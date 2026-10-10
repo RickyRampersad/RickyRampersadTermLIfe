@@ -459,9 +459,57 @@ done.
 
 ---
 
+## Client feedback — every closed claim is asked
+
+A claim is the moment a client finds out whether any of this was worth
+paying for, and until October 2026 Claims TT was the only platform in the
+branch that never asked how it went. It does now.
+
+**When.** The moment a claim reaches `Settled`, `Declined` or `Closed` from
+the staff dashboard. Claims closed by hand on the sheet are caught by the
+daily 9am sweep, because the status dropdown fires no code.
+
+**What is asked.** Three questions on the same 1-to-5 scale the renewal
+portal uses — overall, how easy, how fast — so the two books can be added
+together into one branch service rating.
+
+**The first click is the answer.** Five scored links ride in the email, so
+rating the claim costs one tap from the inbox. The page then asks the other
+two and takes a comment. A survey that needs a form loaded before it records
+anything mostly records nothing.
+
+**A declined claim is still asked**, and asked in different words. Surveying
+only the clients who were paid measures the policy wording, not the branch.
+
+**A score of 3 or less** on overall or speed writes a service-recovery note
+onto the claim and emails the branch the same day. The note is visible beside
+the claim on the staff dashboard; the call is the part the system cannot do.
+
+**The link is signed.** `?survey=REF&k=…` carries an HMAC of the reference,
+so a reference on its own cannot be used to file somebody else's rating. An
+invalid token and an unknown reference return a byte-identical page, so the
+link cannot be used to find out which references exist. The secret is created
+on first use and never leaves Script Properties.
+
+The survey page is served by `Claims.gs`'s own `doGet`, so the rating works
+even while `claims/index.html` is still in preview mode — though with the
+front door unwired there are no claims to survey yet.
+
+Menu: *Claims TT → Preview the feedback request* shows exactly what a client
+would get without sending it. Turn test mode on and *Send feedback requests
+now* to receive one yourself.
+
+---
+
 ## Still to plug in
 
-- [ ] **Apps Script `/exec` URL** → `CONFIG.API_URL` in `claims/index.html`
+- [ ] **Apps Script `/exec` URL** → `CONFIG.API_URL` in `claims/index.html`.
+      Until this is set the site is in preview mode: nothing is filed, nothing
+      is chased, the ten-working-day clock never starts, and the page tells
+      every visitor so. The whole of `Claims.gs` is idle behind this one line.
+- [ ] **The same `/exec` URL** → `CLAIMS.SURVEY_URL` in `Claims.gs`, which is
+      where the feedback link in a closing email points. Left blank, a closed
+      claim logs `survey-skipped` rather than mailing a dead link.
 - [ ] **`SITE_KEY`** changed from the default, in both files
 - [ ] **Claims desk addresses** confirmed for health, life and pension
 - [ ] **Staff emails** added to the `Staff` tab (Active=Y) so the team can
@@ -472,8 +520,11 @@ done.
       automatic `Claims__c` write-back. Until then, the register CSVs
       delivered privately in the Claude session work as a manual fallback.
 - [ ] **Moveable T&T holidays** topped up in `CLAIMS.HOLIDAYS` each January
-- [ ] **Rotate `STAFF_KEY`** in the Apps Script copy of `Code.gs` — the old
-      value was published on the public site
+- [x] **Rotate `STAFF_KEY`** — now read from Script Properties
+      (`RENEWAL_STAFF_KEY`) rather than from `Code.gs`, and the published
+      `CHANGE-ME` placeholder can no longer authorise anything. Run *Guardian
+      Renewals → Issue a new staff key* once; every old dashboard link dies
+      with it, so send the team the new one.
 - [ ] **Git history**: purge the client-data commits, or make the repo
       private and move hosting to Netlify — see *Read this first*
 - [ ] **claimstt.com DNS** repointed from the GoDaddy placeholder

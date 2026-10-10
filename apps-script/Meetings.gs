@@ -79,10 +79,16 @@ var MEET = {
      credential, and it is useless on its own, because the email must
      already be on the People tab.
 
-     Set it ONLY in your Apps Script copy, never in this repository:
-     this file sits in a public repo, so any value committed here is
-     public. Change it again once everyone has enrolled. */
-  JOIN_CODE: 'CHANGE-ME-in-Apps-Script-only',
+     The real value lives in Script Properties, not here, for two
+     reasons. This file sits in a public repository, so anything
+     committed here is public. And the check runs inside doPost, which
+     serves a PINNED SNAPSHOT of the code — editing this line and saving
+     changes nothing until a new version is deployed, which is a trap
+     that costs an afternoon. A property is read live.
+
+     Set it from the sheet: Branch Meetings → Set the branch code. This
+     line is only the fallback, used until a property exists. */
+  JOIN_CODE: 'CHANGE-ME-from-the-Branch-Meetings-menu',
 
   /* Each person picks their own PIN to sign in. */
   PIN_MIN: 4,
@@ -124,7 +130,24 @@ var MEET = {
   TAB_SESSIONS:   'Sessions',
   TAB_CONTRIB:    'Contributions',
   TAB_TOPICS:     'Topics',
+  TAB_ROTA:       'Rota',
+  TAB_KPI:        'KPI',
   TAB_LOG:        'Log',
+
+  /*  THE BRANCH MEETS ON A WEDNESDAY MORNING. 0 is Sunday, so 3 is
+   *  Wednesday. The daily note counts down to the next one and changes
+   *  what it asks for as the day gets closer. */
+  MEETING_DAY: 3,
+  MEETING_TIME: '9:00 AM',
+
+  /*  Materials are due the evening before, which is the only deadline
+   *  that has ever worked: a deadline on the morning of a meeting is a
+   *  deadline nobody can act on once they have missed it. */
+  MATERIALS_DUE_DAYS_BEFORE: 1,
+
+  /*  The daily note goes out on working mornings only. A note on a
+   *  Saturday is a note that teaches people to ignore the notes. */
+  NOTE_HOUR: 7,
 
   /* An audio clip recorded in the app. Apps Script has to hold the whole
      thing in memory as base64, so this is deliberately short: it is for a
@@ -168,9 +191,15 @@ var MEETING_TYPES = ['Branch Meeting', 'Staff Meeting', 'Managers Meeting',
  *  agenda. Visibility controls a single item; scope controls whether the
  *  meeting exists at all for a given person.
  *
- *    branch      Everyone. The weekly branch meeting.
+ *    branch      Everyone on the roll. The weekly branch meeting.
+ *    unit        One unit only, named in the meeting's Unit column, plus
+ *                staff and the manager. Akaash's unit meeting is not
+ *                Gary's unit's business and never appears in their list.
  *    staff       Staff and the manager. Agents never see it — not the
  *                meeting, not the register, not that it happened.
+ *    invited     Only the people named in Participants, plus the chair
+ *                and the manager. The scope for a working group, a
+ *                disciplinary, or anything else that is nobody else's.
  *    one-to-one  The two people in the room, plus the branch manager. A
  *                manager reviewing an agent's persistency is not branch
  *                business.
@@ -178,8 +207,28 @@ var MEETING_TYPES = ['Branch Meeting', 'Staff Meeting', 'Managers Meeting',
  *                These carry client detail, and the branch's standing rule
  *                is that client information travels no further than it has
  *                to.
+ *
+ *  SCOPE ALSO DECIDES THE ROLL. rosterFor_ reads it to work out who was
+ *  expected, and the register is measured against that — so closing a
+ *  unit meeting of eight marks eight people, not the twenty-five who
+ *  were never invited. Getting this wrong would have written a false
+ *  absence onto most of the branch every time a unit met.
  */
-var MEETING_SCOPES = ['branch', 'staff', 'one-to-one', 'client'];
+var MEETING_SCOPES = ['branch', 'unit', 'staff', 'invited', 'one-to-one', 'client'];
+
+/*  A meeting's type implies its scope, so the chair does not have to set
+ *  both and cannot forget the second. It is a DEFAULT, applied only when
+ *  no scope has been chosen — never a lock. */
+var SCOPE_BY_TYPE = {
+  'managers meeting': 'staff',
+  'staff meeting': 'staff',
+  'one-on-one': 'one-to-one',
+  'client meeting': 'client'
+};
+
+function defaultScopeFor_(type) {
+  return SCOPE_BY_TYPE[low_(type)] || 'branch';
+}
 
 function cleanScope_(v) {
   v = low_(v);
@@ -192,15 +241,90 @@ var CONTRIB_KINDS = ['Point', 'Question', 'Answer', 'Decision', 'Concern', 'Comm
 /* Action item statuses, in the branch's own wording. */
 var ACTION_STATUSES = ['Not Started', 'Open', 'In Progress', 'Overdue', 'Standing', 'Complete'];
 
+/*  EVERYBODY IN THE ROOM HOLDS A ROLE.
+ *
+ *  Three of these are standing roles on the People tab. The fourth,
+ *  presenter, is not stored anywhere: you hold it for one meeting
+ *  because the agenda names you against an item, and you stop holding
+ *  it when that meeting closes. Storing it would mean maintaining it,
+ *  and a stored list of presenters goes stale the first time an item
+ *  changes hands.
+ *
+ *  GUEST is a standing role and is deliberately NOT on the roll.
+ *  Head office visitors sat in the 30 July meeting — the President and
+ *  two VPs — and a guest who does not sign in has not missed a branch
+ *  meeting they were contracted to attend. roster_() is the
+ *  denominator the register is measured against, and letting guests
+ *  into it would mark three executives absent and quietly drop the
+ *  branch's attendance rate for a month.
+ */
+var ROLES = ['manager', 'staff', 'agent', 'guest'];
+
+/** The role a person holds FOR ONE MEETING, which is not always the
+ *  role on their People row. The chair of this meeting and a presenter
+ *  on this agenda both need their own view of it. */
+function roleInMeeting_(m, person, agenda) {
+  if (!person) return '';
+  if (m && low_(m['Chair']) === person.email) return 'chair';
+  agenda = agenda || readTab_(MEET.TAB_AGENDA).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  });
+  var presents = agenda.some(function (a) {
+    return low_(a['Presenter Email']) === person.email;
+  });
+  if (presents) return 'presenter';
+  return person.role;
+}
+
+/*  WHY YOU COULD NOT COME, FROM A LIST RATHER THAN A BOX.
+ *
+ *  Decided 6 October 2026, with the JotForm register disbanded. A
+ *  free-text box gives "personal", "busy" and "sorry" — three words
+ *  that cannot be counted, so nobody ever learns which reason is the
+ *  one worth fixing. A fixed list can be counted on the wall the
+ *  same evening, and after a term the branch can see whether it is
+ *  losing the room to client appointments or to the hour it meets.
+ *
+ *  Keep this list short. Every reason added is a column on a wall
+ *  that has to stay readable from across a room, and a list long
+ *  enough to need scrolling is a list people pick the first item
+ *  from. 'Something else' carries a note so nothing is forced into
+ *  the wrong box, and the note is the only free text an apology has.
+ */
+var APOLOGY_REASONS = [
+  'With a client',
+  'Client appointment I could not move',
+  'On a medical or hospital visit',
+  'Unwell',
+  'Family or personal emergency',
+  'On leave or out of the country',
+  'Training or an exam',
+  'At head office or another branch',
+  'Travel or transport problem',
+  'Something else'
+];
+
+/* The one reason that may carry a note, and the only free text an
+   apology accepts. Everything else is picked, so everything else
+   can be counted. */
+var APOLOGY_OTHER = 'Something else';
+
 var SCHEMA = {
-  People: ['Email', 'Name', 'Role', 'Unit', 'Active', 'PIN Hash', 'Salt', 'Token',
-           'Attempts', 'Locked Until', 'Added', 'Added By', 'Last Seen'],
+  /*  Access Code is the agent's own branch portfolio code — the same
+   *  code they already use for the agent portal. The meeting door
+   *  takes it instead of asking them to invent and remember a second
+   *  secret, because a PIN nobody can remember is a person who does
+   *  not sign in, and from 6 October 2026 a person who does not sign
+   *  in is absent. PIN Hash stays for anyone enrolled before that
+   *  and for staff who have no portfolio code. */
+  People: ['Agent No', 'Email', 'Name', 'Role', 'Unit', 'Active', 'Access Code', 'PIN Hash', 'Salt',
+           'Token', 'Attempts', 'Locked Until', 'Added', 'Added By', 'Last Seen'],
 
   Meetings: ['ID', 'Ref', 'Type', 'Title', 'Subtitle', 'Week', 'Date', 'Start', 'End', 'Format',
              'Location', 'Chair', 'Guest', 'Status', 'Check-In Opens', 'Check-In Closes',
              'Late After (min)', 'Materials Due', 'Pre-Read', 'Anchor Document', 'Mission Statement',
              'Purpose', 'Minutes Status', 'Archive Link', 'Scope', 'Participants',
-             'Client Ref', 'Topics', 'Created By', 'Created', 'Updated'],
+             'Client Ref', 'Topics', 'Unit', 'Created By', 'Created', 'Updated'],
 
   Agenda: ['ID', 'Meeting ID', 'Order', 'Section', 'Title', 'Detail', 'Presenter Email',
            'Presenter Name', 'Allotted (min)', 'Visibility', 'Materials Required', 'Ready',
@@ -210,8 +334,49 @@ var SCHEMA = {
             'File ID', 'Link', 'Mime', 'Size', 'Visibility', 'Summary', 'Reviewed By',
             'Reviewed At', 'Uploaded'],
 
+  /*  Reason holds one of APOLOGY_REASONS and nothing else, so it can
+   *  be counted. Note is the free text that only 'Something else'
+   *  carries. Keeping them apart is what lets the wall chart the
+   *  reasons without a human reading every row first. */
+  /*  WHO OWNS WHICH STANDING ITEM, SO THE CHAIR DOES NOT.
+   *
+   *  Cadence says how the presenter is decided each time a meeting is
+   *  built:
+   *    fixed    the named Owner, every time
+   *    rotate   the next agent in the rotation — whoever has presented
+   *             least recently, so it comes round the room rather than
+   *             landing on whoever is willing
+   *    chair    the chair of that meeting
+   *
+   *  Backup is who takes it when the owner apologises. On 7 August a
+   *  report was "presented on her behalf" because its owner was away
+   *  and nobody else held it; naming a backup is how that stops being
+   *  a surprise on the day.                                          */
+  /*  ONE ROW PER PERSON PER MEASURE. Deliberately long and thin rather
+   *  than a column per KPI, because the branch's measures change — the
+   *  minutes from July to September alone talk about fact finds,
+   *  persistency, scripts, contracts, 75-day responses and licensing —
+   *  and a shape that needs a new column every time one changes is a
+   *  shape nobody maintains.
+   *
+   *  Filled from wherever the branch already has the number: a paste, an
+   *  IMPORTRANGE, or a Salesforce pull. The daily note reads whatever is
+   *  here and says nothing when a person has no rows, rather than
+   *  inventing a figure to fill a space.                               */
+  /*  Link is the wall this measure is actually read off — one of the five
+   *  Intelligence Wall boards, or any page that shows the working behind
+   *  the number. A KPI with no way to see what sits underneath it is a
+   *  number people argue with; a KPI that opens the wall is one they go
+   *  and work. It is surfaced in the daily note and beside the measure in
+   *  the app, so nobody has to be told the address.                     */
+  KPI: ['Agent No', 'Email', 'Name', 'Measure', 'Value', 'Target', 'Unit',
+        'Direction', 'As Of', 'Note', 'Link', 'Active'],
+
+  Rota: ['Order', 'Section', 'Item', 'Detail', 'Minutes', 'Visibility',
+         'Cadence', 'Owner', 'Owner Email', 'Backup', 'Backup Email', 'Active', 'Notes'],
+
   Attendance: ['ID', 'Meeting ID', 'Email', 'Name', 'Role', 'Unit', 'Status', 'Method',
-               'Signed In', 'Minutes Late', 'Reason', 'Recorded By', 'Device'],
+               'Signed In', 'Minutes Late', 'Reason', 'Note', 'Recorded By', 'Device'],
 
   Actions: ['ID', 'Meeting ID', 'Item', 'Owner', 'Initiated By', 'Due', 'Status', 'Priority',
             'Notes', 'Origin Meeting', 'Created', 'Created By', 'Updated', 'Completed'],
@@ -229,6 +394,29 @@ var SCHEMA = {
                   'Role', 'Kind', 'Body', 'Topics', 'Visibility', 'Clip Upload ID', 'Edited'],
 
   Topics: ['ID', 'Name', 'Category', 'Description', 'Active', 'Created By', 'Created'],
+
+  /*  ONE ROW PER PERSON PER BLOCK PER DAY. Two rows a day each, so a
+   *  branch of 28 writes about 280 rows a week — long and thin on
+   *  purpose, because the categories change and a column per activity
+   *  is a shape nobody maintains.
+   *
+   *  Items is a comma-joined list of activity keys. Went Well and In
+   *  The Way are the only free text, capped at 500 characters each,
+   *  and they are the part a human reads before a Wednesday.        */
+  Activity: ['ID', 'Day', 'Block', 'Email', 'Name', 'Role', 'Unit', 'Token',
+             'Sent', 'Opened', 'Answered', 'Items', 'Went Well', 'In The Way'],
+
+  /*  ONE ROW PER CASE PER AGENT PER WEEK. The Monday brief asks each agent
+   *  about named cases that are theirs — a maturity coming up, a premium in
+   *  arrears, an orphan file — and Wednesday reads back whether they made
+   *  contact. Long and thin, because the kinds of case will change and the
+   *  branch already has four of them.
+   *
+   *  Ref is a Salesforce record name, never a client name. Nothing on this
+   *  tab identifies a person: the agent knows who CLIENT-0062150 is and
+   *  nobody walking past a screen does.                                  */
+  Chases: ['ID', 'Week', 'Kind', 'Ref', 'Detail', 'Due', 'Email', 'Name', 'Unit',
+           'Sent', 'Answered', 'Contacted', 'Outcome', 'Note', 'Token'],
 
   Log: ['Timestamp', 'Actor', 'Role', 'Action', 'Target', 'Details']
 };
@@ -250,8 +438,15 @@ function setupMeetings() {
   var people = readPeople_();
   var admin = String(MEET.ADMIN_EMAIL || '').trim().toLowerCase();
   if (admin && !people.some(function (p) { return p.email === admin; })) {
-    tab_(MEET.TAB_PEOPLE).appendRow([admin, MEET.ADMIN_NAME, 'manager', 'Branch', 'Y',
-      '', '', '', 0, '', new Date(), 'setup', '']);
+    /*  Written by header, never by position. This was a positional
+     *  appendRow until the Agent No column went in front of Email, at
+     *  which point it would have put the manager's address in the
+     *  agent-number cell and locked out the one person who can fix
+     *  it. appendRow_ maps to the headers as they actually are.     */
+    appendRow_(MEET.TAB_PEOPLE, {
+      'Email': admin, 'Name': MEET.ADMIN_NAME, 'Role': 'manager', 'Unit': 'Branch',
+      'Active': 'Y', 'Attempts': 0, 'Added': new Date(), 'Added By': 'setup'
+    });
   }
 
   log_('setup', 'system', '', 'Meeting Builder set up', 'Tabs, Drive folder and manager seeded');
@@ -267,7 +462,7 @@ function setupMeetings() {
     'Materials folder: ' + materialsFolder_().getName() + '\n' +
     'Topics seeded: ' + topicList_().length + '\n\n' +
     'Next: Deploy > New deployment > Web app (Execute as: Me, Access: Anyone), ' +
-    'then paste the /exec URL into CONFIG.API_URL in managementmeetings/index.html.';
+    'then paste the /exec URL into CONFIG.API_URL in meetings/index.html.';
   Logger.log(summary);
   return summary;
 }
@@ -343,6 +538,20 @@ function appendRow_(name, obj) {
   sh.appendRow(head.map(function (h) { return (h in obj) ? obj[h] : ''; }));
 }
 
+/** Append many rows in one write. Reads the headers once and lands the lot
+ *  in a single setValues, instead of a round trip per row. */
+function appendRows_(name, objs) {
+  if (!objs || !objs.length) return 0;
+  var sh = tab_(name);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+    .map(function (h) { return String(h).trim(); });
+  var rows = objs.map(function (o) {
+    return head.map(function (h) { return (h in o) ? o[h] : ''; });
+  });
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, head.length).setValues(rows);
+  return rows.length;
+}
+
 /** The private Drive folder holding presenters' materials. */
 function materialsFolder_() {
   var props = PropertiesService.getScriptProperties();
@@ -374,6 +583,14 @@ function str_(v) { return v === undefined || v === null ? '' : String(v).trim();
 function low_(v) { return str_(v).toLowerCase(); }
 function num_(v) { var n = Number(v); return isNaN(n) ? 0 : n; }
 function yes_(v) { return str_(v).toUpperCase() !== 'N' && str_(v) !== 'false'; }
+
+/** The branch code people type once when setting a PIN. Script Properties
+ *  first, so changing it takes effect immediately; the constant is only the
+ *  fallback for a script that has never had one set. */
+function joinCode_() {
+  var v = PropertiesService.getScriptProperties().getProperty('JOIN_CODE');
+  return str_(v) || String(MEET.JOIN_CODE);
+}
 
 function tz_() { return Session.getScriptTimeZone() || 'America/Port_of_Spain'; }
 function iso_(d) { return d instanceof Date ? d.toISOString() : ''; }
@@ -438,11 +655,13 @@ function readPeople_() {
   return readTab_(MEET.TAB_PEOPLE).map(function (r) {
     return {
       _row: r._row,
+      agentNo: str_(r['Agent No']),
       email: low_(r['Email']),
       name: str_(r['Name']) || str_(r['Email']),
       role: low_(r['Role']) || 'agent',
       unit: str_(r['Unit']),
       active: yes_(r['Active']),
+      code: str_(r['Access Code']),
       hash: str_(r['PIN Hash']),
       salt: str_(r['Salt']),
       token: str_(r['Token']),
@@ -458,6 +677,25 @@ function findPersonByEmail_(email) {
   return readPeople_().filter(function (p) { return p.email === email; })[0] || null;
 }
 
+/** Agent numbers are typed on a phone, so they are matched with the
+ *  punctuation and leading zeros taken off: 0745444, 745444 and
+ *  745-444 are all the same agent. */
+function normNo_(v) { return str_(v).toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^0+/, ''); }
+
+function findPersonByAgentNo_(no) {
+  no = normNo_(no);
+  if (!no) return null;
+  return readPeople_().filter(function (p) { return normNo_(p.agentNo) === no; })[0] || null;
+}
+
+/** Who is signing in: an agent number, or an e-mail for anyone who
+ *  has no number on the skill bank. One box takes both. */
+function findSignIn_(who) {
+  who = str_(who);
+  if (who.indexOf('@') > 0) return findPersonByEmail_(who);
+  return findPersonByAgentNo_(who) || findPersonByEmail_(who);
+}
+
 function findPersonByToken_(token) {
   token = str_(token);
   if (!token) return null;
@@ -465,8 +703,20 @@ function findPersonByToken_(token) {
 }
 
 /** Everyone who should be at a branch meeting — the denominator
- *  the register is measured against. */
+ *  the register is measured against.
+ *
+ *  Guests are excluded on purpose. The roll is who the branch expects,
+ *  and a visiting executive who does not sign in has not missed a
+ *  meeting they were contracted to attend. They can still sign in,
+ *  and when they do they are counted present like anybody else; they
+ *  are simply never counted absent for staying away. */
 function roster_() {
+  return readPeople_().filter(function (p) { return p.active && p.role !== 'guest'; });
+}
+
+/** Everyone who may sign in, guests included — used where the question
+ *  is "may this person be here", not "was this person expected". */
+function everyone_() {
   return readPeople_().filter(function (p) { return p.active; });
 }
 
@@ -532,24 +782,96 @@ function canOpenMeeting_(person, m) {
   var status = low_(m['Status']) || 'draft';
   if ((status === 'draft' || status === 'cancelled') && !isStaff_(person)) return false;
 
+  // A GUEST IS INVITED TO ONE MEETING, NOT TO THE BRANCH. Without this
+  // a visitor given a sign-in for one session could open every branch
+  // meeting ever held, including the minutes of the ones they were not
+  // at. They get the meeting that names them and nothing else.
+  if (person.role === 'guest') {
+    return low_(m['Guest']).indexOf(person.email) > -1 ||
+           low_(m['Guest']).indexOf(low_(person.name)) > -1 ||
+           isParticipant_(m, person);
+  }
+
   switch (cleanScope_(m['Scope'])) {
     case 'staff':
       return isStaff_(person);
+    case 'unit':
+      // The named unit, plus staff. A unit meeting with no unit set
+      // would otherwise open for the whole branch, so an unset unit
+      // closes it to everyone but staff rather than opening it to all.
+      if (isStaff_(person)) return true;
+      return !!str_(m['Unit']) && sameUnit_(m['Unit'], person.unit);
+    case 'invited':
     case 'one-to-one':
     case 'client':
-      // Only the people actually in the room. The branch manager is
-      // already through, above.
+      // Only the people actually named. The branch manager is already
+      // through, above.
       return low_(m['Chair']) === person.email || isParticipant_(m, person);
     default:
       return true;
   }
 }
 
+/** Units are typed by hand on two different sheets, so they are
+ *  compared loosely: "Akaash Kalladeen", "akaash" and "Akaash's unit"
+ *  are one unit. */
+function sameUnit_(a, b) {
+  // A possessive is dropped before the punctuation is, or "Gary's unit"
+  // becomes "garys" and stops matching "Gary Sookdeo".
+  var tidy = function (v) {
+    return low_(v).replace(/[\u2019']s\b/g, '')
+                  .replace(/[^a-z0-9 ]/g, ' ')
+                  .replace(/\bunit\b/g, '')
+                  .replace(/\s+/g, ' ').trim();
+  };
+  a = tidy(a);
+  b = tidy(b);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  // One is a first name and the other the full name of the same person.
+  var fa = a.split(/\s+/)[0], fb = b.split(/\s+/)[0];
+  return fa === fb && fa.length > 2;
+}
+
+/*  WHO WAS EXPECTED AT THIS MEETING — the register's denominator.
+ *
+ *  roster_() is the whole branch, which is right for a branch meeting
+ *  and wrong for everything else. Closing a unit meeting of eight
+ *  against the whole roll would have written a false absence onto the
+ *  twenty-five people who were never invited to it, and those rows are
+ *  permanent once the register closes.
+ */
+function rosterFor_(m) {
+  var all = roster_();
+  switch (cleanScope_(m && m['Scope'])) {
+    case 'staff':
+      return all.filter(function (p) { return isStaff_(p); });
+    case 'unit':
+      if (!str_(m['Unit'])) return all.filter(function (p) { return isStaff_(p); });
+      return all.filter(function (p) {
+        return sameUnit_(m['Unit'], p.unit) || isStaff_(p);
+      });
+    case 'invited':
+    case 'one-to-one':
+    case 'client':
+      return all.filter(function (p) {
+        return low_(m['Chair']) === p.email || isParticipant_(m, p);
+      });
+    default:
+      return all;
+  }
+}
+
 /** The Participants cell is a comma-separated list of emails. */
 function isParticipant_(m, person) {
-  return str_(m['Participants']).toLowerCase()
+  var want = str_(m['Participants']).toLowerCase()
     .split(/[,;]/).map(function (x) { return x.trim(); })
-    .indexOf(person.email) > -1;
+    .filter(function (x) { return !!x; });
+  if (!want.length) return false;
+  if (want.indexOf(person.email) > -1) return true;
+  // People think in agent numbers now, so a list may be written in them.
+  var no = normNo_(person.agentNo);
+  return !!no && want.some(function (x) { return normNo_(x) === no; });
 }
 
 var VISIBILITIES = ['all', 'staff', 'chair'];
@@ -571,7 +893,7 @@ function apiEnrol_(body) {
   var join = str_(body.joinCode).toUpperCase();
 
   if (email.indexOf('@') < 1) return { ok: false, error: 'Enter your work email address.' };
-  if (join !== String(MEET.JOIN_CODE).toUpperCase()) {
+  if (join !== joinCode_().toUpperCase()) {
     return { ok: false, error: 'That branch code is not right. Ask the branch manager for it.' };
   }
   var bad = checkPin_(pin);
@@ -599,24 +921,53 @@ function apiEnrol_(body) {
   return { ok: true, token: token, user: publicUser_(p) };
 }
 
-function apiLogin_(body) {
-  var email = low_(body.email);
-  var pin = str_(body.pin);
+/*  ONE DOOR: THE AGENT NUMBER AND THE PASSWORD THEY ALREADY HAVE.
+ *
+ *  Decided 9 October 2026. Both live on the Agent Skill Bank, which is
+ *  where the branch already keeps them and where the agent and staff
+ *  portals read them from. Asking for a work e-mail instead meant
+ *  asking a room full of people to type an address on a phone to get
+ *  into a meeting that was marking them absent while they typed. The
+ *  number is shorter, it is on their card, and they know it.
+ *
+ *  The box still takes an e-mail, because a few staff have no number
+ *  on the skill bank, and it still takes a PIN set here before 6
+ *  October. Two doors would mean two ways to fail on the way into a
+ *  meeting; one box that accepts whichever of them you have is one.
+ *
+ *  THE PASSWORD IS NEVER STORED HERE. pullRoster hashes it on the way
+ *  in — salted, SHA-256 — so the meeting sheet holds no second copy of
+ *  a credential that already exists in one place. Changing it on the
+ *  skill bank and pulling again is what changes it here.
+ */
+function sameCode_(given, held) {
+  var a = str_(given).toUpperCase().replace(/\s+/g, '');
+  var b = str_(held).toUpperCase().replace(/\s+/g, '');
+  return !!a && !!b && a === b;
+}
 
-  var p = findPersonByEmail_(email);
-  // Same wording whether the email is unknown or the PIN is wrong,
-  // so the sign-in box cannot be used to discover who is on staff.
-  var generic = { ok: false, error: 'That email and PIN do not match.' };
+function apiLogin_(body) {
+  // 'who' is the agent number or an e-mail; the older keys are kept so
+  // a copy of the page still open in somebody's browser keeps working.
+  var who = str_(body.who || body.agentNo || body.email);
+  var pin = str_(body.password || body.code || body.pin);
+
+  var p = findSignIn_(who);
+  // Same wording whether the number is unknown or the password is
+  // wrong, so the box cannot be used to find out who is on the branch.
+  var generic = { ok: false, error: 'That agent number and password do not match.' };
   if (!p) return generic;
   if (!p.active) return { ok: false, error: 'Your access has been turned off. Speak to the branch manager.' };
-  if (!p.hash) return { ok: false, error: 'needs-enrol', needsEnrol: true };
+  if (!p.hash && !p.code) return { ok: false, error: 'needs-enrol', needsEnrol: true };
 
   if (p.lockedUntil && p.lockedUntil.getTime() > Date.now()) {
     var mins = Math.ceil((p.lockedUntil.getTime() - Date.now()) / 60000);
     return { ok: false, error: 'Too many wrong tries. Try again in ' + mins + ' minute' + (mins === 1 ? '' : 's') + '.' };
   }
 
-  if (hashPin_(pin, p.salt) !== p.hash) {
+  var byCode = sameCode_(pin, p.code);
+  var byPin = !!p.hash && hashPin_(pin, p.salt) === p.hash;
+  if (!byCode && !byPin) {
     var attempts = p.attempts + 1;
     setCell_(MEET.TAB_PEOPLE, p._row, 'Attempts', attempts);
     if (attempts >= MEET.MAX_ATTEMPTS) {
@@ -707,7 +1058,7 @@ function apiSavePerson_(body) {
   var email = low_(body.email);
   if (email.indexOf('@') < 1) return { ok: false, error: 'Enter a valid email address.' };
   var role = low_(body.role);
-  if (['manager', 'staff', 'agent'].indexOf(role) === -1) role = 'agent';
+  if (ROLES.indexOf(role) === -1) role = 'agent';
 
   var existing = findPersonByEmail_(email);
   if (existing) {
@@ -850,8 +1201,35 @@ function apiMeeting_(token, id) {
   var mine = att.filter(function (a) { return low_(a['Email']) === me.email; })[0];
   var myAtt = mine ? {
     status: low_(mine['Status']), signedIn: fmtStamp_(mine['Signed In']),
-    late: num_(mine['Minutes Late']), reason: str_(mine['Reason'])
+    late: num_(mine['Minutes Late']), reason: str_(mine['Reason']),
+    note: str_(mine['Note'])
   } : null;
+
+  /*  AN APOLOGY IS NOT A SIDE DOOR INTO THE PACK. Somebody who has
+   *  logged that they cannot attend gets the card, their own apology
+   *  back, and nothing else — no agenda, no materials, no minutes,
+   *  no floor. They can still change their mind: signing in corrects
+   *  the row and the meeting opens.
+   *
+   *  Staff and the chair are exempt, because they build the agenda
+   *  and write the minutes; locking a chair out of the meeting they
+   *  are minuting would be a rule applied past the point it makes
+   *  sense. Their apology is still recorded and still counted. */
+  var apology = apologised_(m, me, att);
+  if (apology && !isStaff_(me)) {
+    var shut = meetingCard_(m, me, myAtt);
+    return {
+      ok: true, user: publicUser_(me), meeting: shut,
+      apologised: apology,
+      locked: true,
+      lockedMessage: 'You logged that you cannot attend this meeting, so the pack is closed to you. '
+        + 'If that changes, sign in and it opens.',
+      agenda: [], actions: [], minutes: [], contributions: [],
+      minutesPublished: false, sections: SECTIONS, kinds: CONTRIB_KINDS,
+      topicList: [], canRun: false, session: null,
+      apologyReasons: APOLOGY_REASONS, apologyOther: APOLOGY_OTHER
+    };
+  }
 
   var card = meetingCard_(m, me, myAtt);
   card.mission = canSee_(me, 'all') ? str_(m['Mission Statement']) : '';
@@ -945,7 +1323,12 @@ function apiMeeting_(token, id) {
     kinds: CONTRIB_KINDS,
     topicList: topicList_().map(function (t) { return t.name; }),
     canRun: isStaff_(me),
-    maxClipMinutes: MEET.MAX_CLIP_MINUTES
+    maxClipMinutes: MEET.MAX_CLIP_MINUTES,
+    apologyReasons: APOLOGY_REASONS,
+    apologyOther: APOLOGY_OTHER,
+    // The role held for THIS meeting, which the chair and a presenter
+    // need in order to be shown their own part of the framework.
+    myRole: roleInMeeting_(m, me, agenda)
   };
 
   // The register itself is staff material. An agent sees that they
@@ -953,6 +1336,9 @@ function apiMeeting_(token, id) {
   if (isStaff_(me)) {
     out.register = register_(m, att);
     out.floor = floorStats_(contributions, out.register);
+    // Who is carrying this meeting. Counted every time it is opened, so
+    // a rota drifting back to one person shows on the day.
+    out.load = loadOf_(m, agenda);
   }
   else out.presentCount = att.filter(function (a) {
     return ['present', 'late'].indexOf(low_(a['Status'])) > -1;
@@ -1001,13 +1387,23 @@ function actionCard_(x) {
  *  There is no separate attendance register any more. You open the
  *  meeting and press "I'm here" — that writes the row, and the row
  *  IS the register. One place, time-stamped, nothing to reconcile
- *  afterwards.
+ *  afterwards. The JotForm register was disbanded on 6 October 2026
+ *  and nothing else records attendance.
  *
- *  The register reports five groups. The fifth is the one the Q1
- *  minutes went out of their way to record: people who made NO
- *  ENTRY at all — neither present, absent, excused nor late. That
- *  is not the same as being absent, and the branch treats it as a
- *  fact about the record rather than an accusation.
+ *  NO LOGIN IS ABSENT. Until 6 October a person with no row at all
+ *  was reported separately from the absent — "no entry", a fact
+ *  about the record rather than an accusation — because the branch
+ *  had two registers and neither could be trusted. With one register
+ *  and the door open to everybody on the list, there is nothing left
+ *  for a missing row to mean: the branch decided that not signing in
+ *  is being absent, and said so to the room.
+ *
+ *  The distinction survives in the data, not in the count. An absent
+ *  row carries a Method of 'no-login' when nobody ever opened the
+ *  meeting, and 'marked' when staff put it there by hand, so anyone
+ *  reading the sheet in six months can still tell a person who was
+ *  marked absent from a person who simply never appeared. The count
+ *  on the wall is one number, and it is absent.
  */
 
 function register_(m, att) {
@@ -1018,7 +1414,7 @@ function register_(m, att) {
   var byEmail = {};
   att.forEach(function (a) { byEmail[low_(a['Email'])] = a; });
 
-  var groups = { present: [], late: [], excused: [], absent: [], noEntry: [] };
+  var groups = { present: [], late: [], excused: [], absent: [] };
 
   att.forEach(function (a) {
     var entry = {
@@ -1026,32 +1422,66 @@ function register_(m, att) {
       unit: str_(a['Unit']), method: low_(a['Method']),
       signedIn: fmtStamp_(a['Signed In']), time: fmtTime_(a['Signed In']),
       late: num_(a['Minutes Late']), reason: str_(a['Reason']),
-      recordedBy: str_(a['Recorded By'])
+      note: str_(a['Note'] || ''),
+      recordedBy: str_(a['Recorded By']),
+      // Rows written by closeRegister_ when the meeting ended carry
+      // Method 'no-login'. They are read back here so a closed
+      // register says exactly what a live one said.
+      neverLoggedIn: low_(a['Method']) === 'no-login'
     };
     var st = low_(a['Status']);
     if (groups[st]) groups[st].push(entry);
   });
 
-  // Everyone on the branch list with no row at all for this meeting.
-  roster_().forEach(function (p) {
+  // Everyone on the branch list who never opened the meeting. Before
+  // the register is closed they have no row at all; afterwards they
+  // have one, and the loop above has already caught them.
+  var noLogin = 0;
+  var expected = rosterFor_(m);
+  expected.forEach(function (p) {
     if (!byEmail[p.email]) {
-      groups.noEntry.push({ email: p.email, name: p.name, role: p.role, unit: p.unit });
+      groups.absent.push({
+        email: p.email, name: p.name, role: p.role, unit: p.unit,
+        method: 'no-login', signedIn: '', time: '', late: 0,
+        reason: '', note: '', recordedBy: '', neverLoggedIn: true
+      });
     }
   });
+
+  // Counted off the finished list, so it is the same number whether
+  // the register is still open or was closed with the meeting.
+  noLogin = groups.absent.filter(function (x) { return x.neverLoggedIn; }).length;
 
   var order = function (a, b) { return a.name.localeCompare(b.name); };
   Object.keys(groups).forEach(function (k) { groups[k].sort(order); });
 
-  var roll = roster_().length;
+  var roll = expected.length;
   var here = groups.present.length + groups.late.length;
+
+  // Why the apologies came in, counted. One row per reason that was
+  // actually used, so the wall never shows an empty column.
+  var byReason = {};
+  groups.excused.forEach(function (e) {
+    var r = e.reason || APOLOGY_OTHER;
+    byReason[r] = (byReason[r] || 0) + 1;
+  });
+  var reasons = Object.keys(byReason).map(function (r) {
+    return { reason: r, count: byReason[r] };
+  }).sort(function (a, b) { return b.count - a.count || a.reason.localeCompare(b.reason); });
 
   return {
     counts: {
       present: groups.present.length, late: groups.late.length,
       excused: groups.excused.length, absent: groups.absent.length,
-      noEntry: groups.noEntry.length, roll: roll, here: here,
-      rate: roll ? Math.round((here / roll) * 100) : 0
+      // Kept as a breakdown of the absent, never as a group of its own:
+      // the branch counts a missing login as an absence.
+      noLogin: noLogin,
+      markedAbsent: groups.absent.length - noLogin,
+      roll: roll, here: here,
+      rate: roll ? Math.round((here / roll) * 100) : 0,
+      accountedFor: roll ? Math.round(((here + groups.excused.length) / roll) * 100) : 0
     },
+    reasons: reasons,
     groups: groups
   };
 }
@@ -1118,15 +1548,34 @@ function apiCheckIn_(body) {
   return { ok: true, status: decided.status, late: decided.late, signedIn: fmtStamp_(now) };
 }
 
-/** Tell the branch in advance that you cannot attend, and why. The
- *  April minutes log reasons against every absence; this is where
- *  they come from now. */
+/*  THE APOLOGY. You still log in; you just do not get the meeting.
+ *
+ *  Decided 6 October 2026. Somebody who cannot come signs in with
+ *  the same code as everybody else and picks a reason from
+ *  APOLOGY_REASONS. That writes an 'excused' row, and from then on
+ *  the meeting itself — agenda, materials, minutes, the floor — is
+ *  closed to them (see apologised_ and apiMeeting_). An apology is
+ *  not a side door into the pack.
+ *
+ *  The reason has to be one of the listed ones. A typed reason is
+ *  refused rather than quietly stored, because the whole point of
+ *  the list is that every apology lands in a box the wall can count.
+ */
 function apiExcuse_(body) {
   var me = requireUser_(body.token);
   var m = findMeeting_(body.meetingId);
   if (!m) return { ok: false, error: 'That meeting no longer exists.' };
+
   var reason = str_(body.reason);
-  if (reason.length < 3) return { ok: false, error: 'Please say why you cannot attend.' };
+  if (!reason) return { ok: false, error: 'Pick the reason you cannot attend.' };
+  if (APOLOGY_REASONS.indexOf(reason) === -1) {
+    return { ok: false, error: 'Pick a reason from the list.' };
+  }
+  var note = str_(body.note).slice(0, 300);
+  if (reason === APOLOGY_OTHER && note.length < 3) {
+    return { ok: false, error: 'Say in a line what the reason is.' };
+  }
+  if (reason !== APOLOGY_OTHER) note = '';
 
   var existing = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
     return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
@@ -1139,17 +1588,34 @@ function apiExcuse_(body) {
   if (existing) {
     setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Status', 'excused');
     setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Reason', reason);
-    setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Method', 'self-excused');
+    setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Note', note);
+    setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Method', 'apology');
     setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Signed In', new Date());
+    setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Recorded By', 'self');
   } else {
     appendRow_(MEET.TAB_ATTENDANCE, {
       'ID': uid_('ATT'), 'Meeting ID': str_(m['ID']), 'Email': me.email, 'Name': me.name,
-      'Role': me.role, 'Unit': me.unit, 'Status': 'excused', 'Method': 'self-excused',
-      'Signed In': new Date(), 'Minutes Late': 0, 'Reason': reason, 'Recorded By': 'self'
+      'Role': me.role, 'Unit': me.unit, 'Status': 'excused', 'Method': 'apology',
+      'Signed In': new Date(), 'Minutes Late': 0, 'Reason': reason, 'Note': note,
+      'Recorded By': 'self', 'Device': str_(body.device).slice(0, 120)
     });
   }
-  log_('excused', me.name, me.role, str_(m['Ref']) || str_(m['ID']), reason);
-  return { ok: true };
+  log_('apology', me.name, me.role, str_(m['Ref']) || str_(m['ID']),
+    reason + (note ? ' — ' + note : ''));
+  return { ok: true, reason: reason, note: note };
+}
+
+/** Has this person apologised for this meeting? An apology closes the
+ *  meeting to them, so this is checked before anything is handed over. */
+function apologised_(m, person, att) {
+  if (!m || !person) return null;
+  att = att || readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  });
+  var mine = att.filter(function (a) { return low_(a['Email']) === person.email; })[0];
+  if (!mine || low_(mine['Status']) !== 'excused') return null;
+  return { reason: str_(mine['Reason']), note: str_(mine['Note']),
+           at: fmtStamp_(mine['Signed In']) };
 }
 
 /** Staff correcting the register by hand — the "was here earlier,
@@ -1224,7 +1690,8 @@ function apiAttendanceHistory_(token) {
   var per = {};
   roster_().forEach(function (p) {
     per[p.email] = { email: p.email, name: p.name, role: p.role, unit: p.unit,
-                     present: 0, late: 0, excused: 0, absent: 0, noEntry: 0, total: meetings.length };
+                     present: 0, late: 0, excused: 0, absent: 0, noLogin: 0,
+                     total: meetings.length };
   });
   var seen = {};
   att.forEach(function (a) {
@@ -1232,10 +1699,16 @@ function apiAttendanceHistory_(token) {
     if (!per[e]) return;
     var st = low_(a['Status']);
     if (per[e][st] !== undefined) per[e][st]++;
+    if (st === 'absent' && low_(a['Method']) === 'no-login') per[e].noLogin++;
     seen[e + '|' + str_(a['Meeting ID'])] = 1;
   });
+  // A meeting with no row at all is an absence, the same as one the
+  // register wrote when it closed. noLogin is the share of those
+  // absences nobody marked by hand, kept for the one-on-one.
   Object.keys(per).forEach(function (e) {
-    meetings.forEach(function (m) { if (!seen[e + '|' + str_(m['ID'])]) per[e].noEntry++; });
+    meetings.forEach(function (m) {
+      if (!seen[e + '|' + str_(m['ID'])]) { per[e].absent++; per[e].noLogin++; }
+    });
     var p = per[e];
     p.rate = p.total ? Math.round(((p.present + p.late) / p.total) * 100) : 0;
   });
@@ -1285,10 +1758,14 @@ function apiSaveMeeting_(body) {
     'Anchor Document': str_(body.anchor),
     'Mission Statement': str_(body.mission),
     'Purpose': str_(body.purpose),
-    'Scope': cleanScope_(body.scope),
+    // No scope chosen takes the one its type implies, so a Managers
+    // Meeting is never left open to the branch because somebody did not
+    // look at a second dropdown.
+    'Scope': str_(body.scope) ? cleanScope_(body.scope) : defaultScopeFor_(type),
     'Participants': str_(body.participants),
     'Client Ref': str_(body.clientRef),
     'Topics': str_(body.topics),
+    'Unit': str_(body.unit),
     'Updated': new Date()
   };
 
@@ -1405,6 +1882,566 @@ function apiReorderAgenda_(body) {
 
 /** Copy the standing agenda the branch runs every week, so building
  *  next week's meeting is a matter of filling in, not typing out. */
+/* ==================== the daily note ==================== */
+/*
+ *  WHAT THIS IS, AND WHAT IT DELIBERATELY IS NOT.
+ *
+ *  The branch meets on a Wednesday morning. This sends each person one
+ *  short note on each working morning that counts down to it and asks
+ *  for the one thing only they can bring. By Wednesday the meeting has
+ *  been built by everybody rather than assembled by the chair on the
+ *  night before.
+ *
+ *  IT IS NOT A DAILY PRODUCTION CHASE, and that is a design decision
+ *  taken against the evidence rather than a preference. Chung,
+ *  Narayandas and Chang (Management Science, 2021) ran daily against
+ *  monthly quotas in a field experiment: daily quotas lifted the bottom
+ *  quartile 11.7%, and pushed the top performers toward low-ticket
+ *  business so their sales fell 8.1% and firm profit with it. A daily
+ *  number shouted at a room of agents makes the weakest a little better
+ *  and the strongest worse. The common practitioner rule — operational
+ *  measures daily, strategic ones weekly — points the same way.
+ *
+ *  So the daily note carries what a person CONTROLS THAT DAY: their
+ *  item for Wednesday, whether their material is in, their open
+ *  actions, and their own measures with no league table and nobody
+ *  else's figures. The strategy argument happens once a week, in the
+ *  room, which is what the meeting is for.
+ *
+ *  Every note ends with the same ask, because "all have to contribute"
+ *  has to be something a person can do in ten seconds from a phone.
+ */
+
+function nextMeetingDay_(from) {
+  var d = new Date(from || new Date());
+  d.setHours(0, 0, 0, 0);
+  var delta = (MEET.MEETING_DAY - d.getDay() + 7) % 7;
+  d.setDate(d.getDate() + delta);
+  return d;
+}
+
+/** The meeting the notes are counting down to: the next one scheduled,
+ *  or the next meeting day if none has been built yet. */
+function upcomingMeeting_(from) {
+  var now = from || new Date();
+  var soon = meetingRows_().filter(function (m) {
+    var st = low_(m['Status']);
+    if (st === 'cancelled' || st === 'closed') return false;
+    var d = asDate_(m['Date']);
+    return d && d.getTime() >= new Date(now).setHours(0, 0, 0, 0);
+  }).sort(function (a, b) {
+    return asDate_(a['Date']).getTime() - asDate_(b['Date']).getTime();
+  });
+  return soon[0] || null;
+}
+
+function workingDaysBetween_(a, b) {
+  var d = new Date(a); d.setHours(0,0,0,0);
+  var end = new Date(b); end.setHours(0,0,0,0);
+  var n = 0;
+  while (d.getTime() < end.getTime()) {
+    d.setDate(d.getDate() + 1);
+    var w = d.getDay();
+    if (w !== 0 && w !== 6) n++;
+  }
+  return n;
+}
+
+function kpiRowsFor_(person) {
+  var no = normNo_(person.agentNo);
+  return readTab_(MEET.TAB_KPI).filter(function (r) {
+    if (!yes_(r['Active'])) return false;
+    if (!str_(r['Measure'])) return false;
+    if (person.email && low_(r['Email']) === person.email) return true;
+    return !!no && normNo_(r['Agent No']) === no;
+  }).map(function (r) {
+    var v = num_(r['Value']), t = num_(r['Target']);
+    var dir = low_(r['Direction']) || 'up';   // 'up' = higher is better
+    var meets = !str_(r['Target']) ? null : (dir === 'down' ? v <= t : v >= t);
+    return {
+      measure: str_(r['Measure']), value: str_(r['Value']), target: str_(r['Target']),
+      unit: str_(r['Unit']), note: str_(r['Note']), asOf: fmtDate_(r['As Of']),
+      link: safeLink_(r['Link']),
+      meets: meets
+    };
+  });
+}
+
+/*  THE NOTE, BUILT NOT SENT. Kept pure so what a person actually
+ *  receives can be checked without a mailbox, and so the wording can
+ *  be argued about without anybody being e-mailed. */
+function dailyNoteFor_(person, ctx) {
+  var m = ctx.meeting;
+  var days = ctx.daysToMeeting;
+  var when = days === 0 ? 'this morning'
+           : days === 1 ? 'tomorrow'
+           : 'in ' + days + ' days';
+
+  var lines = [], must = [], subjectBits = [];
+
+  // 1. Your item on Wednesday.
+  (ctx.myItems || []).forEach(function (it) {
+    if (it.required && !it.ready) {
+      must.push('Your material for <b>' + esc_(it.title) + '</b> is not in yet.');
+      subjectBits.push('material due');
+    } else if (!it.ready) {
+      must.push('Mark <b>' + esc_(it.title) + '</b> ready when you are.');
+    } else {
+      lines.push('<b>' + esc_(it.title) + '</b> — ready. ' + it.minutes + ' minutes, ' +
+                 (it.clock ? 'at ' + esc_(it.clock) : 'on the running order') + '.');
+    }
+  });
+  if (!(ctx.myItems || []).length) {
+    lines.push('You are not presenting on Wednesday.');
+  }
+
+  // 2. Your actions.
+  if (ctx.overdue && ctx.overdue.length) {
+    must.push('<b>' + ctx.overdue.length + '</b> of your action items ' +
+      (ctx.overdue.length === 1 ? 'is' : 'are') + ' past the date: ' +
+      ctx.overdue.slice(0, 3).map(function (a) { return esc_(a.item); }).join('; ') +
+      (ctx.overdue.length > 3 ? '…' : '') + '.');
+    subjectBits.push(ctx.overdue.length + ' overdue');
+  } else if (ctx.openActions && ctx.openActions.length) {
+    lines.push('<b>' + ctx.openActions.length + '</b> open action' +
+      (ctx.openActions.length === 1 ? '' : 's') + ', none overdue.');
+  } else {
+    lines.push('No action items against your name.');
+  }
+
+  // 3. Your own measures. No league table, no one else's figures.
+  var kpi = ctx.kpi || [];
+  var kpiHtml = '';
+  if (kpi.length) {
+    kpiHtml = '<table style="border-collapse:collapse;margin:10px 0;width:100%">' +
+      kpi.map(function (k) {
+        var mark = k.meets === null ? '' : (k.meets ? ' ✓' : ' —');
+        return '<tr>' +
+          '<td style="padding:4px 10px 4px 0;color:#49637d">' + esc_(k.measure) + '</td>' +
+          '<td style="padding:4px 0;font-weight:700">' + esc_(k.value) +
+            (k.unit ? ' ' + esc_(k.unit) : '') + mark + '</td>' +
+          '<td style="padding:4px 0 4px 12px;color:#8aa3bb;font-size:12px">' +
+            (k.target ? 'target ' + esc_(k.target) : '') +
+            (k.link ? (k.target ? ' &middot; ' : '') +
+              '<a href="' + esc_(k.link) + '" style="color:#00a8c5;text-decoration:none">open the wall</a>'
+              : '') + '</td></tr>';
+      }).join('') + '</table>';
+  }
+
+  // 4. The ask. The same one every day, because it has to be a habit.
+  var ask = ctx.contributedThisWeek
+    ? 'You have already put something on Wednesday&rsquo;s agenda. Add another if it matters.'
+    : '<b>Add one thing to Wednesday&rsquo;s agenda</b> — a question, a concern, or something that worked. '
+      + 'It takes ten seconds and it is the difference between a meeting you attend and one you are in.';
+
+  var subject = days === 0
+    ? 'Branch meeting this morning' + (subjectBits.length ? ' — ' + subjectBits[0] : '')
+    : (subjectBits.length
+        ? 'Wednesday ' + when + ': ' + subjectBits.join(', ')
+        : 'Wednesday ' + when);
+
+  var html =
+    '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:560px;' +
+      'color:#0b2238;line-height:1.6">' +
+    '<p style="margin:0 0 4px;font-size:13px;color:#8aa3bb">' + esc_(MEET.BRANCH) + '</p>' +
+    '<h2 style="margin:0 0 2px;font-size:19px">Good morning, ' + esc_(firstName_(person.name)) + '.</h2>' +
+    '<p style="margin:0 0 14px;font-size:14px;color:#49637d">' +
+      (m ? esc_(str_(m['Title']) || 'Branch meeting') + ' is ' + when +
+           (str_(m['Start']) ? ', ' + esc_(fmtTime_(atTime_(m['Date'], m['Start']))) : '') + '.'
+         : 'The branch meeting is ' + when + '.') + '</p>' +
+    (must.length
+      ? '<div style="background:#fff5e6;border:1px solid #f0c674;border-radius:10px;padding:11px 13px;margin:0 0 14px">' +
+        '<p style="margin:0 0 6px;font-weight:700;font-size:13px">Before Wednesday</p>' +
+        '<ul style="margin:0;padding-left:18px;font-size:13.5px">' +
+        must.map(function (x) { return '<li style="margin-bottom:4px">' + x + '</li>'; }).join('') +
+        '</ul></div>'
+      : '') +
+    (lines.length
+      ? '<ul style="margin:0 0 14px;padding-left:18px;font-size:13.5px;color:#49637d">' +
+        lines.map(function (x) { return '<li style="margin-bottom:4px">' + x + '</li>'; }).join('') +
+        '</ul>'
+      : '') +
+    (kpiHtml ? '<p style="margin:14px 0 2px;font-size:11px;letter-spacing:.12em;' +
+       'text-transform:uppercase;color:#8aa3bb">Yours' +
+       (kpi[0] && kpi[0].asOf ? ', as at ' + esc_(kpi[0].asOf) : '') + '</p>' + kpiHtml : '') +
+    '<p style="margin:16px 0 14px;font-size:13.5px">' + ask + '</p>' +
+    '<p style="margin:0 0 18px"><a href="' + esc_(ctx.appUrl || 'https://rickyrampersadbranch.com/meetings/') +
+      '" style="background:#0b2238;color:#efc24b;text-decoration:none;padding:10px 18px;' +
+      'border-radius:9px;font-weight:700;font-size:13.5px;display:inline-block">Open the meeting</a></p>' +
+    '<p style="margin:0;font-size:11.5px;color:#8aa3bb">Signing in on Wednesday is the attendance register. ' +
+      'If you do not sign in you are marked absent; if you cannot come, log it and pick a reason.</p>' +
+    '<p style="margin:14px 0 0;font-size:11px;color:#a8bccf">Internal — Ricky Rampersad Branch. ' +
+      'Your own figures only; nobody else receives yours.</p>' +
+    '</div>';
+
+  return { subject: subject, html: html, must: must.length, hasKpi: kpi.length > 0 };
+}
+
+function firstName_(n) { return str_(n).split(/\s+/)[0] || str_(n); }
+
+/*  Only http and https ever reach an href. These links come off a sheet
+ *  anybody on the branch can edit, and the daily note is e-mail: a
+ *  javascript: or data: URL pasted into a cell must not become a live
+ *  link in twenty-eight inboxes. */
+function safeLink_(v) {
+  var u = str_(v);
+  return /^https?:\/\//i.test(u) ? u : '';
+}
+function esc_(v) {
+  return str_(v).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+
+/** Everything one person's note needs, read once per run rather than
+ *  per person — a per-person read of six tabs would not finish. */
+function dailyNoteContext_(now) {
+  now = now || new Date();
+  var m = upcomingMeeting_(now);
+  var target = m ? asDate_(m['Date']) : nextMeetingDay_(now);
+  var agenda = m ? readTab_(MEET.TAB_AGENDA).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  }) : [];
+  var uploads = m ? readTab_(MEET.TAB_UPLOADS).filter(function (u) {
+    return str_(u['Meeting ID']) === str_(m['ID']);
+  }) : [];
+  var actions = readTab_(MEET.TAB_ACTIONS);
+  var contribs = m ? readTab_(MEET.TAB_CONTRIB).filter(function (c) {
+    return str_(c['Meeting ID']) === str_(m['ID']);
+  }) : [];
+  var clock = m ? atTime_(m['Date'], m['Start']) : null;
+  agenda.sort(function (a, b) { return num_(a['Order']) - num_(b['Order']); });
+  agenda.forEach(function (a) {
+    a._clock = clock ? Utilities.formatDate(clock, tz_(), 'h:mm a') : '';
+    if (clock) clock = new Date(clock.getTime() + (num_(a['Allotted (min)']) || 0) * 60000);
+  });
+  return {
+    now: now, meeting: m, target: target,
+    daysToMeeting: Math.max(0, workingDaysBetween_(now, target)),
+    agenda: agenda, uploads: uploads, actions: actions, contribs: contribs,
+    appUrl: 'https://rickyrampersadbranch.com/meetings/'
+  };
+}
+
+function noteContextFor_(person, ctx) {
+  var mine = ctx.agenda.filter(function (a) {
+    return low_(a['Presenter Email']) === person.email;
+  }).map(function (a) {
+    var files = ctx.uploads.filter(function (u) { return str_(u['Agenda ID']) === str_(a['ID']); });
+    return {
+      title: str_(a['Title']), minutes: num_(a['Allotted (min)']), clock: a._clock,
+      required: yes_(a['Materials Required']) && str_(a['Materials Required']).toUpperCase() !== 'N',
+      ready: str_(a['Ready']).toUpperCase() === 'Y' || files.length > 0
+    };
+  });
+  var mineActions = ctx.actions.filter(function (x) {
+    var owner = low_(x['Owner']);
+    return owner && (owner.indexOf(person.email) > -1 ||
+      (person.name && owner.indexOf(low_(person.name)) > -1));
+  }).filter(function (x) { return low_(x['Status']) !== 'complete'; });
+  var today = new Date(ctx.now); today.setHours(0,0,0,0);
+  return {
+    meeting: ctx.meeting,
+    daysToMeeting: ctx.daysToMeeting,
+    appUrl: ctx.appUrl,
+    myItems: mine,
+    openActions: mineActions.map(function (x) { return { item: str_(x['Item']) }; }),
+    overdue: mineActions.filter(function (x) {
+      var due = asDate_(x['Due']);
+      return due && due.getTime() < today.getTime();
+    }).map(function (x) { return { item: str_(x['Item']) }; }),
+    kpi: kpiRowsFor_(person),
+    contributedThisWeek: ctx.contribs.some(function (c) { return low_(c['Email']) === person.email; })
+  };
+}
+
+/*  The trigger. Working mornings only, and it says nothing at all on a
+ *  day when there is nothing to say — a note that arrives every day
+ *  whether or not it carries anything is a note people filter.       */
+function dailyMeetingNote() {
+  var now = new Date();
+  var w = now.getDay();
+  if (w === 0 || w === 6) { Logger.log('Weekend — no note.'); return 'Weekend — no note.'; }
+
+  var ctx = dailyNoteContext_(now);
+  if (!ctx.meeting && ctx.daysToMeeting > 2) {
+    Logger.log('No meeting within two working days — no note.');
+    return 'No meeting within two working days — no note.';
+  }
+
+  var sent = 0, quiet = 0;
+  everyone_().forEach(function (p) {
+    if (!p.email) return;
+    var per = noteContextFor_(p, ctx);
+    var note = dailyNoteFor_(p, per);
+    // Nothing owed, nothing open, no measures, and the meeting is still
+    // days away: say nothing rather than train them to ignore it.
+    if (!note.must && !note.hasKpi && per.daysToMeeting > 1 &&
+        !per.myItems.length && !per.openActions.length) { quiet++; return; }
+    try {
+      MailApp.sendEmail({ to: p.email, subject: note.subject, htmlBody: note.html,
+                          name: MEET.BRANCH });
+      sent++;
+    } catch (err) {
+      Logger.log('Could not write to ' + p.email + ': ' + err);
+    }
+  });
+
+  var msg = sent + ' note' + (sent === 1 ? '' : 's') + ' sent, ' + quiet + ' had nothing to say.';
+  log_('daily-note', 'system', '', ctx.meeting ? str_(ctx.meeting['Ref']) : '', msg);
+  Logger.log(msg);
+  return msg;
+}
+
+/** Install the morning trigger. Safe to run again — it clears its own
+ *  first, so pressing the menu item twice never doubles the notes. */
+function installDailyNote() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'dailyMeetingNote') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('dailyMeetingNote').timeBased()
+    .atHour(MEET.NOTE_HOUR).everyDays(1).create();
+  var msg = 'Daily note installed for about ' + MEET.NOTE_HOUR + ':00 each morning. ' +
+    'It stays quiet at weekends and when there is nothing to say.';
+  Logger.log(msg);
+  return msg;
+}
+
+function installDailyNoteFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert('The daily note', installDailyNote(), ui.ButtonSet.OK);
+}
+
+/** Send yourself today's note, to read it before the branch does. */
+function previewDailyNote() {
+  var me = findPersonByEmail_(MEET.ADMIN_EMAIL) || readPeople_()[0];
+  if (!me) throw new Error('Nobody on the People tab yet.');
+  var ctx = dailyNoteContext_(new Date());
+  var note = dailyNoteFor_(me, noteContextFor_(me, ctx));
+  MailApp.sendEmail({ to: me.email, subject: '[Preview] ' + note.subject,
+                      htmlBody: note.html, name: MEET.BRANCH });
+  var msg = 'Preview sent to ' + me.email + '.';
+  Logger.log(msg);
+  return msg;
+}
+
+/* ======================== the rota ======================== */
+/*
+ *  WHY THIS EXISTS. Read the five meetings on record from 22 July to
+ *  11 September and one shape comes out of all of them: the branch
+ *  manager presents most of the meeting. "Branch Manager's
+ *  Presentation" is a standing section that is his alone and carried
+ *  fourteen distinct topics across those five sessions; the whole Key
+ *  Person Insurance workshop on 7 August was his; the opening, the
+ *  correspondence, the compliance section and the closing are his
+ *  every time. Admin carry the operational reports. Agents presented
+ *  twice in five meetings — Rajiv on 21 August, Felicia on 7 August —
+ *  and both were "share your approach" slots rather than items anybody
+ *  owned.
+ *
+ *  The seeder used to put that in code: of twelve standing items, six
+ *  defaulted to the chair and six were left blank for whoever ended up
+ *  holding them, which in practice was the chair again. The rota is
+ *  the fix. Every standing item has an owner who is not the chair, a
+ *  backup for the day they apologise, and the two items that should
+ *  move round the room rotate by themselves.
+ */
+
+function rotaRows_() {
+  return readTab_(MEET.TAB_ROTA)
+    .filter(function (r) { return yes_(r['Active']) && str_(r['Item']); })
+    .sort(function (a, b) { return num_(a['Order']) - num_(b['Order']); });
+}
+
+/*  Whoever has presented least recently, so a rotating slot comes round
+ *  the room instead of landing on whoever volunteers. Never presented
+ *  at all sorts first — which is most of the branch, and the point.
+ *
+ *  `skip` is who has already been given a slot in the meeting being
+ *  built right now. Without it both rotating items land on the same
+ *  person: the rotation reads the Agenda tab to see who presented
+ *  last, and during a build that tab has not been written yet, so
+ *  every call inside one build returns the same name.               */
+function nextInRotation_(exclude, skip) {
+  exclude = low_(exclude || '');
+  skip = skip || {};
+  var lastSeen = {};
+  readTab_(MEET.TAB_AGENDA).forEach(function (a) {
+    var e = low_(a['Presenter Email']);
+    if (!e) return;
+    var when = asDate_(a['Created']);
+    var t = when ? when.getTime() : 0;
+    if (!(e in lastSeen) || t > lastSeen[e]) lastSeen[e] = t;
+  });
+  var pool = roster_().filter(function (p) {
+    return p.role === 'agent' && p.email !== exclude && !skip[p.email];
+  });
+  if (!pool.length) return null;
+  pool.sort(function (a, b) {
+    var la = (a.email in lastSeen) ? lastSeen[a.email] : -1;
+    var lb = (b.email in lastSeen) ? lastSeen[b.email] : -1;
+    return la - lb || a.name.localeCompare(b.name);
+  });
+  return pool[0];
+}
+
+/** Who presents one rota item at this meeting. */
+function presenterFor_(item, m, chairEmail, taken) {
+  var cadence = low_(item['Cadence']) || 'fixed';
+  if (cadence === 'chair') {
+    var c = findPersonByEmail_(chairEmail);
+    return c ? { name: c.name, email: c.email } : { name: str_(m['Chair']), email: low_(m['Chair']) };
+  }
+  if (cadence === 'rotate') {
+    var nxt = nextInRotation_(chairEmail, taken);
+    return nxt ? { name: nxt.name, email: nxt.email } : { name: '', email: '' };
+  }
+  var owner = findPersonByEmail_(item['Owner Email']);
+  if (owner && owner.active) return { name: owner.name, email: owner.email };
+  var backup = findPersonByEmail_(item['Backup Email']);
+  if (backup && backup.active) return { name: backup.name, email: backup.email };
+  return { name: str_(item['Owner']), email: low_(item['Owner Email']) };
+}
+
+/*  HOW MUCH OF THIS MEETING IS ONE PERSON'S.
+ *
+ *  A rota drifts back to the chair quietly — an owner is away, an item
+ *  gets added in a hurry, and six months later it is one person's
+ *  broadcast again. This counts it every time the meeting is opened so
+ *  the drift is visible on the day rather than in a year's minutes.
+ */
+var LOAD_TARGET = 0.34;   /* no one person over about a third */
+
+function loadOf_(m, agenda) {
+  agenda = agenda || readTab_(MEET.TAB_AGENDA).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  });
+  var mins = 0, items = 0, by = {}, unowned = 0;
+  agenda.forEach(function (a) {
+    var min = num_(a['Allotted (min)']);
+    mins += min; items++;
+    var e = low_(a['Presenter Email']) || '';
+    var n = str_(a['Presenter Name']);
+    if (!e && !n) { unowned++; return; }
+    var k = e || low_(n);
+    if (!by[k]) by[k] = { name: n || e, email: e, items: 0, minutes: 0 };
+    by[k].items++; by[k].minutes += min;
+  });
+  var list = Object.keys(by).map(function (k) {
+    var x = by[k];
+    x.shareItems = items ? Math.round((x.items / items) * 100) : 0;
+    x.shareMinutes = mins ? Math.round((x.minutes / mins) * 100) : 0;
+    return x;
+  }).sort(function (a, b) { return b.minutes - a.minutes || b.items - a.items; });
+
+  var chairEmail = low_(m['Chair']);
+  var chair = list.filter(function (x) { return x.email === chairEmail; })[0] || null;
+  var chairShare = chair && mins ? chair.minutes / mins : 0;
+
+  return {
+    items: items, minutes: mins, unowned: unowned,
+    people: list,
+    presenters: list.length,
+    chair: chair,
+    chairShare: Math.round(chairShare * 100),
+    target: Math.round(LOAD_TARGET * 100),
+    overTarget: chairShare > LOAD_TARGET,
+    // Said in words, because a percentage on its own gets argued with.
+    note: !items ? 'No agenda yet.'
+      : chairShare > LOAD_TARGET
+        ? 'The chair is presenting ' + Math.round(chairShare * 100) + '% of this meeting. '
+          + 'Give an item away on the Rota tab and it stays given away.'
+        : list.length < 3
+          ? 'Only ' + list.length + ' people are presenting. A meeting the room takes part in '
+            + 'needs more hands than that.'
+          : 'Spread across ' + list.length + ' presenters'
+            + (unowned ? ', with ' + unowned + ' item' + (unowned === 1 ? '' : 's') + ' nobody owns yet.' : '.')
+  };
+}
+
+/*  The standing order, taken from the branch's own agendas. Owners are
+ *  set by the branch on the Rota tab; what is seeded here is the shape
+ *  and the cadence — in particular WHICH items are the chair's, which
+ *  is now three of fourteen rather than six of twelve, and which come
+ *  round the room.                                                   */
+function seedRota() {
+  var sh = tab_(MEET.TAB_ROTA);
+  if (sh.getLastRow() > 1) {
+    var msg = 'The Rota tab already has rows — left alone. Clear it first to re-seed.';
+    Logger.log(msg);
+    return msg;
+  }
+  /*  ELEVEN ITEMS IN NINETY MINUTES, 9:00 to 10:30.
+   *
+   *  The shape this replaced ran fifteen items over 101 minutes and spent
+   *  forty-one of them having five separate reports read out — outstanding
+   *  requirements, persistency, licensing, scripts and clawback, contract
+   *  delivery, 85-day premium. Every one of those numbers is on a screen
+   *  before anybody sits down, so reading them aloud is the branch paying
+   *  forty minutes a week to be told what it already knows.
+   *
+   *  THE RULE THIS IS BUILT ON: if a number is on a screen, nobody reads it
+   *  out. Those five became one twelve-minute item that covers only what is
+   *  breaching. The time bought back went to the thing that did not exist —
+   *  asking, by name, who answered Monday's brief and who did not.
+   *
+   *  The arithmetic is deliberate and the template on the wall depends on
+   *  it: ninety minutes exactly, fifteen of them the chair's, sixteen
+   *  belonging to the room, two items rotating so they come round rather
+   *  than landing on whoever is willing.                                */
+  var rows = [
+    [0, 'Open | Mission Statement | Moment of Silence', 3, 'all', 'chair',
+     'Three minutes. The register is the app; nobody is marked in from the front.'],
+
+    /*  PRODUCTION LEADS. Items two to five are thirty-eight of the ninety
+     *  minutes and they are the first thing after the door closes. The
+     *  branch does not open on admin and work its way towards selling;
+     *  it opens on what was written and what is there to write.       */
+    [3, 'The production board', 7, 'all', 'chair',
+     'Written this week against target, by unit. The screen is up \u2014 only the exceptions are spoken aloud.'],
+    [3, 'This week\u2019s call list', 12, 'all', 'fixed',
+     'The cross-sell band the sheet scored "call this week" \u2014 the gap named and the question already written for each one. Who called, what was asked, what closed.'],
+    [3, 'Maturities \u2014 money in motion', 10, 'all', 'fixed',
+     'Every policy reaching maturity is a conversation about where the money goes next. Nothing converts better than money already moving.'],
+    [3, 'The campaign \u2014 the orphan book', 9, 'all', 'fixed',
+     'Against target, with the pace needed to finish on time. A review filed is the unit measured.'],
+
+    [3, 'Accountability \u2014 Monday\u2019s brief and last week\u2019s actions', 10, 'all', 'fixed',
+     'Answered against sent, contact made against answered, the names who sent nothing back, and every action carried forward with its owner.'],
+    [2, 'Conservation and exceptions', 8, 'staff', 'fixed',
+     'What we are about to lose, and what is breaching its standard \u2014 dues, lapses, requirements, persistency, contracts, 85-day. Only the breaches.'],
+
+    [3, 'What worked for me', 8, 'all', 'rotate',
+     'One agent, one case, what they actually did. Comes round the room.'],
+    [5, 'Training \u2014 one point, taught by one of us', 10, 'all', 'rotate',
+     'Not the manager. A product, an objection, a system.'],
+    [6, 'Open floor', 8, 'all', 'fixed',
+     'The room\u2019s time. Anything not on the agenda.'],
+    [7, 'Close \u2014 each unit commits its number', 5, 'all', 'chair',
+     'Every unit says what it will have written by next Wednesday. That is what next week opens on.']
+  ];
+  appendRows_(MEET.TAB_ROTA, rows.map(function (r, i) {
+    return {
+      'Order': (i + 1) * 10, 'Section': SECTIONS[r[0]], 'Item': r[1],
+      'Detail': r[5], 'Minutes': r[2], 'Visibility': r[3], 'Cadence': r[4],
+      'Owner': '', 'Owner Email': '', 'Backup': '', 'Backup Email': '',
+      'Active': 'Y', 'Notes': ''
+    };
+  }));
+  var out = rows.length + ' standing items written to the Rota tab.\n\n' +
+    'Put an Owner Email against each one. Two items rotate by themselves and ' +
+    'need no owner. Only the opening and the closing are the chair’s.\n\n' +
+    'Any item left without an owner is seeded unowned, and the meeting will ' +
+    'say so when it is opened.';
+  Logger.log(out);
+  return out;
+}
+
+function seedRotaFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert('The rota', seedRota(), ui.ButtonSet.OK);
+}
+
 function apiSeedAgenda_(body) {
   var me = requireStaff_(body.token);
   var m = findMeeting_(body.meetingId);
@@ -1416,31 +2453,39 @@ function apiSeedAgenda_(body) {
   if (existing.length) return { ok: false, error: 'This meeting already has an agenda.' };
 
   var chair = str_(m['Chair']) || me.email;
-  var chairPerson = findPersonByEmail_(chair);
-  var chairName = chairPerson ? chairPerson.name : MEET.ADMIN_NAME;
 
-  // The standing order, taken from the branch's own agendas.
-  var standing = [
-    { s: 0, t: 'Opening | Mission Statement | Moment of Silence', m: 5, p: chairName, d: 'Standard opening', v: 'all' },
-    { s: 0, t: 'Attendance Register Check', m: 5, p: chairName, d: 'Everyone logs in before we open. The app is the register.', v: 'all' },
-    { s: 0, t: 'Review of Minutes & Action Items Tracker', m: 10, p: chairName, d: 'Carry-forward items first.', v: 'all' },
-    { s: 1, t: 'Correspondence & Administrative Reminders', m: 10, p: '', d: 'Circulars, deadlines, cut-off dates.', v: 'all' },
-    { s: 2, t: 'Outstanding Requirements Report', m: 8, p: '', d: 'By product and value. 5-day turnaround, 20-day file closure.', v: 'staff' },
-    { s: 2, t: 'Persistency — 2-Year & 5-Year', m: 8, p: '', d: 'Red / orange / green. Branch target 90% against the 75% threshold.', v: 'staff' },
-    { s: 2, t: 'Licensing Report', m: 5, p: '', d: 'Central Bank approvals by renewal month.', v: 'staff' },
-    { s: 2, t: 'Scripts & Clawback Report', m: 6, p: '', d: 'Dispatch inside the 20-business-day window.', v: 'staff' },
-    { s: 2, t: '85-Day Premium Due & Lapse Activity', m: 8, p: '', d: 'Standing item at every branch meeting.', v: 'staff' },
-    { s: 3, t: 'Performance & Community Management', m: 8, p: chairName, d: 'Weekly pulse, one-on-one cadence, tenure-band tracker.', v: 'staff' },
-    { s: 4, t: 'Digital Innovation Update', m: 10, p: chairName, d: 'Fact Find 360 and branch automation.', v: 'all' },
-    { s: 6, t: 'Other Items', m: 5, p: '', d: '', v: 'all' },
-    { s: 7, t: 'Closing Remarks', m: 5, p: chairName, d: '', v: 'all' }
-  ];
+  /*  The agenda is built from the Rota tab, so a new meeting arrives
+   *  already owned by other people. The hard-coded list that used to
+   *  live here gave six of twelve items to the chair by default and
+   *  left the rest blank, which in practice meant the chair again. */
+  var rota = rotaRows_();
+  if (!rota.length) {
+    return { ok: false, error: 'There is no rota yet. Run "Set up the standing rota" from the ' +
+                               'Branch Meetings menu, then put an owner against each item.' };
+  }
+
+  // One rotating slot per person per meeting: handed to presenterFor_
+  // so the rotation itself skips anybody already given one today.
+  var taken = {};
+  var standing = rota.map(function (r) {
+    var who = presenterFor_(r, m, chair, taken);
+    if (low_(r['Cadence']) === 'rotate' && who.email) taken[who.email] = true;
+    return {
+      section: str_(r['Section']) || SECTIONS[0],
+      t: str_(r['Item']),
+      d: str_(r['Detail']),
+      m: num_(r['Minutes']) || 5,
+      v: cleanVisibility_(r['Visibility']),
+      pName: who.name,
+      pEmail: who.email
+    };
+  });
 
   standing.forEach(function (item, i) {
     appendRow_(MEET.TAB_AGENDA, {
       'ID': uid_('AGD'), 'Meeting ID': str_(m['ID']), 'Order': (i + 1) * 10,
-      'Section': SECTIONS[item.s], 'Title': item.t, 'Detail': item.d,
-      'Presenter Name': item.p, 'Presenter Email': item.p === chairName ? chair : '',
+      'Section': item.section, 'Title': item.t, 'Detail': item.d,
+      'Presenter Name': item.pName, 'Presenter Email': item.pEmail,
       'Allotted (min)': item.m, 'Visibility': item.v,
       'Materials Required': item.v === 'staff' ? 'Y' : 'N',
       'Ready': 'N', 'Status': 'Planned', 'Created By': me.email, 'Created': new Date()
@@ -1847,17 +2892,17 @@ function apiMinutesDraft_(body) {
     }).join('\n') : '—') + '\n\n' +
     'ABSENT (' + reg.counts.absent + ')\n' +
     (reg.groups.absent.length ? reg.groups.absent.map(function (p) {
-      return p.name + ' — ' + (p.reason || 'no reason logged');
-    }).join('\n') : '—') + '\n\n' +
-    'NO ENTRY IN THE REGISTER (' + reg.counts.noEntry + ')\n' +
-    names(reg.groups.noEntry) + '\n' +
-    (reg.counts.noEntry
-      ? 'Neither present, absent, excused nor late. Signing in is the branch standard for a ' +
-        'scheduled meeting; where an active agent has not engaged with it, that is recorded as a ' +
-        'factual observation of the record and carried to the one-on-one with their manager.'
-      : 'Every active member of the branch engaged with the register.') + '\n\n' +
+      return p.name + (p.neverLoggedIn ? ' — did not log in'
+                                       : ' — ' + (p.reason || 'marked absent'));
+    }).join('\n') : '—') + '\n' +
+    (reg.counts.noLogin
+      ? reg.counts.noLogin + ' of the absences are people who did not log in to the meeting. ' +
+        'Signing in is how attendance is recorded; a member of the branch who does not sign in ' +
+        'is recorded absent, and that is carried to the one-on-one with their manager.'
+      : 'Every active member of the branch either attended or logged an apology.') + '\n\n' +
     'Roll: ' + reg.counts.roll + '  |  In the room: ' + reg.counts.here +
-    '  |  Engagement: ' + reg.counts.rate + '%';
+    '  |  Attendance: ' + reg.counts.rate + '%' +
+    '  |  Accounted for: ' + reg.counts.accountedFor + '%';
 
   var agenda = readTab_(MEET.TAB_AGENDA)
     .filter(function (a) { return str_(a['Meeting ID']) === str_(m['ID']); })
@@ -2107,6 +3152,22 @@ function sessionCard_(sn, agenda) {
   }
   var itemStarted = asDate_(sn['Item Started']);
 
+  /*  THE TICKER NEEDS A TIMESTAMP, NOT A COUNT OF MINUTES.
+   *
+   *  itemElapsed below is whole minutes measured on the server, which is
+   *  fine for a card and useless for a clock: the room cannot see a
+   *  countdown that moves once a minute and only when somebody reloads.
+   *  itemStartedISO lets the browser count the seconds itself, so the
+   *  ticker runs smoothly without polling the sheet.                   */
+  var next = null;
+  if (current && agenda) {
+    var curOrder = num_(current['Order']);
+    agenda.forEach(function (a) {
+      if (num_(a['Order']) <= curOrder) return;
+      if (!next || num_(a['Order']) < num_(next['Order'])) next = a;
+    });
+  }
+
   return {
     id: str_(sn['ID']),
     running: running,
@@ -2125,7 +3186,19 @@ function sessionCard_(sn, agenda) {
     currentAgendaId: currentId,
     currentTitle: current ? str_(current['Title']) : '',
     currentAllotted: current ? num_(current['Allotted (min)']) : 0,
-    itemElapsed: itemStarted ? Math.round((Date.now() - itemStarted.getTime()) / 60000) : 0
+    itemElapsed: itemStarted ? Math.round((Date.now() - itemStarted.getTime()) / 60000) : 0,
+    itemStartedISO: iso_(itemStarted),
+    currentPresenter: current ? str_(current['Presenter Name']) : '',
+    currentOrder: current ? num_(current['Order']) : 0,
+    nextTitle: next ? str_(next['Title']) : '',
+    nextPresenter: next ? str_(next['Presenter Name']) : '',
+    nextAllotted: next ? num_(next['Allotted (min)']) : 0,
+    nextAgendaId: next ? str_(next['ID']) : '',
+    /* Every item's minutes, so the ticker can say how much of the meeting
+       is still to come rather than only how long it has run. */
+    plannedTotal: (agenda || []).reduce(function (n, a) {
+      return n + num_(a['Allotted (min)']);
+    }, 0)
   };
 }
 
@@ -2179,9 +3252,49 @@ function apiEndSession_(body) {
   setCell_(MEET.TAB_SESSIONS, sn._row, 'Item Started', '');
 
   setCell_(MEET.TAB_MEETINGS, m._row, 'Status', 'closed');
+
+  // The register is closed with the meeting: everyone who never
+  // opened it gets a real absent row, so the sheet carries the whole
+  // roll rather than leaving the absences to be worked out later by
+  // whoever happens to read it.
+  var marked = closeRegister_(m, me);
+
   log_('session-end', me.name, me.role, str_(m['Ref']) || str_(m['ID']),
-    'Ran ' + ran + ' min against ' + num_(sn['Allotted']) + ' allotted');
-  return { ok: true, ran: ran, allotted: num_(sn['Allotted']) };
+    'Ran ' + ran + ' min against ' + num_(sn['Allotted']) + ' allotted'
+    + (marked ? '; ' + marked + ' marked absent, no login' : ''));
+  return { ok: true, ran: ran, allotted: num_(sn['Allotted']), markedAbsent: marked };
+}
+
+/*  Write the absences down when the meeting closes.
+ *
+ *  register_ works them out live for the screen, but a figure that
+ *  only exists while a function is running is not a record. This
+ *  writes one row per person who never opened the meeting, with
+ *  Method 'no-login' so it stays distinguishable from an absence a
+ *  human marked. It is safe to run twice — anyone with a row already
+ *  is skipped — which matters because a meeting can be closed, re-
+ *  opened to finish an item, and closed again.
+ */
+function closeRegister_(m, by) {
+  var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  });
+  var seen = {};
+  att.forEach(function (a) { seen[low_(a['Email'])] = true; });
+
+  var now = new Date();
+  var rows = rosterFor_(m).filter(function (p) { return !seen[p.email]; }).map(function (p) {
+    return {
+      'ID': uid_('ATT'), 'Meeting ID': str_(m['ID']), 'Email': p.email, 'Name': p.name,
+      'Role': p.role, 'Unit': p.unit, 'Status': 'absent', 'Method': 'no-login',
+      'Signed In': '', 'Minutes Late': 0, 'Reason': '', 'Note': '',
+      'Recorded By': 'register closed by ' + (by && by.name ? by.name : 'the system'),
+      'Device': ''
+    };
+  });
+
+  if (rows.length) appendRows_(MEET.TAB_ATTENDANCE, rows);
+  return rows.length;
 }
 
 /** Move the room on to the next item. Everyone's screen follows. */
@@ -2918,6 +4031,283 @@ function apiArchiveIndex_(body) {
   return { ok: true, indexed: out.indexed, remaining: out.remaining, failed: out.failed };
 }
 
+/* ======================== a sample meeting ======================== */
+/*
+ *  Signing in to an empty app shows nothing, and nothing is hard to judge.
+ *  This builds one finished meeting — agenda with real clock times, a
+ *  register with all five groups including no-entry, contributions on the
+ *  floor, an action tracker and published minutes — so the branch can see
+ *  the thing working before a real meeting depends on it.
+ *
+ *  It uses the real People tab, because a register full of invented names
+ *  tells you nothing about how yours will look. Every row it writes is
+ *  marked SAMPLE and removeSampleMeeting() takes all of it back out.
+ */
+
+var SAMPLE_TAG = 'SAMPLE';
+
+function seedSampleMeeting() {
+  if (meetingRows_().some(function (m) { return str_(m['Ref']) === 'RRB-SAMPLE'; })) {
+    var msg = 'The sample meeting is already there. Run removeSampleMeeting() first if you want a fresh one.';
+    Logger.log(msg);
+    return msg;
+  }
+
+  var people = roster_();
+  if (people.length < 4) {
+    var warn = 'Put the branch on the People tab first — the sample builds its register from it.';
+    Logger.log(warn);
+    return warn;
+  }
+
+  var byRole = function (r) { return people.filter(function (p) { return p.role === r; }); };
+  var manager = byRole('manager')[0] || people[0];
+  var staff = byRole('staff');
+  var agents = byRole('agent');
+
+  // Last Wednesday, 9am — the branch's usual slot.
+  var when = new Date();
+  when.setDate(when.getDate() - ((when.getDay() + 4) % 7 || 7));
+  when.setHours(0, 0, 0, 0);
+  var start = new Date(when.getTime()); start.setHours(9, 0, 0, 0);
+
+  var meetingId = uid_('MTG');
+  appendRow_(MEET.TAB_MEETINGS, {
+    'ID': meetingId, 'Ref': 'RRB-SAMPLE', 'Type': 'Branch Meeting',
+    'Title': 'SAMPLE — Branch Meeting', 'Subtitle': 'Example data, safe to delete',
+    'Week': weekOf_(when), 'Date': when, 'Start': '09:00', 'End': '10:00',
+    'Format': 'In-person', 'Location': '9–13 Endeavour 1st Street, Chaguanas',
+    'Chair': manager.email, 'Status': 'closed', 'Late After (min)': 10,
+    'Minutes Status': 'published', 'Scope': 'branch',
+    'Topics': 'Persistency, Clawback, Fact Find',
+    'Mission Statement': 'We will deliver increased financial freedom for our clients ' +
+      'through positive interaction powered by technology.',
+    'Purpose': 'This meeting did not happen. It is example data so the branch can see ' +
+      'the app working — the running order, the register, the floor, the tracker and the ' +
+      'minutes — before a real meeting depends on it. The attendance below is invented. ' +
+      'Remove it from the sheet menu when you have finished looking.',
+    'Created By': SAMPLE_TAG, 'Created': new Date(), 'Updated': new Date()
+  });
+
+  // ---- the running order ----
+  var agenda = [
+    [0, 'Opening | Mission Statement | Moment of Silence', 5, manager, 'all', 'Standard opening.', ''],
+    [0, 'Attendance Register Check', 5, manager, 'all', 'Everyone logs in before we open. The app is the register.', 'Attendance'],
+    [0, 'Review of Minutes & Action Items Tracker', 10, manager, 'all', 'Carry-forward items first.', ''],
+    [1, 'Correspondence & Administrative Reminders', 8, staff[0] || manager, 'all',
+     'Reinstatement campaign extended to 30 September. Policy owner and payer must be the same person — applications are not accepted otherwise.', ''],
+    [2, 'Persistency — 2-Year & 5-Year', 8, staff[1] || manager, 'staff',
+     'Red / orange / green. The branch holds itself to 90% against the 75% threshold.', 'Persistency'],
+    [2, 'Scripts & Clawback Report', 6, staff[1] || manager, 'staff',
+     'Dispatch inside the 20-business-day window. Contracts returned for correction need Sales Admin emailed so the dispatch date is adjusted.', 'Clawback'],
+    [2, '85-Day Premium Due & Lapse Activity', 8, staff[2] || manager, 'staff',
+     'Standing item. Escalation at day 45, 60 and 90.', 'Premium Due & Lapse'],
+    [4, 'Digital Innovation — Fact Find 360', 10, manager, 'all',
+     'Digital needs analysis, client e-signature, manager approval queue. Schedule 11 requires a fact find be taken, retained and available for inspection.', 'Fact Find'],
+    [6, 'Other Items', 5, null, 'all', '', ''],
+    [7, 'Closing Remarks', 5, manager, 'all', '', '']
+  ];
+
+  var agendaRows = [], agendaIds = [];
+  agenda.forEach(function (a, i) {
+    var id = uid_('AGD');
+    agendaIds.push(id);
+    agendaRows.push({
+      'ID': id, 'Meeting ID': meetingId, 'Order': (i + 1) * 10,
+      'Section': SECTIONS[a[0]], 'Title': a[1], 'Detail': a[5],
+      'Presenter Email': a[3] ? a[3].email : '', 'Presenter Name': a[3] ? a[3].name : '',
+      'Allotted (min)': a[2], 'Visibility': a[4],
+      'Materials Required': a[4] === 'staff' ? 'Y' : 'N',
+      'Ready': a[4] === 'staff' ? 'Y' : 'N', 'Topics': a[6],
+      'Status': 'Done', 'Created By': SAMPLE_TAG, 'Created': new Date()
+    });
+  });
+  appendRows_(MEET.TAB_AGENDA, agendaRows);
+
+  // ---- the register: present, late, two apologies, and two who never
+  //      logged in at all, which is what "absent" now means ----
+  var att = [], n = agents.length;
+  var lateOne = agents[n - 1], excusedOne = agents[n - 2], absentOne = agents[n - 3];
+  var excusedTwo = agents[n - 6];
+  // Left out of the loop entirely, then written back as absent with
+  // Method 'no-login' — exactly what closeRegister_ does when a real
+  // meeting ends, so the sample shows the rule rather than describing it.
+  var noLogin = [agents[n - 4], agents[n - 5]].filter(Boolean);
+
+  people.forEach(function (p) {
+    if (noLogin.some(function (x) { return x.email === p.email; })) return;
+
+    var row = { 'ID': uid_('ATT'), 'Meeting ID': meetingId, 'Email': p.email,
+      'Name': p.name, 'Role': p.role, 'Unit': p.unit, 'Recorded By': SAMPLE_TAG };
+
+    if (excusedOne && p.email === excusedOne.email) {
+      row['Status'] = 'excused'; row['Method'] = 'apology';
+      row['Signed In'] = new Date(start.getTime() - 3600000);
+      row['Reason'] = 'Client appointment I could not move';
+    } else if (excusedTwo && p.email === excusedTwo.email) {
+      row['Status'] = 'excused'; row['Method'] = 'apology';
+      row['Signed In'] = new Date(start.getTime() - 5400000);
+      row['Reason'] = 'On a medical or hospital visit';
+    } else if (absentOne && p.email === absentOne.email) {
+      row['Status'] = 'absent'; row['Method'] = 'manual';
+      row['Signed In'] = start; row['Reason'] = 'Marked absent by the chair';
+    } else if (lateOne && p.email === lateOne.email) {
+      row['Status'] = 'late'; row['Method'] = 'login';
+      row['Signed In'] = new Date(start.getTime() + 26 * 60000);
+      row['Minutes Late'] = 26;
+      row['Reason'] = 'Traffic on the highway';
+    } else {
+      row['Status'] = 'present'; row['Method'] = 'login';
+      row['Signed In'] = new Date(start.getTime() - Math.round(Math.random() * 12) * 60000);
+      row['Minutes Late'] = 0;
+    }
+    att.push(row);
+  });
+  // The two who never opened it, written the way a closed register
+  // writes them.
+  noLogin.forEach(function (p) {
+    att.push({ 'ID': uid_('ATT'), 'Meeting ID': meetingId, 'Email': p.email,
+      'Name': p.name, 'Role': p.role, 'Unit': p.unit, 'Status': 'absent',
+      'Method': 'no-login', 'Signed In': '', 'Minutes Late': 0, 'Reason': '',
+      'Note': '', 'Recorded By': SAMPLE_TAG });
+  });
+  appendRows_(MEET.TAB_ATTENDANCE, att);
+
+  // ---- one session, finished, running slightly over ----
+  var allotted = agenda.reduce(function (t, a) { return t + a[2]; }, 0);
+  appendRow_(MEET.TAB_SESSIONS, {
+    'ID': uid_('SES'), 'Meeting ID': meetingId, 'Started': start, 'Started By': manager.name,
+    'Ended': new Date(start.getTime() + (allotted + 12) * 60000), 'Ended By': manager.name,
+    'Minutes Run': allotted + 12, 'Allotted': allotted, 'Notice Given': 'Y',
+    'Recording Note': 'Example session — no recording attached.'
+  });
+
+  // ---- the floor ----
+  var speak = function (who, mins, kind, body, topic, agIdx, vis) {
+    return { 'ID': uid_('CON'), 'Meeting ID': meetingId, 'Agenda ID': agendaIds[agIdx],
+      'When': new Date(start.getTime() + mins * 60000), 'Offset (min)': mins,
+      'Email': who.email, 'Name': who.name, 'Role': who.role, 'Kind': kind,
+      'Body': body, 'Topics': topic, 'Visibility': vis || 'all' };
+  };
+  var a0 = agents[0] || manager, a1 = agents[1] || manager, a2 = agents[2] || manager;
+  appendRows_(MEET.TAB_CONTRIB, [
+    speak(manager, 3, 'Point', 'Phones away for the next forty-five minutes, please.', '', 0),
+    speak(a0, 22, 'Question', 'My five-year measure shows red. I settled two of those cases myself — can that be reconfirmed before it goes to the report?', 'Persistency', 4, 'staff'),
+    speak(staff[1] || manager, 24, 'Answer', 'I will pull the underlying policies and come back by Friday.', 'Persistency', 4, 'staff'),
+    speak(manager, 26, 'Decision', 'Any 5-year figure queried in this room gets reconfirmed before it goes on a report. Nobody is managed against a number we have not checked.', 'Persistency', 4, 'staff'),
+    speak(a1, 40, 'Concern', 'Clients are still hitting the MyGG portal error on a first premium payment. Two this week.', '', 5),
+    speak(manager, 42, 'Commitment', 'Send the screenshots today and I will escalate them together rather than one at a time.', '', 5),
+    speak(a2, 55, 'Point', 'The fact find took about five minutes after the client meeting and the closing interview was far easier for it.', 'Fact Find', 7),
+    speak(manager, 58, 'Decision', 'Fact Find 360 is the branch standard from Monday. Ask me if you want a walk-through.', 'Fact Find', 7)
+  ]);
+
+  // ---- the tracker ----
+  var due = function (d) { var x = new Date(start.getTime()); x.setDate(x.getDate() + d); return fmtDate_(x); };
+  appendRows_(MEET.TAB_ACTIONS, [
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Reconfirm the queried 5-year persistency figure',
+      'Owner': (staff[1] || manager).name, 'Initiated By': a0.name, 'Due': due(3), 'Status': 'Open',
+      'Notes': 'Raised on the floor', 'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start },
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Send MyGG portal screenshots for escalation',
+      'Owner': 'All Agents', 'Initiated By': manager.name, 'Due': due(1), 'Status': 'Open',
+      'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start },
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Adopt Fact Find 360 for client engagements',
+      'Owner': 'All Agents', 'Initiated By': manager.name, 'Due': due(4), 'Status': 'In Progress',
+      'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start },
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Submit weekly pulse reports',
+      'Owner': 'All Agents', 'Initiated By': manager.name, 'Due': 'Weekly', 'Status': 'Standing',
+      'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start },
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Chase the outstanding production letter sign-offs',
+      'Owner': (staff[0] || manager).name, 'Initiated By': manager.name, 'Due': due(-6), 'Status': 'Open',
+      'Notes': 'Deliberately overdue, so the tracker shows what overdue looks like',
+      'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start }
+  ]);
+
+  // ---- minutes, drawn from the record ----
+  var reg = register_({ ID: meetingId }, att);
+  var names = function (l) { return l.length ? l.map(function (p) { return p.name; }).join('  |  ') : '—'; };
+  appendRows_(MEET.TAB_MINUTES, [
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 10, 'Section': 'Purpose',
+      'Visibility': 'all', 'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Example minutes. This meeting did not take place — the attendance and the ' +
+        'contributions below are invented so the branch can see the finished shape of a record.' },
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 20,
+      'Section': 'Attendance Record — Digital Register', 'Visibility': 'staff',
+      'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Signing in to the meeting is the register.\n\n' +
+        'PRESENT (' + reg.counts.present + ')\n' + names(reg.groups.present) + '\n\n' +
+        'LATE (' + reg.counts.late + ')\n' + (reg.groups.late.map(function (p) {
+          return p.name + ' — ' + p.late + ' min late (' + p.reason + ')'; }).join('\n') || '—') + '\n\n' +
+        'EXCUSED (' + reg.counts.excused + ')\n' + (reg.groups.excused.map(function (p) {
+          return p.name + ' — ' + p.reason; }).join('\n') || '—') + '\n\n' +
+        'ABSENT (' + reg.counts.absent + ')\n' + (reg.groups.absent.map(function (p) {
+          return p.name + (p.neverLoggedIn ? ' — did not log in'
+                                           : ' — ' + (p.reason || 'marked absent')); }).join('\n') || '—') + '\n' +
+        reg.counts.noLogin + ' of the absences are people who did not log in to the meeting. ' +
+        'Signing in is how attendance is recorded; a member of the branch who does not sign in ' +
+        'is recorded absent, and that is carried to the one-on-one with their manager.\n\n' +
+        'Roll: ' + reg.counts.roll + '  |  In the room: ' + reg.counts.here +
+        '  |  Attendance: ' + reg.counts.rate + '%' +
+        '  |  Accounted for: ' + reg.counts.accountedFor + '%' },
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 30, 'Section': 'Persistency',
+      'Visibility': 'staff', 'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Reviewed on the red / orange / green tracking. A queried 5-year figure is to be ' +
+        'reconfirmed before it goes on a report — the branch does not manage anyone against a ' +
+        'number it has not checked. Internal target remains 90% against the 75% threshold.' },
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 40, 'Section': 'Digital Innovation',
+      'Visibility': 'all', 'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Fact Find 360 becomes the branch standard. Schedule 11 of the Insurance Act ' +
+        'requires that a fact find be taken, retained and available for inspection; this is the ' +
+        'branch’s mechanism for meeting that consistently.' },
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 50, 'Section': 'Closing',
+      'Visibility': 'all', 'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Meeting closed. Ran ' + (allotted + 12) + ' minutes against ' + allotted + ' allotted.' }
+  ]);
+
+  log_('seed-sample', SAMPLE_TAG, '', 'RRB-SAMPLE',
+    agendaRows.length + ' agenda items, ' + att.length + ' on the register');
+
+  var out = 'Sample meeting created.\n' +
+    agendaRows.length + ' agenda items · ' + att.length + ' on the register (' +
+    reg.counts.present + ' present, ' + reg.counts.late + ' late, ' + reg.counts.excused +
+    ' excused, ' + reg.counts.absent + ' absent of whom ' + reg.counts.noLogin +
+    ' never logged in) · ' +
+    '8 contributions · 5 action items · 5 minute sections.\n\n' +
+    'Open the app and it is at the top of the list. Remove it with ' +
+    'removeSampleMeeting() or from the Branch Meetings menu.';
+  Logger.log(out);
+  return out;
+}
+
+function seedSampleMeetingFromMenu() {
+  SpreadsheetApp.getUi().alert(seedSampleMeeting());
+}
+
+/** Take every sample row back out, leaving real meetings untouched. */
+function removeSampleMeeting() {
+  var m = meetingRows_().filter(function (x) { return str_(x['Ref']) === 'RRB-SAMPLE'; })[0];
+  if (!m) { Logger.log('No sample meeting to remove.'); return 'No sample meeting to remove.'; }
+  var id = str_(m['ID']);
+
+  var removed = 0;
+  [MEET.TAB_AGENDA, MEET.TAB_ATTENDANCE, MEET.TAB_ACTIONS, MEET.TAB_MINUTES,
+   MEET.TAB_CONTRIB, MEET.TAB_SESSIONS, MEET.TAB_UPLOADS].forEach(function (t) {
+    var rows = readTab_(t).filter(function (r) { return str_(r['Meeting ID']) === id; });
+    // Bottom up: deleting a row shifts every row beneath it.
+    rows.map(function (r) { return r._row; }).sort(function (a, b) { return b - a; })
+        .forEach(function (n) { tab_(t).deleteRow(n); removed++; });
+  });
+  tab_(MEET.TAB_MEETINGS).deleteRow(m._row);
+
+  log_('remove-sample', SAMPLE_TAG, '', 'RRB-SAMPLE', removed + ' rows removed');
+  var out = 'Sample meeting removed — ' + removed + ' rows, plus the meeting itself.';
+  Logger.log(out);
+  return out;
+}
+
+function removeSampleMeetingFromMenu() {
+  SpreadsheetApp.getUi().alert(removeSampleMeeting());
+}
+
 /* ======================== the log ======================== */
 
 function apiLog_(token, limit) {
@@ -2972,12 +4362,1849 @@ function apiHome_(token) {
  *  file that trusts what the browser says about who it is.
  */
 
+/*  THE WALL'S FEED.
+ *
+ *  Opened with the branch code rather than a personal token, the way
+ *  every other wall screen is, because a wall is a screen in a room
+ *  and nobody signs into it. It gives the register for one meeting —
+ *  the one named, or the latest that is running or has run — and
+ *  nothing else: no agenda, no materials, no minutes. A wall that
+ *  could be asked for the pack would be a pack with no password on
+ *  it, mounted where visitors walk past.
+ */
+function apiWall_(code, id) {
+  if (!sameCode_(code, joinCode_())) {
+    return { ok: false, refused: true, error: 'That branch code is not right.' };
+  }
+
+  var rows = readTab_(MEET.TAB_MEETINGS).filter(function (r) {
+    var st = low_(r['Status']);
+    return st !== 'draft' && st !== 'cancelled';
+  });
+  var m = null;
+  if (str_(id)) {
+    m = rows.filter(function (r) { return str_(r['ID']) === str_(id); })[0] || null;
+  } else {
+    // The latest meeting that has actually happened, by date.
+    rows.sort(function (a, b) {
+      var da = asDate_(a['Date']), db = asDate_(b['Date']);
+      return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+    });
+    var now = Date.now();
+    m = rows.filter(function (r) {
+      var d = asDate_(r['Date']);
+      return d && d.getTime() <= now + 12 * 3600000;
+    })[0] || rows[0] || null;
+  }
+  if (!m) return { ok: true, meeting: null, branch: MEET.BRANCH };
+
+  var reg = register_(m);
+  return {
+    ok: true,
+    branch: MEET.BRANCH,
+    asOf: fmtStamp_(new Date()),
+    meeting: {
+      id: str_(m['ID']), ref: str_(m['Ref']), type: str_(m['Type']),
+      title: str_(m['Title']), week: str_(m['Week']),
+      date: fmtDate_(m['Date']), start: fmtTime_(atTime_(m['Date'], m['Start'])),
+      status: low_(m['Status']), chair: str_(m['Chair'])
+    },
+    counts: reg.counts,
+    reasons: reg.reasons,
+    groups: {
+      // Names only. The wall never carries an email address: it is a
+      // screen in a room people walk past, including visitors.
+      present: reg.groups.present.map(function (x) { return { name: x.name, unit: x.unit, time: x.time }; }),
+      late: reg.groups.late.map(function (x) { return { name: x.name, unit: x.unit, time: x.time, late: x.late }; }),
+      excused: reg.groups.excused.map(function (x) { return { name: x.name, unit: x.unit, reason: x.reason }; }),
+      absent: reg.groups.absent.map(function (x) {
+        return { name: x.name, unit: x.unit, neverLoggedIn: !!x.neverLoggedIn };
+      })
+    }
+  };
+}
+
+
+/* ===================================================================
+ *  THE DAILY TIME BLOCKS
+ *
+ *  Two notes a day, one at 10:00 and one at 15:00, each asking one
+ *  question: what did you actually do since the last one. The morning
+ *  note covers 3pm yesterday to 10am today; the afternoon note covers
+ *  10am to 3pm. Between them they cover the working day without ever
+ *  asking anybody to remember more than five hours back, which is the
+ *  only window people answer honestly.
+ *
+ *  WHY THE E-MAIL CARRIES ONE BUTTON AND NOT ONE LINK PER ACTIVITY.
+ *
+ *  The obvious design is a grid of links in the e-mail — tap
+ *  "Prospecting" and it is logged, never open a page. It cannot be
+ *  built that way. Microsoft Defender and most corporate mail
+ *  gateways FETCH every link in a message to check it before the
+ *  recipient sees it, and this branch is on Microsoft 365. A link
+ *  that records an activity would be recorded by the scanner, for
+ *  everybody, every morning, and the branch's first time-use model
+ *  would be made of work nobody did.
+ *
+ *  So the e-mail holds one link to a page, and the clicking happens
+ *  there. A scanner that follows it marks the row opened and nothing
+ *  else. It is still one tap from the e-mail to the chips.
+ *
+ *  Everything on that page is a GET, including the save, because an
+ *  HtmlService page is served from a different origin than /exec and
+ *  a POST from it is a CORS problem with no good answer. A plain form
+ *  with method="get" has none of that and needs no JavaScript, which
+ *  also means it works in the in-app browser of every mail client.
+ * =================================================================== */
+
+var ACTIVITY = {
+  TAB: 'Activity',
+
+  /*  Who is asked. Staff keep their own KPI block and are not asked
+   *  these questions yet — add 'staff' here when that changes. */
+  SEND_TO: ['agent', 'manager'],
+
+  /*  A person may answer a block until this many hours after it
+   *  opened. After that the row stands as it is, so a week's figures
+   *  stop moving once the week is over. */
+  OPEN_HOURS: 20,
+
+  /*  Categories in these groups are never reported against a named
+   *  person to anybody but that person. See activityStats_. */
+  PRIVATE_GROUPS: ['life']
+};
+
+/*  The two blocks. `from` and `to` are read as hours on a 24h clock;
+ *  `backDays` says how far back the window starts. */
+var ACTIVITY_BLOCKS = [
+  { key: 'morning',   hour: 10, from: 15, backDays: 1, to: 10,
+    label: 'Morning check', window: 'since 3pm yesterday' },
+  { key: 'afternoon', hour: 15, from: 10, backDays: 0, to: 15,
+    label: 'Afternoon check', window: 'since 10 this morning' }
+];
+
+/*  THE ACTIVITIES.
+ *
+ *  Short, concrete, and things a person either did or did not do —
+ *  never a judgement of how well. Keep this list under about a dozen
+ *  per role: a list long enough to need scrolling is a list people
+ *  stop reading and start tapping the first three of.
+ *
+ *  `group` drives the roll-up and the privacy rule, not the colour.  */
+var ACTIVITY_SETS = {
+  agent: [
+    { k: 'prospect', label: 'Prospecting',        group: 'work' },
+    { k: 'calls',    label: 'Calls made',          group: 'work' },
+    { k: 'seen',     label: 'Seen a client',       group: 'work' },
+    { k: 'factfind', label: 'Fact find',           group: 'work' },
+    { k: 'leads',    label: 'Followed up leads',   group: 'work' },
+    { k: 'app',      label: 'Application in',      group: 'work' },
+    { k: 'service',  label: 'Serviced a client',   group: 'service' },
+    { k: 'quote',    label: 'Quote or proposal',   group: 'work' },
+    { k: 'admin',    label: 'Paperwork and admin', group: 'admin' },
+    { k: 'training', label: 'Training or study',   group: 'growth' },
+    { k: 'team',     label: 'Branch or team time', group: 'admin' }
+  ],
+  manager: [
+    { k: 'portfolio', label: 'My own portfolio',    group: 'work' },
+    { k: 'coach',     label: 'Coaching an agent',   group: 'growth' },
+    { k: 'recruit',   label: 'Recruiting',          group: 'growth' },
+    { k: 'seen',      label: 'Seen a client',       group: 'work' },
+    { k: 'calls',     label: 'Calls made',          group: 'work' },
+    { k: 'service',   label: 'Serviced a client',   group: 'service' },
+    { k: 'branch',    label: 'Branch admin',        group: 'admin' },
+    { k: 'head',      label: 'Head office',         group: 'admin' },
+    { k: 'training',  label: 'Training or study',   group: 'growth' },
+    { k: 'team',      label: 'Branch or team time', group: 'admin' }
+  ],
+  staff: [
+    { k: 'sq',       label: 'Service questionnaires', group: 'work' },
+    { k: 'claims',   label: 'Claims and servicing',   group: 'work' },
+    { k: 'renewals', label: 'Renewals chased',        group: 'work' },
+    { k: 'client',   label: 'Client calls',           group: 'work' },
+    { k: 'admin',    label: 'Paperwork and admin',    group: 'admin' },
+    { k: 'training', label: 'Training or study',      group: 'growth' },
+    { k: 'team',     label: 'Branch or team time',    group: 'admin' }
+  ]
+};
+
+/*  Asked of everybody, whatever their role. This is the half of the
+ *  picture that the branch has never had: a day is not only selling,
+ *  and a model built on work categories alone says a person who spent
+ *  the morning at a funeral did nothing. */
+var ACTIVITY_LIFE = [
+  { k: 'family',     label: 'Family time',     group: 'life' },
+  { k: 'personal',   label: 'Personal time',   group: 'life' },
+  { k: 'recreation', label: 'Recreation',      group: 'life' },
+  { k: 'rest',       label: 'Rest or unwell',  group: 'life' },
+  { k: 'travel',     label: 'Travelling',      group: 'life' }
+];
+
+function activityBlock_(key) {
+  for (var i = 0; i < ACTIVITY_BLOCKS.length; i++) {
+    if (ACTIVITY_BLOCKS[i].key === key) return ACTIVITY_BLOCKS[i];
+  }
+  return null;
+}
+
+/** The chips a given role is shown: their own set, then the life set. */
+function activityMenuFor_(role) {
+  var set = ACTIVITY_SETS[low_(role)] || ACTIVITY_SETS.agent;
+  return set.concat(ACTIVITY_LIFE);
+}
+
+function activityLabel_(role, k) {
+  var menu = activityMenuFor_(role);
+  for (var i = 0; i < menu.length; i++) if (menu[i].k === k) return menu[i].label;
+  return k;
+}
+
+function activityGroup_(role, k) {
+  var menu = activityMenuFor_(role);
+  for (var i = 0; i < menu.length; i++) if (menu[i].k === k) return menu[i].group;
+  return '';
+}
+
+function isPrivateGroup_(g) { return ACTIVITY.PRIVATE_GROUPS.indexOf(g) > -1; }
+
+/** The date key a row is filed under — local date, not UTC, so a 3pm
+ *  block never lands on the next day for a branch four hours west. */
+function dayKey_(d) {
+  return Utilities.formatDate(d || new Date(), tz_(), 'yyyy-MM-dd');
+}
+
+function activityRows_() { return readTab_(ACTIVITY.TAB); }
+
+function findActivity_(day, blockKey, email) {
+  var rows = activityRows_(), e = low_(email);
+  for (var i = 0; i < rows.length; i++) {
+    if (str_(rows[i]['Day']) === day &&
+        str_(rows[i]['Block']) === blockKey &&
+        low_(rows[i]['Email']) === e) return rows[i];
+  }
+  return null;
+}
+
+function findActivityByToken_(token) {
+  var t = str_(token);
+  if (!t) return null;
+  var rows = activityRows_();
+  for (var i = 0; i < rows.length; i++) {
+    if (str_(rows[i]['Token']) === t) return rows[i];
+  }
+  return null;
+}
+
+function itemsOf_(row) {
+  var raw = str_(row && row['Items']);
+  if (!raw) return [];
+  return raw.split(',').map(function (s) { return s.trim(); })
+            .filter(function (s) { return !!s; });
+}
+
+/* ------------------------- the e-mail ------------------------- */
+
+function activityEmail_(person, row, block, url) {
+  var first = firstName_(person.name);
+  var link = url + '?action=act&t=' + encodeURIComponent(str_(row['Token']));
+  var done = itemsOf_(row).length;
+
+  var subject = block.label + ' — ' + (done ? 'add to your answer' : 'what did you get done?');
+
+  var html =
+    '<div style="font-family:Inter,Segoe UI,Arial,sans-serif;background:#07131f;padding:26px 16px">' +
+    '<div style="max-width:520px;margin:0 auto;background:#0d2439;border-radius:16px;overflow:hidden;' +
+    'border:1px solid rgba(255,255,255,.11)">' +
+
+    '<div style="padding:20px 24px 4px">' +
+    '<img src="' + IBRAND_LOGO_() + '" width="38" height="38" alt="" ' +
+    'style="border-radius:11px;display:block;margin-bottom:12px">' +
+    '<div style="color:#f5b93b;font-size:11px;letter-spacing:.09em;text-transform:uppercase;' +
+    'font-weight:700">' + esc_(block.label) + '</div>' +
+    '<div style="color:#eaf4ff;font-size:19px;font-weight:700;margin-top:5px">' +
+    esc_(first) + ', what did you get done ' + esc_(block.window) + '?</div>' +
+    '<div style="color:#9dbdd8;font-size:13.5px;line-height:1.6;margin-top:9px">' +
+    'Tap through and pick what you did. It takes about fifteen seconds and there is ' +
+    'nothing to type unless you want to.' +
+    '</div>' +
+    '</div>' +
+
+    '<div style="padding:18px 24px 24px">' +
+    '<a href="' + esc_(link) + '" ' +
+    'style="display:block;text-align:center;background:#f5b93b;color:#07131f;text-decoration:none;' +
+    'font-weight:700;font-size:15px;padding:14px 18px;border-radius:11px">' +
+    (done ? 'Add to my answer' : 'Pick what I did') + '</a>' +
+    (done
+      ? '<div style="color:#6d8ba6;font-size:12px;margin-top:11px;text-align:center">' +
+        'You have ' + done + ' logged for this block already.</div>'
+      : '') +
+    '</div>' +
+
+    '<div style="padding:14px 24px 20px;border-top:1px solid rgba(255,255,255,.09);' +
+    'color:#6d8ba6;font-size:11.5px;line-height:1.65">' +
+    'Your personal time is yours. Family, rest and recreation are counted for the branch as a ' +
+    'whole and are never shown against your name.' +
+    '</div>' +
+
+    '</div></div>';
+
+  return { subject: subject, html: html };
+}
+
+/*  The branch mark, hosted. In e-mail it must be a hosted PNG — Gmail
+ *  strips SVG and blocks data: URIs, and the masthead arrives empty. */
+function IBRAND_LOGO_() { return 'https://rickyrampersadbranch.com/logo-mark.png'; }
+
+/* ------------------------- sending ------------------------- */
+
+/** Open one block and write to everybody it is for. Safe to run twice:
+ *  a person who already has a row for this block keeps it, token and
+ *  answers intact, and is simply written to again. */
+function activityCheck_(blockKey) {
+  var block = activityBlock_(blockKey);
+  if (!block) throw new Error('No such block: ' + blockKey);
+
+  var now = new Date();
+  var w = now.getDay();
+  if (w === 0 || w === 6) { Logger.log('Weekend — no check.'); return 'Weekend — no check.'; }
+
+  var url = '';
+  try { url = ScriptApp.getService().getUrl() || ''; } catch (err) { url = ''; }
+  if (!url) throw new Error('The web app is not deployed yet, so there is no link to send.');
+
+  var day = dayKey_(now);
+  var sent = 0, skipped = 0, failed = 0;
+
+  everyone_().forEach(function (p) {
+    if (!p.email) { skipped++; return; }
+    if (ACTIVITY.SEND_TO.indexOf(low_(p.role)) === -1) { skipped++; return; }
+
+    var row = findActivity_(day, block.key, p.email);
+    if (!row) {
+      var id = uid_('act');
+      appendRow_(ACTIVITY.TAB, {
+        'ID': id, 'Day': day, 'Block': block.key, 'Email': p.email, 'Name': p.name,
+        'Role': p.role, 'Unit': p.unit, 'Token': makeToken_(), 'Sent': now, 'Items': ''
+      });
+      row = findActivity_(day, block.key, p.email);
+      if (!row) { failed++; return; }
+    } else {
+      setCell_(ACTIVITY.TAB, row._row, 'Sent', now);
+    }
+
+    var mail = activityEmail_(p, row, block, url);
+    try {
+      MailApp.sendEmail({ to: p.email, subject: mail.subject, htmlBody: mail.html,
+                          name: MEET.BRANCH });
+      sent++;
+    } catch (err) {
+      failed++;
+      Logger.log('Could not write to ' + p.email + ': ' + err);
+    }
+  });
+
+  var msg = block.label + ': ' + sent + ' sent, ' + skipped + ' not asked, ' + failed + ' failed.';
+  log_('activity-check', 'system', '', block.key, msg);
+  Logger.log(msg);
+  return msg;
+}
+
+/*  Two named handlers, because a time trigger cannot carry an
+ *  argument. */
+function activityMorning()   { return activityCheck_('morning'); }
+function activityAfternoon() { return activityCheck_('afternoon'); }
+
+/** Install both daily triggers. Safe to run again — it clears its own
+ *  first, so pressing the menu item twice never doubles the notes. */
+function installActivityChecks() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    var f = t.getHandlerFunction();
+    if (f === 'activityMorning' || f === 'activityAfternoon') ScriptApp.deleteTrigger(t);
+  });
+  ACTIVITY_BLOCKS.forEach(function (b) {
+    ScriptApp.newTrigger(b.key === 'morning' ? 'activityMorning' : 'activityAfternoon')
+      .timeBased().atHour(b.hour).everyDays(1).create();
+  });
+  var msg = 'Time blocks are on: a note at about ' + ACTIVITY_BLOCKS[0].hour + ':00 and ' +
+    'another at about ' + ACTIVITY_BLOCKS[1].hour + ':00, weekdays only. ' +
+    'Asked of: ' + ACTIVITY.SEND_TO.join(' and ') + '.';
+  Logger.log(msg);
+  return msg;
+}
+
+function installActivityChecksFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert('The daily time blocks', installActivityChecks(), ui.ButtonSet.OK);
+}
+
+/** Send yourself the next block, to read it before the branch does. */
+function previewActivityCheck() {
+  var me = findPersonByEmail_(MEET.ADMIN_EMAIL) || readPeople_()[0];
+  if (!me) throw new Error('Nobody on the People tab yet.');
+  var url = ScriptApp.getService().getUrl() || '';
+  if (!url) throw new Error('The web app is not deployed yet, so there is no link to send.');
+
+  var block = new Date().getHours() < 13 ? ACTIVITY_BLOCKS[0] : ACTIVITY_BLOCKS[1];
+  var day = dayKey_(new Date());
+  var row = findActivity_(day, block.key, me.email);
+  if (!row) {
+    appendRow_(ACTIVITY.TAB, {
+      'ID': uid_('act'), 'Day': day, 'Block': block.key, 'Email': me.email, 'Name': me.name,
+      'Role': me.role, 'Unit': me.unit, 'Token': makeToken_(), 'Sent': new Date(), 'Items': ''
+    });
+    row = findActivity_(day, block.key, me.email);
+  }
+  var mail = activityEmail_(me, row, block, url);
+  MailApp.sendEmail({ to: me.email, subject: '[Preview] ' + mail.subject,
+                      htmlBody: mail.html, name: MEET.BRANCH });
+  return 'Sent to ' + me.email + '.';
+}
+
+/* ------------------------- the page ------------------------- */
+
+/*  Served as HTML, not JSON, because this is the one place in the app
+ *  a person arrives from their inbox rather than from the meeting
+ *  front end. Every control on it is a GET for the reason in the
+ *  header comment. */
+function activityPage_(p) {
+  var row = findActivityByToken_(p.token || p.t);
+  if (!row) return activityShell_('That link has expired',
+    'Ask for the next check, or open the meeting app and log it there.', '');
+
+  var block = activityBlock_(str_(row['Block'])) || ACTIVITY_BLOCKS[0];
+  var role = low_(row['Role']) || 'agent';
+  var menu = activityMenuFor_(role);
+
+  /*  A block closes so that last week's figures cannot move after the
+   *  week is counted. */
+  var sent = asDate_(row['Sent']);
+  var hours = sent ? (new Date().getTime() - sent.getTime()) / 36e5 : 0;
+  var closed = hours > ACTIVITY.OPEN_HOURS;
+
+  var items = itemsOf_(row);
+  var changed = false;
+
+  if (!closed) {
+    var add = str_(p.k), drop = str_(p.x);
+    if (add) {
+      var known = false;
+      for (var i = 0; i < menu.length; i++) if (menu[i].k === add) known = true;
+      if (known && items.indexOf(add) === -1) { items.push(add); changed = true; }
+    }
+    if (drop && items.indexOf(drop) > -1) {
+      items.splice(items.indexOf(drop), 1); changed = true;
+    }
+    if (changed) setCell_(ACTIVITY.TAB, row._row, 'Items', items.join(','));
+
+    if ('well' in p || 'blocker' in p) {
+      setCell_(ACTIVITY.TAB, row._row, 'Went Well', str_(p.well).slice(0, 500));
+      setCell_(ACTIVITY.TAB, row._row, 'In The Way', str_(p.blocker).slice(0, 500));
+      changed = true;
+    }
+    if (changed || !row['Answered']) {
+      setCell_(ACTIVITY.TAB, row._row, 'Answered', new Date());
+      row['Answered'] = new Date();
+    }
+  }
+  if (!row['Opened']) setCell_(ACTIVITY.TAB, row._row, 'Opened', new Date());
+
+  var url = '';
+  try { url = ScriptApp.getService().getUrl() || ''; } catch (err) { url = ''; }
+  var base = url + '?action=act&t=' + encodeURIComponent(str_(row['Token']));
+
+  /* --- the chips --- */
+  var work = [], life = [];
+  menu.forEach(function (a) {
+    var on = items.indexOf(a.k) > -1;
+    var href = base + (on ? '&x=' : '&k=') + encodeURIComponent(a.k);
+    var chip =
+      '<a class="chip' + (on ? ' on' : '') + '" href="' + esc_(href) + '">' +
+      (on ? '<span class="tick">&#10003;</span>' : '') + esc_(a.label) + '</a>';
+    if (a.group === 'life') life.push(chip); else work.push(chip);
+  });
+
+  var body =
+    '<div class="eyebrow">' + esc_(block.label) + '</div>' +
+    '<h1>What did you get done ' + esc_(block.window) + '?</h1>' +
+    (closed
+      ? '<p class="closed">This block has closed, so it cannot be changed now. ' +
+        'What is below is what was recorded.</p>'
+      : '<p class="lede">Tap everything that applies. It saves as you go &mdash; ' +
+        'there is no button to press at the end.</p>') +
+
+    '<div class="group"><h2>Your work</h2><div class="chips">' + work.join('') + '</div></div>' +
+
+    '<div class="group"><h2>Your time</h2>' +
+    '<p class="priv">Counted for the branch as a whole. Never shown against your name.</p>' +
+    '<div class="chips">' + life.join('') + '</div></div>';
+
+  if (!closed) {
+    body +=
+      '<form class="group" method="get" action="' + esc_(url) + '">' +
+      '<input type="hidden" name="action" value="act">' +
+      '<input type="hidden" name="t" value="' + esc_(str_(row['Token'])) + '">' +
+      '<h2>Anything worth saying?</h2>' +
+      '<label>What went well</label>' +
+      '<input type="text" name="well" maxlength="500" autocomplete="off" ' +
+      'value="' + esc_(str_(row['Went Well'])) + '" placeholder="One line. Optional.">' +
+      '<label>What is in the way</label>' +
+      '<input type="text" name="blocker" maxlength="500" autocomplete="off" ' +
+      'value="' + esc_(str_(row['In The Way'])) + '" placeholder="One line. Optional.">' +
+      '<button type="submit">Save these two lines</button>' +
+      '</form>';
+  } else if (str_(row['Went Well']) || str_(row['In The Way'])) {
+    body += '<div class="group"><h2>What you said</h2>' +
+      (str_(row['Went Well']) ? '<p class="said">' + esc_(str_(row['Went Well'])) + '</p>' : '') +
+      (str_(row['In The Way']) ? '<p class="said">' + esc_(str_(row['In The Way'])) + '</p>' : '') +
+      '</div>';
+  }
+
+  var count = items.length;
+  body += '<div class="done">' +
+    (count ? count + ' logged for this block. You can close this page.'
+           : 'Nothing logged yet — a block with nothing in it is recorded as nothing done.') +
+    '</div>';
+
+  return activityShell_('Your ' + block.label.toLowerCase(), '', body);
+}
+
+/** The page frame. Inline styles only: an HtmlService page cannot
+ *  reach the branch stylesheet, and a web font is one more thing to
+ *  fail on a phone with one bar. */
+function activityShell_(title, message, body) {
+  var html =
+    '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + esc_(title) + '</title><style>' +
+    '*{box-sizing:border-box}' +
+    'body{margin:0;background:#07131f;color:#eaf4ff;padding:22px 16px 44px;' +
+    'font-family:Inter,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}' +
+    '.wrap{max-width:520px;margin:0 auto}' +
+    '.eyebrow{color:#f5b93b;font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:700}' +
+    'h1{font-size:21px;line-height:1.3;margin:7px 0 10px;font-weight:700}' +
+    'h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#6d8ba6;' +
+    'margin:0 0 10px;font-weight:700}' +
+    '.lede,.closed{color:#9dbdd8;font-size:14px;line-height:1.6;margin:0 0 20px}' +
+    '.closed{color:#ffb4ab}' +
+    '.priv{color:#6d8ba6;font-size:12px;line-height:1.55;margin:-4px 0 10px}' +
+    '.group{margin:26px 0 0}' +
+    '.chips{display:flex;flex-wrap:wrap;gap:8px}' +
+    '.chip{display:inline-block;text-decoration:none;font-size:14px;font-weight:600;' +
+    'padding:11px 15px;border-radius:999px;border:1px solid rgba(255,255,255,.17);' +
+    'color:#eaf4ff;background:rgba(255,255,255,.055);line-height:1}' +
+    '.chip.on{background:#f5b93b;border-color:#f5b93b;color:#07131f}' +
+    '.tick{margin-right:6px;font-weight:800}' +
+    'label{display:block;font-size:12.5px;color:#9dbdd8;margin:12px 0 5px}' +
+    'input[type=text]{width:100%;padding:12px 13px;border-radius:11px;font-size:15px;' +
+    'border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.055);color:#eaf4ff}' +
+    'input::placeholder{color:#5d7b96}' +
+    'button{margin-top:14px;width:100%;padding:13px;border:none;border-radius:11px;' +
+    'background:#f5b93b;color:#07131f;font-size:15px;font-weight:700}' +
+    '.done{margin:30px 0 0;padding-top:16px;border-top:1px solid rgba(255,255,255,.11);' +
+    'color:#6d8ba6;font-size:12.5px;line-height:1.6}' +
+    '.said{color:#9dbdd8;font-size:14px;line-height:1.6;margin:0 0 8px}' +
+    '.msg{color:#9dbdd8;font-size:15px;line-height:1.6}' +
+    '</style></head><body><div class="wrap">' +
+    (body || ('<h1>' + esc_(title) + '</h1><p class="msg">' + esc_(message) + '</p>')) +
+    '</div></body></html>';
+  return HtmlService.createHtmlOutput(html)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setTitle(title);
+}
+
+/* ===================================================================
+ *  THE MONDAY BRIEF — NAMED CASES, ANSWERED BEFORE WEDNESDAY
+ *
+ *  The branch's standing opportunities are not a mystery; they are rows
+ *  in Salesforce that nobody is asked about by name. Pulled 10 October
+ *  2026:
+ *
+ *    99 policies mature in FY27 — and 86 of them have NO ACTIVE AGENT
+ *    938 premiums sit 45 to 120 days in arrears, 581 of them orphaned
+ *    2,604 live policies, 58% of the book, belong to agents who left
+ *
+ *  So Monday morning each agent gets their own cases, by reference, and
+ *  one question per case: did you make contact. Wednesday reads the
+ *  answers instead of asking the room.
+ *
+ *  WHY ASKING IS THE WHOLE MECHANISM. A list nobody is asked about is a
+ *  report. A list each person is asked about by name, where the answer is
+ *  read out two days later, is accountability — and the difference is one
+ *  e-mail and a column.
+ *
+ *  NO CLIENT NAME GOES IN A CHASE. Ref is the Salesforce record name.
+ *  The agent knows who it is; a screen in the branch does not.
+ * =================================================================== */
+
+var CHASE = {
+  TAB: 'Chases',
+  KINDS: {
+    maturity: { label: 'Maturing soon',      ask: 'Have you spoken to them about what happens at maturity?' },
+    arrears:  { label: 'Premium in arrears', ask: 'Have you contacted them about the premium?' },
+    orphan:   { label: 'Orphan file',        ask: 'Have you introduced yourself as their agent?' },
+    lapse:    { label: 'About to lapse',     ask: 'Have you tried to save it?' },
+    pending:  { label: 'Pending business',   ask: 'Have you chased the requirement?' },
+    expiry:   { label: 'Cover ending',       ask: 'Have you spoken to them about renewing or converting?' },
+    /*  Production, not conservation. The question is not whether they
+     *  were contacted but whether the ask was actually made — a call
+     *  that avoided the subject is not this case closed.            */
+    opportunity: { label: 'Opportunity',     ask: 'Did you make the ask?' }
+  },
+  OUTCOMES: ['Spoke to them', 'Left a message', 'Could not reach them',
+             'Wrong number or address', 'Not mine', 'Not yet'],
+  SEND_HOUR: 7,
+  SEND_DAY: 1               /* Monday — two clear days before Wednesday */
+};
+
+function chaseRows_() { return readTab_(CHASE.TAB); }
+
+function chaseWeek_(d) {
+  d = d || new Date();
+  var mon = new Date(d.getTime());
+  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  return Utilities.formatDate(mon, tz_(), 'yyyy-MM-dd');
+}
+
+function findChaseByToken_(t) {
+  t = str_(t); if (!t) return null;
+  var rows = chaseRows_();
+  for (var i = 0; i < rows.length; i++) if (str_(rows[i]['Token']) === t) return rows[i];
+  return null;
+}
+
+/** Put cases on the tab for this week. Idempotent on Week+Ref+Email, so
+ *  running it twice does not ask anybody the same thing twice. */
+function addChases(list) {
+  if (!list || !list.length) return 0;
+  var week = chaseWeek_();
+  var have = {};
+  chaseRows_().forEach(function (r) {
+    if (str_(r['Week']) === week) have[low_(r['Email']) + '|' + str_(r['Ref'])] = true;
+  });
+  var add = [];
+  list.forEach(function (c) {
+    var key = low_(c.email) + '|' + str_(c.ref);
+    if (!c.email || !c.ref || have[key]) return;
+    have[key] = true;
+    add.push({ 'ID': uid_('CHS'), 'Week': week, 'Kind': low_(c.kind) || 'orphan',
+               'Ref': str_(c.ref), 'Detail': str_(c.detail), 'Due': c.due || '',
+               'Email': low_(c.email), 'Name': str_(c.name), 'Unit': str_(c.unit),
+               'Token': makeToken_() });
+  });
+  appendRows_(CHASE.TAB, add);
+  return add.length;
+}
+
+/*  What Wednesday reads. Answered against sent, and contact made against
+ *  answered — two different failures that must not be reported as one:
+ *  an agent who answered "could not reach them" has done the work, and an
+ *  agent who never answered has not. */
+function chaseStats_(week) {
+  week = week || chaseWeek_();
+  var rows = chaseRows_().filter(function (r) { return str_(r['Week']) === week; });
+  var by = {}, kinds = {};
+  var sent = rows.length, answered = 0, contacted = 0;
+
+  rows.forEach(function (r) {
+    var e = low_(r['Email']);
+    var ans = !!str_(r['Answered']);
+    var got = yes_(r['Contacted']) && str_(r['Contacted']) !== '';
+    if (ans) answered++;
+    if (ans && got) contacted++;
+    var k = low_(r['Kind']) || 'other';
+    kinds[k] = kinds[k] || { sent: 0, answered: 0, contacted: 0 };
+    kinds[k].sent++; if (ans) kinds[k].answered++; if (ans && got) kinds[k].contacted++;
+    if (!by[e]) by[e] = { email: e, name: str_(r['Name']), unit: str_(r['Unit']),
+                          sent: 0, answered: 0, contacted: 0, outcomes: {} };
+    by[e].sent++;
+    if (ans) { by[e].answered++; var o = str_(r['Outcome']); if (o) by[e].outcomes[o] = (by[e].outcomes[o] || 0) + 1; }
+    if (ans && got) by[e].contacted++;
+  });
+
+  var people = Object.keys(by).map(function (e) { return by[e]; })
+    .sort(function (a, b) { return (a.answered / (a.sent || 1)) - (b.answered / (b.sent || 1)); });
+
+  return {
+    week: week, sent: sent, answered: answered, contacted: contacted,
+    silent: people.filter(function (p) { return p.answered === 0; })
+                  .map(function (p) { return p.name || p.email; }),
+    kinds: kinds, people: people
+  };
+}
+
+/** The Monday e-mail: this agent's cases, one question each. */
+function chaseEmail_(email, rows, url) {
+  var first = firstName_(str_(rows[0]['Name']));
+  var link = url + '?action=chase&t=' + encodeURIComponent(str_(rows[0]['Token']));
+  var items = rows.map(function (r) {
+    var k = CHASE.KINDS[low_(r['Kind'])] || { label: str_(r['Kind']) };
+    return '<tr><td style="padding:9px 12px 9px 0;color:#9CAEBF;font-size:13px;white-space:nowrap">' +
+      esc_(k.label) + '</td><td style="padding:9px 0;color:#EAF0F6;font-size:14px">' +
+      '<b>' + esc_(str_(r['Ref'])) + '</b>' +
+      (str_(r['Detail']) ? '<br><span style="color:#6C7E90;font-size:12.5px">' +
+        esc_(str_(r['Detail'])) + '</span>' : '') + '</td></tr>';
+  }).join('');
+
+  return {
+    subject: rows.length + (rows.length === 1 ? ' case' : ' cases') +
+             ' to answer before Wednesday',
+    html:
+      '<div style="font-family:Inter,Segoe UI,Arial,sans-serif;background:#121820;padding:26px 16px">' +
+      '<div style="max-width:560px;margin:0 auto;background:#1C242E;border-radius:16px;' +
+      'border:1px solid rgba(255,255,255,.11);overflow:hidden">' +
+      '<div style="padding:22px 24px 6px">' +
+      '<img src="' + IBRAND_LOGO_() + '" width="38" height="38" alt="" style="border-radius:11px;display:block;margin-bottom:12px">' +
+      '<div style="color:#3B9EFF;font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:700">Monday brief</div>' +
+      '<div style="color:#EAF0F6;font-size:19px;font-weight:700;margin-top:5px">' +
+      esc_(first) + ', these are yours this week.</div>' +
+      '<div style="color:#9CAEBF;font-size:13.5px;line-height:1.6;margin-top:9px">' +
+      'One question against each: did you make contact. Your answers are read out on ' +
+      'Wednesday, so answering is the work — not the outcome.</div></div>' +
+      '<div style="padding:4px 24px 0"><table style="width:100%;border-collapse:collapse">' +
+      items + '</table></div>' +
+      '<div style="padding:18px 24px 24px">' +
+      '<a href="' + esc_(link) + '" style="display:block;text-align:center;background:#3B9EFF;' +
+      'color:#06141F;text-decoration:none;font-weight:700;font-size:15px;padding:14px 18px;' +
+      'border-radius:11px">Answer them</a></div>' +
+      '<div style="padding:13px 24px 20px;border-top:1px solid rgba(255,255,255,.09);' +
+      'color:#6C7E90;font-size:11.5px;line-height:1.65">' +
+      '&ldquo;Could not reach them&rdquo; is a complete answer. Silence is not.</div>' +
+      '</div></div>'
+  };
+}
+
+/** Monday 7am. Writes to every agent who has cases this week. */
+function mondayBrief() {
+  var now = new Date();
+  if (now.getDay() !== CHASE.SEND_DAY) { Logger.log('Not Monday — no brief.'); return 'Not Monday.'; }
+  var url = ''; try { url = ScriptApp.getService().getUrl() || ''; } catch (e) {}
+  if (!url) throw new Error('The web app is not deployed, so there is no link to send.');
+
+  var week = chaseWeek_(now), by = {};
+  chaseRows_().forEach(function (r) {
+    if (str_(r['Week']) !== week || !str_(r['Email'])) return;
+    (by[low_(r['Email'])] = by[low_(r['Email'])] || []).push(r);
+  });
+
+  var sent = 0;
+  Object.keys(by).forEach(function (e) {
+    var rows = by[e];
+    var mail = chaseEmail_(e, rows, url);
+    try {
+      MailApp.sendEmail({ to: e, subject: mail.subject, htmlBody: mail.html, name: MEET.BRANCH });
+      rows.forEach(function (r) { setCell_(CHASE.TAB, r._row, 'Sent', now); });
+      sent++;
+    } catch (err) { Logger.log('Monday brief to ' + e + ': ' + err); }
+  });
+  var msg = sent + ' agent' + (sent === 1 ? '' : 's') + ' written to for week ' + week + '.';
+  log_('monday-brief', 'system', '', week, msg);
+  return msg;
+}
+
+function installMondayBrief() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'mondayBrief') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('mondayBrief').timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(CHASE.SEND_HOUR).create();
+  return 'The Monday brief is on, about ' + CHASE.SEND_HOUR + ':00 each Monday.';
+}
+
+function installMondayBriefFromMenu() {
+  SpreadsheetApp.getUi().alert('The Monday brief', installMondayBrief(), SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+/*  The answer page. Same shape as the activity check: arrived at from an
+ *  inbox, so it answers in HTML, and every control is a GET because an
+ *  HtmlService page is a different origin from /exec.
+ *
+ *  All of an agent's cases for the week are on one page, reached by any
+ *  one of their tokens — a person should answer six cases in one sitting,
+ *  not open six e-mails. */
+function chasePage_(p) {
+  var row = findChaseByToken_(p.token || p.t);
+  if (!row) return activityShell_('That link has expired',
+    'Ask for this week\u2019s brief again, or answer it in the meeting app.', '');
+
+  var week = str_(row['Week']), email = low_(row['Email']);
+  var mine = chaseRows_().filter(function (r) {
+    return str_(r['Week']) === week && low_(r['Email']) === email;
+  });
+
+  /* An answer: ?id=<row id>&c=yes|no&o=<outcome> */
+  var id = str_(p.id), c = low_(p.c), o = str_(p.o), note = str_(p.note);
+  if (id && (c === 'yes' || c === 'no')) {
+    for (var i = 0; i < mine.length; i++) {
+      if (str_(mine[i]['ID']) !== id) continue;
+      var known = CHASE.OUTCOMES.indexOf(o) > -1;
+      setCell_(CHASE.TAB, mine[i]._row, 'Contacted', c === 'yes' ? 'Y' : 'N');
+      setCell_(CHASE.TAB, mine[i]._row, 'Outcome', known ? o : (c === 'yes' ? 'Spoke to them' : 'Not yet'));
+      if (note) setCell_(CHASE.TAB, mine[i]._row, 'Note', note.slice(0, 300));
+      setCell_(CHASE.TAB, mine[i]._row, 'Answered', new Date());
+      mine[i]['Contacted'] = c === 'yes' ? 'Y' : 'N';
+      mine[i]['Outcome'] = known ? o : (c === 'yes' ? 'Spoke to them' : 'Not yet');
+      mine[i]['Answered'] = new Date();
+      break;
+    }
+  }
+
+  var url = ''; try { url = ScriptApp.getService().getUrl() || ''; } catch (e) {}
+  var base = url + '?action=chase&t=' + encodeURIComponent(str_(row['Token']));
+
+  var done = 0;
+  var cards = mine.map(function (r) {
+    var k = CHASE.KINDS[low_(r['Kind'])] || { label: str_(r['Kind']), ask: 'Did you make contact?' };
+    var answered = !!str_(r['Answered']);
+    if (answered) done++;
+    var rid = encodeURIComponent(str_(r['ID']));
+    var opts = CHASE.OUTCOMES.map(function (x) {
+      var on = str_(r['Outcome']) === x;
+      var yes = x !== 'Not yet' && x !== 'Not mine';
+      return '<a class="chip' + (on ? ' on' : '') + '" href="' + esc_(base + '&id=' + rid +
+        '&c=' + (yes ? 'yes' : 'no') + '&o=' + encodeURIComponent(x)) + '">' + esc_(x) + '</a>';
+    }).join('');
+    return '<div class="group">' +
+      '<div class="eyebrow">' + esc_(k.label) + (answered ? ' &middot; answered' : '') + '</div>' +
+      '<h2 style="margin:4px 0 2px">' + esc_(str_(r['Ref'])) + '</h2>' +
+      (str_(r['Detail']) ? '<p class="priv" style="margin:2px 0 10px">' + esc_(str_(r['Detail'])) + '</p>' : '') +
+      '<p class="lede" style="margin:0 0 10px;font-size:13.5px">' + esc_(k.ask) + '</p>' +
+      '<div class="chips">' + opts + '</div></div>';
+  }).join('');
+
+  var body =
+    '<div class="eyebrow">Monday brief &middot; week of ' + esc_(week) + '</div>' +
+    '<h1>' + mine.length + (mine.length === 1 ? ' case' : ' cases') + ', one question each</h1>' +
+    '<p class="lede">&ldquo;Could not reach them&rdquo; is a complete answer. Silence is not &mdash; ' +
+    'these are read out on Wednesday.</p>' + cards +
+    '<div class="done">' + done + ' of ' + mine.length + ' answered.' +
+    (done === mine.length ? ' Nothing else needed &mdash; you can close this page.' : '') + '</div>';
+
+  return activityShell_('Your Monday brief', '', body);
+}
+
+/** What the meeting reads back on Wednesday. */
+function apiChases_(token) {
+  var me = requireUser_(token);
+  var st = chaseStats_();
+  if (!isStaff_(me)) {
+    st.people = st.people.filter(function (p) { return p.email === me.email; });
+    st.silent = [];
+  }
+  return { ok: true, chases: st };
+}
+
+/* ===================================================================
+ *  THE BRIEF READS THE WATCHLISTS THE BRANCH ALREADY KEEPS
+ *
+ *  The Monday brief was built with nothing to send. Meanwhile the
+ *  Branch Portfolio workbook already carries the work, computed and
+ *  current: dues banded by how far overdue, maturities with the months
+ *  remaining and whether the agent is still here, pending business with
+ *  the requirement and its age, term cover about to expire with the
+ *  conversion right. Re-deriving any of that from Salesforce would be
+ *  building a second, worse copy of a thing the branch maintains.
+ *
+ *  So the brief reads those tabs. Nothing here computes a case; it
+ *  routes one.
+ *
+ *  THE CLIENT'S NAME TRAVELS, BUT ONLY TO THEIR OWN AGENT. The orphan
+ *  tab in that same workbook sets the rule — "share each agent only
+ *  their own households" — and a case that says "policy 5004262667
+ *  needs a pay slip" is not actionable while "Salena Boodhoo needs a
+ *  pay slip" is. The name goes in Detail, which only ever appears in
+ *  that one agent's own e-mail. chaseStats_ returns agent names and
+ *  counts, so no client name reaches a branch screen.
+ *
+ *  ONLY ACTIVE AGENTS ARE GIVEN CASES. A case belonging to someone who
+ *  has left is not sent to a dead mailbox and quietly counted as
+ *  delivered; it is reported as unassigned, which is the orphan
+ *  campaign's work and not the brief's.
+ *
+ *  CAPPED PER AGENT. Twenty-four hundred dues across eighteen agents is
+ *  a list nobody answers. Each agent gets the most urgent few, and the
+ *  rest wait for next Monday — a brief that can be finished before
+ *  Wednesday is the only kind that gets finished.
+ * =================================================================== */
+
+var WATCH = {
+  PROP_ID: 'PORTFOLIO_SHEET_ID',
+
+  /*  Per agent, per week. Eight is about ten minutes of calls and fits
+   *  in one screen of e-mail.                                        */
+  PER_AGENT: 8,
+
+  /*  Opportunities are capped SEPARATELY and never compete with the
+   *  chase cases for room. Put them in one pool and the oldest arrears
+   *  always wins, because overdue sorts harder than opportunity — and
+   *  the branch would spend every week defending and none of it
+   *  selling. Four a week across eighteen agents works the 827-strong
+   *  "call this week" band in about twelve weeks.                   */
+  PER_AGENT_OPP: 4,
+
+  /*  Only the top band is briefed. "Worth a call" and "Keep on file"
+   *  stay on the sheet for anyone with time, but a brief that sends
+   *  everything sends nothing.                                       */
+  OPP_BAND: 'call this week',
+
+  TAB_ROSTER: 'agent codes',
+
+  /*  Matched loosely on the tab name, so renaming "Watchlist — Dues"
+   *  to "Watchlist - Dues" does not silently stop the brief.
+   *  `cols` names are matched the same way against the header row.   */
+  LISTS: [
+    { match: 'dues', kind: 'arrears', agent: 'agent',
+      ref: ['policy', 'clientno'], due: 'projectedlapse',
+      detail: function (g) {
+        var band = g('band'), who = g('client'), prem = g('modalpremium'),
+            reach = low_(g('reachable')), lapse = g('projectedlapse');
+        return [band ? band + ' days overdue' : 'overdue',
+                who,
+                prem ? 'TT$' + prem + ' modal' : '',
+                lapse ? 'projected lapse ' + lapse : '',
+                reach === 'no' ? 'NO phone or e-mail on file' : ''
+               ].filter(String).join(' · ');
+      },
+      urgency: function (g) { return -num_(g('daysoverdue')); } },
+
+    { match: 'maturit', kind: 'maturity', agent: 'servicingagent',
+      ref: ['policy'], due: 'matures',
+      detail: function (g) {
+        return [g('kind') || 'Policy',
+                'matures ' + g('matures'),
+                g('months') ? '(' + g('months') + ' months)' : '',
+                g('client'),
+                num_(g('fundvalue')) ? 'fund TT$' + g('fundvalue') : ''
+               ].filter(String).join(' · ');
+      },
+      urgency: function (g) { return num_(g('months')); } },
+
+    { match: 'pending', kind: 'pending', agent: 'agent',
+      ref: ['policy'], due: '',
+      detail: function (g) {
+        return [g('requirement') || 'A requirement',
+                'outstanding ' + g('agedays') + ' days',
+                g('client'),
+                g('decision') || g('status'),
+                /*  The sheet writes "NEVER CHASED" into "Being chased by",
+                 *  not into "Last chased" — which stays empty.          */
+                low_(g('beingchasedby')).indexOf('never') === 0 ? 'NEVER CHASED' : ''
+               ].filter(String).join(' · ');
+      },
+      urgency: function (g) { return -num_(g('agedays')); } },
+
+    /*  The production list. The sheet has already scored each client,
+     *  named the gap and written the question to ask — this only
+     *  routes it to the person whose client it is.                 */
+    { match: 'cross', kind: 'opportunity', agent: 'servicingagent',
+      ref: ['client'], due: '',
+      band: 'band',
+      detail: function (g) {
+        var worth = num_(g('worth'));
+        return [g('client'),
+                g('thegap'),
+                worth ? 'worth about TT$' + Math.round(worth).toLocaleString() : '',
+                g('whattoask') ? 'ASK: ' + g('whattoask') : ''
+               ].filter(String).join(' \u00b7 ');
+      },
+      urgency: function (g) { return -num_(g('score')); } },
+
+    { match: 'expir', kind: 'expiry', agent: 'servicingagent',
+      ref: ['policy'], due: 'expires',
+      detail: function (g) {
+        return [g('kind') || 'Cover',
+                'ends ' + g('expires'),
+                g('months') ? '(' + g('months') + ' months)' : '',
+                g('client'),
+                low_(g('convertible')).indexOf('yes') === 0
+                  ? 'CONVERTIBLE — the conversion right ends with the term' : ''
+               ].filter(String).join(' · ');
+      },
+      urgency: function (g) { return num_(g('months')); } },
+  ],
+};
+
+/* ---- reading the workbook ---- */
+
+function portfolioBook_() {
+  var id = str_(PropertiesService.getScriptProperties().getProperty(WATCH.PROP_ID));
+  if (!id) return null;
+  var m = id.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (m) id = m[1];
+  try { return SpreadsheetApp.openById(id); }
+  catch (err) { Logger.log('portfolio: ' + err); return null; }
+}
+
+function watchKey_(s) { return low_(s).replace(/[^a-z0-9]/g, ''); }
+
+/** A tab whose name contains `want`, or null. */
+function watchTab_(ss, want) {
+  var hit = null;
+  ss.getSheets().forEach(function (sh) {
+    if (!hit && low_(sh.getName()).indexOf(want) > -1) hit = sh;
+  });
+  return hit;
+}
+
+/** Rows as objects keyed by squashed header, plus a getter. */
+function watchRows_(sh) {
+  if (!sh || sh.getLastRow() < 2) return [];
+  var vals = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+  var head = vals[0].map(watchKey_);
+  return vals.slice(1).map(function (r) {
+    var o = {};
+    head.forEach(function (h, i) { if (h && o[h] === undefined) o[h] = r[i]; });
+    return o;
+  });
+}
+
+/*  "ALEEMA LEYYA MOHAMMED-ALI", "Aleema Mohammed-Ali" and
+ *  "A00427 - Ricky Rampersad" all have to resolve to one person. First
+ *  and last token, letters only — a middle name, a code prefix, a
+ *  hyphen and the case all stop mattering.                           */
+function agentKey_(name) {
+  var n = str_(name).replace(/^[A-Z]\d{3,6}\s*-\s*/i, '');
+  var parts = n.replace(/[^A-Za-z\s]/g, ' ').split(/\s+/).filter(String);
+  if (!parts.length) return '';
+  var first = parts[0], last = parts[parts.length - 1];
+  return (first + '|' + last).toUpperCase();
+}
+
+/** Active people from the workbook's own Agent Codes tab. */
+function watchRoster_(ss) {
+  var sh = watchTab_(ss, WATCH.TAB_ROSTER);
+  var by = {};
+  watchRows_(sh).forEach(function (r) {
+    if (low_(r['active']) !== 'active') return;
+    var email = low_(r['email']);
+    if (!email) return;
+    by[agentKey_(r['name'])] = {
+      email: email,
+      name: str_(r['name']).replace(/^[A-Z]\d{3,6}\s*-\s*/i, ''),
+      unit: str_(r['unit']),
+      role: str_(r['role'])
+    };
+  });
+  return by;
+}
+
+/* ---- the seed ---- */
+
+/**
+ * Fills this week's Chases from the Branch Portfolio watchlists.
+ * Safe to run twice: addChases drops anything already on the week.
+ */
+function seedChasesFromWatchlists() {
+  var ss = portfolioBook_();
+  if (!ss) return { ok: false, why: 'No Branch Portfolio sheet is set. Run ' +
+    '"Connect the Branch Portfolio" from the Branch Meetings menu.' };
+
+  var roster = watchRoster_(ss);
+  var nActive = Object.keys(roster).length;
+  if (!nActive) return { ok: false, why: 'No active people found on the Agent Codes tab.' };
+
+  var byAgent = {}, skipped = {}, read = {}, missingTabs = [];
+
+  WATCH.LISTS.forEach(function (spec) {
+    var sh = watchTab_(ss, spec.match);
+    if (!sh) { missingTabs.push(spec.match); return; }
+    var rows = watchRows_(sh);
+    read[spec.kind] = rows.length;
+
+    rows.forEach(function (r) {
+      var g = function (k) { return str_(r[k]); };
+      var who = agentKey_(r[spec.agent]);
+      var person = roster[who];
+      if (!person) {
+        /*  Nobody active owns this. Counted, named by kind, and left
+         *  for the orphan campaign rather than mailed into a void.  */
+        skipped[spec.kind] = (skipped[spec.kind] || 0) + 1;
+        return;
+      }
+      /*  A list with a band only briefs its top band.             */
+      if (spec.band && low_(r[spec.band]) !== WATCH.OPP_BAND) return;
+
+      var ref = '';
+      for (var i = 0; i < spec.ref.length && !ref; i++) ref = str_(r[spec.ref[i]]);
+      if (!ref) return;
+
+      if (!byAgent[person.email]) byAgent[person.email] = { person: person, cases: [] };
+      byAgent[person.email].cases.push({
+        kind: spec.kind, ref: ref, detail: spec.detail(g),
+        due: spec.due ? str_(r[spec.due]) : '',
+        email: person.email, name: person.name, unit: person.unit,
+        _u: spec.urgency(g)
+      });
+    });
+  });
+
+  /*  Most urgent first, then capped. The cap is the point: a list long
+   *  enough to be ignored is worse than a short one that gets done. */
+  var send = [], held = 0, opps = 0;
+  Object.keys(byAgent).forEach(function (e) {
+    var all = byAgent[e].cases.sort(function (a, b) { return a._u - b._u; });
+    var isOpp = function (c) { return c.kind === 'opportunity'; };
+    var o = all.filter(isOpp).slice(0, WATCH.PER_AGENT_OPP);
+    var c = all.filter(function (x) { return !isOpp(x); }).slice(0, WATCH.PER_AGENT);
+    opps += o.length;
+    send = send.concat(o, c);
+    held += Math.max(0, all.length - o.length - c.length);
+  });
+
+  var added = addChases(send);
+  var out = {
+    ok: true, added: added, agents: Object.keys(byAgent).length, activePeople: nActive,
+    opportunities: opps,
+    read: read, skipped: skipped, heldBack: held, missingTabs: missingTabs,
+    unassigned: Object.keys(skipped).reduce(function (t, k) { return t + skipped[k]; }, 0)
+  };
+  log_('seed-chases', 'system', 'manager', 'Chases',
+    added + ' case(s) to ' + out.agents + ' agent(s); ' + out.unassigned +
+    ' had no active agent; ' + held + ' held back by the cap');
+  return out;
+}
+
+/* ---- menu ---- */
+
+function connectPortfolioSheet() {
+  var ui = SpreadsheetApp.getUi();
+  var saved = str_(PropertiesService.getScriptProperties().getProperty(WATCH.PROP_ID));
+  var res = ui.prompt('Connect the Branch Portfolio',
+    'Paste the link to the Branch Portfolio workbook — the one holding the\n' +
+    'Watchlist tabs and Agent Codes.\n\n' +
+    'Monday’s brief is built from those tabs. Nothing is computed here;\n' +
+    'the watchlists are read as the branch keeps them.' +
+    (saved ? '\n\nCurrently: ' + saved : ''), ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+
+  var raw = str_(res.getResponseText());
+  if (!raw) {
+    PropertiesService.getScriptProperties().deleteProperty(WATCH.PROP_ID);
+    ui.alert('Disconnected. Monday’s brief will have nothing to send.');
+    return;
+  }
+  PropertiesService.getScriptProperties().setProperty(WATCH.PROP_ID, raw);
+  var ss = portfolioBook_();
+  if (!ss) { ui.alert('Saved, but that workbook could not be opened. Check the link.'); return; }
+
+  var roster = watchRoster_(ss);
+  var found = [], missing = [];
+  WATCH.LISTS.forEach(function (s) {
+    var sh = watchTab_(ss, s.match);
+    if (sh) found.push(sh.getName() + ' (' + Math.max(sh.getLastRow() - 1, 0) + ')');
+    else missing.push(s.match);
+  });
+  ui.alert('Connected to ' + ss.getName() + '.\n\n' +
+    'Active people on Agent Codes: ' + Object.keys(roster).length + '\n\n' +
+    'Watchlists found:\n  ' + (found.join('\n  ') || '(none)') +
+    (missing.length ? '\n\nNot found: ' + missing.join(', ') : '') +
+    '\n\nRun "Build Monday’s brief now" to see what would go out.');
+}
+
+/** Fill this week's cases and report, without sending anything. */
+function seedChasesFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var r = seedChasesFromWatchlists();
+  if (!r.ok) { ui.alert(r.why); return; }
+
+  var lines = [];
+  Object.keys(r.read).forEach(function (k) {
+    lines.push('  ' + k + ' — ' + r.read[k] + ' on the watchlist' +
+      (r.skipped[k] ? ', ' + r.skipped[k] + ' with no active agent' : ''));
+  });
+  ui.alert('Monday’s brief is built.\n\n' +
+    r.added + ' case(s) queued for ' + r.agents + ' agent(s).\n\n' +
+    lines.join('\n') + '\n\n' +
+    (r.heldBack ? r.heldBack + ' case(s) held back by the ' + WATCH.PER_AGENT +
+      '-per-agent cap — they come round next Monday.\n\n' : '') +
+    (r.unassigned ? r.unassigned + ' case(s) belong to somebody who has left. ' +
+      'Those are the orphan campaign’s, not the brief’s.\n\n' : '') +
+    'Nothing has been e-mailed. The brief sends Monday at ' + CHASE.SEND_HOUR + ':00, ' +
+    'or run "Send Monday’s brief now" to send it immediately.');
+}
+
+/* ===================================================================
+ *  THE SELF-SERVICE PLATFORMS, READ INTO THE MEETING
+ *
+ *  The branch runs four front doors that resolve their own work — the
+ *  renewal portal, property renewals, Claims TT and the service
+ *  questionnaire. Between them they already do the thing the branch
+ *  keeps saying it wants: a client logs in, logs what they need, and
+ *  the system chases it to a close without sales support touching it.
+ *
+ *  Two of those loops produce the only honest accountability signals in
+ *  the estate, and until now neither reached this meeting:
+ *
+ *  THE AUDIT QUERY. A client instruction left unprocessed for three days
+ *  raises a query against whoever the file is assigned to, by name, on
+ *  the record, worded by the system rather than by a manager. Nobody has
+ *  to notice. It was visible only to somebody who opened the renewal
+ *  staff dashboard, which means it was visible to nobody.
+ *
+ *  THE CLIENT RATING. Both books ask the same three questions on the
+ *  same 1-to-5 scale, so they add up. One service rating for the branch,
+ *  from the clients themselves, measured after the work was done.
+ *
+ *  NEITHER NUMBER IS REPORTED ALONE. An open-query count reads as a
+ *  queue somebody is working through; the oldest one and the name
+ *  against it say whether it is moving. An average rating built from
+ *  four replies is a number about four people, so the reply count rides
+ *  beside it always.
+ *
+ *  READ BY HEADER, NEVER BY COLUMN NUMBER. The renewal survey puts
+ *  speed in column 8 and the claims survey puts it in column 7. A fixed
+ *  index does not fail loudly here — it quietly reads a comment string
+ *  as a score and reports an average nobody can explain.
+ * =================================================================== */
+
+var SERV = {
+  /*  Comma-separated spreadsheet ids or links — the renewals sheet and
+   *  the claims sheet are separate containers, so both are needed to
+   *  see the whole picture. Either one alone still works.            */
+  PROP_IDS: 'SERVICE_SHEET_IDS',
+  CACHE_SEC: 600,
+
+  TAB_QUERIES: 'Queries',
+  SURVEY_TABS: [
+    { tab: 'Surveys',       book: 'Renewals', overall: 'satisfaction' },
+    { tab: 'Claim Surveys', book: 'Claims',   overall: 'overall' },
+  ],
+
+  /*  The renewal portal's own threshold — an instruction sitting this
+   *  long is what raises the query in the first place.               */
+  STALE_DAYS: 3,
+
+  /*  A rating at or below this is a service-recovery call somebody owes.
+   *  Both platforms use the same number.                              */
+  RECOVERY_AT: 3,
+};
+
+/** The spreadsheets to read, as ids. A pasted link works. */
+function serviceSheetIds_() {
+  var raw = str_(PropertiesService.getScriptProperties().getProperty(SERV.PROP_IDS));
+  if (!raw) return [];
+  return raw.split(',').map(function (part) {
+    var v = str_(part);
+    var m = v.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : v;
+  }).filter(String);
+}
+
+/*  Header lookup that tolerates every spelling these tabs actually use:
+ *  'Satisfaction (1-5)', 'Overall (1-5)', 'Asked Of', 'Answered By'.  */
+function servHead_(row) {
+  var map = {};
+  row.forEach(function (h, i) {
+    var k = low_(h).replace(/\(.*?\)/g, '').replace(/[^a-z0-9]/g, '');
+    if (k && map[k] === undefined) map[k] = i;
+  });
+  return map;
+}
+
+function servCell_(row, map, key) {
+  var i = map[key];
+  return i === undefined ? '' : row[i];
+}
+
+/*  A 1-to-5 score, or null. Anything outside the range — a blank, a
+ *  comment that drifted into the wrong column, a stray 0 — is not a
+ *  score and must never land in an average.                          */
+function servScore_(v) {
+  var n = Number(v);
+  return (n >= 1 && n <= 5) ? n : null;
+}
+
+/*  An e-mail local part, made fit for a screen people read. The queries
+ *  tab records who owes an answer as an address and nothing else, so
+ *  "arvin.mohammed@…" has to become "Arvin Mohammed" here or the branch
+ *  list reads as lowercase usernames beside properly named colleagues. */
+function servName_(email) {
+  var local = str_(email).split('@')[0];
+  if (!local) return '(unassigned)';
+  return local.split(/[._-]+/).filter(String).map(function (part) {
+    return part.charAt(0).toUpperCase() + part.slice(1);
+  }).join(' ');
+}
+
+function servDays_(v) {
+  var d = v instanceof Date ? v : new Date(v);
+  if (!d || isNaN(d.getTime())) return null;
+  return Math.floor((new Date().getTime() - d.getTime()) / 86400000);
+}
+
+/** Everything the meeting needs, or null when no sheet is set. Never throws:
+ *  a service sheet that has moved must not take the agenda down with it. */
+function serviceFeed_(force) {
+  var cache = CacheService.getScriptCache();
+  if (!force) {
+    var hit = cache.get('servfeed');
+    if (hit) { try { return JSON.parse(hit); } catch (e) { /* fall through */ } }
+  }
+  var ids = serviceSheetIds_();
+  if (!ids.length) return null;
+
+  var queries = [], surveys = [], reached = 0, missed = [];
+  ids.forEach(function (id) {
+    var ss;
+    try { ss = SpreadsheetApp.openById(id); }
+    catch (err) { missed.push(id.slice(0, 8)); return; }
+    reached++;
+
+    var qsh = ss.getSheetByName(SERV.TAB_QUERIES);
+    if (qsh && qsh.getLastRow() > 1) {
+      var qv = qsh.getRange(1, 1, qsh.getLastRow(), qsh.getLastColumn()).getValues();
+      var qm = servHead_(qv[0]);
+      qv.slice(1).forEach(function (r) {
+        var of_ = low_(servCell_(r, qm, 'askedof'));
+        if (!of_) return;
+        queries.push({
+          created: servCell_(r, qm, 'created'),
+          of: of_,
+          by: low_(servCell_(r, qm, 'askedby')),
+          status: str_(servCell_(r, qm, 'status')),
+        });
+      });
+    }
+
+    SERV.SURVEY_TABS.forEach(function (spec) {
+      var sh = ss.getSheetByName(spec.tab);
+      if (!sh || sh.getLastRow() < 2) return;
+      var sv = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+      var sm = servHead_(sv[0]);
+      sv.slice(1).forEach(function (r) {
+        surveys.push({
+          book: spec.book,
+          overall: servScore_(servCell_(r, sm, spec.overall)),
+          ease: servScore_(servCell_(r, sm, 'ease')),
+          speed: servScore_(servCell_(r, sm, 'speed')),
+          when: servCell_(r, sm, 'timestamp'),
+        });
+      });
+    });
+  });
+
+  var feed = { queries: queries, surveys: surveys, sheets: ids.length,
+               reached: reached, missed: missed };
+  cache.put('servfeed', JSON.stringify(feed), SERV.CACHE_SEC);
+  return feed;
+}
+
+/*  Who owes an answer, and for how long. The count on its own is the
+ *  least useful form of this number: a branch with eleven open queries
+ *  spread over nine days is fine, and a branch with two open for a
+ *  month is not.                                                      */
+function queriesCard_(rows) {
+  var open = [], answered = 0, auto = 0, by = {};
+  (rows || []).forEach(function (q) {
+    if (/^answered$/i.test(q.status)) { answered++; return; }
+    if (!/^open$/i.test(q.status)) return;
+    var age = servDays_(q.created);
+    open.push(age === null ? 0 : age);
+    if (q.by === 'system') auto++;
+    var who = q.of || '(unassigned)';
+    if (!by[who]) by[who] = { who: servName_(who), open: 0, oldestDays: 0 };
+    by[who].open++;
+    if (age !== null && age > by[who].oldestDays) by[who].oldestDays = age;
+  });
+
+  var oldest = open.length ? Math.max.apply(null, open) : 0;
+  var people = Object.keys(by).map(function (k) { return by[k]; })
+    .sort(function (a, b) { return b.oldestDays - a.oldestDays || b.open - a.open; });
+
+  return {
+    open: open.length,
+    answered: answered,
+    /*  Raised by the system rather than by a manager — nobody had to
+     *  notice the file was stuck, which is the whole point.          */
+    autoRaised: auto,
+    oldestDays: oldest,
+    people: people,
+    clean: open.length === 0,
+    /*  Scaled off the branch's own standard rather than a round number.
+     *  The portal raises the query at three days; a query still open at
+     *  three times that is not a warning, it is the thing the mechanism
+     *  existed to prevent.                                             */
+    severity: open.length === 0 ? 'ok'
+            : (oldest >= SERV.STALE_DAYS * 3 || open.length >= 8) ? 'bad' : 'warn',
+  };
+}
+
+/*  One service rating for the branch, from two books that finally use
+ *  the same scale. The reply count is part of the number, not a
+ *  footnote to it.                                                    */
+function ratingCard_(rows) {
+  var all = { overall: [], ease: [], speed: [] }, books = {}, recovery = 0, replies = 0;
+  (rows || []).forEach(function (s) {
+    var any = s.overall || s.ease || s.speed;
+    if (!any) return;
+    replies++;
+    if (!books[s.book]) books[s.book] = { book: s.book, replies: 0, scores: [] };
+    books[s.book].replies++;
+    ['overall', 'ease', 'speed'].forEach(function (k) {
+      if (s[k]) { all[k].push(s[k]); if (k === 'overall') books[s.book].scores.push(s[k]); }
+    });
+    if ((s.overall && s.overall <= SERV.RECOVERY_AT) ||
+        (s.speed && s.speed <= SERV.RECOVERY_AT)) recovery++;
+  });
+
+  var mean = function (a) {
+    return a.length
+      ? Math.round(a.reduce(function (t, n) { return t + n; }, 0) / a.length * 10) / 10
+      : null;
+  };
+
+  return {
+    replies: replies,
+    overall: mean(all.overall),
+    ease: mean(all.ease),
+    speed: mean(all.speed),
+    /*  Clients who rated the service 3 or less. Each one is a call
+     *  somebody owes, and both platforms raise a task for it.        */
+    recovery: recovery,
+    books: Object.keys(books).map(function (k) {
+      return { book: books[k].book, replies: books[k].replies, avg: mean(books[k].scores) };
+    }).sort(function (a, b) { return b.replies - a.replies; }),
+    /*  Below this many replies the average is about the respondents,
+     *  not about the branch, and the screen says so instead of
+     *  printing a figure that looks like a measurement.              */
+    thin: replies < 5,
+    severity: replies === 0 ? 'none'
+            : (mean(all.overall) !== null && mean(all.overall) < 3.5) ? 'bad'
+            : recovery > 0 ? 'warn' : 'ok',
+  };
+}
+
+/** What the service slot reads out, already shaped for a screen. */
+function apiService_(token) {
+  var me = requireUser_(token);
+  var d = serviceFeed_();
+  if (!d) {
+    return { ok: true, live: false,
+             why: 'No service sheet is set. A manager must run "Connect the service sheets" ' +
+                  'from the Branch Meeting menu — the renewal sheet and the claims sheet.' };
+  }
+
+  var q = queriesCard_(d.queries);
+  var r = ratingCard_(d.surveys);
+
+  /*  An agent sees only what is theirs. The branch picture — who else
+   *  owes an answer — is the manager's to open, not something to put in
+   *  front of twenty-eight people on a wall.                          */
+  if (!isStaff_(me)) {
+    var mine = q.people.filter(function (p) {
+      return p.who === servName_(me.email);
+    });
+    q = { open: mine.length ? mine[0].open : 0,
+          oldestDays: mine.length ? mine[0].oldestDays : 0,
+          answered: 0, autoRaised: 0, people: mine,
+          clean: !mine.length, severity: mine.length ? 'warn' : 'ok', mine: true };
+  }
+
+  return {
+    ok: true, live: true,
+    queries: q,
+    rating: r,
+    /*  Said plainly, because a sheet that could not be opened looks
+     *  exactly like a branch with no open queries.                   */
+    sheets: { set: d.sheets, reached: d.reached, missed: d.missed },
+    staleDays: SERV.STALE_DAYS,
+  };
+}
+
+/** Menu: point the meeting at the renewal and claims spreadsheets. */
+function setServiceSheets() {
+  var ui = SpreadsheetApp.getUi();
+  var saved = str_(PropertiesService.getScriptProperties().getProperty(SERV.PROP_IDS));
+  var res = ui.prompt('Connect the service sheets',
+    'Paste the links to the spreadsheets behind the renewal portal and\n' +
+    'Claims TT, separated by a comma. Either one on its own works.\n\n' +
+    'The meeting reads two things from them: who owes an answer on a\n' +
+    'stuck file, and what clients rated the service. No client name and\n' +
+    'no policy detail is read.' +
+    (saved ? '\n\nCurrently: ' + saved : ''), ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+
+  var raw = str_(res.getResponseText());
+  if (!raw) {
+    PropertiesService.getScriptProperties().deleteProperty(SERV.PROP_IDS);
+    ui.alert('Disconnected. The service slot will say so rather than show zeros.');
+    return;
+  }
+  PropertiesService.getScriptProperties().setProperty(SERV.PROP_IDS, raw);
+  CacheService.getScriptCache().remove('servfeed');
+
+  var d = serviceFeed_(true);
+  if (!d) { ui.alert('Saved, but nothing could be read back. Check the links.'); return; }
+  var q = queriesCard_(d.queries), r = ratingCard_(d.surveys);
+  ui.alert('Connected.\n\n' +
+    d.reached + ' of ' + d.sheets + ' sheet(s) opened' +
+    (d.missed.length ? ' — could not open: ' + d.missed.join(', ') : '') + '\n\n' +
+    'Open audit queries: ' + q.open +
+      (q.open ? ' (oldest ' + q.oldestDays + ' days, ' + q.autoRaised + ' raised by the system)' : '') + '\n' +
+    'Client ratings: ' + r.replies + ' repl' + (r.replies === 1 ? 'y' : 'ies') +
+      (r.overall === null ? '' : ', averaging ' + r.overall + '/5') +
+      (r.recovery ? ' · ' + r.recovery + ' owed a recovery call' : '') + '\n\n' +
+    'This appears in the meeting under Branch service.');
+}
+
+/* ===================================================================
+ *  THE FACT FIND WALL, READ RATHER THAN RESTATED
+ *
+ *  factfind360.com already holds the branch's production: fact finds
+ *  submitted and approved, the money found, the review queue, and how
+ *  long each manager is taking to decide. The meeting was reciting
+ *  numbers beside it instead of reading it.
+ *
+ *  This fetches the same feed the wall itself polls, server-side, so
+ *  the key is not handed to every browser and twenty-eight people
+ *  opening the agenda is still one call every ten minutes.
+ *
+ *  THE MEDIAN IS NOT THE STORY. Both managers decide in about a day
+ *  (0.9 and 2.2 median), and on 10 October fifteen cases were pending
+ *  with FOURTEEN past the three-day standard and the oldest at thirty
+ *  days. A median that good with a tail that long is a median hiding a
+ *  queue, so queueCard_ reports the breach count and the oldest beside
+ *  it and never the median alone.
+ * =================================================================== */
+
+var FFW = {
+  /*  Both live in Script Properties. The key is already public inside
+   *  factfind360.com/wall, but these .gs files are published on the
+   *  branch site and a credential pasted into one is a credential
+   *  nobody remembers rotating. */
+  PROP_URL: 'FACTFIND_WALL_URL',
+  PROP_KEY: 'FACTFIND_WALL_KEY',
+  CACHE_SEC: 600,
+  TIMEOUT_MS: 20000
+};
+
+/** The live feed, or null when it cannot be reached. Never throws: a
+ *  wall that is down must not take the meeting agenda down with it. */
+function factFindFeed_(force) {
+  var cache = CacheService.getScriptCache();
+  if (!force) {
+    var hit = cache.get('ffwall');
+    if (hit) { try { return JSON.parse(hit); } catch (e) { /* fall through */ } }
+  }
+  var props = PropertiesService.getScriptProperties();
+  var url = str_(props.getProperty(FFW.PROP_URL));
+  var key = str_(props.getProperty(FFW.PROP_KEY));
+  if (!url || !key) return null;
+
+  try {
+    var res = UrlFetchApp.fetch(
+      url + '?action=wall&k=' + encodeURIComponent(key) + '&_=' + Date.now(),
+      { muteHttpExceptions: true, followRedirects: true });
+    if (res.getResponseCode() !== 200) return null;
+    var d = JSON.parse(res.getContentText());
+    if (!d || d.ok === false) return null;
+    cache.put('ffwall', JSON.stringify(d), FFW.CACHE_SEC);
+    return d;
+  } catch (err) {
+    Logger.log('Fact Find wall unreachable: ' + err);
+    return null;
+  }
+}
+
+/*  The queue, said honestly. A count on its own reads as a backlog
+ *  somebody is working through; the breach count and the oldest say
+ *  whether it is moving. */
+function queueCard_(q) {
+  if (!q) return null;
+  var pending = num_(q.pending), breaching = num_(q.breaching), oldest = num_(q.oldestDays);
+  return {
+    pending: pending,
+    breaching: breaching,
+    oldestDays: oldest,
+    oldestWho: str_(q.oldestWho),
+    /* Past the branch's own three-day review standard. */
+    clean: pending > 0 && breaching === 0,
+    severity: breaching === 0 ? 'ok' : (oldest >= 14 || breaching >= pending / 2) ? 'bad' : 'warn'
+  };
+}
+
+/** What the 9:10 pipeline slot reads out, already shaped for a screen. */
+function apiFactFind_(token) {
+  requireUser_(token);
+  var d = factFindFeed_();
+  if (!d) {
+    return { ok: true, live: false,
+             why: 'The Fact Find wall could not be reached. Open factfind360.com/wall.' };
+  }
+
+  var mgr = (d.managerPerf || []).map(function (m) {
+    return { name: str_(m.name), approved: num_(m.approved), returned: num_(m.returned),
+             pending: num_(m.pending), medianDays: num_(m.medianDays),
+             returnRate: num_(m.returnRate), reviewed: num_(m.reviewed) };
+  }).sort(function (a, b) { return b.pending - a.pending; });
+
+  var leaders = (d.leaders || []).slice(0, 6).map(function (a) {
+    return { name: str_(a.name), count: num_(a.count), apiRec: num_(a.apiRec),
+             cover: num_(a.cover), pickedUp: num_(a.pickedUp) };
+  });
+
+  var y = d.year || {}, rec = num_(y.api), got = num_(y.pickedUp);
+  return {
+    ok: true, live: true,
+    asOf: str_(d.asOf),
+    today: d.today || {},
+    week: d.week || {},
+    month: d.month || {},
+    year: { submitted: num_(y.submitted), cover: num_(y.cover),
+            apiRec: rec, pickedUp: got,
+            /* Recommended against actually picked up — the gap the branch
+               is paid on, and the one figure nothing else reports. */
+            conversion: rec ? Math.round(got / rec * 1000) / 10 : null },
+    queue: queueCard_(d.queue),
+    managers: mgr,
+    leaders: leaders,
+    flags: d.flags || {}
+  };
+}
+
+/* ===================================================================
+ *  THE FLIGHT PLANS — WHAT WAS PROMISED AGAINST WHAT WAS LOGGED
+ *
+ *  GoalPlans.gs derives an advisor's whole week backwards from their own
+ *  money, not from a number the branch hands down:
+ *
+ *    income need -> FYC need -> API goal -> apps/year -> apps/week
+ *                -> FACT FINDS/week -> appointments/week -> contacts/week
+ *
+ *  So "you owe four fact finds this week" is arithmetic off what that
+ *  person said their year has to pay for. That is the accountability the
+ *  meeting was missing, and it was already built — the weekly check-in
+ *  records the actuals against it, including the three questions worth
+ *  reading out loud: the win, what is in the way, and what help is needed.
+ *
+ *  GOAL_GATE in that file is on by default: an agent with no filed plan
+ *  does not get the fact find. The meeting should therefore never ask
+ *  "has everyone filed" as an opinion — goalsCard_ counts it.
+ *
+ *  THIS NEEDS A BRANCH TOKEN. Unlike the production wall, every goal
+ *  action is sign-in gated (goalWall_ refuses an agent outright), so
+ *  there is no public key to read it with. The token goes in Script
+ *  Properties, never in this file.
+ * =================================================================== */
+
+var FFG = {
+  PROP_URL: 'FACTFIND_WALL_URL',        /* same /exec as the wall */
+  PROP_TOKEN: 'FACTFIND_GOAL_TOKEN',    /* a branch sign-in token */
+  CACHE_SEC: 600
+};
+
+function goalFeed_(force) {
+  var cache = CacheService.getScriptCache();
+  if (!force) {
+    var hit = cache.get('ffgoals');
+    if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  }
+  var props = PropertiesService.getScriptProperties();
+  var url = str_(props.getProperty(FFG.PROP_URL));
+  var tok = str_(props.getProperty(FFG.PROP_TOKEN));
+  if (!url || !tok) return null;
+  try {
+    var res = UrlFetchApp.fetch(
+      url + '?action=goal_wall&token=' + encodeURIComponent(tok) + '&_=' + Date.now(),
+      { muteHttpExceptions: true, followRedirects: true });
+    if (res.getResponseCode() !== 200) return null;
+    var d = JSON.parse(res.getContentText());
+    if (!d || d.ok === false) return null;
+    cache.put('ffgoals', JSON.stringify(d), FFG.CACHE_SEC);
+    return d;
+  } catch (err) {
+    Logger.log('Flight plans unreachable: ' + err);
+    return null;
+  }
+}
+
+/*  Promised against logged, for the week. `ask` is what every filed plan
+ *  adds up to; `week` is what the check-ins actually recorded.
+ *
+ *  Reported as a SHORTFALL and never as a percentage alone: "eleven of
+ *  the thirty-one fact finds the plans ask for" is a sentence somebody
+ *  can act on, and "35%" is one they can argue with.             */
+function goalsCard_(d) {
+  if (!d) return null;
+  var ask = d.ask || {}, wk = d.week || {}, t = d.totals || {}, fy = d.fy || {};
+
+  function pair(asked, got) {
+    asked = Math.round(num_(asked)); got = Math.round(num_(got));
+    return { asked: asked, got: got, short: Math.max(0, asked - got),
+             pct: asked ? Math.round(got / asked * 100) : null };
+  }
+
+  var filed = num_(t.go), people = num_(t.people);
+  return {
+    fyWeek: num_(fy.week), weekOf: str_(fy.weekOf), label: str_(fy.label),
+    /* The gate is on: no filed plan means no fact find. So this is not a
+       nag, it is a count of who cannot work. */
+    filed: filed,
+    people: people,
+    notFiled: Math.max(0, people - filed),
+    checkedIn: num_(wk.n),
+    /* The chain, in the order the plan derives it. */
+    contacts: pair(ask.contactsWeek, wk.contacts),
+    appts:    pair(ask.apptWeek,     wk.appts),
+    factFinds:pair(ask.ffWeek,       wk.ffs),
+    apps:     pair(ask.appsWeek,     wk.apps),
+    api:      pair(ask.apiWeek,      wk.api),
+    committedApi: num_(t.api),
+    committedFyc: num_(t.fyc)
+  };
+}
+
+/** What the meeting reads: the flight plans against the week just worked. */
+function apiGoals_(token) {
+  var me = requireUser_(token);
+  var d = goalFeed_();
+  if (!d) {
+    return { ok: true, live: false,
+             why: 'The flight plans need a branch token. Set FACTFIND_GOAL_TOKEN ' +
+                  'in Script Properties, then this fills itself.' };
+  }
+  var card = goalsCard_(d);
+  var out = { ok: true, live: true, week: card };
+
+  /*  Staff and the manager also get the lanes and the three questions off
+   *  the check-ins. An agent sees the branch totals and their own lane,
+   *  because a league table is not what this is for. */
+  var lanes = (d.lanes || []).map(function (p) {
+    return { name: str_(p.name), rank: num_(p.rank), streak: num_(p.streak),
+             done: !!p.done, pct: num_(p.pct) };
+  });
+  out.lanes = isStaff_(me) ? lanes
+    : lanes.filter(function (p) { return p.name === me.name; });
+  out.firstOff = isStaff_(me) ? (d.firstOff || []) : [];
+  out.finishers = d.finishers || [];
+  return out;
+}
+
+/* ------------------------- the intelligence ------------------------- */
+
+/*  WHAT THIS DELIBERATELY WILL NOT DO.
+ *
+ *  Personal time is asked for so that a day adds up, not so that it
+ *  can be read back to a manager. Anything in ACTIVITY.PRIVATE_GROUPS
+ *  is counted for the branch and stripped from every per-person
+ *  figure unless the person asking IS that person. Take that rule out
+ *  and the honest answers go with it: people do not log family time
+ *  twice a day for a system that reports it upwards.              */
+function activityStats_(days, viewerEmail) {
+  days = num_(days) || 7;
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  var cutKey = dayKey_(cutoff);
+  var viewer = low_(viewerEmail);
+
+  var rows = activityRows_().filter(function (r) { return str_(r['Day']) >= cutKey; });
+
+  var byPerson = {}, catCount = {}, groupCount = {};
+  var asked = 0, answered = 0, notes = [];
+
+  rows.forEach(function (r) {
+    var email = low_(r['Email']);
+    var role = low_(r['Role']) || 'agent';
+    var items = itemsOf_(r);
+    var did = items.length > 0;
+
+    asked++;
+    if (did) answered++;
+
+    if (!byPerson[email]) {
+      byPerson[email] = { email: email, name: str_(r['Name']), unit: str_(r['Unit']),
+                          role: role, asked: 0, answered: 0, items: 0, top: {} };
+    }
+    var P = byPerson[email];
+    P.asked++;
+    if (did) P.answered++;
+
+    items.forEach(function (k) {
+      var g = activityGroup_(role, k);
+      var label = activityLabel_(role, k);
+
+      /* Branch totals count everything, including personal time. */
+      catCount[label] = (catCount[label] || 0) + 1;
+      groupCount[g] = (groupCount[g] || 0) + 1;
+
+      /* Per-person totals never carry a private group to anybody
+         but its owner. */
+      if (isPrivateGroup_(g) && email !== viewer) return;
+      P.items++;
+      P.top[label] = (P.top[label] || 0) + 1;
+    });
+
+    var well = str_(r['Went Well']), inway = str_(r['In The Way']);
+    if (well)  notes.push({ when: str_(r['Day']), block: str_(r['Block']),
+                            name: str_(r['Name']), kind: 'well', body: well });
+    if (inway) notes.push({ when: str_(r['Day']), block: str_(r['Block']),
+                            name: str_(r['Name']), kind: 'blocker', body: inway });
+  });
+
+  var people = Object.keys(byPerson).map(function (e) {
+    var P = byPerson[e];
+    P.rate = P.asked ? Math.round(P.answered / P.asked * 100) : 0;
+    P.top = Object.keys(P.top).map(function (l) { return { label: l, n: P.top[l] }; })
+      .sort(function (a, b) { return b.n - a.n; }).slice(0, 4);
+    return P;
+  }).sort(function (a, b) { return b.answered - a.answered || a.name.localeCompare(b.name); });
+
+  var categories = Object.keys(catCount).map(function (l) { return { label: l, n: catCount[l] }; })
+    .sort(function (a, b) { return b.n - a.n; });
+
+  var workish = (groupCount.work || 0) + (groupCount.service || 0) +
+                (groupCount.admin || 0) + (groupCount.growth || 0);
+
+  return {
+    days: days,
+    from: cutKey,
+    to: dayKey_(new Date()),
+    asked: asked,
+    answered: answered,
+    rate: asked ? Math.round(answered / asked * 100) : 0,
+    silent: people.filter(function (p) { return !p.answered; })
+                  .map(function (p) { return p.name || p.email; }),
+    people: people,
+    categories: categories,
+    groups: groupCount,
+    split: { work: workish, life: groupCount.life || 0 },
+    notes: notes.sort(function (a, b) { return a.when < b.when ? 1 : -1; }).slice(0, 40)
+  };
+}
+
+/** The app's view. An agent sees their own; staff and the manager see
+ *  the branch, with personal time in the totals and in nobody's row. */
+function apiActivity_(token, days) {
+  var me = requireUser_(token);
+  var stats = activityStats_(days, me.email);
+  if (!isStaff_(me)) {
+    stats.people = stats.people.filter(function (p) { return p.email === me.email; });
+    stats.notes = stats.notes.filter(function (n) { return n.name === me.name; });
+    stats.silent = [];
+  }
+  return { ok: true, me: publicUser_(me), activity: stats };
+}
+
+
 function doGet(e) {
   var p = (e && e.parameter) || {};
+
+  /*  The activity check is served as a PAGE and must return before the
+   *  JSON switch below. It is the one route a person reaches from
+   *  their inbox rather than from the meeting front end, so it answers
+   *  in HTML a phone can read, not in JSON. */
+  if (str_(p.action) === 'act' || str_(p.action) === 'chase') {
+    try { return str_(p.action) === 'act' ? activityPage_(p) : chasePage_(p); }
+    catch (err) {
+      return activityShell_('Something went wrong',
+        String(err && err.message ? err.message : err), '');
+    }
+  }
+
   var out;
   try {
     switch (str_(p.action) || 'home') {
       case 'home':       out = apiHome_(p.token); break;
+      case 'wall':       out = apiWall_(p.code, p.id); break;
       case 'meetings':   out = apiMeetings_(p.token); break;
       case 'meeting':    out = apiMeeting_(p.token, p.id); break;
       case 'register':   out = apiRegister_(p.token, p.id); break;
@@ -2992,6 +6219,11 @@ function doGet(e) {
       case 'search':     out = apiArchiveSearch_(p.token, p.q, p.year, p.type); break;
       case 'document':   out = apiArchiveDoc_(p.token, p.id); break;
       case 'log':        out = apiLog_(p.token, p.limit); break;
+      case 'activity':   out = apiActivity_(p.token, p.days); break;
+      case 'factfind':   out = apiFactFind_(p.token); break;
+      case 'goals':      out = apiGoals_(p.token); break;
+      case 'chases':     out = apiChases_(p.token); break;
+      case 'service':    out = apiService_(p.token); break;
       case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }
@@ -3078,8 +6310,197 @@ function onOpen() {
     .addItem('📥  Import the meeting archive', 'promptImportArchive')
     .addItem('🔎  Index the archive for searching', 'promptIndexArchive')
     .addSeparator()
+    .addItem('🧪  Create a sample meeting', 'seedSampleMeetingFromMenu')
+    .addItem('🗑️  Remove the sample meeting', 'removeSampleMeetingFromMenu')
+    .addSeparator()
+    .addItem('🪪  Pull the roster from the Agent Skill Bank', 'promptPullAccessCodes')
+    .addItem('🔁  Set up the standing rota', 'seedRotaFromMenu')
+    .addSeparator()
+    .addItem('📨  Turn on the daily note', 'installDailyNoteFromMenu')
+    .addItem('👁  Send me today\u2019s note to read', 'previewDailyNote')
+    .addSeparator()
+    .addItem('⏱  Turn on the daily time blocks', 'installActivityChecksFromMenu')
+    .addItem('👁  Send me a time-block check to read', 'previewActivityCheck')
+    .addItem('📋  Turn on the Monday brief', 'installMondayBriefFromMenu')
+    .addItem('📊  Connect the Branch Portfolio', 'connectPortfolioSheet')
+    .addItem('📋  Build Monday\u2019s brief now (sends nothing)', 'seedChasesFromMenu')
+    .addItem('🤝  Connect the service sheets', 'setServiceSheets')
+    .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();
+}
+
+/*  THE CODE THEY ALREADY HAVE, NOT A NEW ONE.
+ *
+ *  The agents' access codes live in the Agent Skill Bank on the
+ *  branch portfolio sheet, which is a different spreadsheet from
+ *  this one. Copying thirty-nine codes across by hand is how a
+ *  roster ends up one letter wrong for two people who then cannot
+ *  get into a meeting that is marking them absent, so this reads
+ *  them straight off that sheet and writes them onto People,
+ *  matching on e-mail.
+ *
+ *  The sheet id goes in a Script Property, never in this file: these
+ *  .gs files are published on the branch site.
+ *
+ *  It only ever fills a blank or replaces a code that has changed,
+ *  and it never creates a person — somebody who is not on the
+ *  meeting roster is reported back rather than added, because who
+ *  belongs in a branch meeting is the manager's call, not the skill
+ *  bank's.
+ */
+function pullRoster(sheetId) {
+  sheetId = str_(sheetId) ||
+    PropertiesService.getScriptProperties().getProperty('ROSTER_SHEET_ID') || '';
+  if (!sheetId) throw new Error('No Branch Portfolio sheet id set.');
+  var mm = sheetId.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);   // a pasted link works too
+  if (mm) sheetId = mm[1];
+
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sh = null;
+  ss.getSheets().forEach(function (s) {
+    if (low_(s.getName()).indexOf('agent skill bank') > -1) sh = s;
+  });
+  if (!sh) throw new Error('No "Agent Skill Bank" tab on that sheet.');
+
+  var values = sh.getDataRange().getValues();
+  if (values.length < 2) throw new Error('The Agent Skill Bank tab is empty.');
+
+  /*  The tab carries two columns called Active and two that begin
+   *  "Agent" — the name and the number. A contains-match picks the
+   *  wrong one of each, so every header is matched exactly first and
+   *  only then loosely, and the FIRST hit wins.                    */
+  var head = values[0].map(function (h) { return low_(h).replace(/[^a-z0-9]/g, ''); });
+  var col = function (exact, loose) {
+    for (var i = 0; i < head.length; i++) if (exact.indexOf(head[i]) > -1) return i;
+    if (loose) for (var j = 0; j < head.length; j++) {
+      for (var k = 0; k < loose.length; k++) if (head[j].indexOf(loose[k]) > -1) return j;
+    }
+    return -1;
+  };
+  var cName  = col(['agent', 'name']);
+  var cNo    = col(['agentno', 'agentnumber', 'no'], ['agentno']);
+  var cPass  = col(['password'], ['password']);
+  var cRole  = col(['role']);
+  var cUnit  = col(['unit']);
+  var cAct   = col(['active']);
+  var cMail  = col(['email', 'email2'], ['mail']);
+  var cCode  = col(['portalcode'], ['portalcode', 'accesscode']);
+  if (cNo === -1 && cMail === -1) {
+    throw new Error('That tab has neither an agent number column nor an e-mail column.');
+  }
+
+  var people = readPeople_();
+  var byNo = {}, byMail = {};
+  people.forEach(function (p) {
+    if (p.agentNo) byNo[normNo_(p.agentNo)] = p;
+    if (p.email) byMail[p.email] = p;
+  });
+
+  var added = 0, updated = 0, pwset = 0, skipped = [];
+
+  for (var r = 1; r < values.length; r++) {
+    var row = values[r];
+    var name = cName > -1 ? str_(row[cName]) : '';
+    var no   = cNo   > -1 ? str_(row[cNo])   : '';
+    var mail = cMail > -1 ? low_(row[cMail]) : '';
+    var pass = cPass > -1 ? str_(row[cPass]) : '';
+    if (!name && !no && !mail) continue;
+    if (!no && mail.indexOf('@') < 1) { skipped.push(name || '(row ' + (r + 1) + ')'); continue; }
+
+    var role = cRole > -1 ? low_(row[cRole]) : '';
+    if (ROLES.indexOf(role) === -1) role = 'agent';
+    var unit = cUnit > -1 ? str_(row[cUnit]) : '';
+    var active = cAct > -1 ? (yes_(row[cAct]) ? 'Y' : 'N') : 'Y';
+    var code = cCode > -1 ? str_(row[cCode]) : '';
+
+    var p = (no && byNo[normNo_(no)]) || (mail && byMail[mail]) || null;
+
+    if (!p) {
+      var salt0 = Utilities.getUuid();
+      appendRow_(MEET.TAB_PEOPLE, {
+        'Agent No': no, 'Email': mail, 'Name': name || mail || no, 'Role': role,
+        'Unit': unit, 'Active': active, 'Access Code': code,
+        'PIN Hash': pass ? hashPin_(pass, salt0) : '', 'Salt': pass ? salt0 : '',
+        'Added': new Date(), 'Added By': 'Agent Skill Bank'
+      });
+      added++;
+      if (pass) pwset++;
+      continue;
+    }
+
+    if (no   && normNo_(no) !== normNo_(p.agentNo)) setCell_(MEET.TAB_PEOPLE, p._row, 'Agent No', no);
+    if (mail && mail !== p.email)                   setCell_(MEET.TAB_PEOPLE, p._row, 'Email', mail);
+    if (name && name !== p.name)                    setCell_(MEET.TAB_PEOPLE, p._row, 'Name', name);
+    if (unit)                                       setCell_(MEET.TAB_PEOPLE, p._row, 'Unit', unit);
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Active', active);
+    /*  The manager's own role is never demoted by a pull. The skill
+     *  bank calls everybody an agent, and a pull that quietly took the
+     *  branch manager's own access away would lock the one person who
+     *  can put it back.                                             */
+    if (p.role !== 'manager') setCell_(MEET.TAB_PEOPLE, p._row, 'Role', role);
+    if (code) setCell_(MEET.TAB_PEOPLE, p._row, 'Access Code', code);
+
+    /*  The password is hashed here and the plain one is dropped. A
+     *  pull that found no password leaves whatever they already had,
+     *  so a blank cell on the skill bank never locks somebody out.  */
+    if (pass) {
+      var salt = Utilities.getUuid();
+      setCell_(MEET.TAB_PEOPLE, p._row, 'Salt', salt);
+      setCell_(MEET.TAB_PEOPLE, p._row, 'PIN Hash', hashPin_(pass, salt));
+      setCell_(MEET.TAB_PEOPLE, p._row, 'Attempts', 0);
+      setCell_(MEET.TAB_PEOPLE, p._row, 'Locked Until', '');
+      pwset++;
+    }
+    updated++;
+  }
+
+  PropertiesService.getScriptProperties().setProperty('ROSTER_SHEET_ID', sheetId);
+  log_('pull-roster', 'system', 'manager', 'People',
+    added + ' added, ' + updated + ' updated, ' + pwset + ' passwords set');
+
+  var msg = added + ' added, ' + updated + ' updated. ' +
+    pwset + ' password' + (pwset === 1 ? '' : 's') + ' taken across and hashed — ' +
+    'no password is stored in the meeting sheet.';
+  if (skipped.length) {
+    msg += '\n\n' + skipped.length + ' row' + (skipped.length === 1 ? '' : 's') +
+      ' had neither an agent number nor an e-mail and were skipped:\n' +
+      skipped.slice(0, 15).join('\n') +
+      (skipped.length > 15 ? '\n…and ' + (skipped.length - 15) + ' more' : '');
+  }
+  var shut = readPeople_().filter(function (p) { return p.active && !p.hash && !p.code; });
+  if (shut.length) {
+    msg += '\n\n' + shut.length + ' active people still have no password and no code, so they ' +
+      'cannot sign in and will be marked absent:\n' +
+      shut.slice(0, 15).map(function (p) {
+        return p.name + (p.agentNo ? ' (' + p.agentNo + ')' : '');
+      }).join('\n') +
+      (shut.length > 15 ? '\n…and ' + (shut.length - 15) + ' more' : '');
+  }
+  Logger.log(msg);
+  return msg;
+}
+
+/* The old name, kept so anything that called it still works. */
+function pullAccessCodes(sheetId) { return pullRoster(sheetId); }
+
+
+function promptPullAccessCodes() {
+  var ui = SpreadsheetApp.getUi();
+  var saved = PropertiesService.getScriptProperties().getProperty('ROSTER_SHEET_ID') || '';
+  var res = ui.prompt('Pull the roster from the Agent Skill Bank',
+    'Paste the link to the spreadsheet that holds the Agent Skill Bank\n' +
+    'tab. Name, agent number, role, unit and active come across; the\n' +
+    'password is hashed on the way in and never stored here.' +
+    (saved ? '\n\n(Last used: ' + saved + ')' : ''), ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var id = res.getResponseText().trim() || saved;
+  if (!id) return;
+  try {
+    ui.alert('The roster', pullRoster(id), ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert('The roster', String(err && err.message ? err.message : err), ui.ButtonSet.OK);
+  }
 }
 
 function promptImportArchive() {
@@ -3112,6 +6533,24 @@ function promptIndexArchive() {
         'It works in batches so it never runs past the execution limit.'
       : 'Nothing left to index.') +
     (out.failed.length ? '\n\nCould not read:\n' + out.failed.join('\n') : ''));
+}
+
+/** Set the branch code without redeploying. */
+function promptBranchCode() {
+  var ui = SpreadsheetApp.getUi();
+  var now = joinCode_();
+  var res = ui.prompt('The branch code',
+    'People type this once, when they set their PIN.\n\n' +
+    'It is now: ' + now + '\n\n' +
+    'Type a new one and press OK, or Cancel to leave it alone.\n' +
+    'It takes effect immediately — no redeploy.', ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var v = res.getResponseText().trim();
+  if (!v) return;
+  PropertiesService.getScriptProperties().setProperty('JOIN_CODE', v);
+  log_('branch-code', 'menu', '', 'JOIN_CODE', 'Changed');
+  ui.alert('The branch code is now:\n\n' + v + '\n\n' +
+    'Anyone setting up a PIN types this. Change it again once everyone has enrolled.');
 }
 
 function showAppUrl() {
