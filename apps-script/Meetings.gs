@@ -406,6 +406,18 @@ var SCHEMA = {
   Activity: ['ID', 'Day', 'Block', 'Email', 'Name', 'Role', 'Unit', 'Token',
              'Sent', 'Opened', 'Answered', 'Items', 'Went Well', 'In The Way'],
 
+  /*  ONE ROW PER CASE PER AGENT PER WEEK. The Monday brief asks each agent
+   *  about named cases that are theirs — a maturity coming up, a premium in
+   *  arrears, an orphan file — and Wednesday reads back whether they made
+   *  contact. Long and thin, because the kinds of case will change and the
+   *  branch already has four of them.
+   *
+   *  Ref is a Salesforce record name, never a client name. Nothing on this
+   *  tab identifies a person: the agent knows who CLIENT-0062150 is and
+   *  nobody walking past a screen does.                                  */
+  Chases: ['ID', 'Week', 'Kind', 'Ref', 'Detail', 'Due', 'Email', 'Name', 'Unit',
+           'Sent', 'Answered', 'Contacted', 'Outcome', 'Note', 'Token'],
+
   Log: ['Timestamp', 'Actor', 'Role', 'Action', 'Target', 'Details']
 };
 
@@ -4869,6 +4881,281 @@ function activityShell_(title, message, body) {
 }
 
 /* ===================================================================
+ *  THE MONDAY BRIEF — NAMED CASES, ANSWERED BEFORE WEDNESDAY
+ *
+ *  The branch's standing opportunities are not a mystery; they are rows
+ *  in Salesforce that nobody is asked about by name. Pulled 10 October
+ *  2026:
+ *
+ *    99 policies mature in FY27 — and 86 of them have NO ACTIVE AGENT
+ *    938 premiums sit 45 to 120 days in arrears, 581 of them orphaned
+ *    2,604 live policies, 58% of the book, belong to agents who left
+ *
+ *  So Monday morning each agent gets their own cases, by reference, and
+ *  one question per case: did you make contact. Wednesday reads the
+ *  answers instead of asking the room.
+ *
+ *  WHY ASKING IS THE WHOLE MECHANISM. A list nobody is asked about is a
+ *  report. A list each person is asked about by name, where the answer is
+ *  read out two days later, is accountability — and the difference is one
+ *  e-mail and a column.
+ *
+ *  NO CLIENT NAME GOES IN A CHASE. Ref is the Salesforce record name.
+ *  The agent knows who it is; a screen in the branch does not.
+ * =================================================================== */
+
+var CHASE = {
+  TAB: 'Chases',
+  KINDS: {
+    maturity: { label: 'Maturing soon',      ask: 'Have you spoken to them about what happens at maturity?' },
+    arrears:  { label: 'Premium in arrears', ask: 'Have you contacted them about the premium?' },
+    orphan:   { label: 'Orphan file',        ask: 'Have you introduced yourself as their agent?' },
+    lapse:    { label: 'About to lapse',     ask: 'Have you tried to save it?' }
+  },
+  OUTCOMES: ['Spoke to them', 'Left a message', 'Could not reach them',
+             'Wrong number or address', 'Not mine', 'Not yet'],
+  SEND_HOUR: 7,
+  SEND_DAY: 1               /* Monday — two clear days before Wednesday */
+};
+
+function chaseRows_() { return readTab_(CHASE.TAB); }
+
+function chaseWeek_(d) {
+  d = d || new Date();
+  var mon = new Date(d.getTime());
+  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  return Utilities.formatDate(mon, tz_(), 'yyyy-MM-dd');
+}
+
+function findChaseByToken_(t) {
+  t = str_(t); if (!t) return null;
+  var rows = chaseRows_();
+  for (var i = 0; i < rows.length; i++) if (str_(rows[i]['Token']) === t) return rows[i];
+  return null;
+}
+
+/** Put cases on the tab for this week. Idempotent on Week+Ref+Email, so
+ *  running it twice does not ask anybody the same thing twice. */
+function addChases(list) {
+  if (!list || !list.length) return 0;
+  var week = chaseWeek_();
+  var have = {};
+  chaseRows_().forEach(function (r) {
+    if (str_(r['Week']) === week) have[low_(r['Email']) + '|' + str_(r['Ref'])] = true;
+  });
+  var add = [];
+  list.forEach(function (c) {
+    var key = low_(c.email) + '|' + str_(c.ref);
+    if (!c.email || !c.ref || have[key]) return;
+    have[key] = true;
+    add.push({ 'ID': uid_('CHS'), 'Week': week, 'Kind': low_(c.kind) || 'orphan',
+               'Ref': str_(c.ref), 'Detail': str_(c.detail), 'Due': c.due || '',
+               'Email': low_(c.email), 'Name': str_(c.name), 'Unit': str_(c.unit),
+               'Token': makeToken_() });
+  });
+  appendRows_(CHASE.TAB, add);
+  return add.length;
+}
+
+/*  What Wednesday reads. Answered against sent, and contact made against
+ *  answered — two different failures that must not be reported as one:
+ *  an agent who answered "could not reach them" has done the work, and an
+ *  agent who never answered has not. */
+function chaseStats_(week) {
+  week = week || chaseWeek_();
+  var rows = chaseRows_().filter(function (r) { return str_(r['Week']) === week; });
+  var by = {}, kinds = {};
+  var sent = rows.length, answered = 0, contacted = 0;
+
+  rows.forEach(function (r) {
+    var e = low_(r['Email']);
+    var ans = !!str_(r['Answered']);
+    var got = yes_(r['Contacted']) && str_(r['Contacted']) !== '';
+    if (ans) answered++;
+    if (ans && got) contacted++;
+    var k = low_(r['Kind']) || 'other';
+    kinds[k] = kinds[k] || { sent: 0, answered: 0, contacted: 0 };
+    kinds[k].sent++; if (ans) kinds[k].answered++; if (ans && got) kinds[k].contacted++;
+    if (!by[e]) by[e] = { email: e, name: str_(r['Name']), unit: str_(r['Unit']),
+                          sent: 0, answered: 0, contacted: 0, outcomes: {} };
+    by[e].sent++;
+    if (ans) { by[e].answered++; var o = str_(r['Outcome']); if (o) by[e].outcomes[o] = (by[e].outcomes[o] || 0) + 1; }
+    if (ans && got) by[e].contacted++;
+  });
+
+  var people = Object.keys(by).map(function (e) { return by[e]; })
+    .sort(function (a, b) { return (a.answered / (a.sent || 1)) - (b.answered / (b.sent || 1)); });
+
+  return {
+    week: week, sent: sent, answered: answered, contacted: contacted,
+    silent: people.filter(function (p) { return p.answered === 0; })
+                  .map(function (p) { return p.name || p.email; }),
+    kinds: kinds, people: people
+  };
+}
+
+/** The Monday e-mail: this agent's cases, one question each. */
+function chaseEmail_(email, rows, url) {
+  var first = firstName_(str_(rows[0]['Name']));
+  var link = url + '?action=chase&t=' + encodeURIComponent(str_(rows[0]['Token']));
+  var items = rows.map(function (r) {
+    var k = CHASE.KINDS[low_(r['Kind'])] || { label: str_(r['Kind']) };
+    return '<tr><td style="padding:9px 12px 9px 0;color:#9CAEBF;font-size:13px;white-space:nowrap">' +
+      esc_(k.label) + '</td><td style="padding:9px 0;color:#EAF0F6;font-size:14px">' +
+      '<b>' + esc_(str_(r['Ref'])) + '</b>' +
+      (str_(r['Detail']) ? '<br><span style="color:#6C7E90;font-size:12.5px">' +
+        esc_(str_(r['Detail'])) + '</span>' : '') + '</td></tr>';
+  }).join('');
+
+  return {
+    subject: rows.length + (rows.length === 1 ? ' case' : ' cases') +
+             ' to answer before Wednesday',
+    html:
+      '<div style="font-family:Inter,Segoe UI,Arial,sans-serif;background:#121820;padding:26px 16px">' +
+      '<div style="max-width:560px;margin:0 auto;background:#1C242E;border-radius:16px;' +
+      'border:1px solid rgba(255,255,255,.11);overflow:hidden">' +
+      '<div style="padding:22px 24px 6px">' +
+      '<img src="' + IBRAND_LOGO_() + '" width="38" height="38" alt="" style="border-radius:11px;display:block;margin-bottom:12px">' +
+      '<div style="color:#3B9EFF;font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:700">Monday brief</div>' +
+      '<div style="color:#EAF0F6;font-size:19px;font-weight:700;margin-top:5px">' +
+      esc_(first) + ', these are yours this week.</div>' +
+      '<div style="color:#9CAEBF;font-size:13.5px;line-height:1.6;margin-top:9px">' +
+      'One question against each: did you make contact. Your answers are read out on ' +
+      'Wednesday, so answering is the work — not the outcome.</div></div>' +
+      '<div style="padding:4px 24px 0"><table style="width:100%;border-collapse:collapse">' +
+      items + '</table></div>' +
+      '<div style="padding:18px 24px 24px">' +
+      '<a href="' + esc_(link) + '" style="display:block;text-align:center;background:#3B9EFF;' +
+      'color:#06141F;text-decoration:none;font-weight:700;font-size:15px;padding:14px 18px;' +
+      'border-radius:11px">Answer them</a></div>' +
+      '<div style="padding:13px 24px 20px;border-top:1px solid rgba(255,255,255,.09);' +
+      'color:#6C7E90;font-size:11.5px;line-height:1.65">' +
+      '&ldquo;Could not reach them&rdquo; is a complete answer. Silence is not.</div>' +
+      '</div></div>'
+  };
+}
+
+/** Monday 7am. Writes to every agent who has cases this week. */
+function mondayBrief() {
+  var now = new Date();
+  if (now.getDay() !== CHASE.SEND_DAY) { Logger.log('Not Monday — no brief.'); return 'Not Monday.'; }
+  var url = ''; try { url = ScriptApp.getService().getUrl() || ''; } catch (e) {}
+  if (!url) throw new Error('The web app is not deployed, so there is no link to send.');
+
+  var week = chaseWeek_(now), by = {};
+  chaseRows_().forEach(function (r) {
+    if (str_(r['Week']) !== week || !str_(r['Email'])) return;
+    (by[low_(r['Email'])] = by[low_(r['Email'])] || []).push(r);
+  });
+
+  var sent = 0;
+  Object.keys(by).forEach(function (e) {
+    var rows = by[e];
+    var mail = chaseEmail_(e, rows, url);
+    try {
+      MailApp.sendEmail({ to: e, subject: mail.subject, htmlBody: mail.html, name: MEET.BRANCH });
+      rows.forEach(function (r) { setCell_(CHASE.TAB, r._row, 'Sent', now); });
+      sent++;
+    } catch (err) { Logger.log('Monday brief to ' + e + ': ' + err); }
+  });
+  var msg = sent + ' agent' + (sent === 1 ? '' : 's') + ' written to for week ' + week + '.';
+  log_('monday-brief', 'system', '', week, msg);
+  return msg;
+}
+
+function installMondayBrief() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'mondayBrief') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('mondayBrief').timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(CHASE.SEND_HOUR).create();
+  return 'The Monday brief is on, about ' + CHASE.SEND_HOUR + ':00 each Monday.';
+}
+
+function installMondayBriefFromMenu() {
+  SpreadsheetApp.getUi().alert('The Monday brief', installMondayBrief(), SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+/*  The answer page. Same shape as the activity check: arrived at from an
+ *  inbox, so it answers in HTML, and every control is a GET because an
+ *  HtmlService page is a different origin from /exec.
+ *
+ *  All of an agent's cases for the week are on one page, reached by any
+ *  one of their tokens — a person should answer six cases in one sitting,
+ *  not open six e-mails. */
+function chasePage_(p) {
+  var row = findChaseByToken_(p.token || p.t);
+  if (!row) return activityShell_('That link has expired',
+    'Ask for this week\u2019s brief again, or answer it in the meeting app.', '');
+
+  var week = str_(row['Week']), email = low_(row['Email']);
+  var mine = chaseRows_().filter(function (r) {
+    return str_(r['Week']) === week && low_(r['Email']) === email;
+  });
+
+  /* An answer: ?id=<row id>&c=yes|no&o=<outcome> */
+  var id = str_(p.id), c = low_(p.c), o = str_(p.o), note = str_(p.note);
+  if (id && (c === 'yes' || c === 'no')) {
+    for (var i = 0; i < mine.length; i++) {
+      if (str_(mine[i]['ID']) !== id) continue;
+      var known = CHASE.OUTCOMES.indexOf(o) > -1;
+      setCell_(CHASE.TAB, mine[i]._row, 'Contacted', c === 'yes' ? 'Y' : 'N');
+      setCell_(CHASE.TAB, mine[i]._row, 'Outcome', known ? o : (c === 'yes' ? 'Spoke to them' : 'Not yet'));
+      if (note) setCell_(CHASE.TAB, mine[i]._row, 'Note', note.slice(0, 300));
+      setCell_(CHASE.TAB, mine[i]._row, 'Answered', new Date());
+      mine[i]['Contacted'] = c === 'yes' ? 'Y' : 'N';
+      mine[i]['Outcome'] = known ? o : (c === 'yes' ? 'Spoke to them' : 'Not yet');
+      mine[i]['Answered'] = new Date();
+      break;
+    }
+  }
+
+  var url = ''; try { url = ScriptApp.getService().getUrl() || ''; } catch (e) {}
+  var base = url + '?action=chase&t=' + encodeURIComponent(str_(row['Token']));
+
+  var done = 0;
+  var cards = mine.map(function (r) {
+    var k = CHASE.KINDS[low_(r['Kind'])] || { label: str_(r['Kind']), ask: 'Did you make contact?' };
+    var answered = !!str_(r['Answered']);
+    if (answered) done++;
+    var rid = encodeURIComponent(str_(r['ID']));
+    var opts = CHASE.OUTCOMES.map(function (x) {
+      var on = str_(r['Outcome']) === x;
+      var yes = x !== 'Not yet' && x !== 'Not mine';
+      return '<a class="chip' + (on ? ' on' : '') + '" href="' + esc_(base + '&id=' + rid +
+        '&c=' + (yes ? 'yes' : 'no') + '&o=' + encodeURIComponent(x)) + '">' + esc_(x) + '</a>';
+    }).join('');
+    return '<div class="group">' +
+      '<div class="eyebrow">' + esc_(k.label) + (answered ? ' &middot; answered' : '') + '</div>' +
+      '<h2 style="margin:4px 0 2px">' + esc_(str_(r['Ref'])) + '</h2>' +
+      (str_(r['Detail']) ? '<p class="priv" style="margin:2px 0 10px">' + esc_(str_(r['Detail'])) + '</p>' : '') +
+      '<p class="lede" style="margin:0 0 10px;font-size:13.5px">' + esc_(k.ask) + '</p>' +
+      '<div class="chips">' + opts + '</div></div>';
+  }).join('');
+
+  var body =
+    '<div class="eyebrow">Monday brief &middot; week of ' + esc_(week) + '</div>' +
+    '<h1>' + mine.length + (mine.length === 1 ? ' case' : ' cases') + ', one question each</h1>' +
+    '<p class="lede">&ldquo;Could not reach them&rdquo; is a complete answer. Silence is not &mdash; ' +
+    'these are read out on Wednesday.</p>' + cards +
+    '<div class="done">' + done + ' of ' + mine.length + ' answered.' +
+    (done === mine.length ? ' Nothing else needed &mdash; you can close this page.' : '') + '</div>';
+
+  return activityShell_('Your Monday brief', '', body);
+}
+
+/** What the meeting reads back on Wednesday. */
+function apiChases_(token) {
+  var me = requireUser_(token);
+  var st = chaseStats_();
+  if (!isStaff_(me)) {
+    st.people = st.people.filter(function (p) { return p.email === me.email; });
+    st.silent = [];
+  }
+  return { ok: true, chases: st };
+}
+
+/* ===================================================================
  *  THE FACT FIND WALL, READ RATHER THAN RESTATED
  *
  *  factfind360.com already holds the branch's production: fact finds
@@ -5214,8 +5501,8 @@ function doGet(e) {
    *  JSON switch below. It is the one route a person reaches from
    *  their inbox rather than from the meeting front end, so it answers
    *  in HTML a phone can read, not in JSON. */
-  if (str_(p.action) === 'act') {
-    try { return activityPage_(p); }
+  if (str_(p.action) === 'act' || str_(p.action) === 'chase') {
+    try { return str_(p.action) === 'act' ? activityPage_(p) : chasePage_(p); }
     catch (err) {
       return activityShell_('Something went wrong',
         String(err && err.message ? err.message : err), '');
@@ -5244,6 +5531,7 @@ function doGet(e) {
       case 'activity':   out = apiActivity_(p.token, p.days); break;
       case 'factfind':   out = apiFactFind_(p.token); break;
       case 'goals':      out = apiGoals_(p.token); break;
+      case 'chases':     out = apiChases_(p.token); break;
       case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }
@@ -5341,6 +5629,7 @@ function onOpen() {
     .addSeparator()
     .addItem('⏱  Turn on the daily time blocks', 'installActivityChecksFromMenu')
     .addItem('👁  Send me a time-block check to read', 'previewActivityCheck')
+    .addItem('📋  Turn on the Monday brief', 'installMondayBriefFromMenu')
     .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();

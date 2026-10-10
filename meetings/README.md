@@ -331,6 +331,45 @@ rotating slot is the producer board, and week 4 is the Flight Plan. The wall and
 the plan are both in the app's nav, because a board nobody opens is a board
 nobody built.
 
+## The Monday brief — named cases, answered before Wednesday
+
+The branch's standing opportunities are not a mystery. They are rows in
+Salesforce that nobody is asked about by name. Pulled live on 10 October 2026:
+
+| | |
+|---|---|
+| Policies maturing in FY27 | **99** — and **86 have no active agent** |
+| Premiums 45–74 days in arrears | **493** |
+| Premiums 75–120 days | **445** — of the 938, only **357** sit with an active agent |
+| Live policies on the book | **4,468** |
+| &nbsp;&nbsp;…with an active agent | 1,864 |
+| &nbsp;&nbsp;**…with an agent who has left** | **2,604 — 58%** |
+
+**That last figure is the orphan book, and it is bigger than the serviced book.**
+`SVC.CAMPAIGN.book` in `Service.gs` is still `0`; it now has a real number to be
+set to, and the house rule against a placeholder no longer forces the wall to say
+"target not set".
+
+So: Monday 07:00, every agent gets **their own cases by reference**, one question
+each — did you make contact. Wednesday reads the answers instead of asking the
+room. `mondayBrief()` sends; `installMondayBrief()` schedules it.
+
+**Asking is the whole mechanism.** A list nobody is asked about is a report. A
+list each person is asked about by name, where the answer is read out two days
+later, is accountability — and the difference is one e-mail and a column.
+
+**Answered and contacted are counted separately**, because they are different
+failures. An agent who answered *"could not reach them"* has done the work; an
+agent who never answered has not. `chaseStats_` reports both and names only the
+silent.
+
+**No client name goes in a chase.** `Ref` is the Salesforce record name. The
+agent knows who `CLIENT-0062150` is; a screen in the branch does not, and the
+e-mail carries no name either.
+
+31 tests, including that one agent's token cannot answer another agent's case and
+that an invented outcome is never stored.
+
 ### The flight plans — `apiGoals_`, promised against logged
 
 `GoalPlans.gs` in `fact-find-analyzer` derives an advisor's whole week
