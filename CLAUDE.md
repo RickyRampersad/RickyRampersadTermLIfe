@@ -2794,6 +2794,14 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     - `mix.py`: the soundtrack.
 
     Re-shoot it when the pages change.
+  - **Part 2, what the group sees** (10 October 2026: "show also the video what the client see and the flow of
+    communication"). `groupclientmanagement/group-view.mp4` (1:57, poster `group-view.jpg`) sits under the first film in
+    the manual. It shows the loop as one picture (the letter on Monday, their answers by Friday, the e-mail and Chatter
+    back to staff, staff acting, the next letter). Then it follows the group: the letter in their inbox, sign-in, their
+    items, the history, Correct / Needs a change / Not ours, the stars, the thank-you, the internal e-mail that reaches
+    the staff member, the answer on the staff page, and the manager's view. It is built the same way as the first film
+    (`shots2.js`, `lines2.json`, `timing2.py`, `film2.html`, `mix2.py` in `staffvid/`). `group-loop.png` there is the
+    loop picture alone, for the group chat.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 
