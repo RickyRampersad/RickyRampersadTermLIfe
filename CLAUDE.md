@@ -2775,8 +2775,8 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   manager (`GCM_TRAIN.TO_MANAGER`), never the sales support inbox, because a result is an appraisal. The bank
   was written so that the right answer is never the longest option and the answers spread across A to D; keep
   it that way when adding questions. The standards the manual sets that were not set before (an
-  acknowledgement within a working day, a call within two working days for a rating of 3 or less, Monday
-  follow-up of groups that did not answer) are proposals for the manager to confirm.
+  acknowledgement within a working day, a call within two working days for a rating of 3 or less, and a call
+  or e-mail before the next approval to a group that did not answer) are proposals for the manager to confirm.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
