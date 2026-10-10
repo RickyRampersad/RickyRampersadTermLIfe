@@ -2371,22 +2371,47 @@ function seedRota() {
     Logger.log(msg);
     return msg;
   }
+  /*  ELEVEN ITEMS IN NINETY MINUTES, 9:00 to 10:30.
+   *
+   *  The shape this replaced ran fifteen items over 101 minutes and spent
+   *  forty-one of them having five separate reports read out — outstanding
+   *  requirements, persistency, licensing, scripts and clawback, contract
+   *  delivery, 85-day premium. Every one of those numbers is on a screen
+   *  before anybody sits down, so reading them aloud is the branch paying
+   *  forty minutes a week to be told what it already knows.
+   *
+   *  THE RULE THIS IS BUILT ON: if a number is on a screen, nobody reads it
+   *  out. Those five became one twelve-minute item that covers only what is
+   *  breaching. The time bought back went to the thing that did not exist —
+   *  asking, by name, who answered Monday's brief and who did not.
+   *
+   *  The arithmetic is deliberate and the template on the wall depends on
+   *  it: ninety minutes exactly, fifteen of them the chair's, sixteen
+   *  belonging to the room, two items rotating so they come round rather
+   *  than landing on whoever is willing.                                */
   var rows = [
-    [0, 'Opening | Mission Statement | Moment of Silence', 5, 'all', 'chair', 'Standard opening'],
-    [0, 'Attendance Register Check', 3, 'all', 'fixed', 'Everyone logs in before we open. The app is the register.'],
-    [0, 'Review of Minutes & Action Items Tracker', 10, 'all', 'fixed', 'Carry-forward items first, with what closed since.'],
-    [1, 'Correspondence & Administrative Reminders', 8, 'all', 'fixed', 'Circulars, deadlines, cut-off dates.'],
-    [2, 'Outstanding Requirements Report', 8, 'staff', 'fixed', 'By product and value. 5-day turnaround, 20-day file closure.'],
-    [2, 'Persistency — 2-Year & 5-Year', 8, 'staff', 'fixed', 'Red / orange / green. Branch target 90% against the 75% threshold.'],
-    [2, 'Licensing & CPD Report', 5, 'staff', 'fixed', 'Central Bank approvals by renewal month.'],
-    [2, 'Scripts & Clawback Report', 6, 'staff', 'fixed', 'Dispatch inside the 20-business-day window.'],
-    [2, 'Contract Delivery — past the 10-day line', 6, 'staff', 'fixed', 'Undelivered contracts and who holds them.'],
-    [2, '85-Day Premium Due & Lapse Activity', 8, 'staff', 'fixed', 'Standing item at every branch meeting.'],
-    [3, 'What worked for me this month', 7, 'all', 'rotate', 'One agent, one case, what they actually did. Comes round the room.'],
-    [5, 'Training — one point, taught by one of us', 10, 'all', 'rotate', 'Not the manager. A product, an objection, a system.'],
-    [4, 'Digital Innovation Update', 8, 'all', 'fixed', 'Fact Find 360 and branch automation.'],
-    [6, 'Other Items', 5, 'all', 'fixed', ''],
-    [7, 'Closing Remarks', 4, 'all', 'chair', '']
+    [0, 'Open | Mission Statement | Moment of Silence', 3, 'all', 'chair',
+     'Three minutes. The register is the app; nobody is marked in from the front.'],
+    [3, 'The board — what moved, what did not', 7, 'all', 'chair',
+     'The screen is up. Only the exceptions are spoken aloud.'],
+    [0, 'Last week\u2019s actions', 8, 'all', 'fixed',
+     'Carried forward with owners and dates. What closed is shown, not discussed.'],
+    [3, 'Monday\u2019s brief — who answered', 10, 'all', 'fixed',
+     'The accountability item. Answered against sent, contact made against answered, and the names who sent nothing back.'],
+    [3, 'The campaign — the orphan book', 10, 'all', 'fixed',
+     'Against target, with the pace needed to finish on time. A review filed is the unit measured.'],
+    [2, 'Exceptions only — requirements, persistency, contracts, 85-day', 12, 'staff', 'fixed',
+     'One item, not five. Only what is breaching its standard, and what is being done about it.'],
+    [3, 'What worked for me', 8, 'all', 'rotate',
+     'One agent, one case, what they actually did. Comes round the room.'],
+    [5, 'Training — one point, taught by one of us', 10, 'all', 'rotate',
+     'Not the manager. A product, an objection, a system.'],
+    [4, 'Digital — Fact Find 360 and branch automation', 9, 'all', 'fixed',
+     'What the platforms did without us, and what still needs a person.'],
+    [6, 'Open floor', 8, 'all', 'fixed',
+     'The room\u2019s time. Anything not on the agenda.'],
+    [7, 'Close — each unit commits its number', 5, 'all', 'chair',
+     'Every unit says what it will have done by next Wednesday. That is what next week opens on.']
   ];
   appendRows_(MEET.TAB_ROTA, rows.map(function (r, i) {
     return {
