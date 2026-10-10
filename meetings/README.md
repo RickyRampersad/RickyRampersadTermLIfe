@@ -331,6 +331,42 @@ rotating slot is the producer board, and week 4 is the Flight Plan. The wall and
 the plan are both in the app's nav, because a board nobody opens is a board
 nobody built.
 
+### The flight plans — `apiGoals_`, promised against logged
+
+`GoalPlans.gs` in `fact-find-analyzer` derives an advisor's whole week
+**backwards from their own money**, not from a number the branch hands down:
+
+`income need → FYC need → API goal → apps/year → apps/week → **fact finds/week**
+→ appointments/week → contacts/week`
+
+So "you owe four fact finds this week" is arithmetic off what that person said
+their own year has to pay for. That is the accountability the meeting was
+missing, and it was already built. The weekly check-in (`FY27 Check-ins`)
+records the actuals against it, and carries the three questions worth reading
+out loud: **the win, what is in the way, and what help is needed.**
+
+`GOAL_GATE` is on by default — `{ on: true, exempt: ['branch','staff','guest'] }`
+— so **an agent with no filed plan does not get the fact find.** The meeting
+must therefore never ask "has everyone filed" as an opinion; `goalsCard_` counts
+it, and the people who have not filed are people who cannot work, not people who
+are behind on paperwork.
+
+`goalsCard_` reports every link in that chain as **a shortfall, never a
+percentage alone**: "eleven of the thirty-one fact finds the plans ask for" is a
+sentence somebody can act on; "35%" is one they can argue with. It never shows a
+negative shortfall when somebody beats their plan, and never divides by zero
+when nothing is asked. 12 tests.
+
+There is also a weekly branch update already written: `FY27 Projections`, one
+row a week from the Monday e-mail — advisors, plans filed, committed API and
+FYC, picked up, plans by today, pace, and **checked in last week**. The meeting
+should read that rather than compile its own.
+
+**This one needs a token.** Unlike the production wall there is no public key:
+every goal action is sign-in gated and `goalWall_` refuses an agent outright. Put
+a branch token in Script Property `FACTFIND_GOAL_TOKEN` and the panel fills
+itself; until then it says so rather than showing zeros.
+
 ### The meeting reads that wall now — `apiFactFind_`
 
 `?action=factfind` fetches the same feed `factfind360.com/wall` polls

@@ -4983,6 +4983,124 @@ function apiFactFind_(token) {
   };
 }
 
+/* ===================================================================
+ *  THE FLIGHT PLANS — WHAT WAS PROMISED AGAINST WHAT WAS LOGGED
+ *
+ *  GoalPlans.gs derives an advisor's whole week backwards from their own
+ *  money, not from a number the branch hands down:
+ *
+ *    income need -> FYC need -> API goal -> apps/year -> apps/week
+ *                -> FACT FINDS/week -> appointments/week -> contacts/week
+ *
+ *  So "you owe four fact finds this week" is arithmetic off what that
+ *  person said their year has to pay for. That is the accountability the
+ *  meeting was missing, and it was already built — the weekly check-in
+ *  records the actuals against it, including the three questions worth
+ *  reading out loud: the win, what is in the way, and what help is needed.
+ *
+ *  GOAL_GATE in that file is on by default: an agent with no filed plan
+ *  does not get the fact find. The meeting should therefore never ask
+ *  "has everyone filed" as an opinion — goalsCard_ counts it.
+ *
+ *  THIS NEEDS A BRANCH TOKEN. Unlike the production wall, every goal
+ *  action is sign-in gated (goalWall_ refuses an agent outright), so
+ *  there is no public key to read it with. The token goes in Script
+ *  Properties, never in this file.
+ * =================================================================== */
+
+var FFG = {
+  PROP_URL: 'FACTFIND_WALL_URL',        /* same /exec as the wall */
+  PROP_TOKEN: 'FACTFIND_GOAL_TOKEN',    /* a branch sign-in token */
+  CACHE_SEC: 600
+};
+
+function goalFeed_(force) {
+  var cache = CacheService.getScriptCache();
+  if (!force) {
+    var hit = cache.get('ffgoals');
+    if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  }
+  var props = PropertiesService.getScriptProperties();
+  var url = str_(props.getProperty(FFG.PROP_URL));
+  var tok = str_(props.getProperty(FFG.PROP_TOKEN));
+  if (!url || !tok) return null;
+  try {
+    var res = UrlFetchApp.fetch(
+      url + '?action=goal_wall&token=' + encodeURIComponent(tok) + '&_=' + Date.now(),
+      { muteHttpExceptions: true, followRedirects: true });
+    if (res.getResponseCode() !== 200) return null;
+    var d = JSON.parse(res.getContentText());
+    if (!d || d.ok === false) return null;
+    cache.put('ffgoals', JSON.stringify(d), FFG.CACHE_SEC);
+    return d;
+  } catch (err) {
+    Logger.log('Flight plans unreachable: ' + err);
+    return null;
+  }
+}
+
+/*  Promised against logged, for the week. `ask` is what every filed plan
+ *  adds up to; `week` is what the check-ins actually recorded.
+ *
+ *  Reported as a SHORTFALL and never as a percentage alone: "eleven of
+ *  the thirty-one fact finds the plans ask for" is a sentence somebody
+ *  can act on, and "35%" is one they can argue with.             */
+function goalsCard_(d) {
+  if (!d) return null;
+  var ask = d.ask || {}, wk = d.week || {}, t = d.totals || {}, fy = d.fy || {};
+
+  function pair(asked, got) {
+    asked = Math.round(num_(asked)); got = Math.round(num_(got));
+    return { asked: asked, got: got, short: Math.max(0, asked - got),
+             pct: asked ? Math.round(got / asked * 100) : null };
+  }
+
+  var filed = num_(t.go), people = num_(t.people);
+  return {
+    fyWeek: num_(fy.week), weekOf: str_(fy.weekOf), label: str_(fy.label),
+    /* The gate is on: no filed plan means no fact find. So this is not a
+       nag, it is a count of who cannot work. */
+    filed: filed,
+    people: people,
+    notFiled: Math.max(0, people - filed),
+    checkedIn: num_(wk.n),
+    /* The chain, in the order the plan derives it. */
+    contacts: pair(ask.contactsWeek, wk.contacts),
+    appts:    pair(ask.apptWeek,     wk.appts),
+    factFinds:pair(ask.ffWeek,       wk.ffs),
+    apps:     pair(ask.appsWeek,     wk.apps),
+    api:      pair(ask.apiWeek,      wk.api),
+    committedApi: num_(t.api),
+    committedFyc: num_(t.fyc)
+  };
+}
+
+/** What the meeting reads: the flight plans against the week just worked. */
+function apiGoals_(token) {
+  var me = requireUser_(token);
+  var d = goalFeed_();
+  if (!d) {
+    return { ok: true, live: false,
+             why: 'The flight plans need a branch token. Set FACTFIND_GOAL_TOKEN ' +
+                  'in Script Properties, then this fills itself.' };
+  }
+  var card = goalsCard_(d);
+  var out = { ok: true, live: true, week: card };
+
+  /*  Staff and the manager also get the lanes and the three questions off
+   *  the check-ins. An agent sees the branch totals and their own lane,
+   *  because a league table is not what this is for. */
+  var lanes = (d.lanes || []).map(function (p) {
+    return { name: str_(p.name), rank: num_(p.rank), streak: num_(p.streak),
+             done: !!p.done, pct: num_(p.pct) };
+  });
+  out.lanes = isStaff_(me) ? lanes
+    : lanes.filter(function (p) { return p.name === me.name; });
+  out.firstOff = isStaff_(me) ? (d.firstOff || []) : [];
+  out.finishers = d.finishers || [];
+  return out;
+}
+
 /* ------------------------- the intelligence ------------------------- */
 
 /*  WHAT THIS DELIBERATELY WILL NOT DO.
@@ -5125,6 +5243,7 @@ function doGet(e) {
       case 'log':        out = apiLog_(p.token, p.limit); break;
       case 'activity':   out = apiActivity_(p.token, p.days); break;
       case 'factfind':   out = apiFactFind_(p.token); break;
+      case 'goals':      out = apiGoals_(p.token); break;
       case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }
