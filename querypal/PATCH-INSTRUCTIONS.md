@@ -699,6 +699,97 @@ Run `qpUnsentReport()` from the editor on any day the limit was reached.
 
 ---
 
+### 22 to 25 — `doGet`: a reference is not a credential
+
+**Five single-word edits. Double-click the word, type the new one, nothing else.**
+
+The agent dashboard reads a case's notes through `comments`, its timeline
+through `casehistory`, and the department-reply map through `replies`. None of
+the three asked who was calling. Tested against the live backend on 10 October
+2026: `action=replies` with no sign-in returned the open references waiting on
+a department, and `action=comments` with one of those references returned nine
+comments, every one of them an internal note. The two chain — the first call
+hands you the references, the second turns a reference into the branch's
+private notes on that case.
+
+`addcomment` had the gap from the other side. It checked for a valid code but
+never that the case belonged to the person holding it, so any signed-in agent
+could write onto any case in the branch and, with the trail option, push that
+text to the client and the department. The client portal already guards this
+("prevent commenting on someone else's case"); the staff path never did.
+
+Each edit is one word. Use **Ctrl+F**, paste the search text, then double-click
+the function name after `return` and type the replacement.
+
+| # | Search for | Double-click | Type |
+|---|---|---|---|
+| 22 | `p.action === 'comments'` | `comments_` | `qpComments_` |
+| 23 | `p.action === 'addcomment'` | `addComment_` | `qpAddComment_` |
+| 24 | `p.action === 'casehistory'` | `history_` | `qpHistory_` |
+| 25 | `p.action === 'replies'` | `replies_` | `qpReplies_` |
+
+Each search text appears exactly once. Double-click selects the whole function
+name because `_` is part of a word in this editor — the four lines should read:
+
+```js
+  if (p.action === 'comments')   return qpComments_(e);
+  if (p.action === 'addcomment') return qpAddComment_(e);
+  if (p.action === 'casehistory') return qpHistory_(e);
+  if (p.action === 'replies')    return qpReplies_(e);
+```
+
+Nothing is replaced. Each wrapper in `QueryPalPatch.gs` section 14 checks who
+is asking, then calls the original function that already does the work. The
+scope is the same one `myQueries_` uses, so what a person can read and write on
+a case now matches what their list shows them: the branch everything, a manager
+their team, an agent their own book, a staff member whatever is assigned to
+them. A client or company code cannot reach these at all — the portal has its
+own scoped endpoints, and internal notes stay inside the branch.
+
+### 26 — `normName_` is declared twice, and the wrong one wins
+
+This one is why managers quietly see only their own cases.
+
+`Code.gs` declares `normName_` twice. Line 1231 keeps spaces between names;
+the v8.1 section near the bottom declares it again and strips every character
+that is not a letter. The second declaration wins, because in JavaScript the
+last one in a file is the one that runs. Every comparison that normalises both
+sides still works — but three comparisons test against a literal **written
+with a space**, and those can now never be true:
+
+```js
+if (normName_(name) === 'ricky rampersad') return 'branch';
+if (mv.split('@')[0].replace(/\./g,' ') === normName_(name)) return 'manager';
+```
+
+`'Ricky Rampersad'` becomes `rickyrampersad`, which does not equal
+`ricky rampersad`. So `roleFromHierarchy_` cannot grant the manager role by
+name, and in `myQueries_` a manager whose row carries no email address gets an
+empty team list and sees only their own cases — looking exactly like an agent
+with no error anywhere.
+
+Search for `[^a-z]` — one hit, this line:
+
+```js
+function normName_(s){ return String(s||'').toLowerCase().replace(/[^a-z]/g,''); }
+```
+
+Double-click `normName_` on **that** line and type `normNameTight_`.
+
+Do not delete the line. Renaming it is enough — nothing calls that name, so the
+line becomes dead and the line-1231 version takes over everywhere, which is
+what every comparison in the file was written for. Renaming also avoids the
+whole-block deletes that went wrong before.
+
+Then run `qpAuditTrailScope()` from the editor. It prints one line per code —
+role, how many cases that code can see, how many team keys it resolved — with
+no client text in the output. A manager showing `1 key` and a case count equal
+to their own book has not been matched to their team; the fix for that is their
+email in the Email column of the Agent Codes tab, or their address as a value
+in `AGENT_MANAGER`.
+
+---
+
 ## URGENT — rotate the branch master codes
 
 **Do this today, and do it before anything else on this page.**

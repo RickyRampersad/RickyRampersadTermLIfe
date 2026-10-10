@@ -2009,3 +2009,197 @@ function qpUnsentReport() {
   Logger.log(msg);
   return msg;
 }
+
+
+/* ══════════════════ 14. A REFERENCE IS NOT A CREDENTIAL ══════════════════
+   The agent dashboard reads a case's trail through `comments`, its timeline
+   through `casehistory`, and the department-reply map through `replies`. All
+   three took a reference and checked nothing — no code, no token, no scope.
+   Tested against the live backend on 10 October 2026:
+
+     GET …/exec?action=replies
+       -> every open reference waiting on a department, no sign-in
+     GET …/exec?action=comments&ref=<one of them>
+       -> nine comments, all of them mode:'internal'
+     GET …/exec?action=casehistory&ref=<the same>
+       -> fifteen events, nine of them those same internal notes
+
+   So the two chain: one unauthenticated call hands you the references, the
+   next turns a reference into the branch's private notes on that case. That
+   breaks the rule the client portal was careful about — qpClientHistory_ in
+   section 8c says in as many words that casehistory "must never be what the
+   portal calls" — but nothing stopped a browser calling it directly.
+
+   `addcomment` had the matching gap from the other side. It did check for a
+   valid code, but never that the case belonged to the person holding it, so
+   any signed-in agent could write onto any case in the branch and, with
+   mode=trail, push that text onto the client-visible trail and email the
+   department. clientComment_ already guards exactly this ("prevent commenting
+   on someone else's case"); the staff path simply never did.
+
+   These wrappers put the same scope rule myQueries_ uses on all four, so what
+   a person can read and write on a case matches what they can see in their
+   list: branch everything, a manager their team, an agent their own, a staff
+   member whatever is assigned to them. A client or company code cannot reach
+   these at all — the portal has its own scoped endpoints and internal notes
+   stay inside the branch.
+
+   Router: in doGet, change four lines to call these instead (edits 22-25 of
+   PATCH-INSTRUCTIONS.md). Nothing here replaces the originals; each wrapper
+   checks, then delegates to the Code.gs function that already does the work. */
+
+/* The dashboard is for people who work here. A client code that resolves
+   through findAgent_ must not reach a staff trail by accident. */
+var QP_TRAIL_ROLES = { branch: 1, manager: 1, agent: 1, staff: 1 };
+
+/* Who is asking. A token is preferred — it means they signed in properly and
+   no credential rode along in a URL — but the page still passes a code. */
+function qpWhoAsks_(p) {
+  var me = qpAgentFromToken_((p || {}).token) || findAgent_(String((p || {}).code || ''));
+  if (!me || !QP_TRAIL_ROLES[String(me.role || '')]) return null;
+  return me;
+}
+
+/* Building a manager's team reads every credentials tab, which is far too much
+   work to repeat each time somebody opens a comment box. Five minutes is short
+   enough that adding an agent to a manager's unit shows up the same morning. */
+function qpScopeKeysCached_(me) {
+  var id = String(me.code || me.email || me.name || '').toUpperCase();
+  try {
+    var c = CacheService.getScriptCache(), hit = c.get('qpsk_' + id);
+    if (hit) return JSON.parse(hit);
+    var keys = qpScopeKeys_(me);
+    c.put('qpsk_' + id, JSON.stringify(keys), 300);
+    return keys;
+  } catch (e) { return qpScopeKeys_(me); }
+}
+
+/* Just the three cells that decide who owns a case, rather than the 29-column
+   read the callers used to do. Three narrow ranges beat one wide one on a
+   sheet this size, and opening a trail should feel instant. */
+function qpCaseOwner_(reference) {
+  var ref = String(reference || '').trim();
+  if (!ref) return null;
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var n = sh.getLastRow() - 1;
+  var refs = sh.getRange(2, 1, n, 1).getValues();
+  var at = -1;
+  for (var i = n - 1; i >= 0; i--) {                    // newest first, references are unique
+    if (String(refs[i][0]).trim() === ref) { at = i; break; }
+  }
+  if (at < 0) return null;
+  var ag = sh.getRange(at + 2, 10, 1, 2).getValues()[0];                 // Agent, Agent email
+  var asg = (sh.getMaxColumns() >= 29)
+          ? String(sh.getRange(at + 2, 29).getValue() || '') : '';        // Assigned To
+  return { agent: String(ag[0] || ''), email: String(ag[1] || ''), assigned: asg };
+}
+
+/* The same test myQueries_ applies to a row, so the trail a person can open is
+   exactly the set of cases their list shows them. A reference that does not
+   exist answers the same way as one they may not see: whether a reference is
+   real is itself worth not confirming. */
+function qpMaySeeCase_(me, own) {
+  if (!me || !own) return false;
+  if (me.role === 'branch') return true;
+  if (me.role === 'staff') return normName_(own.assigned) === normName_(me.name);
+  var keys = qpScopeKeysCached_(me);
+  if (!keys) return true;                                // null = see everything
+  return !!(keys[normName_(own.agent)] || keys[normName_(own.email)]);
+}
+
+function qpGuardTrail_(e) {
+  var p = e.parameter || {};
+  var me = qpWhoAsks_(p);
+  if (!me) return { err: json({ ok: false, err: 'sign-in required' }) };
+  var ref = String(p.ref || '').trim();
+  if (!ref) return { err: json({ ok: false, err: 'no reference' }) };
+  if (!qpMaySeeCase_(me, qpCaseOwner_(ref)))
+    return { err: json({ ok: false, err: 'not one of your cases' }) };
+  return { me: me, ref: ref };
+}
+
+function qpComments_(e) {
+  var g = qpGuardTrail_(e);
+  return g.err || comments_(e);
+}
+
+function qpHistory_(e) {
+  var g = qpGuardTrail_(e);
+  return g.err || history_(e);
+}
+
+function qpAddComment_(e) {
+  var g = qpGuardTrail_(e);
+  return g.err || addComment_(e);
+}
+
+/* The reply map is the quiet one: no names and no text, just which references
+   are waiting on a department. That was enough to hand a stranger the keys to
+   the two endpoints above, so it gets scoped too. An unknown caller gets an
+   empty map rather than an error, because the dashboard draws fine without it
+   and a signed-out tab should not throw. */
+function qpReplies_(e) {
+  var me = qpWhoAsks_(e.parameter || {});
+  if (!me) return json({ ok: true, replied: {} });
+  var keys = (me.role === 'branch') ? null : qpScopeKeysCached_(me);
+  var mine = normName_(me.name);
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  var out = {};
+  if (sh && sh.getLastRow() > 1) {
+    var w = Math.min(29, sh.getMaxColumns());
+    var data = sh.getRange(2, 1, sh.getLastRow() - 1, w).getValues();
+    for (var r = 0; r < data.length; r++) {
+      var row = data[r], ref = String(row[0] || '').trim();
+      if (!ref || /closed|resolved/i.test(String(row[3]))) continue;
+      var replied = row[27];                              // col 28 Dept Replied
+      if (!replied) continue;
+      if (keys) {
+        var allowed = (me.role === 'staff')
+          ? normName_(String(row[28] || '')) === mine
+          : !!(keys[normName_(String(row[9] || ''))] || keys[normName_(String(row[10] || ''))]);
+        if (!allowed) continue;
+      }
+      out[ref] = { repliedAt: (replied instanceof Date) ? replied.toISOString() : String(replied) };
+    }
+  }
+  return json({ ok: true, replied: out });
+}
+
+/* Run this from the editor to see the scope rule applied to real codes without
+   printing anybody's case text. Prints one line per code: role, how many open
+   cases that code can see, and where the team came from. */
+function qpAuditTrailScope() {
+  var out = ['CODE          ROLE      CASES VISIBLE   TEAM KEYS'];
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  var data = (sh && sh.getLastRow() > 1)
+    ? sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues() : [];
+  var codes = [];
+  for (var c in AGENT_ACCESS) codes.push(c);
+  try {
+    var tab = codeTable_();
+    for (var t = 0; t < tab.length; t++) if (tab[t].num) codes.push(tab[t].num);
+  } catch (e) {}
+  for (var i = 0; i < codes.length; i++) {
+    var me = findAgent_(codes[i]);
+    if (!me || !QP_TRAIL_ROLES[String(me.role || '')]) continue;
+    var keys = (me.role === 'branch') ? null : qpScopeKeys_(me);
+    var seen = 0, mine = normName_(me.name);
+    for (var r = 0; r < data.length; r++) {
+      if (!String(data[r][0] || '').trim()) continue;
+      var ok;
+      if (!keys) ok = true;
+      else if (me.role === 'staff') ok = normName_(String(data[r][28] || '')) === mine;
+      else ok = !!(keys[normName_(String(data[r][9] || ''))] || keys[normName_(String(data[r][10] || ''))]);
+      if (ok) seen++;
+    }
+    var nk = keys ? Object.keys(keys).length : 0;
+    out.push((codes[i] + '              ').slice(0, 14)
+           + (String(me.role) + '          ').slice(0, 10)
+           + ('     ' + seen).slice(-5) + '           '
+           + (keys ? nk + ' key' + (nk === 1 ? '' : 's') : 'everything'));
+  }
+  var msg = out.join('\n');
+  Logger.log(msg);
+  return msg;
+}

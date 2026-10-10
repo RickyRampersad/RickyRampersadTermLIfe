@@ -1707,6 +1707,14 @@ function goto(n){show('s'+n);setStep(n);}
 let agentAuth=null;            // {code,name,email} — kept for the whole visit
 let _gateTries=0,_gateLockTil=0;
 
+/* Every staff read of a case now says who is asking. The trail, the timeline
+   and the reply map used to travel on a reference alone — so anyone holding a
+   reference could read the branch's internal notes on that case, and any
+   signed-in agent could write onto anybody's. The server does the deciding
+   (qpComments_/qpHistory_/qpAddComment_/qpReplies_, patch section 14); this
+   only makes sure it has something to decide with. */
+const qpCred=()=>agentAuth?'&code='+encodeURIComponent(agentAuth.code):'';
+
 function pickWho(w,intent){document.body.classList.add('flow');
   // Staff area needs a STAFF/manager/branch credential; an agent login can't open it.
   var needStaff=(w==='Staff');
@@ -1906,8 +1914,9 @@ async function histToggle(btn){
   if(box.style.display!=='none'){box.style.display='none';return;}
   box.style.display='';box.innerHTML='<div class="cmtload">Loading full history…</div>';
   try{
-    var r=await fetch(SHEET_WEBHOOK_URL+'?action=casehistory&ref='+btn.dataset.ref);
+    var r=await fetch(SHEET_WEBHOOK_URL+'?action=casehistory&ref='+encodeURIComponent(btn.dataset.ref)+qpCred());
     var d=await r.json();var ev=(d&&d.events)||[];
+    if(d&&d.ok===false){box.innerHTML='<div class="histempty">'+(d.err==='not one of your cases'?'That case is not on your list.':'Sign in again to see the history.')+'</div>';return;}
     if(!ev.length){box.innerHTML='<div class="histempty">No history recorded yet.</div>';return;}
     var icon={logged:'📥',chase:'📣',reply:'📬',trail:'📧',note:'🔒',close:'✅',survey:'⭐',rating:'⭐',system:'🤖'};
     box.innerHTML='<div class="hist">'+ev.map(function(e){
@@ -1928,7 +1937,7 @@ async function tlToggle(btn){
   let steps=[['📥','Logged',d.ts,1]];
   try{
     if(ref&&ref.ref){
-      const r=await fetch(SHEET_WEBHOOK_URL+'?action=comments&ref='+ref.ref);
+      const r=await fetch(SHEET_WEBHOOK_URL+'?action=comments&ref='+encodeURIComponent(ref.ref)+qpCred());
       const j=await r.json();
       (j.items||[]).forEach(i=>{
         const t=String(i.text||'');
@@ -1965,8 +1974,9 @@ function cmtForm(ref){return '<div class="cmtmode"><label><input type="radio" na
 async function cmtLoad(ref,box){
   box.innerHTML='<div class="cmtload">Loading thread…</div>';
   try{
-    const r=await fetch(SHEET_WEBHOOK_URL+'?action=comments&ref='+encodeURIComponent(ref));
+    const r=await fetch(SHEET_WEBHOOK_URL+'?action=comments&ref='+encodeURIComponent(ref)+qpCred());
     const d=await r.json();
+    if(d&&d.ok===false){box.innerHTML='<div class="cmtload">'+(d.err==='not one of your cases'?'That case is not on your list.':'Sign in again to open the thread.')+'</div>';return;}
     box.innerHTML=((d.items&&d.items.length)?d.items.map(i=>
       '<div class="cmt'+(i.mode==='trail'?' tr':'')+'"><b>'+esc(i.author)+'</b><span> '+esc(i.role)+' · '+esc(i.when)+(i.mode==='trail'?' · <b style="color:#C74A34">📧 on trail</b>':' · 🔒 internal')+'</span><p>'+esc(i.text)+'</p></div>').join('')
       :'<div class="cmtload">No comments yet — start the trail.</div>')+cmtForm(ref);
@@ -1982,7 +1992,16 @@ async function cmtSend(btn,refEnc){
     const mode=(mEl&&mEl.checked)?'trail':'internal';
     const r=await fetch(SHEET_WEBHOOK_URL+'?action=addcomment&ref='+refEnc+'&code='+encodeURIComponent(agentAuth.code)+'&mode='+mode+'&text='+encodeURIComponent(t));
     const d=await r.json();
-    if(!d.ok)throw 0;
+    /* A refusal is not a glitch. "Try again" would send them round a loop that
+       fails identically — the server says 'not one of your cases' when the
+       case sits in another agent's book, and only the branch sees everything. */
+    if(!d.ok){
+      btn.disabled=false;btn.textContent='Send';
+      toast(d.err==='not one of your cases'?'That case is not on your list'
+           :d.err==='sign-in required'?'Sign in again to comment'
+           :"Couldn't send — try again");
+      return;
+    }
     toast('Comment posted ✓');
     cmtLoad(decodeURIComponent(refEnc),btn.closest('.cmtbox'));
   }catch(e){btn.disabled=false;btn.textContent='Send';toast("Couldn't send — try again");}
@@ -2036,7 +2055,7 @@ function dashSetup(){
       else if(b)b.remove();}
   }catch(e){}
   try{fetch(SHEET_WEBHOOK_URL+'?action=outcomes').then(r=>r.json()).then(d=>{window.__QPOUT=(d&&d.map)||{};dashRender();}).catch(()=>{});}catch(e){}
-  try{fetch(SHEET_WEBHOOK_URL+'?action=replies').then(r=>r.json()).then(d=>{window.__QPREPLIES=(d&&d.replied)||{};dashRender();}).catch(()=>{});}catch(e){}
+  try{fetch(SHEET_WEBHOOK_URL+'?action=replies'+qpCred()).then(r=>r.json()).then(d=>{window.__QPREPLIES=(d&&d.replied)||{};dashRender();}).catch(()=>{});}catch(e){}
   try{fetch(SHEET_WEBHOOK_URL+'?action=analytics&code='+encodeURIComponent(agentAuth.code)).then(r=>r.json()).then(d=>{window.__QPAI=aiInsight_(d);dashStats();}).catch(()=>{});}catch(e){}
   try{fetch(SHEET_WEBHOOK_URL+'?action=activity').then(r=>r.json()).then(d=>{window.__QPACT=(d&&d.people)||{};window.__QPSYS=d||null;dashStats();}).catch(()=>{});}catch(e){}
   dashMine=true;

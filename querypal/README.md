@@ -90,6 +90,29 @@ never went.
 hundred recipients a day and the autopilot spends them on chases, surveys and
 client updates. When it runs out, follow-ups silently do not go.
 
+**A reference was never a credential, but three endpoints treated it as one.**
+`comments`, `casehistory` and `replies` took a reference and checked nothing.
+Tested live on 10 October 2026: `action=replies` with no sign-in returned every
+open reference waiting on a department, and `action=comments` with one of them
+returned nine comments, all `mode:"internal"`. The two chained — the first call
+handed out the references the second one needed. `addcomment` had the gap from
+the other side: a valid code, but no check that the case belonged to the person
+holding it, so any agent could write onto anybody's case and push it to the
+client on the trail. Patch section 14 wraps all four with the scope rule
+`myQueries_` already used. The page now sends `qpCred()` on every staff read of
+a case, and `tests/scope.test.mjs` fails if a new call site forgets.
+
+**Two declarations of `normName_`, and the wrong one wins.** `Code.gs` declares
+it at line 1231 keeping spaces, then again in the v8.1 section stripping every
+non-letter. The last declaration in a file is the one that runs, so three
+comparisons written against a literal *with a space* can never be true — which
+is why `roleFromHierarchy_` cannot grant the manager role by name, and why a
+manager whose row carries no email gets an empty team and sees only their own
+cases, looking exactly like an agent with no error anywhere. Edit 26 renames
+the second one. `qpAuditTrailScope()` prints role, cases visible and team-key
+count per code, with no client text, so this is visible before anyone notices
+it in the app.
+
 **`qpwall.html` is a byte copy of `wall.html`** under the name the branch
 manager has in Downloads. Keep them identical.
 
