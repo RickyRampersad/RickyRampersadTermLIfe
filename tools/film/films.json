@@ -291,5 +291,42 @@
   "sfx": "sfx-orphan.wav",
   "start": 0,
   "bedsource": "Western Avenue (supplied 20 Sep 2026, 28s) - held outside the repository; re-supply it to rebuild bed-orphan.wav"
+ },
+ "meeting": {
+  "cap": "cap-mtg",
+  "vox": "vomtg",
+  "music": "bed-meeting.wav",
+  "mix": "mtg-mix.wav",
+  "ass": "captions-mtg.ass",
+  "dur": 160.1,
+  "durs": [
+   7.29,
+   10.03,
+   7.75,
+   8.33,
+   6.65,
+   8.59,
+   6.05,
+   7.82,
+   9.26,
+   8.45,
+   8.47,
+   10.2,
+   7.92,
+   7.94,
+   9.69,
+   6.29,
+   8.01,
+   10.01,
+   5.37,
+   6.02
+  ],
+  "out": "rrb-the-meeting.mp4",
+  "musicgain": 0.62,
+  "duck": 0.3,
+  "dark": [],
+  "sfx": "sfx-mtg.wav",
+  "start": 18,
+  "capmode": "strip"
  }
 }
