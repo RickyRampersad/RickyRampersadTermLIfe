@@ -690,7 +690,8 @@ function tabsFor() {
     { id: "prep", label: "My Prep" },
     { id: "actions", label: "Action Items" },
     { id: "archive", label: "Past Meetings" },
-    { id: "topics", label: "Topics" }
+    { id: "topics", label: "Topics" },
+    { id: "service", label: "Branch Service" }
   ];
   if (S.user && (S.user.role === "staff" || S.user.role === "manager")) {
     t.push({ id: "register", label: "Register" });
@@ -766,6 +767,7 @@ function render() {
     case "document": return viewDocument();
     case "topics":   return viewTopics();
     case "topic":    return viewTopic();
+    case "service":  return viewService();
     case "build":    return viewBuild();
     default:         return viewHome();
   }
@@ -2250,6 +2252,219 @@ function refreshCurrent() {
   else if (S.view === "actions") viewActions();
   else if (S.view === "build") viewBuild();
   else loadHome();
+}
+
+/* ---------------- branch service ----------------
+ * The four self-service platforms report here. Everything on this screen
+ * was produced by a client or by the system, not typed in by anybody, so
+ * it is the one tab in the app nobody can dress up before Wednesday.
+ *
+ * Three questions, in the order the branch should care about them:
+ * did we answer Monday's brief, is any file stuck, and what did clients
+ * actually say. No figure appears on its own — every count carries the
+ * thing that says whether it is moving.
+ */
+
+function viewService() {
+  loading("Reading the service platforms…");
+  Promise.all([
+    apiGet("service", { token: S.token }).then(guard).catch(function () { return null; }),
+    apiGet("chases", { token: S.token }).then(guard).catch(function () { return null; })
+  ]).then(function (res) {
+    var sv = res[0], ch = res[1];
+    var out = '<div class="page-head"><div class="kicker">Branch service</div>' +
+      "<h1>What the platforms did without us</h1>" +
+      "<p>The renewal portal, property renewals, Claims TT and the service " +
+      "questionnaire. Nothing on this screen was typed in by anybody.</p></div>";
+
+    out += serviceChases(ch);
+    out += serviceQueries(sv);
+    out += serviceRating(sv);
+
+    $("view").innerHTML = out;
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' +
+      esc(e.message || "Could not reach the service platforms.") + "</div>";
+  });
+}
+
+/* Monday's brief — the only question it asks is whether you called. */
+function serviceChases(res) {
+  var c = res && res.ok && res.chases;
+  if (!c) {
+    return '<div class="section-label">Monday&rsquo;s brief</div>' +
+      '<div class="card flat"><div class="meta">The Monday brief has not run yet. ' +
+      "A manager turns it on from the Branch Meetings menu; it emails every agent " +
+      "their own cases on Monday at seven and asks one question &mdash; did you make " +
+      "contact.</div></div>";
+  }
+  var sent = c.sent || 0, answered = c.answered || 0, contacted = c.contacted || 0;
+  var silent = c.silent || [];
+
+  var head = '<div class="section-label">Monday&rsquo;s brief &middot; week ' + esc(c.week || "") + "</div>";
+  if (!sent) {
+    return head + '<div class="card flat"><div class="meta">No cases went out this week. ' +
+      "Nothing was due, or the brief has not fired yet.</div></div>";
+  }
+
+  /*  Answered and contacted are counted apart on purpose. "Could not
+   *  reach them" is a complete answer and the agent has done the work;
+   *  never answering is not, and only the silent are named.          */
+  var out = head + '<div class="grid3" style="margin-bottom:12px">' +
+    '<div class="stat"><b>' + sent + "</b><span>Cases sent</span></div>" +
+    '<div class="stat' + (answered === sent ? " green" : answered ? " amber" : " red") +
+      '"><b>' + answered + "</b><span>Answered</span></div>" +
+    '<div class="stat' + (contacted ? " teal" : "") + '"><b>' + contacted +
+      "</b><span>Client contacted</span></div></div>";
+
+  out += '<div class="card flat"><div class="meta">' +
+    answered + " of " + sent + " answered" +
+    (answered ? ", and of those " + contacted + " reached the client" : "") + ". " +
+    (answered < sent
+      ? "<b style=\"color:var(--amber)\">" + (sent - answered) + " unanswered</b> — that is the " +
+        "part Wednesday has to ask about, because the system cannot tell the difference " +
+        "between a case nobody worked and a case nobody logged."
+      : "Every case came back before the meeting.") +
+    "</div></div>";
+
+  if (silent.length) {
+    out += '<div class="card"><h3>Nothing back from</h3><div class="chips" style="margin-top:9px">' +
+      silent.map(function (n) { return '<span class="chip red">' + esc(n) + "</span>"; }).join("") +
+      '</div><div class="meta" style="margin-top:10px">Answering &ldquo;could not reach them&rdquo; ' +
+      "counts. Not answering does not.</div></div>";
+  }
+
+  var kinds = c.kinds || {};
+  var keys = Object.keys(kinds);
+  if (keys.length) {
+    out += '<div class="card flat"><h3>By case type</h3><div class="meta" style="margin-top:8px">' +
+      keys.map(function (k) {
+        var x = kinds[k];
+        return "<div>" + esc(k) + " &mdash; " + x.sent + " sent, " + x.answered +
+          " answered, " + x.contacted + " contacted</div>";
+      }).join("") + "</div></div>";
+  }
+  return out;
+}
+
+/* The audit query: a file the client moved and nobody else did. */
+function serviceQueries(res) {
+  var head = '<div class="section-label">Files nobody moved</div>';
+  if (!res || !res.ok) {
+    return head + '<div class="card flat"><div class="meta">The service sheets could not ' +
+      "be read.</div></div>";
+  }
+  if (!res.live) {
+    return head + '<div class="card flat"><div class="meta">' + esc(res.why || "Not connected.") +
+      "</div></div>";
+  }
+  var q = res.queries || {};
+  var stale = res.staleDays || 3;
+
+  /*  A sheet that could not be opened looks exactly like a branch with
+   *  nothing outstanding, so say which it is before showing a zero.  */
+  var sh = res.sheets || {};
+  var warn = (sh.missed && sh.missed.length)
+    ? '<div class="card" style="border-color:rgba(240,112,95,.4)"><div class="meta">' +
+      "<b style=\"color:var(--red)\">" + sh.missed.length + " of " + sh.set +
+      " service sheet(s) could not be opened.</b> What follows is only the part that " +
+      "could be read — treat a zero here as unknown, not as clear.</div></div>"
+    : "";
+
+  if (q.clean) {
+    return head + warn + '<div class="card flat"><div class="meta">' +
+      "<b style=\"color:var(--green)\">Nothing is stuck.</b> Every client instruction has " +
+      "been picked up inside " + stale + " days" +
+      (q.answered ? ", and " + q.answered + " earlier quer" + (q.answered === 1 ? "y has" : "ies have") +
+        " been answered on the record" : "") + ".</div></div>";
+  }
+
+  var cls = q.severity === "bad" ? " red" : " amber";
+  var out = head + warn + '<div class="grid3" style="margin-bottom:12px">' +
+    '<div class="stat' + cls + '"><b>' + (q.open || 0) + "</b><span>Awaiting an answer</span></div>" +
+    '<div class="stat' + (q.oldestDays >= stale * 3 ? " red" : " amber") + '"><b>' +
+      (q.oldestDays || 0) + "</b><span>Days, the oldest</span></div>" +
+    (q.mine ? "" :
+      '<div class="stat"><b>' + (q.autoRaised || 0) + "</b><span>Raised by the system</span></div>") +
+    "</div>";
+
+  out += '<div class="card flat"><div class="meta">' +
+    (q.mine
+      ? "These are yours. A client instructed, the file did not move, and the system " +
+        "asked you about it &mdash; answer it on the renewal dashboard and it clears."
+      : "A client instruction left unprocessed for " + stale + " days raises a query against " +
+        "whoever the file is assigned to, worded by the system. " +
+        (q.autoRaised
+          ? "<b>" + q.autoRaised + " of these nobody had to notice.</b> "
+          : "") +
+        "The oldest has been open " + (q.oldestDays || 0) + " days against a " + stale +
+        "-day standard.") +
+    "</div></div>";
+
+  if ((q.people || []).length) {
+    out += '<div class="card"><h3>Owing an answer</h3>' +
+      (q.people).map(function (p) {
+        return '<div style="display:flex;justify-content:space-between;gap:12px;' +
+          'padding:9px 0;border-bottom:1px solid var(--line)">' +
+          "<div><b>" + esc(p.who) + "</b></div>" +
+          '<div class="meta">' + p.open + " open &middot; oldest " + p.oldestDays + "d</div></div>";
+      }).join("") +
+      '<div class="meta" style="margin-top:10px">No client name is shown. The person named ' +
+      "knows which file it is; a screen the branch walks past does not need to.</div></div>";
+  }
+  return out;
+}
+
+/* One branch service rating, from two books that finally share a scale. */
+function serviceRating(res) {
+  var head = '<div class="section-label">What clients said</div>';
+  if (!res || !res.ok || !res.live) return "";
+  var r = res.rating || {};
+
+  if (!r.replies) {
+    return head + '<div class="card flat"><div class="meta">No client has rated the service ' +
+      "yet. Both books ask three questions on the same 1-to-5 scale once the work is done " +
+      "&mdash; the renewal portal on confirmation, Claims TT when a claim closes &mdash; so " +
+      "the first replies will land here on their own.</div></div>";
+  }
+
+  var band = function (v) {
+    return v === null || v === undefined ? ""
+      : v >= 4.5 ? " green" : v >= 3.5 ? " teal" : v >= 3 ? " amber" : " red";
+  };
+  var show = function (v) { return v === null || v === undefined ? "&mdash;" : v; };
+
+  var out = head + '<div class="grid3" style="margin-bottom:12px">' +
+    '<div class="stat' + band(r.overall) + '"><b>' + show(r.overall) + "</b><span>Overall</span></div>" +
+    '<div class="stat' + band(r.ease) + '"><b>' + show(r.ease) + "</b><span>Ease</span></div>" +
+    '<div class="stat' + band(r.speed) + '"><b>' + show(r.speed) + "</b><span>Speed</span></div>" +
+    "</div>";
+
+  /*  The reply count is part of the number, not a footnote to it. An
+   *  average over four replies is a fact about four people.          */
+  out += '<div class="card flat"><div class="meta">' +
+    "From <b>" + r.replies + " repl" + (r.replies === 1 ? "y" : "ies") + "</b>" +
+    ((r.books || []).length > 1
+      ? " &mdash; " + r.books.map(function (b) {
+          return b.replies + " " + esc(b.book).toLowerCase();
+        }).join(", ")
+      : (r.books || []).length === 1 ? ", all " + esc(r.books[0].book).toLowerCase() : "") +
+    ". " +
+    (r.thin
+      ? "<b style=\"color:var(--amber)\">Too few to average honestly yet.</b> Read the " +
+        "individual replies on the staff dashboard rather than this figure."
+      : "") +
+    "</div></div>";
+
+  if (r.recovery) {
+    out += '<div class="card" style="border-color:rgba(240,112,95,.4)"><h3>' +
+      '<span style="color:var(--red)">' + r.recovery + ' owed a call back</span></h3>' +
+      '<div class="meta" style="margin-top:6px">' + r.recovery + " client" +
+      (r.recovery === 1 ? " rated" : "s rated") + " the service 3 or less. Both platforms " +
+      "already raised the recovery task and put a note on the file &mdash; the call is the " +
+      "part no system does.</div></div>";
+  }
+  return out;
 }
 
 /* ---------------- people (manager) ---------------- */

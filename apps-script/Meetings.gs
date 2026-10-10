@@ -5246,6 +5246,18 @@ function servScore_(v) {
   return (n >= 1 && n <= 5) ? n : null;
 }
 
+/*  An e-mail local part, made fit for a screen people read. The queries
+ *  tab records who owes an answer as an address and nothing else, so
+ *  "arvin.mohammed@…" has to become "Arvin Mohammed" here or the branch
+ *  list reads as lowercase usernames beside properly named colleagues. */
+function servName_(email) {
+  var local = str_(email).split('@')[0];
+  if (!local) return '(unassigned)';
+  return local.split(/[._-]+/).filter(String).map(function (part) {
+    return part.charAt(0).toUpperCase() + part.slice(1);
+  }).join(' ');
+}
+
 function servDays_(v) {
   var d = v instanceof Date ? v : new Date(v);
   if (!d || isNaN(d.getTime())) return null;
@@ -5322,7 +5334,7 @@ function queriesCard_(rows) {
     open.push(age === null ? 0 : age);
     if (q.by === 'system') auto++;
     var who = q.of || '(unassigned)';
-    if (!by[who]) by[who] = { who: who.split('@')[0], open: 0, oldestDays: 0 };
+    if (!by[who]) by[who] = { who: servName_(who), open: 0, oldestDays: 0 };
     by[who].open++;
     if (age !== null && age > by[who].oldestDays) by[who].oldestDays = age;
   });
@@ -5412,7 +5424,7 @@ function apiService_(token) {
    *  front of twenty-eight people on a wall.                          */
   if (!isStaff_(me)) {
     var mine = q.people.filter(function (p) {
-      return p.who === low_(me.email).split('@')[0];
+      return p.who === servName_(me.email);
     });
     q = { open: mine.length ? mine[0].open : 0,
           oldestDays: mine.length ? mine[0].oldestDays : 0,
