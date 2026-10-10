@@ -46,11 +46,16 @@ var CONFIG = {
   // Deployed Apps Script web app (Deploy > New deployment > Web app).
   WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec',
 
-  // Staff access key — the staff dashboard link is WEBAPP_URL?staff=THIS_KEY.
-  // Set it ONLY in your Apps Script copy, never in this repository: this file
-  // is served on the public website, so any value committed here is public.
-  // The key that used to sit here was published and must be treated as burned —
-  // set a fresh long private value in the Apps Script editor.
+  // Staff access key — the staff dashboard link is WEBAPP_URL?staff=THIS_KEY,
+  // so the key IS the credential. It is no longer read from here: the live
+  // value lives in Script Properties under RENEWAL_STAFF_KEY, which can be
+  // rotated without a redeploy. See staffKey_() below.
+  //
+  // This literal is a placeholder and cannot authorise anything — staffKey_()
+  // refuses any value that still says CHANGE-ME, so the dashboard stays shut
+  // rather than opening to everybody who has read this file. (It is served on
+  // the public website; the key that used to sit here was published and must
+  // be treated as burned.) Run "Issue a new staff key" from the menu.
   STAFF_KEY: 'CHANGE-ME-in-Apps-Script-only',
 
   RESPONSES_SHEET: 'Renewal Responses',
@@ -624,8 +629,11 @@ function clientPage_(p) {
 
 function staffPage_(p) {
   var t = HtmlService.createTemplateFromFile('Staff');
-  var authorized = String(p.staff) === CONFIG.STAFF_KEY;
-  t.payload = JSON.stringify({ ok: authorized, key: authorized ? CONFIG.STAFF_KEY : '' });
+  var want = staffKey_();
+  var authorized = !!want && String(p.staff) === want;
+  t.payload = JSON.stringify({ ok: authorized, key: authorized ? want : '',
+    why: want ? '' : 'This dashboard has no staff key set. An admin must add ' +
+      STAFF_KEY_PROP + ' to Script Properties — until then nobody can sign in.' });
   return t.evaluate().setTitle('Guardian Renewals — Staff')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -782,8 +790,57 @@ function normPin_(v) {
   return String(v).trim();
 }
 
+/* ============================ the staff key ============================
+ * The staff dashboard is WEBAPP_URL?staff=KEY, so the key IS the
+ * credential — there is nothing else between a stranger and the screen.
+ * This file is published on the branch website, which is exactly how the
+ * last key was burned. So:
+ *
+ *   - the live value is read from Script Properties, never from code, and
+ *     can be rotated without a redeploy;
+ *   - the literal in CONFIG is a placeholder that can never authorise
+ *     anything. A key that is empty, or still says CHANGE-ME, is refused
+ *     outright rather than quietly granting the dashboard to anybody who
+ *     has read the repository.
+ *
+ * A short key is accepted but reported, because locking the branch out of
+ * its own dashboard would be the worse failure.
+ */
+var STAFF_KEY_PROP = 'RENEWAL_STAFF_KEY';
+var STAFF_KEY_MIN = 20;
+
+/** The key in force, or '' when none is usable. Never throws. */
+function staffKey_() {
+  var k = '';
+  try {
+    k = String(PropertiesService.getScriptProperties().getProperty(STAFF_KEY_PROP) || '').trim();
+  } catch (err) { /* properties unavailable — fall back to CONFIG */ }
+  if (!k) k = String(CONFIG.STAFF_KEY || '').trim();
+  if (!k || /change[-\s]?me/i.test(k)) return '';
+  return k;
+}
+
+/** Writes a fresh random key into Script Properties and shows the link. */
+function newStaffKey() {
+  var ui = SpreadsheetApp.getUi();
+  var res = ui.alert('Issue a new staff key?',
+    'Every existing staff dashboard link stops working immediately and you will\n' +
+    'need to send the team the new one.\n\n' +
+    'Use this now if the old key was ever committed to the repository, pasted\n' +
+    'into a chat, or shared outside the team.', ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+  var key = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
+  PropertiesService.getScriptProperties().setProperty(STAFF_KEY_PROP, key);
+  logActivity_('', 'system', 'staff-key-rotated', Session.getActiveUser().getEmail() || 'staff',
+    'New staff key issued — every previous dashboard link is now dead');
+  showStaffLink();
+}
+
 function requireStaff_(key, me, pin) {
-  if (String(key) !== CONFIG.STAFF_KEY) throw new Error('Invalid staff link.');
+  var want = staffKey_();
+  if (!want) throw new Error('The staff dashboard is not configured. An admin must set ' +
+    STAFF_KEY_PROP + ' in Script Properties.');
+  if (String(key) !== want) throw new Error('Invalid staff link.');
   me = String(me || '').trim().toLowerCase();
   var found = staffList_().filter(function (s) { return s.email === me; })[0];
   if (!found) throw new Error('Your email is not on the Staff sheet — ask an admin to add you.');
@@ -1230,6 +1287,7 @@ function onOpen() {
               : '🧪 Turn test mode ON (rehearse safely)', 'toggleTestMode')
     .addSeparator()
     .addItem('Show staff dashboard link', 'showStaffLink')
+    .addItem('🔑 Issue a new staff key (kills every old link)', 'newStaffKey')
     .addItem('Preview a client portal (row 2)', 'showMyLink')
     .addSeparator()
     .addItem('🔗 Link Risk Details to portal tokens', 'linkRiskDetails')
@@ -1298,9 +1356,24 @@ function installTriggers() {
 
 function showStaffLink() {
   requireUrl_();
-  SpreadsheetApp.getUi().alert('Staff dashboard link (share only with your team):\n\n' +
-    CONFIG.WEBAPP_URL + (CONFIG.WEBAPP_URL.indexOf('?') > -1 ? '&' : '?') + 'staff=' + CONFIG.STAFF_KEY +
-    '\n\nStaff must also be listed on the "Staff" tab (email, name, role, Active=Y).');
+  var ui = SpreadsheetApp.getUi();
+  var key = staffKey_();
+  if (!key) {
+    ui.alert('No staff key is set — the dashboard is closed.\n\n' +
+      'The link itself is the credential, and this script is published on the branch\n' +
+      'website, so the key is read from Script Properties and never from the code.\n\n' +
+      'Either run "Issue a new staff key" from this menu, or set it by hand:\n' +
+      'Apps Script \u2192 Project Settings \u2192 Script Properties \u2192 add\n\n' +
+      '    ' + STAFF_KEY_PROP + ' = a long random value (20+ characters)');
+    return;
+  }
+  ui.alert('Staff dashboard link (share only with your team):\n\n' +
+    CONFIG.WEBAPP_URL + (CONFIG.WEBAPP_URL.indexOf('?') > -1 ? '&' : '?') + 'staff=' + key +
+    '\n\nStaff must also be listed on the "Staff" tab (email, name, role, Active=Y).' +
+    (key.length < STAFF_KEY_MIN
+      ? '\n\n\u26a0 This key is only ' + key.length + ' characters. Anything short enough to\n' +
+        'type out is short enough to guess \u2014 run "Issue a new staff key".'
+      : ''));
 }
 
 function showMyLink() {
