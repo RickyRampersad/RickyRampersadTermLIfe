@@ -4910,7 +4910,9 @@ var CHASE = {
     maturity: { label: 'Maturing soon',      ask: 'Have you spoken to them about what happens at maturity?' },
     arrears:  { label: 'Premium in arrears', ask: 'Have you contacted them about the premium?' },
     orphan:   { label: 'Orphan file',        ask: 'Have you introduced yourself as their agent?' },
-    lapse:    { label: 'About to lapse',     ask: 'Have you tried to save it?' }
+    lapse:    { label: 'About to lapse',     ask: 'Have you tried to save it?' },
+    pending:  { label: 'Pending business',   ask: 'Have you chased the requirement?' },
+    expiry:   { label: 'Cover ending',       ask: 'Have you spoken to them about renewing or converting?' }
   },
   OUTCOMES: ['Spoke to them', 'Left a message', 'Could not reach them',
              'Wrong number or address', 'Not mine', 'Not yet'],
@@ -5153,6 +5155,298 @@ function apiChases_(token) {
     st.silent = [];
   }
   return { ok: true, chases: st };
+}
+
+/* ===================================================================
+ *  THE BRIEF READS THE WATCHLISTS THE BRANCH ALREADY KEEPS
+ *
+ *  The Monday brief was built with nothing to send. Meanwhile the
+ *  Branch Portfolio workbook already carries the work, computed and
+ *  current: dues banded by how far overdue, maturities with the months
+ *  remaining and whether the agent is still here, pending business with
+ *  the requirement and its age, term cover about to expire with the
+ *  conversion right. Re-deriving any of that from Salesforce would be
+ *  building a second, worse copy of a thing the branch maintains.
+ *
+ *  So the brief reads those tabs. Nothing here computes a case; it
+ *  routes one.
+ *
+ *  THE CLIENT'S NAME TRAVELS, BUT ONLY TO THEIR OWN AGENT. The orphan
+ *  tab in that same workbook sets the rule — "share each agent only
+ *  their own households" — and a case that says "policy 5004262667
+ *  needs a pay slip" is not actionable while "Salena Boodhoo needs a
+ *  pay slip" is. The name goes in Detail, which only ever appears in
+ *  that one agent's own e-mail. chaseStats_ returns agent names and
+ *  counts, so no client name reaches a branch screen.
+ *
+ *  ONLY ACTIVE AGENTS ARE GIVEN CASES. A case belonging to someone who
+ *  has left is not sent to a dead mailbox and quietly counted as
+ *  delivered; it is reported as unassigned, which is the orphan
+ *  campaign's work and not the brief's.
+ *
+ *  CAPPED PER AGENT. Twenty-four hundred dues across eighteen agents is
+ *  a list nobody answers. Each agent gets the most urgent few, and the
+ *  rest wait for next Monday — a brief that can be finished before
+ *  Wednesday is the only kind that gets finished.
+ * =================================================================== */
+
+var WATCH = {
+  PROP_ID: 'PORTFOLIO_SHEET_ID',
+
+  /*  Per agent, per week. Eight is about ten minutes of calls and fits
+   *  in one screen of e-mail.                                        */
+  PER_AGENT: 8,
+
+  TAB_ROSTER: 'agent codes',
+
+  /*  Matched loosely on the tab name, so renaming "Watchlist — Dues"
+   *  to "Watchlist - Dues" does not silently stop the brief.
+   *  `cols` names are matched the same way against the header row.   */
+  LISTS: [
+    { match: 'dues', kind: 'arrears', agent: 'agent',
+      ref: ['policy', 'clientno'], due: 'projectedlapse',
+      detail: function (g) {
+        var band = g('band'), who = g('client'), prem = g('modalpremium'),
+            reach = low_(g('reachable')), lapse = g('projectedlapse');
+        return [band ? band + ' days overdue' : 'overdue',
+                who,
+                prem ? 'TT$' + prem + ' modal' : '',
+                lapse ? 'projected lapse ' + lapse : '',
+                reach === 'no' ? 'NO phone or e-mail on file' : ''
+               ].filter(String).join(' · ');
+      },
+      urgency: function (g) { return -num_(g('daysoverdue')); } },
+
+    { match: 'maturit', kind: 'maturity', agent: 'servicingagent',
+      ref: ['policy'], due: 'matures',
+      detail: function (g) {
+        return [g('kind') || 'Policy',
+                'matures ' + g('matures'),
+                g('months') ? '(' + g('months') + ' months)' : '',
+                g('client'),
+                num_(g('fundvalue')) ? 'fund TT$' + g('fundvalue') : ''
+               ].filter(String).join(' · ');
+      },
+      urgency: function (g) { return num_(g('months')); } },
+
+    { match: 'pending', kind: 'pending', agent: 'agent',
+      ref: ['policy'], due: '',
+      detail: function (g) {
+        return [g('requirement') || 'A requirement',
+                'outstanding ' + g('agedays') + ' days',
+                g('client'),
+                g('decision') || g('status'),
+                /*  The sheet writes "NEVER CHASED" into "Being chased by",
+                 *  not into "Last chased" — which stays empty.          */
+                low_(g('beingchasedby')).indexOf('never') === 0 ? 'NEVER CHASED' : ''
+               ].filter(String).join(' · ');
+      },
+      urgency: function (g) { return -num_(g('agedays')); } },
+
+    { match: 'expir', kind: 'expiry', agent: 'servicingagent',
+      ref: ['policy'], due: 'expires',
+      detail: function (g) {
+        return [g('kind') || 'Cover',
+                'ends ' + g('expires'),
+                g('months') ? '(' + g('months') + ' months)' : '',
+                g('client'),
+                low_(g('convertible')).indexOf('yes') === 0
+                  ? 'CONVERTIBLE — the conversion right ends with the term' : ''
+               ].filter(String).join(' · ');
+      },
+      urgency: function (g) { return num_(g('months')); } },
+  ],
+};
+
+/* ---- reading the workbook ---- */
+
+function portfolioBook_() {
+  var id = str_(PropertiesService.getScriptProperties().getProperty(WATCH.PROP_ID));
+  if (!id) return null;
+  var m = id.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (m) id = m[1];
+  try { return SpreadsheetApp.openById(id); }
+  catch (err) { Logger.log('portfolio: ' + err); return null; }
+}
+
+function watchKey_(s) { return low_(s).replace(/[^a-z0-9]/g, ''); }
+
+/** A tab whose name contains `want`, or null. */
+function watchTab_(ss, want) {
+  var hit = null;
+  ss.getSheets().forEach(function (sh) {
+    if (!hit && low_(sh.getName()).indexOf(want) > -1) hit = sh;
+  });
+  return hit;
+}
+
+/** Rows as objects keyed by squashed header, plus a getter. */
+function watchRows_(sh) {
+  if (!sh || sh.getLastRow() < 2) return [];
+  var vals = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+  var head = vals[0].map(watchKey_);
+  return vals.slice(1).map(function (r) {
+    var o = {};
+    head.forEach(function (h, i) { if (h && o[h] === undefined) o[h] = r[i]; });
+    return o;
+  });
+}
+
+/*  "ALEEMA LEYYA MOHAMMED-ALI", "Aleema Mohammed-Ali" and
+ *  "A00427 - Ricky Rampersad" all have to resolve to one person. First
+ *  and last token, letters only — a middle name, a code prefix, a
+ *  hyphen and the case all stop mattering.                           */
+function agentKey_(name) {
+  var n = str_(name).replace(/^[A-Z]\d{3,6}\s*-\s*/i, '');
+  var parts = n.replace(/[^A-Za-z\s]/g, ' ').split(/\s+/).filter(String);
+  if (!parts.length) return '';
+  var first = parts[0], last = parts[parts.length - 1];
+  return (first + '|' + last).toUpperCase();
+}
+
+/** Active people from the workbook's own Agent Codes tab. */
+function watchRoster_(ss) {
+  var sh = watchTab_(ss, WATCH.TAB_ROSTER);
+  var by = {};
+  watchRows_(sh).forEach(function (r) {
+    if (low_(r['active']) !== 'active') return;
+    var email = low_(r['email']);
+    if (!email) return;
+    by[agentKey_(r['name'])] = {
+      email: email,
+      name: str_(r['name']).replace(/^[A-Z]\d{3,6}\s*-\s*/i, ''),
+      unit: str_(r['unit']),
+      role: str_(r['role'])
+    };
+  });
+  return by;
+}
+
+/* ---- the seed ---- */
+
+/**
+ * Fills this week's Chases from the Branch Portfolio watchlists.
+ * Safe to run twice: addChases drops anything already on the week.
+ */
+function seedChasesFromWatchlists() {
+  var ss = portfolioBook_();
+  if (!ss) return { ok: false, why: 'No Branch Portfolio sheet is set. Run ' +
+    '"Connect the Branch Portfolio" from the Branch Meetings menu.' };
+
+  var roster = watchRoster_(ss);
+  var nActive = Object.keys(roster).length;
+  if (!nActive) return { ok: false, why: 'No active people found on the Agent Codes tab.' };
+
+  var byAgent = {}, skipped = {}, read = {}, missingTabs = [];
+
+  WATCH.LISTS.forEach(function (spec) {
+    var sh = watchTab_(ss, spec.match);
+    if (!sh) { missingTabs.push(spec.match); return; }
+    var rows = watchRows_(sh);
+    read[spec.kind] = rows.length;
+
+    rows.forEach(function (r) {
+      var g = function (k) { return str_(r[k]); };
+      var who = agentKey_(r[spec.agent]);
+      var person = roster[who];
+      if (!person) {
+        /*  Nobody active owns this. Counted, named by kind, and left
+         *  for the orphan campaign rather than mailed into a void.  */
+        skipped[spec.kind] = (skipped[spec.kind] || 0) + 1;
+        return;
+      }
+      var ref = '';
+      for (var i = 0; i < spec.ref.length && !ref; i++) ref = str_(r[spec.ref[i]]);
+      if (!ref) return;
+
+      if (!byAgent[person.email]) byAgent[person.email] = { person: person, cases: [] };
+      byAgent[person.email].cases.push({
+        kind: spec.kind, ref: ref, detail: spec.detail(g),
+        due: spec.due ? str_(r[spec.due]) : '',
+        email: person.email, name: person.name, unit: person.unit,
+        _u: spec.urgency(g)
+      });
+    });
+  });
+
+  /*  Most urgent first, then capped. The cap is the point: a list long
+   *  enough to be ignored is worse than a short one that gets done. */
+  var send = [], held = 0;
+  Object.keys(byAgent).forEach(function (e) {
+    var cs = byAgent[e].cases.sort(function (a, b) { return a._u - b._u; });
+    send = send.concat(cs.slice(0, WATCH.PER_AGENT));
+    held += Math.max(0, cs.length - WATCH.PER_AGENT);
+  });
+
+  var added = addChases(send);
+  var out = {
+    ok: true, added: added, agents: Object.keys(byAgent).length, activePeople: nActive,
+    read: read, skipped: skipped, heldBack: held, missingTabs: missingTabs,
+    unassigned: Object.keys(skipped).reduce(function (t, k) { return t + skipped[k]; }, 0)
+  };
+  log_('seed-chases', 'system', 'manager', 'Chases',
+    added + ' case(s) to ' + out.agents + ' agent(s); ' + out.unassigned +
+    ' had no active agent; ' + held + ' held back by the cap');
+  return out;
+}
+
+/* ---- menu ---- */
+
+function connectPortfolioSheet() {
+  var ui = SpreadsheetApp.getUi();
+  var saved = str_(PropertiesService.getScriptProperties().getProperty(WATCH.PROP_ID));
+  var res = ui.prompt('Connect the Branch Portfolio',
+    'Paste the link to the Branch Portfolio workbook — the one holding the\n' +
+    'Watchlist tabs and Agent Codes.\n\n' +
+    'Monday’s brief is built from those tabs. Nothing is computed here;\n' +
+    'the watchlists are read as the branch keeps them.' +
+    (saved ? '\n\nCurrently: ' + saved : ''), ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+
+  var raw = str_(res.getResponseText());
+  if (!raw) {
+    PropertiesService.getScriptProperties().deleteProperty(WATCH.PROP_ID);
+    ui.alert('Disconnected. Monday’s brief will have nothing to send.');
+    return;
+  }
+  PropertiesService.getScriptProperties().setProperty(WATCH.PROP_ID, raw);
+  var ss = portfolioBook_();
+  if (!ss) { ui.alert('Saved, but that workbook could not be opened. Check the link.'); return; }
+
+  var roster = watchRoster_(ss);
+  var found = [], missing = [];
+  WATCH.LISTS.forEach(function (s) {
+    var sh = watchTab_(ss, s.match);
+    if (sh) found.push(sh.getName() + ' (' + Math.max(sh.getLastRow() - 1, 0) + ')');
+    else missing.push(s.match);
+  });
+  ui.alert('Connected to ' + ss.getName() + '.\n\n' +
+    'Active people on Agent Codes: ' + Object.keys(roster).length + '\n\n' +
+    'Watchlists found:\n  ' + (found.join('\n  ') || '(none)') +
+    (missing.length ? '\n\nNot found: ' + missing.join(', ') : '') +
+    '\n\nRun "Build Monday’s brief now" to see what would go out.');
+}
+
+/** Fill this week's cases and report, without sending anything. */
+function seedChasesFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  var r = seedChasesFromWatchlists();
+  if (!r.ok) { ui.alert(r.why); return; }
+
+  var lines = [];
+  Object.keys(r.read).forEach(function (k) {
+    lines.push('  ' + k + ' — ' + r.read[k] + ' on the watchlist' +
+      (r.skipped[k] ? ', ' + r.skipped[k] + ' with no active agent' : ''));
+  });
+  ui.alert('Monday’s brief is built.\n\n' +
+    r.added + ' case(s) queued for ' + r.agents + ' agent(s).\n\n' +
+    lines.join('\n') + '\n\n' +
+    (r.heldBack ? r.heldBack + ' case(s) held back by the ' + WATCH.PER_AGENT +
+      '-per-agent cap — they come round next Monday.\n\n' : '') +
+    (r.unassigned ? r.unassigned + ' case(s) belong to somebody who has left. ' +
+      'Those are the orphan campaign’s, not the brief’s.\n\n' : '') +
+    'Nothing has been e-mailed. The brief sends Monday at ' + CHASE.SEND_HOUR + ':00, ' +
+    'or run "Send Monday’s brief now" to send it immediately.');
 }
 
 /* ===================================================================
@@ -5955,6 +6249,8 @@ function onOpen() {
     .addItem('⏱  Turn on the daily time blocks', 'installActivityChecksFromMenu')
     .addItem('👁  Send me a time-block check to read', 'previewActivityCheck')
     .addItem('📋  Turn on the Monday brief', 'installMondayBriefFromMenu')
+    .addItem('📊  Connect the Branch Portfolio', 'connectPortfolioSheet')
+    .addItem('📋  Build Monday\u2019s brief now (sends nothing)', 'seedChasesFromMenu')
     .addItem('🤝  Connect the service sheets', 'setServiceSheets')
     .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
