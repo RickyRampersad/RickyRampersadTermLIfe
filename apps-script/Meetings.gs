@@ -4868,6 +4868,121 @@ function activityShell_(title, message, body) {
     .setTitle(title);
 }
 
+/* ===================================================================
+ *  THE FACT FIND WALL, READ RATHER THAN RESTATED
+ *
+ *  factfind360.com already holds the branch's production: fact finds
+ *  submitted and approved, the money found, the review queue, and how
+ *  long each manager is taking to decide. The meeting was reciting
+ *  numbers beside it instead of reading it.
+ *
+ *  This fetches the same feed the wall itself polls, server-side, so
+ *  the key is not handed to every browser and twenty-eight people
+ *  opening the agenda is still one call every ten minutes.
+ *
+ *  THE MEDIAN IS NOT THE STORY. Both managers decide in about a day
+ *  (0.9 and 2.2 median), and on 10 October fifteen cases were pending
+ *  with FOURTEEN past the three-day standard and the oldest at thirty
+ *  days. A median that good with a tail that long is a median hiding a
+ *  queue, so queueCard_ reports the breach count and the oldest beside
+ *  it and never the median alone.
+ * =================================================================== */
+
+var FFW = {
+  /*  Both live in Script Properties. The key is already public inside
+   *  factfind360.com/wall, but these .gs files are published on the
+   *  branch site and a credential pasted into one is a credential
+   *  nobody remembers rotating. */
+  PROP_URL: 'FACTFIND_WALL_URL',
+  PROP_KEY: 'FACTFIND_WALL_KEY',
+  CACHE_SEC: 600,
+  TIMEOUT_MS: 20000
+};
+
+/** The live feed, or null when it cannot be reached. Never throws: a
+ *  wall that is down must not take the meeting agenda down with it. */
+function factFindFeed_(force) {
+  var cache = CacheService.getScriptCache();
+  if (!force) {
+    var hit = cache.get('ffwall');
+    if (hit) { try { return JSON.parse(hit); } catch (e) { /* fall through */ } }
+  }
+  var props = PropertiesService.getScriptProperties();
+  var url = str_(props.getProperty(FFW.PROP_URL));
+  var key = str_(props.getProperty(FFW.PROP_KEY));
+  if (!url || !key) return null;
+
+  try {
+    var res = UrlFetchApp.fetch(
+      url + '?action=wall&k=' + encodeURIComponent(key) + '&_=' + Date.now(),
+      { muteHttpExceptions: true, followRedirects: true });
+    if (res.getResponseCode() !== 200) return null;
+    var d = JSON.parse(res.getContentText());
+    if (!d || d.ok === false) return null;
+    cache.put('ffwall', JSON.stringify(d), FFW.CACHE_SEC);
+    return d;
+  } catch (err) {
+    Logger.log('Fact Find wall unreachable: ' + err);
+    return null;
+  }
+}
+
+/*  The queue, said honestly. A count on its own reads as a backlog
+ *  somebody is working through; the breach count and the oldest say
+ *  whether it is moving. */
+function queueCard_(q) {
+  if (!q) return null;
+  var pending = num_(q.pending), breaching = num_(q.breaching), oldest = num_(q.oldestDays);
+  return {
+    pending: pending,
+    breaching: breaching,
+    oldestDays: oldest,
+    oldestWho: str_(q.oldestWho),
+    /* Past the branch's own three-day review standard. */
+    clean: pending > 0 && breaching === 0,
+    severity: breaching === 0 ? 'ok' : (oldest >= 14 || breaching >= pending / 2) ? 'bad' : 'warn'
+  };
+}
+
+/** What the 9:10 pipeline slot reads out, already shaped for a screen. */
+function apiFactFind_(token) {
+  requireUser_(token);
+  var d = factFindFeed_();
+  if (!d) {
+    return { ok: true, live: false,
+             why: 'The Fact Find wall could not be reached. Open factfind360.com/wall.' };
+  }
+
+  var mgr = (d.managerPerf || []).map(function (m) {
+    return { name: str_(m.name), approved: num_(m.approved), returned: num_(m.returned),
+             pending: num_(m.pending), medianDays: num_(m.medianDays),
+             returnRate: num_(m.returnRate), reviewed: num_(m.reviewed) };
+  }).sort(function (a, b) { return b.pending - a.pending; });
+
+  var leaders = (d.leaders || []).slice(0, 6).map(function (a) {
+    return { name: str_(a.name), count: num_(a.count), apiRec: num_(a.apiRec),
+             cover: num_(a.cover), pickedUp: num_(a.pickedUp) };
+  });
+
+  var y = d.year || {}, rec = num_(y.api), got = num_(y.pickedUp);
+  return {
+    ok: true, live: true,
+    asOf: str_(d.asOf),
+    today: d.today || {},
+    week: d.week || {},
+    month: d.month || {},
+    year: { submitted: num_(y.submitted), cover: num_(y.cover),
+            apiRec: rec, pickedUp: got,
+            /* Recommended against actually picked up — the gap the branch
+               is paid on, and the one figure nothing else reports. */
+            conversion: rec ? Math.round(got / rec * 1000) / 10 : null },
+    queue: queueCard_(d.queue),
+    managers: mgr,
+    leaders: leaders,
+    flags: d.flags || {}
+  };
+}
+
 /* ------------------------- the intelligence ------------------------- */
 
 /*  WHAT THIS DELIBERATELY WILL NOT DO.
@@ -5009,6 +5124,7 @@ function doGet(e) {
       case 'document':   out = apiArchiveDoc_(p.token, p.id); break;
       case 'log':        out = apiLog_(p.token, p.limit); break;
       case 'activity':   out = apiActivity_(p.token, p.days); break;
+      case 'factfind':   out = apiFactFind_(p.token); break;
       case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }

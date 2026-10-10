@@ -331,6 +331,29 @@ rotating slot is the producer board, and week 4 is the Flight Plan. The wall and
 the plan are both in the app's nav, because a board nobody opens is a board
 nobody built.
 
+### The meeting reads that wall now — `apiFactFind_`
+
+`?action=factfind` fetches the same feed `factfind360.com/wall` polls
+(`?action=wall&k=…`), server-side through `UrlFetchApp`, cached ten minutes. The
+URL and key live in Script Properties `FACTFIND_WALL_URL` and
+`FACTFIND_WALL_KEY` — the key is already public inside the wall page, but these
+`.gs` files are published on the branch site and a credential pasted into one is
+a credential nobody remembers rotating. It never throws: a wall that is down must
+not take the agenda down with it.
+
+**`queueCard_` never reports the median alone**, and that is the whole point of
+it. Pulled live on 10 October 2026, both managers were deciding in about a day —
+median 0.9 and 2.2 — while **fifteen cases sat pending, fourteen of them past
+the branch's own three-day standard, the oldest at thirty days**. A median that
+good with a tail that long is a median hiding a queue, so the card carries the
+breach count and the oldest beside it, and `clean` is false whenever anything is
+breaching. 13 tests, run against the real feed rather than a fixture.
+
+It also computes the one figure nothing else puts side by side: **API
+recommended against API actually picked up**. On that pull it was $3,021,264
+recommended across 121 fact finds for the year, and $152,626 picked up — **5.1
+per cent**.
+
 ## What the branch already had, and what this duplicated
 
 Worth reading before adding anything else here. The Meeting Builder was built as
