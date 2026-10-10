@@ -5156,6 +5156,318 @@ function apiChases_(token) {
 }
 
 /* ===================================================================
+ *  THE SELF-SERVICE PLATFORMS, READ INTO THE MEETING
+ *
+ *  The branch runs four front doors that resolve their own work — the
+ *  renewal portal, property renewals, Claims TT and the service
+ *  questionnaire. Between them they already do the thing the branch
+ *  keeps saying it wants: a client logs in, logs what they need, and
+ *  the system chases it to a close without sales support touching it.
+ *
+ *  Two of those loops produce the only honest accountability signals in
+ *  the estate, and until now neither reached this meeting:
+ *
+ *  THE AUDIT QUERY. A client instruction left unprocessed for three days
+ *  raises a query against whoever the file is assigned to, by name, on
+ *  the record, worded by the system rather than by a manager. Nobody has
+ *  to notice. It was visible only to somebody who opened the renewal
+ *  staff dashboard, which means it was visible to nobody.
+ *
+ *  THE CLIENT RATING. Both books ask the same three questions on the
+ *  same 1-to-5 scale, so they add up. One service rating for the branch,
+ *  from the clients themselves, measured after the work was done.
+ *
+ *  NEITHER NUMBER IS REPORTED ALONE. An open-query count reads as a
+ *  queue somebody is working through; the oldest one and the name
+ *  against it say whether it is moving. An average rating built from
+ *  four replies is a number about four people, so the reply count rides
+ *  beside it always.
+ *
+ *  READ BY HEADER, NEVER BY COLUMN NUMBER. The renewal survey puts
+ *  speed in column 8 and the claims survey puts it in column 7. A fixed
+ *  index does not fail loudly here — it quietly reads a comment string
+ *  as a score and reports an average nobody can explain.
+ * =================================================================== */
+
+var SERV = {
+  /*  Comma-separated spreadsheet ids or links — the renewals sheet and
+   *  the claims sheet are separate containers, so both are needed to
+   *  see the whole picture. Either one alone still works.            */
+  PROP_IDS: 'SERVICE_SHEET_IDS',
+  CACHE_SEC: 600,
+
+  TAB_QUERIES: 'Queries',
+  SURVEY_TABS: [
+    { tab: 'Surveys',       book: 'Renewals', overall: 'satisfaction' },
+    { tab: 'Claim Surveys', book: 'Claims',   overall: 'overall' },
+  ],
+
+  /*  The renewal portal's own threshold — an instruction sitting this
+   *  long is what raises the query in the first place.               */
+  STALE_DAYS: 3,
+
+  /*  A rating at or below this is a service-recovery call somebody owes.
+   *  Both platforms use the same number.                              */
+  RECOVERY_AT: 3,
+};
+
+/** The spreadsheets to read, as ids. A pasted link works. */
+function serviceSheetIds_() {
+  var raw = str_(PropertiesService.getScriptProperties().getProperty(SERV.PROP_IDS));
+  if (!raw) return [];
+  return raw.split(',').map(function (part) {
+    var v = str_(part);
+    var m = v.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : v;
+  }).filter(String);
+}
+
+/*  Header lookup that tolerates every spelling these tabs actually use:
+ *  'Satisfaction (1-5)', 'Overall (1-5)', 'Asked Of', 'Answered By'.  */
+function servHead_(row) {
+  var map = {};
+  row.forEach(function (h, i) {
+    var k = low_(h).replace(/\(.*?\)/g, '').replace(/[^a-z0-9]/g, '');
+    if (k && map[k] === undefined) map[k] = i;
+  });
+  return map;
+}
+
+function servCell_(row, map, key) {
+  var i = map[key];
+  return i === undefined ? '' : row[i];
+}
+
+/*  A 1-to-5 score, or null. Anything outside the range — a blank, a
+ *  comment that drifted into the wrong column, a stray 0 — is not a
+ *  score and must never land in an average.                          */
+function servScore_(v) {
+  var n = Number(v);
+  return (n >= 1 && n <= 5) ? n : null;
+}
+
+function servDays_(v) {
+  var d = v instanceof Date ? v : new Date(v);
+  if (!d || isNaN(d.getTime())) return null;
+  return Math.floor((new Date().getTime() - d.getTime()) / 86400000);
+}
+
+/** Everything the meeting needs, or null when no sheet is set. Never throws:
+ *  a service sheet that has moved must not take the agenda down with it. */
+function serviceFeed_(force) {
+  var cache = CacheService.getScriptCache();
+  if (!force) {
+    var hit = cache.get('servfeed');
+    if (hit) { try { return JSON.parse(hit); } catch (e) { /* fall through */ } }
+  }
+  var ids = serviceSheetIds_();
+  if (!ids.length) return null;
+
+  var queries = [], surveys = [], reached = 0, missed = [];
+  ids.forEach(function (id) {
+    var ss;
+    try { ss = SpreadsheetApp.openById(id); }
+    catch (err) { missed.push(id.slice(0, 8)); return; }
+    reached++;
+
+    var qsh = ss.getSheetByName(SERV.TAB_QUERIES);
+    if (qsh && qsh.getLastRow() > 1) {
+      var qv = qsh.getRange(1, 1, qsh.getLastRow(), qsh.getLastColumn()).getValues();
+      var qm = servHead_(qv[0]);
+      qv.slice(1).forEach(function (r) {
+        var of_ = low_(servCell_(r, qm, 'askedof'));
+        if (!of_) return;
+        queries.push({
+          created: servCell_(r, qm, 'created'),
+          of: of_,
+          by: low_(servCell_(r, qm, 'askedby')),
+          status: str_(servCell_(r, qm, 'status')),
+        });
+      });
+    }
+
+    SERV.SURVEY_TABS.forEach(function (spec) {
+      var sh = ss.getSheetByName(spec.tab);
+      if (!sh || sh.getLastRow() < 2) return;
+      var sv = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+      var sm = servHead_(sv[0]);
+      sv.slice(1).forEach(function (r) {
+        surveys.push({
+          book: spec.book,
+          overall: servScore_(servCell_(r, sm, spec.overall)),
+          ease: servScore_(servCell_(r, sm, 'ease')),
+          speed: servScore_(servCell_(r, sm, 'speed')),
+          when: servCell_(r, sm, 'timestamp'),
+        });
+      });
+    });
+  });
+
+  var feed = { queries: queries, surveys: surveys, sheets: ids.length,
+               reached: reached, missed: missed };
+  cache.put('servfeed', JSON.stringify(feed), SERV.CACHE_SEC);
+  return feed;
+}
+
+/*  Who owes an answer, and for how long. The count on its own is the
+ *  least useful form of this number: a branch with eleven open queries
+ *  spread over nine days is fine, and a branch with two open for a
+ *  month is not.                                                      */
+function queriesCard_(rows) {
+  var open = [], answered = 0, auto = 0, by = {};
+  (rows || []).forEach(function (q) {
+    if (/^answered$/i.test(q.status)) { answered++; return; }
+    if (!/^open$/i.test(q.status)) return;
+    var age = servDays_(q.created);
+    open.push(age === null ? 0 : age);
+    if (q.by === 'system') auto++;
+    var who = q.of || '(unassigned)';
+    if (!by[who]) by[who] = { who: who.split('@')[0], open: 0, oldestDays: 0 };
+    by[who].open++;
+    if (age !== null && age > by[who].oldestDays) by[who].oldestDays = age;
+  });
+
+  var oldest = open.length ? Math.max.apply(null, open) : 0;
+  var people = Object.keys(by).map(function (k) { return by[k]; })
+    .sort(function (a, b) { return b.oldestDays - a.oldestDays || b.open - a.open; });
+
+  return {
+    open: open.length,
+    answered: answered,
+    /*  Raised by the system rather than by a manager — nobody had to
+     *  notice the file was stuck, which is the whole point.          */
+    autoRaised: auto,
+    oldestDays: oldest,
+    people: people,
+    clean: open.length === 0,
+    /*  Scaled off the branch's own standard rather than a round number.
+     *  The portal raises the query at three days; a query still open at
+     *  three times that is not a warning, it is the thing the mechanism
+     *  existed to prevent.                                             */
+    severity: open.length === 0 ? 'ok'
+            : (oldest >= SERV.STALE_DAYS * 3 || open.length >= 8) ? 'bad' : 'warn',
+  };
+}
+
+/*  One service rating for the branch, from two books that finally use
+ *  the same scale. The reply count is part of the number, not a
+ *  footnote to it.                                                    */
+function ratingCard_(rows) {
+  var all = { overall: [], ease: [], speed: [] }, books = {}, recovery = 0, replies = 0;
+  (rows || []).forEach(function (s) {
+    var any = s.overall || s.ease || s.speed;
+    if (!any) return;
+    replies++;
+    if (!books[s.book]) books[s.book] = { book: s.book, replies: 0, scores: [] };
+    books[s.book].replies++;
+    ['overall', 'ease', 'speed'].forEach(function (k) {
+      if (s[k]) { all[k].push(s[k]); if (k === 'overall') books[s.book].scores.push(s[k]); }
+    });
+    if ((s.overall && s.overall <= SERV.RECOVERY_AT) ||
+        (s.speed && s.speed <= SERV.RECOVERY_AT)) recovery++;
+  });
+
+  var mean = function (a) {
+    return a.length
+      ? Math.round(a.reduce(function (t, n) { return t + n; }, 0) / a.length * 10) / 10
+      : null;
+  };
+
+  return {
+    replies: replies,
+    overall: mean(all.overall),
+    ease: mean(all.ease),
+    speed: mean(all.speed),
+    /*  Clients who rated the service 3 or less. Each one is a call
+     *  somebody owes, and both platforms raise a task for it.        */
+    recovery: recovery,
+    books: Object.keys(books).map(function (k) {
+      return { book: books[k].book, replies: books[k].replies, avg: mean(books[k].scores) };
+    }).sort(function (a, b) { return b.replies - a.replies; }),
+    /*  Below this many replies the average is about the respondents,
+     *  not about the branch, and the screen says so instead of
+     *  printing a figure that looks like a measurement.              */
+    thin: replies < 5,
+    severity: replies === 0 ? 'none'
+            : (mean(all.overall) !== null && mean(all.overall) < 3.5) ? 'bad'
+            : recovery > 0 ? 'warn' : 'ok',
+  };
+}
+
+/** What the service slot reads out, already shaped for a screen. */
+function apiService_(token) {
+  var me = requireUser_(token);
+  var d = serviceFeed_();
+  if (!d) {
+    return { ok: true, live: false,
+             why: 'No service sheet is set. A manager must run "Connect the service sheets" ' +
+                  'from the Branch Meeting menu — the renewal sheet and the claims sheet.' };
+  }
+
+  var q = queriesCard_(d.queries);
+  var r = ratingCard_(d.surveys);
+
+  /*  An agent sees only what is theirs. The branch picture — who else
+   *  owes an answer — is the manager's to open, not something to put in
+   *  front of twenty-eight people on a wall.                          */
+  if (!isStaff_(me)) {
+    var mine = q.people.filter(function (p) {
+      return p.who === low_(me.email).split('@')[0];
+    });
+    q = { open: mine.length ? mine[0].open : 0,
+          oldestDays: mine.length ? mine[0].oldestDays : 0,
+          answered: 0, autoRaised: 0, people: mine,
+          clean: !mine.length, severity: mine.length ? 'warn' : 'ok', mine: true };
+  }
+
+  return {
+    ok: true, live: true,
+    queries: q,
+    rating: r,
+    /*  Said plainly, because a sheet that could not be opened looks
+     *  exactly like a branch with no open queries.                   */
+    sheets: { set: d.sheets, reached: d.reached, missed: d.missed },
+    staleDays: SERV.STALE_DAYS,
+  };
+}
+
+/** Menu: point the meeting at the renewal and claims spreadsheets. */
+function setServiceSheets() {
+  var ui = SpreadsheetApp.getUi();
+  var saved = str_(PropertiesService.getScriptProperties().getProperty(SERV.PROP_IDS));
+  var res = ui.prompt('Connect the service sheets',
+    'Paste the links to the spreadsheets behind the renewal portal and\n' +
+    'Claims TT, separated by a comma. Either one on its own works.\n\n' +
+    'The meeting reads two things from them: who owes an answer on a\n' +
+    'stuck file, and what clients rated the service. No client name and\n' +
+    'no policy detail is read.' +
+    (saved ? '\n\nCurrently: ' + saved : ''), ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+
+  var raw = str_(res.getResponseText());
+  if (!raw) {
+    PropertiesService.getScriptProperties().deleteProperty(SERV.PROP_IDS);
+    ui.alert('Disconnected. The service slot will say so rather than show zeros.');
+    return;
+  }
+  PropertiesService.getScriptProperties().setProperty(SERV.PROP_IDS, raw);
+  CacheService.getScriptCache().remove('servfeed');
+
+  var d = serviceFeed_(true);
+  if (!d) { ui.alert('Saved, but nothing could be read back. Check the links.'); return; }
+  var q = queriesCard_(d.queries), r = ratingCard_(d.surveys);
+  ui.alert('Connected.\n\n' +
+    d.reached + ' of ' + d.sheets + ' sheet(s) opened' +
+    (d.missed.length ? ' — could not open: ' + d.missed.join(', ') : '') + '\n\n' +
+    'Open audit queries: ' + q.open +
+      (q.open ? ' (oldest ' + q.oldestDays + ' days, ' + q.autoRaised + ' raised by the system)' : '') + '\n' +
+    'Client ratings: ' + r.replies + ' repl' + (r.replies === 1 ? 'y' : 'ies') +
+      (r.overall === null ? '' : ', averaging ' + r.overall + '/5') +
+      (r.recovery ? ' · ' + r.recovery + ' owed a recovery call' : '') + '\n\n' +
+    'This appears in the meeting under Branch service.');
+}
+
+/* ===================================================================
  *  THE FACT FIND WALL, READ RATHER THAN RESTATED
  *
  *  factfind360.com already holds the branch's production: fact finds
@@ -5532,6 +5844,7 @@ function doGet(e) {
       case 'factfind':   out = apiFactFind_(p.token); break;
       case 'goals':      out = apiGoals_(p.token); break;
       case 'chases':     out = apiChases_(p.token); break;
+      case 'service':    out = apiService_(p.token); break;
       case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }
@@ -5630,6 +5943,7 @@ function onOpen() {
     .addItem('⏱  Turn on the daily time blocks', 'installActivityChecksFromMenu')
     .addItem('👁  Send me a time-block check to read', 'previewActivityCheck')
     .addItem('📋  Turn on the Monday brief', 'installMondayBriefFromMenu')
+    .addItem('🤝  Connect the service sheets', 'setServiceSheets')
     .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();
