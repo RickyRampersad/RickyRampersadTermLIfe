@@ -2392,26 +2392,33 @@ function seedRota() {
   var rows = [
     [0, 'Open | Mission Statement | Moment of Silence', 3, 'all', 'chair',
      'Three minutes. The register is the app; nobody is marked in from the front.'],
-    [3, 'The board — what moved, what did not', 7, 'all', 'chair',
-     'The screen is up. Only the exceptions are spoken aloud.'],
-    [0, 'Last week\u2019s actions', 8, 'all', 'fixed',
-     'Carried forward with owners and dates. What closed is shown, not discussed.'],
-    [3, 'Monday\u2019s brief — who answered', 10, 'all', 'fixed',
-     'The accountability item. Answered against sent, contact made against answered, and the names who sent nothing back.'],
-    [3, 'The campaign — the orphan book', 10, 'all', 'fixed',
+
+    /*  PRODUCTION LEADS. Items two to five are thirty-eight of the ninety
+     *  minutes and they are the first thing after the door closes. The
+     *  branch does not open on admin and work its way towards selling;
+     *  it opens on what was written and what is there to write.       */
+    [3, 'The production board', 7, 'all', 'chair',
+     'Written this week against target, by unit. The screen is up \u2014 only the exceptions are spoken aloud.'],
+    [3, 'This week\u2019s call list', 12, 'all', 'fixed',
+     'The cross-sell band the sheet scored "call this week" \u2014 the gap named and the question already written for each one. Who called, what was asked, what closed.'],
+    [3, 'Maturities \u2014 money in motion', 10, 'all', 'fixed',
+     'Every policy reaching maturity is a conversation about where the money goes next. Nothing converts better than money already moving.'],
+    [3, 'The campaign \u2014 the orphan book', 9, 'all', 'fixed',
      'Against target, with the pace needed to finish on time. A review filed is the unit measured.'],
-    [2, 'Exceptions only — requirements, persistency, contracts, 85-day', 12, 'staff', 'fixed',
-     'One item, not five. Only what is breaching its standard, and what is being done about it.'],
+
+    [3, 'Accountability \u2014 Monday\u2019s brief and last week\u2019s actions', 10, 'all', 'fixed',
+     'Answered against sent, contact made against answered, the names who sent nothing back, and every action carried forward with its owner.'],
+    [2, 'Conservation and exceptions', 8, 'staff', 'fixed',
+     'What we are about to lose, and what is breaching its standard \u2014 dues, lapses, requirements, persistency, contracts, 85-day. Only the breaches.'],
+
     [3, 'What worked for me', 8, 'all', 'rotate',
      'One agent, one case, what they actually did. Comes round the room.'],
-    [5, 'Training — one point, taught by one of us', 10, 'all', 'rotate',
+    [5, 'Training \u2014 one point, taught by one of us', 10, 'all', 'rotate',
      'Not the manager. A product, an objection, a system.'],
-    [4, 'Digital — Fact Find 360 and branch automation', 9, 'all', 'fixed',
-     'What the platforms did without us, and what still needs a person.'],
     [6, 'Open floor', 8, 'all', 'fixed',
      'The room\u2019s time. Anything not on the agenda.'],
-    [7, 'Close — each unit commits its number', 5, 'all', 'chair',
-     'Every unit says what it will have done by next Wednesday. That is what next week opens on.']
+    [7, 'Close \u2014 each unit commits its number', 5, 'all', 'chair',
+     'Every unit says what it will have written by next Wednesday. That is what next week opens on.']
   ];
   appendRows_(MEET.TAB_ROTA, rows.map(function (r, i) {
     return {
@@ -4937,7 +4944,11 @@ var CHASE = {
     orphan:   { label: 'Orphan file',        ask: 'Have you introduced yourself as their agent?' },
     lapse:    { label: 'About to lapse',     ask: 'Have you tried to save it?' },
     pending:  { label: 'Pending business',   ask: 'Have you chased the requirement?' },
-    expiry:   { label: 'Cover ending',       ask: 'Have you spoken to them about renewing or converting?' }
+    expiry:   { label: 'Cover ending',       ask: 'Have you spoken to them about renewing or converting?' },
+    /*  Production, not conservation. The question is not whether they
+     *  were contacted but whether the ask was actually made — a call
+     *  that avoided the subject is not this case closed.            */
+    opportunity: { label: 'Opportunity',     ask: 'Did you make the ask?' }
   },
   OUTCOMES: ['Spoke to them', 'Left a message', 'Could not reach them',
              'Wrong number or address', 'Not mine', 'Not yet'],
@@ -5222,6 +5233,19 @@ var WATCH = {
    *  in one screen of e-mail.                                        */
   PER_AGENT: 8,
 
+  /*  Opportunities are capped SEPARATELY and never compete with the
+   *  chase cases for room. Put them in one pool and the oldest arrears
+   *  always wins, because overdue sorts harder than opportunity — and
+   *  the branch would spend every week defending and none of it
+   *  selling. Four a week across eighteen agents works the 827-strong
+   *  "call this week" band in about twelve weeks.                   */
+  PER_AGENT_OPP: 4,
+
+  /*  Only the top band is briefed. "Worth a call" and "Keep on file"
+   *  stay on the sheet for anyone with time, but a brief that sends
+   *  everything sends nothing.                                       */
+  OPP_BAND: 'call this week',
+
   TAB_ROSTER: 'agent codes',
 
   /*  Matched loosely on the tab name, so renaming "Watchlist — Dues"
@@ -5267,6 +5291,22 @@ var WATCH = {
                ].filter(String).join(' · ');
       },
       urgency: function (g) { return -num_(g('agedays')); } },
+
+    /*  The production list. The sheet has already scored each client,
+     *  named the gap and written the question to ask — this only
+     *  routes it to the person whose client it is.                 */
+    { match: 'cross', kind: 'opportunity', agent: 'servicingagent',
+      ref: ['client'], due: '',
+      band: 'band',
+      detail: function (g) {
+        var worth = num_(g('worth'));
+        return [g('client'),
+                g('thegap'),
+                worth ? 'worth about TT$' + Math.round(worth).toLocaleString() : '',
+                g('whattoask') ? 'ASK: ' + g('whattoask') : ''
+               ].filter(String).join(' \u00b7 ');
+      },
+      urgency: function (g) { return -num_(g('score')); } },
 
     { match: 'expir', kind: 'expiry', agent: 'servicingagent',
       ref: ['policy'], due: 'expires',
@@ -5380,6 +5420,9 @@ function seedChasesFromWatchlists() {
         skipped[spec.kind] = (skipped[spec.kind] || 0) + 1;
         return;
       }
+      /*  A list with a band only briefs its top band.             */
+      if (spec.band && low_(r[spec.band]) !== WATCH.OPP_BAND) return;
+
       var ref = '';
       for (var i = 0; i < spec.ref.length && !ref; i++) ref = str_(r[spec.ref[i]]);
       if (!ref) return;
@@ -5396,16 +5439,21 @@ function seedChasesFromWatchlists() {
 
   /*  Most urgent first, then capped. The cap is the point: a list long
    *  enough to be ignored is worse than a short one that gets done. */
-  var send = [], held = 0;
+  var send = [], held = 0, opps = 0;
   Object.keys(byAgent).forEach(function (e) {
-    var cs = byAgent[e].cases.sort(function (a, b) { return a._u - b._u; });
-    send = send.concat(cs.slice(0, WATCH.PER_AGENT));
-    held += Math.max(0, cs.length - WATCH.PER_AGENT);
+    var all = byAgent[e].cases.sort(function (a, b) { return a._u - b._u; });
+    var isOpp = function (c) { return c.kind === 'opportunity'; };
+    var o = all.filter(isOpp).slice(0, WATCH.PER_AGENT_OPP);
+    var c = all.filter(function (x) { return !isOpp(x); }).slice(0, WATCH.PER_AGENT);
+    opps += o.length;
+    send = send.concat(o, c);
+    held += Math.max(0, all.length - o.length - c.length);
   });
 
   var added = addChases(send);
   var out = {
     ok: true, added: added, agents: Object.keys(byAgent).length, activePeople: nActive,
+    opportunities: opps,
     read: read, skipped: skipped, heldBack: held, missingTabs: missingTabs,
     unassigned: Object.keys(skipped).reduce(function (t, k) { return t + skipped[k]; }, 0)
   };
