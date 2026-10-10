@@ -37,7 +37,7 @@ teal `#00CFEA`. Those are the values in `IBRAND` in `Intelligence.gs`, which is
 what the client letters read.
 
 **A second exception, decided 8 October 2026: group client management** (the
-four pages in `groupclientmanagement/` and the Tuesday letter built by
+four pages in `groupclientmanagement/` and the Monday letter built by
 `gcmLetter_` in `GroupClients.gs`) has a corporate look and its own mark. The
 mark is `groupclientmanagement/gcm-mark.png`: the same shield and check, white
 on a corporate-blue tile. The manager asked for it in these words:
@@ -2629,7 +2629,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **The group tabs have their own spreadsheet, the script does not.** Asked
   the same day ("if this is the sheet for managing groups why import into the
   service questionnaire"): `Group Register`, `Group Tasks`, `Group Sends`,
-  `Group Responses` and `Group Shares` live in the **Group Client Management**
+  `Group Responses`, `Group Shares` and `Group Queue` live in the **Group Client Management**
   Google Sheet. The script stays in the Service Questionnaire project, where
   the sign-in, the Salesforce login, the support@ mailbox and the web address
   are, and opens the group sheet by the `GCM_SHEET_ID` Script property
@@ -2709,9 +2709,34 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   through the composite resource (`gcmQuery_`), so a long one never meets URL
   Fetch's limit on an address. Salesforce ids are unique in their first 15
   characters; everything is keyed on those.
-- **Tuesday is send day**; the group is asked to answer by Friday. Every letter
-  is logged on `Group Sends` with the letter itself; without Microsoft 365 it
-  opens in the staff member's Outlook and is still logged.
+- **The letters go by themselves at 10:00 on Monday; staff approve, they do
+  not send** (8 October 2026: "as we have automated our queries will now
+  change to a monday at 10am to go out to client"). Until then Tuesday was send
+  day and each staff member pressed Send. Now a staff member checks a group
+  during the week, previews its letter, ticks that they checked and presses
+  **Approve for Monday**. That writes a row on the **Group Queue** tab (When,
+  Group, Staff, the items they saw, their opening line), and the group reads
+  "Approved" on the board and the wall. At 10:00 on Monday `gcmMondaySend`
+  (a weekly trigger, made by `gcmSetup` or by the first hourly run that finds
+  none) refreshes Salesforce and then rebuilds each approved letter, so the
+  group reads Monday's figures. It sends from support@ through Graph. A letter
+  waits, with the reason, when:
+  - the group is no longer ready;
+  - a letter already went since the approval;
+  - an item open more than 30 days still needs a reason;
+  - **an item arrived that the approver never saw**. The letter goes only with
+    what a person checked.
+
+  One internal e-mail a run tells the branch, and whoever approved a waiting
+  letter, what went and what waited. The hourly refresh runs the same queue
+  afterwards, so a missed 10:00 firing goes at 11:00, and a group approved
+  again after ten on a Monday goes that hour. An approval made after Monday
+  10:00 is for the next Monday. Approving again replaces the earlier one, and
+  "Cancel the approval" withdraws it. Only the branch manager can still send at
+  once ("Send now instead", or Outlook); doing so closes that group's approval.
+  The group is asked to answer by Friday. Every letter is logged on `Group
+  Sends` with the letter itself. `gcmlive/queue-test.js` in the session
+  scratchpad covers it (26 checks).
 - **Every open item says why it is still open** (7 October 2026: "when the
   client sees the opened task shall we not give some history why opened so
   long, to use intelligence", then "you need to scrub emails with the subject
@@ -2750,8 +2775,25 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   manager (`GCM_TRAIN.TO_MANAGER`), never the sales support inbox, because a result is an appraisal. The bank
   was written so that the right answer is never the longest option and the answers spread across A to D; keep
   it that way when adding questions. The standards the manual sets that were not set before (an
-  acknowledgement within a working day, a call within two working days for a rating of 3 or less, Monday
-  follow-up of groups that did not answer) are proposals for the manager to confirm.
+  acknowledgement within a working day, a call within two working days for a rating of 3 or less, and a call
+  or e-mail before the next approval to a group that did not answer) are proposals for the manager to confirm.
+- **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
+  forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
+  training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
+  Approve for Monday, the 10:00 run, a letter that waits, the group's page, their answers, the branch's view.
+  - **What is on screen.** It is shot from the real pages over a made-up branch: five invented groups and invented
+    people, tagged "Sample groups and figures" on every shot. It shows no client, no real count and no test question.
+  - **Sound.** Narration on `en-US-AndrewNeural` at -12%, the Inspired bed 18 dB under the voice, loudness -14 LUFS.
+    The credit is on the closing card and under the player.
+  - **How it is made.** Everything is in the session scratchpad (`staffvid/`):
+    - `demo-world.js`: the made-up branch;
+    - `shots.js`: screenshots and element boxes;
+    - `lines.json` and `tts.py`: the narration;
+    - `timing.py`: scene times from the audio;
+    - `film.html` with `render.js`: frames rendered one by one, so no capture drift;
+    - `mix.py`: the soundtrack.
+
+    Re-shoot it when the pages change.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 

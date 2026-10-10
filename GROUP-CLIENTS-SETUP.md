@@ -55,9 +55,9 @@ property and never in the code, since the `.gs` files are public.
      outside the repository: each group's Salesforce account, list bills,
      match words, contact and code. The script owner must be able to edit it.
 3. **Run `gcmSetup`** from the editor, with `GroupClients.gs` open (authorise
-   when asked). It adds the `Group Tasks`, `Group Sends`, `Group Responses` and
-   `Group Shares` tabs to the group sheet, says which sheet it used, and
-   installs the hourly refresh. Then **run `gcmRefresh`** once to fill
+   when asked). It adds the `Group Tasks`, `Group Sends`, `Group Responses`,
+   `Group Shares` and `Group Queue` tabs to the group sheet, says which sheet
+   it used, and installs the hourly refresh and the Monday 10:00 send. Then **run `gcmRefresh`** once to fill
    `Group Tasks`.
 4. **Deploy → Manage deployments → pencil → New version.** Never New
    deployment: that changes the address every page uses.
@@ -136,13 +136,23 @@ Salesforce (the `History` and `Mails` columns of `Group Tasks`):
 
 - **Every hour**, 6:00 to 18:00 Monday to Saturday, the refresh rereads
   Salesforce. Staff can refresh by hand from the page.
-- **Tuesday is send day** (`GCM.SEND_DAY`). Each staff member opens their
-  groups marked "Letter due", checks every item against Salesforce and the
-  latest billing, ticks what the group sees, previews the letter (written from
-  the group's own numbers, with an optional opening line of their own), ticks
-  that they checked, and sends. Every letter is logged on `Group Sends` with
-  who, when, to whom, the items and the letter itself, and a blind copy goes to
-  sales support.
+- **The letters go out by themselves at 10:00 on Monday** (`GCM.SEND_DAY`,
+  `GCM.SEND_HOUR`). During the week each staff member opens their groups marked
+  "Approve for Monday". For each one they check every item against Salesforce
+  and the latest billing, tick what the group sees, and preview the letter
+  (written from the group's own numbers, with an optional opening line of
+  their own). Then they tick that they checked and press **Approve for
+  Monday**; the group reads "Approved" on the board and the wall.
+  - **The 10:00 run.** It rereads Salesforce, rebuilds each approved letter
+    and sends it from support@. A letter waits, and its approver is told why,
+    if something arrived after the check that nobody looked at. The hourly
+    refresh catches up a missed run.
+  - **The log.** Every letter is logged on `Group Sends` with who approved it,
+    when, to whom, the items and the letter itself. A blind copy goes to sales
+    support.
+  - **Approvals.** Each approval is a row on `Group Queue`. `gcmSetup` makes
+    that tab and the Monday trigger.
+  - **Sending at once.** Only the branch manager can send a letter at once.
 - **The group answers by Friday** (`GCM.RESPOND_DAY`): correct, needs a change,
   or not ours, with a note, which goes onto that task's Chatter; and a rating.
   The staff member and the branch get an internal e-mail at once.
