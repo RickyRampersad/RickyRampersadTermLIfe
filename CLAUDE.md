@@ -2737,6 +2737,15 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   The group is asked to answer by Friday. Every letter is logged on `Group
   Sends` with the letter itself. `gcmlive/queue-test.js` in the session
   scratchpad covers it (26 checks).
+  **The run can be rehearsed** (11 October 2026: "i want to test before going to me and the team today at 10am").
+  `gcmQueueRun_({ test: true })` writes every letter approved for the next run exactly as the run would, with the same
+  checks, and sends each only to the person who approved it and `TRANSITION.CC`, subject `[TEST] …`, with a banner
+  naming who would have received it. One summary, subject `TEST · Group letters …`, lists what would go, what would wait
+  and the groups not approved yet. Nothing reaches a group, nothing is logged on Group Sends and no approval changes, so
+  the real run is untouched. The branch manager presses **Rehearse now** on the staff page (`gcm.rehearse`, branch
+  only; the board says `canRehearse`). In the editor, `gcmRehearse` runs it now and `gcmRehearseAt10` sets a one-off
+  trigger for 10:00 that day (`gcmRehearseTick`, which removes itself). `gcmlive/rehearse-test.js` (25 checks) and
+  `staffvid/rehearse-page.js` (6, Playwright) in the scratchpad cover it.
 - **Every open item says why it is still open** (7 October 2026: "when the
   client sees the opened task shall we not give some history why opened so
   long, to use intelligence", then "you need to scrub emails with the subject
@@ -2794,6 +2803,14 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     - `mix.py`: the soundtrack.
 
     Re-shoot it when the pages change.
+  - **Part 2, what the group sees** (10 October 2026: "show also the video what the client see and the flow of
+    communication"). `groupclientmanagement/group-view.mp4` (1:57, poster `group-view.jpg`) sits under the first film in
+    the manual. It shows the loop as one picture (the letter on Monday, their answers by Friday, the e-mail and Chatter
+    back to staff, staff acting, the next letter). Then it follows the group: the letter in their inbox, sign-in, their
+    items, the history, Correct / Needs a change / Not ours, the stars, the thank-you, the internal e-mail that reaches
+    the staff member, the answer on the staff page, and the manager's view. It is built the same way as the first film
+    (`shots2.js`, `lines2.json`, `timing2.py`, `film2.html`, `mix2.py` in `staffvid/`). `group-loop.png` there is the
+    loop picture alone, for the group chat.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 
