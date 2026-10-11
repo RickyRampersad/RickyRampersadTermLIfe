@@ -150,6 +150,7 @@ function gcmDoPost_(b) {
       case 'gcm.send':   return gcmSend_(b);
       case 'gcm.approve':   return gcmApprove_(b);
       case 'gcm.unapprove': return gcmUnapprove_(b);
+      case 'gcm.rehearse':  return gcmRehearse_(b);
       case 'gcm.share':  return gcmShare_(b);
       case 'gcm.review': return gcmReview_(b);
       case 'gcm.trainSubmit': return gcmTrainSubmit_(b);
@@ -856,7 +857,7 @@ function gcmBoard_(p) {
   var urgency = function (x) { return (x.stats.week === 'due' ? 1000 : 0) + x.stats.late * 10 + x.stats.waiting * 5 + Math.min(x.stats.oldest, 99) / 100; };
   groups.sort(function (a, b) { return urgency(b) - urgency(a); });
   var out = { ok: true, role: who.role, me: who.name, today: today, sendDay: GCM.SEND_DAY, dow: gcmDow_(today), refreshed: L.refreshed,
-    salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), groups: groups };
+    salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', groups: groups };
   if (who.role === 'branch') out.analytics = gcmAnalytics_(L);
   return out;
 }
@@ -1164,26 +1165,58 @@ function gcmUnapprove_(b) {
 
 /** The Monday trigger (and the hourly run, which catches up): every approval due by now is sent or held. */
 function gcmMondaySend() { var r = gcmQueueRun_(); return r.said || r.error || ''; }
-function gcmQueueRun_() {
+
+/** The rehearsal of Monday's run (asked for on 11 October 2026: "i want to test before going to me and the team"):
+ *  every letter approved for the next run is written now, exactly as the run would write it, with the same checks, and
+ *  goes only to the person who approved it and the branch (TRANSITION.CC), marked TEST, with a banner naming who would
+ *  have received it. Nothing reaches a group, nothing is logged on Group Sends and no approval changes, so Monday's run
+ *  is untouched. The branch manager presses it on the page; the editor runs it now (gcmRehearse) or at 10:00 today
+ *  (gcmRehearseAt10). */
+function gcmRehearse() { var r = gcmQueueRun_({ test: true }); return tSay_(r.said || r.error || ''); }
+function gcmRehearseAt10() {
+  var tz = tTz_(), today = gcmToday_(), at = Utilities.parseDate(today + ' 10:00', tz, 'yyyy-MM-dd HH:mm');
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'gcmRehearseTick') ScriptApp.deleteTrigger(t); });
+  if (at.getTime() <= Date.now()) return tSay_('It is already past 10:00 today, so nothing was scheduled. Run gcmRehearse to rehearse now.');
+  ScriptApp.newTrigger('gcmRehearseTick').timeBased().at(at).create();
+  return tSay_('The rehearsal will run at 10:00 today (' + tz + '). Every approved letter goes to its approver and the branch, marked TEST. Nothing reaches a group.');
+}
+function gcmRehearseTick() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'gcmRehearseTick') ScriptApp.deleteTrigger(t); });
+  gcmQueueRun_({ test: true });
+}
+function gcmRehearse_(b) {
+  var who = gcmWho_(b);
+  if (!who.ok) return who;
+  if (who.role !== 'branch') return { ok: false, error: 'Only the branch manager rehearses the run.' };
+  return gcmQueueRun_({ test: true });
+}
+
+/** The send, or with o.test the rehearsal. The send takes the approvals due by now; the rehearsal takes every approval
+ *  still waiting for a run, whatever the hour. */
+function gcmQueueRun_(o) {
+  o = o || {};
+  var test = !!o.test;
   var due = function () {
     var now = new Date(), today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H')), oldest = gcmAddDays_(today, -2);
     return gcmRows_(GCM.QUEUE).filter(function (r) {
       var f = gcmYmd_(r.For);
-      return gcmText_(r.Status) === 'queued' && f && f >= oldest && (f < today || (f === today && h >= GCM.SEND_HOUR));
+      if (gcmText_(r.Status) !== 'queued' || !f) return false;
+      return test ? f >= today : f >= oldest && (f < today || (f === today && h >= GCM.SEND_HOUR));
     });
   };
-  if (!due().length) return { ok: true, sent: 0, held: 0, said: 'No approved letter is due.' };
+  if (!test && !due().length) return { ok: true, sent: 0, held: 0, said: 'No approved letter is due.' };
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(120000)) return { ok: false, error: 'Busy: the next hourly run sends them.' };
-  var sent = [], held = [], t0 = Date.now();
+  if (!lock.tryLock(120000)) return { ok: false, error: 'Busy: ' + (test ? 'try the rehearsal again in a minute.' : 'the next hourly run sends them.') };
+  var sent = [], held = [], approvers = [], waiting = [], t0 = Date.now();
   try {
     /* the letters are written from Salesforce as it is at ten; if Salesforce does not answer, from the last refresh */
     if (tSfOn_()) { try { gcmRefresh_(); } catch (e) {} }
-    var L = gcmLoad_(), mail = !!tMsCreds_();
-    due().forEach(function (r) {   // read again under the lock: a row another run has sent is not sent twice
+    var L = gcmLoad_(), mail = !!tMsCreds_(), rows = due();
+    rows.forEach(function (r) {   // read again under the lock: a row another run has sent is not sent twice
       if (Date.now() - t0 > 270000) return;   // the next hourly run takes the rest
       var g = L.byName[gcmCodeKey_(r.Group)], why = '', letter = null;
       var who = { role: gcmText_(r.Role) === 'branch' ? 'branch' : 'staff', name: gcmText_(r.Staff), email: gcmText_(r['Staff e-mail']) };
+      if (who.email && approvers.indexOf(who.email.toLowerCase()) < 0) approvers.push(who.email.toLowerCase());
       if (!g) why = 'the group is no longer on the Group Register';
       else if (!mail) why = 'Microsoft 365 is not set up on the backend';
       else {
@@ -1198,7 +1231,22 @@ function gcmQueueRun_() {
         else if (need.length) why = gcmNeedSay_(need);
         else if (added.length) why = added.length + ' new item' + (added.length === 1 ? '' : 's') + ' since it was checked (' + added.slice(0, 3).join('; ') + (added.length > 3 ? '; …' : '') + '): check the group again and approve it';
       }
-      if (why) { gcmQueueSet_(r._n, 'held: ' + why); held.push({ group: gcmText_(r.Group), by: who.name, email: who.email, why: why }); return; }
+      if (why) { if (!test) gcmQueueSet_(r._n, 'held: ' + why); held.push({ group: gcmText_(r.Group), by: who.name, email: who.email, why: why }); return; }
+      if (test) {
+        /* the rehearsal: the letter as it would go, to the approver and the branch, never to the group */
+        var to = [];
+        [who.email].concat(TRANSITION.CC || []).forEach(function (a) { a = String(a || '').trim(); if (a && to.map(function (x) { return x.toLowerCase(); }).indexOf(a.toLowerCase()) < 0) to.push(a); });
+        var banner = '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00">' +
+          '<b>TEST of the ' + tEsc_(gcmSendLabel_(gcmYmd_(r.For))) + ' run.</b> This is the letter exactly as it would go to <b>' + tEsc_(g.to.join(', ')) + '</b>' +
+          (g.cc.length ? ' (copied to ' + tEsc_(g.cc.join(', ')) + ')' : '') + ', approved by ' + tEsc_(who.name) + '. It has not gone to the group, and nothing is marked as sent.</div>';
+        try {
+          tMsSend_(to[0], '[TEST] ' + letter.subject, banner + letter.html, { cc: to.slice(1), replyTo: TRANSITION.MS_FROM });
+          sent.push({ group: g.name, by: who.name, items: letter.items.length, to: g.to.join(', ') });
+        } catch (e) {
+          held.push({ group: g.name, by: who.name, email: who.email, why: 'Microsoft 365 refused the test: ' + String(e && e.message ? e.message : e).slice(0, 200) });
+        }
+        return;
+      }
       var row = { When: new Date(), Group: g.name, Staff: who.name, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: letter.subject, Items: letter.items.length,
         'Task Ids': letter.items.join(' ').slice(0, 45000), Letter: letter.text.slice(0, 45000), Via: TRANSITION.MS_FROM + ', ' + GCM.SEND_HOUR + ':00 run' };
       try {
@@ -1215,25 +1263,39 @@ function gcmQueueRun_() {
         held.push({ group: g.name, by: who.name, email: who.email, why: 'Microsoft 365 refused it: ' + err });
       }
     });
+    if (test) {
+      var queued = {};
+      rows.forEach(function (r) { queued[gcmCodeKey_(r.Group)] = true; });
+      L.reg.forEach(function (g) { if (!queued[g.key]) waiting.push({ group: g.name, by: g.assigned || 'no account owner' }); });
+    }
   } finally { try { lock.releaseLock(); } catch (e) {} }
-  try { gcmQueueTell_(sent, held); } catch (e) {}
-  return { ok: true, sent: sent.length, held: held.length, said: sent.length + ' letter' + (sent.length === 1 ? '' : 's') + ' sent, ' + held.length + ' waiting.' };
+  try { gcmQueueTell_(sent, held, test ? { test: true, approvers: approvers, waiting: waiting } : null); } catch (e) {}
+  return { ok: true, test: test, sent: sent.length, held: held.length, waiting: waiting.length,
+    said: test ? 'Rehearsal done. ' + (sent.length ? sent.length + ' letter' + (sent.length === 1 ? '' : 's') + ' would go: each came to its approver and the branch, marked TEST. '
+        : 'No approved letter would go yet. ') + (held.length ? held.length + ' would wait. ' : '') +
+      (waiting.length ? waiting.length + ' group' + (waiting.length === 1 ? ' is' : 's are') + ' not approved yet. ' : '') + 'Nothing reached a group.'
+      : sent.length + ' letter' + (sent.length === 1 ? '' : 's') + ' sent, ' + held.length + ' waiting.' };
 }
 
 /** One internal e-mail a run: what went, and what waited and why, to the branch and to whoever approved a letter that
- *  waited. */
-function gcmQueueTell_(sent, held) {
-  if (!sent.length && !held.length) return;
+ *  waited. A rehearsal says so in its subject and first line, goes to every approver, and lists the groups not yet
+ *  approved. */
+function gcmQueueTell_(sent, held, o) {
+  o = o || {};
+  if (!o.test && !sent.length && !held.length) return;
   var to = [];
-  (TRANSITION.CC || []).concat(held.map(function (h) { return h.email; })).forEach(function (a) { a = String(a || '').trim().toLowerCase(); if (a && to.indexOf(a) < 0) to.push(a); });
+  (TRANSITION.CC || []).concat(held.map(function (h) { return h.email; })).concat(o.approvers || []).forEach(function (a) { a = String(a || '').trim().toLowerCase(); if (a && to.indexOf(a) < 0) to.push(a); });
   if (!to.length) return;
   var E = tEsc_;
-  var body = '<p><b>' + sent.length + '</b> group letter' + (sent.length === 1 ? '' : 's') + ' went out from ' + E(TRANSITION.MS_FROM) + (held.length ? '; <b>' + held.length + '</b> waited.' : '.') + '</p>' +
-    (held.length ? '<p><b>Waiting.</b> Open the group, put it right and approve it again: today, the next hourly run sends it.</p><ul>' +
+  var body = (o.test ? '<p style="background:#FFF4D6;border:2px solid #E0A800;padding:10px 14px"><b>TEST.</b> A rehearsal of the ' + E(gcmSendLabel_(gcmNextSend_())) +
+      ' run. Nothing went to any group, and nothing is marked as sent: Monday’s run is untouched. Each letter that would go came to its approver and the branch, marked TEST.</p>' : '') +
+    '<p><b>' + sent.length + '</b> group letter' + (sent.length === 1 ? '' : 's') + (o.test ? ' would go' : ' went out') + ' from ' + E(TRANSITION.MS_FROM) + (held.length ? '; <b>' + held.length + '</b> ' + (o.test ? 'would wait' : 'waited') + '.' : '.') + '</p>' +
+    (held.length ? '<p><b>' + (o.test ? 'Would wait.' : 'Waiting.') + '</b> Open the group, put it right and approve it again' + (o.test ? '' : ': today, the next hourly run sends it') + '.</p><ul>' +
       held.map(function (h) { return '<li><b>' + E(h.group) + '</b> (approved by ' + E(h.by) + '): ' + E(h.why) + '</li>'; }).join('') + '</ul>' : '') +
-    (sent.length ? '<p><b>Sent</b></p><ul>' + sent.map(function (x) { return '<li>' + E(x.group) + ': ' + x.items + ' item' + (x.items === 1 ? '' : 's') + ', approved by ' + E(x.by) + '</li>'; }).join('') + '</ul>' : '') +
+    (sent.length ? '<p><b>' + (o.test ? 'Would go' : 'Sent') + '</b></p><ul>' + sent.map(function (x) { return '<li>' + E(x.group) + ': ' + x.items + ' item' + (x.items === 1 ? '' : 's') + ', approved by ' + E(x.by) + (o.test && x.to ? ', to ' + E(x.to) : '') + '</li>'; }).join('') + '</ul>' : '') +
+    (o.test && (o.waiting || []).length ? '<p><b>Not approved yet</b> (nothing goes for these on Monday)</p><ul>' + o.waiting.map(function (w) { return '<li>' + E(w.group) + ' · ' + E(w.by) + '</li>'; }).join('') + '</ul>' : '') +
     '<p><a href="' + GCM.SITE + '">Open group client management</a></p><p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p>';
-  MailApp.sendEmail({ to: to.join(','), subject: 'Group letters, ' + tDmy_(gcmToday_()) + ': ' + sent.length + ' sent' + (held.length ? ', ' + held.length + ' waiting' : ''), htmlBody: body, name: 'Ricky Rampersad Branch' });
+  MailApp.sendEmail({ to: to.join(','), subject: (o.test ? 'TEST · ' : '') + 'Group letters, ' + tDmy_(gcmToday_()) + ': ' + sent.length + (o.test ? ' would go' : ' sent') + (held.length ? ', ' + held.length + (o.test ? ' would wait' : ' waiting') : ''), htmlBody: body, name: 'Ricky Rampersad Branch' });
 }
 
 function gcmHasMondayTrigger_() {

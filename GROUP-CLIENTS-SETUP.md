@@ -153,6 +153,9 @@ Salesforce (the `History` and `Mails` columns of `Group Tasks`):
   - **Approvals.** Each approval is a row on `Group Queue`. `gcmSetup` makes
     that tab and the Monday trigger.
   - **Sending at once.** Only the branch manager can send a letter at once.
+  - **Rehearsing.** The branch manager's page has **Rehearse now**: every approved letter is written as Monday's run
+    would write it and goes only to its approver and the branch, marked TEST. Nothing reaches a group, and nothing is
+    marked as sent. From the editor, `gcmRehearse` runs it now and `gcmRehearseAt10` sets it for 10:00 today.
 - **The group answers by Friday** (`GCM.RESPOND_DAY`): correct, needs a change,
   or not ours, with a note, which goes onto that task's Chatter; and a rating.
   The staff member and the branch get an internal e-mail at once.

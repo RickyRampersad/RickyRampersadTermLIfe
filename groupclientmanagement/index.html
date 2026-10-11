@@ -227,6 +227,7 @@ function render() {
   if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into the project’s Script properties, then run gcmRefresh.</div>';
   if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
   if (d.nextSend) h += '<div class="note"><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div>';
+  if (d.canRehearse) h += '<div class="note"><b>Test the run first.</b> “Rehearse now” writes every approved letter exactly as the ' + esc(d.nextSend || 'Monday') + ' run would, and sends it only to the person who approved it and the branch, marked TEST, with one summary of what would go and what would wait. Nothing reaches a group, and nothing is marked as sent. <button class="btn ghost sm" type="button" id="rh">Rehearse now</button></div>';
   if (d.role === 'branch') {
     h += '<div class="tabs" role="tablist"><button class="tab" role="tab" data-t="dash" aria-selected="' + (TAB === 'dash') + '">Dashboard</button><button class="tab" role="tab" data-t="groups" aria-selected="' + (TAB === 'groups') + '">Groups</button></div>';
     h += TAB === 'dash' ? dash(d.analytics) : groupsHtml(d);
@@ -234,7 +235,14 @@ function render() {
   app.innerHTML = h;
   app.querySelectorAll('[data-g]').forEach(b => b.onclick = () => openGroup(b.dataset.g));
   app.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; render(); });
+  if ($('rh')) $('rh').onclick = rehearse;
   window.scrollTo(0, 0);
+}
+async function rehearse() {
+  const b = $('rh'); b.disabled = true; b.textContent = 'Rehearsing… (about a minute)';
+  const r = await post({ action: 'gcm.rehearse' });
+  b.disabled = false; b.textContent = 'Rehearse now';
+  toast(r.ok ? r.said : (r.error || 'The rehearsal did not run'), !r.ok);
 }
 function groupsHtml(d) {
   const due = d.groups.filter(g => g.stats.week === 'due').length;
