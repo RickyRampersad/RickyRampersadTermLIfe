@@ -71,6 +71,10 @@ t('a refusal is not reported as a glitch',
 /* ---------- the server decides ------------------------------------------ */
 console.log('\nthe server\n');
 
+/* Apps Script's ContentService answer: Code.gs reads it back with
+   getContent(), which is how qpHistory_ folds the chase events. */
+const mk = (o) => ({ getContent: () => JSON.stringify(o), _o: o });
+
 /* Enough of Apps Script to run section 14 honestly. normName_ is the
    line-1231 version, which is what edit 26 makes the live one. */
 function load() {
@@ -113,16 +117,21 @@ function load() {
     AGENT_MANAGER: { 'Azaria Charles': 'nicole@g.com' },
     Logger: { log() {} },
     Session: { getScriptTimeZone: () => 'America/Port_of_Spain' },
-    json: (o) => ({ getContent: () => JSON.stringify(o), _o: o }),
+    json: mk,
     normName_: (s) => String(s || '').toLowerCase().replace(/[-.]/g, ' ').replace(/\s+/g, ' ').trim(),
     roleWord_: (v) => (/^(branch|manager|agent|staff)$/i.test(String(v || '')) ? String(v).toLowerCase() : null),
     findAgent_: (code) => PEOPLE[String(code || '').toUpperCase()] || null,
     codeTable_: () => [],
     codeRows_: () => [],
     cmtSheet_: () => ({ getLastRow: () => 1, appendRow: () => {} }),
-    comments_: () => { calls.push('comments_'); return { _o: { ok: true, items: ['internal note'] } }; },
-    history_: () => { calls.push('history_'); return { _o: { ok: true, events: ['note'] } }; },
-    addComment_: () => { calls.push('addComment_'); return { _o: { ok: true } }; },
+    comments_: () => { calls.push('comments_'); return mk({ ok: true, items: ['internal note'] }); },
+    history_: () => { calls.push('history_'); return mk({ ok: true, events: [
+      { kind: 'logged', when: '2026-09-17T10:00:00.000Z', text: 'Request logged' },
+      { kind: 'chase', when: '2026-10-10T10:00:00.000Z', text: 'Follow-up 1' },
+      { kind: 'chase', when: '2026-10-10T10:00:00.000Z', text: 'Follow-up 2' },
+      { kind: 'chase', when: '2026-10-10T10:00:00.000Z', text: 'Final escalation' },
+    ] }); },
+    addComment_: () => { calls.push('addComment_'); return mk({ ok: true }); },
     CacheService: {
       getScriptCache: () => ({
         get: (k) => (cache.has(k) ? cache.get(k) : null),
@@ -236,14 +245,25 @@ const out = (res) => (res && res._o) || {};
 /* ---------- the shape of the patch -------------------------------------- */
 console.log('\nthe patch\n');
 
-const S14 = PATCH.slice(PATCH.indexOf('14. A REFERENCE IS NOT A CREDENTIAL'));
-t('section 14 exists', S14.length > 1000);
+/* Bounded at the next section, or a later one's helpers get audited as if they
+   were guards — which is how this file first went green on a false reading. */
+const S14 = (() => {
+  const a = PATCH.indexOf('14. A REFERENCE IS NOT A CREDENTIAL');
+  const b = PATCH.indexOf('15. THE CHASE THAT MISSED THE DEPARTMENT');
+  return PATCH.slice(a, b > a ? b : undefined);
+})();
+t('section 14 exists and is bounded', S14.length > 1000 && S14.length < 12000,
+  S14.length + ' chars');
 
 t('every wrapper guards before it delegates',
   ['qpComments_', 'qpHistory_', 'qpAddComment_'].every(fn => {
     const i = S14.indexOf('function ' + fn);
-    const body = S14.slice(i, S14.indexOf('}', i));
-    return /qpGuardTrail_\(e\)/.test(body) && /g\.err \|\|/.test(body);
+    if (i < 0) return false;
+    const body = S14.slice(i, i + 600);
+    const guard = body.indexOf('qpGuardTrail_(e)');
+    /* the original handler must not be reached before the guard has run */
+    const orig = body.search(/\b(comments_|history_|addComment_)\(e\)/);
+    return guard > -1 && orig > guard && /g\.err \|\||if \(g\.err\) return g\.err;/.test(body);
   }),
   'a wrapper that calls the original first has guarded nothing');
 

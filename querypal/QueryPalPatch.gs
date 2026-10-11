@@ -2126,7 +2126,13 @@ function qpComments_(e) {
 
 function qpHistory_(e) {
   var g = qpGuardTrail_(e);
-  return g.err || history_(e);
+  if (g.err) return g.err;
+  /* history_ invents a date per chase from one stored date — fold them back
+     into a single honest event (section 15, qpFoldChases_). */
+  var res = history_(e);
+  try {
+    return json(qpFoldChases_(JSON.parse(res.getContent())));
+  } catch (fe) { return res; }
 }
 
 function qpAddComment_(e) {
@@ -2202,4 +2208,195 @@ function qpAuditTrailScope() {
   var msg = out.join('\n');
   Logger.log(msg);
   return msg;
+}
+
+
+/* ══════════════════ 15. THE CHASE THAT MISSED THE DEPARTMENT ══════════════════
+   Case RRB/2026/081, a health claim routed to EB Customer Care on 17 September,
+   fired reminder 5 of 10 on 11 October. Two things were wrong with it, and the
+   branch manager spotted both from the email alone.
+
+   FIRST — the department was not on it. sendFollowUp_ tries to reply inside the
+   original Gmail thread, which reaches everyone the request went to. When that
+   search misses it falls back to a fresh email, and the fallback addresses:
+
+       to: (sup ? RR_SUPPORT : row[14])
+       cc: [row[10], mgr, BRANCH_SUPPORT]
+
+   For a health or claims case `sup` is true, so the chase goes to Sales Support
+   and the CC carries the agent, the agent's manager and branch support. Column
+   15, the department email, appears nowhere. EB Customer Care — the department
+   actually holding the case — received none of the five reminders. The cases
+   chased hardest, ten times instead of three, are exactly the ones where the
+   department gets dropped.
+
+   The branch's own rule stands: a health or claims item is Sales Support's to
+   log on the portal and drive to close, so Sales Support stays in To. The
+   department belongs on the CC of every chase, because they are the ones who
+   have to answer. That is one edit — edit 27.
+
+   SECOND — the subject had been overwritten, which is why the reminder could
+   not thread. The client keep-warm block reads its counter from `row[18]`,
+   which is column 19, Description — and writes it back with
+   `sh.getRange(r + 1, 18)`, which is column 18, Subject. Reading one column and
+   writing the next means the marker never lands where it is read from, so
+   `client-updates:N` stayed at 0 and a progress update went to the client on
+   every sweep. Eleven of them on this one case, every one headed "#1".
+
+   The write also destroyed the Subject. Column 18 now holds the Description
+   text with ` | client-updates:1` appended — which is visible in the reminder
+   itself, printing the same sentence twice, the second time with the marker
+   still attached. And because the chase subject is built from column 18:
+
+       var subjectBase = clean(client) + ' - ' + (row[17] || '');
+
+   every chase now carries a different subject from the request it is chasing,
+   so nothing about it looks like a reply to the original.
+
+   The off-by-one is already fixed in Code.gs — the keep-warm block now writes
+   to column 19. That stops the damage spreading. It does not undo what is
+   already in the sheet, so qpRepairSubjects() below does that: the subject
+   survives in the reference, whose fifth segment is the subject as logged,
+   truncated to 24 characters. Run it once after deploying.
+
+   THIRD, and not fixed here because it needs no code — a department reply was
+   detected on this case on 5 October and recorded on the trail. Five reminders
+   went out afterwards, each one telling Sales Support there was "no
+   confirmation on this thread". The reply is sitting in the record, nobody
+   acted on it, and the autopilot kept chasing over it. That is a branch
+   workflow gap, not a bug: a detected reply needs somebody to read it.       */
+
+/* The department is on every chase. Sales Support keeps the To line on health
+   and claims cases, because driving those to close is theirs; the department
+   is CC'd because they are the ones who answer. Returns a comma list, never
+   undefined, and never the same address twice. */
+function qpChaseCc_(row, mgr, sup) {
+  var set = {};
+  var add = function (v) {
+    v = String(v || '').trim();
+    if (v && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) set[v.toLowerCase()] = v;
+  };
+  if (sup) add(row[14]);            // col 15 department email — dropped entirely before this
+  add(row[10]);                     // col 11 servicing agent
+  add(mgr);
+  add(BRANCH_SUPPORT);
+  var out = [];
+  for (var k in set) out.push(set[k]);
+  return out.join(',');
+}
+
+/* The subject as it was logged, recovered from the reference when the keep-warm
+   block has overwritten column 18. Reference format is
+   RRB/YEAR/RUNNO/CLIENT/SUBJECT, so the fifth segment is the subject, cleaned
+   and cut to 24 characters. Returns '' when there is nothing to recover from,
+   so a caller can leave the cell alone rather than write a guess into it. */
+function qpSubjectFromRef_(reference) {
+  var parts = String(reference || '').split('/');
+  return parts.length >= 5 ? String(parts[4] || '').trim() : '';
+}
+
+/* True when column 18 is carrying keep-warm damage rather than a subject. */
+function qpSubjectDamaged_(subject, description) {
+  var s = String(subject || '');
+  if (/\|\s*client-updates:\d+/.test(s)) return true;
+  if (/\|\s*conv-reminders:\d+/.test(s)) return true;
+  var d = String(description || '').trim();
+  return !!(d && s.trim() === d);        // written over with the description, no marker yet
+}
+
+/* Run this once from the editor after deploying. It reports before it writes and
+   is safe to run twice: a row it has already repaired no longer looks damaged.
+   Pass true to see what it would do without touching the sheet. */
+function qpRepairSubjects(dryRun) {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'Nothing to repair — the log is empty.';
+  var n = sh.getLastRow() - 1;
+  var refs = sh.getRange(2, 1, n, 1).getValues();
+  var subs = sh.getRange(2, 18, n, 2).getValues();            // 18 Subject, 19 Description
+  var fixed = [], stuck = [];
+  for (var i = 0; i < n; i++) {
+    var ref = String(refs[i][0] || '').trim();
+    if (!ref) continue;
+    var sub = String(subs[i][0] || ''), desc = String(subs[i][1] || '');
+    if (!qpSubjectDamaged_(sub, desc)) continue;
+    var want = qpSubjectFromRef_(ref);
+    if (!want) { stuck.push('  ' + ref + '  (no subject in the reference)'); continue; }
+    if (!dryRun) sh.getRange(i + 2, 18).setValue(want);
+    fixed.push('  ' + ref + '\n      subject restored to: ' + want);
+  }
+  var msg = (dryRun ? 'DRY RUN — nothing written\n\n' : '')
+    + (fixed.length ? fixed.length + ' subject' + (fixed.length === 1 ? '' : 's')
+        + (dryRun ? ' would be repaired' : ' repaired') + ':\n' + fixed.join('\n')
+      : 'No damaged subjects found. Either the column fix is deployed and the '
+        + 'sheet was already repaired, or it never spread.')
+    + (stuck.length ? '\n\nCould not recover (subject is not in the reference) — set these by hand:\n'
+        + stuck.join('\n') : '')
+    + '\n\nThe truncation is the reference\'s own: it carries the subject cut to 24 '
+    + 'characters, so a long subject comes back short. The full text is still in '
+    + 'the Description column and in the original email.';
+  Logger.log(msg);
+  return msg;
+}
+
+/* Every chase that went out while the subject was wrong is a chase that could
+   not thread, and every one of those missed the department. This counts them
+   so the scale is a number rather than a feeling. Read-only. */
+function qpChaseAudit() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'The log is empty.';
+  var d = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues();
+  var rows = 0, damaged = 0, chases = 0, supportChases = 0, open = 0;
+  var worst = [];
+  for (var i = 0; i < d.length; i++) {
+    var ref = String(d[i][0] || '').trim();
+    if (!ref) continue;
+    rows++;
+    var fu = Number(d[i][22]) || 0;
+    var sup = isSupportCase_(d[i][11], d[i][12], d[i][13]);
+    var bad = qpSubjectDamaged_(d[i][17], d[i][18]);
+    if (bad) damaged++;
+    if (bad) { chases += fu; if (sup) supportChases += fu; }
+    if (!/closed|resolved|completed/i.test(String(d[i][3] || ''))) open++;
+    if (bad && fu >= 3) worst.push('  ' + fu + ' chase' + (fu === 1 ? '' : 's') + (sup ? ' (support, dept dropped)' : '') + '  ' + ref);
+  }
+  worst.sort(function (a, b) { return parseInt(b) - parseInt(a); });
+  var msg = ['CHASE AUDIT — read-only, nothing is sent', '',
+    '  rows in the log            : ' + rows,
+    '  still open                 : ' + open,
+    '  subjects overwritten       : ' + damaged,
+    '  chases sent on those rows  : ' + chases + '   (none could thread)',
+    '  of those, support cases    : ' + supportChases + '   (department was not on the email)',
+    '', (worst.length ? 'Most chased, worst affected:\n' + worst.slice(0, 15).join('\n')
+                      : 'No row with a damaged subject has been chased three times or more.'),
+    '', 'Run qpRepairSubjects(true) to see the repair without writing.'].join('\n');
+  Logger.log(msg);
+  return msg;
+}
+
+/* ---- the timeline stops inventing dates --------------------------------
+   history_ builds its chase events by looping the Follow-ups count and
+   stamping every one with the single Last Follow-up date, so five chases
+   spread over a fortnight all render on the same day — which is how a trail
+   that reads "five chases on 10 October" actually means "five chases, the
+   last on 10 October". Per-chase dates are not recorded anywhere, so the fix
+   is to stop implying them: one event, stating what is known. Called from
+   qpHistory_, so it needs no further edit to Code.gs. */
+function qpFoldChases_(payload) {
+  var ev = (payload && payload.events) || [];
+  var out = [], chases = [], last = '';
+  for (var i = 0; i < ev.length; i++) {
+    if (ev[i].kind === 'chase') { chases.push(ev[i]); if (ev[i].when) last = ev[i].when; }
+    else out.push(ev[i]);
+  }
+  if (chases.length) {
+    var finalOne = /final/i.test(String(chases[chases.length - 1].text || ''));
+    out.push({ kind: 'chase', when: last, who: 'System',
+      text: chases.length + ' follow-up' + (chases.length === 1 ? '' : 's')
+          + ' sent to the department' + (finalOne ? ', the last a final escalation' : '')
+          + (last ? ' — most recent on this date' : '')
+          + '. Individual chase dates are not recorded.' });
+  }
+  out.sort(function (a, b) { return (a.when || '') < (b.when || '') ? -1 : 1; });
+  payload.events = out;
+  return payload;
 }

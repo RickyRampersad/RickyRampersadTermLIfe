@@ -125,3 +125,37 @@ manager has in Downloads. Keep them identical.
 - Client scoping is enforced on the server, never in the page.
 - A department override may only pick a department on the branch's own list,
   and the server checks that list again.
+
+## Why a chase can miss the department
+
+Worth keeping, because it took reading one reminder email to find three
+separate faults.
+
+`sendFollowUp_` replies inside the original Gmail thread when it can find it,
+which reaches everyone the request went to. When the search misses it sends a
+fresh email, and that fallback addresses Sales Support on a health or claims
+case with the agent, manager and branch support on CC — **not the department**.
+So the cases chased ten times instead of three are exactly the ones where the
+department never hears. Edit 27 puts it on the CC; Sales Support keeps the To
+line, because driving health and claims to close is theirs.
+
+The thread search missed for a reason of its own. The client keep-warm block
+read its counter from `row[18]` — column 19, Description — and wrote it back
+with `getRange(r + 1, 18)`, column 18, **Subject**. Reading one column and
+writing the next means the counter never advances, so a progress update goes to
+the client on every sweep, each headed "#1", and the subject is overwritten
+with the description plus ` | client-updates:1`. Since the chase subject is
+built from column 18, every chase carried a different subject from the request
+it was chasing. `qpRepairSubjects()` recovers each one from the reference's
+fifth segment, cut to 24 characters as the reference itself carries it.
+
+**A detected department reply still needs a person.** Case 081 recorded a reply
+on 5 October and sent five more reminders over the top of it, each saying there
+was no confirmation on the thread. Nothing is broken there — it is the system
+working as built, and it is the next thing worth changing.
+
+**The timeline used to invent dates.** `history_` loops the Follow-ups count and
+stamps every chase with the single Last Follow-up date, so five chases spread
+over a fortnight all render on one day. Per-chase dates are recorded nowhere, so
+`qpFoldChases_` shows one event with the real count instead of five that imply
+dates nobody has.

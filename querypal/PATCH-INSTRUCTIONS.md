@@ -790,6 +790,86 @@ in `AGENT_MANAGER`.
 
 ---
 
+### 27 — `sendFollowUp_`: put the department on the chase
+
+Case `RRB/2026/081`, a health claim routed to EB Customer Care on 17 September,
+fired reminder **5 of 10** on 11 October. The department was not on it, and had
+not been on any of the five.
+
+`sendFollowUp_` replies inside the original Gmail thread when it can find it,
+which reaches everyone the request went to. When the search misses, it sends a
+fresh email instead — and that fallback reads:
+
+```js
+    MailApp.sendEmail({ to: (sup ? RR_SUPPORT : row[14]), cc: cc, replyTo: BRANCH_SUPPORT,
+```
+
+For a health or claims case `sup` is true, so it goes to Sales Support, and
+`cc` is `[row[10], mgr, BRANCH_SUPPORT]` — the agent, the agent's manager and
+branch support. **Column 15, the department email, appears nowhere.** The cases
+chased ten times instead of three are exactly the ones where the department is
+dropped.
+
+The branch's own rule is unchanged: a health or claims item is Sales Support's
+to log on the portal and drive to close, so Sales Support keeps the To line.
+The department belongs on the CC of every chase, because they are the ones who
+have to answer.
+
+**One edit.** Ctrl+F for `cc: cc,` — one hit — and change it to:
+
+```js
+cc: qpChaseCc_(row, mgr, sup),
+```
+
+`qpChaseCc_` (patch section 15) adds the department when it is a support case,
+drops blank addresses so a case with no servicing agent does not put an empty
+recipient on the email, and de-duplicates — every repeated CC spends another of
+the day's hundred recipients. The old `var cc = …` line above it becomes unused;
+leave it, it is harmless.
+
+### Then run two things from the editor
+
+**`qpChaseAudit()`** — read-only, sends nothing. It counts how many rows have a
+damaged subject, how many chases went out on them, and how many of those were
+support cases where the department was dropped. That turns the scale of this
+from a feeling into a number.
+
+**`qpRepairSubjects(true)`** — a dry run that writes nothing and lists what it
+would change. Then `qpRepairSubjects()` to do it.
+
+The keep-warm block read its counter from `row[18]` — column 19, Description —
+and wrote it back with `sh.getRange(r + 1, 18)`, which is column 18, **Subject**.
+Reading one column and writing the next meant the marker never landed where it
+was read from, so `client-updates:N` never advanced past 1 and a progress update
+went to the client on *every sweep*. Eleven on case 081 alone, each headed "#1".
+
+The write also destroyed the subject: column 18 now holds the description text
+with ` | client-updates:1` on the end. That is visible in the reminder, which
+prints the same sentence twice. And since the chase subject is built from
+column 18 —
+
+```js
+  var subjectBase = clean(client) + ' - ' + (row[17] || '');
+```
+
+— every chase carried a different subject from the request it was chasing, so
+nothing about it could look like a reply. **This is why the follow-up had no
+trail.** The off-by-one is already fixed in `Code.gs` (the keep-warm block now
+writes to column 19), which stops it spreading; `qpRepairSubjects()` undoes
+what is already in the sheet, recovering each subject from the reference's
+fifth segment. The reference carries the subject cut to 24 characters, so a
+long one comes back short — the full text is still in the Description column.
+
+### One thing no code will fix
+
+Case 081 shows a **department reply detected on 5 October**, recorded on the
+trail. Five reminders went out after it, each telling Sales Support there was
+"no confirmation on this thread". The reply is in the record and nobody read
+it. A detected reply needs a person; the autopilot chasing over the top of one
+is the system working as built, and that is the part worth changing next.
+
+---
+
 ## URGENT — rotate the branch master codes
 
 **Do this today, and do it before anything else on this page.**
