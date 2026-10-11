@@ -1,3 +1,11 @@
+
+/* A test needs *a* branch code, never *the* branch code. These fixtures were
+   byte-identical to the live ones and sat in the folder dragged onto Netlify,
+   so they were published — querymypolicy.com/tests/… served working
+   credentials. Override with QP_TEST_BRANCH_CODE if a run needs a real one. */
+const BRANCH_CODE = process.env.QP_TEST_BRANCH_CODE || 'BRANCHX';
+const SHARED_CODE = process.env.QP_TEST_SHARED_CODE || 'SHAREDX';
+
 /* Sign-in diagnosis — runs the PRODUCTION findAgent_/agentAuth_ against a
    simulated Agent Codes tab, to answer two live questions:
      · can a newly added staff member (EL005 / password 5) sign in?
@@ -33,8 +41,8 @@ const BRANCH_MANAGER_EMAIL = 'ricky.rampersad@myguardiangroup.com';
 var ROLE_RX = /^(agent|adviser|advisor|manager|abm|mgr|unit manager|assistant branch manager|assistant manager|branch|branch manager|bm|admin|all|staff)$/i;
 
 const AGENT_ACCESS = {
-  '260026':  ['Ricky Rampersad', 'ricky.rampersad@myguardiangroup.com', 'branch'],
-  'RRB2026': ['Rampersad Branch', '', 'branch'],
+  [BRANCH_CODE]:  ['Ricky Rampersad', 'ricky.rampersad@myguardiangroup.com', 'branch'],
+  [SHARED_CODE]: ['Rampersad Branch', '', 'branch'],
   'AE101': ["Aidan Eugene", "aidan.eugene@myguardiangroup.com"],
   'KD122': ["Kamla Dookran", "kamla.dookran@myguardiangroup.com"],
   'PD129': ["Premchand Dookran", "premchand.dookran@myguardiangroup.com"],
@@ -378,8 +386,8 @@ t('the sheet can REVOKE someone hard-coded in the script',
   agentAuthPatched_('AE101', 'Aid#2026'), { ok: false });
 t('before the patch that revoke was ignored', agentAuth_('AE101', '').ok, true);
 t('anyone not in the sheet still falls back to the script list',
-  agentAuthPatched_('260026', '').ok, true);
-t('and keeps their branch role', agentAuthPatched_('260026', '').role, 'branch');
+  agentAuthPatched_(BRANCH_CODE, '').ok, true);
+t('and keeps their branch role', agentAuthPatched_(BRANCH_CODE, '').role, 'branch');
 t('unknown codes are still refused', agentAuthPatched_('ZZ999', ''), { ok: false });
 
 
@@ -402,7 +410,7 @@ t('AFTER EDIT 16: an email is refused',
   authSecure_('kamla.dookran@myguardiangroup.com', ''), { ok: false });
 t('AFTER EDIT 16: a bare digit is refused', authSecure_('5', ''), { ok: false });
 t('AFTER EDIT 16: the real code still works', authSecure_('KD122', 'Kam#2026').ok, true);
-t('AFTER EDIT 16: script-list people still sign in', authSecure_('260026', '').ok, true);
+t('AFTER EDIT 16: script-list people still sign in', authSecure_(BRANCH_CODE, '').ok, true);
 
 head('G2 · the Javid Ali collision, reproduced');
 TABS = { 'Agent Codes': [

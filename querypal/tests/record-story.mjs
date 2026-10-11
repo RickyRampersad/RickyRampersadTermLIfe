@@ -5,6 +5,14 @@
 import { createRequire } from 'module';
 import path from 'path';
 import fs from 'fs';
+
+/* A test needs *a* branch code, never *the* branch code. These fixtures were
+   byte-identical to the live ones and sat in the folder dragged onto Netlify,
+   so they were published — querymypolicy.com/tests/… served working
+   credentials. Override with QP_TEST_BRANCH_CODE if a run needs a real one. */
+const BRANCH_CODE = process.env.QP_TEST_BRANCH_CODE || 'BRANCHX';
+const SHARED_CODE = process.env.QP_TEST_SHARED_CODE || 'SHAREDX';
+
 const { chromium } = createRequire(import.meta.url)('/opt/node22/lib/node_modules/playwright');
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const OUT = path.join(HERE, 'demo');
@@ -40,7 +48,7 @@ await page.route('**/macros/s/**', route => {
     logged: '18 Aug 2026, 9:12 AM', turnaround: '1 day', dateClosed: '', daysToClose: '' });
   if (a === 'agentauth') {
     const onWall = (route.request().frame().url() || '').includes('wall.html');
-    return ok(onWall ? { ok: true, code: '260026', name: 'Ricky Rampersad', email: '', role: 'branch' }
+    return ok(onWall ? { ok: true, code: BRANCH_CODE, name: 'Ricky Rampersad', email: '', role: 'branch' }
                      : { ok: true, code: 'AE101', name: 'Aidan Eugene', email: '', role: 'manager' });
   }
   if (a === 'myqueries')   return ok({ ok: true, role: 'manager', name: 'Aidan Eugene',

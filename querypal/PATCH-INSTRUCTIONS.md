@@ -892,36 +892,56 @@ so they must be treated as known to strangers. Removing them from the page
 does not un-publish them: they are in anyone's browser cache, in archive
 crawls, and in the page anybody saved.
 
-In `Code.gs`, find the sign-in map near line 79:
-
-```js
-  '260026':  ['Ricky Rampersad', 'ricky.rampersad@myguardiangroup.com', 'branch'],
-  'RRB2026': ['Rampersad Branch', '', 'branch'],                    // shared branch master
-```
-
-Replace **both** codes with new ones, then redeploy (Deploy → Manage
-deployments → pencil → New version):
+In `Code.gs`, find the sign-in map near line 79 — the two `'branch'` entries at
+the top, one a six-digit code and one a word-plus-year code. Replace **both**
+values with new ones, keeping the names and emails as they are, then redeploy
+(Deploy → Manage deployments → pencil → New version):
 
 ```js
   '<new six digits>': ['Ricky Rampersad', 'ricky.rampersad@myguardiangroup.com', 'branch'],
   '<new word+digits>': ['Rampersad Branch', '', 'branch'],
 ```
 
-Pick something not derived from the branch number or the year — `260026` is
-the branch number and `RRB2026` the branch and year, so both were guessable
-even without reading the page.
+Pick something not derived from the branch number or the year. The old pair
+were the branch number, and the branch initials plus the year — guessable
+without reading the page at all. *(The old values are deliberately not quoted
+in this file; see the note on `.md` files below.)*
 
 Then:
 
 - **Tell the team the new code by WhatsApp or in person, never by email.**
-- The shared `RRB2026`-style code is worth retiring rather than replacing. A
+- The shared word-plus-year code is worth **retiring rather than replacing**. A
   code everyone knows is a code that ends up written down; the per-agent codes
   in the Agent Codes sheet already do this job and say who did what.
-- Six test files under `tests/` still hold the old code and will fail after
-  the rotation. They are not published — the `_redirects` catch-all swallows
-  that folder — so this is tidying, not exposure.
-- `tests/secrets.test.mjs` fails if a sign-in literal is ever published
-  again. Run it before a deploy.
+
+### The old codes were in more places than the two pages
+
+On 11 October 2026, while packaging a deploy, seven more files in the folder
+that gets dragged onto Netlify were found carrying the old codes: this file,
+and six test fixtures under `tests/`.
+
+An earlier version of this page said that did not matter, because *"the
+`_redirects` catch-all swallows that folder"*. **That was wrong, and it is the
+reason this sat unnoticed.** A `200` rewrite applies only where no real file
+matches, so every real file in the folder wins over the catch-all. The proof
+was already in hand: `404.html` was reachable at `querymypolicy.com/404.html`,
+which is precisely how its stale 310 KB copy of the whole app was found.
+
+So `querymypolicy.com/tests/patch.test.js` was serving a working branch
+credential, as was this file at `/PATCH-INSTRUCTIONS.md`.
+
+Fixed three ways:
+
+- The fixtures now take their code from `QP_TEST_BRANCH_CODE`, defaulting to an
+  obviously-fake value. A test needs *a* branch code, never *the* branch code.
+- This file no longer quotes the old values.
+- `tests/secrets.test.mjs` now walks the **whole tree** and includes `.md`,
+  `.gs` and `.mjs`. It used to scan the top level only, and only a handful of
+  extensions — which is why it passed while seven files carried the codes. It
+  now scans 46 files instead of 10. **Run it before every deploy.**
+
+Anything that ends up in the folder dragged onto Netlify is public. That is the
+only rule worth remembering here.
 
 There is no sign the codes were used by anyone outside the branch — the log
 shows 99 cases and no unexplained sign-ins — but that is not something the

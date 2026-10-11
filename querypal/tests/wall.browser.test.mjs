@@ -2,6 +2,14 @@
    rotation, data rendering, scoped ?code= boot, and the gate as fallback. */
 import { createRequire } from 'module';
 import path from 'path';
+
+/* A test needs *a* branch code, never *the* branch code. These fixtures were
+   byte-identical to the live ones and sat in the folder dragged onto Netlify,
+   so they were published — querymypolicy.com/tests/… served working
+   credentials. Override with QP_TEST_BRANCH_CODE if a run needs a real one. */
+const BRANCH_CODE = process.env.QP_TEST_BRANCH_CODE || 'BRANCHX';
+const SHARED_CODE = process.env.QP_TEST_SHARED_CODE || 'SHAREDX';
+
 const { chromium } = createRequire(import.meta.url)('/opt/node22/lib/node_modules/playwright');
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const WALL = 'file://' + path.join(HERE, '..', 'wall.html');
@@ -39,7 +47,7 @@ let wallCalls = 0, postCalls = 0, refuseAnon = false;
 await page.route('**/macros/s/**', route => {
   const req = route.request();
   const ok = b => route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(b) });
-  if (req.method() === 'POST') { postCalls++; return ok({ ok:true, token:'TOK1', code:'260026', name:'Ricky Rampersad', role:'branch' }); }
+  if (req.method() === 'POST') { postCalls++; return ok({ ok:true, token:'TOK1', code: BRANCH_CODE, name:'Ricky Rampersad', role:'branch' }); }
   wallCalls++;
   if (refuseAnon && !/code=[^&]/.test(req.url())) return ok({ ok:false });   // a backend with the open wall switched off
   return ok(feed);
@@ -194,7 +202,7 @@ t('snapping picks the nearest recorded value', await page.evaluate(() =>
 t('reload boots open again', await page.locator('#gate.off').count(), 1);
 
 // ?code= boot path — a scoped team/agent view, remembered on the device
-await page.goto(WALL + '?code=RRB2026');
+await page.goto(WALL + '?code=' + SHARED_CODE);
 await page.waitForFunction(() => document.getElementById('v_total').textContent !== '—', null, { timeout:5000 });
 t('?code= boots straight to the wall', await page.locator('#gate.off').count(), 1);
 t('the code is stripped from the address bar', page.url().includes('code='), false);
@@ -206,7 +214,7 @@ refuseAnon = true;
 await page.goto(WALL);
 await page.waitForSelector('#gate:not(.off)', { timeout:5000 });
 t('gate appears when the open wall is refused', await page.locator('#gate:not(.off)').count(), 1);
-await page.fill('#gNum','260026'); await page.fill('#gPwd','pw');
+await page.fill('#gNum', BRANCH_CODE); await page.fill('#gPwd','pw');
 await page.click('#gGo');
 await page.waitForFunction(() => document.getElementById('v_total').textContent !== '—', null, { timeout:5000 });
 t('signing in through the gate still works', await page.locator('#gate.off').count(), 1);

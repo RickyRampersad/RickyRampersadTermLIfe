@@ -1,3 +1,11 @@
+
+/* A test needs *a* branch code, never *the* branch code. These fixtures were
+   byte-identical to the live ones and sat in the folder dragged onto Netlify,
+   so they were published — querymypolicy.com/tests/… served working
+   credentials. Override with QP_TEST_BRANCH_CODE if a run needs a real one. */
+const BRANCH_CODE = process.env.QP_TEST_BRANCH_CODE || 'BRANCHX';
+const SHARED_CODE = process.env.QP_TEST_SHARED_CODE || 'SHAREDX';
+
 /* QueryPalPatch.gs — routing, attachments, manager lookup, passwords, tokens.
    Apps Script services stubbed; AGENT_ACCESS / AGENT_MANAGER read from the
    real v10.2 values pasted into fixtures below. */
@@ -38,7 +46,7 @@ global.AGENT_MANAGER = {
   "daniel bhagwandas":"Akaash.Kalladeen@myguardiangroup.com"
 };
 global.AGENT_ACCESS = {
-  '260026':['Ricky Rampersad','ricky.rampersad@myguardiangroup.com','branch'],'RRB2026':['Rampersad Branch','','branch'],
+  [BRANCH_CODE]:['Ricky Rampersad','ricky.rampersad@myguardiangroup.com','branch'],[SHARED_CODE]:['Rampersad Branch','','branch'],
   'AE101':["Aidan Eugene",""],'AJ102':["Alyssa Joseph",""],'AK103':["Akaash Kalladeen",""],'AS104':["Anthony Simmons",""],
   'CB105':["Chris Badaloo",""],'CF106':["Crystal Fraser",""],'DB107':["Daniel Bhagwandas",""],'DM108':["Darryl Manick",""],
   'DH109':["Dhalina Heeraman",""],'DL110':["Diane Lutchman statham",""],'FM111':["Faizal Mohammed",""],

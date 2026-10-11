@@ -116,6 +116,47 @@ it in the app.
 **`qpwall.html` is a byte copy of `wall.html`** under the name the branch
 manager has in Downloads. Keep them identical.
 
+## The site has outgrown Netlify's file picker
+
+`wall.html` is 13.5 MB, and 98.8% of that is 738 base64 voice clips folded into
+the page — the wall's narration. It has to be inline: the hosted copy runs under
+a policy that will not fetch a sibling asset, so a separate MP3 would be silent
+on the office TV. It cannot be slimmed without silencing the wall.
+
+That puts the whole site over **Netlify's 10 MB upload cap for the file
+picker** — the "browse" button, which also refuses folders outright
+("Folders aren't supported. Please zip the folder before uploading"). Zipping
+does not help: the zip is ~11 MB.
+
+What does work:
+
+- **Drag the `querypal` folder onto the drop zone**, rather than clicking
+  browse. A directory drag goes through a different path with a far higher
+  limit. Use Chrome or Edge — Safari does not support directory drag.
+- **A rollback needs no upload at all**: Deploys → pick an earlier deploy →
+  **Publish deploy**. That is the fastest way out of a bad deploy, and the
+  right first move when the site is down.
+- A zip without `wall.html` is ~726 KB and fits the picker. The app, `/story`
+  and `/docs` come back; `/wall` 404s until a full deploy. A staged recovery,
+  not a destination.
+
+If the picker is the only route available, the site needs to stop being
+deployed by hand — either link the Netlify project to this repository or use
+the Netlify CLI.
+
+## Anything in the folder you drag is public
+
+A `200` rewrite in `_redirects` applies only where **no real file matches**, so
+every real file wins over the `/*  /index.html  200` catch-all. `tests/` and the
+`.md` files in `querypal/` were therefore served, not hidden — which is how
+`querymypolicy.com/tests/patch.test.js` came to be handing out a working branch
+credential, and how `404.html` was found still serving a 310 KB copy of the
+whole app.
+
+`tests/secrets.test.mjs` now walks the whole tree and includes `.md`, `.gs` and
+`.mjs`. It used to scan the top level and a handful of extensions, which is why
+it passed while seven files carried the codes. **Run it before every deploy.**
+
 ## Rules that do not bend
 
 - Never send test email to a real department — `TEST_MODE = true` sends to the

@@ -5,6 +5,14 @@ const { chromium } = createRequire(import.meta.url)('/opt/node22/lib/node_module
    that has never existed in this project. Shorten the timeout again and the
    third and fifth checks here fail. */
 import path from 'path';
+
+/* A test needs *a* branch code, never *the* branch code. These fixtures were
+   byte-identical to the live ones and sat in the folder dragged onto Netlify,
+   so they were published — querymypolicy.com/tests/… served working
+   credentials. Override with QP_TEST_BRANCH_CODE if a run needs a real one. */
+const BRANCH_CODE = process.env.QP_TEST_BRANCH_CODE || 'BRANCHX';
+const SHARED_CODE = process.env.QP_TEST_SHARED_CODE || 'SHAREDX';
+
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const PAGE = 'file://' + (process.argv[2] || path.join(HERE, '..', 'index.html'));
 let pass=0,fail=0;
@@ -18,7 +26,7 @@ const b = await chromium.launch();
   let hits=0;
   await p.route('**/macros/s/**', r => { hits++; /* hang */ });
   await p.goto(PAGE); await p.waitForTimeout(800);
-  await p.evaluate(()=>{ agentAuth={code:'260026',name:'Ricky',email:'',role:'branch'}; dashFetch(); });
+  await p.evaluate((c)=>{ agentAuth={code:c,name:'Ricky',email:'',role:'branch'}; dashFetch(); }, BRANCH_CODE);
   await p.waitForTimeout(1500);
   t('while waiting, no false "install" advice',
     (await p.locator('#dashList').innerText()).includes('QueryPal_Backend_v6'), false);
@@ -37,7 +45,7 @@ const b = await chromium.launch();
     r.fulfill({status:200, contentType:'application/json', body: JSON.stringify(body)});
   });
   await p.goto(PAGE); await p.waitForTimeout(800);
-  await p.evaluate(()=>{ agentAuth={code:'260026',name:'Ricky',email:'',role:'branch'}; dashFetch(); });
+  await p.evaluate((c)=>{ agentAuth={code:c,name:'Ricky',email:'',role:'branch'}; dashFetch(); }, BRANCH_CODE);
   await p.waitForFunction(()=>!document.getElementById('dashList').innerText.includes('oading'), null, {timeout:45000}).catch(()=>{});
   const txt = await p.locator('#dashList').innerText();
   t('a 20s backend now loads instead of erroring', txt.includes('RRB/2026/001') || txt.includes('Surrenders'), true);
@@ -48,7 +56,7 @@ const b = await chromium.launch();
   const p = await b.newPage();
   await p.route('**/macros/s/**', r => r.abort());
   await p.goto(PAGE); await p.waitForTimeout(800);
-  await p.evaluate(()=>{ agentAuth={code:'260026',name:'Ricky',email:'',role:'branch'}; dashFetch(); });
+  await p.evaluate((c)=>{ agentAuth={code:c,name:'Ricky',email:'',role:'branch'}; dashFetch(); }, BRANCH_CODE);
   await p.waitForTimeout(2500);
   const txt = await p.locator('#dashList').innerText();
   t('the failure card is honest', txt.includes("didn't load") && txt.includes('Refresh'), true);

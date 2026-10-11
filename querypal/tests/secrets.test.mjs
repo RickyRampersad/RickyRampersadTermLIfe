@@ -26,10 +26,31 @@ const HERE = path.dirname(new URL(import.meta.url).pathname);
 const SITE = path.join(HERE, '..');
 
 /* Everything a drag-and-drop deploy puts on the web and a browser can fetch
-   by name. tests/ is not here: the _redirects catch-all swallows it. */
-const PUBLISHED = fs.readdirSync(SITE)
-  .filter(f => fs.statSync(path.join(SITE, f)).isFile())
-  .filter(f => /\.(html|js|mjs|json|webmanifest|txt|css)$/i.test(f) || f === '_redirects');
+   by name — the WHOLE tree, subfolders included.
+
+   This list used to be the top level only, and only a few extensions. It was
+   wrong twice over, and on 11 October 2026 it was caught passing while seven
+   files in the deploy folder carried the codes: PATCH-INSTRUCTIONS.md and six
+   test fixtures.
+
+     - It skipped `tests/` on the belief that the `_redirects` catch-all
+       (`/*  /index.html  200`) swallowed it. It does not. A 200 rewrite only
+       applies where no real file matches, so every real file wins. The proof
+       was already in hand: 404.html was reachable at querymypolicy.com/404.html,
+       which is exactly how its stale 310 KB app copy was found.
+     - It skipped `.md` and `.gs`, so the patch instructions and the backend
+       source were never looked at.
+
+   If a file ends up in the folder that gets dragged onto Netlify, it is
+   public. That is the only rule that matters here. */
+const EXT = /\.(html|js|mjs|cjs|json|webmanifest|txt|css|md|gs|svg)$/i;
+const walk = (dir, base = '') => fs.readdirSync(dir, { withFileTypes: true })
+  .flatMap(d => {
+    const rel = base ? base + '/' + d.name : d.name;
+    if (d.isDirectory()) return walk(path.join(dir, d.name), rel);
+    return (EXT.test(d.name) || d.name === '_redirects') ? [rel] : [];
+  });
+const PUBLISHED = walk(SITE);
 
 /* A credential is anything that, handed to the backend, answers role:branch.
    Keep the patterns shaped, not literal — a test that names the code would be
@@ -38,9 +59,22 @@ const SHAPES = [
   { what: 'a six-digit branch code used as a sign-in literal',
     rx: /===\s*'[0-9]{6}'|==\s*'[0-9]{6}'|toUpperCase\(\)\s*===\s*'[0-9]{6}'/ },
   { what: 'an RRB-prefixed shared master code',
-    rx: /'RRB[0-9]{4}'|"RRB[0-9]{4}"/ },
+    rx: /'RRB[0-9]{4}'|"RRB[0-9]{4}"|\?code=RRB[0-9]{4}/ },
   { what: 'a client-side call to gatePass with a hard-coded branch role',
     rx: /gatePass\([^)]*'branch'\s*\)/ },
+
+  /* The shapes below are what a test fixture looks like. A fixture is still a
+     working credential if it is byte-identical to the real one, and a fixture
+     in the deploy folder is as public as the app. Tests need *a* branch code,
+     never *the* branch code — QP_TEST_BRANCH_CODE supplies it. */
+  { what: 'a six-digit code assigned as a sign-in value',
+    rx: /\b(code|num|pwd)\s*:\s*'[0-9]{6}'/ },
+  { what: 'an AGENT_ACCESS entry keyed on a six-digit code',
+    rx: /'[0-9]{6}'\s*:\s*\[/ },
+  { what: 'a sign-in form filled with a six-digit code',
+    rx: /\.fill\(\s*'#g[A-Za-z]+'\s*,\s*'[0-9]{6}'\s*\)/ },
+  { what: 'a six-digit code passed straight to a sign-in helper',
+    rx: /(agentAuth\w*|authSecure_|findAgent_)\(\s*'[0-9]{6}'/ },
 ];
 
 let fail = 0;
