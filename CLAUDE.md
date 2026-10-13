@@ -2911,6 +2911,16 @@ servicing work".
   that a client answered, never the rating or what they asked for: one of the
   taps is a private note to the branch manager about the agent. Each source
   is optional; without Salesforce the rest still shows.
+- **The AI read** (13 October 2026: "is there also any intelligence on the premium due tab that staff can actually
+  see and AI driven, like what we did for the groups?"). Beside each letter, "Read <name> with AI" sends the facts
+  the desk holds on that client to the Claude API (`pddAi_`, `claude-opus-5-5`, structured output) and shows where
+  things stand, what most likely stopped the premium, what to check first, an opener for the call and what to be
+  careful of. For the branch and staff, "Read today's lines" (`pddAiDay_`) reads the four lines in counts only and
+  says what stands out and where to start. No client's name, e-mail, policy or client number is sent; an agent's read
+  leaves out what the client told the branch, as the desk does. It is for staff, never a client, and never touches a
+  letter, whose wording is approved. Staff are not licensed, so it never advises on cover: options are the agent's
+  conversation. Each read is kept six hours (the day's half an hour). The key is the `ANTHROPIC_API_KEY` Script
+  property of this project (the tracker's, not the Service Questionnaire's); without it the page offers nothing.
 - **The page**: a tab per line with how many are to check and ticked, and
   filters for the agent, the unit, how they pay, when the cover stops, to
   check / ticked / not sending, flagged, answered us before, holds other
@@ -2946,7 +2956,7 @@ servicing work".
   are read. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
   `pddToday()` (each line's count, and whether the in-force book and
   Salesforce joined), `pddSendNow()`. `pdd3/` in the session scratchpad holds
-  the harness on a made-up branch (`test.js`, 72 checks; `page-test.js`, 34,
+  the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
   Playwright; `world.js`, the fake workbook and Salesforce).
 
 ## Standing rules
