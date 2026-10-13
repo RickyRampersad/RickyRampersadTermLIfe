@@ -87,6 +87,7 @@ var GCM = {
   RESPOND_DAY: 5,           // the letter asks for an answer by Friday of the same week
   SITE: 'https://rickyrampersadbranch.com/groupclientmanagement/',
   COPY: ['rickyrampersadsalessupport@myguardiangroup.com'],   // a blind copy of every letter: the record of what went
+  TELL_CC: ['rickyrampersadsalessupport@myguardiangroup.com'], // copied on a group's answer, which goes to the account owner
   TRIES: 8, LOCK_S: 900,    // wrong codes on one list bill before it closes for fifteen minutes
   MIN_CODE: 10,             // a group code shorter than this opens nothing
   HOURS: [6, 18],           // the hourly refresh runs from 6:00 to 18:00, Monday to Saturday
@@ -1463,6 +1464,9 @@ function gcmReview_(b) {
     rows.push({ When: now, Group: g.name, Name: name, Role: role, 'Task Id': t.id, Task: gcmTitle_(t.subject, g.name), Verdict: v, Note: note, Staff: g.assigned, Chatter: chatter });
   });
   var rating = Math.round(Number(b.rating) || 0), comment = String(b.comment || '').trim().slice(0, 2000);
+  /* The stars are required (13 October 2026: "ensure the star rating is pressed"): Dansteel, the first group to answer,
+     sent two items and no rating. */
+  if (!(rating >= 1 && rating <= 5)) return { ok: false, error: 'Please rate our service: tap one to five stars before you send.' };
   if (rating >= 1 && rating <= 5 || comment) rows.push({ When: now, Group: g.name, Name: name, Role: role, Rating: rating >= 1 && rating <= 5 ? rating : '', Comment: comment, Staff: g.assigned });
   if (!rows.length) return { ok: false, error: 'Mark at least one item, or rate our service, before you send.' };
   gcmAppend_(GCM.RESPONSES, rows);
@@ -1470,12 +1474,14 @@ function gcmReview_(b) {
   return { ok: true, saved: rows.length, posted: posted, failed: failed };
 }
 
-/** The staff member the group is assigned to, and the branch, hear at once: an internal note, with what changed. */
+/** The account owner hears at once, with sales support copied: an internal note, with what changed (13 October 2026:
+ *  "come in via email … to the account owner and copy the Ricky Rampersad sales support"; the branch manager is no
+ *  longer copied, and sees every answer on the dashboard). With no owner's address, sales support alone. */
 function gcmTell_(g, name, rows, rating, comment) {
   var to = [];
   if (g.ownerEmail) to.push(g.ownerEmail);
-  else tTeam_().people.forEach(function (p) { if (gcmSameName_(p.name, g.assigned) && p.email) to.push(p.email); });
-  if (TRANSITION.CC && TRANSITION.CC.length) to = to.concat(TRANSITION.CC);
+  else tTeam_().people.forEach(function (p) { if (gcmSameName_(p.name, g.assigned) && p.email && to.indexOf(p.email) < 0) to.push(p.email); });
+  GCM.TELL_CC.forEach(function (a) { if (to.map(function (x) { return x.toLowerCase(); }).indexOf(a.toLowerCase()) < 0) to.push(a); });
   if (!to.length) return;
   var V = { correct: 'Correct', change: 'Needs a change', notours: 'Not ours' };
   var flag = rows.filter(function (r) { return r.Verdict === 'change' || r.Verdict === 'notours' || r.Note; });

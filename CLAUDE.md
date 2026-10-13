@@ -2695,13 +2695,17 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `teamview/team-page.js` (18, Playwright) in the session scratchpad cover it.
 - **A group's answer reaches staff three ways, and stays on "To act on" until it is dealt with** (13 October 2026:
   the manager could not find Dansteel's answer of 12 October). It is filed on Group Responses and posted to the
-  task's Chatter, and `gcmTell_` e-mails the owner and `TRANSITION.CC` ("Group review in: …"). That e-mail went by
+  task's Chatter, and `gcmTell_` e-mails the account owner, copied to sales support alone (`GCM.TELL_CC`; asked for
+  the same day: "to the account owner and copy the Ricky Rampersad sales support"; the branch manager is no longer
+  copied and sees every answer on the dashboard), as "Group review in: …". That e-mail went by
   Gmail alone and a failure was swallowed: Dansteel's never went. It now goes from support@ first, Gmail second; one
   that cannot go is kept (`GCM_TELL_FAILED`) and named to the branch on the dashboard, and `gcmTellAgain` (the
   editor's Run button, the last three days) sends it again. An answer marking an item "Needs a change" or "Not ours"
   is first on "To act on" for fourteen days, until the item is closed or a note for the group follows on a later day.
-  The "group answers this week" tile opens "What groups told us". A rating shows only when the group gives one.
-  `answers/answers-test.js` in the session scratchpad covers it (16 checks).
+  The "group answers this week" tile opens "What groups told us". **The stars are required** ("ensure the star
+  rating is pressed"): the page will not send until one to five is tapped, and `gcmReview_` refuses an answer
+  without one; Dansteel's, the first, had none. `answers/answers-test.js` (21 checks) and `answers/client-page.js`
+  (5, Playwright) in the session scratchpad cover it.
 - **The letter goes to the account's Contact Person in Salesforce** (7 October
   2026: "there is a contact on the account with an email, why is it she is not
   able to send?"). Until then only the register's To was read, and it was
