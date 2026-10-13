@@ -2868,12 +2868,12 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     groups: ready for a Monday letter, written to the Contact Person, never one of our own addresses, never twice,
     never a group named in the `GCM_WELCOME_SKIP` Script property.
   - **The branch manager gets the test first**: `gcmWelcomeTest` (editor Run) sends him one welcome as a group would
-    get it, marked TEST, with who would and would not get it. `gcmWelcomeAt6` then sends it by itself at 18:00 (today
-    if before six, else tomorrow); `gcmWelcomeCancel` stops it. From support@ only; without Microsoft 365 nothing
-    goes.
+    get it, marked TEST, with who would and would not get it. `gcmWelcomeNow` then sends it at once (chosen the same
+    evening, to all eleven ready groups), or `gcmWelcomeAt6` by itself at 18:00 (today if before six, else tomorrow);
+    `gcmWelcomeCancel` stops a scheduled one. From support@ only; without Microsoft 365 nothing goes.
   - Each welcome is logged on Group Sends with Status "welcome sent". The weekly run passes those rows over, so a
     welcome never counts as that week's letter. One internal summary goes to `TRANSITION.CC`.
-  - `welcome/welcome-test.js` in the session scratchpad covers it (21 checks).
+  - `welcome/welcome-test.js` in the session scratchpad covers it (24 checks).
 
 ## The Premium Due Desk — checked by a person, sent at ten
 

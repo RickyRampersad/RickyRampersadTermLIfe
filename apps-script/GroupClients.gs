@@ -1340,6 +1340,9 @@ function gcmWelcomeAt6() {
   var n = gcmWelcomeList_(gcmLoad_()).go.length;
   return tSay_('The welcome goes at ' + GCM_WELCOME.HOUR + ':00 on ' + tDmy_(day) + ' to ' + n + ' group' + (n === 1 ? '' : 's') + ', from ' + TRANSITION.MS_FROM + '. Run gcmWelcomeCancel to stop it.');
 }
+/** Editor Run, after the test is approved: the welcome goes now, to every group on the list (asked for on 13 October
+ *  2026, the evening the film was approved: "send … to go out now"). A group welcomed already is passed over. */
+function gcmWelcomeNow() { gcmWelcomeCancel_(); return tSay_(gcmWelcomeRun_({}).said); }
 function gcmWelcomeCancel() { gcmWelcomeCancel_(); return tSay_('No welcome is scheduled.'); }
 function gcmWelcomeCancel_() { ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'gcmWelcomeTick') ScriptApp.deleteTrigger(t); }); }
 function gcmWelcomeTick() { gcmWelcomeCancel_(); gcmWelcomeRun_({}); }
