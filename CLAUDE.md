@@ -2853,6 +2853,28 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     (`shots2.js`, `lines2.json`, `timing2.py`, `film2.html`, `mix2.py` in `staffvid/`). `group-loop.png` there is the
     loop picture alone, for the group chat.
 
+- **The welcome: one e-mail to each employer, with the film** (13 October 2026: "with the video embedded so to
+  greet the employer in a new way of managing their account … test with me first as this is supposed to pop").
+  - **The film is the employer's own cut**, `groupclientmanagement/welcome.mp4` (1:33, poster `welcome.jpg`), on
+    its page `welcome.html`. The staff film's part 2 speaks to staff ("their answer comes straight to you") and shows
+    the staff page and the manager's dashboard, so it is never sent to a group. The employer cut keeps the letter,
+    the sign-in, the items, the history, the answers, the stars and the thank-you, voiced to the employer, on a sample
+    group with made-up figures. Built in the scratchpad from the same shots (`staffvid/lines3.json`, `film3.html`,
+    `timing3.py`, `mix3.py`).
+  - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
+    film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
+  - **No access code in it.** The Monday letter carries the sign-in, after staff check it.
+  - `gcmWelcome_` writes it, signed by the branch manager and naming the account owner. `gcmWelcomeList_` picks the
+    groups: ready for a Monday letter, written to the Contact Person, never one of our own addresses, never twice,
+    never a group named in the `GCM_WELCOME_SKIP` Script property.
+  - **The branch manager gets the test first**: `gcmWelcomeTest` (editor Run) sends him one welcome as a group would
+    get it, marked TEST, with who would and would not get it. `gcmWelcomeAt6` then sends it by itself at 18:00 (today
+    if before six, else tomorrow); `gcmWelcomeCancel` stops it. From support@ only; without Microsoft 365 nothing
+    goes.
+  - Each welcome is logged on Group Sends with Status "welcome sent". The weekly run passes those rows over, so a
+    welcome never counts as that week's letter. One internal summary goes to `TRANSITION.CC`.
+  - `welcome/welcome-test.js` in the session scratchpad covers it (21 checks).
+
 ## The Premium Due Desk — checked by a person, sent at ten
 
 `premium-due/` and `apps-script/PremiumDueDesk.gs`, in the Branch Intelligence

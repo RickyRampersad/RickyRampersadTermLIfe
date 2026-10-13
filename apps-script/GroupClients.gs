@@ -691,6 +691,8 @@ function gcmLoad_() {
   });
   gcmRows_(GCM.SENDS).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
+    /* the welcome is logged here too, but it is not a weekly letter: it never counts as this week's */
+    if (g && /^welcome/i.test(gcmText_(r.Status))) { g.welcomed = gcmWhen_(r.When); return; }
     if (g) g.sends.push({ when: gcmYmd_(r.When), at: gcmWhen_(r.When), staff: gcmText_(r.Staff), subject: gcmText_(r.Subject), items: Number(r.Items) || 0, via: gcmText_(r.Via), status: gcmText_(r.Status) });
   });
   gcmRows_(GCM.RESPONSES).forEach(function (r) {
@@ -1250,6 +1252,139 @@ function gcmRehearse_(b) {
   if (!who.ok) return who;
   if (who.role !== 'branch') return { ok: false, error: 'Only the branch manager rehearses the run.' };
   return gcmQueueRun_({ test: true });
+}
+
+/* ── the welcome ─────────────────────────────────────────────────────
+ * One e-mail to each group introducing the new way its account is looked after, with the film (asked for on 13
+ * October 2026: "with the video embedded so to greet the employer in a new way of managing their account … test with
+ * me first"). No mail app plays a film inside an e-mail, so it is the film's first frame with a play button, hosted,
+ * opening the film's own page in one tap. It carries no access code: the Monday letter does, after staff check it.
+ * Once per group, ever; from support@ only; the branch manager gets the test first. */
+var GCM_WELCOME = {
+  HOUR: 18,                                   // gcmWelcomeAt6 schedules the send for this hour, sheet time
+  PAGE: 'welcome.html', CARD: 'welcome-card.jpg', LENGTH: '1 min 33 s',
+  SKIP_PROP: 'GCM_WELCOME_SKIP'               // Script property: groups to leave out, by name, comma-separated
+};
+
+/** The welcome for one group, signed by the branch manager, naming the person who looks after the group. */
+function gcmWelcome_(g) {
+  var E = tEsc_, M = TRANSITION.MANAGER || {}, page = GCM.SITE + GCM_WELCOME.PAGE;
+  var carer = g.ownerActive && g.assigned ? g.assigned : '';
+  var greet = 'Dear ' + (g.greeting || 'Sir or Madam') + ',';
+  var subject = 'Your group account, now in one place: ' + g.name;
+  var pre = 'Watch how it works in ' + GCM_WELCOME.LENGTH + '. One letter every Monday, your own page to answer it.';
+  var p1 = 'From this week, the way our branch looks after ' + g.name + '’s account changes. Everything we have open for you is in one place, and you tell us in one tap what needs our attention.';
+  var steps = [['Every Monday at 10:00', 'One letter: what is open, what we completed, and what we need from you.'],
+    ['Your own page', 'Every item, who is handling it, how long it has been open and how it got there. Mark each one Correct, Needs a change or Not ours, and rate our service.'],
+    ['We act on it', 'Your answer reaches ' + (carer || 'the person looking after you') + ' the moment you send it, and the next Monday letter shows what changed.']];
+  var p2 = 'Your sign-in comes with your Monday letter.' + (carer ? ' ' + carer + ' looks after your account, and a reply to this e-mail reaches us both.' : ' A reply to this e-mail reaches us.');
+  var text = [greet, '', p1, '', 'Watch how it works (' + GCM_WELCOME.LENGTH + '): ' + page, '']
+    .concat(steps.map(function (s, i) { return (i + 1) + '. ' + s[0] + ': ' + s[1]; }))
+    .concat(['', p2, '', 'Warm regards,', M.name || 'Ricky Rampersad', (M.title || 'Branch Manager') + ', Ricky Rampersad Branch', 'Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461']).join('\n');
+  var font = "font-family:'IBM Plex Sans','Segoe UI',Roboto,Arial,sans-serif";
+  var html = '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' + E(pre) + '</div>' +
+    '<div style="background:#E9EEF5;padding:22px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;border-collapse:collapse;background:#ffffff">' +
+    /* the band: the corporate blue, with a plain blue behind it for Outlook, which draws no gradient */
+    '<tr><td bgcolor="#1D5BC4" style="background:#1D5BC4;background-image:linear-gradient(120deg,#13408F,#1D5BC4 60%,#2A6FD8);padding:24px 28px 26px;' + font + '">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px;border:1px solid #7FA3E0"></td>' +
+    '<td style="padding-left:12px;color:#ffffff;font:600 15px/1.25 Arial,sans-serif;' + font + '">Ricky Rampersad Branch<div style="font:400 12.5px/1.4 Arial,sans-serif;color:#D6E3F8">Group client service · Guardian Life of the Caribbean</div></td></tr></table>' +
+    '<div style="font:600 26px/1.2 Arial,sans-serif;' + font + ';color:#ffffff;margin:22px 0 6px">Your account, in one place</div>' +
+    '<div style="font:16px/1.5 Arial,sans-serif;' + font + ';color:#E4ECFA">One letter every Monday. Your own page to answer it. A team that acts on what you say.</div></td></tr>' +
+    '<tr><td style="padding:22px 28px 6px"><a href="' + page + '" style="text-decoration:none"><img src="' + GCM.SITE + GCM_WELCOME.CARD + '" width="584" alt="Play the film: how your account works now, ' + E(GCM_WELCOME.LENGTH) + '" style="display:block;width:100%;max-width:584px;height:auto;border:0;border-radius:10px"></a>' +
+    '<div style="font:13px/1.5 Arial,sans-serif;color:#4B586C;margin:8px 0 0;text-align:center"><a href="' + page + '" style="color:#1D5BC4;font-weight:700;text-decoration:none">&#9654;&nbsp; Watch the film</a> · ' + E(GCM_WELCOME.LENGTH) + '</div></td></tr>' +
+    '<tr><td style="padding:16px 28px 8px;font:15.5px/1.6 Arial,sans-serif;' + font + ';color:#142033">' +
+    '<p style="margin:0 0 12px">' + E(greet) + '</p><p style="margin:0 0 16px">' + E(p1) + '</p>' +
+    steps.map(function (s, i) {
+      return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 10px;background:#F4F7FA;border:1px solid #DCE3EC;border-radius:10px"><tr>' +
+        '<td width="44" valign="top" style="padding:14px 0 14px 14px"><div style="width:30px;height:30px;line-height:30px;border-radius:15px;background:#1D5BC4;color:#ffffff;text-align:center;font:700 14px/30px Arial,sans-serif">' + (i + 1) + '</div></td>' +
+        '<td style="padding:12px 16px 13px 10px;font:15px/1.5 Arial,sans-serif;' + font + ';color:#142033"><b>' + E(s[0]) + '</b><br><span style="color:#4B586C">' + E(s[1]) + '</span></td></tr></table>';
+    }).join('') +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 14px"><tr><td bgcolor="#1D5BC4" style="background:#1D5BC4;border-radius:8px"><a href="' + page + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Watch how it works</a></td></tr></table>' +
+    '<p style="margin:0 0 18px">' + E(p2) + '</p>' +
+    '<p style="margin:0;border-top:1px solid #E2E7EF;padding-top:14px">Warm regards,<br><b>' + E(M.name || 'Ricky Rampersad') + '</b><br>' + E(M.title || 'Branch Manager') + ', Ricky Rampersad Branch<br>' +
+    '<span style="color:#4B586C">Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p>' +
+    tLegal_(null) + '</td></tr></table></div>';
+  return { subject: subject, html: html, text: text };
+}
+
+/** Who the welcome goes to: each group ready for its Monday letter (a contact, a code, a list bill), written to its
+ *  contact, never to one of our own addresses, never twice, and never a group named in GCM_WELCOME_SKIP. */
+function gcmWelcomeList_(L) {
+  var skip = String(PropertiesService.getScriptProperties().getProperty(GCM_WELCOME.SKIP_PROP) || '').split(',')
+    .map(function (x) { return gcmCodeKey_(x); }).filter(String);
+  var go = [], held = [];
+  L.reg.forEach(function (g) {
+    var s = gcmGroupStats_(g, L.today), why = '';
+    if (g.welcomed) why = 'welcomed already, ' + g.welcomed;
+    else if (skip.some(function (k) { return g.key === k || g.key.indexOf(k) === 0; })) why = 'left out by ' + GCM_WELCOME.SKIP_PROP;
+    else if (!s.ready) why = s.why;
+    else if (g.to.some(function (a) { return /@(myguardiangroup\.com|rickyrampersadbranch\.com)$/i.test(a); })) why = 'its contact is one of our own addresses (' + g.to.join(', ') + ')';
+    (why ? held : go).push({ g: g, why: why });
+  });
+  return { go: go, held: held };
+}
+
+/** Editor Run, first: the branch manager gets the welcome exactly as one group would (the first that would get it),
+ *  marked TEST, with the list of who would get it and who would not. Nothing reaches a group. */
+function gcmWelcomeTest() {
+  var r = gcmWelcomeRun_({ test: true });
+  return tSay_(r.said);
+}
+/** Editor Run, after the test is approved: the welcome goes by itself at 18:00, today if it is not yet six, else
+ *  tomorrow. Run it again to move it; gcmWelcomeCancel takes it off. */
+function gcmWelcomeAt6() {
+  var tz = tTz_(), day = gcmToday_(), at = Utilities.parseDate(day + ' ' + GCM_WELCOME.HOUR + ':00', tz, 'yyyy-MM-dd HH:mm');
+  if (at.getTime() <= Date.now() + 5 * 60000) { day = gcmAddDays_(day, 1); at = Utilities.parseDate(day + ' ' + GCM_WELCOME.HOUR + ':00', tz, 'yyyy-MM-dd HH:mm'); }
+  gcmWelcomeCancel_();
+  ScriptApp.newTrigger('gcmWelcomeTick').timeBased().at(at).create();
+  var n = gcmWelcomeList_(gcmLoad_()).go.length;
+  return tSay_('The welcome goes at ' + GCM_WELCOME.HOUR + ':00 on ' + tDmy_(day) + ' to ' + n + ' group' + (n === 1 ? '' : 's') + ', from ' + TRANSITION.MS_FROM + '. Run gcmWelcomeCancel to stop it.');
+}
+function gcmWelcomeCancel() { gcmWelcomeCancel_(); return tSay_('No welcome is scheduled.'); }
+function gcmWelcomeCancel_() { ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'gcmWelcomeTick') ScriptApp.deleteTrigger(t); }); }
+function gcmWelcomeTick() { gcmWelcomeCancel_(); gcmWelcomeRun_({}); }
+
+/** The welcome to every group on the list, or with o.test one sample to the branch manager. Each one sent is logged on
+ *  Group Sends with Status "welcome sent", which is how a group is never welcomed twice; the weekly run passes it over. */
+function gcmWelcomeRun_(o) {
+  o = o || {};
+  if (!tMsCreds_()) return { ok: false, said: 'Microsoft 365 is not set up (MS_TENANT, MS_CLIENT, MS_SECRET): nothing was sent.' };
+  var L = gcmLoad_(), list = gcmWelcomeList_(L), sent = [], failed = [];
+  var E = tEsc_, me = (GCM_TRAIN.TO_MANAGER || [])[0];
+  if (o.test) {
+    var first = list.go[0];
+    if (!first || !me) return { ok: false, said: first ? 'No branch manager address to test with.' : 'No group would get the welcome: ' + list.held.map(function (h) { return h.g.name + ' (' + h.why + ')'; }).join('; ') };
+    var w = gcmWelcome_(first.g);
+    var banner = '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00">' +
+      '<b>TEST of the welcome.</b> This is how it reaches <b>' + E(first.g.to.join(', ')) + '</b> at ' + E(first.g.name) + '. Nothing has gone to any group.<br>' +
+      '<b>Would get it (' + list.go.length + '):</b> ' + E(list.go.map(function (x) { return x.g.name + ' → ' + x.g.to.join(', '); }).join('; ')) + '<br>' +
+      '<b>Would not (' + list.held.length + '):</b> ' + E(list.held.map(function (h) { return h.g.name + ': ' + h.why; }).join('; ')) + '</div>';
+    tMsSend_(me, '[TEST] ' + w.subject, banner + w.html, { replyTo: TRANSITION.MS_FROM });
+    return { ok: true, test: true, said: 'The test went to ' + me + ': ' + list.go.length + ' group' + (list.go.length === 1 ? '' : 's') + ' would get the welcome, ' + list.held.length + ' would not.' };
+  }
+  list.go.forEach(function (x) {
+    var g = x.g, w = gcmWelcome_(g);
+    var row = { When: new Date(), Group: g.name, Staff: (TRANSITION.MANAGER || {}).name || 'Branch Manager', To: g.to.join(', '), Cc: g.cc.join(', '), Subject: w.subject, Items: 0,
+      'Task Ids': '', Letter: w.text.slice(0, 45000), Via: TRANSITION.MS_FROM + ', welcome' };
+    try {
+      tMsSend_(g.to[0], w.subject, w.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
+      row.Status = 'welcome sent';
+      sent.push(g.name + ' → ' + g.to.join(', '));
+    } catch (e) {
+      row.Status = 'failed: welcome: ' + String(e && e.message ? e.message : e).slice(0, 200);
+      failed.push(g.name + ': ' + row.Status);
+    }
+    gcmAppend_(GCM.SENDS, [row]);
+  });
+  try {
+    MailApp.sendEmail({ to: (TRANSITION.CC || []).join(','), subject: 'Group welcome, ' + tDmy_(L.today) + ': ' + sent.length + ' sent' + (failed.length ? ', ' + failed.length + ' failed' : ''),
+      htmlBody: '<p><b>' + sent.length + '</b> group' + (sent.length === 1 ? '' : 's') + ' welcomed from ' + E(TRANSITION.MS_FROM) + '.</p>' +
+        (sent.length ? '<ul>' + sent.map(function (s) { return '<li>' + E(s) + '</li>'; }).join('') + '</ul>' : '') +
+        (failed.length ? '<p><b>Did not go</b> (run gcmWelcomeAt6 again to retry them)</p><ul>' + failed.map(function (s) { return '<li>' + E(s) + '</li>'; }).join('') + '</ul>' : '') +
+        (list.held.length ? '<p><b>Not welcomed</b></p><ul>' + list.held.map(function (h) { return '<li>' + E(h.g.name) + ': ' + E(h.why) + '</li>'; }).join('') + '</ul>' : '') +
+        '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p>' });
+  } catch (e) {}
+  return { ok: true, sent: sent.length, failed: failed.length, said: sent.length + ' welcomed, ' + failed.length + ' failed, ' + list.held.length + ' left out.' };
 }
 
 /** The send, or with o.test the rehearsal. The send takes the approvals due by now; the rehearsal takes every approval
