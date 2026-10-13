@@ -11941,6 +11941,11 @@ function iSurveyHash_() {
     d.tpl = iSurveyTemplate_(5);
     parts.push('stage:' + st, iSurveySubject_(d), iSurveyHtml_(d));
   });
+  /* The line a later letter opens with, for every answer a client can give. */
+  ['', 'private', 'review', 'issue', 'help'].forEach(function (k) {
+    var row = []; row[ISCOL.RATING - 1] = k ? 0 : 4; row[ISCOL.ASKED - 1] = k;
+    parts.push('said:' + k, iSurveyHistoryLine_(row));
+  });
   var raw = parts.join('\u0001');
   var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw);
   return bytes.map(function (b) {
@@ -12071,6 +12076,9 @@ function iSurveyHistoryLine_(row) {
   if (rating >= 1 && rating <= 5) bits.push('You rated us ' + rating + ' out of 5.');
   if (asked.indexOf('review') >= 0) bits.push('You asked for a review of your cover.');
   if (asked.indexOf('issue') >= 0)  bits.push('You told us something was not right.');
+  /* Until 13 October a client who tapped "talk about my options" read "we did
+     not hear back" on the next letter: the tap was not on this list. */
+  if (asked.indexOf('help') >= 0)   bits.push('You asked to talk about your options.');
   if (!bits.length) bits.push('We did not hear back, which is fair enough — you may not have wanted to.');
   if (closed instanceof Date && outcome && outcome !== '(none recorded)') {
     bits.push('What we did about it: ' + outcome + '.');

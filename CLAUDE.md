@@ -2881,7 +2881,9 @@ servicing work".
   Projected Lapse Date) with the ways to pay and "Ask <agent> to call me",
   and states no amount, because the extract does not say how often a premium
   is paid; 90 sets out the options. Each later letter says which note it is
-  and what came before. Every letter carries "What we have done for you",
+  and what came before (`iSurveyHistoryLine_`, under the approval too: until
+  13 October a client who tapped "talk about my options" read "we did not
+  hear back"). Every letter carries "What we have done for you",
   the requests the branch team handled in twelve months and the policies
   held, left out when there is nothing to count. The five taps are the same
   on every letter. **The wording changed on 13 October, so `iSurveyHash_`
@@ -2935,7 +2937,7 @@ servicing work".
   are read. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
   `pddToday()` (each line's count, and whether the in-force book and
   Salesforce joined), `pddSendNow()`. `pdd3/` in the session scratchpad holds
-  the harness on a made-up branch (`test.js`, 69 checks; `page-test.js`, 34,
+  the harness on a made-up branch (`test.js`, 72 checks; `page-test.js`, 34,
   Playwright; `world.js`, the fake workbook and Salesforce).
 
 ## Standing rules
