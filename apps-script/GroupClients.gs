@@ -657,7 +657,7 @@ function gcmFeed_(ids) {
 
 function gcmLoad_() {
   var reg = gcmRegister_(), byName = {};
-  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.sends = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {} }; });
+  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.sends = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
   gcmRows_(GCM.QUEUE).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
     if (g) g.queue.push({ _n: r._n, at: gcmWhen_(r.When), when: gcmYmd_(r.When), staff: gcmText_(r.Staff), role: gcmText_(r.Role), email: gcmText_(r['Staff e-mail']),
@@ -686,6 +686,7 @@ function gcmLoad_() {
     if (!g) return;
     var kind = gcmText_(r.Kind), task = gcmId15_(gcmText_(r['Task Id'])), v = gcmText_(r.Value);
     if (kind === 'show') g.shares.show[task] = gcmYes_(v);
+    if (kind === 'comment' && v) { g.shares.comment[v.split(/\s+/)[0]] = true; g.shares.comment[gcmId15_(v.split(/\s+/)[0])] = true; }
     if (kind === 'post') { var m = /^(\S+)\s+(Y|N)$/.exec(v); if (m) { g.shares.post[m[1]] = m[2] === 'Y'; g.shares.postTask[m[1]] = task; g.shares.postWhen[m[1]] = gcmYmd_(r.When); } }
   });
   /* the newest note each task has shared with the group, by the date it was shared */
@@ -812,19 +813,48 @@ function gcmGroupStats_(g, today) {
 function gcmWho_(p) {
   var w = tWho_(p.code, p.who);
   if (!w.ok) return w;
+  /* the assistant branch manager signs in as the branch on the other boards (tAs_, canTell false); here she is the deputy */
+  if (w.role === 'branch' && w.me && w.canTell === false) return { ok: true, role: 'deputy', name: w.me.name, email: w.me.email };
   if (w.role === 'branch') return { ok: true, role: 'branch', name: w.me ? w.me.name : 'Branch', email: w.me ? w.me.email : '' };
-  if (w.role === 'staff') return { ok: true, role: 'staff', name: w.me.name, email: w.me.email };
+  if (w.role === 'staff') return { ok: true, role: gcmDeputy_(w.me, p.who) ? 'deputy' : 'staff', name: w.me.name, email: w.me.email };
   return { ok: false, refused: true, error: 'Group client management is for the branch’s staff and the branch manager.' };
 }
-/** Whether a group is this person's: the branch sees every group; staff the groups whose account they own in Salesforce,
- *  matched by e-mail first, then by name. The Agent Skill Bank and Salesforce do not always spell a person the same way
+/** The deputy (asked for on 13 October 2026: the assistant branch manager "needs to approve more or less some, she can
+ *  comment"): an Assistant Branch Manager on the Agent Skill Bank, or anyone the GCM_DEPUTIES Script property names, by
+ *  agent number or by name, comma-separated. The property, so that naming a deputy never changes what she sees on the
+ *  other boards. */
+function gcmDeputy_(me, typed) {
+  if (!me) return false;
+  var list = String(PropertiesService.getScriptProperties().getProperty('GCM_DEPUTIES') || '').split(/[,;\n]+/)
+    .map(function (x) { return x.trim(); }).filter(String);
+  if (!list.length) return false;
+  /* her agent number, from the sign-in or from her row on the Agent Skill Bank, whichever way she signed in */
+  var nos = [String(typed || '')], k = tNameKey_(me.name);
+  try { tTeam_().people.forEach(function (p) { if (tNameKey_(p.name) === k) nos.push(String(p.no || '')); }); } catch (e) {}
+  var num = function (x) { var d = String(x).replace(/\D/g, ''); return d ? Number(d) : null; };
+  return list.some(function (x) {
+    var n = num(x);
+    return (n !== null && /\d/.test(x) && nos.some(function (y) { return num(y) === n && /\d/.test(y); })) || gcmSameName_(x, me.name);
+  });
+}
+/** Whether this person may change a group (approve it, choose what the group sees, write to it): the branch manager and
+ *  the deputy any group; staff the groups whose account they own in Salesforce, matched by e-mail first, then by name. The Agent Skill Bank and Salesforce do not always spell a person the same way
  *  (on 7 October 2026 one staff member was "SASHA LALLA" on the one and "Sasha Lalla-Jagassar" on the other, and her
  *  board was empty). */
 function gcmMine_(who, g) {
-  if (who.role === 'branch') return true;
+  if (who.role === 'branch' || who.role === 'deputy') return true;
+  return gcmOwn_(who, g);
+}
+/** Whether this person is the group's account owner. Every signed-in person sees every group (13 October 2026: "all staff
+ *  are able to see other members' groups via a filter"); only the owner, the deputy and the branch manager change one. */
+function gcmOwn_(who, g) {
   var em = String(who.email || '').trim().toLowerCase();
   if (em && g.ownerEmail && em === g.ownerEmail) return true;
   return gcmSameName_(g.assigned, who.name);
+}
+function gcmNotYours_(g) {
+  return { ok: false, error: 'This group is looked after by ' + (g.assigned || 'nobody yet') + '. Only ' + (g.assigned ? g.assigned + ', ' : '') +
+    'the assistant branch manager or the branch manager can approve it or change what the group sees. You can leave a comment for the team.' };
 }
 /** One person under two spellings: the same first name, and every other part of the shorter name inside the longer
  *  ("Sasha Lalla" and "Sasha Lalla-Jagassar"). A first name alone matches only itself. */
@@ -840,7 +870,8 @@ function gcmSameName_(a, b) {
 /** The name a letter is signed with: the staff member's own, as Salesforce has it, else as the sign-in gives it, out of
  *  capitals ("SASHA LALLA" reads "Sasha Lalla"). */
 function gcmSigner_(who, g) {
-  if (who.role === 'staff' && g.assigned && gcmMine_(who, g)) return g.assigned;
+  /* staff and the deputy sign in the name of whoever looks after the group, so a colleague's preview reads as it will go */
+  if ((who.role === 'staff' || who.role === 'deputy') && g.assigned && (gcmOwn_(who, g) || g.ownerActive)) return g.assigned;
   var n = String(who.name || '').trim();
   return n === n.toUpperCase() ? n.toLowerCase().replace(/(^|[\s'-])([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); }) : n;
 }
@@ -849,16 +880,16 @@ function gcmBoard_(p) {
   var who = gcmWho_(p);
   if (!who.ok) return who;
   var L = gcmLoad_(), today = L.today;
-  var groups = L.reg.filter(function (g) { return gcmMine_(who, g); }).map(function (g) {
+  var groups = L.reg.map(function (g) {
     var s = gcmGroupStats_(g, today);
-    return { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, stats: s,
+    return { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, stats: s, own: gcmOwn_(who, g), canAct: gcmMine_(who, g),
       doneToday: g.tasks.filter(function (t) { return !t.open && t.done === today; }).map(function (t) { return { title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, by: t.owner }; }).slice(0, 12) };
   });
   var urgency = function (x) { return (x.stats.week === 'due' ? 1000 : 0) + x.stats.late * 10 + x.stats.waiting * 5 + Math.min(x.stats.oldest, 99) / 100; };
   groups.sort(function (a, b) { return urgency(b) - urgency(a); });
   var out = { ok: true, role: who.role, me: who.name, today: today, sendDay: GCM.SEND_DAY, dow: gcmDow_(today), refreshed: L.refreshed,
     salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', groups: groups };
-  if (who.role === 'branch') out.analytics = gcmAnalytics_(L);
+  out.analytics = gcmAnalytics_(L);
   return out;
 }
 
@@ -932,7 +963,7 @@ function gcmGroupView_(p) {
   var who = gcmWho_(p);
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
-  if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
   var today = L.today, open = g.tasks.filter(function (t) { return t.open; });
   var feed = gcmFeed_(open.map(function (t) { return t.id; }));
   var mine = {};
@@ -941,12 +972,12 @@ function gcmGroupView_(p) {
     return { id: t.id, title: gcmTitle_(t.subject, g.name), subject: t.subject, type: t.type || t.cat, cat: t.cat, status: t.status,
       clientStatus: GCM_STATUS[t.status.toLowerCase()] || 'In progress with us', owner: t.owner, who: t.who, ref: t.ref,
       opened: t.opened, age: gcmDays_(t.opened, today), due: t.due, late: !!(t.due && t.due < today), level: t.level, priv: t.priv,
-      shown: gcmShown_(g, t), posts: (feed[t.id15] || []).map(function (f) { f.shared = !!g.shares.post[f.id]; return f; }), story: gcmStory_(g, t, today, false),
+      shown: gcmShown_(g, t), posts: (feed[t.id15] || []).map(function (f) { f.team = !!g.shares.comment[f.id]; f.shared = !f.team && !!g.shares.post[f.id]; return f; }), story: gcmStory_(g, t, today, false),
       answer: mine[t.id15] ? { verdict: mine[t.id15].verdict, note: mine[t.id15].note, by: mine[t.id15].name, at: mine[t.id15].at } : null };
   }).sort(function (a, b) { return (b.late - a.late) || ((b.age || 0) - (a.age || 0)); });
   var weekAgo = gcmAddDays_(today, -7);
   return { ok: true, role: who.role, me: who.name, today: today, refreshed: L.refreshed, feedError: feed._error || '', reasonDays: GCM.REASON_DAYS, ai: !!gcmAiKey_(),
-    canSendNow: who.role === 'branch',
+    canSendNow: who.role === 'branch', canAct: gcmMine_(who, g), own: gcmOwn_(who, g),
     approvedIntro: (function () { var q = (g.queue || []).filter(function (x) { return x.status === 'queued' && x.for >= L.today; }).pop(); return q ? q.intro : ''; })(),
     group: { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, to: g.to, cc: g.cc, toFrom: g.toFrom, contact: g.contact,
       personal: gcmPersonal_(g), greeting: g.greeting, hasCode: !!g.code, note: g.note },
@@ -1048,11 +1079,11 @@ function gcmPreview_(p) {
   var who = gcmWho_(p);
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
-  if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
   var s = gcmGroupStats_(g, L.today), letter = gcmLetter_(g, L.today, gcmSigner_(who, g), String(p.intro || '').slice(0, 1200));
   var need = gcmNeedReasons_(g, L.today);
   return { ok: true, letter: letter, to: g.to, cc: g.cc, toFrom: g.toFrom, contact: g.contact, personal: gcmPersonal_(g), copy: GCM.COPY, ready: s.ready && !need.length, why: s.why || gcmNeedSay_(need), needReason: need, mail: !!tMsCreds_(),
-    nextSend: s.nextSendLabel, approved: s.approved, canSendNow: who.role === 'branch' };
+    nextSend: s.nextSendLabel, approved: s.approved, canSendNow: who.role === 'branch', canAct: gcmMine_(who, g) };
 }
 
 /** Send the week's letter, and log it. The letter is written here again from the sheet, never taken from the page.
@@ -1139,7 +1170,8 @@ function gcmApprove_(b) {
   if (!lock.tryLock(30000)) return { ok: false, error: 'The letters are going out right now. Try again in a minute.' };
   try {
     var L = gcmLoad_(), g = L.byName[gcmCodeKey_(b.group)];
-    if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
+    if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+    if (!gcmMine_(who, g)) return gcmNotYours_(g);
     var s = gcmGroupStats_(g, L.today);
     if (!s.ready) return { ok: false, error: s.why + ': not approved.' };
     var need = gcmNeedReasons_(g, L.today);
@@ -1156,7 +1188,8 @@ function gcmUnapprove_(b) {
   var who = gcmWho_(b);
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(b.group)];
-  if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  if (!gcmMine_(who, g)) return gcmNotYours_(g);
   var today = L.today;
   if (!g.queue.some(function (q) { return q.status === 'queued' && q.for >= today; })) return { ok: false, error: 'Nothing is approved for this group.' };
   gcmQueueClose_(g, 'cancelled by ' + who.name);
@@ -1215,7 +1248,7 @@ function gcmQueueRun_(o) {
     rows.forEach(function (r) {   // read again under the lock: a row another run has sent is not sent twice
       if (Date.now() - t0 > 270000) return;   // the next hourly run takes the rest
       var g = L.byName[gcmCodeKey_(r.Group)], why = '', letter = null;
-      var who = { role: gcmText_(r.Role) === 'branch' ? 'branch' : 'staff', name: gcmText_(r.Staff), email: gcmText_(r['Staff e-mail']) };
+      var who = { role: { branch: 'branch', deputy: 'deputy' }[gcmText_(r.Role)] || 'staff', name: gcmText_(r.Staff), email: gcmText_(r['Staff e-mail']) };
       if (who.email && approvers.indexOf(who.email.toLowerCase()) < 0) approvers.push(who.email.toLowerCase());
       if (!g) why = 'the group is no longer on the Group Register';
       else if (!mail) why = 'Microsoft 365 is not set up on the backend';
@@ -1313,16 +1346,26 @@ function gcmShare_(b) {
   var who = gcmWho_(b);
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(b.group)];
-  if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  if (b.kind !== 'comment' && !gcmMine_(who, g)) return gcmNotYours_(g);
   var t = g.tasks.filter(function (x) { return x.id15 === gcmId15_(b.task); })[0];
   if (!t) return { ok: false, error: 'That item is not on this group.' };
   var row = { When: new Date(), Group: g.name, 'Task Id': t.id, By: who.name };
-  if (b.kind === 'show') {
+  if (b.kind === 'comment') {
+    /* a comment for the team: on the task's Chatter, headed with the writer's name (Salesforce shows the integration user),
+       and marked on Group Shares so it can never be shared with the group */
+    var said = String(b.text || '').trim().slice(0, 2000);
+    if (!said) return { ok: false, error: 'Write the comment first.' };
+    if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the comment cannot go onto the task.' };
+    var cres = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'Comment for the team from ' + who.name + ' (not shown to the group):\n' + said });
+    row.Kind = 'comment'; row.Value = String(cres.id || '');
+  } else if (b.kind === 'show') {
     if (t.priv && gcmYes_(b.value)) return { ok: false, error: 'This item names a member’s health or a claim: it stays with staff.' };
     row.Kind = 'show'; row.Value = gcmYes_(b.value) ? 'Y' : 'N';
   } else if (b.kind === 'post') {
     if (!/^[A-Za-z0-9]{15,18}$/.test(String(b.post || ''))) return { ok: false, error: 'Which comment?' };
     if (t.priv) return { ok: false, error: 'This item stays with staff.' };
+    if (g.shares.comment[b.post] || g.shares.comment[gcmId15_(b.post)]) return { ok: false, error: 'That is a comment for the team: it is never shown to the group.' };
     row.Kind = 'post'; row.Value = b.post + ' ' + (gcmYes_(b.value) ? 'Y' : 'N');
   } else if (b.kind === 'note') {
     var text = String(b.text || '').trim().slice(0, 2000);
@@ -1472,7 +1515,8 @@ function gcmDraft_(p) {
   var who = gcmWho_(p);
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
-  if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  if (!gcmMine_(who, g)) return gcmNotYours_(g);
   var t = g.tasks.filter(function (x) { return x.id15 === gcmId15_(p.task) && x.open; })[0];
   if (!t) return { ok: false, error: 'That item is not open on this group.' };
   if (t.priv) return { ok: false, error: 'This item names a member’s health or a claim: it stays with staff.' };

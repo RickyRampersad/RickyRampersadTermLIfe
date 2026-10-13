@@ -2668,6 +2668,31 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   alone matches nothing. Letters and Chatter notes are signed with the name
   as Salesforce has it (`gcmSigner_`), and a group's answer is e-mailed to
   the owner's Salesforce address.
+- **Every staff member sees every group; only the owner, the deputy and the branch
+  manager change one** (13 October 2026: "all staff are able to see other members'
+  groups via a filter … and they can see all the tasks. So your dashboards need to
+  be very interactive from the entire team"). The board lists all groups, each
+  marked `own` and `canAct`; a staff member opens on "Mine", with chips for
+  Everyone and each colleague, and a second row by where a group stands (to
+  approve, approved, sent, past target, needs a reason, waiting on the group, not
+  ready), remembered on the device. Everyone has the Team dashboard, and every
+  tile, person and group on it opens the groups behind it. A colleague's group
+  opens read only: its items, Chatter, history and letter preview, but no
+  approving, no ticking what the group sees and no note for the group
+  (`gcmNotYours_` says who can). Anyone may leave a **comment for the team** on
+  any item: it goes onto the task's Chatter headed with the writer's name, is
+  logged on Group Shares as Kind `comment`, shows on the board as "Team comment ·
+  never shown to the group", and can never be shared, not even by the owner. The
+  **deputy** is the assistant branch manager ("she needs to approve more or less
+  some, she can comment"): an Assistant Branch Manager on the Agent Skill Bank,
+  or anyone the `GCM_DEPUTIES` Script property names by name or agent number,
+  the property so that naming her changes nothing on the other boards. She acts
+  on every group as its owner would, her approval is logged in her name with
+  Role `deputy`, and the letter is still signed by the staff member who looks
+  after the group; the rehearsal and "Send now" stay the branch manager's. A
+  unit manager's view of an agent's group was asked for and set aside the same
+  day ("forget Akash for now"). `teamview/team-test.js` (26 checks) and
+  `teamview/team-page.js` (18, Playwright) in the session scratchpad cover it.
 - **The letter goes to the account's Contact Person in Salesforce** (7 October
   2026: "there is a contact on the account with an email, why is it she is not
   able to send?"). Until then only the register's To was read, and it was

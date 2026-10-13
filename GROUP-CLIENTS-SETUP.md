@@ -49,6 +49,11 @@ property and never in the code, since the `.gs` files are public.
    - `GCM_TRAIN_SHEET_ID`: the ID of the private **Group Client Training** sheet that holds the test's
      questions, answers and marking guides (see "Training and the test" below). Without it the training
      page says the test is not linked.
+   - `GCM_DEPUTIES`: who may approve and change any group, besides its owner and
+     the branch manager: the assistant branch manager, by name ("Kamla Dookran")
+     or agent number, comma-separated. Someone whose Role on the Agent Skill Bank
+     is Assistant Branch Manager is a deputy without it. Without either, staff
+     read every group but change only their own.
    - `GCM_SHEET_ID`: the ID of the **Group Client Management** sheet (the long
      part of its address between `/d/` and `/edit`; pasting the whole address
      works too). That sheet starts with one tab, `Group Register`, built
