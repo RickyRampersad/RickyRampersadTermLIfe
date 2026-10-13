@@ -3994,7 +3994,9 @@ var T_INACTIVE = /^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|
 var T_USERS = { MIN: 1, TRIES: 10, LOCK_S: 900 };
 
 /** A name as a key: letters only, so "Persad-Khan" and "Persad Khan" are one. */
-function tNameKey_(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
+/* a label in brackets is not part of the name: Salesforce's agent Contact for one agent reads "Narissa (Agent) Mohammed"
+   (13 October 2026), and her clients named there must reach her list as "Narissa Mohammed" on the Agent Skill Bank */
+function tNameKey_(s) { return String(s || '').toLowerCase().replace(/\([^)]*\)/g, '').replace(/[^a-z]/g, ''); }
 
 /** "A00427 - Ricky Rampersad", "AG-003 - Azariah Griffith": the name without the number in front. */
 function tCleanName_(s) { return String(s || '').replace(/^\s*[A-Za-z]{0,3}\s*-?\s*\d+\s*[-–—:]\s*/, '').replace(/\s+/g, ' ').trim(); }
@@ -5507,12 +5509,21 @@ function transitionUpdate_(p) {
     if (!any.length) {
       /* a client on the call list with nothing on Client Responses yet (7 October 2026): the try needs a row to sit on, a
          /call row (tCallRow_), the branch's record, which nothing ever reads as the client's answer. The branch and staff
-         work the call list; an agent's clients always have a row already */
-      if (!tCanAssign_(w)) return { ok: false, error: 'No rows for that client.' };
+         work the call list. An agent or a unit manager may make one too, for a client Salesforce named to them (the Household
+         Assignments tab): on 13 October ten of the fifteen clients named in Salesforce had never answered a letter, so they
+         had no row, and the agent's Log call was refused with "No rows for that client" */
       var srow = tRowByToken_(tok);
       if (!srow || tYes_(srow.Test)) return { ok: false, error: 'That client is not on the send list.' };
+      if (!tCanAssign_(w)) {
+        var mine = false;
+        try {
+          var hx0 = tHaRead_(), onMine = w.role === 'unit' ? tOnTeam_(w.team) : tOnTeam_([w.me && w.me.name]);
+          if (hx0) hx0.rows.forEach(function (r) { if (r.token === tok && r.agent && onMine(r.agent)) mine = true; });
+        } catch (e) {}
+        if (!mine) return { ok: false, refused: true, error: w.role === 'unit' ? 'That client is not on your team\'s list.' : 'That client is not on your list.' };
+      }
       sh.appendRow([new Date(), tok, tText_(srow.Segment).toUpperCase(), 'call', 'a call from the board', '/call',
-        w.role === 'staff' && w.me ? 'staff: ' + w.me.name : 'branch', 'Open', '', '', '']);
+        w.role === 'branch' || !w.me ? 'branch' : (w.role === 'staff' ? 'staff: ' : 'agent: ') + w.me.name, 'Open', '', '', '']);
       any = [sh.getLastRow()]; targets = any.slice();
     }
     /* the name on the rows, or the one Salesforce gave (the Household Assignments tab): the board shows the client on that
@@ -6849,7 +6860,7 @@ function tHaSync_(force) {
       var k = norm(r.client); if (k) (byName[k] = byName[k] || []).push(r);
     });
     sf.forEach(function (rec) {
-      var agent = rec.Assigned_Agent__r && rec.Assigned_Agent__r.Name ? String(rec.Assigned_Agent__r.Name).trim() : '';
+      var agent = rec.Assigned_Agent__r && rec.Assigned_Agent__r.Name ? String(rec.Assigned_Agent__r.Name).replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim() : '';
       var day = tDay_(rec.Date_Assigned_to_Agent__c);
       if (!agent || !day) return;
       var hit = byPol[tPolNo_(rec.POLICY__c)] || byCno[tCno_(rec.Client_Number__c)];

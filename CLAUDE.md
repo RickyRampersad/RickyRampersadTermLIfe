@@ -2183,7 +2183,10 @@ voice under the new timing and the caption gives it away.
   a client Salesforce names to an agent is on that agent's list in
   `assign.html`. A client who never answered appears as a "named, no answer
   yet" card. Where the board and Salesforce name different agents, the
-  newer name wins. An agent opens their list with **their agent number and
+  newer name wins. A label in brackets is not part of a name (`tNameKey_`,
+  and the sync drops it): Salesforce's agent Contact for one agent reads
+  "Narissa (Agent) Mohammed", and until 13 October a client named to her there
+  would never have reached "Narissa Mohammed" on the Agent Skill Bank. An agent opens their list with **their agent number and
   their own code, both** ("agent Number, and name and code", 1 October
   2026). The number is the Agent no. on the Agent Skill Bank (A10024,
   10024, or the name as written there), and the code is that row's Portal
@@ -2400,7 +2403,12 @@ voice under the new timing and the caption gives it away.
   agent in touch, a change suggested, a payment to trace, paying in person) or
   who are late. **A try is logged on the board.** `transitionUpdate_` on a
   client with no row writes a `/call` row (Response `call`, Referrer `staff:
-  <name>` or `branch`), the branch and staff only. `tCallRow_` makes it the
+  <name>`, `agent: <name>` or `branch`). The branch and staff may log on
+  anyone. An agent or a unit manager may log only on a client Salesforce named
+  to them or their team (the Household Assignments tab): on 13 October ten of
+  the fifteen clients named in Salesforce had never answered a letter, so they
+  had no row, and the agent's Log call was refused with "No rows for that
+  client" (`cb13/agent-log-harness.js` in the scratchpad, 18 checks). `tCallRow_` makes it the
   branch's record everywhere `tAssignRow_` already did: never thanked, never
   chased, never an answer, never a tap on the wall or in the reports; a call
   marked Called or Met counts as having spoken to the client, so it stops the
