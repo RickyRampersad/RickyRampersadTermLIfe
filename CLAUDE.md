@@ -2844,7 +2844,12 @@ project (the tracker's: `Intelligence.gs` beside `KPI.gs`, its own `/exec`).
 Asked for on 7 October 2026: "a trigger go out when a client premium is 45 days
 due with built in responses for them to select", then "a staff has to do a
 check mark to ensure due diligence is done, once they check it goes out", then
-"a time at 10am".
+"a time at 10am". Widened on 13 October 2026 to four lines ("45 days, 60 days,
+75 days, and 90 days … the same thing we did for groups, whereby you have the
+tabs and you have filters and you have the agents"), in **test mode**, because
+the branch trains the group letters and the premium letters together; and
+"build a lot of intelligence around the data we have, as there was a lot of
+servicing work".
 
 - **A tick is a check, recorded on the spot** on the **Premium Due Checks** tab:
   who, when, the client's address and agent as checked, and any flag on the row
@@ -2858,19 +2863,61 @@ check mark to ensure due diligence is done, once they check it goes out", then
   `intelPendingRefresh`, the hourly trigger, from the ten o'clock hour
   (`pddRun_`): the project is one trigger short of its twenty, so no new
   trigger. A firing missed at ten is caught up the next hour.
-- **The line is 45 to 51 days** (`iSurveyPool_(45, 6)`; every other caller
-  passes nothing and keeps the 45th day exactly), so a Saturday's 45s and a
-  tick made after ten still go. A client written to at 45 in the episode stays
-  off it, so no one gets two.
-- **The responses are the letter's own**: the 1–5 rating and the five taps
-  under it. Nothing in the letter changed, so the wording approval holds; a
-  new tap would change `iSurveyHash_` and stop live sends until re-approved.
+- **Four lines: 45 to 51, 60 to 66, 75 to 81 and 90 to 96 days**
+  (`PDD.STAGES`, `iSurveyPool_([45, 60, 75, 90], 6)`, read in one pass of the
+  extract; every other caller passes one stage and nothing for `late`, and
+  keeps the stage to the day), so a Saturday's clients and a tick made after
+  ten still go. A client written to on a line in the episode stays off that
+  line, so no one gets two of one letter. A check belongs to its line
+  (`pddStageOf_`, from the check's own Days due, so the tab has no new column):
+  a 45-day letter sent last week is no tick on the 60-day line, and a client
+  ticked on one line who reaches the next before ten is "not sent: it moved to
+  the 60-day line", to be checked again there.
+- **Each line has its own letter** (`ISURVEY_STAGES`, `iSurveySubject_`):
+  45 thanks them for their years and asks the 1–5 rating once; 60 follows up
+  ("Following up on our note about your premium", or "A note about the
+  premium on your policy" when no 45-day letter went, which then asks the
+  rating); 75 names the date the cover stops (from the dues extract's
+  Projected Lapse Date) with the ways to pay and "Ask <agent> to call me",
+  and states no amount, because the extract does not say how often a premium
+  is paid; 90 sets out the options. Each later letter says which note it is
+  and what came before (`iSurveyHistoryLine_`, under the approval too: until
+  13 October a client who tapped "talk about my options" read "we did not
+  hear back"). Every letter carries "What we have done for you",
+  the requests the branch team handled in twelve months and the policies
+  held, left out when there is nothing to count. The five taps are the same
+  on every letter. **The wording changed on 13 October, so `iSurveyHash_`
+  (which now renders a probe letter for each line) voids the old approval:**
+  live sends stop until `intelSurveyApprove("<reviewer>")` is run again. Test
+  copies still go.
+- **What the desk knows about a client** (`pddIntel_`, beside each letter and
+  as tags on the row): every policy they hold from the in-force book (plan, a
+  year's premium, paid to), their other policies behind or lapsed on the dues
+  extract, every letter this episode and what came back, and from Salesforce
+  the requests the branch team handled in twelve months and what is open now
+  (`pddSfService_`: the policy record by `POLICY__c`, then tasks on it or on
+  its `Contact__c`; logged e-mails and the birthday flow never count, the
+  rule `GCM_LOGGED` keeps for the groups; kept six hours in the cache). Notes
+  in words, most pressing first, facts only. An agent or a unit manager sees
+  that a client answered, never the rating or what they asked for: one of the
+  taps is a private note to the branch manager about the agent. Each source
+  is optional; without Salesforce the rest still shows.
+- **The page**: a tab per line with how many are to check and ticked, and
+  filters for the agent, the unit, how they pay, when the cover stops, to
+  check / ticked / not sending, flagged, answered us before, holds other
+  policies, and a search by name, policy or client number, kept on the device
+  (`rrb-pdd-view`). The branch and the staff also get **After the letters**
+  (`pddOutcomes_`): every letter that really went in 120 days, by line, read
+  against today's dues extract: back in good standing, paid some, still
+  behind, lapsed, off the extract. Test copies are never on Intel Surveys, so
+  test mode counts none of them.
 - **At ten the send reads the line afresh** and sends only a client still on
   it, with the address and agent that were checked; otherwise "not sent", with
   the reason, on the desk and in one internal summary to the manager. Live only
   with client mail live and the wording approved; in test mode each letter goes
-  to the test inbox and the client is not marked as written to; held, ticks wait
-  and a client past 51 days drops off. It logs on Intel Surveys before it sends
+  to the test inbox, its banner naming the line, and the client is not marked
+  as written to; held, ticks wait and a client past the end of their line
+  drops off. It logs on Intel Surveys before it sends
   and takes the log back if the mail fails. It stays inside the day's mail
   allowance (a consumer Google account: about 100 recipients a day, and each
   letter copies the agent, every staff member on the access list and the unit
@@ -2886,9 +2933,12 @@ check mark to ensure due diligence is done, once they check it goes out", then
   shows `lastError`). The checks tab goes there when it can and to the
   tracker's own workbook when a new tab is refused.
 - Install: paste `Intelligence.gs` and `PremiumDueDesk.gs` (all over), then a
-  New version. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
-  `pddToday()`, `pddSendNow()`. `pdd10/` in the session scratchpad holds the
-  harness (`test.js`, 101 checks; `page-test.js`, 33, Playwright).
+  New version, then `intelSurveyApprove("<reviewer>")` once the four letters
+  are read. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
+  `pddToday()` (each line's count, and whether the in-force book and
+  Salesforce joined), `pddSendNow()`. `pdd3/` in the session scratchpad holds
+  the harness on a made-up branch (`test.js`, 72 checks; `page-test.js`, 34,
+  Playwright; `world.js`, the fake workbook and Salesforce).
 
 ## Standing rules
 

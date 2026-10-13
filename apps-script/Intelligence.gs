@@ -11681,6 +11681,47 @@ function iBrandHead_() {
     + '</td></tr></table>';
 }
 
+/* What our branch team has done for this client (asked for on 13 October 2026:
+   "build a lot of intelligence around the data we have, as there was a lot of
+   servicing work"). Counts only, from Salesforce, and the panel is left out when
+   there is nothing to count, so a blank never reads as "we did nothing for you". */
+function iSurveyServiceHtml_(d) {
+  var v = d.svc || {}, lines = [];
+  if (v.done > 0) lines.push('Our branch team has handled <b>' + v.done + '</b> request' + (v.done === 1 ? '' : 's')
+    + ' for you in the last twelve months' + (v.lastDone ? ', the latest in ' + iEsc_(v.lastDone) : '') + '.');
+  if (v.policies > 1) lines.push('You hold <b>' + v.policies + '</b> policies with us, all looked after by the same team.');
+  if (!lines.length) return '';
+  return '<div style="border:1px solid #e2e8ee;border-radius:10px;padding:14px 18px;margin:0 0 20px">'
+    + '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#5c6b7a;'
+    + 'font-weight:700;margin-bottom:8px">What we have done for you</div>'
+    + '<div style="font-size:14px;color:#16202b;line-height:1.6">' + lines.join('<br>') + '</div></div>';
+}
+
+/* At 75 days: when the cover stops, the ways to pay, and the agent's call. The
+   amount owed is not stated: the extract does not say how often a premium is
+   paid, and a wrong figure in a letter about lapsing is worse than none. */
+function iSurvey75Html_(d, bill, office) {
+  var row = function (a, b) {
+    return '<tr><td style="padding:8px 12px 8px 0;vertical-align:top;white-space:nowrap;font-weight:600;color:#00254d;'
+      + 'border-bottom:1px solid #e2e8ee">' + a + '</td><td style="padding:8px 0;border-bottom:1px solid #e2e8ee;color:#3d4c5a">'
+      + b + '</td></tr>';
+  };
+  var agent = String(d.agent || '').split(/\s+/)[0] || 'your agent';
+  return '<div style="margin:22px 0 0;border:2px solid ' + IBRAND.GOLD + ';border-radius:12px;padding:16px 18px">'
+    + '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#8a5a00;font-weight:700;margin-bottom:6px">'
+    + (d.lapseWords ? 'Before ' + iEsc_(d.lapseWords) : 'Before your cover lapses') + '</div>'
+    + '<p style="margin:0 0 10px;font-size:15px">Once the premium is brought up to date, your cover carries on exactly as it is.</p>'
+    + '<table role="presentation" style="border-collapse:collapse;width:100%;font-size:14.5px">'
+    + row('At the branch', 'Chaguanas, Monday to Friday')
+    + row('By phone', d.branchPhone ? 'Call ' + iEsc_(d.branchPhone) + ' and we will take it with you' : 'Call the branch and we will take it with you')
+    + (bill && bill.auto ? row(office === 'your payroll office' ? 'Your payroll' : 'Your bank', 'Ask ' + iEsc_(office) + ' to restart the payment to Guardian Life') : '')
+    + '</table>'
+    + '<div style="margin:16px 0 0"><a href="' + d.base + '?s=' + d.token + '&o=help" '
+    + 'style="display:block;text-align:center;text-decoration:none;background:' + IBRAND.GOLD + ';'
+    + 'color:' + IBRAND.NAVY + ';border-radius:11px;padding:15px;font-weight:700">'
+    + 'Ask ' + iEsc_(agent) + ' to call me</a></div></div>';
+}
+
 function iSurvey90OptionsHtml_(d) {
   var rows = [
     ['Pay what is outstanding', 'Bring it up to date and nothing changes.'],
@@ -11731,25 +11772,40 @@ function iSurveyHtml_(d) {
       'border-radius:26px;text-decoration:none">' + i + '</a>';
   }
 
-  var payment = bill.auto
-    ? '<p style="margin:0 0 14px">Your premium is collected by <b>' + iEsc_(bill.says) +
-      '</b>. Our records show the last one did not come through. Nine times out of ten ' +
-      'that is the bank rather than anything you have done — a card reissued, an account ' +
-      'moved, a change of employer — and a short call to ' + iEsc_(bill.says.indexOf('salary') >= 0 ? 'your payroll office' : 'your bank') +
-      ' usually settles it. We wanted you to hear it from us first.</p>'
-    : '<p style="margin:0 0 14px">Your premium is billed to you as <b>' + iEsc_(bill.says) +
-      '</b>, and our records show the most recent one is outstanding. If it has crossed ' +
-      'in the post with this note, please ignore this paragraph.</p>';
-
   var stage = Number(d.stage) || 45;
   var st = ISURVEY_STAGES[stage] || ISURVEY_STAGES[45];
-  /* The second and third letters open on what went before, so the client is
-     never asked to start the conversation over. */
-  var carried = (!st.first && d.hist)
+  /* The first letter this episode, whatever the stage: a client the desk did
+     not write to at 45 gets a first letter at 60, not a follow-up to nothing. */
+  var first = st.first || !d.hist;
+  var office = bill.says.indexOf('salary') >= 0 || bill.says.indexOf('pay') >= 0 ? 'your payroll office' : 'your bank';
+
+  var payment = first
+    ? (bill.auto
+      ? '<p style="margin:0 0 14px">Your premium is collected by <b>' + iEsc_(bill.says) +
+        '</b>. Our records show the last one did not come through. Nine times out of ten ' +
+        'that is the bank rather than anything you have done — a card reissued, an account ' +
+        'moved, a change of employer — and a short call to ' + iEsc_(office) +
+        ' usually settles it. We wanted you to hear it from us first.</p>'
+      : '<p style="margin:0 0 14px">Your premium is billed to you as <b>' + iEsc_(bill.says) +
+        '</b>, and our records show the most recent one is outstanding. If it has crossed ' +
+        'in the post with this note, please ignore this paragraph.</p>')
+    : (bill.auto
+      ? '<p style="margin:0 0 14px">Your premium is collected by <b>' + iEsc_(bill.says) +
+        '</b>, and our records show it is still not coming through. A short call to ' + iEsc_(office) +
+        ' usually settles it.</p>'
+      : '<p style="margin:0 0 14px">Your premium is billed to you as <b>' + iEsc_(bill.says) +
+        '</b>, and our records show it is still outstanding.</p>');
+
+  /* The later letters open on what went before, so the client is never asked
+     to start the conversation over. */
+  var carried = (!first)
     ? '<div style="background:#eef4fa;border-left:3px solid #0b7fd4;border-radius:0 9px 9px 0;'
       + 'padding:14px 17px;margin:0 0 16px;font-size:14.5px;color:#3d4c5a">'
-      + iEsc_(st.kicker(d.hist)) + '</div>'
+      + iEsc_(st.kicker(d.hist, d)) + '</div>'
     : '';
+  /* The rating is asked once an episode, on the first letter, and never on a
+     letter about lapsing. */
+  var rate = first && stage < 75;
 
   return ''
   + '<div style="font:15px/1.62 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
@@ -11759,7 +11815,7 @@ function iSurveyHtml_(d) {
 
   + '<p style="margin:0 0 14px">Dear ' + iEsc_(d.greeting) + ',</p>'
   + carried
-  + (st.first ? '<p style="margin:0 0 14px">' + t.open(d) + '</p>' : '')
+  + (first ? '<p style="margin:0 0 14px">' + t.open(d) + '</p>' : '')
   + payment
 
   + '<div style="background:#f4f7fa;border-radius:10px;padding:16px 18px;margin:20px 0">'
@@ -11770,8 +11826,14 @@ function iSurveyHtml_(d) {
   +   'Premium collected by ' + iEsc_(bill.says) + '.</div>'
   + '</div>'
 
+  + iSurveyServiceHtml_(d)
+
   + (stage >= 90
      ? iSurvey90OptionsHtml_(d)
+     : stage >= 75
+     ? iSurvey75Html_(d, bill, office)
+     : !rate
+     ? ''
      : '<p style="margin:0 0 6px"><b>One question, one click.</b></p>'
        + '<p style="margin:0 0 16px">How would you rate the service you have had from '
        + iEsc_(d.agent) + '? Tap a number — that is the whole survey.</p>'
@@ -11783,7 +11845,7 @@ function iSurveyHtml_(d) {
   + iSurveyOptionsHtml_(d)
 
   + '<p style="margin:22px 0 14px;font-size:13.5px;color:#5c6b7a">'
-  +   'Nothing is asked of you beyond that click. We will never ask you for a password, '
+  +   'Nothing is asked of you beyond ' + (rate ? 'that click' : 'a tap') + '. We will never ask you for a password, '
   +   'a card number or a payment through an e-mail link — if anything claiming to be '
   +   'from us ever does, it is not from us. To pay a premium or change a bank mandate, '
   +   (d.branchPhone ? 'call the branch on ' + iEsc_(d.branchPhone) + '.' : 'call the branch directly.')
@@ -11868,6 +11930,22 @@ function iSurveyHash_() {
   parts.push(iSurveyThanksHtml_({ greeting: 'NAME', agent: 'AGENT', rating: 5, low: false }));
   parts.push(iSurveyThanksHtml_({ greeting: 'NAME', agent: 'AGENT', rating: 1, low: true }));
   ISURVEY_OPTIONS.forEach(function (o) { parts.push(o.key, o.label, o.note); });
+  /* The later letters, rendered on a probe client: their subjects, openings,
+     the 75's lapse block, the 90's options and the servicing panel. A change to
+     any of them voids the approval, like a change to the first letter. */
+  [45, 60, 75, 90].forEach(function (st) {
+    var d = { yWord: 'X years', months: 9, issued: 'MONTH YEAR', agent: 'AGENT', greeting: 'NAME', billing: 'Bankers Order',
+              years: 5, stage: st, token: 'T', base: 'B', branchPhone: 'PHONE', lapseWords: 'DATE',
+              hist: st === 45 ? null : { when: 'WHEN', said: 'SAID', count: st === 60 ? 1 : st === 75 ? 2 : 3 },
+              svc: { done: 2, lastDone: 'MONTH', policies: 2 } };
+    d.tpl = iSurveyTemplate_(5);
+    parts.push('stage:' + st, iSurveySubject_(d), iSurveyHtml_(d));
+  });
+  /* The line a later letter opens with, for every answer a client can give. */
+  ['', 'private', 'review', 'issue', 'help'].forEach(function (k) {
+    var row = []; row[ISCOL.RATING - 1] = k ? 0 : 4; row[ISCOL.ASKED - 1] = k;
+    parts.push('said:' + k, iSurveyHistoryLine_(row));
+  });
   var raw = parts.join('\u0001');
   var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw);
   return bytes.map(function (b) {
@@ -11948,14 +12026,40 @@ var ISURVEY_STAGES = {
           return 'We wrote to you on ' + h.when + '. ' + h.said +
                  ' The premium is still outstanding, which is why you are hearing from us again.';
         } },
+  /* 75, added 13 October 2026 ("45 days, 60 days, 75 days and 90 days"): the
+     date the cover stops, how to pay, and a call from the agent. No rating. */
+  75: { stage: 75, first: false,
+        kicker: function (h, d) {
+          return 'This is our ' + iSurveyOrdinal_(h) + ' note. We last wrote on ' + h.when + '. ' + h.said +
+                 ' The premium is still outstanding, and ' + (d && d.lapseWords
+                   ? 'your cover stops on ' + d.lapseWords + ' unless it is paid.'
+                   : 'your cover is close to lapsing.');
+        } },
   90: { stage: 90, first: false,
         kicker: function (h) {
-          return 'This is our third note. We wrote on ' + h.when + '. ' + h.said +
+          return 'This is our ' + iSurveyOrdinal_(h) + ' note. We last wrote on ' + h.when + '. ' + h.said +
                  ' Three months of premiums are now outstanding, and at this point the ' +
                  'policy is close to lapsing — so this letter is about what we can do ' +
                  'about that, not about asking you to rate us again.';
         } }
 };
+/* Which note this one is in the episode: the letters already sent, plus this. */
+function iSurveyOrdinal_(h) {
+  var n = (h && h.count ? h.count : 1) + 1;
+  return ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth'][n] || 'latest';
+}
+
+/* The subject line. The first letter's is the tenure template's own; the later
+   ones say what the letter is about, because "6 years of cover — thank you" on
+   a letter about lapsing reads as a form letter nobody looked at. */
+function iSurveySubject_(d) {
+  var s = Number(d.stage) || 45;
+  if (s >= 90) return 'Before your policy lapses: the options open to you';
+  if (s >= 75) return d.lapseWords ? 'Your cover stops on ' + d.lapseWords + ' unless the premium is paid'
+                                   : 'Your cover is close to lapsing';
+  if (s >= 60) return d.hist ? 'Following up on our note about your premium' : 'A note about the premium on your policy';
+  return d.tpl.subject(d);
+}
 
 /* What to say about what happened last time. Never the private words. */
 function iSurveyHistoryLine_(row) {
@@ -11972,6 +12076,9 @@ function iSurveyHistoryLine_(row) {
   if (rating >= 1 && rating <= 5) bits.push('You rated us ' + rating + ' out of 5.');
   if (asked.indexOf('review') >= 0) bits.push('You asked for a review of your cover.');
   if (asked.indexOf('issue') >= 0)  bits.push('You told us something was not right.');
+  /* Until 13 October a client who tapped "talk about my options" read "we did
+     not hear back" on the next letter: the tap was not on this list. */
+  if (asked.indexOf('help') >= 0)   bits.push('You asked to talk about your options.');
   if (!bits.length) bits.push('We did not hear back, which is fair enough — you may not have wanted to.');
   if (closed instanceof Date && outcome && outcome !== '(none recorded)') {
     bits.push('What we did about it: ' + outcome + '.');
@@ -12019,6 +12126,7 @@ function iSurveyHistory_(sh, clientNo, today, vals) {
     }
   });
   best.stagesUsed = stages;
+  best.count = Object.keys(stages).length;
   best.when = Utilities.formatDate(best.sent, iTz_(), 'd MMMM');
   best.said = iSurveyHistoryLine_(best.row);
   return best;
@@ -12046,8 +12154,15 @@ function iSurveyBase_() {
    goes the next working day, at 46. Nobody is written to twice for it: a
    letter already sent at this stage in the episode still takes them off. */
 function iSurveyPool_(stage, late) {
-  stage = Math.round(iNum_(stage)) || 45;
-  if (!ISURVEY_STAGES[stage]) return { error: 'Stage must be 45, 60 or 90.' };
+  /* One stage, as every caller has always passed, or several (the desk's four
+     lines), read in one pass of the extract: four reads of a large tab would
+     keep a person waiting four times as long. Each row says which it is on. */
+  var stages = [].concat(stage == null || stage === '' ? [45] : stage).map(function (x) { return Math.round(iNum_(x)) || 45; });
+  for (var si = 0; si < stages.length; si++) {
+    if (!ISURVEY_STAGES[stages[si]]) return { error: 'Stage must be 45, 60, 75 or 90.' };
+  }
+  stages.sort(function (a, b) { return b - a; });
+  stage = stages[stages.length - 1];
   late = Math.max(0, Math.round(iNum_(late)) || 0);
   var sh = iTabDues_();
   if (!sh) return { error: 'No dues tab found.' };
@@ -12097,7 +12212,9 @@ function iSurveyPool_(stage, late) {
     var paid = iDate_(d.get('paidTo', r));
     if (!paid) continue;
     var days = Math.round((today - paid) / DAY);
-    if (days < stage || days > stage + late) continue;
+    var here = 0;
+    for (var sj = 0; sj < stages.length; sj++) if (days >= stages[sj] && days <= stages[sj] + late) { here = stages[sj]; break; }
+    if (!here) continue;
     /* A letter names the agent looking after them. Sending one under the name
        of somebody the branch has taken off its books invites the reply nobody
        wants: "she left months ago, who has my file now?" */
@@ -12115,7 +12232,7 @@ function iSurveyPool_(stage, late) {
       /* We owe them a call. Asking them to rate us again while their complaint
          sits open is the worst thing this could do — answer them first. */
       if (hist.open) { skipped.openFollowUp++; continue; }
-      if (hist.stagesUsed[stage]) { skipped.alreadyAtStage++; continue; }
+      if (hist.stagesUsed[here]) { skipped.alreadyAtStage++; continue; }
     } else if (recent[clientNo]) {
       /* No history inside this episode but written to recently — a previous
          arrears episode that is still inside the cooldown. */
@@ -12143,7 +12260,7 @@ function iSurveyPool_(stage, late) {
          instead of pointing at a number that is not there. Without it the
          wording changes rather than leaving a dangling "see below". */
       branchPhone: iProp_('INTEL_BRANCH_PHONE'),
-      stage: stage, days: days, hist: hist,
+      stage: here, days: days, hist: hist,
       tpl: iSurveyTemplate_(years)
     });
   }
@@ -12212,11 +12329,11 @@ function intelSurveySend(stage) {
 
     if (mode === 'live') {
       MailApp.sendEmail({ to: d.email, cc: cc, name: 'Ricky Rampersad Branch',
-                          subject: d.tpl.subject(d), htmlBody: html });
+                          subject: iSurveySubject_(d), htmlBody: html });
       sent++;
     } else if (mode === 'test') {
       MailApp.sendEmail({ to: test, name: 'Branch Intelligence',
-        subject: '[TEST] ' + d.tpl.subject(d),
+        subject: '[TEST] ' + iSurveySubject_(d),
         htmlBody: '<div style="background:#E8A020;color:#00254d;padding:10px 14px;'
           + 'font:700 13px sans-serif;border-radius:8px;margin-bottom:14px">TEST MODE — '
           + 'this would have gone to ' + iEsc_(d.email) + ', copying ' + iEsc_(cc || 'nobody')
