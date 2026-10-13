@@ -67,6 +67,15 @@ h2{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:28px 0 10px}h3{fo
 .chip.good{background:var(--goodBg);border-color:transparent;color:var(--good)}.chip.good i{background:var(--good)}
 .chip.warn{background:var(--warnBg);border-color:transparent;color:var(--warn)}.chip.warn i{background:var(--warnMark)}
 .chip.bad{background:var(--badBg);border-color:transparent;color:var(--badText)}.chip.bad i{background:var(--bad)}
+.filt{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0 4px}
+.filt .lbl{font-size:12px;color:var(--muted);font-weight:600;margin-right:2px}
+.fbtn{border:1px solid var(--line2);background:var(--paper);color:var(--ink2);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;min-height:32px}
+.fbtn[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
+.fbtn .n{font-weight:500;opacity:.8;margin-left:4px}
+.click{cursor:pointer}.click:hover{background:var(--primarySoft)}
+button.tile{text-align:left;font:inherit;cursor:pointer}
+.post.team{border-left:3px solid var(--warnMark);background:var(--warnBg)}
+.post .tag{font-size:11px;font-weight:600;color:var(--warn);margin-left:6px}
 .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:13px;color:var(--muted);margin-top:8px}
 .kv b{display:block;color:var(--ink);font-size:17px;font-weight:600}
 .tabs{display:flex;gap:4px;margin:18px 0 0;border-bottom:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -160,7 +169,11 @@ const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','
 const DAYS = ['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const dmy = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1] : ''; };
 const pct = n => n == null ? '–' : n + '%';
-let AUTH = { code: '', who: '' }, BOARD = null, VIEW = 'board', GROUP = null, TAB = 'dash';
+let AUTH = { code: '', who: '' }, BOARD = null, VIEW = 'board', GROUP = null, TAB = '';
+let FILT = { owner: '', status: 'all' };
+try { const f = JSON.parse(localStorage.getItem('rrb-gcm-filter') || 'null'); if (f) FILT = Object.assign(FILT, f); } catch (e) {}
+function saveFilt() { try { localStorage.setItem('rrb-gcm-filter', JSON.stringify(FILT)); } catch (e) {} }
+const ROLE = { branch: 'Branch manager', deputy: 'Assistant branch manager', staff: 'Staff' };
 try { AUTH.code = localStorage.getItem('rrb-gcm-code') || ''; AUTH.who = localStorage.getItem('rrb-gcm-who') || ''; } catch (e) {}
 
 function toast(msg, bad) { const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', bad ? 8000 : 4000); }
@@ -190,7 +203,7 @@ async function open_() {
 function signOut() { try { localStorage.removeItem('rrb-gcm-code'); localStorage.removeItem('rrb-gcm-who'); } catch (e) {} location.reload(); }
 
 function head() {
-  $('who').innerHTML = esc(BOARD.me) + ' · ' + (BOARD.role === 'branch' ? 'Branch manager' : 'Staff') +
+  $('who').innerHTML = esc(BOARD.me) + ' · ' + (ROLE[BOARD.role] || 'Staff') +
     (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') +
     ' <button class="btn ghost" id="rf" type="button">Refresh from Salesforce</button> <a class="btn ghost" href="training.html">Training</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
   $('rf').onclick = refresh;
@@ -216,8 +229,8 @@ function groupCard(g) {
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') +
     (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') + (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') +
     (!s.ready ? '<span class="chip warn"><i></i>' + esc(s.why) + '</span>' : '') + '</div>' +
-    (BOARD.role === 'branch' && (!g.assigned || !g.ownerActive) ? '<div class="chips"><span class="chip bad"><i></i>' + (g.assigned ? 'Owner ' + esc(g.assigned) + ' is inactive in Salesforce' : 'No owner in Salesforce') + '</span></div>' : '') +
-    '<div class="small muted">' + (BOARD.role === 'branch' ? 'Account owner <b>' + esc(g.assigned || 'nobody') + '</b> · ' : '') + 'List bill ' + esc(g.bills.join(', ') || 'none') + '</div>' +
+    (BOARD.role !== 'staff' && (!g.assigned || !g.ownerActive) ? '<div class="chips"><span class="chip bad"><i></i>' + (g.assigned ? 'Owner ' + esc(g.assigned) + ' is inactive in Salesforce' : 'No owner in Salesforce') + '</span></div>' : '') +
+    '<div class="small muted">' + (g.own ? '<b>Yours</b>' : 'Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>') + (g.canAct === false ? ' · read only' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') + '</div>' +
     '<div class="kv"><div><b>' + s.open + '</b>open</div><div><b>' + (s.oldest || 0) + 'd</b>oldest</div><div><b>' + pct(s.onTimePct) + '</b>on time</div><div><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b>rating</div></div></button>';
 }
 function render() {
@@ -228,13 +241,16 @@ function render() {
   if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
   if (d.nextSend) h += '<div class="note"><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div>';
   if (d.canRehearse) h += '<div class="note"><b>Test the run first.</b> “Rehearse now” writes every approved letter exactly as the ' + esc(d.nextSend || 'Monday') + ' run would, and sends it only to the person who approved it and the branch, marked TEST, with one summary of what would go and what would wait. Nothing reaches a group, and nothing is marked as sent. <button class="btn ghost sm" type="button" id="rh">Rehearse now</button></div>';
-  if (d.role === 'branch') {
-    h += '<div class="tabs" role="tablist"><button class="tab" role="tab" data-t="dash" aria-selected="' + (TAB === 'dash') + '">Dashboard</button><button class="tab" role="tab" data-t="groups" aria-selected="' + (TAB === 'groups') + '">Groups</button></div>';
-    h += TAB === 'dash' ? dash(d.analytics) : groupsHtml(d);
-  } else h += groupsHtml(d);
+  if (!TAB) TAB = d.role === 'staff' ? 'groups' : 'dash';
+  if (!FILT.owner) FILT.owner = d.role === 'staff' && d.groups.some(g => g.own) ? 'mine' : 'all';
+  h += '<div class="tabs" role="tablist"><button class="tab" role="tab" data-t="groups" aria-selected="' + (TAB === 'groups') + '">Groups</button><button class="tab" role="tab" data-t="dash" aria-selected="' + (TAB === 'dash') + '">Team dashboard</button></div>';
+  h += TAB === 'dash' && d.analytics ? dash(d.analytics) : groupsHtml(d);
   app.innerHTML = h;
   app.querySelectorAll('[data-g]').forEach(b => b.onclick = () => openGroup(b.dataset.g));
   app.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; render(); });
+  app.querySelectorAll('[data-fo]').forEach(b => b.onclick = () => { FILT.owner = b.dataset.fo; saveFilt(); TAB = 'groups'; render(); });
+  app.querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { FILT.status = b.dataset.fs; if (b.dataset.fo2) FILT.owner = b.dataset.fo2; saveFilt(); TAB = 'groups'; render(); });
+  app.querySelectorAll('[data-gn]').forEach(b => b.onclick = () => { const g = BOARD.groups.find(x => x.name === b.dataset.gn); if (g) openGroup(g.key); });
   if ($('rh')) $('rh').onclick = rehearse;
   window.scrollTo(0, 0);
 }
@@ -244,11 +260,28 @@ async function rehearse() {
   b.disabled = false; b.textContent = 'Rehearse now';
   toast(r.ok ? r.said : (r.error || 'The rehearsal did not run'), !r.ok);
 }
+const STATUS = [['all', 'All'], ['due', 'To approve'], ['queued', 'Approved'], ['sent', 'Sent this week'], ['late', 'Past target'], ['reason', 'Needs a reason'], ['waiting', 'Waiting on the group'], ['notready', 'Not ready']];
+function statusOf(g, k) {
+  const s = g.stats;
+  return k === 'all' || (k === 'due' && s.week === 'due') || (k === 'queued' && s.week === 'queued') || (k === 'sent' && s.week === 'sent') ||
+    (k === 'late' && s.late > 0) || (k === 'reason' && s.needReason > 0) || (k === 'waiting' && s.waiting > 0) || (k === 'notready' && !s.ready);
+}
+function ownerOf(g, k) { return k === 'all' || (k === 'mine' && g.own) || g.assigned === k; }
 function groupsHtml(d) {
-  const due = d.groups.filter(g => g.stats.week === 'due').length;
-  const today = d.groups.flatMap(g => g.doneToday.map(x => Object.assign({ group: g.name }, x)));
-  let h = '<h2>' + (d.role === 'branch' ? 'Every group' : 'Your groups') + ' <span class="muted small">' + d.groups.length + ' · ' + due + ' to approve for ' + esc(d.nextSend || 'Monday') + '</span></h2>';
-  h += d.groups.length ? '<div class="cards">' + d.groups.map(groupCard).join('') + '</div>' : '<p class="muted">No groups are assigned to you on the Group Register yet.</p>';
+  const owners = [...new Set(d.groups.map(g => g.assigned).filter(Boolean))].sort();
+  if (FILT.owner !== 'all' && FILT.owner !== 'mine' && owners.indexOf(FILT.owner) < 0) FILT.owner = 'all';
+  const byOwner = d.groups.filter(g => ownerOf(g, FILT.owner)), shown = byOwner.filter(g => statusOf(g, FILT.status));
+  const due = shown.filter(g => g.stats.week === 'due').length;
+  const today = shown.flatMap(g => g.doneToday.map(x => Object.assign({ group: g.name }, x)));
+  const fb = (attr, k, label, n, on) => '<button class="fbtn" type="button" ' + attr + '="' + esc(k) + '" aria-pressed="' + on + '">' + esc(label) + '<span class="n">' + n + '</span></button>';
+  let h = '<div class="filt" role="group" aria-label="Whose groups"><span class="lbl">Looked after by</span>' +
+    (d.groups.some(g => g.own) ? fb('data-fo', 'mine', 'Mine', d.groups.filter(g => g.own).length, FILT.owner === 'mine') : '') +
+    fb('data-fo', 'all', 'Everyone', d.groups.length, FILT.owner === 'all') +
+    owners.map(o => fb('data-fo', o, o.split(' ')[0], d.groups.filter(g => g.assigned === o).length, FILT.owner === o)).join('') + '</div>' +
+    '<div class="filt" role="group" aria-label="Where they stand"><span class="lbl">Showing</span>' +
+    STATUS.map(([k, l]) => fb('data-fs', k, l, byOwner.filter(g => statusOf(g, k)).length, FILT.status === k)).join('') + '</div>';
+  h += '<h2>' + (FILT.owner === 'mine' ? 'Your groups' : FILT.owner === 'all' ? 'Every group' : esc(FILT.owner) + '’s groups') + ' <span class="muted small">' + shown.length + ' · ' + due + ' to approve for ' + esc(d.nextSend || 'Monday') + '</span></h2>';
+  h += shown.length ? '<div class="cards">' + shown.map(groupCard).join('') + '</div>' : '<p class="muted">No group matches these filters.</p>';
   h += '<h2>What we’ve done today <span class="muted small">' + today.length + '</span></h2>' + (today.length
     ? '<ul class="feed">' + today.map(x => '<li><b>' + esc(x.group) + '</b>: ' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + (x.by ? ' · ' + esc(x.by) : '') + '</span></li>').join('') + '</ul>'
     : '<p class="muted">Nothing completed on these groups in Salesforce yet today.</p>');
@@ -264,23 +297,23 @@ function barCell(v, max, gold, label) {
 function dash(a) {
   if (!a) return '';
   const t = a.totals;
-  let h = '<div class="tiles">' +
-    '<div class="tile"><b>' + t.groups + '</b><span>groups</span></div>' +
-    '<div class="tile' + (t.dueWeek ? ' alert' : '') + '"><b>' + (t.queuedWeek || 0) + ' / ' + ((t.queuedWeek || 0) + t.dueWeek) + '</b><span>approved for ' + esc(t.nextSend || 'Monday') + '</span></div>' +
-    '<div class="tile"><b>' + t.sentWeek + '</b><span>letters sent this week</span></div>' +
+  let h = '<p class="small muted" style="margin:10px 0 0">The whole team’s work. Tap a tile, a person or a group to open the groups behind it.</p><div class="tiles">' +
+    '<button class="tile" type="button" data-fs="all" data-fo2="all"><b>' + t.groups + '</b><span>groups</span></button>' +
+    '<button class="tile' + (t.dueWeek ? ' alert' : '') + '" type="button" data-fs="due" data-fo2="all"><b>' + (t.queuedWeek || 0) + ' / ' + ((t.queuedWeek || 0) + t.dueWeek) + '</b><span>approved for ' + esc(t.nextSend || 'Monday') + '</span></button>' +
+    '<button class="tile" type="button" data-fs="sent" data-fo2="all"><b>' + t.sentWeek + '</b><span>letters sent this week</span></button>' +
     '<div class="tile"><b>' + t.open + '</b><span>open items</span></div>' +
-    '<div class="tile' + (t.late ? ' alert' : '') + '"><b>' + t.late + '</b><span>past target</span></div>' +
+    '<button class="tile' + (t.late ? ' alert' : '') + '" type="button" data-fs="late" data-fo2="all"><b>' + t.late + '</b><span>past target</span></button>' +
     '<div class="tile"><b>' + t.done + '</b><span>completed this year</span></div>' +
     '<div class="tile"><b>' + pct(t.onTimePct) + '</b><span>on time (done by its due date)</span></div>' +
     '<div class="tile"><b>' + (t.avgDays == null ? '–' : t.avgDays + 'd') + '</b><span>average days to complete</span></div>' +
     '<div class="tile"><b>' + t.responsesWeek + '</b><span>group answers this week</span></div>' +
     '<div class="tile"><b>' + (t.rating == null ? '–' : t.rating + '★') + '</b><span>average rating · ' + t.ratings + ' given</span></div>' +
     '<div class="tile"><b>' + t.doneToday + '</b><span>completed today</span></div></div>';
-  if (a.act.length) h += '<h2>To act on</h2><ul class="feed">' + a.act.map(x => '<li><span class="chip ' + (x.kind === 'setup' ? 'warn' : 'bad') + '"><i></i>' + esc(x.what) + '</span> <b>' + esc(x.group) + '</b> <span class="muted small">· ' + esc(x.who || 'not assigned') + '</span></li>').join('') + '</ul>';
+  if (a.act.length) h += '<h2>To act on</h2><ul class="feed">' + a.act.map(x => '<li class="click" data-gn="' + esc(x.group) + '"><span class="chip ' + (x.kind === 'setup' ? 'warn' : 'bad') + '"><i></i>' + esc(x.what) + '</span> <b>' + esc(x.group) + '</b> <span class="muted small">· ' + esc(x.who || 'not assigned') + '</span></li>').join('') + '</ul>';
   const maxDone = Math.max(1, ...a.staff.map(s => s.done));
   h += '<h2>By staff</h2><p class="small muted">Letters and ratings follow each group’s account owner in Salesforce; completed work and on-time follow who owns each task in Salesforce. “On time” counts only tasks with a due date, and a due date can be moved: average days cannot. Accuracy is the share of items groups marked correct.</p>' +
     '<div class="scroll"><table class="t"><thead><tr><th>Staff</th><th class="num">Groups</th><th class="num">Letters this week</th><th class="num">Open</th><th class="num">Past target</th><th>Completed this year</th><th>On time</th><th class="num">Avg days</th><th>Rating</th><th class="num">Accuracy</th></tr></thead><tbody>' +
-    a.staff.map(s => '<tr><td><b>' + esc(s.name) + '</b></td><td class="num">' + s.groups + '</td><td class="num">' + s.sent + (s.queued ? ' <span class="chip good"><i></i>' + s.queued + ' approved</span>' : '') + (s.due ? ' <span class="chip bad"><i></i>' + s.due + ' to approve</span>' : '') + '</td><td class="num">' + s.open + '</td><td class="num">' + s.late + '</td>' +
+    a.staff.map(s => '<tr' + (BOARD.groups.some(g => g.assigned === s.name) ? ' class="click" data-fo="' + esc(s.name) + '" title="Open ' + esc(s.name) + '’s groups"' : '') + '><td><b>' + esc(s.name) + '</b></td><td class="num">' + s.groups + '</td><td class="num">' + s.sent + (s.queued ? ' <span class="chip good"><i></i>' + s.queued + ' approved</span>' : '') + (s.due ? ' <span class="chip bad"><i></i>' + s.due + ' to approve</span>' : '') + '</td><td class="num">' + s.open + '</td><td class="num">' + s.late + '</td>' +
       '<td>' + barCell(s.done, maxDone) + '</td><td>' + barCell(s.onTimePct, 100, false, pct(s.onTimePct)) + '</td><td class="num">' + (s.avgDays == null ? '–' : s.avgDays) + '</td>' +
       '<td>' + (s.rating == null ? '<span class="muted">none yet</span>' : barCell(s.rating, 5, true, s.rating + '★ · ' + s.ratings)) + '</td><td class="num">' + pct(s.accuracy) + '</td></tr>').join('') + '</tbody></table></div>';
   const maxW = Math.max(1, ...a.weeks.map(w => w.done));
@@ -293,7 +326,7 @@ function dash(a) {
   h += '<h2>By task type</h2><div class="scroll"><table class="t"><thead><tr><th>Task type</th><th class="num">Open</th><th>Completed this year</th><th>On time</th><th class="num">Avg days</th></tr></thead><tbody>' +
     a.types.map(t => '<tr><td>' + esc(t.type) + '</td><td class="num">' + t.open + '</td><td>' + barCell(t.done, maxT) + '</td><td>' + barCell(t.onTimePct, 100, false, pct(t.onTimePct)) + '</td><td class="num">' + (t.avgDays == null ? '–' : t.avgDays) + '</td></tr>').join('') + '</tbody></table></div>';
   h += '<h2>What groups told us <span class="muted small">the last 30 days: changes, “not ours”, ratings of 3 or less, and every comment</span></h2>' + (a.responses.length
-    ? '<ul class="feed">' + a.responses.map(r => '<li><b>' + esc(r.group) + '</b> <span class="muted small">' + esc(r.at) + ' · ' + esc(r.name) + ' · ' + esc(r.staff) + '</span><br>' +
+    ? '<ul class="feed">' + a.responses.map(r => '<li class="click" data-gn="' + esc(r.group) + '"><b>' + esc(r.group) + '</b> <span class="muted small">' + esc(r.at) + ' · ' + esc(r.name) + ' · ' + esc(r.staff) + '</span><br>' +
       (r.rating ? '<b>' + r.rating + '★</b> ' : '') + (r.verdict ? esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.task) + ' ' : '') + (r.note ? '“' + esc(r.note) + '”' : '') + (r.comment ? '“' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>'
     : '<p class="muted">No answers needing attention yet.</p>');
   return h;
@@ -314,13 +347,14 @@ function drawGroup() {
     '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
     (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
+    (d.canAct === false ? '<div class="note">Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>. You can read everything here and leave a comment for the team on any item; approving the letter and anything the group sees is for ' + esc(g.assigned ? g.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' : '') +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
     '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
     '<div class="tile"><b>' + s.done + '</b><span>completed this year</span></div><div class="tile"><b>' + pct(s.onTimePct) + '</b><span>on time</span></div><div class="tile"><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b><span>rating</span></div></div>' +
     '<div class="drawer" id="sendBox"><h3 style="margin-top:0">Monday’s letter <span class="muted small">goes out by itself ' + esc(s.nextSendLabel || '') + '</span></h3>' +
-    (s.approved ? '<div class="note" style="background:var(--goodBg);border-color:#BFE3CB"><b>Approved by ' + esc(s.approved.by) + '</b> on ' + esc(s.approved.at) + '. It goes ' + esc(s.approved.for) + ', written again from Salesforce at that moment. A new item before then holds it for you to look at. <button class="btn ghost sm" type="button" id="unap">Cancel the approval</button></div>' : '') +
+    (s.approved ? '<div class="note" style="background:var(--goodBg);border-color:#BFE3CB"><b>Approved by ' + esc(s.approved.by) + '</b> on ' + esc(s.approved.at) + '. It goes ' + esc(s.approved.for) + ', written again from Salesforce at that moment. A new item before then holds it for you to look at.' + (d.canAct === false ? '' : ' <button class="btn ghost sm" type="button" id="unap">Cancel the approval</button>') + '</div>' : '') +
     (s.needReason ? '<div class="note bad">The letter can go once every item open more than ' + d.reasonDays + ' days has a note for the group, written in the last ' + d.reasonDays + ' days: ' + s.needReason + ' still need' + (s.needReason === 1 ? 's' : '') + ' one. Each is marked below' + (d.ai ? ', with “Draft with AI” to start you off' : '') + '.</div>' : '') + (s.week === 'sent' ? '<p class="small">Sent this week (' + esc(s.sentThisWeek) + '). Approving now sets up next Monday’s letter.</p>' : '') +
-    '<label for="intro">Your own opening line (optional)</label><textarea class="field" id="intro" maxlength="1200" placeholder="Anything you want to say first, in your own words.">' + esc(d.approvedIntro || '') + '</textarea>' +
+    (d.canAct === false ? '<input type="hidden" id="intro" value="' + esc(d.approvedIntro || '') + '">' : '<label for="intro">Your own opening line (optional)</label><textarea class="field" id="intro" maxlength="1200" placeholder="Anything you want to say first, in your own words.">' + esc(d.approvedIntro || '') + '</textarea>') +
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" id="pv">Preview the letter</button></div><div id="pvBox"></div></div>' +
     '<h3 style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">Open items <span class="muted small">' + d.items.length + ' · tick what the group sees; share the Chatter comments they should read</span>' + (d.items.length ? '<button class="btn ghost sm" type="button" id="histAll" style="margin-left:auto">Show all history</button>' : '') + '</h3><div class="items">' + d.items.map(itemHtml).join('') + (d.items.length ? '' : '<p class="muted">Nothing open.</p>') + '</div>' +
     '<h3>Completed in the last seven days</h3>' + (d.doneWeek.length ? '<ul class="feed">' + d.doneWeek.map(x => '<li>' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + ' · ' + esc(x.by) + ' · ' + esc(dmy(x.done)) + (x.shown ? '' : ' · not shown to the group') + '</span></li>').join('') + '</ul>' : '<p class="muted">Nothing completed this week.</p>') +
@@ -336,6 +370,7 @@ function drawGroup() {
   $('app').querySelectorAll('[data-show]').forEach(c => c.onchange = () => share({ kind: 'show', task: c.dataset.show, value: c.checked ? 'Y' : 'N' }, c));
   $('app').querySelectorAll('[data-post]').forEach(c => c.onchange = () => share({ kind: 'post', task: c.dataset.task, post: c.dataset.post, value: c.checked ? 'Y' : 'N' }, c));
   $('app').querySelectorAll('[data-note]').forEach(b => b.onclick = () => { const t = $('n-' + b.dataset.note); if (!t.value.trim()) return toast('Write the note first.', true); share({ kind: 'note', task: b.dataset.note, text: t.value }, b, true); });
+  $('app').querySelectorAll('[data-cmt]').forEach(b => b.onclick = () => { const t = $('n-' + b.dataset.cmt); if (!t.value.trim()) return toast('Write the comment first.', true); share({ kind: 'comment', task: b.dataset.cmt, text: t.value }, b, true); });
   $('app').querySelectorAll('[data-draft]').forEach(b => b.onclick = async () => {
     const t = $('n-' + b.dataset.draft); b.disabled = true; b.textContent = 'Drafting…';
     const r = await api({ action: 'gcm.draft', group: GROUP.group.key, task: b.dataset.draft });
@@ -358,13 +393,16 @@ function itemHtml(it) {
       '<details class="hist"><summary>History and e-mails <span class="n">' + it.story.history.length + '</span></summary><ul>' +
         (it.story.history.length ? it.story.history.map(e => '<li' + (e.internal ? ' class="int"' : '') + '><span class="d">' + (e.d ? esc(dmy(e.d)) : '–') + '</span><span>' + esc(e.text) + (e.internal ? '<span class="staff">staff only</span>' : '') + '</span></li>').join('') : '<li><span class="d">–</span><span>Nothing recorded in Salesforce yet.</span></li>') + '</ul></details>' : '') +
     '<div class="chips">' + (it.level === 'member' ? '<span class="chip"><i style="background:#9aa5b1"></i>Employee item: shown only if ticked</span>' : '') +
-    (it.priv ? '<span class="chip bad"><i></i>Health or claim: stays with staff</span>' : '<label class="toggle"><input type="checkbox" data-show="' + esc(it.id) + '"' + (it.shown ? ' checked' : '') + '> The group sees this item</label>') +
+    (it.priv ? '<span class="chip bad"><i></i>Health or claim: stays with staff</span>' : '<label class="toggle"><input type="checkbox" data-show="' + esc(it.id) + '"' + (it.shown ? ' checked' : '') + (GROUP.canAct === false ? ' disabled' : '') + '> The group sees this item</label>') +
     (it.answer ? '<span class="chip ' + (it.answer.verdict === 'correct' ? 'good' : 'warn') + '"><i></i>Group said: ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[it.answer.verdict] || 'a note') + (it.answer.note ? ' “' + esc(it.answer.note) + '”' : '') + '</span>' : '') + '</div>' +
-    (it.priv ? '' : '<div class="posts">' + (it.posts.length ? it.posts.map(p => '<div class="post' + (p.shared ? ' shared' : '') + '"><label class="toggle" style="float:right"><input type="checkbox" data-task="' + esc(it.id) + '" data-post="' + esc(p.id) + '"' + (p.shared ? ' checked' : '') + '> Share</label><span class="who">' + esc(p.by) + '</span> <span class="muted">' + esc(p.when) + '</span>\n' + esc(p.text) +
+    '<div class="posts">' + (it.posts.length ? it.posts.map(p => '<div class="post' + (p.team ? ' team' : p.shared ? ' shared' : '') + '">' +
+      (p.team || it.priv ? '' : '<label class="toggle" style="float:right"><input type="checkbox" data-task="' + esc(it.id) + '" data-post="' + esc(p.id) + '"' + (p.shared ? ' checked' : '') + (GROUP.canAct === false ? ' disabled' : '') + '> Share</label>') +
+      '<span class="who">' + esc(p.by) + '</span> <span class="muted">' + esc(p.when) + '</span>' + (p.team ? '<span class="tag">Team comment · never shown to the group</span>' : '') + '\n' + esc(p.text) +
       (p.replies || []).map(r => '\n  ↳ ' + esc(r.by) + ': ' + esc(r.text)).join('') + '</div>').join('') : '<div class="small muted">No Chatter on this task.</div>') +
-      '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:flex-start"><textarea class="field" id="n-' + esc(it.id) + '" rows="2" maxlength="2000" placeholder="' + (it.story && it.story.needReason ? 'Why is this still open? A note for the group: posted to the task’s Chatter and shown on their page' : 'A note for the group: posted to the task’s Chatter and shown on their page') + '" style="flex:1;min-width:200px;min-height:44px;padding:8px 10px"></textarea>' +
-      (GROUP && GROUP.ai ? '<button class="btn ghost" type="button" data-draft="' + esc(it.id) + '">Draft with AI</button>' : '') +
-      '<button class="btn ghost" type="button" data-note="' + esc(it.id) + '">Post</button></div></div>') + '</div>';
+      '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:flex-start"><textarea class="field" id="n-' + esc(it.id) + '" rows="2" maxlength="2000" placeholder="' + (GROUP.canAct === false || it.priv ? 'A comment for the team: posted to the task’s Chatter, never shown to the group' : it.story && it.story.needReason ? 'Why is this still open? Post it for the group, or comment for the team only' : 'Post a note for the group, or a comment for the team only') + '" style="flex:1;min-width:200px;min-height:44px;padding:8px 10px"></textarea>' +
+      (GROUP.canAct !== false && !it.priv && GROUP.ai ? '<button class="btn ghost" type="button" data-draft="' + esc(it.id) + '">Draft with AI</button>' : '') +
+      (GROUP.canAct !== false && !it.priv ? '<button class="btn ghost" type="button" data-note="' + esc(it.id) + '">Post for the group</button>' : '') +
+      '<button class="btn ghost" type="button" data-cmt="' + esc(it.id) + '">Comment for the team</button></div></div></div>';
 }
 function recordHtml(rows) {
   if (!rows.length) return '<p class="muted">Nothing on record yet this year.</p>';
@@ -376,7 +414,7 @@ async function share(body, el, reload) {
   const r = await post(Object.assign({ action: 'gcm.share', group: GROUP.group.key }, body));
   el.disabled = false;
   if (!r.ok) { toast(r.error || 'Not saved', true); if (el.type === 'checkbox') el.checked = !el.checked; return; }
-  toast(body.kind === 'note' ? 'Posted to the task’s Chatter, and shown to the group.' : 'Saved.');
+  toast(body.kind === 'note' ? 'Posted to the task’s Chatter, and shown to the group.' : body.kind === 'comment' ? 'Comment posted to the task’s Chatter for the team. The group never sees it.' : 'Saved.');
   if (reload) openGroup(GROUP.group.key);
 }
 /* who the letter goes to, and where that came from: the account's Contact Person in Salesforce, or the register */
@@ -391,7 +429,8 @@ async function preview() {
   if (!r.ok) { box.innerHTML = '<div class="note bad">' + esc(r.error) + '</div>'; return; }
   box.innerHTML = '<p class="small" style="margin:12px 0 6px">To ' + (r.to.length ? toLine(r) : '<b>nobody</b>') + ' · hidden copy to ' + esc(r.copy.join(', ')) + ' · subject <b>' + esc(r.letter.subject) + '</b></p>' +
     '<iframe class="preview" title="Letter preview" sandbox=""></iframe>' +
-    (r.ready ? '<label class="toggle" style="margin:12px 0"><input type="checkbox" id="ck"> I have checked every item against Salesforce and the latest billing</label><div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    (r.canAct === false ? '<div class="note">This is the letter as it would go. Approving it is for ' + esc(GROUP.group.assigned ? GROUP.group.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' :
+     r.ready ? '<label class="toggle" style="margin:12px 0"><input type="checkbox" id="ck"> I have checked every item against Salesforce and the latest billing</label><div style="display:flex;gap:8px;flex-wrap:wrap">' +
       '<button class="btn gold" type="button" id="ap" disabled>Approve for ' + esc(r.nextSend) + '</button>' +
       (r.canSendNow ? (r.mail ? '<button class="btn ghost" type="button" id="sd" disabled>Send now instead</button>' : '') + '<button class="btn ghost" type="button" id="ol" disabled>Open in Outlook instead</button>' : '') + '</div>' +
       '<p class="small muted" style="margin-top:8px">At ' + esc(r.nextSend) + ' the letter is written again from Salesforce and sent from support@. If a new item appears after you approve, it waits and you are told by e-mail.' + (r.canSendNow ? ' Send now is for the branch manager only.' : '') + '</p>'
