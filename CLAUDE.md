@@ -648,9 +648,17 @@ voice under the new timing and the caption gives it away.
   for Guardian Life ("his clients get a notification he was terminated with
   immediate effect … and is not authorised to conduct any business on behalf
   of Guardian Life"). The notice card and the subject carry the company's
-  notice and nothing else: the contract was terminated, on a date, as a
-  result of an investigation, and the agent is not authorised to act. Never
-  why, never the grounds, never anyone else's name. `{{agent_name}}` and
+  notice and nothing else. **Since 13 October 2026 it gives no reason**: the
+  branch held the book from 6 October after a complaint about the letter,
+  and on lifting the hold the manager
+  took the investigation out ("remove as a result of an investigation … do
+  not give a reason … no longer with the company as his services has been
+  terminated as at the date"). `NOTICE_T` now reads "Please note that your
+  agent, <name>, is no longer with Guardian Life of the Caribbean, as
+  <first name>'s services have been terminated as at <date>", then that the
+  agent may no longer act and the policy is not affected. The two call
+  scripts say the same words. Never why, never the grounds, never anyone
+  else's name. `{{agent_name}}` and
   `{{terminated_on}}` are filled from the sheet (the Agent column and a
   `terminated_on` column, letter T only), so neither the name nor the date
   is in the repository; a T row without either is held. The name in the
