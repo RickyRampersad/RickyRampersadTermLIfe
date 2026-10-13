@@ -107,7 +107,7 @@
  ******************************************************************************/
 
 var PDD = {
-  VERSION: '2026-10-13a',
+  VERSION: '2026-10-13b',
   STAGE: 45,            // the first line; the page and the editor helpers read it as the default
   STAGES: [45, 60, 75, 90],   // the four lines (13 October 2026: "45 days, 60 days, 75 days and 90 days")
   LATE: 6,              // days past each stage a client stays on its line: 45 to 51, 60 to 66, 75 to 81, 90 to 96
@@ -146,6 +146,8 @@ function pddRoute_(action, b, session) {
     case 'intel.pdd.tick':    return pddTick_(b, session);
     case 'intel.pdd.skip':    return pddSkip_(b, session);
     case 'intel.pdd.send':    return pddSend_(b, session);
+    case 'intel.pdd.ai':      return pddAi_(b, session);
+    case 'intel.pdd.aiday':   return pddAiDay_(b, session);
   }
   return iErr_('Unknown action: ' + action);
 }
@@ -536,6 +538,7 @@ function pddList_(b, session) {
     stage: PDD.STAGE, late: PDD.LATE, upTo: PDD.STAGE + PDD.LATE,
     stages: PDD.STAGES.map(function (st) { return { stage: st, upTo: st + PDD.LATE }; }),
     outcomes: iSeesBranch_(session.role) ? pddOutcomes_(now) : null,
+    ai: !!pddAiKey_(),
     today: pddFmt_(now, 'EEEE d MMMM yyyy'),
     asOf: pddFmt_(new Date(pool.at || now.getTime()), 'HH:mm'),
     rows: out,
@@ -950,6 +953,163 @@ function pddOutcomes_(now) {
   } catch (e) { out.error = String(e && e.message || e); }
   pddCachePut_('pdd_out', out, PDD.POOL_TTL);
   return out;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   THE AI READ
+   ──────────────────────────────────────────────────────────────────────────
+   Asked for on 13 October 2026: "is there also any intelligence on the
+   premium due tab that staff can actually see and AI driven, like what we
+   did for the groups?" Two reads, both for staff and never for a client:
+
+   - One client (pddAi_): from the facts the desk already holds, a line on
+     where things stand, what most likely stopped the premium, what to check
+     first, an opener for the call, and anything to be careful of.
+   - The day (pddAiDay_, the branch and staff): what stands out across the
+     four lines and where to start.
+
+   The facts go to the Claude API without the client's name, e-mail or
+   policy number. An agent's read leaves out what a client told the branch,
+   as the desk does. Nothing here reaches a letter: the letters' wording is
+   approved, and this is not. Staff are not licensed: the read never advises
+   on cover, and anything about options is the agent's conversation. The key
+   is the ANTHROPIC_API_KEY Script property of this project. Kept six hours.
+   ────────────────────────────────────────────────────────────────────────── */
+var PDD_AI = { MODEL: 'claude-opus-5-5', TTL: 21600, DAY_TTL: 1800 };
+
+var PDD_AI_SYSTEM = [
+  'You help staff at the Ricky Rampersad Branch of Guardian Life of the Caribbean, in Trinidad and Tobago, before they check a client whose premium is behind and before a call.',
+  'You are given the facts the branch holds about one client: which line they are on (45, 60, 75 or 90 days behind), how they pay, how long they have held cover, their other policies, the letters already sent and any answer, and the work the branch team did for them.',
+  '',
+  'Write for the staff member, never for the client. Use only the facts given. If the facts do not show why the premium stopped, say that the records do not say, and name the likeliest thing to check given how they pay; never present a guess as a fact.',
+  'Staff are not licensed to advise. Never recommend a product, a change of cover, a surrender, a reduction or a paid-up policy. Where options may matter (75 or 90 days), say that the agent should be the one to talk options.',
+  'Never mention health, medical matters or claims. Do not state an amount owed: the records do not say how often the premium is paid.',
+  'Plain words, short sentences, Caribbean business English. No greeting, no sign-off.',
+  'Fields: headline, one sentence on where things stand. likely, one or two sentences on what most likely stopped the premium, from the facts. check, up to three short things to check first, most important first. say, an opener for the call, one or two sentences the staff member or agent could say, warm and without pressure. careful, anything to be careful about (an agent marked not active, a company, a client who wrote to the branch manager privately, an open follow-up, the cover stopping within days), or an empty string.'
+].join('\n');
+
+var PDD_AI_SCHEMA = { type: 'object', additionalProperties: false, required: ['headline', 'likely', 'check', 'say', 'careful'],
+  properties: { headline: { type: 'string' }, likely: { type: 'string' }, check: { type: 'array', items: { type: 'string' } },
+                say: { type: 'string' }, careful: { type: 'string' } } };
+
+var PDD_AI_DAY_SYSTEM = [
+  'You help the branch manager and staff of the Ricky Rampersad Branch of Guardian Life of the Caribbean read the day\'s premium due lines: clients 45, 60, 75 and 90 days behind on a premium.',
+  'You are given counts only. Say what stands out and where the team should start today, using only those counts. Point to the clients nearest losing cover, to payment routes that cluster, to agents with many clients on the lines, and to anything the counts show about answers and outcomes.',
+  'Never advise on products. Plain words, short sentences. Each point under 30 words.',
+  'Fields: stands_out, three to five points. start_with, one or two sentences on where to start today.'
+].join('\n');
+
+var PDD_AI_DAY_SCHEMA = { type: 'object', additionalProperties: false, required: ['stands_out', 'start_with'],
+  properties: { stands_out: { type: 'array', items: { type: 'string' } }, start_with: { type: 'string' } } };
+
+function pddAiKey_() { return String(iProp_('ANTHROPIC_API_KEY') || '').trim(); }
+
+/* One request to the Messages API, raw HTTP (Apps Script has no SDK), with structured output. */
+function pddClaude_(system, user, schema) {
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { 'x-api-key': pddAiKey_(), 'anthropic-version': '2023-06-01' },
+    payload: JSON.stringify({ model: PDD_AI.MODEL, max_tokens: 4000, system: system,
+      output_config: { effort: 'low', format: { type: 'json_schema', schema: schema } },
+      messages: [{ role: 'user', content: user }] })
+  });
+  var code = res.getResponseCode(), body = {};
+  try { body = JSON.parse(res.getContentText()); } catch (e) {}
+  if (code !== 200) throw new Error('The AI did not answer (' + String((body.error && body.error.message) || ('HTTP ' + code)).slice(0, 200) + ').');
+  if (body.stop_reason === 'refusal') throw new Error('The AI declined to read this one.');
+  var text = (body.content || []).filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('').trim();
+  try { return JSON.parse(text); } catch (e) { throw new Error('The AI\'s answer could not be read. Try again.'); }
+}
+
+/* The facts about one client, as the desk holds them, without who they are. */
+function pddAiFacts_(r, d, x, wide) {
+  var st = Number(r.stage) || PDD.STAGE, bill = ISURVEY_BILLING[r.billing] || null, out = [];
+  var lapse = r.lapseSort < 8e15 ? Math.round((r.lapseSort - iToday_().getTime()) / 86400000) : null;
+  out.push('Line: ' + st + ' days (' + { 45: 'the first note', 60: 'following up', 75: 'before the cover stops', 90: 'the options' }[st] + '). Days behind today: ' + r.days + '.');
+  out.push('Cover stops: ' + (lapse === null ? 'no projected lapse date on file' : r.lapse + (lapse >= 0 ? ', in ' + lapse + ' days' : ', a date already passed')) + '.');
+  out.push('Held cover with the branch: ' + (d.yWord || (r.years + ' years')) + ', since ' + (d.issued || 'a date not recorded') + '.');
+  out.push('Pays by: ' + (r.billing || 'no route on file') + (bill ? ' (' + bill.says + (bill.auto ? ', collected automatically' : ', paid by the client') + ')' : '') + '. Premium on the bill: TT$' + pddMoney_(r.premium) + '.');
+  out.push('Agent: ' + (r.agent || 'none named') + (r.unit ? ', unit ' + r.unit : '') + '.');
+  if (x.book) out.push('Policies held: ' + x.book.policies + ', TT$' + pddMoney_(x.book.annual) + ' a year in all: ' +
+    (x.book.list || []).map(function (p) { return (p.plan || 'a plan') + (p.behind ? ' (' + p.behind + ' days behind)' : ' (paid to ' + (p.paidTo || 'not recorded') + ')'); }).join('; ') + '.');
+  if (x.behind && x.behind.length) out.push('Other policies behind on the dues extract: ' + x.behind.map(function (b) { return (b.plan || 'a policy') + ', ' + b.days + ' days'; }).join('; ') + '.');
+  if (x.lapsed) out.push('Other policies lapsed: ' + x.lapsed + '.');
+  var ls = x.letters || [];
+  out.push('Letters this episode: ' + (ls.length ? ls.map(function (l) {
+    var got = wide ? [l.rating ? 'rated ' + l.rating + ' of 5' : '', l.asked ? 'asked: "' + l.asked + '"' : ''].filter(String).join(', ') : '';
+    return 'the ' + l.stage + '-day letter on ' + l.when + ', ' + (got || (l.answered ? 'answered' : 'no answer')) + (l.open ? ', a follow-up still open' : '');
+  }).join('; ') : 'none before this one') + '.');
+  if (x.sf) out.push('Branch team in Salesforce, twelve months: ' + x.sf.done + ' requests handled, ' + x.sf.open + ' open' +
+    (x.sf.recent && x.sf.recent.length ? '. Latest: ' + x.sf.recent.map(function (t) { return t.when + ' ' + t.subject + (t.open ? ' (open)' : ''); }).join('; ') : '') + '.');
+  if (r.flags && r.flags.length) out.push('Flags on the row: ' + r.flags.join(' '));
+  if (r.state && r.state.kind) out.push('On the desk: ' + { ticked: 'ticked for the ten o\'clock send', sending: 'going out now', skipped: 'marked not to send (' + (r.state.why || '') + ')',
+    tested: 'a test copy went', notsent: 'not sent at ten (' + (r.state.why || '') + ')', sent: 'sent' }[r.state.kind] + '.');
+  return out;
+}
+
+function pddAi_(b, session) {
+  var policy = pddPolKey_(b && b.policy);
+  if (!policy) return iErr_('Which policy?');
+  if (!pddAiKey_()) return iErr_('The AI read is not set up yet: in this Apps Script project, add ANTHROPIC_API_KEY under Project Settings → Script properties.');
+  var pool = pddPool_(false);
+  if (pool.error) return iErr_(pool.error);
+  var hit = null;
+  pool.rows.forEach(function (x) { if (x.row.policy === policy) hit = x; });
+  if (!hit || !pddScope_([hit.row], session).length) return iErr_('That client is not on your lines any more.');
+  var wide = iSeesBranch_(session.role), now = new Date();
+  var key = 'pdd_ai_' + policy + '_' + hit.row.stage + '_' + (wide ? 'w' : 'a') + '_' + pddDay_(now);
+  var kept = pddCacheGet_(key);
+  if (kept && !(b && b.fresh)) { kept.cached = true; return iOk_(kept); }
+  var r = JSON.parse(JSON.stringify(hit.row));
+  r.state = pddState_(pddCurrent_(pddChecks_().rows, policy, now, r.stage), now);
+  var facts = pddAiFacts_(r, hit.d, pddIntelFor_(r.intel, session) || {}, wide);
+  try {
+    var read = pddClaude_(PDD_AI_SYSTEM, 'Read this client for the staff member.\n\n' + facts.join('\n'), PDD_AI_SCHEMA);
+    read.check = (read.check || []).slice(0, 3);
+    var out = { policy: policy, read: read, at: pddFmt_(now, 'HH:mm'), facts: facts.length };
+    pddCachePut_(key, out, PDD_AI.TTL);
+    return iOk_(out);
+  } catch (e) { return iErr_(String(e && e.message ? e.message : e).slice(0, 300)); }
+}
+
+/* The day, in counts: the branch and staff. */
+function pddAiDay_(b, session) {
+  if (!iSeesBranch_(session.role)) return iErr_('The read of the day is for the branch and staff.');
+  if (!pddAiKey_()) return iErr_('The AI read is not set up yet: in this Apps Script project, add ANTHROPIC_API_KEY under Project Settings → Script properties.');
+  var now = new Date(), key = 'pdd_aiday_' + pddDay_(now);
+  var kept = pddCacheGet_(key);
+  if (kept && !(b && b.fresh)) { kept.cached = true; return iOk_(kept); }
+  var pool = pddPool_(false);
+  if (pool.error) return iErr_(pool.error);
+  var rows = pool.rows.map(function (x) { return x.row; }), checks = pddChecks_().rows, today = iToday_().getTime();
+  var count = function (f) { var o = {}; rows.forEach(function (r) { var k = f(r); if (k) o[k] = (o[k] || 0) + 1; }); return o; };
+  var say = function (o) { return Object.keys(o).sort(function (a, c) { return o[c] - o[a]; }).slice(0, 8).map(function (k) { return k + ' ' + o[k]; }).join(', ') || 'none'; };
+  var soon = function (n) { return rows.filter(function (r) { return r.lapseSort < 8e15 && (r.lapseSort - today) / 86400000 <= n; }).length; };
+  var state = count(function (r) { var s = pddState_(pddCurrent_(checks, r.policy, now, r.stage), now); return s ? s.kind : 'to check'; });
+  var facts = [
+    'Clients on the lines: ' + rows.length + '. By line: ' + say(count(function (r) { return r.stage + ' days'; })) + '.',
+    'On the desk: ' + say(state) + '.',
+    'Cover stops within 7 days: ' + soon(7) + '; within 14 days: ' + soon(14) + '; no lapse date on file: ' + rows.filter(function (r) { return !r.lapse; }).length + '.',
+    'By how they pay: ' + say(count(function (r) { return r.billing || 'no route on file'; })) + '.',
+    'By agent: ' + say(count(function (r) { return r.agent || 'none named'; })) + '.',
+    'Holding other policies too: ' + rows.filter(function (r) { return r.intel && r.intel.book && r.intel.book.policies > 1; }).length +
+      '; behind on another policy as well: ' + rows.filter(function (r) { return r.intel && r.intel.behind && r.intel.behind.length; }).length + '.',
+    'Written to earlier this episode: ' + rows.filter(function (r) { return r.intel && r.intel.letters && r.intel.letters.length; }).length +
+      '; of them answered: ' + rows.filter(function (r) { return r.intel && (r.intel.letters || []).some(function (l) { return l.rating || l.askedKey; }); }).length + '.',
+    'With an open Salesforce task: ' + rows.filter(function (r) { return r.intel && r.intel.sf && r.intel.sf.open; }).length + '.',
+    'Flagged rows: ' + rows.filter(function (r) { return r.flags && r.flags.length; }).length + '.',
+    'Left off the lines today: ' + Object.keys(pool.skipped || {}).filter(function (k) { return pool.skipped[k]; }).map(function (k) { return k + ' ' + pool.skipped[k]; }).join(', ') + '.'
+  ];
+  var o = pddOutcomes_(now);
+  if (o && o.total && o.total.sent) facts.push('Letters in the last 120 days: ' + o.total.sent + ' sent, ' + o.total.answered + ' answered, ' + o.total.paid +
+    ' back in good standing, ' + o.total.part + ' paid some, ' + o.total.behind + ' still behind, ' + o.total.lapsed + ' lapsed.');
+  try {
+    var read = pddClaude_(PDD_AI_DAY_SYSTEM, 'Read today\'s premium due lines.\n\n' + facts.join('\n'), PDD_AI_DAY_SCHEMA);
+    read.stands_out = (read.stands_out || []).slice(0, 5);
+    var out = { read: read, at: pddFmt_(now, 'HH:mm'), clients: rows.length };
+    pddCachePut_(key, out, PDD_AI.DAY_TTL);
+    return iOk_(out);
+  } catch (e) { return iErr_(String(e && e.message ? e.message : e).slice(0, 300)); }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

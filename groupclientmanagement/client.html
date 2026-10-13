@@ -215,14 +215,14 @@ function render() {
       D.record.map(r => '<tr><td>' + esc(r.type) + '</td><td class="num">' + r.done + '</td><td class="num">' + (r.onTimePct == null ? '–' : r.onTimePct + '%') + '</td><td class="num">' + (r.avgDays == null ? '–' : r.avgDays) + '</td><td class="num">' + r.open + '</td></tr>').join('') +
       '<tr><td><b>All services</b></td><td class="num"><b>' + tot.done + '</b></td><td></td><td></td><td class="num"><b>' + tot.open + '</b></td></tr></tbody></table></div>';
   }
-  h += '<div class="panel"><h2 class="sec" style="margin-top:0">How are we doing?</h2><p class="sub">' + (D.rated ? 'You rated us this week already. You are welcome to rate us again.' : 'Rate the service you have received from our branch.') + '</p>' +
+  h += '<div class="panel"><h2 class="sec" style="margin-top:0">How are we doing?</h2><p class="sub">' + (D.rated ? 'You rated us this week already. Please rate us again with this week\'s answers.' : 'Rate the service you have received from our branch. A rating is needed before you send.') + '</p>' +
     '<div class="stars" role="radiogroup" aria-label="Your rating">' + [1, 2, 3, 4, 5].map(n => '<button type="button" class="star" role="radio" data-s="' + n + '" aria-checked="' + ((A._stars || 0) >= n) + '" aria-label="' + n + ' of 5: ' + RATE[n] + '"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg></button>').join('') + '</div>' +
     '<div class="rlab" id="rl" aria-live="polite">' + rateLab(A._stars) + '</div>' +
     '<ul class="key" id="key" aria-label="What the stars mean">' + [5, 4, 3, 2, 1].map(n => '<li data-k="' + n + '"' + (A._stars === n ? ' class="on"' : '') + '><span class="ks" aria-hidden="true">' + '★'.repeat(n) + '<i>' + '★'.repeat(5 - n) + '</i></span><span><b>' + n + ' star' + (n === 1 ? '' : 's') + ': ' + RATE[n] + '.</b> ' + MEANS[n] + '</span></li>').join('') + '</ul>' +
     '<label for="gen">What would make it better? (optional)</label><textarea class="field" id="gen" maxlength="2000">' + esc(A._gen || '') + '</textarea>' +
     '<div class="row2"><div><label for="nm">Your name</label><input class="field" id="nm" value="' + esc(A._who || '') + '"></div><div><label for="rl2">Your role</label><input class="field" id="rl2" value="' + esc(A._role || '') + '" placeholder="e.g. HR Manager"></div></div>' +
     '<div class="err" id="serr" role="alert"></div><button class="btn full" type="button" id="send">Send my answers</button>' +
-    '<p class="sub" style="margin-top:10px">Your notes go onto each item for the person handling it, and our branch manager sees every answer.</p></div>' +
+    '<p class="sub" style="margin-top:10px">Your notes go onto each item for the person handling it, and our team is told the moment you send.</p></div>' +
     '<p style="text-align:center"><button class="btn" type="button" id="out" style="background:transparent;color:var(--muted);border:1.5px solid var(--line)">Sign out</button></p>';
   $('app').innerHTML = h;
   $('prog').classList.remove('hide');
@@ -257,9 +257,9 @@ async function send() {
   const err = $('serr'); err.textContent = '';
   const missing = D.items.find(i => A[i.id] && (A[i.id].v === 'change' || A[i.id].v === 'notours') && !(A[i.id].note || '').trim());
   if (missing) { err.textContent = 'Add a note to each item marked as needing a change or not ours.'; $('n-' + missing.id).focus(); return; }
+  if (!A._stars) { err.textContent = 'Please rate our service: tap one to five stars before you send.'; const s1 = document.querySelector('.star'); if (s1) { s1.scrollIntoView({ block: 'center' }); s1.focus(); } return; }
   if (!(A._who || '').trim()) { err.textContent = 'Add your name, so our team knows who answered.'; $('nm').focus(); return; }
   const items = D.items.filter(i => A[i.id] && (A[i.id].v || (A[i.id].note || '').trim())).map(i => ({ id: i.id, v: A[i.id].v || '', note: A[i.id].note || '' }));
-  if (!items.length && !A._stars && !(A._gen || '').trim()) { err.textContent = 'Mark at least one item, or rate our service, before you send.'; return; }
   const n = D.items.filter(i => A[i.id] && A[i.id].v).length;
   if (n < D.items.length && !confirm('You have reviewed ' + n + ' of ' + D.items.length + ' items. Send now?')) return;
   const b = $('send'); b.disabled = true; b.textContent = 'Sending…';

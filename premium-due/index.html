@@ -197,6 +197,23 @@ button.tick:disabled{opacity:.5;cursor:default}
 .know .tl li{padding:4px 0;font-size:13.5px}
 .know .none{color:var(--faint);font-size:13.5px}
 
+/* the AI read */
+.ai{border:1px solid rgba(0,207,234,.4);background:rgba(0,207,234,.07);border-radius:13px;padding:13px 14px;margin:0 0 14px}
+.ai h3{font:800 13px var(--disp);letter-spacing:.06em;text-transform:uppercase;color:var(--teal);margin:0 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ai h3 small{font:500 12px var(--sans);letter-spacing:0;text-transform:none;color:var(--faint)}
+.ai .hl{font-weight:700;margin:2px 0 8px}
+.ai dl{margin:0;font-size:14px}
+.ai dt{font:700 10.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:8px}
+.ai dd{margin:2px 0 0}
+.ai ol{margin:2px 0 0 18px;padding:0}
+.ai .warn-t{color:var(--warn)}
+button.aibtn{background:none;border:1px solid rgba(0,207,234,.55);color:var(--teal);border-radius:10px;padding:9px 14px;font:700 13px var(--sans);cursor:pointer}
+button.aibtn:disabled{opacity:.55;cursor:default}
+.dayai{margin-top:14px}
+.dayai .ai{margin:0}
+.dayai ul{margin:4px 0 0 18px;padding:0;font-size:14.5px}
+.dayai li{margin:3px 0}
+
 /* after the letters (branch) */
 #otbl{min-width:640px}
 .bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:rgba(255,255,255,.06);min-width:120px}
@@ -257,6 +274,7 @@ button.tick:disabled{opacity:.5;cursor:default}
   <div id="gateMsg"></div>
 
   <div class="tabs" id="tabs" role="tablist" aria-label="The lines"></div>
+  <div class="dayai" id="dayAi" hidden></div>
 
   <div class="cols">
     <div class="panel" id="listPanel">
@@ -417,7 +435,7 @@ function load(fresh, said) {
     STATE = r; ROWS = r.rows || []; LOADED = Date.now();
     ROWS.forEach(function (x) { x.stage = Number(x.stage) || 45; });
     if (VIEW.tab !== 'all' && !stages().some(function (x) { return String(x.stage) === String(VIEW.tab); })) VIEW.tab = 'all';
-    paintHead(r); buildFilters(); paintTabs(); paintRows(); paintOutcomes(r); paintRecent(r); paintFoot(r);
+    paintHead(r); buildFilters(); paintTabs(); paintDayAi(); paintRows(); paintOutcomes(r); paintRecent(r); paintFoot(r);
     if (CUR) {
       var again = ROWS.filter(function (x) { return x.policy === CUR.policy; })[0];
       if (again) { CUR = again; paintDecide(); } else { CUR = null; clearPreview('That client has left the line.'); }
@@ -720,16 +738,73 @@ function preview(r) {
       '<b>Copying</b> ' + esc(res.cc || 'nobody: check the access list') + '<br>' +
       '<b>Line</b> ' + esc(r.stage) + ' days (' + esc(tabWords(r.stage).toLowerCase()) + ')<br>' +
       '<b>Subject</b> ' + esc(res.subject) + flags + '</div>' +
-      '<div id="decide"></div>' + knowHtml(r) +
+      '<div id="decide"></div>' + aiHtml(r) + knowHtml(r) +
       '<div class="sheet">' + res.html + '</div>';
     $('backBtn').onclick = function () { $('listPanel').scrollIntoView({ block: 'start' }); };
     paintDecide();
+    wireAi(r);
     paintRows();
     /* On a phone the letter is below the list: take the reader to it. */
     if (window.matchMedia('(max-width:1100px)').matches) $('prevPanel').scrollIntoView({ block: 'start' });
     else $('prev').scrollTop = 0;
   }).catch(function () { clearPreview('Could not build that letter.'); });
 }
+
+/* ── the AI read ────────────────────────────────────────────────────────
+   Written by the Claude API from the facts the desk holds, for staff only.
+   It never reaches the client and never changes the letter. */
+var AIREAD = {};
+function aiHtml(r) {
+  if (!STATE || !STATE.ai) return '';
+  var got = AIREAD[r.policy + '_' + r.stage];
+  return '<div id="aiBox">' + (got ? aiReadHtml(got, first(r.client)) :
+    '<div class="ai"><h3>AI read <small>for staff: never sent to the client</small></h3>' +
+    '<p style="margin:0 0 10px;font-size:14px;color:var(--muted)">What most likely stopped the premium, what to check first, and how to open the call, from what the branch holds on ' + esc(first(r.client)) + '.</p>' +
+    '<button class="aibtn" id="aiGo">Read ' + esc(first(r.client)) + ' with AI</button> <span class="said" id="aiSaid"></span></div>') + '</div>';
+}
+function aiReadHtml(o, name) {
+  var x = o.read || {};
+  return '<div class="ai"><h3>AI read <small>' + esc(o.at ? 'at ' + o.at : '') + (o.cached ? ' · kept from earlier today' : '') + ' · for staff: never sent to the client</small></h3>' +
+    (x.headline ? '<div class="hl">' + esc(x.headline) + '</div>' : '') + '<dl>' +
+    (x.likely ? '<dt>Most likely</dt><dd>' + esc(x.likely) + '</dd>' : '') +
+    (x.check && x.check.length ? '<dt>Check first</dt><dd><ol>' + x.check.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ol></dd>' : '') +
+    (x.say ? '<dt>To open the call</dt><dd>“' + esc(x.say) + '”</dd>' : '') +
+    (x.careful ? '<dt>Be careful</dt><dd class="warn-t">' + esc(x.careful) + '</dd>' : '') +
+    '</dl><p style="margin:10px 0 0;font-size:12px;color:var(--faint)">Written by AI from the records below. Check it against Salesforce before you act; anything about options is the agent\'s conversation.</p></div>';
+}
+function wireAi(r) {
+  var go = $('aiGo');
+  if (!go) return;
+  go.onclick = function () {
+    go.disabled = true; go.textContent = 'Reading…';
+    call({ action: 'intel.pdd.ai', token: TOKEN, policy: r.policy }).then(function (res) {
+      if (!CUR || CUR.policy !== r.policy) return;
+      if (!res.ok) { go.disabled = false; go.textContent = 'Try again'; $('aiSaid').textContent = res.error || 'The AI did not answer.'; $('aiSaid').className = 'said bad'; return; }
+      AIREAD[r.policy + '_' + r.stage] = res;
+      $('aiBox').innerHTML = aiReadHtml(res, first(r.client));
+    }).catch(function () { go.disabled = false; go.textContent = 'Try again'; $('aiSaid').textContent = 'Could not reach the branch script.'; });
+  };
+}
+function paintDayAi() {
+  var box = $('dayAi');
+  if (!STATE || !STATE.ai || !STATE.you || !STATE.you.branchWide || !ROWS.length) { box.hidden = true; return; }
+  box.hidden = false;
+  if (box.dataset.done === pddToday()) return;
+  box.innerHTML = '<div class="ai"><h3>Read the day with AI <small>what stands out across the four lines, and where to start</small></h3>' +
+    '<button class="aibtn" id="dayGo">Read today\'s lines</button> <span class="said" id="daySaid"></span></div>';
+  $('dayGo').onclick = function () {
+    var b = this; b.disabled = true; b.textContent = 'Reading…';
+    call({ action: 'intel.pdd.aiday', token: TOKEN }).then(function (res) {
+      if (!res.ok) { b.disabled = false; b.textContent = 'Try again'; $('daySaid').textContent = res.error || 'The AI did not answer.'; $('daySaid').className = 'said bad'; return; }
+      var x = res.read || {};
+      box.dataset.done = pddToday();
+      box.innerHTML = '<div class="ai"><h3>The day, read by AI <small>at ' + esc(res.at) + ' · ' + esc(res.clients) + ' clients · counts only, no names sent</small></h3>' +
+        '<ul>' + (x.stands_out || []).map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
+        (x.start_with ? '<p style="margin:10px 0 0"><b>Start with:</b> ' + esc(x.start_with) + '</p>' : '') + '</div>';
+    }).catch(function () { b.disabled = false; b.textContent = 'Try again'; $('daySaid').textContent = 'Could not reach the branch script.'; });
+  };
+}
+function pddToday() { return new Date().toISOString().slice(0, 10); }
 
 /* What the records say about the client, beside their letter. Facts only. */
 function knowHtml(r) {

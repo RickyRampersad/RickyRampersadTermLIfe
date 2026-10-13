@@ -2693,6 +2693,19 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   unit manager's view of an agent's group was asked for and set aside the same
   day ("forget Akash for now"). `teamview/team-test.js` (26 checks) and
   `teamview/team-page.js` (18, Playwright) in the session scratchpad cover it.
+- **A group's answer reaches staff three ways, and stays on "To act on" until it is dealt with** (13 October 2026:
+  the manager could not find Dansteel's answer of 12 October). It is filed on Group Responses and posted to the
+  task's Chatter, and `gcmTell_` e-mails the account owner, copied to sales support alone (`GCM.TELL_CC`; asked for
+  the same day: "to the account owner and copy the Ricky Rampersad sales support"; the branch manager is no longer
+  copied and sees every answer on the dashboard), as "Group review in: …". That e-mail went by
+  Gmail alone and a failure was swallowed: Dansteel's never went. It now goes from support@ first, Gmail second; one
+  that cannot go is kept (`GCM_TELL_FAILED`) and named to the branch on the dashboard, and `gcmTellAgain` (the
+  editor's Run button, the last three days) sends it again. An answer marking an item "Needs a change" or "Not ours"
+  is first on "To act on" for fourteen days, until the item is closed or a note for the group follows on a later day.
+  The "group answers this week" tile opens "What groups told us". **The stars are required** ("ensure the star
+  rating is pressed"): the page will not send until one to five is tapped, and `gcmReview_` refuses an answer
+  without one; Dansteel's, the first, had none. `answers/answers-test.js` (21 checks) and `answers/client-page.js`
+  (5, Playwright) in the session scratchpad cover it.
 - **The letter goes to the account's Contact Person in Salesforce** (7 October
   2026: "there is a contact on the account with an email, why is it she is not
   able to send?"). Until then only the register's To was read, and it was
@@ -2700,7 +2713,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   refresh reads `Contact_Person__r` on each account (else the account's own
   `Email__c`) and mirrors it onto the register as Contact in Salesforce,
   Contact e-mail and Contact greeting; the register's To counts only for a
-  group with neither, and its Cc and Greeting still apply. Several accounts'
+  group with neither, and its Cc still applies. Its Greeting applies only
+  when it names the person the letter goes to (`gcmGreetsName_`): on 13
+  October 2026 a letter to the Contact Person opened with the first name of
+  the register's old To, which a staff member caught in the preview. Several accounts'
   Contact Person carries a personal mailbox, and the letter carries the
   group's access code, so the page and the preview name the address, say
   where it came from and point out a personal one; staff tick that they
@@ -2837,6 +2853,28 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     (`shots2.js`, `lines2.json`, `timing2.py`, `film2.html`, `mix2.py` in `staffvid/`). `group-loop.png` there is the
     loop picture alone, for the group chat.
 
+- **The welcome: one e-mail to each employer, with the film** (13 October 2026: "with the video embedded so to
+  greet the employer in a new way of managing their account … test with me first as this is supposed to pop").
+  - **The film is the employer's own cut**, `groupclientmanagement/welcome.mp4` (1:33, poster `welcome.jpg`), on
+    its page `welcome.html`. The staff film's part 2 speaks to staff ("their answer comes straight to you") and shows
+    the staff page and the manager's dashboard, so it is never sent to a group. The employer cut keeps the letter,
+    the sign-in, the items, the history, the answers, the stars and the thank-you, voiced to the employer, on a sample
+    group with made-up figures. Built in the scratchpad from the same shots (`staffvid/lines3.json`, `film3.html`,
+    `timing3.py`, `mix3.py`).
+  - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
+    film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
+  - **No access code in it.** The Monday letter carries the sign-in, after staff check it.
+  - `gcmWelcome_` writes it, signed by the branch manager and naming the account owner. `gcmWelcomeList_` picks the
+    groups: ready for a Monday letter, written to the Contact Person, never one of our own addresses, never twice,
+    never a group named in the `GCM_WELCOME_SKIP` Script property.
+  - **The branch manager gets the test first**: `gcmWelcomeTest` (editor Run) sends him one welcome as a group would
+    get it, marked TEST, with who would and would not get it. `gcmWelcomeNow` then sends it at once (chosen the same
+    evening, to all eleven ready groups), or `gcmWelcomeAt6` by itself at 18:00 (today if before six, else tomorrow);
+    `gcmWelcomeCancel` stops a scheduled one. From support@ only; without Microsoft 365 nothing goes.
+  - Each welcome is logged on Group Sends with Status "welcome sent". The weekly run passes those rows over, so a
+    welcome never counts as that week's letter. One internal summary goes to `TRANSITION.CC`.
+  - `welcome/welcome-test.js` in the session scratchpad covers it (24 checks).
+
 ## The Premium Due Desk — checked by a person, sent at ten
 
 `premium-due/` and `apps-script/PremiumDueDesk.gs`, in the Branch Intelligence
@@ -2902,6 +2940,16 @@ servicing work".
   that a client answered, never the rating or what they asked for: one of the
   taps is a private note to the branch manager about the agent. Each source
   is optional; without Salesforce the rest still shows.
+- **The AI read** (13 October 2026: "is there also any intelligence on the premium due tab that staff can actually
+  see and AI driven, like what we did for the groups?"). Beside each letter, "Read <name> with AI" sends the facts
+  the desk holds on that client to the Claude API (`pddAi_`, `claude-opus-5-5`, structured output) and shows where
+  things stand, what most likely stopped the premium, what to check first, an opener for the call and what to be
+  careful of. For the branch and staff, "Read today's lines" (`pddAiDay_`) reads the four lines in counts only and
+  says what stands out and where to start. No client's name, e-mail, policy or client number is sent; an agent's read
+  leaves out what the client told the branch, as the desk does. It is for staff, never a client, and never touches a
+  letter, whose wording is approved. Staff are not licensed, so it never advises on cover: options are the agent's
+  conversation. Each read is kept six hours (the day's half an hour). The key is the `ANTHROPIC_API_KEY` Script
+  property of this project (the tracker's, not the Service Questionnaire's); without it the page offers nothing.
 - **The page**: a tab per line with how many are to check and ticked, and
   filters for the agent, the unit, how they pay, when the cover stops, to
   check / ticked / not sending, flagged, answered us before, holds other
@@ -2937,7 +2985,7 @@ servicing work".
   are read. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
   `pddToday()` (each line's count, and whether the in-force book and
   Salesforce joined), `pddSendNow()`. `pdd3/` in the session scratchpad holds
-  the harness on a made-up branch (`test.js`, 72 checks; `page-test.js`, 34,
+  the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
   Playwright; `world.js`, the fake workbook and Salesforce).
 
 ## Standing rules
