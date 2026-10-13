@@ -73,7 +73,7 @@ h2{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:28px 0 10px}h3{fo
 .fbtn[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
 .fbtn .n{font-weight:500;opacity:.8;margin-left:4px}
 .click{cursor:pointer}.click:hover{background:var(--primarySoft)}
-button.tile{text-align:left;font:inherit;cursor:pointer}
+button.tile,a.tile{text-align:left;font:inherit;cursor:pointer;color:inherit;text-decoration:none;display:block}
 .post.team{border-left:3px solid var(--warnMark);background:var(--warnBg)}
 .post .tag{font-size:11px;font-weight:600;color:var(--warn);margin-left:6px}
 .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:13px;color:var(--muted);margin-top:8px}
@@ -306,9 +306,12 @@ function dash(a) {
     '<div class="tile"><b>' + t.done + '</b><span>completed this year</span></div>' +
     '<div class="tile"><b>' + pct(t.onTimePct) + '</b><span>on time (done by its due date)</span></div>' +
     '<div class="tile"><b>' + (t.avgDays == null ? '–' : t.avgDays + 'd') + '</b><span>average days to complete</span></div>' +
-    '<div class="tile"><b>' + t.responsesWeek + '</b><span>group answers this week</span></div>' +
+    '<a class="tile" href="#told"><b>' + t.responsesWeek + '</b><span>group answers this week</span></a>' +
     '<div class="tile"><b>' + (t.rating == null ? '–' : t.rating + '★') + '</b><span>average rating · ' + t.ratings + ' given</span></div>' +
     '<div class="tile"><b>' + t.doneToday + '</b><span>completed today</span></div></div>';
+  if (BOARD.tellFailed && BOARD.tellFailed.length) h = '<div class="note"><b>A group answered and staff were not told by e-mail:</b> ' +
+    BOARD.tellFailed.map(x => esc(x.group) + ' (' + esc(x.at) + ')').join(', ') + '. The answer is under “To act on” and on the task’s Chatter. ' +
+    'To send the alert again: in the Apps Script editor, run <code>gcmTellAgain</code>.</div>' + h;
   if (a.act.length) h += '<h2>To act on</h2><ul class="feed">' + a.act.map(x => '<li class="click" data-gn="' + esc(x.group) + '"><span class="chip ' + (x.kind === 'setup' ? 'warn' : 'bad') + '"><i></i>' + esc(x.what) + '</span> <b>' + esc(x.group) + '</b> <span class="muted small">· ' + esc(x.who || 'not assigned') + '</span></li>').join('') + '</ul>';
   const maxDone = Math.max(1, ...a.staff.map(s => s.done));
   h += '<h2>By staff</h2><p class="small muted">Letters and ratings follow each group’s account owner in Salesforce; completed work and on-time follow who owns each task in Salesforce. “On time” counts only tasks with a due date, and a due date can be moved: average days cannot. Accuracy is the share of items groups marked correct.</p>' +
@@ -325,7 +328,7 @@ function dash(a) {
   const maxT = Math.max(1, ...a.types.map(t => t.done));
   h += '<h2>By task type</h2><div class="scroll"><table class="t"><thead><tr><th>Task type</th><th class="num">Open</th><th>Completed this year</th><th>On time</th><th class="num">Avg days</th></tr></thead><tbody>' +
     a.types.map(t => '<tr><td>' + esc(t.type) + '</td><td class="num">' + t.open + '</td><td>' + barCell(t.done, maxT) + '</td><td>' + barCell(t.onTimePct, 100, false, pct(t.onTimePct)) + '</td><td class="num">' + (t.avgDays == null ? '–' : t.avgDays) + '</td></tr>').join('') + '</tbody></table></div>';
-  h += '<h2>What groups told us <span class="muted small">the last 30 days: changes, “not ours”, ratings of 3 or less, and every comment</span></h2>' + (a.responses.length
+  h += '<h2 id="told">What groups told us <span class="muted small">the last 30 days: changes, “not ours”, ratings of 3 or less, and every comment</span></h2>' + (a.responses.length
     ? '<ul class="feed">' + a.responses.map(r => '<li class="click" data-gn="' + esc(r.group) + '"><b>' + esc(r.group) + '</b> <span class="muted small">' + esc(r.at) + ' · ' + esc(r.name) + ' · ' + esc(r.staff) + '</span><br>' +
       (r.rating ? '<b>' + r.rating + '★</b> ' : '') + (r.verdict ? esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.task) + ' ' : '') + (r.note ? '“' + esc(r.note) + '”' : '') + (r.comment ? '“' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>'
     : '<p class="muted">No answers needing attention yet.</p>');

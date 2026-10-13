@@ -889,6 +889,7 @@ function gcmBoard_(p) {
   groups.sort(function (a, b) { return urgency(b) - urgency(a); });
   var out = { ok: true, role: who.role, me: who.name, today: today, sendDay: GCM.SEND_DAY, dow: gcmDow_(today), refreshed: L.refreshed,
     salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', groups: groups };
+  if (who.role === 'branch' || who.role === 'deputy') out.tellFailed = gcmTellFailed_();
   out.analytics = gcmAnalytics_(L);
   return out;
 }
@@ -929,6 +930,16 @@ function gcmAnalytics_(L) {
       if (r.when >= gcmAddDays_(today, -30) && (r.verdict === 'change' || r.verdict === 'notours' || (r.rating && r.rating <= 3) || r.comment || r.note))
         resp.push({ group: g.name, at: r.at, when: r.when, name: r.name, task: r.title, verdict: r.verdict, note: r.note, rating: r.rating, comment: r.comment, staff: r.staff || g.assigned });
     });
+    /* An answer asking for a change stays on "To act on" until the item is closed or a note for the group follows it
+       (13 October 2026: the manager could not find Dansteel's answer, which the list did not carry). */
+    var asked = g.resps.filter(function (r) {
+      if (r.when < gcmAddDays_(today, -14) || (r.verdict !== 'change' && r.verdict !== 'notours')) return false;
+      var t = g.tasks.filter(function (x) { return x.id15 === r.task; })[0];
+      return t && t.open && !((g.noted || {})[r.task] > r.when);   // a note the same day may be the one the group answered
+    });
+    if (asked.length) act.push({ group: g.name, kind: 'answer', who: g.assigned,
+      what: 'Answered ' + asked[asked.length - 1].at + ' (' + asked[asked.length - 1].name + '): ' + asked.length + ' item' + (asked.length === 1 ? '' : 's') + ' to act on: ' +
+        asked.slice(0, 3).map(function (r) { return r.title + (r.note ? ' — “' + r.note.slice(0, 140) + '”' : ''); }).join('; ') });
     if (s.week === 'due') act.push({ group: g.name, what: 'Not yet approved for ' + s.nextSendLabel, who: g.assigned, kind: 'send' });
     if (s.late) act.push({ group: g.name, what: s.late + ' item' + (s.late > 1 ? 's' : '') + ' past target', who: g.assigned, kind: 'late' });
     if (s.lastRating !== null && s.lastRating <= 3) act.push({ group: g.name, what: 'Rated us ' + s.lastRating + ' of 5', who: g.assigned, kind: 'rating' });
@@ -953,7 +964,7 @@ function gcmAnalytics_(L) {
       .sort(function (a, b) { return (b.done + b.open) - (a.done + a.open); }),
     weeks: weeks.map(function (w) { return { from: w.from, done: w.done, onTimePct: pct(w.onTime, w.withDue), sent: w.sent, responses: w.responses }; }),
     responses: resp.slice(0, 30),
-    act: act.sort(function (a, b) { var o = ['owner', 'send', 'reason', 'rating', 'late', 'setup']; return o.indexOf(a.kind) - o.indexOf(b.kind); })
+    act: act.sort(function (a, b) { var o = ['answer', 'owner', 'send', 'reason', 'rating', 'late', 'setup']; return o.indexOf(a.kind) - o.indexOf(b.kind); })
   };
 }
 
@@ -1455,7 +1466,7 @@ function gcmReview_(b) {
   if (rating >= 1 && rating <= 5 || comment) rows.push({ When: now, Group: g.name, Name: name, Role: role, Rating: rating >= 1 && rating <= 5 ? rating : '', Comment: comment, Staff: g.assigned });
   if (!rows.length) return { ok: false, error: 'Mark at least one item, or rate our service, before you send.' };
   gcmAppend_(GCM.RESPONSES, rows);
-  try { gcmTell_(g, name, rows, rating, comment); } catch (e) {}
+  try { gcmTell_(g, name, rows, rating, comment); } catch (e) {}   // recorded by gcmTell_ itself; the answer is already filed
   return { ok: true, saved: rows.length, posted: posted, failed: failed };
 }
 
@@ -1474,7 +1485,48 @@ function gcmTell_(g, name, rows, rating, comment) {
       : '<p>Every item they marked is correct.</p>') +
     '<p>Each note is also on the task’s Chatter in Salesforce. <a href="' + GCM.SITE + '">Open group client management</a></p>' +
     '<p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
-  MailApp.sendEmail({ to: to.join(','), subject: 'Group review in: ' + g.name + (rating ? ' · ' + rating + '/5' : '') + (flag.length ? ' · ' + flag.length + ' to act on' : ''), htmlBody: body, name: 'Ricky Rampersad Branch' });
+  var subject = 'Group review in: ' + g.name + (rating ? ' · ' + rating + '/5' : '') + (flag.length ? ' · ' + flag.length + ' to act on' : '');
+  /* From support@ first, as the letters go; the Gmail allowance second. Until 13 October this went by Gmail alone and a
+     failure was swallowed: Dansteel's answer of 12 October reached the sheet and Salesforce, and nobody was told. */
+  var err = [];
+  if (tMsCreds_()) {
+    try { tMsSend_(to[0], subject, body, { cc: to.slice(1), replyTo: TRANSITION.MS_FROM }); return 'support@'; }
+    catch (e) { err.push('support@: ' + String(e && e.message ? e.message : e).slice(0, 160)); }
+  }
+  try { MailApp.sendEmail({ to: to.join(','), subject: subject, htmlBody: body, name: 'Ricky Rampersad Branch' }); return 'gmail'; }
+  catch (e2) { err.push('Gmail: ' + String(e2 && e2.message ? e2.message : e2).slice(0, 160)); }
+  gcmTellFail_(g.name, err.join('; '));
+  throw new Error(err.join('; '));
+}
+
+/* The alerts that did not go, kept so the board can say so (the branch only) and gcmTellAgain can send them later. */
+function gcmTellFailed_() {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('GCM_TELL_FAILED') || '[]'); } catch (e) { return []; }
+}
+function gcmTellFail_(group, error) {
+  var list = gcmTellFailed_().filter(function (x) { return x.group !== group; });
+  list.unshift({ group: group, at: Utilities.formatDate(new Date(), tTz_(), 'd MMM HH:mm'), error: error });
+  PropertiesService.getScriptProperties().setProperty('GCM_TELL_FAILED', JSON.stringify(list.slice(0, 10)));
+}
+
+/** The editor's Run button: send the staff alert again for every group answer of the last `days` days (3 when run
+ *  bare), one e-mail per group and day, exactly as it would have gone. Nothing is filed twice: the answers are already
+ *  on Group Responses and on Chatter. Clears the list of alerts that did not go. */
+function gcmTellAgain(days) {
+  days = Number(days) || 3;
+  var L = gcmLoad_(), from = gcmAddDays_(L.today, -days), out = [];
+  L.reg.forEach(function (g) {
+    var byDay = {};
+    g.resps.forEach(function (r) { if (r.when >= from) (byDay[r.when + '|' + r.name] = byDay[r.when + '|' + r.name] || []).push(r); });
+    Object.keys(byDay).forEach(function (k) {
+      var rs = byDay[k], rated = rs.filter(function (r) { return r.rating || r.comment; })[0] || {};
+      var rows = rs.filter(function (r) { return r.verdict || r.note; }).map(function (r) { return { Task: r.title, Verdict: r.verdict, Note: r.note }; });
+      try { out.push(g.name + ' (' + rs[0].at + '): sent by ' + gcmTell_(g, rs[0].name, rows, rated.rating || 0, rated.comment || '')); }
+      catch (e) { out.push(g.name + ' (' + rs[0].at + '): did not go: ' + String(e && e.message ? e.message : e).slice(0, 200)); }
+    });
+  });
+  if (out.length && !out.some(function (x) { return /did not go/.test(x); })) PropertiesService.getScriptProperties().deleteProperty('GCM_TELL_FAILED');
+  return tSay_(out.length ? out.join('\n') : 'No group has answered in the last ' + days + ' days.');
 }
 
 /** The items holding the letter back until someone writes the group a reason. */

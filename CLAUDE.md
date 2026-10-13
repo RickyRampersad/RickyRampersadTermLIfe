@@ -2693,6 +2693,15 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   unit manager's view of an agent's group was asked for and set aside the same
   day ("forget Akash for now"). `teamview/team-test.js` (26 checks) and
   `teamview/team-page.js` (18, Playwright) in the session scratchpad cover it.
+- **A group's answer reaches staff three ways, and stays on "To act on" until it is dealt with** (13 October 2026:
+  the manager could not find Dansteel's answer of 12 October). It is filed on Group Responses and posted to the
+  task's Chatter, and `gcmTell_` e-mails the owner and `TRANSITION.CC` ("Group review in: …"). That e-mail went by
+  Gmail alone and a failure was swallowed: Dansteel's never went. It now goes from support@ first, Gmail second; one
+  that cannot go is kept (`GCM_TELL_FAILED`) and named to the branch on the dashboard, and `gcmTellAgain` (the
+  editor's Run button, the last three days) sends it again. An answer marking an item "Needs a change" or "Not ours"
+  is first on "To act on" for fourteen days, until the item is closed or a note for the group follows on a later day.
+  The "group answers this week" tile opens "What groups told us". A rating shows only when the group gives one.
+  `answers/answers-test.js` in the session scratchpad covers it (17 checks).
 - **The letter goes to the account's Contact Person in Salesforce** (7 October
   2026: "there is a contact on the account with an email, why is it she is not
   able to send?"). Until then only the register's To was read, and it was
