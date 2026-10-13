@@ -2701,7 +2701,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   editor's Run button, the last three days) sends it again. An answer marking an item "Needs a change" or "Not ours"
   is first on "To act on" for fourteen days, until the item is closed or a note for the group follows on a later day.
   The "group answers this week" tile opens "What groups told us". A rating shows only when the group gives one.
-  `answers/answers-test.js` in the session scratchpad covers it (17 checks).
+  `answers/answers-test.js` in the session scratchpad covers it (16 checks).
 - **The letter goes to the account's Contact Person in Salesforce** (7 October
   2026: "there is a contact on the account with an email, why is it she is not
   able to send?"). Until then only the register's To was read, and it was
