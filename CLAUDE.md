@@ -2713,7 +2713,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   refresh reads `Contact_Person__r` on each account (else the account's own
   `Email__c`) and mirrors it onto the register as Contact in Salesforce,
   Contact e-mail and Contact greeting; the register's To counts only for a
-  group with neither, and its Cc and Greeting still apply. Several accounts'
+  group with neither, and its Cc still applies. Its Greeting applies only
+  when it names the person the letter goes to (`gcmGreetsName_`): on 13
+  October 2026 a letter to the Contact Person opened with the first name of
+  the register's old To, which a staff member caught in the preview. Several accounts'
   Contact Person carries a personal mailbox, and the letter carries the
   group's access code, so the page and the preview name the address, say
   where it came from and point out a personal one; staff tick that they

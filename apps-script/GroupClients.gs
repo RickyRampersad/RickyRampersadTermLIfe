@@ -298,9 +298,25 @@ function gcmRegister_() {
     g.toFrom = gcmEmailOk_(sfTo) ? 'salesforce' : regTo.length ? 'register' : '';
     g.contact = g.toFrom === 'salesforce' ? gcmText_(r['Contact in Salesforce']) : '';
     g.cc = gcmList_(r.Cc).filter(function (a) { return gcmEmailOk_(a) && g.to.indexOf(a.toLowerCase()) < 0; });
-    g.greeting = gcmText_(r.Greeting) || (g.toFrom === 'salesforce' ? gcmText_(r['Contact greeting']) : '');
+    /* The register's Greeting was written for the register's own To. Once the letter goes to a named Contact Person
+       in Salesforce it counts only when it names that person: on 13 October 2026 a letter to the Contact Person
+       opened with the first name of the register's old To. */
+    var regGreet = gcmText_(r.Greeting), sfGreet = g.toFrom === 'salesforce' ? gcmText_(r['Contact greeting']) : '';
+    g.greeting = regGreet && (!g.contact || gcmGreetsName_(regGreet, g.contact)) ? regGreet : sfGreet;
     return g;
   });
+}
+
+/** Whether a greeting names the person: a word of it, titles aside, is one of their names ("Mr. Singh" and "Rajendra
+ *  Singh", "Mrs. Samaroo-Paul" and "Lorna Samaroo-Paul"). */
+function gcmGreetsName_(greeting, name) {
+  var words = function (s) {
+    return String(s || '').toLowerCase().split(/[^a-zÀ-ɏ]+/).filter(function (w) {
+      return w.length > 1 && !/^(dear|mr|mrs|ms|miss|mx|dr|prof|rev|hon|sir|madam)$/.test(w);
+    });
+  };
+  var them = words(name);
+  return words(greeting).some(function (w) { return them.indexOf(w) >= 0; });
 }
 
 /* ── Salesforce ─────────────────────────────────────────────────── */
