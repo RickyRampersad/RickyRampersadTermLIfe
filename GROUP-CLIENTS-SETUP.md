@@ -10,6 +10,7 @@ how every group is being serviced; the wall shows it to the branch.
 | `/groupclientmanagement/` | staff (their groups) and the branch manager (every group, the dashboard) | agent number and password from the Agent Skill Bank, or the branch code |
 | `/groupclientmanagement/client.html` | a group (the "Group Client Portal" tile on the home page) | its list bill and its access code |
 | `/groupclientmanagement/wall.html` | the wall screen | the branch code |
+| `/groupclientmanagement/training.html` | staff before they start, and the branch manager (every result) | agent number and password, or the branch code |
 
 The pages hold no client data. Everything comes from `apps-script/GroupClients.gs`
 in the Service Questionnaire project, to someone who has signed in.
@@ -45,15 +46,23 @@ property and never in the code, since the `.gs` files are public.
    - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET`: Microsoft 365, so letters go from
      support@. Without them, Send opens the letter in the staff member's own
      Outlook as plain text instead, and still logs it.
+   - `GCM_TRAIN_SHEET_ID`: the ID of the private **Group Client Training** sheet that holds the test's
+     questions, answers and marking guides (see "Training and the test" below). Without it the training
+     page says the test is not linked.
+   - `GCM_DEPUTIES`: who may approve and change any group, besides its owner and
+     the branch manager: the assistant branch manager, by name ("Kamla Dookran")
+     or agent number, comma-separated. Someone whose Role on the Agent Skill Bank
+     is Assistant Branch Manager is a deputy without it. Without either, staff
+     read every group but change only their own.
    - `GCM_SHEET_ID`: the ID of the **Group Client Management** sheet (the long
      part of its address between `/d/` and `/edit`; pasting the whole address
      works too). That sheet starts with one tab, `Group Register`, built
      outside the repository: each group's Salesforce account, list bills,
      match words, contact and code. The script owner must be able to edit it.
 3. **Run `gcmSetup`** from the editor, with `GroupClients.gs` open (authorise
-   when asked). It adds the `Group Tasks`, `Group Sends`, `Group Responses` and
-   `Group Shares` tabs to the group sheet, says which sheet it used, and
-   installs the hourly refresh. Then **run `gcmRefresh`** once to fill
+   when asked). It adds the `Group Tasks`, `Group Sends`, `Group Responses`,
+   `Group Shares` and `Group Queue` tabs to the group sheet, says which sheet
+   it used, and installs the hourly refresh and the Monday 10:00 send. Then **run `gcmRefresh`** once to fill
    `Group Tasks`.
 4. **Deploy → Manage deployments → pencil → New version.** Never New
    deployment: that changes the address every page uses.
@@ -132,13 +141,26 @@ Salesforce (the `History` and `Mails` columns of `Group Tasks`):
 
 - **Every hour**, 6:00 to 18:00 Monday to Saturday, the refresh rereads
   Salesforce. Staff can refresh by hand from the page.
-- **Tuesday is send day** (`GCM.SEND_DAY`). Each staff member opens their
-  groups marked "Letter due", checks every item against Salesforce and the
-  latest billing, ticks what the group sees, previews the letter (written from
-  the group's own numbers, with an optional opening line of their own), ticks
-  that they checked, and sends. Every letter is logged on `Group Sends` with
-  who, when, to whom, the items and the letter itself, and a blind copy goes to
-  sales support.
+- **The letters go out by themselves at 10:00 on Monday** (`GCM.SEND_DAY`,
+  `GCM.SEND_HOUR`). During the week each staff member opens their groups marked
+  "Approve for Monday". For each one they check every item against Salesforce
+  and the latest billing, tick what the group sees, and preview the letter
+  (written from the group's own numbers, with an optional opening line of
+  their own). Then they tick that they checked and press **Approve for
+  Monday**; the group reads "Approved" on the board and the wall.
+  - **The 10:00 run.** It rereads Salesforce, rebuilds each approved letter
+    and sends it from support@. A letter waits, and its approver is told why,
+    if something arrived after the check that nobody looked at. The hourly
+    refresh catches up a missed run.
+  - **The log.** Every letter is logged on `Group Sends` with who approved it,
+    when, to whom, the items and the letter itself. A blind copy goes to sales
+    support.
+  - **Approvals.** Each approval is a row on `Group Queue`. `gcmSetup` makes
+    that tab and the Monday trigger.
+  - **Sending at once.** Only the branch manager can send a letter at once.
+  - **Rehearsing.** The branch manager's page has **Rehearse now**: every approved letter is written as Monday's run
+    would write it and goes only to its approver and the branch, marked TEST. Nothing reaches a group, and nothing is
+    marked as sent. From the editor, `gcmRehearse` runs it now and `gcmRehearseAt10` sets it for 10:00 today.
 - **The group answers by Friday** (`GCM.RESPOND_DAY`): correct, needs a change,
   or not ours, with a note, which goes onto that task's Chatter; and a rating.
   The staff member and the branch get an internal e-mail at once.
@@ -146,6 +168,31 @@ Salesforce (the `History` and `Mails` columns of `Group Tasks`):
   open and past-target items, completed this year, the share done by its due
   date, average days, answers, ratings and accuracy (the share of items groups
   marked correct) by staff, task type and week, and what to act on.
+
+## Training and the test
+
+`/groupclientmanagement/training.html` is the staff manual and the test, asked for on 8 October 2026 so that
+nobody sends a group a letter before they have read how and passed.
+
+- **The manual** has nine sections: the job, the week, the six checks before Send, escalations, what the
+  group sees, writing to the group, follow-up, taking initiative, and how you are appraised. Each section is
+  ticked as read; the test opens when all nine are, and the result records how many were read and for how long.
+- **The test** has 18 questions worth 100 marks: 15 multiple choice and 3 written scenarios, each counted under
+  one appraisal competency. Process accuracy is 30, initiative and problem solving 20, follow-up and ownership 20,
+  client communication 15, confidentiality and compliance 15. A pass is 80% overall, every critical question
+  right (the three on confidentiality), and no competency under 60%. Each competency is rated Exceeds (90%+),
+  Meets (75–89%), Developing (60–74%) or Not yet.
+- **The questions and answers are never in the repository** (it is public): they live in the private Group
+  Client Training sheet, one row a question (Id, Competency, Points, Critical, Type, Question, A–D, Answer,
+  Why, Rubric, Manual). Edit a question there and the next test uses it; a question's Points are its weight.
+  The page is sent the questions without their answers, and every answer is marked by the backend.
+- **Written answers** are marked by the Claude API against the question's Rubric and stay provisional until the
+  branch manager confirms or changes the mark on the page (Team results). Without the API key they simply wait
+  for the manager.
+- **Every attempt is logged** on the training sheet's Results tab (made the first time): who, when, the score,
+  the result, each competency, the critical questions missed, strengths, what to work on, the manual read, the
+  minutes, every answer as marked, and the manager's marks and note. The result is e-mailed to the person and
+  the branch manager, never to a shared inbox. Staff may retake it; every attempt is kept.
 
 ## Tests
 

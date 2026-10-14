@@ -36,6 +36,30 @@ The palette that goes with it: navy `#07131f`, gold `#efc24b` into `#c9942c`,
 teal `#00CFEA`. Those are the values in `IBRAND` in `Intelligence.gs`, which is
 what the client letters read.
 
+**A second exception, decided 8 October 2026: group client management** (the
+four pages in `groupclientmanagement/` and the Monday letter built by
+`gcmLetter_` in `GroupClients.gs`) has a corporate look and its own mark. The
+mark is `groupclientmanagement/gcm-mark.png`: the same shield and check, white
+on a corporate-blue tile. The manager asked for it in these words:
+- *"change the yellow in the logo background and black"*;
+- then, after six looks were turned down, *"a more corporate look"*;
+- then *"dont like the white space"*.
+
+The look:
+- **Header band:** blue, `#13408F` into `#1D5BC4`.
+- **Actions:** `#1D5BC4`.
+- **Surfaces:** white panels on a grey ground, `#E9EEF5`.
+- **Type:** IBM Plex Sans.
+- **Status:** shown as a tinted label, never by colour alone.
+
+The rest of the site keeps the gold shield. Do not carry this look further
+without being asked.
+
+The letter's logo is the hosted copy at
+`https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
+the branch before pasting a `GroupClients.gs` that carries it, or the letter's
+masthead arrives empty.
+
 **In e-mail the logo must be a hosted PNG**, never SVG and never a `data:` URI —
 Gmail strips the first and blocks the second, so the masthead arrives empty.
 `IBRAND.LOGO` points at `https://rickyrampersadbranch.com/logo-mark.png` for
@@ -2799,7 +2823,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **The group tabs have their own spreadsheet, the script does not.** Asked
   the same day ("if this is the sheet for managing groups why import into the
   service questionnaire"): `Group Register`, `Group Tasks`, `Group Sends`,
-  `Group Responses` and `Group Shares` live in the **Group Client Management**
+  `Group Responses`, `Group Shares` and `Group Queue` live in the **Group Client Management**
   Google Sheet. The script stays in the Service Questionnaire project, where
   the sign-in, the Salesforce login, the support@ mailbox and the web address
   are, and opens the group sheet by the `GCM_SHEET_ID` Script property
@@ -2838,6 +2862,44 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   alone matches nothing. Letters and Chatter notes are signed with the name
   as Salesforce has it (`gcmSigner_`), and a group's answer is e-mailed to
   the owner's Salesforce address.
+- **Every staff member sees every group; only the owner, the deputy and the branch
+  manager change one** (13 October 2026: "all staff are able to see other members'
+  groups via a filter … and they can see all the tasks. So your dashboards need to
+  be very interactive from the entire team"). The board lists all groups, each
+  marked `own` and `canAct`; a staff member opens on "Mine", with chips for
+  Everyone and each colleague, and a second row by where a group stands (to
+  approve, approved, sent, past target, needs a reason, waiting on the group, not
+  ready), remembered on the device. Everyone has the Team dashboard, and every
+  tile, person and group on it opens the groups behind it. A colleague's group
+  opens read only: its items, Chatter, history and letter preview, but no
+  approving, no ticking what the group sees and no note for the group
+  (`gcmNotYours_` says who can). Anyone may leave a **comment for the team** on
+  any item: it goes onto the task's Chatter headed with the writer's name, is
+  logged on Group Shares as Kind `comment`, shows on the board as "Team comment ·
+  never shown to the group", and can never be shared, not even by the owner. The
+  **deputy** is the assistant branch manager ("she needs to approve more or less
+  some, she can comment"): an Assistant Branch Manager on the Agent Skill Bank,
+  or anyone the `GCM_DEPUTIES` Script property names by name or agent number,
+  the property so that naming her changes nothing on the other boards. She acts
+  on every group as its owner would, her approval is logged in her name with
+  Role `deputy`, and the letter is still signed by the staff member who looks
+  after the group; the rehearsal and "Send now" stay the branch manager's. A
+  unit manager's view of an agent's group was asked for and set aside the same
+  day ("forget Akash for now"). `teamview/team-test.js` (26 checks) and
+  `teamview/team-page.js` (18, Playwright) in the session scratchpad cover it.
+- **A group's answer reaches staff three ways, and stays on "To act on" until it is dealt with** (13 October 2026:
+  the manager could not find Dansteel's answer of 12 October). It is filed on Group Responses and posted to the
+  task's Chatter, and `gcmTell_` e-mails the account owner, copied to sales support alone (`GCM.TELL_CC`; asked for
+  the same day: "to the account owner and copy the Ricky Rampersad sales support"; the branch manager is no longer
+  copied and sees every answer on the dashboard), as "Group review in: …". That e-mail went by
+  Gmail alone and a failure was swallowed: Dansteel's never went. It now goes from support@ first, Gmail second; one
+  that cannot go is kept (`GCM_TELL_FAILED`) and named to the branch on the dashboard, and `gcmTellAgain` (the
+  editor's Run button, the last three days) sends it again. An answer marking an item "Needs a change" or "Not ours"
+  is first on "To act on" for fourteen days, until the item is closed or a note for the group follows on a later day.
+  The "group answers this week" tile opens "What groups told us". **The stars are required** ("ensure the star
+  rating is pressed"): the page will not send until one to five is tapped, and `gcmReview_` refuses an answer
+  without one; Dansteel's, the first, had none. `answers/answers-test.js` (21 checks) and `answers/client-page.js`
+  (5, Playwright) in the session scratchpad cover it.
 - **The letter goes to the account's Contact Person in Salesforce** (7 October
   2026: "there is a contact on the account with an email, why is it she is not
   able to send?"). Until then only the register's To was read, and it was
@@ -2845,7 +2907,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   refresh reads `Contact_Person__r` on each account (else the account's own
   `Email__c`) and mirrors it onto the register as Contact in Salesforce,
   Contact e-mail and Contact greeting; the register's To counts only for a
-  group with neither, and its Cc and Greeting still apply. Several accounts'
+  group with neither, and its Cc still applies. Its Greeting applies only
+  when it names the person the letter goes to (`gcmGreetsName_`): on 13
+  October 2026 a letter to the Contact Person opened with the first name of
+  the register's old To, which a staff member caught in the preview. Several accounts'
   Contact Person carries a personal mailbox, and the letter carries the
   group's access code, so the page and the preview name the address, say
   where it came from and point out a personal one; staff tick that they
@@ -2879,9 +2944,44 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   through the composite resource (`gcmQuery_`), so a long one never meets URL
   Fetch's limit on an address. Salesforce ids are unique in their first 15
   characters; everything is keyed on those.
-- **Tuesday is send day**; the group is asked to answer by Friday. Every letter
-  is logged on `Group Sends` with the letter itself; without Microsoft 365 it
-  opens in the staff member's Outlook and is still logged.
+- **The letters go by themselves at 10:00 on Monday; staff approve, they do
+  not send** (8 October 2026: "as we have automated our queries will now
+  change to a monday at 10am to go out to client"). Until then Tuesday was send
+  day and each staff member pressed Send. Now a staff member checks a group
+  during the week, previews its letter, ticks that they checked and presses
+  **Approve for Monday**. That writes a row on the **Group Queue** tab (When,
+  Group, Staff, the items they saw, their opening line), and the group reads
+  "Approved" on the board and the wall. At 10:00 on Monday `gcmMondaySend`
+  (a weekly trigger, made by `gcmSetup` or by the first hourly run that finds
+  none) refreshes Salesforce and then rebuilds each approved letter, so the
+  group reads Monday's figures. It sends from support@ through Graph. A letter
+  waits, with the reason, when:
+  - the group is no longer ready;
+  - a letter already went since the approval;
+  - an item open more than 30 days still needs a reason;
+  - **an item arrived that the approver never saw**. The letter goes only with
+    what a person checked.
+
+  One internal e-mail a run tells the branch, and whoever approved a waiting
+  letter, what went and what waited. The hourly refresh runs the same queue
+  afterwards, so a missed 10:00 firing goes at 11:00, and a group approved
+  again after ten on a Monday goes that hour. An approval made after Monday
+  10:00 is for the next Monday. Approving again replaces the earlier one, and
+  "Cancel the approval" withdraws it. Whoever looks after the group, the deputy
+  and the branch manager can still send at once ("Send now", or Outlook; until
+  14 October 2026 the branch manager alone); doing so closes that group's approval.
+  The group is asked to answer by Friday. Every letter is logged on `Group
+  Sends` with the letter itself. `gcmlive/queue-test.js` in the session
+  scratchpad covers it (26 checks).
+  **The run can be rehearsed** (11 October 2026: "i want to test before going to me and the team today at 10am").
+  `gcmQueueRun_({ test: true })` writes every letter approved for the next run exactly as the run would, with the same
+  checks, and sends each only to the person who approved it and `TRANSITION.CC`, subject `[TEST] …`, with a banner
+  naming who would have received it. One summary, subject `TEST · Group letters …`, lists what would go, what would wait
+  and the groups not approved yet. Nothing reaches a group, nothing is logged on Group Sends and no approval changes, so
+  the real run is untouched. The branch manager presses **Rehearse now** on the staff page (`gcm.rehearse`, branch
+  only; the board says `canRehearse`). In the editor, `gcmRehearse` runs it now and `gcmRehearseAt10` sets a one-off
+  trigger for 10:00 that day (`gcmRehearseTick`, which removes itself). `gcmlive/rehearse-test.js` (25 checks) and
+  `staffvid/rehearse-page.js` (6, Playwright) in the scratchpad cover it.
 - **Every open item says why it is still open** (7 October 2026: "when the
   client sees the opened task shall we not give some history why opened so
   long, to use intelligence", then "you need to scrub emails with the subject
@@ -2906,6 +3006,143 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   low, `fallbacks: "default"`), at the manager's choice, with the key in the
   `ANTHROPIC_API_KEY` Script property; the draft is never shared until a
   person edits it and presses Post. A health or claim item gets no draft.
+- **No one sends a group a letter before the manual and the test** (8 October 2026: "a staff manual as well
+  as a test … before they start … with weighting, with building in the performance appraisal, the taking
+  initiative to try to solve things, the follow up … all results logged with a feedback").
+  `groupclientmanagement/training.html` holds the nine-section manual and the test; the staff page links to
+  it. The questions, their answers and their marking guides are in the private **Group Client Training**
+  Google Sheet (`GCM_TRAIN_SHEET_ID`), never in the repository, because the site and the `.gs` files are public:
+  the page gets the questions without answers, and `gcmTrainSubmit_` marks them. Written answers are marked by
+  the Claude API against the Rubric (structured output, the answer fenced as data, never an instruction) and
+  stay provisional until the branch manager confirms them (`gcmTrainMark_`). The competencies are the
+  appraisal's: each question's Points are its weight. A pass needs 80%, every critical question right and no
+  competency under 60%. Every attempt is a row on that sheet's Results tab and an e-mail to the person and the
+  manager (`GCM_TRAIN.TO_MANAGER`), never the sales support inbox, because a result is an appraisal. The bank
+  was written so that the right answer is never the longest option and the answers spread across A to D; keep
+  it that way when adding questions. The standards the manual sets that were not set before (an
+  acknowledgement within a working day, a call within two working days for a rating of 3 or less, and a call
+  or e-mail before the next approval to a group that did not answer) are proposals for the manager to confirm.
+- **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
+  forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
+  training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
+  Approve for Monday, the 10:00 run, a letter that waits, the group's page, their answers, the branch's view.
+  - **What is on screen.** It is shot from the real pages over a made-up branch: five invented groups and invented
+    people, tagged "Sample groups and figures" on every shot. It shows no client, no real count and no test question.
+  - **Sound.** Narration on `en-US-AndrewNeural` at -12%, the Inspired bed 18 dB under the voice, loudness -14 LUFS.
+    The credit is on the closing card and under the player.
+  - **How it is made.** Everything is in the session scratchpad (`staffvid/`):
+    - `demo-world.js`: the made-up branch;
+    - `shots.js`: screenshots and element boxes;
+    - `lines.json` and `tts.py`: the narration;
+    - `timing.py`: scene times from the audio;
+    - `film.html` with `render.js`: frames rendered one by one, so no capture drift;
+    - `mix.py`: the soundtrack.
+
+    Re-shoot it when the pages change.
+  - **Part 2, what the group sees** (10 October 2026: "show also the video what the client see and the flow of
+    communication"). `groupclientmanagement/group-view.mp4` (1:57, poster `group-view.jpg`) sits under the first film in
+    the manual. It shows the loop as one picture (the letter on Monday, their answers by Friday, the e-mail and Chatter
+    back to staff, staff acting, the next letter). Then it follows the group: the letter in their inbox, sign-in, their
+    items, the history, Correct / Needs a change / Not ours, the stars, the thank-you, the internal e-mail that reaches
+    the staff member, the answer on the staff page, and the manager's view. It is built the same way as the first film
+    (`shots2.js`, `lines2.json`, `timing2.py`, `film2.html`, `mix2.py` in `staffvid/`). `group-loop.png` there is the
+    loop picture alone, for the group chat.
+
+- **The welcome: one e-mail to each employer, with the film** (13 October 2026: "with the video embedded so to
+  greet the employer in a new way of managing their account … test with me first as this is supposed to pop").
+  - **The film is the employer's own cut**, `groupclientmanagement/welcome.mp4` (1:33, poster `welcome.jpg`), on
+    its page `welcome.html`. The staff film's part 2 speaks to staff ("their answer comes straight to you") and shows
+    the staff page and the manager's dashboard, so it is never sent to a group. The employer cut keeps the letter,
+    the sign-in, the items, the history, the answers, the stars and the thank-you, voiced to the employer, on a sample
+    group with made-up figures. Built in the scratchpad from the same shots (`staffvid/lines3.json`, `film3.html`,
+    `timing3.py`, `mix3.py`).
+  - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
+    film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
+  - **No access code in it.** The Monday letter carries the sign-in, after staff check it.
+  - **It is signed by the staff member who verified the group** (14 October 2026: "it has me as the branch manager,
+    the letter must have verified by the staff who clicked verified"). `gcmWelcome_` signs it with the verifier
+    (below), says "I look after your account" when the verifier is the account owner and names the owner otherwise,
+    carries the green "Checked against our records by …" label, and gives the group its year with us so far (below).
+    `gcmWelcomeList_` picks the groups: ready for a Monday letter, **verified**, written to the Contact Person, never
+    one of our own addresses, never twice, never a group named in the `GCM_WELCOME_SKIP` Script property. A group
+    nobody has verified waits; the Group Sends Staff column is the verifier.
+  - **The branch manager gets the test first**: `gcmWelcomeTest` (editor Run) sends him one welcome as a group would
+    get it, marked TEST, with who would and would not get it. `gcmWelcomeNow` then sends it at once (chosen the same
+    evening, to all eleven ready groups), or `gcmWelcomeAt9` / `gcmWelcomeAt6` by itself at 9:00 / 18:00 (today if
+    the hour has not come, else tomorrow; asked for on 13 October: "triggered tomorrow at 9am but wait until I give
+    instructions", so nothing is set until one is run); `gcmWelcomeCancel` stops a scheduled one, and the scheduled
+    run does what `gcmWelcomeNow` does. From support@ only; without Microsoft 365 nothing goes.
+    `gcmWelcomeNow` also sets the `GCM_WELCOME_ON` Script property: from then on the hourly run (weekdays, 8:00 to
+    17:00) welcomes a group within the hour of a staff member approving it, says nothing when there is no one to
+    welcome, and the approval toast tells the staff member it will go signed by them. `gcmWelcomeStop` ends that.
+  - Each welcome is logged on Group Sends with Status "welcome sent". The weekly run passes those rows over, so a
+    welcome never counts as that week's letter. One internal summary goes to `TRANSITION.CC`.
+  - `welcome/welcome-test.js` in the session scratchpad covers it (29 checks, with the verifier and the 9:00 run).
+- **The verifier is whoever approved the letter, and every letter says so** (14 October 2026). It is the newest
+  approval on Group Queue that was not cancelled (`gcmVerifier_`): the person who ticked that they checked every item
+  and pressed Approve for Monday, the branch manager included when he approves. The name is written as Salesforce has
+  it when the verifier is the account owner (`gcmVerName_`, through `gcmSameName_`), else in title case, never the
+  Agent Skill Bank's capitals. The Monday letter keeps its signature (the staff member who looks after the group) and
+  adds the same green label under it, naming who checked it and when (`gcmVerifiedLine_`, `gcmVerifiedHtml_`); the
+  label is a tinted label with a tick, never colour alone.
+- **The year with each group: what we did, the trend, and what the records suggest** (14 October 2026: "show how we
+  are servicing the client account for the year and spot opportunities and trends on tasks closed year to date and by
+  type"). `gcmYear_(g, today, forStaff)` reads the Group Tasks tab, which already leaves out logged e-mails and the
+  birthday flow:
+  - **By month**, items completed this year for the company, and apart from them those for employees' own policies
+    (`level` member). A member's health or claim never reaches the group's view, not even as a count; staff see the
+    count. On-time counts only items with a target date.
+  - **The trend** compares the last 91 days with the 91 before, in counts and in average days (only with three items
+    on each side), as sentences of fact, **for staff only**. The group gets the months and the totals, never the
+    comparison: fewer items in a quarter can be a group that asked for less, and on the first real run the welcome
+    would have told an employer "5, against 19 before … up from 28 days".
+  - **What the records suggest** (staff and the branch only, never the group), most time-critical first: a notice of
+    non-renewal in the last year; a renewal within 120 days (from the effective date in the subject, else a year on
+    from when last year's renewal work began); premiums late, in arrears or queried; premium-due notices on employees'
+    own policies, which point at payroll deductions; three or more joiners; individual pension plans taken through the
+    employer; Group Life or Health work with no pension work on file, Life with no Health; three or more leavers;
+    nothing logged in 90 days; items taking a week longer than before; three or more health and claims items; an open
+    Salesforce Opportunity. Never advice, only what the records show.
+  - **The words in a subject that fooled the first cut, read on the real tasks:** "Renewal Date m/d/yyyy" on a
+    payment is the monthly billing date, never a renewal, and "Courtesy Reminder" is an employee's own health plan
+    (`GCM_YEAR.NOT_RENEW`); "Payment Received" is the monthly receipt, not a late premium (`GCM_YEAR.PAY`). Real
+    renewals read "Group Health Renewal", "Feb 1st Renewal Letter", "Notice of non-renewal".
+  - **Where it shows:** the group's page on the staff board ("The year with this group": tiles, the months as a chart
+    with a table under it, the trend, by service, the Salesforce task types, the opportunities); the group's own page
+    ("Our service record for you this year": the company's months and a line for the employees); the welcome; and the
+    dashboard's "The year so far" (`gcmYearAll_`: every group's months, each category, each group with its last three
+    months against the three before, tap to open, and every opportunity with its group and owner).
+  - The charts are one series in the action blue, with the value on every column and the same numbers in a table.
+  - `year/year-test.js` (32 checks) and `year/page-shot.js` (12, Playwright) in the session scratchpad cover it.
+- **Every account on the team dashboard, and send or resend from the page** (14 October 2026: "the team dashboard so
+  staff can view all the accounts and owners and they can also have the ability to resend or send … this has to pop
+  and be a wow experience for the staff, client", then "a much more professional look, filters and scaling and colors
+  for visibility").
+  - **Every account** opens the Team dashboard (`accountsHtml`): four meters (welcomed, approved or sent for Monday,
+    answered, ready), one toolbar (a search over group, owner, contact and list bill; who looks after it; the order;
+    where it stands, each with its mark; "Showing N of M" and Clear filters), then one row an account: the owner, who
+    the letters go to (a personal mailbox marked), the welcome, this week's letter, the last answer with its stars, and
+    the buttons. A coloured rail says where the row stands, with a key under the table: red, something is due from
+    us; amber, it needs setting up; green, welcomed and this week's letter approved or sent. Every state is a word as
+    well as a colour. `gcmAccount_` in `gcmBoard_` is the row's data. The Groups tab takes the same toolbar, and the
+    greeting and the week's numbers sit in the masthead.
+  - **The send window** (`openAct`): the e-mail exactly as it goes, who it goes to and from where, who signs it, a
+    tick, the button; then a tick mark naming who it went to and when. Three things go from it, for whoever looks
+    after the group, the deputy and the branch manager (a colleague's group stays read only):
+    - this week's letter: Approve for Monday or Send now (`gcmSend_`, no longer the branch manager's alone; the same
+      checks as an approval; the opening line of a waiting approval is kept);
+    - the last letter again (`gcmResend_`), exactly as it went, under a line saying when it first went, to the
+      contact as Salesforce has it now. Group Sends keeps each letter's HTML in a new **Html** column (`gcmSheet_` adds
+      it to an older tab by name, once); a letter sent before 14 October has none and is sent fresh instead. Logged as
+      `resent: …`, never counted as the week's letter;
+    - the welcome, or the welcome again (`gcmWelcomeSend_`), signed by the person who ticks and sends it, logged as
+      `welcome sent` or `welcome resent`.
+    Nothing goes to one group twice inside ten minutes (`gcmJustSent_`), and every send is a row with who pressed it.
+  - **A group's own page** opens on who looks after them, the film, when their next letter comes and when they last
+    answered; the year in four tiles; the three answers with their own marks; a progress track; and a thank-you that
+    names them and says what happens next.
+  - `wow/actions-test.js` (31 checks), `wow/after.js` (24, Playwright) and `wow/showcase.js` (screenshots) in the
+    session scratchpad cover it, on the made-up branch.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 
@@ -2914,7 +3151,12 @@ project (the tracker's: `Intelligence.gs` beside `KPI.gs`, its own `/exec`).
 Asked for on 7 October 2026: "a trigger go out when a client premium is 45 days
 due with built in responses for them to select", then "a staff has to do a
 check mark to ensure due diligence is done, once they check it goes out", then
-"a time at 10am".
+"a time at 10am". Widened on 13 October 2026 to four lines ("45 days, 60 days,
+75 days, and 90 days … the same thing we did for groups, whereby you have the
+tabs and you have filters and you have the agents"), in **test mode**, because
+the branch trains the group letters and the premium letters together; and
+"build a lot of intelligence around the data we have, as there was a lot of
+servicing work".
 
 - **A tick is a check, recorded on the spot** on the **Premium Due Checks** tab:
   who, when, the client's address and agent as checked, and any flag on the row
@@ -2928,19 +3170,71 @@ check mark to ensure due diligence is done, once they check it goes out", then
   `intelPendingRefresh`, the hourly trigger, from the ten o'clock hour
   (`pddRun_`): the project is one trigger short of its twenty, so no new
   trigger. A firing missed at ten is caught up the next hour.
-- **The line is 45 to 51 days** (`iSurveyPool_(45, 6)`; every other caller
-  passes nothing and keeps the 45th day exactly), so a Saturday's 45s and a
-  tick made after ten still go. A client written to at 45 in the episode stays
-  off it, so no one gets two.
-- **The responses are the letter's own**: the 1–5 rating and the five taps
-  under it. Nothing in the letter changed, so the wording approval holds; a
-  new tap would change `iSurveyHash_` and stop live sends until re-approved.
+- **Four lines: 45 to 51, 60 to 66, 75 to 81 and 90 to 96 days**
+  (`PDD.STAGES`, `iSurveyPool_([45, 60, 75, 90], 6)`, read in one pass of the
+  extract; every other caller passes one stage and nothing for `late`, and
+  keeps the stage to the day), so a Saturday's clients and a tick made after
+  ten still go. A client written to on a line in the episode stays off that
+  line, so no one gets two of one letter. A check belongs to its line
+  (`pddStageOf_`, from the check's own Days due, so the tab has no new column):
+  a 45-day letter sent last week is no tick on the 60-day line, and a client
+  ticked on one line who reaches the next before ten is "not sent: it moved to
+  the 60-day line", to be checked again there.
+- **Each line has its own letter** (`ISURVEY_STAGES`, `iSurveySubject_`):
+  45 thanks them for their years and asks the 1–5 rating once; 60 follows up
+  ("Following up on our note about your premium", or "A note about the
+  premium on your policy" when no 45-day letter went, which then asks the
+  rating); 75 names the date the cover stops (from the dues extract's
+  Projected Lapse Date) with the ways to pay and "Ask <agent> to call me",
+  and states no amount, because the extract does not say how often a premium
+  is paid; 90 sets out the options. Each later letter says which note it is
+  and what came before (`iSurveyHistoryLine_`, under the approval too: until
+  13 October a client who tapped "talk about my options" read "we did not
+  hear back"). Every letter carries "What we have done for you",
+  the requests the branch team handled in twelve months and the policies
+  held, left out when there is nothing to count. The five taps are the same
+  on every letter. **The wording changed on 13 October, so `iSurveyHash_`
+  (which now renders a probe letter for each line) voids the old approval:**
+  live sends stop until `intelSurveyApprove("<reviewer>")` is run again. Test
+  copies still go.
+- **What the desk knows about a client** (`pddIntel_`, beside each letter and
+  as tags on the row): every policy they hold from the in-force book (plan, a
+  year's premium, paid to), their other policies behind or lapsed on the dues
+  extract, every letter this episode and what came back, and from Salesforce
+  the requests the branch team handled in twelve months and what is open now
+  (`pddSfService_`: the policy record by `POLICY__c`, then tasks on it or on
+  its `Contact__c`; logged e-mails and the birthday flow never count, the
+  rule `GCM_LOGGED` keeps for the groups; kept six hours in the cache). Notes
+  in words, most pressing first, facts only. An agent or a unit manager sees
+  that a client answered, never the rating or what they asked for: one of the
+  taps is a private note to the branch manager about the agent. Each source
+  is optional; without Salesforce the rest still shows.
+- **The AI read** (13 October 2026: "is there also any intelligence on the premium due tab that staff can actually
+  see and AI driven, like what we did for the groups?"). Beside each letter, "Read <name> with AI" sends the facts
+  the desk holds on that client to the Claude API (`pddAi_`, `claude-opus-5-5`, structured output) and shows where
+  things stand, what most likely stopped the premium, what to check first, an opener for the call and what to be
+  careful of. For the branch and staff, "Read today's lines" (`pddAiDay_`) reads the four lines in counts only and
+  says what stands out and where to start. No client's name, e-mail, policy or client number is sent; an agent's read
+  leaves out what the client told the branch, as the desk does. It is for staff, never a client, and never touches a
+  letter, whose wording is approved. Staff are not licensed, so it never advises on cover: options are the agent's
+  conversation. Each read is kept six hours (the day's half an hour). The key is the `ANTHROPIC_API_KEY` Script
+  property of this project (the tracker's, not the Service Questionnaire's); without it the page offers nothing.
+- **The page**: a tab per line with how many are to check and ticked, and
+  filters for the agent, the unit, how they pay, when the cover stops, to
+  check / ticked / not sending, flagged, answered us before, holds other
+  policies, and a search by name, policy or client number, kept on the device
+  (`rrb-pdd-view`). The branch and the staff also get **After the letters**
+  (`pddOutcomes_`): every letter that really went in 120 days, by line, read
+  against today's dues extract: back in good standing, paid some, still
+  behind, lapsed, off the extract. Test copies are never on Intel Surveys, so
+  test mode counts none of them.
 - **At ten the send reads the line afresh** and sends only a client still on
   it, with the address and agent that were checked; otherwise "not sent", with
   the reason, on the desk and in one internal summary to the manager. Live only
   with client mail live and the wording approved; in test mode each letter goes
-  to the test inbox and the client is not marked as written to; held, ticks wait
-  and a client past 51 days drops off. It logs on Intel Surveys before it sends
+  to the test inbox, its banner naming the line, and the client is not marked
+  as written to; held, ticks wait and a client past the end of their line
+  drops off. It logs on Intel Surveys before it sends
   and takes the log back if the mail fails. It stays inside the day's mail
   allowance (a consumer Google account: about 100 recipients a day, and each
   letter copies the agent, every staff member on the access list and the unit
@@ -2956,9 +3250,12 @@ check mark to ensure due diligence is done, once they check it goes out", then
   shows `lastError`). The checks tab goes there when it can and to the
   tracker's own workbook when a new tab is refused.
 - Install: paste `Intelligence.gs` and `PremiumDueDesk.gs` (all over), then a
-  New version. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
-  `pddToday()`, `pddSendNow()`. `pdd10/` in the session scratchpad holds the
-  harness (`test.js`, 101 checks; `page-test.js`, 33, Playwright).
+  New version, then `intelSurveyApprove("<reviewer>")` once the four letters
+  are read. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
+  `pddToday()` (each line's count, and whether the in-force book and
+  Salesforce joined), `pddSendNow()`. `pdd3/` in the session scratchpad holds
+  the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
+  Playwright; `world.js`, the fake workbook and Salesforce).
 
 ## Standing rules
 

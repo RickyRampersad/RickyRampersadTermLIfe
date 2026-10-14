@@ -1,5 +1,5 @@
 /******************************************************************************
- * PREMIUM DUE DESK — the 45-day line: checked by a person, sent at ten
+ * PREMIUM DUE DESK — four lines, 45, 60, 75 and 90 days: checked by a person, sent at ten
  * ============================================================================
  * INSTALL, in the Branch Intelligence project (the tracker's).
  *
@@ -8,6 +8,10 @@
  *   2. Deploy → Manage deployments → pencil → Version: New version → Deploy,
  *      so the desk's page reaches the new code. The ten o'clock send runs
  *      from the saved code and needs nothing more.
+ *   3. The letters' wording changed on 13 October 2026, so the approval on
+ *      file no longer matches: read the four letters, then run
+ *      intelSurveyApprove("<reviewer>"). Until then live sends stop; test
+ *      copies still go.
  *
  *   That is all. intelRoute_ in Intelligence.gs hands every intel.pdd.* action
  *   to pddRoute_ below, and intelPendingRefresh, the hourly trigger the
@@ -44,8 +48,23 @@
  *   THE RESPONSES ARE THE LETTER'S OWN: the rating out of five, and the five
  *   taps under it (a review of my cover, something is not right, write to the
  *   branch manager privately, talk about my options, do not contact me
- *   again). Nothing about the letter changes here, so the wording approval
- *   on file still holds.
+ *   again).
+ *
+ * WHAT CHANGED ON 13 OCTOBER 2026. "45 days, 60 days, 75 days and 90 days
+ * for staff to check … the same thing we did for groups, whereby you have the
+ * tabs and you have filters and you have the agents", in test mode while the
+ * branch trains; and "build a lot of intelligence around the data we have, as
+ * there was a lot of servicing work". So:
+ *
+ *   FOUR LINES, each a week wide (PDD.STAGES), read in one pass. Each has its
+ *   own letter (ISURVEY_STAGES in Intelligence.gs): the rating is asked once,
+ *   on the first letter a client gets; the 75 names the day the cover stops;
+ *   the 90 sets out the options. A check belongs to the line it was made on.
+ *
+ *   WHAT WE KNOW about each client, beside their letter (pddIntel_): their
+ *   policies, the others behind or lapsed, every letter this episode and the
+ *   answer, and the branch team's work for them in Salesforce. And, for the
+ *   branch, what happened after the letters (pddOutcomes_).
  *
  * WHAT THE TEN O'CLOCK SEND CHECKS, AGAIN, AT TEN.
  *
@@ -88,9 +107,10 @@
  ******************************************************************************/
 
 var PDD = {
-  VERSION: '2026-10-07a',
-  STAGE: 45,
-  LATE: 6,              // days past 45 a client stays on the line: 45 to 51
+  VERSION: '2026-10-13b',
+  STAGE: 45,            // the first line; the page and the editor helpers read it as the default
+  STAGES: [45, 60, 75, 90],   // the four lines (13 October 2026: "45 days, 60 days, 75 days and 90 days")
+  LATE: 6,              // days past each stage a client stays on its line: 45 to 51, 60 to 66, 75 to 81, 90 to 96
   HOUR: 10,             // the send, ten in the morning, Monday to Friday
   MAX_PER_RUN: 60,      // ISURVEY.MAX_RUN: more than this in a morning is a cohort, not a day
   RESERVE: 10,          // recipients of the day's mail allowance kept for the branch's own mail
@@ -126,6 +146,8 @@ function pddRoute_(action, b, session) {
     case 'intel.pdd.tick':    return pddTick_(b, session);
     case 'intel.pdd.skip':    return pddSkip_(b, session);
     case 'intel.pdd.send':    return pddSend_(b, session);
+    case 'intel.pdd.ai':      return pddAi_(b, session);
+    case 'intel.pdd.aiday':   return pddAiDay_(b, session);
   }
   return iErr_('Unknown action: ' + action);
 }
@@ -250,6 +272,15 @@ function pddTab_() {
 
 function pddPolKey_(p) { return String(p == null ? '' : p).replace(/^\s+|\s+$/g, '').replace(/\.0$/, ''); }
 
+/* Which line a client, or a check, is on: the highest stage its days have
+   reached. A check's own Days due says it, so the tab needs no new column, and
+   the 45-day checks written before 13 October read as the 45-day line they were. */
+function pddStageOf_(days) {
+  var n = iNum_(days), out = PDD.STAGES[0];
+  PDD.STAGES.forEach(function (st) { if (n >= st) out = st; });
+  return out;
+}
+
 function pddChecks_() {
   var sh = pddTab_(), last = sh.getLastRow();
   var vals = last > 1 ? sh.getRange(2, 1, last - 1, PDD_HEAD.length).getValues() : [];
@@ -280,10 +311,12 @@ function pddCheckOf_(v, rowNum) {
    was not withdrawn or undone, by the moment it was made rather than by where
    it sits, because a person can sort the tab. Anything older belongs to an
    earlier episode. */
-function pddCurrent_(rows, policy, now) {
+function pddCurrent_(rows, policy, now, stage) {
   var cut = now.getTime() - PDD.KEEP_DAYS * 86400000, cur = null;
   rows.forEach(function (r) {
     if (r.policy !== policy) return;
+    /* a check speaks for its own line: a 45-day letter sent last week is not a tick on the 60-day line */
+    if (stage && pddStageOf_(r.days) !== stage) return;
     if (r.status === 'withdrawn' || r.status === 'undone' || !r.status) return;
     if (!(r.at instanceof Date) || r.at.getTime() < cut) return;
     if (!cur || r.at.getTime() >= cur.at.getTime()) cur = r;
@@ -376,15 +409,17 @@ function pddMarkIf_(sh, r, expect, status, token, note) {
 function pddPool_(fresh) {
   if (!fresh) {
     var hit = pddCacheGet_('pdd_line');
-    if (hit && hit.late === PDD.LATE) return hit;
+    if (hit && hit.late === PDD.LATE && hit.v === PDD.VERSION) return hit;
   }
-  var pool = iSurveyPool_(PDD.STAGE, PDD.LATE);
+  var pool = iSurveyPool_(PDD.STAGES, PDD.LATE);
   if (pool.error) return pool;
+  pddDress_(pool.rows || []);
   var out = {
     rows: (pool.rows || []).map(function (d) { return { row: pddRow_(d), d: pddPlain_(d) }; }),
     skipped: pool.skipped || {},
     at: new Date().getTime(),
-    late: PDD.LATE
+    late: PDD.LATE,
+    v: PDD.VERSION
   };
   pddCachePut_('pdd_line', out, PDD.POOL_TTL);
   return out;
@@ -398,8 +433,23 @@ function pddPlain_(d) {
     years: d.years, yWord: d.yWord, months: d.months, issued: d.issued,
     billing: d.billing, premium: d.premium, branchPhone: d.branchPhone,
     stage: d.stage, days: d.days, tpl: d.tpl ? d.tpl.id : '',
-    hist: d.hist ? { when: d.hist.when, said: d.hist.said } : null
+    hist: d.hist ? { when: d.hist.when, said: d.hist.said, count: d.hist.count || 1 } : null,
+    lapseWords: d.lapseWords || '', svc: d.svc || null
   };
+}
+
+/* What a letter needs beyond the line itself: the date the cover stops, for the
+   75-day letter, and what the branch team has done for the client, for the
+   panel every letter carries. Both are left out when they are not known. */
+function pddDress_(rows) {
+  var lapses = pddLapseMap_();
+  rows.forEach(function (d) {
+    var l = pddDate_(lapses[pddPolKey_(d.policy)] || '');
+    d.lapseWords = l ? pddFmt_(l, 'd MMMM yyyy') : '';
+  });
+  var intel = {};
+  try { intel = pddIntel_(rows); } catch (e) { intel = {}; }
+  rows.forEach(function (d) { var x = intel[pddPolKey_(d.policy)]; if (x) { d.intel = x; d.svc = x.svc || null; } });
 }
 function pddLive_(p) {
   var d = JSON.parse(JSON.stringify(p)), tpl = null;
@@ -455,7 +505,8 @@ function pddList_(b, session) {
   var out = mine.map(function (r0) {
     var r = {};
     Object.keys(r0).forEach(function (k) { r[k] = r0[k]; });
-    r.state = pddState_(pddCurrent_(checks.rows, r.policy, now), now);
+    r.state = pddState_(pddCurrent_(checks.rows, r.policy, now, r.stage), now);
+    r.intel = pddIntelFor_(r.intel, session);
     return r;
   });
 
@@ -469,6 +520,7 @@ function pddList_(b, session) {
   out.sort(function (x, y) {
     var a = rank(x), c = rank(y);
     if (a !== c) return a - c;
+    if (x.stage !== y.stage) return y.stage - x.stage;
     if (x.days !== y.days) return y.days - x.days;
     if (x.lapseSort !== y.lapseSort) return x.lapseSort - y.lapseSort;
     return y.premium - x.premium;
@@ -484,6 +536,9 @@ function pddList_(b, session) {
   return iOk_({
     v: PDD.VERSION,
     stage: PDD.STAGE, late: PDD.LATE, upTo: PDD.STAGE + PDD.LATE,
+    stages: PDD.STAGES.map(function (st) { return { stage: st, upTo: st + PDD.LATE }; }),
+    outcomes: iSeesBranch_(session.role) ? pddOutcomes_(now) : null,
+    ai: !!pddAiKey_(),
     today: pddFmt_(now, 'EEEE d MMMM yyyy'),
     asOf: pddFmt_(new Date(pool.at || now.getTime()), 'HH:mm'),
     rows: out,
@@ -519,8 +574,23 @@ function pddRecent_(rows, now, session) {
   done.sort(function (a, b) { return b.done.getTime() - a.done.getTime(); });
   return done.slice(0, 150).map(function (r) {
     return { when: pddWhen_(r.done, now), client: r.client, policy: r.policy, agent: r.agent,
-             by: r.by, status: r.status, note: r.note };
+             by: r.by, status: r.status, note: r.note, stage: pddStageOf_(r.days) };
   });
+}
+
+/* What a client told us is the branch's to read. An agent, or a unit manager,
+   sees that a letter went and whether it was answered, never the rating they
+   gave their agent or what they asked for: a client who asked to write to the
+   branch manager privately, about their agent, is never shown to that agent. */
+function pddIntelFor_(x, session) {
+  if (!x) return null;
+  var y = JSON.parse(JSON.stringify(x)), wide = iSeesBranch_(session && session.role);
+  y.letters = (y.letters || []).map(function (l) {
+    return { when: l.when, stage: l.stage, answered: !!(l.rating || l.askedKey), open: l.open, optOut: l.optOut,
+             rating: wide ? l.rating : 0, heard: wide ? l.heard : '', asked: wide ? l.asked : '' };
+  });
+  if (!wide) y.notes = (y.notes || []).filter(function (n) { return !/^(Rated us|Asked us)/.test(n); });
+  return y;
 }
 
 /* An agent sees their own book and nobody else's. Staff, the branch manager
@@ -552,8 +622,8 @@ function pddRow_(d) {
      off every wall at once; these two only catch what that switch has not been
      told about yet, and they show the client rather than hiding them. */
   if (who && roster.known[who] && !roster.active[who]) {
-    flags.push('Their adviser is marked not active on the access list. Do not ask this client '
-             + 'to rate them — this is a reassignment call, not a 45-day letter.');
+    flags.push('Their adviser is marked not active on the access list. Do not write in their '
+             + 'name: this is a reassignment call, not a premium letter.');
   }
   if (d.unit === 'Unassigned') {
     flags.push('This adviser is not on any unit. Check who looks after this client before '
@@ -589,12 +659,457 @@ function pddRow_(d) {
     premium:  iNum_(d.premium),
     years:    iNum_(d.years),
     days:     iNum_(d.days) || PDD.STAGE,
+    stage:    Number(d.stage) || PDD.STAGE,
+    intel:    d.intel || null,
     billing:  String(d.billing || ''),
     lapse:    lapse ? Utilities.formatDate(lapse, iTz_(), 'd MMM yyyy') : '',
     lapseSort: lapse ? lapse.getTime() : 8640000000000,
-    subject:  (d.tpl && d.tpl.subject) ? d.tpl.subject(d) : '',
+    subject:  d.tpl ? iSurveySubject_(d) : '',
     flags:    flags
   };
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   WHAT WE KNOW ABOUT THE CLIENT
+   ──────────────────────────────────────────────────────────────────────────
+   Asked for on 13 October 2026: "build a lot of intelligence around the data
+   we have, as there was a lot of servicing work". Four sources, each read once
+   for the whole line and each optional: a missing one leaves its part out and
+   never stops the desk.
+   - The in-force book: every policy the client holds, its plan, a year's
+     premium and its paid-to date.
+   - The dues extract: their other policies that are behind, or lapsed.
+   - Intel Surveys: every letter this episode, and what they answered.
+   - Salesforce: the requests the branch team handled for them in twelve
+     months, and what is open now. Logged e-mails and the birthday flow are
+     not work and are never counted (the rule GroupClients.gs keeps as
+     GCM_LOGGED). Kept six hours in the cache, a policy at a time.
+   Only what the records show, never advice.
+   ────────────────────────────────────────────────────────────────────────── */
+var PDD_INTEL = { SF_TTL: 21600, SF_CHUNK: 40, TASK_DAYS: 365, RECENT: 4 };
+var PDD_NOT_WORK = /^\s*(<p>)?\W*(Email|Re|Fwd?)\s*:|\$Record\.|Happy Birthday|birthday e-?mail/i;
+
+function pddCno_(v) {
+  var x = String(v == null ? '' : v).trim(), d = x.replace(/\D/g, '');
+  return d.length >= 5 ? d.replace(/^0+/, '') : x.toUpperCase();
+}
+
+function pddIntel_(rows) {
+  var out = {}, want = {}, today = iToday_(), DAY = 86400000;
+  rows.forEach(function (d) {
+    var k = pddPolKey_(d.policy);
+    out[k] = { book: null, behind: [], lapsed: 0, letters: [], sf: null, notes: [], svc: null };
+    var c = pddCno_(d.clientNo);
+    if (c) (want[c] = want[c] || []).push(k);
+  });
+  if (!rows.length) return out;
+
+  /* The in-force book, by client. */
+  var books = {};
+  try {
+    var inf = iTabInforce_();
+    if (inf) {
+      var b = iReadCols_(inf, {
+        policy: ['policy id'], clientId: ['client id'], plan: ['plan'], annual: ['annual premium'],
+        modal: ['modal premium'], paidTo: ['policy paid to date'], overdue: ['daysoverdue'],
+        bill: ['policy bill type'], eff: ['policy effective date']
+      });
+      for (var r = 0; r < b.rows; r++) {
+        var c1 = pddCno_(b.get('clientId', r));
+        if (!c1 || !want[c1]) continue;
+        var pt = iDate_(b.get('paidTo', r)), ef = iDate_(b.get('eff', r));
+        (books[c1] = books[c1] || []).push({
+          policy: pddPolKey_(b.get('policy', r)),
+          plan: String(b.get('plan', r) || '').replace(/\s+/g, ' ').trim(),
+          annual: Math.round(iNum_(b.get('annual', r)) * 100) / 100,
+          paidTo: pt ? pddFmt_(pt, 'd MMM yyyy') : '',
+          behind: iNum_(b.get('overdue', r)) > 0 ? Math.round(iNum_(b.get('overdue', r))) : 0,
+          bill: String(b.get('bill', r) || '').trim(),
+          since: ef ? pddFmt_(ef, 'yyyy') : ''
+        });
+      }
+    }
+  } catch (e) { books = {}; }
+
+  /* Their other policies on the dues extract. */
+  var dues = {};
+  try {
+    var dsh = iTabDues_();
+    if (dsh) {
+      var q = iReadCols_(dsh, { number: ['number'], clientNo: ['client number'], status: ['status'],
+                                paidTo: ['paid to date'], plan: ['plan code'], desc: ['status description'] });
+      for (var r2 = 0; r2 < q.rows; r2++) {
+        var c2 = pddCno_(q.get('clientNo', r2));
+        if (!c2 || !want[c2]) continue;
+        var p2 = iDate_(q.get('paidTo', r2));
+        (dues[c2] = dues[c2] || []).push({
+          policy: pddPolKey_(q.get('number', r2)), status: String(q.get('status', r2)).trim(),
+          plan: String(q.get('plan', r2) || '').trim(), desc: String(q.get('desc', r2) || '').trim(),
+          days: p2 ? Math.round((today - p2) / DAY) : 0
+        });
+      }
+    }
+  } catch (e) { dues = {}; }
+
+  /* Every letter this episode, and what came back. */
+  var letters = {};
+  try {
+    var sh = iSurveyTab_(), last = sh.getLastRow();
+    if (last > 1) {
+      var opt = {};
+      ISURVEY_OPTIONS.forEach(function (o) { opt[o.key] = o.label; });
+      sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.STAGE)).getValues().forEach(function (v) {
+        var c3 = pddCno_(v[ISCOL.CLIENTNO - 1]), sent = v[ISCOL.SENT - 1];
+        if (!c3 || !want[c3] || !(sent instanceof Date)) return;
+        if ((today - sent) / DAY > ISURVEY.EPISODE) return;
+        var asked = String(v[ISCOL.ASKED - 1] || '').trim();
+        (letters[c3] = letters[c3] || []).push({
+          at: sent.getTime(), when: pddFmt_(sent, 'd MMM'),
+          stage: Number(v[ISCOL.STAGE - 1]) || 45,
+          mode: String(v[ISCOL.MODE - 1] || '').trim(),
+          rating: iNum_(v[ISCOL.RATING - 1]) || 0,
+          heard: String(v[ISCOL.HEARD - 1] || '').trim(),
+          asked: asked ? (opt[asked] || asked) : '',
+          askedKey: asked,
+          optOut: !!String(v[ISCOL.OPTOUT - 1] || '').trim(),
+          open: !!String(v[ISCOL.FOLLOWUP - 1]).trim() && !String(v[ISCOL.CLOSED - 1]).trim()
+        });
+      });
+    }
+  } catch (e) { letters = {}; }
+
+  var sf = {};
+  try { sf = pddSfService_(rows.map(function (d) { return pddPolKey_(d.policy); })); } catch (e) { sf = {}; }
+
+  rows.forEach(function (d) {
+    var k = pddPolKey_(d.policy), c = pddCno_(d.clientNo), x = out[k];
+    var held = books[c] || [];
+    if (held.length) {
+      var annual = 0;
+      held.forEach(function (h) { annual += h.annual; });
+      x.book = { policies: held.length, annual: Math.round(annual), list: held.slice(0, 12) };
+    }
+    (dues[c] || []).forEach(function (q2) {
+      if (q2.policy === k) return;
+      if (q2.status === '2') x.behind.push({ policy: q2.policy, plan: q2.plan, days: q2.days });
+      else if (q2.status === '1') x.lapsed++;
+    });
+    x.letters = (letters[c] || []).sort(function (a, b2) { return a.at - b2.at; });
+    x.sf = sf[k] || null;
+
+    var policies = x.book ? x.book.policies : 0;
+    x.svc = (x.sf && x.sf.done) || policies > 1
+      ? { done: x.sf ? x.sf.done : 0, lastDone: x.sf ? x.sf.lastMonth : '', policies: policies } : null;
+    x.notes = pddNotes_(d, x);
+  });
+  return out;
+}
+
+/* The facts worth a second's thought, in plain words, most pressing first. */
+function pddNotes_(d, x) {
+  var n = [];
+  var lapse = pddDate_(pddLapseMap_()[pddPolKey_(d.policy)] || '');
+  if (lapse) {
+    var left = Math.round((lapse.getTime() - iToday_().getTime()) / 86400000);
+    if (left >= 0 && left <= 14) n.push('Cover stops in ' + left + ' day' + (left === 1 ? '' : 's') + ' (' + pddFmt_(lapse, 'd MMM') + ').');
+    else if (left < 0) n.push('The projected lapse date (' + pddFmt_(lapse, 'd MMM') + ') has passed.');
+  }
+  var asked = x.letters.filter(function (l) { return l.askedKey && l.askedKey !== 'stop'; });
+  if (x.letters.some(function (l) { return l.open; })) n.push('A follow-up from an earlier letter is still open.');
+  if (asked.length) n.push('Asked us: "' + asked[asked.length - 1].asked + '" (' + asked[asked.length - 1].when + ').');
+  if (x.behind.length) n.push('Also behind on ' + x.behind.length + ' other ' + (x.behind.length === 1 ? 'policy' : 'policies') + '.');
+  if (x.lapsed) n.push(x.lapsed + ' other ' + (x.lapsed === 1 ? 'policy has' : 'policies have') + ' lapsed.');
+  if (/salary|payroll|deduct|military/i.test(d.billing || '')) n.push('Paid by salary deduction: a change of job or a payroll error stops it.');
+  else if (/bank|standing|debit|card/i.test(d.billing || '')) n.push('Paid by bank or card: a changed account or an expired card stops it.');
+  if (x.sf && x.sf.open) n.push(x.sf.open + ' Salesforce task' + (x.sf.open === 1 ? '' : 's') + ' open for this client.');
+  if (x.sf && x.sf.done) n.push('The branch team handled ' + x.sf.done + ' request' + (x.sf.done === 1 ? '' : 's') + ' for them in twelve months.');
+  if (x.book && x.book.policies > 1) n.push('Holds ' + x.book.policies + ' policies with us, TT$' + pddMoney_(x.book.annual) + ' a year in all.');
+  var rated = x.letters.filter(function (l) { return l.rating; });
+  if (rated.length) n.push('Rated us ' + rated[rated.length - 1].rating + ' out of 5 on ' + rated[rated.length - 1].when + '.');
+  if (x.letters.length && !x.letters.some(function (l) { return l.rating || l.askedKey; })) {
+    n.push(x.letters.length === 1 ? 'No answer to the letter of ' + x.letters[0].when + '.' : 'No answer to ' + x.letters.length + ' letters this episode.');
+  }
+  return n;
+}
+function pddMoney_(v) { return String(Math.round(iNum_(v))).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+/* Salesforce: the policy records, then the tasks on them or on the client. */
+function pddSfService_(policies) {
+  var out = {}, need = [];
+  if (!iSfHelper_()) return out;
+  var cache = null;
+  try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
+  var uniq = policies.filter(function (p, i, a) { return p && a.indexOf(p) === i; });
+  if (cache) {
+    var keys = uniq.map(function (p) { return 'pdd_sf_' + p; }), got = {};
+    for (var i0 = 0; i0 < keys.length; i0 += 100) {
+      var part = cache.getAll(keys.slice(i0, i0 + 100));
+      Object.keys(part).forEach(function (k) { got[k] = part[k]; });
+    }
+    uniq.forEach(function (p) {
+      var hit = got['pdd_sf_' + p];
+      if (hit) { try { out[p] = JSON.parse(hit); return; } catch (e) {} }
+      need.push(p);
+    });
+  } else need = uniq;
+  if (!need.length) return out;
+
+  var q = function (s) { return "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'"; };
+  var recOf = {}, polOfRec = {}, polsOfContact = {};
+  for (var i = 0; i < need.length; i += PDD_INTEL.SF_CHUNK) {
+    var chunk = need.slice(i, i + PDD_INTEL.SF_CHUNK);
+    iSfQuery_('SELECT Id, POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN ('
+      + chunk.map(q).join(',') + ')').forEach(function (rec) {
+      var p = pddPolKey_(rec.POLICY__c), id = String(rec.Id).slice(0, 15);
+      recOf[id] = 1; polOfRec[id] = p;
+      if (rec.Contact__c) { var c = String(rec.Contact__c).slice(0, 15); (polsOfContact[c] = polsOfContact[c] || []).push(p); }
+    });
+  }
+  var stats = {};
+  need.forEach(function (p) { stats[p] = { done: 0, open: 0, last: 0, lastMonth: '', recent: [], seen: {} }; });
+  var add = function (t, pols) {
+    var subj = String(t.Subject || '').trim();
+    if (t.TaskSubtype === 'Email' || PDD_NOT_WORK.test(subj)) return;
+    var when = new Date(t.IsClosed ? (t.LastModifiedDate || t.CreatedDate) : t.CreatedDate);
+    pols.forEach(function (p) {
+      var st = stats[p];
+      if (!st || st.seen[t.Id]) return;
+      st.seen[t.Id] = 1;
+      if (t.IsClosed) {
+        st.done++;
+        if (when.getTime() > st.last) { st.last = when.getTime(); st.lastMonth = pddFmt_(when, 'MMMM yyyy'); }
+      } else st.open++;
+      st.recent.push({ at: when.getTime(), when: pddFmt_(when, 'd MMM yyyy'), subject: subj.slice(0, 120),
+                       who: (t.Owner && t.Owner.Name) || '', open: !t.IsClosed });
+    });
+  };
+  var sel = 'SELECT Id, Subject, IsClosed, Status, TaskSubtype, CreatedDate, LastModifiedDate, WhatId, WhoId, Owner.Name FROM Task WHERE ';
+  var since = ' AND CreatedDate = LAST_N_DAYS:' + PDD_INTEL.TASK_DAYS;
+  var recIds = Object.keys(recOf), conIds = Object.keys(polsOfContact);
+  for (var a = 0; a < recIds.length; a += PDD_INTEL.SF_CHUNK) {
+    iSfQuery_(sel + 'WhatId IN (' + recIds.slice(a, a + PDD_INTEL.SF_CHUNK).map(q).join(',') + ')' + since)
+      .forEach(function (t) { add(t, [polOfRec[String(t.WhatId).slice(0, 15)]]); });
+  }
+  for (var c2 = 0; c2 < conIds.length; c2 += PDD_INTEL.SF_CHUNK) {
+    iSfQuery_(sel + 'WhoId IN (' + conIds.slice(c2, c2 + PDD_INTEL.SF_CHUNK).map(q).join(',') + ')' + since)
+      .forEach(function (t) { add(t, polsOfContact[String(t.WhoId).slice(0, 15)] || []); });
+  }
+  var put = {};
+  need.forEach(function (p) {
+    var st = stats[p];
+    st.recent.sort(function (x, y) { return y.at - x.at; });
+    out[p] = { done: st.done, open: st.open, lastMonth: st.lastMonth,
+               recent: st.recent.slice(0, PDD_INTEL.RECENT).map(function (r) { return { when: r.when, subject: r.subject, who: r.who, open: r.open }; }) };
+    put['pdd_sf_' + p] = JSON.stringify(out[p]);
+  });
+  if (cache) { try { cache.putAll(put, PDD_INTEL.SF_TTL); } catch (e) {} }
+  return out;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   WHAT HAPPENED AFTER THE LETTERS
+   ──────────────────────────────────────────────────────────────────────────
+   Every letter sent in the last 120 days, by stage, read against today's dues
+   extract: back in good standing (the policy is no longer behind), paid some
+   (still behind, but its paid-to date has moved), still behind, lapsed, or no
+   longer on the extract. Test copies are never on Intel Surveys, so in test
+   mode this counts only letters that really went. Branch only.
+   ────────────────────────────────────────────────────────────────────────── */
+function pddOutcomes_(now) {
+  var hit = pddCacheGet_('pdd_out');
+  if (hit && hit.v === PDD.VERSION) return hit;
+  var out = { v: PDD.VERSION, days: 120, stages: {}, total: null };
+  try {
+    var today = iToday_(), DAY = 86400000;
+    var dues = {}, dsh = iTabDues_();
+    if (dsh) {
+      var q = iReadCols_(dsh, { number: ['number'], status: ['status'], paidTo: ['paid to date'] });
+      for (var r = 0; r < q.rows; r++) {
+        var p = pddPolKey_(q.get('number', r));
+        if (p) dues[p] = { status: String(q.get('status', r)).trim(), paidTo: iDate_(q.get('paidTo', r)) };
+      }
+    }
+    var blank = function () { return { sent: 0, answered: 0, paid: 0, part: 0, behind: 0, lapsed: 0, gone: 0 }; };
+    var total = blank();
+    PDD.STAGES.forEach(function (st) { out.stages[st] = blank(); });
+    var sh = iSurveyTab_(), last = sh.getLastRow();
+    if (last > 1) {
+      sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.STAGE)).getValues().forEach(function (v) {
+        var sent = v[ISCOL.SENT - 1];
+        if (!(sent instanceof Date) || (today - sent) / DAY > out.days) return;
+        var stage = Number(v[ISCOL.STAGE - 1]) || 45, b = out.stages[stage];
+        if (!b) return;
+        var pol = pddPolKey_(v[ISCOL.POLICY - 1]), now2 = dues[pol];
+        var answered = !!(iNum_(v[ISCOL.RATING - 1]) || String(v[ISCOL.ASKED - 1] || '').trim());
+        var paidThen = new Date(sent.getTime() - stage * DAY);
+        var kind = !now2 ? 'gone'
+          : now2.status === '1' ? 'lapsed'
+          : now2.status !== '2' ? 'paid'
+          : (now2.paidTo && now2.paidTo.getTime() > paidThen.getTime() + 15 * DAY) ? 'part' : 'behind';
+        [b, total].forEach(function (t) { t.sent++; if (answered) t.answered++; t[kind]++; });
+      });
+    }
+    out.total = total;
+  } catch (e) { out.error = String(e && e.message || e); }
+  pddCachePut_('pdd_out', out, PDD.POOL_TTL);
+  return out;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   THE AI READ
+   ──────────────────────────────────────────────────────────────────────────
+   Asked for on 13 October 2026: "is there also any intelligence on the
+   premium due tab that staff can actually see and AI driven, like what we
+   did for the groups?" Two reads, both for staff and never for a client:
+
+   - One client (pddAi_): from the facts the desk already holds, a line on
+     where things stand, what most likely stopped the premium, what to check
+     first, an opener for the call, and anything to be careful of.
+   - The day (pddAiDay_, the branch and staff): what stands out across the
+     four lines and where to start.
+
+   The facts go to the Claude API without the client's name, e-mail or
+   policy number. An agent's read leaves out what a client told the branch,
+   as the desk does. Nothing here reaches a letter: the letters' wording is
+   approved, and this is not. Staff are not licensed: the read never advises
+   on cover, and anything about options is the agent's conversation. The key
+   is the ANTHROPIC_API_KEY Script property of this project. Kept six hours.
+   ────────────────────────────────────────────────────────────────────────── */
+var PDD_AI = { MODEL: 'claude-opus-5-5', TTL: 21600, DAY_TTL: 1800 };
+
+var PDD_AI_SYSTEM = [
+  'You help staff at the Ricky Rampersad Branch of Guardian Life of the Caribbean, in Trinidad and Tobago, before they check a client whose premium is behind and before a call.',
+  'You are given the facts the branch holds about one client: which line they are on (45, 60, 75 or 90 days behind), how they pay, how long they have held cover, their other policies, the letters already sent and any answer, and the work the branch team did for them.',
+  '',
+  'Write for the staff member, never for the client. Use only the facts given. If the facts do not show why the premium stopped, say that the records do not say, and name the likeliest thing to check given how they pay; never present a guess as a fact.',
+  'Staff are not licensed to advise. Never recommend a product, a change of cover, a surrender, a reduction or a paid-up policy. Where options may matter (75 or 90 days), say that the agent should be the one to talk options.',
+  'Never mention health, medical matters or claims. Do not state an amount owed: the records do not say how often the premium is paid.',
+  'Plain words, short sentences, Caribbean business English. No greeting, no sign-off.',
+  'Fields: headline, one sentence on where things stand. likely, one or two sentences on what most likely stopped the premium, from the facts. check, up to three short things to check first, most important first. say, an opener for the call, one or two sentences the staff member or agent could say, warm and without pressure. careful, anything to be careful about (an agent marked not active, a company, a client who wrote to the branch manager privately, an open follow-up, the cover stopping within days), or an empty string.'
+].join('\n');
+
+var PDD_AI_SCHEMA = { type: 'object', additionalProperties: false, required: ['headline', 'likely', 'check', 'say', 'careful'],
+  properties: { headline: { type: 'string' }, likely: { type: 'string' }, check: { type: 'array', items: { type: 'string' } },
+                say: { type: 'string' }, careful: { type: 'string' } } };
+
+var PDD_AI_DAY_SYSTEM = [
+  'You help the branch manager and staff of the Ricky Rampersad Branch of Guardian Life of the Caribbean read the day\'s premium due lines: clients 45, 60, 75 and 90 days behind on a premium.',
+  'You are given counts only. Say what stands out and where the team should start today, using only those counts. Point to the clients nearest losing cover, to payment routes that cluster, to agents with many clients on the lines, and to anything the counts show about answers and outcomes.',
+  'Never advise on products. Plain words, short sentences. Each point under 30 words.',
+  'Fields: stands_out, three to five points. start_with, one or two sentences on where to start today.'
+].join('\n');
+
+var PDD_AI_DAY_SCHEMA = { type: 'object', additionalProperties: false, required: ['stands_out', 'start_with'],
+  properties: { stands_out: { type: 'array', items: { type: 'string' } }, start_with: { type: 'string' } } };
+
+function pddAiKey_() { return String(iProp_('ANTHROPIC_API_KEY') || '').trim(); }
+
+/* One request to the Messages API, raw HTTP (Apps Script has no SDK), with structured output. */
+function pddClaude_(system, user, schema) {
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { 'x-api-key': pddAiKey_(), 'anthropic-version': '2023-06-01' },
+    payload: JSON.stringify({ model: PDD_AI.MODEL, max_tokens: 4000, system: system,
+      output_config: { effort: 'low', format: { type: 'json_schema', schema: schema } },
+      messages: [{ role: 'user', content: user }] })
+  });
+  var code = res.getResponseCode(), body = {};
+  try { body = JSON.parse(res.getContentText()); } catch (e) {}
+  if (code !== 200) throw new Error('The AI did not answer (' + String((body.error && body.error.message) || ('HTTP ' + code)).slice(0, 200) + ').');
+  if (body.stop_reason === 'refusal') throw new Error('The AI declined to read this one.');
+  var text = (body.content || []).filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('').trim();
+  try { return JSON.parse(text); } catch (e) { throw new Error('The AI\'s answer could not be read. Try again.'); }
+}
+
+/* The facts about one client, as the desk holds them, without who they are. */
+function pddAiFacts_(r, d, x, wide) {
+  var st = Number(r.stage) || PDD.STAGE, bill = ISURVEY_BILLING[r.billing] || null, out = [];
+  var lapse = r.lapseSort < 8e15 ? Math.round((r.lapseSort - iToday_().getTime()) / 86400000) : null;
+  out.push('Line: ' + st + ' days (' + { 45: 'the first note', 60: 'following up', 75: 'before the cover stops', 90: 'the options' }[st] + '). Days behind today: ' + r.days + '.');
+  out.push('Cover stops: ' + (lapse === null ? 'no projected lapse date on file' : r.lapse + (lapse >= 0 ? ', in ' + lapse + ' days' : ', a date already passed')) + '.');
+  out.push('Held cover with the branch: ' + (d.yWord || (r.years + ' years')) + ', since ' + (d.issued || 'a date not recorded') + '.');
+  out.push('Pays by: ' + (r.billing || 'no route on file') + (bill ? ' (' + bill.says + (bill.auto ? ', collected automatically' : ', paid by the client') + ')' : '') + '. Premium on the bill: TT$' + pddMoney_(r.premium) + '.');
+  out.push('Agent: ' + (r.agent || 'none named') + (r.unit ? ', unit ' + r.unit : '') + '.');
+  if (x.book) out.push('Policies held: ' + x.book.policies + ', TT$' + pddMoney_(x.book.annual) + ' a year in all: ' +
+    (x.book.list || []).map(function (p) { return (p.plan || 'a plan') + (p.behind ? ' (' + p.behind + ' days behind)' : ' (paid to ' + (p.paidTo || 'not recorded') + ')'); }).join('; ') + '.');
+  if (x.behind && x.behind.length) out.push('Other policies behind on the dues extract: ' + x.behind.map(function (b) { return (b.plan || 'a policy') + ', ' + b.days + ' days'; }).join('; ') + '.');
+  if (x.lapsed) out.push('Other policies lapsed: ' + x.lapsed + '.');
+  var ls = x.letters || [];
+  out.push('Letters this episode: ' + (ls.length ? ls.map(function (l) {
+    var got = wide ? [l.rating ? 'rated ' + l.rating + ' of 5' : '', l.asked ? 'asked: "' + l.asked + '"' : ''].filter(String).join(', ') : '';
+    return 'the ' + l.stage + '-day letter on ' + l.when + ', ' + (got || (l.answered ? 'answered' : 'no answer')) + (l.open ? ', a follow-up still open' : '');
+  }).join('; ') : 'none before this one') + '.');
+  if (x.sf) out.push('Branch team in Salesforce, twelve months: ' + x.sf.done + ' requests handled, ' + x.sf.open + ' open' +
+    (x.sf.recent && x.sf.recent.length ? '. Latest: ' + x.sf.recent.map(function (t) { return t.when + ' ' + t.subject + (t.open ? ' (open)' : ''); }).join('; ') : '') + '.');
+  if (r.flags && r.flags.length) out.push('Flags on the row: ' + r.flags.join(' '));
+  if (r.state && r.state.kind) out.push('On the desk: ' + { ticked: 'ticked for the ten o\'clock send', sending: 'going out now', skipped: 'marked not to send (' + (r.state.why || '') + ')',
+    tested: 'a test copy went', notsent: 'not sent at ten (' + (r.state.why || '') + ')', sent: 'sent' }[r.state.kind] + '.');
+  return out;
+}
+
+function pddAi_(b, session) {
+  var policy = pddPolKey_(b && b.policy);
+  if (!policy) return iErr_('Which policy?');
+  if (!pddAiKey_()) return iErr_('The AI read is not set up yet: in this Apps Script project, add ANTHROPIC_API_KEY under Project Settings → Script properties.');
+  var pool = pddPool_(false);
+  if (pool.error) return iErr_(pool.error);
+  var hit = null;
+  pool.rows.forEach(function (x) { if (x.row.policy === policy) hit = x; });
+  if (!hit || !pddScope_([hit.row], session).length) return iErr_('That client is not on your lines any more.');
+  var wide = iSeesBranch_(session.role), now = new Date();
+  var key = 'pdd_ai_' + policy + '_' + hit.row.stage + '_' + (wide ? 'w' : 'a') + '_' + pddDay_(now);
+  var kept = pddCacheGet_(key);
+  if (kept && !(b && b.fresh)) { kept.cached = true; return iOk_(kept); }
+  var r = JSON.parse(JSON.stringify(hit.row));
+  r.state = pddState_(pddCurrent_(pddChecks_().rows, policy, now, r.stage), now);
+  var facts = pddAiFacts_(r, hit.d, pddIntelFor_(r.intel, session) || {}, wide);
+  try {
+    var read = pddClaude_(PDD_AI_SYSTEM, 'Read this client for the staff member.\n\n' + facts.join('\n'), PDD_AI_SCHEMA);
+    read.check = (read.check || []).slice(0, 3);
+    var out = { policy: policy, read: read, at: pddFmt_(now, 'HH:mm'), facts: facts.length };
+    pddCachePut_(key, out, PDD_AI.TTL);
+    return iOk_(out);
+  } catch (e) { return iErr_(String(e && e.message ? e.message : e).slice(0, 300)); }
+}
+
+/* The day, in counts: the branch and staff. */
+function pddAiDay_(b, session) {
+  if (!iSeesBranch_(session.role)) return iErr_('The read of the day is for the branch and staff.');
+  if (!pddAiKey_()) return iErr_('The AI read is not set up yet: in this Apps Script project, add ANTHROPIC_API_KEY under Project Settings → Script properties.');
+  var now = new Date(), key = 'pdd_aiday_' + pddDay_(now);
+  var kept = pddCacheGet_(key);
+  if (kept && !(b && b.fresh)) { kept.cached = true; return iOk_(kept); }
+  var pool = pddPool_(false);
+  if (pool.error) return iErr_(pool.error);
+  var rows = pool.rows.map(function (x) { return x.row; }), checks = pddChecks_().rows, today = iToday_().getTime();
+  var count = function (f) { var o = {}; rows.forEach(function (r) { var k = f(r); if (k) o[k] = (o[k] || 0) + 1; }); return o; };
+  var say = function (o) { return Object.keys(o).sort(function (a, c) { return o[c] - o[a]; }).slice(0, 8).map(function (k) { return k + ' ' + o[k]; }).join(', ') || 'none'; };
+  var soon = function (n) { return rows.filter(function (r) { return r.lapseSort < 8e15 && (r.lapseSort - today) / 86400000 <= n; }).length; };
+  var state = count(function (r) { var s = pddState_(pddCurrent_(checks, r.policy, now, r.stage), now); return s ? s.kind : 'to check'; });
+  var facts = [
+    'Clients on the lines: ' + rows.length + '. By line: ' + say(count(function (r) { return r.stage + ' days'; })) + '.',
+    'On the desk: ' + say(state) + '.',
+    'Cover stops within 7 days: ' + soon(7) + '; within 14 days: ' + soon(14) + '; no lapse date on file: ' + rows.filter(function (r) { return !r.lapse; }).length + '.',
+    'By how they pay: ' + say(count(function (r) { return r.billing || 'no route on file'; })) + '.',
+    'By agent: ' + say(count(function (r) { return r.agent || 'none named'; })) + '.',
+    'Holding other policies too: ' + rows.filter(function (r) { return r.intel && r.intel.book && r.intel.book.policies > 1; }).length +
+      '; behind on another policy as well: ' + rows.filter(function (r) { return r.intel && r.intel.behind && r.intel.behind.length; }).length + '.',
+    'Written to earlier this episode: ' + rows.filter(function (r) { return r.intel && r.intel.letters && r.intel.letters.length; }).length +
+      '; of them answered: ' + rows.filter(function (r) { return r.intel && (r.intel.letters || []).some(function (l) { return l.rating || l.askedKey; }); }).length + '.',
+    'With an open Salesforce task: ' + rows.filter(function (r) { return r.intel && r.intel.sf && r.intel.sf.open; }).length + '.',
+    'Flagged rows: ' + rows.filter(function (r) { return r.flags && r.flags.length; }).length + '.',
+    'Left off the lines today: ' + Object.keys(pool.skipped || {}).filter(function (k) { return pool.skipped[k]; }).map(function (k) { return k + ' ' + pool.skipped[k]; }).join(', ') + '.'
+  ];
+  var o = pddOutcomes_(now);
+  if (o && o.total && o.total.sent) facts.push('Letters in the last 120 days: ' + o.total.sent + ' sent, ' + o.total.answered + ' answered, ' + o.total.paid +
+    ' back in good standing, ' + o.total.part + ' paid some, ' + o.total.behind + ' still behind, ' + o.total.lapsed + ' lapsed.');
+  try {
+    var read = pddClaude_(PDD_AI_DAY_SYSTEM, 'Read today\'s premium due lines.\n\n' + facts.join('\n'), PDD_AI_DAY_SCHEMA);
+    read.stands_out = (read.stands_out || []).slice(0, 5);
+    var out = { read: read, at: pddFmt_(now, 'HH:mm'), clients: rows.length };
+    pddCachePut_(key, out, PDD_AI.DAY_TTL);
+    return iOk_(out);
+  } catch (e) { return iErr_(String(e && e.message ? e.message : e).slice(0, 300)); }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -695,7 +1210,7 @@ function pddPreview_(b, session) {
   var hit = null;
   pool.rows.forEach(function (x) { if (x.row.policy === policy) hit = x; });
   if (!hit || !pddScope_([hit.row], session).length) {
-    return iErr_('That policy is not on the ' + PDD.STAGE + '-day line any more, or it is not yours to see.');
+    return iErr_('That policy is not on any of the lines any more, or it is not yours to see.');
   }
   var d = pddLive_(hit.d);
   d.token = 'preview';
@@ -705,7 +1220,8 @@ function pddPreview_(b, session) {
     client: String(d.client || ''),
     to:     String(d.email || ''),
     cc:     pddCc_(d).join(', '),
-    subject: d.tpl.subject(d),
+    subject: iSurveySubject_(d),
+    stage:  d.stage,
     html:   iSurveyHtml_(d)
   });
 }
@@ -739,12 +1255,13 @@ function pddTick_(b, session) {
   var found = {};
   if (on) {
     found = pddFound_(policy);
-    if (!found) return iErr_('This client is no longer on the ' + PDD.STAGE + '-day line. Refresh the desk.');
+    if (!found) return iErr_('This client is no longer on the line. Refresh the desk.');
   }
+  var stage = Number(found.stage) || pddStageOf_((b && (b.days || b.stage)) || PDD.STAGE);
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return iErr_('The desk is busy for a moment. Tick it again.');
   try {
-    var now = new Date(), c = pddChecks_(), cur = pddCurrent_(c.rows, policy, now);
+    var now = new Date(), c = pddChecks_(), cur = pddCurrent_(c.rows, policy, now, stage);
     var stamp = session.name + ' at ' + pddFmt_(now, 'd MMM HH:mm');
     if (!on) {
       if (cur && cur.status === 'sending') return iErr_('This letter is going out right now. It can no longer be withdrawn.');
@@ -781,10 +1298,11 @@ function pddSkip_(b, session) {
   var why = String((b && b.why) || '').replace(/\s+/g, ' ').trim().slice(0, 300);
   if (!undo && !why) return iErr_('Say why it is not going, so the next person knows.');
   var found = undo ? {} : (pddFound_(policy) || {});
+  var stage = Number(found.stage) || pddStageOf_((b && (b.days || b.stage)) || PDD.STAGE);
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return iErr_('The desk is busy for a moment. Try again.');
   try {
-    var now = new Date(), c = pddChecks_(), cur = pddCurrent_(c.rows, policy, now);
+    var now = new Date(), c = pddChecks_(), cur = pddCurrent_(c.rows, policy, now, stage);
     var stamp = session.name + ' at ' + pddFmt_(now, 'd MMM HH:mm');
     if (undo) {
       if (cur && cur.status === 'not sending') pddMark_(c.sh, cur, 'undone', '', 'undone by ' + stamp);
@@ -807,7 +1325,7 @@ function pddSkip_(b, session) {
 function pddNewRow_(now, goes, policy, found, b, session, decision, reason, status) {
   var pick = function (k, n) { return String(found[k] || (b && b[k]) || '').slice(0, n); };
   return [now, goes, policy, pick('clientNo', 40), pick('client', 200), pick('email', 200),
-          pick('agent', 200), iNum_(found.days || (b && b.days)) || PDD.STAGE,
+          pick('agent', 200), iNum_(found.days || (b && (b.days || b.stage))) || PDD.STAGE,
           session.name, decision, String(reason || '').slice(0, 500), status, '', '', ''];
 }
 
@@ -817,7 +1335,7 @@ function pddNewRow_(now, goes, policy, found, b, session, decision, reason, stat
    checked, and the desk has nothing to say about a client it cannot see. */
 function pddFound_(policy) {
   var pool = pddCacheGet_('pdd_line');
-  if (!pool || !pool.rows || pool.late !== PDD.LATE) pool = pddPool_(false);
+  if (!pool || !pool.rows || pool.late !== PDD.LATE || pool.v !== PDD.VERSION) pool = pddPool_(false);
   if (!pool || pool.error || !pool.rows) return null;
   var out = null;
   pool.rows.forEach(function (x) { if (x.row && x.row.policy === policy) out = x.row; });
@@ -890,7 +1408,7 @@ function pddRunNow_(now, today) {
     }
   };
   var daysNow = function (r) { return r.days + pddIsoGap_(pddDay_(r.at), today); };
-  var upTo = PDD.STAGE + PDD.LATE;
+  var upToOf = function (r) { return pddStageOf_(r.days) + PDD.LATE; };
 
   /* Nothing can go: client mail held, the wording not approved, or no address
      for the taps. Ticks wait, and a client who has passed the line meanwhile
@@ -903,7 +1421,7 @@ function pddRunNow_(now, today) {
            : '';
   if (hold) {
     due.forEach(function (r) {
-      if (daysNow(r) > upTo) put(r, sum.notSent, 'not sent', 'it passed ' + upTo + ' days while ' + hold);
+      if (daysNow(r) > upToOf(r)) put(r, sum.notSent, 'not sent', 'it passed ' + upToOf(r) + ' days while ' + hold);
       else put(r, sum.waiting, 'waiting', 'held at ' + at + ': ' + hold);
     });
     sum.why = hold;
@@ -912,7 +1430,7 @@ function pddRunNow_(now, today) {
     return { did: false, text: 'premium due: ' + due.length + ' ticked, none sent: ' + hold };
   }
 
-  var pool = iSurveyPool_(PDD.STAGE, PDD.LATE);
+  var pool = iSurveyPool_(PDD.STAGES, PDD.LATE);
   if (pool.error) {
     due.forEach(function (r) { put(r, sum.waiting, 'waiting', 'held at ' + at + ': ' + pool.error); });
     sum.why = pool.error;
@@ -922,6 +1440,8 @@ function pddRunNow_(now, today) {
   }
   var byPolicy = {};
   (pool.rows || []).forEach(function (d) { byPolicy[pddPolKey_(d.policy)] = d; });
+  /* the letter's extras for the clients going today only, not the whole line */
+  pddDress_(due.map(function (r) { return byPolicy[r.policy]; }).filter(Boolean));
 
   /* Oldest first: the client nearest the end of the line cannot wait for the
      next send. Then the soonest to lapse. */
@@ -946,11 +1466,15 @@ function pddRunNow_(now, today) {
     }
     if (stoppedFor) { put(r, sum.waiting, 'waiting', stoppedFor); continue; }
 
-    var d = byPolicy[r.policy];
+    var d = byPolicy[r.policy], stageR = pddStageOf_(r.days);
+    if (d && Number(d.stage) !== stageR) {
+      put(r, sum.notSent, 'not sent', 'it moved to the ' + d.stage + '-day line before it could go: check it again there');
+      continue;
+    }
     if (!d) {
-      put(r, sum.notSent, 'not sent', daysNow(r) > upTo
-        ? 'it passed ' + upTo + ' days before it could go'
-        : 'no longer on the ' + PDD.STAGE + '-day line at ten: most likely paid since it was checked, '
+      put(r, sum.notSent, 'not sent', daysNow(r) > upToOf(r)
+        ? 'it passed ' + upToOf(r) + ' days before it could go'
+        : 'no longer on the ' + stageR + '-day line at ten: most likely paid since it was checked, '
           + 'or written to, opted out or taken off the line since');
       continue;
     }
@@ -983,7 +1507,7 @@ function pddRunNow_(now, today) {
     if (claim !== 'ok') continue;                  // withdrawn a moment ago
     d.token = token;
     d.base = base || iSurveyBase_();
-    var html = iSurveyHtml_(d), subject = d.tpl.subject(d);
+    var html = iSurveyHtml_(d), subject = iSurveySubject_(d);
     var checked = 'checked by ' + r.by + ' ' + pddFmt_(r.at, 'd MMM HH:mm');
     try {
       if (mode === 'live') {
@@ -1001,8 +1525,8 @@ function pddRunNow_(now, today) {
       } else {
         MailApp.sendEmail({ to: test, name: 'Branch Intelligence', subject: '[TEST] ' + subject,
           htmlBody: '<div style="background:#E8A020;color:#00254d;padding:10px 14px;'
-            + 'font:700 13px sans-serif;border-radius:8px;margin-bottom:14px">TEST MODE — at ten this '
-            + 'would have gone to ' + iEsc_(d.email) + ', copying ' + iEsc_(pddCc_(d).join(', ') || 'nobody')
+            + 'font:700 13px sans-serif;border-radius:8px;margin-bottom:14px">TEST MODE — the ' + iEsc_(String(d.stage))
+            + '-day letter. At ten this would have gone to ' + iEsc_(d.email) + ', copying ' + iEsc_(pddCc_(d).join(', ') || 'nobody')
             + '. Checked by ' + iEsc_(r.by) + ' ' + iEsc_(pddFmt_(r.at, 'd MMM HH:mm'))
             + ' on the Premium Due Desk. The client was not written to.</div>' + html });
         put(r, sum.test, 'test copy', 'went to the test inbox at ' + pddFmt_(new Date(), 'HH:mm')
@@ -1058,7 +1582,7 @@ function pddLogLetter_(sh, d, mode) {
                 mode,
                 '', '', '', '', '', '', '',
                 '', '', '', '',
-                PDD.STAGE]);
+                Number(d.stage) || PDD.STAGE]);
   var last = sh.getLastRow();
   for (var i = last; i >= Math.max(2, last - 25); i--) {
     if (String(sh.getRange(i, ISCOL.TOKEN).getValue()) === d.token) return i;
@@ -1151,32 +1675,36 @@ function pddToday() {
   var pool = pddPool_(true);
   if (pool.error) { Logger.log(pool.error); return pool.error; }
   var rows = pool.rows.map(function (x) { return x.row; });
-  rows.sort(function (x, y) { return y.days - x.days || x.lapseSort - y.lapseSort; });
+  rows.sort(function (x, y) { return y.stage - x.stage || y.days - x.days || x.lapseSort - y.lapseSort; });
   /* Say whether the joins worked, not just what they produced. "No lapse date"
      against every client read as a data problem for a day when it was a column
      this file never asked for; a line that counts the join turns the next one
      of those into a measurement instead of a guess. */
-  var lapses = pddLapseMap_(), nLapse = 0, roster = pddRoster_(), nKnown = 0, flagged = 0;
+  var lapses = pddLapseMap_(), nLapse = 0, roster = pddRoster_(), nKnown = 0, flagged = 0, nIntel = 0, nSf = 0, by = {};
   rows.forEach(function (r) {
     if (r.lapse) nLapse++;
     if (roster.known[iNameKey_(r.agent)]) nKnown++;
     if (r.flags.length) flagged++;
+    if (r.intel && r.intel.book) nIntel++;
+    if (r.intel && r.intel.sf) nSf++;
+    by[r.stage] = (by[r.stage] || 0) + 1;
   });
-  var out = ['The ' + PDD.STAGE + ' to ' + (PDD.STAGE + PDD.LATE) + '-day line, '
-               + Utilities.formatDate(new Date(), iTz_(), 'd MMMM yyyy'),
-             rows.length + ' client' + (rows.length === 1 ? '' : 's') + ' on it, '
+  var out = ['The four lines, ' + Utilities.formatDate(new Date(), iTz_(), 'd MMMM yyyy') + ': '
+               + PDD.STAGES.map(function (st) { return st + ' to ' + (st + PDD.LATE) + ' days: ' + (by[st] || 0); }).join(' · '),
+             rows.length + ' client' + (rows.length === 1 ? '' : 's') + ' in all, '
                + flagged + ' with something to check.',
              'Client mail: ' + iMailState_().clients + '.',
              (iSurveyBlocked_() ? 'WORDING: ' + iSurveyBlocked_() : 'Wording approved by '
                + (iProp_('INTEL_SURVEY_APPROVED_BY') || '(nobody)')),
              'Joins: lapse date on ' + nLapse + '/' + rows.length + ' (book holds '
                + Object.keys(lapses).length + '), adviser on the access list '
-               + nKnown + '/' + rows.length + '.',
+               + nKnown + '/' + rows.length + ', in-force book ' + nIntel + '/' + rows.length
+               + ', Salesforce ' + (iSfHelper_() ? nSf + '/' + rows.length : 'no helper in this project') + '.',
              'Off every report (INTEL_EXCLUDE_AGENTS): '
                + (String(iProp_('INTEL_EXCLUDE_AGENTS') || '').replace(/^\s+|\s+$/g, '') || 'nobody'),
              ''];
   rows.slice(0, 40).forEach(function (r) {
-    out.push([r.policy, r.client, r.agent, r.days + ' days', '$' + r.premium, r.billing,
+    out.push([r.stage + '-day', r.policy, r.client, r.agent, r.days + ' days', '$' + r.premium, r.billing,
               r.lapse ? 'lapses ' + r.lapse : 'no lapse date'].join('  ·  '));
     /* The flags in full. A count tells you something is wrong; it does not tell
        you the adviser resigned a fortnight ago, which is the bit that stops a
