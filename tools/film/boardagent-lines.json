@@ -1,0 +1,100 @@
+{
+ "note": "The board film for agents (14 October 2026). Every name and number on screen is made up. build-boardfilm.py renders the film's page from this file; voice-lines.py voices the lines and times the scenes.",
+ "role": "agent",
+ "scenes": [
+  {
+   "visual": "title",
+   "eyebrow": "For agents",
+   "headline": "The board, <em>for agents</em>",
+   "sub": "Your clients, your calls, and what counts",
+   "line": "This is the client transition board, as an agent sees it. Your clients, your calls, and what counts.",
+   "extra": 0.6
+  },
+  {
+   "visual": "signin",
+   "eyebrow": "Signing in",
+   "headline": "Your number, <em>your password</em>",
+   "line": "Open Ricky Rampersad branch dot com, slash orphan management, on a phone or a laptop. Sign in with your agent number, or your first name, and your password. The device keeps you signed in until you press Sign out."
+  },
+  {
+   "visual": "list",
+   "eyebrow": "Your list",
+   "headline": "Check it <em>every day</em>",
+   "line": "Your list shows every client named to you, from the board or from Salesforce. A naming in Salesforce sends no e-mail. So check your list every day."
+  },
+  {
+   "visual": "client",
+   "eyebrow": "Open a client",
+   "headline": "Everything before <em>you dial</em>",
+   "line": "Open a client to see their numbers, where they live, their family, what they told us, and why we are calling."
+  },
+  {
+   "visual": "logcall",
+   "eyebrow": "After every call",
+   "headline": "Press <em>Log call</em>",
+   "line": "Call the client. Then press Log call. Choose what happened: called, met, no answer, declined or closed. Write one line for the file, and save."
+  },
+  {
+   "visual": "comment",
+   "eyebrow": "History, tasks and comments",
+   "headline": "Say more <em>on the file</em>",
+   "line": "To say more, open history, tasks and comments. Write your comment, and post it. It stays on the client's file, where the branch reads it."
+  },
+  {
+   "visual": "counts",
+   "eyebrow": "What counts as progress",
+   "headline": "Three ways it <em>counts</em>",
+   "rows": [
+    {
+     "b": "A call you log on the board",
+     "i": "called, met, no answer, declined or closed",
+     "at": "log"
+    },
+    {
+     "b": "A comment on the client's file",
+     "i": "history, tasks and comments",
+     "at": "comment"
+    },
+    {
+     "b": "The Campaign Feedback Update in Salesforce",
+     "i": "the field on the policy record",
+     "at": "Campaign"
+    },
+    {
+     "b": "A note in Chatter alone",
+     "i": "does not show on the board",
+     "off": true,
+     "at": "Chatter"
+    }
+   ],
+   "line": "Your progress counts when you log the call, write a comment, or fill in the Campaign Feedback Update in Salesforce. A note in Chatter alone does not show."
+  },
+  {
+   "visual": "clock",
+   "eyebrow": "The clock starts at the naming",
+   "headline": "Two days to <em>a conversation</em>",
+   "line": "The branch tracks how many days each client has waited, and how many conversations you have had. The aim is a conversation in the first two days, and a meeting soon after."
+  },
+  {
+   "visual": "sees",
+   "eyebrow": "The branch sees it",
+   "headline": "The bar <em>moves</em>",
+   "line": "When you log it, the branch sees it on the Agents tab. The bar moves, and the red flag clears."
+  },
+  {
+   "visual": "close",
+   "eyebrow": "Every client, every day",
+   "headline": "Call in two days. Log it the same day. <em>Meet the client.</em>",
+   "words3": [
+    "Call in two days.",
+    "Log it the same day.",
+    "Meet the client."
+   ],
+   "url": "rickyrampersadbranch.com / orphanmanagement",
+   "line": "Call in two days. Log it the same day. Meet the client.",
+   "extra": 2.0
+  }
+ ],
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%"
+}

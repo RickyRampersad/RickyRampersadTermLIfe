@@ -1133,7 +1133,9 @@ function render() {
   /* the scripts, one tap away: in the side menu, and in Help on a phone */
   var scripts = (staff || manager ? '<a href="/orphan-transition/client-support.html" target="_blank" rel="noopener">Client Support: the call</a>' : '') +
     (staff ? '' : '<a href="/orphan-transition/call-script.html" target="_blank" rel="noopener">The agent&rsquo;s call script</a><a href="/orphan-transition/agent-brief.html" target="_blank" rel="noopener">The agent brief</a>') +
-    '<a href="/orphan-transition/if-they-say.html" target="_blank" rel="noopener">If they say&hellip;</a>';
+    '<a href="/orphan-transition/if-they-say.html" target="_blank" rel="noopener">If they say&hellip;</a>' +
+    /* the film for this sign-in (14 October 2026): one each for management, Client Support and agents */
+    '<a href="/orphan-transition/board-films.html#' + (staff ? 'client-support' : manager || team ? 'management' : 'agents') + '" target="_blank" rel="noopener">&#9654; The film: the board for you</a>';
   $('scripts').innerHTML = scripts; $('helpScripts').innerHTML = scripts;
   /* automatic client e-mail on hold (transitionHoldClientMail): said on the board, and the introduction box starts unticked;
      since 7 October the hold also stops the receipts and the introductions, when the backend says so */

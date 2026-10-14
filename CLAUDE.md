@@ -2690,8 +2690,10 @@ voice under the new timing and the caption gives it away.
     Client Book built from the 7 October portfolio export.
 - **Agents: how each agent is getting on, and the households still to name** (14 October 2026: "can I log in to see the
   branch manager dashboard and how the agents assigned are going and how they are making progress and the unassigned, a
-  lot of data is needed especially batching in households"). A tab under Act on, after the Dashboard, for the branch and
-  for a unit manager (his team only, with nothing to name). Staff and agents have no Agents tab.
+  lot of data is needed especially batching in households"). A tab under Act on, after the Dashboard, for the branch, for
+  a unit manager (their team only, with nothing to name) and, since the same day, for Client Support ("staff can also
+  reassign the orphans as well as a manager with the history of when it was assigned"). Staff see no TT$200 claims on
+  it, and name or reassign only the clients on their own board (`nb: 0` marks the rest). Agents have no Agents tab.
   - **One answer, read when the tab opens.** `tAgentsView_` in Transition.gs, asked for as the board with `agents=1`, so
     Service.gs needs no paste. The page reads it again after five minutes, never on the two-minute refresh, so a batch
     being worked is not redrawn under the hand. A backend older than this answers with the board, and the tab says to
@@ -2711,6 +2713,21 @@ voice under the new timing and the caption gives it away.
 
     An agent who reports only in Salesforce Chatter shows as nothing logged until they write the feedback field or mark
     the call.
+  - **How long, and how many conversations** ("the objective is to have a conversion as fast as possible … tracking these,
+    how long it's assigned and how many conversations"). Each named client carries `da`, the days since the naming,
+    `cv`, the conversations since (a call marked Called, Met or Declined by the agent, or by anyone after the naming, one
+    a day; the agent's Salesforce feedback counts as one when nothing is marked), `tr`, the tries with no answer, and
+    `dm`, the days from the naming to the first meeting. Each agent's line adds the conversations, *converted* (met or
+    completed), the average days their open clients have waited, the median days to a meeting, and how many came to
+    them from another agent. **Since the naming** groups every named client by 0 to 2, 3 to 7, 8 to 14 and 15 or more
+    days since the naming.
+  - **Who it was named to, and when** (`tAssignHist_`). Three sources, oldest first, one line an agent and a day: the
+    board's `[assigned d MMM · Agent]` stamps (with "named by" when staff named), the Household Assignments tab's
+    Salesforce name and date, and the **Assignment Log** tab (When, Token, Client, From, To, Named on, Source, By), made
+    the first time something is written to it. `transitionAssign_` logs every naming and reassignment it makes, and
+    `tHaSync_` logs a name Salesforce gives or changes, once, since the tab keeps only the newest. The Agents tab shows
+    the history on every named client, with a **Reassign to…** list for whoever names agents. The board's card shows
+    it under "Named:" (`c.hist`).
   - **Each agent's line**: households, clients, a progress bar, spoken to, nothing logged, last activity, the median days
     to first contact, feedback, comments, when they were named and where, and TT$200 claims. Agents on the Skill Bank
     with no clients are named under the table. An agent opens on their households, client by client. The "nothing logged"
@@ -2735,8 +2752,33 @@ voice under the new timing and the caption gives it away.
   - In the 13 October export: 2,168 households, 17 clients named (15 in Salesforce), and nothing logged by any agent.
     The batches held 151 urgent households, 257 that asked us, 236 answered or reached, 1,313 not answered and 197 with
     every letter held.
-  - **Tests** in the scratchpad: `agv14/agents-harness.js` (37 checks, Node, the 13 October export) and
-    `agv14/agents-test.js` (39, Playwright, a phone included).
+  - **Tests** in the scratchpad: `agv14/agents-harness.js` (51 checks, Node, the 13 October export, Salesforce mocked
+    for the sync) and `agv14/agents-test.js` (47, Playwright, staff and a phone included).
+- **The board on film: one film per sign-in** (14 October 2026: "there's three videos. There is what the agents see,
+  there's what the staff see, and there's what management sees"). `orphan-transition/board-films.html` plays the three,
+  and the board's menu links each person to theirs ("The film: the board for you").
+  - *The board, for management* (`boardmgr`, 2:21): Urgent, the Agents tab, conversations and conversion, since the
+    naming, households in batches, one press, reassign with the history, what a naming does, a unit manager's team.
+  - *The board, for Client Support* (`boardstaff`, 1:45): Your calls, opening a client, Log call and the call-back
+    flag, take details and never advise, naming a household, reassigning, Your work.
+  - *The board, for agents* (`boardagent`, 1:48): your list every day, opening a client, Log call, comments, what
+    counts, two days to a conversation, the branch sees it.
+
+  Each is a page drawn by `tools/film/build-boardfilm.py <key>` from `<key>-lines.json` and `<key>-timing.json`
+  (`orphan-transition/board-management.html`, `board-client-support.html`, `board-agents.html`), recorded and mixed
+  into `board-*.mp4` with a poster `board-*.jpg` beside it. The board's screens are drawn, not captured, with made-up
+  names and numbers, and every motion lands on the word that names it: the timing file holds each spoken word's start
+  from edge-tts's WordBoundary events. To re-cut one, edit its lines, run `voice-lines.py <key>-lines.json <vox>
+  --changed-only --timing <key>-timing.json --films films.json --key <key>`, write the word timings back into the
+  timing file, then `build-boardfilm.py`, `sfx.py`, `usetrack.py audio/inspired-kevin-macleod.mp3 <key>`, `record.js`
+  (alone on the machine), `mixany.py` with the vox copied to `tools/film/vo<key>`, and `chapters.py`.
+  - **The shell's own class names leak into the scenes.** The film shell (`donthaveanagent/client-film.html`) styles
+    `.stage`, `.ph`, `.drop`, `.tk`, `.ring`, `.prow`, `.url` and others, so the board films use their own names
+    (`.bstage`, `.phn`, `.dropl` …). A new scene class must be checked against the shell's CSS first; the first cut
+    rendered a phone toast as a second phone.
+  - **edge-tts pins certifi's certificate bundle**, so on the session proxy it fails with "self-signed certificate in
+    certificate chain" whatever SSL_CERT_FILE says. A wrapper that points `certifi.where` at `/root/.ccr/ca-bundle.crt`
+    and runs `edge_tts.util.main` works (kept in the scratchpad, not the repository).
 - **The stream: the campaign on a screen anyone in the room may see** (8 October 2026: "I need to stream the wall
   without the confidential information and drive further analysis of how the automations and humans are managing and
   what the clients are saying, group by households"). `orphan-transition/stream.html`, ten slides on a cycle:

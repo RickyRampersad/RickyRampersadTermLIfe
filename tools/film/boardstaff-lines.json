@@ -1,0 +1,95 @@
+{
+ "note": "The board film for Client Support (14 October 2026). Every name and number on screen is made up. build-boardfilm.py renders the film's page from this file; voice-lines.py voices the lines and times the scenes.",
+ "role": "staff",
+ "scenes": [
+  {
+   "visual": "title",
+   "eyebrow": "For Client Support",
+   "headline": "The board, <em>for Client Support</em>",
+   "sub": "Your calls, the call-backs, and naming an agent",
+   "line": "This is the client transition board, as Client Support sees it. Your calls, the call-backs, and naming an agent.",
+   "extra": 0.6
+  },
+  {
+   "visual": "signin",
+   "eyebrow": "Signing in",
+   "headline": "Your number, <em>your password</em>",
+   "line": "Open Ricky Rampersad branch dot com, slash orphan management, on a phone or a laptop. Sign in with your agent number, or your first name, and your password. The device keeps you signed in until you press Sign out."
+  },
+  {
+   "visual": "yourcalls",
+   "eyebrow": "Your calls",
+   "headline": "Your list, <em>in order</em>",
+   "line": "You open on Your calls. Your own list, in order, with why to call, and the number to tap."
+  },
+  {
+   "visual": "client",
+   "eyebrow": "Open a client",
+   "headline": "Everything before <em>you dial</em>",
+   "line": "Open a client to see their numbers, where they live, their family, what they told us, and why we are calling."
+  },
+  {
+   "visual": "staffcall",
+   "eyebrow": "After every try",
+   "headline": "Log it, and <em>flag the call-back</em>",
+   "line": "After every try, press Log call. Choose what happened, and write one line for the file. If the client needs a licensed agent, flag the call-back. It goes to the top of the branch manager's Urgent list."
+  },
+  {
+   "visual": "rules",
+   "eyebrow": "On every call",
+   "headline": "Take details. <em>Never advise.</em>",
+   "rows": [
+    {
+     "b": "Take the details",
+     "i": "the e-mail, spelled back; a new number or address",
+     "at": "details"
+    },
+    {
+     "b": "Advise on cover, or on what a policy pays",
+     "i": "never: a licensed agent calls them back",
+     "off": true,
+     "at": "licensed"
+    },
+    {
+     "b": "Flag a call-back for a licensed agent",
+     "i": "anything about what a policy pays, or changing cover",
+     "at": "never"
+    }
+   ],
+   "line": "On the call, you take details, and you never advise. Anything about what a policy pays, or changing cover, goes to a licensed agent."
+  },
+  {
+   "visual": "assign",
+   "eyebrow": "Naming an agent",
+   "headline": "The family <em>stays together</em>",
+   "line": "On the Agents tab, each household on your board carries one suggested agent. One press names the whole household. The agent gets a brief by e-mail."
+  },
+  {
+   "visual": "reassign",
+   "eyebrow": "Reassign, with the history",
+   "headline": "Your name <em>on the record</em>",
+   "line": "To move a client, choose Reassign. Your name goes on the history, with the date, so everyone can see who moved it, and when."
+  },
+  {
+   "visual": "yourwork",
+   "eyebrow": "Your work",
+   "headline": "Everything <em>you logged</em>",
+   "line": "Your work shows everything you logged, today and this week, with your notes. The branch sees the same."
+  },
+  {
+   "visual": "close",
+   "eyebrow": "Every call, every day",
+   "headline": "Log every try. Flag the call-back. <em>Name the household.</em>",
+   "words3": [
+    "Log every try.",
+    "Flag the call-back.",
+    "Name the household."
+   ],
+   "url": "rickyrampersadbranch.com / orphanmanagement",
+   "line": "Log every try. Flag the call-back. Name the household.",
+   "extra": 2.0
+  }
+ ],
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%"
+}

@@ -28,7 +28,10 @@ PAGE = {'client': (DHAA, 'client-film.html'), 'process': (DHAA, 'process-film.ht
         'agentside': (DHAA, 'agent-side-film.html'), 'agent': (DHAA, 'agent-film.html'),
         'work': (DHAA, 'how-we-work-film.html'), 'wall': (DHAA, 'wall-film.html'),
         'reel': (DHAA, 'ad-reel.html'), 'feed': (DHAA, 'ad-reel.html'),
-        'orphan': (BRANCH, 'film.html')}
+        'orphan': (BRANCH, 'film.html'),
+        # the board films, one per sign-in (14 October 2026), embedded on orphan-transition/board-films.html
+        'boardmgr': (TEAM, 'board-management.html'), 'boardstaff': (TEAM, 'board-client-support.html'),
+        'boardagent': (TEAM, 'board-agents.html')}
 
 def names_of(site, page):
     s = (site / page).read_text(encoding='utf-8')

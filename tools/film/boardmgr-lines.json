@@ -1,0 +1,106 @@
+{
+ "note": "The board film for management: the branch manager and the unit managers (14 October 2026). Every name and number on screen is made up. build-boardfilm.py renders the film's page from this file; voice-lines.py voices the lines and times the scenes.",
+ "role": "branch",
+ "scenes": [
+  {
+   "visual": "title",
+   "eyebrow": "For the branch manager and the unit managers",
+   "headline": "The board, <em>for management</em>",
+   "sub": "Every household, every agent, and how fast each client converts",
+   "line": "This is the client transition board, as the branch manager and the unit managers see it. Every household, every agent, and how fast each client converts.",
+   "extra": 0.6
+  },
+  {
+   "visual": "signin",
+   "eyebrow": "Signing in",
+   "headline": "Your number, <em>your password</em>",
+   "line": "Open Ricky Rampersad branch dot com, slash orphan management, on a phone or a laptop. Sign in with your agent number, or your first name, and your password. The device keeps you signed in until you press Sign out."
+  },
+  {
+   "visual": "urgent",
+   "eyebrow": "Urgent",
+   "headline": "Urgent <em>opens first</em>",
+   "line": "You open on Urgent. First, the call-backs Client Support asked for. Then the clients who want an agent now, or who say a former agent has been in touch."
+  },
+  {
+   "visual": "agents",
+   "eyebrow": "The Agents tab",
+   "headline": "The whole picture, <em>at a glance</em>",
+   "line": "The Agents tab shows the whole picture. How many households have an agent. How many answered, and are still waiting. And how far each agent has got."
+  },
+  {
+   "visual": "table",
+   "eyebrow": "Each agent, one line",
+   "headline": "Conversations and <em>conversion</em>",
+   "line": "Each agent has one line. Conversations. Converted, which means met or completed. And how many days their clients have waited. A client named two working days ago, with nothing logged, turns red."
+  },
+  {
+   "visual": "since",
+   "eyebrow": "Since the naming",
+   "headline": "The first two days <em>matter most</em>",
+   "line": "Since the naming shows every client by how long ago they were named. The aim is a conversation in the first two days, and a meeting soon after."
+  },
+  {
+   "visual": "batches",
+   "eyebrow": "Households to name",
+   "headline": "In batches, <em>most pressing first</em>",
+   "line": "Below are the households still to name, in batches. Urgent first. Then families where one member already has an agent. Then everyone who asked us for something."
+  },
+  {
+   "visual": "assign",
+   "eyebrow": "One press",
+   "headline": "The family <em>stays together</em>",
+   "line": "Each household carries one suggested agent, so a family stays together. One press names the whole household. Or name a whole batch at once."
+  },
+  {
+   "visual": "reassign",
+   "eyebrow": "Reassign, with the history",
+   "headline": "Every move <em>on record</em>",
+   "line": "To move a client, choose Reassign. The history keeps every agent, the date, and who made the change, on the board or in Salesforce."
+  },
+  {
+   "visual": "named",
+   "eyebrow": "When an agent is named",
+   "headline": "What happens <em>next</em>",
+   "rows": [
+    {
+     "b": "The agent gets a brief by e-mail",
+     "i": "every client named to them, with what each one told us",
+     "at": "brief"
+    },
+    {
+     "b": "The client is on the agent's own list",
+     "i": "the moment the name is given on the board",
+     "at": "list"
+    },
+    {
+     "b": "A name given in Salesforce reaches the board",
+     "i": "within fifteen minutes",
+     "at": "Salesforce"
+    }
+   ],
+   "line": "When a client is named, the agent gets a brief by e-mail, and the client appears on the agent's own list. A name given in Salesforce reaches the board within fifteen minutes."
+  },
+  {
+   "visual": "unit",
+   "eyebrow": "A unit manager",
+   "headline": "Your own <em>team</em>",
+   "line": "A unit manager sees their own team. Each agent's line, their clients and their conversations, and how long each client has waited."
+  },
+  {
+   "visual": "close",
+   "eyebrow": "Every client, every day",
+   "headline": "Name the household. Watch the days. <em>Convert the client.</em>",
+   "words3": [
+    "Name the household.",
+    "Watch the days.",
+    "Convert the client."
+   ],
+   "url": "rickyrampersadbranch.com / orphanmanagement",
+   "line": "Name the household. Watch the days. Convert the client.",
+   "extra": 2.0
+  }
+ ],
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%"
+}
