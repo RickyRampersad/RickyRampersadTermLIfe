@@ -2856,12 +2856,32 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 
 - **The welcome: one e-mail to each employer, with the film** (13 October 2026: "with the video embedded so to
   greet the employer in a new way of managing their account … test with me first as this is supposed to pop").
-  - **The film is the employer's own cut**, `groupclientmanagement/welcome.mp4` (1:33, poster `welcome.jpg`), on
+  - **The film is the employer's own cut**, `groupclientmanagement/welcome.mp4` (2:26, poster `welcome.jpg`), on
     its page `welcome.html`. The staff film's part 2 speaks to staff ("their answer comes straight to you") and shows
-    the staff page and the manager's dashboard, so it is never sent to a group. The employer cut keeps the letter,
-    the sign-in, the items, the history, the answers, the stars and the thank-you, voiced to the employer, on a sample
-    group with made-up figures. Built in the scratchpad from the same shots (`staffvid/lines3.json`, `film3.html`,
-    `timing3.py`, `mix3.py`).
+    the staff page and the manager's dashboard, so it is never sent to a group. The employer cut is voiced to the
+    employer, on a sample group with made-up figures and invented people. It covers:
+    - the letter;
+    - the sign-in;
+    - the applications and increases pending, and what is coming up for their people (both added 14 October);
+    - the items, the history, the answers, the stars and the thank-you.
+  - **Re-cut with motion, 14 October 2026** ("can the video be revised and add animation as well motion built in?").
+    Every frame is a function of its time, rendered one by one, so nothing drifts:
+    - push transitions between sections, and dissolves between phone screens;
+    - headlines whose words rise into place, and a phone that floats;
+    - a finger that travels to each button and taps it, with a ripple, the screenshot switching to the pressed
+      state on the tap;
+    - a spotlight that dims all but what is being described;
+    - counters that run up, a dot that travels round the weekly loop, and a closing checklist that ticks itself;
+    - captions that follow the voice a sentence at a time.
+
+    Built in the scratchpad (`welcome4/`):
+    - `world4.js`: the sample;
+    - `shots4.js`: before and after each tap;
+    - `lines4.json`: four new lines, eleven kept;
+    - `timing4.py`, `film4.html` (`film4.js`, `film4.css`), `render.js`, `mix4.py`;
+    - `card.js`: the poster and `welcome-card.jpg`.
+
+    Encoded at CRF 23 for the web: 14 MB. `GCM_WELCOME.LENGTH` reads "2 min 26 s"; change it with the film.
   - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
     film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
   - **No access code in it.** The Monday letter carries the sign-in, after staff check it.

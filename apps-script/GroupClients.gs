@@ -2092,7 +2092,7 @@ function gcmRehearse_(b) {
  * opening the film's own page in one tap. It carries no access code: the Monday letter does, after staff check it.
  * Once per group, ever; from support@ only; the branch manager gets the test first. */
 var GCM_WELCOME = {
-  PAGE: 'welcome.html', CARD: 'welcome-card.jpg', LENGTH: '1 min 33 s',
+  PAGE: 'welcome.html', CARD: 'welcome-card.jpg', LENGTH: '2 min 26 s',
   SKIP_PROP: 'GCM_WELCOME_SKIP',              // Script property: groups to leave out, by name, comma-separated
   ON_PROP: 'GCM_WELCOME_ON'                   // set by gcmWelcomeNow: a group verified later gets its welcome within the hour
 };
@@ -2112,8 +2112,8 @@ function gcmWelcome_(g, today, signed) {
   var subject = 'Your group account, now in one place: ' + g.name;
   var pre = 'Watch how it works in ' + GCM_WELCOME.LENGTH + '. One letter every Monday, your own page to answer it.';
   var p1 = 'From this week, the way our branch looks after ' + g.name + '’s account changes. Everything we have open for you is in one place, and you tell us in one tap what needs our attention.';
-  var steps = [['Every Monday at 10:00', 'One letter: what is open, what we completed, and what we need from you.'],
-    ['Your own page', 'Every item, who is handling it, how long it has been open and how it got there. Mark each one Correct, Needs a change or Not ours, and rate our service.'],
+  var steps = [['Every Monday at 10:00', 'One letter: what is open, what is pending for your employees, what is coming up for them, and what we need from you.'],
+    ['Your own page', 'Applications and increases still pending, who turns 65 or retires soon, and every open item with who is handling it. Mark each one Correct, Needs a change or Not ours, and rate our service.'],
     ['We act on it', 'Your answer reaches ' + (carer || 'the person looking after you') + ' the moment you send it, and the next Monday letter shows what changed.']];
   var p2 = 'Your sign-in comes with your Monday letter.' + (me ? ' I look after your account, and a reply to this e-mail reaches me and our team.'
     : carer ? ' ' + carer + ' looks after your account, and a reply to this e-mail reaches us both.' : ' A reply to this e-mail reaches us.');
