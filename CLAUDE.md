@@ -2950,6 +2950,45 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - `wow/actions-test.js` (31 checks), `wow/after.js` (24, Playwright) and `wow/showcase.js` (screenshots) in the
     session scratchpad cover it, on the made-up branch.
 
+- **Applications still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
+  also see at the top … applications that remain pending … the name, days outstanding, who it's assigned, what's
+  outstanding … pension groups, health groups and life groups … and who was last liaised with").
+  - **What counts.** An open task of type `Pendings` (the branch's own mark for one), reached the way the refresh
+    reaches any group task. The word "pending" in a subject does not count. The refresh reads each task's policy
+    (`gcmApplications_`) and writes the line, the applicant, the application date and who the task is with into a new
+    **Application** column on Group Tasks.
+  - **The line** is the policy's record type: LIFE(GROUP) reads Group Life, HEALTH (GROUP) Group Health, PENSION
+    Pension. **A policy on the employer's own account is the employer's application, whatever its type**, and reads
+    as its type ("Life"). On 14 October, 34 of the branch's open Pendings tasks sat on policies, and only one was a
+    group type: 11 were keyperson applications, ordinary LIFE policies a commercial client owns on the lives of the
+    people who run it.
+  - **Kept off a group's page:**
+    - a task reached only through an employee's own contact;
+    - one on an employee's individual policy tied to the group only by its list bill;
+    - a claim;
+    - anything a person unticked.
+
+    When a run cannot read the policies' types, every policy-reached task is kept off.
+  - **A medical requirement** reads "An underwriting requirement: the details stay between the person insured and us",
+    with neither the doctor nor the department beside it ("Guardian Life" only). `GCM_APP.MED` is wider than
+    `GCM_PRIVATE`, because the keyperson tasks read "LABS at …" and "physician(s) consulted". Staff see the subject,
+    marked.
+  - **The group's page** opens on the panel, under the welcome and above everything else. It shows one card an
+    applicant, oldest first, with:
+    - the lines, each a word with a mark, and a filter for each;
+    - the days outstanding from the application date, as a word and a colour, and "past target";
+    - each requirement with who it is assigned to, who it is liaising with ("(you)" for the group's own contact),
+      its status in the group's words, its target date and its last contact. The last contact is an e-mail to or
+      from the group, else "Last worked on", else "Opened on …, nothing logged since".
+
+    The requirements are listed there and not again among the open items.
+  - **Staff** get the same panel at the top of a group's page, unredacted, with what the group cannot see marked. They
+    also get a chip on the account row, and an "Applications pending" filter on the Team dashboard.
+  - **The Monday letter** says how many are pending and the oldest, never a name.
+  - A backend older than this sends no `pending`, and both pages leave the panel out.
+  - `pending/pending-test.js` (34 checks) and `pending/page.js` (19, Playwright, phone and desk) in the session
+    scratchpad cover it, on the made-up branch with an invented keyperson case.
+
 ## The Premium Due Desk — checked by a person, sent at ten
 
 `premium-due/` and `apps-script/PremiumDueDesk.gs`, in the Branch Intelligence
