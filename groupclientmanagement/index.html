@@ -148,7 +148,114 @@ iframe.preview{width:100%;height:560px;border:1px solid var(--line);border-radiu
 .opps li{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--primary);border-radius:10px;padding:10px 14px;font-size:14px;box-shadow:var(--shadow)}
 .opps li .k{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--primary);background:var(--primarySoft);border-radius:99px;padding:2px 8px;margin-right:6px}
 .opps li.click{cursor:pointer}.opps li.click:hover{border-color:var(--primaryLine)}
+/* every account, and sending from the page (14 October 2026): one row an account on a wide screen, a card on a phone */
+.hello{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:18px 0 0}
+.hello h1{font-size:24px;font-weight:600;letter-spacing:-.015em;margin:0}
+.hello p{margin:0;color:var(--muted)}
+.meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+.meter{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.meter .top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.meter b{font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.meter b small{font-size:15px;color:var(--muted);font-weight:500}
+.meter span{font-size:13px;color:var(--muted)}
+.meter .track{height:8px;background:var(--track);border-radius:4px;overflow:hidden;margin-top:10px}
+.meter .fill{height:100%;background:var(--bar);border-radius:4px}
+.accs{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.acc{display:grid;grid-template-columns:minmax(160px,1.15fr) minmax(170px,1.05fr) minmax(170px,1.15fr) minmax(130px,.85fr) minmax(150px,.95fr) minmax(90px,.55fr) minmax(150px,.9fr);gap:12px;align-items:center;
+  background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+.acc.head{background:none;border:0;box-shadow:none;padding:0 14px;font-size:12px;font-weight:600;color:var(--muted)}
+.acc .gname{font-weight:600;cursor:pointer;color:var(--ink);background:none;border:0;padding:0;text-align:left}
+.acc .gname:hover{color:var(--primary);text-decoration:underline}
+.acc .sub{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.acc .lbl{display:none}
+.who2{display:flex;align-items:center;gap:8px;min-width:0}
+.av{width:30px;height:30px;border-radius:50%;background:var(--primarySoft);color:var(--primary);border:1px solid var(--primaryLine);display:grid;place-items:center;font-size:12px;font-weight:600;flex:none}
+.you{font-size:11px;font-weight:600;color:var(--primary);background:var(--primarySoft);border-radius:99px;padding:0 7px;margin-left:4px}
+.acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.acts .btn{padding:6px 10px;font-size:12.5px}
+.stars2{color:#E09B00;letter-spacing:1px;font-size:13px}.stars2 i{font-style:normal;color:#C3CCD8}
+.search{min-width:200px;max-width:280px;padding:7px 12px;border-radius:99px;border:1px solid var(--line2);background:#fff;font-size:14px}
+@media (max-width:1000px){
+  .acc{grid-template-columns:1fr 1fr;gap:8px 14px}.acc.head{display:none}
+  .acc>div:first-child{grid-column:1 / -1}.acc .acts{grid-column:1 / -1;justify-content:flex-start}
+  .acc .lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase;margin-bottom:2px}
+}
+@media (max-width:520px){.acc{grid-template-columns:1fr}}
+/* the send window: the e-mail exactly as it goes, who it goes to, the tick, the button; then what happened */
+dialog.dlg{border:0;border-radius:14px;padding:0;width:min(760px,96vw);max-height:92vh;box-shadow:var(--shadowLg);background:var(--paper);color:var(--ink)}
+dialog.dlg::backdrop{background:rgba(20,32,51,.55)}
+.dlg .dh{display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(120deg,#13408F,#1D5BC4);color:#fff}
+.dlg .dh h3{margin:0;font-size:17px;font-weight:600;flex:1}
+.dlg .dh button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer}
+.dlg .db{padding:14px 18px 18px;overflow:auto;max-height:calc(92vh - 60px)}
+.dlg .to{font-size:14px;margin:0 0 10px}
+.dlg iframe{width:100%;height:440px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.dlg .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.done2{text-align:center;padding:26px 10px 10px}
+.done2 .tick{width:72px;height:72px;border-radius:50%;background:var(--goodBg);color:var(--good);display:grid;place-items:center;margin:0 auto 12px;font-size:40px;font-weight:700;animation:pop .35s ease-out}
+.done2 h4{font-size:20px;margin:0 0 6px}
+@keyframes pop{0%{transform:scale(.4);opacity:0}80%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.done2 .tick{animation:none}}
+@media (max-width:640px){dialog.dlg{width:100vw;max-width:100vw;max-height:100vh;height:100vh;border-radius:0}.dlg .db{max-height:calc(100vh - 60px)}.dlg iframe{height:360px}}
 @media (max-width:640px){.kv{grid-template-columns:repeat(2,1fr)}.weeks,.months{height:140px;gap:4px;padding:10px 6px 6px}iframe.preview{height:460px}}
+/* the design pass (14 October 2026: "a much more professional look, filters and scaling and colors for visibility"):
+   white panels, stronger status labels that always carry a word and a mark, the greeting and the week in the masthead,
+   one toolbar of filters, and the accounts as one table */
+:root{--paper:#FFFFFF;--canvas:#DCE3EC;--sunken:#EEF2F7;--line:#D3DBE6;--line2:#B9C4D3;
+  --good:#05603A;--goodBg:#DCF3E5;--goodLine:#9FD9B5;--warn:#93370D;--warnBg:#FDEBD3;--warnLine:#F3C58C;--warnMark:#DC6803;
+  --bad:#D92D20;--badBg:#FCE3E0;--badLine:#F4B5AE;--badText:#B42318;--info:#1D5BC4;--infoBg:#E3EDFC;--infoLine:#B8CEF4}
+.wrap{max-width:1320px}
+@media (min-width:1500px){body{font-size:15.5px}}
+.chip{font-size:12.5px;padding:3px 10px;border:1px solid var(--line)}
+.chip i{width:8px;height:8px}
+.chip.good{background:var(--goodBg);border-color:var(--goodLine);color:var(--good)}
+.chip.warn{background:var(--warnBg);border-color:var(--warnLine);color:var(--warn)}
+.chip.bad{background:var(--badBg);border-color:var(--badLine);color:var(--badText)}
+.chip.info{background:var(--infoBg);border-color:var(--infoLine);color:var(--info)}.chip.info i{background:var(--info)}
+.note{border-radius:10px}
+.note.info{background:var(--infoBg);border-color:var(--infoLine);display:flex;gap:10px;align-items:flex-start}
+.note.info::before{content:"i";flex:none;width:20px;height:20px;border-radius:50%;background:var(--info);color:#fff;font-weight:700;font-size:13px;display:grid;place-items:center;margin-top:1px;font-style:italic}
+header.mast{padding:14px 0 0}
+.mhello{padding:16px 16px 20px}
+.mhello:empty{display:none}
+.mhello h1{margin:0;font-size:clamp(22px,2.4vw,30px);font-weight:600;letter-spacing:-.015em;color:#fff}
+.mhello .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.mhello .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:99px;padding:6px 14px;font-size:14px}
+.mhello .pill b{font-size:16px;font-variant-numeric:tabular-nums}
+.mhello .pill.hot{background:#fff;color:var(--badText);border-color:#fff;font-weight:600}
+.mhello .pill.ok{background:#fff;color:var(--good);border-color:#fff;font-weight:600}
+.tabs{border-bottom:2px solid var(--line);gap:8px}
+.tab{font-size:15.5px;padding:12px 16px}
+.tab[aria-selected="true"]{border-bottom-width:3px}
+h2{font-size:21px}
+.tile{border-top:3px solid var(--line2)}.tile.alert{border-top-color:var(--bad)}
+.toolbar{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px;margin:14px 0 0}
+.toolbar .r1{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.sfield{position:relative;flex:1 1 240px;max-width:420px}
+.sfield input{width:100%;padding:10px 12px 10px 38px;border:1px solid var(--line2);border-radius:8px;font-size:15px;background:#fff}
+.sfield input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primarySoft)}
+.sfield svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2}
+.sel{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-weight:600;margin:0}
+.sel select{padding:9px 12px;border:1px solid var(--line2);border-radius:8px;background:#fff;font-size:14px;font-weight:500;color:var(--ink);max-width:240px}
+.toolbar .count{margin-left:auto;font-size:13.5px;color:var(--muted)}
+.toolbar .count button{margin-left:8px;background:none;border:0;color:var(--primary);font-weight:600;cursor:pointer;padding:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg .fbtn{display:inline-flex;align-items:center;gap:7px;padding:6px 12px}
+.seg .fbtn i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.seg .fbtn[aria-pressed="true"] i{box-shadow:0 0 0 2px #fff}
+.acctable{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin-top:12px;overflow:clip}
+.acctable .acc{border:0;border-radius:0;box-shadow:none;border-bottom:1px solid var(--line);border-left:4px solid transparent;padding:14px 16px;background:var(--paper)}
+.acctable .acc:last-child{border-bottom:0}
+.acctable .acc:not(.head):hover{background:#F7FAFE}
+.acctable .acc.head{background:var(--sunken);padding:10px 16px 10px 20px;position:sticky;top:0;z-index:1;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase}
+.acc.r-bad{border-left-color:var(--bad)}.acc.r-warn{border-left-color:var(--warnMark)}.acc.r-good{border-left-color:var(--good)}.acc.r-info{border-left-color:var(--info)}
+.acc .gname{font-size:15.5px}
+.meter{border-top:4px solid var(--bar)}
+.meter.done{border-top-color:var(--good)}.meter.done .fill{background:var(--good)}
+.meter .pct{font-size:13px;font-weight:600;color:var(--ink2)}
+.card{border-left:4px solid var(--line2);display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch}.card.r-bad{border-left-color:var(--bad)}.card.r-warn{border-left-color:var(--warnMark)}.card.r-good{border-left-color:var(--good)}.card.r-info{border-left-color:var(--info)}
+.key2{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin:8px 2px 0}
+.key2 span{display:inline-flex;align-items:center;gap:6px}.key2 i{width:4px;height:14px;border-radius:2px;display:inline-block}
 </style>
 </head>
 <body>
@@ -156,12 +263,12 @@ iframe.preview{width:100%;height:560px;border:1px solid var(--line);border-radiu
   <div class="mark"><img src="gcm-mark.png" alt=""></div>
   <div><div class="bname">Ricky Rampersad Branch</div><div class="bsub">Group Client Management</div></div>
   <div class="mright" id="who"></div>
-</div></header>
+</div><div class="wrap mhello" id="mhello"></div></header>
 
 <main class="wrap" id="app">
   <form class="gate" id="gate" autocomplete="off">
     <h1>Staff sign in</h1>
-    <p>Your agent number and password from the Agent Skill Bank. The branch manager sees every group and the dashboard; staff see the groups assigned to them.</p>
+    <p>Your agent number and password from the Agent Skill Bank. Everyone sees every account; you send for the groups you look after.</p>
     <label for="gWho">Agent number</label>
     <input class="field" id="gWho" autocapitalize="characters" spellcheck="false" placeholder="A00427">
     <label for="gCode">Password, or the branch code</label>
@@ -171,6 +278,7 @@ iframe.preview{width:100%;height:560px;border:1px solid var(--line);border-radiu
   </form>
 </main>
 <div class="toast" id="toast" role="status"></div>
+<dialog class="dlg" id="dlg" aria-labelledby="dlgT"><div class="dh"><h3 id="dlgT">Send</h3><button type="button" id="dlgX">Close</button></div><div class="db" id="dlgB"></div></dialog>
 
 <script>
 /* The Service Questionnaire deployment: the same /exec URL the assignment board uses. GroupClients.gs answers every gcm.* action. */
@@ -237,12 +345,14 @@ function weekChip(s) {
 }
 function groupCard(g) {
   const s = g.stats;
-  return '<button class="card" type="button" data-g="' + esc(g.key) + '"><h4>' + esc(g.name) + '</h4>' +
+  return '<button class="card' + (g.account ? ' r-' + rowState(g) : '') + '" type="button" data-g="' + esc(g.key) + '"><h4>' + esc(g.name) + '</h4>' +
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') +
     (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') + (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') +
     (!s.ready ? '<span class="chip warn"><i></i>' + esc(s.why) + '</span>' : '') + '</div>' +
     (BOARD.role !== 'staff' && (!g.assigned || !g.ownerActive) ? '<div class="chips"><span class="chip bad"><i></i>' + (g.assigned ? 'Owner ' + esc(g.assigned) + ' is inactive in Salesforce' : 'No owner in Salesforce') + '</span></div>' : '') +
     '<div class="small muted">' + (g.own ? '<b>Yours</b>' : 'Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>') + (g.canAct === false ? ' · read only' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') + '</div>' +
+    (g.account ? '<div class="small muted" style="overflow-wrap:anywhere">Letters to ' + esc(g.account.contact || g.account.to.join(', ') || 'nobody yet') + ' · ' +
+      (g.account.welcome ? 'welcomed ' + esc(shortAt(g.account.welcome.at).replace(/,.*$/, '')) : 'not welcomed yet') + '</div>' : '') +
     '<div class="kv"><div><b>' + s.open + '</b>open</div><div><b>' + (s.oldest || 0) + 'd</b>oldest</div><div><b>' + pct(s.onTimePct) + '</b>on time</div><div><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b>rating</div></div></button>';
 }
 function render() {
@@ -251,16 +361,19 @@ function render() {
   let h = '';
   if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into the project’s Script properties, then run gcmRefresh.</div>';
   if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
-  if (d.nextSend) h += '<div class="note"><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div>';
+  if (d.nextSend) h += '<div class="note info"><div><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div></div>';
   if (d.canRehearse) h += '<div class="note"><b>Test the run first.</b> “Rehearse now” writes every approved letter exactly as the ' + esc(d.nextSend || 'Monday') + ' run would, and sends it only to the person who approved it and the branch, marked TEST, with one summary of what would go and what would wait. Nothing reaches a group, and nothing is marked as sent. <button class="btn ghost sm" type="button" id="rh">Rehearse now</button></div>';
   if (!TAB) TAB = d.role === 'staff' ? 'groups' : 'dash';
   if (!FILT.owner) FILT.owner = d.role === 'staff' && d.groups.some(g => g.own) ? 'mine' : 'all';
-  h += '<div class="tabs" role="tablist"><button class="tab" role="tab" data-t="groups" aria-selected="' + (TAB === 'groups') + '">Groups</button><button class="tab" role="tab" data-t="dash" aria-selected="' + (TAB === 'dash') + '">Team dashboard</button></div>';
-  h += TAB === 'dash' && d.analytics ? dash(d.analytics) : groupsHtml(d);
+  h += '<div class="tabs" role="tablist"><button class="tab" role="tab" data-t="groups" aria-selected="' + (TAB === 'groups') + '">Groups</button><button class="tab" role="tab" data-t="dash" aria-selected="' + (TAB === 'dash') + '">Team dashboard · every account</button></div>';
+  h += TAB === 'dash' && d.analytics ? accountsHtml(d) + dash(d.analytics) : groupsHtml(d);
   app.innerHTML = h;
+  $('mhello').innerHTML = hello(d);
+  bindAccounts(app);
   app.querySelectorAll('[data-g]').forEach(b => b.onclick = () => openGroup(b.dataset.g));
   app.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; render(); });
   app.querySelectorAll('[data-fo]').forEach(b => b.onclick = () => { FILT.owner = b.dataset.fo; saveFilt(); TAB = 'groups'; render(); });
+  if ($('grOwner')) $('grOwner').onchange = () => { FILT.owner = $('grOwner').value; saveFilt(); render(); };
   app.querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { FILT.status = b.dataset.fs; if (b.dataset.fo2) FILT.owner = b.dataset.fo2; saveFilt(); TAB = 'groups'; render(); });
   app.querySelectorAll('[data-gn]').forEach(b => b.onclick = () => { const g = BOARD.groups.find(x => x.name === b.dataset.gn); if (g) openGroup(g.key); });
   if ($('rh')) $('rh').onclick = rehearse;
@@ -285,19 +398,184 @@ function groupsHtml(d) {
   const byOwner = d.groups.filter(g => ownerOf(g, FILT.owner)), shown = byOwner.filter(g => statusOf(g, FILT.status));
   const due = shown.filter(g => g.stats.week === 'due').length;
   const today = shown.flatMap(g => g.doneToday.map(x => Object.assign({ group: g.name }, x)));
-  const fb = (attr, k, label, n, on) => '<button class="fbtn" type="button" ' + attr + '="' + esc(k) + '" aria-pressed="' + on + '">' + esc(label) + '<span class="n">' + n + '</span></button>';
-  let h = '<div class="filt" role="group" aria-label="Whose groups"><span class="lbl">Looked after by</span>' +
-    (d.groups.some(g => g.own) ? fb('data-fo', 'mine', 'Mine', d.groups.filter(g => g.own).length, FILT.owner === 'mine') : '') +
-    fb('data-fo', 'all', 'Everyone', d.groups.length, FILT.owner === 'all') +
-    owners.map(o => fb('data-fo', o, o.split(' ')[0], d.groups.filter(g => g.assigned === o).length, FILT.owner === o)).join('') + '</div>' +
-    '<div class="filt" role="group" aria-label="Where they stand"><span class="lbl">Showing</span>' +
-    STATUS.map(([k, l]) => fb('data-fs', k, l, byOwner.filter(g => statusOf(g, k)).length, FILT.status === k)).join('') + '</div>';
+  const opt = (v, label, on) => '<option value="' + esc(v) + '"' + (on ? ' selected' : '') + '>' + esc(label) + '</option>';
+  const MARK = { due: 'var(--bad)', queued: 'var(--good)', sent: 'var(--good)', late: 'var(--bad)', reason: 'var(--bad)', waiting: 'var(--warnMark)', notready: 'var(--warnMark)' };
+  let h = '<div class="toolbar"><div class="r1"><label class="sel">Looked after by <select id="grOwner">' +
+    (d.groups.some(g => g.own) ? opt('mine', 'Mine (' + d.groups.filter(g => g.own).length + ')', FILT.owner === 'mine') : '') + opt('all', 'Everyone (' + d.groups.length + ')', FILT.owner === 'all') +
+    owners.map(o => opt(o, o + ' (' + d.groups.filter(g => g.assigned === o).length + ')', FILT.owner === o)).join('') + '</select></label>' +
+    '<div class="count">Showing <b>' + shown.length + '</b> of ' + byOwner.length + '</div></div>' +
+    '<div class="seg" role="group" aria-label="Where they stand">' + STATUS.map(([k, l]) => '<button class="fbtn" type="button" data-fs="' + k + '" aria-pressed="' + (FILT.status === k) + '">' +
+      (MARK[k] ? '<i style="background:' + MARK[k] + '"></i>' : '') + esc(l) + '<span class="n">' + byOwner.filter(g => statusOf(g, k)).length + '</span></button>').join('') + '</div></div>';
   h += '<h2>' + (FILT.owner === 'mine' ? 'Your groups' : FILT.owner === 'all' ? 'Every group' : esc(FILT.owner) + '’s groups') + ' <span class="muted small">' + shown.length + ' · ' + due + ' to approve for ' + esc(d.nextSend || 'Monday') + '</span></h2>';
   h += shown.length ? '<div class="cards">' + shown.map(groupCard).join('') + '</div>' : '<p class="muted">No group matches these filters.</p>';
   h += '<h2>What we’ve done today <span class="muted small">' + today.length + '</span></h2>' + (today.length
     ? '<ul class="feed">' + today.map(x => '<li><b>' + esc(x.group) + '</b>: ' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + (x.by ? ' · ' + esc(x.by) : '') + '</span></li>').join('') + '</ul>'
     : '<p class="muted">Nothing completed on these groups in Salesforce yet today.</p>');
   return h;
+}
+
+/* ---- every account, and sending from the page (14 October 2026: "the team dashboard so staff can view all the
+   accounts and owners and they can also have the ability to resend or send") ---- */
+let ACC = { owner: 'all', show: 'all', q: '', sort: 'urgent' };
+try { const a = JSON.parse(localStorage.getItem('rrb-gcm-acc') || 'null'); if (a) ACC = Object.assign(ACC, a, { q: '' }); } catch (e) {}
+function saveAcc() { try { localStorage.setItem('rrb-gcm-acc', JSON.stringify({ owner: ACC.owner, show: ACC.show, sort: ACC.sort })); } catch (e) {} }
+const shortAt = x => String(x || '').replace(/ \d{4}(,|$)/, '$1');
+const dayOf = x => shortAt(x).replace(/,.*$/, '');   // "13 Oct": the label says the day, the line under it the time
+const initials = n => String(n || '?').split(/[\s-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?';
+const starsOf = n => n ? '<span class="stars2" aria-label="' + n + ' of 5 stars">' + '★'.repeat(n) + '<i>' + '★'.repeat(5 - n) + '</i></span>' : '';
+function hello(d) {
+  const words = String(d.me || '').trim().split(/\s+/), person = words.length >= 2 && words.length <= 4 && !/team|desk|support|branch|manager|office/i.test(d.me);
+  const name = person ? words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase() : d.me;
+  const hr = new Date().getHours(), part = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  const mine = d.groups.filter(g => d.role === 'staff' ? g.own : true);
+  const due = mine.filter(g => g.stats.week === 'due' && g.stats.ready).length, wel = mine.filter(g => g.canAct && !g.account.welcome && !g.account.welcomeWhy).length;
+  const ans = mine.filter(g => g.stats.lastResponse).length;
+  const pill = (n, label, cls) => '<span class="pill' + (cls ? ' ' + cls : '') + '"><b>' + n + '</b> ' + esc(label) + '</span>';
+  return '<h1>' + part + (name ? ', ' + esc(name) : '') + '.</h1><div class="pills">' + pill(mine.length, d.role === 'staff' ? 'groups you look after' : 'groups in the branch') +
+    pill(due, 'to approve for ' + (d.nextSend || 'Monday'), due ? 'hot' : 'ok') + pill(wel, 'to welcome', wel ? 'hot' : 'ok') + pill(ans, 'have answered us') + '</div>';
+}
+/* each filter's mark: the colour of the state it finds, always beside its words */
+const ACC_SHOW = [['all', 'All', ''], ['due', 'Letter to approve', 'var(--bad)'], ['welcome', 'Welcome to send', 'var(--info)'], ['sent', 'A letter has gone', 'var(--good)'],
+  ['answered', 'Answered us', 'var(--good)'], ['setup', 'Needs set-up', 'var(--warnMark)']];
+function accShow(g, k) {
+  const a = g.account, s = g.stats;
+  return k === 'all' || (k === 'welcome' && !a.welcome && !a.welcomeWhy) || (k === 'due' && s.week === 'due' && s.ready) || (k === 'sent' && !!a.last) ||
+    (k === 'answered' && !!a.answer) || (k === 'setup' && !!(a.mailWhy || !s.ready || !g.assigned || !g.ownerActive));
+}
+/* the row's rail: red when something is due from us, amber when the account needs setting up, green when the week is done */
+function rowState(g) {
+  const a = g.account, s = g.stats;
+  if (a.mailWhy || !s.ready || !g.assigned || !g.ownerActive) return 'warn';
+  if ((s.week === 'due') || s.late) return 'bad';
+  if (a.welcome && s.week !== 'due') return 'good';
+  return 'info';
+}
+const ACC_SORT = [['urgent', 'Most pressing first'], ['name', 'Group, A to Z'], ['owner', 'Who looks after it'], ['answer', 'Answered most recently']];
+function accountsHtml(d) {
+  const all = d.groups, n = all.length, cnt = f => all.filter(f).length;
+  const meter = (v, label) => '<div class="meter' + (n && v === n ? ' done' : '') + '"><div class="top"><b>' + v + ' <small>of ' + n + '</small></b><span class="pct">' + (n ? Math.round(100 * v / n) : 0) + '%</span></div><div class="small" style="margin-top:2px">' + esc(label) +
+    '</div><div class="track" role="img" aria-label="' + esc(label + ': ' + v + ' of ' + n) + '"><div class="fill" style="width:' + (n ? Math.round(100 * v / n) : 0) + '%"></div></div></div>';
+  let h = '<h2 style="margin-top:22px">Every account <span class="muted small">who looks after it, who the letters go to, and what has gone</span></h2>' +
+    '<div class="meters">' + meter(cnt(g => g.account.welcome), 'welcomed with the film') + meter(cnt(g => g.stats.week !== 'due'), 'approved or sent for ' + (d.nextSend || 'Monday')) +
+    meter(cnt(g => g.account.answer), 'have answered us on their page') + meter(cnt(g => g.assigned && g.ownerActive && !g.account.mailWhy && g.stats.ready), 'ready: owner, contact, list bill and code') + '</div>';
+  const owners = [...new Set(all.map(g => g.assigned).filter(Boolean))].sort();
+  if (ACC.owner !== 'all' && ACC.owner !== 'mine' && owners.indexOf(ACC.owner) < 0) ACC.owner = 'all';
+  const byOwner = all.filter(g => ACC.owner === 'all' || (ACC.owner === 'mine' && g.own) || g.assigned === ACC.owner);
+  const q = ACC.q.trim().toLowerCase(), shown = byOwner.filter(g => accShow(g, ACC.show) && (!q || (g.name + ' ' + (g.assigned || '') + ' ' + (g.account.contact || '') + ' ' + g.account.to.join(' ') + ' ' + g.bills.join(' ')).toLowerCase().indexOf(q) >= 0));
+  const by = { name: (x, y) => x.name.localeCompare(y.name), owner: (x, y) => (x.assigned || '~').localeCompare(y.assigned || '~') || x.name.localeCompare(y.name),
+    answer: (x, y) => ((y.account.answer || {}).when || '').localeCompare((x.account.answer || {}).when || '') || x.name.localeCompare(y.name) }[ACC.sort];
+  if (by) shown.sort(by);
+  const opt = (v, label, on) => '<option value="' + esc(v) + '"' + (on ? ' selected' : '') + '>' + esc(label) + '</option>';
+  const busy = ACC.owner !== 'all' || ACC.show !== 'all' || q;
+  h += '<div class="toolbar" role="search"><div class="r1">' +
+    '<div class="sfield"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="accQ" type="search" placeholder="Find a group, owner, contact or list bill" aria-label="Find a group, owner, contact or list bill" value="' + esc(ACC.q) + '"></div>' +
+    '<label class="sel">Looked after by <select id="accOwner">' + opt('all', 'Everyone (' + n + ')', ACC.owner === 'all') + (all.some(g => g.own) ? opt('mine', 'Mine (' + all.filter(g => g.own).length + ')', ACC.owner === 'mine') : '') +
+      owners.map(o => opt(o, o + ' (' + all.filter(g => g.assigned === o).length + ')', ACC.owner === o)).join('') + '</select></label>' +
+    '<label class="sel">Order <select id="accSort">' + ACC_SORT.map(([k, l]) => opt(k, l, ACC.sort === k)).join('') + '</select></label>' +
+    '<div class="count" aria-live="polite">Showing <b>' + shown.length + '</b> of ' + n + (busy ? '<button type="button" id="accClr">Clear filters</button>' : '') + '</div></div>' +
+    '<div class="seg" role="group" aria-label="Where they stand">' + ACC_SHOW.map(([k, l, c]) => '<button class="fbtn" type="button" data-as="' + k + '" aria-pressed="' + (ACC.show === k) + '">' + (c ? '<i style="background:' + c + '"></i>' : '') +
+      esc(l) + '<span class="n">' + byOwner.filter(g => accShow(g, k)).length + '</span></button>').join('') + '</div></div>';
+  h += '<div class="acctable"><div class="acc head" aria-hidden="true"><div>Group</div><div>Looked after by</div><div>Letters go to</div><div>Welcome</div><div>This week’s letter</div><div>Last answer</div><div style="text-align:right">Send</div></div>' +
+    (shown.length ? shown.map(accRow).join('') : '<p class="muted" style="padding:16px">No account matches. <button class="btn ghost sm" type="button" id="accClr2">Clear filters</button></p>') + '</div>' +
+    '<div class="key2" aria-hidden="true"><span><i style="background:var(--bad)"></i>something is due from us</span><span><i style="background:var(--warnMark)"></i>needs setting up</span><span><i style="background:var(--info)"></i>in hand</span><span><i style="background:var(--good)"></i>welcomed, and this week’s letter approved or sent</span></div>';
+  return h;
+}
+function accRow(g) {
+  const a = g.account, s = g.stats, first = (g.assigned || '').split(' ')[0];
+  const L = t => '<span class="lbl">' + t + '</span>';
+  const owner = '<div class="who2"><span class="av" aria-hidden="true">' + esc(initials(g.assigned)) + '</span><div style="min-width:0">' + esc(g.assigned || 'No owner') + (g.own ? '<span class="you">you</span>' : '') +
+    (g.assigned && !g.ownerActive ? '<div><span class="chip bad"><i></i>inactive in Salesforce</span></div>' : '') + '</div></div>';
+  const to = a.to.length ? '<div>' + esc(a.contact || 'Contact') + '</div><div class="sub">' + esc(a.to.join(', ')) + '</div>' + (a.personal ? '<span class="chip warn"><i></i>personal mailbox</span>' : '') +
+    (a.mailWhy && a.to.length ? '<span class="chip bad"><i></i>our own address</span>' : '') : '<span class="chip bad"><i></i>No contact e-mail</span><div class="sub">Give the account a Contact Person in Salesforce</div>';
+  const wel = a.welcome ? '<span class="chip good"><i></i>Welcomed ' + esc(dayOf(a.welcome.at)) + '</span><div class="sub">' + esc((shortAt(a.welcome.at).split(', ')[1] || '')) + ' · ' + esc(a.welcome.by) + (a.welcome.again ? ' · sent again' : '') + '</div>'
+    : a.welcomeWhy ? '<span class="chip warn"><i></i>Not yet</span><div class="sub">' + esc(a.welcomeWhy) + '</div>' : '<span class="chip"><i style="background:#9aa5b1"></i>Not sent yet</span>';
+  const wk = (s.week === 'queued' ? '<span class="chip good"><i></i>Approved</span><div class="sub">goes ' + esc(s.approved.for) + ' · ' + esc(s.approved.by) + '</div>'
+    : s.week === 'sent' ? '<span class="chip good"><i></i>Sent ' + esc(dayOf(s.sentThisWeek)) + '</span><div class="sub">' + esc(shortAt(s.sentThisWeek).split(', ')[1] || '') + (a.last ? ' · ' + esc(a.last.by) : '') + '</div>'
+    : !s.ready ? '<span class="chip warn"><i></i>Not ready</span><div class="sub">' + esc(s.why) + '</div>'
+    : '<span class="chip bad"><i></i>To approve</span><div class="sub">for ' + esc(s.nextSendLabel) + '</div>') +
+    (a.resent ? '<div class="sub">last sent again ' + esc(shortAt(a.resent.at)) + '</div>' : '');
+  const ans = a.answer ? '<div>' + esc(shortAt(a.answer.at).replace(/,.*$/, '')) + '</div>' + starsOf(a.answer.rating) + '<div class="sub">' + esc(a.answer.name) + '</div>' : '<span class="muted small">None yet</span>';
+  let acts = '';
+  if (g.canAct) {
+    if (!a.welcomeWhy) acts += '<button class="btn ' + (a.welcome ? 'ghost' : '') + '" type="button" data-act="welcome" data-k="' + esc(g.key) + '">' + (a.welcome ? 'Resend welcome' : 'Send welcome') + '</button>';
+    if (s.ready && !a.mailWhy) acts += '<button class="btn ' + (s.week === 'due' ? '' : 'ghost') + '" type="button" data-act="letter" data-k="' + esc(g.key) + '">' + (s.week === 'due' ? 'Check and send' : 'Send letter') + '</button>';
+    if (a.last && a.last.again && !a.mailWhy) acts += '<button class="btn ghost" type="button" data-act="again" data-k="' + esc(g.key) + '">Resend last letter</button>';
+  }
+  acts += '<button class="btn ghost" type="button" data-g="' + esc(g.key) + '">Open</button>';
+  return '<div class="acc r-' + rowState(g) + '"><div>' + L('Group') + '<button class="gname" type="button" data-g="' + esc(g.key) + '">' + esc(g.name) + '</button><div class="sub">List bill ' + esc(g.bills.join(', ') || 'none') +
+    ' · ' + s.open + ' open' + (s.late ? ' · <b style="color:var(--badText)">' + s.late + ' past target</b>' : '') + '</div></div>' +
+    '<div>' + L('Looked after by') + owner + '</div><div>' + L('Letters go to') + to + '</div><div>' + L('Welcome') + wel + '</div><div>' + L('This week’s letter') + wk + '</div><div>' + L('Last answer') + ans + '</div>' +
+    '<div class="acts">' + acts + (g.canAct ? '' : '<div class="sub" style="width:100%;text-align:right">' + esc(first || 'Its owner') + ', the assistant branch manager or the branch manager sends</div>') + '</div></div>';
+}
+function bindAccounts(root) {
+  root.querySelectorAll('[data-ao]').forEach(b => b.onclick = () => { ACC.owner = b.dataset.ao; saveAcc(); render(); });
+  const os = root.querySelector('#accOwner'); if (os) os.onchange = () => { ACC.owner = os.value; saveAcc(); render(); };
+  const so = root.querySelector('#accSort'); if (so) so.onchange = () => { ACC.sort = so.value; saveAcc(); render(); };
+  ['accClr', 'accClr2'].forEach(id => { const c = root.querySelector('#' + id); if (c) c.onclick = () => { ACC.owner = 'all'; ACC.show = 'all'; ACC.q = ''; saveAcc(); render(); }; });
+  root.querySelectorAll('[data-as]').forEach(b => b.onclick = () => { ACC.show = b.dataset.as; saveAcc(); render(); });
+  const q = root.querySelector('#accQ');
+  if (q) q.oninput = () => { ACC.q = q.value; const pos = q.selectionStart; render(); const q2 = $('accQ'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) {} } };
+  root.querySelectorAll('[data-act]').forEach(b => b.onclick = () => openAct(b.dataset.act, b.dataset.k));
+}
+
+/* the send window: the e-mail exactly as it goes, who it goes to, the tick, and the button; then what happened */
+const dlg = $('dlg');
+$('dlgX').onclick = () => dlg.close();
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+function nameOf(key) { const g = (BOARD && BOARD.groups.find(x => x.key === key)) || (GROUP && GROUP.group.key === key ? GROUP.group : null); return g ? g.name : ''; }
+async function openAct(kind, key) {
+  const nm = nameOf(key), T = { welcome: 'The welcome, with the film', letter: 'This week’s letter', again: 'Send the last letter again' };
+  $('dlgT').textContent = T[kind] + ' · ' + nm;
+  $('dlgB').innerHTML = '<p class="muted" style="margin:30px 0;text-align:center">Writing it from Salesforce, exactly as it would go…</p>';
+  if (!dlg.open) dlg.showModal();
+  const r = await api(kind === 'welcome' ? { action: 'gcm.welcomePreview', group: key } : kind === 'again' ? { action: 'gcm.resendPreview', group: key } : { action: 'gcm.preview', group: key });
+  if (!r.ok) { $('dlgB').innerHTML = '<div class="note bad">' + esc(r.error || 'It could not be written.') + '</div><div class="row"><button class="btn ghost" type="button" onclick="dlg.close()">Close</button></div>'; return; }
+  const html = kind === 'letter' ? r.letter.html : r.html, subject = kind === 'letter' ? r.letter.subject : r.subject;
+  if (kind === 'welcome' && r.welcomed) $('dlgT').textContent = 'Resend the welcome · ' + nm;
+  let h = '<p class="to">To ' + (r.to && r.to.length ? toLine(r) : '<b>nobody</b>') + (r.copy && r.copy.length ? ' · hidden copy to ' + esc(r.copy.join(', ')) : '') + '<br>Subject <b>' + esc(subject) + '</b>' +
+    (kind === 'welcome' ? '<br>Signed by <b>' + esc(r.signer) + '</b>, with “Checked against our records by ' + esc(r.signer) + '”' : '') + '</p>';
+  if (r.personal && r.personal.length) h += '<div class="note">' + esc(r.personal.join(', ')) + ' is a personal mailbox. Make sure it is still the group’s contact.</div>';
+  if (kind === 'welcome' && r.welcomes && r.welcomes.length) h += '<p class="small muted">Welcomed before: ' + r.welcomes.map(w => esc(w.at) + ' by ' + esc(w.by)).join('; ') + '.</p>';
+  if (kind === 'again') h += '<p class="small muted">First went on <b>' + esc(r.first) + '</b> to ' + esc(r.firstTo) + ', ' + esc(r.firstBy) + '. It goes again exactly as it went, with a line on top saying so.</p>';
+  if (kind === 'letter' && r.approved) h += '<p class="small"><span class="chip good"><i></i>Approved by ' + esc(r.approved.by) + '</span> It goes ' + esc(r.approved.for) + ' by itself. Send now only if the group needs it today.</p>';
+  h += '<iframe title="The e-mail as it goes" sandbox=""></iframe>';
+  const ready = kind === 'letter' ? r.ready : r.ready;
+  if (r.canAct === false) h += '<div class="note">Read only: this group is looked after by a colleague.</div>';
+  else if (!ready) h += '<div class="note bad">Cannot go yet: ' + esc(r.why || '') + '.</div>' + (kind === 'letter' ? '<div class="row"><button class="btn" type="button" data-open="' + esc(key) + '">Open the group to put it right</button></div>' : '');
+  else {
+    const tick = kind === 'welcome' ? 'I have checked the contact and this account: the welcome goes signed by me' : kind === 'again' ? 'I have checked who it goes to' : 'I have checked every item against Salesforce and the latest billing';
+    h += '<label class="toggle" style="margin:14px 0 4px"><input type="checkbox" id="dlgCk"> ' + esc(tick) + '</label><div class="row">' +
+      (kind === 'welcome' ? '<button class="btn" type="button" id="dlgGo" disabled>' + (r.welcomed ? 'Resend the welcome' : 'Send the welcome') + '</button>' :
+       kind === 'again' ? '<button class="btn" type="button" id="dlgGo" disabled>Send it again</button>' :
+       (r.week === 'due' ? '<button class="btn" type="button" id="dlgAp" disabled>Approve for ' + esc(r.nextSend) + '</button>' : '') + '<button class="btn ' + (r.week === 'due' ? 'ghost' : '') + '" type="button" id="dlgGo" disabled>Send now</button>') +
+      '<button class="btn ghost" type="button" onclick="dlg.close()">Cancel</button></div>' +
+      '<p class="small muted" style="margin-top:8px">' + (kind === 'letter' ? 'It goes from support@, written again from Salesforce the moment you press. Send now closes any approval for Monday.' : 'It goes from support@ and is logged on the account with your name.') + '</p>';
+  }
+  $('dlgB').innerHTML = h;
+  $('dlgB').querySelector('iframe').srcdoc = html;
+  $('dlgB').querySelectorAll('[data-open]').forEach(b => b.onclick = () => { dlg.close(); openGroup(b.dataset.open); });
+  const ck = $('dlgCk'); if (!ck) return;
+  ck.onchange = () => ['dlgGo', 'dlgAp'].map($).filter(Boolean).forEach(b => { b.disabled = !ck.checked; });
+  $('dlgGo').onclick = () => doAct(kind, key, r, false);
+  if ($('dlgAp')) $('dlgAp').onclick = () => doAct(kind, key, r, true);
+}
+async function doAct(kind, key, pv, approveOnly) {
+  ['dlgGo', 'dlgAp'].map($).filter(Boolean).forEach(b => { b.disabled = true; });
+  const go = $('dlgGo'); if (go && !approveOnly) go.textContent = 'Sending…';
+  const r = kind === 'welcome' ? await post({ action: 'gcm.welcome', group: key, checked: true, again: !!pv.welcomed })
+    : kind === 'again' ? await post({ action: 'gcm.resend', group: key, checked: true })
+    : approveOnly ? await post({ action: 'gcm.approve', group: key, intro: pv.intro || '', checked: true })
+    : await post({ action: 'gcm.send', group: key, intro: pv.intro || '', checked: true });
+  if (!r.ok) { toast(r.error || 'It did not go', true); ['dlgGo', 'dlgAp'].map($).filter(Boolean).forEach(b => { b.disabled = false; }); if (go) go.textContent = kind === 'again' ? 'Send it again' : kind === 'welcome' ? (pv.welcomed ? 'Resend the welcome' : 'Send the welcome') : 'Send now'; return; }
+  const who = (pv.contact ? pv.contact + ' at ' : '') + (pv.to || []).join(', ');
+  const head = approveOnly ? 'Approved for ' + r.for : kind === 'welcome' ? (r.again ? 'The welcome went again' : 'Welcome sent') : kind === 'again' ? 'Sent again' : 'Letter sent';
+  const line = approveOnly ? 'It is written again from Salesforce and goes by itself ' + esc(r.for) + '. A new item before then holds it for you.' + (r.welcome ? ' Their welcome, with the film, goes within the hour, signed by you.' : '')
+    : 'To ' + esc(who) + ', ' + esc(r.at) + ', from support@. Logged on the account with your name.';
+  $('dlgB').innerHTML = '<div class="done2" role="status"><div class="tick" aria-hidden="true">✓</div><h4>' + esc(head) + '</h4><p>' + line + '</p><div class="row" style="justify-content:center"><button class="btn" type="button" id="dlgOk">Done</button></div></div>';
+  $('dlgOk').onclick = () => dlg.close();
+  $('dlgOk').focus();
+  const d = await api({ action: 'gcm.board' }); if (d.ok) BOARD = d;
+  if (VIEW === 'group' && GROUP && GROUP.group.key === key) openGroup(key); else render();
 }
 
 /* ---- the manager's dashboard ---- */
@@ -329,7 +607,7 @@ function oppsHtml(list, withGroup) {
 function dash(a) {
   if (!a) return '';
   const t = a.totals;
-  let h = '<p class="small muted" style="margin:10px 0 0">The whole team’s work. Tap a tile, a person or a group to open the groups behind it.</p><div class="tiles">' +
+  let h = '<h2>The team’s work</h2><p class="small muted" style="margin:0">Tap a tile, a person or a group to open the groups behind it.</p><div class="tiles">' +
     '<button class="tile" type="button" data-fs="all" data-fo2="all"><b>' + t.groups + '</b><span>groups</span></button>' +
     '<button class="tile' + (t.dueWeek ? ' alert' : '') + '" type="button" data-fs="due" data-fo2="all"><b>' + (t.queuedWeek || 0) + ' / ' + ((t.queuedWeek || 0) + t.dueWeek) + '</b><span>approved for ' + esc(t.nextSend || 'Monday') + '</span></button>' +
     '<button class="tile" type="button" data-fs="sent" data-fo2="all"><b>' + t.sentWeek + '</b><span>letters sent this week</span></button>' +
@@ -391,12 +669,14 @@ async function openGroup(key) {
 }
 function drawGroup() {
   const d = GROUP, g = d.group, s = d.stats;
+  $('mhello').innerHTML = '';
   let h = '<button class="back" type="button" id="bk">← All groups</button><h2 style="margin-top:8px">' + esc(g.name) + '</h2>' +
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') + (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') +
     (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') + '</div>' +
     '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
     (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
+    accountBar(d) +
     (d.canAct === false ? '<div class="note">Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>. You can read everything here and leave a comment for the team on any item; approving the letter and anything the group sees is for ' + esc(g.assigned ? g.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' : '') +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
     '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
@@ -409,10 +689,12 @@ function drawGroup() {
     '<h3 style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">Open items <span class="muted small">' + d.items.length + ' · tick what the group sees; share the Chatter comments they should read</span>' + (d.items.length ? '<button class="btn ghost sm" type="button" id="histAll" style="margin-left:auto">Show all history</button>' : '') + '</h3><div class="items">' + d.items.map(itemHtml).join('') + (d.items.length ? '' : '<p class="muted">Nothing open.</p>') + '</div>' +
     '<h3>Completed in the last seven days</h3>' + (d.doneWeek.length ? '<ul class="feed">' + d.doneWeek.map(x => '<li>' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + ' · ' + esc(x.by) + ' · ' + esc(dmy(x.done)) + (x.shown ? '' : ' · not shown to the group') + '</span></li>').join('') + '</ul>' : '<p class="muted">Nothing completed this week.</p>') +
     yearHtml(d) +
-    '<h3>Letters sent</h3>' + (d.sends.length ? '<ul class="feed">' + d.sends.map(x => '<li>' + esc(x.at) + ' · ' + esc(x.staff) + ' · ' + x.items + ' items · ' + esc(x.status) + ' <span class="muted small">(' + esc(x.via) + ')</span></li>').join('') + '</ul>' : '<p class="muted">None yet.</p>') +
+    '<h3>What went to the group</h3>' + (d.sends.length ? '<ul class="feed">' + d.sends.map(x => '<li><span class="chip' + (/^failed/i.test(x.status) ? ' bad' : x.kind === 'welcome' ? ' good' : '') + '">' + ({ welcome: 'Welcome', again: 'Sent again', letter: 'Weekly letter' }[x.kind] || 'Letter') + '</span> ' +
+      esc(x.at) + ' · ' + esc(x.staff) + (x.kind === 'letter' ? ' · ' + x.items + ' items' : '') + (x.to ? ' · to ' + esc(x.to) : '') + (/^failed/i.test(x.status) ? ' · <b style="color:var(--badText)">' + esc(x.status) + '</b>' : '') + '</li>').join('') + '</ul>' : '<p class="muted">Nothing yet.</p>') +
     '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
   $('app').innerHTML = h;
   $('bk').onclick = render;
+  $('app').querySelectorAll('[data-act]').forEach(b => b.onclick = () => openAct(b.dataset.act, b.dataset.k));
   $('pv').onclick = preview;
   if ($('unap')) $('unap').onclick = async () => { const r = await post({ action: 'gcm.unapprove', group: GROUP.group.key }); if (!r.ok) return toast(r.error || 'Not cancelled', true); toast('Approval cancelled. Nothing goes on Monday until you approve again.'); openGroup(GROUP.group.key); };
   const ha = $('histAll');
@@ -430,6 +712,23 @@ function drawGroup() {
     toast('Draft ready. Read it, change anything that is not right, then press Post. Nothing is shared until you do.');
   });
   window.scrollTo(0, 0);
+}
+/* the top of a group: its welcome, its last letter, and the buttons to send them */
+function accountBar(d) {
+  const a = d.account, s = d.stats;
+  if (!a) return '';
+  let h = '<div class="drawer" style="padding:12px 16px;margin:12px 0;box-shadow:var(--shadow)"><div style="display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center">' +
+    '<div><span class="small muted">Welcome</span><br>' + (a.welcome ? '<span class="chip good"><i></i>Sent ' + esc(shortAt(a.welcome.at)) + ' · ' + esc(a.welcome.by) + '</span>' : a.welcomeWhy ? '<span class="chip warn"><i></i>Not yet: ' + esc(a.welcomeWhy) + '</span>' : '<span class="chip"><i style="background:#9aa5b1"></i>Not sent yet</span>') + '</div>' +
+    '<div><span class="small muted">Last letter</span><br>' + (a.last ? '<span class="chip"><i style="background:var(--bar)"></i>' + esc(shortAt(a.last.at)) + ' · ' + esc(a.last.by) + '</span>' : '<span class="chip"><i style="background:#9aa5b1"></i>None yet</span>') + '</div>' +
+    '<div><span class="small muted">Last answer</span><br>' + (a.answer ? '<span class="chip"><i style="background:var(--good)"></i>' + esc(shortAt(a.answer.at)) + ' · ' + esc(a.answer.name) + '</span> ' + starsOf(a.answer.rating) : '<span class="chip"><i style="background:#9aa5b1"></i>None yet</span>') + '</div>';
+  if (d.canAct !== false) {
+    h += '<div class="acts" style="margin-left:auto">';
+    if (!a.welcomeWhy) h += '<button class="btn ' + (a.welcome ? 'ghost' : '') + '" type="button" data-act="welcome" data-k="' + esc(d.group.key) + '">' + (a.welcome ? 'Resend the welcome' : 'Send the welcome') + '</button>';
+    if (s.ready && !a.mailWhy) h += '<button class="btn ghost" type="button" data-act="letter" data-k="' + esc(d.group.key) + '">Send this week’s letter</button>';
+    if (a.last && a.last.again && !a.mailWhy) h += '<button class="btn ghost" type="button" data-act="again" data-k="' + esc(d.group.key) + '">Resend the last letter</button>';
+    h += '</div>';
+  }
+  return h + '</div></div>';
 }
 function itemHtml(it) {
   const cls = it.late ? ' late' : /waiting/i.test(it.status) ? ' wait' : '';
@@ -499,7 +798,7 @@ async function preview() {
      r.ready ? '<label class="toggle" style="margin:12px 0"><input type="checkbox" id="ck"> I have checked every item against Salesforce and the latest billing</label><div style="display:flex;gap:8px;flex-wrap:wrap">' +
       '<button class="btn gold" type="button" id="ap" disabled>Approve for ' + esc(r.nextSend) + '</button>' +
       (r.canSendNow ? (r.mail ? '<button class="btn ghost" type="button" id="sd" disabled>Send now instead</button>' : '') + '<button class="btn ghost" type="button" id="ol" disabled>Open in Outlook instead</button>' : '') + '</div>' +
-      '<p class="small muted" style="margin-top:8px">At ' + esc(r.nextSend) + ' the letter is written again from Salesforce and sent from support@. If a new item appears after you approve, it waits and you are told by e-mail.' + (r.canSendNow ? ' Send now is for the branch manager only.' : '') + '</p>'
+      '<p class="small muted" style="margin-top:8px">At ' + esc(r.nextSend) + ' the letter is written again from Salesforce and sent from support@. If a new item appears after you approve, it waits and you are told by e-mail. Send now goes at once and closes the approval.</p>'
       : '<div class="note bad">Cannot approve yet: ' + esc(r.why) + '.</div>');
   box.querySelector('iframe').srcdoc = r.letter.html;
   const ck = $('ck'); if (!ck) return;

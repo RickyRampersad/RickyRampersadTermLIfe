@@ -2773,8 +2773,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   afterwards, so a missed 10:00 firing goes at 11:00, and a group approved
   again after ten on a Monday goes that hour. An approval made after Monday
   10:00 is for the next Monday. Approving again replaces the earlier one, and
-  "Cancel the approval" withdraws it. Only the branch manager can still send at
-  once ("Send now instead", or Outlook); doing so closes that group's approval.
+  "Cancel the approval" withdraws it. Whoever looks after the group, the deputy
+  and the branch manager can still send at once ("Send now", or Outlook; until
+  14 October 2026 the branch manager alone); doing so closes that group's approval.
   The group is asked to answer by Friday. Every letter is logged on `Group
   Sends` with the letter itself. `gcmlive/queue-test.js` in the session
   scratchpad covers it (26 checks).
@@ -2919,6 +2920,35 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     months against the three before, tap to open, and every opportunity with its group and owner).
   - The charts are one series in the action blue, with the value on every column and the same numbers in a table.
   - `year/year-test.js` (32 checks) and `year/page-shot.js` (12, Playwright) in the session scratchpad cover it.
+- **Every account on the team dashboard, and send or resend from the page** (14 October 2026: "the team dashboard so
+  staff can view all the accounts and owners and they can also have the ability to resend or send … this has to pop
+  and be a wow experience for the staff, client", then "a much more professional look, filters and scaling and colors
+  for visibility").
+  - **Every account** opens the Team dashboard (`accountsHtml`): four meters (welcomed, approved or sent for Monday,
+    answered, ready), one toolbar (a search over group, owner, contact and list bill; who looks after it; the order;
+    where it stands, each with its mark; "Showing N of M" and Clear filters), then one row an account: the owner, who
+    the letters go to (a personal mailbox marked), the welcome, this week's letter, the last answer with its stars, and
+    the buttons. A coloured rail says where the row stands, with a key under the table: red, something is due from
+    us; amber, it needs setting up; green, welcomed and this week's letter approved or sent. Every state is a word as
+    well as a colour. `gcmAccount_` in `gcmBoard_` is the row's data. The Groups tab takes the same toolbar, and the
+    greeting and the week's numbers sit in the masthead.
+  - **The send window** (`openAct`): the e-mail exactly as it goes, who it goes to and from where, who signs it, a
+    tick, the button; then a tick mark naming who it went to and when. Three things go from it, for whoever looks
+    after the group, the deputy and the branch manager (a colleague's group stays read only):
+    - this week's letter: Approve for Monday or Send now (`gcmSend_`, no longer the branch manager's alone; the same
+      checks as an approval; the opening line of a waiting approval is kept);
+    - the last letter again (`gcmResend_`), exactly as it went, under a line saying when it first went, to the
+      contact as Salesforce has it now. Group Sends keeps each letter's HTML in a new **Html** column (`gcmSheet_` adds
+      it to an older tab by name, once); a letter sent before 14 October has none and is sent fresh instead. Logged as
+      `resent: …`, never counted as the week's letter;
+    - the welcome, or the welcome again (`gcmWelcomeSend_`), signed by the person who ticks and sends it, logged as
+      `welcome sent` or `welcome resent`.
+    Nothing goes to one group twice inside ten minutes (`gcmJustSent_`), and every send is a row with who pressed it.
+  - **A group's own page** opens on who looks after them, the film, when their next letter comes and when they last
+    answered; the year in four tiles; the three answers with their own marks; a progress track; and a thank-you that
+    names them and says what happens next.
+  - `wow/actions-test.js` (31 checks), `wow/after.js` (24, Playwright) and `wow/showcase.js` (screenshots) in the
+    session scratchpad cover it, on the made-up branch.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 

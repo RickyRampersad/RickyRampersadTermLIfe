@@ -101,7 +101,7 @@ var GCM_HEAD = {
   'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Owner in Salesforce', 'Owner active', 'Owner e-mail',
                       'Contact in Salesforce', 'Contact e-mail', 'Contact greeting', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
   'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private', 'History', 'Mails'],
-  'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status'],
+  'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status', 'Html'],
   'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter'],
   'Group Shares':    ['When', 'Group', 'Task Id', 'Kind', 'Value', 'By'],
   'Group Queue':     ['When', 'Group', 'Staff', 'Role', 'Staff e-mail', 'For', 'Task Ids', 'Intro', 'Status', 'Sent at']
@@ -133,6 +133,8 @@ function gcmDoGet_(p) {
       case 'gcm.board':   return gcmBoard_(p);
       case 'gcm.group':   return gcmGroupView_(p);
       case 'gcm.preview': return gcmPreview_(p);
+      case 'gcm.welcomePreview': return gcmWelcomePreview_(p);
+      case 'gcm.resendPreview':  return gcmResendPreview_(p);
       case 'gcm.refresh': return gcmRefreshAsked_(p);
       case 'gcm.client':  return gcmClient_(p);
       case 'gcm.wall':    return gcmWall_(p);
@@ -149,6 +151,8 @@ function gcmDoPost_(b) {
   try {
     switch (String(b.action || '')) {
       case 'gcm.send':   return gcmSend_(b);
+      case 'gcm.resend': return gcmResend_(b);
+      case 'gcm.welcome': return gcmWelcomeSend_(b);
       case 'gcm.approve':   return gcmApprove_(b);
       case 'gcm.unapprove': return gcmUnapprove_(b);
       case 'gcm.rehearse':  return gcmRehearse_(b);
@@ -215,6 +219,10 @@ function gcmSheet_(name) {
     sh = ss.insertSheet(name);
     sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
     sh.setFrozenRows(1);
+  } else if (sh.getLastColumn() < head.length) {
+    /* a column added since the tab was made (Html on Group Sends, 14 October 2026) goes on the end, by name, once */
+    var have = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(function (h) { return String(h).trim(); });
+    if (have.every(function (h, i) { return !h || h === head[i]; })) sh.getRange(1, have.length + 1, 1, head.length - have.length).setValues([head.slice(have.length)]).setFontWeight('bold');
   }
   return sh;
 }
@@ -676,7 +684,7 @@ function gcmFeed_(ids) {
 
 function gcmLoad_() {
   var reg = gcmRegister_(), byName = {};
-  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.sends = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
+  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.sends = []; g.resent = []; g.welcomes = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
   gcmRows_(GCM.QUEUE).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
     if (g) g.queue.push({ _n: r._n, at: gcmWhen_(r.When), when: gcmYmd_(r.When), staff: gcmText_(r.Staff), role: gcmText_(r.Role), email: gcmText_(r['Staff e-mail']),
@@ -693,9 +701,14 @@ function gcmLoad_() {
   });
   gcmRows_(GCM.SENDS).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
-    /* the welcome is logged here too, but it is not a weekly letter: it never counts as this week's */
-    if (g && /^welcome/i.test(gcmText_(r.Status))) { g.welcomed = gcmWhen_(r.When); return; }
-    if (g) g.sends.push({ when: gcmYmd_(r.When), at: gcmWhen_(r.When), staff: gcmText_(r.Staff), subject: gcmText_(r.Subject), items: Number(r.Items) || 0, via: gcmText_(r.Via), status: gcmText_(r.Status) });
+    if (!g) return;
+    var st = gcmText_(r.Status), x = { when: gcmYmd_(r.When), at: gcmWhen_(r.When), ts: r.When instanceof Date ? r.When.getTime() : 0, staff: gcmText_(r.Staff), to: gcmText_(r.To), subject: gcmText_(r.Subject),
+      items: Number(r.Items) || 0, via: gcmText_(r.Via), status: st, html: gcmText_(r.Html), text: gcmText_(r.Letter) };
+    /* the welcome and a letter sent again are logged here too, but neither is a weekly letter: neither counts as this week's */
+    if (/^welcome/i.test(st)) { g.welcomed = x.at; g.welcomes.push(x); return; }
+    if (/^resent/i.test(st)) { g.resent.push(x); return; }
+    if (/welcome|resend/i.test(st)) return;   // one that failed is on the tab, and the summary e-mail named it
+    g.sends.push(x);
   });
   gcmRows_(GCM.RESPONSES).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
@@ -904,12 +917,13 @@ function gcmBoard_(p) {
   var groups = L.reg.map(function (g) {
     var s = gcmGroupStats_(g, today);
     return { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, stats: s, own: gcmOwn_(who, g), canAct: gcmMine_(who, g),
+      account: gcmAccount_(g, who, L),
       doneToday: g.tasks.filter(function (t) { return !t.open && t.done === today; }).map(function (t) { return { title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, by: t.owner }; }).slice(0, 12) };
   });
   var urgency = function (x) { return (x.stats.week === 'due' ? 1000 : 0) + x.stats.late * 10 + x.stats.waiting * 5 + Math.min(x.stats.oldest, 99) / 100; };
   groups.sort(function (a, b) { return urgency(b) - urgency(a); });
   var out = { ok: true, role: who.role, me: who.name, today: today, sendDay: GCM.SEND_DAY, dow: gcmDow_(today), refreshed: L.refreshed,
-    salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', groups: groups };
+    salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', welcomeOn: gcmWelcomeOn_(), groups: groups };
   if (who.role === 'branch' || who.role === 'deputy') out.tellFailed = gcmTellFailed_();
   out.analytics = gcmAnalytics_(L);
   return out;
@@ -1017,7 +1031,12 @@ function gcmGroupView_(p) {
     stats: gcmGroupStats_(g, today), items: items, record: gcmRecord_(g, today), year: gcmYear_(g, today, true),
     doneWeek: g.tasks.filter(function (t) { return !t.open && t.done >= weekAgo; }).map(function (t) {
       return { title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, by: t.owner, done: t.done, shown: gcmShown_(g, t) }; }),
-    sends: g.sends.slice(-10).reverse(), responses: g.resps.slice(-25).reverse() };
+    account: gcmAccount_(g, who, L),
+    /* every e-mail that went to the group, newest first: the weekly letters, the letters sent again, and the welcome */
+    sends: g.sends.concat(g.resent, g.welcomes).sort(function (a, b) { return (a.ts || 0) - (b.ts || 0) || (a.when < b.when ? -1 : 1); }).slice(-15).reverse()
+      .map(function (x) { return { at: x.at, staff: x.staff, to: x.to, items: x.items, via: x.via,
+        kind: /^welcome/i.test(x.status) ? 'welcome' : /^resent/i.test(x.status) ? 'again' : 'letter', status: x.status }; }),
+    responses: g.resps.slice(-25).reverse() };
 }
 
 /** A group's year, by category, counting only what the group may see. */
@@ -1283,10 +1302,13 @@ function gcmPreview_(p) {
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
   if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
-  var s = gcmGroupStats_(g, L.today), letter = gcmLetter_(g, L.today, gcmSigner_(who, g), String(p.intro || '').slice(0, 1200), { name: gcmVerName_(who.name, g), when: L.today });
+  /* from the send window, which has no box for it, the opening line of the approval waiting to go is kept */
+  var q = (g.queue || []).filter(function (x) { return x.status === 'queued' && x.for >= L.today; }).pop();
+  var intro = (p.intro === undefined || p.intro === null ? (q ? q.intro : '') : String(p.intro)).slice(0, 1200);
+  var s = gcmGroupStats_(g, L.today), letter = gcmLetter_(g, L.today, gcmSigner_(who, g), intro, { name: gcmVerName_(who.name, g), when: L.today });
   var need = gcmNeedReasons_(g, L.today);
   return { ok: true, letter: letter, to: g.to, cc: g.cc, toFrom: g.toFrom, contact: g.contact, personal: gcmPersonal_(g), copy: GCM.COPY, ready: s.ready && !need.length, why: s.why || gcmNeedSay_(need), needReason: need, mail: !!tMsCreds_(),
-    nextSend: s.nextSendLabel, approved: s.approved, canSendNow: who.role === 'branch', canAct: gcmMine_(who, g) };
+    nextSend: s.nextSendLabel, approved: s.approved, week: s.week, intro: intro, canSendNow: gcmMine_(who, g), canAct: gcmMine_(who, g) };
 }
 
 /** Send the week's letter, and log it. The letter is written here again from the sheet, never taken from the page.
@@ -1295,17 +1317,19 @@ function gcmPreview_(p) {
 function gcmSend_(b) {
   var who = gcmWho_(b);
   if (!who.ok) return who;
-  if (who.role !== 'branch') return { ok: false, error: 'Letters go out by themselves on ' + gcmSendLabel_(gcmNextSend_()) + ': approve this one for Monday. Only the branch manager sends a letter at once.' };
   if (!b.checked) return { ok: false, error: 'Tick that you have checked every item before it goes.' };
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(b.group)];
-  if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  if (!gcmMine_(who, g)) return gcmNotYours_(g);
+  var just = gcmJustSent_(g.sends);
+  if (just) return { ok: false, error: 'A letter went to this group ' + just + ': it is not sent twice in ten minutes.' };
   var s = gcmGroupStats_(g, L.today);
   if (!s.ready) return { ok: false, error: s.why + ': nothing was sent.' };
   var need = gcmNeedReasons_(g, L.today);
   if (need.length) return { ok: false, needReason: need, error: gcmNeedSay_(need) + ': nothing was sent.' };
   var letter = gcmLetter_(g, L.today, gcmSigner_(who, g), String(b.intro || '').slice(0, 1200), { name: gcmVerName_(who.name, g), when: L.today });
   var row = { When: new Date(), Group: g.name, Staff: who.name, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: letter.subject,
-    Items: letter.items.length, 'Task Ids': letter.items.join(' ').slice(0, 45000), Letter: letter.text.slice(0, 45000) };
+    Items: letter.items.length, 'Task Ids': letter.items.join(' ').slice(0, 45000), Letter: letter.text.slice(0, 45000), Html: gcmKeepHtml_(letter.html) };
   if (!tMsCreds_() || b.outlook) {
     row.Via = 'Outlook, by ' + who.name; row.Status = 'opened in Outlook';
     gcmAppend_(GCM.SENDS, [row]);
@@ -1323,6 +1347,149 @@ function gcmSend_(b) {
     gcmAppend_(GCM.SENDS, [row]);
     return { ok: false, error: row.Status };
   }
+}
+
+/* ── send, and send again, from the page ───────────────────────────
+ * Asked for on 14 October 2026: "the team dashboard so staff can view all the accounts and owners and they can also
+ * have the ability to resend or send". Whoever looks after a group, the deputy and the branch manager may, from the
+ * page: send this week's letter now (checked, as an approval is); send the last letter again, exactly as it went, to
+ * the contact as Salesforce has it today; and send or resend the welcome, signed by the person who checks it. A
+ * colleague's group stays read only (13 October 2026). Nothing goes twice to one group inside ten minutes, and every
+ * send is a row on Group Sends with who pressed it. */
+
+/** The letter's HTML as it is kept on Group Sends, to send it again exactly as it went: a cell holds 50,000 characters,
+ *  and a letter longer than that is kept as text only. */
+function gcmKeepHtml_(html) { html = String(html || ''); return html.length <= 49000 ? html : ''; }
+/** When something went to a group in the last ten minutes, as the page prints it; else ''. */
+function gcmJustSent_(list) {
+  var last = (list || []).filter(function (x) { return x.ts && !/failed/i.test(x.status) && Date.now() - x.ts < 10 * 60000; }).pop();
+  return last ? 'at ' + last.at : '';
+}
+/** The last weekly letter that went to the group and can be sent again exactly as it went. */
+function gcmLastLetter_(g) {
+  return g.sends.filter(function (x) { return !/failed|outlook/i.test(x.status); }).pop() || null;
+}
+/** Why a letter or a welcome cannot go to this group's contact at all, else ''. */
+function gcmCannotMail_(g) {
+  if (!g.to.length) return 'No Contact Person with an e-mail on the account in Salesforce';
+  if (g.to.some(function (a) { return /@(myguardiangroup\.com|rickyrampersadbranch\.com)$/i.test(a); })) return 'its contact is one of our own addresses (' + g.to.join(', ') + '): give the account its Contact Person in Salesforce';
+  return '';
+}
+/** The note above a letter sent again, so the group knows it is the same letter, and when it first went. */
+function gcmAgainBanner_(first, today) {
+  return '<div style="max-width:640px;margin:0 auto 10px;background:#EBF2FD;border:1px solid #B8CEF4;border-radius:8px;padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#142033">' +
+    '<b>Sent again on ' + tEsc_(tDmy_(today)) + '.</b> This is the letter that first went on ' + tEsc_(first) + '. Your service page always shows where things stand today.</div>';
+}
+
+function gcmResendPreview_(p) {
+  var who = gcmWho_(p);
+  if (!who.ok) return who;
+  var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  var last = gcmLastLetter_(g);
+  if (!last) return { ok: false, error: 'No letter has gone to this group yet: send this week’s letter instead.' };
+  if (!last.html) return { ok: false, error: 'The letter of ' + last.at + ' went before copies were kept to send again. Send this week’s letter now instead: it is written fresh from Salesforce.' };
+  var no = gcmCannotMail_(g);
+  return { ok: true, html: gcmAgainBanner_(last.at, L.today) + last.html, subject: last.subject, first: last.at, firstTo: last.to, firstBy: last.staff,
+    to: g.to, cc: g.cc, contact: g.contact, toFrom: g.toFrom, personal: gcmPersonal_(g), copy: GCM.COPY, ready: !no && !!tMsCreds_(), why: no || (tMsCreds_() ? '' : 'Microsoft 365 is not set up on the backend'), canAct: gcmMine_(who, g) };
+}
+
+function gcmResend_(b) {
+  var who = gcmWho_(b);
+  if (!who.ok) return who;
+  if (!b.checked) return { ok: false, error: 'Tick that you have checked who it goes to.' };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) return { ok: false, error: 'The letters are going out right now. Try again in a minute.' };
+  try {
+    var L = gcmLoad_(), g = L.byName[gcmCodeKey_(b.group)];
+    if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+    if (!gcmMine_(who, g)) return gcmNotYours_(g);
+    var last = gcmLastLetter_(g), no = gcmCannotMail_(g);
+    if (!last || !last.html) return { ok: false, error: 'There is no copy of the last letter to send again: send this week’s letter now instead.' };
+    if (no) return { ok: false, error: no + ': nothing was sent.' };
+    if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on the backend: nothing was sent.' };
+    var just = gcmJustSent_(g.sends.concat(g.resent));
+    if (just) return { ok: false, error: 'A letter went to this group ' + just + ': it is not sent twice in ten minutes.' };
+    var html = gcmAgainBanner_(last.at, L.today) + last.html;
+    var row = { When: new Date(), Group: g.name, Staff: who.name, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: last.subject, Items: last.items,
+      'Task Ids': '', Letter: ('Sent again; first sent ' + last.at + '.\n\n' + last.text).slice(0, 45000), Html: gcmKeepHtml_(html), Via: TRANSITION.MS_FROM + ', sent again' };
+    try {
+      tMsSend_(g.to[0], last.subject, html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
+      row.Status = 'resent: the letter of ' + last.at;
+      gcmAppend_(GCM.SENDS, [row]);
+      return { ok: true, sent: true, at: gcmWhen_(row.When), to: g.to.join(', '), contact: g.contact };
+    } catch (e) {
+      row.Status = 'failed: resend: ' + String(e && e.message ? e.message : e).slice(0, 200);
+      gcmAppend_(GCM.SENDS, [row]);
+      return { ok: false, error: row.Status };
+    }
+  } finally { try { lock.releaseLock(); } catch (e) {} }
+}
+
+/** Why the welcome cannot go to this group from the page, else ''. The same rules as the automatic welcome, but the
+ *  person pressing is the one who verifies it, and a group welcomed already can be sent it again. */
+function gcmWelcomeCannot_(g, L) {
+  var s = gcmGroupStats_(g, L.today);
+  var skip = String(PropertiesService.getScriptProperties().getProperty(GCM_WELCOME.SKIP_PROP) || '').split(',').map(function (x) { return gcmCodeKey_(x); }).filter(String);
+  if (skip.some(function (k) { return g.key === k || g.key.indexOf(k) === 0; })) return 'the branch manager has left this group out of the welcome';
+  return gcmCannotMail_(g) || (!s.ready ? s.why : '');
+}
+function gcmWelcomePreview_(p) {
+  var who = gcmWho_(p);
+  if (!who.ok) return who;
+  var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  var mine = gcmMine_(who, g), signer = { name: mine ? gcmVerName_(who.name, g) : (gcmVerifier_(g) || { name: g.assigned || '' }).name, when: L.today };
+  var w = gcmWelcome_(g, L.today, signer), no = gcmWelcomeCannot_(g, L);
+  return { ok: true, html: w.html, subject: w.subject, signer: w.verifier, welcomed: g.welcomed || '', welcomes: g.welcomes.map(function (x) { return { at: x.at, by: x.staff, status: x.status }; }),
+    to: g.to, cc: g.cc, contact: g.contact, toFrom: g.toFrom, personal: gcmPersonal_(g), copy: GCM.COPY, ready: !no && !!tMsCreds_(),
+    why: no || (tMsCreds_() ? '' : 'Microsoft 365 is not set up on the backend'), canAct: mine };
+}
+function gcmWelcomeSend_(b) {
+  var who = gcmWho_(b);
+  if (!who.ok) return who;
+  if (!b.checked) return { ok: false, error: 'Tick that you have checked the contact and the account before it goes.' };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) return { ok: false, error: 'The letters are going out right now. Try again in a minute.' };
+  try {
+    var L = gcmLoad_(), g = L.byName[gcmCodeKey_(b.group)];
+    if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+    if (!gcmMine_(who, g)) return gcmNotYours_(g);
+    var no = gcmWelcomeCannot_(g, L);
+    if (no) return { ok: false, error: no + ': the welcome was not sent.' };
+    if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on the backend: the welcome was not sent.' };
+    if (g.welcomed && !b.again) return { ok: false, welcomed: g.welcomed, error: 'This group was welcomed ' + g.welcomed + '. Press “Resend the welcome” to send it again.' };
+    var just = gcmJustSent_(g.welcomes);
+    if (just) return { ok: false, error: 'The welcome went to this group ' + just + ': it is not sent twice in ten minutes.' };
+    var w = gcmWelcome_(g, L.today, { name: gcmVerName_(who.name, g), when: L.today });
+    var row = { When: new Date(), Group: g.name, Staff: w.verifier, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: w.subject, Items: 0, 'Task Ids': '',
+      Letter: w.text.slice(0, 45000), Html: gcmKeepHtml_(w.html), Via: TRANSITION.MS_FROM + ', welcome from the page' };
+    try {
+      tMsSend_(g.to[0], w.subject, w.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
+      row.Status = g.welcomed ? 'welcome resent' : 'welcome sent';
+      gcmAppend_(GCM.SENDS, [row]);
+      return { ok: true, sent: true, again: !!g.welcomed, at: gcmWhen_(row.When), to: g.to.join(', '), contact: g.contact, signer: w.verifier };
+    } catch (e) {
+      row.Status = 'failed: welcome: ' + String(e && e.message ? e.message : e).slice(0, 200);
+      gcmAppend_(GCM.SENDS, [row]);
+      return { ok: false, error: row.Status };
+    }
+  } finally { try { lock.releaseLock(); } catch (e) {} }
+}
+
+/** One line per account for the team: who looks after it, who the letters go to, where its welcome and this week's
+ *  letter stand, its last answer, and what the person looking may do. */
+function gcmAccount_(g, who, L) {
+  var s = gcmGroupStats_(g, L.today), last = gcmLastLetter_(g), v = gcmVerifier_(g), wc = gcmWelcomeCannot_(g, L);
+  var lastAns = g.resps.length ? g.resps[g.resps.length - 1] : null, rated = g.resps.filter(function (r) { return r.rating; }).pop();
+  var w = g.welcomes.length ? g.welcomes[g.welcomes.length - 1] : null;
+  return { contact: g.contact, to: g.to, toFrom: g.toFrom, personal: gcmPersonal_(g).length > 0,
+    welcome: w ? { at: w.at, by: w.staff, again: g.welcomes.length > 1 } : null, welcomeWhy: wc,
+    verifier: v ? { name: v.name, at: v.when ? tDmy_(v.when) : '' } : null,
+    last: last ? { at: last.at, by: last.staff, again: !!last.html } : null,
+    resent: g.resent.length ? { at: g.resent[g.resent.length - 1].at, by: g.resent[g.resent.length - 1].staff } : null,
+    answer: lastAns ? { at: lastAns.at, when: lastAns.when, name: lastAns.name, rating: rated && rated.when === lastAns.when ? rated.rating : null } : null,
+    mailWhy: gcmCannotMail_(g) };
 }
 
 /* ── Monday at ten: the week's letters go by themselves ───────────────
@@ -1442,9 +1609,9 @@ var GCM_WELCOME = {
 
 /** The welcome for one group, signed by the staff member who verified it (14 October 2026: "the letter must have
  *  verified by the staff who clicked verified"), with the group's year so far. */
-function gcmWelcome_(g, today) {
+function gcmWelcome_(g, today, signed) {
   today = today || gcmToday_();
-  var E = tEsc_, page = GCM.SITE + GCM_WELCOME.PAGE, v = gcmVerifier_(g) || { name: '' };
+  var E = tEsc_, page = GCM.SITE + GCM_WELCOME.PAGE, v = signed || gcmVerifier_(g) || { name: '' };
   var carer = g.ownerActive && g.assigned ? g.assigned : '', me = carer && v.name && gcmSameName_(v.name, carer);
   var yr = gcmYear_(g, today, false), rec = gcmRecord_(g, today), vline = gcmVerifiedLine_(v);
   var top = rec.filter(function (r) { return r.done; }).sort(function (a, b) { return b.done - a.done; }).slice(0, 3)
@@ -1578,7 +1745,7 @@ function gcmWelcomeRun_(o) {
   list.go.forEach(function (x) {
     var g = x.g, w = gcmWelcome_(g, L.today);
     var row = { When: new Date(), Group: g.name, Staff: w.verifier, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: w.subject, Items: 0,
-      'Task Ids': '', Letter: w.text.slice(0, 45000), Via: TRANSITION.MS_FROM + ', welcome' };
+      'Task Ids': '', Letter: w.text.slice(0, 45000), Html: gcmKeepHtml_(w.html), Via: TRANSITION.MS_FROM + ', welcome' };
     try {
       tMsSend_(g.to[0], w.subject, w.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
       row.Status = 'welcome sent';
@@ -1657,7 +1824,7 @@ function gcmQueueRun_(o) {
         return;
       }
       var row = { When: new Date(), Group: g.name, Staff: who.name, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: letter.subject, Items: letter.items.length,
-        'Task Ids': letter.items.join(' ').slice(0, 45000), Letter: letter.text.slice(0, 45000), Via: TRANSITION.MS_FROM + ', ' + GCM.SEND_HOUR + ':00 run' };
+        'Task Ids': letter.items.join(' ').slice(0, 45000), Letter: letter.text.slice(0, 45000), Html: gcmKeepHtml_(letter.html), Via: TRANSITION.MS_FROM + ', ' + GCM.SEND_HOUR + ':00 run' };
       try {
         tMsSend_(g.to[0], letter.subject, letter.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
         row.Status = 'sent';
@@ -1793,6 +1960,9 @@ function gcmClient_(p) {
     record: gcmRecord_(g, today), year: gcmYear_(g, today, false),
     doneWeek: g.tasks.filter(function (t) { return !t.open && t.level === 'group' && !t.priv && t.done >= weekAgo; }).length,
     rated: g.resps.filter(function (r) { return r.rating && r.when >= gcmMonday_(today); }).length > 0,
+    /* the page's welcome (14 October 2026): the film, and when they last answered us */
+    film: GCM_WELCOME.PAGE, filmLength: GCM_WELCOME.LENGTH, nextLetter: gcmSendLabel_(gcmNextSend_()),
+    lastAnswer: g.resps.length ? { at: tDmy_(g.resps[g.resps.length - 1].when), name: g.resps[g.resps.length - 1].name } : null,
     contact: 'rickyrampersadsalessupport@myguardiangroup.com' };
 }
 
