@@ -2864,7 +2864,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `tMsSend_`. The pages under `groupclientmanagement/` hold no client data.
 - **The group tabs have their own spreadsheet, the script does not.** Asked
   the same day ("if this is the sheet for managing groups why import into the
-  service questionnaire"): `Group Register`, `Group Tasks`, `Group Sends`,
+  service questionnaire"): `Group Register`, `Group Tasks`, `Group Increases`, `Group Milestones`, `Group Sends`,
   `Group Responses`, `Group Shares` and `Group Queue` live in the **Group Client Management**
   Google Sheet. The script stays in the Service Questionnaire project, where
   the sign-in, the Salesforce login, the support@ mailbox and the web address
@@ -3092,12 +3092,40 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 
 - **The welcome: one e-mail to each employer, with the film** (13 October 2026: "with the video embedded so to
   greet the employer in a new way of managing their account … test with me first as this is supposed to pop").
-  - **The film is the employer's own cut**, `groupclientmanagement/welcome.mp4` (1:33, poster `welcome.jpg`), on
+  - **The film is the employer's own cut**, `groupclientmanagement/welcome.mp4` (2:26, poster `welcome.jpg`), on
     its page `welcome.html`. The staff film's part 2 speaks to staff ("their answer comes straight to you") and shows
-    the staff page and the manager's dashboard, so it is never sent to a group. The employer cut keeps the letter,
-    the sign-in, the items, the history, the answers, the stars and the thank-you, voiced to the employer, on a sample
-    group with made-up figures. Built in the scratchpad from the same shots (`staffvid/lines3.json`, `film3.html`,
-    `timing3.py`, `mix3.py`).
+    the staff page and the manager's dashboard, so it is never sent to a group. The employer cut is voiced to the
+    employer, on a sample group with made-up figures and invented people. It covers:
+    - the letter;
+    - the sign-in;
+    - the applications and increases pending, and what is coming up for their people (both added 14 October);
+    - the items, the history, the answers, the stars and the thank-you.
+  - **Re-cut with motion, 14 October 2026** ("can the video be revised and add animation as well motion built in?").
+    Every frame is a function of its time, rendered one by one, so nothing drifts:
+    - push transitions between sections, and dissolves between phone screens;
+    - headlines whose words rise into place, and a phone that floats;
+    - a finger that travels to each button and taps it, with a ripple, the screenshot switching to the pressed
+      state on the tap;
+    - a spotlight that dims all but what is being described;
+    - counters that run up, a dot that travels round the weekly loop, and a closing checklist that ticks itself;
+    - captions that follow the voice a sentence at a time.
+
+    Built in the scratchpad (`welcome4/`):
+    - `world4.js`: the sample;
+    - `shots4.js`: before and after each tap;
+    - `lines4.json`: four new lines, eleven kept;
+    - `timing4.py`, `film4.html` (`film4.js`, `film4.css`), `render.js`, `mix4.py`;
+    - `card.js`: the poster and `welcome-card.jpg`.
+
+    Encoded at CRF 23 for the web: 14 MB. `GCM_WELCOME.LENGTH` reads "2 min 26 s"; change it with the film.
+  - **The film to post: `/groupwelcomevideo`** (14 October 2026: "can this be streamed on the rickyrampersadbranch page
+    as groupwelcomevideo, need to post this").
+    - `groupwelcomevideo/index.html` plays the same `welcome.mp4`; it streams because the server answers byte ranges.
+    - It carries Open Graph and Twitter tags, so a posted link previews with `welcome-card.jpg`, the title and the
+      description.
+    - It has a door for a group client (the service page) and one for an employer who is not one yet (the branch's
+      number).
+    - Re-cut the film and this page follows.
   - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
     film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
   - **No access code in it.** The Monday letter carries the sign-in, after staff check it.
@@ -3185,6 +3213,113 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     names them and says what happens next.
   - `wow/actions-test.js` (31 checks), `wow/after.js` (24, Playwright) and `wow/showcase.js` (screenshots) in the
     session scratchpad cover it, on the made-up branch.
+
+- **Applications and increases still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
+  also see at the top … applications that remain pending … the name, days outstanding, who it's assigned, what's
+  outstanding … pension groups, health groups and life groups … and who was last liaised with").
+  - **What counts.** An open task of type `Pendings` (the branch's own mark for one), reached the way the refresh
+    reaches any group task. The word "pending" in a subject does not count. The refresh reads each task's policy
+    (`gcmApplications_`) and writes the line, the applicant, the application date and who the task is with into a new
+    **Application** column on Group Tasks.
+  - **The line** is the policy's record type: LIFE(GROUP) reads Group Life, HEALTH (GROUP) Group Health, PENSION
+    Pension. **A policy on the employer's own account is the employer's application, whatever its type**, and reads
+    as its type ("Life"). On 14 October, 34 of the branch's open Pendings tasks sat on policies, and only one was a
+    group type: 11 were keyperson applications, ordinary LIFE policies a commercial client owns on the lives of the
+    people who run it.
+  - **Kept off a group's page:**
+    - a task reached only through an employee's own contact;
+    - one on an employee's individual policy tied to the group only by its list bill;
+    - a claim;
+    - anything a person unticked.
+
+    When a run cannot read the policies' types, every policy-reached task is kept off.
+  - **A medical requirement** reads "An underwriting requirement: the details stay between the person insured and us",
+    with neither the doctor nor the department beside it ("Guardian Life" only). `GCM_APP.MED` is wider than
+    `GCM_PRIVATE`, because the keyperson tasks read "LABS at …" and "physician(s) consulted". Staff see the subject,
+    marked.
+  - **The group's page** opens on the panel, under the welcome and above everything else. It shows one card an
+    applicant, oldest first, with:
+    - the lines, each a word with a mark, and a filter for each;
+    - the days outstanding from the application date, as a word and a colour, and "past target";
+    - each requirement with who it is assigned to, who it is liaising with ("(you)" for the group's own contact),
+      its status in the group's words, its target date and its last contact. The last contact is an e-mail to or
+      from the group, else "Last worked on", else "Opened on …, nothing logged since".
+
+    The requirements are listed there and not again among the open items.
+  - **Staff** get the same panel at the top of a group's page, unredacted, with what the group cannot see marked. They
+    also get a chip on the account row, and an "Applications pending" filter on the Team dashboard.
+  - **The Monday letter** says how many are pending and the oldest, never a name.
+  - **Increases still pending sit on the same cards** (asked for the same day: "it's important on the increases on the
+    pension plans … on the object called increases … once it's not settled, it's pending"). An increase is a
+    `Policy_Increases__c` record on a policy. It is pending until **Date Settled** is filled in, unless it reads NPW
+    or not proceeded with. The refresh writes them to a **Group Increases** tab of their own (`gcmIncreases_`), so
+    they never swell a group's open items, its year or the dashboard.
+    - Which ones: any increase on a policy on the group's own account, and a pension or group policy tied to it by its
+      list bill, because the employer's payroll deducts it. An employee's own life policy tied only by the list bill
+      stays off.
+    - Only an increase submitted in the last `GCM_INC.DAYS` (365) counts. The branch has used Date Settled only since
+      2024, and about half the increases since then never had one entered, many reading Premium Paying with their
+      production picked up. Staff see those marked "Date Settled is empty: if it is done, enter it in Salesforce",
+      and entering it takes the increase off the group's page at the next refresh.
+    - What is outstanding on an increase is the open tasks on the increase record. Salesforce's Requirements object
+      holds six records on increases ever. Support (a first name) is read as the one active Salesforce user who
+      carries it. Days outstanding are Days O/S, never fewer than the days since it was submitted.
+    - The group reads "Pension increase", where it stands (waiting to be settled, requirements outstanding, with
+      underwriting, being corrected, awaiting settlement), who has it, when it was submitted and the last contact. It
+      never sees an amount. Staff also see the policy number, the amount, the agent and whether it came through the
+      list bill, and can take an increase off the group's page with its tick box.
+    - On 14 October there were 13 unsettled increases in the last year on employer accounts (7 life, 5 pension, 1
+      personal accident), and 12 on employees' own pension plans.
+    - When Salesforce refuses the read, the tab keeps the last good list, and the refresh says so.
+  - A backend older than this sends no `pending`, and both pages leave the panel out.
+  - `pending/pending-test.js` (50 checks) and `pending/page.js` (21, Playwright, phone and desk) in the session
+    scratchpad cover it, on the made-up branch with an invented keyperson case and six invented increases.
+
+- **Coming up for the group's people: conversions at 65, dependents coming of age, retirements within five years**
+  (14 October 2026: "a person … their dependent is coming of age to convert. We need those letters. Those will be
+  included in the weekly reports … approaching age 65 … convert to an individual plan … pension plans, five years
+  prior to retirement, tasks will be opened … future value projections … what is company owned pensions, and what is
+  individual owned pensions … insights the group can actually see and we can manage for clean data").
+  - **Where it comes from.** The refresh reads the group's in-force Group Life, Group Health and pension policies, on its
+    account or its list bill (`gcmMilestones_`). The date of birth is the policy's, else its contact's. It writes a
+    **Group Milestones** tab: one row a person and event, plus a summary row per group.
+    - *Turning 65* (`convert65`): within 183 days, or the last 60.
+    - *A dependent reaching the dependent age* (`dependent`): `GCM_DEP_AGE`, default 21, which the branch confirms.
+      Dependents come from Relationship Groups (Child 1–3, Dependent 1–3) and from Dependant 01–04 on the group's own
+      billing records. Salesforce holds few: on 14 October, 119 billing records and 62 relationship groups named one.
+    - *Retiring within five years* (`retire`): the date is Maturity Date, else Retirement Age, else `GCM_RETIRE_AGE`
+      (default 60), assumed and marked. On 14 October 85% of in-force pensions had no retirement age.
+      - **Company-owned or personal** comes from Ownership, else from the account's type: a commercial or business
+        account is the company's, a household the person's own. Ownership was blank on 96% that day.
+      - That day: 120 company-owned and 128 personal pension members aged 55 to 65, and 5 group life or health members
+        within six months of 65.
+    - *No date of birth* (`nodob`): a person to put right in Salesforce.
+  - **The group** sees, under the pending panel, three columns, soonest first, each with how long until it:
+    - turning 65: "we help them convert to an individual plan";
+    - dependents coming of age;
+    - retirements on its **company** pension.
+
+    Under them, "Help us keep your records right" names anyone with no date of birth. It never sees a personal pension,
+    an e-mail, a policy number, a task or an assumed age.
+  - **The Monday letter** counts them and lists each one (who, what, when), ten at most.
+  - **Staff** see all of it, including:
+    - personal pensions, marked;
+    - the assumed ages;
+    - each person's e-mail;
+    - the projection task's state;
+    - the clean-data counts.
+
+    The account row says how many are coming up.
+  - **Pension projection tasks.** One opens in Salesforce for each retirement within five years: on the policy, owned
+    by the group's account owner, Task Type Servicing, due in 30 days, subject `Pension projection: <name> retires
+    <date> at <age> (company-owned | personal pension)`. An assumed age says so and asks for the real one.
+    - They open only after the branch manager's go: `gcmLifeTasksStart` (editor Run); `gcmLifeTasksStop` ends it.
+    - At most 25 a run. A task already on the policy with that subject is found each run, so none opens twice.
+    - Until the go, the board lists who would get one.
+  - Letters to the members themselves (the conversion and the dependent's move) are not built yet.
+  - When Salesforce refuses the read, the tab keeps the last good list, and the refresh says so.
+  - `coming/coming-test.js` (32 checks) and `coming/page.js` (11, Playwright) in the session scratchpad cover it, on
+    the made-up branch.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 

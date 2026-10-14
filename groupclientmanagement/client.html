@@ -160,6 +160,61 @@ footer a{color:inherit}
 .ch[aria-pressed="true"].notours::before{color:#fff;background:var(--bad);border-color:var(--bad)}
 .progress .track{height:6px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden;margin-top:6px}
 .progress .track div{height:100%;background:#fff;border-radius:3px;transition:width .3s}
+/* applications still pending, first on the page (14 October 2026): one card an employee, oldest first, each
+   requirement with who has it, who it is with, the target and the last contact. The plan's line is a word with a mark
+   (Group Life, Group Health, Pension: checked for colour-blind separation), and the age a word as well as a colour. */
+.pend{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--primary);border-radius:14px;padding:18px 18px 8px;margin:14px 0 0;box-shadow:var(--shadowLg)}
+.pend .ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pend h2{font-size:20px;font-weight:600;margin:0}
+.pend .cnt{display:inline-block;vertical-align:3px;background:var(--primary);color:#fff;border-radius:99px;font-size:13px;line-height:1.5;font-weight:600;padding:0 10px;white-space:nowrap}
+.pend .sub{margin:4px 0 12px}
+.lns{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.ln{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--sunken);color:var(--ink2);border-radius:99px;padding:6px 13px;font-size:14px;font-weight:500;cursor:pointer}
+.ln[aria-pressed="true"]{background:var(--primarySoft);border-color:var(--primary);color:var(--primary);font-weight:600}
+.ln b{font-variant-numeric:tabular-nums}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.dot.life{background:#1D5BC4}.dot.health{background:#008C7A}.dot.pension{background:#8A4FD8}.dot.enrol{background:#5B6B82}
+.papp{border:1px solid var(--line);border-left:5px solid var(--primary);border-radius:10px;padding:14px 16px;margin:0 0 10px;background:#fff}
+.papp.warn{border-left-color:var(--warnMark)}.papp.bad{border-left-color:var(--bad)}
+.papp .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.papp h3{margin:0;font-size:17px;font-weight:600;flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.lt{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2);border:1px solid var(--line);border-radius:99px;padding:2px 10px;background:var(--sunken)}
+.age{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;border-radius:99px;padding:3px 11px;border:1px solid var(--primaryLine);background:var(--primarySoft);color:var(--primary);font-variant-numeric:tabular-nums}
+.age.warn{background:var(--warnBg);border-color:var(--warnLine);color:var(--warn)}.age.warn::before{content:"●";color:var(--warnMark)}
+.age.bad{background:var(--badBg);border-color:var(--badLine);color:var(--badText)}.age.bad::before{content:"!";font-weight:700}
+.papp .meta{margin:6px 0 8px;font-size:14px;color:var(--muted)}
+.reqs{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.reqs li{padding:10px 0;border-bottom:1px solid var(--line)}.reqs li:last-child{border-bottom:0}
+.reqs .w{font-weight:600}
+.reqs dl{display:grid;grid-template-columns:max-content 1fr;gap:2px 12px;margin:6px 0 0;font-size:14px}
+.reqs dt{color:var(--muted)}.reqs dd{margin:0;overflow-wrap:anywhere}
+.reqs .late{color:var(--badText);font-weight:600}
+.pend .none{margin:0 0 12px;color:var(--muted)}
+.inc{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.02em;color:#fff;background:#8A4FD8;border-radius:4px;padding:1px 7px;margin-right:8px;vertical-align:2px}
+.inc.soft{background:#F1EAFD;color:#5B2DA8}
+.reqs li.sub{padding-left:14px;border-left:3px solid #E4D8FA}
+.ln .up{font-weight:700;color:#8A4FD8}
+@media (max-width:560px){.pend{padding:16px 14px 6px}.reqs dl{grid-template-columns:1fr}.reqs dt{margin-top:4px}}
+/* coming up for your people (14 October 2026): conversions at 65, dependents coming of age, company-pension retirements */
+.coming{background:var(--paper);border:1px solid var(--line);border-top:4px solid #067647;border-radius:14px;padding:18px 18px 12px;margin:14px 0 0;box-shadow:var(--shadow)}
+.coming h2{font-size:20px;font-weight:600;margin:0}
+.coming .cnt{display:inline-block;vertical-align:3px;background:#067647;color:#fff;border-radius:99px;font-size:13px;line-height:1.5;font-weight:600;padding:0 10px}
+.coming .sub{margin:4px 0 12px}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.cgrp{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;min-width:0}
+.cgrp h3{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:15.5px;font-weight:600}
+.cgrp h3 .ic{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12.5px;font-weight:700}
+.cgrp.c65 .ic{background:#1D5BC4}.cgrp.dep .ic{background:#008C7A}.cgrp.ret .ic{background:#8A4FD8}
+.cgrp h3 b{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600}
+.cgrp .hint{font-size:13px;color:var(--muted);margin:0 0 8px}
+.cgrp ul{list-style:none;margin:0;padding:0}
+.cgrp li{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.cgrp li b{font-weight:600;overflow-wrap:anywhere}.cgrp li .dt{color:var(--muted);font-size:13px;flex-basis:100%}
+.cgrp li .in{margin-left:auto;font-size:12px;font-weight:600;border-radius:99px;padding:1px 9px;background:var(--primarySoft);color:var(--primary);white-space:nowrap}
+.cgrp li .in.soon{background:var(--warnBg);color:var(--warn)}
+.cgrp .none{font-size:13.5px;color:var(--muted);margin:4px 0 2px}
+.records{margin:12px 0 4px;padding:10px 12px;border-radius:8px;background:var(--warnBg);border:1px solid var(--warnLine);font-size:14px;color:var(--warn)}
+@media (max-width:640px){.cgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -226,6 +281,76 @@ async function open_() {
   D = d; loadDraft(); render();
 }
 
+/* applications still pending: the plan's line as a mark and a word, the age as a word and a colour */
+const LINE_DOT = { 'Group Life': 'life', 'Group Health': 'health', 'Pension': 'pension' };
+const lineTag = l => '<span class="lt"><span class="dot ' + (LINE_DOT[l] || 'enrol') + '" aria-hidden="true"></span>' + esc(l) + '</span>';
+const ageCls = (n, late) => late || n > 30 ? 'bad' : n > 14 ? 'warn' : '';
+const days = n => n == null ? '' : n + ' day' + (n === 1 ? '' : 's');
+let PF = 'all';
+const INC_PF = '__increases';
+function pendHtml() {
+  if (!Array.isArray(D.pending)) return '';
+  const P = D.pending, lines = ['Group Life', 'Group Health', 'Pension'];
+  P.forEach(c => c.lines.forEach(l => { if (lines.indexOf(l) < 0) lines.push(l); }));
+  const n = l => P.filter(c => c.lines.indexOf(l) >= 0).length;
+  const hasInc = P.some(c => c.incs), hasApp = P.some(c => c.apps), nInc = P.filter(c => c.incs).length;
+  const title = (hasInc && hasApp ? 'Applications and increases' : hasInc ? 'Increases' : 'Applications') + ' pending for your employees';
+  if (PF === INC_PF ? !nInc : PF !== 'all' && !n(PF)) PF = 'all';
+  let h = '<section class="pend" aria-labelledby="pendh"><div class="ph"><h2 id="pendh">' + (P.length ? title : 'Applications and increases pending for your employees') + ' <span class="cnt">' + P.length + '</span></h2></div>';
+  if (!P.length) return h + '<p class="none">No applications or increases are pending for your employees right now.</p></section>';
+  h += '<p class="sub">What each one is still waiting on, who on our team has it, and when we last were in touch. Longest outstanding first.</p>' +
+    '<div class="lns" role="group" aria-label="Show">' +
+    '<button type="button" class="ln" data-pf="all" aria-pressed="' + (PF === 'all') + '">All <b>' + P.length + '</b></button>' +
+    lines.filter(n).map(l => '<button type="button" class="ln" data-pf="' + esc(l) + '" aria-pressed="' + (PF === l) + '"><span class="dot ' + (LINE_DOT[l] || 'enrol') + '" aria-hidden="true"></span>' + esc(l) + ' <b>' + n(l) + '</b></button>').join('') +
+    (hasInc && hasApp ? '<button type="button" class="ln" data-pf="' + INC_PF + '" aria-pressed="' + (PF === INC_PF) + '"><span class="up" aria-hidden="true">↑</span>Increases <b>' + nInc + '</b></button>' : '') + '</div>';
+  P.filter(c => PF === 'all' || (PF === INC_PF ? c.incs : c.lines.indexOf(PF) >= 0)).forEach(c => {
+    const cls = ageCls(c.days, c.late);
+    const since = [c.applied ? 'Application received ' + esc(dmy(c.applied)) : '', c.incSince ? 'Increase submitted ' + esc(dmy(c.incSince)) : ''].filter(Boolean).join(' · ') || 'With us since ' + esc(dmy(c.since));
+    h += '<article class="papp ' + cls + '"><div class="top"><h3>' + esc(c.applicant || 'An employee’s application') + '</h3>' + c.lines.map(lineTag).join('') +
+      '<span class="age ' + cls + '">' + days(c.days) + ' outstanding' + (c.late ? ', past target' : '') + '</span></div>' +
+      '<p class="meta">' + since + (c.last && c.last.text ? ' · ' + esc(c.last.text) : '') + '</p>' +
+      '<ul class="reqs">' + c.items.map(x => '<li' + (x.kind === 'increase-req' ? ' class="sub"' : '') + '><div class="w">' +
+        (x.kind === 'increase' ? '<span class="inc">Increase</span>' : x.kind === 'increase-req' ? '<span class="inc soft">For the increase</span>' : '') + esc(x.what) + '</div><dl>' +
+        '<dt>Assigned to</dt><dd>' + esc(x.owner) + '</dd>' +
+        (x.with ? '<dt>Liaising with</dt><dd>' + esc(x.with) + '</dd>' : '') +
+        '<dt>' + (x.kind === 'increase' ? 'Where it stands' : 'Status') + '</dt><dd>' + esc(x.status) + '</dd>' +
+        (x.kind === 'increase' ? '<dt>Submitted</dt><dd>' + esc(dmy(x.opened)) + ', ' + days(x.days) + ' ago</dd>'
+          : '<dt>Target date</dt><dd>' + (x.due ? esc(dmy(x.due)) + (x.late ? ' <span class="late">past target</span>' : '') : 'Not yet set') + '</dd>') +
+        (x.last ? '<dt>Last contact</dt><dd>' + esc(x.last) + '</dd>' : '') + '</dl></li>').join('') + '</ul></article>';
+  });
+  return h + '</section>';
+}
+function bindPend() {
+  document.querySelectorAll('[data-pf]').forEach(b => b.onclick = () => {
+    PF = b.dataset.pf; const box = document.querySelector('.pend');
+    if (box) { box.outerHTML = pendHtml(); bindPend(); }
+  });
+}
+
+/* coming up for your people: three groups, soonest first, each with how long until it */
+function untilWords(n) {
+  if (n == null) return '';
+  if (n < 0) return Math.abs(n) < 31 ? 'this month' : 'since ' + Math.round(-n / 30.4) + ' mo';
+  if (n < 31) return 'this month';
+  if (n < 365) return 'in ' + Math.round(n / 30.4) + ' month' + (Math.round(n / 30.4) === 1 ? '' : 's');
+  const y = Math.round(n / 365.25 * 2) / 2; return 'in ' + y + ' year' + (y === 1 ? '' : 's');
+}
+function comingHtml() {
+  const C = D.coming;
+  if (!C) return '';
+  const grp = (cls, ic, title, hint, list, line) => '<div class="cgrp ' + cls + '"><h3><span class="ic" aria-hidden="true">' + ic + '</span>' + title + ' <b>' + list.length + '</b></h3><p class="hint">' + hint + '</p>' +
+    (list.length ? '<ul>' + list.map(x => '<li><b>' + esc(x.person) + '</b><span class="in' + (x.inDays < 92 ? ' soon' : '') + '">' + untilWords(x.inDays) + '</span><span class="dt">' + line(x) + '</span></li>').join('') + '</ul>'
+      : '<p class="none">Nobody in this window.</p>') + '</div>';
+  let h = '<section class="coming" aria-labelledby="comh"><h2 id="comh">Coming up for your people <span class="cnt">' + C.count + '</span></h2>' +
+    '<p class="sub">So nobody is caught out: we contact each person in good time, and you see it here first.</p><div class="cgrid">' +
+    grp('c65', C.convertAge, 'Turning ' + C.convertAge, 'Their group cover ends at ' + C.convertAge + '. We help them convert to an individual plan.', C.convert, x => esc(x.line || 'Group plan') + ' · ' + esc(dmy(x.date))) +
+    grp('dep', C.depAge, 'Dependents coming of age', 'At ' + C.depAge + ' a dependent moves to a plan of their own. We help them do it.', C.deps, x => (x.member ? esc(x.member) + '’s dependent · ' : '') + esc(dmy(x.date))) +
+    grp('ret', '5y', 'Retiring within ' + C.retireYears + ' years', 'On your company pension. We prepare a projection of their pension, five years ahead.', C.retire, x => 'Retires at ' + x.age + ' · ' + esc(dmy(x.date))) +
+    '</div>' + (C.nodob && C.nodob.length ? '<div class="records"><b>Help us keep your records right.</b> We have no date of birth for ' + esc(C.nodob.slice(0, 8).join(', ')) + (C.nodob.length > 8 ? ' and ' + (C.nodob.length - 8) + ' more' : '') +
+      '. Please give them to us in your note when you answer, so nobody misses a date that matters.</div>' : '') + '</section>';
+  return h;
+}
+
 function render() {
   $('h1').textContent = D.group;
   $('hsub').textContent = 'Open service items as at ' + D.asAt + '. Please review each one by ' + dmy(D.respondBy) + '.';
@@ -239,6 +364,7 @@ function render() {
     (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
     '<div class="links">' + (D.film ? '<a class="pill" href="' + esc(D.film) + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + esc(D.filmLength || '') + '</a>' : '') +
     '<a class="pill plain" href="#rate">Rate our service</a></div></div>' +
+    pendHtml() + comingHtml() +
     '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
     '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +
     '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>';
@@ -291,7 +417,7 @@ function render() {
     '<p style="text-align:center"><button class="btn" type="button" id="out" style="background:transparent;color:var(--muted);border:1.5px solid var(--line)">Sign out</button></p>';
   $('app').innerHTML = h;
   $('prog').classList.remove('hide');
-  bind(); progress();
+  bind(); bindPend(); progress();
 }
 function bind() {
   document.querySelectorAll('.ch').forEach(b => b.onclick = () => {

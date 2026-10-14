@@ -256,6 +256,47 @@ h2{font-size:21px}
 .card{border-left:4px solid var(--line2);display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch}.card.r-bad{border-left-color:var(--bad)}.card.r-warn{border-left-color:var(--warnMark)}.card.r-good{border-left-color:var(--good)}.card.r-info{border-left-color:var(--info)}
 .key2{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin:8px 2px 0}
 .key2 span{display:inline-flex;align-items:center;gap:6px}.key2 i{width:4px;height:14px;border-radius:2px;display:inline-block}
+/* applications still pending, at the top of a group's page (14 October 2026); the group sees the same panel, with a
+   medical requirement in general words and nothing a person unticked */
+.pend{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--primary);border-radius:12px;padding:16px 16px 6px;margin:14px 0;box-shadow:var(--shadow)}
+.pend .ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pend h3{margin:0}
+.pend .cnt{background:var(--primary);color:#fff;border-radius:99px;font-size:12px;font-weight:600;padding:1px 9px}
+.lns{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}
+.ln{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--sunken,#EEF2F7);border-radius:99px;padding:4px 11px;font-size:13px;cursor:pointer}
+.ln[aria-pressed="true"]{background:var(--infoBg);border-color:var(--info);color:var(--info);font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+.dot.life{background:#1D5BC4}.dot.health{background:#008C7A}.dot.pension{background:#8A4FD8}.dot.enrol{background:#5B6B82}
+.papp{border:1px solid var(--line);border-left:5px solid var(--info);border-radius:10px;padding:12px 14px;margin:0 0 10px;background:#fff}
+.papp.warn{border-left-color:var(--warnMark)}.papp.bad{border-left-color:var(--bad)}
+.papp .top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.papp h4{margin:0;font-size:16px;flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.lt{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--line);border-radius:99px;padding:1px 9px}
+.age{font-size:12.5px;font-weight:600;border-radius:99px;padding:2px 10px;border:1px solid var(--infoLine);background:var(--infoBg);color:var(--info)}
+.age.warn{background:var(--warnBg);border-color:var(--warnLine);color:var(--warn)}.age.warn::before{content:"● ";color:var(--warnMark)}
+.age.bad{background:var(--badBg);border-color:var(--badLine);color:var(--badText)}.age.bad::before{content:"! ";font-weight:700}
+.papp .meta{margin:4px 0 6px;font-size:13.5px;color:var(--muted)}
+.reqs{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.reqs li{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.reqs li:last-child{border-bottom:0}
+.reqs .w{font-weight:600}.reqs .sub2{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.inc{display:inline-block;font-size:11.5px;font-weight:600;color:#fff;background:#8A4FD8;border-radius:4px;padding:1px 7px;margin-right:7px;vertical-align:1px}
+.inc.soft{background:#F1EAFD;color:#5B2DA8}
+.reqs li.sub{padding-left:12px;border-left:3px solid #E4D8FA}
+.coming{background:var(--paper);border:1px solid var(--line);border-top:4px solid #067647;border-radius:12px;padding:16px 16px 10px;margin:14px 0;box-shadow:var(--shadow)}
+.coming .ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.coming h3{margin:0}
+.coming .cnt{background:#067647;color:#fff;border-radius:99px;font-size:12px;font-weight:600;padding:1px 9px}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px}
+.cgrp{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;min-width:0}
+.cgrp h4{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:14.5px}
+.cgrp h4 .ic{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
+.cgrp.c65 .ic{background:#1D5BC4}.cgrp.dep .ic{background:#008C7A}.cgrp.ret .ic{background:#8A4FD8}
+.cgrp h4 b{margin-left:auto;color:var(--muted)}
+.cgrp ul{list-style:none;margin:0;padding:0}.cgrp li{padding:6px 0;border-top:1px solid var(--line);font-size:13.5px;overflow-wrap:anywhere}
+.cgrp li .dt{display:block;color:var(--muted);font-size:12.5px}
+.cgrp .own{font-size:11.5px;font-weight:600;border-radius:4px;padding:0 6px;margin-left:4px}
+.cgrp .own.co{background:#EFE8FD;color:#5B2DA8}.cgrp .own.pe{background:#E8EEF7;color:#2B374C}
+.cleanrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+@media (max-width:900px){.cgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -436,11 +477,11 @@ function hello(d) {
 }
 /* each filter's mark: the colour of the state it finds, always beside its words */
 const ACC_SHOW = [['all', 'All', ''], ['due', 'Letter to approve', 'var(--bad)'], ['welcome', 'Welcome to send', 'var(--info)'], ['sent', 'A letter has gone', 'var(--good)'],
-  ['answered', 'Answered us', 'var(--good)'], ['setup', 'Needs set-up', 'var(--warnMark)']];
+  ['answered', 'Answered us', 'var(--good)'], ['setup', 'Needs set-up', 'var(--warnMark)'], ['pending', 'Applications or increases pending', '#5B6B82']];
 function accShow(g, k) {
   const a = g.account, s = g.stats;
   return k === 'all' || (k === 'welcome' && !a.welcome && !a.welcomeWhy) || (k === 'due' && s.week === 'due' && s.ready) || (k === 'sent' && !!a.last) ||
-    (k === 'answered' && !!a.answer) || (k === 'setup' && !!(a.mailWhy || !s.ready || !g.assigned || !g.ownerActive));
+    (k === 'answered' && !!a.answer) || (k === 'setup' && !!(a.mailWhy || !s.ready || !g.assigned || !g.ownerActive)) || (k === 'pending' && !!a.pending);
 }
 /* the row's rail: red when something is due from us, amber when the account needs setting up, green when the week is done */
 function rowState(g) {
@@ -482,6 +523,11 @@ function accountsHtml(d) {
     '<div class="key2" aria-hidden="true"><span><i style="background:var(--bad)"></i>something is due from us</span><span><i style="background:var(--warnMark)"></i>needs setting up</span><span><i style="background:var(--info)"></i>in hand</span><span><i style="background:var(--good)"></i>welcomed, and this week’s letter approved or sent</span></div>';
   return h;
 }
+/* "2 applications, 1 increase pending": a backend without the split says applications */
+function pendWords(p) {
+  const apps = p.apps == null ? p.n : p.apps, incs = p.incs || 0, pl = (k, w) => k + ' ' + w + (k === 1 ? '' : 's');
+  return [apps ? pl(apps, 'application') : '', incs ? pl(incs, 'increase') : ''].filter(Boolean).join(', ') + ' pending';
+}
 function accRow(g) {
   const a = g.account, s = g.stats, first = (g.assigned || '').split(' ')[0];
   const L = t => '<span class="lbl">' + t + '</span>';
@@ -505,7 +551,9 @@ function accRow(g) {
   }
   acts += '<button class="btn ghost" type="button" data-g="' + esc(g.key) + '">Open</button>';
   return '<div class="acc r-' + rowState(g) + '"><div>' + L('Group') + '<button class="gname" type="button" data-g="' + esc(g.key) + '">' + esc(g.name) + '</button><div class="sub">List bill ' + esc(g.bills.join(', ') || 'none') +
-    ' · ' + s.open + ' open' + (s.late ? ' · <b style="color:var(--badText)">' + s.late + ' past target</b>' : '') + '</div></div>' +
+    ' · ' + s.open + ' open' + (s.late ? ' · <b style="color:var(--badText)">' + s.late + ' past target</b>' : '') + '</div>' +
+    (a.coming ? '<div><span class="chip"><i style="background:#067647"></i>' + a.coming.n + ' coming up</span></div>' : '') +
+    (a.pending ? '<div><span class="chip ' + (a.pending.late || a.pending.oldest > 30 ? 'bad' : a.pending.oldest > 14 ? 'warn' : '') + '"><i></i>' + pendWords(a.pending) + ', oldest ' + a.pending.oldest + 'd</span></div>' : '') + '</div>' +
     '<div>' + L('Looked after by') + owner + '</div><div>' + L('Letters go to') + to + '</div><div>' + L('Welcome') + wel + '</div><div>' + L('This week’s letter') + wk + '</div><div>' + L('Last answer') + ans + '</div>' +
     '<div class="acts">' + acts + (g.canAct ? '' : '<div class="sub" style="width:100%;text-align:right">' + esc(first || 'Its owner') + ', the assistant branch manager or the branch manager sends</div>') + '</div></div>';
 }
@@ -663,6 +711,82 @@ function dash(a) {
 }
 
 /* ---- one group ---- */
+/* applications still pending for a group's employees (14 October 2026): one card an applicant, oldest first */
+const LINE_DOT = { 'Group Life': 'life', 'Group Health': 'health', 'Pension': 'pension' };
+const lineTag = l => '<span class="lt"><span class="dot ' + (LINE_DOT[l] || 'enrol') + '" aria-hidden="true"></span>' + esc(l) + '</span>';
+const ageCls = (n, late) => late || n > 30 ? 'bad' : n > 14 ? 'warn' : '';
+let PF = 'all';
+const INC_PF = '__increases';
+function pendHtml(d) {
+  if (!Array.isArray(d.pending)) return '';
+  const P = d.pending, lines = ['Group Life', 'Group Health', 'Pension'];
+  P.forEach(c => c.lines.forEach(l => { if (lines.indexOf(l) < 0) lines.push(l); }));
+  const n = l => P.filter(c => c.lines.indexOf(l) >= 0).length, nInc = P.filter(c => c.incs).length;
+  if (PF === INC_PF ? !nInc : PF !== 'all' && !n(PF)) PF = 'all';
+  let h = '<section class="pend" id="pend" aria-labelledby="pendh"><div class="ph"><h3 id="pendh">Applications and increases pending</h3><span class="cnt">' + P.length + '</span>' +
+    '<span class="muted small">The group sees these first when it signs in: a medical requirement only as “an underwriting requirement”, and never an amount.</span></div>';
+  if (!P.length) return h + '<p class="muted small">No open “Pendings” task and no unsettled increase on this group in Salesforce.</p></section>';
+  h += '<div class="lns" role="group" aria-label="Show"><button type="button" class="ln" data-pf="all" aria-pressed="' + (PF === 'all') + '">All ' + P.length + '</button>' +
+    lines.filter(n).map(l => '<button type="button" class="ln" data-pf="' + esc(l) + '" aria-pressed="' + (PF === l) + '"><span class="dot ' + (LINE_DOT[l] || 'enrol') + '" aria-hidden="true"></span>' + esc(l) + ' ' + n(l) + '</button>').join('') +
+    (nInc ? '<button type="button" class="ln" data-pf="' + INC_PF + '" aria-pressed="' + (PF === INC_PF) + '"><b style="color:#8A4FD8">↑</b> Increases ' + nInc + '</button>' : '') + '</div>';
+  P.filter(c => PF === 'all' || (PF === INC_PF ? c.incs : c.lines.indexOf(PF) >= 0)).forEach(c => {
+    const cls = ageCls(c.days, c.late);
+    const since = [c.applied ? 'Application received ' + esc(dmy(c.applied)) : '', c.incSince ? 'Increase submitted ' + esc(dmy(c.incSince)) : ''].filter(Boolean).join(' · ') || 'First task opened ' + esc(dmy(c.since));
+    h += '<article class="papp ' + cls + '"><div class="top"><h4>' + esc(c.applicant || 'Applicant not named on the task') + '</h4>' + c.lines.map(lineTag).join('') +
+      '<span class="age ' + cls + '">' + (c.days == null ? '' : c.days + ' day' + (c.days === 1 ? '' : 's')) + ' outstanding' + (c.late ? ', past target' : '') + '</span></div>' +
+      '<p class="meta">' + since + (c.last && c.last.text ? ' · ' + esc(c.last.text) : '') + '</p>' +
+      '<ul class="reqs">' + c.items.map(x => '<li' + (x.kind === 'increase-req' ? ' class="sub"' : '') + '><div class="w">' +
+        (x.kind === 'increase' ? '<span class="inc">Increase</span>' : x.kind === 'increase-req' ? '<span class="inc soft">For the increase</span>' : '') + esc(x.what) +
+        (x.kind === 'increase' && x.policy ? ' <span class="muted small">policy ' + esc(x.policy) + (x.amount ? ' · ' + esc(x.amount) : '') + (x.own ? ' · on the group’s own account' : ' · through the list bill') + '</span>' : '') +
+        (x.priv ? ' <span class="chip warn"><i></i>medical: the group reads “an underwriting requirement”</span>' : '') +
+        (x.hidden ? ' <span class="chip"><i style="background:#9aa5b1"></i>not shown to the group</span>' : '') + '</div>' +
+        '<div class="sub2">Assigned to <b>' + esc(x.owner) + '</b>' + (x.agent ? ' · agent ' + esc(x.agent) : '') + (x.with ? ' · liaising with ' + esc(x.with) : '') + ' · ' + esc(x.status) +
+        (x.kind === 'increase' ? ' · submitted ' + esc(dmy(x.opened)) + ', ' + x.days + ' days' : ' · target ' + (x.due ? esc(dmy(x.due)) + (x.late ? ' <b style="color:var(--badText)">past</b>' : '') : 'not set')) +
+        (x.last ? ' · ' + esc(x.last) : '') + '</div>' +
+        (x.check ? '<div class="note warn" style="margin:6px 0 0">' + esc(x.check) + '</div>' : '') +
+        (x.kind === 'increase' ? '<label class="toggle" style="margin-top:6px"><input type="checkbox" data-show="' + esc(x.id) + '"' + (x.hidden ? '' : ' checked') + (GROUP.canAct === false ? ' disabled' : '') + '> The group sees this increase</label>' : '') +
+        '</li>').join('') + '</ul></article>';
+  });
+  return h + '</section>';
+}
+function bindPend() {
+  document.querySelectorAll('[data-pf]').forEach(b => b.onclick = () => { PF = b.dataset.pf; const box = $('pend'); if (box) { box.outerHTML = pendHtml(GROUP); bindPend(); } });
+  document.querySelectorAll('#pend [data-show]').forEach(c => c.onchange = () => share({ kind: 'show', task: c.dataset.show, value: c.checked ? 'Y' : 'N' }, c, true));
+}
+
+/* coming up for the group's people (14 October 2026): what the group sees, plus personal pensions, assumed retirement
+   ages, the projection tasks and what to put right in Salesforce */
+function untilWords(n) {
+  if (n == null) return '';
+  if (n < 0) return Math.abs(n) < 31 ? 'this month' : Math.round(-n / 30.4) + ' mo ago';
+  if (n < 31) return 'this month';
+  if (n < 365) return 'in ' + Math.round(n / 30.4) + ' mo';
+  return 'in ' + (Math.round(n / 365.25 * 2) / 2) + ' yr';
+}
+function comingHtml(d) {
+  const C = d.coming; if (!C) return '';
+  const S = C.sum || {};
+  const li = (x, extra) => '<li><b>' + esc(x.person) + '</b> <span class="muted small">' + untilWords(x.inDays) + '</span>' + (extra || '') +
+    '<span class="dt">' + esc(dmy(x.date)) + (x.line ? ' · ' + esc(x.line) : '') + (x.policy ? ' · policy ' + esc(x.policy) : '') + (x.email ? ' · ' + esc(x.email) : ' · no e-mail on file') + '</span></li>';
+  const grp = (cls, ic, title, list, f) => '<div class="cgrp ' + cls + '"><h4><span class="ic">' + ic + '</span>' + title + ' <b>' + list.length + '</b></h4>' +
+    (list.length ? '<ul>' + list.map(f).join('') + '</ul>' : '<p class="muted small" style="margin:0">Nobody in this window.</p>') + '</div>';
+  return '<section class="coming"><div class="ph"><h3>Coming up for their people</h3><span class="cnt">' + C.count + '</span><span class="muted small">The group sees these too, except personal pensions, e-mails and tasks. They are in the Monday letter.</span></div>' +
+    '<div class="cgrid">' +
+    grp('c65', C.convertAge, 'Turning ' + C.convertAge + ': convert to an individual plan', C.convert, x => li(x)) +
+    grp('dep', C.depAge, 'Dependents reaching ' + C.depAge, C.deps, x => li(x, x.member ? ' <span class="muted small">of ' + esc(x.member) + '</span>' : '')) +
+    grp('ret', '5y', 'Retiring within ' + C.retireYears + ' years', C.retire, x => li(x, '<span class="own ' + (x.ownership === 'Company' ? 'co">Company' : 'pe">Personal') + '</span>' +
+      (x.assumed ? ' <span class="chip warn"><i></i>age ' + x.age + ' assumed: no retirement age in Salesforce</span>' : '') +
+      (x.task ? ' <span class="chip good"><i></i>projection task open</span>' : x.inDays >= 0 ? ' <span class="chip"><i style="background:#9aa5b1"></i>' + (C.tasksOn ? 'task opens at the next refresh' : 'task opens after the branch manager’s go') + '</span>' : '') +
+      (x.note ? ' <span class="muted small">' + esc(x.note) + '</span>' : ''))) + '</div>' +
+    '<div class="cleanrow">' + (S.people != null ? '<span class="chip"><i style="background:#9aa5b1"></i>' + S.people + ' people on group plans and pensions</span>' : '') +
+    (S.nodob ? '<span class="chip bad"><i></i>' + S.nodob + ' with no date of birth</span>' : '') +
+    (S.assumed ? '<span class="chip warn"><i></i>' + S.assumed + ' pension' + (S.assumed === 1 ? '' : 's') + ' with no retirement age (assumed ' + C.retireDefault + ')</span>' : '') +
+    (S.company || S.personal ? '<span class="chip"><i style="background:#8A4FD8"></i>' + (S.company || 0) + ' company-owned, ' + (S.personal || 0) + ' personal pensions</span>' : '') +
+    (S.deps != null ? '<span class="chip"><i style="background:#008C7A"></i>' + S.deps + ' dependent' + (S.deps === 1 ? '' : 's') + ' on record</span>' : '') + '</div>' +
+    (C.nodob && C.nodob.length ? '<p class="small" style="margin:8px 0 0"><b>No date of birth:</b> ' + C.nodob.map(x => esc(x.person) + (x.policy ? ' (' + esc(x.policy) + ')' : '')).join(', ') + '. Enter it on the policy in Salesforce.</p>' : '') +
+    '</section>';
+}
+
 async function openGroup(key) {
   $('app').innerHTML = '<p class="muted" style="margin:30px 0">Opening the group, with every task’s Chatter from Salesforce…</p>';
   const d = await api({ action: 'gcm.group', group: key });
@@ -679,6 +803,7 @@ function drawGroup() {
     ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
     (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
     accountBar(d) +
+    pendHtml(d) + comingHtml(d) +
     (d.canAct === false ? '<div class="note">Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>. You can read everything here and leave a comment for the team on any item; approving the letter and anything the group sees is for ' + esc(g.assigned ? g.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' : '') +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
     '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
@@ -696,6 +821,7 @@ function drawGroup() {
     '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
   $('app').innerHTML = h;
   $('bk').onclick = render;
+  bindPend();
   $('app').querySelectorAll('[data-act]').forEach(b => b.onclick = () => openAct(b.dataset.act, b.dataset.k));
   $('pv').onclick = preview;
   if ($('unap')) $('unap').onclick = async () => { const r = await post({ action: 'gcm.unapprove', group: GROUP.group.key }); if (!r.ok) return toast(r.error || 'Not cancelled', true); toast('Approval cancelled. Nothing goes on Monday until you approve again.'); openGroup(GROUP.group.key); };
