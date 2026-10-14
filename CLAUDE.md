@@ -2773,8 +2773,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   afterwards, so a missed 10:00 firing goes at 11:00, and a group approved
   again after ten on a Monday goes that hour. An approval made after Monday
   10:00 is for the next Monday. Approving again replaces the earlier one, and
-  "Cancel the approval" withdraws it. Only the branch manager can still send at
-  once ("Send now instead", or Outlook); doing so closes that group's approval.
+  "Cancel the approval" withdraws it. Whoever looks after the group, the deputy
+  and the branch manager can still send at once ("Send now", or Outlook; until
+  14 October 2026 the branch manager alone); doing so closes that group's approval.
   The group is asked to answer by Friday. Every letter is logged on `Group
   Sends` with the letter itself. `gcmlive/queue-test.js` in the session
   scratchpad covers it (26 checks).
@@ -2864,16 +2865,90 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
     film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
   - **No access code in it.** The Monday letter carries the sign-in, after staff check it.
-  - `gcmWelcome_` writes it, signed by the branch manager and naming the account owner. `gcmWelcomeList_` picks the
-    groups: ready for a Monday letter, written to the Contact Person, never one of our own addresses, never twice,
-    never a group named in the `GCM_WELCOME_SKIP` Script property.
+  - **It is signed by the staff member who verified the group** (14 October 2026: "it has me as the branch manager,
+    the letter must have verified by the staff who clicked verified"). `gcmWelcome_` signs it with the verifier
+    (below), says "I look after your account" when the verifier is the account owner and names the owner otherwise,
+    carries the green "Checked against our records by …" label, and gives the group its year with us so far (below).
+    `gcmWelcomeList_` picks the groups: ready for a Monday letter, **verified**, written to the Contact Person, never
+    one of our own addresses, never twice, never a group named in the `GCM_WELCOME_SKIP` Script property. A group
+    nobody has verified waits; the Group Sends Staff column is the verifier.
   - **The branch manager gets the test first**: `gcmWelcomeTest` (editor Run) sends him one welcome as a group would
     get it, marked TEST, with who would and would not get it. `gcmWelcomeNow` then sends it at once (chosen the same
-    evening, to all eleven ready groups), or `gcmWelcomeAt6` by itself at 18:00 (today if before six, else tomorrow);
-    `gcmWelcomeCancel` stops a scheduled one. From support@ only; without Microsoft 365 nothing goes.
+    evening, to all eleven ready groups), or `gcmWelcomeAt9` / `gcmWelcomeAt6` by itself at 9:00 / 18:00 (today if
+    the hour has not come, else tomorrow; asked for on 13 October: "triggered tomorrow at 9am but wait until I give
+    instructions", so nothing is set until one is run); `gcmWelcomeCancel` stops a scheduled one, and the scheduled
+    run does what `gcmWelcomeNow` does. From support@ only; without Microsoft 365 nothing goes.
+    `gcmWelcomeNow` also sets the `GCM_WELCOME_ON` Script property: from then on the hourly run (weekdays, 8:00 to
+    17:00) welcomes a group within the hour of a staff member approving it, says nothing when there is no one to
+    welcome, and the approval toast tells the staff member it will go signed by them. `gcmWelcomeStop` ends that.
   - Each welcome is logged on Group Sends with Status "welcome sent". The weekly run passes those rows over, so a
     welcome never counts as that week's letter. One internal summary goes to `TRANSITION.CC`.
-  - `welcome/welcome-test.js` in the session scratchpad covers it (24 checks).
+  - `welcome/welcome-test.js` in the session scratchpad covers it (29 checks, with the verifier and the 9:00 run).
+- **The verifier is whoever approved the letter, and every letter says so** (14 October 2026). It is the newest
+  approval on Group Queue that was not cancelled (`gcmVerifier_`): the person who ticked that they checked every item
+  and pressed Approve for Monday, the branch manager included when he approves. The name is written as Salesforce has
+  it when the verifier is the account owner (`gcmVerName_`, through `gcmSameName_`), else in title case, never the
+  Agent Skill Bank's capitals. The Monday letter keeps its signature (the staff member who looks after the group) and
+  adds the same green label under it, naming who checked it and when (`gcmVerifiedLine_`, `gcmVerifiedHtml_`); the
+  label is a tinted label with a tick, never colour alone.
+- **The year with each group: what we did, the trend, and what the records suggest** (14 October 2026: "show how we
+  are servicing the client account for the year and spot opportunities and trends on tasks closed year to date and by
+  type"). `gcmYear_(g, today, forStaff)` reads the Group Tasks tab, which already leaves out logged e-mails and the
+  birthday flow:
+  - **By month**, items completed this year for the company, and apart from them those for employees' own policies
+    (`level` member). A member's health or claim never reaches the group's view, not even as a count; staff see the
+    count. On-time counts only items with a target date.
+  - **The trend** compares the last 91 days with the 91 before, in counts and in average days (only with three items
+    on each side), as sentences of fact, **for staff only**. The group gets the months and the totals, never the
+    comparison: fewer items in a quarter can be a group that asked for less, and on the first real run the welcome
+    would have told an employer "5, against 19 before … up from 28 days".
+  - **What the records suggest** (staff and the branch only, never the group), most time-critical first: a notice of
+    non-renewal in the last year; a renewal within 120 days (from the effective date in the subject, else a year on
+    from when last year's renewal work began); premiums late, in arrears or queried; premium-due notices on employees'
+    own policies, which point at payroll deductions; three or more joiners; individual pension plans taken through the
+    employer; Group Life or Health work with no pension work on file, Life with no Health; three or more leavers;
+    nothing logged in 90 days; items taking a week longer than before; three or more health and claims items; an open
+    Salesforce Opportunity. Never advice, only what the records show.
+  - **The words in a subject that fooled the first cut, read on the real tasks:** "Renewal Date m/d/yyyy" on a
+    payment is the monthly billing date, never a renewal, and "Courtesy Reminder" is an employee's own health plan
+    (`GCM_YEAR.NOT_RENEW`); "Payment Received" is the monthly receipt, not a late premium (`GCM_YEAR.PAY`). Real
+    renewals read "Group Health Renewal", "Feb 1st Renewal Letter", "Notice of non-renewal".
+  - **Where it shows:** the group's page on the staff board ("The year with this group": tiles, the months as a chart
+    with a table under it, the trend, by service, the Salesforce task types, the opportunities); the group's own page
+    ("Our service record for you this year": the company's months and a line for the employees); the welcome; and the
+    dashboard's "The year so far" (`gcmYearAll_`: every group's months, each category, each group with its last three
+    months against the three before, tap to open, and every opportunity with its group and owner).
+  - The charts are one series in the action blue, with the value on every column and the same numbers in a table.
+  - `year/year-test.js` (32 checks) and `year/page-shot.js` (12, Playwright) in the session scratchpad cover it.
+- **Every account on the team dashboard, and send or resend from the page** (14 October 2026: "the team dashboard so
+  staff can view all the accounts and owners and they can also have the ability to resend or send … this has to pop
+  and be a wow experience for the staff, client", then "a much more professional look, filters and scaling and colors
+  for visibility").
+  - **Every account** opens the Team dashboard (`accountsHtml`): four meters (welcomed, approved or sent for Monday,
+    answered, ready), one toolbar (a search over group, owner, contact and list bill; who looks after it; the order;
+    where it stands, each with its mark; "Showing N of M" and Clear filters), then one row an account: the owner, who
+    the letters go to (a personal mailbox marked), the welcome, this week's letter, the last answer with its stars, and
+    the buttons. A coloured rail says where the row stands, with a key under the table: red, something is due from
+    us; amber, it needs setting up; green, welcomed and this week's letter approved or sent. Every state is a word as
+    well as a colour. `gcmAccount_` in `gcmBoard_` is the row's data. The Groups tab takes the same toolbar, and the
+    greeting and the week's numbers sit in the masthead.
+  - **The send window** (`openAct`): the e-mail exactly as it goes, who it goes to and from where, who signs it, a
+    tick, the button; then a tick mark naming who it went to and when. Three things go from it, for whoever looks
+    after the group, the deputy and the branch manager (a colleague's group stays read only):
+    - this week's letter: Approve for Monday or Send now (`gcmSend_`, no longer the branch manager's alone; the same
+      checks as an approval; the opening line of a waiting approval is kept);
+    - the last letter again (`gcmResend_`), exactly as it went, under a line saying when it first went, to the
+      contact as Salesforce has it now. Group Sends keeps each letter's HTML in a new **Html** column (`gcmSheet_` adds
+      it to an older tab by name, once); a letter sent before 14 October has none and is sent fresh instead. Logged as
+      `resent: …`, never counted as the week's letter;
+    - the welcome, or the welcome again (`gcmWelcomeSend_`), signed by the person who ticks and sends it, logged as
+      `welcome sent` or `welcome resent`.
+    Nothing goes to one group twice inside ten minutes (`gcmJustSent_`), and every send is a row with who pressed it.
+  - **A group's own page** opens on who looks after them, the film, when their next letter comes and when they last
+    answered; the year in four tiles; the three answers with their own marks; a progress track; and a thank-you that
+    names them and says what happens next.
+  - `wow/actions-test.js` (31 checks), `wow/after.js` (24, Playwright) and `wow/showcase.js` (screenshots) in the
+    session scratchpad cover it, on the made-up branch.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 

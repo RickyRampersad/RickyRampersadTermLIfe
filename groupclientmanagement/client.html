@@ -111,7 +111,55 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--pa
 footer{color:var(--muted);font-size:13px;padding:10px 0 40px;text-align:center}
 footer a{color:inherit}
 .hide{display:none!important}
+/* the year by month: one column a month, its value above and the month below (14 October 2026) */
+.months{display:grid;gap:6px;align-items:end;height:160px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 10px 8px;margin:0 0 12px}
+.months .mo{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:12px;color:var(--muted);border-radius:6px}
+.months .mo .col{width:62%;max-width:28px;background:var(--bar);border-radius:4px 4px 0 0;min-height:2px}
+.months .mo b{color:var(--ink);font-size:13px;font-weight:600}
+.trend{margin:0 0 12px;font-size:15px}
+@media (max-width:560px){.months{height:130px;gap:3px;padding:10px 4px 6px}.months .mo{font-size:11px}}
+/* the page's welcome (14 October 2026): who looks after them, the film, and the year at a glance */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:18px 0 0;box-shadow:var(--shadowLg)}
+.hero .av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#13408F,#2A6FD8);color:#fff;display:grid;place-items:center;font-weight:600;font-size:18px;letter-spacing:.02em}
+.hero b{font-weight:600}.hero p{margin:0}.hero .muted{color:var(--muted);font-size:14px}
+.hero .links{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--primaryLine);background:var(--primarySoft);color:var(--primary);border-radius:99px;padding:7px 14px;font-weight:600;font-size:14px;text-decoration:none}
+.pill .play{width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:10px}
+.pill.plain{background:var(--sunken);border-color:var(--line);color:var(--ink2);font-weight:500}
+.ytiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 12px}
+.ytiles div{background:linear-gradient(180deg,#FFFFFF,var(--paper));border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.ytiles b{display:block;font-size:24px;font-weight:600;color:#13408F;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.ytiles span{font-size:12px;color:var(--muted)}
+.thanks{text-align:center}
+.thanks .tick{width:76px;height:76px;border-radius:50%;background:var(--goodBg);color:var(--good);display:grid;place-items:center;margin:4px auto 14px;font-size:42px;font-weight:700;animation:pop .35s ease-out}
+@keyframes pop{0%{transform:scale(.4);opacity:0}80%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.thanks .tick{animation:none}}
+.next{list-style:none;margin:16px 0;padding:0;text-align:left;display:flex;flex-direction:column;gap:8px}
+.next li{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:start;background:var(--sunken);border-radius:10px;padding:10px 12px;font-size:15px}
+.next li span{width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:600;font-size:14px}
+@media (max-width:560px){.ytiles{grid-template-columns:repeat(2,1fr)}.hero{grid-template-columns:auto 1fr}}
 @media (max-width:560px){.tiles{grid-template-columns:repeat(2,1fr)}.row2{grid-template-columns:1fr}.ch{font-size:13px}.t th,.t td{padding:8px 6px}.t th{font-size:11px;letter-spacing:0}}
+/* the design pass (14 October 2026: "a much more professional look … colors for visibility"): white panels, a mark
+   and a word on every state, the three answers with their own marks, and a progress track */
+:root{--paper:#FFFFFF;--canvas:#DCE3EC;--sunken:#EEF2F7;--line:#D3DBE6;--line2:#B9C4D3;
+  --good:#05603A;--goodBg:#DCF3E5;--goodLine:#9FD9B5;--warn:#93370D;--warnBg:#FDEBD3;--warnLine:#F3C58C;--warnMark:#DC6803;
+  --bad:#D92D20;--badBg:#FCE3E0;--badLine:#F4B5AE;--badText:#B42318}
+.tile{border-top:4px solid var(--bar)}.tile.alert{border-top-color:var(--bad)}
+.hero{border-left:5px solid var(--primary)}
+.st{font-size:12.5px;padding:3px 10px;border:1px solid var(--line)}
+.st.wait{background:var(--warnBg);border-color:var(--warnLine);color:var(--warn)}.st.wait::before{content:"● ";color:var(--warnMark)}
+.st.late{background:var(--badBg);border-color:var(--badLine);color:var(--badText)}.st.late::before{content:"! ";font-weight:700}
+.item{border-left-width:5px;padding:16px 18px}.item.late{border-left-color:var(--bad)}.item.wait{border-left-color:var(--warnMark)}
+.item h3{font-size:17px}
+.cat{display:flex;align-items:center;gap:10px;color:var(--ink2)}.cat::after{content:"";flex:1;height:1px;background:var(--line2)}
+.ch{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px}
+.ch::before{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none;border:1.5px solid currentColor}
+.ch.correct::before{content:"✓";color:var(--good)}.ch.change::before{content:"✎";color:var(--warn)}.ch.notours::before{content:"✕";color:var(--badText)}
+.ch[aria-pressed="true"].correct::before{color:#fff;background:var(--good);border-color:var(--good)}
+.ch[aria-pressed="true"].change::before{color:#fff;background:var(--warnMark);border-color:var(--warnMark)}
+.ch[aria-pressed="true"].notours::before{color:#fff;background:var(--bad);border-color:var(--bad)}
+.progress .track{height:6px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden;margin-top:6px}
+.progress .track div{height:100%;background:#fff;border-radius:3px;transition:width .3s}
 </style>
 </head>
 <body>
@@ -184,9 +232,15 @@ function render() {
   const items = D.items, waiting = items.filter(i => /confirmation/i.test(i.status)).length, late = items.filter(i => i.late).length;
   const cats = [];
   items.forEach(i => { if (cats.indexOf(i.cat) < 0) cats.push(i.cat); });
-  let h = '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
+  const ini = String(D.staff || 'RR').split(/[\s-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  let h = '<div class="hero"><div class="av" aria-hidden="true">' + esc(ini) + '</div><div>' +
+    (D.staff ? '<p>Your account is looked after by <b>' + esc(D.staff) + '</b> and our branch team.</p>' : '<p>Your account is looked after by our branch team.</p>') +
+    '<p class="muted">' + (D.lastAnswer ? 'You last answered us on ' + esc(D.lastAnswer.at) + (D.lastAnswer.name ? ' (' + esc(D.lastAnswer.name) + ')' : '') + '. ' : '') +
+    (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
+    '<div class="links">' + (D.film ? '<a class="pill" href="' + esc(D.film) + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + esc(D.filmLength || '') + '</a>' : '') +
+    '<a class="pill plain" href="#rate">Rate our service</a></div></div>' +
+    '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
     '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +
-    (D.staff ? '<p class="sub">Your account is looked after by <b>' + esc(D.staff) + '</b> and our branch team.</p>' : '') +
     '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>';
   if (!items.length) h += '<p>There is nothing open for your company right now.</p>';
   cats.forEach(c => {
@@ -209,13 +263,24 @@ function render() {
     });
   });
   if (D.record.length) {
-    const tot = D.record.reduce((x, r) => ({ done: x.done + r.done, open: x.open + r.open }), { done: 0, open: 0 });
-    h += '<h2 class="sec">Our service record for you this year</h2><p class="sub">Completed items, the share done by their target date, and how many days they took on average.</p>' +
+    const tot = D.record.reduce((x, r) => ({ done: x.done + r.done, open: x.open + r.open }), { done: 0, open: 0 }), Y = D.year;
+    h += '<h2 class="sec">Our service record for you this year</h2><p class="sub">Completed items, the share done by their target date, and how many days they took on average.</p>';
+    if (Y) h += '<div class="ytiles"><div><b>' + Y.done + '</b><span>completed for your company</span></div><div><b>' + Y.member + '</b><span>for your employees’ own policies</span></div>' +
+      '<div><b>' + (Y.onTimePct == null ? '–' : Y.onTimePct + '%') + '</b><span>done by the target date</span></div><div><b>' + (Y.avgDays == null ? '–' : Y.avgDays) + '</b><span>days on average</span></div></div>';
+    if (Y && Y.months && Y.months.length) {
+      const max = Math.max(1, ...Y.months.map(m => m.done));
+      h += '<div class="months" role="list" aria-label="Items completed for you, by month" style="grid-template-columns:repeat(' + Y.months.length + ',1fr)">' + Y.months.map(m => {
+        const mon = MON[Number(m.m.slice(5, 7)) - 1].slice(0, 3);
+        return '<div class="mo" role="listitem" title="' + mon + ': ' + m.done + ' completed" aria-label="' + mon + ': ' + m.done + ' completed"><b>' + m.done + '</b><div class="col" style="height:' + Math.round(100 * m.done / max) + '%"></div><span>' + mon + '</span></div>';
+      }).join('') + '</div>' +
+        '<p class="trend">' + esc((Y.member ? 'We also completed ' + Y.member + ' item' + (Y.member === 1 ? '' : 's') + ' for your employees’ own policies this year. ' : '') + (Y.trend || []).join(' ')) + '</p>';
+    }
+    h +=
       '<div class="scroll"><table class="t"><thead><tr><th>Service</th><th class="num">Completed</th><th class="num">On time</th><th class="num">Avg days</th><th class="num">Open</th></tr></thead><tbody>' +
       D.record.map(r => '<tr><td>' + esc(r.type) + '</td><td class="num">' + r.done + '</td><td class="num">' + (r.onTimePct == null ? '–' : r.onTimePct + '%') + '</td><td class="num">' + (r.avgDays == null ? '–' : r.avgDays) + '</td><td class="num">' + r.open + '</td></tr>').join('') +
       '<tr><td><b>All services</b></td><td class="num"><b>' + tot.done + '</b></td><td></td><td></td><td class="num"><b>' + tot.open + '</b></td></tr></tbody></table></div>';
   }
-  h += '<div class="panel"><h2 class="sec" style="margin-top:0">How are we doing?</h2><p class="sub">' + (D.rated ? 'You rated us this week already. Please rate us again with this week\'s answers.' : 'Rate the service you have received from our branch. A rating is needed before you send.') + '</p>' +
+  h += '<div class="panel" id="rate"><h2 class="sec" style="margin-top:0">How are we doing?</h2><p class="sub">' + (D.rated ? 'You rated us this week already. Please rate us again with this week\'s answers.' : 'Rate the service you have received from our branch. A rating is needed before you send.') + '</p>' +
     '<div class="stars" role="radiogroup" aria-label="Your rating">' + [1, 2, 3, 4, 5].map(n => '<button type="button" class="star" role="radio" data-s="' + n + '" aria-checked="' + ((A._stars || 0) >= n) + '" aria-label="' + n + ' of 5: ' + RATE[n] + '"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg></button>').join('') + '</div>' +
     '<div class="rlab" id="rl" aria-live="polite">' + rateLab(A._stars) + '</div>' +
     '<ul class="key" id="key" aria-label="What the stars mean">' + [5, 4, 3, 2, 1].map(n => '<li data-k="' + n + '"' + (A._stars === n ? ' class="on"' : '') + '><span class="ks" aria-hidden="true">' + '★'.repeat(n) + '<i>' + '★'.repeat(5 - n) + '</i></span><span><b>' + n + ' star' + (n === 1 ? '' : 's') + ': ' + RATE[n] + '.</b> ' + MEANS[n] + '</span></li>').join('') + '</ul>' +
@@ -251,7 +316,8 @@ function bind() {
 }
 function progress() {
   const n = D.items.filter(i => A[i.id] && A[i.id].v).length;
-  $('progText').innerHTML = '<b>' + n + ' of ' + D.items.length + '</b> items reviewed · answers by ' + esc(dmy(D.respondBy));
+  $('progText').innerHTML = '<b>' + n + ' of ' + D.items.length + '</b> items reviewed · answers by ' + esc(dmy(D.respondBy)) +
+    '<div class="track" role="progressbar" aria-valuemin="0" aria-valuemax="' + D.items.length + '" aria-valuenow="' + n + '" aria-label="Items reviewed"><div style="width:' + (D.items.length ? Math.round(100 * n / D.items.length) : 0) + '%"></div></div>';
 }
 async function send() {
   const err = $('serr'); err.textContent = '';
@@ -270,10 +336,15 @@ async function send() {
   } catch (x) { r = { ok: false, error: 'We could not reach our system. Your answers are saved on this device: try again shortly.' }; }
   if (!r.ok) { err.textContent = r.error; b.disabled = false; b.textContent = 'Send my answers'; return; }
   try { localStorage.removeItem(draftKey()); } catch (x) {}
+  const who0 = String(A._who || '').trim(), nm = /^(mr|mrs|ms|miss|dr)\.?$/i.test(who0.split(/\s+/)[0]) ? who0 : who0.split(/\s+/)[0];
   A = {};
   $('prog').classList.add('hide');
-  $('app').innerHTML = '<div class="panel"><h2 class="sec" style="margin-top:0">Thank you. Your answers are with our team.</h2><p>Every note you added is now on that item for the person handling it, and anything you marked as needing a change will be followed up. ' +
-    (D.staff ? esc(D.staff) + ' will be in touch where needed.' : '') + '</p><p><button class="btn" type="button" onclick="open_()">Back to my items</button></p></div>';
+  $('app').innerHTML = '<div class="panel thanks" role="status"><div class="tick" aria-hidden="true">✓</div><h2 class="sec" style="margin-top:0">Thank you' + (nm ? ', ' + esc(nm) : '') + '. Your answers are with our team.</h2>' +
+    '<ol class="next">' +
+    '<li><span>1</span><div>Every note you added is on that item now, for the person handling it.</div></li>' +
+    '<li><span>2</span><div>' + (D.staff ? esc(D.staff) + ' has' : 'Our team has') + ' been told by e-mail, and anything you marked as needing a change is followed up.</div></li>' +
+    '<li><span>3</span><div>Your next letter' + (D.nextLetter ? ', ' + esc(D.nextLetter) + ',' : '') + ' shows what changed.</div></li></ol>' +
+    '<p><button class="btn" type="button" onclick="open_()">Back to my items</button></p></div>';
   window.scrollTo(0, 0);
 }
 if (CRED.lb && CRED.code) { $('lb').value = CRED.lb; open_(); }
