@@ -81,6 +81,8 @@ var GCM = {
   SENDS: 'Group Sends',
   RESPONSES: 'Group Responses',
   SHARES: 'Group Shares',
+  INCREASES: 'Group Increases',
+  LIFE: 'Group Milestones',
   SEND_DAY: 1,              // Monday (1 Monday … 7 Sunday): the week's letters go out by themselves at SEND_HOUR (8 October 2026)
   SEND_HOUR: 10,            // staff approve each letter during the week; at 10:00 on Monday the approved letters go
   QUEUE: 'Group Queue',
@@ -100,11 +102,14 @@ var GCM = {
 var GCM_HEAD = {
   'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Owner in Salesforce', 'Owner active', 'Owner e-mail',
                       'Contact in Salesforce', 'Contact e-mail', 'Contact greeting', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
-  'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private', 'History', 'Mails'],
+  'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private', 'History', 'Mails', 'Application'],
   'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status', 'Html'],
   'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter'],
   'Group Shares':    ['When', 'Group', 'Task Id', 'Kind', 'Value', 'By'],
-  'Group Queue':     ['When', 'Group', 'Staff', 'Role', 'Staff e-mail', 'For', 'Task Ids', 'Intro', 'Status', 'Sent at']
+  'Group Queue':     ['When', 'Group', 'Staff', 'Role', 'Staff e-mail', 'For', 'Task Ids', 'Intro', 'Status', 'Sent at'],
+  'Group Increases': ['Group', 'Increase Id', 'Policy', 'Line', 'Insured', 'Submitted', 'Days', 'Status', 'Stage', 'Support', 'Agent',
+                      'Picked up', 'Last activity', 'Own', 'Amount', 'Mails', 'Check'],
+  'Group Milestones': ['Group', 'Kind', 'Person', 'Member', 'Policy', 'Line', 'Ownership', 'Born', 'Date', 'Age at', 'Assumed', 'E-mail', 'Policy Id', 'Task', 'Note']
 };
 
 /* The order a group's page lists its items in, and the client's words for a status. */
@@ -177,7 +182,7 @@ function gcmSetup() {
   gcmMondayTrigger_();
   var on = tSfOn_(), gs = gcmSS_(), own = gs.getId() === ss_().getId();
   return tSay_('Group client management is set up in "' + gs.getName() + '"' + (own ? ' (this spreadsheet: set GCM_SHEET_ID to keep the group tabs in a sheet of their own)' : '') +
-    ': the six Group tabs exist, the refresh runs every hour from ' +
+    ': the ' + Object.keys(GCM_HEAD).length + ' Group tabs exist, the refresh runs every hour from ' +
     GCM.HOURS[0] + ':00 to ' + GCM.HOURS[1] + ':00, Monday to Saturday, and the approved letters go every Monday at ' + GCM.SEND_HOUR + ':00.\n\n' +
     (on ? 'Salesforce is linked. Run gcmRefresh once now to fill the Group Tasks tab.'
         : 'Salesforce is NOT linked to this project yet: copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings → Script properties, then run gcmRefresh.'));
@@ -461,9 +466,9 @@ function gcmRefresh_() {
   /* who each group is assigned to: its account's owner in Salesforce, and whether that user is still active; and who
      the letter goes to: the account's Contact Person, else the account's own e-mail */
   var owners = {}, contacts = {};
-  if (accts.length) gcmQuery_('SELECT Id, Email__c, Owner.Name, Owner.Email, Owner.IsActive, Contact_Person__r.Name, Contact_Person__r.FirstName, ' +
+  if (accts.length) gcmQuery_('SELECT Id, Email__c, OwnerId, Owner.Name, Owner.Email, Owner.IsActive, Contact_Person__r.Name, Contact_Person__r.FirstName, ' +
     'Contact_Person__r.LastName, Contact_Person__r.Salutation, Contact_Person__r.Email FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
-    owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), email: String((a.Owner && a.Owner.Email) || ''), active: !(a.Owner && a.Owner.IsActive === false) };
+    owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), email: String((a.Owner && a.Owner.Email) || ''), active: !(a.Owner && a.Owner.IsActive === false), id: String(a.OwnerId || '') };
     contacts[gcmId15_(a.Id)] = gcmContactOf_(a);
   });
   reg.forEach(function (g) {
@@ -498,7 +503,7 @@ function gcmRefresh_() {
   var polSub = polWhere.length ? '(SELECT Id FROM CLIENT_PORTFOLIO__c WHERE ' + polWhere.join(' OR ') + ')' : '';
   var conSub = polWhere.length ? '(SELECT Contact__c FROM CLIENT_PORTFOLIO__c WHERE ' + polWhere.join(' OR ') + ')' : '';
   var seen = {}, rows = [], excluded = 0, openRows = [];
-  var take = function (t, gi, level) {
+  var take = function (t, gi, level, via) {
     var id = gcmId15_(t.Id);
     if (seen[id] || gi === undefined) return;
     seen[id] = true;
@@ -508,23 +513,30 @@ function gcmRefresh_() {
     rows.push([reg[gi].name, t.Id, subject.slice(0, 500), type, cat, String(t.Status || ''), t.IsClosed ? 'N' : 'Y',
       gcmYmd_(t.ActivityDate), gcmYmd_(t.CreatedDate), t.IsClosed ? gcmYmd_(t.CompletedDateTime || t.LastModifiedDate) : '',
       gcmName_(t, 'Owner'), gcmName_(t, 'Who'), gcmName_(t, 'What') && /TRANSACTIONS__c/.test((t.What || {}).Type || '') ? gcmName_(t, 'What') : '',
-      level, GCM_PRIVATE.test(subject) ? 'Y' : '', '', '']);
-    if (!t.IsClosed) openRows.push({ i: rows.length - 1, id: t.Id, what: String(t.WhatId || ''), whatType: String((t.What || {}).Type || ''), gi: gi, subject: subject });
+      level, GCM_PRIVATE.test(subject) ? 'Y' : '', '', '', '']);
+    if (!t.IsClosed) openRows.push({ i: rows.length - 1, id: t.Id, what: String(t.WhatId || ''), whatType: String((t.What || {}).Type || ''), gi: gi, subject: subject,
+      via: via, type: type, cat: cat, who: gcmName_(t, 'Who') });
   };
-  if (accts.length) gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN (' + gcmIn_(accts) + ')' + W).forEach(function (t) { take(t, byAcct[gcmId15_(t.WhatId)], 'group'); });
+  if (accts.length) gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN (' + gcmIn_(accts) + ')' + W).forEach(function (t) { take(t, byAcct[gcmId15_(t.WhatId)], 'group', 'account'); });
   if (accts.length) gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN (SELECT Id FROM TRANSACTIONS__c WHERE Account__c IN (' + gcmIn_(accts) + '))' + W)
-    .forEach(function (t) { take(t, transGroup[gcmId15_(t.WhatId)], 'group'); });
+    .forEach(function (t) { take(t, transGroup[gcmId15_(t.WhatId)], 'group', 'billing'); });
   var words = [];
   reg.forEach(function (g) { g.match.forEach(function (w) { if (w.trim()) words.push(w.trim()); }); });
   if (words.length) {
     var like = words.map(function (w) { var l = svcSoqlLit_(w).replace(/%/g, '\\%').replace(/_/g, '\\_'); return "Subject LIKE '%" + l + "%' OR What.Name LIKE '%" + l + "%'"; }).join(' OR ');
     gcmQuery_('SELECT ' + F + ' FROM Task WHERE (' + like + ')' + W).forEach(function (t) {
-      for (var gi = 0; gi < reg.length; gi++) if (gcmNames_(t, reg[gi])) { take(t, gi, 'group'); return; }
+      for (var gi = 0; gi < reg.length; gi++) if (gcmNames_(t, reg[gi])) { take(t, gi, 'group', 'name'); return; }
     });
   }
   if (polSub) {
-    gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN ' + polSub + W).forEach(function (t) { take(t, polGroup[gcmId15_(t.WhatId)], 'member'); });
-    gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhoId IN ' + conSub + W).forEach(function (t) { take(t, contactGroup[gcmId15_(t.WhoId)], 'member'); });
+    gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN ' + polSub + W).forEach(function (t) { take(t, polGroup[gcmId15_(t.WhatId)], 'member', 'policy'); });
+    gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhoId IN ' + conSub + W).forEach(function (t) { take(t, contactGroup[gcmId15_(t.WhoId)], 'member', 'contact'); });
+  }
+  /* the increases still pending on the groups' policies, and the open tasks on them, which say what is outstanding */
+  var incs = gcmIncreases_(reg, byAcct, byBill, accts, bills);
+  for (var ii = 0; ii < incs.ids.length; ii += GCM.CHUNK) {
+    gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN (' + gcmIn_(incs.ids.slice(ii, ii + GCM.CHUNK)) + ') AND IsClosed = false')
+      .forEach(function (t) { take(t, incs.gi[gcmId15_(t.WhatId)], 'member', 'increase'); });
   }
 
   /* each open item's story: its own change history, and the e-mails filed against the same record */
@@ -534,6 +546,9 @@ function gcmRefresh_() {
     rows[o.i][15] = JSON.stringify(hist[gcmId15_(o.id)] || {});
     rows[o.i][16] = JSON.stringify(mails[gcmId15_(o.id)] || []);
   });
+  /* the applications still pending: what each is for, whose it is, and when it came in */
+  var apps = gcmApplications_(openRows, reg, incs.info);
+  openRows.forEach(function (o) { if (apps[gcmId15_(o.id)]) rows[o.i][17] = JSON.stringify(apps[gcmId15_(o.id)]); });
 
   /* write: the tab whole, new over old, so a reader never meets it empty (the header too, so new columns arrive) */
   var sh = gcmSheet_(GCM.TASKS), head = GCM_HEAD[GCM.TASKS];
@@ -543,6 +558,25 @@ function gcmRefresh_() {
   }
   var extra = sh.getLastRow() - 1 - rows.length;
   if (extra > 0) sh.getRange(rows.length + 2, 1, extra, head.length).clearContent();
+  /* the increases, the same way: the tab whole, and left as it was when Salesforce could not be read */
+  if (!incs.error) {
+    var imails = gcmMails_(incs.list.map(function (x) { return { id: x.id, what: x.id, gi: x.gi, subject: '' }; }), reg);
+    var irows = incs.list.map(function (x) { x.row[15] = JSON.stringify(imails[gcmId15_(x.id)] || []); return x.row; });
+    var ish = gcmSheet_(GCM.INCREASES), ihead = GCM_HEAD[GCM.INCREASES];
+    ish.getRange(1, 1, 1, ihead.length).setValues([ihead]);
+    if (irows.length) ish.getRange(2, 1, irows.length, ihead.length).setNumberFormat('@').setValues(irows);
+    var iextra = ish.getLastRow() - 1 - irows.length;
+    if (iextra > 0) ish.getRange(irows.length + 2, 1, iextra, ihead.length).clearContent();
+  }
+  /* what is coming up for each group's people: conversions at 65, dependents coming of age, retirements within five years */
+  var life = gcmMilestones_(reg, byAcct, byBill, accts, polWhere, owners);
+  if (!life.error) {
+    var lsh = gcmSheet_(GCM.LIFE), lhead = GCM_HEAD[GCM.LIFE];
+    lsh.getRange(1, 1, 1, lhead.length).setValues([lhead]);
+    if (life.rows.length) lsh.getRange(2, 1, life.rows.length, lhead.length).setNumberFormat('@').setValues(life.rows);
+    var lextra = lsh.getLastRow() - 1 - life.rows.length;
+    if (lextra > 0) lsh.getRange(life.rows.length + 2, 1, lextra, lhead.length).clearContent();
+  }
   /* the owners onto the register, as a mirror of Salesforce (the two columns are added if the tab lacks them) */
   var regSh = gcmSS_().getSheetByName(GCM.REGISTER);
   var regHead = regSh.getRange(1, 1, 1, regSh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
@@ -572,7 +606,10 @@ function gcmRefresh_() {
   try { CacheService.getScriptCache().remove('gcm-load'); } catch (e) {}
   var open = rows.filter(function (r) { return r[6] === 'Y'; }).length;
   return { ok: true, tasks: rows.length, open: open, excluded: excluded, refreshed: when,
-    said: 'Group Tasks refreshed ' + when + ': ' + rows.length + ' tasks across ' + reg.length + ' groups (' + open + ' open); ' + excluded + ' logged e-mails and internal items left out.' };
+    increases: incs.list.length, milestones: life.count, tasksOpened: life.opened,
+    said: 'Group Tasks refreshed ' + when + ': ' + rows.length + ' tasks across ' + reg.length + ' groups (' + open + ' open); ' + excluded + ' logged e-mails and internal items left out; ' +
+      (incs.error ? 'the increases could not be read (' + incs.error + ')' : incs.list.length + ' increase' + (incs.list.length === 1 ? '' : 's') + ' still pending') + '; ' +
+      (life.error ? 'what is coming up could not be read (' + life.error + ')' : life.count + ' coming up for the groups’ people' + (life.opened ? ', ' + life.opened + ' projection task' + (life.opened === 1 ? '' : 's') + ' opened' : '')) + '.' };
 }
 /** What Salesforce's feed tracking recorded on each open task: the target date first set (fd), when it last took its
  *  present status (ss), the last hand-over (ho: { n, d }), how many times the target moved (mv), and when anyone last
@@ -684,7 +721,7 @@ function gcmFeed_(ids) {
 
 function gcmLoad_() {
   var reg = gcmRegister_(), byName = {};
-  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.sends = []; g.resent = []; g.welcomes = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
+  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.incs = []; g.life = []; g.lifeSum = null; g.sends = []; g.resent = []; g.welcomes = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
   gcmRows_(GCM.QUEUE).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
     if (g) g.queue.push({ _n: r._n, at: gcmWhen_(r.When), when: gcmYmd_(r.When), staff: gcmText_(r.Staff), role: gcmText_(r.Role), email: gcmText_(r['Staff e-mail']),
@@ -697,7 +734,22 @@ function gcmLoad_() {
       cat: gcmText_(r.Category) || 'Other service items', status: gcmText_(r.Status), open: gcmText_(r.Open) === 'Y',
       due: gcmYmd_(r.Due), opened: gcmYmd_(r.Opened), done: gcmYmd_(r.Completed), owner: gcmText_(r.Owner), who: gcmText_(r.For),
       ref: gcmText_(r.Ref), level: gcmText_(r.Level) || 'group', priv: gcmText_(r.Private) === 'Y',
-      hist: gcmParse_(r.History, {}), mails: gcmParse_(r.Mails, []) });
+      hist: gcmParse_(r.History, {}), mails: gcmParse_(r.Mails, []), app: gcmParse_(r.Application, null) });
+  });
+  gcmRows_(GCM.INCREASES).forEach(function (r) {
+    var g = byName[gcmCodeKey_(r.Group)];
+    if (!g || !gcmText_(r['Increase Id'])) return;
+    g.incs.push({ id: gcmText_(r['Increase Id']), id15: gcmId15_(gcmText_(r['Increase Id'])), policy: gcmText_(r.Policy), line: gcmText_(r.Line) || 'Policy',
+      insured: gcmText_(r.Insured), submitted: gcmYmd_(r.Submitted), days: Number(r.Days) || 0, status: gcmText_(r.Status), stage: gcmText_(r.Stage) || 'Pending',
+      support: gcmText_(r.Support), agent: gcmText_(r.Agent), picked: gcmText_(r['Picked up']), last: gcmYmd_(r['Last activity']), own: gcmText_(r.Own) === 'Y',
+      amount: gcmText_(r.Amount), mails: gcmParse_(r.Mails, []), check: gcmText_(r.Check) });
+  });
+  gcmRows_(GCM.LIFE).forEach(function (r) {
+    var g = byName[gcmCodeKey_(r.Group)], kind = gcmText_(r.Kind);
+    if (!g || !kind) return;
+    if (kind === 'summary') { g.lifeSum = gcmParse_(r.Note, null); return; }
+    g.life.push({ kind: kind, person: gcmText_(r.Person), member: gcmText_(r.Member), policy: gcmText_(r.Policy), line: gcmText_(r.Line), ownership: gcmText_(r.Ownership),
+      born: gcmYmd_(r.Born), date: gcmYmd_(r.Date), ageAt: Number(r['Age at']) || null, assumed: gcmText_(r.Assumed), email: gcmText_(r['E-mail']), task: gcmText_(r.Task), note: gcmText_(r.Note) });
   });
   gcmRows_(GCM.SENDS).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
@@ -838,6 +890,419 @@ function gcmGroupStats_(g, today) {
   s.ready = !!(g.to.length && g.code && g.bills.length);
   s.why = !g.to.length ? 'No Contact Person with an e-mail on the account in Salesforce' : !g.code ? 'No code on the register' : !g.bills.length ? 'No list bill on the register' : '';
   return s;
+}
+
+/* ── applications still pending ─────────────────────────────────────
+ * Asked for on 14 October 2026: "when the groups log in they should also see at the top … applications that remain
+ * pending … the pending application's name, days outstanding, who it's assigned, what's outstanding (via a task),
+ * who is assigned to which contact, and the record type: pension groups, health groups and life groups … and who
+ * was last liaised with". In Salesforce a pending application is an open task of type "Pendings" (the branch's own
+ * mark for one), on the group's account, its billing, its name, or a policy. The policy's record type gives the line:
+ * LIFE(GROUP), HEALTH (GROUP), PENSION. A policy on the employer's own account is the employer's application whatever
+ * its type: on 14 October 2026 the branch's open Pendings were mostly keyperson applications, ordinary LIFE policies
+ * owned by a commercial client on the lives of the people who run it. What an employer may see:
+ *  - never a task reached only through an employee's own contact, nor one on an employee's individual policy that is
+ *    tied to the group only by its list bill: that is the employee's own business;
+ *  - never a claim;
+ *  - a medical requirement as "an underwriting requirement", never its detail, nor the doctor or department with it.
+ *    GCM_APP.MED is wider than GCM_PRIVATE because the keyperson tasks read "LABS at …" and "physician(s) consulted". */
+var GCM_APP = {
+  TYPE: /^pending/i,                                   // the Task Type the branch gives an application still pending
+  LINES: { 'LIFE(GROUP)': 'Group Life', 'HEALTH (GROUP)': 'Group Health', 'PENSION': 'Pension' },
+  CLAIM: /CLAIM|REIMBURS|RE-?ISSUE\W+CHEQUE|CHEQUE\W*\(?\s*HEALTH/i,
+  INTERNAL: /\b(GLOC|EBD|customer care|underwriting|team|query|queries|support|department|unit|premium|controls|redates|payments|guardian|head office|mail)\b/i,
+  MED: /MEDICAL|PHYSICIAN|DOCTOR|\bDR\.?\s|\bLABS?\b|BLOOD|URINE|URINALYSIS|\bECG\b|\bEKG\b|CARDIO|STRESS\s*TEST|\bPMAR\b|\bAPS\b|EXAM|NURSE|PARAMED|X-?RAY|\bSCAN\b|\bHIV\b|\bCBC\b|HBA1C|GLUCOSE|CHOLESTEROL|LIPID|SEDIMENTATION|ERYTHROCYTE|SPECIALIST|HOSPITAL|CLINIC|DIAGNOS|SURGER|PRESCRIPTION|MEDICATION|TREATMENT|\bSMOK|ALCOHOL|\bDRUG|PREGNAN|BIOPSY|MAMMOGRAM|\bPSA\b|HEPATITIS|HEALTH\s*(QUESTIONNAIRE|DECLARATION|STATEMENT|HISTORY)|ATTENDING|TEST\s*RESULT/i
+};
+/** A policy record type in the words a group reads: the three group lines, else the type itself ("Life", "Health"). */
+function gcmLineName_(rt) {
+  var u = String(rt || '').toUpperCase();
+  if (GCM_APP.LINES[u]) return GCM_APP.LINES[u];
+  return u ? u.charAt(0) + u.slice(1).toLowerCase() : '';
+}
+function gcmLineOf_(subject, cat) {
+  var s = String(subject || '');
+  if (/GROUP\s*HEALTH|T-\s*HEALTH|\bHEALTH\b/i.test(s)) return 'Group Health';
+  if (/GROUP\s*LIFE|T-\s*LIFE|\bLIFE\b/i.test(s)) return 'Group Life';
+  if (/PENSION|\bIPI\b|ANNUIT/i.test(s)) return 'Pension';
+  return cat === 'Group Life' || cat === 'Group Health' ? cat : cat === 'Group Pensions' ? 'Pension' : '';
+}
+/** For each open task that is an application still pending: its line, the applicant, when the application came in,
+ *  and who the task is with (Guardian Life's own departments, our staff, the group's contact, or the employee). */
+function gcmApplications_(openRows, reg, incInfo) {
+  incInfo = incInfo || {};
+  var out = {}, cand = openRows.filter(function (o) { return GCM_APP.TYPE.test(o.type) || incInfo[gcmId15_(o.what)]; });
+  if (!cand.length) return out;
+  var pols = {}, polsOk = true, ids = cand.filter(function (o) { return /CLIENT_PORTFOLIO__c/.test(o.whatType); }).map(function (o) { return o.what; });
+  try {
+    for (var i = 0; i < ids.length; i += GCM.CHUNK) {
+      gcmQuery_('SELECT Id, Account__c, RecordType.Name, App_Received_Date__c, Contact__r.Name, Policy_Status_Description__c FROM CLIENT_PORTFOLIO__c WHERE Id IN (' +
+        gcmIn_(ids.slice(i, i + GCM.CHUNK)) + ')').forEach(function (p) {
+        pols[gcmId15_(p.Id)] = { rt: String((p.RecordType && p.RecordType.Name) || ''), applied: gcmYmd_(p.App_Received_Date__c), who: gcmName_(p, 'Contact__r'),
+          st: String(p.Policy_Status_Description__c || ''), acct: p.Account__c ? gcmId15_(p.Account__c) : '' };
+      });
+    }
+  } catch (e) { polsOk = false; }
+  var team = [];
+  try { team = tTeam_().people.map(function (p) { return p.name; }); } catch (e) {}
+  var kindOf = function (who, g) {
+    return !who ? '' : GCM_APP.INTERNAL.test(who) ? 'guardian'
+      : team.some(function (n) { return gcmSameName_(n, who); }) ? 'staff'
+      : (g.contact && gcmSameName_(g.contact, who)) || (g.sfContact && g.sfContact.name && gcmSameName_(g.sfContact.name, who)) ? 'contact' : 'person';
+  };
+  cand.forEach(function (o) {
+    if (GCM_APP.CLAIM.test(o.subject)) return;
+    var inc = incInfo[gcmId15_(o.what)];
+    if (inc) {   // a requirement on an increase still pending: the increase says whose it is and what it is for
+      out[gcmId15_(o.id)] = { line: inc.line, applicant: inc.applicant, applied: inc.submitted, withKind: kindOf(o.who || '', reg[o.gi]), status: '', inc: inc.id15 };
+      return;
+    }
+    if (o.via === 'contact') return;                                    // the employee's own business
+    var p = pols[gcmId15_(o.what)] || null, g = reg[o.gi];
+    /* an employee's individual policy tied to the group only by its list bill, or one whose type could not be read */
+    var own = p && p.acct && g.accts.indexOf(p.acct) >= 0;
+    if (o.via === 'policy' && (p ? !own && !GCM_APP.LINES[p.rt.toUpperCase()] : !polsOk || /CLIENT_PORTFOLIO__c/.test(o.whatType))) return;
+    var line = p && p.rt ? gcmLineName_(p.rt) : gcmLineOf_(o.subject, o.cat) || 'Application';
+    var who = o.who || '', kind = kindOf(who, g);
+    out[gcmId15_(o.id)] = { line: line, applicant: (p && p.who) || (kind === 'person' ? who : ''), applied: p ? p.applied : '', withKind: kind, status: p ? p.st : '' };
+  });
+  return out;
+}
+/* ── increases still pending ─────────────────────────────────────────
+ * Asked for the same day: "it's important on the increases on the pension plans … it's on the object called increases.
+ * And the status is pending … once it's not settled, it's pending". An increase is a Policy_Increases__c record on a
+ * policy; it is pending until Date Settled is filled in, unless it reads NPW or not proceeded with. The branch has used
+ * Date Settled only since 2024, and about half of the increases since then never had one entered, so only an increase
+ * submitted in the last GCM_INC.DAYS counts; staff are told when one reads Premium Paying with its production picked up
+ * and still no settled date. Which increases a group hears about: any on a policy on its own account (its own scheme, or
+ * keyperson cover), and a pension or group policy tied to it by its list bill, because the employer's payroll deducts it.
+ * Requirements on an increase are open tasks on the increase record (Salesforce's Requirements object is barely used:
+ * six records ever on increases). The amounts are for staff alone. */
+var GCM_INC = { DAYS: 365, CLOSED: /\bnpw\b|not proceeded|declined|rejected|withdrawn|cancel|file closed/i };
+/** Where an increase stands, in a group's words, from its status picklist and its free-text status. */
+function gcmIncStage_(pick, free) {
+  var t = (String(free || '') + ' ' + String(pick || '')).toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\bnoo\b/g, 'no o');
+  t = t.replace(/no (o s (reqts?|requirements?|requests?)|outstanding (reqts?|requirements?)|os reqts?|errors?)/g, ' ');
+  if (/missing reqt|missing requirement|o s reqt|o s requirement|o s request|outstanding reqt|outstanding requirement|os reqt/.test(t)) return 'Requirements outstanding';
+  if (/error/.test(t)) return 'Being corrected';
+  if (/settlement/.test(t)) return 'Awaiting settlement';
+  if (/underwriting|uw incomplete/.test(t)) return 'With underwriting';
+  if (/pending/.test(t)) return 'Pending';
+  return 'Waiting to be settled';
+}
+function gcmMoney_(n) { n = Number(n) || 0; return 'TT$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+/** The increases still pending on the groups' policies, as rows for the Group Increases tab. Never throws. */
+function gcmIncreases_(reg, byAcct, byBill, accts, bills) {
+  var out = { list: [], ids: [], gi: {}, info: {}, error: '' };
+  var where = [];
+  if (accts.length) where.push('Policy_Increases__r.Account__c IN (' + gcmIn_(accts) + ')');
+  if (bills.length) where.push('Policy_Increases__r.List_Bill__c IN (' + gcmIn_(bills) + ')');
+  if (!where.length) return out;
+  var recs;
+  try {
+    recs = gcmQuery_('SELECT Id, Policy__c, Insured__c, Support__c, Agent__c, Submitted_Date__c, CreatedDate, LastActivityDate, LastModifiedDate, Days_O_S__c, ' +
+      'Policy_Description_Status__c, Policy_Status_Description_R__c, Increase_Production_Picked_up__c, Increase_Production_Picked_Up_Date__c, ' +
+      'Increase_Premium__c, Pension_Increase__c, Lump_Sum_Deposit__c, Policy_Increases__r.RecordType.Name, Policy_Increases__r.Account__c, ' +
+      'Policy_Increases__r.List_Bill__c, Policy_Increases__r.Contact__r.Name FROM Policy_Increases__c WHERE Date_Settled__c = null AND CreatedDate = LAST_N_DAYS:' +
+      (GCM_INC.DAYS + 60) + ' AND (' + where.join(' OR ') + ')');
+  } catch (e) { out.error = String(e && e.message ? e.message : e).slice(0, 160); return out; }
+  /* Support holds a first name: the active Salesforce user who alone carries it gives the full name */
+  var firsts = {};
+  recs.forEach(function (x) { var f = String(x.Support__c || '').trim().split(/\s+/)[0]; if (f) firsts[f] = []; });
+  try {
+    if (Object.keys(firsts).length) gcmQuery_('SELECT Name, FirstName FROM User WHERE IsActive = true AND FirstName IN (' + gcmIn_(Object.keys(firsts)) + ')').forEach(function (u) {
+      Object.keys(firsts).forEach(function (f) { if (f.toLowerCase() === String(u.FirstName || '').toLowerCase()) firsts[f].push(String(u.Name || '')); });
+    });
+  } catch (e) {}
+  var today = gcmToday_();
+  recs.forEach(function (x) {
+    var pick = String(x.Policy_Description_Status__c || '').trim(), free = String(x.Policy_Status_Description_R__c || '').trim();
+    if (GCM_INC.CLOSED.test(pick) || GCM_INC.CLOSED.test(free)) return;
+    var from = gcmYmd_(x.Submitted_Date__c) || gcmYmd_(x.CreatedDate), age = gcmDays_(from, today);
+    if (age === null || age > GCM_INC.DAYS) return;
+    var p = x.Policy_Increases__r || {}, acct = p.Account__c ? gcmId15_(p.Account__c) : '', rt = String((p.RecordType && p.RecordType.Name) || '');
+    var gi = byAcct[acct], own = gi !== undefined;
+    if (!own) {
+      gi = byBill[gcmBillKey_(p.List_Bill__c)];
+      if (gi === undefined) return;
+      if (!/^PENSION$/i.test(rt) && !GCM_APP.LINES[rt.toUpperCase()]) return;   // an employee's own life or health policy
+    }
+    var line = gcmLineName_(rt) || 'Policy', f = String(x.Support__c || '').trim().split(/\s+/)[0];
+    var support = f && firsts[f] && firsts[f].length === 1 ? firsts[f][0] : String(x.Support__c || '').trim();
+    var applicant = String(x.Insured__c || '').trim() || gcmName_(p, 'Contact__r');
+    var picked = x.Increase_Production_Picked_up__c === 'Yes' ? gcmYmd_(x.Increase_Production_Picked_Up_Date__c) || 'yes' : '';
+    var days = Math.max(Number(x.Days_O_S__c) || 0, age);
+    var amount = [x.Increase_Premium__c ? 'premium up ' + gcmMoney_(x.Increase_Premium__c) : '', x.Pension_Increase__c ? 'pension up ' + gcmMoney_(x.Pension_Increase__c) : '',
+      x.Lump_Sum_Deposit__c ? 'lump sum ' + gcmMoney_(x.Lump_Sum_Deposit__c) : ''].filter(String).join(', ');
+    var check = picked && /premium paying/i.test(pick + ' ' + free) ? 'Production was picked up' + (picked !== 'yes' ? ' on ' + tDmy_(picked) : '') +
+      ' and it reads Premium Paying, but Date Settled is empty: if it is done, enter Date Settled in Salesforce and it leaves the group’s page.' : '';
+    var last = [gcmYmd_(x.LastActivityDate), gcmYmd_(x.LastModifiedDate)].sort().pop() || '';
+    var id15 = gcmId15_(x.Id);
+    out.ids.push(x.Id); out.gi[id15] = gi;
+    out.info[id15] = { id15: id15, line: line, applicant: applicant, submitted: from };
+    out.list.push({ id: x.Id, gi: gi, row: [reg[gi].name, x.Id, String(x.Policy__c || ''), line, applicant, from, days, /[a-z]/i.test(free) ? free : pick || 'Pending',
+      gcmIncStage_(pick, free), support, String(x.Agent__c || '').trim(), picked, last, own ? 'Y' : '', amount, '', check] });
+  });
+  return out;
+}
+
+/* ── coming up for each group's people ───────────────────────────────
+ * Asked for on 14 October 2026: "a person … their dependent is coming of age to convert. We need those letters. Those
+ * will be included in the weekly reports. A person is approaching the age where they need to … convert to an individual
+ * plan because they're approaching age 65. Pension plans, five years prior to retirement, tasks will be opened looking
+ * at the retirement ages to start producing persons' future value projections … and what is company owned pensions,
+ * and what is individual owned pensions … insights the group can actually see and we can manage for clean data".
+ * Read from Salesforce on the group's in-force Group Life, Group Health and pension policies (on its account or its list
+ * bill), with the date of birth on the policy, else on its contact:
+ *  - convert65: a member of a group life or health plan turning 65 within CONVERT_AHEAD days (or in the last
+ *    CONVERT_AFTER): the group cover ends and they convert to an individual plan;
+ *  - dependent: a dependent of such a member reaching DEP_AGE, from Relationship Groups and the dependants on the group's
+ *    billing records. Salesforce holds few: 119 billing records and 62 relationship groups name one, on 14 October;
+ *  - retire: a pension member within RETIRE_YEARS of retirement, the date from Maturity Date, else Retirement Age, else
+ *    RETIRE_DEFAULT (assumed, and marked: 85% of in-force pensions had no retirement age that day). Company-owned or
+ *    personal from Ownership, else from the account's type (a commercial or business account is the company's);
+ *  - nodob: a member with no date of birth anywhere, for the records to be put right;
+ *  - summary: one row a group, the counts behind the clean-data panel.
+ * A "Pension projection" task opens in Salesforce for each retirement, on the policy, owned by whoever looks after the
+ * group, but only after the branch manager's go (gcmLifeTasksStart); until then the board lists what would open. An
+ * employer never sees a personal pension: that is the employee's own. DEP_AGE and RETIRE_DEFAULT are Script properties
+ * (GCM_DEP_AGE, GCM_RETIRE_AGE) so the branch can set its own without a paste. */
+var GCM_LIFE = {
+  CONVERT_AGE: 65, CONVERT_AHEAD: 183, CONVERT_AFTER: 60,
+  DEP_AGE: 21, DEP_AHEAD: 183, DEP_AFTER: 60,
+  RETIRE_YEARS: 5, RETIRE_DEFAULT: 60, RETIRE_AFTER: 90,
+  TASKS_MAX: 25, TASK_DUE_DAYS: 30, TASK_PREFIX: 'Pension projection: ',
+  INFORCE: /premium paying|paid up|waiver|vested|in ?force/i
+};
+function gcmLifeNum_(key, dflt) {
+  var v = Number(PropertiesService.getScriptProperties().getProperty(key));
+  return v > 0 && v < 120 ? v : dflt;
+}
+function gcmLifeTasksOn_() { return PropertiesService.getScriptProperties().getProperty('GCM_LIFE_TASKS') === 'Y'; }
+/** The branch manager's go for the pension projection tasks (the editor's Run button), and its stop. */
+function gcmLifeTasksStart() { PropertiesService.getScriptProperties().setProperty('GCM_LIFE_TASKS', 'Y'); return tSay_('Pension projection tasks are on: the next refresh opens one in Salesforce for each pension member within ' + GCM_LIFE.RETIRE_YEARS + ' years of retirement, at most ' + GCM_LIFE.TASKS_MAX + ' a run, owned by whoever looks after the group.'); }
+function gcmLifeTasksStop() { PropertiesService.getScriptProperties().deleteProperty('GCM_LIFE_TASKS'); return tSay_('Pension projection tasks are off: the board still lists the members, and no task opens.'); }
+/** yyyy-MM-dd n years on; 29 February becomes 28 February in a year without one. */
+function gcmAddYears_(ymd, n) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); if (!m) return '';
+  var y = +m[1] + Math.floor(n), mo = +m[2], d = +m[3];
+  if (mo === 2 && d === 29 && !((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0)) d = 28;
+  return y + '-' + ('0' + mo).slice(-2) + '-' + ('0' + d).slice(-2);
+}
+function gcmAgeOn_(dob, ymd) {
+  var a = /^(\d{4})-(\d{2})-(\d{2})/.exec(dob || ''), b = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); if (!a || !b) return null;
+  return +b[1] - +a[1] - ((+b[2] < +a[2] || (+b[2] === +a[2] && +b[3] < +a[3])) ? 1 : 0);
+}
+/** What is coming up for the groups' people, as rows for the Group Milestones tab. Never throws. */
+function gcmMilestones_(reg, byAcct, byBill, accts, polWhere, owners) {
+  var out = { rows: [], count: 0, opened: 0, error: '' };
+  if (!polWhere.length) return out;
+  var depAge = gcmLifeNum_('GCM_DEP_AGE', GCM_LIFE.DEP_AGE), retAge = gcmLifeNum_('GCM_RETIRE_AGE', GCM_LIFE.RETIRE_DEFAULT);
+  var recs;
+  try {
+    recs = gcmQuery_('SELECT Id, POLICY__c, PLAN_NAME__c, RecordType.Name, Policy_Status_Description__c, Account__c, Account__r.RecordType.Name, List_Bill__c, ' +
+      'Contact__c, Contact__r.Name, Contact__r.Email, Contact__r.Birthdate, Date_Of_Birth__c, INSURED__c, Retirement_Age__c, Maturity_Date__c, Ownership__c, ' +
+      "FV_Projections__c FROM CLIENT_PORTFOLIO__c WHERE (" + polWhere.join(' OR ') + ") AND RecordType.Name IN ('PENSION', 'HEALTH (GROUP)', 'LIFE(GROUP)')");
+  } catch (e) { out.error = String(e && e.message ? e.message : e).slice(0, 160); return out; }
+  var today = gcmToday_(), by = {}, sums = {}, members = {};
+  var sum = function (gi) { return sums[gi] = sums[gi] || { people: {}, nodob: 0, assumed: 0, company: 0, personal: 0, deps: 0, depsDated: 0, projections: 0 }; };
+  var put = function (gi, kind, person, date, row) {
+    var key = gi + '|' + kind + '|' + String(person).toLowerCase() + '|' + date, x = by[key];
+    if (x) { if (row[5] && x[5].indexOf(row[5]) < 0) x[5] += ', ' + row[5]; return; }
+    by[key] = row;
+  };
+  recs.forEach(function (p) {
+    if (!GCM_LIFE.INFORCE.test(String(p.Policy_Status_Description__c || ''))) return;
+    var acct = p.Account__c ? gcmId15_(p.Account__c) : '', gi = byAcct[acct];
+    if (gi === undefined) gi = byBill[gcmBillKey_(p.List_Bill__c)];
+    if (gi === undefined) return;
+    var g = reg[gi], S = sum(gi), rt = String((p.RecordType && p.RecordType.Name) || '').toUpperCase(), c = p.Contact__r || {};
+    var person = String(p.INSURED__c || '').trim() || String(c.Name || '').trim() || 'A member', line = gcmLineName_(rt);
+    var dob = gcmYmd_(p.Date_Of_Birth__c) || gcmYmd_(c.Birthdate), email = String(c.Email || '').trim().toLowerCase();
+    S.people[person.toLowerCase()] = true;
+    var base = [g.name, '', person, '', String(p.POLICY__c || ''), line, '', dob, '', '', '', email, String(p.Id || ''), '', ''];
+    if (!dob) { S.nodob++; var nd = base.slice(); nd[1] = 'nodob'; put(gi, 'nodob', person, '', nd); return; }
+    if (rt === 'PENSION') {
+      var arT = String((p.Account__r && p.Account__r.RecordType && p.Account__r.RecordType.Name) || '');
+      var own = /company/i.test(p.Ownership__c || '') ? 'Company' : /personal/i.test(p.Ownership__c || '') ? 'Personal' : /COMMERCIAL|BUSINESS/i.test(arT) ? 'Company' : 'Personal';
+      if (own === 'Company') S.company++; else S.personal++;
+      if (Number(p.FV_Projections__c) > 0) S.projections++;
+      var ra = Number(p.Retirement_Age__c) || 0, md = gcmYmd_(p.Maturity_Date__c), assumed = '';
+      var date = md || (ra ? gcmAddYears_(dob, ra) : '');
+      if (!date) { date = gcmAddYears_(dob, retAge); assumed = 'Y'; S.assumed++; }
+      var dd = gcmDays_(today, date);
+      if (dd === null || dd > Math.round(GCM_LIFE.RETIRE_YEARS * 365.25) || dd < -GCM_LIFE.RETIRE_AFTER) return;
+      var r = base.slice(); r[1] = 'retire'; r[6] = own; r[8] = date; r[9] = gcmAgeOn_(dob, date); r[10] = assumed;
+      r[14] = Number(p.FV_Projections__c) > 0 ? 'projection ' + gcmMoney_(p.FV_Projections__c) : '';
+      put(gi, 'retire', person, date, r);
+      return;
+    }
+    if (p.Contact__c) members[gcmId15_(p.Contact__c)] = { gi: gi, name: person, line: line, id: String(p.Contact__c) };
+    var at = gcmAddYears_(dob, GCM_LIFE.CONVERT_AGE), d = gcmDays_(today, at);
+    if (d !== null && d <= GCM_LIFE.CONVERT_AHEAD && d >= -GCM_LIFE.CONVERT_AFTER) { var cv = base.slice(); cv[1] = 'convert65'; cv[8] = at; cv[9] = GCM_LIFE.CONVERT_AGE; put(gi, 'convert65', person, at, cv); }
+  });
+  /* the dependents: of the members, in their relationship groups, and on the group's own billing records */
+  var dep = function (gi, member, line, c) {
+    if (!c || !c.Name) return;
+    var S = sum(gi); S.deps++;
+    var dob = gcmYmd_(c.Birthdate); if (!dob) return;
+    S.depsDated++;
+    var at = gcmAddYears_(dob, depAge), d = gcmDays_(today, at);
+    if (d === null || d > GCM_LIFE.DEP_AHEAD || d < -GCM_LIFE.DEP_AFTER) return;
+    put(gi, 'dependent', c.Name, at, [reg[gi].name, 'dependent', String(c.Name), member || '', '', line || '', '', dob, at, depAge, '', '', '', '', '']);
+  };
+  var DEP = ['Child_1__r', 'Child_2__r', 'Child_3__r', 'Dependent_1__r', 'Dependent_2__r', 'Dependent_3__r'];
+  var mids = Object.keys(members).map(function (k) { return members[k].id; });
+  try {
+    for (var i = 0; i < mids.length; i += GCM.CHUNK) {
+      var ids = gcmIn_(mids.slice(i, i + GCM.CHUNK));
+      gcmQuery_('SELECT Primary_Name__c, Secondary_Name__c, ' + DEP.map(function (k) { return k + '.Name, ' + k + '.Birthdate'; }).join(', ') +
+        ' FROM Relationship_Groups__c WHERE Primary_Name__c IN (' + ids + ') OR Secondary_Name__c IN (' + ids + ')').forEach(function (r) {
+        var m = members[gcmId15_(r.Primary_Name__c || '')] || members[gcmId15_(r.Secondary_Name__c || '')];
+        if (m) DEP.forEach(function (k) { dep(m.gi, m.name, m.line, r[k]); });
+      });
+    }
+  } catch (e) {}
+  var DT = ['Dependant_01__r', 'Dependant_02__r', 'Dependant_03__r', 'Dependant_04__r'];
+  try {
+    if (accts.length) gcmQuery_('SELECT Account__c, ' + DT.map(function (k) { return k + '.Name, ' + k + '.Birthdate'; }).join(', ') + ' FROM TRANSACTIONS__c WHERE Account__c IN (' +
+      gcmIn_(accts) + ') AND (Dependant_01__c != null OR Dependant_02__c != null OR Dependant_03__c != null OR Dependant_04__c != null)').forEach(function (r) {
+      var gi = byAcct[gcmId15_(r.Account__c || '')];
+      if (gi !== undefined) DT.forEach(function (k) { dep(gi, '', '', r[k]); });
+    });
+  } catch (e) {}
+  out.rows = Object.keys(by).map(function (k) { return by[k]; });
+  /* the projection tasks: any already open on the policy is found again each run, so a task never opens twice */
+  var ret = out.rows.filter(function (r) { return r[1] === 'retire' && r[12] && gcmDays_(today, r[8]) >= 0; });
+  var have = {};
+  try {
+    var pids = ret.map(function (r) { return r[12]; });
+    for (var j = 0; j < pids.length; j += GCM.CHUNK) {
+      gcmQuery_("SELECT Id, WhatId FROM Task WHERE WhatId IN (" + gcmIn_(pids.slice(j, j + GCM.CHUNK)) + ") AND Subject LIKE '" + GCM_LIFE.TASK_PREFIX + "%'")
+        .forEach(function (t) { have[gcmId15_(t.WhatId)] = String(t.Id); });
+    }
+  } catch (e) {}
+  var on = gcmLifeTasksOn_();
+  ret.forEach(function (r) {
+    if (have[gcmId15_(r[12])]) { r[13] = have[gcmId15_(r[12])]; return; }
+    if (!on || out.opened >= GCM_LIFE.TASKS_MAX || !tSfOn_()) return;
+    var gi = reg.map(function (g) { return g.name; }).indexOf(r[0]), g = reg[gi], o = g && g.accts.map(function (a) { return owners[a]; }).filter(function (x) { return x && x.active && x.id; })[0];
+    var task = { WhatId: r[12], Subject: (GCM_LIFE.TASK_PREFIX + r[2] + ' retires ' + tDmy_(r[8]) + ' at ' + r[9] + ' (' + (r[6] === 'Company' ? 'company-owned' : 'personal') + ' pension)').slice(0, 255),
+      Description: 'Five years before retirement: prepare a future value projection of this pension and share it with ' + r[2] + (r[6] === 'Company' ? ' and ' + r[0] : '') + '. ' +
+        (r[10] ? 'The retirement date is assumed at ' + r[9] + ': the record has no retirement age or maturity date. Confirm it, and enter it in Salesforce. ' : '') +
+        'Enter the projection in FV Projections when it is done. Opened by group client management.',
+      ActivityDate: gcmAddDays_(today, GCM_LIFE.TASK_DUE_DAYS), Status: 'Not Started', Priority: 'Normal', Task_Type__c: 'Servicing' };
+    if (o) task.OwnerId = o.id;
+    try { var res = tSfSend_('post', '/sobjects/Task', task); r[13] = String(res.id || ''); out.opened++; } catch (e) { r[14] = (r[14] ? r[14] + '; ' : '') + 'task not opened: ' + String(e && e.message ? e.message : e).slice(0, 80); }
+  });
+  out.count = out.rows.filter(function (r) { return r[1] !== 'nodob'; }).length;
+  Object.keys(sums).forEach(function (gi) {
+    var S = sums[gi];
+    out.rows.push([reg[gi].name, 'summary', '', '', '', '', '', '', '', '', '', '', '', '',
+      JSON.stringify({ people: Object.keys(S.people).length, nodob: S.nodob, assumed: S.assumed, company: S.company, personal: S.personal, deps: S.deps, depsDated: S.depsDated, projections: S.projections })]);
+  });
+  return out;
+}
+/** What is coming up for a group's people, soonest first. For the group: its company pensions only, no e-mail, no task,
+ *  no policy; for staff, all of it, with what to put right. */
+function gcmComing_(g, today, forGroup) {
+  var rows = g.life || [], S = g.lifeSum || null;
+  var item = function (r) {
+    var x = { kind: r.kind, person: r.person, member: r.member, line: r.line, date: r.date, inDays: gcmDays_(today, r.date), age: r.ageAt, ownership: r.ownership };
+    if (!forGroup) { x.policy = r.policy; x.email = r.email; x.assumed = r.assumed === 'Y'; x.task = r.task; x.note = r.note; }
+    return x;
+  };
+  var by = function (k) { return rows.filter(function (r) { return r.kind === k && (!forGroup || k !== 'retire' || r.ownership === 'Company'); }).map(item)
+    .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }); };
+  var out = { convert: by('convert65'), deps: by('dependent'), retire: by('retire'), convertAge: GCM_LIFE.CONVERT_AGE,
+    depAge: gcmLifeNum_('GCM_DEP_AGE', GCM_LIFE.DEP_AGE), retireYears: GCM_LIFE.RETIRE_YEARS,
+    nodob: rows.filter(function (r) { return r.kind === 'nodob'; }).map(function (r) { return forGroup ? r.person : { person: r.person, policy: r.policy, line: r.line }; }) };
+  out.count = out.convert.length + out.deps.length + out.retire.length;
+  if (!forGroup) { out.sum = S; out.tasksOn = gcmLifeTasksOn_(); out.retireDefault = gcmLifeNum_('GCM_RETIRE_AGE', GCM_LIFE.RETIRE_DEFAULT); }
+  return out;
+}
+
+/** What is coming up, as lines a letter can carry: who, what happens, and when, soonest first. */
+function gcmComingLines_(cm, today) {
+  var MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var when = function (ymd) { var d = gcmDays_(today, ymd); return (d < 0 ? 'since ' : '') + MON[Number(ymd.slice(5, 7)) - 1] + ' ' + ymd.slice(0, 4); };
+  var out = [];
+  cm.convert.forEach(function (x) { out.push({ d: x.date, who: x.person, what: 'turns ' + cm.convertAge + ': we help them convert their ' + (x.line || 'group') + ' cover to an individual plan', when: when(x.date) }); });
+  cm.deps.forEach(function (x) { out.push({ d: x.date, who: x.person, what: (x.member ? x.member + '’s dependent, ' : 'A dependent, ') + 'turns ' + x.age + ': we help them move to a plan of their own', when: when(x.date) }); });
+  cm.retire.forEach(function (x) { out.push({ d: x.date, who: x.person, what: 'retires at ' + x.age + ': we are preparing a projection of their pension', when: when(x.date) }); });
+  return out.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+}
+
+/** A pending requirement's status in the group's words. "Waiting on someone else" is on the group only when the task is
+ *  liaising with the group's own contact: one with Guardian Life's desks is waiting on them, not on the employer. */
+function gcmPendStatus_(status, withKind) {
+  if (!/waiting/i.test(status)) return GCM_STATUS[String(status).toLowerCase()] || 'In progress with us';
+  return { contact: 'Awaiting your confirmation', guardian: 'Waiting on Guardian Life', person: 'Waiting on the person insured', staff: 'In progress with us' }[withKind] || 'Waiting on a reply';
+}
+/** A group's applications and increases still pending, one card a person, longest outstanding first. For the group:
+ *  each requirement in words they may read, who on our team has it, who it is liaising with, the target date and the
+ *  last contact on it; never an amount. For staff (forGroup false): the detail, the amounts, and what to put right. */
+function gcmPending_(g, today, forGroup) {
+  var by = {}, order = [];
+  var card = function (name, fallbackKey) {
+    var key = name ? name.toLowerCase().replace(/[^a-z]+/g, ' ').trim() : fallbackKey, c = by[key];
+    if (!c) { c = by[key] = { applicant: name, lines: [], applied: '', incSince: '', opened: '', items: [], last: null, apps: 0, incs: 0, days: null }; order.push(key); }
+    return c;
+  };
+  var addLine = function (c, l) { if (l && c.lines.indexOf(l) < 0) c.lines.push(l); };
+  var lastOf = function (mails, worked, from, withWho) {
+    var ms = (mails || []).filter(function (m) { return !forGroup || m.c; }), m = ms[ms.length - 1];
+    var d = [m ? m.d : '', worked || '', from || ''].sort().pop();
+    var text = m && m.d === d ? (m.i ? (forGroup ? 'You wrote to us' : 'The group wrote to us') : (forGroup && m.c ? 'We e-mailed you' : 'E-mailed')) + ' on ' + tDmy_(m.d)
+      : d && d > from ? 'Last worked on ' + tDmy_(d) : from ? 'Opened on ' + tDmy_(from) + ', nothing logged since' : '';
+    return { d: d, text: text, real: !!((m && m.d === d) || (d && d > from)) };
+  };
+  g.tasks.forEach(function (t) {
+    if (!t.open || !t.app) return;
+    if (forGroup && g.shares.show[t.id15] === false) return;          // a person unticked it
+    var a = t.app, name = a.applicant || '', c = card(name, t.id15);
+    addLine(c, a.line);
+    if (!a.inc) { c.apps++; if (a.applied && (!c.applied || a.applied < c.applied)) c.applied = a.applied; }
+    if (t.opened && (!c.opened || t.opened < c.opened)) c.opened = t.opened;
+    /* who the task is liaising with; for the group, a medical requirement's department stays with us */
+    var priv = t.priv || GCM_APP.MED.test(t.subject), hush = forGroup && priv;
+    var with_ = t.who && a.withKind ? { guardian: hush ? 'Guardian Life' : t.who + ' (Guardian Life)', staff: t.who + ' (our branch)',
+      contact: t.who + (forGroup ? ' (you)' : ' (the group)'), person: t.who === name ? t.who + ' (the person insured)' : hush ? '' : t.who }[a.withKind] : '';
+    var L = lastOf(t.mails, (t.hist || {}).lw, t.opened);
+    var what = priv ? 'An underwriting requirement' + (forGroup ? ': the details stay between the person insured and us' : ': ' + gcmTitle_(t.subject, g.name))
+      : gcmTitle_(t.subject, g.name);
+    c.items.push({ id: t.id15, kind: a.inc ? 'increase-req' : 'application', what: what, line: a.line, owner: t.owner || 'Our branch team', with: with_, opened: t.opened,
+      days: gcmDays_(t.opened, today), due: t.due, late: !!(t.due && t.due < today),
+      status: forGroup ? gcmPendStatus_(t.status, a.withKind) : t.status,
+      last: L.text, lastD: L.d, priv: forGroup ? undefined : priv });
+    if (L.real && (!c.last || L.d > c.last.d)) c.last = { d: L.d, text: L.text };
+  });
+  (g.incs || []).forEach(function (n) {
+    if (forGroup && g.shares.show[n.id15] === false) return;
+    var c = card(n.insured, n.id15);
+    addLine(c, n.line);
+    c.incs++;
+    if (n.submitted && (!c.incSince || n.submitted < c.incSince)) c.incSince = n.submitted;
+    if (c.days === null || n.days > c.days) c.days = n.days;
+    var L = lastOf(n.mails, n.last, n.submitted);
+    var item = { id: n.id15, kind: 'increase', what: n.line + ' increase', line: n.line, owner: n.support || 'Our branch team', with: '', opened: n.submitted,
+      days: n.days, due: '', late: false, status: forGroup ? n.stage : n.status + (n.stage && n.stage.toLowerCase() !== n.status.toLowerCase() ? ' · ' + n.stage : ''),
+      last: L.text, lastD: L.d };
+    if (!forGroup) { item.policy = n.policy; item.amount = n.amount; item.check = n.check; item.agent = n.agent; item.own = n.own; }
+    c.items.push(item);
+    if (L.real && (!c.last || L.d > c.last.d)) c.last = { d: L.d, text: L.text };
+  });
+  return order.map(function (k) {
+    var c = by[k], from = c.applied || (c.apps ? c.opened : '');
+    var appDays = from ? gcmDays_(from, today) : null;
+    if (appDays !== null && (c.days === null || appDays > c.days)) c.days = appDays;
+    if (c.days === null) c.days = gcmDays_(c.opened, today);
+    c.since = c.applied || c.opened || c.incSince;
+    c.late = c.items.some(function (x) { return x.late; });
+    /* the increase first, then its requirements, then the applications' requirements, longest outstanding first */
+    var rank = { increase: 0, 'increase-req': 1, application: 2 };
+    c.items.sort(function (x, y) { return (rank[x.kind] - rank[y.kind]) || ((y.days || 0) - (x.days || 0)); });
+    return c;
+  }).sort(function (x, y) { return (y.days || 0) - (x.days || 0); });
 }
 
 /* ── staff and the manager ───────────────────────────────────────── */
@@ -1019,7 +1484,7 @@ function gcmGroupView_(p) {
     return { id: t.id, title: gcmTitle_(t.subject, g.name), subject: t.subject, type: t.type || t.cat, cat: t.cat, status: t.status,
       clientStatus: GCM_STATUS[t.status.toLowerCase()] || 'In progress with us', owner: t.owner, who: t.who, ref: t.ref,
       opened: t.opened, age: gcmDays_(t.opened, today), due: t.due, late: !!(t.due && t.due < today), level: t.level, priv: t.priv,
-      shown: gcmShown_(g, t), posts: (feed[t.id15] || []).map(function (f) { f.team = !!g.shares.comment[f.id]; f.shared = !f.team && !!g.shares.post[f.id]; return f; }), story: gcmStory_(g, t, today, false),
+      app: t.app ? t.app.line : '', shown: gcmShown_(g, t), posts: (feed[t.id15] || []).map(function (f) { f.team = !!g.shares.comment[f.id]; f.shared = !f.team && !!g.shares.post[f.id]; return f; }), story: gcmStory_(g, t, today, false),
       answer: mine[t.id15] ? { verdict: mine[t.id15].verdict, note: mine[t.id15].note, by: mine[t.id15].name, at: mine[t.id15].at } : null };
   }).sort(function (a, b) { return (b.late - a.late) || ((b.age || 0) - (a.age || 0)); });
   var weekAgo = gcmAddDays_(today, -7);
@@ -1029,6 +1494,11 @@ function gcmGroupView_(p) {
     group: { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, to: g.to, cc: g.cc, toFrom: g.toFrom, contact: g.contact,
       personal: gcmPersonal_(g), greeting: g.greeting, hasCode: !!g.code, note: g.note },
     stats: gcmGroupStats_(g, today), items: items, record: gcmRecord_(g, today), year: gcmYear_(g, today, true),
+    coming: gcmComing_(g, today, false),
+    pending: gcmPending_(g, today, false).map(function (c) {
+      c.items.forEach(function (x) { x.hidden = g.shares.show[x.id] === false; });   // what a person unticked stays off the group's page
+      return c;
+    }),
     doneWeek: g.tasks.filter(function (t) { return !t.open && t.done >= weekAgo; }).map(function (t) {
       return { title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, by: t.owner, done: t.done, shown: gcmShown_(g, t) }; }),
     account: gcmAccount_(g, who, L),
@@ -1256,10 +1726,20 @@ function gcmLetter_(g, today, staffName, intro, verified) {
   if (waiting.length) lines.push(waiting.length === 1 ? 'One needs your confirmation before we can close it.' : waiting.length + ' need your confirmation before we can close them.');
   if (late.length) lines.push(late.length === 1 ? 'One has run past its target date; your page shows why and who is on it.' : late.length + ' have run past their target dates; your page shows why and who is on each.');
   if (joiners || leavers) lines.push('Members: ' + [joiners ? joiners + ' joining' : '', leavers ? leavers + ' leaving' : ''].filter(String).join(', ') + '. Please check the names on your page.');
+  var pend = gcmPending_(g, today, true), pApps = pend.filter(function (c) { return c.apps; }).length, pIncs = pend.reduce(function (t, c) { return t + c.incs; }, 0);
+  if (pend.length) {
+    var pWhat = [pApps ? (pApps === 1 ? 'one application' : pApps + ' applications') : '', pIncs ? (pIncs === 1 ? 'one increase' : pIncs + ' increases') : ''].filter(String).join(' and ');
+    lines.push(pWhat.charAt(0).toUpperCase() + pWhat.slice(1) + ' for your employees ' + (pApps + pIncs === 1 ? 'is' : 'are') + ' still pending' +
+      (pend[0].days ? ', the oldest ' + pend[0].days + ' days' : '') + ': your page lists ' + (pApps + pIncs === 1 ? 'it' : 'them') + ' first, with what each is waiting on and who has it.');
+  }
+  var cm = gcmComing_(g, today, true), cmList = gcmComingLines_(cm, today);
+  if (cm.count) lines.push('Coming up for your people: ' + [cm.convert.length ? cm.convert.length + ' turning ' + cm.convertAge : '', cm.deps.length ? cm.deps.length + ' dependent' + (cm.deps.length === 1 ? '' : 's') + ' coming of age' : '',
+    cm.retire.length ? cm.retire.length + ' retiring within ' + cm.retireYears + ' years' : ''].filter(String).join(', ') + '. Each one is below, and on your page.');
   if (yr.done) lines.push('So far this year we have completed ' + yr.done + ' item' + (yr.done === 1 ? '' : 's') + ' for you' + (onT !== null ? ', ' + onT + '% of them by their target date' : '') +
     (yy.member ? ', and ' + yy.member + ' more for your employees’ own policies' : '') + '.');
   var greet = 'Dear ' + (g.greeting || 'Sir or Madam') + ',';
   var text = [greet, '', intro ? intro + '\n' : '', headline + '.', '', lines.join(' '), '',
+    cmList.length ? 'Coming up for your people:\n' + cmList.slice(0, 10).map(function (x) { return '- ' + x.who + ': ' + x.what + ', ' + x.when; }).join('\n') + (cmList.length > 10 ? '\n- and ' + (cmList.length - 10) + ' more on your page' : '') + '\n' : '',
     'Your service page shows every item: what it is, who on our team is handling it, how long it has been open, its target date and our latest note. ' +
     'Please tell us on the page whether each one is correct, add a note where something needs our attention, and rate our service.', '',
     'Your page: ' + GCM.SITE + 'client.html', 'Sign in with your list bill (' + g.bills[0] + ') and your access code: ' + (g.code || '(not set)'), '',
@@ -1282,6 +1762,10 @@ function gcmLetter_(g, today, staffName, intro, verified) {
     tile(onT === null ? '–' : onT + '%', 'on time this year') + '</tr></table>' +
     (waiting.length ? '<p style="margin:0 0 4px;font-weight:700">Waiting on your confirmation</p><ul style="margin:0 0 14px;padding-left:20px">' + list(waiting) + '</ul>' : '') +
     (late.length ? '<p style="margin:0 0 4px;font-weight:700">Past target</p><ul style="margin:0 0 14px;padding-left:20px">' + list(late) + '</ul>' : '') +
+    (cmList.length ? '<p style="margin:0 0 6px;font-weight:700">Coming up for your people</p><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px;font:14px/1.45 Arial,sans-serif">' +
+      cmList.slice(0, 10).map(function (x) { return '<tr><td style="padding:7px 10px 7px 0;border-bottom:1px solid #e2e7ef;font-weight:700;color:#142033;vertical-align:top">' + E(x.who) + '</td>' +
+        '<td style="padding:7px 10px;border-bottom:1px solid #e2e7ef;color:#2B374C;vertical-align:top">' + E(x.what) + '</td><td style="padding:7px 0;border-bottom:1px solid #e2e7ef;color:#2B374C;white-space:nowrap;vertical-align:top">' + E(x.when) + '</td></tr>'; }).join('') +
+      '</table>' + (cmList.length > 10 ? '<p style="margin:-8px 0 14px;font-size:13px;color:#5a687d">And ' + (cmList.length - 10) + ' more on your page.</p>' : '') : '') +
     '<p style="margin:0 0 16px">Your service page shows every item: what it is, who on our team is handling it, how long it has been open, its target date and our latest note. Tell us whether each one is correct, add a note where something needs our attention, and rate our service.</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px"><tr><td style="background:#1d5bc4;border-radius:6px"><a href="' + GCM.SITE + 'client.html" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #b8cef4;background:#ebf2fd;margin:0 0 18px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif">' +
@@ -1489,6 +1973,12 @@ function gcmAccount_(g, who, L) {
     last: last ? { at: last.at, by: last.staff, again: !!last.html } : null,
     resent: g.resent.length ? { at: g.resent[g.resent.length - 1].at, by: g.resent[g.resent.length - 1].staff } : null,
     answer: lastAns ? { at: lastAns.at, when: lastAns.when, name: lastAns.name, rating: rated && rated.when === lastAns.when ? rated.rating : null } : null,
+    pending: (function () {
+      var pd = gcmPending_(g, L.today, false);
+      return pd.length ? { n: pd.length, apps: pd.filter(function (c) { return c.apps; }).length, incs: pd.reduce(function (t, c) { return t + c.incs; }, 0),
+        oldest: pd[0].days, late: pd.some(function (c) { return c.late; }) } : null;
+    })(),
+    coming: (function () { var cm = gcmComing_(g, L.today, false); return cm.count ? { n: cm.count, convert: cm.convert.length, deps: cm.deps.length, retire: cm.retire.length } : null; })(),
     mailWhy: gcmCannotMail_(g) };
 }
 
@@ -1602,7 +2092,7 @@ function gcmRehearse_(b) {
  * opening the film's own page in one tap. It carries no access code: the Monday letter does, after staff check it.
  * Once per group, ever; from support@ only; the branch manager gets the test first. */
 var GCM_WELCOME = {
-  PAGE: 'welcome.html', CARD: 'welcome-card.jpg', LENGTH: '1 min 33 s',
+  PAGE: 'welcome.html', CARD: 'welcome-card.jpg', LENGTH: '2 min 26 s',
   SKIP_PROP: 'GCM_WELCOME_SKIP',              // Script property: groups to leave out, by name, comma-separated
   ON_PROP: 'GCM_WELCOME_ON'                   // set by gcmWelcomeNow: a group verified later gets its welcome within the hour
 };
@@ -1622,8 +2112,8 @@ function gcmWelcome_(g, today, signed) {
   var subject = 'Your group account, now in one place: ' + g.name;
   var pre = 'Watch how it works in ' + GCM_WELCOME.LENGTH + '. One letter every Monday, your own page to answer it.';
   var p1 = 'From this week, the way our branch looks after ' + g.name + '’s account changes. Everything we have open for you is in one place, and you tell us in one tap what needs our attention.';
-  var steps = [['Every Monday at 10:00', 'One letter: what is open, what we completed, and what we need from you.'],
-    ['Your own page', 'Every item, who is handling it, how long it has been open and how it got there. Mark each one Correct, Needs a change or Not ours, and rate our service.'],
+  var steps = [['Every Monday at 10:00', 'One letter: what is open, what is pending for your employees, what is coming up for them, and what we need from you.'],
+    ['Your own page', 'Applications and increases still pending, who turns 65 or retires soon, and every open item with who is handling it. Mark each one Correct, Needs a change or Not ours, and rate our service.'],
     ['We act on it', 'Your answer reaches ' + (carer || 'the person looking after you') + ' the moment you send it, and the next Monday letter shows what changed.']];
   var p2 = 'Your sign-in comes with your Monday letter.' + (me ? ' I look after your account, and a reply to this e-mail reaches me and our team.'
     : carer ? ' ' + carer + ' looks after your account, and a reply to this e-mail reaches us both.' : ' A reply to this e-mail reaches us.');
@@ -1892,6 +2382,9 @@ function gcmShare_(b) {
   if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
   if (b.kind !== 'comment' && !gcmMine_(who, g)) return gcmNotYours_(g);
   var t = g.tasks.filter(function (x) { return x.id15 === gcmId15_(b.task); })[0];
+  /* an increase still pending is shown or not like an item; nothing else is done to it from here */
+  var inc = !t && (g.incs || []).filter(function (x) { return x.id15 === gcmId15_(b.task); })[0];
+  if (inc && b.kind === 'show') { gcmAppend_(GCM.SHARES, [{ When: new Date(), Group: g.name, 'Task Id': inc.id, Kind: 'show', Value: gcmYes_(b.value) ? 'Y' : 'N', By: who.name }]); return { ok: true }; }
   if (!t) return { ok: false, error: 'That item is not on this group.' };
   var row = { When: new Date(), Group: g.name, 'Task Id': t.id, By: who.name };
   if (b.kind === 'comment') {
@@ -1949,7 +2442,10 @@ function gcmClient_(p) {
   if (respondBy < today) respondBy = gcmAddDays_(respondBy, 7);
   var weekAgo = gcmAddDays_(today, -7);
   return { ok: true, group: g.name, staff: g.ownerActive ? g.assigned : '', asAt: L.refreshed || tDmy_(today), today: today, respondBy: respondBy,
-    items: shown.map(function (t) {
+    /* applications still pending, at the top of the page (14 October 2026); their requirements are listed there, not twice */
+    pending: gcmPending_(g, today, true),
+    coming: gcmComing_(g, today, true),
+    items: shown.filter(function (t) { return !t.app; }).map(function (t) {
       return { id: t.id15, title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, cat: t.cat, status: GCM_STATUS[t.status.toLowerCase()] || 'In progress with us',
         done: gcmDoneText_(t.cat, t.status), owner: t.owner, who: t.who, ref: t.ref, opened: t.opened, age: gcmDays_(t.opened, today), due: t.due,
         story: gcmStory_(g, t, today, true),
