@@ -373,6 +373,8 @@
   .agfil select,.agfil input{font:14px var(--fb);padding:8px 9px;border:1px solid var(--field);border-radius:9px;background:#fff;color:var(--ink);min-height:38px;max-width:220px}
   .agfil input{flex:1 1 220px;max-width:none}
   .agbtn{background:var(--ok);color:#fff;border:0;border-radius:8px;padding:6px 12px;font:700 13px var(--fb);cursor:pointer;min-height:32px;white-space:nowrap}
+  .agre{font:13px var(--fb);padding:4px 7px;border:1px solid var(--field);border-radius:8px;background:#fff;color:var(--ink);min-height:30px;max-width:220px;margin-top:4px}
+  .who .hist{display:block;font-size:13px;color:var(--body);margin-top:3px} .who .hist .mut{color:var(--dim)}
   .agbtn[disabled]{opacity:.55;cursor:default} .agbtn.big{padding:9px 16px;font-size:14px;min-height:40px;white-space:normal;max-width:100%;text-align:left}
   .dm{display:inline-flex;align-items:center;gap:7px} .dm i{display:inline-block;width:64px;height:8px;border-radius:4px;background:#d4eef3;overflow:hidden;vertical-align:middle} .dm i s{display:block;height:100%;background:#07606f;text-decoration:none}
   .dby{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:2px 0 6px} .dby button{border:0;background:none;font:600 13.5px var(--fb);padding:6px 11px;color:var(--body);cursor:pointer} .dby button.on{background:var(--tdark);color:#fff}
@@ -787,6 +789,7 @@
         <div class="card dcard"><div class="dhero" id="agHero"></div><div id="agStages"></div><div class="dtiles" id="agTiles"></div></div>
         <div class="card dcard" id="agTable"></div>
         <div class="card dcard agone" id="agOne" hidden></div>
+        <div class="card dcard" id="agSince"></div>
         <div class="card dcard" id="agBooks"></div>
         <div class="card dcard" id="agBatch"></div>
         <div class="card dcard" id="agDays"></div>
@@ -1083,7 +1086,7 @@ function tabsFor(d) {
   if (r === 'branch') return ['urgent', 'dash', 'agents'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights']);
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
-  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign'], match, ['calls', 'progress', 'done', 'households', 'all']);
+  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all']);
   var out = ['open'].concat(work, claims ? ['claims'] : []);
   if (r === 'unit') out.push('dash', 'agents');
   if (d.clients.some(urgentOf)) out.push('urgent');
@@ -1716,7 +1719,8 @@ function card(c, manager, namer) {
   var rev = c.review ? '<div class="rev"><span>Review</span> <b>' + esc(c.review.ref || '') + '</b>' + (c.review.priority ? ' · ' + esc(c.review.priority) : '') + (c.review.status ? ' · ' + esc(c.review.status) : '') +
     (c.review.words || []).map(function (w) { return '<div><span>' + esc(w.q) + '</span> ' + esc(w.a) + '</div>'; }).join('') + '</div>' : '';
   var said = ans || taps || words || rev ? '<div class="said"><h4>What they told us</h4>' + (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + words + rev + '</div>' : '';
-  var who = c.assigned ? '<div class="who">Named: <b>' + esc(c.assigned) + '</b>' + (c.assignedOn ? ' on ' + esc(c.assignedOn) : '') + (c.mark ? ' · marked <b>' + esc(c.mark) + '</b>' : '') + '</div>'
+  var who = c.assigned ? '<div class="who">Named: <b>' + esc(c.assigned) + '</b>' + (c.assignedOn ? ' on ' + esc(c.assignedOn) : '') + (c.mark ? ' · marked <b>' + esc(c.mark) + '</b>' : '') +
+      (c.hist && c.hist.length ? '<span class="hist">' + histLine(c.hist) + '</span>' : '') + '</div>'
     : (c.mark ? '<div class="who">Marked <b>' + esc(c.mark) + '</b></div>' : '');
   /* the manager's notes that went to the client, from the [told d MMM · key] stamps */
   var told = (c.markers || []).map(function (m) { return /^\[told (\d{1,2} [A-Za-z]{3}) · ([a-z]+)\]$/.exec(m); }).filter(Boolean);
@@ -2336,6 +2340,12 @@ var AG_BUCKETS = [
 var AG_CS = { asked: 'answered', noted: 'answered: noted', reached: 'reached by phone', called: 'called, no answer yet', tocall: 'on a call list, not called yet',
   dnc: 'asked not to be called', silent: 'written to, no answer', held: 'letter held', unsent: 'not written to yet' };
 function agState(html) { $('agState').innerHTML = html || ''; }
+/* who a client has been named to, oldest first: [[d MMM, agent, 'board'|'Salesforce', by]] (tAssignHist_) */
+function histLine(h) {
+  return 'History: ' + h.map(function (x) {
+    return '<b>' + esc(x[1]) + '</b> ' + esc(x[0] || '') + ' <span class="mut">(' + (x[2] === 'Salesforce' ? 'in Salesforce' : 'on the board') + (x[3] ? ', by ' + esc(x[3]) : '') + ')</span>';
+  }).join(' &rarr; ');
+}
 function agAns(x) { return x.cs === 'asked' || x.cs === 'noted'; }
 function agMembers(v) { var out = []; v.hh.forEach(function (h) { h.m.forEach(function (x) { out.push(x); }); }); return out; }
 function agUnitOk(a) { return !AGF.unit || a.unit === AGF.unit; }
@@ -2372,7 +2382,7 @@ function agentsPane(soft) {
     (AGV_BUSY ? ' · reading again&hellip;' : ' <button type="button" id="agReload">Read again</button>'));
   if ($('agReload')) $('agReload').addEventListener('click', function () { agLoad(true); agentsPane(); });
   $('agSub').textContent = v.unit ? 'How each agent in your unit is getting on with the clients named to them' : 'How each agent is getting on with the clients named to them, and the households still to name';
-  agHead(v); agTable(v); agOne(v); agDays(v); agBooks(v); agBatch(v);
+  agHead(v); agTable(v); agOne(v); agSince(v); agDays(v); agBooks(v); agBatch(v);
   $('agHow').innerHTML = '<b>How the numbers are made.</b> The households and the names from Salesforce come from the Household Assignments tab; a name given on the board counts too. ' +
     '<b>Spoken to</b>: a call or meeting the agent marked on the board, a comment they wrote on the client, or their feedback in Salesforce (Campaign Feedback Update). <b>Tried</b>: a call they marked as no answer. ' +
     '<b>Met</b>: a meeting marked on the board. <b>Completed</b>: Closed or Declined, by the agent or by anyone after the naming. <b>Nothing logged</b>: named ' + v.quiet + ' or more working days ago, with no call, comment or feedback. ' +
@@ -2414,19 +2424,23 @@ function agTable(v) {
   var units = unique(v.agents.map(function (a) { return a.unit; }));
   if (AGF.unit && units.indexOf(AGF.unit) < 0) AGF.unit = '';
   var rows = v.agents.filter(function (a) { return a.n && agUnitOk(a); }), idle = v.agents.filter(function (a) { return !a.n && a.on && agUnitOk(a); });
+  var claims = !v.staff;   // staff see no claims
   var usel = !v.unit && units.length > 1 ? '<div class="agfil"><select id="agUnit" aria-label="Unit"><option value="">Every unit</option>' +
     units.map(function (u) { return '<option value="' + esc(u) + '"' + (AGF.unit === u ? ' selected' : '') + '>' + esc(u) + '&rsquo;s unit</option>'; }).join('') + '</select></div>' : '';
-  $('agTable').innerHTML = '<h3>The agents</h3><p class="dsub">The clients named to each agent and how far they have got, most clients first. Tap an agent for their households, client by client.</p>' + usel +
-    (rows.length ? '<div class="dtw"><table class="dt"><tr><th>Agent</th>' + (units.length ? '<th>Unit</th>' : '') + '<th>Households</th><th>Clients</th><th>Progress</th><th>Spoken to</th><th>Nothing logged</th><th>Last activity</th><th>Days to first contact</th>' +
-      '<th>Feedback in Salesforce</th><th>Comments</th><th>Answered the letter</th><th>Tried</th><th>Met</th><th>Completed</th><th>Named</th><th>TT$200 claims</th></tr>' +
+  $('agTable').innerHTML = '<h3>The agents</h3><p class="dsub">The clients named to each agent and how far they have got, most clients first. <b>Converted</b>: met or completed. Tap an agent for their households, client by client.</p>' + usel +
+    (rows.length ? '<div class="dtw"><table class="dt"><tr><th>Agent</th>' + (units.length ? '<th>Unit</th>' : '') + '<th>Households</th><th>Clients</th><th>Progress</th><th>Spoken to</th><th>Nothing logged</th><th>Conversations</th><th>Converted</th><th>Days assigned (open, average)</th>' +
+      '<th>Days to first contact</th><th>Days to a meeting</th><th>Last activity</th><th>Feedback in Salesforce</th><th>Comments</th><th>Answered the letter</th><th>Tried</th><th>Met</th><th>Completed</th>' +
+      '<th>Came from another agent</th><th>Named</th>' + (claims ? '<th>TT$200 claims</th>' : '') + '</tr>' +
       rows.map(function (a) {
         var sp = a.g.spoken + a.g.met + a.g.done, nothing = a.g.named;
         return '<tr class="go" data-ag="' + esc(a.name) + '"><td>' + esc(a.name) + (a.on ? '' : ' <small style="color:var(--stop);font-weight:600">not on the Agent Skill Bank</small>') + '</td>' +
           (units.length ? '<td>' + esc(a.unit ? firstName(a.unit) : '–') + '</td>' : '') + '<td>' + a.hh + '</td><td>' + a.n + '</td><td>' + agBar(a.g, a.n) + '</td><td>' + dMeter(sp, a.n) + '</td>' +
-          '<td' + (a.q ? ' class="bad"' : '') + '>' + nothing + (a.q ? ' (' + a.q + ' past ' + v.quiet + ' days)' : '') + '</td><td>' + esc(a.la || '–') + '</td><td>' + (a.med === null ? '–' : plural(a.med, 'day')) + '</td>' +
-          '<td>' + a.fb + '</td><td>' + a.cm + '</td><td>' + a.ans + '</td><td>' + a.g.tried + '</td><td>' + a.g.met + '</td><td>' + a.g.done + '</td>' +
+          '<td' + (a.q ? ' class="bad"' : '') + '>' + nothing + (a.q ? ' (' + a.q + ' past ' + v.quiet + ' days)' : '') + '</td><td>' + (a.cv || 0) + (a.n ? ' <small style="color:var(--dim)">(' + (Math.round(10 * (a.cv || 0) / a.n) / 10) + ' a client)</small>' : '') + '</td>' +
+          '<td>' + dMeter(a.g.met + a.g.done, a.n) + '</td><td' + (a.da !== null && a.da > 7 && !(a.g.met + a.g.done) ? ' class="bad"' : '') + '>' + (a.da === null ? '–' : plural(a.da, 'day')) + '</td>' +
+          '<td>' + (a.med === null ? '–' : plural(a.med, 'day')) + '</td><td>' + (a.dmMed === null || a.dmMed === undefined ? '–' : plural(a.dmMed, 'day')) + '</td><td>' + esc(a.la || '–') + '</td>' +
+          '<td>' + a.fb + '</td><td>' + a.cm + '</td><td>' + a.ans + '</td><td>' + a.g.tried + '</td><td>' + a.g.met + '</td><td>' + a.g.done + '</td><td>' + (a.re || 0) + '</td>' +
           '<td>' + esc(a.first === a.last ? a.first : a.first + ' to ' + a.last) + (a.sf ? ' <small style="color:var(--dim)">' + a.sf + ' in Salesforce</small>' : '') + '</td>' +
-          '<td>' + (a.cl && a.cl.n ? a.cl.n + (a.cl.paid ? ' (' + a.cl.paid + ' paid)' : '') : '–') + '</td></tr>';
+          (claims ? '<td>' + (a.cl && a.cl.n ? a.cl.n + (a.cl.paid ? ' (' + a.cl.paid + ' paid)' : '') : '–') + '</td>' : '') + '</tr>';
       }).join('') + '</table></div>' : '<p class="dsub">No agent is named on anyone yet.</p>') +
     (idle.length ? '<p class="dsub" style="margin-top:8px"><b>No clients yet</b> (' + idle.length + '): ' + esc(idle.map(function (a) { return a.name; }).join(', ')) + '.</p>' : '');
   if ($('agUnit')) $('agUnit').addEventListener('change', function () { AGF.unit = $('agUnit').value; agTable(AGV); });
@@ -2447,13 +2461,19 @@ function agLine(x, withAgent) {
   if (x.late && !x.a) wh.push('<span class="gap">waiting past the branch&rsquo;s line</span>');
   if (x.a) {
     var bits = [];
-    if (x.on) bits.push('named ' + x.on + (/salesforce/i.test(x.via || '') ? ' in Salesforce' : x.via === 'board' ? ' on the board' : ''));
+    if (x.on) bits.push('named ' + x.on + (/salesforce/i.test(x.via || '') ? ' in Salesforce' : x.via === 'board' ? ' on the board' : '') + (x.da !== undefined ? ', ' + plural(x.da, 'day') + ' ago' : ''));
+    bits.push(plural(x.cv || 0, 'conversation') + (x.tr ? ', ' + plural(x.tr, 'try', 'tries') + ' with no answer' : ''));
+    if (x.dm !== undefined) bits.push('met ' + plural(x.dm, 'day') + ' after the naming');
     if (x.fc) bits.push('first contact ' + x.fc + (x.dd !== undefined ? ', ' + plural(x.dd, 'day') + ' after' : ''));
     if (x.la && x.la !== x.fc) bits.push('last ' + x.la);
     if (x.cl) bits.push('TT$200 claim: ' + x.cl);
     wh.push((withAgent ? 'Agent <b>' + esc(x.a) + '</b> ' : '') + '<span class="agst ' + (x.q ? 'quiet' : x.g) + '">' + esc(x.q ? 'nothing logged' : AG_STAGE_WORDS[x.g]) + '</span>' +
       (bits.length ? ' <span class="mut">' + esc(bits.join(' · ')) + '</span>' : ''));
   }
+  if (x.hist && x.hist.length) wh.push('<span class="mut">' + histLine(x.hist) + '</span>');
+  /* reassign, for whoever names agents: the branch, and staff on the clients of their own board */
+  if (x.a && canAssign() && x.nb !== 0 && AGV && !AGV.unit) wh.push('<select class="agre" data-t="' + esc(x.t) + '" data-from="' + esc(x.a) + '" aria-label="Reassign ' + esc(x.n) + '"><option value="">Reassign to&hellip;</option>' +
+    (D.agents || []).filter(function (a) { return !sameName(a.name, x.a); }).map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>');
   var say = '';
   if (x.fb) say += '<div class="say sf"><b>Feedback in Salesforce:</b> ' + esc(x.fb) + '</div>';
   if (x.lc) say += '<div class="say"><b>' + (x.cm > 1 ? 'Their latest comment (of ' + x.cm + ')' : 'Their comment') + ':</b> ' + esc(x.lc) + '</div>';
@@ -2489,6 +2509,29 @@ function agOne(v) {
         (others.length ? '<div class="dsub" style="margin:8px 0 0">Also in the household:</div>' + others.map(function (m) { return agLine(m, true); }).join('') : '') + '</div></div>';
     }).join('');
   $('agClose').addEventListener('click', function () { AGV_ONE = ''; agOne(AGV); agTo('agTable'); });
+}
+/* since the naming: every named client by how long ago they were named, and how far they have got (14 October 2026:
+   "the objective is to have a conversion as fast as possible … tracking how long it's assigned and how many conversations") */
+var AG_AGE = [[0, 2, '0 to 2 days'], [3, 7, '3 to 7 days'], [8, 14, '8 to 14 days'], [15, 9999, '15 days or more']];
+function agSince(v) {
+  var N = agMembers(v).filter(function (x) { return x.a && x.da !== undefined; });
+  if (!N.length) { $('agSince').innerHTML = '<h3>Since the naming</h3><p class="dsub">Nobody is named yet.</p>'; return; }
+  var med = function (xs) { xs = xs.slice().sort(function (a, b) { return a - b; }); return xs.length ? xs[Math.floor((xs.length - 1) / 2)] : null; };
+  var fc = med(N.filter(function (x) { return x.dd !== undefined; }).map(function (x) { return x.dd; })), dm = med(N.filter(function (x) { return x.dm !== undefined; }).map(function (x) { return x.dm; }));
+  var conv = N.filter(function (x) { return x.g === 'met' || x.g === 'done'; }).length, talk = N.filter(function (x) { return (x.cv || 0) > 0; }).length;
+  var cvs = N.reduce(function (t, x) { return t + (x.cv || 0); }, 0);
+  $('agSince').innerHTML = '<h3>Since the naming</h3><p class="dsub">Every named client by how long ago they were named, and how far they have got. The aim: a conversation in the first two days, a meeting soon after.</p>' +
+    '<div class="dtiles">' + dTile(pc(talk, N.length) + '%', 'Had a conversation', talk + ' of ' + N.length + ' named') + dTile(pc(conv, N.length) + '%', 'Converted: met or completed', conv + ' of ' + N.length) +
+    dTile(cvs, 'Conversations logged', (Math.round(10 * cvs / N.length) / 10) + ' a client') + dTile(fc === null ? '–' : plural(fc, 'day'), 'To first contact', 'the middle client') +
+    dTile(dm === null ? '–' : plural(dm, 'day'), 'To a meeting', 'the middle client') + '</div>' +
+    '<div class="dtw"><table class="dt"><tr><th>Named</th><th>Clients</th><th>Progress</th><th>Nothing logged</th><th>Had a conversation</th><th>Converted</th><th>Conversations a client</th></tr>' +
+    AG_AGE.map(function (b) {
+      var g = N.filter(function (x) { return x.da >= b[0] && x.da <= b[1]; }), st = { done: 0, met: 0, spoken: 0, tried: 0, named: 0 };
+      g.forEach(function (x) { st[x.g]++; });
+      var t = g.filter(function (x) { return (x.cv || 0) > 0; }).length, c = st.met + st.done, cv = g.reduce(function (s2, x) { return s2 + (x.cv || 0); }, 0);
+      return '<tr><td>' + b[2] + ' ago</td><td>' + g.length + '</td><td>' + (g.length ? agBar(st, g.length) : '–') + '</td><td' + (st.named && b[0] >= 3 ? ' class="bad"' : '') + '>' + st.named + '</td>' +
+        '<td>' + dMeter(t, g.length) + '</td><td>' + dMeter(c, g.length) + '</td><td>' + (g.length ? Math.round(10 * cv / g.length) / 10 : '–') + '</td></tr>';
+    }).join('') + '</table></div>';
 }
 function agDays(v) {
   var days = v.days.map(function (d, i) {
@@ -2526,7 +2569,7 @@ function agBooks(v) {
   });
 }
 /* ---- the households to name, in batches ---- */
-function agTodo(h) { return h.m.filter(function (x) { return !x.a; }).map(function (x) { return x.t; }); }
+function agTodo(h) { return h.m.filter(function (x) { return !x.a && x.nb !== 0; }).map(function (x) { return x.t; }); }
 function agFilt(h) {
   if (AGF.book && h.bks.indexOf(AGF.book) < 0) return false;
   if (AGF.town && (h.tw || '') !== AGF.town) return false;
@@ -2542,7 +2585,7 @@ function agBatch(v) {
   var box = $('agBatch');
   if (v.unit || !canAssign()) { box.hidden = true; box.innerHTML = ''; return; }
   box.hidden = false;
-  var all = v.hh.filter(function (h) { return h.bt; });
+  var all = v.hh.filter(function (h) { return h.bt && agTodo(h).length; });
   var sel = function (id, label, vals, cur, words) {
     return '<select id="' + id + '" aria-label="' + esc(label) + '"><option value="">' + esc(label) + '</option>' + vals.map(function (x) {
       return '<option value="' + esc(x) + '"' + (x === cur ? ' selected' : '') + '>' + esc(words ? words(x) : x) + '</option>'; }).join('') + '</select>';
@@ -2550,7 +2593,7 @@ function agBatch(v) {
   var books = unique([].concat.apply([], all.map(function (h) { return h.bks; }))), towns = unique(all.map(function (h) { return h.tw || ''; }));
   var sugs = unique(all.map(function (h) { return h.sg ? h.sg[0] : ''; }));
   var held = !!v.introsHeld;
-  box.innerHTML = '<h3>Households to name</h3><p class="dsub">Every household with someone nobody is named on, in batches, the most pressing first. Each household carries one suggested agent, so a family is named as one: ' +
+  box.innerHTML = '<h3>Households to name</h3><p class="dsub">' + (v.staff ? 'The households on your board with someone nobody is named on' : 'Every household with someone nobody is named on') + ', in batches, the most pressing first. Each household carries one suggested agent, so a family is named as one: ' +
       'the family&rsquo;s own agent first, then the 24 September plan, then the nearest agent with room, then the lightest list.</p>' +
     '<div class="subs" id="agbChips"></div><p class="dsub" id="agbWhat"></p>' +
     '<div class="agfil">' + sel('agbBook', 'Every book', books, AGF.book, function (b) { return 'Was with ' + b; }) + sel('agbTown', 'Every town', towns, AGF.town) +
@@ -2567,7 +2610,7 @@ function agBatch(v) {
 }
 function agBatchFill(v) {
   if (!$('agbList')) return;
-  var shown = v.hh.filter(function (h) { return h.bt && agFilt(h); }), counts = {};
+  var shown = v.hh.filter(function (h) { return h.bt && agFilt(h) && agTodo(h).length; }), counts = {};
   AG_BUCKETS.forEach(function (b) { counts[b[0]] = { h: 0, c: 0 }; });
   shown.forEach(function (h) { counts[h.bt].h++; counts[h.bt].c += h.un; });
   if (!AGV_B || !counts[AGV_B] || !counts[AGV_B].h) AGV_B = (AG_BUCKETS.filter(function (b) { return counts[b[0]].h; })[0] || AG_BUCKETS[0])[0];
@@ -2700,19 +2743,34 @@ function agRun(jobs, el) {
   };
   next();
 }
+/* reassign one client from any list on the Agents tab: the backend keeps the history (the Assignment Log) */
+document.addEventListener('change', function (e) {
+  var el = e.target;
+  if (!el || !el.classList || !el.classList.contains('agre') || !el.value) return;
+  var to = el.value, from = el.getAttribute('data-from'), t = el.getAttribute('data-t'), x = null;
+  (AGV && AGV.hh || []).forEach(function (h) { h.m.forEach(function (m) { if (m.t === t) x = m; }); });
+  if (!window.confirm('Reassign ' + (x ? x.n : 'this client') + ' from ' + from + ' to ' + to + '?\n\nThe history keeps ' + from + ', with today\u2019s date and your name.')) { el.value = ''; return; }
+  agRun([[to, [t]]], el);
+});
 /* what was just named shows as named at once, before the sheet is read again */
 function agMark(tokens, agent) {
   if (!AGV || !AGV.on) return;
   var set = {}; tokens.forEach(function (t) { set[t] = 1; });
   AGV.hh.forEach(function (h) {
     var hit = false;
-    h.m.forEach(function (x) { if (set[x.t] && !x.a) { x.a = agent; x.g = 'named'; x.on = 'today'; x.via = 'board'; hit = true; } });
+    h.m.forEach(function (x) {
+      if (!set[x.t]) return;
+      if (x.a && !sameName(x.a, agent)) {   // a reassignment: the history keeps who it was
+        x.hist = (x.hist && x.hist.length ? x.hist : [[x.on || '', x.a, /salesforce/i.test(x.via || '') ? 'Salesforce' : 'board', '']]).concat([['today', agent, 'board', D && D.me ? D.me.name : 'the branch']]);
+      }
+      x.a = agent; x.g = 'named'; x.on = 'today'; x.via = 'board'; x.da = 0; x.cv = 0; delete x.q; delete x.tr; delete x.dm; hit = true;
+    });
     if (!hit) return;
     var un = h.m.filter(function (x) { return !x.a; }).length;
     h.st = un ? 'part' : 'all'; h.un = un;
     if (!un) { delete h.bt; delete h.sg; delete AGSEL[h.id]; }
   });
-  if (TAB === 'agents') agBatchFill(AGV);
+  if (TAB === 'agents') { agBatchFill(AGV); agOne(AGV); }
 }
 
 /* ---- the Your work tab ---- */

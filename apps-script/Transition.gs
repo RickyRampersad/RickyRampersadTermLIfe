@@ -4502,10 +4502,10 @@ function tBoard_(w, all, lite) {
 
   /* an agent named in Salesforce, or typed on the Household Assignments tab (tHaSync_, 1 October 2026): on the card, in the
      agent's own list when they log in, and on the roster's counts. The board's own name stands unless Salesforce's is newer. */
-  var haBy = {};
+  var haBy = {}, haRow = {};
   try {
     var hax = tHaRead_();
-    if (hax) hax.rows.forEach(function (r) { if (r.token && r.agent) haBy[r.token] = { agent: r.agent, on: tHaDate_(r.date), via: r.source || 'the tab' }; });
+    if (hax) hax.rows.forEach(function (r) { if (r.token) haRow[r.token] = r; if (r.token && r.agent) haBy[r.token] = { agent: r.agent, on: tHaDate_(r.date), via: r.source || 'the tab' }; });
   } catch (e) {}
   var clients = [], silent = [];
   order.forEach(function (tok) {
@@ -4609,6 +4609,16 @@ function tBoard_(w, all, lite) {
   }).sort(function (a, b) { return a.name.localeCompare(b.name); });
   var answeredBy = {};
   clients.forEach(function (c) { if (tHasAnswered_(c)) answeredBy[c.token] = c; });
+  /* who each client has been named to, and when, once there is more than one name or a staff naming to show (14 October
+     2026: "reassign the orphans … with the history of when it was assigned") */
+  var alog = tAlogRead_(), rkey = {};
+  roster.forEach(function (a) { rkey[tNameKey_(a.name)] = a.name; });
+  var canonB = function (n) { var a = rkey[tNameKey_(n)] || (tRosterMatch_(roster, n) || {}).name; return a || String(n || '').replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim(); };
+  clients.forEach(function (c) {
+    if (!c.assigned && !alog[c.token]) return;
+    var h = tAssignHist_(c, haRow[c.token], alog[c.token], canonB, now);
+    if (h.length > 1 || (h.length === 1 && h[0].by)) c.hist = h.map(function (x) { return [x.on ? fmt(x.on, 'd MMM') : '', x.agent, x.via, x.by || '']; });
+  });
   if (onTeam || staff) {
     if (onTeam) clients = clients.filter(function (c) { return onTeam(c.assigned); });
     silent = [];
@@ -5423,7 +5433,7 @@ function transitionAssign_(p) {
     /* who named, outside the stamp so the stamp's readers (the claims, the history) still read the agent alone; it shows
        on the card and in the brief as the file note "assigned 5 Oct · Name: named by …" */
     var marker = '[assigned ' + stamp + ' · ' + agent.name + ']' + (byStaff ? ' named by ' + byStaff : '') + (extra ? (byStaff ? ': ' : ' ') + extra : '');
-    var done = [], missing = [], written = 0, onBoard = {};
+    var done = [], missing = [], written = 0, onBoard = {}, logged = [];
     if (byStaff) b.clients.forEach(function (c) { onBoard[c.token] = true; });   // staff name only the clients on their own board
     tokens.forEach(function (tok) {
       var c = map[tok];
@@ -5442,9 +5452,11 @@ function transitionAssign_(p) {
         c.rows = [{ n: sh.getLastRow(), type: 'assign' }];
         written++;
       }
+      logged.push({ tok: tok, client: c.client, from: c.assigned || '', to: agent.name, on: now, source: 'board', by: byStaff || (w.me && w.me.name) || 'the branch' });
       c.assigned = agent.name; c.assignedOn = stamp;
       done.push(c);
     });
+    tAlogAppend_(logged);   // who it was named to before, and by whom (14 October 2026)
     /* and in Salesforce, the way the branch names an agent there (8 October 2026: "if that is updated there, it updates on
        the Salesforce backend"): skipped, and said, until Salesforce is linked in this project */
     var sf = tSfAssignWrite_(done, agent, now);
@@ -6911,7 +6923,7 @@ function tHaSync_(force) {
     if (!w && r.source === 'Salesforce' && !sf) return;            // Salesforce did not answer this time: keep what it said last
     var next = w || { agent: '', day: '', fb: '', source: '' };
     if (next.agent === r.agent && next.source === r.source && next.day === (tDay_(r.date) || '') && (next.fb || '') === r.fb) return;
-    edits.push({ rn: r.rn, token: r.token, w: next });
+    edits.push({ rn: r.rn, token: r.token, w: next, from: r.agent, client: r.client });
   });
   if (edits.length) {
     /* the tab may have been sorted since it was read: every edited row must still carry its token */
@@ -6930,6 +6942,10 @@ function tHaSync_(force) {
       Object.keys(block).forEach(function (c) { ha.sh.getRange(2, Number(c) + 1, n, 1).setValues(block[c]); });
     }
   }
+  /* a name Salesforce gave or changed goes on the Assignment Log, since the tab keeps only the newest (the board's own
+     namings are logged by transitionAssign_ as they are made) */
+  tAlogAppend_(edits.filter(function (e) { return e.w.source === 'Salesforce' && e.w.agent && tNameKey_(e.w.agent) !== tNameKey_(e.from); })
+    .map(function (e) { return { tok: e.token, client: e.client, from: e.from, to: e.w.agent, on: e.w.day, source: 'Salesforce', by: 'Salesforce' }; }));
   props.setProperty(T_HA.PROP, String(Date.now()));
   props.setProperty('ha_via', JSON.stringify({ at: new Date().toISOString(), via: via }));
   var named = 0;
@@ -7037,6 +7053,73 @@ function tHaWall_(byTok, resp, tz, now) {
   return out;
 }
 
+/* ── who a client has been named to, and when ───────────────────────────── */
+/* 14 October 2026: "staff can also reassign the orphans as well as a manager with the history of when it was assigned". A
+   naming on the board leaves its stamp on the client's rows ([assigned 9 Oct · Agent], "named by" after it when staff
+   named), and the Household Assignments tab holds Salesforce's current name and date. A name Salesforce changes later
+   overwrites the tab, so the Assignment Log keeps every change: the board's from transitionAssign_, Salesforce's from
+   tHaSync_. tAssignHist_ joins the three, oldest first, one line an agent and a day. */
+var T_ALOG = { SHEET: 'Assignment Log', HEAD: ['When', 'Token', 'Client', 'From', 'To', 'Named on', 'Source', 'By'] };
+/** Appends namings to the Assignment Log, made the first time: [{ tok, client, from, to, on, source, by }]. Never throws. */
+function tAlogAppend_(list) {
+  if (!list || !list.length) return;
+  try {
+    var ss = ss_(), sh = ss.getSheetByName(T_ALOG.SHEET);
+    if (!sh) {
+      sh = ss.insertSheet(T_ALOG.SHEET);
+      sh.getRange(1, 1, 1, T_ALOG.HEAD.length).setValues([T_ALOG.HEAD]);
+      try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_ALOG.HEAD.length).setFontWeight('bold'); } catch (e) {}
+    }
+    var now = new Date();
+    var rows = list.map(function (x) { return [now, x.tok, x.client || '', x.from || '', x.to || '', x.on ? (x.on instanceof Date ? x.on : tHaDate_(x.on) || '') : now, x.source || '', x.by || '']; });
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, T_ALOG.HEAD.length).setValues(rows);
+  } catch (e) { log_('transition', 'assignment-log-failed', String(e && e.message ? e.message : e)); }
+}
+/** The Assignment Log by token: { tok: [{ on: Date, agent, via, by }] }. Empty when there is no log yet. */
+function tAlogRead_() {
+  var by = {};
+  try {
+    var t = tSheetRows_(T_ALOG.SHEET), ix = {};
+    t.head.forEach(function (h, i) { ix[String(h).trim()] = i; });
+    if (ix.Token === undefined || ix.To === undefined) return by;
+    t.rows.forEach(function (v) {
+      var tok = String(v[ix.Token] || '').trim(), to = String(v[ix.To] || '').trim();
+      if (!tok || !to) return;
+      var on = ix['Named on'] !== undefined ? (tHaDate_(v[ix['Named on']]) || (v[ix.When] instanceof Date ? v[ix.When] : null)) : null;
+      (by[tok] = by[tok] || []).push({ on: on, agent: to, via: String(v[ix.Source] || ''), by: String(v[ix.By] || '') });
+    });
+  } catch (e) {}
+  return by;
+}
+/** Everyone a client has been named to, oldest first: [{ on: Date|null, agent, via: 'board'|'Salesforce'|…, by }]. c is the
+ *  board's client (its stamps and file notes), hr their Household Assignments row, log the Assignment Log's entries for
+ *  them, canon the roster's spelling of a name. The same agent on the same day is one line. */
+function tAssignHist_(c, hr, log, canon, now) {
+  var out = [], byWho = {};
+  ((c && c.fileNotes) || []).forEach(function (f) {
+    var m = /^assigned (\d{1,2} [A-Za-z]{3}) · ([^:]+): named by (.+?)(?::|$)/.exec(f);
+    if (m) byWho[m[1] + '|' + tNameKey_(m[2])] = m[3].trim();
+  });
+  ((c && c.markers) || []).forEach(function (mk) {
+    var m = /^\[assigned (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/.exec(mk);
+    if (m) out.push({ on: tAgvDay_(m[1], now), agent: canon(m[2].trim()), via: 'board', by: byWho[m[1] + '|' + tNameKey_(m[2])] || '' });
+  });
+  if (hr && hr.agent && /salesforce/i.test(hr.source)) out.push({ on: tHaDate_(hr.date), agent: canon(hr.agent), via: 'Salesforce', by: '' });
+  (log || []).forEach(function (x) { out.push({ on: x.on, agent: canon(x.agent), via: /salesforce/i.test(x.via) ? 'Salesforce' : 'board', by: x.by }); });
+  var day = function (x) { return x.on ? x.on.getTime() : 0; };
+  out.sort(function (a, b) { return day(a) - day(b) || (a.via === 'board' ? -1 : 1); });
+  var seen = {}, list = [];
+  out.forEach(function (x) {
+    if (!x.agent) return;
+    var k = tNameKey_(x.agent) + '|' + (x.on ? Math.floor(day(x) / 86400000) : '');
+    if (seen[k]) { if (x.by && !seen[k].by) seen[k].by = x.by; return; }
+    seen[k] = x;
+    if (list.length && tNameKey_(list[list.length - 1].agent) === tNameKey_(x.agent)) return;   // named again to the same agent
+    list.push(x);
+  });
+  return list;
+}
+
 /* ── the Agents view: the branch manager's picture of the naming ────────── */
 /* 14 October 2026: "can I log in to see the branch manager dashboard and how the agents assigned are going and how they
    are making progress and the unassigned, a lot of data is needed especially batching in households". The board with
@@ -7063,7 +7146,8 @@ function tAgvHeld_(ex) {
     : /e-mail by phone/i.test(s) ? 'e-mail taken by phone, waiting for the go' : /^check/i.test(s) ? 'held to check' : 'held';
 }
 function tAgentsView_(w) {
-  if (w.role !== 'branch' && w.role !== 'unit') return { on: false, why: 'The Agents view is for the branch manager and the unit managers.' };
+  if (w.role !== 'branch' && w.role !== 'unit' && w.role !== 'staff') return { on: false, why: 'The Agents view is for the branch, the unit managers and Client Support.' };
+  var staff = w.role === 'staff';
   var ha = tHaRead_();
   if (!ha) return { on: false, why: 'The Household Assignments tab is not in the sheet yet. The households and the names from Salesforce come from it.' };
   var tz = tTz_(), now = new Date(), day = 86400000;
@@ -7085,7 +7169,11 @@ function tAgentsView_(w) {
   var cm = {};
   try { cm = tCommentsAll_(); } catch (e) {}
   var claimBy = {};
-  ((b.claims && b.claims.rows) || []).forEach(function (v) { if (v.token) claimBy[v.token] = v.state; });
+  if (!staff) ((b.claims && b.claims.rows) || []).forEach(function (v) { if (v.token) claimBy[v.token] = v.state; });   // staff see no claims
+  /* staff name only the clients on their own board (5 October 2026): the answered, the reached, the called and the call list */
+  var onStaffBoard = {};
+  b.clients.forEach(function (c) { onStaffBoard[c.token] = true; });
+  var alog = tAlogRead_();
   var unitOf = {};
   tTeam_().people.forEach(function (p) { if (p.name) unitOf[tNameKey_(p.name)] = p.unit || (p.role === 'um' ? p.name : ''); });
 
@@ -7139,7 +7227,19 @@ function tAgentsView_(w) {
       var acts = mine.map(function (m) { return tAgvDay_(m[2], now); }).concat(cms.map(function (x) { return x.at; })).filter(Boolean)
         .sort(function (x, y) { return x.getTime() - y.getTime(); });
       o.a = agent; o.g = g;
-      if (on) { o.on = fmt(on); o.od = ymd(on); }
+      if (on) { o.on = fmt(on); o.od = ymd(on); o.da = Math.max(0, Math.floor((now.getTime() - on.getTime()) / day)); }
+      /* conversations since the naming: a call marked Called, Met or Declined, by the agent or by anyone after the naming,
+         one a day; the agent's feedback in Salesforce is one when nothing is marked. Tries: a no answer the agent marked. */
+      var convDays = {}, tryDays = {};
+      outs.forEach(function (m) {
+        if (!(isA(m[3]) || after(m))) return;
+        if (/^(called|met|declined)$/.test(m[1])) convDays[m[2]] = 1; else if (m[1] === 'no answer') tryDays[m[2]] = 1;
+      });
+      o.cv = Object.keys(convDays).length || (fb ? 1 : 0);
+      if (Object.keys(tryDays).length) o.tr = Object.keys(tryDays).length;
+      var metOn = outs.filter(function (m) { return m[1] === 'met' && (isA(m[3]) || after(m)); }).map(function (m) { return tAgvDay_(m[2], now); }).filter(Boolean)
+        .sort(function (x, y) { return x.getTime() - y.getTime(); })[0];
+      if (metOn && on) o.dm = Math.max(0, Math.round((metOn.getTime() - on.getTime()) / day));
       o.via = fromTab ? (hr.source || 'the tab') : 'board';
       if (acts.length) {
         o.fc = fmt(acts[0]); o.la = fmt(acts[acts.length - 1]); o.lad = ymd(acts[acts.length - 1]);
@@ -7152,6 +7252,10 @@ function tAgentsView_(w) {
     } else if (c && c.sug && c.sug.agent) o.sg = [c.sug.agent, c.sug.why];
     else if (c && c.sug && c.sug.planned) o.sp = c.sug.planned;
     else pseudo.push({ token: tok, no: o.no, hh: hr.hh, town: o.tw || '', client: o.n, _o: o, _hs: hr.sug });
+    /* who they have been named to, and when: shown once there is a change to show */
+    var hist = tAssignHist_(c, hr, alog[tok], canon, now);
+    if (hist.length > 1 || (hist.length === 1 && hist[0].by)) o.hist = hist.map(function (x) { return [x.on ? fmt(x.on) : '', x.agent, x.via, x.by || '']; });
+    if (staff && !onStaffBoard[tok]) o.nb = 0;                                // staff cannot name this one
     if (!H[hr.hh]) { H[hr.hh] = { id: hr.hh, name: hr.hhName || '', m: [] }; order.push(hr.hh); }
     H[hr.hh].m.push(o);
   });
@@ -7208,7 +7312,8 @@ function tAgentsView_(w) {
   /* each agent: what they hold and how far they have got */
   var A = {}, agentRow = function (name) {
     if (!A[name]) A[name] = { name: name, unit: unitOf[tNameKey_(name)] || '', on: !!byKey[tNameKey_(name)], hh: {}, n: 0, ans: 0, asked: 0,
-      g: { named: 0, tried: 0, spoken: 0, met: 0, done: 0 }, fb: 0, cm: 0, q: 0, back: 0, dd: [], first: '', last: '', la: '', sf: 0, board: 0, cl: { n: 0, paid: 0 } };
+      g: { named: 0, tried: 0, spoken: 0, met: 0, done: 0 }, fb: 0, cm: 0, q: 0, back: 0, dd: [], first: '', last: '', la: '', sf: 0, board: 0, cl: { n: 0, paid: 0 },
+      cv: 0, da: [], dm: [], re: 0 };
     return A[name];
   };
   if (!team) roster.forEach(function (a) { agentRow(a.name); });
@@ -7231,14 +7336,20 @@ function tAgentsView_(w) {
       if (x.lad && (!a.la || x.lad > a.la)) a.la = x.lad;
       (x.acts || []).forEach(function (d) { acts[d] = (acts[d] || 0) + 1; });
       if (x.cl) { a.cl.n++; if (x.cl === 'paid') a.cl.paid++; }
+      a.cv += x.cv || 0;
+      if (x.da !== undefined && x.g !== 'done') a.da.push(x.da);
+      if (x.dm !== undefined) a.dm.push(x.dm);
+      if (x.hist && x.hist.length > 1) a.re++;                              // came to them from another agent
       delete x.acts; delete x.lad;
     });
   });
+  var med = function (xs) { xs = xs.slice().sort(function (x, y) { return x - y; }); return xs.length ? xs[Math.floor((xs.length - 1) / 2)] : null; };
   var agents = Object.keys(A).map(function (k) {
     var a = A[k], dd = a.dd.sort(function (x, y) { return x - y; });
     return { name: a.name, unit: a.unit, on: a.on, hh: Object.keys(a.hh).length, n: a.n, ans: a.ans, asked: a.asked, g: a.g, fb: a.fb, cm: a.cm, q: a.q, back: a.back,
       med: dd.length ? dd[Math.floor((dd.length - 1) / 2)] : null, first: a.first ? tDmy_(a.first) : '', last: a.last ? tDmy_(a.last) : '', la: a.la ? tDmy_(a.la) : '',
-      sf: a.sf, board: a.board, cl: a.cl };
+      sf: a.sf, board: a.board, cl: staff ? undefined : a.cl, cv: a.cv, da: a.da.length ? Math.round(a.da.reduce(function (t, x) { return t + x; }, 0) / a.da.length) : null,
+      dmMed: med(a.dm), re: a.re };
   }).sort(function (x, y) { return y.n - x.n || x.name.localeCompare(y.name); });
 
   /* the last DAYS days, oldest first: clients named, and clients an agent called, met or commented on */
@@ -7249,7 +7360,7 @@ function tAgentsView_(w) {
   }
   var last = null;
   try { last = JSON.parse(PropertiesService.getScriptProperties().getProperty('ha_via') || 'null'); } catch (e) {}
-  return { on: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), quiet: T_AGV.QUIET, urgent: T_AGV.URGENT, unit: !!team, hh: hh, agents: agents, days: days,
+  return { on: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), quiet: T_AGV.QUIET, urgent: T_AGV.URGENT, unit: !!team, staff: staff, hh: hh, agents: agents, days: days,
            synced: last && last.at ? Utilities.formatDate(new Date(last.at), tz, 'd MMM HH:mm') : '', via: last && last.via ? last.via : 'the tab as imported',
            sf: tSfOn_(), mailHeld: tClientMailHeld_(), introsHeld: TRANSITION.HOLD_INTROS !== false && tClientMailHeld_() };
 }
