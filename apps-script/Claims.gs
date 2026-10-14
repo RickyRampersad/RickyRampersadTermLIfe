@@ -160,6 +160,13 @@ var CLAIMS = {
   // Statuses that end all follow-up.
   CLOSED_STATUSES: ['Settled', 'Declined', 'Closed'],
 
+  // Where the feedback link in a closing email points. This is this web
+  // app's own /exec URL — the survey page is served by doGet below, so
+  // the rating works even while claims/index.html is still unwired.
+  // Left '' a closed claim logs 'survey-skipped' rather than mailing a
+  // link that goes nowhere.
+  SURVEY_URL: '',
+
   /* ---- limits -------------------------------------------- */
 
   MAX_FILE_MB: 15,        // per document, after the browser compresses photos
@@ -1044,8 +1051,10 @@ function apiStaffData_(b) {
   var kpis = {};
   CLAIMS.STATUSES.forEach(function (s) { kpis[s] = 0; });
   claims.forEach(function (c) { if (kpis[c.status] !== undefined) kpis[c.status]++; });
+  var feedback = null;
+  try { feedback = claimSurveyStats_(); } catch (err) { Logger.log('survey stats: ' + err); }
   return { ok: true, me: { name: staff.name, role: staff.role }, claims: claims.reverse(),
-    staff: staffNames_(), statuses: CLAIMS.STATUSES, kpis: kpis };
+    staff: staffNames_(), statuses: CLAIMS.STATUSES, kpis: kpis, feedback: feedback };
 }
 
 function apiStaffAction_(b) {
@@ -1063,6 +1072,13 @@ function apiStaffAction_(b) {
     claim.status = status;
     if (b.notify && claim.email) sendStatusEmail_(claim);
     logClaim_(claim.ref, 'status-changed', staff.email, status + (b.notify ? ' (client emailed)' : ''));
+    /*  A claim that has just closed is asked how it went, once, while the
+     *  client still remembers. The marker stops the daily sweep sending a
+     *  second one.                                                       */
+    if (isClosed_(status) && claim.email && !surveySent_(hit)) {
+      try { sendClaimSurvey_(claim, hit); }
+      catch (err) { logClaim_(claim.ref, 'survey-send-failed', 'system', String(err)); }
+    }
   } else if (action === 'assign') {
     setClaimField_(hit, 'Assigned To', clean_(b.assignee, 80));
     logClaim_(claim.ref, 'assigned', staff.email, clean_(b.assignee, 80) || '(cleared)');
@@ -1103,6 +1119,18 @@ function fmtOrBlank_(v) {
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  /*  The feedback page is HTML, not JSON, so it is answered before the
+   *  action switch. A bad token and an unknown reference get the same
+   *  page, so the link cannot be used to probe which references exist. */
+  if (p.survey) {
+    try {
+      return claimSurveyPage_(p);
+    } catch (err) {
+      Logger.log('survey page: ' + err);
+      return surveyHtml_('<h1>Something went wrong</h1><p>Please call <b>' +
+        esc_(CLAIMS.AGENT_PHONE) + '</b> and we will take your feedback that way.</p>', '');
+    }
+  }
   var out;
   try {
     switch (p.action) {
@@ -1962,7 +1990,13 @@ function claimsFollowUp() {
       }
     }
   }
-  return { chased: chased, nudged: nudged };
+  /*  Closed by hand on the sheet rather than through the dashboard — the
+   *  status dropdown fires no code, so without this those clients are
+   *  never asked.                                                       */
+  var surveyed = 0;
+  try { surveyed = claimSurveySweep_(); }
+  catch (err) { Logger.log('survey sweep: ' + err); }
+  return { chased: chased, nudged: nudged, surveyed: surveyed };
 }
 
 function sendChase_(claim, missing, n, total) {
@@ -2171,10 +2205,484 @@ function sweepAbandonedParts() {
 }
 
 
+/* ============================ did we do what we promised? ============================
+ *
+ *  Claims TT makes the hardest written promise in the branch — a review
+ *  within ten working days — and was the only platform that never asked
+ *  the client how it went. The renewal portal has asked since it opened;
+ *  the claim, which is the moment a client finds out whether any of this
+ *  was worth paying for, asked nothing.
+ *
+ *  Three questions, on the same 1-to-5 scale the renewal survey uses, so
+ *  the two books can finally be added together: how it went overall, how
+ *  easy it was, how fast it felt.
+ *
+ *  THE FIRST CLICK IS THE ANSWER. Five scored links ride in the email, so
+ *  rating the claim costs one tap from the inbox and nothing is lost if
+ *  the client never reaches the page. The page then asks the other two
+ *  and takes a comment. A survey that needs a form loaded before it
+ *  records anything mostly records nothing.
+ *
+ *  A DECLINED CLAIM IS STILL ASKED, and asked differently. Surveying only
+ *  the clients who were paid measures the policy wording, not the branch.
+ *  The one number worth having is how the people who were turned down
+ *  felt about being turned down.
+ * ==================================================================================== */
+
+var CSURVEY = {
+  SHEET: 'Claim Surveys',
+
+  /*  Days after a claim closes before the request goes out. 0 sends it on
+   *  the status change, which is while the client still remembers. The
+   *  daily follow-up catches claims closed by hand on the sheet.        */
+  DAYS_AFTER_CLOSE: 0,
+
+  /*  A score at or below this on the overall or the speed question raises
+   *  a service-recovery note on the claim and emails the branch. Matches
+   *  the renewal portal's threshold.                                     */
+  RECOVERY_AT: 3,
+
+  /*  The link in the email is Reference + this signature, so a reference
+   *  on its own cannot be used to file somebody else's rating. The secret
+   *  is created on first use and never leaves Script Properties.         */
+  SECRET_PROP: 'CLAIM_SURVEY_SECRET',
+  TOKEN_LEN: 16,
+
+  COLUMNS: ['Timestamp', 'Reference', 'Claim Type', 'Client', 'Overall (1-5)',
+            'Ease (1-5)', 'Speed (1-5)', 'Comments', 'Status At Close',
+            'Days Open', 'Detail Completed'],
+};
+
+function claimSurveysSheet_() {
+  return namedSheet_(CSURVEY.SHEET, CSURVEY.COLUMNS);
+}
+
+/* ---- the signature ---- */
+
+function surveySecret_() {
+  var p = PropertiesService.getScriptProperties();
+  var s = String(p.getProperty(CSURVEY.SECRET_PROP) || '');
+  if (!s) {
+    s = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+    p.setProperty(CSURVEY.SECRET_PROP, s);
+  }
+  return s;
+}
+
+function surveyToken_(ref) {
+  var sig = Utilities.computeHmacSha256Signature(String(ref || ''), surveySecret_());
+  return sig.map(function (b) {
+    return ((b < 0 ? b + 256 : b) + 0x100).toString(16).slice(1);
+  }).join('').slice(0, CSURVEY.TOKEN_LEN);
+}
+
+/** Constant-length compare, so a wrong token leaks nothing by how long it took. */
+function surveyTokenOk_(ref, token) {
+  var want = surveyToken_(ref), got = String(token || '');
+  if (got.length !== want.length) return false;
+  var diff = 0;
+  for (var i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ got.charCodeAt(i);
+  return diff === 0;
+}
+
+function surveyLink_(ref, score) {
+  var url = String(CLAIMS.SURVEY_URL || '');
+  if (!url) return '';
+  return url + (url.indexOf('?') > -1 ? '&' : '?') +
+    'survey=' + encodeURIComponent(ref) +
+    '&k=' + surveyToken_(ref) +
+    (score ? '&s=' + score : '');
+}
+
+/* ---- sending ---- */
+
+/** True once a survey has gone out for this claim, so it can never go twice. */
+function surveySent_(hit) {
+  return sentMarkers_(hit).indexOf('survey') > -1;
+}
+
+function sendClaimSurvey_(claim, hit) {
+  if (!claim.email) return false;
+  if (!CLAIMS.SURVEY_URL) {
+    logClaim_(claim.ref, 'survey-skipped', 'system',
+      'CLAIMS.SURVEY_URL is not set — no link to send');
+    return false;
+  }
+  var declined = /declin/i.test(claim.status);
+  var first = esc_(String(claim.name).split(' ')[0] || 'there');
+
+  /*  A settled claim and a declined claim are not the same conversation,
+   *  and asking the second one in the first one's words reads as a taunt. */
+  var intro = declined
+    ? '<p>Your claim <b>' + esc_(claim.ref) + '</b> was not covered under your policy, and ' +
+      'I know that is not the answer you were hoping for.</p>' +
+      '<p>I would still like to know how the <b>process</b> felt — whether you were kept ' +
+      'informed, and whether the reason was explained in a way that made sense. How we ' +
+      'handle a claim we cannot pay says more about us than how we handle one we can.</p>'
+    : '<p>Your claim <b>' + esc_(claim.ref) + '</b> is closed. Thank you for letting us ' +
+      'handle it for you.</p>' +
+      '<p>I would like to know how it went — honestly, including anything that was slower ' +
+      'or harder than it should have been.</p>';
+
+  var stars = '<table cellpadding="0" cellspacing="0" style="margin:18px auto"><tr>' +
+    [1, 2, 3, 4, 5].map(function (n) {
+      return '<td style="padding:0 5px"><a href="' + surveyLink_(claim.ref, n) + '" ' +
+        'style="display:block;width:50px;height:50px;line-height:50px;text-align:center;' +
+        'border:1px solid #dde5ee;border-radius:10px;background:' +
+        (n >= 4 ? CBRAND.light : '#fff') + ';color:' + CBRAND.navy +
+        ';font:bold 19px Arial,sans-serif;text-decoration:none">' + n + '</a></td>';
+    }).join('') + '</tr><tr>' +
+    '<td colspan="2" style="color:#8a97a8;font-size:11px;text-align:left;padding-top:6px">Poor</td>' +
+    '<td></td>' +
+    '<td colspan="2" style="color:#8a97a8;font-size:11px;text-align:right;padding-top:6px">Excellent</td>' +
+    '</tr></table>';
+
+  sendMail_({
+    to: claim.email, name: CLAIMS.FROM_NAME,
+    subject: 'How did we handle your claim? (one tap) — ' + claim.ref,
+    htmlBody: brandWrap_(
+      '<p>Dear ' + first + ',</p>' + intro +
+      '<p style="text-align:center;margin-top:20px"><b>Overall, how was it?</b></p>' + stars +
+      '<p style="text-align:center;color:#8a97a8;font-size:12px">One tap records it. ' +
+      'The next screen asks two more questions if you have thirty seconds.</p>' +
+      noteBox_('Every answer comes to me, not to a call centre. If something went wrong ' +
+        'I would rather hear it from you than not hear it at all — ' +
+        '<b>' + esc_(CLAIMS.AGENT_PHONE) + '</b>.') +
+      sig_(), declined ? 'Your feedback' : 'Claim closed'),
+  });
+  if (hit) markSent_(hit, 'survey');
+  logClaim_(claim.ref, 'survey-sent', 'system',
+    (declined ? 'declined wording' : 'settled wording') + ' · ' + claim.status);
+  return true;
+}
+
+/* ---- recording ---- */
+
+/** The row for a reference, or null. */
+function surveyRow_(ref) {
+  var sh = claimSurveysSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return null;
+  var refs = sh.getRange(2, 2, last - 1, 1).getValues();
+  for (var i = 0; i < refs.length; i++) {
+    if (String(refs[i][0]).trim() === String(ref).trim()) {
+      return { row: i + 2, sheet: sh };
+    }
+  }
+  return null;
+}
+
+/** First tap: the overall score. Idempotent — a re-click overwrites, never appends. */
+function recordSurveyScore_(ref, score) {
+  score = Math.max(1, Math.min(5, Number(score) || 0));
+  if (!score) return null;
+  var hit = findClaim_(ref);
+  if (!hit) return null;
+  var claim = claimObject_(hit);
+  var openDays = daysSince_(claimField_(hit, 'Timestamp'));
+  var existing = surveyRow_(ref);
+  var sh = claimSurveysSheet_();
+
+  if (existing) {
+    existing.sheet.getRange(existing.row, 5).setValue(score);
+    existing.sheet.getRange(existing.row, 1).setValue(new Date());
+  } else {
+    sh.appendRow([new Date(), claim.ref, claim.type, claim.name, score, '', '',
+      (testMode_() ? '[TEST] ' : ''), claim.status, openDays >= 0 ? openDays : '', '']);
+  }
+  logClaim_(claim.ref, 'survey-scored', 'client', 'Overall ' + score + '/5');
+  if (score <= CSURVEY.RECOVERY_AT) serviceRecovery_(claim, hit, 'overall ' + score + '/5');
+  return claim;
+}
+
+/** Second step, from the page: ease, speed and a comment. */
+function claimSurveyDetail(payload) {
+  payload = payload || {};
+  var ref = String(payload.ref || '').trim();
+  if (!surveyTokenOk_(ref, payload.k)) throw new Error('That feedback link is not valid.');
+  var hit = findClaim_(ref);
+  if (!hit) throw new Error('That feedback link is not valid.');
+  var claim = claimObject_(hit);
+
+  var ease = Math.max(0, Math.min(5, Number(payload.ease) || 0));
+  var speed = Math.max(0, Math.min(5, Number(payload.speed) || 0));
+  var comments = clean_(payload.comments, 2000);
+
+  var existing = surveyRow_(ref);
+  if (!existing) {
+    claimSurveysSheet_().appendRow([new Date(), claim.ref, claim.type, claim.name, '',
+      ease || '', speed || '', (testMode_() ? '[TEST] ' : '') + comments, claim.status,
+      '', 'Y']);
+  } else {
+    var sh = existing.sheet, r = existing.row;
+    if (ease) sh.getRange(r, 6).setValue(ease);
+    if (speed) sh.getRange(r, 7).setValue(speed);
+    if (comments) sh.getRange(r, 8).setValue((testMode_() ? '[TEST] ' : '') + comments);
+    sh.getRange(r, 11).setValue('Y');
+  }
+  logClaim_(claim.ref, 'survey-detail', 'client',
+    'Ease ' + (ease || '—') + '/5 · Speed ' + (speed || '—') + '/5' +
+    (comments ? ' · "' + comments.slice(0, 120) + '"' : ''));
+  if (speed && speed <= CSURVEY.RECOVERY_AT) serviceRecovery_(claim, hit, 'speed ' + speed + '/5');
+  return { ok: true };
+}
+
+/*  A bad score is not a statistic, it is a phone call somebody owes.
+ *  The note goes on the claim so it is visible on the staff dashboard
+ *  next to the claim itself, and the branch is emailed the same day. */
+function serviceRecovery_(claim, hit, why) {
+  var note = nowStamp_() + ' — SERVICE RECOVERY: client rated this claim ' + why +
+    '. Call them.';
+  try {
+    var existing = String(claimField_(hit, 'Internal Notes') || '');
+    setClaimField_(hit, 'Internal Notes', (existing ? existing + '\n' : '') + note);
+    setClaimField_(hit, 'Last Updated', new Date());
+  } catch (err) { Logger.log('recovery note: ' + err); }
+  logClaim_(claim.ref, 'service-recovery', 'system', why);
+  sendMail_({
+    to: CLAIMS.MAIL_CC[0], name: CLAIMS.FROM_NAME,
+    subject: '⚠ Service recovery — claim ' + claim.ref + ' rated ' + why,
+    htmlBody: brandWrap_(
+      '<p><b>' + esc_(claim.name) + '</b> rated claim <b>' + esc_(claim.ref) + '</b> ' +
+      esc_(why) + '.</p>' +
+      '<p>Type: ' + esc_(claim.type) + ' · closed as <b>' + esc_(claim.status) + '</b>' +
+      (claim.assigned ? ' · handled by ' + esc_(claim.assigned) : ' · nobody assigned') + '</p>' +
+      noteBox_('A note is already on the claim. The call is the part the system cannot do.') +
+      (claim.mobile ? '<p>Reach them on <b>' + esc_(claim.mobile) + '</b>.</p>' : ''),
+      'Service recovery'),
+  });
+}
+
+/* ---- the page ---- */
+
+/*  One page, two states. An invalid link and an unknown reference give
+ *  the SAME answer, so the link cannot be used to find out whether a
+ *  reference exists. No claim detail appears on it beyond a first name. */
+function claimSurveyPage_(p) {
+  var ref = String(p.survey || '').trim();
+  var ok = ref && surveyTokenOk_(ref, p.k);
+  var claim = null;
+  if (ok) {
+    var hit = findClaim_(ref);
+    if (!hit) ok = false; else claim = claimObject_(hit);
+  }
+  if (!ok) return surveyHtml_(
+    '<h1>This link has expired</h1>' +
+    '<p>Feedback links are personal and stop working once the claim is archived. ' +
+    'If you would still like to tell us how it went, call <b>' + esc_(CLAIMS.AGENT_PHONE) +
+    '</b> — it is the same person who reads the surveys.</p>', '');
+
+  var score = Math.max(0, Math.min(5, Number(p.s) || 0));
+  if (score) recordSurveyScore_(ref, score);
+  var first = esc_(String(claim.name).split(' ')[0] || 'there');
+
+  var body =
+    (score
+      ? '<div class="got">Recorded — you rated it <b>' + score + ' out of 5</b>. Thank you.</div>'
+      : '') +
+    '<h1>' + (score ? 'Two more, if you have a moment' : 'How did we handle it, ' + first + '?') + '</h1>' +
+    (score ? '' : '<div class="q"><label>Overall</label><div class="stars" data-k="sat"></div></div>') +
+    '<div class="q"><label>How easy was it to deal with us?</label><div class="stars" data-k="ease"></div></div>' +
+    '<div class="q"><label>How fast did it feel?</label><div class="stars" data-k="speed"></div></div>' +
+    '<div class="q"><label>Anything you want to say<span class="opt"> — optional</span></label>' +
+    '<textarea id="cm" rows="4" placeholder="What worked, what did not."></textarea></div>' +
+    '<button id="go">Send my feedback</button>' +
+    '<div class="err" id="err"></div>' +
+    '<p class="fine">This goes to ' + esc_(CLAIMS.AGENT_NAME) + ' directly. ' +
+    'Nothing about your policy or your claim changes because of what you say here.</p>';
+
+  return surveyHtml_(body, ref, surveyToken_(ref), !!score);
+}
+
+function surveyHtml_(body, ref, token, haveScore) {
+  var css =
+    '*{box-sizing:border-box;margin:0;padding:0}' +
+    'body{font:15px/1.6 Arial,Helvetica,sans-serif;color:#1a2433;background:#eef3f8;' +
+      'min-height:100vh;display:grid;place-items:start center;padding:22px 16px 60px}' +
+    '.card{background:#fff;border:1px solid #dde5ee;border-radius:16px;padding:26px 24px;' +
+      'max-width:470px;width:100%;box-shadow:0 12px 34px rgba(14,42,71,.10)}' +
+    '.top{background:' + CBRAND.navy + ';color:#fff;margin:-26px -24px 20px;padding:16px 24px;' +
+      'border-radius:16px 16px 0 0;font-weight:bold;font-size:17px}' +
+    '.top span{display:block;font-weight:normal;font-size:12px;color:#b7c9de;margin-top:2px}' +
+    'h1{font-size:20px;line-height:1.3;margin-bottom:6px}' +
+    '.got{background:' + CBRAND.light + ';border:1px solid #CBEAE8;border-radius:10px;' +
+      'padding:12px 14px;margin-bottom:16px;font-size:14px}' +
+    '.q{margin-top:18px}' +
+    'label{display:block;font-weight:bold;font-size:14px;margin-bottom:7px}' +
+    '.opt{font-weight:normal;color:#8a97a8}' +
+    '.stars{display:flex;gap:7px}' +
+    '.stars button{flex:1;height:48px;border:1px solid #dde5ee;background:#fff;border-radius:10px;' +
+      'font:bold 17px Arial;color:' + CBRAND.navy + ';cursor:pointer}' +
+    '.stars button.on{background:' + CBRAND.teal + ';border-color:' + CBRAND.teal + ';color:#fff}' +
+    'textarea{width:100%;border:1px solid #dde5ee;border-radius:10px;padding:11px 13px;' +
+      'font:14px Arial;resize:vertical}' +
+    '#go{width:100%;margin-top:20px;background:' + CBRAND.navy + ';color:#fff;border:none;' +
+      'border-radius:11px;padding:15px;font:bold 15px Arial;cursor:pointer}' +
+    '#go:disabled{opacity:.55}' +
+    '.err{display:none;background:#fdecea;border:1px solid #f5c2bd;color:#8c1d13;' +
+      'border-radius:10px;padding:11px 13px;margin-top:12px;font-size:13.5px}' +
+    '.fine{color:#8a97a8;font-size:11.5px;margin-top:16px;line-height:1.6}' +
+    'button:focus-visible,textarea:focus-visible{outline:2px solid ' + CBRAND.teal + ';outline-offset:2px}';
+
+  var js = !ref ? '' :
+    'var S={};' +
+    'document.querySelectorAll(".stars").forEach(function(row){' +
+      'for(var n=1;n<=5;n++){(function(n){var b=document.createElement("button");' +
+        'b.type="button";b.textContent=n;b.setAttribute("aria-label",n+" out of 5");' +
+        'b.onclick=function(){S[row.dataset.k]=n;' +
+          'row.querySelectorAll("button").forEach(function(x,i){x.classList.toggle("on",i<n);});};' +
+        'row.appendChild(b);})(n);}' +
+    '});' +
+    'var go=document.getElementById("go"),err=document.getElementById("err");' +
+    'go.onclick=function(){' +
+      'err.style.display="none";' +
+      'if(!' + (haveScore ? 'true' : 'S.sat') + '){err.textContent="Please tap a rating for the first question.";' +
+        'err.style.display="block";return;}' +
+      'go.disabled=true;go.textContent="Sending\\u2026";' +
+      'google.script.run.withSuccessHandler(function(){' +
+        'document.querySelector(".card").innerHTML=' +
+          '"<div class=\\"top\\">Claims TT<span>Thank you</span></div>' +
+          '<h1>Thank you.</h1><p>Your feedback is recorded and goes straight to ' +
+          esc_(CLAIMS.AGENT_NAME).replace(/"/g, '\\"') + '. ' +
+          'You can close this page.</p>";' +
+      '}).withFailureHandler(function(e){' +
+        'go.disabled=false;go.textContent="Send my feedback";' +
+        'err.textContent=(e&&e.message)||"Something went wrong \\u2014 please try again.";' +
+        'err.style.display="block";' +
+      '}).claimSurveyDetail({ref:' + JSON.stringify(ref) + ',k:' + JSON.stringify(token || '') + ',' +
+        'sat:S.sat||0,ease:S.ease||0,speed:S.speed||0,' +
+        'comments:document.getElementById("cm").value});' +
+    '};';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_top">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>Your feedback — Claims TT</title><style>' + css + '</style></head><body>' +
+    '<div class="card"><div class="top">Claims TT<span>' + esc_(CLAIMS.AGENT_NAME) +
+    ' · Guardian Group</span></div>' + body + '</div>' +
+    (js ? '<script>' + js + '</script>' : '') + '</body></html>';
+
+  return HtmlService.createHtmlOutput(html)
+    .setTitle('Your feedback — Claims TT')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/* ---- what the dashboard reads ---- */
+
+/*  Never the average alone. An average built from four replies out of
+ *  forty is a number about four people, and the response rate is the
+ *  part that says whether to believe it.                             */
+function claimSurveyStats_() {
+  var out = { sent: 0, scored: 0, rate: 0, overall: null, ease: null, speed: null,
+              dist: [0, 0, 0, 0, 0], recovery: 0, recent: [] };
+  var sh = claimSurveysSheet_();
+  var last = sh.getLastRow();
+
+  // how many were asked, counted off the claims themselves
+  try {
+    var csh = claimsSheet_();
+    if (csh.getLastRow() > 1) {
+      var map = headerMap_(csh);
+      for (var r = 2; r <= csh.getLastRow(); r++) {
+        var hit = { row: r, values: csh.getRange(r, 1, 1, csh.getLastColumn()).getValues()[0],
+                    map: map, sheet: csh };
+        if (surveySent_(hit)) out.sent++;
+      }
+    }
+  } catch (err) { Logger.log('survey sent count: ' + err); }
+
+  if (last < 2) return out;
+  var rows = sh.getRange(2, 1, last - 1, CSURVEY.COLUMNS.length).getValues();
+  var so = [], se = [], sp = [];
+  rows.forEach(function (x) {
+    var ov = Number(x[4]), ea = Number(x[5]), spd = Number(x[6]);
+    if (ov >= 1 && ov <= 5) { out.scored++; so.push(ov); out.dist[ov - 1]++; }
+    if (ea >= 1 && ea <= 5) se.push(ea);
+    if (spd >= 1 && spd <= 5) sp.push(spd);
+    if ((ov && ov <= CSURVEY.RECOVERY_AT) || (spd && spd <= CSURVEY.RECOVERY_AT)) out.recovery++;
+    out.recent.push({ when: fmtOrBlank_(x[0]), ref: String(x[1]), type: String(x[2]),
+                      overall: ov || null, ease: ea || null, speed: spd || null,
+                      comments: String(x[7] || '').slice(0, 200), closedAs: String(x[8] || '') });
+  });
+  var mean = function (a) {
+    return a.length ? Math.round(a.reduce(function (s, n) { return s + n; }, 0) / a.length * 10) / 10 : null;
+  };
+  out.overall = mean(so); out.ease = mean(se); out.speed = mean(sp);
+  out.rate = out.sent ? Math.round(out.scored / out.sent * 1000) / 10 : 0;
+  out.recent = out.recent.reverse().slice(0, 10);
+  return out;
+}
+
+/* ---- menu ---- */
+
+/** Shows the branch exactly what a client would get, without sending it. */
+function previewClaimSurvey() {
+  var ui = SpreadsheetApp.getUi();
+  if (!CLAIMS.SURVEY_URL) {
+    ui.alert('No survey URL is set.\n\n' +
+      'The feedback link has to point at this web app. Deploy it, then put the\n' +
+      '/exec URL into CLAIMS.SURVEY_URL at the top of Claims.gs.\n\n' +
+      'Until it is set, a closed claim logs "survey-skipped" instead of mailing\n' +
+      'a link that goes nowhere.');
+    return;
+  }
+  var sh = claimsSheet_();
+  var sel = sh.getActiveRange();
+  if (!sel || sel.getRow() < 2) {
+    ui.alert('Select a claim row first, then run this again.');
+    return;
+  }
+  var map = headerMap_(sh);
+  var hit = { row: sel.getRow(), values: sh.getRange(sel.getRow(), 1, 1, sh.getLastColumn()).getValues()[0],
+              map: map, sheet: sh };
+  var claim = claimObject_(hit);
+  ui.alert('Claim ' + claim.ref + '\n\n' +
+    'Status: ' + claim.status + (isClosed_(claim.status) ? ' (closed — would be surveyed)' : ' (still open — no survey yet)') + '\n' +
+    'Survey already sent: ' + (surveySent_(hit) ? 'yes, it will not go again' : 'no') + '\n\n' +
+    'The link that would go to the client:\n' + surveyLink_(claim.ref, 5) + '\n\n' +
+    'Turn test mode on and run "Send feedback requests now" to receive it yourself.');
+}
+
+/** Catches claims closed by hand on the sheet. Safe to run any time. */
+function sendClaimSurveysNow() {
+  var n = claimSurveySweep_();
+  SpreadsheetApp.getUi().alert(n === 0
+    ? 'Nothing to send — every closed claim with an email has already been asked.'
+    : n + ' feedback request' + (n === 1 ? '' : 's') + ' sent' +
+      (testMode_() ? ' to ' + testInbox_() + ' (test mode).' : '.'));
+}
+
+/*  Rides the daily follow-up. A claim closed on the sheet rather than
+ *  through the dashboard would otherwise never be asked.             */
+function claimSurveySweep_() {
+  var sh = claimsSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return 0;
+  var map = headerMap_(sh);
+  var sent = 0;
+  for (var r = 2; r <= last; r++) {
+    var hit = { row: r, values: sh.getRange(r, 1, 1, sh.getLastColumn()).getValues()[0],
+                map: map, sheet: sh };
+    var claim = claimObject_(hit);
+    if (!claim.ref || !claim.email) continue;
+    if (!isClosed_(claim.status)) continue;
+    if (surveySent_(hit)) continue;
+    var quiet = daysSince_(claimField_(hit, 'Last Updated'));
+    if (quiet !== null && quiet >= 0 && quiet < CSURVEY.DAYS_AFTER_CLOSE) continue;
+    try {
+      if (sendClaimSurvey_(claim, hit)) sent++;
+    } catch (err) {
+      logClaim_(claim.ref, 'survey-send-failed', 'system', String(err));
+    }
+  }
+  return sent;
+}
+
 /* ============================ setup & menu ============================ */
 
 function setupClaims() {
   filesSheet_(); logSheet_(); registerSheet_(); policyRegisterSheet_();
+  claimSurveysSheet_();
   var root = rootFolder_();
 
   // Staff tab: seed you as Admin so the staff dashboard works immediately.
@@ -2209,6 +2717,9 @@ function setupClaims() {
     'Drive folder: ' + root.getUrl() + '\n' +
     'Automatic follow-up: installed, runs daily ~9am (incl. the ' +
       CLAIMS.REVIEW_WORKING_DAYS + '-working-day review)\n' +
+    'Client feedback: ' + (CLAIMS.SURVEY_URL
+      ? 'on — every closed claim is asked for a rating'
+      : 'OFF until CLAIMS.SURVEY_URL holds this web app\'s /exec URL') + '\n' +
     'Vehicle register: ' + vehicles + ' vehicle(s)' +
       (vehicles ? '' : ' — import vehicle-register.csv to switch on motor prefill') + '\n' +
     'Policy register: ' + (Math.max(policyRegisterSheet_().getLastRow() - 1, 0)) + ' policy(ies)' +
@@ -2224,6 +2735,9 @@ function onOpen() {
     .addItem('Open the claims Drive folder', 'openClaimsFolder')
     .addItem('Email the client their new status', 'notifyStatusChange')
     .addItem('Chase outstanding documents now', 'chaseMissingDocuments')
+    .addSeparator()
+    .addItem('⭐ Preview the feedback request (selected row)', 'previewClaimSurvey')
+    .addItem('⭐ Send feedback requests now', 'sendClaimSurveysNow')
     .addSeparator()
     .addItem('☁️ Connect Salesforce (one-time)', 'connectSalesforce')
     .addItem('Sync registers from Salesforce now', 'syncSalesforceNow')
