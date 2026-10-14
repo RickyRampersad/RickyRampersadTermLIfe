@@ -2628,7 +2628,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `tMsSend_`. The pages under `groupclientmanagement/` hold no client data.
 - **The group tabs have their own spreadsheet, the script does not.** Asked
   the same day ("if this is the sheet for managing groups why import into the
-  service questionnaire"): `Group Register`, `Group Tasks`, `Group Increases`, `Group Sends`,
+  service questionnaire"): `Group Register`, `Group Tasks`, `Group Increases`, `Group Milestones`, `Group Sends`,
   `Group Responses`, `Group Shares` and `Group Queue` live in the **Group Client Management**
   Google Sheet. The script stays in the Service Questionnaire project, where
   the sign-in, the Salesforce login, the support@ mailbox and the web address
@@ -3010,6 +3010,52 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - A backend older than this sends no `pending`, and both pages leave the panel out.
   - `pending/pending-test.js` (50 checks) and `pending/page.js` (21, Playwright, phone and desk) in the session
     scratchpad cover it, on the made-up branch with an invented keyperson case and six invented increases.
+
+- **Coming up for the group's people: conversions at 65, dependents coming of age, retirements within five years**
+  (14 October 2026: "a person … their dependent is coming of age to convert. We need those letters. Those will be
+  included in the weekly reports … approaching age 65 … convert to an individual plan … pension plans, five years
+  prior to retirement, tasks will be opened … future value projections … what is company owned pensions, and what is
+  individual owned pensions … insights the group can actually see and we can manage for clean data").
+  - **Where it comes from.** The refresh reads the group's in-force Group Life, Group Health and pension policies, on its
+    account or its list bill (`gcmMilestones_`). The date of birth is the policy's, else its contact's. It writes a
+    **Group Milestones** tab: one row a person and event, plus a summary row per group.
+    - *Turning 65* (`convert65`): within 183 days, or the last 60.
+    - *A dependent reaching the dependent age* (`dependent`): `GCM_DEP_AGE`, default 21, which the branch confirms.
+      Dependents come from Relationship Groups (Child 1–3, Dependent 1–3) and from Dependant 01–04 on the group's own
+      billing records. Salesforce holds few: on 14 October, 119 billing records and 62 relationship groups named one.
+    - *Retiring within five years* (`retire`): the date is Maturity Date, else Retirement Age, else `GCM_RETIRE_AGE`
+      (default 60), assumed and marked. On 14 October 85% of in-force pensions had no retirement age.
+      - **Company-owned or personal** comes from Ownership, else from the account's type: a commercial or business
+        account is the company's, a household the person's own. Ownership was blank on 96% that day.
+      - That day: 120 company-owned and 128 personal pension members aged 55 to 65, and 5 group life or health members
+        within six months of 65.
+    - *No date of birth* (`nodob`): a person to put right in Salesforce.
+  - **The group** sees, under the pending panel, three columns, soonest first, each with how long until it:
+    - turning 65: "we help them convert to an individual plan";
+    - dependents coming of age;
+    - retirements on its **company** pension.
+
+    Under them, "Help us keep your records right" names anyone with no date of birth. It never sees a personal pension,
+    an e-mail, a policy number, a task or an assumed age.
+  - **The Monday letter** counts them and lists each one (who, what, when), ten at most.
+  - **Staff** see all of it, including:
+    - personal pensions, marked;
+    - the assumed ages;
+    - each person's e-mail;
+    - the projection task's state;
+    - the clean-data counts.
+
+    The account row says how many are coming up.
+  - **Pension projection tasks.** One opens in Salesforce for each retirement within five years: on the policy, owned
+    by the group's account owner, Task Type Servicing, due in 30 days, subject `Pension projection: <name> retires
+    <date> at <age> (company-owned | personal pension)`. An assumed age says so and asks for the real one.
+    - They open only after the branch manager's go: `gcmLifeTasksStart` (editor Run); `gcmLifeTasksStop` ends it.
+    - At most 25 a run. A task already on the policy with that subject is found each run, so none opens twice.
+    - Until the go, the board lists who would get one.
+  - Letters to the members themselves (the conversion and the dependent's move) are not built yet.
+  - When Salesforce refuses the read, the tab keeps the last good list, and the refresh says so.
+  - `coming/coming-test.js` (32 checks) and `coming/page.js` (11, Playwright) in the session scratchpad cover it, on
+    the made-up branch.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 

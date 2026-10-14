@@ -282,6 +282,21 @@ h2{font-size:21px}
 .inc{display:inline-block;font-size:11.5px;font-weight:600;color:#fff;background:#8A4FD8;border-radius:4px;padding:1px 7px;margin-right:7px;vertical-align:1px}
 .inc.soft{background:#F1EAFD;color:#5B2DA8}
 .reqs li.sub{padding-left:12px;border-left:3px solid #E4D8FA}
+.coming{background:var(--paper);border:1px solid var(--line);border-top:4px solid #067647;border-radius:12px;padding:16px 16px 10px;margin:14px 0;box-shadow:var(--shadow)}
+.coming .ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.coming h3{margin:0}
+.coming .cnt{background:#067647;color:#fff;border-radius:99px;font-size:12px;font-weight:600;padding:1px 9px}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px}
+.cgrp{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;min-width:0}
+.cgrp h4{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:14.5px}
+.cgrp h4 .ic{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
+.cgrp.c65 .ic{background:#1D5BC4}.cgrp.dep .ic{background:#008C7A}.cgrp.ret .ic{background:#8A4FD8}
+.cgrp h4 b{margin-left:auto;color:var(--muted)}
+.cgrp ul{list-style:none;margin:0;padding:0}.cgrp li{padding:6px 0;border-top:1px solid var(--line);font-size:13.5px;overflow-wrap:anywhere}
+.cgrp li .dt{display:block;color:var(--muted);font-size:12.5px}
+.cgrp .own{font-size:11.5px;font-weight:600;border-radius:4px;padding:0 6px;margin-left:4px}
+.cgrp .own.co{background:#EFE8FD;color:#5B2DA8}.cgrp .own.pe{background:#E8EEF7;color:#2B374C}
+.cleanrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+@media (max-width:900px){.cgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -537,6 +552,7 @@ function accRow(g) {
   acts += '<button class="btn ghost" type="button" data-g="' + esc(g.key) + '">Open</button>';
   return '<div class="acc r-' + rowState(g) + '"><div>' + L('Group') + '<button class="gname" type="button" data-g="' + esc(g.key) + '">' + esc(g.name) + '</button><div class="sub">List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · ' + s.open + ' open' + (s.late ? ' · <b style="color:var(--badText)">' + s.late + ' past target</b>' : '') + '</div>' +
+    (a.coming ? '<div><span class="chip"><i style="background:#067647"></i>' + a.coming.n + ' coming up</span></div>' : '') +
     (a.pending ? '<div><span class="chip ' + (a.pending.late || a.pending.oldest > 30 ? 'bad' : a.pending.oldest > 14 ? 'warn' : '') + '"><i></i>' + pendWords(a.pending) + ', oldest ' + a.pending.oldest + 'd</span></div>' : '') + '</div>' +
     '<div>' + L('Looked after by') + owner + '</div><div>' + L('Letters go to') + to + '</div><div>' + L('Welcome') + wel + '</div><div>' + L('This week’s letter') + wk + '</div><div>' + L('Last answer') + ans + '</div>' +
     '<div class="acts">' + acts + (g.canAct ? '' : '<div class="sub" style="width:100%;text-align:right">' + esc(first || 'Its owner') + ', the assistant branch manager or the branch manager sends</div>') + '</div></div>';
@@ -738,6 +754,39 @@ function bindPend() {
   document.querySelectorAll('#pend [data-show]').forEach(c => c.onchange = () => share({ kind: 'show', task: c.dataset.show, value: c.checked ? 'Y' : 'N' }, c, true));
 }
 
+/* coming up for the group's people (14 October 2026): what the group sees, plus personal pensions, assumed retirement
+   ages, the projection tasks and what to put right in Salesforce */
+function untilWords(n) {
+  if (n == null) return '';
+  if (n < 0) return Math.abs(n) < 31 ? 'this month' : Math.round(-n / 30.4) + ' mo ago';
+  if (n < 31) return 'this month';
+  if (n < 365) return 'in ' + Math.round(n / 30.4) + ' mo';
+  return 'in ' + (Math.round(n / 365.25 * 2) / 2) + ' yr';
+}
+function comingHtml(d) {
+  const C = d.coming; if (!C) return '';
+  const S = C.sum || {};
+  const li = (x, extra) => '<li><b>' + esc(x.person) + '</b> <span class="muted small">' + untilWords(x.inDays) + '</span>' + (extra || '') +
+    '<span class="dt">' + esc(dmy(x.date)) + (x.line ? ' · ' + esc(x.line) : '') + (x.policy ? ' · policy ' + esc(x.policy) : '') + (x.email ? ' · ' + esc(x.email) : ' · no e-mail on file') + '</span></li>';
+  const grp = (cls, ic, title, list, f) => '<div class="cgrp ' + cls + '"><h4><span class="ic">' + ic + '</span>' + title + ' <b>' + list.length + '</b></h4>' +
+    (list.length ? '<ul>' + list.map(f).join('') + '</ul>' : '<p class="muted small" style="margin:0">Nobody in this window.</p>') + '</div>';
+  return '<section class="coming"><div class="ph"><h3>Coming up for their people</h3><span class="cnt">' + C.count + '</span><span class="muted small">The group sees these too, except personal pensions, e-mails and tasks. They are in the Monday letter.</span></div>' +
+    '<div class="cgrid">' +
+    grp('c65', C.convertAge, 'Turning ' + C.convertAge + ': convert to an individual plan', C.convert, x => li(x)) +
+    grp('dep', C.depAge, 'Dependents reaching ' + C.depAge, C.deps, x => li(x, x.member ? ' <span class="muted small">of ' + esc(x.member) + '</span>' : '')) +
+    grp('ret', '5y', 'Retiring within ' + C.retireYears + ' years', C.retire, x => li(x, '<span class="own ' + (x.ownership === 'Company' ? 'co">Company' : 'pe">Personal') + '</span>' +
+      (x.assumed ? ' <span class="chip warn"><i></i>age ' + x.age + ' assumed: no retirement age in Salesforce</span>' : '') +
+      (x.task ? ' <span class="chip good"><i></i>projection task open</span>' : x.inDays >= 0 ? ' <span class="chip"><i style="background:#9aa5b1"></i>' + (C.tasksOn ? 'task opens at the next refresh' : 'task opens after the branch manager’s go') + '</span>' : '') +
+      (x.note ? ' <span class="muted small">' + esc(x.note) + '</span>' : ''))) + '</div>' +
+    '<div class="cleanrow">' + (S.people != null ? '<span class="chip"><i style="background:#9aa5b1"></i>' + S.people + ' people on group plans and pensions</span>' : '') +
+    (S.nodob ? '<span class="chip bad"><i></i>' + S.nodob + ' with no date of birth</span>' : '') +
+    (S.assumed ? '<span class="chip warn"><i></i>' + S.assumed + ' pension' + (S.assumed === 1 ? '' : 's') + ' with no retirement age (assumed ' + C.retireDefault + ')</span>' : '') +
+    (S.company || S.personal ? '<span class="chip"><i style="background:#8A4FD8"></i>' + (S.company || 0) + ' company-owned, ' + (S.personal || 0) + ' personal pensions</span>' : '') +
+    (S.deps != null ? '<span class="chip"><i style="background:#008C7A"></i>' + S.deps + ' dependent' + (S.deps === 1 ? '' : 's') + ' on record</span>' : '') + '</div>' +
+    (C.nodob && C.nodob.length ? '<p class="small" style="margin:8px 0 0"><b>No date of birth:</b> ' + C.nodob.map(x => esc(x.person) + (x.policy ? ' (' + esc(x.policy) + ')' : '')).join(', ') + '. Enter it on the policy in Salesforce.</p>' : '') +
+    '</section>';
+}
+
 async function openGroup(key) {
   $('app').innerHTML = '<p class="muted" style="margin:30px 0">Opening the group, with every task’s Chatter from Salesforce…</p>';
   const d = await api({ action: 'gcm.group', group: key });
@@ -754,7 +803,7 @@ function drawGroup() {
     ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
     (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
     accountBar(d) +
-    pendHtml(d) +
+    pendHtml(d) + comingHtml(d) +
     (d.canAct === false ? '<div class="note">Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>. You can read everything here and leave a comment for the team on any item; approving the letter and anything the group sees is for ' + esc(g.assigned ? g.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' : '') +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
     '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +

@@ -195,6 +195,26 @@ footer a{color:inherit}
 .reqs li.sub{padding-left:14px;border-left:3px solid #E4D8FA}
 .ln .up{font-weight:700;color:#8A4FD8}
 @media (max-width:560px){.pend{padding:16px 14px 6px}.reqs dl{grid-template-columns:1fr}.reqs dt{margin-top:4px}}
+/* coming up for your people (14 October 2026): conversions at 65, dependents coming of age, company-pension retirements */
+.coming{background:var(--paper);border:1px solid var(--line);border-top:4px solid #067647;border-radius:14px;padding:18px 18px 12px;margin:14px 0 0;box-shadow:var(--shadow)}
+.coming h2{font-size:20px;font-weight:600;margin:0}
+.coming .cnt{display:inline-block;vertical-align:3px;background:#067647;color:#fff;border-radius:99px;font-size:13px;line-height:1.5;font-weight:600;padding:0 10px}
+.coming .sub{margin:4px 0 12px}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.cgrp{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;min-width:0}
+.cgrp h3{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:15.5px;font-weight:600}
+.cgrp h3 .ic{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12.5px;font-weight:700}
+.cgrp.c65 .ic{background:#1D5BC4}.cgrp.dep .ic{background:#008C7A}.cgrp.ret .ic{background:#8A4FD8}
+.cgrp h3 b{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600}
+.cgrp .hint{font-size:13px;color:var(--muted);margin:0 0 8px}
+.cgrp ul{list-style:none;margin:0;padding:0}
+.cgrp li{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.cgrp li b{font-weight:600;overflow-wrap:anywhere}.cgrp li .dt{color:var(--muted);font-size:13px;flex-basis:100%}
+.cgrp li .in{margin-left:auto;font-size:12px;font-weight:600;border-radius:99px;padding:1px 9px;background:var(--primarySoft);color:var(--primary);white-space:nowrap}
+.cgrp li .in.soon{background:var(--warnBg);color:var(--warn)}
+.cgrp .none{font-size:13.5px;color:var(--muted);margin:4px 0 2px}
+.records{margin:12px 0 4px;padding:10px 12px;border-radius:8px;background:var(--warnBg);border:1px solid var(--warnLine);font-size:14px;color:var(--warn)}
+@media (max-width:640px){.cgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -307,6 +327,30 @@ function bindPend() {
   });
 }
 
+/* coming up for your people: three groups, soonest first, each with how long until it */
+function untilWords(n) {
+  if (n == null) return '';
+  if (n < 0) return Math.abs(n) < 31 ? 'this month' : 'since ' + Math.round(-n / 30.4) + ' mo';
+  if (n < 31) return 'this month';
+  if (n < 365) return 'in ' + Math.round(n / 30.4) + ' month' + (Math.round(n / 30.4) === 1 ? '' : 's');
+  const y = Math.round(n / 365.25 * 2) / 2; return 'in ' + y + ' year' + (y === 1 ? '' : 's');
+}
+function comingHtml() {
+  const C = D.coming;
+  if (!C) return '';
+  const grp = (cls, ic, title, hint, list, line) => '<div class="cgrp ' + cls + '"><h3><span class="ic" aria-hidden="true">' + ic + '</span>' + title + ' <b>' + list.length + '</b></h3><p class="hint">' + hint + '</p>' +
+    (list.length ? '<ul>' + list.map(x => '<li><b>' + esc(x.person) + '</b><span class="in' + (x.inDays < 92 ? ' soon' : '') + '">' + untilWords(x.inDays) + '</span><span class="dt">' + line(x) + '</span></li>').join('') + '</ul>'
+      : '<p class="none">Nobody in this window.</p>') + '</div>';
+  let h = '<section class="coming" aria-labelledby="comh"><h2 id="comh">Coming up for your people <span class="cnt">' + C.count + '</span></h2>' +
+    '<p class="sub">So nobody is caught out: we contact each person in good time, and you see it here first.</p><div class="cgrid">' +
+    grp('c65', C.convertAge, 'Turning ' + C.convertAge, 'Their group cover ends at ' + C.convertAge + '. We help them convert to an individual plan.', C.convert, x => esc(x.line || 'Group plan') + ' · ' + esc(dmy(x.date))) +
+    grp('dep', C.depAge, 'Dependents coming of age', 'At ' + C.depAge + ' a dependent moves to a plan of their own. We help them do it.', C.deps, x => (x.member ? esc(x.member) + '’s dependent · ' : '') + esc(dmy(x.date))) +
+    grp('ret', '5y', 'Retiring within ' + C.retireYears + ' years', 'On your company pension. We prepare a projection of their pension, five years ahead.', C.retire, x => 'Retires at ' + x.age + ' · ' + esc(dmy(x.date))) +
+    '</div>' + (C.nodob && C.nodob.length ? '<div class="records"><b>Help us keep your records right.</b> We have no date of birth for ' + esc(C.nodob.slice(0, 8).join(', ')) + (C.nodob.length > 8 ? ' and ' + (C.nodob.length - 8) + ' more' : '') +
+      '. Please give them to us in your note when you answer, so nobody misses a date that matters.</div>' : '') + '</section>';
+  return h;
+}
+
 function render() {
   $('h1').textContent = D.group;
   $('hsub').textContent = 'Open service items as at ' + D.asAt + '. Please review each one by ' + dmy(D.respondBy) + '.';
@@ -320,7 +364,7 @@ function render() {
     (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
     '<div class="links">' + (D.film ? '<a class="pill" href="' + esc(D.film) + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + esc(D.filmLength || '') + '</a>' : '') +
     '<a class="pill plain" href="#rate">Rate our service</a></div></div>' +
-    pendHtml() +
+    pendHtml() + comingHtml() +
     '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
     '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +
     '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>';
