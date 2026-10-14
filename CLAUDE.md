@@ -2664,6 +2664,55 @@ voice under the new timing and the caption gives it away.
   - The match adds about 9% to the branch board. `match9/match-harness.js` (39, Node, mocked Salesforce) and
     `match9/match-test.js` (37, Playwright) in the scratchpad cover it, on `match9/tabs9.json`: the real tabs with the
     Client Book built from the 7 October portfolio export.
+- **Agents: how each agent is getting on, and the households still to name** (14 October 2026: "can I log in to see the
+  branch manager dashboard and how the agents assigned are going and how they are making progress and the unassigned, a
+  lot of data is needed especially batching in households"). A tab under Act on, after the Dashboard, for the branch and
+  for a unit manager (his team only, with nothing to name). Staff and agents have no Agents tab.
+  - **One answer, read when the tab opens.** `tAgentsView_` in Transition.gs, asked for as the board with `agents=1`, so
+    Service.gs needs no paste. The page reads it again after five minutes, never on the two-minute refresh, so a batch
+    being worked is not redrawn under the hand. A backend older than this answers with the board, and the tab says to
+    paste Transition.gs.
+  - **Every household of the books** comes from the Household Assignments tab. That is never a departed agent's own
+    policy or household, staff, a death claim or a Test row (`T_NOT_BOOK`). Held clients and clients not written to are
+    included, with why the letter is held.
+  - **Where each member stands with us**: answered and asked, answered with a note, reached by phone, called, on a call
+    list, written to, or held. What they answered is in the wall's words (`T_HA_SAID`).
+  - **How far each named client has got** (`g`):
+    - *completed*: Closed or Declined, by the agent or by anyone after the naming;
+    - *met*: the same, for Met;
+    - *spoken to*: a call the agent marked, a comment they wrote on the board, or their Campaign Feedback Update in
+      Salesforce;
+    - *tried*: a no answer the agent marked;
+    - *nothing logged*: none of these. Two working days after the naming (`T_AGV.QUIET`) it is flagged.
+
+    An agent who reports only in Salesforce Chatter shows as nothing logged until they write the feedback field or mark
+    the call.
+  - **Each agent's line**: households, clients, a progress bar, spoken to, nothing logged, last activity, the median days
+    to first contact, feedback, comments, when they were named and where, and TT$200 claims. Agents on the Skill Bank
+    with no clients are named under the table. An agent opens on their households, client by client. The "nothing logged"
+    tile opens every quiet client.
+  - **The households to name come in six batches** (`bt`), the most pressing first:
+    - *urgent*: an open call-back, or an answer at `T_AGV.URGENT` (80) or more. Waiting past the line alone is not
+      urgent, since nearly everyone who asked has;
+    - *finish the family*;
+    - *asked us*;
+    - *answered or reached*;
+    - *not answered yet*;
+    - *letter held*.
+
+    Each household carries one suggestion (`sg`): the family's own agent first, else what `tSuggest_` gave its members.
+    Held clients get theirs from a second `tSuggest_` pass, seeded with every naming and suggestion the board already
+    made.
+  - **Naming from the batches.** One press names a household. "Assign these N to <agent>" names a batch by suggested
+    agent, and one press names the whole batch each as suggested. Households can also be ticked. Each naming goes as
+    `assign` requests of at most 40 clients, so the brief, the Salesforce write and the introduction rules are the
+    board's own. Since 14 October `transitionAssign_` takes a client of the books the board does not show (a letter held
+    or not sent), for the branch only, as an `/assign` row. Staff still name only their own board's clients.
+  - In the 13 October export: 2,168 households, 17 clients named (15 in Salesforce), and nothing logged by any agent.
+    The batches held 151 urgent households, 257 that asked us, 236 answered or reached, 1,313 not answered and 197 with
+    every letter held.
+  - **Tests** in the scratchpad: `agv14/agents-harness.js` (37 checks, Node, the 13 October export) and
+    `agv14/agents-test.js` (39, Playwright, a phone included).
 - **The stream: the campaign on a screen anyone in the room may see** (8 October 2026: "I need to stream the wall
   without the confidential information and drive further analysis of how the automations and humans are managing and
   what the clients are saying, group by households"). `orphan-transition/stream.html`, ten slides on a cycle:

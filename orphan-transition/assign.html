@@ -338,6 +338,42 @@
   .dtw{overflow-x:auto;margin:6px 0 2px} table.dt{border-collapse:collapse;width:100%;font-size:14px} .dt th{text-align:left;font-size:12.5px;color:var(--dim);font-weight:600;padding:6px 12px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
   .dt td{padding:7px 12px 7px 0;border-bottom:1px solid var(--line2);color:var(--body);white-space:nowrap;font-variant-numeric:tabular-nums} .dt td:first-child{white-space:normal;min-width:120px;color:var(--ink);font-weight:600}
   .dt tr.go{cursor:pointer} .dt tr.go:hover td{background:var(--hover)} .dt td.bad{color:var(--stop);font-weight:700}
+  /* the Agents tab (14 October 2026) */
+  .agstate{font-size:14.5px;color:var(--dim);margin:4px 0 10px} .agstate:empty{display:none} .agstate .stop{color:var(--stop);font-weight:600}
+  .agstate button{background:none;border:1px solid var(--field);border-radius:999px;padding:5px 12px;font:600 13.5px var(--fb);color:var(--ink);cursor:pointer;margin-left:8px}
+  .agbar{display:inline-flex;width:110px;height:9px;border-radius:5px;overflow:hidden;background:#e3eaef;vertical-align:middle;gap:1px}
+  .agbar i{display:block;height:100%}
+  .agst{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2px 7px;border-radius:5px;line-height:1.4;white-space:nowrap}
+  .agst.done{background:#07606f;color:#fff} .agst.met{background:#1d8fa6;color:#fff} .agst.spoken{background:#62bfd2;color:#07202a}
+  .agst.tried{background:#a9dbe6;color:#07202a} .agst.named{background:#eef1f4;color:var(--dim)} .agst.quiet{background:var(--stop);color:#fff}
+  .agone h3 small{font-family:var(--fb);font-weight:500;font-size:13.5px;color:var(--dim);margin-left:6px}
+  .agone .agclose{float:right;background:none;border:1px solid var(--field);border-radius:999px;padding:5px 12px;font:600 13px var(--fb);color:var(--ink);cursor:pointer}
+  .agh{padding:12px 14px}
+  .agh .aghd{display:flex;gap:10px;align-items:flex-start}
+  .agh .aghd input{width:20px;height:20px;margin:3px 0 0;flex:none;accent-color:var(--navy)}
+  .agh .aghd .hn{font:800 16px var(--fh);color:var(--ink)} .agh .aghd i{font-style:normal;font-size:13.5px;color:var(--dim);display:block;margin-top:1px}
+  .agh .aghd .pill{margin-left:6px;vertical-align:2px}
+  .agm{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.6fr);gap:2px 12px;padding:7px 0;border-top:1px solid var(--line2);font-size:14px;align-items:baseline}
+  .agm:first-child{border-top:0}
+  .agm .nm b{color:var(--ink)} .agm .nm a{color:var(--ink)} .agm .nm small{color:var(--dim);font-size:12.5px;margin-left:4px}
+  .agm .wh{color:var(--body)} .agm .wh .ok{color:var(--ok);font-weight:600} .agm .wh .gap{color:var(--stop);font-weight:600} .agm .wh .mut{color:var(--dim)}
+  .agm .say{grid-column:1/-1;font-size:13.5px;color:var(--body);background:#f7fbfd;border-left:3px solid var(--teal);padding:5px 10px;border-radius:0 6px 6px 0;margin-top:3px}
+  .agm .say.sf{border-left-color:var(--gold)}
+  @media(max-width:640px){.agm{grid-template-columns:1fr}}
+  .agms{margin:8px 0 0 30px}
+  .agsug{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:10px 0 0 30px;font-size:14px}
+  .agsug .sl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)} .agsug b{color:var(--ink)} .agsug i{font-style:normal;color:var(--dim);font-size:13px}
+  .agsug select{font:14px var(--fb);padding:5px 8px;border:1px solid var(--field);border-radius:8px;background:#fff;color:var(--ink);min-height:32px;max-width:220px}
+  .agsel{position:sticky;bottom:10px;z-index:5;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;background:var(--navy);color:#fff;border-radius:12px;padding:10px 14px;margin:12px 0;box-shadow:var(--sh2)}
+  .agsel b{color:var(--gold)} .agsel select{font:14px var(--fb);padding:6px 8px;border-radius:8px;border:0;min-height:34px;max-width:220px}
+  .agsel button{border:0;border-radius:8px;padding:7px 13px;font:700 13.5px var(--fb);cursor:pointer;min-height:34px}
+  .agsel .go{background:var(--ok);color:#fff} .agsel .alt{background:#fff;color:var(--ink)} .agsel .x{background:none;color:#cfe0ee;text-decoration:underline}
+  .agopts{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;color:var(--body);margin:8px 0 2px} .agopts label{display:inline-flex;gap:6px;align-items:center}
+  .agfil{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:10px 0 4px}
+  .agfil select,.agfil input{font:14px var(--fb);padding:8px 9px;border:1px solid var(--field);border-radius:9px;background:#fff;color:var(--ink);min-height:38px;max-width:220px}
+  .agfil input{flex:1 1 220px;max-width:none}
+  .agbtn{background:var(--ok);color:#fff;border:0;border-radius:8px;padding:6px 12px;font:700 13px var(--fb);cursor:pointer;min-height:32px;white-space:nowrap}
+  .agbtn[disabled]{opacity:.55;cursor:default} .agbtn.big{padding:9px 16px;font-size:14px;min-height:40px;white-space:normal;max-width:100%;text-align:left}
   .dm{display:inline-flex;align-items:center;gap:7px} .dm i{display:inline-block;width:64px;height:8px;border-radius:4px;background:#d4eef3;overflow:hidden;vertical-align:middle} .dm i s{display:block;height:100%;background:#07606f;text-decoration:none}
   .dby{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:2px 0 6px} .dby button{border:0;background:none;font:600 13.5px var(--fb);padding:6px 11px;color:var(--body);cursor:pointer} .dby button.on{background:var(--tdark);color:#fff}
   .dstand{margin:4px 0 0;padding:0;list-style:none} .dstand li{padding:8px 0;border-bottom:1px solid var(--line2);font-size:14.5px;color:var(--body);line-height:1.5} .dstand li b{color:var(--ink)}
@@ -743,6 +779,21 @@
       <p class="pnote" id="dHow"></p>
     </div>
 
+    <!-- Agents: how each agent is getting on, and the households nobody is named on, in batches (14 October 2026) -->
+    <div class="pane" id="paneAgents" hidden>
+      <div class="panehead"><h2>Agents</h2><span id="agSub">How each agent is getting on with the clients named to them, and the households still to name</span></div>
+      <div class="agstate" id="agState"></div>
+      <div id="agBody" hidden>
+        <div class="card dcard"><div class="dhero" id="agHero"></div><div id="agStages"></div><div class="dtiles" id="agTiles"></div></div>
+        <div class="card dcard" id="agTable"></div>
+        <div class="card dcard agone" id="agOne" hidden></div>
+        <div class="card dcard" id="agBooks"></div>
+        <div class="card dcard" id="agBatch"></div>
+        <div class="card dcard" id="agDays"></div>
+        <p class="pnote" id="agHow"></p>
+      </div>
+    </div>
+
     <!-- Match: who should look after whom, on a map, in order of weight -->
     <div class="pane" id="paneMatch" hidden>
       <section class="mhero" id="mHero"></section>
@@ -941,7 +992,8 @@ $('gateForm').addEventListener('submit', function (e) { e.preventDefault(); CODE
 $('refresh').addEventListener('click', function () { load(); });
 $('signout').addEventListener('click', function () {
   try { localStorage.removeItem('rrb-transition-code'); localStorage.removeItem('rrb-assign-who'); } catch (e) {}
-  CODE = ''; WHO = ''; D = null; shown = false; SEL = {}; forget(); clearTimeout(timer);   // the next person on this device starts afresh
+  CODE = ''; WHO = ''; D = null; shown = false; SEL = {}; forget(); clearTimeout(timer);
+  AGV = null; AGV_AT = 0; AGSEL = {}; AGV_ONE = ''; AGF.book = AGF.town = AGF.sug = AGF.q = AGF.unit = '';   // and the Agents view read for them   // the next person on this device starts afresh
   if (FOCUS) unfocus(true);   // and never on the client the last person had open
   $('main').style.display = 'none'; $('gate').style.display = 'block'; $('gateErr').style.display = 'none'; $('code').value = ''; $('who').value = ''; $('refresh').style.display = 'none'; $('signout').style.display = 'none'; $('helpBtn').style.display = 'none'; closeHelp(); bar();
 });
@@ -1015,6 +1067,7 @@ var TABDEF = {
   all: { label: 'All clients', title: 'All clients', grp: 'lists', test: function () { return true; } },
   work: { label: 'Your work', grp: 'you', pane: 'paneWork' },
   dash: { label: 'Dashboard', grp: 'act', pane: 'paneDash' },
+  agents: { label: 'Agents', grp: 'act', pane: 'paneAgents' },
   match: { label: 'Match', grp: 'act', pane: 'paneMatch' },
   team: { label: 'Team', grp: 'branch', pane: 'paneTeam' },
   insights: { label: 'Insights', grp: 'branch', pane: 'paneInsights' },
@@ -1027,12 +1080,12 @@ function tabsFor(d) {
   var r = d.role, claims = !!(d.claims && d.claims.rows && d.claims.rows.length);
   /* Match (8 October 2026) for whoever names agents, once the backend sends it */
   var match = d.match ? ['match'] : [];
-  if (r === 'branch') return ['urgent', 'dash'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights']);
+  if (r === 'branch') return ['urgent', 'dash', 'agents'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights']);
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
   if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign'], match, ['calls', 'progress', 'done', 'households', 'all']);
   var out = ['open'].concat(work, claims ? ['claims'] : []);
-  if (r === 'unit') out.push('dash');
+  if (r === 'unit') out.push('dash', 'agents');
   if (d.clients.some(urgentOf)) out.push('urgent');
   out = out.concat(['done', 'all']);
   if (r === 'unit') out.push('team');
@@ -1184,11 +1237,13 @@ function pickTab(t, keep) {
 }
 function showPane() {
   var def = TABDEF[TAB] || {}, pane = def.pane || 'paneList';
-  ['paneList', 'paneHouseholds', 'paneDash', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims'].forEach(function (p) { $(p).hidden = p !== pane; });
+  ['paneList', 'paneHouseholds', 'paneDash', 'paneAgents', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims'].forEach(function (p) { $(p).hidden = p !== pane; });
+  if (pane !== 'paneAgents') AG_VISIBLE = false;
   if (pane === 'paneList') listPane();
   else if (pane === 'paneHouseholds') householdsPane();
   else if (pane === 'paneWork') workPane();
   else if (pane === 'paneDash') dashPane();
+  else if (pane === 'paneAgents') agentsPane(true);
   else if (pane === 'paneMatch') matchPane();
   else if (pane === 'paneTeam') teamPane();
   else if (pane === 'paneInsights') insightsPane();
@@ -2024,9 +2079,9 @@ function dStack(parts, total) {
 }
 /* one series by day: columns of at most 24px with a rounded top on one baseline, the period's days in the accent and the
    days before it in grey (emphasis), the highest labelled, every column a hover and focus target with its value */
-function dBars(days, vals, label) {
+function dBars(days, vals, label, from0) {
   var W = 640, H = 150, top = 18, bot = 22, n = days.length, band = W / Math.max(n, 1), bw = Math.min(24, band * 0.62);
-  var max = Math.max.apply(null, vals.concat([1])), ph = H - top - bot, from = dFrom(), hi = vals.indexOf(Math.max.apply(null, vals));
+  var max = Math.max.apply(null, vals.concat([1])), ph = H - top - bot, from = from0 !== undefined ? from0 : dFrom(), hi = vals.indexOf(Math.max.apply(null, vals));
   var tick = max <= 5 ? max : Math.ceil(max / 5) * 5, y = function (v) { return top + ph - ph * v / tick; };
   var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label) + ' by day">' +
     '<line x1="0" x2="' + W + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="#d5e1e8" stroke-width="1"/>' +
@@ -2258,6 +2313,406 @@ function dSfDraw() {
       return '<tr><td>' + esc(p.name) + '</td><td>' + p.held + '</td><td>' + dMeter(p.closed, p.held) + '</td><td' + (p.closedNoNote ? ' class="bad"' : '') + '>' + p.closedNoNote + '</td><td' + (p.untouched ? ' class="bad"' : '') + '>' + p.untouched + '</td>' +
         '<td' + (p.overdue ? ' class="bad"' : '') + '>' + p.overdue + '</td><td>' + p.dueToday + '</td><td>' + inP(p.closedDays) + '</td><td>' + inP(p.noteDays) + '</td></tr>';
     }).join('') + '</table></div>';
+}
+
+/* ---- the Agents tab ---- */
+/* 14 October 2026: "can I log in to see the branch manager dashboard and how the agents assigned are going and how they are
+   making progress and the unassigned, a lot of data is needed especially batching in households". One answer from the
+   backend (the board with agents=1, tAgentsView_ in Transition.gs): every household of the books, each member where they
+   stand and, once named, how far their agent has got; each agent's progress; and the households nobody is named on, in
+   batches by what is most pressing, each with the one agent it should go to. It is read when the tab opens and again after
+   five minutes, never on the two-minute refresh, so a list being worked is not redrawn under the hand. */
+var AGV = null, AGV_AT = 0, AGV_BUSY = false, AGV_DRAWN = -1, AG_VISIBLE = false, AGV_ONE = '', AGV_B = '', AG_STEP = 30, AGV_N = AG_STEP, AGSEL = {};
+var AGF = { book: '', town: '', sug: '', q: '', unit: '' };
+var AG_STAGES = [['done', 'Completed', '#07606f'], ['met', 'Met', '#1d8fa6'], ['spoken', 'Spoken to', '#62bfd2'], ['tried', 'Tried, no answer', '#a9dbe6'], ['named', 'Nothing logged yet', '#e3eaef']];
+var AG_STAGE_WORDS = { done: 'completed', met: 'met', spoken: 'spoken to', tried: 'tried, no answer', named: 'nothing logged yet' };
+var AG_BUCKETS = [
+  ['urgent', 'Urgent', 'A call-back Client Support asked for, or an answer that cannot wait: an agent now, the former agent in touch, someone suggesting a change, a payment.', 'stop'],
+  ['family', 'Finish the family', 'Someone in the household already has an agent. The rest go to the same agent.'],
+  ['asked', 'Asked us', 'Someone answered the letter and asked for something: a call, a review, to keep looking after the policy.'],
+  ['answered', 'Answered or reached', 'Answered with a note only, reached by phone for their details, or called from the board.'],
+  ['silent', 'Not answered yet', 'Written to, or on a call list, and nobody in the household has answered.'],
+  ['held', 'Letter held', 'Nobody in the household has had a letter: held for a check, held by the branch, bounced, or no e-mail.']];
+var AG_CS = { asked: 'answered', noted: 'answered: noted', reached: 'reached by phone', called: 'called, no answer yet', tocall: 'on a call list, not called yet',
+  dnc: 'asked not to be called', silent: 'written to, no answer', held: 'letter held', unsent: 'not written to yet' };
+function agState(html) { $('agState').innerHTML = html || ''; }
+function agAns(x) { return x.cs === 'asked' || x.cs === 'noted'; }
+function agMembers(v) { var out = []; v.hh.forEach(function (h) { h.m.forEach(function (x) { out.push(x); }); }); return out; }
+function agUnitOk(a) { return !AGF.unit || a.unit === AGF.unit; }
+function agLoad(force) {
+  if (!D || AGV_BUSY || (!force && AGV && Date.now() - AGV_AT < 300000)) return;
+  AGV_BUSY = true;
+  if (TAB === 'agents') agState(AGV && AGV.on ? 'Reading the sheet again&hellip;' : 'Reading every household from the sheet&hellip; this takes about fifteen seconds.');
+  api(signed({ action: 'board', agents: '1' })).then(function (r) {
+    AGV_BUSY = false; AGV_AT = Date.now();
+    var nv = r && r.agentsView ? r.agentsView : r && r.ok && r.clients ? { on: false, why: 'This needs the latest Transition.gs: paste it into the Apps Script project and publish a New version.' } : { on: false, why: (r && r.error) || 'The sheet did not answer.' };
+    if (nv.on || !(AGV && AGV.on)) AGV = nv;   // a failed read again keeps the last good picture
+    if (TAB === 'agents') agentsPane();
+  }).catch(function () {
+    AGV_BUSY = false; AGV_AT = Date.now();
+    if (!AGV || !AGV.on) AGV = { on: false, why: 'The sheet did not answer.' };
+    if (TAB === 'agents') agentsPane();
+  });
+}
+function agentsPane(soft) {
+  if (!D) return;
+  var v = AGV;
+  if (!v) { $('agBody').hidden = true; agState('Reading every household from the sheet&hellip; this takes about fifteen seconds.'); agLoad(); return; }
+  if (!v.on) {
+    $('agBody').hidden = true;
+    agState('<span class="stop">' + esc(v.why) + '</span>' + (AGV_BUSY ? '' : ' <button type="button" id="agRetry">Try again</button>'));
+    if ($('agRetry')) $('agRetry').addEventListener('click', function () { agLoad(true); });
+    return;
+  }
+  agLoad();   // again once five minutes have passed
+  if (soft && AG_VISIBLE && AGV_DRAWN === AGV_AT) return;   // nothing new: the list being worked stays as it is
+  AGV_DRAWN = AGV_AT; AG_VISIBLE = true;
+  $('agBody').hidden = false;
+  agState('Read from the sheet at <b>' + esc(v.at) + '</b>' + (v.synced ? ' · names from Salesforce brought in at ' + esc(v.synced) : '') +
+    (AGV_BUSY ? ' · reading again&hellip;' : ' <button type="button" id="agReload">Read again</button>'));
+  if ($('agReload')) $('agReload').addEventListener('click', function () { agLoad(true); agentsPane(); });
+  $('agSub').textContent = v.unit ? 'How each agent in your unit is getting on with the clients named to them' : 'How each agent is getting on with the clients named to them, and the households still to name';
+  agHead(v); agTable(v); agOne(v); agDays(v); agBooks(v); agBatch(v);
+  $('agHow').innerHTML = '<b>How the numbers are made.</b> The households and the names from Salesforce come from the Household Assignments tab; a name given on the board counts too. ' +
+    '<b>Spoken to</b>: a call or meeting the agent marked on the board, a comment they wrote on the client, or their feedback in Salesforce (Campaign Feedback Update). <b>Tried</b>: a call they marked as no answer. ' +
+    '<b>Met</b>: a meeting marked on the board. <b>Completed</b>: Closed or Declined, by the agent or by anyone after the naming. <b>Nothing logged</b>: named ' + v.quiet + ' or more working days ago, with no call, comment or feedback. ' +
+    'An agent who reports only in Salesforce Chatter shows as nothing logged until they write the Campaign Feedback Update or mark the call here.';
+  each('#paneAgents [data-go]', function (b) {
+    b.addEventListener('click', function () {
+      var g = b.getAttribute('data-go');
+      if (g === 'q') { AGV_ONE = '!quiet'; agOne(AGV); agTo('agOne'); return; }
+      if (/^b:/.test(g)) { AGV_B = g.slice(2); AGV_N = AG_STEP; agBatchFill(AGV); agTo('agBatch'); }
+    });
+  });
+}
+function agTo(id) { try { $(id).scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+function agBar(g, n) {
+  return '<span class="agbar" role="img" aria-label="' + esc(AG_STAGES.map(function (s) { return s[1] + ' ' + (g[s[0]] || 0); }).join(', ')) + '">' +
+    AG_STAGES.map(function (s) { return g[s[0]] ? '<i style="background:' + s[2] + ';flex:' + g[s[0]] + '" title="' + esc(s[1] + ': ' + g[s[0]] + ' of ' + n) + '"></i>' : ''; }).join('') + '</span>';
+}
+function agHead(v) {
+  var H = v.hh, M = agMembers(v), N = M.filter(function (x) { return x.a; }), st = { done: 0, met: 0, spoken: 0, tried: 0, named: 0 };
+  N.forEach(function (x) { st[x.g]++; });
+  var hAll = H.filter(function (h) { return h.st === 'all'; }).length, hPart = H.filter(function (h) { return h.st === 'part'; }).length, hNone = H.length - hAll - hPart;
+  var ansWait = H.filter(function (h) { return h.m.some(function (x) { return agAns(x) && !x.a; }); }).length;
+  var urg = H.filter(function (h) { return h.bt === 'urgent'; }).length, quiet = N.filter(function (x) { return x.q; }).length, spoke = st.done + st.met + st.spoken;
+  var withC = v.agents.filter(function (a) { return a.n; }).length, onRoster = v.agents.filter(function (a) { return a.on; }).length;
+  $('agHero').innerHTML = v.unit
+    ? '<b>' + N.length + '</b><span>clients named to your unit, in <b>' + H.length + '</b> household' + (H.length === 1 ? '' : 's') + (N.length ? '. Their agents have spoken to <b>' + pc(spoke, N.length) + '%</b>' : '') + '.</span>'
+    : '<b>' + pc(hAll + hPart, H.length) + '%</b><span>of the <b>' + H.length + '</b> households of the books have an agent: <b>' + hAll + '</b> in full, <b>' + hPart + '</b> in part. <b>' + N.length + '</b> of the <b>' + M.length + '</b> clients are named' +
+      (N.length ? ', and their agents have spoken to <b>' + pc(spoke, N.length) + '%</b> of them' : '') + '.</span>';
+  $('agStages').innerHTML = N.length ? dStack(AG_STAGES.map(function (s) { return [s[0], s[1], s[2], st[s[0]]]; }), N.length) : '<p class="dsub">Nobody is named yet.</p>';
+  $('agTiles').innerHTML = (v.unit ? '' :
+      dTile(hNone, 'Households with no agent', plural(M.length - N.length, 'client') + ' in households not yet named in full', '', 'b:') +
+      dTile(ansWait, 'Answered, still no agent', 'households where someone answered the letter', ansWait ? 'crit' : '', 'b:' + (urg ? 'urgent' : 'asked')) +
+      dTile(urg, 'Urgent households', 'a call-back, or an answer that cannot wait', urg ? 'crit' : '', urg ? 'b:urgent' : '')) +
+    dTile(withC + (v.unit ? '' : ' of ' + onRoster), 'Agents with clients', v.unit ? 'in your unit' : 'on the Agent Skill Bank') +
+    dTile(pc(spoke, N.length) + '%', 'Spoken to by their agent', spoke + ' of ' + N.length + ' named') +
+    dTile(quiet, 'Nothing logged', 'named ' + v.quiet + '+ working days ago: no call, comment or feedback', quiet ? 'crit' : '', quiet ? 'q' : '');
+}
+function agTable(v) {
+  var units = unique(v.agents.map(function (a) { return a.unit; }));
+  if (AGF.unit && units.indexOf(AGF.unit) < 0) AGF.unit = '';
+  var rows = v.agents.filter(function (a) { return a.n && agUnitOk(a); }), idle = v.agents.filter(function (a) { return !a.n && a.on && agUnitOk(a); });
+  var usel = !v.unit && units.length > 1 ? '<div class="agfil"><select id="agUnit" aria-label="Unit"><option value="">Every unit</option>' +
+    units.map(function (u) { return '<option value="' + esc(u) + '"' + (AGF.unit === u ? ' selected' : '') + '>' + esc(u) + '&rsquo;s unit</option>'; }).join('') + '</select></div>' : '';
+  $('agTable').innerHTML = '<h3>The agents</h3><p class="dsub">The clients named to each agent and how far they have got, most clients first. Tap an agent for their households, client by client.</p>' + usel +
+    (rows.length ? '<div class="dtw"><table class="dt"><tr><th>Agent</th>' + (units.length ? '<th>Unit</th>' : '') + '<th>Households</th><th>Clients</th><th>Progress</th><th>Spoken to</th><th>Nothing logged</th><th>Last activity</th><th>Days to first contact</th>' +
+      '<th>Feedback in Salesforce</th><th>Comments</th><th>Answered the letter</th><th>Tried</th><th>Met</th><th>Completed</th><th>Named</th><th>TT$200 claims</th></tr>' +
+      rows.map(function (a) {
+        var sp = a.g.spoken + a.g.met + a.g.done, nothing = a.g.named;
+        return '<tr class="go" data-ag="' + esc(a.name) + '"><td>' + esc(a.name) + (a.on ? '' : ' <small style="color:var(--stop);font-weight:600">not on the Agent Skill Bank</small>') + '</td>' +
+          (units.length ? '<td>' + esc(a.unit ? firstName(a.unit) : '–') + '</td>' : '') + '<td>' + a.hh + '</td><td>' + a.n + '</td><td>' + agBar(a.g, a.n) + '</td><td>' + dMeter(sp, a.n) + '</td>' +
+          '<td' + (a.q ? ' class="bad"' : '') + '>' + nothing + (a.q ? ' (' + a.q + ' past ' + v.quiet + ' days)' : '') + '</td><td>' + esc(a.la || '–') + '</td><td>' + (a.med === null ? '–' : plural(a.med, 'day')) + '</td>' +
+          '<td>' + a.fb + '</td><td>' + a.cm + '</td><td>' + a.ans + '</td><td>' + a.g.tried + '</td><td>' + a.g.met + '</td><td>' + a.g.done + '</td>' +
+          '<td>' + esc(a.first === a.last ? a.first : a.first + ' to ' + a.last) + (a.sf ? ' <small style="color:var(--dim)">' + a.sf + ' in Salesforce</small>' : '') + '</td>' +
+          '<td>' + (a.cl && a.cl.n ? a.cl.n + (a.cl.paid ? ' (' + a.cl.paid + ' paid)' : '') : '–') + '</td></tr>';
+      }).join('') + '</table></div>' : '<p class="dsub">No agent is named on anyone yet.</p>') +
+    (idle.length ? '<p class="dsub" style="margin-top:8px"><b>No clients yet</b> (' + idle.length + '): ' + esc(idle.map(function (a) { return a.name; }).join(', ')) + '.</p>' : '');
+  if ($('agUnit')) $('agUnit').addEventListener('change', function () { AGF.unit = $('agUnit').value; agTable(AGV); });
+  each('#agTable tr[data-ag]', function (tr) { tr.addEventListener('click', function () { AGV_ONE = tr.getAttribute('data-ag'); agOne(AGV); agTo('agOne'); }); });
+}
+function agWhere(x) {
+  if (x.cs === 'asked' && x.ask) return 'answered: ' + x.ask;
+  if (x.cs === 'held' && x.hw) return x.hw;
+  return AG_CS[x.cs] || x.cs || '';
+}
+/* one member: who, where they stand with us, and once named, their agent and how far they have got */
+function agLine(x, withAgent) {
+  var c = findClient(x.t);
+  var nm = c ? '<a href="#t=' + encodeURIComponent(x.t) + '&s=' + encodeURIComponent(x.s || '') + '"><b>' + esc(x.n) + '</b></a>' : '<b>' + esc(x.n) + '</b>';
+  var who = [x.s ? 'letter ' + x.s : '', x.age !== undefined ? String(x.age) : '', x.no || ''].filter(Boolean).join(' · ');
+  var wh = ['<span class="' + (x.cs === 'asked' ? 'ok' : /^(held|dnc|unsent)$/.test(x.cs) ? 'mut' : '') + '">' + esc(cap(agWhere(x))) + (x.ad ? ' <span class="mut">(' + esc(x.ad) + ')</span>' : '') + '</span>'];
+  if (x.bk) wh.push('<span class="gap">call-back asked: ' + (x.bk === 'branch' ? 'the branch' : 'a licensed agent') + '</span>');
+  if (x.late && !x.a) wh.push('<span class="gap">waiting past the branch&rsquo;s line</span>');
+  if (x.a) {
+    var bits = [];
+    if (x.on) bits.push('named ' + x.on + (/salesforce/i.test(x.via || '') ? ' in Salesforce' : x.via === 'board' ? ' on the board' : ''));
+    if (x.fc) bits.push('first contact ' + x.fc + (x.dd !== undefined ? ', ' + plural(x.dd, 'day') + ' after' : ''));
+    if (x.la && x.la !== x.fc) bits.push('last ' + x.la);
+    if (x.cl) bits.push('TT$200 claim: ' + x.cl);
+    wh.push((withAgent ? 'Agent <b>' + esc(x.a) + '</b> ' : '') + '<span class="agst ' + (x.q ? 'quiet' : x.g) + '">' + esc(x.q ? 'nothing logged' : AG_STAGE_WORDS[x.g]) + '</span>' +
+      (bits.length ? ' <span class="mut">' + esc(bits.join(' · ')) + '</span>' : ''));
+  }
+  var say = '';
+  if (x.fb) say += '<div class="say sf"><b>Feedback in Salesforce:</b> ' + esc(x.fb) + '</div>';
+  if (x.lc) say += '<div class="say"><b>' + (x.cm > 1 ? 'Their latest comment (of ' + x.cm + ')' : 'Their comment') + ':</b> ' + esc(x.lc) + '</div>';
+  else if (x.ln) say += '<div class="say"><b>Last on the file:</b> ' + esc(x.ln) + '</div>';
+  return '<div class="agm"><div class="nm">' + nm + (who ? '<small>' + esc(who) + '</small>' : '') + '</div><div class="wh">' + wh.join('<br>') + '</div>' + say + '</div>';
+}
+var AG_ORDER = { named: 0, tried: 1, spoken: 2, met: 3, done: 4 };
+/* one agent's households, client by client; or every client named with nothing logged ('!quiet') */
+function agOne(v) {
+  var box = $('agOne');
+  if (!AGV_ONE) { box.hidden = true; box.innerHTML = ''; return; }
+  var quiet = AGV_ONE === '!quiet';
+  var hs = [];
+  v.hh.forEach(function (h) {
+    var mine = h.m.filter(function (x) { return x.a && (quiet ? x.q : sameName(x.a, AGV_ONE)); });
+    if (mine.length) hs.push({ h: h, mine: mine, k: Math.min.apply(null, mine.map(function (x) { return x.q ? -1 : AG_ORDER[x.g]; })), od: mine.map(function (x) { return x.od || '9'; }).sort()[0] });
+  });
+  if (!hs.length) { AGV_ONE = ''; box.hidden = true; box.innerHTML = ''; return; }
+  hs.sort(function (a, b) { return a.k - b.k || String(a.od).localeCompare(String(b.od)) || a.h.name.localeCompare(b.h.name); });
+  var a = quiet ? null : v.agents.filter(function (x) { return sameName(x.name, AGV_ONE); })[0];
+  var n = hs.reduce(function (t, x) { return t + x.mine.length; }, 0);
+  box.hidden = false;
+  box.innerHTML = '<button type="button" class="agclose" id="agClose">Close</button>' +
+    (quiet ? '<h3>Named, nothing logged <small>' + plural(n, 'client') + ' in ' + plural(hs.length, 'household') + ', named ' + v.quiet + ' or more working days ago</small></h3>'
+      : '<h3>' + esc(a ? a.name : AGV_ONE) + ' <small>' + plural(hs.length, 'household') + ' · ' + plural(n, 'client') + (a && a.unit ? ' · ' + esc(firstName(a.unit)) + '&rsquo;s unit' : '') + (a && a.la ? ' · last activity ' + esc(a.la) : '') + '</small></h3>' +
+        (a ? dStack(AG_STAGES.map(function (s) { return [s[0], s[1], s[2], a.g[s[0]]]; }), a.n) : '')) +
+    '<p class="dsub">Nothing logged first, then the oldest naming. A name that is on the board opens the client in full.</p>' +
+    hs.map(function (x) {
+      var h = x.h, others = h.m.filter(function (m) { return x.mine.indexOf(m) < 0; });
+      var sub = [plural(h.m.length, 'person', 'people'), h.tw || '', h.bks.length ? 'was with ' + h.bks.join(', ') : ''].filter(Boolean).join(' · ');
+      return '<div class="hcard agh"><div class="aghd"><div><span class="hn">' + esc(h.name) + '</span><i>' + esc(sub) + '</i></div></div><div class="agms" style="margin-left:0">' +
+        x.mine.map(function (m) { return agLine(m, quiet); }).join('') +
+        (others.length ? '<div class="dsub" style="margin:8px 0 0">Also in the household:</div>' + others.map(function (m) { return agLine(m, true); }).join('') : '') + '</div></div>';
+    }).join('');
+  $('agClose').addEventListener('click', function () { AGV_ONE = ''; agOne(AGV); agTo('agTable'); });
+}
+function agDays(v) {
+  var days = v.days.map(function (d, i) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d.d), t = new Date(+m[1], +m[2] - 1, +m[3]);
+    return { t: t.getTime(), label: d.l, short: t.getDate() + (t.getDate() === 1 || i === 0 ? ' ' + MON[t.getMonth()] : '') };
+  });
+  $('agDays').innerHTML = '<h3>By day</h3><p class="dsub">The last ' + days.length + ' days. Hover or tab onto a day for its number.</p>' +
+    '<h4 style="margin:8px 0 2px;font:700 14.5px var(--fh);color:var(--ink)">Clients named</h4>' + dBars(days, v.days.map(function (d) { return d.named; }), 'clients named', 0) +
+    '<h4 style="margin:8px 0 2px;font:700 14.5px var(--fh);color:var(--ink)">Clients an agent called, met or commented on</h4>' + dBars(days, v.days.map(function (d) { return d.acts; }), 'clients with an agent&rsquo;s call or comment', 0) +
+    '<details class="dnums"><summary>Show the numbers</summary><div class="dtw"><table class="dt"><tr><th>Day</th><th>Named</th><th>An agent&rsquo;s call or comment</th></tr>' +
+    v.days.slice().reverse().map(function (d) { return '<tr><td>' + esc(d.l) + '</td><td>' + d.named + '</td><td>' + d.acts + '</td></tr>'; }).join('') + '</table></div></details>';
+  dTips($('agDays'));
+}
+function agBooks(v) {
+  var g = {};
+  v.hh.forEach(function (h) {
+    h.m.forEach(function (x) {
+      var k = x.b || '(not recorded)', r = g[k] = g[k] || { hh: {}, n: 0, named: 0, ans: 0, wait: 0, urg: 0, spoke: 0 };
+      r.hh[h.id] = 1; r.n++;
+      if (x.a) { r.named++; if (/^(done|met|spoken)$/.test(x.g)) r.spoke++; }
+      if (agAns(x)) { r.ans++; if (!x.a) r.wait++; }
+      if (h.bt === 'urgent' && !x.a) r.urg++;
+    });
+  });
+  var keys = Object.keys(g).sort(function (a, b) { return g[b].n - g[a].n || a.localeCompare(b); });
+  $('agBooks').innerHTML = '<h3>By former agent&rsquo;s book</h3><p class="dsub">' + (v.unit ? 'Your unit&rsquo;s clients.' : 'Tap a book to see its households still to name.') + '</p>' +
+    '<div class="dtw"><table class="dt"><tr><th>Was with</th><th>Households</th><th>Clients</th><th>Named</th><th>Answered, no agent</th><th>Urgent, no agent</th><th>Spoken to by their agent</th></tr>' +
+    keys.map(function (k) {
+      var r = g[k];
+      return '<tr' + (v.unit ? '' : ' class="go" data-bk="' + esc(k) + '"') + '><td>' + esc(k) + '</td><td>' + Object.keys(r.hh).length + '</td><td>' + r.n + '</td><td>' + dMeter(r.named, r.n) + '</td>' +
+        '<td' + (r.wait ? ' class="bad"' : '') + '>' + r.wait + ' of ' + r.ans + '</td><td' + (r.urg ? ' class="bad"' : '') + '>' + r.urg + '</td><td>' + (r.named ? dMeter(r.spoke, r.named) : '–') + '</td></tr>';
+    }).join('') + '</table></div>';
+  each('#agBooks tr[data-bk]', function (tr) {
+    tr.addEventListener('click', function () { var k = tr.getAttribute('data-bk'); AGF.book = k === '(not recorded)' ? '' : k; AGV_N = AG_STEP; agBatch(AGV); agTo('agBatch'); });
+  });
+}
+/* ---- the households to name, in batches ---- */
+function agTodo(h) { return h.m.filter(function (x) { return !x.a; }).map(function (x) { return x.t; }); }
+function agFilt(h) {
+  if (AGF.book && h.bks.indexOf(AGF.book) < 0) return false;
+  if (AGF.town && (h.tw || '') !== AGF.town) return false;
+  if (AGF.sug === '-' ? !!h.sg : AGF.sug && !(h.sg && h.sg[0] === AGF.sug)) return false;
+  if (AGF.q) {
+    var txt = (h.name + ' ' + (h.tw || '') + ' ' + h.m.map(function (x) { return x.n + ' ' + (x.no || ''); }).join(' ')).toLowerCase();
+    if (txt.indexOf(AGF.q.toLowerCase()) < 0) return false;
+  }
+  return true;
+}
+function agOrd(a, b) { return (b.pr || 0) - (a.pr || 0) || (b.late || 0) - (a.late || 0) || (b.un || 0) - (a.un || 0) || a.name.localeCompare(b.name); }
+function agBatch(v) {
+  var box = $('agBatch');
+  if (v.unit || !canAssign()) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  var all = v.hh.filter(function (h) { return h.bt; });
+  var sel = function (id, label, vals, cur, words) {
+    return '<select id="' + id + '" aria-label="' + esc(label) + '"><option value="">' + esc(label) + '</option>' + vals.map(function (x) {
+      return '<option value="' + esc(x) + '"' + (x === cur ? ' selected' : '') + '>' + esc(words ? words(x) : x) + '</option>'; }).join('') + '</select>';
+  };
+  var books = unique([].concat.apply([], all.map(function (h) { return h.bks; }))), towns = unique(all.map(function (h) { return h.tw || ''; }));
+  var sugs = unique(all.map(function (h) { return h.sg ? h.sg[0] : ''; }));
+  var held = !!v.introsHeld;
+  box.innerHTML = '<h3>Households to name</h3><p class="dsub">Every household with someone nobody is named on, in batches, the most pressing first. Each household carries one suggested agent, so a family is named as one: ' +
+      'the family&rsquo;s own agent first, then the 24 September plan, then the nearest agent with room, then the lightest list.</p>' +
+    '<div class="subs" id="agbChips"></div><p class="dsub" id="agbWhat"></p>' +
+    '<div class="agfil">' + sel('agbBook', 'Every book', books, AGF.book, function (b) { return 'Was with ' + b; }) + sel('agbTown', 'Every town', towns, AGF.town) +
+      '<select id="agbSug" aria-label="Suggested agent"><option value="">Any suggested agent</option>' + sugs.map(function (x) { return '<option value="' + esc(x) + '"' + (x === AGF.sug ? ' selected' : '') + '>Suggested: ' + esc(x) + '</option>'; }).join('') +
+        '<option value="-"' + (AGF.sug === '-' ? ' selected' : '') + '>No suggestion</option></select>' +
+      '<input type="search" id="agbQ" placeholder="Search a name, client number or town" aria-label="Search households" value="' + esc(AGF.q) + '"></div>' +
+    '<div class="agopts"><label><input type="checkbox" id="agBrief" checked> E-mail each agent a brief of the clients named to them</label>' +
+      '<label><input type="checkbox" id="agIntro"' + (held ? ' disabled' : '') + '> Introduce the agent to clients who answered' + (held ? ' (held: client e-mail is on hold)' : '') + '</label></div>' +
+    '<div id="agbBy"></div><div id="agbList"></div><div id="agbSel"></div>';
+  [['agbBook', 'book'], ['agbTown', 'town'], ['agbSug', 'sug']].forEach(function (x) { $(x[0]).addEventListener('change', function () { AGF[x[1]] = $(x[0]).value; AGV_N = AG_STEP; agBatchFill(AGV); }); });
+  var qt = null;
+  $('agbQ').addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(function () { AGF.q = $('agbQ').value.trim(); AGV_N = AG_STEP; agBatchFill(AGV); }, 250); });
+  agBatchFill(v);
+}
+function agBatchFill(v) {
+  if (!$('agbList')) return;
+  var shown = v.hh.filter(function (h) { return h.bt && agFilt(h); }), counts = {};
+  AG_BUCKETS.forEach(function (b) { counts[b[0]] = { h: 0, c: 0 }; });
+  shown.forEach(function (h) { counts[h.bt].h++; counts[h.bt].c += h.un; });
+  if (!AGV_B || !counts[AGV_B] || !counts[AGV_B].h) AGV_B = (AG_BUCKETS.filter(function (b) { return counts[b[0]].h; })[0] || AG_BUCKETS[0])[0];
+  var bdef = AG_BUCKETS.filter(function (b) { return b[0] === AGV_B; })[0];
+  $('agbChips').innerHTML = AG_BUCKETS.map(function (b) {
+    var k = counts[b[0]];
+    return '<button type="button" class="subc' + (AGV_B === b[0] ? ' on' : '') + (b[3] && k.h ? ' ' + b[3] : '') + '" data-agbk="' + b[0] + '"' + (k.h ? '' : ' disabled') + '>' + esc(b[1]) + ' <b>' + k.h + '</b>' +
+      (k.h ? ' <span style="font-weight:500">(' + plural(k.c, 'client') + ')</span>' : '') + '</button>';
+  }).join(' ');
+  $('agbWhat').textContent = bdef[2];
+  var list = shown.filter(function (h) { return h.bt === AGV_B; }).sort(agOrd);
+  /* the batch by suggested agent: one press names an agent on every household of theirs in it */
+  var by = {};
+  list.forEach(function (h) { var a = h.sg ? h.sg[0] : ''; var r = by[a] = by[a] || { h: 0, c: 0, ids: [] }; r.h++; r.c += h.un; r.ids.push(h.id); });
+  var now = {}; v.agents.forEach(function (a) { now[a.name] = a.n; });
+  var names = Object.keys(by).filter(Boolean).sort(function (x, y) { return by[y].h - by[x].h || x.localeCompare(y); });
+  var withSug = names.reduce(function (t, a) { return t + by[a].h; }, 0), withSugC = names.reduce(function (t, a) { return t + by[a].c; }, 0);
+  $('agbBy').innerHTML = names.length ? '<h4 style="margin:12px 0 2px;font:700 15px var(--fh);color:var(--ink)">This batch by suggested agent</h4>' +
+    '<div class="dtw"><table class="dt"><tr><th>Suggested agent</th><th>Households</th><th>Clients</th><th>Named to them now</th><th></th></tr>' +
+    names.map(function (a) {
+      return '<tr><td>' + esc(a) + '</td><td>' + by[a].h + '</td><td>' + by[a].c + '</td><td>' + (now[a] || 0) + '</td><td><button type="button" class="agbtn" data-agb="' + esc(a) + '">Assign these ' + by[a].h + ' to ' + esc(firstName(a)) + '</button></td></tr>';
+    }).join('') + '</table></div>' +
+    (names.length > 1 ? '<p style="margin:8px 0 0"><button type="button" class="agbtn big" id="agAllSug">Assign all ' + plural(withSug, 'household') + ' (' + plural(withSugC, 'client') + ') each as suggested</button></p>' : '') +
+    (by[''] ? '<p class="dsub">' + plural(by[''].h, 'household') + ' in this batch ' + (by[''].h === 1 ? 'has' : 'have') + ' no suggestion: choose an agent on each.</p>' : '')
+    : (list.length ? '<p class="dsub">None of these has a suggested agent: choose one on each.</p>' : '');
+  var drawn = list.slice(0, AGV_N), rest = list.length - drawn.length;
+  var opts = (D.agents || []).map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('');
+  $('agbList').innerHTML = list.length ? '<h4 style="margin:14px 0 2px;font:700 15px var(--fh);color:var(--ink)">' + plural(list.length, 'household') + ' <button type="button" class="subc" id="agTickAll" style="margin-left:8px">Tick all ' + list.length + '</button></h4>' +
+    drawn.map(function (h) {
+      var todo = agTodo(h);
+      var sub = [plural(h.m.length, 'person', 'people'), h.tw || '', h.bks.length ? 'was with ' + h.bks.join(', ') : ''].filter(Boolean).join(' · ');
+      return '<div class="hcard agh"><div class="aghd"><input type="checkbox" class="agck" data-h="' + esc(h.id) + '"' + (AGSEL[h.id] ? ' checked' : '') + ' aria-label="Tick ' + esc(h.name) + '">' +
+        '<div><span class="hn">' + esc(h.name) + '</span>' + (h.late ? '<span class="pill late">late</span>' : '') + (h.st === 'part' ? '<span class="pill hh">' + (h.m.length - todo.length) + ' named</span>' : '') +
+        '<i>' + esc(sub) + '</i></div></div><div class="agms">' + h.m.map(function (x) { return agLine(x, true); }).join('') + '</div>' +
+        '<div class="agsug">' + (h.sg ? '<span class="sl">Suggested</span><b>' + esc(h.sg[0]) + '</b><i>' + esc(h.sg[1]) + '</i><button type="button" class="agbtn" data-agh="' + esc(h.id) + '" data-agent="' + esc(h.sg[0]) + '">Assign ' +
+          (todo.length === 1 ? 'to ' : 'the ' + todo.length + ' to ') + esc(firstName(h.sg[0])) + '</button>'
+          : h.sp ? '<span class="sl">Plan</span><i>the 24 Sep plan names ' + esc(h.sp) + ', who is not on the Agent Skill Bank yet</i>' : '<span class="sl">No suggestion</span>') +
+        '<select class="agpick" data-h="' + esc(h.id) + '" aria-label="Another agent for ' + esc(h.name) + '"><option value="">' + (h.sg ? 'or another agent&hellip;' : 'choose an agent&hellip;') + '</option>' + opts + '</select></div></div>';
+    }).join('') + (rest > 0 ? '<button type="button" class="more" id="agMore">Show the next ' + Math.min(AG_STEP, rest) + ' (' + rest + ' more)</button>' : '')
+    : '<div class="empty">No household in this batch matches.</div>';
+  agSelBar(v);
+  each('#agbChips [data-agbk]', function (b) { b.addEventListener('click', function () { AGV_B = b.getAttribute('data-agbk'); AGV_N = AG_STEP; agBatchFill(AGV); }); });
+  if ($('agMore')) $('agMore').addEventListener('click', function () { AGV_N += AG_STEP; agBatchFill(AGV); });
+  if ($('agTickAll')) $('agTickAll').addEventListener('click', function () { list.forEach(function (h) { if (agTodo(h).length) AGSEL[h.id] = 1; }); agBatchFill(AGV); });
+  each('#agbList .agck', function (el) { el.addEventListener('change', function () { var id = el.getAttribute('data-h'); if (el.checked) AGSEL[id] = 1; else delete AGSEL[id]; agSelBar(AGV); }); });
+  each('#agbList [data-agh]', function (el) {
+    el.addEventListener('click', function () { var h = agFind(el.getAttribute('data-agh')); if (h) agRun([[el.getAttribute('data-agent'), agTodo(h)]], el); });
+  });
+  each('#agbList select.agpick', function (el) {
+    el.addEventListener('change', function () {
+      var h = agFind(el.getAttribute('data-h')), a = el.value;
+      if (!h || !a) return;
+      var todo = agTodo(h);
+      if (!window.confirm('Name ' + a + ' on the ' + plural(todo.length, 'client') + ' in the ' + h.name + '?')) { el.value = ''; return; }
+      agRun([[a, todo]], el);
+    });
+  });
+  each('#agbBy [data-agb]', function (el) {
+    el.addEventListener('click', function () {
+      var a = el.getAttribute('data-agb'), r = by[a], toks = [];
+      r.ids.forEach(function (id) { toks = toks.concat(agTodo(agFind(id))); });
+      if (!window.confirm('Name ' + a + ' on ' + plural(r.h, 'household') + ' (' + plural(toks.length, 'client') + ')?' + ($('agBrief').checked ? ' ' + firstName(a) + ' gets a brief by e-mail.' : ''))) return;
+      agRun([[a, toks]], el);
+    });
+  });
+  if ($('agAllSug')) $('agAllSug').addEventListener('click', function () {
+    var jobs = names.map(function (a) { var toks = []; by[a].ids.forEach(function (id) { toks = toks.concat(agTodo(agFind(id))); }); return [a, toks]; });
+    if (!window.confirm('Name ' + names.length + ' agents on ' + plural(withSug, 'household') + ' (' + plural(withSugC, 'client') + '), each as suggested?\n\n' +
+      names.map(function (a) { return a + ': ' + plural(by[a].h, 'household'); }).join('\n') + ($('agBrief').checked ? '\n\nEach agent gets a brief by e-mail.' : ''))) return;
+    agRun(jobs, $('agAllSug'));
+  });
+}
+function agFind(id) { var out = null; (AGV ? AGV.hh : []).forEach(function (h) { if (h.id === id) out = h; }); return out; }
+/* the households ticked: each as suggested, or all to one agent */
+function agSelBar(v) {
+  var ids = Object.keys(AGSEL).filter(function (id) { var h = agFind(id); return h && agTodo(h).length; });
+  if (!ids.length) { $('agbSel').innerHTML = ''; return; }
+  var hs = ids.map(agFind), n = hs.reduce(function (t, h) { return t + agTodo(h).length; }, 0), withSug = hs.filter(function (h) { return h.sg; }).length;
+  $('agbSel').innerHTML = '<div class="agsel"><span><b>' + plural(ids.length, 'household') + '</b> ticked · ' + plural(n, 'client') + '</span>' +
+    (withSug ? '<button type="button" class="go" id="agSelSug">Assign each as suggested' + (withSug < ids.length ? ' (' + withSug + ')' : '') + '</button>' : '') +
+    '<select id="agSelAgent" aria-label="One agent for all ticked"><option value="">or one agent for all&hellip;</option>' + (D.agents || []).map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>' +
+    '<button type="button" class="alt" id="agSelGo">Assign</button><button type="button" class="x" id="agSelClear">Clear</button></div>';
+  $('agSelClear').addEventListener('click', function () { AGSEL = {}; agBatchFill(AGV); });
+  if ($('agSelSug')) $('agSelSug').addEventListener('click', function () {
+    var by = {};
+    hs.forEach(function (h) { if (h.sg) by[h.sg[0]] = (by[h.sg[0]] || []).concat(agTodo(h)); });
+    var names = Object.keys(by).sort();
+    if (!window.confirm('Name each ticked household\u2019s suggested agent?\n\n' + names.map(function (a) { return a + ': ' + plural(by[a].length, 'client'); }).join('\n'))) return;
+    agRun(names.map(function (a) { return [a, by[a]]; }), $('agSelSug'));
+  });
+  $('agSelGo').addEventListener('click', function () {
+    var a = $('agSelAgent').value;
+    if (!a) { toast('Choose an agent first.', true); return; }
+    var toks = []; hs.forEach(function (h) { toks = toks.concat(agTodo(h)); });
+    if (!window.confirm('Name ' + a + ' on ' + plural(ids.length, 'household') + ' (' + plural(toks.length, 'client') + ')?')) return;
+    agRun([[a, toks]], $('agSelGo'));
+  });
+}
+/* the names go in requests of ASSIGN_CHUNK clients, one after another, as the board's own "Assign each as suggested" does;
+   each household is shown as named at once, and the sheet is read again when the last request has answered */
+function agRun(jobs, el) {
+  if (notYet()) return;
+  var list = [];
+  jobs.forEach(function (j) { for (var i = 0; i < j[1].length; i += ASSIGN_CHUNK) list.push([j[0], j[1].slice(i, i + ASSIGN_CHUNK)]); });
+  if (!list.length) return;
+  var total = list.length, step = 0, named = {}, warn = [], intro = 0, introHeld = 0, missing = 0, sfPol = 0, sfOn = false;
+  if (el) el.disabled = true;
+  var next = function () {
+    if (!list.length) {
+      if (el) el.disabled = false;
+      var who = Object.keys(named).map(function (a) { return firstName(a) + ' ' + named[a]; }).join(' · ');
+      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held' : '') +
+        (missing ? ' · ' + missing + ' not found on the send list' : '') + (sfOn ? ' · Salesforce: ' + sfPol + ' polic' + (sfPol === 1 ? 'y' : 'ies') + ' updated' : '') + (warn.length ? ' · ' + warn.join(' ') : ''), !!warn.length);
+      AGSEL = {};
+      agLoad(true); load();
+      return;
+    }
+    var j = list.shift();
+    toast('Naming ' + j[0] + ' on ' + plural(j[1].length, 'client') + '… (' + (++step) + ' of ' + total + ')');
+    api(signed({ action: 'assign', tokens: j[1].join(','), agent: j[0], brief: $('agBrief') && !$('agBrief').checked ? '0' : '1', intro: $('agIntro') && $('agIntro').checked ? '1' : '0' })).then(function (r) {
+      if (!r || !r.ok) warn.push(j[0] + ': ' + ((r && r.error) || 'the sheet did not take it') + '.');
+      else {
+        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; introHeld += r.introHeld || 0; missing += (r.missing || []).length;
+        if (r.sf && r.sf.on) { sfOn = true; sfPol += r.sf.policies || 0; }
+        (r.warnings || []).forEach(function (x) { warn.push(x); });
+        agMark(j[1].filter(function (t) { return (r.missing || []).indexOf(t) < 0; }), r.agent);
+      }
+      next();
+    }).catch(function () { warn.push(j[0] + ': the sheet did not answer for ' + plural(j[1].length, 'client') + '; press again.'); next(); });
+  };
+  next();
+}
+/* what was just named shows as named at once, before the sheet is read again */
+function agMark(tokens, agent) {
+  if (!AGV || !AGV.on) return;
+  var set = {}; tokens.forEach(function (t) { set[t] = 1; });
+  AGV.hh.forEach(function (h) {
+    var hit = false;
+    h.m.forEach(function (x) { if (set[x.t] && !x.a) { x.a = agent; x.g = 'named'; x.on = 'today'; x.via = 'board'; hit = true; } });
+    if (!hit) return;
+    var un = h.m.filter(function (x) { return !x.a; }).length;
+    h.st = un ? 'part' : 'all'; h.un = un;
+    if (!un) { delete h.bt; delete h.sg; delete AGSEL[h.id]; }
+  });
+  if (TAB === 'agents') agBatchFill(AGV);
 }
 
 /* ---- the Your work tab ---- */
