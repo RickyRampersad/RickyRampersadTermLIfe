@@ -88,7 +88,7 @@ var GCM = {
   QUEUE: 'Group Queue',
   RESPOND_DAY: 5,           // the letter asks for an answer by Friday of the same week
   SITE: 'https://rickyrampersadbranch.com/groupclientmanagement/',
-  COPY: ['rickyrampersadsalessupport@myguardiangroup.com'],   // a blind copy of every letter: the record of what went
+  COPY: ['rickyrampersadsalessupport@myguardiangroup.com'],   // copied, in plain sight, on every letter and welcome: the record of what went
   TELL_CC: ['rickyrampersadsalessupport@myguardiangroup.com'], // copied on a group's answer, which goes to the account owner
   TRIES: 8, LOCK_S: 900,    // wrong codes on one list bill before it closes for fifteen minutes
   MIN_CODE: 10,             // a group code shorter than this opens nothing
@@ -1366,6 +1366,18 @@ function gcmSameName_(a, b) {
   var short = x.length <= y.length ? x : y, long = short === x ? y : x;
   return short.slice(1).every(function (p) { return long.indexOf(p) > 0; });
 }
+/** Who a group's e-mail is copied to: the contact's other addresses, the register's Cc and sales support, each once and
+ *  never the address it goes to. Sales support was a blind copy until 14 October 2026, when the branch could not see it
+ *  on the e-mail ("sales support is not being copied"); it is a visible copy on every letter and welcome since. */
+function gcmCc_(g) {
+  var first = String(g.to[0] || '').trim().toLowerCase(), seen = {};
+  return g.to.slice(1).concat(g.cc, GCM.COPY).filter(function (a) {
+    var k = String(a || '').trim().toLowerCase();
+    if (!k || k === first || seen[k]) return false;
+    seen[k] = true;
+    return true;
+  });
+}
 /** The name a letter is signed with: the staff member's own, as Salesforce has it, else as the sign-in gives it, out of
  *  capitals ("SASHA LALLA" reads "Sasha Lalla"). */
 function gcmSigner_(who, g) {
@@ -1818,10 +1830,10 @@ function gcmSend_(b) {
     row.Via = 'Outlook, by ' + who.name; row.Status = 'opened in Outlook';
     gcmAppend_(GCM.SENDS, [row]);
     gcmQueueClose_(g, 'sent early in Outlook by ' + who.name);
-    return { ok: true, outlook: { to: g.to, cc: g.cc, bcc: GCM.COPY, subject: letter.subject, body: letter.text } };
+    return { ok: true, outlook: { to: g.to, cc: gcmCc_(g), bcc: [], subject: letter.subject, body: letter.text } };
   }
   try {
-    tMsSend_(g.to[0], letter.subject, letter.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
+    tMsSend_(g.to[0], letter.subject, letter.html, { cc: gcmCc_(g), replyTo: TRANSITION.MS_FROM });
     row.Via = TRANSITION.MS_FROM; row.Status = 'sent';
     gcmAppend_(GCM.SENDS, [row]);
     gcmQueueClose_(g, 'sent early by ' + who.name);
@@ -1898,7 +1910,7 @@ function gcmResend_(b) {
     var row = { When: new Date(), Group: g.name, Staff: who.name, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: last.subject, Items: last.items,
       'Task Ids': '', Letter: ('Sent again; first sent ' + last.at + '.\n\n' + last.text).slice(0, 45000), Html: gcmKeepHtml_(html), Via: TRANSITION.MS_FROM + ', sent again' };
     try {
-      tMsSend_(g.to[0], last.subject, html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
+      tMsSend_(g.to[0], last.subject, html, { cc: gcmCc_(g), replyTo: TRANSITION.MS_FROM });
       row.Status = 'resent: the letter of ' + last.at;
       gcmAppend_(GCM.SENDS, [row]);
       return { ok: true, sent: true, at: gcmWhen_(row.When), to: g.to.join(', '), contact: g.contact };
@@ -1949,7 +1961,7 @@ function gcmWelcomeSend_(b) {
     var row = { When: new Date(), Group: g.name, Staff: w.verifier, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: w.subject, Items: 0, 'Task Ids': '',
       Letter: w.text.slice(0, 45000), Html: gcmKeepHtml_(w.html), Via: TRANSITION.MS_FROM + ', welcome from the page' };
     try {
-      tMsSend_(g.to[0], w.subject, w.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
+      tMsSend_(g.to[0], w.subject, w.html, { cc: gcmCc_(g), replyTo: TRANSITION.MS_FROM });
       row.Status = g.welcomed ? 'welcome resent' : 'welcome sent';
       gcmAppend_(GCM.SENDS, [row]);
       return { ok: true, sent: true, again: !!g.welcomed, at: gcmWhen_(row.When), to: g.to.join(', '), contact: g.contact, signer: w.verifier };
@@ -2237,7 +2249,7 @@ function gcmWelcomeRun_(o) {
     var row = { When: new Date(), Group: g.name, Staff: w.verifier, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: w.subject, Items: 0,
       'Task Ids': '', Letter: w.text.slice(0, 45000), Html: gcmKeepHtml_(w.html), Via: TRANSITION.MS_FROM + ', welcome' };
     try {
-      tMsSend_(g.to[0], w.subject, w.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
+      tMsSend_(g.to[0], w.subject, w.html, { cc: gcmCc_(g), replyTo: TRANSITION.MS_FROM });
       row.Status = 'welcome sent';
       sent.push(g.name + ' → ' + g.to.join(', '));
     } catch (e) {
@@ -2316,7 +2328,7 @@ function gcmQueueRun_(o) {
       var row = { When: new Date(), Group: g.name, Staff: who.name, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: letter.subject, Items: letter.items.length,
         'Task Ids': letter.items.join(' ').slice(0, 45000), Letter: letter.text.slice(0, 45000), Html: gcmKeepHtml_(letter.html), Via: TRANSITION.MS_FROM + ', ' + GCM.SEND_HOUR + ':00 run' };
       try {
-        tMsSend_(g.to[0], letter.subject, letter.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
+        tMsSend_(g.to[0], letter.subject, letter.html, { cc: gcmCc_(g), replyTo: TRANSITION.MS_FROM });
         row.Status = 'sent';
         gcmAppend_(GCM.SENDS, [row]);
         gcmQueueSet_(r._n, 'sent', row.When);

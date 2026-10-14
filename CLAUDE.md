@@ -2911,6 +2911,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     welcome, and the approval toast tells the staff member it will go signed by them. `gcmWelcomeStop` ends that.
   - Each welcome is logged on Group Sends with Status "welcome sent". The weekly run passes those rows over, so a
     welcome never counts as that week's letter. One internal summary goes to `TRANSITION.CC`.
+  - **Sales support is a visible copy on every group e-mail** (14 October 2026: "sales support is not being copied").
+    It had been a blind copy, which reached their inbox but showed on nobody's copy of the e-mail. `gcmCc_` puts
+    `GCM.COPY` in Cc on the welcome, the Monday letter, Send now and Send again, beside the register's Cc, each address
+    once. The e-mail itself sits in support@'s Sent Items.
   - `welcome/welcome-test.js` in the session scratchpad covers it (29 checks, with the verifier and the 9:00 run).
 - **The verifier is whoever approved the letter, and every letter says so** (14 October 2026). It is the newest
   approval on Group Queue that was not cancelled (`gcmVerifier_`): the person who ticked that they checked every item
