@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-18c';
+var SCRIPT_VERSION = '2026-10-14a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -547,11 +547,12 @@ var SCHEDULE = {
     }
   },
   azariah: {
-    hours: '8am – 4pm', lunch: '12:00 – 1:00pm',
+    // Lunch is 1 to 2 (the branch group, Sep-Oct 2026), so the morning runs to 1.
+    hours: '8am – 4pm', lunch: '1:00 – 2:00pm',
     blocks: {
       KPI1: { time: '8 – 10am',  focus: 'Pendings, Increases, Group Apps / Production', kpi: 'Pendings' },
-      KPI2: { time: '10 – 12pm', focus: 'Reinstatements / Lapse Mgmt / Reporting',   kpi: 'Renewa/PDl/Bill' },
-      PM1:  { time: '1 – 3pm',   focus: 'Query Pal Management / Survey Mgmt',        kpi: 'Surveys / Query Pal' },
+      KPI2: { time: '10 – 1pm',  focus: 'Reinstatements / Lapse Mgmt / Reporting',   kpi: 'Renewa/PDl/Bill' },
+      PM1:  { time: '2 – 3pm',   focus: 'Query Pal Management / Survey Mgmt',        kpi: 'Surveys / Query Pal' },
       PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting' }
     }
   },
@@ -585,12 +586,15 @@ var SCHEDULE = {
     }
   },
   elizabeth: {
-    hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
+    // Liz works 7 to 3 with lunch 12 to 1 (sign-in register and the branch
+    // group, Sep-Oct 2026). On 9-to-5 her last block closed empty every day
+    // after she had gone home.
+    hours: '7am – 3pm', lunch: '12:00 – 1:00pm',
     blocks: {
-      KPI1: { time: '9 – 11am',  focus: 'Branch Intelligence / Query Pal testing',   kpi: 'Surveys / Query Pal' },
-      KPI2: { time: '11 – 1pm',  focus: 'New applications',                          kpi: 'New Application Process' },
-      PM1:  { time: '2 – 3:30pm',focus: 'Administrative Support',                    kpi: 'Administrative Support' },
-      PM2:  { time: '3:30 – 5pm',focus: 'Task Mgmt / Reporting',                     kpi: 'Reporting' }
+      KPI1: { time: '7 – 9am',   focus: 'Branch Intelligence / Query Pal testing',   kpi: 'Surveys / Query Pal' },
+      KPI2: { time: '9 – 12pm',  focus: 'New applications',                          kpi: 'New Application Process' },
+      PM1:  { time: '1 – 2pm',   focus: 'Administrative Support',                    kpi: 'Administrative Support' },
+      PM2:  { time: '2 – 3pm',   focus: 'Task Mgmt / Reporting',                     kpi: 'Reporting' }
     }
   },
   ricky: {
@@ -1626,6 +1630,13 @@ function saveBlock_(payload, profile) {
   // it while holding one put every other member of staff behind a mail server.
   // And a receipt that fails must not report a saved block as unsaved — that
   // is what makes somebody type their afternoon out twice.
+  // The first block of the day is the morning plan, whatever the person meant
+  // by it. That is the moment the day-start e-mail goes, copied to the Branch
+  // Manager and sales support. Once a day; its own failure is never the save's.
+  if (done.length === 1) {
+    try { sendDayStart_(staffId, date, 'first'); } catch (dsErr) {}
+  }
+
   try {
     emailBlockReceipt_(staffId, date, blockId, d, payload, done);
   } catch (mailErr) {
@@ -2990,6 +3001,250 @@ function remindCheckpoint(e) {
     : '3pm chase: everyone is up to date, nothing sent.';
   Logger.log(msg);
   return msg;
+}
+
+// ---------------------------------------------------------------------------
+//  The day start
+//
+//  "The first email that goes out, copy the sales support, is thanking the
+//  staff for logging in. We know the time. And looking at how their day has
+//  been planned ... if the model on their email sees it does not, it builds
+//  in the other things that are pending. So they will have to go back and
+//  redo." (Ricky, 14 October 2026.)
+//
+//  Two e-mails, each once a day per person, each copied to the Branch Manager
+//  and sales support:
+//    'first' — on the first block filed that day, which is how the morning is
+//              actually used. It thanks them, gives the sign-in time, shows
+//              each block as filed and, beside it, what Salesforce has due or
+//              overdue for that block's work and is not yet in the plan.
+//    'plan'  — the first time that day a block is planned with Salesforce
+//              tasks picked into it: "Plan received", with what is still
+//              missing.
+//  Nothing here invents work. Every line under "Salesforce has" is a real
+//  task the person can open.
+//
+//  Copy list: managerEmails_() plus Script Property DAYSTART_CC
+//  (comma-separated); if DAYSTART_CC is unset, sales support.
+// ---------------------------------------------------------------------------
+
+var DAYSTART_CC_DEFAULT = 'rickyrampersadsalessupport@myguardiangroup.com';
+var DAYSTART_LIST_MAX = 6;
+var DAYSTART_REPLAN_MIN = 30;
+var PLANNER_URL = 'https://rickyrampersadbranch.com/kpi/';
+
+function dayStartCc_(to) {
+  var p = PropertiesService.getScriptProperties().getProperty('DAYSTART_CC');
+  var extra = (p && p.trim()) ? p.split(',') : [DAYSTART_CC_DEFAULT];
+  var seen = {}; seen[normEmail_(to)] = true;
+  return managerEmails_().concat(extra).map(function (s) { return String(s).trim(); })
+    .filter(function (s) { var k = normEmail_(s); if (!s || seen[k]) return false; seen[k] = true; return true; });
+}
+
+/** "07:05" -> "7:05am". */
+function twelve_(hhmm) {
+  var m = minutesOf_(hhmm);
+  if (m == null) return String(hhmm || '');
+  var h = Math.floor(m / 60), mi = m % 60, ap = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return h + ':' + (mi < 10 ? '0' : '') + mi + ap;
+}
+
+/** The Salesforce types a block's work lands in: the one the schedule set,
+ *  plus any typed label the person chose for it on the form. */
+function blockSfTypes_(schedKpi, chosen) {
+  var out = {}, sf = {};
+  sfTypeList_().forEach(function (t) { sf[t] = 1; });
+  var t0 = blockTypeFor_(schedKpi);
+  if (t0) out[t0] = 1;
+  String(chosen || '').split(',').forEach(function (l) {
+    l = l.trim();
+    if (sf[l]) out[l] = 1;
+    else if (blockTypeFor_(l)) out[blockTypeFor_(l)] = 1;
+  });
+  return Object.keys(out);
+}
+
+function dayStartTaskLine_(t, date) {
+  var when = t.late ? 'overdue since ' + shortDate_(t.due) : (t.due === date ? 'due today' : '');
+  return '<div style="font-size:12.5px;line-height:1.45;padding:3px 0;border-top:1px solid ' + MAIL.line + '">' +
+    esc_(t.subject) + (when ? ' <span style="color:' + (t.late ? MAIL.red : MAIL.amber) + ';font-weight:700">· ' + esc_(when) + '</span>' : '') +
+    (t.needs ? ' <span style="color:' + MAIL.muted + '">· untouched ' + t.touched + ' days</span>' : '') +
+  '</div>';
+}
+
+function sendDayStart_(staffId, date, kind) {
+  var props = PropertiesService.getScriptProperties();
+  var onceKey = 'daystart_' + kind + '_' + staffId + '_' + date;
+  if (props.getProperty(onceKey)) return false;
+  var to = emailFor_(staffId);
+  if (!to) return false;
+  props.setProperty(onceKey, hhmm_(new Date()));
+
+  var sched = scheduleFor_(staffId);
+  var name = nameFor_(staffId), first = String(name).split(' ')[0];
+
+  var signIn = '';
+  try { var a = attRow_(sheetObjects_(attSheet_()), date, staffId); if (a) signIn = timeStr_(a.row.FirstSignIn); } catch (e) {}
+
+  var vals = null, idx = {};
+  try { var sh = logSheet_(); idx = colMap_(sh); vals = findDayRow_(sh, idx, staffId, date).vals; } catch (e) {}
+  var cell = function (n) { return (vals && idx[n] != null) ? vals[idx[n]] : ''; };
+
+  var plans = {};
+  try { plans = planRows_(staffId, date); } catch (e) {}
+
+  var sfOk = sfkConfigured_(), book = {};
+  if (sfOk) { try { book = (sfkOpenBook_(date) || {})[staffId] || {}; } catch (e) { sfOk = false; } }
+
+  var overdue = 0, dueToday = 0;
+  Object.keys(book).forEach(function (ty) {
+    book[ty].forEach(function (t) { if (t.late) overdue++; else if (t.due === date) dueToday++; });
+  });
+
+  var covered = {}, plannedTotal = 0, missingTotal = 0, cards = [];
+  BLOCK_IDS.forEach(function (b) {
+    var sb = sched.blocks[b];
+    if (!sb) return;
+    var span = blockSpan_(staffId, b);
+    var chosen = String(cell(b) || '').trim();
+    var wrote = String(cell(b + '_Actioned') || '').trim();
+    var at = cell(b + '_At');
+    var atText = (at && Object.prototype.toString.call(at) === '[object Date]') ? hhmm_(at) : timeStr_(at);
+    var early = atText && span && minutesOf_(atText) < span.start;
+
+    var types = blockSfTypes_(sb.kpi, chosen);
+    types.forEach(function (ty) { covered[ty] = 1; });
+    var planned = {};
+    if (plans[b]) planItemsOf_(plans[b].Items).forEach(function (it) { if (it.k === 'sf') planned[it.id] = it; });
+    var nPlanned = Object.keys(planned).length;
+    plannedTotal += nPlanned;
+
+    var waiting = [];
+    types.forEach(function (ty) {
+      (book[ty] || []).forEach(function (t) { if ((t.late || t.due === date) && !planned[t.id]) waiting.push(t); });
+    });
+    missingTotal += waiting.length;
+
+    var lines = '';
+    lines += '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:4px">Set for this block: ' + esc_(sb.focus || '') + (sb.kpi ? ' (' + esc_(sb.kpi) + ')' : '') + '</div>';
+    if (chosen || wrote || atText) {
+      lines += '<div style="font-size:13px;margin-top:6px">You filed ' + (atText ? 'at ' + esc_(twelve_(atText)) : '') +
+        (chosen ? ': <b>' + esc_(chosen) + '</b>' : '') + '. ' +
+        (wrote ? 'You wrote: "' + esc_(shorten_(wrote, 160)) + '"' : '<span style="color:' + MAIL.red + '">Nothing written for what the block is for.</span>') + '</div>';
+      if (early) lines += '<div style="font-size:12.5px;color:' + MAIL.amber + ';margin-top:4px">Filed before the block starts at ' + esc_(twelve_(mmText_(span.start))) + '. That is a plan, so make it a real one: pick the tasks.</div>';
+    } else {
+      lines += '<div style="font-size:13px;margin-top:6px;color:' + MAIL.muted + '">Not filed yet.</div>';
+    }
+    lines += '<div style="font-size:13px;margin-top:6px">' + (nPlanned
+      ? '<b style="color:' + MAIL.green + '">' + nPlanned + ' Salesforce task' + (nPlanned === 1 ? '' : 's') + ' planned.</b>'
+      : '<b style="color:' + MAIL.red + '">No Salesforce tasks planned for this block.</b>') + '</div>';
+    if (nPlanned && kind === 'plan') {
+      Object.keys(planned).slice(0, DAYSTART_LIST_MAX).forEach(function (id) {
+        lines += '<div style="font-size:12.5px;padding:3px 0;border-top:1px solid ' + MAIL.line + '">' + esc_(planned[id].subject || id) + '</div>';
+      });
+    }
+    if (sfOk && waiting.length) {
+      lines += '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:' + MAIL.red + ';margin-top:9px">' +
+        'Salesforce has ' + waiting.length + ' due or overdue for this block, not in your plan</div>';
+      waiting.slice(0, DAYSTART_LIST_MAX).forEach(function (t) { lines += dayStartTaskLine_(t, date); });
+      if (waiting.length > DAYSTART_LIST_MAX) lines += '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:3px">and ' + (waiting.length - DAYSTART_LIST_MAX) + ' more in the planner.</div>';
+    } else if (sfOk) {
+      lines += '<div style="font-size:12.5px;color:' + MAIL.green + ';margin-top:6px">Nothing due or overdue in Salesforce for this block\'s work.</div>';
+    }
+    cards.push('<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (waiting.length || !nPlanned ? MAIL.amber : MAIL.green) +
+      ';border-radius:10px;padding:13px 15px;margin-bottom:10px">' +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' + esc_(blockLabel_(b)) + (sb.time ? ' · ' + esc_(sb.time) : '') + '</div>' +
+      lines + '</div>');
+    if (b === 'KPI2' && sched.lunch) {
+      cards.push('<div style="background:' + MAIL.paper + ';border:1px dashed ' + MAIL.gold + ';border-radius:10px;padding:10px 15px;margin-bottom:10px;font-size:13px">' +
+        '<b>Lunch · ' + esc_(sched.lunch) + '</b>. If it is different today, post the time in the branch admin group before you go.</div>');
+    }
+  });
+
+  // Overdue or due-today work whose type no block covers: orphan responses and
+  // other untyped tasks land here. It still has to fit somewhere in the day.
+  var loose = [];
+  if (sfOk) Object.keys(book).forEach(function (ty) {
+    if (covered[ty]) return;
+    book[ty].forEach(function (t) { if (t.late || t.due === date) loose.push({ t: t, ty: ty }); });
+  });
+  missingTotal += loose.length;
+
+  var replanBy = twelve_(hhmm_(new Date(Date.now() + DAYSTART_REPLAN_MIN * 60000)));
+  var intro = kind === 'plan'
+    ? 'Thank you, ' + esc_(first) + '. Your plan is in' + (signIn ? ' (signed in at ' + esc_(twelve_(signIn)) + ')' : '') + '. Here is the day as planned and what Salesforce still has waiting.'
+    : 'Good morning, ' + esc_(first) + ', and thank you for signing in' + (signIn ? ' at <b>' + esc_(twelve_(signIn)) + '</b>' : '') + '. ' +
+      'Below is your day as you have filed it, and beside each block what Salesforce has due or overdue for that work.';
+
+  var ask = kind === 'plan'
+    ? (missingTotal
+        ? 'There are still <b>' + missingTotal + '</b> due or overdue tasks not in any block. Add them in the planner, or note in each why it waits.'
+        : 'Everything due or overdue is in your plan. Report each block as it ends.')
+    : (missingTotal || !plannedTotal
+        ? 'Your plan is not complete. Open the planner, pick the Salesforce tasks into each block' +
+          (replanBy ? ' by <b>' + esc_(replanBy) + '</b>' : '') + ', and report each block when it ends, not before. ' +
+          'A "Plan received" copy goes to Mr Rampersad and sales support when you do.'
+        : 'Your plan covers what Salesforce has due. Report each block as it ends.');
+
+  var body =
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + intro + '</div>' +
+    statTiles_([
+      { value: signIn ? twelve_(signIn) : '—', label: 'signed in' },
+      { value: sfOk ? overdue : '—', label: 'overdue', color: overdue ? MAIL.red : MAIL.navy },
+      { value: sfOk ? dueToday : '—', label: 'due today', color: dueToday ? MAIL.amber : MAIL.navy },
+      { value: plannedTotal, label: 'tasks planned', color: plannedTotal ? MAIL.green : MAIL.red }
+    ]) +
+    '<div style="background:#fff;border:1px solid ' + MAIL.gold + ';border-radius:10px;padding:12px 15px;font-size:14px;line-height:1.55;margin-bottom:6px">' + ask +
+      '<div style="margin-top:9px"><a href="' + PLANNER_URL + '" style="display:inline-block;background:' + MAIL.navy + ';color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:9px 16px;border-radius:7px">Open the planner</a></div></div>' +
+    sectionLabel_('Your day · ' + (sched.hours || '')) + cards.join('') +
+    (loose.length
+      ? sectionLabel_('Due or overdue, not in any block (' + loose.length + ')') +
+        '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.red + ';border-radius:10px;padding:11px 15px">' +
+          loose.slice(0, DAYSTART_LIST_MAX * 2).map(function (x) { return dayStartTaskLine_(x.t, date); }).join('') +
+          (loose.length > DAYSTART_LIST_MAX * 2 ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:3px">and ' + (loose.length - DAYSTART_LIST_MAX * 2) + ' more in the planner.</div>' : '') +
+        '</div>'
+      : '') +
+    (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer this morning, so the tasks are not listed. The planner shows them.</div>') +
+    '<div style="font-size:12.5px;color:' + MAIL.muted + ';line-height:1.55;margin-top:16px">' +
+      'Your blocks are built on your job description. Plan before a block starts, report after it ends, and log every task at the point of work.</div>';
+
+  var subject = kind === 'plan'
+    ? 'Plan received · ' + name + ' · ' + shortDate_(date) + ' · ' + plannedTotal + ' planned' + (missingTotal ? ', ' + missingTotal + ' still to add' : '')
+    : 'Your day · ' + name + ' · ' + shortDate_(date) + (signIn ? ' · in at ' + twelve_(signIn) : '') +
+      ' · ' + plannedTotal + ' planned' + (sfOk ? ', ' + missingTotal + ' to add' : '');
+
+  var mail = {
+    to: to,
+    subject: subject,
+    htmlBody: shell_(kind === 'plan' ? 'Plan received' : 'Good morning · your day', name + ' · ' + prettyDate_(date), body)
+  };
+  var cc = dayStartCc_(to);
+  if (cc.length) mail.cc = cc.join(',');
+  MailApp.sendEmail(mail);
+  return true;
+}
+
+/** From the editor: send today's day-start for one person to yourself only,
+ *  to see it before anybody else does. Does not mark it sent. */
+function previewDayStart(staffId) {
+  staffId = staffId || 'elizabeth';
+  var date = todayISO_();
+  var props = PropertiesService.getScriptProperties();
+  var key = 'daystart_first_' + staffId + '_' + date;
+  var had = props.getProperty(key);
+  var realEmailFor = emailFor_;
+  var me = Session.getEffectiveUser().getEmail();
+  props.deleteProperty(key);
+  emailFor_ = function () { return me; };
+  var realCc = dayStartCc_;
+  dayStartCc_ = function () { return []; };
+  try { sendDayStart_(staffId, date, 'first'); }
+  finally {
+    emailFor_ = realEmailFor; dayStartCc_ = realCc;
+    if (had) props.setProperty(key, had); else props.deleteProperty(key);
+  }
+  return 'Preview of ' + staffId + "'s day start sent to " + me;
 }
 
 // ---------------------------------------------------------------------------
@@ -4730,7 +4985,10 @@ function recordAttendance_(profile) {
     var o = { Date: day, StaffId: sid, Name: profile.name || sid, FirstSignIn: hhmm_(now),
               LastSeen: hhmm_(now), SignedOut: '', Status: 'in', Reason: '', MarkedBy: sid,
               UpdatedAt: now };
-    sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+    // In the sheet's own column order. Writing in ATT.head's order put every
+    // value one or more columns over once SignedOut had been added on the end:
+    // 114 of 122 rows had the sign-in time sitting in SignedOut.
+    sh.appendRow(headerOf_(sh).map(function (h) { return o[h] != null ? o[h] : ''; }));
     out = attOut_(o, sid); out.first = true;
   }
   forgetHr_(ATT);
@@ -4784,7 +5042,7 @@ function markAbsent_(data, profile) {
   else {
     var name = (publicRoster_().filter(function (p) { return p.staffId === staffId; })[0] || {}).name || staffId;
     var o = Object.assign({ Date: day, StaffId: staffId, Name: name, FirstSignIn: '', LastSeen: '', SignedOut: '' }, patch);
-    sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+    sh.appendRow(headerOf_(sh).map(function (h) { return o[h] != null ? o[h] : ''; }));
   }
   forgetHr_(ATT);
   try { CacheService.getScriptCache().remove('att_' + staffId + '_' + day); } catch (e) {}
@@ -5606,8 +5864,15 @@ function savePlan_(data, profile) {
     }
     markStaffWrite_();
     planWrite_(person, date, blockId, { Items: items.list });
-    return { ok: true, plan: planOut_(planRows_(staffId, date)[blockId], staffId, blockId) };
-  } finally { lock.releaseLock(); }
+    var saved = planOut_(planRows_(staffId, date)[blockId], staffId, blockId);
+    lock.releaseLock(); lock = null;
+    // A real plan, with Salesforce tasks picked into it, gets its own e-mail
+    // once a day: "Plan received", copied the same way as the day start.
+    if (items.list.some(function (it) { return it.k === 'sf'; })) {
+      try { sendDayStart_(staffId, date, 'plan'); } catch (dsErr) {}
+    }
+    return { ok: true, plan: saved };
+  } finally { if (lock) lock.releaseLock(); }
 }
 
 // ---------------------------------------------------------------------------
