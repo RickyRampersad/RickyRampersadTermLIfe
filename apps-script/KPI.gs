@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-14b';
+var SCRIPT_VERSION = '2026-10-14c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2140,6 +2140,11 @@ function doGet(e) {
   try { var co = closeoutClick_(e); if (co) return co; } catch (err) {}
   // And the links in the e-mail a block sends when it closes itself.
   try { var bc = blockClick_(e); if (bc) return bc; } catch (err) {}
+  // And the answer pages behind the morning, progress and before-you-leave mails.
+  if (p.rs) {
+    try { var rs = replyClick_(e); if (rs) return rs; }
+    catch (err) { return replyPage_('That page did not open.', esc_(String(err && err.message || err)), ''); }
+  }
   try {
     return json_(handle_(p.action || 'rows', p, p.token));
   } catch (err) {
@@ -2153,6 +2158,11 @@ function doPost(e) {
   if (e && e.parameter && e.parameter.bk && e.parameter.why != null) {
     try { var bp = blockReasonPost_(e); if (bp) return bp; }
     catch (err) { return closeoutPage_('That did not record.', String(err && err.message || err), null); }
+  }
+  // A Save from one of the answer pages, form-encoded.
+  if (e && e.parameter && e.parameter.rs) {
+    try { var rp = replyPost_(e); if (rp) return rp; }
+    catch (err) { return replyPage_('That did not save.', esc_(String(err && err.message || err)) + '. Go back and press Save again.', ''); }
   }
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
@@ -3076,13 +3086,26 @@ function dayStartTaskLine_(t, date) {
   '</div>';
 }
 
-function sendDayStart_(staffId, date, kind) {
+function sendDayStart_(staffId, date, kind, opt) {
+  opt = opt || {};
   var props = PropertiesService.getScriptProperties();
   var onceKey = 'daystart_' + kind + '_' + staffId + '_' + date;
-  if (props.getProperty(onceKey)) return false;
-  var to = emailFor_(staffId);
-  if (!to) return false;
-  props.setProperty(onceKey, hhmm_(new Date()));
+  var had = props.getProperty(onceKey);
+  if (kind === 'plan') {
+    // The first plan, then each fix: a save from the answer page always
+    // mails (up to PLAN_MAIL_MAX); a save from the tracker, which saves one
+    // block at a time, mails at most every twenty minutes.
+    var pm = String(had || '').split('|'), n = Number(pm[0]) || 0, last = Number(pm[1]) || 0;
+    if (n >= PLAN_MAIL_MAX || (had && !opt.force && Date.now() - last < 20 * 60000)) return false;
+    var to = emailFor_(staffId);
+    if (!to) return false;
+    props.setProperty(onceKey, (n + 1) + '|' + Date.now());
+  } else {
+    if (had) return false;
+    var to = emailFor_(staffId);
+    if (!to) return false;
+    props.setProperty(onceKey, hhmm_(new Date()));
+  }
 
   var sched = scheduleFor_(staffId);
   var name = nameFor_(staffId), first = String(name).split(' ')[0];
@@ -3124,6 +3147,7 @@ function sendDayStart_(staffId, date, kind) {
       if (!(t.late || t.due === date) || plannedAll[t.id]) return;
       var home = blocks.filter(function (x) { return x.own === ty; })[0] ||
                  blocks.filter(function (x) { return x.types.indexOf(ty) > -1; })[0];
+      t.ty = ty;
       if (home) home.waiting.push(t); else loose.push({ t: t, ty: ty });
     });
   });
@@ -3134,7 +3158,10 @@ function sendDayStart_(staffId, date, kind) {
   var waitingAll = loose.length + blocks.reduce(function (a, x) { return a + x.waiting.length; }, 0);
   var plannedCount = Object.keys(plannedAll).length;
   var target = sfOk ? plannedCount + intelTarget_(intel, dueToday, overdue, waitingAll) : 0;
-  var suggest = sfOk ? suggestPlan_(staffId, blocks, loose.map(function (x) { return x.t; }), Math.max(0, target - plannedCount)) : {};
+  // "Plan received" reads against the morning's number, and shows the plan
+  // as made rather than a second suggestion on top of it.
+  if (kind === 'plan') target = Number(props.getProperty(intelTargetKey_(staffId, date)) || 0) || target;
+  var suggest = (sfOk && kind === 'first') ? suggestPlan_(staffId, blocks, loose.map(function (x) { return x.t; }), Math.max(0, target - plannedCount)) : {};
   var suggested = {};
   Object.keys(suggest).forEach(function (b) { suggest[b].forEach(function (x) { suggested[x.t.id] = 1; }); });
   if (sfOk && kind === 'first') {
@@ -3142,7 +3169,9 @@ function sendDayStart_(staffId, date, kind) {
       props.setProperty(intelTargetKey_(staffId, date), String(target));
       props.setProperty('intel_plan_' + staffId + '_' + date, JSON.stringify(Object.keys(suggested)));
     } catch (e) {}
+    saveIntelModel_(staffId, date, blocks, suggest, loose.map(function (x) { return x.t; }));
   }
+  var check = (sfOk && kind === 'plan') ? planCheck_(staffId, date, book, intel) : null;
 
   var plannedTotal = 0, missingTotal = loose.length, cards = [];
   blocks.forEach(function (x) {
@@ -3204,7 +3233,7 @@ function sendDayStart_(staffId, date, kind) {
 
   var replanBy = twelve_(hhmm_(new Date(Date.now() + DAYSTART_REPLAN_MIN * 60000)));
   var intro = kind === 'plan'
-    ? 'Thank you, ' + esc_(first) + '. Your plan is in' + (signIn ? ' (signed in at ' + esc_(twelve_(signIn)) + ')' : '') + '. Here is the day as planned and what Salesforce still has waiting.'
+    ? 'Thank you, ' + esc_(first) + '. Your plan is in' + (signIn ? ' (signed in at ' + esc_(twelve_(signIn)) + ')' : '') + '. Below: whether it holds up against your record, the day as planned, and what Salesforce still has waiting.'
     : 'Good morning, ' + esc_(first) + ', and thank you for signing in' + (signIn ? ' at <b>' + esc_(twelve_(signIn)) + '</b>' : '') + '. ' +
       'Below is what your record shows over the last ' + INTEL_DAYS + ' working days, your day as you have filed it, and a plan for each block built from what Salesforce has due or overdue.';
 
@@ -3216,7 +3245,7 @@ function sendDayStart_(staffId, date, kind) {
         ? 'Your plan is not complete. ' +
           (target ? 'Below, each block has a suggested list: <b>' + target + ' tasks</b> for today, oldest overdue first' +
             (intel && intel.pace != null ? ', sized from your own record (' + intel.pace + ' closed a day over the last ' + intel.days + ' working days)' : '') + '. ' +
-            'Redo your blocks: open the planner and pick these, or your own choices with a reason,' : 'Open the planner and pick the Salesforce tasks into each block') +
+            'Redo your blocks with the button below: keep these, untick what you will not do with a reason, add your own, and save,' : 'Open the planner and pick the Salesforce tasks into each block') +
           (replanBy ? ' by <b>' + esc_(replanBy) + '</b>' : '') + '. Report each block when it ends, not before. ' +
           'A "Plan received" copy goes to Mr Rampersad and sales support when you do.'
         : 'Your plan covers what Salesforce has due. Report each block as it ends.');
@@ -3230,8 +3259,14 @@ function sendDayStart_(staffId, date, kind) {
       { value: plannedTotal, label: 'tasks planned', color: plannedTotal ? MAIL.green : MAIL.red },
       { value: sfOk ? target : '—', label: 'suggested today', color: MAIL.navy }
     ]) +
+    (check ? '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (check.ok ? MAIL.green : MAIL.red) + ';border-radius:10px;padding:10px 15px;margin-bottom:10px">' +
+        '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + (check.ok ? MAIL.green : MAIL.red) + '">' +
+          (check.ok ? 'Your plan holds up' : 'Your plan does not hold up yet') + '</div>' +
+        check.lines.map(function (l) { return '<div style="font-size:13.5px;line-height:1.55;padding:5px 0;border-top:1px solid ' + MAIL.line + '"><span style="color:' + (l.bad ? MAIL.red : MAIL.green) + ';font-weight:800">' + (l.bad ? '&#9679;' : '&#10003;') + '</span> ' + l.html + '</div>'; }).join('') +
+        (check.ok ? '' : replyButton_(replyUrl_(staffId, date, 'plan'), 'Fix my plan', 'Opens your plan with today\'s suggestion ticked. Change it and save; no sign-in.')) + '</div>' : '') +
     '<div style="background:#fff;border:1px solid ' + MAIL.gold + ';border-radius:10px;padding:12px 15px;font-size:14px;line-height:1.55;margin-bottom:6px">' + ask +
-      '<div style="margin-top:9px"><a href="' + PLANNER_URL + '" style="display:inline-block;background:' + MAIL.navy + ';color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:9px 16px;border-radius:7px">Open the planner</a></div></div>' +
+      (kind === 'first' && sfOk && target ? replyButton_(replyUrl_(staffId, date, 'plan'), 'Review and save this plan', 'One tap opens it ticked. Untick what you will not do, add your own, save. No sign-in.') : '') +
+      '<div style="margin-top:9px"><a href="' + PLANNER_URL + '" style="font-size:12.5px;color:' + MAIL.navy + ';font-weight:700">or open the planner</a></div></div>' +
     (kind === 'first' && intel ? intelBox_(intelLines_(intel), 'What the record shows · last ' + intel.days + ' working days') : '') +
     sectionLabel_('Your day · ' + (sched.hours || '') + (target ? ' · suggested plan of ' + target : '')) + cards.join('') +
     (function () {
@@ -3505,7 +3540,7 @@ function sendHousekeeping_(person, day, signIn) {
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', your day ends at <b>' + esc_(endText) +
       '</b>. Before you sign out, three things. Answer each one in the tracker\'s close-out, with a reason for anything not done. ' +
-      'Your answers and your sign-out time are logged, and copied to Mr Rampersad and sales support.</div>' +
+      'Answer them from the button in this e-mail; your answers and your sign-out time are logged, and copied to Mr Rampersad and sales support.</div>' +
     statTiles_([
       { value: signIn ? twelve_(signIn) : '—', label: 'signed in' },
       { value: blockPct + '%', label: 'blocks reported', color: blockPct < 100 ? MAIL.amber : MAIL.green },
@@ -3513,10 +3548,11 @@ function sendHousekeeping_(person, day, signIn) {
       { value: sfOk ? overdue : '—', label: 'overdue', color: overdue ? MAIL.red : MAIL.navy }
     ]) +
     intelBox_(today.concat(trend), 'Today, and what the record shows') +
+    replyButton_(replyUrl_(sid, day, 'hk'), 'Close my day here', 'A reason for each task not done, the three checks, and sign out. No sign-in.') +
     check(1, 'Tasks verified', c1, !unnoted.length && !dueOpen.length && blockPct === 100) +
     check(2, 'Inbox and WhatsApp scrubbed', c2, false) +
     check(3, 'Open tasks understood', c3, sfOk && day1 && day1.created > 0) +
-    '<div style="margin-top:6px"><a href="' + PLANNER_URL + '" style="display:inline-block;background:' + MAIL.navy + ';color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:9px 16px;border-radius:7px">Open the close-out</a></div>' +
+    replyButton_(replyUrl_(sid, day, 'hk'), 'Close my day here', '') +
     (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer, so the task lists are not shown. The tracker has them.</div>') +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">' +
       'Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
@@ -4002,8 +4038,9 @@ function sendMidday_(person, day, signIn, nowOpt) {
       { value: sfOk ? overdue : '—', label: 'overdue', color: overdue ? MAIL.red : MAIL.navy }
     ]) +
     intelBox_(lines, 'Where the day stands') +
+    replyButton_(replyUrl_(sid, day, 'prog'), 'Answer: where each task stands', 'Working on it, later today, or not today with a reason. Takes a minute; no sign-in.') +
     (later.length ? sectionLabel_('The rest of the day · ' + left + ' to close') + cards : '') +
-    '<div style="margin-top:6px"><a href="' + PLANNER_URL + '" style="display:inline-block;background:' + MAIL.navy + ';color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:9px 16px;border-radius:7px">Update your plan</a></div>' +
+    '<div style="margin-top:6px"><a href="' + PLANNER_URL + '" style="font-size:12.5px;color:' + MAIL.navy + ';font-weight:700">or update your plan in the planner</a></div>' +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">' +
       'Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
 
@@ -4017,6 +4054,569 @@ function sendMidday_(person, day, signIn, nowOpt) {
   if (cc.length) mail.cc = cc.join(',');
   MailApp.sendEmail(mail);
   return true;
+}
+
+// ---------------------------------------------------------------------------
+//  Answering from the e-mail
+//
+//  "Should the responses not be captured in the email instead of they logging
+//  back in? ... make it very interactive and relevant and easy to do for
+//  all." (Ricky, 14 October 2026.)
+//
+//  Each of the three e-mails carries one button. It opens a page for that
+//  person and that day, already filled in; Save writes the answer to the
+//  sheet. Nobody signs in: the link is signed over the person, the day and
+//  the page, so it opens one person's page for one day and nothing else.
+//
+//    plan  the morning's suggested plan, ticked, block by block. Untick what
+//          you will not do (with a reason), tick anything else, add your own
+//          lines, confirm lunch. Save writes the plan and sends "Plan
+//          received", which checks whether the plan holds up.
+//    prog  the progress check: each planned or suggested task still open,
+//          Working on it / Later today / Not today with a reason.
+//    hk    before you leave: a reason for each planned task still open, and
+//          the three close-out checks, Done or Not done with a reason. Can
+//          sign the day out.
+//
+//  Opening a link never writes. Mail scanners (Outlook's Safe Links among
+//  them) open every link in a message before the person does; a link that
+//  recorded on opening would record for the scanner. Only Save writes.
+//  Every answer is copied to the Branch Manager and sales support.
+// ---------------------------------------------------------------------------
+
+var PROG = { must: ['Date', 'StaffId', 'Check', 'TaskId'], name: 'Progress Answers',
+             head: ['Date', 'StaffId', 'Name', 'Check', 'TaskId', 'Subject', 'Answer', 'Reason', 'At'] };
+var REPLY_PAGES = { plan: 'Your plan', prog: 'Where each task stands', hk: 'Before you leave' };
+var PLAN_MAIL_MAX = 4;   // "Plan received" e-mails a day: the first plan and up to three fixes
+
+function replySig_(sid, day, f) {
+  var raw = Utilities.computeHmacSha256Signature(
+    String(sid) + '|' + String(day) + '|' + String(f) + '|reply', closeoutSecret_());
+  return Utilities.base64EncodeWebSafe(raw).replace(/=+$/, '').slice(0, 22);
+}
+
+function replyUrl_(sid, day, f) {
+  return execBase_() + '?rs=' + encodeURIComponent(sid) + '&d=' + encodeURIComponent(day) +
+    '&f=' + encodeURIComponent(f) + '&k=' + encodeURIComponent(replySig_(sid, day, f));
+}
+
+/** The big button in an e-mail. */
+function replyButton_(href, label, sub) {
+  return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:12px 0 4px"><tr><td style="background:' + MAIL.gold +
+    ';border-radius:9px"><a href="' + esc_(href) + '" style="display:inline-block;padding:13px 22px;color:' + MAIL.deep +
+    ';text-decoration:none;font-weight:800;font-size:15px">' + esc_(label) + ' &rarr;</a></td></tr></table>' +
+    (sub ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-bottom:4px">' + esc_(sub) + '</div>' : '');
+}
+
+// ---- the morning's model, kept for the pages ---------------------------------
+
+function intelModelKey_(sid, day) { return 'intel_model_' + sid + '_' + day; }
+
+/** What the morning e-mail suggested, block by block, with a few more of each
+ *  block's waiting work, so the plan page can be built without asking
+ *  Salesforce again. Kept small: a Script Property holds 9 KB. */
+function saveIntelModel_(sid, day, blocks, suggest, loose) {
+  var slim = function (t) {
+    return { id: t.id, s: shorten_(t.subject, 95), ty: shorten_(t.ty || '', 30), due: t.due || '', late: !!t.late };
+  };
+  var model = { b: {}, order: [] }, taken = {};
+  blocks.forEach(function (x) {
+    var sug = (suggest[x.id] || []).map(function (s) { taken[s.t.id] = 1; var o = slim(s.t); o.br = s.brought || ''; return o; });
+    model.b[x.id] = { sug: sug, more: [] };
+    model.order.push(x.id);
+  });
+  blocks.forEach(function (x) {
+    x.waiting.filter(function (t) { return !taken[t.id]; }).slice(0, 6)
+      .forEach(function (t) { taken[t.id] = 1; model.b[x.id].more.push(slim(t)); });
+  });
+  model.loose = (loose || []).filter(function (t) { return !taken[t.id]; }).slice(0, 8).map(slim);
+  var json = JSON.stringify(model);
+  while (json.length > 8500 && model.loose.length) { model.loose.pop(); json = JSON.stringify(model); }
+  model.order.slice().reverse().forEach(function (b) {
+    while (json.length > 8500 && model.b[b].more.length) { model.b[b].more.pop(); json = JSON.stringify(model); }
+  });
+  try { PropertiesService.getScriptProperties().setProperty(intelModelKey_(sid, day), json); } catch (e) {}
+}
+
+function intelModel_(sid, day) {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty(intelModelKey_(sid, day)) || 'null'); }
+  catch (e) { return null; }
+}
+
+/** Every task the model knows, by Id. */
+function modelTasks_(model) {
+  var out = {};
+  if (!model) return out;
+  Object.keys(model.b || {}).forEach(function (b) {
+    model.b[b].sug.concat(model.b[b].more).forEach(function (t) { out[t.id] = t; });
+  });
+  (model.loose || []).forEach(function (t) { out[t.id] = t; });
+  return out;
+}
+
+// ---- does the plan hold up? -----------------------------------------------
+
+/** The plan as saved, read against the record. { ok, lines, total, target }.
+ *  ok is false when a block that has not ended is empty, when the oldest
+ *  overdue are mostly left out, or when the plan is well under her own pace. */
+function planCheck_(sid, day, book, intel, nowM) {
+  var sched = scheduleFor_(sid), plans = {};
+  try { plans = planRows_(sid, day); } catch (e) {}
+  var target = Number(PropertiesService.getScriptProperties().getProperty(intelTargetKey_(sid, day)) || 0);
+  if (nowM == null) nowM = minutesOf_(hhmm_(new Date()));
+
+  var where = {}, total = 0, empty = [], own = 0;
+  BLOCK_IDS.forEach(function (b) {
+    if (!sched.blocks[b]) return;
+    var items = plans[b] ? planItemsOf_(plans[b].Items) : [];
+    var sp = blockSpan_(sid, b);
+    var sf = items.filter(function (it) { return it.k === 'sf'; });
+    own += items.length - sf.length;
+    sf.forEach(function (it) { where[it.id] = b; total++; });
+    if (!items.length && !(sp && sp.end <= nowM)) empty.push(b);
+  });
+
+  var all = [], homeOf = {};
+  Object.keys(book || {}).forEach(function (ty) {
+    book[ty].forEach(function (t) { t.ty = ty; if (t.late || t.due === day) all.push(t); });
+  });
+  BLOCK_IDS.forEach(function (b) {
+    var sb = sched.blocks[b], ty = sb && blockTypeFor_(sb.kpi);
+    if (ty && !homeOf[ty]) homeOf[ty] = b;
+  });
+  var oldest = all.filter(function (t) { return t.late; }).sort(intelOrder_).slice(0, 5);
+  var covered = oldest.filter(function (t) { return where[t.id]; }).length;
+  var dueOut = all.filter(function (t) { return t.due === day && !where[t.id]; });
+  var misplaced = all.filter(function (t) { return where[t.id] && homeOf[t.ty] && homeOf[t.ty] !== where[t.id]; });
+
+  var b_ = function (x) { return '<b>' + esc_(x) + '</b>'; }, red = function (x) { return '<b style="color:' + MAIL.red + '">' + esc_(x) + '</b>'; };
+  var lines = [], major = false;
+  var light = target && total < Math.round(target * 0.7);
+  var heavy = intel && intel.pace && total > Math.max(target * 1.5, intel.pace * 2);
+  lines.push({ bad: light || heavy,
+    html: 'You planned ' + (light ? red(total) : b_(total)) + ' Salesforce task' + (total === 1 ? '' : 's') + (own ? ' and ' + own + ' line' + (own === 1 ? '' : 's') + ' of your own' : '') +
+      (target ? ' against today\'s suggested ' + b_(target) : '') + '. ' +
+      (light ? 'That is well under your own pace' + (intel && intel.pace ? ' (' + intel.pace + ' a day)' : '') + '. Add from what is waiting.'
+       : heavy ? 'That is more than twice what you close in a day. Plan what you will finish, and give the rest a date.'
+       : 'That is a day you can do.') });
+  if (light) major = true;
+  if (oldest.length) {
+    var thin = covered < Math.min(3, oldest.length);
+    lines.push({ bad: thin,
+      html: (thin ? red(covered + ' of your ' + oldest.length + ' oldest overdue') : b_(covered + ' of your ' + oldest.length + ' oldest overdue')) + ' are in the plan' +
+        (thin ? '. The oldest go first: ' + oldest.filter(function (t) { return !where[t.id]; }).slice(0, 3).map(function (t) { return esc_(shorten_(t.subject, 60)); }).join('; ') + '.' : '.') });
+    if (thin) major = true;
+  }
+  if (empty.length) {
+    major = true;
+    lines.push({ bad: true, html: red(empty.map(blockLabel_).join(', ')) + (empty.length > 1 ? ' have' : ' has') + ' nothing planned. Every block gets its work, or a line saying what it is for today.' });
+  }
+  if (dueOut.length) lines.push({ bad: true, html: red(dueOut.length) + ' due today ' + (dueOut.length === 1 ? 'is' : 'are') + ' not in the plan. Each needs a block, or a new date with a reason.' });
+  if (misplaced.length) lines.push({ bad: true,
+    html: misplaced.slice(0, 3).map(function (t) { return esc_(shorten_(t.subject, 50)) + ' is ' + esc_(t.ty) + ' work, set for ' + esc_(blockLabel_(homeOf[t.ty])) + ', planned in ' + esc_(blockLabel_(where[t.id])); }).join('; ') +
+      '. Fine if there is a reason; otherwise move it.' });
+  if (!lines.some(function (l) { return l.bad; })) lines.push({ bad: false, html: 'This plan holds up. Report each block when it ends.' });
+  return { ok: !major, lines: lines, total: total, target: target };
+}
+
+// ---- the pages ----------------------------------------------------------------
+
+function replyPage_(title, sub, inner) {
+  var html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + esc_(title) + '</title>' +
+    '<style>' +
+      'body{margin:0;background:#F7F5EF}' +
+      '.w{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:600px;margin:0 auto;padding:26px 16px 60px;color:#1F2433}' +
+      '.br{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#C7A34A}' +
+      'h1{font-size:22px;margin:6px 0 4px;color:#16264F}.sub{color:#6A7180;margin:0 0 16px}' +
+      '.card{background:#fff;border:1px solid #E5E1D6;border-radius:12px;padding:14px 14px 10px;margin-bottom:12px}' +
+      '.bh{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#C7A34A}' +
+      '.bf{font-size:12.5px;color:#6A7180;margin:2px 0 6px}' +
+      'label.t{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid #EEE;font-size:14px;cursor:pointer}' +
+      'label.t input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:#16264F}' +
+      '.tag{font-size:12px;font-weight:700}.late{color:#AE3A33}.today{color:#B0791C}.br2{color:#16264F;font-size:11.5px}' +
+      'textarea,input[type=text]{width:100%;box-sizing:border-box;padding:10px 11px;border:1.5px solid #DDE4EC;border-radius:9px;font:14px/1.4 inherit;background:#fff}' +
+      '.seg{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.seg label{flex:1;min-width:92px;text-align:center;border:1.5px solid #DDE4EC;border-radius:9px;padding:8px 6px;font-size:13px;font-weight:700;cursor:pointer;background:#fff}' +
+      '.seg input{display:none}.seg input:checked+span{color:#fff}.seg label:has(input:checked){background:#16264F;border-color:#16264F;color:#fff}' +
+      '.task{padding:10px 0;border-top:1px solid #EEE;font-size:14px}' +
+      'details summary{cursor:pointer;color:#16264F;font-weight:700;font-size:13px;padding:8px 0}' +
+      'button{width:100%;padding:15px;border:0;border-radius:11px;background:#16264F;color:#fff;font:800 16px inherit;cursor:pointer;margin-top:8px}' +
+      '.ok{border-left:4px solid #2C7A57}.bad{border-left:4px solid #AE3A33}.warn{color:#AE3A33;font-weight:700;font-size:13px;display:none;margin-top:6px}' +
+      '.ln{padding:6px 0;border-top:1px solid #EEE;font-size:14px}.ln:first-child{border-top:0}' +
+    '</style>' +
+    '<div class="w"><div class="br">Ricky Rampersad Branch</div><h1>' + esc_(title) + '</h1>' +
+    (sub ? '<p class="sub">' + sub + '</p>' : '') + inner + '</div>';
+  return HtmlService.createHtmlOutput(html)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function replyHidden_(sid, day, f) {
+  return ['rs', sid, 'd', day, 'f', f, 'k', replySig_(sid, day, f)].reduce(function (a, v, i, arr) {
+    return i % 2 ? a : a + '<input type="hidden" name="' + arr[i] + '" value="' + esc_(arr[i + 1]) + '">';
+  }, '');
+}
+
+function taskTag_(t, day) {
+  return t.late ? ' <span class="tag late">overdue since ' + esc_(shortDate_(t.due)) + '</span>'
+       : (t.due === day ? ' <span class="tag today">due today</span>' : (t.due ? ' <span class="tag">due ' + esc_(shortDate_(t.due)) + '</span>' : ''));
+}
+
+function linesHtml_(lines) {
+  return lines.map(function (l) {
+    return '<div class="ln"><span style="color:' + (l.bad ? '#AE3A33' : '#2C7A57') + ';font-weight:800">' + (l.bad ? '&#9679;' : '&#10003;') + '</span> ' + l.html + '</div>';
+  }).join('');
+}
+
+/** GET: show a page. Never writes. */
+function replyClick_(e) {
+  var p = (e && e.parameter) || {};
+  var sid = String(p.rs || '').trim();
+  if (!sid) return null;
+  var day = isoDay_(p.d) || todayISO_(), f = String(p.f || '');
+  if (!REPLY_PAGES[f] || String(p.k || '') !== replySig_(sid, day, f)) {
+    return replyPage_('That link has expired.', 'These links are good for the day they were sent. Open the tracker instead.', '');
+  }
+  if (day !== todayISO_()) return replyPage_('That link was for ' + prettyDate_(day) + '.', 'Today\'s e-mail has today\'s link.', '');
+  var person = rosterPerson_(sid);
+  if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
+  if (f === 'plan') return planReplyPage_(person, day, '');
+  if (f === 'prog') return progReplyPage_(person, day, '');
+  return hkReplyPage_(person, day, '');
+}
+
+/** POST: write, then show what was written. */
+function replyPost_(e) {
+  var p = (e && e.parameter) || {}, ps = (e && e.parameters) || {};
+  var sid = String(p.rs || '').trim();
+  if (!sid) return null;
+  var day = isoDay_(p.d) || todayISO_(), f = String(p.f || '');
+  if (!REPLY_PAGES[f] || String(p.k || '') !== replySig_(sid, day, f) || day !== todayISO_()) {
+    return replyPage_('That link has expired.', 'Nothing was saved. Open the tracker instead.', '');
+  }
+  var person = rosterPerson_(sid);
+  if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
+  var all = function (name) { var v = ps[name]; return v ? (Array.isArray(v) ? v : [v]) : []; };
+  if (f === 'plan') return planReplySave_(person, day, p, all);
+  if (f === 'prog') return progReplySave_(person, day, p, all);
+  return hkReplySave_(person, day, p, all);
+}
+
+// ---- plan -------------------------------------------------------------------
+
+function planReplyPage_(person, day, error) {
+  var sid = String(person.staffId), sched = scheduleFor_(sid), model = intelModel_(sid, day);
+  var plans = {};
+  try { plans = planRows_(sid, day); } catch (e) {}
+  if (!model) {
+    return replyPage_('Your plan', 'This morning\'s suggestion is not on file, so there is nothing to fill in here.',
+      '<p><a href="' + PLANNER_URL + '">Open the planner</a> and pick your tasks there.</p>');
+  }
+  var nowM = minutesOf_(hhmm_(new Date())), sugIds = [];
+  var cards = BLOCK_IDS.filter(function (b) { return sched.blocks[b]; }).map(function (b) {
+    var sb = sched.blocks[b], m = model.b[b] || { sug: [], more: [] }, sp = blockSpan_(sid, b);
+    var row = plans[b], have = row ? planItemsOf_(row.Items) : [];
+    var haveIds = {}; have.forEach(function (it) { if (it.k === 'sf') haveIds[it.id] = 1; });
+    var head = '<div class="bh">' + esc_(blockLabel_(b)) + (sb.time ? ' · ' + esc_(sb.time) : '') + '</div><div class="bf">' + esc_(sb.focus || '') + '</div>';
+    if (row && String(row.ClosedAt || '').trim()) return '<div class="card">' + head + '<div class="bf">This block has closed.</div></div>';
+    if (sp && sp.end <= nowM) return '<div class="card">' + head + '<div class="bf">This block has ended.</div></div>';
+    var box = function (t, checked, suggested) {
+      if (suggested) sugIds.push(t.id);
+      return '<label class="t"><input type="checkbox" name="t_' + b + '" value="' + esc_(t.id) + '"' + (checked ? ' checked' : '') +
+        (suggested ? ' data-sug="1"' : '') + '><span>' + esc_(t.s) + taskTag_(t, day) +
+        (t.br ? ' <span class="br2">· brought in from ' + esc_(t.br) + '</span>' : '') + '</span></label>';
+    };
+    var shown = {};
+    var rows = m.sug.map(function (t) { shown[t.id] = 1; return box(t, true, true); }).join('');
+    // Already planned in the tracker, not in the suggestion: keep them ticked.
+    have.forEach(function (it) {
+      if (it.k === 'sf' && !shown[it.id]) { shown[it.id] = 1; rows += box({ id: it.id, s: it.subject || it.id, due: '' }, true, false); }
+    });
+    var more = m.more.filter(function (t) { return !shown[t.id]; });
+    var ownLines = have.filter(function (it) { return it.k === 'own'; }).map(function (it) { return it.label; }).join('\n');
+    return '<div class="card">' + head + (rows || '<div class="bf">Nothing suggested for this block.</div>') +
+      (more.length ? '<details><summary>' + more.length + ' more waiting for this block</summary>' + more.map(function (t) { return box(t, !!haveIds[t.id], false); }).join('') + '</details>' : '') +
+      '<div style="margin-top:8px"><textarea name="own_' + b + '" rows="2" placeholder="Anything else you will do in this block, one per line">' + esc_(ownLines) + '</textarea></div></div>';
+  }).join('');
+  var loose = (model.loose || []).length
+    ? '<div class="card"><div class="bh">Not in any block</div><div class="bf">Tick one to put it in the block with the most room.</div>' +
+      model.loose.map(function (t) { return '<label class="t"><input type="checkbox" name="t_any" value="' + esc_(t.id) + '"><span>' + esc_(t.s) + taskTag_(t, day) + '</span></label>'; }).join('') + '</div>'
+    : '';
+  var inner =
+    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top" onsubmit="return chk()">' + replyHidden_(sid, day, 'plan') +
+    cards + loose +
+    '<div class="card"><div class="bh">Lunch today</div><input type="text" name="lunch" value="' + esc_(sched.lunch || '') + '"></div>' +
+    '<div class="card"><div class="bh">Left a suggested task out?</div><div class="bf">Say why, in one line. It goes with the plan.</div>' +
+      '<textarea name="why" id="why" rows="2" placeholder="e.g. waiting on the agent for the form; given a new date"></textarea>' +
+      '<div class="warn" id="warn">You left out suggested tasks. Say why before you save.</div></div>' +
+    '<button type="submit">Save my plan</button></form>' +
+    '<script>function chk(){var off=[].slice.call(document.querySelectorAll("input[data-sug]")).filter(function(i){return !i.checked}).length;' +
+      'if(off&&!document.getElementById("why").value.trim()){document.getElementById("warn").style.display="block";document.getElementById("why").focus();return false}return true}</script>';
+  return replyPage_('Your plan · ' + prettyDate_(day),
+    esc_(String(person.name || sid).split(' ')[0]) + ', this morning\'s suggestion is ticked below, oldest overdue first. Untick what you will not do today, tick anything else, and save. Report each block when it ends.',
+    inner);
+}
+
+function planReplySave_(person, day, p, all) {
+  var sid = String(person.staffId), sched = scheduleFor_(sid), model = intelModel_(sid, day);
+  var known = modelTasks_(model), plans = planRows_(sid, day);
+  var nowM = minutesOf_(hhmm_(new Date()));
+  var open = BLOCK_IDS.filter(function (b) {
+    var sp = blockSpan_(sid, b), row = plans[b];
+    return sched.blocks[b] && !(row && String(row.ClosedAt || '').trim()) && !(sp && sp.end <= nowM);
+  });
+  var chosen = {}, seen = {};
+  open.forEach(function (b) {
+    chosen[b] = all('t_' + b).filter(function (id) { if (seen[id]) return false; seen[id] = 1; return true; });
+  });
+  // Ticked from "not in any block": into the open block with the fewest.
+  all('t_any').forEach(function (id) {
+    if (seen[id] || !open.length) return;
+    seen[id] = 1;
+    var b = open.slice().sort(function (a, c) { return chosen[a].length - chosen[c].length; })[0];
+    chosen[b].push(id);
+  });
+  var sugIds = [];
+  if (model) Object.keys(model.b).forEach(function (b) { if (open.indexOf(b) > -1) model.b[b].sug.forEach(function (t) { sugIds.push(t.id); }); });
+  var dropped = sugIds.filter(function (id) { return !seen[id]; });
+  var why = String(p.why || '').trim().slice(0, REASON_MAX);
+  if (dropped.length && !why) return planReplyPage_(person, day, 'You left out ' + dropped.length + ' suggested task' + (dropped.length === 1 ? '' : 's') + '. Say why, then save.');
+
+  var lock = takeLock_();
+  if (!lock) return planReplyPage_(person, day, 'Another save was going in just then. Press Save again.');
+  try {
+    markStaffWrite_();
+    open.forEach(function (b) {
+      var have = plans[b] ? planItemsOf_(plans[b].Items) : [];
+      var haveSf = {}; have.forEach(function (it) { if (it.k === 'sf') haveSf[it.id] = it; });
+      var items = chosen[b].map(function (id) {
+        var t = known[id], h = haveSf[id];
+        return { k: 'sf', id: id, subject: t ? t.s : (h ? h.subject : id), type: t ? t.ty : (h ? h.type : '') };
+      });
+      String(p['own_' + b] || '').split(/\r?\n/).forEach(function (l) { if (l.trim()) items.push({ k: 'own', label: l.trim() }); });
+      var clean = cleanPlanItems_(items);
+      if (clean.error) clean = cleanPlanItems_(items.slice(0, PLAN_MAX_ITEMS));
+      var patch = { Items: clean.list };
+      if (b === open[0]) {
+        var lunch = String(p.lunch || '').trim(), notes = [];
+        if (lunch && lunch !== String(sched.lunch || '')) notes.push('Lunch today: ' + lunch);
+        if (dropped.length) notes.push('Left out ' + dropped.length + ' suggested: ' + why);
+        patch.Note = notes.join(' · ').slice(0, REASON_MAX);   // a fresh save replaces the last one's note
+      }
+      planWrite_(person, day, b, patch);
+    });
+  } finally { lock.releaseLock(); }
+
+  try { sendDayStart_(sid, day, 'plan', { force: true }); } catch (e) {}
+  var book = {}, intel = null;
+  try { book = (sfkOpenBook_(day) || {})[sid] || {}; } catch (e) {}
+  try { intel = intelFor_(sid, day); } catch (e) {}
+  var chk = planCheck_(sid, day, book, intel, nowM);
+  return replyPage_(chk.ok ? 'Plan saved. It holds up.' : 'Plan saved, but it does not hold up yet.',
+    'A "Plan received" e-mail is on its way to you, copied to Mr Rampersad and sales support.',
+    '<div class="card ' + (chk.ok ? 'ok' : 'bad') + '">' + linesHtml_(chk.lines) + '</div>' +
+    (chk.ok ? '' : '<a href="' + esc_(replyUrl_(sid, day, 'plan')) + '" style="display:block;text-align:center;padding:14px;border-radius:11px;background:#C7A34A;color:#0D1838;font-weight:800;text-decoration:none">Fix my plan</a>'));
+}
+
+// ---- progress -----------------------------------------------------------------
+
+/** Planned and suggested Salesforce tasks for the day, with whether each is
+ *  closed yet. */
+function dayTasks_(sid, day) {
+  var model = intelModel_(sid, day), known = modelTasks_(model), list = [], seen = {};
+  var plans = {};
+  try { plans = planRows_(sid, day); } catch (e) {}
+  BLOCK_IDS.forEach(function (b) {
+    (plans[b] ? planItemsOf_(plans[b].Items) : []).forEach(function (it) {
+      if (it.k !== 'sf' || seen[it.id]) return;
+      seen[it.id] = 1;
+      var t = known[it.id] || {};
+      list.push({ id: it.id, s: it.subject || t.s || it.id, due: t.due || '', late: !!t.late, b: b, planned: true });
+    });
+  });
+  if (model) Object.keys(model.b).forEach(function (b) {
+    model.b[b].sug.forEach(function (t) {
+      if (seen[t.id]) return; seen[t.id] = 1;
+      list.push({ id: t.id, s: t.s, due: t.due, late: t.late, b: b, planned: false });
+    });
+  });
+  var states = {};
+  if (sfkConfigured_() && list.length) { try { states = sfkTaskStates_(list.map(function (t) { return t.id; })); } catch (e) {} }
+  list.forEach(function (t) { t.closed = /^(completed|closed)/i.test(states[t.id] || ''); });
+  return list;
+}
+
+function progAnswers_(sid, day, check) {
+  var m = {};
+  (hrRows_(PROG, true) || []).forEach(function (r) {
+    if (isoDay_(r.Date) === day && String(r.StaffId) === String(sid) && String(r.Check) === check) {
+      m[String(r.TaskId)] = { a: String(r.Answer || ''), r: String(r.Reason || '') };
+    }
+  });
+  return m;
+}
+
+function progWrite_(person, day, check, rows) {
+  var sh = hrTab_(PROG, true), have = sheetObjects_(sh), at = hhmm_(new Date()), idx = colMap_(sh);
+  rows.forEach(function (x) {
+    var row = 0;
+    have.forEach(function (r, i) {
+      if (isoDay_(r.Date) === day && String(r.StaffId) === String(person.staffId) && String(r.Check) === check && String(r.TaskId) === x.id) row = i + 2;
+    });
+    var o = { Date: day, StaffId: person.staffId, Name: person.name || person.staffId, Check: check, TaskId: x.id,
+              Subject: x.s, Answer: x.a, Reason: x.r || '', At: at };
+    if (row) writeRow_(sh, row, idx, o);
+    else sh.appendRow(PROG.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+  });
+  forgetHr_(PROG);
+}
+
+var PROG_CHOICES = [['now', 'Working on it'], ['later', 'Later today'], ['not', 'Not today']];
+
+function progReplyPage_(person, day, error) {
+  var sid = String(person.staffId), tasks = dayTasks_(sid, day), had = progAnswers_(sid, day, 'progress');
+  var done = tasks.filter(function (t) { return t.closed; }), open = tasks.filter(function (t) { return !t.closed; });
+  if (!tasks.length) {
+    return replyPage_('Where each task stands', 'There is no plan or suggestion on file for today.',
+      '<p><a href="' + PLANNER_URL + '">Open the planner</a> and plan the rest of the day.</p>');
+  }
+  var rows = open.map(function (t) {
+    var h = had[t.id] || {};
+    return '<div class="task"><div>' + esc_(t.s) + taskTag_(t, day) + ' <span class="br2">· ' + esc_(blockLabel_(t.b)) + (t.planned ? '' : ', suggested') + '</span></div>' +
+      '<div class="seg">' + PROG_CHOICES.map(function (c) {
+        return '<label><input type="radio" name="a_' + esc_(t.id) + '" value="' + c[0] + '"' + (h.a === c[0] ? ' checked' : '') + ' onchange="sh(this)"><span>' + c[1] + '</span></label>';
+      }).join('') + '</div>' +
+      '<input type="text" name="r_' + esc_(t.id) + '" value="' + esc_(h.r || '') + '" placeholder="Why not today, and when it will be done" style="display:' + (h.a === 'not' ? 'block' : 'none') + '"></div>';
+  }).join('');
+  var inner = (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    '<div class="card ok"><div class="bh">Closed in Salesforce</div>' +
+      (done.length ? done.map(function (t) { return '<div class="ln">&#10003; ' + esc_(t.s) + '</div>'; }).join('') : '<div class="ln" style="color:#6A7180">None of today\'s tasks yet.</div>') + '</div>' +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'prog') +
+    '<div class="card"><div class="bh">Still open · ' + open.length + '</div>' + (rows || '<div class="ln">Nothing left open. Well done.</div>') + '</div>' +
+    '<div class="card"><div class="bh">Anything stopping you?</div><textarea name="blocker" rows="2" placeholder="Something Mr Rampersad should know or can unblock">' + esc_((had._blocker || {}).r || '') + '</textarea></div>' +
+    '<button type="submit">Send my progress</button></form>' +
+    '<script>function sh(i){var r=document.getElementsByName("r_"+i.name.slice(2))[0];if(r){r.style.display=i.value==="not"?"block":"none";r.required=i.value==="not"}}</script>';
+  return replyPage_('Where each task stands',
+    'Mark each open task. A task you close in Salesforce shows here as done on its own; answering here does not close it.', inner);
+}
+
+function progReplySave_(person, day, p, all) {
+  var sid = String(person.staffId), tasks = dayTasks_(sid, day), rows = [], missing = 0;
+  var label = {}; PROG_CHOICES.forEach(function (c) { label[c[0]] = c[1]; });
+  tasks.forEach(function (t) {
+    if (t.closed) { rows.push({ id: t.id, s: t.s, a: 'done', r: 'closed in Salesforce' }); return; }
+    var a = String(p['a_' + t.id] || ''), r = String(p['r_' + t.id] || '').trim().slice(0, REASON_MAX);
+    if (!label[a]) return;
+    if (a === 'not' && !r) { missing++; return; }
+    rows.push({ id: t.id, s: t.s, a: a, r: r });
+  });
+  if (missing) return progReplyPage_(person, day, missing + ' marked "Not today" with no reason. Say why for each.');
+  var blocker = String(p.blocker || '').trim().slice(0, REASON_MAX);
+  if (blocker) rows.push({ id: '_blocker', s: 'Anything stopping you', a: 'note', r: blocker });
+  var lock = takeLock_();
+  if (!lock) return progReplyPage_(person, day, 'Another save was going in just then. Press Send again.');
+  try { markStaffWrite_(); progWrite_(person, day, 'progress', rows); } finally { lock.releaseLock(); }
+  try { replyCopy_(person, day, 'Progress', rows, label); } catch (e) {}
+  var n = function (a) { return rows.filter(function (x) { return x.a === a; }).length; };
+  return replyPage_('Thank you. Your progress is in.',
+    'Copied to Mr Rampersad and sales support.',
+    '<div class="card ok">' +
+      '<div class="ln">Closed: <b>' + n('done') + '</b></div><div class="ln">Working on it: <b>' + n('now') + '</b></div>' +
+      '<div class="ln">Later today: <b>' + n('later') + '</b></div><div class="ln">Not today: <b>' + n('not') + '</b></div></div>' +
+    '<p class="sub">Close each one in Salesforce with your note as you finish it.</p>');
+}
+
+/** The answers, to the Branch Manager and sales support. */
+function replyCopy_(person, day, what, rows, label) {
+  var cc = dayStartCc_('');
+  if (!cc.length) return;
+  var body = rows.map(function (x) {
+    var bad = x.a === 'not' || x.a === 'Not done';
+    return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (bad ? MAIL.red : (x.a === 'done' || x.a === 'Done' ? MAIL.green : MAIL.amber)) +
+      ';border-radius:9px;padding:9px 13px;margin-bottom:7px"><div style="font-size:13px"><b>' + esc_(label[x.a] || x.a) + '</b> · ' + esc_(x.s) + '</div>' +
+      (x.r ? '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:2px">' + esc_(x.r) + '</div>' : '') + '</div>';
+  }).join('');
+  var notToday = rows.filter(function (x) { return x.a === 'not' || x.a === 'Not done'; }).length;
+  var word = what === 'Progress' ? 'not today' : 'not done';
+  MailApp.sendEmail({
+    to: cc.join(','),
+    subject: what + ' answered · ' + (person.name || person.staffId) + ' · ' + shortDate_(day) + ' · ' + hhmm_(new Date()) +
+      (notToday ? ' · ' + notToday + ' ' + word : ''),
+    htmlBody: shell_(what + ' answered', (person.name || person.staffId) + ' · ' + prettyDate_(day), body || '<div>No answers given.</div>')
+  });
+}
+
+// ---- before you leave ---------------------------------------------------------
+
+/** The day's tasks for the close-out: what was planned, or, with no plan,
+ *  what was suggested. */
+function hkTasks_(sid, day) {
+  var all = dayTasks_(sid, day), planned = all.filter(function (t) { return t.planned; });
+  return planned.length ? planned : all;
+}
+
+function hkReplyPage_(person, day, error) {
+  var sid = String(person.staffId), tasks = hkTasks_(sid, day);
+  var had = progAnswers_(sid, day, 'leave'), state = closeoutFor_(person, day);
+  var open = tasks.filter(function (t) { return !t.closed; }), done = tasks.filter(function (t) { return t.closed; });
+  var pct = tasks.length ? Math.round(100 * done.length / tasks.length) : null;
+  var hk = state.items.filter(function (r) { return /^hk_/.test(r.id); });
+  var taskRows = open.map(function (t) {
+    return '<div class="task"><div>' + esc_(t.s) + taskTag_(t, day) + '</div>' +
+      '<input type="text" name="r_' + esc_(t.id) + '" required value="' + esc_((had[t.id] || {}).r || '') + '" placeholder="Not done because..., and when it will be"></div>';
+  }).join('');
+  var checks = hk.map(function (r) {
+    var isDone = r.done, isNot = !r.done && r.reason;
+    return '<div class="task"><div><b>' + esc_(r.item) + '</b></div><div class="seg">' +
+      '<label><input type="radio" name="c_' + r.id + '" value="Done"' + (isDone ? ' checked' : '') + ' onchange="sc(this)" required><span>Done</span></label>' +
+      '<label><input type="radio" name="c_' + r.id + '" value="Not done"' + (isNot ? ' checked' : '') + ' onchange="sc(this)"><span>Not done</span></label></div>' +
+      '<input type="text" name="cr_' + r.id + '" value="' + esc_(r.reason || '') + '" placeholder="What is left, and why" style="display:' + (isNot ? 'block' : 'none') + '"></div>';
+  }).join('');
+  var inner = (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    '<div class="card ' + (pct === 100 ? 'ok' : 'bad') + '"><div class="bh">Today\'s tasks</div>' +
+      '<div class="ln">' + (pct == null ? 'No plan today.' : '<b>' + done.length + ' of ' + tasks.length + '</b> ' + (tasks.some(function (t) { return t.planned; }) ? 'planned' : 'suggested') + ' tasks closed (<b>' + pct + '%</b>).') + '</div>' +
+      done.map(function (t) { return '<div class="ln">&#10003; ' + esc_(t.s) + '</div>'; }).join('') + '</div>' +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'hk') +
+    (open.length ? '<div class="card"><div class="bh">Not done · a reason for each</div>' + taskRows + '</div>' : '') +
+    '<div class="card"><div class="bh">The three checks</div>' + checks + '</div>' +
+    '<div class="card"><label class="t" style="border:0"><input type="checkbox" name="out" value="1"><span>Sign me out now</span></label></div>' +
+    '<button type="submit">Close my day</button></form>' +
+    '<script>function sc(i){var r=document.getElementsByName("cr_"+i.name.slice(2))[0];if(r){r.style.display=i.value==="Not done"?"block":"none";r.required=i.value==="Not done"}}</script>';
+  return replyPage_('Before you leave · ' + prettyDate_(day),
+    'Answer here; it goes straight into the close-out. Nothing to open in the tracker.', inner);
+}
+
+function hkReplySave_(person, day, p, all) {
+  var sid = String(person.staffId), tasks = hkTasks_(sid, day).filter(function (t) { return !t.closed; });
+  var state = closeoutFor_(person, day), hk = state.items.filter(function (r) { return /^hk_/.test(r.id); });
+  var rows = [], missing = 0, checks = [];
+  tasks.forEach(function (t) {
+    var r = String(p['r_' + t.id] || '').trim().slice(0, REASON_MAX);
+    if (!r) { missing++; return; }
+    rows.push({ id: t.id, s: t.s, a: 'Not done', r: r });
+  });
+  hk.forEach(function (it) {
+    var v = String(p['c_' + it.id] || ''), r = String(p['cr_' + it.id] || '').trim().slice(0, REASON_MAX);
+    if (v !== 'Done' && v !== 'Not done') { missing++; return; }
+    if (v === 'Not done' && !r) { missing++; return; }
+    checks.push({ id: it.id, s: it.item, a: v, r: r });
+  });
+  if (missing) return hkReplyPage_(person, day, missing + ' answer' + (missing === 1 ? ' is' : 's are') + ' missing. Every planned task not done needs a reason, and every check an answer.');
+  var lock = takeLock_();
+  if (!lock) return hkReplyPage_(person, day, 'Another save was going in just then. Press Close my day again.');
+  try {
+    markStaffWrite_();
+    progWrite_(person, day, 'leave', rows);
+    checks.forEach(function (c) { closeoutWrite_(person, day, c.id, c.a, c.r, 'email'); });
+  } finally { lock.releaseLock(); }
+  var out = '';
+  if (p.out) { try { var so = signOutDay_({}, person); if (so && so.ok) out = so.out; } catch (e) {} }
+  try { replyCopy_(person, day, 'Close-out', checks.concat(rows), { Done: 'Done', 'Not done': 'Not done' }); } catch (e) {}
+  return replyPage_('Your day is closed. Thank you.',
+    'Copied to Mr Rampersad and sales support.' + (out ? ' Signed out at ' + esc_(twelve_(out)) + '.' : ''),
+    '<div class="card ok">' + checks.map(function (c) { return '<div class="ln">' + (c.a === 'Done' ? '&#10003;' : '&#9679;') + ' ' + esc_(c.s) + (c.r ? ' · ' + esc_(c.r) : '') + '</div>'; }).join('') +
+    (rows.length ? '<div class="ln"><b>' + rows.length + '</b> planned task' + (rows.length === 1 ? '' : 's') + ' carried, each with your reason.</div>' : '') + '</div>');
 }
 
 // ---------------------------------------------------------------------------
