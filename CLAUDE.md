@@ -2892,7 +2892,11 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     - Re-cut the film and this page follows.
   - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
     film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
-  - **No access code in it.** The Monday letter carries the sign-in, after staff check it.
+  - **It carries the sign-in** (14 October 2026, at the manager's word: "yes please fix this"). Until then it said
+    "Your sign-in comes with your Monday letter", and three groups welcomed that day had never had one; the first
+    wrote back within half an hour that she could not open her page. The welcome now gives "Open your service page",
+    the list bill and the access code in the same blue box as the Monday letter. It still goes only to a group a staff
+    member checked, to the Contact Person, never to one of our own addresses.
   - **It is signed by the staff member who verified the group** (14 October 2026: "it has me as the branch manager,
     the letter must have verified by the staff who clicked verified"). `gcmWelcome_` signs it with the verifier
     (below), says "I look after your account" when the verifier is the account owner and names the owner otherwise,

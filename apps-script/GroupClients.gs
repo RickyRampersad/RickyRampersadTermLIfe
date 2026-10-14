@@ -2101,7 +2101,9 @@ function gcmRehearse_(b) {
  * One e-mail to each group introducing the new way its account is looked after, with the film (asked for on 13
  * October 2026: "with the video embedded so to greet the employer in a new way of managing their account … test with
  * me first"). No mail app plays a film inside an e-mail, so it is the film's first frame with a play button, hosted,
- * opening the film's own page in one tap. It carries no access code: the Monday letter does, after staff check it.
+ * opening the film's own page in one tap. It carries the group's sign-in, its list bill and access code, so the page
+ * opens the day the welcome arrives (14 October 2026, at the manager's word: three groups welcomed that day had never had
+ * a Monday letter and wrote back that they could not open their page). It goes only to a group a staff member checked.
  * Once per group, ever; from support@ only; the branch manager gets the test first. */
 var GCM_WELCOME = {
   PAGE: 'welcome.html', CARD: 'welcome-card.jpg', LENGTH: '2 min 26 s',
@@ -2127,12 +2129,14 @@ function gcmWelcome_(g, today, signed) {
   var steps = [['Every Monday at 10:00', 'One letter: what is open, what is pending for your employees, what is coming up for them, and what we need from you.'],
     ['Your own page', 'Applications and increases still pending, who turns 65 or retires soon, and every open item with who is handling it. Mark each one Correct, Needs a change or Not ours, and rate our service.'],
     ['We act on it', 'Your answer reaches ' + (carer || 'the person looking after you') + ' the moment you send it, and the next Monday letter shows what changed.']];
-  var p2 = 'Your sign-in comes with your Monday letter.' + (me ? ' I look after your account, and a reply to this e-mail reaches me and our team.'
+  var p2 = 'Your page is open now: sign in with your list bill and your access code below.' + (me ? ' I look after your account, and a reply to this e-mail reaches me and our team.'
     : carer ? ' ' + carer + ' looks after your account, and a reply to this e-mail reaches us both.' : ' A reply to this e-mail reaches us.');
+  var site = GCM.SITE + 'client.html', bill = g.bills[0] || '', code = g.code || '';
+  var signIn = ['Your page: ' + site, 'Sign in with your list bill (' + bill + ') and your access code: ' + code];
   var text = [greet, '', p1, '', 'Watch how it works (' + GCM_WELCOME.LENGTH + '): ' + page, '']
     .concat(yearLine ? ['Your year with us so far: ' + yearLine, ''] : [])
     .concat(steps.map(function (s, i) { return (i + 1) + '. ' + s[0] + ': ' + s[1]; }))
-    .concat(['', p2, '', 'Warm regards,', v.name, 'Group client service, Ricky Rampersad Branch', 'Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461', vline]).join('\n');
+    .concat(['', p2].concat(signIn).concat(['', 'Warm regards,', v.name, 'Group client service, Ricky Rampersad Branch', 'Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461', vline])).join('\n');
   var tile = function (n, label) {
     return '<td width="25%" style="padding:12px 6px;text-align:center;border:1px solid #DCE3EC;background:#F4F7FA"><div style="font:700 22px/1.1 Arial,sans-serif;color:#13408F">' + E(String(n)) +
       '</div><div style="font:12px/1.35 Arial,sans-serif;color:#4B586C;margin-top:4px">' + E(label) + '</div></td>'; };
@@ -2160,7 +2164,10 @@ function gcmWelcome_(g, today, signed) {
         '<td style="padding:12px 16px 13px 10px;font:15px/1.5 Arial,sans-serif;' + font + ';color:#142033"><b>' + E(s[0]) + '</b><br><span style="color:#4B586C">' + E(s[1]) + '</span></td></tr></table>';
     }).join('') +
     '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 14px"><tr><td bgcolor="#1D5BC4" style="background:#1D5BC4;border-radius:8px"><a href="' + page + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Watch how it works</a></td></tr></table>' +
-    '<p style="margin:0 0 18px">' + E(p2) + '</p>' +
+    '<p style="margin:0 0 10px">' + E(p2) + '</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px"><tr><td bgcolor="#13408F" style="background:#13408F;border-radius:8px"><a href="' + site + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B8CEF4;background:#EBF2FD;margin:0 0 18px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#142033">' +
+    'List bill: <b>' + E(bill) + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(code) + '</b></td></tr></table>' +
     '<p style="margin:0;border-top:1px solid #E2E7EF;padding-top:14px">Warm regards,<br><b>' + E(v.name) + '</b><br>Group client service, Ricky Rampersad Branch<br>' +
     '<span style="color:#4B586C">Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p>' +
     gcmVerifiedHtml_(vline) + tLegal_(null) + '</td></tr></table></div>';
