@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-14f';
+var SCRIPT_VERSION = '2026-10-14g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2534,7 +2534,7 @@ function sendCheckpoint(dateOpt) {
   var to = managerEmails_();
   if (!to.length) throw new Error('No manager email configured.');
   MailApp.sendEmail({
-    to: to.join(','),
+    to: to.join(','), cc: salesSupportCc_(to.join(',')),
     subject: 'RRB 3pm Checkpoint · ' + shortDate_(r.date) + ' · ' +
              r.reported + '/' + r.headcount + ' logged',
     htmlBody: checkpointHtml_(r)
@@ -2667,7 +2667,7 @@ function sendWeekly(dateOpt) {
   var to = managerEmails_();
   if (!to.length) throw new Error('No manager email configured.');
   MailApp.sendEmail({
-    to: to.join(','),
+    to: to.join(','), cc: salesSupportCc_(to.join(',')),
     subject: 'RRB Weekly Summary · ' + shortDate_(r.weekStart) + ' – ' + shortDate_(r.weekEnd) +
              ' · ' + r.totals.closed + ' closed, ' + r.totals.valueAdds + ' value adds',
     htmlBody: weeklyHtml_(r)
@@ -2916,7 +2916,7 @@ function emailBlockReceipt_(staffId, date, blockId, d, payload, done) {
     '</div>';
 
   MailApp.sendEmail({
-    to: to,
+    to: to, cc: salesSupportCc_(to),
     subject: 'Your ' + blockLabel_(blockId) + ' report · ' + shortDate_(date) +
              ' · ' + done.length + '/4 blocks in',
     htmlBody: shell_(blockLabel_(blockId) + ' logged', nameFor_(staffId) + ' · ' + prettyDate_(date), body)
@@ -3048,14 +3048,20 @@ var DAYSTART_LIST_MAX = 6;
 var DAYSTART_REPLAN_MIN = 30;
 var PLANNER_URL = 'https://rickyrampersadbranch.com/kpi/';
 
-/* Pawan's day is the Branch Manager's own errands and family as much as the
-   branch's, so his mails and answers go to the Branch Manager only, never to
-   sales support. */
-var PRIVATE_DESKS = ['pawan'];
+/* Sales support is copied on everything the day mail sends, Pawan's included
+   ("ensure sales support is copied", Ricky, 14 October 2026). DAYSTART_CC
+   adds addresses; it can never take sales support off. PRIVATE_DESKS is
+   kept, empty, so a desk can be made Branch-Manager-only again by name. */
+var PRIVATE_DESKS = [];
+
+/** Sales support, for the mails that are built for the managers alone. */
+function salesSupportCc_(to) {
+  return normEmail_(to || '').indexOf(normEmail_(DAYSTART_CC_DEFAULT)) > -1 ? undefined : DAYSTART_CC_DEFAULT;
+}
 
 function dayStartCc_(to, sid) {
   var p = PropertiesService.getScriptProperties().getProperty('DAYSTART_CC');
-  var extra = (p && p.trim()) ? p.split(',') : [DAYSTART_CC_DEFAULT];
+  var extra = [DAYSTART_CC_DEFAULT].concat((p && p.trim()) ? p.split(',') : []);
   var priv = PRIVATE_DESKS.some(function (d) {
     if (sid && String(sid) === d) return true;
     var e = ''; try { e = emailFor_(d); } catch (err) {}
@@ -4746,7 +4752,7 @@ function planReplySave_(person, day, p, all) {
   try { intel = intelFor_(sid, day); } catch (e) {}
   var chk = planCheck_(sid, day, book, intel, nowM);
   return replyPage_(chk.ok ? 'Plan saved. It holds up.' : 'Plan saved, but it does not hold up yet.',
-    'A "Plan received" e-mail is on its way to you, copied to Mr Rampersad' + (PRIVATE_DESKS.indexOf(sid) > -1 ? '' : ' and sales support') + '.' +
+    'A "Plan received" e-mail is on its way to you, copied to Mr Rampersad and sales support.' +
       (si ? ' ' + (si.first ? 'Signed in at ' : 'Signed in since ') + esc_(twelve_(si.at)) + '.' : ''),
     (made.length || failed.length ? '<div class="card ' + (failed.length ? 'bad' : 'ok') + '"><div class="bh">From your scrub</div>' +
       made.map(function (l) { return '<div class="ln">&#10003; Task created: ' + esc_(l) + '</div>'; }).join('') +
@@ -5238,7 +5244,7 @@ function undoReplySave_(person, day, p, all) {
 //  His errands live on his Salesforce calendar (Events he owns). His mails
 //  read that calendar, his general insurance expiring in the next fortnight
 //  (Risk_Details__c, by To__c) and his tasks, and go to the Branch Manager
-//  only, never to sales support: half of the calendar is family.
+//  and sales support, like everybody else's.
 // ---------------------------------------------------------------------------
 
 var PAWAN_GI_DAYS = 14;
@@ -5381,7 +5387,7 @@ function errandReplyPage_(person, day, c, error) {
     '<button type="submit">' + (c === 'leave' ? 'Close my day' : 'Send') + '</button></form>' +
     '<script>function sh(i){var r=document.getElementsByName("r_"+i.name.slice(2))[0];if(r){var n=i.value==="move"||i.value==="not";r.style.display=n?"block":"none";r.required=n}}</script>';
   return replyPage_(c === 'leave' ? 'Before you leave · ' + prettyDate_(day) : 'Your errands · ' + prettyDate_(day),
-    'Answer each one. It goes to Mr Rampersad only.', inner);
+    'Answer each one. It goes to Mr Rampersad and sales support.', inner);
 }
 
 function errandReplySave_(person, day, p, all) {
@@ -5516,7 +5522,8 @@ function sendInnovationBoard_(day) {
         : '<span style="color:' + MAIL.red + ';font-weight:700">No innovation task open.</span>' + (x.lastClosed ? ' <span style="color:' + MAIL.muted + '">Last closed ' + esc_(shortDate_(x.lastClosed)) + ': ' + esc_(x.lastSubject) + '</span>' : ' <span style="color:' + MAIL.muted + '">None on record.</span>')) + '</div>' +
       '<div style="font-size:12.5px;color:' + (ans ? MAIL.ink : MAIL.red) + ';margin-top:4px">Thursday\'s hour: ' + (ans ? '"' + esc_(ans) + '"' : 'nothing said') + '</div></div>';
   }).join('');
-  MailApp.sendEmail({ to: (cc.length ? cc : [kamla]).join(','), cc: cc.length && kamla ? kamla : undefined,
+  var ccList = [kamla, DAYSTART_CC_DEFAULT].filter(function (e, i, a) { return e && a.indexOf(e) === i; });
+  MailApp.sendEmail({ to: (cc.length ? cc : [kamla]).join(','), cc: ccList.join(',') || undefined,
     subject: 'Innovation board · ' + shortDate_(day) + ' · for the branch meeting',
     htmlBody: shell_('Innovation board', prettyDate_(day) + ' · before the branch meeting',
       '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Each desk\'s innovation, how long since it moved, and what they said their Thursday hour moved.</div>' + rows) });
@@ -7552,7 +7559,7 @@ function sendBranchPulse(dateOpt) {
   var words = text.split(/\s+/).filter(Boolean).length;
 
   MailApp.sendEmail({
-    to: managerEmails_().join(','),
+    to: managerEmails_().join(','), cc: salesSupportCc_(managerEmails_().join(',')),
     subject: 'For the branch group · ' + shortDate_(r.date) + ' · ' + words + ' words',
     htmlBody: shell_('Ready for the group', prettyDate_(r.date) + ' · two o’clock',
       '<a href="' + esc_(pulseWaLink_(text)) + '" ' +
@@ -7958,7 +7965,7 @@ function sendCloseout(dateOpt) {
     if (!state.of) return;                       // an empty list is not worth an e-mail
     if (state.complete) { clear.push(p.name); return; }
     MailApp.sendEmail({
-      to: to,
+      to: to, cc: dayStartCc_(to).join(',') || undefined,
       subject: 'Before you leave · ' + shortDate_(day) + ' · ' + state.left +
                (state.left === 1 ? ' thing left' : ' things left'),
       htmlBody: closeoutMailHtml_(state)
