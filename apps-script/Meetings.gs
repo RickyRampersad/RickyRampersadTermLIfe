@@ -1886,11 +1886,16 @@ function apiReorderAgenda_(body) {
 /*
  *  WHAT THIS IS, AND WHAT IT DELIBERATELY IS NOT.
  *
- *  The branch meets on a Wednesday morning. This sends each person one
- *  short note on each working morning that counts down to it and asks
- *  for the one thing only they can bring. By Wednesday the meeting has
- *  been built by everybody rather than assembled by the chair on the
- *  night before.
+ *  One short note each working morning carrying a person's OWN DATA:
+ *  their cases on the week that is running, their measures against
+ *  target, what they owe Wednesday, and the same ten-second ask. The
+ *  branch manager set the shape on 13 October 2026 — an agent checks
+ *  their own data once a day, and what the data says is what they bring
+ *  to Wednesday. So by Wednesday the meeting has been built by
+ *  everybody rather than assembled by the chair the night before.
+ *
+ *  The week runs Sunday to Sunday (see chaseWeek_), the figures freeze
+ *  on Sunday evening, and Wednesday reports on a week that has closed.
  *
  *  IT IS NOT A DAILY PRODUCTION CHASE, and that is a design decision
  *  taken against the evidence rather than a preference. Chung,
@@ -1979,7 +1984,52 @@ function dailyNoteFor_(person, ctx) {
 
   var lines = [], must = [], subjectBits = [];
 
-  // 1. Your item on Wednesday.
+  /*  1. THEIR OWN LIST, FIRST.
+   *
+   *  Reframed 13 October 2026. The note opened on the countdown to
+   *  Wednesday and carried the figures underneath, which made it a
+   *  meeting reminder with data attached — "You are not presenting on
+   *  Wednesday" above three KPIs, four mornings out of five. The branch
+   *  manager: "agents are supposed to once during the day just check
+   *  with the data that is being driven — if there is no fact find, if
+   *  their goals are aligned it's checked, if their premium due or
+   *  anything at all it is checked — to build something to talk about
+   *  that will motivate in our Wednesday meeting."
+   *
+   *  So the data is the note. Wednesday is the footer: it is where the
+   *  data gets argued, not the reason the note arrives.             */
+  var cs = ctx.cases || { all: 0, open: 0, kinds: [], next: [], link: '', weekLabel: '' };
+  var caseHtml = '';
+  if (cs.all) {
+    if (cs.open) subjectBits.push(cs.open + ' to answer');
+    caseHtml =
+      '<p style="margin:0 0 2px;font-size:11px;letter-spacing:.12em;' +
+        'text-transform:uppercase;color:#8aa3bb">Your list' +
+        (cs.weekLabel ? ', week of ' + esc_(cs.weekLabel) : '') + '</p>' +
+      '<p style="margin:0 0 8px;font-size:14px">' +
+        (cs.open ? '<b>' + cs.open + '</b> of ' + cs.all + ' still to answer.'
+                 : 'All ' + cs.all + ' answered.') +
+        (cs.kinds.length
+          ? ' <span style="color:#49637d">' +
+            cs.kinds.map(function (k) { return esc_(k); }).join(' &middot; ') + '</span>'
+          : '') + '</p>' +
+      (cs.next.length
+        ? '<ul style="margin:0 0 10px;padding-left:18px;font-size:13px;color:#49637d">' +
+          cs.next.map(function (c) {
+            return '<li style="margin-bottom:3px"><b style="color:#0b2238">' +
+              esc_(c.ref) + '</b> &mdash; ' + esc_(c.label) +
+              (c.detail ? '. ' + esc_(c.detail) : '') + '</li>';
+          }).join('') + '</ul>'
+        : '') +
+      (cs.link
+        ? '<p style="margin:0 0 16px"><a href="' + esc_(cs.link) + '" ' +
+          'style="background:#efc24b;color:#0b2238;text-decoration:none;padding:9px 16px;' +
+          'border-radius:9px;font-weight:700;font-size:13px;display:inline-block">' +
+          'Answer them</a></p>'
+        : '');
+  }
+
+  // 2. Your item on Wednesday.
   (ctx.myItems || []).forEach(function (it) {
     if (it.required && !it.ready) {
       must.push('Your material for <b>' + esc_(it.title) + '</b> is not in yet.');
@@ -1995,7 +2045,7 @@ function dailyNoteFor_(person, ctx) {
     lines.push('You are not presenting on Wednesday.');
   }
 
-  // 2. Your actions.
+  // 3. Your actions.
   if (ctx.overdue && ctx.overdue.length) {
     must.push('<b>' + ctx.overdue.length + '</b> of your action items ' +
       (ctx.overdue.length === 1 ? 'is' : 'are') + ' past the date: ' +
@@ -2009,7 +2059,7 @@ function dailyNoteFor_(person, ctx) {
     lines.push('No action items against your name.');
   }
 
-  // 3. Your own measures. No league table, no one else's figures.
+  // 4. Your own measures. No league table, no one else's figures.
   var kpi = ctx.kpi || [];
   var kpiHtml = '';
   if (kpi.length) {
@@ -2028,27 +2078,38 @@ function dailyNoteFor_(person, ctx) {
       }).join('') + '</table>';
   }
 
-  // 4. The ask. The same one every day, because it has to be a habit.
+  // 5. The ask. The same one every day, because it has to be a habit.
   var ask = ctx.contributedThisWeek
     ? 'You have already put something on Wednesday&rsquo;s agenda. Add another if it matters.'
     : '<b>Add one thing to Wednesday&rsquo;s agenda</b> — a question, a concern, or something that worked. '
       + 'It takes ten seconds and it is the difference between a meeting you attend and one you are in.';
 
-  var subject = days === 0
-    ? 'Branch meeting this morning' + (subjectBits.length ? ' — ' + subjectBits[0] : '')
-    : (subjectBits.length
-        ? 'Wednesday ' + when + ': ' + subjectBits.join(', ')
-        : 'Wednesday ' + when);
+  /*  Goals against target: the other thing the daily check was asked to
+   *  answer. A measure with no target set says nothing either way. */
+  var shortOf = kpi.filter(function (k) { return k.meets === false; }).length;
+  if (shortOf) subjectBits.push(shortOf + (shortOf === 1 ? ' goal short' : ' goals short'));
+
+  /*  The subject states the person's own data. Wednesday is named only
+   *  on the day and the day before, which is when it changes what
+   *  somebody does that morning — a countdown in every subject line for
+   *  five days is a countdown people stop reading. */
+  var tail = days === 0 ? ' \u00b7 meeting this morning'
+           : days === 1 ? ' \u00b7 Wednesday tomorrow'
+           : '';
+  var head = subjectBits.length
+    ? subjectBits.join(' \u00b7 ')
+    : (cs.all ? 'Your list is clear' : 'Nothing outstanding');
+  var subject = head + tail;
 
   var html =
     '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:560px;' +
       'color:#0b2238;line-height:1.6">' +
     '<p style="margin:0 0 4px;font-size:13px;color:#8aa3bb">' + esc_(MEET.BRANCH) + '</p>' +
     '<h2 style="margin:0 0 2px;font-size:19px">Good morning, ' + esc_(firstName_(person.name)) + '.</h2>' +
-    '<p style="margin:0 0 14px;font-size:14px;color:#49637d">' +
-      (m ? esc_(str_(m['Title']) || 'Branch meeting') + ' is ' + when +
-           (str_(m['Start']) ? ', ' + esc_(fmtTime_(atTime_(m['Date'], m['Start']))) : '') + '.'
-         : 'The branch meeting is ' + when + '.') + '</p>' +
+    '<p style="margin:0 0 16px;font-size:13.5px;color:#49637d">' +
+      'Your own figures, as the branch sheets had them this morning. ' +
+      'Check them, and bring what they tell you to Wednesday.</p>' +
+    caseHtml +
     (must.length
       ? '<div style="background:#fff5e6;border:1px solid #f0c674;border-radius:10px;padding:11px 13px;margin:0 0 14px">' +
         '<p style="margin:0 0 6px;font-weight:700;font-size:13px">Before Wednesday</p>' +
@@ -2068,13 +2129,18 @@ function dailyNoteFor_(person, ctx) {
     '<p style="margin:0 0 18px"><a href="' + esc_(ctx.appUrl || 'https://rickyrampersadbranch.com/meetings/') +
       '" style="background:#0b2238;color:#efc24b;text-decoration:none;padding:10px 18px;' +
       'border-radius:9px;font-weight:700;font-size:13.5px;display:inline-block">Open the meeting</a></p>' +
+    '<p style="margin:0 0 8px;font-size:12.5px;color:#49637d">' +
+      (m ? esc_(str_(m['Title']) || 'Branch meeting') + ' is ' + when +
+           (str_(m['Start']) ? ', ' + esc_(fmtTime_(atTime_(m['Date'], m['Start']))) : '') + '.'
+         : 'The branch meeting is ' + when + '.') + '</p>' +
     '<p style="margin:0;font-size:11.5px;color:#8aa3bb">Signing in on Wednesday is the attendance register. ' +
       'If you do not sign in you are marked absent; if you cannot come, log it and pick a reason.</p>' +
     '<p style="margin:14px 0 0;font-size:11px;color:#a8bccf">Internal — Ricky Rampersad Branch. ' +
       'Your own figures only; nobody else receives yours.</p>' +
     '</div>';
 
-  return { subject: subject, html: html, must: must.length, hasKpi: kpi.length > 0 };
+  return { subject: subject, html: html, must: must.length,
+           hasKpi: kpi.length > 0, openCases: cs.open };
 }
 
 function firstName_(n) { return str_(n).split(/\s+/)[0] || str_(n); }
@@ -2115,10 +2181,20 @@ function dailyNoteContext_(now) {
     a._clock = clock ? Utilities.formatDate(clock, tz_(), 'h:mm a') : '';
     if (clock) clock = new Date(clock.getTime() + (num_(a['Allotted (min)']) || 0) * 60000);
   });
+  /*  The week that is running, and every case on it. The Monday brief
+   *  sends a person their list once; the daily note keeps it in front of
+   *  them until it is answered, which is what makes the note a daily
+   *  check of their own data rather than a Monday one. */
+  var week = chaseWeek_(now);
+  var execUrl = '';
+  try { execUrl = ScriptApp.getService().getUrl() || ''; } catch (e) { /* not deployed */ }
+
   return {
     now: now, meeting: m, target: target,
     daysToMeeting: Math.max(0, workingDaysBetween_(now, target)),
     agenda: agenda, uploads: uploads, actions: actions, contribs: contribs,
+    week: week, weekLabel: weekLabel_(week), execUrl: execUrl,
+    chases: chaseRows_().filter(function (r) { return str_(r['Week']) === week; }),
     appUrl: 'https://rickyrampersadbranch.com/meetings/'
   };
 }
@@ -2140,10 +2216,43 @@ function noteContextFor_(person, ctx) {
       (person.name && owner.indexOf(low_(person.name)) > -1));
   }).filter(function (x) { return low_(x['Status']) !== 'complete'; });
   var today = new Date(ctx.now); today.setHours(0,0,0,0);
+
+  /*  Their cases on the week that is running, grouped by kind so the
+   *  note can say "3 premium in arrears, 1 maturing soon" rather than
+   *  listing nine rows nobody reads on a phone. */
+  var mineCases = (ctx.chases || []).filter(function (r) {
+    return low_(r['Email']) === person.email;
+  });
+  var openCases = mineCases.filter(function (r) { return !str_(r['Answered']); });
+  var kindCount = {};
+  openCases.forEach(function (r) {
+    var k = CHASE.KINDS[low_(r['Kind'])];
+    var label = k ? k.label : (str_(r['Kind']) || 'Other');
+    kindCount[label] = (kindCount[label] || 0) + 1;
+  });
+
   return {
     meeting: ctx.meeting,
     daysToMeeting: ctx.daysToMeeting,
     appUrl: ctx.appUrl,
+    cases: {
+      all: mineCases.length,
+      open: openCases.length,
+      weekLabel: str_(ctx.weekLabel),
+      kinds: Object.keys(kindCount).sort().map(function (l) {
+        return kindCount[l] + ' ' + l.toLowerCase();
+      }),
+      next: openCases.slice(0, 4).map(function (r) {
+        var k = CHASE.KINDS[low_(r['Kind'])];
+        return { ref: str_(r['Ref']), label: k ? k.label : str_(r['Kind']),
+                 detail: str_(r['Detail']) };
+      }),
+      /*  The answer page takes one token and walks the rest, so the
+       *  button only ever needs the first unanswered case. */
+      link: (ctx.execUrl && openCases.length)
+        ? ctx.execUrl + '?action=chase&t=' + encodeURIComponent(str_(openCases[0]['Token']))
+        : ''
+    },
     myItems: mine,
     openActions: mineActions.map(function (x) { return { item: str_(x['Item']) }; }),
     overdue: mineActions.filter(function (x) {
@@ -2176,7 +2285,7 @@ function dailyMeetingNote() {
     var note = dailyNoteFor_(p, per);
     // Nothing owed, nothing open, no measures, and the meeting is still
     // days away: say nothing rather than train them to ignore it.
-    if (!note.must && !note.hasKpi && per.daysToMeeting > 1 &&
+    if (!note.must && !note.hasKpi && !note.openCases && per.daysToMeeting > 1 &&
         !per.myItems.length && !per.openActions.length) { quiet++; return; }
     try {
       MailApp.sendEmail({ to: p.email, subject: note.subject, htmlBody: note.html,
@@ -2446,13 +2555,26 @@ function apiSeedAgenda_(body) {
   var me = requireStaff_(body.token);
   var m = findMeeting_(body.meetingId);
   if (!m) return { ok: false, error: 'That meeting no longer exists.' };
+  var out = seedAgendaInto_(m, me.email);
+  if (!out.ok) return out;
+  log_('seed-agenda', me.name, me.role, str_(m['Ref']), out.added + ' standing items');
+  return out;
+}
 
+/*  THE AGENDA, WRITTEN FROM THE ROTA.
+ *
+ *  Shared by the app's "seed agenda" button and by the Wednesday-morning
+ *  builder, so the agenda a chair opens is the same one either way. It
+ *  was only ever reachable from the button, which meant the one thing
+ *  the branch was told happens by itself at seven on a Wednesday was in
+ *  fact somebody remembering to press it. */
+function seedAgendaInto_(m, byEmail) {
   var existing = readTab_(MEET.TAB_AGENDA).filter(function (a) {
     return str_(a['Meeting ID']) === str_(m['ID']);
   });
   if (existing.length) return { ok: false, error: 'This meeting already has an agenda.' };
 
-  var chair = str_(m['Chair']) || me.email;
+  var chair = str_(m['Chair']) || byEmail;
 
   /*  The agenda is built from the Rota tab, so a new meeting arrives
    *  already owned by other people. The hard-coded list that used to
@@ -2488,11 +2610,10 @@ function apiSeedAgenda_(body) {
       'Presenter Name': item.pName, 'Presenter Email': item.pEmail,
       'Allotted (min)': item.m, 'Visibility': item.v,
       'Materials Required': item.v === 'staff' ? 'Y' : 'N',
-      'Ready': 'N', 'Status': 'Planned', 'Created By': me.email, 'Created': new Date()
+      'Ready': 'N', 'Status': 'Planned', 'Created By': byEmail, 'Created': new Date()
     });
   });
 
-  log_('seed-agenda', me.name, me.role, str_(m['Ref']), standing.length + ' standing items');
   return { ok: true, added: standing.length };
 }
 
@@ -4462,7 +4583,7 @@ var ACTIVITY = {
 
   /*  Who is asked. Staff keep their own KPI block and are not asked
    *  these questions yet — add 'staff' here when that changes. */
-  SEND_TO: ['agent', 'manager'],
+  SEND_TO: ['agent', 'manager', 'staff'],
 
   /*  A person may answer a block until this many hours after it
    *  opened. After that the row stands as it is, so a week's figures
@@ -4958,11 +5079,45 @@ var CHASE = {
 
 function chaseRows_() { return readTab_(CHASE.TAB); }
 
+/*  THE BRANCH'S WEEK RUNS SUNDAY TO SUNDAY.
+ *
+ *  Decided 13 October 2026: "the data daily for the agents, it should be
+ *  from Sundays to Sundays to build a meeting report on Wednesday." It
+ *  ran Monday to Sunday before that, which meant the brief, the wall and
+ *  Wednesday's report each measured a different seven days from the one
+ *  the branch manager meant.
+ *
+ *  A week is stamped with its own Sunday. 0 is Sunday, so the arithmetic
+ *  is the day number itself. */
 function chaseWeek_(d) {
   d = d || new Date();
-  var mon = new Date(d.getTime());
-  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
-  return Utilities.formatDate(mon, tz_(), 'yyyy-MM-dd');
+  var sun = new Date(d.getTime());
+  sun.setDate(sun.getDate() - sun.getDay());
+  return Utilities.formatDate(sun, tz_(), 'yyyy-MM-dd');
+}
+
+/*  Dates are handled as year/month/day here rather than through asDate_,
+ *  which parses 'yyyy-MM-dd' as UTC midnight and lands on the day before
+ *  once it is formatted back in a UTC-4 timezone. */
+function weekParts_(week) {
+  var p = str_(week).split('-');
+  if (p.length !== 3) return null;
+  var d = new Date(num_(p[0]), num_(p[1]) - 1, num_(p[2]));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/** The week that had already closed when the given one opened. */
+function weekBefore_(week) {
+  var d = weekParts_(week);
+  if (!d) return '';
+  d.setDate(d.getDate() - 7);
+  return Utilities.formatDate(d, tz_(), 'yyyy-MM-dd');
+}
+
+/** 'Sun 11 Oct' — what a person reads, not the stamp. */
+function weekLabel_(week) {
+  var d = weekParts_(week);
+  return d ? Utilities.formatDate(d, tz_(), 'd MMM') : str_(week);
 }
 
 function findChaseByToken_(t) {
@@ -6304,6 +6459,164 @@ function json_(obj) {
 
 /* ======================== menu ======================== */
 
+/* ============== THE WEEK: SUNDAY CLOSES IT, WEDNESDAY READS IT ==============
+ *
+ *  Three things were true at once on 13 October 2026, and none of them was
+ *  what the branch had been told:
+ *
+ *    - the week ran Monday to Sunday, so the brief, the wall and
+ *      Wednesday's report each measured a different seven days;
+ *    - nothing closed a week, so last week's figures kept moving
+ *      underneath the report that had already quoted them;
+ *    - nothing built Wednesday's agenda. Every film and every page says
+ *      the builder reads it all at seven on a Wednesday. In fact a human
+ *      pressed "seed agenda" in the app, and on a morning nobody pressed
+ *      it the chair opened an empty meeting.
+ *
+ *  Two triggers close that. Sunday evening freezes the week that has run
+ *  and opens the next one from the Branch Portfolio. Wednesday morning
+ *  writes the agenda from the standing rota before anybody is awake.
+ * ========================================================================= */
+
+var CYCLE = {
+  CLOSE_HOUR: 20,          /* Sunday evening. The week is over and nobody is filing. */
+  BUILD_HOUR: 7,           /* Wednesday, two hours before the room sits.            */
+  START: '09:00',
+  END:   '10:30'           /* ninety minutes — the rota is built to fit it          */
+};
+
+/** Same calendar day in the branch's timezone. */
+function sameDay_(a, b) {
+  var x = asDate_(a), y = asDate_(b);
+  if (!x || !y) return false;
+  var f = function (d) { return Utilities.formatDate(d, tz_(), 'yyyy-MM-dd'); };
+  return f(x) === f(y);
+}
+
+/*  SUNDAY EVENING.
+ *
+ *  Run at eight on a Sunday, chaseWeek_ already returns TODAY: that Sunday
+ *  is the stamp of the week now starting. So the week that has just
+ *  finished is the one before it.                                        */
+function weekClose() {
+  var now = new Date();
+  var opening = chaseWeek_(now);
+  var closed  = weekBefore_(opening);
+
+  /*  1. FREEZE. chaseStats_ reads the tab live, so the same call a
+   *  fortnight from now answers differently once somebody back-fills an
+   *  outcome. The Log row is the week as it stood when it ended, which is
+   *  what Wednesday is entitled to report.                              */
+  var frozen = '';
+  try {
+    var st = chaseStats_(closed);
+    frozen = st.sent + ' sent, ' + st.answered + ' answered, ' + st.contacted + ' contacted' +
+             (st.silent.length ? '; answered nothing: ' + st.silent.join(', ') : '');
+    log_('week-closed', 'system', 'manager', closed, frozen);
+  } catch (err) {
+    frozen = 'could not freeze: ' + err;
+    log_('week-closed', 'system', 'manager', closed, frozen);
+  }
+
+  /*  2. OPEN THE NEXT ONE. seedChasesFromWatchlists stamps with
+   *  chaseWeek_(), which is the Sunday that has just begun, so Monday's
+   *  brief sends a list built tonight rather than one built last week.  */
+  var built = '';
+  try {
+    var out = seedChasesFromWatchlists();
+    built = out.ok ? (out.added + ' case(s) to ' + out.agents + ' agent(s)')
+                   : ('not built: ' + str_(out.why));
+  } catch (err) {
+    built = 'not built: ' + err;
+  }
+  log_('week-opened', 'system', 'manager', opening, built);
+
+  var msg = 'Week to ' + closed + ' closed — ' + frozen + '. ' +
+            'Week from ' + opening + ' opened — ' + built + '.';
+  Logger.log(msg);
+  return msg;
+}
+
+/*  WEDNESDAY MORNING. The meeting row first, then the agenda off the rota,
+ *  so the chair opens something already owned, timed and sequenced.
+ *
+ *  It never touches a meeting that already has an agenda: a chair who
+ *  built Wednesday by hand on Tuesday night keeps it.                    */
+function buildWednesday() {
+  var now = new Date();
+  if (now.getDay() !== MEET.MEETING_DAY) {
+    Logger.log('Not the meeting day — nothing built.');
+    return 'Not the meeting day.';
+  }
+
+  var m = meetingRows_().filter(function (r) {
+    var st = low_(r['Status']);
+    return st !== 'cancelled' && sameDay_(r['Date'], now);
+  })[0] || null;
+
+  var made = false;
+  if (!m) {
+    /*  Nobody created it. The branch meets every Wednesday whether or not
+     *  somebody remembered to open the app, so the row is written here
+     *  rather than leaving the morning with no meeting to sign in to. */
+    var when = new Date(now.getTime()); when.setHours(0, 0, 0, 0);
+    var id = uid_('MTG');
+    appendRow_(MEET.TAB_MEETINGS, {
+      'ID': id, 'Ref': 'RRB-' + Utilities.formatDate(when, tz_(), 'yyyy-MM-dd'),
+      'Type': 'Branch Meeting', 'Title': 'Branch Meeting',
+      'Subtitle': 'Week of ' + weekLabel_(chaseWeek_(now)),
+      'Week': weekOf_(when), 'Date': when,
+      'Start': CYCLE.START, 'End': CYCLE.END,
+      'Format': 'In-person', 'Location': MEET.BRANCH,
+      'Chair': MEET.ADMIN_EMAIL, 'Status': 'scheduled',
+      'Late After (min)': MEET.LATE_AFTER_MINUTES, 'Scope': 'branch',
+      'Created By': 'system', 'Created': new Date(), 'Updated': new Date()
+    });
+    m = findMeeting_(id);
+    made = true;
+    if (!m) {
+      log_('build-wednesday', 'system', 'manager', '', 'wrote the meeting row but could not read it back');
+      return 'Wrote the meeting row but could not read it back.';
+    }
+  }
+
+  var out = seedAgendaInto_(m, MEET.ADMIN_EMAIL);
+  var note = (made ? 'meeting created; ' : 'meeting already there; ') +
+             (out.ok ? out.added + ' items written from the rota' : str_(out.error));
+  log_('build-wednesday', 'system', 'manager', str_(m['Ref']), note);
+  Logger.log(note);
+  return note;
+}
+
+/** Install both. Safe to run again — each clears its own first, so
+ *  pressing the menu item twice never doubles a trigger. */
+function installWeekCycle() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    var f = t.getHandlerFunction();
+    if (f === 'weekClose' || f === 'buildWednesday') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('weekClose').timeBased()
+    .onWeekDay(ScriptApp.WeekDay.SUNDAY).atHour(CYCLE.CLOSE_HOUR).create();
+  ScriptApp.newTrigger('buildWednesday').timeBased()
+    .onWeekDay(ScriptApp.WeekDay.WEDNESDAY).atHour(CYCLE.BUILD_HOUR).create();
+  return 'The week now closes on Sunday at ' + CYCLE.CLOSE_HOUR + ':00 and Wednesday’s ' +
+         'agenda is built at ' + CYCLE.BUILD_HOUR + ':00.';
+}
+
+function installWeekCycleFromMenu() {
+  var msg = installWeekCycle();
+  SpreadsheetApp.getUi().alert(msg + '\n\nApps Script fires a time trigger inside the hour, ' +
+    'not on the minute.');
+}
+
+function weekCloseFromMenu() {
+  SpreadsheetApp.getUi().alert(weekClose());
+}
+
+function buildWednesdayFromMenu() {
+  SpreadsheetApp.getUi().alert(buildWednesday());
+}
+
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Branch Meetings')
     .addItem('⚙️  Set up / repair tabs', 'setupMeetingsFromMenu')
@@ -6322,6 +6635,9 @@ function onOpen() {
     .addItem('⏱  Turn on the daily time blocks', 'installActivityChecksFromMenu')
     .addItem('👁  Send me a time-block check to read', 'previewActivityCheck')
     .addItem('📋  Turn on the Monday brief', 'installMondayBriefFromMenu')
+    .addItem('🔄  Turn on the week cycle (Sunday close, Wednesday build)', 'installWeekCycleFromMenu')
+    .addItem('🔒  Close the week now', 'weekCloseFromMenu')
+    .addItem('🗓  Build Wednesday\u2019s agenda now', 'buildWednesdayFromMenu')
     .addItem('📊  Connect the Branch Portfolio', 'connectPortfolioSheet')
     .addItem('📋  Build Monday\u2019s brief now (sends nothing)', 'seedChasesFromMenu')
     .addItem('🤝  Connect the service sheets', 'setServiceSheets')
