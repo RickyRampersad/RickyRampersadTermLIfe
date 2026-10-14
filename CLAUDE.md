@@ -2873,14 +2873,16 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     nobody has verified waits; the Group Sends Staff column is the verifier.
   - **The branch manager gets the test first**: `gcmWelcomeTest` (editor Run) sends him one welcome as a group would
     get it, marked TEST, with who would and would not get it. `gcmWelcomeNow` then sends it at once (chosen the same
-    evening, to all eleven ready groups), or `gcmWelcomeAt6` by itself at 18:00 (today if before six, else tomorrow);
-    `gcmWelcomeCancel` stops a scheduled one. From support@ only; without Microsoft 365 nothing goes.
+    evening, to all eleven ready groups), or `gcmWelcomeAt9` / `gcmWelcomeAt6` by itself at 9:00 / 18:00 (today if
+    the hour has not come, else tomorrow; asked for on 13 October: "triggered tomorrow at 9am but wait until I give
+    instructions", so nothing is set until one is run); `gcmWelcomeCancel` stops a scheduled one, and the scheduled
+    run does what `gcmWelcomeNow` does. From support@ only; without Microsoft 365 nothing goes.
     `gcmWelcomeNow` also sets the `GCM_WELCOME_ON` Script property: from then on the hourly run (weekdays, 8:00 to
     17:00) welcomes a group within the hour of a staff member approving it, says nothing when there is no one to
     welcome, and the approval toast tells the staff member it will go signed by them. `gcmWelcomeStop` ends that.
   - Each welcome is logged on Group Sends with Status "welcome sent". The weekly run passes those rows over, so a
     welcome never counts as that week's letter. One internal summary goes to `TRANSITION.CC`.
-  - `welcome/welcome-test.js` in the session scratchpad covers it (24 checks, with the verifier).
+  - `welcome/welcome-test.js` in the session scratchpad covers it (29 checks, with the verifier and the 9:00 run).
 - **The verifier is whoever approved the letter, and every letter says so** (14 October 2026). It is the newest
   approval on Group Queue that was not cancelled (`gcmVerifier_`): the person who ticked that they checked every item
   and pressed Approve for Monday, the branch manager included when he approves. The name is written as Salesforce has

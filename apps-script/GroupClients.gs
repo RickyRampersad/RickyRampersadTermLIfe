@@ -1435,7 +1435,6 @@ function gcmRehearse_(b) {
  * opening the film's own page in one tap. It carries no access code: the Monday letter does, after staff check it.
  * Once per group, ever; from support@ only; the branch manager gets the test first. */
 var GCM_WELCOME = {
-  HOUR: 18,                                   // gcmWelcomeAt6 schedules the send for this hour, sheet time
   PAGE: 'welcome.html', CARD: 'welcome-card.jpg', LENGTH: '1 min 33 s',
   SKIP_PROP: 'GCM_WELCOME_SKIP',              // Script property: groups to leave out, by name, comma-separated
   ON_PROP: 'GCM_WELCOME_ON'                   // set by gcmWelcomeNow: a group verified later gets its welcome within the hour
@@ -1523,15 +1522,20 @@ function gcmWelcomeTest() {
   var r = gcmWelcomeRun_({ test: true });
   return tSay_(r.said);
 }
-/** Editor Run, after the test is approved: the welcome goes by itself at 18:00, today if it is not yet six, else
- *  tomorrow. Run it again to move it; gcmWelcomeCancel takes it off. */
-function gcmWelcomeAt6() {
-  var tz = tTz_(), day = gcmToday_(), at = Utilities.parseDate(day + ' ' + GCM_WELCOME.HOUR + ':00', tz, 'yyyy-MM-dd HH:mm');
-  if (at.getTime() <= Date.now() + 5 * 60000) { day = gcmAddDays_(day, 1); at = Utilities.parseDate(day + ' ' + GCM_WELCOME.HOUR + ':00', tz, 'yyyy-MM-dd HH:mm'); }
+/** Editor Run, after the test is approved: the welcome goes by itself at 9:00 (asked for on 13 October 2026: "triggered
+ *  tomorrow at 9am"), today if it is not yet nine, else tomorrow. gcmWelcomeAt6 does the same at 18:00. Run either again
+ *  to move it; gcmWelcomeCancel takes it off. Nothing goes until one of them is run. */
+function gcmWelcomeAt9() { return gcmWelcomeAt_(9); }
+function gcmWelcomeAt6() { return gcmWelcomeAt_(18); }
+function gcmWelcomeAt_(hour) {
+  var tz = tTz_(), day = gcmToday_(), hh = (hour < 10 ? '0' : '') + hour + ':00';
+  var at = Utilities.parseDate(day + ' ' + hh, tz, 'yyyy-MM-dd HH:mm');
+  if (at.getTime() <= Date.now() + 5 * 60000) { day = gcmAddDays_(day, 1); at = Utilities.parseDate(day + ' ' + hh, tz, 'yyyy-MM-dd HH:mm'); }
   gcmWelcomeCancel_();
   ScriptApp.newTrigger('gcmWelcomeTick').timeBased().at(at).create();
   var n = gcmWelcomeList_(gcmLoad_()).go.length;
-  return tSay_('The welcome goes at ' + GCM_WELCOME.HOUR + ':00 on ' + tDmy_(day) + ' to ' + n + ' group' + (n === 1 ? '' : 's') + ', from ' + TRANSITION.MS_FROM + '. Run gcmWelcomeCancel to stop it.');
+  return tSay_('The welcome goes at ' + hour + ':00 on ' + tDmy_(day) + ' to the ' + n + ' verified group' + (n === 1 ? '' : 's') + ' ready now (and any verified before then), each signed by the staff member who verified it, from ' +
+    TRANSITION.MS_FROM + '. After it, a group verified later gets its welcome within the hour. Run gcmWelcomeCancel to stop it.');
 }
 /** Editor Run, after the test is approved: the welcome goes now, to every group on the list (asked for on 13 October
  *  2026, the evening the film was approved: "send … to go out now"). A group welcomed already is passed over. */
@@ -1545,7 +1549,12 @@ function gcmWelcomeStop() { PropertiesService.getScriptProperties().deleteProper
 function gcmWelcomeOn_() { try { return PropertiesService.getScriptProperties().getProperty(GCM_WELCOME.ON_PROP) === 'Y'; } catch (e) { return false; } }
 function gcmWelcomeCancel() { gcmWelcomeCancel_(); return tSay_('No welcome is scheduled.'); }
 function gcmWelcomeCancel_() { ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'gcmWelcomeTick') ScriptApp.deleteTrigger(t); }); }
-function gcmWelcomeTick() { gcmWelcomeCancel_(); gcmWelcomeRun_({}); }
+/** The scheduled send: the same as gcmWelcomeNow, at the hour that was set. */
+function gcmWelcomeTick() {
+  gcmWelcomeCancel_();
+  PropertiesService.getScriptProperties().setProperty(GCM_WELCOME.ON_PROP, 'Y');
+  gcmWelcomeRun_({});
+}
 
 /** The welcome to every group on the list, or with o.test one sample to the branch manager. Each one sent is logged on
  *  Group Sends with Status "welcome sent", which is how a group is never welcomed twice; the weekly run passes it over. */
