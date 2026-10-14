@@ -2628,7 +2628,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `tMsSend_`. The pages under `groupclientmanagement/` hold no client data.
 - **The group tabs have their own spreadsheet, the script does not.** Asked
   the same day ("if this is the sheet for managing groups why import into the
-  service questionnaire"): `Group Register`, `Group Tasks`, `Group Sends`,
+  service questionnaire"): `Group Register`, `Group Tasks`, `Group Increases`, `Group Sends`,
   `Group Responses`, `Group Shares` and `Group Queue` live in the **Group Client Management**
   Google Sheet. The script stays in the Service Questionnaire project, where
   the sign-in, the Salesforce login, the support@ mailbox and the web address
