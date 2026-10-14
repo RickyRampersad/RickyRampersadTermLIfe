@@ -2882,6 +2882,14 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     - `card.js`: the poster and `welcome-card.jpg`.
 
     Encoded at CRF 23 for the web: 14 MB. `GCM_WELCOME.LENGTH` reads "2 min 26 s"; change it with the film.
+  - **The film to post: `/groupwelcomevideo`** (14 October 2026: "can this be streamed on the rickyrampersadbranch page
+    as groupwelcomevideo, need to post this").
+    - `groupwelcomevideo/index.html` plays the same `welcome.mp4`; it streams because the server answers byte ranges.
+    - It carries Open Graph and Twitter tags, so a posted link previews with `welcome-card.jpg`, the title and the
+      description.
+    - It has a door for a group client (the service page) and one for an employer who is not one yet (the branch's
+      number).
+    - Re-cut the film and this page follows.
   - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
     film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
   - **No access code in it.** The Monday letter carries the sign-in, after staff check it.
