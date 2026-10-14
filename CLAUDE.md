@@ -2896,7 +2896,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     (`level` member). A member's health or claim never reaches the group's view, not even as a count; staff see the
     count. On-time counts only items with a target date.
   - **The trend** compares the last 91 days with the 91 before, in counts and in average days (only with three items
-    on each side), as sentences of fact.
+    on each side), as sentences of fact, **for staff only**. The group gets the months and the totals, never the
+    comparison: fewer items in a quarter can be a group that asked for less, and on the first real run the welcome
+    would have told an employer "5, against 19 before … up from 28 days".
   - **What the records suggest** (staff and the branch only, never the group), most time-critical first: a notice of
     non-renewal in the last year; a renewal within 120 days (from the effective date in the subject, else a year on
     from when last year's renewal work began); premiums late, in arrears or queried; premium-due notices on employees'

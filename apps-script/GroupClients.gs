@@ -1110,15 +1110,18 @@ function gcmYear_(g, today, forStaff) {
   var out = {
     year: yr, months: months.map(function (x) { var o = { m: x.m, done: x.done, member: x.member }; if (forStaff) { o.priv = x.priv; o.opened = x.opened; } return o; }),
     done: r.done, member: r.member, onTimePct: r.withDue ? Math.round(100 * r.onTime / r.withDue) : null, avgDays: avg(r.days, r.done),
-    recent: r.recent, before: r.before, avgRecent: r.nRecent >= 3 ? avg(r.dRecent, r.nRecent) : null, avgBefore: r.nBefore >= 3 ? avg(r.dBefore, r.nBefore) : null,
     trend: []
   };
-  /* the trend in words, for the group and for staff alike: facts from its own numbers */
-  if (r.recent || r.before) out.trend.push('In the last three months we completed ' + r.recent + ' item' + (r.recent === 1 ? '' : 's') + ' for ' + (forStaff ? 'this group' : 'you') +
-    ', against ' + r.before + ' in the three months before.');
+  /* The group gets the months and the totals, never the comparison: fewer items in a quarter can be a group that asked
+     for less, and on the first real run the welcome would have told an employer "5, against 19 before … up from 28
+     days". The trend is for staff to read and act on. */
+  if (!forStaff) return out;
+  out.recent = r.recent; out.before = r.before;
+  out.avgRecent = r.nRecent >= 3 ? avg(r.dRecent, r.nRecent) : null; out.avgBefore = r.nBefore >= 3 ? avg(r.dBefore, r.nBefore) : null;
+  if (r.recent || r.before) out.trend.push('In the last three months we completed ' + r.recent + ' item' + (r.recent === 1 ? '' : 's') + ' for this group, against ' +
+    r.before + ' in the three months before.');
   if (out.avgRecent !== null && out.avgBefore !== null && out.avgRecent !== out.avgBefore)
     out.trend.push('They took ' + out.avgRecent + ' days on average, ' + (out.avgRecent < out.avgBefore ? 'down from ' : 'up from ') + out.avgBefore + '.');
-  if (!forStaff) return out;
   out.priv = r.priv; out.opened = r.opened;
   out.types = Object.keys(types).map(function (k) { return { type: k, done: types[k] }; }).sort(function (a, b) { return b.done - a.done; });
   out.joiners = r.joiners; out.leavers = r.leavers;
@@ -1448,8 +1451,7 @@ function gcmWelcome_(g, today) {
   var top = rec.filter(function (r) { return r.done; }).sort(function (a, b) { return b.done - a.done; }).slice(0, 3)
     .map(function (r) { return r.type + ' (' + r.done + ')'; });
   var yearLine = yr.done || yr.member ? 'This year we have completed ' + yr.done + ' item' + (yr.done === 1 ? '' : 's') + ' for ' + g.name +
-    (yr.member ? ', and ' + yr.member + ' more for your employees’ own policies' : '') + '.' + (top.length ? ' Most of it: ' + top.join(', ') + '.' : '') +
-    (yr.trend.length ? ' ' + yr.trend.join(' ') : '') : '';
+    (yr.member ? ', and ' + yr.member + ' more for your employees’ own policies' : '') + '.' + (top.length ? ' Most of it: ' + top.join(', ') + '.' : '') : '';
   var greet = 'Dear ' + (g.greeting || 'Sir or Madam') + ',';
   var subject = 'Your group account, now in one place: ' + g.name;
   var pre = 'Watch how it works in ' + GCM_WELCOME.LENGTH + '. One letter every Monday, your own page to answer it.';
@@ -1470,7 +1472,7 @@ function gcmWelcome_(g, today) {
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 10px"><tr>' +
     tile(yr.done, 'completed for your company') + (yr.member ? tile(yr.member, 'for your employees’ own policies') : '') +
     tile(yr.onTimePct === null ? '–' : yr.onTimePct + '%', 'done by the target date') + tile(yr.avgDays === null ? '–' : yr.avgDays, 'days on average') + '</tr></table>' +
-    '<p style="margin:0 0 16px;font-size:14.5px;color:#2B374C">' + E((top.length ? 'Most of it: ' + top.join(', ') + '. ' : '') + yr.trend.join(' ')) + '</p>' : '';
+    '<p style="margin:0 0 16px;font-size:14.5px;color:#2B374C">' + E(top.length ? 'Most of it: ' + top.join(', ') + '.' : '') + '</p>' : '';
   var font = "font-family:'IBM Plex Sans','Segoe UI',Roboto,Arial,sans-serif";
   var html = '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' + E(pre) + '</div>' +
     '<div style="background:#E9EEF5;padding:22px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;border-collapse:collapse;background:#ffffff">' +
