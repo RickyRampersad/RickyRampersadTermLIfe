@@ -2950,7 +2950,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - `wow/actions-test.js` (31 checks), `wow/after.js` (24, Playwright) and `wow/showcase.js` (screenshots) in the
     session scratchpad cover it, on the made-up branch.
 
-- **Applications still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
+- **Applications and increases still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
   also see at the top … applications that remain pending … the name, days outstanding, who it's assigned, what's
   outstanding … pension groups, health groups and life groups … and who was last liaised with").
   - **What counts.** An open task of type `Pendings` (the branch's own mark for one), reached the way the refresh
@@ -2985,9 +2985,31 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - **Staff** get the same panel at the top of a group's page, unredacted, with what the group cannot see marked. They
     also get a chip on the account row, and an "Applications pending" filter on the Team dashboard.
   - **The Monday letter** says how many are pending and the oldest, never a name.
+  - **Increases still pending sit on the same cards** (asked for the same day: "it's important on the increases on the
+    pension plans … on the object called increases … once it's not settled, it's pending"). An increase is a
+    `Policy_Increases__c` record on a policy. It is pending until **Date Settled** is filled in, unless it reads NPW
+    or not proceeded with. The refresh writes them to a **Group Increases** tab of their own (`gcmIncreases_`), so
+    they never swell a group's open items, its year or the dashboard.
+    - Which ones: any increase on a policy on the group's own account, and a pension or group policy tied to it by its
+      list bill, because the employer's payroll deducts it. An employee's own life policy tied only by the list bill
+      stays off.
+    - Only an increase submitted in the last `GCM_INC.DAYS` (365) counts. The branch has used Date Settled only since
+      2024, and about half the increases since then never had one entered, many reading Premium Paying with their
+      production picked up. Staff see those marked "Date Settled is empty: if it is done, enter it in Salesforce",
+      and entering it takes the increase off the group's page at the next refresh.
+    - What is outstanding on an increase is the open tasks on the increase record. Salesforce's Requirements object
+      holds six records on increases ever. Support (a first name) is read as the one active Salesforce user who
+      carries it. Days outstanding are Days O/S, never fewer than the days since it was submitted.
+    - The group reads "Pension increase", where it stands (waiting to be settled, requirements outstanding, with
+      underwriting, being corrected, awaiting settlement), who has it, when it was submitted and the last contact. It
+      never sees an amount. Staff also see the policy number, the amount, the agent and whether it came through the
+      list bill, and can take an increase off the group's page with its tick box.
+    - On 14 October there were 13 unsettled increases in the last year on employer accounts (7 life, 5 pension, 1
+      personal accident), and 12 on employees' own pension plans.
+    - When Salesforce refuses the read, the tab keeps the last good list, and the refresh says so.
   - A backend older than this sends no `pending`, and both pages leave the panel out.
-  - `pending/pending-test.js` (34 checks) and `pending/page.js` (19, Playwright, phone and desk) in the session
-    scratchpad cover it, on the made-up branch with an invented keyperson case.
+  - `pending/pending-test.js` (50 checks) and `pending/page.js` (21, Playwright, phone and desk) in the session
+    scratchpad cover it, on the made-up branch with an invented keyperson case and six invented increases.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 

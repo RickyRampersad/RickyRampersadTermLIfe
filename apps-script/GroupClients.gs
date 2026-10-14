@@ -81,6 +81,7 @@ var GCM = {
   SENDS: 'Group Sends',
   RESPONSES: 'Group Responses',
   SHARES: 'Group Shares',
+  INCREASES: 'Group Increases',
   SEND_DAY: 1,              // Monday (1 Monday … 7 Sunday): the week's letters go out by themselves at SEND_HOUR (8 October 2026)
   SEND_HOUR: 10,            // staff approve each letter during the week; at 10:00 on Monday the approved letters go
   QUEUE: 'Group Queue',
@@ -104,7 +105,9 @@ var GCM_HEAD = {
   'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status', 'Html'],
   'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter'],
   'Group Shares':    ['When', 'Group', 'Task Id', 'Kind', 'Value', 'By'],
-  'Group Queue':     ['When', 'Group', 'Staff', 'Role', 'Staff e-mail', 'For', 'Task Ids', 'Intro', 'Status', 'Sent at']
+  'Group Queue':     ['When', 'Group', 'Staff', 'Role', 'Staff e-mail', 'For', 'Task Ids', 'Intro', 'Status', 'Sent at'],
+  'Group Increases': ['Group', 'Increase Id', 'Policy', 'Line', 'Insured', 'Submitted', 'Days', 'Status', 'Stage', 'Support', 'Agent',
+                      'Picked up', 'Last activity', 'Own', 'Amount', 'Mails', 'Check']
 };
 
 /* The order a group's page lists its items in, and the client's words for a status. */
@@ -177,7 +180,7 @@ function gcmSetup() {
   gcmMondayTrigger_();
   var on = tSfOn_(), gs = gcmSS_(), own = gs.getId() === ss_().getId();
   return tSay_('Group client management is set up in "' + gs.getName() + '"' + (own ? ' (this spreadsheet: set GCM_SHEET_ID to keep the group tabs in a sheet of their own)' : '') +
-    ': the six Group tabs exist, the refresh runs every hour from ' +
+    ': the ' + Object.keys(GCM_HEAD).length + ' Group tabs exist, the refresh runs every hour from ' +
     GCM.HOURS[0] + ':00 to ' + GCM.HOURS[1] + ':00, Monday to Saturday, and the approved letters go every Monday at ' + GCM.SEND_HOUR + ':00.\n\n' +
     (on ? 'Salesforce is linked. Run gcmRefresh once now to fill the Group Tasks tab.'
         : 'Salesforce is NOT linked to this project yet: copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings → Script properties, then run gcmRefresh.'));
@@ -527,6 +530,12 @@ function gcmRefresh_() {
     gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN ' + polSub + W).forEach(function (t) { take(t, polGroup[gcmId15_(t.WhatId)], 'member', 'policy'); });
     gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhoId IN ' + conSub + W).forEach(function (t) { take(t, contactGroup[gcmId15_(t.WhoId)], 'member', 'contact'); });
   }
+  /* the increases still pending on the groups' policies, and the open tasks on them, which say what is outstanding */
+  var incs = gcmIncreases_(reg, byAcct, byBill, accts, bills);
+  for (var ii = 0; ii < incs.ids.length; ii += GCM.CHUNK) {
+    gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN (' + gcmIn_(incs.ids.slice(ii, ii + GCM.CHUNK)) + ') AND IsClosed = false')
+      .forEach(function (t) { take(t, incs.gi[gcmId15_(t.WhatId)], 'member', 'increase'); });
+  }
 
   /* each open item's story: its own change history, and the e-mails filed against the same record */
   var hist = gcmHistories_(openRows.map(function (o) { return o.id; }));
@@ -536,7 +545,7 @@ function gcmRefresh_() {
     rows[o.i][16] = JSON.stringify(mails[gcmId15_(o.id)] || []);
   });
   /* the applications still pending: what each is for, whose it is, and when it came in */
-  var apps = gcmApplications_(openRows, reg);
+  var apps = gcmApplications_(openRows, reg, incs.info);
   openRows.forEach(function (o) { if (apps[gcmId15_(o.id)]) rows[o.i][17] = JSON.stringify(apps[gcmId15_(o.id)]); });
 
   /* write: the tab whole, new over old, so a reader never meets it empty (the header too, so new columns arrive) */
@@ -547,6 +556,16 @@ function gcmRefresh_() {
   }
   var extra = sh.getLastRow() - 1 - rows.length;
   if (extra > 0) sh.getRange(rows.length + 2, 1, extra, head.length).clearContent();
+  /* the increases, the same way: the tab whole, and left as it was when Salesforce could not be read */
+  if (!incs.error) {
+    var imails = gcmMails_(incs.list.map(function (x) { return { id: x.id, what: x.id, gi: x.gi, subject: '' }; }), reg);
+    var irows = incs.list.map(function (x) { x.row[15] = JSON.stringify(imails[gcmId15_(x.id)] || []); return x.row; });
+    var ish = gcmSheet_(GCM.INCREASES), ihead = GCM_HEAD[GCM.INCREASES];
+    ish.getRange(1, 1, 1, ihead.length).setValues([ihead]);
+    if (irows.length) ish.getRange(2, 1, irows.length, ihead.length).setNumberFormat('@').setValues(irows);
+    var iextra = ish.getLastRow() - 1 - irows.length;
+    if (iextra > 0) ish.getRange(irows.length + 2, 1, iextra, ihead.length).clearContent();
+  }
   /* the owners onto the register, as a mirror of Salesforce (the two columns are added if the tab lacks them) */
   var regSh = gcmSS_().getSheetByName(GCM.REGISTER);
   var regHead = regSh.getRange(1, 1, 1, regSh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
@@ -576,7 +595,9 @@ function gcmRefresh_() {
   try { CacheService.getScriptCache().remove('gcm-load'); } catch (e) {}
   var open = rows.filter(function (r) { return r[6] === 'Y'; }).length;
   return { ok: true, tasks: rows.length, open: open, excluded: excluded, refreshed: when,
-    said: 'Group Tasks refreshed ' + when + ': ' + rows.length + ' tasks across ' + reg.length + ' groups (' + open + ' open); ' + excluded + ' logged e-mails and internal items left out.' };
+    increases: incs.list.length,
+    said: 'Group Tasks refreshed ' + when + ': ' + rows.length + ' tasks across ' + reg.length + ' groups (' + open + ' open); ' + excluded + ' logged e-mails and internal items left out; ' +
+      (incs.error ? 'the increases could not be read (' + incs.error + ')' : incs.list.length + ' increase' + (incs.list.length === 1 ? '' : 's') + ' still pending') + '.' };
 }
 /** What Salesforce's feed tracking recorded on each open task: the target date first set (fd), when it last took its
  *  present status (ss), the last hand-over (ho: { n, d }), how many times the target moved (mv), and when anyone last
@@ -688,7 +709,7 @@ function gcmFeed_(ids) {
 
 function gcmLoad_() {
   var reg = gcmRegister_(), byName = {};
-  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.sends = []; g.resent = []; g.welcomes = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
+  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.incs = []; g.sends = []; g.resent = []; g.welcomes = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
   gcmRows_(GCM.QUEUE).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
     if (g) g.queue.push({ _n: r._n, at: gcmWhen_(r.When), when: gcmYmd_(r.When), staff: gcmText_(r.Staff), role: gcmText_(r.Role), email: gcmText_(r['Staff e-mail']),
@@ -702,6 +723,14 @@ function gcmLoad_() {
       due: gcmYmd_(r.Due), opened: gcmYmd_(r.Opened), done: gcmYmd_(r.Completed), owner: gcmText_(r.Owner), who: gcmText_(r.For),
       ref: gcmText_(r.Ref), level: gcmText_(r.Level) || 'group', priv: gcmText_(r.Private) === 'Y',
       hist: gcmParse_(r.History, {}), mails: gcmParse_(r.Mails, []), app: gcmParse_(r.Application, null) });
+  });
+  gcmRows_(GCM.INCREASES).forEach(function (r) {
+    var g = byName[gcmCodeKey_(r.Group)];
+    if (!g || !gcmText_(r['Increase Id'])) return;
+    g.incs.push({ id: gcmText_(r['Increase Id']), id15: gcmId15_(gcmText_(r['Increase Id'])), policy: gcmText_(r.Policy), line: gcmText_(r.Line) || 'Policy',
+      insured: gcmText_(r.Insured), submitted: gcmYmd_(r.Submitted), days: Number(r.Days) || 0, status: gcmText_(r.Status), stage: gcmText_(r.Stage) || 'Pending',
+      support: gcmText_(r.Support), agent: gcmText_(r.Agent), picked: gcmText_(r['Picked up']), last: gcmYmd_(r['Last activity']), own: gcmText_(r.Own) === 'Y',
+      amount: gcmText_(r.Amount), mails: gcmParse_(r.Mails, []), check: gcmText_(r.Check) });
   });
   gcmRows_(GCM.SENDS).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
@@ -880,8 +909,9 @@ function gcmLineOf_(subject, cat) {
 }
 /** For each open task that is an application still pending: its line, the applicant, when the application came in,
  *  and who the task is with (Guardian Life's own departments, our staff, the group's contact, or the employee). */
-function gcmApplications_(openRows, reg) {
-  var out = {}, cand = openRows.filter(function (o) { return GCM_APP.TYPE.test(o.type); });
+function gcmApplications_(openRows, reg, incInfo) {
+  incInfo = incInfo || {};
+  var out = {}, cand = openRows.filter(function (o) { return GCM_APP.TYPE.test(o.type) || incInfo[gcmId15_(o.what)]; });
   if (!cand.length) return out;
   var pols = {}, polsOk = true, ids = cand.filter(function (o) { return /CLIENT_PORTFOLIO__c/.test(o.whatType); }).map(function (o) { return o.what; });
   try {
@@ -895,56 +925,170 @@ function gcmApplications_(openRows, reg) {
   } catch (e) { polsOk = false; }
   var team = [];
   try { team = tTeam_().people.map(function (p) { return p.name; }); } catch (e) {}
+  var kindOf = function (who, g) {
+    return !who ? '' : GCM_APP.INTERNAL.test(who) ? 'guardian'
+      : team.some(function (n) { return gcmSameName_(n, who); }) ? 'staff'
+      : (g.contact && gcmSameName_(g.contact, who)) || (g.sfContact && g.sfContact.name && gcmSameName_(g.sfContact.name, who)) ? 'contact' : 'person';
+  };
   cand.forEach(function (o) {
-    if (o.via === 'contact') return;                                    // the employee's own business
     if (GCM_APP.CLAIM.test(o.subject)) return;
+    var inc = incInfo[gcmId15_(o.what)];
+    if (inc) {   // a requirement on an increase still pending: the increase says whose it is and what it is for
+      out[gcmId15_(o.id)] = { line: inc.line, applicant: inc.applicant, applied: inc.submitted, withKind: kindOf(o.who || '', reg[o.gi]), status: '', inc: inc.id15 };
+      return;
+    }
+    if (o.via === 'contact') return;                                    // the employee's own business
     var p = pols[gcmId15_(o.what)] || null, g = reg[o.gi];
     /* an employee's individual policy tied to the group only by its list bill, or one whose type could not be read */
     var own = p && p.acct && g.accts.indexOf(p.acct) >= 0;
     if (o.via === 'policy' && (p ? !own && !GCM_APP.LINES[p.rt.toUpperCase()] : !polsOk || /CLIENT_PORTFOLIO__c/.test(o.whatType))) return;
     var line = p && p.rt ? gcmLineName_(p.rt) : gcmLineOf_(o.subject, o.cat) || 'Application';
-    var who = o.who || '', kind = !who ? '' : GCM_APP.INTERNAL.test(who) ? 'guardian'
-      : team.some(function (n) { return gcmSameName_(n, who); }) ? 'staff'
-      : (g.contact && gcmSameName_(g.contact, who)) || (g.sfContact && g.sfContact.name && gcmSameName_(g.sfContact.name, who)) ? 'contact' : 'person';
+    var who = o.who || '', kind = kindOf(who, g);
     out[gcmId15_(o.id)] = { line: line, applicant: (p && p.who) || (kind === 'person' ? who : ''), applied: p ? p.applied : '', withKind: kind, status: p ? p.st : '' };
   });
   return out;
 }
-/** A group's applications still pending, one card an applicant, oldest first. For the group: each requirement in
- *  words they may read, who on our team has it, who it is with, the target date and the last contact on it. */
+/* ── increases still pending ─────────────────────────────────────────
+ * Asked for the same day: "it's important on the increases on the pension plans … it's on the object called increases.
+ * And the status is pending … once it's not settled, it's pending". An increase is a Policy_Increases__c record on a
+ * policy; it is pending until Date Settled is filled in, unless it reads NPW or not proceeded with. The branch has used
+ * Date Settled only since 2024, and about half of the increases since then never had one entered, so only an increase
+ * submitted in the last GCM_INC.DAYS counts; staff are told when one reads Premium Paying with its production picked up
+ * and still no settled date. Which increases a group hears about: any on a policy on its own account (its own scheme, or
+ * keyperson cover), and a pension or group policy tied to it by its list bill, because the employer's payroll deducts it.
+ * Requirements on an increase are open tasks on the increase record (Salesforce's Requirements object is barely used:
+ * six records ever on increases). The amounts are for staff alone. */
+var GCM_INC = { DAYS: 365, CLOSED: /\bnpw\b|not proceeded|declined|rejected|withdrawn|cancel|file closed/i };
+/** Where an increase stands, in a group's words, from its status picklist and its free-text status. */
+function gcmIncStage_(pick, free) {
+  var t = (String(free || '') + ' ' + String(pick || '')).toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\bnoo\b/g, 'no o');
+  t = t.replace(/no (o s (reqts?|requirements?|requests?)|outstanding (reqts?|requirements?)|os reqts?|errors?)/g, ' ');
+  if (/missing reqt|missing requirement|o s reqt|o s requirement|o s request|outstanding reqt|outstanding requirement|os reqt/.test(t)) return 'Requirements outstanding';
+  if (/error/.test(t)) return 'Being corrected';
+  if (/settlement/.test(t)) return 'Awaiting settlement';
+  if (/underwriting|uw incomplete/.test(t)) return 'With underwriting';
+  if (/pending/.test(t)) return 'Pending';
+  return 'Waiting to be settled';
+}
+function gcmMoney_(n) { n = Number(n) || 0; return 'TT$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+/** The increases still pending on the groups' policies, as rows for the Group Increases tab. Never throws. */
+function gcmIncreases_(reg, byAcct, byBill, accts, bills) {
+  var out = { list: [], ids: [], gi: {}, info: {}, error: '' };
+  var where = [];
+  if (accts.length) where.push('Policy_Increases__r.Account__c IN (' + gcmIn_(accts) + ')');
+  if (bills.length) where.push('Policy_Increases__r.List_Bill__c IN (' + gcmIn_(bills) + ')');
+  if (!where.length) return out;
+  var recs;
+  try {
+    recs = gcmQuery_('SELECT Id, Policy__c, Insured__c, Support__c, Agent__c, Submitted_Date__c, CreatedDate, LastActivityDate, LastModifiedDate, Days_O_S__c, ' +
+      'Policy_Description_Status__c, Policy_Status_Description_R__c, Increase_Production_Picked_up__c, Increase_Production_Picked_Up_Date__c, ' +
+      'Increase_Premium__c, Pension_Increase__c, Lump_Sum_Deposit__c, Policy_Increases__r.RecordType.Name, Policy_Increases__r.Account__c, ' +
+      'Policy_Increases__r.List_Bill__c, Policy_Increases__r.Contact__r.Name FROM Policy_Increases__c WHERE Date_Settled__c = null AND CreatedDate = LAST_N_DAYS:' +
+      (GCM_INC.DAYS + 60) + ' AND (' + where.join(' OR ') + ')');
+  } catch (e) { out.error = String(e && e.message ? e.message : e).slice(0, 160); return out; }
+  /* Support holds a first name: the active Salesforce user who alone carries it gives the full name */
+  var firsts = {};
+  recs.forEach(function (x) { var f = String(x.Support__c || '').trim().split(/\s+/)[0]; if (f) firsts[f] = []; });
+  try {
+    if (Object.keys(firsts).length) gcmQuery_('SELECT Name, FirstName FROM User WHERE IsActive = true AND FirstName IN (' + gcmIn_(Object.keys(firsts)) + ')').forEach(function (u) {
+      Object.keys(firsts).forEach(function (f) { if (f.toLowerCase() === String(u.FirstName || '').toLowerCase()) firsts[f].push(String(u.Name || '')); });
+    });
+  } catch (e) {}
+  var today = gcmToday_();
+  recs.forEach(function (x) {
+    var pick = String(x.Policy_Description_Status__c || '').trim(), free = String(x.Policy_Status_Description_R__c || '').trim();
+    if (GCM_INC.CLOSED.test(pick) || GCM_INC.CLOSED.test(free)) return;
+    var from = gcmYmd_(x.Submitted_Date__c) || gcmYmd_(x.CreatedDate), age = gcmDays_(from, today);
+    if (age === null || age > GCM_INC.DAYS) return;
+    var p = x.Policy_Increases__r || {}, acct = p.Account__c ? gcmId15_(p.Account__c) : '', rt = String((p.RecordType && p.RecordType.Name) || '');
+    var gi = byAcct[acct], own = gi !== undefined;
+    if (!own) {
+      gi = byBill[gcmBillKey_(p.List_Bill__c)];
+      if (gi === undefined) return;
+      if (!/^PENSION$/i.test(rt) && !GCM_APP.LINES[rt.toUpperCase()]) return;   // an employee's own life or health policy
+    }
+    var line = gcmLineName_(rt) || 'Policy', f = String(x.Support__c || '').trim().split(/\s+/)[0];
+    var support = f && firsts[f] && firsts[f].length === 1 ? firsts[f][0] : String(x.Support__c || '').trim();
+    var applicant = String(x.Insured__c || '').trim() || gcmName_(p, 'Contact__r');
+    var picked = x.Increase_Production_Picked_up__c === 'Yes' ? gcmYmd_(x.Increase_Production_Picked_Up_Date__c) || 'yes' : '';
+    var days = Math.max(Number(x.Days_O_S__c) || 0, age);
+    var amount = [x.Increase_Premium__c ? 'premium up ' + gcmMoney_(x.Increase_Premium__c) : '', x.Pension_Increase__c ? 'pension up ' + gcmMoney_(x.Pension_Increase__c) : '',
+      x.Lump_Sum_Deposit__c ? 'lump sum ' + gcmMoney_(x.Lump_Sum_Deposit__c) : ''].filter(String).join(', ');
+    var check = picked && /premium paying/i.test(pick + ' ' + free) ? 'Production was picked up' + (picked !== 'yes' ? ' on ' + tDmy_(picked) : '') +
+      ' and it reads Premium Paying, but Date Settled is empty: if it is done, enter Date Settled in Salesforce and it leaves the group’s page.' : '';
+    var last = [gcmYmd_(x.LastActivityDate), gcmYmd_(x.LastModifiedDate)].sort().pop() || '';
+    var id15 = gcmId15_(x.Id);
+    out.ids.push(x.Id); out.gi[id15] = gi;
+    out.info[id15] = { id15: id15, line: line, applicant: applicant, submitted: from };
+    out.list.push({ id: x.Id, gi: gi, row: [reg[gi].name, x.Id, String(x.Policy__c || ''), line, applicant, from, days, /[a-z]/i.test(free) ? free : pick || 'Pending',
+      gcmIncStage_(pick, free), support, String(x.Agent__c || '').trim(), picked, last, own ? 'Y' : '', amount, '', check] });
+  });
+  return out;
+}
+
+/** A group's applications and increases still pending, one card a person, longest outstanding first. For the group:
+ *  each requirement in words they may read, who on our team has it, who it is liaising with, the target date and the
+ *  last contact on it; never an amount. For staff (forGroup false): the detail, the amounts, and what to put right. */
 function gcmPending_(g, today, forGroup) {
   var by = {}, order = [];
+  var card = function (name, fallbackKey) {
+    var key = name ? name.toLowerCase().replace(/[^a-z]+/g, ' ').trim() : fallbackKey, c = by[key];
+    if (!c) { c = by[key] = { applicant: name, lines: [], applied: '', incSince: '', opened: '', items: [], last: null, apps: 0, incs: 0, days: null }; order.push(key); }
+    return c;
+  };
+  var addLine = function (c, l) { if (l && c.lines.indexOf(l) < 0) c.lines.push(l); };
+  var lastOf = function (mails, worked, from, withWho) {
+    var ms = (mails || []).filter(function (m) { return !forGroup || m.c; }), m = ms[ms.length - 1];
+    var d = [m ? m.d : '', worked || '', from || ''].sort().pop();
+    var text = m && m.d === d ? (m.i ? (forGroup ? 'You wrote to us' : 'The group wrote to us') : (forGroup && m.c ? 'We e-mailed you' : 'E-mailed')) + ' on ' + tDmy_(m.d)
+      : d && d > from ? 'Last worked on ' + tDmy_(d) : from ? 'Opened on ' + tDmy_(from) + ', nothing logged since' : '';
+    return { d: d, text: text, real: !!((m && m.d === d) || (d && d > from)) };
+  };
   g.tasks.forEach(function (t) {
     if (!t.open || !t.app) return;
     if (forGroup && g.shares.show[t.id15] === false) return;          // a person unticked it
-    var a = t.app, name = a.applicant || '', key = (name ? name.toLowerCase().replace(/[^a-z]+/g, ' ').trim() : t.id15);
-    var c = by[key];
-    if (!c) { c = by[key] = { applicant: name, lines: [], applied: a.applied || '', opened: t.opened, items: [], last: null }; order.push(key); }
-    if (c.lines.indexOf(a.line) < 0) c.lines.push(a.line);
-    if (a.applied && (!c.applied || a.applied < c.applied)) c.applied = a.applied;
-    if (t.opened && t.opened < c.opened) c.opened = t.opened;
-    var mails = (t.mails || []).filter(function (m) { return !forGroup || m.c; }), m = mails[mails.length - 1];
-    var lastD = [m ? m.d : '', (t.hist || {}).lw || '', t.opened].sort().pop();
+    var a = t.app, name = a.applicant || '', c = card(name, t.id15);
+    addLine(c, a.line);
+    if (!a.inc) { c.apps++; if (a.applied && (!c.applied || a.applied < c.applied)) c.applied = a.applied; }
+    if (t.opened && (!c.opened || t.opened < c.opened)) c.opened = t.opened;
     /* who the task is liaising with; for the group, a medical requirement's department stays with us */
     var priv = t.priv || GCM_APP.MED.test(t.subject), hush = forGroup && priv;
     var with_ = t.who && a.withKind ? { guardian: hush ? 'Guardian Life' : t.who + ' (Guardian Life)', staff: t.who + ' (our branch)',
       contact: t.who + (forGroup ? ' (you)' : ' (the group)'), person: t.who === name ? t.who + ' (the person insured)' : hush ? '' : t.who }[a.withKind] : '';
-    var last = m && m.d === lastD ? (m.i ? (forGroup ? 'You wrote to us' : 'The group wrote to us') : (forGroup && m.c ? 'We e-mailed you' : 'E-mailed')) + ' on ' + tDmy_(m.d)
-      : lastD && lastD > t.opened ? 'Last worked on ' + tDmy_(lastD) : t.opened ? 'Opened on ' + tDmy_(t.opened) + ', nothing logged since' : '';
+    var L = lastOf(t.mails, (t.hist || {}).lw, t.opened);
     var what = priv ? 'An underwriting requirement' + (forGroup ? ': the details stay between the person insured and us' : ': ' + gcmTitle_(t.subject, g.name))
       : gcmTitle_(t.subject, g.name);
-    c.items.push({ id: t.id15, what: what, line: a.line, owner: t.owner || 'Our branch team', with: with_, opened: t.opened, days: gcmDays_(t.opened, today),
-      due: t.due, late: !!(t.due && t.due < today), status: forGroup ? (GCM_STATUS[String(t.status).toLowerCase()] || 'In progress with us') : t.status,
-      last: last, lastD: lastD, priv: forGroup ? undefined : priv });
-    /* the card's own line: the newest real contact on any of its requirements, never a date a task was only opened */
-    var real = (m && m.d === lastD) || (lastD && lastD > t.opened);
-    if (real && (!c.last || lastD > c.last.d)) c.last = { d: lastD, text: last };
+    c.items.push({ id: t.id15, kind: a.inc ? 'increase-req' : 'application', what: what, line: a.line, owner: t.owner || 'Our branch team', with: with_, opened: t.opened,
+      days: gcmDays_(t.opened, today), due: t.due, late: !!(t.due && t.due < today),
+      status: forGroup ? (GCM_STATUS[String(t.status).toLowerCase()] || 'In progress with us') : t.status,
+      last: L.text, lastD: L.d, priv: forGroup ? undefined : priv });
+    if (L.real && (!c.last || L.d > c.last.d)) c.last = { d: L.d, text: L.text };
+  });
+  (g.incs || []).forEach(function (n) {
+    if (forGroup && g.shares.show[n.id15] === false) return;
+    var c = card(n.insured, n.id15);
+    addLine(c, n.line);
+    c.incs++;
+    if (n.submitted && (!c.incSince || n.submitted < c.incSince)) c.incSince = n.submitted;
+    if (c.days === null || n.days > c.days) c.days = n.days;
+    var L = lastOf(n.mails, n.last, n.submitted);
+    var item = { id: n.id15, kind: 'increase', what: n.line + ' increase', line: n.line, owner: n.support || 'Our branch team', with: '', opened: n.submitted,
+      days: n.days, due: '', late: false, status: forGroup ? n.stage : n.status + (n.stage && n.stage.toLowerCase() !== n.status.toLowerCase() ? ' · ' + n.stage : ''),
+      last: L.text, lastD: L.d };
+    if (!forGroup) { item.policy = n.policy; item.amount = n.amount; item.check = n.check; item.agent = n.agent; item.own = n.own; }
+    c.items.push(item);
+    if (L.real && (!c.last || L.d > c.last.d)) c.last = { d: L.d, text: L.text };
   });
   return order.map(function (k) {
-    var c = by[k], from = c.applied || c.opened;
-    c.days = gcmDays_(from, today); c.since = from;
+    var c = by[k], from = c.applied || (c.apps ? c.opened : '');
+    var appDays = from ? gcmDays_(from, today) : null;
+    if (appDays !== null && (c.days === null || appDays > c.days)) c.days = appDays;
+    if (c.days === null) c.days = gcmDays_(c.opened, today);
+    c.since = c.applied || c.opened || c.incSince;
     c.late = c.items.some(function (x) { return x.late; });
-    c.items.sort(function (x, y) { return (y.days || 0) - (x.days || 0); });
+    /* the increase first, then its requirements, then the applications' requirements, longest outstanding first */
+    var rank = { increase: 0, 'increase-req': 1, application: 2 };
+    c.items.sort(function (x, y) { return (rank[x.kind] - rank[y.kind]) || ((y.days || 0) - (x.days || 0)); });
     return c;
   }).sort(function (x, y) { return (y.days || 0) - (x.days || 0); });
 }
@@ -1369,9 +1513,12 @@ function gcmLetter_(g, today, staffName, intro, verified) {
   if (waiting.length) lines.push(waiting.length === 1 ? 'One needs your confirmation before we can close it.' : waiting.length + ' need your confirmation before we can close them.');
   if (late.length) lines.push(late.length === 1 ? 'One has run past its target date; your page shows why and who is on it.' : late.length + ' have run past their target dates; your page shows why and who is on each.');
   if (joiners || leavers) lines.push('Members: ' + [joiners ? joiners + ' joining' : '', leavers ? leavers + ' leaving' : ''].filter(String).join(', ') + '. Please check the names on your page.');
-  var pend = gcmPending_(g, today, true);
-  if (pend.length) lines.push((pend.length === 1 ? 'One application for your employees is' : pend.length + ' applications for your employees are') + ' still pending' +
-    (pend[0].days ? ', the oldest ' + pend[0].days + ' days' : '') + ': your page lists ' + (pend.length === 1 ? 'it' : 'them') + ' first, with what each is waiting on and who has it.');
+  var pend = gcmPending_(g, today, true), pApps = pend.filter(function (c) { return c.apps; }).length, pIncs = pend.reduce(function (t, c) { return t + c.incs; }, 0);
+  if (pend.length) {
+    var pWhat = [pApps ? (pApps === 1 ? 'one application' : pApps + ' applications') : '', pIncs ? (pIncs === 1 ? 'one increase' : pIncs + ' increases') : ''].filter(String).join(' and ');
+    lines.push(pWhat.charAt(0).toUpperCase() + pWhat.slice(1) + ' for your employees ' + (pApps + pIncs === 1 ? 'is' : 'are') + ' still pending' +
+      (pend[0].days ? ', the oldest ' + pend[0].days + ' days' : '') + ': your page lists ' + (pApps + pIncs === 1 ? 'it' : 'them') + ' first, with what each is waiting on and who has it.');
+  }
   if (yr.done) lines.push('So far this year we have completed ' + yr.done + ' item' + (yr.done === 1 ? '' : 's') + ' for you' + (onT !== null ? ', ' + onT + '% of them by their target date' : '') +
     (yy.member ? ', and ' + yy.member + ' more for your employees’ own policies' : '') + '.');
   var greet = 'Dear ' + (g.greeting || 'Sir or Madam') + ',';
@@ -1605,7 +1752,11 @@ function gcmAccount_(g, who, L) {
     last: last ? { at: last.at, by: last.staff, again: !!last.html } : null,
     resent: g.resent.length ? { at: g.resent[g.resent.length - 1].at, by: g.resent[g.resent.length - 1].staff } : null,
     answer: lastAns ? { at: lastAns.at, when: lastAns.when, name: lastAns.name, rating: rated && rated.when === lastAns.when ? rated.rating : null } : null,
-    pending: (function () { var pd = gcmPending_(g, L.today, false); return pd.length ? { n: pd.length, oldest: pd[0].days, late: pd.some(function (c) { return c.late; }) } : null; })(),
+    pending: (function () {
+      var pd = gcmPending_(g, L.today, false);
+      return pd.length ? { n: pd.length, apps: pd.filter(function (c) { return c.apps; }).length, incs: pd.reduce(function (t, c) { return t + c.incs; }, 0),
+        oldest: pd[0].days, late: pd.some(function (c) { return c.late; }) } : null;
+    })(),
     mailWhy: gcmCannotMail_(g) };
 }
 
@@ -2009,6 +2160,9 @@ function gcmShare_(b) {
   if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
   if (b.kind !== 'comment' && !gcmMine_(who, g)) return gcmNotYours_(g);
   var t = g.tasks.filter(function (x) { return x.id15 === gcmId15_(b.task); })[0];
+  /* an increase still pending is shown or not like an item; nothing else is done to it from here */
+  var inc = !t && (g.incs || []).filter(function (x) { return x.id15 === gcmId15_(b.task); })[0];
+  if (inc && b.kind === 'show') { gcmAppend_(GCM.SHARES, [{ When: new Date(), Group: g.name, 'Task Id': inc.id, Kind: 'show', Value: gcmYes_(b.value) ? 'Y' : 'N', By: who.name }]); return { ok: true }; }
   if (!t) return { ok: false, error: 'That item is not on this group.' };
   var row = { When: new Date(), Group: g.name, 'Task Id': t.id, By: who.name };
   if (b.kind === 'comment') {

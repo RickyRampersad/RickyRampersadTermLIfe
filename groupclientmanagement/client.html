@@ -190,6 +190,10 @@ footer a{color:inherit}
 .reqs dt{color:var(--muted)}.reqs dd{margin:0;overflow-wrap:anywhere}
 .reqs .late{color:var(--badText);font-weight:600}
 .pend .none{margin:0 0 12px;color:var(--muted)}
+.inc{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.02em;color:#fff;background:#8A4FD8;border-radius:4px;padding:1px 7px;margin-right:8px;vertical-align:2px}
+.inc.soft{background:#F1EAFD;color:#5B2DA8}
+.reqs li.sub{padding-left:14px;border-left:3px solid #E4D8FA}
+.ln .up{font-weight:700;color:#8A4FD8}
 @media (max-width:560px){.pend{padding:16px 14px 6px}.reqs dl{grid-template-columns:1fr}.reqs dt{margin-top:4px}}
 </style>
 </head>
@@ -263,29 +267,35 @@ const lineTag = l => '<span class="lt"><span class="dot ' + (LINE_DOT[l] || 'enr
 const ageCls = (n, late) => late || n > 30 ? 'bad' : n > 14 ? 'warn' : '';
 const days = n => n == null ? '' : n + ' day' + (n === 1 ? '' : 's');
 let PF = 'all';
+const INC_PF = '__increases';
 function pendHtml() {
   if (!Array.isArray(D.pending)) return '';
   const P = D.pending, lines = ['Group Life', 'Group Health', 'Pension'];
   P.forEach(c => c.lines.forEach(l => { if (lines.indexOf(l) < 0) lines.push(l); }));
   const n = l => P.filter(c => c.lines.indexOf(l) >= 0).length;
-  if (PF !== 'all' && !n(PF)) PF = 'all';
-  let h = '<section class="pend" aria-labelledby="pendh"><div class="ph"><h2 id="pendh">Applications pending for your employees <span class="cnt">' + P.length + '</span></h2></div>';
-  if (!P.length) return h + '<p class="none">No applications are pending for your employees right now.</p></section>';
-  h += '<p class="sub">What each one is still waiting on, who on our team has it, and when we last were in touch. Oldest first.</p>' +
-    '<div class="lns" role="group" aria-label="Show applications for">' +
+  const hasInc = P.some(c => c.incs), hasApp = P.some(c => c.apps), nInc = P.filter(c => c.incs).length;
+  const title = (hasInc && hasApp ? 'Applications and increases' : hasInc ? 'Increases' : 'Applications') + ' pending for your employees';
+  if (PF === INC_PF ? !nInc : PF !== 'all' && !n(PF)) PF = 'all';
+  let h = '<section class="pend" aria-labelledby="pendh"><div class="ph"><h2 id="pendh">' + (P.length ? title : 'Applications and increases pending for your employees') + ' <span class="cnt">' + P.length + '</span></h2></div>';
+  if (!P.length) return h + '<p class="none">No applications or increases are pending for your employees right now.</p></section>';
+  h += '<p class="sub">What each one is still waiting on, who on our team has it, and when we last were in touch. Longest outstanding first.</p>' +
+    '<div class="lns" role="group" aria-label="Show">' +
     '<button type="button" class="ln" data-pf="all" aria-pressed="' + (PF === 'all') + '">All <b>' + P.length + '</b></button>' +
-    lines.filter(n).map(l => '<button type="button" class="ln" data-pf="' + esc(l) + '" aria-pressed="' + (PF === l) + '"><span class="dot ' + (LINE_DOT[l] || 'enrol') + '" aria-hidden="true"></span>' + esc(l) + ' <b>' + n(l) + '</b></button>').join('') + '</div>';
-  P.filter(c => PF === 'all' || c.lines.indexOf(PF) >= 0).forEach(c => {
+    lines.filter(n).map(l => '<button type="button" class="ln" data-pf="' + esc(l) + '" aria-pressed="' + (PF === l) + '"><span class="dot ' + (LINE_DOT[l] || 'enrol') + '" aria-hidden="true"></span>' + esc(l) + ' <b>' + n(l) + '</b></button>').join('') +
+    (hasInc && hasApp ? '<button type="button" class="ln" data-pf="' + INC_PF + '" aria-pressed="' + (PF === INC_PF) + '"><span class="up" aria-hidden="true">↑</span>Increases <b>' + nInc + '</b></button>' : '') + '</div>';
+  P.filter(c => PF === 'all' || (PF === INC_PF ? c.incs : c.lines.indexOf(PF) >= 0)).forEach(c => {
     const cls = ageCls(c.days, c.late);
+    const since = [c.applied ? 'Application received ' + esc(dmy(c.applied)) : '', c.incSince ? 'Increase submitted ' + esc(dmy(c.incSince)) : ''].filter(Boolean).join(' · ') || 'With us since ' + esc(dmy(c.since));
     h += '<article class="papp ' + cls + '"><div class="top"><h3>' + esc(c.applicant || 'An employee’s application') + '</h3>' + c.lines.map(lineTag).join('') +
       '<span class="age ' + cls + '">' + days(c.days) + ' outstanding' + (c.late ? ', past target' : '') + '</span></div>' +
-      '<p class="meta">' + (c.applied ? 'Application received ' + esc(dmy(c.applied)) : 'With us since ' + esc(dmy(c.since))) +
-      (c.last && c.last.text ? ' · ' + esc(c.last.text) : '') + '</p>' +
-      '<ul class="reqs">' + c.items.map(x => '<li><div class="w">' + esc(x.what) + '</div><dl>' +
+      '<p class="meta">' + since + (c.last && c.last.text ? ' · ' + esc(c.last.text) : '') + '</p>' +
+      '<ul class="reqs">' + c.items.map(x => '<li' + (x.kind === 'increase-req' ? ' class="sub"' : '') + '><div class="w">' +
+        (x.kind === 'increase' ? '<span class="inc">Increase</span>' : x.kind === 'increase-req' ? '<span class="inc soft">For the increase</span>' : '') + esc(x.what) + '</div><dl>' +
         '<dt>Assigned to</dt><dd>' + esc(x.owner) + '</dd>' +
         (x.with ? '<dt>Liaising with</dt><dd>' + esc(x.with) + '</dd>' : '') +
-        '<dt>Status</dt><dd>' + esc(x.status) + '</dd>' +
-        '<dt>Target date</dt><dd>' + (x.due ? esc(dmy(x.due)) + (x.late ? ' <span class="late">past target</span>' : '') : 'Not yet set') + '</dd>' +
+        '<dt>' + (x.kind === 'increase' ? 'Where it stands' : 'Status') + '</dt><dd>' + esc(x.status) + '</dd>' +
+        (x.kind === 'increase' ? '<dt>Submitted</dt><dd>' + esc(dmy(x.opened)) + ', ' + days(x.days) + ' ago</dd>'
+          : '<dt>Target date</dt><dd>' + (x.due ? esc(dmy(x.due)) + (x.late ? ' <span class="late">past target</span>' : '') : 'Not yet set') + '</dd>') +
         (x.last ? '<dt>Last contact</dt><dd>' + esc(x.last) + '</dd>' : '') + '</dl></li>').join('') + '</ul></article>';
   });
   return h + '</section>';
