@@ -80,65 +80,74 @@ with wave.open(CFG['mix'],'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR)
     w.writeframes((np.clip(stq,-1,1)*32767).astype('<i2').tobytes())
 
-# ── measure the capture's own timeline ──
-webm = glob.glob(CAP+'/*.webm')[0]
-# sample the middle of the frame, whatever shape it is, and keep the sample
-# small — we are looking for cuts, not detail
-_dw, _dh = 160, max(24, int(round(160 * H / W)))
-_cy = int(H * 0.08)
-r = subprocess.run([FF,'-hide_banner','-i',webm,'-vf',
-    f'fps=10,crop={W}:{H - 2*_cy}:0:{_cy},scale={_dw}:{_dh}','-f','rawvideo','-pix_fmt','gray','-'],
-    capture_output=True)
-fr = np.frombuffer(r.stdout,dtype=np.uint8).reshape(-1,_dh,_dw).astype(float)
-d = np.abs(np.diff(fr,axis=0)).mean(axis=(1,2))
-det=[]
-for i in np.argsort(d)[::-1]:
-    t=i/10
-    if d[i]<2.0: break
-    if all(abs(t-c)>3.0 for c in det): det.append(t)
-det = sorted(c for c in det if c > 0.5)
-sched = STARTS[1:]
-# Two adjacent scenes that look alike can fall under the detection threshold,
-# so a detected list is not guaranteed to line up index-for-index with the
-# schedule. Fit by consensus instead: every pair of correspondences proposes a
-# (LEAD, STRETCH), and the proposal that explains the most transitions wins.
-best = None
-for i in range(len(det)):
-    for j in range(len(sched)):
-        for k in range(i+1, len(det)):
-            for l in range(j+1, len(sched)):
-                if sched[l] == sched[j]: continue
-                stretch = (det[k]-det[i]) / (sched[l]-sched[j])
-                if not (1.05 <= stretch <= 1.25): continue      # what this recorder does
-                lead = det[i] - stretch*sched[j]
-                if not (0.5 <= lead <= 4.5): continue
-                pairs = [(s_, min(det, key=lambda t: abs(t-(stretch*s_+lead))))
-                         for s_ in sched]
-                pairs = [p for p in pairs if abs(p[1]-(stretch*p[0]+lead)) < 0.30]
-                if len(pairs) < 2: continue
-                err = max(abs(p[1]-(stretch*p[0]+lead)) for p in pairs)
-                key = (len(pairs), -err)
-                if best is None or key > best[0]: best = (key, pairs, stretch, lead)
-if best is None:
-    raise SystemExit('could not match the capture to the schedule')
-pairs = best[1]
-# refit on the inliers, twice, so one stray pairing cannot tilt the slope
-for _ in range(2):
-    A = np.vstack([np.array([p[0] for p in pairs]), np.ones(len(pairs))]).T
-    STRETCH, LEAD = np.linalg.lstsq(A, np.array([p[1] for p in pairs]), rcond=None)[0]
-    pairs = [(s_, min(det, key=lambda t: abs(t-(STRETCH*s_+LEAD)))) for s_ in sched]
-    pairs = [p for p in pairs if abs(p[1]-(STRETCH*p[0]+LEAD)) < 0.30]
-res = max(abs(p[1]-(STRETCH*p[0]+LEAD)) for p in pairs)
-print(f'capture timeline: video_t = {LEAD:.3f} + {STRETCH:.4f} * film_t '
-      f'({len(pairs)} of {len(sched)} transitions matched, residual {res:.2f}s)')
-if len(pairs) < len(sched) - 2:
-    raise SystemExit(f'only {len(pairs)} of {len(sched)} transitions matched — not encoding')
-# Elements that drop in shift each scene's biggest pixel change by a variable
-# amount, so scatter rises even when the fit is sound. What matters is that the
-# slope is in family and every transition was found; allow more scatter then.
-tol = 0.38 if len(pairs) == len(sched) and 1.10 <= STRETCH <= 1.17 else 0.25
-if res > tol:
-    raise SystemExit(f'timeline fit is unreliable (residual {res:.2f}s > {tol}) — not encoding')
+# ── a film rendered frame by frame (render.js) has an exact timeline: nothing to measure ──
+# Only render.js writes rendered.json, beside the video it made. A real-time capture never has one, so it is
+# still measured below, and still refused when its cuts do not fit.
+if os.path.exists(CAP + '/rendered.json'):
+    _r = json.load(open(CAP + '/rendered.json'))
+    webm, LEAD, STRETCH = CAP + '/rendered.mp4', float(_r['lead']), float(_r['stretch'])
+    assert abs(_r['ms'] / 1000 - sum(DURS)) < 0.05, 'the rendered film is not the length films.json gives'
+    print(f'rendered frame by frame: {_r["frames"]} frames at {_r["fps"]} fps, timeline exact (lead {LEAD}, stretch {STRETCH})')
+else:
+    # ── measure the capture's own timeline ──
+    webm = glob.glob(CAP+'/*.webm')[0]
+    # sample the middle of the frame, whatever shape it is, and keep the sample
+    # small — we are looking for cuts, not detail
+    _dw, _dh = 160, max(24, int(round(160 * H / W)))
+    _cy = int(H * 0.08)
+    r = subprocess.run([FF,'-hide_banner','-i',webm,'-vf',
+        f'fps=10,crop={W}:{H - 2*_cy}:0:{_cy},scale={_dw}:{_dh}','-f','rawvideo','-pix_fmt','gray','-'],
+        capture_output=True)
+    fr = np.frombuffer(r.stdout,dtype=np.uint8).reshape(-1,_dh,_dw).astype(float)
+    d = np.abs(np.diff(fr,axis=0)).mean(axis=(1,2))
+    det=[]
+    for i in np.argsort(d)[::-1]:
+        t=i/10
+        if d[i]<2.0: break
+        if all(abs(t-c)>3.0 for c in det): det.append(t)
+    det = sorted(c for c in det if c > 0.5)
+    sched = STARTS[1:]
+    # Two adjacent scenes that look alike can fall under the detection threshold,
+    # so a detected list is not guaranteed to line up index-for-index with the
+    # schedule. Fit by consensus instead: every pair of correspondences proposes a
+    # (LEAD, STRETCH), and the proposal that explains the most transitions wins.
+    best = None
+    for i in range(len(det)):
+        for j in range(len(sched)):
+            for k in range(i+1, len(det)):
+                for l in range(j+1, len(sched)):
+                    if sched[l] == sched[j]: continue
+                    stretch = (det[k]-det[i]) / (sched[l]-sched[j])
+                    if not (1.05 <= stretch <= 1.25): continue      # what this recorder does
+                    lead = det[i] - stretch*sched[j]
+                    if not (0.5 <= lead <= 4.5): continue
+                    pairs = [(s_, min(det, key=lambda t: abs(t-(stretch*s_+lead))))
+                             for s_ in sched]
+                    pairs = [p for p in pairs if abs(p[1]-(stretch*p[0]+lead)) < 0.30]
+                    if len(pairs) < 2: continue
+                    err = max(abs(p[1]-(stretch*p[0]+lead)) for p in pairs)
+                    key = (len(pairs), -err)
+                    if best is None or key > best[0]: best = (key, pairs, stretch, lead)
+    if best is None:
+        raise SystemExit('could not match the capture to the schedule')
+    pairs = best[1]
+    # refit on the inliers, twice, so one stray pairing cannot tilt the slope
+    for _ in range(2):
+        A = np.vstack([np.array([p[0] for p in pairs]), np.ones(len(pairs))]).T
+        STRETCH, LEAD = np.linalg.lstsq(A, np.array([p[1] for p in pairs]), rcond=None)[0]
+        pairs = [(s_, min(det, key=lambda t: abs(t-(STRETCH*s_+LEAD)))) for s_ in sched]
+        pairs = [p for p in pairs if abs(p[1]-(STRETCH*p[0]+LEAD)) < 0.30]
+    res = max(abs(p[1]-(STRETCH*p[0]+LEAD)) for p in pairs)
+    print(f'capture timeline: video_t = {LEAD:.3f} + {STRETCH:.4f} * film_t '
+          f'({len(pairs)} of {len(sched)} transitions matched, residual {res:.2f}s)')
+    if len(pairs) < len(sched) - 2:
+        raise SystemExit(f'only {len(pairs)} of {len(sched)} transitions matched — not encoding')
+    # Elements that drop in shift each scene's biggest pixel change by a variable
+    # amount, so scatter rises even when the fit is sound. What matters is that the
+    # slope is in family and every transition was found; allow more scatter then.
+    tol = 0.38 if len(pairs) == len(sched) and 1.10 <= STRETCH <= 1.17 else 0.25
+    if res > tol:
+        raise SystemExit(f'timeline fit is unreliable (residual {res:.2f}s > {tol}) — not encoding')
 
 # ── captions ──
 def hms(x):

@@ -55,6 +55,13 @@ The look:
 The rest of the site keeps the gold shield. Do not carry this look further
 without being asked.
 
+**It was asked for once more, 14 October 2026: the three board films**
+(`orphan-transition/board-*.html` and their MP4s). The manager asked "can i
+have more graphics and motion and the colors scheme changed", and chose this
+corporate look from four offered. The films keep the branch's own mark:
+`logo-mark.png`, embedded as a data URI, never redrawn and never `gcm-mark.png`.
+The page that plays them, `board-films.html`, keeps the branch look.
+
 The letter's logo is the hosted copy at
 `https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
 the branch before pasting a `GroupClients.gs` that carries it, or the letter's
@@ -2770,12 +2777,34 @@ voice under the new timing and the caption gives it away.
   names and numbers, and every motion lands on the word that names it: the timing file holds each spoken word's start
   from edge-tts's WordBoundary events. To re-cut one, edit its lines, run `voice-lines.py <key>-lines.json <vox>
   --changed-only --timing <key>-timing.json --films films.json --key <key>`, write the word timings back into the
-  timing file, then `build-boardfilm.py`, `sfx.py`, `usetrack.py audio/inspired-kevin-macleod.mp3 <key>`, `record.js`
-  (alone on the machine), `mixany.py` with the vox copied to `tools/film/vo<key>`, and `chapters.py`.
+  timing file, then `build-boardfilm.py`, `sfx.py`, `usetrack.py audio/inspired-kevin-macleod.mp3 <key>`,
+  `render.js <page> cap-<key> 30 <poster>`, `mixany.py` with the vox copied to `tools/film/vo<key>`, and `chapters.py`.
+  - **The corporate look, and more motion** (14 October 2026, the same day: "can i have more graphics and motion and
+    the colors scheme changed"; the manager chose the group client management look):
+    - **Colours and type:** blue band `#13408F` into `#1D5BC4`, white panels on a `#E9EEF5` ground, and IBM Plex Sans
+      (`tools/film/fonts/`, SIL Open Font License beside it).
+    - **What stays:** the gold shield from `logo-mark.png`, teal for progress, red only for "nothing logged", and every
+      status as a word as well as a colour.
+    - **The motion:**
+      - a blue band wipes each scene in;
+      - headlines rise a word at a time, with the key words underlined as they land;
+      - the screen floats and turns, and a camera pushes in on what the voice names, under a spotlight that dims
+        the rest;
+      - a cursor (a finger on the phone) presses each button;
+      - counters, donuts and a day-by-day track fill;
+      - the chapter scenes run rings and motes on blue.
+  - **Nothing is placed by hand.** The cursor, the clicks, the spotlights and the camera name a selector, and the page's
+    own script finds it when the scene opens, so a new font or layout cannot leave them pointing at the wrong place.
+  - **Rendered, not recorded.** With that much motion, Playwright's real-time capture ran unevenly. Its timeline stopped
+    being a straight line, and `mixany.py` matched 7 of 12 cuts and refused the film, as it should. `tools/film/render.js`
+    renders the page frame by frame instead: every animation is paused and set to the frame's own moment, and the
+    outgoing scene stays until the band has crossed it. It writes `cap-<key>/rendered.mp4` and `rendered.json` (lead 0,
+    stretch 1). `mixany.py` takes that exact timeline only when `rendered.json` is there. A real-time capture is still
+    measured and still refused when its cuts do not fit.
   - **The shell's own class names leak into the scenes.** The film shell (`donthaveanagent/client-film.html`) styles
-    `.stage`, `.ph`, `.drop`, `.tk`, `.ring`, `.prow`, `.url` and others, so the board films use their own names
-    (`.bstage`, `.phn`, `.dropl` …). A new scene class must be checked against the shell's CSS first; the first cut
-    rendered a phone toast as a second phone.
+    `.stage`, `.ph`, `.drop`, `.tk`, `.ring`, `.prow`, `.url`, `.hot`, `.mt`, `.tick` and others, so the board films use
+    their own names (`.bstage`, `.phn`, `.dropl` …). `build-boardfilm.py` now refuses to write a page whose scenes use a
+    class the shell already styles; the first cut rendered a phone toast as a second phone.
   - **edge-tts pins certifi's certificate bundle**, so on the session proxy it fails with "self-signed certificate in
     certificate chain" whatever SSL_CERT_FILE says. A wrapper that points `certifi.where` at `/root/.ccr/ca-bundle.crt`
     and runs `edge_tts.util.main` works (kept in the scratchpad, not the repository).
