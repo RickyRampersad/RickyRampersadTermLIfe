@@ -136,7 +136,19 @@ iframe.preview{width:100%;height:560px;border:1px solid var(--line);border-radiu
 .toast.on{opacity:1}.toast.bad{background:var(--badText)}
 .muted{color:var(--muted)}.small{font-size:13px}
 .hide{display:none!important}
-@media (max-width:640px){.kv{grid-template-columns:repeat(2,1fr)}.weeks{height:140px;gap:4px;padding:10px 6px 6px}iframe.preview{height:460px}}
+/* the year by month (14 October 2026): one column a month, the value above it, the month under it; every number is in
+   the table beneath, and each column says its own value on hover or focus */
+.months{display:grid;gap:8px;align-items:end;height:180px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 12px 8px;box-shadow:var(--shadow)}
+.months .mo{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:12px;color:var(--muted);outline-offset:2px;border-radius:6px}
+.months .mo .col{width:62%;max-width:30px;background:var(--bar);border-radius:4px 4px 0 0;min-height:2px}
+.months .mo b{color:var(--ink);font-size:13px;font-weight:600}
+.months .mo:hover .col,.months .mo:focus .col{background:var(--primary)}
+.trend{margin:10px 0 0;font-size:14px;color:var(--ink2)}
+.opps{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.opps li{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--primary);border-radius:10px;padding:10px 14px;font-size:14px;box-shadow:var(--shadow)}
+.opps li .k{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--primary);background:var(--primarySoft);border-radius:99px;padding:2px 8px;margin-right:6px}
+.opps li.click{cursor:pointer}.opps li.click:hover{border-color:var(--primaryLine)}
+@media (max-width:640px){.kv{grid-template-columns:repeat(2,1fr)}.weeks,.months{height:140px;gap:4px;padding:10px 6px 6px}iframe.preview{height:460px}}
 </style>
 </head>
 <body>
@@ -294,6 +306,26 @@ function barCell(v, max, gold, label) {
   const w = max && v ? Math.max(2, Math.round(100 * v / max)) : 0;
   return '<div class="bar" title="' + esc(label || v) + '"><div class="track"><div class="fill' + (gold ? ' gold' : '') + '" style="width:' + w + '%"></div></div><em>' + esc(label || v) + '</em></div>';
 }
+/* the year's months as columns, and the table under them */
+function monthsHtml(months, val, what) {
+  const max = Math.max(1, ...months.map(val));
+  return '<div class="months" role="list" aria-label="' + esc(what) + ' by month" style="grid-template-columns:repeat(' + months.length + ',1fr)">' + months.map(m => {
+    const v = val(m), mon = MON[Number(m.m.slice(5, 7)) - 1];
+    return '<div class="mo" role="listitem" tabindex="0" title="' + esc(mon + ': ' + v + ' ' + what) + '" aria-label="' + esc(mon + ': ' + v + ' ' + what) + '"><b>' + v + '</b><div class="col" style="height:' + Math.round(100 * v / max) + '%"></div><span>' + mon + '</span></div>';
+  }).join('') + '</div>';
+}
+function monthsTable(months, rows) {
+  return '<div class="scroll" style="margin-top:8px"><table class="t"><thead><tr><th>' + esc(months.length ? months[0].m.slice(0, 4) : '') + '</th>' +
+    months.map(m => '<th class="num">' + MON[Number(m.m.slice(5, 7)) - 1] + '</th>').join('') + '<th class="num">Year</th></tr></thead><tbody>' +
+    rows.map(r => '<tr><td>' + esc(r[0]) + '</td>' + months.map(m => '<td class="num">' + (r[1](m) || 0) + '</td>').join('') +
+      '<td class="num"><b>' + months.reduce((a, m) => a + (r[1](m) || 0), 0) + '</b></td></tr>').join('') + '</tbody></table></div>';
+}
+const OPP_K = { renewal: 'Renewal', payment: 'Billing', payroll: 'Payroll', growth: 'Growth', pension: 'Pension', gap: 'Cover', leavers: 'Leavers', quiet: 'Quiet', slower: 'Slower', claims: 'Claims', 'open-opp': 'Opportunity' };
+function oppsHtml(list, withGroup) {
+  return list.length ? '<ul class="opps">' + list.map(o => '<li' + (withGroup ? ' class="click" data-gn="' + esc(o.group) + '"' : '') + '><span class="k">' + esc(OPP_K[o.kind] || o.kind) + '</span>' +
+    (withGroup ? '<b>' + esc(o.group) + '</b> <span class="muted small">· ' + esc(o.owner || 'no owner') + '</span><br>' : '') + esc(o.text) + '</li>').join('') + '</ul>'
+    : '<p class="muted">Nothing stands out in the records yet.</p>';
+}
 function dash(a) {
   if (!a) return '';
   const t = a.totals;
@@ -328,6 +360,21 @@ function dash(a) {
   const maxT = Math.max(1, ...a.types.map(t => t.done));
   h += '<h2>By task type</h2><div class="scroll"><table class="t"><thead><tr><th>Task type</th><th class="num">Open</th><th>Completed this year</th><th>On time</th><th class="num">Avg days</th></tr></thead><tbody>' +
     a.types.map(t => '<tr><td>' + esc(t.type) + '</td><td class="num">' + t.open + '</td><td>' + barCell(t.done, maxT) + '</td><td>' + barCell(t.onTimePct, 100, false, pct(t.onTimePct)) + '</td><td class="num">' + (t.avgDays == null ? '–' : t.avgDays) + '</td></tr>').join('') + '</tbody></table></div>';
+  if (a.year && a.year.months.length) {
+    const y = a.year, t = y.totals, all = m => m.done + m.member;
+    h += '<h2>The year so far <span class="muted small">items completed for every group, health and claims aside</span></h2>' + monthsHtml(y.months, all, 'completed') +
+      monthsTable(y.months, [['For the companies', m => m.done], ['For employees’ own policies', m => m.member], ['Health and claims (staff only)', m => m.priv], ['New items opened', m => m.opened]]) +
+      '<p class="trend">In the last three months the team completed <b>' + t.recent + '</b> items for the companies, against ' + t.before + ' in the three months before. ' +
+      (t.opened ? t.opened + ' new items have been opened this year.' : '') + '</p>';
+    const maxC = Math.max(1, ...y.cats.map(c => c.done + c.member));
+    h += '<h3>By category this year</h3><div class="scroll"><table class="t"><thead><tr><th>Category</th><th class="num">For the company</th><th class="num">For employees</th><th>All</th></tr></thead><tbody>' +
+      y.cats.map(c => '<tr><td>' + esc(c.type) + '</td><td class="num">' + c.done + '</td><td class="num">' + c.member + '</td><td>' + barCell(c.done + c.member, maxC) + '</td></tr>').join('') + '</tbody></table></div>';
+    const maxG = Math.max(1, ...y.groups.map(g => g.done + g.member));
+    h += '<h3>Each group this year <span class="muted small">tap one to open it</span></h3><div class="scroll"><table class="t"><thead><tr><th>Group</th><th>Looked after by</th><th>Completed this year</th><th class="num">Last 3 months</th><th class="num">3 months before</th><th class="num">Open</th><th class="num">Opportunities</th></tr></thead><tbody>' +
+      y.groups.map(g => '<tr class="click" data-gn="' + esc(g.group) + '"><td><b>' + esc(g.group) + '</b></td><td>' + esc(g.owner || '–') + '</td><td>' + barCell(g.done + g.member, maxG) + '</td><td class="num">' + g.recent +
+        (g.recent > g.before ? ' <span class="chip good"><i></i>up</span>' : g.recent < g.before ? ' <span class="chip warn"><i></i>down</span>' : '') + '</td><td class="num">' + g.before + '</td><td class="num">' + g.open + '</td><td class="num">' + (g.opps || '–') + '</td></tr>').join('') + '</tbody></table></div>';
+    h += '<h2>Opportunities and trends <span class="muted small">what the records show, most time-critical first · ' + y.opps.length + '</span></h2>' + oppsHtml(y.opps, true);
+  }
   h += '<h2 id="told">What groups told us <span class="muted small">the last 30 days: changes, “not ours”, ratings of 3 or less, and every comment</span></h2>' + (a.responses.length
     ? '<ul class="feed">' + a.responses.map(r => '<li class="click" data-gn="' + esc(r.group) + '"><b>' + esc(r.group) + '</b> <span class="muted small">' + esc(r.at) + ' · ' + esc(r.name) + ' · ' + esc(r.staff) + '</span><br>' +
       (r.rating ? '<b>' + r.rating + '★</b> ' : '') + (r.verdict ? esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.task) + ' ' : '') + (r.note ? '“' + esc(r.note) + '”' : '') + (r.comment ? '“' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>'
@@ -361,7 +408,7 @@ function drawGroup() {
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" id="pv">Preview the letter</button></div><div id="pvBox"></div></div>' +
     '<h3 style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">Open items <span class="muted small">' + d.items.length + ' · tick what the group sees; share the Chatter comments they should read</span>' + (d.items.length ? '<button class="btn ghost sm" type="button" id="histAll" style="margin-left:auto">Show all history</button>' : '') + '</h3><div class="items">' + d.items.map(itemHtml).join('') + (d.items.length ? '' : '<p class="muted">Nothing open.</p>') + '</div>' +
     '<h3>Completed in the last seven days</h3>' + (d.doneWeek.length ? '<ul class="feed">' + d.doneWeek.map(x => '<li>' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + ' · ' + esc(x.by) + ' · ' + esc(dmy(x.done)) + (x.shown ? '' : ' · not shown to the group') + '</span></li>').join('') + '</ul>' : '<p class="muted">Nothing completed this week.</p>') +
-    '<h3>Service record this year <span class="muted small">what the group sees</span></h3>' + recordHtml(d.record) +
+    yearHtml(d) +
     '<h3>Letters sent</h3>' + (d.sends.length ? '<ul class="feed">' + d.sends.map(x => '<li>' + esc(x.at) + ' · ' + esc(x.staff) + ' · ' + x.items + ' items · ' + esc(x.status) + ' <span class="muted small">(' + esc(x.via) + ')</span></li>').join('') + '</ul>' : '<p class="muted">None yet.</p>') +
     '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
   $('app').innerHTML = h;
@@ -407,6 +454,22 @@ function itemHtml(it) {
       (GROUP.canAct !== false && !it.priv ? '<button class="btn ghost" type="button" data-note="' + esc(it.id) + '">Post for the group</button>' : '') +
       '<button class="btn ghost" type="button" data-cmt="' + esc(it.id) + '">Comment for the team</button></div></div></div>';
 }
+function yearHtml(d) {
+  const y = d.year;
+  if (!y) return '<h3>Service record this year <span class="muted small">what the group sees</span></h3>' + recordHtml(d.record);
+  let h = '<h2>The year with this group</h2>' +
+    '<div class="tiles"><div class="tile"><b>' + y.done + '</b><span>completed for the company</span></div><div class="tile"><b>' + y.member + '</b><span>for employees’ own policies</span></div>' +
+    '<div class="tile"><b>' + pct(y.onTimePct) + '</b><span>on time</span></div><div class="tile"><b>' + (y.avgDays == null ? '–' : y.avgDays + 'd') + '</b><span>average days</span></div>' +
+    (y.priv ? '<div class="tile"><b>' + y.priv + '</b><span>health and claims (staff only)</span></div>' : '') + '</div>' +
+    monthsHtml(y.months, m => m.done + m.member, 'completed') +
+    monthsTable(y.months, [['For the company', m => m.done], ['For employees’ own policies', m => m.member], ['Health and claims (staff only)', m => m.priv], ['New items opened', m => m.opened]]) +
+    (y.trend.length ? '<p class="trend">' + esc(y.trend.join(' ')) + '</p>' : '') +
+    '<h3>By service <span class="muted small">what the group sees on its page</span></h3>' + recordHtml(d.record);
+  if (y.types && y.types.length) h += '<h3>By Salesforce task type <span class="muted small">completed for the company this year</span></h3><div class="chips">' +
+    y.types.map(t => '<span class="chip">' + esc(t.type) + ' · ' + t.done + '</span>').join('') + '</div>';
+  h += '<h3>Opportunities and trends <span class="muted small">for the team, never shown to the group</span></h3>' + oppsHtml(y.opps || [], false);
+  return h;
+}
 function recordHtml(rows) {
   if (!rows.length) return '<p class="muted">Nothing on record yet this year.</p>';
   return '<div class="scroll"><table class="t"><thead><tr><th>Service</th><th class="num">Completed</th><th class="num">On time</th><th class="num">Avg days</th><th class="num">Open</th></tr></thead><tbody>' +
@@ -449,7 +512,7 @@ async function approve() {
   const btns = ['ap', 'sd', 'ol'].map($).filter(Boolean); btns.forEach(b => b.disabled = true);
   const r = await post({ action: 'gcm.approve', group: GROUP.group.key, intro: $('intro').value, checked: $('ck').checked });
   if (!r.ok) { toast(r.error || 'Not approved', true); btns.forEach(b => b.disabled = false); return; }
-  toast('Approved. It goes ' + r.for + '.');
+  toast('Approved. It goes ' + r.for + '.' + (r.welcome ? ' Their welcome e-mail, with the film, goes within the hour, signed by you.' : ''));
   setTimeout(() => openGroup(GROUP.group.key), 1000);
 }
 async function send(outlook) {

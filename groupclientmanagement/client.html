@@ -111,6 +111,13 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--pa
 footer{color:var(--muted);font-size:13px;padding:10px 0 40px;text-align:center}
 footer a{color:inherit}
 .hide{display:none!important}
+/* the year by month: one column a month, its value above and the month below (14 October 2026) */
+.months{display:grid;gap:6px;align-items:end;height:160px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 10px 8px;margin:0 0 12px}
+.months .mo{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:12px;color:var(--muted);border-radius:6px}
+.months .mo .col{width:62%;max-width:28px;background:var(--bar);border-radius:4px 4px 0 0;min-height:2px}
+.months .mo b{color:var(--ink);font-size:13px;font-weight:600}
+.trend{margin:0 0 12px;font-size:15px}
+@media (max-width:560px){.months{height:130px;gap:3px;padding:10px 4px 6px}.months .mo{font-size:11px}}
 @media (max-width:560px){.tiles{grid-template-columns:repeat(2,1fr)}.row2{grid-template-columns:1fr}.ch{font-size:13px}.t th,.t td{padding:8px 6px}.t th{font-size:11px;letter-spacing:0}}
 </style>
 </head>
@@ -209,8 +216,17 @@ function render() {
     });
   });
   if (D.record.length) {
-    const tot = D.record.reduce((x, r) => ({ done: x.done + r.done, open: x.open + r.open }), { done: 0, open: 0 });
-    h += '<h2 class="sec">Our service record for you this year</h2><p class="sub">Completed items, the share done by their target date, and how many days they took on average.</p>' +
+    const tot = D.record.reduce((x, r) => ({ done: x.done + r.done, open: x.open + r.open }), { done: 0, open: 0 }), Y = D.year;
+    h += '<h2 class="sec">Our service record for you this year</h2><p class="sub">Completed items, the share done by their target date, and how many days they took on average.</p>';
+    if (Y && Y.months && Y.months.length) {
+      const max = Math.max(1, ...Y.months.map(m => m.done));
+      h += '<div class="months" role="list" aria-label="Items completed for you, by month" style="grid-template-columns:repeat(' + Y.months.length + ',1fr)">' + Y.months.map(m => {
+        const mon = MON[Number(m.m.slice(5, 7)) - 1].slice(0, 3);
+        return '<div class="mo" role="listitem" title="' + mon + ': ' + m.done + ' completed" aria-label="' + mon + ': ' + m.done + ' completed"><b>' + m.done + '</b><div class="col" style="height:' + Math.round(100 * m.done / max) + '%"></div><span>' + mon + '</span></div>';
+      }).join('') + '</div>' +
+        '<p class="trend">' + esc((Y.member ? 'We also completed ' + Y.member + ' item' + (Y.member === 1 ? '' : 's') + ' for your employees’ own policies this year. ' : '') + (Y.trend || []).join(' ')) + '</p>';
+    }
+    h +=
       '<div class="scroll"><table class="t"><thead><tr><th>Service</th><th class="num">Completed</th><th class="num">On time</th><th class="num">Avg days</th><th class="num">Open</th></tr></thead><tbody>' +
       D.record.map(r => '<tr><td>' + esc(r.type) + '</td><td class="num">' + r.done + '</td><td class="num">' + (r.onTimePct == null ? '–' : r.onTimePct + '%') + '</td><td class="num">' + (r.avgDays == null ? '–' : r.avgDays) + '</td><td class="num">' + r.open + '</td></tr>').join('') +
       '<tr><td><b>All services</b></td><td class="num"><b>' + tot.done + '</b></td><td></td><td></td><td class="num"><b>' + tot.open + '</b></td></tr></tbody></table></div>';
