@@ -212,9 +212,25 @@ template and the framework page.
 
 | Film | Source page | MP4 | Length |
 |---|---|---|---|
-| Inside Wednesday | `wednesday-film.html` | `rrb-inside-wednesday.mp4` | 2:39 |
-| How a week becomes a meeting | `builder-film.html` | `rrb-meeting-builder.mp4` | 2:12 |
-| What you do | `meeting-film.html` | `rrb-meeting-walkthrough.mp4` | 1:33 |
+| The meeting | `agenda-film.html` | `rrb-the-meeting.mp4` | 2:40 |
+| ~~Inside Wednesday~~ | `wednesday-film.html` | taken down 14 Oct 2026 | 2:39 |
+| ~~How a week becomes a meeting~~ | `builder-film.html` | taken down 14 Oct 2026 | 2:12 |
+| ~~What you do~~ | `meeting-film.html` | taken down 14 Oct 2026 | 1:33 |
+
+**Three films were taken off the site on 14 October 2026.** Their bed came from
+`Music_Motivation.m4a`, whose licence has never been established — the warning
+below has been in this file since they were made, and the merge of 10 October
+put all three at public URLs on rickyrampersadbranch.com anyway. The MP4s and
+their posters are removed from the repository; the source pages stay, so each
+can be rebuilt on the cleared Kevin MacLeod track.
+
+Rebuilding them is not a re-mix. Their `films.json` entries (`meetingwalk`,
+`builder`, `wednesday`) and their vox directories did not survive the rebuild
+onto `main`, so there is no narration to re-time and no capture to re-score:
+each has to be re-voiced from its page. `rrb-the-meeting.mp4` is the one with
+its whole build intact — `films.json` key `meeting`, vox in `tools/film/vomtg`,
+bed from `audio/inspired-kevin-macleod.mp3` — and it is what
+`walkthrough.html` plays now.
 
 **Inside Wednesday is the one that shows the meeting running.** The builder film
 answers *where did this agenda come from*; it names who holds each slot but not
