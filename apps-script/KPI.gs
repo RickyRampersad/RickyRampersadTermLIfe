@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-14e';
+var SCRIPT_VERSION = '2026-10-14f';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4076,11 +4076,14 @@ var PAYOFF = [
     re: /premium|lapse|reinstat|renewal|billing|direct debit|\bDD\b|stop payment|arrears|paid, not showing|call back|conserv/i }
 ];
 
+var PAYOFF_NOT = ['Lic/Staffing/SA/HR', 'Training', 'RR Operations'];   // a licence "application" is not new business
+
 function payoffOf_(t) {
   var subj = String((t && (t.subject || t.s)) || ''), ty = String((t && (t.ty || t.type)) || '');
+  var byWords = PAYOFF_NOT.indexOf(ty) === -1;
   for (var i = 0; i < PAYOFF.length; i++) {
     var p = PAYOFF[i];
-    if (p.re.test(subj) || p.types.indexOf(ty) > -1) return p;
+    if ((byWords && p.re.test(subj)) || p.types.indexOf(ty) > -1) return p;
   }
   return { key: 'other', label: '', rank: 9 };
 }
@@ -4116,6 +4119,13 @@ function suggestPlan_(staffId, blocks, loose, target) {
   if (!target || !total) return out;
   var quota = {}, given = 0;
   blocks.forEach(function (x) { quota[x.id] = Math.floor(target * mins[x.id] / total); given += quota[x.id]; });
+  // Every block gets at least one when the day's number allows it: a
+  // suggestion that leaves a block empty fails its own plan check.
+  if (target >= blocks.length) {
+    blocks.forEach(function (x) { if (!quota[x.id]) { quota[x.id] = 1; given++; } });
+    var big = blocks.slice().sort(function (a, b) { return quota[b.id] - quota[a.id]; });
+    for (var j = 0; given > target && j < big.length * target; j++) { var bb = big[j % big.length]; if (quota[bb.id] > 1) { quota[bb.id]--; given--; } }
+  }
   // Hand out the rounding to the longest blocks.
   var bySize = blocks.slice().sort(function (a, b) { return mins[b.id] - mins[a.id]; });
   for (var i = 0; given < target && bySize.length; i = (i + 1) % bySize.length) { quota[bySize[i].id]++; given++; }
@@ -4268,8 +4278,14 @@ function sendMidday_(person, day, signIn, nowOpt) {
                later.filter(function (y) { return y.types.indexOf(x.ty) > -1; })[0];
     if (home) home.waiting.push(x.t); else loose.push(x.t);
   });
-  var plan = suggestPlan_(sid, later, loose, Math.min(left, all.length));
+  var innoNow = innovationBlock_(sid, day);
+  var plan = suggestPlan_(sid, later.filter(function (x) { return x.id !== innoNow; }), loose.concat([].concat.apply([], later.filter(function (x) { return x.id === innoNow; }).map(function (x) { return x.waiting; }))), Math.min(left, all.length));
   var cards = later.map(function (x) {
+    if (x.id === innoNow) {
+      return '<div style="background:#FBF7EC;border:1px solid ' + MAIL.gold + ';border-left:4px solid ' + MAIL.gold + ';border-radius:10px;padding:13px 15px;margin-bottom:10px">' +
+        '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' + esc_(blockLabel_(x.id)) + (x.sb.time ? ' · ' + esc_(x.sb.time) : '') + ' · Innovation hour · protected</div>' +
+        '<div style="font-size:12.5px;margin-top:4px">Keep it clear. Move your innovation forward and say what moved before you leave.</div></div>';
+    }
     var list = plan[x.id] || [];
     return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (list.length ? MAIL.amber : MAIL.green) + ';border-radius:10px;padding:13px 15px;margin-bottom:10px">' +
       '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' + esc_(blockLabel_(x.id)) + (x.sb.time ? ' · ' + esc_(x.sb.time) : '') + ' · ' + list.length + ' suggested</div>' +
