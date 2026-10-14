@@ -428,7 +428,7 @@ function hello(d) {
   const name = person ? words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase() : d.me;
   const hr = new Date().getHours(), part = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
   const mine = d.groups.filter(g => d.role === 'staff' ? g.own : true);
-  const due = mine.filter(g => g.stats.week === 'due' && g.stats.ready).length, wel = mine.filter(g => g.canAct && !g.account.welcome && !g.account.welcomeWhy).length;
+  const due = mine.filter(g => g.stats.week === 'due' && g.stats.ready).length, wel = mine.filter(g => g.canAct && g.account && !g.account.welcome && !g.account.welcomeWhy).length;
   const ans = mine.filter(g => g.stats.lastResponse).length;
   const pill = (n, label, cls) => '<span class="pill' + (cls ? ' ' + cls : '') + '"><b>' + n + '</b> ' + esc(label) + '</span>';
   return '<h1>' + part + (name ? ', ' + esc(name) : '') + '.</h1><div class="pills">' + pill(mine.length, d.role === 'staff' ? 'groups you look after' : 'groups in the branch') +
@@ -452,6 +452,8 @@ function rowState(g) {
 }
 const ACC_SORT = [['urgent', 'Most pressing first'], ['name', 'Group, A to Z'], ['owner', 'Who looks after it'], ['answer', 'Answered most recently']];
 function accountsHtml(d) {
+  /* a backend older than 14 October 2026 sends no account lines: the page says so instead of breaking */
+  if (d.groups.some(g => !g.account)) return '<h2 style="margin-top:22px">Every account</h2><div class="note info"><div>Every account, with sending and resending from this page, appears once the branch publishes the new version of the backend (GroupClients.gs). Everything else here works as before.</div></div>';
   const all = d.groups, n = all.length, cnt = f => all.filter(f).length;
   const meter = (v, label) => '<div class="meter' + (n && v === n ? ' done' : '') + '"><div class="top"><b>' + v + ' <small>of ' + n + '</small></b><span class="pct">' + (n ? Math.round(100 * v / n) : 0) + '%</span></div><div class="small" style="margin-top:2px">' + esc(label) +
     '</div><div class="track" role="img" aria-label="' + esc(label + ': ' + v + ' of ' + n) + '"><div class="fill" style="width:' + (n ? Math.round(100 * v / n) : 0) + '%"></div></div></div>';
