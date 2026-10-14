@@ -213,8 +213,8 @@ template and the framework page.
 | Film | Source page | MP4 | Length |
 |---|---|---|---|
 | The meeting | `agenda-film.html` | `rrb-the-meeting.mp4` | 2:40 |
+| How a week becomes a meeting | `builder-film.html` | `rrb-meeting-builder.mp4` | 3:06 |
 | ~~Inside Wednesday~~ | `wednesday-film.html` | taken down 14 Oct 2026 | 2:39 |
-| ~~How a week becomes a meeting~~ | `builder-film.html` | taken down 14 Oct 2026 | 2:12 |
 | ~~What you do~~ | `meeting-film.html` | taken down 14 Oct 2026 | 1:33 |
 
 **Three films were taken off the site on 14 October 2026.** Their bed came from
@@ -227,10 +227,49 @@ can be rebuilt on the cleared Kevin MacLeod track.
 Rebuilding them is not a re-mix. Their `films.json` entries (`meetingwalk`,
 `builder`, `wednesday`) and their vox directories did not survive the rebuild
 onto `main`, so there is no narration to re-time and no capture to re-score:
-each has to be re-voiced from its page. `rrb-the-meeting.mp4` is the one with
-its whole build intact — `films.json` key `meeting`, vox in `tools/film/vomtg`,
-bed from `audio/inspired-kevin-macleod.mp3` — and it is what
-`walkthrough.html` plays now.
+each has to be re-voiced from its page.
+
+### The builder film was rebuilt the same day
+
+`rrb-meeting-builder.mp4` is back, 3:06, and four things about it changed.
+
+**It has a script on disk now.** `tools/film/builder-lines.json` carries every
+spoken line. The vox directories are git-ignored build artefacts, so when the
+old `films.json` entry went, the narration went with it and the film could not
+be touched without being rewritten from scratch. That cannot happen again:
+`voice-lines.py` voices and times it from that file, and `builder-timing.py`
+writes the measured durations back onto the page, which is built by hand and
+so has nothing else to write its `data-d`.
+
+**The bed is the cleared track**, `audio/inspired-kevin-macleod.mp3` through
+`usetrack.py builder` — not the branch's own `Music_Motivation.m4a`.
+
+**It carries the branch's mark and palette.** The first cut used a blue shield
+on a steel ground; `meetings/README.md` and the root `CLAUDE.md` both say the
+mark is `logo-mark.png`, the gold shield, on every screen, and that a branch
+whose walls disagree about its logo is the first thing anybody notices. The
+`:root` variables were already named `--gold`, `--gold2`, `--teal` and held
+Steel & Azure values, so repainting was three lines plus the loose hexes.
+`wednesday-film.html` and `meeting-film.html` still carry the blue shield.
+
+**The week runs Sunday to Sunday**, the figures come from the Branch Portfolio
+rather than Salesforce, and two scenes were added: the Sunday evening close,
+and the daily note that carries a person their own data. The film used to open
+the week on a Monday and say the read was from Salesforce, neither of which
+was what the branch meant.
+
+Measured on the rebuild: capture stretch **1.0126**, which the slope search
+would have refused before its floor was widened from 1.05 to 0.97. 24 of 25
+transitions matched, residual 0.15 s, speech over 84% of runtime.
+
+**`edge-tts` 7.2.8 cannot synthesise any more** — Microsoft began answering the
+synthesis websocket with `403 Invalid response status`, while the REST calls
+(`--list-voices`) still work, so the failure does not look like a network one.
+`pip install -U edge-tts` to 7.3.1 fixed it. If a build suddenly cannot voice
+anything, check the version before the proxy.
+
+`rrb-the-meeting.mp4` is the other film with its whole build intact —
+`films.json` key `meeting`, vox in `tools/film/vomtg`, same cleared bed.
 
 **Inside Wednesday is the one that shows the meeting running.** The builder film
 answers *where did this agenda come from*; it names who holds each slot but not
