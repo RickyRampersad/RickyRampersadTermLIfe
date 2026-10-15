@@ -67,9 +67,16 @@ corporate blues `#13408F`, `#1D5BC4` and `#2A6DE0`, electric cyan `#00E5FF`)
 and carry `tools/film/board-mark.png`: the same shield and check, white on a
 blue tile, drawn from `favicon.svg`'s own shape by `tools/film/board-mark.js`,
 as `gcm-mark.png` was for the groups.
-It is embedded in the three films as a data URI and used nowhere else; never
-`gcm-mark.png`, never a redrawn shape. The page that plays them,
-`board-films.html`, keeps the branch look and the gold shield.
+It is embedded in the three films as a data URI, and a hosted copy,
+`orphan-transition/board-mark.png`, sits on the board pages: asked the same
+afternoon ("change the yellow logo to a blue i dont like the yellow"), and the
+manager chose "the films and the board pages" over the films alone or the
+whole site. So `assign.html` (the board), `board-films.html`, `wall.html`,
+`dashboard.html`, `stream.html` and `responses.html` carry the blue shield
+(their `.mark` tile is `#13408F` behind it, and their favicon is the same
+file); never `gcm-mark.png`, never a redrawn shape. Every other page and
+every letter keeps the gold shield, and the hosted `logo-mark.png` is
+untouched: the letters already sent load it.
 
 The letter's logo is the hosted copy at
 `https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
@@ -2803,7 +2810,8 @@ voice under the new timing and the caption gives it away.
       Open Font License beside it). The side column reads in white; inside the windows the ink stays dark (the
       `--ink`, `--slate` and `--mute` tokens are re-set on `.sd` and on `.cue`).
     - **The mark:** `tools/film/board-mark.png`, the shield and check white on a blue tile (see the mark section
-      above). Red only for "nothing logged", and every status as a word as well as a colour.
+      above; the board pages carry the hosted copy `orphan-transition/board-mark.png`). Red only for "nothing
+      logged", and every status as a word as well as a colour.
     - **The motion:**
       - scenes zoom through: the new scene opens a little larger, bright and soft, and sharpens as it settles, while
         the one it replaces pulls away and dims behind it (the page script marks it `out` for the hand-over, and
