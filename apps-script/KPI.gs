@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-15g';
+var SCRIPT_VERSION = '2026-10-15h';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2380,9 +2380,10 @@ function handle_(action, data, token) {
 // ---------------------------------------------------------------------------
 
 var MAIL = {
-  navy: '#16264F', deep: '#0D1838', gold: '#C7A34A', soft: '#E7D9AE',
-  ink: '#1F2433', muted: '#6A7180', line: '#E5E1D6', paper: '#F7F5EF',
-  green: '#2C7A57', amber: '#B0791C', red: '#AE3A33'
+  // the film's palette: indigo, electric cyan, mint, amber, coral
+  navy: '#141C4A', deep: '#0B1230', gold: '#0EA5C9', soft: '#A5F3FC',
+  ink: '#111633', muted: '#6B7AA3', line: '#DCE3F4', paper: '#F3F6FC',
+  green: '#1E9E78', amber: '#D97A06', red: '#DC3F3F'
 };
 
 function esc_(s) {
@@ -2411,7 +2412,7 @@ function shell_(title, sub, inner) {
   return '' +
   '<div style="margin:0;padding:0;background:' + MAIL.paper + ';font-family:Segoe UI,Helvetica,Arial,sans-serif;color:' + MAIL.ink + '">' +
     '<div style="max-width:660px;margin:0 auto;background:' + MAIL.paper + '">' +
-      '<div style="background:' + MAIL.navy + ';border-bottom:3px solid ' + MAIL.gold + ';padding:22px 24px">' +
+      '<div style="background:' + MAIL.navy + ';background-image:linear-gradient(135deg,#0B1230 0%,#1C2A6E 100%);border-bottom:3px solid ' + MAIL.gold + ';padding:22px 24px">' +
         '<div style="color:' + MAIL.soft + ';font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase">Ricky Rampersad Branch</div>' +
         '<div style="color:#fff;font-size:15px;font-weight:800;margin-top:2px">Ricky Rampersad\'s Branch</div>' +
         '<div style="color:#fff;font-size:21px;font-weight:800;margin-top:14px">' + esc_(title) + '</div>' +
@@ -4151,7 +4152,7 @@ function bmReplyPage_(person, day, error, notice) {
     }).join('') + '</div>';
   }).join('');
   return replyPage_('Respond · ' + prettyDate_(day), 'Type under any item and send. Each reply goes on that task\'s Chatter as yours. Leave the rest blank.',
-    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     (notice ? '<div class="card ok">' + esc_(notice) + '</div>' : '') +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_('ricky', day, 'bm') + groups +
     '<div class="card"><div class="bh">Log what you did</div><div class="bf">One line each: every line becomes a Salesforce task in your name for today, with the line as its note.</div>' +
@@ -4428,7 +4429,7 @@ function umReplyPage_(person, day, error) {
       '<input type="text" name="n_' + c.id + '" value="' + esc_(r.Note || '') + '" style="width:calc(100% - 110px)" placeholder="' + esc_(c.note || 'Note') + '"></div>';
   }).join('') + '</div>';
   return replyPage_('Your unit · ' + prettyDate_(day), 'Comment under any task; each comment goes on its Chatter as yours. Then set your day. Leave blank what needs nothing.',
-    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'um') + groups + checks +
     '<button type="submit">Save my comments and my plan</button></form>');
 }
@@ -4541,7 +4542,7 @@ function umEveReplyPage_(person, day, error) {
       '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Your comment, posted to Chatter on this task"></textarea></div>';
   }).join('') + '</div>' : '';
   return replyPage_('Your day · ' + prettyDate_(day), 'A number against each KPI, with names where it asks. Mr Rampersad gets the account.',
-    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'umeve') + checks + list +
     '<button type="submit">Send my account</button></form>');
 }
@@ -5001,7 +5002,7 @@ function agSend_(a, subject, html, ccList) {
     var mgr = managerEmails_();
     if (!mgr.length) return false;
     MailApp.sendEmail({ to: mgr.join(','), subject: '[Preview] ' + subject,
-      htmlBody: '<div style="background:#FBF7EC;border:1px solid #C7A34A;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">' +
+      htmlBody: '<div style="background:#EEF9FD;border:1px solid #0EA5C9;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">' +
         'Preview. In live mode this goes to ' + esc_(a.email) + (ccList && ccList.length ? ', copied to ' + esc_(ccList.join(', ')) : '') +
         '. Switch on with Script Property AGENT_DAY = live.</div>' + html });
     return true;
@@ -5149,7 +5150,7 @@ function agReplyPage_(person, day, kind, error) {
   }).join('') + '</div>' : '';
   return replyPage_((eve ? 'Close off your day · ' : 'Your day · ') + prettyDate_(day),
     eve ? 'A number against each, 0 where nothing was done. Your manager and sales support get it.' : 'Set your plan in numbers and comment on anything the team is working for you. One save at the bottom.',
-    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(a.key, day, kind) + metrics + list +
     '<button type="submit">' + (eve ? 'Close off my day' : 'Save my plan') + '</button></form>');
 }
@@ -5204,7 +5205,7 @@ function agCopy_(a, day, eve, rows, comments) {
 function agSendCopy_(to, cc, subject, html, a) {
   if (agentMode_() === 'preview') {
     MailApp.sendEmail({ to: (managerEmails_() || []).join(','), subject: '[Preview] ' + subject,
-      htmlBody: '<div style="background:#FBF7EC;border:1px solid #C7A34A;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">Preview. In live mode this goes to ' +
+      htmlBody: '<div style="background:#EEF9FD;border:1px solid #0EA5C9;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">Preview. In live mode this goes to ' +
         esc_(to.concat(cc).join(', ')) + '.</div>' + html });
     return;
   }
@@ -6031,7 +6032,7 @@ function sendMidday_(person, day, signIn, nowOpt) {
   var plan = suggestPlan_(sid, later.filter(function (x) { return x.id !== innoNow; }), loose.concat([].concat.apply([], later.filter(function (x) { return x.id === innoNow; }).map(function (x) { return x.waiting; }))), Math.min(left, all.length));
   var cards = later.map(function (x) {
     if (x.id === innoNow) {
-      return '<div style="background:#FBF7EC;border:1px solid ' + MAIL.gold + ';border-left:4px solid ' + MAIL.gold + ';border-radius:10px;padding:13px 15px;margin-bottom:10px">' +
+      return '<div style="background:#EEF9FD;border:1px solid ' + MAIL.gold + ';border-left:4px solid ' + MAIL.gold + ';border-radius:10px;padding:13px 15px;margin-bottom:10px">' +
         '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' + esc_(blockLabel_(x.id)) + (x.sb.time ? ' · ' + esc_(x.sb.time) : '') + ' · Innovation hour · protected</div>' +
         '<div style="font-size:12.5px;margin-top:4px">Keep it clear. Move your innovation forward and say what moved before you leave.</div></div>';
     }
@@ -6261,24 +6262,24 @@ function replyPage_(title, sub, inner) {
     '<style>' +
       'body{margin:0;background:#F7F5EF}' +
       '.w{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:600px;margin:0 auto;padding:26px 16px 60px;color:#1F2433}' +
-      '.br{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#C7A34A}' +
-      'h1{font-size:22px;margin:6px 0 4px;color:#16264F}.sub{color:#6A7180;margin:0 0 16px}' +
+      '.br{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0EA5C9}' +
+      'h1{font-size:22px;margin:6px 0 4px;color:#141C4A}.sub{color:#6A7180;margin:0 0 16px}' +
       '.card{background:#fff;border:1px solid #E5E1D6;border-radius:12px;padding:14px 14px 10px;margin-bottom:12px}' +
-      '.bh{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#C7A34A}' +
+      '.bh{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#0EA5C9}' +
       '.bf{font-size:12.5px;color:#6A7180;margin:2px 0 6px}' +
       'label.t{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid #EEE;font-size:14px;cursor:pointer}' +
-      'label.t input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:#16264F}' +
-      '.tag{font-size:12px;font-weight:700}.late{color:#AE3A33}.today{color:#B0791C}.br2{color:#16264F;font-size:11.5px}' +
+      'label.t input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:#141C4A}' +
+      '.tag{font-size:12px;font-weight:700}.late{color:#DC3F3F}.today{color:#D97A06}.br2{color:#141C4A;font-size:11.5px}' +
       'textarea,input[type=text]{width:100%;box-sizing:border-box;padding:10px 11px;border:1.5px solid #DDE4EC;border-radius:9px;font:14px/1.4 inherit;background:#fff}' +
       '.seg{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.seg label{flex:1;min-width:92px;text-align:center;border:1.5px solid #DDE4EC;border-radius:9px;padding:8px 6px;font-size:13px;font-weight:700;cursor:pointer;background:#fff}' +
-      '.seg input{display:none}.seg input:checked+span{color:#fff}.seg label:has(input:checked){background:#16264F;border-color:#16264F;color:#fff}' +
+      '.seg input{display:none}.seg input:checked+span{color:#fff}.seg label:has(input:checked){background:#141C4A;border-color:#141C4A;color:#fff}' +
       '.task{padding:10px 0;border-top:1px solid #EEE;font-size:14px}' +
-      'details summary{cursor:pointer;color:#16264F;font-weight:700;font-size:13px;padding:8px 0}' +
-      'button{width:100%;padding:15px;border:0;border-radius:11px;background:#16264F;color:#fff;font:800 16px inherit;cursor:pointer;margin-top:8px}' +
+      'details summary{cursor:pointer;color:#141C4A;font-weight:700;font-size:13px;padding:8px 0}' +
+      'button{width:100%;padding:15px;border:0;border-radius:11px;background:#141C4A;color:#fff;font:800 16px inherit;cursor:pointer;margin-top:8px}' +
       // The one save stays in view: Sasha, 15 Oct, typed a note under KPI 1 and
       // could not see how to save it without scrolling to the foot of the page.
       'form>button[type=submit]:last-of-type{position:sticky;bottom:10px;box-shadow:0 6px 18px rgba(13,24,56,.25);z-index:5}' +
-      '.ok{border-left:4px solid #2C7A57}.bad{border-left:4px solid #AE3A33}.warn{color:#AE3A33;font-weight:700;font-size:13px;display:none;margin-top:6px}' +
+      '.ok{border-left:4px solid #2C7A57}.bad{border-left:4px solid #DC3F3F}.warn{color:#DC3F3F;font-weight:700;font-size:13px;display:none;margin-top:6px}' +
       '.ln{padding:6px 0;border-top:1px solid #EEE;font-size:14px}.ln:first-child{border-top:0}' +
     '</style>' +
     '<div class="w"><div class="br">Ricky Rampersad Branch</div><h1>' + esc_(title) + '</h1>' +
@@ -6301,7 +6302,7 @@ function taskTag_(t, day) {
 
 function linesHtml_(lines) {
   return lines.map(function (l) {
-    return '<div class="ln"><span style="color:' + (l.bad ? '#AE3A33' : '#2C7A57') + ';font-weight:800">' + (l.bad ? '&#9679;' : '&#10003;') + '</span> ' + l.html + '</div>';
+    return '<div class="ln"><span style="color:' + (l.bad ? '#DC3F3F' : '#2C7A57') + ';font-weight:800">' + (l.bad ? '&#9679;' : '&#10003;') + '</span> ' + l.html + '</div>';
   }).join('');
 }
 
@@ -6410,7 +6411,7 @@ function planReplyPage_(person, day, error, notice) {
   });
   var inner =
     (notice ? '<div class="card ok"><b style="color:#2C7A57">' + esc_(notice) + '</b></div>' : '') +
-    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     (signed ? '' : '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card">' + replyHidden_(sid, day, 'in') +
       '<div class="bh">Not signed in yet</div><div class="bf">Saving your plan signs you in at the time you save. At your desk now? Sign in first.</div>' +
       '<button type="submit" style="background:#2C7A57;margin-top:4px">I am at my desk</button></form>') +
@@ -6515,9 +6516,9 @@ function planReplySave_(person, day, p, all) {
       (si ? ' ' + (si.first ? 'Signed in at ' : 'Signed in since ') + esc_(twelve_(si.at)) + '.' : ''),
     (made.length || failed.length ? '<div class="card ' + (failed.length ? 'bad' : 'ok') + '"><div class="bh">From your scrub</div>' +
       made.map(function (l) { return '<div class="ln">&#10003; Task created: ' + esc_(l) + '</div>'; }).join('') +
-      failed.map(function (l) { return '<div class="ln" style="color:#AE3A33">Not created: ' + esc_(l) + '. Add it in Salesforce.</div>'; }).join('') + '</div>' : '') +
+      failed.map(function (l) { return '<div class="ln" style="color:#DC3F3F">Not created: ' + esc_(l) + '. Add it in Salesforce.</div>'; }).join('') + '</div>' : '') +
     '<div class="card ' + (chk.ok ? 'ok' : 'bad') + '">' + linesHtml_(chk.lines) + '</div>' +
-    (chk.ok ? '' : '<a href="' + esc_(replyUrl_(sid, day, 'plan')) + '" style="display:block;text-align:center;padding:14px;border-radius:11px;background:#C7A34A;color:#0D1838;font-weight:800;text-decoration:none">Fix my plan</a>'));
+    (chk.ok ? '' : '<a href="' + esc_(replyUrl_(sid, day, 'plan')) + '" style="display:block;text-align:center;padding:14px;border-radius:11px;background:#0EA5C9;color:#0B1230;font-weight:800;text-decoration:none">Fix my plan</a>'));
 }
 
 // ---- progress -----------------------------------------------------------------
@@ -6590,7 +6591,7 @@ function progReplyPage_(person, day, error) {
       }).join('') + '</div>' +
       '<input type="text" name="r_' + esc_(t.id) + '" value="' + esc_(h.r || '') + '" placeholder="Why not today, and when it will be done" style="display:' + (h.a === 'not' ? 'block' : 'none') + '"></div>';
   }).join('');
-  var inner = (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+  var inner = (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     '<div class="card ok"><div class="bh">Closed in Salesforce</div>' +
       (done.length ? done.map(function (t) { return '<div class="ln">&#10003; ' + esc_(t.s) + '</div>'; }).join('') : '<div class="ln" style="color:#6A7180">None of today\'s tasks yet.</div>') + '</div>' +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'prog') +
@@ -6674,14 +6675,14 @@ function hkReplyPage_(person, day, error) {
       '<label><input type="radio" name="c_' + r.id + '" value="Not done"' + (isNot ? ' checked' : '') + ' onchange="sc(this)"><span>Not done</span></label></div>' +
       '<input type="text" name="cr_' + r.id + '" value="' + esc_(r.reason || '') + '" placeholder="What is left, and why" style="display:' + (isNot ? 'block' : 'none') + '"></div>';
   }).join('');
-  var inner = (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+  var inner = (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     '<div class="card ' + (pct === 100 ? 'ok' : 'bad') + '"><div class="bh">Today\'s tasks</div>' +
       '<div class="ln">' + (pct == null ? 'No plan today.' : '<b>' + done.length + ' of ' + tasks.length + '</b> ' + (tasks.some(function (t) { return t.planned; }) ? 'planned' : 'suggested') + ' tasks closed (<b>' + pct + '%</b>).') + '</div>' +
       done.map(function (t) { return '<div class="ln">&#10003; ' + esc_(t.s) + '</div>'; }).join('') + '</div>' +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'hk') +
     (open.length ? '<div class="card"><div class="bh">Not done · a reason for each</div>' + taskRows + '</div>' : '') +
     '<div class="card"><div class="bh">The three checks</div>' + checks + '</div>' +
-    (innovationBlock_(sid, day) ? '<div class="card" style="border-left:4px solid #C7A34A"><div class="bh">Innovation hour · what moved?</div>' +
+    (innovationBlock_(sid, day) ? '<div class="card" style="border-left:4px solid #0EA5C9"><div class="bh">Innovation hour · what moved?</div>' +
       '<div class="bf">One or two lines. It goes on Friday\'s innovation board for the branch meeting. Put the same on the task\'s Chatter.</div>' +
       '<textarea name="inno" rows="2" required placeholder="What you built, tested or found, and the next step">' + esc_(((progAnswers_(sid, day, 'innovation') || {})._inno || {}).r || '') + '</textarea></div>' : '') +
     '<div class="card"><div class="bh">Comment for Mr Rampersad</div><textarea name="comment" rows="2" placeholder="Anything he should know before tomorrow"></textarea></div>' +
@@ -6971,7 +6972,7 @@ function undoReplyPage_(person, day, error) {
       ' <span class="br2">· ' + esc_(nameFor_(String(r.From))) + ' &rarr; ' + esc_(nameFor_(String(r.To))) + '</span></span></label>';
   }).join('');
   return replyPage_('Workload moves · ' + prettyDate_(day), 'Tick a move to send the task back to who had it. A Chatter note says you moved it back.',
-    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     (rows.length ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(person.staffId, day, 'undo') +
       '<div class="card">' + list + '</div><button type="submit">Move these back</button></form>' : '<div class="card">Nothing moved today, or all of it already moved back.</div>'));
 }
@@ -7137,9 +7138,9 @@ function errandReplyPage_(person, day, c, error) {
         return '<label><input type="radio" name="a_' + esc_(x.id) + '" value="' + o[0] + '"' + (h.a === o[0] ? ' checked' : '') + ' onchange="sh(this)"><span>' + o[1] + '</span></label>';
       }).join('') + '</div><input type="text" name="r_' + esc_(x.id) + '" value="' + esc_(h.r || '') + '" placeholder="Why, and when it will be done" style="display:' + (h.a === 'move' || h.a === 'not' ? 'block' : 'none') + '"></div>';
   };
-  var inner = (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+  var inner = (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'errand') + '<input type="hidden" name="c" value="' + c + '">' +
-    '<div class="card"><div class="bh">On the calendar today · ' + it.events.length + '</div>' + (it.events.length ? it.events.map(function (e) { return row(e, true); }).join('') : '<div class="ln" style="color:#AE3A33">Nothing on your Salesforce calendar today. Put every errand on it.</div>') + '</div>' +
+    '<div class="card"><div class="bh">On the calendar today · ' + it.events.length + '</div>' + (it.events.length ? it.events.map(function (e) { return row(e, true); }).join('') : '<div class="ln" style="color:#DC3F3F">Nothing on your Salesforce calendar today. Put every errand on it.</div>') + '</div>' +
     (it.tasks.length ? '<div class="card"><div class="bh">Tasks due or overdue · ' + it.tasks.length + '</div>' + it.tasks.slice(0, 12).map(function (t) { return row(t, false); }).join('') + '</div>' : '') +
     '<div class="card"><div class="bh">Anything new from Mr Rampersad, or for him</div><textarea name="comment" rows="2" placeholder="New errands, deliveries, or anything he should know"></textarea></div>' +
     (c === 'leave' ? '<div class="card"><label class="t" style="border:0"><input type="checkbox" name="out" value="1"><span>Sign me out now</span></label></div>' : '') +
@@ -7255,7 +7256,7 @@ function innovationCard_(sid, day, b, sb, inno) {
   var list = inno && inno.open.length
     ? inno.open.slice(0, 3).map(function (t) { return dayStartTaskLine_(t, day); }).join('')
     : '<div style="font-size:13px;color:' + MAIL.red + ';font-weight:700;margin-top:6px">No innovation task open. Propose one in your own job area and put it in the scrub box as Innovation &amp; Creativity before this block starts.</div>';
-  return '<div style="background:#FBF7EC;border:1px solid ' + MAIL.gold + ';border-left:4px solid ' + MAIL.gold + ';border-radius:10px;padding:13px 15px;margin-bottom:10px">' +
+  return '<div style="background:#EEF9FD;border:1px solid ' + MAIL.gold + ';border-left:4px solid ' + MAIL.gold + ';border-radius:10px;padding:13px 15px;margin-bottom:10px">' +
     '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' + esc_(blockLabel_(b)) + (sb.time ? ' · ' + esc_(sb.time) : '') + ' · Innovation hour · protected</div>' +
     '<div style="font-size:13px;line-height:1.5;margin:5px 0 4px">No ordinary tasks go in this block today. Move your innovation forward, write on the task what moved, and bring it to Friday\'s branch meeting.</div>' +
     list + '</div>';
@@ -7345,7 +7346,7 @@ function sendTeamBoard_(day) {
 function nudgeReplyPage_(person, day, error) {
   var rows = teamRows_(day).filter(function (r) { return r.sid !== 'pawan' && !r.planned; });
   return replyPage_('Nudge · ' + prettyDate_(day), 'Tick who gets a nudge. Each gets their plan button again, copied to you and Mr Rampersad.',
-    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     (rows.length ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(person.staffId, day, 'nudge') +
       '<div class="card">' + rows.map(function (r) {
         return '<label class="t"><input type="checkbox" name="n" value="' + esc_(r.sid) + '" checked><span>' + esc_(r.name) + ' <span class="br2">· ' + (r.signIn ? 'in at ' + esc_(twelve_(r.signIn)) : 'not signed in') + ' · ' + r.overdue + ' overdue</span></span></label>';
@@ -9641,9 +9642,9 @@ function closeoutPage_(head, body, state) {
     }
     return '<div style="padding:11px 0;border-bottom:1px solid #e8eaf0">' +
       '<a href="' + esc_(closeoutUrl_(state.staffId, state.date, r.id)) + '" ' +
-        'style="display:block;text-decoration:none;color:#16264F"><b>' + esc_(r.item) + '</b>' +
+        'style="display:block;text-decoration:none;color:#141C4A"><b>' + esc_(r.item) + '</b>' +
       (r.detail ? '<span style="color:#6A7180"> &middot; ' + esc_(r.detail) + '</span>' : '') +
-      '<div style="margin-top:5px;font-size:13px;font-weight:700;color:#B0791C">Tap to mark it done &rarr;</div>' +
+      '<div style="margin-top:5px;font-size:13px;font-weight:700;color:#D97A06">Tap to mark it done &rarr;</div>' +
       '</a></div>';
   }).join('');
 
@@ -9652,9 +9653,9 @@ function closeoutPage_(head, body, state) {
     '<title>Before you leave</title>' +
     '<div style="font:15px/1.55 -apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;' +
       'max-width:560px;margin:0 auto;padding:34px 20px;color:#1F2433">' +
-    '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#C7A34A">' +
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0EA5C9">' +
       'Ricky Rampersad Branch</div>' +
-    '<h1 style="font-size:23px;margin:6px 0 8px;color:#16264F">' + esc_(head) + '</h1>' +
+    '<h1 style="font-size:23px;margin:6px 0 8px;color:#141C4A">' + esc_(head) + '</h1>' +
     '<p style="margin:0 0 18px;color:#6A7180">' + esc_(body) + '</p>' +
     (rows ? '<div style="border-top:1px solid #e8eaf0">' + rows + '</div>' : '') +
     '</div>';
@@ -10525,9 +10526,9 @@ function blockWhyPage_(person, day, b, i, p) {
     '<meta name="viewport" content="width=device-width,initial-scale=1"><title>Say why</title>' +
     '<div style="font:15px/1.55 -apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;' +
       'max-width:560px;margin:0 auto;padding:34px 20px;color:#1F2433">' +
-    '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#C7A34A">' +
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0EA5C9">' +
       'Ricky Rampersad Branch</div>' +
-    '<h1 style="font-size:23px;margin:6px 0 8px;color:#16264F">' + esc_(what) + '</h1>' +
+    '<h1 style="font-size:23px;margin:6px 0 8px;color:#141C4A">' + esc_(what) + '</h1>' +
     '<p style="margin:0 0 14px;color:#6A7180">' + esc_(blockLabel_(b)) + ' · ' + esc_(prettyDate_(day)) +
       '. One line is enough. It is kept with the day and shows in the tracker.</p>' +
     '<form method="post" action="' + esc_(execBase_()) + '">' +
@@ -10540,7 +10541,7 @@ function blockWhyPage_(person, day, b, i, p) {
       'placeholder="What stopped it, or what you were on instead" ' +
       'style="width:100%;padding:12px;border:1.5px solid #dde4ec;border-radius:10px;font:15px/1.5 inherit;resize:vertical"></textarea>' +
     '<button type="submit" style="margin-top:12px;width:100%;padding:14px;border:0;border-radius:10px;' +
-      'background:#16264F;color:#fff;font:700 15px inherit;cursor:pointer">Send</button></form></div>';
+      'background:#141C4A;color:#fff;font:700 15px inherit;cursor:pointer">Send</button></form></div>';
   return HtmlService.createHtmlOutput(html)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -10554,9 +10555,9 @@ function blockPage_(person, day, b, head, body) {
     var link = ok ? '' :
       '<div style="margin-top:5px;font-size:13px;font-weight:700">' +
       (it.k === 'own' ? '<a href="' + esc_(blockUrl_(person.staffId, day, b, i, 'done')) + '" style="color:#2C7A57;margin-right:14px">Done &#10003;</a>' : '') +
-      '<a href="' + esc_(blockUrl_(person.staffId, day, b, i, 'why')) + '" style="color:#B0791C">Say why &rarr;</a></div>';
+      '<a href="' + esc_(blockUrl_(person.staffId, day, b, i, 'why')) + '" style="color:#D97A06">Say why &rarr;</a></div>';
     return '<div style="padding:11px 0;border-bottom:1px solid #e8eaf0">' +
-      '<span style="color:' + (ok ? '#2C7A57' : '#B0791C') + ';font-weight:800">' + (ok ? '&#10003;' : '&#8226;') + '</span> ' +
+      '<span style="color:' + (ok ? '#2C7A57' : '#D97A06') + ';font-weight:800">' + (ok ? '&#10003;' : '&#8226;') + '</span> ' +
       '<b style="color:#1F2433">' + esc_(itemLabel_(it)) + '</b>' +
       '<span style="color:#6A7180"> &middot; ' + esc_(stateWord_(it)) + '</span>' +
       (it.reason ? '<div style="color:#6A7180;font-size:13px;margin-top:3px">' + esc_(it.reason) + '</div>' : '') + link + '</div>';
@@ -10568,9 +10569,9 @@ function blockPage_(person, day, b, head, body) {
     '<meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc_(blockLabel_(b)) + '</title>' +
     '<div style="font:15px/1.55 -apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;' +
       'max-width:560px;margin:0 auto;padding:34px 20px;color:#1F2433">' +
-    '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#C7A34A">' +
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0EA5C9">' +
       'Ricky Rampersad Branch</div>' +
-    '<h1 style="font-size:23px;margin:6px 0 8px;color:#16264F">' + esc_(head) + '</h1>' +
+    '<h1 style="font-size:23px;margin:6px 0 8px;color:#141C4A">' + esc_(head) + '</h1>' +
     '<p style="margin:0 0 6px;color:#6A7180">' + esc_(body || (blockLabel_(b) + ' · ' + prettyDate_(day))) + '</p>' +
     (sum ? '<p style="margin:0 0 18px;color:#6A7180;font-weight:700">' + esc_(sum) + '</p>' : '') +
     (lines ? '<div style="border-top:1px solid #e8eaf0">' + lines + '</div>' : '') + '</div>';
