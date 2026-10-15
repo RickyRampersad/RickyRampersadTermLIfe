@@ -30,6 +30,14 @@ def impact(dur=1.9, f0=95, f1=33):
     tail  = lp(rng.standard_normal(n), 380)*np.exp(-t/0.9)*0.09
     return (body*0.9 + click + tail)*np.minimum(t/0.004, 1)
 
+def hit(dur=0.9, f0=150, f1=48):
+    """A short punch under a number landing (the board films, 15 October 2026): shorter and higher than the impact."""
+    n = int(dur*SR); t = np.arange(n)/SR
+    f = f1 + (f0-f1)*np.exp(-t/0.09)
+    body = np.sin(2*np.pi*np.cumsum(f)/SR)*np.exp(-t/0.22)
+    click = lp(rng.standard_normal(n), 3200)*np.exp(-t/0.02)*0.5
+    return (body*0.85 + click)*np.minimum(t/0.003, 1)
+
 def sweep(dur=0.85, up=True):
     """Air across a cut. Band-passed noise moving through the spectrum."""
     n = int(dur*SR); t = np.arange(n)/SR
@@ -49,7 +57,7 @@ def tone(n):
     """Room tone: a whisper of filtered noise so silence has texture."""
     return lp(rng.standard_normal(n), 480)*0.0016
 
-def build(dur, starts, dark_idx, tick_scenes, out):
+def build(dur, starts, dark_idx, tick_scenes, out, hits=()):
     n = int(dur*SR)
     L = tone(n); R = tone(n)
     def put(sig, at, g, pan=0.0):
@@ -67,6 +75,8 @@ def build(dur, starts, dark_idx, tick_scenes, out):
     for st, count, gap in tick_scenes:
         for k in range(count):
             put(tick(), st + 0.75 + k*gap, 0.055, (k%2)*0.5-0.25)
+    for h in hits:                      # a number lands on screen: a punch under it (films.json `hits`, in seconds)
+        put(hit(), float(h) - 0.02, 0.24)
     pk = max(np.abs(L).max(), np.abs(R).max(), 1e-9)
     if pk > 0.85: L, R = L/pk*0.85, R/pk*0.85
     st = np.empty(n*2); st[0::2], st[1::2] = L, R
@@ -81,4 +91,4 @@ if __name__ == '__main__':
     cfg = json.loads(sys.argv[1]); out = sys.argv[2]
     durs = cfg['durs']
     starts = [sum(durs[:i]) for i in range(len(durs)+1)]
-    build(cfg['dur'], starts, cfg.get('dark', []), cfg.get('ticks', []), out)
+    build(cfg['dur'], starts, cfg.get('dark', []), cfg.get('ticks', []), out, cfg.get('hits', []))
