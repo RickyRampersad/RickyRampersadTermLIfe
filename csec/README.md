@@ -365,6 +365,37 @@ The index says this on screen, in plain words, rather than letting a family
 discover it in paper three. Fourteen fully separate papers needs 560
 Mathematics items and 504 ELA items.
 
+**The writing paper is usually not a story.** This was found by reading the
+Ministry's own scans of the real papers, page by page — 2010, 2011, 2012, 2018
+and 2019 (the 2013 scan is missing its topic page at source). Of the fifteen
+real topics that could be read:
+
+| Shape | Count | Example year |
+|---|---|---|
+| A **letter** to a named person | 6 | 2011, 2012 |
+| A **report** to a teacher or principal | 3 | 2019 |
+| A free **story** | 4 | 2010 |
+| A story that **must contain given sentences** | 2 | 2018 |
+
+Nine of fifteen were letters or reports. The hub's first writing set was all
+free stories and general essays, which would have left a child meeting the
+commonest form of the paper for the first time in the examination hall. Every
+prompt now carries `form`, `to` and `must`, and the set is weighted the way the
+real papers are.
+
+**The sixty-second decode.** Before the writing box opens, the child answers
+two questions and is told at once if either is wrong: *which topic number* (the
+real booklet has a QUES. NO. box the examiner fills in) and *what form the topic
+asks for*. Choosing "a story" when the topic says "write a report to your
+principal" is corrected on the spot, in the words that matter: this is the
+mistake that scores **zero for Content and full marks for everything else**.
+Then the topic's requirements are listed as a checklist that stays on screen
+while writing, and anything still unticked is named back at the end.
+
+This exists because of a real script: a strong Standard-5 writer scored
+Content 0, Language 5, Organisation 5, Grammar 5. Nothing was wrong with the
+writing. He had answered a question nobody asked.
+
 **Writing is marked by a person, not by the program.** Three prompts, a
 50-minute clock, a word count, then the Ministry’s four criteria — Content,
 Language Use, Grammar and Mechanics, Organisation — with a link to the marked

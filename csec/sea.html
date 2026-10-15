@@ -53,6 +53,20 @@
   .crit .bands button{cursor:pointer;padding:7px 13px;border-radius:9px;border:1px solid var(--line);
     background:rgba(0,0,0,.24);color:var(--muted);font-size:.8rem;font-family:'Montserrat',sans-serif;font-weight:600}
   .crit .bands button.on{background:var(--teal);border-color:var(--teal);color:#07131f}
+  .dec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+  .dec:first-of-type{border-top:0;padding-top:0;margin-top:0}
+  .dec>b{display:block;font-family:'Montserrat',sans-serif;font-size:.92rem;margin-bottom:9px}
+  .dec .bands{display:flex;gap:8px;flex-wrap:wrap}
+  .dec .bands button{cursor:pointer;padding:9px 16px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(0,0,0,.24);color:var(--muted);font-family:'Montserrat',sans-serif;font-weight:700;font-size:.85rem}
+  .dec .bands button.on{background:var(--teal);border-color:var(--teal);color:#07131f}
+  .dec .bands button.wrong{background:rgba(248,113,113,.18);border-color:rgba(248,113,113,.5);color:#f87171}
+  .must{display:block;width:100%;text-align:left;cursor:pointer;padding:11px 13px;border-radius:10px;
+    border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--ink);margin-bottom:7px;line-height:1.5;font-size:.9rem}
+  .must.on{border-color:var(--good);background:rgba(74,222,128,.12)}
+  .must .bx{display:inline-block;width:17px;height:17px;border-radius:5px;border:1.5px solid var(--muted);
+    margin-right:10px;vertical-align:-3px;text-align:center;line-height:15px;font-size:.72rem;font-weight:800}
+  .must.on .bx{background:var(--good);border-color:var(--good);color:#07131f}
   .depth{border-left:3px solid var(--gold);padding:12px 15px;background:rgba(239,194,75,.07);
     border-radius:0 10px 10px 0;margin-bottom:20px;font-size:.87rem;line-height:1.65;color:var(--muted)}
 </style>
@@ -152,13 +166,46 @@
         <div id="w-prompts"></div>
       </div>
 
-      <div class="card" style="margin-top:18px">
+      <!-- The sixty seconds that decide the Content mark. A child who writes a
+           beautiful story when the paper asked for a report to the principal
+           scores zero here and full marks everywhere else. -->
+      <div class="card hidden" id="w-decode" style="margin-top:18px">
+        <div class="section-label">Before you write &mdash; sixty seconds</div>
+        <p class="note" style="margin-bottom:16px">Do not skip this. More marks are lost here than anywhere
+           else in the paper, and never because the writing was poor.</p>
+
+        <div class="dec">
+          <b>1. Which topic number are you answering?</b>
+          <div class="bands" id="w-num"></div>
+          <p class="note" id="w-numfb" style="margin-top:8px">Write it in the box on your paper too. The examiner
+             records it, and a blank box means nobody knows which question you answered.</p>
+        </div>
+
+        <div class="dec">
+          <b>2. What is this topic asking you to WRITE?</b>
+          <div class="bands" id="w-form"></div>
+          <p class="note" id="w-formfb" style="margin-top:8px"></p>
+        </div>
+
+        <div class="dec hidden" id="w-towrap">
+          <b>3. Who is it to?</b>
+          <p class="note" id="w-to"></p>
+        </div>
+
+        <button class="btn teal" id="w-start" style="width:100%;margin-top:18px" disabled>Start writing</button>
+      </div>
+
+      <div class="card hidden" id="w-answer" style="margin-top:18px">
+        <div class="section-label">This topic makes you do these things</div>
+        <p class="note" style="margin-bottom:12px">Tick each one as it goes in. Anything still unticked at the
+           end is a mark you have left on the table.</p>
+        <div id="w-must" style="margin-bottom:20px"></div>
         <div class="section-label">Your answer</div>
         <textarea id="w-text" placeholder="Plan for five minutes, write for forty, check for five."></textarea>
         <p class="note" id="w-count" style="margin-top:8px"></p>
         <button class="btn gold" id="w-done" style="margin-top:14px;width:100%">Finish and mark it</button>
-        <button class="btn ghost" id="w-quit" style="margin-top:9px;width:100%">Leave without finishing</button>
       </div>
+      <button class="btn ghost" id="w-quit" style="margin-top:9px;width:100%">Leave without finishing</button>
     </section>
 
     <!-- ============ RESULT ============ -->
@@ -191,6 +238,7 @@
   var S=window.CSEC_SEA, B=CSEC.seaSpec();
   var SUBJ=['p-mathematics','p-ela','p-ela-writing'];
   var tab=SUBJ[0], paper=null, idx=0, answers={}, tick=null, left=0, started=0, pick=-1;
+  var ticked={}, numOk=false, formOk=false;
 
   /* ---------------- blueprint summary ---------------- */
   $('bp').innerHTML=B.order.map(function(k){
@@ -255,17 +303,20 @@
       $('w-kind').textContent=label+' — '+(paper.kind==='narrative'?'Narrative':'Expository');
       $('w-title').textContent=paper.name;
       $('w-sub').innerHTML=CSEC.esc(paper.note)+' You have <b>'+paper.minutes+' minutes</b>.';
-      $('w-prompts').innerHTML=paper.prompts.map(function(t,i){
-        return '<div class="prompt" data-i="'+i+'"><span class="n">Question '+(i+1)+'</span>'+CSEC.esc(t)+'</div>';
+      $('w-prompts').innerHTML=paper.prompts.map(function(q,i){
+        return '<div class="prompt" data-i="'+i+'"><span class="n">Topic '+(i+1)+'</span>'+CSEC.esc(q.t)+'</div>';
       }).join('');
       Array.prototype.forEach.call($('w-prompts').querySelectorAll('.prompt'),function(el){
         el.addEventListener('click',function(){
           pick=+el.getAttribute('data-i');
           Array.prototype.forEach.call($('w-prompts').querySelectorAll('.prompt'),function(x){
             x.classList.toggle('picked', x===el); });
+          decode();
         });
       });
+      ticked={}; numOk=false; formOk=false;
       $('w-text').value=''; count();
+      $('w-decode').classList.add('hidden'); $('w-answer').classList.add('hidden');
       show('writing'); startClock($('w-clock'), finishWriting);
       return;
     }
@@ -377,6 +428,81 @@
   $('q-submit').addEventListener('click',function(){ submit(false); });
 
   /* ---------------- writing paper ---------------- */
+  /* ---- the sixty-second decode ----
+     Three questions, in the order a marker reads them: which topic, what form,
+     and who to. Getting the FORM wrong is what costs the whole Content mark, so
+     it is said straight away rather than at the end. */
+  var FORMS=[{k:'story',l:'A story'},{k:'letter',l:'A letter'},{k:'report',l:'A report'}];
+
+  function decode(){
+    var q=paper.prompts[pick];
+    $('w-decode').classList.remove('hidden');
+    $('w-answer').classList.add('hidden');
+    ticked={}; numOk=false; formOk=false; $('w-formfb').textContent='';
+    $('w-towrap').classList.add('hidden');
+
+    $('w-num').innerHTML=paper.prompts.map(function(_,i){
+      return '<button data-n="'+i+'">Topic '+(i+1)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call($('w-num').querySelectorAll('button'),function(b){
+      b.addEventListener('click',function(){
+        var n=+b.getAttribute('data-n'); numOk=(n===pick);
+        Array.prototype.forEach.call($('w-num').querySelectorAll('button'),function(x){
+          x.classList.remove('on','wrong'); });
+        b.classList.add(numOk?'on':'wrong');
+        $('w-numfb').innerHTML=numOk
+          ? 'Right \u2014 now write that number in the box on your paper. The examiner records it.'
+          : 'That is not the one you picked. You chose <b>Topic '+(pick+1)+'</b>. On the real paper a wrong '+
+            'or blank number means nobody knows which question you answered.';
+        gate();
+      });
+    });
+
+    $('w-form').innerHTML=FORMS.map(function(f){
+      return '<button data-f="'+f.k+'">'+f.l+'</button>';
+    }).join('');
+    Array.prototype.forEach.call($('w-form').querySelectorAll('button'),function(b){
+      b.addEventListener('click',function(){
+        var f=b.getAttribute('data-f'); formOk=(f===q.form);
+        Array.prototype.forEach.call($('w-form').querySelectorAll('button'),function(x){
+          x.classList.remove('on','wrong'); });
+        b.classList.add(formOk?'on':'wrong');
+        $('w-formfb').innerHTML=formOk
+          ? 'Yes. Now write one of those, and nothing else.'
+          : 'No \u2014 read it again. This topic asks for <b>'+(q.form==='story'?'a story':q.form==='letter'?'a letter':'a report')+
+            '</b>. This is the mistake that scores zero for Content and full marks for everything else: '+
+            'the writing is fine, it is simply not what was asked for.';
+        $('w-towrap').classList.toggle('hidden', !(formOk && q.to));
+        if(q.to) $('w-to').innerHTML='<b>'+CSEC.esc(q.to)+'</b>. Keep that person in mind the whole way through: '+
+          'how you greet them, how formal you are, and what they already know.';
+        gate();
+      });
+    });
+    gate();
+  }
+
+  function gate(){
+    var ok=numOk&&formOk;
+    $('w-start').disabled=!ok;
+    $('w-start').textContent=ok?'Start writing':'Answer both before you write';
+  }
+
+  $('w-start').addEventListener('click',function(){
+    var q=paper.prompts[pick];
+    $('w-must').innerHTML=(q.must||[]).map(function(m,i){
+      return '<button class="must" data-m="'+i+'"><span class="bx">\u2713</span>'+CSEC.esc(m)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call($('w-must').querySelectorAll('.must'),function(b){
+      b.addEventListener('click',function(){
+        var i=b.getAttribute('data-m');
+        ticked[i]=!ticked[i];
+        b.classList.toggle('on',!!ticked[i]);
+      });
+    });
+    $('w-answer').classList.remove('hidden');
+    $('w-text').focus();
+  });
+
   function count(){
     var w=$('w-text').value.trim().split(/\s+/).filter(Boolean).length;
     $('w-count').textContent=w+' word'+(w===1?'':'s')+'. A strong SEA piece is usually 250 to 350.';
@@ -387,12 +513,24 @@
   function finishWriting(auto){
     clearInterval(tick); tick=null;
     var words=$('w-text').value.trim().split(/\s+/).filter(Boolean).length;
-    var chose=pick>=0?paper.prompts[pick]:null;
+    var q=pick>=0?paper.prompts[pick]:null;
+    var chose=q?q.t:null;
+    var missed=q?(q.must||[]).filter(function(_,i){ return !ticked[i]; }):[];
     $('r-kind').textContent=(paper.mock?'Mock ':'Practice ')+(paper.mock?(paper.n-S.practiceCount):paper.n)+' — '+paper.name;
     $('r-title').textContent='Now mark it';
     $('r-sub').textContent=(auto?'Time ran out. ':'')+words+' words'+
-      (chose?' on: '+chose:'. No prompt was chosen.');
-    $('r-card').innerHTML='<div class="section-label">The four criteria the examiner uses</div>'+
+      (chose?' on Topic '+(pick+1)+': '+chose:'. No topic was chosen.');
+    /* Content is read first, against what the topic actually demanded. It is
+       the criterion a strong writer loses without ever learning why. */
+    $('r-card').innerHTML=(q?'<div class="section-label">Did you do what the topic asked?</div>'+
+      (missed.length
+        ? '<p class="note" style="color:var(--gold)"><b>'+missed.length+' of '+(q.must||[]).length+
+          ' left unticked.</b> Find each one in what you wrote. If it is genuinely not there, that is the '+
+          'Content mark gone, however good the writing is.</p>'+
+          missed.map(function(m){ return '<div class="must">'+CSEC.esc(m)+'</div>'; }).join('')
+        : '<p class="note" style="color:var(--good)">Every requirement ticked. That is the Content mark '+
+          'protected before a word of the writing is judged.</p>'):'')+
+      '<div class="section-label" style="margin-top:24px">The four criteria the examiner uses</div>'+
       '<p class="note">Two examiners score every piece on these. Score honestly &mdash; a parent or teacher '+
       'marking it with the child is worth more than any mark a program could give.</p>'+
       paper.criteria.map(function(c,i){
