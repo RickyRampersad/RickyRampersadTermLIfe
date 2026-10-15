@@ -60,11 +60,13 @@ without being asked.
 asked "can i have more graphics and motion and the colors scheme changed" and
 chose the corporate blue from four offered; on 15 October, "can i have a
 differnt colors and more motion and a bigger impact", and, shown four looks on
-the same frames, "i like the purple", then "the yellow logo needs to change".
-So the films are **midnight electric** (near-black `#0B1020`, violet `#7C5CFF`
-and `#4B2FD6`, electric cyan `#00E5FF`) and carry `tools/film/board-mark.png`:
-the same shield and check, white on a violet tile, drawn from `favicon.svg`'s
-own shape by `tools/film/board-mark.js`, as `gcm-mark.png` was for the groups.
+the same frames, "i like the purple", then "the yellow logo needs to change",
+and, within the hour, "no leave dark blue instead and have the logo as well
+blue". So the films are **midnight blue** (near-black navy `#070F26`, the
+corporate blues `#13408F`, `#1D5BC4` and `#2A6DE0`, electric cyan `#00E5FF`)
+and carry `tools/film/board-mark.png`: the same shield and check, white on a
+blue tile, drawn from `favicon.svg`'s own shape by `tools/film/board-mark.js`,
+as `gcm-mark.png` was for the groups.
 It is embedded in the three films as a data URI and used nowhere else; never
 `gcm-mark.png`, never a redrawn shape. The page that plays them,
 `board-films.html`, keeps the branch look and the gold shield.
@@ -2794,13 +2796,13 @@ voice under the new timing and the caption gives it away.
   - **The look, twice** (14 October 2026: "can i have more graphics and motion and the colors scheme changed"; the
     manager chose the group client management look, corporate blue. 15 October 2026: "can i have a differnt colors
     and more motion and a bigger impact"; shown four looks on the same three frames, "i like the purple", "the yellow
-    logo needs to change"): **midnight electric**.
-    - **Colours and type:** near-black `#0B1020` ground, violet `#7C5CFF` and `#4B2FD6` for actions and bands,
-      electric cyan `#00E5FF` for progress and highlights, lavender `#D9D3FF` for quiet text, the board's white
-      windows floating on it with a violet rim, and IBM Plex Sans (`tools/film/fonts/`, SIL Open Font License beside
-      it). The side column reads in white; inside the windows the ink stays dark (the `--ink`, `--slate` and `--mute`
-      tokens are re-set on `.sd` and on `.cue`).
-    - **The mark:** `tools/film/board-mark.png`, the shield and check white on a violet tile (see the mark section
+    logo needs to change", then "no leave dark blue instead and have the logo as well blue"): **midnight blue**.
+    - **Colours and type:** near-black navy `#070F26` ground, the corporate blues `#13408F`, `#1D5BC4` and `#2A6DE0`
+      for actions and bands, electric cyan `#00E5FF` for progress and highlights, light blue `#BFD3F7` for quiet
+      text, the board's white windows floating on it with a blue rim, and IBM Plex Sans (`tools/film/fonts/`, SIL
+      Open Font License beside it). The side column reads in white; inside the windows the ink stays dark (the
+      `--ink`, `--slate` and `--mute` tokens are re-set on `.sd` and on `.cue`).
+    - **The mark:** `tools/film/board-mark.png`, the shield and check white on a blue tile (see the mark section
       above). Red only for "nothing logged", and every status as a word as well as a colour.
     - **The motion:**
       - scenes zoom through: the new scene opens a little larger, bright and soft, and sharpens as it settles, while
@@ -2814,7 +2816,7 @@ voice under the new timing and the caption gives it away.
       - counters, donuts and a day-by-day track fill, and **every counter lands on a punch in the sound**: the
         builder writes each counter's second into `films.json` as `hits` (and the chapter scenes as `dark`), which
         `sfx.py` plays;
-      - an aurora drifts behind every scene, and the chapter scenes run rings and motes on violet.
+      - an aurora drifts behind every scene, and the chapter scenes run rings and motes on blue.
   - **Nothing is placed by hand.** The cursor, the clicks, the spotlights and the camera name a selector, and the page's
     own script finds it when the scene opens, so a new font or layout cannot leave them pointing at the wrong place.
   - **Rendered, not recorded.** With that much motion, Playwright's real-time capture ran unevenly. Its timeline stopped
