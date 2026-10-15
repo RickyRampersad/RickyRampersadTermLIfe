@@ -3162,7 +3162,11 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     - Re-cut the film and this page follows.
   - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
     film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
-  - **No access code in it.** The Monday letter carries the sign-in, after staff check it.
+  - **It carries the sign-in** (14 October 2026, at the manager's word: "yes please fix this"). Until then it said
+    "Your sign-in comes with your Monday letter", and three groups welcomed that day had never had one; the first
+    wrote back within half an hour that she could not open her page. The welcome now gives "Open your service page",
+    the list bill and the access code in the same blue box as the Monday letter. It still goes only to a group a staff
+    member checked, to the Contact Person, never to one of our own addresses.
   - **It is signed by the staff member who verified the group** (14 October 2026: "it has me as the branch manager,
     the letter must have verified by the staff who clicked verified"). `gcmWelcome_` signs it with the verifier
     (below), says "I look after your account" when the verifier is the account owner and names the owner otherwise,
@@ -3181,6 +3185,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     welcome, and the approval toast tells the staff member it will go signed by them. `gcmWelcomeStop` ends that.
   - Each welcome is logged on Group Sends with Status "welcome sent". The weekly run passes those rows over, so a
     welcome never counts as that week's letter. One internal summary goes to `TRANSITION.CC`.
+  - **Sales support is a visible copy on every group e-mail** (14 October 2026: "sales support is not being copied").
+    It had been a blind copy, which reached their inbox but showed on nobody's copy of the e-mail. `gcmCc_` puts
+    `GCM.COPY` in Cc on the welcome, the Monday letter, Send now and Send again, beside the register's Cc, each address
+    once. The e-mail itself sits in support@'s Sent Items.
   - `welcome/welcome-test.js` in the session scratchpad covers it (29 checks, with the verifier and the 9:00 run).
 - **The verifier is whoever approved the letter, and every letter says so** (14 October 2026). It is the newest
   approval on Group Queue that was not cancelled (`gcmVerifier_`): the person who ticked that they checked every item
