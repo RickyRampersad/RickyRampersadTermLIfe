@@ -1164,7 +1164,11 @@ function render() {
   var k = d.counts || {};
   $('sub').textContent = ROLE_WORDS[d.role] || '';
   /* the scripts, one tap away: in the side menu, and in Help on a phone */
-  var scripts = (staff || manager ? '<a href="/orphan-transition/client-support.html" target="_blank" rel="noopener">Client Support: the call</a>' : '') +
+  /* the workflow for this role and its test (15 October 2026: "streamline the proper workflow for all to read … and do a
+     test regarding the orphans. So agents do the test … Staff do the test and managers") */
+  var scripts = '<a href="/orphan-transition/workflow.html#' + (staff ? 'staff' : manager || team ? 'managers' : 'agents') + '" target="_blank" rel="noopener">Your workflow: what to do, step by step</a>' +
+    '<a href="/orphan-transition/training.html" target="_blank" rel="noopener">The test for your role</a>' +
+    (staff || manager ? '<a href="/orphan-transition/client-support.html" target="_blank" rel="noopener">Client Support: the call</a>' : '') +
     (staff ? '' : '<a href="/orphan-transition/call-script.html" target="_blank" rel="noopener">The agent&rsquo;s call script</a><a href="/orphan-transition/agent-brief.html" target="_blank" rel="noopener">The agent brief</a>') +
     '<a href="/orphan-transition/if-they-say.html" target="_blank" rel="noopener">If they say&hellip;</a>' +
     /* the film for this sign-in (14 October 2026): one each for management, Client Support and agents */

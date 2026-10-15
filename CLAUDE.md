@@ -2667,6 +2667,46 @@ voice under the new timing and the caption gives it away.
     or that saving opens one), and the toast says where the log went. `OPEN_ON_LOG` false keeps the log to the board.
   - `team/team-test.js` in the scratchpad covers it (57 checks, Node with a Salesforce in memory, and Playwright, on the
     15 October tabs).
+- **The workflow on one page, and a test for each role** (15 October 2026: "help me to confirm, agent sees their own
+  things that's assigned to them and by whom. And managers has a different dashboard … Help me to streamline the proper
+  workflow for all to read more or less and do a test regarding the orphans. So agents do the test, what they're supposed
+  to do. Staff do the test and managers.").
+  - **Confirmed on the real tabs** (`wf15/confirm.js` in the scratchpad, 20 checks): an agent's board holds only the
+    clients named to them, each row's last line reads "Assigned 15 Oct · <agent>: named by <staff>" and the opened card
+    "Named: … on …" with the history (`c.hist`, from `tAssignHist_`); the roster they get is themselves alone; no team
+    points, no sign-ins, no Match. The branch opens on Urgent, Dashboard, Agents, Match …; a unit manager on his unit
+    with Dashboard, Agents and Team; staff on Your calls, Your work, … Team, with no Dashboard.
+  - **`orphan-transition/workflow.html`** is the one page: a flow strip (letter, answer or call, household named,
+    conversation in two working days, logged on the board and the Salesforce task, met or closed, the review and the
+    TT$200), the three rules on every call, then one section per role (agents 6, Client Support 6, managers 5), each
+    with the day, the steps on every client, what counts, what nobody does, and the links. `#agents`, `#staff` and
+    `#managers` show one role; "Show all three" and print show every section. Every `<article class="msec">` carries
+    `data-sec` (F, R, A1–A6, S1–S6, M1–M5), which the test and the questions' Manual column refer to. No client, no
+    figure from the sheet. The board's menu and Help link each sign-in to its role's section and to the test.
+  - **`orphan-transition/training.html`** signs in as the board does (the same two localStorage keys, so a device signed
+    in to the board is signed in here), fetches `workflow.html` and shows the common and the role's sections as the
+    manual, each ticked as read; then the role's test; then My results, and Team results for the branch (every attempt,
+    the written marks to confirm) and "My team's results" for a unit manager (their agents only). Branch look: the
+    gold shield, never the blue.
+  - **The backend is the group test's, with a course** (`GCM_COURSES`, `gcmCourse_`, `gcmTrainWho_`, `gcmTrainFor_`,
+    `gcmTrainReads_` in GroupClients.gs; the page sends `course=orphan` on `gcm.train`, `gcm.trainSubmit`,
+    `gcm.trainView` and `gcm.trainMark`, so Service.gs needs no paste). The orphan course signs in every role through
+    `tWho_`: an agent, staff, a unit manager and the branch (the assistant branch manager too) take, in turn, the
+    agents', the staff's and the managers' questions; the sheet's **Roles** column (agent, staff, manager, all) says
+    whose a question is, and the weights are worked out over the role's own questions. A unit manager reads their
+    team's attempts; the branch marks. The Results row's Role is the Agent Skill Bank's role word. The e-mail subject
+    is "Orphan transition test: …" and links the orphan page; the AI marker gets the orphan brief
+    (`GCM_MARK_SYSTEM_ORPHAN`). `gcm.ping` answers `orphanTrain`. The group course is untouched: its own sheet, its own
+    sign-in, every question to everyone.
+  - **The questions are in the private "Orphan Transition Training" Google Sheet**, created 15 October 2026 from
+    `wf15/bank.py` in the scratchpad (39 rows: 3 shared critical questions on the three rules; 10 choice and 2 written
+    per role; 73 marks a role; the right answer never the longest option; the answers spread A to D). Its ID goes in
+    the **`ORPHAN_TRAIN_SHEET_ID`** Script property of the Service Questionnaire project; until it is set the page says
+    the test is not linked. Edit a question there and the next test uses it; keep the right answer off the longest
+    option when adding one. Never in the repository.
+  - `wf15/train-test.js` in the scratchpad covers it (60 checks: Node with the sheet mocked from the CSV, then
+    Playwright on the workflow page, the training page as an agent, a unit manager and the branch, and the board's
+    links). `tools7oct/backend.js` gained `newSpreadsheet(tabs)` for a sheet opened by id.
 - **The Dashboard tab: how far the work has got, as shares, with filters** (8 October 2026: "need to have dash analytics
   and % of work completed etc a lot of insights and filter ability").
   - **Who sees it.** The branch has it second, after Urgent, which stays the opening tab. A unit manager has it after
