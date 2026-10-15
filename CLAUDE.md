@@ -1961,9 +1961,18 @@ voice under the new timing and the caption gives it away.
   the agent's brief, in a "most at stake" order and on the roster, and
   plan and paid-to only for Client Support. `transitionBuildClientBook`
   (Transition.gs, 6:00 daily, and on the menu) opens the Branch Portfolio
-  by the ID in the `BOOK_SHEET_ID` Script property. The ID is set from the
-  menu ("Transition: set the Branch Portfolio link", which asks for the
-  link) and is never in the code, because the `.gs` files are public. The
+  by the ID in the `BOOK_SHEET_ID` Script property, and **since 15 October
+  2026, with no property set, the Branch Intelligence workbook itself**
+  (`T_BOOK.DEFAULT`, `tBookId_`: the ID `Intelligence.gs` already carries
+  as `INTEL.WORKBOOK`, so nothing new is public). Until then the build
+  refused to run without the link, so the Client Book was never built and
+  the board carried no policies ("I don't want to import a sheet as we do
+  have access to the data and can build"). The menu ("Transition: set the
+  Branch Portfolio link") still sets another sheet, and "rebuild the Client
+  Book now" builds at once; go live installs the 6:00 build whether or not
+  a link is set. Nothing else is imported by hand: the Client Profile tab
+  is made by the same build from Salesforce once the `SF_*` properties are
+  in the project. The
   build reads only the columns it needs, in chunks, and writes every policy
   of every client on Transition Send to the **Client Book** tab, whole,
   new rows over old, so the board never reads an empty tab. The board

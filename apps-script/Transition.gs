@@ -259,7 +259,7 @@ function transitionGoLive() {
   if (!have.transitionInbox) ScriptApp.newTrigger('transitionInbox').timeBased().everyMinutes(5).create();
   if (!have.transitionReceipts) ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
   if (!have.transitionWeekly) tWeeklyTrigger_();
-  if (!have.transitionBuildClientBook && PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP)) tBookTrigger_();
+  if (!have.transitionBuildClientBook) tBookTrigger_();   // the build reads the Branch Intelligence workbook when no link is set
   var msg = 'Live. The send is on: up to ' + TRANSITION.BATCH + ' letters ' + tCadence_() + ', ' +
     TRANSITION.HOURS[0] + ':00 to ' + TRANSITION.HOURS[1] + ':00, Monday to Friday. Transition: pause turns it off.';
   log_('transition', 'live', msg);
@@ -5999,7 +5999,11 @@ function tIntroMail_(sh, c, agent, stamp) {
    columns on Transition Send, which their calls sheet already imports. An agent sees the figures for their own
    clients and nobody else's. */
 var T_BOOK = {
-  PROP: 'BOOK_SHEET_ID',          // the Branch Portfolio's spreadsheet ID: a Script property (transitionSetBookSource), never this file
+  PROP: 'BOOK_SHEET_ID',          // the Branch Portfolio's spreadsheet ID: a Script property (transitionSetBookSource) overrides DEFAULT
+  /* 15 October 2026 ("I don't want to import a sheet as we do have access to the data and can build"): with no property
+     set, the build reads the Branch Intelligence workbook, the Branch Portfolio the tracker already reads. Its ID is the
+     one Intelligence.gs carries as INTEL.WORKBOOK, public there already, so nothing new is exposed here. */
+  DEFAULT: '1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs',
   BUILT: 'client_book_built',     // when the last build ran and what it found, as JSON: a Script property
   SHEET: 'Client Book',
   CODES: 'Plan Codes',
@@ -6113,7 +6117,7 @@ function tYearOf_(st, prem, pays) {
 function transitionSetBookSource() {
   var ui = SpreadsheetApp.getUi(), cur = PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP);
   var res = ui.prompt('The Branch Portfolio', 'Paste the link to the Branch Portfolio sheet: the address in the browser when it is open.' +
-    (cur ? ' A link is already set; a new one replaces it.' : ''), ui.ButtonSet.OK_CANCEL);
+    (cur ? ' A link is already set; a new one replaces it.' : ' Without one, the build reads the Branch Intelligence workbook.'), ui.ButtonSet.OK_CANCEL);
   if (res.getSelectedButton() !== ui.Button.OK) return;
   var txt = String(res.getResponseText() || '').trim(), m = /\/d\/([a-zA-Z0-9_-]{20,})/.exec(txt);
   var id = m ? m[1] : (/^[a-zA-Z0-9_-]{20,}$/.test(txt) ? txt : '');
@@ -6128,9 +6132,15 @@ function transitionSetBookSource() {
 /** What the daily trigger runs, and the menu's "rebuild now". Safe to run at any time: it rewrites the tab whole. */
 function transitionBuildClientBook() { return tSay_(tBuildBook_().msg); }
 
+/** The workbook the build reads: the BOOK_SHEET_ID property when one is set, else the Branch Intelligence workbook. */
+function tBookId_() {
+  var id = '';
+  try { id = String(PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP) || '').trim(); } catch (e) {}
+  return id || T_BOOK.DEFAULT;
+}
+
 function tBuildBook_() {
-  var id = String(PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP) || '').trim();
-  if (!id) return { ok: false, msg: 'No Branch Portfolio link yet: in the sheet, Service Questionnaire → Transition: set the Branch Portfolio link.' };
+  var id = tBookId_();
   var t0 = Date.now();
   try {
     var want = {};
@@ -6169,7 +6179,10 @@ function tBuildBook_() {
     log_('transition', 'client book', msg);
     return { ok: true, msg: msg, info: info };
   } catch (e) {
-    var bad = 'The Client Book was not built: ' + String(e && e.message ? e.message : e);
+    var bad = 'The Client Book was not built: ' + String(e && e.message ? e.message : e) +
+      (/not found|permission|does not exist|cannot open|Unexpected error while getting/i.test(String(e && e.message ? e.message : e))
+        ? ' (the build reads ' + (String(PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP) || '').trim() ? 'the sheet in BOOK_SHEET_ID' : 'the Branch Intelligence workbook') +
+          ': share it with the account that owns this script, or set another link from the menu)' : '');
     log_('transition', 'client book', bad);
     return { ok: false, msg: bad };
   }

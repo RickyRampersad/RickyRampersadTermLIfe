@@ -1188,7 +1188,7 @@ function render() {
   $('barIntroWhy').textContent = introsHeld ? ' (held: client e-mail is on hold)' : '';
   var bookOn = !!(d.book && d.book.ready), noMoney = !!(d.book && d.book.money === false);
   $('bookNoteTop').hidden = !(manager && d.book && !bookOn);
-  $('bookNoteTop').innerHTML = manager && d.book && !bookOn ? '<b>Policies are not on the board yet.</b> In the sheet: Service Questionnaire &rarr; <i>Transition: set the Branch Portfolio link</i>.' +
+  $('bookNoteTop').innerHTML = manager && d.book && !bookOn ? '<b>Policies are not on the board yet.</b> In the sheet: Service Questionnaire &rarr; <i>Transition: rebuild the Client Book now</i> (it reads the Branch Intelligence workbook, and rebuilds every morning at 6:00 by itself).' +
     ' <details class="inl"><summary>more</summary>Paste the Branch Portfolio&rsquo;s address when it asks. It builds every client&rsquo;s policies, the portfolio&rsquo;s addresses and phones, and the premium a year from the branch workbook, then again every morning at 6:00.</details>' : '';
   lead(d, manager, staff, team, namer, bookOn);
   /* the note under the list: how the figures are made, once for the page */
@@ -3629,7 +3629,7 @@ function mOpps(all, money) {
     (keys.length ? '<div class="mopps">' + keys.map(function (k, i) {
       return '<button type="button" class="mopp' + (M.opp === k ? ' on' : '') + '" data-mo="' + k + '" style="--d:' + (i * 50) + 'ms"><b>' + n[k] + '</b><span>' + esc(OPP_WORDS[k][0]) + '</span><i>' +
         esc(money && prem[k] ? '≈ ' + short(prem[k]) + ' a year held · ' + OPP_WORDS[k][1] : OPP_WORDS[k][1]) + '</i></button>';
-    }).join('') + '</div>' : '<p class="pnote">' + (D.book && D.book.ready ? 'No openings among these clients.' : 'The openings come from the Client Book: build it from the menu (Transition: set the Branch Portfolio link).') + '</p>');
+    }).join('') + '</div>' : '<p class="pnote">' + (D.book && D.book.ready ? 'No openings among these clients.' : 'The openings come from the Client Book: build it from the menu (Transition: rebuild the Client Book now).') + '</p>');
   each('#mOpps [data-mo]', function (b) { b.addEventListener('click', function () { var k = b.getAttribute('data-mo'); M.opp = M.opp === k ? '' : k; M.show = MSTEP; mRedraw(); try { $('mQueue').scrollIntoView({ behavior: mReduced() ? 'auto' : 'smooth', block: 'start' }); } catch (e) {} }); });
 }
 /* every agent: their base, and their list against the even share (named, then suggested) */
