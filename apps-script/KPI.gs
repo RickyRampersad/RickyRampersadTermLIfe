@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-14g';
+var SCRIPT_VERSION = '2026-10-15a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3518,6 +3518,25 @@ function housekeepingTick_() {
     } catch (e) {}
   });
   return sent.length ? 'Day mail sent: ' + sent.join(', ') : '';
+}
+
+/** Run from the editor on the morning the new code goes in, or any morning
+ *  the e-mail was missed: sends today's morning e-mail now to every desk whose
+ *  day has started and who has not had it. Safe to run twice; nobody gets two. */
+function sendMorningNow() {
+  var day = todayISO_(), props = PropertiesService.getScriptProperties(), out = [];
+  var nowM = minutesOf_(hhmm_(new Date()));
+  var absent = {};
+  try { (hrRows_(ATT, true) || []).forEach(function (r) { if (isoDay_(r.Date) === day && String(r.Status || '').toLowerCase() === 'absent') absent[String(r.StaffId)] = 1; }); } catch (e) {}
+  DAY_MAIL_DESKS.forEach(function (sid) {
+    if (absent[sid] || props.getProperty('daystart_first_' + sid + '_' + day)) return;
+    var sp = parseSpan_(scheduleFor_(sid).hours || '');
+    if (sp && nowM < sp.start - 10) return;          // their day has not started; the clock will send it
+    try { if (sendDayStart_(sid, day, 'first')) out.push(sid); } catch (e) { out.push(sid + ' FAILED: ' + (e && e.message)); }
+  });
+  var msg = out.length ? 'Morning e-mail sent: ' + out.join(', ') : 'Nothing to send: everyone due has had it.';
+  Logger.log(msg);
+  return msg;
 }
 
 /** The desks the day mail runs for: the support staff, the BMA, and the
