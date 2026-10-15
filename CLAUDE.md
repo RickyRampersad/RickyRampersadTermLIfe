@@ -2700,12 +2700,16 @@ voice under the new timing and the caption gives it away.
     points, no sign-ins, no Match. The branch opens on Urgent, Dashboard, Agents, Match …; a unit manager on his unit
     with Dashboard, Agents and Team; staff on Your calls, Your work, … Team, with no Dashboard.
   - **`orphan-transition/workflow.html`** is the one page: a flow strip (letter, answer or call, household named,
-    conversation in two working days, logged on the board and the Salesforce task, met or closed, the review and the
-    TT$200), the three rules on every call, then one section per role (agents 6, Client Support 6, managers 5), each
+    conversation in two working days, logged on the board and the Salesforce task, met or closed, the review, paid),
+    **the outcomes** (O: every household named, a first conversation in two working days, every call logged the same
+    day, met or closed with what was agreed, a review filed, the TT$200 paid, the policy kept), the three rules on
+    every call, **the TT$200 start to finish** (C, added 15 October 2026 with the daily list: the four steps and who
+    fills each Salesforce field), then one section per role (agents 6, Client Support 6, managers 5), each
     with the day, the steps on every client, what counts, what nobody does, and the links. `#agents`, `#staff` and
     `#managers` show one role; "Show all three" and print show every section. Every `<article class="msec">` carries
-    `data-sec` (F, R, A1–A6, S1–S6, M1–M5), which the test and the questions' Manual column refer to. No client, no
-    figure from the sheet. The board's menu and Help link each sign-in to its role's section and to the test.
+    `data-sec` (F, O, R, C, A1–A6, S1–S6, M1–M5), which the test and the questions' Manual column refer to. No client,
+    no figure from the sheet. The board's menu and Help link each sign-in to its role's section and to the test. A
+    table whose last column is words, not a number, is `pts two` (the class is styled on both pages).
   - **`orphan-transition/training.html`** signs in as the board does (the same two localStorage keys, so a device signed
     in to the board is signed in here), fetches `workflow.html` and shows the common and the role's sections as the
     manual, each ticked as read; then the role's test; then My results, and Team results for the branch (every attempt,

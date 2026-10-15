@@ -33,7 +33,7 @@
   .roles a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .roles a.all{margin-left:auto;font-weight:500;color:var(--dim)}
   /* the flow: one client, start to finish */
-  .flow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0 0;counter-reset:f}
+  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 0;counter-reset:f}
   .flow div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 10px 10px;font-size:13px;line-height:1.4;position:relative}
   .flow div::before{counter-increment:f;content:counter(f);display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--navy);color:var(--gold);font-family:var(--f);font-weight:800;font-size:12px;margin-bottom:6px}
   .flow b{display:block;color:var(--ink);font-family:var(--f);font-size:13.5px}
@@ -47,7 +47,7 @@
   .rh{display:flex;align-items:center;gap:12px;margin:26px 0 4px}
   .rh h2{margin:0}
   .rh .for{font-size:13.5px;color:var(--dim)}
-  .msec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px 16px;margin:10px 0}
+  .msec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px 16px;margin:10px 0;overflow-wrap:anywhere}
   .msec h3{font-family:var(--f);font-size:17px;color:var(--ink);margin:0 0 8px;display:flex;align-items:center;gap:10px}
   .sn{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--navy);color:var(--gold);font-size:14px;font-weight:800;flex:none}
   table.day{width:100%;border-collapse:collapse;font-size:15px}
@@ -64,6 +64,7 @@
   table.pts{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
   table.pts th{text-align:left;font-family:var(--f);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--navy);padding:8px 10px}
   table.pts td{padding:7px 10px;border-top:1px solid var(--line)} table.pts td:last-child{text-align:right;font-weight:600;color:var(--ink);white-space:nowrap}
+  table.pts.two td:last-child{white-space:normal;text-align:left;font-weight:500;width:34%}
   .links a{display:inline-block;margin:6px 10px 0 0;font-weight:600;color:var(--tdark)}
   .cta{background:var(--navy);color:#eaf4ff;border-radius:12px;padding:18px 20px;margin:28px 0 0;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
   .cta b{font-family:var(--f);font-size:18px;color:#fff;display:block}
@@ -102,7 +103,21 @@
       <div><b>Logged</b>Every try and every outcome on the board, and on the client's Salesforce task.<i>Everyone</i></div>
       <div><b>Met, closed</b>A task closes only with who was spoken to and what was agreed.<i>Agent</i></div>
       <div><b>The review</b>A service questionnaire after the naming: the file is complete, and the agent earns TT$200.<i>Agent, found automatically</i></div>
+      <div><b>Paid</b>Retention pays the TT$200, the date goes into Salesforce, and the agent is told by e-mail.<i>Retention, sales support</i></div>
     </div>
+  </article>
+  <article class="msec" data-sec="O" id="outcomes">
+    <h3><span class="sn">&#9733;</span>Where it ends: the outcomes</h3>
+    <p>Everything on the board drives to these. They are what the branch counts, in this order.</p>
+    <table class="pts two"><tr><th>The outcome</th><th>Where you see it</th></tr>
+      <tr><td><b>Every household has an agent of its own.</b> Named as a family, never one policy at a time.</td><td>Agents tab</td></tr>
+      <tr><td><b>A first conversation within two working days</b> of the naming.</td><td>Agents tab</td></tr>
+      <tr><td><b>Every call logged the same day</b>, on the board and on the client's Salesforce task.</td><td>Dashboard</td></tr>
+      <tr><td><b>Met or closed</b>, with who was spoken to and what was agreed.</td><td>Dashboard</td></tr>
+      <tr><td><b>A review filed</b>: the service questionnaire, after the naming.</td><td>Claims</td></tr>
+      <tr><td><b>The TT$200 paid</b> to the agent, with the date in Salesforce.</td><td>Claims</td></tr>
+      <tr><td><b>The policy kept</b>, in force and paid up, and the client reviewed every six months and every birthday month after that.</td><td>The branch's book</td></tr>
+    </table>
   </article>
   <article class="msec" data-sec="R" id="rules">
     <h3><span class="sn">!</span>Three rules on every call, whoever makes it</h3>
@@ -112,6 +127,30 @@
       to be signed or paid until they have spoken to the branch.</div>
     <p class="tip">The notice is read word for word from the script. A client who wants to check it is given the branch's
       numbers and Guardian Direct's. Client names and answers never leave the board: not in WhatsApp, not in a screenshot.</p>
+  </article>
+  <article class="msec" data-sec="C" id="claims">
+    <h3><span class="sn">$</span>The TT$200, start to finish</h3>
+    <p>Nobody presses anything to start a claim. The system finds it, sends it and follows it up. One person fills one
+      date.</p>
+    <div class="flow">
+      <div><b>The questionnaire comes in</b>On or after the day the client was named. Matched by their own link, else a
+        policy number only they hold, else their e-mail.<i>The client, with the agent</i></div>
+      <div><b>The claim goes</b>To the Retention unit, the branch manager and the agent copied. Salesforce gets Date Subm to Retention and
+        Was Agent Paid = No.<i>The system, at once</i></div>
+      <div><b>The daily list</b>Every working day at 10:00, every claim three days old and unpaid, to Retention with sales
+        support and the branch manager copied.<i>The system</i></div>
+      <div><b>Paid, and the agent told</b>Date Comm Paid goes in. The claim leaves the list, Was Agent Paid turns Yes, and
+        the agent gets one e-mail.<i>Retention or sales support, then the system</i></div>
+    </div>
+    <table class="pts two"><tr><th>Field on the policy in Salesforce</th><th>Who fills it</th></tr>
+      <tr><td><b>Date Subm to Retention</b>: the day the claim e-mail goes</td><td>The system</td></tr>
+      <tr><td><b>Was Agent Paid</b>: No when the claim goes, Yes when paid</td><td>The system</td></tr>
+      <tr><td><b>Date Comm Paid</b>: the commission run date. The one field a person fills, and the one that stops the
+        daily list</td><td>Retention, or sales support from Retention's reply</td></tr>
+    </table>
+    <p class="tip">The branch's own record is the Retention Payments tab. A Paid date typed there closes a claim the same way;
+      Void, Declined or Withdrawn in its Status stops one. One claim per client, ever. A questionnaire from before the
+      naming earns nothing. Nothing goes until the branch manager starts the claims from the menu.</p>
   </article>
   </section>
 
@@ -190,7 +229,10 @@
         payment stands.</li>
       <li>A questionnaire from before the naming earns nothing. So does a staff Test row or a departed agent's own
         policy.</li>
-      <li>The claim is chased until Salesforce carries the payment date. You do not chase it.</li>
+      <li>Make sure the questionnaire carries the client's policy number, or comes from their own link: that is how it is
+        matched to them.</li>
+      <li>The claim is chased every working day until Salesforce carries the payment date. You do not chase it. When the
+        date goes in, you get one e-mail saying so, and the claim reads paid on your Claims tab.</li>
     </ul>
   </article>
 
@@ -340,8 +382,9 @@
         Salesforce tasks held, closed, closed with no note.</td></tr>
       <tr><td>Then</td><td><b>Agents</b>: each agent's households and clients, a progress bar, conversations and conversions,
         the median days to a first meeting, and <b>nothing logged</b> two working days after a naming, in red.</td></tr>
-      <tr><td>Weekly</td><td><b>Team</b>: who is signing in and how often; the points; who named whom; the TT$200 claims
-        and the Monday list to the Retention unit.</td></tr>
+      <tr><td>Weekly</td><td><b>Team</b>: who is signing in and how often; the points; who named whom.</td></tr>
+      <tr><td>Claims</td><td>The TT$200 claims on the board, and the unpaid list that goes to the Retention unit every
+        working day at 10:00 with you and sales support copied. A claim weeks on the list is a call to Retention.</td></tr>
     </table>
     <p class="tip">A <b>unit manager</b> sees the same four over their own unit: their agents, their clients, their
       sign-ins. Naming agents is the branch manager's and Client Support's.</p>
@@ -385,8 +428,9 @@
         tasks held, closed, and closed with no note. A task closed with no note of who was spoken to is a gap to raise,
         not a close.</li>
       <li><b>TT$200 claims</b>: found by the system when a questionnaire arrives on or after the naming, e-mailed to the
-        Retention unit with you and the agent copied, listed every Monday until Salesforce carries the payment date.
-        Nothing goes until you start it from the menu.</li>
+        Retention unit with you and the agent copied, then listed every working day at 10:00, sales support copied, until
+        Salesforce carries Date Comm Paid. The agent is told when it is paid. Nothing goes until you start it from the
+        menu.</li>
       <li><b>Points and the reward</b>: the Team tab ranks Client Support by the period's points (reached 3, met 5, a
         household named 5, a conversion 10, a questionnaire after the naming 10). What a point is worth, a monthly prize
         or a sum per conversion, is yours to set and to announce.</li>

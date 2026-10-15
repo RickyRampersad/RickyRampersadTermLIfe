@@ -8219,7 +8219,7 @@ function tClaimPaidMail_(r, paidDay, source) {
     '<p style="margin:0 0 12px">The conservation payment of <b>' + esc(amt) + '</b> for <b>' + esc(r.client) + '</b>' + (r.policy ? ' (policy ' + esc(r.policy) + ')' : '') +
     (future ? ' is set to be paid on <b>' + esc(when) + '</b>' : ' was paid on <b>' + esc(when) + '</b>') + ', read from ' + esc(source) + '. ' +
     'The service questionnaire ' + esc(r.q || '') + ' came in on ' + esc(tClaimDay_(r.received)) + ', and the claim went to the Retention unit on ' + esc(tClaimDay_(r.submitted)) + ' (branch reference ' + esc(r.id) + ').</p>' +
-    '<p style="margin:0 0 12px">It shows as paid on your Claims tab on the assignment board. Nothing more is needed from you.</p>' +
+    '<p style="margin:0 0 12px">' + (future ? 'It shows on your Claims tab on the assignment board as to be paid on that date.' : 'It shows as paid on your Claims tab on the assignment board.') + ' Nothing more is needed from you.</p>' +
     '<p style="margin:0 0 14px">Thank you,<br><b style="color:#12202e">' + esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch</p>' +
     '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(tInternal_(null)) + '</p></div>';
   try {
