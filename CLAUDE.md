@@ -55,6 +55,13 @@ The look:
 The rest of the site keeps the gold shield. Do not carry this look further
 without being asked.
 
+**It was asked for once more, 14 October 2026: the three board films**
+(`orphan-transition/board-*.html` and their MP4s). The manager asked "can i
+have more graphics and motion and the colors scheme changed", and chose this
+corporate look from four offered. The films keep the branch's own mark:
+`logo-mark.png`, embedded as a data URI, never redrawn and never `gcm-mark.png`.
+The page that plays them, `board-films.html`, keeps the branch look.
+
 The letter's logo is the hosted copy at
 `https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
 the branch before pasting a `GroupClients.gs` that carries it, or the letter's
@@ -672,9 +679,17 @@ voice under the new timing and the caption gives it away.
   for Guardian Life ("his clients get a notification he was terminated with
   immediate effect … and is not authorised to conduct any business on behalf
   of Guardian Life"). The notice card and the subject carry the company's
-  notice and nothing else: the contract was terminated, on a date, as a
-  result of an investigation, and the agent is not authorised to act. Never
-  why, never the grounds, never anyone else's name. `{{agent_name}}` and
+  notice and nothing else. **Since 13 October 2026 it gives no reason**: the
+  branch held the book from 6 October after a complaint about the letter,
+  and on lifting the hold the manager
+  took the investigation out ("remove as a result of an investigation … do
+  not give a reason … no longer with the company as his services has been
+  terminated as at the date"). `NOTICE_T` now reads "Please note that your
+  agent, <name>, is no longer with Guardian Life of the Caribbean, as
+  <first name>'s services have been terminated as at <date>", then that the
+  agent may no longer act and the policy is not affected. The two call
+  scripts say the same words. Never why, never the grounds, never anyone
+  else's name. `{{agent_name}}` and
   `{{terminated_on}}` are filled from the sheet (the Agent column and a
   `terminated_on` column, letter T only), so neither the name nor the date
   is in the repository; a T row without either is held. The name in the
@@ -1711,11 +1726,21 @@ voice under the new timing and the caption gives it away.
   First on both page and digest: taps waiting more than two working days
   with nobody assigned. The manager's `dashboard.html` and the branch's
   `wall.html` (six big slides, first names only) read the same answer.
-  **All three share one answer**: `transitionData_` caches `tSummary_` for
-  thirty seconds, because on the go-live afternoon the summary took seven
-  seconds a request and one request in eight was lost to the web app's own
-  timeout while several screens polled at once, which read on the screens
-  as "no walls are opening". A gate that could not reach the sheet tries
+  **All three share one answer**: `transitionData_` caches `tSummary_`,
+  because on the go-live afternoon the summary took seven seconds a request
+  and one request in eight was lost to the web app's own timeout while
+  several screens polled at once, which read on the screens as "no walls
+  are opening". **A cache value holds 100 KB, and the answer outgrew it.**
+  On 8 October 2026 it was 166 KB (653 late taps), the put threw, the throw
+  was swallowed, and every screen read the whole sheet on every refresh:
+  "taking too long and not opening". It is now kept gzipped (about 17 KB)
+  by `tCachePutBig_`, in 90 KB pieces under one stamp if it ever needs
+  them: fresh for two minutes (`T_WALL_CACHE`), and kept six hours as the
+  last good answer, which a screen gets at once while another screen is
+  reading the sheet, or when the sheet fails. Anything else cached whole
+  must stay under 100 KB or go through the same pair.
+  `wall8/cache-harness.js` in the scratchpad covers it (24 checks, 3 of
+  them run on the previous script). A gate that could not reach the sheet tries
   again by itself after fifteen seconds; only a refused code (the backend
   says `refused: true`) sends a viewer back to the gate for good. **The wall
   and the dashboard open on their last good answer** (25 September, "have
@@ -2197,7 +2222,10 @@ voice under the new timing and the caption gives it away.
   a client Salesforce names to an agent is on that agent's list in
   `assign.html`. A client who never answered appears as a "named, no answer
   yet" card. Where the board and Salesforce name different agents, the
-  newer name wins. An agent opens their list with **their agent number and
+  newer name wins. A label in brackets is not part of a name (`tNameKey_`,
+  and the sync drops it): Salesforce's agent Contact for one agent reads
+  "Narissa (Agent) Mohammed", and until 13 October a client named to her there
+  would never have reached "Narissa Mohammed" on the Agent Skill Bank. An agent opens their list with **their agent number and
   their own code, both** ("agent Number, and name and code", 1 October
   2026). The number is the Agent no. on the Agent Skill Bank (A10024,
   10024, or the name as written there), and the code is that row's Portal
@@ -2414,7 +2442,12 @@ voice under the new timing and the caption gives it away.
   agent in touch, a change suggested, a payment to trace, paying in person) or
   who are late. **A try is logged on the board.** `transitionUpdate_` on a
   client with no row writes a `/call` row (Response `call`, Referrer `staff:
-  <name>` or `branch`), the branch and staff only. `tCallRow_` makes it the
+  <name>`, `agent: <name>` or `branch`). The branch and staff may log on
+  anyone. An agent or a unit manager may log only on a client Salesforce named
+  to them or their team (the Household Assignments tab): on 13 October ten of
+  the fifteen clients named in Salesforce had never answered a letter, so they
+  had no row, and the agent's Log call was refused with "No rows for that
+  client" (`cb13/agent-log-harness.js` in the scratchpad, 18 checks). `tCallRow_` makes it the
   branch's record everywhere `tAssignRow_` already did: never thanked, never
   chased, never an answer, never a tap on the wall or in the reports; a call
   marked Called or Met counts as having spoken to the client, so it stops the
@@ -2599,6 +2632,243 @@ voice under the new timing and the caption gives it away.
   - `work8/dash-test.js` in the scratchpad covers it (42 checks, Node and Playwright, the real tabs, made-up Salesforce
     tasks). It serves the site's `receipt.json` and `receipt.html` to the demo backend, which has no network. Without
     them the board has no answers, and every count that reads one, such as "former agent in touch", is 0 in a test.
+- **The board's look: a side menu and one row a client** (8 October 2026, after Client Support's first morning on it:
+  "the interface is so confusing … a much more professional layout … scale properly").
+  - **The bar along the top** has the shield, the board's name, when the sheet was read, Help, Refresh and Sign out.
+  - **On a laptop the lists are a menu down the side**, grouped Yours, Act on, Lists, The branch, under who is signed in
+    and as what, with the scripts beneath. On a phone the menu is a row of pills that stays at the top.
+  - **Each list opens on its title, its count, one line on what to do there, and its numbers.** The breakdowns stay
+    folded until someone opens them (`rrb-assign-breakdowns2`).
+  - **One row a client.** It shows the name and state, why they are on this list, the town, age and occupation, and the
+    last thing on the file (an open call-back first). Beside it are the number to tap and **Log call** (Update for the
+    branch).
+  - **Log call opens the panel with nothing chosen.** "What happened?" comes first, and nothing saves without it.
+  - **The name or Details opens everything else under the row**: the five blocks, what they told us, the notes, the
+    policies, the household, the history, Assign, WhatsApp, their page and the script.
+  - To assign and Urgent carry the suggested agent, with its one-press button, on the row itself.
+  - A phone cell holding two numbers is dialled one number at a time (`phonesOf`); until then the two ran together.
+  - How the board works, the three rules on every call and the scripts are in Help.
+  - `board8/board-test.js` (60) and the work, dashboard, snapshot and introduction-hold tests in the scratchpad cover
+    it, moved to Log call.
+- **Match: who should look after whom, by weight and by town** (8 October 2026: "scrub agent address and client
+  address and weighting on the client to know who to assign, how many in force policies, lapsed, maturities, spotting
+  opportunities … lives in household … a super intelligent and professionally laid out with graphics, interactive and
+  motion"). A tab under Act on, for the branch and for staff (who name agents); never for an agent or a unit manager.
+  - **Every row gets a weight in four parts**, each 0 to 100 (`tMatch_`, `c.w = [total, urgent, at risk, value,
+    opportunity]`):
+    - *urgent*: a call-back, an answer that cannot wait, past the branch's line;
+    - *at risk*: the former agent in touch, a change suggested, paying in person, a premium due, surrendered before;
+    - *value*: the premium a year and the life cover against everyone on the board, the policies in force, the family
+      on our books;
+    - *opportunity*: what the record shows (`T_OPPS`): a policy maturing within the year (`sum.mat`, from the Client
+      Book's Matures), a lapsed policy, life cover ending, no life cover, a family member without, no critical
+      illness cover, no beneficiary, a birthday, and for the branch only cover low for income and a fund value.
+  - The branch weighting is `T_MATCH.W` (35, 25, 25, 15). The page's sliders re-rank the queue live and keep a
+    person's own weighting on their device (`rrb-match-w`).
+  - **Towns only, never a street.** `T_PLACES` is a gazetteer of the places the books' addresses name, looked up on
+    OpenStreetMap on 8 October 2026 and checked by hand: a town's centre, never its region's; ambiguous names left out.
+    `T_PLACE_ALIAS` maps the spellings on file ("Chaguans", "San Ferando") to them. 98.9% of town mentions map.
+  - **An agent's base** (`tAgentPlaces_`): a "Lives in" column on the Agent Skill Bank, else the first place in Areas
+    covered, else the mailing town on their Salesforce agent record (`tSfAgents_`, read once a day into the
+    `sf_agents` property). On 8 October Areas covered was empty for everyone, and 9 of the 15 Salesforce mailing towns
+    read Chaguanas, which may be the branch's own address, so the branch was asked to confirm each agent's town.
+  - **The suggestion is now family, then the 24 September plan, then the nearest agent with room, then the lightest
+    list** (`tSuggest_`). "With room" means under 1.2 times the even share (`T_MATCH.ROOM`), within 25 km
+    (`NEAR_KM`). A household keeps one agent whichever step chose them.
+  - **The best fits under each client nobody is named on** (`c.mt`, up to three) weigh nearness 65 and room 35.
+  - **A naming writes Salesforce** (`tSfAssignWrite_`, from `transitionAssign_`, so the board, Match and staff namings
+    all do). It sets Assigned Agent (the agent's own Contact), Date Assigned to Agent (that day) and Campaign "Orphan"
+    on each of the client's policies in force, else the first on file, in one composite PATCH, `allOrNone` false.
+    Skipped, and said in the answer, until ServiceSalesforce.gs and its SF_* properties are in the project. An agent
+    Salesforce has no record of, or a policy it refuses, is named in the answer; the board naming stands either way.
+  - **Staff see no money here either.** No premium, cover or fund figure on any row or in the block, and no opening
+    that is a figure. The same change strips money from rows not answered yet on a staff board, which no page asked
+    for but the backend would have sent.
+  - **The view**: a navy hero with the numbers counting up, and a dark map of Trinidad with Tobago in an inset (Natural
+    Earth's coastline, smoothed). Each town is a bubble sized by its clients and coloured by their average weight, and
+    pulses when someone there weighs 60 or more. Each agent is a gold pin at their base. A town draws arcs to the
+    agents who fit it; a pin draws the agent's 25 km reach and arcs to their clients. Then the queue (heaviest first,
+    the four parts as bars, the reasons, one press to name the best fit), the openings as tiles, and every agent's
+    list against the share.
+  - **Motion**: everything moves when the view is opened, the queue and the arcs after a tap, nothing on the two-minute
+    refresh (`c-map`, `c-all`), and nothing at all with reduced motion asked for.
+  - The match adds about 9% to the branch board. `match9/match-harness.js` (39, Node, mocked Salesforce) and
+    `match9/match-test.js` (37, Playwright) in the scratchpad cover it, on `match9/tabs9.json`: the real tabs with the
+    Client Book built from the 7 October portfolio export.
+- **Agents: how each agent is getting on, and the households still to name** (14 October 2026: "can I log in to see the
+  branch manager dashboard and how the agents assigned are going and how they are making progress and the unassigned, a
+  lot of data is needed especially batching in households"). A tab under Act on, after the Dashboard, for the branch, for
+  a unit manager (their team only, with nothing to name) and, since the same day, for Client Support ("staff can also
+  reassign the orphans as well as a manager with the history of when it was assigned"). Staff see no TT$200 claims on
+  it, and name or reassign only the clients on their own board (`nb: 0` marks the rest). Agents have no Agents tab.
+  - **One answer, read when the tab opens.** `tAgentsView_` in Transition.gs, asked for as the board with `agents=1`, so
+    Service.gs needs no paste. The page reads it again after five minutes, never on the two-minute refresh, so a batch
+    being worked is not redrawn under the hand. A backend older than this answers with the board, and the tab says to
+    paste Transition.gs.
+  - **Every household of the books** comes from the Household Assignments tab. That is never a departed agent's own
+    policy or household, staff, a death claim or a Test row (`T_NOT_BOOK`). Held clients and clients not written to are
+    included, with why the letter is held.
+  - **Where each member stands with us**: answered and asked, answered with a note, reached by phone, called, on a call
+    list, written to, or held. What they answered is in the wall's words (`T_HA_SAID`).
+  - **How far each named client has got** (`g`):
+    - *completed*: Closed or Declined, by the agent or by anyone after the naming;
+    - *met*: the same, for Met;
+    - *spoken to*: a call the agent marked, a comment they wrote on the board, or their Campaign Feedback Update in
+      Salesforce;
+    - *tried*: a no answer the agent marked;
+    - *nothing logged*: none of these. Two working days after the naming (`T_AGV.QUIET`) it is flagged.
+
+    An agent who reports only in Salesforce Chatter shows as nothing logged until they write the feedback field or mark
+    the call.
+  - **How long, and how many conversations** ("the objective is to have a conversion as fast as possible … tracking these,
+    how long it's assigned and how many conversations"). Each named client carries `da`, the days since the naming,
+    `cv`, the conversations since (a call marked Called, Met or Declined by the agent, or by anyone after the naming, one
+    a day; the agent's Salesforce feedback counts as one when nothing is marked), `tr`, the tries with no answer, and
+    `dm`, the days from the naming to the first meeting. Each agent's line adds the conversations, *converted* (met or
+    completed), the average days their open clients have waited, the median days to a meeting, and how many came to
+    them from another agent. **Since the naming** groups every named client by 0 to 2, 3 to 7, 8 to 14 and 15 or more
+    days since the naming.
+  - **Who it was named to, and when** (`tAssignHist_`). Three sources, oldest first, one line an agent and a day: the
+    board's `[assigned d MMM · Agent]` stamps (with "named by" when staff named), the Household Assignments tab's
+    Salesforce name and date, and the **Assignment Log** tab (When, Token, Client, From, To, Named on, Source, By), made
+    the first time something is written to it. `transitionAssign_` logs every naming and reassignment it makes, and
+    `tHaSync_` logs a name Salesforce gives or changes, once, since the tab keeps only the newest. The Agents tab shows
+    the history on every named client, with a **Reassign to…** list for whoever names agents. The board's card shows
+    it under "Named:" (`c.hist`).
+  - **Each agent's line**: households, clients, a progress bar, spoken to, nothing logged, last activity, the median days
+    to first contact, feedback, comments, when they were named and where, and TT$200 claims. Agents on the Skill Bank
+    with no clients are named under the table. An agent opens on their households, client by client. The "nothing logged"
+    tile opens every quiet client.
+  - **The households to name come in six batches** (`bt`), the most pressing first:
+    - *urgent*: an open call-back, or an answer at `T_AGV.URGENT` (80) or more. Waiting past the line alone is not
+      urgent, since nearly everyone who asked has;
+    - *finish the family*;
+    - *asked us*;
+    - *answered or reached*;
+    - *not answered yet*;
+    - *letter held*.
+
+    Each household carries one suggestion (`sg`): the family's own agent first, else what `tSuggest_` gave its members.
+    Held clients get theirs from a second `tSuggest_` pass, seeded with every naming and suggestion the board already
+    made.
+  - **Naming from the batches.** One press names a household. "Assign these N to <agent>" names a batch by suggested
+    agent, and one press names the whole batch each as suggested. Households can also be ticked. Each naming goes as
+    `assign` requests of at most 40 clients, so the brief, the Salesforce write and the introduction rules are the
+    board's own. Since 14 October `transitionAssign_` takes a client of the books the board does not show (a letter held
+    or not sent), for the branch only, as an `/assign` row. Staff still name only their own board's clients.
+  - In the 13 October export: 2,168 households, 17 clients named (15 in Salesforce), and nothing logged by any agent.
+    The batches held 151 urgent households, 257 that asked us, 236 answered or reached, 1,313 not answered and 197 with
+    every letter held.
+  - **Tests** in the scratchpad: `agv14/agents-harness.js` (51 checks, Node, the 13 October export, Salesforce mocked
+    for the sync) and `agv14/agents-test.js` (47, Playwright, staff and a phone included).
+- **The board on film: one film per sign-in** (14 October 2026: "there's three videos. There is what the agents see,
+  there's what the staff see, and there's what management sees"). `orphan-transition/board-films.html` plays the three,
+  and the board's menu links each person to theirs ("The film: the board for you").
+  - *The board, for management* (`boardmgr`, 2:21): Urgent, the Agents tab, conversations and conversion, since the
+    naming, households in batches, one press, reassign with the history, what a naming does, a unit manager's team.
+  - *The board, for Client Support* (`boardstaff`, 2:09): Your calls, opening a client, Log call and the call-back
+    flag, take details and never advise, the Salesforce task, naming a household, reassigning, Your work.
+    The Salesforce scene was added on 15 October 2026, when the manager asked whether the films showed everyone what
+    is expected: every step on the task's Chatter the same day; a no answer is a try, not a close; a task closes only
+    with a note of who was spoken to and what was agreed; it stays open until the agent is named; and the standard
+    "no questions or concerns" e-mail is never the close for a client who asked for something. Those rules are what
+    the routine's late-client follow-ups chase.
+  - *The board, for agents* (`boardagent`, 1:48): your list every day, opening a client, Log call, comments, what
+    counts, two days to a conversation, the branch sees it.
+
+  Each is a page drawn by `tools/film/build-boardfilm.py <key>` from `<key>-lines.json` and `<key>-timing.json`
+  (`orphan-transition/board-management.html`, `board-client-support.html`, `board-agents.html`), recorded and mixed
+  into `board-*.mp4` with a poster `board-*.jpg` beside it. The board's screens are drawn, not captured, with made-up
+  names and numbers, and every motion lands on the word that names it: the timing file holds each spoken word's start
+  from edge-tts's WordBoundary events. To re-cut one, edit its lines, run `voice-lines.py <key>-lines.json <vox>
+  --changed-only --timing <key>-timing.json --films films.json --key <key>`, write the word timings back into the
+  timing file, then `build-boardfilm.py`, `sfx.py`, `usetrack.py audio/inspired-kevin-macleod.mp3 <key>`,
+  `render.js <page> cap-<key> 30 <poster>`, `mixany.py` with the vox copied to `tools/film/vo<key>`, and `chapters.py`.
+  - **The corporate look, and more motion** (14 October 2026, the same day: "can i have more graphics and motion and
+    the colors scheme changed"; the manager chose the group client management look):
+    - **Colours and type:** blue band `#13408F` into `#1D5BC4`, white panels on a `#E9EEF5` ground, and IBM Plex Sans
+      (`tools/film/fonts/`, SIL Open Font License beside it).
+    - **What stays:** the gold shield from `logo-mark.png`, teal for progress, red only for "nothing logged", and every
+      status as a word as well as a colour.
+    - **The motion:**
+      - a blue band wipes each scene in;
+      - headlines rise a word at a time, with the key words underlined as they land;
+      - the screen floats and turns, and a camera pushes in on what the voice names, under a spotlight that dims
+        the rest;
+      - a cursor (a finger on the phone) presses each button;
+      - counters, donuts and a day-by-day track fill;
+      - the chapter scenes run rings and motes on blue.
+  - **Nothing is placed by hand.** The cursor, the clicks, the spotlights and the camera name a selector, and the page's
+    own script finds it when the scene opens, so a new font or layout cannot leave them pointing at the wrong place.
+  - **Rendered, not recorded.** With that much motion, Playwright's real-time capture ran unevenly. Its timeline stopped
+    being a straight line, and `mixany.py` matched 7 of 12 cuts and refused the film, as it should. `tools/film/render.js`
+    renders the page frame by frame instead: every animation is paused and set to the frame's own moment, and the
+    outgoing scene stays until the band has crossed it. It writes `cap-<key>/rendered.mp4` and `rendered.json` (lead 0,
+    stretch 1). `mixany.py` takes that exact timeline only when `rendered.json` is there. A real-time capture is still
+    measured and still refused when its cuts do not fit.
+  - **The shell's own class names leak into the scenes.** The film shell (`donthaveanagent/client-film.html`) styles
+    `.stage`, `.ph`, `.drop`, `.tk`, `.ring`, `.prow`, `.url`, `.hot`, `.mt`, `.tick` and others, so the board films use
+    their own names (`.bstage`, `.phn`, `.dropl` …). `build-boardfilm.py` now refuses to write a page whose scenes use a
+    class the shell already styles; the first cut rendered a phone toast as a second phone.
+  - **edge-tts pins certifi's certificate bundle**, so on the session proxy it fails with "self-signed certificate in
+    certificate chain" whatever SSL_CERT_FILE says. A wrapper that points `certifi.where` at `/root/.ccr/ca-bundle.crt`
+    and runs `edge_tts.util.main` works (kept in the scratchpad, not the repository).
+- **The stream: the campaign on a screen anyone in the room may see** (8 October 2026: "I need to stream the wall
+  without the confidential information and drive further analysis of how the automations and humans are managing and
+  what the clients are saying, group by households"). `orphan-transition/stream.html`, ten slides on a cycle:
+  - households: how many answered, how far the ones that asked have got, and the family members still to reach;
+  - the automations: letters, reminders, receipts, what was held for a person, replies filed, bounces, what runs now;
+  - the people, then who did what, on the board and in Salesforce;
+  - day by day;
+  - what clients are saying, and what they asked for and wrote about;
+  - signals by household;
+  - the agents;
+  - what stands out.
+
+  **Its answer carries counts and nothing else.** `tStream_` in Transition.gs builds it, and it holds no client's name,
+  number, token, address, e-mail, phone, words, policy or money, no household's name and no former agent's name. So the
+  screen, a call it is shared on, and the page's source show nothing about any client. A client's own words are read by
+  the script for their subject only (`T_STREAM_THEMES`) and never leave it. The team appears by first name and initial
+  (`tShortName_`), because what the people did is half of what the stream is for.
+  - **Access.** It opens with the branch code, through the board's route as `action=board&who=stream`, so Service.gs
+    needs no paste. A script older than the stream reads "stream" as a person, finds nobody and refuses, so it never
+    sends the board for it. The page then says to paste Transition.gs.
+  - **Definitions.** The words mean what they mean on the board's Dashboard tab (dSpoken, dTried, dDone). A household
+    counts as far along as its least-served member who asked.
+  - **Caching.** The answer is kept like the wall's (`tServeCached_`, three minutes fresh).
+  - **Tests.** `wall8/stream-harness.js` in the scratchpad looks for every client name, first name, surname, token,
+    number, e-mail, phone, address, household name, former agent's name and every piece of client words in the answer
+    on the real tabs (46 checks). `wall8/stream-look.js` (32, Playwright) checks every slide fits a television and
+    nothing runs off a phone.
+  - **Never add a client's anything to it.** If a slide needs a name, it belongs on the wall or the board, behind the
+    same code, not here.
+- **The daily findings to Head Office** (8 October 2026). Head Office had written to the branch formally about one
+  client's response. The manager asked for "a daily update on our findings and frame for him to advise what are they
+  doing, as these are the documented findings from the clients by responses and support staff contacting them; no
+  agents have been on calls as there is a process tracked daily".
+  - **What it is.** `tFindings_` and `tFindingsSend_` in Transition.gs send one e-mail each working day at 17:00
+    (`T_FIND.HOUR`). It goes from support@, signed by the manager, copied to him, and replies go to his Guardian address.
+    It sets out what clients have reported about their former agents, from two sources only:
+    - the clients' own answers and replies to the letters;
+    - the calls Client Support and the manager made, read from every caller's tab of the Client Support calls sheet
+      (`CALLS_SHEET_ID` Script property, read only).
+  - **What each finding carries.** Every finding has its date, its source, the former agent and the client's number.
+    It never carries the client's name: the client's own name, any other client's name, phone numbers, e-mail addresses
+    and links are scrubbed from the words.
+  - **How it reads.** First the frame (Client Support are not licensed, give no advice, and no agent has been on these
+    calls). Then what is new: the words in full, and the ticks as counts per former agent. Then everything by former
+    agent, then how it was documented, then what the branch asks the Company to advise. Everything to date travels as a
+    CSV.
+  - **How a finding is filed.** A note is filed under what it is about (`T_FIND_KINDS`) only when it names that client's
+    own former agent. So "Akaash is his agent" or a note about an agent from years ago is never one.
+  - **The Findings Log tab.** It keeps each finding with the day it first went, so each day's e-mail lists only what is
+    new.
+  - **What is left out.** The terminated agent's book (T, T1) stays out while the branch's hold stands
+    (`INCLUDE_HELD`): its findings are counted in one line, never listed. The address is the `FINDINGS_TO` Script
+    property, never in this public repository.
+  - **Switching it on.** Nothing goes until `transitionFindingsStart`. `transitionFindingsPreview` sends one to the
+    manager alone and marks nothing.
+  - **Tests.** `findings8/findings-run.js` in the scratchpad covers it (32 checks, on the 8 October tabs and calls sheet).
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
@@ -2892,7 +3162,11 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     - Re-cut the film and this page follows.
   - **No mail app plays a film inside an e-mail** (Gmail and Outlook strip a video tag), so the e-mail carries the
     film's first frame with a play button, `welcome-card.jpg`, hosted, opening `welcome.html` in one tap.
-  - **No access code in it.** The Monday letter carries the sign-in, after staff check it.
+  - **It carries the sign-in** (14 October 2026, at the manager's word: "yes please fix this"). Until then it said
+    "Your sign-in comes with your Monday letter", and three groups welcomed that day had never had one; the first
+    wrote back within half an hour that she could not open her page. The welcome now gives "Open your service page",
+    the list bill and the access code in the same blue box as the Monday letter. It still goes only to a group a staff
+    member checked, to the Contact Person, never to one of our own addresses.
   - **It is signed by the staff member who verified the group** (14 October 2026: "it has me as the branch manager,
     the letter must have verified by the staff who clicked verified"). `gcmWelcome_` signs it with the verifier
     (below), says "I look after your account" when the verifier is the account owner and names the owner otherwise,
@@ -2911,6 +3185,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     welcome, and the approval toast tells the staff member it will go signed by them. `gcmWelcomeStop` ends that.
   - Each welcome is logged on Group Sends with Status "welcome sent". The weekly run passes those rows over, so a
     welcome never counts as that week's letter. One internal summary goes to `TRANSITION.CC`.
+  - **Sales support is a visible copy on every group e-mail** (14 October 2026: "sales support is not being copied").
+    It had been a blind copy, which reached their inbox but showed on nobody's copy of the e-mail. `gcmCc_` puts
+    `GCM.COPY` in Cc on the welcome, the Monday letter, Send now and Send again, beside the register's Cc, each address
+    once. The e-mail itself sits in support@'s Sent Items.
   - `welcome/welcome-test.js` in the session scratchpad covers it (29 checks, with the verifier and the 9:00 run).
 - **The verifier is whoever approved the letter, and every letter says so** (14 October 2026). It is the newest
   approval on Group Queue that was not cancelled (`gcmVerifier_`): the person who ticked that they checked every item

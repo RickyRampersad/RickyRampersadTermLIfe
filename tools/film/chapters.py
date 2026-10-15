@@ -28,7 +28,10 @@ PAGE = {'client': (DHAA, 'client-film.html'), 'process': (DHAA, 'process-film.ht
         'agentside': (DHAA, 'agent-side-film.html'), 'agent': (DHAA, 'agent-film.html'),
         'work': (DHAA, 'how-we-work-film.html'), 'wall': (DHAA, 'wall-film.html'),
         'reel': (DHAA, 'ad-reel.html'), 'feed': (DHAA, 'ad-reel.html'),
-        'orphan': (BRANCH, 'film.html')}
+        'orphan': (BRANCH, 'film.html'),
+        # the board films, one per sign-in (14 October 2026), embedded on orphan-transition/board-films.html
+        'boardmgr': (TEAM, 'board-management.html'), 'boardstaff': (TEAM, 'board-client-support.html'),
+        'boardagent': (TEAM, 'board-agents.html')}
 
 def names_of(site, page):
     s = (site / page).read_text(encoding='utf-8')
@@ -36,6 +39,8 @@ def names_of(site, page):
     for sec in re.findall(r'<section class="scene[^"]*"[^>]*>(.*?)</section>', s, re.S):
         # the eyebrow names the chapter; a quotation card names it by its source line
         m = re.search(r'class="(?:eyebrow|src)[^"]*"[^>]*>(.*?)</div>', sec, re.S)
+        # the board films (14 October 2026, the corporate cut) name it "eb" beside the board, "ebw" on blue
+        m = m or re.search(r'class="(?:[^"]*\s)?(?:eb|ebw)(?:\s[^"]*)?"[^>]*>(.*?)</div>', sec, re.S)
         t = m.group(1) if m else (re.search(r'<h[12][^>]*>(.*?)</h[12]>', sec, re.S) or [None, ''])[1]
         t = re.sub(r'<i>\s*</i>', '', t)
         t = re.sub(r'<[^>]+>', ' ', t); t = H.unescape(re.sub(r'\s+', ' ', t)).strip().rstrip('.')

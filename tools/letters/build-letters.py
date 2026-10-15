@@ -351,15 +351,17 @@ def checks_first(cfg):
     return 'rating' in cfg.get('questions', []) or bool(cfg.get('checks_first'))
 
 
-# Letter T (24 September 2026): the one letter that names an agent, because Guardian Life terminated the
-# contract for cause and the client has to know who may no longer act for it. The words are the company's
-# own notice — terminated, with immediate effect, on a date, as a result of an investigation, not authorised —
-# and nothing about why. The name and the date come off the sheet at send time; neither lives here.
+# Letter T (24 September 2026): the one letter that names an agent, because Guardian Life ended the agent's
+# services and the client has to know who may no longer act for it. The name and the date come off the sheet at
+# send time; neither lives here. On 13 October 2026, lifting the hold on that book, the manager took the reason
+# out ("remove as a result of an investigation … do not give a reason … no longer with the company as his
+# services has been terminated as at the date"): the notice says the agent is no longer with Guardian Life, that
+# the services were terminated as at a date, and that the agent may no longer act. Never why, never the grounds.
 # The name sits between the <!--agent--> marks like the standard notice's, because tLetters_ in
 # Transition.gs refuses any letter that carries {{agent_first_name}} without them; a T row with no
 # agent name is held by tHold_ before the cut could ever apply.
-NOTICE_T = ('Guardian Life of the Caribbean terminated the contract of your agent<!--agent-->, {{agent_name}},<!--/agent--> '
-            'with immediate effect on {{terminated_on}}, as a result of an investigation.',
+NOTICE_T = ('Please note that your agent<!--agent-->, {{agent_name}},<!--/agent--> is no longer with Guardian Life of the '
+            "Caribbean, as {{agent_first_name}}'s services have been terminated as at {{terminated_on}}.",
             '{{agent_first_name}} is no longer authorised to conduct any business on behalf of Guardian Life. Your policy is '
             'not affected: it remains with Guardian Life, looked after by our branch team.')
 # Every other letter (30 September 2026). Until then the notice said the representative "has moved on", and
