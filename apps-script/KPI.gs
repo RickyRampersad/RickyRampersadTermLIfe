@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-15c';
+var SCRIPT_VERSION = '2026-10-15d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -5651,6 +5651,9 @@ function replyPage_(title, sub, inner) {
       '.task{padding:10px 0;border-top:1px solid #EEE;font-size:14px}' +
       'details summary{cursor:pointer;color:#16264F;font-weight:700;font-size:13px;padding:8px 0}' +
       'button{width:100%;padding:15px;border:0;border-radius:11px;background:#16264F;color:#fff;font:800 16px inherit;cursor:pointer;margin-top:8px}' +
+      // The one save stays in view: Sasha, 15 Oct, typed a note under KPI 1 and
+      // could not see how to save it without scrolling to the foot of the page.
+      'form>button[type=submit]:last-of-type{position:sticky;bottom:10px;box-shadow:0 6px 18px rgba(13,24,56,.25);z-index:5}' +
       '.ok{border-left:4px solid #2C7A57}.bad{border-left:4px solid #AE3A33}.warn{color:#AE3A33;font-weight:700;font-size:13px;display:none;margin-top:6px}' +
       '.ln{padding:6px 0;border-top:1px solid #EEE;font-size:14px}.ln:first-child{border-top:0}' +
     '</style>' +
@@ -5801,7 +5804,7 @@ function planReplyPage_(person, day, error, notice) {
     '<script>function chk(){var off=[].slice.call(document.querySelectorAll("input[data-sug]")).filter(function(i){return !i.checked}).length;' +
       'if(off&&!document.getElementById("why").value.trim()){document.getElementById("warn").style.display="block";document.getElementById("why").focus();return false}return true}</script>';
   return replyPage_('Your plan · ' + prettyDate_(day),
-    esc_(String(person.name || sid).split(' ')[0]) + ', this morning\'s suggestion is ticked below, high-payoff work first. Untick what you will not do today, tick anything else, and save. Report each block when it ends.',
+    esc_(String(person.name || sid).split(' ')[0]) + ', this morning\'s suggestion is ticked below, high-payoff work first. Untick what you will not do today, tick anything else, add your own lines under any block, then press Save once: the button at the bottom saves every block and every note on this page. Report each block when it ends.',
     inner);
 }
 
