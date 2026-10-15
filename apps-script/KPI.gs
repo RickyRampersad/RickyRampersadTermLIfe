@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-15b';
+var SCRIPT_VERSION = '2026-10-15c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3274,7 +3274,7 @@ function sendDayStart_(staffId, date, kind, opt) {
     ? 'Thank you, ' + esc_(first) + '. Your plan is in' + (signIn ? ' (signed in at ' + esc_(twelve_(signIn)) + ')' : '') + '. Below: whether it holds up against your record, the day as planned, and what Salesforce still has waiting.'
     : 'Good morning, ' + esc_(first) + (signIn
         ? ', and thank you for signing in at <b>' + esc_(twelve_(signIn)) + '</b>. '
-        : '. Your day starts at <b>' + esc_(twelve_(mmText_(startM))) + '</b>. When you arrive, open the button below: that signs you in, and signing in is the attendance register. ' +
+        : '. Your day starts at <b>' + esc_(twelve_(mmText_(startM))) + '</b>. Review your plan below, then open the button and save it: saving signs you in, and that is the attendance register. ' +
           'In after ' + esc_(twelve_(mmText_(startM + ATT_GRACE_MIN))) + ' is late; no sign-in by <b>' + esc_(twelve_(mmText_(startM + ABSENT_AFTER_MIN))) + '</b> marks you absent and your due work goes to colleagues. ') +
       'Below is what your record shows over the last ' + INTEL_DAYS + ' working days, your day as you have filed it, and a plan for each block built from what Salesforce has due or overdue.';
 
@@ -3440,8 +3440,11 @@ function endFor_(staffId) {
  *  The day runs on the clock, not on anybody signing in (Ricky, 14 October
  *  2026: "they no longer log in, but we pull the intelligence and guide them
  *  via email"):
- *    6:00           the morning e-mail, every desk (3 a run)
- *    6:20           the Branch Manager's day (sendBranchManagerDay_)
+ *    5:00           the Branch Manager's day (sendBranchManagerDay_)
+ *    6:00           the Unit Manager's unit (sendUnitManagerMorning_)
+ *    start - 30     the morning e-mail, every desk (3 a run)
+ *    12:00, 18:00   the Branch Manager's progress (sendBranchManagerProgress_)
+ *    17:00          the Unit Manager's account of his day
  *    start + 60     no sign-in: absent, and the work covered (autoAbsentTick_, coverTick_)
  *    9:15           the attendance report
  *    10:00          the workload balance (rebalanceTick_)
@@ -3471,22 +3474,43 @@ function housekeepingTick_() {
   });
   var expected = function (sid) { return present[sid] || props.getProperty('daystart_first_' + sid + '_' + day); };
 
-  // The morning e-mail, from 6:00 (Ricky, 15 October 2026: "all emails are
-  // triggered at 6am"), three a run so no single run carries the branch; a
-  // desk the 6:00 runs missed still gets it up to twenty minutes after its start.
+  // The morning e-mail, half an hour before each desk's start (Ricky, 15
+  // October 2026: "all will receive the email 30 minutes before they get in
+  // and they are to review; if a staff does not open and save, it is assumed
+  // they are absent"). Three a run; a desk the runs missed still gets it up to
+  // twenty minutes after its start.
   var morningSent = 0;
   people.forEach(function (p) {
     var sid = String(p.staffId), sp = parseSpan_(scheduleFor_(sid).hours || '');
-    if (!sp || mins < MORNING_MAIL_AT || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
+    if (!sp || mins < sp.start - STAFF_MAIL_LEAD || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
     if (props.getProperty('daystart_first_' + sid + '_' + day)) return;
     try { if (sendDayStart_(sid, day, 'first')) { sent.push(p.name + ' (morning)'); morningSent++; } } catch (e) {}
   });
 
-  // 6:20, the Branch Manager's own day.
+  // 5:00, the Branch Manager's own day; 12:00 and 18:00, his progress.
   if (mins >= BM_MAIL_AT && mins <= 11 * 60 && !morningSent && !props.getProperty('bmday_' + day)) {
     props.setProperty('bmday_' + day, hhmm_(now));
     try { if (sendBranchManagerDay_(day)) sent.push('Branch Manager'); } catch (e) {}
   }
+  BM_PROGRESS_AT.forEach(function (at) {
+    var key = 'bmprog_' + at + '_' + day;
+    if (mins < at || mins > at + HK_WINDOW_MIN || props.getProperty(key)) return;
+    props.setProperty(key, hhmm_(now));
+    try { if (sendBranchManagerProgress_(day, at >= 15 * 60 ? 'eve' : 'mid')) sent.push('Branch Manager progress'); } catch (e) {}
+  });
+
+  // The Unit Managers: 6:00 their unit, 17:00 the account of their day.
+  UM_DESKS.forEach(function (sid) {
+    if (absent[sid]) return;
+    if (mins >= UM_MORNING_AT && mins <= 10 * 60 && !props.getProperty('um_am_' + sid + '_' + day)) {
+      props.setProperty('um_am_' + sid + '_' + day, hhmm_(now));
+      try { if (sendUnitManagerMorning_(sid, day)) sent.push(nameFor_(sid) + ' (unit)'); } catch (e) {}
+    }
+    if (mins >= UM_EVENING_AT && mins <= UM_EVENING_AT + HK_WINDOW_MIN && !props.getProperty('um_pm_' + sid + '_' + day)) {
+      props.setProperty('um_pm_' + sid + '_' + day, hhmm_(now));
+      try { if (sendUnitManagerEvening_(sid, day)) sent.push(nameFor_(sid) + ' (account)'); } catch (e) {}
+    }
+  });
 
   // The register: an hour after the start with no sign-in is absent, and an
   // absent desk's untouched work is covered by whoever is in.
@@ -3578,10 +3602,10 @@ function sendMorningNow() {
 //  as well, as I am the Branch Manager ... tasks assigned to me, or items that
 //  I need to chatter on."
 //
-//    6:00am         every desk's morning e-mail (three a run, so one run
-//                   never carries the whole branch)
-//    6:20am         the Branch Manager's day: the team, his own tasks, what
+//    5:00am         the Branch Manager's day: the team, his own tasks, what
 //                   is waiting on his Chatter, his instructions not actioned
+//    start - 30     each desk's morning e-mail (three a run). Opening it and
+//                   saving the plan signs the desk in
 //    start          signing in is the register. In within ten minutes of the
 //                   start is on time; after that is late, by the minute
 //    start + 60     nobody signed in and nobody marked them out: absent,
@@ -3601,9 +3625,10 @@ function sendMorningNow() {
 //  Script Property AUTO_ABSENT = off stops the automatic absence and the cover.
 // ---------------------------------------------------------------------------
 
-var MORNING_MAIL_AT = 6 * 60;          // 6:00am
+var MORNING_MAIL_AT = 5 * 60;          // the day's first run: 5:00am
+var STAFF_MAIL_LEAD = 30;              // a desk's morning e-mail, half an hour before its start
 var MORNING_MAIL_PER_RUN = 3;
-var BM_MAIL_AT = 6 * 60 + 20;          // 6:20am, once the desks' figures are cached
+var BM_MAIL_AT = 5 * 60;               // 5:00am, the Branch Manager's operations review
 var ABSENT_AFTER_MIN = 60;             // no sign-in by start + 60 is absent
 var ATT_REPORT_AT = 9 * 60 + 15;       // after the eight o'clock desks' hour has run
 var REBALANCE_AT = 10 * 60;
@@ -4002,8 +4027,8 @@ function sendBranchManagerDay_(day) {
   var owners = Object.keys(w.byOwner).map(function (s) { return String(nameFor_(s)).split(' ')[0] + ' ' + w.byOwner[s]; }).join(', ');
 
   var body =
-    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, Mr Rampersad. The team\'s morning e-mails went out at 6:00. ' +
-      'Below: where each desk stands, then what is waiting on you. The attendance report follows at 9:15; anyone not signed in an hour after their start is marked absent and their work covered.</div>' +
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, Mr Rampersad. Your operations review: where each desk stands, then what is waiting on you. ' +
+      'The team\'s morning e-mails go out half an hour before each start; Akaash has his unit at 6:00. The attendance report follows at 9:15, and your progress at 12:00 and 6:00pm.</div>' +
     statTiles_([
       { value: sfOk ? w.mine.length : '—', label: 'your tasks due', color: w.mine.length ? MAIL.amber : MAIL.navy },
       { value: sfOk ? mineLate : '—', label: 'of them overdue', color: mineLate ? MAIL.red : MAIL.navy },
@@ -4088,7 +4113,6 @@ function saveBmItems_(day, w) {
 function bmReplyPage_(person, day, error, notice) {
   var items = [];
   try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(bmItemsKey_(day)) || '[]'); } catch (e) {}
-  if (!items.length) return replyPage_('Nothing to answer', 'This morning\'s list is not on file, or it was empty.', '');
   var head = { ask: 'Waiting on your Chatter', mine: 'In your name, due or overdue', ignored: 'Your instructions with no note from the desk' };
   var groups = ['ask', 'mine', 'ignored'].map(function (k) {
     var list = items.filter(function (it) { return it.k === k; });
@@ -4110,7 +4134,11 @@ function bmReplyPage_(person, day, error, notice) {
     (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
     (notice ? '<div class="card ok">' + esc_(notice) + '</div>' : '') +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_('ricky', day, 'bm') + groups +
-    '<button type="submit">Send my replies</button></form>');
+    '<div class="card"><div class="bh">Log what you did</div><div class="bf">One line each: every line becomes a Salesforce task in your name for today, with the line as its note.</div>' +
+      '<textarea name="log" rows="4" placeholder="e.g. Met NovaHub board on group life renewal; pricing agreed in principle"></textarea>' +
+      '<select name="log_type">' + Object.keys(SF_TYPES).map(function (k) { return '<option value="' + esc_(k) + '"' + (k === 'RR Operations' ? ' selected' : '') + '>' + esc_(SF_TYPES[k]) + '</option>'; }).join('') + '</select>' +
+      '<label class="t" style="margin-top:6px"><input type="checkbox" name="log_done" value="1" checked><span>Already done: log them as completed</span></label></div>' +
+    '<button type="submit">Send my replies and log</button></form>');
 }
 
 function bmReplySave_(person, day, p, all) {
@@ -4131,7 +4159,19 @@ function bmReplySave_(person, day, p, all) {
     } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 160); }
     out.push({ s: it.s, res: res, ok: !/^NOT/.test(res) });
   });
-  if (!out.length) return bmReplyPage_(person, day, 'Nothing typed. Write under the items you want to answer.');
+  var logLines = String(p.log || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length >= 4; }).slice(0, 15);
+  var logType = SF_TYPES[String(p.log_type || '')] ? String(p.log_type) : 'RR Operations', logDone = String(p.log_done || '') === '1';
+  logLines.forEach(function (l) {
+    var res = '';
+    try {
+      var id = sfkInsert_('Task', { Subject: l.slice(0, 255), OwnerId: bmSfId_(), ActivityDate: day,
+        Status: logDone ? 'Completed' : 'In Progress', Task_Type__c: logType });
+      try { sfkInsert_('FeedItem', { ParentId: id, Body: 'Branch Manager · ' + shortDate_(day) + ' ' + twelve_(at) + '\n\n' + l }); } catch (e) {}
+      res = logDone ? 'logged, completed' : 'logged, in progress';
+    } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 160); }
+    out.push({ s: l, res: res, ok: !/^NOT/.test(res) });
+  });
+  if (!out.length) return bmReplyPage_(person, day, 'Nothing typed. Write under the items you want to answer, or log what you did.');
   sfkForgetDay_(day);
   return replyPage_('Sent: ' + out.filter(function (o) { return o.ok; }).length + ' of ' + out.length, 'Each reply is on the task\'s Chatter now.',
     '<div class="card ' + (out.every(function (o) { return o.ok; }) ? 'ok' : 'bad') + '">' + out.map(function (o) {
@@ -4142,6 +4182,463 @@ function bmReplySave_(person, day, p, all) {
         return i % 2 ? a : a + '<input type="hidden" name="' + arr[i] + '" value="' + esc_(arr[i + 1]) + '">'; }, '') +
       '<button type="submit">Back to the list</button></form>');
 }
+
+// ---------------------------------------------------------------------------
+//  The managers' day: the Branch Manager's progress, and the Unit Manager
+//
+//  Ricky, 15 October 2026: "build a model to also include your unit manager
+//  and yourself ... the objective is not to go online but on the fly."
+//    Branch Manager   5am: operations, his assignments, what he is to action.
+//                     12pm and 6pm: his progress and what is happening, with
+//                     the ability to log and Chatter from the e-mail.
+//    Unit Manager     6am: his unit, filtered to the agents in his unit,
+//                     pendings first; any comment he makes goes on Chatter;
+//                     and his day as a manager planned against the manager's
+//                     KPIs (recruiting new names, coaching, performance
+//                     management ...). 5pm: an account of his day and his
+//                     unit's progress, with comments. Copied to Ricky.
+//
+//  The unit is read from the Unit column of the Access tab (Branch
+//  Intelligence's iBuildUnits_): Salesforce carries no unit on an agent.
+//  Script Property UNIT_FOR_<sid> names the unit if it is not obvious from the
+//  manager's name; UNIT_AGENTS_<sid> (comma-separated names) overrides it.
+// ---------------------------------------------------------------------------
+
+var BM_PROGRESS_AT = [12 * 60, 18 * 60];
+var UM_DESKS = ['akaash'];
+var UM_MORNING_AT = 6 * 60;
+var UM_EVENING_AT = 17 * 60;
+var UM_LIST_MAX = 10;
+
+/** The manager's KPIs, asked as a plan in the morning and as an account at five. */
+var UM_CHECKS = [
+  { id: 'recruit',  q: 'Recruitment: new names added to the pipeline',           note: 'Names, and where each came from' },
+  { id: 'interview',q: 'Recruitment: interviews or career presentations held',   note: 'Who' },
+  { id: 'coach',    q: 'Coaching: agents coached one to one',                    note: 'Who, and on what' },
+  { id: 'perf',     q: 'Performance management: agents spoken to on activity, production or persistency', note: 'Who, and the action agreed' },
+  { id: 'field',    q: 'Joint field work: client meetings with an agent',        note: 'Agent and client' },
+  { id: 'pendings', q: 'Unit pendings moved to a next step',                     note: '' },
+  { id: 'persist',  q: 'Persistency: lapses and premium dues called in the unit', note: '' },
+  { id: 'licence',  q: 'Licensing and development: study, exams, contracts moved', note: 'Who' },
+  { id: 'own',      q: 'Own production: appointments and applications',          note: '' },
+  { id: 'escal',    q: 'Client escalations handled',                             note: '' }
+];
+
+var MGRDAY = { must: ['Date', 'StaffId', 'Kind', 'Item'], name: 'Manager Day',
+               head: ['Date', 'StaffId', 'Kind', 'Item', 'Question', 'Planned', 'Done', 'Note', 'At'] };
+
+function soqlStr_(s) { return "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'"; }
+
+/** The agents in a manager's unit, the manager included. */
+function unitAgents_(sid) {
+  var props = PropertiesService.getScriptProperties();
+  var forced = props.getProperty('UNIT_AGENTS_' + sid);
+  if (forced) return forced.split(',').map(function (s) { return s.trim(); }).filter(String);
+  var me = nameFor_(sid), out = [me];
+  if (typeof iBuildUnits_ !== 'function') return out;
+  var units = {};
+  try { units = iBuildUnits_() || {}; } catch (e) { return out; }
+  var key = props.getProperty('UNIT_FOR_' + sid) || '', parts = String(me).toLowerCase().split(/\s+/);
+  var norm = function (s) { return typeof iNameKey_ === 'function' ? iNameKey_(s) : String(s || '').toLowerCase().trim(); };
+  if (!key) Object.keys(units).forEach(function (u) {
+    if (key) return;
+    var lu = u.toLowerCase();
+    if (parts.some(function (p) { return p.length > 3 && lu.indexOf(p) > -1; })) { key = u; return; }
+    if ((units[u] || []).some(function (m) { return norm(m.name) === norm(me) && /manager/i.test(m.role || ''); })) key = u;
+  });
+  if (!key || !units[key]) return out;
+  units[key].forEach(function (m) { if (m.name && out.indexOf(m.name) === -1) out.push(m.name); });
+  return out;
+}
+
+/** Open and recently closed tasks for the unit's agents. */
+function unitBook_(sid, day) {
+  var agents = unitAgents_(sid);
+  var inList = agents.map(soqlStr_).join(',');
+  var open = sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__r.Name, What.Name, LastModifiedDate FROM Task' +
+    ' WHERE IsClosed = false AND Agent__r.Name IN (' + inList + ") AND (NOT Subject LIKE 'Email:%') ORDER BY ActivityDate ASC NULLS LAST LIMIT 500");
+  var since = sfkUtcAt_(lastWorkdays_(day, 1)[0], 0);
+  var closed = sfkQuery_('SELECT Id, Subject, Task_Type__c, CompletedDateTime, Agent__r.Name FROM Task' +
+    ' WHERE IsClosed = true AND Agent__r.Name IN (' + inList + ') AND CompletedDateTime >= ' + since + ' LIMIT 500');
+  var t = function (r) {
+    return { id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
+             late: !!(r.ActivityDate && r.ActivityDate < day), agent: (r.Agent__r && r.Agent__r.Name) || '',
+             owner: (r.Owner && r.Owner.Name) || '', touched: daysSince_(r.LastModifiedDate), status: r.Status || '' };
+  };
+  var todayFrom = sfkUtcAt_(day, 0);
+  return { agents: agents, open: open.map(t),
+           closedYday: closed.filter(function (r) { return String(r.CompletedDateTime) < todayFrom; }).length,
+           closedToday: closed.filter(function (r) { return String(r.CompletedDateTime) >= todayFrom; })
+             .map(function (r) { return { id: r.Id, subject: shorten_(r.Subject, 95), agent: (r.Agent__r && r.Agent__r.Name) || '', ty: r.Task_Type__c || '' }; }) };
+}
+
+/** Pendings first, then new business, then retention, then the rest overdue. */
+function unitSections_(book) {
+  var pend = book.open.filter(function (t) { return t.ty === 'Pendings'; });
+  var rest = book.open.filter(function (t) { return t.ty !== 'Pendings'; });
+  var nb = rest.filter(function (t) { return payoffOf_(t).key === 'new'; });
+  var ret = rest.filter(function (t) { var k = payoffOf_(t).key; return k === 'retention' || k === 'orphan'; });
+  var other = rest.filter(function (t) { var k = payoffOf_(t).key; return k !== 'new' && k !== 'retention' && k !== 'orphan' && t.late; });
+  var byDue = function (a, b) { return String(a.due || '9999').localeCompare(String(b.due || '9999')); };
+  return [
+    { k: 'pend', label: 'Pendings', list: pend.sort(byDue) },
+    { k: 'new', label: 'New business', list: nb.sort(byDue) },
+    { k: 'ret', label: 'Retention and orphan adoption', list: ret.sort(byDue) },
+    { k: 'other', label: 'Everything else overdue', list: other.sort(byDue) }
+  ];
+}
+
+function umItemsKey_(sid, day) { return 'um_items_' + sid + '_' + day; }
+
+function umTaskLine_(t, day, base) {
+  return '<div style="font-size:12.5px;line-height:1.45;padding:5px 0;border-top:1px solid ' + MAIL.line + '">' +
+    '<b>' + esc_(t.agent || '—') + '</b> · ' + esc_(t.subject) +
+    (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>'
+            : (t.due ? ' <span style="color:' + MAIL.muted + '">· due ' + esc_(shortDate_(t.due)) + '</span>' : '')) +
+    (t.touched >= 7 ? ' <span style="color:' + MAIL.amber + '">· untouched ' + t.touched + ' days</span>' : '') +
+    (base ? ' <a href="' + esc_(base + t.id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &rarr;</a>' : '') + '</div>';
+}
+
+function mgrRows_(sid, day, kind) {
+  var out = {};
+  (hrRows_(MGRDAY, true) || []).forEach(function (r) {
+    if (isoDay_(r.Date) !== day || String(r.StaffId) !== sid || String(r.Kind) !== kind) return;
+    out[String(r.Item)] = r;
+  });
+  return out;
+}
+
+function mgrWrite_(sid, day, kind, rows) {
+  var sh = hrTab_(MGRDAY, true), head = headerOf_(sh), at = hhmm_(new Date());
+  rows.forEach(function (o) {
+    o.Date = day; o.StaffId = sid; o.Kind = kind; o.At = at;
+    sh.appendRow(head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+  });
+  forgetHr_(MGRDAY);
+}
+
+// ---- the Unit Manager: 6am --------------------------------------------------
+
+function sendUnitManagerMorning_(sid, day) {
+  var to = emailFor_(sid);
+  if (!to) return false;
+  var name = nameFor_(sid), first = String(name).split(' ')[0], book = null;
+  try { book = unitBook_(sid, day); } catch (e) {}
+  var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
+  var secs = book ? unitSections_(book) : [];
+  var items = [];
+  secs.forEach(function (s) { s.list.slice(0, UM_LIST_MAX).forEach(function (t) { items.push({ id: t.id, s: t.subject, a: t.agent, due: t.due, late: t.late, k: s.k }); }); });
+  try { PropertiesService.getScriptProperties().setProperty(umItemsKey_(sid, day), JSON.stringify(items).slice(0, 8900)); } catch (e) {}
+
+  var perAgent = {};
+  if (book) book.open.forEach(function (t) {
+    var a = perAgent[t.agent] || (perAgent[t.agent] = { open: 0, late: 0, pend: 0 });
+    a.open++; if (t.late) a.late++; if (t.ty === 'Pendings') a.pend++;
+  });
+  var td = 'padding:6px;font-size:12.5px;border-top:1px solid ' + MAIL.line + ';';
+  var agentTable = book && book.open.length ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px">' +
+    '<tr><td style="padding:6px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + '">Agent</td>' +
+    ['Open', 'Overdue', 'Pendings'].map(function (h) { return '<td style="padding:6px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + ';text-align:right">' + h + '</td>'; }).join('') + '</tr>' +
+    Object.keys(perAgent).sort(function (a, b) { return perAgent[b].late - perAgent[a].late; }).map(function (a) {
+      var x = perAgent[a];
+      return '<tr><td style="' + td + '">' + esc_(a) + '</td><td style="' + td + 'text-align:right">' + x.open + '</td>' +
+        '<td style="' + td + 'text-align:right;' + (x.late ? 'color:' + MAIL.red + ';font-weight:700' : '') + '">' + x.late + '</td>' +
+        '<td style="' + td + 'text-align:right">' + x.pend + '</td></tr>';
+    }).join('') + '</table>' : '';
+
+  var nLate = book ? book.open.filter(function (t) { return t.late; }).length : 0;
+  var nPend = secs.length ? secs[0].list.length : 0;
+  var btn = replyButton_(replyUrl_(sid, day, 'um'), 'Comment and plan my day', 'One page: a box under each item goes on its Chatter; then your plan against the manager\'s KPIs. No sign-in.');
+  var body =
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. This is your unit as Salesforce has it this morning' +
+      (book ? ' (' + book.agents.length + ' agent' + (book.agents.length === 1 ? '' : 's') + ', you included)' : '') +
+      ', pendings first. Comment on anything that needs a push: your comment goes on that task\'s Chatter, headed as yours. ' +
+      'Then set your day as a manager. At 5pm you will be asked for the account of it.</div>' +
+    statTiles_([
+      { value: book ? book.open.length : '—', label: 'open in your unit' },
+      { value: book ? nLate : '—', label: 'overdue', color: nLate ? MAIL.red : MAIL.navy },
+      { value: book ? nPend : '—', label: 'pendings', color: nPend ? MAIL.amber : MAIL.navy },
+      { value: book ? book.closedYday : '—', label: 'closed yesterday', color: MAIL.green }
+    ]) + btn +
+    (book ? secs.map(function (s) {
+      if (!s.list.length) return '';
+      return sectionLabel_(s.label + ' (' + s.list.length + ')') +
+        '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (s.k === 'pend' ? MAIL.amber : MAIL.navy) + ';border-radius:10px;padding:8px 15px">' +
+        s.list.slice(0, UM_LIST_MAX).map(function (t) { return umTaskLine_(t, day, base); }).join('') +
+        (s.list.length > UM_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (s.list.length - UM_LIST_MAX) + ' more in Salesforce.</div>' : '') + '</div>';
+    }).join('') + (agentTable ? sectionLabel_('By agent') + agentTable : '')
+         : '<div style="font-size:13px;color:' + MAIL.muted + '">Salesforce did not answer this morning, so the unit is not listed.</div>') +
+    sectionLabel_('Your day as a manager') +
+    '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:10px 15px;font-size:13px;line-height:1.6">' +
+      UM_CHECKS.map(function (c) { return '<div>&#9675; ' + esc_(c.q) + '</div>'; }).join('') +
+      '<div style="color:' + MAIL.muted + ';margin-top:6px">Put a number against each on the page: what you will do today. At 5pm you give the actual.</div></div>' +
+    btn +
+    '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
+  MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
+    subject: 'Your unit · ' + name + ' · ' + shortDate_(day) + (book ? ' · ' + nPend + ' pendings, ' + nLate + ' overdue' : ''),
+    htmlBody: shell_('Good morning · your unit', name + ' · Unit Manager · ' + prettyDate_(day), body) });
+  return true;
+}
+
+function umReplyPage_(person, day, error) {
+  var sid = String(person.staffId), items = [];
+  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(umItemsKey_(sid, day)) || '[]'); } catch (e) {}
+  var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
+  var head = { pend: 'Pendings', 'new': 'New business', ret: 'Retention and orphan adoption', other: 'Everything else overdue' };
+  var plan = mgrRows_(sid, day, 'plan');
+  var groups = ['pend', 'new', 'ret', 'other'].map(function (k) {
+    var list = items.filter(function (it) { return it.k === k; });
+    if (!list.length) return '';
+    return '<div class="card"><div class="bh">' + esc_(head[k]) + '</div>' + list.map(function (it) {
+      return '<div style="padding:9px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
+        (it.due ? ' <span class="br2">· ' + (it.late ? 'overdue since ' : 'due ') + esc_(shortDate_(it.due)) + '</span>' : '') +
+        (base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
+        '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Your comment, posted to Chatter on this task"></textarea></div>';
+    }).join('') + '</div>';
+  }).join('');
+  var checks = '<div class="card"><div class="bh">Your day as a manager · what you will do today</div>' + UM_CHECKS.map(function (c) {
+    var r = plan[c.id] || {};
+    return '<div style="padding:8px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px">' + esc_(c.q) + '</div>' +
+      '<input type="number" min="0" name="p_' + c.id + '" value="' + esc_(r.Planned || '') + '" style="width:90px" placeholder="0"> ' +
+      '<input type="text" name="n_' + c.id + '" value="' + esc_(r.Note || '') + '" style="width:calc(100% - 110px)" placeholder="' + esc_(c.note || 'Note') + '"></div>';
+  }).join('') + '</div>';
+  return replyPage_('Your unit · ' + prettyDate_(day), 'Comment under any task; each comment goes on its Chatter as yours. Then set your day. Leave blank what needs nothing.',
+    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'um') + groups + checks +
+    '<button type="submit">Save my comments and my plan</button></form>');
+}
+
+function umReplySave_(person, day, p) {
+  var sid = String(person.staffId), name = nameFor_(sid), items = [], at = hhmm_(new Date()), done = [];
+  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(umItemsKey_(sid, day)) || '[]'); } catch (e) {}
+  items.forEach(function (it) {
+    var txt = String(p['c_' + it.id] || '').trim();
+    if (!txt) return;
+    var res = 'posted';
+    try { sfkInsert_('FeedItem', { ParentId: it.id, Body: 'Unit Manager · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at) + '\n\n' + txt }); }
+    catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
+    done.push({ s: (it.a ? it.a + ' · ' : '') + it.s, txt: txt, res: res });
+  });
+  var rows = UM_CHECKS.map(function (c) {
+    return { Item: c.id, Question: c.q, Planned: String(p['p_' + c.id] || '').trim(), Note: String(p['n_' + c.id] || '').trim() };
+  }).filter(function (r) { return r.Planned !== '' || r.Note; });
+  if (!done.length && !rows.length) return umReplyPage_(person, day, 'Nothing filled in. Comment on a task or set at least one number for your day.');
+  if (rows.length) mgrWrite_(sid, day, 'plan', rows);
+  try { umCopy_(sid, day, 'plan', done, rows); } catch (e) {}
+  return replyPage_('Saved', done.length + ' comment' + (done.length === 1 ? '' : 's') + ' on Chatter; your plan for the day is in. Mr Rampersad has a copy.',
+    '<div class="card ok">' + done.map(function (d) { return '<div class="ln">' + (/^NOT/.test(d.res) ? '&#9888; ' : '&#10003; ') + esc_(d.s) + ' · ' + esc_(d.res) + '</div>'; }).join('') +
+    rows.map(function (r) { return '<div class="ln">&#9675; ' + esc_(r.Question) + ': <b>' + esc_(r.Planned || '—') + '</b>' + (r.Note ? ' · ' + esc_(r.Note) : '') + '</div>'; }).join('') + '</div>');
+}
+
+/** The copy to the Branch Manager: comments made, and the plan or the account. */
+function umCopy_(sid, day, kind, comments, rows) {
+  var mgr = managerEmails_();
+  if (!mgr.length) return;
+  var name = nameFor_(sid), plan = kind === 'eve' ? mgrRows_(sid, day, 'plan') : {};
+  var td = 'padding:6px;font-size:12.5px;border-top:1px solid ' + MAIL.line + ';';
+  var table = rows.length ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px">' +
+    '<tr><td style="padding:6px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + '">Manager KPI</td>' +
+    (kind === 'eve' ? '<td style="padding:6px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + ';text-align:right">Planned</td>' : '') +
+    '<td style="padding:6px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + ';text-align:right">' + (kind === 'eve' ? 'Done' : 'Planned') + '</td></tr>' +
+    rows.map(function (r) {
+      var pl = kind === 'eve' ? String((plan[r.Item] || {}).Planned || '') : '';
+      var short = kind === 'eve' && pl !== '' && Number(r.Done || 0) < Number(pl);
+      return '<tr><td style="' + td + '">' + esc_(r.Question) + (r.Note ? '<div style="color:' + MAIL.muted + ';font-size:11.5px">' + esc_(r.Note) + '</div>' : '') + '</td>' +
+        (kind === 'eve' ? '<td style="' + td + 'text-align:right">' + esc_(pl || '—') + '</td>' : '') +
+        '<td style="' + td + 'text-align:right;font-weight:700;' + (short ? 'color:' + MAIL.red : '') + '">' + esc_(kind === 'eve' ? (r.Done || '0') : (r.Planned || '—')) + '</td></tr>';
+    }).join('') + '</table>' : '';
+  MailApp.sendEmail({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT,
+    subject: (kind === 'eve' ? 'Day accounted · ' : 'Plan received · ') + name + ' · Unit Manager · ' + shortDate_(day) +
+      ' · ' + comments.length + ' comment' + (comments.length === 1 ? '' : 's'),
+    htmlBody: shell_(kind === 'eve' ? 'The Unit Manager\'s day' : 'The Unit Manager\'s plan', name + ' · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()),
+      (table ? sectionLabel_(kind === 'eve' ? 'Planned against done' : 'His plan for the day') + table : '') +
+      (comments.length ? sectionLabel_('His comments, now on Chatter') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:8px 15px">' +
+        comments.map(function (c) { return '<div style="font-size:12.5px;padding:5px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(c.s) + '</b><div style="color:' + MAIL.ink + '">' + esc_(c.txt) + '</div></div>'; }).join('') + '</div>' : '')) });
+}
+
+// ---- the Unit Manager: 5pm ----------------------------------------------------
+
+function sendUnitManagerEvening_(sid, day) {
+  var to = emailFor_(sid);
+  if (!to) return false;
+  var name = nameFor_(sid), first = String(name).split(' ')[0], book = null;
+  try { book = unitBook_(sid, day); } catch (e) {}
+  var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
+  var plan = mgrRows_(sid, day, 'plan'), planned = Object.keys(plan).length;
+  var secs = book ? unitSections_(book) : [];
+  var items = [];
+  secs.forEach(function (s) { s.list.slice(0, 6).forEach(function (t) { items.push({ id: t.id, s: t.subject, a: t.agent, due: t.due, late: t.late, k: s.k }); }); });
+  try { PropertiesService.getScriptProperties().setProperty(umItemsKey_(sid, day) + '_eve', JSON.stringify(items).slice(0, 8900)); } catch (e) {}
+  var perAgent = {};
+  if (book) book.closedToday.forEach(function (t) { perAgent[t.agent] = (perAgent[t.agent] || 0) + 1; });
+  var nLate = book ? book.open.filter(function (t) { return t.late; }).length : 0;
+  var btn = replyButton_(replyUrl_(sid, day, 'umeve'), 'Account for my day', 'One page: what you did against each manager KPI, and a comment on anything in your unit. No sign-in.');
+  var body =
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is five o\'clock. Account for your day as a manager: what you did against each KPI' +
+      (planned ? ', against the plan you set this morning' : ' (no plan was set this morning)') + ', and where your unit stands. It goes to Mr Rampersad.</div>' +
+    statTiles_([
+      { value: book ? book.closedToday.length : '—', label: 'closed in your unit today', color: MAIL.green },
+      { value: book ? book.open.length : '—', label: 'still open' },
+      { value: book ? nLate : '—', label: 'overdue', color: nLate ? MAIL.red : MAIL.navy },
+      { value: planned, label: 'KPIs planned this morning', color: planned ? MAIL.green : MAIL.red }
+    ]) + btn +
+    (book && book.closedToday.length ? sectionLabel_('Closed in your unit today') +
+      '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.green + ';border-radius:10px;padding:8px 15px;font-size:12.5px">' +
+      Object.keys(perAgent).map(function (a) { return '<div style="padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(a) + '</b> · ' + perAgent[a] + '</div>'; }).join('') + '</div>' : '') +
+    (planned ? sectionLabel_('Your plan this morning') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:8px 15px;font-size:12.5px;line-height:1.6">' +
+      UM_CHECKS.filter(function (c) { return plan[c.id]; }).map(function (c) { return '<div>' + esc_(c.q) + ': <b>' + esc_(plan[c.id].Planned || '—') + '</b></div>'; }).join('') + '</div>' : '') +
+    (secs.length && secs[0].list.length ? sectionLabel_('Pendings still open (' + secs[0].list.length + ')') +
+      '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.amber + ';border-radius:10px;padding:8px 15px">' +
+      secs[0].list.slice(0, 6).map(function (t) { return umTaskLine_(t, day, base); }).join('') + '</div>' : '') +
+    btn;
+  MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
+    subject: 'Account for your day · ' + name + ' · ' + shortDate_(day) + (book ? ' · unit closed ' + book.closedToday.length + ', ' + nLate + ' overdue' : ''),
+    htmlBody: shell_('Your day as a manager', name + ' · Unit Manager · ' + prettyDate_(day), body) });
+  return true;
+}
+
+function umEveReplyPage_(person, day, error) {
+  var sid = String(person.staffId), items = [], plan = mgrRows_(sid, day, 'plan'), had = mgrRows_(sid, day, 'eve');
+  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(umItemsKey_(sid, day) + '_eve') || '[]'); } catch (e) {}
+  var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
+  var checks = '<div class="card"><div class="bh">Your day as a manager · what you did</div>' + UM_CHECKS.map(function (c) {
+    var pl = (plan[c.id] || {}).Planned, r = had[c.id] || {};
+    return '<div style="padding:8px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px">' + esc_(c.q) +
+      (pl !== undefined && pl !== '' ? ' <span class="br2">· planned ' + esc_(pl) + '</span>' : '') + '</div>' +
+      '<input type="number" min="0" name="d_' + c.id + '" value="' + esc_(r.Done || '') + '" style="width:90px" placeholder="0"> ' +
+      '<input type="text" name="n_' + c.id + '" value="' + esc_(r.Note || '') + '" style="width:calc(100% - 110px)" placeholder="' + esc_(c.note || 'Note') + '"></div>';
+  }).join('') + '<div class="bf" style="margin-top:8px">The day in a line or two, for Mr Rampersad:</div><textarea name="summary" rows="3"></textarea></div>';
+  var list = items.length ? '<div class="card"><div class="bh">Your unit · comment on anything (goes to Chatter)</div>' + items.map(function (it) {
+    return '<div style="padding:9px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
+      (it.late ? ' <span class="br2">· overdue since ' + esc_(shortDate_(it.due)) + '</span>' : '') + (base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
+      '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Your comment, posted to Chatter on this task"></textarea></div>';
+  }).join('') + '</div>' : '';
+  return replyPage_('Your day · ' + prettyDate_(day), 'A number against each KPI, with names where it asks. Mr Rampersad gets the account.',
+    (error ? '<div class="card bad"><b style="color:#AE3A33">' + esc_(error) + '</b></div>' : '') +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'umeve') + checks + list +
+    '<button type="submit">Send my account</button></form>');
+}
+
+function umEveReplySave_(person, day, p) {
+  var sid = String(person.staffId), name = nameFor_(sid), items = [], at = hhmm_(new Date()), done = [];
+  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(umItemsKey_(sid, day) + '_eve') || '[]'); } catch (e) {}
+  var rows = UM_CHECKS.map(function (c) {
+    return { Item: c.id, Question: c.q, Done: String(p['d_' + c.id] || '').trim(), Note: String(p['n_' + c.id] || '').trim() };
+  });
+  var filled = rows.filter(function (r) { return r.Done !== ''; }).length;
+  if (filled < UM_CHECKS.length) return umEveReplyPage_(person, day, 'Put a number against every KPI, 0 where nothing was done. ' + (UM_CHECKS.length - filled) + ' left blank.');
+  items.forEach(function (it) {
+    var txt = String(p['c_' + it.id] || '').trim();
+    if (!txt) return;
+    var res = 'posted';
+    try { sfkInsert_('FeedItem', { ParentId: it.id, Body: 'Unit Manager · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at) + '\n\n' + txt }); }
+    catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
+    done.push({ s: (it.a ? it.a + ' · ' : '') + it.s, txt: txt, res: res });
+  });
+  var summary = String(p.summary || '').trim();
+  if (summary) rows.push({ Item: 'summary', Question: 'The day', Done: '', Note: summary });
+  mgrWrite_(sid, day, 'eve', rows);
+  try { umCopy_(sid, day, 'eve', done, rows.filter(function (r) { return r.Item !== 'summary'; }).concat(summary ? [{ Item: 'summary', Question: 'In his words', Done: '', Note: summary }] : [])); } catch (e) {}
+  return replyPage_('Your day is in', 'Mr Rampersad has the account. Thank you.',
+    '<div class="card ok">' + rows.map(function (r) { return '<div class="ln">' + esc_(r.Question) + ': <b>' + esc_(r.Done || '') + '</b>' + (r.Note ? ' · ' + esc_(r.Note) : '') + '</div>'; }).join('') +
+    done.map(function (d) { return '<div class="ln">' + (/^NOT/.test(d.res) ? '&#9888; ' : '&#10003; ') + esc_(d.s) + ' · ' + esc_(d.res) + '</div>'; }).join('') + '</div>');
+}
+
+// ---- the Branch Manager: 12pm and 6pm -------------------------------------------
+
+/** Today so far, per desk: closed, closed with the owner's note, notes written. */
+function deskToday_(day) {
+  var users = sfkUsers_() || {}, bySf = {}, ids = [], out = {};
+  var who = DAY_MAIL_DESKS.concat(['ricky']);
+  who.forEach(function (s) {
+    out[s] = { closed: 0, noted: 0, notes: 0, list: [] };
+    var id = s === 'ricky' ? bmSfId_() : (users[s] && users[s].id);
+    if (id) { bySf[id] = s; ids.push("'" + id + "'"); }
+  });
+  if (!ids.length) return out;
+  var since = sfkUtcAt_(day, 0);
+  var closed = sfkQuery_('SELECT Id, OwnerId, Subject FROM Task WHERE OwnerId IN (' + ids.join(',') + ") AND IsClosed = true AND CompletedDateTime >= " + since + " AND (NOT Subject LIKE 'Email:%') LIMIT 1000");
+  sfkQuery_("SELECT ParentId, CreatedById FROM FeedItem WHERE Type = 'TextPost' AND CreatedById IN (" + ids.join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 2000')
+    .forEach(function (p) { var s = bySf[p.CreatedById]; if (s) out[s].notes++; });
+  var noted = {};
+  for (var i = 0; i < closed.length; i += 150) {
+    var chunk = closed.slice(i, i + 150).map(function (r) { return "'" + r.Id + "'"; });
+    try { sfkQuery_("SELECT ParentId, CreatedById FROM FeedItem WHERE Type = 'TextPost' AND ParentId IN (" + chunk.join(',') + ') LIMIT 2000')
+      .forEach(function (p) { noted[p.ParentId + '|' + p.CreatedById] = 1; }); } catch (e) {}
+  }
+  closed.forEach(function (r) {
+    var s = bySf[r.OwnerId]; if (!s) return;
+    out[s].closed++; if (noted[r.Id + '|' + r.OwnerId]) out[s].noted++;
+    out[s].list.push(shorten_(r.Subject, 80));
+  });
+  return out;
+}
+
+function sendBranchManagerProgress_(day, which) {
+  var mgr = managerEmails_();
+  if (!mgr.length) return false;
+  var props = PropertiesService.getScriptProperties();
+  var today = {}, w = { mine: [], ask: [], ignored: [], byOwner: {} }, sfOk = true;
+  try { today = deskToday_(day); w = bmWaiting_(day); saveBmItems_(day, w); } catch (e) { sfOk = false; }
+  var att = {};
+  try { attendanceReport_(day).forEach(function (x) { att[x.sid] = x; }); } catch (e) {}
+  var moves = 0;
+  try { moves = (hrRows_(MOVES, true) || []).filter(function (r) { return isoDay_(r.Date) === day && /^OK/.test(String(r.Result || '')); }).length; } catch (e) {}
+
+  var td = 'padding:6px;font-size:12.5px;border-top:1px solid ' + MAIL.line + ';';
+  var th = 'padding:6px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + ';text-align:right';
+  var rows = DAY_MAIL_DESKS.map(function (s) {
+    var d = today[s] || { closed: 0, noted: 0, notes: 0 }, a = att[s] || {};
+    var target = Number(props.getProperty('intel_target_' + s + '_' + day) || 0);
+    var planned = !!props.getProperty('daystart_plan_' + s + '_' + day);
+    var pct = target ? Math.round(100 * d.closed / target) : null;
+    return '<tr><td style="' + td + '"><b>' + esc_(nameFor_(s)) + '</b><div style="font-size:11px;color:' + (a.color || MAIL.muted) + '">' + esc_(a.st || '') + '</div></td>' +
+      '<td style="' + td + 'text-align:right;' + (planned ? '' : 'color:' + MAIL.red + ';font-weight:700') + '">' + (planned ? 'yes' : 'no') + '</td>' +
+      '<td style="' + td + 'text-align:right">' + d.closed + (target ? ' / ' + target : '') + (pct != null ? ' <span style="color:' + (pct >= 50 ? MAIL.green : MAIL.red) + '">(' + pct + '%)</span>' : '') + '</td>' +
+      '<td style="' + td + 'text-align:right;' + (d.closed > d.noted ? 'color:' + MAIL.red + ';font-weight:700' : '') + '">' + d.noted + '</td>' +
+      '<td style="' + td + 'text-align:right">' + d.notes + '</td></tr>';
+  }).join('');
+  var table = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px">' +
+    '<tr><td style="' + th + ';text-align:left">Desk</td><td style="' + th + '">Plan saved</td><td style="' + th + '">Closed / target</td><td style="' + th + '">With note</td><td style="' + th + '">Notes written</td></tr>' + rows + '</table>';
+
+  var um = UM_DESKS.map(function (s) {
+    var pl = mgrRows_(s, day, 'plan'), ev = mgrRows_(s, day, 'eve');
+    var line = Object.keys(ev).length ? 'day accounted' : (Object.keys(pl).length ? 'plan set, day not yet accounted' : 'no plan set');
+    return '<div style="font-size:12.5px;padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(nameFor_(s)) + '</b> · Unit Manager · <span style="color:' + (Object.keys(pl).length ? MAIL.green : MAIL.red) + '">' + esc_(line) + '</span></div>';
+  }).join('');
+
+  var me = today.ricky || { closed: 0, noted: 0, notes: 0, list: [] };
+  var label = which === 'eve' ? 'Six o\'clock' : 'Midday';
+  var answer = replyButton_(replyUrl_('ricky', day, 'bm'), 'Respond and log', 'Reply on Chatter to anything waiting on you, close your own with a note, and log what you did today.');
+  var body =
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + label + ', Mr Rampersad. Where the branch stands' + (which === 'eve' ? ' at the close' : ' so far') + ', and where you stand.</div>' +
+    statTiles_([
+      { value: sfOk ? me.closed : '—', label: 'you closed today', color: MAIL.green },
+      { value: sfOk ? me.notes : '—', label: 'your Chatter today' },
+      { value: sfOk ? w.mine.length : '—', label: 'yours still due', color: w.mine.length ? MAIL.amber : MAIL.navy },
+      { value: sfOk ? w.ask.length : '—', label: 'notes asking you', color: w.ask.length ? MAIL.red : MAIL.navy }
+    ]) + answer +
+    sectionLabel_('The team today') + table +
+    '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Closed today against the morning\'s suggested target; closed with the owner\'s own note. ' + (moves ? moves + ' task' + (moves === 1 ? '' : 's') + ' moved between desks today.' : '') + '</div>' +
+    (um ? sectionLabel_('Unit Managers') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:6px 15px">' + um + '</div>' : '') +
+    (w.ask.length ? sectionLabel_('Still waiting on your Chatter (' + w.ask.length + ')') +
+      '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.red + ';border-radius:10px;padding:8px 15px">' +
+      w.ask.slice(0, 6).map(function (a) { return '<div style="font-size:12.5px;padding:5px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(a.by) + '</b> on ' + esc_(a.subject) + '<div style="color:' + MAIL.muted + '">"' + esc_(a.said) + '"</div></div>'; }).join('') + '</div>' : '') +
+    (me.list.length ? sectionLabel_('What you closed today') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.green + ';border-radius:10px;padding:8px 15px;font-size:12.5px">' +
+      me.list.slice(0, 10).map(function (s) { return '<div style="padding:3px 0">&#10003; ' + esc_(s) + '</div>'; }).join('') + '</div>' : '') +
+    answer;
+  MailApp.sendEmail({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT,
+    subject: label + ' · Branch Manager · ' + shortDate_(day) + (sfOk ? ' · you closed ' + me.closed + ', ' + w.ask.length + ' asking you' : ''),
+    htmlBody: shell_(label + ' · the branch and you', 'Branch Manager · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()), body) });
+  return true;
+}
+
+/** From the editor. */
+function sendUnitManagerNow() { var d = todayISO_(); return UM_DESKS.map(function (s) { return s + ': ' + sendUnitManagerMorning_(s, d); }).join(', '); }
+function sendUnitManagerEveningNow() { var d = todayISO_(); return UM_DESKS.map(function (s) { return s + ': ' + sendUnitManagerEvening_(s, d); }).join(', '); }
+function sendBranchManagerProgressNow() { return sendBranchManagerProgress_(todayISO_(), minutesOf_(hhmm_(new Date())) >= 15 * 60 ? 'eve' : 'mid'); }
+function checkUnitAgents() { var out = UM_DESKS.map(function (s) { return s + ': ' + unitAgents_(s).join(', '); }).join('\n'); Logger.log(out); return out; }
+
 
 /** The desks the day mail runs for: the support staff, the BMA, and the
  *  Branch Manager's assistant. Not the managers, and not anybody who has left
@@ -4981,7 +5478,7 @@ function sendMidday_(person, day, signIn, nowOpt) {
 var PROG = { must: ['Date', 'StaffId', 'Check', 'TaskId'], name: 'Progress Answers',
              head: ['Date', 'StaffId', 'Name', 'Check', 'TaskId', 'Subject', 'Answer', 'Reason', 'At'] };
 var REPLY_PAGES = { plan: 'Your plan', prog: 'Where each task stands', hk: 'Before you leave', 'in': 'Sign in',
-                    errand: 'Your errands', undo: 'Workload moves', nudge: 'Nudge', bm: 'Respond' };
+                    errand: 'Your errands', undo: 'Workload moves', nudge: 'Nudge', bm: 'Respond', um: 'Your unit', umeve: 'Your day as a manager' };
 
 /** Today's sign-in time for a person, or ''. */
 function signedInAt_(sid, day) {
@@ -5191,13 +5688,16 @@ function replyClick_(e) {
     return replyPage_('That link has expired.', 'These links are good for the day they were sent. Open the tracker instead.', '');
   }
   if (day !== todayISO_()) return replyPage_('That link was for ' + prettyDate_(day) + '.', 'Today\'s e-mail has today\'s link.', '');
-  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null);
+  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
+    ((f === 'um' || f === 'umeve') && UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null);
   if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
   if (f === 'plan' || f === 'in') return planReplyPage_(person, day, '');
   if (f === 'prog') return progReplyPage_(person, day, '');
   if (f === 'errand') return errandReplyPage_(person, day, String(p.c || 'progress'), '');
   if (f === 'undo') return undoReplyPage_(person, day, '');
   if (f === 'bm') return bmReplyPage_(person, day, '');
+  if (f === 'um') return umReplyPage_(person, day, '');
+  if (f === 'umeve') return umEveReplyPage_(person, day, '');
   if (f === 'nudge') return nudgeReplyPage_(person, day, '');
   return hkReplyPage_(person, day, '');
 }
@@ -5211,7 +5711,8 @@ function replyPost_(e) {
   if (!REPLY_PAGES[f] || String(p.k || '') !== replySig_(sid, day, f) || day !== todayISO_()) {
     return replyPage_('That link has expired.', 'Nothing was saved. Open the tracker instead.', '');
   }
-  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null);
+  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
+    ((f === 'um' || f === 'umeve') && UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null);
   if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
   var all = function (name) { var v = ps[name]; return v ? (Array.isArray(v) ? v : [v]) : []; };
   if (f === 'in') {
@@ -5223,6 +5724,8 @@ function replyPost_(e) {
   if (f === 'errand') return errandReplySave_(person, day, p, all);
   if (f === 'undo') return undoReplySave_(person, day, p, all);
   if (f === 'bm') return bmReplySave_(person, day, p, all);
+  if (f === 'um') return umReplySave_(person, day, p);
+  if (f === 'umeve') return umEveReplySave_(person, day, p);
   if (f === 'nudge') return nudgeReplySave_(person, day, p, all);
   return hkReplySave_(person, day, p, all);
 }
