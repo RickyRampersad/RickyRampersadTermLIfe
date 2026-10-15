@@ -2631,19 +2631,784 @@ function transitionData_(code) {
       ? 'That code does not open this page. Use the branch code. An agent sees their own clients on the assignment board.'
       : 'Not open yet: the branch code is not set. Put it into TEAM_CODE in Service.gs, then publish a New version.' };
   }
-  /* one answer serves every screen for thirty seconds: the wall, the dashboard and
-     the responses page each ask every minute or two, and the summary reads three
-     tabs (25 September 2026, the go-live afternoon: seven seconds an answer, and
-     one request in eight lost to the web app's own timeout while several screens
-     polled at once) */
-  var cache = null, key = 'transition:summary';
-  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  /* one answer serves every screen: the wall, the dashboard and the responses page each ask every ninety seconds, and
+     the summary reads five tabs (25 September 2026, the go-live afternoon: seven seconds an answer, and one request in
+     eight lost to the web app's own timeout while several screens polled at once).
+     8 October 2026, "taking too long and not opening": the answer had grown to 166 KB, a cache value holds 100 KB, the
+     put threw and the throw was swallowed, so nothing was ever kept and every screen read the whole sheet on every
+     refresh. It is kept gzipped now (about 17 KB), for two minutes as fresh and six hours as the last good answer: a
+     screen that asks while another is reading the sheet, or when the sheet will not answer, gets that at once. */
+  return tServeCached_(T_WALL_CACHE, function () { return tSummary_(); });
+}
+var T_WALL_CACHE = { KEY: 'transition:summary:z', BUSY: 'transition:summary:busy', FRESH_S: 120, KEEP_S: 21600, BUSY_S: 60, PIECE: 90000 };
+/** One answer for every screen that asks: the kept one while it is fresh; the last good one at once while another request
+ *  is building it (`BUSY`), or when the build fails; otherwise built, kept and returned. `build` never sees a cache. */
+function tServeCached_(c, build) {
+  var cache = null, last = null;
+  try { cache = CacheService.getScriptCache(); last = tCacheGetBig_(cache, c.KEY); } catch (e) { last = null; }
+  if (last && Date.now() - Number(last.t || 0) < c.FRESH_S * 1000) return last.d;
+  try { if (last && cache.get(c.BUSY)) return last.d; } catch (e) {}
+  try { if (cache) cache.put(c.BUSY, '1', c.BUSY_S); } catch (e) {}
   try {
-    var out = tSummary_();
-    try { if (cache && out && out.ok) cache.put(key, JSON.stringify(out), 30); } catch (e) {}
+    var out = build();
+    try { if (cache && out && out.ok) tCachePutBig_(cache, c.KEY, { t: Date.now(), d: out }, c.KEEP_S); } catch (e) {}
     return out;
   }
-  catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
+  catch (err) {
+    if (last) return last.d;   // carries its own `at`, so the screen shows how old it is
+    return { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+  finally { try { if (cache) cache.remove(c.BUSY); } catch (e) {} }
+}
+/** An object in the script cache whatever its size: gzipped, base64, in pieces of 90 KB under one stamp, so a reader
+ *  never joins pieces of two different answers. Throws when it cannot keep it; the caller decides what that costs. */
+function tCachePutBig_(cache, key, obj, ttl) {
+  var z = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(JSON.stringify(obj), 'application/json')).getBytes());
+  var stamp = String(Date.now()), n = Math.ceil(z.length / T_WALL_CACHE.PIECE), all = {};
+  for (var i = 0; i < n; i++) all[key + '.' + stamp + '.' + i] = z.slice(i * T_WALL_CACHE.PIECE, (i + 1) * T_WALL_CACHE.PIECE);
+  cache.putAll(all, ttl);
+  cache.put(key, stamp + ':' + n, ttl);   // last, so the pointer never names pieces not yet written
+}
+/** What tCachePutBig_ kept, or null when any piece is gone. */
+function tCacheGetBig_(cache, key) {
+  var m = /^(\d+):(\d+)$/.exec(String(cache.get(key) || ''));
+  if (!m) return null;
+  var keys = [];
+  for (var i = 0; i < Number(m[2]); i++) keys.push(key + '.' + m[1] + '.' + i);
+  var got = cache.getAll(keys), z = '';
+  for (var j = 0; j < keys.length; j++) { if (got[keys[j]] == null) return null; z += got[keys[j]]; }
+  return JSON.parse(Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(z), 'application/x-gzip')).getDataAsString());
+}
+
+/* ── the stream: the campaign on a screen anyone in the room may see ──────────
+   8 October 2026: "I need to stream the wall without the confidential information and drive further analysis of how the
+   automations and humans are managing and what the clients are saying, group by households". The transition wall shows
+   clients' first names and the board shows everything; the stream (orphan-transition/stream.html) shows counts. Its answer
+   carries no client's name, number, token, address, e-mail, phone, words, policy or money, no household's name and no
+   former agent's name, so neither the screen nor the page's source holds anything about a client. The team appears by
+   first name and initial, because what the people are doing is half of what it shows. A client's own words are read here
+   for their subject only (T_STREAM_THEMES) and never leave the script. Opened with the branch code, through the board's
+   route as action=board&who=stream, so Service.gs needs no paste: a script older than this refuses that name rather than
+   sending the board. The words mean what they mean on the board's Dashboard tab (dSpoken, dTried, dDone, dStage), so the
+   two always agree. */
+var T_STREAM = { KEY: 'transition:stream:z', BUSY: 'transition:stream:busy', FRESH_S: 180, KEEP_S: 21600, BUSY_S: 90, PIECE: 90000, DAYS: 14 };
+var T_STREAM_OUT = /^\[(called|met|no answer|declined|closed|open) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/;
+var T_STREAM_TAPS = [['callme', 'Call me'], ['urgent', 'An agent, once their concerns are read'], ['review', 'The full review'],
+  ['wrote', 'Wrote to us in their own words'], ['deliver', 'Their contract never reached them'], ['finish', 'Help to finish an application'],
+  ['stop', 'Stop an application'], ['pay', 'Paying a representative in person'], ['paid', 'A payment that is not showing']];
+var T_STREAM_THEMES = [
+  ['pay', 'Premiums and payments', /premium|payment|\bpa(y|id|ying)\b|arrear|\bdue\b|deduct|salary|standing order/i],
+  ['call', 'A call back', /\bcall|phone|contact me|reach me|my number|whatsapp/i],
+  ['agent', 'Who looks after them now', /\bagent|representative|advis[eo]r/i],
+  ['policy', 'What the policy holds or pays', /statement|value|benefit|\bcover|matur|sum assured|bonus|how much/i],
+  ['cancel', 'Cancel, cash in or surrender', /cancel|surrender|cash(ing)? in|terminat|withdraw|refund/i],
+  ['wait', 'Waiting, or a delay', /still (waiting|no)|no (response|reply)|no one|nobody|waiting|delay|taking (so )?long|follow(ed)? up|disappoint|frustrat|unhappy/i],
+  ['details', 'A change of details', /address|e-?mail|new number|changed my|update my|moved/i],
+  ['docs', 'An application, contract or document', /application|contract|document|medical|signature/i],
+  ['loan', 'A policy loan', /\bloan/i],
+  ['benef', 'Who the policy pays', /beneficiar|nominee/i],
+  ['claim', 'A claim', /\bclaim|passed away|death|died|hospital/i],
+  ['thanks', 'Thanks, or noted', /thank|noted|appreciat|well received/i],
+];
+/** GET action=board&who=stream&code=<branch>: the stream's answer, kept three minutes like the wall's. */
+function transitionStream_(code) {
+  var w = tWho_(code, '');
+  if (!w.ok || w.role !== 'branch') {
+    return { ok: false, refused: true, stream: true, configured: w.configured,
+             error: 'The stream opens with the branch code. An agent sees their own clients on the assignment board.' };
+  }
+  return tServeCached_(T_STREAM, function () { return tStream_(); });
+}
+/** A member of the team as the stream names them: first name and the last name's initial ("Sasha L."). */
+function tShortName_(s) {
+  var p = String(s || '').replace(/^[A-Z]{1,3}\s*-?\s*\d+\s*-\s*/i, '').trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return '';
+  var cap = function (x) { return x.charAt(0).toUpperCase() + x.slice(1).toLowerCase(); };
+  return cap(p[0]) + (p.length > 1 ? ' ' + p[p.length - 1].charAt(0).toUpperCase() + '.' : '');
+}
+function tStream_() {
+  var tz = tTz_(), now = new Date(), DAY = 86400000, wait = Number(TRANSITION.WAIT_DAYS) || 2;
+  var dk = function (d) { return Utilities.formatDate(d, tz, 'yyyy-MM-dd'); };
+  var today = dk(now), weekFrom = dk(new Date(now.getTime() - 6 * DAY)), yr = Number(Utilities.formatDate(now, tz, 'yyyy'));
+  var MON = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  /* a stamp's "d MMM" as yyyy-MM-dd: this year, or last year when this year's would be after today */
+  var stampDay = function (s) {
+    var m = /^(\d{1,2}) ([A-Za-z]{3})/.exec(String(s || '').trim());
+    if (!m || !MON[m[2]]) return '';
+    var k = yr + '-' + pad(MON[m[2]]) + '-' + pad(Number(m[1]));
+    return k > today ? (yr - 1) + k.slice(4) : k;
+  };
+  var dateOf = function (k) { var p = k.split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 12); };
+  var days = [], dayIx = {};
+  for (var i = T_STREAM.DAYS - 1; i >= 0; i--) {
+    var x = new Date(now.getTime() - i * DAY), k0 = dk(x);
+    dayIx[k0] = days.length;
+    days.push({ day: k0, label: Utilities.formatDate(x, tz, 'd MMM'), dow: Utilities.formatDate(x, tz, 'EEE'), letters: 0, reminders: 0, answers: 0, people: 0, reached: 0, named: 0, sfClosed: 0, sfNotes: 0 });
+  }
+  var bump = function (k, f, n) { if (k && dayIx[k] !== undefined) days[dayIx[k]][f] += (n || 1); };
+  var inc = function (o, k, n) { o[k] = (o[k] || 0) + (n || 1); };
+  var setAdd = function (o, k, v) { (o[k] = o[k] || {})[v] = true; };
+  var size = function (o) { return Object.keys(o || {}).length; };
+  var pct = function (n, d) { return d ? Math.round(100 * n / d) : 0; };
+  var median = function (a) { a = a.slice().sort(function (p, q) { return p - q; }); return a.length ? a[Math.floor(a.length / 2)] : null; };
+
+  /* the books, as the board reads them: every client written to or listed to call, staff Test rows never */
+  var B = tBoard_({ ok: true, role: 'branch', me: null, canTell: true, configured: true }, true, true);
+  if (!B || !B.ok) throw new Error((B && B.error) || 'The board could not be read.');
+  var people = (B.clients || []).concat(B.silent || []);
+  var byTok = {};
+  people.forEach(function (c) { if (c.token) byTok[c.token] = c; });
+  var outs = function (c) { return (c.markers || []).map(function (m) { return T_STREAM_OUT.exec(m); }).filter(Boolean); };
+  var answered = function (c) { return ['open', 'assigned', 'done', 'noted'].indexOf(c.state) >= 0; };
+  var asked = function (c) { return answered(c) && c.state !== 'noted'; };
+  var spoken = function (c) {
+    if (outs(c).some(function (m) { return m[1] === 'called' || m[1] === 'met' || m[1] === 'declined'; })) return true;
+    if (/^(called|met|declined)$/i.test(c.mark || '') || c.state === 'reached') return true;
+    return !!(c.call && /reached: yes/i.test(c.call.sheet || ''));
+  };
+  var tried = function (c) { return spoken(c) || outs(c).length > 0 || c.state === 'called' || !!(c.call && /tr(?:y|ies) on the sheet|reached: (?:no answer|not reached)/i.test(c.call.sheet || '')); };
+  var done = function (c) { return c.state === 'done' || /^(met|closed|declined)$/i.test(c.mark || ''); };
+  var stage = function (c) { return done(c) ? 'done' : c.assigned ? 'named' : spoken(c) ? 'spoken' : 'waiting'; };
+  var RANK = { waiting: 0, spoken: 1, named: 2, done: 3 };
+
+  /* the questions, in the letters' own neutral words (receipt.json): never a client's copy of them */
+  var rc = tReceipt_(), qdef = (rc && rc.json && rc.json.questions) || {}, keyOf = {}, labelOf = {};
+  var clean = function (s) { return String(s || '').replace(/\{\{[^}]*\}\}/g, '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(); };
+  Object.keys(qdef).forEach(function (k) { (qdef[k][1] || []).forEach(function (a) { keyOf[a[2]] = k; labelOf[a[2]] = clean(a[0]); }); });
+
+  /* ── each client, and their household ── */
+  var H = {}, hhOf = function (c) { return c.hh ? 'h:' + c.hh : 't:' + c.token; };
+  var said = {}, saidHh = {}, asks = {}, asksHh = {}, themes = {}, themesHh = {}, risk = {}, riskHh = {};
+  var wroteN = 0, wroteHh = {}, reviews = 0, agents = {}, callList = { listed: 0, tried: 0, reached: 0 }, backs = { agent: 0, branch: 0, dnc: 0 };
+  var stageC = { done: 0, named: 0, spoken: 0, waiting: 0 }, late = 0, lateHh = {}, reachedPhone = 0;
+  people.forEach(function (c) {
+    var hk = hhOf(c), h = H[hk] = H[hk] || { n: 0, ans: 0, asked: 0, reached: 0, stage: null, agents: {}, risk: false, back: false, toReach: 0 };
+    h.n++;
+    var a = answered(c), sp = spoken(c);
+    if (a) h.ans++;
+    if (a || sp) h.reached++;
+    if (c.state === 'reached') reachedPhone++;
+    if (c.assigned) h.agents[tNameKey_(c.assigned)] = true;
+    if (asked(c)) {
+      h.asked++;
+      var st = stage(c);
+      stageC[st]++;
+      if (h.stage === null || RANK[st] < RANK[h.stage]) h.stage = st;   // a household is as far along as its least-served member
+      if (c.late) { late++; lateHh[hk] = true; }
+    }
+    if (c.back) { if (c.back.kind === 'dnc') backs.dnc++; else if (c.back.open) { backs[c.back.kind] = (backs[c.back.kind] || 0) + 1; h.back = true; } }
+    if (c.call && (c.call.caller || c.call.why)) { callList.listed++; if (tried(c)) callList.tried++; if (sp) callList.reached++; }
+    if (c.review) reviews++;
+    /* what they said: each question once a client, their last word on it */
+    var last = {};
+    (c.answers || []).forEach(function (x) { var k = keyOf[x.code]; if (k) last[k] = x.code; });
+    Object.keys(last).forEach(function (k) {
+      var code = last[k];
+      inc(said, code); setAdd(saidHh, code, hk);
+      if (T_RISK[code]) { inc(risk, code); setAdd(riskHh, code, hk); h.risk = true; }
+    });
+    var tapSeen = {};
+    (c.taps || []).forEach(function (t) {
+      var tp = String(t.tap || '');
+      if (!tp || tapSeen[tp]) return;
+      tapSeen[tp] = true;
+      inc(asks, tp); setAdd(asksHh, tp, hk);
+      if (tp === 'urgent') { inc(risk, 'urgent'); setAdd(riskHh, 'urgent', hk); h.risk = true; }
+    });
+    /* their own words, for the subject only */
+    var words = (c.notes || []).join(' \n ');
+    if (words || tapSeen.wrote) { wroteN++; wroteHh[hk] = true; }
+    if (words) T_STREAM_THEMES.forEach(function (th) { if (th[2].test(words)) { inc(themes, th[0]); setAdd(themesHh, th[0], hk); } });
+    /* the agents named, by household */
+    if (c.assigned) {
+      var ak = tNameKey_(c.assigned), ag = agents[ak] = agents[ak] || { name: tShortName_(c.assigned), hh: {}, clients: 0, spoken: 0, done: 0, waiting: 0 };
+      ag.hh[hk] = true; ag.clients++;
+      if (done(c)) ag.done++; else if (sp) ag.spoken++;
+      else {
+        var on = stampDay(c.assignedOn);
+        if (on && tWorkingDays_(dateOf(on), now) >= wait) ag.waiting++;
+      }
+    }
+  });
+  var hhAll = Object.keys(H), hh = { all: hhAll.length, answered: 0, reached: 0, asked: 0, partly: 0, toReach: 0, risk: 0, back: 0,
+    stage: { done: 0, named: 0, spoken: 0, waiting: 0 }, agent: { one: 0, split: 0, none: 0 }, sizes: { '1': 0, '2': 0, '3': 0, '4+': 0 }, family: 0 };
+  hhAll.forEach(function (k) {
+    var h = H[k];
+    hh.sizes[h.n >= 4 ? '4+' : String(h.n)]++;
+    if (h.n > 1) hh.family++;
+    if (h.ans) hh.answered++;
+    if (h.reached) hh.reached++;
+    if (h.ans && h.reached < h.n) { hh.partly++; hh.toReach += h.n - h.reached; }
+    if (h.risk) hh.risk++;
+    if (h.back) hh.back++;
+    if (h.asked) {
+      hh.asked++; hh.stage[h.stage]++;
+      var na = size(h.agents);
+      hh.agent[na === 0 ? 'none' : na === 1 ? 'one' : 'split']++;
+    }
+  });
+
+  /* ── Client Responses: what the machines did, what the people logged, and when ── */
+  var resp = tSheetRows_(SVC.RESP_SHEET);
+  var A = { thanked: {}, rHeld: {}, repeat: {}, byPhone: {}, noteSent: {}, noteHeld: {}, lateAlert: {}, intro: {}, told: {}, filed: {}, matched: {}, replies: {} };
+  var firstAns = {}, ansDay = {}, seen = {}, touch = {};
+  var team = {}; tTeam_().people.forEach(function (p) { team[tNameKey_(p.name)] = p; });
+  var P = {}, person = function (name) {
+    var k = tNameKey_(name), p = team[k], role = p ? p.role : (k === 'branch' ? 'bm' : '');
+    var lbl = role === 'staff' ? 'Client Support' : role === 'bm' || role === 'abm' ? 'Branch' : role ? 'Agent' : 'Branch';
+    return P[k] = P[k] || { name: k === 'branch' ? 'Branch' : tShortName_(p ? p.name : name), role: lbl, today: 0, week: 0, all: 0, reachedWeek: 0, noAnswerWeek: 0, flagsWeek: 0, clientsWeek: {} };
+  };
+  var named = { all: 0, week: 0, today: 0 };
+  resp.rows.forEach(function (v) {
+    var tok = String(v[1] || '').trim(), c = byTok[tok];
+    if (!c) return;                                                  // only this campaign's clients, as the board has them
+    var page = v[5], ref = String(v[6] || ''), note = String(v[10] || '');
+    var received = v[0] instanceof Date ? v[0] : null;
+    if (!tOursRow_(page) && String(v[3] || '').trim()) {             // an answer of the client's own
+      if (received) {
+        if (!firstAns[tok] || received.getTime() < firstAns[tok].getTime()) firstAns[tok] = received;
+        var ad = dk(received);
+        if (!ansDay[tok + ad]) { ansDay[tok + ad] = true; bump(ad, 'answers'); }
+      }
+      if (/^reply /.test(ref)) A.replies[ref] = true;
+    }
+    /* the stamps, each once a client: every update writes the same ones on each of the client's rows */
+    var re = /\[[^\]]*\]/g, m, list = [];
+    while ((m = re.exec(note))) list.push({ s: m[0], after: note.slice(re.lastIndex, re.lastIndex + 60) });
+    list.forEach(function (it) {
+      var s = it.s, after = it.after;
+      if (s === '[receipt]') {
+        if (/^ held:/.test(after)) A.rHeld[tok] = /automated/.test(after) ? 'automated' : /own words/.test(after) ? 'wrote' : /one receipt per client/.test(after) ? 'once' : /excluded/.test(after) ? 'held row' : 'held';
+        else if (/^ repeat/.test(after)) A.repeat[tok] = true;
+        else if (/^ (by phone|no e-mail)/.test(after)) A.byPhone[tok] = true;
+        else A.thanked[tok] = true;
+        return;
+      }
+      if (s === '[chase2]') { if (/^ held:/.test(after)) A.noteHeld[tok] = /own words/.test(after) ? 'wrote' : /automated/.test(after) ? 'automated' : /agent is named/.test(after) ? 'named' : /automatic notes are off/.test(after) ? 'off' : 'held'; else A.noteSent[tok] = true; return; }
+      if (s === '[chase1]') { A.lateAlert[tok] = true; return; }
+      if (/^\[intro /.test(s)) { A.intro[tok] = true; return; }
+      if (/^\[told /.test(s)) { A.told[tok + s] = true; return; }
+      if (/^\[filed/.test(s)) { A.filed[tok] = true; return; }
+      if (/^\[matched by (name|hand)\]$/.test(s)) { A.matched[tok] = true; return; }
+      if (seen[tok + s]) return;
+      if (/^\s*:?\s*(test|terst)\b/i.test(after)) return;            // the board's training clicks
+      var o = T_STREAM_OUT.exec(s), as = /^\[assigned (\d{1,2} [A-Za-z]{3}) · [^\]]+\]$/.exec(s), bk = T_BACK_RE.exec(s);
+      if (!o && !as && !bk) return;
+      seen[tok + s] = true;
+      var day = stampDay(o ? o[2] : as ? as[1] : bk[3]);
+      if (!day) return;
+      if (!touch[tok] || day < touch[tok]) { if (o || as) touch[tok] = day; }
+      if (as) {
+        named.all++; if (day >= weekFrom) named.week++; if (day === today) named.today++;
+        bump(day, 'named');
+        return;
+      }
+      var who = person(o ? o[3] : bk[4]);
+      if (bk) { if (day >= weekFrom && bk[1] !== 'clear') who.flagsWeek++; return; }
+      var reach = o[1] === 'called' || o[1] === 'met' || o[1] === 'declined';
+      who.all++;
+      if (day === today) who.today++;
+      if (day >= weekFrom) { who.week++; who.clientsWeek[tok] = true; if (reach) who.reachedWeek++; if (o[1] === 'no answer') who.noAnswerWeek++; }
+      bump(day, 'people'); if (reach) bump(day, 'reached');
+    });
+  });
+
+  /* how long a client who asked for something waited for a person: from their first answer to the first call or name */
+  var waits = [], still = [];
+  people.forEach(function (c) {
+    if (!asked(c) || !firstAns[c.token]) return;
+    var t0 = firstAns[c.token];
+    if (touch[c.token]) waits.push(Math.max(0, tWorkingDays_(t0, dateOf(touch[c.token]))));
+    else if (!c.assigned && !spoken(c) && !done(c)) still.push(tWorkingDays_(t0, now));
+  });
+
+  /* ── the send list: the letters and the reminders, by day ── */
+  var t = tRead_(), send = { letters: 0, today: 0, week: 0, reminders: 0, remindersWeek: 0, again: 0, afterReminder: 0, waiting: 0,
+    held: { noEmail: 0, bounced: 0, hold: 0, check: 0, other: 0 } };
+  t.rows.forEach(function (r) {
+    if (!tText_(r.Segment) || tYes_(r.Test)) return;
+    var ex = tHeld_(r.Exclude) ? tText_(r.Exclude).toLowerCase() : '', status = tText_(r.Status);
+    var sentAt = r['Sent at'] instanceof Date && !isNaN(r['Sent at'].getTime()) ? r['Sent at'] : null;
+    if (sentAt) {
+      send.letters++;
+      var sd = dk(sentAt);
+      if (sd === today) send.today++;
+      if (sd >= weekFrom) send.week++;
+      bump(sd, 'letters');
+    }
+    var rm = /^reminded (\d{4}-\d{2}-\d{2})/.exec(status), ag = /^sent again (\d{4}-\d{2}-\d{2})/.exec(status);
+    if (rm) {
+      send.reminders++; if (rm[1] >= weekFrom) send.remindersWeek++;
+      bump(rm[1], 'reminders');
+      var tk = tText_(r.Token);
+      if (tk && firstAns[tk] && dk(firstAns[tk]) >= rm[1]) send.afterReminder++;
+    }
+    if (ag) send.again++;
+    if (ex) {
+      var b = /^no e-?mail/.test(ex) ? 'noEmail' : /^bounced/.test(ex) ? 'bounced' : /^hold/.test(ex) ? 'hold' : /^check/.test(ex) ? 'check' : 'other';
+      send.held[b]++;
+    } else if (!sentAt) send.waiting++;
+  });
+
+  /* ── the answer: counts and fixed words only ── */
+  var asList = function (counts, sets) { return function (code) { return { clients: counts[code] || 0, hh: size(sets[code]) }; }; };
+  var sc = asList(said, saidHh);
+  var qorder = T_QORDER.filter(function (k) { return qdef[k]; });
+  var questions = qorder.map(function (k) {
+    var ans = (qdef[k][1] || []).map(function (a) { var n = sc(a[2]); return { code: a[2], label: clean(a[0]), person: a[1] !== 'informed', clients: n.clients, hh: n.hh }; });
+    var n = ans.reduce(function (s, a) { return s + a.clients; }, 0);
+    return { key: k, question: clean(qdef[k][0]), clients: n, answers: ans };
+  }).filter(function (q) { return q.clients > 0; });
+  var tapList = T_STREAM_TAPS.map(function (x) { return { tap: x[0], label: x[1], clients: asks[x[0]] || 0, hh: size(asksHh[x[0]]) }; })
+    .filter(function (x) { return x.clients > 0; }).sort(function (p, q) { return q.clients - p.clients; });
+  var themeList = T_STREAM_THEMES.map(function (th) { return { key: th[0], label: th[1], clients: themes[th[0]] || 0, hh: size(themesHh[th[0]]) }; })
+    .filter(function (x) { return x.clients > 0; }).sort(function (p, q) { return q.clients - p.clients; });
+  var riskList = Object.keys(T_RISK).concat(['urgent']).filter(function (k, i, a) { return a.indexOf(k) === i && risk[k]; })
+    .map(function (k) { return { code: k, label: T_RISK[k], clients: risk[k], hh: size(riskHh[k]) }; })
+    .sort(function (p, q) { return q.hh - p.hh; });
+  var teamList = Object.keys(P).map(function (k) { var p = P[k]; p.clientsWeek = size(p.clientsWeek); return p; })
+    .filter(function (p) { return p.all > 0; }).sort(function (p, q) { return q.week - p.week || q.all - p.all; }).slice(0, 14);
+  var sum = function (f) { return teamList.reduce(function (s, p) { return s + p[f]; }, 0); };
+  var agentList = Object.keys(agents).map(function (k) { var g = agents[k]; g.hh = size(g.hh); return g; })
+    .sort(function (p, q) { return q.hh - p.hh || q.clients - p.clients; });
+  var nAnswered = people.filter(answered).length, nAsked = people.filter(asked).length;
+  var auto = {
+    letters: send.letters, lettersToday: send.today, lettersWeek: send.week, reminders: send.reminders, remindersWeek: send.remindersWeek,
+    sentAgain: send.again, afterReminder: send.afterReminder, waiting: send.waiting, held: send.held,
+    receipts: { thanked: size(A.thanked), held: size(A.rHeld), heldWhy: (function () { var o = {}; Object.keys(A.rHeld).forEach(function (k) { inc(o, A.rHeld[k]); }); return o; })(),
+                repeat: size(A.repeat), byPhone: size(A.byPhone) },
+    notes: { sent: size(A.noteSent), held: size(A.noteHeld), heldWhy: (function () { var o = {}; Object.keys(A.noteHeld).forEach(function (k) { inc(o, A.noteHeld[k]); }); return o; })() },
+    lateAlerts: size(A.lateAlert), introductions: size(A.intro), managerNotes: size(A.told), filed: size(A.filed),
+    replies: size(A.replies), matched: size(A.matched),
+    holds: { mail: !!B.mailHeld, receipts: !!B.receiptsHeld, intros: !!B.introsHeld }, sending: tArmed_(),
+    lifetime: (function () { try { return typeof automationOn_ === 'function' ? !!automationOn_() : null; } catch (e) { return null; } })(),
+  };
+  var peopleOut = {
+    week: sum('week'), today: sum('today'), all: sum('all'), reachedWeek: sum('reachedWeek'), noAnswerWeek: sum('noAnswerWeek'),
+    clientsWeek: teamList.reduce(function (s, p) { return s + p.clientsWeek; }, 0), flagsWeek: sum('flagsWeek'),
+    named: named, team: teamList,
+    firstTouch: { median: median(waits), within2: waits.filter(function (d) { return d <= 2; }).length, n: waits.length, waiting: still.length, waitingMedian: median(still) },
+    callList: { listed: callList.listed, tried: callList.tried, reached: callList.reached, notTried: callList.listed - callList.tried },
+    backs: backs, late: late, lateHh: size(lateHh),
+  };
+  var clients = { all: people.length, answered: nAnswered, asked: nAsked, reachedPhone: reachedPhone, stage: stageC, wrote: wroteN, reviews: reviews };
+
+  /* Client Support's Salesforce tasks (tSfWork_, the Dashboard tab's own figures): most of their work is there, not on the board */
+  var sf = { on: false, why: '' };
+  try {
+    var W = tSfWork_();
+    if (W && W.on && !W.error) {
+      var wk = function (a) { return (a || []).filter(function (d) { return d && d >= weekFrom; }).length; };
+      sf = { on: true, since: W.since, people: (W.people || []).map(function (p) {
+        (p.closedDays || []).forEach(function (d) { bump(d, 'sfClosed'); });
+        (p.noteDays || []).forEach(function (d) { bump(d, 'sfNotes'); });
+        return { name: tShortName_(p.name), held: p.held, open: p.open, closed: p.closed, closedWeek: wk(p.closedDays),
+                 closedToday: (p.closedDays || []).filter(function (d) { return d === today; }).length, notesWeek: wk(p.noteDays),
+                 overdue: p.overdue, dueToday: p.dueToday, untouched: p.untouched, closedNoNote: p.closedNoNote };
+      }).slice(0, 14) };
+    } else if (W && W.error) sf = { on: false, why: 'Salesforce did not answer.' };
+    else sf = { on: false, why: 'Salesforce is not linked to this project yet.' };
+  } catch (e) { sf = { on: false, why: 'Salesforce did not answer.' }; }
+
+  /* what stands out: facts, never advice */
+  var C = function (x) { return String(Math.round(Number(x) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+  var NN = function (k, one, many) { return C(k) + ' ' + (Number(k) === 1 ? one : many); };
+  var lines = [], top = themeList.filter(function (x) { return x.key !== 'thanks'; })[0], contact = risk.contact_yes ? size(riskHh.contact_yes) : 0;
+  lines.push(C(hh.answered) + ' of ' + C(hh.all) + ' households have answered (' + pct(hh.answered, hh.all) + '%)' +
+    (hh.partly ? '; in ' + C(hh.partly) + ' of them ' + C(hh.toReach) + ' more family member' + (hh.toReach === 1 ? ' is' : 's are') + ' still to reach.' : '.'));
+  lines.push('The automations have sent ' + NN(auto.letters, 'letter', 'letters') + ' and ' + NN(auto.reminders, 'reminder', 'reminders') + '; ' +
+    NN(auto.afterReminder, 'client', 'clients') + ' answered after the reminder.');
+  if (auto.receipts.thanked) lines.push(NN(auto.receipts.thanked, 'client was', 'clients were') + ' thanked automatically; ' + NN(auto.receipts.held, 'receipt was', 'receipts were') +
+    ' held for a person and ' + NN(auto.receipts.repeat, 'repeat was', 'repeats were') + ' stopped.');
+  lines.push('In the last seven days the team logged ' + NN(peopleOut.week, 'outcome', 'outcomes') + ' on the board, on ' + NN(peopleOut.clientsWeek, 'client', 'clients') +
+    ', and reached ' + C(peopleOut.reachedWeek) + (sf.on ? '; in Salesforce they closed ' + NN(sf.people.reduce(function (n, p) { return n + p.closedWeek; }, 0), 'task', 'tasks') + '.' : '.'));
+  if (waits.length) lines.push('The ' + NN(waits.length, 'client', 'clients') + ' called or named after asking for something waited a median of ' + median(waits) + ' working day' + (median(waits) === 1 ? '' : 's') + ' for it' +
+    (still.length ? '; ' + C(still.length) + ' are still waiting.' : '.'));
+  if (contact) lines.push('In ' + C(contact) + ' household' + (contact === 1 ? '' : 's') + ' someone says their former agent has been in touch since leaving.');
+  if (top) lines.push(NN(wroteN, 'client', 'clients') + ' wrote to us in their own words; after thanks, the commonest subject is ' + top.label.toLowerCase() + ' (' + C(top.clients) + ').');
+  var heldToo = [auto.holds.receipts ? 'receipts' : '', auto.holds.intros ? 'introductions' : ''].filter(Boolean);
+  if (auto.holds.mail) lines.push('Automatic client e-mail is on hold until the manager\'s go' + (heldToo.length ? ', ' + heldToo.join(' and ') + ' too' : '') + '.');
+
+  return {
+    ok: true, stream: 1, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), waitDays: wait,
+    clients: clients, hh: hh, auto: auto, people: peopleOut, sf: sf, days: days,
+    said: { questions: questions, asks: tapList, themes: themeList, risk: riskList }, agents: agentList.slice(0, 16), agentsNamed: agentList.length, lines: lines,
+  };
+}
+
+/* ── the daily findings to Head Office ───────────────────────────────────────
+   8 October 2026: Head Office wrote to the branch formally about one client's response, and the manager asked for "a daily
+   update on our findings and frame for him to advise what are they doing, as these are the documented findings from the
+   clients by responses and support staff contacting them; no agents have been on calls as there is a process tracked
+   daily". One e-mail each working day at T_FIND.HOUR: what clients have reported about their former agents, from two
+   places only, the clients' own answers and replies to the letters and the calls Client Support (and the manager) made,
+   each finding with its date, its source and the client's number, never the client's name; then how it was documented;
+   then what the branch asks the Company to advise. The Findings Log tab keeps every finding with the day it first went,
+   so each e-mail lists what is new and attaches everything to date. Client Support's notes are read from their calls
+   sheet (the CALLS_SHEET_ID Script property); nothing there is changed. The address it goes to is the FINDINGS_TO Script
+   property, never in this public file. Nothing goes until transitionFindingsStart; transitionFindingsPreview sends one
+   to the manager alone and marks nothing. The terminated agent's book (letters T and T1) stays out while the branch's own
+   hold on it stands (INCLUDE_HELD): its findings are counted, never listed. A finding is filed by what it is about only
+   when it names that client's own former agent (or "former agent"), so a note about a current agent, or about an agent
+   from years ago, is never read as one; the words themselves always go with it, so the reader judges from the record. */
+var T_FIND = {
+  TAB: 'Findings Log',
+  HEAD: ['First documented', 'Source', 'What it is about', 'Former agent', 'Letter', 'Client number', 'Token', 'As documented', 'Key', 'In the update of'],
+  HOUR: 17, LIST_MAX: 60, INCLUDE_HELD: false,
+  ME: 'Ricky.Rampersad@myguardiangroup.com',
+  P_LIVE: 'findings_live', P_TO: 'FINDINGS_TO', P_GREET: 'FINDINGS_GREETING', P_CALLS: 'CALLS_SHEET_ID', P_SKIP: 'FINDINGS_SKIP',
+};
+/* what a finding is about, most serious first; each needs the client's own former agent named, except a cancellation */
+var T_FIND_KINDS = [
+  ['money', 'Money or a cheque handed to the former agent', /cheque|\bcheck for\b|\bcash\b|gave (?:him|her|\w+) (?:a |the )?(?:money|premium|payment)|collect(?:ed|s|ing)? (?:the |her |his |my |their )?(?:premium|money|payment)/i],
+  ['follow', 'Plans to follow the former agent', /sign (?:me|us|them|her|him) (?:across|over)|move (?:me|us|my|our) (?:\w+ )?(?:over|across)|follow (?:him|her|them)|go(?:ing)? with (?:him|her|them)|wherever (?:he|she|they) (?:go|choose|end)/i],
+  ['docs', 'Meeting or documents to sign with the former agent', /\bsign(?:ing)? (?:the |some |new |his |her )?(?:documents|forms|papers|application)|\bto sign\b|meet (?:her|him|them|the client)\b/i],
+  ['still', 'Told the client they still look after the policy', /still (?:her|his|their|the|your|my)?\s*agent|still (?:be )?(?:manag|in charge|handl|work|with gu|with the company)|(?:is|was) (?:her|his|their|the) agent|(?:he|she) is the agent|(?:he|she|they) (?:will|would) (?:still )?(?:handle|take|be taking|keep|manage|be managing|be handling|continue)|taking (?:his|her|the|their) portfolio|keep (?:him|her) as|manag\w* (?:her|his|their|the|my|our) (?:portfolio|policies|policy)|in charge of/i],
+  ['loyal', 'Wants to stay with the former agent', /(?:good|happy|fine|ok|okay|comfortable) with \w+ (?:being|as) (?:my|our) agent|keep \w+ as (?:my|our) agent|stay(?:ing)? with (?:him|her|\w+ as)|(?:do not|don'?t) (?:wish|want) to change/i],
+  ['wait', 'Holding back until they speak to the former agent', /(?:does not|doesn'?t|won'?t|will not|did not|didn'?t) want to (?:provide|give|share)|until (?:he|she|they|i) (?:speak|talk|communicat|hear)|until communicating/i],
+  ['cancel', 'Asked to cancel or cash in', /cancel|surrender|cash(?:ing)? in/i],
+  ['moved', 'Said where the former agent has gone', /another branch|other branch|moved to|new company|other company|another company|pan.?am|palig|broker|sagicor|maritime|beacon/i],
+];
+var T_FIND_CONTACT = ['contact', 'The former agent has been in touch'];
+var T_FIND_ANSWERS = {
+  contact_yes: ['contact', 'The former agent has been in touch'],
+  approached_yes: ['approached', 'Someone has already suggested changing or replacing the policy'],
+  pay_person: ['paying', 'Pays a representative in person'],
+};
+var T_FIND_ORDER = ['money', 'follow', 'docs', 'still', 'loyal', 'contact', 'approached', 'wait', 'paying', 'moved', 'cancel'];
+
+/** What a note or a client's words are about, or null. `first` is the client's own former agent's first name, `full` the
+ *  whole name (its initials count too, as Client Support write them). */
+function tFindKind_(text, first, full) {
+  var s = String(text || '').trim();
+  if (s.replace(/\W/g, '').length < 4) return null;
+  var f = String(first || '').replace(/[^A-Za-z]/g, ''), ini = String(full || '').trim().split(/\s+/);
+  var named = (f.length >= 3 && new RegExp('\\b' + f + '\\b', 'i').test(s)) || /\bformer agent\b/i.test(s) ||
+    (ini.length > 1 && /^[A-Za-z]/.test(ini[0]) && /^[A-Za-z]/.test(ini[ini.length - 1]) &&
+     new RegExp('\\b' + ini[0].charAt(0).toUpperCase() + ini[ini.length - 1].charAt(0).toUpperCase() + '\\b').test(s));
+  for (var i = 0; i < T_FIND_KINDS.length; i++) {
+    var k = T_FIND_KINDS[i];
+    if ((named || k[0] === 'cancel') && k[2].test(s)) return k;
+  }
+  if (named && /contact|call|spoke|speak|in touch|reach|visit|messag|whatsapp|told|said|came/i.test(s)) return T_FIND_CONTACT;
+  return null;
+}
+/** Everything documented so far: { items, books, held, num }. Reads; writes nothing. */
+function tFindings_() {
+  var tz = tTz_(), now = new Date(), props = PropertiesService.getScriptProperties();
+  var dk = function (d) { return Utilities.formatDate(d, tz, 'yyyy-MM-dd'); };
+  var today = dk(now), yr = Number(Utilities.formatDate(now, tz, 'yyyy'));
+  var MON = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var stampDay = function (s) {
+    var m = /^(\d{1,2}) ([A-Za-z]{3})/.exec(String(s || '').trim());
+    if (!m || !MON[m[2]]) return '';
+    var k = yr + '-' + pad(MON[m[2]]) + '-' + pad(Number(m[1]));
+    return k > today ? (yr - 1) + k.slice(4) : k;
+  };
+  var skip = {};
+  String(props.getProperty(T_FIND.P_SKIP) || '').split(/[\s,;]+/).forEach(function (x) { if (x) skip[x] = true; });
+
+  /* the books: who was written to, from whose book, by which letter */
+  var who = {}, books = {}, num = { written: 0, answered: 0, calls: null };
+  tRead_().rows.forEach(function (r) {
+    var tok = tText_(r.Token), seg = tText_(r.Segment).toUpperCase();
+    if (!tok || !seg || tYes_(r.Test) || skip[tok] || T_NOT_BOOK.test(tText_(r.Exclude))) return;
+    var agent = tText_(r.Agent) || '(no agent on the sheet)';
+    var held = /^T/.test(seg) && !T_FIND.INCLUDE_HELD;
+    who[tok] = { seg: seg, agent: agent, first: tText_(r['Agent first name']) || agent.split(/\s+/)[0], cno: tText_(r['Client number']), held: held,
+                 name: tText_(r.Client), given: tText_(r['First name']) };
+    if (!held) (books[agent] = books[agent] || { agent: agent, clients: 0, reported: {}, kinds: {} }).clients++;
+    if (!held && r['Sent at'] instanceof Date) num.written++;
+  });
+  /* a client's name never goes, their own (a reply signed with it) or another's (a husband, a mother): the former agents'
+     own names stay, since they hold policies too and the finding is about them */
+  var agents = {}, others = [];
+  Object.keys(who).forEach(function (k) { agents[who[k].agent.toLowerCase()] = true; });
+  tRead_().rows.forEach(function (r) { var n = tText_(r.Client).replace(/\s+/g, ' '); if (n.split(' ').length > 1 && n.length > 5 && !agents[n.toLowerCase()]) others.push(n); });
+  var rx = function (s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+  var scrub = function (text, w) {
+    var t = String(text || ''), own = (w.name + ' ' + w.given).split(/\s+/).filter(function (x) { return x.replace(/[^A-Za-z]/g, '').length >= 3 && !agents[x.toLowerCase()]; });
+    if (w.name) t = t.replace(new RegExp(rx(w.name), 'gi'), '[the client]');
+    own.forEach(function (x) { if (x.toLowerCase() !== String(w.first).toLowerCase()) t = t.replace(new RegExp('\\b' + rx(x) + '\\b', 'gi'), '[the client]'); });
+    var low = t.toLowerCase();
+    others.forEach(function (n) { if (low.indexOf(n.toLowerCase()) >= 0) { t = t.replace(new RegExp(rx(n), 'gi'), '[another client]'); low = t.toLowerCase(); } });
+    t = t.replace(/<?https?:\/\/\S+>?/gi, '').replace(/\bget outlook for \w+\b/gi, '')
+      .replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '[an e-mail address]')
+      .replace(/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b|\b\d{3}[\s.-]\d{4}\b/g, '[a phone number]');
+    return t.replace(/(\[the client\]\s*){2,}/g, '[the client] ').replace(/\s+/g, ' ').trim();
+  };
+  var items = [], seen = {}, heldN = {};
+  var add = function (tok, kind, text, source, day) {
+    var w = who[tok];
+    if (!w || !kind) return;
+    var said = scrub(String(text || '').replace(/\s+/g, ' ').trim(), w).slice(0, 500);
+    var key = kind[0] + '|' + tok + '|' + said.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 120);
+    if (seen[key]) return;
+    seen[key] = true;
+    if (w.held) { heldN[tok] = true; return; }
+    items.push({ key: key, tok: tok, kind: kind[0], about: kind[1], said: said, source: source, day: day || '', agent: w.agent, seg: w.seg, cno: w.cno });
+  };
+
+  /* the clients' own answers, replies and words, and the team's notes on the board */
+  var rc = tReceipt_(), qdef = (rc && rc.json && rc.json.questions) || {}, qOf = {};
+  Object.keys(qdef).forEach(function (k) { (qdef[k][1] || []).forEach(function (a) { qOf[a[2]] = { q: qdef[k][0], a: a[0] }; }); });
+  var answered = {};
+  tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
+    var tok = String(v[1] || '').trim(), w = who[tok];
+    if (!w) return;
+    var page = String(v[5] || ''), ref = String(v[6] || ''), note = String(v[10] || '');
+    var day = v[0] instanceof Date ? dk(v[0]) : '';
+    var ours = tOursRow_(page);
+    if (!ours && String(v[3] || '').trim() && !w.held) answered[tok] = true;
+    var m = /[?&]q=([a-z_]+)/.exec(page), code = m ? m[1] : '';
+    if (T_FIND_ANSWERS[code]) {
+      var qa = qOf[code] || { q: '', a: '' }, byCall = /^\/your-policy\/phone/.test(page), by = /^call by ([^:]+)/.exec(ref);
+      add(tok, T_FIND_ANSWERS[code], (qa.q ? qa.q + ' → ' : '') + qa.a, byCall ? 'Answered on a call' + (by ? ' with ' + tShortName_(by[1]) : '') : 'Their answer to the letter', day);
+    }
+    if (!ours) {
+      var words = tNoteWords_(note);
+      if (words) add(tok, tFindKind_(words, w.first, w.agent), words, /^reply /.test(ref) ? 'Their reply by e-mail' : 'Their own words, on their page', day);
+    }
+    tFileNotes_(note).forEach(function (fn) {
+      var x = /^(called|met|declined|closed|open|no answer) (\d{1,2} [A-Za-z]{3}) · ([^:]+): ([\s\S]*)$/.exec(fn);
+      if (x) add(tok, tFindKind_(x[4], w.first, w.agent), x[4], 'Call logged on the board by ' + tShortName_(x[3]), stampDay(x[2]));
+    });
+  });
+  num.answered = Object.keys(answered).length;
+
+  /* Client Support's calls sheet: every caller's tab, read only */
+  var cid = props.getProperty(T_FIND.P_CALLS);
+  if (cid) {
+    var C = num.calls = { listed: 0, tried: 0, reached: 0, wrong: 0, noAnswer: 0, backAgent: 0, callers: [] };
+    try {
+      SpreadsheetApp.openById(cid).getSheets().forEach(function (sh) {
+        var name = sh.getName();
+        if (!/calls$/i.test(name)) return;
+        var vals = sh.getDataRange().getValues(), hi = -1, ix = {};
+        for (var i = 0; i < Math.min(15, vals.length) && hi < 0; i++) {
+          var h = vals[i].map(function (x) { return String(x || '').trim().toLowerCase(); });
+          if (h.indexOf('token') >= 0 && (h.indexOf('outcome / notes') >= 0 || h.indexOf('outcome') >= 0)) {
+            hi = i;
+            h.forEach(function (k, j) { if (k && ix[k] === undefined) ix[k] = j; });
+          }
+        }
+        if (hi < 0) return;
+        var boss = /^ricky/i.test(name), caller = boss ? 'the Branch Manager' : name.replace(/\s*calls$/i, '').trim();
+        C.callers.push(caller);
+        var col = function (r, k) { return ix[k] === undefined ? '' : r[ix[k]]; };
+        vals.slice(hi + 1).forEach(function (r) {
+          var tok = String(col(r, 'token') || '').trim(), w = who[tok];
+          if (!w || w.held) return;
+          var reached = String(col(r, 'reached?') || '').trim(), note = String(col(r, 'outcome / notes') || col(r, 'outcome') || '').trim();
+          var on = col(r, 'called on'), tried = /^yes/i.test(String(col(r, 'try 1') || '')) || !!reached || (boss && !!on);
+          C.listed++;
+          if (tried) C.tried++;
+          if (/^yes/i.test(reached) || (boss && on)) C.reached++;
+          if (/wrong/i.test(reached)) C.wrong++;
+          if (/no answer|not reached|call back/i.test(reached)) C.noAnswer++;
+          if (/licen/i.test(String(col(r, 'call-back needed') || ''))) C.backAgent++;
+          if (note) add(tok, tFindKind_(note, w.first, w.agent), note, boss ? 'Call by the Branch Manager' : 'Client Support call (' + caller + ')', on instanceof Date ? dk(on) : '');
+        });
+      });
+    } catch (e) { C.error = 'The calls sheet could not be read: ' + String(e && e.message ? e.message : e).slice(0, 120); }
+  }
+
+  items.forEach(function (it) {
+    var b = books[it.agent];
+    if (!b) return;
+    b.reported[it.tok] = true;
+    (b.kinds[it.kind] = b.kinds[it.kind] || {})[it.tok] = true;
+  });
+  return { at: Utilities.formatDate(now, tz, 'd MMMM yyyy, HH:mm'), today: today, items: items, num: num, held: Object.keys(heldN).length,
+    books: Object.keys(books).map(function (k) { return books[k]; }).filter(function (b) { return Object.keys(b.reported).length; })
+      .sort(function (a, b) { return Object.keys(b.reported).length - Object.keys(a.reported).length; }) };
+}
+/** The Findings Log, made the first time it is needed: { sh, keys: { key: 'yyyy-MM-dd' first documented } }. */
+function tFindLog_(create) {
+  var ss = ss_(), sh = ss.getSheetByName(T_FIND.TAB), keys = {};
+  if (!sh && create) {
+    sh = ss.insertSheet(T_FIND.TAB);
+    sh.getRange(1, 1, 1, T_FIND.HEAD.length).setValues([T_FIND.HEAD]);
+    try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_FIND.HEAD.length).setFontWeight('bold'); } catch (e) {}
+  }
+  if (sh && sh.getLastRow() >= 2) sh.getRange(2, 1, sh.getLastRow() - 1, T_FIND.HEAD.length).getValues().forEach(function (v) {
+    var k = String(v[8] || '');
+    if (k) keys[k] = v[0] instanceof Date ? Utilities.formatDate(v[0], tTz_(), 'yyyy-MM-dd') : String(v[0] || '');
+  });
+  return { sh: sh, keys: keys };
+}
+/** The e-mail: the frame, what is new, everything by former agent, how it was documented, what the branch asks. */
+function tFindingsHtml_(F, fresh, preview, greet) {
+  var esc = tEsc_, A = 'font-family:Arial,Helvetica,sans-serif;';
+  var MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var day = function (k) { if (!k) return ''; var p = String(k).split('-'); return Number(p[2]) + ' ' + MO[Number(p[1]) - 1]; };
+  var C = function (x) { return String(Math.round(Number(x) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+  var count = function (kinds) { var s = {}; F.items.forEach(function (it) { if (kinds.indexOf(it.kind) >= 0) s[it.tok] = true; }); return Object.keys(s).length; };
+  var reported = {}; F.items.forEach(function (it) { reported[it.tok] = true; });
+  var nRep = Object.keys(reported).length, calls = F.num.calls;
+  var th = 'padding:7px 10px;border-bottom:2px solid #d6dee6;text-align:left;font-size:12px;color:#5b6b7c;text-transform:uppercase;letter-spacing:.04em';
+  var td = 'padding:7px 10px;border-bottom:1px solid #e6ebf0;vertical-align:top;font-size:13.5px;color:#1d2b3a';
+  var h3 = function (s) { return '<h3 style="' + A + 'font-size:16px;color:#0b1f33;margin:24px 0 8px">' + s + '</h3>'; };
+  var tiles = [[nRep, 'clients have reported something about a former agent'], [fresh.length, 'findings new since the last update'],
+    [calls && !calls.error ? calls.reached : 0, 'clients reached by Client Support'], [F.num.answered, 'clients have answered the letters']];
+  var out = '<div style="' + A + 'font-size:14.5px;line-height:1.55;color:#1d2b3a;max-width:760px">';
+  if (preview) out += '<p style="background:#fff6dc;border:1px solid #efc24b;padding:8px 12px;margin:0 0 14px;font-size:13px">Preview for the Branch Manager. ' +
+    'This is the e-mail Head Office would receive; nothing has been sent to anyone else and nothing has been marked as reported.</p>';
+  out += '<p style="margin:0 0 12px">' + esc(greet || 'Good day,') + '</p>' +
+    '<p style="margin:0 0 12px">This is the branch\'s daily record of what clients have told us about their former agents. It comes from two places only: ' +
+    'the clients\' own answers and replies to the branch\'s letters, and the calls made by Client Support. Client Support are not licensed and give no advice: ' +
+    'they confirm a client\'s contact details and write down what the client says. <b>No agent has been on these calls.</b> Every call is recorded the same day, with who made it.</p>' +
+    '<p style="margin:0 0 16px"><b>I ask you to advise what the Company is doing about what is set out below.</b></p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:8px 0;margin:0 -8px 8px"><tr>' +
+    tiles.map(function (t) { return '<td style="background:#f2f6f9;border-radius:8px;padding:10px 12px;vertical-align:top;width:25%"><div style="' + A + 'font-size:24px;font-weight:bold;color:#0b1f33">' + C(t[0]) +
+      '</div><div style="' + A + 'font-size:12px;color:#5b6b7c;line-height:1.35">' + esc(t[1]) + '</div></td>'; }).join('') + '</tr></table>';
+
+  /* the words first, every one in full; then the ticks on the letters, which all read the same, as counts */
+  var ticked = function (it) { return /^(Their answer to the letter|Answered on a call)/.test(it.source); };
+  var words = fresh.filter(function (it) { return !ticked(it); }), ticks = fresh.filter(ticked);
+  out += h3('New since the last update, in the clients\' words and Client Support\'s notes' + (words.length > T_FIND.LIST_MAX ? ': the first ' + T_FIND.LIST_MAX + ' of ' + C(words.length) + ', all in the attached file' : ''));
+  if (!words.length) out += '<p style="margin:0;color:#5b6b7c">Nothing new in words since the last update.</p>';
+  else {
+    var list = words.slice().sort(function (a, b) { return T_FIND_ORDER.indexOf(a.kind) - T_FIND_ORDER.indexOf(b.kind) || String(b.day).localeCompare(String(a.day)); }).slice(0, T_FIND.LIST_MAX);
+    out += '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%"><tr><th style="' + th + '">Date</th><th style="' + th + '">Former agent · client</th>' +
+      '<th style="' + th + '">What it is about</th><th style="' + th + '">As documented</th></tr>' +
+      list.map(function (it) {
+        return '<tr><td style="' + td + ';white-space:nowrap">' + esc(it.day ? day(it.day) : 'by ' + day(F.today)) + '</td>' +
+          '<td style="' + td + '"><b>' + esc(it.agent) + '</b><br><span style="color:#5b6b7c;font-size:12.5px">client ' + esc(it.cno || '(no number)') + ' · letter ' + esc(it.seg) + '</span></td>' +
+          '<td style="' + td + '">' + esc(it.about) + '</td>' +
+          '<td style="' + td + '"><i>"' + esc(it.said) + '"</i><br><span style="color:#5b6b7c;font-size:12.5px">' + esc(it.source) + '</span></td></tr>';
+      }).join('') + '</table>';
+  }
+  if (ticks.length) {
+    var tk = {};
+    ticks.forEach(function (it) { var g = tk[it.about] = tk[it.about] || { n: 0, by: {} }; g.n++; g.by[it.agent] = (g.by[it.agent] || 0) + 1; });
+    out += h3('New since the last update, ticked on the letter');
+    out += '<ul style="margin:0;padding-left:20px">' + Object.keys(tk).map(function (a) {
+      var by = Object.keys(tk[a].by).sort(function (x, y) { return tk[a].by[y] - tk[a].by[x]; }).map(function (x) { return x + ' ' + tk[a].by[x]; }).join(', ');
+      return '<li style="margin:0 0 6px"><b>' + C(tk[a].n) + '</b> ' + (tk[a].n === 1 ? 'client' : 'clients') + ' ticked that ' + esc(a.charAt(0).toLowerCase() + a.slice(1)) + ': ' + esc(by) + '.</li>';
+    }).join('') + '</ul><p style="margin:6px 0 0;font-size:12.5px;color:#5b6b7c">Each is the client\'s own answer to the question on their letter, with the date it came in; all are in the attached file.</p>';
+  }
+
+  out += h3('Everything documented so far, by former agent');
+  if (!F.books.length) out += '<p style="margin:0;color:#5b6b7c">Nothing yet.</p>';
+  else {
+    var cols = [[['still'], 'Says still acts'], [['money', 'docs'], 'Money or documents'], [['follow', 'loyal'], 'Follow or stay'],
+      [['contact', 'approached'], 'In touch'], [['wait', 'paying', 'moved'], 'Other'], [['cancel'], 'Cancel']];
+    cols = cols.filter(function (c) { return count(c[0]) > 0; });
+    var inCol = function (b, kinds) { var s = {}; kinds.forEach(function (k) { Object.keys(b.kinds[k] || {}).forEach(function (t) { s[t] = true; }); }); return Object.keys(s).length; };
+    var thr = th + ';text-align:right;font-size:11px', tdr = td + ';text-align:right';
+    out += '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%"><tr><th style="' + th + '">Former agent</th><th style="' + thr + '">Written to</th>' +
+      '<th style="' + thr + '">Reported</th>' + cols.map(function (c) { return '<th style="' + thr + '">' + esc(c[1]) + '</th>'; }).join('') + '</tr>' +
+      F.books.map(function (b) {
+        return '<tr><td style="' + td + '"><b>' + esc(b.agent) + '</b></td><td style="' + tdr + '">' + C(b.clients) + '</td><td style="' + tdr + '"><b>' + C(Object.keys(b.reported).length) + '</b></td>' +
+          cols.map(function (c) { var n = inCol(b, c[0]); return '<td style="' + tdr + ';color:' + (n ? '#1d2b3a' : '#a8b4c0') + '">' + C(n) + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</table>' +
+      '<p style="margin:6px 0 0;font-size:12.5px;color:#5b6b7c">Each column counts clients, and one client can be in more than one. Says still acts: the former agent told the client they still look after the policy. ' +
+      'Money or documents: money or a cheque handed over, or a meeting or documents to sign. Follow or stay: the client plans to follow the former agent, or to stay with them. ' +
+      'In touch: the former agent has contacted them, or someone has suggested changing the policy. Other: holding back until they speak to the former agent, paying a representative in person, or where the former agent has gone. ' +
+      'Every finding is in the attached file with its date, its source and the client\'s number.</p>';
+  }
+
+  out += h3('How it was documented');
+  var how = [];
+  how.push(C(F.num.written) + ' clients were written to by the branch, and ' + C(F.num.answered) + ' have answered: by tapping their answers, by replying, or on a call.');
+  if (calls && !calls.error) {
+    how.push('Client Support has ' + C(calls.listed) + ' clients on its call lists' + (calls.callers.length ? ' (' + calls.callers.join(', ') + ')' : '') + ': ' + C(calls.tried) + ' tried, ' + C(calls.reached) +
+      ' reached, ' + C(calls.noAnswer) + ' not reached yet and ' + C(calls.wrong) + ' wrong numbers.');
+    if (calls.backAgent) how.push(C(calls.backAgent) + ' clients asked on a call to speak to a licensed agent. Client Support records the request; no agent has called them as part of this record.');
+  } else if (calls && calls.error) how.push(calls.error);
+  else how.push('Client Support\'s calls sheet is not linked to this report yet, so only what reached the branch\'s own records is counted.');
+  how.push('A finding is filed under what it is about only when it names that client\'s own former agent. The words are given as they were written or recorded.');
+  if (F.held) how.push('The terminated agent\'s book is on the branch\'s own hold and is not in this update: ' + C(F.held) + ' of its clients have reported something.');
+  out += '<ul style="margin:0;padding-left:20px">' + how.map(function (s) { return '<li style="margin:0 0 6px">' + esc(s) + '</li>'; }).join('') + '</ul>';
+
+  out += h3('What the branch asks the Company to advise');
+  var ask = [], n;
+  if ((n = count(['still']))) ask.push('What the Company is doing about former agents who tell clients they still look after their policies (' + C(n) + ' clients so far), and whether the Company will confirm to those clients, in writing, who now does.');
+  if ((n = count(['follow', 'loyal']))) ask.push('How the Company wants the branch to answer clients who say they will stay with, or follow, a former agent (' + C(n) + ' clients).');
+  if ((n = count(['money', 'docs']))) ask.push('How the Company will trace money, cheques or documents handed to a former agent, and meetings arranged with one, since the resignations (' + C(n) + ' clients).');
+  if ((n = count(['contact', 'approached']))) ask.push('What the Company is doing about former agents contacting its policyholders since they resigned (' + C(n) + ' clients have said so).');
+  ask.push('Whether the Company will issue a public notice and a notice to these clients, and confirm that the Central Bank has been notified of each resignation.');
+  if (calls && calls.backAgent) ask.push('Who the Company wants to call the ' + C(calls.backAgent) + ' clients who asked for a licensed agent.');
+  out += '<ol style="margin:0;padding-left:20px">' + ask.map(function (s) { return '<li style="margin:0 0 6px">' + esc(s) + '</li>'; }).join('') + '</ol>';
+
+  var M = TRANSITION.MANAGER || {};
+  out += '<p style="margin:20px 0 0">Regards,<br><b>' + esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch<br>Guardian Life of the Caribbean Limited</p>' +
+    '<p style="margin:18px 0 0;font-size:11.5px;color:#8a97a8">Internal to Guardian Life. This e-mail carries client numbers and what clients said: do not forward it outside the Company. ' +
+    'Read from the branch\'s records at ' + esc(F.at) + '.</p></div>';
+  return out;
+}
+/** Every finding to date as a CSV for the attachment: no names, the client's number. */
+function tFindingsCsv_(F, firstDay) {
+  var q = function (s) { s = String(s == null ? '' : s); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  var rows = [['First documented', 'Former agent', 'Client number', 'Letter', 'What it is about', 'As documented', 'Source']];
+  F.items.slice().sort(function (a, b) { return String(a.agent).localeCompare(b.agent) || T_FIND_ORDER.indexOf(a.kind) - T_FIND_ORDER.indexOf(b.kind); }).forEach(function (it) {
+    rows.push([it.day || firstDay[it.key] || F.today, it.agent, it.cno, it.seg, it.about, it.said, it.source]);
+  });
+  return rows.map(function (r) { return r.map(q).join(','); }).join('\r\n');
+}
+/** Build and send. preview: to the manager alone, nothing marked. Returns what happened, in words. */
+function tFindingsSend_(preview) {
+  var props = PropertiesService.getScriptProperties(), to = preview ? T_FIND.ME : String(props.getProperty(T_FIND.P_TO) || '').trim();
+  if (!to) return 'No address: put the Head Office address into the ' + T_FIND.P_TO + ' Script property first.';
+  var F = tFindings_(), log = tFindLog_(!preview), fresh = F.items.filter(function (it) { return !log.keys[it.key]; });
+  var tz = tTz_(), today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  var subject = 'Transition: what clients report about their former agents, ' + Utilities.formatDate(new Date(), tz, 'd MMMM') + ' (' + fresh.length + ' new)';
+  var html = tFindingsHtml_(F, fresh, preview, props.getProperty(T_FIND.P_GREET) || '');
+  var csv = Utilities.newBlob(tFindingsCsv_(F, log.keys), 'text/csv', 'Transition-findings-to-' + F.today + '.csv');
+  var cc = preview ? [] : [T_FIND.ME], via = 'Microsoft 365';
+  try { tMsSend_(to, subject, html, { cc: cc, replyTo: T_FIND.ME, attachments: [csv] }); }
+  catch (e) {
+    via = 'the script owner\'s mail';
+    var m = { to: to, replyTo: T_FIND.ME, subject: subject, htmlBody: html, name: TRANSITION.FROM_NAME, attachments: [csv] };
+    if (cc.length) m.cc = cc.join(',');
+    MailApp.sendEmail(m);
+  }
+  if (!preview && fresh.length) {
+    log.sh.getRange(log.sh.getLastRow() + 1, 1, fresh.length, T_FIND.HEAD.length).setValues(fresh.map(function (it) {
+      return [it.day || today, it.source, it.about, it.agent, it.seg, it.cno, it.tok, it.said, it.key, today];
+    }));
+  }
+  var msg = (preview ? 'Preview sent to ' : 'Findings sent to ') + to + ' through ' + via + ': ' + fresh.length + ' new, ' + F.items.length + ' documented in all.';
+  try { log_('transition', preview ? 'findings-preview' : 'findings-sent', msg); } catch (e) {}
+  return msg;
+}
+/** The daily trigger: working days, once a day, only after transitionFindingsStart. */
+function transitionFindings() {
+  var props = PropertiesService.getScriptProperties(), tz = tTz_();
+  if (props.getProperty(T_FIND.P_LIVE) !== 'yes') return 'off';
+  if (Number(Utilities.formatDate(new Date(), tz, 'u')) > 5) return 'weekend';
+  var today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  if (props.getProperty('findings_last') === today) return 'already sent today';
+  var msg = tFindingsSend_(false);
+  if (/^Findings sent/.test(msg)) props.setProperty('findings_last', today);
+  return msg;
+}
+/** One e-mail to the manager alone, as Head Office would get it; nothing marked. */
+function transitionFindingsPreview() { return tSay_(tFindingsSend_(true)); }
+/** Today's, now, to Head Office: the same e-mail the trigger sends, and it counts as today's. */
+function transitionFindingsNow() {
+  var props = PropertiesService.getScriptProperties(), msg = tFindingsSend_(false);
+  if (/^Findings sent/.test(msg)) props.setProperty('findings_last', Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd'));
+  return tSay_(msg);
+}
+/** The go: the daily trigger at T_FIND.HOUR, working days. Needs FINDINGS_TO. */
+function transitionFindingsStart() {
+  var props = PropertiesService.getScriptProperties();
+  if (!String(props.getProperty(T_FIND.P_TO) || '').trim()) return tSay_('Put the Head Office address into the ' + T_FIND.P_TO + ' Script property first (Project Settings → Script properties).');
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'transitionFindings') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('transitionFindings').timeBased().everyDays(1).atHour(T_FIND.HOUR).inTimezone(tTz_()).create();
+  props.setProperty(T_FIND.P_LIVE, 'yes');
+  return tSay_('The daily findings go to ' + props.getProperty(T_FIND.P_TO) + ' every working day at ' + T_FIND.HOUR + ':00, copied to you. ' +
+    (props.getProperty(T_FIND.P_CALLS) ? '' : 'The calls sheet is not linked yet: put its ID into the ' + T_FIND.P_CALLS + ' Script property, or only the letters\' answers are read. ') +
+    'Run transitionFindingsNow to send today\'s at once.');
+}
+function transitionFindingsStop() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'transitionFindings') ScriptApp.deleteTrigger(t); });
+  PropertiesService.getScriptProperties().deleteProperty(T_FIND.P_LIVE);
+  return tSay_('The daily findings are off.');
 }
 
 /* ── the insights: what the answers say, for the digest and the Monday report ── */
@@ -3229,7 +3994,9 @@ var T_INACTIVE = /^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|
 var T_USERS = { MIN: 1, TRIES: 10, LOCK_S: 900 };
 
 /** A name as a key: letters only, so "Persad-Khan" and "Persad Khan" are one. */
-function tNameKey_(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
+/* a label in brackets is not part of the name: Salesforce's agent Contact for one agent reads "Narissa (Agent) Mohammed"
+   (13 October 2026), and her clients named there must reach her list as "Narissa Mohammed" on the Agent Skill Bank */
+function tNameKey_(s) { return String(s || '').toLowerCase().replace(/\([^)]*\)/g, '').replace(/[^a-z]/g, ''); }
 
 /** "A00427 - Ricky Rampersad", "AG-003 - Azariah Griffith": the name without the number in front. */
 function tCleanName_(s) { return String(s || '').replace(/^\s*[A-Za-z]{0,3}\s*-?\s*\d+\s*[-–—:]\s*/, '').replace(/\s+/g, ' ').trim(); }
@@ -3278,6 +4045,7 @@ function tTeam_() {
       var pw = col(r, ['password']), roleText = col(r, ['role']);
       out.people.push({ name: name, no: col(r, ['agent no.', 'agent number', 'agent no']), email: col(r, ['email', 'e-mail']),
         phone: col(r, ['phone', 'mobile', 'whatsapp', 'cell']), areas: col(r, ['areas covered', 'areas', 'town']), avail: col(r, ['availability']),
+        home: col(r, ['lives in', 'home town', 'home']), years: col(r, ['years with us', 'years']), skills: col(r, ['skills & strengths', 'skills']),
         role: tRoleOf_(roleText), roleText: roleText || 'Agent', unit: tCleanName_(col(r, ['unit'])),
         active: !cells(r, ['active']).some(function (a) { return T_INACTIVE.test(a); }),
         pw: pw ? tDigest_(pw) : '', pwShort: !!pw && pw.length < T_USERS.MIN, portal: col(r, ['portal code']) });
@@ -3298,7 +4066,8 @@ function tRoster_() {
     seen[k] = true;
     return true;
   }).map(function (p) {
-    return { name: p.name, no: p.no, email: p.email, phone: p.phone, areas: p.areas, avail: p.avail, portal: p.portal, role: p.role, unit: p.unit };
+    return { name: p.name, no: p.no, email: p.email, phone: p.phone, areas: p.areas, avail: p.avail, portal: p.portal, role: p.role, unit: p.unit,
+             home: p.home || '', years: p.years || '', skills: p.skills || '' };
   });
 }
 
@@ -3563,11 +4332,19 @@ function transitionBoard_(p) {
   p = p || {};
   T_READ_ONCE = {};
   try {
+    /* the stream (stream.html): counts only, for the branch code. A script older than 8 October 2026 takes "stream" for a
+       person, finds nobody by that name and refuses, so an old backend never sends the stream the board. */
+    if (/^stream$/i.test(String(p.who || '').trim())) return transitionStream_(p.code);
     var w = tWho_(p.code, p.who);
     if (!w.ok) return { ok: false, refused: true, configured: w.configured, error: w.error };
     /* the dashboard's Salesforce panel (tSfWork_): the branch alone, since it names every member of staff */
     if (/^(1|yes|true)$/i.test(String(p.sfwork || ''))) {
       return { ok: true, sfwork: w.role === 'branch' ? tSfWork_() : { on: false, why: 'The Salesforce figures are for the branch.' } };
+    }
+    /* the Agents view (tAgentsView_, 14 October 2026): the branch, and a unit manager over his team */
+    if (/^(1|yes|true)$/i.test(String(p.agents || ''))) {
+      try { return { ok: true, agentsView: tAgentsView_(w) }; }
+      catch (err) { return { ok: true, agentsView: { on: false, why: 'The Agents view could not be built: ' + String(err && err.message ? err.message : err) } }; }
     }
     try { return tBoardSlim_(tBoard_(w, /^(1|yes|true)$/i.test(String(p.all || '')))); }
     catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
@@ -3725,10 +4502,10 @@ function tBoard_(w, all, lite) {
 
   /* an agent named in Salesforce, or typed on the Household Assignments tab (tHaSync_, 1 October 2026): on the card, in the
      agent's own list when they log in, and on the roster's counts. The board's own name stands unless Salesforce's is newer. */
-  var haBy = {};
+  var haBy = {}, haRow = {};
   try {
     var hax = tHaRead_();
-    if (hax) hax.rows.forEach(function (r) { if (r.token && r.agent) haBy[r.token] = { agent: r.agent, on: tHaDate_(r.date), via: r.source || 'the tab' }; });
+    if (hax) hax.rows.forEach(function (r) { if (r.token) haRow[r.token] = r; if (r.token && r.agent) haBy[r.token] = { agent: r.agent, on: tHaDate_(r.date), via: r.source || 'the tab' }; });
   } catch (e) {}
   var clients = [], silent = [];
   order.forEach(function (tok) {
@@ -3832,6 +4609,16 @@ function tBoard_(w, all, lite) {
   }).sort(function (a, b) { return a.name.localeCompare(b.name); });
   var answeredBy = {};
   clients.forEach(function (c) { if (tHasAnswered_(c)) answeredBy[c.token] = c; });
+  /* who each client has been named to, and when, once there is more than one name or a staff naming to show (14 October
+     2026: "reassign the orphans … with the history of when it was assigned") */
+  var alog = tAlogRead_(), rkey = {};
+  roster.forEach(function (a) { rkey[tNameKey_(a.name)] = a.name; });
+  var canonB = function (n) { var a = rkey[tNameKey_(n)] || (tRosterMatch_(roster, n) || {}).name; return a || String(n || '').replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim(); };
+  clients.forEach(function (c) {
+    if (!c.assigned && !alog[c.token]) return;
+    var h = tAssignHist_(c, haRow[c.token], alog[c.token], canonB, now);
+    if (h.length > 1 || (h.length === 1 && h[0].by)) c.hist = h.map(function (x) { return [x.on ? fmt(x.on, 'd MMM') : '', x.agent, x.via, x.by || '']; });
+  });
   if (onTeam || staff) {
     if (onTeam) clients = clients.filter(function (c) { return onTeam(c.assigned); });
     silent = [];
@@ -3965,8 +4752,15 @@ function tBoard_(w, all, lite) {
     if (!lite) counts.glance = { answered: tGlance_(clients.filter(tHasAnswered_).map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
   }
   /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for whoever may name one */
-  if (tCanAssign_(w)) counts.sug = tSuggest_(clients.filter(function (c) { return c.state !== 'tocall'; }).concat(silent, family),
-    { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
+  var match = null;
+  if (tCanAssign_(w)) {
+    var agentPlaces = tAgentPlaces_(roster);
+    counts.sug = tSuggest_(clients.filter(function (c) { return c.state !== 'tocall'; }).concat(silent, family),
+      { roster: roster, plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy, agentPlaces: agentPlaces });
+    /* the match (8 October 2026): each client's weight, the opportunities on their record, the best-fitting agents, and
+       where everyone is, for the Match view; not when the board is read only to name an agent */
+    if (!lite) match = tMatch_(clients.concat(silent, family), { roster: roster, agentPlaces: agentPlaces, hhInfo: hhInfo, households: households, money: !staff });
+  }
   /* staff see who each client is, what the records say and each policy's plan, where it stands and what it is paid to,
      never a figure: Client Support sees no money (29 September), and the insights are theirs too (5 October 2026: "I do
      need the staff to log in with the insights shared") */
@@ -3975,6 +4769,11 @@ function tBoard_(w, all, lite) {
     if (p) c.pol = p; else delete c.pol;
     if (f) c.profile = f; else delete c.profile;
     if (c.ins) c.ins = c.ins.filter(function (i) { return !T_MONEY_INS[i.k]; });
+    if (c.ik) c.ik = c.ik.filter(function (k) { return !T_MONEY_INS[k]; });
+  });
+  /* and the rows not answered yet, should a staff board ever carry them: their counts and nothing more */
+  if (staff) silent.concat(family).forEach(function (c) {
+    if (c.pol && c.pol.sum) c.pol = { noMoney: true, sum: { live: c.pol.sum.live || 0, mat: c.pol.sum.mat || 0 } };
     if (c.ik) c.ik = c.ik.filter(function (k) { return !T_MONEY_INS[k]; });
   });
   return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
@@ -3988,6 +4787,7 @@ function tBoard_(w, all, lite) {
            /* what the hold stops besides the letters, reminders and notes (7 October 2026), so the board says it in words */
            introsHeld: TRANSITION.HOLD_INTROS !== false && tClientMailHeld_(), receiptsHeld: TRANSITION.HOLD_RECEIPTS === true && tClientMailHeld_(),
            claims: claims, detail: true,   // detail: this backend answers action=detail and action=comment (ping campaign 7)
+           match: match,   // the Match view (8 October 2026): weights, opportunities, best fits and places; for whoever may name
            backs: true };   // backs: this backend reads and takes call-back flags (update back=…), and sends each card's contact (7 October 2026)
 }
 
@@ -4095,6 +4895,328 @@ function tPlan_() {
   }
   return (T_PLAN_MEMO = { ready: n > 0, by: by });
 }
+/* ── the match: where everyone is, what each client needs, who fits them (8 October 2026) ─────────────────────── */
+/* "scrub agent address and client address and weighting on the client to know who to assign, how many in force
+   policies, lapsed, maturities, spotting opportunities … lives in household and have other policies, pulling from
+   Salesforce and the branch Google sheet". Every client the viewer may name an agent on gets a weight in four parts
+   (urgent, at risk, value, opportunity) that the page can re-balance, the opportunities their own records show, and the
+   agents who fit them best: the nearest with room on their list. Only a town is ever used, the client's and the agent's,
+   never a street. Facts off the record, for a person to act on; never advice. */
+var T_MATCH = {
+  W: { u: 35, r: 25, v: 25, o: 15 },   // the weight's four parts, in per cent: urgent, at risk, value, opportunity
+  NEAR_KM: 25,                          // the nearest agent with room is suggested only within this distance
+  ROOM: 1.2,                            // an agent has room while their list is under 1.2 times the even share
+  TOP: 3,                               // the agents shown as the best fits under a client nobody is named on
+  SF_WRITE: true,                       // a naming on the board writes Assigned Agent, Date Assigned and Campaign in Salesforce
+  CAMPAIGN: 'Orphan',                   // the Campaign the branch writes on a naming in Salesforce (1 October 2026)
+  SF_AGENTS_H: 24 };                    // hours the agents' Salesforce records (Id and mailing town) are kept
+/* Every place the books' addresses name, with its point (OpenStreetMap's place search, Trinidad and Tobago only, checked
+   by hand on 8 October 2026: a town's centre, never its region's; places that could be two are left out), and the
+   spellings the addresses carry for them. Public geography: no client is in it. */
+var T_PLACES = {
+  'aranguez':[10.6409,-61.443],'arima':[10.6372,-61.283],'arouca':[10.635,-61.3399],
+  'bamboo settlement':[10.6199,-61.4283],'barataria':[10.6499,-61.4623],'barrackpore':[10.197,-61.3721],
+  'bejucal':[10.5685,-61.4162],'belle garden':[11.2355,-60.6028],'belmont':[10.6685,-61.5071],
+  'biche':[10.4314,-61.1326],'blanchisseuse':[10.7985,-61.3134],'caledonia':[10.525,-61.4036],
+  'california':[10.4085,-61.4744],'cane farm':[10.6392,-61.353],'caparo':[10.4588,-61.3276],
+  'carapichaima':[10.4798,-61.4492],'carapichima':[10.4764,-61.4403],'carapo':[10.5869,-61.3081],
+  'carenage':[10.6882,-61.5928],'carlsen field':[10.4802,-61.3878],'caroni':[10.6073,-61.3848],
+  'cedros':[10.0928,-61.8602],'chaguanas':[10.5147,-61.4077],'chaguanas west':[10.5227,-61.4251],
+  'champ fleurs':[10.651,-61.4313],'champs fleurs':[10.6505,-61.4287],'chandernagore':[10.4855,-61.4187],
+  'charlieville':[10.5623,-61.4138],'charlotteville':[11.3223,-60.5473],'chatham':[10.0885,-61.7347],
+  'chin chin road':[10.5535,-61.3706],'claxton ba':[10.3534,-61.4569],'claxton bay':[10.3534,-61.4569],
+  'cocorite':[10.6633,-61.5358],'coryal':[10.511,-61.1854],'couva':[10.4223,-61.4587],
+  'couva central':[10.4241,-61.4225],'couva north':[10.4273,-61.4748],'cumuto':[10.584,-61.2207],
+  'cunupia':[10.552,-61.3723],'curepe':[10.6503,-61.4093],'d abadie':[10.629,-61.3109],'debe':[10.2107,-61.4515],
+  'delaford':[11.2665,-60.5551],'diego martin':[10.7139,-61.5794],'dow':[10.4013,-61.4681],
+  'el dorado':[10.6478,-61.3723],'el socorro':[10.6339,-61.4515],'el socorro san juan':[10.63,-61.423],
+  'enterprise':[10.5271,-61.3855],'enterprise longdenville':[10.5324,-61.3802],'esperanza':[10.3951,-61.4378],
+  'febeau':[10.6569,-61.4514],'felicity':[10.5456,-61.4377],'fernando':[10.2807,-61.4646],
+  'foster road':[10.589,-61.1286],'freeport':[10.4611,-61.4116],'fyzabad':[10.1803,-61.5468],
+  'gasparillo':[10.3156,-61.4288],'glencoe':[10.6811,-61.5715],'gonzales':[10.6619,-61.4997],
+  'goodwood':[11.2025,-60.6347],'gopaul':[10.3013,-61.4451],'grad couva':[10.4223,-61.4587],
+  'graham extension':[10.597,-61.1267],'gran couva':[10.4041,-61.3776],'guaico':[10.5863,-61.1446],
+  'guayaguayare':[10.1468,-61.0355],'harrilal':[10.1659,-61.4635],'hololo road':[10.7028,-61.4657],
+  'jerningham':[10.6653,-61.5048],'kelly caroni':[10.552,-61.3967],'la brea':[10.2371,-61.6159],
+  'la horquetta':[10.5973,-61.2754],'la romain':[10.2432,-61.4928],'la romaine':[10.2798,-61.4625],
+  'lambeau':[11.1678,-60.7589],'lange park':[10.5236,-61.4019],'las cuevas':[10.7836,-61.3895],
+  'las lomas':[10.5649,-61.3011],'las lomas no':[10.5657,-61.3182],'laventille':[10.6486,-61.4901],
+  'longdenville':[10.5142,-61.3786],'los bajos':[10.1166,-61.5753],'lower santa cruz':[10.6784,-61.4541],
+  'macoya':[10.6455,-61.3851],'malabar':[10.6196,-61.2775],'malick':[10.6566,-61.4601],'maloney':[10.6222,-61.3178],
+  'mamoral':[10.4481,-61.3054],'manoram rd':[10.6524,-61.3522],'manzanilla':[10.5274,-61.0635],
+  'marabella':[10.3073,-61.4519],'maraval':[10.695,-61.519],'mason hall':[11.2199,-60.7141],
+  'matelot':[10.8204,-61.1269],'matura':[10.674,-61.065],'mausica':[10.633,-61.305],'mayaro':[10.3028,-61.0081],
+  'mc bean':[10.4432,-61.4436],'moruga':[10.0887,-61.28],'morvant':[10.6577,-61.4759],'mount hope':[10.6543,-61.4352],
+  'mt hope':[10.6543,-61.4352],'mt lambert':[10.6487,-61.4371],'new grant':[10.2835,-61.3211],
+  'ojoe road':[10.5862,-61.1286],'orange field road':[10.4767,-61.423],'oropouche':[10.217,-61.5432],
+  'oropouche west':[10.2277,-61.5439],'palmiste':[10.287,-61.445],'palo seco':[10.094,-61.5879],
+  'penal':[10.1685,-61.4527],'penal rock road':[10.168,-61.4581],'petit bourg':[10.651,-61.4356],
+  'petit valley':[10.6479,-61.5115],'phillipine':[10.2311,-61.4622],'piarco':[10.6047,-61.3341],
+  'piparo':[10.3404,-61.3443],'pleasantville':[10.2711,-61.448],'plymouth':[11.22,-60.7738],
+  'point fortin':[10.1759,-61.6827],'pointe a pierre':[10.3229,-61.4453],'port of spain':[10.6573,-61.518],
+  'pos':[10.6549,-61.5019],'princes town':[10.2706,-61.3783],'princess town':[10.2706,-61.3783],
+  'ramharack':[10.5622,-61.2753],'rio claro':[10.3058,-61.1739],'rousillac':[10.2105,-61.5807],
+  'roxborough':[11.2495,-60.5762],'san fernando':[10.2807,-61.4646],'san francique':[10.182,-61.5154],
+  'san juan':[10.6486,-61.4509],'san raphael':[10.5757,-61.2735],'sangre chiquito':[10.5898,-61.0918],
+  'sangre grand':[10.822,-61.1417],'sangre grande':[10.5868,-61.1311],'santa cruz':[10.7102,-61.4742],
+  'santa flora':[10.112,-61.5597],'santa rosa':[10.6208,-61.2622],'scarborough':[11.1853,-60.735],
+  'singh':[10.4495,-61.4194],'siparia':[10.1436,-61.507],'south oropouche':[10.202,-61.5004],
+  'st augustine':[10.6464,-61.4008],'st clair':[10.6679,-61.5207],'st claire':[10.5152,-61.3945],
+  'st helena':[10.5822,-61.3402],'st james':[10.6736,-61.5338],'st joseph':[10.6556,-61.4139],
+  'studley park':[11.1957,-60.6563],'sunrise park':[10.631,-61.3458],'tabaquite':[10.3791,-61.325],
+  'tableland':[10.2778,-61.2575],'tacarigua':[10.6437,-61.3612],'talparo':[10.5166,-61.269],
+  'tamana':[10.4691,-61.1944],'toco':[10.8368,-60.9377],'tortuga':[10.3587,-61.4007],'trincity':[10.6343,-61.3568],
+  'tumpuna road arima':[10.6076,-61.2697],'tunapuna':[10.6427,-61.3893],'valencia':[10.6536,-61.1942],
+  'valsayn':[10.6344,-61.4159],'wallerfield':[10.6232,-61.2387],'waterloo':[10.4789,-61.4675],
+  'whiteland':[10.3444,-61.372],'williamsville':[10.3109,-61.3804],'woodbrook':[10.6625,-61.524],
+  'woodland':[10.6357,-61.3658] };
+var T_PLACE_ALIAS = {
+  'arranguez':'aranguez','bamboo':'bamboo settlement','bamboo sett':'bamboo settlement','barackpore':'barrackpore',
+  'baratari':'barataria','barrackpor':'barrackpore','bartaria':'barataria','belmon':'belmont','califonia':'california',
+  'carapachima':'carapichaima','carapichiama':'carapichaima','chaguaanas':'chaguanas','chaguaans':'chaguanas',
+  'chaguans':'chaguanas','champ fleur':'champs fleurs','chandenagore':'chandernagore','chgauanas':'chaguanas',
+  'cumoto':'cumuto','cunaripo':'sangre grande','cunipia':'cunupia','d ababie':'d abadie','dabadie':'d abadie',
+  'deigo martin':'diego martin','guyama charlievi':'charlieville','la horouetta':'la horquetta',
+  'les efforts east':'san fernando','lower barrackpore':'barrackpore','mendez drive champ fleur':'champs fleurs',
+  'oropouche east':'penal','ower santa cruz':'santa cruz','petit curaca':'st augustine','princestown':'princes town',
+  'sagre chiquito':'sangre chiquito','san ferando':'san fernando','san jaun':'san juan',
+  'sangra grande':'sangre grande','sangre grand':'sangre grande','siewdass road freeport':'freeport',
+  'st agustine':'st augustine','st clair gardens trincity':'trincity','tnapuna':'tunapuna','tobag':'scarborough',
+  'tunpuna':'tunapuna','upper carapichaima':'carapichaima','via cunupia post office':'cunupia',
+  'via sangre grand':'sangre grande' };
+/** The key a town is looked up by: lower case, letters only, without "Proper", "Village", "Junction" or the country. */
+function tPlaceKey_(t) {
+  t = String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z ]/g, ' ');
+  t = t.replace(/\b(proper|village|junction|jct|trinidad|tobago|w i|wi|t t)\b/g, ' ');
+  return t.replace(/\s+/g, ' ').trim();
+}
+/** A town's place: { k, lat, lng }, or null. An address line the list does not know is tried by its last words, then its
+ *  first ("Lp 12 Cunupia" is Cunupia); "Tobago" alone is Scarborough. */
+function tPlaceOf_(town) {
+  var raw = String(town || ''), k = tPlaceKey_(raw);
+  var hit = function (x) { x = T_PLACE_ALIAS[x] || x; var p = T_PLACES[x]; return p ? { k: x, lat: p[0], lng: p[1] } : null; };
+  if (!k) return /tobago/i.test(raw) ? hit('scarborough') : null;
+  var p = hit(k);
+  if (p) return p;
+  var w = k.split(' ');
+  for (var n = Math.min(3, w.length - 1); n >= 1; n--) {
+    p = hit(w.slice(-n).join(' ')) || hit(w.slice(0, n).join(' '));
+    if (p) return p;
+  }
+  return null;
+}
+/** A place's name as the page prints it: "Couva", "St Augustine", "D'Abadie". */
+function tPlaceLabel_(k) {
+  return String(k || '').replace(/\b[a-z]/g, function (m) { return m.toUpperCase(); }).replace(/^D Abadie$/, 'D\'Abadie').replace(/^Pos$/, 'Port of Spain');
+}
+/** Kilometres between two places, as the crow flies. */
+function tKm_(a, b) {
+  var r = Math.PI / 180, dla = (b.lat - a.lat) * r, dlo = (b.lng - a.lng) * r;
+  var h = Math.sin(dla / 2) * Math.sin(dla / 2) + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dlo / 2) * Math.sin(dlo / 2);
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+/** The town a row on the board carries: a card's contact, else the row's own. */
+function tRowTown_(c) { return (c && c.contact && c.contact.town) || (c && c.town) || ''; }
+
+/** The branch's agents in Salesforce (Contacts of record type AGENT): each one's Id, for a naming to write, and mailing
+ *  town. Read at most once a day into the sf_agents Script property; { by: nameKey → { id, city }, ready }. Never throws;
+ *  not ready, and nothing asked of Salesforce, until ServiceSalesforce.gs and its SF_* properties are in the project. */
+function tSfAgents_(fresh) {
+  if (!fresh && T_READ_ONCE && T_READ_ONCE.sfAgents) return T_READ_ONCE.sfAgents;
+  var out = { by: {}, ready: false }, props = PropertiesService.getScriptProperties(), now = new Date().getTime();
+  try {
+    var hit = JSON.parse(props.getProperty('sf_agents') || 'null');
+    if (hit && hit.by && !fresh && now - Number(hit.at || 0) < T_MATCH.SF_AGENTS_H * 3600000) out = { by: hit.by, ready: true };
+  } catch (e) {}
+  if (!out.ready && typeof svcSfReady_ === 'function' && svcSfReady_()) {
+    try {
+      var by = {};
+      svcSfQuery_("SELECT Id, Name, MailingCity FROM Contact WHERE RecordType.Name = 'AGENT' LIMIT 2000").forEach(function (r) {
+        var k = tNameKey_(r.Name);
+        if (k && !by[k]) by[k] = { id: String(r.Id || ''), city: String(r.MailingCity || '').trim() };
+      });
+      out = { by: by, ready: true };
+      try { props.setProperty('sf_agents', JSON.stringify({ at: now, by: by })); } catch (e) {}
+    } catch (e) { out.why = String(e && e.message ? e.message : e).slice(0, 200); }
+  }
+  if (T_READ_ONCE) T_READ_ONCE.sfAgents = out;
+  return out;
+}
+/** Where each agent on the roster is based, the town only: a "Lives in" (or "Home town") column on the Agent Skill Bank,
+ *  else the first place in Areas covered, else the mailing town on their Salesforce agent record. With every place in
+ *  Areas covered, for the map. nameKey → { name, pl, src, cover, sfId }. */
+function tAgentPlaces_(roster) {
+  var sf = tSfAgents_(), out = {};
+  (roster || []).forEach(function (a) {
+    var k = tNameKey_(a.name), cover = [], pl = null, src = '', s = sf.by[k] || null;
+    String(a.areas || '').split(/[,;\/\n]|\band\b/i).forEach(function (t) {
+      var p = tPlaceOf_(t);
+      if (p && !cover.some(function (x) { return x.k === p.k; })) cover.push(p);
+    });
+    if (a.home) { pl = tPlaceOf_(a.home); if (pl) src = 'Skill Bank'; }
+    if (!pl && cover.length) { pl = cover[0]; src = 'Areas covered'; }
+    if (!pl && s && s.city) { pl = tPlaceOf_(s.city); if (pl) src = 'Salesforce'; }
+    out[k] = { name: a.name, pl: pl, src: src, cover: cover, sfId: s ? s.id : '' };
+  });
+  return out;
+}
+
+/* The weight's parts. Urgent: how soon the client needs a person, from where they stand (a call-back asked for, an
+   answer that cannot wait, past the branch's line). At risk: what puts the policy in danger of going (the former agent in
+   touch, a change suggested, paying in person, a premium due, surrendered before). Value: what they hold with us against
+   everyone else on the board (the premium a year, the life cover, the policies in force) and the family on our books.
+   Opportunity: what their own record shows a licensed agent could raise (a maturity within the year, a lapsed policy, life
+   cover ending, no life cover, a family member with none, no critical illness cover). */
+var T_URGENT_BY = { open: 55, noted: 25, assigned: 40, reached: 35, named: 30, called: 35, tocall: 30, silent: 15, family: 10, dnc: 0, done: 0 };
+var T_RISK_ANS = { contact_yes: 45, approached_yes: 45, pay_person: 35, pay_unsure: 20, contract_missing: 20, contract_unsure: 10, rate_better: 20, stay_talk: 15 };
+var T_RISK_TAP = { paid: 25, pay: 35 };
+var T_RISK_INS = { surr: [20, 'surrendered a policy with us before'], due: [20, 'a premium due'], lapsed: [10, 'a lapsed policy'], payroll: [10, 'paid from the pay packet'] };
+var T_RISK_WORDS = { contact_yes: 'the former agent has been in touch', approached_yes: 'someone suggested a change', pay_person: 'pays in person',
+  pay_unsure: 'not sure how the premium is paid', contract_missing: 'the contract never reached them', contract_unsure: 'not sure about the contract',
+  rate_better: 'said we could do better', stay_talk: 'wants to talk before staying', paid: 'a premium handed over and not showing', pay: 'pays a representative' };
+var T_OPPS = { mature: [35, 'a policy matures within a year'], lapsed: [25, 'a lapsed policy to reinstate'], ends: [25, 'life cover ends within five years'],
+  nolife: [30, 'no life cover in force'], hhgap: [20, 'someone in the family has no life cover'], noci: [15, 'no critical illness cover'],
+  income: [20, 'life cover low against the income on file'], fund: [15, 'a fund value to review'], estate: [10, 'no beneficiary named on our file'],
+  birthday: [10, 'a birthday this month'] };
+var T_MONEY_OPPS = { income: true, fund: true };   // staff see no money: these two are figures (T_MONEY_INS)
+
+/** The weight, the opportunities and the best-fitting agents for every row the viewer may name an agent on. Puts on each
+ *  row c.pl (its place key), c.w = [total, urgent, at risk, value, opportunity] (each 0 to 100) with c.why (the reasons, a few words each), c.op (the
+ *  opportunity keys) and, on a row nobody is named on, c.mt = [[agent's index in the block's agents, km, fit], …]. Returns
+ *  the page's block: the places used, the agents with their base and their load, the weights. No money leaves it. */
+function tMatch_(rows, ctx) {
+  ctx = ctx || {};
+  var roster = ctx.roster || [], ap = ctx.agentPlaces || {}, hhInfo = ctx.hhInfo || {}, households = ctx.households || {}, money = ctx.money !== false;
+  var places = {}, use = function (p) { if (!p) return ''; if (!places[p.k]) places[p.k] = [p.lat, p.lng, tPlaceLabel_(p.k)]; return p.k; };
+  var asc = function (a, b) { return a - b; }, prems = [], covers = [];
+  rows.forEach(function (c) { var s = c.pol && c.pol.sum; if (s) { prems.push(Number(s.prem) || 0); covers.push(Number(s.cover) || 0); } });
+  prems.sort(asc); covers.sort(asc);
+  /* where a figure sits among everyone's: the share of the rows at or under it */
+  var pct = function (arr, x) {
+    x = Number(x) || 0; if (!arr.length || !x) return 0;
+    var lo = 0, hi = arr.length;
+    while (lo < hi) { var m = (lo + hi) >> 1; if (arr[m] <= x) lo = m + 1; else hi = m; }
+    return Math.round(100 * lo / arr.length);
+  };
+  /* the agents: base, the clients named to them, and those suggested to them on this board */
+  var agents = [], idx = {}, load = {}, sug = {};
+  roster.forEach(function (a) {
+    var k = tNameKey_(a.name), x = ap[k] || {};
+    idx[k] = agents.length; load[k] = 0; sug[k] = 0;
+    agents.push({ name: a.name, pl: use(x.pl), src: x.src || '', cover: (x.cover || []).map(use).filter(Boolean), unit: a.unit || '', sf: !!x.sfId });
+  });
+  rows.forEach(function (c) {
+    var k = c.assigned ? tNameKey_(c.assigned) : '';
+    if (k && load[k] !== undefined) load[k]++;
+    else if (!c.assigned && c.sug && c.sug.agent) { var s = tNameKey_(c.sug.agent); if (sug[s] !== undefined) sug[s]++; }
+  });
+  var total = 0; Object.keys(load).forEach(function (k) { total += load[k] + sug[k]; });
+  var cap = Math.max(1, Math.ceil(T_MATCH.ROOM * total / Math.max(1, agents.length)));
+  agents.forEach(function (a) { var k = tNameKey_(a.name); a.load = load[k]; a.sug = sug[k]; });
+  var placed = agents.filter(function (a) { return a.pl; });
+  var seen = {}, mapped = 0;
+  rows.forEach(function (c) {
+    if (!c || !c.token || seen[c.token]) return;
+    seen[c.token] = true;
+    var pl = tPlaceOf_(tRowTown_(c));
+    c.pl = use(pl);
+    if (c.pl) mapped++;
+    var why = [], keys = {}, s = c.pol && c.pol.sum ? c.pol.sum : null;
+    (c.ins || []).forEach(function (i) { keys[i.k] = i.lv || 'info'; });
+    (c.ik || []).forEach(function (k) { if (!keys[k]) keys[k] = 'info'; });
+    var info = c.hh ? hhInfo[c.hh] : null;
+    if (info && info.gaps && info.gaps.length) keys.hhgap = 'warm';
+    /* urgent */
+    var u = T_URGENT_BY[c.state] !== undefined ? T_URGENT_BY[c.state] : 15;
+    if (c.open && c.score) u = Math.max(u, Math.min(100, c.score));
+    if (c.late) { u = Math.max(u, 80); why.push('waiting past the branch\'s line'); }
+    if (c.back && c.back.open) { u = 100; why.push('a call-back asked for'); }
+    else if (c.open && c.score >= 80) why.push('told us something pressing');
+    if (c.state === 'done' || c.state === 'dnc') u = 0;
+    /* at risk */
+    /* the reasons go strongest first, so the former agent in touch is never pushed out by a smaller one */
+    var r = 0, rw = [], risk = function (pts, words) { r += pts; rw.push([pts, words]); };
+    (c.answers || []).forEach(function (a) { if (T_RISK_ANS[a.code]) risk(T_RISK_ANS[a.code], T_RISK_WORDS[a.code]); });
+    (c.taps || []).forEach(function (t) { if (T_RISK_TAP[t.tap]) risk(T_RISK_TAP[t.tap], T_RISK_WORDS[t.tap]); });
+    if (c.review && (c.review.words || []).some(function (x) { return /been in touch/i.test(x.q) && /^yes/i.test(x.a); })) risk(45, T_RISK_WORDS.contact_yes);
+    Object.keys(T_RISK_INS).forEach(function (k) { if (keys[k]) risk(T_RISK_INS[k][0] + (k === 'due' && keys[k] === 'hot' ? 10 : 0), T_RISK_INS[k][1]); });
+    r = Math.min(100, r);
+    var said = {};
+    rw.sort(function (a, b) { return b[0] - a[0]; }).forEach(function (x) { if (x[1] && !said[x[1]] && Object.keys(said).length < 2) { said[x[1]] = 1; why.push(x[1]); } });
+    /* value: the premium a year and the life cover against everyone's, the policies in force, the family on our books */
+    var v = 0;
+    if (s) {
+      v = Math.round(0.55 * pct(prems, s.prem) + 0.30 * pct(covers, s.cover) + 0.15 * Math.min(100, (Number(s.live) || 0) * 25));
+      if (v >= 75) why.push('among the most held with us');
+    }
+    var fam = c.hh && households[c.hh] ? households[c.hh].length : 1;
+    if (fam > 1) { v = Math.min(100, v + Math.min(15, (fam - 1) * 5)); if (fam >= 3) why.push('a household of ' + fam + ' on our books'); }
+    /* opportunity: what the record itself shows */
+    var op = [];
+    if (s && Number(s.mat) > 0) op.push('mature');
+    ['lapsed', 'ends', 'nolife', 'hhgap', 'noci', 'estate', 'birthday'].forEach(function (k) { if (keys[k]) op.push(k); });
+    if (money && keys.income === 'warm') op.push('income');
+    if (money && s && Number(s.fund) >= 25000) op.push('fund');
+    if (c.profile && c.profile.age >= 65) op = op.filter(function (k) { return k !== 'nolife' && k !== 'noci'; });   // past the age a new life plan is the talk
+    var o = Math.min(100, op.reduce(function (t, k) { return t + T_OPPS[k][0]; }, 0));
+    if (op.length) why.push(T_OPPS[op.sort(function (a, b) { return T_OPPS[b][0] - T_OPPS[a][0]; })[0]][1]);
+    var t = Math.round((T_MATCH.W.u * u + T_MATCH.W.r * r + T_MATCH.W.v * v + T_MATCH.W.o * o) / 100);
+    c.w = [t, u, r, v, o];
+    if (why.length) c.why = why.slice(0, 4);
+    if (op.length) c.op = op;
+    /* the best fits, for a client nobody is named on: the nearest agents with room, nearer counting more than lighter */
+    if (!c.assigned && pl && placed.length && c.state !== 'dnc' && c.state !== 'done') {
+      c.mt = placed.map(function (a) {
+        var k = tNameKey_(a.name), km = tKm_(pl, { lat: places[a.pl][0], lng: places[a.pl][1] }), busy = (load[k] + sug[k]) / cap;
+        var fit = Math.round(100 * (0.65 * Math.max(0, 1 - km / 40) + 0.35 * Math.max(0, 1 - busy)));
+        return [idx[k], Math.round(km * 10) / 10, fit];
+      }).sort(function (a, b) { return b[2] - a[2] || a[1] - b[1]; }).slice(0, T_MATCH.TOP);
+    }
+  });
+  return { places: places, agents: agents, w: T_MATCH.W, cap: cap, mapped: mapped, rows: Object.keys(seen).length, placed: placed.length,
+    nearKm: T_MATCH.NEAR_KM, sf: { linked: typeof svcSfReady_ === 'function' && svcSfReady_(), write: T_MATCH.SF_WRITE } };
+}
+
+/** A naming on the board, written to Salesforce the way the branch names an agent there (1 October 2026): Assigned Agent,
+ *  Date Assigned to Agent and Campaign on each of the client's policies in force (the first on file when none is), so the
+ *  board and Salesforce say the same and a report on Date Assigned sees every naming. Skipped, and said, until
+ *  Salesforce is linked in this project. Never throws: { on, ok, policies, clients, why }. */
+var T_SF_LIVE = /premium paying|paid up|waiver|vested|reduced paid|extended term/i;
+function tSfAssignWrite_(done, agent, now) {
+  if (!T_MATCH.SF_WRITE) return { on: false, why: 'switched off' };
+  if (!done.length || typeof svcSfReady_ !== 'function' || !svcSfReady_()) return { on: false, why: 'Salesforce is not linked in this project yet' };
+  try {
+    var who = tSfAgents_().by[tNameKey_(agent.name)] || tSfAgents_(true).by[tNameKey_(agent.name)];
+    if (!who || !who.id) return { on: true, ok: false, why: 'Salesforce has no agent record named ' + agent.name };
+    var ha = null; try { ha = tHaRead_(); } catch (e) { ha = null; }
+    var want = {}, all = [];
+    done.forEach(function (c) { var p = tClientPols_(c.token, c.no, ha); want[c.token] = p; p.forEach(function (x) { if (all.indexOf(x) < 0) all.push(x); }); });
+    if (!all.length) return { on: true, ok: false, why: 'no policy numbers on file for ' + (done.length === 1 ? 'this client' : 'these clients') };
+    var recs = {};
+    for (var i = 0; i < all.length; i += 100) {
+      svcSfQuery_('SELECT Id, POLICY__c, Policy_Status_Description__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' +
+        all.slice(i, i + 100).map(function (p) { return "'" + svcSoqlLit_(p) + "'"; }).join(',') + ')').forEach(function (r) { recs[tPolNo_(r.POLICY__c)] = r; });
+    }
+    var day = Utilities.formatDate(now, tTz_(), 'yyyy-MM-dd'), upd = [], clients = 0, none = 0;
+    done.forEach(function (c) {
+      var mine = want[c.token].map(function (p) { return recs[p]; }).filter(Boolean);
+      if (!mine.length) { none++; return; }
+      var live = mine.filter(function (r) { return T_SF_LIVE.test(r.Policy_Status_Description__c || ''); });
+      (live.length ? live : mine.slice(0, 1)).forEach(function (r) {
+        upd.push({ attributes: { type: 'CLIENT_PORTFOLIO__c' }, id: r.Id, Assigned_Agent__c: who.id, Date_Assigned_to_Agent__c: day, Campaign__c: T_MATCH.CAMPAIGN });
+      });
+      clients++;
+    });
+    var ok = 0, bad = [];
+    for (var j = 0; j < upd.length; j += 200) {
+      var res = tSfSend_('patch', '/composite/sobjects', { allOrNone: false, records: upd.slice(j, j + 200) });
+      (Array.isArray(res) ? res : []).forEach(function (x) { if (x && x.success) ok++; else bad.push(x && x.errors && x.errors[0] ? x.errors[0].message : 'refused'); });
+    }
+    return { on: true, ok: !bad.length && !none, policies: ok, clients: clients, none: none,
+      why: (bad.length ? bad.length + ' polic' + (bad.length === 1 ? 'y' : 'ies') + ' refused: ' + bad[0] : '') + (none ? (bad.length ? '; ' : '') + none + ' client' + (none === 1 ? '' : 's') + ' not found in Salesforce' : '') };
+  } catch (e) { return { on: true, ok: false, why: String(e && e.message ? e.message : e).slice(0, 200) }; }
+}
+
 /** The roster agent a name means: the full name, or a first name that only one agent on the roster carries. */
 function tRosterMatch_(roster, name) {
   var s = String(name || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -4103,15 +5225,24 @@ function tRosterMatch_(roster, name) {
   var first = s.split(' ')[0], hit = roster.filter(function (a) { return a.name.toLowerCase().split(/\s+/)[0] === first; });
   return hit.length === 1 ? hit[0] : null;
 }
-/** Puts c.sug = { agent, why, src } (src: family, plan, load; or agent '' with `planned` when the plan names someone not on
- *  the roster) on every row nobody is named on. Returns the counts for the page: by agent, by source, and off the roster. */
+/** Puts c.sug = { agent, why, src } (src: family, plan, near, load; or agent '' with `planned` when the plan names someone
+ *  not on the roster) on every row nobody is named on: the family's agent, then the 24 September plan, then (8 October
+ *  2026) the nearest agent with room on their list within T_MATCH.NEAR_KM, then the lightest list. A household keeps one
+ *  agent whichever step chose them. Returns the counts for the page: by agent, by source, and off the roster. */
 function tSuggest_(rows, ctx) {
-  var roster = ctx.roster || [], plan = ctx.plan || { by: {} }, load = {}, out = { byAgent: {}, src: { family: 0, plan: 0, load: 0 }, off: 0, offNames: {}, plan: !!plan.ready };
+  var roster = ctx.roster || [], plan = ctx.plan || { by: {} }, load = {}, out = { byAgent: {}, src: { family: 0, plan: 0, near: 0, load: 0 }, off: 0, offNames: {}, plan: !!plan.ready };
   if (!roster.length) return out;
   var first = function (n) { return String(n || '').split(/\s+/)[0]; };
   roster.forEach(function (a) { load[a.name] = 0; });
   (ctx.clients || []).forEach(function (c) { var a = c.assigned ? tRosterMatch_(roster, c.assigned) : null; if (a) load[a.name]++; });
   var planOf = function (no) { return plan.by[tCno_(no)] || null; };
+  /* the agents with a base (tAgentPlaces_), and the most a list may hold for the nearest step: 1.2 times the even share of
+     everyone named and everyone to suggest */
+  var ap = ctx.agentPlaces || {}, placed = roster.map(function (a) { var x = ap[tNameKey_(a.name)]; return x && x.pl ? { name: a.name, pl: x.pl } : null; }).filter(Boolean);
+  var todo = rows.filter(function (c) { return c && !c.assigned && !c.sug; }).length, named = 0;
+  Object.keys(load).forEach(function (k) { named += load[k]; });
+  var cap = Math.max(1, Math.ceil(T_MATCH.ROOM * (named + todo) / Math.max(1, roster.length)));
+  out.near = { placed: placed.length, cap: cap };
   /* the family's agent, where someone in it is named already; and the household's plan agent: its head's, else most members' */
   var famAgent = {}, famPlan = {}, hhPick = {};
   Object.keys(ctx.households || {}).forEach(function (h) {
@@ -4150,10 +5281,24 @@ function tSuggest_(rows, ctx) {
       put(c, { agent: a.name, why: bits.join(' · '), src: 'plan' });
       return;
     }
-    if (h && hhPick[h]) { put(c, { agent: hhPick[h], why: 'with the family: the lightest list when the first of them was suggested', src: 'load' }); return; }
+    if (h && hhPick[h]) { put(c, { agent: hhPick[h].agent, why: 'with the family: ' + hhPick[h].why, src: hhPick[h].src }); return; }
+    /* the nearest agent with room (8 October 2026: "persons or clients that live close by our agents"): the town only */
+    var pl = placed.length ? tPlaceOf_(tRowTown_(c)) : null, near = null;
+    if (pl) placed.forEach(function (x) {
+      if (load[x.name] >= cap) return;
+      var km = tKm_(pl, x.pl);
+      if (km > T_MATCH.NEAR_KM) return;
+      if (!near || km < near.km - 0.5 || (Math.abs(km - near.km) <= 0.5 && load[x.name] < load[near.name])) near = { name: x.name, km: km, at: x.pl.k };
+    });
+    if (near) {
+      var nw = 'nearest with room: ' + first(near.name) + ' is based in ' + tPlaceLabel_(near.at) + (near.km < 1 ? ', the same town' : ', ' + Math.round(near.km) + ' km from ' + tPlaceLabel_(pl.k));
+      put(c, { agent: near.name, why: nw, src: 'near' });
+      if (h) hhPick[h] = { agent: near.name, why: 'the nearest with room when the first of them was suggested', src: 'near' };
+      return;
+    }
     var light = roster.slice().sort(function (x, y) { return (load[x.name] - load[y.name]) || x.name.localeCompare(y.name); })[0];
     put(c, { agent: light.name, why: 'the lightest list: ' + load[light.name] + ' named or suggested so far', src: 'load' });
-    if (h) hhPick[h] = light.name;
+    if (h) hhPick[h] = { agent: light.name, why: 'the lightest list when the first of them was suggested', src: 'load' };
   });
   return out;
 }
@@ -4265,6 +5410,22 @@ function transitionAssign_(p) {
     b.clients.forEach(function (c) { map[c.token] = c; });
     b.silent.forEach(function (c) { map[c.token] = c; });
     (b.family || []).forEach(function (c) { map[c.token] = c; });   // a family member off the board, named with the household
+    /* a client of the books the board does not show (a letter held or not sent yet), named from the Agents view's
+       households (14 October 2026), so a family is named as one whatever its letters did. The branch only: staff name
+       the clients on their own board. Never a departed agent's own policy or household, staff, a death claim or a Test row. */
+    if (!byStaff) {
+      var sendRows = null;
+      tokens.forEach(function (tok) {
+        if (map[tok]) return;
+        if (!sendRows) { sendRows = {}; tRead_().rows.forEach(function (r) { var t = tText_(r.Token); if (t) sendRows[t] = r; }); }
+        var r = sendRows[tok];
+        if (!r || tYes_(r.Test) || /^test:/i.test(tText_(r.Agent)) || /^test\b/i.test(tText_(r.Client)) || T_NOT_BOOK.test(tText_(r.Exclude))) return;
+        map[tok] = { token: tok, client: tText_(r.Client) || tText_(r['First name']) || 'a client', firstName: tText_(r['First name']), no: tText_(r['Client number']),
+          seg: tText_(r.Segment).toUpperCase(), book: tText_(r.Agent), email: tText_(r.Email), phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '',
+          sent: '', held: tText_(r.Exclude) || 'not written to yet', state: 'held', rows: [], answers: [], taps: [], notes: [], fileNotes: [], needs: [], markers: [],
+          canTell: false, tellWhy: 'its letter is held or not sent' };
+      });
+    }
     var sh = ss_().getSheetByName(SVC.RESP_SHEET);
     if (!sh && typeof responseSheet_ === 'function') sh = responseSheet_();
     if (!sh) return { ok: false, error: 'The Client Responses tab is missing.' };
@@ -4272,7 +5433,7 @@ function transitionAssign_(p) {
     /* who named, outside the stamp so the stamp's readers (the claims, the history) still read the agent alone; it shows
        on the card and in the brief as the file note "assigned 5 Oct · Name: named by …" */
     var marker = '[assigned ' + stamp + ' · ' + agent.name + ']' + (byStaff ? ' named by ' + byStaff : '') + (extra ? (byStaff ? ': ' : ' ') + extra : '');
-    var done = [], missing = [], written = 0, onBoard = {};
+    var done = [], missing = [], written = 0, onBoard = {}, logged = [];
     if (byStaff) b.clients.forEach(function (c) { onBoard[c.token] = true; });   // staff name only the clients on their own board
     tokens.forEach(function (tok) {
       var c = map[tok];
@@ -4291,9 +5452,14 @@ function transitionAssign_(p) {
         c.rows = [{ n: sh.getLastRow(), type: 'assign' }];
         written++;
       }
+      logged.push({ tok: tok, client: c.client, from: c.assigned || '', to: agent.name, on: now, source: 'board', by: byStaff || (w.me && w.me.name) || 'the branch' });
       c.assigned = agent.name; c.assignedOn = stamp;
       done.push(c);
     });
+    tAlogAppend_(logged);   // who it was named to before, and by whom (14 October 2026)
+    /* and in Salesforce, the way the branch names an agent there (8 October 2026: "if that is updated there, it updates on
+       the Salesforce backend"): skipped, and said, until Salesforce is linked in this project */
+    var sf = tSfAssignWrite_(done, agent, now);
     var briefed = false, introduced = 0, notAnswered = 0, introHeld = 0, warnings = [];
     /* client e-mail on hold (7 October 2026: an introduction went to a client while an agent was being trained on the
        board): the agent is named and briefed, and the client is sent nothing and nothing is marked. An introduction
@@ -4321,8 +5487,9 @@ function transitionAssign_(p) {
     }
     log_('transition', 'assign', agent.name + ' · ' + done.length + ' client' + (done.length === 1 ? '' : 's') + (byStaff ? ' · named by ' + byStaff : '') +
          (briefed ? ' · briefed' : '') + (introduced ? ' · ' + introduced + ' introduced' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held: client e-mail on hold' : '') +
-         (missing.length ? ' · ' + missing.length + ' unknown' : ''));
-    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, introHeld: introHeld, notAnswered: notAnswered, missing: missing, warnings: warnings };
+         (missing.length ? ' · ' + missing.length + ' unknown' : '') +
+         (sf.on ? ' · Salesforce: ' + (sf.policies ? sf.policies + ' polic' + (sf.policies === 1 ? 'y' : 'ies') + ' updated' : 'not updated') + (sf.why ? ' (' + sf.why + ')' : '') : ''));
+    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, introHeld: introHeld, notAnswered: notAnswered, missing: missing, warnings: warnings, sf: sf };
   } finally { lock.releaseLock(); }
 }
 
@@ -4375,12 +5542,21 @@ function transitionUpdate_(p) {
     if (!any.length) {
       /* a client on the call list with nothing on Client Responses yet (7 October 2026): the try needs a row to sit on, a
          /call row (tCallRow_), the branch's record, which nothing ever reads as the client's answer. The branch and staff
-         work the call list; an agent's clients always have a row already */
-      if (!tCanAssign_(w)) return { ok: false, error: 'No rows for that client.' };
+         work the call list. An agent or a unit manager may make one too, for a client Salesforce named to them (the Household
+         Assignments tab): on 13 October ten of the fifteen clients named in Salesforce had never answered a letter, so they
+         had no row, and the agent's Log call was refused with "No rows for that client" */
       var srow = tRowByToken_(tok);
       if (!srow || tYes_(srow.Test)) return { ok: false, error: 'That client is not on the send list.' };
+      if (!tCanAssign_(w)) {
+        var mine = false;
+        try {
+          var hx0 = tHaRead_(), onMine = w.role === 'unit' ? tOnTeam_(w.team) : tOnTeam_([w.me && w.me.name]);
+          if (hx0) hx0.rows.forEach(function (r) { if (r.token === tok && r.agent && onMine(r.agent)) mine = true; });
+        } catch (e) {}
+        if (!mine) return { ok: false, refused: true, error: w.role === 'unit' ? 'That client is not on your team\'s list.' : 'That client is not on your list.' };
+      }
       sh.appendRow([new Date(), tok, tText_(srow.Segment).toUpperCase(), 'call', 'a call from the board', '/call',
-        w.role === 'staff' && w.me ? 'staff: ' + w.me.name : 'branch', 'Open', '', '', '']);
+        w.role === 'branch' || !w.me ? 'branch' : (w.role === 'staff' ? 'staff: ' : 'agent: ') + w.me.name, 'Open', '', '', '']);
       any = [sh.getLastRow()]; targets = any.slice();
     }
     /* the name on the rows, or the one Salesforce gave (the Household Assignments tab): the board shows the client on that
@@ -5196,11 +6372,13 @@ function tBookFor_(cno, withList) {
   var b = tBook_(), recs = b.by[tCno_(cno)];
   if (!recs || !recs.length) return null;
   var codes = tPlanCodes_(), P = tProfiles_(), ended = {}, list = [];
-  var s = { live: 0, due: 0, lapsed: 0, pending: 0, ended: 0, prem: 0, cover: 0, ci: 0, acc: 0, unconf: 0, since: '', years: 0, fund: 0, est: 0 };
+  var s = { live: 0, due: 0, lapsed: 0, pending: 0, ended: 0, prem: 0, cover: 0, ci: 0, acc: 0, unconf: 0, since: '', years: 0, fund: 0, est: 0, mat: 0, matOn: '' };
   recs.forEach(function (r) {
     var pc = codes[r.code] || { name: '', cls: '', conf: false }, live = tBookLive_(r.st), pf = P.by[r.no] || null;
     var cv = tCoverOf_(r, pc, pf), life = live ? cv.life : 0;
     if (live) { s.live++; if (r.st === 'overdue') s.due++; s.ci += cv.ci; s.acc += cv.acc; s.fund += r.fund || 0; }
+    /* a policy in force that matures within the year: what happens to the money next is a conversation (8 October 2026) */
+    if (live && r.matures) { var md = tDaysBetween_(b.today, r.matures); if (md > 0 && md <= 365) { s.mat++; if (!s.matOn || r.matures < s.matOn) s.matOn = r.matures; } }
     if (r.yr && r.yrSrc !== 'in-force book') s.est++;   // a premium a year read off the figures, not recorded (T_BOOK)
     else if (r.st === 'lapsed') s.lapsed++;
     else if (r.st === 'pending') s.pending++;
@@ -5236,7 +6414,7 @@ function tBookFor_(cno, withList) {
 function tBookBrief_(cno, more) {
   var p = tBookFor_(cno, false);
   if (!p) return null;
-  var o = { prem: p.sum.prem, cover: p.sum.cover, live: p.sum.live };
+  var o = { prem: p.sum.prem, cover: p.sum.cover, live: p.sum.live, mat: p.sum.mat || 0, fund: p.sum.fund || 0 };
   if (more) { o.ci = p.sum.ci; o.lapsed = p.sum.lapsed; o.due = p.sum.due; o.unconf = p.sum.unconf; }
   return { sum: o };
 }
@@ -5256,7 +6434,7 @@ function tPolNoMoney_(pol) {
   if (!pol || !pol.sum) return null;
   var s = pol.sum;
   return { noMoney: true,
-    sum: { live: s.live || 0, due: s.due || 0, lapsed: s.lapsed || 0, pending: s.pending || 0, ended: s.ended || 0, since: s.since || '', years: s.years || 0 },
+    sum: { live: s.live || 0, due: s.due || 0, lapsed: s.lapsed || 0, pending: s.pending || 0, ended: s.ended || 0, since: s.since || '', years: s.years || 0, mat: s.mat || 0, matOn: s.matOn || '' },
     list: (pol.list || []).map(function (x) {
       return { no: x.no, code: x.code, name: x.name, st: x.st, desc: x.desc, od: x.od, iss: x.iss, paid: x.paid, insured: x.insured, matures: x.matures || '' };
     }),
@@ -5715,7 +6893,7 @@ function tHaSync_(force) {
       var k = norm(r.client); if (k) (byName[k] = byName[k] || []).push(r);
     });
     sf.forEach(function (rec) {
-      var agent = rec.Assigned_Agent__r && rec.Assigned_Agent__r.Name ? String(rec.Assigned_Agent__r.Name).trim() : '';
+      var agent = rec.Assigned_Agent__r && rec.Assigned_Agent__r.Name ? String(rec.Assigned_Agent__r.Name).replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim() : '';
       var day = tDay_(rec.Date_Assigned_to_Agent__c);
       if (!agent || !day) return;
       var hit = byPol[tPolNo_(rec.POLICY__c)] || byCno[tCno_(rec.Client_Number__c)];
@@ -5745,7 +6923,7 @@ function tHaSync_(force) {
     if (!w && r.source === 'Salesforce' && !sf) return;            // Salesforce did not answer this time: keep what it said last
     var next = w || { agent: '', day: '', fb: '', source: '' };
     if (next.agent === r.agent && next.source === r.source && next.day === (tDay_(r.date) || '') && (next.fb || '') === r.fb) return;
-    edits.push({ rn: r.rn, token: r.token, w: next });
+    edits.push({ rn: r.rn, token: r.token, w: next, from: r.agent, client: r.client });
   });
   if (edits.length) {
     /* the tab may have been sorted since it was read: every edited row must still carry its token */
@@ -5764,6 +6942,10 @@ function tHaSync_(force) {
       Object.keys(block).forEach(function (c) { ha.sh.getRange(2, Number(c) + 1, n, 1).setValues(block[c]); });
     }
   }
+  /* a name Salesforce gave or changed goes on the Assignment Log, since the tab keeps only the newest (the board's own
+     namings are logged by transitionAssign_ as they are made) */
+  tAlogAppend_(edits.filter(function (e) { return e.w.source === 'Salesforce' && e.w.agent && tNameKey_(e.w.agent) !== tNameKey_(e.from); })
+    .map(function (e) { return { tok: e.token, client: e.client, from: e.from, to: e.w.agent, on: e.w.day, source: 'Salesforce', by: 'Salesforce' }; }));
   props.setProperty(T_HA.PROP, String(Date.now()));
   props.setProperty('ha_via', JSON.stringify({ at: new Date().toISOString(), via: via }));
   var named = 0;
@@ -5869,6 +7051,318 @@ function tHaWall_(byTok, resp, tz, now) {
   out.synced = last && last.at ? Utilities.formatDate(new Date(last.at), tz, 'd MMM HH:mm') : '';
   out.via = last && last.via ? last.via : 'the tab as imported';
   return out;
+}
+
+/* ── who a client has been named to, and when ───────────────────────────── */
+/* 14 October 2026: "staff can also reassign the orphans as well as a manager with the history of when it was assigned". A
+   naming on the board leaves its stamp on the client's rows ([assigned 9 Oct · Agent], "named by" after it when staff
+   named), and the Household Assignments tab holds Salesforce's current name and date. A name Salesforce changes later
+   overwrites the tab, so the Assignment Log keeps every change: the board's from transitionAssign_, Salesforce's from
+   tHaSync_. tAssignHist_ joins the three, oldest first, one line an agent and a day. */
+var T_ALOG = { SHEET: 'Assignment Log', HEAD: ['When', 'Token', 'Client', 'From', 'To', 'Named on', 'Source', 'By'] };
+/** Appends namings to the Assignment Log, made the first time: [{ tok, client, from, to, on, source, by }]. Never throws. */
+function tAlogAppend_(list) {
+  if (!list || !list.length) return;
+  try {
+    var ss = ss_(), sh = ss.getSheetByName(T_ALOG.SHEET);
+    if (!sh) {
+      sh = ss.insertSheet(T_ALOG.SHEET);
+      sh.getRange(1, 1, 1, T_ALOG.HEAD.length).setValues([T_ALOG.HEAD]);
+      try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_ALOG.HEAD.length).setFontWeight('bold'); } catch (e) {}
+    }
+    var now = new Date();
+    var rows = list.map(function (x) { return [now, x.tok, x.client || '', x.from || '', x.to || '', x.on ? (x.on instanceof Date ? x.on : tHaDate_(x.on) || '') : now, x.source || '', x.by || '']; });
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, T_ALOG.HEAD.length).setValues(rows);
+  } catch (e) { log_('transition', 'assignment-log-failed', String(e && e.message ? e.message : e)); }
+}
+/** The Assignment Log by token: { tok: [{ on: Date, agent, via, by }] }. Empty when there is no log yet. */
+function tAlogRead_() {
+  var by = {};
+  try {
+    var t = tSheetRows_(T_ALOG.SHEET), ix = {};
+    t.head.forEach(function (h, i) { ix[String(h).trim()] = i; });
+    if (ix.Token === undefined || ix.To === undefined) return by;
+    t.rows.forEach(function (v) {
+      var tok = String(v[ix.Token] || '').trim(), to = String(v[ix.To] || '').trim();
+      if (!tok || !to) return;
+      var on = ix['Named on'] !== undefined ? (tHaDate_(v[ix['Named on']]) || (v[ix.When] instanceof Date ? v[ix.When] : null)) : null;
+      (by[tok] = by[tok] || []).push({ on: on, agent: to, via: String(v[ix.Source] || ''), by: String(v[ix.By] || '') });
+    });
+  } catch (e) {}
+  return by;
+}
+/** Everyone a client has been named to, oldest first: [{ on: Date|null, agent, via: 'board'|'Salesforce'|…, by }]. c is the
+ *  board's client (its stamps and file notes), hr their Household Assignments row, log the Assignment Log's entries for
+ *  them, canon the roster's spelling of a name. The same agent on the same day is one line. */
+function tAssignHist_(c, hr, log, canon, now) {
+  var out = [], byWho = {};
+  ((c && c.fileNotes) || []).forEach(function (f) {
+    var m = /^assigned (\d{1,2} [A-Za-z]{3}) · ([^:]+): named by (.+?)(?::|$)/.exec(f);
+    if (m) byWho[m[1] + '|' + tNameKey_(m[2])] = m[3].trim();
+  });
+  ((c && c.markers) || []).forEach(function (mk) {
+    var m = /^\[assigned (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/.exec(mk);
+    if (m) out.push({ on: tAgvDay_(m[1], now), agent: canon(m[2].trim()), via: 'board', by: byWho[m[1] + '|' + tNameKey_(m[2])] || '' });
+  });
+  if (hr && hr.agent && /salesforce/i.test(hr.source)) out.push({ on: tHaDate_(hr.date), agent: canon(hr.agent), via: 'Salesforce', by: '' });
+  (log || []).forEach(function (x) { out.push({ on: x.on, agent: canon(x.agent), via: /salesforce/i.test(x.via) ? 'Salesforce' : 'board', by: x.by }); });
+  var day = function (x) { return x.on ? x.on.getTime() : 0; };
+  out.sort(function (a, b) { return day(a) - day(b) || (a.via === 'board' ? -1 : 1); });
+  var seen = {}, list = [];
+  out.forEach(function (x) {
+    if (!x.agent) return;
+    var k = tNameKey_(x.agent) + '|' + (x.on ? Math.floor(day(x) / 86400000) : '');
+    if (seen[k]) { if (x.by && !seen[k].by) seen[k].by = x.by; return; }
+    seen[k] = x;
+    if (list.length && tNameKey_(list[list.length - 1].agent) === tNameKey_(x.agent)) return;   // named again to the same agent
+    list.push(x);
+  });
+  return list;
+}
+
+/* ── the Agents view: the branch manager's picture of the naming ────────── */
+/* 14 October 2026: "can I log in to see the branch manager dashboard and how the agents assigned are going and how they
+   are making progress and the unassigned, a lot of data is needed especially batching in households". The board with
+   agents=1, so Service.gs needs no paste. Every household of the books comes from the Household Assignments tab. Each
+   member shows where they stand and, once named, how far their agent has got. Each agent has a line of progress. The
+   households nobody is named on come in batches, most pressing first, each with the one agent it should go to. A unit
+   manager gets his team's agents and their households, never the unnamed. It is read when the tab opens, not on the
+   two-minute refresh. */
+var T_AGV = { QUIET: 2, DAYS: 30, TXT: 160, URGENT: 80 };
+var T_AGV_OUT = /^\[(called|met|no answer|declined|closed|open) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/;
+/** A stamp's "13 Oct" as a Date, in the year it most recently was: a stamp carries no year. */
+function tAgvDay_(s, now) {
+  var m = /^(\d{1,2}) ([A-Za-z]{3})/.exec(String(s || ''));
+  var mi = m ? T_MON.indexOf(m[2].charAt(0).toUpperCase() + m[2].slice(1).toLowerCase()) : -1;
+  if (mi < 0) return null;
+  var d = new Date(now.getFullYear(), mi, Number(m[1]));
+  if (d.getTime() > now.getTime() + 86400000) d = new Date(now.getFullYear() - 1, mi, Number(m[1]));
+  return d;
+}
+/** Why a send row is held, in a few words for the household list. */
+function tAgvHeld_(ex) {
+  var s = tText_(ex);
+  return /manager'?s hold/i.test(s) ? 'held by the branch' : /^bounced/i.test(s) ? 'letter bounced' : /no e-?mail/i.test(s) ? 'no e-mail'
+    : /e-mail by phone/i.test(s) ? 'e-mail taken by phone, waiting for the go' : /^check/i.test(s) ? 'held to check' : 'held';
+}
+function tAgentsView_(w) {
+  if (w.role !== 'branch' && w.role !== 'unit' && w.role !== 'staff') return { on: false, why: 'The Agents view is for the branch, the unit managers and Client Support.' };
+  var staff = w.role === 'staff';
+  var ha = tHaRead_();
+  if (!ha) return { on: false, why: 'The Household Assignments tab is not in the sheet yet. The households and the names from Salesforce come from it.' };
+  var tz = tTz_(), now = new Date(), day = 86400000;
+  var fmt = function (d) { return d ? Utilities.formatDate(d, tz, 'd MMM') : ''; };
+  var ymd = function (d) { return d ? Utilities.formatDate(d, tz, 'yyyy-MM-dd') : ''; };
+  var b = tBoard_({ ok: true, role: 'branch', me: null }, true, true), map = {};
+  b.clients.concat(b.silent, b.family || []).forEach(function (c) { if (!map[c.token]) map[c.token] = c; });
+  var send = {};
+  tRead_().rows.forEach(function (r) { var t = tText_(r.Token); if (t) send[t] = r; });
+  var roster = tRoster_(), byKey = {};
+  roster.forEach(function (a) { byKey[tNameKey_(a.name)] = a; });
+  /* one spelling for every agent: the Skill Bank's, whatever Salesforce or the tab wrote */
+  var canon = function (n) {
+    if (!n) return '';
+    var a = byKey[tNameKey_(n)] || tRosterMatch_(roster, n);
+    return a ? a.name : String(n).replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  };
+  var team = w.role === 'unit' ? tOnTeam_(w.team) : null;
+  var cm = {};
+  try { cm = tCommentsAll_(); } catch (e) {}
+  var claimBy = {};
+  if (!staff) ((b.claims && b.claims.rows) || []).forEach(function (v) { if (v.token) claimBy[v.token] = v.state; });   // staff see no claims
+  /* staff name only the clients on their own board (5 October 2026): the answered, the reached, the called and the call list */
+  var onStaffBoard = {};
+  b.clients.forEach(function (c) { onStaffBoard[c.token] = true; });
+  var alog = tAlogRead_();
+  var unitOf = {};
+  tTeam_().people.forEach(function (p) { if (p.name) unitOf[tNameKey_(p.name)] = p.unit || (p.role === 'um' ? p.name : ''); });
+
+  /* each member: where the client stands, and once named, how far the agent has got */
+  var H = {}, order = [], pseudo = [];
+  ha.rows.forEach(function (hr) {
+    var tok = hr.token, r = send[tok];
+    if (!tok || !r) return;                                                     // left the send list
+    if (tYes_(r.Test) || /^test:/i.test(tText_(r.Agent)) || /^test\b/i.test(tText_(r.Client))) return;
+    if (T_NOT_BOOK.test(tText_(r.Exclude))) return;                            // not a client of the books
+    var c = map[tok] || null, ex = tText_(r.Exclude);
+    var cs = c && tHasAnswered_(c) ? (c.actionable ? 'asked' : 'noted')
+      : c && /^(reached|called|tocall|dnc)$/.test(c.state) ? c.state
+      : tHeld_(r.Exclude) ? 'held' : (r['Sent at'] ? 'silent' : 'unsent');
+    var o = { t: tok, n: tText_(r.Client) || hr.client || 'a client', no: tText_(r['Client number']), s: tText_(r.Segment).toUpperCase(), b: tText_(r.Agent), cs: cs };
+    if (cs === 'held') o.hw = tAgvHeld_(ex);
+    if (c && tHasAnswered_(c)) {
+      /* what mattered most, in the wall's words (T_HA_SAID), else the letter's own */
+      var best = null;
+      (c.answers || []).forEach(function (a) { var p = T_PRIORITY[a.code] || 0; if (!best || p > best.p) best = { p: p, k: a.code, t: a.a }; });
+      (c.taps || []).forEach(function (x) { var p = T_PRIORITY[x.tap] || 0; if (!best || p > best.p) best = { p: p, k: x.tap, t: x.label }; });
+      var said = best ? (T_HA_SAID[best.k] || best.t) : (c.review ? 'filed a review' : '');
+      if (said) o.ask = String(said).slice(0, 90);
+      if (c.first) o.ad = String(c.first).replace(/ \d\d:\d\d$/, '');
+    }
+    if (c && c.score) o.pr = c.score;
+    if (c) { var tw = tRowTown_(c); if (tw) o.tw = tw; var ag = c.profile && c.profile.age !== undefined ? c.profile.age : c.age; if (ag !== undefined && ag !== null && ag !== '') o.age = ag; }
+    if (c && c.back && c.back.open) o.bk = c.back.kind;
+    if (c && c.late) o.late = 1;
+    if (claimBy[tok]) o.cl = claimBy[tok];
+    var fn = c && c.fileNotes && c.fileNotes.length ? c.fileNotes[c.fileNotes.length - 1] : '';
+    if (fn) o.ln = String(fn).slice(0, T_AGV.TXT);
+    /* the agent: the board's (which already reads the tab's newer Salesforce name), else the tab's */
+    var agent = canon((c && c.assigned) || hr.agent);
+    if (agent) {
+      var fromTab = hr.agent && tNameKey_(canon(hr.agent)) === tNameKey_(agent);
+      var on = fromTab ? tHaDate_(hr.date) : null;
+      if (!on && c && c.assignedOn) on = tAgvDay_(c.assignedOn, now);
+      var isA = function (n) { return !!n && tNameKey_(canon(n)) === tNameKey_(agent); };
+      var outs = c ? (c.markers || []).map(function (mk) { return T_AGV_OUT.exec(mk); }).filter(Boolean) : [];
+      var mine = outs.filter(function (m) { return isA(m[3]); });
+      var after = function (m) { var d = tAgvDay_(m[2], now); return !on || (d && d.getTime() >= on.getTime()); };
+      var cms = (cm[tok] || []).filter(function (x) { return isA(x.by); });
+      var fb = fromTab ? hr.fb : '';
+      /* completed: closed or declined, by the agent or by anyone after the naming; met, the same; spoken (a call, a comment,
+         or the agent's feedback in Salesforce); tried (no answer only); or nothing yet */
+      var done = outs.some(function (m) { return /^(closed|declined)$/.test(m[1]) && (isA(m[3]) || after(m)); });
+      var met = mine.some(function (m) { return m[1] === 'met'; }) || outs.some(function (m) { return m[1] === 'met' && after(m); });
+      var spoke = mine.some(function (m) { return /^(called|met|declined)$/.test(m[1]); }) || !!fb || cms.length > 0;
+      var g = done ? 'done' : met ? 'met' : spoke ? 'spoken' : mine.length ? 'tried' : 'named';
+      var acts = mine.map(function (m) { return tAgvDay_(m[2], now); }).concat(cms.map(function (x) { return x.at; })).filter(Boolean)
+        .sort(function (x, y) { return x.getTime() - y.getTime(); });
+      o.a = agent; o.g = g;
+      if (on) { o.on = fmt(on); o.od = ymd(on); o.da = Math.max(0, Math.floor((now.getTime() - on.getTime()) / day)); }
+      /* conversations since the naming: a call marked Called, Met or Declined, by the agent or by anyone after the naming,
+         one a day; the agent's feedback in Salesforce is one when nothing is marked. Tries: a no answer the agent marked. */
+      var convDays = {}, tryDays = {};
+      outs.forEach(function (m) {
+        if (!(isA(m[3]) || after(m))) return;
+        if (/^(called|met|declined)$/.test(m[1])) convDays[m[2]] = 1; else if (m[1] === 'no answer') tryDays[m[2]] = 1;
+      });
+      o.cv = Object.keys(convDays).length || (fb ? 1 : 0);
+      if (Object.keys(tryDays).length) o.tr = Object.keys(tryDays).length;
+      var metOn = outs.filter(function (m) { return m[1] === 'met' && (isA(m[3]) || after(m)); }).map(function (m) { return tAgvDay_(m[2], now); }).filter(Boolean)
+        .sort(function (x, y) { return x.getTime() - y.getTime(); })[0];
+      if (metOn && on) o.dm = Math.max(0, Math.round((metOn.getTime() - on.getTime()) / day));
+      o.via = fromTab ? (hr.source || 'the tab') : 'board';
+      if (acts.length) {
+        o.fc = fmt(acts[0]); o.la = fmt(acts[acts.length - 1]); o.lad = ymd(acts[acts.length - 1]);
+        if (on) o.dd = Math.max(0, Math.round((acts[0].getTime() - on.getTime()) / day));
+        o.acts = acts.map(ymd).filter(function (x, i, a) { return a.indexOf(x) === i; });
+      }
+      if (fb) o.fb = fb.slice(0, T_AGV.TXT);
+      if (cms.length) { o.cm = cms.length; o.lc = cms[0].text.slice(0, T_AGV.TXT); }
+      if (g === 'named' && on && tWorkingDays_(on, now) >= T_AGV.QUIET) o.q = 1;
+    } else if (c && c.sug && c.sug.agent) o.sg = [c.sug.agent, c.sug.why];
+    else if (c && c.sug && c.sug.planned) o.sp = c.sug.planned;
+    else pseudo.push({ token: tok, no: o.no, hh: hr.hh, town: o.tw || '', client: o.n, _o: o, _hs: hr.sug });
+    /* who they have been named to, and when: shown once there is a change to show */
+    var hist = tAssignHist_(c, hr, alog[tok], canon, now);
+    if (hist.length > 1 || (hist.length === 1 && hist[0].by)) o.hist = hist.map(function (x) { return [x.on ? fmt(x.on) : '', x.agent, x.via, x.by || '']; });
+    if (staff && !onStaffBoard[tok]) o.nb = 0;                                // staff cannot name this one
+    if (!H[hr.hh]) { H[hr.hh] = { id: hr.hh, name: hr.hhName || '', m: [] }; order.push(hr.hh); }
+    H[hr.hh].m.push(o);
+  });
+  /* a client the board does not show (held, not written to yet) gets a suggestion too, against the lists as the board left
+     them: everyone named and everyone already suggested counts towards an agent's load */
+  if (pseudo.length && roster.length) {
+    var seed = Object.keys(map).map(function (t) { var c = map[t]; return { assigned: c.assigned || (c.sug && c.sug.agent) || '' }; });
+    try {
+      tSuggest_(pseudo, { roster: roster, plan: tPlan_(), clients: seed, households: b.households || {}, answeredBy: {}, agentPlaces: tAgentPlaces_(roster) });
+    } catch (e) {}
+    pseudo.forEach(function (p) {
+      if (p.sug && p.sug.agent) p._o.sg = [p.sug.agent, p.sug.why];
+      else if (p.sug && p.sug.planned) p._o.sp = p.sug.planned;
+      else if (p._hs && byKey[tNameKey_(p._hs)]) p._o.sg = [byKey[tNameKey_(p._hs)].name, 'the Household Assignments tab'];
+    });
+  }
+
+  /* households: one agent each where it can be, the batch it waits in, and the agent it should go to */
+  var hh = [];
+  order.forEach(function (id) {
+    var h = H[id], m = h.m;
+    if (team) { m = m.filter(function (x) { return x.a && team(x.a); }); if (!m.length) return; h.more = h.m.length - m.length; h.m = m; }
+    var named = m.filter(function (x) { return x.a; }), un = m.filter(function (x) { return !x.a; }), count = {};
+    named.forEach(function (x) { count[x.a] = (count[x.a] || 0) + 1; });
+    h.ag = Object.keys(count).sort(function (x, y) { return count[y] - count[x] || x.localeCompare(y); });
+    h.st = !un.length ? 'all' : named.length ? 'part' : 'none';
+    if (!h.name) h.name = m[0].n + ' household';
+    var tw = m.map(function (x) { return x.tw; }).filter(Boolean)[0];
+    if (tw) h.tw = tw;
+    h.bks = m.map(function (x) { return x.b; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; });
+    h.pr = Math.max.apply(null, m.map(function (x) { return x.pr || 0; }).concat([0]));
+    if (un.length && !team) {
+      var unPr = Math.max.apply(null, un.map(function (x) { return x.pr || 0; }).concat([0]));
+      /* urgent: a call-back Client Support asked for, or an answer that cannot wait (an agent now, the former agent in touch,
+         approached, a payment); waiting past the line alone is not urgent, since nearly everyone who asked has */
+      var urgent = un.some(function (x) { return x.bk === 'agent' || x.bk === 'branch'; }) || unPr >= T_AGV.URGENT;
+      h.bt = urgent ? 'urgent' : named.length ? 'family' : un.some(function (x) { return x.cs === 'asked'; }) ? 'asked'
+        : un.some(function (x) { return /^(noted|reached|called)$/.test(x.cs); }) ? 'answered'
+        : un.some(function (x) { return /^(silent|tocall|dnc)$/.test(x.cs); }) ? 'silent' : 'held';
+      /* the family's agent first; then the suggestion the household's own members carry */
+      if (named.length) h.sg = [h.ag[0], 'the family\'s agent: ' + named.filter(function (x) { return x.a === h.ag[0]; }).map(function (x) { return x.n; }).join(', ') + (named.length > 1 ? ' are' : ' is') + ' with ' + h.ag[0].split(/\s+/)[0]];
+      else {
+        var s = un.filter(function (x) { return x.sg; })[0];
+        if (s) h.sg = s.sg;
+        else { var sp = un.filter(function (x) { return x.sp; })[0]; if (sp) h.sp = sp.sp; }
+      }
+      h.un = un.length;
+      h.late = un.filter(function (x) { return x.late; }).length;
+    }
+    m.forEach(function (x) { delete x.sg; delete x.sp; });   // the household carries the one suggestion
+    hh.push(h);
+  });
+
+  /* each agent: what they hold and how far they have got */
+  var A = {}, agentRow = function (name) {
+    if (!A[name]) A[name] = { name: name, unit: unitOf[tNameKey_(name)] || '', on: !!byKey[tNameKey_(name)], hh: {}, n: 0, ans: 0, asked: 0,
+      g: { named: 0, tried: 0, spoken: 0, met: 0, done: 0 }, fb: 0, cm: 0, q: 0, back: 0, dd: [], first: '', last: '', la: '', sf: 0, board: 0, cl: { n: 0, paid: 0 },
+      cv: 0, da: [], dm: [], re: 0 };
+    return A[name];
+  };
+  if (!team) roster.forEach(function (a) { agentRow(a.name); });
+  else roster.forEach(function (a) { if (team(a.name)) agentRow(a.name); });
+  var named = {}, acts = {};
+  hh.forEach(function (h) {
+    h.m.forEach(function (x) {
+      if (!x.a) return;
+      var a = agentRow(x.a);
+      a.hh[h.id] = 1; a.n++; a.g[x.g]++;
+      if (x.cs === 'asked' || x.cs === 'noted') a.ans++;
+      if (x.cs === 'asked') a.asked++;
+      if (x.fb) a.fb++;
+      if (x.cm) a.cm++;
+      if (x.q) a.q++;
+      if (x.bk) a.back++;
+      if (x.dd !== undefined) a.dd.push(x.dd);
+      if (/salesforce/i.test(x.via)) a.sf++; else a.board++;
+      if (x.od) { if (!a.first || x.od < a.first) a.first = x.od; if (!a.last || x.od > a.last) a.last = x.od; named[x.od] = (named[x.od] || 0) + 1; }
+      if (x.lad && (!a.la || x.lad > a.la)) a.la = x.lad;
+      (x.acts || []).forEach(function (d) { acts[d] = (acts[d] || 0) + 1; });
+      if (x.cl) { a.cl.n++; if (x.cl === 'paid') a.cl.paid++; }
+      a.cv += x.cv || 0;
+      if (x.da !== undefined && x.g !== 'done') a.da.push(x.da);
+      if (x.dm !== undefined) a.dm.push(x.dm);
+      if (x.hist && x.hist.length > 1) a.re++;                              // came to them from another agent
+      delete x.acts; delete x.lad;
+    });
+  });
+  var med = function (xs) { xs = xs.slice().sort(function (x, y) { return x - y; }); return xs.length ? xs[Math.floor((xs.length - 1) / 2)] : null; };
+  var agents = Object.keys(A).map(function (k) {
+    var a = A[k], dd = a.dd.sort(function (x, y) { return x - y; });
+    return { name: a.name, unit: a.unit, on: a.on, hh: Object.keys(a.hh).length, n: a.n, ans: a.ans, asked: a.asked, g: a.g, fb: a.fb, cm: a.cm, q: a.q, back: a.back,
+      med: dd.length ? dd[Math.floor((dd.length - 1) / 2)] : null, first: a.first ? tDmy_(a.first) : '', last: a.last ? tDmy_(a.last) : '', la: a.la ? tDmy_(a.la) : '',
+      sf: a.sf, board: a.board, cl: staff ? undefined : a.cl, cv: a.cv, da: a.da.length ? Math.round(a.da.reduce(function (t, x) { return t + x; }, 0) / a.da.length) : null,
+      dmMed: med(a.dm), re: a.re };
+  }).sort(function (x, y) { return y.n - x.n || x.name.localeCompare(y.name); });
+
+  /* the last DAYS days, oldest first: clients named, and clients an agent called, met or commented on */
+  var days = [];
+  for (var i = T_AGV.DAYS - 1; i >= 0; i--) {
+    var d = new Date(now.getTime() - i * day), k = ymd(d);
+    days.push({ d: k, l: fmt(d), named: named[k] || 0, acts: acts[k] || 0 });
+  }
+  var last = null;
+  try { last = JSON.parse(PropertiesService.getScriptProperties().getProperty('ha_via') || 'null'); } catch (e) {}
+  return { on: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), quiet: T_AGV.QUIET, urgent: T_AGV.URGENT, unit: !!team, staff: staff, hh: hh, agents: agents, days: days,
+           synced: last && last.at ? Utilities.formatDate(new Date(last.at), tz, 'd MMM HH:mm') : '', via: last && last.via ? last.via : 'the tab as imported',
+           sf: tSfOn_(), mailHeld: tClientMailHeld_(), introsHeld: TRANSITION.HOLD_INTROS !== false && tClientMailHeld_() };
 }
 
 /* ── Salesforce writes, through ServiceSalesforce.gs's sign-in ──────────── */
