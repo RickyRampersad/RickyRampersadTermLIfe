@@ -2766,8 +2766,13 @@ voice under the new timing and the caption gives it away.
   and the board's menu links each person to theirs ("The film: the board for you").
   - *The board, for management* (`boardmgr`, 2:21): Urgent, the Agents tab, conversations and conversion, since the
     naming, households in batches, one press, reassign with the history, what a naming does, a unit manager's team.
-  - *The board, for Client Support* (`boardstaff`, 1:45): Your calls, opening a client, Log call and the call-back
-    flag, take details and never advise, naming a household, reassigning, Your work.
+  - *The board, for Client Support* (`boardstaff`, 2:09): Your calls, opening a client, Log call and the call-back
+    flag, take details and never advise, the Salesforce task, naming a household, reassigning, Your work.
+    The Salesforce scene was added on 15 October 2026, when the manager asked whether the films showed everyone what
+    is expected: every step on the task's Chatter the same day; a no answer is a try, not a close; a task closes only
+    with a note of who was spoken to and what was agreed; it stays open until the agent is named; and the standard
+    "no questions or concerns" e-mail is never the close for a client who asked for something. Those rules are what
+    the routine's late-client follow-ups chase.
   - *The board, for agents* (`boardagent`, 1:48): your list every day, opening a client, Log call, comments, what
     counts, two days to a conversation, the branch sees it.
 

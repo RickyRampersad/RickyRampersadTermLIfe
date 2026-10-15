@@ -606,6 +606,46 @@ def s_yourwork(i, sc, D):
     cues = [(tT, 'Today', False), (tW, 'This week', False), (tN, 'Your notes, newest first', False), (tB, 'The branch sees the same', True)]
     return stage(side(i, sc, cues), app(i, main, on='work', cam=cam))
 
+def sfwin(main, extra='', cam=None):
+    """A Salesforce task in a browser window: the record, its Chatter, nothing branded."""
+    camattr = f' data-cam="{esc([[int(t), s, k] for (t, s, k) in cam])}"' if cam else ''
+    return (f'<div class="scr at" style="--at:60ms"><div class="tbar"><span class="lights"><i></i><i></i><i></i></span>'
+            f'<div class="ubar">{ico("lock")}<span>Salesforce &rsaquo; Tasks &rsaquo; Keisha Thomas</span></div></div>'
+            f'<div class="vp"><div class="cam"{camattr}>{main}{extra}</div></div></div>')
+
+def s_sftask(i, sc, D):
+    """The Salesforce task (15 October 2026): every step on its Chatter, a no answer is a try, close with a note, open until the
+    agent is named, and the standard e-mail is never the close for a client who asked for something."""
+    tCh, tTry, tNote, tNm, tStd = w(i, 'Chatter'), w(i, 'try'), w(i, 'note'), w(i, 'named'), w(i, 'standard')
+    tDone = tNm + 1300
+    post = lambda who, when, txt, cls='': f'<div class="sfp {cls}">{avatar(who, "sm")}<div><b>{who} <i>· {when}</i></b><span>{txt}</span></div></div>'
+    head = (f'<div class="sfh"><span class="sfi">{ico("check")}</span><div class="sft"><small>Task</small>'
+            f'<b>Orphan response: call me · Keisha Thomas</b></div>'
+            f'<span class="sfst"><span class="sw2"><span class="sa until lbl amb" style="--at:0ms;--to:{ms(tDone)}">Open</span>'
+            f'<span class="sb at lbl grn" style="--at:{ms(tDone)}">{ico("check", "ii")}Completed</span></span></span>'
+            f'<span class="sfbtn prs" style="--at:{ms(tDone - 250)}">Mark complete<s class="sfno until" style="--at:{ms(tTry)};--to:{ms(tNote)}"></s></span></div>'
+            f'<div class="sff"><span>{ico("user", "ii")}Assigned to <b>Client Support</b></span><span>{ico("cal", "ii")}Due <b>16 Oct</b></span>'
+            f'<span>{ico("flag", "ii")}Asked for <b>an agent</b></span></div>')
+    feed = (f'<div class="sfb"><h5>Chatter</h5>'
+            + post('Branch Manager', '14 Oct', 'Call Keisha. She wants an agent to review her cover.', 'brm')
+            + at(tCh, 'at l', inner=post('Client Support', '15 Oct, 10:12', 'Tried 868 555 0142. No answer. Trying again at 2 pm.')
+                 + at(tTry, 'at pop sftag lbl amb', tag='span', inner='A try, not a close'))
+            + at(tNote - 200, 'at l', extra=' data-k="sfnote"', inner=post('Client Support', '15 Oct, 2:05', typed(tNote, 'Spoke to Keisha. Agreed: a licensed agent calls her this week.', 30))
+                 + at(tNote + 900, 'at pop sftag lbl grn', tag='span', inner='Who · what was agreed'))
+            + at(tNm, 'at l', inner=post('Client Support', '15 Oct, 2:20', 'Named Andrea Lewis on the board. Told Keisha her agent&rsquo;s name.')
+                 + at(tNm + 500, 'at pop sftag lbl blu', tag='span', inner='Agent named'))
+            + '</div>')
+    mail = at(tStd - 250, 'at pop sfml', inner=f'<span class="sfmi">{ico("mail")}</span><div><b>The standard e-mail</b>'
+              f'<span>&ldquo;&hellip;you indicated that you currently have no questions or concerns&hellip;&rdquo;</span>'
+              + at(tStd + 700, 'at pop lbl red', tag='span', inner='Not a close when the client asked for something') + '</div>'
+              f'<s class="strk sfk" style="--at:{ms(tStd + 450)}"></s>')
+    extra = (mail + spot(tCh - 100, tTry + 1600, '.sfb .at.l', 4) + spot(tNote - 150, tNm - 300, '[data-k=sfnote]', 4)
+             + cursor([(300, 700, 420), (tDone - 280, '.sfbtn')]) + click(tDone - 250, '.sfbtn'))
+    cues = [(tCh, 'Every step on the task&rsquo;s Chatter, the same day', False), (tTry, 'A no answer is a try, not a close', False),
+            (tNote, 'Close with a note: who, and what was agreed', False), (tNm, 'Asked for an agent? Open until one is named', False),
+            (tStd, 'The standard e-mail is not a close', True)]
+    return stage(side(i, sc, cues), sfwin(head + feed, extra=extra))
+
 def s_clock(i, sc, D):
     """The clock starts at the naming: days waited, conversations, a meeting."""
     tD, tCv, tF, tM = w(i, 'days'), w(i, 'conversations'), w(i, 'first'), w(i, 'meeting')
@@ -621,7 +661,7 @@ def s_clock(i, sc, D):
             f'<div class="clockrow">{ring}<div class="sts">{stats}</div></div>{track}'
             f'{at(tF, "at up aim", inner=ico("target", "ii") + " The aim: a conversation in the first two days, a meeting soon after.")}</div>')
 
-R = {'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
+R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
      'yourwork': s_yourwork, 'clock': s_clock, 'title': s_title, 'flow': s_flow, 'signin': s_signin, 'urgent': s_urgent, 'agents': s_agents, 'table': s_table, 'batches': s_batches,
      'assign': s_assign, 'named': s_named, 'list': s_list, 'client': s_client, 'logcall': s_logcall, 'comment': s_comment, 'counts': s_counts,
      'sees': s_sees, 'close': s_close}
@@ -965,6 +1005,30 @@ body{background:var(--ground)}
 .bf .cbox{display:flex;gap:8px;align-items:center} .bf .cbox .fld{flex:1;font-size:12px;overflow:hidden} .bf .cbox .bbtn{margin:0}
 .bf .cmt{display:flex;gap:8px;margin-top:10px;background:#F5F8FE;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:8px 10px}
 .bf .cmt b{display:block;font:600 11.5px var(--body);color:var(--blue2)} .bf .cmt span{font-size:12.5px}
+/* the Salesforce task (Client Support, 15 October 2026) */
+.bf .sfh{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#fff;border-bottom:1px solid #E1E7F0}
+.bf .sfi{width:34px;height:34px;border-radius:8px;background:#2E844A;color:#fff;display:grid;place-items:center;flex:none} .bf .sfi .ico{width:20px;height:20px}
+.bf .sft small{display:block;font:600 10.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.bf .sft b{display:block;font:700 15.5px var(--head);color:var(--ink)}
+.bf .sfst{margin-left:auto} .bf .sfst .lbl{font-size:12px;padding:3px 10px}
+.bf .sfbtn{position:relative;display:inline-flex;align-items:center;border:1.5px solid #CBD5E1;border-radius:8px;padding:6px 12px;font:600 12.5px var(--head);color:var(--blue2);background:#fff}
+.bf .sfno{position:absolute;left:-4px;right:-4px;top:50%;height:2.5px;background:var(--red);transform:rotate(-8deg)}
+.bf .sff{display:flex;gap:22px;padding:9px 18px;background:#F8FAFD;border-bottom:1px solid #E1E7F0;font-size:12.5px;color:var(--mute)}
+.bf .sff b{color:var(--ink)}
+.bf .sfb{padding:12px 18px}
+.bf .sfb h5{margin:0 0 8px;font:600 10.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.bf .sfp{display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px solid #E1E7F0;border-radius:10px;padding:7px 12px;margin-top:6px}
+.bf .sfp .av.sm{margin:2px 0 0}
+.bf .sfp b{display:block;font:600 12px var(--head);color:var(--blue2)} .bf .sfp b i{font-style:normal;font-weight:500;color:var(--mute)}
+.bf .sfp span{font-size:13.5px;color:var(--ink)} .bf .sfp.brm{background:#F5F8FE;border-color:#DCE6F7}
+.bf .sfb>.at.l{position:relative}
+.bf .sftag{position:absolute;right:10px;top:9px;font-size:11px}
+.bf .sfml{position:absolute;right:18px;bottom:8px;width:440px;display:flex;gap:10px;align-items:flex-start;background:#fff;border:1.5px solid #F4C7C3;border-radius:12px;
+  padding:11px 13px;box-shadow:0 18px 40px rgba(14,27,46,.22);z-index:8}
+.bf .sfmi{width:30px;height:30px;border-radius:8px;background:var(--redbg);color:var(--red);display:grid;place-items:center;flex:none} .bf .sfmi .ico{width:16px;height:16px}
+.bf .sfml b{display:block;font:700 13px var(--head);color:var(--ink)} .bf .sfml>div>span{display:block;font-size:12.5px;color:var(--mute);font-style:italic;margin:2px 0 6px}
+.bf .sfml>div>.lbl{font-style:normal}
+.bf .sfml .strk.sfk{left:52px;right:16px;top:44%;background:var(--red)}
 .bf .onfile{display:inline-flex;align-items:center;margin-top:10px;background:var(--grnbg);color:var(--grn);font:600 12px var(--body);border-radius:999px;padding:4px 11px}
 
 /* the title and the close */

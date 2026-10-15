@@ -59,6 +59,12 @@
    "line": "On the call, you take details, and you never advise. Anything about what a policy pays, or changing cover, goes to a licensed agent."
   },
   {
+   "visual": "sftask",
+   "eyebrow": "Your Salesforce tasks",
+   "headline": "A note before <em>every close</em>",
+   "line": "In Salesforce, post every step on the task's Chatter, the same day. A no answer is a try, not a close. Close a task only with a note: who you spoke to, and what was agreed. If the client asked for an agent, keep it open until one is named. And when a client asked for something, the standard e-mail is not a close."
+  },
+  {
    "visual": "assign",
    "eyebrow": "Naming an agent",
    "headline": "The family <em>stays together</em>",
