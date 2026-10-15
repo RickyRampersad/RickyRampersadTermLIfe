@@ -472,7 +472,7 @@ function rateHtml(a) {
   if (!r) return a && a.answer ? '<div>' + esc(dayOf(a.answer.at)) + '</div>' + starsOf(a.answer.rating) + '<div class="sub">' + esc(a.answer.name) + '</div>' : '<span class="muted small">No letter yet</span>';
   const v = r.lastView, seen = v ? '<div class="sub">opened ' + esc(shortAt(v.at)) + (v.name ? ' · ' + esc(v.name) : '') + (DEV[v.device] ? ' · ' + DEV[v.device] : '') + (r.views > 1 ? ' · ' + r.views + ' visits' : '') + '</div>'
     : a.views ? '<div class="sub">last opened ' + esc(shortAt(a.views.at)) + ', before this letter</div>' : '';
-  const rem = r.reminder ? '<div class="sub">reminded ' + esc(shortAt(r.reminder.at)) + (r.reminder.by ? ' · ' + esc(r.reminder.by) : '') + '</div>' : '';
+  const rem = r.reminder ? '<div class="sub">' + (r.reminder.n > 1 ? 'reminded ' + r.reminder.n + ' times, last ' : 'reminded ') + esc(shortAt(r.reminder.at)) + '</div>' : '';
   if (r.kind === 'rated') return '<span class="chip good" style="white-space:nowrap"><i></i>Rated ' + esc(dayOf(r.rated.at)) + '</span> ' + starsOf(r.rated.rating) + '<div class="sub">' + esc(r.rated.name) + '</div>' + seen + rem;
   if (r.kind === 'answered') return '<span class="chip warn" style="white-space:nowrap"><i></i>No stars yet</span><div class="sub">items answered ' + esc(shortAt(r.answered.at)) + ' · ' + esc(r.answered.name) + '</div>' + seen + rem;
   if (r.kind === 'viewed') return '<span class="chip info" style="white-space:nowrap"><i></i>Opened, no answer</span>' + seen + rem;
@@ -608,7 +608,9 @@ async function openAct(kind, key) {
   if (kind === 'welcome' && r.welcomes && r.welcomes.length) h += '<p class="small muted">Welcomed before: ' + r.welcomes.map(w => esc(w.at) + ' by ' + esc(w.by)).join('; ') + '.</p>';
   if (kind === 'again') h += '<p class="small muted">First went on <b>' + esc(r.first) + '</b> to ' + esc(r.firstTo) + ', ' + esc(r.firstBy) + '. It goes again exactly as it went, with a line on top saying so.</p>';
   if (kind === 'remind' && r.state) h += '<p class="small">' + rateHtml({ rate: r.state }) + '</p><p class="small muted">For the letter of ' + esc(r.state.letter.at) + '. Signed by <b>' + esc(r.signer) + '</b>. ' +
-    'It says only what we know, and each star opens their page with that star chosen. Nothing is recorded until they sign in and press Send.</p>';
+    'It names that e-mail, says only what we know, and each star opens their page with that star chosen. Nothing is recorded until they sign in and press Send. ' +
+    'Until they respond, one goes by itself every working day.</p>' +
+    (r.wrote ? '<div class="note">They wrote to us by e-mail ' + esc(r.wrote.at) + ': “' + esc(r.wrote.subject) + '” (' + esc(r.wrote.from) + '). The automatic reminder stops for this letter: a reply from you may be better than a reminder.</div>' : '');
   if (kind === 'letter' && r.approved) h += '<p class="small"><span class="chip good"><i></i>Approved by ' + esc(r.approved.by) + '</span> It goes ' + esc(r.approved.for) + ' by itself. Send now only if the group needs it today.</p>';
   h += '<iframe title="The e-mail as it goes" sandbox=""></iframe>';
   const ready = kind === 'letter' ? r.ready : r.ready;
@@ -619,7 +621,7 @@ async function openAct(kind, key) {
     h += '<label class="toggle" style="margin:14px 0 4px"><input type="checkbox" id="dlgCk"> ' + esc(tick) + '</label><div class="row">' +
       (kind === 'welcome' ? '<button class="btn" type="button" id="dlgGo" disabled>' + (r.welcomed ? 'Resend the welcome' : 'Send the welcome') + '</button>' :
        kind === 'again' ? '<button class="btn" type="button" id="dlgGo" disabled>Send it again</button>' :
-       kind === 'remind' ? '<button class="btn" type="button" id="dlgGo" disabled>' + (r.state && r.state.reminder ? 'Remind again' : 'Send the reminder') + '</button>' :
+       kind === 'remind' ? '<button class="btn" type="button" id="dlgGo" disabled>' + (r.state && r.state.reminder ? 'Send another reminder' : 'Send the reminder') + '</button>' :
        (r.week === 'due' ? '<button class="btn" type="button" id="dlgAp" disabled>Approve for ' + esc(r.nextSend) + '</button>' : '') + '<button class="btn ' + (r.week === 'due' ? 'ghost' : '') + '" type="button" id="dlgGo" disabled>Send now</button>') +
       '<button class="btn ghost" type="button" onclick="dlg.close()">Cancel</button></div>' +
       '<p class="small muted" style="margin-top:8px">' + (kind === 'letter' ? 'It goes from support@, written again from Salesforce the moment you press. Send now closes any approval for Monday.' : 'It goes from support@ and is logged on the account with your name.') + '</p>';

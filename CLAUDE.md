@@ -3256,8 +3256,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - `wow/actions-test.js` (31 checks), `wow/after.js` (24, Playwright) and `wow/showcase.js` (screenshots) in the
     session scratchpad cover it, on the made-up branch.
 
-- **Who opened their page, and a reminder to rate** (15 October 2026: "deep dive in all the group … who viewed it … If a group have not
-  rated us the stars, we need to automatically send … a reminder. They have viewed it, but they have not rated").
+- **Who opened their page, and a daily reminder to rate** (15 October 2026: "deep dive in all the group … who viewed it … If a group have
+  not rated us the stars, we need to automatically send … a reminder. They have viewed it, but they have not rated"; then "if they
+  have not responded, it's a daily run until we get a response referencing the email we sent").
   - **The sign-in log.** Until then nothing recorded a group opening its page, and an answer was the only sign of one. Every
     sign-in is now a row on the **Group Views** tab (`gcmViewLog_`), at most one per group each half hour:
     - when it was;
@@ -3269,7 +3270,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     opened a page before the paste.
   - **Where each letter stands** (`gcmRateState_`): rated; items answered with no stars; opened with no answer; or no answer yet.
     Only answers and sign-ins after the last weekly letter count.
-  - **The reminder** (`gcmRateMail_`): one per letter, signed by whoever looks after the group. Its words follow what we know:
+  - **The reminder** (`gcmRateMail_`): one every working day, from the day after the letter, until the group responds. It is signed by
+    whoever looks after the group. Its subject is the letter's own ("Reminder: Your weekly service report: …"), and it opens by
+    naming the e-mail it follows, by its day and subject, and the last reminder before it. Then its words follow what we know:
     - "thank you for going through your items … one thing was left: your rating";
     - "thank you for opening your service page";
     - or "our letter of Monday set out where each of your items stands".
@@ -3277,18 +3280,22 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     It carries five stars, each a link that opens the page with that star chosen (`?rate=`). Nothing is recorded until the
     group signs in and presses Send. It also carries the sign-in and the Friday date, and goes from support@ with sales
     support in visible Cc. It is logged on Group Sends as "reminder sent", which the weekly run passes over.
+  - **A response ends it.** A rating on the page is a response. So is any e-mail to support@ since the letter from the group's
+    contact or its company's domain (`gcmMailIn_`, `gcmRateInbox_`). A group that wrote is owed a person's reply, not another
+    automatic e-mail. An automatic reply ("out of office") pauses it two days. A run that cannot read support@'s inbox reminds
+    nobody. A new weekly letter starts it again, for that letter.
   - **When it waits:**
-    - the group rated;
-    - no weekly letter has gone;
-    - it was reminded already for that letter;
+    - the group rated, or wrote to us since the letter;
+    - no weekly letter has gone, or the letter went today;
+    - it was reminded today already;
     - any e-mail went to it in the last 20 hours;
     - the letter went to an address Salesforce no longer names as the contact (`gcmRateMoved_`). The dry run on the real
       tabs found one group whose Contact Person had changed since its Monday letter. The new contact would have been told
       about a letter, and a code, they never had. Send the letter again, or the welcome, first.
   - **The go.** `gcmRateRemindTest` (editor Run) sends the branch manager one of each kind, marked TEST, with who would get it,
     who rated and who would not. `gcmRateRemindNow` sends it now to every group on the list. It also sets `GCM_RATE_ON`, so
-    from then on the hourly run reminds a group whose letter is still unrated three days after it went (a Monday letter:
-    Thursday), 10:00 to 16:00 on weekdays. `gcmRateRemindStop` ends that.
+    from then on the hourly run sends each group that has not responded one reminder a working day, 10:00 to 16:00.
+    `gcmRateRemindStop` ends that. A group that never answers gets its Monday letter and up to four reminders a week.
   - **The staff page:**
     - the accounts table's "Opened · rated" column;
     - filters for "Not rated their last letter" and "Opened their page";
@@ -3296,8 +3303,8 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     - "Who opened their page" on a group's own page.
 
     A failed reminder is logged as failed and goes on the next run.
-  - `rate/rate-test.js` (53 checks), `rate/page.js` (19, Playwright) and `rate/real/dry.js` (the real tabs, nothing sent) in the
-    session scratchpad cover it.
+  - `rate/rate-test.js` (60 checks), `rate/page.js` (19, Playwright) and `rate/real/dry.js` (the real tabs and the replies in
+    support@, nothing sent) in the session scratchpad cover it.
 
 - **Applications and increases still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
   also see at the top … applications that remain pending … the name, days outstanding, who it's assigned, what's
