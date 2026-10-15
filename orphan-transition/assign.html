@@ -384,6 +384,13 @@
   .wtally b{min-width:100px;color:var(--ink);font:700 15px var(--fh)} .wtally em{font-style:normal;font-weight:800;font-size:18px;color:var(--ink)}
   .team .allnotes{background:none;border:0;color:var(--tdark);font:600 14px var(--fb);cursor:pointer;padding:0 0 12px}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+  /* who is signing in (15 October 2026): the seven-day strip, the device, the note under the table */
+  .sdays{display:inline-flex;gap:3px;vertical-align:middle}
+  .sdays i{font-style:normal;font-size:10.5px;font-weight:700;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#e9eef5;color:var(--dim)}
+  .sdays i.on{background:#1d8fa6;color:#fff}
+  .sdev{font-style:normal;color:var(--dim);font-size:12.5px}
+  .snote{color:var(--dim);font-size:13.5px;margin:10px 0 0}
+  #signLink{color:inherit;font-weight:700;text-decoration:underline}
   .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:14px;cursor:pointer}
   .chip:hover{border-color:#c5cfdb}
   .chip b{color:var(--ink);font-family:var(--fh)} .chip i{font-style:normal;color:var(--dim)}
@@ -816,6 +823,7 @@
 
     <!-- the team: today's calls and notes, units and the roster -->
     <div class="pane" id="paneTeam" hidden>
+      <div class="card team" id="signWrap" style="display:none"><div class="panehead"><h2>Who is signing in</h2><span id="signSum"></span></div><div id="signBody"></div></div>
       <div class="card team" id="teamWrap" style="display:none"><div class="panehead"><h2>From the team</h2><span id="teamSum"></span></div><div id="teamBody"></div></div>
       <div id="rosterWrap"><h2 class="sec"><span id="rosterTitle">The roster</span> <small id="rosterNote"></small></h2><div id="units"></div><div class="chips" id="roster"></div></div>
       <p class="pnote" id="sugNote"></p>
@@ -923,6 +931,7 @@ function load() {
   var p = { action: 'board', code: CODE };
   if (WHO) p.who = WHO;
   if ($('fAll').checked) p.all = '1';
+  p.dev = (window.innerWidth < 760 ? 'phone' : 'desk') + ' ' + window.innerWidth;   // for the Sign-ins tab: the device, never the browser
   api(p).then(function (d) {
     inflight = false; busy(false);
     if (!d || !d.ok) {
@@ -1124,6 +1133,13 @@ function render() {
   var d = D, manager = d.role === 'branch', team = d.role === 'unit', staff = d.role === 'staff', namer = canAssign();
   /* the bar along the top says when the sheet was read; the side menu says who is signed in and as what */
   $('stamp').innerHTML = STALE ? '<i>the board as you last saw it, updating from the sheet&hellip;</i>' : 'Updated <b>' + esc(String(d.at || '').replace(/ \d{4} /, ' ')) + '</b>';
+  /* the branch and a unit manager see at a glance who has signed in today (15 October 2026); the link opens the Team tab */
+  if (d.signins && d.signins.on !== false && (d.role === 'branch' || d.role === 'unit')) {
+    var sp = d.signins.people || [], sn = d.signins.never || [], st = sp.filter(function (p) { return p.today; }).length;
+    $('stamp').innerHTML += ' · <a href="#" id="signLink">' + st + ' of ' + (sp.length + sn.length) + ' signed in today</a>';
+    $('signLink').addEventListener('click', function (ev) { ev.preventDefault(); TAB = 'team'; SUB = ''; drawTabs(tabsFor(D)); showPane(); });
+  }
+  if (d.role !== 'branch' && d.role !== 'unit') $('signWrap').style.display = 'none';   // never left drawn for the next person on the device
   var who = d.me ? niceName(d.me.name) : manager ? 'The branch' : '';
   $('whoPh').textContent = d.me ? '· ' + who.split(/\s+/)[0] : '';
   $('title').textContent = who || 'Assignments';
@@ -2865,6 +2881,7 @@ function workPane() {
 /* ---- the Team tab ---- */
 function teamPane() {
   var d = D, manager = d.role === 'branch', team = d.role === 'unit', namer = canAssign();
+  signPanel(d);
   teamPanel(d);
   /* the roster: by unit and person when the Agent Skill Bank has Role and Unit (the branch sees every unit, a unit manager
      his own), else the flat list; a name opens that person's list */
@@ -2907,20 +2924,10 @@ function unitBlock(g, d, manager) {
    organized"): each person's outcomes today and in the last seven days, read from the stamp every outcome leaves on the
    file ("[no answer 7 Oct · Name]"), and their notes, newest first; a client's name opens that client */
 var TEAM_ALL = false;
-function dayOf(s) {
-  var m = /^(\d{1,2}) ([A-Za-z]{3})$/.exec(String(s || '').trim()), mi = m ? MON.indexOf(m[2]) : -1;
-  if (mi < 0) return null;
-  var now = new Date(), d = new Date(now.getFullYear(), mi, Number(m[1]));
-  if (d.getTime() > now.getTime() + 86400000) d.setFullYear(d.getFullYear() - 1);   // a stamp from December, read in January
-  return d;
-}
-function teamPanel(d) {
-  /* a unit manager reads the same for his team's clients (8 October 2026: "as well managers log in") */
-  if (d.role !== 'branch' && d.role !== 'unit') { $('teamWrap').style.display = 'none'; return; }
-  document.querySelector('#teamWrap h2').textContent = d.role === 'unit' ? 'On your team’s clients' : 'From the team';
-  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000;
-  var people = {}, notes = [];
-  d.clients.forEach(function (c) {
+/* each person's outcomes on the board in the last seven days, from the stamp every outcome leaves on the file */
+function teamStamps(d) {
+  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000, people = {};
+  (d.clients || []).forEach(function (c) {
     (c.markers || []).forEach(function (mk) {
       var m = /^\[(called|met|no answer|declined|closed) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/.exec(mk), day = m ? dayOf(m[2]) : null;
       if (!day || day.getTime() < week) return;
@@ -2934,6 +2941,54 @@ function teamPanel(d) {
       var p = people[m[3]] = people[m[3]] || { name: m[3], today: 0, reached: 0, noans: 0, week: 0, backs: 0 };
       p.backs++;
     });
+  });
+  return people;
+}
+/* who is signing in (15 October 2026: "i want the login to see whats happening and is staff logging in and agents?"): the
+   Sign-ins tab, one row a person an hour, read by the backend for the branch (everyone active on the Agent Skill Bank) and
+   a unit manager (his team). Beside each person, what they logged on the board in the same seven days, from the stamps. */
+function ymd(dt) { return dt.getFullYear() + '-' + ('0' + (dt.getMonth() + 1)).slice(-2) + '-' + ('0' + dt.getDate()).slice(-2); }
+function signPanel(d) {
+  var w = $('signWrap');
+  if (d.role !== 'branch' && d.role !== 'unit') { w.style.display = 'none'; return; }
+  w.style.display = '';
+  var s = d.signins;
+  if (!s) { $('signSum').textContent = ''; $('signBody').innerHTML = '<div class="empty">Sign-ins are recorded once the current Transition.gs is pasted into the Apps Script project (Deploy → Manage deployments → pencil → New version). From then on this shows who opened the board, and when.</div>'; return; }
+  if (s.on === false) { $('signSum').textContent = ''; $('signBody').innerHTML = '<div class="empty">The sign-ins could not be read: ' + esc(s.why || '') + '</div>'; return; }
+  var logged = teamStamps(d), people = s.people || [], never = s.never || [], all = people.length + never.length;
+  var todayN = people.filter(function (p) { return p.today; }).length, weekN = people.filter(function (p) { return p.days && p.days.length; }).length;
+  $('signSum').textContent = todayN + ' of ' + all + ' signed in today · ' + weekN + ' in the last 7 days · ' + never.length + ' never';
+  var DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], days = [];
+  for (var i = 6; i >= 0; i--) { var dt = new Date(Date.now() - i * 86400000); days.push([ymd(dt), DOW[dt.getDay()]]); }
+  var strip = function (list) {
+    var on = {}; (list || []).forEach(function (x) { on[x] = true; });
+    return '<span class="sdays">' + days.map(function (k) { return '<i class="' + (on[k[0]] ? 'on' : '') + '" title="' + esc(k[0]) + '">' + k[1] + '</i>'; }).join('') + '</span>';
+  };
+  var lg = function (name) { var p = logged[name]; return p ? p.week + (p.backs ? ' · ' + p.backs + ' call-back' + (p.backs === 1 ? '' : 's') : '') : '0'; };
+  $('signBody').innerHTML = (people.length ? '<div style="overflow-x:auto"><table><tr><th>Who</th><th>Last sign-in</th><th>Today</th><th>Last 7 days</th><th>Opens</th><th>Logged on the board, 7 days</th></tr>' + people.map(function (p) {
+      var tag = p.role && !/^agent$/i.test(p.role) ? '<span class="rtag">' + esc(p.role) + '</span>' : '';
+      return '<tr><td><b>' + esc(p.name) + '</b>' + tag + '</td><td>' + esc(p.last || '') + (p.dev ? ' <i class="sdev">' + esc(String(p.dev).split(' ')[0]) + '</i>' : '') + '</td><td>' + (p.today || 0) + '</td><td>' + strip(p.days) + '</td><td>' + (p.total || 0) + (p.first ? ' <i class="sdev">since ' + esc(p.first) + '</i>' : '') + '</td><td>' + lg(p.name) + '</td></tr>';
+    }).join('') + '</table></div>' : '<div class="empty">Nobody has signed in since the log began' + (s.since ? ' on ' + esc(s.since) : '') + '.</div>') +
+    (never.length ? '<h4>Never signed in' + (s.since ? ' since ' + esc(s.since) : '') + '</h4><div class="chips">' + never.map(function (p) {
+      return '<span class="chip"><b>' + esc(p.name) + '</b> <i>' + esc(p.role || '') + (p.unit && d.role === 'branch' ? ' · ' + esc(p.unit) : '') + (logged[p.name] ? ' · logged ' + logged[p.name].week + ' on the board' : '') + '</i></span>';
+    }).join('') + '</div>' : '') +
+    (s.code && s.code.total ? '<p class="snote">The branch code alone, with no name: last ' + esc(s.code.last) + ', ' + s.code.today + ' today, ' + s.code.total + ' in all.</p>' : '') +
+    '<p class="snote">One row a person an hour, from the Sign-ins tab: a refresh inside the hour is not counted again. "Logged on the board" counts the outcomes they marked (called, met, no answer, declined, closed) and the call-backs they flagged, in the last seven days.</p>';
+}
+function dayOf(s) {
+  var m = /^(\d{1,2}) ([A-Za-z]{3})$/.exec(String(s || '').trim()), mi = m ? MON.indexOf(m[2]) : -1;
+  if (mi < 0) return null;
+  var now = new Date(), d = new Date(now.getFullYear(), mi, Number(m[1]));
+  if (d.getTime() > now.getTime() + 86400000) d.setFullYear(d.getFullYear() - 1);   // a stamp from December, read in January
+  return d;
+}
+function teamPanel(d) {
+  /* a unit manager reads the same for his team's clients (8 October 2026: "as well managers log in") */
+  if (d.role !== 'branch' && d.role !== 'unit') { $('teamWrap').style.display = 'none'; return; }
+  document.querySelector('#teamWrap h2').textContent = d.role === 'unit' ? 'On your team’s clients' : 'From the team';
+  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000;
+  var people = teamStamps(d), notes = [];
+  d.clients.forEach(function (c) {
     (c.fileNotes || []).forEach(function (f) {
       var m = /^(called|met|declined|closed|open|no answer|assigned) (\d{1,2} [A-Za-z]{3}) · ([^:]+): ([\s\S]*)$/.exec(f);
       if (!m) return;

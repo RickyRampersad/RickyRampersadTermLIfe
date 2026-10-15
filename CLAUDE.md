@@ -2608,6 +2608,24 @@ voice under the new timing and the caption gives it away.
     sync caught up.
   - `work8/work-test.js` in the scratchpad covers it (36 checks, Node and Playwright, the real tabs, test passwords in
     memory).
+- **Who is signing in** (15 October 2026: "i want the login to see whats happening and is staff logging in and agents?").
+  Until then nothing recorded a sign-in. The only trace of the board's use was what people logged on it, and on 15
+  October that showed the 7 October training (the branch closing five, a unit manager marking 27 calls and naming 27
+  clients to his two agents) and nothing since: no call logged, nobody named from the board, no comment, the Call List's
+  Done column empty, while Client Support worked in Salesforce. The view counter had no rows either.
+  - **The Sign-ins tab** is written by `tSignIn_` on every board request that passes `tWho_`: When, Who, Role, Unit, Via
+    (password, or the branch code), Device (the page sends `dev`: phone or desk, and the width, never the browser) and
+    What. One row a person an hour (`T_SIGN.EVERY_MIN`, a cache key), so the two-minute refresh never fills it. The tab
+    is made the first time, and a failed write never stops the board. A refused sign-in is never logged.
+  - **The branch and a unit manager read it** (`tSignIns_`, `signins` in the board answer): everyone active on the Agent
+    Skill Bank, never a former agent, a unit manager his team only and never the staff: the last sign-in and its device,
+    the opens today, the days of the last seven, the opens since the first, and who has never signed in. The branch code's
+    own opens, with no name, are counted apart, for the branch alone. Staff and agents get nothing of it.
+  - **On the page**: "Who is signing in" at the top of the Team tab (a seven-day strip a person, and what they logged on
+    the board in the same seven days beside it, from the stamps `teamStamps` reads), and "N of M signed in today" on the
+    masthead stamp, which opens the tab. A backend without it says to paste Transition.gs; Service.gs needs no paste.
+  - `signin/signin-test.js` in the scratchpad covers it (Node and Playwright, the 15 October tabs, test passwords in
+    memory).
 - **The Dashboard tab: how far the work has got, as shares, with filters** (8 October 2026: "need to have dash analytics
   and % of work completed etc a lot of insights and filter ability").
   - **Who sees it.** The branch has it second, after Urgent, which stays the opening tab. A unit manager has it after

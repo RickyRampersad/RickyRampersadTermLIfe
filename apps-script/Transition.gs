@@ -4337,6 +4337,7 @@ function transitionBoard_(p) {
     if (/^stream$/i.test(String(p.who || '').trim())) return transitionStream_(p.code);
     var w = tWho_(p.code, p.who);
     if (!w.ok) return { ok: false, refused: true, configured: w.configured, error: w.error };
+    tSignIn_(w, p);   // the Sign-ins tab: who opened the board, once an hour a person (15 October 2026)
     /* the dashboard's Salesforce panel (tSfWork_): the branch alone, since it names every member of staff */
     if (/^(1|yes|true)$/i.test(String(p.sfwork || ''))) {
       return { ok: true, sfwork: w.role === 'branch' ? tSfWork_() : { on: false, why: 'The Salesforce figures are for the branch.' } };
@@ -4781,6 +4782,7 @@ function tBoard_(w, all, lite) {
            households: households, hhInfo: hhInfo, family: family, hhBook: hhBook, profiles: tProfiles_().ready,
            book: { ready: bk.ready, money: !staff, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
+           signins: w.role === 'branch' || w.role === 'unit' ? tSignIns_(w) : null,   // who is signing in (15 October 2026)
            units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false, canAssign: tCanAssign_(w),
            notes: tNotesForBoard_(w),
            calls: { ready: calls.ready }, mailHeld: tClientMailHeld_(),   // the call list is on the board; automatic client e-mail is on hold
@@ -7091,6 +7093,79 @@ function tAlogRead_() {
   } catch (e) {}
   return by;
 }
+/* ---- who signs in (15 October 2026: "i want the login to see whats happening and is staff logging in and agents?") ---- */
+/** The Sign-ins tab: one row a person an hour (T_SIGN.EVERY_MIN, a cache key), written on a board request that passed
+ *  tWho_. Until 15 October 2026 nothing recorded a sign-in, so the only trace of the board's use was what people logged on
+ *  it, and that showed the 7 October training and nothing since. Made the first time; a failed write never stops the board. */
+var T_SIGN = { SHEET: 'Sign-ins', HEAD: ['When', 'Who', 'Role', 'Unit', 'Via', 'Device', 'What'], EVERY_MIN: 60 };
+function tSignIn_(w, p) {
+  if (!w || !w.ok) return false;
+  p = p || {};
+  try {
+    var name = w.me && w.me.name ? String(w.me.name) : '';
+    var key = 'signin:' + (name ? tNameKey_(name) : 'code') + ':' + (w.role || ''), cache = null;
+    try { cache = CacheService.getScriptCache(); if (cache && cache.get(key)) return false; } catch (e) { cache = null; }
+    var unit = '';
+    if (name) tTeam_().people.forEach(function (x) { if (!unit && tNameKey_(x.name) === tNameKey_(name)) unit = x.unit || ''; });
+    var ss = ss_(), sh = ss.getSheetByName(T_SIGN.SHEET);
+    if (!sh) {
+      sh = ss.insertSheet(T_SIGN.SHEET);
+      sh.getRange(1, 1, 1, T_SIGN.HEAD.length).setValues([T_SIGN.HEAD]);
+      try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_SIGN.HEAD.length).setFontWeight('bold'); } catch (e) {}
+    }
+    var what = /^(1|yes|true)$/i.test(String(p.agents || '')) ? 'agents' : /^(1|yes|true)$/i.test(String(p.sfwork || '')) ? 'dashboard' : 'board';
+    sh.getRange(sh.getLastRow() + 1, 1, 1, T_SIGN.HEAD.length).setValues([[new Date(), name || 'Branch code', w.role || '', unit,
+      name && !w.viaBranch ? 'password' : 'branch code', String(p.dev || '').replace(/[^\w .:-]/g, '').slice(0, 40), what]]);
+    try { if (cache) cache.put(key, '1', T_SIGN.EVERY_MIN * 60); } catch (e) {}
+    return true;
+  } catch (e) { log_('transition', 'signin-log-failed', String(e && e.message ? e.message : e)); return false; }
+}
+/** Who has signed in and when, for the branch (everyone active on the Agent Skill Bank, never a former agent) and a unit
+ *  manager (his team): the last sign-in and its device, the opens today, the days of the last seven, the opens since the
+ *  first, and who never has. The branch code's own sign-ins (no name) are counted apart, for the branch alone. */
+function tSignIns_(w) {
+  var out = { on: true, every: T_SIGN.EVERY_MIN, people: [], never: [], code: null, since: '', at: '' };
+  try {
+    var tz = tTz_(), now = new Date(), sinceTs = 0;
+    var fmt = function (d, f) { return Utilities.formatDate(d, tz, f); };
+    var todayS = fmt(now, 'yyyy-MM-dd'), week = {};
+    for (var i = 0; i < 7; i++) week[fmt(new Date(now.getTime() - i * 86400000), 'yyyy-MM-dd')] = true;
+    var t = tSheetRows_(T_SIGN.SHEET), ix = {};
+    t.head.forEach(function (h, i) { ix[String(h).trim()] = i; });
+    var by = {};
+    if (ix.When !== undefined && ix.Who !== undefined) t.rows.forEach(function (v) {
+      var d = v[ix.When];
+      if (!(d instanceof Date) || isNaN(d.getTime())) return;
+      var who = String(v[ix.Who] || '').trim();
+      if (!who) return;
+      var k = /^branch code$/i.test(who) ? '$code' : tNameKey_(who);
+      var e = by[k] = by[k] || { name: who, total: 0, today: 0, days: {}, last: null, first: null, dev: '' };
+      var ds = fmt(d, 'yyyy-MM-dd');
+      e.total++;
+      if (ds === todayS) e.today++;
+      if (week[ds]) e.days[ds] = true;
+      if (!e.last || d.getTime() >= e.last.getTime()) { e.last = d; e.dev = ix.Device !== undefined ? String(v[ix.Device] || '') : ''; }   // a tie: the lower row is the later open
+      if (!e.first || d.getTime() < e.first.getTime()) e.first = d;
+      if (!sinceTs || d.getTime() < sinceTs) { sinceTs = d.getTime(); out.since = fmt(d, 'd MMM'); }
+    });
+    var team = tTeam_(), former = tFormer_(), mine = null;
+    if (w.role === 'unit') { mine = {}; (w.team || []).forEach(function (n) { mine[tNameKey_(n)] = true; }); }
+    team.people.forEach(function (p) {
+      var k = tNameKey_(p.name);
+      if (!p.active || former[k] || (mine && !mine[k])) return;
+      var row = { name: p.name, role: p.roleText || 'Agent', unit: p.unit || '' }, e = by[k];
+      if (!e) { out.never.push(row); return; }
+      row.last = fmt(e.last, 'd MMM HH:mm'); row.lastTs = e.last.getTime(); row.today = e.today; row.days = Object.keys(e.days).sort();
+      row.total = e.total; row.first = fmt(e.first, 'd MMM'); row.dev = e.dev;
+      out.people.push(row);
+    });
+    out.people.sort(function (a, b) { return b.lastTs - a.lastTs; });
+    if (w.role === 'branch' && by.$code) out.code = { last: fmt(by.$code.last, 'd MMM HH:mm'), today: by.$code.today, days: Object.keys(by.$code.days).sort(), total: by.$code.total };
+    out.at = fmt(now, 'd MMM HH:mm');
+  } catch (e) { out.on = false; out.why = String(e && e.message ? e.message : e); }
+  return out;
+}
+
 /** Everyone a client has been named to, oldest first: [{ on: Date|null, agent, via: 'board'|'Salesforce'|…, by }]. c is the
  *  board's client (its stamps and file notes), hr their Household Assignments row, log the Assignment Log's entries for
  *  them, canon the roster's spelling of a name. The same agent on the same day is one line. */
