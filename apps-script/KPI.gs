@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-15f';
+var SCRIPT_VERSION = '2026-10-15g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3294,6 +3294,7 @@ function sendDayStart_(staffId, date, kind, opt) {
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + intro + '</div>' +
     (kind === 'first' ? backCard_(staffId, date) : '') +
+    (kind === 'first' ? queryCard_(staffId) : '') +
     statTiles_([
       { value: signIn ? twelve_(signIn) : '—', label: signIn ? 'signed in' : 'not signed in' },
       { value: sfOk ? overdue : '—', label: 'overdue', color: overdue ? MAIL.red : MAIL.navy },
@@ -3840,6 +3841,21 @@ function coverMail_(day, plan, done, asked) {
 }
 
 /** The morning a desk is back: what was covered, and what she owes. Once. */
+
+/** Query Pal queries still open and assigned to this desk: a card for the morning e-mail. */
+function queryCard_(sid) {
+  var me = nameFor_(sid), list = [];
+  try { list = openQueries_().filter(function (x) { return bkNk_(x.assigned) === bkNk_(me) || (bkNk_(x.assigned).split(' ')[0] === bkNk_(me).split(' ')[0] && bkNk_(x.assigned).split(' ')[0]); }); } catch (e) { return ''; }
+  if (!list.length) return '';
+  return sectionLabel_('Client queries open in Query Pal · assigned to you (' + list.length + ')') +
+    '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.amber + ';border-radius:10px;padding:8px 15px;margin-bottom:14px">' +
+    list.slice(0, 8).map(function (x) {
+      return '<div style="font-size:12.5px;line-height:1.45;padding:5px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(x.ref) + '</b> · ' + esc_(shorten_(x.subject || x.type, 70)) +
+        (x.agent ? ' · agent ' + esc_(x.agent.split(' ')[0]) : '') + ' · <span style="color:' + (x.days > 3 ? MAIL.red : MAIL.muted) + ';font-weight:700">' + x.days + ' days open</span>' +
+        (x.days > 3 ? ' · past the 3-day turnaround: close it or note why on the trail today' : '') + '</div>'; }).join('') +
+    (list.length > 8 ? '<div style="font-size:12px;color:' + MAIL.muted + '">and ' + (list.length - 8) + ' more in Query Pal.</div>' : '') + '</div>';
+}
+
 function backCard_(sid, day) {
   var props = PropertiesService.getScriptProperties(), raw = props.getProperty('cover_back_' + sid);
   if (!raw) return '';
@@ -4239,6 +4255,11 @@ function unitAgents_(sid) {
   var forced = props.getProperty('UNIT_AGENTS_' + sid);
   if (forced) return forced.split(',').map(function (s) { return s.trim(); }).filter(String);
   var me = nameFor_(sid), out = [me];
+  try {
+    var sb = skillBank_(), mine = [];
+    Object.keys(sb).forEach(function (k) { var p = sb[k]; if (p.isAgent && p.active && bkNk_(p.unit) === bkNk_(me)) mine.push(p.name); });
+    if (mine.length) return out.concat(mine);
+  } catch (e) {}
   if (typeof iBuildUnits_ !== 'function') return out;
   var units = {};
   try { units = iBuildUnits_() || {}; } catch (e) { return out; }
@@ -4750,7 +4771,107 @@ function agentMode_() {
 function agSlug_(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
 
 /** Every active agent with an e-mail, keyed a-<name>. Managers and staff are not agents here. */
+
+/* ───────────────── Branch workbooks: Skill Bank, Query Pal, FY27 goals ─────────────────
+ *  The agents log in everywhere with their agent code, and the Agent Skill Bank
+ *  is the one roster that carries code, unit, e-mail and Active. Query Pal holds
+ *  every client query with the agent on it and the staff member it is assigned to.
+ *  The fact-find workbook holds each advisor's FY27 goal plan (the year began
+ *  1 October 2026) and their weekly check-ins. Script Properties override the ids. */
+var BOOKS = {
+  SKILL: { id: '1-NGk9kWAlmx6BA1DwNjsddwV6IMiTXQNZ61InwyVC0s', tab: 'Agent Skill Bank', households: 'Household Assignments', responses: 'Client Responses' },
+  QPAL:  { id: '1jrbysTBHwOkWiWJUKVI92z4jikdZDf4MYmK7aHRvmmI', tab: 'Queries' },
+  FF:    { id: '1iytBbnETQFRmkveDSxadjsAfN07aMTW9E2slcA5qaWI', plans: 'FY27 Goal Plans', checks: 'FY27 Check-ins' },
+  FY_START: '2026-10-01', CACHE_SEC: 900
+};
+function bookId_(k) { try { return PropertiesService.getScriptProperties().getProperty('BOOK_' + k) || BOOKS[k].id; } catch (e) { return BOOKS[k].id; } }
+/** Rows of a tab as objects keyed by header (trimmed). Cached per tab. */
+function bookRows_(k, tab) {
+  var ck = 'book_' + k + '_' + tab;
+  try { var hit = CacheService.getScriptCache().get(ck); if (hit) return JSON.parse(hit); } catch (e) {}
+  var out = [];
+  try {
+    var sh = SpreadsheetApp.openById(bookId_(k)).getSheetByName(tab);
+    if (sh && sh.getLastRow() > 1) {
+      var v = sh.getDataRange().getValues(), h = v[0].map(function (x) { return String(x || '').trim(); });
+      for (var i = 1; i < v.length; i++) {
+        if (!v[i].some(function (c) { return c !== '' && c != null; })) continue;
+        var o = {}; h.forEach(function (c, j) { if (!c) return; var val = v[i][j] instanceof Date ? Utilities.formatDate(v[i][j], CONFIG.TZ, 'yyyy-MM-dd HH:mm') : v[i][j]; if (o[c] === undefined || o[c] === '' || o[c] === null) o[c] = val; });
+        out.push(o);
+      }
+    }
+  } catch (e) { Logger.log('bookRows_ ' + k + '/' + tab + ': ' + e); return []; }
+  try { var js = JSON.stringify(out); if (js.length < 95000) CacheService.getScriptCache().put(ck, js, BOOKS.CACHE_SEC); } catch (e) {}
+  return out;
+}
+function bkNk_(s) { return String(s || '').toLowerCase().replace(/^[a-z]{1,3}[\s-]*\d{3,6}\s*-\s*/, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
+/** The Skill Bank roster: { code, name, role, unit, email, active, manager } by name key. */
+function skillBank_() {
+  var out = {};
+  bookRows_('SKILL', BOOKS.SKILL.tab).forEach(function (r) {
+    var raw = String(r['Agent'] || ''), code = String(r['Agent no.'] || '').trim();
+    var name = raw.replace(/^[A-Za-z]{1,3}[\s-]*\d{3,6}\s*-\s*/, '').trim(); if (!name) return;
+    var email = String(r['Email'] || '').trim().toLowerCase();
+    var role = String(r['Role'] || '').trim(), unit = String(r['Unit'] || '').trim();
+    var active = !/^(no|inactive|false|0)$/i.test(String(r['Active'] || 'Active').trim());
+    out[bkNk_(name)] = { code: code, name: name, role: role, unit: unit, email: email, active: active,
+      isAgent: /^agent$/i.test(role), isUM: /unit manager/i.test(role), isStaff: /staff|support|assistant/i.test(role) };
+  });
+  return out;
+}
+/** Open Query Pal queries, oldest first: { ref, when, days, client, agent, assigned, subject, dept, type }. */
+function openQueries_() {
+  var day = todayISO_();
+  return bookRows_('QPAL', BOOKS.QPAL.tab).filter(function (r) { return r['Reference'] && !/closed/i.test(String(r['Status'] || '')); })
+    .map(function (r) {
+      var when = String(r['Timestamp'] || ''), d = when ? daysBetween_(sfkDay_(when), day) : null;
+      return { ref: String(r['Reference'] || ''), when: when, days: d, client: String(r['Client/Name'] || ''), agent: String(r['Agent'] || ''),
+        assigned: String(r['Assigned To'] || ''), subject: String(r['Subject'] || ''), dept: String(r['Department'] || ''), type: String(r['Query Type'] || ''), status: String(r['Status'] || '') };
+    }).sort(function (a, b) { return (b.days || 0) - (a.days || 0); });
+}
+function sfkDay_(s) { var m = String(s || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) return m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2); return String(s || '').slice(0, 10); }
+function daysBetween_(a, b) { try { return Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5); } catch (e) { return null; } }
+/** FY27 goal plan and latest check-in for one advisor (by name or code). */
+function goalFor_(name, code) {
+  var plans = bookRows_('FF', BOOKS.FF.plans), checks = bookRows_('FF', BOOKS.FF.checks), nk = bkNk_(name), plan = null, last = null;
+  plans.forEach(function (r) { if ((code && String(r['Code'] || '').trim() === code) || bkNk_(r['Name']) === nk) plan = r; });
+  checks.forEach(function (r) { if ((code && String(r['Code'] || '').trim() === code) || bkNk_(r['Name']) === nk) if (!last || Number(r['Week']) >= Number(last['Week'])) last = r; });
+  if (!plan) return null;
+  var n = function (k) { return Number(plan[k] || 0) || 0; };
+  var weeks = Math.max(1, Math.round(daysBetween_(BOOKS.FY_START, todayISO_()) / 7));
+  return { api: n('API Goal'), fyc: n('FYC Goal'), apps: n('Apps Goal'), contactsWk: n('Contacts / wk'), apptsWk: n('Appointments / wk'), ffWk: n('Fact finds / wk'), appsWk: n('Apps / wk'),
+    title: String(plan['Title Goal'] || ''), submitted: String(plan['Submitted At'] || '').slice(0, 10), weeksIn: weeks,
+    paceApi: Math.round(n('API Goal') * Math.min(1, weeks / 52)),
+    last: last ? { week: last['Week'], contacts: Number(last['Contacts'] || 0), appts: Number(last['Appointments'] || 0), ff: Number(last['Fact finds'] || 0), apps: Number(last['Apps'] || 0), win: String(last['Win'] || ''), way: String(last['In The Way'] || ''), help: String(last['Help'] || '') } : null };
+}
+/** Orphan work assigned to an agent: households assigned, and client call-backs waiting. */
+function orphanFor_(name) {
+  var nk = bkNk_(name), hh = 0, calls = 0;
+  bookRows_('SKILL', BOOKS.SKILL.households).forEach(function (r) { if (bkNk_(r['Agent assigned']) === nk) hh++; });
+  bookRows_('SKILL', BOOKS.SKILL.responses).forEach(function (r) { if (bkNk_(r['Assigned to']) === nk && /open/i.test(String(r['Status'] || ''))) calls++; });
+  return { households: hh, callbacks: calls };
+}
+function checkBooks() {
+  var sb = skillBank_(), names = Object.keys(sb);
+  Logger.log('Skill Bank: ' + names.length + ' rows · agents ' + names.filter(function (k) { return sb[k].isAgent && sb[k].active; }).length);
+  names.forEach(function (k) { var p = sb[k]; Logger.log('  ' + p.code + ' · ' + p.name + ' · ' + p.role + ' · unit ' + p.unit + ' · ' + p.email + (p.active ? '' : ' · INACTIVE')); });
+  var q = openQueries_(); Logger.log('Query Pal open: ' + q.length); q.forEach(function (x) { Logger.log('  ' + x.ref + ' · ' + x.days + 'd · agent ' + (x.agent || '—') + ' · assigned ' + (x.assigned || '—')); });
+  Logger.log('FY27 plans: ' + bookRows_('FF', BOOKS.FF.plans).length + ' · check-ins: ' + bookRows_('FF', BOOKS.FF.checks).length);
+}
+
 function agentPeople_() {
+  var sb = {}; try { sb = skillBank_(); } catch (e) {}
+  var fromBank = {};
+  Object.keys(sb).forEach(function (k) {
+    var p = sb[k]; if (!p.isAgent || !p.active || !p.email) return;
+    var key = 'a-' + agSlug_(p.name);
+    fromBank[key] = { key: key, name: p.name, agentName: p.name, agentId: p.code, email: p.email, role: 'Agent', manager: '', unit: p.unit, code: p.code };
+  });
+  if (Object.keys(fromBank).length) {
+    // the Unit Manager's e-mail from the bank, when the unit names one
+    Object.keys(fromBank).forEach(function (key) { var u = bkNk_(fromBank[key].unit); var um = sb[u]; if (um && um.isUM && um.email) fromBank[key].manager = um.email; });
+    return fromBank;
+  }
   if (typeof iAgentDirectory_ !== 'function') return {};
   var dir = {}, out = {}, skip = {};
   try { dir = iAgentDirectory_() || {}; } catch (e) { return {}; }
@@ -4797,6 +4918,14 @@ function agentBatchData_(list, day) {
   var nk = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); };
   try { out.feed = ff360Feed_(); } catch (e) {}
   list.forEach(function (a) { out.f360[a.key] = ff360Agent_(out.feed, [a.agentName, a.name]); });
+  out.q = {}; out.goal = {}; out.orphan = {};
+  var allQ = []; try { allQ = openQueries_(); } catch (e) {}
+  list.forEach(function (a) {
+    var nk2 = bkNk_(a.agentName);
+    out.q[a.key] = allQ.filter(function (x) { return bkNk_(x.agent) === nk2; });
+    try { out.goal[a.key] = goalFor_(a.agentName, a.code || a.agentId); } catch (e) { out.goal[a.key] = null; }
+    try { out.orphan[a.key] = orphanFor_(a.agentName); } catch (e) { out.orphan[a.key] = null; }
+  });
   var who = {};
   list.forEach(function (a) { who[nk(a.agentName)] = a.key; who[nk(a.name)] = a.key; out.open[a.key] = []; out.closed[a.key] = []; out.ff[a.key] = []; });
   if (!names.length) return out;
@@ -4895,6 +5024,7 @@ function agentMorningMail_(a, day, data, cache) {
   var ffDays = lastFF ? daysSince_(lastFF) : null;
   var ff30 = ff.filter(function (f) { return f.on && daysSince_(f.on) <= 30; }).length;
   var f3 = (data.f360 || {})[a.key] || null;
+  var g = (data.goal || {})[a.key] || null, qs = (data.q || {})[a.key] || [], orp = (data.orphan || {})[a.key] || null;
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late }; });
   try { PropertiesService.getScriptProperties().setProperty('ag_items_' + a.key + '_' + day, JSON.stringify(items).slice(0, 8900)); } catch (e) {}
@@ -4924,6 +5054,16 @@ function agentMorningMail_(a, day, data, cache) {
         agLine_('<b>Premium dues to chase: ' + book.chase.length + '</b>') +
         agLine_('<b>Pending business holding money: ' + book.pend.length + '</b>' + (book.pend.length ? ' · ' + esc_(book.pend.slice(0, 3).map(function (x) { return x.client + ' (' + (x.requirement || x.status || 'pending') + ')'; }).join(', ')) : '')) +
         (book.follow.length ? agLine_('<b>Follow-ups you promised, due: ' + book.follow.length + '</b> · ' + esc_(book.follow.slice(0, 3).map(function (x) { return x.client; }).join(', '))) : '')) : '') +
+    (g ? sectionLabel_('Your FY27 goals · week ' + g.weeksIn + ' of 52') + agCard_(MAIL.gold,
+        agLine_('<b>API goal ' + ff360Money_(g.api) + '</b> · by now you should be at <b>' + ff360Money_(g.paceApi) + '</b>' + (f3 && f3.known ? ' · picked up so far <b style="color:' + (f3.pickedUp >= g.paceApi ? MAIL.green : MAIL.red) + '">' + ff360Money_(f3.pickedUp) + '</b>' : '') + (g.title ? ' · aiming for <b>' + esc_(g.title) + '</b>' : '')) +
+        agLine_('Your own weekly numbers: <b>' + g.contactsWk + '</b> contacts · <b>' + g.apptsWk + '</b> appointments · <b>' + g.ffWk + '</b> fact finds · <b>' + g.appsWk + '</b> apps' + (f3 && f3.known ? ' · this week so far: <b>' + f3.week + '</b> fact find' + (f3.week === 1 ? '' : 's') : '')) +
+        (g.last ? agLine_('Last check-in (week ' + esc_(String(g.last.week)) + '): ' + g.last.contacts + ' contacts · ' + g.last.appts + ' appts · ' + g.last.ff + ' fact finds · ' + g.last.apps + ' apps' + (g.last.way ? ' · in the way: <i>' + esc_(shorten_(g.last.way, 90)) + '</i>' : '')) : agLine_('<span style="color:' + MAIL.red + ';font-weight:700">No weekly check-in yet.</span> Your plan is on factfind360.com; the check-in takes two minutes.')))
+      : sectionLabel_('Your FY27 goals') + agCard_(MAIL.red, agLine_('<b>No goal plan on record for FY27.</b> The year began 1 October. Submit yours on factfind360.com today; the branch wall shows every advisor\'s API race.'))) +
+    (qs.length ? sectionLabel_('Your clients\' open queries · Query Pal (' + qs.length + ')') + agCard_(MAIL.amber, qs.slice(0, 5).map(function (x) {
+        return agLine_('<b>' + esc_(x.client) + '</b> · ' + esc_(shorten_(x.subject || x.type, 60)) + ' · with <b>' + esc_(String(x.assigned || 'unassigned').split(' ')[0]) + '</b> · <span style="color:' + (x.days > 3 ? MAIL.red : MAIL.muted) + '">' + x.days + ' days open</span>'); }).join('') +
+        (qs.length > 5 ? '<div style="font-size:12px;color:' + MAIL.muted + '">and ' + (qs.length - 5) + ' more.</div>' : '')) : '') +
+    (orp && (orp.households || orp.callbacks) ? sectionLabel_('Orphan clients assigned to you') + agCard_(MAIL.navy,
+        agLine_('<b>' + orp.households + '</b> household' + (orp.households === 1 ? '' : 's') + ' assigned to you' + (orp.callbacks ? ' · <b style="color:' + MAIL.red + '">' + orp.callbacks + '</b> asked for a call and are still waiting' : ''))) : '') +
     sectionLabel_('Fact finds' + (data.feed ? ' · FactFind360' : '')) + agCard_(f3 && f3.known ? (f3.month ? MAIL.green : MAIL.red) : (ffDays == null || ffDays > 30 ? MAIL.red : MAIL.green),
       (data.feed ? agLine_(f3 && f3.known ? '<b>' + f3.week + '</b> this week · <b>' + f3.month + '</b> this month · <b>' + f3.year + '</b> this year · picked up <b>' + ff360Money_(f3.pickedUp) + '</b> · pipeline <b>' + ff360Money_(f3.pipeline) + '</b>' +
           (f3.month ? '' : ' <span style="color:' + MAIL.red + ';font-weight:700">· none this month</span>')
