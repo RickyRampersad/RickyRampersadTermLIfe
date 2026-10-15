@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-15h';
+var SCRIPT_VERSION = '2026-10-15i';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3581,6 +3581,29 @@ function housekeepingTick_() {
 /** Run from the editor on the morning the new code goes in, or any morning
  *  the e-mail was missed: sends today's morning e-mail now to every desk whose
  *  day has started and who has not had it. Safe to run twice; nobody gets two. */
+/** Run from the editor when the before-you-leave mail was missed: sends it now
+ *  to every desk that is past (finish − 30) today, signed in, not absent, and
+ *  has not had it. Safe to run twice; nobody gets two. */
+function sendHousekeepingNow() {
+  var day = todayISO_(), props = PropertiesService.getScriptProperties(), out = [];
+  var now = new Date(), mins = minutesOf_(hhmm_(now));
+  var present = {}, absent = {};
+  try { (hrRows_(ATT, true) || []).forEach(function (r) { if (isoDay_(r.Date) !== day) return;
+    if (String(r.Status || 'in').toLowerCase() === 'absent') { absent[String(r.StaffId)] = 1; return; }
+    if (timeStr_(r.FirstSignIn)) present[String(r.StaffId)] = timeStr_(r.FirstSignIn); }); } catch (e) {}
+  publicRoster_().forEach(function (p) {
+    var sid = String(p.staffId);
+    if (!SCHEDULE[sid] || DAY_MAIL_DESKS.indexOf(sid) < 0 || absent[sid]) return;
+    if (!(present[sid] || props.getProperty('daystart_first_' + sid + '_' + day))) { out.push(sid + ': not signed in, no morning mail'); return; }
+    if (mins < endFor_(sid) - HK_LEAD_MIN) { out.push(sid + ': not yet (' + twelve_(mmText_(endFor_(sid) - HK_LEAD_MIN)) + ')'); return; }
+    var key = 'hk_' + sid + '_' + day;
+    if (props.getProperty(key)) { out.push(sid + ': already sent ' + props.getProperty(key)); return; }
+    try { if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid] || ''); props.setProperty(key, hhmm_(now)); out.push(sid + ': sent'); }
+    catch (e) { out.push(sid + ' FAILED: ' + (e && e.message)); }
+  });
+  Logger.log(out.join('\n')); return out.join('\n');
+}
+
 function sendMorningNow() {
   var day = todayISO_(), props = PropertiesService.getScriptProperties(), out = [];
   var nowM = minutesOf_(hhmm_(new Date()));
