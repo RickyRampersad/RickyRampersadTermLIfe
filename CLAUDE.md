@@ -2401,10 +2401,24 @@ voice under the new timing and the caption gives it away.
   when Date Comm Paid, on or after the naming, is on any of the client's
   policies; Was Agent Paid is then set to Yes. A date still to come counts,
   and the board reads it "to be paid". A Paid date typed on the tab also
-  closes a claim, and Void, Declined or Withdrawn in Status stop it. The
-  Monday list goes to the Retention unit with the manager copied, never the
+  closes a claim, and Void, Declined or Withdrawn in Status stop it. **The
+  list of unpaid claims goes every working day at 10:00** (`T_CLAIM.FOLLOW_HOUR`,
+  `tClaimsFollow_`; until 15 October 2026 every Monday at 9: "if the field
+  is not updated, every day a daily run goes out at 10 o'clock, copying the
+  sales support team to the retention department … once they close off,
+  then the email stops") to the Retention unit with sales support and the
+  manager copied (`tClaimCc_`: `FOLLOW_CC`, else `TRANSITION.CC`), never the
   agents, because it carries every agent's clients; each agent sees their own
-  claims on the board. **Nothing goes until the manager's go**:
+  claims on the board. A claim joins it three days after it was sent
+  (`MIN_DAYS`) and leaves it the day the date is there. **When the date
+  appears, the agent is told** (`tClaimPaidMail_`, `CONFIRM_PAID`): one
+  e-mail from support@ naming the client, the policy, the date and where it
+  was read (Salesforce, or Paid typed on the tab), sales support and the
+  manager copied, once per claim (`[agent told]` in the Note), only once the
+  claims are live. The menu item "send the retention follow-up (the daily
+  list) now" keeps its old function name. `claims15/claims-test.js` in the
+  scratchpad covers the daily list and the confirmation (25 checks).
+  **Nothing goes until the manager's go**:
   `transitionClaimsStart`, on the menu as "Transition: start the TT$200
   claims". Until then a claim is found, recorded and held. The board shows
   the branch every claim, a unit manager his team's and an agent their own,

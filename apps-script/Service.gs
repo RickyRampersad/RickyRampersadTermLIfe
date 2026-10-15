@@ -3664,7 +3664,7 @@ function onOpen() {
     .addItem('Transition: check the agent access (Agent Skill Bank)', 'transitionUsersCheck')
     .addItem('Transition: start the TT$200 claims (the go)', 'transitionClaimsStart')
     .addItem('Transition: check the TT$200 claims now', 'transitionClaimsNow')
-    .addItem('Transition: send the Monday retention follow-up now', 'transitionClaimsMondayNow')
+    .addItem('Transition: send the retention follow-up (the daily list) now', 'transitionClaimsMondayNow')
     .addItem('Transition: hold the TT$200 claims', 'transitionClaimsStop')
     .addToUi();
 }

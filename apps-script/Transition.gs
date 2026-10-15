@@ -7814,9 +7814,11 @@ var T_CLAIM = {
   TAB: 'Retention Payments',
   AMOUNT: 200, CUR: 'TT$',
   TO: 'GlocConservationRetentionunit@myguardiangroup.com',
-  COPY: '',             // blank = SVC.AGENT_EMAIL, the manager: copied on every claim and every Monday list, and where a reply goes
-  MONDAY_HOUR: 9,       // the Monday list goes in the first five-minute run at or after this hour, sheet time zone
-  MIN_DAYS: 3,          // a claim joins the Monday list once it was sent this many days before
+  COPY: '',             // blank = SVC.AGENT_EMAIL, the manager: copied on every claim and every follow-up list, and where a reply goes
+  FOLLOW_HOUR: 10,      // the list of unpaid claims goes every working day, in the first five-minute run at or after this hour, sheet time zone
+  FOLLOW_CC: [],        // copied on the daily list besides the manager; blank = TRANSITION.CC (sales support and the manager), 15 October 2026
+  MIN_DAYS: 3,          // a claim joins the daily list once it was sent this many days before
+  CONFIRM_PAID: true,   // when Salesforce shows the payment date, the agent is told by e-mail, sales support and the manager copied
   PAID_EVERY_MIN: 120,  // how often the unpaid claims are read back from Salesforce
   SCAN_EVERY_MIN: 15,   // how often the questionnaires are matched again when no new one has come in
   MAX_PER_RUN: 10,      // the most claims one run e-mails
@@ -7843,12 +7845,13 @@ function transitionClaimsStop() {
 }
 /** The menu's "check the TT$200 claims now": the scan and the payment check, whatever the clock says. */
 function transitionClaimsNow() { return tSay_(tClaimsLocked_(true)); }
-/** The menu's "send the Monday retention follow-up now": the list of unpaid claims, today, whatever the day. */
+/** The menu's "send the retention follow-up now": the list of unpaid claims, today, whatever the day or the hour. */
 function transitionClaimsMondayNow() {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return tSay_('Another run is busy. Try again in a minute.');
-  try { return tSay_(tClaimsMonday_(true).what); } finally { lock.releaseLock(); }
+  try { return tSay_(tClaimsFollow_(true).what); } finally { lock.releaseLock(); }
 }
+function transitionClaimsFollowNow() { return transitionClaimsMondayNow(); }
 function tClaimsLocked_(force) {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return 'Another run is busy. Try again in a minute.';
@@ -7858,21 +7861,21 @@ function tClaimsSay_(r) {
   return [r.found ? tN_(r.found, 'new claim', 'new claims') + ' found.' : 'No new claim.',
     r.sent ? tN_(r.sent, 'claim', 'claims') + ' e-mailed to the Retention unit.' : '',
     r.held ? tN_(r.held, 'claim is', 'claims are') + ' held: see Status on the ' + T_CLAIM.TAB + ' tab.' : '',
-    r.paid ? tN_(r.paid, 'claim', 'claims') + ' marked paid.' : '', r.monday || '',
+    r.paid ? tN_(r.paid, 'claim', 'claims') + ' marked paid.' : '', r.follow || r.monday || '',
     r.errors && r.errors.length ? 'Problems: ' + r.errors.join('; ') : ''].filter(Boolean).join(' ');
 }
 
 /** Inside the five-minute receipts run, which holds the script lock: new claims found and e-mailed, the unpaid read back
- *  from Salesforce, and the Monday list. Never throws. */
+ *  from Salesforce, and the daily list of unpaid claims. Never throws. */
 function tClaimsRun_(force) {
-  var out = { found: 0, sent: 0, held: 0, paid: 0, monday: '', errors: [] };
+  var out = { found: 0, sent: 0, held: 0, paid: 0, follow: '', errors: [] };
   var why = function (e) { return String(e && e.message ? e.message : e).slice(0, 200); };
   try { var a = tClaimsFind_(force); out.found = a.found; out.sent = a.sent; out.held = a.held; }
   catch (e) { out.errors.push('finding: ' + why(e)); log_('transition', 'claims-failed', why(e)); }
   try { out.paid = tClaimsPaid_(force).paid; }
   catch (e) { out.errors.push('payments: ' + why(e)); log_('transition', 'claims-paid-failed', why(e)); }
-  try { out.monday = tClaimsMonday_(false).what; }
-  catch (e) { out.errors.push('Monday list: ' + why(e)); log_('transition', 'claims-monday-failed', why(e)); }
+  try { out.follow = tClaimsFollow_(false).what; }
+  catch (e) { out.errors.push('daily list: ' + why(e)); log_('transition', 'claims-follow-failed', why(e)); }
   return out;
 }
 
@@ -8132,7 +8135,7 @@ function tClaimMail_(c) {
         '</td><td style="padding:6px 0;vertical-align:top;font-size:14.5px;color:#12202e;border-top:1px solid #eef2f5"><b>' + esc(r[1]) + '</b></td></tr>';
     }).join('') + '</table>' +
     '<p style="margin:0 0 12px">When it is paid, please reply with the payment date, or enter it as <b>Date Comm Paid</b> on the policy in Salesforce. ' +
-    'Until that date is there, this claim is on the list of unpaid claims we send you every Monday.</p>' +
+    'Until that date is there, this claim is on the list of unpaid claims we send you every working day at ' + T_CLAIM.FOLLOW_HOUR + ':00; it leaves the list the day the date is entered.</p>' +
     '<p style="margin:0 0 14px">Thank you,<br><b style="color:#12202e">' + esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch</p>' +
     '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(T_CLAIM_FOOT) + '</p></div>';
   var cc = [copy];
@@ -8149,7 +8152,7 @@ function tClaimsPaid_(force) {
   var open = [];
   cl.rows.forEach(function (r) {
     if (!/^submitted/i.test(r.status)) return;
-    if (tText_(r.paid)) { tClaimSet_(r, { Status: 'Paid (entered on this tab)' }); out.paid++; return; }
+    if (tText_(r.paid)) { tClaimSet_(r, { Status: 'Paid (entered on this tab)' }); out.paid++; tClaimPaidMail_(r, r.paid, 'the Paid date entered on the ' + T_CLAIM.TAB + ' tab'); return; }
     open.push(r);
   });
   if (!open.length || !tSfOn_()) return out;
@@ -8182,25 +8185,66 @@ function tClaimsPaid_(force) {
     tClaimSet_(r, { Paid: tHaDate_(hit.rec.paid), Status: 'Paid', Note: (r.note ? r.note + ' ' : '') + note });
     out.paid++;
     log_('transition', 'claim-paid', r.id + ' · ' + r.agent + ' · ' + r.client + ' · ' + hit.rec.paid);
+    tClaimPaidMail_(r, hit.rec.paid, 'Date Comm Paid on policy ' + hit.no + ' in Salesforce');
   });
   return out;
 }
 
-/** The Monday list: one e-mail to the Retention unit with every claim sent at least MIN_DAYS before and still without a
- *  payment date, oldest first, the manager copied (never the agents: the list carries every agent's clients; each agent
- *  sees their own claims on the board). Once a Monday, in the first run at or after MONDAY_HOUR; forced from the menu. */
-function tClaimsMonday_(force) {
+/** The confirmation when a payment date appears (15 October 2026: "please confirmed when payment is received"): one e-mail
+ *  to the agent, from support@, sales support and the manager copied, naming the client, the policy, the date and where it
+ *  was read. Once per claim (the Note carries [agent told]); only once the claims are live; never throws. */
+function tClaimPaidMail_(r, paidDay, source) {
+  if (!T_CLAIM.CONFIRM_PAID || !tClaimsLive_()) return false;
+  if (/\[agent told/.test(String(r.note || ''))) return false;
+  var esc = tEsc_, M = TRANSITION.MANAGER || {}, amt = T_CLAIM.CUR + tMoney_(r.amount || T_CLAIM.AMOUNT, 2);
+  var when = tClaimDay_(paidDay) || tText_(paidDay), future = (tDay_(paidDay) || '') > Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd');
+  var to = tText_(r.agentEmail), cc = tClaimCc_([]);
+  if (!to) { to = cc.shift() || SVC.AGENT_EMAIL; }
+  var subject = 'Retention payment ' + (future ? 'due' : 'confirmed') + ': ' + amt + ' to ' + r.agent + ' for ' + r.client + (r.policy ? ', policy ' + r.policy : '');
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:620px">' +
+    '<p style="margin:0 0 12px">Good day ' + esc(String(r.agent || '').split(/\s+/)[0] || '') + ',</p>' +
+    '<p style="margin:0 0 12px">The conservation payment of <b>' + esc(amt) + '</b> for <b>' + esc(r.client) + '</b>' + (r.policy ? ' (policy ' + esc(r.policy) + ')' : '') +
+    (future ? ' is set to be paid on <b>' + esc(when) + '</b>' : ' was paid on <b>' + esc(when) + '</b>') + ', read from ' + esc(source) + '. ' +
+    'The service questionnaire ' + esc(r.q || '') + ' came in on ' + esc(tClaimDay_(r.received)) + ', and the claim went to the Retention unit on ' + esc(tClaimDay_(r.submitted)) + ' (branch reference ' + esc(r.id) + ').</p>' +
+    '<p style="margin:0 0 12px">It shows as paid on your Claims tab on the assignment board. Nothing more is needed from you.</p>' +
+    '<p style="margin:0 0 14px">Thank you,<br><b style="color:#12202e">' + esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch</p>' +
+    '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(tInternal_(null)) + '</p></div>';
+  try {
+    tMsSend_(to, subject, html, { cc: cc, replyTo: T_CLAIM.COPY || SVC.AGENT_EMAIL });
+    tClaimSet_(r, { Note: (r.note ? r.note + ' ' : '') + '[agent told ' + Utilities.formatDate(new Date(), tTz_(), 'd MMM') + ']' });
+    return true;
+  } catch (e) { log_('transition', 'claim-paid-mail-failed', r.id + ' · ' + String(e && e.message ? e.message : e).slice(0, 160)); return false; }
+}
+/** Who is copied on the daily list and the paid confirmation: FOLLOW_CC, else TRANSITION.CC (sales support and the manager),
+ *  plus the manager's copy, each address once. */
+function tClaimCc_(extra) {
+  var out = [], seen = {};
+  [].concat(extra || [], T_CLAIM.FOLLOW_CC && T_CLAIM.FOLLOW_CC.length ? T_CLAIM.FOLLOW_CC : (TRANSITION.CC || []), [T_CLAIM.COPY || SVC.AGENT_EMAIL]).forEach(function (a) {
+    a = String(a || '').trim(); var k = a.toLowerCase();
+    if (a && !seen[k]) { seen[k] = true; out.push(a); }
+  });
+  return out;
+}
+
+/** The daily list (15 October 2026: "every day a daily run goes out at 10 o'clock, copying the sales support team to the
+ *  retention department … once they close off, then the email stops"; until then every Monday): one e-mail to the
+ *  Retention unit with every claim sent at least MIN_DAYS before and still without a payment date, oldest first, sales
+ *  support and the manager copied (never the agents: the list carries every agent's clients; each agent sees their own
+ *  claims on the board). Once a working day, in the first run at or after FOLLOW_HOUR; forced from the menu. A claim leaves
+ *  the list the day Date Comm Paid is in Salesforce, or Paid is typed on the tab, or its Status is closed. */
+function tClaimsFollow_(force) {
   var props = PropertiesService.getScriptProperties(), tz = tTz_(), now = new Date(), today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   if (!force) {
-    if (!tClaimsLive_() || props.getProperty('claims_monday') === today) return { what: '' };
-    if (Utilities.formatDate(now, tz, 'u') !== '1' || Number(Utilities.formatDate(now, tz, 'H')) < T_CLAIM.MONDAY_HOUR) return { what: '' };
+    if (!tClaimsLive_() || props.getProperty('claims_follow') === today) return { what: '' };
+    var dow = Number(Utilities.formatDate(now, tz, 'u'));
+    if (dow < 1 || dow > 5 || Number(Utilities.formatDate(now, tz, 'H')) < T_CLAIM.FOLLOW_HOUR) return { what: '' };
   }
   var due = tClaimsRead_().rows.filter(function (r) {
     var s = tDay_(r.submitted);
     return /^submitted/i.test(r.status) && !tText_(r.paid) && !!s && (force || tDaysBetween_(s, today) >= T_CLAIM.MIN_DAYS);
   });
   if (!due.length) {
-    if (!force) props.setProperty('claims_monday', today);
+    if (!force) props.setProperty('claims_follow', today);
     return { what: 'No unpaid claim to follow up.' };
   }
   due.sort(function (a, b) { return String(tDay_(a.submitted)).localeCompare(String(tDay_(b.submitted))) || a.id.localeCompare(b.id); });
@@ -8212,7 +8256,7 @@ function tClaimsMonday_(force) {
   var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:760px">' +
     '<p style="margin:0 0 12px">Good day,</p>' +
     '<p style="margin:0 0 12px">These conservation payments for orphan policyholders of the Ricky Rampersad Branch were sent to you and still show no payment date in Salesforce. ' +
-    'Please reply with the date each is paid, or enter it as <b>Date Comm Paid</b> on the policy; each one leaves this list when the date is there.</p>' +
+    'Please reply with the date each is paid, or enter it as <b>Date Comm Paid</b> on the policy; each one leaves this list the day the date is there. This list goes every working day at ' + T_CLAIM.FOLLOW_HOUR + ':00 until then.</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 14px"><tr>' +
     ['Sent to you', 'Agent', 'Client', 'Policy', 'Questionnaire', 'Amount', 'Asked before'].map(function (h) { return '<th style="' + th + '">' + h + '</th>'; }).join('') + '</tr>' +
     due.map(function (r) {
@@ -8227,12 +8271,14 @@ function tClaimsMonday_(force) {
     '<p style="margin:0 0 14px">' + esc(tN_(due.length, 'claim', 'claims')) + ', ' + esc(T_CLAIM.CUR + tMoney_(total, 2)) + ' in all. Thank you,<br><b style="color:#12202e">' +
     esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch</p>' +
     '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(T_CLAIM_FOOT) + '</p></div>';
-  tMsSend_(T_CLAIM.TO, subject, html, { cc: [copy], replyTo: copy });
+  tMsSend_(T_CLAIM.TO, subject, html, { cc: tClaimCc_([]), replyTo: copy });
   due.forEach(function (r) { tClaimSet_(r, { 'Follow-ups': (r.follow || 0) + 1, 'Last follow-up': now }); });
-  if (!force) props.setProperty('claims_monday', today);
-  log_('transition', 'claims-monday', due.length + ' unpaid claims followed up with the Retention unit, ' + T_CLAIM.CUR + tMoney_(total, 2));
+  if (!force) props.setProperty('claims_follow', today);
+  log_('transition', 'claims-follow', due.length + ' unpaid claims followed up with the Retention unit, ' + T_CLAIM.CUR + tMoney_(total, 2));
   return { what: 'Followed up ' + tN_(due.length, 'unpaid claim', 'unpaid claims') + ' with the Retention unit (' + T_CLAIM.CUR + tMoney_(total, 2) + ').' };
 }
+/** The name the menu and older callers know. */
+function tClaimsMonday_(force) { return tClaimsFollow_(force); }
 
 /** One claim as the board shows it: dates as "3 Oct 2026", where it stands in one word (unpaid, paid, held, notsent, check,
  *  closed, new), and for the branch the Status and Salesforce cells as written. */
