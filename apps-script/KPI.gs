@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-15e';
+var SCRIPT_VERSION = '2026-10-15f';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4682,6 +4682,54 @@ var AGENT_PER_RUN = 8;             // agents a ten-minute run; the rest follow
 var AGENT_PREVIEW_MAX = 3;         // in preview, three samples a day to the Branch Manager
 var AGENT_ABSENT_AT = 10 * 60 + 30; // no plan by 10:30 reads as absent
 var AGENT_LIST_MAX = 8;
+
+/* ───────────────────────── FactFind360 ─────────────────────────
+ *  factfind360.com holds the branch's live fact finds; the Salesforce
+ *  Fact_Finding_Interviews object stopped in March 2026. The wall feed
+ *  (?action=wall&k=) is what the television polls: per-agent counts for
+ *  the week, month and year, money picked up, pipeline, and the review
+ *  queue. Script Properties FACTFIND_WALL_URL / FACTFIND_WALL_KEY win;
+ *  the defaults are the ones printed in wall.html itself. */
+var FF360 = {
+  URL: 'https://script.google.com/macros/s/AKfycbx776ORwmwhm2u4vx2YGQPC6bRR9gTQ-Y-Yc1up0FNGkCKGaQdet-APT1PJsrAxxJ3dsQ/exec',
+  KEY: '8ef87867eacb4812b455fb3124dde161', CACHE_SEC: 600
+};
+function ff360Feed_() {
+  var cache = CacheService.getScriptCache();
+  try { var hit = cache.get('ff360'); if (hit) return JSON.parse(hit); } catch (e) {}
+  var props = PropertiesService.getScriptProperties();
+  var url = String(props.getProperty('FACTFIND_WALL_URL') || FF360.URL), key = String(props.getProperty('FACTFIND_WALL_KEY') || FF360.KEY);
+  try {
+    var res = UrlFetchApp.fetch(url + '?action=wall&k=' + encodeURIComponent(key) + '&_=' + Date.now(), { muteHttpExceptions: true, followRedirects: true });
+    if (res.getResponseCode() !== 200) return null;
+    var d = JSON.parse(res.getContentText()); if (!d || d.ok === false) return null;
+    try { cache.put('ff360', JSON.stringify(d).slice(0, 95000), FF360.CACHE_SEC); } catch (e) {}
+    return d;
+  } catch (e) { Logger.log('FactFind360 unreachable: ' + e); return null; }
+}
+/** One agent's FactFind360 line: { week, month, year, pickedUp, pipeline, apps } or null. */
+function ff360Agent_(feed, names) {
+  if (!feed) return null;
+  var nk = function (s) { return String(s || '').toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); };
+  var want = {}; (names || []).forEach(function (n) { if (n) want[nk(n)] = 1; });
+  var pick = function (list) { var hit = null; (list || []).forEach(function (x) { if (!hit && want[nk(x.name)]) hit = x; }); return hit; };
+  var w = pick(feed.leaders), m = pick(feed.monthLeaders), y = pick(feed.yearLeaders);
+  if (!w && !m && !y) return { week: 0, month: 0, year: 0, pickedUp: 0, pipeline: 0, apps: 0, known: false };
+  var n = function (x, f) { return x ? Number(x[f] || 0) : 0; };
+  return { week: n(w, 'count'), month: n(m, 'count'), year: n(y, 'count'),
+           pickedUp: Math.max(n(w, 'pickedUp'), n(m, 'pickedUp'), n(y, 'pickedUp')),
+           pipeline: Math.max(n(w, 'pipeline'), n(m, 'pipeline'), n(y, 'pipeline')),
+           apps: Math.max(n(w, 'apps'), n(m, 'apps'), n(y, 'apps')), known: true };
+}
+function ff360Money_(v) { v = Number(v || 0); return v >= 1000 ? '$' + Math.round(v / 1000).toLocaleString() + 'k' : '$' + Math.round(v).toLocaleString(); }
+function checkFactFind360() {
+  var d = ff360Feed_();
+  if (!d) { Logger.log('FactFind360: not reachable (check FACTFIND_WALL_URL / FACTFIND_WALL_KEY)'); return; }
+  Logger.log('FactFind360 as of ' + (d.asOf || '?') + ' · week leaders: ' + (d.leaders || []).length + ' · month: ' + (d.monthLeaders || []).length + ' · year: ' + (d.yearLeaders || []).length);
+  (d.yearLeaders || []).slice(0, 40).forEach(function (x) { Logger.log('  ' + x.name + ' · year ' + x.count + ' · picked up ' + ff360Money_(x.pickedUp) + ' · pipeline ' + ff360Money_(x.pipeline)); });
+  if (d.queue) Logger.log('Review queue: ' + JSON.stringify(d.queue));
+}
+
 var AGENT_METRICS = [
   { id: 'calls',   q: 'Calls made' },
   { id: 'appts',   q: 'Appointments set' },
@@ -4745,8 +4793,10 @@ function agentBatchData_(list, day) {
     [a.agentName, a.name].forEach(function (n) { if (n && names.indexOf(n) === -1) names.push(n); });
     emails.push(String(a.email).toLowerCase());
   });
-  var out = { open: {}, closed: {}, ff: {} };
+  var out = { open: {}, closed: {}, ff: {}, f360: {}, feed: null };
   var nk = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); };
+  try { out.feed = ff360Feed_(); } catch (e) {}
+  list.forEach(function (a) { out.f360[a.key] = ff360Agent_(out.feed, [a.agentName, a.name]); });
   var who = {};
   list.forEach(function (a) { who[nk(a.agentName)] = a.key; who[nk(a.name)] = a.key; out.open[a.key] = []; out.closed[a.key] = []; out.ff[a.key] = []; });
   if (!names.length) return out;
@@ -4844,6 +4894,7 @@ function agentMorningMail_(a, day, data, cache) {
   var lastFF = ff.length ? ff[0].on : '';
   var ffDays = lastFF ? daysSince_(lastFF) : null;
   var ff30 = ff.filter(function (f) { return f.on && daysSince_(f.on) <= 30; }).length;
+  var f3 = (data.f360 || {})[a.key] || null;
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late }; });
   try { PropertiesService.getScriptProperties().setProperty('ag_items_' + a.key + '_' + day, JSON.stringify(items).slice(0, 8900)); } catch (e) {}
@@ -4856,7 +4907,8 @@ function agentMorningMail_(a, day, data, cache) {
       { value: open.length, label: 'being worked for you', color: MAIL.navy },
       { value: book ? book.urgent.length : '—', label: 'premiums 60+ days', color: book && book.urgent.length ? MAIL.red : MAIL.navy },
       { value: book ? book.pend.length : '—', label: 'pendings stuck', color: book && book.pend.length ? MAIL.amber : MAIL.navy },
-      { value: ffDays == null ? '—' : ffDays + 'd', label: 'since last fact find', color: ffDays == null || ffDays > 30 ? MAIL.red : MAIL.green }
+      (f3 && f3.known ? { value: f3.month, label: 'fact finds this month', color: f3.month ? MAIL.green : MAIL.red }
+        : { value: ffDays == null ? '—' : ffDays + 'd', label: 'since last fact find', color: ffDays == null || ffDays > 30 ? MAIL.red : MAIL.green })
     ]) + btn +
     sectionLabel_('What the branch is actioning for you today (' + open.length + ')') +
     (open.length ? agCard_(MAIL.navy, open.slice(0, AGENT_LIST_MAX).map(function (t) {
@@ -4872,8 +4924,12 @@ function agentMorningMail_(a, day, data, cache) {
         agLine_('<b>Premium dues to chase: ' + book.chase.length + '</b>') +
         agLine_('<b>Pending business holding money: ' + book.pend.length + '</b>' + (book.pend.length ? ' · ' + esc_(book.pend.slice(0, 3).map(function (x) { return x.client + ' (' + (x.requirement || x.status || 'pending') + ')'; }).join(', ')) : '')) +
         (book.follow.length ? agLine_('<b>Follow-ups you promised, due: ' + book.follow.length + '</b> · ' + esc_(book.follow.slice(0, 3).map(function (x) { return x.client; }).join(', '))) : '')) : '') +
-    sectionLabel_('Fact finds') + agCard_(ffDays == null || ffDays > 30 ? MAIL.red : MAIL.green,
-      agLine_(ff.length ? '<b>' + ff.length + '</b> on record · <b>' + ff30 + '</b> in the last 30 days · last on <b>' + esc_(shortDate_(lastFF)) + '</b> (' + ffDays + ' days ago)' : '<b>No fact finds on record</b> under your e-mail.') +
+    sectionLabel_('Fact finds' + (data.feed ? ' · FactFind360' : '')) + agCard_(f3 && f3.known ? (f3.month ? MAIL.green : MAIL.red) : (ffDays == null || ffDays > 30 ? MAIL.red : MAIL.green),
+      (data.feed ? agLine_(f3 && f3.known ? '<b>' + f3.week + '</b> this week · <b>' + f3.month + '</b> this month · <b>' + f3.year + '</b> this year · picked up <b>' + ff360Money_(f3.pickedUp) + '</b> · pipeline <b>' + ff360Money_(f3.pipeline) + '</b>' +
+          (f3.month ? '' : ' <span style="color:' + MAIL.red + ';font-weight:700">· none this month</span>')
+        : '<b>No fact finds on FactFind360 this year</b> under your name.') : '') +
+      (data.feed && data.feed.queue && Number(data.feed.queue.pending) ? agLine_('Branch review queue: <b>' + Number(data.feed.queue.pending) + '</b> waiting' + (Number(data.feed.queue.breaching) ? ', <b style="color:' + MAIL.red + '">' + Number(data.feed.queue.breaching) + ' past 3 days</b>' : '')) : '') +
+      agLine_(ff.length ? '<b>' + ff.length + '</b> on record · <b>' + ff30 + '</b> in the last 30 days · last on <b>' + esc_(shortDate_(lastFF)) + '</b> (' + ffDays + ' days ago)' : '<b>No fact finds in Salesforce</b> under your e-mail.') +
       ff.slice(0, 3).map(function (f) { return agLine_(esc_(f.name || '—') + (f.occ ? ' · ' + esc_(f.occ) : '') + ' · ' + esc_(shortDate_(f.on)) + ' <span style="color:' + MAIL.muted + '">(' + daysSince_(f.on) + ' days: has it moved to a closing interview?)</span>'); }).join('')) +
     sectionLabel_('Your plan today') + agCard_(MAIL.gold, AGENT_METRICS.map(function (m) { return '<div style="font-size:13px;padding:2px 0">&#9675; ' + esc_(m.q) + '</div>'; }).join('') +
       '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:6px">A number against each on the page. At 5pm you give what was done.</div>') + btn +
