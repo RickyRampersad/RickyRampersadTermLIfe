@@ -4783,6 +4783,7 @@ function tBoard_(w, all, lite) {
            book: { ready: bk.ready, money: !staff, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
            signins: w.role === 'branch' || w.role === 'unit' ? tSignIns_(w) : null,   // who is signing in (15 October 2026)
+           stats: w.role === 'branch' || w.role === 'unit' || w.role === 'staff' ? tTeamStats_(w, clients, hhOf) : null,   // the team's progress and points (15 October 2026)
            units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false, canAssign: tCanAssign_(w),
            notes: tNotesForBoard_(w),
            calls: { ready: calls.ready }, mailHeld: tClientMailHeld_(),   // the call list is on the board; automatic client e-mail is on hold
@@ -5405,6 +5406,18 @@ function transitionAssign_(p) {
   var wantBrief = !/^(0|no|false)$/i.test(String(p.brief === undefined ? '1' : p.brief));
   var wantIntro = /^(1|yes|true)$/i.test(String(p.intro || ''));
   var extra = String(p.note || '').replace(/[\[\]<>]/g, '').trim().slice(0, 200);
+  /* the household is the unit of a naming, never one client or one policy (15 October 2026: "ensure always the household
+     is assigned and not a policy"): every member of each client's household on our list is named with them, whichever
+     row the press was on. solo=1 names the one client, for a family the branch has decided to split. */
+  var solo = /^(1|yes|true)$/i.test(String(p.solo || '')), added = [], hhOf = {};
+  try {
+    var hx = tHouseholds_(), fam = {};
+    hhOf = hx.byTok;
+    hx.rows.forEach(function (m) { if (m.token) (fam[m.hh] = fam[m.hh] || []).push(m.token); });
+    if (!solo) tokens.slice().forEach(function (tok) {
+      (hhOf[tok] ? fam[hhOf[tok]] : []).forEach(function (t) { if (tokens.indexOf(t) < 0) { tokens.push(t); added.push(t); } });
+    });
+  } catch (e) {}
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
   try {
@@ -5414,11 +5427,13 @@ function transitionAssign_(p) {
     (b.family || []).forEach(function (c) { map[c.token] = c; });   // a family member off the board, named with the household
     /* a client of the books the board does not show (a letter held or not sent yet), named from the Agents view's
        households (14 October 2026), so a family is named as one whatever its letters did. The branch only: staff name
-       the clients on their own board. Never a departed agent's own policy or household, staff, a death claim or a Test row. */
-    if (!byStaff) {
+       the clients on their own board, and (15 October 2026) the household members of those clients, since a naming is
+       always the household's. Never a departed agent's own policy or household, staff, a death claim or a Test row. */
+    if (!byStaff || added.length) {
       var sendRows = null;
       tokens.forEach(function (tok) {
         if (map[tok]) return;
+        if (byStaff && added.indexOf(tok) < 0) return;
         if (!sendRows) { sendRows = {}; tRead_().rows.forEach(function (r) { var t = tText_(r.Token); if (t) sendRows[t] = r; }); }
         var r = sendRows[tok];
         if (!r || tYes_(r.Test) || /^test:/i.test(tText_(r.Agent)) || /^test\b/i.test(tText_(r.Client)) || T_NOT_BOOK.test(tText_(r.Exclude))) return;
@@ -5439,7 +5454,7 @@ function transitionAssign_(p) {
     if (byStaff) b.clients.forEach(function (c) { onBoard[c.token] = true; });   // staff name only the clients on their own board
     tokens.forEach(function (tok) {
       var c = map[tok];
-      if (!c || (byStaff && !onBoard[tok])) { missing.push(tok); return; }
+      if (!c || (byStaff && !onBoard[tok] && added.indexOf(tok) < 0)) { missing.push(tok); return; }
       var targets = (c.rows || []).filter(function (r) { return r.type !== 'informed'; });
       if (!targets.length) targets = c.rows || [];
       if (targets.length) {
@@ -5462,6 +5477,17 @@ function transitionAssign_(p) {
     /* and in Salesforce, the way the branch names an agent there (8 October 2026: "if that is updated there, it updates on
        the Salesforce backend"): skipped, and said, until Salesforce is linked in this project */
     var sf = tSfAssignWrite_(done, agent, now);
+    /* and a line on each client's open Salesforce tasks (15 October 2026): the naming, the date and who named, so the task
+       that stays open until the matter is closed carries it */
+    var sfNotes = 0;
+    if (done.length && T_SFTASK.NOTE_ON_NAMING && tSfOn_()) {
+      var nmLine = 'From the assignment board · Named to ' + agent.name + ' on ' + Utilities.formatDate(now, tTz_(), 'd MMM yyyy') + ' by ' + tNiceName_(byStaff || (w.me && w.me.name) || 'the branch') +
+        (added.length ? ' · the household named together' : '');
+      var ha0 = null; try { ha0 = tHaRead_(); } catch (e) { ha0 = null; }
+      done.slice(0, 40).forEach(function (c) { try { sfNotes += tSfNoteTasks_(c.token, c.no, ha0, nmLine).posted; } catch (e) {} });
+    }
+    var hhNamed = {};
+    done.forEach(function (c) { hhNamed[hhOf[c.token] || ('S' + c.token)] = 1; });
     var briefed = false, introduced = 0, notAnswered = 0, introHeld = 0, warnings = [];
     /* client e-mail on hold (7 October 2026: an introduction went to a client while an agent was being trained on the
        board): the agent is named and briefed, and the client is sent nothing and nothing is marked. An introduction
@@ -5490,9 +5516,107 @@ function transitionAssign_(p) {
     log_('transition', 'assign', agent.name + ' · ' + done.length + ' client' + (done.length === 1 ? '' : 's') + (byStaff ? ' · named by ' + byStaff : '') +
          (briefed ? ' · briefed' : '') + (introduced ? ' · ' + introduced + ' introduced' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held: client e-mail on hold' : '') +
          (missing.length ? ' · ' + missing.length + ' unknown' : '') +
-         (sf.on ? ' · Salesforce: ' + (sf.policies ? sf.policies + ' polic' + (sf.policies === 1 ? 'y' : 'ies') + ' updated' : 'not updated') + (sf.why ? ' (' + sf.why + ')' : '') : ''));
-    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, introHeld: introHeld, notAnswered: notAnswered, missing: missing, warnings: warnings, sf: sf };
+         (added.length ? ' · ' + added.length + ' household member' + (added.length === 1 ? '' : 's') + ' named with them' : '') +
+         (sf.on ? ' · Salesforce: ' + (sf.policies ? sf.policies + ' polic' + (sf.policies === 1 ? 'y' : 'ies') + ' updated' : 'not updated') + (sf.why ? ' (' + sf.why + ')' : '') : '') +
+         (sfNotes ? ' · ' + sfNotes + ' task note' + (sfNotes === 1 ? '' : 's') : ''));
+    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, introHeld: introHeld, notAnswered: notAnswered, missing: missing, warnings: warnings, sf: sf,
+             households: Object.keys(hhNamed).length, family: added.length, sfNotes: sfNotes };
   } finally { lock.releaseLock(); }
+}
+
+/* ── the board's log on the Salesforce task ──────────────────────────────
+   15 October 2026: "when the agent logs, comments etc, can they see the task opened if any and it's logged on the task, as
+   a task is supposed to be opened until closed". A call logged on the board goes onto the client's open tasks' Chatter in
+   the person's name; when none is open, a task is opened on the client's policy, owned by the person's own Salesforce user
+   (the agents mostly have none, and then the branch manager's), with the line on it. Nothing here closes a task: a person
+   closes it, with a note of who was spoken to and what was agreed. A naming posts its own line (tSfNoteTasks_). */
+var T_SFTASK = {
+  NOTE_ON_NAMING: true,             // a naming posts "Named to <agent> on <date> by <who>" on the client's open tasks
+  OPEN_ON_LOG: true,                // a call logged on a client with no open task opens one, so the log has a task to sit on
+  SUBJECT: 'Orphan transition: ',   // every task the board opens starts so (tSfWork_ counts the tasks whose subject starts "Orphan")
+  DUE_DAYS: 2,                      // working days to the task's due date
+  TYPE: 'Call', TASK_TYPE: 'Servicing'
+};
+/** The Salesforce user a person on the Agent Skill Bank is, by first name and surname (the tab's capitals and Salesforce's
+ *  married names aside), kept six hours. Null when there is none: the agents mostly have no login. */
+function tSfUserId_(name) {
+  var k = tNameKey_(name);
+  if (!k) return null;
+  var cache = null, key = 'sfuser-' + k.slice(0, 40);
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return hit === '-' ? null : hit; } catch (e) {}
+  var id = null;
+  try {
+    var parts = String(name).replace(/\([^)]*\)/g, ' ').trim().split(/\s+/), first = parts[0], last = parts[parts.length - 1];
+    var rows = svcSfQuery_("SELECT Id, Name FROM User WHERE IsActive = true AND Name LIKE '" + svcSoqlLit_(first) + "%' LIMIT 20");
+    var hits = rows.filter(function (u) { var uk = tNameKey_(u.Name); return uk === k || (parts.length > 1 && uk.indexOf(tNameKey_(last)) >= 0); });
+    if (hits.length === 1) id = hits[0].Id;
+    else if (hits.length > 1) { var exact = hits.filter(function (u) { return tNameKey_(u.Name) === k; }); if (exact.length === 1) id = exact[0].Id; }
+  } catch (e) {}
+  try { if (cache) cache.put(key, id || '-', 21600); } catch (e) {}
+  return id;
+}
+/** The client's policy records in Salesforce and the open tasks on them or on their contact: { recs, open }. */
+function tSfOpenTasks_(tok, cno, ha, limit) {
+  var pols = tClientPols_(tok, cno, ha), recs = tSfRecs_(pols);
+  if (!recs.length) return { recs: [], open: [] };
+  var what = recs.map(function (r) { return r.id; }), who = recs.map(function (r) { return r.contact; }).filter(Boolean);
+  var cond = ['WhatId IN (' + tSoqlIn_(what) + ')'];
+  if (who.length) cond.push('WhoId IN (' + tSoqlIn_(who) + ')');
+  var open = svcSfQuery_('SELECT Id, Subject, Owner.Name, ActivityDate, Status FROM Task WHERE (' + cond.join(' OR ') + ') AND IsClosed = false ORDER BY CreatedDate DESC LIMIT ' + (limit || T_CMT.TASKS));
+  return { recs: recs, open: open };
+}
+/** A line of the board's onto the client's open tasks' Chatter: { posted, note }. Never throws. */
+function tSfNoteTasks_(tok, cno, ha, body) {
+  if (!tSfOn_()) return { posted: 0, note: 'Salesforce is not linked to this project' };
+  try {
+    var x = tSfOpenTasks_(tok, cno, ha);
+    if (!x.recs.length) return { posted: 0, note: 'Salesforce has none of this client’s policies' };
+    if (!x.open.length) return { posted: 0, note: 'no open task' };
+    var n = 0, fails = [];
+    x.open.forEach(function (t) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.Id, Body: body }); n++; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); } });
+    return { posted: n, note: n ? 'posted to ' + tN_(n, 'open task', 'open tasks') : 'not posted: ' + fails[0] };
+  } catch (e) { return { posted: 0, note: 'not posted: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+}
+/** A person's name as a line in Salesforce reads it: the Agent Skill Bank's capitals ("SASHA LALLA") in title case, any other spelling as it is. */
+function tNiceName_(name) {
+  var s = String(name || '').trim();
+  if (!s || s !== s.toUpperCase() || !/[A-Z]/.test(s)) return s;
+  return s.toLowerCase().replace(/(^|[\s'-])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); });
+}
+/** The day `days` working days on from `from`, as yyyy-MM-dd. */
+function tDueDay_(from, days) {
+  var d = new Date(from.getTime()), n = 0;
+  while (n < days) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) n++; }
+  return Utilities.formatDate(d, tTz_(), 'yyyy-MM-dd');
+}
+/** A call logged on the board, onto Salesforce (T_SFTASK). { on, posted, opened: subject|'', task: id|'', tasks: [...], note }.
+ *  Never throws. */
+function tSfLogCall_(tok, cno, client, who, roleWord, outcome, extra, back, at) {
+  if (!tSfOn_()) return { on: false, note: 'Salesforce is not linked to this project' };
+  try {
+    var x = tSfOpenTasks_(tok, cno, undefined);
+    if (!x.recs.length) return { on: true, posted: 0, opened: '', note: 'Salesforce has none of this client’s policies' };
+    var when = Utilities.formatDate(at, tTz_(), 'd MMM yyyy HH:mm');
+    var body = 'From the assignment board · ' + who + (roleWord ? ' (' + roleWord + ')' : '') + ', ' + when + ': ' + outcome + (extra ? ' · ' + extra : '') +
+      (back ? ' · call-back: ' + (back === 'agent' ? 'a licensed agent should call' : back === 'branch' ? 'the branch should call' : back === 'dnc' ? 'do not call again' : 'cleared') : '');
+    var n = 0, fails = [];
+    x.open.forEach(function (t) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.Id, Body: body }); n++; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); } });
+    var seen = x.open.map(function (t) { return { id: t.Id, subject: tTaskSubject_(t.Subject), owner: t.Owner ? t.Owner.Name : '', due: t.ActivityDate ? tDmy_(String(t.ActivityDate)) : '', status: String(t.Status || '') }; });
+    if (x.open.length) return { on: true, posted: n, opened: '', tasks: seen, note: n ? 'logged on ' + tN_(n, 'open task', 'open tasks') : 'not logged: ' + fails[0] };
+    if (!T_SFTASK.OPEN_ON_LOG) return { on: true, posted: 0, opened: '', tasks: [], note: 'no open task' };
+    var owner = tSfUserId_(who) || tSfUserId_(TRANSITION.MANAGER.name);
+    var subject = (T_SFTASK.SUBJECT + client + ' · ' + outcome + ' by ' + who).slice(0, 255);
+    var rec = { Subject: subject, Status: 'In Progress', Priority: 'Normal', ActivityDate: tDueDay_(at, T_SFTASK.DUE_DAYS), WhatId: x.recs[0].id, Description: body };
+    if (x.recs[0].contact) rec.WhoId = x.recs[0].contact;
+    if (owner) rec.OwnerId = owner;
+    var made = null;
+    try { made = tSfSend_('post', '/sobjects/Task', Object.assign({ Type: T_SFTASK.TYPE, Task_Type__c: T_SFTASK.TASK_TYPE }, rec)); }
+    catch (e) { made = tSfSend_('post', '/sobjects/Task', rec); }   // a picklist value this org does not carry: without it
+    var id = made && made.id ? made.id : '';
+    if (id) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: id, Body: body }); } catch (e) {} }
+    return { on: true, posted: id ? 1 : 0, opened: id ? subject : '', task: id, tasks: id ? [{ id: id, subject: subject, owner: owner ? who : TRANSITION.MANAGER.name, due: tDmy_(rec.ActivityDate), status: rec.Status }] : [],
+      note: id ? 'no task was open: one opened on policy ' + x.recs[0].no + (owner ? '' : ', owned by the branch manager') : 'no task was open and none could be opened' };
+  } catch (e) { return { on: true, posted: 0, opened: '', note: 'not logged: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
 }
 
 /** GET action=update&code=…[&who=…]&token=…&status=Called|Met|Declined|Closed|Open|No answer[&note=…][&tell=…&line=…].
@@ -5580,6 +5704,14 @@ function transitionUpdate_(p) {
       var cell = sh.getRange(rn, 11), note = String(cell.getValue() || '');
       cell.setValue((note ? note + ' ' : '') + marker);
     });
+    /* and onto the Salesforce task (15 October 2026: "it's logged on the task, as a task is supposed to be opened until
+       closed"): the line on the client's open tasks, or a task opened for it when none is */
+    var sfl = null;
+    try {
+      var srow2 = (typeof srow !== 'undefined' && srow) ? srow : tRowByToken_(tok);
+      sfl = tSfLogCall_(tok, srow2 ? tText_(srow2['Client number']) : '', srow2 ? (tText_(srow2.Client) || tText_(srow2['First name']) || 'a client') : 'a client',
+        who === 'branch' ? 'The branch' : tNiceName_(who), w.me ? (w.me.title || '') : '', noAnswer ? 'No answer' : known, extra, back, new Date());
+    } catch (e) { sfl = { on: true, posted: 0, opened: '', note: 'not logged: ' + String(e && e.message ? e.message : e).slice(0, 120) }; }
     /* the outcome is on the rows whatever happens to the note: a note that cannot go says why, and nothing is marked sent */
     var told = null, toldMark = '[told ' + stamp + ' · ' + tell + ']';
     if (tell) {
@@ -5594,8 +5726,10 @@ function transitionUpdate_(p) {
     log_('transition', 'update', who + ' · ' + (noAnswer ? 'no answer' : known) + ' · ' + tok + ' · ' + targets.length + ' row' + (targets.length === 1 ? '' : 's') +
          (back ? ' · call-back ' + back : '') +
          (told ? (told.sent ? ' · note "' + tell + '" e-mailed' : ' · note "' + tell + '" not sent: ' + told.why) : '') +
-         (linked ? (linked.ok ? ' · family linked, ' + linked.hh : ' · family not linked: ' + linked.why) : ''));
+         (linked ? (linked.ok ? ' · family linked, ' + linked.hh : ' · family not linked: ' + linked.why) : '') +
+         (sfl && sfl.on ? ' · Salesforce: ' + sfl.note : ''));
     var out = { ok: true, status: noAnswer ? 'Open' : known, rows: targets.length };
+    if (sfl) out.sf = sfl;
     if (back) out.back = back;
     if (told) { out.told = told.sent; if (told.sent) out.toldTo = told.to; else out.warning = 'The note did not go: ' + told.why + '.'; }
     if (linked) {
@@ -7153,7 +7287,7 @@ function tSignIns_(w) {
     team.people.forEach(function (p) {
       var k = tNameKey_(p.name);
       if (!p.active || former[k] || (mine && !mine[k])) return;
-      var row = { name: p.name, role: p.roleText || 'Agent', unit: p.unit || '' }, e = by[k];
+      var row = { name: tNiceName_(p.name), role: p.roleText || 'Agent', unit: p.unit || '' }, e = by[k];
       if (!e) { out.never.push(row); return; }
       row.last = fmt(e.last, 'd MMM HH:mm'); row.lastTs = e.last.getTime(); row.today = e.today; row.days = Object.keys(e.days).sort();
       row.total = e.total; row.first = fmt(e.first, 'd MMM'); row.dev = e.dev;
@@ -7253,7 +7387,7 @@ function tAgentsView_(w) {
   tTeam_().people.forEach(function (p) { if (p.name) unitOf[tNameKey_(p.name)] = p.unit || (p.role === 'um' ? p.name : ''); });
 
   /* each member: where the client stands, and once named, how far the agent has got */
-  var H = {}, order = [], pseudo = [];
+  var H = {}, order = [], pseudo = [], NM = [];
   ha.rows.forEach(function (hr) {
     var tok = hr.token, r = send[tok];
     if (!tok || !r) return;                                                     // left the send list
@@ -7330,6 +7464,8 @@ function tAgentsView_(w) {
     /* who they have been named to, and when: shown once there is a change to show */
     var hist = tAssignHist_(c, hr, alog[tok], canon, now);
     if (hist.length > 1 || (hist.length === 1 && hist[0].by)) o.hist = hist.map(function (x) { return [x.on ? fmt(x.on) : '', x.agent, x.via, x.by || '']; });
+    /* who named whom (15 October 2026): every naming, by whom, for the block below */
+    hist.forEach(function (x) { NM.push({ hh: hr.hh, on: x.on || null, agent: canon(x.agent) || x.agent, by: x.by || (/salesforce/i.test(x.via || '') ? 'Salesforce' : 'the branch'), via: x.via || '' }); });
     if (staff && !onStaffBoard[tok]) o.nb = 0;                                // staff cannot name this one
     if (!H[hr.hh]) { H[hr.hh] = { id: hr.hh, name: hr.hhName || '', m: [] }; order.push(hr.hh); }
     H[hr.hh].m.push(o);
@@ -7433,11 +7569,187 @@ function tAgentsView_(w) {
     var d = new Date(now.getTime() - i * day), k = ymd(d);
     days.push({ d: k, l: fmt(d), named: named[k] || 0, acts: acts[k] || 0 });
   }
+  /* who named whom (15 October 2026: "all staff and managers are supposed to be able to view the analytics as to who
+     assigned whom to agent"): every naming by the person who made it (the board's stamps and log, the Household
+     Assignments tab for Salesforce's), the households and clients each named and to which agents; and by agent, from whom.
+     A unit manager reads the namings to his own agents. */
+  var nmBy = {}, nmTo = {}, nmDays = {}, nmN = 0, nmHh = {};
+  var nmRow = function (store, key) { return store[key] = store[key] || { name: key, n: 0, hh: {}, to: {}, last: null, m: 0, w: 0 }; };
+  var nmToday = ymd(now), nmMonth = nmToday.slice(0, 7), nmWeek = {};
+  for (var wi = 0; wi < 7; wi++) nmWeek[ymd(new Date(now.getTime() - wi * day))] = true;
+  NM.forEach(function (x) {
+    if (!x.agent || (team && !team(x.agent))) return;
+    nmN++; nmHh[x.hh] = 1;
+    var k = x.on ? ymd(x.on) : '';
+    [nmRow(nmBy, x.by), nmRow(nmTo, x.agent)].forEach(function (r, i) {
+      r.n++; r.hh[x.hh] = 1;
+      var other = i === 0 ? x.agent : x.by;
+      r.to[other] = (r.to[other] || 0) + 1;
+      if (x.on && (!r.last || x.on.getTime() > r.last.getTime())) r.last = x.on;
+      if (k && k.slice(0, 7) === nmMonth) r.m++;
+      if (k && nmWeek[k]) r.w++;
+    });
+    if (k) nmDays[k] = (nmDays[k] || 0) + 1;
+  });
+  var nmList = function (store) {
+    return Object.keys(store).map(function (k) {
+      var r = store[k];
+      return { name: r.name, n: r.n, hh: Object.keys(r.hh).length, m: r.m, w: r.w, last: r.last ? fmt(r.last) : '', lastD: r.last ? ymd(r.last) : '',
+        to: Object.keys(r.to).map(function (t) { return [t, r.to[t]]; }).sort(function (a, b) { return b[1] - a[1] || String(a[0]).localeCompare(String(b[0])); }) };
+    }).sort(function (a, b) { return b.n - a.n || a.name.localeCompare(b.name); });
+  };
+  var nmSeries = [];
+  for (var di = 13; di >= 0; di--) { var dd = new Date(now.getTime() - di * day), dk = ymd(dd); nmSeries.push({ d: dk, l: fmt(dd), n: nmDays[dk] || 0 }); }
+  var nmv = { n: nmN, hh: Object.keys(nmHh).length, by: nmList(nmBy), agents: nmList(nmTo), days: nmSeries };
   var last = null;
   try { last = JSON.parse(PropertiesService.getScriptProperties().getProperty('ha_via') || 'null'); } catch (e) {}
-  return { on: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), quiet: T_AGV.QUIET, urgent: T_AGV.URGENT, unit: !!team, staff: staff, hh: hh, agents: agents, days: days,
+  return { on: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), quiet: T_AGV.QUIET, urgent: T_AGV.URGENT, unit: !!team, staff: staff, hh: hh, agents: agents, days: days, named: nmv,
            synced: last && last.at ? Utilities.formatDate(new Date(last.at), tz, 'd MMM HH:mm') : '', via: last && last.via ? last.via : 'the tab as imported',
            sf: tSfOn_(), mailHeld: tClientMailHeld_(), introsHeld: TRANSITION.HOLD_INTROS !== false && tClientMailHeld_() };
+}
+
+/* ── the team's progress and points ──────────────────────────────────────
+   15 October 2026: "all staff and managers are supposed to see the progress each support has and who is pulling their
+   weight; there should be a reward system on the conversions for staff; show up staff who has things to do". Everything
+   here is read from the record the board already keeps: the stamp every outcome leaves on Client Responses, the details
+   taken on calls, the namings (the Assignment Log, else the stamps), the call-back flags, and the TT$200 claims for the
+   questionnaires. A conversion is a client the person reached or named who was then met, closed or declined by someone
+   else. The points are T_POINTS; the reward they are paid as is the branch manager's to set. Staff, unit managers and
+   the branch read it; an agent does not. Never throws. */
+var T_POINTS = { noanswer: 1, called: 3, met: 5, closed: 3, email: 2, detail: 1, household: 5, clients: 0, back: 1, conversion: 10, questionnaire: 10 };
+var T_NICK = { liz: 'elizabeth', beth: 'elizabeth', lizzie: 'elizabeth', ricki: 'ricky', rick: 'ricky' };   // the short names the record carries, to the tab's
+function tTeamStats_(w, clients, hhOf) {
+  var out = { on: true, points: T_POINTS, people: [], month: '', at: '' };
+  try {
+    var tz = tTz_(), now = new Date(), fmt = function (d, f) { return Utilities.formatDate(d, tz, f); };
+    var todayS = fmt(now, 'yyyy-MM-dd'), monthS = todayS.slice(0, 7), week = {};
+    for (var i = 0; i < 7; i++) week[fmt(new Date(now.getTime() - i * 86400000), 'yyyy-MM-dd')] = true;
+    out.month = fmt(now, 'MMMM yyyy'); out.at = fmt(now, 'd MMM HH:mm'); out.today = todayS;
+    var team = tTeam_(), former = tFormer_(), roleOf = {}, P = {}, firstOf = {};
+    team.people.forEach(function (p) {
+      var k = tNameKey_(p.name);
+      if (!p.active || former[k]) return;
+      roleOf[k] = { name: p.name, role: p.roleText || 'Agent', r: p.role };
+      var fk = tNameKey_(String(p.name).split(/\s+/)[0]);
+      (firstOf[fk] = firstOf[fk] || []).push(k);
+    });
+    /* a name as the record wrote it ("call by Sasha", the first name a caller keeps on the device; the tab's capitals; a
+       short name) is the one person on the Agent Skill Bank it can be, or stays as written */
+    var resolve = function (name) {
+      var k = tNameKey_(name);
+      if (!k || roleOf[k]) return k;
+      var fk = T_NICK[k] || k, hits = firstOf[fk] || [];
+      return hits.length === 1 ? hits[0] : k;
+    };
+    var blank = function () { var o = {}; Object.keys(T_POINTS).forEach(function (k) { o[k] = 0; }); return o; };
+    var person = function (name) {
+      var k = resolve(name);
+      if (!k) return null;
+      if (!P[k]) { var r = roleOf[k]; P[k] = { key: k, name: r ? r.name : String(name).trim(), role: r ? r.role : '', r: r ? r.r : '', seen: {}, touched: {}, c: blank(), m: blank(), w: blank(), days: {}, hh: {}, named: {}, reached: {}, last: '', todo: { calls: 0, backs: 0, unnamed: 0 } }; }
+      return P[k];
+    };
+    var dayOf = function (s) { var d = tAgvDay_(s, now); return d ? fmt(d, 'yyyy-MM-dd') : ''; };
+    var credit = function (p, kind, dayS, key) {
+      if (!p || !dayS || T_POINTS[kind] === undefined) return;
+      if (key) { if (p.seen[key]) return; p.seen[key] = 1; }
+      p.c[kind]++; p.days[dayS] = 1;
+      if (dayS.slice(0, 7) === monthS) p.m[kind]++;
+      if (week[dayS]) p.w[kind]++;
+      if (dayS > p.last) p.last = dayS;
+    };
+    /* the namings: the Assignment Log says who named (since 14 October 2026); before it, the stamp, and "the branch" */
+    var alog = {};
+    try { alog = tAlogRead_(); } catch (e) { alog = {}; }
+    var hhKey = function (tok) { return (hhOf && hhOf[tok]) || ('S' + tok); };
+    var naming = function (tok, by, dayS) {
+      var p = person(by || 'the branch');
+      if (!p || !dayS) return;
+      var hk = hhKey(tok);
+      p.hh[hk] = 1;
+      credit(p, 'household', dayS, 'hh:' + hk + ':' + dayS);
+      credit(p, 'clients', dayS, 'nm:' + tok + ':' + dayS);
+      if (!p.named[tok] || dayS < p.named[tok]) p.named[tok] = dayS;
+    };
+    Object.keys(alog).forEach(function (tok) { alog[tok].forEach(function (e) { if (!/salesforce/i.test(e.via || '')) naming(tok, e.by, e.on ? fmt(e.on, 'yyyy-MM-dd') : ''); }); });
+    var t = tSheetRows_(SVC.RESP_SHEET);
+    var re = /\[(called|met|no answer|declined|closed|assigned|call-back agent|call-back branch) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]([^\[]*)/g;
+    var mets = {};   // every meeting, closing or declining on a client: [{ d, by }]
+    t.rows.forEach(function (v) {
+      var tok = String(v[1] || '').trim();
+      if (!tok) return;
+      var note = String(v[10] || ''), m;
+      re.lastIndex = 0;
+      while ((m = re.exec(note))) {
+        var kind = m[1], dayS = dayOf(m[2]), who = m[3].trim(), tail = m[4];
+        if (kind === 'assigned') {
+          if (alog[tok]) continue;                                         // the log has it, with who named
+          var nb = /named by ([^:\[]+)/.exec(tail);
+          naming(tok, nb ? nb[1].trim() : '', dayS);
+          continue;
+        }
+        if (/^call-back/.test(kind)) { credit(person(who), 'back', dayS, 'bk:' + tok + ':' + dayS); continue; }
+        var k2 = kind === 'no answer' ? 'noanswer' : kind === 'declined' ? 'closed' : kind, pp = person(who);
+        credit(pp, k2, dayS, k2 + ':' + tok + ':' + dayS);
+        if (pp) { pp.touched[tok] = 1; if (kind === 'called' || kind === 'met') { if (!pp.reached[tok] || dayS < pp.reached[tok]) pp.reached[tok] = dayS; } }
+        if (/^(met|closed|declined)$/.test(kind) && dayS) (mets[tok] = mets[tok] || []).push({ d: dayS, by: resolve(who) });
+      }
+      /* the details taken on a call (tContactRow_): the e-mail, a number, an address, or "no e-mail" */
+      var ref = String(v[6] || ''), page = String(v[5] || ''), cb = /^call by ([^:]+?)(?::|$)/.exec(ref);
+      if (cb && /\/phone/.test(page)) {
+        var d2 = v[0] instanceof Date ? fmt(v[0], 'yyyy-MM-dd') : '';
+        if (/q=email_given/.test(page)) credit(person(cb[1]), 'email', d2, 'em:' + tok);
+        else if (/q=(phone_given|address_given|email_none)/.test(page)) credit(person(cb[1]), 'detail', d2, 'dt:' + tok + ':' + page.replace(/.*q=/, ''));
+      }
+    });
+    /* conversions: the client was met, closed or declined by someone else, on or after the day this person reached or named them */
+    Object.keys(mets).forEach(function (tok) {
+      var list = mets[tok].slice().sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+      Object.keys(P).forEach(function (k) {
+        var p = P[k], from = [p.named[tok], p.reached[tok]].filter(Boolean).sort()[0];
+        if (!from) return;
+        for (var j = 0; j < list.length; j++) {
+          if (list[j].by !== k && list[j].d >= from) { credit(p, 'conversion', list[j].d, 'cv:' + tok); break; }
+        }
+      });
+    });
+    /* the questionnaires that followed a naming (the TT$200 claims): to whoever named */
+    try {
+      tClaimsRead_().rows.forEach(function (r) {
+        if (!r.token || /^(void|declined|withdrawn)$/i.test(r.status || '')) return;
+        var d = r.received instanceof Date ? fmt(r.received, 'yyyy-MM-dd') : '';
+        Object.keys(P).forEach(function (k) { var p = P[k]; if (p.named[r.token] && (!d || p.named[r.token] <= d)) credit(p, 'questionnaire', d || todayS, 'q:' + r.token); });
+      });
+    } catch (e) {}
+    /* what each still has to do: calls on their list never tried, call-backs they flagged still open, clients they reached with nobody named */
+    var byTok = {};
+    (clients || []).forEach(function (c) { byTok[c.token] = c; });
+    try {
+      var calls = tCalls_();
+      Object.keys(calls.by).forEach(function (tok) {
+        var c = calls.by[tok];
+        if (!c.caller || c.done) return;
+        var p = person(c.caller);
+        if (p && !p.touched[tok] && !(byTok[tok] && byTok[tok].state === 'dnc')) p.todo.calls++;
+      });
+    } catch (e) {}
+    (clients || []).forEach(function (c) {
+      if (c.back && c.back.open && c.back.by) { var pb = person(c.back.by); if (pb) pb.todo.backs++; }
+    });
+    Object.keys(P).forEach(function (k) {
+      var p = P[k];
+      Object.keys(p.reached).forEach(function (tok) { var c = byTok[tok]; if (c && !c.assigned && c.state !== 'dnc' && !/^(done)$/.test(c.state)) p.todo.unnamed++; });
+    });
+    /* everyone on the Agent Skill Bank who is staff or a manager, with or without activity, plus anyone else who logged something */
+    Object.keys(roleOf).forEach(function (k) { if (/^(staff|bm|abm|um)$/.test(roleOf[k].r)) person(roleOf[k].name); });
+    var pts = function (c) { var s = 0; Object.keys(c).forEach(function (k) { s += c[k] * (T_POINTS[k] || 0); }); return s; };
+    out.people = Object.keys(P).map(function (k) {
+      var p = P[k];
+      return { name: tNiceName_(p.name), role: p.role, r: p.r, c: p.c, m: p.m, w: p.w, pts: pts(p.c), ptsM: pts(p.m), ptsW: pts(p.w), days: Object.keys(p.days).length,
+        last: p.last ? tDmy_(p.last) : '', lastD: p.last, todo: p.todo, hh: Object.keys(p.hh).length };
+    }).filter(function (p) { return p.pts || p.c.clients || /^(staff|bm|abm|um)$/.test(p.r) || p.todo.calls || p.todo.backs || p.todo.unnamed; })
+      .sort(function (a, b) { return b.ptsM - a.ptsM || b.pts - a.pts || a.name.localeCompare(b.name); });
+  } catch (e) { out.on = false; out.why = String(e && e.message ? e.message : e); }
+  return out;
 }
 
 /* ── Salesforce writes, through ServiceSalesforce.gs's sign-in ──────────── */

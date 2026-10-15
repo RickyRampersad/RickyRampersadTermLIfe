@@ -2626,6 +2626,47 @@ voice under the new timing and the caption gives it away.
     masthead stamp, which opens the tab. A backend without it says to paste Transition.gs; Service.gs needs no paste.
   - `signin/signin-test.js` in the scratchpad covers it (Node and Playwright, the 15 October tabs, test passwords in
     memory).
+- **The household is the unit of a naming, who named whom is on the Agents tab, the team's progress and points are on
+  the Team tab for staff too, and a call logged on the board goes onto the Salesforce task** (15 October 2026: "ensure
+  always the household is assigned and not a policy … all staff and managers are supposed to be able to view the
+  analytics as to who assigned whom to agent … see the progress each support has and who is pulling their weight, there
+  should be a reward system on the conversions for staff … show up staff who has things to do … when the agent logs,
+  comments etc, can they see the task opened if any and it's logged on the task, as a task is supposed to be opened until
+  closed").
+  - **A naming names the household.** `transitionAssign_` adds every member of each named client's household on our
+    list (`tHouseholds_`), whichever row the press was on and whoever presses: staff too, members off their board
+    included. `solo=1` names the one client, for a family the branch decides to split. The answer says how many came
+    along (`family`) and how many households (`households`); the row's control reads "Assign the household (N) to…".
+    The Salesforce write (`tSfAssignWrite_`) therefore covers every member's policies, and a line "Named to <agent> on
+    <date> by <who>" goes onto each client's open tasks (`tSfNoteTasks_`, `T_SFTASK.NOTE_ON_NAMING`).
+  - **Who named whom** (`named` in `tAgentsView_`, from every client's naming history: the board's stamps and the
+    Assignment Log, the Household Assignments tab for Salesforce's own): by person (clients, households, this month,
+    seven days, last, to whom) and by agent (received, from whom), with the last fourteen days. Staff and the branch read
+    all of it; a unit manager the namings to his own agents. Drawn by `agNamed` on the Agents tab.
+  - **The team's progress and points** (`tTeamStats_`, `stats` in the board answer for staff, unit managers and the
+    branch, never an agent). Read from the record the board keeps: the outcome stamps on Client Responses, the details
+    taken on calls (`call by <name>`, the first name a caller keeps on the device, resolved to the one person on the
+    Agent Skill Bank it can be, `T_NICK` for "Liz"), the namings (the Assignment Log, else the stamps; "the branch" for
+    the branch code), the call-back flags and the TT$200 claims. **Points** are `T_POINTS`: no answer 1, reached 3,
+    met 5, closed or declined 3, an e-mail taken 2, a number or address 1, a household named 5 (once a household,
+    never a policy), a call-back flagged 1, a conversion 10, a questionnaire after the naming 10. A **conversion** is a
+    client the person reached or named who was then met, closed or declined by someone else, on or after that day.
+    **Still to do**: their call list never tried on the board, the call-backs they flagged still open, the clients they
+    reached with nobody named. Everyone on the Agent Skill Bank who is staff or a manager is listed, with or without
+    activity; whoever has nothing this period and work waiting is marked. The Team tab (now for staff too, `statsPanel`)
+    ranks by the period's points (this month, seven days, everything; kept on the device) and says how the points are
+    made. Work done only in Salesforce is not counted; the Dashboard's Salesforce table has it. What the points are paid
+    as is the branch manager's to set.
+  - **The log on the Salesforce task** (`tSfLogCall_`, from `transitionUpdate_`; `T_SFTASK`). A call logged on the board
+    goes as a Chatter post, in the person's name (the tab's capitals in title case, `tNiceName_`), with the outcome, the
+    note and any call-back, onto the client's open tasks. With none open, a task is opened on the client's policy and
+    contact, "Orphan transition: <client> · <outcome> by <who>", in progress, due two working days on, owned by the
+    person's own Salesforce user (`tSfUserId_`: first name and surname, so the Skill Bank's "SASHA LALLA" finds her
+    married name in Salesforce) or, for an agent with no login, the branch manager's; a picklist the org refuses is
+    left off. Nothing here closes a task. The Log call panel says what Salesforce holds before the save (the open task,
+    or that saving opens one), and the toast says where the log went. `OPEN_ON_LOG` false keeps the log to the board.
+  - `team/team-test.js` in the scratchpad covers it (57 checks, Node with a Salesforce in memory, and Playwright, on the
+    15 October tabs).
 - **The Dashboard tab: how far the work has got, as shares, with filters** (8 October 2026: "need to have dash analytics
   and % of work completed etc a lot of insights and filter ability").
   - **Who sees it.** The branch has it second, after Urgent, which stays the opening tab. A unit manager has it after

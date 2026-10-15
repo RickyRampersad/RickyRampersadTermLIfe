@@ -390,7 +390,19 @@
   .sdays i.on{background:#1d8fa6;color:#fff}
   .sdev{font-style:normal;color:var(--dim);font-size:12.5px}
   #signBody th{white-space:nowrap}
-  #signBody td .rtag{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--warn);background:#fdf0cf;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap}
+  /* the team's progress and points, and who named whom (15 October 2026) */
+  .speriod{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px}
+  .speriod button{font:600 13px var(--fb);padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--body);cursor:pointer}
+  .speriod button.on{background:var(--ink);color:#fff;border-color:var(--ink)} .speriod span{font-size:13px;color:var(--dim);margin-left:4px}
+  .stats th{white-space:nowrap} .stats td.todo{font-size:13px;color:var(--body);max-width:260px}
+  .stag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap}
+  .stag.lead{background:#dcefe4;color:#1c6b3f} .stag.push{background:#fdf0cf;color:#8a5a00}
+  tr.push td{background:#fffaf0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px} .two h4{margin:4px 0 6px} @media (max-width:980px){.two{grid-template-columns:1fr}}
+  .sdaysrow{display:flex;gap:4px;align-items:flex-end;margin-top:10px;flex-wrap:wrap} .sdaysrow span{display:flex;flex-direction:column;align-items:center;width:30px;justify-content:flex-end}
+  .sdaysrow i{display:block;width:16px;background:#1d8fa6;border-radius:3px 3px 0 0} .sdaysrow small{font-size:9.5px;color:var(--dim);margin-top:2px} .sdaysrow em{font-style:normal;font-size:12.5px;color:var(--dim);margin-left:8px;align-self:center}
+  .sftask{font-size:13.5px;color:var(--body);background:#f3f6fa;border:1px solid var(--line);border-radius:var(--r2);padding:8px 10px;margin:10px 0 0;line-height:1.5} .sftask i{font-style:normal;font-weight:700;color:var(--ink)}
+  #signBody td .rtag,#statsBody td .rtag{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--warn);background:#fdf0cf;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap}
   .snote{color:var(--dim);font-size:13.5px;margin:10px 0 0}
   #signLink{color:inherit;font-weight:700;text-decoration:underline}
   .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:14px;cursor:pointer}
@@ -797,6 +809,7 @@
       <div id="agBody" hidden>
         <div class="card dcard"><div class="dhero" id="agHero"></div><div id="agStages"></div><div class="dtiles" id="agTiles"></div></div>
         <div class="card dcard" id="agTable"></div>
+        <div class="card dcard" id="agNamed" hidden></div>
         <div class="card dcard agone" id="agOne" hidden></div>
         <div class="card dcard" id="agSince"></div>
         <div class="card dcard" id="agBooks"></div>
@@ -825,6 +838,7 @@
 
     <!-- the team: today's calls and notes, units and the roster -->
     <div class="pane" id="paneTeam" hidden>
+      <div class="card team" id="statsWrap" style="display:none"><div class="panehead"><h2>The team: progress and points</h2><span id="statsSum"></span></div><div id="statsBody"></div></div>
       <div class="card team" id="signWrap" style="display:none"><div class="panehead"><h2>Who is signing in</h2><span id="signSum"></span></div><div id="signBody"></div></div>
       <div class="card team" id="teamWrap" style="display:none"><div class="panehead"><h2>From the team</h2><span id="teamSum"></span></div><div id="teamBody"></div></div>
       <div id="rosterWrap"><h2 class="sec"><span id="rosterTitle">The roster</span> <small id="rosterNote"></small></h2><div id="units"></div><div class="chips" id="roster"></div></div>
@@ -1097,7 +1111,8 @@ function tabsFor(d) {
   if (r === 'branch') return ['urgent', 'dash', 'agents'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights']);
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
-  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all']);
+  /* Team for staff too (15 October 2026: "all staff and managers are supposed to see the progress each support has") */
+  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all', 'team']);
   var out = ['open'].concat(work, claims ? ['claims'] : []);
   if (r === 'unit') out.push('dash', 'agents');
   if (d.clients.some(urgentOf)) out.push('urgent');
@@ -1757,7 +1772,7 @@ function card(c, manager, namer) {
   opens += detButton(c);
   var acts = '';
   if (namer) {   // the branch, and staff: name any agent on the roster from the card itself, or another one in place of the agent named
-    acts += '<select class="quick" data-token="' + esc(c.token) + '" aria-label="Assign ' + esc(c.client) + '"><option value="">' + (c.assigned ? 'Reassign to…' : 'Assign to…') + '</option>' +
+    acts += '<select class="quick" data-token="' + esc(c.token) + '" aria-label="Assign ' + esc(c.client) + '"><option value="">' + (c.assigned ? 'Reassign ' : 'Assign ') + (fam && fam.length > 1 ? 'the household (' + fam.length + ') to…' : 'to…') + '</option>' +
       D.agents.filter(function (a) { return !sameName(a.name, c.assigned); }).map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>';
   }
   acts += '<span class="gap1"></span>' + reachLinks(c);
@@ -2402,7 +2417,7 @@ function agentsPane(soft) {
     (AGV_BUSY ? ' · reading again&hellip;' : ' <button type="button" id="agReload">Read again</button>'));
   if ($('agReload')) $('agReload').addEventListener('click', function () { agLoad(true); agentsPane(); });
   $('agSub').textContent = v.unit ? 'How each agent in your unit is getting on with the clients named to them' : 'How each agent is getting on with the clients named to them, and the households still to name';
-  agHead(v); agTable(v); agOne(v); agSince(v); agDays(v); agBooks(v); agBatch(v);
+  agHead(v); agTable(v); agNamed(v); agOne(v); agSince(v); agDays(v); agBooks(v); agBatch(v);
   $('agHow').innerHTML = '<b>How the numbers are made.</b> The households and the names from Salesforce come from the Household Assignments tab; a name given on the board counts too. ' +
     '<b>Spoken to</b>: a call or meeting the agent marked on the board, a comment they wrote on the client, or their feedback in Salesforce (Campaign Feedback Update). <b>Tried</b>: a call they marked as no answer. ' +
     '<b>Met</b>: a meeting marked on the board. <b>Completed</b>: Closed or Declined, by the agent or by anyone after the naming. <b>Nothing logged</b>: named ' + v.quiet + ' or more working days ago, with no call, comment or feedback. ' +
@@ -2416,6 +2431,23 @@ function agentsPane(soft) {
   });
 }
 function agTo(id) { try { $(id).scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+/* who named whom (15 October 2026: "the analytics as to who assigned whom to agent"): every naming by the person who
+   made it, with the households and clients and to whom; and every agent by who named to them. Staff and managers alike. */
+function agNamed(v) {
+  var el = $('agNamed'), N = v.named;
+  if (!el) return;
+  if (!N) { el.hidden = true; return; }
+  el.hidden = false;
+  var top = function (list, n) { n = n || 3; return (list || []).slice(0, n).map(function (x) { return esc(firstName(x[0])) + ' <i class="sdev">' + x[1] + '</i>'; }).join(', ') + ((list || []).length > n ? ' …' : ''); };
+  el.innerHTML = '<h3>Who named whom</h3><p class="dsub">' + plural(N.n, 'naming') + ' in ' + plural(N.hh, 'household') + (v.unit ? ', to your unit' : '') +
+    '. A naming is always the household\'s, never one policy. "Salesforce" is a naming made in Salesforce itself.</p>' +
+    (N.n ? '<div class="two"><div><h4>By person</h4><div class="dtw"><table class="dt"><tr><th>Named by</th><th>Clients</th><th>Households</th><th>This month</th><th>7 days</th><th>Last</th><th>To whom</th></tr>' +
+      (N.by || []).map(function (p) { return '<tr><td><b>' + esc(p.name) + '</b></td><td>' + p.n + '</td><td>' + p.hh + '</td><td>' + p.m + '</td><td>' + p.w + '</td><td>' + esc(p.last || '') + '</td><td>' + top(p.to) + '</td></tr>'; }).join('') + '</table></div></div>' +
+      '<div><h4>By agent</h4><div class="dtw"><table class="dt"><tr><th>Agent</th><th>Received</th><th>Households</th><th>This month</th><th>Last</th><th>Named by</th></tr>' +
+      (N.agents || []).map(function (p) { return '<tr><td><b>' + esc(p.name) + '</b></td><td>' + p.n + '</td><td>' + p.hh + '</td><td>' + p.m + '</td><td>' + esc(p.last || '') + '</td><td>' + top(p.to) + '</td></tr>'; }).join('') + '</table></div></div></div>' +
+      '<div class="sdaysrow">' + (N.days || []).map(function (x) { return '<span title="' + esc(x.l) + ': ' + x.n + '"><i style="height:' + (x.n ? Math.min(40, x.n * 6 + 4) : 1) + 'px"></i><small>' + esc(x.l.replace(/ [A-Za-z]+$/, '')) + '</small></span>'; }).join('') + '<em>namings a day, the last 14 days</em></div>'
+      : '<p class="dsub">Nobody has been named yet.</p>');
+}
 function agBar(g, n) {
   return '<span class="agbar" role="img" aria-label="' + esc(AG_STAGES.map(function (s) { return s[1] + ' ' + (g[s[0]] || 0); }).join(', ')) + '">' +
     AG_STAGES.map(function (s) { return g[s[0]] ? '<i style="background:' + s[2] + ';flex:' + g[s[0]] + '" title="' + esc(s[1] + ': ' + g[s[0]] + ' of ' + n) + '"></i>' : ''; }).join('') + '</span>';
@@ -2883,6 +2915,7 @@ function workPane() {
 /* ---- the Team tab ---- */
 function teamPane() {
   var d = D, manager = d.role === 'branch', team = d.role === 'unit', namer = canAssign();
+  statsPanel(d);
   signPanel(d);
   teamPanel(d);
   /* the roster: by unit and person when the Agent Skill Bank has Role and Unit (the branch sees every unit, a unit manager
@@ -2926,6 +2959,54 @@ function unitBlock(g, d, manager) {
    organized"): each person's outcomes today and in the last seven days, read from the stamp every outcome leaves on the
    file ("[no answer 7 Oct · Name]"), and their notes, newest first; a client's name opens that client */
 var TEAM_ALL = false;
+/* the team's progress and points (15 October 2026: "all staff and managers are supposed to see the progress each support
+   has and who is pulling their weight … there should be a reward system on the conversions for staff … show up staff
+   who has things to do"): the backend's tTeamStats_, for staff, unit managers and the branch, ranked by points. The
+   period is kept on the device: this month, the last 7 days, or everything. */
+var STATS_P = 'm';
+try { var sp0 = localStorage.getItem('rrb-stats-period'); if (/^(m|w|all)$/.test(sp0 || '')) STATS_P = sp0; } catch (e) {}
+function statsPanel(d) {
+  var w = $('statsWrap');
+  if (d.role !== 'branch' && d.role !== 'unit' && d.role !== 'staff') { w.style.display = 'none'; return; }
+  w.style.display = '';
+  var s = d.stats;
+  if (!s) { $('statsSum').textContent = ''; $('statsBody').innerHTML = '<div class="empty">The team\'s progress and points are read once the current Transition.gs is pasted into the Apps Script project (Deploy → Manage deployments → pencil → New version).</div>'; return; }
+  if (s.on === false) { $('statsSum').textContent = ''; $('statsBody').innerHTML = '<div class="empty">The team\'s progress could not be read: ' + esc(s.why || '') + '</div>'; return; }
+  var P = s.points || {}, per = STATS_P;
+  var cnt = function (p) { return per === 'm' ? p.m : per === 'w' ? p.w : p.c; }, pts = function (p) { return per === 'm' ? p.ptsM : per === 'w' ? p.ptsW : p.pts; };
+  var people = (s.people || []).slice().sort(function (a, b) { return pts(b) - pts(a) || b.pts - a.pts || a.name.localeCompare(b.name); });
+  var active = people.filter(function (p) { return pts(p) > 0; }), conv = people.reduce(function (t, p) { return t + cnt(p).conversion; }, 0);
+  var when = per === 'm' ? 'this month' : per === 'w' ? 'in the last 7 days' : 'in all';
+  $('statsSum').textContent = active.length + ' of ' + people.length + ' with points ' + when + ' · ' + plural(conv, 'conversion') + ' ' + when;
+  var todoN = function (p) { return p.todo.calls + p.todo.backs + p.todo.unnamed; };
+  var tag = function (p, i) {
+    if (i === 0 && pts(p) > 0) return ' <span class="stag lead">leading</span>';
+    if (pts(p) === 0 && todoN(p)) return ' <span class="stag push">work waiting, nothing logged</span>';
+    return '';
+  };
+  var todoText = function (p) {
+    var bits = [];
+    if (p.todo.calls) bits.push(p.todo.calls + ' on their call list not tried');
+    if (p.todo.backs) bits.push(plural(p.todo.backs, 'call-back') + ' still open');
+    if (p.todo.unnamed) bits.push(p.todo.unnamed + ' reached, nobody named');
+    return bits.length ? bits.join(' · ') : '—';
+  };
+  $('statsBody').innerHTML = '<div class="speriod">' + [['m', 'This month'], ['w', 'Last 7 days'], ['all', 'Everything']].map(function (x) { return '<button type="button" data-sp="' + x[0] + '" class="' + (per === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') +
+    '<span>' + esc(per === 'm' ? s.month : per === 'w' ? 'the last seven days' : 'since the board began') + ' · read ' + esc(s.at || '') + '</span></div>' +
+    '<div class="dtw"><table class="dt stats"><tr><th>Who</th><th>Points</th><th>Reached</th><th>No answer</th><th>Met / closed</th><th>E-mails taken</th><th>Households named</th><th>Call-backs flagged</th><th>Conversions</th><th>Questionnaires</th><th>Still to do</th><th>Last logged</th></tr>' +
+    people.map(function (p, i) {
+      var c = cnt(p), rt = p.role && !/^agent$/i.test(p.role) ? '<span class="rtag">' + esc(p.role) + '</span>' : '';
+      return '<tr' + (pts(p) === 0 && todoN(p) ? ' class="push"' : '') + '><td><b>' + esc(p.name) + '</b>' + rt + tag(p, i) + '</td><td><b>' + pts(p) + '</b></td><td>' + c.called + '</td><td>' + c.noanswer + '</td><td>' + (c.met + c.closed) + '</td>' +
+        '<td>' + c.email + (c.detail ? ' <i class="sdev">+' + c.detail + ' details</i>' : '') + '</td><td>' + c.household + (c.clients ? ' <i class="sdev">' + plural(c.clients, 'client') + '</i>' : '') + '</td><td>' + c.back + '</td><td><b>' + c.conversion + '</b></td><td>' + c.questionnaire + '</td>' +
+        '<td class="todo">' + todoText(p) + '</td><td>' + esc(p.last || 'never') + '</td></tr>';
+    }).join('') + '</table></div>' +
+    '<p class="snote"><b>How the points are made.</b> ' + ['reached (called or met) ' + P.called, 'no answer ' + P.noanswer, 'met ' + P.met, 'closed or declined ' + P.closed, 'an e-mail taken on a call ' + P.email, 'a number or address taken ' + P.detail,
+      'a household named ' + P.household, 'a call-back flagged ' + P.back, 'a conversion ' + P.conversion, 'a questionnaire after the naming ' + P.questionnaire].join(' · ') +
+    '. A <b>conversion</b> is a client this person reached or named who was then met, closed or declined by someone else. A naming counts once a household, never a policy. ' +
+    '"Still to do" reads their call list, the call-backs they flagged and the clients they reached with nobody named yet. Work done only in Salesforce is not counted here' +
+    (d.role === 'branch' ? ': the Dashboard\'s Salesforce table has it' : '') + '. The reward the points are paid as is the branch manager\'s to set.</p>';
+  each('#statsBody [data-sp]', function (b) { b.addEventListener('click', function () { STATS_P = b.getAttribute('data-sp'); try { localStorage.setItem('rrb-stats-period', STATS_P); } catch (e) {} statsPanel(D); }); });
+}
 /* each person's outcomes on the board in the last seven days, from the stamp every outcome leaves on the file */
 function teamStamps(d) {
   var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000, people = {};
@@ -2957,7 +3038,9 @@ function signPanel(d) {
   var s = d.signins;
   if (!s) { $('signSum').textContent = ''; $('signBody').innerHTML = '<div class="empty">Sign-ins are recorded once the current Transition.gs is pasted into the Apps Script project (Deploy → Manage deployments → pencil → New version). From then on this shows who opened the board, and when.</div>'; return; }
   if (s.on === false) { $('signSum').textContent = ''; $('signBody').innerHTML = '<div class="empty">The sign-ins could not be read: ' + esc(s.why || '') + '</div>'; return; }
-  var logged = teamStamps(d), people = s.people || [], never = s.never || [], all = people.length + never.length;
+  var stamps = teamStamps(d), logged = {}, people = s.people || [], never = s.never || [], all = people.length + never.length;
+  Object.keys(stamps).forEach(function (k) { logged[k.toLowerCase()] = stamps[k]; });   // the stamps carry the tab's capitals; the list is in title case
+  var lgOf = function (name) { return logged[String(name || '').toLowerCase()]; };
   var todayN = people.filter(function (p) { return p.today; }).length, weekN = people.filter(function (p) { return p.days && p.days.length; }).length;
   $('signSum').textContent = todayN + ' of ' + all + ' signed in today · ' + weekN + ' in the last 7 days · ' + never.length + ' never';
   var DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], days = [];
@@ -2966,13 +3049,13 @@ function signPanel(d) {
     var on = {}; (list || []).forEach(function (x) { on[x] = true; });
     return '<span class="sdays">' + days.map(function (k) { return '<i class="' + (on[k[0]] ? 'on' : '') + '" title="' + esc(k[0]) + '">' + k[1] + '</i>'; }).join('') + '</span>';
   };
-  var lg = function (name) { var p = logged[name]; return p ? p.week + (p.backs ? ' · ' + p.backs + ' call-back' + (p.backs === 1 ? '' : 's') : '') : '0'; };
+  var lg = function (name) { var p = lgOf(name); return p ? p.week + (p.backs ? ' · ' + p.backs + ' call-back' + (p.backs === 1 ? '' : 's') : '') : '0'; };
   $('signBody').innerHTML = (people.length ? '<div style="overflow-x:auto"><table><tr><th>Who</th><th>Last sign-in</th><th>Today</th><th>Last 7 days</th><th>Opens</th><th>Logged on the board, 7 days</th></tr>' + people.map(function (p) {
       var tag = p.role && !/^agent$/i.test(p.role) ? '<span class="rtag">' + esc(p.role) + '</span>' : '';
       return '<tr><td><b>' + esc(p.name) + '</b>' + tag + '</td><td>' + esc(p.last || '') + (p.dev ? ' <i class="sdev">' + esc(String(p.dev).split(' ')[0]) + '</i>' : '') + '</td><td>' + (p.today || 0) + '</td><td>' + strip(p.days) + '</td><td>' + (p.total || 0) + (p.first ? ' <i class="sdev">since ' + esc(p.first) + '</i>' : '') + '</td><td>' + lg(p.name) + '</td></tr>';
     }).join('') + '</table></div>' : '<div class="empty">Nobody has signed in since the log began' + (s.since ? ' on ' + esc(s.since) : '') + '.</div>') +
     (never.length ? '<h4>Never signed in' + (s.since ? ' since ' + esc(s.since) : '') + '</h4><div class="chips">' + never.map(function (p) {
-      return '<span class="chip"><b>' + esc(p.name) + '</b> <i>' + esc(p.role || '') + (p.unit && d.role === 'branch' ? ' · ' + esc(p.unit) : '') + (logged[p.name] ? ' · logged ' + logged[p.name].week + ' on the board' : '') + '</i></span>';
+      return '<span class="chip"><b>' + esc(p.name) + '</b> <i>' + esc(p.role || '') + (p.unit && d.role === 'branch' ? ' · ' + esc(p.unit) : '') + (lgOf(p.name) ? ' · logged ' + lgOf(p.name).week + ' on the board' : '') + '</i></span>';
     }).join('') + '</div>' : '') +
     (s.code && s.code.total ? '<p class="snote">The branch code alone, with no name: last ' + esc(s.code.last) + ', ' + s.code.today + ' today, ' + s.code.total + ' in all.</p>' : '') +
     '<p class="snote">One row a person an hour, from the Sign-ins tab: a refresh inside the hour is not counted again. "Logged on the board" counts the outcomes they marked (called, met, no answer, declined, closed) and the call-backs they flagged, in the last seven days.</p>';
@@ -2986,7 +3069,7 @@ function dayOf(s) {
 }
 function teamPanel(d) {
   /* a unit manager reads the same for his team's clients (8 October 2026: "as well managers log in") */
-  if (d.role !== 'branch' && d.role !== 'unit') { $('teamWrap').style.display = 'none'; return; }
+  if (d.role !== 'branch' && d.role !== 'unit' && d.role !== 'staff') { $('teamWrap').style.display = 'none'; return; }
   document.querySelector('#teamWrap h2').textContent = d.role === 'unit' ? 'On your team’s clients' : 'From the team';
   var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000;
   var people = teamStamps(d), notes = [];
@@ -3583,11 +3666,14 @@ function assign(tokens, agent, el) {
   if (!tokens.length || !agent || notYet()) return;
   if (el) el.disabled = true;
   var p = signed({ action: 'assign', tokens: tokens.join(','), agent: agent, brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' });
-  toast('Naming ' + agent + ' on ' + tokens.length + ' client' + (tokens.length === 1 ? '' : 's') + '…');
+  toast('Naming ' + agent + ' on ' + tokens.length + ' client' + (tokens.length === 1 ? '' : 's') + ' and their household…');
   api(p).then(function (r) {
     if (el) el.disabled = false;
     if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
-    var msg = r.agent + ' named on ' + r.assigned + ' client' + (r.assigned === 1 ? '' : 's') + (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
+    /* the household is named with them (15 October 2026): the toast says how many came along */
+    var msg = r.agent + ' named on ' + r.assigned + ' client' + (r.assigned === 1 ? '' : 's') + (r.households ? ' in ' + plural(r.households, 'household') : '') +
+      (r.family ? ' · ' + plural(r.family, 'family member') + ' named with them' : '') + (r.sfNotes ? ' · noted on ' + plural(r.sfNotes, 'Salesforce task') : '') +
+      (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
       (r.introHeld ? ' · ' + r.introHeld + ' introduction' + (r.introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') +
       (r.notAnswered ? ' · ' + r.notAnswered + ' not introduced: they have not answered' : '') +
       (r.missing && r.missing.length ? ' · ' + r.missing.length + ' not found' : '') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join(' ') : '') +
@@ -3700,8 +3786,24 @@ function openPanel(token, status) {
       '<input type="text" id="pFam" list="pFamList" autocomplete="off" placeholder="start typing a name"><datalist id="pFamList">' + familyOptions(c) + '</datalist>' +
       (others.length ? '<p class="famnow">Already one household (' + esc(c.hh) + ') with ' + esc(others.join(', ')) + '.</p>' : '');
   }
+  /* the Salesforce task the log lands on (15 October 2026): the open task, or that saving opens one */
+  if (D.detail) h += '<div class="sftask" id="pTasks"><i>Salesforce:</i> checking for an open task…</div>';
   h += '<div class="gobar"><button type="button" id="pCancel">Cancel</button><button type="button" class="primary" id="pSave">Save</button></div>';
   $('sheet').innerHTML = h;
+  if ($('pTasks')) {
+    var drawTasks = function (x) {
+      var el = $('pTasks');
+      if (!el) return;
+      if (!x || x.error) { el.innerHTML = '<i>Salesforce:</i> ' + esc((x && x.error) || 'could not be read') + '.'; return; }
+      var open = (x.tasks || []).filter(function (t) { return t.open; });
+      el.innerHTML = '<i>Salesforce:</i> ' + (x.sf === false ? 'not linked to this project yet, so this call is not logged there.'
+        : open.length ? open.map(function (t) { return '<b>' + esc(t.subject) + '</b>' + (t.owner ? ' · ' + esc(t.owner) : '') + (t.due ? ' · due ' + esc(t.due) : '') + (t.url ? ' · <a href="' + esc(t.url) + '" target="_blank" rel="noopener">open</a>' : ''); }).join('<br>') +
+          '<br>This call is logged on ' + (open.length === 1 ? 'it' : 'them') + ' when you save. The task stays open until a person closes it.'
+        : 'no open task. Saving this call opens one on the client\'s policy, which stays open until a person closes it.');
+    };
+    if (DET[c.token] && DET[c.token].ok) drawTasks(DET[c.token]);
+    else api(signed({ action: 'detail', token: c.token })).then(function (r) { if (r && r.ok) DET[c.token] = r; drawTasks(r && r.ok ? r : { error: (r && r.error) || 'could not be read' }); }).catch(function () { drawTasks({ error: 'could not be read' }); });
+  }
   each('#pOuts button', function (b) { b.addEventListener('click', function () { PN.status = b.getAttribute('data-s'); $('pOuts').classList.remove('need'); syncPanel(); }); });
   each('#pBacks button', function (b) { b.addEventListener('click', function () { PN.back = b.getAttribute('data-b'); syncPanel(); }); });
   each('#pQuick button', function (b) {
@@ -3765,7 +3867,9 @@ function savePanel() {
     var msg = 'Marked ' + status + (r.rows ? ' on ' + r.rows + ' row' + (r.rows === 1 ? '' : 's') : '') + '.' +
       (r.back ? (r.back === 'clear' ? ' The call-back is cleared.' : r.back === 'dnc' ? ' Marked: do not call.' : ' Call-back flagged for ' + BACK_WORDS[r.back] + ': it is on Urgent.') : '') +
       (r.told ? (key === 'still' ? ' The team\'s note is on its way to ' : ' Your note is on its way to ') + (c.firstName || c.client) + '.' : '') +
-      (r.household ? ' ' + r.family + ' is in one household with ' + c.client + ' (' + r.household + ').' : '') + (r.warning ? ' ' + r.warning : '');
+      (r.household ? ' ' + r.family + ' is in one household with ' + c.client + ' (' + r.household + ').' : '') +
+      (r.sf && r.sf.on ? ' Salesforce: ' + r.sf.note + '.' : '') + (r.warning ? ' ' + r.warning : '');
+    if (r.sf && r.sf.task) delete DET[c.token];   // a task opened: the next look at the client reads it
     toast(msg, !!r.warning);
     closePanel(); load();
   }).catch(function () { btn.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });
