@@ -464,6 +464,22 @@ const shortAt = x => String(x || '').replace(/ \d{4}(,|$)/, '$1');
 const dayOf = x => shortAt(x).replace(/,.*$/, '');   // "13 Oct": the label says the day, the line under it the time
 const initials = n => String(n || '?').split(/[\s-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?';
 const starsOf = n => n ? '<span class="stars2" aria-label="' + n + ' of 5 stars">' + '★'.repeat(n) + '<i>' + '★'.repeat(5 - n) + '</i></span>' : '';
+/* where the last letter's rating stands (15 October 2026): rated, items answered without the stars, the page opened
+   without an answer, or no answer yet; with who opened it and any reminder. Every state is a word, never colour alone. */
+const DEV = { phone: 'on a phone', computer: 'on a computer' };
+function rateHtml(a) {
+  const r = a && a.rate;
+  if (!r) return a && a.answer ? '<div>' + esc(dayOf(a.answer.at)) + '</div>' + starsOf(a.answer.rating) + '<div class="sub">' + esc(a.answer.name) + '</div>' : '<span class="muted small">No letter yet</span>';
+  const v = r.lastView, seen = v ? '<div class="sub">opened ' + esc(shortAt(v.at)) + (v.name ? ' · ' + esc(v.name) : '') + (DEV[v.device] ? ' · ' + DEV[v.device] : '') + (r.views > 1 ? ' · ' + r.views + ' visits' : '') + '</div>'
+    : a.views ? '<div class="sub">last opened ' + esc(shortAt(a.views.at)) + ', before this letter</div>' : '';
+  const rem = r.reminder ? '<div class="sub">reminded ' + esc(shortAt(r.reminder.at)) + (r.reminder.by ? ' · ' + esc(r.reminder.by) : '') + '</div>' : '';
+  if (r.kind === 'rated') return '<span class="chip good" style="white-space:nowrap"><i></i>Rated ' + esc(dayOf(r.rated.at)) + '</span> ' + starsOf(r.rated.rating) + '<div class="sub">' + esc(r.rated.name) + '</div>' + seen + rem;
+  if (r.kind === 'answered') return '<span class="chip warn" style="white-space:nowrap"><i></i>No stars yet</span><div class="sub">items answered ' + esc(shortAt(r.answered.at)) + ' · ' + esc(r.answered.name) + '</div>' + seen + rem;
+  if (r.kind === 'viewed') return '<span class="chip info" style="white-space:nowrap"><i></i>Opened, no answer</span>' + seen + rem;
+  return '<span class="chip" style="white-space:nowrap"><i style="background:#9aa5b1"></i>No answer yet</span><div class="sub">to the letter of ' + esc(dayOf(r.letter.at)) + '</div>' + seen + rem;
+}
+const canRemind = (g, a, s) => g.canAct && a.rate && a.rate.kind !== 'rated' && s.ready && !a.mailWhy;
+const remindBtn = (key, a) => '<button class="btn ghost" type="button" data-act="remind" data-k="' + esc(key) + '">' + (a.rate.reminder ? 'Remind again' : 'Remind to rate') + '</button>';
 function hello(d) {
   const words = String(d.me || '').trim().split(/\s+/), person = words.length >= 2 && words.length <= 4 && !/team|desk|support|branch|manager|office/i.test(d.me);
   const name = person ? words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase() : d.me;
@@ -477,11 +493,13 @@ function hello(d) {
 }
 /* each filter's mark: the colour of the state it finds, always beside its words */
 const ACC_SHOW = [['all', 'All', ''], ['due', 'Letter to approve', 'var(--bad)'], ['welcome', 'Welcome to send', 'var(--info)'], ['sent', 'A letter has gone', 'var(--good)'],
-  ['answered', 'Answered us', 'var(--good)'], ['setup', 'Needs set-up', 'var(--warnMark)'], ['pending', 'Applications or increases pending', '#5B6B82']];
+  ['answered', 'Answered us', 'var(--good)'], ['notrated', 'Not rated their last letter', 'var(--warnMark)'], ['opened', 'Opened their page', 'var(--info)'],
+  ['setup', 'Needs set-up', 'var(--warnMark)'], ['pending', 'Applications or increases pending', '#5B6B82']];
 function accShow(g, k) {
   const a = g.account, s = g.stats;
   return k === 'all' || (k === 'welcome' && !a.welcome && !a.welcomeWhy) || (k === 'due' && s.week === 'due' && s.ready) || (k === 'sent' && !!a.last) ||
-    (k === 'answered' && !!a.answer) || (k === 'setup' && !!(a.mailWhy || !s.ready || !g.assigned || !g.ownerActive)) || (k === 'pending' && !!a.pending);
+    (k === 'answered' && !!a.answer) || (k === 'setup' && !!(a.mailWhy || !s.ready || !g.assigned || !g.ownerActive)) || (k === 'pending' && !!a.pending) ||
+    (k === 'notrated' && !!a.rate && a.rate.kind !== 'rated') || (k === 'opened' && !!a.views);
 }
 /* the row's rail: red when something is due from us, amber when the account needs setting up, green when the week is done */
 function rowState(g) {
@@ -500,7 +518,7 @@ function accountsHtml(d) {
     '</div><div class="track" role="img" aria-label="' + esc(label + ': ' + v + ' of ' + n) + '"><div class="fill" style="width:' + (n ? Math.round(100 * v / n) : 0) + '%"></div></div></div>';
   let h = '<h2 style="margin-top:22px">Every account <span class="muted small">who looks after it, who the letters go to, and what has gone</span></h2>' +
     '<div class="meters">' + meter(cnt(g => g.account.welcome), 'welcomed with the film') + meter(cnt(g => g.stats.week !== 'due'), 'approved or sent for ' + (d.nextSend || 'Monday')) +
-    meter(cnt(g => g.account.answer), 'have answered us on their page') + meter(cnt(g => g.assigned && g.ownerActive && !g.account.mailWhy && g.stats.ready), 'ready: owner, contact, list bill and code') + '</div>';
+    meter(cnt(g => g.account.rate && g.account.rate.kind === 'rated'), 'rated us for their last letter') + meter(cnt(g => g.assigned && g.ownerActive && !g.account.mailWhy && g.stats.ready), 'ready: owner, contact, list bill and code') + '</div>';
   const owners = [...new Set(all.map(g => g.assigned).filter(Boolean))].sort();
   if (ACC.owner !== 'all' && ACC.owner !== 'mine' && owners.indexOf(ACC.owner) < 0) ACC.owner = 'all';
   const byOwner = all.filter(g => ACC.owner === 'all' || (ACC.owner === 'mine' && g.own) || g.assigned === ACC.owner);
@@ -518,7 +536,7 @@ function accountsHtml(d) {
     '<div class="count" aria-live="polite">Showing <b>' + shown.length + '</b> of ' + n + (busy ? '<button type="button" id="accClr">Clear filters</button>' : '') + '</div></div>' +
     '<div class="seg" role="group" aria-label="Where they stand">' + ACC_SHOW.map(([k, l, c]) => '<button class="fbtn" type="button" data-as="' + k + '" aria-pressed="' + (ACC.show === k) + '">' + (c ? '<i style="background:' + c + '"></i>' : '') +
       esc(l) + '<span class="n">' + byOwner.filter(g => accShow(g, k)).length + '</span></button>').join('') + '</div></div>';
-  h += '<div class="acctable"><div class="acc head" aria-hidden="true"><div>Group</div><div>Looked after by</div><div>Letters go to</div><div>Welcome</div><div>This week’s letter</div><div>Last answer</div><div style="text-align:right">Send</div></div>' +
+  h += '<div class="acctable"><div class="acc head" aria-hidden="true"><div>Group</div><div>Looked after by</div><div>Letters go to</div><div>Welcome</div><div>This week’s letter</div><div>Opened · rated</div><div style="text-align:right">Send</div></div>' +
     (shown.length ? shown.map(accRow).join('') : '<p class="muted" style="padding:16px">No account matches. <button class="btn ghost sm" type="button" id="accClr2">Clear filters</button></p>') + '</div>' +
     '<div class="key2" aria-hidden="true"><span><i style="background:var(--bad)"></i>something is due from us</span><span><i style="background:var(--warnMark)"></i>needs setting up</span><span><i style="background:var(--info)"></i>in hand</span><span><i style="background:var(--good)"></i>welcomed, and this week’s letter approved or sent</span></div>';
   return h;
@@ -542,19 +560,20 @@ function accRow(g) {
     : !s.ready ? '<span class="chip warn"><i></i>Not ready</span><div class="sub">' + esc(s.why) + '</div>'
     : '<span class="chip bad"><i></i>To approve</span><div class="sub">for ' + esc(s.nextSendLabel) + '</div>') +
     (a.resent ? '<div class="sub">last sent again ' + esc(shortAt(a.resent.at)) + '</div>' : '');
-  const ans = a.answer ? '<div>' + esc(shortAt(a.answer.at).replace(/,.*$/, '')) + '</div>' + starsOf(a.answer.rating) + '<div class="sub">' + esc(a.answer.name) + '</div>' : '<span class="muted small">None yet</span>';
+  const ans = rateHtml(a);
   let acts = '';
   if (g.canAct) {
     if (!a.welcomeWhy) acts += '<button class="btn ' + (a.welcome ? 'ghost' : '') + '" type="button" data-act="welcome" data-k="' + esc(g.key) + '">' + (a.welcome ? 'Resend welcome' : 'Send welcome') + '</button>';
     if (s.ready && !a.mailWhy) acts += '<button class="btn ' + (s.week === 'due' ? '' : 'ghost') + '" type="button" data-act="letter" data-k="' + esc(g.key) + '">' + (s.week === 'due' ? 'Check and send' : 'Send letter') + '</button>';
     if (a.last && a.last.again && !a.mailWhy) acts += '<button class="btn ghost" type="button" data-act="again" data-k="' + esc(g.key) + '">Resend last letter</button>';
+    if (canRemind(g, a, s)) acts += remindBtn(g.key, a);
   }
   acts += '<button class="btn ghost" type="button" data-g="' + esc(g.key) + '">Open</button>';
   return '<div class="acc r-' + rowState(g) + '"><div>' + L('Group') + '<button class="gname" type="button" data-g="' + esc(g.key) + '">' + esc(g.name) + '</button><div class="sub">List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · ' + s.open + ' open' + (s.late ? ' · <b style="color:var(--badText)">' + s.late + ' past target</b>' : '') + '</div>' +
     (a.coming ? '<div><span class="chip"><i style="background:#067647"></i>' + a.coming.n + ' coming up</span></div>' : '') +
     (a.pending ? '<div><span class="chip ' + (a.pending.late || a.pending.oldest > 30 ? 'bad' : a.pending.oldest > 14 ? 'warn' : '') + '"><i></i>' + pendWords(a.pending) + ', oldest ' + a.pending.oldest + 'd</span></div>' : '') + '</div>' +
-    '<div>' + L('Looked after by') + owner + '</div><div>' + L('Letters go to') + to + '</div><div>' + L('Welcome') + wel + '</div><div>' + L('This week’s letter') + wk + '</div><div>' + L('Last answer') + ans + '</div>' +
+    '<div>' + L('Looked after by') + owner + '</div><div>' + L('Letters go to') + to + '</div><div>' + L('Welcome') + wel + '</div><div>' + L('This week’s letter') + wk + '</div><div>' + L('Opened · rated') + ans + '</div>' +
     '<div class="acts">' + acts + (g.canAct ? '' : '<div class="sub" style="width:100%;text-align:right">' + esc(first || 'Its owner') + ', the assistant branch manager or the branch manager sends</div>') + '</div></div>';
 }
 function bindAccounts(root) {
@@ -574,29 +593,33 @@ $('dlgX').onclick = () => dlg.close();
 dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 function nameOf(key) { const g = (BOARD && BOARD.groups.find(x => x.key === key)) || (GROUP && GROUP.group.key === key ? GROUP.group : null); return g ? g.name : ''; }
 async function openAct(kind, key) {
-  const nm = nameOf(key), T = { welcome: 'The welcome, with the film', letter: 'This week’s letter', again: 'Send the last letter again' };
+  const nm = nameOf(key), T = { welcome: 'The welcome, with the film', letter: 'This week’s letter', again: 'Send the last letter again', remind: 'Remind them to rate us' };
   $('dlgT').textContent = T[kind] + ' · ' + nm;
   $('dlgB').innerHTML = '<p class="muted" style="margin:30px 0;text-align:center">Writing it from Salesforce, exactly as it would go…</p>';
   if (!dlg.open) dlg.showModal();
-  const r = await api(kind === 'welcome' ? { action: 'gcm.welcomePreview', group: key } : kind === 'again' ? { action: 'gcm.resendPreview', group: key } : { action: 'gcm.preview', group: key });
+  const r = await api(kind === 'welcome' ? { action: 'gcm.welcomePreview', group: key } : kind === 'again' ? { action: 'gcm.resendPreview', group: key }
+    : kind === 'remind' ? { action: 'gcm.remindPreview', group: key } : { action: 'gcm.preview', group: key });
   if (!r.ok) { $('dlgB').innerHTML = '<div class="note bad">' + esc(r.error || 'It could not be written.') + '</div><div class="row"><button class="btn ghost" type="button" onclick="dlg.close()">Close</button></div>'; return; }
   const html = kind === 'letter' ? r.letter.html : r.html, subject = kind === 'letter' ? r.letter.subject : r.subject;
   if (kind === 'welcome' && r.welcomed) $('dlgT').textContent = 'Resend the welcome · ' + nm;
-  let h = '<p class="to">To ' + (r.to && r.to.length ? toLine(r) : '<b>nobody</b>') + (r.copy && r.copy.length ? ' · hidden copy to ' + esc(r.copy.join(', ')) : '') + '<br>Subject <b>' + esc(subject) + '</b>' +
+  let h = '<p class="to">To ' + (r.to && r.to.length ? toLine(r) : '<b>nobody</b>') + (r.copy && r.copy.length ? ' · copy to ' + esc(r.copy.join(', ')) : '') + '<br>Subject <b>' + esc(subject) + '</b>' +
     (kind === 'welcome' ? '<br>Signed by <b>' + esc(r.signer) + '</b>, with “Checked against our records by ' + esc(r.signer) + '”' : '') + '</p>';
   if (r.personal && r.personal.length) h += '<div class="note">' + esc(r.personal.join(', ')) + ' is a personal mailbox. Make sure it is still the group’s contact.</div>';
   if (kind === 'welcome' && r.welcomes && r.welcomes.length) h += '<p class="small muted">Welcomed before: ' + r.welcomes.map(w => esc(w.at) + ' by ' + esc(w.by)).join('; ') + '.</p>';
   if (kind === 'again') h += '<p class="small muted">First went on <b>' + esc(r.first) + '</b> to ' + esc(r.firstTo) + ', ' + esc(r.firstBy) + '. It goes again exactly as it went, with a line on top saying so.</p>';
+  if (kind === 'remind' && r.state) h += '<p class="small">' + rateHtml({ rate: r.state }) + '</p><p class="small muted">For the letter of ' + esc(r.state.letter.at) + '. Signed by <b>' + esc(r.signer) + '</b>. ' +
+    'It says only what we know, and each star opens their page with that star chosen. Nothing is recorded until they sign in and press Send.</p>';
   if (kind === 'letter' && r.approved) h += '<p class="small"><span class="chip good"><i></i>Approved by ' + esc(r.approved.by) + '</span> It goes ' + esc(r.approved.for) + ' by itself. Send now only if the group needs it today.</p>';
   h += '<iframe title="The e-mail as it goes" sandbox=""></iframe>';
   const ready = kind === 'letter' ? r.ready : r.ready;
   if (r.canAct === false) h += '<div class="note">Read only: this group is looked after by a colleague.</div>';
   else if (!ready) h += '<div class="note bad">Cannot go yet: ' + esc(r.why || '') + '.</div>' + (kind === 'letter' ? '<div class="row"><button class="btn" type="button" data-open="' + esc(key) + '">Open the group to put it right</button></div>' : '');
   else {
-    const tick = kind === 'welcome' ? 'I have checked the contact and this account: the welcome goes signed by me' : kind === 'again' ? 'I have checked who it goes to' : 'I have checked every item against Salesforce and the latest billing';
+    const tick = kind === 'welcome' ? 'I have checked the contact and this account: the welcome goes signed by me' : kind === 'again' || kind === 'remind' ? 'I have checked who it goes to' : 'I have checked every item against Salesforce and the latest billing';
     h += '<label class="toggle" style="margin:14px 0 4px"><input type="checkbox" id="dlgCk"> ' + esc(tick) + '</label><div class="row">' +
       (kind === 'welcome' ? '<button class="btn" type="button" id="dlgGo" disabled>' + (r.welcomed ? 'Resend the welcome' : 'Send the welcome') + '</button>' :
        kind === 'again' ? '<button class="btn" type="button" id="dlgGo" disabled>Send it again</button>' :
+       kind === 'remind' ? '<button class="btn" type="button" id="dlgGo" disabled>' + (r.state && r.state.reminder ? 'Remind again' : 'Send the reminder') + '</button>' :
        (r.week === 'due' ? '<button class="btn" type="button" id="dlgAp" disabled>Approve for ' + esc(r.nextSend) + '</button>' : '') + '<button class="btn ' + (r.week === 'due' ? 'ghost' : '') + '" type="button" id="dlgGo" disabled>Send now</button>') +
       '<button class="btn ghost" type="button" onclick="dlg.close()">Cancel</button></div>' +
       '<p class="small muted" style="margin-top:8px">' + (kind === 'letter' ? 'It goes from support@, written again from Salesforce the moment you press. Send now closes any approval for Monday.' : 'It goes from support@ and is logged on the account with your name.') + '</p>';
@@ -614,11 +637,12 @@ async function doAct(kind, key, pv, approveOnly) {
   const go = $('dlgGo'); if (go && !approveOnly) go.textContent = 'Sending…';
   const r = kind === 'welcome' ? await post({ action: 'gcm.welcome', group: key, checked: true, again: !!pv.welcomed })
     : kind === 'again' ? await post({ action: 'gcm.resend', group: key, checked: true })
+    : kind === 'remind' ? await post({ action: 'gcm.remind', group: key, checked: true, again: !!(pv.state && pv.state.reminder) })
     : approveOnly ? await post({ action: 'gcm.approve', group: key, intro: pv.intro || '', checked: true })
     : await post({ action: 'gcm.send', group: key, intro: pv.intro || '', checked: true });
-  if (!r.ok) { toast(r.error || 'It did not go', true); ['dlgGo', 'dlgAp'].map($).filter(Boolean).forEach(b => { b.disabled = false; }); if (go) go.textContent = kind === 'again' ? 'Send it again' : kind === 'welcome' ? (pv.welcomed ? 'Resend the welcome' : 'Send the welcome') : 'Send now'; return; }
+  if (!r.ok) { toast(r.error || 'It did not go', true); ['dlgGo', 'dlgAp'].map($).filter(Boolean).forEach(b => { b.disabled = false; }); if (go) go.textContent = kind === 'again' ? 'Send it again' : kind === 'remind' ? 'Send the reminder' : kind === 'welcome' ? (pv.welcomed ? 'Resend the welcome' : 'Send the welcome') : 'Send now'; return; }
   const who = (pv.contact ? pv.contact + ' at ' : '') + (pv.to || []).join(', ');
-  const head = approveOnly ? 'Approved for ' + r.for : kind === 'welcome' ? (r.again ? 'The welcome went again' : 'Welcome sent') : kind === 'again' ? 'Sent again' : 'Letter sent';
+  const head = approveOnly ? 'Approved for ' + r.for : kind === 'welcome' ? (r.again ? 'The welcome went again' : 'Welcome sent') : kind === 'again' ? 'Sent again' : kind === 'remind' ? 'Reminder sent' : 'Letter sent';
   const line = approveOnly ? 'It is written again from Salesforce and goes by itself ' + esc(r.for) + '. A new item before then holds it for you.' + (r.welcome ? ' Their welcome, with the film, goes within the hour, signed by you.' : '')
     : 'To ' + esc(who) + ', ' + esc(r.at) + ', from support@. Logged on the account with your name.';
   $('dlgB').innerHTML = '<div class="done2" role="status"><div class="tick" aria-hidden="true">✓</div><h4>' + esc(head) + '</h4><p>' + line + '</p><div class="row" style="justify-content:center"><button class="btn" type="button" id="dlgOk">Done</button></div></div>';
@@ -816,8 +840,10 @@ function drawGroup() {
     '<h3 style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">Open items <span class="muted small">' + d.items.length + ' · tick what the group sees; share the Chatter comments they should read</span>' + (d.items.length ? '<button class="btn ghost sm" type="button" id="histAll" style="margin-left:auto">Show all history</button>' : '') + '</h3><div class="items">' + d.items.map(itemHtml).join('') + (d.items.length ? '' : '<p class="muted">Nothing open.</p>') + '</div>' +
     '<h3>Completed in the last seven days</h3>' + (d.doneWeek.length ? '<ul class="feed">' + d.doneWeek.map(x => '<li>' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + ' · ' + esc(x.by) + ' · ' + esc(dmy(x.done)) + (x.shown ? '' : ' · not shown to the group') + '</span></li>').join('') + '</ul>' : '<p class="muted">Nothing completed this week.</p>') +
     yearHtml(d) +
-    '<h3>What went to the group</h3>' + (d.sends.length ? '<ul class="feed">' + d.sends.map(x => '<li><span class="chip' + (/^failed/i.test(x.status) ? ' bad' : x.kind === 'welcome' ? ' good' : '') + '">' + ({ welcome: 'Welcome', again: 'Sent again', letter: 'Weekly letter' }[x.kind] || 'Letter') + '</span> ' +
+    '<h3>What went to the group</h3>' + (d.sends.length ? '<ul class="feed">' + d.sends.map(x => '<li><span class="chip' + (/^failed/i.test(x.status) ? ' bad' : x.kind === 'welcome' ? ' good' : '') + '">' + ({ welcome: 'Welcome', again: 'Sent again', letter: 'Weekly letter', reminder: 'Star reminder' }[x.kind] || 'Letter') + '</span> ' +
       esc(x.at) + ' · ' + esc(x.staff) + (x.kind === 'letter' ? ' · ' + x.items + ' items' : '') + (x.to ? ' · to ' + esc(x.to) : '') + (/^failed/i.test(x.status) ? ' · <b style="color:var(--badText)">' + esc(x.status) + '</b>' : '') + '</li>').join('') + '</ul>' : '<p class="muted">Nothing yet.</p>') +
+    (Array.isArray(d.views) ? '<h3>Who opened their page</h3>' + (d.views.length ? '<ul class="feed">' + d.views.map(v => '<li>' + esc(v.at) + (v.name ? ' · <b>' + esc(v.name) + '</b>' : ' · <span class="muted">name not known until they answer from that device</span>') +
+      (DEV[v.device] ? ' · ' + DEV[v.device] : '') + (v.from ? ' · from the ' + esc(v.from) : '') + '</li>').join('') + '</ul>' : '<p class="muted">No sign-in on record yet.</p>') : '') +
     '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
   $('app').innerHTML = h;
   $('bk').onclick = render;
@@ -848,12 +874,13 @@ function accountBar(d) {
   let h = '<div class="drawer" style="padding:12px 16px;margin:12px 0;box-shadow:var(--shadow)"><div style="display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center">' +
     '<div><span class="small muted">Welcome</span><br>' + (a.welcome ? '<span class="chip good"><i></i>Sent ' + esc(shortAt(a.welcome.at)) + ' · ' + esc(a.welcome.by) + '</span>' : a.welcomeWhy ? '<span class="chip warn"><i></i>Not yet: ' + esc(a.welcomeWhy) + '</span>' : '<span class="chip"><i style="background:#9aa5b1"></i>Not sent yet</span>') + '</div>' +
     '<div><span class="small muted">Last letter</span><br>' + (a.last ? '<span class="chip"><i style="background:var(--bar)"></i>' + esc(shortAt(a.last.at)) + ' · ' + esc(a.last.by) + '</span>' : '<span class="chip"><i style="background:#9aa5b1"></i>None yet</span>') + '</div>' +
-    '<div><span class="small muted">Last answer</span><br>' + (a.answer ? '<span class="chip"><i style="background:var(--good)"></i>' + esc(shortAt(a.answer.at)) + ' · ' + esc(a.answer.name) + '</span> ' + starsOf(a.answer.rating) : '<span class="chip"><i style="background:#9aa5b1"></i>None yet</span>') + '</div>';
+    '<div><span class="small muted">Opened · rated</span><br>' + rateHtml(a) + '</div>';
   if (d.canAct !== false) {
     h += '<div class="acts" style="margin-left:auto">';
     if (!a.welcomeWhy) h += '<button class="btn ' + (a.welcome ? 'ghost' : '') + '" type="button" data-act="welcome" data-k="' + esc(d.group.key) + '">' + (a.welcome ? 'Resend the welcome' : 'Send the welcome') + '</button>';
     if (s.ready && !a.mailWhy) h += '<button class="btn ghost" type="button" data-act="letter" data-k="' + esc(d.group.key) + '">Send this week’s letter</button>';
     if (a.last && a.last.again && !a.mailWhy) h += '<button class="btn ghost" type="button" data-act="again" data-k="' + esc(d.group.key) + '">Resend the last letter</button>';
+    if (canRemind({ canAct: true }, a, s)) h += remindBtn(d.group.key, a);
     h += '</div>';
   }
   return h + '</div></div>';

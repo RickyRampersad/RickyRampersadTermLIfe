@@ -83,6 +83,7 @@ var GCM = {
   SHARES: 'Group Shares',
   INCREASES: 'Group Increases',
   LIFE: 'Group Milestones',
+  VIEWS: 'Group Views',     // every sign-in on a group's own page (15 October 2026), at most one a half hour per group
   SEND_DAY: 1,              // Monday (1 Monday … 7 Sunday): the week's letters go out by themselves at SEND_HOUR (8 October 2026)
   SEND_HOUR: 10,            // staff approve each letter during the week; at 10:00 on Monday the approved letters go
   QUEUE: 'Group Queue',
@@ -109,7 +110,8 @@ var GCM_HEAD = {
   'Group Queue':     ['When', 'Group', 'Staff', 'Role', 'Staff e-mail', 'For', 'Task Ids', 'Intro', 'Status', 'Sent at'],
   'Group Increases': ['Group', 'Increase Id', 'Policy', 'Line', 'Insured', 'Submitted', 'Days', 'Status', 'Stage', 'Support', 'Agent',
                       'Picked up', 'Last activity', 'Own', 'Amount', 'Mails', 'Check'],
-  'Group Milestones': ['Group', 'Kind', 'Person', 'Member', 'Policy', 'Line', 'Ownership', 'Born', 'Date', 'Age at', 'Assumed', 'E-mail', 'Policy Id', 'Task', 'Note']
+  'Group Milestones': ['Group', 'Kind', 'Person', 'Member', 'Policy', 'Line', 'Ownership', 'Born', 'Date', 'Age at', 'Assumed', 'E-mail', 'Policy Id', 'Task', 'Note'],
+  'Group Views':     ['When', 'Group', 'Bill', 'Name', 'Device', 'From']
 };
 
 /* The order a group's page lists its items in, and the client's words for a status. */
@@ -140,6 +142,7 @@ function gcmDoGet_(p) {
       case 'gcm.preview': return gcmPreview_(p);
       case 'gcm.welcomePreview': return gcmWelcomePreview_(p);
       case 'gcm.resendPreview':  return gcmResendPreview_(p);
+      case 'gcm.remindPreview':  return gcmRemindPreview_(p);
       case 'gcm.refresh': return gcmRefreshAsked_(p);
       case 'gcm.client':  return gcmClient_(p);
       case 'gcm.wall':    return gcmWall_(p);
@@ -158,6 +161,7 @@ function gcmDoPost_(b) {
       case 'gcm.send':   return gcmSend_(b);
       case 'gcm.resend': return gcmResend_(b);
       case 'gcm.welcome': return gcmWelcomeSend_(b);
+      case 'gcm.remind': return gcmRemind_(b);
       case 'gcm.approve':   return gcmApprove_(b);
       case 'gcm.unapprove': return gcmUnapprove_(b);
       case 'gcm.rehearse':  return gcmRehearse_(b);
@@ -200,6 +204,8 @@ function gcmRefreshTick() {
   try { gcmQueueRun_(); } catch (e) {}
   /* once the welcome is on, a group a staff member has just verified gets it, in working hours */
   try { if (gcmWelcomeOn_() && d <= 5 && h >= 8 && h <= 17) gcmWelcomeRun_({ auto: true }); } catch (e) {}
+  /* and once the branch manager has given the go, a group whose letter is still unrated by Thursday gets its reminder */
+  try { if (gcmRateOn_() && d <= 5 && h >= GCM_RATE.HOURS[0] && h <= GCM_RATE.HOURS[1]) gcmRateRun_({ auto: true }); } catch (e) {}
 }
 
 /* ── sheet plumbing ─────────────────────────────────────────────── */
@@ -721,7 +727,7 @@ function gcmFeed_(ids) {
 
 function gcmLoad_() {
   var reg = gcmRegister_(), byName = {};
-  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.incs = []; g.life = []; g.lifeSum = null; g.sends = []; g.resent = []; g.welcomes = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
+  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.incs = []; g.life = []; g.lifeSum = null; g.sends = []; g.resent = []; g.welcomes = []; g.reminders = []; g.views = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
   gcmRows_(GCM.QUEUE).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
     if (g) g.queue.push({ _n: r._n, at: gcmWhen_(r.When), when: gcmYmd_(r.When), staff: gcmText_(r.Staff), role: gcmText_(r.Role), email: gcmText_(r['Staff e-mail']),
@@ -759,13 +765,18 @@ function gcmLoad_() {
     /* the welcome and a letter sent again are logged here too, but neither is a weekly letter: neither counts as this week's */
     if (/^welcome/i.test(st)) { g.welcomed = x.at; g.welcomes.push(x); return; }
     if (/^resent/i.test(st)) { g.resent.push(x); return; }
-    if (/welcome|resend/i.test(st)) return;   // one that failed is on the tab, and the summary e-mail named it
+    if (/^reminder/i.test(st)) { g.reminders.push(x); return; }   // the star reminder (15 October 2026): not a letter either
+    if (/welcome|resend|reminder/i.test(st)) return;   // one that failed is on the tab, and the summary e-mail named it
     g.sends.push(x);
   });
   gcmRows_(GCM.RESPONSES).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
-    if (g) g.resps.push({ when: gcmYmd_(r.When), at: gcmWhen_(r.When), name: gcmText_(r.Name), role: gcmText_(r.Role), task: gcmId15_(gcmText_(r['Task Id'])),
+    if (g) g.resps.push({ when: gcmYmd_(r.When), at: gcmWhen_(r.When), ts: r.When instanceof Date ? r.When.getTime() : 0, name: gcmText_(r.Name), role: gcmText_(r.Role), task: gcmId15_(gcmText_(r['Task Id'])),
       title: gcmText_(r.Task), verdict: gcmText_(r.Verdict), note: gcmText_(r.Note), rating: Number(r.Rating) || 0, comment: gcmText_(r.Comment), staff: gcmText_(r.Staff) });
+  });
+  gcmRows_(GCM.VIEWS).forEach(function (r) {
+    var g = byName[gcmCodeKey_(r.Group)];
+    if (g) g.views.push({ when: gcmYmd_(r.When), at: gcmWhen_(r.When), ts: r.When instanceof Date ? r.When.getTime() : 0, name: gcmText_(r.Name), device: gcmText_(r.Device), from: gcmText_(r.From) });
   });
   gcmRows_(GCM.SHARES).forEach(function (r) {   // the newest row for a task or a post wins
     var g = byName[gcmCodeKey_(r.Group)];
@@ -1515,9 +1526,11 @@ function gcmGroupView_(p) {
       return { title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, by: t.owner, done: t.done, shown: gcmShown_(g, t) }; }),
     account: gcmAccount_(g, who, L),
     /* every e-mail that went to the group, newest first: the weekly letters, the letters sent again, and the welcome */
-    sends: g.sends.concat(g.resent, g.welcomes).sort(function (a, b) { return (a.ts || 0) - (b.ts || 0) || (a.when < b.when ? -1 : 1); }).slice(-15).reverse()
+    sends: g.sends.concat(g.resent, g.welcomes, g.reminders).sort(function (a, b) { return (a.ts || 0) - (b.ts || 0) || (a.when < b.when ? -1 : 1); }).slice(-15).reverse()
       .map(function (x) { return { at: x.at, staff: x.staff, to: x.to, items: x.items, via: x.via,
-        kind: /^welcome/i.test(x.status) ? 'welcome' : /^resent/i.test(x.status) ? 'again' : 'letter', status: x.status }; }),
+        kind: /^welcome/i.test(x.status) ? 'welcome' : /^resent/i.test(x.status) ? 'again' : /^reminder/i.test(x.status) ? 'reminder' : 'letter', status: x.status }; }),
+    views: g.views.slice(-15).reverse().map(function (v) { return { at: v.at, name: v.name, device: v.device, from: v.from }; }),
+    rate: gcmRateState_(g, L.today),
     responses: g.resps.slice(-25).reverse() };
 }
 
@@ -1754,7 +1767,7 @@ function gcmLetter_(g, today, staffName, intro, verified) {
     cmList.length ? 'Coming up for your people:\n' + cmList.slice(0, 10).map(function (x) { return '- ' + x.who + ': ' + x.what + ', ' + x.when; }).join('\n') + (cmList.length > 10 ? '\n- and ' + (cmList.length - 10) + ' more on your page' : '') + '\n' : '',
     'Your service page shows every item: what it is, who on our team is handling it, how long it has been open, its target date and our latest note. ' +
     'Please tell us on the page whether each one is correct, add a note where something needs our attention, and rate our service.', '',
-    'Your page: ' + GCM.SITE + 'client.html', 'Sign in with your list bill (' + g.bills[0] + ') and your access code: ' + (g.code || '(not set)'), '',
+    'Your page: ' + GCM.SITE + 'client.html?from=letter', 'Sign in with your list bill (' + g.bills[0] + ') and your access code: ' + (g.code || '(not set)'), '',
     'We would be grateful for your answers by ' + dmy(respondBy) + '.', '', 'Warm regards,', staffName, 'Ricky Rampersad Branch, Guardian Life of the Caribbean',
     '9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461', vline].join('\n').replace(/\n{3,}/g, '\n\n');
   var E = tEsc_;
@@ -1779,7 +1792,7 @@ function gcmLetter_(g, today, staffName, intro, verified) {
         '<td style="padding:7px 10px;border-bottom:1px solid #e2e7ef;color:#2B374C;vertical-align:top">' + E(x.what) + '</td><td style="padding:7px 0;border-bottom:1px solid #e2e7ef;color:#2B374C;white-space:nowrap;vertical-align:top">' + E(x.when) + '</td></tr>'; }).join('') +
       '</table>' + (cmList.length > 10 ? '<p style="margin:-8px 0 14px;font-size:13px;color:#5a687d">And ' + (cmList.length - 10) + ' more on your page.</p>' : '') : '') +
     '<p style="margin:0 0 16px">Your service page shows every item: what it is, who on our team is handling it, how long it has been open, its target date and our latest note. Tell us whether each one is correct, add a note where something needs our attention, and rate our service.</p>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px"><tr><td style="background:#1d5bc4;border-radius:6px"><a href="' + GCM.SITE + 'client.html" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px"><tr><td style="background:#1d5bc4;border-radius:6px"><a href="' + GCM.SITE + 'client.html?from=letter" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #b8cef4;background:#ebf2fd;margin:0 0 18px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif">' +
     'List bill: <b>' + E(g.bills[0] || '') + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(g.code || '(not set)') + '</b></td></tr></table>' +
     '<p style="margin:0 0 18px">We would be grateful for your answers by <b>' + E(dmy(respondBy)) + '</b>.</p>' +
@@ -1991,6 +2004,9 @@ function gcmAccount_(g, who, L) {
         oldest: pd[0].days, late: pd.some(function (c) { return c.late; }) } : null;
     })(),
     coming: (function () { var cm = gcmComing_(g, L.today, false); return cm.count ? { n: cm.count, convert: cm.convert.length, deps: cm.deps.length, retire: cm.retire.length } : null; })(),
+    /* who opened the page, and where the last letter's rating stands (15 October 2026) */
+    views: g.views.length ? { n: g.views.length, at: g.views[g.views.length - 1].at, name: g.views[g.views.length - 1].name, device: g.views[g.views.length - 1].device } : null,
+    rate: gcmRateState_(g, L.today),
     mailWhy: gcmCannotMail_(g) };
 }
 
@@ -2131,7 +2147,7 @@ function gcmWelcome_(g, today, signed) {
     ['We act on it', 'Your answer reaches ' + (carer || 'the person looking after you') + ' the moment you send it, and the next Monday letter shows what changed.']];
   var p2 = 'Your page is open now: sign in with your list bill and your access code below.' + (me ? ' I look after your account, and a reply to this e-mail reaches me and our team.'
     : carer ? ' ' + carer + ' looks after your account, and a reply to this e-mail reaches us both.' : ' A reply to this e-mail reaches us.');
-  var site = GCM.SITE + 'client.html', bill = g.bills[0] || '', code = g.code || '';
+  var site = GCM.SITE + 'client.html?from=welcome', bill = g.bills[0] || '', code = g.code || '';
   var signIn = ['Your page: ' + site, 'Sign in with your list bill (' + bill + ') and your access code: ' + code];
   var text = [greet, '', p1, '', 'Watch how it works (' + GCM_WELCOME.LENGTH + '): ' + page, '']
     .concat(yearLine ? ['Your year with us so far: ' + yearLine, ''] : [])
@@ -2274,6 +2290,282 @@ function gcmWelcomeRun_(o) {
         '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p>' });
   } catch (e) {}
   return { ok: true, sent: sent.length, failed: failed.length, said: sent.length + ' welcomed, ' + failed.length + ' failed, ' + list.held.length + ' left out.' };
+}
+
+/* ── who opened their page, and the star reminder ────────────────────
+ * Asked for on 15 October 2026: "deep dive in all the group … who viewed it … If a group have not rated us the stars,
+ * we need to automatically send … a reminder. They have viewed it, but they have not rated." Until then nothing was
+ * kept of a group opening its page, so an answer was the only sign of one. Now every sign-in is a row on Group Views,
+ * at most one a half hour per group: when, the name that device last answered under, phone or computer, and whether it
+ * came from a letter, the welcome or the reminder. A sign-in needs the list bill and the code, which are never in a
+ * link, so a mail scanner that opens every link in an e-mail cannot make one.
+ *
+ * The reminder: a group whose last weekly letter has no star rating since it went gets one e-mail for that letter,
+ * signed by whoever looks after it, with the five stars as links (each opens the page with that star chosen; nothing
+ * is recorded until the group signs in and presses Send) and its sign-in. It says only what we know: they marked their
+ * items but left the stars, they opened the page and did not finish, or the letter is still waiting. It goes by itself
+ * in working hours once the letter is GCM_RATE.AFTER_DAYS old (a Monday letter: Thursday), after the branch manager's
+ * go (gcmRateRemindNow), and never within GCM_RATE.QUIET_H hours of any other e-mail to the group. Whoever looks after
+ * the group, the deputy and the branch manager can also send it from the page. Each one is logged on Group Sends as
+ * "reminder sent", which the weekly run passes over: a reminder is never the week's letter. */
+var GCM_RATE = {
+  AFTER_DAYS: 3,                 // a Monday letter still unrated on Thursday
+  HOURS: [10, 16],               // the hourly run sends it from 10:00 to 16:00, Monday to Friday
+  QUIET_H: 20,                   // and never within this many hours of another e-mail to the group
+  VIEW_GAP_MIN: 30,              // one sign-in row per group per half hour
+  ON_PROP: 'GCM_RATE_ON',        // set by gcmRateRemindNow, cleared by gcmRateRemindStop
+  SKIP_PROP: 'GCM_RATE_SKIP',    // Script property: groups to leave out, by name, comma-separated
+  WORDS: ['', 'Poor', 'Below expectations', 'Fair', 'Good', 'Excellent']   // the group page's own words for each star
+};
+
+/** A sign-in on the group's own page, as a row on Group Views; one a half hour per group, so a reload is not a visit. */
+function gcmViewLog_(g, p) {
+  var cache = CacheService.getScriptCache(), key = 'gcm-view-' + g.key.slice(0, 80);
+  if (cache.get(key)) return;
+  cache.put(key, '1', GCM_RATE.VIEW_GAP_MIN * 60);
+  var pick = function (v, re) { v = String(v || '').toLowerCase(); return re.test(v) ? v : ''; };
+  gcmAppend_(GCM.VIEWS, [{ When: new Date(), Group: g.name, Bill: String(p.lb || '').trim().toUpperCase().slice(0, 30),
+    Name: String(p.nm || '').replace(/\s+/g, ' ').trim().slice(0, 80), Device: pick(p.dev, /^(phone|computer)$/), From: pick(p.from, /^(letter|welcome|reminder)$/) }]);
+}
+
+/** Where the group's last weekly letter stands: rated, its items answered without the stars, the page opened without an
+ *  answer, or still waiting; with who opened it, when, and any reminder sent for it. null before the first letter. */
+function gcmRateState_(g, today) {
+  var letter = gcmLastLetter_(g);
+  if (!letter) return null;
+  var ts = letter.ts || 0, since = letter.when;
+  var after = function (x) { return ts && x.ts ? x.ts >= ts : x.when >= since; };
+  var resps = g.resps.filter(after), rated = resps.filter(function (r) { return r.rating; }).pop() || null;
+  var items = resps.filter(function (r) { return r.verdict || r.note; });
+  var views = (g.views || []).filter(after), lv = views.length ? views[views.length - 1] : null;
+  var rem = (g.reminders || []).filter(function (x) { return after(x) && !/failed/i.test(x.status); }).pop() || null;
+  return { kind: rated ? 'rated' : items.length ? 'answered' : views.length ? 'viewed' : 'waiting',
+    letter: { at: letter.at, when: since, by: letter.staff, to: letter.to }, age: gcmDays_(since, today || gcmToday_()),
+    rated: rated ? { at: rated.at, when: rated.when, rating: rated.rating, name: rated.name, comment: rated.comment } : null,
+    answered: items.length ? { at: items[items.length - 1].at, when: items[items.length - 1].when, n: items.length, name: items[items.length - 1].name } : null,
+    views: views.length, lastView: lv ? { at: lv.at, when: lv.when, name: lv.name, device: lv.device, from: lv.from } : null,
+    reminder: rem ? { at: rem.at, by: rem.staff } : null };
+}
+
+/** Why the reminder cannot speak of the last letter, else '': the letter went to an address Salesforce no longer names as
+ *  the contact (on 15 October 2026 one group's Contact Person had changed since its Monday letter, and the reminder would
+ *  have told the new contact about a letter, and a code, they never had). Send the letter again, or the welcome, first. */
+function gcmRateMoved_(g, st) {
+  var had = String((st && st.letter && st.letter.to) || '').toLowerCase().split(/[,;\s]+/).filter(String);
+  if (!had.length || !g.to.length) return '';
+  var now = g.to.map(function (a) { return String(a).toLowerCase(); });
+  return had.some(function (a) { return now.indexOf(a) >= 0; }) ? '' :
+    'its letter of ' + st.letter.at + ' went to ' + had.join(', ') + ', and Salesforce now names ' + g.to.join(', ') + ' as the contact: send the letter again or the welcome first';
+}
+/** The last e-mail of any kind that went to the group: a letter, a letter sent again, a welcome or a reminder. */
+function gcmLastMail_(g) {
+  return g.sends.concat(g.resent, g.welcomes, g.reminders || []).filter(function (x) { return x.ts && !/failed/i.test(x.status); })
+    .sort(function (a, b) { return a.ts - b.ts; }).pop() || null;
+}
+function gcmPropList_(name) {
+  return String(PropertiesService.getScriptProperties().getProperty(name) || '').split(',').map(function (x) { return gcmCodeKey_(x); }).filter(String);
+}
+
+/** Who the reminder goes to now. o.now (the branch manager's go, and the test) takes any letter a day old; the hourly run
+ *  waits GCM_RATE.AFTER_DAYS. Every group not on the list says why, and the ones that rated are listed apart. */
+function gcmRateList_(L, o) {
+  o = o || {};
+  var skip = gcmPropList_(GCM_RATE.SKIP_PROP), wait = o.now ? 1 : GCM_RATE.AFTER_DAYS, go = [], held = [], rated = [];
+  L.reg.forEach(function (g) {
+    var st = gcmRateState_(g, L.today), s = gcmGroupStats_(g, L.today), why = '';
+    if (st && st.kind === 'rated') { rated.push({ g: g, st: st }); return; }
+    var last = gcmLastMail_(g);
+    if (!st) why = 'no weekly letter has gone yet: the reminder follows a letter';
+    else if (st.reminder) why = 'reminded already for the letter of ' + st.letter.at + ' (' + st.reminder.at + ')';
+    else if (skip.some(function (k) { return g.key === k || g.key.indexOf(k) === 0; })) why = 'left out by ' + GCM_RATE.SKIP_PROP;
+    else if (gcmCannotMail_(g)) why = gcmCannotMail_(g);
+    else if (!s.ready) why = s.why;
+    else if (gcmRateMoved_(g, st)) why = gcmRateMoved_(g, st);
+    else if (st.age < wait) why = 'its letter went ' + st.letter.at + ': the reminder waits until ' + tDmy_(gcmAddDays_(st.letter.when, wait));
+    else if (last && Date.now() - last.ts < GCM_RATE.QUIET_H * 3600000) why = 'an e-mail went to the group ' + last.at + ': the reminder waits a day';
+    (why ? held : go).push({ g: g, st: st, why: why });
+  });
+  return { go: go, held: held, rated: rated };
+}
+
+/** The reminder for one group, in the words its own state calls for. */
+function gcmRateMail_(g, st, today) {
+  today = today || gcmToday_();
+  var E = tEsc_, carer = g.ownerActive && g.assigned ? g.assigned : '', v = gcmVerifier_(g), signer = carer || (v && v.name) || 'The group client service team';
+  var site = GCM.SITE + 'client.html', bill = g.bills[0] || '', code = g.code || '';
+  var day = function (ymd) { return ymd ? GCM_DAYS[gcmDow_(ymd)] + ' ' + tDmy_(ymd).replace(/ \d{4}$/, '') : ''; };
+  var respondBy = gcmAddDays_(gcmMonday_(today), GCM.RESPOND_DAY - 1);
+  if (respondBy < today) respondBy = gcmAddDays_(respondBy, 7);
+  var shown = g.tasks.filter(function (t) { return t.open && gcmShown_(g, t); }), waiting = shown.filter(function (t) { return /waiting/i.test(t.status); }).length;
+  var lead, subject, pre;
+  if (st.kind === 'answered') {
+    subject = 'One tap left: how did we do? ' + g.name;
+    pre = 'Thank you for marking your items. One tap is left: your rating.';
+    lead = 'Thank you for going through your items on your service page on ' + day(st.answered.when) + '. Your notes are with ' + (carer || 'our team') + '. ' +
+      'One thing was left: your rating of our service. It is one tap, and it tells us what to keep doing and what to fix.';
+  } else if (st.kind === 'viewed') {
+    subject = 'One tap left: how did we do? ' + g.name;
+    pre = 'Thank you for opening your service page. One step is left: your rating.';
+    lead = 'Thank you for opening your service page on ' + day(st.lastView.when) + '. One thing is still to do: tell us how we are doing. ' +
+      'Tap a star below, sign in, and press Send. It takes under a minute.';
+  } else {
+    subject = 'How are we doing? Your service page is ready, ' + g.name;
+    pre = 'One minute on your service page: mark your items and rate our service.';
+    lead = 'Our letter of ' + day(st.letter.when) + ' set out where each of your items stands. When you have a minute, open your service page, mark each item Correct, ' +
+      'Needs a change or Not ours, and rate our service. Your rating tells us what to keep doing and what to fix.' +
+      (shown.length ? ' You have ' + shown.length + ' item' + (shown.length === 1 ? '' : 's') + ' open with us' + (waiting ? ', ' + waiting + ' waiting on your confirmation' : '') + '.' : '');
+  }
+  var greet = 'Dear ' + (g.greeting || 'Sir or Madam') + ',';
+  var reply = carer ? 'A reply to this e-mail reaches ' + carer + ' and our team.' : 'A reply to this e-mail reaches our team.';
+  var link = function (n) { return site + '?from=reminder&rate=' + n; };
+  var text = [greet, '', lead, '', 'Rate us in one tap (your page opens with that star chosen):']
+    .concat([5, 4, 3, 2, 1].map(function (n) { return n + ' star' + (n === 1 ? '' : 's') + ', ' + GCM_RATE.WORDS[n] + ': ' + link(n); }))
+    .concat(['', 'Your page: ' + site, 'Sign in with your list bill (' + bill + ') and your access code: ' + code, '',
+      'We would be grateful by ' + day(respondBy) + '. ' + reply, '', 'Warm regards,', signer, 'Group client service, Ricky Rampersad Branch',
+      'Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461']).join('\n');
+  var font = "font-family:'IBM Plex Sans','Segoe UI',Roboto,Arial,sans-serif";
+  var star = function (n) {
+    return '<td width="20%" align="center" style="padding:0 3px"><a href="' + link(n) + '" style="display:block;text-decoration:none;border:1px solid #DCE3EC;border-radius:10px;background:#F4F7FA;padding:10px 0 8px">' +
+      '<span style="font:30px/1 Arial,sans-serif;color:#C98A00">&#9733;</span><br><span style="font:700 15px/1.4 Arial,sans-serif;color:#142033">' + n + '</span></a></td>';
+  };
+  var html = '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' + E(pre) + '</div>' +
+    '<div style="background:#E9EEF5;padding:22px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;border-collapse:collapse;background:#ffffff">' +
+    '<tr><td bgcolor="#1D5BC4" style="background:#1D5BC4;background-image:linear-gradient(120deg,#13408F,#1D5BC4 60%,#2A6FD8);padding:20px 28px 22px;' + font + '">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px;border:1px solid #7FA3E0"></td>' +
+    '<td style="padding-left:12px;color:#ffffff;font:600 15px/1.25 Arial,sans-serif;' + font + '">Ricky Rampersad Branch<div style="font:400 12.5px/1.4 Arial,sans-serif;color:#D6E3F8">Group client service · Guardian Life of the Caribbean</div></td></tr></table>' +
+    '<div style="font:600 24px/1.25 Arial,sans-serif;' + font + ';color:#ffffff;margin:18px 0 4px">' + E(st.kind === 'waiting' ? 'How are we doing?' : 'One tap left') + '</div>' +
+    '<div style="font:15px/1.5 Arial,sans-serif;' + font + ';color:#E4ECFA">' + E(g.name) + '</div></td></tr>' +
+    '<tr><td style="padding:20px 28px 8px;font:15.5px/1.6 Arial,sans-serif;' + font + ';color:#142033">' +
+    '<p style="margin:0 0 12px">' + E(greet) + '</p><p style="margin:0 0 16px">' + E(lead) + '</p>' +
+    '<p style="margin:0 0 8px;font-weight:700">Tap a star: your page opens with it chosen</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 6px"><tr>' + [1, 2, 3, 4, 5].map(star).join('') + '</tr></table>' +
+    '<p style="margin:0 0 4px;font-size:13px;color:#2B374C">' + E([1, 2, 3, 4, 5].map(function (n) { return n + ' ' + GCM_RATE.WORDS[n].toLowerCase(); }).join(' · ')) + '</p>' +
+    '<p style="margin:0 0 16px;font-size:13px;color:#4B586C">Nothing is sent until you sign in and press Send on your page. You can add a comment there too.</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px"><tr><td bgcolor="#13408F" style="background:#13408F;border-radius:8px"><a href="' + site + '?from=reminder" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B8CEF4;background:#EBF2FD;margin:0 0 16px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#142033">' +
+    'List bill: <b>' + E(bill) + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(code) + '</b></td></tr></table>' +
+    '<p style="margin:0 0 18px">We would be grateful by <b>' + E(day(respondBy)) + '</b>. ' + E(reply) + '</p>' +
+    '<p style="margin:0;border-top:1px solid #E2E7EF;padding-top:14px">Warm regards,<br><b>' + E(signer) + '</b><br>Group client service, Ricky Rampersad Branch<br>' +
+    '<span style="color:#4B586C">Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p>' +
+    tLegal_(null) + '</td></tr></table></div>';
+  return { subject: subject, html: html, text: text, signer: signer, kind: st.kind };
+}
+
+/** Sends one reminder and logs it on Group Sends. Returns the row; throws nothing. */
+function gcmRateSend_(g, st, today, by) {
+  var m = gcmRateMail_(g, st, today);
+  var row = { When: new Date(), Group: g.name, Staff: m.signer, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: m.subject, Items: 0, 'Task Ids': '',
+    Letter: m.text.slice(0, 45000), Html: gcmKeepHtml_(m.html), Via: TRANSITION.MS_FROM + ', star reminder' + (by ? ', sent by ' + by : '') };
+  try {
+    tMsSend_(g.to[0], m.subject, m.html, { cc: gcmCc_(g), replyTo: TRANSITION.MS_FROM });
+    row.Status = 'reminder sent: the letter of ' + st.letter.at + ' (' + { answered: 'items answered, no stars', viewed: 'page opened, no answer', waiting: 'no answer yet' }[st.kind] + ')';
+  } catch (e) {
+    row.Status = 'failed: reminder: ' + String(e && e.message ? e.message : e).slice(0, 200);
+  }
+  gcmAppend_(GCM.SENDS, [row]);
+  return row;
+}
+
+/** Editor Run, first: the branch manager gets the reminder exactly as each kind of group would (one of each: items
+ *  answered without stars, page opened without an answer, still waiting), marked TEST, with who would get it now and
+ *  who would not. Nothing reaches a group. */
+function gcmRateRemindTest() { return tSay_(gcmRateRun_({ test: true }).said); }
+/** Editor Run, after the test is approved: the reminder goes now to every group on the list, and from then on by
+ *  itself to a group whose letter is still unrated by Thursday. gcmRateRemindStop ends that. */
+function gcmRateRemindNow() {
+  PropertiesService.getScriptProperties().setProperty(GCM_RATE.ON_PROP, 'Y');
+  return tSay_(gcmRateRun_({ now: true }).said + ' From now on, a group whose letter is still unrated ' + GCM_RATE.AFTER_DAYS + ' days after it went gets one reminder, between ' +
+    GCM_RATE.HOURS[0] + ':00 and ' + GCM_RATE.HOURS[1] + ':00 on a weekday (gcmRateRemindStop ends that).');
+}
+function gcmRateRemindStop() { PropertiesService.getScriptProperties().deleteProperty(GCM_RATE.ON_PROP); return tSay_('The star reminder no longer goes by itself. Staff can still send it from a group’s page.'); }
+function gcmRateOn_() { try { return PropertiesService.getScriptProperties().getProperty(GCM_RATE.ON_PROP) === 'Y'; } catch (e) { return false; } }
+
+/** The reminder to every group on the list (o.now, o.auto), or with o.test one sample of each kind to the branch
+ *  manager. One internal summary to the branch after a run that sent anything. */
+function gcmRateRun_(o) {
+  o = o || {};
+  if (!tMsCreds_()) return { ok: false, said: 'Microsoft 365 is not set up (MS_TENANT, MS_CLIENT, MS_SECRET): nothing was sent.' };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(60000)) return { ok: false, said: 'Busy: the letters or the refresh are running. Run it again in a minute.' };
+  try {
+    var L = gcmLoad_(), list = gcmRateList_(L, { now: o.now || o.test }), E = tEsc_, me = (GCM_TRAIN.TO_MANAGER || [])[0], sent = [], failed = [];
+    var name = function (x) { return x.g.name + ' (' + { answered: 'answered the items, no stars', viewed: 'opened the page, no answer', waiting: 'no answer yet' }[x.st.kind] + ') → ' + x.g.to.join(', '); };
+    var heldLine = function (h) { return h.g.name + ': ' + h.why; };
+    var ratedLine = function (r) { return r.g.name + ': ' + r.st.rated.rating + ' of 5, ' + r.st.rated.at + ' (' + r.st.rated.name + ')'; };
+    if (o.test) {
+      if (!me) return { ok: false, said: 'No branch manager address to test with.' };
+      var kinds = ['answered', 'viewed', 'waiting'], samples = kinds.map(function (k) { return list.go.filter(function (x) { return x.st.kind === k; })[0]; }).filter(Boolean);
+      if (!samples.length) {   // nobody due now: show the wording on the first group with a letter, so the test always shows something
+        var any = L.reg.map(function (g) { return { g: g, st: gcmRateState_(g, L.today) }; }).filter(function (x) { return x.st && x.g.to.length; })[0];
+        if (any) { var st0 = JSON.parse(JSON.stringify(any.st)); if (st0.kind === 'rated') st0.kind = 'waiting'; samples = [{ g: any.g, st: st0 }]; }
+      }
+      if (!samples.length) return { ok: false, said: 'No group has had a weekly letter yet, so there is nothing to remind.' };
+      var banner = function (x) {
+        return '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00">' +
+          '<b>TEST of the star reminder.</b> This is how it reaches <b>' + E(x.g.to.join(', ')) + '</b> at ' + E(x.g.name) + '. Nothing has gone to any group.<br>' +
+          '<b>Would get it now (' + list.go.length + '):</b> ' + E(list.go.map(name).join('; ') || 'nobody') + '<br>' +
+          '<b>Rated us already (' + list.rated.length + '):</b> ' + E(list.rated.map(ratedLine).join('; ') || 'nobody') + '<br>' +
+          '<b>Would not (' + list.held.length + '):</b> ' + E(list.held.map(heldLine).join('; ') || 'nobody') + '</div>';
+      };
+      samples.forEach(function (x) { var m = gcmRateMail_(x.g, x.st, L.today); tMsSend_(me, '[TEST] ' + m.subject, banner(x) + m.html, { replyTo: TRANSITION.MS_FROM }); });
+      return { ok: true, test: true, said: samples.length + ' test' + (samples.length === 1 ? '' : 's') + ' went to ' + me + ': ' + list.go.length + ' group' + (list.go.length === 1 ? '' : 's') +
+        ' would get the reminder now, ' + list.rated.length + ' rated us already, ' + list.held.length + ' would not.' };
+    }
+    if (o.auto && !list.go.length) return { ok: true, sent: 0, said: 'No group is due a reminder.' };
+    list.go.forEach(function (x) {
+      var row = gcmRateSend_(x.g, x.st, L.today, '');
+      if (/^failed/.test(row.Status)) failed.push(x.g.name + ': ' + row.Status); else sent.push(name(x));
+    });
+    try {
+      MailApp.sendEmail({ to: (TRANSITION.CC || []).join(','), subject: 'Group star reminder, ' + tDmy_(L.today) + ': ' + sent.length + ' sent' + (failed.length ? ', ' + failed.length + ' failed' : ''),
+        htmlBody: '<p><b>' + sent.length + '</b> group' + (sent.length === 1 ? '' : 's') + ' reminded to rate our service, from ' + E(TRANSITION.MS_FROM) + '.</p>' +
+          (sent.length ? '<ul>' + sent.map(function (s) { return '<li>' + E(s) + '</li>'; }).join('') + '</ul>' : '') +
+          (failed.length ? '<p><b>Did not go</b></p><ul>' + failed.map(function (s) { return '<li>' + E(s) + '</li>'; }).join('') + '</ul>' : '') +
+          (list.rated.length ? '<p><b>Rated us for their last letter</b></p><ul>' + list.rated.map(function (r) { return '<li>' + E(ratedLine(r)) + '</li>'; }).join('') + '</ul>' : '') +
+          (list.held.length ? '<p><b>Not reminded</b></p><ul>' + list.held.map(function (h) { return '<li>' + E(heldLine(h)) + '</li>'; }).join('') + '</ul>' : '') +
+          '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p>' });
+    } catch (e) {}
+    return { ok: true, sent: sent.length, failed: failed.length, said: sent.length + ' reminded, ' + failed.length + ' failed, ' + list.rated.length + ' rated already, ' + list.held.length + ' not reminded.' };
+  } finally { try { lock.releaseLock(); } catch (e) {} }
+}
+
+/** The reminder as it would go to one group, for the send window. */
+function gcmRemindPreview_(p) {
+  var who = gcmWho_(p);
+  if (!who.ok) return who;
+  var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  var st = gcmRateState_(g, L.today);
+  if (!st) return { ok: false, error: 'No weekly letter has gone to this group yet: the reminder follows a letter.' };
+  var s = gcmGroupStats_(g, L.today), m = gcmRateMail_(g, st, L.today);
+  var no = gcmCannotMail_(g) || (!s.ready ? s.why : '') || gcmRateMoved_(g, st) || (st.kind === 'rated' ? 'they rated us ' + st.rated.rating + ' of 5 on ' + st.rated.at + ' for the letter of ' + st.letter.at : '');
+  return { ok: true, html: m.html, subject: m.subject, signer: m.signer, state: st, to: g.to, cc: g.cc, contact: g.contact, toFrom: g.toFrom, personal: gcmPersonal_(g), copy: GCM.COPY,
+    ready: !no && !!tMsCreds_(), why: no || (tMsCreds_() ? '' : 'Microsoft 365 is not set up on the backend'), canAct: gcmMine_(who, g) };
+}
+/** Whoever looks after the group, the deputy or the branch manager sends the reminder now. Once a letter has had one,
+ *  another goes only when asked for again; never twice in ten minutes. */
+function gcmRemind_(b) {
+  var who = gcmWho_(b);
+  if (!who.ok) return who;
+  if (!b.checked) return { ok: false, error: 'Tick that you have checked who it goes to.' };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) return { ok: false, error: 'The letters are going out right now. Try again in a minute.' };
+  try {
+    var L = gcmLoad_(), g = L.byName[gcmCodeKey_(b.group)];
+    if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+    if (!gcmMine_(who, g)) return gcmNotYours_(g);
+    var st = gcmRateState_(g, L.today), s = gcmGroupStats_(g, L.today), no = gcmCannotMail_(g) || (!s.ready ? s.why : '') || gcmRateMoved_(g, st);
+    if (!st) return { ok: false, error: 'No weekly letter has gone to this group yet: the reminder follows a letter.' };
+    if (st.kind === 'rated') return { ok: false, error: 'They rated us ' + st.rated.rating + ' of 5 on ' + st.rated.at + ': no reminder is needed.' };
+    if (no) return { ok: false, error: no + ': nothing was sent.' };
+    if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on the backend: nothing was sent.' };
+    if (st.reminder && !b.again) return { ok: false, reminded: st.reminder, error: 'A reminder went for this letter ' + st.reminder.at + '. Press “Remind again” to send another.' };
+    var just = gcmJustSent_(g.reminders);
+    if (just) return { ok: false, error: 'A reminder went to this group ' + just + ': it is not sent twice in ten minutes.' };
+    var row = gcmRateSend_(g, st, L.today, gcmNiceName_(who.name));
+    if (/^failed/.test(row.Status)) return { ok: false, error: row.Status };
+    return { ok: true, sent: true, at: gcmWhen_(row.When), to: g.to.join(', '), contact: g.contact, signer: row.Staff };
+  } finally { try { lock.releaseLock(); } catch (e) {} }
 }
 
 /** The send, or with o.test the rehearsal. The send takes the approvals due by now; the rehearsal takes every approval
@@ -2453,6 +2745,7 @@ function gcmClient_(p) {
   var L = gcmLoad_(), a = gcmClientAuth_(L, p.lb, p.code);
   if (!a.ok) return a;
   var g = a.g, today = L.today;
+  try { gcmViewLog_(g, p); } catch (e) {}   // who opened their page: never stands in the way of the page
   var shown = g.tasks.filter(function (t) { return t.open && gcmShown_(g, t); });
   var feed = gcmFeed_(shown.map(function (t) { return t.id; }));
   var mine = {};

@@ -264,6 +264,17 @@ let CRED = { lb: '', code: '' }, D = null, A = {};
 /* the code lives only in this tab, never in the address bar or the browser's history */
 try { CRED = JSON.parse(sessionStorage.getItem('rrb-gcm-client') || '{}'); if (!CRED.lb) CRED = { lb: '', code: '' }; } catch (e) {}
 const draftKey = () => 'rrb-gcm-draft-' + (CRED.lb || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+/* who opened the page (15 October 2026): the name this device last answered under, phone or computer, and which e-mail
+   brought them; the star a reminder's link chose is waiting when they sign in. The code is never in the address. */
+const nameKey = () => 'rrb-gcm-name-' + (CRED.lb || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const QS = new URLSearchParams(location.search);
+const FROM = /^(letter|welcome|reminder)$/.test(QS.get('from') || '') ? QS.get('from') : '';
+const RATE_IN = /^[1-5]$/.test(QS.get('rate') || '') ? +QS.get('rate') : 0;
+function seen() {
+  let nm = ''; try { nm = localStorage.getItem(nameKey()) || ''; } catch (e) {}
+  const dev = window.matchMedia && matchMedia('(max-width: 760px)').matches ? 'phone' : 'computer';
+  return '&nm=' + encodeURIComponent(nm.slice(0, 80)) + '&dev=' + dev + '&from=' + FROM;
+}
 function loadDraft() { try { A = JSON.parse(localStorage.getItem(draftKey()) || '{}') || {}; } catch (e) { A = {}; } }
 function saveDraft() { try { localStorage.setItem(draftKey(), JSON.stringify(A)); } catch (e) {} }
 
@@ -273,12 +284,17 @@ async function open_() {
   if (go) { err.textContent = ''; go.disabled = true; go.textContent = 'Opening your page…'; }
   let d;
   try {
-    const txt = await (await fetch(SVC + '?action=gcm.client&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&z=' + Date.now())).text();
+    const txt = await (await fetch(SVC + '?action=gcm.client&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + seen() + '&z=' + Date.now())).text();
     try { d = JSON.parse(txt); } catch (x) { d = { ok: false, error: 'Our service pages are being updated. Please try again a little later.' }; }
   } catch (x) { d = { ok: false, error: 'We could not reach our system. Check your connection and try again.' }; }
   if (!d.ok) { try { sessionStorage.removeItem('rrb-gcm-client'); } catch (x) {} if (!go) { location.reload(); return; } err.textContent = d.error; go.disabled = false; go.textContent = 'Open my service page'; return; }
   try { sessionStorage.setItem('rrb-gcm-client', JSON.stringify(CRED)); } catch (x) {}
-  D = d; loadDraft(); render();
+  D = d; loadDraft();
+  const fromStar = RATE_IN && !A._stars;
+  if (fromStar) { A._stars = RATE_IN; saveDraft(); }
+  render();
+  /* a star tapped in the reminder: the page opens on the rating, with that star chosen */
+  if (fromStar) { const r = $('rate'); if (r) setTimeout(() => r.scrollIntoView({ block: 'start', behavior: 'smooth' }), 150); }
 }
 
 /* applications still pending: the plan's line as a mark and a word, the age as a word and a colour */
@@ -461,7 +477,7 @@ async function send() {
     try { r = JSON.parse(txt); } catch (x) { r = { ok: false, error: 'Our system did not take it. Please try again in a few minutes.' }; }
   } catch (x) { r = { ok: false, error: 'We could not reach our system. Your answers are saved on this device: try again shortly.' }; }
   if (!r.ok) { err.textContent = r.error; b.disabled = false; b.textContent = 'Send my answers'; return; }
-  try { localStorage.removeItem(draftKey()); } catch (x) {}
+  try { localStorage.removeItem(draftKey()); localStorage.setItem(nameKey(), String(A._who || '').trim().slice(0, 80)); } catch (x) {}
   const who0 = String(A._who || '').trim(), nm = /^(mr|mrs|ms|miss|dr)\.?$/i.test(who0.split(/\s+/)[0]) ? who0 : who0.split(/\s+/)[0];
   A = {};
   $('prog').classList.add('hide');
