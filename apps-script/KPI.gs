@@ -6093,14 +6093,14 @@ function hkSystems_(sid, day) {
   return html;
 }
 /** Monday to today of this week, working days. */
-function weekDays_(day) {
+function weekToDate_(day) {
   var dow = new Date(day + 'T12:00:00Z').getUTCDay() || 7, mon = shiftDays_(day, 1 - dow), out = [];
   for (var i = 0; i < 5; i++) { var d = shiftDays_(mon, i); if (d <= day) out.push(d); }
   return out;
 }
 /** One person's week: per day, and the concerns that follow from it. */
 function weekFor_(sid, day) {
-  var days = weekDays_(day), owed = blocksOwed_(sid), rows = [], u = (sfkUsers_() || {})[sid];
+  var days = weekToDate_(day), owed = blocksOwed_(sid), rows = [], u = (sfkUsers_() || {})[sid];
   var att = {}; try { sheetObjects_(attSheet_()).forEach(function (r) { if (String(r.StaffId) === sid) att[isoDay_(r.Date)] = r; }); } catch (e) {}
   var startM = (parseSpan_(scheduleFor_(sid).hours || '') || { start: 480 }).start;
   var closedBy = {}, noted = {}, created = {};
