@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16f';
+var SCRIPT_VERSION = '2026-10-16g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -559,12 +559,15 @@ var SCHEDULE = {
     }
   },
   kamla: {
-    hours: '8am – 4pm', lunch: 'Flexible',
+    // 6am to 6pm (Ricky, 16 October 2026): the BMA's day runs with the
+    // Branch Manager's, so her plan goes out at 5:30.
+    hours: '6am – 6pm', lunch: '12:00 – 1:00pm',
     blocks: {
-      KPI1: { time: '8 – 9am',   focus: 'HR, SA, RECR, CB',                          kpi: 'Lic/Staffing/SA/HR' },
-      KPI2: { time: '10 – 12pm', focus: 'BM Client Mgt / RR Oper / General lines',   kpi: 'Administrative Support' },
+      KPI1: { time: '6 – 9am',   focus: 'HR, SA, RECR, CB',                          kpi: 'Lic/Staffing/SA/HR' },
+      KPI2: { time: '9 – 12pm',  focus: 'BM Client Mgt / RR Oper / General lines',   kpi: 'Administrative Support' },
       PM1:  { time: '1 – 3pm',   focus: 'Escalations / New Recruit Training',        kpi: 'Escalations' },
-      PM2:  { time: '3 – 4pm',   focus: 'Task Mgmt / Branch Meeting Reports',        kpi: 'Reporting (Production / RDAR)' }
+      PM2:  { time: '3 – 4:30pm', focus: 'Task Mgmt / Branch Meeting Reports',       kpi: 'Reporting (Production / RDAR)' },
+      EVE:  { time: '4:30 – 6pm', focus: 'Close-out: the desks\' day, cover and tomorrow', kpi: 'Administrative Support' }
     }
   },
   // The Branch Manager's personal assistant. His day is the mail run, the
@@ -602,13 +605,14 @@ var SCHEDULE = {
   ricky: {
     /* The only day on this list that runs the wall's full envelope, because
        it is the one that does. */
-    hours: '5am – 12am', lunch: 'Flexible',
+    // 6am to 6pm every day (Ricky, 16 October 2026).
+    hours: '6am – 6pm', lunch: '12:00 – 1:00pm',
     blocks: {
-      KPI1: { time: '5 – 10am',  focus: 'Recruitment, licensing and staffing',    kpi: 'Lic/Staffing/SA/HR' },
-      KPI2: { time: '10 – 12pm', focus: 'Production, pipeline and own book',      kpi: 'Opportunity' },
+      KPI1: { time: '6 – 9am',   focus: 'Recruitment, licensing and staffing',    kpi: 'Lic/Staffing/SA/HR' },
+      KPI2: { time: '9 – 12pm',  focus: 'Production, pipeline and own book',      kpi: 'Opportunity' },
       PM1:  { time: '1 – 3pm',   focus: 'Agent development and field training',   kpi: 'Training' },
-      PM2:  { time: '3 – 4pm',   focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' },
-      EVE:  { time: '4pm – 12am', focus: 'After four: what is still being moved', kpi: 'Opportunity' }
+      PM2:  { time: '3 – 4:30pm', focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' },
+      EVE:  { time: '4:30 – 6pm', focus: 'Close-out: what is still being moved', kpi: 'Opportunity' }
     }
   },
   kerwyn: {
@@ -621,12 +625,14 @@ var SCHEDULE = {
     }
   },
   akaash: {
-    hours: '8am – 4:30pm', lunch: 'Flexible',
+    // 6am to 6pm, the same day as the Branch Manager's (Ricky, 16 October 2026).
+    hours: '6am – 6pm', lunch: '12:00 – 1:00pm',
     blocks: {
-      KPI1: { time: '8 – 10am',  focus: 'Unit activity and pipeline',      kpi: 'Opportunity' },
-      KPI2: { time: '10 – 12pm', focus: 'Joint field work',                kpi: 'Joint Field Work' },
+      KPI1: { time: '6 – 9am',   focus: 'Unit activity and pipeline',      kpi: 'Opportunity' },
+      KPI2: { time: '9 – 12pm',  focus: 'Joint field work',                kpi: 'Joint Field Work' },
       PM1:  { time: '1 – 3pm',   focus: 'Recruitment and agent licensing', kpi: 'Lic/Staffing/SA/HR' },
-      PM2:  { time: '3 – 4:30pm',focus: 'Unit persistency and own book',   kpi: 'Pendings' }
+      PM2:  { time: '3 – 4:30pm',focus: 'Unit persistency and own book',   kpi: 'Pendings' },
+      EVE:  { time: '4:30 – 6pm', focus: 'Close-out: the account of the day', kpi: 'Reporting' }
     }
   },
   gary: {
@@ -4182,7 +4188,7 @@ function sendBranchManagerDay_(day) {
 
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, Mr Rampersad. Your operations review: where each desk stands, then what is waiting on you. ' +
-      'The team\'s morning e-mails go out half an hour before each start; Akaash has his unit at 6:00. The attendance report follows at 9:15, and your progress at 12:00 and 6:00pm.</div>' +
+      'The team\'s morning e-mails go out half an hour before each start; Akaash has his unit at 5:30 and Kamla her plan at 5:30. The attendance report follows at 9:15, and your progress at 12:00 and 6:00pm.</div>' +
     statTiles_([
       { value: sfOk ? w.mine.length : '—', label: 'your tasks due', color: w.mine.length ? MAIL.amber : MAIL.navy },
       { value: sfOk ? mineLate : '—', label: 'of them overdue', color: mineLate ? MAIL.red : MAIL.navy },
@@ -4364,8 +4370,8 @@ function bmReplySave_(person, day, p, all) {
 
 var BM_PROGRESS_AT = [12 * 60, 18 * 60];
 var UM_DESKS = ['akaash'];
-var UM_MORNING_AT = 6 * 60;
-var UM_EVENING_AT = 17 * 60;
+var UM_MORNING_AT = 5 * 60 + 30;     // half an hour before his 6am start
+var UM_EVENING_AT = 17 * 60 + 30;    // the account of the day, half an hour before 6pm
 var UM_LIST_MAX = 10;
 
 /** The manager's KPIs, asked as a plan in the morning and as an account at five. */
@@ -4516,7 +4522,7 @@ function sendUnitManagerMorning_(sid, day) {
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. This is your unit as Salesforce has it this morning' +
       (book ? ' (' + book.agents.length + ' agent' + (book.agents.length === 1 ? '' : 's') + ', you included)' : '') +
       ', pendings first. Comment on anything that needs a push: your comment goes on that task\'s Chatter, headed as yours. ' +
-      'Then set your day as a manager. At 5pm you will be asked for the account of it.</div>' +
+      'Then set your day as a manager. At 5:30pm you will be asked for the account of it.</div>' +
     statTiles_([
       { value: book ? book.open.length : '—', label: 'open in your unit' },
       { value: book ? nLate : '—', label: 'overdue', color: nLate ? MAIL.red : MAIL.navy },
@@ -4538,7 +4544,7 @@ function sendUnitManagerMorning_(sid, day) {
     sectionLabel_('Your day as a manager') +
     '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:10px 15px;font-size:13px;line-height:1.6">' +
       UM_CHECKS.map(function (c) { return '<div>&#9675; ' + esc_(c.q) + '</div>'; }).join('') +
-      '<div style="color:' + MAIL.muted + ';margin-top:6px">Put a number against each on the page: what you will do today. At 5pm you give the actual.</div></div>' +
+      '<div style="color:' + MAIL.muted + ';margin-top:6px">Put a number against each on the page: what you will do today. At 5:30pm you give the actual.</div></div>' +
     btn +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
   MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
