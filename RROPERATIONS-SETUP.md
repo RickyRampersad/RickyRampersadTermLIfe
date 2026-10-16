@@ -159,3 +159,60 @@ person's average. Comments are shown to managers only.
 3. In `OPS_APPS` in `DeliveryBook.gs`, change its `status` from `soon` to
    `live`, and gate its actions with `opsCanUse_(who, '<id>')` in `doPost`.
    Hiding a tile on the launcher is not access control; the server check is.
+
+---
+
+## The Log Book — rickyrampersadbranch.com/logbook
+
+The second app. Agents log the documents they hand in; staff receive and sign
+for them, build the transmittal for each department, print it and send it.
+Anything received and not sent the same working day is chased by e-mail for a
+reason. It replaces the Log Book Digital Jotform.
+
+| Piece | Where |
+|---|---|
+| The page (agents and staff) | `rroperations/logbook/index.html` |
+| The short address | `logbook/index.html` forwards to it |
+| Backend | `apps-script/LogBook.gs`, a **second file in the same RR Operations project** |
+| Tests | `tests/test-logbook.js` (backend), `tests/e2e-logbook.js` (phone and desk, against the real script) |
+
+### Install (about ten minutes)
+
+1. In the **RR Operations** Apps Script project, **+ → Script**, name it
+   `LogBook`, paste in `apps-script/LogBook.gs`.
+2. Paste the current `apps-script/DeliveryBook.gs` over the old one too: it now
+   hands every Log Book action to `LogBook.gs` and lists the Log Book tile.
+3. **Deploy → Manage deployments → pencil → New version.** Never "New
+   deployment": the address in `ops-config.js` must not change.
+4. Reload the sheet → **RR Operations → Log Book: set up**. This makes the tabs
+   (Log Book, Transmittals, Agents, Departments), fills Departments from the
+   history, and installs the hourly chase.
+5. **Agents can sign in two ways** (either is enough):
+   - the **Agents** tab: Agent No, Name, Email, Unit, Code, Active; or
+   - set `LB_AGENTS_SHEET_ID` to the Service Questionnaire workbook, and agents
+     sign in with the Agent no. and Password already on its Agent Skill Bank.
+6. **Staff** use their RR Operations access code. A blank Apps cell on the
+   Access tab already includes the Log Book; otherwise add `logbook` to it.
+   Each staff member's Email on the Access tab is where their chase goes.
+7. Optional: set `LB_HISTORY_ID` to the Log Book Digital workbook's ID and run
+   **Log Book: import the old book** once, so the insights start with the
+   3,600 lines already logged.
+
+### Settings
+
+| Property | Default | What it does |
+|---|---|---|
+| `LB_CUTOFF_HOUR` | 16 | After this hour, a document received today and not sent is late |
+| `LB_SALES_SUPPORT` | sales support | Copied on every chase and every return |
+| `LB_MANAGER` | the branch manager | Told when a contract passes 20 days with the agent |
+| `LB_AGENTS_SHEET_ID` | — | Use the Agent Skill Bank for agent sign-in |
+| `LB_HISTORY_ID` | — | The old Log Book, for the one-off import |
+
+E-mail follows `DB_MODE`: in test mode (the default) every Log Book e-mail goes
+to `DB_TEST_INBOX` with a banner naming who it was for.
+
+### The departments
+
+The **Departments** tab is the list everyone picks from. Add a row for a new
+department, put a name in **Attention** to print it on that department's
+transmittals, or set **Active** to No to retire one.
