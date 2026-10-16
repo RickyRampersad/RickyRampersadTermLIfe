@@ -6,19 +6,31 @@
  * That is the whole security model, and it is the same model as a shared link —
  * see "What this does and does not protect" below before deploying it.
  *
- * ── Deploy (one time, ~3 minutes, desktop browser) ────────────────────────────
- *   1. Create a new Google Sheet named "RRB CSEC Sync". Copy its ID from the URL
- *      (the long string between /d/ and /edit) into SHEET_ID below.
- *   2. script.google.com → New project → delete the sample code.
- *   3. Paste this whole file → save (name it "RRB CSEC Sync").
- *   4. Run `setup` once from the editor and authorise when asked. This creates
- *      the tabs and proves the Sheet ID is right before anyone relies on it.
- *   5. Deploy → New deployment → type: Web app
+ * ── Deploy (one time, ~5 minutes, desktop browser) ────────────────────────────
+ *   The Sheet already exists and its ID is already in SHEET_ID below, so step 1
+ *   of the old instructions is done. Start at 1 here.
+ *
+ *   1. script.google.com → New project → select the sample code and delete it.
+ *   2. Paste this WHOLE file in → save → name the project "RRB CSEC Sync".
+ *   3. In the function dropdown at the top pick `setup`, press Run, and
+ *      authorise when Google asks. Google will warn that the app is not
+ *      verified: Advanced → "Go to RRB CSEC Sync (unsafe)". It is your own
+ *      script. This creates the four tabs and proves the Sheet ID is right.
+ *   4. Deploy → New deployment → gear icon → Web app
  *        Execute as:      Me
- *        Who has access:  Anyone
- *   6. Copy the Web app URL (ends in /exec) and paste it into
- *      csec/assets/csec-sync.js as SYNC_URL, replacing RRB_CSEC_SYNC_URL.
- *   7. Open <that URL>?action=ping in a browser. You should see {"ok":true}.
+ *        Who has access:  Anyone          ← must be Anyone, not "Anyone with
+ *                                           a Google account"; a child's
+ *                                           browser is not signed in to one.
+ *   5. Copy the Web app URL. It ends in /exec.
+ *   6. Open <that URL>?action=ping in a browser. You should see
+ *      {"ok":true,"service":"rrb-csec-sync",...}. If you get a Google sign-in
+ *      page instead, "Who has access" is wrong — fix it and redeploy.
+ *   7. Paste that /exec URL into **csec/assets/csec-config.js**, replacing
+ *      RRB_CSEC_SYNC_URL. That is the only file to edit, and it is the only
+ *      step that needs a commit.
+ *
+ *   Until step 7 the hub runs device-local: every page works, there is simply
+ *   no sync between devices and no e-mailed sign-in codes.
  *
  * Re-deploying after an edit: Deploy → Manage deployments → edit → New version.
  * Keeping the same deployment keeps the same /exec URL.
