@@ -1112,8 +1112,10 @@ function transitionReceipts() {
     try { tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
     var out = tReceipts_();
     tClaimsRun_(false);   // the TT$200 retention claims, after the receipts; never throws
-    return out;
   } finally { lock.releaseLock(); }
+  /* the Client Profile, when the morning build left it due: after the lock, so a save on the board never waits on it */
+  try { tProfileDue_(false); } catch (e) { log_('transition', 'client-profile-failed', String(e && e.message ? e.message : e)); }
+  return out;
 }
 
 /* ── families sharing one inbox ──────────────────────────────────── */
@@ -5391,7 +5393,7 @@ function tSfAgents_(fresh) {
   if (!out.ready && typeof svcSfReady_ === 'function' && svcSfReady_()) {
     try {
       var by = {};
-      svcSfQuery_("SELECT Id, Name, MailingCity FROM Contact WHERE RecordType.Name = 'AGENT' LIMIT 2000").forEach(function (r) {
+      tSfQuery_("SELECT Id, Name, MailingCity FROM Contact WHERE RecordType.Name = 'AGENT' LIMIT 2000").forEach(function (r) {
         var k = tNameKey_(r.Name);
         if (k && !by[k]) by[k] = { id: String(r.Id || ''), city: String(r.MailingCity || '').trim() };
       });
@@ -5554,7 +5556,7 @@ function tSfAssignWrite_(done, agent, now) {
     if (!all.length) return { on: true, ok: false, why: 'no policy numbers on file for ' + (done.length === 1 ? 'this client' : 'these clients') };
     var recs = {};
     for (var i = 0; i < all.length; i += 100) {
-      svcSfQuery_('SELECT Id, POLICY__c, Policy_Status_Description__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' +
+      tSfQuery_('SELECT Id, POLICY__c, Policy_Status_Description__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' +
         all.slice(i, i + 100).map(function (p) { return "'" + svcSoqlLit_(p) + "'"; }).join(',') + ')').forEach(function (r) { recs[tPolNo_(r.POLICY__c)] = r; });
     }
     var day = Utilities.formatDate(now, tTz_(), 'yyyy-MM-dd'), upd = [], clients = 0, none = 0;
@@ -5904,7 +5906,7 @@ function tSfUserId_(name) {
   var id = null;
   try {
     var parts = String(name).replace(/\([^)]*\)/g, ' ').trim().split(/\s+/), first = parts[0], last = parts[parts.length - 1];
-    var rows = svcSfQuery_("SELECT Id, Name FROM User WHERE IsActive = true AND Name LIKE '" + svcSoqlLit_(first) + "%' LIMIT 20");
+    var rows = tSfQuery_("SELECT Id, Name FROM User WHERE IsActive = true AND Name LIKE '" + svcSoqlLit_(first) + "%' LIMIT 20");
     var hits = rows.filter(function (u) { var uk = tNameKey_(u.Name); return uk === k || (parts.length > 1 && uk.indexOf(tNameKey_(last)) >= 0); });
     if (hits.length === 1) id = hits[0].Id;
     else if (hits.length > 1) { var exact = hits.filter(function (u) { return tNameKey_(u.Name) === k; }); if (exact.length === 1) id = exact[0].Id; }
@@ -5919,7 +5921,7 @@ function tSfOpenTasks_(tok, cno, ha, limit) {
   var what = recs.map(function (r) { return r.id; }), who = recs.map(function (r) { return r.contact; }).filter(Boolean);
   var cond = ['WhatId IN (' + tSoqlIn_(what) + ')'];
   if (who.length) cond.push('WhoId IN (' + tSoqlIn_(who) + ')');
-  var open = svcSfQuery_('SELECT Id, Subject, Owner.Name, ActivityDate, Status FROM Task WHERE (' + cond.join(' OR ') + ') AND IsClosed = false ORDER BY CreatedDate DESC LIMIT ' + (limit || T_CMT.TASKS));
+  var open = tSfQuery_('SELECT Id, Subject, Owner.Name, ActivityDate, Status FROM Task WHERE (' + cond.join(' OR ') + ') AND IsClosed = false ORDER BY CreatedDate DESC LIMIT ' + (limit || T_CMT.TASKS));
   return { recs: recs, open: open };
 }
 /** A line of the board's onto the client's open tasks' Chatter: { posted, note }. Never throws. */
@@ -6515,7 +6517,10 @@ function tBuildBook_() {
     var codes = tCodesSync_(recs);
     tBookForget_();
     var plans = tSendPlans_(recs, tPlanCodes_());
-    var prof = tProfileRefresh_(recs, t0 + 300000);
+    /* the profile in what is left of the build's five minutes, or in a run of its own within five minutes (tProfileDue_):
+       on the first live build (15 October 2026) the workbook took most of the time */
+    var prof = Date.now() - t0 < T_PROFILE.INLINE_MS ? tProfileRefresh_(recs, t0 + 300000) : { error: 'stopped before it began: the build used its time on the workbook' };
+    if (prof.error && /^stopped/.test(prof.error)) { PropertiesService.getScriptProperties().setProperty('profile_due', '1'); prof = { due: true }; }
     var have = {};
     recs.forEach(function (r) { have[r.cno] = true; });
     var missing = Object.keys(want).filter(function (c) { return !have[c]; }).length;
@@ -6533,6 +6538,7 @@ function tBuildBook_() {
       (codes.unclassed ? '; ' + codes.unclassed + ' plan code' + (codes.unclassed === 1 ? '' : 's') + ' with no class yet (not counted as life cover)' : '') +
       (plans.error ? '; the Plans on file columns were not written: ' + plans.error : '') +
       (prof.rows !== undefined ? '; Client Profile refreshed from Salesforce: ' + prof.rows + ' of ' + prof.of + ' policies' :
+        prof.due ? '; the Client Profile is refreshed from Salesforce in a run of its own within five minutes (or now: transitionRefreshClientProfile)' :
         prof.error ? '; the Client Profile was not refreshed: ' + prof.error : '; the Client Profile is the imported one (' + prof.skipped + ')') +
       '. ' + info.secs + ' seconds.';
     log_('transition', 'client book', msg);
@@ -7037,7 +7043,9 @@ function tBookMailHtml_(pol, prof, ins) {
 /* 7 October 2026 ("need address and occupation"): the policy record's address (Address 1 to 3, the Contact's mailing
    address), its mobile and home numbers, the plan's name and where the policy stands, so the board has who the client is
    and how to reach them before the Client Book is built, and a town for every card. */
-var T_PROFILE = { SHEET: 'Client Profile', CHUNK: 200, BUDGET_MS: 150000 };
+var T_PROFILE = { SHEET: 'Client Profile', CHUNK: 200, BUDGET_MS: 150000,
+  INLINE_MS: 180000,   // the build refreshes the profile itself only when it has used less than this; otherwise the profile's own run does
+  RUN_MS: 240000 };    // the profile's own run: four of its six minutes
 var T_PROFILE_HEAD = ['Policy', 'Client number', 'Client', 'Date of birth', 'Gender', 'Smoker', 'Occupation', 'Employer', 'Annual income',
   'Life cover', 'Critical illness cover', 'Accident cover', 'Waiver cover', 'Life cover ends', 'Beneficiary 1', 'Beneficiary 2', 'Beneficiary 3',
   'Insured', 'Owner', 'Family role', 'Address', 'Town', 'Mobile', 'Home phone', 'Plan', 'Status', 'Paid to', 'Issued', 'From'];
@@ -7250,6 +7258,47 @@ function tInsightsFor_(pol, prof, today) {
   return out.sort(function (a, b) { return rank[a.lv] - rank[b.lv]; });
 }
 
+/* ── a Salesforce query of any length (16 October 2026) ──
+   svcSfQuery_ (ServiceSalesforce.gs) puts the query in the web address, and URL Fetch refuses an address over 2 KB. Two
+   hundred policy numbers come to some 6 KB, so the morning build's Client Profile refresh failed on its first query and the
+   profile was never written live; a naming of a large household, the claims' paid check (150 policies a query) and the
+   Dashboard's Salesforce table (100 task ids) could fail the same way. A long query goes in the body of a composite
+   request, as the groups' gcmQuery_ already sends theirs, and every page of the answer is read; a short one goes as
+   before. tSfComposite_ is the one place that talks to the composite resource. */
+var T_SFQ_LONG = 1500;   // characters of the encoded query; the rest of the address takes the remainder of the 2 KB
+function tSfQuery_(soql) {
+  return encodeURIComponent(soql).length <= T_SFQ_LONG ? svcSfQuery_(soql) : tSfComposite_(soql);
+}
+function tSfComposite_(soql) {
+  var tok = svcSfToken_(), base = '/services/data/' + SVCSF.API;
+  var go = function (fn) {
+    var r = fn(tok);
+    if (r.getResponseCode() === 401) { svcSfProps_().deleteProperty('SVC_SF_TOKEN'); tok = svcSfToken_(); r = fn(tok); }
+    return r;
+  };
+  var res = go(function (t) {
+    return UrlFetchApp.fetch(t.instance_url + base + '/composite', { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + t.access_token },
+      payload: JSON.stringify({ allOrNone: false, compositeRequest: [{ method: 'GET', referenceId: 'q', url: base + '/query?q=' + encodeURIComponent(soql) }] }) });
+  });
+  if (res.getResponseCode() !== 200) throw new Error('Salesforce query failed: HTTP ' + res.getResponseCode() + ' ' + String(res.getContentText()).slice(0, 160));
+  var sub = (JSON.parse(res.getContentText()).compositeResponse || [])[0] || {};
+  if (sub.httpStatusCode !== 200) {
+    var b = sub.body && sub.body[0] ? sub.body[0] : {};
+    throw new Error('Salesforce query failed: ' + String(b.message || b.errorCode || sub.httpStatusCode).slice(0, 200));
+  }
+  var page = sub.body || {}, out = [];
+  for (var n = 0; n < 50; n++) {
+    out = out.concat(page.records || []);
+    if (!page.nextRecordsUrl) break;
+    var next = page.nextRecordsUrl;
+    var r2 = go(function (t) { return UrlFetchApp.fetch(t.instance_url + next, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + t.access_token } }); });
+    if (r2.getResponseCode() !== 200) throw new Error('Salesforce query failed on a later page: HTTP ' + r2.getResponseCode());
+    page = JSON.parse(r2.getContentText());
+  }
+  return out;
+}
+
 /* ── refreshing the profile from Salesforce, in the morning build ── */
 var T_SF_FIELDS = ['POLICY__c', 'FIRST_NAME__c', 'LAST_NAME__c', 'Date_Of_Birth__c', 'Occupation__c', 'ANNUAL_INCOME__c', 'Monthly_Income__c',
   'Benificiary_1__c', 'Benificiary_2__c', 'Benificiary_3__c', 'INSURED__c', 'POLICY_OWNER__c', 'Family_Role__c', 'Life_Coverage__c',
@@ -7287,7 +7336,7 @@ function tProfileRefresh_(recs, deadline) {
     for (var i = 0; i < pols.length; i += T_PROFILE.CHUNK) {
       if (deadline && Date.now() > deadline) return { error: 'stopped at ' + i + ' of ' + pols.length + ' policies: the build ran out of time; the tab was left as it was' };
       var part = pols.slice(i, i + T_PROFILE.CHUNK);
-      svcSfQuery_('SELECT ' + T_SF_FIELDS.join(', ') + ' FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' +
+      tSfQuery_('SELECT ' + T_SF_FIELDS.join(', ') + ' FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' +
         part.map(function (p) { return "'" + svcSoqlLit_(p) + "'"; }).join(',') + ')').forEach(function (rec) {
         var no = String(rec.POLICY__c || ''), r = who[no];
         if (!r || seen[no]) return;
@@ -7307,6 +7356,31 @@ function tProfileRefresh_(recs, deadline) {
     T_PROFILE_MEMO = null;
     return { rows: rows.length - 1, of: pols.length };
   } catch (e) { return { error: String(e && e.message ? e.message : e).slice(0, 200) }; }
+}
+
+/** The Client Profile in a run of its own (16 October 2026). The morning build reads the Branch Intelligence workbook
+ *  first and, when that leaves too little of its time, marks the profile due (`profile_due`); the five-minute run then
+ *  refreshes it from the Client Book's policies, outside the lock. transitionRefreshClientProfile, on the editor's Run
+ *  button, does it at once. One at a time (a cache key), and the mark goes only when the profile is written. */
+function transitionRefreshClientProfile() { return tSay_(tProfileDue_(true).msg); }
+function tProfileDue_(force) {
+  var props = PropertiesService.getScriptProperties();
+  if (!force && props.getProperty('profile_due') !== '1') return { msg: '' };
+  var cache = CacheService.getScriptCache();
+  if (cache.get('profile_running')) return { msg: 'The Client Profile is being refreshed already: look again in a few minutes.' };
+  cache.put('profile_running', '1', 360);
+  try {
+    var b = tBook_();
+    if (!b.ready) return { msg: 'The Client Book is not built yet: rebuild it first (Transition: rebuild the Client Book now), and the Client Profile follows.' };
+    var recs = [];
+    Object.keys(b.by).forEach(function (cno) { b.by[cno].forEach(function (r) { if (r.no) recs.push({ no: r.no, cno: cno, client: r.client }); }); });
+    var t0 = Date.now(), prof = tProfileRefresh_(recs, t0 + T_PROFILE.RUN_MS), secs = Math.round((Date.now() - t0) / 1000);
+    if (prof.rows !== undefined) props.deleteProperty('profile_due');
+    var msg = prof.rows !== undefined ? 'Client Profile refreshed from Salesforce: ' + prof.rows + ' of ' + prof.of + ' policies, in ' + secs + ' seconds.'
+      : 'The Client Profile was not refreshed: ' + (prof.error || prof.skipped);
+    log_('transition', 'client profile', msg);
+    return { ok: prof.rows !== undefined, msg: msg };
+  } finally { cache.remove('profile_running'); }
 }
 
 /* ── who looks after which household: the wall's assignment slides ─────── */
@@ -7387,7 +7461,7 @@ function tHaSync_(force) {
   var want = {}, sf = null, via;
   if (typeof svcSfReady_ === 'function' && typeof svcSfQuery_ === 'function' && svcSfReady_()) {
     try {
-      sf = svcSfQuery_('SELECT POLICY__c, Client_Number__c, FIRST_NAME__c, LAST_NAME__c, Assigned_Agent__r.Name, Date_Assigned_to_Agent__c, ' +
+      sf = tSfQuery_('SELECT POLICY__c, Client_Number__c, FIRST_NAME__c, LAST_NAME__c, Assigned_Agent__r.Name, Date_Assigned_to_Agent__c, ' +
         'Campain_Feedback_Update__c FROM CLIENT_PORTFOLIO__c WHERE Date_Assigned_to_Agent__c >= ' + T_HA.SINCE +
         ' AND Assigned_Agent__c != null ORDER BY Date_Assigned_to_Agent__c LIMIT 5000');
       via = 'Salesforce';
@@ -8450,7 +8524,7 @@ function tClaimSf_(pols, c) {
   if (!tSfOn_()) return { on: false, why: 'Salesforce is not linked to this project' };
   if (!pols.length) return { on: true, why: 'no policy number for this client' };
   try {
-    var recs = svcSfQuery_('SELECT Id, POLICY__c, Assigned_Agent__r.Name, Date_Subm_to_Retention__c, Was_Agent_Paid__c, Date_Comm_Paid__c ' +
+    var recs = tSfQuery_('SELECT Id, POLICY__c, Assigned_Agent__r.Name, Date_Subm_to_Retention__c, Was_Agent_Paid__c, Date_Comm_Paid__c ' +
       'FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(pols.slice(0, 100)) + ')');
     var named = tDay_(c.named) || '', byHand = null;
     var all = recs.map(function (r) {
@@ -8542,7 +8616,7 @@ function tClaimsPaid_(force) {
   });
   var nos = Object.keys(want);
   for (var i = 0; i < nos.length; i += 150) {
-    svcSfQuery_('SELECT Id, POLICY__c, Was_Agent_Paid__c, Date_Comm_Paid__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(nos.slice(i, i + 150)) + ')')
+    tSfQuery_('SELECT Id, POLICY__c, Was_Agent_Paid__c, Date_Comm_Paid__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(nos.slice(i, i + 150)) + ')')
       .forEach(function (x) { recs[tPolNo_(x.POLICY__c)] = { id: x.Id, was: String(x.Was_Agent_Paid__c || ''), paid: String(x.Date_Comm_Paid__c || '') }; });
   }
   open.forEach(function (r) {
@@ -8837,7 +8911,7 @@ function tSfRecs_(pols) {
   if (!pols.length) return [];
   var k = pols.slice(0, 100).join(',');
   if (T_SFRECS_MEMO && T_SFRECS_MEMO.k === k) return T_SFRECS_MEMO.v;
-  var v = svcSfQuery_('SELECT Id, POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(pols.slice(0, 100)) + ')').map(function (r) {
+  var v = tSfQuery_('SELECT Id, POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(pols.slice(0, 100)) + ')').map(function (r) {
     return { id: r.Id, no: tPolNo_(r.POLICY__c), contact: r.Contact__c || '' };
   });
   T_SFRECS_MEMO = { k: k, v: v };
@@ -8865,7 +8939,7 @@ function tSfService_(tok, cno, ha) {
     if (!what.length) return { on: true, n: 0, why: 'Salesforce has none of this client’s policies.' };
     var cond = ['WhatId IN (' + tSoqlIn_(what) + ')'];
     if (who.length) cond.push('WhoId IN (' + tSoqlIn_(who) + ')');
-    var rows = svcSfQuery_('SELECT Id, Subject, Status, ActivityDate, IsClosed, CompletedDateTime, CreatedDate, LastModifiedDate, Owner.Name, Task_Type__c, WhatId ' +
+    var rows = tSfQuery_('SELECT Id, Subject, Status, ActivityDate, IsClosed, CompletedDateTime, CreatedDate, LastModifiedDate, Owner.Name, Task_Type__c, WhatId ' +
       'FROM Task WHERE (' + cond.join(' OR ') + ') ORDER BY CreatedDate DESC LIMIT ' + T_SVCREC.MAX);
     var today = Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd'), dayMs = 86400000;
     var out = { on: true, n: 0, open: 0, overdue: 0, logged: 0, first: '', last: '', years: {}, types: {}, who: {}, days: [], onTime: 0, withDue: 0, list: [], capped: rows.length >= T_SVC.MAX };
@@ -8916,12 +8990,12 @@ function tSfTasks_(tok, cno, ha) {
     if (!what.length) return { on: true, tasks: [], why: 'Salesforce has none of this client’s policies.' };
     var cond = ['WhatId IN (' + tSoqlIn_(what) + ')'];
     if (who.length) cond.push('WhoId IN (' + tSoqlIn_(who) + ')');
-    var rows = svcSfQuery_('SELECT Id, Subject, Status, Priority, ActivityDate, IsClosed, Owner.Name, CreatedBy.Name, CreatedDate, LastModifiedDate, Description, WhatId ' +
+    var rows = tSfQuery_('SELECT Id, Subject, Status, Priority, ActivityDate, IsClosed, Owner.Name, CreatedBy.Name, CreatedDate, LastModifiedDate, Description, WhatId ' +
       'FROM Task WHERE (' + cond.join(' OR ') + ') AND (IsClosed = false OR LastModifiedDate = LAST_N_DAYS:' + T_CMT.TASK_DAYS + ') ORDER BY CreatedDate DESC LIMIT 25');
     var feed = {}, inst = '';
     try { inst = svcSfToken_().instance_url || ''; } catch (e) {}
     if (rows.length) {
-      svcSfQuery_('SELECT Id, ParentId, Body, CreatedDate, CreatedBy.Name, (SELECT CommentBody, CreatedDate, CreatedBy.Name FROM FeedComments ORDER BY CreatedDate DESC LIMIT 5) ' +
+      tSfQuery_('SELECT Id, ParentId, Body, CreatedDate, CreatedBy.Name, (SELECT CommentBody, CreatedDate, CreatedBy.Name FROM FeedComments ORDER BY CreatedDate DESC LIMIT 5) ' +
         'FROM FeedItem WHERE ParentId IN (' + tSoqlIn_(rows.map(function (t) { return t.Id; })) + ") AND Type = 'TextPost' ORDER BY CreatedDate DESC LIMIT 100").forEach(function (f) {
         (feed[f.ParentId] = feed[f.ParentId] || []).push({ when: tSfWhen_(f.CreatedDate), by: f.CreatedBy ? f.CreatedBy.Name : '', text: tPlain_(f.Body).slice(0, 1500),
           replies: ((f.FeedComments && f.FeedComments.records) || []).map(function (x) { return { when: tSfWhen_(x.CreatedDate), by: x.CreatedBy ? x.CreatedBy.Name : '', text: tPlain_(x.CommentBody).slice(0, 800) }; }) });
@@ -8966,7 +9040,7 @@ function tSfWork_() {
   try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
   try {
     var mgr = tNameKey_(TRANSITION.MANAGER.name), today = Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd');
-    var tasks = svcSfQuery_("SELECT Id, Status, IsClosed, ActivityDate, CompletedDateTime, LastModifiedDate, Owner.Name FROM Task WHERE Subject LIKE 'Orphan%' AND CreatedDate >= " +
+    var tasks = tSfQuery_("SELECT Id, Status, IsClosed, ActivityDate, CompletedDateTime, LastModifiedDate, Owner.Name FROM Task WHERE Subject LIKE 'Orphan%' AND CreatedDate >= " +
       T_SFWORK.SINCE + ' LIMIT 2000');
     var words = {}, touched = {}, people = {};
     var person = function (n) {
@@ -8981,7 +9055,7 @@ function tSfWork_() {
     };
     for (var i = 0; i < tasks.length; i += T_SFWORK.CHUNK) {
       var ids = tasks.slice(i, i + T_SFWORK.CHUNK).map(function (t) { return t.Id; });
-      svcSfQuery_('SELECT ParentId, Type, CreatedDate, CreatedBy.Name, (SELECT CreatedDate, CreatedBy.Name FROM FeedComments) FROM FeedItem WHERE ParentId IN (' +
+      tSfQuery_('SELECT ParentId, Type, CreatedDate, CreatedBy.Name, (SELECT CreatedDate, CreatedBy.Name FROM FeedComments) FROM FeedItem WHERE ParentId IN (' +
         tSoqlIn_(ids) + ") AND Type IN ('TextPost','CreateRecordEvent','TrackedChange') LIMIT 2000").forEach(function (f) {
         var by = f.CreatedBy ? f.CreatedBy.Name : '';
         if (f.Type === 'TextPost') staffWord(f.ParentId, by, f.CreatedDate);
@@ -9076,7 +9150,7 @@ function tCommentToSf_(o, by, role, text, at) {
     var what = recs.map(function (r) { return r.id; }), who = recs.map(function (r) { return r.contact; }).filter(Boolean);
     var cond = ['WhatId IN (' + tSoqlIn_(what) + ')'];
     if (who.length) cond.push('WhoId IN (' + tSoqlIn_(who) + ')');
-    var open = svcSfQuery_('SELECT Id, Subject FROM Task WHERE (' + cond.join(' OR ') + ') AND IsClosed = false ORDER BY CreatedDate DESC LIMIT ' + T_CMT.TASKS);
+    var open = tSfQuery_('SELECT Id, Subject FROM Task WHERE (' + cond.join(' OR ') + ') AND IsClosed = false ORDER BY CreatedDate DESC LIMIT ' + T_CMT.TASKS);
     var body = 'From the assignment board · ' + by + (role ? ' (' + role + ')' : '') + ', ' + Utilities.formatDate(at, tTz_(), 'd MMM yyyy HH:mm') + ':\n\n' + text;
     if (open.length) {
       var n = 0, fails = [];

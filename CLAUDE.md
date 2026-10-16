@@ -2037,7 +2037,18 @@ voice under the new timing and the caption gives it away.
   connector pulls). The morning build rewrites it straight from Salesforce
   (`tProfileRefresh_`) once this project has the four `SF_*` Script
   properties that `ServiceSalesforce.gs` uses; until then the imported tab
-  stands, and the build's message says which. The refresh asks by policy
+  stands, and the build's message says which. **It was never written live until 16 October
+  2026**, for two reasons. `svcSfQuery_` puts the query in the web address,
+  and URL Fetch refuses one over 2 KB; two hundred policy numbers make
+  about 3 KB. And the build gave the profile only what was left of its
+  five minutes after the workbook. Every query in Transition.gs now goes
+  through `tSfQuery_`: a long one is sent in the body of a composite
+  request (`tSfComposite_`, which also reads every page), a short one as
+  before. When the build has used `T_PROFILE.INLINE_MS`, it marks the
+  profile due (`profile_due`). The five-minute run then refreshes it in a
+  run of its own, after releasing the lock (`tProfileDue_`).
+  `transitionRefreshClientProfile`, on the editor's Run button, does it at
+  once. `sfq16/sfq-test.js` in the scratchpad covers it (13 checks). The refresh asks by policy
   number, never by client number: clients opened from about mid-2026
   (numbers from about 0000745000) carry no `Client_Number__c` there.
   **The name and date of birth on a policy record are the life insured's,
