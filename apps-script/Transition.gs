@@ -3963,6 +3963,174 @@ function tLinkFamily_(a, b) {
   } catch (e) { return { ok: false, why: String(e && e.message ? e.message : e).slice(0, 120) }; }
 }
 
+/* ── families the household rule missed (16 October 2026) ─────────────
+   "she also has a husband … the data is supposed to tell me that another person lives there and have not been assigned".
+   A couple on these books sat in two households: one record has the house as "12A Mango Road", the other "12A Mangoe
+   Road", and each has its own phone and e-mail, so the rule that built the households (the same address, phone or
+   e-mail) never joined them. Their client numbers are next to each other, because they took their policies out
+   together. tMaybeFamily_ finds pairs like that over the books for a person to confirm: the same surname, and either
+   client numbers within T_MAYBE.NEAR of each other or the same house number in the same town. A pair already in one
+   household, or decided on the Family Checks tab, is left out. One press on the board links them (tLinkFamily_), or
+   marks them "not family" so they never come back (tFamilyOnly_). Branch and Client Support only: it is data to put
+   right, and they are the ones who name agents. */
+var T_MAYBE = { NEAR: 3, SHEET: 'Family Checks', MAX: 400, HOUSE_MAX: 6 };
+var T_MAYBE_HEAD = ['When', 'Token A', 'Client A', 'Client no. A', 'Token B', 'Client B', 'Client no. B', 'Decision', 'Household', 'By'];
+/** The house number an address opens with: "12A Mango Road", "12 A Mangoe Road" and "#12a" all read 12a, after a "No",
+ *  "Lot" or "Apt" too. A light pole, a mile marker ("8 1/2 MM") or a number later in the line ("Ext Rd 2") is not a house. */
+function tHouseNo_(addr) {
+  var s = String(addr || '').toLowerCase().trim();
+  if (/^(?:lp|l\.p\.?|lamp\s*post|light\s*pole)\b/.test(s)) return '';
+  var m = /^(?:(?:no\.?|lot|apt\.?|apartment|house)\s*)?#?\s*(\d{1,5})\s*([a-z])?(?=[\s,]|$)/.exec(s);
+  if (!m) return '';
+  var rest = s.slice(m[0].length);
+  if (/^\s*(?:\d\s*\/\s*\d|m\.?\s*m\b|mm\b|mile|m\b)/.test(rest)) return '';   // a mile marker, never a house
+  return m[1] + (m[2] || '');
+}
+/** The words of a street, without the house number, the town and the words every street has. */
+var T_STREET_STOP = /^(road|rd|street|st|stre|steet|streeet|trace|tr|tra|avenue|ave|av|lane|ln|drive|dr|circular|extension|ext|main|village|vlg|settlement|garden|gardens|gard|heights|park|estate|no|lot|apt|apartment|trinidad|tobago|tt|the|of|off|junction|jct|branch|north|south|east|west|upper|lower|old|new|hill|close|crescent|cres|terrace|ter|mm)$/;
+function tStreetWords_(addr, town) {
+  var tw = String(town || '').toLowerCase().split(/[^a-z]+/);
+  return String(addr || '').toLowerCase().replace(/['`’]/g, '').split(/[^a-z]+/).filter(function (x) { return x.length >= 3 && !T_STREET_STOP.test(x) && tw.indexOf(x) < 0; });
+}
+/** Whether two addresses name the same street, a typing slip allowed: "Mango" and "Mangoe", "Belmont" and "Bellmont". */
+function tSameStreet_(a, b, town) {
+  var wa = tStreetWords_(a, town), wb = tStreetWords_(b, town);
+  var near = function (x, y) {
+    if (x === y || x.slice(0, 3) === y.slice(0, 3)) return true;
+    if (Math.min(x.length, y.length) < 5 || Math.abs(x.length - y.length) > 2) return false;
+    var d = []; for (var i = 0; i <= x.length; i++) { d[i] = [i]; for (var j = 1; j <= y.length; j++) d[i][j] = i ? Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1)) : j; }
+    return d[x.length][y.length] <= 2;
+  };
+  return wa.some(function (x) { return wb.some(function (y) { return near(x, y); }); });
+}
+/** A town as a key, through the gazetteer's own spellings when it knows the place. */
+function tTownKey_(town, addr) {
+  var pl = null;
+  try { pl = tPlaceOf_(town || '') || (addr ? tPlaceOf_(String(addr).split(',').slice(-2).join(' ')) : null); } catch (e) {}
+  if (pl) return pl.k;
+  return String(town || '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function tPairKey_(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
+/** The Family Checks tab: every pair a person decided, { 'a|b': { decision, by } }. Empty when there is no tab. */
+function tFamilyChecks_() {
+  var out = {};
+  try {
+    var t = tSheetRows_(T_MAYBE.SHEET), ix = {};
+    t.head.forEach(function (h, i) { ix[String(h).trim().toLowerCase()] = i; });
+    if (ix['token a'] === undefined || ix['token b'] === undefined) return out;
+    t.rows.forEach(function (v) {
+      var a = String(v[ix['token a']] || '').trim(), b = String(v[ix['token b']] || '').trim();
+      if (a && b) out[tPairKey_(a, b)] = { decision: String(ix.decision !== undefined ? v[ix.decision] : '').trim(), by: String(ix.by !== undefined ? v[ix.by] : '').trim() };
+    });
+  } catch (e) {}
+  return out;
+}
+/** One decision on the Family Checks tab, made the first time it is needed. Never throws. */
+function tFamilyCheckWrite_(a, ra, b, rb, decision, hh, by) {
+  try {
+    var sh = ss_().getSheetByName(T_MAYBE.SHEET);
+    if (!sh) {
+      sh = ss_().insertSheet(T_MAYBE.SHEET);
+      sh.appendRow(T_MAYBE_HEAD);
+      try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_MAYBE_HEAD.length).setFontWeight('bold'); } catch (e) {}
+    }
+    var name = function (r) { return tText_(r.Client) || tText_(r['First name']) || ''; };
+    sh.appendRow([new Date(), a, name(ra), tText_(ra['Client number']), b, name(rb), tText_(rb['Client number']), decision, hh || '', by || '']);
+  } catch (e) {}
+}
+/** The service record on the send row, as the letters printed it (service-record.py, 24 September 2026): the documents the
+ *  branch handled (the Log Book), the requests completed (Salesforce), the premium reminders and the month of the last
+ *  birthday note. null when there is none. */
+function tSvcOf_(r) {
+  var n = function (k) { var v = Number(String(r[k] == null ? '' : r[k]).replace(/[^\d.]/g, '')); return isNaN(v) ? 0 : Math.round(v); };
+  var b = r.svc_birthday, bd = b instanceof Date && !isNaN(b.getTime()) ? Utilities.formatDate(b, tTz_(), 'MMMM yyyy') : tText_(b).replace(/^\d{1,2}\s+/, '');
+  var o = { docs: n('svc_docs'), req: n('svc_requests'), rem: n('svc_reminders'), bday: bd };
+  return o.docs || o.req || o.rem || o.bday ? o : null;
+}
+/** Pairs on the books who look like one family and are not one household yet. `o`: { order, sendBy, hhOf, calls, bk,
+ *  decided }. Returns { pairs: [{ a, b, why: [..], kind: 'family'|'same', both }] }, both signals first. */
+function tMaybeFamily_(o) {
+  var people = [];
+  (o.order || []).forEach(function (tok) {
+    var r = o.sendBy[tok];
+    if (!r || T_NOT_BOOK.test(tText_(r.Exclude))) return;
+    var sn = tSurnames_(r).filter(function (x) { return x.length > 1; });
+    if (!sn.length) return;
+    var no = tCno_(r['Client number']), n = parseInt(String(no).replace(/\D/g, ''), 10);
+    var prof = null;
+    try { prof = tProfileFor_(no); } catch (e) {}
+    var recs = o.bk && o.bk.ready && o.bk.by ? (o.bk.by[no] || []) : [];
+    var ct = tContactFor_({ email: '' }, prof, recs, (o.calls && o.calls.by && o.calls.by[tok]) || null) || {};
+    var addr = String(ct.addr || ''), house = tHouseNo_(addr);
+    people.push({ tok: tok, r: r, no: no, n: isNaN(n) ? null : n, sn: sn, addr: addr, house: house, town: house ? tTownKey_(ct.town, addr) : '' });
+  });
+  var pairs = {}, decided = o.decided || {}, hhOf = o.hhOf || {};
+  var add = function (x, y, why, sig) {
+    if (x.tok === y.tok || (x.no && x.no === y.no)) return;
+    if (hhOf[x.tok] && hhOf[x.tok] === hhOf[y.tok]) return;
+    var k = tPairKey_(x.tok, y.tok);
+    if (decided[k]) return;
+    var p = pairs[k] = pairs[k] || { a: x.n !== null && y.n !== null && y.n < x.n ? y.tok : x.tok, b: x.n !== null && y.n !== null && y.n < x.n ? x.tok : y.tok, why: [], sig: {} };
+    if (!p.sig[sig]) { p.sig[sig] = true; p.why.push(why); }
+    p.kind = tSamePerson_(x.r, y.r) ? 'same' : 'family';
+  };
+  var bySn = {};
+  people.forEach(function (p) { p.sn.forEach(function (s) { (bySn[s] = bySn[s] || []).push(p); }); });
+  Object.keys(bySn).forEach(function (s) {
+    var L = bySn[s];
+    /* client numbers next to each other: policies taken out together */
+    var nums = L.filter(function (p) { return p.n !== null; }).sort(function (x, y) { return x.n - y.n; });
+    for (var i = 0; i < nums.length; i++) {
+      for (var j = i + 1; j < nums.length && nums[j].n - nums[i].n <= T_MAYBE.NEAR; j++) {
+        var d = nums[j].n - nums[i].n;
+        add(nums[i], nums[j], 'client numbers ' + (d === 1 ? 'next to each other' : d + ' apart') + ' (' + nums[i].no + ', ' + nums[j].no + ')', 'near');
+      }
+    }
+    /* the same house number in the same town, however the street is spelt; more than HOUSE_MAX is flats or an office */
+    var byHouse = {};
+    L.forEach(function (p) { if (p.house && p.town) (byHouse[p.house + '|' + p.town] = byHouse[p.house + '|' + p.town] || []).push(p); });
+    Object.keys(byHouse).forEach(function (hk) {
+      var G = byHouse[hk];
+      if (G.length < 2 || G.length > T_MAYBE.HOUSE_MAX) return;
+      for (var i2 = 0; i2 < G.length; i2++) for (var j2 = i2 + 1; j2 < G.length; j2++) {
+        var x = G[i2], y = G[j2], same = x.addr.toLowerCase().replace(/[^a-z0-9]/g, '') === y.addr.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!same && !tSameStreet_(x.addr, y.addr, x.town)) continue;   // the same number on two different streets is not one house
+        add(x, y, same ? 'the same address on file (' + x.addr + ')' : 'the same house in ' + tPlaceLabel_(x.town) + ', the street typed differently ("' + x.addr + '" and "' + y.addr + '")', 'house');
+      }
+    });
+  });
+  var out = Object.keys(pairs).map(function (k) { var p = pairs[k]; return { a: p.a, b: p.b, why: p.why, kind: p.kind, both: !!(p.sig.near && p.sig.house) }; });
+  out.sort(function (x, y) { return (y.both ? 1 : 0) - (x.both ? 1 : 0) || (y.why.length - x.why.length); });
+  return { pairs: out };
+}
+/** update with family= or notfamily= and no outcome (16 October 2026): link two clients as one household, or mark them not
+ *  family, without logging a call that never happened. The branch and Client Support. */
+function tFamilyOnly_(w, tok, fam, notFam) {
+  if (!tCanAssign_(w)) return { ok: false, refused: true, error: 'Only the branch and Client Support link a family.' };
+  var clean = function (s) { return String(s || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64); };
+  fam = clean(fam); notFam = clean(notFam);
+  var other = fam || notFam;
+  if (!other || other === tok) return { ok: false, error: 'Choose the family member from the list.' };
+  var ra = tRowByToken_(tok), rb = tRowByToken_(other);
+  if (!ra || !rb) return { ok: false, error: 'That client is not on the send list.' };
+  var who = w.me && w.me.name ? w.me.name : 'branch';
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  try {
+    var nameB = tText_(rb.Client) || tText_(rb['First name']) || 'that client';
+    if (notFam) {
+      tFamilyCheckWrite_(tok, ra, other, rb, 'not family', '', who);
+      log_('transition', 'family', who + ' · not family · ' + tok + ' · ' + other);
+      return { ok: true, notFamily: true, family: nameB };
+    }
+    var linked = tLinkFamily_(tok, other);
+    if (!linked.ok) return { ok: false, error: 'The family was not linked: ' + linked.why + '.' };
+    tFamilyCheckWrite_(tok, ra, other, rb, 'same family', linked.hh, who);
+    log_('transition', 'family', who + ' · linked · ' + tok + ' · ' + other + ' · ' + linked.hh);
+    return { ok: true, linkedOnly: true, household: linked.hh, family: linked.name };
+  } finally { lock.releaseLock(); }
+}
+
 /* ── who is in the branch, who signs in, and what they see ─────────────────
    The Agent Skill Bank is the roster and the sign-in. Since 3 October 2026 it
    carries each person's Agent no., Password, Role, Unit and Active, set up by
@@ -4393,6 +4561,7 @@ function tBoard_(w, all, lite) {
       phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '', sent: fmt(r['Sent at'], 'd MMM'),
       held: tHeld_(r.Exclude) ? (tText_(r.Exclude) || 'held') : '',
       facts: { since: tText_(r.first_year).replace(/\.0$/, ''), paidTo: tText_(r.paid_to), appReceived: tText_(r.app_received) },
+      svc: tSvcOf_(r),   // the service record the letter carried (16 October 2026): documents, requests, reminders, the birthday note
       answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], own: 0, contactRows: 0, calls: 0, open: 0, actionable: 0, done: 0, noted: 0,
       late: false, assigned: '', assignedOn: '', mark: '', review: null, score: 0, firstAt: null, lastAt: null, assignedAt: null };
     /* whether the board may offer the manager's note (T_NOTES): the same test transitionUpdate_ applies before it sends */
@@ -4730,6 +4899,31 @@ function tBoard_(w, all, lite) {
     if (prof && prof.occ) c.occ = prof.occ;
   });
   clients.concat(silent, family).forEach(function (c) { if (c.hh) c.hhSize = households[c.hh] ? households[c.hh].length : 1; });
+  /* families the household rule missed (tMaybeFamily_, 16 October 2026): on each card, and as one list to confirm, for the
+     branch and Client Support; never on a board read only to name an agent */
+  var maybe = null;
+  if (tCanAssign_(w) && !lite) {
+    var mfx = { pairs: [] };
+    try { mfx = tMaybeFamily_({ order: order, sendBy: sendBy, hhOf: hhOf, calls: calls, bk: bk, decided: tFamilyChecks_() }); } catch (e) {}
+    var side = function (tok) {
+      var r = sendBy[tok], c = answeredBy[tok], b = byTok[tok];
+      return { token: tok, client: c ? c.client : (tText_(r.Client) || tText_(r['First name']) || 'a client'), no: tText_(r['Client number']),
+        seg: tText_(r.Segment).toUpperCase(), book: tText_(r.Agent), state: c ? 'answered' : tMemberState_(r), said: c ? tSaid_(c) : '',
+        agent: (b && b.assigned) || '', hh: hhOf[tok] || '', onBoard: !!onBoard[tok] };
+    };
+    var cardsBy = {};
+    clients.concat(silent, family).forEach(function (c) { cardsBy[c.token] = c; });
+    maybe = mfx.pairs.slice(0, T_MAYBE.MAX).map(function (p) { return { a: side(p.a), b: side(p.b), why: p.why, kind: p.kind, both: p.both }; });
+    maybe.forEach(function (p) {
+      [[p.a, p.b], [p.b, p.a]].forEach(function (x) {
+        var c = cardsBy[x[0].token];
+        if (c) (c.mf = c.mf || []).push({ token: x[1].token, client: x[1].client, no: x[1].no, state: x[1].state, said: x[1].said, agent: x[1].agent, why: p.why, kind: p.kind });
+      });
+    });
+    counts.maybe = { pairs: maybe.length, answered: maybe.filter(function (p) { return p.a.state === 'answered' || p.b.state === 'answered'; }).length,
+      split: maybe.filter(function (p) { return p.a.agent && p.b.agent && tNameKey_(p.a.agent) !== tNameKey_(p.b.agent); }).length,
+      half: maybe.filter(function (p) { return !!p.a.agent !== !!p.b.agent; }).length };
+  }
   /* the call-backs Client Support asked for (tBackOf_), over this viewer's list: the urgent tab's count */
   counts.back = { agent: 0, branch: 0, named: 0, dnc: 0 };
   clients.forEach(function (c) {
@@ -4780,6 +4974,7 @@ function tBoard_(w, all, lite) {
   return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
            waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT, agents: agents, clients: clients, silent: silent, counts: counts,
            households: households, hhInfo: hhInfo, family: family, hhBook: hhBook, profiles: tProfiles_().ready,
+           maybe: maybe,   // families the household rule missed, to confirm (16 October 2026); null for whoever does not name agents
            book: { ready: bk.ready, money: !staff, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
            signins: w.role === 'branch' || w.role === 'unit' ? tSignIns_(w) : null,   // who is signing in (15 October 2026)
@@ -5633,6 +5828,8 @@ function transitionUpdate_(p) {
   var tok = String(p.token || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
   var status = String(p.status || '').trim(), noAnswer = /^no answer$/i.test(status), known = '';
   T_STATUSES.forEach(function (s) { if (s.toLowerCase() === status.toLowerCase()) known = s; });
+  /* a family linked, or marked not family, with no call to log (16 October 2026): no outcome needed */
+  if (tok && !status && (String(p.family || '').trim() || String(p.notfamily || '').trim())) return tFamilyOnly_(w, tok, p.family, p.notfamily);
   if (!tok || (!known && !noAnswer)) return { ok: false, error: 'Choose a client and an outcome.' };
   var extra = String(p.note || '').replace(/[\[\]<>]/g, '').trim().slice(0, 300);
   var tell = String(p.tell || '').trim().toLowerCase();
@@ -5645,7 +5842,7 @@ function transitionUpdate_(p) {
   /* a family member the client told us about (29 September: a client who told the manager about his wife), put in one household */
   var fam = String(p.family || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
   if (fam === tok) fam = '';
-  if (fam && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch can link a family.' };
+  if (fam && !tCanAssign_(w)) return { ok: false, refused: true, error: 'Only the branch and Client Support link a family.' };
   /* a call-back asked for on the call (7 October 2026): a licensed agent, the branch, do not call, or the flag cleared;
      the branch and Client Support set it, as they work the calls (tBackOf_) */
   var back = String(p.back || '').trim().toLowerCase();
@@ -5733,7 +5930,7 @@ function transitionUpdate_(p) {
     if (back) out.back = back;
     if (told) { out.told = told.sent; if (told.sent) out.toldTo = told.to; else out.warning = 'The note did not go: ' + told.why + '.'; }
     if (linked) {
-      if (linked.ok) { out.household = linked.hh; out.family = linked.name; }
+      if (linked.ok) { out.household = linked.hh; out.family = linked.name; try { tFamilyCheckWrite_(tok, tRowByToken_(tok) || {}, fam, tRowByToken_(fam) || {}, 'same family', linked.hh, who); } catch (e) {} }
       else out.warning = (out.warning ? out.warning + ' ' : '') + 'The family was not linked: ' + linked.why + '.';
     }
     return out;
@@ -8356,6 +8553,7 @@ function tOpenClient_(p, w) {
  *  but staff (Client Support sees no money). */
 function transitionDetail_(p) {
   p = p || {};
+  T_SFRECS_MEMO = null;
   var w = tWho_(p.code, p.who);
   if (!w.ok) return { ok: false, refused: true, error: w.error };
   try {
@@ -8368,8 +8566,9 @@ function transitionDetail_(p) {
     var comments = tCommentsFor_(o.tok);
     var hist = tHistory_(o.row, o.rows, o.ha, claim, staff);
     var tasks = tSfTasks_(o.tok, tText_(o.row['Client number']), o.ha);
+    var service = tSfService_(o.tok, tText_(o.row['Client number']), o.ha);   // the whole service record (16 October 2026)
     var out = { ok: true, token: o.tok, client: tText_(o.row.Client) || tText_(o.row['First name']), at: Utilities.formatDate(new Date(), tz, 'd MMM HH:mm'),
-      history: hist, tasks: tasks.tasks, tasksWhy: tasks.why || '', tasksError: tasks.error || '', sf: tasks.on, taskDays: T_CMT.TASK_DAYS,
+      history: hist, tasks: tasks.tasks, tasksWhy: tasks.why || '', tasksError: tasks.error || '', sf: tasks.on, taskDays: T_CMT.TASK_DAYS, service: service,
       comments: comments.map(function (x) { return { when: x.when, by: x.by, role: x.role, text: x.text, sf: x.sf }; }) };
     if (claim) out.claim = tClaimView_(claim, tz, today, w.role === 'branch');
     return out;
@@ -8445,12 +8644,77 @@ function tTaskSubject_(s) {
   return t || '(no subject)';
 }
 
-/** The client's Salesforce records: { on, recs: [{ id, no, contact }] }. */
+/** The client's Salesforce records: { on, recs: [{ id, no, contact }] }. Read once a request for the same policies. */
+var T_SFRECS_MEMO = null;
 function tSfRecs_(pols) {
   if (!pols.length) return [];
-  return svcSfQuery_('SELECT Id, POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(pols.slice(0, 100)) + ')').map(function (r) {
+  var k = pols.slice(0, 100).join(',');
+  if (T_SFRECS_MEMO && T_SFRECS_MEMO.k === k) return T_SFRECS_MEMO.v;
+  var v = svcSfQuery_('SELECT Id, POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(pols.slice(0, 100)) + ')').map(function (r) {
     return { id: r.Id, no: tPolNo_(r.POLICY__c), contact: r.Contact__c || '' };
   });
+  T_SFRECS_MEMO = { k: k, v: v };
+  return v;
+}
+
+/* ── the service record: everything the branch has done for the client, from Salesforce (16 October 2026) ──
+   "all that we have done to service their account pulling all our salesforce history so a person can see the service
+   levels". Every task on the client's policy records and contact record, ever: how many, since when, the last one, how
+   many days each took to close, how many closed by their due date, by year, by kind of work, and who did it. Logged
+   e-mails and the birthday flow are not work (the rule GCM_LOGGED keeps for the groups: 615 of the groups' 1,176
+   completed tasks in 2026 were those), so they are counted apart and never in the service levels. The kinds are the
+   branch's own Task Type, in words. Read when a person opens the client (action=detail); never throws. */
+var T_SVC = { MAX: 500, LIST: 80,
+  TYPES: { 'renewa/pdl/bill': 'Premiums and billing', 'pendings': 'Applications', 'servicing': 'Servicing', 'scripts/cb': 'Scripts and call-backs',
+           'claims/ mat': 'Claims and maturities', 'opportunity': 'Opportunities' } };
+var T_SVC_LOGGED = /^\s*(<p>)?\W*(Email|Re|Fwd?)\s*:|\$Record\.|Happy Birthday/i;
+function tSfService_(tok, cno, ha) {
+  if (!tSfOn_()) return { on: false, why: 'Salesforce is not linked to this project yet: copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings → Script properties.' };
+  try {
+    var pols = tClientPols_(tok, cno, ha);
+    if (!pols.length) return { on: true, n: 0, why: 'No policy numbers for this client in the Client Book.' };
+    var recs = tSfRecs_(pols), what = [], who = [], polOf = {};
+    recs.forEach(function (r) { if (what.indexOf(r.id) < 0) what.push(r.id); polOf[r.id] = r.no; if (r.contact && who.indexOf(r.contact) < 0) who.push(r.contact); });
+    if (!what.length) return { on: true, n: 0, why: 'Salesforce has none of this client’s policies.' };
+    var cond = ['WhatId IN (' + tSoqlIn_(what) + ')'];
+    if (who.length) cond.push('WhoId IN (' + tSoqlIn_(who) + ')');
+    var rows = svcSfQuery_('SELECT Id, Subject, Status, ActivityDate, IsClosed, CompletedDateTime, CreatedDate, LastModifiedDate, Owner.Name, Task_Type__c, WhatId ' +
+      'FROM Task WHERE (' + cond.join(' OR ') + ') ORDER BY CreatedDate DESC LIMIT ' + T_SVC.MAX);
+    var today = Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd'), dayMs = 86400000;
+    var out = { on: true, n: 0, open: 0, overdue: 0, logged: 0, first: '', last: '', years: {}, types: {}, who: {}, days: [], onTime: 0, withDue: 0, list: [], capped: rows.length >= T_SVC.MAX };
+    rows.forEach(function (t) {
+      var subj = tTaskSubject_(t.Subject);
+      if (T_SVC_LOGGED.test(String(t.Subject || '')) || /^Birthday e-mail|^Automatic e-mail/.test(subj)) { out.logged++; return; }
+      var opened = tSfDay_(t.CreatedDate), closed = t.IsClosed ? tSfDay_(t.CompletedDateTime || t.LastModifiedDate) : '';
+      var due = t.ActivityDate ? String(t.ActivityDate) : '', kind = T_SVC.TYPES[String(t.Task_Type__c || '').toLowerCase()] || (t.Task_Type__c ? String(t.Task_Type__c) : 'Other');
+      var owner = t.Owner ? String(t.Owner.Name || '') : '', days = null, late = false;
+      if (closed && opened) {
+        days = Math.max(0, Math.round((Date.parse(closed + 'T12:00:00Z') - Date.parse(opened + 'T12:00:00Z')) / dayMs));
+        out.n++; out.days.push(days);
+        if (!out.last || closed > out.last) out.last = closed;
+        var y = closed.slice(0, 4); out.years[y] = (out.years[y] || 0) + 1;
+        out.types[kind] = (out.types[kind] || 0) + 1;
+        if (owner) out.who[owner] = (out.who[owner] || 0) + 1;
+        if (due) { out.withDue++; if (closed <= due) out.onTime++; else late = true; }
+      } else if (!t.IsClosed) {
+        out.open++;
+        if (due && due < today) { out.overdue++; late = true; }
+      }
+      if (opened && (!out.first || opened < out.first)) out.first = opened;
+      if (out.list.length < T_SVC.LIST) out.list.push({ subject: subj, kind: kind, owner: owner, opened: opened ? tDmy_(opened) : '', closed: closed ? tDmy_(closed) : '',
+        due: due ? tDmy_(due) : '', days: days, open: !t.IsClosed, late: late, policy: polOf[t.WhatId] || '' });
+    });
+    var d = out.days.slice().sort(function (a, b) { return a - b; });
+    out.median = d.length ? (d.length % 2 ? d[(d.length - 1) / 2] : Math.round((d[d.length / 2 - 1] + d[d.length / 2]) / 2)) : null;
+    out.avg = d.length ? Math.round(d.reduce(function (s, x) { return s + x; }, 0) / d.length * 10) / 10 : null;
+    out.within1 = d.filter(function (x) { return x <= 1; }).length;
+    out.firstDmy = out.first ? tDmy_(out.first) : ''; out.lastDmy = out.last ? tDmy_(out.last) : '';
+    out.types = Object.keys(out.types).map(function (k) { return [k, out.types[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
+    out.who = Object.keys(out.who).map(function (k) { return [k, out.who[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
+    out.years = Object.keys(out.years).sort().map(function (k) { return [k, out.years[k]]; });
+    delete out.days;
+    return out;
+  } catch (e) { return { on: true, n: 0, error: 'Salesforce did not answer: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
 }
 /** Every Salesforce task on the client's policy records or their contact record, open or changed in the last TASK_DAYS days,
  *  open first: who it is assigned to, its status and due date, who opened it, and its Chatter (posts and their replies).

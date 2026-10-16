@@ -2690,6 +2690,45 @@ voice under the new timing and the caption gives it away.
     or that saving opens one), and the toast says where the log went. `OPEN_ON_LOG` false keeps the log to the board.
   - `team/team-test.js` in the scratchpad covers it (57 checks, Node with a Salesforce in memory, and Playwright, on the
     15 October tabs).
+- **Families the household rule missed, and the service record on every client** (16 October 2026: "she also has a
+  husband and how am i to link to a household as the data is supposed to tell me that another person lives there and have
+  not been assigned", then "what to do to fix this for the staff? and branch manager as deeper insights needed", then
+  "all that we have done to service their account pulling all our salesforce history so a person can see the service
+  levels"). The case: a couple on the books sat in two households because one record has the house as "12A Mango
+  Road" and the other "12A Mangoe Road" (a made-up example of the kind), and each has its own phone and e-mail; both had answered, and nobody was named.
+  - **`tMaybeFamily_`** (Transition.gs) finds pairs like that over the books: the same surname (`tSurnames_`), and either
+    client numbers within `T_MAYBE.NEAR` (3) of each other, which is policies taken out together, or the same house in
+    the same town. The house is the number the address opens with (`tHouseNo_`: "12A", "12 A", "#12a", after No, Lot or
+    Apt; never a light pole, a mile marker such as "8 1/2 MM", or a number later in the line), the town through the
+    gazetteer (`tTownKey_`), and the street must be the same street with a typing slip allowed (`tSameStreet_`: a word
+    in common, the same first three letters, or two letters apart), because two different streets share house numbers.
+    More than `HOUSE_MAX` (6) at one house is flats or an office. A pair already in one household, a pair with someone
+    the books leave out (`T_NOT_BOOK`), or a pair decided on the **Family Checks** tab is never shown. `tSamePerson_`
+    marks a pair as possibly one person on two client numbers. Measured on the 15 October export: 72 pairs on the live
+    sheet (13 with someone who answered); 123 once the Client Profile gives the addresses.
+  - **Who sees it**: the branch and Client Support (`tCanAssign_`), never an agent or a unit manager. The card gets a
+    yellow "Possible family on our books" block with the reason and two buttons, One household and Not family, and a
+    "possible family" pill on its row; the Household block points to it. The Households tab opens on "Possible families
+    to confirm", fifteen at a time, those with an answer first, searched with the tab's own box. The Dashboard's "What
+    stands out" counts them. The board answer carries `maybe` (the pairs) and `c.mf` on each card; `counts.maybe` has
+    the pairs, those with an answer, those half named and those named to different agents.
+  - **One press, no call logged.** `transitionUpdate_` with `family=` or `notfamily=` and no outcome goes to
+    `tFamilyOnly_`: it links them (`tLinkFamily_`) or records "not family", and writes the decision, the household and
+    who made it on the Family Checks tab (made the first time). Linking from Log call with an outcome still works, staff
+    included now (until 16 October the branch alone), and is recorded there too. Log call's family field, filled with
+    nothing else, links them with no outcome.
+  - **The service record.** Every card shows the record the letter printed from the send row (`tSvcOf_`: `svc_docs`,
+    `svc_requests`, `svc_reminders`, `svc_birthday`, as at 24 September), or says plainly that the branch had nothing on
+    record for that client. Under History, `tSfService_` reads every Salesforce task on the client's policy records and
+    contact record, ever (up to `T_SVC.MAX`): requests handled and since when, the last served, days to close (median and
+    average), the share closed within a day and by the due date, open and overdue now, by year, by kind of work (the
+    Task Type in words: "Renewa/PDl/Bill" reads Premiums and billing, Pendings Applications, "Claims/ Mat" Claims and
+    maturities) and by who served them, then every task behind a fold. Logged e-mails and the birthday flow are counted
+    apart and never as work (`T_SVC_LOGGED`, the rule `GCM_LOGGED` keeps for the groups). Staff see it: it holds no
+    money. Without the `SF_*` properties it says what to set, and the rest of the history still opens.
+  - Tests in the scratchpad: `fam16/fam-harness.js` (32), `fam16/fam-page.js` (20, Playwright) and `fam16/svc-test.js`
+    (20, Salesforce mocked with made-up tasks), on the 15 October export (`fam16/tabs16.json`, and `tabs16p.json` with
+    the 7 October Client Profile added).
 - **The workflow on one page, and a test for each role** (15 October 2026: "help me to confirm, agent sees their own
   things that's assigned to them and by whom. And managers has a different dashboard … Help me to streamline the proper
   workflow for all to read more or less and do a test regarding the orphans. So agents do the test, what they're supposed
