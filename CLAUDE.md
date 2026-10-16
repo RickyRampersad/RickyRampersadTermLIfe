@@ -1877,7 +1877,33 @@ voice under the new timing and the caption gives it away.
     screenshots the branch manager sent of pictures that name the person themselves: an agent's own Instagram profile,
     a Guardian "Advisor of the Week" card, the branch's own Facebook post. A picture that names nobody is never matched
     to a person by their face: the branch says who it is. Each person approves their photo with the rest of the profile.
-  - `profiles17/prof-test.js` in the scratchpad covers it (108 checks: Node on the 16 October tabs with the drafts and a
+    Four more came the same evening, in screenshots the branch manager sent and named one by one. One (sunglasses,
+    in a car) is held for a head-and-shoulders picture, and one, cut from a group photo, asks for a sharper one. Kamla's
+    Salesforce user record carries a profile photo; Sasha's and Azariah's do not. Until a photo is in, the team line
+    shows the person's initials.
+  - **Skillsets, from what clients look for** (16 October 2026, evening: "add more to this ok more skillsets etc do
+    industry research as to what clients look for and build in"). Seven columns on Agent Profiles:
+    - *Works with* (the clients an agent knows best, from `T_PROF_WORKS` or their own words);
+    - *Areas* and *Languages*;
+    - *Promise* (one thing a client can hold them to, in their own words, printed in a navy band);
+    - *Own words* (why they do this work, printed as a quote under their name);
+    - *Outside work*;
+    - *Registered as* (what the Central Bank's register lists them as; the branch alone sets it, and it prints as a
+      "Registered" badge with a link to the register when `T_INTRO.REGISTER` holds one).
+
+    "Ask me about" now prints as "What <first name> can help you with", each topic with one line in plain words from
+    `T_PROF_SKILLS` (`tProfSkills_`, up to six); Motor and home shows only with a general licence on the agent record.
+    The board's form offers the topics and the client types as taps. Every introduction now says what happens on the
+    first call (a hello, what the client holds in plain words, anything to look at noted; no charge, nothing changes
+    unless they ask) and that a review follows every six months and in the birthday month.
+  - **The team's own record** (`tTeamRecord_`): the client requests each of them closed in Salesforce in the past year,
+    and what kind they mostly were, under their line ("2,400 client requests handled in the past year: mostly new
+    applications, premiums and billing and policy changes"), and the team's total in the heading. Logged e-mails, the
+    birthday flow and internal work (training, staffing, operations) never count; under 20, no count shows.
+  - **The sample**: Felicia's introduction, drawn by the script from her draft, is the example for the whole branch.
+    It is published as a private Artifact page the branch manager shares, never on the website: the drafts are not
+    in this repository. Three fields on it carry sample wording, marked on the page, until Felicia writes her own.
+  - `profiles17/prof-test.js` in the scratchpad covers it (138 checks: Node on the 16 October tabs with the drafts and a
     mocked Salesforce, then Playwright on the board as an agent, the branch and a phone, and on the client's page).
 - **After a call, one press on the board marks the file and can write to the
   client in the manager's name.** Asked for on 28 September 2026 ("a button

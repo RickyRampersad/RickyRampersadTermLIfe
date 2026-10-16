@@ -394,7 +394,9 @@
   .pfwrap{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)} @media (max-width:1100px){.pfwrap{grid-template-columns:minmax(0,1fr)}}
   .pfform label{display:block;font-size:13px;font-weight:700;color:var(--ink);margin:12px 0 4px} .pfform label small{font-weight:500;color:var(--dim)}
   .pfform input,.pfform textarea,.pfform select{width:100%;font:15px/1.45 var(--fb);color:var(--ink);border:1px solid var(--field);border-radius:9px;padding:9px 10px;background:#fff}
-  .pfform textarea{min-height:150px;resize:vertical} .pfform .cnt{font-size:12px;color:var(--dim);text-align:right;margin-top:2px}
+  .pfform textarea{min-height:150px;resize:vertical}
+  .pfsug{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px} .pfsug button{font:600 12.5px/1 var(--fb);border:1px solid var(--field);background:#fff;color:var(--ink);border-radius:999px;padding:6px 10px;cursor:pointer}
+  .pfsug button.on{background:var(--tdark);border-color:var(--tdark);color:#fff} .pfsug button:focus-visible{outline:2px solid var(--teal);outline-offset:1px} .pfform .cnt{font-size:12px;color:var(--dim);text-align:right;margin-top:2px}
   .pfform input:focus,.pfform textarea:focus,.pfform select:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
   .pfbtns{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 2px} .pfbtns button{font:700 14.5px var(--fb);border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid var(--field);background:#fff;color:var(--ink);min-height:44px}
   .pfbtns button.me{background:var(--navy);color:var(--gold);border-color:var(--navy)} .pfbtns button.ok{background:var(--ok);color:#fff;border-color:var(--ok)} .pfbtns button:disabled{opacity:.55;cursor:default}
@@ -3161,8 +3163,15 @@ function workOf(d, me) {
 var PF = null, PF_OPEN = '', PF_PREV = null, PF_BUSY = false, PF_DIRTY = false;
 var PF_FIELDS = [['shown', 'Your name as clients read it'], ['title', 'Your title', '', 'Left empty, the letter says "Your agent"'], ['since', 'With the branch since', 'team', 'A year, like 2010'],
   ['headline', 'One line about you', '', 'The first thing a client reads under your name'], ['bio', 'About you', 'bio'],
-  ['ask', 'Ask me about', '', 'Up to four, with commas between them'], ['before', 'Before Guardian Life'], ['desig', 'Designations', '', 'With commas: LUTCF, FLMI'],
-  ['awards', 'Awards', '', 'With semicolons between them'], ['edu', 'Education'], ['phone', 'The number clients call'], ['email', 'The e-mail clients write to']];
+  ['words', 'Why you do this work', 'agent', 'A sentence or two in your own words: a client reads it as a quote from you'],
+  ['ask', 'What you help with', 'skills', 'Up to six, with commas. Tap one below to add it: the letter explains each in plain words'],
+  ['works', 'Who you work with', 'works', 'With commas. Clients look for someone who knows people like them'],
+  ['promise', 'Your promise to a client', 'agent', 'One thing a client can hold you to, like "I return every call the same working day". Only what you will keep'],
+  ['areas', 'Areas you cover', 'agent', 'Towns, with commas'], ['langs', 'Languages', 'agent', 'Only if you speak more than English: English, Hindi'],
+  ['before', 'Before Guardian Life'], ['desig', 'Designations', '', 'With commas: LUTCF, FLMI'],
+  ['awards', 'Awards', '', 'With semicolons between them'], ['edu', 'Education'],
+  ['outside', 'Outside work', 'agent', 'One line, only what you are happy for a client to read: community, sport, family'],
+  ['phone', 'The number clients call'], ['email', 'The e-mail clients write to']];
 var PF_STATE = { draft: 'Draft', agent: 'Waiting for the branch', branch: 'Waiting for the person', live: 'Live for clients', none: 'No profile' };
 var PF_TIER = { veteran: 'Veteran: 20 years and more', seasoned: 'Seasoned: 10 to 19 years', established: 'Established: 3 to 9 years', new: 'New: under 3 years',
   manager: 'The branch manager', lead: 'Leads the support team', support: 'Sales support' };
@@ -3259,12 +3268,21 @@ function pfOneDraw(p, boss) {
   var field = function (x) {
     var k = x[0], label = x[1], kind = x[2] || '', hint = x[3] || '', v = k === 'ask' || k === 'desig' ? (p[k] || []).join(', ') : k === 'awards' ? (p[k] || []).join('; ') : (p[k] || '');
     if (kind === 'team' && p.kind === 'agent') return '';
+    if ((kind === 'agent' || kind === 'skills' || kind === 'works') && p.kind !== 'agent') return '';
+    if (k === 'works') v = (p.works || []).join(', ');
+    if (k === 'areas' || k === 'langs') v = (p[k] || []).join(', ');
+    /* suggestions a tap adds to the list (the skills the letter explains, the clients agents most often name) */
+    var sug = kind === 'skills' ? (PF.profiles.skills || []).filter(function (s) { return !s.general || (f && f.general); }).map(function (s) { return s.label; })
+      : kind === 'works' ? (PF.profiles.works || []) : [];
+    if (sug.length) return '<label for="pf_' + k + '">' + esc(label) + ' <small>' + esc(hint) + '</small></label><input id="pf_' + k + '" data-k="' + k + '" maxlength="' + PF.profiles.max.line + '" value="' + esc(v) + '">' +
+      '<div class="pfsug" data-for="pf_' + k + '">' + sug.map(function (x) { return '<button type="button" data-v="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>';
     var ph = k === 'phone' && f && f.mobile ? 'Left empty: ' + f.mobile + ' from Salesforce' : k === 'email' && f && /@myguardiangroup\.com$/i.test(f.email || '') ? 'Left empty: ' + f.email : k === 'shown' ? p.name : '';
     if (kind === 'bio') return '<label for="pf_' + k + '">' + esc(label) + ' <small>a few sentences; a client reads it as written</small></label><textarea id="pf_' + k + '" data-k="' + k + '" maxlength="' + PF.profiles.max.bio + '">' + esc(v) + '</textarea><div class="cnt" id="pfCnt"></div>';
     return '<label for="pf_' + k + '">' + esc(label) + (hint ? ' <small>' + esc(hint) + '</small>' : '') + '</label><input id="pf_' + k + '" data-k="' + k + '" maxlength="' + PF.profiles.max.line + '" value="' + esc(v) + '" placeholder="' + esc(ph) + '">';
   };
   var extra = boss ? '<label for="pf_kind">Kind</label><select id="pf_kind" data-k="kind">' + ['agent', 'manager', 'lead', 'support'].map(function (k) { return '<option value="' + k + '"' + (p.kind === k ? ' selected' : '') + '>' + esc(PF.profiles.kinds[k]) + '</option>'; }).join('') + '</select>' +
-    '<label for="pf_photo">Photo <small>a link to a hosted picture, starting https://</small></label><input id="pf_photo" data-k="photo" value="' + esc(p.photo || '') + '">' : '';
+    '<label for="pf_photo">Photo <small>a link to a hosted picture, starting https://</small></label><input id="pf_photo" data-k="photo" value="' + esc(p.photo || '') + '">' +
+    (p.kind === 'agent' ? '<label for="pf_reg">Registered as <small>as the Central Bank register lists them, like "a sales representative of Guardian Life". Left empty, the card shows no badge</small></label><input id="pf_reg" data-k="reg" maxlength="' + PF.profiles.max.line + '" value="' + esc(p.reg || '') + '">' : '') : '';
   var conf = (p.confirm || []).length ? '<div class="card dcard"><h3>Questions from the draft</h3><p class="dsub">Answer them by changing the words above; anything you leave out stays out.</p><ul class="pflist">' +
     p.confirm.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' : '';
   var found = (p.found || []).length ? '<div class="card dcard"><details><summary><b>What the draft was written from (' + p.found.length + ')</b></summary><p class="dsub">Public, professional sources only. A fact marked low or medium is not in the draft.</p><ul class="pflist">' +
@@ -3284,7 +3302,23 @@ function pfOneDraw(p, boss) {
   if (PF_PREV && PF_PREV.name === p.name) pfShowPrev(PF_PREV.html);
   var bio = $('pf_bio'), cnt = function () { if (bio) $('pfCnt').textContent = bio.value.length + ' of ' + PF.profiles.max.bio + ' characters · ' + (bio.value.trim() ? bio.value.trim().split(/\s+/).length : 0) + ' words'; };
   cnt();
-  each('#pfOne [data-k]', function (el) { el.addEventListener('input', function () { PF_DIRTY = true; cnt(); }); });
+  each('#pfOne [data-k]', function (el) { el.addEventListener('input', function () { PF_DIRTY = true; cnt(); pfSugMark(); }); });
+  /* a suggestion adds itself to the list, or takes itself out when it is there already */
+  var pfSugMark = function () {
+    each('#pfOne .pfsug', function (box) {
+      var inp = $(box.getAttribute('data-for')), have = inp.value.split(',').map(function (x) { return x.trim().toLowerCase(); });
+      each('#pfOne .pfsug[data-for="' + box.getAttribute('data-for') + '"] button', function (b) { b.classList.toggle('on', have.indexOf(b.getAttribute('data-v').toLowerCase()) >= 0); });
+    });
+  };
+  each('#pfOne .pfsug button', function (b) {
+    b.addEventListener('click', function () {
+      var inp = $(b.parentNode.getAttribute('data-for')), v = b.getAttribute('data-v');
+      var L = inp.value.split(',').map(function (x) { return x.trim(); }).filter(Boolean), i = L.map(function (x) { return x.toLowerCase(); }).indexOf(v.toLowerCase());
+      if (i >= 0) L.splice(i, 1); else L.push(v);
+      inp.value = L.join(', '); PF_DIRTY = true; pfSugMark();
+    });
+  });
+  pfSugMark();
   var vals = function () { var o = { name: p.name }; each('#pfOne [data-k]', function (el) { o[el.getAttribute('data-k')] = el.value; }); return o; };
   $('pfSave').addEventListener('click', function () {
     var o = vals(); o.profile = 'save';

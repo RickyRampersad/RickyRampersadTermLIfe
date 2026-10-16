@@ -6495,10 +6495,33 @@ function tIntroMail_(sh, c, agent, stamp) {
    template (T_PROF_TIER). */
 var T_PROF = { SHEET: 'Agent Profiles', BIO: 700, LINE: 200, FACTS_KEY: 'sf-agent-facts-v1', FACTS_TTL: 21600 };
 var T_PROF_HEAD = ['Name', 'Kind', 'Shown as', 'Title', 'Since', 'Headline', 'Bio', 'Ask me about', 'Before Guardian', 'Designations',
-  'Awards', 'Education', 'Phone', 'E-mail', 'Photo', 'Found online', 'To confirm', 'Agent approved', 'Branch approved', 'Updated', 'Updated by'];
-/* what the board may change, by the page's key; the branch also sets Kind and Photo */
+  'Awards', 'Education', 'Works with', 'Areas', 'Languages', 'Promise', 'Own words', 'Outside work', 'Registered as',
+  'Phone', 'E-mail', 'Photo', 'Found online', 'To confirm', 'Agent approved', 'Branch approved', 'Updated', 'Updated by'];
+/* what the board may change, by the page's key; the branch also sets Kind, Photo and Registered as */
 var T_PROF_EDIT = { shown: 'Shown as', title: 'Title', since: 'Since', headline: 'Headline', bio: 'Bio', ask: 'Ask me about',
-  before: 'Before Guardian', desig: 'Designations', awards: 'Awards', edu: 'Education', phone: 'Phone', email: 'E-mail' };
+  before: 'Before Guardian', desig: 'Designations', awards: 'Awards', edu: 'Education', works: 'Works with', areas: 'Areas',
+  langs: 'Languages', promise: 'Promise', words: 'Own words', outside: 'Outside work', phone: 'Phone', email: 'E-mail' };
+/* What an agent helps with, in a client's words (16 October 2026, "more skillsets … do industry research as to what clients
+   look for and build in"). Clients choose an agent who explains in plain words and knows people like them, so "Ask me
+   about" prints each topic with one line on what it does for the client. A topic matches by any of its words; the first
+   match in this order wins, so "Retirement savings" is retirement, not savings. Motor and home needs the general licence
+   on the agent's Salesforce record, or it is left off. Anything else the agent types prints as written, with no line. */
+var T_PROF_SKILLS = [
+  ['Life cover', 'Cover that looks after the people who depend on you.', ['life cover', 'life insurance', 'term life', 'whole life'], false],
+  ['Income protection', 'Money coming in if illness or injury stops you working.', ['income'], false],
+  ['Critical illness', 'A lump sum if you are diagnosed with a serious illness, to use as you need.', ['critical', 'dread'], false],
+  ['Health cover', 'Help with medical bills, for you and your family.', ['health', 'medical'], false],
+  ['Retirement savings', 'A plan for the income you will live on later.', ['retire', 'pension', 'annuit'], false],
+  ["Children's education", 'Saving for school and university, on a timetable.', ['education', 'school', 'university', 'college'], false],
+  ['Mortgage protection', 'Cover that clears the home loan if the worst happens.', ['mortgage'], false],
+  ['Savings and investments', 'Growing money towards the goals you name.', ['saving', 'invest'], false],
+  ['Business owners', 'Cover for a business, its partners and the people it relies on.', ['business', 'keyperson', 'key person', 'partner'], false],
+  ['Employee benefits', 'Group life, health and pension for an employer and its staff.', ['employee', 'group'], false],
+  ['Beneficiaries', 'Making sure each policy pays the people you mean it to.', ['beneficiar', 'estate', 'who it pays'], false],
+  ['Motor and home', 'Cover for your car and your home, through Guardian General.', ['motor', 'car', 'home', 'property', 'general insurance'], true]];
+/* the clients an agent may say they work with: offered on the board, any other words allowed */
+var T_PROF_WORKS = ['Young families', 'First-time buyers', 'Newly married', 'Parents planning for school', 'Single parents', 'Professionals',
+  'Public servants', 'Self-employed', 'Business owners', 'Nearing retirement', 'Retirees', 'Grandparents'];
 var T_PROF_KINDS = { agent: 'Agent', manager: 'Branch manager', lead: 'Leads the support team', support: 'Sales support' };
 /* the template a client gets, by the years with Guardian Life: the most seasoned lead with their years, a newer agent with
    the branch behind them */
@@ -6511,6 +6534,8 @@ var T_INTRO = {
   PICK: 'https://rickyrampersadbranch.com/your-policy/agent.html',   // the page a client chooses when and how on
   QUERY: 'https://www.querymypolicy.com',                           // Query Pal: the branch's 24-hour query service
   QUERY_NAME: 'Query Pal',
+  /* the Central Bank's page of registered insurance intermediaries: the page, not its PDF, whose address changes each quarter */
+  REGISTER: 'https://www.central-bank.org.tt/core-functions/financial-stability/insurance-sector/#registered-insurance-intermediaries',
   TELS: 'Branch: (868) 226-6461, 226-6464, 226-6465 · Guardian Direct: (868) 226-MYGG (226-6944)',
   SLOTS: [['morning', 'Morning', '8 to 12'], ['afternoon', 'Afternoon', '12 to 4'], ['evening', 'Evening', '4 to 7']],
   HOWS: [['phone', 'Phone call'], ['whatsapp', 'WhatsApp'], ['video', 'Video call'], ['person', 'Meet in person']],
@@ -6552,6 +6577,8 @@ function tProfRow_(g, n) {
   var p = { n: n, name: name, kind: kind, shown: g('Shown as') || tNiceName_(name), title: g('Title'), since: g('Since'),
     headline: g('Headline'), bio: g('Bio'), ask: list(g('Ask me about')), before: g('Before Guardian'), desig: list(g('Designations'), /\s*[,;·\n]\s*/),
     awards: list(g('Awards'), /\s*[;\n]\s*/), edu: g('Education'), phone: g('Phone'), email: g('E-mail'), photo: g('Photo'),
+    works: list(g('Works with')), areas: list(g('Areas')), langs: list(g('Languages')), promise: g('Promise'), words: g('Own words'),
+    outside: g('Outside work'), reg: g('Registered as'),
     found: found, confirm: list(g('To confirm'), /\n+/), agentOk: g('Agent approved'), branchOk: g('Branch approved'),
     updated: g('Updated'), by: g('Updated by') };
   p.state = p.agentOk && p.branchOk ? 'live' : p.agentOk ? 'agent' : p.branchOk ? 'branch' : 'draft';
@@ -6629,14 +6656,32 @@ function tProfTier_(years) {
   for (var i = 0; i < T_PROF_TIER.length; i++) if (y >= T_PROF_TIER[i].min) return T_PROF_TIER[i];
   return T_PROF_TIER[T_PROF_TIER.length - 1];
 }
+/** "Ask me about" as a client reads it: up to six topics, each { label, line } from T_PROF_SKILLS when one matches (its own
+ *  words otherwise, with no line), each topic once. Motor and home only with a general licence on the agent record. */
+function tProfSkills_(ask, f) {
+  var out = [], seen = {};
+  (ask || []).forEach(function (a) {
+    var w = String(a || '').toLowerCase().trim();
+    if (!w) return;
+    var s = T_PROF_SKILLS.filter(function (x) { return x[2].some(function (k) { return w.indexOf(k) >= 0; }); })[0];
+    if (s && s[3] && !(f && f.general)) return;
+    var label = s ? s[0] : String(a).trim(), key = label.toLowerCase();
+    if (seen[key] || out.length >= 6) return;
+    seen[key] = true;
+    out.push({ label: label, line: s ? s[1] : '' });
+  });
+  return out;
+}
 /** What the page and the e-mail read of one profile: the person's own words, the Salesforce facts, the template, and, for
  *  the person and the branch, what was found online and what to confirm. */
 function tProfView_(p, f, withSources) {
   var v = { name: p.name, kind: p.kind, kindLabel: T_PROF_KINDS[p.kind] || 'Agent', shown: p.shown || tNiceName_(p.name), title: p.title,
     since: p.since, headline: p.headline, bio: p.bio, ask: p.ask || [], before: p.before, desig: p.desig || [], awards: p.awards || [], edu: p.edu,
     phone: p.phone, email: p.email, photo: /^https:\/\/\S+$/.test(p.photo || '') ? p.photo : '', state: p.state || 'none',
+    works: p.works || [], areas: p.areas || [], langs: p.langs || [], promise: p.promise || '', words: p.words || '', outside: p.outside || '', reg: p.reg || '',
     agentOk: p.agentOk || '', branchOk: p.branchOk || '', updated: p.updated || '', by: p.by || '' };
   v.facts = f ? { hired: f.hired, years: f.years, life: f.life, general: f.general, mobile: tPhoneNice_(f.mobile || f.phone), email: f.email, title: f.title } : null;
+  v.skills = tProfSkills_(v.ask, f);
   /* the e-mail a client sees: the one the person typed, else their Guardian address on Salesforce, never another (two
      records carry a personal Gmail and an outside agency's address, which the person has to choose to show) */
   v.show = { phone: tPhoneNice_(p.phone || (f && (f.mobile || f.phone)) || ''),
@@ -6676,7 +6721,8 @@ function tProfileApi_(p, w) {
   var mine = function (pr) { return !!pr && ((!!me && tProfSame_(pr.name, me)) || (boss && !me && pr.kind === 'manager')); };
   var all = tAgProfiles_(), facts = tSfAgentFacts_();
   var view = function (pr) { return tProfView_(pr, tProfFacts_(pr.name, facts), true); };
-  var meta = { ready: all.ready, sf: facts.ready, sfWhy: facts.ready ? '' : (facts.why || ''), boss: boss, kinds: T_PROF_KINDS, max: { bio: T_PROF.BIO, line: T_PROF.LINE } };
+  var meta = { ready: all.ready, sf: facts.ready, sfWhy: facts.ready ? '' : (facts.why || ''), boss: boss, kinds: T_PROF_KINDS, max: { bio: T_PROF.BIO, line: T_PROF.LINE },
+    skills: T_PROF_SKILLS.map(function (s) { return { label: s[0], line: s[1], general: s[3] }; }), works: T_PROF_WORKS };
   if (act === 'list') {
     var own = all.list.filter(mine)[0] || null;
     var res = { ok: true, profiles: meta, mine: own ? view(own) : null };
@@ -6735,6 +6781,8 @@ function tProfileApi_(p, w) {
       });
       if (boss && p.kind !== undefined && T_PROF_KINDS[String(p.kind).toLowerCase()] && cur('Kind').toLowerCase() !== String(p.kind).toLowerCase()) { rec.Kind = String(p.kind).toLowerCase(); changed = true; }
       if (boss && p.photo !== undefined) { var ph = clean(p.photo, 400); if (ph && !/^https:\/\/\S+$/.test(ph)) bad = 'A photo is a link that starts with https://.'; else if (cur('Photo') !== ph) { rec.Photo = ph; changed = true; } }
+      /* what the Central Bank's register lists them as: a regulatory fact, so the branch alone sets it */
+      if (boss && p.reg !== undefined) { var rg = clean(p.reg, T_PROF.LINE); if (cur('Registered as') !== rg) { rec['Registered as'] = tCellSafe_(rg); changed = true; } }
       if (bad) return bad;
       if (!changed) return '';
       /* an edit by one side takes the other's approval away: the person reads the branch's change, the branch the person's */
@@ -6793,10 +6841,51 @@ function tProfWrite_(name, fn) {
 /** The branch team behind every agent, as the introduction shows them: the branch manager, the support lead, then sales
  *  support, each only once both approvals are on (or every row, for a test or a preview). */
 function tIntroTeam_(drafts) {
-  var facts = tSfAgentFacts_(), order = { manager: 0, lead: 1, support: 2 };
+  var facts = tSfAgentFacts_(), order = { manager: 0, lead: 1, support: 2 }, rec = tTeamRecord_();
   return tAgProfiles_().list.filter(function (p) { return order[p.kind] !== undefined && (drafts || p.state === 'live'); })
     .sort(function (a, b) { return order[a.kind] - order[b.kind] || (a.n - b.n); })
-    .map(function (p) { return tProfView_(p, tProfFacts_(p.name, facts), false); });
+    .map(function (p) {
+      var v = tProfView_(p, tProfFacts_(p.name, facts), false);
+      v.rec = p.kind === 'manager' ? null : (rec.list || []).filter(function (r) { return tProfSame_(r.name, p.name); })[0] || null;
+      return v;
+    });
+}
+/* The team's own record with clients, from Salesforce (16 October 2026, "more skillsets"): how many client requests each
+   person closed in the past year, and what kind they mostly were, in the branch's Task Type put into words. Logged
+   e-mails, the birthday flow and the branch's internal work (training, staffing, operations) are not counted, the rule the
+   service record keeps (T_SVC_LOGGED). On 16 October the four on the team had closed some 3,800 between them. Kept six
+   hours; a person under MIN is shown without a count. */
+function tCap_(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
+function tThousands_(n) { return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+var T_TEAMREC = { KEY: 'sf-team-record-v1', TTL: 21600, DAYS: 365, MIN: 20,
+  INTERNAL: ['training', 'lic/staffing/sa/hr', 'hr', 'innovation&creativity', 'rr operations'],
+  WORDS: { 'pendings': 'new applications', 'renewa/pdl/bill': 'premiums and billing', 'servicing': 'policy changes',
+           'scripts/cb': 'follow-up calls', 'claims/ mat': 'claims and maturities' } };
+function tTeamRecord_() {
+  if (T_READ_ONCE && T_READ_ONCE.teamRec) return T_READ_ONCE.teamRec;
+  var out = { ready: false, list: [] }, cache = null;
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(T_TEAMREC.KEY); if (hit) out = { ready: true, list: JSON.parse(hit) }; } catch (e) {}
+  if (!out.ready && tSfOn_()) {
+    try {
+      var by = {};
+      tSfQuery_('SELECT Owner.Name, Task_Type__c, COUNT(Id) n FROM Task WHERE IsClosed = true AND CompletedDateTime = LAST_N_DAYS:' + T_TEAMREC.DAYS +
+        " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE 'Re:%') AND (NOT Subject LIKE 'Fw%') AND (NOT Subject LIKE '%Birthday%')" +
+        " AND (NOT Subject LIKE '%$Record%') GROUP BY Owner.Name, Task_Type__c").forEach(function (r) {
+        var who = String(r.Name || (r.Owner && r.Owner.Name) || '').trim(), type = String(r.Task_Type__c || '').toLowerCase().trim(), n = Number(r.n || r.expr0 || 0);
+        if (!who || !n || T_TEAMREC.INTERNAL.indexOf(type) >= 0) return;
+        var b = by[who] = by[who] || { name: who, n: 0, kinds: {} };
+        b.n += n;
+        if (T_TEAMREC.WORDS[type]) b.kinds[T_TEAMREC.WORDS[type]] = (b.kinds[T_TEAMREC.WORDS[type]] || 0) + n;
+      });
+      out = { ready: true, list: Object.keys(by).map(function (k) {
+        var b = by[k];
+        return { name: b.name, n: b.n, top: Object.keys(b.kinds).sort(function (x, y) { return b.kinds[y] - b.kinds[x]; }).slice(0, 3) };
+      }) };
+      try { if (cache) cache.put(T_TEAMREC.KEY, JSON.stringify(out.list), T_TEAMREC.TTL); } catch (e) {}
+    } catch (e) { out.why = String(e && e.message ? e.message : e).slice(0, 200); }
+  }
+  if (T_READ_ONCE) T_READ_ONCE.teamRec = out;
+  return out;
 }
 /** The link a tap in the introduction opens: the client's own token, the agent, and what they tapped. */
 function tIntroPickUrl_(c, agentName, extra) {
@@ -6808,7 +6897,10 @@ function tIntroPickUrl_(c, agentName, extra) {
 function tIntroBuild_(c, agent, test, pv) {
   var pr = pv ? null : tProfFor_(agent.name), facts = tSfAgentFacts_();
   if (!pv) pv = tProfView_(pr && (test || pr.state === 'live') ? pr : tProfBare_(agent.name), tProfFacts_(agent.name, facts), false);
-  if (!test && pv.state !== 'live') { pv.headline = ''; pv.bio = ''; pv.ask = []; pv.before = ''; pv.awards = []; pv.desig = []; pv.edu = ''; }
+  if (!test && pv.state !== 'live') {
+    pv.headline = ''; pv.bio = ''; pv.ask = []; pv.skills = []; pv.before = ''; pv.awards = []; pv.desig = []; pv.edu = '';
+    pv.works = []; pv.areas = []; pv.langs = []; pv.promise = ''; pv.words = ''; pv.outside = ''; pv.reg = '';
+  }
   if (!pv.show.phone && agent.phone) pv.show.phone = tPhoneNice_(agent.phone);
   if (!pv.show.email && /@myguardiangroup\.com$/i.test(agent.email || '')) pv.show.email = agent.email;
   var team = tIntroTeam_(test), first = c.firstName || 'there';
@@ -6845,22 +6937,51 @@ function tIntroBuild_(c, agent, test, pv) {
   var chips = function (arr, bg, fg) {
     return arr.map(function (x) { return '<span style="display:inline-block;background:' + bg + ';color:' + fg + ';border-radius:999px;padding:3px 10px;margin:0 4px 6px 0;font-size:12.5px;font-weight:700">' + esc(x) + '</span>'; }).join('');
   };
+  var listAnd = function (a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; };
+  /* what the agent helps with, two to a row, each with one line on what it does for the client */
+  var sk = pv.skills || [], skillRows = '';
+  for (var si = 0; si < sk.length; si += 2) {
+    skillRows += '<tr>' + [sk[si], sk[si + 1]].map(function (s) {
+      return s ? '<td style="width:50%;padding:4px;vertical-align:top"><div style="border:1px solid #dcebef;border-radius:10px;padding:9px 11px;background:#f7fbfc">' +
+        '<div style="font:800 13.5px ' + font + ';color:' + teal + '">' + esc(s.label) + '</div>' +
+        (s.line ? '<div style="font-size:12.5px;line-height:1.45;color:' + body + ';margin-top:2px">' + esc(s.line) + '</div>' : '') + '</div></td>'
+        : '<td style="width:50%;padding:4px"></td>';
+    }).join('') + '</tr>';
+  }
+  var skills = skillRows ? '<div style="font:800 14.5px ' + font + ';color:' + ink + ';margin:4px 0 4px">What ' + esc(af) + ' can help you with</div>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 -4px 6px">' + skillRows + '</table>' : '';
+  var where = [];
+  if (pv.areas.length) where.push('<b style="color:' + ink + '">Covers</b> ' + esc(listAnd(pv.areas.slice(0, 5))));
+  if (pv.langs.length) where.push('<b style="color:' + ink + '">Speaks</b> ' + esc(listAnd(pv.langs.slice(0, 4))));
+  var works = pv.works.length ? '<div style="margin:8px 0 2px;font-size:13.5px;color:' + mute + '">' + esc(af) + ' works with</div><div>' + chips(pv.works.slice(0, 6), '#eef3fb', '#1d3c6e') + '</div>' : '';
+  var quote = pv.words ? '<div style="border-left:4px solid ' + gold + ';background:#fffaf0;border-radius:0 10px 10px 0;padding:10px 14px;margin:6px 0 10px">' +
+    '<div style="font:italic 600 15px/1.5 Georgia,\'Times New Roman\',serif;color:' + ink + '">&ldquo;' + esc(pv.words) + '&rdquo;</div>' +
+    '<div style="font-size:12.5px;color:' + mute + ';margin-top:4px">' + esc(pv.shown) + '</div></div>' : '';
+  var promise = pv.promise ? '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:8px 0 6px"><tr><td style="background:' + navy + ';border-radius:10px;padding:10px 14px">' +
+    '<div style="font:800 11.5px ' + font + ';color:' + gold + ';letter-spacing:.6px">' + esc(af.toUpperCase()) + '&rsquo;S PROMISE TO YOU</div>' +
+    '<div style="font:700 14.5px/1.45 ' + font + ';color:#ffffff;margin-top:2px">' + esc(pv.promise) + '</div></td></tr></table>' : '';
+  /* registered with the regulator: the one fact a client can check for themselves */
+  var reg = pv.reg ? '<div style="margin:10px 0 2px;font-size:13px;color:' + body + '"><span style="display:inline-block;background:#e7f6ec;color:#17603a;border-radius:6px;padding:2px 8px;font-weight:800;margin-right:6px">&#10003; Registered</span>' +
+    'with the Central Bank of Trinidad and Tobago as ' + esc(pv.reg.replace(/^as\s+/i, '')) + '.' +
+    (T_INTRO.REGISTER ? ' <a href="' + esc(T_INTRO.REGISTER) + '" style="color:' + teal + ';font-weight:700">Check the register</a>' : '') + '</div>' : '';
   var card = '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid ' + rule + ';border-radius:14px;border-collapse:separate;background:#ffffff">' +
     (T.ribbon ? '<tr><td style="background:' + (T.band === gold ? '#fff7df' : '#e6fbff') + ';border-radius:14px 14px 0 0;padding:8px 20px;font:800 12.5px ' + font + ';color:' + (T.band === gold ? '#7a5a12' : teal) + ';letter-spacing:.3px">' + esc(T.ribbon.toUpperCase()) + '</td></tr>' : '') +
     '<tr><td style="padding:18px 20px 6px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
     '<td style="width:70px;padding-right:14px;vertical-align:top">' + avatar + '</td><td style="vertical-align:top">' +
     '<div style="font:800 20px ' + font + ';color:' + ink + '">' + esc(pv.shown) + '</div>' +
-    '<div style="color:' + mute + ';font-size:13.5px">' + esc(pv.title || 'Your agent') + ' · Ricky Rampersad Branch</div>' +
+    '<div style="color:' + mute + ';font-size:13.5px">' + esc(pv.title || 'Your agent') + ' · ' + esc(pv.reg ? tCap_(pv.reg.replace(/^(as\s+)?(a|an)\s+/i, '')) : 'Ricky Rampersad Branch') + '</div>' +
     (contact.length ? '<div style="margin-top:6px;font-size:14px;overflow-wrap:anywhere;word-break:break-word">' + contact.join(' &nbsp;·&nbsp; ') + '</div>' : '') +   // a long address wraps on a phone
     '</td></tr></table></td></tr>' +
     (tiles.length ? '<tr><td style="padding:8px 16px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>' + tiles.map(tile).join('') + '</tr></table>' +
       '<div style="font-size:11px;color:#8a97a8;padding:2px 6px 0">The dates are from Guardian Life\'s own agent record.</div></td></tr>' : '') +
-    ((pv.headline || paras || pv.awards.length || pv.before || pv.ask.length) ? '<tr><td style="padding:12px 20px 6px;font-size:14.5px;color:' + body + '">' +
-      (pv.headline ? '<p style="margin:0 0 10px;font:700 16px/1.4 ' + font + ';color:' + ink + '">' + esc(pv.headline) + '</p>' : '') + paras +
+    ((pv.headline || paras || pv.awards.length || pv.before || skills || works || quote || promise || where.length || pv.outside || reg) ? '<tr><td style="padding:12px 20px 8px;font-size:14.5px;color:' + body + '">' +
+      (pv.headline ? '<p style="margin:0 0 10px;font:700 16px/1.4 ' + font + ';color:' + ink + '">' + esc(pv.headline) + '</p>' : '') + paras + quote +
       (pv.awards.length ? '<div style="margin:2px 0 6px">' + chips(pv.awards.map(function (x) { return '★ ' + x; }), '#fff4d6', '#7a5a12') + '</div>' : '') +
-      (pv.before ? '<p style="margin:0 0 8px;font-size:13.5px;color:' + mute + '"><b style="color:' + ink + '">Before Guardian Life:</b> ' + esc(pv.before) + '</p>' : '') +
-      (pv.ask.length ? '<div style="margin-top:4px;font-size:13.5px;color:' + mute + '">Ask ' + esc(af) + ' about:</div><div style="margin-top:4px">' + chips(pv.ask, '#eef6f8', teal) + '</div>' : '') +
-      '</td></tr>' : '') +
+      skills + works + promise +
+      (where.length ? '<div style="margin:8px 0 4px;font-size:13.5px;color:' + body + '">' + where.join(' &nbsp;·&nbsp; ') + '</div>' : '') +
+      (pv.before ? '<p style="margin:6px 0 6px;font-size:13.5px;color:' + mute + '"><b style="color:' + ink + '">Before Guardian Life:</b> ' + esc(pv.before) + '</p>' : '') +
+      (pv.outside ? '<p style="margin:6px 0 6px;font-size:13.5px;color:' + mute + '"><b style="color:' + ink + '">Outside work:</b> ' + esc(pv.outside) + '</p>' : '') +
+      reg + '</td></tr>' : '') +
     '</table>';
   var pick = function (extra) { return esc(tIntroPickUrl_(c, pv.name, extra)); };
   var picker = '<div style="background:' + navy + ';border-radius:14px;padding:18px 16px 14px">' +
@@ -6875,6 +6996,16 @@ function tIntroBuild_(c, agent, test, pv) {
       return '<td style="padding:3px;width:25%"><a href="' + pick('h=' + h[0]) + '" style="display:block;border:1px solid #3d5470;color:#ffffff;text-align:center;border-radius:9px;padding:9px 2px;font:700 12.5px ' + font + ';text-decoration:none">' + esc(h[1]) + '</a></td>';
     }).join('') + '</tr></table>' +
     '<div style="margin-top:12px;text-align:center"><a href="' + pick('x=1') + '" style="color:' + gold + ';font:700 13.5px ' + font + ';text-decoration:none">Or choose a day and an exact time &rarr;</a></div></div>';
+  /* what the first call is: a client who has never met the agent should know it is a conversation, not a sale */
+  var steps = ['What you told us comes first: your answers reach ' + af + ' before the call.',
+    'What you hold with us, in plain words: what each policy does today, and who it pays.',
+    'Anything you would like looked at, noted. No pressure and no charge: nothing changes unless you ask.'];
+  var firstCall = '<div style="font:800 17px ' + font + ';color:' + ink + '">What happens when ' + esc(af) + ' calls</div>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px">' + steps.map(function (s, i) {
+      return '<tr><td style="width:34px;vertical-align:top;padding:0 10px 10px 0"><div style="width:26px;height:26px;border-radius:50%;background:' + gold + ';color:' + navy +
+        ';text-align:center;font:800 13px/26px ' + font + '">' + (i + 1) + '</div></td><td style="vertical-align:top;padding:2px 0 10px;font-size:14px;color:' + body + '">' + esc(s) + '</td></tr>';
+    }).join('') + '</table>' +
+    '<div style="font-size:13.5px;color:' + mute + '">After that, a review with ' + esc(af) + ' every six months and in your birthday month.</div>';
   var teamBlock = tIntroTeamHtml_(team, first, null, af, tier === 'new');
   var query = '<div style="background:#f4fafc;border:1px solid #cfe9ef;border-radius:12px;padding:14px 16px">' +
     '<div style="font:800 15px ' + font + ';color:' + teal + '">Help at any hour, day or night</div>' +
@@ -6895,8 +7026,8 @@ function tIntroBuild_(c, agent, test, pv) {
     '<p style="margin:18px 0 4px;font:800 25px/1.25 ' + font + ';color:#ffffff">' + esc(T.h) + '</p>' +
     '<p style="margin:0;color:#b9c9da;font-size:14.5px">Thank you for answering our letter. A person read what you told us, and matched you with the agent who fits.</p></div>' +
     '<div style="padding:22px 22px 4px">' + card + '</div>' +
-    (tier === 'new' ? '<div style="padding:16px 26px 4px">' + teamBlock + '</div><div style="padding:14px 22px 4px">' + picker + '</div>'
-      : '<div style="padding:16px 22px 4px">' + picker + '</div><div style="padding:18px 26px 4px">' + teamBlock + '</div>') +
+    (tier === 'new' ? '<div style="padding:16px 26px 4px">' + teamBlock + '</div><div style="padding:14px 22px 4px">' + picker + '</div><div style="padding:18px 26px 4px">' + firstCall + '</div>'
+      : '<div style="padding:16px 22px 4px">' + picker + '</div><div style="padding:18px 26px 4px">' + firstCall + '</div><div style="padding:18px 26px 4px">' + teamBlock + '</div>') +
     '<div style="padding:14px 26px 22px">' + query +
     '<p style="margin:16px 0 0">Nothing about your policy changes. It stays with Guardian Life, and the same branch team keeps your file.</p>' +
     '<p style="margin:14px 0 0"><b style="color:' + ink + '">' + esc(care.care_name) + '</b><br>' + esc(care.care_line) + '</p></div></div>';
@@ -6917,15 +7048,21 @@ function tIntroTeamHtml_(team, clientFirst, only, af, lead) {
   var rows = list.map(function (v) {
     var extra = v.kind === 'manager' && v.show.phone ? ' Direct line: <a href="tel:' + esc(v.show.phone.replace(/[^\d+]/g, '')) + '" style="color:' + ink + ';font-weight:700;text-decoration:none">' + esc(v.show.phone) + '</a>' : '';
     var since = v.kind === 'manager' && v.facts && v.facts.hired ? 'With Guardian Life since ' + v.facts.hired.slice(0, 4) + '. ' : (v.since && /^\d{4}$/.test(v.since) ? 'With the branch since ' + v.since + '. ' : '');
-    /* a photo beside the line when the profile has one (the branch manager's, first): a face behind the agent */
-    var pic = v.photo ? '<td style="width:44px;padding:12px 12px 10px 0;border-top:1px solid #eef2f5;vertical-align:top"><img src="' + esc(v.photo) + '" width="44" height="44" alt="" ' +
-      'style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover"></td>' : '';
-    return '<tr>' + pic + '<td' + (v.photo ? '' : ' colspan="2"') + ' style="padding:10px 0;border-top:1px solid #eef2f5"><b style="color:' + ink + '">' + esc(v.shown) + '</b>' + (v.title ? ', ' + esc(v.title) : '') +
-      '<br><span style="font-size:13.5px;color:' + mute + '">' + esc(since) + esc(line(v)) + extra + '</span></td></tr>';
+    /* a face behind the agent: the photo when the profile has one, the person's initials until then */
+    var ini = String(v.shown || '').split(/\s+/).filter(Boolean).map(function (x) { return x.charAt(0); }).join('').slice(0, 2).toUpperCase();
+    var pic = '<td style="width:44px;padding:12px 12px 10px 0;border-top:1px solid #eef2f5;vertical-align:top">' + (v.photo ? '<img src="' + esc(v.photo) + '" width="44" height="44" alt="" ' +
+      'style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover">' : '<div style="width:44px;height:44px;border-radius:50%;background:#e4ebf2;text-align:center;font:800 15px/44px ' + font + ';color:#07131f">' + esc(ini) + '</div>') + '</td>';
+    /* what they did for clients in the past year, from their own Salesforce record */
+    var rec = v.rec && v.rec.n >= T_TEAMREC.MIN ? '<br><span style="font-size:12.5px;color:#07606f;font-weight:700">' + tThousands_(v.rec.n) + ' client requests handled in the past year' +
+      (v.rec.top && v.rec.top.length ? '</span><span style="font-size:12.5px;color:' + mute + '">: mostly ' + esc(v.rec.top.length < 2 ? v.rec.top[0] : v.rec.top.slice(0, -1).join(', ') + ' and ' + v.rec.top[v.rec.top.length - 1]) + '.</span>' : '.</span>') : '';
+    return '<tr>' + pic + '<td style="padding:10px 0;border-top:1px solid #eef2f5"><b style="color:' + ink + '">' + esc(v.shown) + '</b>' + (v.title ? ', ' + esc(v.title) : '') +
+      '<br><span style="font-size:13.5px;color:' + mute + '">' + esc(since) + esc(line(v)) + extra + '</span>' + rec + '</td></tr>';
   }).join('');
+  var total = list.reduce(function (s, v) { return s + (v.rec && v.rec.n >= T_TEAMREC.MIN ? v.rec.n : 0); }, 0);
   var head = lead ? 'Never on their own: the whole branch behind ' + who : 'Your whole branch stands behind ' + who;
-  var sub = lead ? who + ' is new to Guardian Life and works with our branch team on everything: your requests are handled by the same team that looks after every client of the branch, and most go on to Guardian Life within a working day.'
-    : who + ' never works alone. Every request is handled by our branch team, and most go on to Guardian Life within a working day.';
+  var sub = (lead ? who + ' is new to Guardian Life and works with our branch team on everything: your requests are handled by the same team that looks after every client of the branch, and most go on to Guardian Life within a working day.'
+    : who + ' never works alone. Every request is handled by our branch team, and most go on to Guardian Life within a working day.') +
+    (total && !only ? ' In the past year the team below handled ' + tThousands_(total) + ' client requests.' : '');
   return '<div style="font:800 17px ' + font + ';color:' + ink + '">' + esc(head) + '</div>' +
     '<div style="color:' + mute + ';font-size:13.5px;margin:2px 0 10px">' + esc(sub) + '</div>' +
     (rows ? '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">' + rows + '</table>' : '');
