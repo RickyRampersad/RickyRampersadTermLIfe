@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16i';
+var SCRIPT_VERSION = '2026-10-16j';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3690,7 +3690,7 @@ function housekeepingTick_() {
     if (!expected(sid)) return;
     var at = endFor_(sid) - HK_LEAD_MIN;
     if (mins < at || mins > at + HK_WINDOW_MIN) return;
-    var key = 'hk_' + sid + '_' + day;
+    var key = 'hkv2_' + sid + '_' + day;   // the official close-out (16 Oct); an earlier version's send does not stop it
     if (props.getProperty(key)) return;
     if (timedSend_(props, key, now, function () { if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid] || ''); })) sent.push(p.name);
   });
@@ -3725,7 +3725,7 @@ function sendHousekeepingNow() {
     if (!SCHEDULE[sid] || DAY_MAIL_DESKS.indexOf(sid) < 0 || absent[sid]) return;
     if (!(present[sid] || props.getProperty('daystart_first_' + sid + '_' + day))) { out.push(sid + ': not signed in, no morning mail'); return; }
     if (mins < endFor_(sid) - HK_LEAD_MIN) { out.push(sid + ': not yet (' + twelve_(mmText_(endFor_(sid) - HK_LEAD_MIN)) + ')'); return; }
-    var key = 'hk_' + sid + '_' + day;
+    var key = 'hkv2_' + sid + '_' + day;   // the official close-out (16 Oct); an earlier version's send does not stop it
     if (props.getProperty(key)) { out.push(sid + ': already sent ' + props.getProperty(key)); return; }
     try { if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid] || ''); props.setProperty(key, hhmm_(now)); out.push(sid + ': sent'); }
     catch (e) { out.push(sid + ' FAILED: ' + (e && e.message)); }
@@ -6109,7 +6109,7 @@ function weekFor_(sid, day) {
       var from = sfkUtcAt_(days[0], 0), to = sfkUtcAt_(shiftDays_(day, 1), 0);
       var cl = sfkQuery_("SELECT Id, LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND IsClosed = true AND LastModifiedDate >= " + from + ' AND LastModifiedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') LIMIT 1000");
       cl.forEach(function (t) { var l = sfLocal_(t.LastModifiedDate); if (l) (closedBy[l.day] = closedBy[l.day] || []).push(t.Id); });
-      for (var i = 0; i < cl.length; i += 150) sfkQuery_("SELECT ParentId FROM FeedItem WHERE CreatedById = '" + u.id + "' AND ParentId IN (" + cl.slice(i, i + 150).map(function (t) { return "'" + t.Id + "'"; }).join(',') + ') LIMIT 2000').forEach(function (f) { noted[f.ParentId] = 1; });
+      for (var i = 0; i < cl.length; i += 150) sfkQuery_("SELECT ParentId FROM FeedItem WHERE CreatedById = '" + u.id + "' AND Type IN ('TextPost','ContentPost','LinkPost') AND ParentId IN (" + cl.slice(i, i + 150).map(function (t) { return "'" + t.Id + "'"; }).join(',') + ') LIMIT 2000').forEach(function (f) { noted[f.ParentId] = 1; });
       sfkQuery_("SELECT CreatedDate FROM Task WHERE CreatedById = '" + u.id + "' AND CreatedDate >= " + from + ' AND CreatedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') LIMIT 1000")
         .forEach(function (t) { var l = sfLocal_(t.CreatedDate); if (l) created[l.day] = (created[l.day] || 0) + 1; });
     } catch (e) {}
