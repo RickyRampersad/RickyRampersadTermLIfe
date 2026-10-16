@@ -18,11 +18,18 @@
   .step span{font-size:.83rem;color:var(--muted);line-height:1.6}
   .wline{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);align-items:flex-start}
   .wline:last-child{border-bottom:none}
-  .wline .w{flex:none;min-width:210px;font-family:'Montserrat',sans-serif;font-size:.9rem;font-weight:600;color:var(--text)}
-  .wline .c{font-size:.83rem;color:var(--muted);line-height:1.6}
+  /* A letter and a report are laid out down the page — an address block, a date,
+     a greeting, To/From/Date lines. So the work column honours its line breaks,
+     and it has to be able to shrink: flex:none sizes to max-content, which sent
+     a long worked line straight off the right of a laptop screen. */
+  .wline .w{flex:1 1 210px;min-width:0;max-width:52%;white-space:pre-line;overflow-wrap:anywhere;
+            font-family:'Montserrat',sans-serif;font-size:.9rem;font-weight:600;color:var(--text);line-height:1.55}
+  .wline .c{flex:1 1 auto;min-width:0;font-size:.83rem;color:var(--muted);line-height:1.6;overflow-wrap:anywhere}
+  /* A topic can arrive with bulleted instructions under it; keep its shape. */
+  .wprob{font-weight:600;margin-bottom:14px;font-size:.95rem;white-space:pre-line}
   .pit li{font-size:.87rem;line-height:1.7;color:var(--muted);margin-left:18px}
   .pit li::marker{color:var(--bad)}
-  @media (max-width:640px){ .wline{flex-direction:column;gap:4px} .wline .w{min-width:0} }
+  @media (max-width:640px){ .wline{flex-direction:column;gap:4px} .wline .w{min-width:0;max-width:100%} }
 </style>
 </head>
 <body>
@@ -146,7 +153,7 @@
 
         '<div class="section-label">Worked example</div>'+
         '<div class="card" style="background:rgba(0,0,0,.24)">'+
-          '<p style="font-weight:600;margin-bottom:14px;font-size:.95rem">'+esc(g.worked.problem)+'</p>'+
+          '<p class="wprob">'+esc(g.worked.problem)+'</p>'+
           g.worked.lines.map(function(l){
             return '<div class="wline"><span class="w">'+esc(l.work)+'</span><span class="c">'+esc(l.note)+'</span></div>';
           }).join('')+

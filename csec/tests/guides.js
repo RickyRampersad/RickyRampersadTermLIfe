@@ -194,6 +194,53 @@ const signIn=async(pg,tab,lvl)=>{
     console.log('   opens on ELA Writing with '+n+' papers');
   });
 
+  /* A letter and a report are laid out down the page, so a worked line carries
+     real newlines and can run long. The work column used to be flex:none with no
+     white-space rule: newlines collapsed into one run-on line and a long line
+     pushed the card off the side of a laptop. Both are fixed; this holds them. */
+  await step('a worked example keeps its line breaks and stays on the screen',async()=>{
+    /* Appended to the real data file on the way through, because paint() closes
+       over its own filtered copy of the list. */
+    const PROBE = 'window.CSEC_GUIDES.push({id:"g-zz-probe",subj:"p-ela-writing",strand:"pw-expository",level:5,'+
+      'title:"Probe",when:"Never \u2014 a test fixture.",'+
+      'steps:[{do:"a",note:"b"},{do:"c",note:"d"},{do:"e",note:"f"},{do:"g",note:"h"}],'+
+      'worked:{problem:"A topic with bulleted instructions:\\n\u2022 the date, time and place\\n\u2022 who was involved",'+
+      'lines:[{work:"14 Pump Trace,\\nSangre Grande.\\n20th March, 2026.\\n\\nDear Mr. Ramkissoon,",note:"An address block."},'+
+      '{work:"'+'X'.repeat(390)+'",note:"A long one."},{work:"short",note:"ok"}]},'+
+      'pitfalls:["one","two"]});';
+    const h=async(route)=>{
+      const res=await route.fetch();
+      route.fulfill({response:res, body:(await res.text())+'\n'+PROBE});
+    };
+    await pg.route('**/data/guides.js',h);
+    try{
+      await signIn(pg,'#c-form-primary',5);
+      await pg.goto(B+'guides.html',{waitUntil:'networkidle'});
+      const r=await pg.evaluate(()=>{
+        const d=document.getElementById('g-g-zz-probe');
+        if(!d) return {err:'probe guide did not render'};
+        d.open=true;
+        const w=d.querySelectorAll('.wline .w'), prob=d.querySelector('.wprob'), root=document.documentElement;
+        return {
+          ws:getComputedStyle(w[0]).whiteSpace,
+          probWs:prob?getComputedStyle(prob).whiteSpace:null,
+          addrH:w[0].getBoundingClientRect().height,
+          shortH:w[2].getBoundingClientRect().height,
+          longRight:Math.round(w[1].getBoundingClientRect().right),
+          cardRight:Math.round(d.getBoundingClientRect().right),
+          overflow:root.scrollWidth-root.clientWidth
+        };
+      });
+      if(r.err) throw new Error(r.err);
+      if(!/pre-line|pre-wrap|^pre$/.test(r.ws)) throw new Error('work column white-space is '+r.ws+' — newlines will collapse');
+      if(!/pre-line|pre-wrap|^pre$/.test(r.probWs)) throw new Error('topic paragraph white-space is '+r.probWs);
+      if(r.addrH < r.shortH*3) throw new Error('a five-line address rendered '+Math.round(r.addrH)+'px against '+Math.round(r.shortH)+'px for one line — still collapsing');
+      if(r.longRight > r.cardRight+1) throw new Error('a long worked line runs '+(r.longRight-r.cardRight)+'px past the card edge');
+      if(r.overflow > 2) throw new Error('page overflows by '+r.overflow+'px on a laptop');
+      console.log('   newlines kept ('+Math.round(r.addrH)+'px for 5 lines vs '+Math.round(r.shortH)+'px for 1), long line contained');
+    } finally { await pg.unroute('**/data/guides.js',h); }
+  });
+
   await step('mobile: a guide opens cleanly on a phone',async()=>{
     await pg.setViewportSize({width:390,height:844});
     await signIn(pg,'#c-form-primary',5);
