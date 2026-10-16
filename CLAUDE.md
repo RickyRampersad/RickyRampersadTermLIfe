@@ -3826,8 +3826,11 @@ the **First-time** template ("research all the instances where approvals was
 given … and if never given then a nice approval template"), agent and manager
 copied. Flag: 3 or more in 90 days, this one counted (the manager's choice).
 Test mode is the default (`APR_MODE`); live approval is refused while
-`APR_GL_CS_TO` is empty. Sent by MailApp under the manager's name, reply-to and
-copy his Outlook: Apps Script cannot send as his Guardian mailbox. Old Jotform
+`APR_GL_CS_TO` is empty. Every e-mail goes from support@rickyrampersadbranch.com
+through Microsoft Graph (`aprMsSend_`, the Service Questionnaire project's Entra
+app: copy `MS_TENANT`, `MS_CLIENT`, `MS_SECRET` into RR Operations), replies to
+support@, the manager's Outlook copied. Without those properties a test copy
+falls back to Gmail and live approval is refused; live mail never goes by Gmail. Old Jotform
 rows read "Decision not recorded", never "Approved". Tests:
 `tests/test-approvals.js`, `tests/e2e-approvals.js`. Runbook: the Approvals
 section of `RROPERATIONS-SETUP.md`.

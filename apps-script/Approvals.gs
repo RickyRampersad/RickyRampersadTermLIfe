@@ -47,8 +47,17 @@
  *   APR_TEST_INBOX     test e-mails. Empty: DB_TEST_INBOX, then the owner.
  *   APR_GL_CS_TO       GL Customer Service address(es), comma-separated.
  *                      Live approval is refused until this is set.
- *   APR_BM_EMAIL       the manager's Outlook address: reply-to and copy on
- *                      every approval, and where new requests are announced.
+ *   APR_BM_EMAIL       the manager's Outlook address: copied on every
+ *                      approval, and where new requests are announced.
+ *   APR_FROM           the mailbox every e-mail goes from. Default
+ *                      support@rickyrampersadbranch.com (asked for on 15
+ *                      October 2026: "ok so from support@…").
+ *   APR_REPLY_TO       reply-to. Blank: APR_FROM.
+ *   MS_TENANT, MS_CLIENT, MS_SECRET
+ *                      the Entra app the Service Questionnaire project already
+ *                      sends support@'s mail with (Graph Mail.Send). Copy the
+ *                      three values into this project. Without them nothing
+ *                      goes live: test mode falls back to the owner's Gmail.
  *   APR_HISTORY_ID     the Branch Managers Approval spreadsheet.
  *   APR_HISTORY_TAB    the Jotform's tab in it. Default "Form responses".
  *   APR_APPROVER_ROLE  a pattern for the Access tab's Role column that may
@@ -63,6 +72,8 @@ var APR = {
   HISTORY_TAB: 'Form responses',
   REQUESTS_TAB: 'Approval Requests',
   BM_EMAIL: 'Ricky.Rampersad@myguardiangroup.com',
+  FROM: 'support@rickyrampersadbranch.com',
+  FROM_NAME: 'Ricky Rampersad Branch',
   BM_NAME: 'Ricky Rampersad',
   BM_TITLE: 'Branch Manager',
   SITE: 'https://rickyrampersadbranch.com/approvals/',
@@ -120,7 +131,7 @@ function aprMustApprove_(who) {
 function aprStart_(who) {
   return { ok: true, approver: aprIsApprover_(who), mode: aprMode_(), types: APR.TYPES, reasons: APR.REASONS,
            minReason: APR.MIN_REASON, flagDays: APR.FLAG_DAYS, flagCount: APR.FLAG_COUNT,
-           glSet: !!aprProp_('APR_GL_CS_TO') };
+           glSet: !!aprProp_('APR_GL_CS_TO'), from: aprFrom_(), msSet: !!aprMsCreds_() };
 }
 
 
@@ -459,7 +470,7 @@ function aprQueue_(b) {
     out.history = prior.map(aprOutRec_);
     return out;
   };
-  return { ok: true, mode: aprMode_(), glSet: !!aprProp_('APR_GL_CS_TO'),
+  return { ok: true, mode: aprMode_(), glSet: !!aprProp_('APR_GL_CS_TO'), msSet: !!aprMsCreds_(), from: aprFrom_(),
            open: open.map(withHistory), done: done.map(aprOutRow_) };
 }
 
@@ -481,6 +492,9 @@ function aprDecide_(b, who) {
   }
   if (decision === 'approve' && aprMode_() === 'live' && !aprProp_('APR_GL_CS_TO')) {
     throw new Error('GL Customer Service address is not set (APR_GL_CS_TO). Nothing was sent.');
+  }
+  if (decision === 'approve' && aprMode_() === 'live' && !aprMsCreds_()) {
+    throw new Error('Sending from ' + aprFrom_() + ' is not set up (MS_TENANT, MS_CLIENT, MS_SECRET). Nothing was sent.');
   }
 
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -629,29 +643,83 @@ function aprNotifyManager_(ref, agent, client, type, amount, flags) {
   aprSend_(aprProp_('APR_BM_EMAIL', APR.BM_EMAIL), 'Approval request: ' + client + ' — ' + type + ' (' + ref + ')', html, []);
 }
 
-/* Sent under the manager's name with his Outlook address as reply-to and in
-   copy, so every approval sits in his Outlook. In test mode every message
-   goes only to the test inbox, with a banner naming who it was for. */
+/* Every e-mail goes from support@rickyrampersadbranch.com through Microsoft
+   Graph, the way the Service Questionnaire project sends its letters, and is
+   kept in that mailbox's Sent Items. The manager's Outlook is copied on every
+   approval. In test mode every message goes only to the test inbox, with a
+   banner naming who it was for; without the Microsoft 365 properties a test
+   falls back to the script owner's Gmail, and live mail is never sent that
+   way. */
+function aprFrom_() { return aprProp_('APR_FROM', APR.FROM); }
+
+function aprMsCreds_() {
+  var c = { tenant: aprProp_('MS_TENANT'), client: aprProp_('MS_CLIENT'), secret: aprProp_('MS_SECRET') };
+  return (c.tenant && c.client && c.secret) ? c : null;
+}
+
+function aprMsToken_() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('apr:ms-token');
+  if (hit) return hit;
+  var c = aprMsCreds_();
+  if (!c) throw new Error('Microsoft 365 is not set up (MS_TENANT, MS_CLIENT, MS_SECRET).');
+  var res = UrlFetchApp.fetch('https://login.microsoftonline.com/' + encodeURIComponent(c.tenant) + '/oauth2/v2.0/token', {
+    method: 'post', muteHttpExceptions: true,
+    payload: { client_id: c.client, client_secret: c.secret, grant_type: 'client_credentials',
+               scope: 'https://graph.microsoft.com/.default' },
+  });
+  var body = {};
+  try { body = JSON.parse(res.getContentText()); } catch (e) {}
+  if (res.getResponseCode() !== 200 || !body.access_token) {
+    throw new Error('Microsoft 365 refused the sign-in: ' + String(body.error_description || body.error || res.getResponseCode()).split('\n')[0].slice(0, 200));
+  }
+  try { cache.put('apr:ms-token', body.access_token, Math.max(60, Math.min(3000, (body.expires_in || 3600) - 300))); } catch (e) {}
+  return body.access_token;
+}
+
+function aprMsSend_(to, subject, html, cc, replyTo) {
+  var addr = function (list) { return list.map(function (a) { return { emailAddress: { address: a } }; }); };
+  var msg = { subject: subject, body: { contentType: 'HTML', content: html },
+              from: { emailAddress: { name: APR.FROM_NAME, address: aprFrom_() } },
+              toRecipients: addr(String(to).split(/\s*,\s*/).filter(String)) };
+  if (cc.length) msg.ccRecipients = addr(cc);
+  if (replyTo) msg.replyTo = addr([replyTo]);
+  var res = UrlFetchApp.fetch('https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(aprFrom_()) + '/sendMail', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { Authorization: 'Bearer ' + aprMsToken_() },
+    payload: JSON.stringify({ message: msg, saveToSentItems: true }),
+  });
+  var code = res.getResponseCode();
+  if (code === 202) return;
+  if (code === 401) { try { CacheService.getScriptCache().remove('apr:ms-token'); } catch (e) {} }
+  var why = 'HTTP ' + code;
+  try { var err = JSON.parse(res.getContentText()).error; if (err) why = (err.code ? err.code + ': ' : '') + (err.message || ''); } catch (e) {}
+  throw new Error('Microsoft 365 did not send: ' + why.slice(0, 200));
+}
+
 function aprSend_(to, subject, html, cc) {
   to = String(to || '').trim();
   cc = (cc || []).map(function (x) { return String(x || '').trim(); })
-    .filter(function (x, i, a) { return x && /@/.test(x) && a.indexOf(x) === i && x.toLowerCase() !== to.toLowerCase(); });
-  var test = aprMode_() !== 'live';
+    .filter(function (x, i, a) { return x && /@/.test(x) && a.indexOf(x) === i && to.toLowerCase().indexOf(x.toLowerCase()) < 0; });
+  var test = aprMode_() !== 'live', ms = !!aprMsCreds_();
   if (test) {
     var inbox = aprProp_('APR_TEST_INBOX') || dbProp_('DB_TEST_INBOX') || Session.getEffectiveUser().getEmail();
     html = '<div style="background:#fff4d6;border:1px solid #efc24b;padding:10px 14px;font-family:Arial;font-size:13px">' +
-      'TEST — in live mode this goes to <b>' + aprEsc_(to || '(not set)') + '</b>' +
+      'TEST — in live mode this goes from <b>' + aprEsc_(aprFrom_()) + '</b> to <b>' + aprEsc_(to || '(not set)') + '</b>' +
       (cc.length ? ', copied to ' + aprEsc_(cc.join(', ')) : '') + '.</div>' + html;
     to = inbox; cc = []; subject = '[TEST] ' + subject;
   }
   if (!to) return { status: 'Not sent: no address' };
+  var replyTo = aprProp_('APR_REPLY_TO') || aprFrom_();
   try {
+    if (ms) {
+      aprMsSend_(to, subject, html, cc, replyTo);
+      return { status: (test ? 'Test copy sent' : 'Sent') + ' from ' + aprFrom_(), sentAt: new Date() };
+    }
+    if (!test) return { status: 'Not sent: ' + aprFrom_() + ' is not set up (MS_TENANT, MS_CLIENT, MS_SECRET)' };
     if (MailApp.getRemainingDailyQuota && MailApp.getRemainingDailyQuota() < 1) return { status: 'Held: daily mail limit reached' };
-    var opts = { to: to, subject: subject, htmlBody: html, name: APR.BM_NAME + ' — ' + APR.BM_TITLE,
-                 replyTo: aprProp_('APR_BM_EMAIL', APR.BM_EMAIL) };
-    if (cc.length) opts.cc = cc.join(',');
-    MailApp.sendEmail(opts);
-    return { status: test ? 'Test copy sent' : 'Sent', sentAt: new Date() };
+    MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: APR.FROM_NAME, replyTo: replyTo });
+    return { status: 'Test copy sent (Gmail: ' + aprFrom_() + ' not set up yet)', sentAt: new Date() };
   } catch (e) {
     return { status: 'Failed: ' + e.message };
   }
@@ -666,7 +734,10 @@ function aprSetupCheck() {
   catch (e) { notes.push('Reading history failed: ' + e.message); }
   notes.push('Mode: ' + aprMode_());
   notes.push('GL Customer Service: ' + (aprProp_('APR_GL_CS_TO') || 'NOT SET (APR_GL_CS_TO)'));
-  notes.push('Manager copy and reply-to: ' + aprProp_('APR_BM_EMAIL', APR.BM_EMAIL));
+  notes.push('Sends from: ' + aprFrom_() + (aprMsCreds_() ? '' : ' — NOT SET UP (MS_TENANT, MS_CLIENT, MS_SECRET)'));
+  if (aprMsCreds_()) { try { aprMsToken_(); notes.push('Microsoft 365 sign-in: OK'); } catch (e) { notes.push(e.message); } }
+  notes.push('Replies go to: ' + (aprProp_('APR_REPLY_TO') || aprFrom_()));
+  notes.push('Manager copied: ' + aprProp_('APR_BM_EMAIL', APR.BM_EMAIL));
   notes.push('Approvers: Access-tab Role matching /' + aprProp_('APR_APPROVER_ROLE', 'branch manager') + '/');
   Logger.log(notes.join('\n'));
   try { SpreadsheetApp.getUi().alert('Approvals setup', notes.join('\n'), SpreadsheetApp.getUi().ButtonSet.OK); } catch (e) {}

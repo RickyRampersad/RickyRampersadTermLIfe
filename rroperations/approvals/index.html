@@ -444,7 +444,9 @@
       var pend = r.open.filter(function (x) { return x.status === 'Pending'; }).length;
       $('reviewCount').hidden = !pend; $('reviewCount').textContent = pend;
       $('revBanner').innerHTML = (!r.glSet ? '<div class="banner">GL Customer Service\'s address is not set yet (APR_GL_CS_TO). ' +
-        (r.mode === 'live' ? 'Approval is refused until it is.' : 'In test mode every e-mail goes to the test inbox.') + '</div>' : '');
+        (r.mode === 'live' ? 'Approval is refused until it is.' : 'In test mode every e-mail goes to the test inbox.') + '</div>' : '') +
+        (r.msSet === false ? '<div class="banner">Sending from ' + esc(r.from || 'support@') + ' is not set up yet (MS_TENANT, MS_CLIENT, MS_SECRET). ' +
+        (r.mode === 'live' ? 'Approval is refused until it is.' : 'Test copies come from Gmail meanwhile.') + '</div>' : '');
       if (quiet && $('tab-review').hidden) return;
       $('queue').innerHTML = r.open.length ? r.open.map(reviewCard).join('') : '<div class="empty">Nothing waiting. Every request has been decided.</div>';
       r.open.forEach(function (x) {

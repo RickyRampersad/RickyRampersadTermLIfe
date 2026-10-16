@@ -183,7 +183,7 @@ person's average. Comments are shown to managers only.
    - **History**: every earlier request on this client in a table (date,
      agent, type, reason, amount, policy, status), with a line summing it up;
    - **First-time**: when there is none on record.
-   The agent and the manager's Outlook are copied; replies go to the manager.
+   The agent and the manager's Outlook are copied; replies go to support@.
 
 **Flags** (shown to both): 3 or more requests in 90 days (this one counted);
 asked again within a week; the same reason given before; the same amount
@@ -204,6 +204,8 @@ already requested; declined before.
      refused until it is set.
    - `APR_TEST_INBOX` — test e-mails (blank: `DB_TEST_INBOX`, then the owner).
    - `APR_BM_EMAIL` — defaults to Ricky.Rampersad@myguardiangroup.com.
+   - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET` — copied from the Service
+     Questionnaire project, so mail goes from support@.
    - `APR_MODE` = `live` when the test run has been read.
 
 **Test mode is the default.** Every e-mail (the manager's alert, the GL
@@ -214,10 +216,15 @@ naming who it was for.
 Approval spreadsheet, beside the Jotform's own. Every decision is on the row:
 status, who, when, the note, the GL e-mail's status and which template.
 
-**Outlook.** Apps Script cannot send as a Microsoft 365 mailbox. The e-mails go
-from the script owner's Google account under the name "Ricky Rampersad — Branch
-Manager", with the manager's Outlook as reply-to and in copy, so every approval
-is in his Outlook.
+**Sent from support@rickyrampersadbranch.com** (15 October 2026: "ok so from
+support@…"). Every e-mail (the GL approval, the manager's alert, the agent's
+notice) goes through Microsoft Graph as support@, the same Entra app the Service
+Questionnaire project uses, and is kept in support@'s Sent Items. Replies come
+back to support@ (`APR_REPLY_TO` to change it); the manager's Outlook is copied
+on every approval. Copy `MS_TENANT`, `MS_CLIENT` and `MS_SECRET` from the
+Service Questionnaire project's Script properties into this one. Until they
+are there, test copies come from the owner's Gmail and live approval is
+refused. **Check approvals setup** reports whether the Microsoft sign-in works.
 
 **Retire the Jotform** once live: disable "Branch Managers Approval" so agents
 have one door. Its rows stay where they are and keep counting as history.

@@ -149,13 +149,14 @@ const post = (env, body) => JSON.parse(env.doPost({ postData: { contents: JSON.s
   d = post(env, { action: 'aprDecide', token: mgr, ref: a.ref, decision: 'approve', note: 'Last cash approval until the new card arrives.' });
   ok('approved in test mode: one e-mail, to the test inbox', d.ok && d.template === 'History' && env.__mail.length === 1 &&
      env.__mail[0].to === 'test@example.com' && !env.__mail[0].cc, JSON.stringify(d));
-  ok('it names the manager and replies to his Outlook', /Ricky Rampersad/.test(env.__mail[0].name) &&
-     env.__mail[0].replyTo === 'Ricky.Rampersad@myguardiangroup.com');
+  ok('no Microsoft 365 yet: the test copy comes by Gmail, replies to support@, and says so',
+     env.__mail[0].replyTo === 'support@rickyrampersadbranch.com' && /from <b>support@rickyrampersadbranch\.com<\/b>/.test(env.__mail[0].htmlBody) &&
+     /Gmail: support@rickyrampersadbranch\.com not set up yet/.test(d.email), d.email);
   ok('the note is in the GL e-mail', /Last cash approval until the new card arrives/.test(env.__mail[0].htmlBody));
   const sh = env.__sheets['Approval Requests'], hd = sh._grid[0], ra = sh._grid.find(r => r[0] === a.ref);
   ok('the row records the decision, who and the template', ra[hd.indexOf('Status')] === 'Approved' &&
      ra[hd.indexOf('Decided By')] === 'Mo Manager' && ra[hd.indexOf('Template')] === 'History' &&
-     ra[hd.indexOf('GL Email')] === 'Test copy sent');
+     /^Test copy sent/.test(ra[hd.indexOf('GL Email')]));
   d = post(env, { action: 'aprDecide', token: mgr, ref: a.ref, decision: 'approve' });
   ok('a decided request cannot be decided again', !d.ok && /Already approved/.test(d.error));
 
@@ -168,22 +169,54 @@ const post = (env, body) => JSON.parse(env.doPost({ postData: { contents: JSON.s
   ok('the agent answers; it returns to the queue', r1.ok && post(env, { action: 'aprQueue', token: mgr }).open.some(x => x.ref === b.ref && x.status === 'Pending'));
 }
 
-/* ── live ──────────────────────────────────────────────────────────── */
+/* ── live, from support@ through Microsoft Graph ──────────────────── */
+function graph(env) {
+  env.__graph = [];
+  env.UrlFetchApp = { fetch: (u, o) => {
+    if (/login\.microsoftonline\.com/.test(u)) return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ access_token: 'ms', expires_in: 3600 }) };
+    const m = u.match(/graph\.microsoft\.com\/v1\.0\/users\/([^/]+)\/sendMail/);
+    if (m) { env.__graph.push({ from: decodeURIComponent(m[1]), body: JSON.parse(o.payload) }); return { getResponseCode: () => 202, getContentText: () => '' }; }
+    throw new Error('unexpected ' + u);
+  } };
+}
 {
-  const env = world({ APR_MODE: 'live' });
+  const env = world({ APR_MODE: 'live', APR_GL_CS_TO: 'glcs@example.com' });
+  graph(env);
   const pat = login(env, 'PAT1'), mgr = login(env, 'MGR9');
   const a = post(env, { action: 'aprSubmit', token: pat, first: 'Brand', last: 'New', type: 'Cash Collection',
     policy: '5001112223', amount: '250', reasonCategory: 'No bank account', reason: 'Client is new to the branch and has no bank account yet.' });
+  ok('live without Microsoft 365: the manager is not e-mailed by Gmail', env.__mail.length === 0 && env.__graph.length === 0);
   let d = post(env, { action: 'aprDecide', token: mgr, ref: a.ref, decision: 'approve' });
-  ok('live approval refused while the GL address is unset, nothing decided',
-     !d.ok && /APR_GL_CS_TO/.test(d.error) && env.__sheets['Approval Requests']._grid[1].includes('Pending'));
-  env.PropertiesService.getScriptProperties().setProperty('APR_GL_CS_TO', 'glcs@example.com');
-  env.__mail = [];
+  ok('live approval refused until support@ is set up, nothing decided',
+     !d.ok && /support@rickyrampersadbranch\.com is not set up/.test(d.error) && env.__sheets['Approval Requests']._grid[1].includes('Pending'), d.error);
+  const p = env.PropertiesService.getScriptProperties();
+  p.setProperty('MS_TENANT', 't'); p.setProperty('MS_CLIENT', 'c'); p.setProperty('MS_SECRET', 's');
+  p.deleteProperty('APR_GL_CS_TO');
   d = post(env, { action: 'aprDecide', token: mgr, ref: a.ref, decision: 'approve' });
-  ok('live: to GL Customer Service, the agent and the manager copied',
-     d.ok && env.__mail[0].to === 'glcs@example.com' && /pat@example\.com/.test(env.__mail[0].cc) &&
-     /Ricky\.Rampersad@myguardiangroup\.com/.test(env.__mail[0].cc), JSON.stringify(env.__mail[0] && { to: env.__mail[0].to, cc: env.__mail[0].cc }));
-  ok('live subject has no TEST mark', !/TEST/.test(env.__mail[0].subject) && /^Approved: Cash Collection/.test(env.__mail[0].subject));
+  ok('live approval refused while the GL address is unset', !d.ok && /APR_GL_CS_TO/.test(d.error));
+  p.setProperty('APR_GL_CS_TO', 'glcs@example.com');
+  d = post(env, { action: 'aprDecide', token: mgr, ref: a.ref, decision: 'approve' });
+  const g = env.__graph[0], msg = g && g.body.message;
+  ok('live: sent from support@ through Microsoft 365, kept in Sent Items',
+     d.ok && g.from === 'support@rickyrampersadbranch.com' && msg.from.emailAddress.address === 'support@rickyrampersadbranch.com' &&
+     g.body.saveToSentItems === true && env.__mail.length === 0, JSON.stringify(d));
+  ok('to GL Customer Service, the agent and the manager copied, replies to support@',
+     msg.toRecipients[0].emailAddress.address === 'glcs@example.com' &&
+     msg.ccRecipients.map(x => x.emailAddress.address).join(',') === 'pat@example.com,Ricky.Rampersad@myguardiangroup.com' &&
+     msg.replyTo[0].emailAddress.address === 'support@rickyrampersadbranch.com');
+  ok('live subject has no TEST mark', !/TEST/.test(msg.subject) && /^Approved: Cash Collection/.test(msg.subject));
+  const row = env.__sheets['Approval Requests']._grid[1], hd = env.__sheets['Approval Requests']._grid[0];
+  ok('the row says where it went from', row[hd.indexOf('GL Email')] === 'Sent from support@rickyrampersadbranch.com');
+}
+{
+  const env = world({ MS_TENANT: 't', MS_CLIENT: 'c', MS_SECRET: 's' });
+  graph(env);
+  const pat = login(env, 'PAT1');
+  post(env, { action: 'aprSubmit', token: pat, first: 'Brand', last: 'New', type: 'Cash Collection',
+    policy: '5001112223', amount: '250', reasonCategory: 'No bank account', reason: 'Client is new to the branch and has no bank account yet.' });
+  const m = env.__graph[0] && env.__graph[0].body.message;
+  ok('test mode with Microsoft 365: from support@, to the test inbox only', m && env.__graph[0].from === 'support@rickyrampersadbranch.com' &&
+     m.toRecipients.length === 1 && m.toRecipients[0].emailAddress.address === 'test@example.com' && !m.ccRecipients && /^\[TEST\]/.test(m.subject));
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall approvals checks pass');
