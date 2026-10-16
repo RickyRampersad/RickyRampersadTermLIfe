@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-15i';
+var SCRIPT_VERSION = '2026-10-16a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3416,6 +3416,97 @@ var HK_ITEMS = [
     Who: 'All', Auto: '', Order: 7, Active: 'Yes', Note: 'Housekeeping, 14 Oct 2026.' }
 ];
 
+
+/* ───────────────────────────── The mailbag ─────────────────────────────
+ *  Agents submit documents through the digital log book; staff verify and
+ *  collect them (MAIL PREP and BU in the Log Book Digital workbook); one
+ *  staff member a week routes the bag. The rota is weekly, Monday to Friday:
+ *  Elizabeth, then Azariah, then Sasha, then round again, anchored on the
+ *  week of 12 October 2026 (Ricky, 16 October 2026). Script Properties
+ *  MAILBAG_ROTA (comma-separated staff ids) and MAILBAG_ANCHOR (a Monday)
+ *  override. If the router is absent the next person in the rota who is in
+ *  carries the bag that day.
+ *
+ *  Half an hour before leaving, the router sees the documents collected
+ *  today by each staff member and the backlog not yet sent, and confirms the
+ *  bag went; if not, a reason from the list. Everyone else confirms what they
+ *  collected was handed to the router. Answers go to the close-out, the
+ *  Mailbag Log tab, and the copy to the Branch Manager and sales support. */
+var MAILBAG = {
+  ROTA: ['elizabeth', 'azariah', 'sasha'], ANCHOR: '2026-10-12', BACKLOG_DAYS: 21,
+  REASONS: ['No courier or mail run today', 'Documents still being verified', 'Waiting on an agent signature', 'Bag held for tomorrow with the Branch Manager\'s knowledge', 'Sent by another staff member', 'Out of office in the afternoon', 'Other (say below)']
+};
+var MAILLOG = { must: ['Date', 'Router', 'Sent'], name: 'Mailbag Log',
+  head: ['Date', 'Router', 'By', 'CollectedToday', 'Backlog', 'Sent', 'Reason', 'Note', 'At', 'Source'] };
+function mailbagRota_() {
+  var props = PropertiesService.getScriptProperties();
+  var rota = String(props.getProperty('MAILBAG_ROTA') || '').split(',').map(function (x) { return x.trim(); }).filter(String);
+  return { rota: rota.length ? rota : MAILBAG.ROTA, anchor: props.getProperty('MAILBAG_ANCHOR') || MAILBAG.ANCHOR };
+}
+/** Who routes the bag on a day: the rota by week, skipping anyone absent that day. */
+function mailbagRouter_(day, absent) {
+  var r = mailbagRota_(), weeks = Math.floor(daysBetween_(r.anchor, day) / 7), i = ((weeks % r.rota.length) + r.rota.length) % r.rota.length;
+  var sched = r.rota[i], who = sched;
+  for (var k = 0; k < r.rota.length && absent && absent[who]; k++) who = r.rota[(i + k + 1) % r.rota.length];
+  return { scheduled: sched, router: who, week: weeks + 1, next: r.rota[(i + 1) % r.rota.length] };
+}
+/** The day's log-book picture: collected today by staff, and the unsent backlog by staff. */
+function mailbagToday_(day) {
+  var out = { today: {}, backlog: {}, todayN: 0, backlogN: 0, oldest: null, byRouting: {} };
+  var since = shiftDays_(day, -MAILBAG.BACKLOG_DAYS);
+  var who = function (r) { var w = String(r['Support Staff Verified'] || r['Prepared By'] || r['Sent by Whom'] || '').replace(/^please select:?/i, '').trim(); return (w.split(/[\s,]+/)[0] || 'unassigned'); };
+  var dayOf = function (v) { var m = String(v || '').match(/(\d{1,2})-(\d{1,2})-(\d{4})/); if (m) return m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2); return sfkDay_(v); };
+  [BOOKS.LOG.prep, BOOKS.LOG.bu].forEach(function (tab) {
+    bookRows_('LOG', tab).forEach(function (r) {
+      var d = dayOf(r['Submitted Date']); if (!d || d.length !== 10) return;
+      var sent = String(r['Date Sent'] || '').trim(), w = who(r), routing = String(r['Routing'] || '').replace(/^routing:\s*/i, '').trim();
+      if (d === day) { out.today[w] = (out.today[w] || 0) + 1; out.todayN++; if (routing) out.byRouting[routing] = (out.byRouting[routing] || 0) + 1; }
+      if (!sent && d >= since && d <= day) { out.backlog[w] = (out.backlog[w] || 0) + 1; out.backlogN++; if (!out.oldest || d < out.oldest) out.oldest = d; }
+    });
+  });
+  return out;
+}
+function mailbagLog_(row) {
+  try { var sh = hrTab_(MAILLOG, true); sh.appendRow(headerOf_(sh).map(function (h) { return row[h] != null ? row[h] : ''; })); forgetHr_(MAILLOG); } catch (e) {}
+}
+/** The mailbag card for the before-you-leave e-mail. */
+function mailbagCard_(sid, day) {
+  var absent = {}; try { (hrRows_(ATT, true) || []).forEach(function (r) { if (isoDay_(r.Date) === day && String(r.Status || '').toLowerCase() === 'absent') absent[String(r.StaffId)] = 1; }); } catch (e) {}
+  var rt = mailbagRouter_(day, absent), mb = mailbagToday_(day), me = String(nameFor_(sid)).split(' ')[0];
+  var isRouter = rt.router === sid, mine = 0;
+  Object.keys(mb.today).forEach(function (w) { if (w.toLowerCase() === me.toLowerCase()) mine += mb.today[w]; });
+  var row = function (h) { return '<div style="font-size:13px;line-height:1.5;padding:4px 0;border-top:1px solid ' + MAIL.line + '">' + h + '</div>'; };
+  var table = Object.keys(mb.today).sort().map(function (w) { return row('<b>' + esc_(w) + '</b> collected <b>' + mb.today[w] + '</b> today'); }).join('') || row('<span style="color:' + MAIL.muted + '">Nothing logged in the log book today.</span>');
+  var backlog = mb.backlogN ? row('<b style="color:' + (mb.backlogN > 10 ? MAIL.red : MAIL.amber) + '">' + mb.backlogN + ' document' + (mb.backlogN === 1 ? '' : 's') + ' logged and not yet sent</b>' +
+      (mb.oldest ? ', oldest ' + esc_(shortDate_(mb.oldest)) : '') + ' · ' + Object.keys(mb.backlog).sort().map(function (w) { return esc_(w) + ' ' + mb.backlog[w]; }).join(', ')) : row('Nothing waiting from earlier days.');
+  var head = isRouter
+    ? '<b>You route the mailbag this week</b> (week ' + rt.week + ' of the rota' + (rt.scheduled !== sid ? ', covering for ' + esc_(nameFor_(rt.scheduled).split(' ')[0]) : '') + '). Confirm on the page that today\'s bag went, or why not.'
+    : '<b>' + esc_(nameFor_(rt.router).split(' ')[0]) + ' routes the mailbag this week.</b> You collected <b>' + mine + '</b> document' + (mine === 1 ? '' : 's') + ' today; confirm on the page they were handed over.';
+  return { html: '<div style="font-size:13.5px;line-height:1.55;margin-top:6px">' + head + '</div>' + table + backlog +
+      (Object.keys(mb.byRouting).length ? row('<span style="color:' + MAIL.muted + '">By routing today: ' + Object.keys(mb.byRouting).map(function (k) { return esc_(k) + ' ' + mb.byRouting[k]; }).join(' · ') + '</span>') : ''),
+    ok: !isRouter, isRouter: isRouter, router: rt.router, mine: mine, data: mb };
+}
+/** The mailbag block on the close-out page: router confirms the bag went; everyone else the hand-over. */
+function mailbagPageCard_(sid, day) {
+  try {
+    var m = mailbagCard_(sid, day), prev = ((progAnswers_(sid, day, 'leave') || {})._mailbag || {});
+    var sel = '<select name="mbr" id="mbr" style="display:none;width:100%;padding:10px;border:1px solid #DCE3F4;border-radius:10px;font:inherit;margin-top:6px"><option value="">Why?</option>' +
+      MAILBAG.REASONS.map(function (r) { return '<option value="' + esc_(r) + '"' + (prev.r && String(prev.r).indexOf(r) === 0 ? ' selected' : '') + '>' + esc_(r) + '</option>'; }).join('') + '</select>';
+    var js = '<script>function mb(i){var s=document.getElementById("mbr");var no=/Not/.test(i.value);s.style.display=no?"block":"none";s.required=no}</script>';
+    var rname = esc_(nameFor_(m.router).split(' ')[0]);
+    if (m.isRouter) return '<div class="card" style="border-left:4px solid #0EA5C9"><div class="bh">The mailbag · you route it this week</div>' +
+      '<div class="ln">' + m.data.todayN + ' collected today' + (m.data.backlogN ? ' · <b>' + m.data.backlogN + ' not yet sent</b>' : '') + '</div>' +
+      '<div class="seg"><label><input type="radio" name="mb" value="Sent" required onchange="mb(this)"><span>Bag sent today</span></label>' +
+      '<label><input type="radio" name="mb" value="Not sent" onchange="mb(this)"><span>Not sent</span></label></div>' + sel +
+      '<input type="text" name="mbn" placeholder="Note: tracking number, courier, or what is still to go" style="margin-top:6px"></div>' + js;
+    return '<div class="card"><div class="bh">The mailbag · ' + rname + ' routes it this week</div>' +
+      '<div class="ln">You collected <b>' + m.mine + '</b> document' + (m.mine === 1 ? '' : 's') + ' today.</div>' +
+      '<div class="seg"><label><input type="radio" name="mb" value="Handed over" required onchange="mb(this)"><span>All handed to ' + rname + '</span></label>' +
+      '<label><input type="radio" name="mb" value="Not handed over" onchange="mb(this)"><span>Some still with me</span></label></div>' + sel +
+      '<input type="text" name="mbn" placeholder="Note" style="margin-top:6px"></div>' + js;
+  } catch (e) { return ''; }
+}
+
 function ensureHousekeepingItems_() {
   var props = PropertiesService.getScriptProperties();
   if (props.getProperty('hk_items_v1')) return;
@@ -4806,6 +4897,7 @@ var BOOKS = {
   SKILL: { id: '1-NGk9kWAlmx6BA1DwNjsddwV6IMiTXQNZ61InwyVC0s', tab: 'Agent Skill Bank', households: 'Household Assignments', responses: 'Client Responses' },
   QPAL:  { id: '1jrbysTBHwOkWiWJUKVI92z4jikdZDf4MYmK7aHRvmmI', tab: 'Queries' },
   FF:    { id: '1iytBbnETQFRmkveDSxadjsAfN07aMTW9E2slcA5qaWI', plans: 'FY27 Goal Plans', checks: 'FY27 Check-ins' },
+  LOG:   { id: '1VjVoMMxVRsMsXQHmIAYmmK8h8P4Poiqad1yE9a6gVRk', prep: 'MAIL PREP', bu: 'BU' },
   FY_START: '2026-10-01', CACHE_SEC: 900
 };
 function bookId_(k) { try { return PropertiesService.getScriptProperties().getProperty('BOOK_' + k) || BOOKS[k].id; } catch (e) { return BOOKS[k].id; } }
@@ -4874,6 +4966,11 @@ function orphanFor_(name) {
   bookRows_('SKILL', BOOKS.SKILL.households).forEach(function (r) { if (bkNk_(r['Agent assigned']) === nk) hh++; });
   bookRows_('SKILL', BOOKS.SKILL.responses).forEach(function (r) { if (bkNk_(r['Assigned to']) === nk && /open/i.test(String(r['Status'] || ''))) calls++; });
   return { households: hh, callbacks: calls };
+}
+function checkMailbag() {
+  var day = todayISO_(), rt = mailbagRouter_(day, {}), mb = mailbagToday_(day);
+  Logger.log('Mailbag ' + day + ': router ' + rt.router + ' (scheduled ' + rt.scheduled + ', rota week ' + rt.week + ', next ' + rt.next + ')');
+  Logger.log('Collected today ' + mb.todayN + ' ' + JSON.stringify(mb.today) + ' · backlog ' + mb.backlogN + ' ' + JSON.stringify(mb.backlog) + ' oldest ' + mb.oldest);
 }
 function checkBooks() {
   var sb = skillBank_(), names = Object.keys(sb);
@@ -5420,7 +5517,7 @@ function sendHousekeeping_(person, day, signIn) {
 
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', your day ends at <b>' + esc_(endText) +
-      '</b>. Before you sign out, three things. Answer each one in the tracker\'s close-out, with a reason for anything not done. ' +
+      '</b>. Before you sign out, four things. Answer each one in the tracker\'s close-out, with a reason for anything not done. ' +
       'Answer them from the button in this e-mail; your answers and your sign-out time are logged, and copied to Mr Rampersad and sales support.</div>' +
     statTiles_([
       { value: signIn ? twelve_(signIn) : '—', label: 'signed in' },
@@ -5433,6 +5530,7 @@ function sendHousekeeping_(person, day, signIn) {
     check(1, 'Tasks verified', c1, !unnoted.length && !dueOpen.length && blockPct === 100) +
     check(2, 'Inbox and WhatsApp scrubbed', c2, false) +
     check(3, 'Open tasks understood', c3, sfOk && day1 && day1.created > 0) +
+    (function () { try { var m = mailbagCard_(sid, day); return check(4, m.isRouter ? 'The mailbag · you route it this week' : 'The mailbag · handed over', m.html, m.ok); } catch (e) { return ''; } })() +
     replyButton_(replyUrl_(sid, day, 'hk'), 'Close my day here', '') +
     (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer, so the task lists are not shown. The tracker has them.</div>') +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">' +
@@ -6705,6 +6803,7 @@ function hkReplyPage_(person, day, error) {
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'hk') +
     (open.length ? '<div class="card"><div class="bh">Not done · a reason for each</div>' + taskRows + '</div>' : '') +
     '<div class="card"><div class="bh">The three checks</div>' + checks + '</div>' +
+    mailbagPageCard_(sid, day) +
     (innovationBlock_(sid, day) ? '<div class="card" style="border-left:4px solid #0EA5C9"><div class="bh">Innovation hour · what moved?</div>' +
       '<div class="bf">One or two lines. It goes on Friday\'s innovation board for the branch meeting. Put the same on the task\'s Chatter.</div>' +
       '<textarea name="inno" rows="2" required placeholder="What you built, tested or found, and the next step">' + esc_(((progAnswers_(sid, day, 'innovation') || {})._inno || {}).r || '') + '</textarea></div>' : '') +
@@ -6736,6 +6835,15 @@ function hkReplySave_(person, day, p, all) {
   if (!lock) return hkReplyPage_(person, day, 'Another save was going in just then. Press Close my day again.');
   var hkComment = String(p.comment || '').trim().slice(0, REASON_MAX);
   if (hkComment) rows.push({ id: '_comment', s: 'Comment', a: 'note', r: hkComment });
+  var mbA = String(p.mb || '').trim(), mbR = String(p.mbr || '').trim(), mbN = String(p.mbn || '').trim().slice(0, REASON_MAX), mbCard = null;
+  try { mbCard = mailbagCard_(sid, day); } catch (e) {}
+  if (mbCard) {
+    if (!mbA) return hkReplyPage_(person, day, 'Answer the mailbag question.');
+    if (/Not/.test(mbA) && !mbR) return hkReplyPage_(person, day, 'Pick the reason the mailbag ' + (mbCard.isRouter ? 'was not sent' : 'was not handed over') + '.');
+    rows.push({ id: '_mailbag', s: mbCard.isRouter ? 'Mailbag routed' : 'Mailbag handed over', a: mbA, r: (mbR ? mbR + (mbN ? ': ' + mbN : '') : mbN) });
+    mailbagLog_({ Date: day, Router: nameFor_(mbCard.router), By: nameFor_(sid), CollectedToday: mbCard.isRouter ? mbCard.data.todayN : mbCard.mine, Backlog: mbCard.data.backlogN,
+      Sent: mbA, Reason: mbR, Note: mbN, At: hhmm_(new Date()), Source: 'email' });
+  }
   var innoSaid = String(p.inno || '').trim().slice(0, REASON_MAX);
   if (innovationBlock_(sid, day)) {
     if (!innoSaid) return hkReplyPage_(person, day, 'Say what your innovation hour moved. One line is enough.');
@@ -6749,7 +6857,7 @@ function hkReplySave_(person, day, p, all) {
   } finally { lock.releaseLock(); }
   var out = '';
   if (p.out) { try { var so = signOutDay_({}, person); if (so && so.ok) out = so.out; } catch (e) {} }
-  try { replyCopy_(person, day, 'Close-out', checks.concat(rows), { Done: 'Done', 'Not done': 'Not done', note: 'Comment' }); } catch (e) {}
+  try { replyCopy_(person, day, 'Close-out', checks.concat(rows), { Done: 'Done', 'Not done': 'Not done', note: 'Comment', Sent: 'Mailbag sent', 'Not sent': 'Mailbag NOT sent', 'Handed over': 'Mailbag handed over', 'Not handed over': 'Mailbag NOT handed over' }); } catch (e) {}
   return replyPage_('Your day is closed. Thank you.',
     'Copied to Mr Rampersad and sales support.' + (out ? ' Signed out at ' + esc_(twelve_(out)) + '.' : ''),
     '<div class="card ok">' + checks.map(function (c) { return '<div class="ln">' + (c.a === 'Done' ? '&#10003;' : '&#9679;') + ' ' + esc_(c.s) + (c.r ? ' · ' + esc_(c.r) : '') + '</div>'; }).join('') +
