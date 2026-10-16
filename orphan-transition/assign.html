@@ -6,7 +6,7 @@
 <title>Assignments | Ricky Rampersad Branch</title>
 <meta name="description" content="Who answered the transition letters, what they told us, and which agent is named to meet them. Signed in by agent number and password: the branch sees every unit, a unit manager his team, an agent their own list.">
 <meta name="robots" content="noindex">
-<link rel="icon" href="../logo-mark.png">
+<link rel="icon" href="board-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,7 +33,7 @@
   /* the bar along the top: the shield, the board's name, when it was read, help, refresh, sign out */
   header{background:var(--navy);color:#e8eef5;border-bottom:2px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
   header .wrap{display:flex;align-items:center;gap:12px;min-height:60px;padding:8px 0}
-  .mark{width:36px;height:36px;border-radius:10px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark{width:36px;height:36px;border-radius:10px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
   .mark img{width:100%;height:100%;display:block}
   .brand{font-family:var(--fh);font-weight:800;font-size:15.5px;letter-spacing:-.2px;line-height:1.2;color:#fff}
   .brand i{display:block;font-style:normal;font-weight:500;font-size:12px;color:#8fd8e6;letter-spacing:0}
@@ -219,6 +219,55 @@
   .fact .mut{color:var(--dim);font-size:13.5px}
   .fact .gap{color:var(--stop);font-weight:600}
   .fact.none{background:transparent;border-style:dashed}
+  /* families the household rule missed (16 October 2026): to confirm, on the card and on the Households tab */
+  .mfam{margin-top:12px;border:1px solid var(--warnline);background:var(--warnbg);border-radius:var(--r2);padding:10px 14px;font-size:14.5px}
+  .mfam h4{margin:0 0 6px;font:700 11px var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--warn)}
+  .mfam h4 i{font:400 13px var(--fb);letter-spacing:0;text-transform:none;color:var(--body);margin-left:6px}
+  .mfr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 0;border-top:1px solid var(--warnline)}
+  .mfr:first-of-type{border-top:0}
+  .mfr .mfw{flex:1 1 260px;min-width:0}
+  .mfr .mfw b{color:var(--ink)}
+  .mfr .why{display:block;color:var(--body);font-size:13.5px;margin-top:2px}
+  .mfr button{font:600 13.5px var(--fb);border-radius:999px;padding:6px 14px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+  .mfr button.yes{background:var(--tdark);border-color:var(--tdark);color:#fff}
+  .mfr button:disabled{opacity:.5;cursor:default}
+  .pill.mf{background:var(--warnbg);color:var(--warn);text-transform:none;letter-spacing:0}
+  .mfpair{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--warnline);border-radius:var(--r);box-shadow:var(--sh);padding:12px 16px;margin:10px 0;min-width:0}
+  .mfpair .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 16px}
+  .mfpair .one b{color:var(--ink)} .mfpair .one > span{display:block;font-size:13.5px;color:var(--dim)} .mfpair .one .cno{color:var(--dim);font-size:13.5px}
+  .mfpair .why{margin-top:8px;font-size:13.5px;color:var(--body)}
+  .mfpair .go{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .mfpair .go button{font:600 13.5px var(--fb);border-radius:999px;padding:7px 15px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+  .mfpair .go button.yes{background:var(--tdark);border-color:var(--tdark);color:#fff}
+  .mfhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;margin:6px 0 4px}
+  .mfhead h3{margin:0;font:700 17px var(--fh,var(--fb));color:var(--ink)}
+  .mfhead span{color:var(--dim);font-size:14px}
+  /* the two side by side, and what the family holds together (16 October 2026) */
+  .mfx{padding:10px 0;border-top:1px solid var(--warnline)} .mfx:first-of-type{border-top:0}
+  .mfpair.mfx{padding:12px 16px;border-top:1px solid var(--line)}
+  .mfc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:2px 0 8px}
+  .mfp{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;min-width:0;font-size:14px;color:var(--body)}
+  .mfp.mine{border-color:var(--field)}
+  .mfp .tag{display:inline-block;font:700 10.5px var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-right:6px}
+  .mfp .nm{color:var(--ink);font-weight:700;overflow-wrap:anywhere} .mfp .cno{color:var(--dim);font-size:13px}
+  .mfp .ln{display:block;margin-top:4px;overflow-wrap:anywhere} .mfp .ln.mut{color:var(--dim);font-size:13px} .mfp .ln.gap{color:var(--stop);font-weight:600}
+  .mfp .ln i{font-style:normal;font:700 10.5px var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-right:6px}
+  .mftot{background:var(--card);border:1px solid var(--warnline);border-radius:var(--r2);padding:10px 12px;font-size:14px;color:var(--body);min-width:0}
+  .mftot h5{margin:0 0 4px;font:700 11px var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--warn)}
+  .mftot .tl{color:var(--ink);font-weight:600;overflow-wrap:anywhere} .mftot .wh{color:var(--dim);font-size:13px;margin-top:2px}
+  .mfg{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+  .mfg li{padding:4px 10px;border-radius:8px;background:#f6f8fb;border:1px solid var(--line);font-size:13.5px;overflow-wrap:anywhere}
+  .mfg li b{font:700 10.5px var(--fb);letter-spacing:.06em;text-transform:uppercase;margin-right:6px}
+  .mfg li.hot{background:var(--stopbg);border-color:var(--stopline);color:var(--stop)} .mfg li.warm{background:var(--warnbg);border-color:var(--warnline);color:var(--warn)}
+  .mfg li.none{background:transparent;border-style:dashed;color:var(--dim)}
+  .mfx .why{display:block;color:var(--body);font-size:13.5px;margin:8px 0 0}
+  .mfx .go{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .mfx .go button{font:600 13.5px var(--fb);border-radius:999px;padding:7px 15px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+  .mfx .go button.yes{background:var(--tdark);border-color:var(--tdark);color:#fff} .mfx .go button.on{border-color:var(--navy)}
+  .mfx .go button:disabled{opacity:.5;cursor:default}
+  .det.mffull .pside{margin-top:14px;padding-top:12px;border-top:2px solid var(--line)} .det.mffull .pside:nth-child(2){border-top:0;padding-top:0;margin-top:6px}
+  .det.mffull .pside h5{margin:0 0 2px;font:800 17px var(--fh);color:var(--ink);overflow-wrap:anywhere} .det.mffull .pside h5 span{font:500 13px var(--fb);color:var(--dim)}
+  .det.mffull .pside .mut{color:var(--dim);font-size:13.5px}
   .ins{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
   .ins span{font-size:13px;border-radius:999px;padding:3px 11px;border:1px solid var(--line);background:#f6f8fb;color:var(--body)}
   .ins span.hot{background:var(--stopbg);border-color:var(--stopline);color:var(--stop);font-weight:600} .ins span.warm{background:var(--warnbg);border-color:var(--warnline);color:var(--warn)}
@@ -384,6 +433,27 @@
   .wtally b{min-width:100px;color:var(--ink);font:700 15px var(--fh)} .wtally em{font-style:normal;font-weight:800;font-size:18px;color:var(--ink)}
   .team .allnotes{background:none;border:0;color:var(--tdark);font:600 14px var(--fb);cursor:pointer;padding:0 0 12px}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+  /* who is signing in (15 October 2026): the seven-day strip, the device, the note under the table */
+  .sdays{display:inline-flex;gap:3px;vertical-align:middle}
+  .sdays i{font-style:normal;font-size:10.5px;font-weight:700;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#e9eef5;color:var(--dim)}
+  .sdays i.on{background:#1d8fa6;color:#fff}
+  .sdev{font-style:normal;color:var(--dim);font-size:12.5px}
+  #signBody th{white-space:nowrap}
+  /* the team's progress and points, and who named whom (15 October 2026) */
+  .speriod{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px}
+  .speriod button{font:600 13px var(--fb);padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--body);cursor:pointer}
+  .speriod button.on{background:var(--ink);color:#fff;border-color:var(--ink)} .speriod span{font-size:13px;color:var(--dim);margin-left:4px}
+  .stats th{white-space:nowrap} .stats td.todo{font-size:13px;color:var(--body);max-width:260px}
+  .stag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap}
+  .stag.lead{background:#dcefe4;color:#1c6b3f} .stag.push{background:#fdf0cf;color:#8a5a00}
+  tr.push td{background:#fffaf0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px} .two h4{margin:4px 0 6px} @media (max-width:980px){.two{grid-template-columns:1fr}}
+  .sdaysrow{display:flex;gap:4px;align-items:flex-end;margin-top:10px;flex-wrap:wrap} .sdaysrow span{display:flex;flex-direction:column;align-items:center;width:30px;justify-content:flex-end}
+  .sdaysrow i{display:block;width:16px;background:#1d8fa6;border-radius:3px 3px 0 0} .sdaysrow small{font-size:9.5px;color:var(--dim);margin-top:2px} .sdaysrow em{font-style:normal;font-size:12.5px;color:var(--dim);margin-left:8px;align-self:center}
+  .sftask{font-size:13.5px;color:var(--body);background:#f3f6fa;border:1px solid var(--line);border-radius:var(--r2);padding:8px 10px;margin:10px 0 0;line-height:1.5} .sftask i{font-style:normal;font-weight:700;color:var(--ink)}
+  #signBody td .rtag,#statsBody td .rtag{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--warn);background:#fdf0cf;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap}
+  .snote{color:var(--dim);font-size:13.5px;margin:10px 0 0}
+  #signLink{color:inherit;font-weight:700;text-decoration:underline}
   .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:14px;cursor:pointer}
   .chip:hover{border-color:#c5cfdb}
   .chip b{color:var(--ink);font-family:var(--fh)} .chip i{font-style:normal;color:var(--dim)}
@@ -446,6 +516,16 @@
   .cmtbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap} .cmtbar span{font-size:13px;color:var(--dim);margin-right:auto}
   .cmtgo{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:9px 15px;font:700 14px var(--fh);cursor:pointer}
   .cmtgo[disabled]{opacity:.55;cursor:default}
+  /* the service record (16 October 2026): everything the branch did for the client, from Salesforce */
+  .svt{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:4px 0 8px}
+  .svt div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 10px;min-width:0}
+  .svt b{display:block;font:800 20px var(--fh);color:var(--ink);font-variant-numeric:tabular-nums} .svt span{font-size:12.5px;color:var(--dim)}
+  .svrow{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0} .svrow span{font-size:13px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 10px}
+  .svrow span b{font-variant-numeric:tabular-nums} .svrow i{font-style:normal;font-size:12px;color:var(--dim);align-self:center;min-width:8.5em}
+  .svlist{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px} .svwrap{overflow-x:auto}
+  .svlist th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);padding:5px 8px 5px 0;border-bottom:1px solid var(--line)}
+  .svlist td{padding:6px 8px 6px 0;border-top:1px solid var(--line2);vertical-align:top} .svlist td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .svlist .late{color:var(--stop);font-weight:600} .svlist .openx{color:var(--tdark);font-weight:600}
   .dnone,.dload{font-size:14px;color:var(--dim);margin:4px 0} .derr{font-size:14px;color:var(--stop);margin:4px 0} .derr a{color:var(--tdark);cursor:pointer;text-decoration:underline}
   /* the assign bar */
   .bar{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#e8eef5;padding:12px max(16px,calc((100% - 1400px)/2));display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;z-index:20;box-shadow:0 -4px 20px rgba(7,19,31,.25)}
@@ -692,7 +772,7 @@
 </head>
 <body>
 <header><div class="wrap">
-  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="mark"><img src="board-mark.png" alt=""></div>
   <div class="brand">Ricky Rampersad Branch<i>Client transition board</i></div>
   <div class="stamp"><span id="stamp"></span><span class="whoph" id="whoPh"></span><button type="button" id="helpBtn" style="display:none">Help</button><button type="button" id="refresh" style="display:none">Refresh</button><button type="button" id="signout" style="display:none">Sign out</button></div>
 </div></header>
@@ -759,6 +839,7 @@
       <div class="panehead"><h2>Households</h2><span id="hhSub"></span></div>
       <div class="subs" id="hhSubs"></div>
       <div class="toolbar"><input type="search" id="hSearch" placeholder="Search a name, client number or town" aria-label="Search households"></div>
+      <div id="mfList"></div>
       <div id="hhList"></div>
     </div>
 
@@ -788,6 +869,7 @@
       <div id="agBody" hidden>
         <div class="card dcard"><div class="dhero" id="agHero"></div><div id="agStages"></div><div class="dtiles" id="agTiles"></div></div>
         <div class="card dcard" id="agTable"></div>
+        <div class="card dcard" id="agNamed" hidden></div>
         <div class="card dcard agone" id="agOne" hidden></div>
         <div class="card dcard" id="agSince"></div>
         <div class="card dcard" id="agBooks"></div>
@@ -816,6 +898,8 @@
 
     <!-- the team: today's calls and notes, units and the roster -->
     <div class="pane" id="paneTeam" hidden>
+      <div class="card team" id="statsWrap" style="display:none"><div class="panehead"><h2>The team: progress and points</h2><span id="statsSum"></span></div><div id="statsBody"></div></div>
+      <div class="card team" id="signWrap" style="display:none"><div class="panehead"><h2>Who is signing in</h2><span id="signSum"></span></div><div id="signBody"></div></div>
       <div class="card team" id="teamWrap" style="display:none"><div class="panehead"><h2>From the team</h2><span id="teamSum"></span></div><div id="teamBody"></div></div>
       <div id="rosterWrap"><h2 class="sec"><span id="rosterTitle">The roster</span> <small id="rosterNote"></small></h2><div id="units"></div><div class="chips" id="roster"></div></div>
       <p class="pnote" id="sugNote"></p>
@@ -923,6 +1007,7 @@ function load() {
   var p = { action: 'board', code: CODE };
   if (WHO) p.who = WHO;
   if ($('fAll').checked) p.all = '1';
+  p.dev = (window.innerWidth < 760 ? 'phone' : 'desk') + ' ' + window.innerWidth;   // for the Sign-ins tab: the device, never the browser
   api(p).then(function (d) {
     inflight = false; busy(false);
     if (!d || !d.ok) {
@@ -980,11 +1065,12 @@ function paintSnap() {
 /* nothing is saved from the remembered picture: the fresh board is seconds away */
 function notYet() { if (!STALE) return false; toast(STALE_MSG, true); return true; }
 /* what one person opened is never shown to the next on the same device: their tab and filters, the clients they opened in
-   full, a comment not yet saved, the policies fetched for them, the search box */
+   full, a comment not yet saved, the policies fetched for them, a possible family compared in full, the search box */
 var FILTER_IDS = ['fSearch', 'fSeg', 'fTown', 'fBook', 'fCaller', 'fAge', 'fNeed', 'fIns', 'fSug', 'fOrder', 'hSearch'];
 function forget() {
   dropSnap(); STALE = false; AGAIN = false;   // the picture of the last board goes with the person who saw it
   FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; OPENX = {}; EXP = {};
+  PAIRX = {}; PAIR_OPEN = {}; MFSHOW = 15;   // a possible family opened in full goes too: the branch's figures never reach the next person
   M = { scope: 'open', town: '', agent: -1, opp: '', show: MSTEP }; MW = null;
   TAB = ''; SUB = ''; HSUB = ''; SHOW_N = SHOW_STEP; HSHOW_N = HSTEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true; $('barIntro').disabled = false; $('barIntroWhy').textContent = '';
   FILTER_IDS.forEach(function (id) { $(id).value = ''; });
@@ -1086,7 +1172,8 @@ function tabsFor(d) {
   if (r === 'branch') return ['urgent', 'dash', 'agents'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights']);
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
-  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all']);
+  /* Team for staff too (15 October 2026: "all staff and managers are supposed to see the progress each support has") */
+  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all', 'team']);
   var out = ['open'].concat(work, claims ? ['claims'] : []);
   if (r === 'unit') out.push('dash', 'agents');
   if (d.clients.some(urgentOf)) out.push('urgent');
@@ -1124,6 +1211,13 @@ function render() {
   var d = D, manager = d.role === 'branch', team = d.role === 'unit', staff = d.role === 'staff', namer = canAssign();
   /* the bar along the top says when the sheet was read; the side menu says who is signed in and as what */
   $('stamp').innerHTML = STALE ? '<i>the board as you last saw it, updating from the sheet&hellip;</i>' : 'Updated <b>' + esc(String(d.at || '').replace(/ \d{4} /, ' ')) + '</b>';
+  /* the branch and a unit manager see at a glance who has signed in today (15 October 2026); the link opens the Team tab */
+  if (d.signins && d.signins.on !== false && (d.role === 'branch' || d.role === 'unit')) {
+    var sp = d.signins.people || [], sn = d.signins.never || [], st = sp.filter(function (p) { return p.today; }).length;
+    $('stamp').innerHTML += ' · <a href="#" id="signLink">' + st + ' of ' + (sp.length + sn.length) + ' signed in today</a>';
+    $('signLink').addEventListener('click', function (ev) { ev.preventDefault(); TAB = 'team'; SUB = ''; drawTabs(tabsFor(D)); showPane(); });
+  }
+  if (d.role !== 'branch' && d.role !== 'unit') $('signWrap').style.display = 'none';   // never left drawn for the next person on the device
   var who = d.me ? niceName(d.me.name) : manager ? 'The branch' : '';
   $('whoPh').textContent = d.me ? '· ' + who.split(/\s+/)[0] : '';
   $('title').textContent = who || 'Assignments';
@@ -1131,7 +1225,11 @@ function render() {
   var k = d.counts || {};
   $('sub').textContent = ROLE_WORDS[d.role] || '';
   /* the scripts, one tap away: in the side menu, and in Help on a phone */
-  var scripts = (staff || manager ? '<a href="/orphan-transition/client-support.html" target="_blank" rel="noopener">Client Support: the call</a>' : '') +
+  /* the workflow for this role and its test (15 October 2026: "streamline the proper workflow for all to read … and do a
+     test regarding the orphans. So agents do the test … Staff do the test and managers") */
+  var scripts = '<a href="/orphan-transition/workflow.html#' + (staff ? 'staff' : manager || team ? 'managers' : 'agents') + '" target="_blank" rel="noopener">Your workflow: what to do, step by step</a>' +
+    '<a href="/orphan-transition/training.html" target="_blank" rel="noopener">The test for your role</a>' +
+    (staff || manager ? '<a href="/orphan-transition/client-support.html" target="_blank" rel="noopener">Client Support: the call</a>' : '') +
     (staff ? '' : '<a href="/orphan-transition/call-script.html" target="_blank" rel="noopener">The agent&rsquo;s call script</a><a href="/orphan-transition/agent-brief.html" target="_blank" rel="noopener">The agent brief</a>') +
     '<a href="/orphan-transition/if-they-say.html" target="_blank" rel="noopener">If they say&hellip;</a>' +
     /* the film for this sign-in (14 October 2026): one each for management, Client Support and agents */
@@ -1151,7 +1249,7 @@ function render() {
   $('barIntroWhy').textContent = introsHeld ? ' (held: client e-mail is on hold)' : '';
   var bookOn = !!(d.book && d.book.ready), noMoney = !!(d.book && d.book.money === false);
   $('bookNoteTop').hidden = !(manager && d.book && !bookOn);
-  $('bookNoteTop').innerHTML = manager && d.book && !bookOn ? '<b>Policies are not on the board yet.</b> In the sheet: Service Questionnaire &rarr; <i>Transition: set the Branch Portfolio link</i>.' +
+  $('bookNoteTop').innerHTML = manager && d.book && !bookOn ? '<b>Policies are not on the board yet.</b> In the sheet: Service Questionnaire &rarr; <i>Transition: rebuild the Client Book now</i> (it reads the Branch Intelligence workbook, and rebuilds every morning at 6:00 by itself).' +
     ' <details class="inl"><summary>more</summary>Paste the Branch Portfolio&rsquo;s address when it asks. It builds every client&rsquo;s policies, the portfolio&rsquo;s addresses and phones, and the premium a year from the branch workbook, then again every morning at 6:00.</details>' : '';
   lead(d, manager, staff, team, namer, bookOn);
   /* the note under the list: how the figures are made, once for the page */
@@ -1633,14 +1731,199 @@ function factBook(c) {
   }
   return '<section class="fact"><h4>With us</h4>' + out.join('') + '</section>';
 }
+/* the service record the letter carried (service-record.py, 24 September 2026), on every card at once; the whole history from
+   Salesforce opens under History · tasks · comments */
+function factService(c) {
+  var v = c.svc;
+  if (!v) return '<section class="fact none"><h4>Service record</h4><span class="mut">Nothing on record with the branch team before the letter. The full Salesforce record is under History.</span></section>';
+  var out = [];
+  if (v.req) out.push('<span class="ln"><b>' + v.req + '</b> request' + (v.req === 1 ? '' : 's') + ' handled</span>');
+  if (v.docs) out.push('<span class="ln"><b>' + v.docs + '</b> document' + (v.docs === 1 ? '' : 's') + ' handled</span>');
+  if (v.rem) out.push('<span class="ln"><b>' + v.rem + '</b> premium reminder' + (v.rem === 1 ? '' : 's') + '</span>');
+  if (v.bday) out.push('<span class="ln">birthday note ' + esc(v.bday) + '</span>');
+  out.push('<span class="ln mut">by the branch team, to 24 Sep; the full record is under History</span>');
+  return '<section class="fact"><h4>Service record</h4>' + out.join('') + '</section>';
+}
 function factHome2(c) {
-  if (!c.hh) return '';
+  var mf = c.mf || [];
+  if (!c.hh && !mf.length) return '';
   var info = (D.hhInfo && D.hhInfo[c.hh]) || {}, n = c.hhSize || 1;
-  if (n < 2) return '<section class="fact"><h4>Household</h4><span class="ln">On our list alone</span><span class="ln mut">nobody else on our books at this address, phone or e-mail' + (/^H/.test(c.hh) ? ' · ' + esc(c.hh) : '') + '</span></section>';
+  if (n < 2) return '<section class="fact"><h4>Household</h4><span class="ln">On our list alone</span><span class="ln mut">nobody else on our books at this address, phone or e-mail' + (/^H/.test(c.hh || '') ? ' · ' + esc(c.hh) : '') + '</span>' +
+    (mf.length ? '<span class="ln gap">possible family: ' + esc(mf.map(function (m) { return m.client; }).join(', ')) + ' (below)</span>' : '') + '</section>';
   var out = ['<span class="ln big">' + esc(info.name || 'The household') + '</span>', '<span class="ln">' + n + ' people' + (info.answered ? ' · ' + info.answered + ' answered' : '') + (info.children ? ' · ' + info.children + ' under 18' : '') + '</span>'];
   if (info.agents && info.agents.length) out.push('<span class="ln">family&rsquo;s agent: <b>' + esc(info.agents.join(', ')) + '</b></span>');
   if (info.gaps && info.gaps.length) out.push('<span class="ln gap">no life cover with us: ' + esc(info.gaps.join(', ')) + '</span>');
+  if (mf.length) out.push('<span class="ln gap">possible family besides: ' + esc(mf.map(function (m) { return m.client; }).join(', ')) + ' (below)</span>');
   return '<section class="fact"><h4>Household</h4>' + out.join('') + '</section>';
+}
+/* families the household rule missed (16 October 2026: "she also has a husband … the data is supposed to tell me that
+   another person lives there and have not been assigned"): the same surname, and client numbers next to each other or the
+   same house in the same town. A person confirms: one press joins the household, or marks them not family for good. */
+var MF_STATE = { answered: 'answered' };
+function mfWho(m) {
+  return '<b>' + esc(m.client) + '</b> <span class="cno">' + esc(m.no || '') + '</span> · ' + (m.state === 'answered' ? '<b>answered</b>' + (m.said ? ': ' + esc(m.said) : '') : esc(m.state || '')) +
+    ' · ' + (m.agent ? 'agent <b>' + esc(m.agent) + '</b>' : 'nobody named');
+}
+function mfBlock(c) {
+  var mf = c.mf || [];
+  if (!mf.length) return '';
+  var can = canAssign(), L = (D && D.maybe) || [];
+  return '<div class="mfam"><h4>Possible family on our books<i>' + (can ? 'the household rule did not join them; confirm from the records or on the call' : 'the branch confirms these') + '</i></h4>' +
+    mf.map(function (m) {
+      var p = m.i !== undefined ? L[m.i] : null;
+      if (p && (p.a.token === c.token || p.b.token === c.token) && (p.a.token === m.token || p.b.token === m.token)) return '<div class="mfx">' + mfCompare(p, c.token) + '</div>';
+      return '<div class="mfr"><div class="mfw">' + (m.kind === 'same' ? '<i>Possibly the same person on another client number:</i> ' : '') + mfWho(m) +
+        '<span class="why">' + esc(cap(m.why.join('; '))) + '</span></div>' +
+        (can ? '<button type="button" class="yes" data-mf="yes" data-a="' + esc(c.token) + '" data-b="' + esc(m.token) + '">One household</button>' +
+          '<button type="button" data-mf="no" data-a="' + esc(c.token) + '" data-b="' + esc(m.token) + '">Not family</button>' : '') + '</div>';
+    }).join('') + '</div>';
+}
+/* 16 October 2026: "if a possible family you could also provide all the policy details and occupation etc as well our
+   history with the person so we can see the cover for the family … intelligence would tell us if there is a gap". Each
+   person: who they are, what they hold with us, and the branch team's record; the two together: what the family holds and
+   where the record shows it thin. Staff see the same without a figure. The whole of both opens on a press. */
+function mfSide(s, me) {
+  var p = s.p || {}, sm = p.sum, out = [];
+  out.push('<div>' + (me ? '<span class="tag">This client</span>' : '') + '<b class="nm">' + esc(s.client) + '</b> <span class="cno">' + esc(s.no || '') + '</span></div>');
+  out.push('<span class="ln">' + (s.state === 'answered' ? '<b>answered</b>' + (s.said ? ': ' + esc(s.said) : '') : esc(s.state || '')) + ' · ' + (s.agent ? 'agent <b>' + esc(s.agent) + '</b>' : 'nobody named') + '</span>');
+  var who = [p.age !== undefined ? 'age ' + p.age : '', p.gender || '', p.occ || '', p.emp ? 'works at ' + p.emp : ''].filter(Boolean).join(' · ');
+  out.push('<span class="ln"><i>Who</i>' + (who ? esc(who) : '<span class="mut">no age or occupation on file</span>') + '</span>');
+  if (p.town || p.pay) out.push('<span class="ln mut">' + esc([p.town ? 'lives in ' + p.town : '', p.pay ? 'pays by ' + p.pay : ''].filter(Boolean).join(' · ')) + '</span>');
+  if (sm) {
+    var w = [sm.live + ' in force'];
+    if (sm.cover !== undefined) {
+      w.push(sm.cover ? money(sm.cover) + ' life cover' : sm.unconf ? 'life cover: plans to confirm' : 'no life cover');
+      if (sm.ci) w.push(money(sm.ci) + ' critical illness');
+      if (sm.prem && !sm.noPrem) w.push('≈ ' + money(sm.prem) + ' a year');
+    }
+    if (sm.since) w.push(sm.years + ' year' + (sm.years === 1 ? '' : 's') + ' with us');
+    out.push('<span class="ln' + (!sm.live || (sm.cover === 0 && !sm.unconf && sm.live) ? ' gap' : '') + '"><i>With us</i>' + esc(w.join(' · ')) + '</span>');
+    var x = [sm.due ? sm.due + ' with a premium due' : '', sm.lapsed ? sm.lapsed + ' lapsed' : '', sm.pending ? sm.pending + ' application' + (sm.pending === 1 ? '' : 's') + ' pending' : ''].filter(Boolean);
+    if (x.length) out.push('<span class="ln gap">' + esc(x.join(' · ')) + '</span>');
+    if (p.plans && p.plans.length) out.push('<span class="ln mut">' + esc(p.plans.join(', ')) + '</span>');
+  } else out.push('<span class="ln mut"><i>With us</i>no policies we can read yet</span>');
+  var v = p.svc;
+  out.push('<span class="ln' + (v ? '' : ' mut') + '"><i>Our service</i>' + (v ? esc([v.req ? v.req + ' request' + (v.req === 1 ? '' : 's') : '', v.docs ? v.docs + ' document' + (v.docs === 1 ? '' : 's') : '',
+    v.rem ? v.rem + ' premium reminder' + (v.rem === 1 ? '' : 's') : '', v.bday ? 'birthday note ' + v.bday : ''].filter(Boolean).join(' · ')) + ' <span class="mut">to 24 Sep</span>' : 'nothing on record before the letter') + '</span>');
+  if (s.book || s.seg) out.push('<span class="ln mut">' + esc([s.book ? 'was with ' + s.book : '', s.seg ? 'letter ' + s.seg : '', s.hh || ''].filter(Boolean).join(' · ')) + '</span>');
+  return '<div class="mfp' + (me ? ' mine' : '') + '">' + out.join('') + '</div>';
+}
+var MFG_WORD = { hot: 'Act', warm: 'Note', info: 'Fact' };
+function mfFam(f) {
+  if (!f) return '';
+  var t = [f.seen === 0 ? 'Nothing we can read yet for either of them' : f.live + ' polic' + (f.live === 1 ? 'y' : 'ies') + ' in force between them'];
+  if (f.cover !== undefined && f.seen !== 0) {
+    t.push(money(f.cover) + ' life cover');
+    t.push(f.ci ? money(f.ci) + ' critical illness' : 'no critical illness');
+    if (f.prem && !f.noPrem) t.push('≈ ' + money(f.prem) + ' a year');
+  }
+  if (f.since) t.push('with us since ' + f.since.slice(0, 4));
+  var g = f.gaps || [];
+  return '<div class="mftot"><h5>The family&rsquo;s cover with us</h5><div class="tl">' + esc(t.join(' · ')) + '</div>' + (f.who ? '<div class="wh">' + esc(f.who) + '</div>' : '') +
+    '<ul class="mfg">' + (g.length ? g.map(function (x) { return '<li class="' + esc(x.lv) + '"><b>' + (MFG_WORD[x.lv] || 'Fact') + '</b>' + esc(x.t) + '</li>'; }).join('')
+      : '<li class="none">Nothing on the records shows the family&rsquo;s cover as thin.</li>') + '</ul></div>';
+}
+function mfCompare(p, me) {
+  var A = p.a, B = p.b;
+  if (me && me === B.token) { A = p.b; B = p.a; }
+  var k = pairKey(A.token, B.token), open = !!PAIR_OPEN[k], can = canAssign();
+  return (p.kind === 'same' ? '<div class="why"><b>Possibly one person on two client numbers.</b></div>' : '') +
+    '<div class="mfc">' + mfSide(A, me === A.token) + mfSide(B, false) + '</div>' + mfFam(p.fam) +
+    '<span class="why">Why: ' + esc(p.why.join('; ')) + '</span>' +
+    '<div class="go">' + (can ? '<button type="button" class="yes" data-mf="yes" data-a="' + esc(A.token) + '" data-b="' + esc(B.token) + '">One household</button>' +
+      '<button type="button" data-mf="no" data-a="' + esc(A.token) + '" data-b="' + esc(B.token) + '">Not family</button>' : '') +
+      (D && D.detail ? '<button type="button" class="' + (open ? 'on' : '') + '" data-mfx-a="' + esc(A.token) + '" data-mfx-b="' + esc(B.token) + '">' + (open ? 'Hide the comparison' : 'Compare in full: policies, service, history') + '</button>' : '') + '</div>' +
+    (open ? pairFull(PAIRX[k] || { loading: true }) : '');
+}
+/* the whole of both, on a press: action=detail with pair= (a backend older than 16 October answers with one client only) */
+var PAIRX = {}, PAIR_OPEN = {};
+function pairKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
+function redrawMf() { if (TABDEF[TAB] && TABDEF[TAB].pane === 'paneHouseholds') householdsPane(); else list(); }
+function togglePair(a, b) {
+  var k = pairKey(a, b);
+  if (PAIR_OPEN[k]) { delete PAIR_OPEN[k]; redrawMf(); return; }
+  PAIR_OPEN[k] = 1;
+  if (PAIRX[k] && PAIRX[k].ok) { redrawMf(); return; }
+  PAIRX[k] = { loading: true };
+  redrawMf();
+  api(signed({ action: 'detail', token: a, pair: b })).then(function (r) {
+    if (!r || !r.ok) PAIRX[k] = { error: r && r.notUpdated ? NEWBACK : ((r && r.error) || 'The sheet did not answer.') };
+    else if (!r.pair) PAIRX[k] = { error: 'Comparing the two needs Transition.gs of 16 October: paste it, then Deploy → Manage deployments → New version.' };
+    else PAIRX[k] = r;
+    if (PAIR_OPEN[k]) redrawMf();
+  }).catch(function () { PAIRX[k] = { error: 'The sheet did not answer. Try again in a moment.' }; if (PAIR_OPEN[k]) redrawMf(); });
+}
+document.addEventListener('click', function (e) {
+  var b = e.target && e.target.closest ? e.target.closest('[data-mfx-a]') : null;
+  if (!b) return;
+  e.preventDefault();
+  togglePair(b.getAttribute('data-mfx-a'), b.getAttribute('data-mfx-b'));
+});
+function pairFull(x) {
+  if (x.loading) return '<div class="det mffull"><p class="dload">Opening both: their policies, the Salesforce service record and the history with us&hellip; this takes a few seconds.</p></div>';
+  if (x.error) return '<div class="det mffull"><p class="derr">' + esc(x.error) + '</p></div>';
+  var one = function (s) {
+    var p = s.prof || {};
+    var who = [p.age !== undefined ? 'age ' + p.age : '', p.gender || '', p.dob ? 'born ' + dmy(p.dob) : '', p.occ || '', p.emp ? 'works at ' + p.emp : '', p.pay ? 'pays by ' + p.pay : '',
+      p.income ? 'income on file ' + money(p.income) + ' a year' : '', p.smoker || '', s.town ? 'lives in ' + s.town : ''].filter(Boolean).join(' · ');
+    var pol = s.pol ? polPanel(s.pol) + (s.pol.noPrem ? '<div class="pnote">These are Salesforce&rsquo;s records; the premiums come with the Client Book, which is not built yet.</div>' : '')
+      : '<p class="dnone">No policies we can read yet: the Client Book and the Client Profile hold nothing for this client.</p>';
+    var v = s.svc;
+    return '<div class="pside"><h5>' + esc(s.client) + ' <span>' + esc(s.no || '') + (s.book ? ' · was with ' + esc(s.book) : '') + (s.seg ? ' · letter ' + esc(s.seg) : '') + '</span></h5>' +
+      '<div class="mut">' + (who ? esc(who) : 'No age, occupation or employer on file.') + '</div>' + insChips(s.ins) + pol +
+      '<div class="dh">The branch team&rsquo;s record on the letter</div>' + (v ? '<p class="dnone" style="color:var(--body)">' + esc([v.req ? v.req + ' requests handled' : '', v.docs ? v.docs + ' documents handled' : '',
+        v.rem ? v.rem + ' premium reminders' : '', v.bday ? 'birthday note ' + v.bday : ''].filter(Boolean).join(' · ')) + ', to 24 September.</p>' : '<p class="dnone">Nothing on record before the letter.</p>') +
+      serviceHtml(s.service || null) +
+      '<div class="dh">History with us <small>the latest first' + ((s.history || []).length >= 12 ? ', the last 12' : '') + '</small></div>' +
+      ((s.history || []).length ? '<ol class="hist">' + s.history.map(histItem).join('') + '</ol>' : '<p class="dnone">Nothing recorded yet.</p>') + '</div>';
+  };
+  /* the two together is the block above the press; here each person in full */
+  return '<div class="det mffull"><div class="dh">Both in full <small>as at ' + esc(x.at || '') + '</small></div>' + one(x.a) + one(x.b) +
+    (x.book && x.book.money !== false ? '<p class="pnote" style="margin-top:12px">' + bookNote() + '</p>' : '') + '</div>';
+}
+/* one press: join the two into one household, or mark them not family; no call is logged (update with family= or notfamily=) */
+function famDecide(a, b, yes, btn) {
+  if (btn) btn.disabled = true;
+  var p = { action: 'update', code: CODE, token: a };
+  if (WHO) p.who = WHO;
+  p[yes ? 'family' : 'notfamily'] = b;
+  api(p).then(function (r) {
+    if (btn) btn.disabled = false;
+    if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
+    toast(yes ? (r.family || 'They') + ' and the client are one household now (' + (r.household || '') + '). Name the household to one agent.' : 'Marked not family: they will not be suggested again.');
+    load();
+  }).catch(function () { if (btn) btn.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });
+}
+document.addEventListener('click', function (e) {
+  var b = e.target && e.target.closest ? e.target.closest('[data-mf]') : null;
+  if (!b) return;
+  e.preventDefault();
+  famDecide(b.getAttribute('data-a'), b.getAttribute('data-b'), b.getAttribute('data-mf') === 'yes', b);
+});
+/* the Households tab's list to confirm: every pair, those with an answer first */
+var MFSHOW = 15;
+function mfPane(q) {
+  var el = $('mfList');
+  if (!el) return;
+  var L = (D && D.maybe) || [];
+  if (!L.length || !canAssign()) { el.innerHTML = ''; return; }
+  var rows = L.filter(function (p) {
+    if (!q) return true;
+    return (p.a.client + ' ' + p.a.no + ' ' + p.b.client + ' ' + p.b.no + ' ' + p.why.join(' ')).toLowerCase().indexOf(q) >= 0;
+  }).slice().sort(function (x, y) {
+    var ax = (x.a.state === 'answered' || x.b.state === 'answered') ? 1 : 0, ay = (y.a.state === 'answered' || y.b.state === 'answered') ? 1 : 0;
+    return (ay - ax) || ((y.both ? 1 : 0) - (x.both ? 1 : 0));
+  });
+  var m = D.counts && D.counts.maybe || {}, drawn = rows.slice(0, MFSHOW), rest = rows.length - drawn.length;
+  var gapsN = L.filter(function (p) { return p.fam && (p.fam.gaps || []).some(function (g) { return g.lv === 'hot' || g.k === 'nolife'; }); }).length;
+  el.innerHTML = '<div class="mfhead"><h3>Possible families to confirm</h3><span>' + L.length + ' pairs the address, phone and e-mail rule did not join' +
+    (m.answered ? ' · ' + m.answered + ' with someone who answered' : '') + (m.half ? ' · ' + m.half + ' with one named and one not' : '') + (m.split ? ' · ' + m.split + ' named to different agents' : '') +
+    (gapsN ? ' · ' + gapsN + ' where someone has no life cover with us or something needs acting on' : '') + '</span></div>' +
+    (rows.length ? drawn.map(function (p) {
+      return '<div class="mfpair mfx">' + mfCompare(p, '') + '</div>';
+    }).join('') + (rest > 0 ? '<button type="button" class="more" id="mfMore">Show the next ' + Math.min(15, rest) + ' (' + rest + ' more)</button>' : '')
+      : '<div class="empty">No possible family matches.</div>');
+  if ($('mfMore')) $('mfMore').addEventListener('click', function () { MFSHOW += 15; mfPane(q); });
 }
 /* ---- one row a client (8 October 2026: "the interface is so confusing … a much more professional layout") ----
    The row says who, why they are on this list, where they live, the last thing on the file, the number to tap and one
@@ -1655,7 +1938,8 @@ function cap(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slic
 function rowPills(c) {
   var so = stateOf(c);
   return '<span class="pill ' + esc(so) + '">' + esc(STATE_WORDS[so] || so) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '') +
-    (backOpen(c) ? '<span class="pill urg">call-back: ' + esc(c.back.kind === 'branch' ? 'the branch' : 'licensed agent') + '</span>' : '');
+    (backOpen(c) ? '<span class="pill urg">call-back: ' + esc(c.back.kind === 'branch' ? 'the branch' : 'licensed agent') + '</span>' : '') +
+    (c.mf && c.mf.length ? '<span class="pill mf">possible family</span>' : '');
 }
 /* why they are on this list, then who and where, in one line */
 function rowSum(c) {
@@ -1739,14 +2023,14 @@ function card(c, manager, namer) {
   opens += detButton(c);
   var acts = '';
   if (namer) {   // the branch, and staff: name any agent on the roster from the card itself, or another one in place of the agent named
-    acts += '<select class="quick" data-token="' + esc(c.token) + '" aria-label="Assign ' + esc(c.client) + '"><option value="">' + (c.assigned ? 'Reassign to…' : 'Assign to…') + '</option>' +
+    acts += '<select class="quick" data-token="' + esc(c.token) + '" aria-label="Assign ' + esc(c.client) + '"><option value="">' + (c.assigned ? 'Reassign ' : 'Assign ') + (fam && fam.length > 1 ? 'the household (' + fam.length + ') to…' : 'to…') + '</option>' +
       D.agents.filter(function (a) { return !sameName(a.name, c.assigned); }).map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>';
   }
   acts += '<span class="gap1"></span>' + reachLinks(c);
   var body = '<div class="cmeta"><span class="tags">' + pills(c) + valuePill(c) + hhPill(c) + '</span></div><div class="cmeta">' + metaLine(c) + '</div>' +
     backBanner(c) + callInfo(c) + state +
     (c.needs && c.needs.length ? '<div class="cneeds"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') +
-    '<div class="facts">' + factReach(c) + factHome(c) + factWho(c) + factBook(c) + factHome2(c) + '</div>' +
+    '<div class="facts">' + factReach(c) + factHome(c) + factWho(c) + factBook(c) + factHome2(c) + factService(c) + '</div>' + mfBlock(c) +
     insChips(c.ins) + said + (fnotes ? '<div class="said"><h4>On the file</h4>' + fnotes + '</div>' : '') +
     who + claimLine(c) + (namer && !sugOnRow(c, namer) ? sugLine(c) : '') +
     '<div class="opens">' + opens + '</div>' +
@@ -1782,7 +2066,7 @@ function callRow(c, manager, namer) {
     '<div class="cmeta">' + (c.book ? 'was with <b>' + esc(c.book) + '</b> · ' : '') + (c.sent ? 'written to ' + esc(c.sent) : 'no letter yet') + (c.held ? ' · ' + esc(c.held) : '') + '</div>' +
     backBanner(c) + callInfo(c) +
     (c.phone || dnc ? '' : '<div class="cneeds">No number on file: look the client up in Salesforce before calling.</div>') +
-    '<div class="facts">' + factReach(c) + factHome(c) + factWho(c) + factHome2(c) + '</div>' +
+    '<div class="facts">' + factReach(c) + factHome(c) + factWho(c) + factHome2(c) + factService(c) + '</div>' + mfBlock(c) +
     (namer && !dnc && !sugOnRow(c, namer) ? sugLine(c) : '') +
     '<div class="opens">' + detButton(c, true) + '</div>' + (DET_OPEN[c.token] ? detPanel(c) : '') +
     '<div class="acts"><span class="gap1"></span>' + reachLinks(c) + '</div>';
@@ -1861,6 +2145,7 @@ function householdsPane() {
   var H = D.households || {}, info = D.hhInfo || {}, map = {}, namer = canAssign();
   everyone().forEach(function (c) { map[c.token] = c; });
   var keys = householdKeys(), q = $('hSearch').value.trim().toLowerCase();
+  mfPane(q);
   var rowsOf = function (h) { return H[h].filter(function (m) { return m.token && map[m.token]; }).map(function (m) { return map[m.token]; }); };
   var stat = function (h) {
     var ms = H[h], on = rowsOf(h);
@@ -1949,7 +2234,8 @@ function polRow(x) {
   if (!cov.length && x.sa) cov.push(esc(money(x.sa)) + ' <span class="pn">(' + (x.cls && x.cls !== 'life' ? esc(x.cls) + ', not life cover' : 'not counted: plan to confirm') + ')</span>');
   if (x.fund) cov.push('<span class="pn">fund value ' + esc(money(x.fund)) + '</span>');
   var ben = !x.ben || !x.ben.length ? '' : x.benK === 'named' ? x.ben.join(', ') : x.benK === 'estate' ? 'the estate' : x.benK === 'provisions' ? 'see the special provisions' : x.ben[0].replace(/\s*-\s*(male|female)$/i, '');
-  return '<tr><td data-l="Plan"><b>' + esc(x.name || x.code || 'a policy') + '</b> ' + clsChip(x) + '<div class="pn">' + esc(x.no) + (x.name && x.code ? ' · ' + esc(x.code) : '') +
+  /* a policy read off the Client Profile carries no plan code: its cover is Salesforce's own split, so no class to confirm */
+  return '<tr><td data-l="Plan"><b>' + esc(x.name || x.code || 'a policy') + '</b> ' + (x.code || x.cls ? clsChip(x) : '') + '<div class="pn">' + esc(x.no) + (x.name && x.code ? ' · ' + esc(x.code) : '') +
       (x.insured ? ' · insures ' + esc(x.insured) : '') + (x.matures ? ' · matures ' + esc(my(x.matures)) : '') + '</div></td>' +
     '<td data-l="Stands"' + (x.st === 'overdue' ? ' class="due"' : x.st === 'lapsed' ? ' class="gone"' : '') + '>' + esc(st) + '</td>' +
     '<td data-l="Issued">' + esc(my(x.iss) || '—') + '</td>' +
@@ -1986,7 +2272,7 @@ function polPanel(pol) {
   var s = pol.sum;
   var tiles = [s.cover ? [money(s.cover), 'life cover'] : s.unconf ? ['—', 'life cover: plans still to confirm'] : ['$0', 'life cover'],
     [s.ci ? money(s.ci) : '$0', 'critical illness'],
-    [s.prem ? '≈ ' + money(s.prem) : '$0', 'premium a year' + (s.est ? ' (part estimated)' : '')],
+    pol.noPrem ? ['—', 'premium a year: with the Client Book'] : [s.prem ? '≈ ' + money(s.prem) : '$0', 'premium a year' + (s.est ? ' (part estimated)' : '')],
     [s.live + ' in force', (s.due ? s.due + ' with a premium due · ' : '') + s.lapsed + ' lapsed' + (s.pending ? ' · ' + s.pending + ' pending' : '')],
     [s.since ? s.years + ' year' + (s.years === 1 ? '' : 's') : '—', s.since ? 'with us since ' + s.since.slice(0, 4) : 'no policy issued yet']];
   if (s.fund) tiles.push([money(s.fund), 'fund value, in force']);
@@ -2271,6 +2557,9 @@ function dashPane() {
   if (quietAll) lines.push('<b>' + quietAll + '</b> client' + (quietAll === 1 ? ' was' : 's were') + ' named to an agent more than ' + (d.waitDays || 2) + ' days ago with nothing logged since.');
   if (L.length && L.length - Lt) lines.push('<b>' + (L.length - Lt) + '</b> on the call lists ' + (L.length - Lt === 1 ? 'has' : 'have') + ' not been tried.');
   if (Fa) lines.push('<b>' + Fa + '</b> call-back' + (Fa === 1 ? '' : 's') + ' for a licensed agent ' + (Fa === 1 ? 'has' : 'have') + ' nobody named.');
+  var mfc = d.counts && d.counts.maybe;
+  if (mfc && mfc.pairs) lines.push('<b>' + mfc.pairs + '</b> possible famil' + (mfc.pairs === 1 ? 'y the household rule did not join is' : 'ies the household rule did not join are') + ' waiting to be confirmed' +
+    (mfc.answered ? '; <b>' + mfc.answered + '</b> with someone who answered' : '') + (mfc.half ? ', <b>' + mfc.half + '</b> with one member named and one not' : '') + ' (Households tab).');
   if (branch && SFW && SFW.on && SFW.people) {
     var un = SFW.people.reduce(function (t, p) { return t + p.untouched; }, 0), nn = SFW.people.reduce(function (t, p) { return t + p.closedNoNote; }, 0);
     if (un || nn) lines.push('In Salesforce, <b>' + un + '</b> orphan task' + (un === 1 ? ' is' : 's are') + ' open and untouched, and <b>' + nn + '</b> ' + (nn === 1 ? 'was' : 'were') + ' closed with no note.');
@@ -2384,7 +2673,7 @@ function agentsPane(soft) {
     (AGV_BUSY ? ' · reading again&hellip;' : ' <button type="button" id="agReload">Read again</button>'));
   if ($('agReload')) $('agReload').addEventListener('click', function () { agLoad(true); agentsPane(); });
   $('agSub').textContent = v.unit ? 'How each agent in your unit is getting on with the clients named to them' : 'How each agent is getting on with the clients named to them, and the households still to name';
-  agHead(v); agTable(v); agOne(v); agSince(v); agDays(v); agBooks(v); agBatch(v);
+  agHead(v); agTable(v); agNamed(v); agOne(v); agSince(v); agDays(v); agBooks(v); agBatch(v);
   $('agHow').innerHTML = '<b>How the numbers are made.</b> The households and the names from Salesforce come from the Household Assignments tab; a name given on the board counts too. ' +
     '<b>Spoken to</b>: a call or meeting the agent marked on the board, a comment they wrote on the client, or their feedback in Salesforce (Campaign Feedback Update). <b>Tried</b>: a call they marked as no answer. ' +
     '<b>Met</b>: a meeting marked on the board. <b>Completed</b>: Closed or Declined, by the agent or by anyone after the naming. <b>Nothing logged</b>: named ' + v.quiet + ' or more working days ago, with no call, comment or feedback. ' +
@@ -2398,6 +2687,23 @@ function agentsPane(soft) {
   });
 }
 function agTo(id) { try { $(id).scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+/* who named whom (15 October 2026: "the analytics as to who assigned whom to agent"): every naming by the person who
+   made it, with the households and clients and to whom; and every agent by who named to them. Staff and managers alike. */
+function agNamed(v) {
+  var el = $('agNamed'), N = v.named;
+  if (!el) return;
+  if (!N) { el.hidden = true; return; }
+  el.hidden = false;
+  var top = function (list, n) { n = n || 3; return (list || []).slice(0, n).map(function (x) { return esc(firstName(x[0])) + ' <i class="sdev">' + x[1] + '</i>'; }).join(', ') + ((list || []).length > n ? ' …' : ''); };
+  el.innerHTML = '<h3>Who named whom</h3><p class="dsub">' + plural(N.n, 'naming') + ' in ' + plural(N.hh, 'household') + (v.unit ? ', to your unit' : '') +
+    '. A naming is always the household\'s, never one policy. "Salesforce" is a naming made in Salesforce itself.</p>' +
+    (N.n ? '<div class="two"><div><h4>By person</h4><div class="dtw"><table class="dt"><tr><th>Named by</th><th>Clients</th><th>Households</th><th>This month</th><th>7 days</th><th>Last</th><th>To whom</th></tr>' +
+      (N.by || []).map(function (p) { return '<tr><td><b>' + esc(p.name) + '</b></td><td>' + p.n + '</td><td>' + p.hh + '</td><td>' + p.m + '</td><td>' + p.w + '</td><td>' + esc(p.last || '') + '</td><td>' + top(p.to) + '</td></tr>'; }).join('') + '</table></div></div>' +
+      '<div><h4>By agent</h4><div class="dtw"><table class="dt"><tr><th>Agent</th><th>Received</th><th>Households</th><th>This month</th><th>Last</th><th>Named by</th></tr>' +
+      (N.agents || []).map(function (p) { return '<tr><td><b>' + esc(p.name) + '</b></td><td>' + p.n + '</td><td>' + p.hh + '</td><td>' + p.m + '</td><td>' + esc(p.last || '') + '</td><td>' + top(p.to) + '</td></tr>'; }).join('') + '</table></div></div></div>' +
+      '<div class="sdaysrow">' + (N.days || []).map(function (x) { return '<span title="' + esc(x.l) + ': ' + x.n + '"><i style="height:' + (x.n ? Math.min(40, x.n * 6 + 4) : 1) + 'px"></i><small>' + esc(x.l.replace(/ [A-Za-z]+$/, '')) + '</small></span>'; }).join('') + '<em>namings a day, the last 14 days</em></div>'
+      : '<p class="dsub">Nobody has been named yet.</p>');
+}
 function agBar(g, n) {
   return '<span class="agbar" role="img" aria-label="' + esc(AG_STAGES.map(function (s) { return s[1] + ' ' + (g[s[0]] || 0); }).join(', ')) + '">' +
     AG_STAGES.map(function (s) { return g[s[0]] ? '<i style="background:' + s[2] + ';flex:' + g[s[0]] + '" title="' + esc(s[1] + ': ' + g[s[0]] + ' of ' + n) + '"></i>' : ''; }).join('') + '</span>';
@@ -2865,6 +3171,8 @@ function workPane() {
 /* ---- the Team tab ---- */
 function teamPane() {
   var d = D, manager = d.role === 'branch', team = d.role === 'unit', namer = canAssign();
+  statsPanel(d);
+  signPanel(d);
   teamPanel(d);
   /* the roster: by unit and person when the Agent Skill Bank has Role and Unit (the branch sees every unit, a unit manager
      his own), else the flat list; a name opens that person's list */
@@ -2907,20 +3215,58 @@ function unitBlock(g, d, manager) {
    organized"): each person's outcomes today and in the last seven days, read from the stamp every outcome leaves on the
    file ("[no answer 7 Oct · Name]"), and their notes, newest first; a client's name opens that client */
 var TEAM_ALL = false;
-function dayOf(s) {
-  var m = /^(\d{1,2}) ([A-Za-z]{3})$/.exec(String(s || '').trim()), mi = m ? MON.indexOf(m[2]) : -1;
-  if (mi < 0) return null;
-  var now = new Date(), d = new Date(now.getFullYear(), mi, Number(m[1]));
-  if (d.getTime() > now.getTime() + 86400000) d.setFullYear(d.getFullYear() - 1);   // a stamp from December, read in January
-  return d;
+/* the team's progress and points (15 October 2026: "all staff and managers are supposed to see the progress each support
+   has and who is pulling their weight … there should be a reward system on the conversions for staff … show up staff
+   who has things to do"): the backend's tTeamStats_, for staff, unit managers and the branch, ranked by points. The
+   period is kept on the device: this month, the last 7 days, or everything. */
+var STATS_P = 'm';
+try { var sp0 = localStorage.getItem('rrb-stats-period'); if (/^(m|w|all)$/.test(sp0 || '')) STATS_P = sp0; } catch (e) {}
+function statsPanel(d) {
+  var w = $('statsWrap');
+  if (d.role !== 'branch' && d.role !== 'unit' && d.role !== 'staff') { w.style.display = 'none'; return; }
+  w.style.display = '';
+  var s = d.stats;
+  if (!s) { $('statsSum').textContent = ''; $('statsBody').innerHTML = '<div class="empty">The team\'s progress and points are read once the current Transition.gs is pasted into the Apps Script project (Deploy → Manage deployments → pencil → New version).</div>'; return; }
+  if (s.on === false) { $('statsSum').textContent = ''; $('statsBody').innerHTML = '<div class="empty">The team\'s progress could not be read: ' + esc(s.why || '') + '</div>'; return; }
+  var P = s.points || {}, per = STATS_P;
+  var cnt = function (p) { return per === 'm' ? p.m : per === 'w' ? p.w : p.c; }, pts = function (p) { return per === 'm' ? p.ptsM : per === 'w' ? p.ptsW : p.pts; };
+  var people = (s.people || []).slice().sort(function (a, b) { return pts(b) - pts(a) || b.pts - a.pts || a.name.localeCompare(b.name); });
+  var active = people.filter(function (p) { return pts(p) > 0; }), conv = people.reduce(function (t, p) { return t + cnt(p).conversion; }, 0);
+  var when = per === 'm' ? 'this month' : per === 'w' ? 'in the last 7 days' : 'in all';
+  $('statsSum').textContent = active.length + ' of ' + people.length + ' with points ' + when + ' · ' + plural(conv, 'conversion') + ' ' + when;
+  var todoN = function (p) { return p.todo.calls + p.todo.backs + p.todo.unnamed; };
+  var tag = function (p, i) {
+    if (i === 0 && pts(p) > 0) return ' <span class="stag lead">leading</span>';
+    if (pts(p) === 0 && todoN(p)) return ' <span class="stag push">work waiting, nothing logged</span>';
+    return '';
+  };
+  var todoText = function (p) {
+    var bits = [];
+    if (p.todo.calls) bits.push(p.todo.calls + ' on their call list not tried');
+    if (p.todo.backs) bits.push(plural(p.todo.backs, 'call-back') + ' still open');
+    if (p.todo.unnamed) bits.push(p.todo.unnamed + ' reached, nobody named');
+    return bits.length ? bits.join(' · ') : '—';
+  };
+  $('statsBody').innerHTML = '<div class="speriod">' + [['m', 'This month'], ['w', 'Last 7 days'], ['all', 'Everything']].map(function (x) { return '<button type="button" data-sp="' + x[0] + '" class="' + (per === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') +
+    '<span>' + esc(per === 'm' ? s.month : per === 'w' ? 'the last seven days' : 'since the board began') + ' · read ' + esc(s.at || '') + '</span></div>' +
+    '<div class="dtw"><table class="dt stats"><tr><th>Who</th><th>Points</th><th>Reached</th><th>No answer</th><th>Met / closed</th><th>E-mails taken</th><th>Households named</th><th>Call-backs flagged</th><th>Conversions</th><th>Questionnaires</th><th>Still to do</th><th>Last logged</th></tr>' +
+    people.map(function (p, i) {
+      var c = cnt(p), rt = p.role && !/^agent$/i.test(p.role) ? '<span class="rtag">' + esc(p.role) + '</span>' : '';
+      return '<tr' + (pts(p) === 0 && todoN(p) ? ' class="push"' : '') + '><td><b>' + esc(p.name) + '</b>' + rt + tag(p, i) + '</td><td><b>' + pts(p) + '</b></td><td>' + c.called + '</td><td>' + c.noanswer + '</td><td>' + (c.met + c.closed) + '</td>' +
+        '<td>' + c.email + (c.detail ? ' <i class="sdev">+' + c.detail + ' details</i>' : '') + '</td><td>' + c.household + (c.clients ? ' <i class="sdev">' + plural(c.clients, 'client') + '</i>' : '') + '</td><td>' + c.back + '</td><td><b>' + c.conversion + '</b></td><td>' + c.questionnaire + '</td>' +
+        '<td class="todo">' + todoText(p) + '</td><td>' + esc(p.last || 'never') + '</td></tr>';
+    }).join('') + '</table></div>' +
+    '<p class="snote"><b>How the points are made.</b> ' + ['reached (called or met) ' + P.called, 'no answer ' + P.noanswer, 'met ' + P.met, 'closed or declined ' + P.closed, 'an e-mail taken on a call ' + P.email, 'a number or address taken ' + P.detail,
+      'a household named ' + P.household, 'a call-back flagged ' + P.back, 'a conversion ' + P.conversion, 'a questionnaire after the naming ' + P.questionnaire].join(' · ') +
+    '. A <b>conversion</b> is a client this person reached or named who was then met, closed or declined by someone else. A naming counts once a household, never a policy. ' +
+    '"Still to do" reads their call list, the call-backs they flagged and the clients they reached with nobody named yet. Work done only in Salesforce is not counted here' +
+    (d.role === 'branch' ? ': the Dashboard\'s Salesforce table has it' : '') + '. The reward the points are paid as is the branch manager\'s to set.</p>';
+  each('#statsBody [data-sp]', function (b) { b.addEventListener('click', function () { STATS_P = b.getAttribute('data-sp'); try { localStorage.setItem('rrb-stats-period', STATS_P); } catch (e) {} statsPanel(D); }); });
 }
-function teamPanel(d) {
-  /* a unit manager reads the same for his team's clients (8 October 2026: "as well managers log in") */
-  if (d.role !== 'branch' && d.role !== 'unit') { $('teamWrap').style.display = 'none'; return; }
-  document.querySelector('#teamWrap h2').textContent = d.role === 'unit' ? 'On your team’s clients' : 'From the team';
-  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000;
-  var people = {}, notes = [];
-  d.clients.forEach(function (c) {
+/* each person's outcomes on the board in the last seven days, from the stamp every outcome leaves on the file */
+function teamStamps(d) {
+  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000, people = {};
+  (d.clients || []).forEach(function (c) {
     (c.markers || []).forEach(function (mk) {
       var m = /^\[(called|met|no answer|declined|closed) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/.exec(mk), day = m ? dayOf(m[2]) : null;
       if (!day || day.getTime() < week) return;
@@ -2934,6 +3280,56 @@ function teamPanel(d) {
       var p = people[m[3]] = people[m[3]] || { name: m[3], today: 0, reached: 0, noans: 0, week: 0, backs: 0 };
       p.backs++;
     });
+  });
+  return people;
+}
+/* who is signing in (15 October 2026: "i want the login to see whats happening and is staff logging in and agents?"): the
+   Sign-ins tab, one row a person an hour, read by the backend for the branch (everyone active on the Agent Skill Bank) and
+   a unit manager (his team). Beside each person, what they logged on the board in the same seven days, from the stamps. */
+function ymd(dt) { return dt.getFullYear() + '-' + ('0' + (dt.getMonth() + 1)).slice(-2) + '-' + ('0' + dt.getDate()).slice(-2); }
+function signPanel(d) {
+  var w = $('signWrap');
+  if (d.role !== 'branch' && d.role !== 'unit') { w.style.display = 'none'; return; }
+  w.style.display = '';
+  var s = d.signins;
+  if (!s) { $('signSum').textContent = ''; $('signBody').innerHTML = '<div class="empty">Sign-ins are recorded once the current Transition.gs is pasted into the Apps Script project (Deploy → Manage deployments → pencil → New version). From then on this shows who opened the board, and when.</div>'; return; }
+  if (s.on === false) { $('signSum').textContent = ''; $('signBody').innerHTML = '<div class="empty">The sign-ins could not be read: ' + esc(s.why || '') + '</div>'; return; }
+  var stamps = teamStamps(d), logged = {}, people = s.people || [], never = s.never || [], all = people.length + never.length;
+  Object.keys(stamps).forEach(function (k) { logged[k.toLowerCase()] = stamps[k]; });   // the stamps carry the tab's capitals; the list is in title case
+  var lgOf = function (name) { return logged[String(name || '').toLowerCase()]; };
+  var todayN = people.filter(function (p) { return p.today; }).length, weekN = people.filter(function (p) { return p.days && p.days.length; }).length;
+  $('signSum').textContent = todayN + ' of ' + all + ' signed in today · ' + weekN + ' in the last 7 days · ' + never.length + ' never';
+  var DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], days = [];
+  for (var i = 6; i >= 0; i--) { var dt = new Date(Date.now() - i * 86400000); days.push([ymd(dt), DOW[dt.getDay()]]); }
+  var strip = function (list) {
+    var on = {}; (list || []).forEach(function (x) { on[x] = true; });
+    return '<span class="sdays">' + days.map(function (k) { return '<i class="' + (on[k[0]] ? 'on' : '') + '" title="' + esc(k[0]) + '">' + k[1] + '</i>'; }).join('') + '</span>';
+  };
+  var lg = function (name) { var p = lgOf(name); return p ? p.week + (p.backs ? ' · ' + p.backs + ' call-back' + (p.backs === 1 ? '' : 's') : '') : '0'; };
+  $('signBody').innerHTML = (people.length ? '<div style="overflow-x:auto"><table><tr><th>Who</th><th>Last sign-in</th><th>Today</th><th>Last 7 days</th><th>Opens</th><th>Logged on the board, 7 days</th></tr>' + people.map(function (p) {
+      var tag = p.role && !/^agent$/i.test(p.role) ? '<span class="rtag">' + esc(p.role) + '</span>' : '';
+      return '<tr><td><b>' + esc(p.name) + '</b>' + tag + '</td><td>' + esc(p.last || '') + (p.dev ? ' <i class="sdev">' + esc(String(p.dev).split(' ')[0]) + '</i>' : '') + '</td><td>' + (p.today || 0) + '</td><td>' + strip(p.days) + '</td><td>' + (p.total || 0) + (p.first ? ' <i class="sdev">since ' + esc(p.first) + '</i>' : '') + '</td><td>' + lg(p.name) + '</td></tr>';
+    }).join('') + '</table></div>' : '<div class="empty">Nobody has signed in since the log began' + (s.since ? ' on ' + esc(s.since) : '') + '.</div>') +
+    (never.length ? '<h4>Never signed in' + (s.since ? ' since ' + esc(s.since) : '') + '</h4><div class="chips">' + never.map(function (p) {
+      return '<span class="chip"><b>' + esc(p.name) + '</b> <i>' + esc(p.role || '') + (p.unit && d.role === 'branch' ? ' · ' + esc(p.unit) : '') + (lgOf(p.name) ? ' · logged ' + lgOf(p.name).week + ' on the board' : '') + '</i></span>';
+    }).join('') + '</div>' : '') +
+    (s.code && s.code.total ? '<p class="snote">The branch code alone, with no name: last ' + esc(s.code.last) + ', ' + s.code.today + ' today, ' + s.code.total + ' in all.</p>' : '') +
+    '<p class="snote">One row a person an hour, from the Sign-ins tab: a refresh inside the hour is not counted again. "Logged on the board" counts the outcomes they marked (called, met, no answer, declined, closed) and the call-backs they flagged, in the last seven days.</p>';
+}
+function dayOf(s) {
+  var m = /^(\d{1,2}) ([A-Za-z]{3})$/.exec(String(s || '').trim()), mi = m ? MON.indexOf(m[2]) : -1;
+  if (mi < 0) return null;
+  var now = new Date(), d = new Date(now.getFullYear(), mi, Number(m[1]));
+  if (d.getTime() > now.getTime() + 86400000) d.setFullYear(d.getFullYear() - 1);   // a stamp from December, read in January
+  return d;
+}
+function teamPanel(d) {
+  /* a unit manager reads the same for his team's clients (8 October 2026: "as well managers log in") */
+  if (d.role !== 'branch' && d.role !== 'unit' && d.role !== 'staff') { $('teamWrap').style.display = 'none'; return; }
+  document.querySelector('#teamWrap h2').textContent = d.role === 'unit' ? 'On your team’s clients' : 'From the team';
+  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000;
+  var people = teamStamps(d), notes = [];
+  d.clients.forEach(function (c) {
     (c.fileNotes || []).forEach(function (f) {
       var m = /^(called|met|declined|closed|open|no answer|assigned) (\d{1,2} [A-Za-z]{3}) · ([^:]+): ([\s\S]*)$/.exec(f);
       if (!m) return;
@@ -2996,8 +3392,8 @@ function claimsPanel(d) {
   if (manager && !C.live) h += '<p class="cnote"><b>Not started.</b> Claims are found and kept on the <i>Retention Payments</i> tab, held: nothing goes to the Retention unit until you press <i>Transition: start the TT$200 claims</i> on the sheet&rsquo;s menu.</p>';
   if (manager && !C.sf) h += '<p class="cnote">Salesforce is not linked to this project, so the submission date is not written and payments are not read back. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings &rarr; Script properties; until then, type the Paid date on the tab when one is paid.</p>';
   h += '<p class="cnote rule">A service questionnaire from a client after they were named to an agent earns that agent ' + esc(cmoney(C.amount)) + ', once per client, whoever sent the link. ' +
-    (manager ? 'Each claim is e-mailed to the Retention unit (' + esc(C.to) + ') with you and the agent copied, and every Monday the unpaid ones go again as one list, until Salesforce shows <i>Date Comm Paid</i>.'
-      : 'The branch e-mails each claim to the Retention unit with you copied, and follows it up every Monday until Salesforce shows the payment date.') + '</p>';
+    (manager ? 'Each claim is e-mailed to the Retention unit (' + esc(C.to) + ') with you and the agent copied, and every working day at 10:00 the unpaid ones go again as one list, sales support copied, until Salesforce shows <i>Date Comm Paid</i>; the agent is then told by e-mail.'
+      : 'The branch e-mails each claim to the Retention unit with you copied, follows it up every working day until Salesforce shows the payment date, and tells you by e-mail when it does.') + '</p>';
   if (!rows.length) { $('claimBody').innerHTML = h + '<div class="empty">No claim yet. The first service questionnaire from a client after they were named to ' + (manager ? 'an agent' : team ? 'one of your team' : 'you') + ' makes one.</div>'; return; }
   h += '<table class="pt"><thead><tr><th>Client</th>' + (manager || team ? '<th>Agent</th>' : '') + '<th>Questionnaire</th><th>Sent to Retention</th><th>Followed up</th><th>Payment</th></tr></thead><tbody>' +
     rows.map(function (v) {
@@ -3070,6 +3466,7 @@ function detPanel(c) {
   h += (x.history || []).length ? '<ol class="hist">' + x.history.map(histItem).join('') + '</ol>' +
     '<p class="hkey"><i style="background:var(--gold)"></i>the client<i style="background:var(--teal)"></i>our e-mails to them<i style="background:#bfd0da"></i>the branch</p>'
     : '<p class="dnone">Nothing recorded yet.</p>';
+  h += serviceHtml(x.service);
   var tasks = x.tasks || [], open = tasks.filter(function (t) { return t.open; }).length;
   h += '<div class="dh">Salesforce tasks <small>' + (x.sf ? (tasks.length ? open + ' open · ' : '') + 'on their policies and contact record: open, and any changed in the last ' + esc(x.taskDays || 14) + ' days' : '') + '</small></div>';
   if (x.tasksError) h += '<p class="derr">' + esc(x.tasksError) + '</p>';
@@ -3083,6 +3480,32 @@ function detPanel(c) {
     '<textarea class="cmtbox" data-cmt="' + esc(c.token) + '" maxlength="800" placeholder="What you did, what you found, what happens next" aria-label="A comment on ' + esc(c.client) + '">' + esc(DRAFT[c.token] || '') + '</textarea>' +
     '<div class="cmtbar"><span>The team sees it; the client never does.</span><button type="button" class="cmtgo" data-cmt-go="' + esc(c.token) + '">Save comment</button></div>';
   return h + '</div>';
+}
+/* everything the branch has done for the client, from Salesforce, with the service levels (16 October 2026: "all that we have
+   done to service their account pulling all our salesforce history so a person can see the service levels") */
+function serviceHtml(v) {
+  if (!v) return '';
+  var h = '<div class="dh">Our service record <small>every task on their policies and contact record in Salesforce; logged e-mails and the birthday flow are not counted</small></div>';
+  if (v.error) return h + '<p class="derr">' + esc(v.error) + '</p>';
+  if (v.on === false || (!v.n && !v.open)) return h + '<p class="dnone">' + esc(v.why || 'Nothing on record in Salesforce for this client yet.') + '</p>';
+  var pc = v.withDue ? Math.round(100 * v.onTime / v.withDue) : null;
+  h += '<div class="svt">' +
+    '<div><b>' + v.n + '</b><span>requests handled' + (v.firstDmy ? ' since ' + esc(v.firstDmy) : '') + '</span></div>' +
+    (v.lastDmy ? '<div><b style="font-size:16px">' + esc(v.lastDmy) + '</b><span>last served</span></div>' : '') +
+    (v.median !== null && v.median !== undefined ? '<div><b>' + v.median + '</b><span>days to close, the median' + (v.avg !== null ? ' (average ' + v.avg + ')' : '') + '</span></div>' : '') +
+    (v.n ? '<div><b>' + Math.round(100 * (v.within1 || 0) / v.n) + '%</b><span>closed within a day</span></div>' : '') +
+    (pc !== null ? '<div><b>' + pc + '%</b><span>closed by the due date (' + v.onTime + ' of ' + v.withDue + ')</span></div>' : '') +
+    '<div><b>' + v.open + '</b><span>open now' + (v.overdue ? ', <b style="display:inline;font:inherit;color:var(--stop)">' + v.overdue + ' overdue</b>' : '') + '</span></div></div>';
+  if ((v.years || []).length) h += '<div class="svrow"><i>By year</i>' + v.years.map(function (y) { return '<span>' + esc(y[0]) + ' <b>' + y[1] + '</b></span>'; }).join('') + '</div>';
+  if ((v.types || []).length) h += '<div class="svrow"><i>By kind of work</i>' + v.types.map(function (t) { return '<span>' + esc(t[0]) + ' <b>' + t[1] + '</b></span>'; }).join('') + '</div>';
+  if ((v.who || []).length) h += '<div class="svrow"><i>Who served them</i>' + v.who.slice(0, 6).map(function (t) { return '<span>' + esc(t[0]) + ' <b>' + t[1] + '</b></span>'; }).join('') + '</div>';
+  if ((v.list || []).length) h += '<details class="more"><summary>Every task (' + v.list.length + (v.capped ? '+' : '') + ')</summary><div class="svwrap"><table class="svlist"><tr><th>Opened</th><th>What</th><th>Kind</th><th>Who</th><th>Closed</th><th>Days</th></tr>' +
+    v.list.map(function (t) {
+      return '<tr><td class="n">' + esc(t.opened) + '</td><td>' + esc(t.subject) + (t.policy ? ' <span class="mut" style="color:var(--dim)">· ' + esc(t.policy) + '</span>' : '') + '</td><td>' + esc(t.kind) + '</td><td>' + esc(t.owner) + '</td>' +
+        '<td class="n">' + (t.open ? '<span class="' + (t.late ? 'late' : 'openx') + '">open' + (t.due ? ', due ' + esc(t.due) : '') + '</span>' : esc(t.closed)) + '</td>' +
+        '<td class="n' + (t.late && !t.open ? ' late' : '') + '">' + (t.days === null || t.days === undefined ? '' : t.days) + '</td></tr>';
+    }).join('') + '</table></div></details>';
+  return h;
 }
 function saveComment(tok, btn) {
   var box = document.querySelector('textarea.cmtbox[data-cmt="' + tok + '"]'), text = String(box ? box.value : (DRAFT[tok] || '')).trim();
@@ -3485,7 +3908,7 @@ function mOpps(all, money) {
     (keys.length ? '<div class="mopps">' + keys.map(function (k, i) {
       return '<button type="button" class="mopp' + (M.opp === k ? ' on' : '') + '" data-mo="' + k + '" style="--d:' + (i * 50) + 'ms"><b>' + n[k] + '</b><span>' + esc(OPP_WORDS[k][0]) + '</span><i>' +
         esc(money && prem[k] ? '≈ ' + short(prem[k]) + ' a year held · ' + OPP_WORDS[k][1] : OPP_WORDS[k][1]) + '</i></button>';
-    }).join('') + '</div>' : '<p class="pnote">' + (D.book && D.book.ready ? 'No openings among these clients.' : 'The openings come from the Client Book: build it from the menu (Transition: set the Branch Portfolio link).') + '</p>');
+    }).join('') + '</div>' : '<p class="pnote">' + (D.book && D.book.ready ? 'No openings among these clients.' : 'The openings come from the Client Book: build it from the menu (Transition: rebuild the Client Book now).') + '</p>');
   each('#mOpps [data-mo]', function (b) { b.addEventListener('click', function () { var k = b.getAttribute('data-mo'); M.opp = M.opp === k ? '' : k; M.show = MSTEP; mRedraw(); try { $('mQueue').scrollIntoView({ behavior: mReduced() ? 'auto' : 'smooth', block: 'start' }); } catch (e) {} }); });
 }
 /* every agent: their base, and their list against the even share (named, then suggested) */
@@ -3526,11 +3949,14 @@ function assign(tokens, agent, el) {
   if (!tokens.length || !agent || notYet()) return;
   if (el) el.disabled = true;
   var p = signed({ action: 'assign', tokens: tokens.join(','), agent: agent, brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' });
-  toast('Naming ' + agent + ' on ' + tokens.length + ' client' + (tokens.length === 1 ? '' : 's') + '…');
+  toast('Naming ' + agent + ' on ' + tokens.length + ' client' + (tokens.length === 1 ? '' : 's') + ' and their household…');
   api(p).then(function (r) {
     if (el) el.disabled = false;
     if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
-    var msg = r.agent + ' named on ' + r.assigned + ' client' + (r.assigned === 1 ? '' : 's') + (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
+    /* the household is named with them (15 October 2026): the toast says how many came along */
+    var msg = r.agent + ' named on ' + r.assigned + ' client' + (r.assigned === 1 ? '' : 's') + (r.households ? ' in ' + plural(r.households, 'household') : '') +
+      (r.family ? ' · ' + plural(r.family, 'family member') + ' named with them' : '') + (r.sfNotes ? ' · noted on ' + plural(r.sfNotes, 'Salesforce task') : '') +
+      (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
       (r.introHeld ? ' · ' + r.introHeld + ' introduction' + (r.introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') +
       (r.notAnswered ? ' · ' + r.notAnswered + ' not introduced: they have not answered' : '') +
       (r.missing && r.missing.length ? ' · ' + r.missing.length + ' not found' : '') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join(' ') : '') +
@@ -3636,15 +4062,32 @@ function openPanel(token, status) {
         ', or take their e-mail on <a href="' + esc(ownLink(c)) + '" target="_blank" rel="noopener">their page</a>.</div>';
     }
   }
-  if (D.role === 'branch') {
-    /* what the client tells us about their family, when the address rule did not see it (29 September: a husband and his wife) */
+  if (canAssign()) {
+    /* what the client tells us about their family, when the address rule did not see it (29 September: a husband and his wife);
+       the branch and Client Support since 16 October 2026, and saving with only this filled links them with no call logged */
     var fam = familyOf(c), others = fam ? fam.filter(function (m) { return m.token !== c.token; }).map(function (m) { return m.client; }) : [];
-    h += '<label class="fl" for="pFam">A family member on our list <i>(optional: they become one household)</i></label>' +
+    h += '<label class="fl" for="pFam">A family member on our list <i>(optional: they become one household; fill only this and Save to link them without logging a call)</i></label>' +
       '<input type="text" id="pFam" list="pFamList" autocomplete="off" placeholder="start typing a name"><datalist id="pFamList">' + familyOptions(c) + '</datalist>' +
       (others.length ? '<p class="famnow">Already one household (' + esc(c.hh) + ') with ' + esc(others.join(', ')) + '.</p>' : '');
   }
+  /* the Salesforce task the log lands on (15 October 2026): the open task, or that saving opens one */
+  if (D.detail) h += '<div class="sftask" id="pTasks"><i>Salesforce:</i> checking for an open task…</div>';
   h += '<div class="gobar"><button type="button" id="pCancel">Cancel</button><button type="button" class="primary" id="pSave">Save</button></div>';
   $('sheet').innerHTML = h;
+  if ($('pTasks')) {
+    var drawTasks = function (x) {
+      var el = $('pTasks');
+      if (!el) return;
+      if (!x || x.error) { el.innerHTML = '<i>Salesforce:</i> ' + esc((x && x.error) || 'could not be read') + '.'; return; }
+      var open = (x.tasks || []).filter(function (t) { return t.open; });
+      el.innerHTML = '<i>Salesforce:</i> ' + (x.sf === false ? 'not linked to this project yet, so this call is not logged there.'
+        : open.length ? open.map(function (t) { return '<b>' + esc(t.subject) + '</b>' + (t.owner ? ' · ' + esc(t.owner) : '') + (t.due ? ' · due ' + esc(t.due) : '') + (t.url ? ' · <a href="' + esc(t.url) + '" target="_blank" rel="noopener">open</a>' : ''); }).join('<br>') +
+          '<br>This call is logged on ' + (open.length === 1 ? 'it' : 'them') + ' when you save. The task stays open until a person closes it.'
+        : 'no open task. Saving this call opens one on the client\'s policy, which stays open until a person closes it.');
+    };
+    if (DET[c.token] && DET[c.token].ok) drawTasks(DET[c.token]);
+    else api(signed({ action: 'detail', token: c.token })).then(function (r) { if (r && r.ok) DET[c.token] = r; drawTasks(r && r.ok ? r : { error: (r && r.error) || 'could not be read' }); }).catch(function () { drawTasks({ error: 'could not be read' }); });
+  }
   each('#pOuts button', function (b) { b.addEventListener('click', function () { PN.status = b.getAttribute('data-s'); $('pOuts').classList.remove('need'); syncPanel(); }); });
   each('#pBacks button', function (b) { b.addEventListener('click', function () { PN.back = b.getAttribute('data-b'); syncPanel(); }); });
   each('#pQuick button', function (b) {
@@ -3690,7 +4133,13 @@ function closePanel() { $('panel').hidden = true; document.body.style.overflow =
 function savePanel() {
   if (!PN || notYet()) return;
   var c = PN.c, status = PN.status, btn = $('pSave'), tell = $('pTell'), key = PN.key, back = PN.back;
-  if (!status) { toast('Choose what happened first: Called, No answer…', true); $('pOuts').classList.add('need'); return; }
+  /* a family member chosen and nothing else: link them, no call logged (16 October 2026) */
+  var fam0 = $('pFam') ? $('pFam').value.trim() : '';
+  if (!status && fam0) {
+    if (!FAMOPTS[fam0]) { toast('Choose the family member from the list as you type their name.', true); return; }
+    closePanel(); famDecide(c.token, FAMOPTS[fam0], true, null); return;
+  }
+  if (!status) { toast('Choose what happened first: Called, No answer… or only a family member, to link them.', true); $('pOuts').classList.add('need'); return; }
   var p = { action: 'update', code: CODE, token: c.token, status: status, note: $('pNote').value.trim() };
   if (WHO) p.who = WHO;
   if (back) p.back = back;
@@ -3708,7 +4157,9 @@ function savePanel() {
     var msg = 'Marked ' + status + (r.rows ? ' on ' + r.rows + ' row' + (r.rows === 1 ? '' : 's') : '') + '.' +
       (r.back ? (r.back === 'clear' ? ' The call-back is cleared.' : r.back === 'dnc' ? ' Marked: do not call.' : ' Call-back flagged for ' + BACK_WORDS[r.back] + ': it is on Urgent.') : '') +
       (r.told ? (key === 'still' ? ' The team\'s note is on its way to ' : ' Your note is on its way to ') + (c.firstName || c.client) + '.' : '') +
-      (r.household ? ' ' + r.family + ' is in one household with ' + c.client + ' (' + r.household + ').' : '') + (r.warning ? ' ' + r.warning : '');
+      (r.household ? ' ' + r.family + ' is in one household with ' + c.client + ' (' + r.household + ').' : '') +
+      (r.sf && r.sf.on ? ' Salesforce: ' + r.sf.note + '.' : '') + (r.warning ? ' ' + r.warning : '');
+    if (r.sf && r.sf.task) delete DET[c.token];   // a task opened: the next look at the client reads it
     toast(msg, !!r.warning);
     closePanel(); load();
   }).catch(function () { btn.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });

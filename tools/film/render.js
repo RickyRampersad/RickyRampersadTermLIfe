@@ -39,7 +39,7 @@ const fs = require('fs'), path = require('path'), { execFileSync } = require('ch
     if (n !== scene) { await p.evaluate((n) => { paused = true; clearTimeout(timer); go(n); clearTimeout(timer); }, n); scene = n; }
     await p.evaluate(({ n, t, T, D }) => {
       const sc = SC[n], prev = n > 0 ? SC[n - 1] : null;
-      if (prev && t >= 720) prev.classList.remove('act');
+      if (prev && t >= 720) { prev.classList.remove('act'); prev.classList.remove('out'); }   // the hand-over is over: the outgoing scene has zoomed away
       document.getAnimations().forEach(a => {
         const el = a.effect && a.effect.target; if (!el) return;
         let ct = null;

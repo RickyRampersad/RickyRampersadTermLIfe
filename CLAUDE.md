@@ -55,12 +55,28 @@ The look:
 The rest of the site keeps the gold shield. Do not carry this look further
 without being asked.
 
-**It was asked for once more, 14 October 2026: the three board films**
-(`orphan-transition/board-*.html` and their MP4s). The manager asked "can i
-have more graphics and motion and the colors scheme changed", and chose this
-corporate look from four offered. The films keep the branch's own mark:
-`logo-mark.png`, embedded as a data URI, never redrawn and never `gcm-mark.png`.
-The page that plays them, `board-films.html`, keeps the branch look.
+**A third exception, decided 15 October 2026: the three board films**
+(`orphan-transition/board-*.html` and their MP4s). On 14 October the manager
+asked "can i have more graphics and motion and the colors scheme changed" and
+chose the corporate blue from four offered; on 15 October, "can i have a
+differnt colors and more motion and a bigger impact", and, shown four looks on
+the same frames, "i like the purple", then "the yellow logo needs to change",
+and, within the hour, "no leave dark blue instead and have the logo as well
+blue". So the films are **midnight blue** (near-black navy `#070F26`, the
+corporate blues `#13408F`, `#1D5BC4` and `#2A6DE0`, electric cyan `#00E5FF`)
+and carry `tools/film/board-mark.png`: the same shield and check, white on a
+blue tile, drawn from `favicon.svg`'s own shape by `tools/film/board-mark.js`,
+as `gcm-mark.png` was for the groups.
+It is embedded in the three films as a data URI, and a hosted copy,
+`orphan-transition/board-mark.png`, sits on the board pages: asked the same
+afternoon ("change the yellow logo to a blue i dont like the yellow"), and the
+manager chose "the films and the board pages" over the films alone or the
+whole site. So `assign.html` (the board), `board-films.html`, `wall.html`,
+`dashboard.html`, `stream.html` and `responses.html` carry the blue shield
+(their `.mark` tile is `#13408F` behind it, and their favicon is the same
+file); never `gcm-mark.png`, never a redrawn shape. Every other page and
+every letter keeps the gold shield, and the hosted `logo-mark.png` is
+untouched: the letters already sent load it.
 
 The letter's logo is the hosted copy at
 `https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
@@ -1945,9 +1961,18 @@ voice under the new timing and the caption gives it away.
   the agent's brief, in a "most at stake" order and on the roster, and
   plan and paid-to only for Client Support. `transitionBuildClientBook`
   (Transition.gs, 6:00 daily, and on the menu) opens the Branch Portfolio
-  by the ID in the `BOOK_SHEET_ID` Script property. The ID is set from the
-  menu ("Transition: set the Branch Portfolio link", which asks for the
-  link) and is never in the code, because the `.gs` files are public. The
+  by the ID in the `BOOK_SHEET_ID` Script property, and **since 15 October
+  2026, with no property set, the Branch Intelligence workbook itself**
+  (`T_BOOK.DEFAULT`, `tBookId_`: the ID `Intelligence.gs` already carries
+  as `INTEL.WORKBOOK`, so nothing new is public). Until then the build
+  refused to run without the link, so the Client Book was never built and
+  the board carried no policies ("I don't want to import a sheet as we do
+  have access to the data and can build"). The menu ("Transition: set the
+  Branch Portfolio link") still sets another sheet, and "rebuild the Client
+  Book now" builds at once; go live installs the 6:00 build whether or not
+  a link is set. Nothing else is imported by hand: the Client Profile tab
+  is made by the same build from Salesforce once the `SF_*` properties are
+  in the project. The
   build reads only the columns it needs, in chunks, and writes every policy
   of every client on Transition Send to the **Client Book** tab, whole,
   new rows over old, so the board never reads an empty tab. The board
@@ -2385,10 +2410,24 @@ voice under the new timing and the caption gives it away.
   when Date Comm Paid, on or after the naming, is on any of the client's
   policies; Was Agent Paid is then set to Yes. A date still to come counts,
   and the board reads it "to be paid". A Paid date typed on the tab also
-  closes a claim, and Void, Declined or Withdrawn in Status stop it. The
-  Monday list goes to the Retention unit with the manager copied, never the
+  closes a claim, and Void, Declined or Withdrawn in Status stop it. **The
+  list of unpaid claims goes every working day at 10:00** (`T_CLAIM.FOLLOW_HOUR`,
+  `tClaimsFollow_`; until 15 October 2026 every Monday at 9: "if the field
+  is not updated, every day a daily run goes out at 10 o'clock, copying the
+  sales support team to the retention department … once they close off,
+  then the email stops") to the Retention unit with sales support and the
+  manager copied (`tClaimCc_`: `FOLLOW_CC`, else `TRANSITION.CC`), never the
   agents, because it carries every agent's clients; each agent sees their own
-  claims on the board. **Nothing goes until the manager's go**:
+  claims on the board. A claim joins it three days after it was sent
+  (`MIN_DAYS`) and leaves it the day the date is there. **When the date
+  appears, the agent is told** (`tClaimPaidMail_`, `CONFIRM_PAID`): one
+  e-mail from support@ naming the client, the policy, the date and where it
+  was read (Salesforce, or Paid typed on the tab), sales support and the
+  manager copied, once per claim (`[agent told]` in the Note), only once the
+  claims are live. The menu item "send the retention follow-up (the daily
+  list) now" keeps its old function name. `claims15/claims-test.js` in the
+  scratchpad covers the daily list and the confirmation (25 checks).
+  **Nothing goes until the manager's go**:
   `transitionClaimsStart`, on the menu as "Transition: start the TT$200
   claims". Until then a claim is found, recorded and held. The board shows
   the branch every claim, a unit manager his team's and an agent their own,
@@ -2592,6 +2631,174 @@ voice under the new timing and the caption gives it away.
     sync caught up.
   - `work8/work-test.js` in the scratchpad covers it (36 checks, Node and Playwright, the real tabs, test passwords in
     memory).
+- **Who is signing in** (15 October 2026: "i want the login to see whats happening and is staff logging in and agents?").
+  Until then nothing recorded a sign-in. The only trace of the board's use was what people logged on it, and on 15
+  October that showed the 7 October training (the branch closing five, a unit manager marking 27 calls and naming 27
+  clients to his two agents) and nothing since: no call logged, nobody named from the board, no comment, the Call List's
+  Done column empty, while Client Support worked in Salesforce. The view counter had no rows either.
+  - **The Sign-ins tab** is written by `tSignIn_` on every board request that passes `tWho_`: When, Who, Role, Unit, Via
+    (password, or the branch code), Device (the page sends `dev`: phone or desk, and the width, never the browser) and
+    What. One row a person an hour (`T_SIGN.EVERY_MIN`, a cache key), so the two-minute refresh never fills it. The tab
+    is made the first time, and a failed write never stops the board. A refused sign-in is never logged.
+  - **The branch and a unit manager read it** (`tSignIns_`, `signins` in the board answer): everyone active on the Agent
+    Skill Bank, never a former agent, a unit manager his team only and never the staff: the last sign-in and its device,
+    the opens today, the days of the last seven, the opens since the first, and who has never signed in. The branch code's
+    own opens, with no name, are counted apart, for the branch alone. Staff and agents get nothing of it.
+  - **On the page**: "Who is signing in" at the top of the Team tab (a seven-day strip a person, and what they logged on
+    the board in the same seven days beside it, from the stamps `teamStamps` reads), and "N of M signed in today" on the
+    masthead stamp, which opens the tab. A backend without it says to paste Transition.gs; Service.gs needs no paste.
+  - `signin/signin-test.js` in the scratchpad covers it (Node and Playwright, the 15 October tabs, test passwords in
+    memory).
+- **The household is the unit of a naming, who named whom is on the Agents tab, the team's progress and points are on
+  the Team tab for staff too, and a call logged on the board goes onto the Salesforce task** (15 October 2026: "ensure
+  always the household is assigned and not a policy … all staff and managers are supposed to be able to view the
+  analytics as to who assigned whom to agent … see the progress each support has and who is pulling their weight, there
+  should be a reward system on the conversions for staff … show up staff who has things to do … when the agent logs,
+  comments etc, can they see the task opened if any and it's logged on the task, as a task is supposed to be opened until
+  closed").
+  - **A naming names the household.** `transitionAssign_` adds every member of each named client's household on our
+    list (`tHouseholds_`), whichever row the press was on and whoever presses: staff too, members off their board
+    included. `solo=1` names the one client, for a family the branch decides to split. The answer says how many came
+    along (`family`) and how many households (`households`); the row's control reads "Assign the household (N) to…".
+    The Salesforce write (`tSfAssignWrite_`) therefore covers every member's policies, and a line "Named to <agent> on
+    <date> by <who>" goes onto each client's open tasks (`tSfNoteTasks_`, `T_SFTASK.NOTE_ON_NAMING`).
+  - **Who named whom** (`named` in `tAgentsView_`, from every client's naming history: the board's stamps and the
+    Assignment Log, the Household Assignments tab for Salesforce's own): by person (clients, households, this month,
+    seven days, last, to whom) and by agent (received, from whom), with the last fourteen days. Staff and the branch read
+    all of it; a unit manager the namings to his own agents. Drawn by `agNamed` on the Agents tab.
+  - **The team's progress and points** (`tTeamStats_`, `stats` in the board answer for staff, unit managers and the
+    branch, never an agent). Read from the record the board keeps: the outcome stamps on Client Responses, the details
+    taken on calls (`call by <name>`, the first name a caller keeps on the device, resolved to the one person on the
+    Agent Skill Bank it can be, `T_NICK` for "Liz"), the namings (the Assignment Log, else the stamps; "the branch" for
+    the branch code), the call-back flags and the TT$200 claims. **Points** are `T_POINTS`: no answer 1, reached 3,
+    met 5, closed or declined 3, an e-mail taken 2, a number or address 1, a household named 5 (once a household,
+    never a policy), a call-back flagged 1, a conversion 10, a questionnaire after the naming 10. A **conversion** is a
+    client the person reached or named who was then met, closed or declined by someone else, on or after that day.
+    **Still to do**: their call list never tried on the board, the call-backs they flagged still open, the clients they
+    reached with nobody named. Everyone on the Agent Skill Bank who is staff or a manager is listed, with or without
+    activity; whoever has nothing this period and work waiting is marked. The Team tab (now for staff too, `statsPanel`)
+    ranks by the period's points (this month, seven days, everything; kept on the device) and says how the points are
+    made. Work done only in Salesforce is not counted; the Dashboard's Salesforce table has it. What the points are paid
+    as is the branch manager's to set.
+  - **The log on the Salesforce task** (`tSfLogCall_`, from `transitionUpdate_`; `T_SFTASK`). A call logged on the board
+    goes as a Chatter post, in the person's name (the tab's capitals in title case, `tNiceName_`), with the outcome, the
+    note and any call-back, onto the client's open tasks. With none open, a task is opened on the client's policy and
+    contact, "Orphan transition: <client> · <outcome> by <who>", in progress, due two working days on, owned by the
+    person's own Salesforce user (`tSfUserId_`: first name and surname, so the Skill Bank's "SASHA LALLA" finds her
+    married name in Salesforce) or, for an agent with no login, the branch manager's; a picklist the org refuses is
+    left off. Nothing here closes a task. The Log call panel says what Salesforce holds before the save (the open task,
+    or that saving opens one), and the toast says where the log went. `OPEN_ON_LOG` false keeps the log to the board.
+  - `team/team-test.js` in the scratchpad covers it (57 checks, Node with a Salesforce in memory, and Playwright, on the
+    15 October tabs).
+- **Families the household rule missed, and the service record on every client** (16 October 2026: "she also has a
+  husband and how am i to link to a household as the data is supposed to tell me that another person lives there and have
+  not been assigned", then "what to do to fix this for the staff? and branch manager as deeper insights needed", then
+  "all that we have done to service their account pulling all our salesforce history so a person can see the service
+  levels"). The case: a couple on the books sat in two households because one record has the house as "12A Mango
+  Road" and the other "12A Mangoe Road" (a made-up example of the kind), and each has its own phone and e-mail; both had answered, and nobody was named.
+  - **`tMaybeFamily_`** (Transition.gs) finds pairs like that over the books: the same surname (`tSurnames_`), and either
+    client numbers within `T_MAYBE.NEAR` (3) of each other, which is policies taken out together, or the same house in
+    the same town. The house is the number the address opens with (`tHouseNo_`: "12A", "12 A", "#12a", after No, Lot or
+    Apt; never a light pole, a mile marker such as "8 1/2 MM", or a number later in the line), the town through the
+    gazetteer (`tTownKey_`), and the street must be the same street with a typing slip allowed (`tSameStreet_`: a word
+    in common, the same first three letters, or two letters apart), because two different streets share house numbers.
+    More than `HOUSE_MAX` (6) at one house is flats or an office. A pair already in one household, a pair with someone
+    the books leave out (`T_NOT_BOOK`), or a pair decided on the **Family Checks** tab is never shown. `tSamePerson_`
+    marks a pair as possibly one person on two client numbers. Measured on the 15 October export: 72 pairs on the live
+    sheet (13 with someone who answered); 123 once the Client Profile gives the addresses.
+  - **Who sees it**: the branch and Client Support (`tCanAssign_`), never an agent or a unit manager. The card gets a
+    yellow "Possible family on our books" block with the reason and two buttons, One household and Not family, and a
+    "possible family" pill on its row; the Household block points to it. The Households tab opens on "Possible families
+    to confirm", fifteen at a time, those with an answer first, searched with the tab's own box. The Dashboard's "What
+    stands out" counts them. The board answer carries `maybe` (the pairs) and `c.mf` on each card; `counts.maybe` has
+    the pairs, those with an answer, those half named and those named to different agents.
+  - **One press, no call logged.** `transitionUpdate_` with `family=` or `notfamily=` and no outcome goes to
+    `tFamilyOnly_`: it links them (`tLinkFamily_`) or records "not family", and writes the decision, the household and
+    who made it on the Family Checks tab (made the first time). Linking from Log call with an outcome still works, staff
+    included now (until 16 October the branch alone), and is recorded there too. Log call's family field, filled with
+    nothing else, links them with no outcome.
+  - **The two side by side, with the family's cover and its gaps** (asked the same day: "if a possible family you could
+    also provide all the policy details and occupation etc as well our history with the person so we can see the cover
+    for the family … intelligence would tell us if there is a gap"). Each pair on the board carries both people
+    (`tFamSide_`, `tFamBrief_`: age, gender, occupation, employer, town, how they pay, what they hold with us, the plans
+    in force, the send row's service record) and the two together (`tFamGaps_`: policies in force, life cover, critical
+    illness, premium a year, since when, the two people's genders and ages and the years between them, and the gaps,
+    most pressing first). The gaps are facts off the record, never advice:
+    - neither holds a policy in force with us;
+    - an adult from 18 to 64 with no life cover with us, and whether the other has it;
+    - life cover and no critical illness cover, where Salesforce split the cover (both, as one line);
+    - each one's premium due, cover ending within five years, lapsed policy, estate beneficiary, waived premium;
+    - both or either paying from the pay packet;
+    - a policy naming the other as beneficiary;
+    - for the branch, the family's life cover against the incomes on file;
+    - the same date of birth on both records (first on a possible same person), or different ones;
+    - only one of the two readable yet, so the figures are one person's.
+
+    **Compare in full** asks `action=detail&token=A&pair=B` (`tPairDetail_`, the branch and Client Support only, so
+    Service.gs needs no paste): each person's every policy, the insights, the whole Salesforce service record and the
+    last twelve lines of their history. Policies come from the Client Book, or from the Client Profile's own rows when
+    the book is not built or lacks the client (`tPolsFor_`): Salesforce's plan, status, paid-to and cover split, no
+    premium (`noPrem`, and the page says so), a premium due only 45 days past the paid-to date (`T_PROFILE_DUE`). Staff
+    get all of it with no figure (`tFamNoMoney_`, and no income line). **Sign-out forgets a compared pair** (`PAIRX`):
+    the first test caught the branch's figures still on screen when Client Support signed in on the same device. The
+    pairs add about 200 KB to the branch board (1.68 MB on the 15 October export with the 7 October profile).
+    `fam16b/pair-test.js` (56 checks, Node and Playwright, with the 8 October Client Book for premiums) covers it.
+  - **The service record.** Every card shows the record the letter printed from the send row (`tSvcOf_`: `svc_docs`,
+    `svc_requests`, `svc_reminders`, `svc_birthday`, as at 24 September), or says plainly that the branch had nothing on
+    record for that client. Under History, `tSfService_` reads every Salesforce task on the client's policy records and
+    contact record, ever (up to `T_SVC.MAX`): requests handled and since when, the last served, days to close (median and
+    average), the share closed within a day and by the due date, open and overdue now, by year, by kind of work (the
+    Task Type in words: "Renewa/PDl/Bill" reads Premiums and billing, Pendings Applications, "Claims/ Mat" Claims and
+    maturities) and by who served them, then every task behind a fold. Logged e-mails and the birthday flow are counted
+    apart and never as work (`T_SVC_LOGGED`, the rule `GCM_LOGGED` keeps for the groups). Staff see it: it holds no
+    money. Without the `SF_*` properties it says what to set, and the rest of the history still opens.
+  - Tests in the scratchpad: `fam16/fam-harness.js` (32), `fam16/fam-page.js` (20, Playwright) and `fam16/svc-test.js`
+    (20, Salesforce mocked with made-up tasks), on the 15 October export (`fam16/tabs16.json`, and `tabs16p.json` with
+    the 7 October Client Profile added).
+- **The workflow on one page, and a test for each role** (15 October 2026: "help me to confirm, agent sees their own
+  things that's assigned to them and by whom. And managers has a different dashboard … Help me to streamline the proper
+  workflow for all to read more or less and do a test regarding the orphans. So agents do the test, what they're supposed
+  to do. Staff do the test and managers.").
+  - **Confirmed on the real tabs** (`wf15/confirm.js` in the scratchpad, 20 checks): an agent's board holds only the
+    clients named to them, each row's last line reads "Assigned 15 Oct · <agent>: named by <staff>" and the opened card
+    "Named: … on …" with the history (`c.hist`, from `tAssignHist_`); the roster they get is themselves alone; no team
+    points, no sign-ins, no Match. The branch opens on Urgent, Dashboard, Agents, Match …; a unit manager on his unit
+    with Dashboard, Agents and Team; staff on Your calls, Your work, … Team, with no Dashboard.
+  - **`orphan-transition/workflow.html`** is the one page: a flow strip (letter, answer or call, household named,
+    conversation in two working days, logged on the board and the Salesforce task, met or closed, the review, paid),
+    **the outcomes** (O: every household named, a first conversation in two working days, every call logged the same
+    day, met or closed with what was agreed, a review filed, the TT$200 paid, the policy kept), the three rules on
+    every call, **the TT$200 start to finish** (C, added 15 October 2026 with the daily list: the four steps and who
+    fills each Salesforce field), then one section per role (agents 6, Client Support 6, managers 5), each
+    with the day, the steps on every client, what counts, what nobody does, and the links. `#agents`, `#staff` and
+    `#managers` show one role; "Show all three" and print show every section. Every `<article class="msec">` carries
+    `data-sec` (F, O, R, C, A1–A6, S1–S6, M1–M5), which the test and the questions' Manual column refer to. No client,
+    no figure from the sheet. The board's menu and Help link each sign-in to its role's section and to the test. A
+    table whose last column is words, not a number, is `pts two` (the class is styled on both pages).
+  - **`orphan-transition/training.html`** signs in as the board does (the same two localStorage keys, so a device signed
+    in to the board is signed in here), fetches `workflow.html` and shows the common and the role's sections as the
+    manual, each ticked as read; then the role's test; then My results, and Team results for the branch (every attempt,
+    the written marks to confirm) and "My team's results" for a unit manager (their agents only). Branch look: the
+    gold shield, never the blue.
+  - **The backend is the group test's, with a course** (`GCM_COURSES`, `gcmCourse_`, `gcmTrainWho_`, `gcmTrainFor_`,
+    `gcmTrainReads_` in GroupClients.gs; the page sends `course=orphan` on `gcm.train`, `gcm.trainSubmit`,
+    `gcm.trainView` and `gcm.trainMark`, so Service.gs needs no paste). The orphan course signs in every role through
+    `tWho_`: an agent, staff, a unit manager and the branch (the assistant branch manager too) take, in turn, the
+    agents', the staff's and the managers' questions; the sheet's **Roles** column (agent, staff, manager, all) says
+    whose a question is, and the weights are worked out over the role's own questions. A unit manager reads their
+    team's attempts; the branch marks. The Results row's Role is the Agent Skill Bank's role word. The e-mail subject
+    is "Orphan transition test: …" and links the orphan page; the AI marker gets the orphan brief
+    (`GCM_MARK_SYSTEM_ORPHAN`). `gcm.ping` answers `orphanTrain`. The group course is untouched: its own sheet, its own
+    sign-in, every question to everyone.
+  - **The questions are in the private "Orphan Transition Training" Google Sheet**, created 15 October 2026 from
+    `wf15/bank.py` in the scratchpad (39 rows: 3 shared critical questions on the three rules; 10 choice and 2 written
+    per role; 73 marks a role; the right answer never the longest option; the answers spread A to D). Its ID goes in
+    the **`ORPHAN_TRAIN_SHEET_ID`** Script property of the Service Questionnaire project; until it is set the page says
+    the test is not linked. Edit a question there and the next test uses it; keep the right answer off the longest
+    option when adding one. Never in the repository.
+  - `wf15/train-test.js` in the scratchpad covers it (60 checks: Node with the sheet mocked from the CSV, then
+    Playwright on the workflow page, the training page as an agent, a unit manager and the branch, and the board's
+    links). `tools7oct/backend.js` gained `newSpreadsheet(tabs)` for a sheet opened by id.
 - **The Dashboard tab: how far the work has got, as shares, with filters** (8 October 2026: "need to have dash analytics
   and % of work completed etc a lot of insights and filter ability").
   - **Who sees it.** The branch has it second, after Urgent, which stays the opening tab. A unit manager has it after
@@ -2784,20 +2991,31 @@ voice under the new timing and the caption gives it away.
   --changed-only --timing <key>-timing.json --films films.json --key <key>`, write the word timings back into the
   timing file, then `build-boardfilm.py`, `sfx.py`, `usetrack.py audio/inspired-kevin-macleod.mp3 <key>`,
   `render.js <page> cap-<key> 30 <poster>`, `mixany.py` with the vox copied to `tools/film/vo<key>`, and `chapters.py`.
-  - **The corporate look, and more motion** (14 October 2026, the same day: "can i have more graphics and motion and
-    the colors scheme changed"; the manager chose the group client management look):
-    - **Colours and type:** blue band `#13408F` into `#1D5BC4`, white panels on a `#E9EEF5` ground, and IBM Plex Sans
-      (`tools/film/fonts/`, SIL Open Font License beside it).
-    - **What stays:** the gold shield from `logo-mark.png`, teal for progress, red only for "nothing logged", and every
-      status as a word as well as a colour.
+  - **The look, twice** (14 October 2026: "can i have more graphics and motion and the colors scheme changed"; the
+    manager chose the group client management look, corporate blue. 15 October 2026: "can i have a differnt colors
+    and more motion and a bigger impact"; shown four looks on the same three frames, "i like the purple", "the yellow
+    logo needs to change", then "no leave dark blue instead and have the logo as well blue"): **midnight blue**.
+    - **Colours and type:** near-black navy `#070F26` ground, the corporate blues `#13408F`, `#1D5BC4` and `#2A6DE0`
+      for actions and bands, electric cyan `#00E5FF` for progress and highlights, light blue `#BFD3F7` for quiet
+      text, the board's white windows floating on it with a blue rim, and IBM Plex Sans (`tools/film/fonts/`, SIL
+      Open Font License beside it). The side column reads in white; inside the windows the ink stays dark (the
+      `--ink`, `--slate` and `--mute` tokens are re-set on `.sd` and on `.cue`).
+    - **The mark:** `tools/film/board-mark.png`, the shield and check white on a blue tile (see the mark section
+      above; the board pages carry the hosted copy `orphan-transition/board-mark.png`). Red only for "nothing
+      logged", and every status as a word as well as a colour.
     - **The motion:**
-      - a blue band wipes each scene in;
-      - headlines rise a word at a time, with the key words underlined as they land;
-      - the screen floats and turns, and a camera pushes in on what the voice names, under a spotlight that dims
-        the rest;
+      - scenes zoom through: the new scene opens a little larger, bright and soft, and sharpens as it settles, while
+        the one it replaces pulls away and dims behind it (the page script marks it `out` for the hand-over, and
+        `render.js` clears it at 720 ms), and a streak of light crosses the cut;
+      - headlines land a word at a time, each from large and soft to sharp, with the key words underlined as they
+        land; the chapter headlines are larger (48, 74 and 54 px);
+      - the screen floats and turns in 3D (±8°), a glare passes over the glass every six seconds, and a camera
+        pushes in on what the voice names, under a spotlight that dims the rest;
       - a cursor (a finger on the phone) presses each button;
-      - counters, donuts and a day-by-day track fill;
-      - the chapter scenes run rings and motes on blue.
+      - counters, donuts and a day-by-day track fill, and **every counter lands on a punch in the sound**: the
+        builder writes each counter's second into `films.json` as `hits` (and the chapter scenes as `dark`), which
+        `sfx.py` plays;
+      - an aurora drifts behind every scene, and the chapter scenes run rings and motes on blue.
   - **Nothing is placed by hand.** The cursor, the clicks, the spotlights and the camera name a selector, and the page's
     own script finds it when the scene opens, so a new font or layout cannot leave them pointing at the wrong place.
   - **Rendered, not recorded.** With that much motion, Playwright's real-time capture ran unevenly. Its timeline stopped

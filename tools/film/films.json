@@ -316,10 +316,25 @@
   "out": "board-management.mp4",
   "musicgain": 0.46,
   "duck": 0.3,
-  "dark": [],
+  "dark": [
+   9,
+   11
+  ],
   "sfx": "sfx-boardmgr.wav",
   "start": 0,
-  "ticks": []
+  "ticks": [],
+  "hits": [
+   41.85,
+   44.23,
+   46.41,
+   46.71,
+   48.9,
+   49.2,
+   67.2,
+   67.6,
+   68.0,
+   125.79
+  ]
  },
  "boardstaff": {
   "cap": "cap-boardstaff",
@@ -344,10 +359,19 @@
   "out": "board-client-support.mp4",
   "musicgain": 0.46,
   "duck": 0.3,
-  "dark": [],
+  "dark": [
+   5,
+   10
+  ],
   "sfx": "sfx-boardstaff.wav",
   "start": 0,
-  "ticks": []
+  "ticks": [],
+  "hits": [
+   115.61,
+   115.93,
+   116.77,
+   117.09
+  ]
  },
  "boardagent": {
   "cap": "cap-boardagent",
@@ -371,10 +395,17 @@
   "out": "board-agents.mp4",
   "musicgain": 0.46,
   "duck": 0.3,
-  "dark": [],
+  "dark": [
+   6,
+   7,
+   9
+  ],
   "sfx": "sfx-boardagent.wav",
   "start": 0,
-  "ticks": []
+  "ticks": [],
+  "hits": [
+   82.52
+  ]
  },
  "meeting": {
   "cap": "cap-mtg",
