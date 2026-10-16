@@ -694,7 +694,22 @@ window.CSEC_CURRICULUM = {
       { name:'MoE SLMS \u2014 Standard 4 Science', url:'https://learn.moe.gov.tt/course/view.php?id=23891',
         cost:'Free', note:'Science learning activities for Standard 4, from the curriculum division.' },
       { name:'MoE SLMS \u2014 Standard 4 Social Studies', url:'https://learn.moe.gov.tt/course/view.php?id=23893',
-        cost:'Free', note:'CPDD Social Studies material for Standard 4.' }
+        cost:'Free', note:'CPDD Social Studies material for Standard 4.' },
+
+      /* The writing half. The exemplars carry the actual rubric, which is the
+         only published statement of how the Content mark is awarded. */
+      { name:'MoE \u2014 SEA Writing Exemplars 2019 (carries the official rubric)', url:'https://learn.moe.gov.tt/pluginfile.php/2877185/mod_resource/content/1/Writing%20Exemplars%202019.pdf',
+        cost:'Free', note:'87 pages, no login. Fifteen real children\u2019s scripts printed in full with the examiner\u2019s analysis beside each, and in Appendix 1 the SEA Narrative Writing Rubric itself. The Content row is a task-response scale: the top band reads "the story is in response to the topic". If you read one thing on this page, read this.' },
+      { name:'MoE \u2014 SEA ELA Writing papers 2021 to 2025', url:'https://moe.gov.tt/?p=2433',
+        cost:'Free', note:'Five recent writing papers, each the full booklet with its three topics and 50 minutes. Direct: 2025 /wpdevelopment/2026/05/SEA-ENGLISH-LANGUAGE-ARTS-WRITING-PAPER-2025.pdf, 2024 /wpdevelopment/2026/05/SEA-ENGLISH-LANGUAGE-ARTS.pdf (the filename carries no year, which makes it easy to skip), 2023 /wpdevelopment/2023/10/SEA-2023-ELAW.pdf, 2022 /wpdevelopment/2023/10/TTSEA-2022-ELAW.pdf, 2021 /wpdevelopment/2023/10/SEA2021-ELAW.pdf \u2014 all on storage.moe.gov.tt.' },
+      { name:'MoE \u2014 Report Writing FAQ', url:'https://storage.moe.gov.tt/corporate/2022/09/Report-Writing-FAQ-December-2021-1.pdf',
+        cost:'Free', note:'Nine pages on the report, which is the form most children never practise and which filled the whole 2019 paper. Says where the marked samples sit in the exemplars so you can go straight to them.' },
+      { name:'MoE \u2014 Continuous assessment now counts towards SEA', url:'https://storage.moe.gov.tt/wpdevelopment/2026/10/CAC-Newsletter-Oct-2026.pdf',
+        cost:'Free', note:'From September 2026 school-based assessment forms part of the SEA score: 15 per cent for the cohort sitting in 2028, 30 per cent for 2029. If your child is in Standard 3 or 4 now, work during the year already counts. Worth reading once, properly.' },
+      { name:'MoE \u2014 Recommendations for parents, Primary ELA', url:'https://wpuploadstorageaccount.blob.core.windows.net/corporate/2022/05/Primary-ELA-RECOMMENDATIONS-FOR-PARENTS.pdf',
+        cost:'Free', note:'Written for a parent rather than a teacher: how to run a practice session at home without turning the evening into a fight.' },
+      { name:'MoE \u2014 Standard 4 and Standard 5 curriculum guides', url:'https://wpuploadstorageaccount.blob.core.windows.net/corporate/2022/06/7-Curriculum-Guides-Std-5.pdf',
+        cost:'Free', note:'The Standard 5 guide, 112 pages, with the writing strand set out objective by objective. Standard 4 is the companion file 6-Curriculum-Guides-Std-4.pdf, 155 pages. Use them to name the exact objective a child is missing instead of guessing.' }
     ],
 
     /* International, free, and genuinely useful for CSEC even though none of it
@@ -724,6 +739,12 @@ window.CSEC_CURRICULUM = {
         note:'Checks an answer and shows the steps on the free tier for many problems. Use it to check work you have already attempted, never to produce work you have not.' },
       { name:'MIT OpenCourseWare', url:'https://ocw.mit.edu/', cost:'Free', subj:'Maths, Sciences',
         note:'University-level material. Well beyond CSEC, but worth knowing about for a Form 5 student deciding whether to take a subject at CAPE.' },
+      { name:'NAPLAN \u2014 Narrative Writing Marking Guide (Australia)', url:'https://www.nap.edu.au/docs/default-source/naplan/narrative-writing-marking-guide.pdf',
+        cost:'Free', note:'107 pages, and the clearest published explanation anywhere of how a marker decides whether a story answered the prompt. Not the SEA rubric, but the same judgement, written out at length with marked examples. Read it if you want to understand the Content mark rather than just avoid losing it.' },
+      { name:'Cambridge Primary Checkpoint English \u2014 specimen mark scheme', url:'https://www.cambridgeinternational.org/images/25177-english-specimen-paper-1-mark-scheme-2014-2017.pdf',
+        cost:'Free', note:'An official end-of-primary mark scheme at roughly the same age. Its "Purpose and Audience" column is a pure task-response mark out of 6 \u2014 useful for seeing that this is how primary writing is marked everywhere, not a local quirk.' },
+      { name:'EEF \u2014 Improving Literacy in Key Stage 2 (UK)', url:'https://d2tic4wvo1iusb.cloudfront.net/production/eef-guidance-reports/literacy-ks2/EEF-Improving-literacy-in-key-stage-2-report-Second-edition.pdf',
+        cost:'Free', note:'Evidence rather than exam board. Recommendation 4 is on teaching writing as a process, which is the part every rubric assumes and nobody teaches: what a child does in the minutes between reading the prompt and starting to write.' },
       { name:'Save My Exams', url:'https://www.savemyexams.com/', cost:'Free & paid', subj:'Sciences, Maths',
         note:'Revision notes and topic questions written for UK exam boards. Structure and question style are close enough to be useful practice; the syllabus is not identical, so check against the CSEC syllabus before relying on it.' }
     ],
