@@ -104,6 +104,8 @@ var DB_SESS_COLUMNS = ['Token', 'Name', 'Role', 'Salesforce User Id', 'Issued', 
 var OPS_APPS = [
   { id: 'delivery-book', name: 'Delivery Book', path: '/rroperations/delivery-book/', status: 'live',
     blurb: 'Log a handover; the client is e-mailed and asked to rate it' },
+  { id: 'logbook', name: 'Log Book', path: '/rroperations/logbook/', status: 'live',
+    blurb: 'Documents in, routed, signed for and sent on a printed transmittal' },
   { id: 'gas-receipts', name: 'Gas Receipt Tracker', path: '/rroperations/gas-receipts/', status: 'soon',
     blurb: 'Snap and log fuel receipts' },
   { id: 'petty-cash', name: 'Petty Cash Tracker', path: '/rroperations/petty-cash/', status: 'soon',
@@ -138,8 +140,16 @@ function doGet(e) {
       return dbHtml_('<h1>Thank you</h1><p>We could not record that just now. Reply to our e-mail and tell us how we did.</p>');
     }
   }
+  /* The Log Book's "why has this not gone" link (LogBook.gs). */
+  if (p.lbr) {
+    try { return lbReasonPage_(p); }
+    catch (err) {
+      Logger.log('log book reason: ' + err);
+      return dbHtml_('<h1>Something went wrong</h1><p>Give the reason in the Log Book instead.</p>');
+    }
+  }
   if (p.action === 'ping') {
-    return dbJson_({ ok: true, service: 'delivery-book', mode: dbMode_(),
+    return dbJson_({ ok: true, service: 'delivery-book', mode: dbMode_(), logbook: typeof lbHandle_ === 'function',
                      salesforce: dbSfConfigured_(), docTypes: DB.DOC_TYPES,
                      relationships: DB.RELATIONSHIPS, methods: DB.METHODS });
   }
@@ -158,6 +168,10 @@ function doPost(e) {
   try {
     if (b.action === 'login') {
       out = dbLogin_(b);
+    } else if (String(b.action || '').indexOf('lb.') === 0) {
+      /* The Log Book (LogBook.gs) signs agents in by agent number and code,
+         and checks its own access. */
+      out = typeof lbHandle_ === 'function' ? lbHandle_(b) : { ok: false, error: 'The Log Book is not in this project yet.' };
     } else {
       var who = dbSession_(b.token);
       if (!who) return dbJson_({ ok: false, error: 'signed-out' });
@@ -1167,6 +1181,9 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('RR Operations')
     .addItem('Check setup', 'dbSetupCheck')
     .addItem('Import the Jotform history', 'importJotformHistory')
+    .addSeparator()
+    .addItem('Log Book: set up', 'lbSetup')
+    .addItem('Log Book: import the old book', 'lbImportHistory')
     .addToUi();
 }
 

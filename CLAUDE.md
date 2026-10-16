@@ -3808,6 +3808,35 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
 - **Test mode is the default** (`DB_MODE` unset): mail to `DB_TEST_INBOX`, no
   Salesforce writes. Tests: `tests/test-deliverybook.js`, `tests/e2e-deliverybook.js`.
 
+## The Log Book — documents in, routed, signed for, sent the same day
+
+`rroperations/logbook/` (short address `/logbook`) and `apps-script/LogBook.gs`, a second file in the RR Operations
+project beside `DeliveryBook.gs`, which hands it every `lb.*` action and the `?lbr=` reason link. Asked for on 15
+October 2026, replacing the Log Book Digital Jotform: "the agent puts their agent number and code, the staff signs …
+when staff collect the documents the transmittal is built so it's for them to just print and send off … if the
+document is received and not sent an email is triggered to the staff and copying sales support and the agent asking
+for a reason". Then: "1 day or same day turnaround as the time and date stamped". `RROPERATIONS-SETUP.md` has the steps.
+
+- **The old book, measured** (BU and MAIL PREP tabs, November 2025 to October 2026, 3,634 lines): 41% sent the day
+  logged, 72% within one working day, 12% six or more; 13% with no date sent; about 25 departments typed some 90 ways
+  and some 70 documents 237 ways; 6.5% with no policy number. So the department and the document are picked, never
+  typed, and `LB_DEPTS` / `LB_DOCS` carry the history: each document's usual department with its share, what travels
+  with it, and the alias patterns that fold the old spellings. Counts and form names only. `lbRouting_` adds every
+  line sent since, so a department staff correct at receipt teaches the suggestion.
+- **Four stamps a line:** Logged (agent, or staff for an agent), Received (staff sign; the date collected), Sent (the
+  transmittal; the date sent), and the reason when the last two are not the same working day. Returned and Cancelled
+  are the other ends. A contract collected to deliver is "With agent" for 20 days (s.155(6)), chased at days 15 and
+  18, the manager told at 20, and closed by a Policy Contract delivery on that policy in the Delivery Book.
+- **Late** is received on an earlier working day, or today after `LB_CUTOFF_HOUR` (16). The hourly `lbHourly` asks the
+  receiver why, sales support and the agent copied, once a working day per line; a reason covers the rest of its day
+  and the next. A transmittal will not take a late line without a reason, which prints beside the two dates.
+- **Agents sign in with their agent number and their own code, both** (the Agents tab, or the Agent Skill Bank when
+  `LB_AGENTS_SHEET_ID` is set); a refusal never says which was wrong. An agent session carries only the `logbook` app,
+  so it never reaches the Delivery Book or a staff action.
+- **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
+- Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
+  `GS_PATH` now takes several files, comma-separated).
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and
