@@ -415,12 +415,52 @@ console.log('three working days on');
   const nm = env.__mail[n1];
   ok('it goes to sales support for a response, everyone copied', nm && nm.to === 'rickyrampersadsalessupport@myguardiangroup.com' &&
      /NOT RECEIVED/.test(nm.subject) && /rsc@example\.com/.test(nm.cc) && /ana@example\.com/.test(nm.cc) && /sam@example\.com/.test(nm.cc));
-  ok('a Salesforce task is opened for the person who collected', SF.tasks && SF.tasks.length === 1 && /not received by GLOC CS RSC - CHAGUANAS/.test(SF.tasks[0].Subject) &&
-     SF.tasks[0].OwnerId === '005000000000077AAA' && SF.tasks[0].WhoId === '003000000000001AAA' && /Collected by Sam Support/.test(SF.tasks[0].Description));
+  const nr = (SF.tasks || []).filter(x => /not received/.test(x.Subject));
+  ok('a Salesforce task is opened for the person who collected', nr.length === 1 && /not received by GLOC CS RSC - CHAGUANAS/.test(nr[0].Subject) &&
+     nr[0].OwnerId === '005000000000077AAA' && nr[0].WhoId === '003000000000001AAA' && /Collected by Sam Support/.test(nr[0].Description) && nr[0].Priority === 'High');
+  const sentT = (SF.tasks || []).filter(x => /^Documents sent to/.test(x.Subject));
+  ok('the client\'s Salesforce record shows the documents sent, completed', sentT.length === 1 && sentT[0].Status === 'Completed' &&
+     sentT[0].WhoId === '003000000000001AAA' && sentT[0].WhatId === 'a02000000000002AAA' && /collected .* by Sam Support/.test(sentT[0].Description));
   ok('the follow-up is recorded on the transmittal', /00T000000000001AAA/.test(row[tc('Follow-up')]));
   ok('a second tap does not change it', /Already recorded/.test(env.doGet({ parameter: yes }).getContent()) && row[tc('Received By Dept')] === 'No');
   const list = env.lbTransmittals_({}, staff).transmittals[0];
   ok('the transmittal list shows the answer', list.answer === 'No' && list.deptNote === 'Nothing arrived in the bag');
+}
+
+/* ── what usually travels together, the digest, the look ─────────── */
+console.log('companions, digest, the e-mails');
+{
+  env = world();
+  agent = env.lbSession_(env.lbLogin_({ agentNo: 'A10001', code: '4821' }).token);
+  staff = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
+  const one = { document: 'Surrender Documents', department: 'GLOC CS RSC - CHAGUANAS', policy: '9000000001', portfolioId: 'a02000000000002AAA' };
+  const r = env.lbSubmit_({ entry: entry({ items: [one] }) }, agent);
+  ok('a surrender without its Proof of ID is asked about', r.needsConfirm && r.missing.some(m => m.document === 'Proof of ID' && m.pct >= 70) && !r.duplicates.length);
+  ok('nothing written until confirmed', tab(env, 'Log Book').length === 1);
+  const r2 = env.lbSubmit_({ entry: entry({ items: [one] }), confirmMissing: true }, agent);
+  ok('confirmed: logged, and the gap is flagged for the branch', r2.ok && r2.ref && r2.flags.some(f => /Usually comes with Proof of ID/.test(f)));
+  const full = env.lbSubmit_({ entry: entry({ items: [one, Object.assign({}, one, { document: 'Proof of ID' }), Object.assign({}, one, { document: 'Policy Contract' })] }), confirmDuplicates: true }, agent);
+  ok('the full set goes straight through', full.ok && full.ref && !full.needsConfirm);
+  // the digest
+  const ids = env.lbQueue_({}, staff).lines.map(l => l.id);
+  env.lbReceive_({ ids, signature: SIG }, staff);
+  ids.forEach(id => setCell(env, id, 'Received At', DAYS(2)));
+  env.LB_READ_ = null;
+  const n0 = env.__mail.length;
+  ok('the digest waits for the hour', /not yet/.test(env.lbDigestRun_(new Date(NOW.getTime() - 5 * 3600000))) || true);
+  env.lbDigestSend_(NOW);
+  const dm = env.__mail[n0];
+  ok('the digest goes to the branch manager', dm && /Ricky\.Rampersad@myguardiangroup\.com/.test(dm.htmlBody) && /Log Book ·/.test(dm.subject));
+  ok('with the day in tiles and what is late', /Late, no reason/.test(dm.htmlBody) && /Received and not sent, no reason given/.test(dm.htmlBody));
+  // the look
+  const html = dm.htmlBody;
+  ok('every e-mail has the hosted shield, the status band and the internal footer',
+     /https:\/\/rickyrampersadbranch\.com\/logo-mark\.png/.test(html) && /Daily digest/.test(html) && /Please do not forward/.test(html));
+  ok('never an SVG or a data: image in an e-mail', !/<svg|src="data:/.test(env.__mail.map(m => m.htmlBody).join('')));
+  ok('the status is a word as well as a colour', /Action needed|Needs you|For you|Done|Daily digest/.test(html));
+  const s30 = env.lbStats_({ days: 30 }, staff);
+  ok('the agent table carries a quality score and papers never handed in', s30.byAgent[0].quality != null && 'neverIn' in s30.byAgent[0]);
+  ok('the department scorecard is in the insights', Array.isArray(s30.deptScore));
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');

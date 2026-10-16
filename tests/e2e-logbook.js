@@ -137,6 +137,27 @@ const server = http.createServer((req, res) => {
   await page.waitForSelector('#mine .grp');
   ok('My log shows it waiting to be handed in', /Logged · hand it in/.test(await page.textContent('#mine')));
 
+  /* what usually travels together */
+  await page.click('[data-tab=log]');
+  await page.click('#again');
+  await page.fill('#q', 'anika@example.com'); await page.click('#findBtn');
+  await page.waitForSelector('#results .client'); await page.click('#results .client');
+  await page.waitForFunction(() => /policy on record/.test((document.getElementById('polLine') || {}).textContent || ''));
+  await page.selectOption('#docSel', 'ACH Form');
+  await page.check('#declare');
+  await page.click('#submitBtn');
+  await page.waitForSelector('[data-addmiss]');
+  const asks = await page.$$eval('[data-addmiss]', b => b.map(x => x.getAttribute('data-addmiss')));
+  ok('logging an ACH form alone asks about what comes with it', asks.includes('Bank Statement') && asks.includes('Proof of ID'), asks.join());
+  if (SHOTS) await page.screenshot({ path: SHOTS + '/lb-7-companions.png' });
+  await page.click('[data-addmiss="Bank Statement"]');
+  ok('one tap adds it to the list', (await page.$$('.item')).length === 2);
+  await page.click('#submitBtn');
+  await page.waitForSelector('[data-addmiss], #result:not([hidden])');
+  if (await page.$('#mYes')) await page.click('#mYes');
+  await page.waitForSelector('#result:not([hidden])');
+  ok('then logs', /LB-/.test(await page.textContent('#result')));
+
   /* ── staff, on a desk ── */
   const desk = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await route(desk);
@@ -148,7 +169,7 @@ const server = http.createServer((req, res) => {
   await sp.fill('#gAccess', 'sam1'); await sp.click('#gBtn');
   await sp.waitForSelector('#qRecv .grp');
   ok('staff open on the queue, four tabs', (await sp.$$('#tabs [data-tab]')).length === 4);
-  ok('the agent\'s lines wait to be received', /Anika Pretend/.test(await sp.textContent('#qRecv')) && (await sp.$$('#qRecv .ln')).length === 2);
+  ok('the agent\'s lines wait to be received', /Anika Pretend/.test(await sp.textContent('#qRecv')) && (await sp.$$('#qRecv .ln')).length >= 2);
   if (SHOTS) await sp.screenshot({ path: SHOTS + '/lb-3-queue.png', fullPage: true });
   await sp.click('#qRecv [data-recv]');
   await sp.click('#mYes');

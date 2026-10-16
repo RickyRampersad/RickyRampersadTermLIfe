@@ -3852,6 +3852,23 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   missing, then goes to sales support for a response with everyone copied, and opens a Salesforce task (High, due the
   next working day) for each staff member who collected, owned by their Salesforce user (Access tab, else the active
   user of that name). Test mode: test inbox, no task.
+- **What usually travels together is asked about** (16 October 2026, "build more of the additional insights"): a
+  document whose companion comes with it `LB.COMPANION_PCT` (70%) of the time or more in the history (ACH and the bank
+  statement, a surrender and the Proof of ID) is asked about before logging, with a one-tap Add; logged anyway, the
+  line is flagged "Usually comes with …: not included".
+- **The client's Salesforce record gets the documents sent** (`lbSfSentTasks_`): one completed Servicing task per
+  client per transmittal, on their policy, owned by the sender, listing each document, when it was collected and any
+  reason. The line's Salesforce Task column holds the id. Test mode: skipped.
+- **The 5:00 pm digest** (`lbDigestRun_`, `LB.DIGEST_HOUR`, once a working day; `lbDigestNow` from the editor) goes to
+  the branch manager, sales support copied: the day in tiles, then late lines with no reason, departments that said No
+  or have not answered in two working days, contracts at day 15 or more, and papers logged and not handed in.
+- **Insights add** the department scorecard (asked, Yes, No, no answer, days to answer) and, per agent, re-routed
+  lines, papers never handed in (`LB.NEVER_IN_DAYS`) and a quality score out of 100.
+- **The e-mails** (16 October 2026: "ensure the email templates pop"): `lbMailHtml_` draws every one the same way, in
+  tables and inline styles only: a navy masthead with the hosted gold shield, a gold rule, a status band whose colour
+  and word agree (`LB_TONES`), the headline, figure tiles that wrap three to a row, and the lines as a striped table up
+  to three columns or as cards beyond that, so nothing runs off a phone; `lbBtn_` makes buttons Outlook keeps.
+  Checked by rendering at 760 and 390 px.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).

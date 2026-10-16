@@ -96,7 +96,10 @@ var LB = {
   // Forms that are not about one policy.
   NO_POLICY: ['Agent Contract', 'Licence Renewal', 'CBTT Receipt', 'CPD Certificate', 'Company Documents', 'Other'],
   OFT: 'OFT (FEDEX)',
-  CONFIRM_DAYS: 3,                // working days after a transmittal, the department is asked "did you get it"
+  CONFIRM_DAYS: 3,
+  COMPANION_PCT: 70,              // a document that travels with another this often is asked about when missing
+  DIGEST_HOUR: 17,                // the branch manager's daily digest
+  NEVER_IN_DAYS: 3,               // logged and not handed in after this many working days: counted against the agent                // working days after a transmittal, the department is asked "did you get it"
   SUPPORT_FROM: 'support@rickyrampersadbranch.com',
   DECLARE_DOCS: 'I confirm these are the documents I am handing to the branch, complete and signed where they must be.',
   DECLARE_CONTRACT: 'I, the agent listed on the insurance policy contract, confirm that I have received the contract for my ' +
@@ -113,7 +116,7 @@ var LB_COLUMNS = [
   'Transmittal', 'Sent At', 'Sent By', 'Tracking #',
   'Late Reason', 'Reason At', 'Reason By',
   'Returned At', 'Returned By', 'Return Reason', 'Delivered At',
-  'Alerts', 'Flags', 'Source',
+  'Alerts', 'Flags', 'Source', 'Salesforce Task',
 ];
 var LB_TRANS_COLUMNS = ['Transmittal', 'Department', 'Attention', 'Sent At', 'Sent By', 'Lines', 'Documents',
                         'Tracking #', 'Late Lines', 'Status', 'Line Ids',
@@ -354,6 +357,7 @@ function lbRows_() {
       returnedAt: lbDate_(g(r, 'Returned At')), returnedBy: String(g(r, 'Returned By')), returnReason: String(g(r, 'Return Reason')),
       deliveredAt: lbDate_(g(r, 'Delivered At')),
       alerts: String(g(r, 'Alerts')), flags: String(g(r, 'Flags')), source: String(g(r, 'Source')),
+      sfTask: String(g(r, 'Salesforce Task')),
     };
   });
   return LB_READ_;
@@ -740,6 +744,24 @@ function lbValidate_(b, who) {
     if (it.suggested && it.department !== it.suggested) out.flags.push(it.document + ' to ' + it.department + ' (usually ' + it.suggested + ')');
   });
   out.items = items;
+  /* What usually travels with these and is not here: a surrender without the
+     Proof of ID that comes with it three times in four, ACH without the bank
+     statement. Asked about, never refused. */
+  out.missing = [];
+  if (!contract) {
+    var have = {};
+    items.forEach(function (it) { have[it.document] = 1; });
+    var seenMiss = {};
+    items.forEach(function (it) {
+      var row = LB_DOCS.filter(function (d) { return d[0] === it.document; })[0];
+      (row ? row[3] : []).forEach(function (w) {
+        if (w[1] >= LB.COMPANION_PCT && !have[w[0]] && !seenMiss[w[0]]) {
+          seenMiss[w[0]] = 1;
+          out.missing.push({ document: w[0], with: it.document, pct: w[1] });
+        }
+      });
+    });
+  }
   /* An agent logs only for their own clients: the client picked, and every
      policy picked, must be theirs in Salesforce. */
   if (who.isAgent && out.contactId && dbSfConfigured_()) {
@@ -776,9 +798,12 @@ function lbDuplicates_(items) {
 function lbSubmit_(b, who) {
   var d = lbValidate_(b, who);
   var dups = lbDuplicates_(d.items);
-  if (dups.length && b.confirmDuplicates !== true) {
-    return { ok: true, needsConfirm: true, duplicates: dups };
+  var askDup = dups.length && b.confirmDuplicates !== true;
+  var askMiss = d.missing.length && b.confirmMissing !== true;
+  if (askDup || askMiss) {
+    return { ok: true, needsConfirm: true, duplicates: askDup ? dups : [], missing: askMiss ? d.missing : [] };
   }
+  d.missing.forEach(function (m) { d.flags.push('Usually comes with ' + m.document + ' (' + m.pct + '% with ' + m.with + '): not included'); });
   dups.forEach(function (x) { d.flags.push('Possible repeat of ' + x.ref + ' (' + x.document + ', ' + x.status.toLowerCase() + ')'); });
 
   var contract = d.type === LB.TYPES[1];
@@ -826,7 +851,11 @@ function lbReceiptMail_(ref, d, who, now) {
         '. It is to reach the client within 20 days. Record the handover in the Delivery Book.'
       : 'These are logged for ' + d.client + '. Hand the papers to the branch with this reference; they are sent on the day they are received.') + '</p>',
     ['Document', 'Policy', contract ? 'Next' : 'Department'], rows,
-    '<p style="color:#5b6b7f;font-size:13px">Reference <b>' + dbEsc_(ref) + '</b> · logged by ' + dbEsc_(who.name) + '</p>');
+    '<p style="color:#5b6b7f;font-size:13px">Reference <b>' + dbEsc_(ref) + '</b> · logged by ' + dbEsc_(who.name) + '</p>',
+    { tone: contract ? 'info' : 'ok', kicker: contract ? '20 days start today' : 'Logged · hand them in',
+      tiles: [['Reference', ref, 'info'], ['Documents', d.items.reduce(function (s, it) { return s + it.quantity; }, 0), 'ok'],
+              contract ? ['Deliver by', Utilities.formatDate(new Date(now.getTime() + LB.CONTRACT_DAYS * 86400000), dbTz_(), 'd MMM'), 'warn']
+                       : ['Departments', Object.keys(d.items.reduce(function (o, it) { o[it.department] = 1; return o; }, {})).length, 'info']] });
   return lbMail_({ to: [d.agent.email], subject: (contract ? 'Contract for delivery' : 'Log Book') + ': ' + d.client + ' (' + ref + ')', html: html });
 }
 
@@ -958,7 +987,8 @@ function lbReturn_(b, who) {
     var list = byAgent[k];
     var html = lbMailHtml_('Documents returned to you',
       '<p>' + dbEsc_(who.name) + ' has returned these to you: <b>' + dbEsc_(reason) + '</b></p><p>Put them right and log them again.</p>',
-      ['Client', 'Document', 'Policy'], list.map(function (r) { return [r.client, r.document, r.policy || '—']; }), '');
+      ['Client', 'Document', 'Policy'], list.map(function (r) { return [r.client, r.document, r.policy || '—']; }), '',
+      { tone: 'bad', kicker: 'Put right and log again' });
     lbMail_({ to: [list[0].agentEmail], cc: [lbSalesSupport_()], subject: 'Log Book: documents returned (' + list[0].client + ')', html: html });
   });
   return { ok: true, returned: rows.length };
@@ -1060,7 +1090,9 @@ function lbTransmittal_(b, who) {
     lbSet_(fresh, { 'Status': 'Sent', 'Transmittal': no, 'Sent At': now, 'Sent By': who.name, 'Tracking #': tracking });
   } finally { lock.releaseLock(); }
   CacheService.getScriptCache().remove('lb_routing');
-  return lbTransmittalPrint_(no);
+  var printed = lbTransmittalPrint_(no);
+  try { printed.salesforce = lbSfSentTasks_(no, who); } catch (e) { printed.salesforce = 'Not logged: ' + e.message; }
+  return printed;
 }
 
 /* Everything one transmittal prints, from the sheet, so a reprint is the same
@@ -1143,6 +1175,124 @@ function lbDelivered_(b, who) {
 }
 
 
+
+/* ============================== the client's service record ============================== */
+/*
+ * Every document sent becomes a completed Servicing task on the client in
+ * Salesforce, so the client's record shows what the branch did for them, as the
+ * Delivery Book does for a delivery: one task per client per transmittal, on
+ * their policy, owned by the person who sent it. Test mode, or no Salesforce:
+ * nothing is written, and the line says so.
+ */
+function lbSfSentTasks_(no, who) {
+  var lines = lbTransLines_(no);
+  if (dbMode_() !== 'live') { lbSet_(lines, { 'Salesforce Task': 'Skipped (test mode)' }); return 'Skipped (test mode)'; }
+  if (!dbSfConfigured_()) { lbSet_(lines, { 'Salesforce Task': 'Salesforce not connected' }); return 'Salesforce not connected'; }
+  var by = {};
+  lines.forEach(function (r) { var k = dbIsSfId_(r.contactId) ? r.contactId : ''; if (k) (by[k] = by[k] || []).push(r); });
+  var owner = '';
+  try { owner = lbSfUserId_(who.name); } catch (e) {}
+  var made = 0, failed = 0, tz = dbTz_();
+  Object.keys(by).forEach(function (cid) {
+    var ls = by[cid], t = ls[0];
+    var docs = ls.map(function (r) { return r.document; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+    var body = {
+      WhoId: cid, Status: 'Completed', Priority: 'Normal', Task_Type__c: 'Servicing',
+      Subject: ('Documents sent to ' + t.department + ': ' + docs.join(', ') + ' (' + no + ')').slice(0, 255),
+      ActivityDate: Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'),
+      Description: [
+        'Sent to ' + t.department + ' on transmittal ' + no + ' by ' + who.name + '.',
+        '',
+        ls.map(function (r) {
+          return '- ' + r.document + (r.quantity > 1 ? ' x' + r.quantity : '') + ' · ' + (r.policy || 'no policy') +
+            ' · collected ' + (r.receivedAt ? Utilities.formatDate(r.receivedAt, tz, 'd MMM') : '?') + ' by ' + r.receivedBy +
+            (r.reason ? ' · not sent the same day: ' + r.reason : '');
+        }).join('\n'),
+        '',
+        'Logged by ' + t.agent + ' (' + t.ref + '). Log Book.',
+      ].join('\n').slice(0, 31000),
+    };
+    var pf = ls.filter(function (r) { return dbIsSfId_(r.portfolioId); })[0];
+    if (pf) body.WhatId = pf.portfolioId;
+    if (owner) body.OwnerId = owner;
+    try {
+      var id = dbSfFetch_('/sobjects/Task', { method: 'post', body: body }).id;
+      lbSet_(ls, { 'Salesforce Task': id }); made++;
+    } catch (e) { lbSet_(ls, { 'Salesforce Task': 'Failed: ' + e.message }); failed++; }
+  });
+  var none = lines.filter(function (r) { return !dbIsSfId_(r.contactId); });
+  if (none.length) lbSet_(none, { 'Salesforce Task': 'Typed client: no Salesforce record' });
+  return made + ' logged in Salesforce' + (failed ? ', ' + failed + ' failed' : '') + (none.length ? ', ' + none.length + ' typed' : '');
+}
+
+
+/* ============================== the 5:00 pm digest ============================== */
+/*
+ * One e-mail to the branch manager each working day at LB.DIGEST_HOUR, sales
+ * support copied: the day in figures, then what needs someone: late lines with
+ * no reason, departments that have not confirmed or said No, contracts near
+ * day 20, papers logged and not handed in. Facts only. lbDigestNow() sends it
+ * at once from the editor.
+ */
+function lbDigestRun_(now) {
+  if (lbHour_(now) < LB.DIGEST_HOUR) return 'digest: not yet';
+  var day = lbDay_(now);
+  if (dbProp_('lb_digest_day') === day) return 'digest: sent today';
+  var res = lbDigestSend_(now);
+  if (/sent/i.test(res)) dbProps_().setProperty('lb_digest_day', day);
+  return 'digest: ' + res;
+}
+function lbDigestNow() { LB_READ_ = null; return lbDigestSend_(new Date()); }
+
+function lbDigestSend_(now) {
+  var today = lbDay_(now), tz = dbTz_();
+  var rows = lbRows_().filter(function (r) { return r.source !== 'Imported' && r.status !== 'Cancelled'; });
+  var logged = rows.filter(function (r) { return lbDay_(r.loggedAt) === today; });
+  var recvd = rows.filter(function (r) { return lbDay_(r.receivedAt) === today; });
+  var sent = rows.filter(function (r) { return lbDay_(r.sentAt) === today; });
+  var same = sent.filter(function (r) { return lbDay_(r.receivedAt) === today; });
+  var late = rows.filter(function (r) { return lbIsLate_(r, now); });
+  var lateNo = late.filter(function (r) { return !lbReasonFresh_(r, now); });
+  var notIn = rows.filter(function (r) { return r.status === 'Logged' && lbWorkDays_(r.loggedAt, now) >= 1; });
+  var contracts = rows.filter(function (r) { return r.status === 'With agent' && r.loggedAt && lbCalDays_(r.loggedAt, now) >= LB.CONTRACT_WARN[0]; });
+  var trans = lbTransRows_();
+  var noAns = trans.filter(function (t) { return t.status === 'Sent' && t.askedAt && /^Awaiting/.test(t.answer) && lbWorkDays_(t.askedAt, now) >= 2; });
+  var saidNo = trans.filter(function (t) { return t.answer === 'No' && t.answeredAt && lbCalDays_(t.answeredAt, now) <= 14; });
+  var rerouted = rows.filter(function (r) { return r.routingChanged && lbDay_(r.receivedAt) === today; });
+
+  var sec = function (title, head, list, note) {
+    if (!list.length) return '';
+    return '<h3 style="font-size:15px;margin:22px 0 2px;color:#07131f">' + dbEsc_(title) + '</h3>' +
+      (note ? '<div style="font-size:13px;color:#5b6b7f">' + note + '</div>' : '') + lbTable_(head, list.slice(0, 15)) +
+      (list.length > 15 ? '<div style="font-size:12px;color:#5b6b7f">and ' + (list.length - 15) + ' more in the Log Book.</div>' : '');
+  };
+  var calm = !lateNo.length && !noAns.length && !saidNo.length && !contracts.length && !notIn.length;
+  var html = lbMailHtml_('The Log Book today',
+    '<p>' + dbEsc_(Utilities.formatDate(now, tz, 'EEEE d MMMM')) + '. ' + (calm ? 'Nothing is waiting on anyone.' : 'What needs someone is below, most pressing first.') + '</p>',
+    [], [],
+    sec('Received and not sent, no reason given', ['Client', 'Document', 'Department', 'Received', 'By'],
+        lateNo.map(function (r) { return [r.client, r.document, r.department, Utilities.formatDate(r.receivedAt, tz, 'EEE d MMM'), r.receivedBy]; }),
+        'The person who received them has been asked.') +
+    sec('Departments that said No', ['Transmittal', 'Department', 'Answered', 'What they said', 'Follow-up'],
+        saidNo.map(function (t) { return [t.no, t.department, Utilities.formatDate(t.answeredAt, tz, 'd MMM'), t.deptNote || '—', t.followUp || '—']; })) +
+    sec('Departments that have not answered in 2 working days', ['Transmittal', 'Department', 'Sent', 'Asked'],
+        noAns.map(function (t) { return [t.no, t.department, Utilities.formatDate(t.sentAt, tz, 'd MMM'), Utilities.formatDate(t.askedAt, tz, 'd MMM')]; })) +
+    sec('Contracts with agents, day 15 or more', ['Client', 'Policy', 'Agent', 'Day'],
+        contracts.sort(function (a, b) { return a.loggedAt - b.loggedAt; })
+          .map(function (r) { return [r.client, r.policy || '—', r.agent, lbCalDays_(r.loggedAt, now) + ' of 20']; })) +
+    sec('Logged and not yet handed in', ['Agent', 'Client', 'Document', 'Logged'],
+        notIn.map(function (r) { return [r.agent, r.client, r.document, Utilities.formatDate(r.loggedAt, tz, 'EEE d MMM')]; })) +
+    (rerouted.length ? '<p style="font-size:13px;color:#5b6b7f;margin-top:18px">Staff corrected the department on ' + rerouted.length +
+      ' line' + (rerouted.length === 1 ? '' : 's') + ' today; the suggestions learn from it.</p>' : ''),
+    { tone: calm ? 'ok' : lateNo.length || saidNo.length ? 'bad' : 'warn', kicker: 'Daily digest · ' + Utilities.formatDate(now, tz, 'd MMM'),
+      tiles: [['Logged today', logged.length, 'info'], ['Received', recvd.length, 'info'], ['Sent', sent.length, 'ok'],
+              ['Same day', sent.length ? Math.round(same.length * 100 / sent.length) + '%' : '—', same.length === sent.length ? 'ok' : 'warn'],
+              ['Late, no reason', lateNo.length, lateNo.length ? 'bad' : 'ok']] });
+  return lbSupportMail_({ to: [dbProp_('LB_MANAGER', LB.MANAGER)], cc: [lbSalesSupport_()],
+                          subject: 'Log Book · ' + Utilities.formatDate(now, tz, 'EEE d MMM') + ': ' + sent.length + ' sent, ' +
+                                   lateNo.length + ' late with no reason', html: html });
+}
+
 /* ============================== the chase ============================== */
 
 /** Every hour on a working day (lbSetup installs it). Three things:
@@ -1160,7 +1310,7 @@ function lbHourly() {
   LB_READ_ = null;
   var out = [];
   out.push(lbChaseLate_(now));
-  if (h >= 9) { out.push(lbNudgeAgents_(now)); out.push(lbChaseContracts_(now)); out.push(lbConfirmRun_(now)); }
+  if (h >= 9) { out.push(lbNudgeAgents_(now)); out.push(lbChaseContracts_(now)); out.push(lbConfirmRun_(now)); out.push(lbDigestRun_(now)); }
   return out.join('; ');
 }
 
@@ -1193,10 +1343,14 @@ function lbChaseLate_(now) {
     var html = lbMailHtml_('Received and not sent: the reason, please',
       '<p>' + dbEsc_(staff.split(' ')[0] || staff) + ', the documents below were received and have not gone to Guardian Life. ' +
       'The branch standard is the same working day. The transmittal prints the date collected and the date sent, and the reason beside them.</p>' +
-      (link ? '<p style="margin:18px 0"><a href="' + dbEsc_(link) + '" style="background:#07131f;color:#efc24b;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:bold">Give the reason</a></p>' : '') +
+      (link ? '<div style="margin:18px 0 6px">' + lbBtn_(link, 'Give the reason &rarr;', '#07131f', '#efc24b') + '</div>' : '') +
       '<p style="color:#5b6b7f;font-size:13px">Or send them on today\'s transmittal from the Log Book. You will be asked again each working day until they go or a reason is given.</p>',
       ['Client', 'Document', 'Policy', 'Department', 'Received', 'Working days'], rows,
-      '<p style="color:#5b6b7f;font-size:13px">Agent: ' + dbEsc_(list[0].agent) + '. Sales support and the agent are copied.</p>');
+      '<p style="color:#5b6b7f;font-size:13px">Agent: ' + dbEsc_(list[0].agent) + '. Sales support and the agent are copied.</p>',
+      { tone: 'warn', kicker: 'Same-day rule missed',
+        tiles: [['Documents waiting', list.length, 'warn'],
+                ['Oldest, working days', list.reduce(function (m, r) { return Math.max(m, lbWorkDays_(r.receivedAt, now)); }, 0), 'bad'],
+                ['Departments', Object.keys(list.reduce(function (o, r) { o[r.department] = 1; return o; }, {})).length, 'info']] });
     var res = lbMail_({ to: [staffMail || lbSalesSupport_()], cc: [lbSalesSupport_(), list[0].agentEmail],
                         subject: 'Reason needed: ' + list.length + ' document' + (list.length > 1 ? 's' : '') + ' received and not sent (' + list[0].client + (list.length > 1 && list.some(function (r) { return r.client !== list[0].client; }) ? ' and others' : '') + ')',
                         html: html });
@@ -1219,7 +1373,8 @@ function lbNudgeAgents_(now) {
     var html = lbMailHtml_('Logged, not yet with the branch',
       '<p>You logged these and the branch has not received the papers. Hand them in today, or withdraw the entry in the Log Book if they are not coming.</p>',
       ['Reference', 'Client', 'Document', 'Logged'],
-      list.map(function (r) { return [r.ref, r.client, r.document, Utilities.formatDate(r.loggedAt, dbTz_(), 'EEE d MMM')]; }), '');
+      list.map(function (r) { return [r.ref, r.client, r.document, Utilities.formatDate(r.loggedAt, dbTz_(), 'EEE d MMM')]; }), '',
+      { tone: 'warn', kicker: 'Hand them in today', tiles: [['Not yet handed in', list.length, 'warn']] });
     var res = lbMail_({ to: [k], cc: [lbSalesSupport_()], subject: 'Log Book: papers not yet handed in (' + list.length + ')', html: html });
     if (/sent/i.test(res)) lbMarkAlert_(list, 'nudged ' + today);
   });
@@ -1245,7 +1400,9 @@ function lbChaseContracts_(now) {
         ? r.agent + ' collected this contract ' + day + ' days ago and no delivery is recorded. The Act allows 20 days.'
         : 'This contract is due to the client by ' + due + '. Record the handover in the Delivery Book when it is done.') + '</p>',
       ['Client', 'Policy', 'Collected', 'Day'],
-      [[r.client, r.policy || '—', Utilities.formatDate(r.loggedAt, dbTz_(), 'EEE d MMM'), String(day)]], '');
+      [[r.client, r.policy || '—', Utilities.formatDate(r.loggedAt, dbTz_(), 'EEE d MMM'), String(day)]], '',
+      { tone: manager ? 'bad' : 'warn', kicker: manager ? 'Section 155(6): 20 days passed' : 'Section 155(6): 20-day delivery',
+        tiles: [['Day', day + ' of 20', manager ? 'bad' : 'warn'], ['Due', due, 'info']] });
     var to = manager ? [dbProp_('LB_MANAGER', LB.MANAGER)] : [r.agentEmail || lbSalesSupport_()];
     var cc = manager ? [lbSalesSupport_(), r.agentEmail] : [lbSalesSupport_()];
     var res = lbMail_({ to: to, cc: cc, subject: (manager ? 'Past 20 days: ' : 'Contract due ' + due + ': ') + r.client + ' (' + (r.policy || r.ref) + ')', html: html });
@@ -1378,10 +1535,7 @@ function lbConfirmAsk_(t) {
   var dept = lbDeptRows_().filter(function (d) { return d.name === t.department; })[0] || {};
   var ppl = lbPeopleOn_(lines);
   var yes = lbConfirmLink_(t.no, 'yes'), no = lbConfirmLink_(t.no, 'no');
-  var btn = function (href, label, bg, fg) {
-    return '<a href="' + dbEsc_(href) + '" style="display:inline-block;background:' + bg + ';color:' + fg +
-      ';padding:13px 22px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0">' + label + '</a>';
-  };
+  var btn = lbBtn_;
   var html = lbMailHtml_('Did you receive these documents?',
     '<p>Good day' + (t.attn ? ' ' + dbEsc_(t.attn) : '') + ',</p>' +
     '<p>On <b>' + dbEsc_(Utilities.formatDate(t.sentAt, dbTz_(), 'EEEE d MMMM yyyy')) + '</b> the Ricky Rampersad Branch sent ' +
@@ -1390,7 +1544,10 @@ function lbConfirmAsk_(t) {
     (yes ? '<p style="margin:18px 0 10px">' + btn(yes, '&#10003; Yes, received', '#15803d', '#ffffff') + btn(no, '&#10007; No, not received', '#b91c1c', '#ffffff') + '</p>' : ''),
     ['Client', 'Policy', 'Document', 'Copies', 'Agent'],
     lines.map(function (r) { return [r.client, r.policy || '—', r.document + (r.itemNote ? ' (' + r.itemNote + ')' : ''), String(r.quantity), r.agent]; }),
-    '<p style="color:#5b6b7f;font-size:13px">Sent by ' + dbEsc_(t.sentBy) + '. Sales support, the agents and their managers are copied.</p>');
+    '<p style="color:#5b6b7f;font-size:13px">Sent by ' + dbEsc_(t.sentBy) + '. Sales support, the agents and their managers are copied.</p>',
+    { tone: 'info', kicker: 'One tap: Yes or No',
+      tiles: [['Transmittal', t.no, 'info'], ['Documents', lines.reduce(function (s, r) { return s + r.quantity; }, 0), 'ok'],
+              ['Sent', Utilities.formatDate(t.sentAt, dbTz_(), 'd MMM'), 'info']] });
   var to = dept.email ? [dept.email] : [lbSalesSupport_()];
   var res = lbSupportMail_({ to: to, cc: [lbSalesSupport_()].concat(ppl.agents, ppl.managers),
                              subject: 'Please confirm receipt: transmittal ' + t.no + ' (' + t.department + ')', html: html });
@@ -1445,7 +1602,8 @@ function lbNotReceived_(t, note) {
     '<p><b>Sales support: please respond to all</b> with where the documents are and when they will reach the department. ' +
     'A task is open in Salesforce for ' + dbEsc_(Object.keys(ppl.collectors).join(', ') || 'the branch') + '.</p>',
     ['Client', 'Policy', 'Document', 'Collected', 'By'],
-    lines.map(function (r) { return [r.client, r.policy || '—', r.document, r.receivedAt ? Utilities.formatDate(r.receivedAt, dbTz_(), 'd MMM') : '—', r.receivedBy]; }), '');
+    lines.map(function (r) { return [r.client, r.policy || '—', r.document, r.receivedAt ? Utilities.formatDate(r.receivedAt, dbTz_(), 'd MMM') : '—', r.receivedBy]; }), '',
+    { tone: 'bad', kicker: 'Department says: not received', tiles: [['Transmittal', t.no, 'bad'], ['Documents', lines.length, 'warn']] });
   var mail = lbSupportMail_({ to: [lbSalesSupport_()], cc: [dept.email].concat(ppl.agents, ppl.managers, collectorMails, [lbStaffEmail_(t.sentBy)]),
                               subject: 'NOT RECEIVED: transmittal ' + t.no + ' (' + t.department + '): response needed', html: html });
   var tasks = Object.keys(ppl.collectors).map(function (who) {
@@ -1586,19 +1744,114 @@ function lbMail_(m) {
   } catch (e) { return 'Failed: ' + e.message; }
 }
 
-function lbMailHtml_(title, intro, head, rows, foot) {
-  var th = head.map(function (h) { return '<th align="left" style="padding:7px 9px;font-size:12px;color:#5b6b7f">' + dbEsc_(h) + '</th>'; }).join('');
-  var trs = rows.map(function (r) {
-    return '<tr>' + r.map(function (c) { return '<td style="padding:7px 9px;border-top:1px solid #e6ebf1;font-size:13px">' + dbEsc_(c) + '</td>'; }).join('') + '</tr>';
+/* ── the look of every Log Book e-mail ─────────────────────────────────────
+ * 16 October 2026: "ensure the email templates pop". Tables and inline styles
+ * only, so Gmail and Outlook show it as built; the shield is the hosted PNG.
+ * A navy masthead with the gold shield, a coloured status band (its colour and
+ * a word say the same thing, never the colour alone), the headline, optional
+ * figure tiles, the lines as a striped table under a navy head, any buttons,
+ * and the internal footer.
+ *   opt.tone    ok | info | warn | bad   (else read from the title)
+ *   opt.kicker  the small line above the headline
+ *   opt.tiles   [[label, value, tone], ...]
+ */
+var LB_TONES = {
+  ok:   { c: '#15803d', bg: '#e8f6ee', icon: '&#10003;', word: 'Done' },
+  info: { c: '#0e7490', bg: '#e6f6fa', icon: 'i',        word: 'For you' },
+  warn: { c: '#b45309', bg: '#fdf3e2', icon: '!',        word: 'Needs you' },
+  bad:  { c: '#b91c1c', bg: '#fdecec', icon: '&#10007;', word: 'Action needed' },
+};
+
+function lbToneOf_(title) {
+  var t = String(title || '');
+  if (/not received|past the 20|reason|returned/i.test(t)) return /reason/i.test(t) ? 'warn' : 'bad';
+  if (/day \d+|not yet with|due|confirm|receive these/i.test(t)) return /receive these/i.test(t) ? 'info' : 'warn';
+  return 'ok';
+}
+
+function lbMailHtml_(title, intro, head, rows, foot, opt) {
+  opt = opt || {};
+  var tone = LB_TONES[opt.tone || lbToneOf_(title)] || LB_TONES.info;
+  var kicker = opt.kicker || tone.word;
+  var F = "font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;";
+  var tiles = (opt.tiles || []).filter(function (x) { return x && x[1] !== '' && x[1] != null; });
+  /* Tiles are inline blocks, three to a row at most, so they wrap on a phone
+     instead of pushing the e-mail wider than the screen. */
+  var per = Math.min(tiles.length, 3);
+  var tileHtml = tiles.length ? '<div style="margin:18px -4px 6px;font-size:0;text-align:center">' +
+    tiles.map(function (t) {
+      var tc = (LB_TONES[t[2]] || { c: '#07131f', bg: '#f3f6fa' });
+      return '<div style="display:inline-block;vertical-align:top;box-sizing:border-box;width:' + (Math.floor(1000 / per) / 10 - 0.1) + '%;min-width:92px;padding:4px">' +
+        '<div style="background:' + (tc.bg || '#f3f6fa') + ';border-radius:12px;padding:14px 6px;text-align:center;' + F + '">' +
+        '<div style="font-size:' + (String(t[1]).length > 8 ? 16 : String(t[1]).length > 5 ? 20 : 26) + 'px;line-height:1.15;font-weight:800;color:' + tc.c + ';white-space:nowrap">' + dbEsc_(t[1]) + '</div>' +
+        '<div style="font-size:11px;color:#5b6b7f;margin-top:6px;letter-spacing:.3px;text-transform:uppercase">' + dbEsc_(t[0]) + '</div></div></div>';
+    }).join('') + '</div>' : '';
+  var table = lbTable_(head, rows);
+  return '<div style="background:#eef1f5;padding:20px 6px;' + F + 'color:#13202e">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:660px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(7,19,31,.10)">' +
+    // masthead
+    '<tr><td style="background:#07131f;padding:18px 22px">' +
+      '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+      '<td style="vertical-align:middle"><img src="' + DB.LOGO + '" width="46" height="46" alt="" style="display:block;border-radius:11px"></td>' +
+      '<td style="vertical-align:middle;padding-left:14px">' +
+        '<div style="' + F + 'color:#efc24b;font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase">Ricky Rampersad Branch</div>' +
+        '<div style="' + F + 'color:#ffffff;font-size:20px;font-weight:800;margin-top:2px">Log Book</div></td></tr></table></td></tr>' +
+    '<tr><td style="height:4px;line-height:4px;font-size:0;background:#efc24b;background-image:linear-gradient(90deg,#efc24b,#c9942c)">&nbsp;</td></tr>' +
+    // status band
+    '<tr><td style="padding:20px 18px 4px">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + tone.bg + ';border-left:5px solid ' + tone.c + ';border-radius:12px"><tr>' +
+      '<td width="54" style="padding:16px 0 16px 16px;vertical-align:top"><div style="width:38px;height:38px;line-height:38px;border-radius:50%;background:' + tone.c +
+        ';color:#ffffff;text-align:center;font-weight:800;font-size:18px;' + F + '">' + tone.icon + '</div></td>' +
+      '<td style="padding:14px 16px 14px 12px;vertical-align:middle">' +
+        '<div style="' + F + 'font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:' + tone.c + '">' + dbEsc_(kicker) + '</div>' +
+        '<div style="' + F + 'font-size:21px;font-weight:800;line-height:1.25;color:#07131f;margin-top:3px">' + dbEsc_(title) + '</div></td></tr></table></td></tr>' +
+    // body
+    '<tr><td style="padding:10px 18px 22px;' + F + 'font-size:15px;line-height:1.6;color:#2a3a4c;word-break:break-word">' + intro + tileHtml + table + (foot || '') + '</td></tr>' +
+    // footer
+    '<tr><td style="background:#f6f8fb;border-top:1px solid #e6ebf1;padding:14px 22px;' + F + 'font-size:12px;line-height:1.5;color:#5b6b7f">' +
+      '<b style="color:#07131f">' + dbEsc_(LB.BRANCH_LINE) + '</b><br>' +
+      'Internal: for the branch team, our agents and Guardian Life departments. Please do not forward outside them.</td></tr>' +
+    '</table></div>';
+}
+
+/* The lines in a Log Book e-mail. Up to three columns: a striped table under a
+   navy head. More than that cannot fit a phone, so each line is a card: the
+   first value as its title, the rest as labelled facts that wrap two or three
+   to a row on a desk and one under another on a phone. */
+function lbTable_(head, rows) {
+  if (!rows || !rows.length) return '';
+  var F = "font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;";
+  if (head.length > 3) {
+    return '<div style="margin:16px 0">' + rows.map(function (r, i) {
+      return '<div style="border:1px solid #dfe5ee;border-left:4px solid ' + (i % 2 ? '#c9942c' : '#efc24b') +
+        ';border-radius:12px;padding:12px 14px 6px;margin:0 0 10px;background:#ffffff;' + F + '">' +
+        '<div style="font-size:15px;font-weight:800;color:#07131f;margin-bottom:6px">' + dbEsc_(r[0]) + '</div>' +
+        '<div style="font-size:0">' + r.slice(1).map(function (c, j) {
+          return '<div style="display:inline-block;vertical-align:top;width:33%;min-width:132px;box-sizing:border-box;padding:0 10px 8px 0">' +
+            '<div style="font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#8a97a8;font-weight:700">' + dbEsc_(head[j + 1]) + '</div>' +
+            '<div style="font-size:14px;color:#13202e;margin-top:2px">' + dbEsc_(c) + '</div></div>';
+        }).join('') + '</div></div>';
+    }).join('') + '</div>';
+  }
+  var th = head.map(function (h) {
+    return '<th align="left" style="background:#07131f;color:#efc24b;' + F + 'font-size:10px;letter-spacing:.4px;text-transform:uppercase;padding:10px 10px;font-weight:700">' + dbEsc_(h) + '</th>';
   }).join('');
-  return '<div style="background:#f3f5f8;padding:20px 10px;font-family:Arial,Helvetica,sans-serif;color:#13202e">' +
-    '<div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden">' +
-    '<div style="background:#07131f;padding:14px 18px"><img src="' + DB.LOGO + '" width="34" height="34" alt="" style="vertical-align:middle;border-radius:8px">' +
-    '<span style="color:#efc24b;font-weight:bold;font-size:15px;margin-left:10px;vertical-align:middle">Log Book</span></div>' +
-    '<div style="padding:18px;font-size:14px;line-height:1.55"><h2 style="font-size:17px;margin:0 0 10px">' + dbEsc_(title) + '</h2>' + intro +
-    (rows.length ? '<table style="width:100%;border-collapse:collapse;margin:12px 0"><tr style="background:#f6f8fb">' + th + '</tr>' + trs + '</table>' : '') +
-    (foot || '') + '</div>' +
-    '<div style="padding:10px 18px;background:#f6f8fb;color:#5b6b7f;font-size:12px">Internal: for the branch team. Do not forward outside the branch.</div></div></div>';
+  var trs = rows.map(function (r, i) {
+    return '<tr>' + r.map(function (c, j) {
+      return '<td style="' + F + 'padding:10px 10px;font-size:13px;color:#13202e;background:' + (i % 2 ? '#f6f8fb' : '#ffffff') +
+        ';border-top:1px solid #e6ebf1;overflow-wrap:break-word' + (j === 0 ? ';font-weight:600' : '') + '">' + dbEsc_(c) + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border:1px solid #dfe5ee;border-radius:12px;overflow:hidden;margin:16px 0">' +
+    '<tr>' + th + '</tr>' + trs + '</table>';
+}
+
+/* A big button that survives Outlook: a padded table cell, not a styled link alone. */
+function lbBtn_(href, label, bg, fg) {
+  return '<table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-table;margin:4px 8px 8px 0"><tr>' +
+    '<td style="background:' + bg + ';border-radius:12px">' +
+    '<a href="' + dbEsc_(href) + '" style="display:inline-block;padding:15px 26px;font-family:\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;' +
+    'font-size:16px;font-weight:800;color:' + fg + ';text-decoration:none;border-radius:12px">' + label + '</a></td></tr></table>';
 }
 
 
@@ -1612,6 +1865,7 @@ function lbStats_(b, who) {
   var days = Math.max(1, Math.min(800, parseInt(b.days, 10) || 30));
   var now = new Date(), since = new Date(now.getTime() - days * 86400000);
   var all = lbRows_();
+  var withCancelled = all.filter(function (r) { return r.loggedAt && r.loggedAt >= since && r.type === LB.TYPES[0] && r.source !== 'Imported'; });
   var rows = all.filter(function (r) { return r.loggedAt && r.loggedAt >= since && r.status !== 'Cancelled' && r.type === LB.TYPES[0]; });
   var sent = rows.filter(function (r) { return r.status === 'Sent' && r.receivedAt && r.sentAt; });
   var wd = sent.map(function (r) { return lbWorkDays_(r.receivedAt, r.sentAt); }).filter(function (x) { return x != null && x >= 0; });
@@ -1624,7 +1878,7 @@ function lbStats_(b, who) {
     var m = {};
     rows.forEach(function (r) {
       var k = key(r) || '(none)';
-      var o = m[k] = m[k] || { name: k, lines: 0, docs: 0, sent: 0, sameDay: 0, within1: 0, late: 0, waiting: 0, returned: 0, changed: 0, noPolicy: 0 };
+      var o = m[k] = m[k] || { name: k, lines: 0, docs: 0, sent: 0, sameDay: 0, within1: 0, late: 0, waiting: 0, returned: 0, changed: 0, noPolicy: 0, neverIn: 0 };
       o.lines++; o.docs += r.quantity;
       if (r.status === 'Sent' && r.receivedAt && r.sentAt) {
         o.sent++;
@@ -1637,6 +1891,7 @@ function lbStats_(b, who) {
       if (r.status === 'Returned') o.returned++;
       if (r.routingChanged) o.changed++;
       if (!r.policy && LB.NO_POLICY.indexOf(r.document) < 0) o.noPolicy++;
+      if (r.status === 'Cancelled' || (r.status === 'Logged' && lbWorkDays_(r.loggedAt, now) >= LB.NEVER_IN_DAYS)) o.neverIn++;
     });
     return Object.keys(m).map(function (k) {
       var o = m[k]; o.sameDayPct = pct(o.sameDay, o.sent); o.within1Pct = pct(o.within1, o.sent); return o;
@@ -1701,7 +1956,30 @@ function lbStats_(b, who) {
     },
     byDepartment: bucket(function (r) { return r.department; }),
     byStaff: bucket(function (r) { return r.sentBy || r.receivedBy; }).filter(function (o) { return o.name !== '(none)'; }),
-    byAgent: bucket(function (r) { return r.agent; }).slice(0, 40),
+    byAgent: (function () {
+      var b = bucket(function (r) { return r.agent; });
+      var cx = {};
+      withCancelled.forEach(function (r) { if (r.status === 'Cancelled') cx[r.agent] = (cx[r.agent] || 0) + 1; });
+      b.forEach(function (o) { o.neverIn += cx[o.name] || 0; o.quality = o.lines ? Math.max(0, Math.round(100 - (o.returned * 3 + o.noPolicy * 2 + o.changed + o.neverIn * 2) * 100 / (o.lines * 3))) : null; });
+      return b.slice(0, 40);
+    })(),
+    deptScore: (function () {
+      var m = {};
+      lbTransRows_().filter(function (t) { return t.status === 'Sent' && t.sentAt && t.sentAt >= since; }).forEach(function (t) {
+        var o = m[t.department] = m[t.department] || { name: t.department, transmittals: 0, asked: 0, yes: 0, no: 0, waiting: 0, days: [] };
+        o.transmittals++;
+        if (t.askedAt) o.asked++;
+        if (t.answer === 'Yes') o.yes++;
+        else if (t.answer === 'No') o.no++;
+        else if (t.askedAt) o.waiting++;
+        if (t.askedAt && t.answeredAt) o.days.push(lbWorkDays_(t.askedAt, t.answeredAt));
+      });
+      return Object.keys(m).map(function (k) {
+        var o = m[k]; o.answerDays = median(o.days); delete o.days;
+        o.confirmedPct = o.yes + o.no ? Math.round(o.yes * 100 / (o.yes + o.no)) : null;
+        return o;
+      }).sort(function (a, c) { return c.transmittals - a.transmittals; });
+    })(),
     byDocument: bucket(function (r) { return r.document; }).slice(0, 25),
     byWeekday: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(function (n, i) {
       return { day: n, lines: rows.filter(function (r) { return new Date(lbDay_(r.loggedAt) + 'T12:00:00Z').getUTCDay() === i + 1; }).length };
