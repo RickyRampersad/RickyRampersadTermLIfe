@@ -2717,6 +2717,32 @@ voice under the new timing and the caption gives it away.
     who made it on the Family Checks tab (made the first time). Linking from Log call with an outcome still works, staff
     included now (until 16 October the branch alone), and is recorded there too. Log call's family field, filled with
     nothing else, links them with no outcome.
+  - **The two side by side, with the family's cover and its gaps** (asked the same day: "if a possible family you could
+    also provide all the policy details and occupation etc as well our history with the person so we can see the cover
+    for the family … intelligence would tell us if there is a gap"). Each pair on the board carries both people
+    (`tFamSide_`, `tFamBrief_`: age, gender, occupation, employer, town, how they pay, what they hold with us, the plans
+    in force, the send row's service record) and the two together (`tFamGaps_`: policies in force, life cover, critical
+    illness, premium a year, since when, the two people's genders and ages and the years between them, and the gaps,
+    most pressing first). The gaps are facts off the record, never advice:
+    - neither holds a policy in force with us;
+    - an adult from 18 to 64 with no life cover with us, and whether the other has it;
+    - life cover and no critical illness cover, where Salesforce split the cover (both, as one line);
+    - each one's premium due, cover ending within five years, lapsed policy, estate beneficiary, waived premium;
+    - both or either paying from the pay packet;
+    - a policy naming the other as beneficiary;
+    - for the branch, the family's life cover against the incomes on file;
+    - the same date of birth on both records (first on a possible same person), or different ones;
+    - only one of the two readable yet, so the figures are one person's.
+
+    **Compare in full** asks `action=detail&token=A&pair=B` (`tPairDetail_`, the branch and Client Support only, so
+    Service.gs needs no paste): each person's every policy, the insights, the whole Salesforce service record and the
+    last twelve lines of their history. Policies come from the Client Book, or from the Client Profile's own rows when
+    the book is not built or lacks the client (`tPolsFor_`): Salesforce's plan, status, paid-to and cover split, no
+    premium (`noPrem`, and the page says so), a premium due only 45 days past the paid-to date (`T_PROFILE_DUE`). Staff
+    get all of it with no figure (`tFamNoMoney_`, and no income line). **Sign-out forgets a compared pair** (`PAIRX`):
+    the first test caught the branch's figures still on screen when Client Support signed in on the same device. The
+    pairs add about 200 KB to the branch board (1.68 MB on the 15 October export with the 7 October profile).
+    `fam16b/pair-test.js` (56 checks, Node and Playwright, with the 8 October Client Book for premiums) covers it.
   - **The service record.** Every card shows the record the letter printed from the send row (`tSvcOf_`: `svc_docs`,
     `svc_requests`, `svc_reminders`, `svc_birthday`, as at 24 September), or says plainly that the branch had nothing on
     record for that client. Under History, `tSfService_` reads every Salesforce task on the client's policy records and

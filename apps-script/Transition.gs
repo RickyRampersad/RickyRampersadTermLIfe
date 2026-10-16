@@ -4131,6 +4131,158 @@ function tFamilyOnly_(w, tok, fam, notFam) {
   } finally { lock.releaseLock(); }
 }
 
+/* ── a possible family side by side (16 October 2026: "if a possible family you could also provide all the policy details
+   and occupation etc as well our history with the person so we can see the cover for the family … intelligence would
+   tell us if there is a gap") ──
+   Each person: who they are, what they hold with us, what the records say and what the branch team has done for them.
+   The two together: what the family holds and where it is thin. Facts off the record, never advice; staff see no money.
+   The board carries the short version on every pair; the whole of it, with each person's Salesforce service record and
+   history, comes on a press (action=detail with pair=). */
+
+/** One client's policies: the Client Book's when it is built, else the Client Profile's own rows (Salesforce's plan,
+ *  status, paid-to date, issue date and cover split), so a pair can be read before the book is; the profile carries no
+ *  premium, so `noPrem` says so. null when neither knows the client. */
+var T_PROFILE_DUE = 45;
+function tPolsFor_(cno, today) {
+  var bk = tBook_().ready ? tBookFor_(cno, true) : null;
+  if (bk) return bk;
+  /* no Client Book yet, or this client not on it: the Client Profile's own rows */
+  var P = tProfiles_(), nos = P.byCno[tCno_(cno)] || [];
+  if (!nos.length) return null;
+  var s = { live: 0, due: 0, lapsed: 0, pending: 0, ended: 0, prem: 0, cover: 0, ci: 0, acc: 0, unconf: 0, since: '', years: 0, fund: 0, est: 0, mat: 0, matOn: '' };
+  var list = [], ended = {};
+  nos.forEach(function (no) {
+    var pf = P.by[no], d = String(pf.status || '').trim().toLowerCase();
+    var st = /lapse/.test(d) ? 'lapsed' : /pending|underwriting|outstanding|awaiting/.test(d) ? 'pending' :
+      T_LIVE_DESC[d] || (/premium paying/.test(d) ? 'inforce' : /paid ?up/.test(d) ? 'paidup' : /waiver/.test(d) ? 'waived' : /vested|annuity/.test(d) ? 'annuity' : 'ended');
+    /* no Status(2) flag here, so a premium counts as due only 45 days past the paid-to date (the Premium Due Desk's first
+       line): the profile can be days old, and a monthly payer is a month behind on any given day */
+    var od = st === 'inforce' && pf.paid && pf.paid < today ? tDaysBetween_(pf.paid, today) : 0;
+    if (od >= T_PROFILE_DUE) st = 'overdue'; else od = 0;
+    var live = tBookLive_(st), cv = tCoverOf_({ sa: 0 }, { cls: '', conf: false }, pf);
+    if (live) { s.live++; if (st === 'overdue') s.due++; s.cover += cv.life; s.ci += cv.ci; s.acc += cv.acc; }
+    else if (st === 'lapsed') s.lapsed++;
+    else if (st === 'pending') s.pending++;
+    else { s.ended++; var k = d || 'ended'; ended[k] = (ended[k] || 0) + 1; }
+    if (pf.iss && st !== 'pending' && !T_NEVER.test(d) && (!s.since || pf.iss < s.since)) s.since = pf.iss;
+    if (st !== 'ended') list.push({ no: no, code: '', name: pf.plan || 'Policy ' + no, cls: '', conf: false, st: st, desc: st === 'pending' ? pf.status : '', iss: pf.iss, prem: 0, pays: '', yr: 0,
+      bill: '', paid: pf.paid, od: od, sa: 0, life: cv.life, ci: cv.ci, acc: cv.acc, src: cv.src, counted: live && cv.life > 0,
+      ben: pf.ben.map(tTitleCase_), benK: tBenKind_(pf.ben), ends: pf.ends, insured: tOtherLife_(pf.insured, pf.client) ? tTitleCase_(pf.insured) : '', matures: '', fund: 0, est: false });
+  });
+  if (s.since) s.years = Math.max(0, Math.floor(tDaysBetween_(s.since, today) / 365.25));
+  return { sum: s, noPrem: true, src: 'profile',
+    list: list.sort(function (a, c) { return (T_ST_ORDER[a.st] - T_ST_ORDER[c.st]) || String(c.iss).localeCompare(String(a.iss)); }),
+    ended: Object.keys(ended).sort().map(function (k) { return { what: k, n: ended[k] }; }) };
+}
+
+/** One person of a pair, in full: { token, client, first, no, book, seg, town, prof, pol, ins, svc }, money taken out for
+ *  staff (tPolNoMoney_, tProfileNoMoney_, and the insight that quotes an income). */
+function tFamSide_(r, money, today) {
+  var no = tText_(r['Client number']), client = tText_(r.Client) || tText_(r['First name']) || 'a client';
+  var prof = tProfileFor_(no), pol = tPolsFor_(no, today), ins = tInsightsFor_(pol, prof, today), town = prof && prof.contact ? prof.contact.town : '';
+  if (prof) delete prof.contact;
+  var o = { token: tText_(r.Token), client: client, first: tText_(r['First name']) || client.split(/\s+/)[0], no: no, book: tText_(r.Agent), seg: tText_(r.Segment).toUpperCase(),
+    town: town || '', prof: prof, pol: pol, ins: ins, svc: tSvcOf_(r) };
+  return money ? o : tFamNoMoney_(o);
+}
+/** The same person with every figure taken out, for staff. */
+function tFamNoMoney_(x) {
+  var o = {};
+  Object.keys(x).forEach(function (k) { o[k] = x[k]; });
+  o.prof = tProfileNoMoney_(x.prof);
+  o.pol = tPolNoMoney_(x.pol);
+  o.ins = (x.ins || []).filter(function (i) { return !T_MONEY_INS[i.k]; });
+  return o;
+}
+
+/** What the two hold together and where it is thin, from both people in full (tFamSide_, before any money is taken out):
+ *  { live, cover, ci, prem, noPrem, since, years, seen (how many of the two can be read), who, gaps: [{ k, t, lv }] }. Every
+ *  line is a fact off the record: who
+ *  has no life cover in force with us, critical illness, cover that ends, a premium due, a lapsed policy, a policy that
+ *  pays the estate, a premium taken from the pay packet, a policy that names the other; with `money`, the family's life
+ *  cover against the incomes on file. `kind` 'same' adds whether the two records carry one date of birth. */
+var T_FAM_RANK = { hot: 0, warm: 1, info: 2 };
+function tFamGaps_(A, B, kind, money) {
+  var out = [], ppl = [A, B], add = function (k, t, lv) { out.push({ k: k, t: t, lv: lv }); };
+  var sum = function (x) { return x.pol && x.pol.sum ? x.pol.sum : null; };
+  var age = function (x) { return x.prof && x.prof.age !== undefined && x.prof.age !== null && x.prof.age !== '' ? Number(x.prof.age) : null; };
+  var adult = function (x) { var a = age(x); return a === null || (a >= 18 && a < 65); };
+  var nm = function (x) { var a = age(x); return x.first + (a !== null ? ' (' + a + ')' : ''); };
+  var f = { live: 0, cover: 0, ci: 0, prem: 0, noPrem: false, since: '', years: 0, seen: 0 };
+  ppl.forEach(function (x) {
+    var s = sum(x);
+    if (!s) return;
+    f.seen++; f.live += s.live || 0; f.cover += s.cover || 0; f.ci += s.ci || 0; f.prem += s.prem || 0;
+    if (x.pol.noPrem) f.noPrem = true;
+    if (s.since && (!f.since || s.since < f.since)) { f.since = s.since; f.years = s.years || 0; }
+  });
+  f.prem = Math.round(f.prem);
+  /* who the two are, in facts: gender and age, and the gap between them */
+  var who = ppl.map(function (x) { var a = age(x), g = x.prof && x.prof.gender; return x.first + ': ' + [g ? (g === 'male' ? 'a man' : g === 'female' ? 'a woman' : g) : '', a !== null ? 'age ' + a : ''].filter(Boolean).join(', '); });
+  var aa = age(A), ab = age(B);
+  f.who = who.join(' · ') + (aa !== null && ab !== null && aa !== ab ? ' · ' + Math.abs(aa - ab) + ' years apart' : '');
+  var dobA = A.prof && A.prof.dob, dobB = B.prof && B.prof.dob;
+  if (dobA && dobB && dobA === dobB) add('samedob', 'The same date of birth on both records (' + tDmy_(dobA) + ')' + (kind === 'same' ? ': most likely one person on two client numbers' : ''), kind === 'same' ? 'hot' : 'warm');
+  else if (kind === 'same' && dobA && dobB) add('twodob', 'Different dates of birth on the two records: two people, or one record to correct', 'warm');
+  if (!f.seen) {
+    add('unknown', 'Neither one’s policies can be read yet: the Client Book and the Client Profile hold nothing for them', 'info');
+    return finish();
+  }
+  if (f.seen === 1) { var blind = ppl.filter(function (x) { return !sum(x); })[0]; add('partial', 'Only ' + ppl.filter(function (x) { return sum(x); })[0].first + '’s policies can be read: ' + blind.first + ' is not on the Client Book or the Client Profile yet, so the family figures are one person’s', 'info'); }
+  if (ppl.every(function (x) { var s = sum(x); return !s || !s.live; })) add('none', 'Neither holds a policy in force with us', 'hot');
+  /* life cover, person by person, among the adults under 65 */
+  ppl.forEach(function (x, i) {
+    var s = sum(x), o = ppl[1 - i], so = sum(o);
+    if (!s || !adult(x) || s.cover || s.unconf) return;
+    add('nolife', nm(x) + ' has no life cover in force with us' + (so && (so.cover || so.unconf) ? '; ' + o.first + ' does' : ''), s.live ? 'warm' : 'hot');
+  });
+  /* critical illness: only where Salesforce has split the cover (the noci insight), so "none on file" is a fact */
+  var noci = ppl.filter(function (x) { return adult(x) && (x.ins || []).some(function (i) { return i.k === 'noci'; }); });
+  if (noci.length === 2) add('noci', 'Both have life cover, and neither has critical illness cover on file', 'warm');
+  else noci.forEach(function (x) { add('noci', nm(x) + ': life cover, and no critical illness cover on file', 'info'); });
+  /* what each one's own record says */
+  var lower = function (t) { return t.charAt(0).toLowerCase() + t.slice(1); };
+  ppl.forEach(function (x) {
+    (x.ins || []).forEach(function (i) { if (i.k === 'due' || i.k === 'ends' || i.k === 'lapsed' || i.k === 'estate' || i.k === 'waived') add(i.k, x.first + ': ' + lower(i.t), i.lv); });
+  });
+  var pay = ppl.filter(function (x) { return x.prof && x.prof.pay; });
+  if (pay.length === 2) add('payroll', 'Both pay through ' + (pay[0].prof.pay === pay[1].prof.pay ? pay[0].prof.pay : 'their pay') + ': a change of job stops the deduction', 'info');
+  else pay.forEach(function (x) { add('payroll', x.first + ' pays by ' + x.prof.pay + ': a change of job stops the deduction', 'info'); });
+  /* whether either policy names the other, by first name, among the beneficiaries on our file */
+  ppl.forEach(function (x, i) {
+    var o = ppl[1 - i], fo = String(o.first || '').toLowerCase();
+    if (!x.pol || !x.pol.list || fo.length < 3) return;
+    var named = x.pol.list.some(function (p) { return tBookLive_(p.st) && (p.ben || []).some(function (b) { return String(b).toLowerCase().split(/[\s,]+/).indexOf(fo) >= 0; }); });
+    if (named) add('names', x.first + '’s policy names ' + o.first + ' as beneficiary', 'info');
+  });
+  if (money) {
+    var inc = ppl.reduce(function (t, x) { return t + (x.prof && x.prof.income > 0 ? Number(x.prof.income) : 0); }, 0);
+    if (inc > 0 && f.cover) {
+      var m = f.cover / inc;
+      add('income', 'The two together hold life cover of ' + (m >= 10 ? Math.round(m) : Math.round(m * 10) / 10) + '× the income on file ($' + tMoney_(inc) + ' a year)', m < 5 ? 'warm' : 'info');
+    }
+  }
+  return finish();
+  function finish() {
+    f.gaps = out.sort(function (a, b) { return T_FAM_RANK[a.lv] - T_FAM_RANK[b.lv]; });
+    if (!money) { delete f.cover; delete f.ci; delete f.prem; f.gaps = f.gaps.filter(function (g) { return g.k !== 'income'; }); }
+    return f;
+  }
+}
+
+/** The short version of one person, for the board's pair list: who they are and the totals. */
+function tFamBrief_(x) {
+  var s = x.pol && x.pol.sum, p = x.prof || {}, o = { town: x.town || '' };
+  ['age', 'gender', 'occ', 'emp', 'pay'].forEach(function (k) { if (p[k] !== undefined && p[k] !== '' && p[k] !== null) o[k] = p[k]; });
+  if (s) {
+    o.sum = { live: s.live || 0, due: s.due || 0, lapsed: s.lapsed || 0, pending: s.pending || 0, years: s.years || 0, since: s.since || '' };
+    if (!x.pol.noMoney) { o.sum.cover = s.cover || 0; o.sum.ci = s.ci || 0; o.sum.prem = s.prem || 0; o.sum.unconf = s.unconf || 0; if (x.pol.noPrem) o.sum.noPrem = true; }
+    o.plans = (x.pol.list || []).filter(function (q) { return tBookLive_(q.st); }).map(function (q) { return q.name || q.code; }).filter(Boolean).slice(0, 4);
+  }
+  if (x.svc) o.svc = x.svc;
+  return o;
+}
+
 /* ── who is in the branch, who signs in, and what they see ─────────────────
    The Agent Skill Bank is the roster and the sign-in. Since 3 October 2026 it
    carries each person's Agent no., Password, Role, Unit and Active, set up by
@@ -4905,19 +5057,29 @@ function tBoard_(w, all, lite) {
   if (tCanAssign_(w) && !lite) {
     var mfx = { pairs: [] };
     try { mfx = tMaybeFamily_({ order: order, sendBy: sendBy, hhOf: hhOf, calls: calls, bk: bk, decided: tFamilyChecks_() }); } catch (e) {}
+    /* each person with who they are, the totals of what they hold and the branch team's record, and the two together with
+       where the family's cover is thin (tFamGaps_); the policies in full come on a press (detail with pair=) */
+    var famToday = Utilities.formatDate(now, tz, 'yyyy-MM-dd'), famFull = {};
+    /* each person read once, with the figures; the gaps are read from that, and staff get the brief without them */
+    var full = function (tok) { return famFull[tok] || (famFull[tok] = tFamSide_(sendBy[tok], true, famToday)); };
     var side = function (tok) {
-      var r = sendBy[tok], c = answeredBy[tok], b = byTok[tok];
-      return { token: tok, client: c ? c.client : (tText_(r.Client) || tText_(r['First name']) || 'a client'), no: tText_(r['Client number']),
+      var r = sendBy[tok], c = answeredBy[tok], b = byTok[tok], o = { token: tok, client: c ? c.client : (tText_(r.Client) || tText_(r['First name']) || 'a client'), no: tText_(r['Client number']),
         seg: tText_(r.Segment).toUpperCase(), book: tText_(r.Agent), state: c ? 'answered' : tMemberState_(r), said: c ? tSaid_(c) : '',
         agent: (b && b.assigned) || '', hh: hhOf[tok] || '', onBoard: !!onBoard[tok] };
+      try { o.first = full(tok).first; o.p = tFamBrief_(staff ? tFamNoMoney_(full(tok)) : full(tok)); } catch (e) {}
+      return o;
     };
     var cardsBy = {};
     clients.concat(silent, family).forEach(function (c) { cardsBy[c.token] = c; });
-    maybe = mfx.pairs.slice(0, T_MAYBE.MAX).map(function (p) { return { a: side(p.a), b: side(p.b), why: p.why, kind: p.kind, both: p.both }; });
-    maybe.forEach(function (p) {
+    maybe = mfx.pairs.slice(0, T_MAYBE.MAX).map(function (p) {
+      var o = { a: side(p.a), b: side(p.b), why: p.why, kind: p.kind, both: p.both };
+      try { o.fam = tFamGaps_(full(p.a), full(p.b), p.kind, !staff); } catch (e) {}
+      return o;
+    });
+    maybe.forEach(function (p, i) {
       [[p.a, p.b], [p.b, p.a]].forEach(function (x) {
         var c = cardsBy[x[0].token];
-        if (c) (c.mf = c.mf || []).push({ token: x[1].token, client: x[1].client, no: x[1].no, state: x[1].state, said: x[1].said, agent: x[1].agent, why: p.why, kind: p.kind });
+        if (c) (c.mf = c.mf || []).push({ i: i, token: x[1].token, client: x[1].client, no: x[1].no, state: x[1].state, said: x[1].said, agent: x[1].agent, why: p.why, kind: p.kind });
       });
     });
     counts.maybe = { pairs: maybe.length, answered: maybe.filter(function (p) { return p.a.state === 'answered' || p.b.state === 'answered'; }).length,
@@ -8559,6 +8721,7 @@ function transitionDetail_(p) {
   try {
     var o = tOpenClient_(p, w);
     if (!o.ok) return o;
+    if (p.pair) return tPairDetail_(p, w, o);   // a possible family, the two side by side (16 October 2026)
     var tz = tTz_(), today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'), staff = w.role === 'staff';
     var claim = null;
     var mineC = w.role === 'unit' ? tOnTeam_(w.team) : w.role === 'agent' ? tOnTeam_([w.me.name]) : null;
@@ -8573,6 +8736,30 @@ function transitionDetail_(p) {
     if (claim) out.claim = tClaimView_(claim, tz, today, w.role === 'branch');
     return out;
   } catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
+}
+
+/** GET action=detail&token=A&pair=B: the two of a possible family in full, for the branch and Client Support. Each person:
+ *  who they are, every policy, what the records say, the branch team's record on the letter, the whole Salesforce service
+ *  record and the history with us (the last twelve lines); the two together: tFamGaps_. Staff get no figure and no claim. */
+var T_PAIR_HIST = 12;
+function tPairDetail_(p, w, oa) {
+  if (!tCanAssign_(w)) return { ok: false, refused: true, error: 'Only the branch and Client Support compare a possible family.' };
+  var ob = tOpenClient_({ token: p.pair }, w);
+  if (!ob.ok) return ob;
+  if (ob.tok === oa.tok) return { ok: false, error: 'Choose two different clients.' };
+  var tz = tTz_(), today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'), money = w.role !== 'staff';
+  var one = function (o) {
+    var x = tFamSide_(o.row, true, today), hist = [], svc = null;
+    try { hist = tHistory_(o.row, o.rows, o.ha, null, !money).slice(0, T_PAIR_HIST); } catch (e) {}
+    try { svc = tSfService_(o.tok, tText_(o.row['Client number']), o.ha); } catch (e) { svc = { error: 'Salesforce did not answer: ' + String(e && e.message || e) }; }
+    return { x: x, hist: hist, svc: svc };
+  };
+  var A = one(oa), B = one(ob), kind = tSamePerson_(oa.row, ob.row) ? 'same' : 'family';
+  var fam = tFamGaps_(A.x, B.x, kind, money);
+  var side = function (s) { var x = money ? s.x : tFamNoMoney_(s.x); x.history = s.hist; x.service = s.svc; return x; };
+  var bk = tBook_();
+  return { ok: true, pair: true, at: Utilities.formatDate(new Date(), tz, 'd MMM HH:mm'), kind: kind, a: side(A), b: side(B), fam: fam,
+    book: { ready: bk.ready, money: money, at: bk.built ? bk.built.when : '' }, profiles: tProfiles_().ready };
 }
 
 /** Everything between us and one client, newest first: the trail (tTrail_), in the board's words, and what the branch did

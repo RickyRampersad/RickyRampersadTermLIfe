@@ -242,6 +242,32 @@
   .mfhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;margin:6px 0 4px}
   .mfhead h3{margin:0;font:700 17px var(--fh,var(--fb));color:var(--ink)}
   .mfhead span{color:var(--dim);font-size:14px}
+  /* the two side by side, and what the family holds together (16 October 2026) */
+  .mfx{padding:10px 0;border-top:1px solid var(--warnline)} .mfx:first-of-type{border-top:0}
+  .mfpair.mfx{padding:12px 16px;border-top:1px solid var(--line)}
+  .mfc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:2px 0 8px}
+  .mfp{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;min-width:0;font-size:14px;color:var(--body)}
+  .mfp.mine{border-color:var(--field)}
+  .mfp .tag{display:inline-block;font:700 10.5px var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-right:6px}
+  .mfp .nm{color:var(--ink);font-weight:700;overflow-wrap:anywhere} .mfp .cno{color:var(--dim);font-size:13px}
+  .mfp .ln{display:block;margin-top:4px;overflow-wrap:anywhere} .mfp .ln.mut{color:var(--dim);font-size:13px} .mfp .ln.gap{color:var(--stop);font-weight:600}
+  .mfp .ln i{font-style:normal;font:700 10.5px var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-right:6px}
+  .mftot{background:var(--card);border:1px solid var(--warnline);border-radius:var(--r2);padding:10px 12px;font-size:14px;color:var(--body);min-width:0}
+  .mftot h5{margin:0 0 4px;font:700 11px var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--warn)}
+  .mftot .tl{color:var(--ink);font-weight:600;overflow-wrap:anywhere} .mftot .wh{color:var(--dim);font-size:13px;margin-top:2px}
+  .mfg{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+  .mfg li{padding:4px 10px;border-radius:8px;background:#f6f8fb;border:1px solid var(--line);font-size:13.5px;overflow-wrap:anywhere}
+  .mfg li b{font:700 10.5px var(--fb);letter-spacing:.06em;text-transform:uppercase;margin-right:6px}
+  .mfg li.hot{background:var(--stopbg);border-color:var(--stopline);color:var(--stop)} .mfg li.warm{background:var(--warnbg);border-color:var(--warnline);color:var(--warn)}
+  .mfg li.none{background:transparent;border-style:dashed;color:var(--dim)}
+  .mfx .why{display:block;color:var(--body);font-size:13.5px;margin:8px 0 0}
+  .mfx .go{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .mfx .go button{font:600 13.5px var(--fb);border-radius:999px;padding:7px 15px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+  .mfx .go button.yes{background:var(--tdark);border-color:var(--tdark);color:#fff} .mfx .go button.on{border-color:var(--navy)}
+  .mfx .go button:disabled{opacity:.5;cursor:default}
+  .det.mffull .pside{margin-top:14px;padding-top:12px;border-top:2px solid var(--line)} .det.mffull .pside:nth-child(2){border-top:0;padding-top:0;margin-top:6px}
+  .det.mffull .pside h5{margin:0 0 2px;font:800 17px var(--fh);color:var(--ink);overflow-wrap:anywhere} .det.mffull .pside h5 span{font:500 13px var(--fb);color:var(--dim)}
+  .det.mffull .pside .mut{color:var(--dim);font-size:13.5px}
   .ins{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
   .ins span{font-size:13px;border-radius:999px;padding:3px 11px;border:1px solid var(--line);background:#f6f8fb;color:var(--body)}
   .ins span.hot{background:var(--stopbg);border-color:var(--stopline);color:var(--stop);font-weight:600} .ins span.warm{background:var(--warnbg);border-color:var(--warnline);color:var(--warn)}
@@ -1039,11 +1065,12 @@ function paintSnap() {
 /* nothing is saved from the remembered picture: the fresh board is seconds away */
 function notYet() { if (!STALE) return false; toast(STALE_MSG, true); return true; }
 /* what one person opened is never shown to the next on the same device: their tab and filters, the clients they opened in
-   full, a comment not yet saved, the policies fetched for them, the search box */
+   full, a comment not yet saved, the policies fetched for them, a possible family compared in full, the search box */
 var FILTER_IDS = ['fSearch', 'fSeg', 'fTown', 'fBook', 'fCaller', 'fAge', 'fNeed', 'fIns', 'fSug', 'fOrder', 'hSearch'];
 function forget() {
   dropSnap(); STALE = false; AGAIN = false;   // the picture of the last board goes with the person who saw it
   FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; OPENX = {}; EXP = {};
+  PAIRX = {}; PAIR_OPEN = {}; MFSHOW = 15;   // a possible family opened in full goes too: the branch's figures never reach the next person
   M = { scope: 'open', town: '', agent: -1, opp: '', show: MSTEP }; MW = null;
   TAB = ''; SUB = ''; HSUB = ''; SHOW_N = SHOW_STEP; HSHOW_N = HSTEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true; $('barIntro').disabled = false; $('barIntroWhy').textContent = '';
   FILTER_IDS.forEach(function (id) { $(id).value = ''; });
@@ -1740,14 +1767,119 @@ function mfWho(m) {
 function mfBlock(c) {
   var mf = c.mf || [];
   if (!mf.length) return '';
-  var can = canAssign();
+  var can = canAssign(), L = (D && D.maybe) || [];
   return '<div class="mfam"><h4>Possible family on our books<i>' + (can ? 'the household rule did not join them; confirm from the records or on the call' : 'the branch confirms these') + '</i></h4>' +
     mf.map(function (m) {
+      var p = m.i !== undefined ? L[m.i] : null;
+      if (p && (p.a.token === c.token || p.b.token === c.token) && (p.a.token === m.token || p.b.token === m.token)) return '<div class="mfx">' + mfCompare(p, c.token) + '</div>';
       return '<div class="mfr"><div class="mfw">' + (m.kind === 'same' ? '<i>Possibly the same person on another client number:</i> ' : '') + mfWho(m) +
         '<span class="why">' + esc(cap(m.why.join('; '))) + '</span></div>' +
         (can ? '<button type="button" class="yes" data-mf="yes" data-a="' + esc(c.token) + '" data-b="' + esc(m.token) + '">One household</button>' +
           '<button type="button" data-mf="no" data-a="' + esc(c.token) + '" data-b="' + esc(m.token) + '">Not family</button>' : '') + '</div>';
     }).join('') + '</div>';
+}
+/* 16 October 2026: "if a possible family you could also provide all the policy details and occupation etc as well our
+   history with the person so we can see the cover for the family … intelligence would tell us if there is a gap". Each
+   person: who they are, what they hold with us, and the branch team's record; the two together: what the family holds and
+   where the record shows it thin. Staff see the same without a figure. The whole of both opens on a press. */
+function mfSide(s, me) {
+  var p = s.p || {}, sm = p.sum, out = [];
+  out.push('<div>' + (me ? '<span class="tag">This client</span>' : '') + '<b class="nm">' + esc(s.client) + '</b> <span class="cno">' + esc(s.no || '') + '</span></div>');
+  out.push('<span class="ln">' + (s.state === 'answered' ? '<b>answered</b>' + (s.said ? ': ' + esc(s.said) : '') : esc(s.state || '')) + ' · ' + (s.agent ? 'agent <b>' + esc(s.agent) + '</b>' : 'nobody named') + '</span>');
+  var who = [p.age !== undefined ? 'age ' + p.age : '', p.gender || '', p.occ || '', p.emp ? 'works at ' + p.emp : ''].filter(Boolean).join(' · ');
+  out.push('<span class="ln"><i>Who</i>' + (who ? esc(who) : '<span class="mut">no age or occupation on file</span>') + '</span>');
+  if (p.town || p.pay) out.push('<span class="ln mut">' + esc([p.town ? 'lives in ' + p.town : '', p.pay ? 'pays by ' + p.pay : ''].filter(Boolean).join(' · ')) + '</span>');
+  if (sm) {
+    var w = [sm.live + ' in force'];
+    if (sm.cover !== undefined) {
+      w.push(sm.cover ? money(sm.cover) + ' life cover' : sm.unconf ? 'life cover: plans to confirm' : 'no life cover');
+      if (sm.ci) w.push(money(sm.ci) + ' critical illness');
+      if (sm.prem && !sm.noPrem) w.push('≈ ' + money(sm.prem) + ' a year');
+    }
+    if (sm.since) w.push(sm.years + ' year' + (sm.years === 1 ? '' : 's') + ' with us');
+    out.push('<span class="ln' + (!sm.live || (sm.cover === 0 && !sm.unconf && sm.live) ? ' gap' : '') + '"><i>With us</i>' + esc(w.join(' · ')) + '</span>');
+    var x = [sm.due ? sm.due + ' with a premium due' : '', sm.lapsed ? sm.lapsed + ' lapsed' : '', sm.pending ? sm.pending + ' application' + (sm.pending === 1 ? '' : 's') + ' pending' : ''].filter(Boolean);
+    if (x.length) out.push('<span class="ln gap">' + esc(x.join(' · ')) + '</span>');
+    if (p.plans && p.plans.length) out.push('<span class="ln mut">' + esc(p.plans.join(', ')) + '</span>');
+  } else out.push('<span class="ln mut"><i>With us</i>no policies we can read yet</span>');
+  var v = p.svc;
+  out.push('<span class="ln' + (v ? '' : ' mut') + '"><i>Our service</i>' + (v ? esc([v.req ? v.req + ' request' + (v.req === 1 ? '' : 's') : '', v.docs ? v.docs + ' document' + (v.docs === 1 ? '' : 's') : '',
+    v.rem ? v.rem + ' premium reminder' + (v.rem === 1 ? '' : 's') : '', v.bday ? 'birthday note ' + v.bday : ''].filter(Boolean).join(' · ')) + ' <span class="mut">to 24 Sep</span>' : 'nothing on record before the letter') + '</span>');
+  if (s.book || s.seg) out.push('<span class="ln mut">' + esc([s.book ? 'was with ' + s.book : '', s.seg ? 'letter ' + s.seg : '', s.hh || ''].filter(Boolean).join(' · ')) + '</span>');
+  return '<div class="mfp' + (me ? ' mine' : '') + '">' + out.join('') + '</div>';
+}
+var MFG_WORD = { hot: 'Act', warm: 'Note', info: 'Fact' };
+function mfFam(f) {
+  if (!f) return '';
+  var t = [f.seen === 0 ? 'Nothing we can read yet for either of them' : f.live + ' polic' + (f.live === 1 ? 'y' : 'ies') + ' in force between them'];
+  if (f.cover !== undefined && f.seen !== 0) {
+    t.push(money(f.cover) + ' life cover');
+    t.push(f.ci ? money(f.ci) + ' critical illness' : 'no critical illness');
+    if (f.prem && !f.noPrem) t.push('≈ ' + money(f.prem) + ' a year');
+  }
+  if (f.since) t.push('with us since ' + f.since.slice(0, 4));
+  var g = f.gaps || [];
+  return '<div class="mftot"><h5>The family&rsquo;s cover with us</h5><div class="tl">' + esc(t.join(' · ')) + '</div>' + (f.who ? '<div class="wh">' + esc(f.who) + '</div>' : '') +
+    '<ul class="mfg">' + (g.length ? g.map(function (x) { return '<li class="' + esc(x.lv) + '"><b>' + (MFG_WORD[x.lv] || 'Fact') + '</b>' + esc(x.t) + '</li>'; }).join('')
+      : '<li class="none">Nothing on the records shows the family&rsquo;s cover as thin.</li>') + '</ul></div>';
+}
+function mfCompare(p, me) {
+  var A = p.a, B = p.b;
+  if (me && me === B.token) { A = p.b; B = p.a; }
+  var k = pairKey(A.token, B.token), open = !!PAIR_OPEN[k], can = canAssign();
+  return (p.kind === 'same' ? '<div class="why"><b>Possibly one person on two client numbers.</b></div>' : '') +
+    '<div class="mfc">' + mfSide(A, me === A.token) + mfSide(B, false) + '</div>' + mfFam(p.fam) +
+    '<span class="why">Why: ' + esc(p.why.join('; ')) + '</span>' +
+    '<div class="go">' + (can ? '<button type="button" class="yes" data-mf="yes" data-a="' + esc(A.token) + '" data-b="' + esc(B.token) + '">One household</button>' +
+      '<button type="button" data-mf="no" data-a="' + esc(A.token) + '" data-b="' + esc(B.token) + '">Not family</button>' : '') +
+      (D && D.detail ? '<button type="button" class="' + (open ? 'on' : '') + '" data-mfx-a="' + esc(A.token) + '" data-mfx-b="' + esc(B.token) + '">' + (open ? 'Hide the comparison' : 'Compare in full: policies, service, history') + '</button>' : '') + '</div>' +
+    (open ? pairFull(PAIRX[k] || { loading: true }) : '');
+}
+/* the whole of both, on a press: action=detail with pair= (a backend older than 16 October answers with one client only) */
+var PAIRX = {}, PAIR_OPEN = {};
+function pairKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
+function redrawMf() { if (TABDEF[TAB] && TABDEF[TAB].pane === 'paneHouseholds') householdsPane(); else list(); }
+function togglePair(a, b) {
+  var k = pairKey(a, b);
+  if (PAIR_OPEN[k]) { delete PAIR_OPEN[k]; redrawMf(); return; }
+  PAIR_OPEN[k] = 1;
+  if (PAIRX[k] && PAIRX[k].ok) { redrawMf(); return; }
+  PAIRX[k] = { loading: true };
+  redrawMf();
+  api(signed({ action: 'detail', token: a, pair: b })).then(function (r) {
+    if (!r || !r.ok) PAIRX[k] = { error: r && r.notUpdated ? NEWBACK : ((r && r.error) || 'The sheet did not answer.') };
+    else if (!r.pair) PAIRX[k] = { error: 'Comparing the two needs Transition.gs of 16 October: paste it, then Deploy → Manage deployments → New version.' };
+    else PAIRX[k] = r;
+    if (PAIR_OPEN[k]) redrawMf();
+  }).catch(function () { PAIRX[k] = { error: 'The sheet did not answer. Try again in a moment.' }; if (PAIR_OPEN[k]) redrawMf(); });
+}
+document.addEventListener('click', function (e) {
+  var b = e.target && e.target.closest ? e.target.closest('[data-mfx-a]') : null;
+  if (!b) return;
+  e.preventDefault();
+  togglePair(b.getAttribute('data-mfx-a'), b.getAttribute('data-mfx-b'));
+});
+function pairFull(x) {
+  if (x.loading) return '<div class="det mffull"><p class="dload">Opening both: their policies, the Salesforce service record and the history with us&hellip; this takes a few seconds.</p></div>';
+  if (x.error) return '<div class="det mffull"><p class="derr">' + esc(x.error) + '</p></div>';
+  var one = function (s) {
+    var p = s.prof || {};
+    var who = [p.age !== undefined ? 'age ' + p.age : '', p.gender || '', p.dob ? 'born ' + dmy(p.dob) : '', p.occ || '', p.emp ? 'works at ' + p.emp : '', p.pay ? 'pays by ' + p.pay : '',
+      p.income ? 'income on file ' + money(p.income) + ' a year' : '', p.smoker || '', s.town ? 'lives in ' + s.town : ''].filter(Boolean).join(' · ');
+    var pol = s.pol ? polPanel(s.pol) + (s.pol.noPrem ? '<div class="pnote">These are Salesforce&rsquo;s records; the premiums come with the Client Book, which is not built yet.</div>' : '')
+      : '<p class="dnone">No policies we can read yet: the Client Book and the Client Profile hold nothing for this client.</p>';
+    var v = s.svc;
+    return '<div class="pside"><h5>' + esc(s.client) + ' <span>' + esc(s.no || '') + (s.book ? ' · was with ' + esc(s.book) : '') + (s.seg ? ' · letter ' + esc(s.seg) : '') + '</span></h5>' +
+      '<div class="mut">' + (who ? esc(who) : 'No age, occupation or employer on file.') + '</div>' + insChips(s.ins) + pol +
+      '<div class="dh">The branch team&rsquo;s record on the letter</div>' + (v ? '<p class="dnone" style="color:var(--body)">' + esc([v.req ? v.req + ' requests handled' : '', v.docs ? v.docs + ' documents handled' : '',
+        v.rem ? v.rem + ' premium reminders' : '', v.bday ? 'birthday note ' + v.bday : ''].filter(Boolean).join(' · ')) + ', to 24 September.</p>' : '<p class="dnone">Nothing on record before the letter.</p>') +
+      serviceHtml(s.service || null) +
+      '<div class="dh">History with us <small>the latest first' + ((s.history || []).length >= 12 ? ', the last 12' : '') + '</small></div>' +
+      ((s.history || []).length ? '<ol class="hist">' + s.history.map(histItem).join('') + '</ol>' : '<p class="dnone">Nothing recorded yet.</p>') + '</div>';
+  };
+  /* the two together is the block above the press; here each person in full */
+  return '<div class="det mffull"><div class="dh">Both in full <small>as at ' + esc(x.at || '') + '</small></div>' + one(x.a) + one(x.b) +
+    (x.book && x.book.money !== false ? '<p class="pnote" style="margin-top:12px">' + bookNote() + '</p>' : '') + '</div>';
 }
 /* one press: join the two into one household, or mark them not family; no call is logged (update with family= or notfamily=) */
 function famDecide(a, b, yes, btn) {
@@ -1783,13 +1915,12 @@ function mfPane(q) {
     return (ay - ax) || ((y.both ? 1 : 0) - (x.both ? 1 : 0));
   });
   var m = D.counts && D.counts.maybe || {}, drawn = rows.slice(0, MFSHOW), rest = rows.length - drawn.length;
-  var one = function (s) { return '<div class="one">' + mfWho(s) + '<span>' + (s.book ? 'was with ' + esc(s.book) : '') + (s.seg ? ' · letter ' + esc(s.seg) : '') + (s.hh ? ' · ' + esc(s.hh) : '') + '</span></div>'; };
+  var gapsN = L.filter(function (p) { return p.fam && (p.fam.gaps || []).some(function (g) { return g.lv === 'hot' || g.k === 'nolife'; }); }).length;
   el.innerHTML = '<div class="mfhead"><h3>Possible families to confirm</h3><span>' + L.length + ' pairs the address, phone and e-mail rule did not join' +
-    (m.answered ? ' · ' + m.answered + ' with someone who answered' : '') + (m.half ? ' · ' + m.half + ' with one named and one not' : '') + (m.split ? ' · ' + m.split + ' named to different agents' : '') + '</span></div>' +
+    (m.answered ? ' · ' + m.answered + ' with someone who answered' : '') + (m.half ? ' · ' + m.half + ' with one named and one not' : '') + (m.split ? ' · ' + m.split + ' named to different agents' : '') +
+    (gapsN ? ' · ' + gapsN + ' where someone has no life cover with us or something needs acting on' : '') + '</span></div>' +
     (rows.length ? drawn.map(function (p) {
-      return '<div class="mfpair"><div class="two">' + one(p.a) + one(p.b) + '</div><div class="why">' + (p.kind === 'same' ? '<b>Possibly one person on two client numbers.</b> ' : '') + esc(cap(p.why.join('; '))) + '</div>' +
-        '<div class="go"><button type="button" class="yes" data-mf="yes" data-a="' + esc(p.a.token) + '" data-b="' + esc(p.b.token) + '">One household</button>' +
-        '<button type="button" data-mf="no" data-a="' + esc(p.a.token) + '" data-b="' + esc(p.b.token) + '">Not family</button></div></div>';
+      return '<div class="mfpair mfx">' + mfCompare(p, '') + '</div>';
     }).join('') + (rest > 0 ? '<button type="button" class="more" id="mfMore">Show the next ' + Math.min(15, rest) + ' (' + rest + ' more)</button>' : '')
       : '<div class="empty">No possible family matches.</div>');
   if ($('mfMore')) $('mfMore').addEventListener('click', function () { MFSHOW += 15; mfPane(q); });
@@ -2103,7 +2234,8 @@ function polRow(x) {
   if (!cov.length && x.sa) cov.push(esc(money(x.sa)) + ' <span class="pn">(' + (x.cls && x.cls !== 'life' ? esc(x.cls) + ', not life cover' : 'not counted: plan to confirm') + ')</span>');
   if (x.fund) cov.push('<span class="pn">fund value ' + esc(money(x.fund)) + '</span>');
   var ben = !x.ben || !x.ben.length ? '' : x.benK === 'named' ? x.ben.join(', ') : x.benK === 'estate' ? 'the estate' : x.benK === 'provisions' ? 'see the special provisions' : x.ben[0].replace(/\s*-\s*(male|female)$/i, '');
-  return '<tr><td data-l="Plan"><b>' + esc(x.name || x.code || 'a policy') + '</b> ' + clsChip(x) + '<div class="pn">' + esc(x.no) + (x.name && x.code ? ' · ' + esc(x.code) : '') +
+  /* a policy read off the Client Profile carries no plan code: its cover is Salesforce's own split, so no class to confirm */
+  return '<tr><td data-l="Plan"><b>' + esc(x.name || x.code || 'a policy') + '</b> ' + (x.code || x.cls ? clsChip(x) : '') + '<div class="pn">' + esc(x.no) + (x.name && x.code ? ' · ' + esc(x.code) : '') +
       (x.insured ? ' · insures ' + esc(x.insured) : '') + (x.matures ? ' · matures ' + esc(my(x.matures)) : '') + '</div></td>' +
     '<td data-l="Stands"' + (x.st === 'overdue' ? ' class="due"' : x.st === 'lapsed' ? ' class="gone"' : '') + '>' + esc(st) + '</td>' +
     '<td data-l="Issued">' + esc(my(x.iss) || '—') + '</td>' +
@@ -2140,7 +2272,7 @@ function polPanel(pol) {
   var s = pol.sum;
   var tiles = [s.cover ? [money(s.cover), 'life cover'] : s.unconf ? ['—', 'life cover: plans still to confirm'] : ['$0', 'life cover'],
     [s.ci ? money(s.ci) : '$0', 'critical illness'],
-    [s.prem ? '≈ ' + money(s.prem) : '$0', 'premium a year' + (s.est ? ' (part estimated)' : '')],
+    pol.noPrem ? ['—', 'premium a year: with the Client Book'] : [s.prem ? '≈ ' + money(s.prem) : '$0', 'premium a year' + (s.est ? ' (part estimated)' : '')],
     [s.live + ' in force', (s.due ? s.due + ' with a premium due · ' : '') + s.lapsed + ' lapsed' + (s.pending ? ' · ' + s.pending + ' pending' : '')],
     [s.since ? s.years + ' year' + (s.years === 1 ? '' : 's') : '—', s.since ? 'with us since ' + s.since.slice(0, 4) : 'no policy issued yet']];
   if (s.fund) tiles.push([money(s.fund), 'fund value, in force']);
