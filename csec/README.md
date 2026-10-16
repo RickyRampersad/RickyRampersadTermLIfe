@@ -31,16 +31,30 @@ Live path: `/csec/` on rickyrampersadbranch.com (GitHub Pages).
 
 ## Logins, sync and what they actually protect
 
-**A PIN is a profile separator, not a password.** It keeps a younger sibling out
-of the wrong profile on a shared laptop. Anyone with the device and a browser
-console can read what is stored. That is said on the sign-in page and in Settings.
+**There is no password.** Choosing the name signs you in. A child should not be
+locked out of their own homework by something they cannot remember, and a PIN
+on a family device was never protecting anything from anyone who could pick up
+the device.
 
-**Every profile gets a recovery code** at creation, shown once on a screen that
-must be dismissed, and again in Settings while signed in. A forgotten PIN is the
-commonest support call there is, so there are three ways back in, in order:
-the recovery code; any other profile signed in on that device resetting it from
-**Settings → PINs & recovery**; or, if the family is in a sync group, a fresh
-profile on another device joining with the group code.
+**A six-digit code is the optional check.** Put an e-mail on the profile and the
+sign-in screen offers *E-mail me a code instead*: the service sends a code good
+for ten minutes, five wrong guesses kill it, and asking again cancels the one
+before. On a child's profile the address should be a **parent's** — the code
+lands with the parent, so a parent is told about every sign-in without having to
+ask, and a child cannot quietly sign in somewhere else.
+
+The code door is only offered when all three of these are true: an address on
+the profile, the Apps Script deployed, and a group joined. A door that cannot
+open is never shown; where any is missing, sign-in is by name.
+
+**Every sign-in is recorded** — who, when, which door, and whether it was
+refused — in **Settings → Who signed in**. It is kept on the device so it works
+with no network, and reported to the group sheet when sync is set up, so one
+list covers every device.
+
+**A PIN is still available and is nobody's default.** Settings → *Add a PIN*,
+for a device two children share; type `none` to remove it. It separates
+profiles. It is not a secret, and the hub does not pretend otherwise.
 
 ### Why not Salesforce — a standing decision
 

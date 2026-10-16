@@ -34,7 +34,9 @@ announcement below promises it, so do this first.
 | ☐ | On a **different** device: create a profile, join with the code |
 | ☐ | Confirm the student and their progress appear |
 | ☐ | Change something on device two, sync, confirm it reaches device one |
-| ☐ | Deliberately enter a wrong PIN, then recover with the recovery code |
+| ☐ | Create a profile and confirm it asks for no password at all |
+| ☐ | Sign out, sign back in by name, then check **Settings → Who signed in** lists both |
+| ☐ | With sync deployed: put an e-mail on a profile, ask for a code, enter a wrong one, then the right one |
 | ☐ | Print `csec/flyer.html` — check the QR scans with a real phone |
 
 If sync is not deployed by launch day, the hub still runs device-local and says
@@ -84,10 +86,11 @@ four public pages are in `sitemap.xml`.
 
 **"Is it really free?"** Yes. No advertising, nothing sold, no account needed.
 
-**"We forgot the PIN."** Sign-in → *Forgotten the PIN?* → the six-character
-recovery code. Failing that, anyone else signed in on the device can reset it in
-Settings. Failing that, if they are in a sync group they can start fresh on
-another device and join with the group code.
+**"What is the password?"** There isn’t one — choose the name. If you want a
+check, put an e-mail on the profile and the hub sends a six-digit code instead;
+on a child’s profile use a parent’s address, so the parent is told about every
+sign-in. Codes need the Apps Script deployed. **Settings → Who signed in**
+lists every sign-in and every refusal either way.
 
 **"Is my child's data safe?"** Be straight, in these words: *if you use a sync
 group, the names and scores in it sit on a branch-owned Google Sheet, and anyone

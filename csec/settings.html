@@ -65,11 +65,10 @@
           <input class="fi" id="p-name"/>
         </div>
         <div class="field" id="p-formwrap">
-          <label class="fl" for="p-form">Current form</label>
-          <select class="fi" id="p-form">
-            <option value="1">Form 1</option><option value="2">Form 2</option><option value="3">Form 3</option>
-            <option value="4">Form 4</option><option value="5">Form 5</option>
-          </select>
+          <label class="fl" for="p-form">Current year</label>
+          <!-- Filled from the ladder itself: Standard 1 to Form 5. It listed five
+               forms until now, so a primary child could not pick their own year. -->
+          <select class="fi" id="p-form"></select>
         </div>
       </div>
       <div class="field">
@@ -77,16 +76,36 @@
         <input class="fi" id="p-school"/>
       </div>
       <div class="field">
-        <label class="fl" for="p-pin">Change PIN (leave blank to keep the current one)</label>
-        <input class="fi" id="p-pin" type="password" inputmode="numeric" maxlength="6" placeholder="4 to 6 digits"/>
+        <label class="fl" for="p-email">E-mail for sign-in codes</label>
+        <input class="fi" id="p-email" type="email" autocomplete="email" placeholder="a parent’s address is best"/>
+        <p class="sub" style="margin-top:7px">For a child this should be a <b>parent’s</b> address. The
+          code goes there, so a parent is told every time their child signs in. Leave it blank and
+          signing in is just choosing the name.</p>
+      </div>
+      <div class="field">
+        <label class="fl" for="p-pin">Add a PIN (optional, and only for a shared device)</label>
+        <input class="fi" id="p-pin" type="password" inputmode="numeric" maxlength="6" placeholder="leave blank for none"/>
+        <p class="sub" style="margin-top:7px">There is no password by default. A PIN only keeps one
+          child out of another child’s record on a device they share. Type <b>none</b> to remove one.</p>
       </div>
       <button class="btn" id="save-prof">Save profile</button>
       <div class="ok hidden" id="prof-ok"></div>
       <div class="err" id="prof-err"></div>
     </div>
 
+    <!-- ---------- who signed in ---------- -->
+    <div class="section-label">Who signed in</div>
+    <div class="card" style="margin-bottom:14px">
+      <p class="sub" style="margin-bottom:14px">Every sign-in on this device, newest first — who,
+        when, and which door they came through. Failed attempts are here too: a run of them is the
+        only sign this hub can give that somebody is guessing. It is kept on the device, so it works
+        with no internet at all.</p>
+      <div class="scrollx"><table class="rows" id="si-log"></table></div>
+      <p class="sub hidden" id="si-cloud" style="margin-top:12px"></p>
+    </div>
+
     <!-- ---------- PINs ---------- -->
-    <div class="section-label">PINs &amp; recovery</div>
+    <div class="section-label">PINs &amp; recovery <span style="font-weight:400;opacity:.7">— only if you set one</span></div>
     <div class="card" style="margin-bottom:14px">
       <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:18px">
         <div style="flex:1;min-width:200px">
@@ -382,7 +401,9 @@
   /* ---------------- profile ---------------- */
   $('p-name').value=me.name;
   $('p-school').value=me.school||'';
-  $('p-form').value=String(me.level||2);
+  $('p-form').innerHTML=(CSEC.levels||[]).map(function(l){
+    return '<option value="'+l.n+'">'+CSEC.esc(l.label)+'</option>'; }).join('');
+  $('p-form').value=String(me.level||8);
   if(me.role!=='student') $('p-formwrap').classList.add('hidden');
 
   $('save-prof').addEventListener('click',function(){
@@ -390,14 +411,51 @@
     var pin=$('p-pin').value.trim();
     $('prof-err').textContent='';
     if(!name){ $('prof-err').textContent='A name is required.'; return; }
-    if(pin && !/^\d{4,6}$/.test(pin)){ $('prof-err').textContent='PIN must be 4 to 6 digits.'; return; }
-    var patch={name:name,school:$('p-school').value.trim(),form:parseInt($('p-form').value,10)||me.level};
-    if(pin) patch.pin=pin;
+    if(pin && !/^none$/i.test(pin) && !/^\d{4,6}$/.test(pin)){
+      $('prof-err').textContent='A PIN must be 4 to 6 digits, or the word none to remove it.'; return; }
+    var email=$('p-email').value.trim();
+    if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+      $('prof-err').textContent='That does not look like an e-mail address.'; return;
+    }
+    /* This wrote `form`, which nothing has read since the ladder went to ten
+       levels, so changing the year did nothing at all. */
+    var patch={name:name,school:$('p-school').value.trim(),
+               level:parseInt($('p-form').value,10)||me.level, email:email};
+    if(pin){ patch.pin = /^none$/i.test(pin) ? '' : pin; }
     CSEC.updateProfile(me.id,patch);
     me=CSEC.profile(me.id);
     $('p-pin').value='';
-    flash('prof-ok','Profile saved.');
+    flash('prof-ok','Profile saved.'+(/^none$/i.test(pin)?' The PIN is removed.':''));
+    drawLog();
   });
+
+  /* ---------------- who signed in ---------------- */
+  function drawLog(){
+    var rows=CSEC.signInLog(60);
+    if(!rows.length){
+      $('si-log').innerHTML='<tr><td class="sub">Nothing yet. The next sign-in appears here.</td></tr>';
+    } else {
+      $('si-log').innerHTML='<tr><th>When</th><th>Who</th><th>How</th><th>Result</th></tr>'+
+        rows.map(function(r){
+          var t=new Date(r.at);
+          var how=r.how==='code'?'e-mailed code':r.how==='pin'?'PIN':'name';
+          return '<tr><td>'+CSEC.esc(r.date)+' '+
+            String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+'</td>'+
+            '<td>'+CSEC.esc(r.name)+(r.role?' <span class="sub">('+CSEC.esc(r.role)+')</span>':'')+'</td>'+
+            '<td>'+how+'</td><td>'+(r.ok
+              ? '<span style="color:var(--good)">signed in</span>'
+              : '<span style="color:var(--bad)">refused</span>'+(r.note?' <span class="sub">'+CSEC.esc(r.note)+'</span>':''))+
+            '</td></tr>';
+        }).join('');
+    }
+    var g=window.CSEC_SYNC&&CSEC_SYNC.group&&CSEC_SYNC.group();
+    var on=window.CSEC_SYNC&&CSEC_SYNC.configured&&CSEC_SYNC.configured()&&g&&g.code;
+    $('si-cloud').classList.toggle('hidden',!on);
+    if(on) $('si-cloud').textContent='Sign-ins on this device are also reported to the group sheet, '+
+      'so one list covers every phone and laptop in the group.';
+  }
+  $('p-email').value=me.email||'';
+  drawLog();
 
   /* ---------------- PINs & recovery ---------------- */
   var recShown=false;

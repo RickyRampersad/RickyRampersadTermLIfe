@@ -74,6 +74,9 @@
       role: o.role || 'student',
       level: o.level || 8,
       school: o.school || '',
+      /* For a child this is the parent's address. The sign-in code goes there,
+         which is how a parent hears about every sign-in without being asked. */
+      email: String(o.email || '').trim(),
       pin: String(o.pin || '').trim(),
       subjects: o.subjects || defaultsFor(o.level || 8),
       linked: o.linked || [],
@@ -124,13 +127,94 @@
     return { ok: true, recovery: profile(profileId).recovery };
   }
 
+  /* ---------------------------- the sign-in log -------------------------
+     Who signed in, when, and how. Kept on the device so it works with no
+     network at all, and pushed to the group sheet when sync is set up. A
+     parent or teacher reads it in Settings. It records failures too - a run
+     of them is the only sign the hub can give that someone is guessing. */
+  var LOG_MAX = 300;
+  function logSignIn(id, how, ok, note) {
+    try {
+      var all = read('signins', []);
+      var p = profile(id);
+      all.push({
+        at: Date.now(), date: today(), id: id,
+        name: (p && p.name) || 'unknown', role: (p && p.role) || '',
+        how: how, ok: !!ok, note: note || ''
+      });
+      if (all.length > LOG_MAX) all = all.slice(-LOG_MAX);
+      write('signins', all);
+      if (ok && global.CSEC_SYNC && global.CSEC_SYNC.noteSignIn) {
+        global.CSEC_SYNC.noteSignIn(id, how);
+      }
+    } catch (e) {}
+  }
+  /* Newest first, which is the order anybody actually reads it in. */
+  function signInLog(limit) {
+    var all = read('signins', []).slice().sort(function (a, b) { return b.at - a.at; });
+    return limit ? all.slice(0, limit) : all;
+  }
+  function hasPin(id) { var p = profile(id); return !!(p && p.pin); }
+
   /* ------------------------------- session ----------------------------- */
-  function signIn(id, pin) {
+  /* No password by default. A profile with a PIN still needs it; a profile
+     without one is opened by choosing the name, which is what a nine-year-old
+     can actually do. `how` records which door was used. */
+  function signIn(id, pin, how) {
     var p = profile(id);
     if (!p) return { ok: false, msg: 'Profile not found.' };
-    if (p.pin && String(pin || '') !== p.pin) return { ok: false, msg: 'That PIN does not match.' };
+    if (p.pin && String(pin || '') !== p.pin) {
+      logSignIn(id, how || 'pin', false, 'wrong PIN');
+      return { ok: false, msg: 'That PIN does not match.' };
+    }
     try { sessionStorage.setItem(NS + 'session', JSON.stringify({ id: id, at: Date.now() })); } catch (e) {}
+    logSignIn(id, how || (p.pin ? 'pin' : 'name'), true, '');
     return { ok: true, profile: p };
+  }
+
+  /* ---------------------------- sign in by code -------------------------
+     The student or teacher asks to sign in, the service e-mails a six-digit
+     code, they type it back. No password to forget and nothing to write down.
+     It needs the Apps Script deployed and an address on the profile; where
+     either is missing the caller falls back to opening by name. */
+  /* Three things have to be true, and a door that cannot open must never be
+     shown: an address to send to, a deployed service to send it, and a group,
+     because the group is what the service files the code and the sign-in
+     under. Offering "e-mail me a code" and then failing is worse than not
+     offering it. */
+  function canCode(id) {
+    var p = profile(id);
+    if (!p || !p.email) return false;
+    var S = global.CSEC_SYNC;
+    if (!S || !S.configured || !S.configured()) return false;
+    var g = S.group && S.group();
+    return !!(g && g.code);
+  }
+  function requestCode(id, cb) {
+    var p = profile(id);
+    if (!p) return cb({ ok: false, msg: 'Profile not found.' });
+    if (!p.email) return cb({ ok: false, msg: 'No e-mail address on this profile. Add one in Settings, or sign in by name.' });
+    if (!canCode(id)) return cb({ ok: false, msg: 'Codes need the sync service set up. Sign in by name for now.' });
+    global.CSEC_SYNC.requestCode(p, function (r) {
+      if (!r || !r.ok) {
+        logSignIn(id, 'code', false, 'code not sent: ' + ((r && (r.msg || r.error)) || 'unknown'));
+        return cb({ ok: false, msg: (r && r.msg) || 'The code could not be sent. Sign in by name instead.' });
+      }
+      cb({ ok: true, sentTo: r.sentTo || p.email });
+    });
+  }
+  function signInWithCode(id, otp, cb) {
+    var p = profile(id);
+    if (!p) return cb({ ok: false, msg: 'Profile not found.' });
+    global.CSEC_SYNC.verifyCode(p, String(otp || '').trim(), function (r) {
+      if (!r || !r.ok) {
+        logSignIn(id, 'code', false, (r && (r.msg || r.error)) || 'wrong code');
+        return cb({ ok: false, msg: (r && r.msg) || 'That code did not match, or it has expired.' });
+      }
+      try { sessionStorage.setItem(NS + 'session', JSON.stringify({ id: id, at: Date.now() })); } catch (e) {}
+      logSignIn(id, 'code', true, '');
+      cb({ ok: true, profile: p });
+    });
   }
   function current() {
     try {
@@ -976,6 +1060,8 @@
     createProfile: createProfile, updateProfile: updateProfile, deleteProfile: deleteProfile,
     signIn: signIn, current: current, signOut: signOut, requireRole: requireRole,
     resetPin: resetPin, recoverWithCode: recoverWithCode, newRecovery: newRecovery,
+    hasPin: hasPin, canCode: canCode, requestCode: requestCode, signInWithCode: signInWithCode,
+    logSignIn: logSignIn, signInLog: signInLog,
     progress: progress, saveProgress: saveProgress, recordAnswer: recordAnswer,
     recordSession: recordSession, streak: streak,
     strandStat: strandStat, subjectStat: subjectStat, overallStat: overallStat,

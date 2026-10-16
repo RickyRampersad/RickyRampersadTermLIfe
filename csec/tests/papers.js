@@ -13,10 +13,9 @@ const step=async(n,f)=>{try{await f();console.log('✓ '+n);pass++;}catch(e){con
   await step('sign in as Standard 5',async()=>{
     await pg.goto(B+'index.html?signin',{waitUntil:'networkidle'});
     await pg.click('[data-role="student"]'); await pg.click('#si-new');
-    await pg.fill('#c-name','Reg'); await pg.fill('#c-pin','1234');
+    await pg.fill('#c-name','Reg');
     await pg.click('#c-form-primary button[data-f="5"]');
-    await pg.click('#c-go'); await pg.waitForSelector('#saved:not(.hidden)',{timeout:8000});
-    await pg.click('#sv-go'); await pg.waitForURL('**/student.html');
+    await pg.click('#c-go'); await pg.waitForURL('**/student.html',{timeout:10000});
   });
   await step('Maths paper still builds to blueprint and scores',async()=>{
     await pg.goto(B+'sea.html',{waitUntil:'networkidle'});

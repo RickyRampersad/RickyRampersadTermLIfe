@@ -76,20 +76,31 @@
     <div id="signin" class="hidden" style="margin-top:24px">
       <div class="card narrow" style="margin:0 auto">
         <h3 id="si-title">Sign in</h3>
-        <p class="sub" style="margin-bottom:16px">Pick your profile and enter your PIN.</p>
+        <p class="sub" style="margin-bottom:16px" id="si-sub">Choose your name.</p>
 
         <div id="si-has">
           <div class="field">
-            <label class="fl" for="si-who">Profile</label>
+            <label class="fl" for="si-who">Who are you?</label>
             <select class="fi" id="si-who"></select>
           </div>
-          <div class="field">
+
+          <!-- Only for a profile that still carries a PIN. Nothing created now has one. -->
+          <div class="field hidden" id="si-pinwrap">
             <label class="fl" for="si-pin">PIN</label>
             <input class="fi" id="si-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="4 digits"/>
           </div>
+
+          <!-- The code door. Appears once a code has actually been sent. -->
+          <div class="field hidden" id="si-codewrap">
+            <label class="fl" for="si-code">The six-digit code</label>
+            <input class="fi" id="si-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6 digits"/>
+          </div>
+
           <button class="btn wide" id="si-go">Sign in →</button>
           <div class="err" id="si-err"></div>
-          <button class="btn ghost sm" id="si-forgot" style="margin-top:10px">Forgotten the PIN?</button>
+          <div class="ok hidden" id="si-ok" style="margin-top:10px"></div>
+          <button class="btn ghost sm hidden" id="si-sendcode" style="margin-top:10px">E-mail me a code instead</button>
+          <button class="btn ghost sm hidden" id="si-forgot" style="margin-top:10px">Forgotten the PIN?</button>
         </div>
 
         <div id="si-none" class="hidden empty">
@@ -204,8 +215,12 @@
           <input class="fi" id="c-school" placeholder="e.g. St Mary’s Government Primary"/>
         </div>
         <div class="field">
-          <label class="fl" for="c-pin">Choose a PIN (4 digits)</label>
-          <input class="fi" id="c-pin" type="password" inputmode="numeric" maxlength="6" placeholder="e.g. 2468"/>
+          <label class="fl" for="c-email">E-mail for sign-in codes (optional)</label>
+          <input class="fi" id="c-email" type="email" autocomplete="email" placeholder="a parent’s address is best"/>
+          <p style="font-size:.78rem;color:var(--muted);margin-top:7px">
+            There is no password. Choosing the name signs you in. Put an address here and you can
+            ask for a six-digit code instead &mdash; and for a child, put a <b>parent’s</b> address,
+            so a parent is told every time their child signs in.</p>
         </div>
 
         <button class="btn wide" id="c-go">Create profile →</button>
@@ -305,7 +320,24 @@
     $('si-none').classList.toggle('hidden',!!list.length);
     $('si-rolename').textContent=role;
     $('si-title').textContent='Sign in as '+role;
+    doors();
   }
+
+  /* Which way in this person has. Nothing created now carries a PIN, so for
+     almost everybody this is: choose your name and press the button. */
+  function doors(){
+    var id=$('si-who').value;
+    var pin=id?CSEC.hasPin(id):false;
+    var code=id?CSEC.canCode(id):false;
+    $('si-pinwrap').classList.toggle('hidden',!pin);
+    $('si-forgot').classList.toggle('hidden',!pin);
+    $('si-sendcode').classList.toggle('hidden',!code||codeSent);
+    $('si-codewrap').classList.toggle('hidden',!codeSent);
+    $('si-sub').textContent=pin?'Choose your name and enter your PIN.'
+      :codeSent?'Type the six-digit code we sent you.'
+      :'Choose your name. There is no password.';
+  }
+  var codeSent=false;
 
   Array.prototype.forEach.call(document.querySelectorAll('[data-role]'),function(b){
     b.addEventListener('click',function(){
@@ -387,17 +419,49 @@
   });
 
   function doSignIn(){
-    var id=$('si-who').value, pin=$('si-pin').value;
-    var r=CSEC.signIn(id,pin);
+    var id=$('si-who').value;
+    $('si-err').textContent='';
+    if(!id){ $('si-err').textContent='Choose a name first.'; return; }
+    /* A code that has been sent is the door being used. */
+    if(codeSent && $('si-code').value.trim()){
+      $('si-go').disabled=true; $('si-go').textContent='Checking\u2026';
+      CSEC.signInWithCode(id,$('si-code').value,function(r){
+        $('si-go').disabled=false; $('si-go').textContent='Sign in \u2192';
+        if(!r.ok){ $('si-err').textContent=r.msg; return; }
+        location.href=HOME[r.profile.role]||'student.html';
+      });
+      return;
+    }
+    if(codeSent){ $('si-err').textContent='Type the code we e-mailed you, or ask for another.'; return; }
+    var r=CSEC.signIn(id,$('si-pin').value);
     if(!r.ok){ $('si-err').textContent=r.msg; return; }
     location.href=HOME[r.profile.role]||'student.html';
   }
   $('si-go').addEventListener('click',doSignIn);
   $('si-pin').addEventListener('keydown',function(e){ if(e.key==='Enter') doSignIn(); });
+  $('si-code').addEventListener('keydown',function(e){ if(e.key==='Enter') doSignIn(); });
+  $('si-who').addEventListener('change',function(){
+    codeSent=false; $('si-code').value=''; $('si-err').textContent='';
+    $('si-ok').classList.add('hidden'); doors();
+  });
+
+  $('si-sendcode').addEventListener('click',function(){
+    var id=$('si-who').value; if(!id) return;
+    $('si-err').textContent=''; $('si-sendcode').disabled=true;
+    $('si-sendcode').textContent='Sending\u2026';
+    CSEC.requestCode(id,function(r){
+      $('si-sendcode').disabled=false; $('si-sendcode').textContent='E-mail me a code instead';
+      if(!r.ok){ $('si-err').textContent=r.msg; return; }
+      codeSent=true; doors();
+      $('si-ok').textContent='Code sent to '+r.sentTo+'. It works for ten minutes.';
+      $('si-ok').classList.remove('hidden');
+      $('si-code').focus();
+    });
+  });
 
   $('c-go').addEventListener('click',function(){
     var name=$('c-name').value.trim();
-    var pin=$('c-pin').value.trim();
+    var email=$('c-email').value.trim();
     var role2=$('c-role').value;
     if(!name){ $('c-err').textContent='Please enter a name.'; return; }
     if(role2==='student' && !pickedForm){
@@ -405,17 +469,18 @@
       $('c-form-primary').scrollIntoView({behavior:'smooth',block:'center'});
       return;
     }
-    if(!/^\d{4,6}$/.test(pin)){ $('c-err').textContent='PIN must be 4 to 6 digits.'; return; }
+    if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+      $('c-err').textContent='That does not look like an e-mail address. Leave it blank if you would rather not.'; return;
+    }
     var p=CSEC.createProfile({
       name:name, role:role2,
       level:pickedForm||8,
-      school:$('c-school').value.trim(), pin:pin
+      school:$('c-school').value.trim(), email:email
     });
-    CSEC.signIn(p.id,pin);
-    /* Show the recovery code before letting them in — after this they may never
-       see it again until they go looking in Settings. */
-    showSaved(p.recovery,'Recovery code for '+p.name+'.',
-      function(){ location.href=HOME[p.role]||'student.html'; });
+    CSEC.signIn(p.id,'','name');
+    /* No PIN means nothing to forget, so there is no recovery code to write
+       down and no screen asking them to. Straight in. */
+    location.href=HOME[p.role]||'student.html';
   });
 })();
 </script>

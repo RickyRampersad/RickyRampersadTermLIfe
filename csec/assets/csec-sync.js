@@ -283,8 +283,39 @@
     try { syncNow(function () {}); } catch (e) {}
   }
 
+  /* --------------------------- sign in by code ---------------------------
+     The service holds the code, not the browser. Nothing here can be read off
+     the device to get in: the page sends who is asking, the service e-mails
+     the code to the address on the profile, and the page can only offer a
+     guess back. A group is needed because that is what the service files the
+     request and the sign-in log under. */
+  function requestCode(p, cb) {
+    var g = group();
+    if (!g || !g.code) return cb({ ok: false, msg: 'This device is not in a family or class group yet, so there is nowhere to send a code from. Settings \u2192 Cloud sync.' });
+    post({ action: 'code', code: g.code, profileId: p.id, name: p.name, role: p.role, email: p.email }, cb);
+  }
+  function verifyCode(p, otp, cb) {
+    var g = group();
+    if (!g || !g.code) return cb({ ok: false, msg: 'No group on this device.' });
+    post({ action: 'verify', code: g.code, profileId: p.id, otp: otp }, cb);
+  }
+  /* Best effort: a sign-in that reaches the sheet gives a parent or teacher one
+     list across every device, instead of one per browser. Never blocks a
+     sign-in, and never reports a failure to the child. */
+  function noteSignIn(profileId, how) {
+    var g = group();
+    if (!configured() || !g || !g.code) return;
+    try { post({ action: 'signin', code: g.code, profileId: profileId, how: how }, function () {}); } catch (e) {}
+  }
+  function signIns(cb) {
+    var g = group();
+    if (!configured() || !g || !g.code) return cb({ ok: false, error: 'not_configured' });
+    get({ action: 'signins', code: g.code }, cb);
+  }
+
   global.CSEC_SYNC = {
     configured: configured, setEndpoint: setEndpoint,
+    requestCode: requestCode, verifyCode: verifyCode, noteSignIn: noteSignIn, signIns: signIns,
     group: group, setGroup: setGroup, leaveGroup: leaveGroup,
     state: state, ping: ping,
     createGroup: createGroup, joinGroup: joinGroup,
