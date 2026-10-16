@@ -140,9 +140,11 @@ function doGet(e) {
       return dbHtml_('<h1>Thank you</h1><p>We could not record that just now. Reply to our e-mail and tell us how we did.</p>');
     }
   }
-  /* The Log Book's "why has this not gone" link (LogBook.gs). */
-  if (p.lbr) {
-    try { return lbReasonPage_(p); }
+  /* The Log Book's links (LogBook.gs): "why has this not gone" and the
+     department's "did you receive it". Every lb* link goes to lbGet_, so a new
+     one needs no change here. */
+  if (p.lbr || p.lbc) {
+    try { return typeof lbGet_ === 'function' ? lbGet_(p) : lbReasonPage_(p); }
     catch (err) {
       Logger.log('log book reason: ' + err);
       return dbHtml_('<h1>Something went wrong</h1><p>Give the reason in the Log Book instead.</p>');

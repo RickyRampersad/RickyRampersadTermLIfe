@@ -216,6 +216,17 @@ to `DB_TEST_INBOX` with a banner naming who it was for.
 
 ### The departments
 
-The **Departments** tab is the list everyone picks from. Add a row for a new
+The **Departments** tab is the list the routing uses. Add a row for a new
 department, put a name in **Attention** to print it on that department's
 transmittals, or set **Active** to No to retire one.
+
+**Email** is where the 3-working-day "did you receive these documents?" goes,
+with Yes and No buttons. Fill it in for each department; a blank one sends the
+question to sales support instead. A **No** goes to sales support for a
+response, copying everyone, and opens a Salesforce task for the staff member
+who collected the papers.
+
+To send these from **support@rickyrampersadbranch.com**, copy `MS_TENANT`,
+`MS_CLIENT` and `MS_SECRET` from the Service Questionnaire project's Script
+Properties into this one. Without them they go from this account with
+support@ as the reply address.

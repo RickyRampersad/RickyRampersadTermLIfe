@@ -32,26 +32,37 @@ const SF = {
   contacts: [
     { Id: '003000000000001AAA', Name: 'Anika Pretend', FirstName: 'Anika', LastName: 'Pretend', Email: 'anika@example.com',
       Preferred_Email__c: null, MobilePhone: '', Contact_Type__c: 'Client', Account: { Name: '' } },
+    { Id: '003000000000008AAA', Name: 'Otto Other', FirstName: 'Otto', LastName: 'Other', Email: 'otto@example.com',
+      Preferred_Email__c: null, MobilePhone: '', Contact_Type__c: 'Client', Account: { Name: '' } },
   ],
   portfolios: [
     { Id: 'a02000000000002AAA', Name: 'CLIENT-2', POLICY__c: '9000000001', RecordType: { Name: 'LIFE' },
-      PLAN_NAME__c: 'Term', Contact__c: '003000000000001AAA' },
+      PLAN_NAME__c: 'Term', Contact__c: '003000000000001AAA', AgentName__c: 'A10001 - Ana Agent' },
+    { Id: 'a02000000000008AAA', Name: 'CLIENT-8', POLICY__c: '9000000008', RecordType: { Name: 'LIFE' },
+      PLAN_NAME__c: 'Term', Contact__c: '003000000000008AAA', AgentName__c: 'A19999 - Other Agent' },
   ],
   queries: [],
 };
 const ids = s => (String(s).match(/'([^']+)'/g) || []).map(x => x.slice(1, -1));
-function sfRoute(url) {
+function sfRoute(url, opts) {
   const res = (code, body) => ({ getResponseCode: () => code, getContentText: () => JSON.stringify(body) });
   if (/oauth2\/token/.test(url)) return res(200, { access_token: 'tok', instance_url: 'https://sf.example' });
   const p = url.match(/\/services\/data\/v[\d.]+(\/.*)$/)[1];
   if (p.startsWith('/query?q=')) {
     const q = decodeURIComponent(p.slice(9)); SF.queries.push(q);
+    if (/AgentName__c LIKE/.test(q)) {
+      const a = (q.match(/LIKE '([^%']+)%'/) || [])[1]; const w = ids(q.split('AgentName__c')[0]);
+      return res(200, { records: SF.portfolios.filter(r => w.includes(r.Contact__c) && r.AgentName__c.indexOf(a) === 0) });
+    }
+    if (/FROM User/.test(q)) return res(200, { records: [{ Id: '005000000000077AAA' }] });
+    if (/FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN/.test(q)) { const w = ids(q.split('WHERE')[1].split(') OR')[0]); return res(200, { records: SF.portfolios.filter(r => w.includes(r.Contact__c)) }); }
     if (/FROM Contact WHERE Email =/.test(q)) { const w = ids(q); return res(200, { records: SF.contacts.filter(c => w.includes(c.Email)) }); }
     if (/FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN/.test(q)) { const w = ids(q.split(' IN ')[1]); return res(200, { records: SF.portfolios.filter(r => w.includes(r.POLICY__c)) }); }
     if (/FROM Contact WHERE Id/.test(q)) { const w = ids(q); return res(200, { records: SF.contacts.filter(c => w.includes(c.Id)) }); }
     return res(200, { records: [] });
   }
   if (p.startsWith('/search?q=')) return res(200, { searchRecords: SF.contacts });
+  if (p === '/sobjects/Task') { SF.tasks = (SF.tasks || []).concat([JSON.parse(arguments[1].payload)]); return res(201, { id: '00T000000000001AAA' }); }
   return res(404, [{ message: 'not found ' + p }]);
 }
 
@@ -342,6 +353,74 @@ console.log('insights and history');
   ok('same day and within one working day', s.totals.sameDayPct === 50 && s.totals.within1Pct === 50, JSON.stringify(s.totals));
   ok('by department', s.byDepartment.some(d => d.name === 'MAIL TEAM QUERY' && d.sent === 1));
   ok('imported lines are never chased', /none/.test(env.lbChaseLate_(NOW)));
+}
+
+/* ── an agent sees only their own clients ──────────────────────────── */
+console.log('own clients only');
+{
+  env = world();
+  agent = env.lbSession_(env.lbLogin_({ agentNo: 'A10001', code: '4821' }).token);
+  staff = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
+  const a = env.lbLookup_({ q: 'otto' }, agent);
+  ok('an agent searching another agent\'s client finds nothing', a.clients.length === 1 && a.clients[0].name === 'Anika Pretend', JSON.stringify(a.clients.map(c => c.name)));
+  ok('a search by e-mail for another agent\'s client finds nothing', env.lbLookup_({ q: 'otto@example.com' }, agent).clients.length === 0);
+  ok('staff find anyone', env.lbLookup_({ q: 'otto@example.com' }, staff).clients.length === 1);
+  ok('an agent cannot open another agent\'s client\'s policies', throws(() => env.lbPolicies_({ contactIds: ['003000000000008AAA'] }, agent), /not one of yours/));
+  ok('nor log for them', throws(() => env.lbSubmit_({ entry: entry({ client: 'Otto Other', contactId: '003000000000008AAA',
+    items: [{ document: 'PMAR', department: 'MAIL TEAM QUERY', policy: '9000000008', portfolioId: 'a02000000000008AAA' }] }) }, agent), /not one of yours/));
+  ok('nor put another agent\'s policy on their own client', throws(() => env.lbSubmit_({ entry: entry({
+    items: [{ document: 'PMAR', department: 'MAIL TEAM QUERY', policy: '9000000008', portfolioId: 'a02000000000008AAA' }] }) }, agent), /not one of yours/));
+  ok('the agent number matches Salesforce\'s way of writing it', env.lbSfAgentNo_('10001') === 'A10001' && env.lbSfAgentNo_('a427') === 'A00427');
+}
+
+/* ── did the department get it ───────────────────────────────────── */
+console.log('three working days on');
+{
+  env = world({ DB_MODE: 'live' });
+  env.__mkSheet('Departments', 7, ['Department', 'Attention', 'Email', 'Active'], [
+    ['GLOC CS RSC - CHAGUANAS', 'The CS Team', 'rsc@example.com', 'Yes'], ['RECORDS MANAGEMENT DEPT', '', '', 'Yes']]);
+  tab(env, 'Agents').push(['A20000', 'Uma Unit', 'uma@example.com', '', '9', 'Yes']);
+  tab(env, 'Agents')[0].push('Role'); tab(env, 'Agents').forEach((r, i) => { if (i) r[6] = r[1] === 'Uma Unit' ? 'Unit Manager' : 'Agent'; });
+  tab(env, 'Agents')[1][3] = 'Uma Unit';
+  agent = env.lbSession_(env.lbLogin_({ agentNo: 'A10001', code: '4821' }).token);
+  staff = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
+  env.lbSubmit_({ entry: entry({ items: [entry().items[1]] }) }, agent);
+  const ids = env.lbQueue_({}, staff).lines.map(l => l.id);
+  env.lbReceive_({ ids, signature: SIG }, staff);
+  const t = env.lbTransmittal_({ ids, reasons: Object.fromEntries(ids.map(i => [i, 'After the cut-off'])) }, staff).transmittal;
+  const tg = tab(env, 'Transmittals'); const tc = h => tg[0].indexOf(h);
+  const row = tg.find(r => r[0] === t.no);
+  env.LB_READ_ = null;
+  const n0 = env.__mail.length;
+  env.lbConfirmRun_(NOW);
+  ok('not asked before three working days', env.__mail.length === n0 || new Date(row[tc('Sent At')]) > NOW);
+  row[tc('Sent At')] = new Date(NOW.getTime() - 5 * 86400000);   // the Saturday before: 3 working days by Thursday
+  env.LB_READ_ = null; env.LB_AGENTS_READ_ = null;
+  env.lbConfirmRun_(NOW);
+  const m = env.__mail[env.__mail.length - 1];
+  ok('asked after three working days, to the department', m && m.to === 'rsc@example.com' && /Please confirm receipt/.test(m.subject));
+  ok('copied to sales support, the agent and the agent\'s manager', /rickyrampersadsalessupport@myguardiangroup\.com/.test(m.cc) && /ana@example\.com/.test(m.cc) && /uma@example\.com/.test(m.cc), m.cc);
+  ok('from support@ as the reply address', m.replyTo === 'support@rickyrampersadbranch.com' && /Support/.test(m.name));
+  ok('with a Yes and a No', /Yes, received/.test(m.htmlBody) && /No, not received/.test(m.htmlBody) && /lbc=/.test(m.htmlBody));
+  env.lbConfirmRun_(NOW);
+  ok('asked once', env.__mail[env.__mail.length - 1] === m);
+  const yes = Object.fromEntries(new URL(env.lbConfirmLink_(t.no, 'yes')).searchParams);
+  const no = Object.fromEntries(new URL(env.lbConfirmLink_(t.no, 'no')).searchParams);
+  ok('a forged link is refused', /expired/.test(env.doGet({ parameter: Object.assign({}, yes, { k: 'bad' }) }).getContent()));
+  const askNo = env.doGet({ parameter: no }).getContent();
+  ok('No asks what is missing first', /what is missing/.test(askNo) && row[tc('Received By Dept')] !== 'No');
+  const n1 = env.__mail.length;
+  const done = env.doGet({ parameter: Object.assign({}, no, { note: 'Nothing arrived in the bag' }) }).getContent();
+  ok('No is recorded with the note', /sales support team has it/.test(done) && row[tc('Received By Dept')] === 'No' && row[tc('Dept Note')] === 'Nothing arrived in the bag');
+  const nm = env.__mail[n1];
+  ok('it goes to sales support for a response, everyone copied', nm && nm.to === 'rickyrampersadsalessupport@myguardiangroup.com' &&
+     /NOT RECEIVED/.test(nm.subject) && /rsc@example\.com/.test(nm.cc) && /ana@example\.com/.test(nm.cc) && /sam@example\.com/.test(nm.cc));
+  ok('a Salesforce task is opened for the person who collected', SF.tasks && SF.tasks.length === 1 && /not received by GLOC CS RSC - CHAGUANAS/.test(SF.tasks[0].Subject) &&
+     SF.tasks[0].OwnerId === '005000000000077AAA' && SF.tasks[0].WhoId === '003000000000001AAA' && /Collected by Sam Support/.test(SF.tasks[0].Description));
+  ok('the follow-up is recorded on the transmittal', /00T000000000001AAA/.test(row[tc('Follow-up')]));
+  ok('a second tap does not change it', /Already recorded/.test(env.doGet({ parameter: yes }).getContent()) && row[tc('Received By Dept')] === 'No');
+  const list = env.lbTransmittals_({}, staff).transmittals[0];
+  ok('the transmittal list shows the answer', list.answer === 'No' && list.deptNote === 'Nothing arrived in the bag');
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');

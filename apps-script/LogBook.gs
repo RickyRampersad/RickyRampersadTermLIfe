@@ -96,6 +96,8 @@ var LB = {
   // Forms that are not about one policy.
   NO_POLICY: ['Agent Contract', 'Licence Renewal', 'CBTT Receipt', 'CPD Certificate', 'Company Documents', 'Other'],
   OFT: 'OFT (FEDEX)',
+  CONFIRM_DAYS: 3,                // working days after a transmittal, the department is asked "did you get it"
+  SUPPORT_FROM: 'support@rickyrampersadbranch.com',
   DECLARE_DOCS: 'I confirm these are the documents I am handing to the branch, complete and signed where they must be.',
   DECLARE_CONTRACT: 'I, the agent listed on the insurance policy contract, confirm that I have received the contract for my ' +
     'client and reviewed it for accuracy, and that it is to be delivered to the client within 20 days as required ' +
@@ -114,9 +116,10 @@ var LB_COLUMNS = [
   'Alerts', 'Flags', 'Source',
 ];
 var LB_TRANS_COLUMNS = ['Transmittal', 'Department', 'Attention', 'Sent At', 'Sent By', 'Lines', 'Documents',
-                        'Tracking #', 'Late Lines', 'Status', 'Line Ids'];
+                        'Tracking #', 'Late Lines', 'Status', 'Line Ids',
+                        'Confirm Sent At', 'Received By Dept', 'Answered At', 'Dept Note', 'Follow-up'];
 var LB_AGENT_COLUMNS = ['Agent No', 'Name', 'Email', 'Unit', 'Code', 'Active'];
-var LB_DEPT_COLUMNS = ['Department', 'Attention', 'Active'];
+var LB_DEPT_COLUMNS = ['Department', 'Attention', 'Email', 'Active'];
 
 /* ── What the history says ─────────────────────────────────────────────────
  * Built from the Log Book Digital workbook (BU and MAIL PREP, 3,634 lines,
@@ -264,10 +267,11 @@ function lbDeptRows_() {
     sh.getRange(2, 1, sh.getLastRow() - 1, hm.head.length).getValues().forEach(function (r) {
       var name = String(r[hm.map['Department']] || '').trim();
       var act = String('Active' in hm.map ? r[hm.map['Active']] : 'Yes').trim().toLowerCase();
-      if (name && act !== 'no' && act !== 'false') out.push({ name: name, attn: 'Attention' in hm.map ? String(r[hm.map['Attention']] || '').trim() : '' });
+      if (name && act !== 'no' && act !== 'false') out.push({ name: name, attn: 'Attention' in hm.map ? String(r[hm.map['Attention']] || '').trim() : '',
+                                                             email: 'Email' in hm.map ? String(r[hm.map['Email']] || '').trim() : '' });
     });
   }
-  if (!out.length) out = LB_DEPTS.map(function (d) { return { name: d[0], attn: '' }; });
+  if (!out.length) out = LB_DEPTS.map(function (d) { return { name: d[0], attn: '', email: '' }; });
   return out;
 }
 function lbDeptNames_() { return lbDeptRows_().map(function (d) { return d.name; }); }
@@ -339,7 +343,7 @@ function lbRows_() {
       loggedAt: lbDate_(g(r, 'Logged At')), loggedBy: String(g(r, 'Logged By')),
       agentNo: String(g(r, 'Agent No')), agent: String(g(r, 'Agent')), agentEmail: String(g(r, 'Agent Email')), unit: String(g(r, 'Unit')),
       client: String(g(r, 'Client')), contactId: String(g(r, 'Salesforce Contact')), clientEmail: String(g(r, 'Client Email')),
-      policy: String(g(r, 'Policy #')), recordType: String(g(r, 'Record Type')), plan: String(g(r, 'Plan')),
+      policy: String(g(r, 'Policy #')), recordType: String(g(r, 'Record Type')), plan: String(g(r, 'Plan')), portfolioId: String(g(r, 'Portfolio Id')),
       document: String(g(r, 'Document')), quantity: Number(g(r, 'Quantity')) || 1, itemNote: String(g(r, 'Item Note')),
       department: String(g(r, 'Department')), suggested: String(g(r, 'Suggested Department')), notes: String(g(r, 'Notes')),
       receivedAt: lbDate_(g(r, 'Received At')), receivedBy: String(g(r, 'Received By')), signed: !!g(r, 'Receipt Signature'),
@@ -581,7 +585,7 @@ function lbHandle_(b) {
   switch (b.action) {
     case 'lb.config':       return lbConfig_(who);
     case 'lb.lookup':       return lbLookup_(b, who);
-    case 'lb.policies':     return dbPolicies_(b, who);
+    case 'lb.policies':     return lbPolicies_(b, who);
     case 'lb.submit':       return lbSubmit_(b, who);
     case 'lb.mine':         return lbMine_(b, who);
     case 'lb.cancel':       return lbCancel_(b, who);
@@ -617,20 +621,70 @@ function lbConfig_(who) {
 /* ============================== finding the client ============================== */
 
 /** A policy number, a name or an e-mail address. The e-mail is matched on the
- *  contact's own address or their preferred one. */
+ *  contact's own address or their preferred one. An agent sees only their own
+ *  clients ("you don't want persons pulling up other agents' clients", 16
+ *  October 2026); staff and the branch manager see everyone. */
 function lbLookup_(b, who) {
   var q = dbClean_(b.q, 80);
   if (!q) throw new Error('Type the client\'s name, e-mail or a policy number.');
   if (!dbSfConfigured_()) return { ok: true, via: 'none', clients: [], note: 'Salesforce is not connected yet: type the client and the policy.' };
+  var out;
   if (/@/.test(q)) {
     var e = q.toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw new Error('That e-mail address does not look complete.');
     var cs = dbSoql_('SELECT ' + DB_CONTACT_FIELDS + ' FROM Contact WHERE Email = ' + dbQuote_(e) +
                      ' OR Preferred_Email__c = ' + dbQuote_(e) + ' LIMIT 10').map(dbContactOut_);
-    return { ok: true, via: 'email', clients: dbMarkDuplicates_(cs) };
+    out = { ok: true, via: 'email', clients: dbMarkDuplicates_(cs) };
+  } else if (/\d{5,}/.test(q.replace(/\s/g, ''))) {
+    out = dbLookup_({ policy: q }, who);
+  } else {
+    out = dbLookup_({ name: q }, who);
   }
-  if (/\d{5,}/.test(q.replace(/\s/g, '')) && !/^[a-z .'-]+$/i.test(q)) return dbLookup_({ policy: q }, who);
-  return dbLookup_({ name: q }, who);
+  if (who.isAgent) {
+    var mine = lbAgentScope_(who, (out.clients || []).map(function (c) { return c.id; }));
+    var before = (out.clients || []).length;
+    out.clients = (out.clients || []).filter(function (c) { return mine.contacts[c.id]; });
+    if (before && !out.clients.length) out.note = 'No client of yours matches. You can only look up your own clients.';
+  }
+  return out;
+}
+
+/* The agent's number as Salesforce writes it at the head of AgentName__c:
+   "A10024 - Neil Ramnanan". */
+function lbSfAgentNo_(no) {
+  var k = lbAgentKey_(no);
+  return /^\d+$/.test(k) ? 'A' + ('00000' + k).slice(-5) : String(no || '').toUpperCase();
+}
+
+/* Which of these contacts, and which of their policies, belong to the agent:
+   the policies whose AgentName__c starts with the agent's number. */
+function lbAgentScope_(who, contactIds) {
+  var ids = (contactIds || []).filter(dbIsSfId_).slice(0, 20);
+  var out = { contacts: {}, portfolios: {} };
+  if (!ids.length || !who.agentNo) return out;
+  var inList = ids.map(dbQuote_).join(',');
+  dbSoql_('SELECT Id, Contact__c, Contact_Person__c FROM CLIENT_PORTFOLIO__c WHERE (Contact__c IN (' + inList +
+          ') OR Contact_Person__c IN (' + inList + ')) AND AgentName__c LIKE ' + dbQuote_(lbSfAgentNo_(who.agentNo) + '%') + ' LIMIT 200')
+    .forEach(function (r) {
+      out.portfolios[r.Id] = 1;
+      if (r.Contact__c) out.contacts[r.Contact__c] = 1;
+      if (r.Contact_Person__c) out.contacts[r.Contact_Person__c] = 1;
+    });
+  return out;
+}
+
+/* Their policies, grouped as the Delivery Book groups them; for an agent, only
+   the ones that are theirs. */
+function lbPolicies_(b, who) {
+  var out = dbPolicies_(b, who);
+  if (!who.isAgent || !out.groups) return out;
+  var ids = [].concat(b.contactIds || b.contactId || []);
+  var mine = lbAgentScope_(who, ids);
+  if (!ids.some(function (id) { return mine.contacts[id]; })) throw new Error('That client is not one of yours.');
+  out.groups = out.groups.map(function (g) {
+    return { type: g.type, policies: g.policies.filter(function (p) { return mine.portfolios[p.portfolioId]; }) };
+  }).filter(function (g) { return g.policies.length; });
+  return out;
 }
 
 
@@ -686,6 +740,15 @@ function lbValidate_(b, who) {
     if (it.suggested && it.department !== it.suggested) out.flags.push(it.document + ' to ' + it.department + ' (usually ' + it.suggested + ')');
   });
   out.items = items;
+  /* An agent logs only for their own clients: the client picked, and every
+     policy picked, must be theirs in Salesforce. */
+  if (who.isAgent && out.contactId && dbSfConfigured_()) {
+    var mine = lbAgentScope_(who, [out.contactId]);
+    if (!mine.contacts[out.contactId]) throw new Error('That client is not one of yours.');
+    items.forEach(function (it) {
+      if (it.portfolioId && !mine.portfolios[it.portfolioId]) throw new Error('Policy ' + it.policy + ' is not one of yours.');
+    });
+  }
   if (d.declared !== true) throw new Error('Tick the declaration.');
   out.declaration = contract ? LB.DECLARE_CONTRACT : LB.DECLARE_DOCS;
   out.notes = dbClean_(d.notes, 500);
@@ -923,7 +986,13 @@ function lbSaveReason_(rows, reason, by) {
 
 /* ============================== the transmittal ============================== */
 
-function lbTransTab_() { return dbSheet_(LB.TABS.TRANS, LB_TRANS_COLUMNS); }
+function lbTransTab_() {
+  var sh = dbSheet_(LB.TABS.TRANS, LB_TRANS_COLUMNS);
+  var hm = dbHeaderMap_(sh);
+  var missing = LB_TRANS_COLUMNS.filter(function (c) { return !(c in hm.map); });
+  if (missing.length) sh.getRange(1, hm.head.length + 1, 1, missing.length).setValues([missing]);
+  return sh;
+}
 
 function lbTransRows_() {
   var sh = lbTransTab_();
@@ -935,13 +1004,17 @@ function lbTransRows_() {
     return { row: i + 2, no: String(g('Transmittal')), department: String(g('Department')), attn: String(g('Attention')),
              sentAt: lbDate_(g('Sent At')), sentBy: String(g('Sent By')), lines: Number(g('Lines')) || 0,
              documents: Number(g('Documents')) || 0, tracking: String(g('Tracking #')), late: Number(g('Late Lines')) || 0,
-             status: String(g('Status')), ids: String(g('Line Ids')).split(',').filter(String) };
+             status: String(g('Status')), ids: String(g('Line Ids')).split(',').filter(String),
+             askedAt: lbDate_(g('Confirm Sent At')), answer: String(g('Received By Dept')), answeredAt: lbDate_(g('Answered At')),
+             deptNote: String(g('Dept Note')), followUp: String(g('Follow-up')) };
   });
 }
 
 function lbTransPublic_(t) {
   return { no: t.no, department: t.department, attn: t.attn, sentAt: t.sentAt ? t.sentAt.toISOString() : '',
-           sentBy: t.sentBy, lines: t.lines, documents: t.documents, tracking: t.tracking, late: t.late, status: t.status };
+           sentBy: t.sentBy, lines: t.lines, documents: t.documents, tracking: t.tracking, late: t.late, status: t.status,
+           askedAt: t.askedAt ? t.askedAt.toISOString() : '', answer: t.answer, answeredAt: t.answeredAt ? t.answeredAt.toISOString() : '',
+           deptNote: t.deptNote, followUp: t.followUp };
 }
 
 /** Builds the transmittal for one department from the lines received, stamps
@@ -1087,7 +1160,7 @@ function lbHourly() {
   LB_READ_ = null;
   var out = [];
   out.push(lbChaseLate_(now));
-  if (h >= 9) { out.push(lbNudgeAgents_(now)); out.push(lbChaseContracts_(now)); }
+  if (h >= 9) { out.push(lbNudgeAgents_(now)); out.push(lbChaseContracts_(now)); out.push(lbConfirmRun_(now)); }
   return out.join('; ');
 }
 
@@ -1221,9 +1294,269 @@ function lbReasonPage_(p) {
 }
 
 
+/* ============================== did the department get it ============================== */
+/*
+ * Asked for on 16 October 2026: "an email should trigger after 3 working days
+ * to ensure the department gets the documents, sent from support copying sales
+ * support as well as the agent and the respective manager … a checkmark saying
+ * yes or no … if no then it's routed to sales support for a response copying
+ * all and a task is logged on Salesforce accordingly to the person who
+ * collected".
+ *
+ * So: three working days after a transmittal is sent (LB.CONFIRM_DAYS), one
+ * e-mail goes from support@ to the department (the Email on the Departments
+ * tab; sales support when there is none), copied to sales support, every agent
+ * on it and each agent's manager. Two buttons: Yes, received / No. A Yes is
+ * recorded on the transmittal. A No (with what is missing, if they say) goes to
+ * sales support for a response, everyone copied again, and a Salesforce task
+ * is opened for each staff member who collected the papers. In test mode the
+ * mail goes to the test inbox and no task is written.
+ */
+
+/* Every lb* link from DeliveryBook.gs's doGet. */
+function lbGet_(p) {
+  if (p.lbc) return lbConfirmPage_(p);
+  return lbReasonPage_(p);
+}
+
+function lbConfirmSign_(no) {
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature('lbc|' + no, dbSecret_())).replace(/=+$/, '').slice(0, 22);
+}
+function lbConfirmLink_(no, answer) {
+  var u = dbExecUrl_();
+  return u ? u + '?lbc=' + encodeURIComponent(no) + '&a=' + answer + '&k=' + lbConfirmSign_(no) : '';
+}
+
+/* The agent's manager: the person the agent's Unit names, else the branch manager. */
+function lbManagerEmail_(agentNo, agentName) {
+  var people = lbAgents_();
+  var a = lbFindAgent_(agentNo) || people.filter(function (x) { return x.name.toLowerCase() === String(agentName || '').toLowerCase(); })[0];
+  var unit = a ? String(a.unit || '').trim().toLowerCase() : '';
+  if (unit) {
+    var m = people.filter(function (x) {
+      return x.email && x.active && /manager/i.test(x.role) && (x.name.toLowerCase() === unit || x.name.toLowerCase().indexOf(unit) >= 0 || unit.indexOf(x.name.toLowerCase()) >= 0);
+    })[0];
+    if (m) return m.email;
+  }
+  return dbProp_('LB_MANAGER', LB.MANAGER);
+}
+
+function lbPeopleOn_(lines) {
+  var agents = {}, managers = {}, collectors = {};
+  lines.forEach(function (r) {
+    var em = r.agentEmail || (lbFindAgent_(r.agentNo) || {}).email;
+    if (em) agents[em.toLowerCase()] = em;
+    var mg = lbManagerEmail_(r.agentNo, r.agent);
+    if (mg) managers[mg.toLowerCase()] = mg;
+    if (r.receivedBy) collectors[r.receivedBy] = lbStaffEmail_(r.receivedBy);
+  });
+  var vals = function (o) { return Object.keys(o).map(function (k) { return o[k]; }).filter(String); };
+  return { agents: vals(agents), managers: vals(managers), collectors: collectors };
+}
+
+function lbTransLines_(no) { return lbRows_().filter(function (r) { return r.transmittal === no; }); }
+
+function lbSetTrans_(t, obj) {
+  var sh = lbTransTab_(), hm = dbHeaderMap_(sh);
+  Object.keys(obj).forEach(function (k) { if (k in hm.map) sh.getRange(t.row, hm.map[k] + 1).setValue(obj[k]); });
+}
+
+/** Run from the hourly chase: every transmittal sent three working days ago
+ *  or more and not yet asked about. */
+function lbConfirmRun_(now) {
+  var due = lbTransRows_().filter(function (t) {
+    return t.status === 'Sent' && t.sentAt && !t.askedAt && lbWorkDays_(t.sentAt, now) >= LB.CONFIRM_DAYS;
+  });
+  var n = 0;
+  due.forEach(function (t) { if (/sent/i.test(lbConfirmAsk_(t))) n++; });
+  return 'confirmations: ' + n + ' of ' + due.length;
+}
+
+function lbConfirmAsk_(t) {
+  var lines = lbTransLines_(t.no);
+  if (!lines.length) return 'No lines';
+  var dept = lbDeptRows_().filter(function (d) { return d.name === t.department; })[0] || {};
+  var ppl = lbPeopleOn_(lines);
+  var yes = lbConfirmLink_(t.no, 'yes'), no = lbConfirmLink_(t.no, 'no');
+  var btn = function (href, label, bg, fg) {
+    return '<a href="' + dbEsc_(href) + '" style="display:inline-block;background:' + bg + ';color:' + fg +
+      ';padding:13px 22px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0">' + label + '</a>';
+  };
+  var html = lbMailHtml_('Did you receive these documents?',
+    '<p>Good day' + (t.attn ? ' ' + dbEsc_(t.attn) : '') + ',</p>' +
+    '<p>On <b>' + dbEsc_(Utilities.formatDate(t.sentAt, dbTz_(), 'EEEE d MMMM yyyy')) + '</b> the Ricky Rampersad Branch sent ' +
+    dbEsc_(t.department) + ' the documents below on transmittal <b>' + dbEsc_(t.no) + '</b>' + (t.tracking ? ' (tracking ' + dbEsc_(t.tracking) + ')' : '') +
+    '. Please confirm they reached you. One tap is enough.</p>' +
+    (yes ? '<p style="margin:18px 0 10px">' + btn(yes, '&#10003; Yes, received', '#15803d', '#ffffff') + btn(no, '&#10007; No, not received', '#b91c1c', '#ffffff') + '</p>' : ''),
+    ['Client', 'Policy', 'Document', 'Copies', 'Agent'],
+    lines.map(function (r) { return [r.client, r.policy || '—', r.document + (r.itemNote ? ' (' + r.itemNote + ')' : ''), String(r.quantity), r.agent]; }),
+    '<p style="color:#5b6b7f;font-size:13px">Sent by ' + dbEsc_(t.sentBy) + '. Sales support, the agents and their managers are copied.</p>');
+  var to = dept.email ? [dept.email] : [lbSalesSupport_()];
+  var res = lbSupportMail_({ to: to, cc: [lbSalesSupport_()].concat(ppl.agents, ppl.managers),
+                             subject: 'Please confirm receipt: transmittal ' + t.no + ' (' + t.department + ')', html: html });
+  if (/sent/i.test(res)) lbSetTrans_(t, { 'Confirm Sent At': new Date(), 'Received By Dept': 'Awaiting' + (dept.email ? '' : ' (no department e-mail: sent to sales support)') });
+  return res;
+}
+
+/* The department's tap. Yes is recorded at once. No asks what is missing
+   (optional), then goes to sales support and opens the Salesforce tasks. */
+function lbConfirmPage_(p) {
+  LB_READ_ = null; LB_AGENTS_READ_ = null;
+  var no = dbClean_(p.lbc, 20);
+  if (!no || String(p.k || '') !== lbConfirmSign_(no)) return dbHtml_('<h1>This link has expired</h1><p>Reply to the e-mail instead and we will follow up.</p>');
+  var t = lbTransRows_().filter(function (x) { return x.no === no; })[0];
+  if (!t) return dbHtml_('<h1>Not found</h1><p>Reply to the e-mail and we will follow up.</p>');
+  if (/^(Yes|No)/.test(t.answer)) {
+    return dbHtml_('<h1>Already recorded</h1><p>Transmittal ' + dbEsc_(no) + ' is marked <b>' + dbEsc_(t.answer) + '</b>' +
+      (t.answeredAt ? ' on ' + dbEsc_(Utilities.formatDate(t.answeredAt, dbTz_(), 'd MMM yyyy')) : '') + '. Reply to the e-mail if that is not right.</p>');
+  }
+  if (p.a === 'yes') {
+    lbSetTrans_(t, { 'Received By Dept': 'Yes', 'Answered At': new Date() });
+    return dbHtml_('<h1>Thank you</h1><p>Transmittal ' + dbEsc_(no) + ' is marked received by ' + dbEsc_(t.department) + '.</p>');
+  }
+  if (p.a === 'no') {
+    if (p.note == null) {
+      return dbHtml_('<h1>Not received</h1><p>Transmittal ' + dbEsc_(no) + ' to ' + dbEsc_(t.department) + '. Tell us what is missing, if you can, and send.</p>' +
+        '<form method="get" action="' + dbEsc_(dbExecUrl_()) + '" target="_top">' +
+        '<input type="hidden" name="lbc" value="' + dbEsc_(no) + '"><input type="hidden" name="a" value="no"><input type="hidden" name="k" value="' + dbEsc_(String(p.k)) + '">' +
+        '<textarea name="note" maxlength="500" placeholder="e.g. Nothing arrived / the ID for one client is missing"></textarea>' +
+        '<button type="submit">Send to the branch</button></form>');
+    }
+    var note = dbClean_(p.note, 500);
+    lbSetTrans_(t, { 'Received By Dept': 'No', 'Answered At': new Date(), 'Dept Note': note });
+    var follow = lbNotReceived_(t, note);
+    lbSetTrans_(t, { 'Follow-up': follow });
+    return dbHtml_('<h1>Thank you</h1><p>The branch\'s sales support team has it and will respond. Everyone on the transmittal is copied.</p>');
+  }
+  return dbHtml_('<h1>Choose Yes or No</h1><p>Use the buttons in the e-mail.</p>');
+}
+
+/** A "No": sales support is asked to respond, everyone copied, and a task is
+ *  opened in Salesforce for each person who collected the papers. */
+function lbNotReceived_(t, note) {
+  var lines = lbTransLines_(t.no);
+  var ppl = lbPeopleOn_(lines);
+  var dept = lbDeptRows_().filter(function (d) { return d.name === t.department; })[0] || {};
+  var collectorMails = Object.keys(ppl.collectors).map(function (k) { return ppl.collectors[k]; }).filter(String);
+  var html = lbMailHtml_('Not received: transmittal ' + t.no,
+    '<p><b>' + dbEsc_(t.department) + '</b> says the documents on transmittal <b>' + dbEsc_(t.no) + '</b>, sent ' +
+    dbEsc_(Utilities.formatDate(t.sentAt, dbTz_(), 'EEEE d MMMM')) + ' by ' + dbEsc_(t.sentBy) + ', did not reach them.</p>' +
+    (note ? '<p style="background:#fff3f0;border-left:4px solid #b91c1c;padding:10px 12px">' + dbEsc_(note) + '</p>' : '') +
+    '<p><b>Sales support: please respond to all</b> with where the documents are and when they will reach the department. ' +
+    'A task is open in Salesforce for ' + dbEsc_(Object.keys(ppl.collectors).join(', ') || 'the branch') + '.</p>',
+    ['Client', 'Policy', 'Document', 'Collected', 'By'],
+    lines.map(function (r) { return [r.client, r.policy || '—', r.document, r.receivedAt ? Utilities.formatDate(r.receivedAt, dbTz_(), 'd MMM') : '—', r.receivedBy]; }), '');
+  var mail = lbSupportMail_({ to: [lbSalesSupport_()], cc: [dept.email].concat(ppl.agents, ppl.managers, collectorMails, [lbStaffEmail_(t.sentBy)]),
+                              subject: 'NOT RECEIVED: transmittal ' + t.no + ' (' + t.department + '): response needed', html: html });
+  var tasks = Object.keys(ppl.collectors).map(function (who) {
+    return who + ': ' + lbSfFollowTask_(t, lines.filter(function (r) { return r.receivedBy === who; }), who, note);
+  });
+  return 'Mail: ' + mail + (tasks.length ? '; tasks: ' + tasks.join('; ') : '');
+}
+
+/* The Salesforce user behind a staff name: the Access tab's Salesforce User
+   Id, else an active user of that name. */
+function lbSfUserId_(name) {
+  var sh = dbSheet_(DB.TABS.ACCESS, DB_ACCESS_COLUMNS), hm = dbHeaderMap_(sh), last = sh.getLastRow();
+  if (last > 1 && 'Salesforce User Id' in hm.map) {
+    var hit = sh.getRange(2, 1, last - 1, hm.head.length).getValues().filter(function (r) {
+      return String(r[hm.map['Name']] || '').trim().toLowerCase() === String(name).trim().toLowerCase() && dbIsSfId_(r[hm.map['Salesforce User Id']]);
+    })[0];
+    if (hit) return String(hit[hm.map['Salesforce User Id']]);
+  }
+  var parts = String(name || '').trim().split(/\s+/);
+  if (parts.length < 2) return '';
+  var u = dbSoql_('SELECT Id FROM User WHERE IsActive = true AND FirstName = ' + dbQuote_(parts[0]) +
+                  ' AND LastName LIKE ' + dbQuote_(parts[parts.length - 1] + '%') + ' LIMIT 1');
+  return u.length ? u[0].Id : '';
+}
+
+function lbSfFollowTask_(t, lines, collector, note) {
+  if (dbMode_() !== 'live') return 'Skipped (test mode)';
+  if (!dbSfConfigured_()) return 'Salesforce not connected';
+  try {
+    var first = lines.filter(function (r) { return dbIsSfId_(r.contactId); })[0] || lines[0];
+    var due = new Date(); do { due = new Date(due.getTime() + 86400000); } while (lbWeekend_(due));
+    var body = {
+      Subject: 'Documents not received by ' + t.department + ': ' + t.no,
+      Status: 'Not Started', Priority: 'High', Task_Type__c: 'Servicing',
+      ActivityDate: Utilities.formatDate(due, dbTz_(), 'yyyy-MM-dd'),
+      Description: [
+        t.department + ' says the documents on transmittal ' + t.no + ' (sent ' + Utilities.formatDate(t.sentAt, dbTz_(), 'd MMM yyyy') +
+          ' by ' + t.sentBy + ') did not reach them.',
+        note ? 'Their note: ' + note : '',
+        '',
+        lines.map(function (r) { return '- ' + r.document + ' · ' + r.client + ' · ' + (r.policy || 'no policy') + ' (' + r.ref + ')'; }).join('\n'),
+        '',
+        'Collected by ' + collector + '. Find the documents, send them again or confirm where they are, and update this task.',
+      ].filter(function (x, i, a) { return x !== '' || a[i - 1] !== ''; }).join('\n').slice(0, 31000),
+    };
+    if (first && dbIsSfId_(first.contactId)) body.WhoId = first.contactId;
+    if (first && dbIsSfId_(first.portfolioId)) body.WhatId = first.portfolioId;
+    var owner = lbSfUserId_(collector);
+    if (owner) body.OwnerId = owner;
+    var id = dbSfFetch_('/sobjects/Task', { method: 'post', body: body }).id;
+    return id + (owner ? '' : ' (owner not found: assigned to the integration user)');
+  } catch (e) { return 'Failed: ' + e.message; }
+}
+
+
+/* ── mail from support@ ────────────────────────────────────────────────────
+ * Through Microsoft 365 (Graph, Mail.Send) when the three properties the
+ * Service Questionnaire project uses are copied here: MS_TENANT, MS_CLIENT,
+ * MS_SECRET. Otherwise from this script's account, named "Ricky Rampersad
+ * Branch Support" with support@ as the reply address. Test mode: the test inbox. */
+function lbGraphReady_() { return !!(dbProp_('MS_TENANT') && dbProp_('MS_CLIENT') && dbProp_('MS_SECRET')); }
+
+function lbGraphToken_() {
+  var cache = CacheService.getScriptCache();
+  var c = cache.get('lb_ms_tok');
+  if (c) return c;
+  var res = UrlFetchApp.fetch('https://login.microsoftonline.com/' + dbProp_('MS_TENANT') + '/oauth2/v2.0/token', {
+    method: 'post', muteHttpExceptions: true,
+    payload: { grant_type: 'client_credentials', client_id: dbProp_('MS_CLIENT'), client_secret: dbProp_('MS_SECRET'),
+               scope: 'https://graph.microsoft.com/.default' } });
+  var j = JSON.parse(res.getContentText() || '{}');
+  if (!j.access_token) throw new Error('Microsoft sign-in failed: ' + (j.error_description || j.error || res.getResponseCode()));
+  cache.put('lb_ms_tok', j.access_token, 50 * 60);
+  return j.access_token;
+}
+
+function lbSupportMail_(m) {
+  if (dbMode_() !== 'live') return lbMail_(m);
+  var clean = function (l) {
+    var seen = {};
+    return (l || []).map(function (x) { return String(x || '').trim(); })
+      .filter(function (x) { var k = x.toLowerCase(); if (!/@/.test(x) || seen[k]) return false; seen[k] = 1; return true; });
+  };
+  var to = clean(m.to);
+  var cc = clean(m.cc).filter(function (x) { return to.map(function (y) { return y.toLowerCase(); }).indexOf(x.toLowerCase()) < 0; });
+  if (!to.length) return 'No address';
+  if (lbGraphReady_()) {
+    try {
+      var addr = function (l) { return l.map(function (a) { return { emailAddress: { address: a } }; }); };
+      var res = UrlFetchApp.fetch('https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(lbSupportFrom_()) + '/sendMail', {
+        method: 'post', muteHttpExceptions: true, contentType: 'application/json',
+        headers: { Authorization: 'Bearer ' + lbGraphToken_() },
+        payload: JSON.stringify({ message: { subject: m.subject, body: { contentType: 'HTML', content: m.html },
+          toRecipients: addr(to), ccRecipients: addr(cc), replyTo: addr([lbSupportFrom_()]) }, saveToSentItems: true }) });
+      if (res.getResponseCode() === 202) return 'Sent from ' + lbSupportFrom_();
+      Logger.log('graph send: ' + res.getResponseCode() + ' ' + res.getContentText());
+    } catch (e) { Logger.log('graph send: ' + e); }
+  }
+  try {
+    var o = { to: to.join(','), subject: m.subject, htmlBody: m.html, name: DB.BRAND + ' Support', replyTo: lbSupportFrom_() };
+    if (cc.length) o.cc = cc.join(',');
+    MailApp.sendEmail(o);
+    return 'Sent (reply to ' + lbSupportFrom_() + ')';
+  } catch (e2) { return 'Failed: ' + e2.message; }
+}
+
+
 /* ============================== mail ============================== */
 
 function lbSalesSupport_() { return dbProp_('LB_SALES_SUPPORT', LB.SALES_SUPPORT); }
+function lbSupportFrom_() { return dbProp_('LB_SUPPORT_FROM', LB.SUPPORT_FROM); }
 
 /* Every Log Book e-mail is internal: to staff, agents, sales support and the
    manager, never a client. In test mode it goes to the test inbox with a
@@ -1466,10 +1799,14 @@ function lbSetup() {
   lbLinesTab_(); lbTransTab_();
   dbSheet_(LB.TABS.AGENTS, LB_AGENT_COLUMNS);
   var dsh = dbSheet_(LB.TABS.DEPTS, LB_DEPT_COLUMNS);
+  var dhm = dbHeaderMap_(dsh);
+  var dmiss = LB_DEPT_COLUMNS.filter(function (c) { return !(c in dhm.map); });
+  if (dmiss.length) dsh.getRange(1, dhm.head.length + 1, 1, dmiss.length).setValues([dmiss]);
   if (dsh.getLastRow() < 2) {
-    var rows = LB_DEPTS.map(function (d) { return [d[0], '', 'Yes']; });
-    dsh.getRange(2, 1, rows.length, 3).setValues(rows);
+    var rows = LB_DEPTS.map(function (d) { return dbRowFor_(dsh, { 'Department': d[0], 'Active': 'Yes' }); });
+    dsh.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
   }
+  var noMail = lbDeptRows_().filter(function (d) { return !d.email; }).length;
   var have = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'lbHourly'; });
   if (!have) ScriptApp.newTrigger('lbHourly').timeBased().everyHours(1).create();
   var agents = lbAgents_();
@@ -1479,7 +1816,8 @@ function lbSetup() {
     'Late after: ' + lbCutoff_() + ':00 on the day received',
     'People who can sign in: ' + agents.filter(function (a) { return a.active && a.code; }).length +
       ' (the Agents tab and the fact find\'s Access tab' + (agents.length ? '' : ': none found, check the script owner can open the fact find workbook') + ')',
-    'Departments: ' + lbDeptNames_().length,
+    'Departments: ' + lbDeptNames_().length + (noMail ? ' (' + noMail + ' with no Email: their 3-day check goes to sales support)' : ''),
+    'E-mail from support@: ' + (lbGraphReady_() ? 'Microsoft 365 connected' : 'not connected (set MS_TENANT, MS_CLIENT, MS_SECRET); sent from this account with support@ as the reply address'),
     'Reason links: ' + (dbExecUrl_() ? 'on' : 'off until the web app is deployed'),
     'History: ' + (dbProp_('LB_HISTORY_ID') ? 'run lbImportHistory() once' : 'set LB_HISTORY_ID, then run lbImportHistory()'),
   ];

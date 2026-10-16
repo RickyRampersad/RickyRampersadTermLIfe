@@ -3837,6 +3837,21 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   branch manager can access this"); Agent, Unit Manager and Assistant Branch Manager log documents;
   "Not Active" is refused. A refusal never says which half was wrong. An agent session carries only the `logbook` app,
   so it never reaches the Delivery Book or a staff action.
+- **An agent sees only their own clients** (16 October 2026: "you don't want persons pulling up other agents'
+  clients"): lookup, policies and submit keep to policies whose `AgentName__c` starts with the agent's number
+  (`lbAgentScope_`, `lbSfAgentNo_` pads to `A00427`). A client found only through another agent's policy is never
+  shown, and a submit naming one is refused on the server. Staff and the branch manager see everyone. A typed client
+  (not found) is allowed and flagged.
+- **The document is chosen first and the department is routed for it**; the routing can be changed, and the line says
+  so.
+- **Three working days after a transmittal** (`LB.CONFIRM_DAYS`) the department is asked, from support@ (Graph when
+  `MS_TENANT`, `MS_CLIENT`, `MS_SECRET` are copied into this project, else this account with support@ as reply-to),
+  to the Departments tab's Email (sales support when blank), copied to sales support, the agents and each agent's
+  manager (the person their Unit names, else the branch manager): two buttons, Yes and No (`?lbc=`, signed, routed by
+  `lbGet_` so DeliveryBook.gs needs no change for new links). Yes is recorded on the transmittal. No asks what is
+  missing, then goes to sales support for a response with everyone copied, and opens a Salesforce task (High, due the
+  next working day) for each staff member who collected, owned by their Salesforce user (Access tab, else the active
+  user of that name). Test mode: test inbox, no task.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).

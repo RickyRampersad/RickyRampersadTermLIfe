@@ -272,9 +272,9 @@
       <div class="card dim" id="c3">
         <h2><span class="step">3</span><span id="c3Title">The documents</span></h2>
         <div id="docsBox">
-          <label for="deptFilter">Going to (optional: narrows the list to that department's documents)</label>
-          <select id="deptFilter"></select>
-          <div class="adder">
+          <label for="docSel">Choose the document: the department it goes to is filled in from the branch's history</label>
+          <select id="deptFilter" hidden aria-hidden="true"></select>
+          <div class="adder" style="margin-top:0">
             <select id="docSel" aria-label="Add a document"></select>
             <button class="btn gold" type="button" id="addDoc">Add</button>
           </div>
@@ -548,13 +548,14 @@
       var d = DOC[it.document] || { to: [], with: [], noPolicy: false, n: 0 };
       var usual = d.to.length ? d.to[0] : null;
       var sg = usual ? (it.department === usual[0]
-        ? '<div class="sugg">✓ Usually goes here: ' + usual[2] + '% of ' + d.n.toLocaleString() + ' handed in</div>'
-        : '<div class="sugg off">Usually goes to ' + esc(usual[0]) + ' (' + usual[2] + '% of ' + d.n.toLocaleString() + ')</div>') : '';
+        ? '<div class="sugg">✓ Routed automatically: ' + usual[2] + '% of ' + d.n.toLocaleString() + ' handed in went here</div>'
+        : '<div class="sugg off">Changed by you. It usually goes to ' + esc(usual[0]) + ' (' + usual[2] + '% of ' + d.n.toLocaleString() + ')</div>') :
+        '<div class="sugg off">New document for the branch: choose where it goes</div>';
       var withs = (d.with || []).filter(function (w) { return !have[w[0]]; });
       return '<div class="item" data-i="' + i + '"><div class="head"><b>' + esc(it.document) + '</b>' +
         '<button type="button" class="x" data-rm="' + i + '" aria-label="Remove">×</button></div>' +
         '<div class="grid">' +
-          '<div><label>Department</label><select data-f="department">' + DEPTS.map(function (x) {
+          '<div><label>Routed to</label><select data-f="department">' + DEPTS.map(function (x) {
             return '<option' + (x.name === it.department ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') +
             (it.department ? '' : '<option value="" selected>Choose…</option>') + '</select></div>' +
           '<div><label>Policy' + (d.noPolicy ? ' (if any)' : '') + '</label><select data-f="policy">' + polOptions(it.policy) + '</select></div>' +
@@ -1001,9 +1002,15 @@
   function transRow(t) {
     return '<div class="ln" style="grid-template-columns:1fr auto"><div class="t"><b>' + esc(t.no) + '</b> · ' + esc(t.department) +
       '<small>' + esc(fmt(t.sentAt, true)) + ' · ' + esc(t.sentBy) + ' · ' + plural(t.lines, 'line') + (t.tracking ? ' · ' + esc(t.tracking) : '') +
-      (t.late ? ' · ' + t.late + ' late' : '') + (t.status !== 'Sent' ? ' · ' + esc(t.status) : '') + '</small></div>' +
+      (t.late ? ' · ' + t.late + ' late' : '') + (t.status !== 'Sent' ? ' · ' + esc(t.status) : '') + '</small>' + confirmTag(t) + '</div>' +
       '<div style="display:flex;gap:6px"><button class="btn ghost sm" data-pr="' + esc(t.no) + '">Reprint</button>' +
       (t.status === 'Sent' ? '<button class="btn ghost sm" data-back="' + esc(t.no) + '">Take back</button>' : '') + '</div></div>';
+  }
+  function confirmTag(t) {
+    if (t.answer === 'Yes') return '<div><span class="tag ok">✓ Received by the department ' + esc(fmt(t.answeredAt)) + '</span></div>';
+    if (t.answer === 'No') return '<div><span class="tag bad">✗ Not received ' + esc(fmt(t.answeredAt)) + '</span>' + (t.deptNote ? ' <span class="stamps">' + esc(t.deptNote) + '</span>' : '') + '</div>';
+    if (t.askedAt) return '<div><span class="tag warn">Asked ' + esc(fmt(t.askedAt)) + ': no answer yet</span></div>';
+    return t.status === 'Sent' ? '<div><span class="tag mute">Department asked 3 working days after sending</span></div>' : '';
   }
   function wireTrans(el, today) {
     el.querySelectorAll('[data-pr]').forEach(function (b) {

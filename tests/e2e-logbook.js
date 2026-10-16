@@ -28,7 +28,8 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
 const SFC = { Id: '003000000000001AAA', Name: 'Anika Pretend', FirstName: 'Anika', LastName: 'Pretend', Email: 'anika@example.com',
               Preferred_Email__c: null, MobilePhone: '868-555-0101', Contact_Type__c: 'Client', Account: { Name: '' } };
 const SFP = [
-  { Id: 'a02000000000002AAA', Name: 'CLIENT-2', POLICY__c: '9000000001', RecordType: { Name: 'LIFE' }, PLAN_NAME__c: 'Term', Contact__c: SFC.Id },
+  { Id: 'a02000000000002AAA', Name: 'CLIENT-2', POLICY__c: '9000000001', RecordType: { Name: 'LIFE' }, PLAN_NAME__c: 'Term', Contact__c: SFC.Id, AgentName__c: 'A10001 - Ana Agent' },
+  { Id: 'a02000000000009AAA', Name: 'CLIENT-9', POLICY__c: '9000000009', RecordType: { Name: 'LIFE' }, PLAN_NAME__c: 'Term', Contact__c: SFC.Id, AgentName__c: 'A19999 - Someone Else' },
 ];
 const env = makeEnv({ props: { SF_KEY: 'k', SF_SECRET: 's', DB_TEST_INBOX: 'test@example.com' } });
 env.UrlFetchApp = { fetch: u => {
@@ -37,6 +38,7 @@ env.UrlFetchApp = { fetch: u => {
   const q = decodeURIComponent(u);
   if (/FROM Contact WHERE Email =/.test(q)) return res({ records: /anika@example\.com/.test(q) ? [SFC] : [] });
   if (/FROM Contact WHERE Id/.test(q)) return res({ records: [SFC] });
+  if (/AgentName__c LIKE/.test(q)) { const a = (q.match(/LIKE '([^%']+)%'/) || [])[1]; return res({ records: SFP.filter(p => p.AgentName__c.indexOf(a) === 0) }); }
   if (/FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN/.test(q)) return res({ records: SFP });
   if (/\/search\?q=/.test(u)) return res({ searchRecords: [SFC] });
   return res({ records: [] });
@@ -106,20 +108,18 @@ const server = http.createServer((req, res) => {
   ok('found by e-mail', seen.some(s => s.action === 'lb.lookup' && s.q === 'anika@example.com'));
   await page.click('#results .client');
   await page.waitForFunction(() => /1 policy on record/.test((document.getElementById('polLine') || {}).textContent || ''));
-  ok('her policy comes from Salesforce', true);
+  ok('only her policy with this agent is offered, not another agent\'s', true);
   await page.selectOption('#docSel', 'Surrender Documents');
   await page.waitForSelector('.item');
   ok('the department is suggested from the history', (await page.$eval('.item [data-f=department]', s => s.value)) === 'GLOC CS RSC - CHAGUANAS');
-  ok('and says how sure', /Usually goes here: \d+% of/.test(await page.textContent('.item .sugg')));
+  ok('and says how sure', /Routed automatically: \d+% of/.test(await page.textContent('.item .sugg')));
   ok('the one policy is filled in', (await page.$eval('.item [data-f=policy]', s => s.value)) === '9000000001');
   const withs = await page.$$eval('.item .with button', b => b.map(x => x.textContent));
   ok('what usually goes with it is offered', withs.some(w => /Proof of ID/.test(w)), withs.join());
   await page.click('.item .with button:has-text("Proof of ID")');
   ok('one tap adds it', (await page.$$('.item')).length === 2);
-  await page.selectOption('#deptFilter', 'MAIL TEAM QUERY');
-  const firstGroup = await page.$eval('#docSel optgroup', g => g.label + ':' + g.querySelector('option').textContent);
-  ok('choosing a department lists its documents first', /MAIL TEAM QUERY:PMAR/.test(firstGroup), firstGroup);
-  await page.selectOption('#deptFilter', '');
+  ok('the document is chosen first and the department is routed for it', /Routed automatically/.test(await page.textContent('.item .sugg')) &&
+     /Routed to/.test(await page.textContent('.item')));
   await page.click('#submitBtn');
   ok('no declaration, refused', /declaration/.test(await page.textContent('#subErr')));
   await page.check('#declare');
