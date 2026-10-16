@@ -1,5 +1,5 @@
 // The English B essay workshop, at /englishb/, driven in a browser against the REAL
-// apps-script/Academy.gs: every request the page makes is handed to the script running
+// apps-script/EssayWorkshop.gs: every request the page makes is handed to the script running
 // here under the fake Sheets, so this is the page and the backend together, not the page
 // against a stand-in that agrees with it. Only Claude is faked, and it records what it
 // is sent.
@@ -20,11 +20,11 @@ const http = require('http'), fs = require('fs'), path = require('path'), crypto
 const ROOT = path.join(__dirname, '..');
 const CHROME = process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const TYPES = { '.html':'text/html', '.js':'application/javascript', '.css':'text/css', '.png':'image/png', '.svg':'image/svg+xml' };
-const PORT = 8798, FAKE = 'https://academy.test/exec', URL = `http://localhost:${PORT}/englishb/`;
+const PORT = 8798, FAKE = 'https://essay.test/exec', URL = `http://localhost:${PORT}/englishb/`;
 const SHOTS = process.env.SHOTS || '';
 
 // ---- the real backend ----------------------------------------------------------------
-process.env.GS_PATH = path.join(ROOT, 'apps-script/Academy.gs');
+process.env.GS_PATH = path.join(ROOT, 'apps-script/EssayWorkshop.gs');
 const { makeEnv } = require('./harness');
 const env = makeEnv();
 env.Utilities.DigestAlgorithm = { SHA_256: 'SHA_256' };
@@ -45,7 +45,7 @@ env.UrlFetchApp = { fetch: (url, opt) => {
     : 'Good question. Look at the walk on Garnet Road again: what does Paul do with his father’s hand?';
   return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ stop_reason: 'end_turn', content: [{ type: 'text', text }] }) };
 } };
-env.academySetup();
+env.essaySetup();
 const TEACHER = env.__sheets['Essay Codes']._grid.find(r => r[1] === 'teacher')[0];
 
 const server = http.createServer((req, res) => {
@@ -77,7 +77,7 @@ const body130 = 'Wickham shows fear through “spectral light” and ' + Array.f
       const out = env.doPost({ postData: { contents: route.request().postData() } }).getContent();
       await route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: out });
     });
-    await page.addInitScript(u => { window.ACADEMY_API_OVERRIDE = u; }, FAKE);
+    await page.addInitScript(u => { window.ESSAY_API_OVERRIDE = u; }, FAKE);
     return page;
   };
   const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: false }); };

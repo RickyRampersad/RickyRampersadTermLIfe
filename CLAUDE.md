@@ -3415,21 +3415,26 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 
 ## The English B essay workshop — it asks, the student writes
 
-`englishb/index.html` (rickyrampersadbranch.com/englishb/), backed by the "English B essay workshop" section of
-`apps-script/Academy.gs` on the Academy's own sheet and `/exec` address. Asked for on 15 October 2026: a five-paragraph
-CSEC English B essay on fear in John Wickham's "Blood Brothers", where "the objective is not to do this but to guide her
-and make think to do this", with "student log in and teacher log in with a code". `ENGLISHB-SETUP.md` has the steps.
+`englishb/index.html` (rickyrampersadbranch.com/englishb/) and `apps-script/EssayWorkshop.gs`, **its own Apps Script
+project on its own Google Sheet, with its own `/exec` address (`ESSAY_API` in the page)**. Asked for on 15 October 2026:
+a five-paragraph CSEC English B essay on fear in John Wickham's "Blood Brothers", where "the objective is not to do this
+but to guide her and make think to do this", with "student log in and teacher log in with a code". `ENGLISHB-SETUP.md`
+has the steps.
 
-- **Codes live on the Essay Codes tab, never in the page or the `.gs`.** `academySetup()` makes the first teacher code
-  and shows it; the teacher adds students (first name only) from the page. A new code ends every sign-in made with the
-  old one. A teacher sees only their own Class.
+- **It is not part of the RRB Academy.** First built inside `Academy.gs`; the same evening: "dont wan this in my acadeny
+  module as this is different". Never put it back in `Academy.gs` or `/sea/`, never point the page at the Academy's
+  address, never brand it as the Academy. `tests/test-englishb.js` fails on any of the three. It keeps the branch's
+  gold shield, as every screen does.
+- **Codes live on the Essay Codes tab, never in the page or the `.gs`.** `essaySetup()` makes the first teacher code and
+  shows it; the teacher adds students (first name only) from the page. A new code ends every sign-in made with the old
+  one. A teacher sees only their own Class.
 - **The coach never writes any part of the essay.** Its rules are in `ESSAY_RULES` and travel in the system prompt of
-  every request from the script, so no browser can change them: no thesis, sentence, rewrite, quotation or list of
-  points; at most two questions a reply. The teacher reads every word (Essay Coach tab). Do not loosen a rule because a
-  student asks; the point of the workshop is that they do the thinking.
+  every request from the script, so no browser can change them: no thesis, sentence, rewrite or list of points, no words
+  from the story the student has not found, at most two questions a reply. The teacher reads every word (Essay Coach
+  tab). Do not loosen a rule because a student asks; the point of the workshop is that they do the thinking.
 - **The story is not in the repository**, which is the website. `ESSAY_STORY` is a study-guide summary quoting a few
-  words at a time, and `tests/test-englishb.js` fails past nine words. Do not add the text, and do not write out what a
-  strong essay would argue in any public file: a teacher's steer goes in Coach Notes on the Essay Classes tab.
+  words at a time, and the test fails past nine words. Do not add the text, and do not write out what a strong essay
+  would argue in any public file: a teacher's steer goes in Coach Notes on the Essay Classes tab.
 - **A hand-in is final until the teacher returns it**, enforced in the script (`elocked_`), never by the page alone.
 - Stage, question and check keys must match between the page (`STAGES`, `WHY`, `CHECKS`) and the script
   (`ESSAY_STAGES`, `ESSAY_WHY`, `ESSAY_CHECKS`); the test compares them.

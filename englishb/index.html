@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fear, in Blood Brothers · RRB Academy</title>
-<meta name="description" content="Ricky Rampersad Branch Academy. A guided workshop for writing your own five-paragraph CSEC English B essay on the theme of fear in John Wickham's short story Blood Brothers.">
+<title>Fear, in Blood Brothers · English B</title>
+<meta name="description" content="Ricky Rampersad Branch. A guided workshop for writing your own five-paragraph CSEC English B essay on the theme of fear in John Wickham's short story Blood Brothers.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../favicon.svg">
 <meta name="theme-color" content="#07131f">
 <style>
-/* Layout: the Academy's navy gate, then a notebook: six stages down the side, the stage in the
+/* Layout: a navy gate, then a notebook: six stages down the side, the stage in the
    middle, the coach on the right. The casuarinas on the gate are the story's own trees, under
    the moon of the night walk on Garnet Road. */
 :root{
-  /* The branch palette — the values in IBRAND, as on /sea/. */
+  /* The branch palette — the values in IBRAND. */
   --navy:#07131f; --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
   --ink:#16202b; --muted:#5c6b7a; --rule:#e2e8ee;
   --paper:#F5F7FA; --surface:#FFFFFF; --surface2:#EDF1F6; --field:#FFFFFF;
@@ -346,17 +346,19 @@ footer.foot .mark{width:26px;height:26px;flex:none}
    Asked for on 15 October 2026: the objective "is not to do this but to guide her and make
    think to do this", with a student log in and a teacher log in, each with a code.
 
-   Everything that decides who gets in, and everything the coach is told, is in
-   apps-script/Academy.gs (the "English B essay workshop" section), on the Academy's own
-   sheet. This page holds no code, no student and no answer. The questions and hints here
-   point at the story; none of them gives a point for the essay.
+   Its own project, not part of the Academy ("dont wan this in my acadeny module as this is
+   different"). Everything that decides who gets in, and everything the coach is told, is in
+   apps-script/EssayWorkshop.gs, on the workshop's own sheet. This page holds no code, no
+   student and no answer. The questions and hints here point at the story; none of them gives
+   a point for the essay.
    ============================================================ */
 
-/* The deployed /exec address of apps-script/Academy.gs — the same backend as /sea/.
-   The override is how the tests choose a backend. */
-const API = (typeof window !== "undefined" && window.ACADEMY_API_OVERRIDE !== undefined)
-  ? window.ACADEMY_API_OVERRIDE
-  : "https://script.google.com/macros/s/AKfycbwBI6nYyhCwPCQaMgnXLXyPTWKkF-hw-Jvz_CZpZVF3SEnPSiSkvxMZkzmFTXC-cabJ/exec";
+/* The deployed /exec address of apps-script/EssayWorkshop.gs. Empty until it is deployed:
+   the gate then says the workshop is not connected yet. Not a secret; what makes a call
+   somebody's is the signed token. The override is how the tests choose a backend. */
+const ESSAY_API = "";
+const API = (typeof window !== "undefined" && window.ESSAY_API_OVERRIDE !== undefined)
+  ? window.ESSAY_API_OVERRIDE : ESSAY_API;
 const TKEY = "rrb.englishb.token";
 
 const STAGES = [
@@ -375,7 +377,7 @@ const STAGES = [
 ];
 const SI = Object.fromEntries(STAGES.map((s, i) => [s.k, i]));
 
-/* Stage 2. The same keys as ESSAY_WHY in Academy.gs, so the coach reads each answer beside its question. */
+/* Stage 2. The same keys as ESSAY_WHY in EssayWorkshop.gs, so the coach reads each answer beside its question. */
 const WHY = [
   {k:"trees", q:"By day the casuarinas are “tall and graceful”. At night they become ghostlike. Did the trees change, or did Paul?",
    nudge:"Read the second paragraph again. What is different at night: the trees, the light, or the person looking at them? What does that tell you about where fear comes from?"},
@@ -427,7 +429,7 @@ const PARAS = [
   {k:"b3",    title:"Body paragraph 3", kind:"body",  i:2, min:120, max:180},
   {k:"concl", title:"Conclusion",       kind:"concl", min:60,  max:100}
 ];
-/* The same keys as ESSAY_CHECKS in Academy.gs: the student ticks them, the coach checks them. */
+/* The same keys as ESSAY_CHECKS in EssayWorkshop.gs: the student ticks them, the coach checks them. */
 const CHECKS = {
   intro:[["hook","My first sentence makes the reader think about fear"],
          ["context","I name the story and the writer, and give context without retelling it"],
@@ -509,16 +511,16 @@ function toast(msg){
 }
 
 async function api(action, body){
-  if (!API) throw new Error("The workshop is not connected to the Academy yet.");
+  if (!API) throw new Error("The workshop is not connected yet. It opens once its script is deployed.");
   let r;
   try {
     r = await fetch(API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
                           body: JSON.stringify(Object.assign({action}, body || {}))});
-  } catch (e) { throw new Error("Could not reach the Academy. Check the connection and try again."); }
-  let j; try { j = await r.json(); } catch (e) { throw new Error("The Academy sent back something unreadable. Try again."); }
+  } catch (e) { throw new Error("Could not reach the workshop. Check the connection and try again."); }
+  let j; try { j = await r.json(); } catch (e) { throw new Error("The workshop sent back something unreadable. Try again."); }
   if (!j.ok) {
     const msg = j.error === "Unknown action."
-      ? "The essay workshop is not switched on yet: the Academy’s script needs its latest version."
+      ? "The essay workshop is not switched on yet: its script needs its latest version."
       : (j.error || "Something went wrong.");
     const err = new Error(msg); err.locked = !!j.locked; err.signin = /code again|sign in again|switched off|removed|has changed|run out/i.test(msg);
     throw err;
@@ -542,7 +544,7 @@ function gateHTML(msg){
   <canvas id="trees" aria-hidden="true"></canvas>
   <div class="gatebox">
     <div class="mark"><img src="../logo-mark.png" alt="Ricky Rampersad Branch"></div>
-    <p class="kicker">RRB Academy · CSEC English B</p>
+    <p class="kicker">Ricky Rampersad Branch · CSEC English B</p>
     <h1>Fear, in <i>Blood Brothers</i></h1>
     <p class="sub">A workshop for writing your own five-paragraph essay on John Wickham’s short story.
       It asks the questions. You do the thinking, and the writing.</p>
@@ -571,7 +573,7 @@ function gateHTML(msg){
         <li><b>Every question you ask the coach</b>, and every answer it gives.</li>
         <li><b>When large blocks of text are pasted in</b>, so your teacher knows the words are yours.</li>
       </ul>
-      Your teacher sees all of it, and so does the Academy, which keeps it in its own Google Sheet.
+      Your teacher sees all of it. It is kept in the workshop’s own Google Sheet.
       Nothing else is asked for, nothing is shared, and nothing is used to sell anything.
       <br><br>The coach is <b>Claude</b>, an AI made by Anthropic. What you ask it, with your work so far,
       goes to Anthropic to be answered. It is told never to write your essay, and it is not allowed to.
@@ -643,7 +645,7 @@ function takeSession(j){
 }
 
 async function resume(){
-  if (!S.token || !API) { showGate(API ? "" : "The workshop is not connected to the Academy yet."); return; }
+  if (!S.token || !API) { showGate(API ? "" : "The workshop is not connected yet. It opens once its script is deployed."); return; }
   document.getElementById("app").innerHTML = `<div class="gate"><div class="gatebox"><div class="mark"><img src="../logo-mark.png" alt="Ricky Rampersad Branch"></div><p class="sub">Opening…</p></div></div>`;
   try { takeSession(await api("essay.load", {token: S.token})); }
   catch (e) { if (e.signin) { lsDel(TKEY); S.token = ""; } showGate(e.message); }
@@ -791,13 +793,13 @@ function headerHTML(sub, name){
   </div></header>`;
 }
 const footHTML = () => `<footer class="foot"><div class="mark"><img src="../logo-mark.png" alt=""></div>
-  <span>Ricky Rampersad Branch Academy · The story is John Wickham’s; work from your own copy of it.</span></footer>`;
+  <span>Ricky Rampersad Branch · The story is John Wickham’s; work from your own copy of it.</span></footer>`;
 
 function render(){
   if (!S.me) return showGate("");
   if (S.me.role === "teacher") return renderTeacher();
   const app = document.getElementById("app");
-  app.innerHTML = headerHTML("Academy · English B", S.me.name) +
+  app.innerHTML = headerHTML("CSEC English B", S.me.name) +
     `<div class="shell"><nav class="rail" aria-label="Stages">${railHTML()}</nav>
        <main class="page" id="page">${stageHTML()}</main>${coachHTML()}</div>
      <button class="fab" data-act="coach-open">Ask the coach</button>` + footHTML();

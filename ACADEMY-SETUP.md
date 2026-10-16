@@ -85,10 +85,6 @@ but `academy` — a parent and a teacher included.
 
 ## 5. The tabs
 
-`academySetup()` also makes four **Essay** tabs for the English B essay workshop at
-`/englishb/`, which signs in with codes rather than e-mail. They are described in
-`ENGLISHB-SETUP.md`; nothing below touches them.
-
 **Users** — the only one you touch. Most rows write themselves when somebody
 registers; you touch it to switch someone off, sell a season, or reset a
 password.

@@ -1,6 +1,6 @@
-// The English B essay workshop's backend: the "English B essay workshop" section of
-// apps-script/Academy.gs, run under the fake Sheets with real SHA-256 and HMAC, and a fake
-// Claude that records every request it is sent.
+// The English B essay workshop's backend, apps-script/EssayWorkshop.gs, run under the fake
+// Sheets with real SHA-256 and HMAC, and a fake Claude that records every request it is sent.
+// It is its own project, apart from the Academy, and the last checks hold it there.
 //
 // What it holds the script to is what the workshop promises. To the student: a code opens
 // their own notebook and nothing else, nothing typed is lost, a hand-in is final until the
@@ -17,7 +17,7 @@
 //
 // Run: node tests/test-englishb.js   (needs nothing but node)
 const crypto = require('crypto'), fs = require('fs'), path = require('path');
-process.env.GS_PATH = path.join(__dirname, '../apps-script/Academy.gs');
+process.env.GS_PATH = path.join(__dirname, '../apps-script/EssayWorkshop.gs');
 const { makeEnv } = require('./harness');
 const env = makeEnv();
 
@@ -52,9 +52,9 @@ const clearFails = () => env.CacheService.getScriptCache().remove('essayfail');
 const words = n => Array.from({ length: n }, (_, i) => ['fear', 'shadow', 'Paul', 'casuarina', 'brother'][i % 5]).join(' ');
 
 // ---- setup ----------------------------------------------------------------------------
-const report = env.academySetup();
-ok('setup makes the four essay tabs with their headers',
-   ['Essay Codes', 'Essay Work', 'Essay Coach', 'Essay Classes'].every(n => env.__sheets[n]) &&
+const report = env.essaySetup();
+ok('setup makes the five tabs with their headers',
+   ['Essay Codes', 'Essay Work', 'Essay Coach', 'Essay Classes', 'Essay Activity'].every(n => env.__sheets[n]) &&
    tab('Essay Codes')[0].join() === 'Code,Role,Name,Class,Status,Id,Created,Last Used' &&
    tab('Essay Work')[0].join() === 'Id,Updated,Work,Review Updated,Review');
 const tRow = tab('Essay Codes').find(r => r[1] === 'teacher');
@@ -63,9 +63,11 @@ ok('setup makes one teacher code, a word and four characters, and says what it i
    /^(WICKHAM|CASUARINA)-[2-9A-HJKMNP-Z]{4}$/.test(TEACHER) && report.includes(TEACHER));
 ok('and the class row, with the question', tab('Essay Classes').length === 2 && /Blood Brothers/.test(tab('Essay Classes')[1][1]));
 ok('setup says the coach is off until there is a key', /coach is off/.test(report));
-env.academySetup();
+env.essaySetup();
 ok('running setup again makes no second teacher code', tab('Essay Codes').filter(r => r[1] === 'teacher').length === 1);
-ok('the Academy tabs are all still there beside them', ['Users', 'Progress', 'Activity'].every(n => env.__sheets[n]));
+ok('setup makes its own signing secret, nobody else\'s', (props.ESSAY_SECRET || '').length > 40 && !('ACADEMY_SECRET' in props));
+ok('it makes no tab but its own', Object.keys(env.__sheets).every(n => n.startsWith('Essay ')));
+ok('the workshop answers a GET', /essay workshop is running/.test(env.doGet().getContent()));
 
 // ---- the teacher signs in and adds a student -------------------------------------------
 ok('a teacher code at the student door is turned away with the reason',
@@ -283,12 +285,14 @@ ok('renaming keeps the record', post({ action: 'essay.roster', token: T.token, o
    post({ action: 'essay.load', token: A2.token }).me.name === 'Aisha R');
 const bent = A2.token.slice(0, -1) + (A2.token.slice(-1) === 'a' ? 'b' : 'a');
 ok('a token with one character changed is refused', /code again/.test(post({ action: 'essay.load', token: bent }).error));
-const sig = p => crypto.createHmac('sha256', props.ACADEMY_SECRET).update(p).digest('hex');
+const sig = p => crypto.createHmac('sha256', props.ESSAY_SECRET).update(p).digest('hex');
 const forge = p => Buffer.from(p).toString('base64url') + '.' + sig(p);
-ok('an Academy sign-in token does not open the essay workshop',
+ok('a signed token of any other shape is refused',
    /code again/.test(post({ action: 'essay.load', token: forge('ricky@example.com|academy|' + (Date.now() + 1e7)) }).error));
-ok('an essay token does not open the Academy',
-   post({ action: 'load', token: A2.token }).ok === false);
+const other = crypto.createHmac('sha256', 'some-other-secret').update(`essay|${A.me.id}|student|x|${Date.now() + 1e7}`).digest('hex');
+ok('a token signed with another project\'s secret is refused',
+   /code again/.test(post({ action: 'essay.load', token: Buffer.from(`essay|${A.me.id}|student|x|${Date.now() + 1e7}`).toString('base64url') + '.' + other }).error));
+ok('an action that is not the workshop\'s is refused', post({ action: 'load', token: A2.token }).ok === false);
 ok('an expired essay token is refused',
    /run out/.test(post({ action: 'essay.load', token: forge(`essay|${A.me.id}|student|x|${Date.now() - 1000}`) }).error));
 ok('a token whose role is not the code’s is refused',
@@ -300,10 +304,10 @@ ok('a code typed onto the sheet by hand works, and is given its id', K.ok && /^s
 ok('and lands in the class whatever the case of its Class cell', post({ action: 'essay.load', token: T.token }).students.some(x => x.name === 'Kiran'));
 
 // ---- the record --------------------------------------------------------------------------------
-const acts = tab('Activity').slice(1).map(x => x[2]);
+const acts = tab('Essay Activity').slice(1).map(x => x[2]);
 ok('sign-ins, refusals, hand-ins and returns are logged',
-   ['essay-sign-in', 'essay-sign-in-refused', 'essay-handed-in', 'essay-returned', 'essay-new-code'].every(a => acts.includes(a)));
-ok('no code is ever written to the log', !JSON.stringify(tab('Activity')).includes(nc.code) && !JSON.stringify(tab('Activity')).includes(TEACHER));
+   ['sign-in', 'sign-in-refused', 'handed-in', 'returned', 'new-code'].every(a => acts.includes(a)));
+ok('no code is ever written to the log', !JSON.stringify(tab('Essay Activity')).includes(nc.code) && !JSON.stringify(tab('Essay Activity')).includes(TEACHER));
 ok('no request to the coach carries a code', !JSON.stringify(sent).includes(nc.code) && !JSON.stringify(sent).includes(add.code));
 
 // ---- the page and the script agree, and neither carries the story --------------------------------------
@@ -325,7 +329,7 @@ ok('the page reports its views, and asks not to be indexed', page.includes('<!--
 ok('the page loads no outside script', !/<script[^>]+src=/i.test(page));
 ok('the page holds no code: it signs in only against the sheet', !/(WICKHAM|CASUARINA|MOON|AWL|GUAVA|TAMARIND|PIGEON|WHISTLE|SHADOW|HIBISCUS|MIST|LEATHER)-[2-9A-HJKMNP-Z]{4}/.test(page));
 const quoted = src => [...src.matchAll(/[“"]([^“”"\n]{2,400})[”"]/g)].map(x => x[1]).filter(x => /[a-z]/.test(x) && !/[{}=;<>]/.test(x));
-const storyOf = gs.slice(gs.indexOf('var ESSAY_STORY'), gs.indexOf('/* ---- setup ---- */'));
+const storyOf = gs.slice(gs.indexOf('var ESSAY_STORY'), gs.indexOf('/* ============================ setup'));
 const longest = a => a.reduce((m, x) => Math.max(m, x.trim().split(/\s+/).length), 0);
 ok('the coach’s summary quotes the story a few words at a time, never more than nine',
    storyOf.length > 2000 && longest(quoted(storyOf.replace(/\\"/g, '"'))) <= 9, String(longest(quoted(storyOf.replace(/\\"/g, '"')))));
@@ -335,6 +339,13 @@ const curly = [...prompts.matchAll(/“([^“”\n]{2,400})”/g)].map(x => x[1]
 ok('the page’s questions and hints quote a few words at a time, never more than nine',
    curly.length >= 5 && longest(curly) <= 9, String(longest(curly)));
 ok('the script does not write out what a strong essay would argue', !/strong essay might reach/i.test(gs) && !/Ideas a strong essay/i.test(gs));
+
+// ---- it stays out of the Academy -----------------------------------------------------------------
+const academy = fs.readFileSync(path.join(__dirname, '../apps-script/Academy.gs'), 'utf8');
+ok('the Academy\'s script carries nothing of the workshop', !/essay\.(signin|load|save|handin|coach|check|review|return|roster|class|log)\b|ESSAY_|Essay Codes|englishb/.test(academy));
+ok('the page talks to its own backend, not the Academy\'s', /const ESSAY_API = "/.test(page) && !page.includes('AKfycbwBI6nYyhCwPCQaMgnXLXyPTWKkF') &&
+   !/ACADEMY_API/.test(page));
+ok('and is not branded as the Academy', !/RRB Academy|Branch Academy/.test(page));
 
 console.log();
 console.log(fails ? `  ${fails} failed` : '  all good');
