@@ -425,7 +425,7 @@ function lbSession_(token) {
   var sh = dbSheet_(DB.TABS.SESS, DB_SESS_COLUMNS);
   var hm = dbHeaderMap_(sh);
   who.isAgent = /^agent$/i.test(who.role);
-  who.isManager = /manager/i.test(who.role) && !/unit/i.test(who.role);
+  who.isManager = /^branch manager$/i.test(String(who.role).trim());
   if ('Agent No' in hm.map) {
     var last = sh.getLastRow();
     var vals = sh.getRange(2, 1, last - 1, hm.head.length).getValues();
@@ -500,10 +500,13 @@ function lbAgents_() {
   return out;
 }
 
-/* Staff, the branch manager and the assistant branch manager on that list get
-   the staff side; agents and unit managers log their own documents. */
+/* Staff and the branch manager get the staff side (receiving, transmittals,
+   insights): "only staff and the branch manager can access this", 15 October
+   2026. Agents, unit managers and the assistant branch manager log their own
+   documents. */
 function lbIsStaffRole_(role) {
-  return /staff|support|admin|branch manager/i.test(String(role || '')) && !/unit manager/i.test(String(role || ''));
+  var r = String(role || '').trim();
+  return /staff|support|admin/i.test(r) || /^branch manager$/i.test(r);
 }
 
 function lbFindAgent_(no) {

@@ -117,12 +117,17 @@ let env = world();
     ['boss@example.com', 'Bo Branch', 'A00001', 'pw1', 'Branch Manager', '', 'Active'],
     ['um@example.com', 'Uma Unit', 'A00002', 'pw2', 'Unit Manager', '', 'Active'],
     ['old@example.com', 'Ola Gone', 'A00003', 'pw3', 'Agent', '', 'Not Active'],
+    ['abm@example.com', 'Abe Assist', 'A00004', 'pw4', 'Assistant Branch Manager', '', 'Active'],
   ]);
   const k = env.lbLogin_({ agentNo: '10024', code: '77' });
   ok('an agent on the fact find list signs in with the password they have', k.ok && k.name === 'Kim Banked' && k.role === 'Agent');
   const bo = env.lbLogin_({ agentNo: 'A00001', code: 'pw1' });
   ok('the branch manager signs in by number and gets the staff side', bo.role === 'Branch Manager' && !env.lbSession_(bo.token).isAgent && env.lbSession_(bo.token).isManager);
   ok('a unit manager logs as an agent', env.lbLogin_({ agentNo: 'A00002', code: 'pw2' }).role === 'Agent');
+  ok('the assistant branch manager logs as an agent', env.lbLogin_({ agentNo: 'A00004', code: 'pw4' }).role === 'Agent');
+  const ag = env.lbLogin_({ agentNo: 'A10024', code: '77' });
+  ok('an agent is refused the transmittals', ['lb.transmittals', 'lb.transmittal', 'lb.receive', 'lb.stats', 'lb.queue']
+    .every(a => /staff/.test(env.lbHandle_({ action: a, token: ag.token }).error || '')));
   ok('"Not Active" is refused', throws(() => env.lbLogin_({ agentNo: 'A00003', code: 'pw3' })));
   ok('staff are not in the agent list', !env.lbHandle_({ action: 'lb.agents', token: bo.token }).agents.some(a => a.name === 'Bo Branch'));
 }

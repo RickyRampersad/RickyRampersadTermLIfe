@@ -3833,7 +3833,8 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
 - **Everyone signs in with their agent number and the password they use for the fact find, both** (asked for the same
   night: "it should use the code that are on the fact find sheet"): the Access tab of the Confidential Fact Find Form
   workbook (`LB.FACTFIND_ID`, overridden by `LB_AGENTS_SHEET_ID`), after the Agents tab here. Its Role decides the
-  side: Staff, Branch Manager and Assistant Branch Manager get the staff side, Agent and Unit Manager log documents;
+  side: only Staff and the Branch Manager get the staff side (receiving, transmittals, insights: "only staff and the
+  branch manager can access this"); Agent, Unit Manager and Assistant Branch Manager log documents;
   "Not Active" is refused. A refusal never says which half was wrong. An agent session carries only the `logbook` app,
   so it never reaches the Delivery Book or a staff action.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.

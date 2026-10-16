@@ -189,9 +189,9 @@ reason. It replaces the Log Book Digital Jotform.
    history, and installs the hourly chase.
 5. **Everyone signs in with their agent number and the password they use for
    the fact find**: the Log Book reads the **Access** tab of the Confidential
-   Fact Find Form workbook (Agent Number, Password, Role, Unit, Active). Staff,
-   the branch manager and the assistant branch manager get the staff side;
-   agents and unit managers log their own documents. "Not Active" cannot sign in.
+   Fact Find Form workbook (Agent Number, Password, Role, Unit, Active). Only staff
+   and the branch manager get the staff side (receiving, transmittals, insights);
+   agents, unit managers and the assistant branch manager log their own documents. "Not Active" cannot sign in.
    The script owner must be able to open that workbook. Anyone not on it can be
    added on the **Agents** tab here.
 6. **Staff** use their RR Operations access code. A blank Apps cell on the
