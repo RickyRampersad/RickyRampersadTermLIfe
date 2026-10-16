@@ -6917,7 +6917,10 @@ function tIntroTeamHtml_(team, clientFirst, only, af, lead) {
   var rows = list.map(function (v) {
     var extra = v.kind === 'manager' && v.show.phone ? ' Direct line: <a href="tel:' + esc(v.show.phone.replace(/[^\d+]/g, '')) + '" style="color:' + ink + ';font-weight:700;text-decoration:none">' + esc(v.show.phone) + '</a>' : '';
     var since = v.kind === 'manager' && v.facts && v.facts.hired ? 'With Guardian Life since ' + v.facts.hired.slice(0, 4) + '. ' : (v.since && /^\d{4}$/.test(v.since) ? 'With the branch since ' + v.since + '. ' : '');
-    return '<tr><td style="padding:10px 0;border-top:1px solid #eef2f5"><b style="color:' + ink + '">' + esc(v.shown) + '</b>' + (v.title ? ', ' + esc(v.title) : '') +
+    /* a photo beside the line when the profile has one (the branch manager's, first): a face behind the agent */
+    var pic = v.photo ? '<td style="width:44px;padding:12px 12px 10px 0;border-top:1px solid #eef2f5;vertical-align:top"><img src="' + esc(v.photo) + '" width="44" height="44" alt="" ' +
+      'style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover"></td>' : '';
+    return '<tr>' + pic + '<td' + (v.photo ? '' : ' colspan="2"') + ' style="padding:10px 0;border-top:1px solid #eef2f5"><b style="color:' + ink + '">' + esc(v.shown) + '</b>' + (v.title ? ', ' + esc(v.title) : '') +
       '<br><span style="font-size:13.5px;color:' + mute + '">' + esc(since) + esc(line(v)) + extra + '</span></td></tr>';
   }).join('');
   var head = lead ? 'Never on their own: the whole branch behind ' + who : 'Your whole branch stands behind ' + who;

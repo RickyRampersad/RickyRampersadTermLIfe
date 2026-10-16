@@ -1858,7 +1858,8 @@ voice under the new timing and the caption gives it away.
     shield; the agent's card (ribbon, initials or photo, number and e-mail, three fact tiles, headline, bio, awards,
     before Guardian, "Ask … about"); "When should … call you?" with morning (8 to 12), afternoon (12 to 4) and evening
     (4 to 7), phone, WhatsApp, video or in person, and a day and exact time; "Your whole branch stands behind …" (the
-    branch manager with his direct line, the support lead, sales support, each only once their own line is live); Query
+    branch manager with his direct line, the support lead, sales support, each only once their own line is live, each
+    with their photo when the profile has one); Query
     Pal (`T_INTRO.QUERY`, www.querymypolicy.com, the branch's 24-hour query service) and the branch and Guardian Direct
     numbers. The hold on introductions (`HOLD_INTROS`) still stands: nothing goes to a client until the branch releases
     client e-mail. `transitionIntroTest` (the editor's Run button) sends the branch manager one of each template from
@@ -1871,6 +1872,11 @@ voice under the new timing and the caption gives it away.
     the board (never the client's number), copied to `TRANSITION.CC` and the agent's unit manager (the Unit column of
     the Agent Skill Bank), posts it on the client's open Salesforce tasks, and marks the rows `[pick sent d MMM → Name]`.
     No receipt goes for it (`tReceipts_` skips it): the agent's call is the answer. The card shows "Asked for a call".
+  - **Photos are the person's own, never found by a face.** A Photo is a hosted https link (the e-mail cannot carry a
+    picture otherwise), shown in a circle on the card and beside a team line. The first three (16 October) came from
+    screenshots the branch manager sent of pictures that name the person themselves: an agent's own Instagram profile,
+    a Guardian "Advisor of the Week" card, the branch's own Facebook post. A picture that names nobody is never matched
+    to a person by their face: the branch says who it is. Each person approves their photo with the rest of the profile.
   - `profiles17/prof-test.js` in the scratchpad covers it (108 checks: Node on the 16 October tabs with the drafts and a
     mocked Salesforce, then Playwright on the board as an agent, the branch and a phone, and on the client's page).
 - **After a call, one press on the board marks the file and can write to the
