@@ -331,6 +331,19 @@ details.model ul{margin:.2rem 0 .8rem;padding-left:1.1rem;font-size:14px}
 .renamer{display:flex;gap:.4rem}
 .toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;background:var(--navy);color:#fff;
   border-radius:10px;padding:.6rem 1rem;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
+.gpts{display:grid;gap:.75rem}
+.gpt{border-left:3px solid var(--teal);padding:.15rem 0 .15rem .8rem}
+.gpt b{display:block}
+.gpt p{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:.2rem}
+.forme{font-size:12.5px;color:var(--goldInk);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.bigscore{font-family:var(--display);font-size:2.6rem;line-height:1}
+.bigscore small{font-size:1rem;color:var(--muted)}
+.crit{display:grid;grid-template-columns:minmax(0,1fr) 130px 3.5em;gap:.3rem .8rem;align-items:center;padding:.65rem 0;border-top:1px solid var(--rule)}
+.crit .c{grid-column:1 / -1;color:var(--muted);font-size:14px}
+.sbar{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+.sbar i{height:9px;border-radius:99px;background:var(--surface2)}
+.sbar i.on{background:var(--teal)}
+@media (max-width:560px){.crit{grid-template-columns:minmax(0,1fr) 90px 3.2em}}
 footer.foot{max-width:1400px;margin:0 auto;padding:1.5rem 16px 2rem;display:flex;align-items:center;gap:.6rem;color:var(--muted);font-size:12.5px}
 footer.foot .mark{width:26px;height:26px;flex:none}
 </style>
@@ -535,7 +548,7 @@ const S = {
   work: null, review: null, locked: false, coach: [], stage: "find", coachBusy: false, checking: {}, checkErr: {},
   save: "", seq: 0, savedSeq: 0, saving: false, saveTimer: 0,
   // teacher
-  students: [], t: {open: null, tab: "find", flash: null, renaming: null, logs: {}}
+  students: [], t: {open: null, tab: "find", flash: null, renaming: null, logs: {}, guides: {}, busy: {}, gerr: {}, ferr: {}, guideView: null}
 };
 
 /* ============================ the gate ============================ */
@@ -654,7 +667,7 @@ async function resume(){
 async function signOut(){
   if (S.me && S.me.role === "student") await flushSave();
   lsDel(TKEY); Object.assign(S, {token: "", me: null, work: null, review: null, students: [], coach: []});
-  S.t = {open: null, tab: "find", flash: null, renaming: null, logs: {}};
+  S.t = {open: null, tab: "find", flash: null, renaming: null, logs: {}, guides: {}, busy: {}, gerr: {}, ferr: {}, guideView: null};
   showGate("");
 }
 
@@ -1142,7 +1155,7 @@ async function handIn(){
 function renderTeacher(){
   const app = document.getElementById("app");
   app.innerHTML = headerHTML("Teacher · " + (S.me.cls || ""), S.me.name) +
-    `<main class="tpage">${S.t.open ? teacherStudentHTML() : teacherClassHTML()}</main>` + footHTML();
+    `<main class="tpage">${S.t.guideView ? teacherGuideHTML() : (S.t.open ? teacherStudentHTML() : teacherClassHTML())}</main>` + footHTML();
   const sync = $(".sync"); if (sync) sync.textContent = "";
 }
 function statusOf(s){
@@ -1187,6 +1200,12 @@ function teacherClassHTML(){
       <form class="card row" id="addForm" style="align-items:flex-end"><label class="f" style="flex:1;min-width:200px">Add a student <span class="hint">First name only</span>
         <input type="text" id="newName" maxlength="40" placeholder="First name"></label><button class="btn gold" type="submit">Add student</button></form></section>
     <section class="card">
+      <p class="forme">For you only</p>
+      <h2>Answers for every stage</h2>
+      <p class="muted">What a careful student should find and say at each stage, with model theses, a model plan and a model paragraph. Students never see these.</p>
+      <div class="row">${STAGES.map((st, i) => `<button class="btn" data-act="t-guideview" data-stage="${st.k}">${i + 1}. ${esc(st.title)}</button>`).join("")}</div>
+    </section>
+    <section class="card">
       <h2>The essay question</h2>
       <label class="f"><span class="sr">The essay question</span><textarea id="tq" rows="3">${esc(c.question || "")}</textarea></label>
       <label class="f" style="max-width:240px">Due<input type="date" id="tdue" value="${esc(c.due || "")}"></label>
@@ -1204,7 +1223,8 @@ function teacherStudentHTML(){
   const tabs = STAGES.map(st => {
     const m = (r.status || {})[st.k];
     return `<button class="${tab === st.k ? "on" : ""}" data-ttab="${st.k}">${esc(st.title)}${m ? `<span class="tn ${m}">${m === "ok" ? "✓" : "↺"}</span>` : ""}</button>`;
-  }).join("") + `<button class="${tab === "coach" ? "on" : ""}" data-ttab="coach">Coach</button><button class="${tab === "activity" ? "on" : ""}" data-ttab="activity">Activity</button>`;
+  }).join("") + `<button class="${tab === "full" ? "on" : ""}" data-ttab="full">Full review${r.full ? ` <span class="tn ok">${r.full.total}/25</span>` : ""}</button>` +
+    `<button class="${tab === "coach" ? "on" : ""}" data-ttab="coach">Coach</button><button class="${tab === "activity" ? "on" : ""}" data-ttab="activity">Activity</button>`;
   const ret = locked ? `<section class="card"><h2 class="h3">Handed in ${esc(when(w.submittedAt))}</h2>
       <p class="muted">Return it if you want ${esc(s.name)} to work on it again. Your note is the first thing they read.</p>
       <label class="f"><span class="sr">Note when returning</span><textarea id="retNote" rows="2" placeholder="What to work on"></textarea></label>
@@ -1215,7 +1235,8 @@ function teacherStudentHTML(){
   return `<div><button class="link" data-act="t-back">← All students</button></div>
     <div class="thead"><div><p class="eyebrow">${esc(S.cls.name || "")}</p><h1>${esc(s.name)}</h1></div><span class="pill ${cls}">${esc(word)}</span></div>
     ${ret}<nav class="ttabs" aria-label="Their work">${tabs}</nav>
-    <div class="${side ? "tgrid" : ""}"><section class="card ro">${content ? content(w, s) : (tab === "coach" ? roCoach(s) : roActivity(w, s))}</section>${side}</div>`;
+    <div class="${side ? "tgrid" : ""}"><section class="card ro"${tab === "full" ? ' id="fullreview"' : ""}>${content ? content(w, s) : (tab === "full" ? fullInner(s) : (tab === "coach" ? roCoach(s) : roActivity(w, s)))}</section>${side}</div>
+    ${SI.hasOwnProperty(tab) ? `<section class="card" id="guide-${tab}">${guideInner(tab)}</section>` : ""}`;
 }
 function noteBoxHTML(s, k){
   const r = s.review || {}, st = (r.status || {})[k] || "";
@@ -1227,6 +1248,77 @@ function noteBoxHTML(s, k){
       <button class="${!st ? "on none" : ""}" data-act="t-status" data-v="">No mark</button></div>
     <p class="small muted" id="tnoteSaved">${r.updatedAt ? "Saved " + esc(ago(r.updatedAt)) : "Your note saves as you type."}</p></aside>`;
 }
+/* ---- for the teacher only: the answer guide and the full review ----
+   Both come from the workshop's backend behind the teacher's code, and neither is ever
+   in this page's source or in anything a student's sign-in receives. */
+function guideInner(k){
+  const g = S.t.guides[k], busy = S.t.busy["g:" + k], err = S.t.gerr[k], title = STAGES[SI[k]].title;
+  let h = `<p class="forme">For you only · students never see this</p><h2 class="h3">Answers for “${esc(title)}”</h2>`;
+  if (busy) return h + `<p class="muted">Writing the answers for this stage. The first time takes up to a minute.</p>`;
+  if (err) h += `<p class="cnote" style="padding:0">${esc(err)}</p>`;
+  if (!g) return h + `<p><button class="btn navy" data-act="t-guide" data-stage="${k}">Show the answers for this stage</button></p>`;
+  return h + (g.summary ? `<p>${esc(g.summary)}</p>` : "") +
+    `<div class="gpts">${(g.points || []).map(p => `<div class="gpt"><b>${esc(p.title)}</b><p>${esc(p.detail)}</p></div>`).join("")}</div>` +
+    ((g.watch || []).length ? `<div><span class="label">Watch for</span><ul>${g.watch.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "") +
+    `<p class="small muted">Written by the coach ${esc(when(g.at))} from a summary of the story. Check any quotation against the book.
+      <button class="link" data-act="t-guide" data-stage="${k}" data-fresh="1">Write it again</button></p>`;
+}
+function teacherGuideHTML(){
+  const k = S.t.guideView;
+  if (!S.t.guides[k] && !S.t.busy["g:" + k] && !S.t.gerr[k]) setTimeout(() => fetchGuide(k, false), 0);
+  return `<div><button class="link" data-act="t-guideback">← Your class</button></div>
+    <div class="thead"><div><p class="eyebrow">Teacher · ${esc(S.cls.name || "")}</p><h1>Answers for every stage</h1></div></div>
+    <nav class="ttabs" aria-label="Stages">${STAGES.map((st, i) => `<button class="${k === st.k ? "on" : ""}" data-act="t-guideview" data-stage="${st.k}">${i + 1}. ${esc(st.title)}</button>`).join("")}</nav>
+    <section class="card" id="guide-${k}">${guideInner(k)}</section>`;
+}
+async function fetchGuide(k, fresh){
+  S.t.busy["g:" + k] = true; S.t.gerr[k] = ""; paintGuide(k);
+  try { const j = await api("essay.guide", {token: S.token, stage: k, fresh: !!fresh}); S.t.guides[k] = j.guide; }
+  catch (e) { S.t.gerr[k] = e.message; }
+  S.t.busy["g:" + k] = false; paintGuide(k);
+}
+function paintGuide(k){ const el = document.getElementById("guide-" + k); if (el) el.innerHTML = guideInner(k); }
+
+function fullInner(s){
+  const f = (s.review || {}).full, busy = S.t.busy["f:" + s.id], err = S.t.ferr[s.id];
+  const words = s.work ? PARAS.reduce((a, p) => a + wc(normWork(s.work).draft[p.k]), 0) : 0;
+  let h = `<div class="item"><p class="forme">For you only · ${esc(s.name)} never sees this page</p>
+    <p class="muted">A full review of everything ${esc(s.name)} has written: the stages, the plan and the essay. A guide for you, not a CSEC mark.</p>
+    <p>${busy ? `<button class="btn" disabled>Writing the review, up to a minute…</button>`
+      : `<button class="btn navy" data-act="t-full" data-id="${esc(s.id)}">${f ? "Review again" : "Write the full review"}</button>`}</p>
+    ${err ? `<p class="cnote" style="padding:0">${esc(err)}</p>` : ""}</div>`;
+  if (!f) return h;
+  const nm = k => (PARAS.find(p => p.k === k) || {}).title || k;
+  h += `<div class="item"><span class="label">Reviewed ${esc(when(f.at))} at ${plural(f.words, "word")}${words !== f.words ? `; ${esc(s.name)} has ${words} now` : ""}</span>
+      <p style="margin-top:.4rem">${esc(f.overall)}</p></div>
+    <div class="item"><div class="bigscore">${f.total}<small> / 25</small></div>
+      ${f.criteria.map(c => `<div class="crit"><b>${esc(c.name)}</b>
+        <span class="sbar" aria-hidden="true">${[1, 2, 3, 4, 5].map(n => `<i class="${n <= c.score ? "on" : ""}"></i>`).join("")}</span>
+        <span class="mono">${c.score} / 5</span><span class="c">${esc(c.comment)}</span></div>`).join("")}</div>
+    ${f.strengths.length ? `<div class="item"><span class="label">What is working</span><ul>${f.strengths.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+    ${f.next.length ? `<div class="item"><span class="label">To work on, most important first</span><ol>${f.next.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
+    ${f.paragraphs.length ? `<div class="item"><span class="label">Paragraph by paragraph</span>${f.paragraphs.map(p => `<div class="gpt" style="margin-top:.6rem"><b>${esc(nm(p.para))}</b><p>${esc(p.comment)}</p></div>`).join("")}</div>` : ""}
+    <div class="item"><span class="label">Their own words?</span><p style="margin-top:.3rem">${esc(f.ownWords || "No comment.")}</p></div>
+    <div class="item"><span class="label">Notes you could give ${esc(s.name)}, stage by stage</span>
+      <p class="small muted" style="margin-top:.2rem">Written to the student, as pointers and questions. Put one in your note and ${esc(s.name)} reads it at the top of that stage.</p>
+      ${STAGES.filter(st => (f.stages || {})[st.k]).map(st => {
+        const mine = ((s.review || {}).notes || {})[st.k];
+        return `<div class="gpt" style="margin-top:.7rem"><b>${esc(st.title)}</b><p>${esc(f.stages[st.k])}</p>
+          <p style="margin-top:.35rem"><button class="btn" data-act="t-usenote" data-id="${esc(s.id)}" data-stage="${st.k}">${mine ? "Replace my note on this stage" : "Use as my note on this stage"}</button></p></div>`;
+      }).join("")}</div>`;
+  return h;
+}
+async function fetchFull(id){
+  S.t.busy["f:" + id] = true; S.t.ferr[id] = ""; paintFull(id);
+  try {
+    const j = await api("essay.fullreview", {token: S.token, id});
+    const s = S.students.find(x => x.id === id); if (s) { s.review = s.review || {}; s.review.full = j.full; }
+  } catch (e) { S.t.ferr[id] = e.message; }
+  S.t.busy["f:" + id] = false;
+  if (S.t.open === id) { if (S.t.tab === "full") renderTeacher(); }
+}
+function paintFull(id){ const el = document.getElementById("fullreview"), s = S.students.find(x => x.id === id); if (el && s) el.innerHTML = fullInner(s); }
+
 const none = t => `<div class="aa none">${esc(t || "Nothing yet.")}</div>`;
 const said = t => String(t || "").trim() ? `<div class="aa">${esc(t)}</div>` : none();
 function roChecks(k, w, locked){ return `<div class="item"><span class="label">The page’s checklist</span>${checklist(STAGE_CHECKS[k](w, locked))}</div>`; }
@@ -1411,6 +1503,17 @@ document.addEventListener("click", e => {
     case "t-open": S.t.open = id; S.t.flash = null; S.t.tab = (() => { const s = S.students.find(x => x.id === id); if (!s || !s.work) return "find"; const w = normWork(s.work); for (const st of STAGES) if (progress(st.k, w, false) < 1) return st.k; return "hand"; })();
       renderTeacher(); window.scrollTo(0, 0); return;
     case "t-back": S.t.open = null; return reloadTeacher();
+    case "t-guideview": S.t.guideView = t.dataset.stage; S.t.open = null; S.t.flash = null; renderTeacher(); window.scrollTo(0, 0); return;
+    case "t-guideback": S.t.guideView = null; return renderTeacher();
+    case "t-guide": return fetchGuide(t.dataset.stage, t.dataset.fresh === "1");
+    case "t-full": return fetchFull(id);
+    case "t-usenote": {
+      const s = S.students.find(x => x.id === id), k = t.dataset.stage, f = s && s.review && s.review.full;
+      if (!f || !f.stages[k]) return;
+      const mine = ((s.review || {}).notes || {})[k];
+      if (mine && t.dataset.armed !== "1") { t.dataset.armed = "1"; t.textContent = "Press again: your note is replaced"; setTimeout(() => { if (t.isConnected) { t.dataset.armed = ""; t.textContent = "Replace my note on this stage"; } }, 5000); return; }
+      return saveReview({id, stage: k, note: f.stages[k]}).then(() => { toast(`In your note on “${STAGES[SI[k]].title}”. ${s.name} reads it at the top of that stage.`); paintFull(id); });
+    }
     case "t-newcode": {
       if (t.dataset.armed !== "1") { t.dataset.armed = "1"; t.textContent = "Press again: the old code stops"; setTimeout(() => { if (t.isConnected) { t.dataset.armed = ""; t.textContent = "New code"; } }, 5000); return; }
       const s = S.students.find(x => x.id === id);

@@ -38,7 +38,18 @@ env.PropertiesService = { getScriptProperties: () => ({ getProperty: k => (k in 
 const sent = [];
 env.UrlFetchApp = { fetch: (url, opt) => {
   const body = JSON.parse(opt.payload); sent.push(body);
-  const text = body.output_config && body.output_config.format
+  const shape = body.output_config && body.output_config.format && body.output_config.format.schema.properties;
+  const text = shape && shape.criteria
+    ? JSON.stringify({ overall: 'FULL-REVIEW: a clear thesis and three kinds of fear, with thin analysis in body paragraph 1.',
+        criteria: [4, 3, 4, 3, 4].map((score, i) => ({ name: 'c' + i, score, comment: 'Comment ' + i + ' on her own words.' })),
+        paragraphs: [{ para: 'intro', comment: 'The hook works.' }, { para: 'b1', comment: 'Say what “spectral light” does.' }],
+        strengths: ['A clear thesis.', 'Moments from across the story.'], next: ['Explain each quotation.', 'Link back to the thesis.', 'Vary sentence openings.'],
+        stages: { find: 'Which moment shows fear in Benjy?', why: '', idea: 'What links your three kinds of fear?', plan: '', write: '', hand: '' },
+        own_words: 'One paragraph was pasted in; ask her where it came from.' })
+    : shape && shape.points
+    ? JSON.stringify({ summary: 'ANSWER-GUIDE: what this stage is for.', watch: ['Moments told, not shown.'],
+        points: [{ title: 'Paul, on the night walk', detail: 'MODEL-ANSWER: the dark turns ordinary things strange.' }, { title: 'Benjy, waking', detail: 'MODEL-ANSWER: fear with the awl.' }] })
+    : shape
     ? JSON.stringify({ strengths: ['Your first sentence names one idea about fear.'],
         questions: ['Which word in your quotation does the most work, and why?', 'How does your last sentence connect to your thesis?'],
         checks: { point: true, evidence: true, technique: true, explain: false, link: false } })
@@ -215,7 +226,33 @@ const body130 = 'Wickham shows fear through “spectral light” and ' + Array.f
   ok('and every word she and the coach said', /father’s hand/.test(await tp.textContent('.ro')));
   await tp.click('[data-ttab="activity"]');
   ok('the activity says where the paste went', /130 words into Body paragraph 1/.test(await tp.textContent('.ro')));
+
+  // ---- for the teacher only: the full review and the answers ---------------------------------------
+  await tp.click('[data-ttab="full"]');
+  ok('the full review waits to be asked for, and says she never sees it', /never sees this page/.test(await tp.textContent('#fullreview')) &&
+     await tp.isVisible('[data-act="t-full"]'));
+  await tp.click('[data-act="t-full"]');
+  await tp.waitForSelector('#fullreview .bigscore');
+  ok('the review marks five criteria out of 25', /18\s*\/ 25/.test(await tp.textContent('#fullreview .bigscore')) &&
+     await tp.locator('#fullreview .crit').count() === 5 && (await tp.textContent('#fullreview')).includes('Knowledge of the story'));
+  ok('with what is working, what to work on and each paragraph', /A clear thesis/.test(await tp.textContent('#fullreview')) &&
+     /Explain each quotation/.test(await tp.textContent('#fullreview')) && /Body paragraph 1/.test(await tp.textContent('#fullreview')));
+  ok('and whether it reads as her own words', /ask her where it came from/.test(await tp.textContent('#fullreview')));
+  ok('the tab carries the score', /18\/25/.test(await tp.textContent('[data-ttab="full"]')));
+  await shot(tp, 'teacher-full');
+  await tp.click('[data-act="t-usenote"][data-stage="idea"]');
+  await tp.waitForFunction(() => /Replace my note/.test((document.querySelector('[data-act="t-usenote"][data-stage="idea"]') || {}).textContent || ''));
+  ok('a suggested note goes into the teacher’s note on that stage with one press', true);
+  await tp.click('[data-ttab="idea"]');
+  ok('and is there in the note box', /What links your three kinds of fear/.test(await tp.inputValue('#tnote')));
   await tp.click('[data-ttab="find"]');
+  ok('each stage offers its answers, for the teacher only', /For you only/.test(await tp.textContent('#guide-find')) && await tp.isVisible('#guide-find [data-act="t-guide"]'));
+  await tp.click('#guide-find [data-act="t-guide"]');
+  await tp.waitForSelector('#guide-find .gpt');
+  ok('the answers for the stage show, with what to watch for', /Paul, on the night walk/.test(await tp.textContent('#guide-find')) &&
+     /Moments told, not shown/.test(await tp.textContent('#guide-find')) && /Check any quotation against the book/.test(await tp.textContent('#guide-find')));
+  ok('they were asked for in the teacher’s rules', /for the teacher/.test(sent[sent.length - 1].system[0].text));
+  await shot(tp, 'teacher-guide');
   await tp.fill('#tnote', 'Good start. Find two more moments for Benjy.');
   await tp.click('[data-act="t-status"][data-v="more"]');
   await tp.waitForFunction(() => document.querySelector('[data-ttab="find"] .tn.more'));
@@ -227,6 +264,18 @@ const body130 = 'Wickham shows fear through “spectral light” and ' + Array.f
   await tp.click('[data-act="t-back"]');
   await tp.waitForSelector('.scard');
   await shot(tp, 'teacher-class');
+  ok('the class page offers the answers for every stage', await tp.locator('[data-act="t-guideview"]').count() === 6);
+  await tp.click('[data-act="t-guideview"][data-stage="plan"]');
+  await tp.waitForSelector('#guide-plan .gpt');
+  ok('one press opens a stage’s answers, written there and then', /Answers for every stage/.test(await tp.textContent('.tpage h1')) &&
+     /MODEL-ANSWER/.test(await tp.textContent('#guide-plan')));
+  const before = sent.length;
+  await tp.click('.ttabs [data-act="t-guideview"][data-stage="find"]');
+  await tp.waitForSelector('#guide-find .gpt');
+  ok('answers already written open again without asking the coach', sent.length === before);
+  await tp.click('[data-act="t-guideback"]');
+  await tp.waitForSelector('.scard');
+  ok('and the way back is to the class', /Your class/.test(await tp.textContent('.tpage h1')));
 
   // ---- the student finds it open again ------------------------------------------------------------
   await sp.reload({ waitUntil: 'networkidle' });
@@ -236,6 +285,11 @@ const body130 = 'Wickham shows fear through “spectral light” and ' + Array.f
   ok('the stage note sits at the top of the stage', /Find two more moments for Benjy/.test(await sp.textContent('[data-live="tnote:find"]')));
   ok('the stage is marked in the list of stages', /look again/.test(await sp.textContent('[data-go="find"]')));
   ok('and the essay can be worked on again', !(await sp.isDisabled('[data-bind="moments.0.words"]')));
+  await sp.click('[data-go="idea"]');
+  ok('the note the teacher took from the review is hers to read', /What links your three kinds of fear/.test(await sp.textContent('[data-live="tnote:idea"]')));
+  const seen = [];
+  for (const k of ['find', 'why', 'idea', 'plan', 'write', 'hand']) { await sp.click(`.rail [data-go="${k}"]`); seen.push(await sp.evaluate(() => document.body.innerText)); }
+  ok('she never sees the full review or the answers, on any stage', seen.every(t => !/FULL-REVIEW|MODEL-ANSWER|ANSWER-GUIDE|18\/25|Full review|Answers for/.test(t)));
 
   // ---- a phone ----------------------------------------------------------------------------------
   const pp = await open({ width: 390, height: 844 });
@@ -255,6 +309,19 @@ const body130 = 'Wickham shows fear through “spectral light” and ' + Array.f
   await pp.waitForFunction(() => { const r = document.querySelector('#coach').getBoundingClientRect(); return r.top < window.innerHeight - 100; });
   ok('the coach opens from the button on a phone', true);
   await shot(pp, 'coach-phone');
+  const tph = await open({ width: 390, height: 844 });
+  await tph.goto(URL, { waitUntil: 'networkidle' });
+  await tph.fill('#code-teacher', TEACHER); await tph.click('form[data-door="teacher"] button');
+  await tph.waitForSelector('.scard');
+  await tph.click('[data-act="t-open"]');
+  await tph.click('[data-ttab="full"]');
+  await tph.waitForSelector('#fullreview .bigscore');
+  ok('the full review fits a phone', await tph.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+  await shot(tph, 'teacher-full-phone');
+  await tph.click('[data-act="t-back"]');
+  await tph.click('[data-act="t-guideview"][data-stage="why"]');
+  await tph.waitForSelector('#guide-why .gpt');
+  ok('and so do the answers', await tph.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
 
   // ---- signing out ------------------------------------------------------------------------------
   await sp.click('[data-act="signout"]');
