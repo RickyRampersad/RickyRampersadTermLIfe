@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16b';
+var SCRIPT_VERSION = '2026-10-16c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3296,6 +3296,7 @@ function sendDayStart_(staffId, date, kind, opt) {
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + intro + '</div>' +
     (kind === 'first' ? backCard_(staffId, date) : '') +
     (kind === 'first' ? queryCard_(staffId) : '') +
+    (kind === 'first' ? branchCards_(staffId, date) : '') +
     statTiles_([
       { value: signIn ? twelve_(signIn) : '—', label: signIn ? 'signed in' : 'not signed in' },
       { value: sfOk ? overdue : '—', label: 'overdue', color: overdue ? MAIL.red : MAIL.navy },
@@ -4186,6 +4187,7 @@ function sendBranchManagerDay_(day) {
       { value: sfOk ? w.ask.length : '—', label: 'notes asking you', color: w.ask.length ? MAIL.red : MAIL.navy },
       { value: sfOk ? w.ignored.length : '—', label: 'your instructions, no note', color: w.ignored.length ? MAIL.red : MAIL.navy }
     ]) + answer +
+    bmBranchCards_(day) +
     sectionLabel_('The team this morning') + teamTable +
     '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Closed yesterday and closed with the owner\'s own note. A closed task without a note is not closed.</div>' +
     sectionLabel_('Waiting on your Chatter (' + w.ask.length + ')') +
@@ -4524,6 +4526,7 @@ function sendUnitManagerMorning_(sid, day) {
         (s.list.length > UM_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (s.list.length - UM_LIST_MAX) + ' more in Salesforce.</div>' : '') + '</div>';
     }).join('') + (agentTable ? sectionLabel_('By agent') + agentTable : '')
          : '<div style="font-size:13px;color:' + MAIL.muted + '">Salesforce did not answer this morning, so the unit is not listed.</div>') +
+    umLetters_(sid, day) +
     sectionLabel_('Your day as a manager') +
     '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:10px 15px;font-size:13px;line-height:1.6">' +
       UM_CHECKS.map(function (c) { return '<div>&#9675; ' + esc_(c.q) + '</div>'; }).join('') +
@@ -4918,9 +4921,11 @@ var BOOKS = {
 };
 function bookId_(k) { try { return PropertiesService.getScriptProperties().getProperty('BOOK_' + k) || BOOKS[k].id; } catch (e) { return BOOKS[k].id; } }
 /** Rows of a tab as objects keyed by header (trimmed). Cached per tab. */
+var _bookMemo = {};
 function bookRows_(k, tab) {
   var ck = 'book_' + k + '_' + tab;
-  try { var hit = CacheService.getScriptCache().get(ck); if (hit) return JSON.parse(hit); } catch (e) {}
+  if (_bookMemo[ck]) return _bookMemo[ck];
+  try { var hit = CacheService.getScriptCache().get(ck); if (hit) return (_bookMemo[ck] = JSON.parse(hit)); } catch (e) {}
   var out = [];
   try {
     var sh = SpreadsheetApp.openById(bookId_(k)).getSheetByName(tab);
@@ -4934,6 +4939,7 @@ function bookRows_(k, tab) {
     }
   } catch (e) { Logger.log('bookRows_ ' + k + '/' + tab + ': ' + e); return []; }
   try { var js = JSON.stringify(out); if (js.length < 95000) CacheService.getScriptCache().put(ck, js, BOOKS.CACHE_SEC); } catch (e) {}
+  _bookMemo[ck] = out;
   return out;
 }
 function bkNk_(s) { return String(s || '').toLowerCase().replace(/^[a-z]{1,3}[\s-]*\d{3,6}\s*-\s*/, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
@@ -4983,6 +4989,192 @@ function orphanFor_(name) {
   bookRows_('SKILL', BOOKS.SKILL.responses).forEach(function (r) { if (bkNk_(r['Assigned to']) === nk && /open/i.test(String(r['Status'] || ''))) calls++; });
   return { households: hh, callbacks: calls };
 }
+
+/* ─────────────────── All the branch's sources, into each person's day ───────────────────
+ *  Ricky, 15–16 October 2026: the plan each person gets must read every place
+ *  work arrives, not only Salesforce. Each workbook below is read live at send
+ *  time (cached ten minutes) and turned into a short card for the person whose
+ *  name is on the row. Ids can be overridden with Script Property BOOK_<KEY>. */
+BOOKS.GROUP  = { id: '1BljjYLcj-pYbrekW2NT_7x_489ey90diCy_MM6T0PHg', tasks: 'Group Tasks', responses: 'Group Responses', register: 'Group Register', milestones: 'Group Milestones' };
+BOOKS.CLAIMS = { id: '1IZm2dRTk9zpwJa2Oh4n2mMFZ6FaR0vXYieZEFOYq3s8', tab: 'Claims' };
+BOOKS.MOTOR  = { id: '1joDyJMrF0RrQCqt3A6iuFjbC2uzXB7P1ZhOxqyyjAkM', tab: 'Motor' };
+BOOKS.PPM    = { id: '12uHVzd9o5k50KDZEM3UybjFI7gGf3MRM67zZeezxaBA', letters: 'Letters', escalations: 'Escalations' };
+BOOKS.EB     = { id: '1v6iDusLyaX-1HNP-hKShO83W6IYDozJucuyr-1MwlYI', requests: 'Requests' };
+BOOKS.SKILL.calls = 'Call List';
+var SRC_DESK = { claims: 'elizabeth', eb: 'kamla' };   // Script Properties CLAIMS_DESK, EB_DESK override
+function srcDesk_(k) { try { return PropertiesService.getScriptProperties().getProperty(k.toUpperCase() + '_DESK') || SRC_DESK[k]; } catch (e) { return SRC_DESK[k]; } }
+/** Any date the sheets hold, as yyyy-MM-dd: ISO, M/D/YYYY, or D/M/YYYY when dmy is set. */
+function anyIso_(v, dmy) {
+  var s = String(v || '').trim(); if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  var m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/); if (!m) return '';
+  var a = dmy ? m[2] : m[1], b = dmy ? m[1] : m[2];
+  return m[3] + '-' + ('0' + a).slice(-2) + '-' + ('0' + b).slice(-2);
+}
+function firstOf_(s) { return bkNk_(s).split(' ')[0] || ''; }
+function sameDesk_(cell, sid) { var f = firstOf_(cell), me = firstOf_(nameFor_(sid)); return !!f && f === me; }
+function srcCard_(title, color, lines, more) {
+  if (!lines.length) return '';
+  return sectionLabel_(title) + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + color + ';border-radius:10px;padding:8px 15px;margin-bottom:12px">' +
+    lines.map(function (h) { return '<div style="font-size:12.5px;line-height:1.45;padding:5px 0;border-top:1px solid ' + MAIL.line + '">' + h + '</div>'; }).join('') +
+    (more ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">' + more + '</div>' : '') + '</div>';
+}
+function lateTag_(iso, day) { if (!iso) return ''; var d = daysBetween_(iso, day); return d > 0 ? ' <span style="color:' + MAIL.red + ';font-weight:700">· ' + d + 'd overdue</span>' : d === 0 ? ' <span style="color:' + MAIL.amber + '">· due today</span>' : ' <span style="color:' + MAIL.muted + '">· due ' + esc_(shortDate_(iso)) + '</span>'; }
+
+/** The staff member's cards: call list, group clients, claims, log book, benefits requests. */
+function branchCards_(sid, day) {
+  var out = '';
+  // 1. The client call list (Service Questionnaires · Call List)
+  try {
+    var calls = bookRows_('SKILL', BOOKS.SKILL.calls).filter(function (r) { return sameDesk_(r['Caller'], sid); });
+    if (calls.length) {
+      var open = calls.filter(function (r) { return !String(r['Done'] || '').trim(); });
+      var back = open.filter(function (r) { return String(r['Call-back'] || '').trim(); });
+      var why = {}; open.forEach(function (r) { var k = String(r['Call for'] || 'Call').trim(); why[k] = (why[k] || 0) + 1; });
+      var top = Object.keys(why).sort(function (a, b) { return why[b] - why[a]; }).slice(0, 3).map(function (k) { return esc_(k) + ' <b>' + why[k] + '</b>'; }).join(' · ');
+      out += srcCard_('Your client call list (' + open.length + ' of ' + calls.length + ' still to call)', MAIL.gold,
+        [ '<b>' + (calls.length - open.length) + '</b> done · <b>' + open.length + '</b> to go' + (top ? ' · ' + top : ''),
+          back.length ? '<b style="color:' + MAIL.red + '">' + back.length + ' call-back' + (back.length === 1 ? '' : 's') + ' promised</b> and not yet done: these first' : '' ].filter(String),
+        'Work top to bottom on your tab of Client Support calls. Mark Done as each one is made.');
+    }
+  } catch (e) {}
+  // 2. Group clients (Group Client Management · Group Tasks, Group Responses)
+  try {
+    var gt = bookRows_('GROUP', BOOKS.GROUP.tasks).filter(function (r) { return sameDesk_(r['Owner'], sid) && /^y/i.test(String(r['Open'] || '')) ; });
+    var since = shiftDays_(day, -14);
+    var gr = bookRows_('GROUP', BOOKS.GROUP.responses).filter(function (r) { return sameDesk_(r['Staff'], sid) && /change|notours/i.test(String(r['Verdict'] || '')) && anyIso_(r['When']) >= since; });
+    var lines = [];
+    gt.sort(function (a, b) { return String(anyIso_(a['Due'])).localeCompare(String(anyIso_(b['Due']))); }).slice(0, 5).forEach(function (r) {
+      lines.push('<b>' + esc_(shorten_(r['Group'], 32)) + '</b> · ' + esc_(shorten_(r['Subject'], 70)) + lateTag_(anyIso_(r['Due']), day)); });
+    gr.slice(0, 4).forEach(function (r) {
+      lines.push('<b style="color:' + MAIL.red + '">Client said "' + esc_(r['Verdict']) + '"</b> · ' + esc_(shorten_(r['Group'], 28)) + ' · ' + esc_(shorten_(r['Task'], 50)) + (r['Note'] ? ' · <i>' + esc_(shorten_(r['Note'], 80)) + '</i>' : '') + ': reply and correct the task'); });
+    var late = gt.filter(function (r) { var d = anyIso_(r['Due']); return d && d < day; }).length;
+    out += srcCard_('Group clients · ' + gt.length + ' open with you' + (late ? ', ' + late + ' overdue' : ''), MAIL.navy, lines,
+      gt.length > 5 ? 'and ' + (gt.length - 5) + ' more on the group register.' : '');
+  } catch (e) {}
+  // 3. Claims payment pending (Claims), for the claims desk
+  try {
+    if (sid === srcDesk_('claims')) {
+      var pend = bookRows_('CLAIMS', BOOKS.CLAIMS.tab).filter(function (r) { return /pending/i.test(String(r['Status'] || '')); });
+      if (pend.length) {
+        var byG = {}, oldest = '';
+        pend.forEach(function (r) { var g = String(r['GROUP NAME'] || 'No group').trim() || 'No group'; byG[g] = (byG[g] || 0) + 1; var d = anyIso_(r['Service Date'], true); if (d && (!oldest || d < oldest)) oldest = d; });
+        out += srcCard_('Health claims payment pending (' + pend.length + ')', MAIL.amber,
+          [ Object.keys(byG).map(function (g) { return esc_(g) + ' <b>' + byG[g] + '</b>'; }).join(' · '),
+            oldest ? 'Oldest service date <b>' + esc_(shortDate_(oldest)) + '</b> (' + daysBetween_(oldest, day) + ' days): chase it with EB Customer Care today' : '' ].filter(String), '');
+      }
+    }
+  } catch (e) {}
+  // 4. Log book: documents verified by this desk and not yet sent
+  try {
+    var mb = mailbagToday_(day), me = firstOf_(nameFor_(sid)), n = 0;
+    Object.keys(mb.backlog).forEach(function (w) { if (firstOf_(w) === me) n += mb.backlog[w]; });
+    if (n) out += srcCard_('Log book · documents you verified, not yet sent (' + n + ')', n > 5 ? MAIL.red : MAIL.amber,
+      [ 'Logged in the last ' + MAILBAG.BACKLOG_DAYS + ' days with no Date Sent. Hand them to <b>' + esc_(nameFor_(mailbagRouter_(day, {}).router).split(' ')[0]) + '</b> for this week\'s bag, or put the Date Sent in the log book.' ], '');
+  } catch (e) {}
+  // 5. Employee benefits requests (Employee Benefits · Requests), for the benefits desk
+  try {
+    if (sid === srcDesk_('eb')) {
+      var rq = bookRows_('EB', BOOKS.EB.requests).filter(function (r) { return /^new$/i.test(String(r['Status'] || '').trim()); });
+      if (rq.length) {
+        var blank = rq.filter(function (r) { return !String(r['Company'] || '').trim(); }).length;
+        out += srcCard_('Employee benefits requests still New (' + rq.length + ')', MAIL.red,
+          rq.filter(function (r) { return String(r['Company'] || '').trim(); }).slice(0, 4).map(function (r) {
+            return '<b>' + esc_(r['Company']) + '</b> · ' + esc_(shorten_(r['Benefits requested'], 60)) + ' · chased <b>' + esc_(String(r['Chasers sent'] || 0)) + '</b> times, received ' + esc_(shortDate_(anyIso_(r['Received']))); })
+            .concat(blank ? ['<b style="color:' + MAIL.red + '">' + blank + ' with no company name</b> are still being chased: close them or complete them'] : []), 'Move each to Contacted or Quoted on the Requests tab once it is moving.');
+      }
+    }
+  } catch (e) {}
+  // 6. Group milestones in the next 60 days (conversions at 65, missing birth dates), for the group's owner
+  try {
+    var owners = {}; bookRows_('GROUP', BOOKS.GROUP.register).forEach(function (r) { owners[bkNk_(r['Group'])] = r['Owner in Salesforce']; });
+    var horizon = shiftDays_(day, 60);
+    var ms = bookRows_('GROUP', BOOKS.GROUP.milestones).filter(function (r) { var d = anyIso_(r['Date']); return sameDesk_(owners[bkNk_(r['Group'])], sid) && d && d >= day && d <= horizon && !String(r['Task'] || '').trim(); });
+    out += srcCard_('Group members reaching a milestone in 60 days (' + ms.length + ')', MAIL.navy,
+      ms.slice(0, 4).map(function (r) { return esc_(r['Person']) + ' · ' + esc_(shorten_(r['Group'], 28)) + ' · ' + esc_(r['Kind'] === 'convert65' ? 'turns 65: conversion letter' : r['Kind']) + ' on ' + esc_(shortDate_(anyIso_(r['Date']))) + ' · no task yet'; }),
+      ms.length > 4 ? 'and ' + (ms.length - 4) + ' more. Log a task for each.' : 'Log a task for each.');
+  } catch (e) {}
+  return out;
+}
+
+/** The performance letters (Productive Performance Management): every one, or only a unit's. */
+function ppmLetters_(names) {
+  var want = names ? {} : null; (names || []).forEach(function (n) { want[bkNk_(n)] = 1; });
+  return bookRows_('PPM', BOOKS.PPM.letters).filter(function (r) { return r['Letter ID'] && (!want || want[bkNk_(r['Agent Name'])]) && !/complet|closed|resolved/i.test(String(r['Status'] || '')); });
+}
+function ppmCard_(list, day, title) {
+  if (!list.length) return '';
+  var unopened = list.filter(function (r) { return /assigned/i.test(String(r['Status'] || '')); });
+  var esc = {}; try { bookRows_('PPM', BOOKS.PPM.escalations).forEach(function (e) { if (!String(e['Resolved Date'] || '').trim()) esc[e['Letter ID']] = e; }); } catch (e) {}
+  var lines = list.slice().sort(function (a, b) { return String(anyIso_(a['Due Date'])).localeCompare(String(anyIso_(b['Due Date']))); }).slice(0, 6).map(function (r) {
+    var e = esc[r['Letter ID']];
+    return '<b>' + esc_(r['Agent Name']) + '</b> · ' + esc_(r['Performance Period']) + ' · ' + esc_(r['Status']) + lateTag_(anyIso_(r['Due Date']), day) + (e ? ' · <b style="color:' + MAIL.red + '">' + esc_(e['Current Status']) + '</b>' : ''); });
+  return srcCard_(title + ' (' + list.length + ' open' + (unopened.length ? ', ' + unopened.length + ' never opened' : '') + ')', MAIL.red, lines, list.length > 6 ? 'and ' + (list.length - 6) + ' more.' : '');
+}
+/** The Branch Manager's extra cards at 5am. */
+function bmBranchCards_(day) {
+  var out = '';
+  try { out += ppmCard_(ppmLetters_(null), day, 'Performance letters'); } catch (e) {}
+  try {
+    var seen = {}, waiting = bookRows_('SKILL', BOOKS.SKILL.responses).filter(function (r) {
+      if (!/open/i.test(String(r['Status'] || '')) || String(r['Assigned to'] || '').trim()) return false;
+      var t = String(r['Token'] || '') + '|' + String(r['Response'] || ''); if (seen[t]) return false; seen[t] = 1; return true; });
+    var clients = {}; waiting.forEach(function (r) { clients[String(r['Token'] || '')] = 1; });
+    if (waiting.length) {
+      var kinds = {}; waiting.forEach(function (r) { var k = String(r['Response'] || 'response'); kinds[k] = (kinds[k] || 0) + 1; });
+      out += srcCard_('Orphan clients who answered, waiting for you to name an agent (' + Object.keys(clients).length + ' clients)', MAIL.red,
+        [ Object.keys(kinds).sort(function (a, b) { return kinds[b] - kinds[a]; }).slice(0, 5).map(function (k) { return esc_(k) + ' <b>' + kinds[k] + '</b>'; }).join(' · '),
+          'Assign on the Ricky assigns tab: the agent gets the brief and the client the call they asked for.' ], '');
+    }
+  } catch (e) {}
+  try {
+    var calls = bookRows_('SKILL', BOOKS.SKILL.calls), by = {};
+    calls.forEach(function (r) { var c = firstOf_(r['Caller']); if (!c) return; by[c] = by[c] || { n: 0, d: 0 }; by[c].n++; if (String(r['Done'] || '').trim()) by[c].d++; });
+    var ks = Object.keys(by); if (ks.length) out += srcCard_('Client call list · progress', MAIL.gold, [ks.map(function (c) { return '<b>' + esc_(c.charAt(0).toUpperCase() + c.slice(1)) + '</b> ' + by[c].d + ' of ' + by[c].n; }).join(' · ')], '');
+  } catch (e) {}
+  try {
+    var q = openQueries_(), late = q.filter(function (x) { return x.days > 3; });
+    if (q.length) out += srcCard_('Query Pal · ' + q.length + ' open, ' + late.length + ' past 3 days', late.length ? MAIL.red : MAIL.amber,
+      q.slice(0, 5).map(function (x) { return esc_(x.ref.split('/').slice(0, 4).join('/')) + ' · ' + esc_(shorten_(x.subject || x.type, 50)) + ' · ' + esc_(String(x.assigned || 'unassigned').split(' ')[0]) + ' · <b>' + x.days + 'd</b>'; }), '');
+  } catch (e) {}
+  try {
+    var mb = mailbagToday_(shiftDays_(day, -1)), rt = mailbagRouter_(day, {});
+    out += srcCard_('Mailbag', MAIL.navy, ['<b>' + esc_(nameFor_(rt.router).split(' ')[0]) + '</b> routes it this week · <b>' + mb.backlogN + '</b> logged and not sent' + (mb.oldest ? ', oldest ' + esc_(shortDate_(mb.oldest)) : '')], '');
+  } catch (e) {}
+  return out;
+}
+/** The Unit Manager: his agents' open performance letters. */
+function umLetters_(sid, day) { try { return ppmCard_(ppmLetters_(unitAgents_(sid)), day, 'Performance letters in your unit'); } catch (e) { return ''; } }
+/** An agent's own open performance letter. */
+function agLetter_(a, day) {
+  try {
+    var l = ppmLetters_([a.agentName, a.name]); if (!l.length) return '';
+    var r = l[0];
+    return srcCard_('Your performance letter · ' + esc_(r['Performance Period']), MAIL.red,
+      [ esc_(r['Letter Type']) + ' · ' + esc_(r['Status']) + lateTag_(anyIso_(r['Due Date']), day),
+        'Target API <b>' + ff360Money_(r['Target API']) + '</b> · submitted <b>' + ff360Money_(r['Submitted API']) + '</b> · settled <b>' + ff360Money_(r['Settled API']) + '</b>',
+        'Open it and submit your signed response; this line stays in your morning e-mail until you do.' ], '');
+  } catch (e) { return ''; }
+}
+/** Pawan: motor renewals in the next 30 days, and balances owing. */
+function motorCard_(day) {
+  try {
+    var horizon = shiftDays_(day, 30);
+    var rows = bookRows_('MOTOR', BOOKS.MOTOR.tab).filter(function (r) { var d = anyIso_(r['Next Due']); return d && d >= shiftDays_(day, -7) && d <= horizon && !/renewed/i.test(String(r['Renewal Status'] || '')); })
+      .sort(function (a, b) { return String(anyIso_(a['Next Due'])).localeCompare(String(anyIso_(b['Next Due']))); });
+    var owing = bookRows_('MOTOR', BOOKS.MOTOR.tab).filter(function (r) { return /owing/i.test(String(r['Payment Status'] || '')); });
+    var lines = rows.slice(0, 8).map(function (r) { return '<b>' + esc_(shorten_(r['Client Account'], 32)) + '</b> · ' + esc_(r['Policy #']) + lateTag_(anyIso_(r['Next Due']), day) + (Number(r['Balance Owing (TT$)'] || 0) > 0 ? ' · owing <b>TT$' + Math.round(Number(r['Balance Owing (TT$)'])).toLocaleString() + '</b>' : '') + (r['Reminders Sent'] ? ' · ' + esc_(String(r['Reminders Sent'])) + ' reminders' : ' · <span style="color:' + MAIL.red + '">no reminder sent</span>'); });
+    if (owing.length) lines.push('<b style="color:' + MAIL.red + '">' + owing.length + ' motor polic' + (owing.length === 1 ? 'y' : 'ies') + ' with a balance owing</b> on the renewal book');
+    return srcCard_('Motor renewals · next 30 days (' + rows.length + ')', MAIL.amber, lines, rows.length > 8 ? 'and ' + (rows.length - 8) + ' more on the Motor Renewal Book.' : '');
+  } catch (e) { return ''; }
+}
+function checkSources() {
+  var day = todayISO_();
+  ['sasha', 'elizabeth', 'azariah', 'kamla'].forEach(function (sid) { var h = branchCards_(sid, day); Logger.log(sid + ': ' + (h.match(/text-transform:uppercase[^>]*>([^<]+)</g) || []).map(function (x) { return x.replace(/.*>/, ''); }).join(' | ')); });
+  Logger.log('BM: ' + (bmBranchCards_(day).match(/text-transform:uppercase[^>]*>([^<]+)</g) || []).map(function (x) { return x.replace(/.*>/, ''); }).join(' | '));
+  Logger.log('Pawan motor: ' + (motorCard_(day) ? 'yes' : 'none'));
+}
+
 function checkMailbag() {
   var day = todayISO_(), rt = mailbagRouter_(day, {}), mb = mailbagToday_(day);
   Logger.log('Mailbag ' + day + ': router ' + rt.router + ' (scheduled ' + rt.scheduled + ', rota week ' + rt.week + ', next ' + rt.next + ')');
@@ -5201,6 +5393,7 @@ function agentMorningMail_(a, day, data, cache) {
         (qs.length > 5 ? '<div style="font-size:12px;color:' + MAIL.muted + '">and ' + (qs.length - 5) + ' more.</div>' : '')) : '') +
     (orp && (orp.households || orp.callbacks) ? sectionLabel_('Orphan clients assigned to you') + agCard_(MAIL.navy,
         agLine_('<b>' + orp.households + '</b> household' + (orp.households === 1 ? '' : 's') + ' assigned to you' + (orp.callbacks ? ' · <b style="color:' + MAIL.red + '">' + orp.callbacks + '</b> asked for a call and are still waiting' : ''))) : '') +
+    agLetter_(a, day) +
     sectionLabel_('Fact finds' + (data.feed ? ' · FactFind360' : '')) + agCard_(f3 && f3.known ? (f3.month ? MAIL.green : MAIL.red) : (ffDays == null || ffDays > 30 ? MAIL.red : MAIL.green),
       (data.feed ? agLine_(f3 && f3.known ? '<b>' + f3.week + '</b> this week · <b>' + f3.month + '</b> this month · <b>' + f3.year + '</b> this year · picked up <b>' + ff360Money_(f3.pickedUp) + '</b> · pipeline <b>' + ff360Money_(f3.pipeline) + '</b>' +
           (f3.month ? '' : ' <span style="color:' + MAIL.red + ';font-weight:700">· none this month</span>')
@@ -7255,6 +7448,7 @@ function sendPawanDay_(day, kind) {
       it.tasks.slice(0, 10).map(function (t) { return dayStartTaskLine_(t, day); }).join('') + '</div>' : '') +
     (gi.length ? sectionLabel_('General insurance expiring · next ' + PAWAN_GI_DAYS + ' days') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' +
       gi.slice(0, 12).map(function (g) { return '<div style="font-size:12.5px;padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(shortDate_(g.due)) + '</b> · ' + esc_(g.s) + (g.carrier ? ' <span style="color:' + MAIL.muted + '">· ' + esc_(g.carrier) + '</span>' : '') + '</div>'; }).join('') + '</div>' : '') +
+    (kind === 'first' ? motorCard_(day) : '') +
     (kind !== 'midday' ? sectionLabel_('Tomorrow') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' +
       (tomorrow.length ? tomorrow.map(eventLine_).join('') : '<div style="font-size:13px;color:' + (kind === 'leave' ? MAIL.red : MAIL.muted) + ';padding:8px 0">Nothing on tomorrow\'s calendar yet.</div>') + '</div>' : '') +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">' +
