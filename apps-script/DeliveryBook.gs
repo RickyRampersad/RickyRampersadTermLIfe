@@ -140,6 +140,14 @@ function doGet(e) {
       return dbHtml_('<h1>Thank you</h1><p>We could not record that just now. Reply to our e-mail and tell us how we did.</p>');
     }
   }
+  /* A client's answer on a collection request (Approvals.gs). */
+  if (p.apr) {
+    try { return aprClientPage_(p); }
+    catch (err) {
+      Logger.log('approvals client page: ' + err);
+      return dbHtml_('<h1>Thank you</h1><p>We could not record that just now. Please reply to our e-mail and we will help.</p>');
+    }
+  }
   if (p.action === 'ping') {
     return dbJson_({ ok: true, service: 'delivery-book', mode: dbMode_(),
                      salesforce: dbSfConfigured_(), docTypes: DB.DOC_TYPES,

@@ -185,6 +185,39 @@ person's average. Comments are shown to managers only.
    - **First-time**: when there is none on record.
    The agent and the manager's Outlook are copied; replies go to support@.
 
+**The client is asked first** (15 October 2026, the same evening). When the
+agent sends the request, the client is e-mailed from support@ before the
+Branch Manager sees it:
+- what was asked for and the reason given, and the client's own record of
+  earlier collections;
+- the cashless ways to pay, offered first and without pressure (online or bank
+  transfer, card, automatic payments, "call me"), and collection as an equal
+  choice ("I prefer my agent to collect, and the reason is right"), plus "this
+  is not right";
+- each choice opens a short page where the client presses **Send**. Mail
+  security opens every link in an e-mail, so a link alone never records an
+  answer. The links are signed, so an edited link is refused.
+
+What happens next:
+- **A cashless choice** closes the request (nothing is collected) and e-mails
+  **Sales Support** a query with the client's details and words, the agent
+  copied.
+- **"I prefer collection"** sends it to the Branch Manager.
+- **"This is not right"** sends it to the Branch Manager, flagged.
+- **No answer in 2 working days**, or **no e-mail at all**: it reaches the
+  Branch Manager flagged, and approving it needs a note.
+
+The client's e-mail is Salesforce's. When Salesforce has none the agent may
+give one (flagged); an address on the Access tab is refused, so an agent can
+never answer for a client.
+
+**One thread.** The approval to GL Customer Service is a reply-all on the
+client's own e-mail, re-addressed to GL Customer Service with the client, the
+agent and the manager copied, so everyone holds the same trail. This needs the
+Entra app to have **Mail.ReadWrite** (application) beside Mail.Send, with admin
+consent. Without it the approval still goes, as a new e-mail whose subject
+continues the client's ("Re: …") with the client's e-mail quoted beneath.
+
 **Flags** (shown to both): 3 or more requests in 90 days (this one counted);
 asked again within a week; the same reason given before; the same amount
 already requested; declined before.
@@ -204,6 +237,7 @@ already requested; declined before.
      refused until it is set.
    - `APR_TEST_INBOX` — test e-mails (blank: `DB_TEST_INBOX`, then the owner).
    - `APR_BM_EMAIL` — defaults to Ricky.Rampersad@myguardiangroup.com.
+   - `APR_SALES_SUPPORT` — defaults to the sales support inbox.
    - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET` — copied from the Service
      Questionnaire project, so mail goes from support@.
    - `APR_MODE` = `live` when the test run has been read.

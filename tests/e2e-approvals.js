@@ -93,6 +93,8 @@ const shot = async (page, n) => { if (SHOTS) await page.screenshot({ path: path.
   ok('every request listed, newest first', (await page.$$('#hist .h')).length === 3 && /Lee/.test(await page.textContent('#hist .h')));
   ok('the tick and "what is different" are asked', await page.isVisible('#historyAsk'));
   await shot(page, 'a1-history');
+  ok('no e-mail on file: the agent may give one, or tick none', await page.isVisible('#noEmailBox') && !(await page.$eval('#clientEmail', e => e.readOnly)));
+  await page.fill('#clientEmail', 'anika@example.com');
   await page.fill('#amount', '700'); await page.selectOption('#cat', 'Card problem');
   await page.fill('#policy', '5009990001');
   await page.fill('#reason', 'Card declined again');
@@ -108,6 +110,7 @@ const shot = async (page, n) => { if (SHOTS) await page.screenshot({ path: path.
   const ref = (await page.textContent('#result .ref')).trim();
   ok('sent, with a reference', /^APR-/.test(ref), ref);
   ok('the flags are shown to the agent', /requests in 90 days/.test(await page.textContent('#result')));
+  ok('the agent is told the client was e-mailed to confirm', /client has been e-mailed \(an\*\*\*@example\.com\)/.test(await page.textContent('#result')));
   ok('no sideways scroll on a phone (agent)', await noSideScroll(page));
   await shot(page, 'a2-sent');
   await page.click('#again');
@@ -115,14 +118,24 @@ const shot = async (page, n) => { if (SHOTS) await page.screenshot({ path: path.
   await page.waitForSelector('#c2:not([hidden]) .first');
   ok('a new client shows "No requests on record"', /This would be the first/.test(await page.textContent('#hist')));
   ok('and needs no second answer', await page.isHidden('#historyAsk'));
+  await page.check('#noEmail');
   await page.fill('#policy', '5001112223'); await page.fill('#amount', '250'); await page.selectOption('#cat', 'No bank account');
   await page.fill('#reason', 'New client to the branch; he has not opened a bank account yet.');
   await page.click('#sendBtn'); await page.waitForSelector('#result:not([hidden]) .ref');
   const ref2 = (await page.textContent('#result .ref')).trim();
   await page.context().close();
 
+  /* the client answers: the e-mail's link opens a page, Send records it */
+  const cmail = env.__mail.find(m => /quick check/.test(m.subject));
+  ok('the client was e-mailed (test inbox) with the history and the choices', cmail && /4 earlier|3 earlier/.test(cmail.htmlBody) && /Pay online/.test(cmail.htmlBody));
+  const k = cmail.htmlBody.match(/k=([\w-]+)/)[1];
+  const cpage = env.doGet({ parameter: { apr: ref, k, c: 'cash' } }).getContent();
+  if (SHOTS) { fs.writeFileSync(path.join(SHOTS, 'client-mail.html'), cmail.htmlBody); fs.writeFileSync(path.join(SHOTS, 'client-page.html'), cpage); }
+  ok('opening the link alone records nothing', /Awaiting client/.test(JSON.stringify(env.__sheets['Approval Requests']._grid)));
+  env.doGet({ parameter: { apr: ref, k, c: 'cash', go: '1', m: 'My card is still blocked' } });
+
   /* the manager, from the e-mail's link */
-  const link = env.__mail.find(m => /Approval request/.test(m.subject)).htmlBody.match(/href="([^"]+)"/)[1];
+  const link = env.__mail.filter(m => /Approval request/.test(m.subject)).find(m => m.subject.includes(ref)).htmlBody.match(/href="([^"]+)"/)[1];
   ok('the manager\'s e-mail links straight to the review', /approvals\/\?review=APR-/.test(link), link);
   page = await phone('MGR9');
   await page.goto(base + '/approvals/?review=' + encodeURIComponent(ref));
@@ -130,6 +143,7 @@ const shot = async (page, n) => { if (SHOTS) await page.screenshot({ path: path.
   ok('the short /approvals link opens the Review tab', await page.isVisible('#tab-review') && page.url().includes('/rroperations/approvals/'));
   ok('the review shows the reason, what is different and the history',
      /no cheque book/.test(await page.textContent('#r-' + ref)) && /arrives on Friday/.test(await page.textContent('#r-' + ref)) &&
+     /THE CLIENT ANSWERED/.test(await page.textContent('#r-' + ref)) && /still blocked/.test(await page.textContent('#r-' + ref)) &&
      (await page.$$('#h-' + ref + ' .h')).length === 3);
   await page.fill('#n-' + ref, 'Approved once more; no further cash after the new card.');
   await page.click('[data-prev="' + ref + '"]');
@@ -140,7 +154,7 @@ const shot = async (page, n) => { if (SHOTS) await page.screenshot({ path: path.
   await page.click('[data-dec="approve"][data-ref="' + ref + '"]');
   await page.waitForFunction(r => /Approved/.test(document.getElementById('r-' + r).textContent), ref);
   ok('approved: GL e-mail sent (test inbox)', /History e-mail to GL Customer Service: Test copy sent/.test(await page.textContent('#r-' + ref)));
-  const gl = env.__mail.filter(m => /^\[TEST\] Approved:/.test(m.subject));
+  const gl = env.__mail.filter(m => /^\[TEST\] (Approved:|Re: .*— approved)/.test(m.subject));
   ok('exactly one GL e-mail, to the test inbox', gl.length === 1 && gl[0].to === 'test@example.com');
   await page.click('[data-dec="approve"][data-ref="' + ref2 + '"]');
   await page.waitForFunction(r => /Approved/.test(document.getElementById('r-' + r).textContent), ref2);

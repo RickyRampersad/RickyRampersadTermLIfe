@@ -3830,7 +3830,19 @@ Test mode is the default (`APR_MODE`); live approval is refused while
 through Microsoft Graph (`aprMsSend_`, the Service Questionnaire project's Entra
 app: copy `MS_TENANT`, `MS_CLIENT`, `MS_SECRET` into RR Operations), replies to
 support@, the manager's Outlook copied. Without those properties a test copy
-falls back to Gmail and live approval is refused; live mail never goes by Gmail. Old Jotform
+falls back to Gmail and live approval is refused; live mail never goes by Gmail. **The client is asked first**
+(the same evening, "just like the fact find"): the request is e-mailed to the
+client (Salesforce's address; one the agent gives is flagged, a team address
+refused) with their own history, the cashless ways to pay offered first and
+collection as an equal choice. A choice opens a signed page and records only on
+Send (`aprClientPage_`, routed from `doGet` by `apr=`), never on the link
+itself, because mail scanners open links. A cashless choice closes the request
+(`Client paying another way`) and sends Sales Support a query, agent copied;
+"prefer collection" or "not right" puts it in the manager's queue; two working
+days without an answer, or no e-mail, reaches him flagged and approval needs a
+note. The approval is a reply-all on the client's e-mail (Graph
+`createReplyAll` with immutable ids, so it needs Mail.ReadWrite), client copied;
+without that permission it goes fresh with the client's e-mail quoted. Old Jotform
 rows read "Decision not recorded", never "Approved". Tests:
 `tests/test-approvals.js`, `tests/e2e-approvals.js`. Runbook: the Approvals
 section of `RROPERATIONS-SETUP.md`.

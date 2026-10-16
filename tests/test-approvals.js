@@ -95,7 +95,7 @@ const post = (env, body) => JSON.parse(env.doPost({ postData: { contents: JSON.s
   const env = world();
   const pat = login(env, 'PAT1');
   const base = { action: 'aprSubmit', token: pat, first: 'Anika', last: 'Pretend', type: 'Cash Collection',
-                 policy: '5009990001', amount: '700', reasonCategory: 'Card problem',
+                 policy: '5009990001', amount: '700', reasonCategory: 'Card problem', noEmail: true,
                  reason: 'Her card was declined twice at the bank this week.' };
   let r = post(env, Object.assign({}, base, { reason: 'card' }));
   ok('a one-word reason is refused', !r.ok && /own words/.test(r.error));
@@ -112,8 +112,8 @@ const post = (env, body) => JSON.parse(env.doPost({ postData: { contents: JSON.s
   ok('the manager is told, in test mode only the test inbox', env.__mail.length === 1 &&
      env.__mail[0].to === 'test@example.com' && /\[TEST\] Approval request/.test(env.__mail[0].subject));
   const first = post(env, { action: 'aprSubmit', token: pat, first: 'Brand', last: 'New', type: 'Cash Collection',
-    policy: '5001112223', amount: '250', reasonCategory: 'No bank account', reason: 'Client is new to the branch and has no bank account yet.' });
-  ok('a client with no history needs no second answer', first.ok && first.prior === 0 && first.flags.length === 0);
+    policy: '5001112223', amount: '250', reasonCategory: 'No bank account', noEmail: true, reason: 'Client is new to the branch and has no bank account yet.' });
+  ok('a client with no history needs no second answer', first.ok && first.prior === 0 && first.flags.join() === 'Client has no e-mail: not asked');
   const mine = post(env, { action: 'aprMine', token: pat });
   ok('the agent sees their own requests', mine.ok && mine.requests.length === 2);
 }
@@ -123,10 +123,10 @@ const post = (env, body) => JSON.parse(env.doPost({ postData: { contents: JSON.s
   const env = world();
   const pat = login(env, 'PAT1'), mgr = login(env, 'MGR9');
   const a = post(env, { action: 'aprSubmit', token: pat, first: 'Anika', last: 'Pretend', type: 'Cash Collection',
-    policy: '5009990001', amount: '650', reasonCategory: 'Card problem', historySeen: true,
+    policy: '5009990001', amount: '650', reasonCategory: 'Card problem', historySeen: true, noEmail: true,
     reason: 'Her card was declined twice at the bank this week.', different: 'New card issued, arriving next week.' });
   const b = post(env, { action: 'aprSubmit', token: pat, first: 'Brand', last: 'New', type: 'Cash Collection',
-    policy: '5001112223', amount: '250', reasonCategory: 'No bank account', reason: 'Client is new to the branch and has no bank account yet.' });
+    policy: '5001112223', amount: '250', reasonCategory: 'No bank account', noEmail: true, reason: 'Client is new to the branch and has no bank account yet.' });
   env.__mail = [];
 
   const q = post(env, { action: 'aprQueue', token: mgr });
@@ -171,11 +171,24 @@ const post = (env, body) => JSON.parse(env.doPost({ postData: { contents: JSON.s
 
 /* ── live, from support@ through Microsoft Graph ──────────────────── */
 function graph(env) {
+  env.__ids = 0;
   env.__graph = [];
   env.UrlFetchApp = { fetch: (u, o) => {
     if (/login\.microsoftonline\.com/.test(u)) return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ access_token: 'ms', expires_in: 3600 }) };
-    const m = u.match(/graph\.microsoft\.com\/v1\.0\/users\/([^/]+)\/sendMail/);
-    if (m) { env.__graph.push({ from: decodeURIComponent(m[1]), body: JSON.parse(o.payload) }); return { getResponseCode: () => 202, getContentText: () => '' }; }
+    const m = u.match(/graph\.microsoft\.com\/v1\.0\/users\/([^/]+)(\/.*)$/);
+    if (m) {
+      const from = decodeURIComponent(m[1]), path = m[2], body = o.payload ? JSON.parse(o.payload) : null;
+      const r = (code, b) => ({ getResponseCode: () => code, getContentText: () => b ? JSON.stringify(b) : '' });
+      if (path === '/sendMail') { env.__graph.push({ from, body }); return r(202); }
+      if (env.__noReadWrite && path !== '/sendMail') return r(403, { error: { code: 'ErrorAccessDenied', message: 'Access is denied.' } });
+      if (path === '/messages' && o.method === 'post') { const id = 'M' + (++env.__ids); env.__drafts = env.__drafts || {}; env.__drafts[id] = body; return r(201, { id, conversationId: 'C' + id }); }
+      let k = path.match(/^\/messages\/([^/]+)\/send$/);
+      if (k) { const id = decodeURIComponent(k[1]); env.__graph.push({ from, body: { message: env.__drafts[id] }, id }); return r(202); }
+      k = path.match(/^\/messages\/([^/]+)\/createReplyAll$/);
+      if (k) { const id = 'R' + (++env.__ids); env.__drafts[id] = { _of: decodeURIComponent(k[1]) }; return r(201, { id, conversationId: 'C' + decodeURIComponent(k[1]) }); }
+      k = path.match(/^\/messages\/([^/]+)$/);
+      if (k && o.method === 'patch') { Object.assign(env.__drafts[decodeURIComponent(k[1])], body); return r(200, {}); }
+    }
     throw new Error('unexpected ' + u);
   } };
 }
@@ -184,7 +197,7 @@ function graph(env) {
   graph(env);
   const pat = login(env, 'PAT1'), mgr = login(env, 'MGR9');
   const a = post(env, { action: 'aprSubmit', token: pat, first: 'Brand', last: 'New', type: 'Cash Collection',
-    policy: '5001112223', amount: '250', reasonCategory: 'No bank account', reason: 'Client is new to the branch and has no bank account yet.' });
+    policy: '5001112223', amount: '250', reasonCategory: 'No bank account', noEmail: true, reason: 'Client is new to the branch and has no bank account yet.' });
   ok('live without Microsoft 365: the manager is not e-mailed by Gmail', env.__mail.length === 0 && env.__graph.length === 0);
   let d = post(env, { action: 'aprDecide', token: mgr, ref: a.ref, decision: 'approve' });
   ok('live approval refused until support@ is set up, nothing decided',
@@ -196,7 +209,7 @@ function graph(env) {
   ok('live approval refused while the GL address is unset', !d.ok && /APR_GL_CS_TO/.test(d.error));
   p.setProperty('APR_GL_CS_TO', 'glcs@example.com');
   d = post(env, { action: 'aprDecide', token: mgr, ref: a.ref, decision: 'approve' });
-  const g = env.__graph[0], msg = g && g.body.message;
+  const g = env.__graph[env.__graph.length - 1], msg = g && g.body.message;
   ok('live: sent from support@ through Microsoft 365, kept in Sent Items',
      d.ok && g.from === 'support@rickyrampersadbranch.com' && msg.from.emailAddress.address === 'support@rickyrampersadbranch.com' &&
      g.body.saveToSentItems === true && env.__mail.length === 0, JSON.stringify(d));
@@ -213,10 +226,89 @@ function graph(env) {
   graph(env);
   const pat = login(env, 'PAT1');
   post(env, { action: 'aprSubmit', token: pat, first: 'Brand', last: 'New', type: 'Cash Collection',
-    policy: '5001112223', amount: '250', reasonCategory: 'No bank account', reason: 'Client is new to the branch and has no bank account yet.' });
+    policy: '5001112223', amount: '250', reasonCategory: 'No bank account', noEmail: true, reason: 'Client is new to the branch and has no bank account yet.' });
   const m = env.__graph[0] && env.__graph[0].body.message;
   ok('test mode with Microsoft 365: from support@, to the test inbox only', m && env.__graph[0].from === 'support@rickyrampersadbranch.com' &&
      m.toRecipients.length === 1 && m.toRecipients[0].emailAddress.address === 'test@example.com' && !m.ccRecipients && /^\[TEST\]/.test(m.subject));
+}
+
+
+/* ── the client is asked first ─────────────────────────────────────── */
+{
+  const env = world({ MS_TENANT: 't', MS_CLIENT: 'c', MS_SECRET: 's', APR_MODE: 'live', APR_GL_CS_TO: 'glcs@example.com' });
+  graph(env);
+  const pat = login(env, 'PAT1'), mgr = login(env, 'MGR9');
+  const base = { action: 'aprSubmit', token: pat, first: 'Anika', last: 'Pretend', type: 'Cash Collection', policy: '5009990001',
+    amount: '650', reasonCategory: 'Card problem', historySeen: true, reason: 'Her card was declined twice at the bank this week.',
+    different: 'New card issued, arriving next week; last collection.' };
+  let r = post(env, Object.assign({}, base));
+  ok('no e-mail on file and none given: the e-mail or a "has none" tick is needed', !r.ok && /client's e-mail, or a tick/.test(r.error));
+  r = post(env, Object.assign({}, base, { clientEmail: 'pat@example.com' }));
+  ok('an address on the team list is refused', !r.ok && /on our team list/.test(r.error));
+  r = post(env, Object.assign({}, base, { clientEmail: 'anika@example.com' }));
+  ok('filed and the client asked', r.ok && r.client === 'asked' && r.flags.includes('Client e-mail given by the agent, not on file'), JSON.stringify(r));
+  const sh = env.__sheets['Approval Requests'], hd = sh._grid[0], row = () => sh._grid.find(x => x[0] === r.ref);
+  ok('it waits on the client; the manager is not told yet', row()[hd.indexOf('Status')] === 'Awaiting client' &&
+     !env.__graph.some(g => /Approval request/.test(g.body.message.subject)));
+  const cm = env.__graph[0].body.message;
+  ok('the client e-mail: from support@, to the client alone, made as a draft so its id is kept',
+     env.__graph[0].id && cm.toRecipients[0].emailAddress.address === 'anika@example.com' && !cm.ccRecipients &&
+     row()[hd.indexOf('Message Id')] === env.__graph[0].id);
+  const ch = cm.body.content;
+  ok('it lists the client\'s own history and offers the cashless ways first, cash as an equal choice',
+     /4 earlier requests/.test(ch) && ch.indexOf('Pay online') < ch.indexOf('prefer my agent to collect') && /whichever you choose is fine/.test(ch));
+  ok('each choice is a signed link to the page', /\?apr=APR-261015-0001&amp;k=[\w-]{10,}&amp;c=online/.test(ch));
+  const k = ch.match(/k=([\w-]+)/)[1];
+  const page = q => env.doGet({ parameter: Object.assign({ apr: r.ref, k }, q) }).getContent();
+  ok('a forged link is refused', /expired/.test(env.doGet({ parameter: { apr: r.ref, k: 'nope', c: 'cash', go: '1' } }).getContent()));
+  ok('opening a link records nothing (mail scanners)', /<form/.test(page({ c: 'online' })) && !row()[hd.indexOf('Client Choice')]);
+
+  /* a cashless choice */
+  const n0 = env.__graph.length;
+  ok('the client chooses card: thanked, nothing collected', /sales support team will contact you/.test(page({ c: 'card', go: '1', m: 'Call after 4pm please' })));
+  ok('closed as paying another way', row()[hd.indexOf('Status')] === 'Client paying another way' && row()[hd.indexOf('Client Choice')] === 'card');
+  const sq = env.__graph.slice(n0).find(g => /^Query:/.test(g.body.message.subject));
+  ok('Sales Support gets a query, the agent copied, with the client\'s words',
+     sq && sq.body.message.toRecipients[0].emailAddress.address === 'rickyrampersadsalessupport@myguardiangroup.com' &&
+     sq.body.message.ccRecipients[0].emailAddress.address === 'pat@example.com' && /Call after 4pm/.test(sq.body.message.body.content));
+  page({ c: 'card', go: '1' });
+  ok('the same answer again tells nobody twice', env.__graph.length === n0 + 1);
+  let d = post(env, { action: 'aprDecide', token: mgr, ref: r.ref, decision: 'approve', note: 'ok' });
+  ok('a request the client moved to another way cannot be approved', !d.ok && /pay another way/.test(d.error));
+
+  /* the client insists on cash */
+  const r2 = post(env, Object.assign({}, base, { clientEmail: 'anika@example.com', amount: '600' }));
+  const row2 = () => sh._grid.find(x => x[0] === r2.ref);
+  d = post(env, { action: 'aprDecide', token: mgr, ref: r2.ref, decision: 'approve' });
+  ok('approving before the client answers needs a note', !d.ok && /not answered yet/.test(d.error));
+  const q0 = post(env, { action: 'aprQueue', token: mgr });
+  ok('the review shows it as waiting on the client', q0.waiting.some(x => x.ref === r2.ref) && !q0.open.some(x => x.ref === r2.ref));
+  const k2 = env.__graph.filter(g => g.body.message.subject.includes(r2.ref)).pop().body.message.body.content.match(/k=([\w-]+)/)[1];
+  env.doGet({ parameter: { apr: r2.ref, k: k2, c: 'cash', go: '1' } });
+  ok('cash confirmed: it moves to the manager, who is told', row2()[hd.indexOf('Status')] === 'Pending' &&
+     env.__graph.some(g => /Approval request/.test(g.body.message.subject) && /prefers collection/.test(g.body.message.body.content)));
+  d = post(env, { action: 'aprDecide', token: mgr, ref: r2.ref, decision: 'approve' });
+  const gl = env.__graph[env.__graph.length - 1], dm = gl.body.message;
+  ok('approval is a reply-all on the client\'s own e-mail (one thread)', d.ok && /on the client.s thread/.test(d.email) &&
+     dm._of === row2()[hd.indexOf('Message Id')] && dm.replyTo[0].emailAddress.address === 'support@rickyrampersadbranch.com', d.email);
+  ok('to GL Customer Service, the client, the agent and the manager copied',
+     dm.toRecipients[0].emailAddress.address === 'glcs@example.com' &&
+     dm.ccRecipients.map(x => x.emailAddress.address).join(',') === 'anika@example.com,pat@example.com,Ricky.Rampersad@myguardiangroup.com');
+  ok('subject continues the client\'s, and the e-mail says what the client answered',
+     /^Re: Your premium payment: a quick check/.test(dm.subject) && /prefer my agent to collect/.test(dm.body.content));
+  ok('the client\'s page says it is decided', /already been approved/.test(env.doGet({ parameter: { apr: r2.ref, k: k2, c: 'card' } }).getContent()));
+
+  /* without Mail.ReadWrite: no id, the reply quotes the client's e-mail instead */
+  env.__noReadWrite = true;
+  const r3 = post(env, Object.assign({}, base, { clientEmail: 'anika@example.com', amount: '550', reasonCategory: 'Internet problems' }));
+  const k3 = env.__graph.filter(g => g.body.message.subject.includes(r3.ref)).pop().body.message.body.content.match(/k=([\w-]+)/)[1];
+  env.doGet({ parameter: { apr: r3.ref, k: k3, c: 'wrong', go: '1', m: 'I pay by card already' } });
+  const q3 = post(env, { action: 'aprQueue', token: mgr }).open.find(x => x.ref === r3.ref);
+  ok('"this is not right" reaches the manager flagged, with the client\'s words', q3 && q3.flags.includes('Client says this is not right') && /pay by card already/.test(q3.clientMessage));
+  d = post(env, { action: 'aprDecide', token: mgr, ref: r3.ref, decision: 'approve', note: 'Spoke to the client; she wants it collected this once.' });
+  const m3 = env.__graph[env.__graph.length - 1].body.message;
+  ok('no Mail.ReadWrite: sent fresh, the client copied, with her e-mail quoted beneath',
+     d.ok && /wrote to the client/.test(m3.body.content) && m3.ccRecipients.some(x => x.emailAddress.address === 'anika@example.com'));
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall approvals checks pass');

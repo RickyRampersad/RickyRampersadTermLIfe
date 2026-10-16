@@ -117,6 +117,8 @@
   .st.Approved{background:rgba(74,222,128,.13);color:var(--ok)}
   .st.Declined{background:rgba(248,113,113,.13);color:var(--bad)}
   .st.More{background:rgba(251,191,36,.14);color:var(--warn)}
+  .st.Awaiting{background:rgba(169,187,207,.14);color:var(--muted)}
+  .st.Client{background:rgba(74,222,128,.13);color:var(--ok)}
   .actions{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:12px}
   @media (max-width:520px){.actions{grid-template-columns:1fr}}
   .preview{margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#eef1f5}
@@ -183,6 +185,12 @@
         <div><label for="policy">Policy number(s)</label><input id="policy" type="text" autocomplete="off"></div>
         <div id="amtBox"><label for="amount">Cash amount (TT$)</label><input id="amount" type="number" min="0" step="0.01" inputmode="decimal"></div>
       </div>
+      <div id="emailBox">
+        <label for="clientEmail">Client's e-mail: they are asked to confirm before it reaches the Branch Manager</label>
+        <input id="clientEmail" type="text" inputmode="email" autocomplete="off">
+        <div class="hint" id="emailHint"></div>
+        <label class="chk" id="noEmailBox"><input type="checkbox" id="noEmail"><span>The client has no e-mail</span></label>
+      </div>
       <label for="cat">Reason</label>
       <select id="cat"></select>
       <label for="reason">In your own words: why can the client not pay by card, online or cheque?</label>
@@ -211,6 +219,7 @@
   <section id="tab-review" hidden>
     <div id="revBanner"></div>
     <div class="card"><h2>Waiting for you</h2><div id="queue"><div class="empty"><span class="spin"></span></div></div></div>
+    <div class="card"><h2>Waiting on the client</h2><div class="hint" style="margin:-6px 0 8px">Asked to confirm or choose another way to pay. Approving before they answer needs a note.</div><div id="waiting"></div></div>
     <div class="card"><h2>Decided in the last 30 days</h2><div id="decided"></div></div>
   </section>
 </main>
@@ -239,7 +248,9 @@
     if (!iso) return ''; var n = Math.round((Date.now() - new Date(iso).getTime()) / 86400000);
     return n <= 0 ? 'today' : n === 1 ? 'yesterday' : n < 60 ? n + ' days ago' : Math.round(n / 30) + ' months ago';
   }
-  function stClass(s) { return /^More/.test(s) ? 'More' : /Approved|Declined|Pending/.test(s) ? s.split(' ')[0] : 'Pending'; }
+  var CHOICE = { online: 'Pay online or by bank transfer', card: 'Pay by credit or debit card', auto: 'Set up automatic payments',
+    help: 'Call me about another way to pay', cash: 'Prefers collection; the reason is right', wrong: 'This is not right' };
+  function stClass(s) { return /^More/.test(s) ? 'More' : /^Awaiting/.test(s) ? 'Awaiting' : /^Client/.test(s) ? 'Client' : /Approved|Declined|Pending/.test(s) ? s.split(' ')[0] : 'Pending'; }
 
   function api(action, body) {
     if (/RR_OPERATIONS_DEPLOYMENT_ID/.test(API_URL)) return Promise.reject(new Error('RR Operations is not connected yet.'));
@@ -306,6 +317,12 @@
       $('histTitle').textContent = 'Approval history — ' + r.client;
       $('c2').hidden = false; $('c3').classList.remove('dim');
       if (!$('policy').value) $('policy').value = $('pol0').value.trim();
+      var on = (r.emailOnFile || [])[0];
+      $('clientEmail').value = on || ''; $('clientEmail').readOnly = !!on; $('noEmail').checked = false;
+      $('noEmailBox').hidden = !!on;
+      $('emailHint').textContent = on ? 'On file in Salesforce. The client is e-mailed here.'
+        : (r.sf ? 'No e-mail on file in Salesforce. Enter the client\'s own address (it is flagged), or tick that they have none.'
+                : 'Enter the client\'s own address (it is flagged as given by you), or tick that they have none.');
       var has = r.history.length > 0;
       $('historyAsk').hidden = !has;
       $('seenText').textContent = has ? 'I have read the ' + r.history.length + ' earlier request' + (r.history.length === 1 ? '' : 's') +
@@ -386,11 +403,16 @@
     if (!S.hist) { $('sErr').textContent = 'Show the history first.'; return; }
     var body = { first: S.client.first, last: S.client.last, type: S.type, policy: $('policy').value.trim(),
                  amount: $('amount').value, reasonCategory: $('cat').value, reason: $('reason').value.trim(),
-                 historySeen: $('seen').checked, different: $('different').value.trim() };
+                 historySeen: $('seen').checked, different: $('different').value.trim(),
+                 clientEmail: $('clientEmail').readOnly ? '' : $('clientEmail').value.trim(), noEmail: $('noEmail').checked };
     $('sendBtn').disabled = true;
     api('aprSubmit', body).then(function (r) {
       $('result').hidden = false; $('c3').classList.add('dim');
-      $('result').innerHTML = '<div class="hint">Sent to the Branch Manager</div><div class="ref">' + esc(r.ref) + '</div>' +
+      var who = r.client === 'asked' ? 'The client has been e-mailed (' + esc(r.email) + ') to confirm. It reaches the Branch Manager when they answer, or after two working days.'
+        : r.client === 'failed' ? 'The client could not be e-mailed (' + esc(r.clientEmail) + '), so it has gone to the Branch Manager.'
+        : 'No client e-mail, so it has gone straight to the Branch Manager.';
+      $('result').innerHTML = '<div class="hint">' + (r.client === 'asked' ? 'Sent to the client to confirm' : 'Sent to the Branch Manager') +
+        '</div><div class="ref">' + esc(r.ref) + '</div><p class="hint" style="margin-bottom:8px">' + who + '</p>' +
         '<p>' + esc(S.hist.client) + ' · ' + esc(S.type) + (body.amount && S.type === 'Cash Collection' ? ' · ' + esc(money(body.amount)) : '') + '</p>' +
         (r.flags.length ? '<div style="margin-top:8px">' + r.flags.map(function (f) { return '<span class="tag warn">' + esc(f) + '</span>'; }).join('') +
           '</div><div class="hint">The Branch Manager sees these beside your reason.</div>' : '') +
@@ -403,7 +425,8 @@
       .then(function () { $('sendBtn').disabled = false; });
   });
   function reset() {
-    ['first', 'last', 'pol0', 'policy', 'amount', 'reason', 'different'].forEach(function (id) { $(id).value = ''; });
+    ['first', 'last', 'pol0', 'policy', 'amount', 'reason', 'different', 'clientEmail'].forEach(function (id) { $(id).value = ''; });
+    $('clientEmail').readOnly = false; $('noEmail').checked = false;
     $('cat').value = ''; $('seen').checked = false; S.hist = null;
     $('c2').hidden = true; $('c3').classList.add('dim'); $('result').hidden = true; counters();
     window.scrollTo({ top: 0, behavior: 'smooth' }); $('first').focus();
@@ -420,6 +443,8 @@
         var info = x.status === 'More info needed';
         return '<div class="req"><div class="l1"><b>' + esc(x.first + ' ' + x.last) + '</b><span class="st ' + stClass(x.status) + '">' + esc(x.status) + '</span></div>' +
           '<div class="meta">' + esc(x.ref) + ' · ' + esc(x.type) + (x.amount ? ' · ' + esc(money(x.amount)) : '') + ' · ' + esc(day(x.at)) + '</div>' +
+          (x.clientChoice ? '<div class="quote"><small>THE CLIENT ANSWERED</small>' + esc(CHOICE[x.clientChoice] || x.clientChoice) +
+            (x.clientMessage ? ': "' + esc(x.clientMessage) + '"' : '') + '</div>' : x.status === 'Awaiting client' ? '<div class="hint">Waiting for the client\'s answer (' + esc(x.clientEmail) + ').</div>' : '') +
           (x.note ? '<div class="quote"><small>' + (info ? 'THE BRANCH MANAGER ASKS' : 'NOTE FROM ' + esc(String(x.decidedBy).toUpperCase())) + '</small>' + esc(x.note) + '</div>' : '') +
           (x.reply ? '<div class="quote"><small>YOUR ANSWER</small>' + esc(x.reply).replace(/\n/g, '<br>') + '</div>' : '') +
           (info ? '<label for="rp-' + esc(x.ref) + '">Your answer</label><textarea id="rp-' + esc(x.ref) + '"></textarea>' +
@@ -441,19 +466,26 @@
     if (!quiet) $('queue').innerHTML = '<div class="empty"><span class="spin"></span> Reading the requests and every client\'s history…</div>';
     api('aprQueue').then(function (r) {
       S.queue = r;
-      var pend = r.open.filter(function (x) { return x.status === 'Pending'; }).length;
+      var pend = r.open.filter(function (x) { return x.status === 'Pending'; }).length +
+        (r.waiting || []).filter(function (x) { return x.waitingDays >= r.waitDays; }).length;
       $('reviewCount').hidden = !pend; $('reviewCount').textContent = pend;
       $('revBanner').innerHTML = (!r.glSet ? '<div class="banner">GL Customer Service\'s address is not set yet (APR_GL_CS_TO). ' +
         (r.mode === 'live' ? 'Approval is refused until it is.' : 'In test mode every e-mail goes to the test inbox.') + '</div>' : '') +
         (r.msSet === false ? '<div class="banner">Sending from ' + esc(r.from || 'support@') + ' is not set up yet (MS_TENANT, MS_CLIENT, MS_SECRET). ' +
         (r.mode === 'live' ? 'Approval is refused until it is.' : 'Test copies come from Gmail meanwhile.') + '</div>' : '');
       if (quiet && $('tab-review').hidden) return;
-      $('queue').innerHTML = r.open.length ? r.open.map(reviewCard).join('') : '<div class="empty">Nothing waiting. Every request has been decided.</div>';
-      r.open.forEach(function (x) {
+      $('queue').innerHTML = r.open.length ? r.open.map(reviewCard).join('') : ((r.waiting || []).some(function (x) { return x.waitingDays >= r.waitDays; }) ? '' : '<div class="empty">Nothing waiting for you.</div>');
+      var late = (r.waiting || []).filter(function (x) { return x.waitingDays >= r.waitDays; });
+      var still = (r.waiting || []).filter(function (x) { return x.waitingDays < r.waitDays; });
+      if (late.length) $('queue').innerHTML = late.map(reviewCard).join('') + (r.open.length ? $('queue').innerHTML : '');
+      $('waiting').innerHTML = still.length ? still.map(reviewCard).join('') : '<div class="empty">No one waiting.</div>';
+      r.open.concat(r.waiting || []).forEach(function (x) {
         renderHistory({ history: x.history, summary: x.summary, flags: [] }, $('h-' + x.ref), { forManager: true, limit: 8 });
       });
       wireReview();
       $('decided').innerHTML = r.done.length ? r.done.map(function (x) {
+        if (x.status === 'Client paying another way') return '<div class="req"><div class="l1"><b>' + esc(x.first + ' ' + x.last) + '</b><span class="st Client">Paying another way</span></div>' +
+          '<div class="meta">' + esc(x.ref) + ' · ' + esc(x.agent) + ' · chose: ' + esc(CHOICE[x.clientChoice] || x.clientChoice) + ' · Sales Support: ' + esc(x.salesTold) + '</div></div>';
         return '<div class="req"><div class="l1"><b>' + esc(x.first + ' ' + x.last) + '</b><span class="st ' + stClass(x.status) + '">' + esc(x.status) + '</span></div>' +
           '<div class="meta">' + esc(x.ref) + ' · ' + esc(x.agent) + ' · ' + esc(x.type) + (x.amount ? ' · ' + esc(money(x.amount)) : '') +
           ' · decided ' + esc(day(x.decidedAt)) + (x.template ? ' · ' + esc(x.template) + ' e-mail: ' + esc(x.glEmail) : '') + '</div></div>';
@@ -462,7 +494,9 @@
     }).catch(function (e) { if (!quiet) $('queue').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; });
   }
   function reviewCard(x) {
-    var flags = x.flags.length ? x.flags.map(function (f) { return '<span class="tag bad">' + esc(f) + '</span>'; }).join('')
+    var fl = x.flags.slice();
+    if (x.status === 'Awaiting client') fl.unshift(x.waitingDays >= (S.queue ? S.queue.waitDays : 2) ? 'No answer from the client in ' + x.waitingDays + ' working days' : 'Client asked ' + (x.waitingDays ? x.waitingDays + ' working day' + (x.waitingDays === 1 ? '' : 's') + ' ago' : 'today'));
+    var flags = fl.length ? fl.map(function (f) { return '<span class="tag ' + (/^Client asked/.test(f) ? 'mute' : 'bad') + '">' + esc(f) + '</span>'; }).join('')
       : '<span class="tag ok">No flags</span>';
     return '<div class="req" id="r-' + esc(x.ref) + '">' +
       '<div class="l1"><b>' + esc(x.first + ' ' + x.last) + '</b><span class="st ' + stClass(x.status) + '">' + esc(x.status) + '</span></div>' +
@@ -471,6 +505,9 @@
       '<div style="margin-top:6px">' + flags + '</div>' +
       '<div class="quote"><small>' + esc(String(x.category).toUpperCase()) + ' · THE AGENT\'S REASON</small>' + esc(x.reason) + '</div>' +
       (x.different ? '<div class="quote"><small>WHAT IS DIFFERENT THIS TIME</small>' + esc(x.different) + '</div>' : '') +
+      (x.clientChoice ? '<div class="quote" style="border-left-color:var(--ok)"><small>THE CLIENT ANSWERED · ' + esc(day(x.clientAt)) + '</small>' +
+        esc(CHOICE[x.clientChoice] || x.clientChoice) + (x.clientMessage ? ': "' + esc(x.clientMessage) + '"' : '') + '</div>'
+        : '<div class="hint">' + (x.clientEmail ? 'Client e-mail ' + esc(x.clientEmail) + ' (' + esc(x.clientSource) + ')' : 'No client e-mail: the client was not asked') + '</div>') +
       (x.note ? '<div class="quote"><small>YOU ASKED</small>' + esc(x.note) + '</div>' : '') +
       (x.reply ? '<div class="quote"><small>THE AGENT ANSWERED</small>' + esc(x.reply).replace(/\n/g, '<br>') + '</div>' : '') +
       '<details' + (x.history.length ? ' open' : '') + '><summary>History: ' + (x.history.length ? x.history.length + ' earlier request' + (x.history.length === 1 ? '' : 's') : 'none, first request') + '</summary>' +
@@ -486,19 +523,20 @@
       '</div><div class="err" id="e-' + esc(x.ref) + '" role="alert"></div></div>';
   }
   function wireReview() {
-    $('queue').querySelectorAll('[data-prev]').forEach(function (b) {
+    document.querySelectorAll('#queue [data-prev], #waiting [data-prev]').forEach(function (b) {
       b.addEventListener('click', function () {
         var ref = b.getAttribute('data-prev'), box = $('p-' + ref);
         if (!box.hidden) { box.hidden = true; return; }
         b.disabled = true;
         api('aprPreview', { ref: ref, note: $('n-' + ref).value }).then(function (r) {
           box.hidden = false;
-          box.innerHTML = '<div class="to">To: ' + esc(r.to) + ' · ' + esc(r.template) + ' template<br>Subject: ' + esc(r.subject) + '</div><iframe title="E-mail preview" sandbox=""></iframe>';
+          box.innerHTML = '<div class="to">To: ' + esc(r.to) + ' · copied: ' + esc(r.cc) + ' · ' + esc(r.template) + ' template' +
+            (r.thread ? ' · as a reply on the client\'s e-mail' : '') + '<br>Subject: ' + esc(r.subject) + '</div><iframe title="E-mail preview" sandbox=""></iframe>';
           box.querySelector('iframe').srcdoc = r.html;
         }).catch(function (e) { $('e-' + ref).textContent = e.message; }).then(function () { b.disabled = false; });
       });
     });
-    $('queue').querySelectorAll('[data-dec]').forEach(function (b) {
+    document.querySelectorAll('#queue [data-dec], #waiting [data-dec]').forEach(function (b) {
       b.addEventListener('click', function () {
         var ref = b.getAttribute('data-ref'), dec = b.getAttribute('data-dec'), note = $('n-' + ref).value.trim();
         $('e-' + ref).textContent = '';
