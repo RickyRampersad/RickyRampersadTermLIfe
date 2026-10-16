@@ -734,8 +734,11 @@ var ESSAY_GUIDE_ASK = {
   idea:  'Stage 3 asks the student to sort their moments into three kinds of fear, to say in one sentence what the writer is saying about fear, and to write a thesis. As points give: three or four sensible ways to group the fear into three kinds (title = the three kinds; detail = which moments belong in each); two or three one-sentence statements of what the writer is saying about fear; and three model thesis statements of different strength, each titled strong, adequate or weak, with why. Under watch, the commonest problems with a thesis on this story.',
   plan:  'Stage 4 asks for a plan: hook, context and thesis for the introduction; point, evidence, technique, effect and link for each of three body paragraphs; restate and so-what for the conclusion. As points, give one complete model plan, one point per paragraph (title = the paragraph; detail = its notes, labelled). Under watch, what to check in a student\'s plan.',
   write: 'Stage 5 is the writing. As points give: what a strong introduction, a strong body paragraph and a strong conclusion do on this question (one point each), and one model body paragraph of about 150 words on one kind of fear (title = "A model body paragraph"; detail = the paragraph). Under watch, the commonest weaknesses in students\' paragraphs on this story.',
-  hand:  'Stage 6 is the final check. As points, set out how to judge the finished essay under these headings, one point each: knowledge of the story, analysis of the writer\'s methods, use of evidence, organisation, expression; for each, what separates a strong essay from an adequate one on this story. In the summary, say plainly that this is a guide for the teacher, not the official CSEC mark scheme. Under watch, the slips to look for last.'
+  hand:  'Stage 6 is the final check. As points, set out how to judge the finished essay under these headings, one point each: knowledge of the story, analysis of the writer\'s methods, use of evidence, organisation, expression; for each, what separates a strong essay from an adequate one on this story. In the summary, say plainly that this is a guide for the teacher, not the official CSEC mark scheme. Under watch, the slips to look for last.',
+  // Not a stage: the whole essay, asked for on 16 October 2026 ("where is the essay?").
+  essay: 'Write one complete model essay answering the question, as a very strong CSEC English B student could write it in an examination: five paragraphs, about 600 to 750 words in all. As points, give the five paragraphs in order, one point each, titled Introduction, Body paragraph 1, Body paragraph 2, Body paragraph 3 and Conclusion, with the paragraph itself as the detail. The introduction ends on a clear thesis naming three kinds of fear; each body paragraph makes one point, supports it with evidence from the story, names the writer\'s technique, explains its effect and links back to the thesis; the conclusion draws the three together and says what the story shows about fear. Use quotation marks only around words the summary quotes; otherwise refer to the moment in your own words. In the summary, give the thesis it argues in one sentence and say it is one strong answer among several, not the only one. Under watch, four to six things this essay does that earn marks and that a student\'s essay can be read against.'
 };
+var ESSAY_GUIDE_EXTRA = { essay: 'A model essay' };   // answers that are not a stage of the notebook
 function eguideAsk_(stage) {
   if (stage !== 'why') return ESSAY_GUIDE_ASK[stage];
   var qs = Object.keys(ESSAY_WHY).map(function (k, i) { return String.fromCharCode(65 + i) + '. ' + ESSAY_WHY[k]; }).join('\n');
@@ -755,7 +758,7 @@ var ESSAY_GUIDE_SCHEMA = {
 /* The answer guide for one stage, made once per class and kept; "make it again" replaces it. */
 function essayGuide_(b) {
   var t = eteacher_(b.token), stage = String(b.stage || '');
-  if (!ESSAY_STAGES[stage]) return eerr_('Which stage?');
+  if (!ESSAY_STAGES[stage] && !ESSAY_GUIDE_EXTRA[stage]) return eerr_('Which stage?');
   var sh = eguideSheet_(), hit = null;
   erows_(ESSAY.GUIDE).forEach(function (r) { if (elow_(r['class']) === elow_(t.cls) && String(r.stage) === stage) hit = r; });
   if (hit && !b.fresh) {

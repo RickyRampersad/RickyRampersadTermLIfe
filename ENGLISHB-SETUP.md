@@ -55,7 +55,10 @@ Signs in at the teacher door with the teacher code, then:
   *Answers for every stage* on the class page: what a careful student should find and
   say at that stage, the Ask-why questions answered one by one, ways to group the fear,
   model theses of different strength, a model plan, a model body paragraph, and how to
-  judge the finished essay. The coach writes each stage's answers the first time they
+  judge the finished essay. **A model essay** sits beside the six stages: one whole
+  five-paragraph answer to the class's question, about 600 to 750 words, with its thesis
+  and what earns its marks, to read a student's essay against (asked for the same
+  evening: "where is the essay?"). The coach writes each stage's answers the first time they
   are asked for and keeps them on the Essay Guide tab for the class; *Write it again*
   replaces them. They quote the story only where the summary does, so a quotation is
   checked against the book before it is used.
@@ -106,7 +109,7 @@ Later changes to the script: paste, then Deploy → Manage deployments → penci
 | Essay Coach | At, Id, Stage, Who, Text | Every question and every answer. |
 | Essay Classes | Class, Question, Due, Coach Notes, Updated | One row per class. |
 | Essay Activity | At, Who, Did, Note | Sign-ins, refused codes, hand-ins, returns, new codes, answer guides and full reviews written. Never a code. |
-| Essay Guide | Class, Stage, Updated, Guide | The answers for each stage, one row per class and stage, for the teacher only. Made by setup, or the first time a teacher asks if setup ran before 16 October 2026. |
+| Essay Guide | Class, Stage, Updated, Guide | The answers for each stage and the model essay (Stage `essay`), one row per class and stage, for the teacher only. Made by setup, or the first time a teacher asks if setup ran before 16 October 2026. |
 
 ## What is kept
 
