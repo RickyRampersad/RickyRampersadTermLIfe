@@ -6836,7 +6836,7 @@ function tIntroBuild_(c, agent, test, pv) {
       '<div style="font-size:12px;color:' + mute + '">' + esc(t[1]) + '</div></div></td>';
   };
   var initials = String(pv.shown).split(/\s+/).filter(Boolean).map(function (x) { return x.charAt(0); }).join('').slice(0, 2).toUpperCase();
-  var avatar = pv.photo ? '<img src="' + esc(pv.photo) + '" width="68" height="68" alt="" style="display:block;width:68px;height:68px;border-radius:50%;border:3px solid ' + T.band + ';object-fit:cover">'
+  var avatar = pv.photo ? '<img src="' + esc(pv.photo) + '" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:50%;border:3px solid ' + T.band + ';object-fit:cover">'
     : '<div style="width:64px;height:64px;border-radius:50%;background:#dfe7ef;border:3px solid ' + T.band + ';text-align:center;font:800 22px/64px ' + font + ';color:' + navy + '">' + esc(initials) + '</div>';
   var contact = [];
   if (pv.show.phone) contact.push('<a href="tel:' + esc(pv.show.phone.replace(/[^\d+]/g, '')) + '" style="color:' + teal + ';font-weight:700;text-decoration:none">' + esc(pv.show.phone) + '</a>');
@@ -6848,10 +6848,10 @@ function tIntroBuild_(c, agent, test, pv) {
   var card = '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid ' + rule + ';border-radius:14px;border-collapse:separate;background:#ffffff">' +
     (T.ribbon ? '<tr><td style="background:' + (T.band === gold ? '#fff7df' : '#e6fbff') + ';border-radius:14px 14px 0 0;padding:8px 20px;font:800 12.5px ' + font + ';color:' + (T.band === gold ? '#7a5a12' : teal) + ';letter-spacing:.3px">' + esc(T.ribbon.toUpperCase()) + '</td></tr>' : '') +
     '<tr><td style="padding:18px 20px 6px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
-    '<td style="width:82px;vertical-align:top">' + avatar + '</td><td style="vertical-align:top">' +
+    '<td style="width:70px;padding-right:14px;vertical-align:top">' + avatar + '</td><td style="vertical-align:top">' +
     '<div style="font:800 20px ' + font + ';color:' + ink + '">' + esc(pv.shown) + '</div>' +
     '<div style="color:' + mute + ';font-size:13.5px">' + esc(pv.title || 'Your agent') + ' · Ricky Rampersad Branch</div>' +
-    (contact.length ? '<div style="margin-top:6px;font-size:14px">' + contact.join(' &nbsp;·&nbsp; ') + '</div>' : '') +
+    (contact.length ? '<div style="margin-top:6px;font-size:14px;overflow-wrap:anywhere;word-break:break-word">' + contact.join(' &nbsp;·&nbsp; ') + '</div>' : '') +   // a long address wraps on a phone
     '</td></tr></table></td></tr>' +
     (tiles.length ? '<tr><td style="padding:8px 16px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>' + tiles.map(tile).join('') + '</tr></table>' +
       '<div style="font-size:11px;color:#8a97a8;padding:2px 6px 0">The dates are from Guardian Life\'s own agent record.</div></td></tr>' : '') +
