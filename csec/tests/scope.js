@@ -10,7 +10,10 @@ const B='http://127.0.0.1:8899/csec/';
 const errs=[]; let pass=0;
 const step=async(n,f)=>{try{await f();console.log('✓ '+n);pass++;}catch(e){console.log('✗ '+n+' — '+e.message);errs.push(n+': '+e.message);}};
 
-const LEAK=/\bCSEC\b|\bCXC\b|\bSBA\b|\bForms? [1-5]\b|\bForm [1-5]\b|lower secondary|upper secondary|\bO'?Levels?\b/i;
+/* The acronyms are matched in capitals only: the address is rickyrampersadbranch.com/csec
+   and stays, and a lowercase "csec" in a URL is not a word a parent reads as the exam. */
+const LEAKS=[/\bCSEC\b/, /\bCXC\b/, /\bSBA\b/, /\bForms? [1-5]\b/i, /lower secondary|upper secondary/i, /\bO'?Levels?\b/i];
+const firstLeak=(s)=>{ for(const re of LEAKS){ const m=s.match(re); if(m) return m; } return null; };
 
 const visible=async(pg)=>pg.evaluate(()=>({
   title:document.title,
@@ -21,9 +24,9 @@ const visible=async(pg)=>pg.evaluate(()=>({
 
 const leaks=(v)=>{
   const out=[];
-  [['title',v.title],['description',v.desc],['og:description',v.og]].forEach(([k,s])=>{ const m=s.match(LEAK); if(m) out.push(k+': "'+m[0]+'"'); });
+  [['title',v.title],['description',v.desc],['og:description',v.og]].forEach(([k,s])=>{ const m=firstLeak(s); if(m) out.push(k+': "'+m[0]+'"'); });
   const lines=v.text.split('\n').map(l=>l.trim()).filter(Boolean);
-  lines.forEach(l=>{ const m=l.match(LEAK); if(m) out.push('"'+l.slice(0,90)+'"'); });
+  lines.forEach(l=>{ const m=firstLeak(l); if(m) out.push('"'+l.slice(0,90)+'"'); });
   return out;
 };
 
@@ -122,7 +125,7 @@ const asRole=async(pg,role)=>{
     await pg.goto('http://127.0.0.1:8899/index.html',{waitUntil:'networkidle'});
     const t=await pg.evaluate(()=>{ const a=document.querySelector('a[href="csec/start.html"]'); return a?a.innerText:''; });
     if(!t) throw new Error('no tile links to csec/start.html');
-    const m=t.match(LEAK); if(m) throw new Error('tile says "'+m[0]+'": '+t.slice(0,100));
+    const m=firstLeak(t); if(m) throw new Error('tile says "'+m[0]+'": '+t.slice(0,100));
     if(!/SEA/.test(t)) throw new Error('tile does not say SEA');
   });
 

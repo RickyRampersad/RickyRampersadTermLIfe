@@ -88,7 +88,7 @@ window.CSEC_CURRICULUM = {
     },
     'p-science': {
       name:'Science', short:'Science', icon:'\u{1F52C}', group:'Primary', stage:'primary',
-      blurb:'The primary science curriculum. Not tested at SEA, but it builds Form 1.',
+      blurb:'The primary science curriculum. Not tested at SEA, but secondary school builds on it.',
       papers:'School assessment',
       strands:[
         { id:'ps-living', name:'Living Things',        levels:[1,2,3,4,5], note:'Plants, animals, habitats, life cycles, classification.' },
@@ -543,8 +543,8 @@ window.CSEC_CURRICULUM = {
           do:['Complete every remaining maths strand','Drill spelling, punctuation and grammar daily','Read a passage and answer under time'] },
         { n:2, title:'Papers, to time, every week', aim:'Turn knowledge into marks under pressure. SEA is written this term.',
           do:['A full past paper every week, marked properly','Practise the writing paper — one item, two markers','Sleep properly in the week before'] },
-        { n:3, title:'After SEA', aim:'Keep reading, and get ready for Form 1.',
-          do:['Keep reading daily — the habit is the point','Look at what Form 1 will bring','Rest. This year was hard.'] }
+        { n:3, title:'After SEA', aim:'Keep reading, and get ready for secondary school.',
+          do:['Keep reading daily — the habit is the point','Look at what secondary school will bring','Rest. This year was hard.'] }
       ],
       milestones:[
         { term:2, what:'SEA examination', why:'Written in March. Three papers — Mathematics, English Language Arts, and ELA Writing — in one morning. The mark decides secondary school placement.' }
