@@ -3438,7 +3438,8 @@ has the steps.
 - **A hand-in is final until the teacher returns it**, enforced in the script (`elocked_`), never by the page alone.
 - **The answers and the full review are the teacher's alone** (16 October 2026: "allow the teacher to do the full review
   and answers"). `essay.guide` writes what a careful student should find and say at each stage (model theses, a model
-  plan, a model paragraph), kept per class and stage on the Essay Guide tab; `essay.fullreview` scores one student's
+  plan, a model paragraph) and, as stage `essay` (`ESSAY_GUIDE_EXTRA`, asked for as "where is the essay?"), one whole
+  five-paragraph model essay, all kept per class and stage on the Essay Guide tab; `essay.fullreview` scores one student's
   work on five criteria out of 25, paragraph by paragraph, with a note per stage the teacher may pass on with *Use as my
   note*. Both are written by Claude at the teacher's request and live only on the private sheet. Both routes refuse a
   student's code, and `essaySession_` strips `review.full` from a student's sign-in. Never write model answers into the

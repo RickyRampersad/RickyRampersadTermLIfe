@@ -264,7 +264,7 @@ const body130 = 'Wickham shows fear through “spectral light” and ' + Array.f
   await tp.click('[data-act="t-back"]');
   await tp.waitForSelector('.scard');
   await shot(tp, 'teacher-class');
-  ok('the class page offers the answers for every stage', await tp.locator('[data-act="t-guideview"]').count() === 6);
+  ok('the class page offers the answers for every stage, and a model essay', await tp.locator('[data-act="t-guideview"]').count() === 7);
   await tp.click('[data-act="t-guideview"][data-stage="plan"]');
   await tp.waitForSelector('#guide-plan .gpt');
   ok('one press opens a stage’s answers, written there and then', /Answers for every stage/.test(await tp.textContent('.tpage h1')) &&
@@ -273,6 +273,11 @@ const body130 = 'Wickham shows fear through “spectral light” and ' + Array.f
   await tp.click('.ttabs [data-act="t-guideview"][data-stage="find"]');
   await tp.waitForSelector('#guide-find .gpt');
   ok('answers already written open again without asking the coach', sent.length === before);
+  await tp.click('.ttabs [data-act="t-guideview"][data-stage="essay"]');
+  await tp.waitForSelector('#guide-essay .model');
+  ok('the model essay reads as an essay, paragraph by paragraph, with its length', /A model essay/.test(await tp.textContent('#guide-essay h2')) &&
+     await tp.locator('#guide-essay .model p').count() >= 2 && /\d+ words/.test(await tp.textContent('#guide-essay .model')));
+  await shot(tp, 'teacher-model-essay');
   await tp.click('[data-act="t-guideback"]');
   await tp.waitForSelector('.scard');
   ok('and the way back is to the class', /Your class/.test(await tp.textContent('.tpage h1')));

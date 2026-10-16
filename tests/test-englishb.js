@@ -300,11 +300,20 @@ const g3 = post({ action: 'essay.guide', token: T.token, stage: 'why', fresh: tr
 ok('“write it again” asks afresh and replaces it, one row still', g3.ok && g3.kept === false && sent.length === n0 + 1 &&
    g3.guide.points.length === 4 && tab('Essay Guide').length === 2);
 next = say(guideJSON(3));
+next = say(JSON.stringify({ summary: 'Thesis: fear kept secret turns to hate.', watch: ['a clear thesis'],
+  points: ['Introduction', 'Body paragraph 1', 'Body paragraph 2', 'Body paragraph 3', 'Conclusion'].map(t => ({ title: t, detail: 'MODEL-ESSAY ' + words(130) })) }));
+const ge = post({ action: 'essay.guide', token: T.token, stage: 'essay' });
+ok('the answers include a whole model essay, five paragraphs, asked for as one', ge.ok && ge.guide.points.length === 5 &&
+   /complete model essay/.test(sent[sent.length - 1].body.messages[0].content) && /five paragraphs/.test(sent[sent.length - 1].body.messages[0].content));
+ok('it is kept like a stage’s answers, and a student cannot ask for it', tab('Essay Guide').some(r => r[1] === 'essay') &&
+   /for the teacher/.test(post({ action: 'essay.guide', token: A.token, stage: 'essay' }).error) &&
+   !JSON.stringify(post({ action: 'essay.load', token: A.token })).includes('MODEL-ESSAY'));
+next = say(guideJSON(3));
 const og = post({ action: 'essay.guide', token: O.token, stage: 'why' });
-ok('another class gets its own answers, never this one’s', og.ok && og.kept === false && tab('Essay Guide').length === 3);
+ok('another class gets its own answers, never this one’s', og.ok && og.kept === false && tab('Essay Guide').length === 4);
 next = say('not json');
 ok('a garbled answer is a sentence, and nothing is kept', /garbled/.test(post({ action: 'essay.guide', token: T.token, stage: 'plan' }).error) &&
-   tab('Essay Guide').length === 3);
+   tab('Essay Guide').length === 4);
 delete props.ANTHROPIC_API_KEY;
 ok('without the key, a stage not yet written says how to switch it on', /ANTHROPIC_API_KEY/.test(post({ action: 'essay.guide', token: T.token, stage: 'plan' }).error));
 ok('but answers already written still open', post({ action: 'essay.guide', token: T.token, stage: 'why' }).ok);

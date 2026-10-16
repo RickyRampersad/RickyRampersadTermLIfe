@@ -332,6 +332,9 @@ details.model ul{margin:.2rem 0 .8rem;padding-left:1.1rem;font-size:14px}
 .toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;background:var(--navy);color:#fff;
   border-radius:10px;padding:.6rem 1rem;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
 .gpts{display:grid;gap:.75rem}
+.model{max-width:72ch}
+.model .label{display:block;margin-top:1rem}
+.model p{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:.25rem;line-height:1.7}
 .gpt{border-left:3px solid var(--teal);padding:.15rem 0 .15rem .8rem}
 .gpt b{display:block}
 .gpt p{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:.2rem}
@@ -1202,8 +1205,9 @@ function teacherClassHTML(){
     <section class="card">
       <p class="forme">For you only</p>
       <h2>Answers for every stage</h2>
-      <p class="muted">What a careful student should find and say at each stage, with model theses, a model plan and a model paragraph. Students never see these.</p>
-      <div class="row">${STAGES.map((st, i) => `<button class="btn" data-act="t-guideview" data-stage="${st.k}">${i + 1}. ${esc(st.title)}</button>`).join("")}</div>
+      <p class="muted">What a careful student should find and say at each stage, with model theses, a model plan, and a whole model essay. Students never see these.</p>
+      <div class="row">${STAGES.map((st, i) => `<button class="btn" data-act="t-guideview" data-stage="${st.k}">${i + 1}. ${esc(st.title)}</button>`).join("")}
+        <button class="btn navy" data-act="t-guideview" data-stage="essay">${esc(GUIDE_EXTRA.essay)}</button></div>
     </section>
     <section class="card">
       <h2>The essay question</h2>
@@ -1251,15 +1255,19 @@ function noteBoxHTML(s, k){
 /* ---- for the teacher only: the answer guide and the full review ----
    Both come from the workshop's backend behind the teacher's code, and neither is ever
    in this page's source or in anything a student's sign-in receives. */
+const GUIDE_EXTRA = {essay: "A model essay"};   // answers that are not a stage
 function guideInner(k){
-  const g = S.t.guides[k], busy = S.t.busy["g:" + k], err = S.t.gerr[k], title = STAGES[SI[k]].title;
-  let h = `<p class="forme">For you only · students never see this</p><h2 class="h3">Answers for “${esc(title)}”</h2>`;
-  if (busy) return h + `<p class="muted">Writing the answers for this stage. The first time takes up to a minute.</p>`;
+  const g = S.t.guides[k], busy = S.t.busy["g:" + k], err = S.t.gerr[k], isEssay = k === "essay";
+  let h = `<p class="forme">For you only · students never see this</p><h2 class="h3">${isEssay ? "A model essay" : `Answers for “${esc(STAGES[SI[k]].title)}”`}</h2>`;
+  if (busy) return h + `<p class="muted">${isEssay ? "Writing the whole essay." : "Writing the answers for this stage."} The first time takes up to a minute.</p>`;
   if (err) h += `<p class="cnote" style="padding:0">${esc(err)}</p>`;
-  if (!g) return h + `<p><button class="btn navy" data-act="t-guide" data-stage="${k}">Show the answers for this stage</button></p>`;
+  if (!g) return h + `<p><button class="btn navy" data-act="t-guide" data-stage="${k}">${isEssay ? "Show the model essay" : "Show the answers for this stage"}</button></p>`;
+  const words = isEssay ? (g.points || []).reduce((a, p) => a + wc(p.detail), 0) : 0;
   return h + (g.summary ? `<p>${esc(g.summary)}</p>` : "") +
-    `<div class="gpts">${(g.points || []).map(p => `<div class="gpt"><b>${esc(p.title)}</b><p>${esc(p.detail)}</p></div>`).join("")}</div>` +
-    ((g.watch || []).length ? `<div><span class="label">Watch for</span><ul>${g.watch.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "") +
+    (isEssay
+      ? `<div class="model">${(g.points || []).map(p => `<span class="label">${esc(p.title)}</span><p>${esc(p.detail)}</p>`).join("")}<p class="small muted">${plural(words, "word")}</p></div>`
+      : `<div class="gpts">${(g.points || []).map(p => `<div class="gpt"><b>${esc(p.title)}</b><p>${esc(p.detail)}</p></div>`).join("")}</div>`) +
+    ((g.watch || []).length ? `<div><span class="label">${isEssay ? "What earns the marks" : "Watch for"}</span><ul>${g.watch.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "") +
     `<p class="small muted">Written by the coach ${esc(when(g.at))} from a summary of the story. Check any quotation against the book.
       <button class="link" data-act="t-guide" data-stage="${k}" data-fresh="1">Write it again</button></p>`;
 }
@@ -1268,7 +1276,7 @@ function teacherGuideHTML(){
   if (!S.t.guides[k] && !S.t.busy["g:" + k] && !S.t.gerr[k]) setTimeout(() => fetchGuide(k, false), 0);
   return `<div><button class="link" data-act="t-guideback">← Your class</button></div>
     <div class="thead"><div><p class="eyebrow">Teacher · ${esc(S.cls.name || "")}</p><h1>Answers for every stage</h1></div></div>
-    <nav class="ttabs" aria-label="Stages">${STAGES.map((st, i) => `<button class="${k === st.k ? "on" : ""}" data-act="t-guideview" data-stage="${st.k}">${i + 1}. ${esc(st.title)}</button>`).join("")}</nav>
+    <nav class="ttabs" aria-label="Stages">${STAGES.map((st, i) => `<button class="${k === st.k ? "on" : ""}" data-act="t-guideview" data-stage="${st.k}">${i + 1}. ${esc(st.title)}</button>`).join("")}<button class="${k === "essay" ? "on" : ""}" data-act="t-guideview" data-stage="essay">${esc(GUIDE_EXTRA.essay)}</button></nav>
     <section class="card" id="guide-${k}">${guideInner(k)}</section>`;
 }
 async function fetchGuide(k, fresh){
