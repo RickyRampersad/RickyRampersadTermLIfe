@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16d';
+var SCRIPT_VERSION = '2026-10-16e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4189,6 +4189,7 @@ function sendBranchManagerDay_(day) {
       { value: sfOk ? w.ignored.length : '—', label: 'your instructions, no note', color: w.ignored.length ? MAIL.red : MAIL.navy }
     ]) + answer +
     bmBranchCards_(day) +
+    bmFFCard_(day) +
     sectionLabel_('The team this morning') + teamTable +
     '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Closed yesterday and closed with the owner\'s own note. A closed task without a note is not closed.</div>' +
     sectionLabel_('Waiting on your Chatter (' + w.ask.length + ')') +
@@ -4528,6 +4529,7 @@ function sendUnitManagerMorning_(sid, day) {
     }).join('') + (agentTable ? sectionLabel_('By agent') + agentTable : '')
          : '<div style="font-size:13px;color:' + MAIL.muted + '">Salesforce did not answer this morning, so the unit is not listed.</div>') +
     umLetters_(sid, day) +
+    umFFCard_(sid, day) +
     sectionLabel_('Your day as a manager') +
     '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:10px 15px;font-size:13px;line-height:1.6">' +
       UM_CHECKS.map(function (c) { return '<div>&#9675; ' + esc_(c.q) + '</div>'; }).join('') +
@@ -5143,6 +5145,58 @@ function bmBranchCards_(day) {
     out += srcCard_('Mailbag', MAIL.navy, ['<b>' + esc_(nameFor_(rt.router).split(' ')[0]) + '</b> routes it this week · <b>' + mb.backlogN + '</b> logged and not sent' + (mb.oldest ? ', oldest ' + esc_(shortDate_(mb.oldest)) : '')], '');
   } catch (e) {}
   return out;
+}
+/* ─────────── Fact finds and goals, for the managers (16 Oct 2026) ───────────
+ *  Ricky: the agents' FactFind360 work and FY27 goals feed the agents' own
+ *  mornings; the Unit Manager sees his unit's, the Branch Manager the branch's,
+ *  so each can guide in the morning and comment to Chatter. */
+function teamFFCard_(names, title, day, limit) {
+  var feed = null; try { feed = ff360Feed_(); } catch (e) {}
+  var sb = {}; try { sb = skillBank_(); } catch (e) {}
+  var codeOf = function (n) { var p = sb[bkNk_(n)]; return p && p.code ? String(p.code) : ''; };
+  var rows = [], noPlan = [], noFF = [], behind = [], help = [];
+  (names || []).forEach(function (n) {
+    if (!n) return;
+    var f = ff360Agent_(feed, [n]) || { week: 0, month: 0, year: 0, pickedUp: 0, known: false };
+    var g = null; try { g = goalFor_(n, codeOf(n)); } catch (e) {}
+    var first = String(n).split(' ')[0];
+    if (!g) noPlan.push(first);
+    if (feed && !f.week) noFF.push(first);
+    if (g && g.paceApi && f.pickedUp < g.paceApi) behind.push(first);
+    if (g && g.last && (g.last.help || g.last.way)) help.push('<b>' + esc_(first) + '</b>: ' + esc_(shorten_(g.last.help || g.last.way, 70)));
+    rows.push({ n: n, f: f, g: g });
+  });
+  if (!rows.length) return '';
+  rows.sort(function (a, b) { return (b.f.month - a.f.month) || (b.f.year - a.f.year); });
+  var td = 'padding:6px;font-size:12px;border-top:1px solid ' + MAIL.line + ';';
+  var th = function (h, r) { return '<td style="padding:6px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + (r ? ';text-align:right' : '') + '">' + h + '</td>'; };
+  var shown = rows.slice(0, limit || 40);
+  var table = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px;margin-bottom:10px"><tr>' +
+    th('Agent') + th('FF wk', 1) + th('FF mth', 1) + th('FF yr', 1) + th('Picked up', 1) + th('Pace', 1) + th('Check-in', 1) + '</tr>' +
+    shown.map(function (r) {
+      var g = r.g, f = r.f, low = g && g.paceApi && f.pickedUp < g.paceApi;
+      return '<tr><td style="' + td + '">' + esc_(r.n) + '</td>' +
+        '<td style="' + td + 'text-align:right;' + (feed && !f.week ? 'color:' + MAIL.red + ';font-weight:700' : '') + '">' + f.week + '</td>' +
+        '<td style="' + td + 'text-align:right">' + f.month + '</td><td style="' + td + 'text-align:right">' + f.year + '</td>' +
+        '<td style="' + td + 'text-align:right;' + (low ? 'color:' + MAIL.red + ';font-weight:700' : g ? 'color:' + MAIL.green + ';font-weight:700' : '') + '">' + ff360Money_(f.pickedUp) + '</td>' +
+        '<td style="' + td + 'text-align:right">' + (g ? ff360Money_(g.paceApi) : '<span style="color:' + MAIL.amber + '">no goals</span>') + '</td>' +
+        '<td style="' + td + 'text-align:right">' + (g && g.last ? 'wk ' + esc_(String(g.last.week)) : '—') + '</td></tr>';
+    }).join('') + '</table>' +
+    (rows.length > shown.length ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin:-4px 0 10px">and ' + (rows.length - shown.length) + ' more on the FactFind360 wall.</div>' : '');
+  var flags = [];
+  if (noFF.length) flags.push('<b style="color:' + MAIL.red + '">No fact find this week (' + noFF.length + ')</b>: ' + esc_(noFF.slice(0, 12).join(', ')) + (noFF.length > 12 ? ' …' : ''));
+  if (behind.length) flags.push('<b style="color:' + MAIL.red + '">Behind API pace (' + behind.length + ')</b>: ' + esc_(behind.slice(0, 12).join(', ')) + (behind.length > 12 ? ' …' : ''));
+  if (noPlan.length) flags.push('<b style="color:' + MAIL.amber + '">No FY27 goal plan (' + noPlan.length + ')</b>: ' + esc_(noPlan.slice(0, 12).join(', ')) + (noPlan.length > 12 ? ' …' : ''));
+  help.slice(0, 6).forEach(function (h) { flags.push('Asked for help · ' + h); });
+  return sectionLabel_(title) + table + srcCard_('Who to guide this morning', MAIL.gold, flags.length ? flags : ['Everyone has a fact find this week and is on pace.'],
+    'FY27 began 1 October: week ' + Math.max(1, Math.round(daysBetween_(BOOKS.FY_START, day) / 7)) + ' of 52. Comment on their tasks from the button above: it goes to Chatter as yours.');
+}
+function umFFCard_(sid, day) { try { return teamFFCard_(unitAgents_(sid), 'Your unit · fact finds and FY27 goals', day, 30); } catch (e) { return ''; } }
+function bmFFCard_(day) {
+  try {
+    var ap = agentPeople_(), names = Object.keys(ap).map(function (k) { return ap[k].agentName || ap[k].name; });
+    return teamFFCard_(names, 'Branch · fact finds and FY27 goals', day, 25);
+  } catch (e) { return ''; }
 }
 /** The Unit Manager: his agents' open performance letters. */
 function umLetters_(sid, day) { try { return ppmCard_(ppmLetters_(unitAgents_(sid)), day, 'Performance letters in your unit'); } catch (e) { return ''; } }
