@@ -8851,7 +8851,7 @@ function tSfRecs_(pols) {
    e-mails and the birthday flow are not work (the rule GCM_LOGGED keeps for the groups: 615 of the groups' 1,176
    completed tasks in 2026 were those), so they are counted apart and never in the service levels. The kinds are the
    branch's own Task Type, in words. Read when a person opens the client (action=detail); never throws. */
-var T_SVC = { MAX: 500, LIST: 80,
+var T_SVCREC = { MAX: 500, LIST: 80,
   TYPES: { 'renewa/pdl/bill': 'Premiums and billing', 'pendings': 'Applications', 'servicing': 'Servicing', 'scripts/cb': 'Scripts and call-backs',
            'claims/ mat': 'Claims and maturities', 'opportunity': 'Opportunities' } };
 var T_SVC_LOGGED = /^\s*(<p>)?\W*(Email|Re|Fwd?)\s*:|\$Record\.|Happy Birthday/i;
@@ -8866,14 +8866,14 @@ function tSfService_(tok, cno, ha) {
     var cond = ['WhatId IN (' + tSoqlIn_(what) + ')'];
     if (who.length) cond.push('WhoId IN (' + tSoqlIn_(who) + ')');
     var rows = svcSfQuery_('SELECT Id, Subject, Status, ActivityDate, IsClosed, CompletedDateTime, CreatedDate, LastModifiedDate, Owner.Name, Task_Type__c, WhatId ' +
-      'FROM Task WHERE (' + cond.join(' OR ') + ') ORDER BY CreatedDate DESC LIMIT ' + T_SVC.MAX);
+      'FROM Task WHERE (' + cond.join(' OR ') + ') ORDER BY CreatedDate DESC LIMIT ' + T_SVCREC.MAX);
     var today = Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd'), dayMs = 86400000;
     var out = { on: true, n: 0, open: 0, overdue: 0, logged: 0, first: '', last: '', years: {}, types: {}, who: {}, days: [], onTime: 0, withDue: 0, list: [], capped: rows.length >= T_SVC.MAX };
     rows.forEach(function (t) {
       var subj = tTaskSubject_(t.Subject);
       if (T_SVC_LOGGED.test(String(t.Subject || '')) || /^Birthday e-mail|^Automatic e-mail/.test(subj)) { out.logged++; return; }
       var opened = tSfDay_(t.CreatedDate), closed = t.IsClosed ? tSfDay_(t.CompletedDateTime || t.LastModifiedDate) : '';
-      var due = t.ActivityDate ? String(t.ActivityDate) : '', kind = T_SVC.TYPES[String(t.Task_Type__c || '').toLowerCase()] || (t.Task_Type__c ? String(t.Task_Type__c) : 'Other');
+      var due = t.ActivityDate ? String(t.ActivityDate) : '', kind = T_SVCREC.TYPES[String(t.Task_Type__c || '').toLowerCase()] || (t.Task_Type__c ? String(t.Task_Type__c) : 'Other');
       var owner = t.Owner ? String(t.Owner.Name || '') : '', days = null, late = false;
       if (closed && opened) {
         days = Math.max(0, Math.round((Date.parse(closed + 'T12:00:00Z') - Date.parse(opened + 'T12:00:00Z')) / dayMs));
@@ -8888,7 +8888,7 @@ function tSfService_(tok, cno, ha) {
         if (due && due < today) { out.overdue++; late = true; }
       }
       if (opened && (!out.first || opened < out.first)) out.first = opened;
-      if (out.list.length < T_SVC.LIST) out.list.push({ subject: subj, kind: kind, owner: owner, opened: opened ? tDmy_(opened) : '', closed: closed ? tDmy_(closed) : '',
+      if (out.list.length < T_SVCREC.LIST) out.list.push({ subject: subj, kind: kind, owner: owner, opened: opened ? tDmy_(opened) : '', closed: closed ? tDmy_(closed) : '',
         due: due ? tDmy_(due) : '', days: days, open: !t.IsClosed, late: late, policy: polOf[t.WhatId] || '' });
     });
     var d = out.days.slice().sort(function (a, b) { return a - b; });
