@@ -132,6 +132,7 @@ var MEET = {
   TAB_TOPICS:     'Topics',
   TAB_ROTA:       'Rota',
   TAB_KPI:        'KPI',
+  TAB_RATINGS:    'Ratings',
   TAB_LOG:        'Log',
 
   /*  THE BRANCH MEETS ON A WEDNESDAY MORNING. 0 is Sunday, so 3 is
@@ -417,6 +418,19 @@ var SCHEMA = {
    *  nobody walking past a screen does.                                  */
   Chases: ['ID', 'Week', 'Kind', 'Ref', 'Detail', 'Due', 'Email', 'Name', 'Unit',
            'Sent', 'Answered', 'Contacted', 'Outcome', 'Note', 'Token'],
+
+  /*  HOW THE MEETING WAS. One row per person per meeting, 1 to 5 —
+   *  the same scale the renewal portal, Claims TT and the group
+   *  letters already use, so the branch has one number for how it is
+   *  doing and not four that cannot be added up.
+   *
+   *  WHO rated is shown; WHAT they scored is not. A score with a name
+   *  against it on a screen the room is standing in front of is a
+   *  score that drifts upward, and then the number is worth nothing.
+   *  The register already holds people to account for turning up and
+   *  taking part; the rating is for the meeting, not for the rater. */
+  Ratings: ['ID', 'Meeting ID', 'Email', 'Name', 'Role', 'Unit',
+            'Score', 'Best', 'Change', 'When', 'Edited'],
 
   Log: ['Timestamp', 'Actor', 'Role', 'Action', 'Target', 'Details']
 };
@@ -6379,7 +6393,8 @@ function doGet(e) {
       case 'goals':      out = apiGoals_(p.token); break;
       case 'chases':     out = apiChases_(p.token); break;
       case 'service':    out = apiService_(p.token); break;
-      case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
+      case 'room':       out = apiRoom_(p.code, p.id); break;
+      case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH, room: true }; break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }
   } catch (err) {
@@ -6388,11 +6403,64 @@ function doGet(e) {
   return json_(out);
 }
 
+/* ==================== ONE WRITER AT A TIME ====================
+ *
+ *  Twenty-eight people tap "I'm here" inside the same minute on a
+ *  Wednesday morning, and every one of them is a read, a decision and
+ *  a write against the same Sheet. Apps Script runs each request in
+ *  its own instance, so without a lock:
+ *
+ *   - two requests for one person both read "no attendance row yet"
+ *     and both append, and the register counts them twice;
+ *   - closeRegister_ computes getLastRow() + 1, somebody signs in,
+ *     and its setValues writes straight over that row;
+ *   - setCell_ writes by row number, so a row that moved underneath
+ *     takes somebody else's status.
+ *
+ *  The orphan campaign learned this on live data: a tab sorted
+ *  mid-run put Sent at stamps on the wrong clients, which is why
+ *  tAt_ in Transition.gs re-checks the token before every write.
+ *  Here the whole POST is serialised instead. It is simpler and it is
+ *  safe: a write takes about a second, a room signs in over a minute
+ *  or two, and anybody who truly collides waits rather than losing
+ *  their row.
+ *
+ *  doGet is NOT locked. Reads never corrupt anything, and the room
+ *  screen polls — holding the lock to read would make the writes
+ *  queue behind every screen in the branch.
+ */
+var WRITE_WAIT_MS = 30000;
+
+function withWriteLock_(fn) {
+  var lock;
+  try { lock = LockService.getScriptLock(); }
+  catch (err) { return fn(); }          /* no lock service: better to write than to refuse */
+  if (!lock.tryLock(WRITE_WAIT_MS)) {
+    return { ok: false, busy: true,
+             error: 'The sheet is busy with somebody else signing in. Tap again.' };
+  }
+  try { return fn(); } finally {
+    try { lock.releaseLock(); } catch (err) { /* released by the runtime */ }
+  }
+}
+
 function doPost(e) {
   var body = {};
   try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); }
   catch (err) { return json_({ ok: false, error: 'That request could not be read.' }); }
 
+  var out;
+  try {
+    out = withWriteLock_(function () { return doPostAction_(body); });
+  } catch (err) {
+    out = { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+  return json_(out);
+}
+
+/** Every write the app makes, behind one lock. Split out of doPost so
+ *  the lock is taken once, around the whole decision, never per cell. */
+function doPostAction_(body) {
   var out;
   try {
     switch (str_(body.action)) {
@@ -6438,6 +6506,7 @@ function doPost(e) {
       case 'currentItem':       out = apiSetCurrentItem_(body); break;
       case 'attachRecording':   out = apiAttachRecording_(body); break;
 
+      case 'rateMeeting':       out = apiRateMeeting_(body); break;
       case 'contribute':        out = apiAddContribution_(body); break;
       case 'editContribution':  out = apiEditContribution_(body); break;
       case 'uploadClip':        out = apiUploadClip_(body); break;
@@ -6449,7 +6518,7 @@ function doPost(e) {
   } catch (err) {
     out = { ok: false, error: String(err && err.message ? err.message : err) };
   }
-  return json_(out);
+  return out;
 }
 
 function json_(obj) {
@@ -6615,6 +6684,242 @@ function weekCloseFromMenu() {
 
 function buildWednesdayFromMenu() {
   SpreadsheetApp.getUi().alert(buildWednesday());
+}
+
+/* ============ THE ROOM SCREEN, AND HOW THE MEETING RATED ============
+ *
+ *  One read for the touchscreen on the wall, and one write for a
+ *  person's phone. The screen is a branch screen, not a person's, so
+ *  it opens on the branch code like the wall does and carries no
+ *  client's name, number or figure — only the branch's own people and
+ *  the branch's own numbers.
+ * =================================================================== */
+
+var ROOM = {
+  SCORES: [1, 2, 3, 4, 5],
+  /*  A meeting is rated once it has run. Before that the tab shows
+   *  what the last few meetings scored, so the room can see the trend
+   *  it is about to add to. */
+  TREND: 8
+};
+
+/** Every rating for one meeting, read for a screen: the average, the
+ *  spread, who rated and who has not. Never who scored what. */
+function ratingStats_(m, roll) {
+  var rows = readTab_(MEET.TAB_RATINGS).filter(function (r) {
+    return str_(r['Meeting ID']) === str_(m['ID']) && num_(r['Score']);
+  });
+  var spread = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  var total = 0, best = [], change = [];
+  rows.forEach(function (r) {
+    var sc = Math.max(1, Math.min(5, Math.round(num_(r['Score']))));
+    spread[sc]++; total += sc;
+    if (str_(r['Best'])) best.push(str_(r['Best']));
+    if (str_(r['Change'])) change.push(str_(r['Change']));
+  });
+  var n = rows.length;
+  return {
+    n: n,
+    roll: roll || 0,
+    /*  Of the people in the room, not of the branch: somebody who
+     *  apologised is not a missing rating. */
+    share: roll ? Math.round((n / roll) * 100) : 0,
+    avg: n ? Math.round((total / n) * 10) / 10 : 0,
+    spread: ROOM.SCORES.map(function (sc) {
+      return { score: sc, n: spread[sc],
+               share: n ? Math.round((spread[sc] / n) * 100) : 0 };
+    }),
+    rated: rows.map(function (r) { return str_(r['Name']); }).sort(),
+    best: best, change: change
+  };
+}
+
+/** What the last few meetings scored, oldest first, for the trend. */
+function ratingTrend_(before) {
+  var all = readTab_(MEET.TAB_RATINGS);
+  var byMeeting = {};
+  all.forEach(function (r) {
+    var id = str_(r['Meeting ID']);
+    if (!num_(r['Score'])) return;
+    (byMeeting[id] = byMeeting[id] || []).push(num_(r['Score']));
+  });
+  var rows = meetingRows_().filter(function (m) {
+    if (low_(m['Status']) === 'cancelled' || low_(m['Status']) === 'draft') return false;
+    if (!byMeeting[str_(m['ID'])]) return false;
+    var d = asDate_(m['Date']);
+    return d && (!before || d.getTime() < before.getTime());
+  });
+  rows.sort(function (a, b) {
+    return asDate_(a['Date']).getTime() - asDate_(b['Date']).getTime();
+  });
+  return rows.slice(-ROOM.TREND).map(function (m) {
+    var sc = byMeeting[str_(m['ID'])];
+    var sum = sc.reduce(function (t, x) { return t + x; }, 0);
+    return { id: str_(m['ID']), date: fmtDate_(m['Date']),
+             short: Utilities.formatDate(asDate_(m['Date']), tz_(), 'd MMM'),
+             n: sc.length, avg: Math.round((sum / sc.length) * 10) / 10 };
+  });
+}
+
+/*  RATE THE MEETING. One row per person per meeting; rating again
+ *  replaces your own row rather than adding a second. You have to have
+ *  been in the room — the register already knows. */
+function apiRateMeeting_(body) {
+  var me = requireUser_(body.token);
+  var m = findMeeting_(body.meetingId);
+  if (!m) return { ok: false, error: 'That meeting no longer exists.' };
+
+  var score = Math.round(num_(body.score));
+  if (ROOM.SCORES.indexOf(score) === -1) {
+    return { ok: false, error: 'Give the meeting a score from 1 to 5.' };
+  }
+
+  var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
+  })[0];
+  if (!att || ['present', 'late'].indexOf(low_(att['Status'])) === -1) {
+    return { ok: false, error: 'Only the people who were in the room rate the meeting.' };
+  }
+
+  var best = str_(body.best).slice(0, 400);
+  var change = str_(body.change).slice(0, 400);
+  var mine = readTab_(MEET.TAB_RATINGS).filter(function (r) {
+    return str_(r['Meeting ID']) === str_(m['ID']) && low_(r['Email']) === me.email;
+  })[0];
+
+  if (mine) {
+    setCell_(MEET.TAB_RATINGS, mine._row, 'Score', score);
+    setCell_(MEET.TAB_RATINGS, mine._row, 'Best', best);
+    setCell_(MEET.TAB_RATINGS, mine._row, 'Change', change);
+    setCell_(MEET.TAB_RATINGS, mine._row, 'Edited', new Date());
+  } else {
+    appendRow_(MEET.TAB_RATINGS, {
+      'ID': uid_('RAT'), 'Meeting ID': str_(m['ID']), 'Email': me.email,
+      'Name': me.name, 'Role': me.role, 'Unit': me.unit,
+      'Score': score, 'Best': best, 'Change': change, 'When': new Date(), 'Edited': ''
+    });
+  }
+  log_('rating', me.name, me.role, str_(m['Ref']) || str_(m['ID']),
+       score + ' of 5' + (mine ? ' (changed)' : ''));
+  return { ok: true, score: score, changed: !!mine };
+}
+
+/*  THE ROOM SCREEN'S ONE ANSWER.
+ *
+ *  Everything the wall screen shows, in a single read, because it is a
+ *  television in a room and a tab that waits on its own request is a
+ *  tab nobody taps twice.                                            */
+function roomBoard_(code, id) {
+  if (!sameCode_(code, joinCode_())) {
+    return { ok: false, refused: true, error: 'That branch code is not right.' };
+  }
+
+  var rows = meetingRows_().filter(function (r) {
+    var st = low_(r['Status']);
+    return st !== 'draft' && st !== 'cancelled';
+  });
+  var m = null;
+  if (str_(id)) {
+    m = rows.filter(function (r) { return str_(r['ID']) === str_(id); })[0] || null;
+  } else {
+    rows.sort(function (a, b) {
+      var da = asDate_(a['Date']), db = asDate_(b['Date']);
+      return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+    });
+    var now = Date.now();
+    m = rows.filter(function (r) {
+      var d = asDate_(r['Date']);
+      return d && d.getTime() <= now + 12 * 3600000;
+    })[0] || rows[0] || null;
+  }
+  if (!m) return { ok: true, branch: MEET.BRANCH, meeting: null };
+
+  var agenda = readTab_(MEET.TAB_AGENDA).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  });
+  agenda.sort(function (a, b) { return num_(a['Order']) - num_(b['Order']); });
+
+  var reg = register_(m);
+  var sn = sessionFor_(m['ID']);
+
+  /*  THE FLOOR. What was said, newest first, with the item it was said
+   *  under. Only what everybody in the room may see.                  */
+  var floor = readTab_(MEET.TAB_CONTRIB).filter(function (c) {
+    return str_(c['Meeting ID']) === str_(m['ID']) &&
+           cleanVisibility_(c['Visibility']) === 'all';
+  }).map(function (c) {
+    var on = agenda.filter(function (a) { return str_(a['ID']) === str_(c['Agenda ID']); })[0];
+    return { kind: str_(c['Kind']) || 'Point', body: str_(c['Body']),
+             who: str_(c['Name']), role: low_(c['Role']),
+             at: num_(c['Offset (min)']), item: on ? str_(on['Title']) : '',
+             when: fmtTime_(c['When']) };
+  }).reverse();
+
+  /*  WHO OWES WHAT. Open actions, the overdue first, by owner — the
+   *  tab the branch argues from.                                     */
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var actions = readTab_(MEET.TAB_ACTIONS).filter(function (x) {
+    return low_(x['Status']) !== 'complete';
+  }).map(function (x) {
+    var due = asDate_(x['Due']);
+    var over = due ? Math.round((today.getTime() - due.getTime()) / 86400000) : 0;
+    return { item: str_(x['Item']), owner: str_(x['Owner']),
+             due: fmtDate_(x['Due']), overdue: over > 0 ? over : 0,
+             priority: str_(x['Priority']), status: str_(x['Status']) || 'Open',
+             from: fmtDate_(x['Created']) };
+  });
+  actions.sort(function (a, b) { return b.overdue - a.overdue; });
+
+  var byOwner = {};
+  actions.forEach(function (a) {
+    var who = a.owner || 'nobody named';
+    byOwner[who] = byOwner[who] || { owner: who, open: 0, overdue: 0 };
+    byOwner[who].open++;
+    if (a.overdue) byOwner[who].overdue++;
+  });
+
+  /*  THE WEEK. The Monday list, answered against sent — the branch's
+   *  own measure of whether the work was done, not of its outcome.   */
+  var week = chaseWeek_();
+  var chase = null;
+  try { chase = chaseStats_(week); } catch (err) { chase = null; }
+
+  var rate = ratingStats_(m, reg.counts.roll);
+  var trend = ratingTrend_(asDate_(m['Date']));
+
+  return {
+    ok: true,
+    branch: MEET.BRANCH,
+    now: fmtStamp_(new Date()),
+    meeting: {
+      id: str_(m['ID']), ref: str_(m['Ref']), title: str_(m['Title']),
+      date: fmtDate_(m['Date']), start: str_(m['Start']), end: str_(m['End']),
+      status: low_(m['Status']), chair: str_(m['Chair']),
+      week: str_(m['Week']), weekOf: weekLabel_(week)
+    },
+    session: sn ? sessionCard_(sn, agenda) : null,
+    agenda: agenda.map(function (a) {
+      return { id: str_(a['ID']), order: num_(a['Order']), title: str_(a['Title']),
+               presenter: str_(a['Presenter Name']), minutes: num_(a['Allotted (min)']),
+               ready: str_(a['Ready']).toUpperCase() === 'Y',
+               required: yes_(a['Materials Required']),
+               status: str_(a['Status']) || 'Planned' };
+    }),
+    register: { counts: reg.counts, groups: reg.groups, reasons: reg.reasons },
+    floor: floor,
+    actions: { list: actions.slice(0, 40),
+               owners: Object.keys(byOwner).map(function (k) { return byOwner[k]; })
+                 .sort(function (a, b) { return b.overdue - a.overdue || b.open - a.open; }),
+               open: actions.length,
+               overdue: actions.filter(function (a) { return a.overdue; }).length },
+    chase: chase,
+    rating: rate,
+    trend: trend
+  };
+}
+
+function apiRoom_(code, id) {
+  return roomBoard_(code, id);
 }
 
 function onOpen() {
