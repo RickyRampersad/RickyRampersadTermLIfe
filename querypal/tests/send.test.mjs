@@ -44,6 +44,44 @@ t('a failed attempt does not trip the duplicate guard on retry',
   /m\[window\._dupfp\]=\{at:Date\.now\(\),failed:true\}/.test(APP) && /hit\.failed/.test(APP),
   'the client must be able to press Send again without a scary confirm');
 
+/* On 16 October 2026 Premchand logged RRB/2026/095, read "Tap Try sending
+   again" on the failure card, did exactly that, and logged RRB/2026/096 — the
+   same request twice. Fawwaz had already done it on 13 October (093 and 094).
+
+   doPost appends the row before it attempts the send, so every attempt leaves
+   a case behind. A retry is right for a dropped connection and wrong for the
+   daily sending limit, which cannot clear until tomorrow: there the retry is
+   certain to fail and certain to duplicate. */
+{
+  const fn = APP.slice(APP.indexOf('function sendFailed'),
+                       APP.indexOf('function celebrate'));
+
+  t('the quota reason is worked out before the button is touched',
+    fn.indexOf('const quota=') < fn.indexOf('btn.disabled'),
+    'the button was being relabelled "Try sending again" before anyone asked why it failed');
+
+  t('a sending-limit failure offers no retry button',
+    /btn\.disabled=quota/.test(fn)
+    && /btn\.textContent=quota\?'Logged \\u2014 nothing more to do'/.test(fn),
+    'this is what logged 095 and 096 five minutes apart');
+
+  t('a dropped connection still offers the retry',
+    /:'Try sending again \\u2192'/.test(fn),
+    'a transient failure does succeed second time and costs nothing');
+
+  t('the duplicate guard is only cleared where a retry is offered',
+    /window\._dupfp&&!quota/.test(fn),
+    'clearing it on a quota failure is what let the second row through');
+
+  t('the card tells them it is saved rather than to send again',
+    /Your request is saved and the branch can see it/.test(fn)
+    && /puts the same case on the list twice/.test(fn));
+
+  t('the toast does not contradict the card',
+    /toast\(quota\?'Not sent \\u2014 saved/.test(fn),
+    'the card said "do not resend" while the toast said "please try again"');
+}
+
 t('a logged-but-unrouted case still shows a real reference',
   /p\._mailed===false/.test(APP) && APP.includes('notMailed'),
   'the reference is real even when the email did not go - do not withhold it');

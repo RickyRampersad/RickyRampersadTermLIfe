@@ -2981,14 +2981,30 @@ function submitQuery(){
 function sendFailed(why,payload){
   window._sending=false;
   const btn=document.getElementById('submitBtn');
-  if(btn){btn.disabled=false;btn.textContent='Try sending again \u2192';}
+  const quota=/quota|limit|service invoked too many|too many times/i.test(String(why||''));
 
-  /* A failed attempt must not trip the duplicate guard on the retry. */
-  try{ if(window._dupfp){ const m=JSON.parse(localStorage.getItem('qpsent')||'{}');
+  /* On 16 October 2026 Premchand logged RRB/2026/095, got this card, tapped
+     "Try sending again" exactly as it told him to, and logged RRB/2026/096 \u2014
+     the same request twice, five minutes apart. Fawwaz had already done the
+     same on 13 October (093 and 094). The retry advice caused both.
+
+     doPost appends the row BEFORE it tries to send, so every attempt leaves a
+     case behind whether the email goes or not. Retrying is right for a dropped
+     connection, which succeeds second time and costs nothing. It is wrong for
+     the daily sending limit: that cannot clear until tomorrow, so the retry is
+     certain to fail and certain to log a duplicate.
+
+     So the button only comes back when a retry could actually work. */
+  if(btn){
+    btn.disabled=quota;
+    btn.textContent=quota?'Logged \u2014 nothing more to do':'Try sending again \u2192';
+  }
+
+  /* A failed attempt must not trip the duplicate guard on the retry \u2014 but only
+     where we are offering a retry at all. */
+  try{ if(window._dupfp&&!quota){ const m=JSON.parse(localStorage.getItem('qpsent')||'{}');
     m[window._dupfp]={at:Date.now(),failed:true};
     localStorage.setItem('qpsent',JSON.stringify(m)); } }catch(e){}
-
-  const quota=/quota|limit|service invoked too many|too many times/i.test(String(why||''));
   let el=document.getElementById('sendFail');
   if(!el){
     el=document.createElement('div'); el.id='sendFail';
@@ -2999,16 +3015,24 @@ function sendFailed(why,payload){
   el.innerHTML='<div style="border-left:4px solid #e0483e;background:#fdeceb;border-radius:10px;'
     +'padding:14px 16px;margin:0 0 14px;font-size:15px;line-height:1.5;color:#3a1512">'
     +'<b>This did not send. Please do not assume it has gone through.</b><br><br>'
-    +(quota?'Our system has reached its sending limit for today. ':'')
-    +'Nothing you typed is lost \u2014 but the department has <b>not</b> been contacted yet.'
-    +'<br><br>Tap <b>Try sending again</b> first; it often goes on a second attempt. '
-    +'If it still will not send, call the branch on <b><a href="tel:+18686653279" '
+    +(quota
+      ? 'Our system has reached its sending limit for today, so the department has '
+        +'<b>not</b> been contacted yet.<br><br>'
+        +'<b>Your request is saved and the branch can see it</b> \u2014 you do not need to '
+        +'log it again. Sending another copy will not help: the limit does not clear '
+        +'until tomorrow, and it puts the same case on the list twice.<br><br>'
+        +'If the client is waiting on this today, call the branch on '
+      : 'Nothing you typed is lost \u2014 but the department has <b>not</b> been contacted yet.'
+        +'<br><br>Tap <b>Try sending again</b> first; it often goes on a second attempt. '
+        +'If it still will not send, call the branch on ')
+    +'<b><a href="tel:+18686653279" '
     +'style="color:#b3291f">1-868-665-3279</a></b> or email '
     +'<a href="mailto:support@rickyrampersadbranch.com?subject=Request%20would%20not%20send" '
     +'style="color:#b3291f">support@rickyrampersadbranch.com</a> and we will put it through by hand.'
     +'</div>';
   el.scrollIntoView({behavior:'smooth',block:'center'});
-  try{toast('Not sent \u2014 please try again');}catch(e){}
+  try{toast(quota?'Not sent \u2014 saved, the branch will route it'
+                 :'Not sent \u2014 please try again');}catch(e){}
 }
 function celebrate(){
   try{const C=['#E4644B','#0b7fd4','#15803d','#e0483e','#6d28d9'];
