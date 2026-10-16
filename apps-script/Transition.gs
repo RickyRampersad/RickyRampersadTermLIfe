@@ -6274,7 +6274,9 @@ function tBriefMail_(agent, clients, board) {
   /* one client, a first look: the household, how many policies, the one thing to raise first, the way in */
   var peek = function (c) {
     var ps = c.pol && c.pol.sum ? c.pol.sum : null;
-    if (!ps && c.no) { try { var pp = tPolsFor_(c.no); ps = pp ? pp.sum : null; } catch (e) { ps = null; } }
+    var today = tBook_().today, pp = c.pol && c.pol.list ? c.pol : null;
+    if (!pp && c.no) { try { pp = tPolsFor_(c.no, today); } catch (e) { pp = null; } }
+    if (!ps && pp) ps = pp.sum;
     var pf = c.profile || null;
     if (!pf && c.no) { try { pf = tProfileFor_(c.no); } catch (e) { pf = null; } }
     var ct = c.contact || null, town = (ct && ct.town) || (pf && pf.contact && pf.contact.town) || '';
@@ -6282,12 +6284,31 @@ function tBriefMail_(agent, clients, board) {
     if (pf && pf.age !== undefined) who.push(pf.age + (pf.gender ? ', ' + pf.gender : ''));
     if (town) who.push(tNiceLabel_(town));
     if (c.book) who.push('was with ' + c.book);
+    /* what they do (16 October 2026: "what are their occupations, what they do, how long they with Guardian"): the
+       occupation and employer as the profile reads them, how they pay; never the income, which is a figure */
+    var work = [];
+    if (pf && pf.occ) work.push(tNiceLabel_(pf.occ));
+    if (pf && pf.emp && (!pf.occ || tNameKey_(pf.emp) !== tNameKey_(pf.occ))) work.push((pf.occ ? 'at ' : '') + tNiceLabel_(pf.emp));
+    if (pf && pf.pay) work.push('pays by ' + pf.pay);
     var held = [];
     if (ps) {
+      if (ps.since) held.push('With Guardian since ' + (tDmy_(ps.since).replace(/^\d+ /, '') || ps.since.slice(0, 4)) + (ps.years ? ', ' + pl(ps.years, 'year', 'years') : ''));
       if (ps.live) held.push(pl(ps.live, 'policy in force', 'policies in force'));
       if (ps.lapsed) held.push(ps.lapsed + ' lapsed');
       if (ps.pending) held.push(pl(ps.pending, 'application', 'applications'));
-      if (ps.years) held.push('with us ' + pl(ps.years, 'year', 'years'));
+    }
+    /* what the records show: who the policies pay, cover ending, a premium due, a lapse, no critical illness … the board's
+       own lines (tInsightsFor_), the most pressing four, never the cover against income */
+    var ins = c.ins && c.ins.length ? c.ins : [];
+    if (!ins.length && pp) { try { ins = tInsightsFor_(pp, pf, today); } catch (e) { ins = []; } }
+    ins = (ins || []).filter(function (x) { return !T_MONEY_INS[x.k]; }).slice(0, 4);
+    /* how we have served them: the record the letter printed (tSvcOf_), the whole Salesforce record being on the board */
+    var sr = sendBy[c.token] ? tSvcOf_(sendBy[c.token]) : null, served = [];
+    if (sr) {
+      if (sr.docs) served.push(pl(sr.docs, 'document', 'documents') + ' handled');
+      if (sr.req) served.push(pl(sr.req, 'request', 'requests') + ' completed');
+      if (sr.rem) served.push(pl(sr.rem, 'premium reminder', 'premium reminders'));
+      if (sr.bday) served.push('a birthday note in ' + sr.bday);
     }
     var fam = board && c.hh && board.households && board.households[c.hh] ? board.households[c.hh] : [];
     var info = board && c.hh && board.hhInfo ? board.hhInfo[c.hh] : null;
@@ -6306,12 +6327,19 @@ function tBriefMail_(agent, clients, board) {
     return '<div style="border:1px solid #d7e3ea;border-radius:10px;padding:12px 14px;margin:10px 0">' +
       '<p style="margin:0"><b style="font-size:16px;color:' + ink + '">' + esc(c.client) + '</b> <span style="color:' + mute + '">' + esc(c.no || '') + '</span></p>' +
       (who.length ? '<p style="margin:2px 0 0;color:' + mute + '">' + esc(who.join(' · ')) + '</p>' : '') +
-      (held.length ? '<p style="margin:6px 0 0">' + esc(held.join(' · ')) + '</p>' : '') +
+      (work.length ? '<p style="margin:6px 0 0">' + esc(work.join(' · ')) + '</p>' : '') +
+      (held.length ? '<p style="margin:4px 0 0">' + esc(held.join(' · ')) + '</p>' : '') +
       (famLine ? '<p style="margin:4px 0 0">' + famLine + '</p>' : '') +
+      (ins.length ? '<p style="margin:8px 0 2px;font-size:13.5px;color:' + mute + '"><b>What the records show</b></p><ul style="margin:0;padding-left:18px;font-size:14px">' +
+        ins.map(function (x) { return '<li' + (x.lv === 'hot' ? ' style="color:#8a3324"' : '') + '>' + esc(x.t) + '</li>'; }).join('') + '</ul>' : '') +
+      '<p style="margin:8px 0 0;font-size:14px"><span style="color:' + mute + '">How we have served them:</span> ' +
+        (served.length ? esc(served.join(' · ')) + ' <span style="color:' + mute + '">(every Salesforce task is on the board)</span>' : 'nothing on our record yet: the board shows anything in Salesforce') + '</p>' +
       '<p style="margin:6px 0 0">' + first1 + '</p>' +
       (c.back && c.back.open ? '<p style="margin:6px 0 0;color:#8a3324"><b>Call-back asked for ' + esc(T_BACK[c.back.kind] || c.back.kind) + '</b></p>' : '') +
       '<p style="margin:8px 0 0"><a href="' + link + '" style="color:#13408F;font-weight:700">Open ' + esc(c.firstName || String(c.client).split(/\s+/)[0]) + '’s file on the board &rarr;</a></p></div>';
   };
+  var sendBy = {};
+  try { tRead_().rows.forEach(function (r) { var t = tText_(r.Token); if (t) sendBy[t] = r; }); } catch (e) {}
   var tt = tBriefClaims_(agent, clients, board);
   var html = '<div style="font:15px/1.5 ' + F + ';color:#33465a;max-width:640px">' +
     '<h2 style="font:800 20px ' + F + ';color:' + ink + ';margin:0 0 4px">' + esc(agent.name) + ', you have been named on ' + pl(clients.length, 'client', 'clients') +
