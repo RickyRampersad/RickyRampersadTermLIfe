@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>RR Operations | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#07131f;--bg2:#0d2137;--card:#163553;--card2:#1b3d61;--gold:#efc24b;--gold2:#c9942c;
+    --text:#edf4fb;--muted:#a9bbcf;--line:rgba(255,255,255,.09);--bad:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(239,194,75,.08),transparent)}
+  button,input{font:inherit;color:inherit}
+  .mark{border-radius:12px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  #lock{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+  .lock-card{width:min(380px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:32px 24px}
+  .lock-card .mark{width:64px;height:64px;border-radius:16px;margin:0 auto 16px}
+  .lock-card h1{font-family:'Montserrat';font-weight:800;font-size:21px;color:var(--gold);margin-bottom:6px}
+  .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
+  .lock-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.28);
+    text-align:center;letter-spacing:3px;font-family:'Montserrat';font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:12px;outline:none}
+  .lock-card input:focus{border-color:rgba(239,194,75,.55)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 18px;border-radius:12px;border:0;cursor:pointer;
+    font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px}
+  .btn.gold{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503}
+  .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);padding:8px 12px;min-height:36px;font-size:12px}
+  .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px;min-height:16px}
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+  .top{display:flex;align-items:center;gap:12px}
+  .top .mark{width:44px;height:44px}
+  .top h1{font-family:'Montserrat';font-size:18px;font-weight:800;color:var(--gold)}
+  .top small{display:block;color:var(--muted);font-size:13px}
+  .top .sp{flex:1}
+  .hello{font-family:'Montserrat';font-size:22px;font-weight:800;margin:28px 0 4px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .app{display:block;text-decoration:none;color:inherit;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:18px;padding:18px;min-height:150px;position:relative;transition:transform .15s,border-color .15s}
+  a.app:hover,a.app:focus-visible{transform:translateY(-2px);border-color:rgba(239,194,75,.55);outline:none}
+  .app .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:rgba(239,194,75,.12);margin-bottom:14px}
+  .app .ic svg{width:24px;height:24px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .app b{display:block;font-family:'Montserrat';font-size:16px;font-weight:800}
+  .app span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+  .app.soon{opacity:.55}
+  .app.soon .ic{background:rgba(255,255,255,.06)}
+  .app.soon .ic svg{stroke:var(--muted)}
+  .badge{position:absolute;top:14px;right:14px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;
+    background:rgba(255,255,255,.08);color:var(--muted);letter-spacing:.3px}
+  .empty{color:var(--muted);text-align:center;padding:30px 0}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <form class="lock-card" id="lockForm" autocomplete="off">
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
+    <h1>RR Operations</h1>
+    <p>The branch team's apps. Sign in with your access code.</p>
+    <input id="code" type="password" placeholder="ACCESS CODE" aria-label="Access code" required>
+    <button class="btn gold" type="submit" id="lockBtn">Sign in</button>
+    <div class="err" id="lockErr" role="alert"></div>
+  </form>
+</div>
+
+<main class="wrap" id="home" hidden>
+  <div class="top">
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
+    <div><h1>RR Operations</h1><small>Ricky Rampersad Branch</small></div>
+    <div class="sp"></div>
+    <button class="btn ghost" id="signOut">Sign out</button>
+  </div>
+  <div class="hello" id="hello"></div>
+  <div class="sub">Your apps</div>
+  <div class="grid" id="apps"></div>
+</main>
+
+<script src="/rroperations/ops-config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var C = window.RR_OPS, $ = function (id) { return document.getElementById(id); };
+  var ICONS = {
+    'delivery-book': '<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>',
+    'gas-receipts': '<svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16"/><path d="M3 21h13"/><path d="M15 9h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3"/><path d="M7 7h5v4H7z"/></svg>',
+    'petty-cash': '<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 10v.01M18 15v.01"/></svg>'
+  };
+  var DEF = '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>';
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var store = {
+    get: function () { try { return JSON.parse(localStorage.getItem(C.SESSION_KEY) || 'null'); } catch (e) { return null; } },
+    set: function (s) { try { localStorage.setItem(C.SESSION_KEY, JSON.stringify(s)); } catch (e) {} },
+    del: function () { try { localStorage.removeItem(C.SESSION_KEY); } catch (e) {} }
+  };
+  function api(action, body) {
+    if (/RR_OPERATIONS_DEPLOYMENT_ID/.test(C.API_URL)) return Promise.reject(new Error('RR Operations is not connected yet.'));
+    return fetch(C.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action: action }, body || {})) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || 'Something went wrong.'); return j; });
+  }
+  var next = (new URLSearchParams(location.search).get('next') || '').replace(/[^a-z-]/g, '');
+
+  function show(s) {
+    var first = String(s.name || '').split(' ')[0];
+    var h = new Date().getHours();
+    $('hello').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (first ? ', ' + first : '');
+    var apps = s.apps || [];
+    $('apps').innerHTML = apps.length ? apps.map(function (a) {
+      var live = a.status === 'live';
+      var inner = '<div class="ic">' + (ICONS[a.id] || DEF) + '</div><b>' + esc(a.name) + '</b><span>' + esc(a.blurb || '') + '</span>' +
+        (live ? '' : '<div class="badge">Coming soon</div>');
+      return live ? '<a class="app" href="' + esc(a.path) + '">' + inner + '</a>'
+                  : '<div class="app soon" aria-disabled="true">' + inner + '</div>';
+    }).join('') : '<div class="empty">No apps on your access yet. Ask the branch to add them.</div>';
+    $('lock').hidden = true; $('home').hidden = false;
+    // Sent here from an app to sign in: go straight back to it.
+    var target = apps.filter(function (a) { return a.id === next && a.status === 'live'; })[0];
+    if (target) location.replace(target.path);
+  }
+
+  $('lockForm').addEventListener('submit', function (e) {
+    e.preventDefault(); $('lockErr').textContent = ''; $('lockBtn').disabled = true;
+    api('login', { code: $('code').value }).then(function (s) { store.set(s); show(s); })
+      .catch(function (err) { $('lockErr').textContent = err.message; })
+      .then(function () { $('lockBtn').disabled = false; });
+  });
+  $('signOut').addEventListener('click', function () {
+    var s = store.get(); if (s) api('signOut', { token: s.token }).catch(function () {});
+    store.del(); $('home').hidden = true; $('lock').hidden = false; $('code').value = '';
+  });
+
+  /* A saved sign-in is shown at once, then checked: an app added or removed
+     on the Access tab shows the next time the launcher opens. */
+  var s = store.get();
+  if (s && s.token) {
+    show(s);
+    api('apps', { token: s.token }).then(function (r) { s.apps = r.apps; s.mode = r.mode; store.set(s); show(s); })
+      .catch(function (err) { if (/signed-out/.test(err.message)) { store.del(); $('home').hidden = true; $('lock').hidden = false; } });
+  }
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

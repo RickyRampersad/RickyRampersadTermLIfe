@@ -3779,6 +3779,35 @@ servicing work".
   the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
   Playwright; `world.js`, the fake workbook and Salesforce).
 
+## RR Operations and the Delivery Book — one sign-in, the client told the same day
+
+`rroperations/` and `apps-script/DeliveryBook.gs` (its own Apps Script project,
+**RR Operations**, bound to the Delivery Book sheet). Asked for on 15 October
+2026, replacing the Jotform delivery book whose "Client's Email" column was
+empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
+
+- **One door.** `/rroperations/` is the launcher: one access code, and the tiles
+  the Access tab's `Apps` column allows (blank = every app). Apps read the
+  backend address from `rroperations/ops-config.js` and the sign-in from
+  `rrb-ops-session`. The Gas Receipt Tracker and Petty Cash Tracker are in
+  `OPS_APPS` as `soon`; they are built into the same project and flipped to
+  `live`, and every app's actions are gated by `opsCanUse_` on the server.
+- **The client is picked, never typed.** By policy (spacing-blind: the org
+  stores `TT FCP 0100001` and `TTFHO0100002` side by side) or by name; then
+  every policy they hold, grouped by record type, to tick ("allow the user …
+  access to the different record types and policy numbers the client has").
+  A contact is created only on an explicit "Not in Salesforce".
+- **Refused whole or recorded whole:** collector's full name, relationship,
+  signature, GPS or a reason, a photo for a cheque. Rows are written before
+  Salesforce or mail is touched.
+- **GPS is ours.** Pin, address and distance from the address on file go on the
+  row and the Salesforce task, never in the client's e-mail.
+- **Stars** ("an experience star rating … when the client gets the email"):
+  five signed links in the e-mail, one rating per delivery, a comment page
+  after the tap. Comments are for managers; test-mode ratings never count.
+- **Test mode is the default** (`DB_MODE` unset): mail to `DB_TEST_INBOX`, no
+  Salesforce writes. Tests: `tests/test-deliverybook.js`, `tests/e2e-deliverybook.js`.
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and
