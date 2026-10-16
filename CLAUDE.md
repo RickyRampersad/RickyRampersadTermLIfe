@@ -3830,8 +3830,11 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
 - **Late** is received on an earlier working day, or today after `LB_CUTOFF_HOUR` (16). The hourly `lbHourly` asks the
   receiver why, sales support and the agent copied, once a working day per line; a reason covers the rest of its day
   and the next. A transmittal will not take a late line without a reason, which prints beside the two dates.
-- **Agents sign in with their agent number and their own code, both** (the Agents tab, or the Agent Skill Bank when
-  `LB_AGENTS_SHEET_ID` is set); a refusal never says which was wrong. An agent session carries only the `logbook` app,
+- **Everyone signs in with their agent number and the password they use for the fact find, both** (asked for the same
+  night: "it should use the code that are on the fact find sheet"): the Access tab of the Confidential Fact Find Form
+  workbook (`LB.FACTFIND_ID`, overridden by `LB_AGENTS_SHEET_ID`), after the Agents tab here. Its Role decides the
+  side: Staff, Branch Manager and Assistant Branch Manager get the staff side, Agent and Unit Manager log documents;
+  "Not Active" is refused. A refusal never says which half was wrong. An agent session carries only the `logbook` app,
   so it never reaches the Delivery Book or a staff action.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;

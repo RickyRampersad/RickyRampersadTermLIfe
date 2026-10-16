@@ -206,14 +206,14 @@
   <form class="lock-card" id="lockForm" autocomplete="off">
     <div class="mark"><img src="/logo-mark.png" alt=""></div>
     <h1>Log Book</h1>
-    <p>Documents in, routed to the right department, sent the same day.</p>
+    <p>Sign in with your agent number and the password you use for the fact find.</p>
     <div class="seg" role="group" aria-label="Who is signing in">
-      <button type="button" aria-pressed="true" data-who="agent">I am an agent</button>
-      <button type="button" aria-pressed="false" data-who="staff">Branch staff</button>
+      <button type="button" aria-pressed="true" data-who="agent">Agent number</button>
+      <button type="button" aria-pressed="false" data-who="staff">Access code</button>
     </div>
     <div id="gAgent">
       <input id="gNo" type="text" placeholder="AGENT NUMBER" aria-label="Agent number" inputmode="text" autocapitalize="characters">
-      <input id="gCode" type="password" placeholder="YOUR CODE" aria-label="Your code">
+      <input id="gCode" type="password" placeholder="PASSWORD" aria-label="Password">
     </div>
     <div id="gStaff" hidden>
       <input id="gAccess" type="password" placeholder="ACCESS CODE" aria-label="Access code">

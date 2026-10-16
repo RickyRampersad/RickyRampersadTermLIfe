@@ -110,12 +110,21 @@ let env = world();
   ok('a code alone opens nothing', throws(() => env.lbLogin_({ agentNo: '', code: '4821' })));
   const who = env.lbSession_(a.token);
   ok('the session carries the agent number and e-mail', who.isAgent && who.agentNo === 'A10001' && who.email === 'ana@example.com');
-  env.__mkSheet('Agent Skill Bank', 3, ['Agent', 'Agent no.', 'Password', 'Role', 'Unit', 'Active', 'E-mail'], [
-    ['A10024 - Kim Banked', 'A10024', '77', 'Agent', 'Unit Two', 'Active', 'kim@example.com'],
+  // The fact find's Access tab, in the harness's one spreadsheet as "Agent Skill Bank"
+  // (the RR Operations Access tab already has that name here).
+  env.__mkSheet('Agent Skill Bank', 3, ['Email', 'Name', 'Agent Number', 'Password', 'Role', 'Unit', 'Active'], [
+    ['kim@example.com', 'Kim Banked', 'A10024', 77, 'Agent', 'Unit Two', 'Active'],
+    ['boss@example.com', 'Bo Branch', 'A00001', 'pw1', 'Branch Manager', '', 'Active'],
+    ['um@example.com', 'Uma Unit', 'A00002', 'pw2', 'Unit Manager', '', 'Active'],
+    ['old@example.com', 'Ola Gone', 'A00003', 'pw3', 'Agent', '', 'Not Active'],
   ]);
-  env.PropertiesService.getScriptProperties().setProperty('LB_AGENTS_SHEET_ID', 'bank');
   const k = env.lbLogin_({ agentNo: '10024', code: '77' });
-  ok('an agent on the Agent Skill Bank signs in with the password they have', k.ok && k.name === 'Kim Banked');
+  ok('an agent on the fact find list signs in with the password they have', k.ok && k.name === 'Kim Banked' && k.role === 'Agent');
+  const bo = env.lbLogin_({ agentNo: 'A00001', code: 'pw1' });
+  ok('the branch manager signs in by number and gets the staff side', bo.role === 'Branch Manager' && !env.lbSession_(bo.token).isAgent && env.lbSession_(bo.token).isManager);
+  ok('a unit manager logs as an agent', env.lbLogin_({ agentNo: 'A00002', code: 'pw2' }).role === 'Agent');
+  ok('"Not Active" is refused', throws(() => env.lbLogin_({ agentNo: 'A00003', code: 'pw3' })));
+  ok('staff are not in the agent list', !env.lbHandle_({ action: 'lb.agents', token: bo.token }).agents.some(a => a.name === 'Bo Branch'));
 }
 
 /* ── the seam ──────────────────────────────────────────────────────── */

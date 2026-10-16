@@ -187,10 +187,13 @@ reason. It replaces the Log Book Digital Jotform.
 4. Reload the sheet → **RR Operations → Log Book: set up**. This makes the tabs
    (Log Book, Transmittals, Agents, Departments), fills Departments from the
    history, and installs the hourly chase.
-5. **Agents can sign in two ways** (either is enough):
-   - the **Agents** tab: Agent No, Name, Email, Unit, Code, Active; or
-   - set `LB_AGENTS_SHEET_ID` to the Service Questionnaire workbook, and agents
-     sign in with the Agent no. and Password already on its Agent Skill Bank.
+5. **Everyone signs in with their agent number and the password they use for
+   the fact find**: the Log Book reads the **Access** tab of the Confidential
+   Fact Find Form workbook (Agent Number, Password, Role, Unit, Active). Staff,
+   the branch manager and the assistant branch manager get the staff side;
+   agents and unit managers log their own documents. "Not Active" cannot sign in.
+   The script owner must be able to open that workbook. Anyone not on it can be
+   added on the **Agents** tab here.
 6. **Staff** use their RR Operations access code. A blank Apps cell on the
    Access tab already includes the Log Book; otherwise add `logbook` to it.
    Each staff member's Email on the Access tab is where their chase goes.
@@ -205,7 +208,7 @@ reason. It replaces the Log Book Digital Jotform.
 | `LB_CUTOFF_HOUR` | 16 | After this hour, a document received today and not sent is late |
 | `LB_SALES_SUPPORT` | sales support | Copied on every chase and every return |
 | `LB_MANAGER` | the branch manager | Told when a contract passes 20 days with the agent |
-| `LB_AGENTS_SHEET_ID` | — | Use the Agent Skill Bank for agent sign-in |
+| `LB_AGENTS_SHEET_ID` | the fact find workbook | Other workbooks to sign in from, comma-separated |
 | `LB_HISTORY_ID` | — | The old Log Book, for the one-off import |
 
 E-mail follows `DB_MODE`: in test mode (the default) every Log Book e-mail goes

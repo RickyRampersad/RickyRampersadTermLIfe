@@ -63,10 +63,11 @@
  *   LB_MANAGER         the branch manager's address, told of a contract past
  *                      20 days (default the branch manager's Guardian address).
  *   LB_SALES_SUPPORT   copied on every chase (default sales support).
- *   LB_AGENTS_SHEET_ID optional: a workbook whose "Agent Skill Bank" tab holds
- *                      Agent no. and Password, so agents sign in with the
- *                      number and password they already have. Without it the
- *                      Agents tab in this sheet is the list.
+ *   LB_AGENTS_SHEET_ID the workbooks whose Access (or Agent Skill Bank) tab
+ *                      holds Agent Number and Password, comma-separated.
+ *                      Default: the Confidential Fact Find Form, so everyone
+ *                      signs in with the number and password the fact find
+ *                      uses. The Agents tab here is read first.
  *   LB_HISTORY_ID      the Log Book Digital workbook, for lbImportHistory().
  *
  * Mail follows DB_MODE: in test (the default) every e-mail goes to
@@ -88,6 +89,8 @@ var LB = {
   MAX_ITEMS: 30,
   SALES_SUPPORT: 'rickyrampersadsalessupport@myguardiangroup.com',
   MANAGER: 'Ricky.Rampersad@myguardiangroup.com',
+  // The Confidential Fact Find Form workbook: its Access tab is the sign-in list.
+  FACTFIND_ID: '1iytBbnETQFRmkveDSxadjsAfN07aMTW9E2slcA5qaWI',
   FROM: 'RICKY RAMPERSAD BRANCH',
   BRANCH_LINE: 'Ricky Rampersad Branch · 26000 · GLOC Chaguanas',
   // Forms that are not about one policy.
@@ -412,8 +415,8 @@ function lbReasonFresh_(r, now) {
 
 /* ============================== who is signed in ============================== */
 
-/* Agent sessions sit on the Delivery Book's Sessions tab with three more
-   columns, so one sign-out, one expiry and one prune serve both. */
+/* Sessions sit on the Delivery Book's Sessions tab with three more columns,
+   so one sign-out, one expiry and one prune serve both. */
 var LB_SESS_EXTRA = ['Agent No', 'Email', 'Unit'];
 
 function lbSession_(token) {
@@ -422,8 +425,8 @@ function lbSession_(token) {
   var sh = dbSheet_(DB.TABS.SESS, DB_SESS_COLUMNS);
   var hm = dbHeaderMap_(sh);
   who.isAgent = /^agent$/i.test(who.role);
-  who.isManager = /manager/i.test(who.role);
-  if (who.isAgent && 'Agent No' in hm.map) {
+  who.isManager = /manager/i.test(who.role) && !/unit/i.test(who.role);
+  if ('Agent No' in hm.map) {
     var last = sh.getLastRow();
     var vals = sh.getRange(2, 1, last - 1, hm.head.length).getValues();
     for (var i = 0; i < vals.length; i++) {
@@ -443,10 +446,21 @@ function lbAgentKey_(v) {
   return /^\d+$/.test(d) ? String(Number(d)) : s;
 }
 
-/* Every agent who may sign in: the Agents tab here, then the Agent Skill Bank
-   the assignment board uses, when LB_AGENTS_SHEET_ID names that workbook. */
+/* Where people sign in from, in order:
+     1. the Agents tab in this sheet (anyone added by hand);
+     2. the Access tab of the Confidential Fact Find Form workbook: Agent Number
+        and Password, the same sign-in the fact find uses (asked for on 15
+        October 2026: "it should use the code that are on the fact find
+        sheet"). Its Role says who is staff;
+     3. the Agent Skill Bank, when LB_AGENTS_SHEET_ID also names that workbook.
+   LB_AGENTS_SHEET_ID lists workbook IDs, comma-separated, and replaces the
+   default (the fact find workbook). The first row found for a number wins.
+   Read once per request. */
+var LB_AGENTS_READ_ = null;
 function lbAgents_() {
+  if (LB_AGENTS_READ_) return LB_AGENTS_READ_;
   var out = [], seen = {};
+  var inactive = /^(no|false|not active|inactive|resigned|terminated)/i;
   var add = function (a) {
     var k = lbAgentKey_(a.agentNo);
     if (!k || seen[k]) return;
@@ -458,26 +472,38 @@ function lbAgents_() {
   if (last > 1) tab.getRange(2, 1, last - 1, hm.head.length).getValues().forEach(function (r) {
     add({ agentNo: String(r[hm.map['Agent No']] || '').trim(), name: String(r[hm.map['Name']] || '').trim(),
           email: String(r[hm.map['Email']] || '').trim(), unit: String(r[hm.map['Unit']] || '').trim(),
-          code: String(r[hm.map['Code']] || '').trim(), active: !/^(no|false|inactive|resigned|terminated)/i.test(String(r[hm.map['Active']] || '')) });
+          code: String(r[hm.map['Code']] || '').trim(), role: 'Role' in hm.map ? String(r[hm.map['Role']] || '').trim() : '',
+          active: !inactive.test(String(r[hm.map['Active']] || '')) });
   });
-  var bankId = dbProp_('LB_AGENTS_SHEET_ID');
-  if (bankId) {
-    try {
-      var bank = SpreadsheetApp.openById(bankId).getSheetByName('Agent Skill Bank');
-      if (bank && bank.getLastRow() > 1) {
-        var bh = dbHeaderMap_(bank);
-        var col = function (names) { for (var i = 0; i < names.length; i++) if (names[i] in bh.map) return bh.map[names[i]]; return -1; };
-        var cNo = col(['Agent no.', 'Agent No', 'Agent no', 'Agent Number']), cPw = col(['Password', 'Portal code', 'Code']);
-        var cName = col(['Agent', 'Name']), cMail = col(['E-mail', 'Email', 'Agent Email']), cUnit = col(['Unit']), cAct = col(['Active']);
-        if (cNo >= 0 && cPw >= 0) bank.getRange(2, 1, bank.getLastRow() - 1, bh.head.length).getValues().forEach(function (r) {
-          add({ agentNo: String(r[cNo] || '').trim(), name: String(cName >= 0 ? r[cName] : '').replace(/^\s*A?\d+\s*-\s*/, '').trim(),
-                email: String(cMail >= 0 ? r[cMail] : '').trim(), unit: String(cUnit >= 0 ? r[cUnit] : '').trim(),
-                code: String(r[cPw] || '').trim(), active: !/^(no|false|not active|inactive|resigned|terminated)/i.test(String(cAct >= 0 ? r[cAct] : '')) });
-        });
-      }
-    } catch (e) { Logger.log('agent skill bank: ' + e); }
-  }
+  var ids = String(dbProp_('LB_AGENTS_SHEET_ID', LB.FACTFIND_ID)).split(',').map(function (x) { return x.trim(); }).filter(String);
+  ids.forEach(function (id) {
+    var book;
+    try { book = SpreadsheetApp.openById(id); } catch (e) { Logger.log('agent list ' + id + ': ' + e); return; }
+    ['Access', 'Agent Skill Bank'].forEach(function (name) {
+      var sh = book.getSheetByName(name);
+      if (!sh || sh.getLastRow() < 2) return;
+      var bh = dbHeaderMap_(sh);
+      var col = function (names) { for (var i = 0; i < names.length; i++) if (names[i] in bh.map) return bh.map[names[i]]; return -1; };
+      var cNo = col(['Agent Number', 'Agent no.', 'Agent No', 'Agent no']), cPw = col(['Password', 'Portal code']);
+      if (cNo < 0 || cPw < 0) return;
+      var cName = col(['Name', 'Agent']), cMail = col(['Email', 'E-mail', 'Agent Email']), cUnit = col(['Unit']);
+      var cAct = col(['Active']), cRole = col(['Role']);
+      sh.getRange(2, 1, sh.getLastRow() - 1, bh.head.length).getValues().forEach(function (r) {
+        add({ agentNo: String(r[cNo] || '').trim(), name: String(cName >= 0 ? r[cName] : '').replace(/^\s*A?\d+\s*-\s*/, '').trim(),
+              email: String(cMail >= 0 ? r[cMail] : '').trim(), unit: String(cUnit >= 0 ? r[cUnit] : '').trim(),
+              code: String(r[cPw] == null ? '' : r[cPw]).trim(), role: String(cRole >= 0 ? r[cRole] : '').trim(),
+              active: !inactive.test(String(cAct >= 0 ? r[cAct] : '')) });
+      });
+    });
+  });
+  LB_AGENTS_READ_ = out;
   return out;
+}
+
+/* Staff, the branch manager and the assistant branch manager on that list get
+   the staff side; agents and unit managers log their own documents. */
+function lbIsStaffRole_(role) {
+  return /staff|support|admin|branch manager/i.test(String(role || '')) && !/unit manager/i.test(String(role || ''));
 }
 
 function lbFindAgent_(no) {
@@ -485,24 +511,29 @@ function lbFindAgent_(no) {
   return k ? lbAgents_().filter(function (a) { return a.key === k; })[0] || null : null;
 }
 
+/* A staff member's address: the RR Operations Access tab, else the fact find's. */
 function lbStaffEmail_(name) {
+  var want = String(name || '').trim().toLowerCase();
+  if (!want) return '';
   var sh = dbSheet_(DB.TABS.ACCESS, DB_ACCESS_COLUMNS);
   var hm = dbHeaderMap_(sh);
   var last = sh.getLastRow();
-  if (last < 2 || !('Email' in hm.map)) return '';
-  var want = String(name || '').trim().toLowerCase();
-  var hit = sh.getRange(2, 1, last - 1, hm.head.length).getValues().filter(function (r) {
-    return String(r[hm.map['Name']] || '').trim().toLowerCase() === want;
-  })[0];
-  return hit ? String(hit[hm.map['Email']] || '').trim() : '';
+  if (last > 1 && 'Email' in hm.map) {
+    var hit = sh.getRange(2, 1, last - 1, hm.head.length).getValues().filter(function (r) {
+      return String(r[hm.map['Name']] || '').trim().toLowerCase() === want && r[hm.map['Email']];
+    })[0];
+    if (hit) return String(hit[hm.map['Email']]).trim();
+  }
+  var a = lbAgents_().filter(function (x) { return x.name.toLowerCase() === want && x.email; })[0];
+  return a ? a.email : '';
 }
 
-/** An agent signs in with their agent number and their own code, both. A
- *  refusal never says which was wrong. Ten wrong tries on one number close it
- *  for fifteen minutes. */
+/** Sign-in by agent number and password, both. A refusal never says which
+ *  was wrong. Ten wrong tries on one number close it for fifteen minutes. */
 function lbLogin_(b) {
+  LB_AGENTS_READ_ = null;
   var no = dbClean_(b.agentNo, 20), code = dbClean_(b.code, 40);
-  if (!no || !code) throw new Error('Enter your agent number and your code.');
+  if (!no || !code) throw new Error('Enter your agent number and your password.');
   var key = 'lb_fail_' + lbAgentKey_(no);
   var cache = CacheService.getScriptCache();
   var fails = Number(cache.get(key) || 0);
@@ -510,8 +541,11 @@ function lbLogin_(b) {
   var a = lbFindAgent_(no);
   if (!a || !a.active || !a.code || a.code.toUpperCase() !== code.toUpperCase()) {
     cache.put(key, String(fails + 1), 900);
-    throw new Error('That agent number and code do not match.');
+    throw new Error('That agent number and password do not match.');
   }
+  var staff = lbIsStaffRole_(a.role);
+  var role = staff ? a.role : 'Agent';
+  var name = a.name || ('Agent ' + a.agentNo);
   var token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
   var now = new Date();
   var exp = new Date(now.getTime() + DB.SESSION_HOURS * 3600000);
@@ -519,11 +553,11 @@ function lbLogin_(b) {
   var hm = dbHeaderMap_(sh);
   var need = LB_SESS_EXTRA.filter(function (c) { return !(c in hm.map); });
   if (need.length) { sh.getRange(1, hm.head.length + 1, 1, need.length).setValues([need]); hm = dbHeaderMap_(sh); }
-  sh.appendRow(dbRowFor_(sh, { 'Token': token, 'Name': a.name || ('Agent ' + a.agentNo), 'Role': 'Agent',
+  sh.appendRow(dbRowFor_(sh, { 'Token': token, 'Name': name, 'Role': role,
     'Salesforce User Id': '', 'Issued': now, 'Expires': exp, 'Apps': 'logbook',
     'Agent No': a.agentNo, 'Email': a.email, 'Unit': a.unit }));
   dbPruneSessions_(sh);
-  return { ok: true, token: token, name: a.name || ('Agent ' + a.agentNo), role: 'Agent', mode: dbMode_(),
+  return { ok: true, token: token, name: name, role: role, mode: dbMode_(),
            agentNo: a.agentNo, apps: opsAppsFor_('logbook') };
 }
 
@@ -532,7 +566,7 @@ function lbLogin_(b) {
 
 /* Called by DeliveryBook.gs's doPost for every action that starts "lb.". */
 function lbHandle_(b) {
-  LB_READ_ = null;
+  LB_READ_ = null; LB_AGENTS_READ_ = null;
   if (b.action === 'lb.login') return lbLogin_(b);
   var who = lbSession_(b.token);
   if (!who) return { ok: false, error: 'signed-out' };
@@ -557,7 +591,7 @@ function lbHandle_(b) {
     case 'lb.reason':       return lbReason_(b, who);
     case 'lb.delivered':    return lbDelivered_(b, who);
     case 'lb.stats':        return lbStats_(b, who);
-    case 'lb.agents':       return { ok: true, agents: lbAgents_().filter(function (a) { return a.active; })
+    case 'lb.agents':       return { ok: true, agents: lbAgents_().filter(function (a) { return a.active && !lbIsStaffRole_(a.role); })
                                        .map(function (a) { return { agentNo: a.agentNo, name: a.name, unit: a.unit }; }) };
     default:                return { ok: false, error: 'Unknown action' };
   }
@@ -1440,8 +1474,8 @@ function lbSetup() {
     'Mode: ' + dbMode_() + (dbMode_() === 'live' ? '' : ' (every Log Book e-mail goes to ' + (dbProp_('DB_TEST_INBOX') || 'the script owner') + ')'),
     'Hourly chase: ' + (have ? 'already on' : 'installed'),
     'Late after: ' + lbCutoff_() + ':00 on the day received',
-    'Agents who can sign in: ' + agents.filter(function (a) { return a.active && a.code; }).length +
-      (dbProp_('LB_AGENTS_SHEET_ID') ? ' (Agents tab and the Agent Skill Bank)' : ' (Agents tab; set LB_AGENTS_SHEET_ID to use the Agent Skill Bank)'),
+    'People who can sign in: ' + agents.filter(function (a) { return a.active && a.code; }).length +
+      ' (the Agents tab and the fact find\'s Access tab' + (agents.length ? '' : ': none found, check the script owner can open the fact find workbook') + ')',
     'Departments: ' + lbDeptNames_().length,
     'Reason links: ' + (dbExecUrl_() ? 'on' : 'off until the web app is deployed'),
     'History: ' + (dbProp_('LB_HISTORY_ID') ? 'run lbImportHistory() once' : 'set LB_HISTORY_ID, then run lbImportHistory()'),
