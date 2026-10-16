@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16c';
+var SCRIPT_VERSION = '2026-10-16d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3257,6 +3257,7 @@ function sendDayStart_(staffId, date, kind, opt) {
     } else if (sfOk) {
       lines += '<div style="font-size:12.5px;color:' + MAIL.green + ';margin-top:6px">Nothing due or overdue in Salesforce for this block\'s work.</div>';
     }
+    if (kind === 'first') lines += srcBlockLines_(staffId, date, b);
     cards.push('<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (waiting.length || sug.length || !nPlanned ? MAIL.amber : MAIL.green) +
       ';border-radius:10px;padding:13px 15px;margin-bottom:10px">' +
       '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' + esc_(blockLabel_(b)) + (sb.time ? ' · ' + esc_(sb.time) : '') + '</div>' +
@@ -5168,6 +5169,76 @@ function motorCard_(day) {
     return srcCard_('Motor renewals · next 30 days (' + rows.length + ')', MAIL.amber, lines, rows.length > 8 ? 'and ' + (rows.length - 8) + ' more on the Motor Renewal Book.' : '');
   } catch (e) { return ''; }
 }
+
+/** The day builder beyond Salesforce: each source's work for this person, put
+ *  into the block whose focus fits it (by the block's focus and KPI words), so
+ *  the morning plan says what to do in each block from every source, not only
+ *  the Salesforce tasks. Display in the e-mail; the Salesforce items stay the
+ *  plan's checkable rows. */
+var _srcPlanMemo = {};
+function srcPlan_(sid, day) {
+  var mk = sid + '|' + day; if (_srcPlanMemo[mk]) return _srcPlanMemo[mk];
+  var blocks = (scheduleFor_(sid) || {}).blocks || {}, ids = Object.keys(blocks), out = {};
+  ids.forEach(function (b) { out[b] = []; });
+  if (!ids.length) return (_srcPlanMemo[mk] = out);
+  var place = function (re, fallback, html) {
+    var hit = ids.filter(function (b) { return re.test(String(blocks[b].focus || '') + ' ' + String(blocks[b].kpi || '')); })[0];
+    out[hit || (fallback === 'last' ? ids[ids.length - 1] : ids[0])].push(html);
+  };
+  var tag = function (t) { return '<span style="font-size:10.5px;font-weight:800;letter-spacing:.06em;color:' + MAIL.gold + '">' + t + '</span> '; };
+  // Query Pal: assigned to me, oldest first
+  try {
+    var me = nameFor_(sid);
+    openQueries_().filter(function (x) { return firstOf_(x.assigned) === firstOf_(me); }).slice(0, 3).forEach(function (x) {
+      place(/quer|issue|service line|task mgmt|escalat/i, 'first', tag('QUERY PAL') + esc_(x.client) + ' · ' + esc_(shorten_(x.subject || x.type, 55)) + ' · <b style="color:' + (x.days > 3 ? MAIL.red : MAIL.amber) + '">' + x.days + 'd open</b>: close it or note the trail');
+    });
+  } catch (e) {}
+  // Client call list: call-backs first, then the next calls
+  try {
+    var calls = bookRows_('SKILL', BOOKS.SKILL.calls).filter(function (r) { return sameDesk_(r['Caller'], sid) && !String(r['Done'] || '').trim(); });
+    var back = calls.filter(function (r) { return String(r['Call-back'] || '').trim(); });
+    if (calls.length) place(/survey|orphan|service quest|call|retention|premium due/i, 'first', tag('CALL LIST') + (back.length ? '<b style="color:' + MAIL.red + '">' + back.length + ' promised call-back' + (back.length === 1 ? '' : 's') + '</b>, then ' : '') +
+      'the next <b>' + Math.min(10, calls.length) + '</b> of ' + calls.length + ' on your call list (' + esc_(String(calls[0]['Call for'] || 'call')) + ' first)');
+  } catch (e) {}
+  // Group clients: overdue or due within three days
+  try {
+    var soon = shiftDays_(day, 3);
+    bookRows_('GROUP', BOOKS.GROUP.tasks).filter(function (r) { var d = anyIso_(r['Due']); return sameDesk_(r['Owner'], sid) && /^y/i.test(String(r['Open'] || '')) && d && d <= soon; })
+      .sort(function (a, b) { return String(anyIso_(a['Due'])).localeCompare(String(anyIso_(b['Due']))); }).slice(0, 3).forEach(function (r) {
+        place(/group|billing|recon|renewa|pension|benefit/i, 'first', tag('GROUP') + '<b>' + esc_(shorten_(r['Group'], 28)) + '</b> · ' + esc_(shorten_(r['Subject'], 55)) + lateTag_(anyIso_(r['Due']), day));
+      });
+  } catch (e) {}
+  // Claims pending, for the claims desk
+  try {
+    if (sid === srcDesk_('claims')) {
+      var pend = bookRows_('CLAIMS', BOOKS.CLAIMS.tab).filter(function (r) { return /pending/i.test(String(r['Status'] || '')); });
+      if (pend.length) place(/claim|health|eb |customer care/i, 'first', tag('CLAIMS') + '<b>' + pend.length + '</b> payment pending: chase the oldest with EB Customer Care');
+    }
+  } catch (e) {}
+  // Benefits requests, for the benefits desk
+  try {
+    if (sid === srcDesk_('eb')) {
+      var rq = bookRows_('EB', BOOKS.EB.requests).filter(function (r) { return /^new$/i.test(String(r['Status'] || '').trim()) && String(r['Company'] || '').trim(); });
+      rq.slice(0, 2).forEach(function (r) { place(/benefit|group|new business|opportun|quot/i, 'first', tag('BENEFITS') + '<b>' + esc_(r['Company']) + '</b> still New after ' + esc_(String(r['Chasers sent'] || 0)) + ' chasers: call ' + esc_(r['Contact'] || 'the contact') + ' and move it on'); });
+    }
+  } catch (e) {}
+  // Log book and the mailbag
+  try {
+    var mb = mailbagToday_(day), mine = 0, myF = firstOf_(nameFor_(sid));
+    Object.keys(mb.backlog).forEach(function (w) { if (firstOf_(w) === myF) mine += mb.backlog[w]; });
+    var rt = mailbagRouter_(day, {});
+    if (rt.router === sid) place(/task mgmt|report|mail|admin|document|send off/i, 'last', tag('MAILBAG') + 'You route the bag this week: <b>' + mb.backlogN + '</b> logged and not sent' + (mb.oldest ? ', oldest ' + esc_(shortDate_(mb.oldest)) : '') + '. Collect from each desk and send before you leave');
+    else if (mine) place(/task mgmt|report|mail|admin|document|send off/i, 'last', tag('LOG BOOK') + '<b>' + mine + '</b> document' + (mine === 1 ? '' : 's') + ' you verified are not sent: hand them to ' + esc_(nameFor_(rt.router).split(' ')[0]));
+  } catch (e) {}
+  return (_srcPlanMemo[mk] = out);
+}
+function srcBlockLines_(sid, day, b) {
+  var list = []; try { list = srcPlan_(sid, day)[b] || []; } catch (e) {}
+  if (!list.length) return '';
+  return '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:' + MAIL.navy + ';margin-top:9px">Also in this block, from the branch\'s other systems</div>' +
+    list.map(function (h) { return '<div style="font-size:12.5px;line-height:1.45;padding:3px 0;border-top:1px solid ' + MAIL.line + '">' + h + '</div>'; }).join('');
+}
+
 function checkSources() {
   var day = todayISO_();
   ['sasha', 'elizabeth', 'azariah', 'kamla'].forEach(function (sid) { var h = branchCards_(sid, day); Logger.log(sid + ': ' + (h.match(/text-transform:uppercase[^>]*>([^<]+)</g) || []).map(function (x) { return x.replace(/.*>/, ''); }).join(' | ')); });
