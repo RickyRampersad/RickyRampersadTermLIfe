@@ -185,6 +185,10 @@ const server = http.createServer((req, res) => {
   await sp.waitForSelector('#stats .kp');
   ok('the insights open', /sent the day collected/.test(await sp.textContent('#stats')) && /By department/.test(await sp.textContent('#stats')));
   if (SHOTS) await sp.screenshot({ path: SHOTS + '/lb-5-insights.png', fullPage: true });
+  await sp.goto(base + '/transmittal/?api=' + encodeURIComponent(API));
+  await sp.waitForFunction(() => /Sam Support/.test((document.getElementById('transWho') || {}).textContent || ''));
+  ok('/transmittal opens the transmittals, with who sent them', !(await sp.$eval('#tab-trans', e => e.hidden)) && /TR-/.test(await sp.textContent('#transList')));
+  if (SHOTS) await sp.screenshot({ path: SHOTS + '/lb-6-transmittals.png', fullPage: true });
   await sp.click('[data-tab=log]');
   ok('staff log for an agent: the agent list is there', (await sp.$$eval('#agentSel option', o => o.length)) === 2 && !(await sp.$eval('#agentPick', e => e.hidden)));
 
