@@ -63,10 +63,24 @@
  *  Essay Coach    : At | Id | Stage | Who | Text   (every question and every answer)
  *  Essay Classes  : Class | Question | Due | Coach Notes | Updated
  *  Essay Activity : At | Who | Did | Note   (sign-ins, refusals, hand-ins, returns; never a code)
+ *  Essay Guide    : Class | Stage | Updated | Guide   (made the first time a teacher asks; see below)
+ *
+ *  ── FOR THE TEACHER ONLY: THE ANSWERS AND THE FULL REVIEW ─────────────────────────
+ *  Asked for on 16 October 2026: "allow the teacher to do the full review and answers".
+ *  The answer guide is what a careful student should find and say at each stage, with model
+ *  theses, a model plan and a model paragraph. The full review marks one student's whole
+ *  notebook and essay, criterion by criterion and paragraph by paragraph, and drafts a note
+ *  for each stage that the teacher may pass on. Both are written by Claude when the teacher
+ *  asks, from the summary below, and kept on this sheet: the guide on the Essay Guide tab,
+ *  the review inside the student's Review cell. Neither is in this file or the page, which
+ *  are public, and neither ever reaches a student: every route that makes or reads them
+ *  takes a teacher's code, and a student's own session has the review stripped out.
  */
 
 var ESSAY = {
   CODES: 'Essay Codes', WORK: 'Essay Work', COACH: 'Essay Coach', CLASSES: 'Essay Classes', ACTIVITY: 'Essay Activity',
+  GUIDE: 'Essay Guide',
+  GUIDE_LIMIT: 30, REVIEW_LIMIT: 30,    // per teacher, per six hours
   DEFAULT_CLASS: 'English B',
   DEFAULT_QUESTION: 'With close reference to “Blood Brothers” by John Wickham, write a five-paragraph ' +
                     'essay showing how the writer presents the theme of fear.',
@@ -88,8 +102,12 @@ var ESSAY_COLUMNS = {
   'Essay Work':     ['Id', 'Updated', 'Work', 'Review Updated', 'Review'],
   'Essay Coach':    ['At', 'Id', 'Stage', 'Who', 'Text'],
   'Essay Classes':  ['Class', 'Question', 'Due', 'Coach Notes', 'Updated'],
-  'Essay Activity': ['At', 'Who', 'Did', 'Note']
+  'Essay Activity': ['At', 'Who', 'Did', 'Note'],
+  'Essay Guide':    ['Class', 'Stage', 'Updated', 'Guide']
 };
+/* Tabs made the first time they are needed, so a sheet set up before they existed needs no
+   second run of essaySetup(). */
+var ESSAY_LAZY = { 'Essay Guide': 1 };
 
 /* What each stage is for, as the coach is told it. The page's STAGES carry the same keys. */
 var ESSAY_STAGES = {
@@ -233,6 +251,7 @@ function essaySelfTest() {
   try {
     Object.keys(ESSAY_COLUMNS).forEach(function (name) {
       var sh = SpreadsheetApp.getActive().getSheetByName(name);
+      if (!sh && ESSAY_LAZY[name]) { out.push('  note   tab "' + name + '" is made the first time it is needed'); return; }
       if (!sh) { t('tab "' + name + '" exists', false, 'run essaySetup()'); return; }
       var have = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(function (h) { return String(h).trim().toLowerCase(); });
       var missing = ESSAY_COLUMNS[name].filter(function (c) { return have.indexOf(c.toLowerCase()) === -1; });
@@ -306,6 +325,8 @@ function essayRoute_(b) {
     case 'essay.roster': return essayRoster_(b);
     case 'essay.class':  return essayClass_(b);
     case 'essay.log':    return essayLog_(b);
+    case 'essay.guide':  return essayGuide_(b);
+    case 'essay.fullreview': return essayFullReview_(b);
   }
   return eerr_('Unknown action.');
 }
@@ -353,6 +374,7 @@ function essaySession_(u, fresh) {
   if (u.role === 'student') {
     var w = ework_(u.id);
     out.work = w.work; out.review = w.review;
+    if (out.review) delete out.review.full;   // the full review is the teacher's, never the student's
     out.locked = elocked_(w.work, w.review);
     out.coach = ecoachLog_(u.id, 60);
     return out;
@@ -694,6 +716,165 @@ function essayClass_(b) {
 function essayLog_(b) {
   var t = eteacher_(b.token), s = epupil_(t, b.id);
   return eok_({ id: s.id, coach: ecoachLog_(s.id, 0) });
+}
+
+/* ============================ for the teacher: answers and the full review ============================ */
+
+var ESSAY_TEACHER_RULES = [
+  'You are helping a secondary-school English teacher in Trinidad and Tobago who is preparing students for CSEC English B. The students are writing five-paragraph essays on the theme of fear in the short story "Blood Brothers" by John Wickham.',
+  'Everything you write here is for the teacher. The student never sees it unless the teacher decides to pass something on.',
+  'Quote the story only with words that appear in quotation marks in the summary below. Never invent a quotation. When a point needs the writer\'s exact words and the summary does not give them, describe the moment and say the teacher should take the wording from the book.',
+  'Be specific to this story. Write plain, clear English, with no markdown inside the JSON strings.'
+].join('\n');
+
+/* What the answer guide covers at each stage. Each answer is { summary, points: [{title, detail}], watch }. */
+var ESSAY_GUIDE_ASK = {
+  find:  'Stage 1 asks the student to log every moment of fear: who is afraid, what sets it off, and the writer\'s words. As points, list the moments a careful student should find, in story order, eight to twelve of them: title = who is afraid and where (for example "Paul, on the night walk"); detail = what sets the fear off and the words to look for. Under watch, the moments students most often miss and the mistakes they make here.',
+  why:   null,   // built from ESSAY_WHY, below
+  idea:  'Stage 3 asks the student to sort their moments into three kinds of fear, to say in one sentence what the writer is saying about fear, and to write a thesis. As points give: three or four sensible ways to group the fear into three kinds (title = the three kinds; detail = which moments belong in each); two or three one-sentence statements of what the writer is saying about fear; and three model thesis statements of different strength, each titled strong, adequate or weak, with why. Under watch, the commonest problems with a thesis on this story.',
+  plan:  'Stage 4 asks for a plan: hook, context and thesis for the introduction; point, evidence, technique, effect and link for each of three body paragraphs; restate and so-what for the conclusion. As points, give one complete model plan, one point per paragraph (title = the paragraph; detail = its notes, labelled). Under watch, what to check in a student\'s plan.',
+  write: 'Stage 5 is the writing. As points give: what a strong introduction, a strong body paragraph and a strong conclusion do on this question (one point each), and one model body paragraph of about 150 words on one kind of fear (title = "A model body paragraph"; detail = the paragraph). Under watch, the commonest weaknesses in students\' paragraphs on this story.',
+  hand:  'Stage 6 is the final check. As points, set out how to judge the finished essay under these headings, one point each: knowledge of the story, analysis of the writer\'s methods, use of evidence, organisation, expression; for each, what separates a strong essay from an adequate one on this story. In the summary, say plainly that this is a guide for the teacher, not the official CSEC mark scheme. Under watch, the slips to look for last.'
+};
+function eguideAsk_(stage) {
+  if (stage !== 'why') return ESSAY_GUIDE_ASK[stage];
+  var qs = Object.keys(ESSAY_WHY).map(function (k, i) { return String.fromCharCode(65 + i) + '. ' + ESSAY_WHY[k]; }).join('\n');
+  return 'Stage 2 asks the student these questions:\n' + qs + '\nAs points, one for each question in this order: title = the question; detail = what a strong answer says, in two to four sentences, and the moment in the story it should point to. Under watch, what weak answers to these questions tend to do.';
+}
+
+var ESSAY_GUIDE_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['summary', 'points', 'watch'],
+  properties: {
+    summary: { type: 'string' },
+    points: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['title', 'detail'],
+                                      properties: { title: { type: 'string' }, detail: { type: 'string' } } } },
+    watch: { type: 'array', items: { type: 'string' } }
+  }
+};
+
+/* The answer guide for one stage, made once per class and kept; "make it again" replaces it. */
+function essayGuide_(b) {
+  var t = eteacher_(b.token), stage = String(b.stage || '');
+  if (!ESSAY_STAGES[stage]) return eerr_('Which stage?');
+  var sh = eguideSheet_(), hit = null;
+  erows_(ESSAY.GUIDE).forEach(function (r) { if (elow_(r['class']) === elow_(t.cls) && String(r.stage) === stage) hit = r; });
+  if (hit && !b.fresh) {
+    var kept = ejson_(hit.guide);
+    if (kept) return eok_({ stage: stage, guide: kept, kept: true });
+  }
+  if (!eprop_('ANTHROPIC_API_KEY')) return eerr_('The answer guide needs the coach switched on: add the ANTHROPIC_API_KEY Script property.');
+  if (!elimit_('guide', t.id, ESSAY.GUIDE_LIMIT)) return eerr_('That is a lot of guides for one afternoon. Try again in a few hours.');
+  var cls = eclass_(t.cls);
+  var ask = '<essay_question>' + cls.question + '</essay_question>\n' +
+    (cls.notes ? '<your_notes_as_teacher>\n' + ecut_(cls.notes, 3000) + '\n</your_notes_as_teacher>\n' : '') +
+    eguideAsk_(stage) + '\nReply in the JSON format given. summary: two or three sentences on what this stage is for and what to look for.';
+  var raw = eclaude_(ESSAY_TEACHER_RULES + '\n\n' + ESSAY_STORY, [{ role: 'user', content: ask }], ESSAY_GUIDE_SCHEMA), got;
+  try { got = JSON.parse(raw); } catch (e) { return eerr_('The guide came back garbled. Ask again.'); }
+  var guide = {
+    at: new Date().toISOString(),
+    summary: String(got.summary || '').trim().slice(0, 1500),
+    points: (Array.isArray(got.points) ? got.points : []).slice(0, 16).map(function (p) {
+      return { title: String(p && p.title || '').trim().slice(0, 300), detail: String(p && p.detail || '').trim().slice(0, 2500) };
+    }).filter(function (p) { return p.title || p.detail; }),
+    watch: (Array.isArray(got.watch) ? got.watch : []).map(function (w) { return String(w || '').trim().slice(0, 400); }).filter(Boolean).slice(0, 8)
+  };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var again = null;
+    erows_(ESSAY.GUIDE).forEach(function (r) { if (elow_(r['class']) === elow_(t.cls) && String(r.stage) === stage) again = r; });
+    var row = [t.cls, stage, new Date(), JSON.stringify(guide)];
+    if (again) sh.getRange(again._row, 1, 1, 4).setValues([row]); else sh.appendRow(row);
+  } finally { lock.releaseLock(); }
+  elog_(t.id, 'guide', stage);
+  return eok_({ stage: stage, guide: guide, kept: false });
+}
+
+var ESSAY_CRITERIA = ['Knowledge of the story', 'Analysis of the writer\'s methods', 'Use of evidence', 'Organisation', 'Expression'];
+var ESSAY_REVIEW_SCHEMA = (function () {
+  var stages = {};
+  Object.keys(ESSAY_STAGES).forEach(function (k) { stages[k] = { type: 'string' }; });
+  return {
+    type: 'object', additionalProperties: false,
+    required: ['overall', 'criteria', 'paragraphs', 'strengths', 'next', 'stages', 'own_words'],
+    properties: {
+      overall: { type: 'string' },
+      criteria: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['name', 'score', 'comment'],
+                  properties: { name: { type: 'string' }, score: { type: 'integer' }, comment: { type: 'string' } } } },
+      paragraphs: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['para', 'comment'],
+                    properties: { para: { type: 'string', enum: Object.keys(ESSAY_PARAS) }, comment: { type: 'string' } } } },
+      strengths: { type: 'array', items: { type: 'string' } },
+      next: { type: 'array', items: { type: 'string' } },
+      stages: { type: 'object', additionalProperties: false, required: Object.keys(ESSAY_STAGES), properties: stages },
+      own_words: { type: 'string' }
+    }
+  };
+})();
+
+/* The full review of one student's notebook and essay, for the teacher. Kept on the student's
+   Review cell as `full`, which the student's own session never carries. */
+function essayFullReview_(b) {
+  var t = eteacher_(b.token), s = epupil_(t, b.id);
+  if (!eprop_('ANTHROPIC_API_KEY')) return eerr_('The full review needs the coach switched on: add the ANTHROPIC_API_KEY Script property.');
+  var cur = ework_(s.id), w = cur.work || {};
+  var d = w.draft || {}, words = 0;
+  Object.keys(ESSAY_PARAS).forEach(function (k) { words += ewords_(d[k]); });
+  var any = words + ewords_(w.thesis) + ewords_(w.message) + (Array.isArray(w.moments) ? w.moments.length : 0);
+  if (!any) return eerr_(s.name + ' has not written anything to review yet.');
+  if (!elimit_('review', t.id, ESSAY.REVIEW_LIMIT)) return eerr_('That is a lot of reviews for one afternoon. Try again in a few hours.');
+  var cls = eclass_(t.cls);
+  var pastes = (Array.isArray(w.pastes) ? w.pastes : []).map(function (p) { return p.n + ' words pasted into ' + p.f; });
+  var ask = '<essay_question>' + cls.question + '</essay_question>\n' +
+    (cls.notes ? '<your_notes_as_teacher>\n' + ecut_(cls.notes, 3000) + '\n</your_notes_as_teacher>\n' : '') +
+    '<student_first_name>' + ecut_(s.name, ESSAY.MAX_NAME) + '</student_first_name>\n' +
+    '<handed_in>' + (w.submittedAt ? 'yes' : 'not yet') + '</handed_in>\n' +
+    '<their_notebook>\n' + eworkText_(w) + '\n</their_notebook>\n' +
+    '<pasted_text_record>' + (pastes.length ? pastes.join('; ') : 'nothing pasted') + '</pasted_text_record>\n' +
+    'Write a full review of this student\'s notebook and essay for their teacher. Reply in the JSON format given.\n' +
+    'overall: four to six sentences on where the work stands.\n' +
+    'criteria: one entry for each of these, in this order: ' + ESSAY_CRITERIA.join('; ') + '. Score each from 1 (not yet) to 5 (excellent for a CSEC student), with a comment of two or three sentences that cites the student\'s own words. Judge only what is written; where a part is missing, say so and score it low.\n' +
+    'paragraphs: one entry for each paragraph the student has written, using the keys intro, b1, b2, b3, concl, with a comment of two or three sentences.\n' +
+    'strengths: two or three. next: the three most important things to work on, the most important first.\n' +
+    'stages: for each stage, a note the teacher could put at the top of that stage for the student. Write it to the student, warm and specific, as pointers and questions. Never rewrite their sentences and never give them a sentence to copy. One to three sentences, or an empty string when there is nothing to add.\n' +
+    'own_words: one or two sentences on whether any part reads as if it is not the student\'s own writing, judged from the writing and the pasted-text record. Say plainly when there is no concern.\n' +
+    'This is a guide for the teacher, not a CSEC mark.';
+  var raw = eclaude_(ESSAY_TEACHER_RULES + '\n\n' + ESSAY_STORY, [{ role: 'user', content: ask }], ESSAY_REVIEW_SCHEMA), got;
+  try { got = JSON.parse(raw); } catch (e) { return eerr_('The review came back garbled. Ask again.'); }
+  var txt = function (v, n) { return String(v || '').trim().slice(0, n); };
+  var crit = Array.isArray(got.criteria) ? got.criteria : [];
+  var full = {
+    at: new Date().toISOString(), words: words, handedIn: !!w.submittedAt,
+    overall: txt(got.overall, 2000),
+    criteria: ESSAY_CRITERIA.map(function (name, i) {
+      var c = crit[i] || {}, sc = Math.round(Number(c.score));
+      return { name: name, score: isFinite(sc) ? Math.max(1, Math.min(5, sc)) : 1, comment: txt(c.comment, 900) };
+    }),
+    paragraphs: (Array.isArray(got.paragraphs) ? got.paragraphs : []).filter(function (p) { return p && ESSAY_PARAS[p.para]; })
+      .map(function (p) { return { para: p.para, comment: txt(p.comment, 900) }; }).slice(0, 5),
+    strengths: (Array.isArray(got.strengths) ? got.strengths : []).map(function (x) { return txt(x, 400); }).filter(Boolean).slice(0, 3),
+    next: (Array.isArray(got.next) ? got.next : []).map(function (x) { return txt(x, 400); }).filter(Boolean).slice(0, 3),
+    stages: {}, ownWords: txt(got.own_words, 600)
+  };
+  full.total = full.criteria.reduce(function (a, c) { return a + c.score; }, 0);
+  Object.keys(ESSAY_STAGES).forEach(function (k) { full.stages[k] = txt(got.stages && got.stages[k], 700); });
+
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var again = ework_(s.id), r = again.review || {};
+    r.full = full;
+    ewrite_(s.id, 'review', JSON.stringify(r));
+  } finally { lock.releaseLock(); }
+  elog_(s.id, 'full-review', t.name + ' · ' + full.total + '/25');
+  return eok_({ id: s.id, full: full });
+}
+
+function eguideSheet_() {
+  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(ESSAY.GUIDE);
+  if (sh) return sh;
+  sh = ss.insertSheet(ESSAY.GUIDE);
+  var cols = ESSAY_COLUMNS[ESSAY.GUIDE], head = sh.getRange(1, 1, 1, cols.length);
+  head.setValues([cols]); head.setFontWeight('bold');
+  sh.setFrozenRows(1);
+  return sh;
 }
 
 /* ============================ the tabs ============================ */

@@ -53,8 +53,8 @@ const words = n => Array.from({ length: n }, (_, i) => ['fear', 'shadow', 'Paul'
 
 // ---- setup ----------------------------------------------------------------------------
 const report = env.essaySetup();
-ok('setup makes the five tabs with their headers',
-   ['Essay Codes', 'Essay Work', 'Essay Coach', 'Essay Classes', 'Essay Activity'].every(n => env.__sheets[n]) &&
+ok('setup makes the six tabs with their headers',
+   ['Essay Codes', 'Essay Work', 'Essay Coach', 'Essay Classes', 'Essay Activity', 'Essay Guide'].every(n => env.__sheets[n]) &&
    tab('Essay Codes')[0].join() === 'Code,Role,Name,Class,Status,Id,Created,Last Used' &&
    tab('Essay Work')[0].join() === 'Id,Updated,Work,Review Updated,Review');
 const tRow = tab('Essay Codes').find(r => r[1] === 'teacher');
@@ -267,6 +267,92 @@ ok('and cannot read this student’s notes, marks or coach',
    /not in your class/.test(post({ action: 'essay.review', token: O.token, id: A.me.id, stage: 'find', note: 'x' }).error) &&
    /not in your class/.test(post({ action: 'essay.roster', token: O.token, op: 'newcode', id: A.me.id }).error));
 ok('nor return their essay', /not in your class/.test(post({ action: 'essay.return', token: O.token, id: A.me.id }).error));
+
+// ---- for the teacher only: the answers for every stage, and the full review ------------------------
+const guideJSON = n => JSON.stringify({ summary: 'What this stage is for.', watch: Array.from({ length: 10 }, (_, i) => 'slip ' + i),
+  points: Array.from({ length: n }, (_, i) => ({ title: 'Point ' + i, detail: 'MODEL-ANSWER-' + i + ' what a strong answer says.' })) });
+ok('the answers are not for a student', /for the teacher/.test(post({ action: 'essay.guide', token: A.token, stage: 'why' }).error));
+ok('their tab is made by setup and holds nothing until a teacher asks', tab('Essay Guide').length === 1);
+post({ action: 'essay.class', token: T.token, question: 'How does Wickham present fear?', due: '2026-10-30', notes: 'Push for the irony at the end.' });
+ok('a stage that does not exist is refused', /Which stage/.test(post({ action: 'essay.guide', token: T.token, stage: 'zzz' }).error));
+let n0 = sent.length;
+next = say(guideJSON(20));
+const g1 = post({ action: 'essay.guide', token: T.token, stage: 'why' });
+const gReq = sent[sent.length - 1].body;
+ok('the teacher asks for a stage’s answers, and the coach writes them', g1.ok && g1.kept === false && sent.length === n0 + 1 && g1.guide.summary === 'What this stage is for.');
+ok('no more than sixteen points and eight things to watch', g1.guide.points.length === 16 && g1.guide.watch.length === 8);
+ok('it is asked in the teacher’s rules, with the summary of the story, never the student’s',
+   /for the teacher/.test(gReq.system[0].text) && /Never invent a quotation/.test(gReq.system[0].text) &&
+   gReq.system[0].text.includes(env.ESSAY_STORY) && !gReq.system[0].text.includes(env.ESSAY_RULES));
+ok('for every Ask-why question, in order, and for the class’s own question and notes',
+   Object.values(env.ESSAY_WHY).every(q => gReq.messages[0].content.includes(q)) &&
+   gReq.messages[0].content.includes('How does Wickham present fear?') && gReq.messages[0].content.includes('irony at the end'));
+ok('in the same model and settings as the coach, with the answer’s shape given',
+   gReq.model === 'claude-opus-5-5' && gReq.fallbacks === 'default' && gReq.output_config.effort === 'low' &&
+   gReq.output_config.format.type === 'json_schema' && !!gReq.output_config.format.schema.properties.points);
+ok('it is kept on its own tab, by class and stage', tab('Essay Guide')[0].join() === 'Class,Stage,Updated,Guide' &&
+   tab('Essay Guide').length === 2 && tab('Essay Guide')[1][0] === 'English B' && tab('Essay Guide')[1][1] === 'why');
+n0 = sent.length;
+const g2 = post({ action: 'essay.guide', token: T.token, stage: 'why' });
+ok('asked again, it is read from the tab and the coach is not asked', g2.ok && g2.kept === true && sent.length === n0 && g2.guide.points[3].detail === g1.guide.points[3].detail);
+next = say(guideJSON(4));
+const g3 = post({ action: 'essay.guide', token: T.token, stage: 'why', fresh: true });
+ok('“write it again” asks afresh and replaces it, one row still', g3.ok && g3.kept === false && sent.length === n0 + 1 &&
+   g3.guide.points.length === 4 && tab('Essay Guide').length === 2);
+next = say(guideJSON(3));
+const og = post({ action: 'essay.guide', token: O.token, stage: 'why' });
+ok('another class gets its own answers, never this one’s', og.ok && og.kept === false && tab('Essay Guide').length === 3);
+next = say('not json');
+ok('a garbled answer is a sentence, and nothing is kept', /garbled/.test(post({ action: 'essay.guide', token: T.token, stage: 'plan' }).error) &&
+   tab('Essay Guide').length === 3);
+delete props.ANTHROPIC_API_KEY;
+ok('without the key, a stage not yet written says how to switch it on', /ANTHROPIC_API_KEY/.test(post({ action: 'essay.guide', token: T.token, stage: 'plan' }).error));
+ok('but answers already written still open', post({ action: 'essay.guide', token: T.token, stage: 'why' }).ok);
+ok('and the full review says the same', /ANTHROPIC_API_KEY/.test(post({ action: 'essay.fullreview', token: T.token, id: A.me.id }).error));
+props.ANTHROPIC_API_KEY = 'sk-test-key';
+ok('the student never sees the answers', !JSON.stringify(post({ action: 'essay.load', token: A.token })).includes('MODEL-ANSWER'));
+
+ok('the full review is not for a student', /for the teacher/.test(post({ action: 'essay.fullreview', token: A.token, id: A.me.id }).error));
+ok('nor for another class’s teacher', /not in your class/.test(post({ action: 'essay.fullreview', token: O.token, id: A.me.id }).error));
+const blank = post({ action: 'essay.roster', token: T.token, op: 'add', name: 'Dev' });
+ok('a student who has written nothing has nothing to review', /has not written anything/.test(post({ action: 'essay.fullreview', token: T.token, id: blank.id }).error));
+const fr = { overall: 'FULL-REVIEW-OVERALL a clear start.',
+  criteria: [{ name: 'x', score: 7, comment: 'Knows the story.' }, { name: 'x', score: 0, comment: 'Little analysis.' }, { name: 'x', score: 3.6, comment: 'c' }, { name: 'x', score: 3, comment: 'c' }],
+  paragraphs: [{ para: 'b1', comment: 'Good point.' }, { para: 'zz', comment: 'no such' }],
+  strengths: ['one', 'two', 'three', 'four'], next: ['first', 'second'],
+  stages: { find: 'Look again at the walk home.', why: '', idea: 'What links your three kinds?', plan: '', write: '', hand: '' },
+  own_words: 'No concern.' };
+next = say(JSON.stringify(fr));
+n0 = sent.length;
+const FR = post({ action: 'essay.fullreview', token: T.token, id: A.me.id });
+const frReq = sent[sent.length - 1].body;
+ok('the teacher asks for a full review of a student’s work', FR.ok && FR.id === A.me.id && sent.length === n0 + 1 && FR.full.overall.startsWith('FULL-REVIEW-OVERALL'));
+ok('five criteria in the script’s order, scores held between 1 and 5, a missing one scored 1',
+   FR.full.criteria.map(c => c.name).join() === env.ESSAY_CRITERIA.join() &&
+   FR.full.criteria.map(c => c.score).join() === '5,1,4,3,1' && FR.full.total === 14);
+ok('a paragraph that is not one is dropped, and three strengths at most', FR.full.paragraphs.length === 1 && FR.full.paragraphs[0].para === 'b1' && FR.full.strengths.length === 3);
+ok('a note for every stage, blank where there is nothing to add', Object.keys(FR.full.stages).join() === Object.keys(env.ESSAY_STAGES).join() &&
+   FR.full.stages.find === 'Look again at the walk home.' && FR.full.stages.plan === '');
+ok('it knows the essay was handed in, and how long it is', FR.full.handedIn === true && FR.full.words === 530);
+ok('the coach reads their whole notebook, the paste record and the class’s notes, in the teacher’s rules',
+   frReq.messages[0].content.includes('<their_notebook>') && frReq.messages[0].content.includes('Thesis: In Blood Brothers') &&
+   /<pasted_text_record>/.test(frReq.messages[0].content) && frReq.messages[0].content.includes('irony at the end') &&
+   /for the teacher/.test(frReq.system[0].text) && !!frReq.output_config.format.schema.properties.criteria);
+ok('it is kept with the teacher’s notes', JSON.parse(tab('Essay Work').find(r => r[0] === A.me.id)[4]).full.total === 14);
+const TLf = post({ action: 'essay.load', token: T.token }).students.find(x => x.id === A.me.id);
+ok('the teacher reads it on their next load', TLf.review.full.total === 14 && TLf.review.notes.find === 'Look for Benjy too.');
+const SL = post({ action: 'essay.load', token: A.token });
+ok('the student never receives it, and still has the teacher’s notes', !('full' in (SL.review || {})) &&
+   !JSON.stringify(SL).includes('FULL-REVIEW-OVERALL') && SL.review.notes.find === 'Look for Benjy too.');
+rv = post({ action: 'essay.review', token: T.token, id: A.me.id, stage: 'find', note: FR.full.stages.find });
+ok('a note taken from it is the student’s to read, and the review stays', rv.ok && rv.review.full.total === 14 &&
+   post({ action: 'essay.load', token: A.token }).review.notes.find === 'Look again at the walk home.');
+ok('the review never unlocks a handed-in essay', post({ action: 'essay.load', token: A.token }).locked === true);
+env.CacheService.getScriptCache().put('essayreview:' + T.me.id, '30', 21600);
+ok('thirty reviews in six hours is the limit', /a lot of reviews/.test(post({ action: 'essay.fullreview', token: T.token, id: A.me.id }).error));
+env.CacheService.getScriptCache().remove('essayreview:' + T.me.id);
+const acts2 = tab('Essay Activity').slice(1).map(x => x[2]);
+ok('both are logged', acts2.includes('guide') && acts2.includes('full-review'));
 
 // ---- codes changed, switched off, and forged ---------------------------------------------------------
 const nc = post({ action: 'essay.roster', token: T.token, op: 'newcode', id: A.me.id });
