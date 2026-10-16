@@ -1,4 +1,4 @@
-/* CSEC Study Hub — guided method library
+/* SEA & CSEC Study Hub — guided method library
  *
  * Worked methods for the question types that carry the most marks. Each guide
  * is: when to use it, the method as numbered steps, one fully worked example

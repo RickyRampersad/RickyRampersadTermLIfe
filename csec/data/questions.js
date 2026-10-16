@@ -1,4 +1,4 @@
-/* CSEC Study Hub — practice bank
+/* SEA & CSEC Study Hub — practice bank
  *
  * These questions are written for this hub in CSEC Paper 01 style. They are not
  * copies of CXC past papers — CXC owns those and sells them, so the hub links

@@ -237,7 +237,11 @@
   var me=CSEC.requireRole(['student','parent','teacher']); if(!me) return;
   var S=window.CSEC_SEA, B=CSEC.seaSpec();
   var SUBJ=['p-mathematics','p-ela','p-ela-writing'];
-  var tab=SUBJ[0], paper=null, idx=0, answers={}, tick=null, left=0, started=0, pick=-1;
+  /* ?s= opens straight on one paper, so "Write one now" on a writing guide
+     lands on the writing papers instead of the mathematics tab. */
+  var want=new URLSearchParams(location.search).get('s');
+  var tab=(want&&SUBJ.indexOf(want)>-1)?want:SUBJ[0];
+  var paper=null, idx=0, answers={}, tick=null, left=0, started=0, pick=-1;
   var ticked={}, numOk=false, formOk=false;
 
   /* ---------------- blueprint summary ---------------- */

@@ -71,6 +71,16 @@
   var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
   var G=window.CSEC_GUIDES||[];
   var me=CSEC.current();
+
+  /* A guide is a method for one examination. A Standard 5 has no use for the
+     CSEC argumentative essay, and listing it buries the SEA writing methods
+     they actually sit in March. So a student is shown the methods for the
+     paper they sit next and nothing from beyond it. Parents and teachers keep
+     the whole list, because they work across the ladder. */
+  if(me && me.role==='student'){
+    var stg=CSEC.nextExam(me.level), ceil=(stg&&stg.examLevel)||10;
+    G=G.filter(function(g){ return g.level<=ceil; });
+  }
   var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
 
   $('nav').innerHTML = me
@@ -147,7 +157,13 @@
 
         (me && me.role==='student'
           ? '<div style="margin-top:20px;display:flex;gap:9px;flex-wrap:wrap">'+
-            '<a class="btn sm" href="practice.html?strand='+encodeURIComponent(g.strand)+'">Practise this now →</a>'+
+            /* Writing is practised by writing. A multiple-choice question cannot
+               ask a child to answer a topic, which is the whole skill these
+               methods teach, so a writing guide sends them to the real papers
+               and everything else to the question bank. */
+            (g.subj==='p-ela-writing'
+              ? '<a class="btn sm" href="sea.html?s=p-ela-writing">Write one now \u2192</a>'
+              : '<a class="btn sm" href="practice.html?strand='+encodeURIComponent(g.strand)+'">Practise this now \u2192</a>')+
             '<a class="btn ghost sm" href="planner.html">See it in the syllabus</a></div>'
           : '')+
       '</div></details>';

@@ -1,4 +1,4 @@
-/* CSEC Study Hub — curriculum registry
+/* SEA & CSEC Study Hub — curriculum registry
  * Subjects, syllabus strands and the Form 1-5 progression.
  *
  * Strands follow the CSEC syllabus section structure so that practice,
