@@ -14,15 +14,15 @@
      Referrer "intro <agent>: <the day and time>"), which Transition.gs sends to the agent within five minutes, copied to
      the branch, and shows on the board. No automatic receipt goes for it: the agent's call is the answer. -->
 <style>
-  :root{--blue:#13408F;--blue2:#1D5BC4;--blue3:#2A6DE0;--sky:#BFD3F7;--cyan:#00E5FF;--ink:#12202e;--body:#33465a;--dim:#5d7186;--line:#d6e3f8;--paper:#eef3fb;--card:#fff;--okbg:#eef7f2;--ok:#1f6f4a;--pick:#eaf1fd;--tint:#f4f7fe}
+  :root{--blue:#13408F;--blue2:#2D5BB9;--blue3:#5B8DEF;--sky:#BFD3F7;--ink:#14284B;--body:#3E4C66;--dim:#6E7A91;--line:#DCE5F3;--paper:#F4F6FA;--card:#fff;--okbg:#eaf6ef;--ok:#1E7A4A;--pick:#EEF3FC;--tint:#F6F9FE;--head:#F2F6FD}
   /* the board's blues and its blue shield (16 October 2026: "i do not like the yello inside the logo nor the black") */
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--body);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-  header{background:var(--blue);background-image:linear-gradient(135deg,var(--blue),var(--blue2));border-bottom:3px solid var(--cyan);padding:12px 16px;display:flex;align-items:center;gap:10px}
+  header{background:var(--head);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px}
   .mark{width:34px;height:34px;border-radius:9px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
   .mark img{width:100%;height:100%;display:block}
-  .brand{color:#ffffff;font-weight:800;font-size:14.5px;line-height:1.25}
-  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:var(--sky)}
+  .brand{color:var(--ink);font-weight:800;font-size:14.5px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:var(--dim)}
   main{width:min(560px,100% - 32px);margin:18px auto 28px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin:0 0 14px}
   .ask{border-top:4px solid var(--blue3)}
@@ -69,6 +69,18 @@
   <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
 </header>
 <main>
+  <div class="card ask" id="reply" hidden>
+    <h1 id="replyH">Tell your agent</h1>
+    <p id="replyP"></p>
+    <p class="note" id="replyPrev" hidden>This is a preview: nothing is sent.</p>
+    <button id="replySend" class="send" type="button">Send</button>
+    <p class="out" id="replyOut"></p>
+  </div>
+  <div class="card done" id="replyDone" hidden>
+    <div class="tick" aria-hidden="true">&#10003;</div>
+    <h1 id="replyDoneH">Thank you.</h1>
+    <p id="replyDoneP"></p>
+  </div>
   <div class="card ask" id="ask">
     <h1 id="title">When should your agent call you?</h1>
     <p id="lead">Choose what suits you and press send. Your agent sees it at once, and so does our branch team.</p>
@@ -135,6 +147,37 @@ var HOWS = { phone: 'a phone call', whatsapp: 'WhatsApp', video: 'a video call',
 var $ = function (id) { return document.getElementById(id); };
 var pick = { w: SLOTS[P.get('w')] ? P.get('w') : '', h: HOWS[P.get('h')] ? P.get('h') : 'phone', d: '', at: '' };
 var sent = false;
+/* a reply to one of our answers in the introduction (16 October 2026): k= the answer, v= ok ("That helps") or call ("Talk to me
+   about this"). One press sends it, as with the time; "call" keeps the time picker underneath so they can say when. */
+var K = (P.get('k') || '').replace(/[^a-z0-9_]/gi, '').slice(0, 40), V = /^(ok|call)$/.test(P.get('v') || '') ? P.get('v') : '';
+if (K && V) {
+  $('reply').hidden = false;
+  if (V === 'ok') { $('ask').hidden = true; $('replyH').textContent = 'Tell ' + N + ' that helped'; $('replyP').textContent = 'Press send and ' + N + ' knows that answer covered it. Our branch team sees it too.'; }
+  else { $('replyH').textContent = 'Ask ' + N + ' to call you about this'; $('replyP').textContent = 'Press send and ' + N + ' will take it up with you. Below, you can say when suits you.'; }
+  $('replySend').textContent = 'Send to ' + N;
+  if (PREVIEW) $('replyPrev').hidden = false;
+  var rsent = false;
+  $('replySend').addEventListener('click', function () {
+    if (rsent) return;
+    if (PREVIEW) { $('replyOut').textContent = 'This is a preview, so nothing was sent.'; return; }
+    if (!HUMAN) return;
+    rsent = true; $('replySend').disabled = true; $('replySend').textContent = 'Sending…';
+    var body = { action: 'resp', r: 'informed', t: T, s: S, p: '/your-policy/agent?q=reply_' + V + '_' + K, ref: ('intro ' + A + ': reply ' + V).slice(0, 120) };
+    var ok = function () {
+      $('reply').hidden = true; $('replyDone').hidden = false;
+      $('replyDoneH').textContent = 'Thank you. ' + N + ' has your reply.';
+      $('replyDoneP').textContent = V === 'ok' ? 'If anything else comes up, reply to our e-mail or use Query Pal below, at any hour.' : N + ' will call you about it. Choose below when suits you best.';
+    };
+    fetch(SVC, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) return ok(); throw new Error('not filed'); })
+      .catch(function () {
+        var q = Object.keys(body).map(function (k) { return k + '=' + encodeURIComponent(body[k]); }).join('&');
+        fetch(SVC + '?' + q + '&z=' + Date.now(), { credentials: 'omit' }).then(function (r) { return r.json(); })
+          .then(function (j) { if (j && j.ok) ok(); else throw new Error('not filed'); })
+          .catch(function () { rsent = false; $('replySend').disabled = false; $('replySend').textContent = 'Send to ' + N; $('replyOut').textContent = 'That did not reach us. Try again, or call the branch on (868) 226-6461.'; });
+      });
+  });
+}
 
 $('title').textContent = 'When should ' + N + ' call you?';
 $('lead').textContent = 'Choose what suits you and press send. ' + N + ' sees it at once, and so does our branch team.';

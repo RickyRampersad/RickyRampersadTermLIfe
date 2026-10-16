@@ -79,9 +79,12 @@ joined them on 16 October 2026** ("change the color i have said i do not like
 the yello inside the logo nor the black!!!!!", on seeing the gold shield on
 the near-black masthead of the Felicia sample): the "Meet your agent" e-mail
 (`tIntroBuild_`, `tIntroTeamHtml_`, colours in `T_INTRO_LOOK`), the client's
-page `your-policy/agent.html` and the sample carry the blue shield, a
-`#13408F` into `#1D5BC4` masthead with a cyan rule, white buttons on a blue
-picker, and no gold or near-black anywhere. Anything new built for the board
+page `your-policy/agent.html` and the sample carry the blue shield, and no
+gold or near-black anywhere. The same evening the saturated blue masthead was
+turned down too ("improve on the color as this is hurting the eyes"): a pale
+`#F2F6FD` header, white panels on `#F4F6FA`, deep blue type `#14284B` and one
+action blue `#2D5BB9`, with the moving banner `orphan-transition/intro-motion.gif`
+for the impact (see the introduction below). Anything new built for the board
 or sent from it takes the same blues. Every other page and every letter
 keeps the gold shield, and the hosted `logo-mark.png` is untouched: the
 letters already sent load it.
@@ -1862,14 +1865,28 @@ voice under the new timing and the caption gives it away.
     headline: "27 years of looking after families like yours"), seasoned 10 to 19, established 3 to 9 ("your agent
     from today", licensed since), new under 3 ("your new agent, with our whole branch behind them", and the branch team
     comes before the picker). On 16 October: 2 veteran, 5 seasoned, 8 established, 3 new.
-  - **The e-mail** (`tIntroBuild_`, sent by `tIntroMail_` through `clientMail_` as before): the navy hero with the
-    shield; the agent's card (ribbon, initials or photo, number and e-mail, three fact tiles, headline, bio, awards,
-    before Guardian, "Ask … about"); "When should … call you?" with morning (8 to 12), afternoon (12 to 4) and evening
-    (4 to 7), phone, WhatsApp, video or in person, and a day and exact time; "Your whole branch stands behind …" (the
-    branch manager with his direct line, the support lead, sales support, each only once their own line is live, each
-    with their photo when the profile has one); Query
-    Pal (`T_INTRO.QUERY`, www.querymypolicy.com, the branch's 24-hour query service) and the branch and Guardian Direct
-    numbers. The hold on introductions (`HOLD_INTROS`) still stands: nothing goes to a client until the branch releases
+  - **The e-mail** (`tIntroBuild_`, sent by `tIntroMail_` through `clientMail_` as before), calm since the evening of
+    16 October (`T_INTRO_LOOK`, see the mark section). In order:
+    - the moving banner, `orphan-transition/intro-motion.gif` (you, our branch, your agent; 1200×300, about 5 s,
+      under 240 KB, made by `motion/make.py` in the scratchpad). Its first frame is the whole picture, because
+      Outlook on Windows shows only that frame, and Gmail strips CSS animation;
+    - a pale header: the shield, the tier's eyebrow and line, "<first name>, meet <agent>.", the agent's photo or
+      initials, "Your agent · Sales representative of Guardian Life" (what the register lists), number, e-mail and
+      three figures;
+    - **You told us** (below), then **Our record with you**: "We have looked after you since <first year>." and up to
+      three figures off the send row's service record (requests and documents handled, premium reminders, the last
+      birthday note; never the reminders on letters I or G);
+    - the picker and "When <agent> calls:", then About (headline, bio, their own words, what they can help with
+      two-up, the promise, and a short table: works with, covers, speaks, awards, before Guardian, outside work,
+      registered with the link). A new agent's template puts About and the support team before the picker;
+    - **the support team only** (`tIntroTeamHtml_`, 16 October: "branch manager and support staff pooled too much
+      for the client they need to just see the support"): their faces in a row, first names, "<names> handle every
+      request with <agent> …", one figure for the team's client requests in the past year, and how to reach them.
+      The branch manager is no longer on the client's e-mail; he is still copied on it;
+    - Query Pal (`T_INTRO.QUERY`, www.querymypolicy.com, the branch's 24-hour query service), the branch and
+      Guardian Direct numbers, and the sign-off.
+
+    The hold on introductions (`HOLD_INTROS`) still stands: nothing goes to a client until the branch releases
     client e-mail. `transitionIntroTest` (the editor's Run button) sends the branch manager one of each template from
     the real profiles, drafts included and marked TEST.
   - **The client's choice.** Every tap opens `/your-policy/agent.html` with the choice made; the client confirms it with
@@ -1904,31 +1921,63 @@ voice under the new timing and the caption gives it away.
     The board's form offers the topics and the client types as taps. Every introduction now says what happens on the
     first call (a hello, what the client holds in plain words, anything to look at noted; no charge, nothing changes
     unless they ask) and that a review follows every six months and in the birthday month.
-  - **The team's own record** (`tTeamRecord_`): the client requests each of them closed in Salesforce in the past year,
-    and what kind they mostly were, under their line ("2,400 client requests handled in the past year: mostly new
-    applications, premiums and policy changes"), and the team's total in the heading. Logged e-mails, the
-    birthday flow and internal work (training, staffing, operations) never count; under 20, no count shows.
-  - **"You told us", and a reply that shows we listened** (16 October 2026: "the ai is supposed to have read the
-    questions asked as to how they answered and provide a response … to show we are listening, also not too much
-    clutter as folks dont like long emails"). The introduction opens, under the masthead, on up to three of the client's
-    answers (`tIntroHeard_`: most pressing first by `T_PRIORITY`, in the letter's own words, their own words as one
-    short quote) and one or two sentences in reply, written by the Claude API (`gcmClaude_`, the `ANTHROPIC_API_KEY`
-    Script property) under `T_HEARD.SYSTEM`: only what the answers say, no advice, figures, dates or promises, never a
-    former agent, their own words fenced as data. `tHeardOk_` checks the reply before it is used (length, a link, an
-    amount or long number, a refund or guarantee, a greeting, the former agent's name from the Agent column); a reply
-    that fails, an API that does not answer, or no key, and the plain line goes instead ("Thank you for telling us. <agent>
-    has your answers and will start your first call with what matters most to you."). A reply is kept six hours per
-    client and agent, so the preview and the send read the same words. A test or a preview with no answers shows
-    made-up ones (`T_HEARD_SAMPLE`) and says so. **The e-mail is short on purpose**: four topics at most
-    (`T_PROF.SKILLS_MAIL`), who they work with, the areas and the languages in one line each, before Guardian and
-    outside work in one line, the first call in two sentences, one line a person for the team (the branch manager's
-    years and direct line; each of the team's client requests in the past year in short words), and one line of help.
-    It reads under 700 words with every part filled in.
+  - **The team's own record** (`tTeamRecord_`): the client requests each of them closed in Salesforce in the past year.
+    The client reads the team's total in one sentence; the per-person counts stay on the sample page for the branch.
+    Logged e-mails, the birthday flow and internal work (training, staffing, operations) never count; under 20 for a
+    person, their count is left out.
+  - **"You told us": every answer replied to by a named person, on the board** (16 October 2026: "the ai is supposed
+    to have read the questions … to show we are listening", then "the ones that answered the questions they are to see
+    who answered it as felicia and team need to answer this on the portal and reflected in the email template … a very
+    interactive email").
+    - **Where the answers are written.** A board card for a client who told us something has "What they told us ·
+      answer each one" (`answerPanel` in `assign.html`, shown when the backend says `answersApi`): each answer
+      (`tClientItems_`: the letter's questions by their code, a tap as `tap_<type>`, their own words as `words`, most
+      pressing first) with a box, **Draft with AI** and **Save answer**. Whoever may open the client may answer (`tOpenClient_`):
+      the agent named on them, Client Support, the branch, and a unit manager on his team's clients; another agent
+      may not. Every route is
+      `action=board&answer=save|draft|preview|send` (`tAnswerApi_`), so Service.gs needs no paste.
+    - **The Answer Replies tab** (When, Token, Client, Key, Question, Answer, Reply, By, Role, Drafted by AI), made the
+      first time: one row a save, the newest per client and answer counts (`tRepliesAll_`), an empty reply takes it
+      back. A reply starting with `=`, `+`, `-` or `@` is written as text. **Role** is the writer's as the client reads
+      it (`tReplyRole_`): Your agent, Client Support, Branch Manager, Unit Manager.
+    - **Draft with AI** (`T_REPLY.SYSTEM`, `gcmClaude_`, the `ANTHROPIC_API_KEY` Script property) writes a first answer
+      in the writer's voice from the question and the client's answer, their words fenced as data. `tHeardOk_` checks it
+      (length, a link, an amount or long number, a refund, guarantee or promise, a greeting or sign-off, the former
+      agent's name from the Agent column); a draft that fails is not offered. Nothing is saved until the person edits
+      it and presses Save, and the row says it began as a draft.
+    - **In the e-mail** (`tIntroHeard_`) each answer shows, under the client's own words, the reply with the writer's
+      first name, role and initials, and two taps: "✓ That helps" and "Talk to me about this" (`k=<key>&v=ok|call` on
+      `your-policy/agent.html`). Only when nobody has replied to anything does one short line stand in: the AI's,
+      written from the answers under `T_HEARD.SYSTEM` and checked by `tHeardOk_` (kept six hours, so the preview and
+      the send read the same words), else the plain line ("Thank you for telling us. <agent> has your answers and will
+      start your first call with what matters most to you."). A test with no answers shows `T_HEARD_SAMPLE` (one reply
+      by the agent, one by the first support person) and says so.
+    - **The introduction waits for them** (`T_REPLY.WAIT`, true). Naming an agent no longer sends it: the naming
+      answer counts it as `introDue`, the board marks the card, and the agent (or Client Support, or the branch) answers,
+      presses **Preview the introduction** (the e-mail exactly as the client reads it, `answer=preview`) and **Send the
+      introduction** twice (`answer=send`). Send keeps every rule of the naming: only a client who answered, never twice
+      to one agent, never a held or bounced row, never while client e-mail is held. `WAIT` false brings back the send
+      at the naming.
+    - **The client's tap back.** "That helps" sends at once on a press; "Talk to me about this" sends on a press and
+      keeps the time picker under it. Each files `informed`, `/your-policy/agent?q=reply_<ok|call>_<key>`, Referrer
+      `intro <agent key>: reply <v>`; no receipt goes for it (`tPickRow_`). `tIntroPicks_` adds it to the agent's
+      five-minute e-mail with his own reply beside it ("<client> wants a call about your answer" when no time came with
+      it), copies `TRANSITION.CC` and the unit manager as before, and puts it on the Salesforce task. The card shows
+      "Client tapped: talk to me about this" under that answer (`c.replyTaps`).
+  - **The e-mail is short on purpose**: four topics at most (`T_PROF.SKILLS_MAIL`), the first call in two sentences,
+    the support team in one paragraph, one line of help. Under 820 words with every part filled in and two answers
+    replied to.
   - **The sample**: Felicia's introduction, drawn by the script from her draft, is the example for the whole branch.
     It is published as a private Artifact page the branch manager shares, never on the website: the drafts are not
-    in this repository. Three fields on it carry sample wording, marked on the page, until Felicia writes her own.
-  - `profiles17/prof-test.js` in the scratchpad covers it (156 checks, the AI mocked: Node on the 16 October tabs with the drafts and a
-    mocked Salesforce, then Playwright on the board as an agent, the branch and a phone, and on the client's page).
+    in this repository. The page shows the e-mail on a computer and in a phone frame side by side, a moving mock of
+    the board where Felicia types her answer and it lands in the client's e-mail beside Sasha's, the four steps, a note
+    on every part, the research and the team. Jordan, the client, is made up, and so are his answers and record; three
+    fields carry sample wording, marked, until Felicia writes her own. Built by `sample17/build-email.js`, `pins.py` and
+    `assemble.py` in the scratchpad.
+  - `profiles17/prof-test.js` in the scratchpad covers it (194 checks, the AI mocked: Node on the 16 October tabs with
+    the drafts and a mocked Salesforce, then Playwright on the board as an agent and the branch, the answer panel from
+    save to send, a phone, and the client's page with its reply taps). The demo backend has no network, so the test
+    puts the site's `receipt.json` and `receipt.html` in the cache; without them no board card carries an answer.
 - **After a call, one press on the board marks the file and can write to the
   client in the manager's name.** Asked for on 28 September 2026 ("a button
   where I click so I can update the notes and let them know that I will

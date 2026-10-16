@@ -276,7 +276,25 @@
   .ans{margin:0;padding:0;list-style:none;display:grid;gap:6px 18px;grid-template-columns:1fr}
   @media(min-width:760px){.ans{grid-template-columns:1fr 1fr}}
   .ans li{font-size:14.5px;color:var(--body);padding-left:10px;border-left:3px solid var(--line)} .ans li span{color:var(--dim);display:block;font-size:13px;line-height:1.35} .ans li b{color:var(--ink)}
-  .ans li.hot{border-left-color:var(--stop)} .ans li.hot b{color:var(--stop)}
+.ans li.hot{border-left-color:var(--stop)} .ans li.hot b{color:var(--stop)}
+  /* answers to what they told us (16 October 2026) */
+  .ansx{margin-top:14px} .ansx h4{margin:0 0 8px;font:700 11px var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)} .ansx h4 span{text-transform:none;letter-spacing:0;font-weight:500}
+  .aitem{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px;background:#fff}
+  .aq{font-size:13px;color:var(--dim);line-height:1.35} .aa{font-weight:700;color:var(--ink);font-size:15px;margin-top:2px} .aa.hot{color:var(--stop)}
+  .arep{margin-top:10px;background:var(--hover);border-left:3px solid #5B8DEF;border-radius:0 8px 8px 0;padding:8px 12px}
+  .arw{font-size:12.5px;color:var(--dim)} .arw b{color:var(--ink)} .art{font-size:14.5px;color:var(--ink);margin-top:2px;line-height:1.5}
+  .ansbox{display:block;width:100%;margin-top:10px;font:15px var(--fb);padding:9px 11px;border:1px solid var(--field);border-radius:9px;min-height:64px;resize:vertical;color:var(--ink);background:#fff}
+  .ansbox:focus{outline:2px solid #5B8DEF;outline-offset:1px;border-color:#5B8DEF}
+  .abar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px} .abar.end{margin-top:4px} .abar .anote{flex:1 1 220px}
+  .aai,.ago,.alink{font:700 13.5px var(--fb);border-radius:9px;padding:8px 13px;cursor:pointer}
+  .aai{background:#fff;border:1px solid var(--field);color:#2D5BB9} .ago{background:#2D5BB9;border:1px solid #2D5BB9;color:#fff}
+  .alink{background:none;border:0;color:#2D5BB9;padding:6px 0 0} .aai[disabled],.ago[disabled]{opacity:.55;cursor:default}
+  .atap{display:inline-block;margin:8px 6px 0 0;font-size:12.5px;font-weight:700;border-radius:999px;padding:3px 10px} .atap.ok{background:var(--okbg);color:var(--ok)} .atap.call{background:var(--warnbg);color:var(--warn)}
+  .anote{margin:4px 0 0;font-size:13.5px;color:var(--dim)} .anote.ok{color:var(--ok);font-weight:700}
+  .iprev{position:fixed;inset:0;background:rgba(10,20,40,.45);z-index:60;display:grid;place-items:center;padding:16px} .iprev[hidden]{display:none}
+  .iprevin{background:#fff;border-radius:14px;width:min(680px,100%);height:min(88vh,1100px);display:flex;flex-direction:column;overflow:hidden}
+  .iprevbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px} .iprevbar button{font:700 13.5px var(--fb);border:1px solid var(--field);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer}
+  .iprevin iframe{flex:1;border:0;width:100%}
   .taps{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px} .taps i{font-style:normal;background:var(--warnbg);border:1px solid var(--warnline);border-radius:999px;padding:3px 10px;font-size:13px;color:var(--warn)}
   .q{font-style:italic;color:var(--ink);margin:8px 0 0;font-size:15px;padding:8px 12px;background:#fafbfc;border-left:3px solid var(--gold);border-radius:0 8px 8px 0}
   .fnote{color:var(--body);margin:6px 0 0;font-size:14px;padding-left:10px;border-left:3px solid #c7d2df}
@@ -1639,6 +1657,13 @@ function wireList() {
   each('#list [data-det-retry]', function (el) { el.addEventListener('click', function () { loadDetail(el.getAttribute('data-det-retry')); }); });
   each('#list textarea.cmtbox', function (el) { el.addEventListener('input', function () { DRAFT[el.getAttribute('data-cmt')] = el.value; }); });
   each('#list button.cmtgo', function (el) { el.addEventListener('click', function () { saveComment(el.getAttribute('data-cmt-go'), el); }); });
+  /* answers to what the client told us, and their introduction (16 October 2026) */
+  each('#list textarea.ansbox', function (el) { el.addEventListener('input', function () { ANS[el.getAttribute('data-ans')] = { text: el.value, ai: (ANS[el.getAttribute('data-ans')] || {}).ai }; }); });
+  each('#list button[data-ans-save]', function (el) { el.addEventListener('click', function () { ansSave(el.getAttribute('data-ans-save'), el); }); });
+  each('#list button[data-ans-ai]', function (el) { el.addEventListener('click', function () { ansDraft(el.getAttribute('data-ans-ai'), el); }); });
+  each('#list button[data-ans-edit]', function (el) { el.addEventListener('click', function () { var k = el.getAttribute('data-ans-edit'), r = ansReply(k); ANS[k] = { text: r ? r.text : '' }; list(); }); });
+  each('#list button[data-intro-prev]', function (el) { el.addEventListener('click', function () { introPreview(el.getAttribute('data-intro-prev'), el); }); });
+  each('#list button[data-intro-send]', function (el) { el.addEventListener('click', function () { introSend(el.getAttribute('data-intro-send'), el); }); });
   /* a client opened from a link (#t=…) opens in full, once */
   if (FOCUS && D.detail && focusDet !== FOCUS && document.getElementById('c-' + FOCUS)) { focusDet = FOCUS; if (!DET_OPEN[FOCUS]) { DET_OPEN[FOCUS] = 1; loadDetail(FOCUS); } }
   if ($('selShown')) $('selShown').addEventListener('click', function () {
@@ -2047,7 +2072,8 @@ function card(c, manager, namer) {
   var fnotes = (c.fileNotes || []).map(function (f) { return '<p class="fnote">' + esc(f) + '</p>'; }).join('');
   var rev = c.review ? '<div class="rev"><span>Review</span> <b>' + esc(c.review.ref || '') + '</b>' + (c.review.priority ? ' · ' + esc(c.review.priority) : '') + (c.review.status ? ' · ' + esc(c.review.status) : '') +
     (c.review.words || []).map(function (w) { return '<div><span>' + esc(w.q) + '</span> ' + esc(w.a) + '</div>'; }).join('') + '</div>' : '';
-  var said = ans || taps || words || rev ? '<div class="said"><h4>What they told us</h4>' + (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + words + rev + '</div>' : '';
+  var said = ans || taps || words || rev ? (D.answersApi && (ans || taps || words) ? answerPanel(c) + (rev ? '<div class="said">' + rev + '</div>' : '')
+    : '<div class="said"><h4>What they told us</h4>' + (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + words + rev + '</div>') : '';
   var who = c.assigned ? '<div class="who">Named: <b>' + esc(c.assigned) + '</b>' + (c.assignedOn ? ' on ' + esc(c.assignedOn) : '') + (c.mark ? ' · marked <b>' + esc(c.mark) + '</b>' : '') +
       (c.hist && c.hist.length ? '<span class="hist">' + histLine(c.hist) + '</span>' : '') + '</div>'
     : (c.mark ? '<div class="who">Marked <b>' + esc(c.mark) + '</b></div>' : '');
@@ -3067,13 +3093,13 @@ function agRun(jobs, el) {
   var list = [];
   jobs.forEach(function (j) { for (var i = 0; i < j[1].length; i += ASSIGN_CHUNK) list.push([j[0], j[1].slice(i, i + ASSIGN_CHUNK)]); });
   if (!list.length) return;
-  var total = list.length, step = 0, named = {}, warn = [], intro = 0, introHeld = 0, missing = 0, sfPol = 0, sfOn = false;
+  var total = list.length, step = 0, named = {}, warn = [], intro = 0, introHeld = 0, introDue = 0, missing = 0, sfPol = 0, sfOn = false;
   if (el) el.disabled = true;
   var next = function () {
     if (!list.length) {
       if (el) el.disabled = false;
       var who = Object.keys(named).map(function (a) { return firstName(a) + ' ' + named[a]; }).join(' · ');
-      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held' : '') +
+      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held' : '') + (introDue ? ' · ' + introDue + ' introduction' + (introDue === 1 ? '' : 's') + ' waiting for the agent to answer and send' : '') +
         (missing ? ' · ' + missing + ' not found on the send list' : '') + (sfOn ? ' · Salesforce: ' + sfPol + ' polic' + (sfPol === 1 ? 'y' : 'ies') + ' updated' : '') + (warn.length ? ' · ' + warn.join(' ') : ''), !!warn.length);
       AGSEL = {};
       agLoad(true); load();
@@ -3084,7 +3110,7 @@ function agRun(jobs, el) {
     api(signed({ action: 'assign', tokens: j[1].join(','), agent: j[0], brief: $('agBrief') && !$('agBrief').checked ? '0' : '1', intro: $('agIntro') && $('agIntro').checked ? '1' : '0' })).then(function (r) {
       if (!r || !r.ok) warn.push(j[0] + ': ' + ((r && r.error) || 'the sheet did not take it') + '.');
       else {
-        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; introHeld += r.introHeld || 0; missing += (r.missing || []).length;
+        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; introHeld += r.introHeld || 0; introDue += r.introDue || 0; missing += (r.missing || []).length;
         if (r.sf && r.sf.on) { sfOn = true; sfPol += r.sf.policies || 0; }
         (r.warnings || []).forEach(function (x) { warn.push(x); });
         agMark(j[1].filter(function (t) { return (r.missing || []).indexOf(t) < 0; }), r.agent);
@@ -3675,7 +3701,7 @@ function claimLine(c) {
 /* 3 October 2026: "so the agent can see the email and history and tasks opened on salesforce assigned to the staff and a
    place for their comments". Opened on demand, one client at a time. */
 var DET = {}, DET_OPEN = {}, DRAFT = {}, focusDet = '';
-function typing() { var a = document.activeElement; return !!(a && a.classList && (a.classList.contains('cmtbox') || (a.closest && a.closest('.pfform')))); }
+function typing() { var a = document.activeElement; return !!(a && a.classList && (a.classList.contains('cmtbox') || a.classList.contains('ansbox') || (a.closest && a.closest('.pfform')))); }
 function detButton(c, small) {
   if (!D || !D.detail) return '';
   return '<button type="button" class="detbtn' + (DET_OPEN[c.token] ? ' on' : '') + '" data-det="' + esc(c.token) + '">' +
@@ -3779,6 +3805,103 @@ function saveComment(tok, btn) {
   }).catch(function () { btn.disabled = false; btn.textContent = 'Save comment'; toast('The sheet did not answer. Your comment is still in the box: try again in a moment.', true); });
 }
 
+/* ---- answers to what a client told us, and the introduction they go in (16 October 2026) ----
+   "felicia and team need to answer this on the portal and reflected in the email template … a very interactive email".
+   Each thing the client told us gets an answer from a named person: the agent named on them, Client Support or the branch.
+   An AI draft is one press away and is never saved until a person presses Save. The introduction shows each answer with
+   the writer's face and name, and the agent (or Client Support, or the branch) sends it from here once they have answered
+   (tAnswerApi_). The keys are the backend's (tClientItems_): an answer by its code, a tap as tap_<type>, their words. */
+var ANS = {}, ANS_PREV = {};
+function clientItems(c) {
+  var out = [], seen = {};
+  (c.answers || []).forEach(function (a) { if (a.q && a.a && !seen[a.code]) { seen[a.code] = 1; out.push({ key: a.code, q: a.q, a: a.a, hot: !!HOT[a.code] }); } });
+  (c.taps || []).forEach(function (t) { if (t.tap === 'wrote' || !t.label || seen['tap_' + t.tap]) return; seen['tap_' + t.tap] = 1; out.push({ key: 'tap_' + t.tap, q: 'They asked us', a: t.label }); });
+  if ((c.notes || []).length) out.push({ key: 'words', q: 'In their words', a: '“' + c.notes[0] + '”', w: c.notes.join('\n') });
+  return out;
+}
+function ansReply(k) { var p = k.split('|'), c = byTokenAny(p[0]); return c && c.replies ? c.replies[p[1]] : null; }
+function byTokenAny(tok) { return (D.clients || []).filter(function (x) { return x.token === tok; })[0] || null; }
+function answerPanel(c) {
+  var items = clientItems(c), rep = c.replies || {}, taps = {};
+  (c.replyTaps || []).forEach(function (t) { (taps[t.key] = taps[t.key] || []).push(t); });
+  var mine = items.filter(function (x) { return rep[x.key]; }).length;
+  var rows = items.map(function (x) {
+    var k = c.token + '|' + x.key, r = rep[x.key], ed = ANS[k];
+    var said = '<div class="aq">' + esc(x.q) + '</div><div class="aa' + (x.hot ? ' hot' : '') + '">' + esc(x.a) + '</div>';
+    var tapLine = (taps[x.key] || []).map(function (t) { return '<span class="atap ' + (t.v === 'call' ? 'call' : 'ok') + '">' + (t.v === 'call' ? 'Client tapped: talk to me about this' : 'Client tapped: that helps') + (t.on ? ' · ' + esc(t.on) : '') + '</span>'; }).join('');
+    var body;
+    if (r && !ed) body = '<div class="arep"><div class="arw"><b>' + esc(firstName(r.by)) + '</b> · ' + esc(r.role) + (r.when ? ' · ' + esc(r.when) : '') + (r.ai ? ' · <i>from an AI draft</i>' : '') + '</div>' +
+      '<div class="art">' + esc(r.text) + '</div><button type="button" class="alink" data-ans-edit="' + esc(k) + '">Change</button></div>';
+    else body = '<textarea class="ansbox" data-ans="' + esc(k) + '" maxlength="600" placeholder="Your answer, in a sentence or two. The client reads it with your name." aria-label="Your answer to: ' + esc(x.q) + '">' + esc(ed ? ed.text : '') + '</textarea>' +
+      '<div class="abar"><button type="button" class="aai" data-ans-ai="' + esc(k) + '">Draft with AI</button><button type="button" class="ago" data-ans-save="' + esc(k) + '">Save answer</button></div>';
+    return '<div class="aitem">' + said + body + tapLine + '</div>';
+  }).join('');
+  var foot;
+  if (!c.assigned) foot = '<p class="anote">Answer now if you can. Their introduction goes once an agent is named and has answered.</p>';
+  else if (c.introDue === false || (c.markers || []).some(function (m) { return /^\[intro /.test(m); })) foot = '<p class="anote ok">&#10003; Their introduction to ' + esc(c.assigned) + ' has gone.</p>';
+  else foot = '<div class="abar end"><span class="anote">' + (D.introsHeld ? 'Client e-mail is on hold: the introduction can go once the branch releases it. Answer now; it keeps.' : mine + ' of ' + items.length + ' answered. The introduction carries every answer with its writer&rsquo;s name.') + '</span>' +
+    '<button type="button" class="aai" data-intro-prev="' + esc(c.token) + '">Preview the introduction</button>' +
+    '<button type="button" class="ago" data-intro-send="' + esc(c.token) + '"' + (D.introsHeld ? ' disabled' : '') + '>Send the introduction</button></div>';
+  return '<div class="ansx"><h4>What they told us <span>· answer each one: it goes in their introduction with your name</span></h4>' + rows + foot + '</div>';
+}
+function ansSave(k, btn) {
+  var p = k.split('|'), c = byTokenAny(p[0]), it = c ? clientItems(c).filter(function (x) { return x.key === p[1]; })[0] : null;
+  var box = document.querySelector('textarea.ansbox[data-ans="' + k + '"]'), text = String(box ? box.value : (ANS[k] || {}).text || '').trim();
+  if (!text) { toast('Write the answer first, or press Draft with AI.', true); return; }
+  if (notYet()) return;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  api(signed({ action: 'board', answer: 'save', token: p[0], key: p[1], text: text, q: it ? it.q : '', a: it ? it.a : '', ai: (ANS[k] || {}).ai ? '1' : '' })).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Save answer';
+    if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Your answer is still in the box.', true); return; }
+    delete ANS[k];
+    if (c) { c.replies = c.replies || {}; c.replies[p[1]] = r.reply; }
+    toast('Saved. It goes in their introduction with your name.');
+    list();
+  }).catch(function () { btn.disabled = false; btn.textContent = 'Save answer'; toast('The sheet did not answer. Your answer is still in the box.', true); });
+}
+function ansDraft(k, btn) {
+  var p = k.split('|'), c = byTokenAny(p[0]), it = c ? clientItems(c).filter(function (x) { return x.key === p[1]; })[0] : null;
+  if (!it || notYet()) return;
+  btn.disabled = true; btn.textContent = 'Drafting…';
+  api(signed({ action: 'board', answer: 'draft', token: p[0], key: p[1], q: it.q, a: it.a, w: it.w || '' })).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Draft with AI';
+    if (!r || !r.ok) { toast((r && r.error) || 'No draft came back. Write the answer yourself.', true); return; }
+    ANS[k] = { text: r.text, ai: true };
+    list();
+    toast('A draft is in the box. Read it, change anything, then press Save answer.');
+  }).catch(function () { btn.disabled = false; btn.textContent = 'Draft with AI'; toast('The AI did not answer. Write the answer yourself.', true); });
+}
+function introPreview(tok, btn) {
+  if (notYet()) return;
+  btn.disabled = true; btn.textContent = 'Drawing it…';
+  api(signed({ action: 'board', answer: 'preview', token: tok })).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Preview the introduction';
+    if (!r || !r.ok || !r.preview) { toast((r && r.error) || 'The preview did not come back.', true); return; }
+    showIntroPrev(r.preview);
+  }).catch(function () { btn.disabled = false; btn.textContent = 'Preview the introduction'; toast('The sheet did not answer.', true); });
+}
+function showIntroPrev(pv) {
+  var box = $('introPrev');
+  if (!box) { box = document.createElement('div'); box.id = 'introPrev'; box.className = 'iprev'; document.body.appendChild(box); }
+  box.innerHTML = '<div class="iprevin" role="dialog" aria-label="The introduction as the client reads it"><div class="iprevbar"><span><b>' + esc(pv.subject) + '</b>' + (pv.to ? ' · to ' + esc(pv.to) : '') + '</span><button type="button" id="introPrevX">Close</button></div><iframe title="The introduction" sandbox="allow-same-origin"></iframe></div>';
+  var fr = box.querySelector('iframe');
+  fr.srcdoc = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0">' + pv.html + '</body>';
+  box.hidden = false;
+  $('introPrevX').addEventListener('click', function () { box.hidden = true; });
+}
+function introSend(tok, btn) {
+  if (notYet()) return;
+  if (btn.getAttribute('data-sure') !== '1') { btn.setAttribute('data-sure', '1'); btn.textContent = 'Yes, send it now'; setTimeout(function () { if (btn.isConnected) { btn.removeAttribute('data-sure'); btn.textContent = 'Send the introduction'; } }, 6000); return; }
+  btn.disabled = true; btn.textContent = 'Sending…';
+  api(signed({ action: 'board', answer: 'send', token: tok })).then(function (r) {
+    if (!r || !r.ok) { btn.disabled = false; btn.removeAttribute('data-sure'); btn.textContent = 'Send the introduction'; toast((r && r.error) || 'It did not send.', true); return; }
+    var c = byTokenAny(tok);
+    if (c) { c.introDue = false; (c.markers = c.markers || []).push('[intro ' + (c.assigned || '') + ']'); }
+    toast('Sent to ' + (r.to || 'the client') + ', from support@, the branch copied.');
+    list();
+  }).catch(function () { btn.disabled = false; btn.removeAttribute('data-sure'); btn.textContent = 'Send the introduction'; toast('The sheet did not answer. Nothing was sent.', true); });
+}
+
 /* ---- the suggested agent (tSuggest_ in Transition.gs): the family's, the 24 September plan's, or the lightest list ---- */
 /* 29 September 2026, evening: "how is the assignment going to be?" The board suggests; nothing is named until the press. */
 var SUGN = {}, SHOWN = [];
@@ -3834,13 +3957,13 @@ function assignSuggested() {
   var sg = sugGroups(), jobs = [];
   Object.keys(sg.g).sort().forEach(function (a) { for (var i = 0; i < sg.g[a].length; i += ASSIGN_CHUNK) jobs.push([a, sg.g[a].slice(i, i + ASSIGN_CHUNK)]); });
   if (!jobs.length) { toast('None of those ticked has a suggested agent: choose one in the bar instead.', true); return; }
-  var btn = $('barSug'), total = jobs.length, step = 0, named = {}, intro = 0, introHeld = 0, notAns = 0, warn = [];
+  var btn = $('barSug'), total = jobs.length, step = 0, named = {}, intro = 0, introHeld = 0, introDue = 0, notAns = 0, warn = [];
   btn.disabled = true; $('barGo').disabled = true;
   var next = function () {
     if (!jobs.length) {
       btn.disabled = false; $('barGo').disabled = false;
       var who = Object.keys(named).map(function (a) { return firstName(a) + ' ' + named[a]; }).join(' · ');
-      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') + (notAns ? ' · ' + notAns + ' not introduced: they have not answered' : '') +
+      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') + (introDue ? ' · ' + introDue + ' introduction' + (introDue === 1 ? '' : 's') + ' waiting for the agent to answer and send' : '') + (notAns ? ' · ' + notAns + ' not introduced: they have not answered' : '') +
         (sg.none ? ' · ' + sg.none + ' left ticked: no suggestion' : '') + (warn.length ? ' · ' + warn.join(' ') : ''), !!warn.length);
       load();
       return;
@@ -3850,7 +3973,7 @@ function assignSuggested() {
     api(signed({ action: 'assign', tokens: j[1].join(','), agent: j[0], brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' })).then(function (r) {
       if (!r || !r.ok) warn.push(j[0] + ': ' + ((r && r.error) || 'the sheet did not take it') + '.');
       else {
-        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; introHeld += r.introHeld || 0; notAns += r.notAnswered || 0;
+        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; introHeld += r.introHeld || 0; introDue += r.introDue || 0; notAns += r.notAnswered || 0;
         j[1].forEach(function (t) { delete SEL[t]; });
         (r.warnings || []).forEach(function (x) { warn.push(x); });
       }
@@ -4214,6 +4337,7 @@ function assign(tokens, agent, el) {
       (r.family ? ' · ' + plural(r.family, 'family member') + ' named with them' : '') + (r.sfNotes ? ' · noted on ' + plural(r.sfNotes, 'Salesforce task') : '') +
       (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
       (r.introHeld ? ' · ' + r.introHeld + ' introduction' + (r.introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') +
+      (r.introDue ? ' · their introduction waits for ' + firstName(r.agent) + ' to answer what they told us and send it' : '') +
       (r.notAnswered ? ' · ' + r.notAnswered + ' not introduced: they have not answered' : '') +
       (r.missing && r.missing.length ? ' · ' + r.missing.length + ' not found' : '') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join(' ') : '') +
       /* and Salesforce (8 October 2026): what it took, or why not */
