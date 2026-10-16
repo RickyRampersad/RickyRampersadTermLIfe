@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16k';
+var SCRIPT_VERSION = '2026-10-16l';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -6103,11 +6103,11 @@ function weekFor_(sid, day) {
   var days = weekToDate_(day), owed = blocksOwed_(sid), rows = [], u = (sfkUsers_() || {})[sid];
   var att = {}; try { sheetObjects_(attSheet_()).forEach(function (r) { if (String(r.StaffId) === sid) att[isoDay_(r.Date)] = r; }); } catch (e) {}
   var startM = (parseSpan_(scheduleFor_(sid).hours || '') || { start: 480 }).start;
-  var closedBy = {}, noted = {}, created = {};
+  var closedBy = {}, noted = {}, created = {}, cl = [];
   if (u) {
     try {
       var from = sfkUtcAt_(days[0], 0), to = sfkUtcAt_(shiftDays_(day, 1), 0);
-      var cl = sfkQuery_("SELECT Id, LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND IsClosed = true AND LastModifiedDate >= " + from + ' AND LastModifiedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') LIMIT 1000");
+      cl = sfkQuery_("SELECT Id, Subject, Task_Type__c, LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND IsClosed = true AND LastModifiedDate >= " + from + ' AND LastModifiedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') LIMIT 1000");
       cl.forEach(function (t) { var l = sfLocal_(t.LastModifiedDate); if (l) (closedBy[l.day] = closedBy[l.day] || []).push(t.Id); });
       for (var i = 0; i < cl.length; i += 150) sfkQuery_("SELECT ParentId FROM FeedItem WHERE CreatedById = '" + u.id + "' AND Type IN ('TextPost','ContentPost','LinkPost') AND ParentId IN (" + cl.slice(i, i + 150).map(function (t) { return "'" + t.Id + "'"; }).join(',') + ') LIMIT 2000').forEach(function (f) { noted[f.ParentId] = 1; });
       sfkQuery_("SELECT CreatedDate FROM Task WHERE CreatedById = '" + u.id + "' AND CreatedDate >= " + from + ' AND CreatedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') LIMIT 1000")
@@ -6125,6 +6125,14 @@ function weekFor_(sid, day) {
   var still = []; try { var bk = (sfkOpenBook_(day) || {})[sid] || {}; Object.keys(bk).forEach(function (t) { bk[t].forEach(function (x) { if (x.due && x.due >= days[0] && x.due <= day) still.push(x); }); }); } catch (e) {}
   var overdue = 0; try { var b2 = (sfkOpenBook_(day) || {})[sid] || {}; Object.keys(b2).forEach(function (t) { b2[t].forEach(function (x) { if (x.late) overdue++; }); }); } catch (e) {}
   var sum = function (k) { return rows.reduce(function (a, r) { return a + (r[k] || 0); }, 0); };
+  // What was done: every closure this week, by type, the ones with a note first.
+  var byType = {}, done = [];
+  cl.forEach(function (t) {
+    var ty = String(t.Task_Type__c || 'Other'), l = sfLocal_(t.LastModifiedDate);
+    byType[ty] = (byType[ty] || 0) + 1;
+    done.push({ subject: String(t.Subject || ''), type: ty, day: l ? l.day : '', noted: !!noted[t.Id] });
+  });
+  done.sort(function (a, b) { return (b.noted - a.noted) || (b.day < a.day ? -1 : b.day > a.day ? 1 : 0); });
   var concerns = [];
   var lateDays = rows.filter(function (r) { return r.late; }).length, absentDays = rows.filter(function (r) { return r.absent; }).length;
   if (absentDays) concerns.push(absentDays + ' day' + (absentDays === 1 ? '' : 's') + ' absent');
@@ -6137,7 +6145,7 @@ function weekFor_(sid, day) {
   if (noCreate) concerns.push('no task logged at the point of work on ' + noCreate + ' day' + (noCreate === 1 ? '' : 's'));
   if (still.length) concerns.push(still.length + ' task' + (still.length === 1 ? '' : 's') + ' due this week still open');
   if (overdue > 10) concerns.push(overdue + ' overdue in total');
-  return { rows: rows, still: still, overdue: overdue, concerns: concerns, totals: { closed: sum('closed'), unnoted: sum('unnoted'), of: sum('of'), ach: sum('ach'), created: sum('created') } };
+  return { rows: rows, still: still, overdue: overdue, concerns: concerns, byType: byType, done: done, totals: { closed: sum('closed'), unnoted: sum('unnoted'), of: sum('of'), ach: sum('ach'), created: sum('created') } };
 }
 function weekCard_(sid, day, w, title) {
   var td = 'padding:5px;font-size:12px;border-top:1px solid ' + MAIL.line + ';text-align:right;', th = 'padding:5px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + ';text-align:right';
@@ -6154,8 +6162,14 @@ function weekCard_(sid, day, w, title) {
         '<td style="' + td + (r.unnoted ? 'color:' + MAIL.red + ';font-weight:700' : '') + '">' + r.unnoted + '</td>' +
         '<td style="' + td + (!r.created ? 'color:' + MAIL.amber : '') + '">' + r.created + '</td>') + '</tr>';
     }).join('') + '</table>';
-  var t = w.totals;
-  return sectionLabel_(title) + table +
+  var t = w.totals, bt = w.byType || {}, done = w.done || [];
+  var types = Object.keys(bt).sort(function (a, b) { return bt[b] - bt[a]; });
+  var doneCard = done.length ? srcCard_('What you got done this week (' + done.length + ' closed)', MAIL.green,
+      ['<b>By type:</b> ' + types.map(function (ty) { return esc_(ty) + ' ' + bt[ty]; }).join(' · ')].concat(
+      done.slice(0, 12).map(function (x) { return '<span style="color:' + MAIL.muted + '">' + esc_(x.day ? shortDate_(x.day).split(' ')[0] : '') + '</span> ' + esc_(x.subject) +
+        (x.noted ? ' <span style="color:' + MAIL.green + '">· noted</span>' : ' <span style="color:' + MAIL.red + '">· no note</span>'); })),
+      (done.length > 12 ? 'and ' + (done.length - 12) + ' more. ' : '') + (done.length - t.unnoted) + ' of ' + done.length + ' carry your note on the trail.') : '';
+  return sectionLabel_(title) + table + doneCard +
     srcCard_('Areas of concern', w.concerns.length ? MAIL.red : MAIL.green, w.concerns.length ? w.concerns.map(function (c) { return esc_(c); }) : ['None this week. Well done.'],
       'Week total: ' + t.closed + ' closed, ' + t.unnoted + ' without a note, ' + (t.of ? t.ach + ' of ' + t.of + ' planned' : 'no plan') + ', ' + t.created + ' logged at the point of work. ' + w.overdue + ' overdue now.') +
     (w.still.length ? srcCard_('What should have been done this week, and is still open (' + w.still.length + ')', MAIL.amber,
