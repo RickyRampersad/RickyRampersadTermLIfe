@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16j';
+var SCRIPT_VERSION = '2026-10-16k';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4104,7 +4104,7 @@ function bmWaiting_(day) {
 
   // 1. In his name, due or overdue.
   out.mine = sfkQuery_("SELECT Id, Subject, ActivityDate, Task_Type__c FROM Task WHERE OwnerId = '" + me +
-    "' AND IsClosed = false AND ActivityDate <= " + day + " AND (NOT Subject LIKE 'Email:%') ORDER BY ActivityDate ASC LIMIT 200")
+    "' AND IsClosed = false AND ActivityDate <= " + day + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') ORDER BY ActivityDate ASC LIMIT 200")
     .map(function (r) { return { id: r.Id, subject: shorten_(r.Subject, 95), due: r.ActivityDate || '', late: !!(r.ActivityDate && r.ActivityDate < day), ty: r.Task_Type__c || '' }; });
 
   if (!deskIds.length) return out;
@@ -4439,7 +4439,7 @@ function unitBook_(sid, day) {
   var agents = unitAgents_(sid);
   var inList = agents.map(soqlStr_).join(',');
   var open = sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__r.Name, What.Name, LastModifiedDate FROM Task' +
-    ' WHERE IsClosed = false AND Agent__r.Name IN (' + inList + ") AND (NOT Subject LIKE 'Email:%') ORDER BY ActivityDate ASC NULLS LAST LIMIT 500");
+    ' WHERE IsClosed = false AND Agent__r.Name IN (' + inList + ") AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') ORDER BY ActivityDate ASC NULLS LAST LIMIT 500");
   var since = sfkUtcAt_(lastWorkdays_(day, 1)[0], 0);
   var closed = sfkQuery_('SELECT Id, Subject, Task_Type__c, CompletedDateTime, Agent__r.Name FROM Task' +
     ' WHERE IsClosed = true AND Agent__r.Name IN (' + inList + ') AND CompletedDateTime >= ' + since + ' LIMIT 500');
@@ -4747,7 +4747,7 @@ function deskToday_(day) {
   });
   if (!ids.length) return out;
   var since = sfkUtcAt_(day, 0);
-  var closed = sfkQuery_('SELECT Id, OwnerId, Subject FROM Task WHERE OwnerId IN (' + ids.join(',') + ") AND IsClosed = true AND CompletedDateTime >= " + since + " AND (NOT Subject LIKE 'Email:%') LIMIT 1000");
+  var closed = sfkQuery_('SELECT Id, OwnerId, Subject FROM Task WHERE OwnerId IN (' + ids.join(',') + ") AND IsClosed = true AND CompletedDateTime >= " + since + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') LIMIT 1000");
   sfkQuery_("SELECT ParentId, CreatedById FROM FeedItem WHERE Type = 'TextPost' AND CreatedById IN (" + ids.join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 2000')
     .forEach(function (p) { var s = bySf[p.CreatedById]; if (s) out[s].notes++; });
   var noted = {};
@@ -4798,7 +4798,7 @@ function sendBranchManagerProgress_(day, which) {
   }).join('');
 
   var me = today.ricky || { closed: 0, noted: 0, notes: 0, list: [] };
-  var label = which === 'eve' ? 'Six o\'clock' : 'Midday';
+  var label = which === 'eve' ? (minutesOf_(hhmm_(new Date())) >= 17 * 60 ? 'Six o\'clock' : 'This afternoon') : 'Midday';
   var answer = replyButton_(replyUrl_('ricky', day, 'bm'), 'Respond and log', 'Reply on Chatter to anything waiting on you, close your own with a note, and log what you did today.');
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + label + ', Mr Rampersad. Where the branch stands' + (which === 'eve' ? ' at the close' : ' so far') + ', and where you stand.</div>' +
@@ -5665,7 +5665,7 @@ function agentBatchData_(list, day) {
   var inList = names.map(soqlStr_).join(',');
   try {
     sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__r.Name, LastModifiedDate FROM Task' +
-      ' WHERE IsClosed = false AND Agent__r.Name IN (' + inList + ') AND ActivityDate <= ' + day + " AND (NOT Subject LIKE 'Email:%')" +
+      ' WHERE IsClosed = false AND Agent__r.Name IN (' + inList + ') AND ActivityDate <= ' + day + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%')" +
       ' ORDER BY ActivityDate ASC LIMIT 1500').forEach(function (r) {
         var k = who[nk(r.Agent__r && r.Agent__r.Name)]; if (!k) return;
         out.open[k].push({ id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
@@ -6010,10 +6010,10 @@ function sfkDayFor_(staffId, day) {
   var closed = sfkQuery_(
     "SELECT Id, Subject, LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND IsClosed = true" +
     ' AND LastModifiedDate >= ' + from + ' AND LastModifiedDate < ' + to +
-    " AND (NOT Subject LIKE 'Email:%') ORDER BY LastModifiedDate ASC LIMIT 200");
+    " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') ORDER BY LastModifiedDate ASC LIMIT 200");
   var created = sfkQuery_(
     "SELECT Id FROM Task WHERE CreatedById = '" + u.id + "' AND CreatedDate >= " + from +
-    ' AND CreatedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') LIMIT 200");
+    ' AND CreatedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') LIMIT 200");
   var noted = {};
   if (closed.length) {
     var ids = closed.map(function (t) { return "'" + t.Id + "'"; }).join(',');
@@ -6049,7 +6049,7 @@ var BMA_REPORT_AT = 16 * 60;
 function lastSfAction_(sid, day) {
   var u = (sfkUsers_() || {})[sid]; if (!u) return null;
   var r = sfkQuery_("SELECT Id, Subject, IsClosed, LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND LastModifiedDate >= " + sfkUtcAt_(day, 0) +
-    " AND LastModifiedDate < " + sfkUtcAt_(shiftDays_(day, 1), 0) + " AND (NOT Subject LIKE 'Email:%') ORDER BY LastModifiedDate DESC LIMIT 1")[0];
+    " AND LastModifiedDate < " + sfkUtcAt_(shiftDays_(day, 1), 0) + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') ORDER BY LastModifiedDate DESC LIMIT 1")[0];
   if (!r) return { none: true };
   var l = sfLocal_(r.LastModifiedDate);
   return { id: r.Id, subject: r.Subject || '', closed: !!r.IsClosed, at: l ? twelve_(mmText_(l.min)) : '' };
@@ -6107,10 +6107,10 @@ function weekFor_(sid, day) {
   if (u) {
     try {
       var from = sfkUtcAt_(days[0], 0), to = sfkUtcAt_(shiftDays_(day, 1), 0);
-      var cl = sfkQuery_("SELECT Id, LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND IsClosed = true AND LastModifiedDate >= " + from + ' AND LastModifiedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') LIMIT 1000");
+      var cl = sfkQuery_("SELECT Id, LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND IsClosed = true AND LastModifiedDate >= " + from + ' AND LastModifiedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') LIMIT 1000");
       cl.forEach(function (t) { var l = sfLocal_(t.LastModifiedDate); if (l) (closedBy[l.day] = closedBy[l.day] || []).push(t.Id); });
       for (var i = 0; i < cl.length; i += 150) sfkQuery_("SELECT ParentId FROM FeedItem WHERE CreatedById = '" + u.id + "' AND Type IN ('TextPost','ContentPost','LinkPost') AND ParentId IN (" + cl.slice(i, i + 150).map(function (t) { return "'" + t.Id + "'"; }).join(',') + ') LIMIT 2000').forEach(function (f) { noted[f.ParentId] = 1; });
-      sfkQuery_("SELECT CreatedDate FROM Task WHERE CreatedById = '" + u.id + "' AND CreatedDate >= " + from + ' AND CreatedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') LIMIT 1000")
+      sfkQuery_("SELECT CreatedDate FROM Task WHERE CreatedById = '" + u.id + "' AND CreatedDate >= " + from + ' AND CreatedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') LIMIT 1000")
         .forEach(function (t) { var l = sfLocal_(t.CreatedDate); if (l) created[l.day] = (created[l.day] || 0) + 1; });
     } catch (e) {}
   }
@@ -6449,7 +6449,7 @@ function sfkIntelRaw_(staffId, day, from) {
   var since = sfkUtcAt_(from, 0);
   var tasks = sfkQuery_(
     'SELECT Id, Subject, Task_Type__c, IsClosed, ActivityDate, CreatedDate, CompletedDateTime, LastModifiedDate, CreatedById FROM Task' +
-    " WHERE OwnerId = '" + u.id + "' AND (NOT Subject LIKE 'Email:%') AND (CreatedDate >= " + since +
+    " WHERE OwnerId = '" + u.id + "' AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') AND (CreatedDate >= " + since +
     ' OR (IsClosed = true AND LastModifiedDate >= ' + since + ')' +
     ' OR (IsClosed = false AND ActivityDate < ' + day + ')) LIMIT 2000');
   var notes = sfkQuery_(
