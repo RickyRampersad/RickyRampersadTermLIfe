@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16g';
+var SCRIPT_VERSION = '2026-10-16i';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3421,7 +3421,11 @@ var HK_ITEMS = [
   { ItemId: 'hk_inbox', Item: 'Inbox and branch WhatsApp scrubbed: nothing urgent from the Branch Manager, a manager, an agent or a client left without a reply or a task',
     Who: 'All', Auto: '', Order: 6, Active: 'Yes', Note: 'Housekeeping, 14 Oct 2026.' },
   { ItemId: 'hk_understood', Item: 'Open tasks understood: I know what each task due tomorrow needs, and anything that came in by e-mail today is a task',
-    Who: 'All', Auto: '', Order: 7, Active: 'Yes', Note: 'Housekeeping, 14 Oct 2026.' }
+    Who: 'All', Auto: '', Order: 7, Active: 'Yes', Note: 'Housekeeping, 14 Oct 2026.' },
+  { ItemId: 'hk_systems', Item: 'Branch systems closed off: Query Pal, the log book, the call list, group, claims and benefits sheets, every line in my name checked and updated',
+    Who: 'All', Auto: '', Order: 8, Active: 'Yes', Note: 'Ricky, 16 Oct 2026: the Drive systems are to be closed off before leaving.' },
+  { ItemId: 'hk_desk', Item: 'Desk and surroundings cleared: every document filed, logged or handed over; nothing left loose',
+    Who: 'All', Auto: '', Order: 9, Active: 'Yes', Note: 'Ricky, 16 Oct 2026.' }
 ];
 
 
@@ -3690,6 +3694,16 @@ function housekeepingTick_() {
     if (props.getProperty(key)) return;
     if (timedSend_(props, key, now, function () { if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid] || ''); })) sent.push(p.name);
   });
+  // At the finish, half an hour after the notice: signed out by the tracker.
+  people.forEach(function (p) {
+    var sid = String(p.staffId), endM = endFor_(sid);
+    if (!present[sid] || mins < endM || mins > endM + 60 || props.getProperty('autoout_' + sid + '_' + day)) return;
+    try { if (autoSignOut_(sid, day, endM)) sent.push(p.name + ' (signed out at finish)'); props.setProperty('autoout_' + sid + '_' + day, hhmm_(now)); } catch (e) {}
+  });
+  // The BMA's 4pm report.
+  if (mins >= BMA_REPORT_AT && mins <= BMA_REPORT_AT + HK_WINDOW_MIN && !props.getProperty('bmarep_' + day)) {
+    if (timedSend_(props, 'bmarep_' + day, now, function () { sendBmaReport_(day); })) sent.push('BMA 4pm report');
+  }
   return sent.length ? 'Day mail sent: ' + sent.join(', ') : '';
 }
 
@@ -4194,7 +4208,7 @@ function sendBranchManagerDay_(day) {
       { value: sfOk ? mineLate : '—', label: 'of them overdue', color: mineLate ? MAIL.red : MAIL.navy },
       { value: sfOk ? w.ask.length : '—', label: 'notes asking you', color: w.ask.length ? MAIL.red : MAIL.navy },
       { value: sfOk ? w.ignored.length : '—', label: 'your instructions, no note', color: w.ignored.length ? MAIL.red : MAIL.navy }
-    ]) + replyButton_(replyUrl_('ricky', day, 'um'), 'Plan my day and sign in', 'One tap, no password. Comment on your own tasks, set your numbers for the day; saving signs you in.') + answer +
+    ]) + cmdButton_('ricky', day) + replyButton_(replyUrl_('ricky', day, 'um'), 'Plan my day and sign in', 'One tap, no password. Comment on your own tasks, set your numbers for the day; saving signs you in.') + answer +
     mgrDayCard_('ricky', day, bmDayItems_(day, w), 'Your blocks, filled with what is outstanding: your own tasks, what is waiting on you, the orphans to assign, and the agents who need you. Plan it from the first button; saving signs you in.') +
     sectionLabel_('The branch in full') +
     bmBranchCards_(day) +
@@ -4528,7 +4542,7 @@ function sendUnitManagerMorning_(sid, day) {
       { value: book ? nLate : '—', label: 'overdue', color: nLate ? MAIL.red : MAIL.navy },
       { value: book ? nPend : '—', label: 'pendings', color: nPend ? MAIL.amber : MAIL.navy },
       { value: book ? book.closedYday : '—', label: 'closed yesterday', color: MAIL.green }
-    ]) + btn +
+    ]) + btn + cmdButton_(sid, day) +
     mgrDayCard_(sid, day, umDayItems_(sid, day, book), 'Your blocks are built on the Unit Manager\'s job: your unit\'s outstanding work and your manager KPIs, each in the block it belongs to. Open the button, set your numbers and save: <b>saving signs you in</b>, and that is your attendance for the day.') +
     sectionLabel_('Your unit in full') +
     (book ? secs.map(function (s) {
@@ -5308,6 +5322,161 @@ function bmDayItems_(day, w) {
   } catch (e) {}
   return items;
 }
+/* ─────────── Command centre (16 Oct 2026) ───────────
+ *  Ricky: "make it easy so you could look at it, what's not getting attention,
+ *  look at the block, and with a click of a button it can be reassigned ...
+ *  asking for feedback." One page, read live when it opens, of everything in
+ *  Salesforce and in the branch's own workbooks that has gone quiet. Each row
+ *  can be moved to another desk, given a new date, or sent a question; every
+ *  move is a Salesforce write with a Chatter note, so nothing leaves the record.
+ *  Work that lives only in a sheet (an approval, a log-book line, a receipt)
+ *  becomes a Salesforce task in the chosen person's name, so it is tracked
+ *  and closed like everything else.  */
+BOOKS.APPROVE  = { id: '1KMHY_PZraICOMjI4h26Jv98RrkrZ0CwXXWrx1U-yFn0', tab: 'Form responses' };
+BOOKS.DELIVERY = { id: '1EAc0X0648Im2HQJMB-jTVNZFWr5Y1hKh9Ok2a_472uo', log: 'Log Book', transmittals: 'Transmittals', deliveries: 'Deliveries' };
+BOOKS.PETTY    = { id: '1lpOZD0hv31dyd9EtD_vrqEPg7Gm78AsUtwezXeCUe2o', tab: 'Form responses' };
+var CMD = { QUIET_DAYS: 5, MAX: 60, APPROVE_DAYS: 30 };
+function cmdKey_(sid, day) { return 'cmd_items_' + sid + '_' + day; }
+/** Who work can be moved to: the desks Salesforce knows, plus the Unit Manager if he is a user. */
+function cmdTargets_() {
+  var u = {}; try { u = sfkUsers_() || {}; } catch (e) {}
+  return DAY_MAIL_DESKS.concat(UM_DESKS, ['ricky']).filter(function (s, i, a) { return a.indexOf(s) === i && u[s]; })
+    .map(function (s) { return { sid: s, id: u[s].id, name: nameFor_(s) }; });
+}
+/** Everything that has gone quiet, for the Branch Manager (scope 'all'), the BMA ('desks') or a Unit Manager ('unit'). */
+function cmdItems_(sid, day) {
+  var scope = sid === 'ricky' ? 'all' : UM_DESKS.indexOf(sid) > -1 ? 'unit' : 'desks', items = [];
+  var push = function (o) { items.push(o); };
+  // 1. Salesforce: the desks' open work nobody has touched, worst first.
+  if (scope !== 'unit') {
+    try {
+      var ob = sfkOpenBook_(day) || {};
+      Object.keys(ob).forEach(function (desk) {
+        if (scope === 'desks' && desk === 'ricky') return;
+        Object.keys(ob[desk]).forEach(function (ty) {
+          ob[desk][ty].forEach(function (t) {
+            if (!(t.touched >= CMD.QUIET_DAYS && (t.late || !t.due))) return;
+            push({ k: 'sf', id: t.id, src: 'Salesforce', key: ty, who: desk, title: t.subject, age: t.touched,
+                   why: 'untouched ' + t.touched + ' days' + (t.late ? ', overdue since ' + shortDate_(t.due) : ''), agent: t.agent || '' });
+          });
+        });
+      });
+    } catch (e) {}
+  } else {
+    try {
+      var bk = unitBook_(sid, day);
+      bk.open.forEach(function (t) { if (t.touched >= CMD.QUIET_DAYS || t.late) push({ k: 'sf', id: t.id, src: 'Salesforce', key: t.ty || 'Servicing', who: '', ownerName: t.owner, title: t.subject, age: t.touched,
+        why: (t.late ? 'overdue since ' + shortDate_(t.due) + ', ' : '') + 'untouched ' + t.touched + ' days', agent: t.agent }); });
+    } catch (e) {}
+  }
+  if (scope === 'all') {
+    // 2. His instructions with no note from the desk.
+    try { var w = bmWaiting_(day);
+      w.ignored.forEach(function (t) { push({ k: 'sf', id: t.id, src: 'Your instruction', key: 'ignored', who: '', ownerName: t.owner, title: t.subject, age: daysBetween_(t.due, day), why: 'no note from ' + String(t.owner).split(' ')[0] + ' since ' + shortDate_(t.due) }); });
+    } catch (e) {}
+  }
+  if (scope !== 'unit') {
+    // 3. Query Pal past three days.
+    try { openQueries_().filter(function (q) { return q.days > 3; }).forEach(function (q) {
+      push({ k: 'sheet', id: 'qp:' + q.ref, src: 'Query Pal', key: 'query', who: '', ownerName: q.assigned, title: q.ref + ' · ' + (q.subject || q.type), age: q.days, why: q.days + ' days open, ' + (q.assigned ? 'with ' + q.assigned : 'unassigned') }); });
+    } catch (e) {}
+    // 4. Cash and cheque approvals with no BM decision.
+    try { bookRows_('APPROVE', BOOKS.APPROVE.tab).forEach(function (r, i) {
+      var d = anyIso_(r['Submission Date']); if (!d || daysBetween_(d, day) > CMD.APPROVE_DAYS || String(r['BM Cash Approval'] || '').trim()) return;
+      var who = String(r['Agent Name'] || ''), cl = (String(r['Client Name - First Name'] || '') + ' ' + String(r['Client Name - Last Name'] || '')).trim();
+      push({ k: 'sheet', id: 'ap:' + (r['Submission ID'] || i), src: 'BM approval', key: 'ask', who: '', ownerName: who, title: String(r['Approval Type'] || 'Approval') + ' · ' + cl + ' · ' + String(r['Policy Number'] || ''), age: daysBetween_(d, day), why: 'no BM decision recorded' + (r['Reason For Cheque/Cash Collection'] ? ', reason: ' + r['Reason For Cheque/Cash Collection'] : '') });
+    }); } catch (e) {}
+    // 5. Log book lines logged and not sent on.
+    try { bookRows_('DELIVERY', BOOKS.DELIVERY.log).forEach(function (r) {
+      if (!/logged|received/i.test(String(r['Status'] || '')) || String(r['Sent At'] || '').trim()) return;
+      var d = anyIso_(r['Logged At']); var age = d ? daysBetween_(d, day) : 0; if (age < 1) return;
+      push({ k: 'sheet', id: 'lb:' + r['Line Id'], src: 'Log book', key: 'mailbag', who: '', ownerName: String(r['Logged By'] || ''), title: String(r['Document'] || '') + ' · ' + String(r['Client'] || '') + ' · ' + String(r['Policy #'] || '') + ' → ' + String(r['Department'] || ''), age: age, why: 'logged ' + shortDate_(d) + ', not sent' + (r['Salesforce Task'] ? '' : ', no task') });
+    }); } catch (e) {}
+    // 6. Petty cash spent with no receipt, or not reviewed.
+    try { bookRows_('PETTY', BOOKS.PETTY.tab).forEach(function (r) {
+      if (!/spent/i.test(String(r['Request Type'] || ''))) return;
+      var d = anyIso_(r['Date']) || anyIso_(r['Submission Date']); if (!d || daysBetween_(d, day) > 45) return;
+      var noRec = !String(r['Copy of Receipt Upload'] || '').trim(), unrev = !String(r['Cash Management'] || '').trim();
+      if (!noRec && !unrev) return;
+      push({ k: 'sheet', id: 'pc:' + (r['Submission ID'] || d), src: 'Petty cash', key: 'escal', who: '', ownerName: String(r['Staff Spending Cash'] || ''), title: '$' + (r['Amount Spent'] || '?') + ' · ' + String(r['Purpose of Transaction'] || '').replace(/\s+/g, ' ').slice(0, 70), age: daysBetween_(d, day), why: noRec ? 'no receipt uploaded' : 'not reviewed' });
+    }); } catch (e) {}
+  }
+  // 7. Performance letters past due (the managers').
+  if (scope !== 'desks') {
+    try { (ppmLetters_(scope === 'unit' ? unitAgents_(sid) : null) || []).forEach(function (l) {
+      var due = anyIso_(l['Due Date']); if (!due || due >= day) return;
+      push({ k: 'sheet', id: 'pl:' + l['Letter ID'], src: 'Performance letter', key: 'perf', who: '', ownerName: String(l['Agent Name'] || ''), title: String(l['Agent Name'] || '') + ' · ' + String(l['Performance Period'] || '') + ' · ' + String(l['Status'] || ''), age: daysBetween_(due, day), why: 'past due since ' + shortDate_(due) });
+    }); } catch (e) {}
+  }
+  items.sort(function (a, b) { return (b.age || 0) - (a.age || 0); });
+  return items.slice(0, CMD.MAX);
+}
+function cmdButton_(sid, day) {
+  return replyButton_(replyUrl_(sid, day, 'cmd'), 'What is not getting attention', 'One page, read live: everything gone quiet in Salesforce and the branch sheets. Move it, re-date it or ask for feedback, a tap each.');
+}
+function cmdReplyPage_(person, day, error, notice) {
+  var sid = String(person.staffId), items = cmdItems_(sid, day), targets = cmdTargets_();
+  try { PropertiesService.getScriptProperties().setProperty(cmdKey_(sid, day), JSON.stringify(items.map(function (it) { return { k: it.k, id: it.id, src: it.src, t: it.title.slice(0, 120), who: it.who, on: it.ownerName || '', why: it.why }; })).slice(0, 8900)); } catch (e) {}
+  var sch = scheduleFor_(sid), blocks = sch.blocks || {}, by = {};
+  Object.keys(blocks).forEach(function (b) { by[b] = []; });
+  items.forEach(function (it, i) { var b = mgrBlockFor_(blocks, it.key); (by[b] = by[b] || []).push(i); });
+  var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
+  var opts = '<option value="">Leave where it is</option>' + targets.map(function (t) { return '<option value="' + esc_(t.sid) + '">Move to ' + esc_(t.name) + '</option>'; }).join('');
+  var srcCount = {}; items.forEach(function (it) { srcCount[it.src] = (srcCount[it.src] || 0) + 1; });
+  var cards = Object.keys(blocks).map(function (b) {
+    var list = by[b] || []; if (!list.length) return '';
+    return '<div class="card"><div class="bh">' + esc_(blocks[b].time) + ' · ' + esc_(blocks[b].focus) + ' (' + list.length + ')</div>' + list.map(function (i) {
+      var it = items[i], owner = it.who ? nameFor_(it.who) : (it.ownerName || '—');
+      return '<div class="task"><div><span class="tag">' + esc_(it.src) + '</span> · <b>' + esc_(owner) + '</b> · ' + esc_(it.title) +
+        (it.k === 'sf' && base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
+        '<div class="tag late" style="margin:2px 0 6px">' + esc_(it.why) + '</div>' +
+        '<select name="to_' + i + '" style="width:100%;padding:9px;border:1.5px solid #DDE4EC;border-radius:9px;font:14px inherit;margin-bottom:6px">' + opts + '</select>' +
+        '<input type="text" name="q_' + i + '" placeholder="' + (it.k === 'sf' ? 'Ask for feedback or give the instruction (goes on Chatter)' : 'Instruction for the task this becomes') + '">' +
+        '<div style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px">New date <input type="date" name="d_' + i + '" style="flex:1;padding:8px;border:1.5px solid #DDE4EC;border-radius:9px"></div></div>';
+    }).join('') + '</div>';
+  }).join('');
+  return replyPage_('Not getting attention · ' + prettyDate_(day),
+    items.length + ' item' + (items.length === 1 ? '' : 's') + ' gone quiet, worst first within each block: ' + esc_(Object.keys(srcCount).map(function (k) { return k + ' ' + srcCount[k]; }).join(', ')) + '. Move, re-date or ask; leave blank what needs nothing.',
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') +
+    (items.length ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'cmd') + cards + '<button type="submit">Send these moves and questions</button></form>'
+                  : '<div class="card ok">Nothing has gone quiet. Every item has been touched in the last ' + CMD.QUIET_DAYS + ' days.</div>'));
+}
+function cmdReplySave_(person, day, p) {
+  var sid = String(person.staffId), items = [], at = hhmm_(new Date()), out = [], me = nameFor_(sid);
+  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(cmdKey_(sid, day)) || '[]'); } catch (e) {}
+  var targets = {}; cmdTargets_().forEach(function (t) { targets[t.sid] = t; });
+  var head = (sid === 'ricky' ? 'Branch Manager' : UM_DESKS.indexOf(sid) > -1 ? 'Unit Manager · ' + me : 'BMA · ' + me) + ' · ' + shortDate_(day) + ' ' + twelve_(at);
+  items.forEach(function (it, i) {
+    var to = String(p['to_' + i] || ''), q = String(p['q_' + i] || '').trim(), nd = String(p['d_' + i] || '').trim();
+    if (!to && !q && !nd) return;
+    var tgt = targets[to] || null, res = '';
+    try {
+      if (it.k === 'sf') {
+        var patch = {};
+        if (tgt) patch.OwnerId = tgt.id;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(nd)) patch.ActivityDate = nd;
+        if (Object.keys(patch).length) sfkPatchTask_(it.id, patch);
+        var body = head + '\n\n' + (tgt ? 'Moved from ' + (it.who ? nameFor_(it.who) : it.on || 'the desk') + ' to ' + tgt.name + '. ' : '') + (patch.ActivityDate ? 'New date ' + shortDate_(nd) + '. ' : '') +
+          (q ? (tgt ? '' : 'Feedback wanted: ') + q : (tgt ? 'Please note on this task what you will do and by when.' : ''));
+        sfkInsert_('FeedItem', { ParentId: it.id, Body: body.trim() });
+        res = [tgt ? 'moved to ' + tgt.name.split(' ')[0] : '', patch.ActivityDate ? 're-dated' : '', q ? 'asked' : ''].filter(String).join(', ');
+      } else {
+        var owner = tgt || targets['kamla'] || targets[sid] || null;
+        if (!owner) throw new Error('No one to give it to: choose a desk.');
+        var id = sfkInsert_('Task', { Subject: ('[' + it.src + '] ' + it.t).slice(0, 255), OwnerId: owner.id, ActivityDate: /^\d{4}-\d{2}-\d{2}$/.test(nd) ? nd : day,
+          Status: 'In Progress', Task_Type__c: 'RR Operations',
+          Description: it.src + ' · ' + it.id.replace(/^[a-z]{2}:/, '') + '\nWhy it is here: ' + it.why + (it.on ? '\nWas with: ' + it.on : '') + (q ? '\n\nInstruction: ' + q : '') });
+        try { sfkInsert_('FeedItem', { ParentId: id, Body: head + '\n\n' + (q || 'From the command centre: ' + it.why + '. Note what you did, then close.') }); } catch (e) {}
+        res = 'task for ' + owner.name.split(' ')[0];
+      }
+    } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
+    out.push({ s: it.src + ' · ' + it.t, res: res });
+  });
+  if (!out.length) return cmdReplyPage_(person, day, 'Nothing chosen. Pick a desk, a date or type a question under an item.');
+  try { runlog_('cmd ' + sid + ' ' + out.length + ' actions'); } catch (e) {}
+  return cmdReplyPage_(person, day, '', '<b>' + out.filter(function (o) { return !/^NOT/.test(o.res); }).length + ' of ' + out.length + ' done.</b>' +
+    out.map(function (o) { return '<div class="ln">' + (/^NOT/.test(o.res) ? '&#9888; ' : '&#10003; ') + esc_(o.s) + ' · <b>' + esc_(o.res) + '</b></div>'; }).join(''));
+}
 /** The Unit Manager: his agents' open performance letters. */
 function umLetters_(sid, day) { try { return ppmCard_(ppmLetters_(unitAgents_(sid)), day, 'Performance letters in your unit'); } catch (e) { return ''; } }
 /** An agent's own open performance letter. */
@@ -5867,6 +6036,196 @@ function sfkDayFor_(staffId, day) {
   };
 }
 
+/* ─────────── The official close-out, the weekly report, the BMA's 4pm (16 Oct 2026) ───────────
+ *  Ricky: "30 minutes prior to leaving they are officially written ... comment
+ *  on the blocks, on things that remain outstanding, scrubbing emails, their
+ *  inbox and their general surroundings ... Let them know the last task on
+ *  Salesforce that is actioned ... the time logged out will be 30 minutes
+ *  after the reminder; the system will automatically log the person off ...
+ *  On Friday a weekly progress report: areas of concern and what should have
+ *  been done. Kamla gets her report at 4pm, a deeper dive."  */
+var BMA_REPORT_AT = 16 * 60;
+/** The last thing done in Salesforce today, by subject and time. */
+function lastSfAction_(sid, day) {
+  var u = (sfkUsers_() || {})[sid]; if (!u) return null;
+  var r = sfkQuery_("SELECT Id, Subject, IsClosed, LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND LastModifiedDate >= " + sfkUtcAt_(day, 0) +
+    " AND LastModifiedDate < " + sfkUtcAt_(shiftDays_(day, 1), 0) + " AND (NOT Subject LIKE 'Email:%') ORDER BY LastModifiedDate DESC LIMIT 1")[0];
+  if (!r) return { none: true };
+  var l = sfLocal_(r.LastModifiedDate);
+  return { id: r.Id, subject: r.Subject || '', closed: !!r.IsClosed, at: l ? twelve_(mmText_(l.min)) : '' };
+}
+/** Open work by block: each block's own type, late or due today, for the comment on each. */
+function hkBlockOutstanding_(sid, day, book) {
+  var blocks = scheduleFor_(sid).blocks || {}, plans = {}, seen = {}, out = [], byId = {};
+  try { plans = planRows_(sid, day); } catch (e) {}
+  Object.keys(book).forEach(function (t) { book[t].forEach(function (x) { byId[x.id] = x; x.ty = x.ty || t; }); });
+  var rows = BLOCK_IDS.filter(function (b) { return blocks[b]; }).map(function (b) {
+    var kpi = blocks[b].kpi, own = blockTypeFor_(kpi), types = [];
+    try { types = blockSfTypes_(kpi, '') || []; } catch (e) {}
+    var row = { b: b, time: blocks[b].time, focus: blocks[b].focus, list: [], own: own, types: types };
+    // What she planned for this block and has not closed comes first.
+    if (plans[b]) planItemsOf_(plans[b].Items).forEach(function (it) { if (it.k === 'sf' && byId[it.id] && !seen[it.id]) { seen[it.id] = 1; var x = byId[it.id]; x.planned = true; row.list.push(x); } });
+    return row;
+  });
+  var due = []; Object.keys(book).forEach(function (t) { book[t].forEach(function (x) { if (!seen[x.id] && (x.late || x.due === day)) due.push({ x: x, t: t }); }); });
+  due.forEach(function (d) {
+    var home = rows.filter(function (r) { return r.own && r.own === d.t; })[0] || rows.filter(function (r) { return r.types.indexOf(d.t) > -1; })[0] ||
+      rows.filter(function (r) { return r.b === mgrBlockFor_(blocks, d.t); })[0];
+    if (home) { seen[d.x.id] = 1; home.list.push(d.x); }
+  });
+  rows.forEach(function (r) { out.push(r); });
+  var rest = due.filter(function (d) { return !seen[d.x.id]; }).map(function (d) { return d.x; });
+  if (rest.length) out.push({ b: 'OTHER', time: '', focus: 'Outside your blocks', list: rest });
+  return out;
+}
+/** The branch sheets with lines still in this person's name. */
+function hkSystems_(sid, day) {
+  var html = '';
+  try { html += branchCards_(sid, day); } catch (e) {}
+  try { html += queryCard_(sid); } catch (e) {}
+  try {
+    var me = bkNk_(nameFor_(sid)), first = me.split(' ')[0];
+    var lines = bookRows_('DELIVERY', BOOKS.DELIVERY.log).filter(function (r) {
+      return /logged|received/i.test(String(r['Status'] || '')) && !String(r['Sent At'] || '').trim() && bkNk_(r['Logged By']).indexOf(first) > -1; });
+    if (lines.length) html += srcCard_('Log book · ' + lines.length + ' line' + (lines.length === 1 ? '' : 's') + ' you logged, not sent on', MAIL.amber,
+      lines.slice(0, 6).map(function (r) { return esc_(r['Document']) + ' · ' + esc_(r['Client']) + ' · ' + esc_(r['Policy #']) + ' → ' + esc_(r['Department']); }), lines.length > 6 ? 'and ' + (lines.length - 6) + ' more.' : '');
+  } catch (e) {}
+  return html;
+}
+/** Monday to today of this week, working days. */
+function weekDays_(day) {
+  var dow = new Date(day + 'T12:00:00Z').getUTCDay() || 7, mon = shiftDays_(day, 1 - dow), out = [];
+  for (var i = 0; i < 5; i++) { var d = shiftDays_(mon, i); if (d <= day) out.push(d); }
+  return out;
+}
+/** One person's week: per day, and the concerns that follow from it. */
+function weekFor_(sid, day) {
+  var days = weekDays_(day), owed = blocksOwed_(sid), rows = [], u = (sfkUsers_() || {})[sid];
+  var att = {}; try { sheetObjects_(attSheet_()).forEach(function (r) { if (String(r.StaffId) === sid) att[isoDay_(r.Date)] = r; }); } catch (e) {}
+  var startM = (parseSpan_(scheduleFor_(sid).hours || '') || { start: 480 }).start;
+  var closedBy = {}, noted = {}, created = {};
+  if (u) {
+    try {
+      var from = sfkUtcAt_(days[0], 0), to = sfkUtcAt_(shiftDays_(day, 1), 0);
+      var cl = sfkQuery_("SELECT Id, LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND IsClosed = true AND LastModifiedDate >= " + from + ' AND LastModifiedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') LIMIT 1000");
+      cl.forEach(function (t) { var l = sfLocal_(t.LastModifiedDate); if (l) (closedBy[l.day] = closedBy[l.day] || []).push(t.Id); });
+      for (var i = 0; i < cl.length; i += 150) sfkQuery_("SELECT ParentId FROM FeedItem WHERE CreatedById = '" + u.id + "' AND ParentId IN (" + cl.slice(i, i + 150).map(function (t) { return "'" + t.Id + "'"; }).join(',') + ') LIMIT 2000').forEach(function (f) { noted[f.ParentId] = 1; });
+      sfkQuery_("SELECT CreatedDate FROM Task WHERE CreatedById = '" + u.id + "' AND CreatedDate >= " + from + ' AND CreatedDate < ' + to + " AND (NOT Subject LIKE 'Email:%') LIMIT 1000")
+        .forEach(function (t) { var l = sfLocal_(t.CreatedDate); if (l) created[l.day] = (created[l.day] || 0) + 1; });
+    } catch (e) {}
+  }
+  days.forEach(function (d) {
+    var a = att[d] || {}, inAt = timeStr_(a.FirstSignIn), status = String(a.Status || '').toLowerCase();
+    var plans = {}; try { plans = planRows_(sid, d); } catch (e) {}
+    var of = 0, ach = 0; Object.keys(plans).forEach(function (b) { of += n_(plans[b].Of) || 0; ach += n_(plans[b].Achieved) || 0; });
+    var ids = closedBy[d] || [], nn = ids.filter(function (id) { return !noted[id]; }).length;
+    rows.push({ d: d, inAt: inAt, out: timeStr_(a.SignedOut), absent: status === 'absent', late: inAt ? minutesOf_(inAt) > startM + 10 : false,
+      blocks: blocksSubmittedOn_(sid, d).length, owed: owed, of: of, ach: ach, closed: ids.length, unnoted: nn, created: created[d] || 0 });
+  });
+  var still = []; try { var bk = (sfkOpenBook_(day) || {})[sid] || {}; Object.keys(bk).forEach(function (t) { bk[t].forEach(function (x) { if (x.due && x.due >= days[0] && x.due <= day) still.push(x); }); }); } catch (e) {}
+  var overdue = 0; try { var b2 = (sfkOpenBook_(day) || {})[sid] || {}; Object.keys(b2).forEach(function (t) { b2[t].forEach(function (x) { if (x.late) overdue++; }); }); } catch (e) {}
+  var sum = function (k) { return rows.reduce(function (a, r) { return a + (r[k] || 0); }, 0); };
+  var concerns = [];
+  var lateDays = rows.filter(function (r) { return r.late; }).length, absentDays = rows.filter(function (r) { return r.absent; }).length;
+  if (absentDays) concerns.push(absentDays + ' day' + (absentDays === 1 ? '' : 's') + ' absent');
+  if (lateDays) concerns.push('signed in late on ' + lateDays + ' day' + (lateDays === 1 ? '' : 's'));
+  var shortBlocks = rows.filter(function (r) { return !r.absent && r.owed && r.blocks < r.owed; }).length;
+  if (shortBlocks) concerns.push('blocks not all reported on ' + shortBlocks + ' day' + (shortBlocks === 1 ? '' : 's'));
+  if (sum('of') && sum('ach') / sum('of') < 0.8) concerns.push('only ' + Math.round(100 * sum('ach') / sum('of')) + '% of the planned tasks done');
+  if (sum('unnoted')) concerns.push(sum('unnoted') + ' task' + (sum('unnoted') === 1 ? '' : 's') + ' closed without a note');
+  var noCreate = rows.filter(function (r) { return !r.absent && !r.created; }).length;
+  if (noCreate) concerns.push('no task logged at the point of work on ' + noCreate + ' day' + (noCreate === 1 ? '' : 's'));
+  if (still.length) concerns.push(still.length + ' task' + (still.length === 1 ? '' : 's') + ' due this week still open');
+  if (overdue > 10) concerns.push(overdue + ' overdue in total');
+  return { rows: rows, still: still, overdue: overdue, concerns: concerns, totals: { closed: sum('closed'), unnoted: sum('unnoted'), of: sum('of'), ach: sum('ach'), created: sum('created') } };
+}
+function weekCard_(sid, day, w, title) {
+  var td = 'padding:5px;font-size:12px;border-top:1px solid ' + MAIL.line + ';text-align:right;', th = 'padding:5px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + ';text-align:right';
+  var table = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px;margin-bottom:10px"><tr>' +
+    ['Day', 'In', 'Out', 'Blocks', 'Plan', 'Closed', 'No note', 'Logged'].map(function (h, i) { return '<td style="' + th + (i ? '' : ';text-align:left') + '">' + h + '</td>'; }).join('') + '</tr>' +
+    w.rows.map(function (r) {
+      return '<tr><td style="' + td + 'text-align:left">' + esc_(shortDate_(r.d)) + '</td>' +
+        (r.absent ? '<td colspan="7" style="' + td + 'text-align:left;color:' + MAIL.red + ';font-weight:700">Absent</td>' :
+        '<td style="' + td + (r.late ? 'color:' + MAIL.red + ';font-weight:700' : '') + '">' + esc_(r.inAt ? twelve_(r.inAt) : '—') + '</td>' +
+        '<td style="' + td + '">' + esc_(r.out ? twelve_(r.out) : '—') + '</td>' +
+        '<td style="' + td + (r.blocks < r.owed ? 'color:' + MAIL.amber + ';font-weight:700' : '') + '">' + r.blocks + '/' + r.owed + '</td>' +
+        '<td style="' + td + '">' + (r.of ? r.ach + '/' + r.of : '—') + '</td>' +
+        '<td style="' + td + '">' + r.closed + '</td>' +
+        '<td style="' + td + (r.unnoted ? 'color:' + MAIL.red + ';font-weight:700' : '') + '">' + r.unnoted + '</td>' +
+        '<td style="' + td + (!r.created ? 'color:' + MAIL.amber : '') + '">' + r.created + '</td>') + '</tr>';
+    }).join('') + '</table>';
+  var t = w.totals;
+  return sectionLabel_(title) + table +
+    srcCard_('Areas of concern', w.concerns.length ? MAIL.red : MAIL.green, w.concerns.length ? w.concerns.map(function (c) { return esc_(c); }) : ['None this week. Well done.'],
+      'Week total: ' + t.closed + ' closed, ' + t.unnoted + ' without a note, ' + (t.of ? t.ach + ' of ' + t.of + ' planned' : 'no plan') + ', ' + t.created + ' logged at the point of work. ' + w.overdue + ' overdue now.') +
+    (w.still.length ? srcCard_('What should have been done this week, and is still open (' + w.still.length + ')', MAIL.amber,
+      w.still.slice(0, 10).map(function (x) { return esc_(x.subject) + lateTag_(x.due, day); }), w.still.length > 10 ? 'and ' + (w.still.length - 10) + ' more.' : '') : '');
+}
+/** At the finish: whoever has not signed out is signed out, and the close-out state goes to the managers. */
+function autoSignOut_(sid, day, endM) {
+  var sh = attSheet_(), rows = sheetObjects_(sh), found = attRow_(rows, day, sid);
+  if (!found || !timeStr_(found.row.FirstSignIn) || timeStr_(found.row.SignedOut)) return false;
+  var at = mmText_(endM);
+  writeRow_(sh, found.at, colMap_(sh), { SignedOut: at, LastSeen: timeStr_(found.row.LastSeen) || at, UpdatedAt: new Date(),
+    Reason: (String(found.row.Reason || '') ? found.row.Reason + '; ' : '') + 'Signed out automatically at ' + twelve_(at) });
+  forgetHr_(ATT);
+  try { CacheService.getScriptCache().remove('att_' + sid + '_' + day); } catch (e) {}
+  try { signOutNotice_(sid, day, at); } catch (e) {}
+  return true;
+}
+/** The BMA's 4pm: every desk's day, deeper; on Friday the week as well. */
+function sendBmaReport_(day) {
+  var to = emailFor_('kamla'); if (!to) return false;
+  var friday = new Date(day + 'T12:00:00Z').getUTCDay() === 5, desks = DAY_MAIL_DESKS.filter(function (s) { return s !== 'kamla'; });
+  var att = {}; try { sheetObjects_(attSheet_()).forEach(function (r) { if (isoDay_(r.Date) === day) att[String(r.StaffId)] = r; }); } catch (e) {}
+  var td = 'padding:6px;font-size:12px;border-top:1px solid ' + MAIL.line + ';text-align:right;', th = 'padding:6px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + ';text-align:right';
+  var ob = {}; try { ob = sfkOpenBook_(day) || {}; } catch (e) {}
+  var concerns = [], sysHtml = '';
+  var rows = desks.map(function (sid) {
+    var a = att[sid] || {}, d1 = null, last = null, of = 0, ach = 0;
+    try { d1 = sfkDayFor_(sid, day); } catch (e) {}
+    try { last = lastSfAction_(sid, day); } catch (e) {}
+    try { var pl = planRows_(sid, day); Object.keys(pl).forEach(function (b) { of += n_(pl[b].Of) || 0; ach += n_(pl[b].Achieved) || 0; }); } catch (e) {}
+    var book = ob[sid] || {}, over = 0, quiet = 0; Object.keys(book).forEach(function (t) { book[t].forEach(function (x) { if (x.late) over++; if (x.touched >= 5) quiet++; }); });
+    var blocks = blocksSubmittedOn_(sid, day).length, owed = blocksOwed_(sid), un = d1 ? d1.closed.filter(function (t) { return !t.noted; }).length : 0;
+    var nm = String(nameFor_(sid)).split(' ')[0], absent = String(a.Status || '').toLowerCase() === 'absent';
+    if (absent) concerns.push(nm + ' is out today' + (a.Reason ? ' (' + a.Reason + ')' : ''));
+    else {
+      if (blocks < owed) concerns.push(nm + ': ' + (owed - blocks) + ' block' + (owed - blocks === 1 ? '' : 's') + ' not reported');
+      if (un) concerns.push(nm + ': ' + un + ' closed without a note');
+      if (of && ach / of < 0.6) concerns.push(nm + ': ' + ach + ' of ' + of + ' planned done');
+      if (d1 && !d1.created) concerns.push(nm + ': nothing logged at the point of work today');
+      if (last && last.none) concerns.push(nm + ': no Salesforce action at all today');
+    }
+    try { var sy = hkSystems_(sid, day); if (sy) sysHtml += '<div style="font-size:12px;font-weight:800;color:' + MAIL.navy + ';margin:10px 0 2px">' + esc_(nameFor_(sid)) + '</div>' + sy; } catch (e) {}
+    return '<tr><td style="' + td + 'text-align:left"><b>' + esc_(nameFor_(sid)) + '</b><div style="font-size:11px;color:' + MAIL.muted + '">' + esc_(scheduleFor_(sid).hours || '') + '</div></td>' +
+      (absent ? '<td colspan="7" style="' + td + 'text-align:left;color:' + MAIL.red + ';font-weight:700">Absent' + (a.Reason ? ' · ' + esc_(a.Reason) : '') + '</td>' :
+      '<td style="' + td + '">' + esc_(timeStr_(a.FirstSignIn) ? twelve_(timeStr_(a.FirstSignIn)) : '—') + '</td>' +
+      '<td style="' + td + (blocks < owed ? 'color:' + MAIL.amber + ';font-weight:700' : '') + '">' + blocks + '/' + owed + '</td>' +
+      '<td style="' + td + '">' + (of ? ach + '/' + of : '—') + '</td>' +
+      '<td style="' + td + '">' + (d1 ? d1.closed.length : '—') + '</td>' +
+      '<td style="' + td + (un ? 'color:' + MAIL.red + ';font-weight:700' : '') + '">' + un + '</td>' +
+      '<td style="' + td + (over ? 'color:' + MAIL.red : '') + '">' + over + ' · ' + quiet + '</td>' +
+      '<td style="' + td + 'text-align:left;font-size:11.5px">' + (last && !last.none ? esc_(last.at) + ' · ' + esc_(shorten_(last.subject, 38)) : '<span style="color:' + MAIL.red + '">none today</span>') + '</td>') + '</tr>';
+  });
+  var table = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px"><tr>' +
+    ['Desk', 'In', 'Blocks', 'Plan', 'Closed', 'No note', 'Overdue · quiet', 'Last Salesforce action'].map(function (h, i) { return '<td style="' + th + (i && i < 7 ? '' : ';text-align:left') + '">' + h + '</td>'; }).join('') + '</tr>' + rows.join('') + '</table>';
+  var week = '';
+  if (friday) desks.forEach(function (sid) { try { week += weekCard_(sid, day, weekFor_(sid, day), 'The week · ' + nameFor_(sid)); } catch (e) {} });
+  var body = '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Kamla, the branch at 4pm: where each desk stands before the close-outs go out, what has gone quiet, and what is still open in the branch sheets. ' +
+      'Chase what is below before each person\'s before-you-leave; anything you move from the command centre goes on its Chatter.' + (friday ? ' It is Friday, so each desk\'s week follows.' : '') + '</div>' +
+    cmdButton_('kamla', day) +
+    sectionLabel_('Every desk today') + table +
+    '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Quiet: open and untouched five days or more.</div>' +
+    srcCard_('Areas of concern today (' + concerns.length + ')', concerns.length ? MAIL.red : MAIL.green, concerns.length ? concerns.map(function (c) { return esc_(c); }) : ['Every desk is on track.'], '') +
+    (sysHtml ? sectionLabel_('Branch sheets still open, by desk') + sysHtml : '') + week;
+  MailApp.sendEmail({ to: to, cc: [DAYSTART_CC_DEFAULT].concat(managerEmails_()).join(','),
+    subject: (friday ? 'The branch at 4pm and the week · ' : 'The branch at 4pm · ') + shortDate_(day) + ' · ' + concerns.length + ' concern' + (concerns.length === 1 ? '' : 's'),
+    htmlBody: shell_(friday ? 'The branch at 4pm · and the week' : 'The branch at 4pm', 'For the BMA · ' + prettyDate_(day), body) });
+  return true;
+}
+function sendBmaReportNow() { return sendBmaReport_(todayISO_()); }
+
 function sendHousekeeping_(person, day, signIn) {
   var sid = String(person.staffId);
   var to = emailFor_(sid);
@@ -5933,7 +6292,8 @@ function sendHousekeeping_(person, day, signIn) {
     (sfOk && dueOpen.length ? p('Due today and still open: <b>' + dueOpen.length + '</b>. Each needs your note on what happened and when it will be done:') + list(dueOpen, 8) : '');
   var c2 =
     p('Scrub your inbox and the branch WhatsApp before you go. Anything urgent from <b>Mr Rampersad</b>, a manager, an agent or a client gets a reply or a task today, not tomorrow.') +
-    p('Clients who wrote to us in their own words go to support@ with a person replying, not a template.');
+    p('Clients who wrote to us in their own words go to support@ with a person replying, not a template.') +
+    p('Then your surroundings: every document on your desk filed, logged in the log book or handed to the router. Nothing left loose overnight.');
   var c3 =
     (sfOk ? p('Due tomorrow: <b>' + dueTomorrow.length + '</b>. Open each one and be sure you know what it needs.') + list(dueTomorrow, 8) : '') +
     (sfOk && day1 && day1.created === 0
@@ -5960,9 +6320,11 @@ function sendHousekeeping_(person, day, signIn) {
   } catch (e) {}
 
   var body =
-    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', your day ends at <b>' + esc_(endText) +
-      '</b>. Before you sign out, four things. Answer each one in the tracker\'s close-out, with a reason for anything not done. ' +
-      'Answer them from the button in this e-mail; your answers and your sign-out time are logged, and copied to Mr Rampersad and sales support.</div>' +
+    '<div style="background:' + MAIL.navy + ';color:#fff;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.55">' +
+      '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:' + MAIL.soft + '">Official close-out notice · ' + esc_(twelve_(hhmm_(new Date()))) + '</div>' +
+      esc_(first) + ', your day ends at <b>' + esc_(endText) + '</b>. <b>You will be signed out automatically at ' + esc_(endText) + '</b>, thirty minutes from this notice. ' +
+      'Before then: comment on every block below and every task still open in it, scrub your inbox and WhatsApp, close off the branch sheets in your name, clear your desk, and save the close-out. ' +
+      'If the close-out is not saved by ' + esc_(endText) + ', Mr Rampersad and Mrs Dookran are told, with what was left.</div>' +
     statTiles_([
       { value: signIn ? twelve_(signIn) : '—', label: 'signed in' },
       { value: blockPct + '%', label: 'blocks reported', color: blockPct < 100 ? MAIL.amber : MAIL.green },
@@ -5970,7 +6332,19 @@ function sendHousekeeping_(person, day, signIn) {
       { value: sfOk ? overdue : '—', label: 'overdue', color: overdue ? MAIL.red : MAIL.navy }
     ]) +
     intelBox_(today.concat(trend), 'Today, and what the record shows') + periodTable_(intel) +
-    replyButton_(replyUrl_(sid, day, 'hk'), 'Close my day here', 'A reason for each task not done, the three checks, and sign out. No sign-in.') +
+    replyButton_(replyUrl_(sid, day, 'hk'), 'Close my day here', 'A comment on each task still open, the checks, and sign out. No password.') +
+    (function () { try { var la = lastSfAction_(sid, day); return la ? sectionLabel_('Your last Salesforce action today') +
+      '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (la.none ? MAIL.red : MAIL.navy) + ';border-radius:10px;padding:10px 15px;font-size:13px">' +
+      (la.none ? '<b style="color:' + MAIL.red + '">Nothing in Salesforce today.</b> Every task you worked needs its note before you go.' :
+        '<b>' + esc_(la.at) + '</b> · ' + esc_(la.subject) + ' · ' + (la.closed ? 'closed' : 'updated, still open')) + '</div>' : ''; } catch (e) { return ''; } })() +
+    (sfOk ? (function () { var bo = hkBlockOutstanding_(sid, day, book); return sectionLabel_('Your blocks · what is still outstanding') + bo.map(function (x) {
+      return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (x.list.length ? MAIL.amber : MAIL.green) + ';border-radius:10px;padding:10px 15px;margin-bottom:8px">' +
+        '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' + esc_(x.time ? x.time + ' · ' : '') + esc_(x.focus) + '</div>' +
+        (x.list.length ? x.list.slice(0, 8).map(function (t) { return '<div style="font-size:12.5px;padding:4px 0;border-top:1px solid ' + MAIL.line + '">' + (t.planned ? '<b style="color:' + MAIL.navy + '">Planned · </b>' : '') + esc_(t.subject) + lateTag_(t.due, day) + '</div>'; }).join('') + (x.list.length > 8 ? '<div style="font-size:12px;color:' + MAIL.muted + '">and ' + (x.list.length - 8) + ' more on the close-out page.</div>' : '') +
+          '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">Comment on each on the close-out page: what was done, what is left, and when.</div>'
+          : '<div style="font-size:12.5px;color:' + MAIL.green + ';padding-top:3px">Nothing outstanding in this block.</div>') + '</div>'; }).join(''); })() : '') +
+    (function () { var sy = hkSystems_(sid, day); return sy ? sectionLabel_('Branch sheets to close off before you go') + sy : ''; })() +
+    (new Date(day + 'T12:00:00Z').getUTCDay() === 5 ? (function () { try { return weekCard_(sid, day, weekFor_(sid, day), 'Your week · Monday to today'); } catch (e) { return ''; } })() : '') +
     check(1, 'Tasks verified', c1, !unnoted.length && !dueOpen.length && blockPct === 100) +
     check(2, 'Inbox and WhatsApp scrubbed', c2, false) +
     check(3, 'Open tasks understood', c3, sfOk && day1 && day1.created > 0) +
@@ -5982,7 +6356,7 @@ function sendHousekeeping_(person, day, signIn) {
 
   var mail = {
     to: to,
-    subject: 'Before you leave · ' + name + ' · ' + shortDate_(day) + ' · ' + blockPct + '% of blocks' +
+    subject: (new Date(day + 'T12:00:00Z').getUTCDay() === 5 ? 'Close-out and your week · ' : 'Close-out notice · ') + name + ' · ' + shortDate_(day) + ' · signed out at ' + endText + ' · ' + blockPct + '% of blocks' +
              (of ? ', ' + pct + '% of plan' : ', no plan') + (unnoted.length ? ', ' + unnoted.length + ' closed without a note' : ''),
     htmlBody: shell_('Before you leave', name + ' · ' + prettyDate_(day) + ' · finishing ' + endText, body)
   };
@@ -6668,7 +7042,7 @@ var PROG = { must: ['Date', 'StaffId', 'Check', 'TaskId'], name: 'Progress Answe
              head: ['Date', 'StaffId', 'Name', 'Check', 'TaskId', 'Subject', 'Answer', 'Reason', 'At'] };
 var REPLY_PAGES = { plan: 'Your plan', prog: 'Where each task stands', hk: 'Before you leave', 'in': 'Sign in',
                     errand: 'Your errands', undo: 'Workload moves', nudge: 'Nudge', bm: 'Respond', um: 'Your unit', umeve: 'Your day as a manager',
-                    ag: 'Your day', agc: 'Close off your day' };
+                    ag: 'Your day', agc: 'Close off your day', cmd: 'Not getting attention' };
 
 /** Today's sign-in time for a person, or ''. */
 function signedInAt_(sid, day) {
@@ -6881,8 +7255,8 @@ function replyClick_(e) {
     return replyPage_('That link has expired.', 'These links are good for the day they were sent. Open the tracker instead.', '');
   }
   if (day !== todayISO_()) return replyPage_('That link was for ' + prettyDate_(day) + '.', 'Today\'s e-mail has today\'s link.', '');
-  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
-    ((f === 'um' || f === 'umeve') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
+  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm' || f === 'cmd') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
+    ((f === 'um' || f === 'umeve' || f === 'cmd') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
     ((f === 'ag' || f === 'agc') && /^a-/.test(sid) ? agentBySid_(sid) : null);
   if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
   if (f === 'plan' || f === 'in') return planReplyPage_(person, day, '');
@@ -6890,6 +7264,7 @@ function replyClick_(e) {
   if (f === 'errand') return errandReplyPage_(person, day, String(p.c || 'progress'), '');
   if (f === 'undo') return undoReplyPage_(person, day, '');
   if (f === 'bm') return bmReplyPage_(person, day, '');
+  if (f === 'cmd') return cmdReplyPage_(person, day, '', '');
   if (f === 'um') return umReplyPage_(person, day, '');
   if (f === 'umeve') return umEveReplyPage_(person, day, '');
   if (f === 'ag' || f === 'agc') return agReplyPage_(person, day, f, '');
@@ -6906,8 +7281,8 @@ function replyPost_(e) {
   if (!REPLY_PAGES[f] || String(p.k || '') !== replySig_(sid, day, f) || day !== todayISO_()) {
     return replyPage_('That link has expired.', 'Nothing was saved. Open the tracker instead.', '');
   }
-  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
-    ((f === 'um' || f === 'umeve') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
+  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm' || f === 'cmd') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
+    ((f === 'um' || f === 'umeve' || f === 'cmd') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
     ((f === 'ag' || f === 'agc') && /^a-/.test(sid) ? agentBySid_(sid) : null);
   if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
   var all = function (name) { var v = ps[name]; return v ? (Array.isArray(v) ? v : [v]) : []; };
@@ -6920,6 +7295,7 @@ function replyPost_(e) {
   if (f === 'errand') return errandReplySave_(person, day, p, all);
   if (f === 'undo') return undoReplySave_(person, day, p, all);
   if (f === 'bm') return bmReplySave_(person, day, p, all);
+  if (f === 'cmd') return cmdReplySave_(person, day, p);
   if (f === 'um') return umReplySave_(person, day, p);
   if (f === 'umeve') return umEveReplySave_(person, day, p);
   if (f === 'ag' || f === 'agc') return agReplySave_(person, day, f, p);
