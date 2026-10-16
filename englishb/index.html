@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fear, in Blood Brothers · RRB Academy</title>
+<meta name="description" content="Ricky Rampersad Branch Academy. A guided workshop for writing your own five-paragraph CSEC English B essay on the theme of fear in John Wickham's short story Blood Brothers.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg">
+<meta name="theme-color" content="#07131f">
+<style>
+/* Layout: the Academy's navy gate, then a notebook: six stages down the side, the stage in the
+   middle, the coach on the right. The casuarinas on the gate are the story's own trees, under
+   the moon of the night walk on Garnet Road. */
+:root{
+  /* The branch palette — the values in IBRAND, as on /sea/. */
+  --navy:#07131f; --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
+  --ink:#16202b; --muted:#5c6b7a; --rule:#e2e8ee;
+  --paper:#F5F7FA; --surface:#FFFFFF; --surface2:#EDF1F6; --field:#FFFFFF;
+  --tealInk:#0A7C8C; --goldInk:#8A6410; --goldSoft:#FBF3DC;
+  --go:#1C7A52; --goBg:#E6F4EC; --stop:#A8362A; --stopBg:#FBEAE7; --warn:#8A6410; --warnBg:#FBF3DC;
+  --sans:"Avenir Next","Segoe UI",Inter,system-ui,-apple-system,sans-serif;
+  --display:Optima,"Palatino Linotype",Georgia,serif;
+  --read:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --shadow:0 1px 2px rgba(7,19,31,.05),0 6px 18px rgba(7,19,31,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#DDE6ED; --paper:#07131f; --surface:#0F2131; --surface2:#17303F; --field:#0B1B29;
+  --muted:#8FA3B3; --rule:#22394A;
+  --tealInk:#4FD8EE; --goldInk:#efc24b; --goldSoft:#2A2410;
+  --go:#4FB489; --goBg:#0F2E24; --stop:#DE8477; --stopBg:#321915; --warn:#D9AC57; --warnBg:#2A2410;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.28);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --ink:#DDE6ED; --paper:#07131f; --surface:#0F2131; --surface2:#17303F; --field:#0B1B29;
+  --muted:#8FA3B3; --rule:#22394A;
+  --tealInk:#4FD8EE; --goldInk:#efc24b; --goldSoft:#2A2410;
+  --go:#4FB489; --goBg:#0F2E24; --stop:#DE8477; --stopBg:#321915; --warn:#D9AC57; --warnBg:#2A2410;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.28);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.2;text-wrap:balance}
+p{margin:0}
+a{color:var(--tealInk)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.label{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13.5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* The branch mark — logo-mark.png, never a substitute. */
+.mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+.mark img{width:100%;height:100%;display:block}
+
+/* ================= gate ================= */
+.gate{min-height:100vh;position:relative;overflow:hidden;color:#EAF1F6;
+  background:radial-gradient(1100px 620px at 50% -10%,#12293d 0%,#07131f 62%);
+  display:grid;place-items:start center;padding:3rem 16px 190px}
+#trees{position:absolute;left:0;right:0;bottom:0;width:100%;height:180px;display:block;pointer-events:none}
+.gatebox{position:relative;width:min(760px,100%);text-align:center}
+.gatebox .mark{width:74px;height:74px;margin:0 auto 1.1rem;box-shadow:0 10px 34px rgba(0,0,0,.42)}
+.kicker{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.55rem}
+.gatebox h1{font-size:clamp(1.9rem,5vw,2.6rem);color:#fff;letter-spacing:.01em}
+.gatebox h1 i{color:var(--gold);font-style:italic}
+.gatebox .sub{color:#A9BCCB;margin:.7rem auto 2rem;max-width:50ch;font-size:15px}
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+@media (max-width:620px){.doors{grid-template-columns:1fr}}
+.door{background:rgba(255,255,255,.055);border:1px solid rgba(239,194,75,.24);border-radius:14px;
+  padding:1.15rem 1rem 1.2rem;display:flex;flex-direction:column;align-items:center;gap:.55rem}
+.door b{font-family:var(--display);font-size:1.15rem;color:#fff}
+.door small{color:#8FA5B8;font-size:12.5px;margin-top:-.35rem}
+.door input{width:100%;max-width:280px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.2);
+  border-radius:9px;padding:.7rem .9rem;color:#fff;text-align:center;letter-spacing:.14em;
+  font-family:var(--mono);font-size:15px;text-transform:uppercase}
+.door input:focus{border-color:var(--gold);background:rgba(255,255,255,.11);outline:none}
+.door input::placeholder{color:#6E8497}
+.gatego{background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;border:0;border-radius:9px;
+  padding:.68rem 1.4rem;font-weight:800;font-size:14px;letter-spacing:.03em}
+.gatego:hover{filter:brightness(1.07)}
+.gatego[disabled]{opacity:.6;cursor:progress}
+#gateErr{color:#F0A79B;font-size:14px;min-height:1.4em;margin-top:.9rem}
+.path{list-style:none;margin:1.8rem auto 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;text-align:left;max-width:700px}
+@media (max-width:620px){.path{grid-template-columns:1fr 1fr}}
+.path li{display:flex;gap:.55rem;align-items:baseline;font-size:13px;color:#A9BCCB;
+  background:rgba(255,255,255,.035);border-radius:10px;padding:.55rem .7rem}
+.path li b{font-family:var(--mono);color:var(--gold);font-size:12px}
+.path li span{color:#E2EAF0}
+details.notice{max-width:min(620px,100%);margin:1.4rem auto 0;text-align:left;
+  border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(7,19,31,.55)}
+details.notice > summary{cursor:pointer;list-style:none;padding:.7rem .95rem;font-size:13px;font-weight:700;color:#A9BCCB;display:flex;gap:.5rem}
+details.notice > summary::-webkit-details-marker{display:none}
+details.notice > summary::before{content:"▸";color:var(--gold);transition:transform .15s}
+details.notice[open] > summary::before{transform:rotate(90deg)}
+details.notice .in{padding:0 .95rem 1rem;font-size:13px;color:#9FB3C4;line-height:1.65}
+details.notice .in b{color:#DCE6EE}
+details.notice .in ul{margin:.4rem 0;padding-left:1.1rem}
+
+/* ================= header ================= */
+header.top{background:var(--navy);position:sticky;top:0;z-index:40;box-shadow:0 1px 0 rgba(255,255,255,.07)}
+.hin{max-width:1400px;margin:0 auto;padding:.55rem 16px;display:flex;align-items:center;gap:.9rem}
+.brand{display:flex;align-items:center;gap:.65rem;margin-right:auto;min-width:0}
+.brand .mark{width:36px;height:36px;flex:none;box-shadow:0 0 0 1px rgba(239,194,75,.3)}
+.brand b{display:block;font-family:var(--display);font-size:15.5px;color:#fff;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{display:block;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.who{display:flex;align-items:center;gap:.7rem;color:#C9D6E0;font-size:13.5px;flex:none}
+.who .me{font-weight:700;color:#fff;max-width:12ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbtn{background:none;border:1px solid rgba(255,255,255,.25);color:#E2EAF0;border-radius:8px;padding:.35rem .7rem;font-size:13px}
+.hbtn:hover{border-color:var(--gold);color:#fff}
+.sync{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#8FA5B8;min-width:5.5em;text-align:right}
+.sync.bad{color:#F5A79B}
+@media (max-width:560px){.who .me{display:none}.brand small{display:none}}
+
+/* ================= the notebook ================= */
+.shell{max-width:1400px;margin:0 auto;padding:1.4rem 16px 6rem;display:grid;grid-template-columns:228px minmax(0,1fr);gap:1.6rem;align-items:start;min-height:calc(100vh - 56px)}
+@media (min-width:1200px){.shell{grid-template-columns:228px minmax(0,1fr) 350px}}
+@media (max-width:860px){.shell{grid-template-columns:minmax(0,1fr);gap:1rem;padding-top:1rem}}
+
+.rail{position:sticky;top:76px;display:flex;flex-direction:column;gap:.35rem}
+.rail .q{font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:.7rem .8rem;margin-bottom:.5rem}
+.rail .q b{display:block;color:var(--ink);font-family:var(--display);font-size:13.5px;margin-bottom:.2rem}
+.st{display:grid;grid-template-columns:28px minmax(0,1fr);gap:.1rem .6rem;align-items:center;text-align:left;
+  background:none;border:1px solid transparent;border-radius:10px;padding:.55rem .6rem;color:var(--ink)}
+.st:hover{background:var(--surface)}
+.st.on{background:var(--surface);border-color:var(--rule);box-shadow:var(--shadow)}
+.st .n{grid-row:span 2;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--mono);font-size:12.5px;font-weight:700;background:var(--surface2);color:var(--muted)}
+.st.on .n{background:var(--navy);color:var(--gold)}
+.st.done .n{background:var(--goBg);color:var(--go)}
+.st .t{font-weight:600;font-size:14px;line-height:1.25}
+.st .bar{height:5px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.st .bar i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .3s}
+.st .tn{grid-column:2;font-size:11px;font-weight:700}
+.tn.ok{color:var(--go)} .tn.more{color:var(--warn)}
+@media (max-width:860px){
+  .rail{position:static;flex-direction:row;overflow-x:auto;gap:.4rem;padding-bottom:.25rem;scrollbar-width:thin}
+  .rail .q{display:none}
+  .st{flex:none;width:168px}
+}
+
+.page{min-width:0;display:flex;flex-direction:column;gap:1.1rem}
+.sh .eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--goldInk)}
+.sh h1{font-size:clamp(1.6rem,3.6vw,2.15rem);margin:.2rem 0 .45rem}
+.sh .lead{color:var(--muted);max-width:68ch;font-size:15.5px}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:1.1rem 1.15rem;box-shadow:var(--shadow);min-width:0}
+.card h2{font-size:1.2rem}
+.h3{font-size:1.05rem!important}
+.card > * + *{margin-top:.75rem}
+.card.stack > * + *,.card.row > * + *,.card.ro > * + *{margin-top:0}
+.steps{margin:.5rem 0 0;padding-left:1.25rem;display:grid;gap:.3rem}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:1.1rem;align-items:start}
+@media (max-width:1040px){.split{grid-template-columns:minmax(0,1fr)}}
+.side{display:flex;flex-direction:column;gap:1rem;position:sticky;top:76px}
+@media (max-width:1040px){.side{position:static}}
+.stack{display:flex;flex-direction:column;gap:.9rem;min-width:0}
+
+.f{display:flex;flex-direction:column;gap:.3rem;font-size:13.5px;font-weight:600;color:var(--ink);min-width:0}
+.f .hint{font-weight:400;color:var(--muted);font-size:13px}
+input[type=text],input[type=date],select,textarea{width:100%;background:var(--field);border:1px solid var(--rule);border-radius:9px;
+  padding:.6rem .7rem;font-size:15px;font-weight:400;line-height:1.5;color:var(--ink)}
+textarea{resize:vertical;min-height:3.2em}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--tealInk);box-shadow:0 0 0 3px rgba(0,207,234,.18)}
+textarea.quote{font-family:var(--read);font-style:italic;background:var(--goldSoft)}
+textarea.draft{font-family:var(--read);font-size:16.5px;line-height:1.75;min-height:12em}
+textarea[disabled],input[disabled],select[disabled]{opacity:.75;cursor:not-allowed}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+@media (max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+
+.btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:9px;border:1px solid var(--rule);background:var(--surface);
+  padding:.55rem .95rem;font-weight:700;font-size:14px;color:var(--ink)}
+.btn:hover{border-color:var(--tealInk)}
+.btn.gold{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:transparent;color:#07131f}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.quiet{background:none}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--tealInk);font-weight:700;font-size:13.5px;text-decoration:underline;text-underline-offset:2px}
+.link.danger{color:var(--stop)}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.nav{display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-top:.4rem}
+
+.cl{list-style:none;margin:0;padding:0;display:grid;gap:.4rem}
+.cl li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:.4rem;font-size:14px;line-height:1.4}
+.cl .mk{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800}
+.cl li.ok .mk{background:var(--goBg);color:var(--go)}
+.cl li.no .mk{background:var(--surface2);color:var(--muted)}
+.cl li.ok span{color:var(--ink)} .cl li.no span{color:var(--muted)}
+
+.moment{border:1px solid var(--rule);border-left:4px solid var(--gold);border-radius:12px;padding:.9rem 1rem;background:var(--surface);display:grid;gap:.7rem}
+.moment > header{display:flex;justify-content:space-between;align-items:center}
+.empty{border:1.5px dashed var(--rule);border-radius:12px;padding:1.2rem;color:var(--muted);text-align:center}
+.empty b{display:block;color:var(--ink);font-family:var(--display);font-size:1.05rem;margin-bottom:.2rem}
+.hint-p{font-size:14px;background:var(--goldSoft);border-radius:9px;padding:.6rem .7rem}
+.hint-p b{color:var(--goldInk)}
+
+.q-block{display:grid;gap:.45rem}
+.q-block .ql{display:grid;grid-template-columns:30px minmax(0,1fr);gap:.4rem;font-weight:600;font-size:15px;line-height:1.45}
+.q-block .qn{font-family:var(--mono);color:var(--goldInk);font-size:13px;padding-top:.1rem}
+.q-block .opt{font-weight:400;color:var(--muted);font-size:12.5px;margin-left:.3rem}
+.qfoot{display:flex;justify-content:space-between;align-items:center;gap:.6rem;font-size:12.5px;color:var(--muted)}
+.nudge{font-size:14px;background:var(--surface2);border-radius:9px;padding:.6rem .75rem;border-left:3px solid var(--teal)}
+
+.tnote{border-radius:12px;padding:.85rem 1rem;background:var(--goBg);border:1px solid color-mix(in srgb,var(--go) 30%,transparent)}
+.tnote.more{background:var(--warnBg);border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
+.tnote .label{color:inherit}
+.tnote p{margin-top:.25rem;white-space:pre-wrap}
+.banner{border-radius:12px;padding:.85rem 1rem;background:var(--surface2);border:1px solid var(--rule)}
+.banner.lock{background:var(--goldSoft);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.banner.back{background:var(--warnBg)}
+.banner b{display:block}
+
+.kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+@media (max-width:700px){.kinds{grid-template-columns:1fr}}
+.kind{border-radius:12px;background:var(--surface2);padding:.75rem;display:grid;gap:.4rem}
+.kind .label{color:var(--goldInk)}
+.sortrow{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:.7rem;align-items:center;padding:.6rem 0;border-top:1px solid var(--rule)}
+.sortrow:first-child{border-top:0}
+@media (max-width:640px){.sortrow{grid-template-columns:1fr}}
+.sortrow .w{font-family:var(--read);font-style:italic}
+.sortrow .t{font-size:13px;color:var(--muted)}
+details.model{border:1px solid var(--rule);border-radius:10px;padding:.2rem .85rem;background:var(--surface2)}
+details.model summary{cursor:pointer;font-weight:700;font-size:14px;padding:.5rem 0}
+details.model .m{font-family:var(--read);font-size:15.5px;padding:.4rem 0 .6rem}
+details.model ul{margin:.2rem 0 .8rem;padding-left:1.1rem;font-size:14px}
+
+.techhelp{font-size:13.5px;color:var(--muted);background:var(--surface2);border-radius:9px;padding:.55rem .7rem}
+.techhelp b{color:var(--ink)}
+
+.para .ph{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;flex-wrap:wrap}
+.wc{font-family:var(--mono);font-size:12.5px;padding:.15rem .5rem;border-radius:99px;background:var(--surface2);color:var(--muted)}
+.wc.ok{background:var(--goBg);color:var(--go)} .wc.over{background:var(--warnBg);color:var(--warn)}
+.pgrid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:1rem;align-items:start}
+@media (max-width:1100px){.pgrid{grid-template-columns:minmax(0,1fr)}}
+.peek{background:var(--surface2);border-radius:10px;padding:.75rem .8rem;font-size:13.5px}
+.peek dl{margin:.35rem 0 0;display:grid;gap:.35rem}
+.peek dt{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.peek dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.ticks{display:grid;gap:.35rem;margin-top:.7rem}
+.tick{display:flex;gap:.55rem;align-items:flex-start;font-size:14px;font-weight:400}
+.tick input{width:18px;height:18px;margin-top:.15rem;accent-color:var(--go);flex:none}
+.cc{margin-top:.8rem;border-radius:12px;border:1px solid var(--rule);padding:.8rem .9rem;background:var(--surface2);font-size:14px}
+.cc h4{margin:0 0 .3rem;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--tealInk)}
+.cc ul{margin:.2rem 0 .5rem;padding-left:1.1rem}
+.cc .found{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.3rem}
+.chip{font-size:12px;border-radius:99px;padding:.15rem .55rem;background:var(--surface);border:1px solid var(--rule)}
+.chip.ok{background:var(--goBg);color:var(--go);border-color:transparent}
+.essay{font-family:var(--read);font-size:16.5px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+.essay p + p{margin-top:.9rem}
+
+/* ================= the coach ================= */
+.coach{position:sticky;top:76px;height:calc(100vh - 96px);display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid var(--rule);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.coach .ch{display:flex;justify-content:space-between;gap:.5rem;padding:.85rem 1rem;background:var(--navy);color:#fff}
+.coach .ch h2{font-size:1.05rem;color:#fff}
+.coach .ch p{font-size:12.5px;color:#A9BCCB;line-height:1.4;margin-top:.15rem}
+.coach .x{display:none;background:none;border:0;color:#fff;font-size:1.6rem;line-height:1}
+.clog{flex:1;overflow-y:auto;padding:.9rem;display:flex;flex-direction:column;gap:.6rem}
+.bub{max-width:92%;padding:.6rem .8rem;border-radius:12px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.bub.c{background:var(--surface2);align-self:flex-start;border-top-left-radius:4px}
+.bub.s{background:var(--navy);color:#fff;align-self:flex-end;border-top-right-radius:4px}
+.bub.think{color:var(--muted);font-style:italic}
+.divider{align-self:center;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem;padding:0 .9rem .6rem}
+.chips button{font-size:12.5px;border:1px solid var(--rule);background:var(--surface);border-radius:99px;padding:.3rem .65rem;color:var(--ink);text-align:left}
+.chips button:hover{border-color:var(--tealInk)}
+.cform{display:flex;gap:.5rem;padding:.7rem .9rem;border-top:1px solid var(--rule);align-items:flex-end}
+.cform textarea{min-height:2.6em;max-height:9em;font-size:14.5px}
+.cnote{font-size:12.5px;color:var(--stop);padding:0 .9rem .6rem;min-height:0}
+.coach-off{padding:1rem;color:var(--muted);font-size:14px}
+.fab{display:none}
+@media (max-width:1199px){
+  .coach{position:fixed;left:0;right:0;bottom:0;top:auto;height:min(78vh,640px);border-radius:16px 16px 0 0;z-index:60;
+    transform:translateY(105%);transition:transform .25s ease;margin:0 auto;max-width:720px;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .coach.open{transform:none}
+  .coach .x{display:block}
+  .fab{display:inline-flex;position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:50;
+    background:var(--navy);color:#fff;border:1px solid rgba(239,194,75,.5);border-radius:99px;padding:.75rem 1.1rem;font-weight:700;box-shadow:0 8px 24px rgba(7,19,31,.35)}
+}
+
+/* ================= the teacher ================= */
+.tpage{max-width:1240px;margin:0 auto;padding:1.4rem 16px 5rem;display:flex;flex-direction:column;gap:1.2rem}
+.thead{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap}
+.thead h1{font-size:clamp(1.6rem,3.4vw,2.1rem)}
+.thead .eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--goldInk)}
+.flash{border-radius:12px;background:var(--goldSoft);border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);padding:.9rem 1rem}
+.flash .code{font-family:var(--mono);font-size:1.4rem;letter-spacing:.1em;font-weight:700;display:block;margin:.25rem 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+.scard{display:grid;gap:.6rem}
+.scard .top{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem}
+.scard h3{font-size:1.2rem;overflow-wrap:anywhere}
+.pill{font-size:11.5px;font-weight:700;border-radius:99px;padding:.18rem .6rem;white-space:nowrap;background:var(--surface2);color:var(--muted)}
+.pill.in{background:var(--goldSoft);color:var(--goldInk)} .pill.work{background:color-mix(in srgb,var(--teal) 14%,transparent);color:var(--tealInk)}
+.pill.back{background:var(--warnBg);color:var(--warn)} .pill.off{background:var(--stopBg);color:var(--stop)}
+.segs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.segs i{height:7px;border-radius:99px;background:var(--surface2);overflow:hidden;position:relative}
+.segs i b{position:absolute;inset:0 auto 0 0;background:var(--teal);border-radius:99px}
+.meta{font-size:13px;color:var(--muted)}
+.flag{font-size:12.5px;color:var(--warn);background:var(--warnBg);border-radius:8px;padding:.3rem .55rem}
+.codeline{font-size:13px;color:var(--muted)}
+.codeline b{font-family:var(--mono);color:var(--ink);letter-spacing:.06em}
+.ttabs{display:flex;gap:.3rem;overflow-x:auto;border-bottom:1px solid var(--rule);padding-bottom:.4rem}
+.ttabs button{flex:none;background:none;border:1px solid transparent;border-radius:9px;padding:.45rem .75rem;font-weight:600;font-size:14px;color:var(--muted)}
+.ttabs button.on{background:var(--surface);border-color:var(--rule);color:var(--ink);box-shadow:var(--shadow)}
+.ttabs .tn{margin-left:.3rem}
+.tgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1.1rem;align-items:start}
+@media (max-width:960px){.tgrid{grid-template-columns:minmax(0,1fr)}}
+.ro{display:grid;gap:.9rem}
+.ro .item{border-top:1px solid var(--rule);padding-top:.75rem}
+.ro .item:first-child{border-top:0;padding-top:0}
+.ro .qq{font-weight:600}
+.ro .aa{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:.2rem}
+.ro .aa.none{color:var(--muted);font-style:italic}
+.ro .w{font-family:var(--read);font-style:italic}
+.seg{display:flex;gap:.35rem;flex-wrap:wrap}
+.seg button{border:1px solid var(--rule);background:var(--surface);border-radius:9px;padding:.4rem .7rem;font-size:13.5px;font-weight:700;color:var(--ink)}
+.seg button.on.ok{background:var(--goBg);color:var(--go);border-color:transparent}
+.seg button.on.more{background:var(--warnBg);color:var(--warn);border-color:transparent}
+.seg button.on.none{background:var(--surface2)}
+.notebox{position:sticky;top:76px}
+.log{display:grid;gap:.6rem}
+.log .bub{max-width:100%}
+.renamer{display:flex;gap:.4rem}
+.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;background:var(--navy);color:#fff;
+  border-radius:10px;padding:.6rem 1rem;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
+footer.foot{max-width:1400px;margin:0 auto;padding:1.5rem 16px 2rem;display:flex;align-items:center;gap:.6rem;color:var(--muted);font-size:12.5px}
+footer.foot .mark{width:26px;height:26px;flex:none}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+"use strict";
+/* ============================================================
+   The English B essay workshop — "Blood Brothers" by John Wickham, and the theme of fear.
+   Asked for on 15 October 2026: the objective "is not to do this but to guide her and make
+   think to do this", with a student log in and a teacher log in, each with a code.
+
+   Everything that decides who gets in, and everything the coach is told, is in
+   apps-script/Academy.gs (the "English B essay workshop" section), on the Academy's own
+   sheet. This page holds no code, no student and no answer. The questions and hints here
+   point at the story; none of them gives a point for the essay.
+   ============================================================ */
+
+/* The deployed /exec address of apps-script/Academy.gs — the same backend as /sea/.
+   The override is how the tests choose a backend. */
+const API = (typeof window !== "undefined" && window.ACADEMY_API_OVERRIDE !== undefined)
+  ? window.ACADEMY_API_OVERRIDE
+  : "https://script.google.com/macros/s/AKfycbwBI6nYyhCwPCQaMgnXLXyPTWKkF-hw-Jvz_CZpZVF3SEnPSiSkvxMZkzmFTXC-cabJ/exec";
+const TKEY = "rrb.englishb.token";
+
+const STAGES = [
+  {k:"find",  title:"Find the fear",       short:"Collect every moment of fear",
+   lead:"Before you can write about fear, you need to see every place it appears. You are collecting evidence here, not explaining it yet."},
+  {k:"why",   title:"Ask why",             short:"Think about why it happens",
+   lead:"Now ask why. These questions have no single right answer. Say what you think, and point to the story when you do."},
+  {k:"idea",  title:"Your big idea",       short:"Find your argument",
+   lead:"Sort your evidence into three kinds of fear, then decide what Wickham is saying about fear. That becomes your thesis."},
+  {k:"plan",  title:"Plan the paragraphs", short:"Notes for five paragraphs",
+   lead:"Plan each paragraph before you write it. A plan is short notes, not sentences."},
+  {k:"write", title:"Write it",            short:"Your words, paragraph by paragraph",
+   lead:"Turn each plan into a paragraph, in your own words. Your plan sits beside each box."},
+  {k:"hand",  title:"Check and hand in",   short:"Check it, then hand it in",
+   lead:"Read the whole essay once more, check it against the list, then hand it in."}
+];
+const SI = Object.fromEntries(STAGES.map((s, i) => [s.k, i]));
+
+/* Stage 2. The same keys as ESSAY_WHY in Academy.gs, so the coach reads each answer beside its question. */
+const WHY = [
+  {k:"trees", q:"By day the casuarinas are “tall and graceful”. At night they become ghostlike. Did the trees change, or did Paul?",
+   nudge:"Read the second paragraph again. What is different at night: the trees, the light, or the person looking at them? What does that tell you about where fear comes from?"},
+  {k:"grow",  q:"Paul was afraid of the dark as a small boy. What is he afraid of now, at thirteen?",
+   nudge:"Find the paragraph that begins “Paul looked up through the trees at the sky”. Which word does Paul keep using about himself?"},
+  {k:"hate",  q:"Paul says he hates Benjy. Which other feelings are mixed into that hate, and where does it come from?",
+   nudge:"Find the paragraph that begins “Sometimes, the violence of his hate frightened Paul”. List every feeling it names. Which one came first?"},
+  {k:"speak", q:"Paul wants to share “the secret ways of his heart” with Benjy. Why does he never say it?",
+   nudge:"Look for what Paul is afraid Benjy would do with his offer. What is he afraid of losing?"},
+  {k:"awl",   q:"Why does the awl drop from Paul’s hand?",
+   nudge:"Read the climax slowly. What exactly does Paul see on Benjy’s face, and what does it tell him?"},
+  {k:"happy", q:"The story ends with Paul happy to discover “that his brother also knew fear”. Why would someone else’s fear make Paul happy?",
+   nudge:"What did Paul believe about Benjy for the whole story? What changes when that belief turns out to be wrong?"},
+  {k:"title", q:"Why do you think Wickham called the story “Blood Brothers”?", optional:true,
+   nudge:"Think of two meanings of blood in this story: family, and something more dangerous."},
+  {k:"mac",   q:"Mac “had not even looked up”. Why might Wickham include that detail?", optional:true,
+   nudge:"What do the grown-ups in the story notice about how the boys feel? Think about the father too."}
+];
+
+/* Stage 1. Each one points at a place in the story and asks; none says what to write. */
+const HINTS = [
+  "Start with the walk on Garnet Road. What does Paul do with his father’s hand, and what does his father do back?",
+  "Fear is not always about ghosts. Find a sentence where Paul is afraid of what someone else might think of him.",
+  "Look for the moment when Paul’s own feelings scare him.",
+  "Read the last page slowly. Look at Benjy’s eyes.",
+  "Count every “afraid”, “fear”, “frightened” and “frightening” in the story. Where does each one sit?"
+];
+
+/* Every example is from everyday life, never from this story. */
+const TECH = [
+  {k:"Imagery",         def:"Words that let you see, hear or feel something.", eg:"“The kitchen smelled of burnt sugar.”", ask:"What can I see or hear in these words?"},
+  {k:"Personification", def:"Giving something that is not human a human action or feeling.", eg:"“The old car groaned up the hill.”", ask:"Is something that is not a person acting like one?"},
+  {k:"Simile",          def:"Comparing two things using “like” or “as”.", eg:"“She ran like the wind.”", ask:"Which two things are compared, and why those two?"},
+  {k:"Metaphor",        def:"Saying one thing is another, without “like” or “as”.", eg:"“The classroom was a zoo.”", ask:"What does the comparison suggest that plain words would not?"},
+  {k:"Contrast",        def:"Putting opposites side by side so each stands out.", eg:"“Outside it poured; inside, the fire crackled.”", ask:"Which two things are set against each other?"},
+  {k:"Word choice",     def:"The particular words a writer picks instead of plainer ones.", eg:"“He devoured the roti” instead of “he ate the roti”.", ask:"Why this word, and not a plainer one?"},
+  {k:"Flashback",       def:"The story steps back into the past.", eg:"A grown man remembering his first day at school.", ask:"Why does the writer take us back in time here?"},
+  {k:"Point of view",   def:"Whose mind the story lets us into.", eg:"A story told only through what one sister sees and thinks.", ask:"What do we know, and what are we never told?"},
+  {k:"Irony",           def:"The opposite of what you expect, or of what a character believes.", eg:"A fire station burning down.", ask:"What turned out differently from what I, or a character, expected?"},
+  {k:"Symbolism",       def:"An object that stands for an idea beyond itself.", eg:"A broken watch standing for wasted time.", ask:"What could this object mean beyond itself?"},
+  {k:"Climax",          def:"The moment of highest tension, where things turn.", eg:"The last penalty kick of a final.", ask:"What changes after this moment?"},
+  {k:"Repetition",      def:"A word or idea that keeps coming back.", eg:"“Never, never, never give up.”", ask:"What keeps coming back, and why?"}
+];
+
+const PARAS = [
+  {k:"intro", title:"Introduction",     kind:"intro", min:60,  max:110},
+  {k:"b1",    title:"Body paragraph 1", kind:"body",  i:0, min:120, max:180},
+  {k:"b2",    title:"Body paragraph 2", kind:"body",  i:1, min:120, max:180},
+  {k:"b3",    title:"Body paragraph 3", kind:"body",  i:2, min:120, max:180},
+  {k:"concl", title:"Conclusion",       kind:"concl", min:60,  max:100}
+];
+/* The same keys as ESSAY_CHECKS in Academy.gs: the student ticks them, the coach checks them. */
+const CHECKS = {
+  intro:[["hook","My first sentence makes the reader think about fear"],
+         ["context","I name the story and the writer, and give context without retelling it"],
+         ["thesis","My thesis is the last sentence and argues something about fear"]],
+  body: [["point","My first sentence states one idea about fear"],
+         ["evidence","I quote Wickham’s words, in quotation marks"],
+         ["technique","I name a technique"],
+         ["explain","I explain what the words make the reader feel or understand"],
+         ["link","My last sentence links back to my thesis"]],
+  concl:[["restate","I restate my thesis in new words"],
+         ["together","I bring my three ideas together"],
+         ["sowhat","I say what the story suggests about fear"],
+         ["nonew","I add no new quotation and no new point"]]
+};
+const RUBRIC = [
+  ["answers","My essay answers the question that was set"],
+  ["thesis","My thesis is in the introduction and makes an argument"],
+  ["onepoint","Each body paragraph has one clear point about fear"],
+  ["quotes","Every body paragraph uses Wickham’s words, in quotation marks"],
+  ["technique","I name techniques and explain their effect on the reader"],
+  ["links","Each body paragraph links back to my thesis"],
+  ["conclusion","My conclusion says what the story suggests about fear, without repeating my introduction"],
+  ["tense","I write about the story in the present tense: “Paul fears”, not “Paul feared”"],
+  ["names","I have checked the spelling of Paul, Benjy, Mac, Wickham and casuarina"]
+];
+const STARTERS = {
+  find: ["Does this count as a moment of fear?", "I can only find fear in the night walk", "What do I write for what sets it off?"],
+  why:  ["Is my answer deep enough?", "I don’t understand one of the questions", "How do I point to the story in an answer?"],
+  idea: ["Do my three kinds of fear overlap?", "Is my thesis an argument or a fact?", "How do I name a kind of fear?"],
+  plan: ["Help me choose a technique", "Is this the right evidence for my point?", "What is the difference between effect and link?"],
+  write:["How do I start a body paragraph?", "Am I retelling the story instead of analysing it?", "How do I fit a quotation into my sentence?"],
+  hand: ["What should I check last?", "Is my conclusion just repeating my introduction?"]
+};
+const WHO = ["Paul", "Benjy", "Both", "Someone else"];
+
+/* ============================ little helpers ============================ */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const wc = s => (String(s || "").trim().match(/\S+/g) || []).length;
+const obj = x => (x && typeof x === "object" && !Array.isArray(x)) ? JSON.parse(JSON.stringify(x)) : {};
+const uid = () => Math.random().toString(36).slice(2, 10);
+const hasQuote = s => /["“”]/.test(String(s || ""));
+const plural = (n, one) => n + " " + one + (n === 1 ? "" : "s");
+function getPath(o, p){ return p.split(".").reduce((a, k) => a == null ? undefined : a[k], o); }
+function setPath(o, p, v){
+  const ks = p.split("."); let cur = o;
+  for (let i = 0; i < ks.length - 1; i++) {
+    if (cur[ks[i]] == null || typeof cur[ks[i]] !== "object") cur[ks[i]] = /^\d+$/.test(ks[i + 1]) ? [] : {};
+    cur = cur[ks[i]];
+  }
+  cur[ks[ks.length - 1]] = v;
+}
+function lsGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+function lsDel(k){ try { localStorage.removeItem(k); } catch (e) {} }
+function when(iso){
+  if (!iso) return "";
+  const d = new Date(iso); if (isNaN(d)) return "";
+  return d.toLocaleString(undefined, {weekday:"short", day:"numeric", month:"short", hour:"numeric", minute:"2-digit"});
+}
+function ago(iso){
+  if (!iso) return "never";
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (!isFinite(s)) return "never";
+  if (s < 90) return "just now";
+  if (s < 3600) return Math.round(s / 60) + " min ago";
+  if (s < 86400) return Math.round(s / 3600) + " h ago";
+  const d = Math.round(s / 86400); return d === 1 ? "yesterday" : d + " days ago";
+}
+function dueText(due){
+  if (!due) return "";
+  const d = new Date(due + "T12:00:00");
+  return isNaN(d) ? "" : d.toLocaleDateString(undefined, {weekday:"long", day:"numeric", month:"long"});
+}
+let toastT = 0;
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 4200);
+}
+
+async function api(action, body){
+  if (!API) throw new Error("The workshop is not connected to the Academy yet.");
+  let r;
+  try {
+    r = await fetch(API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+                          body: JSON.stringify(Object.assign({action}, body || {}))});
+  } catch (e) { throw new Error("Could not reach the Academy. Check the connection and try again."); }
+  let j; try { j = await r.json(); } catch (e) { throw new Error("The Academy sent back something unreadable. Try again."); }
+  if (!j.ok) {
+    const msg = j.error === "Unknown action."
+      ? "The essay workshop is not switched on yet: the Academy’s script needs its latest version."
+      : (j.error || "Something went wrong.");
+    const err = new Error(msg); err.locked = !!j.locked; err.signin = /code again|sign in again|switched off|removed|has changed|run out/i.test(msg);
+    throw err;
+  }
+  return j;
+}
+
+/* ============================ state ============================ */
+const S = {
+  token: lsGet(TKEY) || "", me: null, cls: null, coachOn: false,
+  // student
+  work: null, review: null, locked: false, coach: [], stage: "find", coachBusy: false, checking: {}, checkErr: {},
+  save: "", seq: 0, savedSeq: 0, saving: false, saveTimer: 0,
+  // teacher
+  students: [], t: {open: null, tab: "find", flash: null, renaming: null, logs: {}}
+};
+
+/* ============================ the gate ============================ */
+function gateHTML(msg){
+  return `<div class="gate">
+  <canvas id="trees" aria-hidden="true"></canvas>
+  <div class="gatebox">
+    <div class="mark"><img src="../logo-mark.png" alt="Ricky Rampersad Branch"></div>
+    <p class="kicker">RRB Academy · CSEC English B</p>
+    <h1>Fear, in <i>Blood Brothers</i></h1>
+    <p class="sub">A workshop for writing your own five-paragraph essay on John Wickham’s short story.
+      It asks the questions. You do the thinking, and the writing.</p>
+    <div class="doors">
+      <form class="door" data-door="student">
+        <b>I’m a student</b><small>Type the code your teacher gave you</small>
+        <label class="sr" for="code-student">Student code</label>
+        <input id="code-student" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="WORD-1234">
+        <button class="gatego" type="submit">Open my notebook</button>
+      </form>
+      <form class="door" data-door="teacher">
+        <b>I’m the teacher</b><small>Type your teacher code</small>
+        <label class="sr" for="code-teacher">Teacher code</label>
+        <input id="code-teacher" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="WORD-1234">
+        <button class="gatego" type="submit">Open the class</button>
+      </form>
+    </div>
+    <p id="gateErr" role="alert">${esc(msg || "")}</p>
+    <ol class="path" aria-label="The six stages">
+      ${STAGES.map((s, i) => `<li><b>${i + 1}</b><span>${esc(s.title)}</span></li>`).join("")}
+    </ol>
+    <details class="notice"><summary>What is kept, and who sees it</summary><div class="in">
+      <ul>
+        <li><b>Your first name</b>, as your teacher typed it, and when you signed in.</li>
+        <li><b>Everything you write here</b>, saved as you go so it is there on any device.</li>
+        <li><b>Every question you ask the coach</b>, and every answer it gives.</li>
+        <li><b>When large blocks of text are pasted in</b>, so your teacher knows the words are yours.</li>
+      </ul>
+      Your teacher sees all of it, and so does the Academy, which keeps it in its own Google Sheet.
+      Nothing else is asked for, nothing is shared, and nothing is used to sell anything.
+      <br><br>The coach is <b>Claude</b>, an AI made by Anthropic. What you ask it, with your work so far,
+      goes to Anthropic to be answered. It is told never to write your essay, and it is not allowed to.
+    </div></details>
+  </div>
+</div>`;
+}
+function showGate(msg){
+  document.getElementById("app").innerHTML = gateHTML(msg);
+  drawTrees();
+  setTimeout(() => { const i = $("#code-student"); if (i && matchMedia("(min-width:700px)").matches) i.focus(); }, 30);
+}
+
+/* The casuarinas on Garnet Road, under the moon. Drawn, not a picture; the same every time. */
+function drawTrees(){
+  const c = $("#trees"); if (!c) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+  c.width = w * dpr; c.height = h * dpr;
+  const x = c.getContext("2d"); x.scale(dpr, dpr); x.clearRect(0, 0, w, h);
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const moon = x.createRadialGradient(w * .8, h * .3, 2, w * .8, h * .3, 46);
+  moon.addColorStop(0, "rgba(239,194,75,.95)"); moon.addColorStop(.42, "rgba(239,194,75,.85)"); moon.addColorStop(.46, "rgba(239,194,75,.18)"); moon.addColorStop(1, "rgba(239,194,75,0)");
+  x.fillStyle = moon; x.beginPath(); x.arc(w * .8, h * .3, 46, 0, Math.PI * 2); x.fill();
+  x.fillStyle = "rgba(4,11,19,.9)"; x.fillRect(0, h - 10, w, 10);
+  const n = Math.max(5, Math.round(w / 95));
+  for (let i = 0; i < n; i++) {
+    const tx = (i + .5) * (w / n) + (rnd() - .5) * 40, top = h * (.05 + rnd() * .3), lean = (rnd() - .5) * 10;
+    const tone = i % 2 ? "rgba(26,52,74,.95)" : "rgba(14,32,48,.98)";
+    x.strokeStyle = tone; x.lineWidth = 2.2;
+    x.beginPath(); x.moveTo(tx, h); x.lineTo(tx + lean, top); x.stroke();
+    x.lineWidth = .8;
+    for (let k = 0; k < 90; k++) {
+      const t = rnd(), y = top + (h - top) * t * .78, px = tx + lean * (1 - t * .78), dir = rnd() < .5 ? -1 : 1;
+      const len = 8 + rnd() * 30 * (1 - t * .5);
+      x.beginPath(); x.moveTo(px, y);
+      x.quadraticCurveTo(px + dir * len * .55, y - 3, px + dir * len, y + len * .6); x.stroke();
+    }
+  }
+}
+
+async function signIn(role, code, btn){
+  const err = $("#gateErr");
+  code = String(code || "").trim();
+  if (!code) { err.textContent = role === "teacher" ? "Type your teacher code." : "Type the code your teacher gave you."; return; }
+  btn.disabled = true; err.textContent = "";
+  const was = btn.textContent; btn.textContent = "Opening…";
+  try {
+    const j = await api("essay.signin", {code, role});
+    S.token = j.token; lsSet(TKEY, j.token);
+    takeSession(j);
+  } catch (e) {
+    err.textContent = e.message;
+    btn.disabled = false; btn.textContent = was;
+  }
+}
+
+function takeSession(j){
+  S.me = j.me; S.cls = j.cls || {}; S.coachOn = !!j.coachOn;
+  if (S.me.role === "student") {
+    S.work = normWork(j.work); S.review = obj(j.review); S.locked = !!j.locked; S.coach = Array.isArray(j.coach) ? j.coach : [];
+    S.stage = lsGet("rrb.englishb.stage." + S.me.id) || firstOpenStage();
+    if (!SI.hasOwnProperty(S.stage)) S.stage = "find";
+    S.seq = 0; S.savedSeq = 0; S.save = "saved";
+  } else {
+    S.students = Array.isArray(j.students) ? j.students : [];
+  }
+  render();
+}
+
+async function resume(){
+  if (!S.token || !API) { showGate(API ? "" : "The workshop is not connected to the Academy yet."); return; }
+  document.getElementById("app").innerHTML = `<div class="gate"><div class="gatebox"><div class="mark"><img src="../logo-mark.png" alt="Ricky Rampersad Branch"></div><p class="sub">Opening…</p></div></div>`;
+  try { takeSession(await api("essay.load", {token: S.token})); }
+  catch (e) { if (e.signin) { lsDel(TKEY); S.token = ""; } showGate(e.message); }
+}
+
+async function signOut(){
+  if (S.me && S.me.role === "student") await flushSave();
+  lsDel(TKEY); Object.assign(S, {token: "", me: null, work: null, review: null, students: [], coach: []});
+  S.t = {open: null, tab: "find", flash: null, renaming: null, logs: {}};
+  showGate("");
+}
+
+/* ============================ the student's notebook ============================ */
+function blankWork(){
+  return {v:1, moments:[], why:{}, groups:[{name:""},{name:""},{name:""}], momentGroup:{}, message:"", thesis:"", thesisTicks:{},
+    plan:{intro:{hook:"", context:""}, b:[0,1,2].map(() => ({point:"", evidence:"", technique:"", effect:"", link:""})), concl:{restate:"", sowhat:""}},
+    draft:{intro:"", b1:"", b2:"", b3:"", concl:""}, ticks:{}, checks:{}, rubric:{}, reflect:{strong:"", change:""},
+    hints:0, nudges:{}, pastes:[], startedAt:new Date().toISOString(), submittedAt:null, handins:[]};
+}
+function normWork(d){
+  d = (d && typeof d === "object") ? d : {};
+  const w = blankWork(), p = obj(d.plan);
+  w.moments = Array.isArray(d.moments) ? d.moments.filter(m => m && typeof m === "object").map(m => ({
+    id: String(m.id || uid()), who: String(m.who || ""), trigger: String(m.trigger || ""), words: String(m.words || ""), where: String(m.where || "")})) : [];
+  w.why = obj(d.why);
+  w.groups = [0, 1, 2].map(i => ({name: String((Array.isArray(d.groups) && d.groups[i] && d.groups[i].name) || "")}));
+  w.momentGroup = obj(d.momentGroup);
+  w.message = String(d.message || ""); w.thesis = String(d.thesis || ""); w.thesisTicks = obj(d.thesisTicks);
+  w.plan = {intro: Object.assign({hook:"", context:""}, obj(p.intro)),
+            b: [0, 1, 2].map(i => Object.assign({point:"", evidence:"", technique:"", effect:"", link:""}, obj((p.b || [])[i]))),
+            concl: Object.assign({restate:"", sowhat:""}, obj(p.concl))};
+  w.draft = Object.assign({intro:"", b1:"", b2:"", b3:"", concl:""}, obj(d.draft));
+  w.ticks = obj(d.ticks); w.checks = obj(d.checks); w.rubric = obj(d.rubric);
+  w.reflect = Object.assign({strong:"", change:""}, obj(d.reflect));
+  w.hints = Number(d.hints) || 0; w.nudges = obj(d.nudges);
+  w.pastes = Array.isArray(d.pastes) ? d.pastes.slice(-50) : [];
+  if (d.startedAt) w.startedAt = d.startedAt;
+  w.submittedAt = d.submittedAt || null; w.handins = Array.isArray(d.handins) ? d.handins : [];
+  return w;
+}
+
+/* Saved a second and a half after the last change, one save at a time; a change made while
+   a save is on its way goes in the next one. */
+function touch(){
+  if (S.locked) return;
+  S.seq++; S.save = "unsaved"; paintSave();
+  clearTimeout(S.saveTimer); S.saveTimer = setTimeout(runSave, 1500);
+}
+async function runSave(){
+  if (S.saving || S.seq === S.savedSeq || !S.work) return;
+  S.saving = true; const seq = S.seq; S.save = "saving"; paintSave();
+  try {
+    await api("essay.save", {token: S.token, work: S.work});
+    S.savedSeq = seq; S.save = S.seq === seq ? "saved" : "unsaved";
+  } catch (e) {
+    S.save = "error";
+    if (e.locked) { S.locked = true; S.savedSeq = S.seq; render(); toast(e.message); }
+    else if (e.signin) { toast(e.message); setTimeout(signOut, 1500); }
+    else toast("Not saved yet: " + e.message + " It will try again.");
+  }
+  S.saving = false; paintSave();
+  if (S.seq !== S.savedSeq && S.save !== "error") { clearTimeout(S.saveTimer); S.saveTimer = setTimeout(runSave, 600); }
+  else if (S.save === "error") { clearTimeout(S.saveTimer); S.saveTimer = setTimeout(runSave, 8000); }
+}
+async function flushSave(){
+  clearTimeout(S.saveTimer);
+  for (let i = 0; i < 40 && S.saving; i++) await new Promise(r => setTimeout(r, 150));
+  if (S.seq !== S.savedSeq) await runSave();
+}
+function paintSave(){
+  const el = $(".sync"); if (!el) return;
+  const t = {unsaved:"Not saved yet", saving:"Saving…", saved:"Saved", error:"Not saved"}[S.save] || "";
+  el.textContent = S.locked ? "Handed in" : t;
+  el.classList.toggle("bad", S.save === "error" && !S.locked);
+}
+
+/* ---- what each stage asks for: [done?, words, share done] ---- */
+function thesisChecks(t){
+  const n = wc(t);
+  return [[/blood\s*brothers/i.test(t), "It names the story"],
+          [/wickham/i.test(t), "It names the writer"],
+          [/fear|afraid|frighten|terror|scared|dread/i.test(t), "It is about fear"],
+          [/\b(shows?|suggests?|reveals?|presents?|explores?|demonstrates?|uses?|portrays?|illustrates?|highlights?|argues?)\b/i.test(t),
+           "It argues something (shows, suggests, reveals…), not just a fact"],
+          [n >= 20 && n <= 60, `It is one or two sentences, 20 to 60 words (${n} now)`]];
+}
+const STAGE_CHECKS = {
+  find(w){
+    const m = w.moments, n = m.length;
+    return [[n >= 6, `Six or more moments logged (${n} so far)`, Math.min(1, n / 6)],
+            [m.some(x => x.who && x.who !== "Paul"), "At least one moment for someone other than Paul"],
+            [n > 0 && m.every(x => wc(x.words) >= 2), "Every moment has Wickham’s exact words"],
+            [n > 0 && m.every(x => wc(x.trigger) >= 2), "Every moment says what sets the fear off"]];
+  },
+  why(w){
+    const core = WHY.filter(q => !q.optional), n = core.filter(q => wc(w.why[q.k]) >= 12).length;
+    return [[n === core.length, `Every main question answered in a sentence or two (${n} of ${core.length})`, n / core.length],
+            [WHY.some(q => hasQuote(w.why[q.k])), "At least one answer points to Wickham’s own words"]];
+  },
+  idea(w){
+    const named = w.groups.filter(g => wc(g.name) >= 1).length;
+    const used = [0, 1, 2].filter(i => w.moments.some(m => w.momentGroup[m.id] === String(i + 1))).length;
+    return [[named === 3, `Three kinds of fear named (${named} of 3)`, named / 3],
+            [used === 3, "Every kind has at least one moment in it", used / 3],
+            [wc(w.message) >= 8, "You have said what Wickham is saying about fear"],
+            [thesisChecks(w.thesis).every(c => c[0]) && !!w.thesisTicks.three, "Your thesis passes every check"]];
+  },
+  plan(w){
+    const f = [w.plan.intro.hook, w.plan.intro.context, ...w.plan.b.flatMap(b => [b.point, b.evidence, b.technique, b.effect, b.link]),
+               w.plan.concl.restate, w.plan.concl.sowhat];
+    const n = f.filter(x => String(x || "").trim().length > 1).length;
+    return [[n === f.length, `Every part of the plan has notes (${n} of ${f.length})`, n / f.length],
+            [w.plan.b.every(b => b.technique), "A technique chosen for each body paragraph"],
+            [w.plan.b.every(b => hasQuote(b.evidence)), "Each piece of evidence is in quotation marks"]];
+  },
+  write(w){
+    const done = PARAS.filter(p => wc(w.draft[p.k]) >= p.min).length;
+    const share = PARAS.reduce((a, p) => a + Math.min(1, wc(w.draft[p.k]) / p.min), 0) / PARAS.length;
+    return [[done === PARAS.length, `All five paragraphs reach their length (${done} of 5)`, share],
+            [PARAS.filter(p => p.kind === "body").every(p => hasQuote(w.draft[p.k])), "Every body paragraph quotes Wickham"]];
+  },
+  hand(w, locked){
+    const n = RUBRIC.filter(r => w.rubric[r[0]]).length;
+    return [[n === RUBRIC.length, `Checked against the whole list (${n} of ${RUBRIC.length})`, n / RUBRIC.length],
+            [!!w.submittedAt && !!locked, "Handed in"]];
+  }
+};
+function progress(k, w, locked){
+  if (k === "hand" && w.submittedAt && locked) return 1;
+  const cs = STAGE_CHECKS[k](w, locked);
+  return cs.reduce((a, c) => a + (c[0] ? 1 : (c[2] !== undefined ? c[2] : 0)), 0) / cs.length;
+}
+function firstOpenStage(){ for (const s of STAGES) if (progress(s.k, S.work, S.locked) < 1) return s.k; return "hand"; }
+function checklist(cs){
+  return `<ul class="cl">${cs.map(c => `<li class="${c[0] ? "ok" : "no"}"><span class="mk" aria-hidden="true">${c[0] ? "✓" : "○"}</span><span>${esc(c[1])}<span class="sr">${c[0] ? " (done)" : " (not yet)"}</span></span></li>`).join("")}</ul>`;
+}
+
+/* ---- the page ---- */
+function headerHTML(sub, name){
+  return `<header class="top"><div class="hin">
+    <div class="brand"><div class="mark"><img src="../logo-mark.png" alt=""></div>
+      <div style="min-width:0"><small>${esc(sub)}</small><b>Fear, in Blood Brothers</b></div></div>
+    <div class="who"><span class="sync" aria-live="polite"></span><span class="me">${esc(name)}</span>
+      <button class="hbtn" data-act="signout">Sign out</button></div>
+  </div></header>`;
+}
+const footHTML = () => `<footer class="foot"><div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <span>Ricky Rampersad Branch Academy · The story is John Wickham’s; work from your own copy of it.</span></footer>`;
+
+function render(){
+  if (!S.me) return showGate("");
+  if (S.me.role === "teacher") return renderTeacher();
+  const app = document.getElementById("app");
+  app.innerHTML = headerHTML("Academy · English B", S.me.name) +
+    `<div class="shell"><nav class="rail" aria-label="Stages">${railHTML()}</nav>
+       <main class="page" id="page">${stageHTML()}</main>${coachHTML()}</div>
+     <button class="fab" data-act="coach-open">Ask the coach</button>` + footHTML();
+  paintSave(); refreshLive(); renderCoachLog();
+}
+function railHTML(){
+  const q = S.cls && S.cls.question ? `<div class="q"><b>The question</b>${esc(S.cls.question)}${S.cls.due ? `<br><b style="margin-top:.4rem">Due ${esc(dueText(S.cls.due))}</b>` : ""}</div>` : "";
+  return q + STAGES.map((s, i) => {
+    const st = (S.review && S.review.status || {})[s.k];
+    return `<button class="st${S.stage === s.k ? " on" : ""}" data-go="${s.k}" data-live="rail:${s.k}"${S.stage === s.k ? ' aria-current="step"' : ""}>
+      <span class="n">${i + 1}</span><span class="t">${esc(s.title)}</span><span class="bar"><i style="width:0"></i></span>
+      ${st ? `<span class="tn ${st}">${st === "ok" ? "✓ Teacher: ready" : "↺ Teacher: look again"}</span>` : ""}</button>`;
+  }).join("");
+}
+function stageHTML(){
+  const s = STAGES[SI[S.stage]], i = SI[S.stage];
+  const back = S.review && S.review.returnedAt && S.work.submittedAt && S.review.returnedAt > S.work.submittedAt;
+  const banner = S.locked
+    ? `<div class="banner lock"><b>Handed in ${esc(when(S.work.submittedAt))}.</b>Your teacher will read it. If they return it with notes, you can work on it again.</div>`
+    : (back ? `<div class="banner back"><b>Your teacher returned your essay ${esc(when(S.review.returnedAt))}.</b>${S.review.returnNote ? esc(S.review.returnNote) : "Read their notes on each stage, make your changes, then hand it in again."}</div>` : "");
+  const body = {find: stageFind, why: stageWhy, idea: stageIdea, plan: stagePlan, write: stageWrite, hand: stageHand}[s.k]();
+  return `<div class="sh"><p class="eyebrow">Stage ${i + 1} of 6</p><h1>${esc(s.title)}</h1><p class="lead">${esc(s.lead)}</p></div>
+    ${banner}<div data-live="tnote:${s.k}"></div>${body}
+    <div class="nav">${i > 0 ? `<button class="btn quiet" data-go="${STAGES[i - 1].k}">← ${esc(STAGES[i - 1].title)}</button>` : "<span></span>"}
+      ${i < 5 ? `<button class="btn navy" data-go="${STAGES[i + 1].k}">${esc(STAGES[i + 1].title)} →</button>` : ""}</div>`;
+}
+const dis = () => S.locked ? " disabled" : "";
+const val = p => esc(getPath(S.work, p) ?? "");
+
+function stageFind(){
+  const w = S.work;
+  const ms = w.moments.length ? w.moments.map((m, i) => `
+    <article class="moment">
+      <header><span class="label">Moment ${i + 1}</span>${S.locked ? "" : `<button class="link danger" data-act="del-moment" data-i="${i}">Remove</button>`}</header>
+      <div class="grid2">
+        <label class="f">Who is afraid?<select data-bind="moments.${i}.who"${dis()}>
+          <option value="">Choose…</option>${WHO.map(o => `<option${m.who === o ? " selected" : ""}>${o}</option>`).join("")}</select></label>
+        <label class="f">Where in the story?<input type="text" data-bind="moments.${i}.where" value="${val(`moments.${i}.where`)}" placeholder="The first words of the paragraph"${dis()}></label>
+      </div>
+      <label class="f">What sets the fear off?<textarea rows="2" data-bind="moments.${i}.trigger"${dis()}>${val(`moments.${i}.trigger`)}</textarea></label>
+      <label class="f">Wickham’s exact words<textarea rows="2" class="quote" data-bind="moments.${i}.words" placeholder="Copy them from your book, word for word"${dis()}>${val(`moments.${i}.words`)}</textarea></label>
+    </article>`).join("")
+    : `<div class="empty"><b>No moments logged yet.</b>Start with the first time anyone in the story feels afraid, then press “Log a fear moment”.</div>`;
+  return `<section class="card"><h2 class="h3">How to do it</h2><ol class="steps">
+      <li>Have your copy of the story open. You will need Wickham’s exact words.</li>
+      <li>Read it through once without stopping.</li>
+      <li>Read it again slowly. Every time someone is afraid, or something is described as frightening, stop.</li>
+      <li>Log the moment below: who, what sets it off, and the exact words.</li></ol></section>
+    <div class="split"><div class="stack">${ms}
+      ${S.locked ? "" : `<div><button class="btn gold" data-act="add-moment">+ Log a fear moment</button></div>`}</div>
+      <aside class="side"><section class="card"><h2 class="h3">Checklist</h2><div data-live="checks:find"></div></section>
+        <section class="card" id="hints">${hintsInner()}</section></aside></div>`;
+}
+function hintsInner(){
+  const n = Math.min(S.work.hints || 0, HINTS.length);
+  return `<h2 class="h3">Stuck?</h2><p class="small muted">Open a hint only when you need one. Your teacher sees how many you open.</p>
+    ${HINTS.slice(0, n).map((h, i) => `<p class="hint-p"><b>Hint ${i + 1}.</b> ${esc(h)}</p>`).join("")}
+    ${n < HINTS.length ? `<button class="btn" data-act="hint">Show hint ${n + 1} of ${HINTS.length}</button>` : ""}`;
+}
+
+function stageWhy(){
+  const w = S.work;
+  return `<section class="card stack">${WHY.map((q, i) => `
+    <div class="q-block">
+      <label class="ql" for="why-${q.k}"><span class="qn">${String.fromCharCode(65 + i)}</span><span>${esc(q.q)}${q.optional ? `<span class="opt">(if you have time)</span>` : ""}</span></label>
+      <textarea id="why-${q.k}" rows="4" data-bind="why.${q.k}"${dis()}>${val("why." + q.k)}</textarea>
+      <div class="qfoot"><span data-live="words:why.${q.k}"></span>
+        ${w.nudges[q.k] ? "" : `<button class="link" data-act="nudge" data-k="${q.k}">I’m stuck on this one</button>`}</div>
+      ${w.nudges[q.k] ? `<p class="nudge">${esc(q.nudge)}</p>` : ""}
+    </div>`).join("")}</section>
+    <section class="card"><h2 class="h3">Checklist</h2><div data-live="checks:why"></div></section>`;
+}
+
+function stageIdea(){
+  const w = S.work;
+  if (w.moments.length < 3) {
+    return `<section class="card"><p><b>Log at least three fear moments first.</b> You sort them here, so Stage 1 comes first.</p>
+      <p style="margin-top:.7rem"><button class="btn navy" data-go="find">Go to Stage 1</button></p></section>`;
+  }
+  const opts = m => `<option value="">Not used</option>` + [1, 2, 3].map(n =>
+    `<option value="${n}" data-kind="${n}"${w.momentGroup[m.id] === String(n) ? " selected" : ""}>${esc(kindLabel(n))}</option>`).join("");
+  return `<section class="card">
+      <h2>1. Sort your moments into three kinds of fear</h2>
+      <p class="muted">Look at what sets each fear off. Which moments belong together? Name each kind in your own words.</p>
+      <div class="kinds">${[0, 1, 2].map(i => `<label class="kind"><span class="label">Kind ${i + 1}</span>
+        <input type="text" data-bind="groups.${i}.name" value="${val(`groups.${i}.name`)}" placeholder="Name it yourself"${dis()}></label>`).join("")}</div>
+      <div>${w.moments.map((m, i) => `<div class="sortrow">
+        <div><div class="w">${esc(m.words || "(no words copied yet)")}</div><div class="t">${esc(m.who || "?")} · ${esc(m.trigger || "nothing noted yet")}</div></div>
+        <label class="f"><span class="sr">Kind for moment ${i + 1}</span><select data-bind="momentGroup.${m.id}" data-kinds="1"${dis()}>${opts(m)}</select></label>
+      </div>`).join("")}</div>
+    </section>
+    <section class="card">
+      <h2>2. What is Wickham saying about fear?</h2>
+      <p class="muted">Not what happens. What it means. One sentence, in your own words. If you are stuck, try finishing the thought “Fear in this story…”</p>
+      <textarea rows="3" data-bind="message"${dis()}>${val("message")}</textarea>
+    </section>
+    <section class="card">
+      <h2>3. Your thesis</h2>
+      <p class="muted">The last sentence of your introduction. It names the story and the writer, says what Wickham shows about fear, and points to your three kinds.</p>
+      <textarea rows="3" data-bind="thesis"${dis()}>${val("thesis")}</textarea>
+      <div data-live="thesis"></div>
+      <label class="tick"><input type="checkbox" data-bind="thesisTicks.three"${w.thesisTicks.three ? " checked" : ""}${dis()}> My thesis points to my three kinds of fear</label>
+      <details class="model"><summary>See a thesis about a different story</summary>
+        <p class="m">In “Little Red Riding Hood”, the storyteller uses the dark forest, the wolf’s disguise and the grandmother’s bed to show that danger is most frightening when it wears a familiar face.</p>
+        <ul><li>It names the story.</li><li>It points to three things it will discuss: the forest, the disguise, the bed.</li>
+          <li>It argues something (“to show that…”) that a reader could disagree with.</li></ul>
+        <p class="small muted" style="padding-bottom:.6rem">Yours will be about a different story, and in your own words.</p>
+      </details>
+    </section>
+    <section class="card"><h2 class="h3">Checklist</h2><div data-live="checks:idea"></div></section>`;
+}
+function kindLabel(n){ const g = S.work.groups[n - 1]; return "Kind " + n + (g && g.name.trim() ? ": " + g.name.trim() : ""); }
+
+function stagePlan(){
+  const w = S.work;
+  const thesis = w.thesis.trim() ? `<p class="essay" style="font-size:15.5px">${esc(w.thesis)}</p>` : `<p class="muted">No thesis yet.</p>`;
+  const body = w.plan.b.map((b, i) => {
+    const g = w.groups[i] && w.groups[i].name.trim();
+    const ms = w.moments.filter(m => wc(m.words) >= 1);
+    const inKind = ms.filter(m => w.momentGroup[m.id] === String(i + 1));
+    const pick = ms.length && !S.locked ? `<label class="f">Use a moment you logged<select data-pick="${i}"><option value="">Choose one…</option>
+        ${(inKind.length ? inKind : ms).map(m => `<option value="${esc(m.id)}">${esc(m.words.slice(0, 70))}${m.words.length > 70 ? "…" : ""}</option>`).join("")}</select></label>` : "";
+    return `<section class="card">
+      <h2 class="h3">Body paragraph ${i + 1}</h2>
+      <p class="small muted">${g ? "Your kind of fear: <b>" + esc(g) + "</b>" : "Name your three kinds of fear in Stage 3, and each one becomes a body paragraph."}</p>
+      <label class="f">Point <span class="hint">The one idea about fear this paragraph argues</span><textarea rows="2" data-bind="plan.b.${i}.point"${dis()}>${val(`plan.b.${i}.point`)}</textarea></label>
+      <label class="f">Evidence <span class="hint">Wickham’s words, in quotation marks</span><textarea rows="2" class="quote" id="ev-${i}" data-bind="plan.b.${i}.evidence"${dis()}>${val(`plan.b.${i}.evidence`)}</textarea></label>
+      ${pick}
+      <label class="f">Technique <span class="hint">What is Wickham doing with these words?</span><select data-bind="plan.b.${i}.technique"${dis()}>
+        <option value="">Choose…</option>${TECH.map(t => `<option${b.technique === t.k ? " selected" : ""}>${t.k}</option>`).join("")}</select></label>
+      <div data-live="tech:${i}"></div>
+      <label class="f">Effect <span class="hint">What do the words make the reader feel or understand about fear?</span><textarea rows="2" data-bind="plan.b.${i}.effect"${dis()}>${val(`plan.b.${i}.effect`)}</textarea></label>
+      <label class="f">Link <span class="hint">How does this connect back to your thesis?</span><textarea rows="2" data-bind="plan.b.${i}.link"${dis()}>${val(`plan.b.${i}.link`)}</textarea></label>
+    </section>`;
+  }).join("");
+  return `<section class="card">
+      <h2 class="h3">Introduction</h2>
+      <label class="f">Hook <span class="hint">An opening thought about fear that makes a reader want to go on</span><textarea rows="2" data-bind="plan.intro.hook"${dis()}>${val("plan.intro.hook")}</textarea></label>
+      <label class="f">Context <span class="hint">The story, the writer, and what happens, in a sentence. Not a retelling.</span><textarea rows="2" data-bind="plan.intro.context"${dis()}>${val("plan.intro.context")}</textarea></label>
+      <div><span class="label">Your thesis, from Stage 3</span>${thesis}</div>
+    </section>${body}
+    <section class="card">
+      <h2 class="h3">Conclusion</h2>
+      <label class="f">Restate <span class="hint">Your thesis again, in new words</span><textarea rows="2" data-bind="plan.concl.restate"${dis()}>${val("plan.concl.restate")}</textarea></label>
+      <label class="f">So what? <span class="hint">What does the story suggest about fear in real life?</span><textarea rows="2" data-bind="plan.concl.sowhat"${dis()}>${val("plan.concl.sowhat")}</textarea></label>
+    </section>
+    <section class="card"><h2 class="h3">Checklist</h2><div data-live="checks:plan"></div></section>`;
+}
+function techHelp(i){
+  const t = TECH.find(x => x.k === S.work.plan.b[i].technique);
+  return t ? `<div class="techhelp"><b>${esc(t.k)}:</b> ${esc(t.def)} For example, ${esc(t.eg)} <br><b>Ask yourself:</b> ${esc(t.ask)}</div>` : "";
+}
+
+function stageWrite(){
+  const w = S.work;
+  const peek = p => {
+    let rows;
+    if (p.kind === "intro") rows = [["Hook", w.plan.intro.hook], ["Context", w.plan.intro.context], ["Thesis", w.thesis]];
+    else if (p.kind === "concl") rows = [["Restate", w.plan.concl.restate], ["So what?", w.plan.concl.sowhat]];
+    else { const b = w.plan.b[p.i]; rows = [["Point", b.point], ["Evidence", b.evidence], ["Technique", b.technique], ["Effect", b.effect], ["Link", b.link]]; }
+    return `<aside class="peek"><span class="label">Your plan</span><dl>${rows.map(r => `<dt>${esc(r[0])}</dt><dd>${r[1] && String(r[1]).trim() ? esc(r[1]) : '<span class="muted">Not planned yet</span>'}</dd>`).join("")}</dl></aside>`;
+  };
+  return `<p class="banner small">Write in your own words. Your teacher can see when large blocks of text are pasted in.</p>
+    ${PARAS.map(p => `<section class="card para" id="p-${p.k}">
+      <div class="ph"><h2 class="h3">${esc(p.title)}</h2><span data-live="wc:${p.k}"></span></div>
+      <div class="pgrid">${peek(p)}<div style="min-width:0">
+        <label class="sr" for="d-${p.k}">${esc(p.title)}</label>
+        <textarea class="draft" id="d-${p.k}" rows="9" data-bind="draft.${p.k}"${dis()}>${val("draft." + p.k)}</textarea>
+        <div class="ticks"><span class="label">Tick what your paragraph does</span>
+          ${CHECKS[p.kind].map(c => `<label class="tick"><input type="checkbox" data-bind="ticks.${p.k}.${c[0]}"${getPath(w, `ticks.${p.k}.${c[0]}`) ? " checked" : ""}${dis()}> ${esc(c[1])}</label>`).join("")}</div>
+        <div data-live="check:${p.k}"></div>
+      </div></div></section>`).join("")}
+    <section class="card"><h2 class="h3">Checklist</h2><div data-live="checks:write"></div></section>`;
+}
+function checkHTML(k){
+  const p = PARAS.find(x => x.k === k), c = S.work.checks[k], now = wc(S.work.draft[k]);
+  let h = "";
+  if (S.checking[k]) h = `<div class="cc"><h4>Your coach</h4><p class="muted">Reading your paragraph…</p></div>`;
+  else if (c) {
+    const found = CHECKS[p.kind].map(x => `<span class="chip${c.checks && c.checks[x[0]] ? " ok" : ""}">${c.checks && c.checks[x[0]] ? "✓ " : "○ "}${esc(x[1])}</span>`).join("");
+    h = `<div class="cc"><h4>Your coach read it at ${c.words} words${now !== c.words ? ` (you have ${now} now)` : ""}</h4>
+      ${c.strengths && c.strengths.length ? `<b>What works</b><ul>${c.strengths.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
+      ${c.questions && c.questions.length ? `<b>Questions to think about</b><ul>${c.questions.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
+      <b>What the coach found in it</b><div class="found">${found}</div></div>`;
+  }
+  if (S.checkErr[k]) h += `<p class="cnote" style="padding:.4rem 0 0">${esc(S.checkErr[k])}</p>`;
+  if (S.coachOn && !S.locked && !S.checking[k]) {
+    h += `<p style="margin-top:.6rem"><button class="btn" data-act="check" data-p="${k}"${now < 25 ? " disabled" : ""}>${c ? "Ask the coach again" : "Ask the coach about this paragraph"}</button>
+      ${now < 25 ? `<span class="small muted"> Write at least 25 words first.</span>` : ""}</p>`;
+  }
+  return h;
+}
+
+function stageHand(){
+  const w = S.work;
+  return `<section class="card"><h2 class="h3">Read it all once more</h2><div data-live="essay"></div></section>
+    <section class="card"><h2 class="h3">Check it against the list</h2>
+      <div class="ticks">${RUBRIC.map(r => `<label class="tick"><input type="checkbox" data-bind="rubric.${r[0]}"${w.rubric[r[0]] ? " checked" : ""}${dis()}> ${esc(r[1])}</label>`).join("")}</div></section>
+    <section class="card"><h2 class="h3">Two last questions</h2>
+      <label class="f">What is the strongest sentence in your essay, and why?<textarea rows="3" data-bind="reflect.strong"${dis()}>${val("reflect.strong")}</textarea></label>
+      <label class="f">If you had one more hour, what would you change?<textarea rows="3" data-bind="reflect.change"${dis()}>${val("reflect.change")}</textarea></label></section>
+    <section class="card" data-live="handin"></section>`;
+}
+function essayHTML(){
+  const w = S.work, total = PARAS.reduce((a, p) => a + wc(w.draft[p.k]), 0);
+  const paras = PARAS.map(p => w.draft[p.k].trim() ? `<p>${esc(w.draft[p.k].trim())}</p>` : `<p class="muted" style="font-family:var(--sans);font-size:14px">(${esc(p.title)} not written yet)</p>`).join("");
+  return `<p class="small muted">${total} words in all.</p><div class="essay" style="margin-top:.6rem">${paras}</div>`;
+}
+function handinHTML(){
+  const w = S.work;
+  if (S.locked) return `<h2 class="h3">Handed in</h2><p>You handed it in ${esc(when(w.submittedAt))}. Your teacher will read it, and may return it with notes for you to work on.</p>`;
+  const missing = PARAS.filter(p => wc(w.draft[p.k]) < 25).map(p => p.title);
+  const armed = S.handArmed && Date.now() - S.handArmed < 6000;
+  return `<h2 class="h3">${w.submittedAt ? "Hand it in again" : "Hand it in"}</h2>
+    ${missing.length ? `<p class="muted">Still to write: ${esc(missing.join(", "))}.</p>` : `<p class="muted">Once it is handed in it is locked until your teacher returns it.</p>`}
+    <p style="margin-top:.6rem"><button class="btn ${armed ? "navy" : "gold"}" data-act="handin"${missing.length ? " disabled" : ""}>${armed ? "Press again to hand it in" : "Hand in my essay"}</button></p>`;
+}
+
+/* ---- the parts of the page that change as she types ---- */
+const LIVE = {
+  rail(k){ return null; },
+  checks(k){ return checklist(STAGE_CHECKS[k](S.work, S.locked)); },
+  words(p){ const n = wc(getPath(S.work, p)); return n ? n + " words" : ""; },
+  wc(k){
+    const p = PARAS.find(x => x.k === k), n = wc(S.work.draft[k]);
+    const cls = n > p.max ? "over" : (n >= p.min ? "ok" : "");
+    return `<span class="wc ${cls}">${n} words · aim for ${p.min}–${p.max}</span>`;
+  },
+  thesis(){ return checklist(thesisChecks(S.work.thesis)); },
+  tech(i){ return techHelp(Number(i)); },
+  check(k){ return checkHTML(k); },
+  essay(){ return essayHTML(); },
+  handin(){ return handinHTML(); },
+  tnote(k){
+    const r = S.review || {}, note = (r.notes || {})[k], st = (r.status || {})[k];
+    if (!note && !st) return "";
+    return `<div class="tnote${st === "more" ? " more" : ""}"><span class="label">${st === "ok" ? "✓ Your teacher: ready to move on" : (st === "more" ? "↺ Your teacher: think about this again" : "A note from your teacher")}</span>
+      ${note ? `<p>${esc(note)}</p>` : ""}</div>`;
+  }
+};
+function refreshLive(){
+  if (!S.work) return;
+  document.querySelectorAll("[data-live]").forEach(el => {
+    const [kind, arg] = el.dataset.live.split(":");
+    if (kind === "rail") {
+      const pr = progress(arg, S.work, S.locked), bar = el.querySelector(".bar i");
+      if (bar) bar.style.width = Math.round(pr * 100) + "%";
+      el.classList.toggle("done", pr >= 1);
+      return;
+    }
+    const fn = LIVE[kind]; if (!fn) return;
+    const html = fn(arg);
+    if (el.__h !== html) { el.innerHTML = html; el.__h = html; }
+  });
+  document.querySelectorAll("select[data-kinds] option[data-kind]").forEach(o => { const t = kindLabel(Number(o.dataset.kind)); if (o.textContent !== t) o.textContent = t; });
+}
+
+function go(k){
+  if (!SI.hasOwnProperty(k)) return;
+  S.stage = k; lsSet("rrb.englishb.stage." + S.me.id, k);
+  $("#page").innerHTML = stageHTML();
+  $(".rail").innerHTML = railHTML();
+  refreshLive(); renderChips();
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+/* ---- the coach ---- */
+function coachHTML(){
+  return `<aside class="coach" id="coach" aria-label="Your coach">
+    <div class="ch"><div><h2>Your coach</h2><p>Asks you questions. Never writes your essay. Your teacher reads this conversation.</p></div>
+      <button class="x" data-act="coach-close" aria-label="Close the coach">×</button></div>
+    <div class="clog" id="clog" aria-live="polite"></div>
+    ${S.coachOn ? `<div class="chips" id="chips"></div>
+      <form class="cform" id="cform"><label for="cin" class="sr">Ask your coach</label>
+        <textarea id="cin" rows="2" maxlength="1200" placeholder="Ask about this stage…"></textarea>
+        <button class="btn gold" id="csend" type="submit">Ask</button></form>
+      <p class="cnote" id="cnote"></p>`
+    : `<p class="coach-off">The coach is switched off for now. Every stage still has its own questions, hints and checklist.</p>`}
+  </aside>`;
+}
+function renderCoachLog(){
+  const log = $("#clog"); if (!log) return;
+  let last = "", html = "";
+  if (!S.coach.length) html = `<div class="bub c">I’m here to ask you questions, not to give you answers. Tell me what you’re working on, or tap one of the questions below.</div>`;
+  S.coach.slice(-60).forEach(t => {
+    if (t.stage && t.stage !== last && SI.hasOwnProperty(t.stage)) { html += `<div class="divider">${esc(STAGES[SI[t.stage]].title)}</div>`; last = t.stage; }
+    html += `<div class="bub ${t.who === "coach" ? "c" : "s"}">${esc(t.text)}</div>`;
+  });
+  if (S.coachBusy) html += `<div class="bub c think">Thinking about that…</div>`;
+  log.innerHTML = html; log.scrollTop = log.scrollHeight;
+  renderChips();
+}
+function renderChips(){
+  const c = $("#chips"); if (!c) return;
+  c.innerHTML = (STARTERS[S.stage] || []).map(s => `<button type="button" data-chip="${esc(s)}">${esc(s)}</button>`).join("");
+}
+async function askCoach(text){
+  text = String(text || "").trim();
+  if (!text || S.coachBusy) return;
+  const note = $("#cnote"), input = $("#cin"), send = $("#csend");
+  if (note) note.textContent = "";
+  S.coachBusy = true; if (send) send.disabled = true;
+  S.coach.push({who: "student", text, stage: S.stage, at: new Date().toISOString()});
+  if (input) input.value = "";
+  renderCoachLog();
+  try {
+    await flushSave();
+    const j = await api("essay.coach", {token: S.token, stage: S.stage, message: text});
+    S.coach.push({who: "coach", text: j.reply, stage: S.stage, at: j.at});
+  } catch (e) {
+    S.coach.pop();
+    if (input && !input.value) input.value = text;
+    if (note) note.textContent = e.message;
+  }
+  S.coachBusy = false; if (send) send.disabled = false;
+  renderCoachLog();
+}
+async function checkPara(k){
+  S.checking[k] = true; S.checkErr[k] = ""; refreshLive();
+  try {
+    await flushSave();
+    const j = await api("essay.check", {token: S.token, para: k});
+    S.work.checks[k] = j.check;
+  } catch (e) { S.checkErr[k] = e.message; if (e.locked) { S.locked = true; } }
+  S.checking[k] = false; refreshLive();
+}
+async function handIn(){
+  if (!S.handArmed || Date.now() - S.handArmed > 6000) { S.handArmed = Date.now(); refreshLive(); return; }
+  S.handArmed = 0;
+  clearTimeout(S.saveTimer);
+  try {
+    const j = await api("essay.handin", {token: S.token, work: S.work});
+    S.work.submittedAt = j.submittedAt; S.work.handins = (S.work.handins || []).concat([j.submittedAt]);
+    S.locked = true; S.savedSeq = S.seq; S.save = "saved";
+    render(); toast("Handed in. Your teacher can read it now.");
+  } catch (e) { toast(e.message); if (e.locked) { S.locked = true; render(); } else refreshLive(); }
+}
+
+/* ============================ the teacher ============================ */
+function renderTeacher(){
+  const app = document.getElementById("app");
+  app.innerHTML = headerHTML("Teacher · " + (S.me.cls || ""), S.me.name) +
+    `<main class="tpage">${S.t.open ? teacherStudentHTML() : teacherClassHTML()}</main>` + footHTML();
+  const sync = $(".sync"); if (sync) sync.textContent = "";
+}
+function statusOf(s){
+  const w = s.work, r = s.review || {};
+  if (s.off) return ["off", "Code switched off"];
+  if (!w) return ["", "Not started"];
+  const locked = !!w.submittedAt && !(r.returnedAt && r.returnedAt > w.submittedAt);
+  if (locked) return ["in", "Handed in " + when(w.submittedAt)];
+  if (w.submittedAt) return ["back", "Returned to work on"];
+  const nw = normWork(w);
+  for (const st of STAGES) if (progress(st.k, nw, false) < 1) return ["work", "Working on: " + st.title];
+  return ["work", "Ready to hand in"];
+}
+function teacherClassHTML(){
+  const c = S.cls || {}, f = S.t.flash;
+  const cards = S.students.length ? S.students.map(s => {
+    const w = s.work ? normWork(s.work) : null, [cls, word] = statusOf(s);
+    const locked = !!(w && w.submittedAt && !(s.review && s.review.returnedAt && s.review.returnedAt > w.submittedAt));
+    const segs = STAGES.map(st => `<i title="${esc(st.title)}"><b style="width:${w ? Math.round(progress(st.k, w, locked) * 100) : 0}%"></b></i>`).join("");
+    const words = w ? PARAS.reduce((a, p) => a + wc(w.draft[p.k]), 0) : 0;
+    const big = w ? w.pastes.filter(p => p.n >= 40) : [];
+    const name = S.t.renaming === s.id
+      ? `<form class="renamer" data-rename="${esc(s.id)}"><label class="sr" for="rn-${esc(s.id)}">First name</label><input type="text" id="rn-${esc(s.id)}" value="${esc(s.name)}" maxlength="40"><button class="btn" type="submit">Save</button></form>`
+      : `<h3>${esc(s.name)}</h3>`;
+    return `<article class="card scard">
+      <div class="top">${name}<span class="pill ${cls}">${esc(word)}</span></div>
+      <div class="segs" aria-label="Progress through the six stages">${segs}</div>
+      <p class="meta">Last signed in ${esc(ago(s.lastUsed))} · ${plural(words, "word")} written · ${plural(s.asked || 0, "question")} to the coach · ${plural(w ? Math.min(w.hints, HINTS.length) : 0, "hint")}</p>
+      ${big.length ? `<p class="flag">Pasted text: ${big.length} time${big.length === 1 ? "" : "s"}, the largest ${Math.max(...big.map(p => p.n))} words. Open the activity to see where.</p>` : ""}
+      <p class="codeline">Code <b>${esc(s.code)}</b>${s.off ? " · switched off" : ""}</p>
+      <div class="row"><button class="btn navy" data-act="t-open" data-id="${esc(s.id)}">Open</button>
+        <button class="btn" data-act="t-newcode" data-id="${esc(s.id)}">New code</button>
+        <button class="btn quiet" data-act="t-rename" data-id="${esc(s.id)}">Rename</button>
+        <button class="btn quiet" data-act="t-off" data-id="${esc(s.id)}">${s.off ? "Switch on" : "Switch off"}</button></div>
+    </article>`;
+  }).join("") : `<div class="empty"><b>No students yet.</b>Add a student by first name below. Each gets a code to type at the door.</div>`;
+  return `<div class="thead"><div><p class="eyebrow">Teacher · ${esc(c.name || "")}</p><h1>Your class</h1></div>
+      <button class="btn" data-act="t-refresh">Refresh</button></div>
+    ${f ? `<div class="flash" role="status">Give <b>${esc(f.name)}</b> this code to type at the student door:<span class="code">${esc(f.code)}</span>
+      <span class="small">It is also on the student’s card below. ${f.renewed ? "The old code no longer works." : ""}</span></div>` : ""}
+    <section class="stack"><div class="cards">${cards}</div>
+      <form class="card row" id="addForm" style="align-items:flex-end"><label class="f" style="flex:1;min-width:200px">Add a student <span class="hint">First name only</span>
+        <input type="text" id="newName" maxlength="40" placeholder="First name"></label><button class="btn gold" type="submit">Add student</button></form></section>
+    <section class="card">
+      <h2>The essay question</h2>
+      <label class="f"><span class="sr">The essay question</span><textarea id="tq" rows="3">${esc(c.question || "")}</textarea></label>
+      <label class="f" style="max-width:240px">Due<input type="date" id="tdue" value="${esc(c.due || "")}"></label>
+      <h3 style="font-size:1.05rem">Notes for the coach</h3>
+      <p class="small muted">Points you want the coach to steer towards. It asks questions that lead to them and never hands them over. Students never see these notes.</p>
+      <label class="f"><span class="sr">Notes for the coach</span><textarea id="tnotes" rows="4">${esc(c.notes || "")}</textarea></label>
+      <p class="row"><button class="btn navy" data-act="t-saveclass">Save the question and notes</button><span class="small muted" id="classSaved"></span></p>
+    </section>`;
+}
+function teacherStudentHTML(){
+  const s = S.students.find(x => x.id === S.t.open);
+  if (!s) { S.t.open = null; return teacherClassHTML(); }
+  const w = normWork(s.work), r = s.review || {}, [cls, word] = statusOf(s), tab = S.t.tab;
+  const locked = !!w.submittedAt && !(r.returnedAt && r.returnedAt > w.submittedAt);
+  const tabs = STAGES.map(st => {
+    const m = (r.status || {})[st.k];
+    return `<button class="${tab === st.k ? "on" : ""}" data-ttab="${st.k}">${esc(st.title)}${m ? `<span class="tn ${m}">${m === "ok" ? "✓" : "↺"}</span>` : ""}</button>`;
+  }).join("") + `<button class="${tab === "coach" ? "on" : ""}" data-ttab="coach">Coach</button><button class="${tab === "activity" ? "on" : ""}" data-ttab="activity">Activity</button>`;
+  const ret = locked ? `<section class="card"><h2 class="h3">Handed in ${esc(when(w.submittedAt))}</h2>
+      <p class="muted">Return it if you want ${esc(s.name)} to work on it again. Your note is the first thing they read.</p>
+      <label class="f"><span class="sr">Note when returning</span><textarea id="retNote" rows="2" placeholder="What to work on"></textarea></label>
+      <p><button class="btn gold" data-act="t-return" data-id="${esc(s.id)}">Return it to work on</button></p></section>`
+    : (w.submittedAt ? `<p class="banner back small"><b>Returned ${esc(when(r.returnedAt))}.</b>${esc(r.returnNote || "")}</p>` : "");
+  const content = {find: roFind, why: roWhy, idea: roIdea, plan: roPlan, write: roWrite, hand: roHand}[tab];
+  const side = SI.hasOwnProperty(tab) ? noteBoxHTML(s, tab) : "";
+  return `<div><button class="link" data-act="t-back">← All students</button></div>
+    <div class="thead"><div><p class="eyebrow">${esc(S.cls.name || "")}</p><h1>${esc(s.name)}</h1></div><span class="pill ${cls}">${esc(word)}</span></div>
+    ${ret}<nav class="ttabs" aria-label="Their work">${tabs}</nav>
+    <div class="${side ? "tgrid" : ""}"><section class="card ro">${content ? content(w, s) : (tab === "coach" ? roCoach(s) : roActivity(w, s))}</section>${side}</div>`;
+}
+function noteBoxHTML(s, k){
+  const r = s.review || {}, st = (r.status || {})[k] || "";
+  return `<aside class="card notebox"><h2 class="h3">Your note on “${esc(STAGES[SI[k]].title)}”</h2>
+    <label class="f"><span class="sr">Your note</span><textarea id="tnote" rows="6" data-sid="${esc(s.id)}" data-stage="${k}" placeholder="What ${esc(s.name)} reads at the top of this stage">${esc((r.notes || {})[k] || "")}</textarea></label>
+    <div class="seg" role="group" aria-label="Your mark on this stage">
+      <button class="${st === "ok" ? "on ok" : ""}" data-act="t-status" data-v="ok">✓ Ready to move on</button>
+      <button class="${st === "more" ? "on more" : ""}" data-act="t-status" data-v="more">↺ Needs more thought</button>
+      <button class="${!st ? "on none" : ""}" data-act="t-status" data-v="">No mark</button></div>
+    <p class="small muted" id="tnoteSaved">${r.updatedAt ? "Saved " + esc(ago(r.updatedAt)) : "Your note saves as you type."}</p></aside>`;
+}
+const none = t => `<div class="aa none">${esc(t || "Nothing yet.")}</div>`;
+const said = t => String(t || "").trim() ? `<div class="aa">${esc(t)}</div>` : none();
+function roChecks(k, w, locked){ return `<div class="item"><span class="label">The page’s checklist</span>${checklist(STAGE_CHECKS[k](w, locked))}</div>`; }
+function roFind(w){
+  return (w.moments.length ? w.moments.map((m, i) => `<div class="item"><span class="label">Moment ${i + 1} · ${esc(m.who || "who?")}${m.where ? " · " + esc(m.where) : ""}</span>
+      <div class="aa w">${esc(m.words || "(no words copied)")}</div><div class="aa">${esc(m.trigger || "")}</div></div>`).join("") : none("No moments logged yet."))
+    + `<div class="item"><span class="label">Hints opened</span><div class="aa">${Math.min(w.hints, HINTS.length)} of ${HINTS.length}</div></div>` + roChecks("find", w);
+}
+function roWhy(w){
+  return WHY.map((q, i) => `<div class="item"><div class="qq">${String.fromCharCode(65 + i)}. ${esc(q.q)}${w.nudges[q.k] ? ' <span class="pill back">opened the nudge</span>' : ""}</div>${said(w.why[q.k])}</div>`).join("") + roChecks("why", w);
+}
+function roIdea(w){
+  const kinds = [0, 1, 2].map(i => {
+    const ms = w.moments.filter(m => w.momentGroup[m.id] === String(i + 1));
+    return `<div class="item"><div class="qq">Kind ${i + 1}: ${esc(w.groups[i].name || "(not named)")}</div>${ms.length ? ms.map(m => `<div class="aa w">${esc(m.words)}</div>`).join("") : none("No moments sorted into it.")}</div>`;
+  }).join("");
+  return kinds + `<div class="item"><div class="qq">What Wickham is saying about fear</div>${said(w.message)}</div>
+    <div class="item"><div class="qq">Thesis</div>${said(w.thesis)}${w.thesis ? checklist(thesisChecks(w.thesis)) : ""}</div>` + roChecks("idea", w);
+}
+function roPlan(w){
+  const row = (l, v) => `<div class="item"><div class="qq">${esc(l)}</div>${said(v)}</div>`;
+  return row("Introduction: hook", w.plan.intro.hook) + row("Introduction: context", w.plan.intro.context) +
+    w.plan.b.map((b, i) => `<div class="item"><div class="qq">Body paragraph ${i + 1}</div>
+      <div class="aa"><b>Point:</b> ${esc(b.point || "—")}\n<b>Evidence:</b> ${esc(b.evidence || "—")}\n<b>Technique:</b> ${esc(b.technique || "—")}\n<b>Effect:</b> ${esc(b.effect || "—")}\n<b>Link:</b> ${esc(b.link || "—")}</div></div>`).join("") +
+    row("Conclusion: restate", w.plan.concl.restate) + row("Conclusion: so what?", w.plan.concl.sowhat) + roChecks("plan", w);
+}
+function roWrite(w){
+  return PARAS.map(p => {
+    const c = w.checks[p.k], ticks = CHECKS[p.kind].filter(x => getPath(w, `ticks.${p.k}.${x[0]}`)).map(x => x[1]);
+    return `<div class="item"><div class="qq">${esc(p.title)} <span class="muted small">· ${wc(w.draft[p.k])} words</span></div>
+      ${w.draft[p.k].trim() ? `<div class="aa essay" style="font-size:15.5px">${esc(w.draft[p.k])}</div>` : none("Not written yet.")}
+      ${ticks.length ? `<p class="small muted" style="margin-top:.3rem">They ticked: ${esc(ticks.join("; "))}</p>` : ""}
+      ${c ? `<div class="cc"><h4>The coach read it at ${c.words} words</h4>
+        ${(c.questions || []).length ? `<ul>${c.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : ""}
+        <div class="found">${CHECKS[p.kind].map(x => `<span class="chip${c.checks && c.checks[x[0]] ? " ok" : ""}">${c.checks && c.checks[x[0]] ? "✓ " : "○ "}${esc(x[1])}</span>`).join("")}</div></div>` : ""}</div>`;
+  }).join("") + roChecks("write", w);
+}
+function roHand(w, s){
+  const r = s.review || {}, locked = !!w.submittedAt && !(r.returnedAt && r.returnedAt > w.submittedAt);
+  const total = PARAS.reduce((a, p) => a + wc(w.draft[p.k]), 0);
+  return `<div class="item"><div class="qq">The whole essay <span class="muted small">· ${total} words</span></div>
+      <div class="essay" style="margin-top:.4rem">${PARAS.map(p => w.draft[p.k].trim() ? `<p>${esc(w.draft[p.k].trim())}</p>` : "").join("") || none("Nothing written yet.")}</div></div>
+    <div class="item"><div class="qq">Their strongest sentence, and why</div>${said(w.reflect.strong)}</div>
+    <div class="item"><div class="qq">What they would change with one more hour</div>${said(w.reflect.change)}</div>
+    <div class="item"><span class="label">Their own check against the list</span>${checklist(RUBRIC.map(x => [!!w.rubric[x[0]], x[1]]))}</div>` + roChecks("hand", w, locked);
+}
+function roCoach(s){
+  const log = S.t.logs[s.id];
+  if (!log) return `<p class="muted">Loading the conversation…</p>`;
+  if (!log.length) return none(s.name + " has not asked the coach anything yet.");
+  let last = "";
+  return `<div class="log">${log.map(t => {
+    const d = t.stage !== last && SI.hasOwnProperty(t.stage) ? `<div class="divider">${esc(STAGES[SI[t.stage]].title)} · ${esc(when(t.at))}</div>` : "";
+    last = t.stage;
+    return d + `<div class="bub ${t.who === "coach" ? "c" : "s"}">${esc(t.text)}</div>`;
+  }).join("")}</div>`;
+}
+const FIELD = p => {
+  const m = {"message":"What Wickham is saying about fear","thesis":"Thesis","reflect.strong":"Strongest sentence","reflect.change":"One more hour"};
+  if (m[p]) return m[p];
+  if (p.startsWith("draft.")) { const x = PARAS.find(q => q.k === p.slice(6)); return x ? x.title : p; }
+  if (p.startsWith("why.")) { const i = WHY.findIndex(q => q.k === p.slice(4)); return i >= 0 ? "Ask why, question " + String.fromCharCode(65 + i) : p; }
+  if (p.startsWith("plan.")) return "The plan";
+  return p;
+};
+function roActivity(w, s){
+  const pastes = w.pastes.slice().reverse();
+  return `<div class="item"><div class="qq">Started</div><div class="aa">${esc(when(w.startedAt) || "—")}</div></div>
+    <div class="item"><div class="qq">Last signed in</div><div class="aa">${esc(when(s.lastUsed) || "—")}</div></div>
+    <div class="item"><div class="qq">Handed in</div><div class="aa">${w.handins.length ? w.handins.map(h => esc(when(h))).join("\n") : "Not yet"}</div></div>
+    <div class="item"><div class="qq">Help they asked for</div><div class="aa">${plural(Math.min(w.hints, HINTS.length), "hint")} in Stage 1 · ${plural(Object.keys(w.nudges).length, "nudge")} in Stage 2 · ${plural(s.asked || 0, "question")} to the coach</div></div>
+    <div class="item"><div class="qq">Text pasted in</div>${pastes.length ? `<div class="aa">${pastes.map(p => `${esc(when(p.at))}: ${p.n} words into ${esc(FIELD(p.f))}`).join("\n")}</div>` : none("Nothing pasted.")}
+      <p class="small muted" style="margin-top:.3rem">Pastes of 15 words or more, outside Stage 1 where copying the story’s words is the task.</p></div>`;
+}
+
+async function reloadTeacher(){
+  try { const j = await api("essay.load", {token: S.token}); S.cls = j.cls || S.cls; S.students = j.students || []; S.coachOn = !!j.coachOn; }
+  catch (e) { toast(e.message); if (e.signin) return signOut(); }
+  renderTeacher();
+}
+async function openLog(id){
+  try { const j = await api("essay.log", {token: S.token, id}); S.t.logs[id] = j.coach || []; }
+  catch (e) { S.t.logs[id] = []; toast(e.message); }
+  if (S.t.open === id && S.t.tab === "coach") renderTeacher();
+}
+let noteTimer = 0;
+async function saveReview(body){
+  const s = S.students.find(x => x.id === body.id); if (!s) return;
+  try {
+    const j = await api("essay.review", Object.assign({token: S.token}, body));
+    s.review = j.review;
+    const lab = $("#tnoteSaved"); if (lab) lab.textContent = "Saved just now";
+  } catch (e) { toast(e.message); }
+}
+
+/* ============================ events ============================ */
+document.addEventListener("submit", e => {
+  const f = e.target;
+  if (f.matches(".door")) {
+    e.preventDefault();
+    signIn(f.dataset.door, f.querySelector("input").value, f.querySelector("button"));
+  } else if (f.id === "cform") {
+    e.preventDefault(); askCoach($("#cin").value);
+  } else if (f.id === "addForm") {
+    e.preventDefault();
+    const name = $("#newName").value.trim(); if (!name) { $("#newName").focus(); return; }
+    api("essay.roster", {token: S.token, op: "add", name}).then(j => { S.t.flash = {name: j.name, code: j.code}; return reloadTeacher(); }).catch(err => toast(err.message));
+  } else if (f.matches("[data-rename]")) {
+    e.preventDefault();
+    const id = f.dataset.rename, name = f.querySelector("input").value.trim();
+    api("essay.roster", {token: S.token, op: "rename", id, name}).then(() => { S.t.renaming = null; return reloadTeacher(); }).catch(err => toast(err.message));
+  }
+});
+
+function onField(el){
+  if (!S.work || S.locked || !el.matches("[data-bind]")) return;
+  const v = el.type === "checkbox" ? el.checked : el.value;
+  if (getPath(S.work, el.dataset.bind) === v) return;
+  setPath(S.work, el.dataset.bind, v);
+  touch(); refreshLive();
+}
+document.addEventListener("input", e => {
+  const el = e.target;
+  if (el.matches("[data-bind]")) return onField(el);
+  if (el.id === "tnote") {
+    clearTimeout(noteTimer);
+    const lab = $("#tnoteSaved"); if (lab) lab.textContent = "Saving…";
+    noteTimer = setTimeout(() => saveReview({id: el.dataset.sid, stage: el.dataset.stage, note: el.value}), 1200);
+  }
+});
+document.addEventListener("change", e => {
+  const el = e.target;
+  if (el.matches("[data-bind]")) return onField(el);
+  if (el.matches("[data-pick]")) {
+    const i = Number(el.dataset.pick), m = S.work.moments.find(x => x.id === el.value);
+    if (m && !S.locked) {
+      const words = m.words.trim(), q = hasQuote(words) ? words : "“" + words + "”";
+      S.work.plan.b[i].evidence = q; const ta = $("#ev-" + i); if (ta) ta.value = q;
+      touch(); refreshLive();
+    }
+    el.value = "";
+  }
+});
+document.addEventListener("paste", e => {
+  const el = e.target;
+  if (!S.work || S.locked || !el.matches || !el.matches("textarea[data-bind]")) return;
+  const p = el.dataset.bind; if (p.startsWith("moments.")) return;
+  const t = (e.clipboardData || window.clipboardData) ? (e.clipboardData || window.clipboardData).getData("text") : "";
+  const n = wc(t);
+  if (n >= 15) { S.work.pastes.push({at: new Date().toISOString(), f: p, n}); S.work.pastes = S.work.pastes.slice(-50); touch(); }
+});
+document.addEventListener("keydown", e => {
+  if (e.target.id === "cin" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askCoach(e.target.value); }
+});
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-go],[data-act],[data-chip],[data-ttab]");
+  if (!t) return;
+  if (t.dataset.go) return go(t.dataset.go);
+  if (t.dataset.chip) { askCoach(t.dataset.chip); return; }
+  if (t.dataset.ttab) { S.t.tab = t.dataset.ttab; if (t.dataset.ttab === "coach") openLog(S.t.open); renderTeacher(); return; }
+  const a = t.dataset.act, id = t.dataset.id;
+  switch (a) {
+    case "signout": return signOut();
+    case "add-moment":
+      S.work.moments.push({id: uid(), who: "", trigger: "", words: "", where: ""}); touch();
+      $("#page").innerHTML = stageHTML(); refreshLive();
+      { const all = document.querySelectorAll(".moment"); const last = all[all.length - 1]; if (last) { last.scrollIntoView({block: "center", behavior: "smooth"}); const s = last.querySelector("select"); if (s) s.focus({preventScroll: true}); } }
+      return;
+    case "del-moment": {
+      if (t.dataset.armed !== "1") { t.dataset.armed = "1"; t.textContent = "Press again to remove"; setTimeout(() => { if (t.isConnected) { t.dataset.armed = ""; t.textContent = "Remove"; } }, 4000); return; }
+      const m = S.work.moments.splice(Number(t.dataset.i), 1)[0]; if (m) delete S.work.momentGroup[m.id];
+      touch(); $("#page").innerHTML = stageHTML(); refreshLive(); return;
+    }
+    case "hint": S.work.hints = Math.min(HINTS.length, (S.work.hints || 0) + 1); touch(); $("#hints").innerHTML = hintsInner(); return;
+    case "nudge": S.work.nudges[t.dataset.k] = new Date().toISOString(); touch(); $("#page").innerHTML = stageHTML(); refreshLive(); return;
+    case "check": return checkPara(t.dataset.p);
+    case "handin": return handIn();
+    case "coach-open": $("#coach").classList.add("open"); setTimeout(() => { const i = $("#cin"); if (i) i.focus(); }, 260); return;
+    case "coach-close": $("#coach").classList.remove("open"); return;
+    // the teacher
+    case "t-refresh": S.t.flash = null; return reloadTeacher();
+    case "t-open": S.t.open = id; S.t.flash = null; S.t.tab = (() => { const s = S.students.find(x => x.id === id); if (!s || !s.work) return "find"; const w = normWork(s.work); for (const st of STAGES) if (progress(st.k, w, false) < 1) return st.k; return "hand"; })();
+      renderTeacher(); window.scrollTo(0, 0); return;
+    case "t-back": S.t.open = null; return reloadTeacher();
+    case "t-newcode": {
+      if (t.dataset.armed !== "1") { t.dataset.armed = "1"; t.textContent = "Press again: the old code stops"; setTimeout(() => { if (t.isConnected) { t.dataset.armed = ""; t.textContent = "New code"; } }, 5000); return; }
+      const s = S.students.find(x => x.id === id);
+      return api("essay.roster", {token: S.token, op: "newcode", id}).then(j => { S.t.flash = {name: s ? s.name : "", code: j.code, renewed: true}; return reloadTeacher(); }).catch(err => toast(err.message));
+    }
+    case "t-rename": S.t.renaming = id; renderTeacher(); { const i = $("#rn-" + CSS.escape(id)); if (i) i.focus(); } return;
+    case "t-off": {
+      const s = S.students.find(x => x.id === id);
+      return api("essay.roster", {token: S.token, op: s && s.off ? "on" : "off", id}).then(reloadTeacher).catch(err => toast(err.message));
+    }
+    case "t-saveclass": {
+      const lab = $("#classSaved"); lab.textContent = "Saving…";
+      return api("essay.class", {token: S.token, question: $("#tq").value, due: $("#tdue").value, notes: $("#tnotes").value})
+        .then(j => { S.cls = j.cls; lab.textContent = "Saved."; }).catch(err => { lab.textContent = err.message; });
+    }
+    case "t-status": {
+      const ta = $("#tnote"); if (!ta) return;
+      clearTimeout(noteTimer);
+      document.querySelectorAll(".seg button").forEach(b => { b.className = ""; });
+      t.className = "on " + (t.dataset.v || "none");
+      return saveReview({id: ta.dataset.sid, stage: ta.dataset.stage, note: ta.value, status: t.dataset.v}).then(() => {
+        const tabs = document.querySelector(".ttabs"); if (tabs) { renderTeacher(); }
+      });
+    }
+    case "t-return": {
+      if (t.dataset.armed !== "1") { t.dataset.armed = "1"; t.textContent = "Press again to return it"; setTimeout(() => { if (t.isConnected) { t.dataset.armed = ""; t.textContent = "Return it to work on"; } }, 5000); return; }
+      return api("essay.return", {token: S.token, id, note: ($("#retNote") || {}).value || ""}).then(() => { toast("Returned. They can work on it again."); return reloadTeacher(); }).catch(err => toast(err.message));
+    }
+  }
+});
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && S.work && S.seq !== S.savedSeq) runSave(); });
+window.addEventListener("resize", () => { if ($("#trees")) drawTrees(); });
+/* The teacher's class refreshes itself every three minutes while nobody is typing in it. */
+setInterval(() => {
+  if (!S.me || S.me.role !== "teacher" || document.visibilityState !== "visible") return;
+  const a = document.activeElement; if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  if (!S.t.open && !S.t.renaming) reloadTeacher();
+}, 180000);
+
+resume();
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

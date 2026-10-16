@@ -3413,6 +3413,27 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - `coming/coming-test.js` (32 checks) and `coming/page.js` (11, Playwright) in the session scratchpad cover it, on
     the made-up branch.
 
+## The English B essay workshop — it asks, the student writes
+
+`englishb/index.html` (rickyrampersadbranch.com/englishb/), backed by the "English B essay workshop" section of
+`apps-script/Academy.gs` on the Academy's own sheet and `/exec` address. Asked for on 15 October 2026: a five-paragraph
+CSEC English B essay on fear in John Wickham's "Blood Brothers", where "the objective is not to do this but to guide her
+and make think to do this", with "student log in and teacher log in with a code". `ENGLISHB-SETUP.md` has the steps.
+
+- **Codes live on the Essay Codes tab, never in the page or the `.gs`.** `academySetup()` makes the first teacher code
+  and shows it; the teacher adds students (first name only) from the page. A new code ends every sign-in made with the
+  old one. A teacher sees only their own Class.
+- **The coach never writes any part of the essay.** Its rules are in `ESSAY_RULES` and travel in the system prompt of
+  every request from the script, so no browser can change them: no thesis, sentence, rewrite, quotation or list of
+  points; at most two questions a reply. The teacher reads every word (Essay Coach tab). Do not loosen a rule because a
+  student asks; the point of the workshop is that they do the thinking.
+- **The story is not in the repository**, which is the website. `ESSAY_STORY` is a study-guide summary quoting a few
+  words at a time, and `tests/test-englishb.js` fails past nine words. Do not add the text, and do not write out what a
+  strong essay would argue in any public file: a teacher's steer goes in Coach Notes on the Essay Classes tab.
+- **A hand-in is final until the teacher returns it**, enforced in the script (`elocked_`), never by the page alone.
+- Stage, question and check keys must match between the page (`STAGES`, `WHY`, `CHECKS`) and the script
+  (`ESSAY_STAGES`, `ESSAY_WHY`, `ESSAY_CHECKS`); the test compares them.
+
 ## The Premium Due Desk — checked by a person, sent at ten
 
 `premium-due/` and `apps-script/PremiumDueDesk.gs`, in the Branch Intelligence
