@@ -3539,6 +3539,8 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   `rrb-ops-session`. The Gas Receipt Tracker and Petty Cash Tracker are in
   `OPS_APPS` as `soon`; they are built into the same project and flipped to
   `live`, and every app's actions are gated by `opsCanUse_` on the server.
+  Petty Cash went live the same day (below); the Gas Receipt Tracker is still
+  `soon`.
 - **The client is picked, never typed.** By policy (spacing-blind: the org
   stores `TT FCP 0100001` and `TTFHO0100002` side by side) or by name; then
   every policy they hold, grouped by record type, to tick ("allow the user …
@@ -3554,6 +3556,40 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   after the tap. Comments are for managers; test-mode ratings never count.
 - **Test mode is the default** (`DB_MODE` unset): mail to `DB_TEST_INBOX`, no
   Salesforce writes. Tests: `tests/test-deliverybook.js`, `tests/e2e-deliverybook.js`.
+
+## Petty Cash — an imprest float, every spend categorised, a Monday report
+
+`rroperations/petty-cash/` and `apps-script/PettyCash.gs`, a second file in the
+RR Operations project. Asked for on 15 October 2026 ("build now the petty cash
+management and add many other fields and categorize", then "deep research and
+build a proper petty cash management system with deep analytics and weekly
+reporting"). `RROPERATIONS-SETUP.md` has the steps.
+
+- **Why.** The Jotform book had no categories (branch spend and the manager's
+  own errands in one column), and the "balance at hand" typed at each top-up
+  never matched the entries before it. Run through the ledger, the eleven
+  Jotform rows (18 August to 1 October 2026) showed far more cash leaving the
+  float than was logged. Figures stay out of this file.
+- **The model is an imprest float** (the standard control in audit guidance):
+  each holder keeps a fixed float; cash plus receipts since the last top-up
+  equal it; every top-up starts with a count; a count resets the book to the
+  cash there and keeps the difference as a shortage or surplus. `pcCompute_`
+  is the one place the arithmetic lives; the page, the alerts and the weekly
+  report all read it.
+- **Flags are recomputed, never trusted from the sheet**, except those written
+  at import ("Imported", "guessed"), so a top-up recorded late clears the
+  "below zero" it explains.
+- **Personal spend is a category, not a refusal.** The branch manager's errands
+  are paid from the float on his say; they are charged personal and reported
+  apart from branch spend.
+- **The Petty Cash sheet is opened by `PC_SHEET_ID`**, set from the menu, never
+  written in the code: the repository is public.
+- **Nothing is edited or deleted.** A reviewer marks reviewed, queries (the
+  holder answers in the app) or voids with a reason; a void stays on the ledger.
+- The page's category suggestion and the import's guess read the same word
+  lists (`PC.CATEGORIES[].words`, sent to the page by `pc.init`).
+- Tests: `tests/test-pettycash.js` (80 checks), `tests/e2e-pettycash.js` (36,
+  Playwright at phone width, the page driving the real backend in Node).
 
 ## Standing rules
 

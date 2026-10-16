@@ -106,8 +106,8 @@ var OPS_APPS = [
     blurb: 'Log a handover; the client is e-mailed and asked to rate it' },
   { id: 'gas-receipts', name: 'Gas Receipt Tracker', path: '/rroperations/gas-receipts/', status: 'soon',
     blurb: 'Snap and log fuel receipts' },
-  { id: 'petty-cash', name: 'Petty Cash Tracker', path: '/rroperations/petty-cash/', status: 'soon',
-    blurb: 'The float, what was spent and the top-ups' },
+  { id: 'petty-cash', name: 'Petty Cash', path: '/rroperations/petty-cash/', status: 'live',
+    blurb: 'Your float, every spend by category, counts and top-ups' },
 ];
 
 /* The apps one person sees: those named on their row, or every app when the
@@ -174,7 +174,13 @@ function doPost(e) {
         case 'submit':   out = dbSubmit_(b, who); break;
         case 'book':     out = dbBook_(b, who); break;
         case 'signOut':  out = dbSignOut_(b); break;
-        default:         out = { ok: false, error: 'Unknown action' };
+        default:
+          /* Petty cash (PettyCash.gs, the same project). */
+          if (/^pc\./.test(String(b.action))) {
+            if (!opsCanUse_(who, 'petty-cash')) out = { ok: false, error: 'Petty cash is not on your access. Ask the branch to add it.' };
+            else if (typeof pcRoute_ !== 'function') out = { ok: false, error: 'Petty cash is not installed yet: paste PettyCash.gs into the RR Operations project.' };
+            else out = pcRoute_(b, who);
+          } else out = { ok: false, error: 'Unknown action' };
       }
     }
   } catch (err) {
@@ -1167,6 +1173,12 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('RR Operations')
     .addItem('Check setup', 'dbSetupCheck')
     .addItem('Import the Jotform history', 'importJotformHistory')
+    .addSeparator()
+    .addItem('Petty cash: connect the Petty Cash sheet', 'pcConnectSheet')
+    .addItem('Petty cash: check setup', 'pcSetupCheck')
+    .addItem('Petty cash: import the Jotform history', 'pcImportJotform')
+    .addItem('Petty cash: e-mail me a preview of the weekly report', 'pcWeeklyPreview')
+    .addItem('Petty cash: switch on the weekly report (Mondays)', 'pcWeeklyOn')
     .addToUi();
 }
 

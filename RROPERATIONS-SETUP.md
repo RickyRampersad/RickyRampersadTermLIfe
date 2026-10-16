@@ -1,16 +1,17 @@
 # RR Operations — setup
 
 **rickyrampersadbranch.com/rroperations** is the branch team's sign-in and app
-launcher. The first app on it is the **Delivery Book**. The Gas Receipt Tracker
-and the Petty Cash Tracker are listed as "coming soon" until they are built.
+launcher. Two apps are live: the **Delivery Book** and **Petty Cash**. The Gas
+Receipt Tracker is listed as "coming soon" until it is built.
 
 | Piece | Where |
 |---|---|
 | Launcher (sign-in, the app tiles) | `rroperations/index.html` |
 | Delivery Book | `rroperations/delivery-book/index.html` |
+| Petty Cash | `rroperations/petty-cash/index.html` |
 | The one shared setting (the backend address) | `rroperations/ops-config.js` |
-| Backend | `apps-script/DeliveryBook.gs`, as the **RR Operations** Apps Script project |
-| Tests | `tests/test-deliverybook.js` (backend), `tests/e2e-deliverybook.js` (phone, end to end) |
+| Backend | `apps-script/DeliveryBook.gs` and `apps-script/PettyCash.gs`, two files in the **RR Operations** Apps Script project |
+| Tests | `tests/test-deliverybook.js`, `tests/test-pettycash.js` (backend); `tests/e2e-deliverybook.js`, `tests/e2e-pettycash.js` (phone, end to end) |
 
 No client data lives in this repository. Deliveries, signatures, photos and
 ratings are kept in the Delivery Book sheet and its Drive folder.
@@ -159,3 +160,85 @@ person's average. Comments are shown to managers only.
 3. In `OPS_APPS` in `DeliveryBook.gs`, change its `status` from `soon` to
    `live`, and gate its actions with `opsCanUse_(who, '<id>')` in `doPost`.
    Hiding a tile on the launcher is not access control; the server check is.
+
+---
+
+# Petty Cash
+
+Replaces the Jotform that fed the **Petty Cash Transactions** sheet. The
+Jotform's own tab ("Form responses") is left exactly as it is; the app keeps
+its own **Petty Cash Ledger** tab beside it, and a **Petty Cash Weekly** tab
+logging each Monday report.
+
+## Install
+
+1. In the RR Operations Apps Script project, **+ → Script**, name it
+   `PettyCash`, and paste in `apps-script/PettyCash.gs`. Paste the current
+   `apps-script/DeliveryBook.gs` over the old one too: it routes the petty
+   cash actions, turns the tile on and adds the menu items.
+2. **Deploy → Manage deployments → pencil → New version.** Never a new
+   deployment: the site's address would change.
+3. Reload the Delivery Book sheet. **RR Operations → Petty cash: connect the
+   Petty Cash sheet**, and paste the Petty Cash Transactions sheet's link.
+   Approve the new permission (opening another spreadsheet).
+4. **RR Operations → Petty cash: import the Jotform history.** Copies every
+   Jotform row across once. Categories are guessed from the purpose and marked
+   "guessed"; the "balance at hand" typed at each top-up becomes that top-up's
+   count, so the shortages show. Running it again copies nothing.
+5. **Access tab**: add `petty-cash` to the Apps cell of everyone who holds
+   cash, and make sure each reviewer has an Email (alerts and the weekly report
+   go there). A Role containing "Manager" reviews; anyone else who should
+   (the branch management assistant) goes in the `PC_REVIEWERS` property.
+6. **RR Operations → Petty cash: check setup** says what is set.
+7. **Petty cash: e-mail me a preview of the weekly report**, read it, then
+   **Petty cash: switch on the weekly report (Mondays)**.
+8. Switch the Jotform off, so there is one book.
+
+## Script properties (all optional)
+
+| Property | Default | What it does |
+|---|---|---|
+| `PC_SHEET_ID` | (set by the menu) | The Petty Cash Transactions sheet |
+| `PC_FLOAT` | 500 | The float each holder is kept at, TT$ |
+| `PC_SPEND_LIMIT` | 300 | A spend above this waits for a reviewer |
+| `PC_VARIANCE` | 5 | A count this far off the book is flagged |
+| `PC_COUNT_DAYS` | 14 | A float not counted for this long shows "count due" |
+| `PC_REVIEWERS` | | Extra reviewers by name, comma-separated |
+| `PC_ALERT_TO` | | Extra addresses for alerts and the weekly report |
+| `PC_VEHICLES` | | The branch vehicles, offered as a list |
+
+## How it works
+
+**An imprest float.** Each person who holds cash holds a fixed float. The cash
+in hand plus the receipts since the last top-up always equal it. A top-up
+starts with a count; the count is compared with the book; the difference is
+kept as a shortage or a surplus, and the book takes the count as the truth
+from there. The Float tab says what brings each float back to its level.
+
+**Five entries:** Spent, Received (a float top-up, or a repayment of own
+money), Request, Count (by note and coin if wanted), Returned.
+
+**A spend** needs a category and its kind, who was paid, what for, and a
+receipt photo (or the reason there is none). Personal spends (the Branch
+Manager's errands) are charged personal and kept apart from branch spend. A
+spend paid from the holder's own pocket is owed back to them, not taken from
+the float. The same receipt number from the same shop twice is refused.
+
+**Approval and review.** A spend over the limit and every request wait for a
+reviewer. A reviewer can mark an entry reviewed, ask a question (the holder
+answers in the app and is e-mailed), or void it with a reason. Nothing is
+edited and nothing is deleted.
+
+**Red flags:** possible split purchases (one shop, one day, each under the
+limit, together over it), no receipt, logged more than two days late, a round
+amount with no receipt, the float below zero, a shortage at a count, a count
+overdue, a receipt number used twice, weekend spends.
+
+**Alerts**, the moment they happen, to the reviewers: a request, an over-limit
+spend, a count off by the variance or more, the float going below zero, a
+possible split.
+
+**The weekly report**, Mondays between 7 and 8, for the week before: spend
+against the four-week average, branch against personal, top-ups, shortages,
+what stands out, every float reconciled, by category, vendor and vehicle,
+everything flagged, and what waits for approval or an answer.

@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Petty Cash | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61; --field:rgba(0,0,0,.28);
+    --gold:#efc24b; --gold2:#c9942c; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.09); --teal:#00CFEA; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(239,194,75,.07),transparent);font-size:15px;line-height:1.45}
+  button,input,select,textarea{font:inherit;color:inherit}
+  .wrap{max-width:820px;margin:0 auto;padding:0 16px 96px}
+  h1,h2,h3{font-family:'Montserrat',sans-serif}
+  .mark{width:38px;height:38px;border-radius:10px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  #lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px}
+  .lock-card{width:min(380px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:32px 24px}
+  .lock-card .mark{width:64px;height:64px;border-radius:16px;margin:0 auto 16px}
+  .lock-card h1{font-weight:800;font-size:20px;color:var(--gold);margin-bottom:6px}
+  .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(7,19,31,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top{max-width:820px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+  .top h1{font-size:16px;font-weight:800;color:var(--gold);line-height:1.1}
+  .top small{display:block;color:var(--muted);font-size:12px;font-family:'DM Sans'}
+  .top .sp{flex:1}
+  .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;letter-spacing:.4px}
+  .pill.test{background:rgba(251,191,36,.15);color:var(--warn);border:1px solid rgba(251,191,36,.4)}
+  .tabs{max-width:820px;margin:0 auto;display:flex;gap:2px;padding:0 10px;overflow-x:auto}
+  .tabs button{flex:1;background:none;border:0;padding:10px 6px 11px;color:var(--muted);font-weight:700;font-size:14px;
+    border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;position:relative}
+  .tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--gold)}
+  .tabs .n{display:inline-block;min-width:18px;padding:0 5px;border-radius:99px;background:var(--bad);color:#1d0505;font-size:11px;margin-left:5px}
+
+  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  .card h2{font-size:15px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+  .card h2 .sp{flex:1}
+  label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 6px;letter-spacing:.2px}
+  input[type=text],input[type=number],input[type=date],input[type=datetime-local],input[type=search],select,textarea{
+    width:100%;padding:12px 13px;border-radius:11px;border:1px solid var(--line);background:var(--field);outline:none;min-height:46px}
+  input:focus,select:focus,textarea:focus{border-color:rgba(239,194,75,.55)}
+  select option{background:#0d2137}
+  textarea{min-height:70px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:440px){.row{grid-template-columns:1fr}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;border:0;
+    cursor:pointer;font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px;text-decoration:none}
+  .btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503}
+  .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text)}
+  .btn.sm{padding:7px 11px;min-height:34px;font-size:12px;border-radius:10px}
+  .btn.ok{background:rgba(74,222,128,.16);color:var(--ok);border:1px solid rgba(74,222,128,.35)}
+  .btn.no{background:rgba(248,113,113,.14);color:var(--bad);border:1px solid rgba(248,113,113,.35)}
+  .btn.block{width:100%}
+  .btn:disabled{opacity:.5;cursor:default}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px}
+  .amt{font-family:'Montserrat';font-weight:800;font-size:22px;text-align:right}
+
+  /* type chooser */
+  .types{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+  @media (max-width:560px){.types{grid-template-columns:repeat(3,1fr)}}
+  .type{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:14px;padding:12px 6px;
+    cursor:pointer;text-align:center;font-weight:700;font-size:13px}
+  .type svg{width:26px;height:26px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 6px}
+  .type small{display:block;color:var(--muted);font-size:11px;font-weight:500;margin-top:2px}
+  .type[aria-pressed=true]{border-color:var(--gold);background:rgba(239,194,75,.12)}
+
+  .cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+  .cat{padding:10px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.04);cursor:pointer;font-size:13px;font-weight:700;text-align:left}
+  .cat[aria-pressed=true]{border-color:var(--gold);background:rgba(239,194,75,.12)}
+  .cat.personal{border-style:dashed}
+  .suggest{display:inline-block;margin-top:8px;font-size:12px;color:var(--teal);background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.3);
+    border-radius:99px;padding:4px 10px;cursor:pointer}
+  .check{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px;cursor:pointer}
+  .check input{width:20px;height:20px;accent-color:var(--gold)}
+  input[type=file]{width:100%;font-size:13px;color:var(--muted)}
+  input[type=file]::file-selector-button{margin-right:12px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(255,255,255,.08);color:var(--text);font-weight:700;cursor:pointer}
+  .prev{max-width:100%;max-height:220px;border-radius:12px;margin-top:8px;display:none}
+  .denoms{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:6px}
+  .denoms div{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);border-radius:10px;padding:6px 8px}
+  .denoms b{font-size:12px;min-width:38px}
+  .denoms input{min-height:34px!important;padding:6px!important;text-align:center}
+  .recon{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.22);margin-top:10px;font-size:14px}
+  .recon b{font-family:'Montserrat'}
+
+  /* float cards */
+  .floats{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .fl{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  .fl .h{font-weight:800;font-family:'Montserrat';font-size:15px;display:flex;justify-content:space-between;gap:8px}
+  .fl .bal{font-family:'Montserrat';font-size:30px;font-weight:800;margin:6px 0 2px}
+  .fl .bal.neg{color:var(--bad)}
+  .meter{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:8px 0}
+  .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold))}
+  .kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-top:1px solid var(--line)}
+  .kv span:first-child{color:var(--muted)}
+
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin:4px 4px 0 0}
+  .tag.warn{background:rgba(251,191,36,.14);color:var(--warn)}
+  .tag.bad{background:rgba(248,113,113,.14);color:var(--bad)}
+  .tag.ok{background:rgba(74,222,128,.12);color:var(--ok)}
+  .tag.info{background:rgba(0,207,234,.12);color:var(--teal)}
+  .tag.mute{background:rgba(255,255,255,.07);color:var(--muted)}
+
+  /* ledger */
+  .filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .filters select,.filters input{min-height:40px;padding:8px 10px;font-size:13px}
+  .entry{padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+  .entry:last-child{border-bottom:0}
+  .entry .l1{display:flex;gap:10px;align-items:baseline}
+  .entry .l1 b{flex:1;font-size:15px;overflow-wrap:anywhere}
+  .entry .money{font-family:'Montserrat';font-weight:800;white-space:nowrap}
+  .money.out{color:var(--text)} .money.in{color:var(--ok)}
+  .entry .meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .entry .more{display:none;margin-top:10px;font-size:13px}
+  .entry.open .more{display:block}
+  .entry .more a{color:var(--teal);font-weight:700;text-decoration:none}
+  .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .q{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:8px 10px;margin-top:8px}
+
+  /* insights */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .tile{background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .tile .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+  .tile .v{font-family:'Montserrat';font-size:21px;font-weight:800;margin-top:2px}
+  .tile .s{font-size:12px;color:var(--muted)}
+  .tile.bad .v{color:var(--bad)}
+  .bars{margin-top:4px}
+  .bar{display:grid;grid-template-columns:minmax(110px,38%) 1fr auto;gap:10px;align-items:center;padding:6px 0;font-size:13px;cursor:pointer;border:0;background:none;width:100%;text-align:left}
+  .bar .t{height:12px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden}
+  .bar .t i{display:block;height:100%;border-radius:6px;background:var(--gold)}
+  .bar .t i.p{background:var(--teal)}
+  .bar .x{white-space:nowrap;font-weight:700}
+  .bar .x small{color:var(--muted);font-weight:500}
+  .weeks{display:flex;align-items:flex-end;gap:4px;height:150px;margin-top:10px;padding-top:16px}
+  .wk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;position:relative}
+  .wk .b{background:var(--gold);border-radius:4px 4px 0 0;min-height:1px}
+  .wk .p{background:var(--teal)}
+  .wk .lab{font-size:10px;color:var(--muted);text-align:center;margin-top:4px;white-space:nowrap}
+  .wk .val{position:absolute;top:-14px;left:0;right:0;font-size:10px;text-align:center;color:var(--muted)}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  ul.stand{padding-left:18px;font-size:14px}
+  ul.stand li{margin:5px 0}
+  .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.t{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  table.t th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:6px 4px;border-bottom:1px solid var(--line)}
+  table.t td{padding:7px 4px;white-space:nowrap;border-bottom:1px solid var(--line)}
+  table.t td.r,table.t th.r{text-align:right}
+  .done{text-align:center}
+  .done .ref{font-family:'Montserrat';font-size:22px;font-weight:800;color:var(--gold);margin:6px 0 10px;letter-spacing:1px}
+  .empty{color:var(--muted);text-align:center;padding:22px 8px;font-size:14px}
+  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#0d2137;border:1px solid var(--gold);border-radius:12px;
+    padding:10px 16px;font-weight:700;font-size:14px;z-index:60;max-width:90vw}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="lock"><div class="lock-card"><div class="mark"><img src="/logo-mark.png" alt=""></div>
+  <h1>Petty Cash</h1><p id="lockMsg">Opening…</p>
+  <a class="btn gold block" href="/rroperations/?next=petty-cash">Sign in</a></div></div>
+
+<header>
+  <div class="top">
+    <a href="/rroperations/" class="mark" title="All apps" aria-label="All apps"><img src="/logo-mark.png" alt=""></a>
+    <div><h1>Petty Cash</h1><small id="me">—</small></div>
+    <div class="sp"></div>
+    <span class="pill test" id="modePill" hidden>TEST</span>
+    <a class="btn ghost sm" href="/rroperations/">All apps</a>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="record">Record</button>
+    <button role="tab" aria-selected="false" data-tab="float">Float<span class="n" id="todoN" hidden></span></button>
+    <button role="tab" aria-selected="false" data-tab="ledger">Ledger</button>
+    <button role="tab" aria-selected="false" data-tab="insights">Insights</button>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <!-- ─────────── RECORD ─────────── -->
+  <section id="tab-record">
+    <div class="types" id="types" role="group" aria-label="What are you recording?"></div>
+    <form id="form" novalidate hidden>
+      <div class="card">
+        <h2 id="formTitle">—</h2>
+        <div id="holderBox" hidden>
+          <label for="holder">Whose float</label>
+          <select id="holder"></select>
+        </div>
+        <div class="row">
+          <div id="amountBox"><label for="amount" id="amountLabel">Amount (TT$)</label>
+            <input id="amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div>
+          <div><label for="when" id="whenLabel">When</label><input id="when" type="datetime-local"></div>
+        </div>
+
+        <!-- spend -->
+        <div data-for="spend">
+          <label for="purpose">What was it for?</label>
+          <textarea id="purpose" placeholder="e.g. Cleaning supplies for the meeting room"></textarea>
+          <label for="paidTo">Paid to (shop or person)</label>
+          <input id="paidTo" type="text" list="vendors" autocomplete="off" placeholder="e.g. the hardware on the main road">
+          <datalist id="vendors"></datalist>
+          <label>Category</label>
+          <div class="cats" id="cats"></div>
+          <button type="button" class="suggest" id="suggest" hidden></button>
+          <div id="subBox" hidden><label for="sub">What kind</label><select id="sub"></select></div>
+          <div id="vehicleBox" hidden>
+            <div class="row">
+              <div><label for="vehicle">Vehicle</label><input id="vehicle" type="text" list="vehicles" autocomplete="off"></div>
+              <div><label for="odometer">Odometer (optional)</label><input id="odometer" type="number" inputmode="numeric"></div>
+            </div>
+            <datalist id="vehicles"></datalist>
+            <div class="hint" id="fuelHint" hidden>Fuel will move to the Gas Receipt Tracker once it is live.</div>
+          </div>
+          <div id="clientBox" hidden><label for="client">Client or policy (optional)</label><input id="client" type="text" autocomplete="off"></div>
+          <div class="row">
+            <div><label for="charged">Charged to</label><select id="charged"></select></div>
+            <div><label for="payment">Paid with</label><select id="payment"></select></div>
+          </div>
+          <div id="recoverBox" hidden><label for="recover">Recover from</label><input id="recover" type="text" autocomplete="off" placeholder="Their name"></div>
+          <label for="receipt">Receipt photo</label>
+          <input id="receipt" type="file" accept="image/*" capture="environment">
+          <img class="prev" id="prev" alt="Receipt preview">
+          <div class="row">
+            <div><label for="receiptNo">Receipt # (if printed)</label><input id="receiptNo" type="text" autocomplete="off"></div>
+            <div></div>
+          </div>
+          <label class="check"><input type="checkbox" id="noRec"> There is no receipt</label>
+          <div id="noRecBox" hidden>
+            <div class="row">
+              <div><label for="noReceipt">Why</label><select id="noReceipt"></select></div>
+              <div><label for="noRecNote">Detail</label><input id="noRecNote" type="text" autocomplete="off"></div>
+            </div>
+          </div>
+          <div class="hint" id="limitHint" hidden></div>
+        </div>
+
+        <!-- topup -->
+        <div data-for="topup">
+          <div class="row">
+            <div><label for="forWhat">For</label><select id="forWhat"></select></div>
+            <div><label for="method">How</label><select id="method"></select></div>
+          </div>
+          <label for="from">Received from</label>
+          <input id="from" type="text" list="givers" autocomplete="off"><datalist id="givers"></datalist>
+          <div id="reqBox" hidden><label for="requestRef">Against a request</label><select id="requestRef"></select></div>
+        </div>
+
+        <!-- request -->
+        <div data-for="request">
+          <label for="rPurpose">What is the money needed for?</label>
+          <textarea id="rPurpose"></textarea>
+          <div class="row">
+            <div><label for="rCat">Category (optional)</label><select id="rCat"></select></div>
+            <div><label for="neededBy">Needed by</label><input id="neededBy" type="date"></div>
+          </div>
+        </div>
+
+        <!-- count: on its own, and before any top-up -->
+        <div data-for="count topup" id="countBox">
+          <label for="counted" id="countedLabel">Cash in hand, counted now (TT$)</label>
+          <input id="counted" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
+          <div class="hint" id="countHint">Count every note and coin. Or count them below and the total fills itself.</div>
+          <details style="margin-top:8px"><summary class="hint" style="cursor:pointer">Count by note and coin</summary>
+            <div class="denoms" id="denoms"></div></details>
+          <div class="recon" id="recon" hidden></div>
+        </div>
+
+        <!-- return -->
+        <div data-for="return">
+          <label for="returnedTo">Returned to</label>
+          <input id="returnedTo" type="text" list="givers" autocomplete="off">
+          <label for="retWhy">Why</label><input id="retWhy" type="text" autocomplete="off" placeholder="e.g. Change from the event">
+        </div>
+
+        <label for="notes">Notes (optional)</label>
+        <input id="notes" type="text" autocomplete="off">
+        <div class="err" id="formErr" role="alert"></div>
+        <button class="btn gold block" type="submit" id="saveBtn" style="margin-top:14px">Record</button>
+      </div>
+    </form>
+    <div class="card done" id="done" hidden></div>
+  </section>
+
+  <!-- ─────────── FLOAT ─────────── -->
+  <section id="tab-float" hidden>
+    <div id="todo"></div>
+    <div class="floats" id="floats"></div>
+    <div class="hint" style="margin-top:10px">Each float is kept at the same amount. The cash in hand plus the receipts since the last top-up should always add up to it. Count it before every top-up; a reviewer may count it at any time.</div>
+  </section>
+
+  <!-- ─────────── LEDGER ─────────── -->
+  <section id="tab-ledger" hidden>
+    <div class="card">
+      <div class="filters">
+        <select id="fPeriod" aria-label="Period"></select>
+        <select id="fHolder" aria-label="Held by"></select>
+        <select id="fType" aria-label="Type"></select>
+        <select id="fCat" aria-label="Category"></select>
+        <select id="fShow" aria-label="Show">
+          <option value="">Everything</option><option value="flag">Flagged</option><option value="norec">No receipt</option>
+          <option value="wait">Awaiting approval</option><option value="query">Queried</option><option value="unrev">Not reviewed</option>
+          <option value="personal">Personal</option><option value="branch">Branch</option>
+        </select>
+        <input id="fQ" type="search" placeholder="Search" aria-label="Search">
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px">
+        <div class="hint" id="lSum" style="margin:0"></div>
+        <button class="btn ghost sm" type="button" id="csv">Download CSV</button>
+      </div>
+    </div>
+    <div class="card" id="ledger"><div class="empty">Loading…</div></div>
+  </section>
+
+  <!-- ─────────── INSIGHTS ─────────── -->
+  <section id="tab-insights" hidden>
+    <div class="card">
+      <div class="filters">
+        <select id="iPeriod" aria-label="Period"></select>
+        <select id="iHolder" aria-label="Held by"></select>
+      </div>
+    </div>
+    <div class="card"><div class="tiles" id="tiles"></div></div>
+    <div class="card"><h2>What stands out</h2><ul class="stand" id="stand"></ul></div>
+    <div class="card"><h2>Week by week<span class="sp"></span><span class="hint" style="margin:0">last 12 weeks</span></h2>
+      <div class="weeks" id="weeks" role="img" aria-label="Spend by week"></div>
+      <div class="legend"><span><i style="background:var(--gold)"></i>Branch</span><span><i style="background:var(--teal)"></i>Personal</span></div>
+      <table class="t" id="weeksT"></table>
+    </div>
+    <div class="card"><h2>By category</h2><div class="bars" id="byCat"></div>
+      <div class="hint">Tap a category to open its entries in the Ledger.</div></div>
+    <div class="card"><h2>By kind</h2><div class="bars" id="bySub"></div></div>
+    <div class="card"><h2>Paid to</h2><div class="bars" id="byVendor"></div></div>
+    <div class="card" id="vehCard"><h2>By vehicle</h2><div class="bars" id="byVehicle"></div></div>
+    <div class="card" id="holderCard"><h2>By person</h2><div class="tscroll"><table class="t" id="byHolder"></table></div></div>
+    <div class="card"><h2>Red flags</h2><div class="bars" id="flags"></div>
+      <div class="hint">A flag asks a question; it does not answer it.</div></div>
+  </section>
+</main>
+
+<script src="/rroperations/ops-config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API_URL = window.RR_OPS.API_URL, SESSION_KEY = window.RR_OPS.SESSION_KEY;
+  var $ = function (id) { return document.getElementById(id); };
+  var S = { token: '', cfg: null, type: '', cat: '', photo: '', entries: [], floats: [], loaded: false, ledgerAt: 0 };
+  var TYPE_INFO = {
+    spend:   { t: 'Spent', s: 'Paid for something', icon: '<path d="M12 3v18"/><path d="M17 7H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/>' },
+    topup:   { t: 'Received', s: 'Cash given to you', icon: '<path d="M12 19V5"/><path d="M5 12l7-7 7 7"/>' },
+    request: { t: 'Request', s: 'Ask for cash', icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
+    count:   { t: 'Count', s: 'Count the cash', icon: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>' },
+    'return':{ t: 'Returned', s: 'Gave cash back', icon: '<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>' }
+  };
+  var TYPE_LABEL = { spend: 'Spent', topup: 'Received', request: 'Request', count: 'Count', 'return': 'Returned' };
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function money(n) { var v = Math.round((Number(n) || 0) * 100) / 100, neg = v < 0; v = Math.abs(v);
+    return (neg ? '-' : '') + 'TT$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function r2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+  function day(iso, withTime) { if (!iso) return ''; var d = new Date(iso);
+    var s = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+    return withTime ? s + ', ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : s; }
+  function localNow() { var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); }
+  function name(s) { return String(s || '').trim().toLowerCase(); }
+  function toast(msg) { var t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 3200); }
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+  function api(action, body) {
+    if (/RR_OPERATIONS_DEPLOYMENT_ID/.test(API_URL)) return Promise.reject(new Error('RR Operations is not connected yet.'));
+    var payload = Object.assign({ action: action, token: S.token }, body || {});
+    return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.error === 'signed-out') { store.del(SESSION_KEY); location.replace('/rroperations/?next=petty-cash'); throw new Error('Signed out'); }
+        if (!j || !j.ok) throw new Error((j && j.error) || 'Something went wrong.');
+        return j;
+      });
+  }
+  function opts(sel, list, def, blank) {
+    sel.innerHTML = (blank != null ? '<option value="">' + esc(blank) + '</option>' : '') +
+      list.map(function (v) { var val = typeof v === 'object' ? v.v : v, lab = typeof v === 'object' ? v.l : v;
+        return '<option value="' + esc(val) + '"' + (val === def ? ' selected' : '') + '>' + esc(lab) + '</option>'; }).join('');
+  }
+
+  /* ── start ─────────────────────────────────────────────── */
+  var sess = null;
+  try { sess = JSON.parse(store.get(SESSION_KEY) || 'null'); } catch (e) {}
+  if (!sess || !sess.token) { $('lockMsg').textContent = 'Sign in on RR Operations first.'; }
+  else {
+    S.token = sess.token;
+    api('pc.init').then(function (c) {
+      S.cfg = c;
+      $('me').textContent = c.me.name + ' · ' + (c.me.reviewer ? 'Reviewer' : c.me.role);
+      if (c.mode !== 'live') { $('modePill').hidden = false; $('modePill').title = 'RR Operations is in test mode'; }
+      setup();
+      $('lock').hidden = true;
+      loadLedger();
+    }).catch(function (err) { if (err.message !== 'Signed out') $('lockMsg').textContent = err.message; });
+  }
+
+  function setup() {
+    var c = S.cfg;
+    $('types').innerHTML = Object.keys(TYPE_INFO).map(function (k) {
+      var t = TYPE_INFO[k];
+      return '<button type="button" class="type" data-type="' + k + '" aria-pressed="false"><svg viewBox="0 0 24 24">' + t.icon + '</svg>' +
+        t.t + '<small>' + t.s + '</small></button>';
+    }).join('');
+    $('types').querySelectorAll('.type').forEach(function (b) { b.addEventListener('click', function () { pickType(b.getAttribute('data-type')); }); });
+    $('cats').innerHTML = c.categories.map(function (k, i) {
+      return '<button type="button" class="cat' + (k.name === c.personal ? ' personal' : '') + '" data-i="' + i + '" aria-pressed="false">' + esc(k.name) + '</button>';
+    }).join('');
+    $('cats').querySelectorAll('.cat').forEach(function (b) { b.addEventListener('click', function () { pickCat(c.categories[+b.getAttribute('data-i')].name); }); });
+    opts($('charged'), c.charged, c.charged[0]);
+    opts($('payment'), c.payment, c.payment[0]);
+    opts($('noReceipt'), c.noReceipt, '', 'Choose…');
+    opts($('forWhat'), c.forWhat, c.forWhat[0]);
+    opts($('method'), c.methods, 'Cash');
+    opts($('rCat'), c.categories.map(function (k) { return k.name; }), '', '—');
+    $('vendors').innerHTML = c.vendors.map(function (v) { return '<option value="' + esc(v) + '">'; }).join('');
+    $('vehicles').innerHTML = c.vehicles.map(function (v) { return '<option value="' + esc(v) + '">'; }).join('');
+    $('givers').innerHTML = c.givers.map(function (v) { return '<option value="' + esc(v) + '">'; }).join('');
+    $('denoms').innerHTML = c.denoms.map(function (d) {
+      return '<div><b>' + (d >= 1 ? '$' + d : (d * 100).toFixed(0) + '¢') + '</b><input type="number" min="0" inputmode="numeric" data-d="' + d + '" aria-label="How many ' + d + '"></div>';
+    }).join('');
+    $('denoms').addEventListener('input', function () {
+      var t = 0; $('denoms').querySelectorAll('input').forEach(function (i) { t += (parseInt(i.value, 10) || 0) * Number(i.getAttribute('data-d')); });
+      $('counted').value = r2(t).toFixed(2); recon();
+    });
+    if (c.me.reviewer) {
+      $('holderBox').hidden = false;
+      opts($('holder'), c.holders, c.holders.filter(function (h) { return name(h) === name(c.me.name); })[0] || c.holders[0]);
+    }
+    var periods = [{ v: '7', l: 'Last 7 days' }, { v: '30', l: 'Last 30 days' }, { v: 'month', l: 'This month' }, { v: 'lastmonth', l: 'Last month' },
+                   { v: '90', l: 'Last 90 days' }, { v: 'year', l: 'This year' }, { v: 'all', l: 'All time' }];
+    opts($('fPeriod'), periods, '90'); opts($('iPeriod'), periods, '30');
+    opts($('fType'), Object.keys(TYPE_LABEL).map(function (k) { return { v: k, l: TYPE_LABEL[k] }; }), '', 'All types');
+    opts($('fCat'), c.categories.map(function (k) { return k.name; }), '', 'All categories');
+    ['fPeriod', 'fHolder', 'fType', 'fCat', 'fShow'].forEach(function (id) { $(id).addEventListener('change', drawLedger); });
+    $('fQ').addEventListener('input', drawLedger);
+    ['iPeriod', 'iHolder'].forEach(function (id) { $(id).addEventListener('change', drawInsights); });
+    $('holderCard').hidden = !c.me.reviewer;
+    $('fHolder').hidden = !c.me.reviewer; $('iHolder').hidden = !c.me.reviewer;
+  }
+
+  /* ── tabs ──────────────────────────────────────────────── */
+  document.querySelectorAll('[data-tab]').forEach(function (b) { b.addEventListener('click', function () { showTab(b.getAttribute('data-tab')); }); });
+  function showTab(t) {
+    document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === t)); });
+    ['record', 'float', 'ledger', 'insights'].forEach(function (k) { $('tab-' + k).hidden = k !== t; });
+    if (t !== 'record' && Date.now() - S.ledgerAt > 60000) loadLedger();
+    window.scrollTo(0, 0);
+  }
+
+  /* ── record ────────────────────────────────────────────── */
+  function myFloat() {
+    var h = S.cfg.me.reviewer ? $('holder').value : S.cfg.me.name;
+    return S.floats.filter(function (f) { return name(f.holder) === name(h); })[0] || null;
+  }
+  function pickType(t) {
+    S.type = t;
+    $('types').querySelectorAll('.type').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-type') === t)); });
+    $('form').hidden = false; $('done').hidden = true; $('formErr').textContent = '';
+    var titles = { spend: 'Cash spent', topup: 'Cash received', request: 'Ask for cash', count: 'Count the cash', 'return': 'Cash returned' };
+    $('formTitle').textContent = titles[t];
+    document.querySelectorAll('[data-for]').forEach(function (el) { el.hidden = el.getAttribute('data-for').split(' ').indexOf(t) < 0; });
+    $('amountBox').hidden = t === 'count';
+    $('amountLabel').textContent = t === 'topup' ? 'Amount received (TT$)' : t === 'request' ? 'Amount needed (TT$)' : t === 'return' ? 'Amount returned (TT$)' : 'Amount (TT$)';
+    $('whenLabel').textContent = t === 'request' ? 'Asked on' : 'When';
+    $('saveBtn').textContent = t === 'request' ? 'Send the request' : t === 'count' ? 'Record the count' : 'Record';
+    $('countedLabel').textContent = t === 'topup' ? 'Count first: cash in hand before this money (TT$)' : 'Cash in hand, counted now (TT$)';
+    if (!$('when').value) $('when').value = localNow();
+    if (t === 'topup') {
+      if (!$('from').value && S.cfg.givers.length === 1) $('from').value = S.cfg.givers[0];
+      toggleRepay(); fillRequests();
+    }
+    recon();
+    $('form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function toggleRepay() {
+    var repay = /repay/i.test($('forWhat').value);
+    $('countBox').hidden = S.type === 'topup' && repay;
+  }
+  $('forWhat').addEventListener('change', toggleRepay);
+  $('holder').addEventListener('change', function () { recon(); fillRequests(); });
+
+  function fillRequests() {
+    var h = S.cfg.me.reviewer ? $('holder').value : S.cfg.me.name;
+    var open = S.entries.filter(function (e) { return e.type === 'request' && e.status === 'Approved' && name(e.holder) === name(h); });
+    $('reqBox').hidden = !open.length;
+    opts($('requestRef'), open.map(function (e) { return { v: e.ref, l: money(e.amount) + ' · ' + e.purpose.slice(0, 40) }; }), '', 'No request');
+  }
+
+  /* The count against the book, live: what should be there, what is. */
+  function recon() {
+    var box = $('recon'), f = myFloat();
+    if (!(S.type === 'count' || S.type === 'topup') || !f) { box.hidden = true; return; }
+    var c = $('counted').value === '' ? null : Number($('counted').value);
+    var html = '<span>The book says <b>' + money(f.balance) + '</b></span>';
+    if (c != null) {
+      var v = r2(c - f.balance);
+      html += Math.abs(v) < 0.005 ? '<span class="tag ok">Agrees</span>'
+        : '<span class="tag ' + (Math.abs(v) >= S.cfg.variance ? 'bad' : 'warn') + '">' + (v < 0 ? 'Short ' + money(-v) : 'Over ' + money(v)) + '</span>';
+    }
+    if (S.type === 'topup' && c != null) html += '<span>Top-up to ' + money(f.float) + ': <b>' + money(Math.max(0, f.float - c)) + '</b></span>';
+    box.innerHTML = html; box.hidden = false;
+  }
+  $('counted').addEventListener('input', recon);
+
+  /* Category: pick, or take the suggestion read off what was typed. */
+  function guess(text) {
+    var t = ' ' + String(text || '').toLowerCase().replace(/[^a-z0-9& ]/g, ' ') + ' ', best = null, score = 0;
+    S.cfg.categories.forEach(function (c) {
+      var s = 0;
+      c.words.forEach(function (w) { if (t.indexOf(' ' + w + ' ') >= 0 || (w.length > 4 && t.indexOf(' ' + w) >= 0)) s += w.length > 4 ? 2 : 1; });
+      if (c.name === S.cfg.personal && s) s += 3;
+      if (s > score) { score = s; best = c.name; }
+    });
+    return best;
+  }
+  function suggest() {
+    var g = guess($('purpose').value + ' ' + $('paidTo').value);
+    var b = $('suggest');
+    if (g && g !== S.cat) { b.hidden = false; b.textContent = 'Looks like ' + g + ' — tap to use'; b.setAttribute('data-c', g); }
+    else b.hidden = true;
+  }
+  $('purpose').addEventListener('input', suggest); $('paidTo').addEventListener('input', suggest);
+  $('suggest').addEventListener('click', function () { pickCat($('suggest').getAttribute('data-c')); });
+  function pickCat(n) {
+    S.cat = n;
+    var c = S.cfg.categories.filter(function (k) { return k.name === n; })[0];
+    $('cats').querySelectorAll('.cat').forEach(function (b) { b.setAttribute('aria-pressed', String(b.textContent === n)); });
+    $('subBox').hidden = !c.subs.length;
+    opts($('sub'), c.subs, '', 'Choose…');
+    $('vehicleBox').hidden = n !== 'Vehicle';
+    $('clientBox').hidden = n !== 'Client service';
+    var personal = n === S.cfg.personal;
+    $('charged').value = personal ? S.cfg.charged[1] : ($('charged').value === S.cfg.charged[1] ? S.cfg.charged[0] : $('charged').value);
+    $('charged').disabled = personal;
+    $('recoverBox').hidden = $('charged').value !== S.cfg.charged[2];
+    suggest();
+  }
+  $('sub').addEventListener('change', function () { $('fuelHint').hidden = $('sub').value !== 'Fuel'; });
+  $('charged').addEventListener('change', function () { $('recoverBox').hidden = $('charged').value !== S.cfg.charged[2]; });
+  $('noRec').addEventListener('change', function () { $('noRecBox').hidden = !$('noRec').checked; });
+  $('amount').addEventListener('input', function () {
+    var a = Number($('amount').value), h = $('limitHint');
+    h.hidden = !(S.type === 'spend' && a > S.cfg.limit);
+    if (!h.hidden) h.textContent = 'Over ' + money(S.cfg.limit) + ': it is recorded and waits for a reviewer to approve it.';
+  });
+
+  /* A receipt photo, made small on the phone before it is sent. */
+  $('receipt').addEventListener('change', function () {
+    var f = $('receipt').files[0]; S.photo = '';
+    if (!f) { $('prev').style.display = 'none'; return; }
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function () {
+      var max = 1600, w = img.width, h = img.height, k = Math.min(1, max / Math.max(w, h));
+      var cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      S.photo = cv.toDataURL('image/jpeg', 0.72);
+      $('prev').src = S.photo; $('prev').style.display = 'block';
+      $('noRec').checked = false; $('noRecBox').hidden = true;
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = function () { $('formErr').textContent = 'That photo could not be read. Take it again.'; };
+    img.src = url;
+  });
+
+  $('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var t = S.type, e = { type: t, notes: $('notes').value };
+    e.when = $('when').value ? new Date($('when').value).toISOString() : '';
+    if (S.cfg.me.reviewer) e.holder = $('holder').value;
+    if (t !== 'count') e.amount = $('amount').value;
+    if (t === 'spend') {
+      Object.assign(e, { purpose: $('purpose').value, paidTo: $('paidTo').value, category: S.cat, sub: $('sub').value,
+        vehicle: $('vehicle').value, odometer: $('odometer').value, client: $('client').value,
+        charged: $('charged').value, payment: $('payment').value, recover: $('recover').value,
+        receiptNo: $('receiptNo').value, receipt: $('noRec').checked ? '' : S.photo,
+        noReceipt: $('noRec').checked ? $('noReceipt').value : '', noReceiptNote: $('noRecNote').value });
+    } else if (t === 'topup') {
+      Object.assign(e, { forWhat: $('forWhat').value, method: $('method').value, from: $('from').value, requestRef: $('requestRef').value });
+    } else if (t === 'request') {
+      Object.assign(e, { purpose: $('rPurpose').value, category: $('rCat').value, neededBy: $('neededBy').value });
+    } else if (t === 'return') {
+      Object.assign(e, { returnedTo: $('returnedTo').value, purpose: $('retWhy').value });
+    }
+    if (t === 'count' || (t === 'topup' && !/repay/i.test(e.forWhat))) {
+      e.counted = $('counted').value;
+      var d = {}; $('denoms').querySelectorAll('input').forEach(function (i) { if (i.value) d[i.getAttribute('data-d')] = i.value; });
+      e.denoms = d;
+    }
+    $('formErr').textContent = ''; $('saveBtn').disabled = true; $('saveBtn').textContent = 'Recording…';
+    api('pc.submit', { entry: e }).then(function (r) {
+      var en = r.entry, fl = r.float;
+      $('form').hidden = true; resetForm();
+      $('types').querySelectorAll('.type').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+      $('done').hidden = false;
+      $('done').innerHTML = '<div class="hint">Recorded</div><div class="ref">' + esc(r.ref) + '</div>' +
+        '<div style="font-size:15px">' + esc(TYPE_LABEL[en.type]) + (en.type === 'count' ? ': ' + money(en.counted) : ' · ' + money(en.amount)) +
+        (en.paidTo ? ' to ' + esc(en.paidTo) : '') + '</div>' +
+        (r.status === 'Awaiting approval' ? '<div><span class="tag warn">Waiting for a reviewer</span></div>' : '') +
+        (en.variance != null && Math.abs(en.variance) >= 0.005 ? '<div><span class="tag ' + (Math.abs(en.variance) >= S.cfg.variance ? 'bad' : 'warn') + '">' +
+          (en.variance < 0 ? 'Short ' + money(-en.variance) : 'Over ' + money(en.variance)) + ' against the book</span></div>' : '') +
+        en.flags.filter(function (f) { return f !== 'Weekend'; }).map(function (f) { return '<span class="tag warn">' + esc(f) + '</span>'; }).join('') +
+        (fl ? '<div class="kv" style="margin-top:14px"><span>' + esc(fl.holder) + '\'s float now</span><b>' + money(fl.balance) + '</b></div>' +
+          (fl.owed ? '<div class="kv"><span>Owed back to ' + esc(fl.holder.split(' ')[0]) + '</span><b>' + money(fl.owed) + '</b></div>' : '') : '') +
+        '<button class="btn gold block" type="button" id="again" style="margin-top:14px">Record another</button>';
+      $('again').addEventListener('click', function () { $('done').hidden = true; window.scrollTo(0, 0); });
+      loadLedger();
+    }).catch(function (err) { $('formErr').textContent = err.message; })
+      .then(function () { $('saveBtn').disabled = false; $('saveBtn').textContent = S.type === 'request' ? 'Send the request' : 'Record'; });
+  });
+
+  function resetForm() {
+    ['amount', 'purpose', 'paidTo', 'vehicle', 'odometer', 'client', 'recover', 'receiptNo', 'noRecNote', 'from', 'rPurpose',
+     'neededBy', 'counted', 'returnedTo', 'retWhy', 'notes'].forEach(function (id) { $(id).value = ''; });
+    $('denoms').querySelectorAll('input').forEach(function (i) { i.value = ''; });
+    $('receipt').value = ''; S.photo = ''; $('prev').style.display = 'none';
+    $('noRec').checked = false; $('noRecBox').hidden = true; $('suggest').hidden = true; $('limitHint').hidden = true;
+    S.cat = ''; $('cats').querySelectorAll('.cat').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+    $('subBox').hidden = true; $('vehicleBox').hidden = true; $('clientBox').hidden = true; $('recoverBox').hidden = true;
+    $('charged').disabled = false; $('charged').value = S.cfg.charged[0];
+    $('when').value = localNow(); $('recon').hidden = true;
+  }
+
+  /* ── load ──────────────────────────────────────────────── */
+  function loadLedger() {
+    return api('pc.ledger').then(function (r) {
+      S.entries = r.entries; S.floats = r.floats; S.loaded = true; S.ledgerAt = Date.now();
+      var hs = S.floats.map(function (f) { return f.holder; });
+      ['fHolder', 'iHolder'].forEach(function (id) { var v = $(id).value; opts($(id), hs, v, 'Everyone'); });
+      drawFloat(); drawLedger(); drawInsights(); recon();
+    }).catch(function (err) { $('ledger').innerHTML = '<div class="empty">' + esc(err.message) + '</div>'; });
+  }
+
+  /* ── float ─────────────────────────────────────────────── */
+  function drawFloat() {
+    var c = S.cfg, me = name(c.me.name);
+    var wait = c.me.reviewer ? S.entries.filter(function (e) { return e.status === 'Awaiting approval'; }) : [];
+    var queries = S.entries.filter(function (e) { return e.review === 'Queried' && (e.mine || false); });
+    var answered = c.me.reviewer ? S.entries.filter(function (e) { return e.review === 'Answered'; }) : [];
+    var myReq = S.entries.filter(function (e) { return e.type === 'request' && name(e.holder) === me && /Awaiting|Approved/.test(e.status); });
+    var n = wait.length + queries.length + answered.length;
+    $('todoN').hidden = !n; $('todoN').textContent = n;
+    var h = '';
+    if (wait.length) h += '<div class="card"><h2>Waiting for you<span class="sp"></span><span class="tag warn">' + wait.length + '</span></h2>' +
+      wait.map(function (e) { return entryHtml(e, true); }).join('') + '</div>';
+    if (queries.length) h += '<div class="card"><h2>Questions for you</h2>' + queries.map(function (e) { return entryHtml(e, true); }).join('') + '</div>';
+    if (answered.length) h += '<div class="card"><h2>Answers to your questions</h2>' + answered.map(function (e) { return entryHtml(e, true); }).join('') + '</div>';
+    if (myReq.length) h += '<div class="card"><h2>Your requests</h2>' + myReq.map(function (e) { return entryHtml(e, false); }).join('') + '</div>';
+    $('todo').innerHTML = h;
+    bindEntries($('todo'));
+    $('floats').innerHTML = S.floats.length ? S.floats.map(function (f) {
+      var pct = Math.max(0, Math.min(100, f.balance / f.float * 100));
+      var lc = f.lastCount;
+      return '<div class="fl"><div class="h"><span>' + esc(f.holder) + '</span>' +
+        (f.countOverdue ? '<span class="tag warn">Count due</span>' : '<span class="tag ok">Counted</span>') + '</div>' +
+        '<div class="bal' + (f.balance < 0 ? ' neg' : '') + '">' + money(f.balance) + '</div>' +
+        '<div class="hint" style="margin:0">cash the book says is in hand, of a ' + money(f.float) + ' float</div>' +
+        '<div class="meter"><i style="width:' + pct + '%"></i></div>' +
+        '<div class="kv"><span>Receipts since the last top-up</span><b>' + money(f.receiptsSinceTopup) + '</b></div>' +
+        '<div class="kv"><span>To bring it back to the float</span><b>' + money(f.topUp) + '</b></div>' +
+        (f.owed ? '<div class="kv"><span>Own money owed back</span><b>' + money(f.owed) + '</b></div>' : '') +
+        '<div class="kv"><span>Last count</span><b>' + (lc ? day(lc.when) + ' · ' + money(lc.counted) +
+          (lc.variance ? ' <span class="tag ' + (Math.abs(lc.variance) >= c.variance ? 'bad' : 'warn') + '">' + (lc.variance < 0 ? 'short ' : 'over ') + money(Math.abs(lc.variance)) + '</span>' : '')
+          : 'Never') + '</b></div>' +
+        (f.shortage ? '<div class="kv"><span>Short at counts, all time</span><b style="color:var(--bad)">' + money(f.shortage) + '</b></div>' : '') +
+        (f.balance < 0 ? '<div class="q">The book has gone below zero: more was spent than it shows was there. A top-up, or a spend from your own money, may not be recorded.</div>' : '') +
+        '</div>';
+    }).join('') : '<div class="empty">No float yet. Record the first cash you receive.</div>';
+  }
+
+  /* ── one entry, as a row that opens ────────────────────── */
+  function entryHtml(e, open) {
+    var c = S.cfg;
+    var inflow = e.type === 'topup';
+    var amt = e.type === 'count' ? money(e.counted) : (inflow ? '+' : e.type === 'request' ? '' : '−') + money(e.amount).replace('-', '');
+    var title = e.type === 'spend' ? (e.paidTo || e.purpose) : e.type === 'topup' ? (/repay/i.test(e.forWhat) ? 'Repaid' : 'Received') + (e.from ? ' from ' + e.from : '')
+      : e.type === 'count' ? 'Cash count' : e.type === 'request' ? 'Request: ' + e.purpose : 'Returned to ' + e.from;
+    var tags = '';
+    if (e.status === 'Void') tags += '<span class="tag mute">Void</span>';
+    if (e.status === 'Awaiting approval') tags += '<span class="tag warn">Awaiting approval</span>';
+    if (e.status === 'Approved') tags += '<span class="tag ok">Approved</span>';
+    if (e.status === 'Declined') tags += '<span class="tag bad">Declined</span>';
+    if (e.status === 'Topped up') tags += '<span class="tag ok">Topped up</span>';
+    if (e.review === 'Queried') tags += '<span class="tag warn">Queried</span>';
+    if (e.review === 'Answered') tags += '<span class="tag info">Answered</span>';
+    if (e.review === 'Reviewed') tags += '<span class="tag ok">Reviewed</span>';
+    if (e.charged && /personal/i.test(e.charged)) tags += '<span class="tag info">Personal</span>';
+    if (e.variance != null && Math.abs(e.variance) >= 0.005) tags += '<span class="tag ' + (Math.abs(e.variance) >= c.variance ? 'bad' : 'warn') + '">' +
+      (e.variance < 0 ? 'Short ' + money(-e.variance) : 'Over ' + money(e.variance)) + '</span>';
+    (e.flags || []).forEach(function (f) { if (f !== 'Void' && !/^Short |^Over TT/.test(f)) tags += '<span class="tag ' + (/guessed|Imported|Weekend/.test(f) ? 'mute' : 'warn') + '">' + esc(f) + '</span>'; });
+    var kv = function (k, v) { return v || v === 0 ? '<div class="kv"><span>' + k + '</span><span>' + v + '</span></div>' : ''; };
+    var more =
+      kv('Reference', esc(e.ref)) + kv('When', esc(day(e.when, true))) + kv('Logged', esc(day(e.logged, true)) + (e.by && name(e.by) !== name(e.holder) ? ' by ' + esc(e.by) : '')) +
+      kv('Float', esc(e.holder)) + kv('Category', esc([e.cat, e.sub].filter(Boolean).join(' · '))) + kv('Purpose', e.type !== 'request' ? esc(e.purpose) : '') +
+      kv('Charged to', esc(e.charged + (e.recover ? ': ' + e.recover : ''))) + kv('Paid with', esc(e.payment)) +
+      kv('Vehicle', esc(e.vehicle + (e.odometer ? ' · ' + e.odometer + ' km' : ''))) + kv('Client / policy', esc(e.client)) +
+      kv('Receipt', e.receipt ? '<a href="' + esc(e.receipt) + '" target="_blank" rel="noopener">Open the photo</a>' + (e.receiptNo ? ' · #' + esc(e.receiptNo) : '')
+        : (e.receiptNo ? '#' + esc(e.receiptNo) : (e.hasReceipt ? 'On file' : esc(e.noReceipt)))) +
+      kv('Method', esc(e.method)) + kv('Counted', e.counted != null && e.type !== 'count' ? money(e.counted) : '') +
+      kv('Notes and coins', esc(e.denoms)) + kv('Balance', e.before != null && e.type !== 'request' ? money(e.before) + ' → ' + money(e.after) : '') +
+      kv('Needed by', e.neededBy ? esc(day(e.neededBy)) : '') + kv('Decided by', esc(e.approvedBy)) + kv('Notes', esc(e.notes)) +
+      (e.reviewNote ? '<div class="q"><b>' + esc(e.reviewedBy || 'Reviewer') + ':</b> ' + esc(e.reviewNote) + (e.answer ? '<br><b>Answer:</b> ' + esc(e.answer).replace(/\n/g, '<br>') : '') + '</div>' : '');
+    var acts = '';
+    if (c.me.reviewer && e.status !== 'Void') {
+      if (e.status === 'Awaiting approval') acts += '<button class="btn ok sm" data-act="approve">Approve</button><button class="btn no sm" data-act="decline">Decline</button>';
+      if (e.type !== 'request' && e.review !== 'Reviewed') acts += '<button class="btn ok sm" data-act="reviewed">Mark reviewed</button>';
+      acts += '<button class="btn ghost sm" data-act="query">Ask a question</button><button class="btn no sm" data-act="void">Void</button>';
+    }
+    if (e.review === 'Queried' && e.mine) acts += '<button class="btn gold sm" data-act="answer">Answer the question</button>';
+    return '<div class="entry' + (open ? ' open' : '') + '" data-ref="' + esc(e.ref) + '"><div class="l1"><b>' + esc(title) + '</b>' +
+      '<span class="money ' + (inflow ? 'in' : 'out') + '">' + amt + '</span></div>' +
+      '<div class="meta">' + esc(day(e.when)) + ' · ' + esc(TYPE_LABEL[e.type] || e.type) + (e.cat ? ' · ' + esc(e.cat) : '') +
+      (c.me.reviewer ? ' · ' + esc(e.holder) : '') + (e.after != null && e.type !== 'request' ? ' · float ' + money(e.after) : '') + '</div>' +
+      (tags ? '<div>' + tags + '</div>' : '') +
+      '<div class="more">' + more + (acts ? '<div class="acts">' + acts + '</div>' : '') + '</div></div>';
+  }
+
+  function bindEntries(root) {
+    root.querySelectorAll('.entry').forEach(function (el) {
+      el.addEventListener('click', function (ev) {
+        if (ev.target.closest('a,button')) return;
+        el.classList.toggle('open');
+      });
+      el.querySelectorAll('[data-act]').forEach(function (b) {
+        b.addEventListener('click', function () { act(el.getAttribute('data-ref'), b.getAttribute('data-act'), b); });
+      });
+    });
+  }
+
+  function act(ref, what, btn) {
+    var note = '';
+    if (what === 'decline' || what === 'void' || what === 'query' || what === 'answer') {
+      var q = { decline: 'Why is it declined?', void: 'Why is it void? (The entry is kept, crossed out.)', query: 'Your question for the holder:', answer: 'Your answer:' }[what];
+      note = window.prompt(q, '');
+      if (note == null) return;
+      if (!note.trim()) { toast('Nothing written, nothing sent.'); return; }
+    }
+    btn.disabled = true;
+    var p = what === 'answer' ? api('pc.answer', { ref: ref, note: note }) : api('pc.review', { ref: ref, act: what, note: note });
+    p.then(function () {
+      toast({ approve: 'Approved', decline: 'Declined', reviewed: 'Marked reviewed', query: 'Question sent', void: 'Void', answer: 'Answer sent' }[what]);
+      loadLedger();
+    }).catch(function (err) { toast(err.message); btn.disabled = false; });
+  }
+
+  /* ── ledger ────────────────────────────────────────────── */
+  function inPeriod(iso, p) {
+    if (p === 'all') return true;
+    var d = new Date(iso), now = new Date();
+    if (p === 'month') return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    if (p === 'lastmonth') { var lm = new Date(now.getFullYear(), now.getMonth() - 1, 1); return d.getFullYear() === lm.getFullYear() && d.getMonth() === lm.getMonth(); }
+    if (p === 'year') return d.getFullYear() === now.getFullYear();
+    return now - d <= Number(p) * 86400000;
+  }
+  function realFlags(e) { return (e.flags || []).filter(function (f) { return !/^(Void|Weekend)$|guessed|Imported/.test(f); }); }
+  function ledgerRows() {
+    var p = $('fPeriod').value, h = $('fHolder').value, t = $('fType').value, cat = $('fCat').value, show = $('fShow').value,
+        q = $('fQ').value.trim().toLowerCase();
+    return S.entries.filter(function (e) {
+      if (!inPeriod(e.when, p)) return false;
+      if (h && name(e.holder) !== name(h)) return false;
+      if (t && e.type !== t) return false;
+      if (cat && e.cat !== cat) return false;
+      if (show === 'flag' && !realFlags(e).length && !(e.variance && Math.abs(e.variance) >= S.cfg.variance)) return false;
+      if (show === 'norec' && !(e.type === 'spend' && !e.hasReceipt && !e.receiptNo)) return false;
+      if (show === 'wait' && e.status !== 'Awaiting approval') return false;
+      if (show === 'query' && !/Queried|Answered/.test(e.review)) return false;
+      if (show === 'unrev' && (e.review || e.type === 'request' || e.status === 'Void')) return false;
+      if (show === 'personal' && !/personal/i.test(e.charged)) return false;
+      if (show === 'branch' && !(e.type === 'spend' && !/personal/i.test(e.charged))) return false;
+      if (q && [e.ref, e.paidTo, e.purpose, e.cat, e.sub, e.holder, e.from, e.vehicle, e.receiptNo, e.notes].join(' ').toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+  }
+  function drawLedger() {
+    if (!S.loaded) return;
+    var rows = ledgerRows();
+    var spent = rows.filter(function (e) { return e.type === 'spend' && e.status !== 'Void'; }).reduce(function (a, e) { return a + e.amount; }, 0);
+    var got = rows.filter(function (e) { return e.type === 'topup' && e.status !== 'Void'; }).reduce(function (a, e) { return a + e.amount; }, 0);
+    $('lSum').textContent = rows.length + ' entr' + (rows.length === 1 ? 'y' : 'ies') + ' · spent ' + money(spent) + ' · received ' + money(got);
+    $('ledger').innerHTML = rows.length ? rows.map(function (e) { return entryHtml(e, false); }).join('') : '<div class="empty">Nothing here for these filters.</div>';
+    bindEntries($('ledger'));
+  }
+  $('csv').addEventListener('click', function () {
+    var cols = ['ref', 'type', 'when', 'holder', 'amount', 'cat', 'sub', 'charged', 'recover', 'paidTo', 'purpose', 'vehicle', 'odometer', 'client',
+      'payment', 'receiptNo', 'receipt', 'noReceipt', 'from', 'method', 'forWhat', 'counted', 'before', 'after', 'variance', 'status', 'approvedBy',
+      'review', 'reviewNote', 'answer', 'by', 'logged', 'notes'];
+    var q = function (v) { v = v == null ? '' : Array.isArray(v) ? v.join('; ') : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var lines = [cols.concat(['flags']).join(',')].concat(ledgerRows().map(function (e) {
+      return cols.map(function (c) { return q(c === 'type' ? TYPE_LABEL[e.type] : e[c]); }).concat([q(e.flags)]).join(',');
+    }));
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+    a.download = 'petty-cash-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  /* ── insights ──────────────────────────────────────────── */
+  function group(list, key) {
+    var m = {};
+    list.forEach(function (e) { var k = key(e) || '(none)'; m[k] = m[k] || { name: k, amount: 0, n: 0, personal: 0 };
+      m[k].amount = r2(m[k].amount + e.amount); m[k].n++; if (/personal/i.test(e.charged)) m[k].personal = r2(m[k].personal + e.amount); });
+    return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return b.amount - a.amount; });
+  }
+  function bars(el, list, total, onTap) {
+    if (!list.length) { el.innerHTML = '<div class="empty">Nothing in this period.</div>'; return; }
+    var max = list[0].amount || 1;
+    el.innerHTML = list.map(function (g, i) {
+      var pct = total ? Math.round(g.amount / total * 100) : 0;
+      return '<button type="button" class="bar" data-i="' + i + '"><span>' + esc(g.name) + '</span><span class="t"><i style="width:' +
+        Math.max(1, g.amount / max * 100) + '%"></i></span><span class="x">' + money(g.amount) + ' <small>' + pct + '% · ' + g.n + '</small></span></button>';
+    }).join('');
+    if (onTap) el.querySelectorAll('.bar').forEach(function (b) { b.addEventListener('click', function () { onTap(list[+b.getAttribute('data-i')]); }); });
+  }
+  function weekStart(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var w = x.getDay(); x.setDate(x.getDate() - (w === 0 ? 6 : w - 1)); return x; }
+
+  function drawInsights() {
+    if (!S.loaded) return;
+    var p = $('iPeriod').value, h = $('iHolder').value, c = S.cfg;
+    var live = S.entries.filter(function (e) { return e.status !== 'Void' && (!h || name(e.holder) === name(h)); });
+    var rows = live.filter(function (e) { return inPeriod(e.when, p); });
+    var sp = rows.filter(function (e) { return e.type === 'spend'; });
+    var sum = function (l) { return r2(l.reduce(function (a, e) { return a + e.amount; }, 0)); };
+    var spent = sum(sp), personal = sum(sp.filter(function (e) { return /personal/i.test(e.charged); }));
+    var noRec = sp.filter(function (e) { return !e.hasReceipt && !e.receiptNo; });
+    var counts = rows.filter(function (e) { return e.variance != null; });
+    var short = r2(counts.reduce(function (a, e) { return a + (e.variance < 0 ? -e.variance : 0); }, 0));
+    var over = r2(counts.reduce(function (a, e) { return a + (e.variance > 0 ? e.variance : 0); }, 0));
+    var got = sum(rows.filter(function (e) { return e.type === 'topup' && !/repay/i.test(e.forWhat); }));
+    var owed = r2(S.floats.filter(function (f) { return !h || name(f.holder) === name(h); }).reduce(function (a, f) { return a + f.owed; }, 0));
+    var daysIn = p === 'all' || p === 'year' || /month/.test(p) ? null : Number(p);
+    var tile = function (l, v, s, bad) { return '<div class="tile' + (bad ? ' bad' : '') + '"><div class="l">' + l + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>'; };
+    $('tiles').innerHTML =
+      tile('Spent', money(spent), sp.length + ' spend' + (sp.length === 1 ? '' : 's') + (daysIn ? ' · ' + money(spent / daysIn * 7) + ' a week' : '')) +
+      tile('Branch', money(spent - personal), spent ? Math.round((spent - personal) / spent * 100) + '% of spend' : '') +
+      tile('Personal', money(personal), spent ? Math.round(personal / spent * 100) + '% of spend' : '') +
+      tile('Received', money(got), rows.filter(function (e) { return e.type === 'topup'; }).length + ' top-ups') +
+      tile('Short at counts', money(short), counts.length + ' count' + (counts.length === 1 ? '' : 's') + (over ? ' · over ' + money(over) : ''), short >= c.variance) +
+      tile('With a receipt', sp.length ? Math.round((sp.length - noRec.length) / sp.length * 100) + '%' : '—', noRec.length ? noRec.length + ' without · ' + money(sum(noRec)) : 'every spend', noRec.length > 0) +
+      tile('Average spend', money(sp.length ? spent / sp.length : 0), sp.length ? 'largest ' + money(Math.max.apply(null, sp.map(function (e) { return e.amount; }))) : '') +
+      tile('Owed to staff', money(owed), 'own money not yet repaid', owed > 0);
+
+    var byCat = group(sp, function (e) { return e.cat; });
+    bars($('byCat'), byCat, spent, function (g) {
+      $('fCat').value = g.name === '(none)' ? '' : g.name; $('fPeriod').value = p; $('fHolder').value = h; $('fType').value = 'spend'; $('fShow').value = '';
+      showTab('ledger'); drawLedger();
+    });
+    bars($('bySub'), group(sp, function (e) { return e.sub ? e.cat + ' · ' + e.sub : e.cat; }).slice(0, 10), spent);
+    bars($('byVendor'), group(sp, function (e) { return e.paidTo; }).slice(0, 10), spent, function (g) {
+      $('fQ').value = g.name; $('fCat').value = ''; $('fType').value = 'spend'; $('fPeriod').value = p; showTab('ledger'); drawLedger();
+    });
+    var veh = group(sp.filter(function (e) { return e.vehicle; }), function (e) { return e.vehicle; });
+    $('vehCard').hidden = !veh.length; bars($('byVehicle'), veh, spent);
+
+    /* Twelve weeks, branch and personal stacked, every value also in the table. */
+    var w0 = weekStart(new Date()), weeks = [];
+    for (var i = 11; i >= 0; i--) weeks.push({ from: new Date(w0.getTime() - i * 7 * 86400000), b: 0, p: 0 });
+    live.filter(function (e) { return e.type === 'spend'; }).forEach(function (e) {
+      var d = new Date(e.when);
+      weeks.forEach(function (w) { if (d >= w.from && d < new Date(w.from.getTime() + 7 * 86400000)) { if (/personal/i.test(e.charged)) w.p += e.amount; else w.b += e.amount; } });
+    });
+    var wmax = Math.max.apply(null, weeks.map(function (w) { return w.b + w.p; })) || 1;
+    $('weeks').innerHTML = weeks.map(function (w) {
+      var t = r2(w.b + w.p);
+      return '<div class="wk" title="Week of ' + esc(day(w.from.toISOString())) + ': ' + money(t) + '">' + (t ? '<span class="val">' + Math.round(t) + '</span>' : '') +
+        '<div class="b p" style="height:' + (w.p / wmax * 100) + '%"></div><div class="b" style="height:' + (w.b / wmax * 100) + '%"></div>' +
+        '<div class="lab">' + w.from.getDate() + '/' + (w.from.getMonth() + 1) + '</div></div>';
+    }).join('');
+    $('weeksT').innerHTML = '<tr><th>Week of</th><th class="r">Branch</th><th class="r">Personal</th><th class="r">Total</th></tr>' +
+      weeks.slice().reverse().filter(function (w) { return w.b || w.p; }).slice(0, 6).map(function (w) {
+        return '<tr><td>' + esc(day(w.from.toISOString())) + '</td><td class="r">' + money(w.b) + '</td><td class="r">' + money(w.p) + '</td><td class="r"><b>' + money(w.b + w.p) + '</b></td></tr>';
+      }).join('');
+
+    if (c.me.reviewer) {
+      var hs = {};
+      S.floats.forEach(function (f) { hs[name(f.holder)] = { f: f, spent: 0, n: 0, norec: 0, short: 0, flags: 0 }; });
+      rows.forEach(function (e) {
+        var x = hs[name(e.holder)]; if (!x) return;
+        if (e.type === 'spend') { x.spent += e.amount; x.n++; if (!e.hasReceipt && !e.receiptNo) x.norec++; }
+        if (e.variance < 0) x.short += -e.variance;
+        if (realFlags(e).length) x.flags++;
+      });
+      $('byHolder').innerHTML = '<tr><th>Person</th><th class="r">Spent</th><th class="r">No receipt</th><th class="r">Short</th><th class="r">Flags</th><th class="r">Float now</th></tr>' +
+        Object.keys(hs).map(function (k) { var x = hs[k];
+          return '<tr><td>' + esc(x.f.holder) + '</td><td class="r">' + money(x.spent) + ' <span class="hint">· ' + x.n + '</span></td><td class="r">' + x.norec +
+            '</td><td class="r"' + (x.short >= c.variance ? ' style="color:var(--bad)"' : '') + '>' + money(x.short) + '</td><td class="r">' + x.flags +
+            '</td><td class="r">' + money(x.f.balance) + '</td></tr>'; }).join('');
+    }
+
+    /* Red flags, by kind. */
+    var kinds = {};
+    rows.forEach(function (e) {
+      realFlags(e).forEach(function (f) {
+        var k = f.replace(/TT\$[\d,.]+/g, '').replace(/\d+ days/, 'days').replace(/Possible split.*/, 'Possible split purchase')
+          .replace(/Receipt # also on .*/, 'Receipt # used twice').replace(/^Short .*at the count$/, 'Short at a count').replace(/^Over .*at the count$/, 'Over at a count').trim();
+        kinds[k] = kinds[k] || { name: k, amount: 0, n: 0 }; kinds[k].n++; kinds[k].amount = r2(kinds[k].amount + (e.type === 'count' ? Math.abs(e.variance || 0) : e.amount));
+      });
+    });
+    var fl = Object.keys(kinds).map(function (k) { return kinds[k]; }).sort(function (a, b) { return b.n - a.n; });
+    bars($('flags'), fl, 0, function () { $('fShow').value = 'flag'; $('fPeriod').value = p; $('fHolder').value = h; $('fCat').value = ''; $('fType').value = ''; $('fQ').value = ''; showTab('ledger'); drawLedger(); });
+    $('flags').querySelectorAll('.x small').forEach(function (s, i) { s.textContent = fl[i].n + ' entr' + (fl[i].n === 1 ? 'y' : 'ies'); });
+
+    /* What stands out: facts, the most important first. */
+    var st = [];
+    if (short >= c.variance) st.push('Counts came up <b>' + money(short) + ' short</b> of the book' + (counts.length ? ' across ' + counts.length + ' count' + (counts.length === 1 ? '' : 's') : '') +
+      '. Cash left the float without an entry: ask for the spends behind it.');
+    var neg = S.floats.filter(function (f) { return f.balance < 0 && (!h || name(f.holder) === name(h)); });
+    if (neg.length) st.push(neg.map(function (f) { return esc(f.holder); }).join(', ') + '\'s book is below zero: a top-up or an own-money spend is missing.');
+    if (personal) st.push(money(personal) + ' (' + Math.round(personal / spent * 100) + '%) of the spend was personal, kept apart from the branch\'s.');
+    if (noRec.length) st.push(noRec.length + ' spend' + (noRec.length === 1 ? '' : 's') + ' (' + money(sum(noRec)) + ') had no receipt.');
+    if (byCat[0] && spent) st.push('Most went on ' + esc(byCat[0].name.toLowerCase()) + ': ' + money(byCat[0].amount) + ' (' + Math.round(byCat[0].amount / spent * 100) + '%).');
+    var late = sp.filter(function (e) { return (e.flags || []).some(function (f) { return /^Logged/.test(f); }); });
+    if (late.length) st.push(late.length + ' spend' + (late.length === 1 ? ' was' : 's were') + ' logged more than ' + c.lateDays + ' days after it happened. Log on the day, while the receipt is in hand.');
+    var due = S.floats.filter(function (f) { return f.countOverdue && (!h || name(f.holder) === name(h)); });
+    if (due.length) st.push('Count due: ' + due.map(function (f) { return esc(f.holder); }).join(', ') + ' (not counted in ' + c.countDays + ' days). A surprise count is the strongest check there is.');
+    var recent = weeks.slice(-4).reduce(function (a, w) { return a + w.b + w.p; }, 0) / 4, before = weeks.slice(0, 8).reduce(function (a, w) { return a + w.b + w.p; }, 0) / 8;
+    if (before > 0 && recent > before * 1.4) st.push('The last four weeks averaged ' + money(recent) + ' a week, up from ' + money(before) + ' in the eight before.');
+    if (before > 0 && recent < before * 0.6) st.push('The last four weeks averaged ' + money(recent) + ' a week, down from ' + money(before) + '.');
+    if (!st.length) st.push('Nothing out of the ordinary in this period.');
+    $('stand').innerHTML = st.map(function (s) { return '<li>' + s + '</li>'; }).join('');
+  }
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
