@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16l';
+var SCRIPT_VERSION = '2026-10-16m';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3713,6 +3713,30 @@ function housekeepingTick_() {
 /** Run from the editor when the before-you-leave mail was missed: sends it now
  *  to every desk that is past (finish − 30) today, signed in, not absent, and
  *  has not had it. Safe to run twice; nobody gets two. */
+/** Run by hand: every close-out and every manager report, now, whatever the time.
+ *  Each staff close-out is marked sent, so the ten-minute run does not send it again. */
+function sendEverythingNow() {
+  var day = todayISO_(), props = PropertiesService.getScriptProperties(), now = new Date(), out = [], present = {};
+  try { (hrRows_(ATT, true) || []).forEach(function (r) {
+    if (isoDay_(r.Date) !== day || String(r.Status || 'in').toLowerCase() === 'absent') return;
+    if (timeStr_(r.FirstSignIn)) present[String(r.StaffId)] = timeStr_(r.FirstSignIn); }); } catch (e) {}
+  publicRoster_().forEach(function (p) {
+    var sid = String(p.staffId);
+    if (DAY_MAIL_DESKS.indexOf(sid) < 0) return;
+    if (!present[sid]) { out.push(nameFor_(sid) + ': not signed in today, nothing sent'); return; }
+    var key = 'hkv2_' + sid + '_' + day;
+    if (props.getProperty(key)) { out.push(nameFor_(sid) + ': close-out already sent at ' + props.getProperty(key)); return; }
+    try { if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid]);
+      props.setProperty(key, hhmm_(now)); out.push(nameFor_(sid) + ': close-out sent'); }
+    catch (e) { out.push(nameFor_(sid) + ': FAILED ' + (e && e.message)); }
+  });
+  try { sendBranchManagerProgress_(day, 'eve'); out.push('Branch Manager report: sent'); } catch (e) { out.push('Branch Manager report: FAILED ' + (e && e.message)); }
+  try { UM_DESKS.forEach(function (s) { out.push(nameFor_(s) + ' unit report: ' + (sendUnitManagerEvening_(s, day) ? 'sent' : 'not sent')); }); } catch (e) { out.push('Unit Manager report: FAILED ' + (e && e.message)); }
+  try { sendBmaReport_(day); props.setProperty('bmarep_' + day, hhmm_(now)); out.push('Kamla branch report: sent'); } catch (e) { out.push('Kamla branch report: FAILED ' + (e && e.message)); }
+  Logger.log(out.join('\n'));
+  return out.join('\n');
+}
+
 function sendHousekeepingNow() {
   var day = todayISO_(), props = PropertiesService.getScriptProperties(), out = [];
   var now = new Date(), mins = minutesOf_(hhmm_(now));
@@ -6336,7 +6360,7 @@ function sendHousekeeping_(person, day, signIn) {
   var body =
     '<div style="background:' + MAIL.navy + ';color:#fff;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:14px;line-height:1.55">' +
       '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:' + MAIL.soft + '">Official close-out notice · ' + esc_(twelve_(hhmm_(new Date()))) + '</div>' +
-      esc_(first) + ', your day ends at <b>' + esc_(endText) + '</b>. <b>You will be signed out automatically at ' + esc_(endText) + '</b>, thirty minutes from this notice. ' +
+      esc_(first) + ', your day ends at <b>' + esc_(endText) + '</b>. <b>You will be signed out automatically at ' + esc_(endText) + '</b>. ' +
       'Before then: comment on every block below and every task still open in it, scrub your inbox and WhatsApp, close off the branch sheets in your name, clear your desk, and save the close-out. ' +
       'If the close-out is not saved by ' + esc_(endText) + ', Mr Rampersad and Mrs Dookran are told, with what was left.</div>' +
     statTiles_([
