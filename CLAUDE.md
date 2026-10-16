@@ -74,9 +74,17 @@ manager chose "the films and the board pages" over the films alone or the
 whole site. So `assign.html` (the board), `board-films.html`, `wall.html`,
 `dashboard.html`, `stream.html` and `responses.html` carry the blue shield
 (their `.mark` tile is `#13408F` behind it, and their favicon is the same
-file); never `gcm-mark.png`, never a redrawn shape. Every other page and
-every letter keeps the gold shield, and the hosted `logo-mark.png` is
-untouched: the letters already sent load it.
+file); never `gcm-mark.png`, never a redrawn shape. **The agent introduction
+joined them on 16 October 2026** ("change the color i have said i do not like
+the yello inside the logo nor the black!!!!!", on seeing the gold shield on
+the near-black masthead of the Felicia sample): the "Meet your agent" e-mail
+(`tIntroBuild_`, `tIntroTeamHtml_`, colours in `T_INTRO_LOOK`), the client's
+page `your-policy/agent.html` and the sample carry the blue shield, a
+`#13408F` into `#1D5BC4` masthead with a cyan rule, white buttons on a blue
+picker, and no gold or near-black anywhere. Anything new built for the board
+or sent from it takes the same blues. Every other page and every letter
+keeps the gold shield, and the hosted `logo-mark.png` is untouched: the
+letters already sent load it.
 
 The letter's logo is the hosted copy at
 `https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
@@ -1898,12 +1906,28 @@ voice under the new timing and the caption gives it away.
     unless they ask) and that a review follows every six months and in the birthday month.
   - **The team's own record** (`tTeamRecord_`): the client requests each of them closed in Salesforce in the past year,
     and what kind they mostly were, under their line ("2,400 client requests handled in the past year: mostly new
-    applications, premiums and billing and policy changes"), and the team's total in the heading. Logged e-mails, the
+    applications, premiums and policy changes"), and the team's total in the heading. Logged e-mails, the
     birthday flow and internal work (training, staffing, operations) never count; under 20, no count shows.
+  - **"You told us", and a reply that shows we listened** (16 October 2026: "the ai is supposed to have read the
+    questions asked as to how they answered and provide a response … to show we are listening, also not too much
+    clutter as folks dont like long emails"). The introduction opens, under the masthead, on up to three of the client's
+    answers (`tIntroHeard_`: most pressing first by `T_PRIORITY`, in the letter's own words, their own words as one
+    short quote) and one or two sentences in reply, written by the Claude API (`gcmClaude_`, the `ANTHROPIC_API_KEY`
+    Script property) under `T_HEARD.SYSTEM`: only what the answers say, no advice, figures, dates or promises, never a
+    former agent, their own words fenced as data. `tHeardOk_` checks the reply before it is used (length, a link, an
+    amount or long number, a refund or guarantee, a greeting, the former agent's name from the Agent column); a reply
+    that fails, an API that does not answer, or no key, and the plain line goes instead ("Thank you for telling us. <agent>
+    has your answers and will start your first call with what matters most to you."). A reply is kept six hours per
+    client and agent, so the preview and the send read the same words. A test or a preview with no answers shows
+    made-up ones (`T_HEARD_SAMPLE`) and says so. **The e-mail is short on purpose**: four topics at most
+    (`T_PROF.SKILLS_MAIL`), who they work with, the areas and the languages in one line each, before Guardian and
+    outside work in one line, the first call in two sentences, one line a person for the team (the branch manager's
+    years and direct line; each of the team's client requests in the past year in short words), and one line of help.
+    It reads under 700 words with every part filled in.
   - **The sample**: Felicia's introduction, drawn by the script from her draft, is the example for the whole branch.
     It is published as a private Artifact page the branch manager shares, never on the website: the drafts are not
     in this repository. Three fields on it carry sample wording, marked on the page, until Felicia writes her own.
-  - `profiles17/prof-test.js` in the scratchpad covers it (138 checks: Node on the 16 October tabs with the drafts and a
+  - `profiles17/prof-test.js` in the scratchpad covers it (156 checks, the AI mocked: Node on the 16 October tabs with the drafts and a
     mocked Salesforce, then Playwright on the board as an agent, the branch and a phone, and on the client's page).
 - **After a call, one press on the board marks the file and can write to the
   client in the manager's name.** Asked for on 28 September 2026 ("a button
