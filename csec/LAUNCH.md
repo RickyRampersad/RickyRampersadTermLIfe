@@ -1,4 +1,4 @@
-# CSEC Study Hub — launch pack
+# Study Hub — launch pack
 
 Launching to **Ricky Rampersad Branch client families** with school-age children
 — **Standard 1 through Form 5**, covering both SEA and CSEC. Free, no app,
@@ -56,7 +56,7 @@ paragraphs — WhatsApp reflows and wrapped text arrives ragged.
 
 CXC gives the full syllabus away free — the exact document the examiner works from. It is the most useful thing in the whole process and almost nobody in a family home has opened one.
 
-The CSEC Study Hub is live and free for your client families. Ten minutes a night aimed at whatever their child is weakest on, Form 1 to Form 5, nothing to install. It is a reason to call a client that has nothing to do with selling them anything.
+The Study Hub is live and free for your client families. Ten minutes a night aimed at whatever their child is weakest on, Form 1 to Form 5, nothing to install. It is a reason to call a client that has nothing to do with selling them anything.
 
 Reply with one family you are sending it to this week.
 
