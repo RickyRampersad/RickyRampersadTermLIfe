@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Syllabus Browser | CSEC Study Hub</title>
+<meta name="description" content="The Standard 1 to Form 5 road through SEA to CSEC — what matters in each year, a countdown to the examination, and the full syllabus strand list for every subject."/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+<style>
+  .strand{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;
+          background:rgba(0,0,0,.2);border:1px solid var(--line)}
+  .strand .fms{flex:none;display:flex;gap:3px}
+  .strand .fms i{width:19px;height:19px;border-radius:5px;display:grid;place-items:center;
+                 font-style:normal;font-size:.66rem;font-weight:700;background:rgba(255,255,255,.07);color:var(--muted)}
+  .strand .fms i.on{background:rgba(0,207,234,.22);color:var(--teal)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Syllabus</span></div>
+    <nav class="topnav" id="nav"></nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow">Form 1 → Form 5</div>
+      <h1>The syllabus, strand by strand</h1>
+      <p>Every CSEC syllabus section for every subject, with the forms each is normally taught in
+         and how you are doing on it. For what each <i>year</i> is for, see
+         <a href="journey.html" style="color:var(--gold)">your journey →</a></p>
+    </div>
+
+    <!-- ---------- countdown ---------- -->
+    <div class="card" style="margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <label class="fl" for="formsel">I am currently in</label>
+          <select class="fi" id="formsel" style="max-width:260px">
+            <optgroup label="Primary school">
+              <option value="1">Standard 1</option><option value="2">Standard 2</option>
+              <option value="3">Standard 3</option><option value="4">Standard 4</option>
+              <option value="5">Standard 5 — SEA year</option>
+            </optgroup>
+            <optgroup label="Secondary school">
+              <option value="6">Form 1</option><option value="7">Form 2</option>
+              <option value="8" selected>Form 3</option><option value="9">Form 4</option>
+              <option value="10">Form 5 — CSEC year</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="grid g3" style="flex:2;min-width:280px">
+          <div class="tile"><div class="big" id="cd-year">—</div><div class="lab">CSEC year</div></div>
+          <div class="tile teal"><div class="big" id="cd-months">—</div><div class="lab">Months away</div></div>
+          <div class="tile"><div class="big" id="cd-days">—</div><div class="lab">Days away</div></div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:14px">
+        CSEC examinations are written in May and June. The countdown runs to 1 May of your examination year.
+      </p>
+    </div>
+
+    <a class="card" href="journey.html" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:14px 0;text-decoration:none">
+      <div style="font-size:1.7rem">🧭</div>
+      <div style="flex:1;min-width:200px">
+        <h3>What is this year actually for?</h3>
+        <p class="sub">The guided journey breaks each form into its three terms, shows what is new
+        this year, what you are still carrying from below, and every milestone ahead, through SEA and on to CSEC.</p>
+      </div>
+      <span class="r-arrow">→</span>
+    </a>
+
+    <!-- ---------- syllabus browser ---------- -->
+    <div class="section-label">Syllabus browser</div>
+    <div class="card" style="margin-bottom:14px">
+      <label class="fl" for="subjsel">Show the syllabus strands for</label>
+      <select class="fi" id="subjsel"></select>
+      <p class="sub" style="margin-top:12px" id="subjmeta"></p>
+    </div>
+    <div class="rows" id="strands"></div>
+
+    <div class="note" style="margin-top:20px">
+      <b>These strands follow the CSEC syllabus sections.</b> The syllabus itself is published free by
+      CXC and lists exactly what an examiner is allowed to ask — download it for each of your subjects
+      from the <a href="papers.html" style="color:var(--gold)">Past papers page</a>. The blue markers show
+      the forms in which a strand is normally taught in Trinidad and Tobago; schools vary, so treat
+      them as a guide rather than a timetable.
+    </div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script src="assets/csec-config.js"></script>
+<script src="assets/csec-sync.js"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+  var me=CSEC.current();
+
+  /* nav depends on whether anyone is signed in */
+  var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
+  $('nav').innerHTML = me
+    ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
+      '<a href="journey.html">Journey</a>'+
+    (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
+      /* SEA papers are for the primary ladder only; a Form 3 has no use for them. */
+      ((me.role!=='student'||me.level<=5)?'<a href="sea.html">SEA Papers</a>':'')+
+      '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
+      '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a><a href="settings.html">Settings</a>'
+    : '<a href="start.html">Start here</a><a href="index.html">Sign in</a><a href="journey.html">Journey</a><a href="guides.html">Guides</a>'+
+      '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a>';
+
+  var form = me && me.role==='student' ? me.level : 8;
+  $('formsel').value=String(form);
+
+  /* ---------------- countdown + roadmap ---------------- */
+  function paintForm(){
+    form=parseInt($('formsel').value,10)||8;
+    var cd=CSEC.countdown(form);
+    $('cd-year').textContent=cd.year;
+    $('cd-months').textContent=cd.months;
+    $('cd-days').textContent=cd.days;
+
+  }
+  $('formsel').addEventListener('change',function(){ paintForm(); paintSubject(); });
+  paintForm();
+
+  /* ---------------- syllabus browser ---------------- */
+  var list = me && me.role==='student' && me.subjects && me.subjects.length
+    ? me.subjects : C.defaultSelection;
+  var seen={}; var all=list.concat(Object.keys(C.subjects)).filter(function(id){
+    if(seen[id]||!C.subjects[id]) return false; seen[id]=true; return true;
+  });
+  $('subjsel').innerHTML=all.map(function(id){
+    return '<option value="'+esc(id)+'">'+C.subjects[id].icon+'  '+esc(C.subjects[id].name)+'</option>';
+  }).join('');
+
+  function paintSubject(){
+    var s=C.subjects[$('subjsel').value]; if(!s) return;
+    $('subjmeta').innerHTML='<b>'+esc(s.blurb)+'</b><br>'+esc(s.papers);
+    $('strands').innerHTML=s.strands.map(function(t){
+      var marks='';
+      for(var f=1;f<=5;f++){
+        marks+='<i class="'+(t.levels.indexOf(f)>-1?'on':'')+'" title="'+CSEC.levelLabel(f)+'">'+f+'</i>';
+      }
+      var stat = me && me.role==='student' ? CSEC.strandStat(me.id,t.id) : null;
+      var badge = !stat ? ''
+        : stat.pct==null ? '<span class="pill mute">not started</span>'
+        : '<span class="pill '+(stat.pct>=75?'good':stat.pct>=50?'gold':'bad')+'">'+stat.pct+'%</span>';
+      return '<div class="strand">'+
+        '<div class="fms">'+marks+'</div>'+
+        '<div class="r-text" style="flex:1"><b>'+esc(t.name)+'</b><span>'+esc(t.note)+'</span></div>'+
+        badge+'</div>';
+    }).join('');
+  }
+  $('subjsel').addEventListener('change',paintSubject);
+  paintSubject();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
