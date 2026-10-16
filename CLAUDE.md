@@ -2456,6 +2456,41 @@ voice under the new timing and the caption gives it away.
   the e-mails still go, and the tab says to enter the dates by hand.
   `claims/claims-harness.js` (68 checks) and `claims/claims-test.js`
   (Playwright, 31) in the scratchpad cover it.
+  **Since 16 October 2026 the questionnaire's dates in Salesforce drive every claim** (`T_SQ`, `tSqRun_`; `T_SQ.ON`
+  false puts back the flow above). The manager: "the date service received is updated by the staff … sales support
+  follows up with customer service … after 5 working days … a follow up email is sent attaching the trail as support is
+  copied. If … date SQ processed by CSR is filled then there is no further automation. Once the date SQ processed is
+  filled an automated email to GLOC retention is sent … with a 3 working days timeframe with reminders [until] date SQ
+  comm paid". Every claim since 1 October had been submitted by hand, and none started from a questionnaire on the sheet.
+  - **The fields** (CLIENT_PORTFOLIO__c): `Date_SQ_submitted__c` (the completed questionnaire, staff),
+    `Date_SQ_submitted_to_CSR__c` and `Date_SQ_processed_by_CSR__c` (sales support; both new on 16 October, and both
+    dates), `Date_Subm_to_Retention__c` and `Was_Agent_Paid__c` ("Was Agent Paid for Orphan?", the system),
+    `Date_Comm_Paid__c` ("Date SQ Comm Paid", Retention or sales support). The integration user needs read and edit on
+    the two new fields, or the query fails.
+  - **A claim** is one client (their Contact, else client number) and one questionnaire (the day it went to Customer
+    Service), with every policy that carries those dates. Only dates from 16 October (`T_SQ.FROM`) count. It is a row on
+    the Retention Payments tab (`SQ key`, `Records`, `Sent to CSR`, `CSR follow-ups`, `Last CSR follow-up`, `Processed
+    by CSR`, added by name to an older tab), so the board, the brief and the points read it as before; the board shows
+    the new stage as "with Customer Service".
+  - **Customer Service**: every 5 working days (`CSR_DAYS`, counted as `tWorkingDays_` counts them) until processed is
+    filled, in the first run from 10:00 on a working day, one follow-up: to the desk the SQ task went to (the task's
+    contact when it is a desk, else `CSR_TO`), sales support and the task's owner copied, a reply to sales support; the
+    task's subject as its own, the trail in the body (the task and its Chatter), and the original e-mail attached as
+    `.eml` when support@ was copied on it (found by policy number, `tSqOriginal_`). A line goes on the task's Chatter.
+  - **Retention**: the day processed is filled (8:00 to 17:00, working days) the claim goes to `T_CLAIM.TO`, the manager,
+    sales support and the agent copied, to be paid within 3 working days (`RET_DAYS`), and Date Subm to Retention (and
+    Was Agent Paid No) is written on each policy. A reminder every 3 working days at 10:00, never copying the agent,
+    until Date SQ Comm Paid is in; then Was Agent Paid Yes and the agent told (`tClaimPaidMail_`). A Date Subm to
+    Retention already entered is "Submitted by hand", never e-mailed, still reminded.
+  - **Held**: no agent; an agent who left (`tFormer_`); not active on the Agent Skill Bank; a questionnaire received
+    before the Date Assigned to Agent. A second questionnaire for a client already claimed is Void.
+  - **The agent paid** is Assigned Agent, else the agent on the policy (`AGENT__c`, which is who Sasha's by-hand claims
+    paid).
+  - Nothing goes before the go (`claims_live`); `transitionSqTest` sends the manager one follow-up, one claim and one
+    reminder, marked TEST, from the real records where there are some; `transitionSqNow` runs it at once.
+  - `sq16/sq-test.js` in the scratchpad covers it (54 checks, a made-up Salesforce and mailbox, the clock moved over two
+    weeks). The board film's claim line ("at once … every working day at ten") is now out of date: re-voice it with the
+    next cut.
 - **One client in full on the board: the history, their Salesforce tasks,
   and the team's comments** (3 October 2026, the same request: "so the agent
   can see the email and history and tasks opened on salesforce assigned to

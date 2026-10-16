@@ -4961,14 +4961,16 @@ function tBoard_(w, all, lite) {
     var cview = crows.map(function (r) { return tClaimView_(r, tz, today, w.role === 'branch'); });
     cview.forEach(function (v) { if (v.token) cBy[v.token] = v; });
     clients.forEach(function (c) { if (cBy[c.token]) c.claim = cBy[c.token]; });
-    var corder = { check: 0, notsent: 1, held: 2, 'new': 3, unpaid: 4, paid: 5, closed: 6 }, csum = { n: cview.length, unpaid: 0, owed: 0, paid: 0, paidAmt: 0, held: 0 };
+    var corder = { check: 0, notsent: 1, held: 2, 'new': 3, csr: 4, unpaid: 5, paid: 6, closed: 7 }, csum = { n: cview.length, unpaid: 0, owed: 0, paid: 0, paidAmt: 0, held: 0, csr: 0 };
     cview.forEach(function (v) {
       if (v.state === 'unpaid') { csum.unpaid++; csum.owed += v.amount; }
       else if (v.state === 'paid') { csum.paid++; csum.paidAmt += v.amount; }
+      else if (v.state === 'csr') csum.csr++;
       else if (v.state !== 'closed') csum.held++;
     });
     cview.sort(function (a, b) { return (corder[a.state] - corder[b.state]) || String(b.id).localeCompare(String(a.id)); });
     claims = { rows: cview, sum: csum, live: tClaimsLive_(), sf: tSfOn_(), amount: T_CLAIM.AMOUNT, cur: T_CLAIM.CUR, minDays: T_CLAIM.MIN_DAYS,
+               sq: T_SQ.ON ? { csrDays: T_SQ.CSR_DAYS, retDays: T_SQ.RET_DAYS, hour: T_SQ.HOUR } : null,
                to: w.role === 'branch' ? T_CLAIM.TO : '' };
   }
   /* the branch by unit and person (the Agent Skill Bank's Role and Unit): every unit for the branch, his own for a unit manager */
@@ -6378,12 +6380,13 @@ function tBriefClaims_(agent, clients, board) {
     var all = tClaimsRead_().rows;
     all.forEach(function (r) { if (r.token) claimed[r.token] = true; });   // one claim per client, ever: any row (tClaimsFind_'s rule)
     var mine = all.filter(function (r) { return tNameKey_(r.agent) === k; }).map(function (r) { var v = tClaimView_(r, tz, today, false); v.paidDay = tDay_(r.paid) || ''; return v; });
-    var s = { paid: 0, paidAmt: 0, due: 0, dueAmt: 0, soon: '', soonD: '', owed: 0, owedAmt: 0, held: 0, heldAmt: 0 };
+    var s = { paid: 0, paidAmt: 0, due: 0, dueAmt: 0, soon: '', soonD: '', owed: 0, owedAmt: 0, held: 0, heldAmt: 0, csr: 0, csrAmt: 0 };
     mine.forEach(function (v) {
       /* a Date Comm Paid still to come is the commission run it will be paid in: "to be paid", not paid */
       if (v.state === 'paid' && v.future) { s.due++; s.dueAmt += v.amount; if (!s.soonD || v.paidDay < s.soonD) { s.soonD = v.paidDay; s.soon = v.paid; } }
       else if (v.state === 'paid') { s.paid++; s.paidAmt += v.amount; }
       else if (v.state === 'unpaid') { s.owed++; s.owedAmt += v.amount; }
+      else if (v.state === 'csr') { s.csr++; s.csrAmt += v.amount; }
       else if (v.state !== 'closed') { s.held++; s.heldAmt += v.amount; }
     });
     /* still to earn: every client named to them, this press and before, with no claim */
@@ -6397,6 +6400,7 @@ function tBriefClaims_(agent, clients, board) {
     var m = function (n) { return esc(cur + tMoney_(n)); };
     var rows = '';
     if (s.owed) rows += line('Owed to you', m(s.owedAmt), tPl_(s.owed, 'claim') + ' with the Retention unit, waiting for the payment date');
+    if (s.csr) rows += line('With Customer Service', m(s.csrAmt), tPl_(s.csr, 'questionnaire') + ' being processed: the claim goes to Retention the day it is');
     if (s.held) rows += line('Found, not sent yet', m(s.heldAmt), tPl_(s.held, 'claim') + (tClaimsLive_() ? ' the branch is checking' : ', going to the Retention unit on the branch’s go'));
     if (s.due) rows += line('To be paid', m(s.dueAmt), tPl_(s.due, 'claim') + ' on the commission run' + (s.soon ? ' of ' + esc(s.soon) : ''));
     if (s.paid) rows += line('Paid', m(s.paidAmt), tPl_(s.paid, 'claim'));
@@ -6405,9 +6409,13 @@ function tBriefClaims_(agent, clients, board) {
     return '<div style="border:1px solid #c9d8ef;border-radius:10px;padding:10px 14px;margin:14px 0;font-size:14px">' +
       '<b style="color:#12202e">Your ' + esc(cur + amt) + '</b>' +
       '<table style="border-collapse:collapse;margin:6px 0 4px;font-size:14px">' + rows + '</table>' +
-      '<p style="margin:4px 0 0;font-size:13px;color:' + mute + '">A service questionnaire that comes in on or after the day a client was named to you earns ' + esc(cur + amt) +
-      ', once per client, whoever sent the link. Do it with them on the call or at the visit, from their file on the board, so it carries their own link. ' +
-      'The board finds it, the claim goes to the Retention unit, and it is chased every working day until the payment date is in Salesforce. Your Claims tab on the board shows each one.</p></div>';
+      '<p style="margin:4px 0 0;font-size:13px;color:' + mute + '">' + (T_SQ.ON
+        ? 'A completed service questionnaire for a client named to you earns ' + esc(cur + amt) + ', once per client. Do it with them on the call or at the visit. ' +
+          'Sales support sends it to Customer Service, and the claim goes to the Retention unit the day Customer Service has processed it, to be paid within ' + T_SQ.RET_DAYS +
+          ' working days and reminded until the payment date is in Salesforce. You do not chase it. Your Claims tab on the board shows each one.'
+        : 'A service questionnaire that comes in on or after the day a client was named to you earns ' + esc(cur + amt) +
+          ', once per client, whoever sent the link. Do it with them on the call or at the visit, from their file on the board, so it carries their own link. ' +
+          'The board finds it, the claim goes to the Retention unit, and it is chased every working day until the payment date is in Salesforce. Your Claims tab on the board shows each one.') + '</p></div>';
   } catch (e) { return ''; }
 }
 function tPl_(n, one) { return n + ' ' + one + (n === 1 ? '' : 's'); }
@@ -8375,7 +8383,8 @@ var T_CLAIM = {
   LIVE: 'claims_live',  // the go: 'on' once transitionClaimsStart is pressed
 };
 var T_CLAIM_HEAD = ['Claim', 'Token', 'Client', 'Client number', 'Policy', 'Agent', 'Agent no.', 'Agent e-mail', 'Named on', 'Named via',
-  'Questionnaire', 'Received', 'Amount', 'Submitted', 'Salesforce', 'Follow-ups', 'Last follow-up', 'Paid', 'Status', 'Note'];
+  'Questionnaire', 'Received', 'Amount', 'Submitted', 'Salesforce', 'Follow-ups', 'Last follow-up', 'Paid', 'Status', 'Note',
+  'SQ key', 'Records', 'Sent to CSR', 'CSR follow-ups', 'Last CSR follow-up', 'Processed by CSR'];
 var T_CLAIM_SHUT = /^(paid|void|declined|withdrawn|cancel)/i;   // closed: never e-mailed or followed up again
 var T_CLAIM_RETRY = /^(not sent|held)/i;                       // tried again on the next scan
 var T_CLAIM_FOOT = 'This e-mail carries client information for Guardian Life of the Caribbean’s own use: do not forward it outside the company.';
@@ -8398,7 +8407,7 @@ function transitionClaimsNow() { return tSay_(tClaimsLocked_(true)); }
 function transitionClaimsMondayNow() {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return tSay_('Another run is busy. Try again in a minute.');
-  try { return tSay_(tClaimsFollow_(true).what); } finally { lock.releaseLock(); }
+  try { return tSay_(T_SQ.ON ? tSqRun_({ force: true }).what || 'Nothing was due.' : tClaimsFollow_(true).what); } finally { lock.releaseLock(); }
 }
 function transitionClaimsFollowNow() { return transitionClaimsMondayNow(); }
 function tClaimsLocked_(force) {
@@ -8419,6 +8428,12 @@ function tClaimsSay_(r) {
 function tClaimsRun_(force) {
   var out = { found: 0, sent: 0, held: 0, paid: 0, follow: '', errors: [] };
   var why = function (e) { return String(e && e.message ? e.message : e).slice(0, 200); };
+  /* since 16 October 2026 the questionnaire's dates in Salesforce drive every claim (tSqRun_, below) */
+  if (T_SQ.ON) {
+    try { var q = tSqRun_({ force: force }); out.found = q.found; out.sent = q.sent; out.held = q.held; out.paid = q.paid; out.follow = q.what; out.errors = q.errors; }
+    catch (e) { out.errors.push('questionnaires: ' + why(e)); log_('transition', 'sq-failed', why(e)); }
+    return out;
+  }
   try { var a = tClaimsFind_(force); out.found = a.found; out.sent = a.sent; out.held = a.held; }
   catch (e) { out.errors.push('finding: ' + why(e)); log_('transition', 'claims-failed', why(e)); }
   try { out.paid = tClaimsPaid_(force).paid; }
@@ -8452,7 +8467,9 @@ function tClaimsRead_() {
       policy: tPolNo_(g(v, 'Policy')), agent: tText_(g(v, 'Agent')), agentNo: tText_(g(v, 'Agent no.')), agentEmail: tText_(g(v, 'Agent e-mail')),
       named: g(v, 'Named on'), via: tText_(g(v, 'Named via')), q: tText_(g(v, 'Questionnaire')), received: g(v, 'Received'),
       amount: Number(g(v, 'Amount')) || T_CLAIM.AMOUNT, submitted: g(v, 'Submitted'), sf: tText_(g(v, 'Salesforce')),
-      follow: Number(g(v, 'Follow-ups')) || 0, lastFollow: g(v, 'Last follow-up'), paid: g(v, 'Paid'), status: tText_(g(v, 'Status')), note: tText_(g(v, 'Note')) });
+      follow: Number(g(v, 'Follow-ups')) || 0, lastFollow: g(v, 'Last follow-up'), paid: g(v, 'Paid'), status: tText_(g(v, 'Status')), note: tText_(g(v, 'Note')),
+      sqKey: tText_(g(v, 'SQ key')), recIds: tText_(g(v, 'Records')), toCsr: g(v, 'Sent to CSR'), csrN: Number(g(v, 'CSR follow-ups')) || 0,
+      csrLast: g(v, 'Last CSR follow-up'), done: g(v, 'Processed by CSR') });
   }
   return out;
 }
@@ -8835,12 +8852,440 @@ function tClaimView_(r, tz, today, branch) {
   var d = function (x) { var y = tDay_(x); return y ? tDmy_(y) : ''; };
   var sub = tDay_(r.submitted) || '', paid = tDay_(r.paid) || '', st = r.status;
   var state = /^paid/i.test(st) || (/^submitted/i.test(st) && tText_(r.paid)) ? 'paid' : T_CLAIM_SHUT.test(st) ? 'closed' : /^submitted/i.test(st) ? 'unpaid'
-    : /^held/i.test(st) ? 'held' : /^not sent/i.test(st) ? 'notsent' : /^sending/i.test(st) ? 'check' : 'new';
+    : /^with customer service/i.test(st) ? 'csr' : /^held/i.test(st) ? 'held' : /^not sent/i.test(st) ? 'notsent' : /^sending/i.test(st) ? 'check' : 'new';
   var v = { id: r.id, token: r.token, client: r.client, agent: r.agent, amount: r.amount, q: r.q, received: d(r.received), named: d(r.named), via: r.via,
     submitted: sub ? tDmy_(sub) : '', days: sub ? tDaysBetween_(sub, today) : null, follow: r.follow, last: d(r.lastFollow),
-    paid: paid ? tDmy_(paid) : (tText_(r.paid) && !paid ? tText_(r.paid) : ''), future: !!paid && paid > today, state: state, byHand: /by hand/i.test(st) };
+    paid: paid ? tDmy_(paid) : (tText_(r.paid) && !paid ? tText_(r.paid) : ''), future: !!paid && paid > today, state: state, byHand: /by hand/i.test(st),
+    toCsr: d(r.toCsr), csrN: r.csrN || 0, csrLast: d(r.csrLast), done: d(r.done) };
   if (branch) { v.status = st; v.sf = r.sf; }
   return v;
+}
+
+/* ── the service questionnaire, from Customer Service to the TT$200 ─────────────────────────────────────────────────
+   16 October 2026, the manager: "the date service received is updated by the staff, this is the complete service
+   questioner, sales support follows up with customer service to send the service questioner, after 5 working days sales
+   support then send a follow up, this will now be resolved by an automation … after [Date SQ submitted to CSR] is
+   populated, 5 working days after a follow up email is sent attaching the trail as support is copied. If … date SQ
+   processed by CSR is filled then there is no further automation. Once the date SQ processed is filled an automated email
+   to GLOC retention is sent to seek the reimbursement with a 3 working days timeframe with reminders, [until] date SQ comm
+   paid". Six fields on the policy record (CLIENT_PORTFOLIO__c) carry it:
+   - Date SQ submitted (Date_SQ_submitted__c): the completed questionnaire is in. Staff.
+   - Date SQ submitted to CSR: sales support has sent it to Customer Service. Sales support.
+   - Date SQ processed by CSR: Customer Service has processed it. Sales support, on Customer Service's word.
+   - Date Subm to Retention and Was Agent Paid for Orphan? (Was_Agent_Paid__c): the system, when the claim goes.
+   - Date SQ Comm Paid (Date_Comm_Paid__c): Retention, or sales support from Retention's reply.
+   So a claim is born in Salesforce and reaches every client the branch submits a questionnaire for, not only this
+   campaign's: every claim since 1 October was submitted by hand, and none of them started from a questionnaire on the
+   sheet, which is what tClaimsFind_ waited for. The Retention Payments tab stays the branch's copy of where each stands,
+   one row per client and questionnaire (SQ key), so the board, the agent's brief and the points read it as before.
+   Nothing goes before the manager's go (claims_live, "Transition: start the TT$200 claims"); transitionSqTest sends him one
+   of each e-mail first. */
+var T_SQ = {
+  ON: true,                 // the Salesforce dates drive the claims; false puts back the 3 October flow (tClaimsFind_)
+  FROM: '2026-10-16',       // dates before this were handled by hand: the two Customer Service fields are new that day
+  CSR_DAYS: 5,              // working days after Date SQ submitted to CSR, and between follow-ups, until it is processed
+  CSR_TO: 'gloccustomerservicechaguanassrsc@myguardiangroup.com',   // when the SQ task names no Customer Service desk
+  CSR_DESK: /customer|service|care|task|team|admin|desk|unit|rsc/i,   // a task's contact that is a desk, not a person
+  RET_DAYS: 3,              // the Retention unit is asked to pay within this many working days, and reminded each time it passes
+  HOUR: 10,                 // follow-ups and reminders go in the first run at or after this hour, Monday to Friday
+  WORK_FROM: 8, WORK_TO: 17,// the Retention claim goes in the first run in these hours after "processed" is filled
+  EVERY_MIN: 15,            // how often Salesforce is read
+  MAX_PER_RUN: 10,          // the most e-mails one run sends; the rest go in the next
+  EML_MAX: 2800000,         // the original e-mail is attached only under this size (Graph takes 3 MB inline)
+};
+var T_SQ_FIELDS = 'Id, POLICY__c, Client_Number__c, FIRST_NAME__c, LAST_NAME__c, Contact__c, Contact__r.Name, ' +
+  'Assigned_Agent__r.Name, Assigned_Agent__r.Email, AGENT__r.Name, AGENT__r.Email, Date_Assigned_to_Agent__c, Date_SQ_submitted__c, ' +
+  'Date_SQ_submitted_to_CSR__c, Date_SQ_processed_by_CSR__c, Date_Subm_to_Retention__c, Was_Agent_Paid__c, Date_Comm_Paid__c';
+
+/** A Salesforce date or date-time as yyyy-MM-dd ('' when blank). */
+function tSqDay_(x) { var m = /^(\d{4}-\d{2}-\d{2})/.exec(String(x || '')); return m ? m[1] : ''; }
+/** The date n working days after d (Saturday and Sunday skipped), as a Date. */
+function tAddWorkingDays_(d, n) {
+  var x = new Date(d.getTime());
+  while (n > 0) { x.setDate(x.getDate() + 1); var wd = x.getDay(); if (wd !== 0 && wd !== 6) n--; }
+  return x;
+}
+/** Whether n working days have fully passed since x (a Date or yyyy-MM-dd), as tWorkingDays_ counts them. */
+function tSqDue_(x, n, now) {
+  var d = x instanceof Date && !isNaN(x.getTime()) ? x : tHaDate_(tSqDay_(x) || x);
+  return !!d && tWorkingDays_(d, now) >= n;
+}
+
+/** The policy records carrying a questionnaire on its way, one group per client and questionnaire: { key, who, client, cno,
+ *  pols, ids, recs, received, csr, done, ret, paid, named, agent, agentEmail, via }. A client is their Contact, else their
+ *  client number; the questionnaire is the day it went to Customer Service (else the day it was processed). */
+function tSqGroups_(recs) {
+  var by = {}, order = [];
+  var min = function (a, b) { return !a ? b : !b ? a : a < b ? a : b; };
+  recs.forEach(function (r) {
+    var csr = tSqDay_(r.Date_SQ_submitted_to_CSR__c), done = tSqDay_(r.Date_SQ_processed_by_CSR__c);
+    if (!csr && !done) return;
+    var who = r.Contact__c ? 'K' + String(r.Contact__c).slice(0, 15) : r.Client_Number__c ? 'N' + tCno_(r.Client_Number__c) : 'P' + tPolNo_(r.POLICY__c);
+    var key = who + '|' + (csr || done);
+    var g = by[key];
+    if (!g) {
+      g = by[key] = { key: key, who: who, client: '', cno: '', pols: [], ids: [], recs: [], received: '', csr: '', done: '', ret: '', paid: '', named: '',
+        agents: {}, agent: '', agentEmail: '', via: '' };
+      order.push(key);
+    }
+    var name = r.Contact__r && r.Contact__r.Name ? String(r.Contact__r.Name) : tNiceName_([r.FIRST_NAME__c, r.LAST_NAME__c].filter(Boolean).join(' '));
+    if (!g.client && name) g.client = name;
+    if (!g.cno && r.Client_Number__c) g.cno = tCno_(r.Client_Number__c);
+    var no = tPolNo_(r.POLICY__c);
+    if (no && g.pols.indexOf(no) < 0) g.pols.push(no);
+    g.ids.push(r.Id);
+    g.recs.push({ id: r.Id, no: no, ret: tSqDay_(r.Date_Subm_to_Retention__c), was: String(r.Was_Agent_Paid__c || ''), paid: tSqDay_(r.Date_Comm_Paid__c) });
+    g.received = min(g.received, tSqDay_(r.Date_SQ_submitted__c));
+    g.csr = min(g.csr, csr); g.done = min(g.done, done);
+    g.ret = min(g.ret, tSqDay_(r.Date_Subm_to_Retention__c)); g.paid = min(g.paid, tSqDay_(r.Date_Comm_Paid__c));
+    g.named = min(g.named, tSqDay_(r.Date_Assigned_to_Agent__c));
+    /* who is paid: the agent named on the client (Assigned Agent), else the agent on the policy, the one most of the records name */
+    var as = r.Assigned_Agent__r && r.Assigned_Agent__r.Name ? r.Assigned_Agent__r : null, ag = r.AGENT__r && r.AGENT__r.Name ? r.AGENT__r : null;
+    var pick = as || ag;
+    if (pick) {
+      var k = (as ? 'A' : 'B') + tNameKey_(pick.Name), t = g.agents[k] = g.agents[k] || { name: tNiceName_(String(pick.Name).replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()),
+        email: String(pick.Email || ''), via: as ? 'Assigned Agent' : 'the agent on the policy', n: 0 };
+      t.n++;
+    }
+  });
+  return order.map(function (k) {
+    var g = by[k], best = null;
+    Object.keys(g.agents).sort().forEach(function (a) { var t = g.agents[a]; if (!best || (a.charAt(0) < best.k.charAt(0)) || (a.charAt(0) === best.k.charAt(0) && t.n > best.t.n)) best = { k: a, t: t }; });
+    if (best) { g.agent = best.t.name; g.agentEmail = best.t.email; g.via = best.t.via; }
+    delete g.agents;
+    return g;
+  });
+}
+
+/** The tab's questionnaire columns on a tab made before 16 October 2026, added once, by name. */
+function tSqCols_(sh) {
+  var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(function (h) { return String(h).trim(); });
+  var add = T_CLAIM_HEAD.filter(function (h) { return head.indexOf(h) < 0; });
+  if (add.length) sh.getRange(1, head.length + 1, 1, add.length).setValues([add]);
+}
+
+/** Every five-minute receipts run (it holds the script lock), at most every EVERY_MIN minutes: reads the questionnaires in
+ *  Salesforce and moves each on. o: { force, test }. Returns { found, sent, held, paid, csr, reminders, what, errors }. */
+function tSqRun_(o) {
+  o = o || {};
+  var out = { found: 0, sent: 0, held: 0, paid: 0, csr: 0, reminders: 0, what: '', errors: [] };
+  if (!tSfOn_()) { out.what = 'Salesforce is not linked to this project: the questionnaire dates cannot be read (SF_KEY, SF_SECRET, SF_LOGIN_URL).'; return out; }
+  var props = PropertiesService.getScriptProperties(), last = Number(props.getProperty('sq_scan_at') || 0);
+  if (!o.force && Date.now() - last < T_SQ.EVERY_MIN * 60000) return out;
+  props.setProperty('sq_scan_at', String(Date.now()));
+  var recs, where = function (lit) { return ' WHERE Date_SQ_submitted_to_CSR__c >= ' + lit + ' OR Date_SQ_processed_by_CSR__c >= ' + lit; };
+  try { recs = tSfQuery_('SELECT ' + T_SQ_FIELDS + ' FROM CLIENT_PORTFOLIO__c' + where(T_SQ.FROM)); }
+  catch (e) {   // a field made a date-time takes a date-time in the filter
+    if (!/datetime|date\/time|INVALID_FIELD|MALFORMED/i.test(String(e && e.message))) throw e;
+    recs = tSfQuery_('SELECT ' + T_SQ_FIELDS + ' FROM CLIENT_PORTFOLIO__c' + where(T_SQ.FROM + 'T00:00:00Z'));
+  }
+  var groups = tSqGroups_(recs);
+  var sh = tClaimTab_(); tSqCols_(sh);
+  var cl = tClaimsRead_(), byKey = {}, claimed = {}, ids = {};
+  cl.rows.forEach(function (r) {
+    ids[r.id] = true;
+    if (r.sqKey) byKey[r.sqKey] = r;
+    if (r.sqKey && /^(submitted|paid)/i.test(r.status)) claimed[r.sqKey.split('|')[0]] = r.id;
+  });
+  var tz = tTz_(), now = new Date(), today = Utilities.formatDate(now, tz, 'yyyy-MM-dd'), stamp = Utilities.formatDate(now, tz, 'd MMM');
+  var dow = Number(Utilities.formatDate(now, tz, 'u')), hour = Number(Utilities.formatDate(now, tz, 'H')), workday = dow >= 1 && dow <= 5;
+  var followTime = !!o.force || (workday && hour >= T_SQ.HOUR), sendTime = !!o.force || (workday && hour >= T_SQ.WORK_FROM && hour < T_SQ.WORK_TO);
+  var live = tClaimsLive_(), roster = tRoster_(), former = tFormer_(), sent = 0, seq = Number(props.getProperty('claims_seq') || 0);
+  var tokOf = null;
+  var tokFor = function (cno) {
+    if (!tokOf) { tokOf = {}; try { tRead_().rows.forEach(function (r) { var n = tCno_(r['Client number']), t = tText_(r.Token); if (n && t && !tokOf[n]) tokOf[n] = t; }); } catch (e) {} }
+    return cno ? tokOf[cno] || '' : '';
+  };
+  var why = function (e) { return String(e && e.message ? e.message : e).slice(0, 160); };
+  groups.forEach(function (g) {
+    var r = byKey[g.key];
+    if (!r) {   // a new row: the client and questionnaire, from the moment it went to Customer Service
+      var id;
+      do { seq++; id = 'RP-' + Utilities.formatDate(now, tz, 'yyMMdd') + '-' + ('00' + seq).slice(-3); } while (ids[id]);
+      ids[id] = true;
+      var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
+      var v = { Claim: id, Token: tokFor(g.cno), Client: g.client, 'Client number': g.cno, Policy: g.pols[0] || '', Agent: g.agent,
+        'Named on': g.named ? tHaDate_(g.named) : '', 'Named via': g.via, Questionnaire: 'SQ for ' + g.pols.join(', '),
+        Received: g.received ? tHaDate_(g.received) : '', Amount: T_CLAIM.AMOUNT, 'Follow-ups': 0, 'CSR follow-ups': 0,
+        'SQ key': g.key, Records: g.ids.join(' '), 'Sent to CSR': g.csr ? tHaDate_(g.csr) : '', Status: g.csr && !g.done ? 'With Customer Service since ' + tDmy_(g.csr) : '' };
+      var at = sh.getLastRow() + 1;
+      ['Token', 'Client number', 'Policy'].forEach(function (h) { var j = head.indexOf(h); if (j >= 0) sh.getRange(at, j + 1).setNumberFormat('@'); });
+      sh.getRange(at, 1, 1, head.length).setValues([head.map(function (h) { return v.hasOwnProperty(h) ? v[h] : ''; })]);
+      r = { id: id, token: v.Token, client: g.client, cno: g.cno, policy: v.Policy, agent: g.agent, named: v['Named on'], via: g.via, q: v.Questionnaire,
+        received: v.Received, amount: T_CLAIM.AMOUNT, submitted: '', follow: 0, lastFollow: '', paid: '', status: v.Status, note: '', sqKey: g.key,
+        toCsr: v['Sent to CSR'], csrN: 0, csrLast: '', done: '' };
+      byKey[g.key] = r;
+      out.found++;
+    }
+    var F = { Status: 'status', Note: 'note', Submitted: 'submitted', Paid: 'paid', Agent: 'agent', 'Agent no.': 'agentNo', 'Agent e-mail': 'agentEmail',
+      'Follow-ups': 'follow', 'Last follow-up': 'lastFollow', 'CSR follow-ups': 'csrN', 'Last CSR follow-up': 'csrLast', 'Processed by CSR': 'done' };
+    var set = function (f) {
+      var ch = {};
+      Object.keys(f).forEach(function (k) { if (String(r[F[k] || k] == null ? '' : r[F[k] || k]) !== String(f[k] == null ? '' : f[k])) ch[k] = f[k]; });
+      if (!Object.keys(ch).length) return;   // nothing new: the cell is not written again every fifteen minutes
+      tClaimSet_(r, ch);
+      Object.keys(ch).forEach(function (k) { r[F[k] || k] = ch[k]; });
+    };
+    if (T_CLAIM_SHUT.test(r.status) && !/^paid/i.test(r.status)) return;   // Void, Declined or Withdrawn by a person: never again
+    if (/^paid/i.test(r.status)) return;
+    /* paid: Date SQ Comm Paid on any of the questionnaire's policies (a date to come is the commission run it is paid in) */
+    if (g.paid) {
+      if (!r.submitted && g.ret) set({ Submitted: tHaDate_(g.ret) });
+      var yes = [];
+      g.recs.forEach(function (x) {
+        if (!x.paid || x.was === 'Yes' || o.test) return;
+        try { tSfSend_('patch', '/sobjects/CLIENT_PORTFOLIO__c/' + x.id, { Was_Agent_Paid__c: 'Yes' }); yes.push(x.no); } catch (e) { out.errors.push('Was Agent Paid on ' + x.no + ': ' + why(e)); }
+      });
+      set({ Paid: tHaDate_(g.paid), Status: 'Paid', Note: (r.note ? r.note + ' ' : '') + '[paid ' + g.paid + ' in Salesforce' + (yes.length ? ', Was Agent Paid set to Yes on ' + yes.join(', ') : '') + ']' });
+      out.paid++;
+      log_('transition', 'claim-paid', r.id + ' · ' + r.agent + ' · ' + r.client + ' · ' + g.paid);
+      if (!o.test) { var a0 = tSqAgent_(g, roster, former); r.agentEmail = (a0.a && a0.a.email) || g.agentEmail; tClaimPaidMail_(r, g.paid, 'Date SQ Comm Paid in Salesforce'); }
+      return;
+    }
+    /* with Customer Service: a follow-up every CSR_DAYS working days, until Date SQ processed by CSR is filled */
+    if (!g.done) {
+      var base = 'With Customer Service since ' + tDmy_(g.csr);
+      if (!/^with customer service/i.test(r.status)) set({ Status: base + (r.csrN ? ', followed up ' + tN_(r.csrN, 'time', 'times') : '') });
+      if (!followTime || sent >= T_SQ.MAX_PER_RUN || (tDay_(r.csrLast) || '') === today || !tSqDue_(r.csrLast || g.csr, T_SQ.CSR_DAYS, now)) return;
+      if (!live) { set({ Status: base + ': a follow-up to Customer Service is due, held until the go' }); out.held++; return; }
+      var n = (r.csrN || 0) + 1;
+      try {
+        var task = tSqTask_(g), msg = tSqCsrMsg_(g, task, n, r, now);
+        tMsSend_(msg.to, msg.subject, msg.html, { cc: msg.cc, replyTo: msg.replyTo, attachments: msg.attachments });
+        sent++; out.csr++;
+        set({ 'CSR follow-ups': n, 'Last CSR follow-up': now, Status: base + ', followed up ' + tN_(n, 'time', 'times') + ' (last ' + stamp + ')' });
+        if (task) try {
+          tSfSend_('post', '/sobjects/FeedItem', { ParentId: task.id, Body: 'Follow-up ' + n + ' sent to Customer Service (' + msg.to + ') on ' +
+            Utilities.formatDate(now, tz, 'd MMM yyyy') + ' by the branch, sales support copied' + (msg.eml ? ', with the original e-mail attached' : '') +
+            ': Date SQ processed by CSR is still empty ' + tWorkingDays_(tHaDate_(g.csr), now) + ' working days after it went to Customer Service.' });
+        } catch (e) { out.errors.push('Chatter on ' + task.subject + ': ' + why(e)); }
+        log_('transition', 'sq-csr-followup', r.id + ' · ' + g.client + ' · follow-up ' + n + ' to ' + msg.to + (msg.eml ? ' · original attached' : ' · no original in support@'));
+      } catch (e) { out.errors.push('follow-up for ' + g.client + ': ' + why(e)); set({ Status: base + ': the follow-up did not send (' + why(e) + ')' }); }
+      return;
+    }
+    /* processed: the claim to the Retention unit, once per client; then a reminder every RET_DAYS working days */
+    if (tDay_(r.done) !== g.done) set({ 'Processed by CSR': tHaDate_(g.done) });
+    if (!/^submitted/i.test(r.status)) {
+      if (g.ret) { set({ Submitted: tHaDate_(g.ret), Status: 'Submitted by hand', Salesforce: 'Date Subm to Retention ' + g.ret + ', entered by hand: not e-mailed again' }); return; }
+      var other = claimed[g.who];
+      if (other && other !== r.id) { set({ Status: 'Void: one claim per client, already claimed as ' + other }); return; }
+      var ag = tSqAgent_(g, roster, former);
+      if (ag.why) { set({ Status: 'Held: ' + ag.why }); out.held++; return; }
+      if (g.named && g.received && g.received < g.named && g.via === 'Assigned Agent') {
+        set({ Status: 'Held: the questionnaire (' + tDmy_(g.received) + ') came in before the client was named to ' + g.agent + ' (' + tDmy_(g.named) + ')' }); out.held++; return;
+      }
+      set({ Agent: ag.a.name, 'Agent no.': ag.a.no, 'Agent e-mail': ag.a.email });
+      if (!live) { set({ Status: 'Held: processed by Customer Service ' + tDmy_(g.done) + ', waiting for the go (Transition: start the TT$200 claims)' }); out.held++; return; }
+      if (!sendTime || sent >= T_SQ.MAX_PER_RUN) return;
+      try {
+        var m1 = tSqRetMsg_(g, r, 0, ag.a, now);
+        tMsSend_(m1.to, m1.subject, m1.html, { cc: m1.cc, replyTo: m1.replyTo });
+        sent++; out.sent++;
+        var wrote = [];
+        g.recs.forEach(function (x) {
+          if (x.ret) return;
+          var body = { Date_Subm_to_Retention__c: today };
+          if (!x.was) body.Was_Agent_Paid__c = 'No';
+          try { tSfSend_('patch', '/sobjects/CLIENT_PORTFOLIO__c/' + x.id, body); wrote.push(x.no); } catch (e) { out.errors.push('Date Subm to Retention on ' + x.no + ': ' + why(e)); }
+        });
+        claimed[g.who] = r.id;
+        set({ Submitted: now, Status: 'Submitted', Salesforce: wrote.length ? 'Date Subm to Retention ' + today + ' and Was Agent Paid No on ' + wrote.join(', ') : 'not written: enter Date Subm to Retention by hand' });
+        log_('transition', 'claim', r.id + ' · ' + ag.a.name + ' · ' + g.client + ' · e-mailed to the Retention unit, processed by Customer Service ' + g.done);
+      } catch (e) { out.errors.push('claim for ' + g.client + ': ' + why(e)); set({ Status: 'Not sent: ' + why(e) }); }
+      return;
+    }
+    if (/by hand/i.test(r.status) && tDay_(r.submitted) < T_SQ.FROM) return;   // a claim sent by hand before the process began: left to the people who sent it
+    if (!live || !followTime || sent >= T_SQ.MAX_PER_RUN || tDay_(r.lastFollow) === today || !tSqDue_(r.lastFollow || r.submitted, T_SQ.RET_DAYS, now)) return;
+    try {
+      var ag2 = tSqAgent_(g, roster, former), m2 = tSqRetMsg_(g, r, (r.follow || 0) + 1, ag2.a || { name: r.agent, no: r.agentNo }, now);
+      tMsSend_(m2.to, m2.subject, m2.html, { cc: m2.cc, replyTo: m2.replyTo });
+      sent++; out.reminders++;
+      set({ 'Follow-ups': (r.follow || 0) + 1, 'Last follow-up': now });
+      log_('transition', 'claim-reminder', r.id + ' · ' + r.agent + ' · ' + g.client + ' · reminder ' + r.follow);
+    } catch (e) { out.errors.push('reminder for ' + g.client + ': ' + why(e)); }
+  });
+  props.setProperty('claims_seq', String(seq));
+  out.what = [out.found ? tN_(out.found, 'questionnaire', 'questionnaires') + ' newly with Customer Service.' : '',
+    out.csr ? tN_(out.csr, 'follow-up', 'follow-ups') + ' sent to Customer Service.' : '',
+    out.sent ? tN_(out.sent, 'claim', 'claims') + ' e-mailed to the Retention unit.' : '',
+    out.reminders ? tN_(out.reminders, 'reminder', 'reminders') + ' sent to the Retention unit.' : '',
+    out.paid ? tN_(out.paid, 'claim', 'claims') + ' marked paid.' : '',
+    out.held ? tN_(out.held, 'item is', 'items are') + ' held: see Status on the ' + T_CLAIM.TAB + ' tab.' : ''].filter(Boolean).join(' ');
+  return out;
+}
+
+/** The agent a questionnaire pays, off the Agent Skill Bank: { a } or { why } (no agent, a former agent, not on the bank). */
+function tSqAgent_(g, roster, former) {
+  if (!g.agent) return { why: 'no agent on the policy records: name one (Assigned Agent) in Salesforce' };
+  var k = tNameKey_(g.agent);
+  if (former[k]) return { why: g.agent + ', ' + g.via + ', has left the branch: name the agent who looks after the client now (Assigned Agent) in Salesforce' };
+  var a = null;
+  roster.forEach(function (x) { if (!a && tNameKey_(x.name) === k) a = x; });
+  return a ? { a: a } : { why: g.agent + ' (' + g.via + ') is not on the Agent Skill Bank as an active agent' };
+}
+
+/** The task sales support opened for Customer Service on this questionnaire ("SQ- <client> <policies>", "Service
+ *  Questionnaire - …"), with its Chatter and the desk it went to: { id, subject, created, due, status, owner, ownerEmail,
+ *  desk, deskEmail, posts: [{ at, by, text }] }, or null. Never throws. */
+function tSqTask_(g) {
+  try {
+    var conds = ['WhatId IN (' + tSoqlIn_(g.ids) + ')'].concat(g.pols.slice(0, 6).map(function (p) { return "Subject LIKE '%" + svcSoqlLit_(p) + "%'"; }));
+    var ts = tSfQuery_('SELECT Id, Subject, Status, CreatedDate, ActivityDate, Owner.Name, Owner.Email, WhoId, Who.Name, ' +
+      '(SELECT Body, CreatedDate, CreatedBy.Name, Type FROM Feeds ORDER BY CreatedDate) FROM Task WHERE (' + conds.join(' OR ') + ") AND " +
+      "(Subject LIKE '%SQ%' OR Subject LIKE '%Questionnaire%') ORDER BY CreatedDate DESC LIMIT 10");
+    var lo = tAddWorkingDays_(tHaDate_(g.csr), 0), from = new Date(lo.getTime() - 45 * 86400000), to = new Date(lo.getTime() + 7 * 86400000);
+    var t = ts.filter(function (x) {
+      var at = new Date(String(x.CreatedDate || ''));
+      return /\bsq\b|service\s+questionnaire/i.test(String(x.Subject || '')) && at >= from && at <= to;
+    })[0];
+    if (!t) return null;
+    var out = { id: t.Id, subject: String(t.Subject || ''), created: tSqDay_(t.CreatedDate), due: tSqDay_(t.ActivityDate), status: String(t.Status || ''),
+      owner: t.Owner ? String(t.Owner.Name || '') : '', ownerEmail: t.Owner ? String(t.Owner.Email || '') : '', desk: t.Who ? String(t.Who.Name || '') : '', deskEmail: '', posts: [] };
+    ((t.Feeds && t.Feeds.records) || []).forEach(function (f) {
+      var text = String(f.Body || '').replace(/<br\s*\/?>|<\/p>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+        .replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/​/g, '').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n').trim();
+      if (f.Type === 'TextPost' && text) out.posts.push({ at: tSqDay_(f.CreatedDate), by: f.CreatedBy ? String(f.CreatedBy.Name || '') : '', text: text.slice(0, 600) });
+    });
+    if (t.WhoId && /^003/.test(t.WhoId) && T_SQ.CSR_DESK.test(out.desk)) {
+      var c = tSfQuery_("SELECT Email FROM Contact WHERE Id = '" + svcSoqlLit_(t.WhoId) + "'")[0];
+      if (c && /@myguardiangroup\.com$/i.test(String(c.Email || ''))) out.deskEmail = String(c.Email).trim();
+    }
+    return out;
+  } catch (e) { return null; }
+}
+
+/** The e-mail sales support sent Customer Service, when support@ was copied on it: found in support@ by a policy number and
+ *  attached whole (.eml), so the follow-up carries the trail and its attachments. null when it is not there. Never throws. */
+function tSqOriginal_(g) {
+  if (!tMsCreds_()) return null;
+  try {
+    var token = tMsToken_(), user = 'https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM);
+    var csr = tHaDate_(g.csr), lo = csr.getTime() - 10 * 86400000, hi = csr.getTime() + 3 * 86400000, best = null;
+    g.pols.slice(0, 3).forEach(function (p) {
+      if (best) return;
+      var res = UrlFetchApp.fetch(user + '/messages?$search=' + encodeURIComponent('"' + p + '"') + '&$select=id,subject,receivedDateTime&$top=15',
+        { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + token } });
+      if (res.getResponseCode() !== 200) return;
+      (JSON.parse(res.getContentText()).value || []).forEach(function (m) {
+        var at = new Date(String(m.receivedDateTime || '')).getTime(), subj = String(m.subject || '');
+        if (!/\bsq\b|service\s+questionnaire/i.test(subj) || /^\s*follow-?up/i.test(subj) || !(at >= lo && at <= hi)) return;
+        if (!best || at < best.at) best = { id: m.id, at: at, subject: subj };
+      });
+    });
+    if (!best) return null;
+    var raw = UrlFetchApp.fetch(user + '/messages/' + encodeURIComponent(best.id) + '/$value', { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + token } });
+    if (raw.getResponseCode() !== 200) return null;
+    var bytes = raw.getContent();
+    if (!bytes || bytes.length > T_SQ.EML_MAX) return null;
+    var name = best.subject.replace(/[\\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Original e-mail';
+    return { blob: Utilities.newBlob(bytes, 'message/rfc822', name + '.eml'), subject: best.subject };
+  } catch (e) { return null; }
+}
+
+/** The follow-up to Customer Service, n (1, 2 …): to the desk the SQ task went to (else CSR_TO), sales support and the
+ *  task's owner copied, a reply going to sales support; the trail in the body, and the original e-mail attached when
+ *  support@ was copied on it. Returns { to, cc, replyTo, subject, html, attachments, eml }. */
+function tSqCsrMsg_(g, task, n, r, now) {
+  var esc = tEsc_, ss = SVC.SALES_SUPPORT_EMAIL, orig = tSqOriginal_(g);
+  var to = (task && task.deskEmail) || T_SQ.CSR_TO, cc = [ss];
+  if (task && /@myguardiangroup\.com$/i.test(task.ownerEmail) && task.ownerEmail.toLowerCase() !== ss.toLowerCase()) cc.push(task.ownerEmail);
+  var days = tWorkingDays_(tHaDate_(g.csr), now), ord = ['', 'first', 'second', 'third', 'fourth', 'fifth'][n] || n + 'th';
+  var pols = g.pols.join(', '), base = task ? task.subject : 'Service Questionnaire - ' + g.client + ' - ' + pols;
+  var subject = 'Follow-up' + (n > 1 ? ' ' + n : '') + ': ' + base.replace(/^\s*(re|fw|fwd)\s*:\s*/i, '');
+  var rows = [['Client', g.client + (g.cno ? ' · client number ' + g.cno : '')], [g.pols.length > 1 ? 'Policies' : 'Policy', pols],
+    ['Completed questionnaire received', g.received ? tClaimDay_(g.received) : 'see the task'], ['Sent to Customer Service', tClaimDay_(g.csr) + ' (' + tN_(days, 'working day', 'working days') + ' ago)'],
+    ['This follow-up', 'the ' + ord + (r.csrLast ? '; the last was on ' + tClaimDay_(r.csrLast) : '')]];
+  var trail = [];
+  if (task) {
+    trail.push('<li><b>' + esc(tClaimDay_(task.created)) + '</b>: ' + esc(task.owner || 'Sales support') + ' opened “' + esc(task.subject) + '” for ' + esc(task.desk || 'Customer Service') +
+      (task.due ? ', due ' + esc(tClaimDay_(task.due)) : '') + '. Status now: ' + esc(task.status || 'open') + '.</li>');
+    task.posts.forEach(function (p) { trail.push('<li><b>' + esc(tClaimDay_(p.at)) + '</b>, ' + esc(p.by) + ': ' + esc(p.text).replace(/\n/g, '<br>') + '</li>'); });
+  } else trail.push('<li><b>' + esc(tClaimDay_(g.csr)) + '</b>: the questionnaire was sent to Customer Service (Date SQ submitted to CSR in Salesforce).</li>');
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:640px">' +
+    '<p style="margin:0 0 12px">Good day, Customer Service team,</p>' +
+    '<p style="margin:0 0 12px">On ' + esc(tClaimDay_(g.csr)) + ' the Ricky Rampersad Branch sent you the completed Service Questionnaire for <b>' + esc(g.client) + '</b> (' +
+    (g.pols.length > 1 ? 'policies ' : 'policy ') + esc(pols) + ') to be processed. That was ' + esc(tN_(days, 'working day', 'working days')) + ' ago, and our record does not show it processed yet.</p>' +
+    '<p style="margin:0 0 14px">Please let us know where it stands, or what is still needed, by replying to this e-mail. Sales support is copied and will update the record.</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 14px">' +
+    rows.map(function (x) {
+      return '<tr><td style="padding:6px 14px 6px 0;vertical-align:top;white-space:nowrap;font-size:13px;color:#8a97a8;border-top:1px solid #eef2f5">' + esc(x[0]) +
+        '</td><td style="padding:6px 0;vertical-align:top;font-size:14.5px;color:#12202e;border-top:1px solid #eef2f5"><b>' + esc(x[1]) + '</b></td></tr>';
+    }).join('') + '</table>' +
+    '<p style="margin:0 0 4px"><b style="color:#12202e">The trail</b></p><ul style="margin:0 0 14px;padding-left:20px">' + trail.join('') + '</ul>' +
+    (orig ? '<p style="margin:0 0 14px">The original e-mail, with what was attached to it, is attached: “' + esc(orig.subject) + '”.</p>' : '') +
+    '<p style="margin:0 0 14px">Thank you,<br><b style="color:#12202e">Sales Support</b><br>Ricky Rampersad Branch</p>' +
+    '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(T_CLAIM_FOOT) + '</p></div>';
+  return { to: to, cc: cc, replyTo: ss, subject: subject, html: html, attachments: orig ? [orig.blob] : [], eml: !!orig };
+}
+
+/** The claim to the Retention unit (n = 0) or its reminder n: the agent, the client, the policies, the questionnaire's dates,
+ *  paid within RET_DAYS working days. The first copies the agent; every one copies sales support and the manager; a reply
+ *  goes to sales support. Returns { to, cc, replyTo, subject, html }. */
+function tSqRetMsg_(g, r, n, a, now) {
+  var esc = tEsc_, M = TRANSITION.MANAGER || {}, amt = T_CLAIM.CUR + tMoney_(T_CLAIM.AMOUNT, 2), agent = a.name + (a.no ? ' (' + a.no + ')' : '');
+  var sentOn = r.submitted ? (r.submitted instanceof Date ? r.submitted : tHaDate_(r.submitted)) : now;
+  var by = tAddWorkingDays_(new Date(sentOn.getFullYear(), sentOn.getMonth(), sentOn.getDate()), T_SQ.RET_DAYS);
+  var pols = g.pols.join(', ');
+  var rows = [['Agent to be paid', agent], ['Amount', amt], ['Client', g.client + (g.cno ? ' · client number ' + g.cno : '')], [g.pols.length > 1 ? 'Policies' : 'Policy', pols],
+    ['Completed questionnaire received', g.received ? tClaimDay_(g.received) : 'on the policy record'], ['Sent to Customer Service', g.csr ? tClaimDay_(g.csr) : '—'],
+    ['Processed by Customer Service', tClaimDay_(g.done)]];
+  if (g.named && g.via === 'Assigned Agent') rows.push(['Named to the agent', tClaimDay_(g.named)]);
+  rows.push(['Branch reference', r.id]);
+  var subject = (n ? 'Reminder' + (n > 1 ? ' ' + n : '') + ': ' : '') + 'Retention claim ' + amt + ': ' + agent + ' · ' + g.client + ', ' + (g.pols.length > 1 ? 'policies ' : 'policy ') + pols;
+  var lead = n
+    ? '<p style="margin:0 0 12px">This claim went to you on ' + esc(tClaimDay_(sentOn)) + ', to be paid by <b>' + esc(tClaimDay_(by)) + '</b>. Salesforce does not show <b>Date SQ Comm Paid</b> yet. ' +
+      'Please process it, or reply with the date it will be paid.</p>'
+    : '<p style="margin:0 0 12px">Please process the reimbursement below for the Ricky Rampersad Branch. Customer Service processed the client’s service questionnaire on ' +
+      esc(tClaimDay_(g.done)) + '. We ask that it is paid within ' + T_SQ.RET_DAYS + ' working days, by <b>' + esc(tClaimDay_(by)) + '</b>.</p>';
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:620px">' +
+    '<p style="margin:0 0 12px">Good day,</p>' + lead +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 14px">' +
+    rows.map(function (x) {
+      return '<tr><td style="padding:6px 14px 6px 0;vertical-align:top;white-space:nowrap;font-size:13px;color:#8a97a8;border-top:1px solid #eef2f5">' + esc(x[0]) +
+        '</td><td style="padding:6px 0;vertical-align:top;font-size:14.5px;color:#12202e;border-top:1px solid #eef2f5"><b>' + esc(x[1]) + '</b></td></tr>';
+    }).join('') + '</table>' +
+    '<p style="margin:0 0 12px">When it is paid, please enter <b>Date SQ Comm Paid</b> on the policy in Salesforce, or reply with the date. Until that date is there, a reminder ' +
+    'comes every ' + T_SQ.RET_DAYS + ' working days; it stops the day the date is entered.</p>' +
+    '<p style="margin:0 0 14px">Thank you,<br><b style="color:#12202e">' + esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch</p>' +
+    '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(T_CLAIM_FOOT) + '</p></div>';
+  var cc = tClaimCc_([SVC.SALES_SUPPORT_EMAIL]);
+  if (!n && a.email && cc.map(function (x) { return x.toLowerCase(); }).indexOf(String(a.email).toLowerCase()) < 0) cc.push(a.email);
+  return { to: T_CLAIM.TO, cc: cc, replyTo: SVC.SALES_SUPPORT_EMAIL, subject: subject, html: html };
+}
+
+/** The editor's Run button, before the go: one of each e-mail, to the branch manager alone, marked TEST, built from the
+ *  first questionnaire Salesforce has in each stage (or a made-up one when there is none): the follow-up to Customer
+ *  Service, the claim to the Retention unit and its reminder. Nothing is written to Salesforce or the tab, and no Chatter. */
+function transitionSqTest() {
+  var to = T_CLAIM.COPY || SVC.AGENT_EMAIL, now = new Date(), sent = [];
+  var groups = [];
+  if (tSfOn_()) {
+    try { groups = tSqGroups_(tSfQuery_('SELECT ' + T_SQ_FIELDS + ' FROM CLIENT_PORTFOLIO__c WHERE Date_SQ_submitted_to_CSR__c >= ' + T_SQ.FROM + ' OR Date_SQ_processed_by_CSR__c >= ' + T_SQ.FROM)); }
+    catch (e) { groups = []; }
+  }
+  var sample = { key: 'sample', who: 'sample', client: 'Sample Client', cno: '0000000000', pols: ['5000000000', '8000000000'], ids: [], recs: [],
+    received: Utilities.formatDate(new Date(now.getTime() - 14 * 86400000), tTz_(), 'yyyy-MM-dd'), csr: Utilities.formatDate(new Date(now.getTime() - 9 * 86400000), tTz_(), 'yyyy-MM-dd'),
+    done: Utilities.formatDate(now, tTz_(), 'yyyy-MM-dd'), agent: 'Sample Agent', via: 'Assigned Agent', named: '' };
+  var gCsr = groups.filter(function (g) { return !g.done; })[0] || sample, gRet = groups.filter(function (g) { return g.done; })[0] || sample;
+  var r = { id: 'RP-TEST', csrLast: '', submitted: now };
+  var a = tSqAgent_(gRet, tRoster_(), tFormer_()).a || { name: gRet.agent || 'Sample Agent', no: '', email: '' };
+  var msgs = [tSqCsrMsg_(gCsr, gCsr === sample ? null : tSqTask_(gCsr), 1, r, now), tSqRetMsg_(gRet, r, 0, a, now),
+    tSqRetMsg_(gRet, { id: 'RP-TEST', submitted: new Date(now.getTime() - 4 * 86400000) }, 1, a, now)];
+  msgs.forEach(function (m) {
+    var banner = '<div style="font:13px/1.5 Inter,Arial,sans-serif;background:#fff6df;border-left:4px solid #efc24b;padding:8px 12px;margin:0 0 14px">' +
+      '<b>TEST</b>: in the real run this goes to ' + tEsc_(m.to) + (m.cc && m.cc.length ? ', copied to ' + tEsc_(m.cc.join(', ')) : '') +
+      (m.attachments && m.attachments.length ? ', with the original e-mail attached' : '') + '. Nothing was written to Salesforce.</div>';
+    tMsSend_(to, '[TEST] ' + m.subject, banner + m.html, { attachments: m.attachments });
+    sent.push(m.subject);
+  });
+  return tSay_('Sent to ' + to + ': ' + sent.length + ' test e-mails (' + sent.join(' · ') + ').' +
+    (gCsr === sample || gRet === sample ? ' Where Salesforce had no questionnaire in that stage yet, a made-up one was used.' : ''));
+}
+/** The editor's Run button: read Salesforce and move every questionnaire on now, whatever the hour (still nothing before the go). */
+function transitionSqNow() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return tSay_('Another run is busy. Try again in a minute.');
+  try { var r = tSqRun_({ force: true }); return tSay_((r.what || 'Nothing was due.') + (r.errors.length ? ' Problems: ' + r.errors.join('; ') : '')); } finally { lock.releaseLock(); }
 }
 
 /* ── one client in full: the history, their Salesforce tasks, the team's comments ── */
