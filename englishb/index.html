@@ -356,7 +356,7 @@ footer.foot .mark{width:26px;height:26px;flex:none}
 /* The deployed /exec address of apps-script/EssayWorkshop.gs. Empty until it is deployed:
    the gate then says the workshop is not connected yet. Not a secret; what makes a call
    somebody's is the signed token. The override is how the tests choose a backend. */
-const ESSAY_API = "";
+const ESSAY_API = "https://script.google.com/macros/s/AKfycbz0xJGd5ZAGvHL0bxOa5aPkgAVVBfei3jduaGJjvTPwIF0dR8Dz76kEcafEjAuDgZH7EA/exec";
 const API = (typeof window !== "undefined" && window.ESSAY_API_OVERRIDE !== undefined)
   ? window.ESSAY_API_OVERRIDE : ESSAY_API;
 const TKEY = "rrb.englishb.token";
