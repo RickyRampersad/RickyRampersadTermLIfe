@@ -33,4 +33,6 @@ with a full history rewrite. Do not make it a third time.
 - `claims/` — Claims TT intake · `market/` — Branch Trading League
 - `managementmeetings/` — Branch Meeting Builder: agenda, materials, attendance
   (signing in is the register), action tracker and minutes
+- `rroperations/` — RR Operations: the team's sign-in and app launcher; first app the
+  Delivery Book (`rroperations/delivery-book/`). Setup in `RROPERATIONS-SETUP.md`
 - `apps-script/` — backend source (deployed to Google Apps Script, not run here)

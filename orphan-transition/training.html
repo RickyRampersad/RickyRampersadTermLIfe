@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Transition Training | Ricky Rampersad Branch</title>
+<link rel="icon" href="../logo-mark.png">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- 15 October 2026: "do a test regarding the orphans. So agents do the test, what they're supposed to do. Staff do the
+     test and managers." One page: sign in as the board signs in; read your role's workflow (the sections come from
+     workflow.html, so the words live once); take your role's test; see your results. The questions come from the
+     backend without their answers (the private Orphan Transition Training sheet, course=orphan on GroupClients.gs) and
+     every answer is marked there. The branch manager sees every attempt and confirms the written marks; a unit manager
+     sees their team's. Nothing on this page knows an answer. -->
+<style>
+:root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--tdark:#07606f;
+  --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--stop:#8a3324;--stopbg:#fdeeea;--ok:#1f6f4a;--okbg:#eef7f2;--notebg:#eafafd;--warn:#8a6420;--warnbg:#fff8e6;
+  --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--body);font:16px/1.6 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+a{color:var(--tdark)}
+.wrap{width:min(900px,100% - 32px);margin:0 auto}
+header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
+header .in{width:min(900px,100% - 32px);margin:0 auto;display:flex;align-items:center;gap:12px;padding:14px 0;flex-wrap:wrap}
+.mark{width:36px;height:36px;border-radius:9px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+.mark img{width:100%;height:100%;display:block}
+header b{font-family:var(--f);font-size:14px;display:block} header i{font-style:normal;font-size:11.5px;color:#8fd8e6}
+.mright{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.85)}
+.btn{border:1px solid var(--navy);border-radius:999px;padding:9px 18px;font-weight:700;font-family:var(--f);cursor:pointer;background:var(--navy);color:#fff}
+.btn:hover{background:#0f2234}.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:var(--navy)}.btn.gold:hover{background:#f3cd63}
+.btn.ghost{background:var(--card);border:1px solid var(--line);color:var(--ink)}.btn.ghost:hover{background:var(--paper)}
+header .btn.ghost{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.35);color:#fff}
+.gate{max-width:440px;margin:40px auto;background:var(--card);border:1px solid var(--line);padding:26px 24px;border-radius:14px;box-shadow:0 20px 40px -24px rgba(7,19,31,.35)}
+.gate h1{font-family:var(--f);font-size:23px;color:var(--ink);margin:0 0 4px;letter-spacing:-.3px}.gate p{color:var(--dim);margin:0 0 14px;font-size:14.5px}
+label{display:block;font-weight:600;font-size:14px;margin:12px 0 6px;color:var(--ink)}
+.field{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.field:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,207,234,.18)}
+textarea.field{min-height:84px;resize:vertical}
+.err{color:var(--stop);font-size:14px;min-height:20px;margin-top:8px}
+.note{background:var(--warnbg);border:1px solid #f1dca2;padding:10px 14px;border-radius:9px;margin:14px 0;font-size:14.5px;color:var(--ink)}
+.note.bad{background:var(--stopbg);border-color:#edc9bf}
+h2{font-family:var(--f);font-size:20px;color:var(--ink);margin:26px 0 10px;letter-spacing:-.3px}h3{font-family:var(--f);font-size:16px;color:var(--ink);margin:18px 0 8px}
+.tabs{display:flex;gap:4px;margin:14px 0 0;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{border:0;background:none;padding:10px 14px;font-weight:700;font-family:var(--f);color:var(--dim);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--navy);border-color:var(--gold)}
+table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14.5px}
+.t th{text-align:left;font-family:var(--f);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--navy);padding:9px 12px}
+.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}.t tr:last-child td{border-bottom:0}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+.bar{display:flex;align-items:center;gap:8px;min-width:120px}.bar .track{flex:1;height:8px;background:#dfe8ee;border-radius:4px;overflow:hidden}.bar .fill{height:100%;background:var(--tdark);border-radius:4px}
+.bar em{font-style:normal;font-variant-numeric:tabular-nums;font-size:13px;min-width:38px;text-align:right}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tile b{display:block;font-family:var(--f);font-size:28px;color:var(--ink);line-height:1.1}.tile span{color:var(--dim);font-size:13px}
+.tile.alert b{color:var(--stop)}
+.panel{margin:16px auto}
+.muted{color:var(--dim)}.small{font-size:13.5px}
+.hide{display:none!important}
+/* the manual: the role's sections from workflow.html */
+.manual{margin:0 auto 40px}
+.msec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px 16px;margin:10px 0;overflow-wrap:anywhere}
+.msec h3{font-family:var(--f);font-size:17px;color:var(--ink);margin:0 0 8px;display:flex;align-items:center;gap:10px}
+.sn{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--navy);color:var(--gold);font-size:14px;font-weight:800;flex:none}
+.msec table.day{width:100%;border-collapse:collapse;font-size:15px}.msec table.day td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+.msec table.day tr:first-child td{border-top:0}.msec table.day td:first-child{font-family:var(--f);font-weight:800;color:var(--ink);white-space:nowrap;width:1%}
+.msec ol.steps{margin:4px 0 0;padding-left:22px}.msec ol.steps li{margin:7px 0}.msec ol.steps li b{color:var(--ink)}
+.msec ul{margin:4px 0 0;padding-left:20px}.msec li{margin:5px 0}
+.msec .say{border-left:4px solid var(--teal);background:#f7fcfd;border-radius:8px;padding:9px 14px;margin:8px 0 0;color:var(--ink)}
+.msec .tip{font-size:14px;color:var(--dim);margin:8px 0 0}
+.msec .no{background:var(--stopbg);border:1px solid #edc9bf;border-left:4px solid var(--stop);border-radius:10px;padding:12px 16px;margin:10px 0 0}
+.msec .no b{color:var(--stop);display:block;font-family:var(--f);margin-bottom:4px}
+.msec .ok{background:var(--okbg);border:1px solid #c8e3d6;border-left:4px solid var(--ok);border-radius:10px;padding:12px 16px;margin:10px 0 0;color:var(--ink)}
+.msec .rules{background:var(--stopbg);border:1px solid #edc9bf;border-left:4px solid var(--stop);border-radius:10px;padding:13px 16px;margin:10px 0 0;color:var(--ink)}.msec .rules b{color:var(--stop)}
+.msec table.pts{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+.msec table.pts th{text-align:left;font-family:var(--f);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--navy);padding:8px 10px}
+.msec table.pts td{padding:7px 10px;border-top:1px solid var(--line)}.msec table.pts td:last-child{text-align:right;font-weight:600;color:var(--ink);white-space:nowrap}
+.msec table.pts.two td:last-child{white-space:normal;text-align:left;font-weight:500;width:34%}
+.msec .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 0;counter-reset:f}
+.msec .flow div{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;line-height:1.4}
+.msec .flow div::before{counter-increment:f;content:counter(f);display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--navy);color:var(--gold);font-family:var(--f);font-weight:800;font-size:12px;margin-bottom:6px}
+.msec .flow b{display:block;color:var(--ink);font-family:var(--f);font-size:13.5px}.msec .flow i{font-style:normal;color:var(--tdark);font-size:12px;display:block;margin-top:4px}
+@media (max-width:640px){.msec .flow{grid-template-columns:repeat(2,1fr)}}
+.msec .links a{display:inline-block;margin:6px 10px 0 0;font-weight:600}
+.readtick{display:flex;gap:10px;align-items:center;margin:14px 0 0;padding:11px 14px;border:1px dashed var(--line);border-radius:9px;font-weight:600;cursor:pointer;color:var(--ink)}
+.readtick input{width:20px;height:20px;accent-color:var(--ok);flex:none}
+.readtick.on{border:1px solid #c8e3d6;background:var(--okbg)}
+.prog{position:sticky;top:0;z-index:3;background:var(--paper);padding:10px 0 8px}
+.prog .track{height:8px;background:#dfe8ee;border-radius:4px;overflow:hidden}.prog .fill{height:100%;background:var(--gold2);border-radius:4px;transition:width .3s}
+.prog .lbl{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13.5px;color:var(--dim);margin-bottom:5px}
+/* the test */
+.q{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+.q.done{border-left:4px solid var(--ok)}
+.qh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--dim);font-weight:600}
+.qn{background:var(--navy);color:var(--gold);border-radius:6px;padding:2px 8px;font-family:var(--f)}
+.crit{background:var(--stopbg);color:var(--stop);border-radius:99px;padding:2px 8px}
+.qt{margin:8px 0 10px;font-weight:600;color:var(--ink)}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:9px;margin:6px 0;cursor:pointer;font-size:14.5px}
+.opt:hover{border-color:var(--teal)}.opt input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:var(--tdark)}
+.opt:has(input:checked){border-color:var(--tdark);background:var(--notebg)}.opt b{flex:none;width:18px;color:var(--ink)}
+.cnt{font-size:12px;color:var(--dim);text-align:right}
+.comphead{margin:26px 0 4px;font-size:17px}.comphead span{color:var(--dim);font-weight:500;font-size:13px}
+.drawer{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0}
+.res{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:12px 0}
+.res .big{font-family:var(--f);font-size:46px;font-weight:800;letter-spacing:-.02em;line-height:1;color:var(--tdark)}
+.res.notyet .big{color:var(--stop)}
+.res .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-weight:700;font-size:13px;background:var(--okbg);color:var(--ok)}
+.res.notyet .pill{background:var(--stopbg);color:var(--stop)}
+.res .resub{color:var(--dim)}.res .resnote{color:var(--warn)}
+.rate{font-weight:700;font-size:12px;padding:2px 8px;border-radius:99px;background:#dfe8ee;white-space:nowrap;color:var(--ink)}
+.rate.Exceeds{background:var(--okbg);color:var(--ok)}.rate.Meets{background:var(--notebg);color:var(--tdark)}.rate.Developing{background:var(--warnbg);color:var(--warn)}.rate.Not{background:var(--stopbg);color:var(--stop)}
+.rv{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0;font-size:14.5px}
+.rv.ok{border-left-color:var(--ok)}.rv.no{border-left-color:var(--stop)}.rv.wr{border-left-color:var(--gold2)}
+.rv .o{padding:6px 10px;border-radius:6px;margin:4px 0;border:1px solid transparent}
+.rv .o.right{background:var(--okbg);border-color:#c8e3d6}.rv .o.mine.wrong{background:var(--stopbg);border-color:#edc9bf}
+.rv .why{color:var(--dim);margin-top:6px}
+.rv .ans{white-space:pre-wrap;background:var(--paper);border-radius:6px;padding:8px 10px;margin:6px 0}
+.rv .fb{background:var(--notebg);border-radius:6px;padding:8px 10px;margin:6px 0}
+.markin{width:80px;padding:8px;border:1px solid var(--line);border-radius:6px}
+.appr .bar{min-width:104px}.rowlink{cursor:pointer}.rowlink:hover td{background:var(--paper)}
+.back{background:none;border:0;color:var(--tdark);font-weight:700;cursor:pointer;padding:0;margin:16px 0 0;font-family:var(--f)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:92vw;z-index:9}
+.toast.on{opacity:1}.toast.bad{background:var(--stop)}
+.rolebadge{display:inline-block;background:var(--gold);color:var(--navy);font-family:var(--f);font-weight:800;font-size:12px;border-radius:999px;padding:2px 10px;margin-left:6px}
+</style>
+</head>
+<body>
+<header><div class="in"><div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div><b>Ricky Rampersad Branch</b><i>The orphan transition &middot; training and test</i></div>
+  <div class="mright" id="who"></div></div></header>
+
+<main class="wrap">
+  <div id="app">
+  <form class="gate" id="gate" autocomplete="off">
+    <h1>Your workflow, and the test</h1>
+    <p>Read what your role does on the orphan transition, then take the test for your role: agents, Client Support and
+      managers each have their own. Sign in as you do on the board, so your reading and your result are logged against
+      your name.</p>
+    <label for="gWho">Agent number, or your name</label>
+    <input class="field" id="gWho" autocapitalize="characters" spellcheck="false" placeholder="A00427, or Sasha">
+    <label for="gCode">Password, or the branch code</label>
+    <input class="field" id="gCode" type="password" required>
+    <div class="err" id="gErr" role="alert"></div>
+    <button class="btn gold" type="submit" id="gGo" style="width:100%;margin-top:6px">Sign in</button>
+    <p class="small muted" style="margin:12px 0 0">Just want to read? <a href="workflow.html">The workflow for all three roles</a> needs no sign-in.</p>
+  </form>
+  </div>
+  <article id="manual" class="manual hide"></article>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* The Service Questionnaire deployment: GroupClients.gs answers every gcm.* action, the test's included, and course=orphan
+   picks the orphan transition sheet and the role's questions. Every answer is marked there: nothing on this page knows
+   them. The sign-in is the board's, so the device that is signed in to the board is signed in here. */
+const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+const COURSE = 'orphan';
+const ROLE_WORDS = { branch: 'Branch manager', unit: 'Unit manager', staff: 'Client Support', agent: 'Agent' };
+const TEST_WORDS = { agent: 'the agents’ test', staff: 'the Client Support test', manager: 'the managers’ test' };
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let SECS = [], AUTH = { code: '', who: '' }, T = null, TAB = 'manual', PROG = null, VIEW = null, MANUAL_ERR = '';
+try { AUTH.code = localStorage.getItem('rrb-transition-code') || ''; AUTH.who = localStorage.getItem('rrb-assign-who') || ''; } catch (e) {}
+
+function toast(msg, bad) { const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', bad ? 8000 : 4000); }
+async function api(params) {
+  const q = Object.entries(Object.assign({ course: COURSE }, params, { code: AUTH.code, who: AUTH.who })).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
+  try { const txt = await (await fetch(SVC + '?' + q + '&z=' + Date.now())).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, error: 'The branch backend is not answering for the training yet: GroupClients.gs needs pasting and a New version publishing.' }; } }
+  catch (e) { return { ok: false, error: 'Could not reach the branch backend. Check the connection and try again.' }; }
+}
+async function post(body) {
+  try { const txt = await (await fetch(SVC, { method: 'POST', body: JSON.stringify(Object.assign({ course: COURSE }, body, { code: AUTH.code, who: AUTH.who })) })).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, error: 'The backend answered with a page instead of data.' }; } }
+  catch (e) { return { ok: false, error: 'Could not reach the branch backend. Your answers are still saved on this device: try again.' }; }
+}
+
+/* ---- progress, on this device: sections read, minutes in the manual, answers not yet sent ---- */
+function pkey() { return 'rrb-orphan-train:' + String(AUTH.who || 'branch').toLowerCase(); }
+function loadProg() {
+  try { PROG = JSON.parse(localStorage.getItem(pkey()) || 'null'); } catch (e) { PROG = null; }
+  PROG = Object.assign({ read: {}, ms: 0, answers: {}, started: 0 }, PROG || {});
+}
+function saveProg() { try { localStorage.setItem(pkey(), JSON.stringify(PROG)); } catch (e) {} }
+const readCount = () => SECS.filter(s => PROG.read[s]).length;
+setInterval(() => { if (T && TAB === 'manual' && document.visibilityState === 'visible') { PROG.ms += 15000; saveProg(); const m = $('pmin'); if (m) m.textContent = Math.round(PROG.ms / 60000) + ' min'; } }, 15000);
+
+/* ---- the gate ---- */
+$('gate').addEventListener('submit', e => { e.preventDefault(); AUTH = { code: $('gCode').value.trim(), who: $('gWho').value.trim() }; open_(); });
+async function open_() {
+  const err = $('gErr'), go = $('gGo');
+  if (err) { err.textContent = ''; go.disabled = true; go.textContent = 'Opening…'; }
+  const [d] = await Promise.all([api({ action: 'gcm.train' }), loadManual()]);
+  if (!d.ok) {
+    if (!$('gate')) { location.reload(); return; }
+    err.textContent = d.error || 'Not opened.'; go.disabled = false; go.textContent = 'Sign in'; return;
+  }
+  try { localStorage.setItem('rrb-transition-code', AUTH.code); localStorage.setItem('rrb-assign-who', AUTH.who); } catch (e) {}
+  T = d; loadProg(); buildManual(); wireManual();
+  if (readCount() === SECS.length && SECS.length) TAB = PROG.started ? 'test' : (T.mine.length ? 'mine' : 'test');
+  render();
+}
+function signOut() { try { localStorage.removeItem('rrb-transition-code'); localStorage.removeItem('rrb-assign-who'); } catch (e) {} location.reload(); }
+
+/* ---- the manual: the role's sections of workflow.html, written once there ---- */
+let WF = null;
+async function loadManual() {
+  if (WF) return WF;
+  try { const txt = await (await fetch('workflow.html', { cache: 'no-cache' })).text(); WF = new DOMParser().parseFromString(txt, 'text/html'); }
+  catch (e) { MANUAL_ERR = 'The workflow page could not be loaded. Open it on its own: '; WF = null; }
+  return WF;
+}
+function buildManual() {
+  const role = T.test, m = $('manual');
+  if (!WF) { m.innerHTML = '<div class="note bad">' + esc(MANUAL_ERR) + '<a href="workflow.html">workflow.html</a>.</div>'; SECS = []; return; }
+  const secs = [...WF.querySelectorAll('section.role')].filter(s => s.dataset.role === 'all' || s.dataset.role === role);
+  let h = '<h2>Your workflow<span class="rolebadge">' + esc(TEST_WORDS[role] ? TEST_WORDS[role].replace(/^the |’ test$| test$/g, '') : role) + '</span></h2>' +
+    '<p class="muted small">The same words as <a href="workflow.html#' + (role === 'agent' ? 'agents' : role === 'staff' ? 'staff' : 'managers') + '" target="_blank" rel="noopener">the workflow page</a>. Tick each section when you have read it; the test opens when every one is ticked.</p>';
+  SECS = [];
+  secs.forEach(s => { [...s.querySelectorAll('article.msec')].forEach(a => {
+    const id = a.dataset.sec; if (!id) return; SECS.push(id);
+    a.querySelectorAll('a[href]').forEach(x => { x.setAttribute('target', '_blank'); x.setAttribute('rel', 'noopener'); });
+    h += '<section class="msec" id="m-' + esc(id) + '" data-sec="' + esc(id) + '">' + a.innerHTML + '<label class="readtick"><input type="checkbox" data-read="' + esc(id) + '"> I have read and understood this section</label></section>';
+  }); });
+  m.innerHTML = h;
+}
+function wireManual() {
+  document.querySelectorAll('#manual [data-read]').forEach(c => {
+    c.checked = !!PROG.read[c.dataset.read]; c.closest('.readtick').classList.toggle('on', c.checked);
+    c.onchange = () => { PROG.read[c.dataset.read] = c.checked; saveProg(); c.closest('.readtick').classList.toggle('on', c.checked); progBar(); if (c.checked && readCount() === SECS.length) toast('Every section read. The test is open.'); };
+  });
+}
+function weightsTable() {
+  return '<div class="scroll"><table class="t"><thead><tr><th>Competency</th><th class="num">Questions</th><th class="num">Marks</th><th class="num">Weight</th></tr></thead><tbody>' +
+    T.comps.map(c => '<tr><td>' + esc(c.name) + '</td><td class="num">' + c.questions + '</td><td class="num">' + c.points + '</td><td class="num"><b>' + c.weight + '%</b></td></tr>').join('') + '</tbody></table></div>';
+}
+
+/* ---- the frame ---- */
+function head() {
+  $('who').innerHTML = esc(T.me) + ' · ' + esc(T.title || ROLE_WORDS[T.role] || T.role) +
+    ' <a class="btn ghost" href="/orphanmanagement/">The board</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
+}
+const reads = () => T.role === 'branch' || T.role === 'unit';
+function render() {
+  head();
+  const tabs = [['manual', '1 · Your workflow'], ['test', '2 · The test'], ['mine', 'My results']].concat(reads() ? [['team', T.role === 'unit' ? 'My team’s results' : 'Team results']] : []);
+  $('app').innerHTML = '<div class="tabs panel" role="tablist" style="margin-bottom:0">' + tabs.map(([k, l]) => '<button class="tab" role="tab" data-t="' + k + '" aria-selected="' + (TAB === k) + '">' + l + '</button>').join('') + '</div><div id="pane"></div>';
+  $('app').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; VIEW = null; render(); window.scrollTo(0, 0); });
+  $('manual').classList.toggle('hide', TAB !== 'manual');
+  if (TAB === 'manual') { $('pane').innerHTML = '<div class="prog" id="prog"></div>'; progBar(); }
+  else if (TAB === 'test') drawTest();
+  else if (TAB === 'mine') drawMine();
+  else drawTeam();
+}
+function progBar() {
+  const p = $('prog'); if (!p) return;
+  const n = readCount(), all = SECS.length;
+  p.innerHTML = '<div class="lbl"><span><b>' + n + ' of ' + all + '</b> sections read · <span id="pmin">' + Math.round(PROG.ms / 60000) + ' min</span></span>' +
+    (all && n === all ? '<button class="btn gold" type="button" id="toTest" style="padding:6px 14px">Go to the test →</button>' : '<span>Tick each section when you have read it. The test opens when all ' + all + ' are ticked.</span>') + '</div>' +
+    '<div class="track"><div class="fill" style="width:' + (all ? Math.round(100 * n / all) : 0) + '%"></div></div>';
+  if ($('toTest')) $('toTest').onclick = () => { TAB = 'test'; render(); window.scrollTo(0, 0); };
+}
+function gotoSection(s) { TAB = 'manual'; render(); const el = $('m-' + s); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+
+/* ---- the test ---- */
+function drawTest() {
+  const pane = $('pane'), n = readCount(), all = SECS.length, Q = T.questions;
+  if (!Q.length) { pane.innerHTML = '<div class="panel"><div class="note">There are no questions for your role on the training sheet yet. Ask the branch.</div></div>'; return; }
+  if (all && n < all) {
+    pane.innerHTML = '<div class="panel"><div class="note">Read every section of your workflow first: <b>' + n + ' of ' + all + '</b> ticked. The branch sees how many sections you read and how long you spent on them.</div><button class="btn" type="button" id="toMan">Back to the workflow</button></div>';
+    $('toMan').onclick = () => { TAB = 'manual'; render(); };
+    return;
+  }
+  const written = Q.filter(q => q.type === 'written').length;
+  if (!PROG.started) {
+    pane.innerHTML = '<div class="panel"><h2>' + esc((TEST_WORDS[T.test] || 'the test').replace(/^the /, 'The ')) + '</h2>' +
+      '<p><b>' + Q.length + ' questions</b>: ' + (Q.length - written) + ' multiple choice and ' + written + ' written scenario' + (written === 1 ? '' : 's') + '. Allow about 25 minutes. Your answers are kept on this device as you go, and nothing is sent until you press Submit.</p>' +
+      '<p><b>To pass:</b> ' + T.pass + '% overall, every critical question right, and no competency under ' + T.floor + '%. The critical questions are the three rules on every call.</p>' + weightsTable() +
+      '<p class="small muted" style="margin-top:12px">Written answers are marked by AI against a marking guide' + (T.ai ? '' : ' (not switched on yet: the branch manager marks them)') + ', and the branch manager confirms the mark. Write them the way you would do the work: the steps, in order, and why.</p>' +
+      '<button class="btn gold" type="button" id="start" style="margin-top:8px">Start the test</button></div>';
+    $('start').onclick = () => { PROG.started = Date.now(); saveProg(); render(); window.scrollTo(0, 0); };
+    return;
+  }
+  let h = '<div class="panel"><div class="prog" id="tprog"></div>', num = 0;
+  T.comps.forEach(c => {
+    h += '<h3 class="comphead">' + esc(c.name) + ' <span>· ' + c.weight + '% of the marks</span></h3>';
+    Q.filter(q => q.comp === c.name).forEach(q => {
+      num++;
+      const a = PROG.answers[q.id] || '';
+      h += '<div class="q' + (a ? ' done' : '') + '" id="q-' + esc(q.id) + '"><div class="qh"><span class="qn">' + num + '</span><span>' + q.points + ' marks</span>' +
+        (q.type === 'written' ? '<span>Written</span>' : '') + (q.crit ? '<span class="crit">Critical: must be right to pass</span>' : '') + '</div>' +
+        '<p class="qt">' + esc(q.q) + '</p>' +
+        (q.type === 'written'
+          ? '<textarea class="field" rows="7" maxlength="' + T.writtenMax + '" data-w="' + esc(q.id) + '" placeholder="The steps you would take, in order, and why.">' + esc(a) + '</textarea><div class="cnt" id="c-' + esc(q.id) + '">' + a.length + ' / ' + T.writtenMax + '</div>'
+          : q.opts.map(o => '<label class="opt"><input type="radio" name="r-' + esc(q.id) + '" value="' + esc(o.k) + '" data-q="' + esc(q.id) + '"' + (a === o.k ? ' checked' : '') + '><b>' + esc(o.k) + '</b><span>' + esc(o.t) + '</span></label>').join('')) +
+        '</div>';
+    });
+  });
+  h += '<div class="drawer"><p style="margin-top:0">When you submit, the test is marked and logged, and the result is e-mailed to you and the branch manager. You cannot change an answer after that, but you may take the test again.</p>' +
+    '<button class="btn gold" type="button" id="submit">Submit my answers</button> <button class="btn ghost" type="button" id="restart">Start again</button></div></div>';
+  pane.innerHTML = h;
+  testProg();
+  pane.querySelectorAll('input[type=radio]').forEach(r => r.onchange = () => { PROG.answers[r.dataset.q] = r.value; saveProg(); $('q-' + r.dataset.q).classList.add('done'); testProg(); });
+  pane.querySelectorAll('textarea[data-w]').forEach(t => t.oninput = () => { PROG.answers[t.dataset.w] = t.value; saveProg(); $('c-' + t.dataset.w).textContent = t.value.length + ' / ' + T.writtenMax; $('q-' + t.dataset.w).classList.toggle('done', !!t.value.trim()); testProg(); });
+  $('submit').onclick = submit;
+  $('restart').onclick = () => { if (confirm('Clear every answer and start again?')) { PROG.answers = {}; PROG.started = 0; saveProg(); render(); } };
+}
+function answered() { return T.questions.filter(q => String(PROG.answers[q.id] || '').trim()).length; }
+function testProg() {
+  const p = $('tprog'); if (!p) return;
+  const n = answered(), all = T.questions.length;
+  p.innerHTML = '<div class="lbl"><span><b>' + n + ' of ' + all + '</b> answered</span><span>' + Math.round((Date.now() - PROG.started) / 60000) + ' min so far</span></div><div class="track"><div class="fill" style="width:' + Math.round(100 * n / all) + '%"></div></div>';
+}
+async function submit() {
+  const n = answered(), all = T.questions.length;
+  if (!confirm(n < all ? 'You have answered ' + n + ' of ' + all + '. An unanswered question scores nothing. Submit anyway?' : 'Submit your answers now?')) return;
+  const b = $('submit'); b.disabled = true; b.textContent = T.ai ? 'Marking… the written answers take up to a minute' : 'Marking…';
+  const r = await post({ action: 'gcm.trainSubmit', answers: PROG.answers, read: readCount(), readOf: SECS.length, readMin: PROG.ms / 60000, testMin: (Date.now() - PROG.started) / 60000 });
+  if (!r.ok) { toast(r.error || 'Not submitted', true); b.disabled = false; b.textContent = 'Submit my answers'; return; }
+  PROG.answers = {}; PROG.started = 0; saveProg();
+  T.mine.unshift(r.attempt); if (T.team) T.team.unshift(r.attempt); VIEW = r.attempt; TAB = 'mine'; render(); window.scrollTo(0, 0);
+}
+
+/* ---- results ---- */
+const rateCls = r => String(r || '').split(' ')[0];
+function resultHtml(o, canMark) {
+  let h = '<div class="res ' + (o.result === 'Pass' ? 'pass' : 'notyet') + '"><div class="big">' + o.score + '%</div><div><span class="pill">' + esc(o.result) + '</span> <span class="small resub">' + esc(o.name) + (o.role ? ' · ' + esc(o.role) : '') + ' · attempt ' + o.n + ' · ' + esc(o.at) + '</span>' +
+    (o.status !== 'Final' ? '<div class="small resnote" style="margin-top:6px">' + esc(o.status) + '. The score can change when the branch manager confirms the written answers.</div>' : '') + '</div></div>';
+  if (o.why && o.why.length) h += '<div class="note bad">Not yet a pass because ' + esc(o.why.join('; ')) + '.</div>';
+  h += '<h3>The appraisal</h3><div class="scroll"><table class="t appr"><thead><tr><th>Competency</th><th>Score</th><th>Rating</th></tr></thead><tbody>' +
+    o.comps.map(c => '<tr><td>' + esc(c.name) + '<div class="small muted">' + c.weight + '% of the marks</div></td><td><div class="bar"><div class="track"><div class="fill' + (c.pct < T.floor ? '" style="background:var(--stop);width:' : '" style="width:') + Math.max(2, c.pct) + '%"></div></div><em>' + c.pct + '%</em></div></td><td><span class="rate ' + rateCls(c.rating) + '">' + esc(c.rating) + '</span></td></tr>').join('') + '</tbody></table></div>';
+  if (o.strengths.length) h += '<p><b>Strengths:</b> ' + esc(o.strengths.join(', ')) + '.</p>';
+  if (o.work.length) h += '<p><b>To work on:</b> ' + o.work.map(w => esc(w.name) + (w.manual.length ? ' (re-read ' + w.manual.map(s => '<a href="#" data-goto="' + esc(s) + '">section ' + esc(s) + '</a>').join(', ') + ')' : '')).join('; ') + '.</p>';
+  if (o.note) h += '<div class="note"><b>The branch manager’s note' + (o.markedBy ? ' (' + esc(o.markedBy) + ', ' + esc(o.markedOn) + ')' : '') + ':</b> ' + esc(o.note) + '</div>';
+  if (o.read) h += '<p class="small muted">Workflow: ' + esc(o.read) + (o.minutes !== '' ? ' · test: ' + esc(o.minutes) + ' min' : '') + '</p>';
+  if (o.items) {
+    h += '<h3>Every question, with feedback</h3>' + o.items.map((it, i) => reviewHtml(it, i + 1, canMark)).join('');
+    if (canMark && o.items.some(it => it.type === 'written')) h += '<div class="drawer"><label for="mnote" style="margin-top:0">Your note to ' + esc(o.name) + ' (optional)</label><textarea class="field" id="mnote" placeholder="What went well, and what to work on.">' + esc(o.note) + '</textarea><button class="btn gold" type="button" id="saveMarks" style="margin-top:10px">Save the marks</button> <span class="small muted">The result is worked out again and e-mailed to them.</span></div>';
+  }
+  return h;
+}
+function reviewHtml(it, n, canMark) {
+  const head = '<div class="qh"><span class="qn">' + n + '</span><span>' + esc(it.comp) + '</span><span>' + it.pts + ' / ' + it.max + '</span>' + (it.crit ? '<span class="crit">Critical</span>' : '') + '</div><p class="qt">' + esc(it.q) + '</p>';
+  if (it.type === 'written') {
+    const mark = it.mm ? it.mm.s : (it.ai ? it.ai.s : '');
+    return '<div class="rv wr">' + head + (it.a ? '<div class="ans">' + esc(it.a) + '</div>' : '<p class="muted">Not answered.</p>') +
+      (it.ai ? '<div class="fb"><b>AI mark ' + it.ai.s + ' / ' + it.max + '.</b> ' + esc(it.ai.fb) + '</div>' : (it.a ? '<p class="small muted">' + (it.aiErr ? 'The AI could not mark this answer: the branch manager marks it.' : 'Waiting for the branch manager’s mark.') + '</p>' : '')) +
+      (it.mm ? '<p class="small"><b>Confirmed by ' + esc(it.mm.by) + ': ' + it.mm.s + ' / ' + it.max + '</b></p>' : '') +
+      (canMark && it.a ? '<label class="small" style="font-weight:600">Your mark <input class="markin" type="number" inputmode="numeric" min="0" max="' + it.max + '" data-mark="' + esc(it.id) + '" value="' + esc(mark) + '"> / ' + it.max + '</label>' : '') +
+      (it.manual ? '<p class="small"><a href="#" data-goto="' + esc(it.manual) + '">Workflow section ' + esc(it.manual) + '</a></p>' : '') + '</div>';
+  }
+  return '<div class="rv ' + (it.ok ? 'ok' : 'no') + '">' + head + it.opts.map(o =>
+      '<div class="o' + (o.k === it.right ? ' right' : '') + (o.k === it.a ? ' mine' + (it.ok ? '' : ' wrong') : '') + '"><b>' + esc(o.k) + '</b> ' + esc(o.t) +
+      (o.k === it.a ? ' <span class="small">← your answer</span>' : '') + (o.k === it.right && !it.ok ? ' <span class="small">← the right answer</span>' : '') + '</div>').join('') +
+    (it.a ? '' : '<p class="small muted">Not answered.</p>') + '<div class="why"><b>Why:</b> ' + esc(it.why) + (it.manual ? ' <a href="#" data-goto="' + esc(it.manual) + '">Workflow section ' + esc(it.manual) + '</a>' : '') + '</div></div>';
+}
+function wireResult(o, canMark) {
+  $('pane').querySelectorAll('[data-goto]').forEach(a => a.onclick = e => { e.preventDefault(); gotoSection(a.dataset.goto); });
+  if (canMark && $('saveMarks')) $('saveMarks').onclick = async () => {
+    const marks = {}; $('pane').querySelectorAll('[data-mark]').forEach(i => { if (i.value !== '') marks[i.dataset.mark] = i.value; });
+    const b = $('saveMarks'); b.disabled = true;
+    const r = await post({ action: 'gcm.trainMark', attempt: o.id, marks: marks, note: $('mnote').value });
+    b.disabled = false;
+    if (!r.ok) { toast(r.error || 'Not saved', true); return; }
+    toast('Saved, and e-mailed to ' + o.name + '.');
+    const i = T.team.findIndex(x => x.id === r.attempt.id); if (i >= 0) T.team[i] = r.attempt;
+    VIEW = r.attempt; drawTeam(true);
+  };
+}
+async function openAttempt(id, where) {
+  $('pane').innerHTML = '<p class="muted panel">Opening the attempt…</p>';
+  const r = await api({ action: 'gcm.trainView', attempt: id });
+  if (!r.ok) { toast(r.error || 'Not opened', true); VIEW = null; render(); return; }
+  VIEW = r.attempt; if (where === 'team') drawTeam(true); else drawMine();
+}
+function attemptsTable(list, showName) {
+  return '<div class="scroll"><table class="t"><thead><tr>' + (showName ? '<th>Name</th><th>Role</th>' : '') + '<th>When</th><th class="num">Attempt</th><th class="num">Score</th><th>Result</th><th>Status</th></tr></thead><tbody>' +
+    list.map(a => '<tr class="rowlink" data-a="' + esc(a.id) + '">' + (showName ? '<td><b>' + esc(a.name) + '</b></td><td class="small">' + esc(a.role) + '</td>' : '') + '<td>' + esc(a.at) + '</td><td class="num">' + a.n + '</td><td class="num"><b>' + a.score + '%</b></td>' +
+      '<td><span class="rate ' + (a.result === 'Pass' ? 'Exceeds' : 'Not') + '">' + esc(a.result) + '</span></td><td class="small">' + esc(a.status) + '</td></tr>').join('') + '</tbody></table></div>';
+}
+function drawMine() {
+  const pane = $('pane');
+  let h = '<div class="panel">';
+  if (VIEW) h += resultHtml(VIEW, false) + '<p><button class="btn gold" type="button" id="again">Take the test again</button></p>';
+  h += '<h2>Your attempts</h2>' + (T.mine.length ? attemptsTable(T.mine, false) : '<p class="muted">None yet. Read your workflow, then take the test.</p>') + '</div>';
+  pane.innerHTML = h;
+  pane.querySelectorAll('[data-a]').forEach(r => r.onclick = () => openAttempt(r.dataset.a, 'mine'));
+  if ($('again')) $('again').onclick = () => { PROG.started = 0; PROG.answers = {}; saveProg(); TAB = 'test'; VIEW = null; render(); window.scrollTo(0, 0); };
+  if (VIEW) wireResult(VIEW, false);
+}
+function drawTeam(detail) {
+  const pane = $('pane'), team = T.team || [], canMark = !!T.canMark;
+  if (detail && VIEW) {
+    pane.innerHTML = '<div class="panel"><button class="back" type="button" id="bk">← Team results</button>' + resultHtml(VIEW, canMark) + '</div>';
+    $('bk').onclick = () => { VIEW = null; drawTeam(false); };
+    wireResult(VIEW, canMark); window.scrollTo(0, 0);
+    return;
+  }
+  const people = {}; team.forEach(a => { (people[a.name] = people[a.name] || []).push(a); });
+  const names = Object.keys(people), passed = names.filter(n => people[n].some(a => a.result === 'Pass')).length;
+  const toMark = team.filter(a => a.status !== 'Final').length;
+  const byRole = {}; team.forEach(a => { byRole[a.role || '?'] = (byRole[a.role || '?'] || 0) + 1; });
+  let h = '<div class="panel">' + (T.problems && T.problems.length ? '<div class="note bad">Questions left out of the test, to fix on the training sheet: ' + esc(T.problems.join('; ')) + '.</div>' : '') +
+    '<div class="tiles"><div class="tile"><b>' + names.length + '</b><span>people tested</span></div><div class="tile"><b>' + passed + '</b><span>passed</span></div>' +
+    '<div class="tile' + (toMark && canMark ? ' alert' : '') + '"><b>' + toMark + '</b><span>attempts with written answers to confirm</span></div>' +
+    '<div class="tile"><b>' + (team.length ? Math.round(team.reduce((s, a) => s + a.score, 0) / team.length) + '%' : '–') + '</b><span>average score</span></div></div>' +
+    (team.length ? '<p class="small muted">Attempts by role: ' + Object.keys(byRole).map(r => esc(r) + ' ' + byRole[r]).join(' · ') + '.</p>' : '') +
+    '<h2>Every attempt</h2>' + (team.length ? attemptsTable(team, true) : '<p class="muted">Nobody on your list has taken the test yet.</p>') + '</div>';
+  pane.innerHTML = h;
+  pane.querySelectorAll('[data-a]').forEach(r => r.onclick = () => openAttempt(r.dataset.a, 'team'));
+}
+
+if (AUTH.code) { $('gWho').value = AUTH.who; $('gCode').value = AUTH.code; open_(); }
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Log Book | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61; --field:rgba(0,0,0,.28);
+    --gold:#efc24b; --gold2:#c9942c; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.09); --teal:#00CFEA; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(239,194,75,.07),transparent);font-size:15px;line-height:1.45}
+  button,input,select,textarea{font:inherit;color:inherit}
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px 96px}
+  h1,h2,h3{font-family:'Montserrat',system-ui,sans-serif}
+  .mark{width:38px;height:38px;border-radius:10px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  [hidden]{display:none!important}
+
+  /* gate */
+  #lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px;overflow:auto}
+  .lock-card{width:min(400px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:30px 22px}
+  .lock-card .mark{width:64px;height:64px;border-radius:16px;margin:0 auto 14px}
+  .lock-card h1{font-weight:800;font-size:21px;color:var(--gold);margin-bottom:6px}
+  .lock-card p{font-size:13px;color:var(--muted);margin-bottom:16px}
+  .seg{display:flex;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:14px}
+  .seg button{flex:1;border:0;background:none;padding:9px 6px;border-radius:9px;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--gold);color:#1d1503}
+  .lock-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--field);
+    text-align:center;letter-spacing:2px;font-family:'Montserrat';font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:10px;outline:none}
+  .lock-card input:focus{border-color:rgba(239,194,75,.55)}
+
+  /* top */
+  header{position:sticky;top:0;z-index:20;background:rgba(7,19,31,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+  .top h1{font-size:16px;font-weight:800;color:var(--gold);line-height:1.1}
+  .top small{display:block;color:var(--muted);font-size:12px;font-family:'DM Sans',system-ui,sans-serif}
+  .top .sp{flex:1}
+  .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;letter-spacing:.4px}
+  .pill.test{background:rgba(251,191,36,.15);color:var(--warn);border:1px solid rgba(251,191,36,.4)}
+  .pill.live{background:rgba(74,222,128,.12);color:var(--ok);border:1px solid rgba(74,222,128,.35)}
+  .tabs{max-width:980px;margin:0 auto;display:flex;gap:2px;padding:0 10px;overflow-x:auto}
+  .tabs button{flex:1 0 auto;background:none;border:0;padding:10px 12px 11px;color:var(--muted);font-weight:700;font-size:14px;
+    border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+  .tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--gold)}
+  .tabs .n{display:inline-block;min-width:20px;padding:0 6px;border-radius:99px;background:rgba(255,255,255,.1);font-size:11px;margin-left:6px}
+  .tabs .n.bad{background:rgba(248,113,113,.25);color:#fecaca}
+
+  /* cards and fields */
+  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  .card h2{font-size:15px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .card h2 .sp{flex:1}
+  .step{width:24px;height:24px;border-radius:50%;background:var(--gold);color:#1d1503;display:grid;place-items:center;font-size:12px;flex:none}
+  .card.dim{opacity:.45;pointer-events:none}
+  label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 6px;letter-spacing:.2px}
+  label:first-child{margin-top:0}
+  input[type=text],input[type=email],input[type=number],input[type=search],select,textarea{
+    width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--line);background:var(--field);outline:none;min-height:44px}
+  input:focus,select:focus,textarea:focus{border-color:rgba(239,194,75,.55)}
+  select option{background:#0d2137}
+  textarea{min-height:70px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:520px){.row{grid-template-columns:1fr}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;border:0;
+    cursor:pointer;font-family:'Montserrat',system-ui,sans-serif;font-weight:800;font-size:14px;min-height:44px;text-decoration:none}
+  .btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503}
+  .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text)}
+  .btn.red{background:rgba(248,113,113,.16);border:1px solid rgba(248,113,113,.45);color:#fecaca}
+  .btn.sm{padding:7px 11px;min-height:34px;font-size:12px;border-radius:10px}
+  .btn.block{width:100%}
+  .btn:disabled{opacity:.5;cursor:default}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px}
+  .search{display:flex;gap:8px}
+  .search input{flex:1}
+  .chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text);font-weight:500;margin-top:12px;cursor:pointer}
+  .chk input{width:20px;height:20px;accent-color:var(--gold);flex:none;margin-top:1px}
+
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin:2px 4px 2px 0;white-space:nowrap}
+  .tag.warn{background:rgba(251,191,36,.14);color:var(--warn)}
+  .tag.bad{background:rgba(248,113,113,.16);color:var(--bad)}
+  .tag.ok{background:rgba(74,222,128,.12);color:var(--ok)}
+  .tag.info{background:rgba(0,207,234,.12);color:var(--teal)}
+  .tag.mute{background:rgba(255,255,255,.07);color:var(--muted)}
+
+  /* client pick */
+  .client{display:block;width:100%;text-align:left;padding:11px 13px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);margin-top:8px;cursor:pointer}
+  .client b{display:block;font-size:15px}
+  .client span{display:block;font-size:12px;color:var(--muted)}
+  .client.sel{border-color:var(--gold);background:rgba(239,194,75,.08)}
+
+  /* documents */
+  .item{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:rgba(255,255,255,.03)}
+  .item .head{display:flex;gap:10px;align-items:center}
+  .item .head b{flex:1;font-size:15px}
+  .item .x{background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px}
+  .item .grid{display:grid;grid-template-columns:2fr 2fr 70px;gap:8px;margin-top:8px}
+  @media (max-width:620px){.item .grid{grid-template-columns:1fr 70px}.item .grid > div:first-child{grid-column:span 2}}
+  .sugg{font-size:12px;color:var(--teal);margin-top:6px}
+  .sugg.off{color:var(--warn)}
+  .with{margin-top:8px;font-size:12px;color:var(--muted)}
+  .with button{background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.35);color:var(--teal);border-radius:99px;padding:3px 10px;
+    font-size:12px;font-weight:700;margin:4px 4px 0 0;cursor:pointer}
+  .adder{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px}
+
+  /* queue */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  @media (max-width:640px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  .tile{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;text-align:left}
+  .tile b{display:block;font-family:'Montserrat',system-ui,sans-serif;font-size:26px;font-weight:800}
+  .tile span{font-size:12px;color:var(--muted)}
+  .tile.bad b{color:var(--bad)} .tile.ok b{color:var(--ok)} .tile.warn b{color:var(--warn)}
+  .grp{border:1px solid var(--line);border-radius:14px;margin-top:10px;overflow:hidden;background:rgba(0,0,0,.12)}
+  .grp > .gh{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);flex-wrap:wrap}
+  .grp > .gh b{font-size:14px}
+  .grp > .gh .sp{flex:1}
+  .ln{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:start;padding:10px 12px;border-top:1px solid var(--line)}
+  .ln input[type=checkbox]{width:20px;height:20px;accent-color:var(--gold);margin-top:2px}
+  .ln .t{font-size:14px}
+  .ln .t small{display:block;color:var(--muted);font-size:12px}
+  .ln select{min-height:34px;padding:5px 8px;font-size:12px;max-width:230px}
+  .ln.late{background:rgba(248,113,113,.07)}
+  .empty{color:var(--muted);text-align:center;padding:22px 8px;font-size:14px}
+  .stamps{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin-top:4px}
+  .stamps b{color:var(--text);font-weight:700}
+
+  /* modal */
+  .modal{position:fixed;inset:0;z-index:60;background:rgba(3,9,16,.72);display:flex;align-items:flex-end;justify-content:center;padding:0}
+  .sheet{width:min(560px,100%);max-height:92vh;overflow:auto;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:20px 20px 0 0;padding:18px 16px 22px}
+  @media (min-width:640px){.modal{align-items:center}.sheet{border-radius:20px}}
+  .sheet h3{font-size:16px;margin-bottom:6px}
+  .sig{position:relative;border-radius:12px;border:1px dashed rgba(239,194,75,.5);background:#fff;touch-action:none;overflow:hidden;margin-top:8px}
+  .sig canvas{display:block;width:100%;height:160px}
+  .sig .x{position:absolute;right:8px;top:8px;background:#07131f;color:var(--gold);border:0;border-radius:8px;padding:6px 10px;font-weight:700;font-size:12px}
+  .sig .ph{position:absolute;inset:auto 0 12px;text-align:center;color:#9aa6b4;font-size:13px;pointer-events:none}
+  .acts{display:flex;gap:8px;margin-top:14px}
+  .acts .btn{flex:1}
+
+  /* insights */
+  .kp{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .kp .tile{cursor:default}
+  table.t{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  table.t th{text-align:left;color:var(--muted);font-weight:700;font-size:11px;letter-spacing:.3px;padding:7px 6px;border-bottom:1px solid var(--line)}
+  table.t td{padding:7px 6px;border-bottom:1px solid var(--line)}
+  table.t td.n,table.t th.n{text-align:right;font-variant-numeric:tabular-nums}
+  .scroll{overflow-x:auto}
+  .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;min-width:60px}
+  .bar i{display:block;height:100%;background:var(--teal)}
+  .chart svg{width:100%;height:auto;display:block}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  /* result */
+  .done{text-align:center}
+  .done .ref{font-family:'Montserrat';font-size:24px;font-weight:800;color:var(--gold);margin:6px 0 12px;letter-spacing:1px}
+
+  /* the transmittal, on screen and on paper */
+  #print{position:fixed;inset:0;z-index:70;background:#e9edf2;overflow:auto;padding:16px}
+  .ptools{max-width:820px;margin:0 auto 12px;display:flex;gap:8px;flex-wrap:wrap}
+  .ptools .btn.ghost{background:#07131f;color:#efc24b;border-color:#07131f}
+  .paper{max-width:820px;margin:0 auto;background:#fff;color:#111;padding:28px 30px;border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:12px}
+  .paper .ph1{display:flex;align-items:center;gap:14px;border-bottom:3px solid #07131f;padding-bottom:12px}
+  .paper .ph1 img{width:48px;height:48px;border-radius:10px}
+  .paper .ph1 .tt{flex:1}
+  .paper .ph1 .tt b{display:block;font-size:18px;letter-spacing:1px}
+  .paper .ph1 .no{text-align:right;font-size:12px}
+  .paper .no b{display:block;font-size:17px}
+  .paper .meta{display:grid;grid-template-columns:120px 1fr 110px 1fr;gap:5px 10px;margin:14px 0}
+  .paper .meta span{color:#555;font-weight:bold;font-size:11px}
+  .paper table{width:100%;border-collapse:collapse}
+  .paper th{background:#07131f;color:#efc24b;text-align:left;font-size:10px;padding:6px 5px;letter-spacing:.3px}
+  .paper td{border-bottom:1px solid #d8dde3;padding:6px 5px;vertical-align:top;font-size:11px}
+  .paper tr.late td{background:#fff3f0}
+  .paper .why{color:#9a2b12;font-style:italic}
+  .paper .tot{margin-top:10px;font-weight:bold}
+  .paper .signs{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:38px}
+  .paper .signs div{border-top:1px solid #111;padding-top:5px;font-size:11px}
+  .paper .foot{margin-top:18px;color:#666;font-size:10px}
+  @media print{
+    @page{size:A4 landscape;margin:12mm}
+    body{background:#fff}
+    body > *:not(#print){display:none!important}
+    #print{position:static;padding:0;background:#fff}
+    .ptools{display:none}
+    .paper{max-width:none;padding:0;border-radius:0}
+    .paper th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .paper tr.late td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<!-- Agents sign in here with their agent number and code. Branch staff use
+     the RR Operations access code, the same sign-in as every other app. -->
+<div id="lock">
+  <form class="lock-card" id="lockForm" autocomplete="off">
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
+    <h1>Log Book</h1>
+    <p>Sign in with your agent number and the password you use for the fact find.</p>
+    <div class="seg" role="group" aria-label="Who is signing in">
+      <button type="button" aria-pressed="true" data-who="agent">Agent number</button>
+      <button type="button" aria-pressed="false" data-who="staff">Access code</button>
+    </div>
+    <div id="gAgent">
+      <input id="gNo" type="text" placeholder="AGENT NUMBER" aria-label="Agent number" inputmode="text" autocapitalize="characters">
+      <input id="gCode" type="password" placeholder="PASSWORD" aria-label="Password">
+    </div>
+    <div id="gStaff" hidden>
+      <input id="gAccess" type="password" placeholder="ACCESS CODE" aria-label="Access code">
+    </div>
+    <button class="btn gold block" type="submit" id="gBtn">Sign in</button>
+    <div class="err" id="gErr" role="alert"></div>
+  </form>
+</div>
+
+<header id="hdr" hidden>
+  <div class="top">
+    <a href="/rroperations/" class="mark" title="All apps" aria-label="All apps"><img src="/logo-mark.png" alt=""></a>
+    <div><h1>Log Book</h1><small id="me">—</small></div>
+    <div class="sp"></div>
+    <span class="pill test" id="modePill" hidden>TEST</span>
+    <button class="btn ghost sm" id="signOut">Sign out</button>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+</header>
+
+<main class="wrap" id="main" hidden>
+
+  <!-- ─────────── LOG ─────────── -->
+  <section id="tab-log" hidden>
+    <form id="logForm" novalidate>
+      <div class="card">
+        <h2><span class="step">1</span>What are you logging</h2>
+        <div class="seg" role="group" aria-label="Type" id="typeSeg"></div>
+        <div id="agentPick" hidden>
+          <label for="agentSel">Agent the documents are from</label>
+          <select id="agentSel"><option value="">Choose the agent…</option></select>
+        </div>
+        <div class="hint" id="typeHint"></div>
+      </div>
+
+      <div class="card" id="c2">
+        <h2><span class="step">2</span>The client</h2>
+        <label for="q">Client's name, e-mail or a policy number</label>
+        <div class="search">
+          <input id="q" type="search" placeholder="e.g. Jane Doe, jane@mail.com or 1000812345" autocomplete="off" enterkeyhint="search">
+          <button class="btn gold" type="button" id="findBtn">Find</button>
+        </div>
+        <div class="err" id="findErr" role="alert" hidden></div>
+        <div id="results"></div>
+        <div id="picked" hidden></div>
+        <button class="btn ghost block" type="button" id="typeClient" style="margin-top:10px">Not found? Type the client instead</button>
+        <div id="typed" hidden>
+          <div class="row">
+            <div><label for="tName">Client's full name</label><input id="tName" type="text" autocomplete="off"></div>
+            <div><label for="tEmail">Client's e-mail (optional)</label><input id="tEmail" type="email" autocomplete="off" inputmode="email"></div>
+          </div>
+          <div class="hint">Typed clients are flagged for the branch to match in Salesforce.</div>
+        </div>
+      </div>
+
+      <div class="card dim" id="c3">
+        <h2><span class="step">3</span><span id="c3Title">The documents</span></h2>
+        <div id="docsBox">
+          <label for="docSel">Choose the document: the department it goes to is filled in from the branch's history</label>
+          <select id="deptFilter" hidden aria-hidden="true"></select>
+          <div class="adder" style="margin-top:0">
+            <select id="docSel" aria-label="Add a document"></select>
+            <button class="btn gold" type="button" id="addDoc">Add</button>
+          </div>
+        </div>
+        <div id="contractBox" hidden>
+          <label for="contractPol">Policy whose contract you are collecting</label>
+          <select id="contractPol"></select>
+          <input id="contractPolTyped" type="text" placeholder="Policy number" style="margin-top:8px" hidden>
+        </div>
+        <div id="items"></div>
+      </div>
+
+      <div class="card dim" id="c4">
+        <h2><span class="step">4</span>Confirm</h2>
+        <label for="notes">Notes for the branch (optional)</label>
+        <textarea id="notes" maxlength="500" placeholder="e.g. Client will drop the ID tomorrow"></textarea>
+        <label class="chk"><input type="checkbox" id="declare"><span id="declareText"></span></label>
+        <div class="err" id="subErr" role="alert" hidden></div>
+        <button class="btn gold block" type="submit" id="submitBtn" style="margin-top:14px">Log it</button>
+      </div>
+    </form>
+    <div class="card done" id="result" hidden></div>
+  </section>
+
+  <!-- ─────────── MY LOG (agents) ─────────── -->
+  <section id="tab-mine" hidden>
+    <div class="card"><h2>What you have logged<span class="sp"></span>
+      <select id="mineDays" style="width:auto;min-height:34px;padding:5px 8px;font-size:12px"><option value="30">30 days</option><option value="90" selected>90 days</option><option value="365">A year</option></select></h2>
+      <div id="mine"></div></div>
+  </section>
+
+  <!-- ─────────── QUEUE (staff) ─────────── -->
+  <section id="tab-queue" hidden>
+    <div class="tiles" id="qTiles"></div>
+    <div class="card" id="qLate" hidden><h2><span class="tag bad">LATE</span>Received and not sent</h2>
+      <div class="hint" style="margin-top:-6px">Past the same-day rule. Send them now, or give the reason: it prints on the transmittal.</div>
+      <div id="qLateList"></div></div>
+    <div class="card"><h2>To send, by department<span class="sp"></span><span class="hint" id="qCut" style="margin:0"></span></h2>
+      <div id="qSend"></div></div>
+    <div class="card"><h2>To receive from agents</h2>
+      <div class="hint" style="margin-top:-6px">Check the papers against the lines, correct a department if it is wrong, then receive and sign.</div>
+      <div id="qRecv"></div></div>
+    <div class="card" id="qContractsCard"><h2>Contracts with agents (20 days)</h2><div id="qContracts"></div></div>
+    <div class="card"><h2>Sent today</h2><div id="qToday"></div></div>
+    <div class="card" id="qRetCard"><h2>Returned to agents this week</h2><div id="qRet"></div></div>
+  </section>
+
+  <!-- ─────────── TRANSMITTALS ─────────── -->
+  <section id="tab-trans" hidden>
+    <div class="card"><h2>Build a transmittal</h2><p class="hint" style="margin-top:-6px">Receive the papers on the Queue, then press <b>Build transmittal</b> on a department: it is numbered, stamped sent and printed.</p>
+      <button class="btn gold" type="button" id="goQueue" style="margin-top:10px">Go to the Queue</button></div>
+    <div class="card"><h2>Who is sending them</h2><div id="transWho"></div></div>
+    <div class="card"><h2>Transmittals<span class="sp"></span>
+      <select id="transDays" style="width:auto;min-height:34px;padding:5px 8px;font-size:12px"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option></select></h2>
+      <div id="transList"></div></div>
+  </section>
+
+  <!-- ─────────── INSIGHTS ─────────── -->
+  <section id="tab-stats" hidden>
+    <div class="card"><h2>Insights<span class="sp"></span>
+      <select id="statDays" style="width:auto;min-height:34px;padding:5px 8px;font-size:12px">
+        <option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option>
+        <option value="365">A year</option><option value="800">Everything</option></select></h2>
+      <div id="stats"><div class="empty">Loading…</div></div></div>
+  </section>
+</main>
+
+<!-- the modal: signature, reasons, return, confirm -->
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<!-- the transmittal -->
+<div id="print" hidden>
+  <div class="ptools">
+    <button class="btn gold" id="pPrint">Print</button>
+    <button class="btn ghost" id="pClose">Done</button>
+    <span class="hint" style="align-self:center;color:#4b5868" id="pNote"></span>
+  </div>
+  <div class="paper" id="paper"></div>
+</div>
+
+<script src="/rroperations/ops-config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API_URL = window.RR_OPS.API_URL, SESSION_KEY = window.RR_OPS.SESSION_KEY;
+  var $ = function (id) { return document.getElementById(id); };
+  var S = { token: '', cfg: null, type: '', client: null, typed: false, policies: [], items: [], agents: [], queue: null, gate: 'agent' };
+  var DOC = {}, DEPTS = [];
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var store = {
+    get: function () { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; } },
+    set: function (s) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {} },
+    del: function () { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+  };
+  function api(action, body) {
+    if (/RR_OPERATIONS_DEPLOYMENT_ID/.test(API_URL)) return Promise.reject(new Error('RR Operations is not connected yet.'));
+    var payload = Object.assign({ action: action, token: S.token }, body || {});
+    return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.error === 'signed-out') { gate('Your sign-in ended. Sign in again.'); throw new Error('Signed out.'); }
+        if (!j || !j.ok) throw new Error((j && j.error) || 'Something went wrong.');
+        return j;
+      });
+  }
+  function busy(btn, on, label) { if (!btn) return; btn.disabled = on; if (on && label) { btn.dataset.l = btn.textContent; btn.textContent = label; } else if (!on && btn.dataset.l) { btn.textContent = btn.dataset.l; delete btn.dataset.l; } }
+  function showErr(el, msg) { el.textContent = msg || ''; el.hidden = !msg; }
+  var TZ = 'America/Port_of_Spain';
+  function fmt(iso, withTime) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    var o = { weekday: 'short', day: 'numeric', month: 'short', timeZone: TZ };
+    if (withTime) { o.hour = 'numeric'; o.minute = '2-digit'; }
+    return d.toLocaleString('en-GB', o);
+  }
+  function fmtDay(iso) { return iso ? new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TZ }) : ''; }
+  function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+  /* ── the gate ───────────────────────────────────────────── */
+  document.querySelectorAll('[data-who]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      S.gate = b.getAttribute('data-who');
+      document.querySelectorAll('[data-who]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      $('gAgent').hidden = S.gate !== 'agent'; $('gStaff').hidden = S.gate !== 'staff';
+      showErr($('gErr'), '');
+    });
+  });
+  $('lockForm').addEventListener('submit', function (e) {
+    e.preventDefault(); showErr($('gErr'), ''); busy($('gBtn'), true, 'Signing in…');
+    var p = S.gate === 'agent'
+      ? api('lb.login', { agentNo: $('gNo').value, code: $('gCode').value })
+      : api('login', { code: $('gAccess').value });
+    p.then(function (s) { store.set(s); S.token = s.token; return start(); })
+      .catch(function (err) { showErr($('gErr'), err.message); })
+      .then(function () { busy($('gBtn'), false); });
+  });
+  function gate(msg) {
+    store.del(); S.token = '';
+    $('lock').hidden = false; $('hdr').hidden = true; $('main').hidden = true;
+    showErr($('gErr'), msg || '');
+  }
+  $('signOut').addEventListener('click', function () {
+    api('signOut', {}).catch(function () {});
+    gate('');
+  });
+
+  function start() {
+    return api('lb.config').then(function (c) {
+      S.cfg = c; DOC = {}; c.documents.forEach(function (d) { DOC[d.name] = d; }); DEPTS = c.departments;
+      $('lock').hidden = true; $('hdr').hidden = false; $('main').hidden = false;
+      $('me').textContent = c.name + ' · ' + (c.agent ? 'Agent ' + c.agentNo : c.role);
+      var pill = $('modePill'); pill.hidden = false;
+      pill.textContent = c.mode === 'live' ? 'LIVE' : 'TEST'; pill.className = 'pill ' + (c.mode === 'live' ? 'live' : 'test');
+      pill.title = c.mode === 'live' ? 'E-mails go to the people named' : 'Test mode: every e-mail goes to the test inbox';
+      buildTabs(); setupForm();
+      if (!c.agent) api('lb.agents').then(function (r) {
+        S.agents = r.agents;
+        $('agentSel').innerHTML = '<option value="">Choose the agent…</option>' + r.agents.map(function (a) {
+          return '<option value="' + esc(a.agentNo) + '">' + esc(a.name) + ' · ' + esc(a.agentNo) + (a.unit ? ' · ' + esc(a.unit) : '') + '</option>';
+        }).join('');
+      }).catch(function () {});
+      var want = (location.hash || '').replace('#', '');
+      showTab(!c.agent && ['queue', 'log', 'trans', 'stats'].indexOf(want) >= 0 ? want : c.agent ? 'log' : 'queue');
+    });
+  }
+
+  /* ── tabs ──────────────────────────────────────────────── */
+  function buildTabs() {
+    var t = S.cfg.agent
+      ? [['log', 'Log documents'], ['mine', 'My log']]
+      : [['queue', 'Queue'], ['log', 'Log for an agent'], ['trans', 'Transmittals'], ['stats', 'Insights']];
+    $('tabs').innerHTML = t.map(function (x) {
+      return '<button role="tab" aria-selected="false" data-tab="' + x[0] + '">' + esc(x[1]) + '<span class="n" id="n-' + x[0] + '" hidden></span></button>';
+    }).join('');
+    $('tabs').querySelectorAll('[data-tab]').forEach(function (b) { b.addEventListener('click', function () { showTab(b.getAttribute('data-tab')); }); });
+  }
+  function showTab(k) {
+    S.tab = k;
+    ['log', 'mine', 'queue', 'trans', 'stats'].forEach(function (x) { $('tab-' + x).hidden = x !== k; });
+    $('tabs').querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-tab') === k ? 'true' : 'false'); });
+    if (k === 'mine') loadMine();
+    if (k === 'queue') loadQueue();
+    if (k === 'trans') loadTrans();
+    if (k === 'stats') loadStats();
+    window.scrollTo(0, 0);
+  }
+
+  /* ── the log form ───────────────────────────────────────── */
+  function setupForm() {
+    $('typeSeg').innerHTML = S.cfg.types.map(function (t, i) {
+      return '<button type="button" aria-pressed="' + (i === 0) + '" data-type="' + esc(t) + '">' + esc(t) + '</button>';
+    }).join('');
+    $('typeSeg').querySelectorAll('[data-type]').forEach(function (b) {
+      b.addEventListener('click', function () { setType(b.getAttribute('data-type')); });
+    });
+    $('agentPick').hidden = S.cfg.agent;
+    $('deptFilter').innerHTML = '<option value="">Any department</option>' + DEPTS.map(function (d) {
+      return '<option>' + esc(d.name) + '</option>'; }).join('');
+    fillDocSel();
+    resetForm();
+  }
+  function setType(t) {
+    S.type = t;
+    $('typeSeg').querySelectorAll('[data-type]').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-type') === t ? 'true' : 'false'); });
+    var contract = t === S.cfg.types[1];
+    $('docsBox').hidden = contract; $('contractBox').hidden = !contract;
+    $('c3Title').textContent = contract ? 'The contract' : 'The documents';
+    $('typeHint').textContent = contract
+      ? 'A contract you are collecting from the branch to deliver. The 20 days under s.155(6) start today; record the handover in the Delivery Book.'
+      : 'Documents you are handing to the branch for Guardian Life. They go the day the branch receives them.';
+    $('declareText').textContent = contract ? S.cfg.declareContract : S.cfg.declareDocs;
+    $('submitBtn').textContent = contract ? 'Log the contract' : 'Log it';
+    S.items = []; renderItems(); fillContractPol(); gateSteps();
+  }
+  function fillDocSel() {
+    var dept = $('deptFilter').value;
+    var docs = S.cfg.documents.slice();
+    if (dept) {
+      var share = function (d) { var h = d.to.filter(function (x) { return x[0] === dept; })[0]; return h ? h[1] : 0; };
+      var there = docs.filter(function (d) { return share(d) > 0; }).sort(function (a, b) { return share(b) - share(a); });
+      var rest = docs.filter(function (d) { return share(d) === 0; }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+      $('docSel').innerHTML = '<option value="">Choose a document…</option>' +
+        (there.length ? '<optgroup label="Usually sent to ' + esc(dept) + '">' + there.map(docOpt).join('') + '</optgroup>' : '') +
+        '<optgroup label="Everything else">' + rest.map(docOpt).join('') + '</optgroup>';
+    } else {
+      var top = docs.slice().sort(function (a, b) { return b.n - a.n; }).slice(0, 12);
+      var all = docs.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
+      $('docSel').innerHTML = '<option value="">Choose a document…</option><optgroup label="Most handed in">' + top.map(docOpt).join('') +
+        '</optgroup><optgroup label="A to Z">' + all.map(docOpt).join('') + '</optgroup>';
+    }
+  }
+  function docOpt(d) { return '<option value="' + esc(d.name) + '">' + esc(d.name) + '</option>'; }
+  $('deptFilter').addEventListener('change', fillDocSel);
+  $('addDoc').addEventListener('click', function () { var v = $('docSel').value; if (v) { addItem(v); $('docSel').value = ''; } });
+  $('docSel').addEventListener('change', function () { var v = $('docSel').value; if (v) { addItem(v); $('docSel').value = ''; } });
+
+  function suggestFor(name) {
+    var d = DOC[name];
+    var forced = $('deptFilter').value;
+    if (forced) return forced;
+    return d && d.to.length ? d.to[0][0] : '';
+  }
+  function addItem(name) {
+    var d = DOC[name] || { noPolicy: false };
+    var pol = S.policies.length === 1 ? S.policies[0] : null;
+    if (!pol && S.items.length) {
+      var last = S.items[S.items.length - 1];
+      if (last.policy) pol = { policy: last.policy, portfolioId: last.portfolioId, type: last.type };
+    }
+    S.items.push({ document: name, department: suggestFor(name), policy: d.noPolicy ? '' : (pol ? pol.policy : ''),
+                   portfolioId: d.noPolicy || !pol ? '' : pol.portfolioId, type: pol ? pol.type : '', quantity: 1, note: '' });
+    renderItems(); gateSteps();
+  }
+  function polOptions(sel) {
+    var o = '<option value="">' + (S.policies.length ? 'Choose the policy…' : 'Type the policy below') + '</option>';
+    o += S.policies.map(function (p) {
+      return '<option value="' + esc(p.policy) + '"' + (p.policy === sel ? ' selected' : '') + '>' + esc(p.policy) + ' · ' + esc(p.type) + (p.plan ? ' · ' + esc(p.plan) : '') + (p.status ? ' · ' + esc(p.status) : '') + '</option>';
+    }).join('');
+    if (sel && !S.policies.some(function (p) { return p.policy === sel; })) o += '<option value="' + esc(sel) + '" selected>' + esc(sel) + ' (typed)</option>';
+    o += '<option value="__type">Type another policy number…</option>';
+    return o;
+  }
+  function renderItems() {
+    var contract = S.type === S.cfg.types[1];
+    if (contract) { $('items').innerHTML = ''; return; }
+    var have = {};
+    S.items.forEach(function (it) { have[it.document] = 1; });
+    $('items').innerHTML = S.items.length ? S.items.map(function (it, i) {
+      var d = DOC[it.document] || { to: [], with: [], noPolicy: false, n: 0 };
+      var usual = d.to.length ? d.to[0] : null;
+      var sg = usual ? (it.department === usual[0]
+        ? '<div class="sugg">✓ Routed automatically: ' + usual[2] + '% of ' + d.n.toLocaleString() + ' handed in went here</div>'
+        : '<div class="sugg off">Changed by you. It usually goes to ' + esc(usual[0]) + ' (' + usual[2] + '% of ' + d.n.toLocaleString() + ')</div>') :
+        '<div class="sugg off">New document for the branch: choose where it goes</div>';
+      var withs = (d.with || []).filter(function (w) { return !have[w[0]]; });
+      return '<div class="item" data-i="' + i + '"><div class="head"><b>' + esc(it.document) + '</b>' +
+        '<button type="button" class="x" data-rm="' + i + '" aria-label="Remove">×</button></div>' +
+        '<div class="grid">' +
+          '<div><label>Routed to</label><select data-f="department">' + DEPTS.map(function (x) {
+            return '<option' + (x.name === it.department ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') +
+            (it.department ? '' : '<option value="" selected>Choose…</option>') + '</select></div>' +
+          '<div><label>Policy' + (d.noPolicy ? ' (if any)' : '') + '</label><select data-f="policy">' + polOptions(it.policy) + '</select></div>' +
+          '<div class="q"><label>Copies</label><input type="number" min="1" max="50" value="' + it.quantity + '" data-f="quantity"></div>' +
+        '</div>' + sg +
+        (it.document === 'Other' || it.note ? '<label>What is it' + (it.document === 'Other' ? '' : ' (optional)') + '</label><input type="text" maxlength="120" data-f="note" value="' + esc(it.note) + '">' : '') +
+        (withs.length ? '<div class="with">Often handed in with it: ' + withs.map(function (w) {
+          return '<button type="button" data-add="' + esc(w[0]) + '">+ ' + esc(w[0]) + ' (' + w[1] + '%)</button>'; }).join('') + '</div>' : '') +
+        '</div>';
+    }).join('') : '<div class="empty">Add each document from the list above.</div>';
+    $('items').querySelectorAll('[data-rm]').forEach(function (b) {
+      b.addEventListener('click', function () { S.items.splice(+b.getAttribute('data-rm'), 1); renderItems(); gateSteps(); });
+    });
+    $('items').querySelectorAll('[data-add]').forEach(function (b) {
+      b.addEventListener('click', function () { addItem(b.getAttribute('data-add')); });
+    });
+    $('items').querySelectorAll('.item').forEach(function (el) {
+      var it = S.items[+el.getAttribute('data-i')];
+      el.querySelectorAll('[data-f]').forEach(function (f) {
+        f.addEventListener('change', function () {
+          var k = f.getAttribute('data-f');
+          if (k === 'policy') {
+            if (f.value === '__type') {
+              var v = (prompt('Policy number') || '').trim();
+              it.policy = v; it.portfolioId = ''; it.type = '';
+            } else {
+              var p = S.policies.filter(function (x) { return x.policy === f.value; })[0];
+              it.policy = f.value; it.portfolioId = p ? p.portfolioId : ''; it.type = p ? p.type : '';
+            }
+            renderItems();
+          } else if (k === 'quantity') it.quantity = Math.max(1, Math.min(50, parseInt(f.value, 10) || 1));
+          else { it[k] = f.value; if (k === 'department') renderItems(); }
+        });
+      });
+    });
+  }
+  function fillContractPol() {
+    $('contractPol').innerHTML = polOptions('');
+    $('contractPolTyped').hidden = true;
+  }
+  $('contractPol').addEventListener('change', function () { $('contractPolTyped').hidden = $('contractPol').value !== '__type'; gateSteps(); });
+  $('contractPolTyped').addEventListener('input', gateSteps);
+
+  function haveClient() { return !!(S.client || (S.typed && $('tName').value.trim())); }
+  function gateSteps() {
+    var ok = haveClient();
+    $('c3').classList.toggle('dim', !ok);
+    var contract = S.type === S.cfg.types[1];
+    var docsOk = contract ? !!($('contractPol').value && ($('contractPol').value !== '__type' || $('contractPolTyped').value.trim())) : S.items.length > 0;
+    $('c4').classList.toggle('dim', !(ok && docsOk));
+  }
+  $('tName').addEventListener('input', gateSteps);
+  $('declare').addEventListener('change', function () { showErr($('subErr'), ''); });
+
+  /* ── finding the client ─────────────────────────────────── */
+  function find() {
+    var q = $('q').value.trim();
+    showErr($('findErr'), '');
+    if (!q) return;
+    busy($('findBtn'), true, '…');
+    api('lb.lookup', { q: q }).then(function (r) {
+      if (r.note) showErr($('findErr'), r.note);
+      var list = r.clients || [];
+      $('results').innerHTML = list.length ? list.map(function (c, i) {
+        return '<button type="button" class="client" data-i="' + i + '"><b>' + esc(c.name) + '</b><span>' +
+          [c.email, c.mobile, c.town, c.account].filter(Boolean).map(esc).join(' · ') + '</span>' +
+          (c.sameEmailAs && c.sameEmailAs.length ? '<span class="tag warn">Same e-mail as another record</span>' : '') + '</button>';
+      }).join('') : (r.note ? '' : '<div class="empty">No client found. Try another spelling, the e-mail, or a policy number.</div>');
+      $('results').querySelectorAll('.client').forEach(function (b) {
+        b.addEventListener('click', function () { pick(list[+b.getAttribute('data-i')]); });
+      });
+    }).catch(function (err) { showErr($('findErr'), err.message); })
+      .then(function () { busy($('findBtn'), false); });
+  }
+  $('findBtn').addEventListener('click', find);
+  $('q').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); find(); } });
+
+  function pick(c) {
+    S.client = c; S.typed = false; $('typed').hidden = true;
+    $('results').innerHTML = '';
+    $('picked').hidden = false;
+    $('picked').innerHTML = '<div class="client sel"><b>' + esc(c.name) + '</b><span>' + esc([c.email, c.mobile].filter(Boolean).join(' · ')) +
+      '</span><span id="polLine">Loading their policies…</span></div><button type="button" class="btn ghost sm" id="unpick" style="margin-top:8px">Change client</button>';
+    $('unpick').addEventListener('click', unpick);
+    api('lb.policies', { contactIds: [c.id] }).then(function (r) {
+      S.policies = [];
+      (r.groups || []).forEach(function (g) { g.policies.forEach(function (p) { S.policies.push(p); }); });
+      $('polLine').textContent = S.policies.length ? plural(S.policies.length, 'policy') + ' on record' : 'No policies on record: type the number on each document';
+      if (S.policies.length) $('polLine').textContent = S.policies.length === 1 ? '1 policy on record: ' + S.policies[0].policy : S.policies.length + ' policies on record';
+      S.items.forEach(function (it) { if (!it.policy && S.policies.length === 1 && !DOC[it.document].noPolicy) { it.policy = S.policies[0].policy; it.portfolioId = S.policies[0].portfolioId; it.type = S.policies[0].type; } });
+      renderItems(); fillContractPol(); gateSteps();
+    }).catch(function (err) { $('polLine').textContent = err.message; });
+    gateSteps();
+  }
+  function unpick() { S.client = null; S.policies = []; $('picked').hidden = true; $('picked').innerHTML = ''; renderItems(); fillContractPol(); gateSteps(); $('q').focus(); }
+  $('typeClient').addEventListener('click', function () { unpick(); S.typed = true; $('typed').hidden = false; $('tName').focus(); gateSteps(); });
+
+  /* ── submit ─────────────────────────────────────────────── */
+  function entry() {
+    var contract = S.type === S.cfg.types[1];
+    var items;
+    if (contract) {
+      var v = $('contractPol').value === '__type' ? $('contractPolTyped').value.trim() : $('contractPol').value;
+      var p = S.policies.filter(function (x) { return x.policy === v; })[0];
+      items = [{ document: 'Policy Contract', policy: v, portfolioId: p ? p.portfolioId : '', type: p ? p.type : '', plan: p ? p.plan : '' }];
+    } else items = S.items.map(function (it) {
+      return { document: it.document, department: it.department, policy: it.policy, portfolioId: it.portfolioId, type: it.type, quantity: it.quantity, note: it.note };
+    });
+    return {
+      type: S.type, agentNo: S.cfg.agent ? '' : $('agentSel').value,
+      client: S.client ? S.client.name : $('tName').value.trim(), contactId: S.client ? S.client.id : '',
+      clientEmail: S.client ? S.client.email : $('tEmail').value.trim(),
+      items: items, notes: $('notes').value.trim(), declared: $('declare').checked,
+    };
+  }
+  $('logForm').addEventListener('submit', function (e) { e.preventDefault(); submit(false); });
+  function submit(confirmDup) {
+    showErr($('subErr'), '');
+    if (!$('declare').checked) return showErr($('subErr'), 'Tick the declaration first.');
+    if (!S.cfg.agent && !$('agentSel').value) return showErr($('subErr'), 'Choose the agent these documents are from (step 1).');
+    busy($('submitBtn'), true, 'Logging…');
+    api('lb.submit', { entry: entry(), confirmDuplicates: confirmDup, confirmMissing: confirmDup }).then(function (r) {
+      if (r.needsConfirm) {
+        var miss = r.missing || [], dups = r.duplicates || [];
+        modal('<h3>' + (miss.length ? 'Usually handed in together' : 'Already logged?') + '</h3>' +
+          (miss.length ? '<p class="hint">The branch\'s history says these usually come with what you are logging. Add them, or log it as it is.</p>' +
+            miss.map(function (m) {
+              return '<div class="ln" style="grid-template-columns:1fr auto;border:1px solid var(--line);border-radius:12px;margin-top:8px">' +
+                '<div class="t"><b>' + esc(m.document) + '</b><small>with ' + esc(m.with) + ' ' + m.pct + '% of the time</small></div>' +
+                '<div><button class="btn gold sm" data-addmiss="' + esc(m.document) + '">+ Add</button></div></div>';
+            }).join('') : '') +
+          (dups.length ? '<p class="hint" style="margin-top:12px">These look like papers logged in the last fortnight and not yet sent:</p>' +
+            dups.map(function (d) { return '<div class="stamps"><b>' + esc(d.document) + '</b> ' + esc(d.policy) + ' · ' + esc(d.ref) + ' · ' + esc(d.status.toLowerCase()) + '</div>'; }).join('') : '') +
+          '<div class="acts"><button class="btn ghost" id="mNo">Go back</button><button class="btn gold" id="mYes">Log it as it is</button></div>');
+        $('sheet').querySelectorAll('[data-addmiss]').forEach(function (b) {
+          b.onclick = function () { addItem(b.getAttribute('data-addmiss')); closeModal(); window.scrollTo(0, $('c3').offsetTop - 80); };
+        });
+        $('mNo').onclick = closeModal; $('mYes').onclick = function () { closeModal(); submit(true); };
+        return;
+      }
+      done(r);
+    }).catch(function (err) { showErr($('subErr'), err.message); })
+      .then(function () { busy($('submitBtn'), false); });
+  }
+  function done(r) {
+    $('logForm').hidden = true;
+    var contract = S.type === S.cfg.types[1];
+    $('result').hidden = false;
+    $('result').innerHTML = '<div style="font-size:40px">✓</div><h2 style="justify-content:center">' + (contract ? 'Contract logged' : 'Logged') + '</h2>' +
+      '<div class="ref">' + esc(r.ref) + '</div>' +
+      '<p class="hint" style="font-size:14px">' + (contract
+        ? 'Deliver it to the client by <b>' + esc(r.due) + '</b> and record the handover in the Delivery Book.'
+        : plural(r.lines, 'document') + ' logged. Hand the papers to the branch with this reference.') + '</p>' +
+      (r.flags && r.flags.length ? '<div style="margin-top:10px">' + r.flags.map(function (f) { return '<span class="tag warn">' + esc(f) + '</span>'; }).join('') + '</div>' : '') +
+      '<p class="hint">' + esc(r.mail || '') + '</p>' +
+      '<div class="acts"><button class="btn gold" id="again">Log more</button>' + (S.cfg.agent ? '<button class="btn ghost" id="seeMine">My log</button>' : '<button class="btn ghost" id="seeQ">Queue</button>') + '</div>';
+    $('again').onclick = function () { resetForm(); };
+    if ($('seeMine')) $('seeMine').onclick = function () { showTab('mine'); };
+    if ($('seeQ')) $('seeQ').onclick = function () { showTab('queue'); };
+    window.scrollTo(0, 0);
+  }
+  function resetForm() {
+    $('logForm').hidden = false; $('result').hidden = true;
+    S.items = []; S.client = null; S.typed = false; S.policies = [];
+    $('q').value = ''; $('results').innerHTML = ''; $('picked').hidden = true; $('typed').hidden = true;
+    $('tName').value = ''; $('tEmail').value = ''; $('notes').value = ''; $('declare').checked = false;
+    $('deptFilter').value = ''; fillDocSel();
+    setType(S.cfg.types[0]);
+  }
+
+  /* ── my log ─────────────────────────────────────────────── */
+  function statusTag(l) {
+    if (l.status === 'Sent') return '<span class="tag ok">Sent</span>';
+    if (l.status === 'Received') return '<span class="tag ' + (l.late ? 'bad' : 'info') + '">' + (l.late ? 'Received · not sent' : 'With the branch') + '</span>';
+    if (l.status === 'Logged') return '<span class="tag warn">Logged · hand it in</span>';
+    if (l.status === 'Returned') return '<span class="tag bad">Returned</span>';
+    if (l.status === 'With agent') return '<span class="tag ' + (l.contractDay >= 20 ? 'bad' : l.contractDay >= 15 ? 'warn' : 'info') + '">Day ' + l.contractDay + ' of 20</span>';
+    if (l.status === 'Delivered') return '<span class="tag ok">Delivered</span>';
+    return '<span class="tag mute">' + esc(l.status) + '</span>';
+  }
+  function stampsOf(l) {
+    var s = [];
+    if (l.loggedAt) s.push('Logged <b>' + esc(fmt(l.loggedAt, true)) + '</b>');
+    if (l.receivedAt) s.push('Received <b>' + esc(fmt(l.receivedAt, true)) + '</b> by ' + esc(l.receivedBy));
+    if (l.sentAt) s.push('Sent <b>' + esc(fmt(l.sentAt, true)) + '</b> · ' + esc(l.transmittal));
+    if (l.returnedAt) s.push('Returned <b>' + esc(fmt(l.returnedAt)) + '</b>: ' + esc(l.returnReason));
+    if (l.deliveredAt) s.push('Delivered <b>' + esc(fmt(l.deliveredAt)) + '</b>');
+    if (l.reason) s.push('Reason: ' + esc(l.reason));
+    return '<div class="stamps">' + s.map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</div>';
+  }
+  function groupByRef(lines) {
+    var by = {}, order = [];
+    lines.forEach(function (l) { if (!by[l.ref]) { by[l.ref] = []; order.push(l.ref); } by[l.ref].push(l); });
+    return order.map(function (k) { return by[k]; });
+  }
+  function loadMine() {
+    $('mine').innerHTML = '<div class="empty">Loading…</div>';
+    api('lb.mine', { days: $('mineDays').value }).then(function (r) {
+      var g = groupByRef(r.lines);
+      $('mine').innerHTML = g.length ? g.map(function (ls) {
+        var a = ls[0];
+        var canWithdraw = ls.every(function (l) { return l.status === 'Logged' || l.status === 'With agent'; });
+        return '<div class="grp"><div class="gh"><b>' + esc(a.client) + '</b><span class="tag mute">' + esc(a.ref) + '</span><span class="sp"></span>' +
+          (canWithdraw ? '<button class="btn ghost sm" data-wd="' + esc(a.ref) + '">Withdraw</button>' : '') + '</div>' +
+          ls.map(function (l) {
+            return '<div class="ln" style="grid-template-columns:1fr auto"><div class="t">' + esc(l.document) + (l.quantity > 1 ? ' × ' + l.quantity : '') +
+              '<small>' + esc(l.policy || 'no policy') + ' · ' + esc(l.type === S.cfg.types[1] ? 'to deliver to the client' : l.department) + '</small>' + stampsOf(l) + '</div>' +
+              '<div>' + statusTag(l) + '</div></div>';
+          }).join('') + '</div>';
+      }).join('') : '<div class="empty">Nothing logged in this period.</div>';
+      $('mine').querySelectorAll('[data-wd]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          if (!confirm('Withdraw ' + b.getAttribute('data-wd') + '?')) return;
+          api('lb.cancel', { ref: b.getAttribute('data-wd') }).then(loadMine).catch(function (e) { alert(e.message); });
+        });
+      });
+    }).catch(function (e) { $('mine').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; });
+  }
+  $('mineDays').addEventListener('change', loadMine);
+
+  /* ── the queue ──────────────────────────────────────────── */
+  function loadQueue() {
+    api('lb.queue').then(function (q) { S.queue = q; renderQueue(); })
+      .catch(function (e) { $('qSend').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; });
+  }
+  function renderQueue() {
+    var q = S.queue, L = q.lines;
+    var logged = L.filter(function (l) { return l.status === 'Logged'; });
+    var recv = L.filter(function (l) { return l.status === 'Received'; });
+    var late = recv.filter(function (l) { return l.late; });
+    var contracts = L.filter(function (l) { return l.status === 'With agent'; });
+    var returned = L.filter(function (l) { return l.status === 'Returned'; });
+    var sentToday = L.filter(function (l) { return l.status === 'Sent'; });
+    $('qTiles').innerHTML =
+      tile('To receive', logged.length, logged.length ? 'warn' : '', 'qRecv') +
+      tile('To send', recv.length, '', 'qSend') +
+      tile('Late, no reason', late.filter(function (l) { return !l.reasonFresh; }).length, late.length ? 'bad' : 'ok', 'qLate') +
+      tile('Sent today', sentToday.length, 'ok', 'qToday');
+    $('qTiles').querySelectorAll('[data-go]').forEach(function (t) { t.addEventListener('click', function () { var el = $(t.getAttribute('data-go')); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
+    var n = $('n-queue'); if (n) { n.hidden = !(late.length + logged.length); n.textContent = late.length || logged.length; n.className = 'n' + (late.length ? ' bad' : ''); }
+    $('qCut').textContent = 'Late after ' + q.cutoff + ':00 on the day received';
+
+    $('qLate').hidden = !late.length;
+    $('qLateList').innerHTML = late.map(function (l) {
+      return '<div class="ln late" style="grid-template-columns:1fr auto"><div class="t"><b>' + esc(l.document) + '</b> · ' + esc(l.client) +
+        '<small>' + esc(l.department) + ' · received ' + esc(fmt(l.receivedAt, true)) + ' by ' + esc(l.receivedBy) + ' · ' + plural(l.daysHeld, 'working day') + '</small>' +
+        (l.reason ? '<div class="stamps">Reason: ' + esc(l.reason) + (l.reasonFresh ? '' : ' <span class="tag warn">stale</span>') + '</div>' : '') + '</div>' +
+        '<div><button class="btn ghost sm" data-why="' + esc(l.id) + '">Give reason</button></div></div>';
+    }).join('');
+    $('qLateList').querySelectorAll('[data-why]').forEach(function (b) { b.addEventListener('click', function () { askReason([b.getAttribute('data-why')]); }); });
+
+    // to send, by department
+    var byDept = {};
+    recv.forEach(function (l) { (byDept[l.department] = byDept[l.department] || []).push(l); });
+    var depts = Object.keys(byDept).sort(function (a, b) { return byDept[b].length - byDept[a].length; });
+    $('qSend').innerHTML = depts.length ? depts.map(function (d) {
+      var ls = byDept[d];
+      return '<div class="grp" data-dept="' + esc(d) + '"><div class="gh"><input type="checkbox" checked data-all aria-label="All"><b>' + esc(d) + '</b>' +
+        '<span class="tag mute">' + plural(ls.length, 'line') + '</span>' + (ls.some(function (l) { return l.late; }) ? '<span class="tag bad">late</span>' : '') +
+        '<span class="sp"></span><button class="btn gold sm" data-build>Build transmittal</button></div>' +
+        ls.map(function (l) {
+          return '<div class="ln' + (l.late ? ' late' : '') + '"><input type="checkbox" checked data-id="' + esc(l.id) + '">' +
+            '<div class="t"><b>' + esc(l.document) + '</b>' + (l.quantity > 1 ? ' × ' + l.quantity : '') + ' · ' + esc(l.client) +
+            '<small>' + esc(l.policy || 'no policy') + ' · ' + esc(l.agent) + ' · received ' + esc(fmt(l.receivedAt, true)) + ' by ' + esc(l.receivedBy) + '</small>' +
+            (l.routingChanged ? '<div class="stamps">Routing corrected: ' + esc(l.routingChanged) + '</div>' : '') +
+            (l.reason ? '<div class="stamps">Reason: ' + esc(l.reason) + '</div>' : '') + '</div>' +
+            '<div>' + (l.late ? '<span class="tag bad">' + (l.daysHeld ? plural(l.daysHeld, 'day') : 'after ' + q.cutoff + ':00') + '</span>' : '<span class="tag info">today</span>') + '</div></div>';
+        }).join('') + '</div>';
+    }).join('') : '<div class="empty">Nothing waiting to go. Received papers appear here, grouped by department.</div>';
+    $('qSend').querySelectorAll('.grp').forEach(function (g) {
+      var all = g.querySelector('[data-all]');
+      all.addEventListener('change', function () { g.querySelectorAll('[data-id]').forEach(function (c) { c.checked = all.checked; }); });
+      g.querySelector('[data-build]').addEventListener('click', function () {
+        var ids = Array.prototype.map.call(g.querySelectorAll('[data-id]:checked'), function (c) { return c.getAttribute('data-id'); });
+        if (!ids.length) return alert('Tick the lines to send.');
+        build(g.getAttribute('data-dept'), ids, {});
+      });
+    });
+
+    // to receive
+    var refs = groupByRef(logged);
+    $('qRecv').innerHTML = refs.length ? refs.map(function (ls) {
+      var a = ls[0];
+      return '<div class="grp" data-ref="' + esc(a.ref) + '"><div class="gh"><input type="checkbox" checked data-all aria-label="All"><b>' + esc(a.client) + '</b>' +
+        '<span class="tag mute">' + esc(a.agent) + '</span><span class="tag mute">' + esc(a.ref) + '</span>' +
+        (a.daysWaiting > 0 ? '<span class="tag warn">logged ' + plural(a.daysWaiting, 'working day') + ' ago</span>' : '') +
+        '<span class="sp"></span><button class="btn ghost sm" data-ret>Return</button><button class="btn gold sm" data-recv>Receive &amp; sign</button></div>' +
+        ls.map(function (l) {
+          return '<div class="ln"><input type="checkbox" checked data-id="' + esc(l.id) + '"><div class="t"><b>' + esc(l.document) + '</b>' +
+            (l.quantity > 1 ? ' × ' + l.quantity : '') + (l.itemNote ? ' (' + esc(l.itemNote) + ')' : '') +
+            '<small>' + esc(l.policy || 'no policy') + ' · logged ' + esc(fmt(l.loggedAt, true)) + (l.loggedBy !== l.agent ? ' by ' + esc(l.loggedBy) : '') + '</small>' +
+            (l.flags ? '<div>' + l.flags.split('; ').map(function (f) { return '<span class="tag warn">' + esc(f) + '</span>'; }).join('') + '</div>' : '') +
+            (l.notes ? '<div class="stamps">Note: ' + esc(l.notes) + '</div>' : '') + '</div>' +
+            '<div><select data-dep="' + esc(l.id) + '" aria-label="Department">' + DEPTS.map(function (x) {
+              return '<option' + (x.name === l.department ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></div></div>';
+        }).join('') + '</div>';
+    }).join('') : '<div class="empty">Nothing logged and waiting.</div>';
+    $('qRecv').querySelectorAll('.grp').forEach(function (g) {
+      var all = g.querySelector('[data-all]');
+      all.addEventListener('change', function () { g.querySelectorAll('[data-id]').forEach(function (c) { c.checked = all.checked; }); });
+      var chosen = function () { return Array.prototype.map.call(g.querySelectorAll('[data-id]:checked'), function (c) { return c.getAttribute('data-id'); }); };
+      g.querySelector('[data-recv]').addEventListener('click', function () {
+        var ids = chosen(); if (!ids.length) return alert('Tick what you have in hand.');
+        var deps = {};
+        ids.forEach(function (id) { var s = g.querySelector('[data-dep="' + id + '"]'); var l = L.filter(function (x) { return x.id === id; })[0]; if (s && l && s.value !== l.department) deps[id] = s.value; });
+        receive(ids, deps);
+      });
+      g.querySelector('[data-ret]').addEventListener('click', function () {
+        var ids = chosen(); if (!ids.length) return alert('Tick what is going back.');
+        returnLines(ids);
+      });
+    });
+
+    // contracts
+    $('qContractsCard').hidden = !contracts.length;
+    $('qContracts').innerHTML = contracts.sort(function (a, b) { return b.contractDay - a.contractDay; }).map(function (l) {
+      return '<div class="ln' + (l.contractDay >= 20 ? ' late' : '') + '" style="grid-template-columns:1fr auto auto"><div class="t"><b>' + esc(l.client) + '</b> · ' + esc(l.policy) +
+        '<small>' + esc(l.agent) + ' · collected ' + esc(fmt(l.loggedAt)) + ' · due ' + esc(fmt(l.contractDue)) + '</small></div>' +
+        '<div>' + statusTag(l) + '</div><div><button class="btn ghost sm" data-dlv="' + esc(l.id) + '">Delivered</button></div></div>';
+    }).join('');
+    $('qContracts').querySelectorAll('[data-dlv]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (!confirm('Mark this contract delivered today? (A delivery recorded in the Delivery Book closes it by itself.)')) return;
+        api('lb.delivered', { ids: [b.getAttribute('data-dlv')] }).then(loadQueue).catch(function (e) { alert(e.message); });
+      });
+    });
+
+    // today
+    $('qToday').innerHTML = q.today.length ? q.today.map(transRow).join('') : '<div class="empty">No transmittal yet today.</div>';
+    wireTrans($('qToday'), true);
+    $('qRetCard').hidden = !returned.length;
+    $('qRet').innerHTML = returned.map(function (l) {
+      return '<div class="ln" style="grid-template-columns:1fr"><div class="t"><b>' + esc(l.document) + '</b> · ' + esc(l.client) +
+        '<small>' + esc(l.agent) + ' · ' + esc(fmt(l.returnedAt)) + ': ' + esc(l.returnReason) + '</small></div></div>';
+    }).join('');
+  }
+  function tile(label, n, cls, go) { return '<button type="button" class="tile ' + cls + '" data-go="' + go + '"><b>' + n + '</b><span>' + esc(label) + '</span></button>'; }
+
+  /* receive: the signature */
+  var pad = null;
+  function receive(ids, deps) {
+    modal('<h3>Receive ' + plural(ids.length, 'document line') + '</h3>' +
+      '<p class="hint">You have the papers in hand and they match the lines. This stamps the date collected.</p>' +
+      (Object.keys(deps).length ? '<p class="hint">' + plural(Object.keys(deps).length, 'department') + ' corrected.</p>' : '') +
+      '<label>Your signature</label><div class="sig"><canvas id="sigC"></canvas><button type="button" class="x" id="sigX">Clear</button><div class="ph" id="sigPh">Sign here</div></div>' +
+      '<label for="rNote">Note (optional)</label><input id="rNote" type="text" maxlength="300">' +
+      '<div class="err" id="mErr" hidden></div>' +
+      '<div class="acts"><button class="btn ghost" id="mNo">Cancel</button><button class="btn gold" id="mYes">Receive</button></div>');
+    pad = sigPad($('sigC'), $('sigPh'));
+    $('sigX').onclick = function () { pad.clear(); };
+    $('mNo').onclick = closeModal;
+    $('mYes').onclick = function () {
+      if (!pad.dirty()) return showErr($('mErr'), 'Sign for the documents.');
+      busy($('mYes'), true, 'Saving…');
+      api('lb.receive', { ids: ids, departments: deps, signature: pad.data(), note: $('rNote').value })
+        .then(function () { closeModal(); loadQueue(); })
+        .catch(function (e) { showErr($('mErr'), e.message); busy($('mYes'), false); });
+    };
+  }
+  function sigPad(c, ph) {
+    var ctx, drawing = false, dirty = false;
+    function size() { var r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1; c.width = r.width * d; c.height = r.height * d;
+      ctx = c.getContext('2d'); ctx.scale(d, d); ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0b1e33'; }
+    size();
+    function pt(e) { var r = c.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+    c.addEventListener('pointerdown', function (e) { drawing = true; c.setPointerCapture(e.pointerId); var p = pt(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    c.addEventListener('pointermove', function (e) { if (!drawing) return; var p = pt(e); ctx.lineTo(p.x, p.y); ctx.stroke(); dirty = true; ph.style.display = 'none'; });
+    c.addEventListener('pointerup', function () { drawing = false; });
+    return { dirty: function () { return dirty; }, clear: function () { ctx.clearRect(0, 0, c.width, c.height); dirty = false; ph.style.display = ''; },
+             data: function () { return c.toDataURL('image/png'); } };
+  }
+  function returnLines(ids) {
+    modal('<h3>Return to the agent</h3><p class="hint">The agent is e-mailed the reason, sales support copied.</p>' +
+      '<label for="rWhy">Why are they going back?</label><input id="rWhy" type="text" maxlength="300" placeholder="e.g. Not signed by the client on page 2">' +
+      '<div class="err" id="mErr" hidden></div><div class="acts"><button class="btn ghost" id="mNo">Cancel</button><button class="btn red" id="mYes">Return</button></div>');
+    $('mNo').onclick = closeModal;
+    $('mYes').onclick = function () {
+      busy($('mYes'), true, 'Saving…');
+      api('lb.return', { ids: ids, reason: $('rWhy').value }).then(function () { closeModal(); loadQueue(); })
+        .catch(function (e) { showErr($('mErr'), e.message); busy($('mYes'), false); });
+    };
+  }
+  function askReason(ids) {
+    modal('<h3>Why has this not gone?</h3><p class="hint">It stays on the line and prints on the transmittal beside the date collected and the date sent.</p>' +
+      '<label for="rWhy">Reason</label><input id="rWhy" type="text" maxlength="300" placeholder="e.g. Mailbag collected before receipt">' +
+      '<div class="err" id="mErr" hidden></div><div class="acts"><button class="btn ghost" id="mNo">Cancel</button><button class="btn gold" id="mYes">Save</button></div>');
+    $('mNo').onclick = closeModal;
+    $('mYes').onclick = function () {
+      busy($('mYes'), true, 'Saving…');
+      api('lb.reason', { ids: ids, reason: $('rWhy').value }).then(function () { closeModal(); loadQueue(); })
+        .catch(function (e) { showErr($('mErr'), e.message); busy($('mYes'), false); });
+    };
+  }
+
+  /* the transmittal */
+  function build(dept, ids, reasons, tracking) {
+    var oft = dept === S.cfg.oft;
+    if (oft && !tracking) {
+      modal('<h3>FedEx tracking number</h3><label for="tTrack">Tracking #</label><input id="tTrack" type="text" placeholder="80 1285 0000">' +
+        '<div class="err" id="mErr" hidden></div><div class="acts"><button class="btn ghost" id="mNo">Cancel</button><button class="btn gold" id="mYes">Continue</button></div>');
+      $('mNo').onclick = closeModal;
+      $('mYes').onclick = function () { var t = $('tTrack').value.trim(); if (!t) return showErr($('mErr'), 'Enter the tracking number.'); closeModal(); build(dept, ids, reasons, t); };
+      return;
+    }
+    api('lb.transmittal', { ids: ids, reasons: reasons, tracking: tracking || '' }).then(function (r) {
+      if (r.needsReasons) {
+        modal('<h3>Reasons first</h3><p class="hint">These were received before today, or today after ' + S.queue.cutoff + ':00. ' +
+          'The reason prints on the transmittal beside the two dates.</p>' +
+          r.needsReasons.map(function (n) {
+            return '<label for="nr-' + esc(n.id) + '">' + esc(n.document) + ' · ' + esc(n.client) + ' · received ' + esc(fmt(n.receivedAt, true)) + '</label>' +
+              '<input type="text" maxlength="300" id="nr-' + esc(n.id) + '" data-nr="' + esc(n.id) + '">';
+          }).join('') +
+          '<div class="err" id="mErr" hidden></div><div class="acts"><button class="btn ghost" id="mNo">Cancel</button><button class="btn gold" id="mYes">Build it</button></div>');
+        $('mNo').onclick = closeModal;
+        $('mYes').onclick = function () {
+          var rs = Object.assign({}, reasons), miss = false;
+          document.querySelectorAll('[data-nr]').forEach(function (i) { if (i.value.trim().length < 4) miss = true; rs[i.getAttribute('data-nr')] = i.value.trim(); });
+          if (miss) return showErr($('mErr'), 'A reason for each, in a few words.');
+          closeModal(); build(dept, ids, rs, tracking);
+        };
+        return;
+      }
+      showTransmittal(r, true);
+      loadQueue();
+    }).catch(function (e) { alert(e.message); });
+  }
+  function showTransmittal(r, fresh) {
+    var t = r.transmittal, L = r.lines;
+    var docs = L.reduce(function (s, l) { return s + (l.quantity || 1); }, 0);
+    $('paper').innerHTML =
+      '<div class="ph1"><img src="/logo-mark.png" alt=""><div class="tt"><b>TRANSMITTAL</b>FROM: ' + esc(r.from) + '<br>' + esc(r.branch) + '</div>' +
+      '<div class="no">No.<b>' + esc(t.no) + '</b>' + (t.status && t.status !== 'Sent' ? '<span style="color:#b00">' + esc(t.status) + '</span>' : '') + '</div></div>' +
+      '<div class="meta"><span>DEPARTMENT</span><div><b>' + esc(t.department) + '</b></div><span>DATE SENT</span><div>' + esc(fmtDay(t.sentAt)) + ' ' + esc(new Date(t.sentAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: TZ })) + '</div>' +
+      '<span>ATTENTION</span><div>' + esc(t.attn || '') + '</div><span>SENT BY</span><div>' + esc(t.sentBy) + '</div>' +
+      (t.tracking ? '<span>TRACKING #</span><div>' + esc(t.tracking) + '</div><span></span><div></div>' : '') + '</div>' +
+      '<table><thead><tr><th>#</th><th>CLIENT</th><th>POLICY #</th><th>DOCUMENT</th><th>QTY</th><th>AGENT</th><th>LOG REF</th><th>DATE COLLECTED</th><th>DATE SENT</th><th>REASON IF NOT SAME DAY</th></tr></thead><tbody>' +
+      L.map(function (l, i) {
+        var lateRow = l.sameDay === false;
+        return '<tr class="' + (lateRow ? 'late' : '') + '"><td>' + (i + 1) + '</td><td>' + esc(l.client) + '</td><td>' + esc(l.policy) + '</td><td>' + esc(l.document) +
+          (l.itemNote ? ' (' + esc(l.itemNote) + ')' : '') + '</td><td>' + (l.quantity || 1) + '</td><td>' + esc(l.agent) + '</td><td>' + esc(l.ref) + '</td>' +
+          '<td>' + esc(fmtDay(l.receivedAt)) + '</td><td>' + esc(fmtDay(l.sentAt || t.sentAt)) + '</td><td class="why">' + (lateRow ? esc(lastReason(l.reason)) : '') + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<div class="tot">' + plural(L.length, 'line') + ' · ' + plural(docs, 'document') + (L.some(function (l) { return l.sameDay === false; }) ? ' · ' + L.filter(function (l) { return l.sameDay === false; }).length + ' not sent the day collected' : '') + '</div>' +
+      '<div class="signs"><div>Dispatched by: ' + esc(t.sentBy) + ' &nbsp; Date: ' + esc(fmtDay(t.sentAt)) + '</div><div>Received by (' + esc(t.department) + ') &nbsp; Name, signature, date</div></div>' +
+      '<div class="foot">Date collected is the day the branch received the documents from the agent; date sent is this transmittal. Where the two differ, the reason is printed. ' +
+      'Generated by the branch Log Book.</div>';
+    $('pNote').textContent = fresh ? 'Stamped sent. Print it and put it in the bag.' + (r.salesforce ? ' Salesforce: ' + r.salesforce + '.' : '') : '';
+    $('print').hidden = false;
+    if (fresh) setTimeout(function () { try { window.print(); } catch (e) {} }, 300);
+  }
+  function lastReason(r) { var p = String(r || '').split(' | '); return p[p.length - 1].replace(/^\d{1,2} \w{3}: /, ''); }
+  $('pPrint').addEventListener('click', function () { window.print(); });
+  $('pClose').addEventListener('click', function () { $('print').hidden = true; });
+
+  function transRow(t) {
+    return '<div class="ln" style="grid-template-columns:1fr auto"><div class="t"><b>' + esc(t.no) + '</b> · ' + esc(t.department) +
+      '<small>' + esc(fmt(t.sentAt, true)) + ' · ' + esc(t.sentBy) + ' · ' + plural(t.lines, 'line') + (t.tracking ? ' · ' + esc(t.tracking) : '') +
+      (t.late ? ' · ' + t.late + ' late' : '') + (t.status !== 'Sent' ? ' · ' + esc(t.status) : '') + '</small>' + confirmTag(t) + '</div>' +
+      '<div style="display:flex;gap:6px"><button class="btn ghost sm" data-pr="' + esc(t.no) + '">Reprint</button>' +
+      (t.status === 'Sent' ? '<button class="btn ghost sm" data-back="' + esc(t.no) + '">Take back</button>' : '') + '</div></div>';
+  }
+  function confirmTag(t) {
+    if (t.answer === 'Yes') return '<div><span class="tag ok">✓ Received by the department ' + esc(fmt(t.answeredAt)) + '</span></div>';
+    if (t.answer === 'No') return '<div><span class="tag bad">✗ Not received ' + esc(fmt(t.answeredAt)) + '</span>' + (t.deptNote ? ' <span class="stamps">' + esc(t.deptNote) + '</span>' : '') + '</div>';
+    if (t.askedAt) return '<div><span class="tag warn">Asked ' + esc(fmt(t.askedAt)) + ': no answer yet</span></div>';
+    return t.status === 'Sent' ? '<div><span class="tag mute">Department asked 3 working days after sending</span></div>' : '';
+  }
+  function wireTrans(el, today) {
+    el.querySelectorAll('[data-pr]').forEach(function (b) {
+      b.addEventListener('click', function () { api('lb.transmittals', { no: b.getAttribute('data-pr') }).then(function (r) { showTransmittal(r, false); }).catch(function (e) { alert(e.message); }); });
+    });
+    el.querySelectorAll('[data-back]').forEach(function (b) {
+      if (!today) { b.remove(); return; }
+      b.addEventListener('click', function () {
+        if (!confirm('Take back ' + b.getAttribute('data-back') + '? Its lines go back to "to send".')) return;
+        api('lb.unsend', { no: b.getAttribute('data-back') }).then(loadQueue).catch(function (e) { alert(e.message); });
+      });
+    });
+  }
+  function loadTrans() {
+    $('transList').innerHTML = '<div class="empty">Loading…</div>';
+    api('lb.transmittals', { days: $('transDays').value }).then(function (r) {
+      $('transList').innerHTML = r.transmittals.length ? r.transmittals.map(transRow).join('') : '<div class="empty">No transmittals in this period.</div>';
+      var who = {};
+      r.transmittals.filter(function (t) { return t.status === 'Sent'; }).forEach(function (t) {
+        var o = who[t.sentBy] = who[t.sentBy] || { name: t.sentBy, n: 0, lines: 0, docs: 0, late: 0, depts: {}, last: '' };
+        o.n++; o.lines += t.lines; o.docs += t.documents; o.late += t.late; o.depts[t.department] = 1;
+        if (t.sentAt > o.last) o.last = t.sentAt;
+      });
+      var rows = Object.keys(who).map(function (k) { return who[k]; }).sort(function (a, b) { return b.n - a.n; });
+      $('transWho').innerHTML = rows.length ? '<div class="scroll"><table class="t"><thead><tr><th>Sent by</th><th class="n">Transmittals</th><th class="n">Lines</th>' +
+        '<th class="n">Documents</th><th class="n">Not same day</th><th class="n">Departments</th><th>Last</th></tr></thead><tbody>' +
+        rows.map(function (o) { return '<tr><td>' + esc(o.name) + '</td><td class="n">' + o.n + '</td><td class="n">' + o.lines + '</td><td class="n">' + o.docs +
+          '</td><td class="n">' + (o.late ? '<span class="tag bad">' + o.late + '</span>' : 0) + '</td><td class="n">' + Object.keys(o.depts).length + '</td><td>' + esc(fmt(o.last, true)) + '</td></tr>'; }).join('') +
+        '</tbody></table></div>' : '<div class="empty">No transmittals in this period.</div>';
+      wireTrans($('transList'), false);
+    }).catch(function (e) { $('transList').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; });
+  }
+  $('transDays').addEventListener('change', loadTrans);
+  $('goQueue').addEventListener('click', function () { showTab('queue'); });
+
+  /* ── insights ───────────────────────────────────────────── */
+  function loadStats() {
+    $('stats').innerHTML = '<div class="empty">Loading…</div>';
+    api('lb.stats', { days: $('statDays').value }).then(renderStats)
+      .catch(function (e) { $('stats').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; });
+  }
+  $('statDays').addEventListener('change', loadStats);
+  function pctTxt(v) { return v == null ? '—' : v + '%'; }
+  function renderStats(s) {
+    var T = s.totals, B = s.backlog, C = s.contracts;
+    var kp = function (label, v, cls, sub) { return '<div class="tile ' + (cls || '') + '"><b>' + v + '</b><span>' + esc(label) + (sub ? '<br>' + sub : '') + '</span></div>'; };
+    var html = '<div class="kp">' +
+      kp('lines logged', T.lines.toLocaleString(), '', plural(T.documents, 'document')) +
+      kp('sent the day collected', pctTxt(T.sameDayPct), T.sameDayPct >= 90 ? 'ok' : T.sameDayPct >= 60 ? 'warn' : 'bad', T.sameDay + ' of ' + T.sent) +
+      kp('within one working day', pctTxt(T.within1Pct), T.within1Pct >= 95 ? 'ok' : 'warn') +
+      kp('waiting now', B.logged + B.received, B.late ? 'bad' : '', B.late + ' late, ' + B.lateNoReason + ' with no reason') +
+      kp('hours, logged to received', T.medianHoursToReceive == null ? '—' : T.medianHoursToReceive, '', 'median') +
+      kp('returned to agents', T.returned, T.returned ? 'warn' : '') +
+      kp('department as suggested', T.suggestedAll ? Math.round(T.suggestedRight * 100 / T.suggestedAll) + '%' : '—', '', T.suggestedRight + ' of ' + T.suggestedAll) +
+      kp('contracts past 20 days', C.past, C.past ? 'bad' : 'ok', C.open + ' open, ' + C.due5 + ' due within 5 days') +
+      '</div>';
+    if (s.imported) html += '<p class="hint" style="margin-top:8px">Includes ' + s.imported.toLocaleString() + ' lines imported from the old Log Book' +
+      (T.noSentDate ? ', ' + T.noSentDate.toLocaleString() + ' of them with no date sent recorded' : '') + '.</p>';
+    html += '<h3 style="font-size:14px;margin:18px 0 4px">Day by day</h3>' + dayChart(s.daily);
+    html += '<h3 style="font-size:14px;margin:18px 0 4px">By department</h3>' + table(s.byDepartment, 'Department');
+    html += '<h3 style="font-size:14px;margin:18px 0 4px">Did the departments confirm they got them?</h3>' + deptScore(s.deptScore || []);
+    html += '<h3 style="font-size:14px;margin:18px 0 4px">By staff member</h3>' + table(s.byStaff, 'Staff');
+    html += '<h3 style="font-size:14px;margin:18px 0 4px">By agent</h3>' + table(s.byAgent, 'Agent', true);
+    html += '<h3 style="font-size:14px;margin:18px 0 4px">By document</h3>' + table(s.byDocument, 'Document', true);
+    html += '<h3 style="font-size:14px;margin:18px 0 4px">Which day they come in</h3>' + weekdayBars(s.byWeekday);
+    if (s.reasons.length) html += '<h3 style="font-size:14px;margin:18px 0 4px">Reasons given for not sending the same day</h3><table class="t"><tbody>' +
+      s.reasons.map(function (r) { return '<tr><td>' + esc(r.reason) + '</td><td class="n">' + r.n + '</td></tr>'; }).join('') + '</tbody></table>';
+    $('stats').innerHTML = html;
+  }
+  function table(rows, label, agentish) {
+    if (!rows.length) return '<div class="empty">Nothing in this period.</div>';
+    return '<div class="scroll"><table class="t"><thead><tr><th>' + esc(label) + '</th><th class="n">Lines</th><th class="n">Sent</th><th>Same day</th><th class="n">≤1 day</th>' +
+      '<th class="n">Waiting</th><th class="n">Late</th>' + (agentish ? '<th class="n">Returned</th><th class="n">No policy</th><th class="n">Rerouted</th><th class="n">Never handed in</th>' +
+        (label === 'Agent' ? '<th>Quality</th>' : '') : '<th class="n">Rerouted</th>') + '</tr></thead><tbody>' +
+      rows.map(function (o) {
+        return '<tr><td>' + esc(o.name) + '</td><td class="n">' + o.lines + '</td><td class="n">' + o.sent + '</td>' +
+          '<td><div style="display:flex;align-items:center;gap:6px"><div class="bar"><i style="width:' + (o.sameDayPct || 0) + '%"></i></div>' + pctTxt(o.sameDayPct) + '</div></td>' +
+          '<td class="n">' + pctTxt(o.within1Pct) + '</td><td class="n">' + o.waiting + '</td><td class="n">' + (o.late ? '<span class="tag bad">' + o.late + '</span>' : 0) + '</td>' +
+          (agentish ? '<td class="n">' + o.returned + '</td><td class="n">' + o.noPolicy + '</td><td class="n">' + o.changed + '</td><td class="n">' + (o.neverIn || 0) + '</td>' +
+            (label === 'Agent' ? '<td>' + (o.quality == null ? '—' : '<span class="tag ' + (o.quality >= 90 ? 'ok' : o.quality >= 75 ? 'warn' : 'bad') + '">' + o.quality + '</span>') + '</td>' : '')
+            : '<td class="n">' + o.changed + '</td>') + '</tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+  function deptScore(rows) {
+    if (!rows.length) return '<div class="empty">No transmittals in this period yet.</div>';
+    return '<div class="scroll"><table class="t"><thead><tr><th>Department</th><th class="n">Transmittals</th><th class="n">Asked</th>' +
+      '<th class="n">Yes</th><th class="n">No</th><th class="n">No answer</th><th class="n">Days to answer</th></tr></thead><tbody>' +
+      rows.map(function (o) {
+        return '<tr><td>' + esc(o.name) + '</td><td class="n">' + o.transmittals + '</td><td class="n">' + o.asked + '</td>' +
+          '<td class="n">' + (o.yes ? '<span class="tag ok">' + o.yes + '</span>' : 0) + '</td><td class="n">' + (o.no ? '<span class="tag bad">' + o.no + '</span>' : 0) + '</td>' +
+          '<td class="n">' + (o.waiting ? '<span class="tag warn">' + o.waiting + '</span>' : 0) + '</td><td class="n">' + (o.answerDays == null ? '—' : o.answerDays) + '</td></tr>';
+      }).join('') + '</tbody></table></div><p class="hint">Each department is asked three working days after a transmittal. Quality, on the agent table, starts at 100 and drops for papers returned, missing policy numbers, departments re-routed and papers never handed in.</p>';
+  }
+  function dayChart(days) {
+    if (!days.length) return '<div class="empty">Nothing in this period.</div>';
+    var w = 720, h = 170, pad = 22, n = days.length, bw = Math.max(2, (w - pad) / n - 2);
+    var max = Math.max.apply(null, days.map(function (d) { return d.logged; }).concat([1]));
+    var bars = days.map(function (d, i) {
+      var x = pad + i * ((w - pad) / n), hl = (d.logged / max) * (h - 30), hs = (d.sameDay / max) * (h - 30);
+      return '<g><title>' + esc(d.day) + ': ' + d.logged + ' logged, ' + d.sent + ' sent, ' + d.sameDay + ' the same day</title>' +
+        '<rect x="' + x.toFixed(1) + '" y="' + (h - 18 - hl).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hl.toFixed(1) + '" rx="2" fill="rgba(169,187,207,.35)"/>' +
+        '<rect x="' + x.toFixed(1) + '" y="' + (h - 18 - hs).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hs.toFixed(1) + '" rx="2" fill="#00CFEA"/></g>';
+    }).join('');
+    var labels = [0, Math.floor(n / 2), n - 1].filter(function (v, i, a) { return a.indexOf(v) === i; }).map(function (i) {
+      return '<text x="' + (pad + i * ((w - pad) / n)).toFixed(1) + '" y="' + (h - 4) + '" fill="#a9bbcf" font-size="11">' + esc(days[i].day.slice(5)) + '</text>';
+    }).join('');
+    return '<div class="chart"><svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Lines logged and sent the same day, by day">' +
+      '<text x="0" y="12" fill="#a9bbcf" font-size="11">' + max + '</text>' + bars + labels + '</svg></div>' +
+      '<div class="legend"><span><i style="background:rgba(169,187,207,.5)"></i>Logged</span><span><i style="background:#00CFEA"></i>Sent the day collected</span></div>';
+  }
+  function weekdayBars(ws) {
+    var max = Math.max.apply(null, ws.map(function (w) { return w.lines; }).concat([1]));
+    return '<table class="t"><tbody>' + ws.map(function (w) {
+      return '<tr><td style="width:60px">' + w.day + '</td><td><div class="bar" style="height:12px"><i style="width:' + Math.round(w.lines * 100 / max) + '%"></i></div></td><td class="n" style="width:60px">' + w.lines + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  }
+
+  /* ── modal ──────────────────────────────────────────────── */
+  function modal(html) { $('sheet').innerHTML = html; $('modal').hidden = false; var f = $('sheet').querySelector('input,button'); if (f) f.focus(); }
+  function closeModal() { $('modal').hidden = true; $('sheet').innerHTML = ''; }
+  $('modal').addEventListener('click', function (e) { if (e.target === $('modal')) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (!$('modal').hidden) closeModal(); else if (!$('print').hidden) $('print').hidden = true; } });
+
+  /* ── open ───────────────────────────────────────────────── */
+  var saved = store.get();
+  if (saved && saved.token) {
+    S.token = saved.token;
+    start().catch(function (e) { if (!/Signed out/.test(e.message)) gate(e.message); });
+  }
+  setInterval(function () { if (S.tab === 'queue' && document.visibilityState === 'visible' && $('modal').hidden && $('print').hidden) loadQueue(); }, 120000);
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

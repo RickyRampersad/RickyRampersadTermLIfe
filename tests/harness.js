@@ -166,7 +166,10 @@ function makeEnv(opts = {}) {
   };
   g.globalThis = g;
   vm.createContext(g);
-  new vm.Script(fs.readFileSync(process.env.GS_PATH || (__dirname + '/../apps-script/KPI.gs'), 'utf8'), { filename: 'KPI.gs' }).runInContext(g);
+  // GS_PATH may list several files, comma-separated, for a project of more
+  // than one script (the RR Operations project is DeliveryBook.gs and LogBook.gs).
+  String(process.env.GS_PATH || (__dirname + '/../apps-script/KPI.gs')).split(',').forEach(f =>
+    new vm.Script(fs.readFileSync(f, 'utf8'), { filename: require('path').basename(f) }).runInContext(g));
   return g;
 }
 /* THE LIVE ORG'S OWN REFUSAL, kept so a test cannot pass a query the org
