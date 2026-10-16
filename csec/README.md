@@ -1,0 +1,618 @@
+# Study Hub
+
+A study module for Trinidad and Tobago students covering **Standard 1 through
+Form 5** — ten years and two examinations, **SEA** and **CSEC**. Written for
+Trinidad and Tobago, free for Ricky Rampersad Branch client families.
+
+Live path: `/csec/` on rickyrampersadbranch.com (GitHub Pages).
+
+---
+
+## What it does
+
+| Page | Purpose |
+|---|---|
+| `index.html` | Front door — student / parent / teacher sign-in and profile creation |
+| `student.html` | The student's desk: daily plan, mastery rings, streak, study timer |
+| `practice.html` | The practice engine — CSEC-style questions with reasoning and exam technique |
+| `parent.html` | Read-only progress view with a plain-language summary and session history |
+| `teacher.html` | Class roster, class-wide weak strands, and focus-topic assignment |
+| `start.html` | **Start here** — what it is, three-minute setup, parent and teacher guides, FAQ |
+| `flyer.html` | Printable A4 one-pager with a QR code, for a school bag or a client visit |
+| `journey.html` | The guided journey — what this term is for, what is new this year, what is carried forward, every milestone ahead |
+| `test.html` | Timed mock tests under examination conditions — no feedback until submission |
+| `kpi.html` | Readiness index, projected grade bands, and the Form 1–5 term-by-term record |
+| `guides.html` | Guided worked methods — how to attack the highest-value question types |
+| `planner.html` | Syllabus browser — every strand, the forms it is taught in, and progress on it |
+| `papers.html` | Verified links to official, international and Ministry resources |
+| `settings.html` | Subject selection, form promotion, profile, backup / restore, data clearing |
+
+---
+
+## Logins, sync and what they actually protect
+
+**There is no password.** Choosing the name signs you in. A child should not be
+locked out of their own homework by something they cannot remember, and a PIN
+on a family device was never protecting anything from anyone who could pick up
+the device.
+
+**A six-digit code is the optional check.** Put an e-mail on the profile and the
+sign-in screen offers *E-mail me a code instead*: the service sends a code good
+for ten minutes, five wrong guesses kill it, and asking again cancels the one
+before. On a child's profile the address should be a **parent's** — the code
+lands with the parent, so a parent is told about every sign-in without having to
+ask, and a child cannot quietly sign in somewhere else.
+
+The code door is only offered when all three of these are true: an address on
+the profile, the Apps Script deployed, and a group joined. A door that cannot
+open is never shown; where any is missing, sign-in is by name.
+
+**Every sign-in is recorded** — who, when, which door, and whether it was
+refused — in **Settings → Who signed in**. It is kept on the device so it works
+with no network, and reported to the group sheet when sync is set up, so one
+list covers every device.
+
+**A PIN is still available and is nobody's default.** Settings → *Add a PIN*,
+for a device two children share; type `none` to remove it. It separates
+profiles. It is not a secret, and the hub does not pretend otherwise.
+
+### Why not Salesforce — a standing decision
+
+Asked and answered on 13 September 2026: **the hub stays on Apps Script and a
+Google Sheet. Nothing goes to Salesforce.**
+
+The branch's Salesforce is Guardian Group's *production* org, and it already
+carries `Education_Needs_Assessment__c` (22 live records) linking a parent
+Contact to a child's name, date of birth and university-funding projections —
+so there was a natural hook, and a browser-to-Apps-Script-to-Salesforce route
+was technically available.
+
+It was declined for three reasons worth keeping:
+
+1. It is a corporate CRM, not the branch's system. Branch-level System
+   Administrator rights make it *possible*, which is not the same as it being
+   a branch decision to make.
+2. **It would break a promise already in print.** The FAQ and the flyer both
+   say a family can delete their data at any time. A Sheet row deletes; a
+   Salesforce record leaves field history (`Education_Needs_Assessment__History`
+   exists on that object), report snapshots and backups behind it.
+3. Salesforce sharing reaches other agents and head office. A parent handing
+   over their child's marks does not expect that audience.
+
+If this comes back, the version to revisit is **engagement only** — activated
+date, children enrolled, form levels, last active — with no marks and no
+readiness scores, and cleared with Guardian Group's data protection function
+first. Child performance data stays out.
+
+### Sync
+
+Cross-device sync is served by `gs/csec-sync.gs`, an Apps Script web app writing
+to a Google Sheet, following the pattern of `gs/views-counter.gs`. **A group has
+a code; the code is the credential.** There is no account and no password:
+whoever holds `ABCD-EFGH` can read and change that group's names and practice
+scores. This is stated wherever a code is shown, in the FAQ, and on the flyer —
+never softened, because it is the claim that costs trust if it turns out to have
+been oversold.
+
+Set the endpoint in **one** place, `csec/assets/csec-config.js`. Leave the
+placeholder and the hub runs device-local: everything works, Settings says sync
+is not switched on, and Export backup is still offered.
+
+Two ordering rules make the merge safe, both learned from tests that caught the
+opposite behaviour:
+
+- **Pull before push.** Pushing first meant a laptop closed for a week uploaded
+  its stale copy over the teacher's update, then pulled that stale copy back.
+- **Remote wins only when genuinely newer**, compared on `profile.updatedAt` and
+  `progress._t`. A stale tab cannot roll back a night's work.
+
+Incoming records are **treated as untrusted input**, because any group member can
+write them: `cleanProfile()` and `cleanProgress()` drop anything malformed and
+coerce the rest (bad role rejected, form clamped to 1–5, name truncated, unknown
+subject ids stripped). Everything rendered from another device's data goes
+through `esc()` or `textContent`.
+
+**Deleting is real.** Settings removes one person from a group, or the whole
+group, and both delete the rows outright. Local data stays until cleared
+separately, which the confirmation says.
+
+---
+
+## Past papers — what is here and what is not
+
+The request behind this module was to "scrape the ministry sites and pull in all
+the past papers". That is not what this does, deliberately:
+
+- **CSEC past papers are copyright CXC**, which sells them as eBooks through
+  [cxc-store.com](https://cxc-store.com/past-papers/csec). Scraping and
+  republishing them on a public site owned by an insurance branch would be
+  copying someone else's product without permission.
+- **What CXC gives away free is the more useful half**: the full syllabus for
+  every subject, plus specimen papers, mark schemes and subject reports, at
+  [cxc-store.com/syllabuses-subject-reports](https://cxc-store.com/syllabuses-subject-reports).
+  The syllabus states exactly what an examiner may ask.
+- **The Ministry of Education (T&T)** publishes worked CSEC solutions and CPDD
+  activity sheets on its own learning platform, [learn.moe.gov.tt](https://learn.moe.gov.tt/).
+
+So `papers.html` is a **verified link directory** to those sources (every URL
+checked reachable on 7 September 2026), with a per-subject syllabus download
+checklist. The practice content in this hub is **original** — written for the hub
+in CSEC Paper 01 style and tagged to syllabus strands.
+
+### International resources
+
+The same page lists 12 free international sources — Khan Academy, BBC Bitesize,
+PhET, OpenStax, Desmos, GeoGebra, LibreTexts, Project Gutenberg, CommonLit,
+Wolfram Alpha, MIT OpenCourseWare and Save My Exams. **None is written for CXC**,
+so each carries an honest note on how well it aligns and where it does not:
+Khan Academy's mathematics maps almost directly, BBC Bitesize's GCSE science
+overlaps heavily, English literature set texts do not transfer at all. CK-12 and
+Quizlet were excluded because they returned 403 to verification.
+
+---
+
+### Standing decision — commercial practice-test books
+
+Asked whether the Lester Subnaik SEA practice tests could be pulled in. They
+**cannot**, and this is settled: they are commercially published books sold in
+Trinidad bookshops at roughly TT$120–160 (Charran’s, CrayonBox, Mohammed’s).
+Copying them would be straightforward infringement, and no amount of
+reformatting changes that.
+
+What was done instead is better for a family anyway. The **Ministry gives away
+the thing those books imitate** — ten years of real SEA papers, free, readable
+without an account. Those are now linked on the Resources page, and the paper
+*structure* the books sell is reproduced from the Ministry’s own published
+blueprint, which is a specification and not anyone’s copyright.
+
+If a family wants a Subnaik book as well, they should buy it. The hub links to
+what is free and does not pretend to replace what is not.
+
+
+## How the study model works
+
+**Strands, not subjects.** Progress is tracked against CSEC syllabus sections —
+`Consumer Arithmetic`, `Resistance & Revolt`, `Waves & Optics` — because "Maths
+62%" tells a student nothing actionable.
+
+**Spaced repetition (SM-2 lite).** In `recordAnswer()`:
+
+- Correct → ease rises by 0.08 (capped 2.8), interval grows by the ease factor
+  (capped 30 days), and the strand is scheduled forward.
+- Wrong → ease drops by 0.2 (floor 1.3) and the interval resets to 0, so the
+  strand is due again immediately and appears in tomorrow's plan.
+
+**The daily plan** (`planFor()`) scores every strand the student carries, using
+inaccuracy, how overdue it is, and how little it has been practised. Untouched
+strands score 70 so they surface early. A day-seeded jitter breaks ties, so a
+student who has not practised yet does not get the identical six strands every
+morning. Output is capped at two strands per subject so the plan spreads.
+
+**Form gating.** `questionsFor()` will not serve material more than one form
+ahead of the student, and the plan only draws strands taught in the student's
+current form. A Form 2 student is never handed Form 5 vectors.
+
+---
+
+## The guided journey
+
+The form is the input that drives everything, so it is chosen deliberately: the
+create-profile screen has **no pre-selected form**. A silently wrong default
+would mis-set the syllabus, the milestones and the countdown for five years, so
+creation is blocked until a form is tapped, and each option says what that year
+means before you pick it.
+
+From that one input, `journey.html` pulls in what is relevant:
+
+- **Where you are standing.** Form, stage, school year, and which of the three
+  terms is running now — derived from the date, not typed in.
+- **What this term is for.** Every form is broken into T1/T2/T3, each with an
+  aim and three concrete things to do. The current term is highlighted; past
+  terms dim.
+- **New to you this year.** `newThisYear()` returns strands taught in this form
+  but *not* in the one below — the material nobody has covered yet, which is
+  where a term goes wrong quietly. Form 3 has 20 of them; Form 5 has none, and
+  the page says so rather than showing an empty list.
+- **Carried forward.** `carriedForward()` returns strands from earlier forms
+  still under 60%. This is the debt that sinks a Form 4, and it is far cheaper
+  to clear in Form 2.
+- **Milestones ahead**, nearest first, with the current term's flagged:
+  Form 3 T3 subject selection, Form 4 T1 SBA begins, Form 5 T2 SBA submission,
+  Form 5 T3 the examinations.
+
+The page works signed out too, with a form selector, so a parent can look at
+what Form 1 or Form 4 involves before anyone has a profile.
+
+---
+
+## The ladder — one number, ten years
+
+Everything gates on `profile.level`, a single integer from 1 to 10:
+
+| Level | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Year** | Std 1 | Std 2 | Std 3 | Std 4 | Std 5 | Form 1 | Form 2 | Form 3 | Form 4 | Form 5 |
+| **Age** | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
+| **Exam** | | | | | **SEA** | | | | | **CSEC** |
+
+One integer spans both halves, so strand gating, the daily plan, coverage,
+retention and the journey all work across SEA without knowing it is there.
+`C.levels` is the only place a number becomes words — `CSEC.levelLabel(3)`
+returns "Standard 3". Never spell a year out in a template.
+
+**Two examinations, two countdowns.** `nextExam(level)` returns the stage whose
+`examLevel` the student has not yet passed, so a Standard 3 counts down to SEA
+in March and a Form 3 to CSEC in May. Nothing in the UI names an exam directly;
+it uses `countdown(level).exam`.
+
+**Crossing SEA.** `promote()` from level 5 to 6 also swaps the subject ticks —
+but only when every subject held belongs to the stage being left. A child
+arriving in Form 1 still ticked for ELA Writing would otherwise get a daily plan
+full of subjects that no longer exist for them.
+
+**Migration.** Profiles written before this stored `form` 1-5. `profiles()`
+upgrades them on read (`level = form + 5`) and rewrites the store, so a device
+that has been offline for a month still upgrades itself.
+
+---
+
+## Primary content
+
+Eight primary subjects, 44 strands, built from the Ministry's **SEA Assessment
+Framework 2025-2028**, which is the document the SEA is actually set from:
+
+- **Mathematics** — the four assessed strands are Number, Measurement, Geometry
+  and Statistics. 40 items in the paper.
+- **English Language Arts** — Spelling, Punctuation and Capitalisation, Standard
+  English Grammar, and Reading Comprehension. 36 items, 64 marks: 30 for
+  Section I, 34 for Section II.
+- **ELA Writing** — three items in any year, all narrative **or** all expository;
+  the student answers one, scored by two people on Content, Language Use,
+  Grammar and Mechanics, and Organisation.
+- Plus Science, Social Studies, Spanish, VAPA and Physical Education.
+
+Defaults are stage-aware: `defaultPrimary` seeds five subjects for a Standard,
+`defaultSelection` fourteen for a Form. A Standard 3 never opens the app to a
+CSEC timetable.
+
+## Tracking a student across the ten years
+
+The form is not just a filter — it is the spine of the record.
+
+**Term snapshots.** Every practice session and test writes a snapshot for the
+current school term (T1 Sept–Dec, T2 Jan–Mar, T3 Apr–Jul), overwritten as the
+term goes on so it always reflects where the term finished. Fifteen terms
+across Forms 1–5 become fifteen points on the KPI timeline.
+
+**Promotion.** Settings → *Moving up a form* moves a student up. Mastery carries
+forward — she has not forgotten Form 2 mathematics — but a `history` entry
+records the date, the term, and the accuracy and coverage she left the year on.
+The syllabus for the new form opens up, which means **coverage correctly drops**
+on promotion: 5 of 7 Maths strands as a Form 2 is 5 of 9 as a Form 5.
+
+**The timeline chart** on `kpi.html` plots accuracy and syllabus coverage per
+term, with shaded bands showing which form each term belonged to.
+
+---
+
+## The KPI model
+
+`readiness(studentId, subjId)` returns a **Readiness Index** from 0 to 100:
+
+| Component | Weight | What it asks |
+|---|---|---|
+| Accuracy | 40% | Can she do it at all |
+| Syllabus coverage | 25% | Has she met the syllabus taught to her form |
+| Retention | 20% | Can she still do it a week later |
+| Timed tests | 15% | Can she do it against the clock |
+
+**Retention is the interesting one.** It is accuracy on attempts made at least
+seven days after a strand was first seen — the difference between a student who
+has revised and one who crammed. It needs a per-attempt log, which is why each
+strand keeps a capped `log` array rather than running totals alone.
+
+Where retention or timed data is missing, a discounted proxy stands in
+(accuracy × 0.85 and × 0.80) and the result is flagged `provisional` rather than
+quietly inflated.
+
+**Bands are named for the grade they track towards, never stated as the grade.**
+≥80 Grade I track, ≥65 Grade II, ≥50 Grade III, ≥35 below pass, under that a
+serious gap. CSEC awards Grades I–VI; I, II and III are passes.
+
+### Honesty rules built into the model
+
+- **It is not a CXC prediction.** It is derived from practice inside this hub,
+  which flatters: multiple choice, no time pressure, an explanation after every
+  question. The disclaimer sits above the numbers on `kpi.html`, not in a footnote.
+- **Thin evidence shows no band at all.** Below 5 answers in a subject (15
+  overall) `readiness()` returns `thin: true` and `band: null`, and the UI says
+  "too early to say". Without this, one lucky answer displayed as "Grade II
+  track" — which it did, until the browser screenshot caught it.
+- **The distinction board ranks on evidence, not score.** Well-evidenced
+  subjects sort above thin ones, so a thin 75 never outranks a practised 68 and
+  send her to the wrong subject. `onTrack` ignores thin subjects entirely.
+
+---
+
+## SEA practice and mock papers
+
+`sea.html`, backed by `data/sea-papers.js`. Twelve practice papers and two mock
+examinations in each of the three papers a child actually sits.
+
+Every figure is taken from the Ministry’s **Assessment Framework for the SEA
+2025–2028** (Tables 1–8), which is linked on the Resources page. Nothing is
+copied from a commercial practice-test book — the blueprint is a published
+specification, and the items filling it are this hub’s own.
+
+| Paper | Time | Structure |
+|---|---|---|
+| ELA Writing | 50 min | 3 prompts set (all narrative **or** all expository), **one** answered |
+| Mathematics | 75 min | 40 items, 75 marks — Section I 20×1, II 16×2–3, III 4×4 |
+| English Language Arts | 75 min | 36 items, 64 marks — Section I 18, Section II 18 |
+
+Weighting is **Mathematics 100 : ELA 60 : ELA Writing 40**.
+
+Mathematics items are distributed Number 19, Geometry 6, Measurement 9,
+Statistics 6. ELA is spelling 6, punctuation 6, grammar 6, fiction/non-fiction 7,
+poetry 7, graphic text 4.
+
+**Two rules make these practice papers rather than another shuffle of the bank:**
+
+*Repeatable.* Paper 7 is the same paper every time it is opened, on any device,
+so a mark can be compared with last month’s. The deal is seeded by strand —
+never by the clock or the child.
+
+*Maximally distinct.* Items are **dealt** across papers, not sampled for each.
+Each strand’s pool is ordered once and paper *n* takes the next slice, so papers
+stay wholly separate until the pool runs out — rather than colliding on paper
+two, which random sampling does.
+
+**How many papers the bank currently fills without repeating:**
+
+| | Complete papers | Held down by |
+|---|---|---|
+| Mathematics | **4** | Number — 77 written, 19 needed per paper |
+| ELA | **2** | Spelling — 12 written, 6 needed per paper |
+| ELA Writing | **14** | nothing; 42 prompts are written out |
+
+The index says this on screen, in plain words, rather than letting a family
+discover it in paper three. Fourteen fully separate papers needs 560
+Mathematics items and 504 ELA items.
+
+**The writing paper is usually not a story.** This was found by reading the
+Ministry's own scans of the real papers, page by page — 2010, 2011, 2012, 2018
+and 2019 (the 2013 scan is missing its topic page at source). Of the fifteen
+real topics that could be read:
+
+| Shape | Count | Example year |
+|---|---|---|
+| A **letter** to a named person | 6 | 2011, 2012 |
+| A **report** to a teacher or principal | 3 | 2019 |
+| A free **story** | 4 | 2010 |
+| A story that **must contain given sentences** | 2 | 2018 |
+
+Nine of fifteen were letters or reports. The hub's first writing set was all
+free stories and general essays, which would have left a child meeting the
+commonest form of the paper for the first time in the examination hall. Every
+prompt now carries `form`, `to` and `must`, and the set is weighted the way the
+real papers are.
+
+**The sixty-second decode.** Before the writing box opens, the child answers
+two questions and is told at once if either is wrong: *which topic number* (the
+real booklet has a QUES. NO. box the examiner fills in) and *what form the topic
+asks for*. Choosing "a story" when the topic says "write a report to your
+principal" is corrected on the spot, in the words that matter: this is the
+mistake that scores **zero for Content and full marks for everything else**.
+Then the topic's requirements are listed as a checklist that stays on screen
+while writing, and anything still unticked is named back at the end.
+
+This exists because of a real script: a strong Standard-5 writer scored
+Content 0, Language 5, Organisation 5, Grammar 5. Nothing was wrong with the
+writing. He had answered a question nobody asked.
+
+**Writing is marked by a person, not by the program.** Three prompts, a
+50-minute clock, a word count, then the Ministry’s four criteria — Content,
+Language Use, Grammar and Mechanics, Organisation — with a link to the marked
+Standard 5 exemplars. No program can mark a child’s story honestly, and
+pretending otherwise would be the most damaging thing in the hub.
+
+SEA papers appear in the navigation only for a student on the primary ladder
+(levels 1–5), and for parents and teachers. A Form 3 has no use for them.
+
+---
+
+## Timed tests
+
+`test.html` runs 10/20/30 questions at roughly the CSEC Paper 01 pace of 90
+seconds each. No feedback until submission, a clock that auto-submits at zero, a
+question map with flagging, and a full review of every question afterwards.
+Answers still feed the mastery model, and the result is stored in `progress.tests`
+and weighted into the readiness index.
+
+The verdict after a test comments on **pace as well as score** — finishing in
+under half the time is reported as a problem, because it usually is.
+
+---
+
+## Guided methods
+
+`data/guides.js` holds 24 worked methods for the question types that carry the
+most marks. Each is: when to use it, the method as numbered steps, one fully
+worked example with every line explained, and the mistakes that lose marks.
+
+A strand with a guide gets a **📐 method** link on the daily plan, and a weak
+topic in a test result links straight to it. Same shape as a question:
+
+```js
+{ id:'g-ma-quad', subj:'mathematics', strand:'ma-algebra', form:3,
+  title:'…', when:'…',
+  steps:[{do:'…', note:'…'}],
+  worked:{ problem:'…', lines:[{work:'…', note:'…'}] },
+  pitfalls:['…'] }
+```
+
+---
+
+## The chart palette
+
+The KPI timeline uses `#b8862a` (accuracy) and `#0093ad` (coverage) — **not** the
+branch display gold and teal, which fail the dark-surface lightness band. These
+two pass all six checks of the dataviz validator against the `#163553` card
+surface: lightness band, chroma floor, CVD separation (ΔE 17.3 protan / 21.0
+tritan), normal-vision separation (ΔE 21.8) and 3:1 contrast. Re-run before
+changing them:
+
+```bash
+node scripts/validate_palette.js "#b8862a,#0093ad" --mode dark --surface "#163553"
+```
+
+Identity is never colour alone: two series carry a legend, direct value labels on
+the final point, and a table view toggle.
+
+---
+
+## What the question bank actually is
+
+| | |
+|---|---|
+| Questions | **781**, all written for this hub |
+| Guided methods | **24** |
+| Strands in the default subjects | 130 |
+| Strands with **none** | **0** |
+| Thinnest strand | **4** questions |
+| **Median questions per strand** | **5** |
+
+Split by stage:
+
+| | Questions | Strands | Thinnest | Median |
+|---|---|---|---|---|
+| Primary — 5 SEA subjects | 309 | 35 | 4 | 8 |
+| Secondary — 14 CSEC subjects | 472 | 95 | 4 | 5 |
+
+Primary is now the deeper half, because that is where the examination
+structure demanded it — see **SEA practice and mock papers** above. It backs
+four complete Mathematics papers and two complete ELA papers with no item
+repeated.
+
+Secondary at a median of 5 is enough for a nightly habit across a whole subject
+list, but a student who drills one strand hard still exhausts it in two or three
+sittings. It is **not** a revision bank a Form 5 can live in for a term. Say so
+to families rather than letting them discover it.
+
+The weakest part is now the **guided methods**: 24 worked methods against 130
+strands. A question tells a child they were wrong; a guide tells them how to be
+right. That is where the next effort is worth most.
+
+Nothing has been ingested from any past-paper bank or practice-test book — see
+the standing decision above. Every item is original, for two reasons: CXC owns
+the CSEC papers and sells them, and a question copied without its mark scheme
+teaches the wrong thing anyway.
+
+**The real material lives on the Resources page**, and for primary it is
+excellent: 19 free Ministry sources, including ten years of SEA Mathematics and
+Language Arts papers, the marked writing exemplars, and the televised SEA Time
+lessons. For CSEC, the free half is the CXC syllabuses and specimen papers plus
+the Ministry’s own Form 5 Mathematics course with worked past-paper solutions.
+
+**Closing the gap, in order of value:**
+
+1. **Guided methods.** One per strand in the examined core — CSEC Maths,
+   English A, the three sciences, and all five SEA subjects.
+2. **SEA paper depth.** Number and Spelling are the two strands holding the
+   paper count down. Fourteen fully separate papers needs 560 Mathematics items
+   and 504 ELA items; Mathematics has 161 and ELA 75.
+3. Everything else, toward ten per strand.
+
+---
+
+## Adding questions
+
+Append to `data/questions.js`. Every field is required except `tech`:
+
+```js
+{ id:'ma49',                    // unique across the whole bank AND guides.js
+  subj:'mathematics',           // must be a key in curriculum.js subjects
+  strand:'ma-consumer',         // must belong to that subject
+  level:8,                      // earliest level this fits (1-5 Std 1-5, 6-10 Form 1-5)
+  diff:2,                       // 1 easy, 2 typical, 3 stretch
+  q:'…',                        // the question stem
+  opts:['…','…','…','…'],       // exactly four
+  a:0,                          // index of the correct option
+  why:'…',                      // why it is right — shown after answering
+  tech:'…' }                    // optional exam-technique note
+```
+
+**Write the correct option first (`a:0`).** Every question in the bank does, which
+makes the file quick to author and quick to review. The practice engine shuffles
+the four options every time a question is displayed and maps the click back to
+the original index, so on screen the answer lands in a different position each
+time — including when a student meets the same question twice. Never rely on the
+stored order when reading the UI; `orderFor()` in `practice.html` owns it.
+
+Validate before committing — this catches wrong strand tags, duplicate ids and
+malformed options:
+
+```bash
+node -e "
+global.window={};
+require('./csec/data/curriculum.js'); require('./csec/data/questions.js');
+var C=window.CSEC_CURRICULUM,Q=window.CSEC_QUESTIONS,ids={},bad=[],st={};
+Object.keys(C.subjects).forEach(s=>C.subjects[s].strands.forEach(t=>st[t.id]=s));
+Q.forEach(q=>{
+  if(ids[q.id])bad.push('duplicate id '+q.id); ids[q.id]=1;
+  if(st[q.strand]!==q.subj)bad.push(q.id+': strand not in subject');
+  if(!Array.isArray(q.opts)||q.opts.length!==4)bad.push(q.id+': needs 4 options');
+  if(typeof q.a!=='number'||q.a<0||q.a>3)bad.push(q.id+': bad answer index');
+});
+console.log(bad.length?bad.join('\n'):'OK — '+Q.length+' questions valid');"
+```
+
+---
+
+## Subjects
+
+`curriculum.js` carries **23 subjects and 131 syllabus strands**. Fourteen are
+selected by default, inferred from the student's spoken subject list and
+cross-checked against the subjects Lakshmi Girls' Hindu College offers:
+
+> English A · English B · Mathematics · Spanish · French · Physics · Chemistry ·
+> Biology · Geography · History · Social Studies · Visual Arts · Physical
+> Education · Information Technology
+
+**This default is an inference and should be corrected.** Settings → Subjects
+lists all 23 (Integrated Science, Food & Nutrition, POB, POA, Additional
+Mathematics, Music, Religious Education, Technical Drawing, Agricultural Science
+are the rest) — tick the real timetable and save. Everything downstream follows.
+
+---
+
+## House conventions observed
+
+- Every page carries the `<!-- rrb-views -->` beacon before `</body>`.
+- Every page uses `logo-mark.png` via the standard `.mark` block. Nothing draws
+  a substitute mark.
+- Palette is the branch palette: navy `#07131f`, gold `#efc24b`→`#c9942c`,
+  teal `#00CFEA`.
+
+---
+
+## Next steps, in the order they would pay off
+
+1. **Deploy the sync service** — see `csec/LAUNCH.md`, section 1. Until that is
+   done the announcement's sync promise is not true and should be cut from it.
+2. **More questions.** 176 across 14 subjects, every subject at 12 or more.
+   Enough for a nightly habit, not enough for a Form 5 to revise from alone.
+3. **Real accounts and cross-device sync** via an Apps Script + Sheets endpoint,
+   following `gs/views-counter.gs`. That would let a parent see progress from
+   their own phone and turn the teacher view into a real class register.
+4. **More guided methods.** 16 covers the highest-value question types; English B,
+   Spanish, French, Social Studies and PE have none yet.
+5. **Join the primary site** — see *Joining the primary site* above. The data
+   model is ready; the countdown is the one function needing a stage check.
+6. **Past-paper practice log** — a place to record scores on real CXC papers
+   worked under time, alongside the hub's own timed tests.
+7. **SBA tracker** for Forms 4–5, since SBA deadlines cost more grades than
+   content gaps do.
+8. **Calibrate the readiness weights** once there is a real CSEC result to check
+   them against. The 40/25/20/15 split is a considered starting point, not a
+   fitted model, and it should be corrected by evidence when evidence exists.
