@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Approvals | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61; --field:rgba(0,0,0,.28);
+    --gold:#efc24b; --gold2:#c9942c; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.09); --teal:#00CFEA; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(239,194,75,.07),transparent);font-size:15px;line-height:1.45}
+  button,input,select,textarea{font:inherit;color:inherit}
+  .wrap{max-width:820px;margin:0 auto;padding:0 16px 96px}
+  h1,h2,h3{font-family:'Montserrat',sans-serif}
+  .mark{width:38px;height:38px;border-radius:10px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+
+  #lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px}
+  .lock-card{width:min(380px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:32px 24px}
+  .lock-card .mark{width:64px;height:64px;border-radius:16px;margin:0 auto 16px}
+  .lock-card h1{font-weight:800;font-size:20px;color:var(--gold);margin-bottom:6px}
+  .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(7,19,31,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top{max-width:820px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+  .top h1{font-size:16px;font-weight:800;color:var(--gold);line-height:1.1}
+  .top small{display:block;color:var(--muted);font-size:12px;font-family:'DM Sans'}
+  .top .sp{flex:1}
+  .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;letter-spacing:.4px;white-space:nowrap}
+  .pill.test{background:rgba(251,191,36,.15);color:var(--warn);border:1px solid rgba(251,191,36,.4)}
+  .pill.live{background:rgba(74,222,128,.12);color:var(--ok);border:1px solid rgba(74,222,128,.35)}
+  .tabs{max-width:820px;margin:0 auto;display:flex;gap:4px;padding:0 12px}
+  .tabs button{flex:1;background:none;border:0;padding:10px 6px 11px;color:var(--muted);font-weight:700;font-size:14px;
+    border-bottom:3px solid transparent;cursor:pointer;position:relative}
+  .tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--gold)}
+  .count{display:inline-block;min-width:20px;padding:1px 6px;margin-left:6px;border-radius:99px;background:var(--gold);color:#1d1503;font-size:11px}
+
+  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  .card h2{font-size:15px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .step{width:24px;height:24px;border-radius:50%;background:var(--gold);color:#1d1503;display:grid;place-items:center;font-size:12px;flex:none}
+  .card.dim{opacity:.45;pointer-events:none}
+  label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 6px;letter-spacing:.2px}
+  label:first-child{margin-top:0}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;padding:12px 13px;border-radius:11px;border:1px solid var(--line);background:var(--field);outline:none;min-height:46px}
+  input:focus,select:focus,textarea:focus{border-color:rgba(239,194,75,.55)}
+  select option{background:#0d2137}
+  textarea{min-height:90px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:460px){.row{grid-template-columns:1fr}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 18px;border-radius:12px;border:0;
+    cursor:pointer;font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px;text-decoration:none}
+  .btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503}
+  .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text)}
+  .btn.red{background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.45);color:var(--bad)}
+  .btn.block{width:100%}
+  .btn.sm{min-height:36px;padding:8px 12px;font-size:12px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px;min-height:1px}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;padding:12px;border-radius:11px;border:1px solid var(--line);background:var(--field);font-weight:700;cursor:pointer}
+  .seg button[aria-pressed=true]{border-color:var(--gold);background:rgba(239,194,75,.12);color:var(--gold)}
+  .chk{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:14px;cursor:pointer}
+  .chk input{width:22px;height:22px;accent-color:var(--gold);flex:none;margin-top:1px}
+  .counter{font-size:11px;color:var(--muted);text-align:right;margin-top:4px}
+  .counter.okc{color:var(--ok)}
+
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;margin:4px 4px 0 0}
+  .tag.warn{background:rgba(251,191,36,.14);color:var(--warn)}
+  .tag.bad{background:rgba(248,113,113,.14);color:var(--bad)}
+  .tag.ok{background:rgba(74,222,128,.12);color:var(--ok)}
+  .tag.info{background:rgba(0,207,234,.12);color:var(--teal)}
+  .tag.mute{background:rgba(255,255,255,.07);color:var(--muted)}
+
+  /* history */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .stat b{display:block;font-family:'Montserrat';font-size:20px;font-weight:800;line-height:1.1}
+  .stat span{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.3px}
+  .stat.hot{border-color:rgba(248,113,113,.5)} .stat.hot b{color:var(--bad)}
+  .first{display:flex;gap:12px;align-items:center;padding:14px;border-radius:12px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3)}
+  .first .ic{width:34px;height:34px;border-radius:50%;background:rgba(74,222,128,.18);display:grid;place-items:center;color:var(--ok);flex:none;font-weight:800}
+  .hist{margin-top:12px}
+  .h{display:grid;grid-template-columns:92px 1fr auto;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
+  .h:first-child{border-top:0}
+  .h .d{color:var(--muted);font-size:12px;font-weight:700}
+  .h .w{font-weight:700}
+  .h .s{font-size:12px;color:var(--muted)}
+  .h .amt{font-family:'Montserrat';font-weight:700;text-align:right;white-space:nowrap}
+  .bars{margin-top:12px;font-size:12px}
+  .bar{display:flex;align-items:center;gap:8px;margin-top:5px}
+  .bar span:first-child{width:46%;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar i{display:block;height:8px;border-radius:99px;background:var(--gold);min-width:4px}
+  details summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--teal);margin-top:12px}
+
+  /* requests & review */
+  .req{padding:14px 0;border-top:1px solid var(--line)}
+  .req:first-child{border-top:0;padding-top:0}
+  .req .l1{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .req .l1 b{font-size:16px}
+  .req .meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .quote{margin-top:8px;padding:10px 12px;border-left:3px solid var(--gold);background:rgba(0,0,0,.18);border-radius:0 10px 10px 0;font-size:14px}
+  .quote small{display:block;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.3px;margin-bottom:2px}
+  .st{font-size:11px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
+  .st.Pending{background:rgba(0,207,234,.13);color:var(--teal)}
+  .st.Approved{background:rgba(74,222,128,.13);color:var(--ok)}
+  .st.Declined{background:rgba(248,113,113,.13);color:var(--bad)}
+  .st.More{background:rgba(251,191,36,.14);color:var(--warn)}
+  .actions{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:12px}
+  @media (max-width:520px){.actions{grid-template-columns:1fr}}
+  .preview{margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#eef1f5}
+  .preview iframe{width:100%;height:560px;border:0;display:block;background:#eef1f5}
+  .preview .to{background:#0d2137;padding:8px 12px;font-size:12px;color:var(--muted)}
+  .banner{margin-top:14px;padding:12px 14px;border-radius:12px;font-size:13px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);color:var(--warn)}
+  .done{text-align:center}
+  .done .ref{font-family:'Montserrat';font-size:24px;font-weight:800;color:var(--gold);margin:6px 0 12px;letter-spacing:1px}
+  .empty{color:var(--muted);text-align:center;padding:24px 8px;font-size:14px}
+  .spin{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:var(--gold);animation:sp 0.8s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- Signing in happens once, on the RR Operations launcher; this page uses that sign-in. -->
+<div id="lock"><div class="lock-card"><div class="mark"><img src="/logo-mark.png" alt=""></div>
+  <h1>Approvals</h1><p id="lockMsg">Opening…</p>
+  <a class="btn gold block" href="/rroperations/?next=approvals">Sign in</a></div></div>
+
+<header>
+  <div class="top">
+    <a href="/rroperations/" class="mark" title="All apps" aria-label="All apps"><img src="/logo-mark.png" alt=""></a>
+    <div><h1>Approvals</h1><small id="me">—</small></div>
+    <div class="sp"></div>
+    <span class="pill test" id="modePill" hidden>TEST</span>
+    <a class="btn ghost sm" href="/rroperations/">All apps</a>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="ask">Ask</button>
+    <button role="tab" aria-selected="false" data-tab="mine">My requests<span class="count" id="mineCount" hidden></span></button>
+    <button role="tab" aria-selected="false" data-tab="review" id="reviewTab" hidden>Review<span class="count" id="reviewCount" hidden></span></button>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <!-- ─────────── ASK ─────────── -->
+  <section id="tab-ask">
+    <div class="card" id="c1">
+      <h2><span class="step">1</span>Which client?</h2>
+      <div class="row">
+        <div><label for="first">Client's first name</label><input id="first" type="text" autocomplete="off"></div>
+        <div><label for="last">Client's last name</label><input id="last" type="text" autocomplete="off"></div>
+      </div>
+      <label for="pol0">Policy number (if you have it)</label>
+      <input id="pol0" type="text" autocomplete="off" placeholder="Helps match a client filed under another spelling">
+      <div class="err" id="hErr" role="alert"></div>
+      <button class="btn gold block" type="button" id="histBtn" style="margin-top:14px">Show this client's approval history</button>
+    </div>
+
+    <div class="card" id="c2" hidden>
+      <h2><span class="step">2</span><span id="histTitle">Approval history</span></h2>
+      <div id="hist"></div>
+    </div>
+
+    <div class="card dim" id="c3">
+      <h2><span class="step">3</span>Your request and your reason</h2>
+      <label>What are you asking for?</label>
+      <div class="seg" id="typeSeg"></div>
+      <div class="row">
+        <div><label for="policy">Policy number(s)</label><input id="policy" type="text" autocomplete="off"></div>
+        <div id="amtBox"><label for="amount">Cash amount (TT$)</label><input id="amount" type="number" min="0" step="0.01" inputmode="decimal"></div>
+      </div>
+      <label for="cat">Reason</label>
+      <select id="cat"></select>
+      <label for="reason">In your own words: why can the client not pay by card, online or cheque?</label>
+      <textarea id="reason" maxlength="1500" placeholder="What happened, and what you tried first."></textarea>
+      <div class="counter" id="reasonCount"></div>
+      <div id="historyAsk" hidden>
+        <label class="chk"><input type="checkbox" id="seen"><span id="seenText">I have read this client's approval history above.</span></label>
+        <label for="different">This client has asked before. What is different this time?</label>
+        <textarea id="different" maxlength="1500" placeholder="e.g. the new card has been ordered; this is the last cash collection until it arrives."></textarea>
+        <div class="counter" id="diffCount"></div>
+      </div>
+      <div class="err" id="sErr" role="alert"></div>
+      <button class="btn gold block" type="button" id="sendBtn" style="margin-top:14px">Send to the Branch Manager</button>
+      <div class="hint" style="text-align:center">Nothing is collected until the Branch Manager approves.</div>
+    </div>
+
+    <div class="card done" id="result" hidden></div>
+  </section>
+
+  <!-- ─────────── MINE ─────────── -->
+  <section id="tab-mine" hidden>
+    <div class="card"><h2>My requests</h2><div id="mine"><div class="empty"><span class="spin"></span></div></div></div>
+  </section>
+
+  <!-- ─────────── REVIEW ─────────── -->
+  <section id="tab-review" hidden>
+    <div id="revBanner"></div>
+    <div class="card"><h2>Waiting for you</h2><div id="queue"><div class="empty"><span class="spin"></span></div></div></div>
+    <div class="card"><h2>Decided in the last 30 days</h2><div id="decided"></div></div>
+  </section>
+</main>
+
+<script src="/rroperations/ops-config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var API_URL = window.RR_OPS.API_URL, SESSION_KEY = window.RR_OPS.SESSION_KEY;
+  var S = { token: '', name: '', role: '', mode: 'test', approver: false, types: [], reasons: [], min: 25,
+            flagDays: 90, glSet: false, hist: null, type: '', client: null, queue: null };
+  var $ = function (id) { return document.getElementById(id); };
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} },
+    sget: function (k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
+    sset: function (k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} },
+    sdel: function (k) { try { sessionStorage.removeItem(k); } catch (e) {} }
+  };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function money(n) { return n == null || n === '' ? '' : 'TT$' + Number(n).toLocaleString('en-TT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function day(iso) { if (!iso) return '—'; var d = new Date(iso); return isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  function ago(iso) {
+    if (!iso) return ''; var n = Math.round((Date.now() - new Date(iso).getTime()) / 86400000);
+    return n <= 0 ? 'today' : n === 1 ? 'yesterday' : n < 60 ? n + ' days ago' : Math.round(n / 30) + ' months ago';
+  }
+  function stClass(s) { return /^More/.test(s) ? 'More' : /Approved|Declined|Pending/.test(s) ? s.split(' ')[0] : 'Pending'; }
+
+  function api(action, body) {
+    if (/RR_OPERATIONS_DEPLOYMENT_ID/.test(API_URL)) return Promise.reject(new Error('RR Operations is not connected yet.'));
+    var payload = Object.assign({ action: action, token: S.token }, body || {});
+    return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.error === 'signed-out') { signOutLocal(); throw new Error('Your session ended. Sign in again.'); }
+        if (!j || !j.ok) throw new Error((j && j.error) || 'Something went wrong.');
+        return j;
+      });
+  }
+  function signOutLocal() { store.del(SESSION_KEY); S.token = ''; location.replace('/rroperations/?next=approvals'); }
+
+  /* ── tabs ──────────────────────────────────────────────── */
+  document.querySelectorAll('[data-tab]').forEach(function (b) {
+    b.addEventListener('click', function () { showTab(b.getAttribute('data-tab')); });
+  });
+  function showTab(t) {
+    document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === t)); });
+    ['ask', 'mine', 'review'].forEach(function (k) { $('tab-' + k).hidden = k !== t; });
+    if (t === 'mine') loadMine();
+    if (t === 'review') loadQueue();
+  }
+
+  /* ── start ─────────────────────────────────────────────── */
+  function applySession(s) {
+    S.token = s.token; S.name = s.name; S.role = s.role;
+    $('me').textContent = S.name + ' · ' + S.role;
+    $('lock').hidden = true;
+    api('aprStart').then(function (r) {
+      S.approver = r.approver; S.mode = r.mode; S.types = r.types; S.reasons = r.reasons; S.min = r.minReason;
+      S.flagDays = r.flagDays; S.glSet = r.glSet;
+      var pill = $('modePill'); pill.hidden = false;
+      pill.textContent = S.mode === 'live' ? 'LIVE' : 'TEST'; pill.className = 'pill ' + (S.mode === 'live' ? 'live' : 'test');
+      pill.title = S.mode === 'live' ? 'Approvals e-mail GL Customer Service' : 'Test mode: every e-mail goes to the test inbox';
+      $('typeSeg').innerHTML = S.types.map(function (t) {
+        return '<button type="button" aria-pressed="false" data-t="' + esc(t) + '">' + esc(t.replace(' Collection', '')) + '</button>'; }).join('');
+      $('typeSeg').querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { setType(b.getAttribute('data-t')); }); });
+      $('cat').innerHTML = '<option value="">Choose…</option>' + S.reasons.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('');
+      setType(S.types[0]); counters();
+      $('reviewTab').hidden = !S.approver;
+      loadMine(true);
+      var want = new URLSearchParams(location.search).get('review') || store.sget('apr-review');
+      store.sdel('apr-review');
+      if (S.approver) { if (want) { S.focus = want; showTab('review'); } else loadQueue(true); }
+    }).catch(function (e) { $('lock').hidden = false; $('lockMsg').textContent = e.message; });
+  }
+  function setType(t) {
+    S.type = t;
+    $('typeSeg').querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-t') === t)); });
+    $('amtBox').hidden = t !== 'Cash Collection';
+  }
+
+  /* ── 1 and 2: the client, then the history ─────────────── */
+  function showHistory() {
+    var first = $('first').value.trim(), last = $('last').value.trim();
+    $('hErr').textContent = '';
+    if (first.length < 2 || last.length < 2) { $('hErr').textContent = "Enter the client's first and last name."; return; }
+    $('histBtn').disabled = true; $('histBtn').innerHTML = '<span class="spin"></span> Reading every request on record…';
+    api('aprHistory', { first: first, last: last, policy: $('pol0').value.trim() }).then(function (r) {
+      S.hist = r; S.client = { first: first, last: last };
+      renderHistory(r, $('hist'));
+      $('histTitle').textContent = 'Approval history — ' + r.client;
+      $('c2').hidden = false; $('c3').classList.remove('dim');
+      if (!$('policy').value) $('policy').value = $('pol0').value.trim();
+      var has = r.history.length > 0;
+      $('historyAsk').hidden = !has;
+      $('seenText').textContent = has ? 'I have read the ' + r.history.length + ' earlier request' + (r.history.length === 1 ? '' : 's') +
+        ' for ' + r.client + ' above.' : '';
+      $('result').hidden = true;
+      $('c2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }).catch(function (e) { $('hErr').textContent = e.message; })
+      .then(function () { $('histBtn').disabled = false; $('histBtn').textContent = "Show this client's approval history"; });
+  }
+  $('histBtn').addEventListener('click', showHistory);
+  ['first', 'last', 'pol0'].forEach(function (id) {
+    $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); showHistory(); } });
+    $(id).addEventListener('input', function () { if (S.hist) { S.hist = null; $('c2').hidden = true; $('c3').classList.add('dim'); } });
+  });
+
+  /* One renderer for the agent's step 2 and the manager's review. */
+  function renderHistory(r, el, opts) {
+    opts = opts || {};
+    var h = r.history || [], s = r.summary || {};
+    if (!h.length) {
+      el.innerHTML = '<div class="first"><div class="ic">1</div><div><b>No cash or cheque requests on record' +
+        (r.client ? ' for ' + esc(r.client) : '') + '.</b><div class="hint" style="margin:2px 0 0">This would be the first.' +
+        (opts.forManager ? ' GL Customer Service gets the first-time approval.' : '') + '</div></div></div>' + possible(r);
+      return;
+    }
+    var hot = s.in90 + (opts.forManager ? 0 : 1) >= 3;
+    el.innerHTML =
+      '<div class="stats">' +
+        '<div class="stat"><b>' + s.count + '</b><span>ON RECORD</span></div>' +
+        '<div class="stat' + (hot ? ' hot' : '') + '"><b>' + s.in90 + '</b><span>LAST ' + S.flagDays + ' DAYS</span></div>' +
+        '<div class="stat"><b>' + esc(ago(s.last)) + '</b><span>LAST REQUEST</span></div>' +
+        '<div class="stat"><b>' + (s.total ? money(s.total).replace('.00', '') : '—') + '</b><span>CASH ON RECORD</span></div>' +
+      '</div>' +
+      ((r.flags || []).length ? '<div style="margin-top:8px">' + r.flags.map(function (f) { return '<span class="tag bad">' + esc(f) + '</span>'; }).join('') + '</div>' : '') +
+      (!opts.forManager && hot ? '<div class="banner">This would be request ' + (s.in90 + 1) + ' in ' + S.flagDays +
+        ' days. Explain clearly what is different this time.</div>' : '') +
+      '<div class="bars">' + bars('Reasons given', s.reasons) + bars('Asked by', s.agents) + '</div>' +
+      '<div class="hist">' + h.slice(0, opts.limit || 12).map(rowHtml).join('') + '</div>' +
+      (h.length > (opts.limit || 12) ? '<details><summary>All ' + h.length + ' requests</summary><div class="hist">' +
+        h.slice(opts.limit || 12).map(rowHtml).join('') + '</div></details>' : '') +
+      possible(r) +
+      '<div class="hint">Requests on the earlier form did not record the decision, so they read "Decision not recorded". First on record ' + esc(day(s.first)) + '.</div>';
+  }
+  function bars(title, list) {
+    if (!list || !list.length) return '';
+    var max = list[0].count;
+    return '<div style="margin-top:8px;font-weight:700;color:var(--muted)">' + title + '</div>' +
+      list.slice(0, 4).map(function (x) {
+        return '<div class="bar"><span>' + esc(x.name) + '</span><i style="width:' + Math.max(4, Math.round(50 * x.count / max)) + '%"></i><b>' + x.count + '</b></div>';
+      }).join('');
+  }
+  function rowHtml(x) {
+    return '<div class="h"><div class="d">' + esc(day(x.at)) + '</div><div><div class="w">' + esc(x.type.replace(' Collection', '')) +
+      ' · ' + esc(x.agent) + '</div><div class="s">' + esc(x.reason || 'No reason given') + (x.policy ? ' · ' + esc(x.policy) : '') +
+      '</div><span class="st ' + stClass(x.status) + '" style="display:inline-block;margin-top:4px">' + esc(x.status) + '</span></div>' +
+      '<div class="amt">' + esc(money(x.amount)) + '</div></div>';
+  }
+  function possible(r) {
+    if (!r.possible || !r.possible.length) return '';
+    return '<details><summary>' + r.possible.length + ' possible match' + (r.possible.length === 1 ? '' : 'es') +
+      ' (same surname and initial), not counted</summary><div class="hist">' + r.possible.map(function (x) {
+        return rowHtml(Object.assign({}, x, { agent: x.agent + ' · ' + x.client })); }).join('') + '</div></details>';
+  }
+
+  /* ── 3: the request ────────────────────────────────────── */
+  function counters() {
+    [['reason', 'reasonCount'], ['different', 'diffCount']].forEach(function (p) {
+      var n = $(p[0]).value.trim().length, c = $(p[1]);
+      c.textContent = n >= S.min ? 'Thank you' : (S.min - n) + ' more characters: a full sentence';
+      c.className = 'counter' + (n >= S.min ? ' okc' : '');
+    });
+  }
+  $('reason').addEventListener('input', counters);
+  $('different').addEventListener('input', counters);
+
+  $('sendBtn').addEventListener('click', function () {
+    $('sErr').textContent = '';
+    if (!S.hist) { $('sErr').textContent = 'Show the history first.'; return; }
+    var body = { first: S.client.first, last: S.client.last, type: S.type, policy: $('policy').value.trim(),
+                 amount: $('amount').value, reasonCategory: $('cat').value, reason: $('reason').value.trim(),
+                 historySeen: $('seen').checked, different: $('different').value.trim() };
+    $('sendBtn').disabled = true;
+    api('aprSubmit', body).then(function (r) {
+      $('result').hidden = false; $('c3').classList.add('dim');
+      $('result').innerHTML = '<div class="hint">Sent to the Branch Manager</div><div class="ref">' + esc(r.ref) + '</div>' +
+        '<p>' + esc(S.hist.client) + ' · ' + esc(S.type) + (body.amount && S.type === 'Cash Collection' ? ' · ' + esc(money(body.amount)) : '') + '</p>' +
+        (r.flags.length ? '<div style="margin-top:8px">' + r.flags.map(function (f) { return '<span class="tag warn">' + esc(f) + '</span>'; }).join('') +
+          '</div><div class="hint">The Branch Manager sees these beside your reason.</div>' : '') +
+        '<p class="hint" style="margin-top:12px">You are told by e-mail when it is decided. Do not collect until it is approved.</p>' +
+        '<button class="btn ghost block" type="button" id="again" style="margin-top:14px">Ask for another client</button>';
+      $('again').addEventListener('click', reset);
+      loadMine(true);
+      $('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }).catch(function (e) { $('sErr').textContent = e.message; })
+      .then(function () { $('sendBtn').disabled = false; });
+  });
+  function reset() {
+    ['first', 'last', 'pol0', 'policy', 'amount', 'reason', 'different'].forEach(function (id) { $(id).value = ''; });
+    $('cat').value = ''; $('seen').checked = false; S.hist = null;
+    $('c2').hidden = true; $('c3').classList.add('dim'); $('result').hidden = true; counters();
+    window.scrollTo({ top: 0, behavior: 'smooth' }); $('first').focus();
+  }
+
+  /* ── my requests ───────────────────────────────────────── */
+  function loadMine(quiet) {
+    if (!quiet) $('mine').innerHTML = '<div class="empty"><span class="spin"></span></div>';
+    api('aprMine').then(function (r) {
+      var waiting = r.requests.filter(function (x) { return x.status === 'More info needed'; }).length;
+      $('mineCount').hidden = !waiting; $('mineCount').textContent = waiting;
+      if (!r.requests.length) { $('mine').innerHTML = '<div class="empty">No requests yet.</div>'; return; }
+      $('mine').innerHTML = r.requests.map(function (x) {
+        var info = x.status === 'More info needed';
+        return '<div class="req"><div class="l1"><b>' + esc(x.first + ' ' + x.last) + '</b><span class="st ' + stClass(x.status) + '">' + esc(x.status) + '</span></div>' +
+          '<div class="meta">' + esc(x.ref) + ' · ' + esc(x.type) + (x.amount ? ' · ' + esc(money(x.amount)) : '') + ' · ' + esc(day(x.at)) + '</div>' +
+          (x.note ? '<div class="quote"><small>' + (info ? 'THE BRANCH MANAGER ASKS' : 'NOTE FROM ' + esc(String(x.decidedBy).toUpperCase())) + '</small>' + esc(x.note) + '</div>' : '') +
+          (x.reply ? '<div class="quote"><small>YOUR ANSWER</small>' + esc(x.reply).replace(/\n/g, '<br>') + '</div>' : '') +
+          (info ? '<label for="rp-' + esc(x.ref) + '">Your answer</label><textarea id="rp-' + esc(x.ref) + '"></textarea>' +
+            '<button class="btn gold block" type="button" data-reply="' + esc(x.ref) + '" style="margin-top:8px">Send my answer</button>' : '') +
+          '</div>';
+      }).join('');
+      $('mine').querySelectorAll('[data-reply]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var ref = b.getAttribute('data-reply'); b.disabled = true;
+          api('aprReply', { ref: ref, reply: $('rp-' + ref).value }).then(function () { loadMine(); })
+            .catch(function (e) { alert(e.message); b.disabled = false; });
+        });
+      });
+    }).catch(function (e) { if (!quiet) $('mine').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; });
+  }
+
+  /* ── review ────────────────────────────────────────────── */
+  function loadQueue(quiet) {
+    if (!quiet) $('queue').innerHTML = '<div class="empty"><span class="spin"></span> Reading the requests and every client\'s history…</div>';
+    api('aprQueue').then(function (r) {
+      S.queue = r;
+      var pend = r.open.filter(function (x) { return x.status === 'Pending'; }).length;
+      $('reviewCount').hidden = !pend; $('reviewCount').textContent = pend;
+      $('revBanner').innerHTML = (!r.glSet ? '<div class="banner">GL Customer Service\'s address is not set yet (APR_GL_CS_TO). ' +
+        (r.mode === 'live' ? 'Approval is refused until it is.' : 'In test mode every e-mail goes to the test inbox.') + '</div>' : '');
+      if (quiet && $('tab-review').hidden) return;
+      $('queue').innerHTML = r.open.length ? r.open.map(reviewCard).join('') : '<div class="empty">Nothing waiting. Every request has been decided.</div>';
+      r.open.forEach(function (x) {
+        renderHistory({ history: x.history, summary: x.summary, flags: [] }, $('h-' + x.ref), { forManager: true, limit: 8 });
+      });
+      wireReview();
+      $('decided').innerHTML = r.done.length ? r.done.map(function (x) {
+        return '<div class="req"><div class="l1"><b>' + esc(x.first + ' ' + x.last) + '</b><span class="st ' + stClass(x.status) + '">' + esc(x.status) + '</span></div>' +
+          '<div class="meta">' + esc(x.ref) + ' · ' + esc(x.agent) + ' · ' + esc(x.type) + (x.amount ? ' · ' + esc(money(x.amount)) : '') +
+          ' · decided ' + esc(day(x.decidedAt)) + (x.template ? ' · ' + esc(x.template) + ' e-mail: ' + esc(x.glEmail) : '') + '</div></div>';
+      }).join('') : '<div class="empty">None yet.</div>';
+      if (S.focus) { var el = document.getElementById('r-' + S.focus); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); S.focus = ''; }
+    }).catch(function (e) { if (!quiet) $('queue').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; });
+  }
+  function reviewCard(x) {
+    var flags = x.flags.length ? x.flags.map(function (f) { return '<span class="tag bad">' + esc(f) + '</span>'; }).join('')
+      : '<span class="tag ok">No flags</span>';
+    return '<div class="req" id="r-' + esc(x.ref) + '">' +
+      '<div class="l1"><b>' + esc(x.first + ' ' + x.last) + '</b><span class="st ' + stClass(x.status) + '">' + esc(x.status) + '</span></div>' +
+      '<div class="meta">' + esc(x.ref) + ' · ' + esc(x.agent) + ' · ' + esc(x.type) + (x.amount ? ' · <b style="color:var(--text)">' + esc(money(x.amount)) + '</b>' : '') +
+        ' · policy ' + esc(x.policy) + ' · asked ' + esc(ago(x.at)) + '</div>' +
+      '<div style="margin-top:6px">' + flags + '</div>' +
+      '<div class="quote"><small>' + esc(String(x.category).toUpperCase()) + ' · THE AGENT\'S REASON</small>' + esc(x.reason) + '</div>' +
+      (x.different ? '<div class="quote"><small>WHAT IS DIFFERENT THIS TIME</small>' + esc(x.different) + '</div>' : '') +
+      (x.note ? '<div class="quote"><small>YOU ASKED</small>' + esc(x.note) + '</div>' : '') +
+      (x.reply ? '<div class="quote"><small>THE AGENT ANSWERED</small>' + esc(x.reply).replace(/\n/g, '<br>') + '</div>' : '') +
+      '<details' + (x.history.length ? ' open' : '') + '><summary>History: ' + (x.history.length ? x.history.length + ' earlier request' + (x.history.length === 1 ? '' : 's') : 'none, first request') + '</summary>' +
+        '<div id="h-' + esc(x.ref) + '" style="margin-top:10px"></div></details>' +
+      '<label for="n-' + esc(x.ref) + '">Your note (goes in the e-mail; required to decline or ask)</label>' +
+      '<textarea id="n-' + esc(x.ref) + '" style="min-height:64px"></textarea>' +
+      '<button class="btn ghost block sm" type="button" data-prev="' + esc(x.ref) + '" style="margin-top:10px">See the e-mail GL Customer Service will get</button>' +
+      '<div class="preview" id="p-' + esc(x.ref) + '" hidden></div>' +
+      '<div class="actions">' +
+        '<button class="btn gold" type="button" data-dec="approve" data-ref="' + esc(x.ref) + '">Approve and e-mail GL</button>' +
+        '<button class="btn ghost" type="button" data-dec="info" data-ref="' + esc(x.ref) + '">Ask for more</button>' +
+        '<button class="btn red" type="button" data-dec="decline" data-ref="' + esc(x.ref) + '">Decline</button>' +
+      '</div><div class="err" id="e-' + esc(x.ref) + '" role="alert"></div></div>';
+  }
+  function wireReview() {
+    $('queue').querySelectorAll('[data-prev]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var ref = b.getAttribute('data-prev'), box = $('p-' + ref);
+        if (!box.hidden) { box.hidden = true; return; }
+        b.disabled = true;
+        api('aprPreview', { ref: ref, note: $('n-' + ref).value }).then(function (r) {
+          box.hidden = false;
+          box.innerHTML = '<div class="to">To: ' + esc(r.to) + ' · ' + esc(r.template) + ' template<br>Subject: ' + esc(r.subject) + '</div><iframe title="E-mail preview" sandbox=""></iframe>';
+          box.querySelector('iframe').srcdoc = r.html;
+        }).catch(function (e) { $('e-' + ref).textContent = e.message; }).then(function () { b.disabled = false; });
+      });
+    });
+    $('queue').querySelectorAll('[data-dec]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var ref = b.getAttribute('data-ref'), dec = b.getAttribute('data-dec'), note = $('n-' + ref).value.trim();
+        $('e-' + ref).textContent = '';
+        if (dec !== 'approve' && note.length < 5) { $('e-' + ref).textContent = dec === 'info' ? 'Say what you need from the agent.' : 'Give the agent the reason.'; $('n-' + ref).focus(); return; }
+        if (dec === 'approve' && !confirm('Approve ' + ref + ' and e-mail GL Customer Service' + (S.mode === 'live' ? '' : ' (test inbox)') + '?')) return;
+        var btns = $('r-' + ref).querySelectorAll('[data-dec]'); btns.forEach(function (x) { x.disabled = true; });
+        api('aprDecide', { ref: ref, decision: dec, note: note }).then(function (r) {
+          $('r-' + ref).innerHTML = '<div class="l1"><b>' + esc(ref) + '</b><span class="st ' + (dec === 'approve' ? 'Approved' : dec === 'decline' ? 'Declined' : 'More') + '">' +
+            (dec === 'approve' ? 'Approved' : dec === 'decline' ? 'Declined' : 'Sent back') + '</span></div><div class="meta">' +
+            (dec === 'approve' ? esc(r.template) + ' e-mail to GL Customer Service: ' + esc(r.email) : 'The agent is told: ' + esc(r.email)) + '</div>';
+          setTimeout(function () { loadQueue(true); }, 1500);
+        }).catch(function (e) { $('e-' + ref).textContent = e.message; btns.forEach(function (x) { x.disabled = false; }); });
+      });
+    });
+  }
+
+  /* ── open ──────────────────────────────────────────────── */
+  var saved = null;
+  try { saved = JSON.parse(store.get(SESSION_KEY) || 'null'); } catch (e) {}
+  var allowed = saved && (saved.apps || []).some(function (a) { return a.id === 'approvals' && a.status === 'live'; });
+  var want = new URLSearchParams(location.search).get('review');
+  if (saved && saved.token && allowed) applySession(saved);
+  else if (saved && saved.token) {
+    /* A sign-in saved before Approvals was added to this person's access
+       does not list it yet: ask again before saying no. */
+    S.token = saved.token;
+    api('apps').then(function (r) {
+      saved.apps = r.apps;
+      try { localStorage.setItem(SESSION_KEY, JSON.stringify(saved)); } catch (e) {}
+      if (r.apps.some(function (a) { return a.id === 'approvals' && a.status === 'live'; })) applySession(saved);
+      else $('lockMsg').textContent = 'Approvals is not on your access. Ask the branch to add it.';
+    }).catch(function (e) { $('lockMsg').textContent = e.message; });
+  }
+  else { if (want) store.sset('apr-review', want); location.replace('/rroperations/?next=approvals'); }
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

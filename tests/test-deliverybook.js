@@ -158,7 +158,7 @@ console.log('apps');
   ok('Pat sees the apps on his row', pat.apps.map(a => a.id).join(',') === 'delivery-book,gas-receipts');
   ok('an app not built yet comes back as soon', pat.apps.find(a => a.id === 'gas-receipts').status === 'soon');
   const mo = env.dbLogin_({ code: 'MGR9' });
-  ok('a blank Apps cell means every app', mo.apps.length === 3);
+  ok('a blank Apps cell means every app', mo.apps.length === 4);
   const again = post({ action: 'apps', token: pat.token });
   ok('the launcher can ask again with the token', again.ok && again.apps.length === 2);
   const cash = env.dbLogin_({ code: 'CASH' });

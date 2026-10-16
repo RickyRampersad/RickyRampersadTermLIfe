@@ -159,3 +159,65 @@ person's average. Comments are shown to managers only.
 3. In `OPS_APPS` in `DeliveryBook.gs`, change its `status` from `soon` to
    `live`, and gate its actions with `opsCanUse_(who, '<id>')` in `doPost`.
    Hiding a tile on the launcher is not access control; the server check is.
+
+## Approvals — cash and cheque collection
+
+`rroperations/approvals/` (short link `/approvals`) and
+`apps-script/Approvals.gs`. Replaces the "Branch Managers Approval" Jotform.
+
+**The flow.**
+1. The agent types the client's name (and the policy number if they have it).
+   Every earlier request comes back first: the old Jotform rows and this
+   app's own, matched by name in any case or order, or by a policy number in
+   common. Test rows are left out. Same surname and initial is shown as a
+   possible match, never counted.
+2. Only then can the agent ask: cash or cheque, policy, amount, the reason
+   from the list **and in their own words** (a full sentence). A client with
+   history also needs a tick ("I have read …") and *what is different this
+   time*.
+3. The Branch Manager is e-mailed a link to the request. The review shows the
+   reason, the flags and the whole history side by side, and **the exact
+   e-mail GL Customer Service will receive** before anything is sent.
+4. Approve, decline, or ask for more (a note is required for the last two).
+   Approve sends GL Customer Service one of two e-mails:
+   - **History**: every earlier request on this client in a table (date,
+     agent, type, reason, amount, policy, status), with a line summing it up;
+   - **First-time**: when there is none on record.
+   The agent and the manager's Outlook are copied; replies go to the manager.
+
+**Flags** (shown to both): 3 or more requests in 90 days (this one counted);
+asked again within a week; the same reason given before; the same amount
+already requested; declined before.
+
+**Setup.**
+1. Paste `Approvals.gs` as a new file in the RR Operations Apps Script project,
+   and paste the updated `DeliveryBook.gs` over the old one.
+2. Deploy → Manage deployments → pencil → **New version** (never New
+   deployment: the address in `ops-config.js` must not change).
+3. Run **RR Operations → Check approvals setup** once and allow the new
+   permission (the script opens the Branch Managers Approval spreadsheet).
+4. Access tab: add **approvals** to the Apps cell of each agent and of the
+   Branch Manager (a blank cell already means every app). The person who
+   decides must have **Branch Manager** in the Role column.
+5. Script properties:
+   - `APR_GL_CS_TO` — GL Customer Service address(es). Live approval is
+     refused until it is set.
+   - `APR_TEST_INBOX` — test e-mails (blank: `DB_TEST_INBOX`, then the owner).
+   - `APR_BM_EMAIL` — defaults to Ricky.Rampersad@myguardiangroup.com.
+   - `APR_MODE` = `live` when the test run has been read.
+
+**Test mode is the default.** Every e-mail (the manager's alert, the GL
+approval, the agent's notice) goes only to the test inbox, with a banner
+naming who it was for.
+
+**Where it writes.** A tab **Approval Requests** in the Branch Managers
+Approval spreadsheet, beside the Jotform's own. Every decision is on the row:
+status, who, when, the note, the GL e-mail's status and which template.
+
+**Outlook.** Apps Script cannot send as a Microsoft 365 mailbox. The e-mails go
+from the script owner's Google account under the name "Ricky Rampersad — Branch
+Manager", with the manager's Outlook as reply-to and in copy, so every approval
+is in his Outlook.
+
+**Retire the Jotform** once live: disable "Branch Managers Approval" so agents
+have one door. Its rows stay where they are and keep counting as history.

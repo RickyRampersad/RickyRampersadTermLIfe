@@ -3808,6 +3808,30 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
 - **Test mode is the default** (`DB_MODE` unset): mail to `DB_TEST_INBOX`, no
   Salesforce writes. Tests: `tests/test-deliverybook.js`, `tests/e2e-deliverybook.js`.
 
+## Approvals — the client's history first, then the reason
+
+`rroperations/approvals/` (short link `/approvals`, a stub) and
+`apps-script/Approvals.gs`, in the RR Operations project beside
+`DeliveryBook.gs`, whose `doPost` hands every `apr*` action to `aprRoute_`.
+Asked for on 15 October 2026, replacing the "Branch Managers Approval" Jotform:
+2,267 requests since November 2022, the "BM Cash Approval" column blank on every
+row, the reason a pick-list. The agent types the client, reads every earlier
+request (the Jotform tab and this app's **Approval Requests** tab, in the same
+spreadsheet), and only then writes the reason in their own words; a client with
+history needs a tick and *what is different this time*. The Branch Manager
+(Access-tab Role matching `APR_APPROVER_ROLE`, default "branch manager") decides
+with the history and a preview of the GL e-mail beside it. Approval sends GL
+Customer Service the **History** template (every earlier request in a table) or
+the **First-time** template ("research all the instances where approvals was
+given … and if never given then a nice approval template"), agent and manager
+copied. Flag: 3 or more in 90 days, this one counted (the manager's choice).
+Test mode is the default (`APR_MODE`); live approval is refused while
+`APR_GL_CS_TO` is empty. Sent by MailApp under the manager's name, reply-to and
+copy his Outlook: Apps Script cannot send as his Guardian mailbox. Old Jotform
+rows read "Decision not recorded", never "Approved". Tests:
+`tests/test-approvals.js`, `tests/e2e-approvals.js`. Runbook: the Approvals
+section of `RROPERATIONS-SETUP.md`.
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and

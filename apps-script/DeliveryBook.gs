@@ -104,6 +104,8 @@ var DB_SESS_COLUMNS = ['Token', 'Name', 'Role', 'Salesforce User Id', 'Issued', 
 var OPS_APPS = [
   { id: 'delivery-book', name: 'Delivery Book', path: '/rroperations/delivery-book/', status: 'live',
     blurb: 'Log a handover; the client is e-mailed and asked to rate it' },
+  { id: 'approvals', name: 'Approvals', path: '/rroperations/approvals/', status: 'live',
+    blurb: 'Cash and cheque collection: the client\'s history first, then the reason' },
   { id: 'gas-receipts', name: 'Gas Receipt Tracker', path: '/rroperations/gas-receipts/', status: 'soon',
     blurb: 'Snap and log fuel receipts' },
   { id: 'petty-cash', name: 'Petty Cash Tracker', path: '/rroperations/petty-cash/', status: 'soon',
@@ -167,6 +169,9 @@ function doPost(e) {
       if (DELIVERY_ACTIONS[b.action] && !opsCanUse_(who, 'delivery-book')) {
         return dbJson_({ ok: false, error: 'The Delivery Book is not on your access. Ask the branch to add it.' });
       }
+      /* Approvals (Approvals.gs, same project): every action starting
+         "apr" is its own, gated there by opsCanUse_(who, 'approvals'). */
+      if (/^apr[A-Z]/.test(String(b.action || ''))) return dbJson_(aprRoute_(b, who));
       switch (b.action) {
         case 'apps':     out = { ok: true, name: who.name, role: who.role, apps: who.apps, mode: dbMode_() }; break;
         case 'lookup':   out = dbLookup_(b, who); break;
@@ -1167,6 +1172,8 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('RR Operations')
     .addItem('Check setup', 'dbSetupCheck')
     .addItem('Import the Jotform history', 'importJotformHistory')
+    .addSeparator()
+    .addItem('Check approvals setup', 'aprSetupCheck')
     .addToUi();
 }
 
