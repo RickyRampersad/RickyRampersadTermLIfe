@@ -2993,6 +2993,17 @@ voice under the new timing and the caption gives it away.
     the routine's late-client follow-ups chase.
   - *The board, for agents* (`boardagent`, 1:48): your list every day, opening a client, Log call, comments, what
     counts, two days to a conversation, the branch sees it.
+  - *The client transition, start to finish* (`boardflow`, 3:48, `board-workflow.html` and `.mp4`), added 16 October 2026
+    for everyone ("where is the revised video to post that will guide all on the revised process, workflow etc so all
+    will understand and take the test"). It is the storyboard approved the day before, one client from the letter to the
+    TT$200: the letter, the answer or Client Support's call, the three rules, the household named, families the records
+    missed, what a naming does, the agent's call, the service record, Log call, the Salesforce task, the claim and the
+    10:00 list, what the branch sees, the seven outcomes (`workflow.html`'s O section, in its order), and the training
+    page. It sits first on `board-films.html` (`#start-to-finish`), at the top of `training.html` above the sign-in, under
+    the title of `workflow.html`, and in the board's Help ("The film: start to finish, for everyone"). It draws six
+    visuals of its own (`letter`, `family`, `record`, `claim`, `outcomes`, `test`), and a scene may carry `role` to show
+    another sign-in's board (its Client Support scene does). The test scene shows the question as grey bars, never a
+    question from the private sheet. If a rule in the workflow changes, re-voice the line that says it.
 
   Each is a page drawn by `tools/film/build-boardfilm.py <key>` from `<key>-lines.json` and `<key>-timing.json`
   (`orphan-transition/board-management.html`, `board-client-support.html`, `board-agents.html`), recorded and mixed

@@ -38,7 +38,11 @@ below, which the three share.
 
 Every name and every number on screen is made up. The MP4 sits at a public URL.
 
-  python3 build-boardfilm.py boardmgr|boardstaff|boardagent
+A fourth, boardflow (16 October 2026), is the workflow for everyone, start to finish: the letter, the call, the household
+named, families the records missed, the service record, the log and the Salesforce task, the TT$200, the outcomes and the
+test. Its scenes may show another sign-in's board (`role` on the scene).
+
+  python3 build-boardfilm.py boardmgr|boardstaff|boardagent|boardflow
 """
 import base64, html as H, json, pathlib, re, sys
 
@@ -46,8 +50,10 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
-PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html'}
-TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents'}
+PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
+         'boardflow': 'board-workflow.html'}
+TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
+          'boardflow': 'The client transition, start to finish'}
 OUT = ROOT / 'orphan-transition' / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
@@ -669,11 +675,132 @@ def s_clock(i, sc, D):
             f'<div class="clockrow">{ring}<div class="sts">{stats}</div></div>{track}'
             f'{at(tF, "at up aim", inner=ico("target", "ii") + " The aim: a conversation in the first two days, a meeting soon after.")}</div>')
 
+# ── the workflow film (16 October 2026): the letter, families the records missed, the service record, the claim, the outcomes, the test ──
+def win(main, url, title='Client transition board', extra='', cam=None):
+    """A browser window with the branch's band and a title of its own."""
+    camattr = f' data-cam="{esc([[int(t), s, k] for (t, s, k) in cam])}"' if cam else ''
+    return (f'<div class="scr at" style="--at:60ms"><div class="tbar"><span class="lights"><i></i><i></i><i></i></span>'
+            f'<div class="ubar">{ico("lock")}<span>{url}</span></div></div>'
+            f'<div class="vp"><div class="cam"{camattr}><div class="ab">{mark()}<div class="an"><b>Ricky Rampersad Branch</b><span>{title}</span></div></div>'
+            f'<div class="main wmain">{main}</div>{extra}</div></div></div>')
+
+def s_letter(i, sc, D):
+    """The letter as the client reads it: the notice, the facts off their record, the one-tap answers, from support@."""
+    tL, tN, tR, tT, tS = w(i, 'letter'), w(i, 'notice'), w(i, 'record'), w(i, 'tap'), w(i, 'support')
+    head = (f'<div class="lmh"><span class="lmf">{ico("mail", "ii")} <b>Ricky Rampersad Branch</b> &lt;<span class="lms" data-k="from">support@rickyrampersadbranch.com</span>&gt;</span>'
+            f'<span class="lmj">Important: your representative has resigned. Your policy has not changed.</span></div>')
+    hero = '<div class="lhero"><b>Your policy, looked after</b><span>A note from your branch team</span></div>'
+    note = at(tN - 200, 'at l lnot', extra=' data-k="not"', inner='<h5>Important notice</h5><span>Guardian Life of the Caribbean has accepted the resignation of your agent, '
+              'effective 21 September 2026. They are no longer authorised to conduct any business on behalf of Guardian Life.</span>')
+    facts = [('Paid to', '21 Sep 2026'), ('With us since', '2014'), ('Policies in force', '2'), ('Documents handled', '12')]
+    fs = '<div class="lfac" data-k="fac">' + ''.join(at(tR + k * 160, 'at pop lf', inner=f'<small>{a}</small><b>{b}</b>') for k, (a, b) in enumerate(facts)) + '</div>'
+    taps = [('Keep looking after my policy', 'key'), ('Call me', ''), ('I want an agent now', '')]
+    tp = '<div class="ltap" data-k="taps">' + ''.join(at(tT + k * 180, f'at up lt {c}', inner=x) for k, (x, c) in enumerate(taps)) + '</div>'
+    main = f'{head}<div class="lbody">{hero}<p class="ldear">Dear Keisha,</p>{note}{fs}{tp}</div>'
+    toast = f'<div class="toast at" style="--at:{ms(tT + 1500)}">{ico("check", "ii")} Answer recorded · the branch reads it</div>'
+    extra = (cursor([(tT - 200, 700, 430), (tT + 1050, '.lt.key')]) + click(tT + 1100, '.lt.key') + toast
+             + spot(tN, tR - 200, '[data-k=not]', 6) + glow(tS + 100, '[data-k=from]', 4))
+    cam = [(tN - 300, '[data-k=not]', 1.18), (tR - 200, '[data-k=fac]', 1.15), (tT - 100, '[data-k=taps]', 1.15), (tS - 300, '[data-k=from]', 1.3)]
+    cues = [(tN, 'Guardian Life&rsquo;s notice', False), (tR, 'The facts off their own record', False), (tT, 'Answers with one tap', False),
+            (tS, 'From the branch&rsquo;s support address', True)]
+    return stage(side(i, sc, cues), win(main, 'Inbox &rsaquo; Ricky Rampersad Branch', 'Your letter', extra=extra, cam=cam))
+
+def s_family(i, sc, D):
+    """Possible family on our books: the two side by side, the family's cover and its gaps, one press to link them. No money: staff see it too."""
+    tS, tH, tSd, tG, tP = w(i, 'surname'), w(i, 'house'), w(i, 'side'), w(i, 'gaps'), w(i, 'One', shift=250)
+    def per(t, name, about, addr, live, cover, c):
+        return at(t, 'at pop ffp', inner=f'<div class="ffn">{avatar(name, "sm")}<b>{name}</b></div><span class="ffa">{about}</span>'
+                  f'<span class="ffad hseg" style="--at:{ms(tH)}">{addr}</span><span>{live}</span><span class="lbl {c}">{cover}</span>')
+    p1 = per(tSd, 'Carla Joseph', '44 · woman · teacher', '12A Mango Road, Arima', 'In force: 2 policies', 'Life cover with us', 'grn')
+    p2 = per(tSd + 250, 'Peter Joseph', '46 · man · electrician', '12A Mangoe Road, Arima', 'In force: 1 policy', 'No life cover with us', 'red')
+    gaps = [('Peter, 46: no life cover with us', 'red'), ('Carla: life cover, and no critical illness cover', 'amb'), ('A premium due 47 days on one policy', 'amb')]
+    gp = ''.join(at(tG + k * 220, 'at l ffg', inner=f'<i class="ffd {c}"></i>{x}') for k, (x, c) in enumerate(gaps))
+    btn = (f'<div class="ffb"><span class="ab1 prs" style="--at:{ms(tP)}"><span class="sa until" style="--at:0ms;--to:{ms(tP + 120)}">One household</span>'
+           f'<span class="sb at" style="--at:{ms(tP + 120)}">{ico("check", "ii")} Joseph household</span></span><span class="sfbtn">Not family</span></div>')
+    box = (f'<div class="ffx" data-k="ffx"><div class="ffh">{at(tS - 300, "at l", tag="b", inner=ico("flag", "ii") + " Possible family on our books")}'
+           f'{at(tS, "at l", tag="span", inner="The same surname · the same house, spelt two ways")}</div>'
+           f'<div class="ffc">{p1}{p2}</div><div class="ffgs" data-k="gaps"><h5>The family&rsquo;s cover and its gaps</h5>{gp}</div>{btn}</div>')
+    main = f'<h3>Carla Joseph <small>Details</small></h3>{box}'
+    toast = f'<div class="toast at" style="--at:{ms(tP + 400)}">{ico("check", "ii")} Linked: one household · Joseph household</div>'
+    extra = cursor([(tG + 500, 620, 420), (tP - 30, '.ab1')]) + click(tP, '.ab1') + toast + spot(tG, tP - 600, '[data-k=gaps]', 6)
+    cam = [(tH - 200, '.ffc', 1.14), (tG - 200, '[data-k=gaps]', 1.2), (tP - 600, None, 1)]
+    cues = [(tS, 'The same surname, the same house', False), (tSd, 'The two side by side', False), (tG, 'The family&rsquo;s cover and its gaps', False),
+            (tP, 'One press: one household', True)]
+    return stage(side(i, sc, cues), app(i, main, on='hh', extra=extra, cam=cam))
+
+def s_record(i, sc, D):
+    """The service record on the card: every Salesforce task the branch handled for the client, how fast, what kind."""
+    tC, tH, tF, tK = w(i, 'card'), w(i, 'handled'), w(i, 'closed'), w(i, 'kind')
+    tiles = [(tH, '23', 'Requests handled', '', 'list', (23, '')), (tH + 250, 'since 2019', 'Our first for them', '', 'cal', None),
+             (tF, '1 day', 'Median to close', '', 'clock', (1, ' day')), (tF + 250, '87%', 'Closed by the due date', '', 'check', (87, '%'))]
+    tl = ''.join(tile(*x) for x in tiles)
+    kinds = [('Premiums and billing', 9), ('Servicing', 7), ('Claims and maturities', 4), ('Applications', 3)]
+    kb = ''.join(at(tK + k * 160, 'at l kbr', inner=f'<span>{x}</span><span class="kbb"><i class="gr" style="--at:{ms(tK + 150 + k * 160)};--w:{100 * n / 9:.0f}%"></i></span><b>{n}</b>')
+                 for k, (x, n) in enumerate(kinds))
+    tw = at(tC, 'at up', inner='<div class="tiles t4">' + tl + '</div>')
+    main = (f'<h3>Keisha Thomas <small>History · our service record</small></h3>{tw}'
+            f'<h4>By kind of work</h4><div class="kbs" data-k="kinds">{kb}</div>'
+            f'<p class="fnote at" style="--at:{ms(tK + 900)}">{ico("eye", "ii")} No money on it: Client Support see it too.</p>')
+    extra = spot(tH, tK - 250, '.tiles', 6) + spot(tK, D - 300, '[data-k=kinds]', 6)
+    cues = [(tH, 'Every request we handled', False), (tF, 'How fast we closed it', False), (tK, 'What kind of work it was', True)]
+    return stage(side(i, sc, cues), app(i, main, on='urgent', menu=False, extra=extra))
+
+def s_claim(i, sc, D):
+    """The TT$200 by itself: the questionnaire, the claim to Retention, the 10:00 list, paid and the agent told."""
+    tQ, tM, tR, tT, tD, tTo = w(i, 'questionnaire'), w(i, 'hundred'), w(i, 'Retention'), w(i, 'ten'), w(i, 'date'), w(i, 'told')
+    steps = [(tQ, 'file', 'Questionnaire in', 'after the naming', ''), (tR, 'mail', 'Claim to Retention', 'the manager and the agent copied', ''),
+             (tT, 'clock', '10:00, every working day', 'the unpaid claims go again', ''), (tTo, 'check', 'Paid', 'the agent is told', 'key')]
+    row = ''
+    for k, (t, ic, b, s, c) in enumerate(steps):
+        if k: row += f'<div class="arw" style="--at:{ms(t - 450)}"><i class="ln"></i><i class="pkt"></i><i class="pkt q2"></i></div>'
+        row += at(t, f'at pop cms {c}', inner=f'<span class="kic{" spin" if ic == "clock" else ""}">{ico(ic)}</span><b>{b}</b><small>{s}</small>')
+    fld = at(tD - 150, 'at up cmd', inner=f'<small>Date Comm Paid</small><span class="fld">{typed(tD, "4 Nov 2026", 70)}</span>')
+    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'{at(tM - 200, "at pop cma", inner=cnt(tM, 200, "", "TT$") + "<span>to the agent, for a review after the naming</span>")}'
+            f'<div class="cmr">{row}</div>{fld}</div>')
+
+def s_outcomes(i, sc, D):
+    """The seven outcomes, each landing on the word that names it."""
+    its = sc['items']; ts = [w(i, x['at']) for x in its]
+    cards = ''.join(at(t, 'at pop occ' + (' key' if k == len(its) - 1 else ''), inner=f'<span class="ocn">{k + 1}</span><div><b>{x["b"]}</b><small>{x["i"]}</small></div>')
+                    for k, (t, x) in enumerate(zip(ts, its)))
+    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="ocg">{cards}</div></div>')
+
+def s_test(i, sc, D):
+    """The training page: sign in, read and tick each section, take the test, the result to you and the branch manager."""
+    tTr, tSi, tRd, tTk, tTe, tRs = w(i, 'training'), w(i, 'Sign'), w(i, 'Read'), w(i, 'tick'), w(i, 'test'), w(i, 'result')
+    tGo, tPk = tSi + 1500, tTe + 450                 # the answer, the submit and the result land in the second after "test"
+    tSb = tPk + 700; tShow = tSb + 400
+    gate = (f'<div class="gate until" style="--at:0ms;--to:{ms(tRd - 150)}"><div class="gc"><div class="gch"><span class="gl">{ico("lock")}</span><b>Sign in to take the test</b></div>'
+            f'<label>Agent number or your name</label><div class="fld f1">{typed(tSi, "A10024", 90)}</div>'
+            f'<label>Password</label><div class="fld f2">{typed(tSi + 650, "••••••••", 60)}</div>'
+            f'<div class="bbtn prs gob" style="--at:{ms(tGo)}">Sign in {ico("arrow", "ii")}</div><p>The same number and password as the board.</p></div></div>')
+    tabs = lambda on: '<div class="ttbs">' + ''.join(f'<span class="ttb{" on" if k == on else ""}">{x}</span>' for k, x in enumerate(('1 · Your workflow', '2 · The test', 'My results'))) + '</div>'
+    secs = ['The flow, start to finish', 'The outcomes', 'Three rules on every call', 'The TT$200', 'Your day', 'On every client']
+    man = ''.join(at(tRd + k * 140, 'at l tsec', inner=f'<b>{x}</b><span class="tck"><i class="tbx" style="--at:{ms(tTk + k * 230)}">{ico("check")}</i>'
+                     f'I have read and understood this section</span>') for k, x in enumerate(secs))
+    manual = f'<div class="until" style="--at:{ms(tRd - 150)};--to:{ms(tTe)}">{tabs(0)}<div class="tsecs">{man}</div></div>'
+    opts = ''.join(f'<div class="topt{" pick" if k == 1 else ""}"{f" style=--at:{ms(tPk)}" if k == 1 else ""}><b>{x}</b><i class="skl" style="width:{wd}%"></i></div>'
+                   for k, (x, wd) in enumerate([('A', 62), ('B', 74), ('C', 55), ('D', 68)]))
+    qcard = (f'<div class="tq"><div class="tqh"><span class="qnn">1</span><span>4 marks</span><span class="lbl red">Critical: must be right to pass</span></div>'
+             f'<i class="skl" style="width:88%"></i><i class="skl" style="width:64%"></i>{opts}</div>')
+    test = f'<div class="until" style="--at:{ms(tTe)};--to:{ms(tShow)}">{tabs(1)}{qcard}<div class="bbtn prs tsub" style="--at:{ms(tSb)}">Submit</div></div>'
+    res = (f'<div class="after" style="--at:{ms(tShow)}">{tabs(2)}<div class="tres">{cnt(tShow + 150, 88, "%")}<div><span class="lbl grn">Pass</span>'
+           f'<span class="trs">Andrea Lewis · Agent · attempt 1</span><span class="trs">{ico("mail", "ii")} Sent to you, and to the branch manager</span></div></div></div>')
+    main = f'{gate}{manual}{test}{res}'
+    extra = (cursor([(tSi - 400, 560, 330), (tGo - 30, '.gob'), (tTk + 200, '.tbx'), (tPk - 30, '.topt.pick'), (tSb - 30, '.tsub')])
+             + click(tGo, '.gob') + click(tPk, '.topt.pick') + click(tSb, '.tsub'))
+    cam = [(tSi - 300, '.gc', 1.2), (tRd - 100, None, 1), (tShow + 200, '.tres', 1.15)]
+    cues = [(tTr, 'The training page', False), (tRd, 'Read the workflow for your role', False), (tTe, 'Then the test', False),
+            (tRs, 'Your result: to you and the branch manager', True)]
+    return stage(side(i, sc, cues), win(main, f'rickyrampersadbranch.com/orphan-transition/training', 'Your workflow, and the test', extra=extra, cam=cam))
+
 R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
      'yourwork': s_yourwork, 'clock': s_clock, 'title': s_title, 'flow': s_flow, 'signin': s_signin, 'urgent': s_urgent, 'agents': s_agents, 'table': s_table, 'batches': s_batches,
      'assign': s_assign, 'named': s_named, 'list': s_list, 'client': s_client, 'logcall': s_logcall, 'comment': s_comment, 'counts': s_counts,
-     'sees': s_sees, 'close': s_close}
-BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close'}
+     'sees': s_sees, 'close': s_close, 'letter': s_letter, 'family': s_family, 'record': s_record, 'claim': s_claim, 'outcomes': s_outcomes, 'test': s_test}
+BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close', 'claim', 'outcomes'}
 
 def bgfx(i, blue):
     if blue:
@@ -685,6 +812,7 @@ def bgfx(i, blue):
 html = []
 for i, sc in enumerate(LINES):
     v = sc['visual']; D = DUR[i]; blue = v in BLUE
+    ROLE = sc.get('role', SCRIPT['role'])            # a scene may show another sign-in's board (the workflow film shows Client Support's calls)
     body = R[v](i, sc, D)
     html.append(f'<!-- {i + 1} · {v} -->\n<section class="scene bf{" blue" if blue else ""}" data-d="{D}" style="--D:{D}ms">'
                 f'<div class="wv">{bgfx(i, blue)}<div class="inner">{body}</div></div><i class="wband"></i></section>')
@@ -1141,6 +1269,76 @@ body{background:var(--ground)}
 .bf .dnode.hit::before{display:none} .bf .dnode .ico{width:28px;height:28px;padding:6px;border-radius:50%;background:#fff;color:var(--blue);box-sizing:border-box}
 .bf .dnode span{font:600 12px var(--body);color:var(--lav)}
 .bf .aim{display:inline-flex;align-items:center;margin-top:20px;font:600 17px var(--head);color:var(--blue2);background:#fff;border-radius:12px;padding:11px 20px;box-shadow:0 14px 34px rgba(0,0,0,.25)}
+/* the workflow film (16 October 2026) */
+.bf .wmain{height:calc(100% - 46px);position:relative}
+.bf .wmain>.until{position:absolute;inset:14px 18px}
+.bf .lmh{padding:0 0 9px;border-bottom:1px solid #E1E7F0;display:grid;gap:3px}
+.bf .lmf{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--mute)} .bf .lmf b{color:var(--ink)}
+.bf .lms{border-radius:5px;padding:0 3px} .bf .lmj{font:600 13.5px/1.3 var(--head);color:var(--ink)}
+.bf .lbody{max-width:620px;margin:10px auto 0}
+.bf .lhero{background:linear-gradient(90deg,#0D2F6E,#13408F);border-radius:10px;padding:10px 16px}
+.bf .lhero b{display:block;color:#fff;font:700 17px var(--head)} .bf .lhero span{color:#BFD3F7;font-size:12px}
+.bf .ldear{margin:10px 0 6px;font-size:13.5px;color:var(--ink)}
+.bf .lnot{border-left:4px solid var(--cyan);background:#F0F7FF;border-radius:0 10px 10px 0;padding:8px 12px}
+.bf .lnot h5{margin:0 0 3px;font:700 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--blue2)}
+.bf .lnot span{font-size:12.5px;line-height:1.4;color:#24324A}
+.bf .lfac{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.bf .lf{background:#fff;border:1px solid #E1E7F0;border-radius:9px;padding:6px 10px}
+.bf .lf small{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)} .bf .lf b{font:700 14px var(--head);color:var(--ink)}
+.bf .ltap{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:8px}
+.bf .lt{border:1.5px solid #C9D8F3;background:#fff;border-radius:10px;padding:9px 10px;font:600 12.5px var(--head);color:var(--blue2);text-align:center}
+.bf .lt.key{background:#13408F;border-color:#13408F;color:#fff}
+.bf .ffx{background:#FFFBEB;border:1px solid #FDE7A9;border-radius:12px;padding:10px 14px}
+.bf .ffh b{display:flex;align-items:center;gap:5px;font:700 14px var(--head);color:var(--amb)} .bf .ffh span{display:block;font-size:12px;color:#7A5B12;margin-top:2px}
+.bf .ffc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.bf .ffp{display:grid;gap:3px;justify-items:start;background:#fff;border:1px solid #E1E7F0;border-radius:10px;padding:8px 11px;font-size:12.5px;color:#334155}
+.bf .ffn{display:flex;align-items:center} .bf .ffn b{font:700 14px var(--head);color:var(--ink)} .bf .ffa{color:var(--mute)}
+.bf .ffad{font-weight:600;color:var(--ink);padding:0 3px;margin-left:-3px}
+.bf .ffgs{background:#fff;border:1px solid #E1E7F0;border-radius:10px;padding:8px 11px}
+.bf .ffgs h5{margin:0 0 4px;font:600 10px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.bf .ffg{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:13px;color:var(--ink)}
+.bf .ffd{flex:none;width:9px;height:9px;border-radius:50%} .bf .ffd.red{background:var(--red)} .bf .ffd.amb{background:var(--amb)}
+.bf .ffb{display:flex;align-items:center;gap:8px;margin-top:10px} .bf .ffb .ab1{margin-left:0}
+.bf .tiles.t4{grid-template-columns:repeat(4,1fr)}
+.bf .kbs{display:grid;gap:8px;background:#fff;border:1px solid #E1E7F0;border-radius:10px;padding:10px 12px}
+.bf .kbr{display:grid;grid-template-columns:180px 1fr 30px;gap:10px;align-items:center;font-size:13px;color:#334155}
+.bf .kbr b{font:700 14px var(--head);color:var(--ink);text-align:right}
+.bf .kbb{display:block;height:12px;background:#E3EAEF;border-radius:6px;overflow:hidden} .bf .kbb .gr{background:var(--blue)}
+.bf .cma{display:flex;flex-direction:column;align-items:center;margin-top:16px}
+.bf .cma .cnt{font:700 66px/1 var(--head);color:#fff;text-shadow:0 0 30px rgba(0,229,255,.7)} .bf .cma span{font:500 14px var(--body);color:var(--lav);margin-top:4px}
+.bf .cmr{display:grid;grid-template-columns:230px 56px 230px 56px 230px 56px 230px;align-items:center;margin-top:20px}
+.bf .cms{display:grid;justify-items:center;gap:6px;text-align:center;background:#fff;border-radius:14px;padding:14px;box-shadow:0 14px 34px rgba(0,0,0,.25)}
+.bf .cms b{font:700 16px/1.2 var(--head);color:var(--ink)} .bf .cms small{font-size:13px;color:var(--mute)}
+.bf .cms.key{background:linear-gradient(135deg,#1D5BC4,#13408F);box-shadow:0 14px 34px rgba(0,0,0,.3),0 0 0 1px rgba(0,229,255,.55)}
+.bf .cms.key b{color:#fff} .bf .cms.key small{color:#BFD3F7} .bf .cms.key .kic{background:#fff;color:var(--blue)}
+.bf .cmd{display:flex;align-items:center;gap:10px;margin-top:16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:8px 14px}
+.bf .cmd small{font:600 12px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--lav)} .bf .cmd .fld{min-width:150px}
+.bf .ocg{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;width:1120px;margin-top:24px}
+.bf .occ{width:262px;display:flex;gap:12px;align-items:center;background:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 14px 34px rgba(0,0,0,.25)}
+.bf .ocn{flex:none;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#00E5FF,#13408F);color:#fff;display:grid;place-items:center;font:700 15px var(--head)}
+.bf .occ b{display:block;font:700 15.5px/1.2 var(--head);color:var(--ink)} .bf .occ small{display:block;font-size:12.5px;color:var(--mute);margin-top:2px}
+.bf .occ.key{background:linear-gradient(135deg,#1D5BC4,#13408F);box-shadow:0 14px 34px rgba(0,0,0,.3),0 0 0 1px rgba(0,229,255,.55)}
+.bf .occ.key b{color:#fff} .bf .occ.key small{color:#BFD3F7} .bf .occ.key .ocn{background:#fff;color:var(--blue)}
+.bf .ttbs{display:flex;gap:6px;margin-bottom:12px}
+.bf .ttb{border:1px solid #E1E7F0;background:#fff;border-radius:999px;padding:5px 12px;font:600 12px var(--body);color:#334155}
+.bf .ttb.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.bf .tsecs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bf .tsec{display:grid;gap:6px;background:#fff;border:1px solid #E1E7F0;border-radius:10px;padding:9px 12px} .bf .tsec b{font:700 13.5px var(--head);color:var(--ink)}
+.bf .tck{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#334155}
+.bf .tbx{flex:none;width:18px;height:18px;border:1.5px solid #CBD5E1;border-radius:5px;display:grid;place-items:center;color:transparent;background:#fff}
+.bf .tbx .ico{width:12px;height:12px}
+.scene.act .tbx{animation:bfTbx .3s var(--at) forwards} @keyframes bfTbx{to{background:#1D5BC4;border-color:#1D5BC4;color:#fff}}
+.bf .tq{display:grid;gap:8px;background:#fff;border:1px solid #E1E7F0;border-radius:12px;padding:12px 14px}
+.bf .tqh{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mute)}
+.bf .qnn{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font:700 12px var(--head)}
+.bf .skl{display:block;height:10px;border-radius:5px;background:#E3EAEF}
+.bf .topt{display:flex;align-items:center;gap:10px;border:1.5px solid #CBD5E1;border-radius:9px;padding:8px 11px;background:#fff}
+.bf .topt b{width:16px;font:700 13px var(--head);color:var(--blue2)} .bf .topt .skl{flex:none}
+.scene.act .topt.pick{animation:bfLit .2s var(--at) forwards} .scene.act .topt.pick b{animation:bfWhite .2s var(--at) forwards}
+@keyframes bfWhite{to{color:#fff}}
+.bf .tres{display:inline-flex;align-items:center;gap:22px;background:#fff;border:1px solid #E1E7F0;border-left:4px solid var(--grn);border-radius:12px;padding:18px 22px;margin-top:6px}
+.bf .tres .cnt{font:700 54px/1 var(--head);color:var(--ink)} .bf .tres .lbl{font-size:13px;padding:3px 12px}
+.bf .trs{display:flex;align-items:center;gap:5px;font-size:13px;color:#334155;margin-top:6px}
 @media (prefers-reduced-motion:reduce){.scene.act *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 """
 
@@ -1241,8 +1439,8 @@ out = re.sub(r'(<link rel="icon" href=")[^"]*(")', lambda m: m.group(1) + FAVICO
 out = re.sub(r'const cols = \[[^\]]*\]', 'const cols = ["#ffffff", "#00E5FF", "#1D5BC4", "#BFD3F7", "#7FA6EE"]', out, count=1)
 out = re.sub(r'<h1>The launch of<br>donthaveanagent<em>\.com</em></h1>', '<h1>' + TITLES[KEY].replace(', ', ',<br><em>') + '</em></h1>', out, count=1)
 out = re.sub(r'<div class="eyebrow" style="margin-top:16px">[^<]*</div>', '<div class="eyebrow" style="margin-top:16px">A Ricky Rampersad Branch film</div>', out, count=1)
-out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 120000 else 'two and a half minutes') + '</button>', out, count=1)
-out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', 'How the branch names agents, and how agents report back.', out, count=1)
+out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 120000 else 'two and a half minutes' if sum(DUR) < 160000 else f'{round(sum(DUR) / 60000)} minutes') + '</button>', out, count=1)
+out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
 MSG = ('const MSG = "' + TITLES[KEY] + ': a short film on the client transition board.\\n\\n" +\n'
        '  "▶ https://rickyrampersadbranch.com/orphan-transition/board-films.html";')
 out = re.sub(r'const MSG = ".*?";', lambda m: MSG, out, count=1, flags=re.S)

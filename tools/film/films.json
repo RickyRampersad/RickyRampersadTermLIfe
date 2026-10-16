@@ -443,5 +443,50 @@
   "sfx": "sfx-mtg.wav",
   "start": 18,
   "capmode": "strip"
+ },
+ "boardflow": {
+  "cap": "cap-boardflow",
+  "vox": "voboardflow",
+  "music": "bed-boardflow.wav",
+  "mix": "boardflow-mix.wav",
+  "ass": "captions-boardflow.ass",
+  "dur": 228.4,
+  "durs": [
+   10.8,
+   11.7,
+   12.3,
+   15.8,
+   13.8,
+   15.6,
+   12.7,
+   11.9,
+   10.2,
+   15.0,
+   24.6,
+   20.4,
+   13.1,
+   16.8,
+   16.4,
+   7.3
+  ],
+  "out": "board-workflow.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "dark": [
+   3,
+   6,
+   11,
+   13,
+   15
+  ],
+  "sfx": "sfx-boardflow.wav",
+  "start": 0,
+  "ticks": [],
+  "hits": [
+   109.87,
+   111.52,
+   159.59,
+   217.78
+  ]
  }
 }
