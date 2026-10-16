@@ -9,7 +9,7 @@
  * so signing in on the launcher signs you in to every app.
  */
 window.RR_OPS = {
-  API_URL: 'https://script.google.com/macros/s/RR_OPERATIONS_DEPLOYMENT_ID/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbyRPFW_RdQItCeSMHvP2HYEN69Zv2HQMrLxw9IUWUlnUlkzjqaVFPdvjFcg_-b-zX78/exec',
   SESSION_KEY: 'rrb-ops-session',
 };
 (function () {
