@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16a';
+var SCRIPT_VERSION = '2026-10-16b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3546,6 +3546,32 @@ function endFor_(staffId) {
  *  Anybody marked absent is skipped. A person who has not signed in still
  *  gets the progress check and before-you-leave once their morning e-mail
  *  has gone, because signing in now happens from the e-mail itself. */
+
+/** A timed send that may fail: mark it done only when it went. A failure is
+ *  logged under Script Property FAIL_<key> and retried on later runs, up to
+ *  three times, so a cold start or a slow Salesforce answer does not cost the
+ *  day's e-mail. runlog_ keeps the last 40 outcomes under RUNLOG for showRunLog. */
+function timedSend_(props, key, now, fn) {
+  var fk = 'FAIL_' + key, tries = Number(props.getProperty(fk) || 0);
+  if (tries >= 3) return false;
+  try {
+    var ok = fn();
+    props.setProperty(key, hhmm_(now));
+    if (tries) props.deleteProperty(fk);
+    runlog_(key + ' sent ' + hhmm_(now) + (ok === false ? ' (nothing to send)' : ''));
+    return true;
+  } catch (e) {
+    props.setProperty(fk, String(tries + 1));
+    runlog_(key + ' FAILED ' + hhmm_(now) + ' try ' + (tries + 1) + ': ' + (e && e.message));
+    return false;
+  }
+}
+function runlog_(line) {
+  try { var props = PropertiesService.getScriptProperties(), cur = String(props.getProperty('RUNLOG') || '').split('\n').filter(String); cur.push(todayISO_() + ' ' + line); props.setProperty('RUNLOG', cur.slice(-40).join('\n')); } catch (e) {}
+}
+/** Run from the editor: the last 40 timed sends and failures, with reasons. */
+function showRunLog() { Logger.log(PropertiesService.getScriptProperties().getProperty('RUNLOG') || 'No timed sends recorded yet.'); }
+
 function housekeepingTick_() {
   var now = new Date();
   var dow = Number(Utilities.formatDate(now, CONFIG.TZ, 'u'));   // 1 Mon .. 7 Sun
@@ -3582,14 +3608,12 @@ function housekeepingTick_() {
 
   // 5:00, the Branch Manager's own day; 12:00 and 18:00, his progress.
   if (mins >= BM_MAIL_AT && mins <= 11 * 60 && !morningSent && !props.getProperty('bmday_' + day)) {
-    props.setProperty('bmday_' + day, hhmm_(now));
-    try { if (sendBranchManagerDay_(day)) sent.push('Branch Manager'); } catch (e) {}
+    if (timedSend_(props, 'bmday_' + day, now, function () { return sendBranchManagerDay_(day); })) sent.push('Branch Manager');
   }
   BM_PROGRESS_AT.forEach(function (at) {
     var key = 'bmprog_' + at + '_' + day;
     if (mins < at || mins > at + HK_WINDOW_MIN || props.getProperty(key)) return;
-    props.setProperty(key, hhmm_(now));
-    try { if (sendBranchManagerProgress_(day, at >= 15 * 60 ? 'eve' : 'mid')) sent.push('Branch Manager progress'); } catch (e) {}
+    if (timedSend_(props, key, now, function () { return sendBranchManagerProgress_(day, at >= 15 * 60 ? 'eve' : 'mid'); })) sent.push('Branch Manager progress');
   });
 
   // The Unit Managers: 6:00 their unit, 17:00 the account of their day.
@@ -3645,11 +3669,7 @@ function housekeepingTick_() {
     if (mins < at || mins > at + HK_WINDOW_MIN) return;
     var key = 'md_' + sid + '_' + day;
     if (props.getProperty(key)) return;
-    props.setProperty(key, hhmm_(now));
-    try {
-      if (sid === 'pawan') sendPawanDay_(day, 'midday'); else sendMidday_(p, day, present[sid] || '');
-      sent.push(p.name + ' (progress)');
-    } catch (e) {}
+    if (timedSend_(props, key, now, function () { if (sid === 'pawan') sendPawanDay_(day, 'midday'); else sendMidday_(p, day, present[sid] || ''); })) sent.push(p.name + ' (progress)');
   });
 
   // Before you leave, half an hour before each person's finish.
@@ -3660,11 +3680,7 @@ function housekeepingTick_() {
     if (mins < at || mins > at + HK_WINDOW_MIN) return;
     var key = 'hk_' + sid + '_' + day;
     if (props.getProperty(key)) return;
-    props.setProperty(key, hhmm_(now));
-    try {
-      if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid] || '');
-      sent.push(p.name);
-    } catch (e) {}
+    if (timedSend_(props, key, now, function () { if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid] || ''); })) sent.push(p.name);
   });
   return sent.length ? 'Day mail sent: ' + sent.join(', ') : '';
 }
