@@ -1,4 +1,11 @@
-/* SEA & CSEC Study Hub — curriculum registry
+/* What this hub is for. 'sea' cuts everything secondary out of the data below
+ * before any page reads it, so the whole product is for the Secondary Entrance
+ * Assessment and nothing else: Standard 1 to Standard 5, one examination. The
+ * CSEC data stays in these files, unreachable; 'all' would bring the ladder back.
+ * Decided 16 October 2026: "ok want sea only". */
+window.CSEC_SCOPE = 'sea';
+
+/* SEA Study Hub — curriculum registry
  * Subjects, syllabus strands and the Form 1-5 progression.
  *
  * Strands follow the CSEC syllabus section structure so that practice,
@@ -754,3 +761,20 @@ window.CSEC_CURRICULUM = {
     ]
   }
 };
+
+/* ---- Scope -------------------------------------------------------------------
+ * Applied here, at the source, so every page that reads the curriculum is an SEA
+ * product by itself, including the two marketing pages that never load the
+ * engine. Dropped resource groups become empty lists, never missing keys, so a
+ * page that maps over one does not throw. */
+(function (C) {
+  if (window.CSEC_SCOPE !== 'sea' || !C) return;
+  Object.keys(C.subjects || {}).forEach(function (k) { if (!/^p-/.test(k)) delete C.subjects[k]; });
+  C.levels = (C.levels || []).filter(function (l) { return l.n <= 5; });
+  C.stages = (C.stages || []).filter(function (st) { return st.key === 'primary'; });
+  C.roadmap = (C.roadmap || []).filter(function (r) { return r.level <= 5; });
+  C.defaultSelection = (C.defaultPrimary || []).slice();
+  if (C.resources) {
+    ['official', 'school', 'international'].forEach(function (k) { if (C.resources[k]) C.resources[k] = []; });
+  }
+})(window.CSEC_CURRICULUM);
