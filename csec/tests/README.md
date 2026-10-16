@@ -1,6 +1,6 @@
 # Running these
 
-Four Playwright suites, 41 checks. They have lived in a session scratchpad
+Four Playwright suites, 45 checks. They have lived in a session scratchpad
 twice and been lost both times, which is why they are in the repository now.
 
 ```bash

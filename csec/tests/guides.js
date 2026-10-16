@@ -82,6 +82,111 @@ const signIn=async(pg,tab,lvl)=>{
 
   /* ---------- the SEA writing module ---------- */
 
+  await step('the SEA writing module covers the paper as it is actually set',async()=>{
+    const w=await pg.evaluate(()=>(window.CSEC_GUIDES||[])
+      .filter(g=>g.subj==='p-ela-writing')
+      .map(g=>({id:g.id,level:g.level,strand:g.strand})));
+    if(w.length<10) throw new Error('only '+w.length+' writing guides');
+    const ids=w.map(g=>g.id);
+    /* Six of the fifteen real topics were letters and three were reports, so a module
+       that only teaches free story writing meets most of the paper for the first time
+       in the hall. These are the pieces that have to be there. */
+    [['g-pw-topic','reading the topic before writing — the Content mark'],
+     ['g-pw-letter','the letter form'],
+     ['g-pw-report','the report form'],
+     ['g-pw-given','sentences that must be used word for word'],
+     ['g-pw-opening','opening without the memorised template'],
+     ['g-pw-middle','building the middle'],
+     ['g-pw-ending','an ending that lands'],
+     ['g-pw-shape','how long it should be and how to spend the fifty minutes']
+    ].forEach(([id,what])=>{ if(ids.indexOf(id)===-1) throw new Error('nothing teaches '+what+' ('+id+' missing)'); });
+    console.log('   '+w.length+' writing guides: '+ids.map(i=>i.replace('g-pw-','')).join(', '));
+  });
+
+  /* Four rounds of drafting broke these, so they are nailed down here. Each one is a
+     decision about the set, not a matter of taste: a child copies the worked examples
+     letter for letter, and two guides disagreeing about how long to plan for is worse
+     than either answer on its own. */
+  await step('the writing guides hold to one house style',async()=>{
+    const bad=await pg.evaluate(()=>{
+      const out=[];
+      const W=(window.CSEC_GUIDES||[]).filter(g=>g.subj==='p-ela-writing');
+      const text=g=>JSON.stringify(g);
+
+      /* one name for one thing */
+      [[/speech marks/i,'"speech marks" — the set says quotation marks'],
+       [/rough page|jotting page|working page/i,'a second name for the plan page'],
+       [/Yours respectfully/i,'"Yours respectfully" — not used in this set'],
+       [/rubbish bin/i,'"rubbish bin" — a Trinidadian child writes garbage bin'],
+       [/\bthe marker\b|person who marks/i,'a second name for the examiner'],
+       [/\bcriterion\b|\bexemplar\b|\bpreamble\b/i,'examiner jargon']
+      ].forEach(([re,why])=>{ W.forEach(g=>{ if(re.test(text(g))) out.push(g.id+': '+why); }); });
+
+      /* no invented mark arithmetic */
+      [/half the Content mark/i, /costs? you a mark/i, /lose a mark/i,
+       /does not earn you anything/i, /\bzero for (Content|Organisation)\b/i
+      ].forEach(re=>{ W.forEach(g=>{ if(re.test(text(g))) out.push(g.id+': prices a mark consequence — '+re); }); });
+
+      /* One guide owns the clock. Three phrases are allowed anywhere, because they
+         name the check and the topic pass rather than budget them: strip every one
+         of those, and whatever numbered minutes remain are a second budget. */
+      const ALLOWED=/two-minute check|last two minutes|plan-page minute/ig;
+      const NUMBERED=/\b(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*(planning |quiet |whole )?minutes?\b/i;
+      const owners=W.filter(g=>NUMBERED.test(text(g).replace(ALLOWED,'')))
+                    .map(g=>g.id).filter(id=>id!=='g-pw-shape');
+      if(owners.length) out.push('states its own minutes budget instead of deferring to g-pw-shape: '+owners.join(', '));
+
+      /* no line count invented for a booklet nobody has measured */
+      W.forEach(g=>{ if(/\b\d+\s*(lines|words)\b/i.test(text(g))) out.push(g.id+': states a line or word count'); });
+
+      /* the renderer wraps, but a 600-character worked line is still unreadable */
+      W.forEach(g=>g.worked.lines.forEach((l,i)=>{
+        if(l.work.length>420) out.push(g.id+' worked line '+(i+1)+' is '+l.work.length+' characters');
+      }));
+
+      /* a pitfall that is a step turned negative is wasted space */
+      W.forEach(g=>{
+        const seen={};
+        g.pitfalls.forEach(p=>{
+          const k=p.toLowerCase().replace(/[^a-z ]/g,'').split(' ').filter(x=>x.length>4).slice(0,4).join(' ');
+          if(k&&seen[k]) out.push(g.id+': two pitfalls make the same point');
+          seen[k]=1;
+        });
+      });
+      return out;
+    });
+    if(bad.length) throw new Error(bad.length+' breaches: '+bad.slice(0,5).join(' | '));
+    console.log('   one name per thing, no priced marks, one clock, no invented counts');
+  });
+
+  await step('the letter heading and sign-off are identical wherever they appear',async()=>{
+    const r=await pg.evaluate(()=>{
+      const W=(window.CSEC_GUIDES||[]).filter(g=>g.subj==='p-ela-writing');
+      const heads=[], signs=[];
+      W.forEach(g=>g.worked.lines.forEach(l=>{
+        /* an address block: two or more lines before a date */
+        const m=l.work.match(/^([^\n]+,)\n([^\n]+\.)\n(\d{1,2}(st|nd|rd|th) [A-Z][a-z]+, \d{4}\.)/);
+        if(m) heads.push({id:g.id, head:m[0]});
+        const s=l.work.match(/Yours (sincerely|faithfully|respectfully),|Your friend,|Love,/g);
+        if(s) s.forEach(x=>signs.push({id:g.id, sign:x}));
+      }));
+      return {heads:heads, signs:signs};
+    });
+    /* The module teaches the letter, so a letter heading must be here to check. Zero
+       means the line breaks were lost between the data and the page — which is what
+       happened the first time, when the emitter turned every newline into a space. */
+    if(!r.heads.length) throw new Error('no address block found in any writing guide — were the newlines flattened?');
+    /* every address block must use the same punctuation pattern: commas, then a full
+       stop on the last line of the address, then the date with a full stop */
+    r.heads.forEach(h=>{
+      if(!/,\n.+\.\n\d{1,2}(st|nd|rd|th) [A-Z][a-z]+, \d{4}\.$/.test(h.head))
+        throw new Error(h.id+' heading punctuation differs: '+JSON.stringify(h.head));
+    });
+    const resp=r.signs.filter(s=>/respectfully/.test(s.sign));
+    if(resp.length) throw new Error(resp[0].id+' closes "Yours respectfully"');
+    console.log('   '+r.heads.length+' address block(s), '+r.signs.length+' sign-off(s), all to one pattern');
+  });
+
   await step('no SEA guide is written above Standard 5',async()=>{
     const over=await pg.evaluate(()=>(window.CSEC_GUIDES||[])
       .filter(g=>/^p-/.test(g.subj)&&g.level>5).map(g=>g.id+'@L'+g.level));
