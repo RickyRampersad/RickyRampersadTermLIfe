@@ -1111,6 +1111,7 @@ function transitionReceipts() {
     try { tFilePhoneEmails_(); } catch (e) { log_('transition', 'phone-emails-failed', String(e && e.message ? e.message : e)); }
     try { tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
     var out = tReceipts_();
+    try { tIntroPicks_(); } catch (e) { log_('transition', 'intro-picks-failed', String(e && e.message ? e.message : e)); }   // a client's time for the agent's call
     tClaimsRun_(false);   // the TT$200 retention claims, after the receipts; never throws
   } finally { lock.releaseLock(); }
   /* the Client Profile, when the morning build left it due: after the lock, so a save on the board never waits on it */
@@ -1390,6 +1391,11 @@ function tCallRow_(page) { return String(page || '').indexOf('/call') === 0; }
 function tOursRow_(page) { return tContactRow_(page) || tAssignRow_(page) || tCallRow_(page); }
 /** A call row whose outcome was a conversation. */
 function tSpokeCall_(page, status) { return tCallRow_(page) && /^(called|met)$/i.test(String(status || '').trim()); }
+/* A client's choice of when and how their agent should call, made from the introduction (/your-policy/agent, 16 October
+   2026): Page "/your-policy/agent?q=when_afternoon&h=whatsapp", Referrer "intro <agent key>: <the day and time, in
+   words>". It is the client's own answer, so it counts as one wherever answers are counted; it is the agent's to
+   confirm, so no receipt goes for it, and tIntroPicks_ sends it to the agent with the branch copied. */
+function tPickRow_(page) { return String(page || '').indexOf('/your-policy/agent') === 0; }
 
 /** One receipt per client per sitting: every unreceipted tap of a token this
  *  campaign recognises, once the newest is RECEIPT_WAIT_MIN old (a client
@@ -1413,6 +1419,7 @@ function tReceipts_() {
     if (!tokens[token]) continue;                                    // not this campaign's token: never touched
     (every[token] || (every[token] = [])).push(v);                   // every row the client has, marked or not: the trail
     if (tAssignRow_(v[5]) || tCallRow_(v[5])) continue;              // an agent named, or a call logged, from the board: nothing the client said
+    if (tPickRow_(v[5])) continue;                                   // a time chosen for the agent's call: the agent confirms it (tIntroPicks_)
     var note = String(v[10] || '');
     if (note.indexOf('[receipt]') >= 0) {                            // seen by a run already: what it answered, and whether a receipt thanked it
       var p = prior[token] || (prior[token] = { thanked: {}, answered: {} }), pq = tQOf_(v[5]);
@@ -4664,6 +4671,11 @@ function transitionBoard_(p) {
     if (/^(1|yes|true)$/i.test(String(p.sfwork || ''))) {
       return { ok: true, sfwork: w.role === 'branch' ? tSfWork_() : { on: false, why: 'The Salesforce figures are for the branch.' } };
     }
+    /* profiles (tProfileApi_, 16 October 2026): each person their own, the branch manager everyone's */
+    if (p.profile) {
+      try { return tProfileApi_(p, w); }
+      catch (err) { return { ok: false, error: 'The profiles could not be read: ' + String(err && err.message ? err.message : err) }; }
+    }
     /* the Agents view (tAgentsView_, 14 October 2026): the branch, and a unit manager over his team */
     if (/^(1|yes|true)$/i.test(String(p.agents || ''))) {
       try { return { ok: true, agentsView: tAgentsView_(w) }; }
@@ -4754,6 +4766,22 @@ function tBoard_(w, all, lite) {
       /* an agent named on the client after the call writes onto this row, the only one there is: read the name here too, or
          the agent's list misses the client until the assignment sync catches up (8 October 2026) */
       if (assigned && (!c.assignedAt || (on && on > c.assignedAt))) { c.assigned = assigned; c.assignedAt = on || c.assignedAt || rec; c.assignedOn = fmt(on, 'd MMM'); }
+      return;
+    }
+    if (tPickRow_(v[5])) {
+      /* when and how the client wants their agent to call, chosen from the introduction (16 October 2026): their own
+         answer, shown on the card as "Asked for a call" and sent to the agent by tIntroPicks_ */
+      var pk = tPickWords_(v[5], v[6]);
+      c.own++;
+      if (rec && (!c.firstAt || rec < c.firstAt)) c.firstAt = rec;
+      if (rec && (!c.lastAt || rec > c.lastAt)) c.lastAt = rec;
+      c.pick = c.pick || {};
+      ['when', 'how', 'at'].forEach(function (k) { if (pk[k]) c.pick[k] = pk[k]; });
+      c.pick.on = at;
+      if (pk.when) c.when = pk.when.replace(/\s*\(.*$/, '');
+      if (pk.how) c.reach = pk.how;
+      tSeq_(c, note);
+      (note.match(/\[[^\]]*\]/g) || []).forEach(function (mk) { if (c.markers.indexOf(mk) < 0) c.markers.push(mk); });
       return;
     }
     if (tContactRow_(v[5])) c.contactRows++;                          // details taken on a call
@@ -6425,32 +6453,568 @@ function tPl_(n, one) { return n + ' ' + one + (n === 1 ? '' : 's'); }
  *  From support@ through clientMail_ (Service.gs) with the branch copied;
  *  once per client per agent, marked on the client's first row. Returns
  *  true when it went. */
+/** The introduction to a client who answered: their agent's profile (when the agent and the branch have both approved
+ *  it), the facts from the agent's Salesforce record, the branch team behind them, and one tap for when and how the agent
+ *  should call (16 October 2026, see the agent profiles below). Sent once per client per agent through clientMail_, which
+ *  goes from support@ and adds the confidentiality footer; marked [intro Name] on the client's first row. */
 function tIntroMail_(sh, c, agent, stamp) {
   var to = String(c.email || '').trim();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return false;
   var mark = '[intro ' + agent.name + ']';
   if ((c.markers || []).some(function (m) { return m.indexOf('[intro') === 0 && m.indexOf(agent.name) > 0; })) return false;
   if (typeof clientMail_ !== 'function') throw new Error('clientMail_ is not in this project');
-  var rc = tReceipt_(), care = tCare_(rc), esc = tEsc_;
-  var first = c.firstName || 'there', aFirst = agent.name.split(/\s+/)[0];
-  var call = c.open ? '<p style="margin:0 0 12px">' + esc(aFirst) + ' will call you ' + (c.when ? 'in the ' + esc(c.when.toLowerCase()) : 'in the next few days') +
-    (c.reach && /whatsapp/i.test(c.reach) ? ', and can reach you on WhatsApp as you asked' : '') + '.</p>' : '';
-  var direct = [];
-  if (agent.phone) direct.push(esc(agent.phone));
-  if (agent.email) direct.push('<a href="mailto:' + esc(agent.email) + '" style="color:#07606f">' + esc(agent.email) + '</a>');
-  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
-    '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + esc(first) + ',</p>' +
-    '<p style="margin:0 0 12px">Thank you for answering our letter. A person has read what you told us, and <b>' + esc(agent.name) + '</b> of our branch team ' +
-    'now looks after your policy.</p>' + call +
-    '<p style="margin:0 0 12px">You can reach ' + esc(aFirst) + ' directly' + (direct.length ? ': ' + direct.join(' · ') : ' by replying to this e-mail') +
-    '. Nothing about your policy changes: it stays with Guardian Life, and the same branch team keeps your file.</p>' +
-    '<p style="margin:16px 0 0"><b style="display:block">' + esc(care.care_name) + '</b>' + esc(care.care_line) + '</p></div></div>';
-  clientMail_({ to: to, subject: 'Meet your agent: ' + agent.name, htmlBody: html, cc: TRANSITION.CC || [] });
+  var m = tIntroBuild_(c, agent, false);
+  clientMail_({ to: to, subject: m.subject, htmlBody: m.html, cc: TRANSITION.CC || [] });
   try {
     var rn = c.rows && c.rows.length ? c.rows[0].n : 0;
     if (rn) { var cell = sh.getRange(rn, 11), note = String(cell.getValue() || ''); cell.setValue((note ? note + ' ' : '') + mark + ' ' + stamp); }
   } catch (e) {}
   return true;
+}
+
+/* ── who a client is introduced to: the agent's profile, and the branch behind them ─────────────────────────────────
+   16 October 2026: "the letter that goes out to the client introducing the agent … their qualification … their
+   capabilities, how long they were the branch, what did they do before, and write a very nice bio on each of the agents.
+   So different ones would template differently to show the caliber of the agents … the agents does have the backing of
+   the entire branch … our support services, our online query services … the branch manager, direct number … the client
+   checks when can the agent call and the preferred method in the morning, afternoon, and set a time … it directly goes to
+   the agent and copy the branch manager and the sales support team, as well as the agent's manager", then "don't depend
+   on the agent skill bank because I've not updated that. Depend on pulling social media, LinkedIn, Facebook, anything at
+   all to build a profile, and let's help the agent build their profiles."
+   The Agent Profiles tab holds one row a person: every agent, the branch manager, and the team behind them. The first
+   drafts were written in the session scratchpad from Guardian's own agent records, the Central Bank's register of sales
+   representatives, the national advisers' association's awards and each person's own public pages, every fact with its
+   source (Found online) and what the person must confirm (To confirm), and imported once. The tab is private and this
+   repository is public, so no draft and no source about anyone is ever in it.
+   Each person edits their own on the board ("Your profile") and presses "This is me"; the branch manager reads it and
+   presses "Approve for clients". A client sees a profile only when it carries both. An edit by one side takes the other's
+   approval away, so nothing reaches a client that its person has not read in its last words and the branch not passed.
+   The dates are never typed: with Guardian since (Date Hired), licensed in life insurance since and the general licence
+   (License Date Life and General; a date before 1950 is a placeholder and is never shown) come from the person's agent
+   record in Salesforce, and so do the number and e-mail when the profile gives none. The years with Guardian choose the
+   template (T_PROF_TIER). */
+var T_PROF = { SHEET: 'Agent Profiles', BIO: 700, LINE: 200, FACTS_KEY: 'sf-agent-facts-v1', FACTS_TTL: 21600 };
+var T_PROF_HEAD = ['Name', 'Kind', 'Shown as', 'Title', 'Since', 'Headline', 'Bio', 'Ask me about', 'Before Guardian', 'Designations',
+  'Awards', 'Education', 'Phone', 'E-mail', 'Photo', 'Found online', 'To confirm', 'Agent approved', 'Branch approved', 'Updated', 'Updated by'];
+/* what the board may change, by the page's key; the branch also sets Kind and Photo */
+var T_PROF_EDIT = { shown: 'Shown as', title: 'Title', since: 'Since', headline: 'Headline', bio: 'Bio', ask: 'Ask me about',
+  before: 'Before Guardian', desig: 'Designations', awards: 'Awards', edu: 'Education', phone: 'Phone', email: 'E-mail' };
+var T_PROF_KINDS = { agent: 'Agent', manager: 'Branch manager', lead: 'Leads the support team', support: 'Sales support' };
+/* the template a client gets, by the years with Guardian Life: the most seasoned lead with their years, a newer agent with
+   the branch behind them */
+var T_PROF_TIER = [
+  { k: 'veteran', min: 20, tag: 'Two decades and more with Guardian Life' },
+  { k: 'seasoned', min: 10, tag: 'A decade and more with Guardian Life' },
+  { k: 'established', min: 3, tag: 'Licensed and experienced' },
+  { k: 'new', min: 0, tag: 'New to Guardian Life, backed by the whole branch' }];
+var T_INTRO = {
+  PICK: 'https://rickyrampersadbranch.com/your-policy/agent.html',   // the page a client chooses when and how on
+  QUERY: 'https://www.querymypolicy.com',                           // Query Pal: the branch's 24-hour query service
+  QUERY_NAME: 'Query Pal',
+  TELS: 'Branch: (868) 226-6461, 226-6464, 226-6465 · Guardian Direct: (868) 226-MYGG (226-6944)',
+  SLOTS: [['morning', 'Morning', '8 to 12'], ['afternoon', 'Afternoon', '12 to 4'], ['evening', 'Evening', '4 to 7']],
+  HOWS: [['phone', 'Phone call'], ['whatsapp', 'WhatsApp'], ['video', 'Video call'], ['person', 'Meet in person']],
+};
+
+/** The Agent Profiles tab: { ready, list }. `fresh` reads past the one-read-a-request copy. */
+function tAgProfiles_(fresh) {
+  if (!fresh && T_READ_ONCE && T_READ_ONCE.agProfiles) return T_READ_ONCE.agProfiles;
+  var out = { ready: false, list: [] };
+  try {
+    var sh = ss_().getSheetByName(T_PROF.SHEET);
+    if (sh && sh.getLastRow() >= 1) {
+      var vals = sh.getDataRange().getValues(), head = vals[0].map(function (h) { return String(h).trim().toLowerCase(); });
+      out.ready = head.indexOf('name') >= 0;
+      if (out.ready) vals.slice(1).forEach(function (v, i) {
+        var p = tProfRow_(function (h) { var j = head.indexOf(h.toLowerCase()); return j < 0 ? '' : tText_(v[j]); }, i + 2);
+        if (p) out.list.push(p);
+      });
+    }
+  } catch (e) { out.why = String(e && e.message ? e.message : e).slice(0, 200); }
+  if (T_READ_ONCE) T_READ_ONCE.agProfiles = out;
+  return out;
+}
+/** One row of the tab, read by its headers (g). Found online is one fact a line: "what · confidence · https://source". */
+function tProfRow_(g, n) {
+  var name = tCleanName_(g('Name'));
+  if (!name) return null;
+  var kind = String(g('Kind') || '').toLowerCase();
+  kind = /assistant|lead/.test(kind) ? 'lead' : /manager/.test(kind) ? 'manager' : /support|staff/.test(kind) ? 'support' : 'agent';
+  var trim = function (x) { return String(x).trim(); };
+  var list = function (s, re) { return String(s || '').split(re || /\s*[,;·•\n]\s*/).map(trim).filter(Boolean); };
+  var found = String(g('Found online') || '').split(/\n+/).map(function (l) {
+    var parts = l.split(/\s+·\s+/), u = '', c = '';
+    if (parts.length > 1 && /^https?:\/\/\S+$/.test(parts[parts.length - 1].trim())) u = parts.pop().trim();
+    if (parts.length > 1 && /^(high|medium|low)$/i.test(parts[parts.length - 1].trim())) c = parts.pop().trim().toLowerCase();
+    var f = parts.join(' · ').trim();
+    return f ? { f: f, c: c, u: u } : null;
+  }).filter(Boolean);
+  var p = { n: n, name: name, kind: kind, shown: g('Shown as') || tNiceName_(name), title: g('Title'), since: g('Since'),
+    headline: g('Headline'), bio: g('Bio'), ask: list(g('Ask me about')), before: g('Before Guardian'), desig: list(g('Designations'), /\s*[,;·\n]\s*/),
+    awards: list(g('Awards'), /\s*[;\n]\s*/), edu: g('Education'), phone: g('Phone'), email: g('E-mail'), photo: g('Photo'),
+    found: found, confirm: list(g('To confirm'), /\n+/), agentOk: g('Agent approved'), branchOk: g('Branch approved'),
+    updated: g('Updated'), by: g('Updated by') };
+  p.state = p.agentOk && p.branchOk ? 'live' : p.agentOk ? 'agent' : p.branchOk ? 'branch' : 'draft';
+  return p;
+}
+/** A name in words, brackets dropped: "Narissa (Agent) Mohammed" → narissa, mohammed. */
+function tProfWords_(s) { return String(s || '').toLowerCase().replace(/\([^)]*\)/g, ' ').split(/[^a-z]+/).filter(Boolean); }
+/** Whether two ways of writing a name are one person: the same letters, or the same first name with every word of the
+ *  shorter name in the longer ("Jamil Khan" and "Jamil Sean Khan", "Sasha Lalla" and "Sasha Lalla-Jagassar"). */
+function tProfSame_(a, b) {
+  if (!a || !b) return false;
+  if (tNameKey_(a) && tNameKey_(a) === tNameKey_(b)) return true;
+  var x = tProfWords_(a), y = tProfWords_(b);
+  if (x.length < 2 || y.length < 2 || x[0] !== y[0]) return false;
+  var s = x.length <= y.length ? x : y, l = s === x ? y : x;
+  return s.every(function (t) { return l.indexOf(t) >= 0; });
+}
+/** A person's profile, by the name they sign in with or the name Salesforce gives them. */
+function tProfFor_(name, list) {
+  list = list || tAgProfiles_().list;
+  var k = tNameKey_(name);
+  return list.filter(function (p) { return tNameKey_(p.name) === k; })[0] ||
+    list.filter(function (p) { return tProfSame_(p.name, name) || tProfSame_(p.shown, name); })[0] || null;
+}
+
+/** Every agent record in Salesforce with a hire date (Contacts of record type AGENT): kept six hours. { ready, list, why }. */
+function tSfAgentFacts_() {
+  if (T_READ_ONCE && T_READ_ONCE.sfFacts) return T_READ_ONCE.sfFacts;
+  var out = { ready: false, list: [] }, cache = null;
+  try { cache = CacheService.getScriptCache(); var hit = tCacheGetBig_(cache, T_PROF.FACTS_KEY); if (hit) out = { ready: true, list: hit }; } catch (e) {}
+  if (!out.ready && tSfOn_()) {
+    try {
+      var day = function (x) { var s = String(x || '').slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(s) && Number(s.slice(0, 4)) >= 1950 ? s : ''; };
+      var list = tSfQuery_("SELECT Id, Name, Email, MobilePhone, Phone, Title, Date_Hired__c, License_Date_Life__c, License_Date_General__c, " +
+        "Employment_Status__c FROM Contact WHERE RecordType.Name = 'AGENT' AND Date_Hired__c != null LIMIT 2000").map(function (r) {
+        return { id: String(r.Id || ''), name: String(r.Name || '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim(), email: String(r.Email || '').trim(),
+                 mobile: String(r.MobilePhone || '').trim(), phone: String(r.Phone || '').trim(), title: String(r.Title || '').trim(),
+                 hired: day(r.Date_Hired__c), life: day(r.License_Date_Life__c), general: day(r.License_Date_General__c), status: String(r.Employment_Status__c || '').trim() };
+      });
+      out = { ready: true, list: list };
+      try { if (cache) tCachePutBig_(cache, T_PROF.FACTS_KEY, list, T_PROF.FACTS_TTL); } catch (e) {}
+    } catch (e) { out.why = String(e && e.message ? e.message : e).slice(0, 200); }
+  } else if (!out.ready) out.why = 'Salesforce is not linked to this project yet (the SF_* Script properties), so the dates are not shown.';
+  if (T_READ_ONCE) T_READ_ONCE.sfFacts = out;
+  return out;
+}
+/** One person's facts from their Salesforce agent record, an active record first: { hired, years, life, general, mobile,
+ *  phone, email, title, id }, the licences as years; null when Salesforce has no record of them. */
+function tProfFacts_(name, facts) {
+  facts = facts || tSfAgentFacts_();
+  var hits = (facts.list || []).filter(function (r) { return tProfSame_(r.name, name); });
+  hits.sort(function (a, b) {
+    var aa = /^active$/i.test(a.status) ? 0 : 1, bb = /^active$/i.test(b.status) ? 0 : 1;
+    return aa !== bb ? aa - bb : (a.hired < b.hired ? 1 : a.hired > b.hired ? -1 : 0);
+  });
+  var r = hits[0];
+  if (!r) return null;
+  var years = 0;
+  if (r.hired) {
+    var now = new Date(), y = Number(r.hired.slice(0, 4)), mo = Number(r.hired.slice(5, 7)) - 1, d = Number(r.hired.slice(8, 10));
+    years = now.getFullYear() - y - (now < new Date(now.getFullYear(), mo, d) ? 1 : 0);
+  }
+  return { hired: r.hired, years: Math.max(0, years), life: r.life ? r.life.slice(0, 4) : '', general: r.general ? r.general.slice(0, 4) : '',
+           mobile: r.mobile, phone: r.phone, email: r.email, title: r.title, id: r.id };
+}
+/** A Trinidad number as it reads on a letter: "(868) 740-3666", whatever way the record typed it. */
+function tPhoneNice_(s) {
+  var d = String(s || '').replace(/\D/g, '');
+  if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+  if (d.length === 7) d = '868' + d;
+  return d.length === 10 && d.slice(0, 3) === '868' ? '(868) ' + d.slice(3, 6) + '-' + d.slice(6) : String(s || '').trim();
+}
+function tProfTier_(years) {
+  var y = Number(years) || 0;
+  for (var i = 0; i < T_PROF_TIER.length; i++) if (y >= T_PROF_TIER[i].min) return T_PROF_TIER[i];
+  return T_PROF_TIER[T_PROF_TIER.length - 1];
+}
+/** What the page and the e-mail read of one profile: the person's own words, the Salesforce facts, the template, and, for
+ *  the person and the branch, what was found online and what to confirm. */
+function tProfView_(p, f, withSources) {
+  var v = { name: p.name, kind: p.kind, kindLabel: T_PROF_KINDS[p.kind] || 'Agent', shown: p.shown || tNiceName_(p.name), title: p.title,
+    since: p.since, headline: p.headline, bio: p.bio, ask: p.ask || [], before: p.before, desig: p.desig || [], awards: p.awards || [], edu: p.edu,
+    phone: p.phone, email: p.email, photo: /^https:\/\/\S+$/.test(p.photo || '') ? p.photo : '', state: p.state || 'none',
+    agentOk: p.agentOk || '', branchOk: p.branchOk || '', updated: p.updated || '', by: p.by || '' };
+  v.facts = f ? { hired: f.hired, years: f.years, life: f.life, general: f.general, mobile: tPhoneNice_(f.mobile || f.phone), email: f.email, title: f.title } : null;
+  /* the e-mail a client sees: the one the person typed, else their Guardian address on Salesforce, never another (two
+     records carry a personal Gmail and an outside agency's address, which the person has to choose to show) */
+  v.show = { phone: tPhoneNice_(p.phone || (f && (f.mobile || f.phone)) || ''),
+             email: p.email || (f && /@myguardiangroup\.com$/i.test(f.email || '') ? f.email : '') };
+  var yrs = f && f.hired ? f.years : (/^\d{4}$/.test(String(p.since || '')) ? new Date().getFullYear() - Number(p.since) : 0);
+  v.years = yrs;
+  v.tier = tProfTier_(yrs).k;
+  if (withSources) { v.found = p.found || []; v.confirm = p.confirm || []; }
+  return v;
+}
+/** An agent with no profile on the tab: the name and Salesforce's facts only, so the introduction still has a card. */
+function tProfBare_(name) { return { name: name, kind: 'agent', shown: tNiceName_(name), state: 'none', ask: [], desig: [], awards: [], found: [], confirm: [] }; }
+
+/** The tab, made the first time, with every column this script reads (an older tab gains the missing ones at the end). */
+function tProfSheet_() {
+  var ss = ss_(), sh = ss.getSheetByName(T_PROF.SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(T_PROF.SHEET);
+    sh.getRange(1, 1, 1, T_PROF_HEAD.length).setValues([T_PROF_HEAD]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+    return sh;
+  }
+  var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(function (h) { return String(h).trim().toLowerCase(); });
+  var miss = T_PROF_HEAD.filter(function (h) { return head.indexOf(h.toLowerCase()) < 0; });
+  if (miss.length) sh.getRange(1, head.length + 1, 1, miss.length).setValues([miss]).setFontWeight('bold');
+  return sh;
+}
+/** A value as a cell takes it: a leading = + or @ would be read as a formula. */
+function tCellSafe_(s) { return /^[=+@]/.test(String(s)) ? "'" + s : s; }
+
+/** The board's profile requests (action=board&profile=…): list, save, me ("This is me"), approve, withdraw, add, preview.
+ *  A person reads and changes their own; the branch manager (or the branch code) reads and changes everyone's, and alone
+ *  approves one for clients. Staff and agents never see anyone else's. */
+function tProfileApi_(p, w) {
+  var act = String(p.profile || 'list').toLowerCase().trim(), boss = w.role === 'branch' && !!w.canTell;
+  var me = w.me && w.me.name ? w.me.name : '', who = me || TRANSITION.MANAGER.name;
+  var mine = function (pr) { return !!pr && ((!!me && tProfSame_(pr.name, me)) || (boss && !me && pr.kind === 'manager')); };
+  var all = tAgProfiles_(), facts = tSfAgentFacts_();
+  var view = function (pr) { return tProfView_(pr, tProfFacts_(pr.name, facts), true); };
+  var meta = { ready: all.ready, sf: facts.ready, sfWhy: facts.ready ? '' : (facts.why || ''), boss: boss, kinds: T_PROF_KINDS, max: { bio: T_PROF.BIO, line: T_PROF.LINE } };
+  if (act === 'list') {
+    var own = all.list.filter(mine)[0] || null;
+    var res = { ok: true, profiles: meta, mine: own ? view(own) : null };
+    if (boss) {
+      res.profiles.list = all.list.map(view);
+      /* who could have a profile and has none: the active agents Salesforce knows, and the roster */
+      var have = function (n) { return all.list.some(function (x) { return tProfSame_(x.name, n); }); }, add = [];
+      (facts.list || []).forEach(function (r) { if (/^active$/i.test(r.status) && r.life && !have(r.name) && add.indexOf(r.name) < 0) add.push(r.name); });
+      tRoster_().forEach(function (r) { if (!have(r.name) && !add.some(function (n) { return tProfSame_(n, r.name); })) add.push(r.name); });
+      res.profiles.without = add.slice(0, 80);
+    }
+    if (!own && me && !boss) res.profiles.none = 'There is no profile for you yet. Ask Ricky to add one, and it will be here for you to check.';
+    return res;
+  }
+  var name = String(p.name || '').trim();
+  if (act === 'add') {
+    if (!boss) return { ok: false, error: 'Only the branch manager adds a profile.' };
+    if (!name) return { ok: false, error: 'Give the name.' };
+    if (tProfFor_(name, all.list)) return { ok: false, error: 'There is already a profile for ' + name + '.' };
+    var kind = T_PROF_KINDS[String(p.kind || '').toLowerCase()] ? String(p.kind).toLowerCase() : 'agent';
+    var lock0 = LockService.getScriptLock(); lock0.waitLock(20000);
+    try {
+      var sh0 = tProfSheet_(), head0 = sh0.getRange(1, 1, 1, sh0.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
+      var row0 = head0.map(function (h) { return h === 'Name' ? name : h === 'Kind' ? kind : h === 'Updated' ? new Date() : h === 'Updated by' ? who : ''; });
+      sh0.appendRow(row0);
+    } finally { lock0.releaseLock(); }
+    log_('transition', 'profile', who + ' · added · ' + name);
+    var made = tProfFor_(name, tAgProfiles_(true).list);
+    return { ok: true, profile: made ? view(made) : null };
+  }
+  var pr = name ? tProfFor_(name, all.list) : all.list.filter(mine)[0];
+  if (!pr) return { ok: false, error: name ? 'There is no profile for ' + name + ' yet.' : 'There is no profile for you yet.' };
+  if (!boss && !mine(pr)) return { ok: false, refused: false, error: 'You can only open your own profile.' };
+  if (act === 'preview') {
+    var pv = view(pr), m = pr.kind === 'agent' ? tIntroBuild_({ firstName: 'Jordan', token: 'PREVIEW', seg: '' }, { name: pr.name }, true, pv)
+      : { subject: 'The branch team, as a client reads it', html: tIntroTeamHtml_(tIntroTeam_(true), 'Jordan', pv) };
+    return { ok: true, preview: { subject: m.subject, html: m.html } };
+  }
+  var clean = function (s, max, multi) {
+    s = String(s == null ? '' : s).replace(/[<>]/g, '').replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, ' ');
+    s = multi ? s.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim() : s.replace(/\s+/g, ' ').trim();
+    return s.slice(0, max);
+  };
+  var stamp = Utilities.formatDate(new Date(), tTz_(), 'd MMM yyyy HH:mm') + ' · ' + tNiceName_(who), mineToo = mine(pr);
+  var res2 = tProfWrite_(pr.name, function (rec) {
+    var cur = function (h) { return tText_(rec[h]); };
+    if (act === 'save') {
+      var changed = false, bad = '';
+      Object.keys(T_PROF_EDIT).forEach(function (k) {
+        if (p[k] === undefined) return;
+        var h = T_PROF_EDIT[k], v = clean(p[k], k === 'bio' ? T_PROF.BIO : T_PROF.LINE, k === 'bio');
+        if (k === 'phone' && v && (v.replace(/\D/g, '').length < 7 || v.replace(/\D/g, '').length > 15)) bad = 'That phone number does not look complete.';
+        if (k === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) bad = 'That e-mail address does not look right.';
+        if (k === 'since' && v && !/^(19|20)\d{2}$/.test(v)) bad = 'Since is a year, like 2010.';
+        if (cur(h) !== v) { rec[h] = tCellSafe_(v); changed = true; }
+      });
+      if (boss && p.kind !== undefined && T_PROF_KINDS[String(p.kind).toLowerCase()] && cur('Kind').toLowerCase() !== String(p.kind).toLowerCase()) { rec.Kind = String(p.kind).toLowerCase(); changed = true; }
+      if (boss && p.photo !== undefined) { var ph = clean(p.photo, 400); if (ph && !/^https:\/\/\S+$/.test(ph)) bad = 'A photo is a link that starts with https://.'; else if (cur('Photo') !== ph) { rec.Photo = ph; changed = true; } }
+      if (bad) return bad;
+      if (!changed) return '';
+      /* an edit by one side takes the other's approval away: the person reads the branch's change, the branch the person's */
+      if (mineToo && !boss) rec['Branch approved'] = '';
+      else if (boss && !mineToo) rec['Agent approved'] = '';
+      rec.Updated = new Date(); rec['Updated by'] = tNiceName_(who);
+      return '';
+    }
+    if (act === 'me') {
+      if (!mineToo) return 'Only ' + pr.shown + ' can say this is them.';
+      if (!cur('Bio') && !cur('Headline')) return 'Write a line about yourself first.';
+      rec['Agent approved'] = stamp;
+      if (boss) rec['Branch approved'] = stamp;   // the branch manager's own profile: he is both
+      return '';
+    }
+    if (act === 'approve') {
+      if (!boss) return 'Only the branch manager approves a profile for clients.';
+      if (!cur('Bio') && !cur('Headline')) return 'There is nothing written yet.';
+      rec['Branch approved'] = stamp;
+      if (mineToo) rec['Agent approved'] = stamp;
+      return '';
+    }
+    if (act === 'withdraw') {
+      if (!boss) return 'Only the branch manager takes a profile off.';
+      rec['Branch approved'] = '';
+      return '';
+    }
+    return 'Unknown profile action.';
+  });
+  if (!res2.ok) return res2;
+  log_('transition', 'profile', who + ' · ' + act + ' · ' + pr.name);
+  var after = tProfFor_(pr.name, tAgProfiles_(true).list);
+  return { ok: true, profile: after ? view(after) : null };
+}
+/** Read the row of `name` afresh under the script lock, let fn change it by header (it returns '' or why not), write it
+ *  back. { ok } or { ok:false, error }. */
+function tProfWrite_(name, fn) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = tProfSheet_(), vals = sh.getDataRange().getValues(), head = vals[0].map(function (h) { return String(h).trim(); });
+    var ni = head.map(function (h) { return h.toLowerCase(); }).indexOf('name'), row = -1;
+    for (var i = 1; i < vals.length && row < 0; i++) if (tNameKey_(tCleanName_(tText_(vals[i][ni]))) === tNameKey_(name)) row = i;
+    for (var j = 1; j < vals.length && row < 0; j++) if (tProfSame_(tCleanName_(tText_(vals[j][ni])), name)) row = j;
+    if (row < 0) return { ok: false, error: 'No profile for ' + name + '.' };
+    var rec = {};
+    head.forEach(function (h, k) { rec[h] = vals[row][k]; });
+    var why = fn(rec);
+    if (why) return { ok: false, error: why };
+    sh.getRange(row + 1, 1, 1, head.length).setValues([head.map(function (h) { return rec[h] === undefined || rec[h] === null ? '' : rec[h]; })]);
+    SpreadsheetApp.flush();
+    return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+
+/** The branch team behind every agent, as the introduction shows them: the branch manager, the support lead, then sales
+ *  support, each only once both approvals are on (or every row, for a test or a preview). */
+function tIntroTeam_(drafts) {
+  var facts = tSfAgentFacts_(), order = { manager: 0, lead: 1, support: 2 };
+  return tAgProfiles_().list.filter(function (p) { return order[p.kind] !== undefined && (drafts || p.state === 'live'); })
+    .sort(function (a, b) { return order[a.kind] - order[b.kind] || (a.n - b.n); })
+    .map(function (p) { return tProfView_(p, tProfFacts_(p.name, facts), false); });
+}
+/** The link a tap in the introduction opens: the client's own token, the agent, and what they tapped. */
+function tIntroPickUrl_(c, agentName, extra) {
+  return T_INTRO.PICK + '?t=' + encodeURIComponent(c.token || '') + '&s=' + encodeURIComponent(c.seg || '') + '&a=' + encodeURIComponent(tNameKey_(agentName)) +
+    '&n=' + encodeURIComponent(String(tNiceName_(agentName)).split(/\s+/)[0]) + (extra ? '&' + extra : '');
+}
+/** The introduction for client c (firstName, token, seg) and agent { name }: { subject, html }. `test` shows drafts and
+ *  says so; `pv` is the agent's profile view when the caller already has it. Nothing here sends. */
+function tIntroBuild_(c, agent, test, pv) {
+  var pr = pv ? null : tProfFor_(agent.name), facts = tSfAgentFacts_();
+  if (!pv) pv = tProfView_(pr && (test || pr.state === 'live') ? pr : tProfBare_(agent.name), tProfFacts_(agent.name, facts), false);
+  if (!test && pv.state !== 'live') { pv.headline = ''; pv.bio = ''; pv.ask = []; pv.before = ''; pv.awards = []; pv.desig = []; pv.edu = ''; }
+  if (!pv.show.phone && agent.phone) pv.show.phone = tPhoneNice_(agent.phone);
+  if (!pv.show.email && /@myguardiangroup\.com$/i.test(agent.email || '')) pv.show.email = agent.email;
+  var team = tIntroTeam_(test), first = c.firstName || 'there';
+  var af = String(pv.shown).split(/\s+/)[0];
+  var esc = tEsc_, f = pv.facts || {}, tier = pv.tier;
+  var navy = '#07131f', gold = '#efc24b', teal = '#07606f', cyan = '#00CFEA', ink = '#12202e', body = '#33465a', mute = '#64798e', rule = '#e3e9ef';
+  var font = "'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+  var yrs = f.years || pv.years || 0;
+  var T = {
+    veteran: { h: first + ', meet ' + af + '. ' + (yrs ? yrs + ' years' : 'Decades') + ' of looking after families like yours.', band: gold,
+               ribbon: (yrs ? yrs + ' years' : 'Two decades and more') + ' with Guardian Life' },
+    seasoned: { h: first + ', meet ' + af + ', who now looks after your policy.', band: cyan, ribbon: (yrs ? yrs + ' years' : 'A decade and more') + ' with Guardian Life' },
+    established: { h: first + ', meet ' + af + ', your agent from today.', band: gold, ribbon: f.life ? 'Licensed in life insurance since ' + f.life : 'Licensed with Guardian Life' },
+    new: { h: first + ', meet ' + af + ', your new agent, with our whole branch behind them.', band: cyan, ribbon: 'Fully licensed · backed by the whole branch' }
+  }[tier] || { h: first + ', meet ' + af + ', who now looks after your policy.', band: gold, ribbon: '' };
+  var tiles = [];
+  if (yrs >= 1) tiles.push([yrs + (yrs === 1 ? ' year' : ' years'), 'with Guardian Life']);
+  if (f.life) tiles.push([f.life, 'licensed in life insurance']);
+  if (f.life) tiles.push([f.general ? 'Life &amp; general' : 'Life', f.general ? 'both licences held' : 'licence held', true]);
+  if (pv.desig.length) tiles.unshift([esc(pv.desig.slice(0, 2).join(' · ')), 'professional designation' + (pv.desig.length > 1 ? 's' : ''), true]);
+  tiles = tiles.slice(0, 3);
+  var tile = function (t) {
+    return '<td style="width:' + Math.floor(100 / tiles.length) + '%;padding:4px;vertical-align:top"><div style="background:#f6f8fb;border-radius:10px;padding:10px 6px;text-align:center">' +
+      '<div style="font:800 ' + (String(t[0]).length > 12 ? 16 : 21) + 'px ' + font + ';color:' + navy + '">' + (t[2] ? t[0] : esc(t[0])) + '</div>' +
+      '<div style="font-size:12px;color:' + mute + '">' + esc(t[1]) + '</div></div></td>';
+  };
+  var initials = String(pv.shown).split(/\s+/).filter(Boolean).map(function (x) { return x.charAt(0); }).join('').slice(0, 2).toUpperCase();
+  var avatar = pv.photo ? '<img src="' + esc(pv.photo) + '" width="68" height="68" alt="" style="display:block;width:68px;height:68px;border-radius:50%;border:3px solid ' + T.band + ';object-fit:cover">'
+    : '<div style="width:64px;height:64px;border-radius:50%;background:#dfe7ef;border:3px solid ' + T.band + ';text-align:center;font:800 22px/64px ' + font + ';color:' + navy + '">' + esc(initials) + '</div>';
+  var contact = [];
+  if (pv.show.phone) contact.push('<a href="tel:' + esc(pv.show.phone.replace(/[^\d+]/g, '')) + '" style="color:' + teal + ';font-weight:700;text-decoration:none">' + esc(pv.show.phone) + '</a>');
+  if (pv.show.email) contact.push('<a href="mailto:' + esc(pv.show.email) + '" style="color:' + teal + ';text-decoration:none">' + esc(pv.show.email) + '</a>');
+  var paras = String(pv.bio || '').split(/\n+/).filter(Boolean).map(function (x) { return '<p style="margin:0 0 10px">' + esc(x) + '</p>'; }).join('');
+  var chips = function (arr, bg, fg) {
+    return arr.map(function (x) { return '<span style="display:inline-block;background:' + bg + ';color:' + fg + ';border-radius:999px;padding:3px 10px;margin:0 4px 6px 0;font-size:12.5px;font-weight:700">' + esc(x) + '</span>'; }).join('');
+  };
+  var card = '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid ' + rule + ';border-radius:14px;border-collapse:separate;background:#ffffff">' +
+    (T.ribbon ? '<tr><td style="background:' + (T.band === gold ? '#fff7df' : '#e6fbff') + ';border-radius:14px 14px 0 0;padding:8px 20px;font:800 12.5px ' + font + ';color:' + (T.band === gold ? '#7a5a12' : teal) + ';letter-spacing:.3px">' + esc(T.ribbon.toUpperCase()) + '</td></tr>' : '') +
+    '<tr><td style="padding:18px 20px 6px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+    '<td style="width:82px;vertical-align:top">' + avatar + '</td><td style="vertical-align:top">' +
+    '<div style="font:800 20px ' + font + ';color:' + ink + '">' + esc(pv.shown) + '</div>' +
+    '<div style="color:' + mute + ';font-size:13.5px">' + esc(pv.title || 'Your agent') + ' · Ricky Rampersad Branch</div>' +
+    (contact.length ? '<div style="margin-top:6px;font-size:14px">' + contact.join(' &nbsp;·&nbsp; ') + '</div>' : '') +
+    '</td></tr></table></td></tr>' +
+    (tiles.length ? '<tr><td style="padding:8px 16px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>' + tiles.map(tile).join('') + '</tr></table>' +
+      '<div style="font-size:11px;color:#8a97a8;padding:2px 6px 0">The dates are from Guardian Life\'s own agent record.</div></td></tr>' : '') +
+    ((pv.headline || paras || pv.awards.length || pv.before || pv.ask.length) ? '<tr><td style="padding:12px 20px 6px;font-size:14.5px;color:' + body + '">' +
+      (pv.headline ? '<p style="margin:0 0 10px;font:700 16px/1.4 ' + font + ';color:' + ink + '">' + esc(pv.headline) + '</p>' : '') + paras +
+      (pv.awards.length ? '<div style="margin:2px 0 6px">' + chips(pv.awards.map(function (x) { return '★ ' + x; }), '#fff4d6', '#7a5a12') + '</div>' : '') +
+      (pv.before ? '<p style="margin:0 0 8px;font-size:13.5px;color:' + mute + '"><b style="color:' + ink + '">Before Guardian Life:</b> ' + esc(pv.before) + '</p>' : '') +
+      (pv.ask.length ? '<div style="margin-top:4px;font-size:13.5px;color:' + mute + '">Ask ' + esc(af) + ' about:</div><div style="margin-top:4px">' + chips(pv.ask, '#eef6f8', teal) + '</div>' : '') +
+      '</td></tr>' : '') +
+    '</table>';
+  var pick = function (extra) { return esc(tIntroPickUrl_(c, pv.name, extra)); };
+  var picker = '<div style="background:' + navy + ';border-radius:14px;padding:18px 16px 14px">' +
+    '<div style="font:800 17px ' + font + ';color:#ffffff">When should ' + esc(af) + ' call you?</div>' +
+    '<div style="color:#b9c9da;font-size:13px;margin:2px 0 10px">Tap one, then press send. ' + esc(af) + ' sees it at once, and so does our branch team.</div>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>' + T_INTRO.SLOTS.map(function (s) {
+      return '<td style="padding:3px;width:33%"><a href="' + pick('w=' + s[0]) + '" style="display:block;background:' + gold + ';color:' + navy + ';text-align:center;border-radius:9px;padding:10px 4px;font:800 14px ' + font + ';text-decoration:none">' +
+        esc(s[1]) + '<br><span style="font-weight:600;font-size:11.5px">' + esc(s[2]) + '</span></a></td>';
+    }).join('') + '</tr></table>' +
+    '<div style="color:#b9c9da;font-size:13px;margin:12px 0 6px">How would you like to talk?</div>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>' + T_INTRO.HOWS.map(function (h) {
+      return '<td style="padding:3px;width:25%"><a href="' + pick('h=' + h[0]) + '" style="display:block;border:1px solid #3d5470;color:#ffffff;text-align:center;border-radius:9px;padding:9px 2px;font:700 12.5px ' + font + ';text-decoration:none">' + esc(h[1]) + '</a></td>';
+    }).join('') + '</tr></table>' +
+    '<div style="margin-top:12px;text-align:center"><a href="' + pick('x=1') + '" style="color:' + gold + ';font:700 13.5px ' + font + ';text-decoration:none">Or choose a day and an exact time &rarr;</a></div></div>';
+  var teamBlock = tIntroTeamHtml_(team, first, null, af, tier === 'new');
+  var query = '<div style="background:#f4fafc;border:1px solid #cfe9ef;border-radius:12px;padding:14px 16px">' +
+    '<div style="font:800 15px ' + font + ';color:' + teal + '">Help at any hour, day or night</div>' +
+    '<div style="font-size:13.5px;margin:3px 0 10px;color:' + body + '">Can\'t reach us? ' + esc(T_INTRO.QUERY_NAME) + ', our 24-hour query service, takes your question at any time and routes it straight to the right department, tracked to the day.</div>' +
+    '<a href="' + esc(T_INTRO.QUERY) + '" style="display:inline-block;background:' + teal + ';color:#ffffff;border-radius:9px;padding:10px 16px;font:700 14px ' + font + ';text-decoration:none">Send us a question, 24/7</a>' +
+    '<div style="font-size:12.5px;color:' + mute + ';margin-top:8px">' + esc(T_INTRO.TELS) + '</div></div>';
+  var care = tCare_(tReceipt_());
+  var banner = test ? '<div style="font:13px/1.5 ' + font + ';background:#fff6df;border-left:4px solid ' + gold + ';padding:8px 12px">' +
+    '<b>TEST · as a client would read it.</b> ' + (pv.state === 'live' ? 'This profile is approved for clients.'
+      : pv.state === 'none' ? 'There is no profile for ' + esc(af) + ' yet: a client gets the card with the dates only.'
+      : 'Draft: a client sees the words only once ' + esc(af) + ' has pressed "This is me" and the branch has approved them' +
+        (pv.state === 'agent' ? ' (' + esc(af) + ' has; the branch has not yet)' : pv.state === 'branch' ? ' (the branch has; ' + esc(af) + ' has not yet)' : '') + '. Until then the card carries the dates only.') +
+    ' Template: ' + esc(tier) + '.</div>' : '';
+  var html = '<div style="max-width:600px;margin:0 auto;background:#ffffff;font:15px/1.6 ' + font + ';color:' + body + '">' + banner +
+    '<div style="background:' + navy + ';padding:22px 26px 26px;border-bottom:4px solid ' + T.band + '">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:34px;padding-right:10px"><img src="https://rickyrampersadbranch.com/logo-mark.png" width="34" height="34" alt="" style="display:block;border-radius:8px"></td>' +
+    '<td style="font:800 14px ' + font + ';color:#eaf4ff;letter-spacing:.3px">Ricky Rampersad Branch <span style="color:' + gold + ';font-weight:600">· Guardian Life of the Caribbean</span></td></tr></table>' +
+    '<p style="margin:18px 0 4px;font:800 25px/1.25 ' + font + ';color:#ffffff">' + esc(T.h) + '</p>' +
+    '<p style="margin:0;color:#b9c9da;font-size:14.5px">Thank you for answering our letter. A person read what you told us, and matched you with the agent who fits.</p></div>' +
+    '<div style="padding:22px 22px 4px">' + card + '</div>' +
+    (tier === 'new' ? '<div style="padding:16px 26px 4px">' + teamBlock + '</div><div style="padding:14px 22px 4px">' + picker + '</div>'
+      : '<div style="padding:16px 22px 4px">' + picker + '</div><div style="padding:18px 26px 4px">' + teamBlock + '</div>') +
+    '<div style="padding:14px 26px 22px">' + query +
+    '<p style="margin:16px 0 0">Nothing about your policy changes. It stays with Guardian Life, and the same branch team keeps your file.</p>' +
+    '<p style="margin:14px 0 0"><b style="color:' + ink + '">' + esc(care.care_name) + '</b><br>' + esc(care.care_line) + '</p></div></div>';
+  return { subject: 'Meet your agent: ' + pv.shown, html: html, tier: tier, state: pv.state };
+}
+/** "Your whole branch stands behind <agent>": the branch manager with his direct line, the support lead and sales support,
+ *  each with their one line. `only` is a profile view to show alone (a preview of one person's line). `first` is the
+ *  agent's first name (or the client's, when there is no agent); `lead` puts the heading a newer agent's template uses. */
+function tIntroTeamHtml_(team, clientFirst, only, af, lead) {
+  var esc = tEsc_, ink = '#12202e', mute = '#64798e', font = "'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+  var list = only ? [only] : team;
+  var who = af || 'your agent';
+  var line = function (v) {
+    if (v.headline) return v.headline;
+    var s = String(v.bio || '').trim(), dot = s.search(/\.\s/);
+    return dot > 0 ? s.slice(0, dot + 1) : s;
+  };
+  var rows = list.map(function (v) {
+    var extra = v.kind === 'manager' && v.show.phone ? ' Direct line: <a href="tel:' + esc(v.show.phone.replace(/[^\d+]/g, '')) + '" style="color:' + ink + ';font-weight:700;text-decoration:none">' + esc(v.show.phone) + '</a>' : '';
+    var since = v.kind === 'manager' && v.facts && v.facts.hired ? 'With Guardian Life since ' + v.facts.hired.slice(0, 4) + '. ' : (v.since && /^\d{4}$/.test(v.since) ? 'With the branch since ' + v.since + '. ' : '');
+    return '<tr><td style="padding:10px 0;border-top:1px solid #eef2f5"><b style="color:' + ink + '">' + esc(v.shown) + '</b>' + (v.title ? ', ' + esc(v.title) : '') +
+      '<br><span style="font-size:13.5px;color:' + mute + '">' + esc(since) + esc(line(v)) + extra + '</span></td></tr>';
+  }).join('');
+  var head = lead ? 'Never on their own: the whole branch behind ' + who : 'Your whole branch stands behind ' + who;
+  var sub = lead ? who + ' is new to Guardian Life and works with our branch team on everything: your requests are handled by the same team that looks after every client of the branch, and most go on to Guardian Life within a working day.'
+    : who + ' never works alone. Every request is handled by our branch team, and most go on to Guardian Life within a working day.';
+  return '<div style="font:800 17px ' + font + ';color:' + ink + '">' + esc(head) + '</div>' +
+    '<div style="color:' + mute + ';font-size:13.5px;margin:2px 0 10px">' + esc(sub) + '</div>' +
+    (rows ? '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">' + rows + '</table>' : '');
+}
+/** The editor's Run button: send the branch manager one introduction for each template, from the real profiles, drafts
+ *  included and marked TEST, with a made-up client. Nothing is written and no client is e-mailed. */
+function transitionIntroTest() {
+  var to = T_CLAIM.COPY || SVC.AGENT_EMAIL, facts = tSfAgentFacts_(), sent = [], seen = {};
+  var agents = tAgProfiles_(true).list.filter(function (p) { return p.kind === 'agent'; });
+  if (!agents.length) agents = tRoster_().map(function (r) { return tProfBare_(r.name); });
+  agents.forEach(function (p) {
+    var pv = tProfView_(p, tProfFacts_(p.name, facts), false);
+    if (seen[pv.tier]) return;
+    seen[pv.tier] = true;
+    var m = tIntroBuild_({ firstName: 'Jordan', token: 'TEST', seg: '' }, { name: p.name }, true, pv);
+    if (tMsCreds_()) tMsSend_(to, '[TEST] ' + m.subject, m.html + tLegal_());
+    else MailApp.sendEmail(to, '[TEST] ' + m.subject, 'Open in a mail app that shows HTML.', { htmlBody: m.html + tLegal_(), name: TRANSITION.FROM_NAME });
+    sent.push(pv.shown + ' (' + pv.tier + ')');
+  });
+  return tSay_('Sent to ' + to + ': ' + sent.length + ' test introduction' + (sent.length === 1 ? '' : 's') + (sent.length ? ': ' + sent.join(', ') : '') +
+    '. ' + (facts.ready ? '' : facts.why));
+}
+
+/** A pick row in words: { when: 'Afternoon (12 to 4)', how: 'WhatsApp', at: 'Tuesday 20 October, 6:30 pm', agentKey }. */
+function tPickWords_(page, ref) {
+  var q = tQOf_(page), h = (String(page || '').match(/[?&]h=([a-z]+)/) || [])[1] || '';
+  var slot = T_INTRO.SLOTS.filter(function (s) { return 'when_' + s[0] === q; })[0];
+  var how = T_INTRO.HOWS.filter(function (x) { return x[0] === h || 'reach_' + x[0] === q; })[0];
+  var m = /^intro ([a-z]+):\s*(.*)$/.exec(String(ref || '').trim());
+  return { when: slot ? slot[1] + ' (' + slot[2] + ')' : '', how: how ? how[1] : '', at: m ? m[2].trim() : '', agentKey: m ? m[1] : '' };
+}
+/** The five-minute run: every time a client chose for their agent's call (tPickRow_) and nobody has been told of yet goes
+ *  to the agent the same run, copied to the branch manager, sales support (TRANSITION.CC) and the agent's unit manager,
+ *  and onto the client's open Salesforce tasks. The client's newest choice wins when they changed their mind. Marked
+ *  "[pick sent d MMM → Agent]" on every row it covers. Internal mail, so it is never held with client e-mail. */
+function tIntroPicks_() {
+  var sh = ss_().getSheetByName(SVC.RESP_SHEET);
+  if (!sh || sh.getLastRow() < 2) return 0;
+  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 11).getValues(), now = new Date(), by = {}, order = [];
+  vals.forEach(function (v, i) {
+    if (!tPickRow_(v[5]) || !(v[0] instanceof Date)) return;
+    var note = String(v[10] || '');
+    if (note.indexOf('[pick') >= 0 || now - v[0] > 14 * 86400000) return;
+    var tok = String(v[1] || '').trim();
+    if (!tok) return;
+    if (!by[tok]) { by[tok] = []; order.push(tok); }
+    by[tok].push({ n: i + 2, at: v[0], seg: String(v[2] || '').trim(), page: String(v[5] || ''), ref: String(v[6] || ''), note: note });
+  });
+  if (!order.length) return 0;
+  var tokens = tTokenMap_(), roster = tRoster_(), team = tTeam_(), facts = tSfAgentFacts_(), ha = null, sent = 0;
+  try { ha = tHaRead_(); } catch (e) { ha = null; }
+  var rc = tReceipt_(), F = 'Inter,Arial,sans-serif', esc = tEsc_;
+  order.forEach(function (tok) {
+    var rows = by[tok].sort(function (a, b) { return a.at - b.at; }), last = rows[rows.length - 1], row = tokens[tok] || {};
+    /* the choice: the newest of each part (a client may tap the time, then the way, then come back for the day) */
+    var w = { when: '', how: '', at: '', agentKey: '' };
+    rows.forEach(function (r) { var x = tPickWords_(r.page, r.ref); Object.keys(x).forEach(function (k) { if (x[k]) w[k] = x[k]; }); });
+    var agent = roster.filter(function (a) { return tNameKey_(a.name) === w.agentKey; })[0] || null;
+    if (!agent && ha) { var hr = ha.rows.filter(function (x) { return x.token === tok && x.agent; })[0]; if (hr) agent = roster.filter(function (a) { return tProfSame_(a.name, hr.agent); })[0] || { name: hr.agent }; }
+    var client = tText_(row.Client) || tText_(row['First name']) || 'A client', cno = tText_(row['Client number']);
+    var pr = agent ? tProfFor_(agent.name) : null, f = agent ? tProfFacts_(agent.name, facts) : null;
+    var to = (pr && pr.email) || (f && f.email) || (agent && agent.email) || '';
+    var unit = agent && agent.unit ? team.people.filter(function (p) { return tNameKey_(p.name) === tNameKey_(agent.unit) && p.email; })[0] : null;
+    var cc = (TRANSITION.CC || []).slice();
+    if (unit && unit.email && cc.indexOf(unit.email) < 0 && unit.email !== to) cc.push(unit.email);
+    if (!to) to = cc.shift() || SVC.AGENT_EMAIL;
+    var what = [w.when, w.how, w.at].filter(Boolean).join(' · ') || 'a call';
+    var link = T_BOARD_URL + '#t=' + encodeURIComponent(tok) + '&s=' + encodeURIComponent(last.seg || '');
+    var aFirst = agent ? String(tNiceName_(agent.name)).split(/\s+/)[0] : 'the agent';
+    var html = '<div style="font:15px/1.55 ' + F + ';color:#33465a;max-width:560px">' + tHead_() +
+      '<div style="padding:16px 4px 0"><p style="margin:0 0 10px">' + (agent ? esc(aFirst) + ', ' : '') + '<b>' + esc(client) + '</b>' + (cno ? ' (client ' + esc(cno) + ')' : '') +
+      ' read the introduction and chose when and how you should call.</p>' +
+      '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 14px;border:1px solid #e3e9ef;border-radius:10px;border-collapse:separate;width:100%">' +
+      (w.when ? '<tr><td style="padding:8px 12px;color:#64798e;width:120px">When</td><td style="padding:8px 12px;font-weight:700;color:#12202e">' + esc(w.when) + '</td></tr>' : '') +
+      (w.at ? '<tr><td style="padding:8px 12px;color:#64798e;border-top:1px solid #eef2f5">The day and time</td><td style="padding:8px 12px;font-weight:700;color:#12202e;border-top:1px solid #eef2f5">' + esc(w.at) + '</td></tr>' : '') +
+      (w.how ? '<tr><td style="padding:8px 12px;color:#64798e;border-top:1px solid #eef2f5">How</td><td style="padding:8px 12px;font-weight:700;color:#12202e;border-top:1px solid #eef2f5">' + esc(w.how) + '</td></tr>' : '') +
+      '<tr><td style="padding:8px 12px;color:#64798e;border-top:1px solid #eef2f5">Chosen</td><td style="padding:8px 12px;border-top:1px solid #eef2f5">' + esc(Utilities.formatDate(last.at, tTz_(), 'EEE d MMM, h:mm a')) + '</td></tr></table>' +
+      '<p style="margin:0 0 12px"><a href="' + esc(link) + '" style="display:inline-block;background:#13408F;color:#fff;font-weight:700;text-decoration:none;padding:11px 18px;border-radius:9px">Open ' + esc(client.split(/\s+/)[0]) + ' on the board</a></p>' +
+      '<p style="margin:0 0 10px">Their number and the whole file are on the board. Call at the time they chose, and log the call there the same day: the branch sees it, and so does the Salesforce task.</p>' +
+      '<p style="margin:0 0 10px;font-size:13.5px;color:#64798e">Copied to the branch manager and sales support' + (unit && cc.indexOf(unit.email) >= 0 ? ', and to ' + esc(tNiceName_(unit.name)) + ' as your unit manager' : '') + '.' +
+      (agent ? '' : ' Nobody is named on this client in our records yet: the branch decides who calls.') + '</p>' +
+      '<p style="font-size:12px;color:#64798e;margin-top:16px">' + esc(tInternal_(rc)) + '</p></div></div>';
+    try {
+      MailApp.sendEmail(to, 'Call ' + client + ': ' + what, 'Open in a mail app that shows HTML.', { htmlBody: html, cc: cc.join(','), name: TRANSITION.FROM_NAME });
+    } catch (e) { log_('transition', 'intro-pick-failed', client + ': ' + String(e && e.message ? e.message : e)); return; }
+    var mark = '[pick sent ' + Utilities.formatDate(now, tTz_(), 'd MMM') + ' → ' + (agent ? tNiceName_(agent.name) : 'the branch') + ']';
+    rows.forEach(function (r) { try { sh.getRange(r.n, 11).setValue((r.note ? r.note + ' ' : '') + mark); } catch (e) {} });
+    if (tSfOn_()) { try { tSfNoteTasks_(tok, cno, ha, 'From the introduction · ' + client + ' chose a call: ' + what + (agent ? ' · with ' + tNiceName_(agent.name) : '')); } catch (e) {} }
+    sent++;
+  });
+  if (sent) log_('transition', 'intro-picks', sent + ' client choice' + (sent === 1 ? '' : 's') + ' sent to the agents');
+  return sent;
 }
 
 /* ── the Client Book: each client's policies, from the live Branch Portfolio ── */

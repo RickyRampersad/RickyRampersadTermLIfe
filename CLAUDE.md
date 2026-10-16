@@ -1821,6 +1821,58 @@ voice under the new timing and the caption gives it away.
   (Playwright, mocked endpoint) in the session scratchpad cover it. A paste
   of Service.gs blanks `TEAM_CODE`: put the branch code back before the New
   version, or every screen locks out.
+- **The introduction shows who the agent is, and the client picks when and how they call** (16 October 2026: "write a
+  very nice bio on each of the agents. So different ones would template differently to show the caliber of the agents
+  … the backing of the entire branch … the client checks when can the agent call and the preferred method … it directly
+  goes to the agent and copy the branch manager and the sales support team, as well as the agent's manager", then
+  "don't depend on the agent skill bank … Depend on pulling social media, LinkedIn, Facebook, anything at all to build a
+  profile, and let's help the agent build their profiles").
+  - **The Agent Profiles tab** (Name, Kind, Shown as, Title, Since, Headline, Bio, Ask me about, Before Guardian,
+    Designations, Awards, Education, Phone, E-mail, Photo, Found online, To confirm, Agent approved, Branch approved,
+    Updated, Updated by) holds one row a person: every agent, the branch manager (`manager`), the support lead (`lead`)
+    and sales support (`support`). The drafts were written in the scratchpad (`profiles17/build-profiles.py`) from the
+    agent records in Salesforce, the Central Bank's registers of sales representatives and agents, TTAIFA's award pages
+    and membership listings, Guardian's own pages and the person's own pages, and imported once
+    (`Agent-Profiles-import.xlsx`). A draft bio states only what a source confirms with high confidence; everything
+    else is a question under To confirm with the sentence it would become. No pronouns: nobody's were given. **No draft
+    and no source about anyone goes in this repository**, which is public; the tab is private.
+  - **Two approvals, both on the last words.** A person opens "Your profile" on the board (agents, unit managers and
+    staff; matched by `tProfSame_`, so "SASHA LALLA" finds "Sasha Lalla-Jagassar"), edits, presses "See it as a client
+    does" (the real e-mail with a made-up client, `profile=preview`) and "This is me". The branch manager (or the branch
+    code) has "Profiles": every row with where it stands, the sources and the questions, and "Approve for clients" or
+    "Take it off clients". An edit by the person takes the branch's approval away and an edit by the branch takes the
+    person's, so a client never reads words their person has not read last. The branch code's "This is me" is the
+    branch manager's own. A client reads a profile's words only when both are on (`state` `live`); until then the
+    introduction carries the card with the Salesforce dates and no words. Everything goes through `action=board&profile=`
+    (`tProfileApi_`), so Service.gs needs no paste.
+  - **The dates are never typed.** `tSfAgentFacts_` reads every agent record with a hire date (Date Hired, License Date
+    Life and General, mobile, e-mail; kept six hours) and `tProfFacts_` gives the years with Guardian, the year licensed
+    and whether both licences are held. A general licence dated before 1950 is a placeholder and never shown. The number
+    on the card is the profile's, else the Salesforce mobile; the e-mail is the profile's, else a myguardiangroup.com
+    address on Salesforce, never another (one record holds a personal Gmail, one an outside agency's address).
+  - **The template follows the years with Guardian** (`T_PROF_TIER`): veteran 20 and more (the years lead the
+    headline: "27 years of looking after families like yours"), seasoned 10 to 19, established 3 to 9 ("your agent
+    from today", licensed since), new under 3 ("your new agent, with our whole branch behind them", and the branch team
+    comes before the picker). On 16 October: 2 veteran, 5 seasoned, 8 established, 3 new.
+  - **The e-mail** (`tIntroBuild_`, sent by `tIntroMail_` through `clientMail_` as before): the navy hero with the
+    shield; the agent's card (ribbon, initials or photo, number and e-mail, three fact tiles, headline, bio, awards,
+    before Guardian, "Ask … about"); "When should … call you?" with morning (8 to 12), afternoon (12 to 4) and evening
+    (4 to 7), phone, WhatsApp, video or in person, and a day and exact time; "Your whole branch stands behind …" (the
+    branch manager with his direct line, the support lead, sales support, each only once their own line is live); Query
+    Pal (`T_INTRO.QUERY`, www.querymypolicy.com, the branch's 24-hour query service) and the branch and Guardian Direct
+    numbers. The hold on introductions (`HOLD_INTROS`) still stands: nothing goes to a client until the branch releases
+    client e-mail. `transitionIntroTest` (the editor's Run button) sends the branch manager one of each template from
+    the real profiles, drafts included and marked TEST.
+  - **The client's choice.** Every tap opens `/your-policy/agent.html` with the choice made; the client confirms it with
+    one press (a mail scanner opening every link never chooses, and a scripted browser sends nothing). It files one
+    Client Responses row, Response `informed`, Page `/your-policy/agent?q=when_<part>&h=<way>`, Referrer `intro <agent
+    key>: <the day and time>` (`tPickRow_`, `tPickWords_`), and offers a calendar entry. The five-minute run
+    (`tIntroPicks_`) sends the agent one internal e-mail per client with the newest choice and a link to the client on
+    the board (never the client's number), copied to `TRANSITION.CC` and the agent's unit manager (the Unit column of
+    the Agent Skill Bank), posts it on the client's open Salesforce tasks, and marks the rows `[pick sent d MMM → Name]`.
+    No receipt goes for it (`tReceipts_` skips it): the agent's call is the answer. The card shows "Asked for a call".
+  - `profiles17/prof-test.js` in the scratchpad covers it (108 checks: Node on the 16 October tabs with the drafts and a
+    mocked Salesforce, then Playwright on the board as an agent, the branch and a phone, and on the client's page).
 - **After a call, one press on the board marks the file and can write to the
   client in the manager's name.** Asked for on 28 September 2026 ("a button
   where I click so I can update the notes and let them know that I will

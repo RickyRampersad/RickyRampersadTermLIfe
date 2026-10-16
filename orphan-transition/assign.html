@@ -387,6 +387,26 @@
   .dtw{overflow-x:auto;margin:6px 0 2px} table.dt{border-collapse:collapse;width:100%;font-size:14px} .dt th{text-align:left;font-size:12.5px;color:var(--dim);font-weight:600;padding:6px 12px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
   .dt td{padding:7px 12px 7px 0;border-bottom:1px solid var(--line2);color:var(--body);white-space:nowrap;font-variant-numeric:tabular-nums} .dt td:first-child{white-space:normal;min-width:120px;color:var(--ink);font-weight:600}
   .dt tr.go{cursor:pointer} .dt tr.go:hover td{background:var(--hover)} .dt td.bad{color:var(--stop);font-weight:700}
+  /* profiles (16 October 2026) */
+  .pfstate{border-radius:var(--r2);padding:12px 14px;margin:0 0 12px;font-size:14.5px;border:1px solid var(--line)}
+  .pfstate.draft{background:var(--warnbg);border-color:var(--warnline);color:var(--warn)} .pfstate.agent,.pfstate.branch{background:var(--notebg);border-color:var(--noteline);color:var(--tdark)}
+  .pfstate.live{background:var(--okbg);border-color:var(--okline);color:var(--ok)} .pfstate b{color:inherit}
+  .pfwrap{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)} @media (max-width:1100px){.pfwrap{grid-template-columns:minmax(0,1fr)}}
+  .pfform label{display:block;font-size:13px;font-weight:700;color:var(--ink);margin:12px 0 4px} .pfform label small{font-weight:500;color:var(--dim)}
+  .pfform input,.pfform textarea,.pfform select{width:100%;font:15px/1.45 var(--fb);color:var(--ink);border:1px solid var(--field);border-radius:9px;padding:9px 10px;background:#fff}
+  .pfform textarea{min-height:150px;resize:vertical} .pfform .cnt{font-size:12px;color:var(--dim);text-align:right;margin-top:2px}
+  .pfform input:focus,.pfform textarea:focus,.pfform select:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
+  .pfbtns{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 2px} .pfbtns button{font:700 14.5px var(--fb);border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid var(--field);background:#fff;color:var(--ink);min-height:44px}
+  .pfbtns button.me{background:var(--navy);color:var(--gold);border-color:var(--navy)} .pfbtns button.ok{background:var(--ok);color:#fff;border-color:var(--ok)} .pfbtns button:disabled{opacity:.55;cursor:default}
+  .pftiles{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px} .pftiles div{flex:1 1 120px;background:var(--hover);border:1px solid var(--line);border-radius:10px;padding:9px 10px;text-align:center}
+  .pftiles b{display:block;font:800 19px var(--fh);color:var(--ink)} .pftiles span{font-size:12.5px;color:var(--dim)}
+  .pflist li{margin:0 0 7px;font-size:14px} .pflist .cf{font-size:11px;font-weight:800;border-radius:6px;padding:0 6px;text-transform:uppercase;margin-right:4px}
+  .cf.high{background:var(--okbg);color:var(--ok)} .cf.medium{background:var(--warnbg);color:var(--warn)} .cf.low{background:var(--stopbg);color:var(--stop)}
+  .pfprev{width:100%;border:1px solid var(--line);border-radius:12px;background:#eef2f6;min-height:600px}
+  .pfchip{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 9px} .pfchip.draft{background:var(--warnbg);color:var(--warn)}
+  .pfchip.agent,.pfchip.branch{background:var(--notebg);color:var(--tdark)} .pfchip.live{background:var(--okbg);color:var(--ok)}
+  .pfadd{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px} .pfadd select,.pfadd input{font:14px var(--fb);border:1px solid var(--field);border-radius:9px;padding:8px 10px}
+  .pfadd button{font:700 14px var(--fb);border-radius:9px;padding:8px 14px;border:0;background:var(--navy);color:#fff;cursor:pointer}
   /* the Agents tab (14 October 2026) */
   .agstate{font-size:14.5px;color:var(--dim);margin:4px 0 10px} .agstate:empty{display:none} .agstate .stop{color:var(--stop);font-weight:600}
   .agstate button{background:none;border:1px solid var(--field);border-radius:999px;padding:5px 12px;font:600 13.5px var(--fb);color:var(--ink);cursor:pointer;margin-left:8px}
@@ -896,6 +916,14 @@
       <div class="card team" id="workWrap"><div class="panehead"><h2 id="workTitle">Your work</h2><span id="workSum"></span></div><div id="workBody"></div></div>
     </div>
 
+    <!-- profiles: who a client is introduced to (16 October 2026). Each person their own; the branch manager everyone's -->
+    <div class="pane" id="paneProfile" hidden>
+      <div class="panehead"><h2 id="pfTitle">Your profile</h2><span id="pfSub">What a client reads about you when you are introduced as their agent.</span></div>
+      <div class="agstate" id="pfState"></div>
+      <div class="card dcard" id="pfList" hidden></div>
+      <div id="pfOne" hidden></div>
+    </div>
+
     <!-- the team: today's calls and notes, units and the roster -->
     <div class="pane" id="paneTeam" hidden>
       <div class="card team" id="statsWrap" style="display:none"><div class="panehead"><h2>The team: progress and points</h2><span id="statsSum"></span></div><div id="statsBody"></div></div>
@@ -1071,6 +1099,7 @@ function forget() {
   dropSnap(); STALE = false; AGAIN = false;   // the picture of the last board goes with the person who saw it
   FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; OPENX = {}; EXP = {};
   PAIRX = {}; PAIR_OPEN = {}; MFSHOW = 15;   // a possible family opened in full goes too: the branch's figures never reach the next person
+  PF = null; PF_OPEN = ''; PF_PREV = null; PF_BUSY = false;   // and every profile read or being edited
   M = { scope: 'open', town: '', agent: -1, opp: '', show: MSTEP }; MW = null;
   TAB = ''; SUB = ''; HSUB = ''; SHOW_N = SHOW_STEP; HSHOW_N = HSTEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true; $('barIntro').disabled = false; $('barIntroWhy').textContent = '';
   FILTER_IDS.forEach(function (id) { $(id).value = ''; });
@@ -1160,7 +1189,10 @@ var TABDEF = {
   match: { label: 'Match', grp: 'act', pane: 'paneMatch' },
   team: { label: 'Team', grp: 'branch', pane: 'paneTeam' },
   insights: { label: 'Insights', grp: 'branch', pane: 'paneInsights' },
-  claims: { label: 'Claims', grp: 'you', pane: 'paneClaims' }
+  claims: { label: 'Claims', grp: 'you', pane: 'paneClaims' },
+  /* who a client is introduced to (16 October 2026): each person checks their own, the branch manager approves */
+  profile: { label: 'Your profile', grp: 'you', pane: 'paneProfile' },
+  profiles: { label: 'Profiles', grp: 'branch', pane: 'paneProfile' }
 };
 /* the side menu's headings, and who is signed in as what */
 var GRP_WORDS = { you: 'Yours', act: 'Act on', lists: 'Lists', branch: 'The branch' };
@@ -1169,12 +1201,13 @@ function tabsFor(d) {
   var r = d.role, claims = !!(d.claims && d.claims.rows && d.claims.rows.length);
   /* Match (8 October 2026) for whoever names agents, once the backend sends it */
   var match = d.match ? ['match'] : [];
-  if (r === 'branch') return ['urgent', 'dash', 'agents'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights']);
+  if (r === 'branch') return ['urgent', 'dash', 'agents'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights', 'profiles']);
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
+  var prof = d.me && d.me.name ? ['profile'] : [];
   /* Team for staff too (15 October 2026: "all staff and managers are supposed to see the progress each support has") */
-  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all', 'team']);
-  var out = ['open'].concat(work, claims ? ['claims'] : []);
+  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, prof, ['urgent', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all', 'team']);
+  var out = ['open'].concat(work, prof, claims ? ['claims'] : []);
   if (r === 'unit') out.push('dash', 'agents');
   if (d.clients.some(urgentOf)) out.push('urgent');
   out = out.concat(['done', 'all']);
@@ -1342,7 +1375,7 @@ function pickTab(t, keep) {
 }
 function showPane() {
   var def = TABDEF[TAB] || {}, pane = def.pane || 'paneList';
-  ['paneList', 'paneHouseholds', 'paneDash', 'paneAgents', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims'].forEach(function (p) { $(p).hidden = p !== pane; });
+  ['paneList', 'paneHouseholds', 'paneDash', 'paneAgents', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims', 'paneProfile'].forEach(function (p) { $(p).hidden = p !== pane; });
   if (pane !== 'paneAgents') AG_VISIBLE = false;
   if (pane === 'paneList') listPane();
   else if (pane === 'paneHouseholds') householdsPane();
@@ -1353,6 +1386,7 @@ function showPane() {
   else if (pane === 'paneTeam') teamPane();
   else if (pane === 'paneInsights') insightsPane();
   else if (pane === 'paneClaims') claimsPanel(D);
+  else if (pane === 'paneProfile') profilePane();
 }
 var FILTER = { agent: '' };
 /* one person whatever the spacing or hyphens of their name: "Persad-Khan" and "Persad Khan" (the backend's tNameKey_) */
@@ -1693,8 +1727,13 @@ function factReach(c) {
   });
   phones.forEach(function (p) { out.push('<span class="ln"><a href="tel:' + esc(digits(p.n)) + '">☎ ' + esc(p.n) + '</a>' + (p.w ? ' <span class="mut">' + esc(p.w) + '</span>' : '') + '</span>'); });
   if (email) out.push('<span class="ln"><a href="mailto:' + esc(email) + '">' + esc(email) + '</a></span>');
-  if (c.reach) out.push('<span class="ln">prefers <b>' + esc(c.reach.toLowerCase()) + '</b></span>');
-  if (c.when) out.push('<span class="ln">best in the <b>' + esc(c.when.toLowerCase()) + '</b></span>');
+  /* the call the client asked for from the introduction (16 October 2026): their own words for when and how */
+  if (c.pick) out.push('<span class="ln"><b>Asked for a call:</b> ' + esc([c.pick.at && c.pick.at !== 'any day' ? c.pick.at : '', c.pick.when ? c.pick.when.toLowerCase() : '', c.pick.how].filter(Boolean).join(', ')) +
+    (c.pick.on ? ' <span class="mut">chosen ' + esc(c.pick.on) + '</span>' : '') + '</span>');
+  else {
+    if (c.reach) out.push('<span class="ln">prefers <b>' + esc(c.reach.toLowerCase()) + '</b></span>');
+    if (c.when) out.push('<span class="ln">best in the <b>' + esc(c.when.toLowerCase()) + '</b></span>');
+  }
   return '<section class="fact' + (out.length ? '' : ' none') + '"><h4>Reach them</h4>' + (out.length ? out.join('') : '<span class="mut">No number or e-mail on file: look the client up by number.</span>') + '</section>';
 }
 function factHome(c) {
@@ -3115,6 +3154,180 @@ function workOf(d, me) {
   out.sort(function (a, b) { return (b.t - a.t) || String(a.c.client).localeCompare(String(b.c.client)); });
   return out;
 }
+/* ---- profiles (16 October 2026) ----
+   "let's help the agent build their profiles": each person reads the draft written from their Salesforce record and what
+   the public web shows, changes anything, and presses "This is me"; the branch manager approves it for clients. A client
+   reads a profile only when it carries both, and an edit by one side takes the other's approval away (tProfileApi_). */
+var PF = null, PF_OPEN = '', PF_PREV = null, PF_BUSY = false, PF_DIRTY = false;
+var PF_FIELDS = [['shown', 'Your name as clients read it'], ['title', 'Your title', '', 'Left empty, the letter says "Your agent"'], ['since', 'With the branch since', 'team', 'A year, like 2010'],
+  ['headline', 'One line about you', '', 'The first thing a client reads under your name'], ['bio', 'About you', 'bio'],
+  ['ask', 'Ask me about', '', 'Up to four, with commas between them'], ['before', 'Before Guardian Life'], ['desig', 'Designations', '', 'With commas: LUTCF, FLMI'],
+  ['awards', 'Awards', '', 'With semicolons between them'], ['edu', 'Education'], ['phone', 'The number clients call'], ['email', 'The e-mail clients write to']];
+var PF_STATE = { draft: 'Draft', agent: 'Waiting for the branch', branch: 'Waiting for the person', live: 'Live for clients', none: 'No profile' };
+var PF_TIER = { veteran: 'Veteran: 20 years and more', seasoned: 'Seasoned: 10 to 19 years', established: 'Established: 3 to 9 years', new: 'New: under 3 years',
+  manager: 'The branch manager', lead: 'Leads the support team', support: 'Sales support' };
+function pfLoad() {
+  if (PF_BUSY) return;
+  PF_BUSY = true;
+  $('pfState').innerHTML = 'Reading the profiles&hellip;';
+  api(signed({ action: 'board', profile: 'list' })).then(function (r) {
+    PF_BUSY = false;
+    PF = r && r.ok && r.profiles ? r : { ok: false, why: r && r.ok && r.clients ? 'This needs the latest Transition.gs: paste it into the Apps Script project and publish a New version.' : (r && r.error) || 'The sheet did not answer.' };
+    if (TAB === 'profile' || TAB === 'profiles') profilePane(true);
+  }).catch(function () { PF_BUSY = false; PF = { ok: false, why: 'The sheet did not answer.' }; if (TAB === 'profile' || TAB === 'profiles') profilePane(true); });
+}
+function pfFind(name) {
+  if (!PF || !PF.ok) return null;
+  if (PF.mine && PF.mine.name === name) return PF.mine;
+  return (PF.profiles.list || []).filter(function (p) { return p.name === name; })[0] || null;
+}
+function pfPut(p) {
+  if (!p || !PF) return;
+  if (PF.mine && PF.mine.name === p.name) PF.mine = p;
+  var L = PF.profiles.list || [];
+  for (var i = 0; i < L.length; i++) if (L[i].name === p.name) L[i] = p;
+}
+function pfMine(p) { return !!(PF && PF.mine && p && PF.mine.name === p.name); }
+function profilePane(force) {
+  if (!D) return;
+  /* the two-minute refresh never redraws a form someone is writing in */
+  if (!force && PF_DIRTY && !$('pfOne').hidden) return;
+  if (!PF) { $('pfList').hidden = true; $('pfOne').hidden = true; pfLoad(); return; }
+  if (!PF.ok) {
+    $('pfList').hidden = true; $('pfOne').hidden = true;
+    $('pfState').innerHTML = '<span class="stop">' + esc(PF.why) + '</span> <button type="button" id="pfRetry">Try again</button>';
+    $('pfRetry').addEventListener('click', function () { PF = null; profilePane(true); });
+    return;
+  }
+  var boss = !!PF.profiles.boss, all = boss && TAB === 'profiles';
+  $('pfTitle').textContent = all ? 'Profiles' : 'Your profile';
+  $('pfSub').textContent = all ? 'What a client reads about each agent and the team behind them. Each person checks their own; you approve it for clients.'
+    : 'What a client reads about you when you are introduced. Check every word: nothing reaches a client until you press This is me' + (boss ? '.' : ' and Ricky approves it.');
+  $('pfState').innerHTML = PF.profiles.ready ? '' : 'The Agent Profiles tab is not in the sheet yet: import it (File &rarr; Import &rarr; Insert new sheet).';
+  if (all && !PF_OPEN) { $('pfOne').hidden = true; pfListDraw(); return; }
+  var p = all ? pfFind(PF_OPEN) : PF.mine;
+  $('pfList').hidden = true;
+  if (!p) { $('pfOne').hidden = true; $('pfState').innerHTML = esc(PF.profiles.none || 'There is no profile for you yet.'); return; }
+  pfOneDraw(p, boss);
+}
+function pfListDraw() {
+  var L = (PF.profiles.list || []).slice(), n = { live: 0, agent: 0, branch: 0, draft: 0 };
+  L.forEach(function (p) { n[p.state] = (n[p.state] || 0) + 1; });
+  var order = { manager: 0, lead: 1, support: 2, agent: 3 };
+  L.sort(function (a, b) { return (order[a.kind] - order[b.kind]) || ((b.years || 0) - (a.years || 0)); });
+  var row = function (p) {
+    return '<tr class="go" data-pf="' + esc(p.name) + '"><td>' + esc(p.shown || p.name) + '</td><td>' + esc(p.kind === 'agent' ? (PF_TIER[p.tier] || '') : PF_TIER[p.kind] || '') + '</td>' +
+      '<td><span class="pfchip ' + esc(p.state) + '">' + esc(PF_STATE[p.state] || p.state) + '</span></td><td>' + esc(p.updated || '') + (p.by ? ' <span class="mut">' + esc(p.by) + '</span>' : '') + '</td></tr>';
+  };
+  var w = PF.profiles.without || [];
+  $('pfList').innerHTML = '<div class="dtiles">' +
+    '<div class="dtile"><b>' + n.live + '</b><span>live for clients</span></div><div class="dtile"><b>' + n.agent + '</b><span>waiting for your approval</span></div>' +
+    '<div class="dtile"><b>' + n.branch + '</b><span>waiting for the person</span></div><div class="dtile"><b>' + n.draft + '</b><span>drafts nobody has checked</span></div></div>' +
+    '<p class="dsub">A client reads a profile only once its person has pressed This is me and you have approved it. Until then an introduction carries the dates from Salesforce and no words.</p>' +
+    '<div class="dtw"><table class="dt"><tr><th>Name</th><th>Template</th><th>Where it stands</th><th>Last changed</th></tr>' + L.map(row).join('') + '</table></div>' +
+    (w.length ? '<div class="pfadd"><select id="pfAddName" aria-label="Who"><option value="">Add a profile for&hellip;</option>' + w.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select>' +
+      '<select id="pfAddKind" aria-label="As"><option value="agent">an agent</option><option value="support">sales support</option><option value="lead">the support lead</option><option value="manager">the branch manager</option></select>' +
+      '<button type="button" id="pfAddGo">Add</button></div>' : '');
+  $('pfList').hidden = false;
+  each('#pfList tr[data-pf]', function (tr) { tr.addEventListener('click', function () { PF_OPEN = tr.getAttribute('data-pf'); PF_PREV = null; PF_DIRTY = false; profilePane(true); window.scrollTo(0, 0); }); });
+  if ($('pfAddGo')) $('pfAddGo').addEventListener('click', function () {
+    var nm = $('pfAddName').value;
+    if (!nm) return toast('Choose who first.', true);
+    pfAct({ profile: 'add', name: nm, kind: $('pfAddKind').value }, 'Added. Open it to write the first draft.', function (r) { if (r.profile) { PF.profiles.list.push(r.profile); PF.profiles.without = w.filter(function (x) { return x !== nm; }); } pfListDraw(); });
+  });
+}
+function pfOneDraw(p, boss) {
+  var mine = pfMine(p), f = p.facts, first = String(p.shown || p.name).split(/\s+/)[0], all = boss && TAB === 'profiles';
+  var words = {
+    draft: mine ? '<b>Draft.</b> Read it, change anything that is not right, then press <b>This is me</b>.' + (boss ? '' : ' Ricky approves it after you, and only then does a client read it.')
+      : '<b>Draft.</b> ' + esc(first) + ' has not said this is them yet. Any change you make here, ' + esc(first) + ' reads before it goes out.',
+    agent: mine && !boss ? '<b>You said this is you.</b> Waiting for Ricky to approve it for clients.' : '<b>' + esc(first) + ' said this is them</b> (' + esc(p.agentOk) + '). Approve it for clients when you are happy with it.',
+    branch: mine ? '<b>Ricky has approved this version.</b> Read it and press This is me: clients read it once you have.' : '<b>You approved it</b> (' + esc(p.branchOk) + '). Waiting for ' + esc(first) + ' to say this is them.',
+    live: '<b>Live.</b> ' + (mine ? 'Clients you are introduced to read this.' : 'Clients ' + esc(first) + ' is introduced to read this.') + ' A change goes back for approval before clients see it.'
+  }[p.state] || '';
+  var tiles = '';
+  if (f) {
+    var t = [];
+    if (f.years >= 1) t.push([f.years + (f.years === 1 ? ' year' : ' years'), 'with Guardian Life']);
+    if (f.life) t.push([f.life, 'licensed in life insurance']);
+    if (f.life) t.push([f.general ? 'Life & general' : 'Life', f.general ? 'both licences' : 'licence']);
+    tiles = '<div class="card dcard"><h3>From ' + (mine ? 'your' : esc(first) + '&rsquo;s') + ' agent record</h3><p class="dsub">These print on the card as they are. If one is wrong, sales support corrects it in Salesforce.</p>' +
+      '<div class="pftiles">' + t.map(function (x) { return '<div><b>' + esc(x[0]) + '</b><span>' + esc(x[1]) + '</span></div>'; }).join('') + '</div>' +
+      '<p class="dsub">' + (p.show && p.show.phone ? 'The number on the card: <b>' + esc(p.show.phone) + '</b>' + (p.phone ? '' : ' (the mobile on Salesforce)') + '. ' : '') +
+      (p.show && p.show.email ? 'The e-mail: <b>' + esc(p.show.email) + '</b>.' : 'No e-mail shows until one is typed below.') + '</p></div>';
+  } else if (p.kind === 'agent') tiles = '<p class="pnote">' + esc(PF.profiles.sfWhy || 'Salesforce has no agent record under this name, so the card carries no dates.') + '</p>';
+  var field = function (x) {
+    var k = x[0], label = x[1], kind = x[2] || '', hint = x[3] || '', v = k === 'ask' || k === 'desig' ? (p[k] || []).join(', ') : k === 'awards' ? (p[k] || []).join('; ') : (p[k] || '');
+    if (kind === 'team' && p.kind === 'agent') return '';
+    var ph = k === 'phone' && f && f.mobile ? 'Left empty: ' + f.mobile + ' from Salesforce' : k === 'email' && f && /@myguardiangroup\.com$/i.test(f.email || '') ? 'Left empty: ' + f.email : k === 'shown' ? p.name : '';
+    if (kind === 'bio') return '<label for="pf_' + k + '">' + esc(label) + ' <small>a few sentences; a client reads it as written</small></label><textarea id="pf_' + k + '" data-k="' + k + '" maxlength="' + PF.profiles.max.bio + '">' + esc(v) + '</textarea><div class="cnt" id="pfCnt"></div>';
+    return '<label for="pf_' + k + '">' + esc(label) + (hint ? ' <small>' + esc(hint) + '</small>' : '') + '</label><input id="pf_' + k + '" data-k="' + k + '" maxlength="' + PF.profiles.max.line + '" value="' + esc(v) + '" placeholder="' + esc(ph) + '">';
+  };
+  var extra = boss ? '<label for="pf_kind">Kind</label><select id="pf_kind" data-k="kind">' + ['agent', 'manager', 'lead', 'support'].map(function (k) { return '<option value="' + k + '"' + (p.kind === k ? ' selected' : '') + '>' + esc(PF.profiles.kinds[k]) + '</option>'; }).join('') + '</select>' +
+    '<label for="pf_photo">Photo <small>a link to a hosted picture, starting https://</small></label><input id="pf_photo" data-k="photo" value="' + esc(p.photo || '') + '">' : '';
+  var conf = (p.confirm || []).length ? '<div class="card dcard"><h3>Questions from the draft</h3><p class="dsub">Answer them by changing the words above; anything you leave out stays out.</p><ul class="pflist">' +
+    p.confirm.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' : '';
+  var found = (p.found || []).length ? '<div class="card dcard"><details><summary><b>What the draft was written from (' + p.found.length + ')</b></summary><p class="dsub">Public, professional sources only. A fact marked low or medium is not in the draft.</p><ul class="pflist">' +
+    p.found.map(function (x) { return '<li><span class="cf ' + esc(x.c) + '">' + esc(x.c || '–') + '</span>' + esc(x.f) + (x.u ? ' <a href="' + esc(x.u) + '" target="_blank" rel="noopener noreferrer">source</a>' : '') + '</li>'; }).join('') + '</ul></details></div>' : '';
+  var btns = '<div class="pfbtns"><button type="button" id="pfSave">Save changes</button><button type="button" id="pfSee">See it as a client does</button>' +
+    (mine && p.state !== 'live' && !(p.state === 'agent' && !boss) ? '<button type="button" class="me" id="pfMe">This is me</button>' : '') +
+    (boss && !mine && (p.state === 'agent' || p.state === 'draft') ? '<button type="button" class="ok" id="pfOk">Approve for clients</button>' : '') +
+    (boss && p.branchOk ? '<button type="button" id="pfOff">Take it off clients</button>' : '') +
+    (all ? '<button type="button" id="pfBack">All profiles</button>' : '') + '</div>';
+  $('pfOne').innerHTML = '<div class="pfstate ' + esc(p.state) + '">' + words + '</div>' +
+    '<div class="pfwrap"><div><div class="card dcard pfform"><h3>' + esc(p.shown || p.name) + ' <span class="pfchip ' + esc(p.state) + '">' + esc(PF_STATE[p.state] || '') + '</span></h3>' +
+    '<p class="dsub">' + esc(p.kind === 'agent' ? 'Template: ' + (PF_TIER[p.tier] || '') : PF_TIER[p.kind] || '') + (p.updated ? ' · last changed ' + esc(p.updated) + (p.by ? ' by ' + esc(p.by) : '') : '') + '</p>' +
+    PF_FIELDS.map(field).join('') + extra + btns + '</div>' + conf + found + '</div>' +
+    '<div>' + tiles + '<div class="card dcard"><h3>As a client reads it</h3><p class="dsub">The introduction e-mail, with a made-up client. Press "See it as a client does" after a change.</p><div id="pfPrevBox">' +
+    (PF_PREV && PF_PREV.name === p.name ? '' : '<p class="dsub">Not drawn yet.</p>') + '</div></div></div></div>';
+  $('pfOne').hidden = false;
+  if (PF_PREV && PF_PREV.name === p.name) pfShowPrev(PF_PREV.html);
+  var bio = $('pf_bio'), cnt = function () { if (bio) $('pfCnt').textContent = bio.value.length + ' of ' + PF.profiles.max.bio + ' characters · ' + (bio.value.trim() ? bio.value.trim().split(/\s+/).length : 0) + ' words'; };
+  cnt();
+  each('#pfOne [data-k]', function (el) { el.addEventListener('input', function () { PF_DIRTY = true; cnt(); }); });
+  var vals = function () { var o = { name: p.name }; each('#pfOne [data-k]', function (el) { o[el.getAttribute('data-k')] = el.value; }); return o; };
+  $('pfSave').addEventListener('click', function () {
+    var o = vals(); o.profile = 'save';
+    pfAct(o, 'Saved.', function (r) { PF_DIRTY = false; if (r.profile) { pfPut(r.profile); if (r.profile.state !== p.state && p.state !== 'draft') toast('Saved. The change goes back for ' + (mine && !boss ? 'Ricky\'s approval' : first + '\'s check') + ' before clients see it.'); } PF_PREV = null; profilePane(true); });
+  });
+  $('pfSee').addEventListener('click', function () {
+    if (PF_DIRTY) return toast('Save your changes first, then see it as a client does.', true);
+    $('pfPrevBox').innerHTML = '<p class="dsub">Drawing it&hellip;</p>';
+    api(signed({ action: 'board', profile: 'preview', name: p.name })).then(function (r) {
+      if (!r || !r.ok || !r.preview) { $('pfPrevBox').innerHTML = '<p class="dsub stop">' + esc((r && r.error) || 'The sheet did not answer.') + '</p>'; return; }
+      PF_PREV = { name: p.name, html: r.preview.html }; pfShowPrev(r.preview.html);
+    }).catch(function () { $('pfPrevBox').innerHTML = '<p class="dsub stop">The sheet did not answer.</p>'; });
+  });
+  var done = function (msg) { return function (r) { PF_DIRTY = false; if (r.profile) pfPut(r.profile); PF_PREV = null; toast(msg); profilePane(true); }; };
+  if ($('pfMe')) $('pfMe').addEventListener('click', function () {
+    if (PF_DIRTY) return toast('Save your changes first.', true);
+    pfAct({ profile: 'me', name: p.name }, '', done(boss ? 'Done: it is live for clients.' : 'Thank you. Ricky has it to approve.'));
+  });
+  if ($('pfOk')) $('pfOk').addEventListener('click', function () {
+    if (PF_DIRTY) return toast('Save your changes first.', true);
+    pfAct({ profile: 'approve', name: p.name }, '', done(p.state === 'agent' ? 'Approved: it is live for clients.' : 'Approved. Clients read it once ' + first + ' says this is them.'));
+  });
+  if ($('pfOff')) $('pfOff').addEventListener('click', function () { pfAct({ profile: 'withdraw', name: p.name }, '', done('Taken off: introductions carry the dates only until you approve it again.')); });
+  if ($('pfBack')) $('pfBack').addEventListener('click', function () { if (PF_DIRTY && !confirm('Leave without saving your changes?')) return; PF_OPEN = ''; PF_DIRTY = false; PF_PREV = null; profilePane(true); });
+}
+function pfShowPrev(html) {
+  var box = $('pfPrevBox');
+  box.innerHTML = '';
+  var fr = document.createElement('iframe');
+  fr.className = 'pfprev'; fr.setAttribute('sandbox', 'allow-same-origin'); fr.setAttribute('title', 'The introduction as a client reads it');
+  fr.srcdoc = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#eef2f6;padding:12px 0">' + html + '</body>';
+  fr.addEventListener('load', function () { try { fr.style.height = (fr.contentDocument.documentElement.scrollHeight + 8) + 'px'; } catch (e) {} });
+  box.appendChild(fr);
+}
+function pfAct(params, ok, then) {
+  if (notYet()) return;
+  api(signed(Object.assign({ action: 'board' }, params))).then(function (r) {
+    if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not answer.', true); return; }
+    if (ok) toast(ok);
+    if (then) then(r);
+  }).catch(function () { toast('The sheet did not answer. Nothing was changed.', true); });
+}
+
 function workPane() {
   var d = D, me = d.me ? d.me.name : '';
   var rows = me ? workOf(d, me) : [];
@@ -3428,7 +3641,7 @@ function claimLine(c) {
 /* 3 October 2026: "so the agent can see the email and history and tasks opened on salesforce assigned to the staff and a
    place for their comments". Opened on demand, one client at a time. */
 var DET = {}, DET_OPEN = {}, DRAFT = {}, focusDet = '';
-function typing() { var a = document.activeElement; return !!(a && a.classList && a.classList.contains('cmtbox')); }
+function typing() { var a = document.activeElement; return !!(a && a.classList && (a.classList.contains('cmtbox') || (a.closest && a.closest('.pfform')))); }
 function detButton(c, small) {
   if (!D || !D.detail) return '';
   return '<button type="button" class="detbtn' + (DET_OPEN[c.token] ? ' on' : '') + '" data-det="' + esc(c.token) + '">' +
