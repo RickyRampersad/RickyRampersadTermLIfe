@@ -1,4 +1,4 @@
-# CSEC Study Hub
+# Study Hub
 
 A study module for Trinidad and Tobago students covering **Standard 1 through
 Form 5** — ten years and two examinations, **SEA** and **CSEC**. Written for

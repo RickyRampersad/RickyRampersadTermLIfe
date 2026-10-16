@@ -1,4 +1,4 @@
-/* CSEC Study Hub — core engine
+/* SEA & CSEC Study Hub — core engine
  *
  * Profiles, storage, the mastery model, spaced repetition and the daily plan.
  * Everything lives in this browser. There is no server behind this site, so a

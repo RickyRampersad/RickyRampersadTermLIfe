@@ -247,6 +247,7 @@ var CODE_MAX_TRIES = 5;
 var CODES_PER_HOUR = 6;
 
 function sendCode(groupCode, profileId, name, role, email) {
+  groupCode = normalise(groupCode);   /* findGroup normalises the stored code, not the incoming one */
   var g = findGroup(groupCode);
   if (!g) return { ok: false, error: 'no_group' };
   if (!profileId) return { ok: false, error: 'no_profile' };
@@ -288,6 +289,7 @@ function sendCode(groupCode, profileId, name, role, email) {
 }
 
 function verifyCode(groupCode, profileId, otp) {
+  groupCode = normalise(groupCode);   /* findGroup normalises the stored code, not the incoming one */
   var g = findGroup(groupCode);
   if (!g) return { ok: false, error: 'no_group' };
   otp = String(otp || '').replace(/\D/g, '');
@@ -327,6 +329,7 @@ function verifyCode(groupCode, profileId, otp) {
 
 /** A sign-in that happened by name on the device, reported so one list covers every device. */
 function noteSignIn(groupCode, profileId, how) {
+  groupCode = normalise(groupCode);   /* findGroup normalises the stored code, not the incoming one */
   var g = findGroup(groupCode);
   if (!g) return { ok: false, error: 'no_group' };
   logSignInRow(g.code, profileId, '', '', String(how || 'name'), 'signed in', '');
@@ -346,6 +349,7 @@ function logSignInRow(groupCode, profileId, name, role, how, result, note) {
 
 /** The list a parent or teacher reads. Newest first, this group only. */
 function signIns(groupCode) {
+  groupCode = normalise(groupCode);   /* findGroup normalises the stored code, not the incoming one */
   var g = findGroup(groupCode);
   if (!g) return { ok: false, error: 'no_group' };
   var rows = sheet('signins').getDataRange().getValues(), out = [];
