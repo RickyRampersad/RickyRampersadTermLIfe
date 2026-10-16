@@ -1801,7 +1801,14 @@ voice under the new timing and the caption gives it away.
   internal footer) and, when the box is left ticked, the client the
   introduction the receipt promised ("Meet your agent: Name", through
   `clientMail_`, so from support@ when the Entra properties exist), once per
-  client per agent, marked `[intro Name]`. The roster is the Agent Skill
+  client per agent, marked `[intro Name]`. **Since 16 October 2026 the brief is a first look, not the file** ("we can just
+  give a sneak peek, but he is required to log into the portal"): per client the name, age, town, the former book, how
+  many policies (in force, lapsed, applications), the household and whether it was named with them, the one thing they
+  told us that matters most, an open call-back, and a link that opens that client on the board
+  (`/orphanmanagement#t=…`); never a phone number, address, e-mail, words or money figure of the client. Then **Your
+  TT$200** (`tBriefClaims_`, from the Retention Payments tab, their own claims only): owed (with the Retention unit),
+  found and held, to be paid on the commission run, paid, and still to earn (every client named to them with no claim,
+  TT$200 each). `brief16/brief-test.js` in the scratchpad covers it (33 checks). The roster is the Agent Skill
   Bank: name, e-mail, Areas covered, Active, Portal code, and a Phone column
   if one is added, which the introduction then carries; the sheet has no
   client phone numbers unless a Phone column is added to Transition Send

@@ -6251,66 +6251,138 @@ function tTellClient_(tok, key, status, line) {
   return { sent: true, to: to };
 }
 
-/** One internal e-mail to the agent for the batch: every client named to
- *  them in this press, with everything the branch knows, so the first call
- *  is personal and not cold. From the script owner's account, never to a
- *  client, and it says it is internal. */
-var T_BRIEF_FULL = 25;   // clients shown in full in one brief; a larger batch lists the rest by name, and the board has every one
+/** One internal e-mail to the agent for the batch: a first look at every client named to them in this press, and the way
+ *  in to the board, where the whole file is. 16 October 2026: "we can just give a sneak peek, but he is required to log into
+ *  the portal to see the household …, the history we have gotten …, the kind of things that we did for him with the
+ *  birthdays …, and what task has been opened for him. So if [the agent] can make a comment, it's on the task. And also to
+ *  remember the amount that's owed to him". So no phone number, address, e-mail, words or money figure of the client travels
+ *  here: who they are, their household, how many policies, the one thing they told us that matters most, and a link that
+ *  opens that client on the board; then the agent's own TT$200: owed, to be paid, paid, and still to earn. Until then the brief carried the whole file
+ *  and an agent could call from the e-mail without ever opening the board. From the script
+ *  owner's account, never to a client, and it says it is internal. */
+var T_BRIEF_FULL = 25;   // clients shown in one brief; a larger batch lists the rest by name, and the board has every one
+var T_BOARD_URL = 'https://rickyrampersadbranch.com/orphanmanagement';
 function tBriefMail_(agent, clients, board) {
-  var F = 'Inter,Arial,sans-serif', esc = tEsc_;
-  var to = agent.email || TRANSITION.COPY_TO || SVC.AGENT_EMAIL;
-  var names = clients.map(function (c) { return c.client; });
-  var subject = (agent.email ? '' : '(no e-mail on the roster for ' + agent.name + ') ') + 'Your client' + (clients.length === 1 ? '' : 's') + ': ' +
-    names.slice(0, 3).join(', ') + (names.length > 3 ? ' and ' + (names.length - 3) + ' more' : '');
-  var block = function (c) {
-    var lines = '';
-    if (c.answers && c.answers.length) lines += '<p style="margin:8px 0 2px"><b>What they told us</b></p><ul style="margin:0;padding-left:18px">' +
-      c.answers.map(function (a) { return '<li><span style="color:#64798e">' + esc(a.q) + '</span><br><b>' + esc(a.a) + '</b></li>'; }).join('') + '</ul>';
-    if (c.taps && c.taps.length) lines += '<p style="margin:8px 0 2px"><b>They tapped</b> ' + c.taps.map(function (t) { return esc(t.label) + (t.needs ? ' <span style="color:#64798e">(' + esc(t.needs) + ')</span>' : ''); }).join(' · ') + '</p>';
-    if (c.notes && c.notes.length) lines += '<p style="margin:8px 0 2px"><b>In their words</b></p>' + c.notes.map(function (n) { return '<p style="margin:2px 0;font-style:italic">“' + esc(n) + '”</p>'; }).join('');
-    if (c.review) lines += '<p style="margin:8px 0 2px"><b>Their review</b> ' + esc(c.review.ref) + (c.review.priority ? ' · ' + esc(c.review.priority) : '') + '</p>' +
-      (c.review.words || []).map(function (x) { return '<p style="margin:2px 0"><span style="color:#64798e">' + esc(x.q) + '</span><br>' + esc(x.a) + '</p>'; }).join('');
-    if (c.fileNotes && c.fileNotes.length) lines += '<p style="margin:8px 0 2px"><b>On the file</b></p>' + c.fileNotes.map(function (n) { return '<p style="margin:2px 0;color:#64798e">' + esc(n) + '</p>'; }).join('');
-    /* who they are, what to raise first, and their policies with us, from the Client Book and the Client Profile: a row off
-       the board carries the totals alone, so the rest is read here */
-    var bpol = c.pol && c.pol.list ? c.pol : (c.no ? tBookFor_(c.no, true) : null), bprof = c.profile || (c.no ? tProfileFor_(c.no) : null);
-    lines += tBookMailHtml_(bpol, bprof, c.ins || tInsightsFor_(bpol, bprof, tBook_().today));
-    /* the family on our list, by name, age and where they stand: never the figures of anyone not named to this agent */
-    var fam = board && c.hh && board.households && board.households[c.hh] ? board.households[c.hh].filter(function (m) { return m.onList && m.token !== c.token; }) : [];
-    if (fam.length) lines += '<p style="margin:8px 0 2px"><b>' + esc((board.hhInfo && board.hhInfo[c.hh] && board.hhInfo[c.hh].name) || 'Their household') + '</b> <span style="color:#64798e">' +
-      fam.map(function (m) { return esc(m.client) + (m.age !== undefined ? ' (' + m.age + ')' : '') + ': ' + esc(m.state === 'answered' ? 'answered' : m.state); }).join(' · ') + '</span></p>';
-    var reach = [], ct = c.contact || null;
-    /* every number on file, once each (tContactFor_), and the address (7 October 2026) */
-    var phones = ct && ct.phones && ct.phones.length ? ct.phones : (c.phone ? [{ n: c.phone }] : []);
-    phones.forEach(function (p) { reach.push('<a href="tel:' + esc(String(p.n).replace(/[^\d+]/g, '')) + '">' + esc(p.n) + '</a>' + (p.w ? ' (' + esc(p.w) + ')' : '')); });
-    if (c.email) reach.push('<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>');
-    if (c.reach) reach.push('prefers ' + esc(c.reach.toLowerCase()));
-    if (c.when) reach.push('best in the ' + esc(c.when.toLowerCase()));
-    /* r=phone: the caller's copy of the answer page. Without an r= the address opens the film. */
-    var link = 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '&r=phone';
+  var F = 'Inter,Arial,sans-serif', esc = tEsc_, mute = '#64798e', ink = '#12202e';
+  var to = agent.email || TRANSITION.COPY_TO || SVC.AGENT_EMAIL, first = String(agent.name).split(/\s+/)[0];
+  var pl = function (n, one, many) { return n + ' ' + (n === 1 ? one : many); };
+  var hhs = {};
+  clients.forEach(function (c) { hhs[c.hh || ('S' + c.token)] = 1; });
+  var nh = Object.keys(hhs).length, names = clients.map(function (c) { return c.client; });
+  var subject = (agent.email ? '' : '(no e-mail on the roster for ' + agent.name + ') ') + 'Named to you: ' +
+    names.slice(0, 2).join(', ') + (names.length > 2 ? ' and ' + (names.length - 2) + ' more' : '') + ' · sign in to the board to see the file';
+  /* one client, a first look: the household, how many policies, the one thing to raise first, the way in */
+  var peek = function (c) {
+    var ps = c.pol && c.pol.sum ? c.pol.sum : null;
+    if (!ps && c.no) { try { var pp = tPolsFor_(c.no); ps = pp ? pp.sum : null; } catch (e) { ps = null; } }
+    var pf = c.profile || null;
+    if (!pf && c.no) { try { pf = tProfileFor_(c.no); } catch (e) { pf = null; } }
+    var ct = c.contact || null, town = (ct && ct.town) || (pf && pf.contact && pf.contact.town) || '';
+    var who = [];
+    if (pf && pf.age !== undefined) who.push(pf.age + (pf.gender ? ', ' + pf.gender : ''));
+    if (town) who.push(tNiceLabel_(town));
+    if (c.book) who.push('was with ' + c.book);
+    var held = [];
+    if (ps) {
+      if (ps.live) held.push(pl(ps.live, 'policy in force', 'policies in force'));
+      if (ps.lapsed) held.push(ps.lapsed + ' lapsed');
+      if (ps.pending) held.push(pl(ps.pending, 'application', 'applications'));
+      if (ps.years) held.push('with us ' + pl(ps.years, 'year', 'years'));
+    }
+    var fam = board && c.hh && board.households && board.households[c.hh] ? board.households[c.hh] : [];
+    var info = board && c.hh && board.hhInfo ? board.hhInfo[c.hh] : null;
+    var famLine = fam.length > 1 ? esc((info && info.name) || 'Their household') + ': ' + pl(fam.length, 'person', 'people') +
+      (fam.filter(function (m) { return m.onList; }).length > 1 ? ', named to you together' : '') : '';
+    /* the one most pressing thing they told us (T_PRIORITY), a tap in the wall's words (T_HA_SAID), an answer with its question */
+    var best = null;
+    (c.answers || []).forEach(function (a) { var p = T_PRIORITY[a.code] || 0; if (!best || p > best.p) best = { p: p, q: a.q, t: a.a }; });
+    (c.taps || []).forEach(function (t) { var p = T_PRIORITY[t.tap] || 0; if (!best || p > best.p) best = { p: p, q: '', t: T_HA_SAID[t.tap] || t.label }; });
+    if (!best && c.review) best = { q: '', t: 'filed a review' };
+    var more = (c.answers || []).length + (c.taps || []).length + (c.notes || []).length + (c.review ? 1 : 0) - (best ? 1 : 0);
+    var first1 = best ? (best.q ? '<span style="color:' + mute + '">' + esc(best.q) + '</span> <b>' + esc(best.t) + '</b>' : 'What matters most: <b>' + esc(best.t) + '</b>') +
+        (more > 0 ? ' <span style="color:' + mute + '">and ' + more + ' more on the board</span>' : '')
+      : (tHasAnswered_(c) ? 'They answered our letter: read what they said on the board' : 'They have not answered our letter yet: yours is their first call from us');
+    var link = T_BOARD_URL + '#t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '');
     return '<div style="border:1px solid #d7e3ea;border-radius:10px;padding:12px 14px;margin:10px 0">' +
-      '<p style="margin:0"><b style="font-size:16px;color:#12202e">' + esc(c.client) + '</b> <span style="color:#64798e">' + esc(c.no || '') + ' · letter ' + esc(c.seg || '') +
-      (c.book ? ' · was with ' + esc(c.book) : '') + (c.sent ? ' · written to ' + esc(c.sent) : '') + (c.first ? ' · answered ' + esc(c.first) : '') + '</span></p>' +
-      (c.needs && c.needs.length ? '<p style="margin:6px 0 0;color:#8a3324"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</p>' : '') + lines +
-      '<p style="margin:8px 0 0"><b>Reach them:</b> ' + (reach.length ? reach.join(' · ') : 'no phone or e-mail on the sheet: look the client up by number') + '</p>' +
-      (ct && ct.addr ? '<p style="margin:4px 0 0"><b>Address on file:</b> ' + esc(ct.addr) + '</p>' : '') +
-      (c.back && c.back.open ? '<p style="margin:6px 0 0;color:#8a3324"><b>Call-back asked for ' + esc(T_BACK[c.back.kind] || c.back.kind) + '</b>' +
-        (c.back.by ? ' by ' + esc(c.back.by) : '') + (c.back.why ? ': ' + esc(c.back.why) : '') + '</p>' : '') +
-      '<p style="margin:6px 0 0;font-size:13px"><a href="' + link + '">Their own answer page</a>: tick anything more they tell you with them on the line, and it lands on the sheet.</p></div>';
+      '<p style="margin:0"><b style="font-size:16px;color:' + ink + '">' + esc(c.client) + '</b> <span style="color:' + mute + '">' + esc(c.no || '') + '</span></p>' +
+      (who.length ? '<p style="margin:2px 0 0;color:' + mute + '">' + esc(who.join(' · ')) + '</p>' : '') +
+      (held.length ? '<p style="margin:6px 0 0">' + esc(held.join(' · ')) + '</p>' : '') +
+      (famLine ? '<p style="margin:4px 0 0">' + famLine + '</p>' : '') +
+      '<p style="margin:6px 0 0">' + first1 + '</p>' +
+      (c.back && c.back.open ? '<p style="margin:6px 0 0;color:#8a3324"><b>Call-back asked for ' + esc(T_BACK[c.back.kind] || c.back.kind) + '</b></p>' : '') +
+      '<p style="margin:8px 0 0"><a href="' + link + '" style="color:#13408F;font-weight:700">Open ' + esc(c.firstName || String(c.client).split(/\s+/)[0]) + '’s file on the board &rarr;</a></p></div>';
   };
+  var tt = tBriefClaims_(agent, clients, board);
   var html = '<div style="font:15px/1.5 ' + F + ';color:#33465a;max-width:640px">' +
-    '<h2 style="font:800 20px ' + F + ';color:#12202e;margin:0 0 4px">' + esc(agent.name) + ', you have been named on ' + clients.length + ' client' + (clients.length === 1 ? '' : 's') + '.</h2>' +
-    '<p style="margin:0 0 12px;color:#64798e">From the transition letters. Each is a call before anything else, at the time the client chose. Mark the outcome on your list: ' +
-    '<a href="https://rickyrampersadbranch.com/orphan-transition/assign.html">rickyrampersadbranch.com/orphan-transition/assign.html</a> (your own code, or the branch code and your name).</p>' +
-    clients.slice(0, T_BRIEF_FULL).map(block).join('') +
-    (clients.length > T_BRIEF_FULL ? '<p style="margin:14px 0 4px"><b>And ' + (clients.length - T_BRIEF_FULL) + ' more</b> <span style="color:#64798e">(each in full on your list on the board)</span></p>' +
-      '<p style="margin:0;font-size:13.5px">' + clients.slice(T_BRIEF_FULL).map(function (c) { return esc(c.client) + ' <span style="color:#64798e">' + esc(c.no || '') + '</span>'; }).join(' · ') + '</p>' : '') +
+    '<h2 style="font:800 20px ' + F + ';color:' + ink + ';margin:0 0 4px">' + esc(agent.name) + ', you have been named on ' + pl(clients.length, 'client', 'clients') +
+    (nh < clients.length ? ' in ' + pl(nh, 'household', 'households') : '') + '.</h2>' +
+    '<p style="margin:0 0 12px;color:' + mute + '">Here is a first look. Their full file is on the board: read it before you call, within two working days.</p>' +
+    '<p style="margin:0 0 6px"><a href="' + T_BOARD_URL + '" style="display:inline-block;background:#13408F;color:#fff;font-weight:700;text-decoration:none;padding:11px 18px;border-radius:9px">Sign in to your list on the board</a></p>' +
+    '<p style="margin:0 0 14px;font-size:13.5px;color:' + mute + '">' + esc(T_BOARD_URL.replace(/^https:\/\//, '')) + ' · your agent number and your password</p>' +
+    '<div style="background:#f3f7fb;border-radius:10px;padding:10px 14px;margin:0 0 6px;font-size:14px"><b>On the board, for each client</b>' +
+    '<ul style="margin:4px 0 0;padding-left:18px">' +
+    '<li>every policy, in force and lapsed, with who it pays and what it covers</li>' +
+    '<li>their household: everyone on our books at the address, and each one’s cover</li>' +
+    '<li>what they told us, in their own words, and every number to reach them</li>' +
+    '<li>everything between us and them, from the letter to today</li>' +
+    '<li>our service record: every request we handled for them, and their birthday notes</li>' +
+    '<li>their open Salesforce task: a comment you write on the board goes onto it</li></ul></div>' +
+    clients.slice(0, T_BRIEF_FULL).map(peek).join('') +
+    (clients.length > T_BRIEF_FULL ? '<p style="margin:14px 0 4px"><b>And ' + (clients.length - T_BRIEF_FULL) + ' more</b> <span style="color:' + mute + '">(each on your list on the board)</span></p>' +
+      '<p style="margin:0;font-size:13.5px">' + clients.slice(T_BRIEF_FULL).map(function (c) { return esc(c.client) + ' <span style="color:' + mute + '">' + esc(c.no || '') + '</span>'; }).join(' · ') + '</p>' : '') +
+    tt +
     '<div style="background:#fff6df;border-left:4px solid #efc24b;padding:10px 14px;margin:14px 0;font-size:13.5px">' +
+    '<b>After every call</b>, press Log call on the board the same day: what happened and one line for the file. It goes onto their Salesforce task. ' +
     '<b>Three rules.</b> Nothing about the former agent beyond what the letter said. If the client says the former agent has been in touch, or that they pay in person, thank them, say a person calls before anything else, and do not ask what was said. ' +
     'Nothing needs to be signed or paid until they have spoken to the branch.</div>' +
-    '<p style="font:12px ' + F + ';color:#64798e;margin-top:18px">' + esc(tInternal_(tReceipt_())) + '</p></div>';
+    '<p style="font:12px ' + F + ';color:' + mute + ';margin-top:18px">' + esc(tInternal_(tReceipt_())) + '</p></div>';
   MailApp.sendEmail(to, subject, 'Open in a mail app that shows HTML.', { htmlBody: html, name: TRANSITION.FROM_NAME });
 }
+
+/** The agent's own TT$200, for the foot of the brief: what the Retention Payments tab holds for them (paid, or to be paid on
+ *  the commission run's date; with the Retention unit and not paid yet; found and held), and what is still to earn: every
+ *  client named to them with no claim yet, at TT$200 each when a service questionnaire comes in on or after the naming.
+ *  Only their own; never another agent's. '' when there is nothing to say. Never throws. */
+function tBriefClaims_(agent, clients, board) {
+  try {
+    var k = tNameKey_(agent.name), tz = tTz_(), today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'), esc = tEsc_;
+    var amt = T_CLAIM.AMOUNT, cur = T_CLAIM.CUR, mute = '#64798e', claimed = {};
+    var all = tClaimsRead_().rows;
+    all.forEach(function (r) { if (r.token) claimed[r.token] = true; });   // one claim per client, ever: any row (tClaimsFind_'s rule)
+    var mine = all.filter(function (r) { return tNameKey_(r.agent) === k; }).map(function (r) { var v = tClaimView_(r, tz, today, false); v.paidDay = tDay_(r.paid) || ''; return v; });
+    var s = { paid: 0, paidAmt: 0, due: 0, dueAmt: 0, soon: '', soonD: '', owed: 0, owedAmt: 0, held: 0, heldAmt: 0 };
+    mine.forEach(function (v) {
+      /* a Date Comm Paid still to come is the commission run it will be paid in: "to be paid", not paid */
+      if (v.state === 'paid' && v.future) { s.due++; s.dueAmt += v.amount; if (!s.soonD || v.paidDay < s.soonD) { s.soonD = v.paidDay; s.soon = v.paid; } }
+      else if (v.state === 'paid') { s.paid++; s.paidAmt += v.amount; }
+      else if (v.state === 'unpaid') { s.owed++; s.owedAmt += v.amount; }
+      else if (v.state !== 'closed') { s.held++; s.heldAmt += v.amount; }
+    });
+    /* still to earn: every client named to them, this press and before, with no claim */
+    var named = {};
+    clients.forEach(function (c) { named[c.token] = true; });
+    if (board) [board.clients, board.silent, board.family].forEach(function (list) {
+      (list || []).forEach(function (c) { if (c.token && c.assigned && tNameKey_(c.assigned) === k) named[c.token] = true; });
+    });
+    var toEarn = Object.keys(named).filter(function (t) { return !claimed[t]; }).length;
+    var line = function (label, v, note) { return '<tr><td style="padding:4px 12px 4px 0;color:' + mute + '">' + label + '</td><td style="padding:4px 12px 4px 0;font-weight:700">' + v + '</td><td style="padding:4px 0;color:' + mute + '">' + note + '</td></tr>'; };
+    var m = function (n) { return esc(cur + tMoney_(n)); };
+    var rows = '';
+    if (s.owed) rows += line('Owed to you', m(s.owedAmt), tPl_(s.owed, 'claim') + ' with the Retention unit, waiting for the payment date');
+    if (s.held) rows += line('Found, not sent yet', m(s.heldAmt), tPl_(s.held, 'claim') + (tClaimsLive_() ? ' the branch is checking' : ', going to the Retention unit on the branch’s go'));
+    if (s.due) rows += line('To be paid', m(s.dueAmt), tPl_(s.due, 'claim') + ' on the commission run' + (s.soon ? ' of ' + esc(s.soon) : ''));
+    if (s.paid) rows += line('Paid', m(s.paidAmt), tPl_(s.paid, 'claim'));
+    if (toEarn) rows += line('Still to earn', 'up to ' + m(toEarn * amt), tPl_(toEarn, 'client') + ' named to you with no questionnaire yet');
+    if (!rows) return '';
+    return '<div style="border:1px solid #c9d8ef;border-radius:10px;padding:10px 14px;margin:14px 0;font-size:14px">' +
+      '<b style="color:#12202e">Your ' + esc(cur + amt) + '</b>' +
+      '<table style="border-collapse:collapse;margin:6px 0 4px;font-size:14px">' + rows + '</table>' +
+      '<p style="margin:4px 0 0;font-size:13px;color:' + mute + '">A service questionnaire that comes in on or after the day a client was named to you earns ' + esc(cur + amt) +
+      ', once per client, whoever sent the link. Do it with them on the call or at the visit, from their file on the board, so it carries their own link. ' +
+      'The board finds it, the claim goes to the Retention unit, and it is chased every working day until the payment date is in Salesforce. Your Claims tab on the board shows each one.</p></div>';
+  } catch (e) { return ''; }
+}
+function tPl_(n, one) { return n + ' ' + one + (n === 1 ? '' : 's'); }
 
 /** The introduction the receipt promised: "once your file has been read, we
  *  introduce the agent who fits it, in writing, with a name and a number".
@@ -6890,13 +6962,16 @@ function tBookFor_(cno, withList) {
   recs.forEach(function (r) {
     var pc = codes[r.code] || { name: '', cls: '', conf: false }, live = tBookLive_(r.st), pf = P.by[r.no] || null;
     var cv = tCoverOf_(r, pc, pf), life = live ? cv.life : 0;
+    /* in force, lapsed, pending or ended: one of the four, always. From 7 to 16 October the estimate's line below sat
+       inside this chain, so a policy in force whose premium came from the in-force book was also counted as ended, and the
+       card read "Also on file: 2 premium paying" (480 of 820 clients in the 8 October Client Book). */
     if (live) { s.live++; if (r.st === 'overdue') s.due++; s.ci += cv.ci; s.acc += cv.acc; s.fund += r.fund || 0; }
-    /* a policy in force that matures within the year: what happens to the money next is a conversation (8 October 2026) */
-    if (live && r.matures) { var md = tDaysBetween_(b.today, r.matures); if (md > 0 && md <= 365) { s.mat++; if (!s.matOn || r.matures < s.matOn) s.matOn = r.matures; } }
-    if (r.yr && r.yrSrc !== 'in-force book') s.est++;   // a premium a year read off the figures, not recorded (T_BOOK)
     else if (r.st === 'lapsed') s.lapsed++;
     else if (r.st === 'pending') s.pending++;
     else { s.ended++; var k = (r.desc || 'ended').toLowerCase(); ended[k] = (ended[k] || 0) + 1; }
+    /* a policy in force that matures within the year: what happens to the money next is a conversation (8 October 2026) */
+    if (live && r.matures) { var md = tDaysBetween_(b.today, r.matures); if (md > 0 && md <= 365) { s.mat++; if (!s.matOn || r.matures < s.matOn) s.matOn = r.matures; } }
+    if (r.yr && r.yrSrc !== 'in-force book') s.est++;   // a premium a year read off the figures, not recorded (T_BOOK)
     s.prem += r.yr || 0;
     s.cover += life;
     if (live && cv.src === 'plan' && r.sa > 0 && !life && (!pc.cls || pc.cls === 'life')) s.unconf += r.sa;
