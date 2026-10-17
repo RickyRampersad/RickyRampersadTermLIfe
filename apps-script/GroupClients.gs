@@ -136,6 +136,7 @@ function gcmDoGet_(p) {
     switch (String(p.action || '')) {
       case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(),
                                    sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_() };
+      case 'gcm.proc':    return gcmProc_(p);
       case 'gcm.draft':   return gcmDraft_(p);
       case 'gcm.board':   return gcmBoard_(p);
       case 'gcm.group':   return gcmGroupView_(p);
@@ -167,6 +168,7 @@ function gcmDoPost_(b) {
       case 'gcm.rehearse':  return gcmRehearse_(b);
       case 'gcm.share':  return gcmShare_(b);
       case 'gcm.review': return gcmReview_(b);
+      case 'gcm.procOk':      return gcmProcOk_(b);
       case 'gcm.trainSubmit': return gcmTrainSubmit_(b);
       case 'gcm.trainMark':   return gcmTrainMark_(b);
     }
@@ -3063,6 +3065,171 @@ var GCM_TRAIN = {
  * password, or the branch code), and each role gets its own questions: the sheet's Roles column says who a question is
  * for (agent, staff, manager, or all), so one sheet holds the three tests. Its manual is orphan-transition/workflow.html.
  * The page asks for a course with course=orphan; nothing else about the routes changes, so Service.gs needs no paste. */
+
+/* ══════════════════════════════════════════════════════════════════════════
+ *  THE PROCESS PACK — everyone reads their own, and clicks OK
+ *
+ *  17 October 2026: "need to see the revised templates scripts and process
+ *  as all person depending on their roles click ok."
+ *
+ *  Nine systems rolled out in eight weeks and nothing recorded that anybody
+ *  had read how to use them. The branch found out who had not when something
+ *  went wrong: an introduction e-mailed to a client during training, a
+ *  caller typing addresses into a spreadsheet the board never reads, a staff
+ *  member seeing an empty board because her Salesforce name differs from her
+ *  roster name. None of those is a training failure. They are a failure to
+ *  record that the process was ever handed over.
+ *
+ *  So: /process holds the revised templates, scripts and process, each
+ *  section marked with the roles it is for. A person signs in exactly as
+ *  they sign in to the board, reads the sections that are theirs, and
+ *  clicks OK. The row carries what they read, which VERSION of the pack
+ *  they read, and when.
+ *
+ *  THE VERSION IS THE POINT. A pack everyone acknowledged in October is
+ *  worth nothing in December if the process changed in November. Bump
+ *  `data-version` on the page and every acknowledgement against the old one
+ *  goes stale at once, and the register says who is behind. Nothing else in
+ *  the branch does this: it is the only place that can say, on a date, that
+ *  a named person was handed a named process.
+ *
+ *  The pack's words live in process/index.html, not here. A manager edits
+ *  the page; the script records who read it. The two never have to agree
+ *  about content, which is why this needs no paste when the words change.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+var GCM_PROC = {
+  TAB: 'Process Acknowledgements',
+  ROLES: ['agent', 'staff', 'unit', 'branch'],
+  MAX_SECS: 60          /* a pack longer than this is not being read */
+};
+GCM_HEAD[GCM_PROC.TAB] = ['When', 'Version', 'No.', 'Name', 'Role', 'Unit', 'E-mail',
+                          'Sections read', 'Of', 'Minutes', 'Device', 'Sections'];
+
+/** Who is reading, with the role whose sections they get. The board's own
+ *  sign-in, so there is no second password to remember or to leak. */
+function gcmProcWho_(p) {
+  var w = tWho_(p.code, p.who);
+  if (!w.ok) return w;
+  var me = w.me || null;
+  return {
+    ok: true, role: w.role, name: me ? me.name : 'Branch', no: me ? String(me.no || '') : '',
+    email: me ? String(me.email || '') : '', unit: me ? String(me.unit || '') : '',
+    title: me && me.title ? me.title : (w.role === 'branch' ? 'Branch Manager' : w.role),
+    /*  The branch code with no name signs in as the branch with nobody
+     *  behind it. It may read the register and may not acknowledge: there
+     *  is no person to write down. */
+    canAck: !!me,
+    team: w.role === 'unit' ? (w.team || []) : null
+  };
+}
+
+function gcmProcRows_() { return gcmRows_(GCM_PROC.TAB); }
+
+/*  The newest acknowledgement per person for one version. Keyed on the
+ *  roster name rather than the agent number, because the number is blank
+ *  for some staff on the Agent Skill Bank and a blank key would collapse
+ *  every one of them into a single person. */
+function gcmProcLatest_(version) {
+  var by = {};
+  gcmProcRows_().forEach(function (r) {
+    if (version && gcmText_(r['Version']) !== version) return;
+    var k = tNameKey_(gcmText_(r['Name']));
+    if (!k) return;
+    var when = r['When'] instanceof Date ? r['When'] : new Date(gcmText_(r['When']));
+    if (isNaN(when.getTime())) when = new Date(0);
+    if (!by[k] || when.getTime() > by[k]._t) {
+      by[k] = { _t: when.getTime(), name: gcmText_(r['Name']), role: gcmText_(r['Role']),
+                unit: gcmText_(r['Unit']), no: gcmText_(r['No.']), version: gcmText_(r['Version']),
+                read: Number(r['Sections read']) || 0, of: Number(r['Of']) || 0,
+                minutes: Number(r['Minutes']) || 0, when: gcmYmd_(r['When']) };
+    }
+  });
+  return by;
+}
+
+/*  The register: who on the roster has acknowledged this version and who
+ *  has not. Everyone active, never a former agent of these books, and the
+ *  branch manager sees all of it while a unit manager sees their team. */
+function gcmProcRegister_(who, version) {
+  var team = tTeam_(), former = tFormer_();
+  var done = gcmProcLatest_(version);
+  var mine = null;
+  if (who.role === 'unit') {
+    mine = {};
+    (who.team || []).forEach(function (p) { mine[tNameKey_(p.name || p)] = true; });
+    mine[tNameKey_(who.name)] = true;
+  }
+  var out = [];
+  team.people.forEach(function (p) {
+    if (!p.active || former[tNameKey_(p.name)]) return;
+    var k = tNameKey_(p.name);
+    if (mine && !mine[k]) return;
+    var d = done[k] || null;
+    out.push({ name: p.name, no: String(p.no || ''), role: String(p.role || ''),
+               unit: String(p.unit || ''), ok: !!d,
+               when: d ? d.when : '', read: d ? d.read : 0, of: d ? d.of : 0 });
+  });
+  out.sort(function (a, b) {
+    if (a.ok !== b.ok) return a.ok ? 1 : -1;        /* outstanding first */
+    return String(a.name).localeCompare(String(b.name));
+  });
+  return { version: version, people: out,
+           done: out.filter(function (x) { return x.ok; }).length, all: out.length };
+}
+
+/** GET gcm.proc — who you are, where you stand, and (for a manager) who has not. */
+function gcmProc_(p) {
+  var who = gcmProcWho_(p);
+  if (!who.ok) return who;
+  var version = gcmText_(p.v);
+  var mine = version ? (gcmProcLatest_(version)[tNameKey_(who.name)] || null) : null;
+  var out = { ok: true, who: { name: who.name, role: who.role, title: who.title,
+                               no: who.no, unit: who.unit, canAck: who.canAck },
+              version: version, mine: mine };
+  /*  Only the people who are answerable for somebody else see the register:
+   *  an agent has no business reading who else is behind on their reading. */
+  if (who.role === 'branch' || who.role === 'unit') {
+    try { out.register = gcmProcRegister_(who, version); }
+    catch (e) { out.registerError = String(e && e.message ? e.message : e).slice(0, 160); }
+  }
+  return out;
+}
+
+/** POST gcm.procOk — one person, acknowledging for themselves, once per press. */
+function gcmProcOk_(p) {
+  var who = gcmProcWho_(p);
+  if (!who.ok) return who;
+  if (!who.canAck) {
+    return { ok: false, error: 'The branch code on its own has nobody behind it. ' +
+             'Sign in with your own agent number and password to acknowledge.' };
+  }
+  var version = gcmText_(p.v);
+  if (!version) return { ok: false, error: 'The pack did not say which version this is.' };
+
+  var secs = gcmList_(p.secs).slice(0, GCM_PROC.MAX_SECS);
+  var of = Math.max(secs.length, Number(p.of) || 0);
+  if (!secs.length) return { ok: false, error: 'Tick each section as you read it, then press OK.' };
+  if (secs.length < of) {
+    return { ok: false, error: 'There ' + (of - secs.length === 1 ? 'is 1 section' : 'are ' +
+             (of - secs.length) + ' sections') + ' you have not ticked yet.' };
+  }
+
+  gcmAppend_(GCM_PROC.TAB, [{
+    'When': new Date(), 'Version': version, 'No.': who.no, 'Name': who.name,
+    'Role': who.role, 'Unit': who.unit, 'E-mail': who.email,
+    'Sections read': secs.length, 'Of': of,
+    'Minutes': Math.max(0, Math.round(Number(p.mins) || 0)),
+    /*  Phone or desk and the width, as the board records it. Never the
+     *  browser string: it identifies a person's device more than it helps. */
+    'Device': gcmText_(p.dev).slice(0, 40),
+    'Sections': secs.join(', ')
+  }]);
+
+  return { ok: true, name: who.name, version: version, read: secs.length, of: of,
+           when: gcmYmd_(new Date()) };
+}
+
 var GCM_COURSES = {
   group:  { key: 'group',  prop: 'GCM_TRAIN_SHEET_ID',    title: 'group client management', subject: 'Group client test',
             page: GCM.SITE + 'training.html', roles: false },

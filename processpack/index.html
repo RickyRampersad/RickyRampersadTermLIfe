@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Branch process pack</title>
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&family=Inter:wght@400;500;600;700&display=swap">
+
+<!--
+  THE PROCESS PACK — the revised templates, scripts and process, by role.
+
+  Asked for on 17 October 2026: "need to see the revised templates scripts
+  and process as all person depending on their roles click ok."
+
+  Three rules this page keeps:
+
+  1. THE WORDS LIVE HERE, NOT IN THE SCRIPT. A manager edits this file to
+     change the process. GroupClients.gs only records who read it, so the
+     words and the record never have to be pasted together.
+
+  2. THE VERSION IS THE POINT. Bump data-version below when the process
+     changes and every acknowledgement against the old one goes stale at
+     once; the register then says who is behind. A pack everyone signed in
+     October is worth nothing in December if November changed it.
+
+  3. A SECTION CARRIES THE ROLES IT IS FOR. data-roles="all" or any of
+     agent, staff, unit, branch. Nobody is shown somebody else's job, and
+     nobody can tick a section they were never shown.
+
+  /process is a different page — the FactFind360 sale flow, from 26 Sep.
+-->
+
+<style>
+:root{
+  --navy:#07131f; --panel:#0d2137; --line:#dfe4ec; --ink:#0f172a; --ink2:#3f4a5c;
+  --muted:#69748a; --paper:#fff; --ground:#f4f6fa; --sunk:#eef2f8;
+  --gold:#efc24b; --gold2:#c9942c; --teal:#00a9bf;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+  --shadow:0 1px 2px rgba(7,19,31,.06), 0 12px 32px -14px rgba(7,19,31,.22);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#111a2e; --ground:#080d1a; --sunk:#0d1526; --ink:#eaeef6; --ink2:#c3ccda;
+  --muted:#8b95a9; --line:#222c42; --good:#34d399; --warn:#f5b324; --crit:#f87171;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); } }
+:root[data-theme="dark"]{
+  --paper:#111a2e; --ground:#080d1a; --sunk:#0d1526; --ink:#eaeef6; --ink2:#c3ccda;
+  --muted:#8b95a9; --line:#222c42; --good:#34d399; --warn:#f5b324; --crit:#f87171;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px -16px rgba(0,0,0,.8); }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16.5px/1.62 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 90px}
+
+/* masthead */
+.top{background:var(--navy);color:#eaf2fb;padding:22px 0 24px;margin-bottom:26px}
+.top .wrap{padding-bottom:0;display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+.mark{width:46px;height:46px;flex:0 0 46px;border-radius:13px;overflow:hidden;
+  background:#07131f;display:grid;place-items:center}
+.mark img{width:100%;height:100%;display:block}
+.top h1{font-family:Newsreader,Georgia,serif;font-size:clamp(21px,4.4vw,27px);
+  font-weight:600;margin:0;line-height:1.2}
+.top .sub{color:#9fb3c8;font-size:13.5px;margin-top:3px}
+
+h2{font-family:Newsreader,Georgia,serif;font-size:clamp(21px,4.4vw,26px);
+  font-weight:600;margin:34px 0 4px;line-height:1.25}
+.lead{color:var(--ink2);margin:0 0 20px}
+.eyebrow{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;margin:30px 0 8px}
+
+/* the gate */
+.gate{background:var(--paper);border:1px solid var(--line);border-radius:16px;
+  padding:26px;box-shadow:var(--shadow);max-width:430px;margin:8px auto 0}
+.gate label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin:14px 0 5px}
+.gate input{width:100%;padding:13px 14px;font-size:16px;border:1px solid var(--line);
+  border-radius:10px;background:var(--sunk);color:var(--ink);font-family:inherit}
+.btn{appearance:none;border:0;border-radius:11px;padding:14px 22px;font-size:15.5px;
+  font-weight:700;font-family:inherit;cursor:pointer;background:var(--navy);color:var(--gold);
+  min-height:52px}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.big{width:100%;font-size:17px;padding:17px 22px;min-height:60px}
+.btn.ok{background:var(--good);color:#fff}
+.err{color:var(--crit);font-size:14px;margin-top:12px;min-height:20px}
+
+/* a section */
+.sec{background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  padding:19px 21px;margin:0 0 13px;box-shadow:var(--shadow)}
+.sec.read{border-color:var(--good)}
+.sec h3{font-size:18px;font-weight:700;margin:0 0 3px;line-height:1.3}
+.sec .who{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;margin-bottom:9px}
+.sec p{margin:0 0 11px;color:var(--ink2)}
+.sec ul{margin:0 0 11px;padding-left:20px;color:var(--ink2)}
+.sec li{margin:5px 0}
+.sec a{color:var(--teal);font-weight:600}
+.chg{background:var(--sunk);border-left:3px solid var(--gold);padding:10px 13px;
+  border-radius:0 8px 8px 0;font-size:14.5px;margin:0 0 12px;color:var(--ink2)}
+.chg b{color:var(--ink)}
+
+/* the tick */
+.tick{display:flex;align-items:center;gap:11px;margin-top:14px;padding-top:13px;
+  border-top:1px solid var(--line);cursor:pointer;user-select:none;min-height:48px}
+.tick input{width:24px;height:24px;flex:0 0 24px;accent-color:var(--good);cursor:pointer}
+.tick span{font-size:14.5px;font-weight:600;color:var(--muted)}
+.sec.read .tick span{color:var(--good)}
+
+/* the foot */
+.foot{background:var(--paper);border:1px solid var(--line);border-radius:16px;
+  padding:24px;margin-top:26px;box-shadow:var(--shadow)}
+.count{font-size:14.5px;color:var(--muted);margin:0 0 16px}
+.done{background:rgba(12,163,12,.10);border:1px solid var(--good);border-radius:14px;
+  padding:20px 22px;margin-top:20px}
+.done b{color:var(--good)}
+
+/* the register */
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:10px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+td.s{white-space:nowrap}
+.pillbad,.pillok{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+  border-radius:999px;font-size:12.5px;font-weight:700}
+.pillok{background:rgba(12,163,12,.14);color:var(--good)}
+.pillbad{background:rgba(208,59,59,.13);color:var(--crit)}
+.hide{display:none}
+@media (max-width:560px){ .wrap{padding:0 13px 80px} .sec{padding:17px 16px} }
+</style>
+
+<div class="top"><div class="wrap">
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Branch process pack</h1>
+    <div class="sub" id="topsub">The revised templates, scripts and process &mdash; read yours, then press OK</div>
+  </div>
+</div></div>
+
+<div class="wrap">
+
+  <!-- ═══ the gate ═══ -->
+  <div id="gate">
+    <p class="lead">Sign in with the same agent number and password you use for the
+      assignment board. You will be shown the sections for your role.</p>
+    <div class="gate">
+      <label for="who">Agent number or your name</label>
+      <input id="who" autocomplete="username" inputmode="text" placeholder="A10024, or Akaash">
+      <label for="code">Password</label>
+      <input id="code" type="password" autocomplete="current-password" inputmode="numeric">
+      <div class="err" id="gerr"></div>
+      <button class="btn big" id="go" style="margin-top:14px">Open my pack</button>
+    </div>
+  </div>
+
+  <!-- ═══ the pack ═══ -->
+  <div id="pack" class="hide">
+    <h2 id="hello">&nbsp;</h2>
+    <p class="lead" id="intro">&nbsp;</p>
+
+    <div id="secs"></div>
+
+    <div class="foot" id="foot">
+      <p class="count" id="count">&nbsp;</p>
+      <button class="btn big ok" id="ok" disabled>I have read and understood</button>
+      <div class="err" id="oerr"></div>
+    </div>
+
+    <div id="after" class="hide"></div>
+    <div id="reg" class="hide"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       THE PACK. One <article> a section. data-sec is its id — it is what
+       the acknowledgement records, so never reuse one for different words:
+       change the words, change the id, and bump data-version below.
+       data-roles: all, or any of agent / staff / unit / branch.
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div id="src" class="hide" data-version="2026-10-17">
+
+    <article data-sec="E1" data-roles="all" data-title="Where everything lives">
+      <p>One list. Every address below is the branch's own; none of them is a link a
+        client ever holds.</p>
+      <ul>
+        <li><a href="/orphanmanagement">/orphanmanagement</a> &mdash; the assignment board. Your clients, their history, and where you log every call.</li>
+        <li><a href="/logbook">/logbook</a> &mdash; the Log Book. Every document in and out.</li>
+        <li><a href="/premium-due/">/premium-due</a> &mdash; the premium due desk.</li>
+        <li><a href="/groupclientmanagement/">/groupclientmanagement</a> &mdash; group clients and the Monday letter.</li>
+        <li><a href="/meetings/">/meetings</a> &mdash; the Wednesday meeting.</li>
+        <li><a href="/orphan-transition/workflow.html">The workflow page</a> &mdash; the whole flow on one page, by role.</li>
+      </ul>
+      <div class="chg"><b>What changed:</b> they are one list, here, and you sign in to
+        all of them with the same agent number and password.</div>
+    </article>
+
+    <article data-sec="E2" data-roles="all" data-title="The three rules on every client call">
+      <ul>
+        <li><b>Never characterise anyone who left.</b> State Guardian Life's own notice and nothing else. Never why, never where they went, never that anyone is saying otherwise.</li>
+        <li><b>Only a licensed agent advises.</b> Anything about cover, suitability, or whether a client should change a policy is a call back from a licensed agent &mdash; whoever is asked.</li>
+        <li><b>Log it the same day, where the system reads it.</b> A conversation nobody files did not happen, and a note on a private spreadsheet reaches nothing.</li>
+      </ul>
+      <p>If a client repeats something a former agent told them, answer none of it. Give
+        them the number to confirm, and note who, when, how, and what &mdash; in the client's
+        own words.</p>
+      <p><a href="/orphan-transition/if-they-say.html">If they say &hellip;</a> has the
+        wording for the questions that come up most.</p>
+    </article>
+
+    <article data-sec="E3" data-roles="all" data-title="What never leaves the branch">
+      <ul>
+        <li>Client names, numbers and figures stay in the systems. Not in WhatsApp, not in a personal spreadsheet, not in an e-mail to a personal address.</li>
+        <li>Your password is yours. Nobody needs it &mdash; not a colleague, not the branch, not anyone who telephones asking for it.</li>
+        <li>Sign out on a shared device. Signing out clears the client that was open and everything the device had saved.</li>
+      </ul>
+      <div class="chg"><b>Why this is here now:</b> the systems hold the whole branch book.
+        One shared password reaches further than it used to.</div>
+    </article>
+
+    <article data-sec="E4" data-roles="all" data-title="The Wednesday meeting">
+      <p>Sunday to Sunday is the week. It closes itself on Sunday evening, the agenda
+        builds itself on Wednesday morning, and the meeting runs 9:00 to 10:30.</p>
+      <ul>
+        <li><b>Signing in on the app is the register.</b> Nobody is marked in from the front. If you do not sign in you are marked absent; if you cannot come, log it and give a reason.</li>
+        <li><b>You get a note each working morning</b> with your own cases, what is due, and what you are presenting.</li>
+        <li><b>The screen is the meeting.</b> Only the exceptions are spoken aloud.</li>
+      </ul>
+      <div class="chg"><b>What changed:</b> the week runs Sunday to Sunday so Wednesday
+        reports a finished week, not half of one.</div>
+    </article>
+
+    <article data-sec="A1" data-roles="agent" data-title="Your morning note">
+      <p>Each working morning you get one e-mail: the cases on your list this week, what
+        is overdue, where your goals stand, and what you are presenting on Wednesday.</p>
+      <p>It is short on purpose. If it says nothing, you owe nothing &mdash; it is not sent
+        when there is nothing to say.</p>
+      <div class="chg"><b>New.</b> It starts with a small group before the branch gets it.
+        If a figure on it is wrong, reply and say so.</div>
+    </article>
+
+    <article data-sec="A2" data-roles="agent" data-title="Log every call the same day">
+      <p>Open the client on the board, press <b>Log call</b>, choose what happened, and
+        write the note. That one press writes your file note, stamps the record, and
+        posts to the client's Salesforce task.</p>
+      <ul>
+        <li><b>A no answer is a try, not a close.</b> Mark it as a try.</li>
+        <li><b>A task closes only with a note</b> of who you spoke to and what was agreed.</li>
+        <li>It stays open until the agent is named and the conversation has happened.</li>
+      </ul>
+      <div class="chg"><b>What changed:</b> work logged only in Salesforce Chatter does not
+        reach the branch's own counts. Log it on the board and it reaches both.</div>
+    </article>
+
+    <article data-sec="A3" data-roles="agent" data-title="Your own week, at the meeting">
+      <p>Every Wednesday a few agents account for their own week, by name, for two minutes.
+        The rule is fixed and the screen picks, not the chair:</p>
+      <ul>
+        <li>Anyone the Monday list sent cases to who <b>answered none of them</b> comes up first, most cases first.</li>
+        <li>The remaining slots go to whoever has gone <b>longest without one</b>.</li>
+      </ul>
+      <p>So: answer your cases and the screen never calls you. Have a clean week and you
+        will still come up eventually, with something that worked.</p>
+      <div class="chg"><b>New.</b> &ldquo;Could not reach them&rdquo; is a complete answer.
+        Never replying is not.</div>
+    </article>
+
+    <article data-sec="A4" data-roles="agent" data-title="The Log Book">
+      <p>Every document you hand in is logged with your agent number: the document is
+        chosen from a list, the department is routed for you, and staff sign for it.</p>
+      <ul>
+        <li>A contract you collect to deliver is yours for <b>20 days</b>. You are chased at 15 and 18, and the manager is told at 20.</li>
+        <li>Some documents travel together &mdash; the page asks before you log one without its companion.</li>
+        <li>You see your own clients only.</li>
+      </ul>
+    </article>
+
+    <article data-sec="A5" data-roles="agent" data-title="Fact find and flight plan">
+      <p>Your goals are filed once and then stream on the wall: contacts, appointments,
+        fact finds, applications and API, as a week's commitment.</p>
+      <p>No filed plan means no fact find. The branch reads filed plans against the week
+        actually worked, as a shortfall in cases rather than as a percentage &mdash; eleven
+        of the thirty-one fact finds the plans ask for is a sentence somebody can act on.</p>
+    </article>
+
+    <article data-sec="S1" data-roles="staff" data-title="Your calls live on the board">
+      <p>Your call list is a tab on the board. Open the client, press <b>Log call</b>,
+        record what happened, and flag a call-back where one is needed.</p>
+      <div class="chg"><b>What changed, and it matters:</b> the old Client Support calls
+        spreadsheet is <b>one-way</b>. Nothing typed on it ever reaches the board, the
+        reports or the chase. On the first day of calls nine e-mails were typed into the
+        sheet and none was recorded; by the next afternoon it was 107. Record it on the
+        board or it reaches nothing.</div>
+      <p>Your <b>scripts</b>: <a href="/orphan-transition/client-support.html">your day, step by step</a>
+        &middot; <a href="/orphan-transition/call-script.html">the call, word for word</a>
+        &middot; <a href="/orphan-transition/if-they-say.html">if they say &hellip;</a></p>
+    </article>
+
+    <article data-sec="S2" data-roles="staff" data-title="Taking details">
+      <p>Read every e-mail address back to the client and tick that you read it back. The
+        page refuses an address that looks cut off or misspelt, but it cannot catch one
+        that is simply wrong.</p>
+      <ul>
+        <li>A new number or address only if it has changed.</li>
+        <li>An address a letter bounced from is never filed back, even if the client confirms it.</li>
+        <li>Your own name goes on every detail you take, so nothing has to be retyped.</li>
+      </ul>
+    </article>
+
+    <article data-sec="S3" data-roles="staff" data-title="You are not licensed to advise">
+      <p>You ask questions, take details and explain process. You never advise on cover,
+        on whether a policy suits, or on whether a client should change one.</p>
+      <p>Anything of that kind is a call back from a licensed agent, and saying so is a
+        complete and professional answer. The objective of the call is clean data and a
+        correct record, so the right agent can be named.</p>
+    </article>
+
+    <article data-sec="S4" data-roles="staff" data-title="Group clients &mdash; check, then approve">
+      <p>During the week you check a group's open items, give a reason for anything open
+        more than 30 days, preview the letter, tick that you checked, and press
+        <b>Approve for Monday</b>.</p>
+      <ul>
+        <li><b>The letters send themselves at 10:00 on Monday.</b> You approve; you do not send.</li>
+        <li>A letter waits, with the reason, if an item arrived that you never saw. The letter goes only with what a person checked.</li>
+        <li>Every staff member sees every group. Only the owner, the deputy and the branch manager change one.</li>
+        <li>A group's answer marked <i>Needs a change</i> or <i>Not ours</i> stays on &ldquo;To act on&rdquo; for fourteen days.</li>
+      </ul>
+      <p><a href="/groupclientmanagement/training.html">The group manual and test</a>.</p>
+    </article>
+
+    <article data-sec="S5" data-roles="staff" data-title="Documents and transmittals">
+      <ul>
+        <li><b>Sign for every document the same working day.</b> Correct the routing when the suggestion is wrong &mdash; that is what teaches it.</li>
+        <li><b>Build the transmittal the day you receive the document.</b> Where that is not possible, record the reason before the hourly run asks you for it.</li>
+        <li><b>Answer the department's day-3 confirmation.</b> Where a department says <i>not received</i>, respond with everyone copied and open the Salesforce task.</li>
+      </ul>
+      <div class="chg"><b>Measured:</b> 41% of documents went out the day they were logged
+        and 12% took six days or more. Same or next working day is the standard.</div>
+    </article>
+
+    <article data-sec="S6" data-roles="staff" data-title="Enrolments and pending business">
+      <p>Every portal enrolment e-mails you the details. The pack is yours to finish:</p>
+      <ul>
+        <li>Chase the <b>signed printed form</b>, the <b>ID copy</b>, and for health the <b>bank details</b>.</li>
+        <li>Flip <i>Signed form received</i> to Yes.</li>
+        <li>Send the pack to Guardian.</li>
+      </ul>
+      <p>Work the pending requirements list daily. It is the branch's largest single source
+        of lost business, and it is the one list where a day's delay costs a case.</p>
+      <div class="chg"><b>Pensions:</b> Salesforce cannot tell a company scheme from a
+        personal annuity &mdash; one record type covers both and ownership is recorded on
+        8 records in 402. Until that is filled in, any question about a company scheme
+        ends with a person, and that person is you. Record <i>Ownership</i> whenever you
+        touch a pension record.</div>
+    </article>
+
+    <article data-sec="U1" data-roles="unit" data-title="You account for your unit">
+      <p>Every Wednesday you have a slot of your own with your unit's numbers already on
+        the screen: cases answered against sent, who answered nothing, your register, your
+        overdue actions, and how many of your people spoke at all last week.</p>
+      <p>You are not reading the figures out. The room can see them. You are saying what
+        you are doing about them.</p>
+      <div class="chg"><b>New, and it is the point of the change.</b> The slot is seeded
+        from the roster and cannot be left blank. It does not fall to the chair if you are
+        away &mdash; it stays yours and the meeting says so.</div>
+    </article>
+
+    <article data-sec="U2" data-roles="unit" data-title="Your team's board">
+      <p>You see your team's clients, their figures, what each agent has logged, and how
+        long each named client has waited. <b>Nothing logged</b> two working days after a
+        naming is flagged, and that flag is yours to clear.</p>
+      <p>An agent who reports only in Salesforce Chatter shows as nothing logged until they
+        mark the call or write the feedback field. Tell them.</p>
+    </article>
+
+    <article data-sec="U3" data-roles="unit" data-title="What is not yours">
+      <ul>
+        <li><b>You do not name agents.</b> The branch manager and Client Support do.</li>
+        <li><b>You do not e-mail a client a note from the board.</b> Those go in the branch manager's name.</li>
+        <li><b>You see your unit, not the branch.</b> Another unit's figures are not yours, and neither are the branch-wide exception lists.</li>
+      </ul>
+    </article>
+
+    <article data-sec="B1" data-roles="branch" data-title="The holds and the switches">
+      <p>Several systems are built and deliberately silent. Each needs you:</p>
+      <ul>
+        <li><b>Automatic client e-mail is held</b> since 7 October &mdash; letters, reminders, receipts and introductions.</li>
+        <li><b>The TT$200 claims</b> are found and recorded, and sent nowhere.</li>
+        <li><b>The premium due letters</b> need re-approving: the 13 October rewording voided the last approval.</li>
+        <li><b>The Delivery Book and Log Book</b> default to test mode.</li>
+      </ul>
+      <div class="chg"><b>None of these is visible from outside the script editor.</b>
+        Nobody walking past a screen can tell that the claims are held. That is what the
+        register below is for.</div>
+    </article>
+
+    <article data-sec="B2" data-roles="branch" data-title="What only you press">
+      <ul>
+        <li>The go-live switches, and the holds.</li>
+        <li>A note e-mailed to a client from the board &mdash; it goes in your name, so your press is your go.</li>
+        <li>The Monday rehearsal, and <i>Send now</i> on a group letter.</li>
+        <li>Confirming a staff member's written test marks.</li>
+      </ul>
+    </article>
+
+    <article data-sec="B3" data-roles="branch" data-title="The register">
+      <p>Below this pack you see who has acknowledged this version and who has not.</p>
+      <p>When the process changes, edit the pack and bump its version. Every
+        acknowledgement against the old version goes stale at once and the register says
+        who is behind &mdash; which is the only way the branch can show, on a date, that a
+        named person was handed a named process.</p>
+    </article>
+
+  </div>
+</div>
+
+<script>
+/*  The Service Questionnaire deployment: GroupClients.gs answers every gcm.*
+ *  action, so this page needs no route of its own and no Service.gs paste. */
+const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+const VERSION = document.getElementById('src').dataset.version;
+const KEY = 'rrb-proc-who';
+
+let ME = null, SECS = [], READ = {}, T0 = Date.now();
+const $ = id => document.getElementById(id);
+const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function api(params){
+  const q = new URLSearchParams(Object.assign({ v: VERSION }, params));
+  const r = await fetch(SVC + '?' + q.toString());
+  return r.json();
+}
+async function post(body){
+  /*  text/plain so Apps Script never gets a CORS preflight it cannot answer. */
+  const r = await fetch(SVC, { method:'POST', headers:{'Content-Type':'text/plain'},
+    body: JSON.stringify(Object.assign({ v: VERSION }, body)) });
+  return r.json();
+}
+
+/* phone or desk and the width — never the browser string, which identifies a
+   person's device more than it helps. */
+function device(){
+  return (matchMedia('(pointer:coarse)').matches ? 'phone' : 'desk') + ' ' + window.innerWidth;
+}
+
+function mySections(role){
+  return [...document.querySelectorAll('#src article')].filter(a => {
+    const roles = (a.dataset.roles || 'all').split(/[,\s]+/).filter(Boolean);
+    return roles.includes('all') || roles.includes(role);
+  });
+}
+
+function draw(){
+  const host = $('secs');
+  host.innerHTML = SECS.map(a => {
+    const roles = (a.dataset.roles || 'all');
+    const who = roles === 'all' ? 'Everyone' :
+      ({ agent:'Agents', staff:'Client Support', unit:'Unit managers', branch:'Branch manager' })[roles] || roles;
+    return '<article class="sec" id="sec-' + a.dataset.sec + '">' +
+      '<div class="who">' + esc(who) + '</div>' +
+      '<h3>' + a.dataset.title + '</h3>' +
+      a.innerHTML +
+      '<label class="tick"><input type="checkbox" data-s="' + a.dataset.sec + '">' +
+      '<span>I have read this</span></label></article>';
+  }).join('');
+
+  host.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      READ[cb.dataset.s] = cb.checked;
+      $('sec-' + cb.dataset.s).classList.toggle('read', cb.checked);
+      tally();
+    });
+  });
+  tally();
+}
+
+function tally(){
+  const n = Object.keys(READ).filter(k => READ[k]).length;
+  $('count').textContent = n + ' of ' + SECS.length + ' read' +
+    (n < SECS.length ? ' — tick each section as you go' : ' — ready');
+  /*  canAck first: ticking every box used to re-enable OK for the branch
+   *  code signed in with nobody behind it. The backend refuses that press
+   *  anyway, but a button that goes live and then errors looks broken. */
+  $('ok').disabled = !(ME && ME.canAck) || n < SECS.length;
+}
+
+function drawRegister(reg){
+  if (!reg) return;
+  const rows = reg.people.map(p =>
+    '<tr><td>' + esc(p.name) + '</td><td class="s">' + esc(p.role || '') + '</td>' +
+    '<td class="s">' + (p.ok
+      ? '<span class="pillok">✓ ' + esc(p.when) + '</span>'
+      : '<span class="pillbad">✕ not yet</span>') + '</td></tr>').join('');
+  $('reg').className = '';
+  $('reg').innerHTML = '<h2>Who has read this version</h2>' +
+    '<p class="lead">' + reg.done + ' of ' + reg.all + ' — version ' + esc(reg.version) +
+    '. Outstanding first.</p>' +
+    '<div class="foot" style="padding:8px 18px 14px"><table><thead><tr>' +
+    '<th>Name</th><th>Role</th><th>Acknowledged</th></tr></thead><tbody>' +
+    rows + '</tbody></table></div>';
+}
+
+function openPack(d){
+  ME = d.who;
+  $('gate').className = 'hide';
+  $('pack').className = '';
+  $('topsub').textContent = 'Version ' + VERSION;
+  $('hello').textContent = (ME.name || '').split(/\s+/)[0] + ', this is your pack';
+  const asRole = { agent:'an agent', staff:'Client Support',
+                   unit:'a unit manager', branch:'the branch manager' }[ME.role] || ME.role;
+  $('intro').textContent = 'Everything below applies to you as ' + asRole + '.';
+
+  SECS = mySections(ME.role);
+  SECS.forEach(a => READ[a.dataset.sec] = false);
+  draw();
+
+  if (d.mine) {
+    $('after').className = '';
+    $('after').innerHTML = '<div class="done">You already acknowledged version ' +
+      esc(d.mine.version) + ' on <b>' + esc(d.mine.when) + '</b>. ' +
+      'You may read it again and press OK again; both are kept.</div>';
+  }
+  if (!ME.canAck) {
+    $('ok').disabled = true;
+    $('oerr').textContent = 'The branch code on its own has nobody behind it. ' +
+      'Sign in with your own number and password to acknowledge.';
+  }
+  drawRegister(d.register);
+  T0 = Date.now();
+}
+
+$('go').addEventListener('click', async () => {
+  const who = $('who').value.trim(), code = $('code').value.trim();
+  if (!who || !code) { $('gerr').textContent = 'Both, please.'; return; }
+  $('gerr').textContent = 'Opening…'; $('go').disabled = true;
+  try {
+    const d = await api({ action:'gcm.proc', who, code });
+    if (!d.ok) { $('gerr').textContent = d.error || 'That did not work.'; $('go').disabled = false; return; }
+    try { sessionStorage.setItem(KEY, JSON.stringify({ who, code })); } catch(e){}
+    openPack(d);
+  } catch (e) {
+    $('gerr').textContent = 'Could not reach the branch. Try again.';
+    $('go').disabled = false;
+  }
+});
+$('code').addEventListener('keydown', e => { if (e.key === 'Enter') $('go').click(); });
+
+$('ok').addEventListener('click', async () => {
+  $('ok').disabled = true; $('oerr').textContent = 'Recording…';
+  let s = {};
+  try { s = JSON.parse(sessionStorage.getItem(KEY) || '{}'); } catch(e){}
+  try {
+    const r = await post({ action:'gcm.procOk', who:s.who, code:s.code,
+      secs: Object.keys(READ).filter(k => READ[k]).join(','),
+      of: SECS.length, mins: (Date.now() - T0) / 60000, dev: device() });
+    if (!r.ok) { $('oerr').textContent = r.error || 'That did not record.'; $('ok').disabled = false; return; }
+    $('oerr').textContent = '';
+    $('foot').className = 'hide';
+    $('after').className = '';
+    /*  The version is a date and so is the stamp, so printing both read as
+     *  "version 2026-10-17, 2026-10-17". The masthead already carries the
+     *  version; this line carries the day it was read. */
+    $('after').innerHTML = '<div class="done"><b>Recorded.</b> ' + esc(r.name) +
+      ', all ' + r.of + ' sections, ' + esc(r.when) + '. ' +
+      'Nothing further is needed from you until the process changes, and you ' +
+      'will be told when it does.</div>';
+    window.scrollTo({ top: $('after').offsetTop - 80, behavior:'smooth' });
+  } catch (e) {
+    $('oerr').textContent = 'Could not reach the branch. Try again.';
+    $('ok').disabled = false;
+  }
+});
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){try{var u='RRB_VIEWS_URL';if(u.indexOf('RRB_VIEWS')===0)return;
+var i=new Image();i.src=u+'?p='+encodeURIComponent(location.pathname)+
+'&r='+encodeURIComponent(document.referrer||'');}catch(e){}})();
+</script>
+</body>
+</html>
