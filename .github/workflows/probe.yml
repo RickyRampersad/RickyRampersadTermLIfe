@@ -20,7 +20,9 @@ jobs:
           try:
               from faster_whisper import WhisperModel
               m = WhisperModel('base.en', compute_type='int8')
-              segs, _ = m.transcribe('probe/sample.mp3')
+              import subprocess, numpy as np
+              raw = subprocess.run(['ffmpeg','-v','error','-i','probe/sample.mp3','-ar','16000','-ac','1','-f','f32le','-'],capture_output=True).stdout
+              segs, _ = m.transcribe(np.frombuffer(raw, np.float32))
               text = ' '.join(s.text.strip() for s in segs)
           except Exception: log.write(traceback.format_exc())
           open('probe/text.txt','w').write(text)
