@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-16m';
+var SCRIPT_VERSION = '2026-10-17a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3618,7 +3618,7 @@ function housekeepingTick_() {
     try { if (sendDayStart_(sid, day, 'first')) { sent.push(p.name + ' (morning)'); morningSent++; } } catch (e) {}
   });
 
-  // 5:00, the Branch Manager's own day; 12:00 and 18:00, his progress.
+  // 5:00, the Branch Manager's own day; 11:00 his progress; 15:00 he closes out the day.
   if (mins >= BM_MAIL_AT && mins <= 11 * 60 && !morningSent && !props.getProperty('bmday_' + day)) {
     if (timedSend_(props, 'bmday_' + day, now, function () { return sendBranchManagerDay_(day); })) sent.push('Branch Manager');
   }
@@ -4406,7 +4406,7 @@ function bmReplySave_(person, day, p, all) {
 //  manager's name; UNIT_AGENTS_<sid> (comma-separated names) overrides it.
 // ---------------------------------------------------------------------------
 
-var BM_PROGRESS_AT = [12 * 60, 18 * 60];
+var BM_PROGRESS_AT = [11 * 60, 15 * 60];   // 11am progress across the team; 3pm, close out the day
 var UM_DESKS = ['akaash'];
 var UM_MORNING_AT = 5 * 60 + 30;     // half an hour before his 6am start
 var UM_EVENING_AT = 17 * 60 + 30;    // the account of the day, half an hour before 6pm
@@ -4822,10 +4822,10 @@ function sendBranchManagerProgress_(day, which) {
   }).join('');
 
   var me = today.ricky || { closed: 0, noted: 0, notes: 0, list: [] };
-  var label = which === 'eve' ? (minutesOf_(hhmm_(new Date())) >= 17 * 60 ? 'Six o\'clock' : 'This afternoon') : 'Midday';
+  var label = which === 'eve' ? 'Three o\'clock · close out the day' : 'Eleven o\'clock · progress';
   var answer = replyButton_(replyUrl_('ricky', day, 'bm'), 'Respond and log', 'Reply on Chatter to anything waiting on you, close your own with a note, and log what you did today.');
   var body =
-    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + label + ', Mr Rampersad. Where the branch stands' + (which === 'eve' ? ' at the close' : ' so far') + ', and where you stand.</div>' +
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + (which === 'eve' ? 'Three o\'clock, Mr Rampersad. Time to close out the day: where the branch stands at the close, and where you stand.' : 'Eleven o\'clock, Mr Rampersad. Where the team stands so far (support, the BMA, the Unit Manager and the agents), what is urgent, and where you stand. Comment on anything as you go.') + '</div>' +
     statTiles_([
       { value: sfOk ? me.closed : '—', label: 'you closed today', color: MAIL.green },
       { value: sfOk ? me.notes : '—', label: 'your Chatter today' },
