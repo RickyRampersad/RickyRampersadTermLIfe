@@ -3885,7 +3885,7 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
 - **The films** (17 October 2026: "the vid to send off", then "two films: agents and staff"). `rroperations/logbook/films.html`
   (short address `/logbook-films`) plays *The Log Book, for agents* (`logbook-agents.mp4`, poster `film-agents.jpg`) and *The Log
   Book, for staff* (`logbook-staff.mp4`, `film-staff.jpg`); the Log Book's "▶ Film" button opens each person's own. They are
-  drawn by `tools/film/build-boardfilm.py lbagent|lbstaff` (the board films' machinery and midnight-blue look; the Log Book's
+  each also has a page of its own to post, `/logbookdemoagent/` and `/logbookdemostaff/` (17 October 2026: "Logbook demo agent, logbook demo staff"; `/logbook-demo-agent/` and `/logbook-demo-staff/` forward to them), with Open Graph tags so a WhatsApp link previews with the poster. They are drawn by `tools/film/build-boardfilm.py lbagent|lbstaff` (the board films' machinery and midnight-blue look; the Log Book's
   scenes are the `s_lb*` visuals and `LB_CSS`) from `lbagent-lines.json` / `lbstaff-lines.json`, then `sfx.py`, `usetrack.py
   audio/inspired-kevin-macleod.mp3 lbagent lbstaff`, `render.js`, `mixany.py`. Every name and number on screen is made up.
   **The voice is Andrew** (`en-US-AndrewNeural`, **-4%**, not the films' usual -12%: the same evening the manager heard
