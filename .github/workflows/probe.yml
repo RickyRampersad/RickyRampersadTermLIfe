@@ -1,0 +1,32 @@
+name: probe
+on:
+  push:
+    branches: [tts-run]
+    paths: ['probe/go']
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install edge-tts faster-whisper
+      - name: transcribe and re-voice
+        run: |
+          python3 - <<'PY'
+          import asyncio, edge_tts, json
+          from faster_whisper import WhisperModel
+          m = WhisperModel('small.en', compute_type='int8')
+          segs, _ = m.transcribe('probe/sample.mp3')
+          text = ' '.join(s.text.strip() for s in segs)
+          open('probe/text.txt','w').write(text)
+          voices = ['en-US-AndrewNeural','en-US-AndrewMultilingualNeural','en-US-BrianNeural','en-US-BrianMultilingualNeural','en-US-ChristopherNeural','en-US-GuyNeural','en-US-EricNeural','en-US-RogerNeural','en-US-SteffanNeural']
+          async def go():
+              for v in voices:
+                  for r in ['-12%']:
+                      await edge_tts.Communicate(text, v, rate=r).save(f'probe/{v}{r}.mp3')
+          asyncio.run(go())
+          PY
+      - run: |
+          git config user.name tts-bot; git config user.email tts-bot@users.noreply.github.com
+          git add probe && git commit -m "probe output" && git push
