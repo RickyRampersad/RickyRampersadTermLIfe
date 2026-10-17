@@ -2,7 +2,7 @@
  "note": "The Log Book, for agents (re-cut 17 October 2026: the 1 pm bag, the real agents and staff by name, clients made up).",
  "role": "agent",
  "voice": "en-US-AndrewNeural",
- "rate": "-12%",
+ "rate": "-4%",
  "scenes": [
   {
    "visual": "title",

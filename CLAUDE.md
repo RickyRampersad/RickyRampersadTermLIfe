@@ -3888,7 +3888,9 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   drawn by `tools/film/build-boardfilm.py lbagent|lbstaff` (the board films' machinery and midnight-blue look; the Log Book's
   scenes are the `s_lb*` visuals and `LB_CSS`) from `lbagent-lines.json` / `lbstaff-lines.json`, then `sfx.py`, `usetrack.py
   audio/inspired-kevin-macleod.mp3 lbagent lbstaff`, `render.js`, `mixany.py`. Every name and number on screen is made up.
-  **The voice is Andrew** (`en-US-AndrewNeural`, -12%), re-cut on 17 October 2026 ("I need Andrew's voice … use actual agents
+  **The voice is Andrew** (`en-US-AndrewNeural`, **-4%**, not the films' usual -12%: the same evening the manager heard
+  -12% as "robotic"; his uploaded sample was proved to be that exact voice and setting, so the pace was the cause, and he
+  chose -4% over the Multilingual voice), re-cut on 17 October 2026 ("I need Andrew's voice … use actual agents
   as demo and the actual staff names"). Microsoft's speech service is refused by the session's network, so the narration
   is made on a GitHub Actions runner: the `tts-run` branch (never merged, never on Pages) holds `.github/workflows/tts.yml`;
   pushing a `tts/job.json` (`{"voice", "rate", "films": {key: [line, …]}}`) voices every line with edge-tts and commits
@@ -3900,7 +3902,8 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   and the 11:00 e-mail (`lbnudge`); the staff film has the bag day (`lbbagday`), the weekly rota (`lbrota`), the noon
   e-mail (`lbprep`) and bag in and out (`lbbaglog`). The Kokoro voice of the first cut is retired.
   **The music is the branch's own "Music_Motivation" track** (sent in the chat on 17 October 2026 with an Andrew sample),
-  looped by `usetrack.py` for `lbagent` and `lbstaff`; it is kept outside the repository, so the Kevin MacLeod credit is not on
+  only 28 seconds long, so it is chained eight times with 3-second equal-power crossfades into one 3:25 bed first
+  (`motivation-long.wav` in the scratchpad), so the repeat is not heard, then given to `usetrack.py` for `lbagent` and `lbstaff`; it is kept outside the repository, so the Kevin MacLeod credit is not on
   the films page.
 - **The bag: in by 12 noon, down at 1 pm** (17 October 2026: "the bags actually come in once a day and leave once a day …
   around 1pm bags come in … rotated by 1 staff member weekly … once it comes in before 12 … it should be able to catch the bag …
