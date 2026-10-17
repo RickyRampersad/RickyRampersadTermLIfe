@@ -440,5 +440,112 @@ ok('capitals and spacing do not matter', env.accSameName_('REENA  MADEUP', 'Reen
 ok('two different people never match', !env.accSameName_('Ravi Singh', 'Ravi Persad'));
 ok('a shared first name alone never matches', !env.accSameName_('Ravi Singh', 'Ravi'));
 
+
+/* =======================================================================
+   14. THE TRACKER'S OWN DAY, READ WHOLE
+   The four tabs, found by their headers the way the tracker finds them.
+   openById in the harness hands back this same workbook, which is exactly
+   the shape the real thing has when the tracker and the meeting app share
+   a container.
+   ======================================================================= */
+sec('The tracker\'s day');
+
+const LOGH = ['Timestamp', 'Date', 'StaffId', 'Name', 'Status', 'MailAM', 'MailPM']
+  .concat(['KPI1', 'KPI1_Actioned', 'KPI2', 'KPI2_Actioned', 'PM1', 'PM1_Actioned',
+           'PM2', 'PM2_Actioned', 'EVE', 'EVE_Actioned']);
+const logrow = (o) => LOGH.map(h => (o[h] === undefined ? '' : o[h]));
+env.__mkSheet('KPI Log', 70, LOGH, [
+  // Gita: KPI1 filed, morning mail swept, afternoon not.
+  logrow({ Date: '2026-10-16', StaffId: 'gita', Name: 'Gita Imaginary',
+           MailAM: '08:25|bm:done,abm:none', MailPM: '',
+           KPI1: 'Surveys / Query Pal', KPI1_Actioned: 'Tested the dues extract' }),
+  // Devi: everything in, both sweeps.
+  logrow({ Date: '2026-10-16', StaffId: 'devi', Name: 'Devi Invented',
+           MailAM: '07:59|um:done', MailPM: '15:20|um:done',
+           KPI1: 'Opportunity', KPI1_Actioned: 'Called four of the unit' }),
+  // Yesterday's row for Gita: must never be read as today.
+  logrow({ Date: '2026-10-15', StaffId: 'gita', Name: 'Gita Imaginary',
+           MailAM: '08:10|bm:done', MailPM: '15:40|bm:done',
+           KPI1: 'x', KPI1_Actioned: 'yesterday' })
+]);
+env.__mkSheet('Attendance', 71,
+  ['Date', 'StaffId', 'Name', 'FirstSignIn', 'LastSeen', 'SignedOut', 'Status', 'Reason'], [
+  ['2026-10-16', 'gita', 'Gita Imaginary', '08:52', '15:01', '', 'in', ''],
+  ['2026-10-16', 'devi', 'Devi Invented', '07:58', '15:30', '', 'in', ''],
+  ['2026-10-16', 'farida', 'Farida Notreal', '', '', '', 'absent', 'Certified sick']
+]);
+env.__mkSheet('Closeout Items', 72,
+  ['ItemId', 'Item', 'Who', 'Auto', 'Order', 'Active', 'Note'], [
+  ['blocks',    'Every block reported',            'All',            'blocks', 10, 'Yes', ''],
+  ['mail',      'Afternoon mail sweep cleared',    'All',            'mail',   20, 'Yes', ''],
+  ['portfolio', 'Branch portfolio uploaded',       'sales support',  '',       30, 'Yes', ''],
+  ['unitpipe',  'Unit pipeline reviewed',          'um',             '',       40, 'Yes', ''],
+  ['dormant',   'An example nobody asked for',     'All',            '',       50, 'No',  '']
+]);
+env.__mkSheet('Closeout Log', 73,
+  ['Date', 'StaffId', 'Name', 'ItemId', 'Item', 'Status', 'Reason', 'At', 'Source'], [
+  ['2026-10-16', 'gita', 'Gita Imaginary', 'portfolio', 'Branch portfolio uploaded',
+   'Not done', 'Waiting on head office', '15:50', 'page']
+]);
+env.__mkSheet('Day Blocks', 74, env.ACC_HEAD ? env.ACC_HEAD['Day Blocks'] : [], []);
+
+clearCaches();
+env.CacheService.getScriptCache().removeAll(['acc.trk.2026-10-16']);
+env.accSeedBlocks_();
+const people = env.readPeople_();
+const byName = {};
+people.forEach(p => { byName[p.name] = p; });
+
+/* The seed keys on first names, so the invented roster has to be renamed to
+   desks the seed knows. gita -> elizabeth's hours, devi -> akaash's. */
+const trk = env.accTracker_('2026-10-16');
+ok('the KPI Log is found by its headers', trk.live === true, trk.why);
+ok('only today is read', !!trk.log['gita'] && trk.log['gita'].KPI1.actioned === 'Tested the dues extract',
+   JSON.stringify(trk.log['gita'] && trk.log['gita'].KPI1));
+ok('the morning sweep is read as a time', trk.log['gita'].mailAM === '08:25',
+   trk.log['gita'].mailAM);
+ok('an unswept afternoon reads empty, not zero', trk.log['gita'].mailPM === '');
+ok('attendance gives the arrival', trk.att['gita'].in === '08:52', trk.att['gita'].in);
+ok('and an absence with its reason',
+   trk.att['farida'].status === 'absent' && trk.att['farida'].reason === 'Certified sick');
+ok('the close-out list drops an inactive line',
+   trk.items.length === 4 && !trk.items.some(i => i.id === 'dormant'), trk.items.length + '');
+ok('and comes back in its own order', trk.items[0].id === 'blocks' && trk.items[3].id === 'unitpipe');
+ok('a hand tick is read with its reason',
+   trk.ticks['gita'].portfolio.status === 'not done' &&
+   trk.ticks['gita'].portfolio.reason === 'Waiting on head office');
+
+/* ---- the role scoping, which is the whole differentiation ---- */
+const staffP = { name: 'Gita Imaginary', role: 'staff' };
+const umP = { name: 'Devi Invented', role: 'unitmgr' };
+const bmP = { name: 'Anand Pretend', role: 'manager' };
+ok('"All" reaches everybody', env.accCloApplies_('All', staffP, 'gita'));
+ok('"sales support" reaches a staff desk', env.accCloApplies_('sales support', staffP, 'gita'));
+ok('and not a unit manager', !env.accCloApplies_('sales support', umP, 'devi'));
+ok('"um" reaches a unit manager', env.accCloApplies_('um', umP, 'devi'));
+ok('and not the chair', !env.accCloApplies_('um', bmP, 'ricky'));
+ok('a staff id reaches one desk only',
+   env.accCloApplies_('gita', staffP, 'gita') && !env.accCloApplies_('gita', umP, 'devi'));
+ok('a name reaches that person', env.accCloApplies_('Devi Invented', umP, 'devi'));
+
+/* ---- who is on the tracker at all ---- */
+ok('an advisor is not on the tracker',
+   env.accOnTracker_({ name: 'Rajiv Pretendo', role: 'agent' }) === false);
+ok('a desk with blocks is', env.accOnTracker_({ name: 'Sasha Someone', role: 'staff' }) === true);
+ok('a desk with no blocks on the tab is not',
+   env.accOnTracker_({ name: 'Nobody Here', role: 'staff' }) === false);
+
+/* ---- an advisor's close-off is theirs; a desk's is the tracker's ---- */
+const agentClose = env.apiCloseOff_({ token: 'T-BUSY', period: 'day', done: 'Two fact finds' });
+ok('an advisor may close off here', agentClose.ok === true && agentClose.saved === true);
+
+/* Rename a staff member onto a seeded desk so the guard has blocks to find. */
+env.__sheets['People']._grid.forEach(r => { if (r[1] === 'liz@example.com') r[2] = 'Sasha Someone'; });
+env.CacheService.getScriptCache().removeAll(['acc.trk.2026-10-16']);
+const deskClose = env.apiCloseOff_({ token: 'T-STAFF2', period: 'day', done: 'anything' });
+ok('a desk is sent to the tracker instead of asked twice',
+   deskClose.ok === false && deskClose.onTracker === true &&
+   /15:45/.test(deskClose.error), deskClose.error);
+
 console.log('\n' + (fails ? fails + ' FAILED' : 'All checks passed'));
 process.exit(fails ? 1 : 0);

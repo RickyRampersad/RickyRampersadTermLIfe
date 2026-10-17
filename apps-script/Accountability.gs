@@ -1003,9 +1003,23 @@ function accNumbersFor_(person, S) {
   return out;
 }
 
-/** Record one close-off. Idempotent per person per period. */
+/*  Record one close-off. Idempotent per person per period.
+ *
+ *  A DESK CANNOT CLOSE OFF HERE. Staff and management already have the
+ *  tracker's before-you-leave list at a quarter to four, scoped to them
+ *  by its own Who column and answering three of its lines off the
+ *  sheet. A second set of questions over it would give the branch two
+ *  answers to one day, which is the same mistake as logging a block
+ *  twice. So this is the advisors' close-off, and theirs alone —
+ *  because nothing else in the branch asks an advisor for their day at
+ *  all. */
 function apiCloseOff_(body) {
   var me = requireUser_(body.token);
+  if (accOnTracker_(me)) {
+    return { ok: false, onTracker: true,
+             error: 'Your day closes off in the KPI tracker at ' + ACC_TRK.CLOSEOUT_AT +
+                    ', on the before-you-leave list. Nothing to fill in twice.' };
+  }
   var now = new Date();
   var period = accLow_(body.period) === 'week' ? 'week' : 'day';
   var key = period === 'week' ? accWeekKey_(now) : accDayKey_(now);
@@ -2479,137 +2493,345 @@ function accTrackerBook_() {
   return SpreadsheetApp.openById(id);
 }
 
-/** Today's filed blocks, as { staffId: { KPI1: {kpi, actioned, resolved,
- *  open, blocker}, ... } }. Cached, and never throws: the tracker being
- *  unreachable must leave the day view standing. */
-function accFiled_(dayKey) {
-  return accCached_('filed.' + dayKey, function () {
-    try {
-      var ss = accTrackerBook_(), sh = null;
-      var want = ACC_DAY.FIND.map(function (h) { return h.toLowerCase(); });
-      ss.getSheets().forEach(function (s) {
-        if (sh) return;
-        if (s.getLastRow() < 1) return;
-        var head = s.getRange(1, 1, 1, Math.max(1, s.getLastColumn())).getValues()[0]
-          .map(function (h) { return String(h).trim().toLowerCase(); });
-        if (want.every(function (w) { return head.indexOf(w) > -1; })) sh = s;
-      });
-      if (!sh) {
-        return { live: false, why: 'No KPI Log tab in the tracker workbook (it is the tab ' +
-                                   'with StaffId and KPI1_Actioned columns).', rows: {} };
-      }
-      var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
-        .map(function (h) { return String(h).trim(); });
-      var ix = {};
-      head.forEach(function (h, i) { ix[h] = i; });
-      if (!('Date' in ix) || !('StaffId' in ix)) {
-        return { live: false, why: 'The tracker log has no Date or StaffId column.', rows: {} };
-      }
+/*  One tab of the tracker's workbook, found by the headers the tracker
+ *  itself finds it by. Never by name: the branch renames tabs, and the
+ *  tracker's own findTabBy_ is header-based for exactly that reason. */
+function accTrackerTab_(ss, must) {
+  var want = must.map(function (h) { return h.toLowerCase(); }), hit = null;
+  ss.getSheets().forEach(function (s) {
+    if (hit || s.getLastRow() < 1 || s.getLastColumn() < 1) return;
+    var head = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0]
+      .map(function (h) { return String(h).trim().toLowerCase(); });
+    if (want.every(function (w) { return head.indexOf(w) > -1; })) hit = s;
+  });
+  return hit;
+}
 
-      /*  Read the tail only. The log is unbounded — it is a row per
-       *  person per day, for ever — and the desk wants one day of it. */
-      var last = sh.getLastRow();
-      if (last < 2) return { live: true, rows: {} };
-      var from = Math.max(2, last - 400);
-      var vals = sh.getRange(from, 1, last - from + 1, head.length).getValues();
+/** A tab's rows as objects, reading only the tail where one is asked for. */
+function accTrackerRows_(sh, tailRows) {
+  if (!sh || sh.getLastRow() < 2) return [];
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+    .map(function (h) { return String(h).trim(); });
+  var last = sh.getLastRow();
+  var from = tailRows ? Math.max(2, last - tailRows) : 2;
+  return sh.getRange(from, 1, last - from + 1, head.length).getValues()
+    .map(function (r) {
+      var o = {};
+      head.forEach(function (h, i) { if (h) o[h] = r[i]; });
+      return o;
+    });
+}
 
-      var rows = {};
-      vals.forEach(function (r) {
-        var d = r[ix['Date']];
-        var key = (d instanceof Date) ? accDayKey_(d) : accStr_(d).slice(0, 10);
-        if (key !== dayKey) return;
-        var id = accLow_(r[ix['StaffId']]);
-        if (!id) return;
-        var one = {};
-        ACC_DAY.IDS.forEach(function (b) {
-          one[b] = {
-            kpi:      (b in ix) ? accStr_(r[ix[b]]) : '',
-            actioned: ((b + '_Actioned') in ix) ? accStr_(r[ix[b + '_Actioned']]) : '',
-            resolved: ((b + '_Resolved') in ix) ? accStr_(r[ix[b + '_Resolved']]) : '',
-            open:     ((b + '_Open') in ix) ? accStr_(r[ix[b + '_Open']]) : '',
-            blocker:  ((b + '_Blocker') in ix) ? accStr_(r[ix[b + '_Blocker']]) : ''
-          };
-        });
-        rows[id] = one;                          /* a later row wins */
-      });
-      return { live: true, rows: rows };
-    } catch (err) {
-      return { live: false, rows: {},
-               why: 'The tracker workbook would not open: ' + accShortErr_(err) +
-                    ' Set ' + ACC_DAY.PROP_BOOK + ' if it has moved.' };
+/* ===================================================================
+ *  THE TRACKER'S DAY, READ WHOLE
+ *
+ *  Four tabs, one open, cached for the run. The desk shows what the
+ *  tracker holds and writes none of it.
+ *
+ *    Attendance     when each person came in, and whether they are out
+ *    the KPI Log    the blocks, and the morning and afternoon mail sweep
+ *    Closeout Items the before-you-leave list, already scoped by role
+ *    Closeout Log   what each person has ticked off it today
+ *
+ *  THE DAY THE TRACKER ACTUALLY RUNS, which this reads rather than
+ *  reinvents:
+ *
+ *    on arrival   FirstSignIn, whenever that is
+ *    morning      the AM mail sweep, logged as "08:25|bm:done,abm:none"
+ *    10:00        KPI1 due        12:00  KPI2 due, and the midday nudge
+ *    14:00        the branch message, written for the chair to send
+ *    15:00        PM1 due, and the checkpoint to the managers
+ *    15:45        BEFORE YOU LEAVE — the close-out, to everyone in
+ *    16:00        PM2 due         midnight  EVE, the chair's alone
+ *    Friday 17:00 the week
+ * =================================================================== */
+var ACC_TRK = {
+  ATT:  ['Date', 'StaffId', 'FirstSignIn'],
+  LOG:  ['StaffId', 'KPI1_Actioned'],
+  CLO:  ['ItemId', 'Item', 'Who'],
+  CLOG: ['Date', 'StaffId', 'ItemId'],
+  CLOSEOUT_AT: '15:45'
+};
+
+function accTracker_(dayKey) {
+  return accCached_('trk.' + dayKey, function () {
+    var out = { live: false, why: '', att: {}, log: {}, items: [], ticks: {},
+                closeoutAt: ACC_TRK.CLOSEOUT_AT };
+    var ss;
+    try { ss = accTrackerBook_(); }
+    catch (err) {
+      out.why = 'The tracker workbook would not open: ' + accShortErr_(err) +
+                ' Set ' + ACC_DAY.PROP_BOOK + ' if it has moved.';
+      return out;
     }
+
+    var log = accTrackerTab_(ss, ACC_TRK.LOG);
+    if (!log) {
+      out.why = 'No KPI Log in the tracker workbook — the tab with StaffId and ' +
+                'KPI1_Actioned columns.';
+      return out;
+    }
+    out.live = true;
+
+    /*  The log is a row per person per day, for ever, so only the tail is
+     *  read. Four hundred rows is a fortnight of a ten-desk branch. */
+    accTrackerRows_(log, 400).forEach(function (r) {
+      if (accRowDay_(r['Date']) !== dayKey) return;
+      var id = accLow_(r['StaffId']);
+      if (!id) return;
+      var one = { mailAM: accMailAt_(r['MailAM']), mailPM: accMailAt_(r['MailPM']) };
+      ACC_DAY.IDS.forEach(function (b) {
+        one[b] = { kpi: accStr_(r[b]), actioned: accStr_(r[b + '_Actioned']),
+                   resolved: accStr_(r[b + '_Resolved']), open: accStr_(r[b + '_Open']),
+                   blocker: accStr_(r[b + '_Blocker']) };
+      });
+      out.log[id] = one;                                   /* a later row wins */
+    });
+
+    var att = accTrackerTab_(ss, ACC_TRK.ATT);
+    if (att) {
+      accTrackerRows_(att, 400).forEach(function (r) {
+        if (accRowDay_(r['Date']) !== dayKey) return;
+        var id = accLow_(r['StaffId']);
+        if (!id) return;
+        out.att[id] = { in: accTime_(r['FirstSignIn']), out: accTime_(r['SignedOut']),
+                        seen: accTime_(r['LastSeen']),
+                        status: accLow_(r['Status']) || 'in',
+                        reason: accStr_(r['Reason']) };
+      });
+    }
+
+    /*  The close-out list. Already role-scoped on the tab by a Who column
+     *  taking bm, um, bma, sales support, a name or a staff id — so the
+     *  branch changes who is asked what by typing, and the desk only has
+     *  to apply the same rule. */
+    var clo = accTrackerTab_(ss, ACC_TRK.CLO);
+    if (clo) {
+      accTrackerRows_(clo).forEach(function (r) {
+        var on = accLow_(r['Active'] == null ? 'yes' : r['Active']);
+        if (on === 'no' || on === 'false' || on === '0') return;
+        if (!accStr_(r['Item'])) return;
+        out.items.push({ id: accStr_(r['ItemId']) || accStr_(r['Item']),
+                         item: accStr_(r['Item']), who: accStr_(r['Who']),
+                         auto: accLow_(r['Auto']), order: accNum_(r['Order']) });
+      });
+      out.items.sort(function (a, b) { return a.order - b.order; });
+    }
+
+    var clog = accTrackerTab_(ss, ACC_TRK.CLOG);
+    if (clog) {
+      accTrackerRows_(clog, 600).forEach(function (r) {
+        if (accRowDay_(r['Date']) !== dayKey) return;
+        var id = accLow_(r['StaffId']);
+        if (!id) return;
+        if (!out.ticks[id]) out.ticks[id] = {};
+        out.ticks[id][accStr_(r['ItemId'])] = {
+          status: accLow_(r['Status']), reason: accStr_(r['Reason']),
+          at: accTime_(r['At']), source: accStr_(r['Source'])
+        };
+      });
+    }
+
+    return out;
   });
 }
 
-/*  ONE PERSON'S DAY. Each block with where it stands, and the Salesforce
- *  figure for the work it is for, pulled in rather than asked for.
+function accRowDay_(v) {
+  if (v instanceof Date) return accDayKey_(v);
+  return accStr_(v).slice(0, 10);
+}
+
+function accTime_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, accTz_(), 'HH:mm');
+  var s = accStr_(v);
+  var m = s.match(/(\d{1,2}):(\d{2})/);
+  return m ? (m[1].length === 1 ? '0' : '') + m[1] + ':' + m[2] : '';
+}
+
+/*  "08:25|bm:done,abm:none,…" — the sweep's time is the first field. The
+ *  per-mailbox states after the bar are the tracker's own business; the
+ *  desk only needs to know whether it was swept and when. */
+function accMailAt_(v) {
+  var s = accStr_(v);
+  if (!s) return '';
+  return accTime_(s.split('|')[0]);
+}
+
+/*  WHO IS ON THE TRACKER. Staff and management are; agents are not, and
+ *  that is the whole differentiation. The KPI tracker measures desks —
+ *  blocks, the mail sweep, the close-out — and no agent owns one, which
+ *  is the same fact that makes every Salesforce task owner staff. An
+ *  agent's day is their flight plan, their fact finds and their
+ *  production, and asking them to file a block would be asking them to
+ *  account for work the branch does not do that way.
  *
- *  The states, and why each one is its own word rather than a colour:
- *    filed    the tracker has it
- *    late     the hour it was due by has gone and it is not filed
- *    now      this is the block the clock is in
- *    ahead    still to come
- *  Nothing here grades anybody. A block is late or it is not; what it
- *  means is the sentence the person writes beside it.                 */
+ *  So this is read off the tracker itself: a person with blocks on the
+ *  Day Blocks tab is on it, and a person without is not. Nobody is
+ *  sorted by their role code into a day they do not work. */
+function accOnTracker_(person) {
+  if (person.role === 'agent') return false;
+  return !!accBlockTab_()[accStaffId_(person)];
+}
+
+/*  ONE PERSON'S DAY, differentiated by whether the tracker holds it.
+ *
+ *  For a desk: when they came in, the mail sweep, each block with where
+ *  it stands, and the before-you-leave list with what is still open on
+ *  it — all of it read, none of it written. The person files in the
+ *  tracker; the desk shows the branch what the tracker says.
+ *
+ *  For an advisor: none of that, and the screen says so rather than
+ *  showing four empty rows. Their account of the day is the three
+ *  lines, because it is the only one anything asks them for.
+ *
+ *  The block states, each a word as well as a colour:
+ *    filed  the tracker has it
+ *    late   the hour it was due by has gone and it is not filed
+ *    now    the clock is inside it
+ *    ahead  still to come                                             */
 function accDayFor_(person, S) {
   S = S || accSnapshot_();
-  var now = new Date(), hour = now.getHours();
+  var now = new Date(), hour = now.getHours(), dayKey = accDayKey_(now);
   var id = accStaffId_(person);
-  var tab = accBlockTab_(), mine = tab[id];
-  var filed = accFiled_(accDayKey_(now));
-  var got = (filed.rows || {})[id] || null;
+  var mine = accBlockTab_()[id];
+  var trk = accTracker_(dayKey);
 
   if (!mine) {
-    return { live: filed.live, why: filed.why || '',
-             staffId: id, hours: '', lunch: '', blocks: [],
-             none: 'No day blocks on file for ' + person.name.split(/\s+/)[0] +
-                   '. Add them on the Day Blocks tab and this fills itself.' };
+    /*  Not a desk. An advisor, or a desk nobody has given hours yet —
+     *  and the two read differently, because one is how the branch
+     *  works and the other is something to fix. */
+    return {
+      live: trk.live, why: trk.why, onTracker: false, staffId: id,
+      blocks: [], items: [], ownCloseOff: true,
+      none: person.role === 'agent'
+        ? 'Advisors are not on the KPI tracker: no blocks, no mail sweep. ' +
+          'Your day is your flight plan, your fact finds and what you wrote below.'
+        : 'No day blocks on file for ' + person.name.split(/\s+/)[0] +
+          '. Add them on the Day Blocks tab and this fills itself.'
+    };
   }
 
-  /*  The desk's own Salesforce counts for this person today, by task
-   *  type, so a block for pendings can say how many pendings moved.
-   *  Only what this project can see: the task owner's name has to match
-   *  the person, which is true for staff and never for an agent. */
-  var byType = (S.tasks.live && (S.tasks.byTypeFor || {})[accLow_(person.name)]) || {};
+  var got = trk.log[id] || null;
+  var att = trk.att[id] || null;
 
   var blocks = mine.blocks.map(function (b) {
     var f = got ? got[b.id] : null;
     var isFiled = !!(f && (f.actioned || f.kpi));
-    var state = isFiled ? 'filed'
-              : (b.due && hour >= b.due) ? 'late'
-              : accBlockNow_(b, hour) ? 'now' : 'ahead';
     return {
       id: b.id, label: ACC_DAY.LABEL[b.id] || b.id,
       time: b.time, focus: b.focus, kpi: b.kpi, due: b.due, type: b.type,
-      state: state, filed: isFiled,
+      state: isFiled ? 'filed'
+           : (b.due && hour >= b.due) ? 'late'
+           : accBlockNow_(b, hour) ? 'now' : 'ahead',
+      filed: isFiled,
       actioned: f ? f.actioned : '', resolved: f ? f.resolved : '',
       open: f ? f.open : '', blocker: f ? f.blocker : '',
-      /*  What Salesforce says moved in this block's own kind of work
-       *  today. Null, not zero, when the type is work Salesforce does
-       *  not type — a zero there would read as a wasted morning. */
-      sf: b.type && byType[b.type] !== undefined ? byType[b.type] : null
+      sf: accBlockSf_(b, person, S)
     };
   });
 
-  var owed = blocks.length, inHand = blocks.filter(function (b) { return b.filed; }).length;
+  /*  THE BEFORE-YOU-LEAVE LIST, as the tracker already scopes it. Three
+   *  of its lines answer themselves off the sheet, and the desk reads
+   *  the same evidence rather than asking a person to confirm what is
+   *  already true. A line the tracker cannot see is left as the
+   *  person's own tick. */
+  var items = trk.items.filter(function (it) {
+    return accCloApplies_(it.who, person, id);
+  }).map(function (it) {
+    var t = (trk.ticks[id] || {})[it.id] || null;
+    var auto = accCloAuto_(it.auto, { blocks: blocks, mail: got, person: person, S: S });
+    var done = (auto && auto.ok) || !!(t && /^done$/.test(t.status));
+    return { id: it.id, item: it.item, auto: it.auto, done: done,
+             detail: auto ? auto.detail : '',
+             by: t ? (t.source || 'ticked') : (auto && auto.ok ? 'checked' : ''),
+             at: t ? t.at : '',
+             reason: t && /^not done$/.test(t.status) ? (t.reason || 'not done') : '' };
+  });
+
+  var left = items.filter(function (x) { return !x.done; }).length;
+
   return {
-    live: filed.live, why: filed.why || '',
-    staffId: id, hours: mine.hours, lunch: mine.lunch,
-    blocks: blocks, owed: owed, filed: inHand,
+    live: trk.live, why: trk.why, onTracker: true, staffId: id,
+    hours: mine.hours, lunch: mine.lunch,
+    arrived: att ? att.in : '', signedOut: att ? att.out : '',
+    absent: !!(att && att.status === 'absent'),
+    absentReason: att ? att.reason : '',
+    mailAM: got ? got.mailAM : '', mailPM: got ? got.mailPM : '',
+    blocks: blocks, owed: blocks.length,
+    filed: blocks.filter(function (b) { return b.filed; }).length,
     late: blocks.filter(function (b) { return b.state === 'late'; }).length,
+    items: items, itemsOf: items.length, itemsLeft: left,
+    closeoutAt: trk.closeoutAt,
+    /*  A desk's account of the day is the tracker's close-out, which
+     *  fires at a quarter to four and is already role-scoped. The desk
+     *  does not ask a second set of questions over it: two scrubs is
+     *  how a branch gets two answers to the same question. */
+    ownCloseOff: false,
     trackerUrl: ACC_DAY.TRACKER_URL
   };
 }
 
+/*  The same rule the tracker applies: Who takes a role key, a name, a
+ *  staff id, or All. Kept here so the desk and the tracker can never
+ *  disagree about who is asked what. */
+function accCloApplies_(who, person, staffId) {
+  var w = accLow_(who);
+  if (!w || w === 'all' || w === 'everyone' || w === 'everybody') return true;
+  var name = accLow_(person.name);
+  var role = accTrkRole_(person);
+  return w.split(/\s*[,;|]\s*/).filter(String).some(function (p) {
+    return p === accLow_(staffId) || p === name || p === role ||
+           name.indexOf(p) > -1 ||
+           (p === 'sales support' && role === 'ssa');
+  });
+}
+
+/*  The meeting app's role code in the tracker's words. The tracker's
+ *  tiers are bm / abm / um / bma / pa / ssa; this app stores manager /
+ *  unitmgr / staff / agent. One map, so a close-out line written for
+ *  "um" reaches a unit manager here too. */
+function accTrkRole_(person) {
+  if (person.role === 'manager') return 'bm';
+  if (person.role === 'unitmgr') return 'um';
+  if (person.role === 'staff') return 'ssa';
+  return 'agent';
+}
+
+/*  The three lines the sheet answers for itself, read off the same
+ *  evidence the tracker reads. The evidence is the point, not the tick:
+ *  "3 of 4 reported" tells a person what to do, where a bare cross does
+ *  not. A line whose Auto this desk does not know is left to the
+ *  person's own tick rather than guessed at. */
+function accCloAuto_(auto, ctx) {
+  if (auto === 'blocks') {
+    var done = ctx.blocks.filter(function (b) { return b.filed; }).length;
+    return { ok: done >= ctx.blocks.length && ctx.blocks.length > 0,
+             detail: done + ' of ' + ctx.blocks.length + ' reported' };
+  }
+  if (auto === 'mail') {
+    var pm = ctx.mail ? ctx.mail.mailPM : '';
+    return { ok: !!pm, detail: pm ? 'swept at ' + pm : 'not swept' };
+  }
+  return null;
+}
+
+/*  What Salesforce says moved in this block's own kind of work today.
+ *  Null, not zero, where the work is a kind Salesforce does not type —
+ *  a zero there would read as a wasted morning rather than as work the
+ *  system has no column for. */
+function accBlockSf_(b, person, S) {
+  if (!b.type || !S.tasks.live) return null;
+  var by = (S.tasks.byTypeFor || {})[accLow_(person.name)];
+  return by && by[b.type] !== undefined ? by[b.type] : null;
+}
+
 /*  Whether the clock is inside a block. The tab's times are written for
  *  people — "8 – 10am", "3 – 4:30pm" — so the hour is read off the
- *  front of the range and the block runs until the next one starts. */
+ *  front of the range and the block runs until its due hour. */
 function accBlockNow_(b, hour) {
   var m = accStr_(b.time).match(/^(\d+)/);
   if (!m) return false;
   var start = Number(m[1]);
-  var pm = /pm/i.test(accStr_(b.time)) && start < 12;
-  if (pm && b.id !== 'KPI1') start += 12;
   if (/^(PM1|PM2|EVE)$/.test(b.id) && start < 12) start += 12;
   return hour >= start && (!b.due || hour < b.due);
 }
@@ -2621,14 +2843,17 @@ function accDayAll_(S) {
   readPeople_().forEach(function (p) {
     if (!p.active || p.role === 'guest' || p.role === 'agent') return;
     var d = accDayFor_(p, S);
-    if (!d.blocks.length) return;
+    if (!d.onTracker) return;
     out.push({ name: p.name, role: p.role, unit: p.unit || '',
-               hours: d.hours, owed: d.owed, filed: d.filed, late: d.late,
-               blocks: d.blocks });
+               hours: d.hours, arrived: d.arrived, signedOut: d.signedOut,
+               absent: d.absent, mailAM: d.mailAM, mailPM: d.mailPM,
+               owed: d.owed, filed: d.filed, late: d.late,
+               itemsOf: d.itemsOf, itemsLeft: d.itemsLeft, blocks: d.blocks });
   });
-  return out.sort(function (a, b) { return b.late - a.late || a.name.localeCompare(b.name); });
+  return out.sort(function (a, b) {
+    return b.late - a.late || b.itemsLeft - a.itemsLeft || a.name.localeCompare(b.name);
+  });
 }
-
 /** Who on the People tab has no blocks. Run after adding a desk. */
 function accDayCheck() {
   var tab = accBlockTab_(), missing = [], extra = [];

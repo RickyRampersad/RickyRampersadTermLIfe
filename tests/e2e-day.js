@@ -23,6 +23,17 @@ const SRC = [
   { key: 'tasks', label: 'Salesforce tasks', live: true, why: '' },
   { key: 'goals', label: 'Flight plans and goals', live: false, why: 'Needs FACTFIND_GOAL_TOKEN.' }
 ];
+const CLO = (id, item, done, detail) => ({ id, item, auto: id, done, detail,
+  by: done ? 'checked' : '', at: '', reason: '' });
+
+const DAY = (o) => Object.assign({
+  live: true, why: '', onTracker: true, staffId: 'x', hours: '9am – 5pm',
+  arrived: '08:52', signedOut: '', absent: false, absentReason: '',
+  mailAM: '08:25', mailPM: '', blocks: [], owed: 0, filed: 0, late: 0,
+  items: [], itemsOf: 0, itemsLeft: 0, closeoutAt: '15:45',
+  ownCloseOff: false, trackerUrl: 'https://rickyrampersadbranch.com/kpi/'
+}, o);
+
 const BLOCK = (state, focus, sf) => ({
   id: 'KPI1', label: 'KPI 1', time: '8 – 10am', focus: focus, kpi: 'Pendings', due: 10,
   type: 'Pendings', state: state, filed: state === 'filed',
@@ -51,13 +62,16 @@ const BRANCH = {
   quiet: [{ name: 'Hamid Fictitious', month: 0, year: 3, owed: 4, why: 'Nothing this month.' }],
   topics: [{ name: 'Devi Invented', role: 'unitmgr', topic: 'Your review queue' }],
   days: [{ name: 'Gita Imaginary', role: 'staff', unit: '', hours: '9am – 5pm',
-           owed: 4, filed: 1, late: 2, blocks: [BLOCK('filed', 'Premium Dues', 12)] }]
+           owed: 4, filed: 1, late: 2, blocks: [BLOCK('filed', 'Premium Dues', 12)],
+           arrived: '08:52', mailAM: '08:25', mailPM: '', itemsOf: 3, itemsLeft: 2 }]
 };
 
 const DESK = {
   agent: { token: 'T-A', me: { name: 'Rajiv Pretendo', role: 'agent', unit: 'Devi Invented' },
     items: [], numbers: [{ label: 'Fact finds this week', value: 4 }],
-    day: { live: true, staffId: 'rajiv', blocks: [], none: 'No day blocks on file for Rajiv.' },
+    day: DAY({ onTracker: false, staffId: 'rajiv', hours: '', arrived: '', mailAM: '',
+               none: 'Advisors are not on the KPI tracker: no blocks, no mail sweep. ' +
+                     'Your day is your flight plan, your fact finds and what you wrote below.' }),
     topic: { topic: 'Recommended against written', question: 'Which case do you re-open first?',
              evidence: 'Conversion 7.5%.', source: 'Fact finds', rank: 90 },
     closedToday: false, sources: SRC },
@@ -65,14 +79,21 @@ const DESK = {
     items: [{ kind: 'stuck', what: 'A client — TPI10041', why: 'Postponed, TT$75,948 API',
               days: 640, source: 'Salesforce', day: '2026-10-16' }],
     numbers: [{ label: 'Open tasks', value: 107 }],
-    day: BRANCH.days[0],
+    day: DAY({ staffId: 'gita', owed: 2, filed: 1, late: 1,
+               blocks: [BLOCK('filed', 'Premium Dues', 12), BLOCK('late', 'Reporting')],
+               itemsOf: 3, itemsLeft: 2,
+               items: [CLO('blocks', 'Every block reported', false, '1 of 2 reported'),
+                       CLO('mail', 'Afternoon mail sweep cleared', false, 'not swept'),
+                       CLO('written', 'Anything you fell short on, noted', true, '2 noted today')] }),
     topic: { topic: 'The applications on your desk', question: 'Which three clear this week?',
              evidence: '61 over 120 days.', source: 'Pipeline', rank: 95 },
     closedToday: false, sources: SRC, branch: BRANCH },
   unitmgr: { token: 'T-U', me: { name: 'Devi Invented', role: 'unitmgr', unit: 'Devi Invented' },
     items: [], numbers: [{ label: 'Fact finds waiting on you', value: 13 }],
-    day: { live: true, staffId: 'devi', hours: '8am – 4:30pm', owed: 1, filed: 1, late: 0,
-           blocks: [BLOCK('filed', 'Unit activity and pipeline', 3)] },
+    day: DAY({ staffId: 'devi', hours: '8am – 4:30pm', arrived: '07:58', owed: 1, filed: 1,
+               late: 0, blocks: [BLOCK('filed', 'Unit activity and pipeline', 3)],
+               itemsOf: 1, itemsLeft: 0,
+               items: [CLO('blocks', 'Every block reported', true, '1 of 1 reported')] }),
     topic: { topic: 'Your review queue', question: 'When are they cleared?',
              evidence: '13 waiting.', source: 'Fact finds', rank: 95 },
     closedToday: false, sources: SRC,
@@ -82,8 +103,11 @@ const DESK = {
             quiet: BRANCH.quiet } },
   manager: { token: 'T-M', me: { name: 'Anand Pretend', role: 'manager', unit: '' },
     items: [], numbers: [{ label: 'Open tasks', value: 35 }],
-    day: { live: true, staffId: 'ricky', hours: '5am – 12am', owed: 1, filed: 0, late: 1,
-           blocks: [BLOCK('late', 'Recruitment, licensing and staffing')] },
+    day: DAY({ staffId: 'ricky', hours: '5am – 12am', arrived: '05:04', mailAM: '05:30',
+               owed: 1, filed: 0, late: 1,
+               blocks: [BLOCK('late', 'Recruitment, licensing and staffing')],
+               itemsOf: 1, itemsLeft: 1,
+               items: [CLO('blocks', 'Every block reported', false, '0 of 1 reported')] }),
     topic: { topic: 'Recommended against written, for the branch', question: 'What are we changing?',
              evidence: '4.8%.', source: 'Fact finds', rank: 100 },
     closedToday: true, sources: SRC, branch: BRANCH }
@@ -150,9 +174,13 @@ const HOME = (role, name) => ({
     const { page, ctx } = await open('agent', 'day');
     const txt = await page.textContent('#view');
     ok('an agent sees their topic as a question', /Which case do you re-open first\?/.test(txt));
-    ok('an agent with no blocks is told why, not shown an empty list',
-       /No day blocks on file/.test(txt));
+    ok('an agent is told why there are no blocks, not shown an empty list',
+       /no blocks, no mail sweep/.test(txt));
     ok('an agent is offered the three questions', /What got done today\?/.test(txt));
+    ok('and is told plainly they are not on the tracker',
+       /not on the KPI tracker/.test(txt));
+    ok('an agent is shown no blocks and no mail sweep',
+       !/Morning mail/.test(txt) && !/Before you leave/.test(txt));
     /* THE ONE THAT MATTERS. */
     ok('no other advisor\'s name reaches an agent\'s browser',
        !/Hamid|Gita|Anand|Pawan/.test(txt), (txt.match(/Hamid|Gita|Anand|Pawan/) || [''])[0]);
@@ -178,15 +206,30 @@ const HOME = (role, name) => ({
        /Premium Dues/.test(txt) && states.indexOf('In') > -1, states.join('|'));
     ok('the Salesforce figure for the block is pulled in', /12/.test(txt));
     ok('and the page says the tracker is where a block is filed',
-       /read from the daily KPI tracker/.test(txt));
-    /* The close-off posts the three lines and nothing else. */
-    await page.fill('#co-done', 'Cleared four pendings');
-    await page.fill('#co-blocked', 'Three waiting on labs');
+       /Read from the daily KPI tracker/.test(txt));
+    /*  The differentiation, on the screen: a desk sees when they came in,
+     *  the mail sweep, and the tracker's own before-you-leave list. */
+    ok('a desk sees when they came in', /Came in/.test(txt) && /08:52/.test(txt));
+    ok('and both mail sweeps', /Morning mail/.test(txt) && /08:25/.test(txt) &&
+       /Afternoon mail/.test(txt) && /not swept/.test(txt));
+    ok('and the tracker\'s before-you-leave list, with its evidence',
+       /Before you leave/.test(txt) && /1 of 2 reported/.test(txt));
+    ok('a desk is never asked the three questions as well',
+       !/What got done today\?/.test(txt));
+    ok('the close-out time is named', /15:45/.test(txt));
+    await ctx.close();
+  }
+
+  /* ---- the three lines are the advisor's, and they post ---- */
+  {
+    const { page, ctx, posted } = await open('agent', 'day');
+    await page.fill('#co-done', 'Two fact finds, one application in');
+    await page.fill('#co-blocked', 'Waiting on a medical');
     await page.click('#co-go');
     await page.waitForTimeout(600);
-    ok('closing off posts the three lines', posted.length === 1 &&
-       posted[0].done === 'Cleared four pendings' &&
-       posted[0].blocked === 'Three waiting on labs');
+    ok('an advisor closing off posts the three lines', posted.length === 1 &&
+       posted[0].done === 'Two fact finds, one application in' &&
+       posted[0].blocked === 'Waiting on a medical');
     ok('and says which device it came from', /phone|desk/.test(posted[0].device || ''));
     await ctx.close();
   }
@@ -196,6 +239,8 @@ const HOME = (role, name) => ({
     const { page, ctx } = await open('unitmgr', 'day');
     const txt = await page.textContent('#view');
     ok('a unit manager gets his own day first', /Your day, Devi/.test(txt));
+    ok('with his own arrival and close-out',
+       /07:58/.test(txt) && /all 1 clear/.test(txt));
     ok('then his unit, person by person', /Your unit/.test(txt) && /Hamid Fictitious/.test(txt));
     ok('each with their topic', /What changed/.test(txt));
     ok('and who filed nothing', /Filed nothing this week/.test(txt));
@@ -211,6 +256,7 @@ const HOME = (role, name) => ({
     ok('the chair sees the findings', /The pipeline is holding the year/.test(txt));
     ok('severity is a word, not only a colour', /Act now/.test(txt));
     ok('every desk\'s day is on it', /Every desk today/.test(txt));
+    ok('the chair\'s own day shows a five o\'clock start', /05:04/.test(txt) === false);
     ok('what people said was in the way is quoted', /Waiting on labs/.test(txt));
     ok('and who closed off nothing is named', /Pawan Imagined/.test(txt));
     ok('the sources say which is not reporting',

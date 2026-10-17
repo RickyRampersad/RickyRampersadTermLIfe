@@ -952,21 +952,22 @@ function viewDay() {
     }
   }
 
-  /* ---- the blocks ---- */
-  if (day.blocks && day.blocks.length) {
+  /* ---- the day, as the tracker runs it ---- */
+  if (day.onTracker) {
+    out += dayStrip(day);
     out += '<div class="section-label">Your blocks today — ' +
       day.filed + " of " + day.owed + " in" +
       (day.late ? ", " + day.late + " late" : "") + "</div>";
     out += day.blocks.map(blockRow).join("");
-    out += '<p class="hint">These are read from the daily KPI tracker, which is where ' +
-      "they are filed. Nothing is logged twice.</p>";
+    out += '<p class="hint">Read from the daily KPI tracker, which is where they are ' +
+      "filed. Nothing is logged twice.</p>";
     if (day.filed < day.owed) {
       out += '<div class="btn-row" style="margin:4px 0 10px">' +
         '<a class="btn teal sm" href="' + esc(day.trackerUrl || "#") +
         '" target="_blank" rel="noopener">File a block in the tracker ↗</a></div>';
     }
   } else if (day.none) {
-    out += '<div class="section-label">Your blocks today</div>' +
+    out += '<div class="section-label">Your day</div>' +
       '<div class="empty" style="padding:24px"><span class="big">⏱</span>' + esc(day.none) + "</div>";
   }
   if (day.live === false && day.why) {
@@ -983,7 +984,18 @@ function viewDay() {
       }).join("") + "</div>";
   }
 
-  /* ---- close off the day ---- */
+  /* ---- how this person's day closes ----
+     A desk closes off on the tracker's before-you-leave list at a quarter
+     to four, already scoped to them by its own Who column. An advisor is
+     on no such list, so the three lines are theirs — and they are the only
+     account of an advisor's day the branch has. */
+  if (day.onTracker) {
+    out += closeoutBlock(day);
+    if (d.unit) out += unitBlock(d.unit);
+    $("view").innerHTML = out;
+    return;
+  }
+
   out += '<div class="section-label">' +
     (d.closedToday ? "You closed off today" : "Close off your day") + "</div>";
   if (d.closedToday) {
@@ -1011,14 +1023,75 @@ function viewDay() {
   wireCloseOff();
 }
 
+
+/*  WHEN THEY CAME IN, AND THE MAIL. The branch does not work one shift:
+ *  people come in from seven and leave from two, and a screen that calls
+ *  a block late without saying when the person started is a screen that
+ *  blames the early shift for the schedule's own gaps. */
+function dayStrip(day) {
+  var bits = [["Came in", day.arrived || "—"]];
+  if (day.hours) bits.push(["Your hours", day.hours]);
+  bits.push(["Morning mail", day.mailAM || "not swept"]);
+  bits.push(["Afternoon mail", day.mailPM || "not swept"]);
+  if (day.signedOut) bits.push(["Signed out", day.signedOut]);
+  var out = "";
+  if (day.absent) {
+    out += '<div class="card flat" style="border-left:3px solid var(--amber)">' +
+      '<div class="meta">Marked absent today' +
+      (day.absentReason ? " — " + esc(day.absentReason) : "") + ".</div></div>";
+  }
+  return out + '<div class="section-label">Your day so far</div><div class="grid3">' +
+    bits.map(function (b) {
+      return '<div class="stat"><b style="font-size:18px">' + esc(String(b[1])) +
+        "</b><span>" + esc(b[0]) + "</span></div>";
+    }).join("") + "</div>";
+}
+
+/*  THE TRACKER'S OWN BEFORE-YOU-LEAVE LIST. Shown, never asked: three of
+ *  its lines answer themselves off the sheet, and the evidence beside
+ *  each one is what tells a person what to do — "3 of 4 reported" is
+ *  actionable where a bare cross is not. */
+function closeoutBlock(day) {
+  var items = day.items || [];
+  var out = '<div class="section-label">Before you leave — ' +
+    (items.length ? (day.itemsLeft ? day.itemsLeft + " left of " + day.itemsOf
+                                   : "all " + day.itemsOf + " clear")
+                  : "nothing on your list") + "</div>";
+  if (!items.length) {
+    return out + '<div class="card flat"><div class="meta">Nothing is on your ' +
+      "before-you-leave list. The branch sets it on the tracker's Closeout Items tab, " +
+      "and the Who column decides whose list each line is on.</div></div>";
+  }
+  out += '<div class="card">' + items.map(function (it) {
+    return '<div class="deskrow"><div class="nm">' +
+      (it.done ? '<span class="badge b-green">Done</span> '
+               : '<span class="badge b-amber">Left</span> ') + esc(it.item) +
+      (it.detail || it.by || it.reason
+        ? "<i>" + esc([it.detail, it.by && it.at ? it.by + " at " + it.at : it.by, it.reason]
+            .filter(Boolean).join(" · ")) + "</i>"
+        : "") + "</div></div>";
+  }).join("") + "</div>";
+  out += '<p class="hint">Your close-out goes at ' + esc(day.closeoutAt || "15:45") +
+    " from the tracker, with whatever is still left on it. This screen shows it; " +
+    "it does not ask you a second time.</p>";
+  return out + '<div class="btn-row" style="margin:2px 0 10px">' +
+    '<a class="btn ghost sm" href="' + esc(day.trackerUrl || "#") +
+    '" target="_blank" rel="noopener">Open the tracker ↗</a></div>';
+}
+
 function roleLine(role) {
   return role === "agent"
-    ? "Your fact finds, your pipeline and the one thing you are taking to Wednesday."
+    ? "You are not on the KPI tracker \u2014 your day is your flight plan, your fact " +
+      "finds and your pipeline. The three lines below are the only account of it the " +
+      "branch has."
     : role === "unitmgr"
-    ? "Your own day, then your unit person by person. You account for them on Wednesday."
+    ? "Your own blocks and close-out, then your unit person by person. You account for " +
+      "them on Wednesday."
     : role === "manager"
-    ? "Your own day, then the branch. The report in your inbox at five is this screen."
-    : "Your blocks off the tracker, what came to your desk this morning, and your topic.";
+    ? "Your own day, then the branch. The read in your inbox at five is this screen, " +
+      "before anybody else is in."
+    : "When you came in, the mail sweep, your blocks, and what has to be true before " +
+      "you leave at a quarter to four.";
 }
 
 function unitBlock(u) {
