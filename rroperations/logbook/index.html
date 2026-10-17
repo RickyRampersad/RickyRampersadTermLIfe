@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Log Book | Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex"/>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="icon" type="image/png" href="/orphan-transition/board-mark.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -20,7 +20,7 @@
   button,input,select,textarea{font:inherit;color:inherit}
   .wrap{max-width:980px;margin:0 auto;padding:0 16px 96px}
   h1,h2,h3{font-family:'Montserrat',system-ui,sans-serif}
-  .mark{width:38px;height:38px;border-radius:10px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark{width:38px;height:38px;border-radius:10px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
   .mark img{width:100%;height:100%;display:block}
   [hidden]{display:none!important}
 
@@ -204,7 +204,7 @@
      the RR Operations access code, the same sign-in as every other app. -->
 <div id="lock">
   <form class="lock-card" id="lockForm" autocomplete="off">
-    <div class="mark"><img src="/logo-mark.png" alt=""></div>
+    <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
     <h1>Log Book</h1>
     <p>Sign in with your agent number and the password you use for the fact find.</p>
     <div class="seg" role="group" aria-label="Who is signing in">
@@ -225,7 +225,7 @@
 
 <header id="hdr" hidden>
   <div class="top">
-    <a href="/rroperations/" class="mark" title="All apps" aria-label="All apps"><img src="/logo-mark.png" alt=""></a>
+    <a href="/rroperations/" class="mark" title="All apps" aria-label="All apps"><img src="/orphan-transition/board-mark.png" alt=""></a>
     <div><h1>Log Book</h1><small id="me">—</small></div>
     <div class="sp"></div>
     <span class="pill test" id="modePill" hidden>TEST</span>
@@ -301,7 +301,8 @@
 
   <!-- ─────────── MY LOG (agents) ─────────── -->
   <section id="tab-mine" hidden>
-    <div class="card"><h2>What you have logged<span class="sp"></span>
+    <div class="card"><h2><span id="mineTitle">What you have logged</span><span class="sp"></span>
+      <select id="mineWho" hidden style="width:auto;min-height:34px;padding:5px 8px;font-size:12px;margin-right:6px" aria-label="Whose papers"></select>
       <select id="mineDays" style="width:auto;min-height:34px;padding:5px 8px;font-size:12px"><option value="30">30 days</option><option value="90" selected>90 days</option><option value="365">A year</option></select></h2>
       <div id="mine"></div></div>
   </section>
@@ -445,8 +446,9 @@
 
   /* ── tabs ──────────────────────────────────────────────── */
   function buildTabs() {
+    setupTeam();
     var t = S.cfg.agent
-      ? [['log', 'Log documents'], ['mine', 'My log']]
+      ? [['log', 'Log documents'], ['mine', S.cfg.lead ? 'My team' : 'My log']]
       : [['queue', 'Queue'], ['log', 'Log for an agent'], ['trans', 'Transmittals'], ['stats', 'Insights']];
     $('tabs').innerHTML = t.map(function (x) {
       return '<button role="tab" aria-selected="false" data-tab="' + x[0] + '">' + esc(x[1]) + '<span class="n" id="n-' + x[0] + '" hidden></span></button>';
@@ -753,12 +755,17 @@
   }
   function loadMine() {
     $('mine').innerHTML = '<div class="empty">Loading…</div>';
-    api('lb.mine', { days: $('mineDays').value }).then(function (r) {
+    var who = $('mineWho').value || '';
+    api('lb.mine', { days: $('mineDays').value, scope: who === 'team' ? 'team' : '', agentNo: who && who !== 'team' && who !== 'me' ? who : '' }).then(function (r) {
       var g = groupByRef(r.lines);
+      var me = S.cfg.agentNo || '';
       $('mine').innerHTML = g.length ? g.map(function (ls) {
         var a = ls[0];
         var canWithdraw = ls.every(function (l) { return l.status === 'Logged' || l.status === 'With agent'; });
-        return '<div class="grp"><div class="gh"><b>' + esc(a.client) + '</b><span class="tag mute">' + esc(a.ref) + '</span><span class="sp"></span>' +
+        var other = S.cfg.lead && a.agentNo && a.agentNo !== me;
+        if (other) canWithdraw = false;
+        return '<div class="grp"><div class="gh"><b>' + esc(a.client) + '</b><span class="tag mute">' + esc(a.ref) + '</span>' +
+          (other ? '<span class="tag">' + esc(a.agent || a.agentNo) + '</span>' : '') + '<span class="sp"></span>' +
           (canWithdraw ? '<button class="btn ghost sm" data-wd="' + esc(a.ref) + '">Withdraw</button>' : '') + '</div>' +
           ls.map(function (l) {
             return '<div class="ln" style="grid-template-columns:1fr auto"><div class="t">' + esc(l.document) + (l.quantity > 1 ? ' × ' + l.quantity : '') +
@@ -775,6 +782,16 @@
     }).catch(function (e) { $('mine').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; });
   }
   $('mineDays').addEventListener('change', loadMine);
+  $('mineWho').addEventListener('change', loadMine);
+  /* A unit manager picks: their own papers, the whole team, or one agent. */
+  function setupTeam() {
+    var t = (S.cfg && S.cfg.lead && S.cfg.team) || [];
+    $('mineWho').hidden = !t.length;
+    if (!t.length) return;
+    $('mineTitle').textContent = 'What your team has logged';
+    $('mineWho').innerHTML = '<option value="team">Whole team (' + t.length + ')</option><option value="me">Just mine</option>' +
+      t.filter(function (x) { return !x.self; }).map(function (x) { return '<option value="' + esc(x.agentNo) + '">' + esc(x.name) + '</option>'; }).join('');
+  }
 
   /* ── the queue ──────────────────────────────────────────── */
   function loadQueue() {
@@ -986,7 +1003,7 @@
     var t = r.transmittal, L = r.lines;
     var docs = L.reduce(function (s, l) { return s + (l.quantity || 1); }, 0);
     $('paper').innerHTML =
-      '<div class="ph1"><img src="/logo-mark.png" alt=""><div class="tt"><b>TRANSMITTAL</b>FROM: ' + esc(r.from) + '<br>' + esc(r.branch) + '</div>' +
+      '<div class="ph1"><img src="/orphan-transition/board-mark.png" alt=""><div class="tt"><b>TRANSMITTAL</b>FROM: ' + esc(r.from) + '<br>' + esc(r.branch) + '</div>' +
       '<div class="no">No.<b>' + esc(t.no) + '</b>' + (t.status && t.status !== 'Sent' ? '<span style="color:#b00">' + esc(t.status) + '</span>' : '') + '</div></div>' +
       '<div class="meta"><span>DEPARTMENT</span><div><b>' + esc(t.department) + '</b></div><span>DATE SENT</span><div>' + esc(fmtDay(t.sentAt)) + ' ' + esc(new Date(t.sentAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: TZ })) + '</div>' +
       '<span>ATTENTION</span><div>' + esc(t.attn || '') + '</div><span>SENT BY</span><div>' + esc(t.sentBy) + '</div>' +

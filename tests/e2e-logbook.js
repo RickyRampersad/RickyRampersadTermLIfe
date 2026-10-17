@@ -53,8 +53,10 @@ env.Session = { getEffectiveUser: () => ({ getEmail: () => 'owner@example.com' }
 env.__mkSheet('Access', 1, ['Name', 'Email', 'Access Code', 'Role', 'Salesforce User Id', 'Active', 'Apps'], [
   ['Sam Support', 'sam@example.com', 'SAM1', 'Sales Support', '', 'Yes', ''],
 ]);
-env.__mkSheet('Agents', 2, ['Agent No', 'Name', 'Email', 'Unit', 'Code', 'Active'], [
-  ['A10001', 'Ana Agent', 'ana@example.com', 'Unit One', '4821', 'Yes'],
+env.__mkSheet('Agents', 2, ['Agent No', 'Name', 'Email', 'Unit', 'Code', 'Active', 'Role'], [
+  ['A10001', 'Ana Agent', 'ana@example.com', 'Uma Unit', '4821', 'Yes', 'Agent'],
+  ['A20000', 'Uma Unit', 'uma@example.com', '', 'u1', 'Yes', 'Unit Manager'],
+  ['A20002', 'Cal Other', 'cal@example.com', 'Gary Else', 'c1', 'Yes', 'Agent'],
 ]);
 const seen = [];
 
@@ -211,7 +213,7 @@ const server = http.createServer((req, res) => {
   ok('/transmittal opens the transmittals, with who sent them', !(await sp.$eval('#tab-trans', e => e.hidden)) && /TR-/.test(await sp.textContent('#transList')));
   if (SHOTS) await sp.screenshot({ path: SHOTS + '/lb-6-transmittals.png', fullPage: true });
   await sp.click('[data-tab=log]');
-  ok('staff log for an agent: the agent list is there', (await sp.$$eval('#agentSel option', o => o.length)) === 2 && !(await sp.$eval('#agentPick', e => e.hidden)));
+  ok('staff log for an agent: the agent list is there', (await sp.$$eval('#agentSel option', o => o.length)) >= 2 && !(await sp.$eval('#agentPick', e => e.hidden)));
 
   /* back on the phone: the agent sees it sent */
   await page.reload();
@@ -219,6 +221,29 @@ const server = http.createServer((req, res) => {
   await page.click('[data-tab=mine]');
   await page.waitForSelector('#mine .grp');
   ok('the agent sees it sent, with the transmittal', /Sent/.test(await page.textContent('#mine')) && /TR-/.test(await page.textContent('#mine')));
+
+  /* the unit manager: their team, never another unit */
+  { const st = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
+    env.lbSubmit_({ entry: { type: 'Documents for Guardian', client: 'Cora Elsewhere', declared: true, agentNo: 'A20002',
+      items: [{ document: 'PMAR', department: 'RECORDS MANAGEMENT DEPT', policy: '9000000777' }] }, confirmDuplicates: true, confirmMissing: true }, st); }
+  const um = await (await browser.newContext({ viewport: { width: 390, height: 844 } }));
+  await route(um);
+  const up = await um.newPage();
+  up.on('pageerror', e => errors.push(e.message));
+  await up.goto(base + '/rroperations/logbook/?api=' + encodeURIComponent(API));
+  await up.fill('#gNo', 'A20000'); await up.fill('#gCode', 'u1'); await up.click('#gBtn');
+  await up.waitForSelector('#main:not([hidden])');
+  ok('the unit manager gets the agent side, with "My team"', (await up.$$('#tabs [data-tab]')).length === 2 && /My team/.test(await up.textContent('#tabs')));
+  await up.click('[data-tab=mine]');
+  await up.waitForSelector('#mine .grp');
+  const mt = await up.textContent('#mine');
+  ok('the whole team: Ana\'s papers, with her name on them', /Anika Pretend/.test(mt) && /Ana Agent/.test(mt));
+  ok('never another unit\'s papers', !/Cora Elsewhere/.test(mt));
+  ok('no withdrawing a team member\'s entry', (await up.$$('#mine [data-wd]')).length === 0);
+  ok('the team list names the team only', (await up.$$eval('#mineWho option', o => o.map(x => x.textContent))).join('|') === 'Whole team (2)|Just mine|Ana Agent');
+  const umWide = await up.evaluate(() => document.documentElement.scrollWidth);
+  ok('nothing runs off the phone', umWide <= 390, umWide);
+  ok('the blue shield, not the gold', (await up.$eval('.mark img', i => i.getAttribute('src'))) === '/orphan-transition/board-mark.png');
 
   ok('no script errors', errors.length === 0, errors.join(' | '));
   await browser.close(); server.close();

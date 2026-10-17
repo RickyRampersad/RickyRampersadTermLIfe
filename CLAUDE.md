@@ -3837,6 +3837,16 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   branch manager can access this"); Agent, Unit Manager and Assistant Branch Manager log documents;
   "Not Active" is refused. A refusal never says which half was wrong. An agent session carries only the `logbook` app,
   so it never reaches the Delivery Book or a staff action.
+- **Who sees what** (17 October 2026: "agents only see their information, the branch manager can see all, the unit
+  manager can see his team"). An agent: their own clients and their own papers. A **Unit Manager** (and the Assistant
+  Branch Manager) signs in with that role, logs their own clients like an agent, and gets **My team**: their own papers,
+  the whole team's, or one agent's (`lbTeam_`: every active agent whose Unit on the Access tab is the manager's name).
+  They see who logged each line, withdraw only their own, and never get the staff side. Staff and the Branch Manager see
+  every line. `lbMine_` refuses an agent outside the team, whoever asks.
+- **The RR Operations pages and e-mails carry the blue shield** (17 October 2026: "my logo i said i dont like the gold"):
+  `orphan-transition/board-mark.png` on a `#13408F` tile on the launcher, the Delivery Book and the Log Book, as their
+  favicon and on the printed transmittal, and `DB.LOGO` points at the hosted copy, so the Delivery Book's client e-mails
+  and every Log Book e-mail carry it too. The rest of the site keeps the gold shield until asked.
 - **An agent sees only their own clients** (16 October 2026: "you don't want persons pulling up other agents'
   clients"): lookup, policies and submit keep to policies whose `AgentName__c` starts with the agent's number
   (`lbAgentScope_`, `lbSfAgentNo_` pads to `A00427`). A client found only through another agent's policy is never

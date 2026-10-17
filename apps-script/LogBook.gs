@@ -432,7 +432,12 @@ function lbSession_(token) {
   if (!who) return null;
   var sh = dbSheet_(DB.TABS.SESS, DB_SESS_COLUMNS);
   var hm = dbHeaderMap_(sh);
-  who.isAgent = /^agent$/i.test(who.role);
+  /* A unit manager (and the assistant branch manager) logs their own papers like
+     an agent and also sees their team's: the agents whose Unit names them, as
+     the fact find's Access tab writes it ("unit manager can see his team", 17
+     October 2026). */
+  who.isLead = /^(unit manager|assistant branch manager)$/i.test(String(who.role).trim());
+  who.isAgent = /^agent$/i.test(who.role) || who.isLead;
   who.isManager = /^branch manager$/i.test(String(who.role).trim());
   if ('Agent No' in hm.map) {
     var last = sh.getLastRow();
@@ -517,6 +522,23 @@ function lbIsStaffRole_(role) {
   return /staff|support|admin/i.test(r) || /^branch manager$/i.test(r);
 }
 
+/* A person's name for matching a Unit cell: letters only, any case. */
+function lbNameKey_(n) { return String(n || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[^a-z]+/g, ' ').trim(); }
+
+/* The team a unit manager sees: themselves, and every active agent whose Unit
+   is the manager's name. Anyone else sees only themselves. */
+function lbTeam_(who) {
+  var own = lbAgentKey_(who.agentNo);
+  var out = [{ agentNo: who.agentNo, name: who.name, key: own, self: true }];
+  if (!who.isLead) return out;
+  var me = lbNameKey_(who.name);
+  lbAgents_().forEach(function (a) {
+    if (!a.active || a.key === own || lbIsStaffRole_(a.role)) return;
+    if (me && lbNameKey_(a.unit) === me) out.push({ agentNo: a.agentNo, name: a.name, key: a.key });
+  });
+  return out;
+}
+
 function lbFindAgent_(no) {
   var k = lbAgentKey_(no);
   return k ? lbAgents_().filter(function (a) { return a.key === k; })[0] || null : null;
@@ -555,7 +577,7 @@ function lbLogin_(b) {
     throw new Error('That agent number and password do not match.');
   }
   var staff = lbIsStaffRole_(a.role);
-  var role = staff ? a.role : 'Agent';
+  var role = staff ? a.role : /^(unit manager|assistant branch manager)$/i.test(a.role) ? a.role.trim().replace(/\b\w/g, function (c) { return c.toUpperCase(); }) : 'Agent';
   var name = a.name || ('Agent ' + a.agentNo);
   var token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
   var now = new Date();
@@ -615,7 +637,8 @@ function lbConfig_(who) {
     var r = routing.docs[d[0]] || { n: 0, to: [], with: [] };
     return { name: d[0], n: r.n, to: r.to, with: r.with, noPolicy: LB.NO_POLICY.indexOf(d[0]) >= 0 };
   });
-  return { ok: true, name: who.name, role: who.role, agent: who.isAgent, manager: !!who.isManager,
+  return { ok: true, name: who.name, role: who.role, agent: who.isAgent, manager: !!who.isManager, lead: !!who.isLead,
+           team: who.isLead ? lbTeam_(who).map(function (t) { return { agentNo: t.agentNo, name: t.name, self: !!t.self }; }) : [],
            agentNo: who.agentNo || '', mode: dbMode_(), types: LB.TYPES, departments: depts, documents: docs,
            cutoff: lbCutoff_(), oft: LB.OFT, declareDocs: LB.DECLARE_DOCS, declareContract: LB.DECLARE_CONTRACT,
            salesforce: dbSfConfigured_() };
@@ -885,12 +908,24 @@ function lbPublic_(r, now, staff) {
   return o;
 }
 
+/* An agent: their own lines. A unit manager: their own, or their team's
+   (b.scope 'team', or one agent's number in b.agentNo, which must be on the
+   team). Staff: what they logged for agents. Never anyone else's. */
 function lbMine_(b, who) {
   var days = Math.max(7, Math.min(400, parseInt(b.days, 10) || 90));
   var since = new Date(Date.now() - days * 86400000), now = new Date();
+  var keys = {};
+  if (who.isAgent) {
+    var team = lbTeam_(who);
+    var pick = b.agentNo ? lbAgentKey_(b.agentNo) : '';
+    if (pick && !team.some(function (t) { return t.key === pick; })) throw new Error('That agent is not on your team.');
+    team.forEach(function (t) {
+      if (pick ? t.key === pick : (b.scope === 'team' && who.isLead) || t.self) keys[t.key] = 1;
+    });
+  }
   var mine = lbRows_().filter(function (r) {
     return r.source !== 'Imported' && r.loggedAt && r.loggedAt >= since &&
-      (who.isAgent ? lbAgentKey_(r.agentNo) === lbAgentKey_(who.agentNo) : r.loggedBy === who.name);
+      (who.isAgent ? !!keys[lbAgentKey_(r.agentNo)] : r.loggedBy === who.name);
   });
   lbContractsClose_(mine.filter(function (r) { return r.status === 'With agent'; }));
   return { ok: true, lines: mine.map(function (r) { return lbPublic_(r, now, false); })

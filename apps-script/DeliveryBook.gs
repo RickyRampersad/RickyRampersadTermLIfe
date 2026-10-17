@@ -64,7 +64,7 @@ var DB = {
     OLD: 'Form responses',
   },
   SALES_SUPPORT: 'rickyrampersadsalessupport@myguardiangroup.com',
-  LOGO: 'https://rickyrampersadbranch.com/logo-mark.png',
+  LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',  // the blue shield: RR Operations, 17 Oct 2026
   BRAND: 'Ricky Rampersad Branch',
   DOC_TYPES: ['Policy Contract', 'Certificate', 'Cheque', 'Renewal Notice', 'Cover Note',
               'Claim Payment', 'Endorsement', 'Other'],

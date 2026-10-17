@@ -134,8 +134,11 @@ let env = world();
   ok('an agent on the fact find list signs in with the password they have', k.ok && k.name === 'Kim Banked' && k.role === 'Agent');
   const bo = env.lbLogin_({ agentNo: 'A00001', code: 'pw1' });
   ok('the branch manager signs in by number and gets the staff side', bo.role === 'Branch Manager' && !env.lbSession_(bo.token).isAgent && env.lbSession_(bo.token).isManager);
-  ok('a unit manager logs as an agent', env.lbLogin_({ agentNo: 'A00002', code: 'pw2' }).role === 'Agent');
-  ok('the assistant branch manager logs as an agent', env.lbLogin_({ agentNo: 'A00004', code: 'pw4' }).role === 'Agent');
+  const um = env.lbLogin_({ agentNo: 'A00002', code: 'pw2' });
+  ok('a unit manager signs in as a unit manager, on the agent side', um.role === 'Unit Manager' && env.lbSession_(um.token).isAgent && env.lbSession_(um.token).isLead);
+  ok('a unit manager is refused the staff side', ['lb.transmittals', 'lb.receive', 'lb.stats', 'lb.queue']
+    .every(a => /staff/.test(env.lbHandle_({ action: a, token: um.token }).error || '')));
+  ok('the assistant branch manager is on the agent side', env.lbSession_(env.lbLogin_({ agentNo: 'A00004', code: 'pw4' }).token).isAgent);
   const ag = env.lbLogin_({ agentNo: 'A10024', code: '77' });
   ok('an agent is refused the transmittals', ['lb.transmittals', 'lb.transmittal', 'lb.receive', 'lb.stats', 'lb.queue']
     .every(a => /staff/.test(env.lbHandle_({ action: a, token: ag.token }).error || '')));
@@ -373,6 +376,40 @@ console.log('own clients only');
   ok('the agent number matches Salesforce\'s way of writing it', env.lbSfAgentNo_('10001') === 'A10001' && env.lbSfAgentNo_('a427') === 'A00427');
 }
 
+/* ── who sees what: agent, unit manager, branch ────────────────────── */
+console.log('who sees what');
+{
+  env = world();
+  const ag = tab(env, 'Agents'); ag[0].push('Role');
+  ag[1].push('Agent'); ag[2].push('Agent');
+  ag.push(['A20000', 'Uma Unit', 'uma@example.com', '', 'u1', 'Yes', 'Unit Manager']);
+  ag.push(['A20001', 'Ben Team', 'ben@example.com', 'Uma Unit', 'b1', 'Yes', 'Agent']);
+  ag.push(['A20002', 'Cal Other', 'cal@example.com', 'Gary Else', 'c1', 'Yes', 'Agent']);
+  ag[1][3] = 'Uma Unit';                                  // Ana is on Uma's team too
+  staff = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
+  const boss = env.lbSession_(env.dbLogin_({ code: 'MGR9' }).token);
+  const put = no => env.lbSubmit_({ entry: entry({ agentNo: no, items: [{ document: 'PMAR', department: 'RECORDS MANAGEMENT DEPT', policy: '90000' + no.slice(1) }] }), confirmDuplicates: true, confirmMissing: true }, staff);
+  ['A10001', 'A20000', 'A20001', 'A20002'].forEach(put);
+  const uma = env.lbSession_(env.lbLogin_({ agentNo: 'A20000', code: 'u1' }).token);
+  const ben = env.lbSession_(env.lbLogin_({ agentNo: 'A20001', code: 'b1' }).token);
+  const nos = r => r.lines.map(l => l.agentNo).sort().join(',');
+  ok('an agent sees only their own papers', nos(env.lbMine_({}, ben)) === 'A20001');
+  ok('an agent asking for the team still sees only their own', nos(env.lbMine_({ scope: 'team' }, ben)) === 'A20001');
+  ok('an agent cannot ask for another agent', throws(() => env.lbMine_({ agentNo: 'A10001' }, ben), /not on your team/));
+  ok('a unit manager sees their whole team, never another unit', nos(env.lbMine_({ scope: 'team' }, uma)) === 'A10001,A20000,A20001', nos(env.lbMine_({ scope: 'team' }, uma)));
+  ok('a unit manager can look at one agent on the team', nos(env.lbMine_({ agentNo: 'A20001' }, uma)) === 'A20001');
+  ok('but not an agent on another unit', throws(() => env.lbMine_({ agentNo: 'A20002' }, uma), /not on your team/));
+  ok('"just mine" is the manager\'s own', nos(env.lbMine_({}, uma)) === 'A20000');
+  const cfg = env.lbConfig_(uma);
+  ok('the page is told the team', cfg.lead && cfg.team.length === 3 && !cfg.team.some(t => t.name === 'Cal Other'));
+  ok('a unit manager cannot withdraw a team member\'s entry', throws(() => env.lbCancel_({ ref: env.lbMine_({ agentNo: 'A20001' }, uma).lines[0].ref }, uma), /not yours/));
+  ok('a unit manager gets no staff side', /staff/.test(env.lbHandle_({ action: 'lb.queue', token: env.lbLogin_({ agentNo: 'A20000', code: 'u1' }).token }).error));
+  const q = env.lbQueue_({}, boss);
+  const all = (q.lines || q.waiting || []).map(l => l.agentNo);
+  ok('the branch manager sees every agent\'s papers', ['A10001', 'A20000', 'A20001', 'A20002'].every(n => JSON.stringify(q).includes(n)));
+  ok('and the insights cover every agent', env.lbStats_({ days: 30 }, boss).byAgent.length >= 4);
+}
+
 /* ── did the department get it ───────────────────────────────────── */
 console.log('three working days on');
 {
@@ -455,7 +492,7 @@ console.log('companions, digest, the e-mails');
   // the look
   const html = dm.htmlBody;
   ok('every e-mail has the hosted shield, the status band and the internal footer',
-     /https:\/\/rickyrampersadbranch\.com\/logo-mark\.png/.test(html) && /Daily digest/.test(html) && /Please do not forward/.test(html));
+     /https:\/\/rickyrampersadbranch\.com\/orphan-transition\/board-mark\.png/.test(html) && /Daily digest/.test(html) && /Please do not forward/.test(html));
   ok('never an SVG or a data: image in an e-mail', !/<svg|src="data:/.test(env.__mail.map(m => m.htmlBody).join('')));
   ok('the status is a word as well as a colour', /Action needed|Needs you|For you|Done|Daily digest/.test(html));
   const s30 = env.lbStats_({ days: 30 }, staff);
