@@ -428,7 +428,22 @@ This is the reported bug. The follow-up looks for the original email with a
 single Gmail search on the reference — and a reference like
 `RRB/2026/214/Anita Maharaj/Tax statem` is not one search term to Gmail. When
 the search misses, the empty `catch` swallows it and the chase goes out as a
-fresh `Re:` email with no day-1 underneath it. Find, inside `sendFollowUp_`:
+fresh `Re:` email with no day-1 underneath it. **The short way — one expression, and the only form worth attempting on a
+phone.** Ctrl+F for `deptThread_(ref, row[14])` (one hit) and replace just that
+with:
+
+```js
+qpFindThread_(ref, row[14], subjectBase).thread
+```
+
+`qpFindThread_` answers `{thread, how}`, so `.thread` hands back the thread or
+`null`, and the wrapper already round it (`return th ? [th] : []`) copes with
+both. A `null` leaves `sent` false, so the chase goes out as its own email to
+the department — which, with edit 27, now carries the department on it.
+
+**The fuller way**, when you are at a computer: this also writes a note on the
+case trail saying the chase went outside the thread and why. Find, inside
+`sendFollowUp_`:
 
 ```js
     var threads = (function(){ var th = deptThread_(ref, row[14]); return th ? [th] : []; })();  // dept-locked
