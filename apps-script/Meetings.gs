@@ -2212,6 +2212,20 @@ function safeLink_(v) {
   var u = str_(v);
   return /^https?:\/\//i.test(u) ? u : '';
 }
+/*  Accountability.gs is a second file in this project and the desk's
+ *  routes are the only thing in Meetings.gs that reaches it. A bare
+ *  reference to a function that is not there is a ReferenceError, not a
+ *  falsy value, so the guard has to be a typeof — which is also what
+ *  lets this file be pasted first and the desk second without the whole
+ *  app going down in between. */
+function accHave_() { return typeof accSnapshot_ === 'function'; }
+
+function accNotPasted_() {
+  return { ok: false,
+           error: 'The desk is not installed yet. Paste Accountability.gs into this ' +
+                  'project and publish a New version.' };
+}
+
 function esc_(v) {
   return str_(v).replace(/[&<>"]/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -6865,6 +6879,13 @@ function doGet(e) {
       case 'activity':   out = apiActivity_(p.token, p.days); break;
       case 'factfind':   out = apiFactFind_(p.token); break;
       case 'goals':      out = apiGoals_(p.token); break;
+
+      /*  THE DESK. Accountability.gs is a second file in this project;
+       *  these three lines are all of it that reaches the router, so a
+       *  change to the desk is a paste of that one file. Each returns
+       *  { ok: false } rather than throwing when it is not pasted yet. */
+      case 'desk':       out = accHave_() ? apiDesk_(p.token) : accNotPasted_(); break;
+      case 'deskTopics': out = accHave_() ? apiDeskTopics_(p.token, p.id) : accNotPasted_(); break;
       case 'chases':     out = apiChases_(p.token); break;
       case 'service':    out = apiService_(p.token); break;
       case 'room':       out = apiRoom_(p.code, p.id); break;
@@ -6981,6 +7002,9 @@ function doPostAction_(body) {
       case 'attachRecording':   out = apiAttachRecording_(body); break;
 
       case 'rateMeeting':       out = apiRateMeeting_(body); break;
+
+      case 'closeOff':          out = accHave_() ? apiCloseOff_(body) : accNotPasted_(); break;
+      case 'seedTopics':        out = accHave_() ? apiDeskSeedTopics_(body) : accNotPasted_(); break;
       case 'contribute':        out = apiAddContribution_(body); break;
       case 'editContribution':  out = apiEditContribution_(body); break;
       case 'uploadClip':        out = apiUploadClip_(body); break;

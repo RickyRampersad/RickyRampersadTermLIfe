@@ -99,7 +99,10 @@ function makeEnv(opts = {}) {
                     deleteProperty: k => { delete store[k]; return api; },
                     getProperties: () => Object.assign({}, store) };
       return { getScriptProperties: () => api }; })(),
-    Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }) },
+    // tz_() in Meetings.gs asks Session for it, so the stub has to answer or
+    // every date helper in the project throws inside a test.
+    Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }),
+               getScriptTimeZone: () => 'America/Port_of_Spain' },
     MailApp: { sendEmail: () => { calls.mail++; if (opts.mailThrows) throw new Error('Service invoked too many times'); } },
     Utilities: {
       formatDate: (d, tz, f) => {
