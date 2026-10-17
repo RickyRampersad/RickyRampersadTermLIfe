@@ -1,10 +1,10 @@
 {
  "durs": [
-  6.891,
-  7.175,
-  6.223
+  8.391,
+  7.475,
+  7.723
  ],
- "dur": 20.289,
+ "dur": 23.589,
  "words": [
   [
    [
@@ -177,5 +177,5 @@
    ]
   ]
  ],
- "note": "durs: each line plus its air. words: each spoken word's start in ms (edge-tts WordBoundary, boundary='WordBoundary' \u2014 7.x defaults to SentenceBoundary and yields none)."
+ "note": "durs: each line plus its air, plus extra where a scene carries a chart that must finish before the cut. words: each spoken word's start in ms (edge-tts WordBoundary, boundary='WordBoundary' \u2014 7.x defaults to SentenceBoundary and yields none)."
 }

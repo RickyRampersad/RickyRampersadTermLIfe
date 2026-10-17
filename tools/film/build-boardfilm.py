@@ -688,6 +688,65 @@ def s_clock(i, sc, D):
 #  names no existing scene uses. The three board films build byte-identical.
 # ══════════════════════════════════════════════════════════════════════════
 
+
+# ── charts, drawn to the dataviz method ──────────────────────────────────
+#
+#  Two hues, validated against the panel they sit on (#F6F8FC):
+#    #1D5BC4  the accent — one series, one colour
+#    #7C8BA3  de-emphasis — ΔE 19.3 from the accent in normal vision (the
+#             floor is 15) and >= 3:1 on the surface. #64748B, the panel's
+#             own text grey, was the obvious pick and FAILED at ΔE 14.7:
+#             the chair's bar and the rest would have been hard to tell
+#             apart even with full colour vision.
+#
+#  A FILM HAS NO TOOLTIP AND NO TABLE VIEW. The usual advice — label
+#  selectively and let hover carry the rest — has no fallback here, so
+#  every value a viewer needs is on the mark. That is the one place this
+#  departs from the guidance, and it departs toward legibility.
+#
+MC_ACCENT, MC_MUTE, MC_GRID = '#1D5BC4', '#7C8BA3', '#E3E9F2'
+
+def mcol(t0, rows, step=95, cap=None):
+    """The week, a column a day, aligned under the week strip above it.
+       Columns, not a line: these are counts per day, and a line between
+       Sunday and Monday would draw a slope through a weekend nothing
+       happened in. Zero baseline, <= 24px, 4px rounded top, square foot."""
+    top = cap or max(v for _, v in rows) or 1
+    out = ''
+    for k, (lbl, v) in enumerate(rows):
+        h = round(100 * v / top, 1)
+        out += (f'<div class="mcc"><span class="mcv" style="--at:{ms(t0 + k * step + 260)}">{v}</span>'
+                f'<div class="mct"><i class="mcf" style="--h:{h}%;--at:{ms(t0 + k * step)}"></i></div>'
+                f'<span class="mcl">{lbl}</span></div>')
+    return f'<div class="mcwrap"><div class="mcgrid"><i></i><i></i><i></i></div>{out}</div>'
+
+
+def mload(t0, rows, target=None, step=105):
+    """Minutes by presenter. Emphasis, not categorical: the chair is the
+       point and everyone else is context, so one accent and one grey —
+       never a hue per person, and never darker-where-bigger, which would
+       double-encode length as colour on names that have no order."""
+    #  The track has to reach the threshold or the chart cannot show the
+    #  claim its heading makes: scaled to the tallest bar the "third of the
+    #  hour" rule sat at 144% — off the chart — while the point of the
+    #  picture is that every bar is short of it.
+    top = max(v for _, v, _ in rows) or 1
+    if target: top = max(top, target * 1.12)
+    out = ''
+    for k, (name, v, hot) in enumerate(rows):
+        w = round(100 * v / top, 1)
+        col = MC_ACCENT if hot else MC_MUTE
+        out += (f'<div class="mlr"><span class="mln">{name}</span>'
+                f'<div class="mlt"><i class="mlf" style="--w:{w}%;--at:{ms(t0 + k * step)};background:{col}"></i></div>'
+                f'<span class="mlv" style="--at:{ms(t0 + k * step + 240)}">{v}</span></div>')
+    rule = ''
+    if target:
+        rule = (f'<div class="mlrule" style="--at:{ms(t0 + len(rows) * step)}">'
+                f'<span></span><div class="mlrt"><i style="left:{round(100 * target / top, 1)}%">'
+                f'<b>a third of the hour</b></i></div><span></span></div>')
+    return f'<div class="mlwrap">{out}{rule}</div>'
+
+
 MDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
 def s_week(i, sc, D):
@@ -713,8 +772,14 @@ def s_week(i, sc, D):
     froze = ''.join(at(tFr + k * 130, 'at pop mwf', inner=f'{cnt(tFr + k * 130 + 120, n, s)}<span>{lb}</span>')
                     for k, (n, s, lb) in enumerate([(31, '', 'fact finds'), (19, '', 'applications'), (84, '%', 'checks answered')]))
 
+    #  What was logged each day, under the strip it belongs to. The lower
+    #  half of this panel was empty white, which is what "not making the
+    #  impact it should" looked like.
+    week = [('SUN', 0), ('MON', 7), ('TUE', 5), ('WED', 9), ('THU', 6), ('FRI', 8), ('SAT', 1)]
+    chart = (f'<div class="mchd"><b>Fact finds logged, day by day</b>'
+             f'<span>the week that just closed</span></div>{mcol(tFr + 260, week)}')
     right = (f'<div class="mwrap"><div class="mwk">{cells}</div>{span}'
-             f'<div class="mwbot">{close}<div class="mwfz">{froze}</div></div></div>')
+             f'<div class="mwbot">{close}<div class="mwfz">{froze}</div></div>{chart}</div>')
     cues = [(t0, 'Sunday to Sunday', False), (tCl, 'It closes itself', False), (tFr, 'The figures freeze', True)]
     return stage(side(i, sc, cues), right)
 
@@ -742,8 +807,9 @@ def s_agenda(i, sc, D):
                    inner=f'<span class="magn">{k + 1:02d}</span><span class="magt">{t}</span>'
                          f'<span class="magm">{m}</span>'
                          + at(tNm + k * 55, 'at pop magw', inner=f'{avatar(who)}<span>{who}</span>'))
+    #  Derived, not typed: the header said 90 while the rows summed to 77.
     head = (f'<div class="maghd"><b>The agenda, written for you</b>'
-            f'<span>{cnt(tIt, 11)} items &middot; {cnt(tMin, 90)} minutes</span></div>')
+            f'<span>{cnt(tIt, len(rows))} items &middot; {cnt(tMin, sum(int(m) for _, m, _ in rows))} minutes</span></div>')
     right = f'<div class="mawrap">{head}<div class="magl">{body}</div></div>'
     cues = [(tIt, '11 · items, every week', False), (tMin, '90 · minutes, to the minute', False),
             (tNm, 'A name against every one', True)]
@@ -766,7 +832,16 @@ def s_round(i, sc, D):
                    f'<span>4 people &middot; answers for all of them</span></div>')
     says = at(tOwn, 'at up msay',
               inner='&ldquo;Omar answered nothing. I am with him Thursday morning.&rdquo;')
-    right = (f'<div class="mrwrap">{clock}{who}<div class="tiles mrt">{tl}</div>{says}</div>')
+    #  The film's own argument, as a chart: the meeting is not one
+    #  person's. Emphasis — the chair is the point, the rest is context.
+    load = [('Chair', 15, True), ('By rota', 18, False), ('Sales support', 12, False),
+            ('Lenore', 10, False), ('Sasha', 9, False), ('Client Support', 8, False),
+            ('Akaash', 3, False), ('By the data', 2, False)]
+    third = round(sum(v for _, v, _ in load) / 3)
+    chart = (f'<div class="mchd"><b>Minutes, by who presents them</b>'
+             f'<span>no one person over a third</span></div>'
+             f'{mload(tOwn + 200, load, target=third)}')
+    right = (f'<div class="mrwrap">{clock}{who}<div class="tiles mrt">{tl}</div>{says}{chart}</div>')
     cues = [(tTw, 'Twenty past the hour', False), (tEv, 'Every unit manager', False),
             (tOwn, 'Answers for their own', True)]
     return stage(side(i, sc, cues), right)
@@ -1309,6 +1384,47 @@ body{background:var(--ground)}
 .bf .mrt{grid-template-columns:repeat(4,1fr)!important}
 .bf .msay{background:#fff;border:1px solid #DDE5F0;border-left:3px solid #0E7490;
   border-radius:0 10px 10px 0;padding:13px 16px;font:600 13.5px/1.45 var(--f);color:#334155}
+
+/* ── the charts ──────────────────────────────────────────────────────── */
+@keyframes bfRise{from{height:0}to{height:var(--h)}}
+/* the week, a column a day */
+.bf .mcwrap{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:8px;
+  height:132px;padding-top:4px;margin-top:2px}
+.bf .mcgrid{position:absolute;inset:16px 0 20px 0;display:flex;flex-direction:column;
+  justify-content:space-between;pointer-events:none}
+.bf .mcgrid i{height:1px;background:#E3E9F2}            /* hairline, solid, recessive */
+.bf .mcc{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;position:relative}
+.bf .mcv{font:800 12px/1 var(--f);color:#1D5BC4;opacity:0;
+  animation:bfIn .4s cubic-bezier(.2,.9,.3,1) var(--at) both}
+.bf .mct{width:100%;max-width:24px;height:84px;display:flex;align-items:flex-end}  /* <=24px, zero baseline */
+.bf .mcf{display:block;width:100%;height:0;background:#1D5BC4;
+  border-radius:4px 4px 0 0;                            /* rounded data-end, square foot */
+  animation:bfRise .8s cubic-bezier(.3,.8,.3,1) var(--at) both}
+.bf .mcl{font:700 10px/1 var(--f);letter-spacing:.07em;color:#7C8BA3}
+/* minutes by presenter */
+.bf .mlwrap{position:relative;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.bf .mlr{display:grid;grid-template-columns:104px 1fr 26px;gap:10px;align-items:center}
+.bf .mln{font:600 11.5px/1 var(--f);color:#334155;text-align:right;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bf .mlt{height:14px;background:#EDF1F7;border-radius:7px;overflow:hidden}
+.bf .mlf{display:block;height:100%;width:0;border-radius:7px;
+  animation:bfGrow .85s cubic-bezier(.3,.8,.3,1) var(--at) both}
+.bf .mlv{font:800 11.5px/1 var(--f);color:#334155;font-variant-numeric:tabular-nums;opacity:0;
+  animation:bfIn .35s var(--at) both}
+.bf .mlrule{position:absolute;inset:0;display:grid;grid-template-columns:104px 1fr 26px;
+  gap:10px;pointer-events:none;opacity:0;animation:bfIn .5s var(--at) both}
+.bf .mlrt{position:relative}
+.bf .mlrt i{position:absolute;top:-2px;bottom:-2px;width:1px;background:#64748B}
+/*  Centred on the rule, the label hung off the panel: the threshold sits
+ *  near the right edge by design, since every bar is meant to fall short
+ *  of it. It reads leftwards from the line instead. */
+.bf .mlrt b{position:absolute;bottom:-13px;right:4px;white-space:nowrap;
+  font:700 9.5px/1 var(--f);letter-spacing:.06em;text-transform:uppercase;color:#64748B}
+.bf .mchd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  border-top:1px solid #E3E9F2;padding:11px 2px 0;margin-top:4px}
+.bf .mchd b{font:800 13px/1 var(--f);color:#0F172A}
+.bf .mchd span{font:600 11.5px/1 var(--f);color:#7C8BA3}
+
 """
 
 JS = r"""
