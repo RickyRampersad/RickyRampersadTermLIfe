@@ -28,6 +28,11 @@ tools/film/bed-*.wav
 tools/film/sfx-*.wav
 tools/film/*-mix.wav
 tools/film/captions-*.ass
+# A three-scene preview of the meeting film, built to agree the graphics
+# before the other 22 are drawn. The served film pages (board-*.html) are
+# tracked; this one is a build artifact and rebuilds from mtg3-lines.json,
+# mtg3-timing.json and build-boardfilm.py.
+orphan-transition/mtg3.html
 
 # the transition send: the departed agents' names and every client file stay out
 tools/letters/departed.txt
