@@ -2,35 +2,8 @@
  "voice": "en-US-AndrewNeural",
  "rate": "-4%",
  "films": {
-  "lbagent": [
-   "This is the new Log Book, as an agent sees it. Log your documents, hand them in by noon, and catch the bag.",
-   "Open Ricky Rampersad branch dot com, slash log book. Sign in with your agent number, and the password you use for the fact find.",
-   "There is one bag a day. It goes down at the one o'clock bag exchange. Papers in the branch's hands by twelve noon go on it. After twelve, they wait for the next day's bag.",
-   "Choose the document first. The Log Book routes it to the right department, from the branch's own history, and says how sure it is.",
-   "Then find the client. Type a name, an e-mail, or a policy number. You only ever see your own clients. Tick the policy the papers are for.",
-   "If something usually travels with it, the Log Book asks. A surrender usually comes with proof of I D. One tap adds it.",
-   "Confirm the papers are complete and signed, and press Log it. You get a reference, and the Log Book tells you if it will catch today's bag.",
-   "Here is why it matters. In the old book, fifty seven in every hundred papers came in after twelve, and waited a day. More came in between twelve and one than in any hour of the morning, just after the bag closes.",
-   "At eleven, if you logged papers and have not handed them in, the Log Book e-mails you. One hour to catch today's bag.",
-   "My log shows every step. Logged. Received by the branch. On the bag. And confirmed by the department.",
-   "The rule is simple. In by twelve, on the one o'clock bag. If it misses the bag, the branch is asked why, and you are copied. A contract you collect to deliver has twenty days.",
-   "Unit managers, like Akaash, see their whole team under My team. Every agent's papers, or one agent at a time. Nobody sees another unit.",
-   "Log it. In by noon. Catch the bag."
-  ],
-  "lbstaff": [
-   "This is the Log Book, as Client Support and the branch see it. Receive the papers by noon, and send them on the one o'clock bag.",
-   "Every day runs to the bag. Papers come in until twelve noon. Then they are checked, and put on their transmittals. At one o'clock the bag comes in, is cleared, and the mail given out. And it goes back down with the day's transmittals.",
-   "One of you has the bag each week, in turn. This week Sasha. Next week Kamla. Then Azariah, then Liz. The bag is done by one, while the whole team is still in, because the team leaves from two.",
-   "The Queue opens on today's bag. Papers logged, and not yet handed in. Papers received, and not yet sent, grouped by department.",
-   "When an agent hands papers in, tick them, and sign with your finger. If a department is wrong, change it. The Log Book learns from the change.",
-   "At twelve, whoever has the bag gets one e-mail. Everything to prepare for today's bag, by department, and what agents have not handed in.",
-   "Build the transmittal. One department, one press. It is numbered, with the date collected and the date sent on every line, ready to print and go in the bag.",
-   "If something received before twelve misses the bag, the Log Book asks why at one o'clock, while everyone is still in. The reason prints beside the two dates.",
-   "Press Bag in when the bag is cleared, and Bag out when it goes. Every day's bag is on record. Who had it, what went, and what missed it.",
-   "Three working days later, the department gets one e-mail with a Yes and a No. A Yes is recorded. A No goes to sales support, and a Salesforce task opens for whoever collected.",
-   "Insights shows how the branch is doing. The share that made its bag, hour by hour. Each department's answers. And a quality score for every agent.",
-   "At five o'clock, the branch manager gets the day in one e-mail. What is late, what a department said it never got, and what was never handed in.",
-   "Receive by noon. Prepare it. On the one o'clock bag."
+  "rota": [
+   "The three of you who do transmittals take the bag in turn, a week each. This week Sasha. Next week Azariah, then Liz. The bag is done by one o'clock, while the team is still in. Sasha leaves at two, Liz at three, and Azariah at four."
   ]
  }
 }
