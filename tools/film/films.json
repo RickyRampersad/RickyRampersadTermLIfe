@@ -538,5 +538,118 @@
    167.87,
    180.25
   ]
+ },
+ "daystaff": {
+  "cap": "cap-daystaff",
+  "vox": "vodaystaff",
+  "music": "bed-daystaff.wav",
+  "mix": "daystaff-mix.wav",
+  "ass": "captions-daystaff.ass",
+  "out": "daystaff.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "sfx": "sfx-daystaff.wav",
+  "start": 0,
+  "ticks": [],
+  "dark": [
+   5
+  ],
+  "hits": [
+   21.9,
+   46.28
+  ],
+  "durs": [
+   9.406,
+   9.862,
+   10.822,
+   12.574,
+   11.686,
+   8.662
+  ],
+  "dur": 63.012
+ },
+ "dayagent": {
+  "cap": "cap-dayagent",
+  "vox": "vodayagent",
+  "music": "bed-dayagent.wav",
+  "mix": "dayagent-mix.wav",
+  "ass": "captions-dayagent.ass",
+  "out": "dayagent.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "sfx": "sfx-dayagent.wav",
+  "start": 0,
+  "ticks": [],
+  "dark": [
+   4
+  ],
+  "hits": [
+   21.58,
+   31.63
+  ],
+  "durs": [
+   11.686,
+   15.934,
+   13.966,
+   10.654,
+   9.43
+  ],
+  "dur": 61.67
+ },
+ "dayunit": {
+  "cap": "cap-dayunit",
+  "vox": "vodayunit",
+  "music": "bed-dayunit.wav",
+  "mix": "dayunit-mix.wav",
+  "ass": "captions-dayunit.ass",
+  "out": "dayunit.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "sfx": "sfx-dayunit.wav",
+  "start": 0,
+  "ticks": [],
+  "dark": [
+   4
+  ],
+  "hits": [
+   10.91,
+   23.12
+  ],
+  "durs": [
+   9.19,
+   11.902,
+   15.742,
+   10.702,
+   8.83
+  ],
+  "dur": 56.366
+ },
+ "daybm": {
+  "cap": "cap-daybm",
+  "vox": "vodaybm",
+  "music": "bed-daybm.wav",
+  "mix": "daybm-mix.wav",
+  "ass": "captions-daybm.ass",
+  "out": "daybm.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "sfx": "sfx-daybm.wav",
+  "start": 0,
+  "ticks": [],
+  "dark": [
+   4
+  ],
+  "hits": [
+   10.45,
+   21.53
+  ],
+  "durs": [
+   8.134,
+   9.526,
+   13.87,
+   13.054,
+   9.262
+  ],
+  "dur": 53.846
  }
 }

@@ -1,0 +1,134 @@
+{
+ "note": "One cut per role, 17 October 2026: \"there must be a differentiation from an agent to a sales support to the branch manager to the unit manager\". Every name, hour and figure on screen is made up. The hours are the tracker's own schedule; where the branch's real shifts differ, the Day Blocks tab is what changes, not this file.",
+ "role": "manager",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
+ "scenes": [
+  {
+   "visual": "dtitle",
+   "eyebrow": "The day, for the branch manager",
+   "headline": "It is read <em>before anybody is in</em>",
+   "line": "The branch manager's day starts at five. So the read lands at five, before anybody else is in.",
+   "on": "five",
+   "bits": [
+    [
+     "05:00",
+     "the read"
+    ],
+    [
+     "14:00",
+     "the branch message"
+    ],
+    [
+     "15:00",
+     "the checkpoint"
+    ]
+   ],
+   "tail": "Five o'clock to midnight, and the envelope is the wall's own"
+  },
+  {
+   "visual": "dstrip",
+   "eyebrow": "What the night found",
+   "headline": "Five figures, <em>and the gap between two</em>",
+   "line": "Five figures. What is stuck. What it is worth. What we recommended. What we wrote. And how many closed off their day.",
+   "cells": [
+    {
+     "on": "stuck",
+     "n": 197,
+     "label": "Over 120 days",
+     "icon": "file"
+    },
+    {
+     "on": "worth",
+     "v": "TT$3.45m",
+     "label": "API waiting in them",
+     "icon": "chart",
+     "key": true
+    },
+    {
+     "on": "recommended",
+     "v": "TT$3.17m",
+     "label": "Recommended this year",
+     "icon": "target"
+    },
+    {
+     "on": "wrote",
+     "v": "TT$153k",
+     "label": "Actually written",
+     "icon": "check"
+    },
+    {
+     "v": "4 of 10",
+     "label": "Closed off their day",
+     "icon": "users"
+    },
+    {
+     "v": "123",
+     "label": "Overdue tasks",
+     "icon": "clock"
+    }
+   ],
+   "note": "More is stuck in the pipeline than the branch has written all year. Twenty two times more.",
+   "note_on": "day",
+   "cues": []
+  },
+  {
+   "visual": "mstat",
+   "eyebrow": "The one nobody has seen",
+   "headline": "A third of the work waits on <em>somebody unnamed</em>",
+   "line": "And one finding no report has ever carried. A third of every open task in this branch reads waiting on someone else. Nothing anywhere records who. So none of it can be chased from this room.",
+   "on": "third",
+   "n": 133,
+   "suf": "",
+   "nlabel": "waiting on someone else",
+   "note": "Of 399 open tasks. Until who is recorded, a third of the branch's work cannot be chased by anybody.",
+   "cues": []
+  },
+  {
+   "visual": "dlist",
+   "eyebrow": "Your day, the same as theirs",
+   "headline": "You are on <em>the same list</em>",
+   "line": "Your own day is read the same way. Two blocks in of five. The two o'clock message written for you to send. The three o'clock checkpoint. And the same close-out as every desk.",
+   "items": [
+    {
+     "on": "five",
+     "item": "Every block reported",
+     "why": "2 of 5 reported",
+     "done": false
+    },
+    {
+     "on": "send",
+     "item": "The two o'clock branch message",
+     "why": "written, waiting on your send",
+     "done": true
+    },
+    {
+     "on": "checkpoint",
+     "item": "The three o'clock checkpoint",
+     "why": "4 of 10 logged",
+     "done": true
+    },
+    {
+     "on": "desk",
+     "item": "Afternoon mail sweep cleared",
+     "why": "not swept",
+     "done": false
+    }
+   ],
+   "foot": "Every topic for Wednesday is already written, one per person, with its figure under it.",
+   "foot_on": "close-out",
+   "cues": []
+  },
+  {
+   "visual": "close",
+   "eyebrow": "The branch manager",
+   "words3": [
+    "Read it at five.",
+    "Send the two o'clock.",
+    "Walk in with the questions already written."
+   ],
+   "line": "Read it at five. Send the two o'clock. Walk in on Wednesday with the questions already written. Nobody has to be led.",
+   "url": "rickyrampersadbranch.com/meetings"
+  }
+ ]
+}

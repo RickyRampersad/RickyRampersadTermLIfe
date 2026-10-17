@@ -1,0 +1,132 @@
+{
+ "note": "One cut per role, 17 October 2026: \"there must be a differentiation from an agent to a sales support to the branch manager to the unit manager\". Every name, hour and figure on screen is made up. The hours are the tracker's own schedule; where the branch's real shifts differ, the Day Blocks tab is what changes, not this file.",
+ "role": "unitmgr",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
+ "scenes": [
+  {
+   "visual": "dtitle",
+   "eyebrow": "The day, for a unit manager",
+   "headline": "You answer for <em>your unit</em>",
+   "line": "Unit managers. You have your own day, and then you have your unit. On Wednesday you answer for them, person by person.",
+   "on": "own",
+   "bits": [
+    [
+     "4",
+     "your blocks"
+    ],
+    [
+     "13",
+     "waiting on you"
+    ],
+    [
+     "4",
+     "in your unit"
+    ]
+   ],
+   "tail": "The chair does not read your unit out. You do"
+  },
+  {
+   "visual": "dblocks",
+   "eyebrow": "Your own day first",
+   "headline": "Your blocks, <em>before</em> your unit's",
+   "line": "Your own blocks come first, and they are read the same way as everybody else's. Two in, one late, one ahead. Nobody is exempt because they manage.",
+   "blocks": [
+    {
+     "on": "first",
+     "time": "8 \u2013 10am",
+     "focus": "Unit activity and pipeline",
+     "kpi": "KPI 1 \u00b7 due by 10:00",
+     "state": "filed",
+     "word": "In",
+     "did": "Called four of the unit, two field appointments set",
+     "sf": 3
+    },
+    {
+     "on": "in",
+     "time": "10 \u2013 12pm",
+     "focus": "Joint field work",
+     "kpi": "KPI 2 \u00b7 due by 12:00",
+     "state": "filed",
+     "word": "In",
+     "did": "Joint call with one advisor"
+    },
+    {
+     "on": "late",
+     "time": "1 \u2013 3pm",
+     "focus": "Recruitment and agent licensing",
+     "kpi": "Afternoon 1 \u00b7 due by 15:00",
+     "state": "late",
+     "word": "Late"
+    },
+    {
+     "on": "ahead",
+     "time": "3 \u2013 4:30pm",
+     "focus": "Unit persistency and own book",
+     "kpi": "Afternoon 2 \u00b7 due by 16:00",
+     "state": "ahead",
+     "word": "Ahead"
+    }
+   ],
+   "cues": []
+  },
+  {
+   "visual": "mstat",
+   "eyebrow": "Your review queue",
+   "headline": "A median that <em>hides a queue</em>",
+   "line": "Thirteen fact finds are waiting on you. Your median is one point four days, which reads well. The oldest in the branch has waited thirty seven. A median that good with a tail that long is a median hiding a queue.",
+   "on": "waiting",
+   "n": 13,
+   "suf": "",
+   "nlabel": "fact finds waiting on you",
+   "note": "An advisor cannot sell a case that is sitting in a review queue. That is why the count routes it, never the median.",
+   "cues": []
+  },
+  {
+   "visual": "dlist",
+   "eyebrow": "Your unit, person by person",
+   "headline": "Each one has <em>their own question</em>",
+   "line": "And each of your people walks in with their own question, chosen by their own numbers. Nobody is skipped, including the one who is doing well.",
+   "items": [
+    {
+     "on": "question",
+     "item": "Recommended against written",
+     "why": "Rajiv \u00b7 conversion 7.5% of what he recommended",
+     "done": true
+    },
+    {
+     "on": "numbers",
+     "item": "What changed",
+     "why": "Hamid \u00b7 3 this year, none this month",
+     "done": false
+    },
+    {
+     "on": "skipped",
+     "item": "Your week ahead",
+     "why": "Ira \u00b7 nothing filed this year",
+     "done": false
+    },
+    {
+     "on": "well",
+     "item": "Your best case this week",
+     "why": "Nalini \u00b7 2 filed, both written",
+     "done": true
+    }
+   ],
+   "foot": "Three of your four filed nothing this week. That is the conversation.",
+   "foot_on": "well",
+   "cues": []
+  },
+  {
+   "visual": "close",
+   "eyebrow": "Unit managers",
+   "words3": [
+    "Clear your review queue.",
+    "Know what each of yours filed.",
+    "Bring their answers, not yours."
+   ],
+   "line": "Clear your review queue. Know what each of yours filed. Bring their answers, not yours. That is what the unit round is.",
+   "url": "rickyrampersadbranch.com/meetings"
+  }
+ ]
+}

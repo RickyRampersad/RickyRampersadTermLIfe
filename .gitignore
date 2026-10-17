@@ -40,6 +40,26 @@ orphan-transition/mtgfull.html
 orphan-transition/mtgfull-poster.jpg
 tools/film/mtgfull.mp4
 tools/film/vomtgfull/
+
+# The four day films, one per role (17 October 2026). Same rule as above:
+# the SOURCE is tracked — <key>-lines.json, <key>-timing.json and the four
+# scene functions in build-boardfilm.py — and the rendered page, the poster,
+# the MP4 and the narration are build artifacts that rebuild from it.
+orphan-transition/day-advisor.html
+orphan-transition/day-sales-support.html
+orphan-transition/day-unit-manager.html
+orphan-transition/day-branch-manager.html
+orphan-transition/day-*.jpg
+tools/film/day*.mp4
+tools/film/vodaystaff/
+tools/film/vodayagent/
+tools/film/vodayunit/
+tools/film/vodaybm/
+tools/film/cap-day*/
+tools/film/bed-day*.wav
+tools/film/sfx-day*.wav
+tools/film/day*-mix.wav
+tools/film/captions-day*.ass
 # The music the manager sent on 17 October. tools/film/audio/ is published
 # on the branch site, so a track only goes in there once its licence is
 # known and written into ATTRIBUTION.md — the uncleared-music exposure in

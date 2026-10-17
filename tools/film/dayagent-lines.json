@@ -1,0 +1,128 @@
+{
+ "note": "One cut per role, 17 October 2026: \"there must be a differentiation from an agent to a sales support to the branch manager to the unit manager\". Every name, hour and figure on screen is made up. The hours are the tracker's own schedule; where the branch's real shifts differ, the Day Blocks tab is what changes, not this file.",
+ "role": "agent",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
+ "scenes": [
+  {
+   "visual": "dtitle",
+   "eyebrow": "The day, for an advisor",
+   "headline": "You are <em>not</em> on the KPI tracker",
+   "line": "Advisors. You are not on the KPI tracker. No blocks. No mail sweep. Your day is your flight plan, your fact finds, and your pipeline.",
+   "on": "blocks",
+   "bits": [
+    [
+     "0",
+     "blocks"
+    ],
+    [
+     "0",
+     "mail sweeps"
+    ],
+    [
+     "3",
+     "things measured"
+    ]
+   ],
+   "tail": "The branch measures desks on blocks and advisors on fact finds"
+  },
+  {
+   "visual": "dstrip",
+   "eyebrow": "Your own arithmetic",
+   "headline": "The number is <em>yours</em>, not the branch's",
+   "line": "Your flight plan works backwards from what your year has to pay for. Income, down to commission, down to applications, down to fact finds a week. So four a week is your own arithmetic, not a number handed down.",
+   "cells": [
+    {
+     "on": "Income",
+     "v": "TT$30,000",
+     "label": "A month, your need",
+     "icon": "target"
+    },
+    {
+     "on": "commission",
+     "v": "TT$360,000",
+     "label": "A year, commission",
+     "icon": "chart"
+    },
+    {
+     "on": "applications",
+     "v": "48",
+     "label": "Applications a year",
+     "icon": "file"
+    },
+    {
+     "on": "week",
+     "n": 4,
+     "label": "Fact finds a week",
+     "icon": "users",
+     "key": true
+    },
+    {
+     "v": "12",
+     "label": "Appointments a week",
+     "icon": "cal"
+    },
+    {
+     "v": "30",
+     "label": "Contacts a week",
+     "icon": "phone"
+    }
+   ],
+   "note": "An advisor with no plan on file cannot file a fact find at all: the gate stops it.",
+   "note_on": "down",
+   "cues": []
+  },
+  {
+   "visual": "mstat",
+   "eyebrow": "Recommended against written",
+   "headline": "The gap <em>nobody reports</em>",
+   "line": "Here is the number no board in this branch has ever put beside the other. Across the year we recommended three point one seven million dollars of cover. We wrote one hundred and fifty two thousand.",
+   "on": "beside",
+   "n": 48,
+   "suf": "%",
+   "nlabel": "of what you recommended",
+   "note": "Your own figure, not the branch's. The question on Wednesday is which case you re-open first.",
+   "cues": []
+  },
+  {
+   "visual": "dlist",
+   "eyebrow": "Your three lines",
+   "headline": "The only account of <em>your</em> day",
+   "line": "Nothing else in the branch asks an advisor for their day. So three lines, before you go. What got done. What is in the way. What help you need.",
+   "items": [
+    {
+     "on": "done",
+     "item": "What got done today?",
+     "why": "Two fact finds, one application in",
+     "done": true
+    },
+    {
+     "on": "way",
+     "item": "What is in the way?",
+     "why": "Waiting on a medical since Tuesday",
+     "done": true
+    },
+    {
+     "on": "need",
+     "item": "What help do you need?",
+     "why": "Someone to chase the lab",
+     "done": true
+    }
+   ],
+   "foot": "Your numbers are already filled in. You are asked what they mean.",
+   "foot_on": "need",
+   "cues": []
+  },
+  {
+   "visual": "close",
+   "eyebrow": "Advisors",
+   "words3": [
+    "File the fact find.",
+    "Re-open the case you recommended.",
+    "Tell us what is in the way."
+   ],
+   "line": "File the fact find. Re-open the case you recommended. Tell us what is in the way. Your topic on Wednesday comes from those three.",
+   "url": "factfind360.com/goals"
+  }
+ ]
+}

@@ -1,0 +1,169 @@
+{
+ "note": "One cut per role, 17 October 2026: \"there must be a differentiation from an agent to a sales support to the branch manager to the unit manager\". Every name, hour and figure on screen is made up. The hours are the tracker's own schedule; where the branch's real shifts differ, the Day Blocks tab is what changes, not this file.",
+ "role": "staff",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
+ "scenes": [
+  {
+   "visual": "dtitle",
+   "eyebrow": "The day, for sales support",
+   "headline": "Your day is <em>already written down</em>",
+   "line": "Sales support. Your day is already written down. Four blocks, two mail sweeps, and one list before you leave.",
+   "on": "Four",
+   "bits": [
+    [
+     "4",
+     "blocks"
+    ],
+    [
+     "2",
+     "mail sweeps"
+    ],
+    [
+     "15:45",
+     "before you leave"
+    ]
+   ],
+   "tail": "Nothing here asks you to type what a system can already see"
+  },
+  {
+   "visual": "dstrip",
+   "eyebrow": "When you came in",
+   "headline": "The branch does not work <em>one shift</em>",
+   "line": "You sign in when you arrive. Some of us are in at seven. Some leave at two. The board reads your own hours, not somebody else's.",
+   "cells": [
+    {
+     "on": "arrive",
+     "v": "08:52",
+     "label": "Came in",
+     "icon": "clock",
+     "key": true
+    },
+    {
+     "on": "seven",
+     "v": "07:41",
+     "label": "The early desk",
+     "icon": "user"
+    },
+    {
+     "on": "two",
+     "v": "14:00",
+     "label": "Leaves at two",
+     "icon": "clock"
+    },
+    {
+     "v": "08:25",
+     "label": "Morning mail",
+     "icon": "mail"
+    },
+    {
+     "v": "not swept",
+     "label": "Afternoon mail",
+     "icon": "mail"
+    },
+    {
+     "v": "9am \u2013 5pm",
+     "label": "Your hours",
+     "icon": "cal"
+    }
+   ],
+   "note": "A block is never late against a day you did not work.",
+   "note_on": "hours",
+   "cues": []
+  },
+  {
+   "visual": "dblocks",
+   "eyebrow": "Your blocks",
+   "headline": "Filed in the tracker, <em>read here</em>",
+   "line": "Your blocks come straight from the daily tracker. Nothing is logged twice. KPI one is in. Reporting is late. The afternoon has not started.",
+   "blocks": [
+    {
+     "on": "tracker",
+     "time": "9 \u2013 11am",
+     "focus": "Branch Intelligence / Query Pal",
+     "kpi": "KPI 1 \u00b7 due by 10:00",
+     "state": "filed",
+     "word": "In",
+     "did": "Tested the premium due desk against the dues extract",
+     "sf": 4
+    },
+    {
+     "on": "late",
+     "time": "11 \u2013 12pm",
+     "focus": "Reporting",
+     "kpi": "KPI 2 \u00b7 due by 12:00",
+     "state": "late",
+     "word": "Late"
+    },
+    {
+     "on": "afternoon",
+     "time": "1 \u2013 3pm",
+     "focus": "Task Management",
+     "kpi": "Afternoon 1 \u00b7 due by 15:00",
+     "state": "ahead",
+     "word": "Ahead"
+    },
+    {
+     "time": "3 \u2013 5pm",
+     "focus": "Administrative Support",
+     "kpi": "Afternoon 2 \u00b7 due by 16:00",
+     "state": "ahead",
+     "word": "Ahead"
+    }
+   ],
+   "cues": []
+  },
+  {
+   "visual": "dlist",
+   "eyebrow": "Before you leave",
+   "headline": "Three lines, and <em>two answer themselves</em>",
+   "line": "At a quarter to four the tracker asks what has to be true before you leave. Three of those lines answer themselves off the sheet. You are only asked about the one it cannot see.",
+   "items": [
+    {
+     "on": "true",
+     "item": "Every block reported",
+     "why": "1 of 4 reported",
+     "done": false
+    },
+    {
+     "on": "themselves",
+     "item": "Afternoon mail sweep cleared",
+     "why": "not swept",
+     "done": false
+    },
+    {
+     "on": "sheet",
+     "item": "Anything you were written to about, or fell short on, noted",
+     "why": "2 noted today \u00b7 checked",
+     "done": true
+    }
+   ],
+   "foot": "Your list is set on the tracker. The Who column decides whose list each line is on.",
+   "foot_on": "see",
+   "cues": []
+  },
+  {
+   "visual": "mstat",
+   "eyebrow": "What came to your desk",
+   "headline": "The record <em>already knows</em> who supports it",
+   "line": "And what came to your desk this morning was not assigned by anybody. Every stuck application already names the person supporting it. Sixty one of them are on yours.",
+   "on": "anybody",
+   "n": 61,
+   "suf": "",
+   "nlabel": "applications over 120 days",
+   "note": "Carrying one million, two hundred and forty thousand dollars of API. The oldest is six hundred and forty days old.",
+   "cues": []
+  },
+  {
+   "visual": "close",
+   "eyebrow": "Sales support",
+   "words3": [
+    "Sign in when you arrive.",
+    "File your blocks as you finish them.",
+    "Clear the list before you leave."
+   ],
+   "line": "Sign in when you arrive. File your blocks as you finish them. Clear the list before you leave. That is the whole of it.",
+   "url": "rickyrampersadbranch.com/meetings"
+  }
+ ]
+}

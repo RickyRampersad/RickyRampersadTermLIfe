@@ -48,12 +48,19 @@ SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
 PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
          # the meeting builder film, rebuilt on this motion system
-         'mtg3': 'mtg3.html', 'mtgfull': 'mtgfull.html'}
+         'mtg3': 'mtg3.html', 'mtgfull': 'mtgfull.html',
+         # one cut per role: the day each person is actually held to
+         'daystaff': 'day-sales-support.html', 'dayagent': 'day-advisor.html',
+         'dayunit': 'day-unit-manager.html', 'daybm': 'day-branch-manager.html'}
 TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
           'mtg3': 'How a week becomes a meeting',
-          'mtgfull': 'How a week becomes a meeting'}
+          'mtgfull': 'How a week becomes a meeting',
+          'daystaff': 'Your day, for sales support', 'dayagent': 'Your day, for advisors',
+          'dayunit': 'Your day, for unit managers', 'daybm': 'Your day, for the branch manager'}
 # the line under the branch name in the masthead; the board films keep theirs
-SUBTITLES = {'mtg3': 'The Wednesday meeting', 'mtgfull': 'The Wednesday meeting'}
+SUBTITLES = {'mtg3': 'The Wednesday meeting', 'mtgfull': 'The Wednesday meeting',
+             'daystaff': 'Sales support', 'dayagent': 'Advisors',
+             'dayunit': 'Unit managers', 'daybm': 'The branch manager'}
 OUT = ROOT / 'orphan-transition' / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
@@ -1087,6 +1094,92 @@ def s_mchase(i, sc, D):
                  f'{at(t0 + len(sc["rows"]) * 190 + 250, "at up mrnote", inner=sc["note"])}</div>')
 
 
+
+# ══════════════════════════════════════════════════════════════════════════
+#  THE DAY FILMS — one cut per role (17 October 2026)
+#
+#  "There must be a differentiation from an agent to a sales support to the
+#  branch manager to the unit manager… you're aware a staff comes in at 7,
+#  some leave at 2, some leave at 3, so different routing."
+#
+#  One film showing every slide to everybody taught nobody their own day. So
+#  four cuts, and these four scenes are what they are built from — all of
+#  them data-driven, because the only difference between the cuts should be
+#  the data, never the drawing.
+#
+#  Every name, hour and figure on screen is made up.
+# ══════════════════════════════════════════════════════════════════════════
+
+def s_dtitle(i, sc, D):
+    """The cover for one role: the mark, who it is for, and their hours."""
+    t0 = w(i, sc['on'])
+    bits = ''.join(at(t0 + k * 230, 'at pop dtb', inner=f'<b>{a}</b><span>{b}</span>')
+                   for k, (a, b) in enumerate(sc['bits']))
+    tail = at(t0 + len(sc['bits']) * 230 + 400, 'at up furl', inner=sc['tail']) if sc.get('tail') else ''
+    return (f'<div class="center dtw"><div class="lockup sm"><i class="halo"></i>{mark("big")}</div>'
+            f'{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h1", sc["headline"], 420, "mth")}'
+            f'<div class="dtbits">{bits}</div>{tail}</div>')
+
+
+def s_dstrip(i, sc, D):
+    """When they came in, and what the day already knows about them — the
+       tiles landing on the words that name them. The arrival is on it
+       because the branch does not work one shift: a screen that calls a
+       block late without saying when the person started blames the early
+       desk for the schedule's own gaps."""
+    cues = []
+    for k, c in enumerate(sc['cells']):
+        t = w(i, c['on']) if c.get('on') else 300 + k * 280
+        num = cnt(t + 100, c['n'], c.get('suf', '')) if isinstance(c.get('n'), int) else f'<b>{c["v"]}</b>'
+        cues.append(at(t, 'at pop dsc' + (' key' if c.get('key') else ''),
+                       inner=f'<span class="tic">{ico(c.get("icon", "clock"))}</span>{num}'
+                             f'<span class="tlb">{c["label"]}</span>'))
+    note = at(w(i, sc['note_on']) if sc.get('note_on') else D - 1400, 'at up dsn',
+              inner=ico('flag', 'ii') + ' ' + sc['note']) if sc.get('note') else ''
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mwrap dsw"><div class="dsg">{"".join(cues)}</div>{note}</div>')
+
+
+def s_dblocks(i, sc, D):
+    """The day as its blocks, each with its hours, what it is for, and where
+       it stands. State is a word as well as a colour — the branch's rule for
+       every status anywhere — and the figure beside a block is what
+       Salesforce says moved in that block's own kind of work."""
+    rows = ''
+    for k, b in enumerate(sc['blocks']):
+        t = w(i, b['on']) if b.get('on') else 400 + k * 300
+        st = b.get('state', 'ahead')
+        fig = (f'<span class="dbf">{cnt(t + 160, b["sf"])}<i>closed</i></span>'
+               if b.get('sf') is not None else '')
+        did = f'<span class="dbd">{b["did"]}</span>' if b.get('did') else ''
+        rows += at(t, f'at l dbr {st}',
+                   inner=f'<span class="dbt">{b["time"]}</span>'
+                         f'<span class="dbb"><b>{b["focus"]}</b>'
+                         f'<span class="dbk">{b["kpi"]}</span>{did}</span>'
+                         f'<span class="dbs {st}">{b["word"]}</span>{fig}')
+    return stage(side(i, sc, mcues(i, sc)), f'<div class="mwrap dbw">{rows}</div>')
+
+
+def s_dlist(i, sc, D):
+    """A checklist that ticks itself: the before-you-leave list, or any list
+       whose lines the sheet can already answer. The evidence under each line
+       is the point — "1 of 4 reported" tells a person what to do where a bare
+       cross does not."""
+    rows = ''
+    for k, it in enumerate(sc['items']):
+        t = w(i, it['on']) if it.get('on') else 400 + k * 330
+        done = it.get('done')
+        rows += at(t, 'at l dli' + (' dok' if done else ''),
+                   inner=f'<span class="dlb">{ico("check") if done else ""}</span>'
+                         f'<span class="dlt"><b>{it["item"]}</b>'
+                         + (f'<i>{it["why"]}</i>' if it.get('why') else '') + '</span>'
+                         f'<span class="dlw {"ok" if done else "left"}">'
+                         f'{"Done" if done else "Left"}</span>')
+    foot = at(w(i, sc['foot_on']) if sc.get('foot_on') else D - 1500, 'at up dlf',
+              inner=ico('clock', 'ii') + ' ' + sc['foot']) if sc.get('foot') else ''
+    return stage(side(i, sc, mcues(i, sc)), f'<div class="mwrap dlw2">{rows}{foot}</div>')
+
+
 R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
      'yourwork': s_yourwork, 'clock': s_clock, 'title': s_title, 'flow': s_flow, 'signin': s_signin, 'urgent': s_urgent, 'agents': s_agents, 'table': s_table, 'batches': s_batches,
      'assign': s_assign, 'named': s_named, 'list': s_list, 'client': s_client, 'logcall': s_logcall, 'comment': s_comment, 'counts': s_counts,
@@ -1097,8 +1190,9 @@ R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_uni
      'mtitle': s_mtitle, 'mflow': s_mflow, 'mfeed': s_mfeed, 'mphone': s_mphone,
      'mstat': s_mstat, 'mbuild': s_mbuild, 'mmoved': s_mmoved, 'mquiet': s_mquiet,
      'mreg': s_mreg, 'mslot': s_mslot, 'mguest': s_mguest, 'mnames': s_mnames,
-     'mchase': s_mchase}
-BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close'}
+     'mchase': s_mchase,
+     'dtitle': s_dtitle, 'dstrip': s_dstrip, 'dblocks': s_dblocks, 'dlist': s_dlist}
+BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close', 'dtitle'}
 
 def bgfx(i, blue):
     if blue:
@@ -1816,6 +1910,66 @@ body{background:var(--ground)}
 .bf .mkn span{font:600 11.5px/1 var(--f);color:#64748B}
 .bf .mkd{font:800 10.5px/1 var(--f);letter-spacing:.05em;text-transform:uppercase;
   color:#1D5BC4;background:#EDF3FC;border-radius:999px;padding:5px 10px}
+
+/* ── the day films: one cut per role ─────────────────────────────── */
+.dtw .dtbits{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.dtb{background:rgba(255,255,255,.07);border:1px solid rgba(191,211,247,.26);border-radius:13px;
+  padding:12px 18px;min-width:118px}
+.dtb b{display:block;font-size:26px;font-weight:800;color:#fff;line-height:1.1}
+.dtb span{display:block;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#BFD3F7;margin-top:3px}
+
+.dsw{display:flex;flex-direction:column;justify-content:center;height:100%}
+.dsg{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.dsc{background:#fff;border:1px solid #DCE5F4;border-radius:14px;padding:14px 15px;
+  box-shadow:0 10px 26px rgba(7,15,38,.16)}
+.dsc.key{border-color:#2A6DE0;box-shadow:0 12px 30px rgba(42,109,224,.26)}
+.dsc .tic{display:block;margin-bottom:7px}
+.dsc .tic .ico{width:17px;height:17px;stroke:#1D5BC4}
+.dsc b{display:block;font-size:25px;font-weight:800;color:#0E1A2E;line-height:1.08}
+.dsc .tlb{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:#64748B;margin-top:4px;font-weight:700}
+.dsn{margin-top:16px;font-size:14.5px;color:#BFD3F7;display:flex;align-items:center;gap:8px}
+.dsn .ii{width:16px;height:16px;stroke:#00E5FF;flex:none}
+
+.dbw{display:flex;flex-direction:column;justify-content:center;gap:9px;height:100%}
+.dbr{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #DCE5F4;
+  border-left:4px solid #94A3B8;border-radius:13px;padding:13px 16px;
+  box-shadow:0 8px 22px rgba(7,15,38,.14)}
+.dbr.filed{border-left-color:#16A34A}
+.dbr.late{border-left-color:#D9663B;background:#FFF6F3}
+.dbr.now{border-left-color:#2A6DE0;background:#F4F8FF}
+.dbt{min-width:92px;font-size:12.5px;font-weight:700;color:#64748B;letter-spacing:.02em}
+.dbb{flex:1;min-width:0}
+.dbb b{display:block;font-size:15.5px;font-weight:800;color:#0E1A2E;line-height:1.25}
+.dbk{display:block;font-size:11.5px;color:#64748B;margin-top:2px}
+.dbd{display:block;font-size:12.5px;color:#334155;margin-top:5px;line-height:1.45}
+.dbs{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  padding:4px 11px;border-radius:20px;white-space:nowrap}
+.dbs.filed{background:#E7F6EC;color:#16A34A}
+.dbs.late{background:#FDEDE6;color:#D9663B}
+.dbs.now{background:#E8F0FE;color:#1D5BC4}
+.dbs.ahead{background:#EEF2F7;color:#64748B}
+.dbf{display:flex;flex-direction:column;align-items:center;min-width:56px}
+.dbf b{font-size:21px;font-weight:800;color:#0E7490;line-height:1}
+.dbf i{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#64748B;font-style:normal;font-weight:700}
+
+.dlw2{display:flex;flex-direction:column;justify-content:center;gap:9px;height:100%}
+.dli{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #DCE5F4;
+  border-radius:13px;padding:13px 16px;box-shadow:0 8px 22px rgba(7,15,38,.14)}
+.dli.dok{background:#F6FBF7;border-color:#CDE9D6}
+.dlb{width:26px;height:26px;border-radius:8px;border:2px solid #CBD5E1;flex:none;
+  display:grid;place-items:center}
+.dli.dok .dlb{border-color:#16A34A;background:#16A34A}
+.dli.dok .dlb .ico{width:15px;height:15px;stroke:#fff}
+.dlt{flex:1;min-width:0}
+.dlt b{display:block;font-size:15px;font-weight:800;color:#0E1A2E;line-height:1.3}
+.dlt i{display:block;font-size:12px;color:#64748B;font-style:normal;margin-top:3px}
+.dlw{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  padding:4px 11px;border-radius:20px}
+.dlw.ok{background:#E7F6EC;color:#16A34A}
+.dlw.left{background:#FDF3E3;color:#B45309}
+.dlf{margin-top:15px;font-size:14px;color:#BFD3F7;display:flex;align-items:center;gap:8px}
+.dlf .ii{width:16px;height:16px;stroke:#00E5FF;flex:none}
 """
 
 JS = r"""
