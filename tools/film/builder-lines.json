@@ -1,0 +1,82 @@
+{
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
+ "note": "How a week becomes a meeting — the branch meeting builder, for rickyrampersadbranch.com/meetings. Written 14 October 2026, after the first cut was taken off the site: its bed came from a track whose licence was never established, it carried a blue substitute mark instead of the branch's gold shield, it ran the week Monday to Sunday, and it said the figures came from Salesforce. The branch manager set the shape: the week runs Sunday to Sunday, the figures are read from the Branch Portfolio, an agent checks their own data once a day, and Wednesday is where that data gets argued. The page is meetings/builder-film.html, built by hand; this file is its script, voice-lines.py voices and times it, and builder-timing.py writes the durations back onto the page. Nothing here is a real client, a real agent or a real figure.",
+ "scenes": [
+  { "scene": "title",
+    "line": "The branch meets on a Wednesday morning. Ninety minutes. The meeting is built before anybody walks in." },
+
+  { "scene": "the week you already worked",
+    "line": "It is built out of the week you already worked." },
+
+  { "scene": "Sunday 20:00 — the week closes",
+    "line": "The week runs Sunday to Sunday. On Sunday evening it closes. The figures freeze, and nothing moves under a number that has already been read out." },
+
+  { "scene": "Sunday 20:00 — the Branch Portfolio is read",
+    "line": "Then the Branch Portfolio is read. Applications in. Policies issued. What is still sitting, and what is owed." },
+
+  { "scene": "sales support adds the rest",
+    "line": "Sales support adds the rest. Every renewal, every claim and every questionnaire is a line in the record." },
+
+  { "scene": "every working morning — your own data",
+    "line": "Every working morning you get your own data. What is still on your list. Where you stand against your target. Nobody else's figures, and nobody else sees yours." },
+
+  { "scene": "Monday 10:00 — the first check",
+    "line": "At ten, the first check goes out." },
+
+  { "scene": "fifteen seconds — tap what you did",
+    "line": "Fifteen seconds. Tap what you did. Prospecting. Calls. A client seen. A fact find. Nothing to type unless you want to." },
+
+  { "scene": "Monday 15:00 — the afternoon",
+    "line": "At three, the afternoon. While you still remember it." },
+
+  { "scene": "nobody writes a report",
+    "line": "Nobody writes a report. The week writes itself." },
+
+  { "scene": "Wednesday 07:00 — the builder reads it all",
+    "line": "At seven on Wednesday the builder reads all of it. It knows who worked, and on what." },
+
+  { "scene": "and which numbers moved",
+    "line": "It knows which numbers moved, and which did not." },
+
+  { "scene": "and who has not presented lately",
+    "line": "It knows who has not presented lately. So it asks them." },
+
+  { "scene": "and it writes the agenda",
+    "line": "And it writes the agenda. Eleven items. Ninety minutes. A name against every one." },
+
+  { "scene": "Wednesday 9:00 — everybody logs in",
+    "line": "Nine o'clock. Everybody logs in. The login is the register." },
+
+  { "scene": "you open the meeting",
+    "line": "You open the meeting. Your own item is already at the top." },
+
+  { "scene": "9:03 — the branch manager",
+    "line": "Three minutes past, the branch manager takes last week's open items, by name and by date. Nothing new is raised until those are spoken to." },
+
+  { "scene": "9:10 — sales support",
+    "line": "Ten past, sales support. Applications in, applications issued, and what is still sitting, with the oldest one named." },
+
+  { "scene": "9:20 — the BME",
+    "line": "Twenty past, the B M E takes the unit round. Everybody with something moving says what moved." },
+
+  { "scene": "9:49 — what worked for me",
+    "line": "Ten to ten, one case in somebody's own words. Chosen by the rota, not by the chair." },
+
+  { "scene": "9:59 — a guest",
+    "line": "A guest opens their own link and joins the same agenda. They see this meeting, and nothing else of the branch." },
+
+  { "scene": "10:17 — every single week",
+    "line": "And every single week, every person in the room names one client. About twenty seconds each. Nobody leaves without naming one." },
+
+  { "scene": "Thursday — the actions are chased",
+    "line": "On Thursday the actions are chased. And the week starts again." },
+
+  { "scene": "the week builds the meeting",
+    "line": "The week builds the meeting." },
+
+  { "scene": "close card",
+    "line": "Wednesday, nine to half past ten. Ricky Rampersad Branch dot com, slash meetings.",
+    "extra": 1.2 }
+ ]
+}
