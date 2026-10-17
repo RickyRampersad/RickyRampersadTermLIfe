@@ -18,7 +18,7 @@ jobs:
           log = open('probe/log.txt','w')
           text = open('probe/line.txt').read().strip()
           try:
-              raise SystemExit
+              assert False
               from faster_whisper import WhisperModel
               m = WhisperModel('base.en', compute_type='int8')
               import subprocess, numpy as np
