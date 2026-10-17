@@ -48,11 +48,12 @@ SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
 PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
          # the meeting builder film, rebuilt on this motion system
-         'mtg3': 'mtg3.html'}
+         'mtg3': 'mtg3.html', 'mtgfull': 'mtgfull.html'}
 TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
-          'mtg3': 'How a week becomes a meeting'}
+          'mtg3': 'How a week becomes a meeting',
+          'mtgfull': 'How a week becomes a meeting'}
 # the line under the branch name in the masthead; the board films keep theirs
-SUBTITLES = {'mtg3': 'The Wednesday meeting'}
+SUBTITLES = {'mtg3': 'The Wednesday meeting', 'mtgfull': 'The Wednesday meeting'}
 OUT = ROOT / 'orphan-transition' / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
@@ -819,8 +820,11 @@ def s_agenda(i, sc, D):
 def s_round(i, sc, D):
     """The round at twenty past: the clock, then the unit's own numbers,
        then the manager who answers for them."""
+    #  The approved line is "Twenty past, the B M E takes the unit round.
+    #  Everybody with something moving says what moved." The first cut of
+    #  this scene was written against a line I had rewritten myself.
     tTw, tRd = w(i, 'Twenty'), w(i, 'round')
-    tEv, tOwn = w(i, 'Every'), w(i, 'own')
+    tEv, tOwn = w(i, 'Everybody'), w(i, 'moved')
     clock = at(tTw, 'at pop mclk', inner=f'<b>9:20</b><span>twenty past</span>')
     tl = ''.join(tile(tRd + 150 + k * 170, n, lb, kind, ic, ct) for k, (n, lb, kind, ic, ct) in enumerate([
         ('3 of 4', 'Cases answered', '', 'check', None),
@@ -829,9 +833,9 @@ def s_round(i, sc, D):
         ('1', 'Actions overdue', 'red', 'clock', (1, ''))]))
     who = at(tEv, 'at up mwho',
              inner=f'{avatar("Akaash Kalladeen", "lg")}<div><b>Akaash’s unit</b>'
-                   f'<span>4 people &middot; answers for all of them</span></div>')
+                   f'<span>B M E &middot; 4 people, and he answers for them</span></div>')
     says = at(tOwn, 'at up msay',
-              inner='&ldquo;Omar answered nothing. I am with him Thursday morning.&rdquo;')
+              inner='&ldquo;Two moved. Omar answered nothing \u2014 I am with him Thursday.&rdquo;')
     #  The film's own argument, as a chart: the meeting is not one
     #  person's. Emphasis — the chair is the point, the rest is context.
     load = [('Chair', 15, True), ('By rota', 18, False), ('Sales support', 12, False),
@@ -842,9 +846,245 @@ def s_round(i, sc, D):
              f'<span>no one person over a third</span></div>'
              f'{mload(tOwn + 200, load, target=third)}')
     right = (f'<div class="mrwrap">{clock}{who}<div class="tiles mrt">{tl}</div>{says}{chart}</div>')
-    cues = [(tTw, 'Twenty past the hour', False), (tEv, 'Every unit manager', False),
-            (tOwn, 'Answers for their own', True)]
+    cues = [(tTw, 'Twenty past the hour', False), (tEv, 'Everybody with something moving', False),
+            (tOwn, 'Says what moved', True)]
     return stage(side(i, sc, cues), right)
+
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  THE FULL MEETING FILM — Sunday to Sunday, every role
+#
+#  17 October 2026: "I've asked more or less for a very detailed video to
+#  send to the team to show what happens from Sunday to Sunday with
+#  everyone's role. And you've watered this down so much."
+#
+#  Fair. A four-scene cut was agreed as a way to settle the look and then
+#  shipped as if it were the film. These are the other scenes, so the
+#  branch manager, sales support, the B M E, the agents and a guest each
+#  get their own part of the week on screen.
+#
+#  Every visual here is m-prefixed: the board films already own `title`,
+#  `flow` and `signin`, and those draw the transition board.
+# ══════════════════════════════════════════════════════════════════════════
+
+def mcues(i, sc):
+    """A scene names its cues by the WORD each should land on; the time comes
+       from the narration, not from a number typed into the script. Entries
+       are [word, text] or [word, text, True] for the one that matters."""
+    out = []
+    for c in sc.get('cues', []):
+        word, text = c[0], c[1]
+        out.append((w(i, word), text, bool(c[2]) if len(c) > 2 else False))
+    return out
+
+
+MDIV_UP, MDIV_DN = '#1D5BC4', '#D9663B'   # validated diverging pair, ΔE 34.4
+
+def s_mtitle(i, sc, D):
+    """The cover: the mark, the hour, and the claim."""
+    t90 = w(i, 'Ninety')
+    tB = w(i, 'built')
+    bits = ''.join(at(t90 + k * 230, 'at pop mtb', inner=f'<b>{a}</b><span>{b}</span>')
+                   for k, (a, b) in enumerate([('Wednesday', 'every week'), ('9:00', 'to 10:30'), ('11', 'items')]))
+    return (f'<div class="center mtw"><div class="lockup sm"><i class="halo"></i>{mark("big")}</div>'
+            f'{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h1", sc["headline"], 420, "mth")}'
+            f'<div class="mtbits">{bits}</div>'
+            f'{at(tB + 500, "at up furl", inner="Sunday to Sunday, and nobody writes a report")}</div>')
+
+
+def s_mflow(i, sc, D):
+    """The week on the left, the meeting on the right, and the arrow between."""
+    tW, tM = w(i, 'week'), w(i, 'worked')
+    days = ''.join(at(tW + k * 90, 'at pop mfd', inner=d) for k, d in enumerate(MDAYS))
+    arw = f'<div class="arw" style="--at:{ms(tW + 700)}"><i class="ln"></i><i class="pkt"></i><i class="pkt q2"></i></div>'
+    mtg = at(tM, 'at pop mfm', inner=f'{mark()}<b>Wednesday</b><span>the agenda, written</span>')
+    return (f'<div class="mfw">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="mfrow"><div class="mfdays">{days}</div>{arw}{mtg}</div></div>')
+
+
+def s_mfeed(i, sc, D):
+    """Figures arriving into the record. Two scenes use it: what the Branch
+       Portfolio gives on Sunday evening, and what sales support adds."""
+    rows = sc['rows']
+    t0 = w(i, sc['on'])
+    body = ''.join(at(t0 + k * 320, 'at l mfr',
+                      inner=f'<span class="mfi">{ico(ic)}</span><span class="mfn">{lbl}</span>'
+                            f'{cnt(t0 + k * 320 + 180, v)}')
+                   for k, (lbl, v, ic) in enumerate(rows))
+    src = at(150, 'at up mfsrc', inner=f'{ico("file")}<span>{sc["source"]}</span>')
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mwrap">{src}<div class="mfl">{body}</div>'
+                 f'{at(t0 + len(rows) * 320 + 200, "at up mfnote", inner=sc["note"])}</div>')
+
+
+def s_mphone(i, sc, D):
+    """The agent's own morning and the two checks, on a phone. Four scenes
+       use it: the note, ten o'clock, the fifteen seconds, and three."""
+    t0 = w(i, sc['on'])
+    if sc.get('taps'):
+        #  the check itself: four taps, a finger pressing each one
+        taps = ''.join(f'<div class="ptap" data-k="t{k}" style="--at:{ms(t0 + k * 260)}">'
+                       f'<span class="pti">{ico(ic)}</span><b>{lbl}</b>'
+                       f'<span class="ptn">{n}</span></div>'
+                       for k, (lbl, n, ic) in enumerate(sc['taps']))
+        body = f'<div class="ptaps">{taps}</div>' + \
+               at(t0 + len(sc['taps']) * 260 + 300, 'at up psend', inner='Send · 15 seconds')
+        cur = cursor([(t0 + 120, '[data-k=t0]')] +
+                     [(t0 + k * 260 + 180, f'[data-k=t{k}]') for k in range(len(sc['taps']))], 'finger')
+        clicks = ''.join(click(t0 + k * 260 + 200, f'[data-k=t{k}]') for k in range(len(sc['taps'])))
+        extra = cur + clicks
+    else:
+        body = ''.join(at(t0 + k * 280, 'at l prow2',
+                          inner=f'<span class="pri">{ico(ic)}</span><div><b>{a}</b><span>{b}</span></div>')
+                       for k, (a, b, ic) in enumerate(sc['rows']))
+        extra = ''
+    #  The cursor and its ripples must live INSIDE the phone's own screen:
+    #  frameOf looks for .cam or .ps to measure a selector against, and a
+    #  cursor dropped beside the phone finds neither and throws.
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mphw">{phone(i, body, sc.get("ptitle", "Your morning"), sc.get("pwho", "Marlon"), extra=extra)}</div>')
+
+
+def s_mstat(i, sc, D):
+    """One sentence, one figure. Used where the line is the point."""
+    t0 = w(i, sc['on'])
+    fig = at(t0, 'at pop mstf', inner=f'{cnt(t0 + 120, sc["n"], sc.get("suf", ""))}<span>{sc["nlabel"]}</span>')
+    sub = at(t0 + 600, 'at up mstb', inner=sc['note'])
+    return (f'<div class="center mstw">{at(150, "at up ebw", inner=sc["eyebrow"])}'
+            f'{hx("h2", sc["headline"], 380, "c")}{fig}{sub}</div>')
+
+
+def s_mbuild(i, sc, D):
+    """Wednesday, seven in the morning: every source read into one place."""
+    tR, tK = w(i, 'reads'), w(i, 'knows')
+    srcs = ''.join(at(300 + k * 190, 'at l mbs', inner=f'{ico(ic)}<span>{lbl}</span>')
+                   for k, (lbl, ic) in enumerate(sc['sources']))
+    arw = f'<div class="arw mba" style="--at:{ms(tR - 200)}"><i class="ln"></i><i class="pkt"></i><i class="pkt q2"></i><i class="pkt q3"></i></div>'
+    box = at(tR, 'at pop mbb', inner=f'{mark()}<b>The builder</b><span>07:00, Wednesday</span>')
+    out = ''.join(at(tK + k * 220, 'at up mbo', inner=f'{ico("check")}<span>{x}</span>')
+                  for k, x in enumerate(sc['knows']))
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mwrap mbw"><div class="mbsrc">{srcs}</div>{arw}'
+                 f'<div class="mbmid">{box}<div class="mbouts">{out}</div></div></div>')
+
+
+def s_mmoved(i, sc, D):
+    """Which numbers moved, against the week before: a diverging bar about
+       zero. Up and down are opposite things, so they get opposite hues —
+       the validated pair, blue against orange, with a neutral zero rule."""
+    t0 = w(i, 'moved')
+    rows = sc['rows']
+    top = max(abs(v) for _, v in rows) or 1
+    body = ''
+    for k, (lbl, v) in enumerate(rows):
+        wpc = round(50 * abs(v) / top, 1)
+        side_ = 'up' if v >= 0 else 'dn'
+        col = MDIV_UP if v >= 0 else MDIV_DN
+        body += (f'<div class="mmr"><span class="mmn">{lbl}</span>'
+                 f'<div class="mmt"><i class="mmz"></i>'
+                 f'<i class="mmf {side_}" style="--w:{wpc}%;--at:{ms(t0 + k * 150)};background:{col}"></i></div>'
+                 f'<span class="mmv {side_}" style="--at:{ms(t0 + k * 150 + 220)}">{v:+d}</span></div>')
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mwrap"><div class="mchd"><b>{sc["title"]}</b><span>against the week before</span></div>'
+                 f'<div class="mmw">{body}</div>'
+                 f'<div class="mmkey"><span><i style="background:{MDIV_UP}"></i>up</span>'
+                 f'<span><i style="background:{MDIV_DN}"></i>down</span></div></div>')
+
+
+def s_mquiet(i, sc, D):
+    """Who has not presented lately — and the one the builder asks next."""
+    t0 = w(i, 'presented')
+    tA = w(i, 'asks')
+    body = ''.join(at(t0 + k * 230, 'at l mqr' + (' next' if nxt else ''),
+                      inner=f'{avatar(n)}<div class="mqn"><b>{n}</b><span>{ago}</span></div>'
+                            + (f'<span class="mqb">next up</span>' if nxt else ''))
+                   for k, (n, ago, nxt) in enumerate(sc['rows']))
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mwrap"><div class="mchd"><b>Last presented</b>'
+                 f'<span>the rota, not the chair</span></div><div class="mql">{body}</div>'
+                 f'{at(tA, "at up mqask", inner=sc["note"])}</div>')
+
+
+def s_mreg(i, sc, D):
+    """Nine o'clock: the register fills as people sign in — and your own
+       item is already at the top of it."""
+    t0 = w(i, sc['on'])
+    body = ''.join(at(t0 + k * 170, 'at l mrr' + (' me' if me else ''),
+                      inner=f'{avatar(n)}<div class="mrn"><b>{n}</b><span>{role}</span></div>'
+                            f'<span class="mrp">{"You" if me else "In"}</span>')
+                   for k, (n, role, me) in enumerate(sc['rows']))
+    head = (f'<div class="mchd"><b>{sc["title"]}</b>'
+            f'<span>{cnt(t0 + 200, sc["inn"])} of {sc["roll"]} signed in</span></div>')
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mwrap">{head}<div class="mrl">{body}</div>'
+                 f'{at(t0 + len(sc["rows"]) * 170 + 200, "at up mrnote", inner=sc["note"])}</div>')
+
+
+def s_mslot(i, sc, D):
+    """One person's slot in the meeting: the clock, who has the floor, and
+       what is on the screen while they speak. The branch manager, sales
+       support and the agent whose case it is all run through this."""
+    t0 = w(i, sc['on'])
+    clock = at(120, 'at pop mclk', inner=f'<b>{sc["clock"]}</b><span>{sc["mins"]}</span>')
+    who = at(400, 'at up mwho',
+             inner=f'{avatar(sc["who"], "lg")}<div><b>{sc["who"]}</b><span>{sc["role"]}</span></div>')
+    if sc.get('rows'):
+        panel = ''.join(at(t0 + k * 200, 'at l mslr',
+                           inner=f'<span class="mstag {c}">{tag}</span><span class="mslt">{txt}</span>'
+                                 f'<span class="mslv">{v}</span>')
+                        for k, (tag, c, txt, v) in enumerate(sc['rows']))
+        panel = f'<div class="msll">{panel}</div>'
+    else:
+        panel = ''
+    tiles = ''
+    if sc.get('tiles'):
+        tiles = '<div class="tiles mrt">' + ''.join(
+            tile(t0 + 150 + k * 170, n, lb, kind, ic, ct)
+            for k, (n, lb, kind, ic, ct) in enumerate(sc['tiles'])) + '</div>'
+    says = at(w(i, sc['saysat']), 'at up msay', inner=sc['says']) if sc.get('says') else ''
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mrwrap">{clock}{who}{tiles}{panel}{says}</div>')
+
+
+def s_mguest(i, sc, D):
+    """A guest's own link: this meeting, and nothing else of the branch."""
+    t0, tN = w(i, 'link'), w(i, 'nothing')
+    sees = ''.join(at(t0 + k * 200, 'at l mgy', inner=f'{ico("check")}<span>{x}</span>')
+                   for k, x in enumerate(sc['sees']))
+    hidden = ''.join(at(tN + k * 170, 'at l mgn', inner=f'{ico("lock")}<span>{x}</span>')
+                     for k, x in enumerate(sc['hidden']))
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mwrap"><div class="mgcols">'
+                 f'<div><div class="mgh ok">They see</div>{sees}</div>'
+                 f'<div><div class="mgh no">They never see</div>{hidden}</div></div></div>')
+
+
+def s_mnames(i, sc, D):
+    """Every person in the room names one client. Nobody leaves without."""
+    t0 = w(i, 'names')
+    tS = w(i, 'seconds')
+    chips = ''.join(at(t0 + k * 150, 'at pop mnc',
+                       inner=f'{avatar(n)}<span>{c}</span>')
+                    for k, (n, c) in enumerate(sc['rows']))
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mwrap"><div class="mchd"><b>One client each</b>'
+                 f'<span>{cnt(tS, sc["secs"], " seconds")} apiece</span></div>'
+                 f'<div class="mncw">{chips}</div>'
+                 f'{at(tS + 500, "at up mnnote", inner=sc["note"])}</div>')
+
+
+def s_mchase(i, sc, D):
+    """Thursday: every action from the meeting, with its owner and its day."""
+    t0 = w(i, 'chased')
+    body = ''.join(at(t0 + k * 190, 'at l mcr',
+                      inner=f'{avatar(n)}<div class="mkn"><b>{task}</b><span>{n}</span></div>'
+                            f'<span class="mkd">{due}</span>')
+                   for k, (n, task, due) in enumerate(sc['rows']))
+    return stage(side(i, sc, mcues(i, sc)),
+                 f'<div class="mwrap"><div class="mchd"><b>Carried from Wednesday</b>'
+                 f'<span>chased on Thursday</span></div><div class="mkl">{body}</div>'
+                 f'{at(t0 + len(sc["rows"]) * 190 + 250, "at up mrnote", inner=sc["note"])}</div>')
 
 
 R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
@@ -852,7 +1092,12 @@ R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_uni
      'assign': s_assign, 'named': s_named, 'list': s_list, 'client': s_client, 'logcall': s_logcall, 'comment': s_comment, 'counts': s_counts,
      'sees': s_sees, 'close': s_close,
      # the meeting film
-     'week': s_week, 'agenda': s_agenda, 'round': s_round}
+     'week': s_week, 'agenda': s_agenda, 'round': s_round,
+     # the full meeting film
+     'mtitle': s_mtitle, 'mflow': s_mflow, 'mfeed': s_mfeed, 'mphone': s_mphone,
+     'mstat': s_mstat, 'mbuild': s_mbuild, 'mmoved': s_mmoved, 'mquiet': s_mquiet,
+     'mreg': s_mreg, 'mslot': s_mslot, 'mguest': s_mguest, 'mnames': s_mnames,
+     'mchase': s_mchase}
 BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close'}
 
 def bgfx(i, blue):
@@ -1425,6 +1670,152 @@ body{background:var(--ground)}
 .bf .mchd b{font:800 13px/1 var(--f);color:#0F172A}
 .bf .mchd span{font:600 11.5px/1 var(--f);color:#7C8BA3}
 
+
+/* ── the full meeting film's scenes ──────────────────────────────────── */
+/* the cover */
+.bf .mtw{gap:0}
+.bf .mth{font-size:46px!important;line-height:1.1;max-width:15ch;margin:10px auto 0}
+.bf .mtbits{display:flex;gap:12px;justify-content:center;margin:26px 0 4px}
+.bf .mtb{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);
+  border-radius:12px;padding:12px 20px;text-align:center;min-width:112px}
+.bf .mtb b{display:block;font:800 24px/1 var(--f);color:#fff}
+.bf .mtb span{font:600 11.5px/1 var(--f);color:var(--lav);letter-spacing:.06em}
+/* the week into the meeting */
+.bf .mfw{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 30px}
+.bf .mfrow{display:flex;align-items:center;gap:22px;margin-top:26px}
+.bf .mfdays{display:grid;grid-template-columns:repeat(4,auto);gap:7px}
+.bf .mfd{background:#fff;border:1px solid #DDE5F0;border-radius:9px;padding:9px 13px;
+  font:800 11px/1 var(--f);letter-spacing:.09em;color:#5B6B82}
+.bf .mfm{display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:linear-gradient(170deg,#1D5BC4,#13408F);border-radius:14px;padding:16px 24px}
+.bf .mfm b{font:800 19px/1 var(--f);color:#fff}
+.bf .mfm span{font:600 12px/1 var(--f);color:var(--lav)}
+/* figures arriving */
+.bf .mfsrc{display:flex;align-items:center;gap:8px;font:700 11.5px/1 var(--f);
+  letter-spacing:.07em;text-transform:uppercase;color:#5B6B82}
+.bf .mfsrc .ico{width:15px;height:15px;color:#1D5BC4}
+.bf .mfl{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.bf .mfr{display:grid;grid-template-columns:30px 1fr auto;gap:12px;align-items:center;
+  background:#fff;border:1px solid #DDE5F0;border-radius:11px;padding:12px 15px;
+  box-shadow:0 1px 2px rgba(19,64,143,.05)}
+.bf .mfi{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;
+  background:#EDF3FC}
+.bf .mfi .ico{width:16px;height:16px;color:#1D5BC4}
+.bf .mfn{font:600 14px/1.2 var(--f);color:#0F172A}
+.bf .mfr .cnt{font:800 22px/1 var(--f);color:#13408F}
+.bf .mfnote,.bf .mrnote,.bf .mqask,.bf .mnnote{font:600 12.5px/1.45 var(--f);color:#5B6B82;
+  border-top:1px solid #E3E9F2;padding-top:10px;margin-top:2px}
+/* the phone */
+.bf .mphw{display:grid;place-items:center;min-height:452px;position:relative}
+.bf .prow2{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:center;
+  padding:9px 2px;border-bottom:1px solid #EDF1F7}
+.bf .prow2:last-child{border-bottom:0}
+.bf .pri{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#EDF3FC}
+.bf .pri .ico{width:15px;height:15px;color:#1D5BC4}
+.bf .prow2 b{display:block;font:700 13px/1.25 var(--f);color:#0F172A}
+.bf .prow2 span{font:600 11.5px/1.3 var(--f);color:#64748B}
+.bf .ptaps{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:2px}
+.bf .ptap{opacity:0;animation:bfPop .45s cubic-bezier(.2,.9,.3,1) var(--at) both;
+  background:#fff;border:1.5px solid #1D5BC4;border-radius:12px;padding:12px 8px;text-align:center}
+.bf .pti{display:block;margin:0 auto 5px}
+.bf .pti .ico{width:18px;height:18px;color:#1D5BC4}
+.bf .ptap b{display:block;font:700 12px/1.2 var(--f);color:#0F172A}
+.bf .ptn{font:800 17px/1.1 var(--f);color:#1D5BC4}
+.bf .psend{margin-top:11px;text-align:center;background:#1D5BC4;color:#fff;border-radius:999px;
+  padding:10px 14px;font:800 12.5px/1 var(--f)}
+/* a statement */
+.bf .mstw{gap:0}
+.bf .mstf{margin:22px auto 0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bf .mstf .cnt{font:800 96px/1 var(--f);color:var(--cyan)}
+.bf .mstf span{font:600 15px/1 var(--f);color:var(--lav);letter-spacing:.04em}
+.bf .mstb{margin-top:20px;font:600 15px/1.5 var(--f);color:#CBDCF8;max-width:40ch;text-align:center}
+/* the builder */
+.bf .mbw{flex-direction:row!important;align-items:center;gap:16px}
+.bf .mbsrc{display:flex;flex-direction:column;gap:7px;flex:0 0 190px}
+.bf .mbs{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #DDE5F0;
+  border-radius:9px;padding:9px 11px;font:600 12px/1.2 var(--f);color:#334155}
+.bf .mbs .ico{width:15px;height:15px;color:#7C8BA3;flex:none}
+.bf .mba{flex:0 0 52px}
+.bf .mbmid{flex:1;display:flex;flex-direction:column;gap:12px}
+.bf .mbb{display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:linear-gradient(170deg,#1D5BC4,#13408F);border-radius:14px;padding:16px}
+.bf .mbb b{font:800 18px/1 var(--f);color:#fff}
+.bf .mbb span{font:600 12px/1 var(--f);color:var(--lav)}
+.bf .mbouts{display:flex;flex-direction:column;gap:6px}
+.bf .mbo{display:flex;align-items:center;gap:8px;font:600 13px/1.3 var(--f);color:#334155}
+.bf .mbo .ico{width:15px;height:15px;color:#067647;flex:none}
+/* what moved: diverging about zero */
+.bf .mmw{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.bf .mmr{display:grid;grid-template-columns:148px 1fr 46px;gap:12px;align-items:center}
+.bf .mmn{font:600 12px/1 var(--f);color:#334155;text-align:right;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bf .mmt{position:relative;height:22px;background:#EDF1F7;border-radius:11px}
+.bf .mmz{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#7C8BA3}
+.bf .mmf{position:absolute;top:0;bottom:0;width:0;border-radius:11px;
+  animation:bfGrow .8s cubic-bezier(.3,.8,.3,1) var(--at) both}
+.bf .mmf.up{left:50%}
+.bf .mmf.dn{right:50%}
+.bf .mmv{font:800 12.5px/1 var(--f);font-variant-numeric:tabular-nums;opacity:0;
+  animation:bfIn .35s var(--at) both}
+.bf .mmv.up{color:#1D5BC4}
+.bf .mmv.dn{color:#D9663B}
+.bf .mmkey{display:flex;gap:14px;justify-content:center;margin-top:18px;
+  font:600 11.5px/1 var(--f);color:#5B6B82}
+.bf .mmkey span{display:flex;align-items:center;gap:5px}
+.bf .mmkey i{width:10px;height:10px;border-radius:3px;display:block}
+/* who has not presented */
+.bf .mql,.bf .mrl,.bf .mkl{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.bf .mqr{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;
+  background:#fff;border:1px solid #DDE5F0;border-radius:10px;padding:9px 12px}
+.bf .mqr.next{border-color:#1D5BC4;box-shadow:0 0 0 2px rgba(29,91,196,.14)}
+.bf .mqn b{display:block;font:700 13px/1.2 var(--f);color:#0F172A}
+.bf .mqn span{font:600 11.5px/1 var(--f);color:#64748B}
+.bf .mqb{background:#1D5BC4;color:#fff;border-radius:999px;padding:4px 10px;
+  font:800 10.5px/1 var(--f);letter-spacing:.05em;text-transform:uppercase}
+/* the register */
+.bf .mrr{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;
+  background:#fff;border:1px solid #DDE5F0;border-radius:10px;padding:8px 12px}
+.bf .mrr.me{border-color:#1D5BC4;box-shadow:0 0 0 2px rgba(29,91,196,.14)}
+.bf .mrn b{display:block;font:700 13px/1.2 var(--f);color:#0F172A}
+.bf .mrn span{font:600 11.5px/1 var(--f);color:#64748B}
+.bf .mrp{font:800 10.5px/1 var(--f);letter-spacing:.05em;text-transform:uppercase;
+  color:#067647;background:#DCFAE6;border-radius:999px;padding:4px 9px}
+.bf .mrr.me .mrp{color:#fff;background:#1D5BC4}
+/* one person's slot */
+.bf .msll{display:flex;flex-direction:column;gap:6px}
+.bf .mslr{display:grid;grid-template-columns:86px 1fr auto;gap:11px;align-items:center;
+  background:#fff;border:1px solid #DDE5F0;border-radius:10px;padding:9px 12px}
+.bf .mstag{font:800 9.5px/1 var(--f);letter-spacing:.07em;text-transform:uppercase;
+  border-radius:999px;padding:4px 7px;text-align:center;background:#EDF1F7;color:#5B6B82}
+.bf .mstag.amb{background:var(--ambbg);color:var(--amb)}
+.bf .mstag.grn{background:var(--grnbg);color:var(--grn)}
+.bf .mstag.red{background:var(--redbg);color:var(--red)}
+.bf .mslt{font:600 12.5px/1.25 var(--f);color:#0F172A}
+.bf .mslv{font:700 11.5px/1 var(--f);color:#64748B;white-space:nowrap}
+/* the guest */
+.bf .mgcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:2px}
+.bf .mgh{font:800 11px/1 var(--f);letter-spacing:.09em;text-transform:uppercase;
+  padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid #E3E9F2}
+.bf .mgh.ok{color:#067647}
+.bf .mgh.no{color:#B42318}
+.bf .mgy,.bf .mgn{display:flex;align-items:center;gap:9px;padding:8px 2px;
+  font:600 12.5px/1.3 var(--f);color:#334155}
+.bf .mgy .ico{width:15px;height:15px;color:#067647;flex:none}
+.bf .mgn{color:#7C8BA3}
+.bf .mgn .ico{width:15px;height:15px;color:#B42318;flex:none}
+/* everybody names one */
+.bf .mncw{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.bf .mnc{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #DDE5F0;
+  border-radius:999px;padding:7px 14px 7px 7px}
+.bf .mnc span{font:600 12.5px/1 var(--f);color:#334155;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Thursday */
+.bf .mkr{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;
+  background:#fff;border:1px solid #DDE5F0;border-radius:10px;padding:9px 12px}
+.bf .mkn b{display:block;font:700 12.5px/1.2 var(--f);color:#0F172A}
+.bf .mkn span{font:600 11.5px/1 var(--f);color:#64748B}
+.bf .mkd{font:800 10.5px/1 var(--f);letter-spacing:.05em;text-transform:uppercase;
+  color:#1D5BC4;background:#EDF3FC;border-radius:999px;padding:5px 10px}
 """
 
 JS = r"""

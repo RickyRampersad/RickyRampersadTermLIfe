@@ -1,0 +1,835 @@
+{
+ "note": "The meeting builder film: Sunday to Sunday, every role. 25 scenes.",
+ "role": "branch",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
+ "scenes": [
+  {
+   "visual": "mtitle",
+   "eyebrow": "The Wednesday meeting",
+   "headline": "The meeting is <em>built</em> before anybody walks in",
+   "line": "The branch meets on a Wednesday morning. Ninety minutes. The meeting is built before anybody walks in."
+  },
+  {
+   "visual": "mflow",
+   "eyebrow": "Where it comes from",
+   "headline": "Out of the week <em>you already worked</em>",
+   "line": "It is built out of the week you already worked."
+  },
+  {
+   "visual": "week",
+   "eyebrow": "The week, Sunday to Sunday",
+   "headline": "The week <em>closes itself</em>",
+   "line": "The week runs Sunday to Sunday. On Sunday evening it closes. The figures freeze, and nothing moves under a number that has already been read out."
+  },
+  {
+   "visual": "mfeed",
+   "eyebrow": "Sunday evening \u00b7 the data",
+   "headline": "Then the Branch Portfolio <em>is read</em>",
+   "line": "Then the Branch Portfolio is read. Applications in. Policies issued. What is still sitting, and what is owed.",
+   "source": "Branch Portfolio \u00b7 read Sunday 20:00",
+   "on": "read",
+   "rows": [
+    [
+     "Applications in",
+     19,
+     "mail"
+    ],
+    [
+     "Policies issued",
+     14,
+     "check"
+    ],
+    [
+     "Still sitting",
+     7,
+     "clock"
+    ],
+    [
+     "Premium owed",
+     23,
+     "flag"
+    ]
+   ],
+   "note": "Nobody types any of this. It is read off the sheet the branch already keeps.",
+   "cues": [
+    [
+     "read",
+     "The sheet is read"
+    ],
+    [
+     "Applications",
+     "What came in"
+    ],
+    [
+     "owed",
+     "And what is owed",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mfeed",
+   "eyebrow": "Sunday evening \u00b7 sales support",
+   "headline": "Sales support <em>adds the rest</em>",
+   "line": "Sales support adds the rest. Every renewal, every claim and every questionnaire is a line in the record.",
+   "source": "Sales support \u00b7 the service record",
+   "on": "adds",
+   "rows": [
+    [
+     "Renewals handled",
+     31,
+     "sync"
+    ],
+    [
+     "Claims moved on",
+     12,
+     "check"
+    ],
+    [
+     "Questionnaires in",
+     9,
+     "file"
+    ]
+   ],
+   "note": "Every renewal, every claim, every questionnaire \u2014 a line in the record.",
+   "cues": [
+    [
+     "adds",
+     "Sales support adds"
+    ],
+    [
+     "renewal",
+     "Every renewal"
+    ],
+    [
+     "record",
+     "A line in the record",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mphone",
+   "eyebrow": "Every working morning \u00b7 the agent",
+   "headline": "Your own data, <em>nobody else\u2019s</em>",
+   "line": "Every working morning you get your own data. What is still on your list. Where you stand against your target. Nobody else's figures, and nobody else sees yours.",
+   "on": "morning",
+   "ptitle": "Your morning",
+   "pwho": "Marlon",
+   "rows": [
+    [
+     "4 cases to answer",
+     "on your list this week",
+     "mail"
+    ],
+    [
+     "11 of 31 fact finds",
+     "where you stand against target",
+     "target"
+    ],
+    [
+     "2 actions overdue",
+     "from last Wednesday",
+     "clock"
+    ],
+    [
+     "You present item 09",
+     "what worked for me",
+     "msg"
+    ]
+   ],
+   "cues": [
+    [
+     "morning",
+     "Every working morning"
+    ],
+    [
+     "stand",
+     "Where you stand"
+    ],
+    [
+     "yours",
+     "Nobody else sees yours",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mphone",
+   "eyebrow": "10:00 \u00b7 the agent",
+   "headline": "The first check <em>goes out</em>",
+   "line": "At ten, the first check goes out.",
+   "on": "ten",
+   "ptitle": "10:00 check",
+   "pwho": "Marlon",
+   "rows": [
+    [
+     "The first check",
+     "arrives at ten",
+     "bolt"
+    ],
+    [
+     "Fifteen seconds",
+     "that is the whole ask",
+     "clock"
+    ]
+   ],
+   "cues": [
+    [
+     "ten",
+     "Ten o\u2019clock"
+    ],
+    [
+     "check",
+     "The first check goes out",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mphone",
+   "eyebrow": "Fifteen seconds",
+   "headline": "Tap <em>what you did</em>",
+   "line": "Fifteen seconds. Tap what you did. Prospecting. Calls. A client seen. A fact find. Nothing to type unless you want to.",
+   "on": "Tap",
+   "ptitle": "What did you do?",
+   "pwho": "Marlon",
+   "taps": [
+    [
+     "Prospecting",
+     "6",
+     "eye"
+    ],
+    [
+     "Calls",
+     "11",
+     "phone"
+    ],
+    [
+     "A client seen",
+     "2",
+     "users"
+    ],
+    [
+     "A fact find",
+     "1",
+     "file"
+    ]
+   ],
+   "cues": [
+    [
+     "Tap",
+     "Tap what you did"
+    ],
+    [
+     "Prospecting",
+     "Prospecting, calls, a client seen"
+    ],
+    [
+     "type",
+     "Nothing to type unless you want to",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mphone",
+   "eyebrow": "15:00 \u00b7 the agent",
+   "headline": "The afternoon, <em>while you remember it</em>",
+   "line": "At three, the afternoon. While you still remember it.",
+   "on": "three",
+   "ptitle": "15:00 check",
+   "pwho": "Marlon",
+   "rows": [
+    [
+     "The afternoon",
+     "while you still remember it",
+     "clock"
+    ],
+    [
+     "Same four taps",
+     "fifteen seconds again",
+     "check"
+    ]
+   ],
+   "cues": [
+    [
+     "three",
+     "Three o\u2019clock"
+    ],
+    [
+     "remember",
+     "While you still remember it",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mstat",
+   "eyebrow": "No reports",
+   "headline": "The week <em>writes itself</em>",
+   "line": "Nobody writes a report. The week writes itself.",
+   "on": "report",
+   "n": 0,
+   "suf": "",
+   "nlabel": "reports written",
+   "note": "Two checks a day, fifteen seconds each. The week writes itself.",
+   "cues": []
+  },
+  {
+   "visual": "mbuild",
+   "eyebrow": "Wednesday 07:00 \u00b7 the builder",
+   "headline": "It reads <em>all of it</em>",
+   "line": "At seven on Wednesday the builder reads all of it. It knows who worked, and on what.",
+   "sources": [
+    [
+     "The daily checks",
+     "check"
+    ],
+    [
+     "The Branch Portfolio",
+     "file"
+    ],
+    [
+     "The service record",
+     "file"
+    ],
+    [
+     "Last week\u2019s actions",
+     "clock"
+    ],
+    [
+     "Flight plans",
+     "target"
+    ]
+   ],
+   "knows": [
+    "Who worked, and on what",
+    "Which numbers moved",
+    "Who has not presented"
+   ],
+   "cues": [
+    [
+     "reads",
+     "It reads all of it"
+    ],
+    [
+     "knows",
+     "It knows who worked",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mmoved",
+   "eyebrow": "Wednesday 07:00 \u00b7 the builder",
+   "headline": "Which numbers <em>moved</em>",
+   "line": "It knows which numbers moved, and which did not.",
+   "title": "What moved this week",
+   "rows": [
+    [
+     "Fact finds",
+     6
+    ],
+    [
+     "Appointments",
+     4
+    ],
+    [
+     "Applications",
+     2
+    ],
+    [
+     "Calls",
+     -9
+    ],
+    [
+     "Premium in",
+     -3
+    ],
+    [
+     "Reviews filed",
+     5
+    ]
+   ],
+   "cues": [
+    [
+     "moved",
+     "Which numbers moved"
+    ],
+    [
+     "not",
+     "And which did not",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mquiet",
+   "eyebrow": "Wednesday 07:00 \u00b7 the builder",
+   "headline": "Who has not <em>presented lately</em>",
+   "line": "It knows who has not presented lately. So it asks them.",
+   "rows": [
+    [
+     "Varun Baksh",
+     "5 weeks ago",
+     true
+    ],
+    [
+     "Meera Singh",
+     "4 weeks ago",
+     false
+    ],
+    [
+     "Neil Charles",
+     "3 weeks ago",
+     false
+    ],
+    [
+     "Anisa Khan",
+     "2 weeks ago",
+     false
+    ]
+   ],
+   "note": "So it asks them. The rota picks, not the chair.",
+   "cues": [
+    [
+     "presented",
+     "Who has not presented"
+    ],
+    [
+     "asks",
+     "So it asks them",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "agenda",
+   "eyebrow": "Wednesday 07:00 \u00b7 the agenda",
+   "headline": "It writes <em>the agenda</em>",
+   "line": "And it writes the agenda. Eleven items. Ninety minutes. A name against every one."
+  },
+  {
+   "visual": "mreg",
+   "eyebrow": "09:00 \u00b7 everybody",
+   "headline": "The login <em>is the register</em>",
+   "line": "Nine o'clock. Everybody logs in. The login is the register.",
+   "on": "logs",
+   "title": "Nine o\u2019clock",
+   "inn": 24,
+   "roll": 28,
+   "rows": [
+    [
+     "Dev Ramkissoon",
+     "Branch manager",
+     false
+    ],
+    [
+     "Akaash Kalladeen",
+     "B M E",
+     false
+    ],
+    [
+     "Priya Boodram",
+     "Sales support",
+     false
+    ],
+    [
+     "Marlon Pierre",
+     "Agent",
+     true
+    ],
+    [
+     "Shanti Baboolal",
+     "Agent",
+     false
+    ]
+   ],
+   "note": "Nobody is marked in from the front. If you do not sign in, you are absent.",
+   "cues": [
+    [
+     "logs",
+     "Everybody logs in"
+    ],
+    [
+     "register",
+     "The login is the register",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mreg",
+   "eyebrow": "09:00 \u00b7 you",
+   "headline": "Your own item is <em>already at the top</em>",
+   "line": "You open the meeting. Your own item is already at the top.",
+   "on": "open",
+   "title": "Your agenda",
+   "inn": 26,
+   "roll": 28,
+   "rows": [
+    [
+     "Marlon Pierre",
+     "09 \u00b7 What worked for me",
+     true
+    ],
+    [
+     "Akaash Kalladeen",
+     "06 \u00b7 The unit round",
+     false
+    ],
+    [
+     "Priya Boodram",
+     "03 \u00b7 This week\u2019s call list",
+     false
+    ]
+   ],
+   "note": "Yours is at the top because it is yours, not because it is first.",
+   "cues": [
+    [
+     "open",
+     "You open the meeting"
+    ],
+    [
+     "top",
+     "Already at the top",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mslot",
+   "eyebrow": "09:03 \u00b7 the branch manager",
+   "headline": "Last week\u2019s open items, <em>by name</em>",
+   "line": "Three minutes past, the branch manager takes last week's open items, by name and by date. Nothing new is raised until those are spoken to.",
+   "on": "items",
+   "clock": "9:03",
+   "mins": "10 minutes",
+   "who": "Dev Ramkissoon",
+   "role": "Branch manager",
+   "rows": [
+    [
+     "OPEN",
+     "amb",
+     "Call the three maturities \u00b7 Marlon",
+     "9 days"
+    ],
+    [
+     "OPEN",
+     "amb",
+     "File the fact find \u00b7 Dexter",
+     "6 days"
+    ],
+    [
+     "DONE",
+     "grn",
+     "Book the review \u00b7 Renee",
+     "closed"
+    ],
+    [
+     "OPEN",
+     "red",
+     "Chase the undelivered contract \u00b7 Sasha",
+     "14 days"
+    ]
+   ],
+   "says": "\u201cNothing new is raised until these are spoken to.\u201d",
+   "saysat": "spoken",
+   "cues": [
+    [
+     "items",
+     "Last week\u2019s open items"
+    ],
+    [
+     "name",
+     "By name and by date"
+    ],
+    [
+     "spoken",
+     "Nothing new until those are answered",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mslot",
+   "eyebrow": "09:10 \u00b7 sales support",
+   "headline": "Applications in, issued, <em>and still sitting</em>",
+   "line": "Ten past, sales support. Applications in, applications issued, and what is still sitting, with the oldest one named.",
+   "on": "Applications",
+   "clock": "9:10",
+   "mins": "8 minutes",
+   "who": "Priya Boodram",
+   "role": "Sales support",
+   "tiles": [
+    [
+     "19",
+     "Applications in",
+     "",
+     "mail",
+     [
+      19,
+      ""
+     ]
+    ],
+    [
+     "14",
+     "Issued",
+     "grn",
+     "check",
+     [
+      14,
+      ""
+     ]
+    ],
+    [
+     "7",
+     "Still sitting",
+     "amb",
+     "clock",
+     [
+      7,
+      ""
+     ]
+    ],
+    [
+     "61",
+     "Oldest, in days",
+     "red",
+     "flag",
+     [
+      61,
+      ""
+     ]
+    ]
+   ],
+   "rows": [
+    [
+     "OLDEST",
+     "red",
+     "Pending medical \u00b7 61 days",
+     "named"
+    ],
+    [
+     "NEXT",
+     "amb",
+     "Awaiting settlement \u00b7 44 days",
+     "named"
+    ]
+   ],
+   "says": "\u201cThe oldest one gets named every week until it moves.\u201d",
+   "saysat": "named",
+   "cues": [
+    [
+     "Applications",
+     "Applications in and issued"
+    ],
+    [
+     "sitting",
+     "And what is still sitting"
+    ],
+    [
+     "named",
+     "The oldest one, named",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "round",
+   "eyebrow": "09:20 \u00b7 the B M E",
+   "headline": "The unit round: <em>everybody with something moving</em>",
+   "line": "Twenty past, the B M E takes the unit round. Everybody with something moving says what moved."
+  },
+  {
+   "visual": "mslot",
+   "eyebrow": "09:50 \u00b7 one agent",
+   "headline": "One case, <em>in their own words</em>",
+   "line": "Ten to ten, one case in somebody's own words. Chosen by the rota, not by the chair.",
+   "on": "case",
+   "clock": "9:50",
+   "mins": "8 minutes",
+   "who": "Shanti Baboolal",
+   "role": "Agent \u00b7 chosen by the rota",
+   "rows": [
+    [
+     "THE CASE",
+     "amb",
+     "A lapsed policy, back in force",
+     "1 call"
+    ],
+    [
+     "WHAT WORKED",
+     "grn",
+     "Asked what changed, not why they stopped",
+     "\u2014"
+    ],
+    [
+     "THE ASK",
+     "",
+     "Who else on my list is in the same place?",
+     "3 names"
+    ]
+   ],
+   "says": "\u201cChosen by the rota, not by the chair.\u201d",
+   "saysat": "chair",
+   "cues": [
+    [
+     "case",
+     "One case"
+    ],
+    [
+     "words",
+     "In their own words"
+    ],
+    [
+     "chair",
+     "Not by the chair",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mguest",
+   "eyebrow": "Any guest",
+   "headline": "Their own link, <em>this meeting only</em>",
+   "line": "A guest opens their own link and joins the same agenda. They see this meeting, and nothing else of the branch.",
+   "sees": [
+    "This Wednesday\u2019s agenda",
+    "The items marked for everyone",
+    "Who is presenting each one"
+   ],
+   "hidden": [
+    "Any other meeting",
+    "The branch\u2019s own figures",
+    "Anything marked staff or chair"
+   ],
+   "cues": [
+    [
+     "link",
+     "Their own link"
+    ],
+    [
+     "nothing",
+     "And nothing else of the branch",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mnames",
+   "eyebrow": "Every week \u00b7 everybody",
+   "headline": "Every person <em>names one client</em>",
+   "line": "And every single week, every person in the room names one client. About twenty seconds each. Nobody leaves without naming one.",
+   "secs": 20,
+   "rows": [
+    [
+     "Marlon Pierre",
+     "the maturity in March"
+    ],
+    [
+     "Shanti Baboolal",
+     "the lapsed policy"
+    ],
+    [
+     "Dexter Ali",
+     "the pension top-up"
+    ],
+    [
+     "Renee Charles",
+     "the keyperson case"
+    ],
+    [
+     "Yolande Peters",
+     "the group renewal"
+    ],
+    [
+     "Akaash Kalladeen",
+     "his unit\u2019s silent one"
+    ]
+   ],
+   "note": "Nobody leaves without naming one. That is the list Monday is built from.",
+   "cues": [
+    [
+     "names",
+     "Every person names one"
+    ],
+    [
+     "seconds",
+     "About twenty seconds each"
+    ],
+    [
+     "leaves",
+     "Nobody leaves without one",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mchase",
+   "eyebrow": "Thursday",
+   "headline": "The actions <em>are chased</em>",
+   "line": "On Thursday the actions are chased. And the week starts again.",
+   "rows": [
+    [
+     "Marlon Pierre",
+     "Call the three maturities",
+     "Mon"
+    ],
+    [
+     "Priya Boodram",
+     "Name the oldest pending",
+     "Tue"
+    ],
+    [
+     "Akaash Kalladeen",
+     "Sit with Omar",
+     "Thu"
+    ],
+    [
+     "Shanti Baboolal",
+     "Bring the three names",
+     "next Wed"
+    ]
+   ],
+   "note": "Chased on Thursday, carried to Monday, read out next Wednesday.",
+   "cues": [
+    [
+     "chased",
+     "The actions are chased"
+    ],
+    [
+     "again",
+     "And the week starts again",
+     true
+    ]
+   ]
+  },
+  {
+   "visual": "mstat",
+   "eyebrow": "Sunday to Sunday, every week",
+   "headline": "The week <em>builds the meeting</em>",
+   "line": "The week builds the meeting.",
+   "on": "builds",
+   "n": 90,
+   "suf": " min",
+   "nlabel": "and not one of them yours alone",
+   "note": "Sunday to Sunday. Everybody presents. Nobody writes a report.",
+   "cues": []
+  },
+  {
+   "visual": "close",
+   "eyebrow": "Every week, without exception",
+   "headline": "The week <em>builds the meeting</em>",
+   "line": "Wednesday, nine to half past ten. Ricky Rampersad Branch dot com, slash meetings.",
+   "words3": [
+    "Wednesday.",
+    "Nine to half past ten.",
+    "Ricky Rampersad Branch."
+   ],
+   "url": "rickyrampersadbranch.com / meetings"
+  }
+ ]
+}

@@ -36,6 +36,15 @@ orphan-transition/mtg3.html
 orphan-transition/mtg3-poster.jpg
 tools/film/mtg3.mp4
 tools/film/vomtg3/
+orphan-transition/mtgfull.html
+orphan-transition/mtgfull-poster.jpg
+tools/film/mtgfull.mp4
+tools/film/vomtgfull/
+# The music the manager sent on 17 October. tools/film/audio/ is published
+# on the branch site, so a track only goes in there once its licence is
+# known and written into ATTRIBUTION.md — the uncleared-music exposure in
+# PR #190 is exactly this mistake, already live. Held out until then.
+tools/film/audio/music-motivation.m4a
 
 # the transition send: the departed agents' names and every client file stay out
 tools/letters/departed.txt
