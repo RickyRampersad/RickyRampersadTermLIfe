@@ -2188,6 +2188,14 @@ function dailyNoteFor_(person, ctx) {
       'If you do not sign in you are marked absent; if you cannot come, log it and pick a reason.</p>' +
     '<p style="margin:14px 0 0;font-size:11px;color:#a8bccf">Internal — Ricky Rampersad Branch. ' +
       'Your own figures only; nobody else receives yours.</p>' +
+    /*  A trial reader is being asked for something, so the note says so
+     *  rather than arriving as one more automatic e-mail. */
+    (ctx.pilot
+      ? '<p style="margin:12px 0 0;padding:11px 13px;background:#102a44;border-left:3px solid #efc24b;' +
+        'font-size:12px;color:#cfe0f0">You are one of a small group trying this before the branch gets ' +
+        'it. Nothing here is compulsory. If it is useful, say so; if a figure is wrong or you would ' +
+        'rather not have it, reply and it stops for you.</p>'
+      : '') +
     '</div>';
 
   return { subject: subject, html: html, must: must.length,
@@ -2318,6 +2326,84 @@ function noteContextFor_(person, ctx) {
 /*  The trigger. Working mornings only, and it says nothing at all on a
  *  day when there is nothing to say — a note that arrives every day
  *  whether or not it carries anything is a note people filter.       */
+/* =================================================================
+ *  THE DAY PLANNER GOES TO A TEST GROUP FIRST
+ *
+ *  Asked for on 17 October 2026: "Email starts the ball from today,
+ *  which is the day planner, as a test for a particular test group.
+ *  So it's going out more or less whoever wants to complete it, they
+ *  can."
+ *
+ *  dailyMeetingNote() wrote to everyone_() — the whole roster — which
+ *  is the right end state and the wrong way to start. A note nobody
+ *  asked for, landing in twenty-eight inboxes on its first morning,
+ *  gets one reading and then a filter.
+ *
+ *  DAILY_NOTE_TO in Script Properties holds the test group: agent
+ *  numbers, names or e-mail addresses, comma-separated. While it holds
+ *  anything the note goes to those people only and says on its face
+ *  that it is a trial and what to do about it. Clear the property and
+ *  it goes to the branch, which is the switch for the day the branch
+ *  decides it is worth having.
+ * ================================================================= */
+var NOTE_PILOT_PROP = 'DAILY_NOTE_TO';
+
+/** The test group as a list of People rows, or null for everybody. */
+function notePilot_() {
+  var raw = str_(PropertiesService.getScriptProperties().getProperty(NOTE_PILOT_PROP));
+  if (!raw) return null;
+  var want = raw.split(/[,;\n]+/).map(function (x) { return low_(x); }).filter(String);
+  if (!want.length) return null;
+  var all = everyone_();
+  var picked = [], missed = [];
+  want.forEach(function (w) {
+    var hit = all.filter(function (p) {
+      /*  normNo_ strips to letters and digits, so an empty agent number
+       *  and a stray "-" both normalise to '' and would match each
+       *  other. Compare numbers only when there is a number. */
+      var a = normNo_(p.agentNo), b = normNo_(w);
+      return p.email === w || low_(p.name) === w || low_(p.agentNo) === w ||
+             (!!a && a === b) || firstName_(low_(p.name)) === w;
+    });
+    /*  A first name two people share must never silently pick one of
+     *  them: the branch would be told the note went out and one of the
+     *  two would never see it. */
+    if (hit.length === 1) picked.push(hit[0]); else missed.push(w + (hit.length ? ' (matches ' + hit.length + ')' : ''));
+  });
+  return { people: picked, missed: missed, raw: raw };
+}
+
+/** Name the test group, or clear it so the note goes to the branch. */
+function promptNoteTestGroup() {
+  var ui = SpreadsheetApp.getUi();
+  var props = PropertiesService.getScriptProperties();
+  var now = str_(props.getProperty(NOTE_PILOT_PROP));
+  var res = ui.prompt('Daily note \u2014 the test group',
+    'Who gets the day planner while it is being tried?\n\n' +
+    'Agent numbers, names or e-mail addresses, separated by commas.\n' +
+    'Leave it empty to send it to the whole branch.\n\n' +
+    (now ? 'It currently goes to: ' + now : 'It currently goes to the whole branch.'),
+    ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+
+  var v = str_(res.getResponseText());
+  if (!v) {
+    props.deleteProperty(NOTE_PILOT_PROP);
+    ui.alert('The daily note now goes to the whole branch.');
+    return;
+  }
+  props.setProperty(NOTE_PILOT_PROP, v);
+  var pick = notePilot_();
+  ui.alert('The daily note goes to ' + pick.people.length +
+    (pick.people.length === 1 ? ' person' : ' people') + ':\n\n' +
+    pick.people.map(function (x) { return '\u2022 ' + x.name; }).join('\n') +
+    (pick.missed.length
+      ? '\n\nNot on the roster, so nothing goes to them:\n' +
+        pick.missed.map(function (x) { return '\u2022 ' + x; }).join('\n')
+      : '') +
+    '\n\nThey are told on the note itself that it is a trial and that they may stop it.');
+}
+
 function dailyMeetingNote() {
   var now = new Date();
   var w = now.getDay();
@@ -2329,10 +2415,18 @@ function dailyMeetingNote() {
     return 'No meeting within two working days — no note.';
   }
 
+  var pilot = notePilot_();
+  var audience = pilot ? pilot.people : everyone_();
+  if (pilot && !audience.length) {
+    var why = 'DAILY_NOTE_TO names nobody on the roster: ' + pilot.missed.join(', ');
+    Logger.log(why); return why;
+  }
+
   var sent = 0, quiet = 0;
-  everyone_().forEach(function (p) {
+  audience.forEach(function (p) {
     if (!p.email) return;
     var per = noteContextFor_(p, ctx);
+    per.pilot = !!pilot;
     var note = dailyNoteFor_(p, per);
     // Nothing owed, nothing open, no measures, and the meeting is still
     // days away: say nothing rather than train them to ignore it.
@@ -2347,7 +2441,9 @@ function dailyMeetingNote() {
     }
   });
 
-  var msg = sent + ' note' + (sent === 1 ? '' : 's') + ' sent, ' + quiet + ' had nothing to say.';
+  var msg = sent + ' note' + (sent === 1 ? '' : 's') + ' sent, ' + quiet + ' had nothing to say.' +
+    (pilot ? ' Test group only (' + audience.length + ' of ' + everyone_().length + ')' +
+             (pilot.missed.length ? '; not on the roster: ' + pilot.missed.join(', ') : '') + '.' : '');
   log_('daily-note', 'system', '', ctx.meeting ? str_(ctx.meeting['Ref']) : '', msg);
   Logger.log(msg);
   return msg;
@@ -7206,6 +7302,7 @@ function onOpen() {
     .addSeparator()
     .addItem('📨  Turn on the daily note', 'installDailyNoteFromMenu')
     .addItem('👁  Send me today\u2019s note to read', 'previewDailyNote')
+    .addItem('🧑\u200d🤝\u200d🧑  Daily note: set the test group', 'promptNoteTestGroup')
     .addSeparator()
     .addItem('⏱  Turn on the daily time blocks', 'installActivityChecksFromMenu')
     .addItem('👁  Send me a time-block check to read', 'previewActivityCheck')
