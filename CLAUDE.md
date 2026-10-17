@@ -3913,9 +3913,7 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   by 2 pm that day (`lbOnBag_`, `GRACE_MIN`; an imported line, which has only a date, by the day). The hourly run: at 11:00
   agents with papers logged and not handed in are told there is an hour (`lbNudgeAgents_`); at 12:00 whoever has the bag gets
   what to prepare by department (`lbBagPrep_`, once a day); from 1:00 every line that missed its bag is asked about, the
-  receiver and the person on the bag both written to, while everyone is in (the staff leave from 2 pm). Who has the bag:
-  the **Bag Rota** tab (Staff, Order, Leaves At, Active), one week each from `LB.BAG.ROTA_FROM`, else the Staff on the
-  sign-in list by name (`lbDuty_`). Staff press Bag in (cleared, the mail given out) and Bag out (sealed, with what went and
+  receiver and the person on the bag both written to, while everyone is in (the staff leave from 2 pm). Who has the bag: the **Bag Rota** tab (Staff, Order, Leaves At, Active) if it has rows, else `LB.BAG.ROTA`. **The rota is Azariah, Elizabeth (Liz) and Sasha, a week each, Azariah from Monday 19 October 2026**, so the week of 12 October was Sasha's. These three are the ones who do transmittals; **Kamla does not do transmittals and is never on the bag** (the manager, 17 October 2026). **Sasha leaves at 2 pm, Liz at 3 pm and Azariah at 4 pm**, so the bag is done by 1 pm while all three are in. Each first name is read as the full name on the sign-in list, so the 12:00 e-mail finds them (`lbRota_`, `lbDuty_`). Staff press Bag in (cleared, the mail given out) and Bag out (sealed, with what went and
   what missed it) on the **Bag Log** tab (`lb.bag`). The page shows everyone the bag bar: a countdown to 12:00, the day's
   track with the cut-off, the exchange and when the team goes home, who has the bag; the log form and the "Logged" card say
   whether the papers catch today's bag; every line carries its bag; Insights shows the share that made its bag, by the hour

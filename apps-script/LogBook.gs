@@ -89,7 +89,10 @@ var LB = {
   TABS: { LINES: 'Log Book', TRANS: 'Transmittals', AGENTS: 'Agents', DEPTS: 'Departments' },
   TYPES: ['Documents for Guardian', 'Contract for delivery'],
   CUTOFF_HOUR: 12,
-  BAG: { CUTOFF: 12, AT: 13, NUDGE: 11, GRACE_MIN: 60, ROTA_FROM: '2026-10-19' },
+  BAG: { CUTOFF: 12, AT: 13, NUDGE: 11, GRACE_MIN: 60, ROTA_FROM: '2026-10-19',
+         /* The branch's rota (17 October 2026): the three who do transmittals, one week each, Azariah first
+            from 19 October. Kamla does not do transmittals and is never on it. A Bag Rota tab overrides this. */
+         ROTA: [{ who: 'Azariah', leaves: '4:00 pm' }, { who: 'Elizabeth', also: 'Liz', leaves: '3:00 pm' }, { who: 'Sasha', leaves: '2:00 pm' }] },
   CONTRACT_DAYS: 20, CONTRACT_WARN: [15, 18],
   NUDGE_DAYS: [1, 3],             // logged and not handed in: the agent is reminded on these working days
   REASON_COVERS: 1,               // a reason given covers the rest of that working day and the next
@@ -469,9 +472,9 @@ function lbIsLate_(r, now) {
   return now.getTime() >= lbBagTime_(lbBagDay_(r.receivedAt)).getTime();
 }
 
-/* Who has the bag this week: the Bag Rota tab in its order, else the staff on
-   the sign-in list (not the branch manager) by name, one week each from
-   LB.BAG.ROTA_FROM. "Leaves At" is the hour they go home. */
+/* Who has the bag this week: the Bag Rota tab in its order, else LB.BAG.ROTA
+   (Azariah, Elizabeth, Sasha), one week each from LB.BAG.ROTA_FROM.
+   "Leaves At" is the hour they go home. */
 function lbRota_() {
   var sh = dbSheet_('Bag Rota', LB_ROTA_COLUMNS);
   var hm = dbHeaderMap_(sh), last = sh.getLastRow(), out = [];
@@ -480,13 +483,14 @@ function lbRota_() {
     if (!name || /^(no|false|not active)/i.test(String(r[hm.map['Active']] || ''))) return;
     out.push({ name: name, order: Number(r[hm.map['Order']]) || i + 1, leaves: lbLeaves_(r[hm.map['Leaves At']]) });
   });
-  if (!out.length) {
-    lbAgents_().forEach(function (a) {
-      if (a.active && lbIsStaffRole_(a.role) && !/manager/i.test(a.role)) out.push({ name: lbTitle_(a.name), order: 0, leaves: '' });
-    });
-    out.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
-  } else out.sort(function (a, b) { return a.order - b.order; });
-  return out;
+  if (out.length) return out.sort(function (a, b) { return a.order - b.order; });
+  /* No tab: LB.BAG.ROTA, each first name read as the full name on the sign-in list (so the e-mail finds them). */
+  var staff = lbAgents_().filter(function (a) { return a.active && lbIsStaffRole_(a.role); });
+  return LB.BAG.ROTA.map(function (r, i) {
+    var first = function (n) { return String(n || '').trim().split(/\s+/)[0].toLowerCase(); };
+    var hit = staff.filter(function (a) { var f = first(a.name); return f === r.who.toLowerCase() || (r.also && f === r.also.toLowerCase()); })[0];
+    return { name: hit ? lbTitle_(hit.name) : r.who, order: i + 1, leaves: r.leaves };
+  });
 }
 function lbLeaves_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, dbTz_(), 'h:mm a');

@@ -200,11 +200,13 @@ reason. It replaces the Log Book Digital Jotform.
 7. Optional: set `LB_HISTORY_ID` to the Log Book Digital workbook's ID and run
    **Log Book: import the old book** once, so the insights start with the
    3,600 lines already logged.
-8. **The bag rota.** Add a tab named **Bag Rota** with the columns
-   `Staff | Order | Leaves At | Active`: one row a staff member, in the order
-   they take the bag (one week each, from Monday 19 October 2026), with the time
-   they go home (`2 pm`). Without the tab the staff on the sign-in list take it
-   in turn by name. The **Bag Log** tab makes itself the first time someone
+8. **The bag rota.** Nothing to add: the script already rotates the bag
+   between the three who do transmittals, Azariah, then Elizabeth, then Sasha,
+   one week each from Monday 19 October 2026 (Sasha goes home at 2 pm, Liz at
+   3 pm, Azariah at 4 pm). Kamla does not do transmittals and is not on it. To
+   change the order later, add a tab named **Bag Rota** with the columns
+   `Staff | Order | Leaves At | Active`; while it has rows it replaces the
+   built-in rota. The **Bag Log** tab makes itself the first time someone
    presses Bag in.
 
 ### Settings

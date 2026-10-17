@@ -511,6 +511,13 @@ console.log('the bag');
   ok('12:00 on a Friday waits for Monday\'s bag', env.lbBagDay_(L(16, 12, 0)) === '2026-10-19');
   ok('a Saturday goes on Monday\'s bag', env.lbBagDay_(L(17, 9)) === '2026-10-19');
   ok('3 pm Tuesday goes on Wednesday\'s bag', env.lbBagDay_(L(20, 15)) === '2026-10-21');
+  {
+    const e = world();
+    const r = [e.lbDuty_('2026-10-19'), e.lbDuty_('2026-10-26'), e.lbDuty_('2026-11-02'), e.lbDuty_('2026-11-09'), e.lbDuty_('2026-10-12')];
+    ok('with no tab: Azariah, Elizabeth, Sasha, from 19 Oct', /^Azariah/.test(r[0].name) && /^Elizabeth/.test(r[1].name) && /^Sasha/.test(r[2].name) && /^Azariah/.test(r[3].name) && /^Sasha/.test(r[4].name), r.map(d => d.name));
+    ok('and when each goes home', r[0].leaves === '4:00 pm' && r[1].leaves === '3:00 pm' && r[2].leaves === '2:00 pm');
+    ok('Kamla is never on the bag', ![0,1,2,3,4,5,6].some(k => /kamla/i.test(e.lbDuty_(new Date(Date.UTC(2026, 9, 19 + 7 * k)).toISOString().slice(0, 10)).name)));
+  }
   env.__mkSheet('Bag Rota', 1, ['Staff', 'Order', 'Leaves At', 'Active'], [
     ['Sasha Lalla', 1, '2 pm', 'Yes'], ['Kamla Dookran', 2, '3 pm', 'Yes'], ['Azariah Griffith', 3, '4 pm', 'Yes'], ['Elizabeth Lee', 4, '', 'No']]);
   const d1 = env.lbDuty_('2026-10-19'), d2 = env.lbDuty_('2026-10-26'), d3 = env.lbDuty_('2026-11-02'), d4 = env.lbDuty_('2026-11-09');

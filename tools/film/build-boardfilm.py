@@ -1011,22 +1011,23 @@ def s_lbbagday(i, sc, D):
     return f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{tl}{st}</div>'
 
 def s_lbrota(i, sc, D):
-    tWk, tS, tK, tA, tL, tSt, tTwo = w(i, 'week', 1), w(i, 'Sasha'), w(i, 'Kamla'), w(i, 'Azariah'), w(i, 'Liz'), w(i, 'still'), w(i, 'two')
-    P = [('Sasha Lalla', 'Week of 19 Oct', tS), ('Kamla Dookran', 'Week of 26 Oct', tK), ('Azariah Griffith', 'Week of 2 Nov', tA), ('Elizabeth Lee', 'Week of 9 Nov', tL)]
+    tWk, tS, tA, tL, tSt = w(i, 'week', 1), w(i, 'Sasha'), w(i, 'Azariah'), w(i, 'Liz'), w(i, 'still')
+    tHome = [w(i, 'two'), w(i, 'three'), w(i, 'four')]
+    P = [('Sasha Lalla', 'This week · 12 Oct', tS), ('Azariah Griffith', 'Week of 19 Oct', tA), ('Elizabeth Lee', 'Week of 26 Oct', tL)]
     cards = ''.join(f'<div class="rc at up" style="--at:{ms(tWk + k * 140)}" data-k="rc{k}">{avatar(n, "")}<b>{n}</b><span>{wk}</span>'
-                    f'<i class="rcon" style="--at:{ms(t)};--to:{ms(P[k + 1][2] if k < 3 else tSt + 99999)}"></i></div>' for k, (n, wk, t) in enumerate(P))
+                    f'<i class="rcon" style="--at:{ms(t)};--to:{ms(P[k + 1][2] if k < 2 else tSt + 99999)}"></i></div>' for k, (n, wk, t) in enumerate(P))
     kf = []
     tot = tSt
     for k, (_, _, t) in enumerate(P):
         kf.append(f'{max(0, t - 350) * 100 / tot:.2f}%{{transform:translateX({k * 214}px)}}{t * 100 / tot:.2f}%{{transform:translateX({k * 214}px)}}' if k else f'0%{{transform:translateX(0)}}')
     kfs = ''.join(kf)
-    style = f'<style>@keyframes rcBag{{{kfs}100%{{transform:translateX(642px)}}}}.scene.act .rbag{{animation:rcBag {tot}ms cubic-bezier(.6,0,.3,1) 0ms both}}</style>'
+    style = f'<style>@keyframes rcBag{{{kfs}100%{{transform:translateX(428px)}}}}.scene.act .rbag{{animation:rcBag {tot}ms cubic-bezier(.6,0,.3,1) 0ms both}}</style>'
     bag = f'<div class="rbag"><b class="at pop" style="--at:{ms(tS - 300)}">{ico("bag")}<span>the bag</span></b></div>'
     day = (f'<div class="rday at up" style="--at:{ms(tSt)}"><div class="rdt"><i class="rdw"></i><i class="bmk bagm" style="left:{HX(13, 0, 640):.0f}px"><span>Bag done by 1 pm</span></i>'
-           + ''.join(f'<i class="bmk home at pop" style="left:{HX(h, 0, 640):.0f}px;--at:{ms(tTwo + k * 220)}"><span>{h - 12} pm</span></i>' for k, h in enumerate((14, 15, 16)))
-           + f'</div><span class="rdl">{ico("home", "ii")} The team goes home from 2 pm</span></div>')
+           + ''.join(f'<i class="bmk home at pop" style="left:{HX(h, 0, 640):.0f}px;--at:{ms(tHome[k])}"><span>{h - 12} pm</span></i>' for k, (h, nm) in enumerate(((14, 'Sasha'), (15, 'Liz'), (16, 'Azariah'))))
+           + f'</div><span class="rdl">{ico("home", "ii")} Sasha leaves at 2, Liz at 3, Azariah at 4</span></div>')
     return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{style}'
-            f'<div class="rrow">{bag}{cards}</div>{day}<p class="rnote at" style="--at:{ms(tSt + 400)}">The order is the Bag Rota tab in the Log Book sheet.</p></div>')
+            f'<div class="rrow">{bag}{cards}</div>{day}<p class="rnote at" style="--at:{ms(tSt + 400)}">Azariah, Liz, Sasha, then round again. Kamla does not do transmittals.</p></div>')
 
 def s_lbprep(i, sc, D):
     tT, tP, tD, tA = w(i, 'twelve'), w(i, 'prepare'), w(i, 'department'), w(i, 'agents')
@@ -1043,7 +1044,7 @@ def s_lbprep(i, sc, D):
 def s_lbbaglog(i, sc, D):
     tIn, tOut, tR, tM = w(i, 'in', 1), w(i, 'out'), w(i, 'record'), w(i, 'missed')
     rows = [('Fri 17 Oct', 'Sasha Lalla', '1:04 pm', '1:21 pm', 4, 11, 0), ('Thu 16 Oct', 'Sasha Lalla', '1:02 pm', '1:25 pm', 3, 9, 1),
-            ('Wed 15 Oct', 'Sasha Lalla', '12:58 pm', '1:18 pm', 5, 14, 0), ('Fri 10 Oct', 'Kamla Dookran', '1:06 pm', '1:30 pm', 4, 10, 2)]
+            ('Wed 15 Oct', 'Sasha Lalla', '12:58 pm', '1:18 pm', 5, 14, 0), ('Fri 10 Oct', 'Elizabeth Lee', '1:06 pm', '1:30 pm', 4, 10, 2)]
     head = '<div class="blh"><span>Day</span><span>On the bag</span><span>In</span><span>Out</span><span>Transmittals</span><span>Documents</span><span>Missed</span></div>'
     tb = head + ''.join(at(tR + k * 160, 'at l blr' + (' miss' if r[6] else ''), extra=f' data-k="br{k}"', inner=''.join(f'<span>{x}</span>' for x in r[:6]) + f'<span class="{"lbl red" if r[6] else ""}">{r[6]}</span>') for k, r in enumerate(rows))
     main = f'{bagstrip(150, (tIn, tOut))}<h3 class="at" style="--at:{ms(tR - 200)}">The bag, day by day</h3><div class="blt">{tb}</div>'
