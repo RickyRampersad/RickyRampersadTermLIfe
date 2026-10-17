@@ -80,6 +80,7 @@
 
 var ACC = {
   TAB_ROUTE: 'Routed Items',
+  TAB_BLOCKS: 'Day Blocks',
   TAB_CLOSE: 'Close Offs',
   TAB_TOPIC: 'Meeting Topics',
   TAB_FIND:  'Findings',
@@ -115,11 +116,19 @@ var ACC = {
   MORNING_HOUR: 7,
   EVENING_HOUR: 16,
 
-  /*  The manager's report. Daily at the end of the day, and the long
-   *  one on Monday morning so the week opens on it. */
-  REPORT_HOUR: 17,
+  /*  THE MANAGER'S REPORT GOES AT FIVE IN THE MORNING, because that is
+   *  when his day starts: his KPI1 block on the tracker runs 5 to 10am,
+   *  recruitment, licensing and staffing. A report at the end of the
+   *  previous day is a report read the next morning anyway, and one
+   *  written for five is one that opens the day it is about.
+   *
+   *  Apps Script fires a time trigger within the hour, so this is the
+   *  five o'clock hour and not five exactly. */
+  REPORT_HOUR: 5,
+
+  /*  The long one on Monday, an hour before the first desk comes in. */
   WEEKLY_DAY: 1,
-  WEEKLY_HOUR: 6,
+  WEEKLY_HOUR: 5,
 
   /*  A finding already sent is not news. The Findings tab remembers
    *  what went and on which day, so the report leads on what changed.*/
@@ -150,6 +159,8 @@ ACC_HEAD[ACC.TAB_TOPIC] = ['When', 'Meeting ID', 'Email', 'Name', 'Role', 'Unit'
                            'Rank', 'Spoke', 'Note'];
 ACC_HEAD[ACC.TAB_FIND] = ['When', 'Day', 'Key', 'Severity', 'Heading', 'Finding',
                           'Figure', 'Source', 'Who', 'Sent', 'Note'];
+ACC_HEAD[ACC.TAB_BLOCKS] = ['Staff Id', 'Name', 'Hours', 'Lunch', 'Block', 'Time',
+                            'Focus', 'KPI', 'Due by', 'Task type', 'Active'];
 
 (function () {
   if (typeof SCHEMA === 'undefined') return;        /* pasted alone: nothing to do */
@@ -270,8 +281,29 @@ function accTasks_() {
     try {
       var rows = accSfQuery_(
         'SELECT Id, Subject, Status, Priority, ActivityDate, LastModifiedDate, CreatedDate, ' +
-        'Owner.Name, Type, WhatId, WhoId ' +
+        'Owner.Name, Task_Type__c, WhatId, WhoId ' +
         'FROM Task WHERE IsClosed = false LIMIT 2000');
+
+      /*  What each desk CLOSED today, by the branch's own task type, so
+       *  a day block for pendings can say how many pendings moved
+       *  without anybody typing a number. Task_Type__c is the branch's
+       *  field and it is what the KPI tracker's blocks are keyed on. */
+      var closedToday = [];
+      try {
+        closedToday = accSfQuery_(
+          'SELECT Owner.Name, Task_Type__c, COUNT(Id) n FROM Task ' +
+          'WHERE IsClosed = true AND LastModifiedDate = TODAY ' +
+          'GROUP BY Owner.Name, Task_Type__c');
+      } catch (e) { closedToday = []; }           /* a nice-to-have, never a blocker */
+
+      var byTypeFor = {};
+      closedToday.forEach(function (r) {
+        var who = accLow_((r.Owner || {}).Name);
+        var ty = accStr_(r.Task_Type__c);
+        if (!who || !ty) return;
+        if (!byTypeFor[who]) byTypeFor[who] = {};
+        byTypeFor[who][ty] = accNum_(r.n || r.expr0);
+      });
 
       var today = accDayKey_(new Date()), by = {};
       var tot = { open: 0, overdue: 0, waiting: 0, nodate: 0, untouched: 0, escalated: 0 };
@@ -301,7 +333,8 @@ function accTasks_() {
       var people = Object.keys(by).map(function (k) { return by[k]; })
         .sort(function (a, b) { return b.overdue - a.overdue || b.open - a.open; });
 
-      return { live: true, total: tot, people: people, counted: rows.length };
+      return { live: true, total: tot, people: people, counted: rows.length,
+               byTypeFor: byTypeFor };
     } catch (err) {
       return { live: false, why: 'Salesforce would not answer: ' + accShortErr_(err) };
     }
@@ -2069,6 +2102,7 @@ function apiDesk_(token) {
     asOf: S.at,
     items: mine,
     numbers: accNumbersFor_(me, S),
+    day: accDayFor_(me, S),
     topic: accTopicFor_(me, S),
     closedToday: closes.some(function (r) {
       return accStr_(r['Day']) === day && accStr_(r['Period']) === 'day'; }),
@@ -2094,12 +2128,15 @@ function apiDesk_(token) {
                               logging: S.ff.logging, series: S.ff.series } : null,
       reminders: S.rem.live ? S.rem : null,
       quiet: accQuietAgents_(S),
-      topics: accTopics_(S)
+      topics: accTopics_(S),
+      days: accDayAll_(S)
     };
   } else if (isUnitMgr_(me)) {
     var unit = accLow_(me.unit || me.name);
     out.unit = {
       name: me.unit || me.name,
+      days: accDayAll_(S).filter(function (d) {
+        return accLow_(d.unit) === unit || accSameName_(d.name, me.name); }),
       quiet: accQuietAgents_(S).filter(function (q) {
         return accLow_(q.unit) === unit || accLow_(q.unit) === accLow_(me.name); }),
       review: S.ff.live ? S.ff.reviewers.filter(function (r) {
@@ -2176,6 +2213,7 @@ function accSetup() {
     }
   });
 
+  var seeded = accSeedBlocks_();
   accTriggers_();
 
   var S = accSnapshot_();
@@ -2258,4 +2296,355 @@ function accTopicsNow() {
   }).join('\n\n');
   Logger.log(s);
   return s;
+}
+
+/* ===================================================================
+ *  THE DAY — each person's own blocks, read from the tracker's log
+ *
+ *  "We have built several KPIs and persons are just supposed to click
+ *  and log, pulling in the data."
+ *
+ *  They are, and it is already built: the daily KPI tracker holds every
+ *  desk's day as blocks — KPI1, KPI2, PM1, PM2 and the evening — each
+ *  with its hours, the work it is for, the Salesforce task type that
+ *  work lands in, and the hour it is due by. A person files a block and
+ *  the tracker writes KPI1, KPI1_Actioned, KPI1_Resolved, KPI1_Open and
+ *  KPI1_Blocker onto their row for that day.
+ *
+ *  SO THE DESK DOES NOT LOG A BLOCK. It reads the tracker's own log and
+ *  presents it. Two systems writing one person's day is how a branch
+ *  ends up with two answers to "did she file", and the tracker's answer
+ *  is the one the KPIs are graded on. A block the tracker has not got
+ *  shows here as a button that opens the tracker at it — one click, one
+ *  record.
+ *
+ *  WHAT THE DESK ADDS is the part the tracker does not ask: the three
+ *  narrative lines, the routed items, and the Wednesday topic. A block
+ *  is a count; "what is in the way" is a sentence, and a meeting runs
+ *  on sentences.
+ *
+ *  THE BLOCKS LIVE ON A TAB, not in this file. The tracker carries them
+ *  in code (SCHEDULE in KPI.gs) and this project cannot see that code,
+ *  so accSetup() seeds the Day Blocks tab from the copy below and the
+ *  branch edits the tab from then on — which also means changing
+ *  somebody's hours is typing, never a paste. accDayCheck() says who on
+ *  the People tab has no blocks, so a new desk cannot sit there
+ *  unmeasured.
+ * =================================================================== */
+
+var ACC_DAY = {
+  /*  The tracker's workbook. The same ID Intelligence.gs already
+   *  carries, so nothing new is public; the Script Property overrides
+   *  it, which is what a test or a second branch uses. */
+  PROP_BOOK: 'KPI_SHEET_ID',
+  BOOK: '1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs',
+
+  /*  The log tab is found by its headers, never by its name, because
+   *  that is how the tracker itself finds it. */
+  FIND: ['StaffId', 'KPI1_Actioned'],
+
+  IDS: ['KPI1', 'KPI2', 'PM1', 'PM2', 'EVE'],
+  LABEL: { KPI1: 'KPI 1', KPI2: 'KPI 2', PM1: 'Afternoon 1', PM2: 'Afternoon 2',
+           EVE: 'After four' },
+
+  /*  Where a person goes to file one. The tracker's own front door. */
+  TRACKER_URL: 'https://rickyrampersadbranch.com/kpi/'
+};
+
+/*  The seed, copied from the tracker's SCHEDULE on 17 October 2026.
+ *  IT IS A SEED AND NOT THE TRUTH: once the tab exists, the tab wins,
+ *  and accSetup() never writes over a tab that has rows. Hours here
+ *  that have since changed in the tracker are a tab edit, not a paste.
+ *  Staff Id is the lowercase first name, which is what the tracker's
+ *  log keys on. */
+var ACC_SEED_BLOCKS = [
+  ['sasha', '8am – 4pm', '12:30 – 1:30pm', [
+    ['KPI1', '8 – 10am',  'Premium Dues / Surveys',                      'Renewa/PDl/Bill', 10],
+    ['KPI2', '10 – 12pm', 'Ind. Health Billing Recon / Send Off',        'Renewa/PDl/Bill', 12],
+    ['PM1',  '1 – 3pm',   'Adopt an Orphan / Service Quest. / Quotations','Orphan Adoption Listing', 15],
+    ['PM2',  '3 – 4pm',   'Task Mgmt / Branch Meeting Reports',          'Reporting', 16]]],
+  ['azariah', '8am – 4pm', '12:00 – 1:00pm', [
+    ['KPI1', '8 – 10am',  'Pendings, Increases, Group Apps / Production', 'Pendings', 10],
+    ['KPI2', '10 – 12pm', 'Reinstatements / Lapse Mgmt / Reporting',      'Renewa/PDl/Bill', 12],
+    ['PM1',  '1 – 3pm',   'Query Pal Management / Survey Mgmt',           'Surveys / Query Pal', 15],
+    ['PM2',  '3 – 4pm',   'Task Mgmt / Branch Meeting Reports',           'Reporting', 16]]],
+  ['kamla', '8am – 4pm', 'Flexible', [
+    ['KPI1', '8 – 9am',   'HR, SA, RECR, CB',                             'Lic/Staffing/SA/HR', 10],
+    ['KPI2', '10 – 12pm', 'BM Client Mgt / RR Oper / General lines',       'Administrative Support', 12],
+    ['PM1',  '1 – 3pm',   'Escalations / New Recruit Training',            'Escalations', 15],
+    ['PM2',  '3 – 4pm',   'Task Mgmt / Branch Meeting Reports',           'Reporting (Production / RDAR)', 16]]],
+  ['pawan', '8am – 4pm', 'Flexible', [
+    ['KPI1', '8 – 10am',  'Mail in, contracts logged',                    'Mail Management / Contracts', 10],
+    ['KPI2', '10 – 12pm', 'Document delivery & collection',               'Document delivery & collection', 12],
+    ['PM1',  '1 – 3pm',   'Scripts & transmittals',                       'Scripts & transmittals', 15],
+    ['PM2',  '3 – 4pm',   'Branch Manager support',                       'Branch Manager support', 16]]],
+  ['ashley', '9am – 5pm', 'Flexible', [
+    ['KPI1', '9 – 10am',  'Client Portfolio creation / Macros / Surveys',  'Client Portfolios / Macros', 10],
+    ['KPI2', '10 – 12pm', 'New Application Process',                      'New Application Process', 12],
+    ['PM1',  '1 – 3pm',   'Quotations & Proposals',                       'Quotations & Proposals', 15],
+    ['PM2',  '3 – 5pm',   'Administrative Support',                       'Administrative Support', 16]]],
+  ['elizabeth', '9am – 5pm', 'Flexible', [
+    ['KPI1', '9 – 11am',  'Branch Intelligence / Query Pal testing',      'Surveys / Query Pal', 10],
+    ['KPI2', '11 – 12pm', 'Reporting',                                    'Reporting', 12],
+    ['PM1',  '1 – 3pm',   'Task Management',                              'Task Management', 15],
+    ['PM2',  '3 – 5pm',   'Administrative Support',                       'Administrative Support', 16]]],
+  /*  The branch manager's day is the one that runs the wall's full
+   *  envelope, because it is the one that does: five in the morning to
+   *  midnight. That is why his report is written for five. */
+  ['ricky', '5am – 12am', 'Flexible', [
+    ['KPI1', '5 – 10am',  'Recruitment, licensing and staffing',          'Lic/Staffing/SA/HR', 10],
+    ['KPI2', '10 – 12pm', 'Production, pipeline and own book',            'Opportunity', 12],
+    ['PM1',  '1 – 3pm',   'Agent development and field training',         'Training', 15],
+    ['PM2',  '3 – 4pm',   'Escalations, reporting and branch team',       'Reporting (Production / RDAR / Branch Meeting)', 16],
+    ['EVE',  '4pm – 12am','After four: what is still being moved',        'Opportunity', 24]]],
+  ['kerwyn', '8am – 5pm', 'Flexible', [
+    ['KPI1', '8 – 10am',  'Recruitment intake and agent school',          'Lic/Staffing/SA/HR', 10],
+    ['KPI2', '10 – 12pm', 'Unit manager supervision',                     'Unit Manager Supervision', 12],
+    ['PM1',  '1 – 3pm',   'Joint field work and pipeline',                'Opportunity', 15],
+    ['PM2',  '3 – 5pm',   'Persistency and reporting',                    'Reporting (Production / RDAR)', 16]]],
+  ['akaash', '8am – 4:30pm', 'Flexible', [
+    ['KPI1', '8 – 10am',  'Unit activity and pipeline',                   'Opportunity', 10],
+    ['KPI2', '10 – 12pm', 'Joint field work',                             'Joint Field Work', 12],
+    ['PM1',  '1 – 3pm',   'Recruitment and agent licensing',              'Lic/Staffing/SA/HR', 15],
+    ['PM2',  '3 – 4:30pm','Unit persistency and own book',                'Pendings', 16]]],
+  ['gary', '8am – 4:30pm', 'Flexible', [
+    ['KPI1', '8 – 10am',  'Unit activity and pipeline',                   'Opportunity', 10],
+    ['KPI2', '10 – 12pm', 'Joint field work',                             'Joint Field Work', 12],
+    ['PM1',  '1 – 3pm',   'Recruitment and agent licensing',              'Lic/Staffing/SA/HR', 15],
+    ['PM2',  '3 – 4:30pm','Unit persistency and own book',                'Pendings', 16]]]
+];
+
+/*  Which Salesforce task type a block's work lands in, so "closed four
+ *  pendings" can sit beside the block that was for pendings. Copied
+ *  from BLOCK_TYPE in KPI.gs: six labels are task types letter for
+ *  letter and every other label is work Salesforce does not type, which
+ *  maps to nothing rather than to a guess. */
+var ACC_BLOCK_TYPE = {
+  'Renewa/PDl/Bill': 'Renewa/PDl/Bill', 'Pendings': 'Pendings',
+  'Scripts/CB': 'Scripts/CB', 'Lic/Staffing/SA/HR': 'Lic/Staffing/SA/HR',
+  'Opportunity': 'Opportunity', 'Training': 'Training'
+};
+
+function accSeedBlocks_() {
+  var sh = tab_(ACC.TAB_BLOCKS);
+  if (sh.getLastRow() > 1) return 0;              /* the tab wins, always */
+  var rows = [];
+  ACC_SEED_BLOCKS.forEach(function (p) {
+    p[3].forEach(function (b) {
+      rows.push({ 'Staff Id': p[0], 'Name': '', 'Hours': p[1], 'Lunch': p[2],
+                  'Block': b[0], 'Time': b[1], 'Focus': b[2], 'KPI': b[3],
+                  'Due by': b[4], 'Task type': ACC_BLOCK_TYPE[b[3]] || '',
+                  'Active': 'Yes' });
+    });
+  });
+  appendRows_(ACC.TAB_BLOCKS, rows);
+  return rows.length;
+}
+
+/** The whole tab, as { staffId: { hours, lunch, blocks: [...] } }. */
+function accBlockTab_() {
+  var out = {};
+  readTab_(ACC.TAB_BLOCKS).forEach(function (r) {
+    if (accLow_(r['Active']) === 'no') return;
+    var id = accLow_(r['Staff Id']);
+    if (!id) return;
+    if (!out[id]) out[id] = { staffId: id, name: accStr_(r['Name']),
+                              hours: accStr_(r['Hours']), lunch: accStr_(r['Lunch']),
+                              blocks: [] };
+    out[id].blocks.push({ id: accStr_(r['Block']).toUpperCase(),
+                          time: accStr_(r['Time']), focus: accStr_(r['Focus']),
+                          kpi: accStr_(r['KPI']), due: accNum_(r['Due by']),
+                          type: accStr_(r['Task type']) });
+  });
+  Object.keys(out).forEach(function (k) {
+    out[k].blocks.sort(function (a, b) {
+      return ACC_DAY.IDS.indexOf(a.id) - ACC_DAY.IDS.indexOf(b.id); });
+  });
+  return out;
+}
+
+/*  A person's Staff Id. The tracker keys its log on the lowercase first
+ *  name, so that is what this returns — and a person whose first name
+ *  is not on the Day Blocks tab has no blocks rather than somebody
+ *  else's. */
+function accStaffId_(person) {
+  return accLow_(person.name).split(/\s+/)[0];
+}
+
+/* ------------------- the tracker's log, read only ------------------- */
+
+function accTrackerBook_() {
+  var id = accStr_(PropertiesService.getScriptProperties().getProperty(ACC_DAY.PROP_BOOK))
+           || ACC_DAY.BOOK;
+  return SpreadsheetApp.openById(id);
+}
+
+/** Today's filed blocks, as { staffId: { KPI1: {kpi, actioned, resolved,
+ *  open, blocker}, ... } }. Cached, and never throws: the tracker being
+ *  unreachable must leave the day view standing. */
+function accFiled_(dayKey) {
+  return accCached_('filed.' + dayKey, function () {
+    try {
+      var ss = accTrackerBook_(), sh = null;
+      var want = ACC_DAY.FIND.map(function (h) { return h.toLowerCase(); });
+      ss.getSheets().forEach(function (s) {
+        if (sh) return;
+        if (s.getLastRow() < 1) return;
+        var head = s.getRange(1, 1, 1, Math.max(1, s.getLastColumn())).getValues()[0]
+          .map(function (h) { return String(h).trim().toLowerCase(); });
+        if (want.every(function (w) { return head.indexOf(w) > -1; })) sh = s;
+      });
+      if (!sh) {
+        return { live: false, why: 'No KPI Log tab in the tracker workbook (it is the tab ' +
+                                   'with StaffId and KPI1_Actioned columns).', rows: {} };
+      }
+      var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+        .map(function (h) { return String(h).trim(); });
+      var ix = {};
+      head.forEach(function (h, i) { ix[h] = i; });
+      if (!('Date' in ix) || !('StaffId' in ix)) {
+        return { live: false, why: 'The tracker log has no Date or StaffId column.', rows: {} };
+      }
+
+      /*  Read the tail only. The log is unbounded — it is a row per
+       *  person per day, for ever — and the desk wants one day of it. */
+      var last = sh.getLastRow();
+      if (last < 2) return { live: true, rows: {} };
+      var from = Math.max(2, last - 400);
+      var vals = sh.getRange(from, 1, last - from + 1, head.length).getValues();
+
+      var rows = {};
+      vals.forEach(function (r) {
+        var d = r[ix['Date']];
+        var key = (d instanceof Date) ? accDayKey_(d) : accStr_(d).slice(0, 10);
+        if (key !== dayKey) return;
+        var id = accLow_(r[ix['StaffId']]);
+        if (!id) return;
+        var one = {};
+        ACC_DAY.IDS.forEach(function (b) {
+          one[b] = {
+            kpi:      (b in ix) ? accStr_(r[ix[b]]) : '',
+            actioned: ((b + '_Actioned') in ix) ? accStr_(r[ix[b + '_Actioned']]) : '',
+            resolved: ((b + '_Resolved') in ix) ? accStr_(r[ix[b + '_Resolved']]) : '',
+            open:     ((b + '_Open') in ix) ? accStr_(r[ix[b + '_Open']]) : '',
+            blocker:  ((b + '_Blocker') in ix) ? accStr_(r[ix[b + '_Blocker']]) : ''
+          };
+        });
+        rows[id] = one;                          /* a later row wins */
+      });
+      return { live: true, rows: rows };
+    } catch (err) {
+      return { live: false, rows: {},
+               why: 'The tracker workbook would not open: ' + accShortErr_(err) +
+                    ' Set ' + ACC_DAY.PROP_BOOK + ' if it has moved.' };
+    }
+  });
+}
+
+/*  ONE PERSON'S DAY. Each block with where it stands, and the Salesforce
+ *  figure for the work it is for, pulled in rather than asked for.
+ *
+ *  The states, and why each one is its own word rather than a colour:
+ *    filed    the tracker has it
+ *    late     the hour it was due by has gone and it is not filed
+ *    now      this is the block the clock is in
+ *    ahead    still to come
+ *  Nothing here grades anybody. A block is late or it is not; what it
+ *  means is the sentence the person writes beside it.                 */
+function accDayFor_(person, S) {
+  S = S || accSnapshot_();
+  var now = new Date(), hour = now.getHours();
+  var id = accStaffId_(person);
+  var tab = accBlockTab_(), mine = tab[id];
+  var filed = accFiled_(accDayKey_(now));
+  var got = (filed.rows || {})[id] || null;
+
+  if (!mine) {
+    return { live: filed.live, why: filed.why || '',
+             staffId: id, hours: '', lunch: '', blocks: [],
+             none: 'No day blocks on file for ' + person.name.split(/\s+/)[0] +
+                   '. Add them on the Day Blocks tab and this fills itself.' };
+  }
+
+  /*  The desk's own Salesforce counts for this person today, by task
+   *  type, so a block for pendings can say how many pendings moved.
+   *  Only what this project can see: the task owner's name has to match
+   *  the person, which is true for staff and never for an agent. */
+  var byType = (S.tasks.live && (S.tasks.byTypeFor || {})[accLow_(person.name)]) || {};
+
+  var blocks = mine.blocks.map(function (b) {
+    var f = got ? got[b.id] : null;
+    var isFiled = !!(f && (f.actioned || f.kpi));
+    var state = isFiled ? 'filed'
+              : (b.due && hour >= b.due) ? 'late'
+              : accBlockNow_(b, hour) ? 'now' : 'ahead';
+    return {
+      id: b.id, label: ACC_DAY.LABEL[b.id] || b.id,
+      time: b.time, focus: b.focus, kpi: b.kpi, due: b.due, type: b.type,
+      state: state, filed: isFiled,
+      actioned: f ? f.actioned : '', resolved: f ? f.resolved : '',
+      open: f ? f.open : '', blocker: f ? f.blocker : '',
+      /*  What Salesforce says moved in this block's own kind of work
+       *  today. Null, not zero, when the type is work Salesforce does
+       *  not type — a zero there would read as a wasted morning. */
+      sf: b.type && byType[b.type] !== undefined ? byType[b.type] : null
+    };
+  });
+
+  var owed = blocks.length, inHand = blocks.filter(function (b) { return b.filed; }).length;
+  return {
+    live: filed.live, why: filed.why || '',
+    staffId: id, hours: mine.hours, lunch: mine.lunch,
+    blocks: blocks, owed: owed, filed: inHand,
+    late: blocks.filter(function (b) { return b.state === 'late'; }).length,
+    trackerUrl: ACC_DAY.TRACKER_URL
+  };
+}
+
+/*  Whether the clock is inside a block. The tab's times are written for
+ *  people — "8 – 10am", "3 – 4:30pm" — so the hour is read off the
+ *  front of the range and the block runs until the next one starts. */
+function accBlockNow_(b, hour) {
+  var m = accStr_(b.time).match(/^(\d+)/);
+  if (!m) return false;
+  var start = Number(m[1]);
+  var pm = /pm/i.test(accStr_(b.time)) && start < 12;
+  if (pm && b.id !== 'KPI1') start += 12;
+  if (/^(PM1|PM2|EVE)$/.test(b.id) && start < 12) start += 12;
+  return hour >= start && (!b.due || hour < b.due);
+}
+
+/** Every desk's day, for the branch and for a unit manager's team. */
+function accDayAll_(S) {
+  S = S || accSnapshot_();
+  var out = [];
+  readPeople_().forEach(function (p) {
+    if (!p.active || p.role === 'guest' || p.role === 'agent') return;
+    var d = accDayFor_(p, S);
+    if (!d.blocks.length) return;
+    out.push({ name: p.name, role: p.role, unit: p.unit || '',
+               hours: d.hours, owed: d.owed, filed: d.filed, late: d.late,
+               blocks: d.blocks });
+  });
+  return out.sort(function (a, b) { return b.late - a.late || a.name.localeCompare(b.name); });
+}
+
+/** Who on the People tab has no blocks. Run after adding a desk. */
+function accDayCheck() {
+  var tab = accBlockTab_(), missing = [], extra = [];
+  var have = {};
+  readPeople_().forEach(function (p) {
+    if (!p.active || p.role === 'guest' || p.role === 'agent') return;
+    var id = accStaffId_(p);
+    have[id] = true;
+    if (!tab[id]) missing.push(p.name + ' (' + id + ')');
+  });
+  Object.keys(tab).forEach(function (id) {
+    if (!have[id]) extra.push(id);
+  });
+  var msg = (missing.length ? 'No blocks on file for: ' + missing.join(', ') + '\n'
+                            : 'Every desk on the People tab has blocks.\n') +
+            (extra.length ? 'Blocks for nobody active: ' + extra.join(', ') : '');
+  Logger.log(msg);
+  return msg;
 }

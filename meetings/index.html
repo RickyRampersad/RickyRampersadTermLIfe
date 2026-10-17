@@ -309,6 +309,74 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     .card{background:#fff;border:1px solid #ccc;break-inside:avoid}
     .section-label{color:#111} th{color:#333}
   }
+
+  /* ---------- MY DAY: the blocks, read from the KPI tracker ----------
+     A block is a row, not a tile, because a day is read down and the
+     time is what anchors it. State is a WORD as well as a colour —
+     the branch's standing rule for every status anywhere. */
+  .blk{display:flex;gap:13px;align-items:flex-start;background:rgba(255,255,255,.03);
+    border:1px solid var(--line);border-left:3px solid var(--dim);border-radius:12px;
+    padding:13px 15px;margin-bottom:8px}
+  .blk.filed{border-left-color:var(--green)}
+  .blk.late{border-left-color:var(--red);background:rgba(240,112,95,.05)}
+  .blk.now{border-left-color:var(--accent);background:rgba(59,158,255,.05)}
+  .blk-t{min-width:92px;font-family:'Montserrat',sans-serif;font-size:11.5px;font-weight:800;
+    color:var(--muted);letter-spacing:.4px;padding-top:2px}
+  .blk-b{flex:1;min-width:0}
+  .blk-b h4{font-size:14px;font-weight:800;margin-bottom:2px;overflow-wrap:anywhere}
+  .blk-b .kpi{font-size:11.5px;color:var(--dim)}
+  .blk-b .did{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.55;
+    overflow-wrap:anywhere}
+  .blk-b .blocker{font-size:12.5px;color:var(--amber);margin-top:4px;line-height:1.55}
+  .blk-r{text-align:right;min-width:86px}
+  .blk-sf{display:block;font-family:'Montserrat',sans-serif;font-size:19px;font-weight:900;
+    line-height:1.1;color:var(--support)}
+  .blk-sf span{display:block;font-size:9.5px;color:var(--dim);letter-spacing:.7px;
+    text-transform:uppercase;font-weight:700}
+
+  /* The topic card. One question, the figure under it, nothing else. */
+  .topic{background:linear-gradient(160deg,rgba(59,158,255,.13),rgba(59,158,255,.04));
+    border:1px solid rgba(59,158,255,.3);border-left:4px solid var(--accent);
+    border-radius:0 15px 15px 0;padding:17px 19px;margin-bottom:12px}
+  .topic h3{font-size:16px;font-weight:800;margin-bottom:6px}
+  .topic p{font-size:14.5px;line-height:1.6}
+  .topic .ev{font-size:11.5px;color:var(--dim);margin-top:8px;letter-spacing:.2px}
+
+  /* A routed item. What came to this desk, and why now. */
+  .item{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.03);
+    border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:7px}
+  .item-d{min-width:58px;text-align:center;font-family:'Montserrat',sans-serif;
+    font-size:17px;font-weight:900;color:var(--amber);line-height:1}
+  .item-d span{display:block;font-size:9px;color:var(--dim);letter-spacing:.7px;
+    text-transform:uppercase;font-weight:700;margin-top:2px}
+  .item-b{flex:1;min-width:0}
+  .item-b b{display:block;font-size:13.5px;font-weight:700;overflow-wrap:anywhere}
+  .item-b i{display:block;font-size:11.5px;color:var(--muted);font-style:normal;margin-top:2px;
+    overflow-wrap:anywhere}
+
+  /* A finding. Severity as a word in a tinted pill, never colour alone. */
+  .find{border-left:3px solid var(--dim);padding:2px 0 2px 14px;margin-bottom:14px}
+  .find.s3{border-left-color:var(--red)} .find.s2{border-left-color:var(--accent)}
+  .find h4{font-size:15px;font-weight:800;margin:5px 0 3px;overflow-wrap:anywhere}
+  .find p{font-size:14px;line-height:1.55;color:var(--text)}
+  .find .src{font-size:11px;color:var(--dim);margin-top:4px}
+
+  /* Every desk's day, for the branch. One line each. */
+  .deskrow{display:flex;gap:12px;align-items:center;padding:10px 0;
+    border-bottom:1px solid var(--line)}
+  .deskrow:last-child{border-bottom:none}
+  .deskrow .nm{flex:1;min-width:0;font-size:13.5px;font-weight:700;overflow-wrap:anywhere}
+  .deskrow .nm i{display:block;font-style:normal;font-size:11px;color:var(--dim);font-weight:400}
+  .dots{display:flex;gap:4px}
+  .dot{width:26px;height:9px;border-radius:3px;background:rgba(255,255,255,.1)}
+  .dot.filed{background:var(--green)} .dot.late{background:var(--red)}
+  .dot.now{background:var(--accent)}
+
+  .srcline{display:flex;gap:9px;align-items:baseline;font-size:12.5px;padding:5px 0;
+    border-bottom:1px solid var(--line);line-height:1.5}
+  .srcline:last-child{border-bottom:none}
+  .srcline b{min-width:132px;font-weight:700}
+  .srcline i{font-style:normal;color:var(--dim)}
 </style>
 </head>
 <body>
@@ -630,8 +698,7 @@ function onSignedIn(res) {
   $("app").style.display = "block";
   $("who-av").textContent = initials(res.user.name);
   $("who-name").textContent = res.user.name;
-  $("who-role").textContent = res.user.role === "manager" ? "Branch Manager"
-    : res.user.role === "staff" ? "Branch Staff" : "Agent";
+  $("who-role").textContent = roleTitle(res.user.role);
   loadHome();
 }
 
@@ -685,7 +752,11 @@ function doEnrol() {
 /* ---------------- tabs and routing ---------------- */
 
 function tabsFor() {
+  /*  MY DAY IS FIRST, for every role. The meeting is a Wednesday; the
+   *  day is every day, and a person who opens this app lands on what
+   *  they are held to rather than on a list of meetings. */
   var t = [
+    { id: "day", label: "My Day" },
     { id: "home", label: "Meetings" },
     { id: "prep", label: "My Prep" },
     { id: "actions", label: "Action Items" },
@@ -694,6 +765,7 @@ function tabsFor() {
     { id: "service", label: "Branch Service" }
   ];
   if (S.user && (S.user.role === "staff" || S.user.role === "manager")) {
+    t.splice(1, 0, { id: "branch", label: "The Branch" });
     t.push({ id: "register", label: "Register" });
   }
   if (S.user && S.user.role === "manager") t.push({ id: "people", label: "People" });
@@ -730,6 +802,10 @@ function go(view, id) {
   S.view = view;
   if (id !== undefined) S.meetingId = id;
   drawTabs();
+  /*  The desk is one read of five systems, so it is read once and both
+   *  views share it. Opening My Day or The Branch with nothing in hand
+   *  fetches it; opening either again paints what is already there. */
+  if ((view === "day" || view === "branch") && !S.desk) { loadDay(); return; }
   render();
 }
 
@@ -757,6 +833,8 @@ function loadHome() {
 
 function render() {
   switch (S.view) {
+    case "day":      return viewDay();
+    case "branch":   return viewBranch();
     case "meeting":  return viewMeeting();
     case "prep":     return viewPrep();
     case "actions":  return viewActions();
@@ -776,6 +854,390 @@ function render() {
 var isStaff = function () { return S.user && (S.user.role === "staff" || S.user.role === "manager"); };
 
 /* ---------------- home ---------------- */
+
+
+/* ================================================================
+ *  MY DAY — what this person is held to, and nothing else
+ *
+ *  The same screen for every role, filled differently, because a
+ *  branch where four roles use four screens is a branch where three
+ *  of them stop. What changes is what is on it:
+ *
+ *    an agent        their fact finds, their pipeline, their topic
+ *    sales support   their KPI blocks off the tracker, what came to
+ *                    their desk this morning, their topic
+ *    a unit manager  their own blocks, plus their unit person by
+ *                    person
+ *    the chair       their own blocks, plus the branch
+ *
+ *  THE BLOCKS ARE READ FROM THE KPI TRACKER, never logged here. One
+ *  record. A block the tracker has not got shows as a button that
+ *  opens the tracker at it.
+ * ================================================================ */
+
+function loadDay() {
+  loading("Reading the branch…");
+  apiGet("desk", { token: S.token })
+    .then(guard)
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.error || "Could not load the desk.");
+      S.desk = res;
+      render();
+    })
+    .catch(function (e) {
+      $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' +
+        esc(e.message || "Could not reach the branch system.") + "</div>";
+    });
+}
+
+var BLK_WORD = { filed: ["In", "b-green"], late: ["Late", "b-red"],
+                 now: ["On now", "b-staff"], ahead: ["Ahead", "b-dim"] };
+
+function blockRow(b) {
+  var w = BLK_WORD[b.state] || BLK_WORD.ahead;
+  var out = '<div class="blk ' + b.state + '">' +
+    '<div class="blk-t">' + esc(b.time) + "</div>" +
+    '<div class="blk-b">' +
+      "<h4>" + esc(b.focus) + ' <span class="badge ' + w[1] + '">' + w[0] + "</span></h4>" +
+      '<div class="kpi">' + esc(b.label) + (b.kpi ? " · " + esc(b.kpi) : "") +
+        (b.due && b.due < 24 ? " · due by " + b.due + ":00" : "") + "</div>";
+  if (b.actioned) out += '<div class="did">' + esc(b.actioned) + "</div>";
+  if (b.blocker) out += '<div class="blocker">In the way: ' + esc(b.blocker) + "</div>";
+  out += "</div>";
+  /*  The Salesforce figure for this block's own kind of work, pulled
+   *  in. Null when the work is a kind Salesforce does not type — a
+   *  zero there would read as a wasted morning. */
+  out += '<div class="blk-r">' +
+    (b.sf !== null && b.sf !== undefined
+      ? '<b class="blk-sf">' + b.sf + "<span>closed</span></b>"
+      : "") + "</div></div>";
+  return out;
+}
+
+function viewDay() {
+  var d = S.desk;
+  if (!d) { loadDay(); return; }
+  var me = d.me || {}, first = (me.name || "").split(" ")[0];
+  var day = d.day || {};
+
+  var out = '<div class="page-head">' +
+    '<div class="kicker">' + esc(new Date().toLocaleDateString("en",
+      { weekday: "long", day: "numeric", month: "long" })) +
+      (day.hours ? " · " + esc(day.hours) : "") + "</div>" +
+    "<h1>Your day, " + esc(first) + "</h1>" +
+    "<p>" + esc(roleLine(me.role)) + "</p></div>";
+
+  /* ---- the topic. First, because it is why Wednesday exists. ---- */
+  if (d.topic) {
+    out += '<div class="section-label">Your topic for Wednesday</div>' +
+      '<div class="topic"><h3>' + esc(d.topic.topic) + "</h3>" +
+      "<p>" + esc(d.topic.question) + "</p>" +
+      (d.topic.evidence ? '<div class="ev">' + esc(d.topic.evidence) +
+        (d.topic.source ? " · " + esc(d.topic.source) : "") + "</div>" : "") +
+      "</div>";
+  }
+
+  /* ---- what came to this desk ---- */
+  var items = d.items || [];
+  if (items.length) {
+    out += '<div class="section-label">Came to you — ' + items.length + "</div>";
+    out += items.slice(0, 30).map(function (i) {
+      return '<div class="item">' +
+        '<div class="item-d">' + (i.days || "—") + "<span>days</span></div>" +
+        '<div class="item-b"><b>' + esc(i.what) + "</b><i>" + esc(i.why) + "</i></div>" +
+        '<span class="badge b-dim">' + esc(i.source) + "</span></div>";
+    }).join("");
+    if (items.length > 30) {
+      out += '<p class="hint">And ' + (items.length - 30) + " more.</p>";
+    }
+  }
+
+  /* ---- the blocks ---- */
+  if (day.blocks && day.blocks.length) {
+    out += '<div class="section-label">Your blocks today — ' +
+      day.filed + " of " + day.owed + " in" +
+      (day.late ? ", " + day.late + " late" : "") + "</div>";
+    out += day.blocks.map(blockRow).join("");
+    out += '<p class="hint">These are read from the daily KPI tracker, which is where ' +
+      "they are filed. Nothing is logged twice.</p>";
+    if (day.filed < day.owed) {
+      out += '<div class="btn-row" style="margin:4px 0 10px">' +
+        '<a class="btn teal sm" href="' + esc(day.trackerUrl || "#") +
+        '" target="_blank" rel="noopener">File a block in the tracker ↗</a></div>';
+    }
+  } else if (day.none) {
+    out += '<div class="section-label">Your blocks today</div>' +
+      '<div class="empty" style="padding:24px"><span class="big">⏱</span>' + esc(day.none) + "</div>";
+  }
+  if (day.live === false && day.why) {
+    out += '<p class="hint">' + esc(day.why) + "</p>";
+  }
+
+  /* ---- the numbers, pulled in ---- */
+  var nums = d.numbers || [];
+  if (nums.length) {
+    out += '<div class="section-label">Where you stand</div><div class="grid3">' +
+      nums.map(function (n) {
+        return '<div class="stat"><b>' + esc(String(n.value)) + "</b><span>" +
+          esc(n.label) + "</span></div>";
+      }).join("") + "</div>";
+  }
+
+  /* ---- close off the day ---- */
+  out += '<div class="section-label">' +
+    (d.closedToday ? "You closed off today" : "Close off your day") + "</div>";
+  if (d.closedToday) {
+    out += '<div class="card flat"><div class="meta">Your three lines are in for today. ' +
+      'Press below to change them.</div>' +
+      '<div class="btn-row" style="margin-top:10px">' +
+      '<button class="btn ghost sm" id="co-again">Change what I wrote</button></div></div>';
+  }
+  out += '<div class="card" id="co-card"' + (d.closedToday ? ' style="display:none"' : "") + ">" +
+    '<div class="meta" style="margin-bottom:12px">The numbers above are already filled in. ' +
+    "You are not being asked to retype them — tell us what they mean.</div>" +
+    '<div class="field"><label for="co-done">What got done today?</label>' +
+    '<textarea id="co-done" rows="2" placeholder="In your own words"></textarea></div>' +
+    '<div class="field"><label for="co-blocked">What is in the way?</label>' +
+    '<textarea id="co-blocked" rows="2" placeholder="Leave it blank if nothing is"></textarea></div>' +
+    '<div class="field"><label for="co-help">What help do you need?</label>' +
+    '<textarea id="co-help" rows="2" placeholder="Who, and with what"></textarea></div>' +
+    '<button class="btn" id="co-go">Close off my day</button>' +
+    '<div class="msg" id="co-msg"></div></div>';
+
+  /* ---- the unit, for a unit manager ---- */
+  if (d.unit) out += unitBlock(d.unit);
+
+  $("view").innerHTML = out;
+  wireCloseOff();
+}
+
+function roleLine(role) {
+  return role === "agent"
+    ? "Your fact finds, your pipeline and the one thing you are taking to Wednesday."
+    : role === "unitmgr"
+    ? "Your own day, then your unit person by person. You account for them on Wednesday."
+    : role === "manager"
+    ? "Your own day, then the branch. The report in your inbox at five is this screen."
+    : "Your blocks off the tracker, what came to your desk this morning, and your topic.";
+}
+
+function unitBlock(u) {
+  var out = '<div class="section-label">Your unit — ' + esc(u.name) + "</div>";
+  if (u.review) {
+    out += '<div class="grid3" style="margin-bottom:12px">' +
+      '<div class="stat ' + (u.review.pending >= 5 ? "red" : "") + '"><b>' + u.review.pending +
+        "</b><span>Waiting on you</span></div>" +
+      '<div class="stat"><b>' + u.review.medianDays + "</b><span>Median days</span></div>" +
+      '<div class="stat"><b>' + u.review.returnRate + "%</b><span>Returned</span></div></div>";
+  }
+  out += (u.people || []).length
+    ? '<div class="card">' + u.people.map(function (p) {
+        return '<div class="deskrow"><div class="nm">' + esc(p.name) +
+          "<i>" + esc(p.topic) + (p.evidence ? " · " + esc(p.evidence) : "") +
+          "</i></div></div>";
+      }).join("") + "</div>"
+    : '<div class="empty" style="padding:24px">Nobody on your unit yet.</div>';
+  if ((u.quiet || []).length) {
+    out += '<div class="section-label">Filed nothing this week — ' + u.quiet.length + "</div>" +
+      '<div class="card">' + u.quiet.map(function (q) {
+        return '<div class="deskrow"><div class="nm">' + esc(q.name) + "<i>" + esc(q.why) +
+          "</i></div></div>";
+      }).join("") + "</div>";
+  }
+  return out;
+}
+
+function wireCloseOff() {
+  var again = $("co-again");
+  if (again) again.onclick = function () { $("co-card").style.display = ""; };
+  var go = $("co-go");
+  if (!go) return;
+  go.onclick = function () {
+    var done = $("co-done").value.trim();
+    if (!done) { $("co-msg").textContent = "Say what got done, even in a few words."; return; }
+    go.disabled = true;
+    $("co-msg").textContent = "Saving…";
+    apiPost({ action: "closeOff", token: S.token, period: "day", done: done,
+              blocked: $("co-blocked").value.trim(), help: $("co-help").value.trim(),
+              device: window.innerWidth < 760 ? "phone" : "desk" })
+      .then(guard)
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.error || "Could not save.");
+        S.desk = null;
+        go.disabled = false;
+        loadDay();
+      })
+      .catch(function (e) {
+        go.disabled = false;
+        $("co-msg").textContent = e.message || "Could not save.";
+      });
+  };
+}
+
+/* ================================================================
+ *  THE BRANCH — staff and the chair
+ *
+ *  What the five-in-the-morning e-mail says, on a screen, so the
+ *  room can be shown it rather than told about it.
+ * ================================================================ */
+
+var SEV_WORD = { 3: ["Act now", "b-red"], 2: ["This week", "b-staff"], 1: ["Worth knowing", "b-dim"] };
+
+function viewBranch() {
+  var d = S.desk;
+  if (!d) { loadDay(); return; }
+  if (!d.branch) {
+    $("view").innerHTML = '<div class="empty"><span class="big">🔒</span>' +
+      "The branch view is for staff and the branch manager.</div>";
+    return;
+  }
+  var b = d.branch;
+  var out = '<div class="page-head"><div class="kicker">Read ' +
+    esc(new Date().toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" })) +
+    "</div><h1>The branch</h1>" +
+    "<p>Every figure here is read off the branch's own systems. Nothing is typed in.</p></div>";
+
+  /* ---- the tiles ---- */
+  var t = [];
+  if (b.factfind) {
+    t.push(["Fact finds this week", b.factfind.week.submitted, ""]);
+    t.push(["Review queue", b.factfind.queue.pending, b.factfind.queue.breaching ? "red" : ""]);
+    if (b.factfind.year.conversion !== null) {
+      t.push(["Recommended written", b.factfind.year.conversion + "%",
+              b.factfind.year.conversion < 25 ? "red" : ""]);
+    }
+  }
+  if (b.pipeline) {
+    t.push(["Stuck over 120 days", b.pipeline.total.stuck, "amber"]);
+    t.push(["API waiting in them", money(b.pipeline.total.stuckApi), "red"]);
+  }
+  if (b.tasks) {
+    t.push(["Overdue tasks", b.tasks.total.overdue, "amber"]);
+    t.push(["Waiting on someone", b.tasks.total.waiting, ""]);
+  }
+  if (b.close) t.push(["Closed off their day", b.close.closed.length + " of " + b.close.expected, ""]);
+  if (t.length) {
+    out += '<div class="grid3">' + t.map(function (x) {
+      return '<div class="stat ' + (x[2] || "") + '"><b>' + esc(String(x[1])) +
+        "</b><span>" + esc(x[0]) + "</span></div>";
+    }).join("") + "</div>";
+  }
+
+  /* ---- the findings ---- */
+  if ((b.findings || []).length) {
+    out += '<div class="section-label">What today says</div><div class="card">' +
+      b.findings.slice(0, 14).map(function (f) {
+        var w = SEV_WORD[f.severity] || SEV_WORD[1];
+        return '<div class="find s' + f.severity + '">' +
+          '<span class="badge ' + w[1] + '">' + w[0] + "</span>" +
+          "<h4>" + esc(f.heading) + "</h4><p>" + esc(f.finding) + "</p>" +
+          '<div class="src">' + esc(f.source) + (f.who ? " · " + esc(f.who) : "") +
+          "</div></div>";
+      }).join("") + "</div>";
+  }
+
+  /* ---- every desk's day ---- */
+  if ((b.days || []).length) {
+    out += '<div class="section-label">Every desk today</div><div class="card">' +
+      b.days.map(deskRow).join("") + "</div>";
+  }
+
+  /* ---- who closed off, and who did not ---- */
+  if (b.close) {
+    var said = [];
+    (b.close.closed || []).forEach(function (p) {
+      (p.blocked || []).forEach(function (x) { said.push([p.name, x.text]); });
+    });
+    if (said.length) {
+      out += '<div class="section-label">What people said was in the way</div><div class="card">' +
+        said.slice(0, 15).map(function (r) {
+          return '<div class="deskrow"><div class="nm">' + esc(r[0]) + "<i>" + esc(r[1]) +
+            "</i></div></div>";
+        }).join("") + "</div>";
+    }
+    if ((b.close.silent || []).length) {
+      out += '<div class="section-label">Closed off nothing this week — ' +
+        b.close.silent.length + "</div>" +
+        '<p class="hint">' + esc(b.close.silent.map(function (p) { return p.name; }).join(", ")) + "</p>";
+    }
+  }
+
+  /* ---- the desks, from Salesforce ---- */
+  if (b.tasks && (b.tasks.people || []).length) {
+    out += '<div class="section-label">The desks</div><div class="card">' +
+      b.tasks.people.map(function (p) {
+        return '<div class="deskrow"><div class="nm">' + esc(p.name) +
+          "<i>" + p.open + " open · " + p.waiting + " waiting on someone" +
+          (p.oldestDays ? " · oldest " + p.oldestDays + " days past" : "") + "</i></div>" +
+          '<span class="badge ' + (p.overdue >= 20 ? "b-red" : p.overdue ? "b-amber" : "b-green") +
+          '">' + p.overdue + " overdue</span></div>";
+      }).join("") + "</div>";
+  }
+
+  /* ---- what is stuck ---- */
+  if (b.pipeline && (b.pipeline.bySupport || []).length) {
+    out += '<div class="section-label">What is stuck, by the desk supporting it</div><div class="card">' +
+      b.pipeline.bySupport.slice(0, 10).map(function (r) {
+        return '<div class="deskrow"><div class="nm">' + esc(r.name) +
+          "<i>" + r.n + " case" + (r.n === 1 ? "" : "s") + " · oldest " + r.oldest +
+          " days</i></div><span class=\"badge b-amber\">" + money(r.api) + "</span></div>";
+      }).join("") + "</div>";
+  }
+
+  /* ---- Wednesday ---- */
+  if ((b.topics || []).length) {
+    out += '<div class="section-label">Wednesday — one topic each</div><div class="card">' +
+      b.topics.map(function (x) {
+        return '<div class="deskrow"><div class="nm">' + esc(x.name) +
+          ' <span class="badge b-dim">' + esc(roleWord(x.role)) + "</span><i>" + esc(x.topic) +
+          "</i></div></div>";
+      }).join("") + "</div>";
+  }
+
+  /* ---- where it all came from ---- */
+  if ((d.sources || []).length) {
+    out += '<div class="section-label">Where these came from</div><div class="card">' +
+      d.sources.map(function (sc) {
+        return '<div class="srcline"><b>' + esc(sc.label) + "</b>" +
+          '<span class="badge ' + (sc.live ? "b-green" : "b-amber") + '">' +
+          (sc.live ? "Reporting" : "Not reporting") + "</span>" +
+          (sc.live ? "" : "<i>" + esc(sc.why) + "</i>") + "</div>";
+      }).join("") + "</div>";
+  }
+
+  $("view").innerHTML = out;
+}
+
+/*  WHAT THE MASTHEAD CALLS YOU. Two copies of a two-branch ternary used
+ *  to decide this and both fell through to "Agent", so a unit manager
+ *  signed in and read "Agent" under his own name — the role was added
+ *  to the backend and the masthead never learned it. One map now, read
+ *  in both places. */
+function roleTitle(r) {
+  return { manager: "Branch Manager", unitmgr: "Unit Manager",
+           staff: "Sales Support", agent: "Agent", guest: "Guest" }[r] || "Agent";
+}
+
+/*  The sheet stores a role code; a person reads a word. One map, so the
+ *  room never sees "unitmgr" on a wall. */
+function roleWord(r) {
+  return { manager: "branch manager", unitmgr: "unit manager", staff: "sales support",
+           agent: "advisor", guest: "guest" }[r] || r;
+}
+
+function deskRow(d) {
+  return '<div class="deskrow"><div class="nm">' + esc(d.name) +
+    ' <span class="badge b-dim">' + esc(roleWord(d.role)) + "</span>" +
+    "<i>" + esc(d.hours || "") + " · " + d.filed + " of " + d.owed + " blocks in" +
+    (d.late ? ", " + d.late + " late" : "") + "</i></div>" +
+    '<div class="dots">' + (d.blocks || []).map(function (b) {
+      return '<span class="dot ' + b.state + '" title="' + esc(b.label + ": " + b.focus) + '"></span>';
+    }).join("") + "</div></div>";
+}
+
+function money(n) {
+  return "TT$" + String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 function viewHome() {
   var h = S.home || {};
@@ -3514,8 +3976,7 @@ function resume() {
     $("app").style.display = "block";
     $("who-av").textContent = initials(res.user.name);
     $("who-name").textContent = res.user.name;
-    $("who-role").textContent = res.user.role === "manager" ? "Branch Manager"
-      : res.user.role === "staff" ? "Branch Staff" : "Agent";
+    $("who-role").textContent = roleTitle(res.user.role);
     drawTabs();
     render();
   }).catch(function () {
