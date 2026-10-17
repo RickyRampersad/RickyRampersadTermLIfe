@@ -2520,8 +2520,15 @@ function qpThreadAudit() {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
   if (!sh || sh.getLastRow() < 2) return 'The log is empty.';
   var d = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues();
+  /* References run past 44 characters, so a fixed slice left no gap and the
+     HOW column ran straight into the text — "...Explanation for areference-
+     reply-from-dept". Cut shorter than the column is wide. */
+  var W = 46, pad = function (s) {
+    s = String(s || '');
+    return (s.length > W - 2 ? s.slice(0, W - 2) : s) + '                                                '.slice(0, W - Math.min(s.length, W - 2));
+  };
   var out = ['THREAD AUDIT — read-only, nothing is sent', '',
-             '  REFERENCE                                  HOW'];
+             '  ' + pad('REFERENCE') + 'HOW'];
   var n = 0, stray = 0;
   for (var i = 0; i < d.length; i++) {
     var ref = String(d[i][0] || '').trim();
@@ -2532,7 +2539,7 @@ function qpThreadAudit() {
       ? clean(String(d[i][5] || '')) + ' - ' + String(d[i][17] || '') : '';
     var f = qpFindThread_(ref, d[i][14], subject);
     if (!f.thread) stray++;
-    out.push('  ' + (ref + '                                          ').slice(0, 44) + f.how);
+    out.push('  ' + pad(ref) + f.how);
   }
   out.push('');
   out.push('  ' + n + ' open case' + (n === 1 ? '' : 's') + ', ' + stray
