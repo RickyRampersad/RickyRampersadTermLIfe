@@ -14,19 +14,25 @@ jobs:
       - name: transcribe and re-voice
         run: |
           python3 - <<'PY'
-          import asyncio, edge_tts, json
-          from faster_whisper import WhisperModel
-          m = WhisperModel('small.en', compute_type='int8')
-          segs, _ = m.transcribe('probe/sample.mp3')
-          text = ' '.join(s.text.strip() for s in segs)
+          import asyncio, edge_tts, json, traceback
+          log = open('probe/log.txt','w')
+          text = 'This is a test of the Andrew voice.'
+          try:
+              from faster_whisper import WhisperModel
+              m = WhisperModel('base.en', compute_type='int8')
+              segs, _ = m.transcribe('probe/sample.mp3')
+              text = ' '.join(s.text.strip() for s in segs)
+          except Exception: log.write(traceback.format_exc())
           open('probe/text.txt','w').write(text)
           voices = ['en-US-AndrewNeural','en-US-AndrewMultilingualNeural','en-US-BrianNeural','en-US-BrianMultilingualNeural','en-US-ChristopherNeural','en-US-GuyNeural','en-US-EricNeural','en-US-RogerNeural','en-US-SteffanNeural']
           async def go():
               for v in voices:
                   for r in ['-12%']:
-                      await edge_tts.Communicate(text, v, rate=r).save(f'probe/{v}{r}.mp3')
-          asyncio.run(go())
+                      try: await edge_tts.Communicate(text, v, rate=r).save(f'probe/{v}{r}.mp3')
+                      except Exception: log.write(v + ' ' + traceback.format_exc())
+          asyncio.run(go()); log.close()
           PY
-      - run: |
+      - if: always()
+        run: |
           git config user.name tts-bot; git config user.email tts-bot@users.noreply.github.com
           git add probe && git commit -m "probe output" && git push
