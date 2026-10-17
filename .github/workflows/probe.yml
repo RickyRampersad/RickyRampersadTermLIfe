@@ -16,8 +16,9 @@ jobs:
           python3 - <<'PY'
           import asyncio, edge_tts, json, traceback
           log = open('probe/log.txt','w')
-          text = 'This is a test of the Andrew voice.'
+          text = open('probe/line.txt').read().strip()
           try:
+              raise SystemExit
               from faster_whisper import WhisperModel
               m = WhisperModel('base.en', compute_type='int8')
               import subprocess, numpy as np
@@ -26,14 +27,24 @@ jobs:
               segs, _ = m.transcribe(np.frombuffer(raw, np.int16).astype(np.float32) / 32768)
               text = ' '.join(s.text.strip() for s in segs)
           except Exception: log.write(traceback.format_exc())
-          open('probe/text.txt','w').write(text)
-          voices = ['en-US-AndrewNeural','en-US-AndrewMultilingualNeural','en-US-BrianNeural','en-US-BrianMultilingualNeural','en-US-ChristopherNeural','en-US-GuyNeural','en-US-EricNeural','en-US-RogerNeural','en-US-SteffanNeural']
+
+          voices = ['en-US-AndrewNeural','en-US-AndrewMultilingualNeural']
           async def go():
               for v in voices:
-                  for r in ['-12%']:
+                  for r in ['-12%','-4%']:
                       try: await edge_tts.Communicate(text, v, rate=r).save(f'probe/{v}{r}.mp3')
                       except Exception: log.write(v + ' ' + traceback.format_exc())
           asyncio.run(go()); log.close()
+          from faster_whisper import WhisperModel
+          import glob
+          m = WhisperModel('base', compute_type='int8')
+          out = {}
+          for f in sorted(glob.glob('probe/en-US-*.mp3')):
+              try:
+                  segs, info = m.transcribe(f)
+                  out[f] = [info.language, ' '.join(x.text.strip() for x in segs)]
+              except Exception as e: out[f] = ['err', str(e)]
+          json.dump(out, open('probe/check.json','w'), indent=1)
           PY
       - if: always()
         run: |
