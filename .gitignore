@@ -33,6 +33,9 @@ tools/film/captions-*.ass
 # tracked; this one is a build artifact and rebuilds from mtg3-lines.json,
 # mtg3-timing.json and build-boardfilm.py.
 orphan-transition/mtg3.html
+orphan-transition/mtg3-poster.jpg
+tools/film/mtg3.mp4
+tools/film/vomtg3/
 
 # the transition send: the departed agents' names and every client file stay out
 tools/letters/departed.txt

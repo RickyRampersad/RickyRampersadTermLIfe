@@ -443,5 +443,35 @@
   "sfx": "sfx-mtg.wav",
   "start": 18,
   "capmode": "strip"
+ },
+ "mtg3": {
+  "cap": "cap-mtg3",
+  "vox": "vomtg3",
+  "music": "bed-mtg3.wav",
+  "mix": "mtg3-mix.wav",
+  "ass": "captions-mtg3.ass",
+  "dur": 31.599,
+  "durs": [
+   8.391,
+   7.475,
+   7.723,
+   8.01
+  ],
+  "out": "mtg3.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "dark": [
+   3
+  ],
+  "sfx": "sfx-mtg3.wav",
+  "start": 0,
+  "ticks": [],
+  "hits": [
+   5.96,
+   10.67,
+   12.0,
+   18.49,
+   18.83
+  ]
  }
 }
