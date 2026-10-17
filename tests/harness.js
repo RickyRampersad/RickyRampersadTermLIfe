@@ -115,6 +115,7 @@ function makeEnv(opts = {}) {
         if (f === 'EEEE d MMMM yyyy') return DAY[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
         return d.toISOString();
       },
+      parseDate: (s, tz, f) => new Date(String(s).replace(' ', 'T') + (String(s).length <= 16 ? ':00' : '')),
       getUuid: () => 'uuid-' + Math.random().toString(36).slice(2),
       base64Encode: s => Buffer.from(String(s)).toString('base64'),
       base64EncodeWebSafe: b => Buffer.from(Array.isArray(b) ? b : String(b))

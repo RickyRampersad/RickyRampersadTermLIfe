@@ -161,6 +161,50 @@
   .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 
+
+  /* the bag */
+  .bag{position:relative;overflow:hidden;margin-top:14px;border-radius:18px;padding:16px 16px 12px;border:1px solid rgba(111,168,255,.28);
+    background:radial-gradient(120% 140% at 0% 0%,rgba(42,109,224,.32),transparent 55%),linear-gradient(160deg,#0b1d3f,#070F26)}
+  .bag.closed{border-color:rgba(251,191,36,.35)} .bag.gone{border-color:rgba(255,255,255,.12)}
+  .bag .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .bag .ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:rgba(0,207,234,.12);border:1px solid rgba(0,207,234,.35);flex:none}
+  .bag .ico svg{width:26px;height:26px}
+  .bag .what{flex:1;min-width:200px}
+  .bag .what small{display:block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:#7fe9f7;font-weight:800}
+  .bag .what b{display:block;font-family:'Montserrat',system-ui,sans-serif;font-size:19px;font-weight:800;line-height:1.25}
+  .bag .what span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+  .bag .cd{font-family:'Montserrat',system-ui,sans-serif;font-variant-numeric:tabular-nums;text-align:right}
+  .bag .cd b{display:block;font-size:30px;font-weight:800;color:#fff;line-height:1}
+  .bag .cd span{font-size:11px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
+  .bag.closed .cd b{color:var(--warn)}
+  .track{position:relative;height:46px;margin:14px 2px 2px}
+  .track .rail{position:absolute;left:0;right:0;top:16px;height:10px;border-radius:99px;background:rgba(255,255,255,.07)}
+  .track .win{position:absolute;top:16px;height:10px;border-radius:99px;background:linear-gradient(90deg,#1D5BC4,#00CFEA)}
+  .track .mk{position:absolute;top:8px;width:2px;height:26px;background:rgba(255,255,255,.55);transform:translateX(-1px)}
+  .track .mk.cut{background:var(--warn)} .track .mk.bagm{background:#00E5FF;width:3px}
+  .track .mk.home{background:rgba(255,255,255,.25);height:18px;top:12px}
+  .track .lb{position:absolute;top:30px;font-size:10px;color:var(--muted);transform:translateX(-50%);white-space:nowrap}
+  .track .lb.up{top:-6px}
+  .track .lb.up.l{transform:translateX(calc(-100% - 6px))} .track .lb.up.r{transform:translateX(6px)}
+  .track .lb .nm{display:inline}
+  @media (max-width:560px){.track .lb .nm,.track .lb.end{display:none}.bag .ico{width:38px;height:38px}.bag .cd{text-align:left;width:100%}.bag .what b{font-size:17px}}
+  .track .now{position:absolute;top:10px;width:14px;height:22px;transform:translateX(-7px)}
+  .track .now i{position:absolute;left:6px;top:0;width:2px;height:22px;background:#fff;box-shadow:0 0 10px #fff}
+  .track .now i:after{content:'';position:absolute;left:-4px;top:-5px;width:10px;height:10px;border-radius:50%;background:#fff;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}100%{box-shadow:0 0 0 12px rgba(255,255,255,0)}}
+  @media (prefers-reduced-motion:reduce){.track .now i:after{animation:none}}
+  .bag .duty{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)}
+  .bag .duty b{color:var(--text)}
+  .bag .acts2{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .bagnote{margin-top:12px;padding:10px 12px;border-radius:12px;font-size:13px;border:1px solid rgba(0,207,234,.3);background:rgba(0,207,234,.08)}
+  .bagnote.warn{border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.08)}
+  .tag.bag-on{background:rgba(74,222,128,.12);color:var(--ok)} .tag.bag-for{background:rgba(0,207,234,.12);color:var(--teal)}
+  .tag.bag-missed,.tag.bag-after{background:rgba(248,113,113,.16);color:var(--bad)} .tag.bag-waiting{background:rgba(251,191,36,.14);color:var(--warn)}
+  .hours{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:150px;margin-top:8px}
+  .hours .h{display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
+  .hours .h i{display:block;border-radius:4px 4px 0 0}
+  .hours .h small{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted)}
+  .hours .h em{font-style:normal;font-size:10px;color:var(--text);text-align:center;margin-bottom:2px}
   /* result */
   .done{text-align:center}
   .done .ref{font-family:'Montserrat';font-size:24px;font-weight:800;color:var(--gold);margin:6px 0 12px;letter-spacing:1px}
@@ -237,6 +281,7 @@
 </header>
 
 <main class="wrap" id="main" hidden>
+  <div class="bag" id="bagBar" hidden></div>
 
   <!-- ─────────── LOG ─────────── -->
   <section id="tab-log" hidden>
@@ -294,6 +339,7 @@
         <label for="notes">Notes for the branch (optional)</label>
         <textarea id="notes" maxlength="500" placeholder="e.g. Client will drop the ID tomorrow"></textarea>
         <label class="chk"><input type="checkbox" id="declare"><span id="declareText"></span></label>
+        <div class="bagnote" id="bagHint"></div>
         <div class="err" id="subErr" role="alert" hidden></div>
         <button class="btn gold block" type="submit" id="submitBtn" style="margin-top:14px">Log it</button>
       </div>
@@ -434,7 +480,7 @@
       var pill = $('modePill'); pill.hidden = false;
       pill.textContent = c.mode === 'live' ? 'LIVE' : 'TEST'; pill.className = 'pill ' + (c.mode === 'live' ? 'live' : 'test');
       pill.title = c.mode === 'live' ? 'E-mails go to the people named' : 'Test mode: every e-mail goes to the test inbox';
-      buildTabs(); setupForm();
+      S.bag = c.bag || null; buildTabs(); setupForm(); renderBag();
       if (!c.agent) api('lb.agents').then(function (r) {
         S.agents = r.agents;
         $('agentSel').innerHTML = '<option value="">Choose the agent…</option>' + r.agents.map(function (a) {
@@ -445,6 +491,75 @@
       showTab(!c.agent && ['queue', 'log', 'trans', 'stats'].indexOf(want) >= 0 ? want : c.agent ? 'log' : 'queue');
     });
   }
+
+
+  /* ── the bag ────────────────────────────────────────────── */
+  var BAG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#00E5FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.5 14l2 2 3.5-4"/></svg>';
+  function h12(h) { return h === 12 ? '12 noon' : (h > 12 ? h - 12 : h) + ':00 ' + (h >= 12 ? 'pm' : 'am'); }
+  function dayLabel(iso) { return new Date(iso).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ }); }
+  function hrsOf(iso) { var d = new Date(iso); var p = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ }).format(d).split(':'); return +p[0] + (+p[1]) / 60; }
+  function left(ms) {
+    if (ms <= 0) return '0:00';
+    var m = Math.floor(ms / 60000), h = Math.floor(m / 60);
+    return h ? h + ' h ' + (m % 60 < 10 ? '0' : '') + (m % 60) + ' m' : m + ' min';
+  }
+  function bagText(b, now) {
+    b.bagDayLabel = dayLabel(b.bagAt);
+    var close = new Date(b.closesAt).getTime(), bagAt = new Date(b.bagAt).getTime();
+    if (b.open && now < close) return { cls: '', k: 'Today\'s bag · open', head: 'In by ' + h12(b.cutoff) + ', on today\'s ' + h12(b.at) + ' bag',
+      sub: 'Papers in the branch\'s hands before ' + h12(b.cutoff) + ' are checked, put on a transmittal and go down at the ' + h12(b.at) + ' bag exchange.',
+      cd: left(close - now), cdl: 'until the bag closes' };
+    if (b.open && now < bagAt) return { cls: 'closed', k: 'Today\'s bag · closed, being prepared', head: 'Too late for today. Next: ' + b.bagDayLabel,
+      sub: 'Today\'s bag is being sealed for the ' + h12(b.at) + ' exchange. Papers in now go on the next working day\'s bag.', cd: left(bagAt - now), cdl: 'to the exchange' };
+    return { cls: b.gone ? 'gone' : 'closed', k: b.gone ? 'Today\'s bag has gone' : 'Next bag', head: 'Next bag: ' + b.bagDayLabel + ', ' + h12(b.at),
+      sub: 'Hand papers in by ' + h12(b.cutoff) + ' on ' + b.bagDayLabel + ' to catch it.',
+      cd: close - now > 20 * 3600000 ? b.bagDayLabel.split(' ')[0] : left(close - now), cdl: close - now > 20 * 3600000 ? 'in by ' + h12(b.cutoff) : 'until it closes' };
+  }
+  function renderBag() {
+    var b = S.bag, el = $('bagBar');
+    if (!b) { el.hidden = true; return; }
+    var now = Date.now(), t = bagText(b, now);
+    if (b.open && now >= new Date(b.bagAt).getTime() + 60000 && !S.bagRefetch) { S.bagRefetch = 1; api('lb.baginfo').then(function (r) { S.bag = r.bag; S.bagRefetch = 0; renderBag(); }).catch(function () {}); }
+    var H0 = 7, H1 = 17, x = function (h) { return Math.max(0, Math.min(100, (h - H0) * 100 / (H1 - H0))); };
+    var nowH = hrsOf(new Date(now).toISOString());
+    var homes = (b.rota || []).filter(function (r) { return r.leaves; }).map(function (r) {
+      var m = /(\d{1,2})(?::(\d\d))?\s*(am|pm)?/i.exec(r.leaves); if (!m) return '';
+      var h = +m[1] + (m[2] ? +m[2] / 60 : 0); if (/pm/i.test(m[3] || '') && h < 12) h += 12; if (!m[3] && h < 7) h += 12;
+      return '<i class="mk home" style="left:' + x(h) + '%"></i><span class="lb" style="left:' + x(h) + '%"><span class="nm">' + esc(r.name.split(' ')[0]) + ' </span>' + esc(String(Math.floor(h) > 12 ? Math.floor(h) - 12 : Math.floor(h))) + 'pm</span>';
+    }).join('');
+    var d = b.duty;
+    el.className = 'bag ' + t.cls; el.hidden = false;
+    el.innerHTML = '<div class="top"><div class="ico">' + BAG_ICON + '</div><div class="what"><small>' + esc(t.k) + '</small><b>' + esc(t.head) + '</b><span>' + esc(t.sub) + '</span></div>' +
+      '<div class="cd"><b>' + esc(t.cd) + '</b><span>' + esc(t.cdl) + '</span></div></div>' +
+      '<div class="track" aria-hidden="true"><div class="rail"></div><div class="win" style="left:0;width:' + x(b.cutoff) + '%"></div>' +
+      '<i class="mk cut" style="left:' + x(b.cutoff) + '%"></i><span class="lb up l" style="left:' + x(b.cutoff) + '%;color:#FBBF24">In by ' + h12(b.cutoff) + '</span>' +
+      '<i class="mk bagm" style="left:' + x(b.at) + '%"></i><span class="lb up r" style="left:' + x(b.at) + '%;color:#7fe9f7">Bag ' + h12(b.at).replace(':00', '') + '</span>' +
+      '<span class="lb" style="left:0;transform:none">7 am</span><span class="lb end" style="left:100%;transform:translateX(-100%)">5 pm</span>' + homes +
+      (b.workDay && nowH >= H0 && nowH <= H1 ? '<div class="now" style="left:' + x(nowH) + '%"><i></i></div>' : '') + '</div>' +
+      (d ? '<div class="duty">On the bag this week: <b>' + esc(d.name) + '</b>' + (d.leaves ? ' · leaves ' + esc(d.leaves) : '') + ' · next week ' + esc(d.next) + '</div>' : '') +
+      (!S.cfg.agent ? '<div class="acts2">' +
+        '<button class="btn ghost sm" id="bagIn">' + (b.log && b.log.inAt ? '✓ Bag in ' + esc(fmt(b.log.inAt, true).split(', ').pop()) : 'Bag in: cleared and distributed') + '</button>' +
+        '<button class="btn ghost sm" id="bagOut">' + (b.log && b.log.outAt ? '✓ Bag out ' + esc(fmt(b.log.outAt, true).split(', ').pop()) + ' · ' + plural(+b.log.transmittals || 0, 'transmittal') : 'Bag out: sealed and gone') + '</button></div>' : '');
+    if ($('bagIn')) $('bagIn').onclick = function () { bagStep('in'); };
+    if ($('bagOut')) $('bagOut').onclick = function () { bagStep('out'); };
+    var hint = $('bagHint');
+    if (hint) hint.hidden = !!(S.cfg && S.type === S.cfg.types[1]);
+    if (hint) { var tx = bagText(b, now); hint.className = 'bagnote' + (tx.cls ? ' warn' : ''); hint.textContent = (tx.cls ? '⏱ ' + tx.head + '. ' + tx.sub : '⏱ ' + tx.cd + ' left: hand these papers in by ' + h12(b.cutoff) + ' and they go on today\'s ' + h12(b.at) + ' bag.'); }
+  }
+  function bagStep(step) {
+    modal('<h3>' + (step === 'in' ? 'The bag is in' : 'The bag is going down') + '</h3><p class="hint">' +
+      (step === 'in' ? 'Cleared, and the mail given out to the team.' : 'Sealed with today\'s transmittals. Anything not on it is counted as missed.') + '</p>' +
+      '<label for="bNote">Note (optional)</label><textarea id="bNote" maxlength="300"></textarea><div class="err" id="mErr" hidden></div>' +
+      '<div class="acts"><button class="btn ghost" id="mNo">Cancel</button><button class="btn gold" id="mYes">' + (step === 'in' ? 'Bag in' : 'Bag out') + '</button></div>');
+    $('mNo').onclick = closeModal;
+    $('mYes').onclick = function () {
+      busy($('mYes'), true, 'Saving…');
+      api('lb.bag', { step: step, note: $('bNote').value }).then(function (r) { S.bag = r.bag; closeModal(); renderBag(); if (S.tab === 'queue') loadQueue(); })
+        .catch(function (e) { showErr($('mErr'), e.message); busy($('mYes'), false); });
+    };
+  }
+  setInterval(function () { if (document.visibilityState === 'visible') renderBag(); }, 30000);
+  function bagTag(l) { return l.bag ? '<span class="tag bag-' + esc(l.bag.state) + '">' + esc(l.bag.label) + '</span>' : ''; }
 
   /* ── tabs ──────────────────────────────────────────────── */
   function buildTabs() {
@@ -714,6 +829,9 @@
       '<p class="hint" style="font-size:14px">' + (contract
         ? 'Deliver it to the client by <b>' + esc(r.due) + '</b> and record the handover in the Delivery Book.'
         : plural(r.lines, 'document') + ' logged. Hand the papers to the branch with this reference.') + '</p>' +
+      (r.bag ? (function () { S.bag = r.bag; renderBag(); var t = bagText(r.bag, Date.now());
+        return '<div class="bagnote' + (t.cls ? ' warn' : '') + '" style="text-align:left"><b>' + esc(t.cls ? t.head : 'Catches today\'s ' + h12(r.bag.at) + ' bag if the papers are in by ' + h12(r.bag.cutoff)) + '</b><br>' +
+          esc(t.cls ? t.sub : t.cd + ' left. After ' + h12(r.bag.cutoff) + ' they wait for the next working day\'s bag.') + '</div>'; })() : '') +
       (r.flags && r.flags.length ? '<div style="margin-top:10px">' + r.flags.map(function (f) { return '<span class="tag warn">' + esc(f) + '</span>'; }).join('') + '</div>' : '') +
       '<p class="hint">' + esc(r.mail || '') + '</p>' +
       '<div class="acts"><button class="btn gold" id="again">Log more</button>' + (S.cfg.agent ? '<button class="btn ghost" id="seeMine">My log</button>' : '<button class="btn ghost" id="seeQ">Queue</button>') + '</div>';
@@ -773,7 +891,7 @@
           ls.map(function (l) {
             return '<div class="ln" style="grid-template-columns:1fr auto"><div class="t">' + esc(l.document) + (l.quantity > 1 ? ' × ' + l.quantity : '') +
               '<small>' + esc(l.policy || 'no policy') + ' · ' + esc(l.type === S.cfg.types[1] ? 'to deliver to the client' : l.department) + '</small>' + stampsOf(l) + '</div>' +
-              '<div>' + statusTag(l) + '</div></div>';
+              '<div style="text-align:right">' + statusTag(l) + (l.bag ? '<br>' + bagTag(l) : '') + '</div></div>';
           }).join('') + '</div>';
       }).join('') : '<div class="empty">Nothing logged in this period.</div>';
       $('mine').querySelectorAll('[data-wd]').forEach(function (b) {
@@ -809,14 +927,16 @@
     var contracts = L.filter(function (l) { return l.status === 'With agent'; });
     var returned = L.filter(function (l) { return l.status === 'Returned'; });
     var sentToday = L.filter(function (l) { return l.status === 'Sent'; });
+    if (q.bag) { S.bag = q.bag; renderBag(); }
+    var forBag = recv.filter(function (l) { return l.bag && l.bag.state === 'for' && q.bag && l.bag.bagDay <= q.bag.today; });
     $('qTiles').innerHTML =
       tile('To receive', logged.length, logged.length ? 'warn' : '', 'qRecv') +
-      tile('To send', recv.length, '', 'qSend') +
+      tile('For today\'s bag', forBag.length, forBag.length ? 'warn' : 'ok', 'qSend') +
       tile('Late, no reason', late.filter(function (l) { return !l.reasonFresh; }).length, late.length ? 'bad' : 'ok', 'qLate') +
       tile('Sent today', sentToday.length, 'ok', 'qToday');
     $('qTiles').querySelectorAll('[data-go]').forEach(function (t) { t.addEventListener('click', function () { var el = $(t.getAttribute('data-go')); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
     var n = $('n-queue'); if (n) { n.hidden = !(late.length + logged.length); n.textContent = late.length || logged.length; n.className = 'n' + (late.length ? ' bad' : ''); }
-    $('qCut').textContent = 'Late after ' + q.cutoff + ':00 on the day received';
+    $('qCut').textContent = 'In by ' + h12(q.cutoff) + ', on the ' + h12((q.bag && q.bag.at) || 13) + ' bag';
 
     $('qLate').hidden = !late.length;
     $('qLateList').innerHTML = late.map(function (l) {
@@ -842,7 +962,7 @@
             '<small>' + esc(l.policy || 'no policy') + ' · ' + esc(l.agent) + ' · received ' + esc(fmt(l.receivedAt, true)) + ' by ' + esc(l.receivedBy) + '</small>' +
             (l.routingChanged ? '<div class="stamps">Routing corrected: ' + esc(l.routingChanged) + '</div>' : '') +
             (l.reason ? '<div class="stamps">Reason: ' + esc(l.reason) + '</div>' : '') + '</div>' +
-            '<div>' + (l.late ? '<span class="tag bad">' + (l.daysHeld ? plural(l.daysHeld, 'day') : 'after ' + q.cutoff + ':00') + '</span>' : '<span class="tag info">today</span>') + '</div></div>';
+            '<div>' + (l.bag ? bagTag(l) : l.late ? '<span class="tag bad">late</span>' : '<span class="tag info">today</span>') + '</div></div>';
         }).join('') + '</div>';
     }).join('') : '<div class="empty">Nothing waiting to go. Received papers appear here, grouped by department.</div>';
     $('qSend').querySelectorAll('.grp').forEach(function (g) {
@@ -1100,6 +1220,7 @@
       '</div>';
     if (s.imported) html += '<p class="hint" style="margin-top:8px">Includes ' + s.imported.toLocaleString() + ' lines imported from the old Log Book' +
       (T.noSentDate ? ', ' + T.noSentDate.toLocaleString() + ' of them with no date sent recorded' : '') + '.</p>';
+    if (s.bag) html += bagStats(s.bag);
     html += '<h3 style="font-size:14px;margin:18px 0 4px">Day by day</h3>' + dayChart(s.daily);
     html += '<h3 style="font-size:14px;margin:18px 0 4px">By department</h3>' + table(s.byDepartment, 'Department');
     html += '<h3 style="font-size:14px;margin:18px 0 4px">Did the departments confirm they got them?</h3>' + deptScore(s.deptScore || []);
@@ -1110,6 +1231,27 @@
     if (s.reasons.length) html += '<h3 style="font-size:14px;margin:18px 0 4px">Reasons given for not sending the same day</h3><table class="t"><tbody>' +
       s.reasons.map(function (r) { return '<tr><td>' + esc(r.reason) + '</td><td class="n">' + r.n + '</td></tr>'; }).join('') + '</tbody></table>';
     $('stats').innerHTML = html;
+  }
+  function bagStats(b) {
+    var max = Math.max.apply(null, b.byHour.map(function (o) { return o.lines; }).concat([1]));
+    var cols = []; for (var h = 7; h <= 18; h++) cols.push(b.byHour.filter(function (o) { return o.hour === h; })[0] || { hour: h, lines: 0, onBag: 0, late1: 0, late2: 0, never: 0 });
+    var bar = function (o) {
+      var u = function (n) { return (n * 130 / max).toFixed(1) + 'px'; };
+      return '<div class="h" title="' + esc(h12(o.hour)) + ': ' + o.lines + ' received, ' + o.onBag + ' on their bag, ' + o.late1 + ' one bag late, ' + o.late2 + ' later, ' + o.never + ' no date sent">' +
+        '<em>' + (o.lines ? Math.round(o.onBag * 100 / o.lines) + '%' : '') + '</em>' +
+        '<i style="height:' + u(o.never) + ';background:rgba(169,187,207,.25)"></i><i style="height:' + u(o.late2) + ';background:#F87171;border-radius:0"></i>' +
+        '<i style="height:' + u(o.late1) + ';background:#FBBF24;border-radius:0"></i><i style="height:' + u(o.onBag) + ';background:#00CFEA;border-radius:0"></i>' +
+        '<small>' + (o.hour > 12 ? o.hour - 12 : o.hour) + (o.hour === b.cutoff ? '⁎' : '') + '</small></div>';
+    };
+    return '<h3 style="font-size:14px;margin:18px 0 4px">The bag: in by ' + h12(b.cutoff) + ', down at ' + h12(b.at) + '</h3>' +
+      '<div class="kp">' +
+      '<div class="tile ' + (b.onBagPct >= 90 ? 'ok' : b.onBagPct >= 60 ? 'warn' : 'bad') + '"><b>' + pctTxt(b.onBagPct) + '</b><span>went on their bag<br>' + b.onBag + ' of ' + b.sent + ' sent</span></div>' +
+      '<div class="tile ' + (b.beforeOnBagPct >= 90 ? 'ok' : 'warn') + '"><b>' + pctTxt(b.beforeOnBagPct) + '</b><span>of papers in before ' + h12(b.cutoff) + ' went that day</span></div>' +
+      '<div class="tile warn"><b>' + pctTxt(b.afterPct) + '</b><span>came in after ' + h12(b.cutoff) + '<br>so waited a day</span></div></div>' +
+      '<div class="hours" role="img" aria-label="Papers by the hour they came in, and whether they made their bag">' + cols.map(bar).join('') + '</div>' +
+      '<div class="legend" style="margin-top:24px;flex-wrap:wrap"><span><i style="background:#00CFEA"></i>On their bag</span><span><i style="background:#FBBF24"></i>One bag late</span><span><i style="background:#F87171"></i>Two or more late</span><span><i style="background:rgba(169,187,207,.4)"></i>No date sent</span><span>⁎ the cut-off hour</span></div>' +
+      (b.log && b.log.length ? '<div class="scroll"><table class="t" style="margin-top:10px"><thead><tr><th>Day</th><th>On the bag</th><th>In</th><th>Out</th><th class="n">Transmittals</th><th class="n">Documents</th><th class="n">Missed</th></tr></thead><tbody>' +
+        b.log.slice().reverse().map(function (r) { return '<tr><td>' + esc(String(r.day).slice(0, 10)) + '</td><td>' + esc(r.duty || '—') + '</td><td>' + esc(r.inAt ? fmt(r.inAt, true).split(', ').pop() : '—') + '</td><td>' + esc(r.outAt ? fmt(r.outAt, true).split(', ').pop() : '—') + '</td><td class="n">' + (r.transmittals || 0) + '</td><td class="n">' + (r.documents || 0) + '</td><td class="n">' + (r.missed ? '<span class="tag bad">' + r.missed + '</span>' : 0) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '');
   }
   function table(rows, label, agentish) {
     if (!rows.length) return '<div class="empty">Nothing in this period.</div>';

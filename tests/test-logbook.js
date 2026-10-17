@@ -299,7 +299,7 @@ console.log('the chase');
   env.LB_READ_ = null;
   const n0 = env.__mail.length;
   env.lbNudgeAgents_(NOW);
-  ok('an agent is reminded of papers logged and not handed in', env.__mail.length === n0 + 1 && /not yet with the branch/.test(env.__mail[n0].htmlBody));
+  ok('an agent is reminded of papers logged and not handed in', env.__mail.length === n0 + 1 && /One hour to catch today/.test(env.__mail[n0].htmlBody));
 }
 
 /* ── contracts ─────────────────────────────────────────────────────── */
@@ -499,6 +499,61 @@ console.log('companions, digest, the e-mails');
   const s30 = env.lbStats_({ days: 30 }, staff);
   ok('the agent table carries a quality score and papers never handed in', s30.byAgent[0].quality != null && 'neverIn' in s30.byAgent[0]);
   ok('the department scorecard is in the insights', Array.isArray(s30.deptScore));
+}
+
+
+/* ── the bag ───────────────────────────────────────────────────────── */
+console.log('the bag');
+{
+  env = world();
+  const L = (d, h, m) => new Date(2026, 9, d, h, m || 0);     // local clock = the branch's in the harness
+  ok('11:59 on a Friday catches that day\'s bag', env.lbBagDay_(L(16, 11, 59)) === '2026-10-16');
+  ok('12:00 on a Friday waits for Monday\'s bag', env.lbBagDay_(L(16, 12, 0)) === '2026-10-19');
+  ok('a Saturday goes on Monday\'s bag', env.lbBagDay_(L(17, 9)) === '2026-10-19');
+  ok('3 pm Tuesday goes on Wednesday\'s bag', env.lbBagDay_(L(20, 15)) === '2026-10-21');
+  env.__mkSheet('Bag Rota', 1, ['Staff', 'Order', 'Leaves At', 'Active'], [
+    ['Sasha Lalla', 1, '2 pm', 'Yes'], ['Kamla Dookran', 2, '3 pm', 'Yes'], ['Azariah Griffith', 3, '4 pm', 'Yes'], ['Elizabeth Lee', 4, '', 'No']]);
+  const d1 = env.lbDuty_('2026-10-19'), d2 = env.lbDuty_('2026-10-26'), d3 = env.lbDuty_('2026-11-02'), d4 = env.lbDuty_('2026-11-09');
+  ok('the bag rotates weekly through the rota in order', d1.name === 'Sasha Lalla' && d2.name === 'Kamla Dookran' && d3.name === 'Azariah Griffith' && d4.name === 'Sasha Lalla', [d1.name, d2.name, d3.name, d4.name]);
+  ok('a person marked No is off the rota', ![d1, d2, d3, d4].some(d => /Elizabeth/.test(d.name)));
+  ok('every day of a week has the same person', env.lbDuty_('2026-10-23').name === d1.name);
+  agent = env.lbSession_(env.lbLogin_({ agentNo: 'A10001', code: '4821' }).token);
+  staff = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
+  const r = env.lbSubmit_({ entry: entry() }, agent);
+  ok('logging returns where the bag stands', r.bag && typeof r.bag.open === 'boolean' && r.bag.cutoff === 12 && r.bag.at === 13);
+  const ids = env.lbQueue_({}, staff).lines.map(l => l.id);
+  env.lbReceive_({ ids, signature: SIG }, staff);
+  ids.forEach(id => setCell(env, id, 'Received At', L(15, 10, 30)));
+  env.LB_READ_ = null;
+  const rows = env.lbRows_();
+  ok('received 10:30, not late at 12:50', !env.lbIsLate_(rows[0], L(15, 12, 50)));
+  ok('missed the bag at 1:00 pm', env.lbIsLate_(rows[0], L(15, 13, 0)));
+  ok('the line says which bag', env.lbBagOf_(rows[0], L(15, 12, 50)).label === 'For the ' + env.Utilities.formatDate(new Date(2026, 9, 15, 12), '', 'EEE d MMM') + ' bag');
+  ids.forEach(id => setCell(env, id, 'Received At', L(15, 12, 20)));
+  env.LB_READ_ = null;
+  ok('received 12:20 is for the next bag, not late that afternoon', !env.lbIsLate_(env.lbRows_()[0], L(15, 16, 0)));
+  // prep at noon
+  env.LB_READ_ = null; env.LB_HOURS_ = null;
+  ids.forEach(id => setCell(env, id, 'Received At', L(15, 9)));
+  env.LB_READ_ = null;
+  const n0 = env.__mail.length;
+  const res = env.lbBagPrep_(L(15, 12, 5));
+  const pm = env.__mail[n0];
+  ok('at noon the person on the bag gets what to prepare', pm && /Today's bag/.test(pm.subject) && /RECORDS MANAGEMENT DEPT/.test(pm.htmlBody), res);
+  env.lbBagPrep_(L(15, 12, 50));
+  ok('once a day', env.__mail.length === n0 + 1);
+  // bag in, bag out
+  const bi = env.lbBag_({ step: 'in' }, staff);
+  ok('bag in is logged', bi.ok && tab(env, 'Bag Log').length === 2 && /Sam/.test(tab(env, 'Bag Log')[1][col(env, 'Bag Log', 'In By')]));
+  const bo = env.lbBag_({ step: 'out', note: 'Sealed' }, staff);
+  ok('bag out is logged on the same day\'s row with what missed it', bo.ok && tab(env, 'Bag Log').length === 2 && tab(env, 'Bag Log')[1][col(env, 'Bag Log', 'Out By')] && /Sealed/.test(tab(env, 'Bag Log')[1][col(env, 'Bag Log', 'Note')]));
+  ok('an agent cannot log the bag', env.lbHandle_({ action: 'lb.bag', step: 'in', token: env.lbLogin_({ agentNo: 'A10001', code: '4821' }).token }).ok === false);
+  // on its bag
+  const sent = { receivedAt: L(15, 9), sentAt: L(15, 12, 40) }, nextDay = { receivedAt: L(15, 9), sentAt: L(16, 12, 30) }, imported = { receivedAt: L(15, 11), sentAt: new Date(2026, 9, 15) };
+  ok('sent 12:40 made its bag; sent next day is one bag late; an old date-only line on the day counts',
+     env.lbOnBag_(sent) === true && env.lbBagsLate_(nextDay) === 1 && env.lbOnBag_(imported) === true);
+  const st = env.lbStats_({ days: 30 }, staff);
+  ok('the insights carry the bag', st.bag && Array.isArray(st.bag.byHour) && 'onBagPct' in st.bag);
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');
