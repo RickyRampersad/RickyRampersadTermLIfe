@@ -145,6 +145,7 @@
   .sig .ph{position:absolute;inset:auto 0 12px;text-align:center;color:#9aa6b4;font-size:13px;pointer-events:none}
   .acts{display:flex;gap:8px;margin-top:14px}
   .acts .btn{flex:1}
+  a.btn{text-decoration:none}
 
   /* insights */
   .kp{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -229,6 +230,7 @@
     <div><h1>Log Book</h1><small id="me">—</small></div>
     <div class="sp"></div>
     <span class="pill test" id="modePill" hidden>TEST</span>
+    <a class="btn ghost sm" id="filmLink" href="/rroperations/logbook/films.html" title="How the Log Book works, on film">&#9654; Film</a>
     <button class="btn ghost sm" id="signOut">Sign out</button>
   </div>
   <nav class="tabs" role="tablist" id="tabs"></nav>
@@ -447,6 +449,7 @@
   /* ── tabs ──────────────────────────────────────────────── */
   function buildTabs() {
     setupTeam();
+    $('filmLink').href = '/rroperations/logbook/films.html#' + (S.cfg.agent ? 'agents' : 'staff');
     var t = S.cfg.agent
       ? [['log', 'Log documents'], ['mine', S.cfg.lead ? 'My team' : 'My log']]
       : [['queue', 'Queue'], ['log', 'Log for an agent'], ['trans', 'Transmittals'], ['stats', 'Insights']];

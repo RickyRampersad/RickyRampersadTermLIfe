@@ -1,0 +1,93 @@
+{
+ "note": "The Log Book, for agents (17 October 2026). Every name and number on screen is made up.",
+ "role": "agent",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
+ "scenes": [
+  {
+   "visual": "title",
+   "eyebrow": "For agents",
+   "headline": "The Log Book, <em>for agents</em>",
+   "sub": "Log it, hand it in, watch it go",
+   "extra": 0.6,
+   "line": "This is the new Log Book, as an agent sees it. Log your documents, hand them in, and watch them go."
+  },
+  {
+   "visual": "lbsignin",
+   "eyebrow": "Signing in",
+   "headline": "Your number, <em>your password</em>",
+   "line": "Open Ricky Rampersad branch dot com, slash log book. Sign in with your agent number, and the password you use for the fact find."
+  },
+  {
+   "visual": "lbdoc",
+   "eyebrow": "The document first",
+   "headline": "It knows <em>where it goes</em>",
+   "line": "Choose the document first. The Log Book routes it to the right department, from the branch's own history, and says how sure it is."
+  },
+  {
+   "visual": "lbclient",
+   "eyebrow": "The client",
+   "headline": "Only <em>your</em> clients",
+   "line": "Then find the client. Type a name, an e-mail, or a policy number. You only ever see your own clients. Tick the policy the papers are for."
+  },
+  {
+   "visual": "lbcompanion",
+   "eyebrow": "Nothing left behind",
+   "headline": "What usually <em>comes with it</em>",
+   "line": "If something usually travels with it, the Log Book asks. A surrender usually comes with proof of I D. One tap adds it."
+  },
+  {
+   "visual": "lbconfirm",
+   "eyebrow": "Log it",
+   "headline": "A reference, <em>at once</em>",
+   "line": "Confirm the papers are complete and signed, and press Log it. You get a reference. Hand the papers to the branch the same day."
+  },
+  {
+   "visual": "lbmine",
+   "eyebrow": "My log",
+   "headline": "Every step, <em>on your phone</em>",
+   "line": "My log shows every step. Logged. Received by the branch. Sent on a transmittal. And confirmed by the department."
+  },
+  {
+   "visual": "counts",
+   "eyebrow": "The rule",
+   "headline": "The <em>same day</em>",
+   "rows": [
+    {
+     "at": "four",
+     "b": "In by four, out the same day",
+     "i": "Stamped when you log, when the branch receives, when it goes"
+    },
+    {
+     "at": "why",
+     "b": "Late? The branch is asked why",
+     "i": "And you are copied on the e-mail"
+    },
+    {
+     "at": "twenty",
+     "b": "A contract to deliver: twenty days",
+     "i": "Chased at day fifteen and day eighteen"
+    }
+   ],
+   "line": "The aim is the same day. Papers in by four o'clock go out the same day. If not, the branch is asked why, and you are copied. A contract you collect to deliver has twenty days."
+  },
+  {
+   "visual": "lbteam",
+   "eyebrow": "Unit managers",
+   "headline": "Your <em>whole team</em>",
+   "line": "Unit managers see their whole team, under My team. Every agent's papers, or one agent at a time. Nobody sees another unit."
+  },
+  {
+   "visual": "close",
+   "eyebrow": "The Log Book",
+   "words3": [
+    "Log it.",
+    "Hand it in.",
+    "Watch it go."
+   ],
+   "url": "rickyrampersadbranch.com/logbook",
+   "line": "Log it. Hand it in. Watch it go.",
+   "extra": 1.8
+  }
+ ]
+}

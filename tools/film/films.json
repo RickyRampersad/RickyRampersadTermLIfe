@@ -443,5 +443,71 @@
   "sfx": "sfx-mtg.wav",
   "start": 18,
   "capmode": "strip"
+ },
+ "lbagent": {
+  "cap": "cap-lbagent",
+  "vox": "volbagent",
+  "music": "bed-lbagent.wav",
+  "mix": "lbagent-mix.wav",
+  "ass": "captions-lbagent.ass",
+  "dur": 97.9,
+  "durs": [
+   8.7,
+   10.4,
+   9.8,
+   11.0,
+   9.3,
+   9.2,
+   9.7,
+   13.4,
+   9.9,
+   6.5
+  ],
+  "out": "logbook-agents.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "dark": [
+   7,
+   9
+  ],
+  "sfx": "sfx-lbagent.wav",
+  "start": 0,
+  "ticks": [],
+  "hits": []
+ },
+ "lbstaff": {
+  "cap": "cap-lbstaff",
+  "vox": "volbstaff",
+  "music": "bed-lbstaff.wav",
+  "mix": "lbstaff-mix.wav",
+  "ass": "captions-lbstaff.ass",
+  "dur": 91.7,
+  "durs": [
+   9.5,
+   10.0,
+   10.2,
+   10.3,
+   10.9,
+   13.9,
+   9.8,
+   10.8,
+   6.3
+  ],
+  "out": "logbook-staff.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "dark": [
+   8
+  ],
+  "sfx": "sfx-lbstaff.wav",
+  "start": 0,
+  "ticks": [],
+  "hits": [
+   69.07,
+   69.47,
+   72.53,
+   75.76,
+   76.21
+  ]
  }
 }

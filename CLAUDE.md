@@ -3878,10 +3878,20 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
 - **Insights add** the department scorecard (asked, Yes, No, no answer, days to answer) and, per agent, re-routed
   lines, papers never handed in (`LB.NEVER_IN_DAYS`) and a quality score out of 100.
 - **The e-mails** (16 October 2026: "ensure the email templates pop"): `lbMailHtml_` draws every one the same way, in
-  tables and inline styles only: a navy masthead with the hosted gold shield, a gold rule, a status band whose colour
+  tables and inline styles only: a navy masthead with the hosted blue shield, a blue-to-cyan rule, a status band whose colour
   and word agree (`LB_TONES`), the headline, figure tiles that wrap three to a row, and the lines as a striped table up
   to three columns or as cards beyond that, so nothing runs off a phone; `lbBtn_` makes buttons Outlook keeps.
   Checked by rendering at 760 and 390 px.
+- **The films** (17 October 2026: "the vid to send off", then "two films: agents and staff"). `rroperations/logbook/films.html`
+  (short address `/logbook-films`) plays *The Log Book, for agents* (`logbook-agents.mp4`, poster `film-agents.jpg`) and *The Log
+  Book, for staff* (`logbook-staff.mp4`, `film-staff.jpg`); the Log Book's "▶ Film" button opens each person's own. They are
+  drawn by `tools/film/build-boardfilm.py lbagent|lbstaff` (the board films' machinery and midnight-blue look; the Log Book's
+  scenes are the `s_lb*` visuals and `LB_CSS`) from `lbagent-lines.json` / `lbstaff-lines.json`, then `sfx.py`, `usetrack.py
+  audio/inspired-kevin-macleod.mp3 lbagent lbstaff`, `render.js`, `mixany.py`. Every name and number on screen is made up.
+  **The voice is not edge-tts**: that day `speech.platform.bing.com` was refused by the session's network and by the Mac's
+  too, so the narration is Kokoro (`am_michael`, offline, Apache 2.0, model files from the kokoro-onnx GitHub release),
+  voiced per sentence by a script in the session scratchpad, which also estimates each word's start for the timing file.
+  Re-voice on `en-US-AndrewNeural` when edge-tts is reachable again, so these sound like the other films.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).

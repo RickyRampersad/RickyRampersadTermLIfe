@@ -46,9 +46,12 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
-PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html'}
-TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents'}
-OUT = ROOT / 'orphan-transition' / PAGES[KEY]
+PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
+         'lbagent': 'film-agents.html', 'lbstaff': 'film-staff.html'}
+TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
+          'lbagent': 'The Log Book, for agents', 'lbstaff': 'The Log Book, for staff'}
+LB = KEY.startswith('lb')   # the Log Book films (17 October 2026): rroperations/logbook/, same look and machinery
+OUT = (ROOT / 'rroperations' / 'logbook' if LB else ROOT / 'orphan-transition') / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
 LINES, ROLE = SCRIPT['scenes'], SCRIPT['role']
@@ -669,10 +672,353 @@ def s_clock(i, sc, D):
             f'<div class="clockrow">{ring}<div class="sts">{stats}</div></div>{track}'
             f'{at(tF, "at up aim", inner=ico("target", "ii") + " The aim: a conversation in the first two days, a meeting soon after.")}</div>')
 
+# ── the Log Book films (17 October 2026: "the vid to send off", two films: agents and staff) ──────────
+def lbtabs(on, lead=False):
+    t = [('log', 'Log documents'), ('mine', 'My team' if lead else 'My log')]
+    return '<div class="ptabs">' + ''.join(f'<span class="{"on" if k == on else ""}">{x}</span>' for k, x in t) + '</div>'
+
+def lbcard(n, title, inner, cls='', t=None):
+    h = f'<div class="lbc {cls}"><div class="lbch"><i class="lbn">{n}</i><b>{title}</b></div>{inner}</div>'
+    return at(t, 'at up', inner=h) if t is not None else h
+
+def lbapp(main, on='queue', extra='', cam=None, url='rickyrampersadbranch.com/logbook'):
+    tabs = [('queue', 'Queue', '7'), ('log', 'Log for an agent', ''), ('trans', 'Transmittals', ''), ('stats', 'Insights', '')]
+    tb = ''.join(f'<span class="{"on" if k == on else ""}">{x}{f" <b>{n}</b>" if n else ""}</span>' for k, x, n in tabs)
+    camattr = f' data-cam="{esc([[int(t), s, k] for (t, s, k) in cam])}"' if cam else ''
+    return (f'<div class="scr at" style="--at:60ms"><div class="tbar"><span class="lights"><i></i><i></i><i></i></span>'
+            f'<div class="ubar">{ico("lock")}<span>{url}</span></div></div>'
+            f'<div class="vp"><div class="cam"{camattr}><div class="ab">{mark()}<div class="an"><b>Log Book</b>'
+            f'<span>Dana Reid · Staff</span></div><div class="abr"><span class="so">Sign out</span></div></div>'
+            f'<div class="lbtabs">{tb}</div><div class="main lbmain">{main}</div>{extra}</div></div></div>')
+
+def lbwin(url, main, extra=''):
+    return (f'<div class="scr at" style="--at:60ms"><div class="tbar"><span class="lights"><i></i><i></i><i></i></span>'
+            f'<div class="ubar">{ico("lock")}<span>{url}</span></div></div><div class="vp"><div class="cam lbmailbg">{main}{extra}</div></div></div>')
+
+def lbmasthead(title, kicker, tone='info'):
+    return (f'<div class="lbmh">{mark()}<div><small>RICKY RAMPERSAD BRANCH</small><b>Log Book</b></div></div><i class="lbrule"></i>'
+            f'<div class="lbband {tone}"><span class="lbbi">{ico("check" if tone == "ok" else "bolt" if tone == "bad" else "mail")}</span>'
+            f'<div><small>{kicker}</small><b>{title}</b></div></div>')
+
+def s_lbsignin(i, sc, D):
+    tU, tF1, tF2 = w(i, 'slash'), w(i, 'number'), w(i, 'password')
+    tBtn = tF2 + 1500
+    body = (f'<div class="lbgate"><div class="lbgl">{mark()}<b>Log Book</b><span>Ricky Rampersad Branch</span></div>'
+            f'<label>Agent number</label><div class="fld f1">{typed(tF1, "A10427", 110)}</div>'
+            f'<label>Password</label><div class="fld f2">{typed(tF2, "••••••••", 90)}</div>'
+            f'<div class="bbtn wide prs" style="--at:{ms(tBtn)}">Sign in</div>'
+            f'<p class="lbfine">The same password you use for the fact find.</p></div>')
+    toast = f'<div class="toast tph at" style="--at:{ms(tBtn + 350)}">{ico("check", "ii")} Signed in · Andrea Lewis</div>'
+    extra = toast + cursor([(300, 150, 420), (tF1 - 250, '.lbgate .f1'), (tF2 - 250, '.lbgate .f2'), (tBtn - 30, '.lbgate .bbtn')], kind='touch') + click(tBtn, '.lbgate .bbtn')
+    cues = [(tU, 'rickyrampersadbranch.com/logbook', False), (tF1, 'Your agent number', False), (tF2, 'Your fact find password', True)]
+    return stage(side(i, sc, cues), phone(i, body, title='Log Book', who='sign in', extra=extra))
+
+def s_lbdoc(i, sc, D):
+    tD, tR, tS = w(i, 'document'), w(i, 'routes'), w(i, 'sure')
+    seg = '<div class="lbseg"><span class="on">Documents for Guardian</span><span>Contract to deliver</span></div>'
+    pick = f'<div class="fld sel">{typed(tD, "Surrender Documents", 55)}</div>'
+    item = at(tR, 'at pop lbitem', inner=f'<b>Surrender Documents</b><label>Routed to</label>'
+              f'<div class="fld rt">GLOC CS RSC - CHAGUANAS</div>'
+              + at(tS, 'at up lbsugg', inner=f'{ico("check", "ii")} Routed automatically: 86% of 412 went here'))
+    body = (lbtabs('log') + lbcard(1, 'What are you logging', seg) + lbcard(3, 'The documents', '<label>Choose the document</label>' + pick + item))
+    extra = glow(tR + 500, '.lbitem .rt') + cursor([(300, 150, 420), (tD - 250, '.fld.sel')], kind='touch') + click(tD - 200, '.fld.sel')
+    cues = [(tD, 'Choose the document first', False), (tR, 'Routed from the branch&rsquo;s own history', False), (tS, 'It says how sure it is', True)]
+    return stage(side(i, sc, cues), phone(i, body, title='Log Book', who='Andrea', extra=extra))
+
+def s_lbclient(i, sc, D):
+    tC, tN, tO, tT = w(i, 'client'), w(i, 'name'), w(i, 'own'), w(i, 'Tick')
+    found = at(tN + 900, 'at pop lbcl', inner=f'{avatar("Keisha Thomas", "sm")}<div><b>Keisha Thomas</b><i>2 policies with you</i></div>{ico("check", "lbok")}')
+    other = at(tO, 'at up lboff', inner=f'{ico("lock", "ii")} Another agent&rsquo;s client: never shown')
+    pol = at(tT - 300, 'at up lbpol', inner=(f'<div class="lbpr on"><span class="bx prs" style="--at:{ms(tT + 200)}">{ico("check")}</span><div><b>9000000101</b><i>Life · Term to 65</i></div></div>'
+                                           f'<div class="lbpr"><span class="bx"></span><div><b>9000000102</b><i>Health · Individual</i></div></div>'))
+    body = lbtabs('log') + lbcard(2, 'The client', f'<label>Name, e-mail or policy number</label><div class="fld">{typed(tN, "Keisha", 120)}</div>{found}{other}{pol}')
+    extra = cursor([(300, 150, 420), (tN - 250, '.lbc .fld'), (tT + 150, '.lbpr.on .bx')], kind='touch') + click(tT + 200, '.lbpr.on .bx')
+    cues = [(tC, 'Find the client', False), (tN, 'A name, an e-mail or a policy', False), (tO, 'Only your own clients', True), (tT, 'Tick the policy', False)]
+    return stage(side(i, sc, cues), phone(i, body, title='Log Book', who='Andrea', extra=extra))
+
+def s_lbcompanion(i, sc, D):
+    tA, tS, tT = w(i, 'asks'), w(i, 'surrender'), w(i, 'tap')
+    item = lambda n, extra='': f'<div class="lbitem"><b>{n}</b><label>Routed to</label><div class="fld">GLOC CS RSC - CHAGUANAS</div>{extra}</div>'
+    ask = (f'<div class="lbask until" style="--at:{ms(tA)};--to:{ms(tT + 700)}"><b>Usually handed in with it</b>'
+           f'<div class="lbwith"><span>Proof of ID <i>79%</i></span><span class="add prs" style="--at:{ms(tT)}">+ Add</span></div>'
+           f'<div class="lbwith dim"><span>Policy Contract <i>58%</i></span><span class="add">+ Add</span></div></div>')
+    added = at(tT + 500, 'at pop', inner=item('Proof of ID', f'<span class="lbsugg">{ico("check", "ii")} Added</span>'))
+    body = lbtabs('log') + lbcard(3, 'The documents', item('Surrender Documents') + ask + added)
+    extra = cursor([(300, 150, 420), (tT - 30, '.lbask .add')], kind='touch') + click(tT, '.lbask .add')
+    cues = [(tA, 'The Log Book asks', False), (tS, 'A surrender: proof of ID', False), (tT, 'One tap adds it', True)]
+    return stage(side(i, sc, cues), phone(i, body, title='Log Book', who='Andrea', extra=extra))
+
+def s_lbconfirm(i, sc, D):
+    tC, tL, tR, tH = w(i, 'Confirm'), w(i, 'Log', 1), w(i, 'reference'), w(i, 'Hand')
+    form = lbcard(4, 'Confirm', f'<div class="lbchk"><span class="bx prs" style="--at:{ms(tC + 300)}">{ico("check")}</span>'
+                  f'<span>These are the documents I am handing in, complete and signed.</span></div>'
+                  f'<div class="bbtn wide prs lbgo" style="--at:{ms(tL)}">Log it</div>')
+    done = (f'<div class="lbdone after" style="--at:{ms(tR - 300)}"><span class="lbdi">{ico("check")}</span><b>Logged</b>'
+            f'<div class="lbref">{typed(tR, "LB-261017-7K2Q", 60)}</div><span>Surrender Documents · Proof of ID<br>for Keisha Thomas</span>'
+            + at(tH, 'at pop lbhand', inner=f'{ico("clock", "ii")} Hand them to the branch today') + '</div>')
+    body = lbtabs('log') + f'<div class="lbsw until" style="--at:0ms;--to:{ms(tR - 300)}">{form}</div>' + done
+    extra = cursor([(300, 150, 420), (tC + 250, '.lbchk .bx'), (tL - 30, '.lbgo')], kind='touch') + click(tC + 300, '.lbchk .bx') + click(tL, '.lbgo')
+    cues = [(tC, 'Complete and signed', False), (tL, 'Press Log it', False), (tR, 'Your reference, at once', False), (tH, 'Hand them in the same day', True)]
+    return stage(side(i, sc, cues), phone(i, body, title='Log Book', who='Andrea', extra=extra))
+
+def lbsteps(steps):
+    return ('<div class="lbsteps">' + ''.join(at(t, 'at l lbst' + (' lbhit' if g else ''), inner=f'<span class="lbsd">{ico(ic)}</span><div><b>{b}</b><i>{x}</i></div>')
+                                             for (t, b, x, ic, g) in steps) + '</div>')
+
+def s_lbmine(i, sc, D):
+    tL, tR, tS, tC = w(i, 'Logged'), w(i, 'Received'), w(i, 'Sent'), w(i, 'confirmed')
+    head = f'<div class="prw open">{avatar("Keisha Thomas", "sm")}<div><b>Keisha Thomas</b><i>LB-261017-7K2Q · 2 documents</i></div></div>'
+    st = lbsteps([(tL, 'Logged', 'Fri 17 Oct, 9:12', 'file', False), (tR, 'Received by the branch', 'Dana Reid, 10:40 · signed', 'user', False),
+                  (tS, 'Sent', 'TR-261017-03 · 2:05 pm, the same day', 'arrow', False), (tC, 'Department: Yes, received', 'Wed 22 Oct', 'check', True)])
+    body = lbtabs('mine') + head + st
+    cues = [(tL, 'Logged', False), (tR, 'Received', False), (tS, 'Sent on a transmittal', False), (tC, 'Confirmed by the department', True)]
+    return stage(side(i, sc, cues), phone(i, body, title='Log Book', who='Andrea'))
+
+def s_lbteam(i, sc, D):
+    tT, tO, tU = w(i, 'team'), w(i, 'one'), w(i, 'unit', 2)
+    row = lambda c, ref, ag, s, cls='': f'<div class="prw lbtr {cls}">{avatar(c, "sm")}<div><b>{c}</b><i>{ref}</i><span class="lbag">{ag}</span></div><span class="lbl {s[1]}">{s[0]}</span></div>'
+    A = [('Keisha Thomas', 'Surrender Documents', 'Andrea Lewis', ('Sent', 'grn')), ('Omar Hosein', 'ACH Form · Bank Statement', 'Marcus Ali', ('Received', 'blu')),
+         ('Lena Singh', 'Policy Contract to deliver', 'Marcus Ali', ('With agent', 'amb')), ('Ian Francis', 'Change of Beneficiary', 'Gail Walker', ('Logged', 'gry'))]
+    sel1 = f'<div class="fld lbsel until" style="--at:0ms;--to:{ms(tO)}">Whole team (4) ▾</div>'
+    sel2 = f'<div class="fld lbsel at" style="--at:{ms(tO)}">Marcus Ali ▾</div>'
+    l1 = f'<div class="until" style="--at:{ms(tT)};--to:{ms(tO)}">' + ''.join(row(*r) for r in A) + '</div>'
+    l2 = f'<div class="after lbl2" style="--at:{ms(tO + 100)}">' + ''.join(row(*r) for r in A if r[2] == 'Marcus Ali') + '</div>'
+    off = at(tU, 'at up lboff', inner=f'{ico("lock", "ii")} Another unit&rsquo;s papers: never shown')
+    body = lbtabs('mine', lead=True) + f'<div class="lbselw">{sel1}{sel2}</div><div class="lbstack">{l1}{l2}</div>{off}'
+    extra = cursor([(300, 150, 300), (tO - 200, '.lbselw')], kind='touch') + click(tO - 150, '.lbselw')
+    cues = [(tT, 'My team: every agent&rsquo;s papers', False), (tO, 'Or one agent at a time', False), (tU, 'Never another unit', True)]
+    return stage(side(i, sc, cues), phone(i, body, title='Log Book', who='Unit manager', extra=extra))
+
+# staff, on a laptop
+def lbqrow(c, doc, ag, right, cls='', t=None, k=None):
+    dk = f' data-k="{k}"' if k else ''
+    inner = f'<span class="bx">{ico("check")}</span>{avatar(ag, "sm")}<div class="lbqn"><b>{c}</b><i>{doc}</i></div><span class="lbqa">{ag}</span>{right}'
+    return at(t, f'at l lbq {cls}', extra=dk, inner=inner) if t is not None else f'<div class="lbq {cls}"{dk}>{inner}</div>'
+
+def s_lbqueue(i, sc, D):
+    tQ, tL, tR, tD = w(i, 'Queue'), w(i, 'logged'), w(i, 'received'), w(i, 'department')
+    logged = (f'<h4 class="at" style="--at:{ms(tL)}">Logged, not handed in yet <span class="lbl gry">2</span></h4>'
+              + lbqrow('Keisha Thomas', 'Surrender Documents · Proof of ID', 'Andrea Lewis', '<span class="lbl gry">today</span>', t=tL + 100)
+              + lbqrow('Paul Baptiste', 'Policy Contract to deliver', 'Gail Walker', '<span class="lbl amb">2 days</span>', t=tL + 250))
+    grp = lambda d, n, t, rows: (at(t, 'at up lbdh', inner=f'{ico("home", "ii")}<b>{d}</b><span class="lbl blu">{n}</span>') + ''.join(lbqrow(*r, t=t + 120 + k * 120) for k, r in enumerate(rows)))
+    recv = (f'<h4 class="at" style="--at:{ms(tR)}">Received, to send <span class="lbl blu">5</span></h4>'
+            + grp('GLOC CS RSC - CHAGUANAS', 3, tD, [('Omar Hosein', 'ACH Form · Bank Statement', 'Marcus Ali', '<span class="lbl grn">today</span>'),
+                                                     ('Lena Singh', 'Change of Address', 'Marcus Ali', '<span class="lbl grn">today</span>')])
+            + grp('RECORDS MANAGEMENT DEPT', 2, tD + 500, [('Ian Francis', 'Signed Script', 'Gail Walker', '<span class="lbl red">yesterday</span>')]))
+    main = f'<h3>Queue <small>Fri 17 Oct</small></h3><div class="lbcols"><div>{logged}</div><div>{recv}</div></div>'
+    cam = [(tD, '.lbcols>div:last-child', 1.05)]
+    cues = [(tQ, 'The Queue opens on what is waiting', False), (tL, 'Logged, not handed in', False), (tR, 'Received, not sent yet', False), (tD, 'Grouped by department', True)]
+    return stage(side(i, sc, cues), lbapp(main, 'queue', cam=cam))
+
+def s_lbreceive(i, sc, D):
+    tT, tS, tC, tLe = w(i, 'tick'), w(i, 'sign'), w(i, 'change'), w(i, 'learns')
+    rows = (lbqrow('Keisha Thomas', 'Surrender Documents', 'Andrea Lewis', '<span class="lbl gry">today</span>', cls='tk1', k='r1')
+            + lbqrow('Keisha Thomas', 'Proof of ID', 'Andrea Lewis', '<span class="lbl gry">today</span>', cls='tk2', k='r2'))
+    ticks = f'<style>.scene.act .tk1 .bx{{animation:lbTick .25s {ms(tT)} both}}.scene.act .tk2 .bx{{animation:lbTick .25s {ms(tT + 300)} both}}</style>'
+    dept = (f'<div class="lbdept"><label>Goes to</label><div class="fld lbdf"><span class="sw2"><span class="sa until" style="--at:0ms;--to:{ms(tC + 300)}">RECORDS MANAGEMENT DEPT ▾</span>'
+            f'<span class="sb at" style="--at:{ms(tC + 300)}">GLOC CS RSC - CHAGUANAS ▾</span></span></div>'
+            + at(tLe, 'at pop lbl blu lblearn', tag='span', inner=f'{ico("sync", "ii")} Routing changed: the Log Book learns') + '</div>')
+    pad = (f'<div class="lbpad at" style="--at:{ms(tS - 300)}"><small>Sign to receive · Dana Reid</small><svg viewBox="0 0 300 80" aria-hidden="true">'
+           f'<path class="lbsig" style="--at:{ms(tS)}" pathLength="1" d="M14 58 C30 18 42 16 48 40 S60 70 74 36 S96 12 102 44 S120 66 134 30 C142 14 150 50 162 46 S186 20 198 42 S226 64 246 34 C256 22 270 40 288 30"/></svg></div>')
+    main = f'<h3>Receive <small>2 lines from Andrea Lewis</small></h3>{ticks}{rows}{dept}{pad}<div class="bbtn prs lbrb" style="--at:{ms(tLe + 600)}">Receive and sign</div>'
+    extra = cursor([(300, 600, 420), (tT - 30, '[data-k=r1] .bx'), (tT + 280, '[data-k=r2] .bx'), (tC + 250, '.lbdf'), (tLe + 550, '.lbrb')]) + click(tC + 300, '.lbdf') + click(tLe + 600, '.lbrb')
+    cues = [(tT, 'Tick the lines', False), (tS, 'Sign with your finger', False), (tC, 'Wrong department? Change it', False), (tLe, 'The Log Book learns', True)]
+    return stage(side(i, sc, cues), lbapp(main, 'queue', extra=extra))
+
+def lbpaper(rows, tNo=None, reason=None):
+    no = f'<span class="lbhot" style="--at:{ms(tNo)}">TR-261017-03</span>' if tNo else 'TR-261017-03'
+    trs = ''.join(f'<tr class="{"late" if r[5] else ""}"><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td data-c="c">{r[3]}</td><td data-c="s">{r[4]}</td>'
+                  f'<td class="why">{r[5] or ""}</td></tr>' for r in rows)
+    return (f'<div class="lbpaper"><div class="lbph">{mark()}<div><b>TRANSMITTAL</b><span>FROM: Ricky Rampersad Branch 26000</span></div>'
+            f'<div class="lbpn"><small>No.</small><b>{no}</b><small>TO: GLOC CS RSC - CHAGUANAS</small></div></div>'
+            f'<table><thead><tr><th>Client</th><th>Policy</th><th>Document</th><th data-k="hc">Date collected</th><th data-k="hs">Date sent</th><th>Reason if not same day</th></tr></thead>'
+            f'<tbody>{trs}</tbody></table><div class="lbsigs"><span>Dispatched by: Dana Reid</span><span>Received by (GLOC CS RSC - CHAGUANAS)</span></div></div>')
+
+ROWS = [('Keisha Thomas', '9000000101', 'Surrender Documents', '17 Oct', '17 Oct', ''), ('Keisha Thomas', '9000000101', 'Proof of ID', '17 Oct', '17 Oct', ''),
+        ('Omar Hosein', '9000000207', 'ACH Form', '17 Oct', '17 Oct', ''), ('Omar Hosein', '9000000207', 'Bank Statement', '17 Oct', '17 Oct', '')]
+
+def s_lbtrans(i, sc, D):
+    tB, tN, tC, tP = w(i, 'Build'), w(i, 'numbered'), w(i, 'collected'), w(i, 'print')
+    pre = (f'<div class="until" style="--at:0ms;--to:{ms(tB + 400)}"><h3>Transmittals</h3><div class="lbbuild"><b>Ready to send</b>'
+           f'<div class="lbbr"><span>GLOC CS RSC - CHAGUANAS</span><span class="lbl blu">4 lines</span><span class="bbtn prs lbbt" style="--at:{ms(tB)}">Build transmittal</span></div>'
+           f'<div class="lbbr dim"><span>RECORDS MANAGEMENT DEPT</span><span class="lbl blu">1 line</span><span class="bbtn">Build transmittal</span></div></div></div>')
+    paper = f'<div class="after lbpw" style="--at:{ms(tB + 400)}">{lbpaper(ROWS, tN)}<div class="bbtn prs lbpr2" style="--at:{ms(tP)}">{ico("file", "ii")} Print</div></div>'
+    toast = f'<div class="toast at" style="--at:{ms(tP + 400)}">{ico("check", "ii")} TR-261017-03 · sent to the printer</div>'
+    extra = (toast + colhl(tC, '[data-k=hc]', '.lbpaper table') + colhl(tC + 700, '[data-k=hs]', '.lbpaper table')
+             + cursor([(300, 600, 420), (tB - 30, '.lbbt'), (tP - 30, '.lbpr2')]) + click(tB, '.lbbt') + click(tP, '.lbpr2'))
+    cues = [(tB, 'One department, one press', False), (tN, 'Numbered', False), (tC, 'Date collected, date sent', False), (tP, 'Ready to print', True)]
+    return stage(side(i, sc, cues), lbapp(pre + paper, 'trans', extra=extra))
+
+def s_lblate(i, sc, D):
+    tRu, tRe, tPr = w(i, 'rule'), w(i, 'reason'), w(i, 'prints')
+    q = lbqrow('Ian Francis', 'Signed Script', 'Gail Walker', '<span class="lbl red">received yesterday</span>', cls='lbqlate')
+    modal = (f'<div class="lbmod until" style="--at:{ms(tRe - 300)};--to:{ms(tPr - 200)}"><b>Received yesterday: why is it going today?</b>'
+             f'<div class="fld">{typed(tRe + 200, "Department closed early on Thursday.", 45)}</div><div class="bbtn prs" style="--at:{ms(tPr - 500)}">Save the reason</div></div>')
+    rows = ROWS[:2] + [('Ian Francis', '9000000330', 'Signed Script', '16 Oct', '17 Oct', 'Department closed early on Thursday.')]
+    paper = f'<div class="after lbpw" style="--at:{ms(tPr - 200)}">{lbpaper(rows)}</div>'
+    main = f'<div class="until" style="--at:0ms;--to:{ms(tPr - 200)}"><h3>Received, to send</h3>{q}<p class="lbrule2 at" style="--at:{ms(tRu)}">{ico("clock", "ii")} In by four, out the same day</p></div>{modal}{paper}'
+    extra = glow(tPr + 300, '.lbpaper tr.late', 3)
+    cues = [(tRu, 'Same day is the rule', False), (tRe, 'Late needs a reason first', False), (tPr, 'It prints beside the two dates', True)]
+    return stage(side(i, sc, cues), lbapp(main, 'trans', extra=extra))
+
+def s_lbdept(i, sc, D):
+    tY, tRec, tN, tSF = w(i, 'Yes', 1), w(i, 'recorded'), w(i, 'No', 2), w(i, 'Salesforce')
+    mail = (lbmasthead('Did you receive these documents?', 'One tap: Yes or No')
+            + f'<div class="lbmb"><p>Good day, the CS Team. On <b>Friday 17 October</b> we sent you transmittal <b>TR-261017-03</b>.</p>'
+            f'<div class="lbyn"><span class="lbyes prs" style="--at:{ms(tRec - 200)}">{ico("check", "ii")} Yes, received</span>'
+            f'<span class="lbno prs" style="--at:{ms(tN)}">{ico("x", "ii")} No, not received</span></div>'
+            + at(tRec, 'at pop lbl grn lbtag', tag='span', inner='Recorded on TR-261017-03') + '</div>')
+    flow = (at(tN + 400, 'at l lbflow', inner=f'<span class="lbsd">{ico("users")}</span><div><b>To sales support for a response</b><i>The agent, their manager and the branch copied</i></div>')
+            + at(tSF, 'at l lbflow sf', inner=f'<span class="lbsd">{ico("flag")}</span><div><b>Salesforce task: TR-261017-03 not received</b><i>High · due Monday · Dana Reid, who collected</i></div>'))
+    body = f'<div class="lbmail">{mail}</div><div class="lbflows">{flow}</div>'
+    extra = cursor([(300, 600, 420), (tRec - 230, '.lbyes'), (tN - 30, '.lbno')]) + click(tRec - 200, '.lbyes') + click(tN, '.lbno')
+    cues = [(tY, 'Three working days on: Yes or No', False), (tRec, 'Yes is recorded', False), (tN, 'No goes to sales support', False), (tSF, 'And a Salesforce task opens', True)]
+    return stage(side(i, sc, cues), lbwin('Outlook · support@rickyrampersadbranch.com', body, extra))
+
+def s_lbinsights(i, sc, D):
+    tS, tD, tQ = w(i, 'same'), w(i, 'departments'), w(i, 'quality')
+    tiles = ('<div class="tiles t4">' + tile(tS, '', 'Sent the day collected', 'grn', 'clock', (83, '%')) + tile(tS + 200, '', 'Lines this month', '', 'file', (412, ''))
+             + tile(tS + 400, '', 'Within a working day', '', 'check', (96, '%')) + tile(tS + 600, '', 'Late, no reason', 'red', 'flag', (2, '')) + '</div>')
+    dep = [('GLOC CS RSC - CHAGUANAS', 41, 39, 1, 1, '1.2 days'), ('RECORDS MANAGEMENT DEPT', 18, 17, 0, 1, '1.6 days'), ('NEW BUSINESS', 12, 10, 1, 1, '2.1 days')]
+    dt = (f'<div class="lbtb at" style="--at:{ms(tD)}"><h4>Did the departments confirm?</h4><div class="lbth"><span>Department</span><span>Asked</span><span>Yes</span><span>No</span><span>No answer</span><span>Days to answer</span></div>'
+          + ''.join(at(tD + 150 + k * 150, 'at l lbtr', inner=''.join(f'<span>{x}</span>' for x in r)) for k, r in enumerate(dep)) + '</div>')
+    ag = [('Andrea Lewis', 96), ('Marcus Ali', 88), ('Gail Walker', 71)]
+    qt = (f'<div class="lbtb at" style="--at:{ms(tQ)}"><h4>Agents · quality</h4>' + ''.join(
+        at(tQ + 150 + k * 150, 'at l lbqa2', inner=f'{avatar(n, "sm")}<b>{n}</b><span class="lbbar"><i style="--at:{ms(tQ + 300 + k * 150)};--w:{s}%"></i></span>{cnt(tQ + 300 + k * 150, s)}')
+        for k, (n, s) in enumerate(ag)) + '</div>')
+    main = f'<h3>Insights <small>last 30 days</small></h3>{tiles}<div class="lbcols2">{dt}{qt}</div>'
+    cam = [(tD, '.lbcols2', 1.1), (tQ + 1500, None, 1)]
+    cues = [(tS, 'Sent the same day', False), (tD, 'Each department&rsquo;s answers', False), (tQ, 'A quality score, every agent', True)]
+    return stage(side(i, sc, cues), lbapp(main, 'stats', cam=cam))
+
+def s_lbdigest(i, sc, D):
+    tF, tL, tN1, tN2 = w(i, 'five'), w(i, 'late'), w(i, 'never', 1), w(i, 'never', 2)
+    tiles = ('<div class="lbdt">' + ''.join(at(tF + 300 + k * 150, f'at pop lbdtl {c}', inner=f'{cnt(tF + 400 + k * 150, n, suf)}<span>{x}</span>')
+                                           for k, (n, suf, x, c) in enumerate([(23, '', 'Logged', ''), (21, '', 'Received', ''), (19, '', 'Sent', ''), (83, '%', 'Same day', 'grn'), (2, '', 'Late, no reason', 'red')])) + '</div>')
+    sec = lambda t, h, x, c: at(t, 'at l lbds ' + c, inner=f'<b>{h}</b><span>{x}</span>')
+    body = ('<div class="lbmail">' + lbmasthead('Friday 17 October', 'Daily digest · 5:00 pm', 'warn') + '<div class="lbmb">' + tiles
+            + sec(tL, 'Late, no reason yet', 'Signed Script · Ian Francis · received yesterday', 'red')
+            + sec(tN1, 'A department said it never got it', 'TR-261014-02 · NEW BUSINESS · Salesforce task open', 'amb')
+            + sec(tN2, 'Logged, never handed in', 'Policy Contract · Paul Baptiste · 3 working days', 'gry') + '</div></div>')
+    cues = [(tF, 'Five o&rsquo;clock, every working day', False), (tL, 'What is late', False), (tN1, 'What a department never got', False), (tN2, 'What was never handed in', True)]
+    return stage(side(i, sc, cues), lbwin('Outlook · Ricky.Rampersad@myguardiangroup.com', body))
+
+R_LB = {'lbsignin': s_lbsignin, 'lbdoc': s_lbdoc, 'lbclient': s_lbclient, 'lbcompanion': s_lbcompanion, 'lbconfirm': s_lbconfirm, 'lbmine': s_lbmine,
+        'lbteam': s_lbteam, 'lbqueue': s_lbqueue, 'lbreceive': s_lbreceive, 'lbtrans': s_lbtrans, 'lblate': s_lblate, 'lbdept': s_lbdept,
+        'lbinsights': s_lbinsights, 'lbdigest': s_lbdigest}
+
+LB_CSS = r"""
+/* ══ the Log Book films (17 October 2026) ══ */
+.bf .lbc{background:#fff;border:1px solid #E1E7F0;border-radius:12px;padding:9px 10px;margin:7px 0}
+.bf .lbch{display:flex;align-items:center;gap:7px;margin-bottom:6px} .bf .lbch b{font:700 13px var(--head)}
+.bf .lbn{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font:700 11px var(--head)}
+.bf .lbc label,.bf .lbitem label,.bf .lbgate label,.bf .lbdept label{display:block;font:600 10px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:6px 0 3px}
+.bf .lbc .fld{font-size:12.5px;min-height:30px;padding:6px 9px}
+.bf .lbseg{display:flex;gap:4px;background:#EEF2F8;border-radius:10px;padding:3px} .bf .lbseg span{flex:1;text-align:center;font:600 11px var(--body);padding:7px 4px;border-radius:8px;color:#334155}
+.bf .lbseg .on{background:var(--blue);color:#fff}
+.bf .lbitem{position:relative;background:#F7F9FD;border:1px solid #DCE6F7;border-radius:10px;padding:8px 9px;margin-top:7px} .bf .lbitem>b{font:700 12.5px var(--head)}
+.bf .lbsugg{display:flex;align-items:center;gap:4px;margin-top:6px;font:600 11px var(--body);color:var(--grn)} .bf .lbsugg .ico{width:13px;height:13px}
+.bf .lbgate{padding:26px 14px} .bf .lbgl{text-align:center;margin-bottom:12px} .bf .lbgl .mk{width:56px;height:56px;margin:0 auto 8px}
+.bf .lbgl b{display:block;font:700 20px var(--head)} .bf .lbgl span{font-size:12px;color:var(--mute)}
+.bf .bbtn.wide{display:flex;justify-content:center;width:100%;box-sizing:border-box}
+.bf .lbfine{font-size:11px;color:var(--mute);text-align:center;margin-top:10px}
+.bf .lbcl{display:flex;align-items:center;gap:8px;margin-top:8px;border:1.5px solid var(--blue);border-radius:10px;padding:7px 9px;background:#F0F5FF}
+.bf .lbcl b{display:block;font:700 12.5px var(--head)} .bf .lbcl i{font-style:normal;font-size:11px;color:var(--mute)} .bf .lbcl .lbok{margin-left:auto;width:16px;height:16px;color:var(--grn)}
+.bf .lboff{display:flex;align-items:center;gap:5px;margin-top:7px;font:600 11px var(--body);color:var(--mute);border:1px dashed #CBD5E1;border-radius:9px;padding:6px 9px}
+.bf .lbpol{margin-top:8px} .bf .lbpr{display:flex;gap:8px;align-items:center;padding:6px 2px;border-top:1px solid #EDF1F5}
+.bf .lbpr b{display:block;font:700 12px var(--head)} .bf .lbpr i{font-style:normal;font-size:11px;color:var(--mute)}
+.bf .bx{width:18px;height:18px;border-radius:5px;border:1.5px solid #94A3B8;display:grid;place-items:center;flex:none;background:#fff;color:transparent}
+.bf .bx .ico{width:13px;height:13px}
+.scene.act .lbpr.on .bx,.scene.act .lbchk .bx{animation:bfPress .32s var(--at) both,lbTick .2s var(--at) both}
+@keyframes lbTick{to{background:var(--blue);border-color:var(--blue);color:#fff}}
+.bf .lbask{position:absolute;left:12px;right:12px;bottom:22px;z-index:6;border:1.5px solid var(--blue3);border-radius:11px;padding:9px 10px;background:#fff;box-shadow:0 10px 26px rgba(19,64,143,.18)}
+.bf .lbask>b{font:700 12.5px var(--head)} .bf .lbwith{display:flex;align-items:center;justify-content:space-between;margin-top:6px;font:600 12px var(--body)}
+.bf .lbwith i{font-style:normal;color:var(--mute);font-weight:500} .bf .lbwith .add{background:var(--blue);color:#fff;border-radius:7px;padding:4px 9px;font-size:11.5px}
+.bf .lbwith.dim{opacity:.55} .bf .lbwith.dim .add{background:#94A3B8}
+.bf .lbchk{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#334155}
+.bf .lbdone{position:absolute;left:10px;right:10px;top:52px;background:#fff;border-radius:14px;padding:22px 14px;text-align:center;border:1px solid #E1E7F0}
+.bf .lbdi{display:grid;place-items:center;width:48px;height:48px;margin:0 auto 8px;border-radius:50%;background:var(--grnbg);color:var(--grn)} .bf .lbdi .ico{width:26px;height:26px}
+.bf .lbdone>b{display:block;font:700 18px var(--head)} .bf .lbref{font:700 24px var(--head);color:var(--blue2);letter-spacing:.04em;margin:8px 0}
+.bf .lbdone>span{font-size:12px;color:var(--mute)}
+.bf .lbhand{display:inline-flex;align-items:center;gap:5px;margin-top:12px;background:var(--ambbg);color:var(--amb);font:600 12px var(--body);border-radius:999px;padding:6px 12px}
+.bf .lbsteps{position:relative;margin-top:10px;padding-left:4px}
+.bf .lbst{display:flex;gap:10px;align-items:flex-start;padding:9px 6px;border-left:2px solid #DCE6F7;margin-left:14px;position:relative}
+.bf .lbsd{width:30px;height:30px;margin-left:-22px;border-radius:50%;background:var(--sky);color:var(--blue);display:grid;place-items:center;flex:none;border:3px solid #F4F7FB} .bf .lbsd .ico{width:15px;height:15px}
+.bf .lbst b{display:block;font:700 13px var(--head)} .bf .lbst i{font-style:normal;font-size:11.5px;color:var(--mute)}
+.bf .lbst.lbhit .lbsd{background:var(--grn);color:#fff}
+.bf .lbselw{position:relative;height:34px;margin:6px 0} .bf .lbsel{position:absolute;inset:0;font-size:12.5px;font-weight:600}
+.bf .lbstack{position:relative;min-height:290px} .bf .lbstack>div{position:absolute;left:0;right:0;top:0}
+.bf .lbtr>div{flex:1;min-width:0} .bf .lbtr .lbag{display:block;font:600 10.5px var(--body);color:var(--blue2)} .bf .lbtr .lbl{margin-left:auto;align-self:center}
+.bf .lbtabs{display:flex;gap:4px;padding:0 18px;border-bottom:1px solid #E1E7F0;background:#fff}
+.bf .lbtabs span{font:600 12.5px var(--body);color:var(--mute);padding:9px 12px;border-bottom:2.5px solid transparent} .bf .lbtabs .on{color:var(--ink);border-bottom-color:var(--blue)}
+.bf .lbtabs b{background:var(--blue);color:#fff;border-radius:999px;padding:0 6px;font-size:10.5px}
+.bf .lbtest{background:var(--ambbg);color:var(--amb);border-radius:6px;padding:1px 7px;font-weight:700}
+.bf .lbmain{height:calc(100% - 46px - 38px)}
+.bf .lbcols{display:grid;grid-template-columns:1fr 1.15fr;gap:14px} .bf .lbcols h4{display:flex;align-items:center;gap:6px}
+.bf .lbq{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #E1E7F0;border-radius:10px;padding:7px 10px;margin:5px 0;font-size:12px}
+.bf .lbqn{flex:1;min-width:0} .bf .lbqn b{display:block;font:700 12.5px var(--head)} .bf .lbqn i{font-style:normal;font-size:11px;color:var(--mute)}
+.bf .lbqa{margin-left:auto;font-size:11px;color:#334155;white-space:nowrap} .bf .lbq .lbl{flex:none}
+.bf .lbdh{display:flex;align-items:center;gap:6px;margin:9px 0 2px;font:700 11.5px var(--head);color:var(--blue2)}
+.bf .lbdept{margin-top:8px;display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap} .bf .lbdept>label{width:100%;margin:0}
+.bf .lbdf{min-width:290px;font-size:13px;font-weight:600} .bf .lblearn{display:inline-flex;align-items:center;gap:4px;padding:5px 9px}
+.bf .lbpad{margin-top:10px;background:#fff;border:1.5px dashed #94A3B8;border-radius:11px;padding:6px 10px;width:340px}
+.bf .lbpad small{font:600 10px var(--body);color:var(--mute);letter-spacing:.05em;text-transform:uppercase} .bf .lbpad svg{display:block;width:300px;height:70px}
+.bf .lbsig{fill:none;stroke:#0E1B2E;stroke-width:3;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1}
+.scene.act .lbsig{animation:lbDraw 1.6s cubic-bezier(.4,0,.2,1) var(--at) both} @keyframes lbDraw{to{stroke-dashoffset:0}}
+.bf .lbbuild{background:#fff;border:1px solid #E1E7F0;border-radius:12px;padding:12px 14px} .bf .lbbuild>b{font:700 14px var(--head)}
+.bf .lbbr{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #EDF1F5;margin-top:8px;font:600 13px var(--body)}
+.bf .lbbr .bbtn{margin:0 0 0 auto} .bf .lbbr.dim{opacity:.55}
+.bf .lbpw{position:absolute;inset:10px 14px} .bf .lbpaper{background:#fff;color:#111;border-radius:6px;padding:14px 16px;font-family:Arial,Helvetica,sans-serif;box-shadow:0 10px 30px rgba(14,27,46,.18);position:relative}
+.bf .lbph{display:flex;align-items:center;gap:10px;border-bottom:3px solid #070F26;padding-bottom:8px} .bf .lbph .mk{width:34px;height:34px}
+.bf .lbph b{display:block;font-size:15px;letter-spacing:1px} .bf .lbph span{font-size:10.5px}
+.bf .lbpn{margin-left:auto;text-align:right;font-size:10px} .bf .lbpn b{font-size:14px;letter-spacing:0} .bf .lbpn small{display:block}
+.bf .lbhot{border-radius:4px;padding:0 3px} .scene.act .lbhot{animation:lbHot .5s var(--at) both} @keyframes lbHot{to{background:#FEF0C7;box-shadow:0 0 0 2px #F5B23F}}
+.bf .lbpaper table{width:100%;border-collapse:collapse;margin-top:8px;position:relative}
+.bf .lbpaper th{background:#070F26;color:#BFD3F7;text-align:left;font-size:9.5px;padding:5px;letter-spacing:.3px}
+.bf .lbpaper td{border-bottom:1px solid #D8DDE3;padding:5px;font-size:10.5px;vertical-align:top} .bf .lbpaper tr.late td{background:#FFF3F0} .bf .lbpaper .why{color:#9A2B12;font-style:italic}
+.bf .lbsigs{display:flex;justify-content:space-between;margin-top:22px;font-size:10px} .bf .lbsigs span{border-top:1px solid #333;padding-top:4px;width:44%}
+.bf .lbpw .bbtn{position:absolute;right:6px;bottom:-4px}
+.bf .lbrule2{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:var(--sky);color:var(--blue2);font:600 13px var(--body);border-radius:999px;padding:7px 13px}
+.bf .lbmod{position:absolute;left:120px;right:120px;top:120px;background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 24px 60px rgba(14,27,46,.35);z-index:7}
+.bf .lbmod>b{display:block;font:700 15px var(--head);margin-bottom:10px}
+.bf .lbmailbg{background:#E9EEF5;padding:14px 18px;box-sizing:border-box}
+.bf .lbmail{background:#fff;border-radius:12px;overflow:hidden;width:470px;box-shadow:0 8px 24px rgba(14,27,46,.12)}
+.bf .lbmh{display:flex;align-items:center;gap:10px;background:#070F26;padding:12px 16px} .bf .lbmh .mk{width:36px;height:36px}
+.bf .lbmh small{display:block;font:700 9px var(--body);letter-spacing:.14em;color:#8FBBFF} .bf .lbmh b{font:700 16px var(--head);color:#fff}
+.bf .lbrule{display:block;height:4px;background:linear-gradient(90deg,#2A6DE0,#00CFEA)}
+.bf .lbband{display:flex;gap:10px;align-items:center;margin:12px 14px 0;border-radius:10px;padding:10px 12px;border-left:4px solid}
+.bf .lbband.info{background:#E7F3F8;border-color:#0E7490} .bf .lbband.warn{background:#FEF6E7;border-color:#B54708} .bf .lbband.ok{background:#E8F6EE;border-color:#067647}
+.bf .lbbi{width:32px;height:32px;border-radius:50%;background:#0E7490;color:#fff;display:grid;place-items:center;flex:none} .bf .lbband.warn .lbbi{background:#B54708}
+.bf .lbbi .ico{width:16px;height:16px}
+.bf .lbband small{display:block;font:700 9.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:#0E7490} .bf .lbband.warn small{color:#B54708}
+.bf .lbband b{font:700 15px var(--head);color:var(--ink)}
+.bf .lbmb{padding:10px 16px 14px;font-size:12.5px;color:#334155} .bf .lbmb p{margin:4px 0 8px}
+.bf .lbyn{display:flex;flex-direction:column;gap:7px;align-items:flex-start} .bf .lbyes,.bf .lbno{display:inline-flex;align-items:center;gap:6px;color:#fff;font:700 13px var(--head);border-radius:9px;padding:9px 16px}
+.bf .lbyes{background:#15803D} .bf .lbno{background:#B91C1C} .bf .lbtag{margin-top:8px}
+.bf .lbflows{position:absolute;right:16px;top:120px;width:330px;display:grid;gap:10px}
+.bf .lbflow{display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:12px;padding:11px 12px;box-shadow:0 10px 26px rgba(14,27,46,.15)}
+.bf .lbflow .lbsd{margin:0;border:0} .bf .lbflow.sf .lbsd{background:#FEF0C7;color:#93370D}
+.bf .lbflow b{display:block;font:700 13px var(--head)} .bf .lbflow i{font-style:normal;font-size:11.5px;color:var(--mute)}
+.bf .tiles.t4{grid-template-columns:repeat(4,1fr)} .bf .tile.grn{background:#F0FBF4;border-color:#B7EBC9} .bf .tile.grn b{color:var(--grn)}
+.bf .lbcols2{display:grid;grid-template-columns:1.25fr 1fr;gap:12px;margin-top:10px}
+.bf .lbtb{background:#fff;border:1px solid #E1E7F0;border-radius:10px;padding:8px 12px} .bf .lbtb h4{margin:2px 0 6px}
+.bf .lbth,.bf .lbtr{display:grid;grid-template-columns:1.9fr .55fr .45fr .45fr .8fr .9fr;gap:6px;padding:6px 0;border-bottom:1px solid #EDF1F5;font-size:11.5px}
+.bf .lbth{font:500 10px var(--body);color:var(--mute)} .bf .lbtr span:first-child{font-weight:600;color:var(--ink)}
+.bf .lbqa2{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #EDF1F5;font-size:12px} .bf .lbqa2 b:first-of-type{width:96px;font:600 12px var(--head)}
+.bf .lbbar{flex:1;height:8px;border-radius:5px;background:#EEF2F8;overflow:hidden} .bf .lbbar i{display:block;height:100%;width:var(--w);background:var(--blue);transform:scaleX(0);transform-origin:left}
+.scene.act .lbbar i{animation:lbGrow .9s cubic-bezier(.2,.9,.3,1) var(--at) both} @keyframes lbGrow{to{transform:none}}
+.bf .lbdt{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:4px 0 10px} .bf .lbdtl{background:#F4F7FB;border-radius:9px;padding:7px 6px;text-align:center}
+.bf .lbdtl b{display:block;font:700 19px var(--head);color:var(--ink)} .bf .lbdtl span{font-size:10px;color:var(--mute)}
+.bf .lbdtl.grn b{color:var(--grn)} .bf .lbdtl.red b{color:var(--red)}
+.bf .lbds{border-left:4px solid;border-radius:0 8px 8px 0;padding:7px 10px;margin:6px 0;background:#F8FAFC} .bf .lbds b{display:block;font:700 12.5px var(--head);color:var(--ink)} .bf .lbds span{font-size:11.5px}
+.bf .lbds.red{border-color:var(--red)} .bf .lbds.amb{border-color:#B54708} .bf .lbds.gry{border-color:#94A3B8}
+"""
+
 R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
      'yourwork': s_yourwork, 'clock': s_clock, 'title': s_title, 'flow': s_flow, 'signin': s_signin, 'urgent': s_urgent, 'agents': s_agents, 'table': s_table, 'batches': s_batches,
      'assign': s_assign, 'named': s_named, 'list': s_list, 'client': s_client, 'logcall': s_logcall, 'comment': s_comment, 'counts': s_counts,
      'sees': s_sees, 'close': s_close}
+R.update(R_LB)
 BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close'}
 
 def bgfx(i, blue):
@@ -1230,10 +1576,10 @@ chrome_end = s.index('</div>', s.index('<div id="chrome">')) + len('</div>')
 tap = s.index('<div class="tapzone" id="zL"')
 out = s[:chrome_end] + '\n' + SCENES + '\n\n' + s[tap:]
 last = out.rindex('</style>')
-out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + '\n' + out[last:]
+out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + (LB_CSS if LB else '') + '\n' + out[last:]
 out = re.sub(r'<title>.*?</title>', '<title>' + TITLES[KEY] + ' — Ricky Rampersad Branch</title>', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="mark mk"></i>', out, count=1, flags=re.S)
-out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>Client transition board</i></span>', out, count=1, flags=re.S)
+out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
 out = re.sub(r'<span class="live">.*?</span>', '', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="biglogo" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="biglogo mk"></i>', out, count=1, flags=re.S)
 FAVICON = 'data:image/svg+xml,' + (ROOT / 'favicon.svg').read_text().replace('#', '%23').replace('<', '%3C').replace('>', '%3E').replace('"', "'").replace('\n', '')
@@ -1242,9 +1588,9 @@ out = re.sub(r'const cols = \[[^\]]*\]', 'const cols = ["#ffffff", "#00E5FF", "#
 out = re.sub(r'<h1>The launch of<br>donthaveanagent<em>\.com</em></h1>', '<h1>' + TITLES[KEY].replace(', ', ',<br><em>') + '</em></h1>', out, count=1)
 out = re.sub(r'<div class="eyebrow" style="margin-top:16px">[^<]*</div>', '<div class="eyebrow" style="margin-top:16px">A Ricky Rampersad Branch film</div>', out, count=1)
 out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 120000 else 'two and a half minutes') + '</button>', out, count=1)
-out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', 'How the branch names agents, and how agents report back.', out, count=1)
-MSG = ('const MSG = "' + TITLES[KEY] + ': a short film on the client transition board.\\n\\n" +\n'
-       '  "▶ https://rickyrampersadbranch.com/orphan-transition/board-films.html";')
+out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('Log it, hand it in, see it sent: the same day.' if LB else 'How the branch names agents, and how agents report back.'), out, count=1)
+MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
+       '  "▶ https://rickyrampersadbranch.com/' + ('logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
 out = re.sub(r'const MSG = ".*?";', lambda m: MSG, out, count=1, flags=re.S)
 out = out.replace('document.getElementById("waBtn").href =', 'if (document.getElementById("waBtn")) document.getElementById("waBtn").href =')
 # the narration and the bed are in the MP4; the page itself plays no music of its own
