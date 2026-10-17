@@ -1,0 +1,18 @@
+{
+ "probe/en-US-AndrewMultilingualNeural-12%.mp3": [
+  "err",
+  "open() got an unexpected keyword argument 'metadata_errors'"
+ ],
+ "probe/en-US-AndrewMultilingualNeural-4%.mp3": [
+  "err",
+  "open() got an unexpected keyword argument 'metadata_errors'"
+ ],
+ "probe/en-US-AndrewNeural-12%.mp3": [
+  "err",
+  "open() got an unexpected keyword argument 'metadata_errors'"
+ ],
+ "probe/en-US-AndrewNeural-4%.mp3": [
+  "err",
+  "open() got an unexpected keyword argument 'metadata_errors'"
+ ]
+}
