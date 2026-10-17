@@ -432,11 +432,11 @@ function lbSession_(token) {
   if (!who) return null;
   var sh = dbSheet_(DB.TABS.SESS, DB_SESS_COLUMNS);
   var hm = dbHeaderMap_(sh);
-  /* A unit manager (and the assistant branch manager) logs their own papers like
+  /* A unit manager logs their own papers like
      an agent and also sees their team's: the agents whose Unit names them, as
      the fact find's Access tab writes it ("unit manager can see his team", 17
      October 2026). */
-  who.isLead = /^(unit manager|assistant branch manager)$/i.test(String(who.role).trim());
+  who.isLead = /^unit manager$/i.test(String(who.role).trim());
   who.isAgent = /^agent$/i.test(who.role) || who.isLead;
   who.isManager = /^branch manager$/i.test(String(who.role).trim());
   if ('Agent No' in hm.map) {
@@ -515,8 +515,9 @@ function lbAgents_() {
 
 /* Staff and the branch manager get the staff side (receiving, transmittals,
    insights): "only staff and the branch manager can access this", 15 October
-   2026. Agents, unit managers and the assistant branch manager log their own
-   documents. */
+   2026. Agents and unit managers log their own documents. The branch has no
+   assistant branch manager (17 October 2026); a row still carrying that role
+   signs in as an agent. */
 function lbIsStaffRole_(role) {
   var r = String(role || '').trim();
   return /staff|support|admin/i.test(r) || /^branch manager$/i.test(r);
@@ -577,7 +578,7 @@ function lbLogin_(b) {
     throw new Error('That agent number and password do not match.');
   }
   var staff = lbIsStaffRole_(a.role);
-  var role = staff ? a.role : /^(unit manager|assistant branch manager)$/i.test(a.role) ? a.role.trim().replace(/\b\w/g, function (c) { return c.toUpperCase(); }) : 'Agent';
+  var role = staff ? a.role : /^unit manager$/i.test(String(a.role).trim()) ? 'Unit Manager' : 'Agent';
   var name = a.name || ('Agent ' + a.agentNo);
   var token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
   var now = new Date();
@@ -1297,7 +1298,7 @@ function lbDigestSend_(now) {
 
   var sec = function (title, head, list, note) {
     if (!list.length) return '';
-    return '<h3 style="font-size:15px;margin:22px 0 2px;color:#07131f">' + dbEsc_(title) + '</h3>' +
+    return '<h3 style="font-size:15px;margin:22px 0 2px;color:#070F26">' + dbEsc_(title) + '</h3>' +
       (note ? '<div style="font-size:13px;color:#5b6b7f">' + note + '</div>' : '') + lbTable_(head, list.slice(0, 15)) +
       (list.length > 15 ? '<div style="font-size:12px;color:#5b6b7f">and ' + (list.length - 15) + ' more in the Log Book.</div>' : '');
   };
@@ -1378,7 +1379,7 @@ function lbChaseLate_(now) {
     var html = lbMailHtml_('Received and not sent: the reason, please',
       '<p>' + dbEsc_(staff.split(' ')[0] || staff) + ', the documents below were received and have not gone to Guardian Life. ' +
       'The branch standard is the same working day. The transmittal prints the date collected and the date sent, and the reason beside them.</p>' +
-      (link ? '<div style="margin:18px 0 6px">' + lbBtn_(link, 'Give the reason &rarr;', '#07131f', '#efc24b') + '</div>' : '') +
+      (link ? '<div style="margin:18px 0 6px">' + lbBtn_(link, 'Give the reason &rarr;', '#1D5BC4', '#ffffff') + '</div>' : '') +
       '<p style="color:#5b6b7f;font-size:13px">Or send them on today\'s transmittal from the Log Book. You will be asked again each working day until they go or a reason is given.</p>',
       ['Client', 'Document', 'Policy', 'Department', 'Received', 'Working days'], rows,
       '<p style="color:#5b6b7f;font-size:13px">Agent: ' + dbEsc_(list[0].agent) + '. Sales support and the agent are copied.</p>',
@@ -1764,7 +1765,7 @@ function lbMail_(m) {
   if (!to.length) return 'No address';
   var html = m.html, subject = m.subject;
   if (dbMode_() !== 'live') {
-    html = '<div style="background:#fff4d6;border:1px solid #efc24b;padding:10px 14px;font-family:Arial;font-size:13px">' +
+    html = '<div style="background:#eef4ff;border:1px solid #6FA8FF;padding:10px 14px;font-family:Arial;font-size:13px">' +
       'TEST — in live mode this would go to <b>' + dbEsc_(to.join(', ')) + '</b>' + (cc.length ? ', copied to ' + dbEsc_(cc.join(', ')) : '') + '.</div>' + html;
     to = [dbProp_('DB_TEST_INBOX') || Session.getEffectiveUser().getEmail()];
     cc = [];
@@ -1782,7 +1783,7 @@ function lbMail_(m) {
 /* ── the look of every Log Book e-mail ─────────────────────────────────────
  * 16 October 2026: "ensure the email templates pop". Tables and inline styles
  * only, so Gmail and Outlook show it as built; the shield is the hosted PNG.
- * A navy masthead with the gold shield, a coloured status band (its colour and
+ * A navy masthead with the blue shield, a coloured status band (its colour and
  * a word say the same thing, never the colour alone), the headline, optional
  * figure tiles, the lines as a striped table under a navy head, any buttons,
  * and the internal footer.
@@ -1815,7 +1816,7 @@ function lbMailHtml_(title, intro, head, rows, foot, opt) {
   var per = Math.min(tiles.length, 3);
   var tileHtml = tiles.length ? '<div style="margin:18px -4px 6px;font-size:0;text-align:center">' +
     tiles.map(function (t) {
-      var tc = (LB_TONES[t[2]] || { c: '#07131f', bg: '#f3f6fa' });
+      var tc = (LB_TONES[t[2]] || { c: '#070F26', bg: '#f3f6fa' });
       return '<div style="display:inline-block;vertical-align:top;box-sizing:border-box;width:' + (Math.floor(1000 / per) / 10 - 0.1) + '%;min-width:92px;padding:4px">' +
         '<div style="background:' + (tc.bg || '#f3f6fa') + ';border-radius:12px;padding:14px 6px;text-align:center;' + F + '">' +
         '<div style="font-size:' + (String(t[1]).length > 8 ? 16 : String(t[1]).length > 5 ? 20 : 26) + 'px;line-height:1.15;font-weight:800;color:' + tc.c + ';white-space:nowrap">' + dbEsc_(t[1]) + '</div>' +
@@ -1825,13 +1826,13 @@ function lbMailHtml_(title, intro, head, rows, foot, opt) {
   return '<div style="background:#eef1f5;padding:20px 6px;' + F + 'color:#13202e">' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:660px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(7,19,31,.10)">' +
     // masthead
-    '<tr><td style="background:#07131f;padding:18px 22px">' +
+    '<tr><td style="background:#070F26;padding:18px 22px">' +
       '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
       '<td style="vertical-align:middle"><img src="' + DB.LOGO + '" width="46" height="46" alt="" style="display:block;border-radius:11px"></td>' +
       '<td style="vertical-align:middle;padding-left:14px">' +
-        '<div style="' + F + 'color:#efc24b;font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase">Ricky Rampersad Branch</div>' +
+        '<div style="' + F + 'color:#8FBBFF;font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase">Ricky Rampersad Branch</div>' +
         '<div style="' + F + 'color:#ffffff;font-size:20px;font-weight:800;margin-top:2px">Log Book</div></td></tr></table></td></tr>' +
-    '<tr><td style="height:4px;line-height:4px;font-size:0;background:#efc24b;background-image:linear-gradient(90deg,#efc24b,#c9942c)">&nbsp;</td></tr>' +
+    '<tr><td style="height:4px;line-height:4px;font-size:0;background:#2A6DE0;background-image:linear-gradient(90deg,#2A6DE0,#00CFEA)">&nbsp;</td></tr>' +
     // status band
     '<tr><td style="padding:20px 18px 4px">' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + tone.bg + ';border-left:5px solid ' + tone.c + ';border-radius:12px"><tr>' +
@@ -1839,12 +1840,12 @@ function lbMailHtml_(title, intro, head, rows, foot, opt) {
         ';color:#ffffff;text-align:center;font-weight:800;font-size:18px;' + F + '">' + tone.icon + '</div></td>' +
       '<td style="padding:14px 16px 14px 12px;vertical-align:middle">' +
         '<div style="' + F + 'font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:' + tone.c + '">' + dbEsc_(kicker) + '</div>' +
-        '<div style="' + F + 'font-size:21px;font-weight:800;line-height:1.25;color:#07131f;margin-top:3px">' + dbEsc_(title) + '</div></td></tr></table></td></tr>' +
+        '<div style="' + F + 'font-size:21px;font-weight:800;line-height:1.25;color:#070F26;margin-top:3px">' + dbEsc_(title) + '</div></td></tr></table></td></tr>' +
     // body
     '<tr><td style="padding:10px 18px 22px;' + F + 'font-size:15px;line-height:1.6;color:#2a3a4c;word-break:break-word">' + intro + tileHtml + table + (foot || '') + '</td></tr>' +
     // footer
     '<tr><td style="background:#f6f8fb;border-top:1px solid #e6ebf1;padding:14px 22px;' + F + 'font-size:12px;line-height:1.5;color:#5b6b7f">' +
-      '<b style="color:#07131f">' + dbEsc_(LB.BRANCH_LINE) + '</b><br>' +
+      '<b style="color:#070F26">' + dbEsc_(LB.BRANCH_LINE) + '</b><br>' +
       'Internal: for the branch team, our agents and Guardian Life departments. Please do not forward outside them.</td></tr>' +
     '</table></div>';
 }
@@ -1858,9 +1859,9 @@ function lbTable_(head, rows) {
   var F = "font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;";
   if (head.length > 3) {
     return '<div style="margin:16px 0">' + rows.map(function (r, i) {
-      return '<div style="border:1px solid #dfe5ee;border-left:4px solid ' + (i % 2 ? '#c9942c' : '#efc24b') +
+      return '<div style="border:1px solid #dfe5ee;border-left:4px solid ' + (i % 2 ? '#13408F' : '#2A6DE0') +
         ';border-radius:12px;padding:12px 14px 6px;margin:0 0 10px;background:#ffffff;' + F + '">' +
-        '<div style="font-size:15px;font-weight:800;color:#07131f;margin-bottom:6px">' + dbEsc_(r[0]) + '</div>' +
+        '<div style="font-size:15px;font-weight:800;color:#070F26;margin-bottom:6px">' + dbEsc_(r[0]) + '</div>' +
         '<div style="font-size:0">' + r.slice(1).map(function (c, j) {
           return '<div style="display:inline-block;vertical-align:top;width:33%;min-width:132px;box-sizing:border-box;padding:0 10px 8px 0">' +
             '<div style="font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#8a97a8;font-weight:700">' + dbEsc_(head[j + 1]) + '</div>' +
@@ -1869,7 +1870,7 @@ function lbTable_(head, rows) {
     }).join('') + '</div>';
   }
   var th = head.map(function (h) {
-    return '<th align="left" style="background:#07131f;color:#efc24b;' + F + 'font-size:10px;letter-spacing:.4px;text-transform:uppercase;padding:10px 10px;font-weight:700">' + dbEsc_(h) + '</th>';
+    return '<th align="left" style="background:#070F26;color:#8FBBFF;' + F + 'font-size:10px;letter-spacing:.4px;text-transform:uppercase;padding:10px 10px;font-weight:700">' + dbEsc_(h) + '</th>';
   }).join('');
   var trs = rows.map(function (r, i) {
     return '<tr>' + r.map(function (c, j) {

@@ -138,7 +138,8 @@ let env = world();
   ok('a unit manager signs in as a unit manager, on the agent side', um.role === 'Unit Manager' && env.lbSession_(um.token).isAgent && env.lbSession_(um.token).isLead);
   ok('a unit manager is refused the staff side', ['lb.transmittals', 'lb.receive', 'lb.stats', 'lb.queue']
     .every(a => /staff/.test(env.lbHandle_({ action: a, token: um.token }).error || '')));
-  ok('the assistant branch manager is on the agent side', env.lbSession_(env.lbLogin_({ agentNo: 'A00004', code: 'pw4' }).token).isAgent);
+  const ab = env.lbSession_(env.lbLogin_({ agentNo: 'A00004', code: 'pw4' }).token);
+  ok('an old "Assistant Branch Manager" row signs in as an agent, no team', ab.isAgent && !ab.isLead && ab.role === 'Agent');
   const ag = env.lbLogin_({ agentNo: 'A10024', code: '77' });
   ok('an agent is refused the transmittals', ['lb.transmittals', 'lb.transmittal', 'lb.receive', 'lb.stats', 'lb.queue']
     .every(a => /staff/.test(env.lbHandle_({ action: a, token: ag.token }).error || '')));

@@ -10,14 +10,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
   :root{
-    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61; --field:rgba(0,0,0,.28);
-    --gold:#efc24b; --gold2:#c9942c; --text:#edf4fb; --muted:#a9bbcf;
+    --bg:#070F26; --bg2:#0d2137; --card:#163553; --card2:#1b3d61; --field:rgba(0,0,0,.28);
+    --gold:#6FA8FF; --gold2:#1D5BC4; --text:#edf4fb; --muted:#a9bbcf;
     --line:rgba(255,255,255,.09); --teal:#00CFEA; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
   body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
-    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(239,194,75,.07),transparent);font-size:15px;line-height:1.45}
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.07),transparent);font-size:15px;line-height:1.45}
   button,input,select,textarea{font:inherit;color:inherit}
   .wrap{max-width:760px;margin:0 auto;padding:0 16px 96px}
   h1,h2,h3{font-family:'Montserrat',sans-serif}
@@ -51,13 +51,13 @@
   /* cards and fields */
   .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
   .card h2{font-size:15px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px}
-  .step{width:24px;height:24px;border-radius:50%;background:var(--gold);color:#1d1503;display:grid;place-items:center;font-size:12px;flex:none}
+  .step{width:24px;height:24px;border-radius:50%;background:var(--gold);color:#06183a;display:grid;place-items:center;font-size:12px;flex:none}
   .card.dim{opacity:.45;pointer-events:none}
   label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 6px;letter-spacing:.2px}
   label:first-child{margin-top:0}
   input[type=text],input[type=email],input[type=tel],input[type=datetime-local],input[type=number],select,textarea{
     width:100%;padding:12px 13px;border-radius:11px;border:1px solid var(--line);background:var(--field);outline:none;min-height:46px}
-  input:focus,select:focus,textarea:focus{border-color:rgba(239,194,75,.55)}
+  input:focus,select:focus,textarea:focus{border-color:rgba(111,168,255,.55)}
   select option{background:#0d2137}
   textarea{min-height:76px;resize:vertical}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -65,7 +65,7 @@
   @media (max-width:420px){.row{grid-template-columns:1fr}}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 18px;border-radius:12px;border:0;
     cursor:pointer;font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px}
-  .btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503}
+  .btn.gold{background:linear-gradient(135deg,#2A6DE0,#13408F);color:#fff}
   .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text)}
   .btn.block{width:100%}
   .btn:disabled{opacity:.5;cursor:default}
@@ -79,7 +79,7 @@
     background:rgba(255,255,255,.04);margin-top:8px;cursor:pointer}
   .client b{display:block;font-size:15px}
   .client span{display:block;font-size:12px;color:var(--muted)}
-  .client.sel{border-color:var(--gold);background:rgba(239,194,75,.08)}
+  .client.sel{border-color:var(--gold);background:rgba(111,168,255,.08)}
   .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin:4px 4px 0 0}
   .tag.warn{background:rgba(251,191,36,.14);color:var(--warn)}
   .tag.bad{background:rgba(248,113,113,.14);color:var(--bad)}
@@ -90,7 +90,7 @@
   .grp{margin-top:12px}
   .grp h3{font-size:12px;letter-spacing:1px;color:var(--gold);margin-bottom:6px;display:flex;justify-content:space-between}
   .pol{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:6px;background:rgba(255,255,255,.03)}
-  .pol.on{border-color:rgba(239,194,75,.6);background:rgba(239,194,75,.07)}
+  .pol.on{border-color:rgba(111,168,255,.6);background:rgba(111,168,255,.07)}
   .pol .head{display:flex;align-items:center;gap:12px;cursor:pointer}
   .pol input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);flex:none}
   .pol .num{font-family:'Montserrat';font-weight:700;font-size:14px}
@@ -99,9 +99,9 @@
   .pol.on .more{display:grid}
 
   /* signature */
-  .sig{position:relative;border-radius:12px;border:1px dashed rgba(239,194,75,.5);background:#fff;touch-action:none;overflow:hidden}
+  .sig{position:relative;border-radius:12px;border:1px dashed rgba(111,168,255,.5);background:#fff;touch-action:none;overflow:hidden}
   .sig canvas{display:block;width:100%;height:170px}
-  .sig .x{position:absolute;right:8px;top:8px;background:#07131f;color:var(--gold);border:0;border-radius:8px;padding:6px 10px;font-weight:700;font-size:12px}
+  .sig .x{position:absolute;right:8px;top:8px;background:#070F26;color:var(--gold);border:0;border-radius:8px;padding:6px 10px;font-weight:700;font-size:12px}
   .sig .ph{position:absolute;inset:auto 0 12px;text-align:center;color:#9aa6b4;font-size:13px;pointer-events:none}
 
   /* location */
@@ -551,7 +551,7 @@
     }
     mini.setView([S.loc.lat, S.loc.lng], 16);
     if (miniPin) miniPin.remove();
-    miniPin = L.circleMarker([S.loc.lat, S.loc.lng], { radius: 9, color: '#c9942c', fillColor: '#efc24b', fillOpacity: 1, weight: 3 }).addTo(mini);
+    miniPin = L.circleMarker([S.loc.lat, S.loc.lng], { radius: 9, color: '#1D5BC4', fillColor: '#6FA8FF', fillOpacity: 1, weight: 3 }).addTo(mini);
     setTimeout(function () { mini.invalidateSize(); }, 50);
   }
 
@@ -695,7 +695,7 @@
     layer = L.featureGroup().addTo(map);
     var pins = S.bookRows.filter(function (d) { return d.lat != null && d.lng != null; });
     pins.forEach(function (d) {
-      L.circleMarker([d.lat, d.lng], { radius: 9, color: '#07131f', weight: 2, fillColor: d.stars && d.stars <= 2 ? '#f87171' : '#efc24b', fillOpacity: .95 })
+      L.circleMarker([d.lat, d.lng], { radius: 9, color: '#070F26', weight: 2, fillColor: d.stars && d.stars <= 2 ? '#f87171' : '#6FA8FF', fillOpacity: .95 })
         .bindPopup('<b>' + esc(d.client) + '</b><br>' + esc(fmt(d.deliveredAt)) + '<br>' +
           d.items.map(function (i) { return esc(i.document) + (i.policy ? ' — ' + esc(i.policy) : ''); }).join('<br>') +
           '<br>By ' + esc(d.by) + ' · to ' + esc(d.collector) + (d.stars ? '<br>' + '★'.repeat(d.stars) : '') +

@@ -8,11 +8,11 @@
 <link rel="icon" type="image/png" href="/orphan-transition/board-mark.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#07131f;--bg2:#0d2137;--card:#163553;--card2:#1b3d61;--gold:#efc24b;--gold2:#c9942c;
+  :root{--bg:#070F26;--bg2:#0d2137;--card:#163553;--card2:#1b3d61;--gold:#6FA8FF;--gold2:#1D5BC4;
     --text:#edf4fb;--muted:#a9bbcf;--line:rgba(255,255,255,.09);--bad:#f87171}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
-    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(239,194,75,.08),transparent)}
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.08),transparent)}
   button,input{font:inherit;color:inherit}
   .mark{border-radius:12px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
   .mark img{width:100%;height:100%;display:block}
@@ -24,10 +24,10 @@
   .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
   .lock-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.28);
     text-align:center;letter-spacing:3px;font-family:'Montserrat';font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:12px;outline:none}
-  .lock-card input:focus{border-color:rgba(239,194,75,.55)}
+  .lock-card input:focus{border-color:rgba(111,168,255,.55)}
   .btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 18px;border-radius:12px;border:0;cursor:pointer;
     font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px}
-  .btn.gold{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503}
+  .btn.gold{width:100%;background:linear-gradient(135deg,#2A6DE0,#13408F);color:#fff}
   .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);padding:8px 12px;min-height:36px;font-size:12px}
   .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px;min-height:16px}
   .wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
@@ -41,8 +41,8 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
   .app{display:block;text-decoration:none;color:inherit;background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:18px;padding:18px;min-height:150px;position:relative;transition:transform .15s,border-color .15s}
-  a.app:hover,a.app:focus-visible{transform:translateY(-2px);border-color:rgba(239,194,75,.55);outline:none}
-  .app .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:rgba(239,194,75,.12);margin-bottom:14px}
+  a.app:hover,a.app:focus-visible{transform:translateY(-2px);border-color:rgba(111,168,255,.55);outline:none}
+  .app .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:rgba(111,168,255,.12);margin-bottom:14px}
   .app .ic svg{width:24px;height:24px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .app b{display:block;font-family:'Montserrat';font-size:16px;font-weight:800}
   .app span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
