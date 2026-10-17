@@ -259,7 +259,26 @@ var ACTION_STATUSES = ['Not Started', 'Open', 'In Progress', 'Overdue', 'Standin
  *  into it would mark three executives absent and quietly drop the
  *  branch's attendance rate for a month.
  */
-var ROLES = ['manager', 'staff', 'agent', 'guest'];
+var ROLES = ['manager', 'staff', 'unitmgr', 'agent', 'guest'];
+
+/*  WHAT THE BRANCH ACTUALLY TYPES IN A ROLE COLUMN.
+ *
+ *  The roster import read the Agent Codes tab's Role column and sent
+ *  anything not in ROLES to 'agent'. "Unit Manager" was not in ROLES,
+ *  so every unit manager on the branch's own roster arrived here as an
+ *  agent. The branch's sheets spell these roles a dozen ways between
+ *  them, and the spelling is not the branch's problem to fix.
+ */
+function cleanRole_(v) {
+  var r = low_(v).replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!r) return 'agent';
+  if (ROLES.indexOf(r) > -1) return r;
+  if (/^(branch manager|bm)$/.test(r)) return 'manager';
+  if (/unit (manager|mgr|head)|^um$/.test(r)) return 'unitmgr';
+  if (/staff|support|admin|assistant|secretar|clerk/.test(r)) return 'staff';
+  if (/guest|visitor|head office/.test(r)) return 'guest';
+  return 'agent';
+}
 
 /** The role a person holds FOR ONE MEETING, which is not always the
  *  role on their People row. The chair of this meeting and a presenter
@@ -672,7 +691,10 @@ function readPeople_() {
       agentNo: str_(r['Agent No']),
       email: low_(r['Email']),
       name: str_(r['Name']) || str_(r['Email']),
-      role: low_(r['Role']) || 'agent',
+      /*  Normalised on READ as well as on import, so a People row
+       *  somebody typed "Unit Manager" into works without waiting for
+       *  the next roster sync. */
+      role: cleanRole_(r['Role']),
       unit: str_(r['Unit']),
       active: yes_(r['Active']),
       code: str_(r['Access Code']),
@@ -758,6 +780,22 @@ function requireManager_(token) {
 }
 
 function isStaff_(p) { return p && (p.role === 'staff' || p.role === 'manager'); }
+
+/*  A unit manager is NOT staff. The branch-wide persistency red zones,
+ *  licensing and clawback are things the branch discusses about agents,
+ *  and a unit manager is one rung from the people in them. What a unit
+ *  manager gets instead is their own unit in full — which is the whole
+ *  point of making them account for it.
+ */
+function isUnitMgr_(p) { return !!p && p.role === 'unitmgr'; }
+
+/** Whether this person may be shown one named unit's figures. */
+function managesUnit_(p, unit) {
+  if (!p) return false;
+  if (p.role === 'manager' || p.role === 'staff') return true;
+  if (p.role !== 'unitmgr') return false;
+  return sameUnit_(unit, p.name) || (!!p.unit && sameUnit_(unit, p.unit));
+}
 
 /** What a person is allowed to see. Everything in the app runs
  *  through this one test, so there is a single place to be right.
@@ -1071,8 +1109,7 @@ function apiSavePerson_(body) {
   var me = requireManager_(body.token);
   var email = low_(body.email);
   if (email.indexOf('@') < 1) return { ok: false, error: 'Enter a valid email address.' };
-  var role = low_(body.role);
-  if (ROLES.indexOf(role) === -1) role = 'agent';
+  var role = cleanRole_(body.role);
 
   var existing = findPersonByEmail_(email);
   if (existing) {
@@ -2409,6 +2446,169 @@ function nextInRotation_(exclude, skip) {
 }
 
 /** Who presents one rota item at this meeting. */
+/* ==================================================================
+ *  THE UNIT ROUND — every unit manager accounts for their own people
+ *
+ *  Asked for on 17 October 2026: "I want a contribution from all.
+ *  They have come too many times in the meetings where I have to lead
+ *  the entire meeting. I want a manager, the respected manager, to
+ *  account for his teams."
+ *
+ *  Two things were in the way and both were in this file.
+ *
+ *  The first: there was no unit manager. ROLES held manager, staff,
+ *  agent and guest, so the roster import sent "Unit Manager" — which
+ *  is what the branch's own Agent Codes tab says — to 'agent'. No
+ *  agenda item could be routed to a unit manager by role, because as
+ *  far as this script was concerned there were none.
+ *
+ *  The second: the fixed tier of the rota needs an Owner Email typed
+ *  against it by hand, and an item with none seeds unowned. Unowned in
+ *  a room means the chair speaks. Six of the twelve standing items were
+ *  one blank cell away from being his again, every week, quietly.
+ *
+ *  So the round is seeded from the roster and cannot be left blank:
+ *  one agenda slot per active unit manager, each owned by that manager,
+ *  each carrying their own unit's numbers. A unit manager who is away
+ *  keeps the slot and the meeting says so; it does not fall to the chair.
+ * ================================================================== */
+
+/*  A person's Unit column holds their unit manager's name. That is how
+ *  the branch has always written it and how the transition board reads
+ *  it, so a unit is a unit manager plus everyone whose Unit is their
+ *  name. Anyone whose Unit names somebody who has left comes back under
+ *  no manager rather than disappearing: an agent nobody accounts for is
+ *  the single thing a branch meeting most needs on the screen.
+ */
+function units_() {
+  var all = roster_();
+  var mgrs = all.filter(isUnitMgr_);
+  var used = {};
+  var out = mgrs.map(function (m) {
+    var members = all.filter(function (p) {
+      if (p.email === m.email) return false;
+      if (p.role === 'manager' || p.role === 'staff') return false;
+      return sameUnit_(p.unit, m.name) || (!!m.unit && sameUnit_(p.unit, m.unit));
+    });
+    members.forEach(function (p) { used[p.email] = true; });
+    used[m.email] = true;
+    return { unit: m.name, manager: m, members: members, people: [m].concat(members) };
+  });
+
+  var loose = all.filter(function (p) { return !used[p.email] && p.role === 'agent'; });
+  if (loose.length) {
+    out.push({ unit: '', manager: null, members: loose, people: loose, unmanaged: true });
+  }
+  out.sort(function (a, b) {
+    if (!a.unmanaged !== !b.unmanaged) return a.unmanaged ? 1 : -1;
+    return b.people.length - a.people.length || a.unit.localeCompare(b.unit);
+  });
+  return out;
+}
+
+/** The last meeting whose register was closed — the one the round
+ *  reports against. */
+function lastClosedMeeting_(before) {
+  var rows = meetingRows_().filter(function (m) {
+    var s = low_(m['Status']);
+    if (s === 'cancelled' || s === 'draft') return false;
+    var d = asDate_(m['Date']);
+    return d && (!before || d.getTime() < before.getTime());
+  });
+  rows.sort(function (a, b) { return asDate_(b['Date']).getTime() - asDate_(a['Date']).getTime(); });
+  return rows[0] || null;
+}
+
+/*  A unit's week, out of what the system already recorded rather than
+ *  out of anything a manager types on the day. Every figure here has a
+ *  row behind it: a case the agent answered, a register the app closed,
+ *  an action somebody carried, a contribution the room heard.
+ *
+ *  Flight plans are deliberately NOT on this card. goalFeed_ returns
+ *  branch totals with no per-person breakdown, so a per-unit "plans
+ *  filed" would be a figure I invented. The branch total stays on the
+ *  production board, where it is true.
+ */
+function unitCard_(u, ctx) {
+  ctx = ctx || {};
+  var mine = {};
+  u.people.forEach(function (p) { mine[p.email] = true; });
+
+  var sent = 0, answered = 0, contacted = 0, silent = [];
+  ((ctx.chase || chaseStats_()).people || []).forEach(function (r) {
+    if (!mine[r.email]) return;
+    sent += r.sent; answered += r.answered; contacted += r.contacted;
+    if (!r.answered) silent.push(r.name || r.email);
+  });
+
+  var midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  var open = 0, overdue = 0;
+  (ctx.actions || readTab_(MEET.TAB_ACTIONS)).forEach(function (a) {
+    if (!mine[low_(a['Owner'])]) return;
+    /*  The same two tests the Actions tab itself applies, so the unit
+     *  card and the branch's own action list can never disagree on a
+     *  screen: 'Complete' is closed, and a 'Standing' action is never
+     *  overdue however old it is. */
+    var st = str_(a['Status']);
+    if (st === 'Complete') return;
+    open++;
+    var due = asDate_(a['Due']);
+    if (due && due.getTime() < midnight.getTime() && st !== 'Standing') overdue++;
+  });
+
+  var reg = { present: 0, absent: 0, late: 0, missing: [] };
+  var spoke = 0, speakers = {};
+  if (ctx.lastMeetingId) {
+    (ctx.attendance || readTab_(MEET.TAB_ATTENDANCE)).forEach(function (r) {
+      if (str_(r['Meeting ID']) !== ctx.lastMeetingId) return;
+      if (!mine[low_(r['Email'])]) return;
+      if (low_(r['Status']) === 'present') {
+        reg.present++;
+        if (num_(r['Minutes Late']) > 0) reg.late++;
+      } else {
+        reg.absent++;
+        reg.missing.push(str_(r['Name']) || low_(r['Email']));
+      }
+    });
+    (ctx.contrib || readTab_(MEET.TAB_CONTRIB)).forEach(function (c) {
+      if (str_(c['Meeting ID']) !== ctx.lastMeetingId) return;
+      var e = low_(c['Email']);
+      if (!mine[e]) return;
+      spoke++; speakers[e] = true;
+    });
+  }
+
+  return {
+    unit: u.unit,
+    unmanaged: !!u.unmanaged,
+    manager: u.manager ? { name: u.manager.name, email: u.manager.email } : null,
+    people: u.people.length,
+    agents: u.members.filter(function (p) { return p.role === 'agent'; }).length,
+    cases: { sent: sent, answered: answered, contacted: contacted,
+             pct: sent ? Math.round(answered / sent * 100) : null, silent: silent },
+    actions: { open: open, overdue: overdue },
+    register: reg,
+    /*  Contributions and the heads behind them: eleven remarks from one
+     *  person is not a unit that contributed. */
+    spoke: spoke,
+    voices: Object.keys(speakers).length
+  };
+}
+
+/** Every unit's week, reading each tab once. */
+function unitCards_(week) {
+  var last = lastClosedMeeting_();
+  var ctx = {
+    chase: chaseStats_(week),
+    actions: readTab_(MEET.TAB_ACTIONS),
+    attendance: readTab_(MEET.TAB_ATTENDANCE),
+    contrib: readTab_(MEET.TAB_CONTRIB),
+    lastMeetingId: last ? str_(last['ID']) : ''
+  };
+  var cards = units_().map(function (u) { return unitCard_(u, ctx); });
+  return { week: ctx.chase.week, against: last ? str_(last['Ref']) : '', units: cards };
+}
+
 function presenterFor_(item, m, chairEmail, taken) {
   var cadence = low_(item['Cadence']) || 'fixed';
   if (cadence === 'chair') {
@@ -2529,8 +2729,15 @@ function seedRota() {
     [3, 'The campaign \u2014 the orphan book', 9, 'all', 'fixed',
      'Against target, with the pace needed to finish on time. A review filed is the unit measured.'],
 
-    [3, 'Accountability \u2014 Monday\u2019s brief and last week\u2019s actions', 10, 'all', 'fixed',
-     'Answered against sent, contact made against answered, the names who sent nothing back, and every action carried forward with its owner.'],
+    /*  THE ROUND. Cadence 'unit' expands at seed time into one slot per
+     *  active unit manager, each owned by that manager. This row is the
+     *  only place the branch states that every unit accounts for itself,
+     *  and no cell has to be filled by hand for it to happen. Minutes
+     *  are per unit. */
+    [3, 'Each unit accounts for its week', 3, 'all', 'unit',
+     'Your own people. Answered against sent, contact made against answered, who sent nothing back, your register, and every action your unit is carrying. The screen already has your numbers \u2014 you say what you are doing about them.'],
+    [3, 'Monday\u2019s brief \u2014 the branch picture', 5, 'all', 'fixed',
+     'The branch total behind the round: answered against sent, and every action carried forward with its owner.'],
     [2, 'Conservation and exceptions', 8, 'staff', 'fixed',
      'What we are about to lose, and what is breaching its standard \u2014 dues, lapses, requirements, persistency, contracts, 85-day. Only the breaches.'],
 
@@ -2603,18 +2810,64 @@ function seedAgendaInto_(m, byEmail) {
   // One rotating slot per person per meeting: handed to presenterFor_
   // so the rotation itself skips anybody already given one today.
   var taken = {};
-  var standing = rota.map(function (r) {
+
+  /*  A rota row whose cadence is 'unit' is not an item, it is a ROUND:
+   *  it becomes one slot per active unit manager, owned by that manager,
+   *  and the row's minutes are split between them. This is the one
+   *  cadence that cannot seed unowned — the owners come off the roster,
+   *  not out of a cell somebody has to remember to fill.
+   */
+  var unitList = null;
+  var standing = [];
+  rota.forEach(function (r) {
+    var base = {
+      section: str_(r['Section']) || SECTIONS[0],
+      d: str_(r['Detail']),
+      v: cleanVisibility_(r['Visibility'])
+    };
+
+    if (low_(r['Cadence']) === 'unit') {
+      if (!unitList) unitList = units_();
+      if (!unitList.length) {
+        /*  No unit manager on the roster. Say so on the agenda rather
+         *  than dropping the round, which would hide the reason the
+         *  chair is about to present it himself. */
+        standing.push({
+          section: base.section, d: base.d, v: base.v,
+          t: str_(r['Item']) + ' \u2014 no unit manager on the roster',
+          m: num_(r['Minutes']) || 5, pName: '', pEmail: ''
+        });
+        return;
+      }
+      /*  Minutes on a 'unit' row are PER UNIT, not the round's total:
+       *  a chair sets "three minutes each", and the round costs what
+       *  the branch's shape costs. The agenda's own total then tells
+       *  him the truth about the hour instead of hiding it. */
+      var each = Math.max(1, num_(r['Minutes']) || 3);
+      unitList.forEach(function (u) {
+        standing.push({
+          section: base.section, d: base.d, v: base.v, m: each,
+          t: u.unmanaged
+              ? 'Agents with no unit manager'
+              : u.unit + '\u2019s unit \u2014 ' + u.people.length +
+                (u.people.length === 1 ? ' person' : ' people'),
+          /*  The unmanaged bucket is the chair's: there is nobody else
+           *  it can belong to, and that is exactly the point of it. */
+          pName: u.manager ? u.manager.name : str_(m['Chair']),
+          pEmail: u.manager ? u.manager.email : low_(m['Chair'])
+        });
+      });
+      return;
+    }
+
     var who = presenterFor_(r, m, chair, taken);
     if (low_(r['Cadence']) === 'rotate' && who.email) taken[who.email] = true;
-    return {
-      section: str_(r['Section']) || SECTIONS[0],
+    standing.push({
+      section: base.section, d: base.d, v: base.v,
       t: str_(r['Item']),
-      d: str_(r['Detail']),
       m: num_(r['Minutes']) || 5,
-      v: cleanVisibility_(r['Visibility']),
-      pName: who.name,
-      pEmail: who.email
-    };
+      pName: who.name, pEmail: who.email
+    });
   });
 
   standing.forEach(function (item, i) {
@@ -6844,7 +7097,8 @@ function roomBoard_(code, id) {
 
   /*  THE FLOOR. What was said, newest first, with the item it was said
    *  under. Only what everybody in the room may see.                  */
-  var floor = readTab_(MEET.TAB_CONTRIB).filter(function (c) {
+  var contribRows = readTab_(MEET.TAB_CONTRIB);
+  var floor = contribRows.filter(function (c) {
     return str_(c['Meeting ID']) === str_(m['ID']) &&
            cleanVisibility_(c['Visibility']) === 'all';
   }).map(function (c) {
@@ -6858,7 +7112,8 @@ function roomBoard_(code, id) {
   /*  WHO OWES WHAT. Open actions, the overdue first, by owner — the
    *  tab the branch argues from.                                     */
   var today = new Date(); today.setHours(0, 0, 0, 0);
-  var actions = readTab_(MEET.TAB_ACTIONS).filter(function (x) {
+  var actionRows = readTab_(MEET.TAB_ACTIONS);
+  var actions = actionRows.filter(function (x) {
     return low_(x['Status']) !== 'complete';
   }).map(function (x) {
     var due = asDate_(x['Due']);
@@ -6887,6 +7142,20 @@ function roomBoard_(code, id) {
   var rate = ratingStats_(m, reg.counts.roll);
   var trend = ratingTrend_(asDate_(m['Date']));
 
+  /*  THE ROUND. Every unit's week side by side, so the screen is
+   *  already on a unit manager's own numbers when his turn comes and
+   *  he is answering them rather than hearing them for the first time.
+   *  Built from the tabs roomBoard_ already has in hand — the unit
+   *  cards must not cost four more sheet reads on a two-minute poll.
+   */
+  var lastClosed = lastClosedMeeting_(asDate_(m['Date']));
+  var unitCtx = {
+    chase: chase, actions: actionRows, contrib: contribRows,
+    attendance: readTab_(MEET.TAB_ATTENDANCE),
+    lastMeetingId: lastClosed ? str_(lastClosed['ID']) : ''
+  };
+  var unitList = units_().map(function (u) { return unitCard_(u, unitCtx); });
+
   return {
     ok: true,
     branch: MEET.BRANCH,
@@ -6906,6 +7175,7 @@ function roomBoard_(code, id) {
                status: str_(a['Status']) || 'Planned' };
     }),
     register: { counts: reg.counts, groups: reg.groups, reasons: reg.reasons },
+    units: { against: lastClosed ? str_(lastClosed['Ref']) : '', list: unitList },
     floor: floor,
     actions: { list: actions.slice(0, 40),
                owners: Object.keys(byOwner).map(function (k) { return byOwner[k]; })
@@ -7029,8 +7299,7 @@ function pullRoster(sheetId) {
     if (!name && !no && !mail) continue;
     if (!no && mail.indexOf('@') < 1) { skipped.push(name || '(row ' + (r + 1) + ')'); continue; }
 
-    var role = cRole > -1 ? low_(row[cRole]) : '';
-    if (ROLES.indexOf(role) === -1) role = 'agent';
+    var role = cleanRole_(cRole > -1 ? row[cRole] : '');
     var unit = cUnit > -1 ? str_(row[cUnit]) : '';
     var active = cAct > -1 ? (yes_(row[cAct]) ? 'Y' : 'N') : 'Y';
     var code = cCode > -1 ? str_(row[cCode]) : '';

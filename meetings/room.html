@@ -124,6 +124,24 @@ h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.01em}
 .c-exc{border-left-color:var(--dim)}   .c-out{border-left-color:var(--crit)}
 
 /* bars — the value is printed on every one, because nothing hovers here */
+/*  THE ROUND. One card per unit, so the screen is already on a unit
+ *  manager's own numbers when his turn comes. Cards wrap rather than
+ *  scroll: a unit pushed off the right-hand edge of a wall screen is a
+ *  unit nobody asks about. */
+.units{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.unit{background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:20px 22px}
+.unit.loose{border-color:var(--crit);background:rgba(208,59,59,.10)}
+.unit .un{font-family:var(--disp);font-size:27px;line-height:1.15;color:var(--ink)}
+.unit .um{font-size:16px;color:var(--dim);margin-top:3px}
+.unit .hd{display:flex;align-items:baseline;gap:14px;margin:16px 0 4px}
+.unit .hd .n{font-family:var(--disp);font-size:46px;line-height:1}
+.unit .hd .of{font-size:17px;color:var(--muted)}
+.unit .t{height:12px;border-radius:7px;background:rgba(255,255,255,.09);overflow:hidden;margin:10px 0 16px}
+.unit .t .f{height:100%;width:0;border-radius:7px;transition:width .8s cubic-bezier(.22,1,.36,1)}
+.unit .rowz{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;font-size:17px}
+.unit .rowz .l{color:var(--dim)}
+.unit .rowz b{font-variant-numeric:tabular-nums}
+.unit .silent{margin-top:14px}
 .bars{display:flex;flex-direction:column;gap:12px}
 .bar{display:grid;grid-template-columns:190px 1fr 124px;align-items:center;gap:16px}
 .bar .k{font-size:19px;color:var(--muted);text-align:right;
@@ -242,6 +260,7 @@ var TABS = [
   { k:'room',    t:'The room',  n:'who is here' },
   { k:'now',     t:'Now',       n:'what is running' },
   { k:'board',   t:'The board', n:'this week' },
+  { k:'units',   t:'The round',  n:'every unit' },
   { k:'actions', t:'Actions',   n:'who owes what' },
   { k:'floor',   t:'The floor', n:'what was said' },
   { k:'rating',  t:'Rating',    n:'how it went' }
@@ -425,7 +444,8 @@ function boardTab(){
     return '<div class="bar">' +
       '<div class="k">' + esc(p.name || p.email) + '</div>' +
       '<div class="t"><div class="f" data-w="' + share + '"' +
-        ' style="background:' + (share >= 80 ? 'var(--r2)' : share >= 50 ? 'var(--r1)' : 'var(--serious)') +
+        /*  Same ramp as the round, same direction: brightest is best. */
+        ' style="background:' + (share >= 80 ? 'var(--teal)' : share >= 50 ? 'var(--r1)' : 'var(--serious)') +
         '"></div></div>' +
       '<div class="v">' + share + '<span style="color:var(--dim);font-size:17px">%</span>' +
         '<div style="font-size:15px;font-weight:500;font-family:var(--body);color:var(--dim)">' +
@@ -453,6 +473,100 @@ function boardTab(){
         ch.silent.map(function(n){ return '<span class="pill p-out" style="margin:0 10px 10px 0">' +
           '<span class="g">✕</span>' + esc(n) + '</span>'; }).join('') + '</div>'
       : '');
+}
+
+/*  THE ROUND — every unit's week, side by side.
+ *
+ *  The branch manager asked for this on 17 October 2026: "I want a
+ *  contribution from all... I want a manager, the respected manager, to
+ *  account for his teams." So the measure at the top of this tab is not
+ *  production: it is how many units contributed at all last week, which
+ *  is the thing he is actually trying to change.
+ *
+ *  Every figure on a card came off a row the system already had. A unit
+ *  manager standing up to this screen is answering his own numbers, not
+ *  hearing them for the first time.
+ */
+function unitsTab(){
+  var U = D.units;
+  if (!U || !(U.list || []).length){
+    return '<div class="empty">No unit managers on the roster yet. ' +
+      'Put &ldquo;Unit Manager&rdquo; in the Role column against each one, ' +
+      'and their agents&rsquo; Unit column to the manager&rsquo;s name.</div>';
+  }
+  var list = U.list, pc = function(n, d){ return d ? Math.round((n / d) * 100) : 0; };
+  var live = list.filter(function(u){ return !u.unmanaged; });
+  var spoke = live.filter(function(u){ return u.voices > 0; }).length;
+  var loose = list.filter(function(u){ return u.unmanaged; })[0];
+
+  var cards = list.map(function(u){
+    var share = u.cases.sent ? pc(u.cases.answered, u.cases.sent) : null;
+    /*  Brightest is best. The ramp used to darken as the week improved,
+     *  which on a navy wall made the strongest unit the faintest card. */
+    var col = share === null ? 'var(--dim)'
+            : share >= 80 ? 'var(--teal)' : share >= 50 ? 'var(--r1)' : 'var(--serious)';
+    var silent = (u.cases.silent || []).map(function(n){
+      return '<span class="pill p-out" style="margin:0 8px 8px 0">' +
+             '<span class="g">&#10005;</span>' + esc(n) + '</span>'; }).join('');
+
+    return '<div class="unit' + (u.unmanaged ? ' loose' : '') + '">' +
+      '<div class="un">' + (u.unmanaged ? 'Nobody accounts for these' : esc(u.unit) + '&rsquo;s unit') + '</div>' +
+      '<div class="um">' + (u.unmanaged
+          ? u.people + (u.people === 1 ? ' agent, no unit manager' : ' agents, no unit manager')
+          : esc(u.manager ? u.manager.name : '') + ' &middot; ' + u.people +
+            (u.people === 1 ? ' person' : ' people')) + '</div>' +
+
+      (share === null
+        ? '<div class="hd"><div class="n" style="color:var(--dim)">&mdash;</div>' +
+          '<div class="of">nothing was sent to them this week</div></div>' +
+          '<div class="t"></div>'
+        : '<div class="hd"><div class="n" style="color:' + col + '">' +
+            '<span data-count="' + share + '">0</span>' +
+            '<span style="font-size:22px;color:var(--dim)">%</span></div>' +
+          '<div class="of">answered &middot; ' + u.cases.answered + ' of ' + u.cases.sent + '</div></div>' +
+          '<div class="t"><div class="f" data-w="' + share + '" style="background:' + col + '"></div></div>') +
+
+      '<div class="rowz">' +
+        '<div><span class="l">Contact made</span> <b>' + u.cases.contacted + '</b></div>' +
+        '<div><span class="l">Answered nothing</span> <b' +
+          ((u.cases.silent || []).length ? ' style="color:var(--serious)"' : '') + '>' +
+          (u.cases.silent || []).length + '</b></div>' +
+        '<div><span class="l">Here last time</span> <b>' + u.register.present +
+          '</b>' + (u.register.late ? ' <span class="l">(' + u.register.late + ' late)</span>' : '') + '</div>' +
+        '<div><span class="l">Not there</span> <b' +
+          (u.register.absent ? ' style="color:var(--serious)"' : '') + '>' + u.register.absent + '</b></div>' +
+        '<div><span class="l">Actions open</span> <b>' + u.actions.open + '</b></div>' +
+        '<div><span class="l">Overdue</span> <b' +
+          (u.actions.overdue ? ' style="color:var(--crit)"' : '') + '>' + u.actions.overdue + '</b></div>' +
+        /*  Remarks and the heads behind them: eleven points from one
+         *  person is not a unit that contributed. */
+        '<div style="grid-column:1/-1"><span class="l">Spoke last meeting</span> <b' +
+          (u.voices ? '' : ' style="color:var(--serious)"') + '>' +
+          (u.voices ? u.voices + (u.voices === 1 ? ' voice' : ' voices') +
+            ' &middot; ' + u.spoke + (u.spoke === 1 ? ' point' : ' points')
+            : 'nobody') + '</b></div>' +
+      '</div>' +
+      (silent ? '<div class="silent">' + silent + '</div>' : '') +
+    '</div>';
+  }).join('');
+
+  return '<div class="hero">' +
+      '<div><div class="cap">Units that spoke</div><div class="big gold">' +
+        '<span data-count="' + spoke + '">0</span>' +
+        '<span class="u">of ' + live.length + '</span></div></div>' +
+      '<div><div class="cap">Answered, branch</div><div class="big teal">' +
+        '<span data-count="' + pc(
+            list.reduce(function(t,u){ return t + u.cases.answered; }, 0),
+            list.reduce(function(t,u){ return t + u.cases.sent; }, 0)) + '">0</span>' +
+        '<span class="u">%</span></div></div>' +
+    '</div>' +
+    '<div class="sec">Each unit accounts for its week' +
+      (U.against ? ' &mdash; against ' + esc(U.against) : '') + '</div>' +
+    '<p class="lead">Every figure here is already on the sheet. The round is ' +
+      'what each unit manager is doing about their own.' +
+      (loose ? ' The red card is agents no unit manager is accountable for &mdash; ' +
+               'that one is the chair&rsquo;s.' : '') + '</p>' +
+    '<div class="units">' + cards + '</div>';
 }
 
 function actionsTab(){
@@ -593,7 +707,7 @@ function draw(){
     : D.branch;
   el('stamp').textContent = 'read ' + (D.now || '');
 
-  var build = { room: roomTab, now: nowTab, board: boardTab,
+  var build = { room: roomTab, now: nowTab, board: boardTab, units: unitsTab,
                 actions: actionsTab, floor: floorTab, rating: ratingTab };
   el('stage').innerHTML = TABS.map(function(t){
     var html = '';
