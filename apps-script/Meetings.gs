@@ -2705,6 +2705,82 @@ function unitCards_(week) {
   return { week: ctx.chase.week, against: last ? str_(last['Ref']) : '', units: cards };
 }
 
+/* ==================================================================
+ *  THE NAMED ROUND — when there is no management layer to delegate to
+ *
+ *  17 October 2026: "so we have one unit manager atm akaash."
+ *
+ *  The unit round assumed several unit managers to spread the meeting
+ *  across. With one, it produces two slots: Akaash's unit, and a card
+ *  called "agents with no unit manager" holding most of the branch,
+ *  owned by the chair. That is the chair presenting the branch again
+ *  with a new heading on it, which is the thing he asked to stop.
+ *
+ *  So contribution has to come from the agents themselves, and the
+ *  question is who speaks. A chair picking names in the room is the
+ *  same chair leading the meeting, and it reads as favour or as
+ *  punishment depending on the week. The data can pick instead, and
+ *  the rule can be said out loud beforehand:
+ *
+ *    Anyone the Monday list sent cases to who answered none of them
+ *    accounts for their own week, by name. The rest of the slots go
+ *    to whoever has gone longest without one.
+ *
+ *  That is fair in a way a chair's eye is not: do the work and the
+ *  screen never calls you, and everybody comes up eventually whether
+ *  the week was good or bad. It needs no unit managers, so it works
+ *  today and keeps working as the branch appoints more.
+ * ================================================================== */
+
+var ROUND = {
+  NAMED: 5,      /* agent slots a meeting, unless the rota says otherwise */
+  /*  Beyond this, "agents with no unit manager" has stopped being an
+   *  exception list and is simply the branch. One slot for 24 people
+   *  read out by the chair is not accountability; those agents come up
+   *  by name in the named round instead. */
+  BUCKET_MAX: 4
+};
+
+/*  Who accounts for themselves this week: the silent first, in the
+ *  order of how much was sent to them, then the longest since anybody
+ *  last gave them a slot. `taken` is shared with the rota's own
+ *  rotation so nobody draws two slots in one meeting.           */
+function namedRound_(m, chair, taken, want, chase) {
+  want = want || ROUND.NAMED;
+  taken = taken || {};
+  var out = [];
+
+  try { chase = chase || chaseStats_(); } catch (err) { chase = null; }
+
+  /*  SILENT FIRST. Sent cases and answered none of them — not "answered
+   *  badly", which is a conversation, but never replied, which is the
+   *  one thing the branch can measure without arguing about it. */
+  (chase && chase.people ? chase.people : [])
+    .filter(function (p) { return p.sent > 0 && p.answered === 0; })
+    .sort(function (a, b) { return b.sent - a.sent; })
+    .forEach(function (p) {
+      if (out.length >= want || taken[p.email] || low_(p.email) === low_(chair)) return;
+      var who = findPersonByEmail_(p.email);
+      /*  Only an agent accounts for themselves here. A unit manager
+       *  already has the unit round and staff are not on the list. */
+      if (!who || !who.active || who.role !== 'agent') return;
+      taken[p.email] = true;
+      out.push({ name: who.name, email: who.email,
+                 why: p.sent + (p.sent === 1 ? ' case' : ' cases') + ', none answered',
+                 silent: true });
+    });
+
+  /*  THEN THE ROTATION, so a clean week is still a week somebody
+   *  speaks in and everyone comes round. */
+  while (out.length < want) {
+    var nxt = nextInRotation_(chair, taken);
+    if (!nxt) break;
+    taken[nxt.email] = true;
+    out.push({ name: nxt.name, email: nxt.email, why: 'their turn', silent: false });
+  }
+  return out;
+}
+
 function presenterFor_(item, m, chairEmail, taken) {
   var cadence = low_(item['Cadence']) || 'fixed';
   if (cadence === 'chair') {
@@ -2832,6 +2908,14 @@ function seedRota() {
      *  are per unit. */
     [3, 'Each unit accounts for its week', 3, 'all', 'unit',
      'Your own people. Answered against sent, contact made against answered, who sent nothing back, your register, and every action your unit is carrying. The screen already has your numbers \u2014 you say what you are doing about them.'],
+    /*  THE NAMED ROUND. One slot per agent accounting for their own
+     *  week: anyone the Monday list sent cases to who answered none of
+     *  them, then whoever has gone longest without a slot. Minutes are
+     *  per agent; ROUND.NAMED is how many. This is what carries
+     *  "a contribution from all" while the branch has one unit
+     *  manager — it needs no management layer to delegate to. */
+    [3, 'Your own week', 2, 'all', 'named',
+     'One agent, their own week, in their words. The screen says why you are up.'],
     [3, 'Monday\u2019s brief \u2014 the branch picture', 5, 'all', 'fixed',
      'The branch total behind the round: answered against sent, and every action carried forward with its owner.'],
     [2, 'Conservation and exceptions', 8, 'staff', 'fixed',
@@ -2913,7 +2997,16 @@ function seedAgendaInto_(m, byEmail) {
    *  cadence that cannot seed unowned — the owners come off the roster,
    *  not out of a cell somebody has to remember to fill.
    */
-  var unitList = null;
+  var unitList = null, seedChase = null, seedChaseRead = false;
+  /*  Read once for the seed: the unit round and the named round both
+   *  want the week, and seeding is already several tab reads deep. */
+  function chaseForSeed_() {
+    if (!seedChaseRead) {
+      seedChaseRead = true;
+      try { seedChase = chaseStats_(); } catch (err) { seedChase = null; }
+    }
+    return seedChase;
+  }
   var standing = [];
   rota.forEach(function (r) {
     var base = {
@@ -2941,16 +3034,48 @@ function seedAgendaInto_(m, byEmail) {
        *  him the truth about the hour instead of hiding it. */
       var each = Math.max(1, num_(r['Minutes']) || 3);
       unitList.forEach(function (u) {
+        /*  THE BUCKET IS THE CHAIR'S ONLY WHILE IT IS AN EXCEPTION.
+         *  With one unit manager on the roster it holds most of the
+         *  branch, and a single slot called "agents with no unit
+         *  manager" read out by the chair is the chair presenting the
+         *  branch again. Past BUCKET_MAX those agents come up by name
+         *  in the named round instead, and the red card on the room
+         *  screen still says how many of them there are — which is the
+         *  argument for appointing the next unit manager. */
+        if (u.unmanaged && u.people.length > ROUND.BUCKET_MAX) return;
         standing.push({
           section: base.section, d: base.d, v: base.v, m: each,
           t: u.unmanaged
-              ? 'Agents with no unit manager'
+              ? 'Agents with no unit manager \u2014 ' + u.people.length
               : u.unit + '\u2019s unit \u2014 ' + u.people.length +
                 (u.people.length === 1 ? ' person' : ' people'),
-          /*  The unmanaged bucket is the chair's: there is nobody else
-           *  it can belong to, and that is exactly the point of it. */
           pName: u.manager ? u.manager.name : str_(m['Chair']),
           pEmail: u.manager ? u.manager.email : low_(m['Chair'])
+        });
+      });
+      return;
+    }
+
+    /*  'named' is the other round: one slot per agent accounting for
+     *  their own week. Minutes on the row are per agent; how many
+     *  agents is ROUND.NAMED, which is one number in one place. */
+    if (low_(r['Cadence']) === 'named') {
+      var want = ROUND.NAMED;
+      var each2 = Math.max(1, num_(r['Minutes']) || 2);
+      var picks = namedRound_(m, chair, taken, want, chaseForSeed_());
+      if (!picks.length) {
+        standing.push({ section: base.section, d: base.d, v: base.v, m: each2,
+          t: str_(r['Item']) + ' \u2014 nobody to call', pName: '', pEmail: '' });
+        return;
+      }
+      picks.forEach(function (q) {
+        standing.push({
+          section: base.section, v: base.v, m: each2,
+          t: q.name + ' \u2014 ' + q.why,
+          d: q.silent
+              ? 'The Monday list sent you cases and none came back. Your own week, in your words: what happened, and what you are doing about it.'
+              : base.d,
+          pName: q.name, pEmail: q.email
         });
       });
       return;
