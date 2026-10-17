@@ -3892,6 +3892,9 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   too, so the narration is Kokoro (`am_michael`, offline, Apache 2.0, model files from the kokoro-onnx GitHub release),
   voiced per sentence by a script in the session scratchpad, which also estimates each word's start for the timing file.
   Re-voice on `en-US-AndrewNeural` when edge-tts is reachable again, so these sound like the other films.
+  **The music is the branch's own "Music_Motivation" track** (sent in the chat on 17 October 2026 with an Andrew sample),
+  looped by `usetrack.py` for `lbagent` and `lbstaff`; it is kept outside the repository, so the Kevin MacLeod credit is not on
+  the films page.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).
