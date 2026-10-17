@@ -776,7 +776,7 @@ def s_lbmine(i, sc, D):
 
 def s_lbteam(i, sc, D):
     tT, tO, tU = w(i, 'team'), w(i, 'one'), w(i, 'unit', 2)
-    row = lambda c, ref, ag, s, cls='': f'<div class="prw lbtr {cls}">{avatar(c, "sm")}<div><b>{c}</b><i>{ref}</i><span class="lbag">{ag}</span></div><span class="lbl {s[1]}">{s[0]}</span></div>'
+    row = lambda c, ref, ag, s, cls='': f'<div class="prw lbtm {cls}">{avatar(c, "sm")}<div><b>{c}</b><i>{ref}</i><span class="lbag">{ag}</span></div><span class="lbl {s[1]}">{s[0]}</span></div>'
     A = [('Keisha Thomas', 'Surrender Documents', 'Andrea Lewis', ('Sent', 'grn')), ('Omar Hosein', 'ACH Form · Bank Statement', 'Marcus Ali', ('Received', 'blu')),
          ('Lena Singh', 'Policy Contract to deliver', 'Marcus Ali', ('With agent', 'amb')), ('Ian Francis', 'Change of Beneficiary', 'Gail Walker', ('Logged', 'gry'))]
     sel1 = f'<div class="fld lbsel until" style="--at:0ms;--to:{ms(tO)}">Whole team (4) ▾</div>'
@@ -948,7 +948,7 @@ LB_CSS = r"""
 .bf .lbst.lbhit .lbsd{background:var(--grn);color:#fff}
 .bf .lbselw{position:relative;height:34px;margin:6px 0} .bf .lbsel{position:absolute;inset:0;font-size:12.5px;font-weight:600}
 .bf .lbstack{position:relative;min-height:290px} .bf .lbstack>div{position:absolute;left:0;right:0;top:0}
-.bf .lbtr>div{flex:1;min-width:0} .bf .lbtr .lbag{display:block;font:600 10.5px var(--body);color:var(--blue2)} .bf .lbtr .lbl{margin-left:auto;align-self:center}
+.bf .lbtm>div{flex:1;min-width:0} .bf .lbtm .lbag{display:block;font:600 10.5px var(--body);color:var(--blue2)} .bf .lbtm .lbl{margin-left:auto;align-self:center}
 .bf .lbtabs{display:flex;gap:4px;padding:0 18px;border-bottom:1px solid #E1E7F0;background:#fff}
 .bf .lbtabs span{font:600 12.5px var(--body);color:var(--mute);padding:9px 12px;border-bottom:2.5px solid transparent} .bf .lbtabs .on{color:var(--ink);border-bottom-color:var(--blue)}
 .bf .lbtabs b{background:var(--blue);color:#fff;border-radius:999px;padding:0 6px;font-size:10.5px}
