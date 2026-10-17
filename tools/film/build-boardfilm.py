@@ -1110,6 +1110,29 @@ def s_mchase(i, sc, D):
 #  Every name, hour and figure on screen is made up.
 # ══════════════════════════════════════════════════════════════════════════
 
+
+def rowtimes(i, sc, rows, key, base, step):
+    """When each row of a list appears, in order and never out of it.
+
+       A row may name the word it should land on; a row that names none
+       follows the one above. The guard is the point: a row cued on a
+       word the voice says EARLIER than the row above it would draw the
+       list with a hole in it, which is exactly what the first cut of
+       the sales support film did — the fourth block appeared seven
+       seconds before the third. Caught here, at build time, rather than
+       in a rendered frame."""
+    out, prev = [], 0
+    for k, r in enumerate(rows):
+        t = w(i, r[key]) if r.get(key) else max(base + k * step, prev + step)
+        if t < prev:
+            raise SystemExit(
+                f'scene {i + 1} ({sc["visual"]}): row {k + 1} is cued on '
+                f'{r[key]!r} at {t} ms, before row {k} at {prev} ms. '
+                f'Cue it on a later word, or drop the cue and let it follow.')
+        out.append(t)
+        prev = t
+    return out
+
 def s_dtitle(i, sc, D):
     """The cover for one role: the mark, who it is for, and their hours."""
     t0 = w(i, sc['on'])
@@ -1128,8 +1151,9 @@ def s_dstrip(i, sc, D):
        block late without saying when the person started blames the early
        desk for the schedule's own gaps."""
     cues = []
+    T = rowtimes(i, sc, sc['cells'], 'on', 300, 280)
     for k, c in enumerate(sc['cells']):
-        t = w(i, c['on']) if c.get('on') else 300 + k * 280
+        t = T[k]
         num = cnt(t + 100, c['n'], c.get('suf', '')) if isinstance(c.get('n'), int) else f'<b>{c["v"]}</b>'
         cues.append(at(t, 'at pop dsc' + (' key' if c.get('key') else ''),
                        inner=f'<span class="tic">{ico(c.get("icon", "clock"))}</span>{num}'
@@ -1146,8 +1170,9 @@ def s_dblocks(i, sc, D):
        every status anywhere — and the figure beside a block is what
        Salesforce says moved in that block's own kind of work."""
     rows = ''
+    T = rowtimes(i, sc, sc['blocks'], 'on', 400, 300)
     for k, b in enumerate(sc['blocks']):
-        t = w(i, b['on']) if b.get('on') else 400 + k * 300
+        t = T[k]
         st = b.get('state', 'ahead')
         fig = (f'<span class="dbf">{cnt(t + 160, b["sf"])}<i>closed</i></span>'
                if b.get('sf') is not None else '')
@@ -1166,8 +1191,9 @@ def s_dlist(i, sc, D):
        is the point — "1 of 4 reported" tells a person what to do where a bare
        cross does not."""
     rows = ''
+    T = rowtimes(i, sc, sc['items'], 'on', 400, 330)
     for k, it in enumerate(sc['items']):
-        t = w(i, it['on']) if it.get('on') else 400 + k * 330
+        t = T[k]
         done = it.get('done')
         rows += at(t, 'at l dli' + (' dok' if done else ''),
                    inner=f'<span class="dlb">{ico("check") if done else ""}</span>'
