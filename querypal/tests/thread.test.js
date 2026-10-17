@@ -79,7 +79,10 @@ t('the old single search would have missed this', !!r2.thread, true);
 
 gmailIndex = {};
 let r3 = G('qpFindThread_')(REF, DEPT, 'x');
-t('a genuine miss is reported, not thrown', r3.how, 'no-thread-found');
+/* Renamed on 17 Oct 2026: the sentinel now says what was actually missing.
+   A thread can exist for a reference and still not be the department's — the
+   client keep-warm note is one — so "no thread" was never the right word. */
+t('a genuine miss is reported, not thrown', r3.how, 'no-department-thread');
 t('and no thread comes back', r3.thread, null);
 
 gmailThrows = true;

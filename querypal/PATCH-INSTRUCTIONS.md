@@ -870,6 +870,81 @@ is the system working as built, and that is the part worth changing next.
 
 ---
 
+### 28 — a client's reply is not a department's reply
+
+**One find-and-replace.** Ctrl+F for:
+
+```js
+latestExternalReplyText_(row[0])
+```
+
+One hit, inside `autoSweep`. Change it to:
+
+```js
+qpExternalReply_(row)
+```
+
+### Why this and edit 16 matter more than they look
+
+On 17 October 2026 follow-up 1 of 3 for `RRB/2026/092` arrived under the
+subject:
+
+> **Re: We are working on your Direct Debit payment not actioned. request**
+
+That is `sendClientUpdate_`'s subject line — the client keep-warm note. The
+chase had replied **inside the client's thread**, so a message written for a
+department ("our records still show it open, kindly reply to this thread with a
+status or completion confirmation") went to the client instead. No attachments,
+no original trail, and nothing reached GLOC Premium Query.
+
+`deptThread_` had two faults, and the first version of `qpFindThread_` in the
+patch copied both:
+
+1. **`blob.indexOf('myguardiangroup.com') > -1` was treated as proof.** The
+   script *sends* from that domain, so every thread it has ever created matched
+   itself — the keep-warm note to the client included.
+2. **Failing that, it returned `threads[0]` anyway.** Gmail returns newest
+   first, so a keep-warm sent this morning outranked the real department thread
+   from four days earlier.
+
+Section 10 now requires an actual department address on the thread, or a
+message *from* the corporate domain that is not us (a genuine reply, possibly
+from an officer we never wrote to). There is no fallback: no department thread
+means the chase goes out as **its own email to the department**, which is
+correct and visible. The client being CC'd does not disqualify a thread —
+`sendRoutedEmail` copies them on the real one, so their presence proves nothing
+either way.
+
+The same root cause ran through reply detection, which is what edit 28 fixes.
+`latestExternalReplyText_` took the newest thread matching the reference and
+read its newest message not sent by us. Once a keep-warm note exists, that is
+the client's thread — so **a client's own words were recorded as "Department
+replied"**, stamped in column 28, and handed to `classifyReply_`, which reads
+"thanks, that's sorted" as resolved and **auto-closes the case**.
+
+`qpExternalReply_` reads only the department thread and skips both us and the
+client. No department thread means no reply, because silence is the honest
+answer.
+
+### Check it before it sends anything
+
+Run **`qpThreadAudit()`** from the editor. Read-only, sends nothing. One line
+per open case showing which thread a chase would attach to and why. `HOW` is
+the column that matters:
+
+- `no-department-thread` — the next chase goes out as its own email. Expect
+  this on any case whose routed email never sent, which is every case logged
+  on a day the quota was exhausted.
+- anything else names the signal that matched.
+
+Before this fix, every one of those `no-department-thread` cases would have
+replied into whatever Gmail listed first.
+
+`tests/thread-match.test.mjs` fails on the old behaviour — 8 assertions,
+including "the client keep-warm thread is not mistaken for the department".
+
+---
+
 ## URGENT — rotate the branch master codes
 
 **Do this today, and do it before anything else on this page.**

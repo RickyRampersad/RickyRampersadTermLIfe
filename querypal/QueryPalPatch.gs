@@ -1390,10 +1390,57 @@ function qpThreadQueries_(ref, subject) {
   return q;
 }
 
-/* Returns { thread, how } or { thread:null, how:'<why it failed>' }. Never throws. */
+/* Our own address, cached. Every message this script sends carries it as From,
+   which is the whole reason the old domain test was worthless. */
+var QP_ME = null;
+function qpMe_() {
+  if (QP_ME === null) {
+    try { QP_ME = String(Session.getEffectiveUser().getEmail() || '').toLowerCase(); }
+    catch (e) { QP_ME = ''; }
+  }
+  return QP_ME;
+}
+
+/* A thread is the department's only if a department address is actually on it.
+
+   On 17 October 2026 the branch manager opened follow-up 1 of 3 for
+   RRB/2026/092 and found it sitting under the subject
+
+       Re: We are working on your Direct Debit payment not actioned. request
+
+   which is sendClientUpdate_'s subject, not the department's. The chase had
+   replied inside the CLIENT's keep-warm thread, so a message written for a
+   department — "our records still show it open, kindly reply to this thread
+   with a status or completion confirmation" — went to the client instead.
+
+   Two faults, and the original deptThread_ in Code.gs has both:
+
+     1. `blob.indexOf('myguardiangroup.com') > -1` was treated as proof. The
+        script SENDS from that domain, so every thread it has ever created
+        matches itself — including the keep-warm note to the client.
+     2. Failing that, it returned threads[0] anyway. Gmail returns newest
+        first, so once a keep-warm existed it outranked the real thread from
+        four days earlier.
+
+   Now: a thread qualifies only if an actual department address appears on it,
+   or a message came FROM the corporate domain and was not sent by us (a real
+   reply, possibly from a different officer than we wrote to). Nothing else
+   qualifies, and there is no fallback — no thread means a fresh email to the
+   department, which is correct and visible, rather than a chase posted to a
+   client.
+
+   The client is not excluded: sendRoutedEmail CCs them on the real thread, so
+   their presence proves nothing either way. The department's presence is the
+   whole test.
+
+   Returns { thread, how } or { thread:null, how:'<why it failed>' }. Never throws. */
 function qpFindThread_(ref, deptMail, subject) {
-  var want = String(deptMail || '').toLowerCase();
+  var want = String(deptMail || '').toLowerCase().split(',')
+               .map(function (s) { return s.trim(); })
+               .filter(function (s) { return s.indexOf('@') > -1; });
+  var me = qpMe_();
   var qs = qpThreadQueries_(ref, subject);
+
   for (var i = 0; i < qs.length; i++) {
     var threads;
     try {
@@ -1405,20 +1452,32 @@ function qpFindThread_(ref, deptMail, subject) {
       return { thread: null, how: 'gmail-not-authorised: ' + (ge && ge.message ? ge.message : ge) };
     }
     if (!threads || !threads.length) continue;
+
     for (var t = 0; t < threads.length; t++) {
       try {
         var ms = threads[t].getMessages();
         for (var m = 0; m < ms.length; m++) {
-          var blob = (String(ms[m].getTo()) + ',' + String(ms[m].getFrom()) + ',' +
-                      String(ms[m].getCc())).toLowerCase();
-          if ((want && blob.indexOf(want) > -1) || blob.indexOf('myguardiangroup.com') > -1)
-            return { thread: threads[t], how: qs[i].how };
+          var to = String(ms[m].getTo() || '').toLowerCase();
+          var cc = String(ms[m].getCc() || '').toLowerCase();
+          var from = String(ms[m].getFrom() || '').toLowerCase();
+          var addressed = to + ',' + cc + ',' + from;
+
+          for (var w = 0; w < want.length; w++) {
+            if (addressed.indexOf(want[w]) > -1)
+              return { thread: threads[t], how: qs[i].how };
+          }
+          /* A reply from the corporate domain that is not us. Our own From
+             carries that domain too, which is exactly what used to make this
+             test meaningless. */
+          if (from.indexOf('myguardiangroup.com') > -1 && (!me || from.indexOf(me) === -1))
+            return { thread: threads[t], how: qs[i].how + '-reply-from-dept' };
         }
       } catch (te) {}
     }
-    return { thread: threads[0], how: qs[i].how + '-first' };   // matched text, no address match
   }
-  return { thread: null, how: 'no-thread-found' };
+  /* No fallback. A chase with nowhere correct to go goes out as its own email
+     to the department, not into whatever Gmail happened to list first. */
+  return { thread: null, how: 'no-department-thread' };
 }
 
 /* Read-only. Run this from the editor to see whether threading actually works.
@@ -2399,4 +2458,88 @@ function qpFoldChases_(payload) {
   out.sort(function (a, b) { return (a.when || '') < (b.when || '') ? -1 : 1; });
   payload.events = out;
   return payload;
+}
+
+
+/* ══════════════ 16. A CLIENT'S REPLY IS NOT A DEPARTMENT'S REPLY ══════════════
+   latestExternalReplyText_ takes the newest thread matching the reference
+   (`GmailApp.search(..., 0, 1)`) and treats the newest message not sent by us
+   as the department answering. Once a client keep-warm note exists for a case,
+   that is the newest thread — so a reply typed by the CLIENT is recorded as
+   "Department replied on the trail", stamped in column 28, and handed to
+   classifyReply_, which can read "thanks, that's sorted" and auto-close the
+   case on the strength of it.
+
+   The same root cause as section 10: nothing checked that the thread was the
+   department's. This reads the department thread qpFindThread_ identifies, and
+   ignores messages from the client and from us. No department thread means no
+   reply — silence is the honest answer, not a guess.
+
+   Code.gs edit 28: in autoSweep, find
+
+       latestExternalReplyText_(row[0])
+
+   (one hit) and change it to
+
+       qpExternalReply_(row)                                                  */
+
+function qpExternalReply_(row) {
+  try {
+    var ref = String(row[0] || '').trim();
+    if (!ref) return null;
+    var subject = (typeof clean === 'function')
+      ? clean(String(row[5] || '')) + ' - ' + String(row[17] || '') : '';
+    var found = qpFindThread_(ref, row[14], subject);
+    if (!found || !found.thread) return null;
+
+    var me = qpMe_();
+    var client = String(row[6] || '').toLowerCase().trim();
+    var ms = found.thread.getMessages();
+    var best = null, bestTx = '';
+
+    for (var i = 0; i < ms.length; i++) {
+      var from = String(ms[i].getFrom() || '').toLowerCase();
+      if (me && from.indexOf(me) > -1) continue;              // ours
+      if (client && from.indexOf(client) > -1) continue;      // the client, not the department
+      var dt = ms[i].getDate ? ms[i].getDate() : null;
+      if (!dt || (best && dt <= best)) continue;
+      best = dt;
+      try { bestTx = String(ms[i].getPlainBody ? ms[i].getPlainBody() : (ms[i].getBody() || '')); }
+      catch (be) { bestTx = ''; }
+    }
+    return best ? { at: best, text: bestTx } : null;
+  } catch (e) { return null; }
+}
+
+/* Read-only. Run from the editor to see, per open case, which thread a chase
+   would attach itself to and why — before it sends anything to anybody. The
+   column that matters is HOW: 'no-department-thread' means the next chase goes
+   out as its own email, and anything else names the signal that matched. No
+   client text or request detail is printed. */
+function qpThreadAudit() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'The log is empty.';
+  var d = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues();
+  var out = ['THREAD AUDIT — read-only, nothing is sent', '',
+             '  REFERENCE                                  HOW'];
+  var n = 0, stray = 0;
+  for (var i = 0; i < d.length; i++) {
+    var ref = String(d[i][0] || '').trim();
+    if (!ref) continue;
+    if (/closed|resolved|completed/i.test(String(d[i][3] || ''))) continue;
+    n++;
+    var subject = (typeof clean === 'function')
+      ? clean(String(d[i][5] || '')) + ' - ' + String(d[i][17] || '') : '';
+    var f = qpFindThread_(ref, d[i][14], subject);
+    if (!f.thread) stray++;
+    out.push('  ' + (ref + '                                          ').slice(0, 44) + f.how);
+  }
+  out.push('');
+  out.push('  ' + n + ' open case' + (n === 1 ? '' : 's') + ', ' + stray
+         + ' with no department thread — those chase by fresh email.');
+  out.push('  Before this fix they would have replied into whatever Gmail listed');
+  out.push('  first, which for a case with a keep-warm note is the client.');
+  var msg = out.join('\n');
+  Logger.log(msg);
+  return msg;
 }

@@ -240,8 +240,15 @@ console.log('\nthe timeline\n');
 /* ---------- the shape of section 15 ------------------------------------- */
 console.log('\nthe patch\n');
 
-const S15 = PATCH.slice(PATCH.indexOf('15. THE CHASE THAT MISSED THE DEPARTMENT'));
-t('section 15 exists', S15.length > 1000);
+/* Bounded at the next section. An unbounded slice audits later sections as if
+   they were this one — which is how this went red when section 16 arrived. */
+const S15 = (() => {
+  const a = PATCH.indexOf('15. THE CHASE THAT MISSED THE DEPARTMENT');
+  const b = PATCH.indexOf('16. A CLIENT\'S REPLY IS NOT A DEPARTMENT\'S REPLY');
+  return PATCH.slice(a, b > a ? b : undefined);
+})();
+t('section 15 exists and is bounded', S15.length > 1000 && S15.length < 12000,
+  S15.length + ' chars');
 t('nothing in section 15 sends email', !/MailApp|GmailApp/.test(S15),
   'these decide recipients and repair cells — the sending stays in Code.gs');
 {
