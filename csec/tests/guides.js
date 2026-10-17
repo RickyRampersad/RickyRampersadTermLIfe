@@ -1,7 +1,6 @@
-/* The guide library is level-scoped: a child sitting SEA must be shown SEA
-   methods and nothing from the secondary ladder. Before this, guides.html
-   listed all of them, so a Standard 5 was offered the CSEC argumentative
-   essay and the literature paragraph — which is what "want SEA only" meant. */
+/* The guide library is scoped to the examination the child sits, and since
+   16 October 2026 the whole product is for SEA alone: the data carries no
+   secondary guide at all. These checks hold both facts. */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const B='http://127.0.0.1:8899/csec/';
 const errs=[]; let pass=0;
@@ -231,16 +230,17 @@ const signIn=async(pg,tab,lvl)=>{
     console.log('   '+head.trim());
   });
 
-  await step('a Form 3 still gets the CSEC methods',async()=>{
-    await signIn(pg,'#c-form',8);   /* Form 3 is level 8 on the ten-rung ladder */
+  await step('a Standard 3 is shown the same SEA methods, nothing more',async()=>{
+    await signIn(pg,'#c-form-primary',3);
     await pg.goto(B+'guides.html',{waitUntil:'networkidle'});
     const r=await pg.evaluate(()=>{
       const shown=[...document.querySelectorAll('#list details')].map(d=>d.id.replace(/^g-/,''));
       const by={}; (window.CSEC_GUIDES||[]).forEach(g=>by[g.id]=g);
-      return {n:shown.length, sec:shown.filter(id=>by[id]&&!/^p-/.test(by[id].subj)).length};
+      return {n:shown.length, total:(window.CSEC_GUIDES||[]).length, sec:shown.filter(id=>by[id]&&!/^p-/.test(by[id].subj)).length};
     });
-    if(!r.sec) throw new Error('a Form 3 was shown no secondary methods');
-    console.log('   '+r.n+' methods listed, '+r.sec+' of them secondary');
+    if(r.sec) throw new Error('a Standard 3 was shown '+r.sec+' secondary methods');
+    if(r.n!==r.total) throw new Error('a Standard 3 sees '+r.n+' of '+r.total+' SEA methods');
+    console.log('   '+r.n+' methods, all SEA');
   });
 
   await step('a teacher keeps the whole ladder',async()=>{

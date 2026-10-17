@@ -1,4 +1,4 @@
-/* SEA & CSEC Study Hub — cross-device sync client
+/* SEA Study Hub — cross-device sync client
  *
  * Talks to the Apps Script in gs/csec-sync.gs. A group has a code; anyone
  * holding the code reads and writes that group. The code is the credential —

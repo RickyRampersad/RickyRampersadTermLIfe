@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Teacher View | SEA &amp; CSEC Study Hub</title>
+<title>Teacher View | SEA Study Hub</title>
+<meta name="description" content="Teacher view of the SEA Study Hub: every pupil profile on this device, the topics the class finds hardest, and a focus topic you can set, from Standard 1 to Standard 5."/>
+<meta property="og:description" content="Teacher view of the SEA Study Hub: the class at a glance, the weakest topics, and a focus topic for each pupil, from Standard 1 to Standard 5."/>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -14,7 +16,7 @@
 <header class="top">
   <div class="wrap topbar">
     <div class="mark"><img src="../logo-mark.png" alt=""></div>
-    <div class="brandtext"><b>Study Hub</b><span>Teacher view</span></div>
+    <div class="brandtext"><b>SEA Study Hub</b><span>Teacher view</span></div>
     <nav class="topnav">
       <a href="teacher.html" class="on">Class</a>
       <a href="parent.html">Individual</a>
@@ -58,8 +60,8 @@
         <div style="font-size:1.7rem">📊</div>
         <div style="flex:1;min-width:200px">
           <h3>Readiness index and the five-year record</h3>
-          <p class="sub">Per-student grade bands, syllabus coverage, retention and timed-test history,
-          with the term-by-term chart across Forms 1 to 5.</p>
+          <p class="sub">Each student's readiness for the Secondary Entrance Assessment, syllabus coverage,
+          retention and timed-test history, with the term-by-term chart <span id="ladder-span">across every year</span>.</p>
         </div>
         <span class="r-arrow">→</span>
       </a>
@@ -67,7 +69,7 @@
       <div class="section-label">Roster</div>
       <div class="scrollx card">
         <table class="tbl" id="roster"><thead><tr>
-          <th>Student</th><th>Form</th><th>Answered</th><th>Accuracy</th><th>Streak</th><th>Last active</th><th>Weakest topic</th>
+          <th>Student</th><th>Standard</th><th>Answered</th><th>Accuracy</th><th>Streak</th><th>Last active</th><th>Weakest topic</th>
         </tr></thead><tbody></tbody></table>
       </div>
 
@@ -108,7 +110,7 @@
 </main>
 
 <footer class="foot">
-  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · Study Hub</div>
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · SEA Study Hub</div>
 </footer>
 
 <script src="data/curriculum.js"></script>
@@ -139,6 +141,10 @@
   $('t-acc').textContent=seen?Math.round(100*correct/seen)+'%':'—';
   $('t-active').textContent=active;
 
+  /* The ladder is read off the data, never typed: first and last level on CSEC.levels. */
+  var L=CSEC.levels||[];
+  if(L.length) $('ladder-span').textContent='from '+L[0].label+' to '+L[L.length-1].label;
+
   /* ---------------- roster ---------------- */
   $('roster').querySelector('tbody').innerHTML=kids.map(function(k){
     var ov=CSEC.overallStat(k.id), st=CSEC.streak(k.id), pr=CSEC.progress(k.id);
@@ -146,7 +152,7 @@
     var w=CSEC.weakSpots(k.id,1)[0];
     var accCell = ov.pct==null ? '<span class="pill mute">no data</span>'
       : '<span class="pill '+(ov.pct>=75?'good':ov.pct>=50?'gold':'bad')+'">'+ov.pct+'%</span>';
-    return '<tr><td><b>'+esc(k.name)+'</b></td><td>'+k.level+'</td><td>'+ov.seen+'</td>'+
+    return '<tr><td><b>'+esc(k.name)+'</b></td><td>'+esc(CSEC.levelLabel(k.level))+'</td><td>'+ov.seen+'</td>'+
       '<td>'+accCell+'</td><td>'+st.current+'</td><td>'+esc(last)+'</td>'+
       '<td>'+(w? esc(w.strandName)+' <span style="color:var(--muted)">('+w.pct+'%)</span>' : '<span style="color:var(--muted)">—</span>')+'</td></tr>';
   }).join('');

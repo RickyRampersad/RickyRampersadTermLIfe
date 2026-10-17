@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Progress &amp; KPIs | SEA &amp; CSEC Study Hub</title>
+<title>Progress &amp; KPIs | SEA Study Hub</title>
+<meta name="description" content="Progress and readiness for the Secondary Entrance Assessment: accuracy, coverage, retention and timed tests, term by term from Standard 1 to Standard 5."/>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -39,7 +40,7 @@
 <header class="top">
   <div class="wrap topbar">
     <div class="mark"><img src="../logo-mark.png" alt=""></div>
-    <div class="brandtext"><b>Study Hub</b><span>Progress &amp; KPIs</span></div>
+    <div class="brandtext"><b>SEA Study Hub</b><span>Progress &amp; KPIs</span></div>
     <nav class="topnav" id="nav"></nav>
   </div>
 </header>
@@ -78,18 +79,18 @@
           </div>
           <div style="flex:none;text-align:center">
             <div class="big" style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:800;color:var(--teal)" id="ri-ontrack">0</div>
-            <div class="lab" style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Subjects on<br>Grade I track</div>
+            <div class="lab" style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Subjects on<br>the top track</div>
           </div>
         </div>
       </div>
 
       <div class="note gold" style="margin-bottom:8px">
         <b>Read this before you read the numbers.</b> The readiness index is built from
-        practice inside this hub. It is <b>not a CXC prediction and not a grade</b>. Practice
+        practice inside this hub. It is <b>not a predicted SEA score and not a mark</b>. Practice
         accuracy flatters — multiple choice, no time pressure, an explanation after every
         question — so retention and timed tests are weighted, and coverage caps the score,
         because nobody is ready for a paper they have seen a third of. Treat a band as a
-        direction of travel, and treat school reports and real past papers as the truth.
+        direction of travel. Treat school reports and the Ministry's past papers as the truth.
       </div>
 
       <!-- ---------- the four components ---------- -->
@@ -101,12 +102,12 @@
       <div class="rows" id="board"></div>
 
       <!-- ---------- the five-year timeline ---------- -->
-      <div class="section-label">Form 1 to Form 5 — the record</div>
+      <div class="section-label" id="record-label">The record</div>
       <div class="card" style="margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
           <div>
             <h3>Progress by school term</h3>
-            <p class="sub">One point per term. The shaded bands show which form she was in.</p>
+            <p class="sub">One point per term. The shaded bands show which Standard the student was in.</p>
           </div>
           <button class="btn ghost sm" id="tbl-toggle">Show as table</button>
         </div>
@@ -128,14 +129,14 @@
 
         <div class="scrollx hidden" id="tblwrap" style="margin-top:14px">
           <table class="tbl" id="tbl"><thead><tr>
-            <th>Term</th><th>Form</th><th>Accuracy</th><th>Coverage</th><th>Questions</th>
+            <th>Term</th><th>Standard</th><th>Accuracy</th><th>Coverage</th><th>Questions</th>
           </tr></thead><tbody></tbody></table>
         </div>
       </div>
 
       <!-- ---------- promotions ---------- -->
       <div id="promo-wrap" class="hidden">
-        <div class="section-label">Form changes</div>
+        <div class="section-label">Moving up a Standard</div>
         <div class="rows" id="promos"></div>
       </div>
 
@@ -143,7 +144,7 @@
       <div class="section-label">Timed tests</div>
       <div class="scrollx card">
         <table class="tbl" id="tests"><thead><tr>
-          <th>Date</th><th>Subject</th><th>Form</th><th>Score</th><th>Time used</th>
+          <th>Date</th><th>Subject</th><th>Standard</th><th>Score</th><th>Time used</th>
         </tr></thead><tbody></tbody></table>
       </div>
 
@@ -152,7 +153,7 @@
 </main>
 
 <footer class="foot">
-  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · Study Hub</div>
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · SEA Study Hub</div>
 </footer>
 
 <script src="data/curriculum.js"></script>
@@ -169,11 +170,16 @@
   $('nav').innerHTML='<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
     '<a href="journey.html">Journey</a>'+
     (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
-      /* SEA papers are for the primary ladder only; a Form 3 has no use for them. */
-      ((me.role!=='student'||me.level<=5)?'<a href="sea.html">SEA Papers</a>':'')+
+      /* The ladder is Standard 1 to Standard 5, so the SEA papers are for everyone. */
+      '<a href="sea.html">SEA Papers</a>'+
     '<a href="guides.html">Guides</a><a href="kpi.html" class="on">KPIs</a>'+
     '<a href="planner.html">Syllabus</a><a href="papers.html">Resources</a>'+
     '<a href="settings.html">Settings</a>';
+
+  /* The ladder's first and last rungs, read from the data so the words on this
+     page can never drift from it. */
+  var LV=CSEC.levels||[], FIRST=LV.length?LV[0].label:'', LAST=LV.length?LV[LV.length-1].label:'';
+  $('record-label').textContent=(FIRST&&LAST?FIRST+' to '+LAST+' — the record':'The record');
 
   var kids = me.role==='student' ? [me] : CSEC.students();
   if(!kids.length){ $('nostudents').classList.remove('hidden'); return; }
@@ -222,7 +228,7 @@
     var P=R.parts;
     var meta=[
       {k:'accuracy', n:'Accuracy',  d:'Of the questions answered, how many were right.'},
-      {k:'coverage', n:'Syllabus coverage', d:'Strands attempted, out of those taught up to this form.'},
+      {k:'coverage', n:'Syllabus coverage', d:'Strands attempted, out of those taught up to this Standard.'},
       {k:'retention',n:'Retention', d:'Accuracy on topics revisited a week or more after first meeting them. The number that separates revision from cramming.'},
       {k:'timed',    n:'Timed tests',d:'Average score in mock tests taken against the clock.'}
     ];
@@ -305,8 +311,8 @@
       $('chartwrap').classList.add('hidden');
       $('chart-empty').classList.remove('hidden');
       $('chart-empty').innerHTML = series.length===1
-        ? '<b>One term recorded so far ('+esc(series[0].key)+').</b> The line appears once there are two terms to join — the record builds itself as she works, term by term, through to Form 5.'
-        : '<b>Nothing recorded yet.</b> The five-year record starts with the first practice session.';
+        ? '<b>One term recorded so far ('+esc(series[0].key)+').</b> The line appears once there are two terms to join — the record builds itself term by term, through to '+esc(LAST||'the last Standard')+'.'
+        : '<b>Nothing recorded yet.</b> The record from '+esc(FIRST||'the first Standard')+' to '+esc(LAST||'the last Standard')+' starts with the first practice session.';
       return;
     }
     $('chartwrap').classList.remove('hidden');
@@ -315,7 +321,7 @@
     var n=series.length, NS='http://www.w3.org/2000/svg';
     function el(t,a){ var e=document.createElementNS(NS,t); for(var k in a) e.setAttribute(k,a[k]); return e; }
 
-    /* form bands — this is the Form 1-5 progression, made visible */
+    /* level bands — the Standard 1 to Standard 5 progression, made visible */
     var runs=[], cur=null;
     series.forEach(function(s,i){
       if(!cur||cur.level!==s.level){ cur={level:s.level,from:i,to:i}; runs.push(cur); }

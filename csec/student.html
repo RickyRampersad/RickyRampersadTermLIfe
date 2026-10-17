@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Desk | SEA &amp; CSEC Study Hub</title>
+<title>My Desk | SEA Study Hub</title>
+<meta name="description" content="A pupil's own desk on the SEA Study Hub: today's plan, the weak spots, the subjects, the habit and the days to the Secondary Entrance Assessment."/>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -14,7 +15,7 @@
 <header class="top">
   <div class="wrap topbar">
     <div class="mark"><img src="../logo-mark.png" alt=""></div>
-    <div class="brandtext"><b>Study Hub</b><span id="nav-who">My Desk</span></div>
+    <div class="brandtext"><b>SEA Study Hub</b><span id="nav-who">My Desk</span></div>
     <nav class="topnav">
       <a href="student.html" class="on">My Desk</a>
       <a href="journey.html">Journey</a>
@@ -77,7 +78,7 @@
       </div>
       <div style="flex:none;text-align:center">
         <div style="font-family:'Montserrat',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)" id="ri-ontrack">0</div>
-        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px">on Grade I<br>track</div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px">subjects<br>on track</div>
       </div>
       <span class="r-arrow">→</span>
     </a>
@@ -87,8 +88,8 @@
       <div style="flex:none;width:60px;height:60px;border-radius:16px;display:grid;place-items:center;
                   background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f">
         <div style="text-align:center;line-height:1.05">
-          <div style="font-family:'Montserrat',sans-serif;font-size:.52rem;font-weight:800;letter-spacing:1px">FORM</div>
-          <div style="font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:900" id="jn-form">3</div>
+          <div style="font-family:'Montserrat',sans-serif;font-size:.52rem;font-weight:800;letter-spacing:1px" id="jn-formlab">STD</div>
+          <div style="font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:900" id="jn-form">&mdash;</div>
         </div>
       </div>
       <div style="flex:1;min-width:200px">
@@ -155,7 +156,7 @@
 </main>
 
 <footer class="foot">
-  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · Study Hub</div>
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · SEA Study Hub</div>
 </footer>
 
 <script src="data/curriculum.js"></script>
@@ -180,20 +181,27 @@
   $('hd-title').textContent=me.name;
   $('nav-who').textContent=CSEC.levelLabel(me.level);
   var cd=CSEC.countdown(me.level);
-  $('hd-sub').textContent=me.school+' · You sit '+cd.exam+' in '+cd.year+'.';
+  /* The examination and its year come off the ladder (CSEC.countdown), never
+     a literal. A record with no stage reads as the school alone. */
+  $('hd-sub').textContent=[me.school||'', cd.exam?'You sit the '+cd.exam+' in '+cd.year+'.':''].filter(Boolean).join(' · ');
 
   /* ---------------- tiles ---------------- */
   var st=CSEC.streak(me.id), ov=CSEC.overallStat(me.id);
   $('t-streak').textContent=st.current;
   $('t-answered').textContent=ov.seen;
   $('t-acc').textContent=ov.pct==null?'—':ov.pct+'%';
-  if(cd.days>400){ $('t-days').textContent=cd.months; $('t-dayslab').textContent='Months to '+cd.exam+' '+cd.year; }
-  else { $('t-days').textContent=cd.days; $('t-dayslab').textContent='Days to '+cd.exam+' '+cd.year; }
+  if(!cd.exam){ $('t-days').textContent='\u2014'; $('t-dayslab').textContent='Days to exam'; }
+  else if(cd.days>400){ $('t-days').textContent=cd.months; $('t-dayslab').textContent='Months to the '+cd.exam+' '+cd.year; }
+  else { $('t-days').textContent=cd.days; $('t-dayslab').textContent='Days to the '+cd.exam+' '+cd.year; }
 
   /* ---------------- this year, this term ---------------- */
   var J=CSEC.journeyNow(me.id);
   if(J){
-    $('jn-form').textContent=CSEC.levelInfo(J.level).short;
+    /* The badge reads the ladder's own short label ("Std 5"): the word above,
+       the number below. Nothing about a year is spelled out in this page. */
+    var li=CSEC.levelInfo(J.level)||{}, sh=String(li.short||li.label||J.level).split(' ');
+    $('jn-formlab').textContent=(sh.length>1?sh.slice(0,-1).join(' '):'').toUpperCase();
+    $('jn-form').textContent=sh[sh.length-1];
     $('jn-term').textContent=J.stage.label+' · Term '+J.termNo+' · '+J.schoolYear;
     $('jn-title').textContent=J.term.title;
     $('jn-aim').textContent=J.term.aim+(J.milestones.length&&J.milestones[0].now
@@ -316,16 +324,6 @@
   $('tm-break').addEventListener('click',function(){ stop(); left=5*60; paint(); });
   paint();
 })();
-</script>
-
-<script>
-/* SEA papers belong to the primary ladder. A Form 1-5 student should not see
-   the link at all; parents and teachers keep it, since they may have a child
-   in Standard 1-5. */
-(function(){try{
-  var me=CSEC.current&&CSEC.current(), a=document.querySelector('.topnav a[href="sea.html"]');
-  if(a&&me&&me.role==='student'&&me.level>5) a.parentNode.removeChild(a);
-}catch(e){}})();
 </script>
 
 <!-- rrb-views -->
