@@ -3882,6 +3882,16 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   and word agree (`LB_TONES`), the headline, figure tiles that wrap three to a row, and the lines as a striped table up
   to three columns or as cards beyond that, so nothing runs off a phone; `lbBtn_` makes buttons Outlook keeps.
   Checked by rendering at 760 and 390 px.
+- **Handed to** (17 October 2026: "staff is collecting documents, but … departments being lost … that dropdown has to be who
+  it's handed to. The staff signs on their phones … accept it"). Step 4 of the log form asks *Who are you handing the papers
+  to?*: the staff list (`lbStaff_`: the RR Operations Access tab with the Log Book on their Apps, plus the fact find's staff
+  rows) or *Not yet: I will hand them in later*, named afterwards from My log (`lb.handto`). The line keeps `Handed To` and
+  `Handed At`. The person named is e-mailed at once to sign on their phone (`lbHandedMail_`, sales support copied); their
+  Queue puts those papers first under *Handed to you* with **Accept & sign** and **Not with me** (`lb.notwithme`: the name
+  comes off, the line is flagged and the agent asked who has them). Signing e-mails the agent the proof (`lbSignedMail_`).
+  Not signed for after `LB.ACCEPT_HOURS` (2): `lbChaseHanded_` asks the person named, sales support and the agent copied,
+  once a working day, and the agent's own "hand them in" reminder and the never-handed-in count stop for that line. Signed
+  by someone other than the person named is allowed (cover) and flagged. The 5pm digest lists papers handed and not signed for.
 - **The films** (17 October 2026: "the vid to send off", then "two films: agents and staff"). `rroperations/logbook/films.html`
   (short address `/logbook-films`) plays *The Log Book, for agents* (`logbook-agents.mp4`, poster `film-agents.jpg`) and *The Log
   Book, for staff* (`logbook-staff.mp4`, `film-staff.jpg`); the Log Book's "▶ Film" button opens each person's own. They are
