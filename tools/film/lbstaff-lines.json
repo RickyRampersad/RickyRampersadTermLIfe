@@ -1,5 +1,5 @@
 {
- "note": "The Log Book, for staff (17 October 2026). Every name and number on screen is made up.",
+ "note": "The Log Book, for staff (re-cut 17 October 2026: the 1 pm bag and the weekly rota, the real staff and agents by name, clients made up).",
  "role": "staff",
  "voice": "en-US-AndrewNeural",
  "rate": "-12%",
@@ -8,15 +8,27 @@
    "visual": "title",
    "eyebrow": "For Client Support",
    "headline": "The Log Book, <em>for staff</em>",
-   "sub": "Receive, sign, send: the same day",
+   "sub": "Received by noon, out on the 1 pm bag",
    "extra": 0.6,
-   "line": "This is the Log Book, as Client Support and the branch see it. Receive the papers, sign for them, and send them the same day."
+   "line": "This is the Log Book, as Client Support and the branch see it. Receive the papers by noon, and send them on the one o'clock bag."
+  },
+  {
+   "visual": "lbbagday",
+   "eyebrow": "The bag day",
+   "headline": "Everything runs <em>to the bag</em>",
+   "line": "Every day runs to the bag. Papers come in until twelve noon. Then they are checked, and put on their transmittals. At one o'clock the bag comes in, is cleared, and the mail given out. And it goes back down with the day's transmittals."
+  },
+  {
+   "visual": "lbrota",
+   "eyebrow": "Whose bag",
+   "headline": "One of you, <em>each week</em>",
+   "line": "One of you has the bag each week, in turn. This week Sasha. Next week Kamla. Then Azariah, then Liz. The bag is done by one, while the whole team is still in, because the team leaves from two."
   },
   {
    "visual": "lbqueue",
    "eyebrow": "Your queue",
    "headline": "What is <em>waiting</em>",
-   "line": "The Queue opens on what is waiting. Papers logged, and not yet handed in. Papers received, and not yet sent, grouped by department."
+   "line": "The Queue opens on today's bag. Papers logged, and not yet handed in. Papers received, and not yet sent, grouped by department."
   },
   {
    "visual": "lbreceive",
@@ -25,16 +37,28 @@
    "line": "When an agent hands papers in, tick them, and sign with your finger. If a department is wrong, change it. The Log Book learns from the change."
   },
   {
+   "visual": "lbprep",
+   "eyebrow": "Twelve noon",
+   "headline": "What goes <em>today</em>",
+   "line": "At twelve, whoever has the bag gets one e-mail. Everything to prepare for today's bag, by department, and what agents have not handed in."
+  },
+  {
    "visual": "lbtrans",
    "eyebrow": "The transmittal",
    "headline": "One press, <em>ready to print</em>",
-   "line": "Build the transmittal. One department, one press. It is numbered, with the date collected and the date sent on every line, ready to print."
+   "line": "Build the transmittal. One department, one press. It is numbered, with the date collected and the date sent on every line, ready to print and go in the bag."
   },
   {
    "visual": "lblate",
-   "eyebrow": "Same day is the rule",
-   "headline": "Late needs <em>a reason</em>",
-   "line": "Same day is the rule. A line received yesterday, or after four, needs a reason before it goes. The reason prints beside the two dates."
+   "eyebrow": "One o'clock",
+   "headline": "Missed the bag? <em>A reason</em>",
+   "line": "If something received before twelve misses the bag, the Log Book asks why at one o'clock, while everyone is still in. The reason prints beside the two dates."
+  },
+  {
+   "visual": "lbbaglog",
+   "eyebrow": "Bag in, bag out",
+   "headline": "The bag, <em>on record</em>",
+   "line": "Press Bag in when the bag is cleared, and Bag out when it goes. Every day's bag is on record. Who had it, what went, and what missed it."
   },
   {
    "visual": "lbdept",
@@ -46,7 +70,7 @@
    "visual": "lbinsights",
    "eyebrow": "Insights",
    "headline": "How the branch <em>is doing</em>",
-   "line": "Insights shows how the branch is doing. The share sent the same day. Each department's answers. And a quality score for every agent."
+   "line": "Insights shows how the branch is doing. The share that made its bag, hour by hour. Each department's answers. And a quality score for every agent."
   },
   {
    "visual": "lbdigest",
@@ -58,12 +82,12 @@
    "visual": "close",
    "eyebrow": "The Log Book",
    "words3": [
-    "Receive it.",
-    "Sign it.",
-    "Send it today."
+    "Receive by noon.",
+    "Prepare it.",
+    "On the 1 pm bag."
    ],
    "url": "rickyrampersadbranch.com/logbook",
-   "line": "Receive it. Sign it. Send it today.",
+   "line": "Receive by noon. Prepare it. On the one o'clock bag.",
    "extra": 1.8
   }
  ]

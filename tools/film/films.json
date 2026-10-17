@@ -450,30 +450,39 @@
   "music": "bed-lbagent.wav",
   "mix": "lbagent-mix.wav",
   "ass": "captions-lbagent.ass",
-  "dur": 96.4,
+  "dur": 139.5,
   "durs": [
-   8.1,
+   9.6,
+   10.4,
+   12.8,
+   9.6,
+   11.3,
+   9.7,
    10.1,
-   9.3,
-   10.8,
-   9.2,
-   9.2,
-   10.0,
-   13.1,
-   9.8,
-   6.8
+   16.0,
+   9.5,
+   9.4,
+   13.5,
+   11.3,
+   6.3
   ],
   "out": "logbook-agents.mp4",
-  "musicgain": 0.5,
-  "duck": 0.45,
+  "musicgain": 0.46,
+  "duck": 0.3,
   "dark": [
+   2,
    7,
-   9
+   10,
+   12
   ],
   "sfx": "sfx-lbagent.wav",
   "start": 0,
   "ticks": [],
-  "hits": []
+  "hits": [
+   71.38,
+   77.01,
+   96.46
+  ]
  },
  "lbstaff": {
   "cap": "cap-lbstaff",
@@ -481,33 +490,43 @@
   "music": "bed-lbstaff.wav",
   "mix": "lbstaff-mix.wav",
   "ass": "captions-lbstaff.ass",
-  "dur": 89.3,
+  "dur": 153.3,
   "durs": [
-   9.1,
-   9.9,
-   10.0,
-   9.9,
+   10.3,
+   16.7,
+   15.7,
+   10.8,
+   11.2,
    10.6,
-   13.3,
-   10.0,
-   9.9,
-   6.6
+   12.2,
+   12.2,
+   10.7,
+   13.5,
+   11.6,
+   10.7,
+   7.1
   ],
   "out": "logbook-staff.mp4",
-  "musicgain": 0.5,
-  "duck": 0.45,
+  "musicgain": 0.46,
+  "duck": 0.3,
   "dark": [
-   8
+   1,
+   2,
+   12
   ],
   "sfx": "sfx-lbstaff.wav",
   "start": 0,
   "ticks": [],
   "hits": [
-   67.13,
-   67.53,
-   70.78,
-   73.94,
-   74.39
+   43.61,
+   69.53,
+   100.15,
+   128.31,
+   128.71,
+   132.77,
+   136.64,
+   136.94,
+   137.24
   ]
  }
 }

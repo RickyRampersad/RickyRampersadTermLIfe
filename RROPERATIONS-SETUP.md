@@ -200,12 +200,19 @@ reason. It replaces the Log Book Digital Jotform.
 7. Optional: set `LB_HISTORY_ID` to the Log Book Digital workbook's ID and run
    **Log Book: import the old book** once, so the insights start with the
    3,600 lines already logged.
+8. **The bag rota.** Add a tab named **Bag Rota** with the columns
+   `Staff | Order | Leaves At | Active`: one row a staff member, in the order
+   they take the bag (one week each, from Monday 19 October 2026), with the time
+   they go home (`2 pm`). Without the tab the staff on the sign-in list take it
+   in turn by name. The **Bag Log** tab makes itself the first time someone
+   presses Bag in.
 
 ### Settings
 
 | Property | Default | What it does |
 |---|---|---|
-| `LB_CUTOFF_HOUR` | 16 | After this hour, a document received today and not sent is late |
+| `LB_BAG_CUTOFF` | 12 | Papers in before this hour go on that day's bag |
+| `LB_BAG_HOUR` | 13 | The bag exchange; a received line still here after it missed its bag |
 | `LB_SALES_SUPPORT` | sales support | Copied on every chase and every return |
 | `LB_MANAGER` | the branch manager | Told when a contract passes 20 days with the agent |
 | `LB_AGENTS_SHEET_ID` | the fact find workbook | Other workbooks to sign in from, comma-separated |

@@ -3888,13 +3888,36 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   drawn by `tools/film/build-boardfilm.py lbagent|lbstaff` (the board films' machinery and midnight-blue look; the Log Book's
   scenes are the `s_lb*` visuals and `LB_CSS`) from `lbagent-lines.json` / `lbstaff-lines.json`, then `sfx.py`, `usetrack.py
   audio/inspired-kevin-macleod.mp3 lbagent lbstaff`, `render.js`, `mixany.py`. Every name and number on screen is made up.
-  **The voice is not edge-tts**: that day `speech.platform.bing.com` was refused by the session's network and by the Mac's
-  too, so the narration is Kokoro (offline, Apache 2.0, model files from the kokoro-onnx GitHub release),
-  voiced per sentence by a script in the session scratchpad; since 17 October a blend of `am_michael`, `am_onyx` and `am_fenrir` at 0.95 speed, EQ'd to the tone of the manager's Andrew sample ("too robotic … toned down … blend in"), with short fades so no line clicks, and the bed ducked less (`duck` 0.45), which also estimates each word's start for the timing file.
-  Re-voice on `en-US-AndrewNeural` when edge-tts is reachable again, so these sound like the other films.
+  **The voice is Andrew** (`en-US-AndrewNeural`, -12%), re-cut on 17 October 2026 ("I need Andrew's voice … use actual agents
+  as demo and the actual staff names"). Microsoft's speech service is refused by the session's network, so the narration
+  is made on a GitHub Actions runner: the `tts-run` branch (never merged, never on Pages) holds `.github/workflows/tts.yml`;
+  pushing a `tts/job.json` (`{"voice", "rate", "films": {key: [line, …]}}`) voices every line with edge-tts and commits
+  `tts/out/<key>/NN.mp3` and `NN.words.json` (each word's start, from WordBoundary) back to the branch in about a minute.
+  The scratchpad's `importvox.py` turns those into `tools/film/vo<key>/NN.wav` and `NN.vtt`, the timing file and
+  `durs`. Agents, staff and the unit manager on screen are the branch's own (Neil Ramnanan signs in; Sasha Lalla receives;
+  Akaash Kalladeen's unit); clients are made up, and a screen that puts figures beside a real name says "sample figures".
+  The agents' film has the bag (`lbbag`), why it matters (`lbhistory`, the old book by the hour: 57% logged after 12 noon)
+  and the 11:00 e-mail (`lbnudge`); the staff film has the bag day (`lbbagday`), the weekly rota (`lbrota`), the noon
+  e-mail (`lbprep`) and bag in and out (`lbbaglog`). The Kokoro voice of the first cut is retired.
   **The music is the branch's own "Music_Motivation" track** (sent in the chat on 17 October 2026 with an Andrew sample),
   looped by `usetrack.py` for `lbagent` and `lbstaff`; it is kept outside the repository, so the Kevin MacLeod credit is not on
   the films page.
+- **The bag: in by 12 noon, down at 1 pm** (17 October 2026: "the bags actually come in once a day and leave once a day …
+  around 1pm bags come in … rotated by 1 staff member weekly … once it comes in before 12 … it should be able to catch the bag …
+  agents should be aware if it will catch the bag"). `LB.BAG` (`LB_BAG_CUTOFF` 12, `LB_BAG_HOUR` 13): papers in the branch's
+  hands before 12:00 on a working day go on that day's bag (`lbBagDay_`), anything later on the next working day's.
+  A received line is late once its bag has gone (`lbIsLate_`), and a sent line made its bag when its transmittal was done
+  by 2 pm that day (`lbOnBag_`, `GRACE_MIN`; an imported line, which has only a date, by the day). The hourly run: at 11:00
+  agents with papers logged and not handed in are told there is an hour (`lbNudgeAgents_`); at 12:00 whoever has the bag gets
+  what to prepare by department (`lbBagPrep_`, once a day); from 1:00 every line that missed its bag is asked about, the
+  receiver and the person on the bag both written to, while everyone is in (the staff leave from 2 pm). Who has the bag:
+  the **Bag Rota** tab (Staff, Order, Leaves At, Active), one week each from `LB.BAG.ROTA_FROM`, else the Staff on the
+  sign-in list by name (`lbDuty_`). Staff press Bag in (cleared, the mail given out) and Bag out (sealed, with what went and
+  what missed it) on the **Bag Log** tab (`lb.bag`). The page shows everyone the bag bar: a countdown to 12:00, the day's
+  track with the cut-off, the exchange and when the team goes home, who has the bag; the log form and the "Logged" card say
+  whether the papers catch today's bag; every line carries its bag; Insights shows the share that made its bag, by the hour
+  received. Measured on the old book (3,605 lines, Aug 2024 to Oct 2026): 57% were logged after 12 noon; of those before,
+  56% went that day; the 12:00 hour (504) is busier than any morning hour, and 2 pm and 3 pm are the busiest of all.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).
