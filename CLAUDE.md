@@ -3889,8 +3889,8 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   scenes are the `s_lb*` visuals and `LB_CSS`) from `lbagent-lines.json` / `lbstaff-lines.json`, then `sfx.py`, `usetrack.py
   audio/inspired-kevin-macleod.mp3 lbagent lbstaff`, `render.js`, `mixany.py`. Every name and number on screen is made up.
   **The voice is not edge-tts**: that day `speech.platform.bing.com` was refused by the session's network and by the Mac's
-  too, so the narration is Kokoro (`am_michael`, offline, Apache 2.0, model files from the kokoro-onnx GitHub release),
-  voiced per sentence by a script in the session scratchpad, which also estimates each word's start for the timing file.
+  too, so the narration is Kokoro (offline, Apache 2.0, model files from the kokoro-onnx GitHub release),
+  voiced per sentence by a script in the session scratchpad; since 17 October a blend of `am_michael`, `am_onyx` and `am_fenrir` at 0.95 speed, EQ'd to the tone of the manager's Andrew sample ("too robotic … toned down … blend in"), with short fades so no line clicks, and the bed ducked less (`duck` 0.45), which also estimates each word's start for the timing file.
   Re-voice on `en-US-AndrewNeural` when edge-tts is reachable again, so these sound like the other films.
   **The music is the branch's own "Music_Motivation" track** (sent in the chat on 17 October 2026 with an Andrew sample),
   looped by `usetrack.py` for `lbagent` and `lbstaff`; it is kept outside the repository, so the Kevin MacLeod credit is not on
