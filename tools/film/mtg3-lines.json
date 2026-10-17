@@ -1,0 +1,26 @@
+{
+ "note": "three-scene proof of the rebuilt graphics; the full film has 25",
+ "role": "branch",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
+ "scenes": [
+  {
+   "visual": "week",
+   "eyebrow": "The week, Sunday to Sunday",
+   "headline": "The week <em>closes itself</em>",
+   "line": "The week runs Sunday to Sunday. On Sunday evening it closes. The figures freeze."
+  },
+  {
+   "visual": "agenda",
+   "eyebrow": "Wednesday, 07:00",
+   "headline": "It writes <em>the agenda</em>",
+   "line": "And it writes the agenda. Eleven items. Ninety minutes. A name against every one."
+  },
+  {
+   "visual": "round",
+   "eyebrow": "Nine twenty",
+   "headline": "Every unit <em>answers</em>",
+   "line": "Twenty past, the unit round. Every unit manager answers for their own people."
+  }
+ ]
+}

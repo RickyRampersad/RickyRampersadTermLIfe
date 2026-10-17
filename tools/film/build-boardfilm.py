@@ -46,8 +46,13 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
-PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html'}
-TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents'}
+PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
+         # the meeting builder film, rebuilt on this motion system
+         'mtg3': 'mtg3.html'}
+TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
+          'mtg3': 'How a week becomes a meeting'}
+# the line under the branch name in the masthead; the board films keep theirs
+SUBTITLES = {'mtg3': 'The Wednesday meeting'}
 OUT = ROOT / 'orphan-transition' / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
@@ -669,10 +674,110 @@ def s_clock(i, sc, D):
             f'<div class="clockrow">{ring}<div class="sts">{stats}</div></div>{track}'
             f'{at(tF, "at up aim", inner=ico("target", "ii") + " The aim: a conversation in the first two days, a meeting soon after.")}</div>')
 
+
+# ══════════════════════════════════════════════════════════════════════════
+#  THE MEETING FILM'S OWN SCENES
+#
+#  The meeting builder film was hand-built on the old shell: flat cards and
+#  text that simply appears. "HATE THE GRAPHICS YOU CAN DO BETTER THAN THIS"
+#  — 17 October 2026, and quite right. These three are the same film's
+#  content drawn through this motion system instead, so every reveal lands
+#  on the word that names it.
+#
+#  Purely additive: new functions, new keys in R, and CSS scoped to class
+#  names no existing scene uses. The three board films build byte-identical.
+# ══════════════════════════════════════════════════════════════════════════
+
+MDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+
+def s_week(i, sc, D):
+    """The week, Sunday to Sunday. The strip fills as it is named, the close
+       lands on 'closes', and the figures freeze on 'freeze'."""
+    t0, t1 = w(i, 'Sunday'), w(i, 'Sunday', 2)
+    tCl, tFr = w(i, 'closes'), w(i, 'freeze')
+    step = max(90, (t1 - t0) // 7)
+
+    cells = ''
+    for k, d in enumerate(MDAYS):
+        body = ''
+        if k == 1: body = '<span class="mwt">10:00</span><span class="mwt">15:00</span>'
+        if k == 3: body = '<b class="mwm">The meeting</b>'
+        hot = ' mwhot' if k == 3 else (' mwlead' if k == 0 else '')
+        cells += at(t0 + k * step, f'at pop mwd{hot}',
+                    inner=f'<span class="mwn">{d}</span>{body}')
+
+    # the bracket that says the week is a loop, drawn as it is spoken
+    span = at(t0 + 120, 'at mwspan', inner=f'<i></i><span>one week</span><i></i>')
+    close = at(tCl, 'at up mwcl', inner=f'{ico("lock")}<div><b>Sunday, 20:00</b>'
+                                       f'<span>the week closes itself</span></div>')
+    froze = ''.join(at(tFr + k * 130, 'at pop mwf', inner=f'{cnt(tFr + k * 130 + 120, n, s)}<span>{lb}</span>')
+                    for k, (n, s, lb) in enumerate([(31, '', 'fact finds'), (19, '', 'applications'), (84, '%', 'checks answered')]))
+
+    right = (f'<div class="mwrap"><div class="mwk">{cells}</div>{span}'
+             f'<div class="mwbot">{close}<div class="mwfz">{froze}</div></div></div>')
+    cues = [(t0, 'Sunday to Sunday', False), (tCl, 'It closes itself', False), (tFr, 'The figures freeze', True)]
+    return stage(side(i, sc, cues), right)
+
+
+def s_agenda(i, sc, D):
+    """The agenda writing itself: a row at a time, the count landing on
+       'Eleven', the minutes on 'Ninety', a name on every row on 'name'."""
+    tW, tIt, tMin, tNm = w(i, 'writes'), w(i, 'Eleven'), w(i, 'Ninety'), w(i, 'name')
+    rows = [('Open · mission · silence', '3', 'Chair'),
+            ('The production board', '7', 'Chair'),
+            ('This week’s call list', '12', 'Sales support'),
+            ('Maturities — money in motion', '10', 'Lenore'),
+            ('The campaign — the orphan book', '9', 'Sasha'),
+            ('Each unit accounts for its week', '3', 'Akaash'),
+            ('Your own week', '2', 'By the data'),
+            ('Conservation and exceptions', '8', 'Client Support'),
+            ('What worked for me', '8', 'By rota'),
+            ('Training — one point', '10', 'By rota'),
+            ('Close — each unit commits', '5', 'Chair')]
+    gap = max(70, (tNm - tW - 400) // len(rows))
+    body = ''
+    for k, (t, m, who) in enumerate(rows):
+        tr = tW + 250 + k * gap
+        body += at(tr, 'at l mag',
+                   inner=f'<span class="magn">{k + 1:02d}</span><span class="magt">{t}</span>'
+                         f'<span class="magm">{m}</span>'
+                         + at(tNm + k * 55, 'at pop magw', inner=f'{avatar(who)}<span>{who}</span>'))
+    head = (f'<div class="maghd"><b>The agenda, written for you</b>'
+            f'<span>{cnt(tIt, 11)} items &middot; {cnt(tMin, 90)} minutes</span></div>')
+    right = f'<div class="mawrap">{head}<div class="magl">{body}</div></div>'
+    cues = [(tIt, '11 · items, every week', False), (tMin, '90 · minutes, to the minute', False),
+            (tNm, 'A name against every one', True)]
+    return stage(side(i, sc, cues), right)
+
+
+def s_round(i, sc, D):
+    """The round at twenty past: the clock, then the unit's own numbers,
+       then the manager who answers for them."""
+    tTw, tRd = w(i, 'Twenty'), w(i, 'round')
+    tEv, tOwn = w(i, 'Every'), w(i, 'own')
+    clock = at(tTw, 'at pop mclk', inner=f'<b>9:20</b><span>twenty past</span>')
+    tl = ''.join(tile(tRd + 150 + k * 170, n, lb, kind, ic, ct) for k, (n, lb, kind, ic, ct) in enumerate([
+        ('3 of 4', 'Cases answered', '', 'check', None),
+        ('1', 'Answered nothing', 'amb', 'flag', (1, '')),
+        ('3', 'Here last time', '', 'users', (3, '')),
+        ('1', 'Actions overdue', 'red', 'clock', (1, ''))]))
+    who = at(tEv, 'at up mwho',
+             inner=f'{avatar("Akaash Kalladeen", "lg")}<div><b>Akaash’s unit</b>'
+                   f'<span>4 people &middot; answers for all of them</span></div>')
+    says = at(tOwn, 'at up msay',
+              inner='&ldquo;Omar answered nothing. I am with him Thursday morning.&rdquo;')
+    right = (f'<div class="mrwrap">{clock}{who}<div class="tiles mrt">{tl}</div>{says}</div>')
+    cues = [(tTw, 'Twenty past the hour', False), (tEv, 'Every unit manager', False),
+            (tOwn, 'Answers for their own', True)]
+    return stage(side(i, sc, cues), right)
+
+
 R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
      'yourwork': s_yourwork, 'clock': s_clock, 'title': s_title, 'flow': s_flow, 'signin': s_signin, 'urgent': s_urgent, 'agents': s_agents, 'table': s_table, 'batches': s_batches,
      'assign': s_assign, 'named': s_named, 'list': s_list, 'client': s_client, 'logcall': s_logcall, 'comment': s_comment, 'counts': s_counts,
-     'sees': s_sees, 'close': s_close}
+     'sees': s_sees, 'close': s_close,
+     # the meeting film
+     'week': s_week, 'agenda': s_agenda, 'round': s_round}
 BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close'}
 
 def bgfx(i, blue):
@@ -1142,6 +1247,62 @@ body{background:var(--ground)}
 .bf .dnode span{font:600 12px var(--body);color:var(--lav)}
 .bf .aim{display:inline-flex;align-items:center;margin-top:20px;font:600 17px var(--head);color:var(--blue2);background:#fff;border-radius:12px;padding:11px 20px;box-shadow:0 14px 34px rgba(0,0,0,.25)}
 @media (prefers-reduced-motion:reduce){.scene.act *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+/* ── the meeting film's own scenes ───────────────────────────────────── */
+.bf .mwrap,.bf .mawrap,.bf .mrwrap{display:flex;flex-direction:column;gap:14px;padding:4px 2px}
+/* the week strip */
+.bf .mwk{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.bf .mwd{background:#fff;border:1px solid #E1E7F0;border-radius:11px;min-height:96px;
+  padding:9px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  box-shadow:0 1px 2px rgba(19,64,143,.05)}
+.bf .mwd.mwlead{border-color:#1D5BC4;box-shadow:0 0 0 2px rgba(29,91,196,.16)}
+.bf .mwd.mwhot{background:linear-gradient(170deg,#1D5BC4,#13408F);border-color:#13408F}
+.bf .mwn{font:800 11px/1 var(--f);letter-spacing:.12em;color:#64748B}
+.bf .mwd.mwhot .mwn{color:#BFD3F7}
+.bf .mwt{font:600 12px/1.3 var(--f);color:#475569}
+.bf .mwm{font:800 12.5px/1.25 var(--f);color:#fff;text-align:center;margin-top:3px}
+.bf .mwspan{display:flex;align-items:center;gap:9px;justify-content:center}
+.bf .mwspan i{flex:1;height:2px;background:linear-gradient(90deg,transparent,#1D5BC4)}
+.bf .mwspan i:last-child{background:linear-gradient(90deg,#1D5BC4,transparent)}
+.bf .mwspan span{font:800 11px/1 var(--f);letter-spacing:.14em;text-transform:uppercase;color:#1D5BC4}
+.bf .mwbot{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.bf .mwcl{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid #E1E7F0;
+  border-left:3px solid #1D5BC4;border-radius:11px;padding:11px 13px}
+.bf .mwcl .ico{width:19px;height:19px;color:#1D5BC4;flex:0 0 19px}
+.bf .mwcl b{display:block;font:800 13.5px/1.25 var(--f);color:#0F172A}
+.bf .mwcl span{font:500 12.5px/1.35 var(--f);color:#64748B}
+.bf .mwfz{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bf .mwf{background:#F1F5FB;border:1px solid #E1E7F0;border-radius:10px;padding:9px 7px;text-align:center}
+.bf .mwf .cnt{display:block;font:800 21px/1 var(--f);color:#13408F}
+.bf .mwf span{font:600 10.5px/1.25 var(--f);color:#64748B}
+/* the agenda */
+.bf .maghd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.14);padding:2px 2px 8px}
+.bf .maghd b{font:800 15px/1 var(--f);color:#fff}
+.bf .maghd span{font:600 13px/1 var(--f);color:#BFD3F7}
+.bf .maghd .cnt{color:#00E5FF;font-weight:800}
+.bf .magl{display:flex;flex-direction:column;gap:4px}
+.bf .mag{display:grid;grid-template-columns:24px 1fr 26px 150px;gap:10px;align-items:center;
+  background:#fff;border:1px solid #EAF0F7;border-radius:9px;padding:5px 10px}
+.bf .magn{font:800 11px/1 var(--f);color:#94A3B8}
+.bf .magt{font:600 12.5px/1.2 var(--f);color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bf .magm{font:800 12px/1 var(--f);color:#1D5BC4;text-align:right}
+.bf .magw{display:flex;align-items:center;gap:6px;justify-content:flex-end;overflow:hidden}
+.bf .magw span{font:600 11px/1 var(--f);color:#475569;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:112px}
+.bf .magw .av{flex:0 0 auto}
+/* the round */
+.bf .mclk{align-self:flex-start;display:flex;align-items:baseline;gap:9px;
+  background:linear-gradient(170deg,#1D5BC4,#13408F);border-radius:11px;padding:9px 15px}
+.bf .mclk b{font:800 26px/1 var(--f);color:#fff;font-variant-numeric:tabular-nums}
+.bf .mclk span{font:700 11px/1 var(--f);letter-spacing:.1em;text-transform:uppercase;color:#BFD3F7}
+.bf .mwho{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid #E1E7F0;
+  border-radius:12px;padding:12px 14px}
+.bf .mwho b{display:block;font:800 16px/1.2 var(--f);color:#0F172A}
+.bf .mwho span{font:600 12.5px/1.3 var(--f);color:#64748B}
+.bf .mrt{grid-template-columns:repeat(4,1fr)!important}
+.bf .msay{background:#F1F5FB;border-left:3px solid #0E7490;border-radius:0 10px 10px 0;
+  padding:11px 14px;font:600 13.5px/1.45 var(--f);color:#334155}
 """
 
 JS = r"""
@@ -1233,7 +1394,9 @@ last = out.rindex('</style>')
 out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + '\n' + out[last:]
 out = re.sub(r'<title>.*?</title>', '<title>' + TITLES[KEY] + ' — Ricky Rampersad Branch</title>', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="mark mk"></i>', out, count=1, flags=re.S)
-out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>Client transition board</i></span>', out, count=1, flags=re.S)
+out = re.sub(r'<span class="who">.*?</span>',
+             f'<span class="who">Ricky Rampersad Branch<i>{SUBTITLES.get(KEY, "Client transition board")}</i></span>',
+             out, count=1, flags=re.S)
 out = re.sub(r'<span class="live">.*?</span>', '', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="biglogo" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="biglogo mk"></i>', out, count=1, flags=re.S)
 FAVICON = 'data:image/svg+xml,' + (ROOT / 'favicon.svg').read_text().replace('#', '%23').replace('<', '%3C').replace('>', '%3E').replace('"', "'").replace('\n', '')
