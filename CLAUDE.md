@@ -3226,3 +3226,13 @@ servicing work".
   Support 7–2, 7–3 and 8–4, Unit Manager and agents 6am–6pm. The other block
   columns stay on the log so history reads; do not schedule into them again
   unless the branch splits the day.
+- **"Not getting attention" (the command centre)** closes things, not only
+  moves them (18 October 2026). Each row has a status from the record's own
+  list (Salesforce's `TaskStatus`; the letter sheet's own values), its history
+  (Chatter posts and replies; a letter's e-mail trail, escalation, response and
+  BM comments; a query's comments) and a suggestion read from that history.
+  Closing needs a note and the note is posted before the close; a task where
+  the client asked for an agent cannot be closed. A letter closed here also
+  resolves its open escalation and writes `BM Comments` and `Audit Log` in the
+  Productive Performance Management workbook. Query Pal queries are closed in
+  Query Pal, so the client is told. Pinned in `tests/test-cmd.js`.

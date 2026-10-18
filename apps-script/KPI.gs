@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-17b';
+var SCRIPT_VERSION = '2026-10-18a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -5411,7 +5411,7 @@ function cmdItems_(sid, day) {
         Object.keys(ob[desk]).forEach(function (ty) {
           ob[desk][ty].forEach(function (t) {
             if (!(t.touched >= CMD.QUIET_DAYS && (t.late || !t.due))) return;
-            push({ k: 'sf', id: t.id, src: 'Salesforce', key: ty, who: desk, title: t.subject, age: t.touched,
+            push({ k: 'sf', id: t.id, src: 'Salesforce', key: ty, who: desk, title: t.subject, age: t.touched, st: t.status || '',
                    why: 'untouched ' + t.touched + ' days' + (t.late ? ', overdue since ' + shortDate_(t.due) : ''), agent: t.agent || '' });
           });
         });
@@ -5420,7 +5420,7 @@ function cmdItems_(sid, day) {
   } else {
     try {
       var bk = unitBook_(sid, day);
-      bk.open.forEach(function (t) { if (t.touched >= CMD.QUIET_DAYS || t.late) push({ k: 'sf', id: t.id, src: 'Salesforce', key: t.ty || 'Servicing', who: '', ownerName: t.owner, title: t.subject, age: t.touched,
+      bk.open.forEach(function (t) { if (t.touched >= CMD.QUIET_DAYS || t.late) push({ k: 'sf', id: t.id, src: 'Salesforce', key: t.ty || 'Servicing', who: '', ownerName: t.owner, title: t.subject, age: t.touched, st: t.status || '',
         why: (t.late ? 'overdue since ' + shortDate_(t.due) + ', ' : '') + 'untouched ' + t.touched + ' days', agent: t.agent }); });
     } catch (e) {}
   }
@@ -5433,7 +5433,7 @@ function cmdItems_(sid, day) {
   if (scope !== 'unit') {
     // 3. Query Pal past three days.
     try { openQueries_().filter(function (q) { return q.days > 3; }).forEach(function (q) {
-      push({ k: 'sheet', id: 'qp:' + q.ref, src: 'Query Pal', key: 'query', who: '', ownerName: q.assigned, title: q.ref + ' · ' + (q.subject || q.type), age: q.days, why: q.days + ' days open, ' + (q.assigned ? 'with ' + q.assigned : 'unassigned') }); });
+      push({ k: 'sheet', id: 'qp:' + q.ref, src: 'Query Pal', key: 'query', who: '', ownerName: q.assigned, title: q.ref + ' · ' + (q.subject || q.type), age: q.days, st: q.status || '', ref: q.ref, why: q.days + ' days open, ' + (q.assigned ? 'with ' + q.assigned : 'unassigned') }); });
     } catch (e) {}
     // 4. Cash and cheque approvals with no BM decision.
     try { bookRows_('APPROVE', BOOKS.APPROVE.tab).forEach(function (r, i) {
@@ -5460,7 +5460,8 @@ function cmdItems_(sid, day) {
   if (scope !== 'desks') {
     try { (ppmLetters_(scope === 'unit' ? unitAgents_(sid) : null) || []).forEach(function (l) {
       var due = anyIso_(l['Due Date']); if (!due || due >= day) return;
-      push({ k: 'sheet', id: 'pl:' + l['Letter ID'], src: 'Performance letter', key: 'perf', who: '', ownerName: String(l['Agent Name'] || ''), title: String(l['Agent Name'] || '') + ' · ' + String(l['Performance Period'] || '') + ' · ' + String(l['Status'] || ''), age: daysBetween_(due, day), why: 'past due since ' + shortDate_(due) });
+      push({ k: 'sheet', id: 'pl:' + l['Letter ID'], src: 'Performance letter', key: 'perf', who: '', ownerName: String(l['Agent Name'] || ''), title: String(l['Agent Name'] || '') + ' · ' + String(l['Performance Period'] || '') + ' · ' + String(l['Letter Type'] || 'letter'), age: daysBetween_(due, day), why: 'past due since ' + shortDate_(due),
+             st: String(l['Status'] || ''), ref: String(l['Letter ID'] || ''), opened: anyIso_(l['Date Opened']), mgr: String(l['Manager Email'] || ''), period: String(l['Performance Period'] || ''), drive: String(l['Drive File ID'] || '') });
     }); } catch (e) {}
   }
   items.sort(function (a, b) { return (b.age || 0) - (a.age || 0); });
@@ -5469,52 +5470,393 @@ function cmdItems_(sid, day) {
 function cmdButton_(sid, day) {
   return replyButton_(replyUrl_(sid, day, 'cmd'), 'What is not getting attention', 'One page, read live: everything gone quiet in Salesforce and the branch sheets. Move it, re-date it or ask for feedback, a tap each.');
 }
+/* ─────────── Command centre: status, history, advice (18 Oct 2026) ───────────
+ *  Ricky: "the ability to close off task ... pull in the field status so I can
+ *  close. Also add the Chatter history, if there are any comments, and build
+ *  in further intelligence."
+ *  Every row now carries:
+ *    · its STATUS, set from the record's own list: Salesforce's Task status
+ *      picklist (read from TaskStatus, so it is the org's list and knows which
+ *      ones close), and the performance letter's own statuses from its sheet.
+ *      Closing needs a note — a closed task without a note is not closed — and
+ *      a task where the client asked for an agent cannot be closed at all.
+ *    · its HISTORY: the Chatter on a task (posts and replies, newest first);
+ *      the e-mail trail, the escalation, the agent's response and your last
+ *      comment on a letter; the comments on a query.
+ *    · what the system SUGGESTS, read from that history: it looks done, nobody
+ *      has written, your note is unanswered, the desk is not in, the agent has
+ *      left, the letter was never opened. A summary at the top counts each.  */
+var CMD_STATUS_FALLBACK = [{ v: 'Not Started', closed: false }, { v: 'In Progress', closed: false },
+  { v: 'Waiting on someone else', closed: false }, { v: 'Deferred', closed: false }, { v: 'Completed', closed: true }];
+var CMD_DONE_RE = /\b(done|completed?|processed|submitted|sent|resolved|issued|paid|received|uploaded|closed|signed|delivered|confirmed)\b/i;
+var CMD_NOT_DONE_RE = /\b(not|no|yet|pending|waiting|awaiting|still|follow(ing)? up|chase|will)\b/i;
+var CMD_AGENT_WANTED_RE = /\b(wants?|needs?|request(s|ed|ing)?|asking for|asked for|would like)\b[^.]{0,40}\b(agent|advisor|adviser)\b/i;
+var PPM_CLOSE_STATUS = 'Completed';
+
+/** Salesforce's own Task status list, with the ones that close a task marked. */
+function sfTaskStatuses_() {
+  var c = CacheService.getScriptCache();
+  try { var hit = c.get('sf_task_statuses'); if (hit) return JSON.parse(hit); } catch (e) {}
+  var out = [];
+  try {
+    out = sfkQuery_('SELECT MasterLabel, IsClosed FROM TaskStatus ORDER BY SortOrder')
+      .map(function (r) { return { v: String(r.MasterLabel || ''), closed: !!r.IsClosed }; }).filter(function (s) { return s.v; });
+  } catch (e) {}
+  if (!out.length) return CMD_STATUS_FALLBACK;
+  try { c.put('sf_task_statuses', JSON.stringify(out), 21600); } catch (e) {}
+  return out;
+}
+function sfStatusClosed_(v) {
+  var hit = sfTaskStatuses_().filter(function (s) { return s.v === v; })[0];
+  return hit ? hit.closed : /complet|closed/i.test(String(v || ''));
+}
+/** The letter statuses the sheet itself uses, and Completed to close one. */
+function ppmStatuses_() {
+  var seen = {}, out = [];
+  bookRows_('PPM', BOOKS.PPM.letters).map(function (r) { return String(r['Status'] || '').trim(); }).concat([PPM_CLOSE_STATUS])
+    .forEach(function (s) { var k = s.toLowerCase(); if (s && !seen[k]) { seen[k] = 1; out.push({ v: s, closed: /complet|closed|resolved/i.test(s) }); } });
+  return out;
+}
+function ppmClosing_(s) { return /complet|closed|resolved/i.test(String(s || '')); }
+
+/** Chatter on a set of tasks: posts and replies, newest first, with names. */
+function cmdChatter_(ids) {
+  var out = {}; if (!ids.length) return out;
+  var names = {};
+  try { var u = sfkUsers_() || {}; Object.keys(u).forEach(function (s) { names[u[s].id] = nameFor_(s); }); } catch (e) {}
+  var rows = [];
+  for (var i = 0; i < ids.length; i += 150) {
+    var inList = ids.slice(i, i + 150).map(function (x) { return "'" + String(x).replace(/'/g, '') + "'"; }).join(',');
+    try {
+      sfkQuery_("SELECT ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND ParentId IN (" + inList + ') ORDER BY CreatedDate DESC LIMIT 1000')
+        .forEach(function (r) { rows.push({ p: r.ParentId, by: r.CreatedById, at: r.CreatedDate, text: r.Body }); });
+    } catch (e) {}
+    try {
+      sfkQuery_('SELECT ParentId, CreatedById, CreatedDate, CommentBody FROM FeedComment WHERE ParentId IN (' + inList + ') ORDER BY CreatedDate DESC LIMIT 1000')
+        .forEach(function (r) { rows.push({ p: r.ParentId, by: r.CreatedById, at: r.CreatedDate, text: r.CommentBody, reply: true }); });
+    } catch (e) {}
+  }
+  var unknown = {};
+  rows.forEach(function (r) { if (r.by && !names[r.by]) unknown[r.by] = 1; });
+  var uk = Object.keys(unknown);
+  if (uk.length) {
+    try { sfkQuery_('SELECT Id, Name FROM User WHERE Id IN (' + uk.slice(0, 150).map(function (x) { return "'" + x + "'"; }).join(',') + ')')
+      .forEach(function (r) { names[r.Id] = r.Name; }); } catch (e) {}
+  }
+  rows.forEach(function (r) {
+    var t = String(r.text || '').replace(/<br\s*\/?>/gi, ' ').replace(/<\/p>/gi, ' ').replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ').trim();
+    if (!t) return;
+    var l = sfLocal_(r.at);
+    (out[r.p] = out[r.p] || []).push({ at: String(r.at || ''), day: l ? l.day : '', by: names[r.by] || 'Someone', byId: r.by || '', text: t, reply: !!r.reply });
+  });
+  Object.keys(out).forEach(function (k) { out[k].sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); }); });
+  return out;
+}
+
+/** Everything the performance-letter workbook knows about each letter. */
+function ppmIntel_() {
+  var out = {};
+  var get = function (id) { id = String(id || '').trim(); return id ? (out[id] = out[id] || { trail: 0, last: null, resp: '', bm: null, esc: null, weekly: '' }) : null; };
+  try { bookRows_('PPM', 'Communication Trail').forEach(function (r) {
+    var x = get(r['Letter ID']); if (!x) return; x.trail++;
+    var d = anyIso_(r['Sent Date']);
+    if (d && (!x.last || d >= x.last.d)) x.last = { d: d, type: String(r['Email Type'] || 'e-mail'), status: String(r['Status'] || ''), to: String(r['Recipient Name'] || '') };
+  }); } catch (e) {}
+  try { bookRows_('PPM', 'Responses').concat(bookRows_('PPM', 'Initial Reviews')).forEach(function (r) {
+    var x = get(r['Letter ID']); if (!x) return; var d = anyIso_(r['Submitted Date']) || 'on file'; if (!x.resp || d > x.resp) x.resp = d;
+  }); } catch (e) {}
+  try { bookRows_('PPM', 'BM Comments').forEach(function (r) {
+    var x = get(r['Letter ID']); if (!x || !String(r['Comment'] || '').trim()) return; var d = anyIso_(r['Comment Date']);
+    if (!x.bm || d >= x.bm.d) x.bm = { d: d, text: String(r['Comment']) };
+  }); } catch (e) {}
+  try { bookRows_('PPM', BOOKS.PPM.escalations).forEach(function (r) {
+    if (String(r['Resolved Date'] || '').trim()) return; var x = get(r['Letter ID']); if (!x) return;
+    x.esc = { status: String(r['Current Status'] || 'escalated'), count: Number(r['Reminder Count'] || 0), next: anyIso_(r['Next Action Date']) };
+  }); } catch (e) {}
+  try { bookRows_('PPM', 'Weekly Updates').forEach(function (r) {
+    var x = get(r['Letter ID']); if (!x) return; var d = anyIso_(r['Week Ending']) || anyIso_(r['Submitted Date']); if (d > x.weekly) x.weekly = d;
+  }); } catch (e) {}
+  return out;
+}
+/** A Query Pal reference's comments, newest first, keyed by the reference number. */
+function qpCode_(ref) { var m = String(ref || '').match(/^\s*([A-Z]+\/\d{4}\/\d+)/i); return m ? m[1].toUpperCase() : String(ref || '').trim().toUpperCase(); }
+function qpComments_() {
+  var out = {};
+  try { bookRows_('QPAL', 'Comments').forEach(function (r) {
+    var k = qpCode_(r['Reference']), t = String(r['Comment'] || '').trim(); if (!k || !t) return;
+    (out[k] = out[k] || []).push({ day: anyIso_(r['When']), at: String(r['When'] || ''), by: String(r['Author'] || ''), text: t });
+  }); } catch (e) {}
+  Object.keys(out).forEach(function (k) { out[k].sort(function (a, b) { return String(b.day).localeCompare(String(a.day)); }); });
+  return out;
+}
+/** A person's name from a Guardian address: the roster first, then the address itself. */
+function nameFromEmail_(email) {
+  var e = normEmail_(email || ''); if (!e) return '';
+  var p = roster_().filter(function (x) { return x.email && normEmail_(x.email) === e; })[0];
+  if (p) return p.name;
+  return e.split('@')[0].split(/[._-]/).map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+}
+/** "Q2 2026" is older than the last finished quarter. */
+function cmdOldPeriod_(period, day) {
+  var m = String(period || '').match(/Q([1-4])\s*(\d{4})/i); if (!m) return false;
+  var y = Number(day.slice(0, 4)), q = Math.floor((Number(day.slice(5, 7)) - 1) / 3) + 1;   // this quarter
+  var lastY = q === 1 ? y - 1 : y, lastQ = q === 1 ? 4 : q - 1;                             // the last finished one
+  return Number(m[2]) * 4 + Number(m[1]) < lastY * 4 + lastQ;
+}
+
+/** What the record says to do with one item. { tone: done|act|warn|info, tag, text } or null. */
+function cmdAdvise_(it, ctx) {
+  var first = function (s) { return String(s || '').split(' ')[0]; };
+  if (it.k === 'sf') {
+    var ch = ctx.chatter[it.id] || [], last = ch[0];
+    var said = it.title + ' ' + ch.slice(0, 6).map(function (c) { return c.text; }).join(' ');
+    if (CMD_AGENT_WANTED_RE.test(said)) return { tone: 'warn', tag: 'agent', text: 'The client asked for an agent, so this task cannot be closed. Give the client an agent and note who.' };
+    if (it.who && ctx.away[it.who]) return { tone: 'act', tag: 'away', text: first(nameFor_(it.who)) + ' is not in today: move it to whoever is in.' };
+    if (it.agent && ctx.left(it.agent)) return { tone: 'act', tag: 'orphan', text: it.agent + ' is no longer active: the client is an orphan. Assign an agent before anything else.' };
+    // Read everything written since your own last note, newest first.
+    var since = []; for (var j = 0; j < ch.length && ch[j].byId !== ctx.me; j++) since.push(ch[j]);
+    var doneNote = since.slice(0, 3).filter(function (c) { return CMD_DONE_RE.test(c.text) && !CMD_NOT_DONE_RE.test(c.text); })[0];
+    if (doneNote) return { tone: 'done', tag: 'done', text: first(doneNote.by) + ' wrote "' + shorten_(doneNote.text, 90) + '" on ' + shortDate_(doneNote.day) + '. It reads as done: close it with your note.' };
+    if (!ch.length) return { tone: 'act', tag: 'silent', text: 'Nobody has written on this task. Ask for feedback before you move it.' };
+    if (last.byId === ctx.me) {
+      var wait = daysBetween_(last.day, ctx.day);
+      if (wait >= 2) return { tone: 'act', tag: 'unanswered', text: 'Your note of ' + shortDate_(last.day) + ' has had no reply in ' + wait + ' days: move it, or ask again with a date.' };
+      return { tone: 'info', text: 'Waiting on a reply to your note of ' + shortDate_(last.day) + '.' };
+    }
+    if ((it.age || 0) >= 60) return { tone: 'act', tag: 'old', text: 'Two months and more without a touch: close it with the reason, or give it a new date and an owner.' };
+    return { tone: 'info', text: 'Last word from ' + first(last.by) + ' on ' + shortDate_(last.day) + ', ' + daysBetween_(last.day, ctx.day) + ' days ago. Ask for the next step and a date.' };
+  }
+  if (it.src === 'Performance letter') {
+    var p = ctx.ppm[it.ref] || {}, who = first(it.ownerName), mgr = it.mgr && normEmail_(it.mgr) !== normEmail_(ctx.myEmail) ? nameFromEmail_(it.mgr) : '';
+    var stale = cmdOldPeriod_(it.period, ctx.day) ? ' The ' + it.period + ' letter is a quarter behind: decide whether it still stands, or close it with the outcome.' : '';
+    if (p.resp) return { tone: 'done', tag: 'done', text: who + ' has responded' + (/^\d{4}/.test(p.resp) ? ' (' + shortDate_(p.resp) + ')' : '') + '. Review it, then close the letter with your note.' };
+    if (!it.opened && /assign/i.test(it.st))
+      return { tone: 'act', tag: 'unopened', text: 'Never opened, ' + it.age + ' days past due' + (p.trail ? ', after ' + p.trail + ' e-mail' + (p.trail === 1 ? '' : 's') : '') + '. E-mail is not working: call ' + who + (mgr ? ' and have ' + first(mgr) + ' sit with them this week' : '') + '.' + stale };
+    return { tone: 'act', tag: 'unsigned', text: 'Opened' + (it.opened ? ' ' + shortDate_(it.opened) : '') + ' but no signed response' + (p.esc ? ' (' + p.esc.status + ', ' + p.esc.count + ' reminders)' : '') + '. Meet ' + who + ' and get it signed, or close it with the outcome.' + stale };
+  }
+  if (it.src === 'Query Pal') {
+    var qc = ctx.qp[qpCode_(it.ref)] || [];
+    if (!it.ownerName) return { tone: 'act', tag: 'silent', text: 'Unassigned: give it to a desk.' };
+    if (!qc.length) return { tone: 'act', tag: 'silent', text: 'No comment on the trail in ' + it.age + ' days. Ask ' + first(it.ownerName) + ' where it stands; close it in Query Pal so the client is told.' };
+    return { tone: 'info', text: 'Last comment by ' + first(qc[0].by) + ' on ' + shortDate_(qc[0].day) + '. Close it in Query Pal once answered, so the client is told.' };
+  }
+  return null;
+}
+
+/** The history lines under one item, newest first. */
+function cmdHistory_(it, ctx) {
+  var out = [];
+  if (it.k === 'sf') {
+    (ctx.chatter[it.id] || []).forEach(function (c) { out.push({ d: c.day, by: c.by + (c.reply ? ' (reply)' : ''), text: c.text }); });
+  } else if (it.src === 'Performance letter') {
+    var p = ctx.ppm[it.ref] || {};
+    if (p.bm) out.push({ d: p.bm.d, by: 'Your comment', text: p.bm.text });
+    out.push({ d: p.resp && /^\d{4}/.test(p.resp) ? p.resp : '', by: 'Agent', text: p.resp ? 'Signed response on file.' : 'No response from the agent.' });
+    if (p.esc) out.push({ d: p.esc.next, by: 'Escalation', text: p.esc.status + ' · ' + p.esc.count + ' reminders' + (p.esc.next ? ' · next chase ' + shortDate_(p.esc.next) : '') });
+    if (p.trail) out.push({ d: p.last ? p.last.d : '', by: 'E-mail trail', text: p.trail + ' e-mail' + (p.trail === 1 ? '' : 's') + (p.last ? '; the last, ' + p.last.type.toLowerCase() + ' to ' + p.last.to + ' (' + p.last.status + ')' : '') });
+    if (it.opened) out.push({ d: it.opened, by: 'Letter', text: 'Opened by the agent.' });
+    if (p.weekly) out.push({ d: p.weekly, by: 'Weekly update', text: 'Last weekly update from the agent.' });
+  } else if (it.src === 'Query Pal') {
+    (ctx.qp[qpCode_(it.ref)] || []).forEach(function (c) { out.push({ d: c.day, by: c.by, text: c.text }); });
+  }
+  return out;
+}
+
+/* The page's items are kept between the page and its save. One Script
+   Property holds 9 KB, and sixty items run past it, so they are kept in
+   chunks; the save finds each item by its id, not by its place, so a page
+   opened twice cannot apply a move to the wrong row. */
+function cmdStore_(sid, day, arr) {
+  var props = PropertiesService.getScriptProperties(), base = cmdKey_(sid, day), js = JSON.stringify(arr);
+  try { Object.keys(props.getProperties()).forEach(function (k) { if (k.indexOf('cmd_items_' + sid + '_') === 0 && k.indexOf(base) !== 0) props.deleteProperty(k); }); } catch (e) {}
+  var n = Math.max(1, Math.ceil(js.length / 8000));
+  for (var i = 0; i < n; i++) props.setProperty(base + (i ? '_' + i : ''), js.slice(i * 8000, (i + 1) * 8000));
+  props.setProperty(base + '_n', String(n));
+}
+function cmdLoad_(sid, day) {
+  var props = PropertiesService.getScriptProperties(), base = cmdKey_(sid, day), n = Number(props.getProperty(base + '_n') || 1), js = '';
+  for (var i = 0; i < n; i++) js += props.getProperty(base + (i ? '_' + i : '')) || '';
+  try { return JSON.parse(js || '[]'); } catch (e) { return []; }
+}
+
+var CMD_GROUPS = ['Your instruction', 'Salesforce', 'Performance letter', 'Query Pal', 'BM approval', 'Log book', 'Petty cash'];
+var CMD_GROUP_LABEL = { 'Your instruction': 'Your instructions with no note', 'Salesforce': 'Salesforce tasks gone quiet', 'Performance letter': 'Performance letters past due',
+  'Query Pal': 'Query Pal past three days', 'BM approval': 'Approvals waiting on you', 'Log book': 'Log book lines not sent on', 'Petty cash': 'Petty cash' };
+
 function cmdReplyPage_(person, day, error, notice) {
   var sid = String(person.staffId), items = cmdItems_(sid, day), targets = cmdTargets_();
-  try { PropertiesService.getScriptProperties().setProperty(cmdKey_(sid, day), JSON.stringify(items.map(function (it) { return { k: it.k, id: it.id, src: it.src, t: it.title.slice(0, 120), who: it.who, on: it.ownerName || '', why: it.why }; })).slice(0, 8900)); } catch (e) {}
-  var sch = scheduleFor_(sid), blocks = sch.blocks || {}, by = {};
-  Object.keys(blocks).forEach(function (b) { by[b] = []; });
-  items.forEach(function (it, i) { var b = mgrBlockFor_(blocks, it.key); (by[b] = by[b] || []).push(i); });
+  var ctx = { day: day, me: '', myEmail: emailFor_(sid), chatter: {}, ppm: {}, qp: {}, away: absentToday_(day), left: function () { return false; } };
+  try { ctx.me = sid === 'ricky' ? bmSfId_() : (((sfkUsers_() || {})[sid] || {}).id || ''); } catch (e) {}
+  var sfIds = items.filter(function (it) { return it.k === 'sf'; }).map(function (it) { return it.id; });
+  try { ctx.chatter = cmdChatter_(sfIds); } catch (e) {}
+  if (items.some(function (it) { return it.src === 'Performance letter'; })) { try { ctx.ppm = ppmIntel_(); } catch (e) {} }
+  if (items.some(function (it) { return it.src === 'Query Pal'; })) { try { ctx.qp = qpComments_(); } catch (e) {} }
+  try { var bank = skillBank_(); ctx.left = function (n) { var a = bank[bkNk_(n)]; return !!(a && !a.active); }; } catch (e) {}
+  var sfSt = sfIds.length ? sfTaskStatuses_() : [], plSt = items.some(function (it) { return it.src === 'Performance letter'; }) ? ppmStatuses_() : [];
+
+  items.forEach(function (it) { it.adv = cmdAdvise_(it, ctx); it.hist = cmdHistory_(it, ctx); it.nc = !!(it.adv && it.adv.tag === 'agent'); });
+  try { cmdStore_(sid, day, items.map(function (it) { return { k: it.k, id: it.id, src: it.src, t: String(it.title).slice(0, 120), who: it.who, on: it.ownerName || '', why: it.why, st: it.st || '', ref: it.ref || '', nc: it.nc ? 1 : 0 }; })); } catch (e) {}
+
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var opts = '<option value="">Leave where it is</option>' + targets.map(function (t) { return '<option value="' + esc_(t.sid) + '">Move to ' + esc_(t.name) + '</option>'; }).join('');
-  var srcCount = {}; items.forEach(function (it) { srcCount[it.src] = (srcCount[it.src] || 0) + 1; });
-  var cards = Object.keys(blocks).map(function (b) {
-    var list = by[b] || []; if (!list.length) return '';
-    return '<div class="card"><div class="bh">' + esc_(blocks[b].time) + ' · ' + esc_(blocks[b].focus) + ' (' + list.length + ')</div>' + list.map(function (i) {
-      var it = items[i], owner = it.who ? nameFor_(it.who) : (it.ownerName || '—');
-      return '<div class="task"><div><span class="tag">' + esc_(it.src) + '</span> · <b>' + esc_(owner) + '</b> · ' + esc_(it.title) +
-        (it.k === 'sf' && base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
-        '<div class="tag late" style="margin:2px 0 6px">' + esc_(it.why) + '</div>' +
-        '<select name="to_' + i + '" style="width:100%;padding:9px;border:1.5px solid #DDE4EC;border-radius:9px;font:14px inherit;margin-bottom:6px">' + opts + '</select>' +
-        '<input type="text" name="q_' + i + '" placeholder="' + (it.k === 'sf' ? 'Ask for feedback or give the instruction (goes on Chatter)' : 'Instruction for the task this becomes') + '">' +
-        '<div style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px">New date <input type="date" name="d_' + i + '" style="flex:1;padding:8px;border:1.5px solid #DDE4EC;border-radius:9px"></div></div>';
-    }).join('') + '</div>';
+  var sel = 'width:100%;padding:9px;border:1.5px solid #DDE4EC;border-radius:9px;font:14px inherit;margin-bottom:6px;background:#fff';
+  var tone = { done: '#2C7A57', act: '#141C4A', warn: '#DC3F3F', info: '#6A7180' };
+
+  // What the system sees, counted.
+  var tags = {}; items.forEach(function (it) { if (it.adv && it.adv.tag) tags[it.adv.tag] = (tags[it.adv.tag] || 0) + 1; });
+  var byDesk = {}; items.forEach(function (it) { var o = it.who ? nameFor_(it.who) : (it.ownerName || 'unassigned'); o = String(o).split(' ')[0]; byDesk[o] = (byDesk[o] || 0) + 1; });
+  var sees = [
+    tags.done ? '<b style="color:#2C7A57">' + tags.done + ' read as done</b>: the desk or the agent has answered. Close each with your note.' : '',
+    tags.agent ? '<b style="color:#DC3F3F">' + tags.agent + ' cannot be closed</b>: the client asked for an agent.' : '',
+    tags.unanswered ? '<b>' + tags.unanswered + '</b> carry your note with no reply.' : '',
+    tags.silent ? '<b>' + tags.silent + '</b> have nothing written on them at all.' : '',
+    tags.away ? '<b>' + tags.away + '</b> sit with someone who is not in today.' : '',
+    tags.orphan ? '<b>' + tags.orphan + '</b> belong to an agent who has left.' : '',
+    tags.unopened ? '<b>' + tags.unopened + '</b> performance letter' + (tags.unopened === 1 ? ' was' : 's were') + ' never opened.' : '',
+    tags.old ? '<b>' + tags.old + '</b> have not been touched in two months.' : '',
+    'By who has them: ' + Object.keys(byDesk).sort(function (a, b) { return byDesk[b] - byDesk[a]; }).map(function (k) { return esc_(k) + ' ' + byDesk[k]; }).join(' · ') + '.'
+  ].filter(String);
+  var seesCard = items.length ? '<div class="card"><div class="bh">What the system sees</div>' + sees.map(function (s) { return '<div class="ln">' + s + '</div>'; }).join('') + '</div>' : '';
+
+  var row = function (it, i) {
+    var owner = it.who ? nameFor_(it.who) : (it.ownerName || '—');
+    var link = it.k === 'sf' && base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank" rel="noopener">open</a>'
+             : it.drive ? ' · <a href="https://drive.google.com/file/d/' + esc_(it.drive) + '/view" target="_blank" rel="noopener">open the letter</a>' : '';
+    var list = it.k === 'sf' ? sfSt : it.src === 'Performance letter' ? plSt : null;
+    var stSel = list ? '<select name="st_' + i + '" style="' + sel + '"><option value="">Status: ' + esc_(it.st || '—') + ' (leave)</option>' +
+      list.filter(function (s) { return s.v !== it.st && !(it.nc && s.closed); }).map(function (s) { return '<option value="' + esc_(s.v) + '">Set to ' + esc_(s.v) + (s.closed ? ' (closes it)' : '') + '</option>'; }).join('') + '</select>' : '';
+    var hist = it.hist || [], shown = hist.slice(0, 2), more = hist.slice(2);
+    var hl = function (h) { return '<div style="font-size:12.5px;line-height:1.45;padding:4px 0;border-top:1px dashed #E5E1D6">' + (h.d ? '<span style="color:#6A7180">' + esc_(shortDate_(h.d)) + '</span> · ' : '') + '<b>' + esc_(h.by) + '</b>: ' + esc_(shorten_(h.text, 220)) + '</div>'; };
+    var histHtml = it.k === 'sf' && !hist.length ? '<div style="font-size:12.5px;color:#6A7180;padding:4px 0">No Chatter on this task.</div>'
+      : hist.length ? '<div style="margin:4px 0 6px">' + shown.map(hl).join('') + (more.length ? '<details><summary>' + more.length + ' earlier</summary>' + more.map(hl).join('') + '</details>' : '') + '</div>' : '';
+    var adv = it.adv ? '<div style="font-size:13px;line-height:1.45;margin:4px 0 8px;padding:7px 10px;border-radius:8px;background:#F7F5EF;border-left:3px solid ' + tone[it.adv.tone] + ';color:' + tone[it.adv.tone] + '"><b>Suggested:</b> ' + esc_(it.adv.text) + '</div>' : '';
+    var ph = it.k === 'sf' ? 'Your note: feedback wanted, an instruction, or why it is closed (goes on Chatter)'
+           : it.src === 'Performance letter' ? 'Your comment on the letter, or why it is closed (goes on its record)' : 'Instruction for the task this becomes';
+    return '<div class="task" id="it' + i + '"><input type="hidden" name="id_' + i + '" value="' + esc_(it.id) + '">' +
+      '<div><span class="tag">' + esc_(it.src) + '</span> · <b>' + esc_(owner) + '</b> · ' + esc_(it.title) + link + '</div>' +
+      '<div class="tag late" style="margin:2px 0 4px">' + esc_(it.why) + (it.st ? ' <span style="color:#141C4A">· ' + esc_(it.st) + '</span>' : '') + '</div>' +
+      histHtml + adv + stSel +
+      '<select name="to_' + i + '" style="' + sel + '">' + opts + '</select>' +
+      '<input type="text" name="q_' + i + '" placeholder="' + esc_(ph) + '">' +
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px">New date <input type="date" name="d_' + i + '" style="flex:1;padding:8px;border:1.5px solid #DDE4EC;border-radius:9px"></div></div>';
+  };
+  var groups = CMD_GROUPS.concat(items.map(function (it) { return it.src; }).filter(function (s, i, a) { return CMD_GROUPS.indexOf(s) < 0 && a.indexOf(s) === i; }));
+  var cards = groups.map(function (g) {
+    var idx = []; items.forEach(function (it, i) { if (it.src === g) idx.push(i); });
+    if (!idx.length) return '';
+    return '<div class="card"><div class="bh">' + esc_(CMD_GROUP_LABEL[g] || g) + ' (' + idx.length + ')</div>' + idx.map(function (i) { return row(items[i], i); }).join('') + '</div>';
   }).join('');
+  var srcCount = {}; items.forEach(function (it) { srcCount[it.src] = (srcCount[it.src] || 0) + 1; });
   return replyPage_('Not getting attention · ' + prettyDate_(day),
-    items.length + ' item' + (items.length === 1 ? '' : 's') + ' gone quiet, worst first: ' + esc_(Object.keys(srcCount).map(function (k) { return k + ' ' + srcCount[k]; }).join(', ')) + '. Move, re-date or ask; leave blank what needs nothing.',
-    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') +
-    (items.length ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'cmd') + cards + '<button type="submit">Send these moves and questions</button></form>'
+    items.length + ' item' + (items.length === 1 ? '' : 's') + ' gone quiet, worst first: ' + esc_(Object.keys(srcCount).map(function (k) { return k + ' ' + srcCount[k]; }).join(', ')) +
+      '. Set a status to close it, move it, re-date it or ask; leave blank what needs nothing.',
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') + seesCard +
+    (items.length ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'cmd') + cards + '<button type="submit">Send these changes</button></form>'
                   : '<div class="card ok">Nothing has gone quiet. Every item has been touched in the last ' + CMD.QUIET_DAYS + ' days.</div>'));
 }
+
+/** Set fields on every row of a branch workbook tab whose keyCol is keyVal (and that passes onlyIf). */
+function bookUpdate_(k, tab, keyCol, keyVal, patch, onlyIf) {
+  var sh = SpreadsheetApp.openById(bookId_(k)).getSheetByName(tab);
+  if (!sh) throw new Error('No "' + tab + '" tab in that workbook.');
+  var lr = sh.getLastRow(), lc = sh.getLastColumn(); if (lr < 2) return 0;
+  var head = sh.getRange(1, 1, 1, lc).getValues()[0].map(function (h) { return String(h || '').trim(); });
+  var kc = head.indexOf(keyCol); if (kc < 0) throw new Error('No "' + keyCol + '" column on ' + tab + '.');
+  var vals = sh.getRange(2, 1, lr - 1, lc).getValues(), n = 0;
+  for (var i = 0; i < vals.length; i++) {
+    if (String(vals[i][kc]).trim() !== String(keyVal).trim()) continue;
+    if (onlyIf) { var o = {}; head.forEach(function (h, j) { o[h] = vals[i][j]; }); if (!onlyIf(o)) continue; }
+    Object.keys(patch).forEach(function (f) { var c = head.indexOf(f); if (c > -1) sh.getRange(i + 2, c + 1).setValue(patch[f]); });
+    n++;
+  }
+  bookForget_(k, tab);
+  return n;
+}
+function bookAppend_(k, tab, obj) {
+  var sh = SpreadsheetApp.openById(bookId_(k)).getSheetByName(tab);
+  if (!sh || sh.getLastColumn() < 1) return false;
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(function (h) { return String(h || '').trim(); });
+  sh.appendRow(head.map(function (h) { return Object.prototype.hasOwnProperty.call(obj, h) ? obj[h] : ''; }));
+  bookForget_(k, tab);
+  return true;
+}
+function bookForget_(k, tab) {
+  var ck = 'book_' + k + '_' + tab; delete _bookMemo[ck];
+  try { CacheService.getScriptCache().remove(ck); } catch (e) {}
+}
+
+/** A letter's status set from the tracker: the letter, its open escalation, your comment and the audit log. */
+function ppmSetStatus_(letterId, status, note, who) {
+  var now = new Date(), closing = ppmClosing_(status), patch = { Status: status };
+  if (closing) patch['Date Completed'] = now;
+  if (!bookUpdate_('PPM', BOOKS.PPM.letters, 'Letter ID', letterId, patch)) throw new Error('Letter ' + letterId + ' is not on the sheet any more.');
+  if (closing) {
+    try { bookUpdate_('PPM', BOOKS.PPM.escalations, 'Letter ID', letterId, { 'Resolved Date': now, 'Current Status': 'Resolved', 'Resolution Notes': note },
+      function (o) { return !String(o['Resolved Date'] || '').trim(); }); } catch (e) {}
+  }
+  if (note) ppmComment_(letterId, note, who, closing ? 'Closed: ' + status : 'Status: ' + status, true);
+  try { bookAppend_('PPM', 'Audit Log', { Timestamp: now, Email: who.email, Role: who.role, Action: 'STATUS CHANGE', 'Letter ID': letterId,
+    Details: 'Set to "' + status + '" from the KPI tracker by ' + who.name + (note ? ': ' + note : '') }); } catch (e) {}
+}
+/** A comment on a letter's record: the BM Comments tab for the Branch Manager; the audit log for anyone else. */
+function ppmComment_(letterId, note, who, action, quiet) {
+  var now = new Date();
+  if (who.role === 'Branch Manager') {
+    bookAppend_('PPM', 'BM Comments', { 'Comment ID': 'BMC-' + String(Utilities.getUuid()).replace(/[^a-z0-9]/gi, '').slice(0, 8).toUpperCase(), 'Letter ID': letterId,
+      'BM Email': who.email, 'BM Name': who.name, 'Comment Date': now, 'Comment': note, 'Action Required': action || '' });
+  } else if (!quiet) {
+    bookAppend_('PPM', 'Audit Log', { Timestamp: now, Email: who.email, Role: who.role, Action: 'COMMENT', 'Letter ID': letterId, Details: note });
+  }
+}
+
 function cmdReplySave_(person, day, p) {
-  var sid = String(person.staffId), items = [], at = hhmm_(new Date()), out = [], me = nameFor_(sid);
-  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(cmdKey_(sid, day)) || '[]'); } catch (e) {}
+  var sid = String(person.staffId), at = hhmm_(new Date()), out = [], me = nameFor_(sid);
+  var stored = cmdLoad_(sid, day), byId = {};
+  stored.forEach(function (it) { byId[it.id] = it; });
   var targets = {}; cmdTargets_().forEach(function (t) { targets[t.sid] = t; });
-  var head = (sid === 'ricky' ? 'Branch Manager' : UM_DESKS.indexOf(sid) > -1 ? 'Unit Manager · ' + me : 'BMA · ' + me) + ' · ' + shortDate_(day) + ' ' + twelve_(at);
-  items.forEach(function (it, i) {
-    var to = String(p['to_' + i] || ''), q = String(p['q_' + i] || '').trim(), nd = String(p['d_' + i] || '').trim();
-    if (!to && !q && !nd) return;
+  var role = sid === 'ricky' ? 'Branch Manager' : UM_DESKS.indexOf(sid) > -1 ? 'Unit Manager' : 'BMA';
+  var who = { name: me, email: emailFor_(sid), role: role };
+  var head = (sid === 'ricky' ? 'Branch Manager' : role + ' · ' + me) + ' · ' + shortDate_(day) + ' ' + twelve_(at);
+  // Rows as the page numbered them, each found by its id.
+  var rows = [];
+  for (var i = 0; i < 200; i++) {
+    var hasId = p['id_' + i] != null && String(p['id_' + i]) !== '';
+    if (!hasId && i >= stored.length) break;
+    var it = hasId ? byId[String(p['id_' + i])] : stored[i];
+    if (it) { rows.push({ it: it, i: i }); continue; }
+    if (p['to_' + i] || String(p['q_' + i] || '').trim() || p['d_' + i] || p['st_' + i])
+      out.push({ s: String(p['id_' + i] || 'An item'), res: 'NOT SAVED: it is no longer on the list. Open the page again and redo it.' });
+  }
+  rows.forEach(function (r) {
+    var it = r.it, i = r.i;
+    var to = String(p['to_' + i] || ''), q = String(p['q_' + i] || '').trim(), nd = String(p['d_' + i] || '').trim(), st = String(p['st_' + i] || '').trim();
+    if (st === it.st) st = '';
+    if (!to && !q && !nd && !st) return;
     var tgt = targets[to] || null, res = '';
     try {
       if (it.k === 'sf') {
+        var closing = !!st && sfStatusClosed_(st);
+        if (closing && it.nc) throw new Error('The client asked for an agent: this task cannot be closed. Give the client an agent first.');
+        if (closing && !q) throw new Error('Write the note first: a closed task without a note is not closed.');
         var patch = {};
         if (tgt) patch.OwnerId = tgt.id;
         if (/^\d{4}-\d{2}-\d{2}$/.test(nd)) patch.ActivityDate = nd;
-        if (Object.keys(patch).length) sfkPatchTask_(it.id, patch);
-        var body = head + '\n\n' + (tgt ? 'Moved from ' + (it.who ? nameFor_(it.who) : it.on || 'the desk') + ' to ' + tgt.name + '. ' : '') + (patch.ActivityDate ? 'New date ' + shortDate_(nd) + '. ' : '') +
-          (q ? (tgt ? '' : 'Feedback wanted: ') + q : (tgt ? 'Please note on this task what you will do and by when.' : ''));
-        sfkInsert_('FeedItem', { ParentId: it.id, Body: body.trim() });
-        res = [tgt ? 'moved to ' + tgt.name.split(' ')[0] : '', patch.ActivityDate ? 're-dated' : '', q ? 'asked' : ''].filter(String).join(', ');
+        if (st) patch.Status = st;
+        var body = head + '\n\n' + (tgt ? 'Moved from ' + (it.who ? nameFor_(it.who) : it.on || 'the desk') + ' to ' + tgt.name + '. ' : '') +
+          (patch.ActivityDate ? 'New date ' + shortDate_(nd) + '. ' : '') + (st ? (closing ? 'Closed (' + st + '). ' : 'Status set to ' + st + '. ') : '') +
+          (q ? (tgt || closing ? '' : 'Feedback wanted: ') + q : (tgt ? 'Please note on this task what you will do and by when.' : ''));
+        // The note goes on before the task closes, so no task is ever closed without one.
+        if (closing) { sfkInsert_('FeedItem', { ParentId: it.id, Body: body.trim() }); sfkPatchTask_(it.id, patch); }
+        else { if (Object.keys(patch).length) sfkPatchTask_(it.id, patch); if (body.trim() !== head) sfkInsert_('FeedItem', { ParentId: it.id, Body: body.trim() }); }
+        res = [tgt ? 'moved to ' + tgt.name.split(' ')[0] : '', patch.ActivityDate ? 're-dated' : '', closing ? 'closed' : (st ? 'set to ' + st : ''), q && !closing ? 'asked' : ''].filter(String).join(', ');
+      } else if (it.src === 'Performance letter' && !tgt && (st || q)) {
+        if (st) {
+          if (ppmClosing_(st) && !q) throw new Error('Write the note first: say why the letter is closed.');
+          ppmSetStatus_(it.ref, st, q, who);
+          res = ppmClosing_(st) ? 'letter closed' : 'letter set to ' + st;
+        } else { ppmComment_(it.ref, q, who, 'Comment'); res = 'comment on the letter'; }
       } else {
         var owner = tgt || targets['kamla'] || targets[sid] || null;
         if (!owner) throw new Error('No one to give it to: choose a desk.');
@@ -5524,10 +5866,10 @@ function cmdReplySave_(person, day, p) {
         try { sfkInsert_('FeedItem', { ParentId: id, Body: head + '\n\n' + (q || 'From the command centre: ' + it.why + '. Note what you did, then close.') }); } catch (e) {}
         res = 'task for ' + owner.name.split(' ')[0];
       }
-    } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
+    } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 160); }
     out.push({ s: it.src + ' · ' + it.t, res: res });
   });
-  if (!out.length) return cmdReplyPage_(person, day, 'Nothing chosen. Pick a desk, a date or type a question under an item.');
+  if (!out.length) return cmdReplyPage_(person, day, 'Nothing chosen. Set a status, pick a desk or a date, or type a note under an item.');
   try { runlog_('cmd ' + sid + ' ' + out.length + ' actions'); } catch (e) {}
   return cmdReplyPage_(person, day, '', '<b>' + out.filter(function (o) { return !/^NOT/.test(o.res); }).length + ' of ' + out.length + ' done.</b>' +
     out.map(function (o) { return '<div class="ln">' + (/^NOT/.test(o.res) ? '&#9888; ' : '&#10003; ') + esc_(o.s) + ' · <b>' + esc_(o.res) + '</b></div>'; }).join(''));
