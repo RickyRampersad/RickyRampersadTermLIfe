@@ -805,6 +805,9 @@ function lbHandle_(b) {
     case 'lb.delivered':    return lbDelivered_(b, who);
     case 'lb.stats':        return lbStats_(b, who);
     case 'lb.bag':          return lbBag_(b, who);
+    case 'lb.train':        return lbTrain_(b, who);
+    case 'lb.trainSubmit':  return lbTrainSubmit_(b, who);
+    case 'lb.trainView':    return lbTrainView_(b, who);
     case 'lb.baginfo':      return { ok: true, bag: lbBagInfo_(new Date()) };
     case 'lb.agents':       return { ok: true, agents: lbAgents_().filter(function (a) { return a.active && !lbIsStaffRole_(a.role); })
                                        .map(function (a) { return { agentNo: a.agentNo, name: a.name, unit: a.unit }; }) };
@@ -2388,4 +2391,158 @@ function lbSetup() {
   var msg = notes.join('\n');
   try { SpreadsheetApp.getUi().alert('Log Book\n\n' + msg); } catch (e) {}
   return msg;
+}
+
+
+/* ============================== training ============================== */
+
+/* The Log Book training (17 October 2026: "a training manual for both the
+ * agent and staff so they can log in and do the questions and get scores so
+ * they understand how to use"). The manual is public on the page
+ * (/logbook/training); the questions, their answers and the reasons are not,
+ * because this file is on the website: they live on the "Log Book Questions"
+ * tab of this sheet, or of the sheet LB_TRAIN_SHEET_ID names. Columns: Id,
+ * Roles (agent, staff or all), Section, Question, A, B, C, D, Answer, Why,
+ * Points, Critical (Y). Agents and unit managers take the agent questions;
+ * staff and the branch manager the staff questions; "all" goes to everyone.
+ * A pass is LB_TRAIN.PASS per cent with every critical question right. Every
+ * attempt is a row on "Log Book Training" and an e-mail to the person, the
+ * branch manager copied. After an attempt the page shows each answer, right
+ * or wrong, with the reason: this is a test to learn the book, so it teaches.
+ */
+var LB_TRAIN = { TAB: 'Log Book Questions', RESULTS: 'Log Book Training', PASS: 80 };
+var LB_TRAIN_COLUMNS = ['When', 'Name', 'Agent No', 'Role', 'Unit', 'Course', 'Score', 'Out Of', 'Percent', 'Pass',
+                        'Critical Missed', 'Wrong', 'Answers', 'Seconds'];
+
+function lbTrainRole_(who) { return who.isAgent ? 'agent' : 'staff'; }
+
+function lbTrainBank_() {
+  var id = dbProp_('LB_TRAIN_SHEET_ID');
+  var book;
+  try { book = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet(); } catch (e) { return null; }
+  var sh = book && book.getSheetByName(LB_TRAIN.TAB);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var hm = dbHeaderMap_(sh);
+  var g = function (r, c) { return c in hm.map ? String(r[hm.map[c]] == null ? '' : r[hm.map[c]]).trim() : ''; };
+  return sh.getRange(2, 1, sh.getLastRow() - 1, hm.head.length).getValues().map(function (r) {
+    return { id: g(r, 'Id'), roles: g(r, 'Roles').toLowerCase(), section: g(r, 'Section'), q: g(r, 'Question'),
+             opts: ['A', 'B', 'C', 'D'].map(function (k) { return g(r, k); }), ans: g(r, 'Answer').toUpperCase(),
+             why: g(r, 'Why'), pts: Number(g(r, 'Points')) || 1, crit: /^y/i.test(g(r, 'Critical')) };
+  }).filter(function (x) { return x.id && x.q && /^[ABCD]$/.test(x.ans); });
+}
+
+function lbTrainFor_(who) {
+  var role = lbTrainRole_(who), bank = lbTrainBank_();
+  if (!bank) return null;
+  return bank.filter(function (x) { return x.roles === 'all' || x.roles.split(/[ ,]+/).indexOf(role) >= 0; });
+}
+
+function lbTrainTab_() { return dbSheet_(LB_TRAIN.RESULTS, LB_TRAIN_COLUMNS); }
+
+function lbTrainRows_() {
+  var sh = lbTrainTab_(), hm = dbHeaderMap_(sh), last = sh.getLastRow();
+  if (last < 2) return [];
+  return sh.getRange(2, 1, last - 1, hm.head.length).getValues().map(function (r) {
+    var g = function (c) { return r[hm.map[c]]; };
+    var when = g('When');
+    return { when: when instanceof Date ? when.toISOString() : String(when || ''), name: String(g('Name') || ''),
+             agentNo: String(g('Agent No') || ''), role: String(g('Role') || ''), unit: String(g('Unit') || ''),
+             course: String(g('Course') || ''), score: Number(g('Score')) || 0, outOf: Number(g('Out Of')) || 0,
+             pct: Number(g('Percent')) || 0, pass: /^y/i.test(String(g('Pass'))), critMissed: String(g('Critical Missed') || ''),
+             wrong: String(g('Wrong') || ''), seconds: Number(g('Seconds')) || 0 };
+  });
+}
+
+/* Whose attempts someone may read: staff and the branch manager everyone's; a
+   unit manager their team's; an agent their own. */
+function lbTrainMine_(who, rows) {
+  if (!who.isAgent) return rows;
+  var keys = {};
+  lbTeam_(who).forEach(function (t) { keys[t.key] = 1; });
+  var me = lbNameKey_(who.name);
+  return rows.filter(function (r) { return keys[lbAgentKey_(r.agentNo)] || (!r.agentNo && lbNameKey_(r.name) === me); });
+}
+
+function lbTrain_(b, who) {
+  var qs = lbTrainFor_(who);
+  var mine = lbTrainMine_(who, lbTrainRows_()).filter(function (r) {
+    return who.isAgent ? lbAgentKey_(r.agentNo) === lbAgentKey_(who.agentNo) : lbNameKey_(r.name) === lbNameKey_(who.name);
+  });
+  if (!qs || !qs.length) return { ok: true, linked: false, role: lbTrainRole_(who), mine: mine };
+  return { ok: true, linked: true, role: lbTrainRole_(who), pass: LB_TRAIN.PASS, name: who.name,
+           lead: !!who.isLead, staff: !who.isAgent, manager: !!who.isManager,
+           questions: qs.map(function (x) { return { id: x.id, section: x.section, q: x.q, opts: x.opts, pts: x.pts, crit: x.crit }; }),
+           mine: mine };
+}
+
+function lbTrainSubmit_(b, who) {
+  var qs = lbTrainFor_(who);
+  if (!qs || !qs.length) throw new Error('The questions are not set up yet. Ask the branch.');
+  var ans = b.answers || {};
+  var missing = qs.filter(function (x) { return !/^[ABCD]$/.test(String(ans[x.id] || '')); });
+  if (missing.length) throw new Error('Answer every question first (' + missing.length + ' left).');
+  var score = 0, outOf = 0, wrong = [], critMissed = [];
+  var marked = qs.map(function (x) {
+    var given = String(ans[x.id]).toUpperCase(), right = given === x.ans;
+    outOf += x.pts;
+    if (right) score += x.pts; else { wrong.push(x.id); if (x.crit) critMissed.push(x.id); }
+    return { id: x.id, given: given, ans: x.ans, right: right, why: x.why, crit: x.crit, section: x.section };
+  });
+  var pct = outOf ? Math.round(score * 1000 / outOf) / 10 : 0;
+  var pass = pct >= LB_TRAIN.PASS && !critMissed.length;
+  var now = new Date();
+  var secs = Math.max(0, Math.min(36000, parseInt(b.seconds, 10) || 0));
+  var sh = lbTrainTab_();
+  sh.appendRow(dbRowFor_(sh, { 'When': now, 'Name': who.name, 'Agent No': who.agentNo || '', 'Role': who.role, 'Unit': who.unit || '',
+    'Course': lbTrainRole_(who), 'Score': score, 'Out Of': outOf, 'Percent': pct, 'Pass': pass ? 'Yes' : 'No',
+    'Critical Missed': critMissed.join(', '), 'Wrong': wrong.join(', '),
+    'Answers': qs.map(function (x) { return x.id + ':' + String(ans[x.id]).toUpperCase(); }).join(' '), 'Seconds': secs }));
+  var mail = '';
+  try {
+    var to = who.email || (who.isAgent ? '' : lbStaffEmail_(who.name));
+    var byQ = {}; qs.forEach(function (x) { byQ[x.id] = x; });
+    var html = lbMailHtml_(pass ? 'Log Book training: passed' : 'Log Book training: not yet',
+      '<p>' + dbEsc_(who.name) + ' scored <b>' + score + ' of ' + outOf + ' (' + pct + '%)</b> on the ' + lbTrainRole_(who) +
+      ' questions. A pass is ' + LB_TRAIN.PASS + '% with every one of the three rules right.</p>' +
+      (pass ? '' : '<p>Read the sections below again and take the test once more at rickyrampersadbranch.com/logbook/training.</p>'),
+      ['Question', 'Section', 'Answered'],
+      wrong.map(function (id) { return [byQ[id].q + (byQ[id].crit ? ' (one of the three rules)' : ''), byQ[id].section, 'Not right']; }),
+      '', { tone: pass ? 'ok' : 'warn', kicker: 'Training result',
+            tiles: [['Score', score + '/' + outOf], ['Percent', pct + '%', pass ? 'ok' : 'warn'], ['Result', pass ? 'Pass' : 'Not yet', pass ? 'ok' : 'warn']] });
+    mail = lbMail_({ to: [to || LB.MANAGER], cc: to ? [LB.MANAGER] : [], subject: 'Log Book training: ' + who.name + ' ' + pct + '% (' + (pass ? 'pass' : 'not yet') + ')', html: html });
+  } catch (e) { mail = 'Failed: ' + e.message; }
+  return { ok: true, score: score, outOf: outOf, pct: pct, pass: pass, passMark: LB_TRAIN.PASS, critMissed: critMissed, marked: marked, mail: mail };
+}
+
+/** Results to read: one line a person (their best and last), and how each
+ *  question went, for the branch to see what the team has not understood. */
+function lbTrainView_(b, who) {
+  var rows = lbTrainMine_(who, lbTrainRows_());
+  var people = {};
+  rows.forEach(function (r) {
+    var k = r.agentNo ? 'n' + lbAgentKey_(r.agentNo) : 'm' + lbNameKey_(r.name);
+    var p = people[k] = people[k] || { name: r.name, agentNo: r.agentNo, role: r.role, unit: r.unit, tries: 0, best: 0, last: null, passed: false };
+    p.tries++; p.best = Math.max(p.best, r.pct); if (r.pass) p.passed = true;
+    if (!p.last || r.when > p.last.when) p.last = r;
+  });
+  var bank = lbTrainBank_() || [], qmap = {};
+  bank.forEach(function (x) { qmap[x.id] = { id: x.id, q: x.q, section: x.section, roles: x.roles, crit: x.crit, asked: 0, wrong: 0 }; });
+  rows.forEach(function (r) {
+    var w = r.wrong ? r.wrong.split(/,\s*/) : [];
+    bank.forEach(function (x) {
+      if (!(x.roles === 'all' || x.roles.split(/[ ,]+/).indexOf(r.course) >= 0)) return;
+      qmap[x.id].asked++; if (w.indexOf(x.id) >= 0) qmap[x.id].wrong++;
+    });
+  });
+  var notYet = [];
+  if (!who.isAgent || who.isLead) {
+    var seen = {};
+    Object.keys(people).forEach(function (k) { seen[k] = 1; });
+    var pool = !who.isAgent ? lbAgents_().filter(function (a) { return a.active && a.code; })
+                            : lbTeam_(who).map(function (t) { return lbFindAgent_(t.agentNo) || { agentNo: t.agentNo, name: t.name, role: 'Agent' }; });
+    pool.forEach(function (a) { if (!seen['n' + lbAgentKey_(a.agentNo)]) notYet.push({ name: a.name, agentNo: a.agentNo, role: a.role || '' }); });
+  }
+  return { ok: true, people: Object.keys(people).map(function (k) { return people[k]; }),
+           questions: Object.keys(qmap).map(function (k) { return qmap[k]; }).filter(function (x) { return x.asked; }),
+           notYet: notYet, passMark: LB_TRAIN.PASS, scope: !who.isAgent ? 'branch' : who.isLead ? 'team' : 'me' };
 }

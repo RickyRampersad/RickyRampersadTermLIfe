@@ -3919,6 +3919,22 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   whether the papers catch today's bag; every line carries its bag; Insights shows the share that made its bag, by the hour
   received. Measured on the old book (3,605 lines, Aug 2024 to Oct 2026): 57% were logged after 12 noon; of those before,
   56% went that day; the 12:00 hour (504) is busier than any morning hour, and 2 pm and 3 pm are the busiest of all.
+- **The training: the manual and a scored test, by role** (17 October 2026: "a training manual for both the agent and
+  staff so they can log in and do the questions and get scores", at "rickyrampersadbranch/logbook training").
+  `rroperations/logbook/training.html`, short addresses `/logbook/training` and `/logbooktraining`. It signs in as the Log
+  Book does (agent number and fact find password, or a staff access code; the same `rrb-ops-session`, so a phone signed in
+  to the Log Book is signed in here). Agents and unit managers get the agent manual (the three rules and seven sections) and
+  the agent questions; staff and the branch manager the staff manual (the rules and seven) and the staff questions. Each
+  section is ticked as read (kept on the device). After an attempt every answer shows, right or wrong, with the reason:
+  the test teaches. A pass is `LB_TRAIN.PASS` (80) per cent with every critical question (the three rules) right; retakes
+  are open. Results: an agent their own attempts, a unit manager their team's and who has not taken it, staff and the
+  branch manager everyone's and the questions most answered wrongly. `lb.train`, `lb.trainSubmit`, `lb.trainView` in
+  LogBook.gs. **The questions live on the private "Log Book Questions" tab of the RR Operations sheet** (or the sheet
+  `LB_TRAIN_SHEET_ID` names): Id, Roles (agent, staff, all), Section, Question, A–D, Answer, Why, Points, Critical. They
+  reach the page without their answers, and never enter the repository: the bank is built in the scratchpad
+  (`lbtrain/bank.py`, 29 questions: 3 rules, 14 agent, 12 staff; the right answer never the longest option, spread A to
+  D). Every attempt is a row on **Log Book Training** and an e-mail to the person, the branch manager copied (follows
+  `DB_MODE`). `tests/e2e-logbook-training.js` covers it with a made-up bank (31 checks).
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).
