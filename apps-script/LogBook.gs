@@ -1938,6 +1938,25 @@ function lbGraphToken_() {
   return j.access_token;
 }
 
+/* One way out for every RR Operations e-mail (18 October 2026: "would like this coming from
+   rickyrampersadbranch.com … any other emails with communications"): Microsoft Graph, as
+   support@rickyrampersadbranch.com, saved in its Sent Items, when MS_TENANT, MS_CLIENT and MS_SECRET are in
+   this project's Script properties. Returns true when Microsoft took it; false sends the caller to Gmail. */
+function lbGraphSend_(to, cc, subject, html, replyTo) {
+  if (!lbGraphReady_() || !to.length) return false;
+  try {
+    var addr = function (l) { return l.map(function (a) { return { emailAddress: { address: a } }; }); };
+    var res = UrlFetchApp.fetch('https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(lbSupportFrom_()) + '/sendMail', {
+      method: 'post', muteHttpExceptions: true, contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + lbGraphToken_() },
+      payload: JSON.stringify({ message: { subject: subject, body: { contentType: 'HTML', content: html },
+        toRecipients: addr(to), ccRecipients: addr(cc || []), replyTo: addr([replyTo || lbSupportFrom_()]) }, saveToSentItems: true }) });
+    if (res.getResponseCode() === 202) return true;
+    Logger.log('graph send: ' + res.getResponseCode() + ' ' + res.getContentText());
+  } catch (e) { Logger.log('graph send: ' + e); }
+  return false;
+}
+
 function lbSupportMail_(m) {
   if (dbMode_() !== 'live') return lbMail_(m);
   var clean = function (l) {
@@ -1948,18 +1967,7 @@ function lbSupportMail_(m) {
   var to = clean(m.to);
   var cc = clean(m.cc).filter(function (x) { return to.map(function (y) { return y.toLowerCase(); }).indexOf(x.toLowerCase()) < 0; });
   if (!to.length) return 'No address';
-  if (lbGraphReady_()) {
-    try {
-      var addr = function (l) { return l.map(function (a) { return { emailAddress: { address: a } }; }); };
-      var res = UrlFetchApp.fetch('https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(lbSupportFrom_()) + '/sendMail', {
-        method: 'post', muteHttpExceptions: true, contentType: 'application/json',
-        headers: { Authorization: 'Bearer ' + lbGraphToken_() },
-        payload: JSON.stringify({ message: { subject: m.subject, body: { contentType: 'HTML', content: m.html },
-          toRecipients: addr(to), ccRecipients: addr(cc), replyTo: addr([lbSupportFrom_()]) }, saveToSentItems: true }) });
-      if (res.getResponseCode() === 202) return 'Sent from ' + lbSupportFrom_();
-      Logger.log('graph send: ' + res.getResponseCode() + ' ' + res.getContentText());
-    } catch (e) { Logger.log('graph send: ' + e); }
-  }
+  if (lbGraphSend_(to, cc, m.subject, m.html, lbSupportFrom_())) return 'Sent from ' + lbSupportFrom_();
   try {
     var o = { to: to.join(','), subject: m.subject, htmlBody: m.html, name: DB.BRAND + ' Support', replyTo: lbSupportFrom_() };
     if (cc.length) o.cc = cc.join(',');
@@ -1993,6 +2001,7 @@ function lbMail_(m) {
     cc = [];
     subject = '[TEST] ' + subject;
   }
+  if (lbGraphSend_(to, cc, subject, html, lbSalesSupport_())) return (dbMode_() === 'live' ? 'Sent' : 'Test copy sent') + ' from ' + lbSupportFrom_();
   try {
     if (MailApp.getRemainingDailyQuota && MailApp.getRemainingDailyQuota() < 1 + cc.length) return 'Held: daily mail limit reached';
     var o = { to: to.join(','), subject: subject, htmlBody: html, name: DB.BRAND + ' Log Book', replyTo: lbSalesSupport_() };

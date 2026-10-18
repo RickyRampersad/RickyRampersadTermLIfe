@@ -860,6 +860,11 @@ function dbSendConfirmation_(d, client, email, who, test) {
     html = '<div style="background:#eef4ff;border:1px solid #6FA8FF;padding:10px 14px;font-family:Arial;font-size:13px">' +
       'TEST — in live mode this would have gone to <b>' + dbEsc_(email) + '</b>.</div>' + html;
   }
+  /* From support@rickyrampersadbranch.com through Microsoft 365 when LogBook.gs and the MS_* properties are in
+     the project (18 October 2026), else from this account as before. */
+  if (typeof lbGraphSend_ === 'function' && lbGraphSend_([to], [], subject, html, dbProp_('DB_REPLY_TO', DB.SALES_SUPPORT))) {
+    return { status: (test ? 'Test copy sent' : 'Sent') + ' from support@', sentAt: new Date() };
+  }
   try {
     if (MailApp.getRemainingDailyQuota && MailApp.getRemainingDailyQuota() < 1) {
       return { status: 'Held: daily mail limit reached' };

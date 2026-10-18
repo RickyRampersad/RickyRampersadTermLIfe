@@ -3935,6 +3935,12 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   (`lbtrain/bank.py`, 29 questions: 3 rules, 14 agent, 12 staff; the right answer never the longest option, spread A to
   D). Every attempt is a row on **Log Book Training** and an e-mail to the person, the branch manager copied (follows
   `DB_MODE`). `tests/e2e-logbook-training.js` covers it with a made-up bank (31 checks).
+- **Every RR Operations e-mail goes from support@rickyrampersadbranch.com** (18 October 2026: "would like this coming
+  from rickyrampersadbranch.com … any other emails with communications"). `lbGraphSend_` in LogBook.gs sends through
+  Microsoft Graph as support@ (Sent Items kept) when `MS_TENANT`, `MS_CLIENT` and `MS_SECRET` are in this project's
+  Script properties; `lbMail_`, `lbSupportMail_` and the Delivery Book's `dbSendConfirmation_` all try it first and
+  fall back to MailApp when it is not set or Microsoft refuses. Test mode still sends only to the test inbox.
+  `tests/test-rrops-mail.js` covers it.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).

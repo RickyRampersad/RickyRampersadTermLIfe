@@ -216,6 +216,13 @@ reason. It replaces the Log Book Digital Jotform.
    **Log Book Training** tab here, made the first time. To change a question, edit that sheet: the next
    test uses it. Keep the right answer off the longest option.
 
+10. **Every e-mail from support@rickyrampersadbranch.com.** Copy the three Microsoft 365 properties
+    from the Service Questionnaire project into this one (Project Settings → Script properties):
+    `MS_TENANT`, `MS_CLIENT`, `MS_SECRET`. From then on every Log Book and Delivery Book e-mail
+    (training results, the 11:00 and 12:00 e-mails, the reason requests, the department check,
+    the 5 pm digest, the client's delivery confirmation) goes from support@ and sits in its Sent
+    Items. Without them, or if Microsoft refuses one, it still goes, from this script's account.
+
 ### Settings
 
 | Property | Default | What it does |
