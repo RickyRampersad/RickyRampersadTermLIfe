@@ -469,7 +469,10 @@
 
   /* ── start ── */
   function start() {
-    return api('lb.train').then(function (d) {
+    return api('lb.train').catch(function (e) {
+      if (/Unknown action/i.test(e.message)) throw new Error('Your sign-in worked, but the training is still being switched on by the branch. Please try again later today.');
+      throw e;
+    }).then(function (d) {
       S.data = d; S.who = (d.name || '').toLowerCase();
       $('lock').hidden = true; $('hdr').hidden = false; $('main').hidden = false; $('foot').hidden = false;
       var staff = d.role === 'staff';
