@@ -64,7 +64,10 @@ const seen = [];
       seen.push(b);
       const reply = o => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
       switch (b.action) {
-        case 'login': return reply(b.code.toUpperCase() === 'PAT1' ? SESSION : { ok: false, error: 'That code is not on the Delivery Book access list.' });
+        case 'lb.login':
+          if (String(b.agentNo).toUpperCase() === 'A00999' && b.code === 'ag1') return reply(Object.assign({}, SESSION, { token: 'TA', name: 'Ann Agent', role: 'Agent', agentNo: 'A00999' }));
+          if (String(b.agentNo).toUpperCase() === 'A00777' && b.code === 'um1') return reply(Object.assign({}, SESSION, { token: 'TU', name: 'Uma Lead', role: 'Unit Manager', agentNo: 'A00777' }));
+          return reply(String(b.agentNo).toUpperCase() === 'S001' && b.code === 'pat1' ? SESSION : { ok: false, error: 'That agent number and password do not match.' });
         case 'apps': return reply({ ok: true, apps: APPS, mode: 'test' });
         case 'lookup': return reply({ ok: true, via: 'policy', policy: 'TT FCP 0700001', clients: [CLIENT] });
         case 'policies': return reply(POLICIES);
@@ -86,22 +89,41 @@ const seen = [];
     return route.abort();
   });
 
-  /* ── the launcher ── */
+  /* ── the branch app: one sign-in, tiles by role ── */
+  const signIn = async (no, pw) => { await page.fill('#no', no); await page.fill('#pw', pw); await page.click('#lockBtn'); };
+  const tileNames = () => page.$$eval('.app b', els => els.map(e => e.textContent));
   await page.goto(base + '/rroperations/?api=' + encodeURIComponent(API));
-  await page.fill('#code', 'nope'); await page.click('#lockBtn');
+  await signIn('S001', 'nope');
   await page.waitForFunction(() => document.getElementById('lockErr').textContent.length > 0);
-  ok('a wrong code is told so', /not on the Delivery Book access list/.test(await page.textContent('#lockErr')));
-  await page.fill('#code', 'pat1'); await page.click('#lockBtn');
+  ok('a wrong password is told so', /do not match/.test(await page.textContent('#lockErr')));
+
+  await signIn('A00999', 'ag1');
   await page.waitForSelector('#home:not([hidden])');
-  const tiles = await page.$$eval('.app', els => els.map(e => ({ t: e.querySelector('b').textContent, live: e.tagName === 'A' })));
-  ok('three apps on the launcher', tiles.length === 3, JSON.stringify(tiles));
-  ok('the Delivery Book opens; the two trackers are coming soon',
-     tiles[0].live && !tiles[1].live && !tiles[2].live && (await page.$$('.badge')).length === 2);
+  let names = await tileNames();
+  ok('an agent sees the Log Book, the clients board and the fact find', ['Log Book', 'My clients board', 'Fact Find'].every(n => names.includes(n)), names.join(', '));
+  ok('an agent sees no Delivery Book and no branch screens', !names.includes('Delivery Book') && !names.includes('Clients dashboard'));
+  ok('an agent is told they see their own work', /your own/.test(await page.textContent('#scope')));
+  await page.click('#signOut');
+  ok('signing out clears the phone', await page.evaluate(() => !localStorage.getItem('rrb-ops-session')));
+
+  await signIn('A00777', 'um1');
+  await page.waitForSelector('#home:not([hidden])');
+  ok('a unit manager is told he sees his team', /team/.test(await page.textContent('#scope')));
+  ok('a unit manager has no Delivery Book', !(await tileNames()).includes('Delivery Book'));
+  await page.click('#signOut');
+
+  await signIn('S001', 'pat1');
+  await page.waitForSelector('#home:not([hidden])');
+  names = await tileNames();
+  ok('staff see the Delivery Book, group clients and the Premium Due Desk', ['Delivery Book', 'Group clients', 'Premium Due Desk'].every(n => names.includes(n)), names.join(', '));
+  ok('the two trackers are coming soon', (await page.$$('.app.soon')).length === 2);
+  ok('test mode is shown', /Test mode/.test(await page.textContent('#who')));
   ok('greets him by name', /Pat/.test(await page.textContent('#hello')));
+  ok('nothing runs off a phone', await page.evaluate(() => document.documentElement.scrollWidth <= 390));
   if (SHOTS) await page.screenshot({ path: SHOTS + '/1-launcher.png', fullPage: true });
 
   /* ── the Delivery Book ── */
-  await page.click('a.app');
+  await page.click('a.app[href="/rroperations/delivery-book/"]');
   await page.waitForURL(/delivery-book/);
   await page.waitForSelector('#lock[hidden]', { state: 'attached' });
   ok('signed in already, no second code', await page.$eval('#lock', e => e.hidden));

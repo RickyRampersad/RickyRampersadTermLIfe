@@ -3792,6 +3792,19 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   `rrb-ops-session`. The Gas Receipt Tracker and Petty Cash Tracker are in
   `OPS_APPS` as `soon`; they are built into the same project and flipped to
   `live`, and every app's actions are gated by `opsCanUse_` on the server.
+- **The branch app is the door** (18 October 2026: "an app where a person log in ricky rampersad branch and they see log
+  book etc", then "they wil only see theirs and their manager sees his team"). `/rroperations/` (short address `/app`)
+  signs everyone in with their agent number and fact find password (`lb.login`, the same session the Log Book keeps), and
+  shows tiles by role: agents and unit managers the Log Book, the clients board, the fact find and the training; staff
+  and the branch manager the Log Book, the Delivery Book, the clients board, group clients, the Premium Due Desk and the
+  training; the branch manager also the dashboard, the stream and the groups wall. The scoping lives in each tool, not
+  the tiles: an agent sees their own clients and papers, a unit manager his team's. Tools with their own sign-in
+  (the clients board, group clients, the Premium Due Desk) are marked "Own sign-in". A staff sign-in by agent number now
+  carries the Delivery Book too (`lbLoginApps_`). The access-code sign-in is gone from the page; `login` still answers.
+  `manifest.webmanifest` makes Add to Home Screen open it full screen. `tests/e2e-deliverybook.js` covers the roles.
+- **Test copies go to sales support and support@ too** (18 October 2026). In test mode every Log Book e-mail and the
+  Delivery Book confirmation go to `DB_TEST_INBOX`, copied to rickyrampersadsalessupport@myguardiangroup.com and
+  support@rickyrampersadbranch.com (`dbTestCc_`; the `DB_TEST_CC` property replaces the two).
 - **The client is picked, never typed.** By policy (spacing-blind: the org
   stores `TT FCP 0100001` and `TTFHO0100002` side by side) or by name; then
   every policy they hold, grouped by record type, to tick ("allow the user …

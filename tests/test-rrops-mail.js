@@ -33,6 +33,13 @@ e = world(MS, 202);   // test mode
 r = e.lbMail_({ to: ['agent@example.com'], subject: 'Training result', html: '<p>x</p>' });
 ok('test mode: from support@ too, to the test inbox only', e.__graph.length === 1 &&
    e.__graph[0].body.message.toRecipients[0].emailAddress.address === 'test@example.com' && /^\[TEST\]/.test(e.__graph[0].body.message.subject), r);
+const tcc = (e.__graph[0].body.message.ccRecipients || []).map(x => x.emailAddress.address);
+ok('test mode: copied to sales support and support@, never the real agent', tcc.length === 2 &&
+   tcc.includes('rickyrampersadsalessupport@myguardiangroup.com') && tcc.includes('support@rickyrampersadbranch.com') &&
+   !JSON.stringify(e.__graph[0].body.message.toRecipients).includes('agent@example.com'), tcc.join(', '));
+e = world(Object.assign({ DB_TEST_CC: 'other@example.com' }, MS), 202);
+e.lbMail_({ to: ['agent@example.com'], subject: 'x', html: '<p>x</p>' });
+ok('DB_TEST_CC replaces the two', e.__graph[0].body.message.ccRecipients.map(x => x.emailAddress.address).join() === 'other@example.com');
 
 e = world({ DB_MODE: 'live' }, 202);
 r = e.lbMail_({ to: ['agent@example.com'], subject: 'x', html: 'x' });

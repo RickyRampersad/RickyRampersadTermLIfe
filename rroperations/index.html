@@ -3,81 +3,113 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>RR Operations | Ricky Rampersad Branch</title>
+<title>Branch App | Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex"/>
+<meta name="description" content="The Ricky Rampersad Branch app: one sign-in for the Log Book, the Delivery Book, your clients and your training."/>
+<meta name="theme-color" content="#070F26"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="RR Branch"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="manifest" href="/rroperations/manifest.webmanifest"/>
 <link rel="icon" type="image/png" href="/orphan-transition/board-mark.png"/>
+<link rel="apple-touch-icon" href="/orphan-transition/board-mark.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#070F26;--bg2:#0d2137;--card:#163553;--card2:#1b3d61;--gold:#6FA8FF;--gold2:#1D5BC4;
+  :root{--bg:#070F26;--card:#163553;--card2:#1b3d61;--gold:#6FA8FF;--cyan:#00CFEA;
     --text:#edf4fb;--muted:#a9bbcf;--line:rgba(255,255,255,.09);--bad:#f87171}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
-    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.08),transparent)}
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.10),transparent);
+    padding-bottom:env(safe-area-inset-bottom)}
   button,input{font:inherit;color:inherit}
   .mark{border-radius:12px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
   .mark img{width:100%;height:100%;display:block}
   #lock{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
   .lock-card{width:min(380px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:22px;padding:32px 24px}
-  .lock-card .mark{width:64px;height:64px;border-radius:16px;margin:0 auto 16px}
-  .lock-card h1{font-family:'Montserrat';font-weight:800;font-size:21px;color:var(--gold);margin-bottom:6px}
+  .lock-card .mark{width:72px;height:72px;border-radius:18px;margin:0 auto 16px}
+  .lock-card h1{font-family:'Montserrat';font-weight:800;font-size:22px;color:#fff;margin-bottom:4px}
+  .lock-card .tag{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px}
   .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
+  .lock-card label{display:block;text-align:left;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px 2px}
   .lock-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.28);
-    text-align:center;letter-spacing:3px;font-family:'Montserrat';font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:12px;outline:none}
+    font-size:16px;margin-bottom:12px;outline:none}
   .lock-card input:focus{border-color:rgba(111,168,255,.55)}
   .btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 18px;border-radius:12px;border:0;cursor:pointer;
     font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px}
   .btn.gold{width:100%;background:linear-gradient(135deg,#2A6DE0,#13408F);color:#fff}
   .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);padding:8px 12px;min-height:36px;font-size:12px}
+  .btn:disabled{opacity:.6;cursor:wait}
   .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px;min-height:16px}
-  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+  .hint{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5}
+  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
   .top{display:flex;align-items:center;gap:12px}
   .top .mark{width:44px;height:44px}
-  .top h1{font-family:'Montserrat';font-size:18px;font-weight:800;color:var(--gold)}
+  .top h1{font-family:'Montserrat';font-size:18px;font-weight:800;color:#fff}
   .top small{display:block;color:var(--muted);font-size:13px}
   .top .sp{flex:1}
-  .hello{font-family:'Montserrat';font-size:22px;font-weight:800;margin:28px 0 4px}
-  .sub{color:var(--muted);font-size:14px;margin-bottom:18px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .hello{font-family:'Montserrat';font-size:24px;font-weight:800;margin:28px 0 4px}
+  .who{color:var(--muted);font-size:14px;margin-bottom:6px}
+  .who b{color:var(--gold)}
+  .scope{display:inline-block;font-size:12px;font-weight:700;color:var(--cyan);background:rgba(0,207,234,.1);
+    border:1px solid rgba(0,207,234,.25);border-radius:99px;padding:4px 10px;margin-bottom:6px}
+  h2{font-family:'Montserrat';font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
   .app{display:block;text-decoration:none;color:inherit;background:linear-gradient(160deg,var(--card),var(--card2));
-    border:1px solid var(--line);border-radius:18px;padding:18px;min-height:150px;position:relative;transition:transform .15s,border-color .15s}
+    border:1px solid var(--line);border-radius:18px;padding:16px;min-height:136px;position:relative;transition:transform .15s,border-color .15s}
   a.app:hover,a.app:focus-visible{transform:translateY(-2px);border-color:rgba(111,168,255,.55);outline:none}
-  .app .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:rgba(111,168,255,.12);margin-bottom:14px}
-  .app .ic svg{width:24px;height:24px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .app b{display:block;font-family:'Montserrat';font-size:16px;font-weight:800}
-  .app span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+  .app .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:rgba(111,168,255,.12);margin-bottom:12px}
+  .app .ic svg{width:23px;height:23px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .app b{display:block;font-family:'Montserrat';font-size:15px;font-weight:800}
+  .app span{display:block;color:var(--muted);font-size:13px;margin-top:4px;line-height:1.4}
   .app.soon{opacity:.55}
-  .app.soon .ic{background:rgba(255,255,255,.06)}
-  .app.soon .ic svg{stroke:var(--muted)}
-  .badge{position:absolute;top:14px;right:14px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;
-    background:rgba(255,255,255,.08);color:var(--muted);letter-spacing:.3px}
-  .empty{color:var(--muted);text-align:center;padding:30px 0}
+  .badge{position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;
+    background:rgba(255,255,255,.08);color:var(--muted)}
+  .badge.own{background:rgba(111,168,255,.14);color:var(--gold)}
+  .install{margin-top:28px;font-size:13px;color:var(--muted);background:rgba(255,255,255,.04);border:1px dashed var(--line);
+    border-radius:14px;padding:12px 14px;line-height:1.5}
+  .install b{color:var(--text)}
+  .test{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:#fbbf24;background:rgba(251,191,36,.12);
+    border-radius:99px;padding:3px 8px;vertical-align:middle}
   [hidden]{display:none!important}
+  @media (max-width:420px){.hello{font-size:21px}.grid{grid-template-columns:1fr 1fr;gap:10px}.app{min-height:128px;padding:14px}
+    .app b{font-size:14px}.app span{font-size:12px}.badge{position:static;display:inline-block;margin-top:8px}}
 </style>
 </head>
 <body>
 
 <div id="lock">
-  <form class="lock-card" id="lockForm" autocomplete="off">
+  <form class="lock-card" id="lockForm" autocomplete="on">
     <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
-    <h1>RR Operations</h1>
-    <p>The branch team's apps. Sign in with your access code.</p>
-    <input id="code" type="password" placeholder="ACCESS CODE" aria-label="Access code" required>
+    <h1>Ricky Rampersad Branch</h1>
+    <div class="tag">The branch app</div>
+    <p>One sign-in for your Log Book, your clients and your training.</p>
+    <label for="no">Agent number</label>
+    <input id="no" name="username" autocomplete="username" placeholder="e.g. A00427" required>
+    <label for="pw">Password</label>
+    <input id="pw" name="password" type="password" autocomplete="current-password" placeholder="Your fact find password" required>
     <button class="btn gold" type="submit" id="lockBtn">Sign in</button>
     <div class="err" id="lockErr" role="alert"></div>
+    <div class="hint">Use the same agent number and password as the fact find. Staff use theirs too.</div>
   </form>
 </div>
 
 <main class="wrap" id="home" hidden>
   <div class="top">
     <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
-    <div><h1>RR Operations</h1><small>Ricky Rampersad Branch</small></div>
+    <div><h1>Branch App</h1><small>Ricky Rampersad Branch</small></div>
     <div class="sp"></div>
     <button class="btn ghost" id="signOut">Sign out</button>
   </div>
   <div class="hello" id="hello"></div>
-  <div class="sub">Your apps</div>
-  <div class="grid" id="apps"></div>
+  <div class="who" id="who"></div>
+  <div class="scope" id="scope"></div>
+  <div id="sections"></div>
+  <div class="install" id="install">
+    <b>Put it on your phone:</b> open this page in Chrome or Safari, tap the menu or the Share button, then
+    <b>Add to Home Screen</b>. It opens like an app, already signed in.
+  </div>
 </main>
 
 <script src="/rroperations/ops-config.js"></script>
@@ -85,13 +117,63 @@
 (function () {
   'use strict';
   var C = window.RR_OPS, $ = function (id) { return document.getElementById(id); };
-  var ICONS = {
-    'delivery-book': '<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>',
-    'logbook': '<svg viewBox="0 0 24 24"><path d="M5 3h11a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V3z"/><path d="M5 18a3 3 0 0 1 3-3h11"/><path d="M9 7h6M9 10.5h4"/></svg>',
-    'gas-receipts': '<svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16"/><path d="M3 21h13"/><path d="M15 9h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3"/><path d="M7 7h5v4H7z"/></svg>',
-    'petty-cash': '<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 10v.01M18 15v.01"/></svg>'
+  var IC = {
+    book: '<path d="M5 3h11a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V3z"/><path d="M5 18a3 3 0 0 1 3-3h11"/><path d="M9 7h6M9 10.5h4"/>',
+    box: '<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
+    people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14a6 6 0 0 1 3.5 6"/>',
+    form: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    cap: '<path d="M2 9l10-5 10 5-10 5-10-5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',
+    play: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/>',
+    flow: '<circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h6a4 4 0 0 1 0 8h-2a4 4 0 0 0 0 8"/>',
+    building: '<path d="M4 21V5l8-3v19"/><path d="M12 21V9l8 3v9"/><path d="M7 8h2M7 12h2M7 16h2M15 14h2M15 17h2"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    tv: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+    fuel: '<path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16"/><path d="M3 21h13"/><path d="M15 9h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3"/>',
+    cash: '<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/>'
   };
-  var DEF = '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>';
+
+  /* Every tile, and who sees it. a = agent, l = unit manager, s = staff,
+     m = branch manager. "own" marks a tool that still asks for its own
+     sign-in; everything inside each tool is already scoped to the person:
+     an agent sees their own clients and papers, a unit manager his team's. */
+  var TILES = [
+    { sec: 'Your work', id: 'logbook', name: 'Log Book', ic: 'book', to: 'alsm', href: '/rroperations/logbook/',
+      blurb: { a: 'Log your documents and see where each one is', l: 'Your documents, and your team\'s', s: 'Receive, route and send on the bag', m: 'Every line in the branch' } },
+    { sec: 'Your work', id: 'delivery-book', name: 'Delivery Book', ic: 'box', to: 'sm', href: '/rroperations/delivery-book/',
+      blurb: 'Log a handover; the client is told and rates it' },
+    { sec: 'Your work', id: 'board', name: 'My clients board', ic: 'people', to: 'alsm', href: '/orphanmanagement', own: true,
+      blurb: { a: 'The clients named to you, and the calls to log', l: 'Your team\'s clients and their progress', s: 'Your calls and the clients to name', m: 'Urgent, agents, households and the dashboard' } },
+    { sec: 'Your work', id: 'factfind', name: 'Fact Find', ic: 'form', to: 'alm', href: 'https://factfind360.com/ffproject', ext: true,
+      blurb: 'Complete a client fact find' },
+    { sec: 'Your work', id: 'groups', name: 'Group clients', ic: 'building', to: 'sm', href: '/groupclientmanagement/', own: true,
+      blurb: 'Your employer groups and the Monday letters' },
+    { sec: 'Your work', id: 'premium', name: 'Premium Due Desk', ic: 'clock', to: 'sm', href: '/premium-due/', own: true,
+      blurb: 'Check the 45 to 90 day letters before ten' },
+    { sec: 'Your work', id: 'gas', name: 'Gas Receipts', ic: 'fuel', to: 'sm', soon: true, blurb: 'Snap and log fuel receipts' },
+    { sec: 'Your work', id: 'petty', name: 'Petty Cash', ic: 'cash', to: 'sm', soon: true, blurb: 'The float, spends and top-ups' },
+
+    { sec: 'Learn', id: 'lbtrain', name: 'Log Book training', ic: 'cap', to: 'alsm', href: '/rroperations/logbook/training.html',
+      blurb: 'The manual and your scored test' },
+    { sec: 'Learn', id: 'lbfilm', name: 'Log Book film', ic: 'play', to: 'alsm', href: { a: '/logbookdemoagent/', l: '/logbookdemoagent/', s: '/logbookdemostaff/', m: '/rroperations/logbook/films.html' },
+      blurb: 'How it works, in two minutes' },
+    { sec: 'Learn', id: 'orphtrain', name: 'Clients board test', ic: 'cap', to: 'alsm', href: '/orphan-transition/training.html', own: true,
+      blurb: 'The workflow and your role\'s test' },
+    { sec: 'Learn', id: 'workflow', name: 'The workflow', ic: 'flow', to: 'alsm', href: { a: '/orphan-transition/workflow.html#agents', l: '/orphan-transition/workflow.html#managers', s: '/orphan-transition/workflow.html#staff', m: '/orphan-transition/workflow.html#managers' },
+      blurb: 'What you do on every client, step by step' },
+    { sec: 'Learn', id: 'boardfilm', name: 'Board films', ic: 'play', to: 'alsm', href: '/orphan-transition/board-films.html',
+      blurb: 'The clients board, for agents, staff and managers' },
+    { sec: 'Learn', id: 'gcmtrain', name: 'Group clients training', ic: 'cap', to: 'sm', href: '/groupclientmanagement/training.html', own: true,
+      blurb: 'The manual and test before you send a letter' },
+
+    { sec: 'The branch', id: 'dash', name: 'Clients dashboard', ic: 'chart', to: 'm', href: '/orphan-transition/dashboard.html', own: true,
+      blurb: 'How the transition is going, by the numbers' },
+    { sec: 'The branch', id: 'stream', name: 'Stream to the TV', ic: 'tv', to: 'm', href: '/orphan-transition/stream.html', own: true,
+      blurb: 'The campaign on a screen, with no client details' },
+    { sec: 'The branch', id: 'gcmwall', name: 'Group clients wall', ic: 'tv', to: 'm', href: '/groupclientmanagement/wall.html', own: true,
+      blurb: 'The groups on the office screen' }
+  ];
+
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   var store = {
@@ -100,49 +182,76 @@
     del: function () { try { localStorage.removeItem(C.SESSION_KEY); } catch (e) {} }
   };
   function api(action, body) {
-    if (/RR_OPERATIONS_DEPLOYMENT_ID/.test(C.API_URL)) return Promise.reject(new Error('RR Operations is not connected yet.'));
     return fetch(C.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(Object.assign({ action: action }, body || {})) })
       .then(function (r) { return r.json(); })
       .then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || 'Something went wrong.'); return j; });
   }
+  /* The role a session carries, as one letter. */
+  function roleOf(s) {
+    var r = String(s.role || '').trim().toLowerCase();
+    if (r === 'branch manager') return 'm';
+    if (r === 'unit manager') return 'l';
+    if (r === 'agent') return 'a';
+    return 's';
+  }
+  var ROLE_NAME = { a: 'Agent', l: 'Unit Manager', s: 'Staff', m: 'Branch Manager' };
+  var SCOPE = { a: 'You see your own clients and documents', l: 'You see your own work and your team\'s',
+                s: 'You see the branch\'s work, with no figures on the clients board', m: 'You see the whole branch' };
+  function pick(v, r) { return v && typeof v === 'object' ? v[r] : v; }
+
   var next = (new URLSearchParams(location.search).get('next') || '').replace(/[^a-z-]/g, '');
 
   function show(s) {
+    var r = roleOf(s);
+    /* Sent here from an app to sign in: go straight back to it. */
+    if (next) {
+      var back = TILES.filter(function (t) { return t.id === next && t.to.indexOf(r) >= 0 && !t.soon; })[0];
+      if (back) { location.replace(pick(back.href, r)); return; }
+    }
     var first = String(s.name || '').split(' ')[0];
+    first = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
     var h = new Date().getHours();
     $('hello').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (first ? ', ' + first : '');
-    var apps = s.apps || [];
-    $('apps').innerHTML = apps.length ? apps.map(function (a) {
-      var live = a.status === 'live';
-      var inner = '<div class="ic">' + (ICONS[a.id] || DEF) + '</div><b>' + esc(a.name) + '</b><span>' + esc(a.blurb || '') + '</span>' +
-        (live ? '' : '<div class="badge">Coming soon</div>');
-      return live ? '<a class="app" href="' + esc(a.path) + '">' + inner + '</a>'
-                  : '<div class="app soon" aria-disabled="true">' + inner + '</div>';
-    }).join('') : '<div class="empty">No apps on your access yet. Ask the branch to add them.</div>';
+    $('who').innerHTML = '<b>' + esc(ROLE_NAME[r]) + '</b>' + (s.agentNo ? ' · ' + esc(s.agentNo) : '') +
+      (s.mode && s.mode !== 'live' ? '<span class="test">Test mode</span>' : '');
+    $('scope').textContent = SCOPE[r];
+    var secs = [];
+    TILES.forEach(function (t) {
+      if (t.to.indexOf(r) < 0) return;
+      if (secs.indexOf(t.sec) < 0) secs.push(t.sec);
+    });
+    $('sections').innerHTML = secs.map(function (sec) {
+      return '<h2>' + esc(sec) + '</h2><div class="grid">' + TILES.filter(function (t) {
+        return t.sec === sec && t.to.indexOf(r) >= 0;
+      }).map(function (t) {
+        var inner = '<div class="ic"><svg viewBox="0 0 24 24">' + IC[t.ic] + '</svg></div><b>' + esc(t.name) + '</b><span>' +
+          esc(pick(t.blurb, r)) + '</span>' + (t.soon ? '<div class="badge">Coming soon</div>' : t.own ? '<div class="badge own">Own sign-in</div>' : t.ext ? '<div class="badge own">Opens fact find</div>' : '');
+        return t.soon ? '<div class="app soon" aria-disabled="true">' + inner + '</div>'
+          : '<a class="app" href="' + esc(pick(t.href, r)) + '"' + (t.ext ? ' target="_blank" rel="noopener"' : '') + '>' + inner + '</a>';
+      }).join('') + '</div>';
+    }).join('');
+    try { if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) $('install').hidden = true; } catch (e) {}
     $('lock').hidden = true; $('home').hidden = false;
-    // Sent here from an app to sign in: go straight back to it.
-    var target = apps.filter(function (a) { return a.id === next && a.status === 'live'; })[0];
-    if (target) location.replace(target.path);
   }
 
   $('lockForm').addEventListener('submit', function (e) {
-    e.preventDefault(); $('lockErr').textContent = ''; $('lockBtn').disabled = true;
-    api('login', { code: $('code').value }).then(function (s) { store.set(s); show(s); })
-      .catch(function (err) { $('lockErr').textContent = err.message; })
-      .then(function () { $('lockBtn').disabled = false; });
+    e.preventDefault(); $('lockErr').textContent = ''; $('lockBtn').disabled = true; $('lockBtn').textContent = 'Signing in…';
+    api('lb.login', { agentNo: $('no').value.trim(), code: $('pw').value })
+      .then(function (s) { store.set(s); $('pw').value = ''; show(s); })
+      .catch(function (err) { $('lockErr').textContent = /fetch/i.test(err.message) ? 'Could not reach the branch. Check your connection.' : err.message; })
+      .then(function () { $('lockBtn').disabled = false; $('lockBtn').textContent = 'Sign in'; });
   });
   $('signOut').addEventListener('click', function () {
-    var s = store.get(); if (s) api('signOut', { token: s.token }).catch(function () {});
-    store.del(); $('home').hidden = true; $('lock').hidden = false; $('code').value = '';
+    var s = store.get(); if (s && s.token) api('signOut', { token: s.token }).catch(function () {});
+    store.del(); $('home').hidden = true; $('lock').hidden = false; $('no').value = ''; $('pw').value = '';
   });
 
-  /* A saved sign-in is shown at once, then checked: an app added or removed
-     on the Access tab shows the next time the launcher opens. */
+  /* A saved sign-in opens at once, then is checked. */
   var s = store.get();
   if (s && s.token) {
     show(s);
-    api('apps', { token: s.token }).then(function (r) { s.apps = r.apps; s.mode = r.mode; store.set(s); show(s); })
+    api('apps', { token: s.token }).then(function (r) { s.mode = r.mode; store.set(s); })
       .catch(function (err) { if (/signed-out/.test(err.message)) { store.del(); $('home').hidden = true; $('lock').hidden = false; } });
   }
 })();

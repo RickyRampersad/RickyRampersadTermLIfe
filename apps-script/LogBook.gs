@@ -767,12 +767,18 @@ function lbLogin_(b) {
   var need = LB_SESS_EXTRA.filter(function (c) { return !(c in hm.map); });
   if (need.length) { sh.getRange(1, hm.head.length + 1, 1, need.length).setValues([need]); hm = dbHeaderMap_(sh); }
   sh.appendRow(dbRowFor_(sh, { 'Token': token, 'Name': name, 'Role': role,
-    'Salesforce User Id': '', 'Issued': now, 'Expires': exp, 'Apps': 'logbook',
+    'Salesforce User Id': '', 'Issued': now, 'Expires': exp, 'Apps': lbLoginApps_(staff),
     'Agent No': a.agentNo, 'Email': a.email, 'Unit': a.unit }));
   dbPruneSessions_(sh);
   return { ok: true, token: token, name: name, role: role, mode: dbMode_(),
-           agentNo: a.agentNo, apps: opsAppsFor_('logbook') };
+           agentNo: a.agentNo, apps: opsAppsFor_(lbLoginApps_(staff)) };
 }
+
+/* What one sign-in by agent number opens in RR Operations (18 October 2026: "an
+   app where a person log in … and they see log book etc"). Agents and unit
+   managers get the Log Book; staff and the branch manager the Log Book and the
+   Delivery Book, so the branch app's one sign-in reaches both. */
+function lbLoginApps_(staff) { return staff ? 'logbook,delivery-book' : 'logbook'; }
 
 
 /* ============================== the web seam ============================== */
@@ -2027,7 +2033,7 @@ function lbMail_(m) {
     html = '<div style="background:#eef4ff;border:1px solid #6FA8FF;padding:10px 14px;font-family:Arial;font-size:13px">' +
       'TEST — in live mode this would go to <b>' + dbEsc_(to.join(', ')) + '</b>' + (cc.length ? ', copied to ' + dbEsc_(cc.join(', ')) : '') + '.</div>' + html;
     to = [dbProp_('DB_TEST_INBOX') || Session.getEffectiveUser().getEmail()];
-    cc = [];
+    cc = dbTestCc_(to);
     subject = '[TEST] ' + subject;
   }
   if (lbGraphSend_(to, cc, subject, html, lbSalesSupport_())) return (dbMode_() === 'live' ? 'Sent' : 'Test copy sent') + ' from ' + lbSupportFrom_();

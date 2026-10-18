@@ -849,20 +849,31 @@ function dbConfirmationHtml_(d, client, who) {
     '</div></div>';
 }
 
+/* Who a test copy is copied to (18 October 2026: "in the test copy the
+   rickyrampersadsalessupport and support@rickyrampersadbranch.com"). The
+   DB_TEST_CC property, comma-separated, replaces the two; never the test inbox
+   itself twice. */
+function dbTestCc_(to) {
+  var list = String(dbProp_('DB_TEST_CC') || (DB.SALES_SUPPORT + ',support@rickyrampersadbranch.com')).split(/[,;\s]+/);
+  var seen = {}; [].concat(to || []).forEach(function (t) { seen[String(t).toLowerCase()] = 1; });
+  return list.filter(function (x) { var k = x.toLowerCase(); if (!/@/.test(x) || seen[k]) return false; seen[k] = 1; return true; });
+}
+
 function dbSendConfirmation_(d, client, email, who, test) {
   if (!email) return { status: 'No e-mail on file' };
-  var to = email, html = dbConfirmationHtml_(d, client, who);
+  var to = email, cc = [], html = dbConfirmationHtml_(d, client, who);
   var subject = 'Delivery confirmation — ' + d.items.map(function (it) { return it.document; })
     .filter(function (v, i, a) { return a.indexOf(v) === i; }).join(', ') + ' (' + d.ref + ')';
   if (test) {
     to = dbProp_('DB_TEST_INBOX') || Session.getEffectiveUser().getEmail();
+    cc = dbTestCc_([to]);
     subject = '[TEST] ' + subject;
     html = '<div style="background:#eef4ff;border:1px solid #6FA8FF;padding:10px 14px;font-family:Arial;font-size:13px">' +
       'TEST — in live mode this would have gone to <b>' + dbEsc_(email) + '</b>.</div>' + html;
   }
   /* From support@rickyrampersadbranch.com through Microsoft 365 when LogBook.gs and the MS_* properties are in
      the project (18 October 2026), else from this account as before. */
-  if (typeof lbGraphSend_ === 'function' && lbGraphSend_([to], [], subject, html, dbProp_('DB_REPLY_TO', DB.SALES_SUPPORT))) {
+  if (typeof lbGraphSend_ === 'function' && lbGraphSend_([to], cc, subject, html, dbProp_('DB_REPLY_TO', DB.SALES_SUPPORT))) {
     return { status: (test ? 'Test copy sent' : 'Sent') + ' from support@', sentAt: new Date() };
   }
   try {
@@ -870,6 +881,7 @@ function dbSendConfirmation_(d, client, email, who, test) {
       return { status: 'Held: daily mail limit reached' };
     }
     var mo = { to: to, subject: subject, htmlBody: html, name: DB.BRAND, replyTo: dbProp_('DB_REPLY_TO', DB.SALES_SUPPORT) };
+    if (cc.length) mo.cc = cc.join(',');
     if (typeof lbAppMail_ === 'function') lbAppMail_(mo); else MailApp.sendEmail(mo);
     return { status: test ? 'Test copy sent' : 'Sent', sentAt: new Date() };
   } catch (e) {
