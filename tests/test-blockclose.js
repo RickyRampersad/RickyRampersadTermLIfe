@@ -41,7 +41,19 @@ Object.keys(env.SCHEDULE).forEach(sid => Object.keys(env.SCHEDULE[sid].blocks).f
   if (!env.blockSpan_(sid, b)) unparsed.push(sid + '.' + b);
 }));
 ok('every scheduled block of every desk has a window', !unparsed.length, unparsed.join(', '));
-ok('a desk not on the schedule gets the default four', env.blockSpan_('nobody', 'KPI1').end === 600 && !env.blockSpan_('nobody', 'EVE'));
+ok('a desk not on the schedule gets one plan for the day', env.blockSpan_('nobody', 'KPI1').start === 480 && env.blockSpan_('nobody', 'KPI1').end === 960 && !env.blockSpan_('nobody', 'KPI2'));
+/* The branch has no time blocks now (17 October 2026), but the closer still
+   handles a split day, and the rest of this file proves it on one: the old
+   four-block default, pinned for the fixture. */
+env.DEFAULT_SCHEDULE = { hours: '8am – 4pm', lunch: 'Flexible', blocks: {
+  KPI1: { time: '8 – 10am', focus: 'KPI Block 1', kpi: '' }, KPI2: { time: '10 – 12pm', focus: 'KPI Block 2', kpi: '' },
+  PM1: { time: '1 – 3pm', focus: 'Afternoon 1', kpi: '' }, PM2: { time: '3 – 4pm', focus: 'Afternoon 2', kpi: '' } } };
+env.SCHEDULE.ricky = { hours: '6am – 6pm', lunch: '12:00 – 1:00pm', blocks: {
+  KPI1: { time: '6 – 9am', focus: 'Recruitment, licensing and staffing', kpi: 'Lic/Staffing/SA/HR' },
+  KPI2: { time: '9 – 12pm', focus: 'Production, pipeline and own book', kpi: 'Opportunity' },
+  PM1: { time: '1 – 3pm', focus: 'Agent development and field training', kpi: 'Training' },
+  PM2: { time: '3 – 4:30pm', focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' },
+  EVE: { time: '4:30 – 6pm', focus: 'Close-out: what is still being moved', kpi: 'Opportunity' } } };
 ok('local eight is 12:00Z — Port of Spain is four behind, all year', env.sfkUtcAt_(TODAY, 480) === '2026-09-17T12:00:00Z');
 ok('local midnight is 04:00Z the next day', env.sfkUtcAt_(TODAY, 1440) === '2026-09-18T04:00:00Z');
 

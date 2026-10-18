@@ -121,7 +121,7 @@ const ok = (what, cond, extra) => {
   await page.waitForTimeout(2400);
 
   console.log('\nSigning in before ten lands on the plan:\n');
-  ok('the plan is what opens', await page.locator('text=Set the day before it starts').count() > 0);
+  ok('the plan is what opens', await page.locator('text=Plan the day when your e-mail comes in').count() > 0);
   ok('all four blocks are laid out', await page.locator('text=/8 . 10am/').count() > 0);
 
   console.log('\nThe size of the work is on screen while the day is set:\n');
@@ -178,7 +178,7 @@ const ok = (what, cond, extra) => {
     return { tile: px(tile.firstElementChild), chip: px(chip) };
   });
   ok('what the block is for is bigger than what it is not', sizes.tile > sizes.chip, JSON.stringify(sizes));
-  ok('and the block says what it is for, in words', /This block is for/i.test(plan) && /Add another/i.test(plan));
+  ok('and the block says what it is for, in words', /Today is for/i.test(plan) && /Add another/i.test(plan));
 
   console.log('\nA thin block says so before two hours go into it:\n');
   const lic = await page.locator('button:has-text("Licensing / Staffing")').first();
@@ -227,7 +227,7 @@ const ok = (what, cond, extra) => {
   await page.waitForTimeout(400);
   const alone = await page.locator('body').innerText();
   ok('and the screen says so rather than leaving them to work it out',
-     /not a two-hour block on its own/.test(alone),
+     /About half an hour at your rate\./.test(alone),
      (alone.match(/About [^\n]{0,70}/g) || ['not found']).join(' | '));
   await renewChip.click();
   await page.waitForTimeout(400);
@@ -243,7 +243,7 @@ const ok = (what, cond, extra) => {
   console.log('\nAnd the day starts from here:\n');
   await page.click('button:has-text("Start the day")');
   await page.waitForTimeout(900);
-  ok('it opens the blocks', await page.locator('text=Each block closes itself at its end time').count() > 0);
+  ok('it opens the blocks', await page.locator('text=Your day closes itself at your finish time').count() > 0);
 
   console.log('\nThe Salesforce column says where the work sits, not just how much:\n');
   let col = await page.locator('body').innerText();
@@ -265,7 +265,7 @@ const ok = (what, cond, extra) => {
   ok('the row keeps its Close as well', await page.locator('button:has-text("Close \u2713")').count() >= 4);
 
   // Blocks are an accordion on the day screen, so open one before looking.
-  await page.locator('text=KPI 1').first().click();
+  await page.locator('[data-day="KPI1"]').first().click();
   await page.waitForTimeout(500);
   const carried = await page.locator('button:has-text("Licensing / Staffing")').first().textContent();
   ok('the morning plan is carried into the block', /\u2713/.test(carried), carried);
@@ -287,7 +287,7 @@ const ok = (what, cond, extra) => {
   console.log('\nAnd the plan is reachable again at two o’clock:\n');
   await page.click('button:has-text("Plan the day")');
   await page.waitForTimeout(600);
-  ok('the way back works', await page.locator('text=Set the day before it starts').count() > 0);
+  ok('the way back works', await page.locator('text=Plan the day when your e-mail comes in').count() > 0);
 
   if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT });
   await b.close(); server.close();

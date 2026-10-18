@@ -3217,3 +3217,12 @@ servicing work".
   tint, `#FFF6F4` paper, `#6B7C96` muted — with The Knot as the mark. Guardian
   is named only where it is a matter of fact: the insurer, the form, the
   customer-service desk.
+- **The tracker has no time blocks** (Ricky, 17 October 2026). Every desk's
+  day in `KPI.gs` `SCHEDULE` is one plan, block `KPI1` labelled "Your day",
+  spanning the desk's own hours: plan by e-mail and the morning check, progress
+  before lunch (the Unit Manager at 11, agents at 12), close-out half an hour
+  before finishing, the week on Friday. No morning check reads as absent and
+  the work is shared out. Hours: Branch Manager 5am–3pm, BMA 8am–5pm, Sales
+  Support 7–2, 7–3 and 8–4, Unit Manager and agents 6am–6pm. The other block
+  columns stay on the log so history reads; do not schedule into them again
+  unless the branch splits the day.

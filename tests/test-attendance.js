@@ -104,7 +104,7 @@ NOW = new Date('2026-09-07T16:32:00');
 env.resetRequestMemo_(); expire();
 const so = env.signOutDay_({}, SASHA);
 ok('recorded, with the time', so.ok && so.out === '16:32' && so.date === TODAY, JSON.stringify(so));
-ok('and it says how much of the day went in', so.blocksDone === 0 && so.blocksLeft === 4, JSON.stringify(so));
+ok('and it says how much of the day went in', so.blocksDone === 0 && so.blocksLeft === 1, JSON.stringify(so));
 env.resetRequestMemo_(); expire();
 const backIn = env.recordAttendance_(SASHA);
 ok('the morning sign-in is untouched', backIn.at === '08:07' && backIn.first === false, JSON.stringify(backIn));
