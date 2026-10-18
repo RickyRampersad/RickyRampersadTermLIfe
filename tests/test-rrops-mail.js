@@ -6,11 +6,12 @@ process.env.GS_PATH = ['DeliveryBook.gs', 'LogBook.gs'].map(f => path.join(__dir
 const { makeEnv } = require('./harness');
 let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x ? '  ' + x : '')); if (!c) fails++; };
-function world(props, graphCode) {
+function world(props, graphCode, owner, aliases) {
   const env = makeEnv({ props });
-  env.__graph = []; env.__mail = [];
+  env.__graph = []; env.__mail = []; env.__gmail = [];
+  env.GmailApp = { getAliases: () => aliases || [], sendEmail: (to, subj, body, opt) => env.__gmail.push(Object.assign({ to, subject: subj }, opt)) };
   env.MailApp = { sendEmail: o => env.__mail.push(o), getRemainingDailyQuota: () => 90 };
-  env.Session = { getEffectiveUser: () => ({ getEmail: () => 'owner@example.com' }) };
+  env.Session = { getEffectiveUser: () => ({ getEmail: () => owner || 'owner@example.com' }) };
   env.UrlFetchApp = { fetch: (u, o) => {
     if (/oauth2\/v2\.0\/token/.test(u)) return { getResponseCode: () => 200, getContentText: () => '{"access_token":"tok"}' };
     if (/graph\.microsoft\.com/.test(u)) { env.__graph.push({ u, body: JSON.parse(o.payload) }); return { getResponseCode: () => graphCode, getContentText: () => '' }; }
@@ -51,6 +52,18 @@ r = e.dbSendConfirmation_({ ref: 'DB-1', items: [{ document: 'Policy Contract', 
   { name: 'Anika Pretend', first: 'Anika' }, 'anika@example.com', { name: 'Sam Support' }, false);
 ok('the Delivery Book\'s client confirmation goes from support@', e.__graph.length === 1 && !e.__mail.length &&
    e.__graph[0].body.message.toRecipients[0].emailAddress.address === 'anika@example.com', JSON.stringify(r.status));
+
+e = world({ DB_MODE: 'live' }, 202, 'rampersadricky@gmail.com', ['support@rickyrampersadbranch.com']);
+r = e.lbMail_({ to: ['agent@example.com'], cc: ['boss@example.com'], subject: 'x', html: 'x' });
+ok('no Microsoft 365, support@ a Send-mail-as address in Gmail: it goes from support@', e.__gmail.length === 1 && !e.__mail.length &&
+   e.__gmail[0].from === 'support@rickyrampersadbranch.com' && e.__gmail[0].cc === 'boss@example.com', r);
+e = world({ DB_MODE: 'live' }, 202, 'support@rickyrampersadbranch.com', []);
+r = e.lbMail_({ to: ['agent@example.com'], subject: 'x', html: 'x' });
+ok('the script runs as support@ itself: it goes from support@', e.__mail.length === 1 && !e.__gmail.length && /from support@/.test(r), r);
+e = world({ DB_MODE: 'live' }, 202, 'rampersadricky@gmail.com', ['ricky@other.com']);
+r = e.dbSendConfirmation_({ ref: 'DB-1', items: [{ document: 'Policy Contract', policy: '9', type: 'LIFE' }], deliveredText: 'x', relationship: 'Self', collector: 'A' },
+  { name: 'A P', first: 'A' }, 'anika@example.com', { name: 'Sam' }, false);
+ok('no support@ anywhere: the client confirmation still goes, as before', e.__mail.length === 1 && !e.__gmail.length, JSON.stringify(r.status));
 
 console.log(fails ? '\n' + fails + ' failed' : '\nall passed');
 process.exit(fails ? 1 : 0);

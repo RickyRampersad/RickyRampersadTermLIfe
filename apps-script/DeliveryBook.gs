@@ -869,8 +869,8 @@ function dbSendConfirmation_(d, client, email, who, test) {
     if (MailApp.getRemainingDailyQuota && MailApp.getRemainingDailyQuota() < 1) {
       return { status: 'Held: daily mail limit reached' };
     }
-    MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: DB.BRAND,
-                        replyTo: dbProp_('DB_REPLY_TO', DB.SALES_SUPPORT) });
+    var mo = { to: to, subject: subject, htmlBody: html, name: DB.BRAND, replyTo: dbProp_('DB_REPLY_TO', DB.SALES_SUPPORT) };
+    if (typeof lbAppMail_ === 'function') lbAppMail_(mo); else MailApp.sendEmail(mo);
     return { status: test ? 'Test copy sent' : 'Sent', sentAt: new Date() };
   } catch (e) {
     return { status: 'Failed: ' + e.message };

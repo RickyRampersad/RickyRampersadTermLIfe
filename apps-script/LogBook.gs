@@ -1938,6 +1938,35 @@ function lbGraphToken_() {
   return j.access_token;
 }
 
+/* The second way out (18 October 2026: "i do have the gmail account support@rickyrampersadbranch.com"): when
+   Microsoft 365 is not set up, the e-mail goes from this script's Google account, and as support@ when that
+   account is support@ itself or has it as a "Send mail as" address in Gmail. Otherwise as before, with
+   support@ or sales support as the reply address. */
+var LB_ALIAS_ = null;
+function lbGmailFrom_() {
+  if (LB_ALIAS_ !== null) return LB_ALIAS_;
+  LB_ALIAS_ = '';
+  var want = lbSupportFrom_().toLowerCase();
+  try {
+    if (String(Session.getEffectiveUser().getEmail()).toLowerCase() === want) return LB_ALIAS_ = 'self';
+  } catch (e) {}
+  try {
+    if (GmailApp.getAliases().some(function (a) { return String(a).toLowerCase() === want; })) LB_ALIAS_ = lbSupportFrom_();
+  } catch (e) { Logger.log('gmail aliases: ' + e); }
+  return LB_ALIAS_;
+}
+function lbAppMail_(o) {
+  var alias = lbGmailFrom_();
+  if (alias && alias !== 'self') {
+    var opt = { htmlBody: o.htmlBody, name: o.name, replyTo: o.replyTo, from: alias };
+    if (o.cc) opt.cc = o.cc;
+    GmailApp.sendEmail(o.to, o.subject, '', opt);
+    return 'from ' + alias;
+  }
+  MailApp.sendEmail(o);
+  return alias === 'self' ? 'from ' + lbSupportFrom_() : '';
+}
+
 /* One way out for every RR Operations e-mail (18 October 2026: "would like this coming from
    rickyrampersadbranch.com … any other emails with communications"): Microsoft Graph, as
    support@rickyrampersadbranch.com, saved in its Sent Items, when MS_TENANT, MS_CLIENT and MS_SECRET are in
@@ -1971,8 +2000,8 @@ function lbSupportMail_(m) {
   try {
     var o = { to: to.join(','), subject: m.subject, htmlBody: m.html, name: DB.BRAND + ' Support', replyTo: lbSupportFrom_() };
     if (cc.length) o.cc = cc.join(',');
-    MailApp.sendEmail(o);
-    return 'Sent (reply to ' + lbSupportFrom_() + ')';
+    var via = lbAppMail_(o);
+    return via ? 'Sent ' + via : 'Sent (reply to ' + lbSupportFrom_() + ')';
   } catch (e2) { return 'Failed: ' + e2.message; }
 }
 
@@ -2004,10 +2033,10 @@ function lbMail_(m) {
   if (lbGraphSend_(to, cc, subject, html, lbSalesSupport_())) return (dbMode_() === 'live' ? 'Sent' : 'Test copy sent') + ' from ' + lbSupportFrom_();
   try {
     if (MailApp.getRemainingDailyQuota && MailApp.getRemainingDailyQuota() < 1 + cc.length) return 'Held: daily mail limit reached';
-    var o = { to: to.join(','), subject: subject, htmlBody: html, name: DB.BRAND + ' Log Book', replyTo: lbSalesSupport_() };
+    var o = { to: to.join(','), subject: subject, htmlBody: html, name: DB.BRAND, replyTo: lbSalesSupport_() };
     if (cc.length) o.cc = cc.join(',');
-    MailApp.sendEmail(o);
-    return dbMode_() === 'live' ? 'Sent' : 'Test copy sent';
+    var via = lbAppMail_(o);
+    return (dbMode_() === 'live' ? 'Sent' : 'Test copy sent') + (via ? ' ' + via : '');
   } catch (e) { return 'Failed: ' + e.message; }
 }
 

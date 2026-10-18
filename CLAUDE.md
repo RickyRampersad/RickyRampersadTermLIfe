@@ -3939,7 +3939,7 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   from rickyrampersadbranch.com … any other emails with communications"). `lbGraphSend_` in LogBook.gs sends through
   Microsoft Graph as support@ (Sent Items kept) when `MS_TENANT`, `MS_CLIENT` and `MS_SECRET` are in this project's
   Script properties; `lbMail_`, `lbSupportMail_` and the Delivery Book's `dbSendConfirmation_` all try it first and
-  fall back to MailApp when it is not set or Microsoft refuses. Test mode still sends only to the test inbox.
+  fall back to Gmail when it is not set or Microsoft refuses. The fallback (`lbAppMail_`, `lbGmailFrom_`) sends from support@ too when the script runs under the support@ Google account, or when the owning Gmail has support@ as a verified "Send mail as" address (`GmailApp.getAliases()`); otherwise it sends from the owner's Gmail with support@ as the reply address. Test mode still sends only to the test inbox.
   `tests/test-rrops-mail.js` covers it.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;

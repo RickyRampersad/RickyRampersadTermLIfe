@@ -222,6 +222,10 @@ reason. It replaces the Log Book Digital Jotform.
     (training results, the 11:00 and 12:00 e-mails, the reason requests, the department check,
     the 5 pm digest, the client's delivery confirmation) goes from support@ and sits in its Sent
     Items. Without them, or if Microsoft refuses one, it still goes, from this script's account.
+    **Or through Gmail, with no Microsoft 365 at all:** either own the RR Operations script from the
+    support@rickyrampersadbranch.com Google account, or, in the owning Gmail, add support@ under
+    Settings → Accounts and Import → Send mail as, and confirm the code Google sends to it. The script
+    finds that address by itself and sends from it. Publishing the new version asks once to allow Gmail.
 
 ### Settings
 
