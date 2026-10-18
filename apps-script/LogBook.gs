@@ -2410,20 +2410,35 @@ function lbSetup() {
  * branch manager copied. After an attempt the page shows each answer, right
  * or wrong, with the reason: this is a test to learn the book, so it teaches.
  */
-var LB_TRAIN = { TAB: 'Log Book Questions', RESULTS: 'Log Book Training', PASS: 80 };
+var LB_TRAIN = { TAB: 'Log Book Questions', RESULTS: 'Log Book Training', PASS: 80,
+  // The private "Log Book Questions (private)" sheet in the branch manager's Drive (18 October 2026). Only its
+  // owner and whoever it is shared with can open it, so the ID here shows nothing. LB_TRAIN_SHEET_ID overrides it.
+  SHEET: '1o3RdA0BMtGfZvP3mBIrHxrIXjXvXoYz1ZdoHRrmvsIA' };
 var LB_TRAIN_COLUMNS = ['When', 'Name', 'Agent No', 'Role', 'Unit', 'Course', 'Score', 'Out Of', 'Percent', 'Pass',
                         'Critical Missed', 'Wrong', 'Answers', 'Seconds'];
 
 function lbTrainRole_(who) { return who.isAgent ? 'agent' : 'staff'; }
 
 function lbTrainBank_() {
-  var id = dbProp_('LB_TRAIN_SHEET_ID');
-  var book;
-  try { book = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet(); } catch (e) { return null; }
-  var sh = book && book.getSheetByName(LB_TRAIN.TAB);
+  /* A tab named "Log Book Questions" in this sheet wins; else the private sheet (any tab with an Id column). */
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LB_TRAIN.TAB);
+  if (!sh || sh.getLastRow() < 2) {
+    sh = null;
+    try {
+      var book = SpreadsheetApp.openById(dbProp_('LB_TRAIN_SHEET_ID', LB_TRAIN.SHEET));
+      sh = book.getSheetByName(LB_TRAIN.TAB) || book.getSheets().filter(function (t) {
+        return t.getLastRow() > 1 && String(t.getRange(1, 1).getValue()).trim() === 'Id';
+      })[0] || null;
+    } catch (e) { Logger.log('training questions: ' + e); }
+  }
   if (!sh || sh.getLastRow() < 2) return null;
   var hm = dbHeaderMap_(sh);
-  var g = function (r, c) { return c in hm.map ? String(r[hm.map[c]] == null ? '' : r[hm.map[c]]).trim() : ''; };
+  var g = function (r, c) {
+    if (!(c in hm.map)) return '';
+    var v = r[hm.map[c]];
+    if (v && typeof v.getTime === 'function') return Utilities.formatDate(v, dbTz_(), 'h a').toLowerCase();  // "1 pm" read by Sheets as a time
+    return String(v == null ? '' : v).trim();
+  };
   return sh.getRange(2, 1, sh.getLastRow() - 1, hm.head.length).getValues().map(function (r) {
     return { id: g(r, 'Id'), roles: g(r, 'Roles').toLowerCase(), section: g(r, 'Section'), q: g(r, 'Question'),
              opts: ['A', 'B', 'C', 'D'].map(function (k) { return g(r, k); }), ans: g(r, 'Answer').toUpperCase(),

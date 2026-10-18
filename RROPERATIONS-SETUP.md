@@ -209,11 +209,12 @@ reason. It replaces the Log Book Digital Jotform.
    built-in rota. The **Bag Log** tab makes itself the first time someone
    presses Bag in.
 
-9. **The training** (`/logbook/training`). Import `Log-Book-Questions.xlsx` into the RR Operations sheet
-   (File → Import → Upload → *Insert new sheet(s)*); the tab must be named **Log Book Questions**. Paste the
-   new `LogBook.gs` and publish a New version. Each attempt lands on a **Log Book Training** tab, made the
-   first time. To change a question, edit the tab: the next test uses it. Keep the right answer off the
-   longest option.
+9. **The training** (`/logbook/training`). The questions are in the private Google Sheet
+   **Log Book Questions (private)** in the branch manager's Drive; `LogBook.gs` already knows it
+   (`LB_TRAIN.SHEET`), so there is nothing to import. Paste the new `LogBook.gs` and publish a New
+   version. The script must run as the account that owns that sheet. Each attempt lands on a
+   **Log Book Training** tab here, made the first time. To change a question, edit that sheet: the next
+   test uses it. Keep the right answer off the longest option.
 
 ### Settings
 

@@ -105,6 +105,7 @@ function makeEnv(opts = {}) {
       formatDate: (d, tz, f) => {
         const p = n => String(n).padStart(2, '0');
         if (f === 'HH:mm') return p(d.getHours()) + ':' + p(d.getMinutes());
+        if (f === 'h a') { const h = d.getHours(); return ((h % 12) || 12) + ' ' + (h < 12 ? 'AM' : 'PM'); }
         if (f === 'yyyy-MM-dd') return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
         // Every date a person reads is built in UTC by prettyDate_/shortDate_,
         // so an e-mail's own subject line stayed an ISO timestamp in tests and
