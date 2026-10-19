@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19b';
+var SCRIPT_VERSION = '2026-10-19c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4657,13 +4657,20 @@ function umReplyPage_(person, day, error) {
   var head = { pend: 'Pendings', 'new': 'New business', ret: 'Retention and orphan adoption', other: 'Everything else overdue' };
   var plan = mgrRows_(sid, day, 'plan'), noSf = noSfLogin_(sid), chat = {};
   try { chat = cmdChatter_(items.map(function (it) { return it.id; })); } catch (e) {}
+  // The task's Chatter, newest first: the latest two, and the whole history a tap away (he cannot open Salesforce).
   var notes = function (id) {
-    return (chat[id] || []).slice(0, 2).map(function (n) {
-      var t = String(n.text || ''), head = t.split('\n')[0];
-      var who = /^(Unit Manager|Branch Manager|BMA)\b/.test(head) ? head.split(' · ').slice(0, 2).join(' · ') : n.by;
-      var body = /^(Unit Manager|Branch Manager|BMA)\b/.test(head) ? t.split('\n').slice(1).join(' ').trim() : t;
-      return '<div class="br2" style="margin-top:3px">' + esc_(who) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(shorten_(body, 160)) + '</div>';
-    }).join('');
+    var all = chat[id] || [];
+    var one = function (n, full) {
+      var t = String(n.text || ''), head = t.split('\n')[0], ours = /^(Unit Manager|Branch Manager|BMA)\b/.test(head);
+      var who = ours ? head.split(' · ').slice(0, 2).join(' · ') : n.by;
+      var body = ours ? t.split('\n').slice(1).join(' ').trim() : t;
+      return '<div class="br2" style="margin-top:3px">' + (n.reply ? '&#8627; ' : '') + esc_(who) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(full ? body : shorten_(body, 160)) + '</div>';
+    };
+    if (!all.length) return '<div class="br2" style="margin-top:3px">No notes on Chatter yet.</div>';
+    return all.slice(0, 2).map(function (n) { return one(n, false); }).join('') +
+      (all.length > 2 || all.some(function (n) { return String(n.text || '').length > 160; })
+        ? '<details style="margin-top:4px"><summary class="br2" style="cursor:pointer">The whole history (' + all.length + ' note' + (all.length === 1 ? '' : 's') + ')</summary>' +
+          all.map(function (n) { return one(n, true); }).join('') + '</details>' : '');
   };
   var groups = ['pend', 'new', 'ret', 'other'].map(function (k) {
     var list = items.filter(function (it) { return it.k === k; });
@@ -4672,7 +4679,7 @@ function umReplyPage_(person, day, error) {
       return '<div id="i' + esc_(it.id) + '" style="padding:9px 0;border-top:1px solid #E5E1D6;scroll-margin-top:72px"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
         (it.due ? ' <span class="br2">· ' + (it.late ? 'overdue since ' : 'due ') + esc_(shortDate_(it.due)) + '</span>' : '') +
         (base && !noSf ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' + notes(it.id) +
-        '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Your comment, posted to Chatter on this task"></textarea></div>';
+        '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Type or speak your comment (tap the microphone on your keyboard). It goes on this task\'s Chatter as yours."></textarea></div>';
     }).join('') + '</div>';
   }).join('');
   var checks = '<div class="card"><div class="bh">Your day as a manager · what you will do today</div>' + UM_CHECKS.map(function (c) {
@@ -4844,7 +4851,7 @@ function umEveReplyPage_(person, day, error) {
   var list = items.length ? '<div class="card"><div class="bh">Your unit · comment on anything (goes to Chatter)</div>' + items.map(function (it) {
     return '<div style="padding:9px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
       (it.late ? ' <span class="br2">· overdue since ' + esc_(shortDate_(it.due)) + '</span>' : '') + (base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
-      '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Your comment, posted to Chatter on this task"></textarea></div>';
+      '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Type or speak your comment (tap the microphone on your keyboard). It goes on this task\'s Chatter as yours."></textarea></div>';
   }).join('') + '</div>' : '';
   return replyPage_('Your day · ' + prettyDate_(day), 'A number against each KPI, with names where it asks. Mr Rampersad gets the account.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
