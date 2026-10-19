@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-18f';
+var SCRIPT_VERSION = '2026-10-18g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3025,6 +3025,10 @@ function remindCheckpoint(e) {
 // ---------------------------------------------------------------------------
 
 var DAYSTART_CC_DEFAULT = 'rickyrampersadsalessupport@myguardiangroup.com';
+/* Ricky, 18 Oct 2026: "Don't copy anyone on mine." His own mails (the 5am
+ * review, the 11am progress, the 3pm close-out and the check-ins) go to him
+ * alone; every other desk's mail still copies sales support. */
+function ownMail_(sid, m) { if (sid !== 'ricky' && DAYSTART_CC_DEFAULT) m.cc = DAYSTART_CC_DEFAULT; return m; }
 var DAYSTART_LIST_MAX = 6;
 var DAYSTART_REPLAN_MIN = 30;
 var PLANNER_URL = 'https://rickyrampersadbranch.com/kpi/';
@@ -4235,9 +4239,9 @@ function sendBranchManagerDay_(day) {
     answer +
     (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer this morning, so your lists are not shown.</div>');
 
-  MailApp.sendEmail({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT,
+  MailApp.sendEmail(ownMail_('ricky', { to: mgr.join(','),
     subject: 'Your day · Branch Manager · ' + shortDate_(day) + (sfOk ? ' · ' + w.mine.length + ' yours due, ' + w.ask.length + ' asking you, ' + w.ignored.length + ' instructions not actioned' : ''),
-    htmlBody: shell_('Good morning · the branch today', 'Branch Manager · ' + prettyDate_(day), body) });
+    htmlBody: shell_('Good morning · the branch today', 'Branch Manager · ' + prettyDate_(day), body) }));
   return true;
 }
 
@@ -4885,9 +4889,9 @@ function sendBranchManagerProgress_(day, which) {
     (me.list.length ? sectionLabel_('What you closed today') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.green + ';border-radius:10px;padding:8px 15px;font-size:12.5px">' +
       me.list.slice(0, 10).map(function (s) { return '<div style="padding:3px 0">&#10003; ' + esc_(s) + '</div>'; }).join('') + '</div>' : '') +
     answer;
-  MailApp.sendEmail({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT,
+  MailApp.sendEmail(ownMail_('ricky', { to: mgr.join(','),
     subject: label + ' · Branch Manager · ' + shortDate_(day) + (self && !self.planned ? ' · not planned' : '') + (self && which === 'eve' && !self.accounted ? ' · day not accounted' : '') + (sfOk ? ' · you closed ' + me.closed + ', ' + w.ask.length + ' asking you' : ''),
-    htmlBody: shell_(label + ' · the branch and you', 'Branch Manager · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()), body) });
+    htmlBody: shell_(label + ' · the branch and you', 'Branch Manager · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()), body) }));
   return true;
 }
 
@@ -6936,9 +6940,9 @@ function sendMeNudge_(sid, day, at) {
     (next.length ? sectionLabel_('Next up') + next.map(function (x, i) { return '<div style="font-size:14px;line-height:1.45;padding:7px 0;border-top:1px solid ' + MAIL.line + '"><b>' + (i + 1) + '.</b> ' + esc_(x.text) + '<div style="font-size:12.5px;color:' + MAIL.muted + '">' + esc_(x.sub) + '</div></div>'; }).join('') : '') +
     meButton_(sid) +
     '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:6px">Log what you did as you go: "Done already" on My day counts it in your day.</div>';
-  MailApp.sendEmail({ to: to.join(','), cc: DAYSTART_CC_DEFAULT,
+  MailApp.sendEmail(ownMail_(sid, { to: to.join(','),
     subject: when + ' check-in · ' + (!m.planned ? 'plan your day' : next.length ? 'next: ' + shorten_(next[0].text, 60) : 'nothing waiting on you'),
-    htmlBody: shell_('Check-in · ' + when, first + ' · ' + prettyDate_(day), body) });
+    htmlBody: shell_('Check-in · ' + when, first + ' · ' + prettyDate_(day), body) }));
   return true;
 }
 function sendMeNudgeNow() { return sendMeNudge_('ricky', todayISO_(), minutesOf_(hhmm_(new Date()))); }

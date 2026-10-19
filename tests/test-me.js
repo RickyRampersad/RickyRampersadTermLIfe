@@ -83,7 +83,7 @@ ok('7, 9 and 1 by default; a Script Property changes them', env.meNudgeTimes_().
 mails.length = 0;
 env.sendMeNudge_('ricky', DAY, 7 * 60);
 ok('not planned: it says plan first', mails.length === 1 && /7:00am check-in · plan your day/.test(mails[0].subject) && /Your day is not planned yet/.test(mails[0].htmlBody) && /Plan my day now/.test(mails[0].htmlBody), mails[0] && mails[0].subject);
-ok('with the next three and the link', /Kamla asks you: Agent school list/.test(mails[0].htmlBody) && /f=me/.test(mails[0].htmlBody) && /salessupport/.test(mails[0].cc));
+ok('with the next three and the link, to Ricky alone', /Kamla asks you: Agent school list/.test(mails[0].htmlBody) && /f=me/.test(mails[0].htmlBody) && !mails[0].cc);
 env.mgrWrite_('ricky', DAY, 'plan', [{ Item: 'recruit', Question: 'Recruitment', Planned: '3', Note: '' }]);
 mails.length = 0;
 env.sendMeNudge_('ricky', DAY, 9 * 60);
@@ -108,6 +108,7 @@ mails.length = 0;
 env.sendBranchManagerProgress_(DAY, 'eve');
 const close = mails.find(m => /close out the day/.test(m.subject));
 ok('the 3pm close-out leads with you against your plan, and the week', !!close && /You against your plan/.test(close.htmlBody) && /check-ins answered/.test(close.htmlBody) && /This week: planned 1 of 1 day/.test(close.htmlBody), close && close.subject);
+ok('the close-out goes to Ricky alone, nobody copied', !!close && !close.cc);
 ok('accounted and planned: the subject carries no flag', !!close && !/not planned|not accounted/.test(close.subject), close && close.subject);
 env.todayISO_ = () => '2026-10-20';
 mails.length = 0;
