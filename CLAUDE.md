@@ -3998,6 +3998,19 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   Support 7–2, 7–3 and 8–4, Unit Manager and agents 6am–6pm. The other block
   columns stay on the log so history reads; do not schedule into them again
   unless the branch splits the day.
+- **The 5am report and the register** (19 October 2026, v2026-10-19a). Every
+  desk's report goes out from 5am, the Branch Manager's first. At its end,
+  "I have read the concerns · ready to start my day" (`startDayCard_`) opens
+  the page whose green button records the person in. Against their own start:
+  before it is early and present, the start minute on time, after it late
+  (`attWord_`; `ATT_GRACE_MIN` 0). Not pressed by the start and the register
+  reads absent from the next minute (`ABSENT_AFTER_MIN` 0) until they press,
+  when it turns to present and late. Hours: Ricky 5–3, Sasha 7–2, Liz 7–3,
+  Kamla 8–5, Azariah 8–4. Near the top, `periodStrip_`: tasks closed this week,
+  month and quarter to yesterday, with the trend on the same days last time,
+  and the month's attendance. Still to build: blocks grouped by what is open,
+  "anything else in this block?", emails owed a reply as pending work, and the
+  bag from the new Log Book's rota. Pinned in `tests/test-startday.js`.
 - **"Not getting attention" (the command centre)** closes things, not only
   moves them (18 October 2026). Each row has a status from the record's own
   list (Salesforce's `TaskStatus`; the letter sheet's own values), its history

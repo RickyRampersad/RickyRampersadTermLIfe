@@ -49,9 +49,13 @@ ok('a seven o\'clock desk starts at 420', env.startFor_('sasha') === 420 && env.
 ok('an eight o\'clock desk starts at 480', env.startFor_('azariah') === 480);
 ok('a nine o\'clock desk starts at 540', env.startFor_('ashley') === 540);
 ok('a stranger to the schedule defaults to eight', env.startFor_('nobody') === 480);
-ok('08:07 is on time for an eight o\'clock start', env.lateBy_('azariah', '08:07') === 0);
-ok('08:25 is fifteen minutes over the grace', env.lateBy_('azariah', '08:25') === 25);
-ok('and 09:05 is on time for a nine o\'clock start', env.lateBy_('ashley', '09:05') === 0);
+// No grace since 19 October 2026: before the start is early, the start minute on time, after it late.
+ok('08:00 is on time for an eight o\'clock start', env.lateBy_('azariah', '08:00') === 0 && env.attWord_('azariah', '08:00') === 'on time');
+ok('07:42 is early for an eight o\'clock start', env.lateBy_('azariah', '07:42') === 0 && env.attWord_('azariah', '07:42') === 'early');
+ok('08:01 is a minute late for an eight o\'clock start', env.lateBy_('azariah', '08:01') === 1 && env.attWord_('azariah', '08:01') === 'late');
+ok('08:07 is seven minutes late for an eight o\'clock start', env.lateBy_('azariah', '08:07') === 7);
+ok('08:25 is twenty-five minutes late', env.lateBy_('azariah', '08:25') === 25);
+ok('and 09:05 is five minutes late for a nine o\'clock start', env.lateBy_('ashley', '09:05') === 5);
 ok('08:07 is an hour and seven minutes after a seven o\'clock start', env.lateBy_('sasha', '08:07') === 67);
 
 console.log('\nThe first sign-in of the day is the start of the day:\n');

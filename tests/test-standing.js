@@ -128,7 +128,7 @@ ok('a goal with no blocks has no landed rate', st.goals.find(g => /New Applicati
 console.log('\nWhat the record says about each competency:\n');
 const comp = n => st.competencies.find(c => c.competency === n);
 const sig = (n, label) => { const x = (comp(n).signals || []).find(s => s.label === label); return x ? String(x.value) + (x.tone ? '/' + x.tone : '') : '(none)'; };
-ok('reliability reads the register: days in, not in, after the start', sig('Reliability', 'Days in') === '2' && sig('Reliability', 'Not in') === '1/amber' && sig('Reliability', 'After your start') === '1/amber', JSON.stringify(comp('Reliability').signals));
+ok('reliability reads the register: days in, not in, after the start', sig('Reliability', 'Days in') === '2' && sig('Reliability', 'Not in') === '1/amber' && sig('Reliability', 'After your start') === '2/amber'   /* 08:04 counts since the grace went on 19 Oct 2026 */, JSON.stringify(comp('Reliability').signals));
 ok('and the days logged against the days in', sig('Reliability', 'Days reported') === '2 of 2/green', JSON.stringify(comp('Reliability').signals));
 ok('responsiveness reads untouched, late, no reason', sig('Responsiveness', 'Untouched 7+ days') === '2/amber' && sig('Responsiveness', 'Late') === '1/amber' && sig('Responsiveness', 'Late with no reason') === '1/amber', JSON.stringify(comp('Responsiveness').signals));
 ok('and what closed', sig('Responsiveness', 'Closed this quarter') === '48');

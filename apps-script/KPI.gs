@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-18g';
+var SCRIPT_VERSION = '2026-10-19a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3260,8 +3260,8 @@ function sendDayStart_(staffId, date, kind, opt) {
     ? 'Thank you, ' + esc_(first) + '. Your plan is in' + (signIn ? ' (signed in at ' + esc_(twelve_(signIn)) + ')' : '') + '. Below: whether it holds up against your record, the day as planned, and what Salesforce still has waiting.'
     : 'Good morning, ' + esc_(first) + (signIn
         ? ', and thank you for signing in at <b>' + esc_(twelve_(signIn)) + '</b>. '
-        : '. Your day starts at <b>' + esc_(twelve_(mmText_(startM))) + '</b>. Review your plan below, then open the button and save it: saving signs you in, and that is the attendance register. ' +
-          'In after ' + esc_(twelve_(mmText_(startM + ATT_GRACE_MIN))) + ' is late; no sign-in by <b>' + esc_(twelve_(mmText_(startM + ABSENT_AFTER_MIN))) + '</b> marks you absent and your due work goes to colleagues. ') +
+        : '. Your day starts at <b>' + esc_(twelve_(mmText_(startM))) + '</b>. Read this report to the end and press <b>ready to start my day</b> at the bottom: that is the attendance register. ' +
+          'Before ' + esc_(twelve_(mmText_(startM))) + ' is early, at ' + esc_(twelve_(mmText_(startM))) + ' on time, after it late. Not pressed by <b>' + esc_(twelve_(mmText_(startM + ABSENT_AFTER_MIN))) + '</b> and the register reads absent until you press, and your due work goes to colleagues. ') +
       'Below is what your record shows over the last ' + INTEL_DAYS + ' working days, your day as you have filed it, and a plan for the day built from what Salesforce, Query Pal and the inbox have waiting.';
 
   var ask = kind === 'plan'
@@ -3279,6 +3279,7 @@ function sendDayStart_(staffId, date, kind, opt) {
 
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + intro + '</div>' +
+    (kind === 'first' ? periodStrip_(staffId, date) : '') +
     (kind === 'first' ? backCard_(staffId, date) : '') +
     (kind === 'first' ? queryCard_(staffId) : '') +
     (kind === 'first' ? branchCards_(staffId, date) : '') +
@@ -3328,6 +3329,7 @@ function sendDayStart_(staffId, date, kind, opt) {
     (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer this morning, so the tasks are not listed. The planner shows them.</div>') +
     '<div style="font-size:12.5px;color:' + MAIL.muted + ';line-height:1.55;margin-top:16px">' +
       'Your day is built on your job description. Every morning the system reads Salesforce, Query Pal and the inbox and shares out the work; you plan the day and press the morning check, give your progress before lunch, and close the day off before you leave. Log every task at the point of work.</div>' +
+    (kind === 'first' && !signIn ? startDayCard_(staffId, date, startM) : '') +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">' +
       'Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
 
@@ -3583,15 +3585,17 @@ function housekeepingTick_() {
   });
   var expected = function (sid) { return present[sid] || props.getProperty('daystart_first_' + sid + '_' + day); };
 
-  // The morning e-mail, half an hour before each desk's start (Ricky, 15
-  // October 2026: "all will receive the email 30 minutes before they get in
-  // and they are to review; if a staff does not open and save, it is assumed
-  // they are absent"). Three a run; a desk the runs missed still gets it up to
-  // twenty minutes after its start.
+  // The morning e-mail, from 5am for every desk (Ricky, 19 October 2026; it
+  // was half an hour before each start). Three a run; a desk the runs missed
+  // still gets it up to twenty minutes after its start.
   var morningSent = 0;
   people.forEach(function (p) {
     var sid = String(p.staffId), sp = parseSpan_(scheduleFor_(sid).hours || '');
-    if (!sp || mins < sp.start - STAFF_MAIL_LEAD || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
+    // Every desk's report goes out from 5am (Ricky, 19 October 2026: "all
+    // reports go out at 5 AM on mornings for everyone"), the Branch Manager's
+    // first; the desk's own start is still what the register measures.
+    if (!props.getProperty('bmday_' + day) && mins < BM_MAIL_AT + 20) return;
+    if (!sp || mins < MORNING_MAIL_AT || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
     if (props.getProperty('daystart_first_' + sid + '_' + day)) return;
     try { if (sendDayStart_(sid, day, 'first')) { sent.push(p.name + ' (morning)'); morningSent++; } } catch (e) {}
   });
@@ -3798,10 +3802,15 @@ function sendMorningNow() {
 // ---------------------------------------------------------------------------
 
 var MORNING_MAIL_AT = 5 * 60;          // the day's first run: 5:00am
-var STAFF_MAIL_LEAD = 30;              // a desk's morning e-mail, half an hour before its start
+var STAFF_MAIL_LEAD = 30;              // no longer used for timing: every report goes out from 5am (19 October 2026)
 var MORNING_MAIL_PER_RUN = 3;
 var BM_MAIL_AT = 5 * 60;               // 5:00am, the Branch Manager's operations review
-var ABSENT_AFTER_MIN = 60;             // no sign-in by start + 60 is absent
+/* The register, as Ricky set it on 19 October 2026: every report goes out at
+   5am, and each person presses "ready to start my day" at the end of it.
+   Before their own start is early and present; on the start minute, present;
+   after it, present and late. Not pressed by the start and the register reads
+   absent until they press, when it turns to present and late. */
+var ABSENT_AFTER_MIN = 0;              // not pressed by the start is absent
 var ATT_REPORT_AT = 9 * 60 + 15;       // after the eight o'clock desks' hour has run
 var REBALANCE_AT = 10 * 60;
 var BM_SF_DEFAULT = '005A0000001NfJGIA0';   // the Branch Manager's Salesforce user
@@ -3856,7 +3865,7 @@ function autoAbsentTick_(day, mins, present, absent) {
   DAY_MAIL_DESKS.forEach(function (sid) {
     if (present[sid] || absent[sid]) return;
     var sp = parseSpan_(scheduleFor_(sid).hours || '');
-    if (!sp || mins < sp.start + ABSENT_AFTER_MIN) return;
+    if (!sp || mins <= sp.start + ABSENT_AFTER_MIN) return;   // the start minute itself is on time
     var key = 'autoabs_' + sid + '_' + day;
     if (props.getProperty(key)) return;
     props.setProperty(key, hhmm_(new Date()));
@@ -4053,8 +4062,8 @@ function attendanceReport_(day) {
       st = 'Absent · ' + (auto ? 'no sign-in (automatic)' : (String(today.row.Reason || '') || 'marked') + ' (' + String(today.row.MarkedBy || '') + ')');
       color = MAIL.red;
     } else if (today && timeStr_(today.row.FirstSignIn)) {
-      var at = timeStr_(today.row.FirstSignIn), late = lateBy_(sid, at);
-      st = 'In at ' + twelve_(at) + (late ? ' · late ' + late + ' min' : ' · on time');
+      var at = timeStr_(today.row.FirstSignIn), late = lateBy_(sid, at), word = attWord_(sid, at);
+      st = 'In at ' + twelve_(at) + (late ? ' · late ' + late + ' min' : word === 'early' ? ' · early' : ' · on time');
       color = late ? MAIL.amber : MAIL.green;
     } else { st = 'Not signed in'; color = MAIL.red; }
     var mLate = 0, mAbs = 0, mIn = 0, sum = 0, seen = {};
@@ -4097,7 +4106,7 @@ function sendAttendanceReport_(day) {
       statTiles_([{ value: nIn, label: 'in', color: MAIL.green }, { value: nLate, label: 'late', color: nLate ? MAIL.amber : MAIL.navy },
                   { value: nOut, label: 'out or not signed in', color: nOut ? MAIL.red : MAIL.navy }]) +
       '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Signing in is the register: from the morning e-mail\'s button, the plan page or the tracker. ' +
-        'In more than ' + ATT_GRACE_MIN + ' minutes after the start is late; no sign-in an hour after the start is absent, and the work is covered.</div>' +
+        'Pressed before the person\'s own start is early, at the start on time, after it late. Not pressed by the start reads absent until they press, and the work is covered.</div>' +
       table) });
   return true;
 }
@@ -5836,6 +5845,95 @@ function cmdRisk_(it, ctx) {
  *  advice and the risk. Without a key the page runs on its rules exactly as
  *  before. ANTHROPIC_MODEL picks the model (default claude-haiku-5-5).  */
 var PEOPLE = { RECENT: 5, NORMAL: 15, SLIP: 0.7, AHEAD: 1.3, CACHE: 600 };
+/** The ready-to-start button at the very end of the 5am report, so it is
+ *  pressed after the report has been read (Ricky, 19 October 2026). */
+function startDayCard_(staffId, date, startM) {
+  var at = twelve_(mmText_(startM));
+  return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.green + ';border-radius:10px;padding:12px 15px;margin-top:16px">' +
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.green + '">You have reached the end</div>' +
+    '<div style="font-size:14px;line-height:1.55;margin-top:4px">When you have read the concerns above, press the button. It records you present, with the time: before ' +
+      esc_(at) + ' is early, at ' + esc_(at) + ' on time, after it late. Not pressed by ' + esc_(at) + ' and the register reads absent until you do.</div>' +
+    replyButton_(replyUrl_(staffId, date, 'in'), 'I have read the concerns · ready to start my day', 'Opens your page; press the green button there. No sign-in needed.') +
+    '</div>';
+}
+
+/** This week, this month and this quarter, from what the person closed in
+ *  Salesforce and the register (Ricky, 19 October 2026: "a little analytics in
+ *  terms of how the week is going and how the month is going and the quarter").
+ *  Counts up to yesterday, since the report goes out before the day starts. */
+function periodStats_(staffId, day) {
+  var c = CacheService.getScriptCache(), key = 'period_' + staffId + '_' + day;
+  try { var hit = c.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  var wk = weekStart_(day), lastWk = shiftDays_(wk, -7), mo = day.slice(0, 8) + '01';
+  var prevMo = shiftDays_(mo, -1).slice(0, 8) + '01';
+  var qFrom = quarterRange_(quarterOf_(day)).from;
+  var from = [lastWk, prevMo, qFrom].sort()[0];
+  var out = { ok: false };
+  var users = {}; try { users = sfkUsers_() || {}; } catch (e) {}
+  var sfId = staffId === 'ricky' ? bmSfId_() : (users[staffId] && users[staffId].id);
+  var per = {};
+  if (sfId && sfkConfigured_()) {
+    try {
+      sfkQuery_('SELECT DAY_ONLY(convertTimezone(CompletedDateTime)) d, COUNT(Id) n FROM Task WHERE IsClosed = true AND OwnerId = \'' + sfId +
+        '\' AND CompletedDateTime >= ' + sfkUtcAt_(from, 0) + ' AND CompletedDateTime < ' + sfkUtcAt_(day, 0) +
+        " AND (NOT Subject LIKE 'Email:%') GROUP BY DAY_ONLY(convertTimezone(CompletedDateTime))")
+        .forEach(function (r) { per[String(r.d || '').slice(0, 10)] = Number(r.n || 0); });
+      out.ok = true;
+    } catch (e) {}
+  }
+  var sum = function (a, b) { var n = 0; Object.keys(per).forEach(function (d) { if (d >= a && d < b) n += per[d]; }); return n; };
+  var dayOfMonth = Number(day.slice(8, 10));
+  var prevSame = shiftDays_(prevMo, dayOfMonth - 1);
+  if (prevSame.slice(0, 7) !== prevMo.slice(0, 7)) prevSame = mo;
+  out.week = sum(wk, day); out.lastWeek = sum(lastWk, shiftDays_(day, -7));
+  out.month = sum(mo, day); out.lastMonth = sum(prevMo, prevSame);
+  out.quarter = sum(qFrom, day);
+  var att = { early: 0, ontime: 0, late: 0, absent: 0 };
+  try {
+    var rows = hrRows_(ATT, false) || [], seen = {};
+    rows.forEach(function (r) {
+      var d = isoDay_(r.Date);
+      if (String(r.StaffId) !== String(staffId) || !d || d < mo || d >= day || seen[d]) return;
+      var a = attRow_(rows, d, staffId); if (!a) return;
+      seen[d] = 1;
+      if (String(a.row.Status || '').toLowerCase() === 'absent') { att.absent++; return; }
+      var w = attWord_(staffId, timeStr_(a.row.FirstSignIn));
+      if (w === 'early') att.early++; else if (w === 'late') att.late++; else if (w) att.ontime++;
+    });
+  } catch (e) {}
+  out.att = att;
+  try { c.put(key, JSON.stringify(out), 3600); } catch (e) {}
+  return out;
+}
+
+/** The strip near the top of the 5am report. */
+function periodStrip_(staffId, day) {
+  var s; try { s = periodStats_(staffId, day); } catch (e) { return ''; }
+  if (!s) return '';
+  var trend = function (now, before) {
+    if (!before && !now) return '';
+    if (!before) return ' <span style="color:' + MAIL.green + '">· up from none</span>';
+    var pct = Math.round(100 * (now - before) / before);
+    return ' <span style="color:' + (pct >= 0 ? MAIL.green : MAIL.red) + '">· ' + (pct >= 0 ? 'up ' : 'down ') + Math.abs(pct) + '% on the same days last time</span>';
+  };
+  var a = s.att || {};
+  var cell = function (label, value, sub) {
+    return '<td style="padding:8px 10px;vertical-align:top;border-top:1px solid ' + MAIL.line + '"><div style="font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.navy + '">' + label + '</div>' +
+      '<div style="font-size:14px;line-height:1.45;margin-top:2px">' + value + (sub || '') + '</div></td>';
+  };
+  var rows = s.ok
+    ? '<tr>' + cell('This week', '<b>' + s.week + '</b> closed', trend(s.week, s.lastWeek)) + '</tr>' +
+      '<tr>' + cell('This month', '<b>' + s.month + '</b> closed', trend(s.month, s.lastMonth)) + '</tr>' +
+      '<tr>' + cell('This quarter', '<b>' + s.quarter + '</b> closed', '') + '</tr>'
+    : '<tr>' + cell('Your record', 'Salesforce did not answer, so the counts are not shown this morning.', '') + '</tr>';
+  rows += '<tr>' + cell('Attendance this month', (a.early || 0) + ' early · ' + (a.ontime || 0) + ' on time · ' +
+    '<span style="color:' + (a.late ? MAIL.amber : 'inherit') + '">' + (a.late || 0) + ' late</span> · ' +
+    '<span style="color:' + (a.absent ? MAIL.red : 'inherit') + '">' + (a.absent || 0) + ' absent</span>', '') + '</tr>';
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;margin:0 0 12px">' +
+    '<tr><td style="padding:9px 10px 4px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:' + MAIL.gold + '">How your period is going · to yesterday</td></tr>' +
+    rows + '</table>';
+}
+
 function peopleNormal_(day, onlyDesks) {
   var c = CacheService.getScriptCache(), key = 'people_norm_' + day + '_' + (onlyDesks || []).join(',');
   try { var hit = c.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
@@ -9015,7 +9113,9 @@ function replyPost_(e) {
   var all = function (name) { var v = ps[name]; return v ? (Array.isArray(v) ? v : [v]) : []; };
   if (f === 'in') {
     var si = signInFromPage_(person);
-    return planReplyPage_(person, day, '', (si.first ? 'Signed in at ' : 'You were already signed in at ') + twelve_(si.at) + '. Now plan your day.');
+    var sw = attWord_(person.staffId, si.at);
+    return planReplyPage_(person, day, '', (si.first ? 'Present at ' : 'You were already in at ') + twelve_(si.at) +
+      (sw === 'early' ? ', early' : sw === 'late' ? ', late' : ', on time') + '. Now plan your day.');
   }
   if (f === 'plan') return planReplySave_(person, day, p, all);
   if (f === 'prog') return progReplySave_(person, day, p, all);
@@ -9084,8 +9184,9 @@ function planReplyPage_(person, day, error, notice) {
     (notice ? '<div class="card ok"><b style="color:#2C7A57">' + esc_(notice) + '</b></div>' : '') +
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     (signed ? '' : '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card">' + replyHidden_(sid, day, 'in') +
-      '<div class="bh">Not signed in yet</div><div class="bf">Saving your plan signs you in at the time you save. At your desk now? Sign in first.</div>' +
-      '<button type="submit" style="background:#2C7A57;margin-top:4px">I am at my desk</button></form>') +
+      '<div class="bh">Ready to start your day?</div><div class="bf">Press once you have read this morning\'s report to the end. It records you in at the time you press: before ' +
+        esc_(twelve_(mmText_(startFor_(sid)))) + ' is early, at ' + esc_(twelve_(mmText_(startFor_(sid)))) + ' on time, after it late.</div>' +
+      '<button type="submit" style="background:#2C7A57;margin-top:4px">I have read the concerns and I am ready to start my day</button></form>') +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top" onsubmit="return chk()">' + replyHidden_(sid, day, 'plan') +
     '<div class="card"><div class="bh">The scrub · inbox and WhatsApp</div>' +
       '<div class="bf">Anything that needs doing, one per line. Each becomes a Salesforce task in your name, due today, in today\'s plan.</div>' +
@@ -11707,7 +11808,7 @@ function standing_(profile, staffId) {
 var ATT = { must: ['Date', 'StaffId', 'FirstSignIn'], name: 'Attendance',
             head: ['Date', 'StaffId', 'Name', 'FirstSignIn', 'LastSeen', 'SignedOut', 'Status',
                    'Reason', 'MarkedBy', 'UpdatedAt'] };
-var ATT_GRACE_MIN = 10;
+var ATT_GRACE_MIN = 0;    // no grace: a minute after the start is late (Ricky, 19 October 2026)
 
 /** "8am – 4pm" -> 480. The first token of the hours string, in minutes. */
 function startFor_(staffId) {
@@ -11728,6 +11829,13 @@ function lateBy_(staffId, at) {
   if (mins == null) return 0;
   var over = mins - startFor_(staffId);
   return over > ATT_GRACE_MIN ? over : 0;
+}
+/** "early", "on time" or "late", against the person's own start. */
+function attWord_(staffId, at) {
+  var mins = minutesOf_(at);
+  if (mins == null) return '';
+  var start = startFor_(staffId);
+  return mins < start ? 'early' : mins - start > ATT_GRACE_MIN ? 'late' : 'on time';
 }
 
 function attSheet_() {
