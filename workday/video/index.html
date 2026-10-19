@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- /workday/video: the three-minute film of the branch's day, every role,
+     5am to sign-out (19 October 2026). Phone screens get the upright film,
+     laptops the wide one; either can be picked. Kept out of search. -->
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Our workday, the film · Ricky Rampersad Branch</title>
+<meta name="description" content="Three minutes: how every role at the Ricky Rampersad Branch spends the day, from the 5am report to the last sign-out.">
+<meta property="og:title" content="Our workday, the film · Ricky Rampersad Branch">
+<meta property="og:description" content="Every role. Every click. Driven by our goals.">
+<meta property="og:type" content="video.other">
+<meta property="og:url" content="https://rickyrampersadbranch.com/workday/video/">
+<meta property="og:image" content="https://rickyrampersadbranch.com/workday/video/poster-laptop.jpg">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#17181D;--mute:#7A7280;--line:rgba(60,40,20,.10);--hl1:#F08A24;--hl2:#D9480F;--card:#FFFFFF}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);
+  background:radial-gradient(900px 600px at 0% 0%,rgba(255,170,90,.28),transparent 60%),radial-gradient(800px 600px at 100% 100%,rgba(120,205,180,.22),transparent 60%),linear-gradient(160deg,#FFFDF8,#F6EDE0);
+  padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 40px}
+.brand{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.brand i{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#F7A541,#E2581A);display:inline-block}
+h1{font-size:clamp(34px,6vw,64px);line-height:1.02;letter-spacing:-.03em;margin:22px 0 8px;font-weight:800}
+h1 span{background:linear-gradient(90deg,var(--hl1),var(--hl2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{font-size:clamp(16px,2.2vw,20px);color:var(--mute);font-weight:600;margin:0 0 22px;max-width:760px;line-height:1.45}
+.pick{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:#fff;border:1px solid var(--line);margin-bottom:16px}
+.pick button{font:inherit;font-size:14px;font-weight:800;border:0;background:transparent;color:var(--mute);padding:9px 18px;border-radius:999px;cursor:pointer}
+.pick button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.player{position:relative;border-radius:22px;overflow:hidden;background:#F2E9DC;box-shadow:0 30px 70px rgba(90,60,30,.18),0 2px 8px rgba(90,60,30,.08)}
+.player video{display:block;width:100%;height:auto;background:#F2E9DC}
+.player.tall{max-width:440px;margin:0 auto}
+.more{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+.more a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:800;font-size:15px;color:var(--ink);background:#fff;border:1px solid var(--line);padding:12px 18px;border-radius:14px}
+.more a b{color:var(--hl2)}
+.foot{margin-top:28px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+@media (max-width:640px){.wrap{padding-top:20px}.player.tall{max-width:none}}
+</style></head><body>
+<div class="wrap">
+  <div class="brand"><i></i>Ricky Rampersad Branch &middot; Our workday</div>
+  <h1>Our <span>workday.</span></h1>
+  <p class="lede">Every role. Every click. Driven by our goals. Three minutes on how each of us spends the day, from the 5am report to the last sign-out. The figures in it are samples.</p>
+  <div class="pick" role="group" aria-label="Which film">
+    <button type="button" data-v="wide" aria-pressed="false">Laptop</button>
+    <button type="button" data-v="tall" aria-pressed="false">Phone</button>
+  </div>
+  <div class="player" id="player">
+    <video id="film" controls playsinline preload="metadata"></video>
+  </div>
+  <div class="more">
+    <a href="/workday/">See every screen, role by role <b>&rsaquo;</b></a>
+  </div>
+  <div class="foot">Ricky Rampersad Branch &middot; Chaguanas</div>
+</div>
+<script>
+(function () {
+  var F = { wide: { src: 'our-workday-laptop.mp4', poster: 'poster-laptop.jpg' }, tall: { src: 'our-workday-phone.mp4', poster: 'poster-phone.jpg' } };
+  var v = document.getElementById('film'), box = document.getElementById('player'), btns = document.querySelectorAll('.pick button');
+  function pick(k) {
+    var playing = !v.paused, t = v.currentTime || 0;
+    v.poster = F[k].poster; v.src = F[k].src; box.className = 'player' + (k === 'tall' ? ' tall' : '');
+    for (var i = 0; i < btns.length; i++) btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-v') === k ? 'true' : 'false');
+    if (t) v.addEventListener('loadedmetadata', function once() { v.removeEventListener('loadedmetadata', once); try { v.currentTime = t; } catch (e) {} if (playing) v.play(); });
+  }
+  for (var i = 0; i < btns.length; i++) btns[i].addEventListener('click', function () { pick(this.getAttribute('data-v')); });
+  var tallScreen = window.matchMedia && window.matchMedia('(max-width: 700px) and (orientation: portrait)').matches;
+  pick(tallScreen ? 'tall' : 'wide');
+})();
+</script>
+</body></html>
