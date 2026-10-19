@@ -72,6 +72,17 @@
   .install b{color:var(--text)}
   .test{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:#fbbf24;background:rgba(251,191,36,.12);
     border-radius:99px;padding:3px 8px;vertical-align:middle}
+  .day{margin-top:18px;background:linear-gradient(160deg,rgba(42,109,224,.22),rgba(19,64,143,.12));border:1px solid rgba(111,168,255,.3);
+    border-radius:18px;padding:4px 16px 14px}
+  .day h2{margin:14px 0 8px;color:#fff}
+  .steps{list-style:none;display:grid;gap:10px}
+  .steps li{display:flex;gap:12px;align-items:flex-start}
+  .steps .n{flex:none;width:28px;height:28px;border-radius:50%;background:#2A6DE0;color:#fff;font-family:'Montserrat';font-weight:800;
+    font-size:14px;display:grid;place-items:center;margin-top:1px}
+  .steps b{display:block;font-size:15px}
+  .steps span{display:block;color:var(--muted);font-size:13px;line-height:1.45;margin-top:2px}
+  .steps a{display:inline-block;margin-top:5px;font-size:13px;font-weight:700;color:var(--gold);text-decoration:none}
+  .steps a:hover{text-decoration:underline}
   [hidden]{display:none!important}
   @media (max-width:420px){.hello{font-size:21px}.grid{grid-template-columns:1fr 1fr;gap:10px}.app{min-height:128px;padding:14px}
     .app b{font-size:14px}.app span{font-size:12px}.badge{position:static;display:inline-block;margin-top:8px}}
@@ -91,7 +102,7 @@
     <input id="pw" name="password" type="password" autocomplete="current-password" placeholder="Your fact find password" required>
     <button class="btn gold" type="submit" id="lockBtn">Sign in</button>
     <div class="err" id="lockErr" role="alert"></div>
-    <div class="hint">Use the same agent number and password as the fact find. Staff use theirs too.</div>
+    <div class="hint">Use the same agent number and password as the fact find. Staff use theirs too. One sign-in opens every tool here.</div>
   </form>
 </div>
 
@@ -105,6 +116,7 @@
   <div class="hello" id="hello"></div>
   <div class="who" id="who"></div>
   <div class="scope" id="scope"></div>
+  <section class="day" id="day"></section>
   <div id="sections"></div>
   <div class="install" id="install">
     <b>Put it on your phone:</b> open this page in Chrome or Safari, tap the menu or the Share button, then
@@ -134,45 +146,69 @@
   };
 
   /* Every tile, and who sees it. a = agent, l = unit manager, s = staff,
-     m = branch manager. "own" marks a tool that still asks for its own
-     sign-in; everything inside each tool is already scoped to the person:
-     an agent sees their own clients and papers, a unit manager his team's. */
+     m = branch manager. One sign-in opens them all (/rroperations/sso.js
+     carries it into each tool), and everything inside each tool is scoped to
+     the person: an agent sees their own clients and papers, a unit manager
+     his team's. */
   var TILES = [
-    { sec: 'Your work', id: 'logbook', name: 'Log Book', ic: 'book', to: 'alsm', href: '/rroperations/logbook/',
+    { sec: 'Every day', id: 'logbook', name: 'Log Book', ic: 'book', to: 'alsm', href: '/rroperations/logbook/',
       blurb: { a: 'Log your documents and see where each one is', l: 'Your documents, and your team\'s', s: 'Receive, route and send on the bag', m: 'Every line in the branch' } },
-    { sec: 'Your work', id: 'delivery-book', name: 'Delivery Book', ic: 'box', to: 'sm', href: '/rroperations/delivery-book/',
+    { sec: 'Every day', id: 'delivery-book', name: 'Delivery Book', ic: 'box', to: 'sm', href: '/rroperations/delivery-book/',
       blurb: 'Log a handover; the client is told and rates it' },
-    { sec: 'Your work', id: 'board', name: 'My clients board', ic: 'people', to: 'alsm', href: '/orphanmanagement', own: true,
+    { sec: 'Every day', id: 'board', name: 'My clients board', ic: 'people', to: 'alsm', href: '/orphanmanagement',
       blurb: { a: 'The clients named to you, and the calls to log', l: 'Your team\'s clients and their progress', s: 'Your calls and the clients to name', m: 'Urgent, agents, households and the dashboard' } },
-    { sec: 'Your work', id: 'factfind', name: 'Fact Find', ic: 'form', to: 'alm', href: 'https://factfind360.com/ffproject', ext: true,
+    { sec: 'When you need it', id: 'factfind', name: 'Fact Find', ic: 'form', to: 'alm', href: 'https://factfind360.com/ffproject', ext: true,
       blurb: 'Complete a client fact find' },
-    { sec: 'Your work', id: 'groups', name: 'Group clients', ic: 'building', to: 'sm', href: '/groupclientmanagement/', own: true,
+    { sec: 'Each week', id: 'groups', name: 'Group clients', ic: 'building', to: 'sm', href: '/groupclientmanagement/',
       blurb: 'Your employer groups and the Monday letters' },
-    { sec: 'Your work', id: 'premium', name: 'Premium Due Desk', ic: 'clock', to: 'sm', href: '/premium-due/', own: true,
+    { sec: 'Each week', id: 'premium', name: 'Premium Due Desk', ic: 'clock', to: 'sm', href: '/premium-due/',
       blurb: 'Check the 45 to 90 day letters before ten' },
-    { sec: 'Your work', id: 'gas', name: 'Gas Receipts', ic: 'fuel', to: 'sm', soon: true, blurb: 'Snap and log fuel receipts' },
-    { sec: 'Your work', id: 'petty', name: 'Petty Cash', ic: 'cash', to: 'sm', soon: true, blurb: 'The float, spends and top-ups' },
+    { sec: 'Coming soon', id: 'gas', name: 'Gas Receipts', ic: 'fuel', to: 'sm', soon: true, blurb: 'Snap and log fuel receipts' },
+    { sec: 'Coming soon', id: 'petty', name: 'Petty Cash', ic: 'cash', to: 'sm', soon: true, blurb: 'The float, spends and top-ups' },
 
     { sec: 'Learn', id: 'lbtrain', name: 'Log Book training', ic: 'cap', to: 'alsm', href: '/rroperations/logbook/training.html',
       blurb: 'The manual and your scored test' },
     { sec: 'Learn', id: 'lbfilm', name: 'Log Book film', ic: 'play', to: 'alsm', href: { a: '/logbookdemoagent/', l: '/logbookdemoagent/', s: '/logbookdemostaff/', m: '/rroperations/logbook/films.html' },
       blurb: 'How it works, in two minutes' },
-    { sec: 'Learn', id: 'orphtrain', name: 'Clients board test', ic: 'cap', to: 'alsm', href: '/orphan-transition/training.html', own: true,
+    { sec: 'Learn', id: 'orphtrain', name: 'Clients board test', ic: 'cap', to: 'alsm', href: '/orphan-transition/training.html',
       blurb: 'The workflow and your role\'s test' },
     { sec: 'Learn', id: 'workflow', name: 'The workflow', ic: 'flow', to: 'alsm', href: { a: '/orphan-transition/workflow.html#agents', l: '/orphan-transition/workflow.html#managers', s: '/orphan-transition/workflow.html#staff', m: '/orphan-transition/workflow.html#managers' },
       blurb: 'What you do on every client, step by step' },
     { sec: 'Learn', id: 'boardfilm', name: 'Board films', ic: 'play', to: 'alsm', href: '/orphan-transition/board-films.html',
       blurb: 'The clients board, for agents, staff and managers' },
-    { sec: 'Learn', id: 'gcmtrain', name: 'Group clients training', ic: 'cap', to: 'sm', href: '/groupclientmanagement/training.html', own: true,
+    { sec: 'Learn', id: 'gcmtrain', name: 'Group clients training', ic: 'cap', to: 'sm', href: '/groupclientmanagement/training.html',
       blurb: 'The manual and test before you send a letter' },
 
-    { sec: 'The branch', id: 'dash', name: 'Clients dashboard', ic: 'chart', to: 'm', href: '/orphan-transition/dashboard.html', own: true,
+    { sec: 'The branch', id: 'dash', name: 'Clients dashboard', ic: 'chart', to: 'm', href: '/orphan-transition/dashboard.html',
       blurb: 'How the transition is going, by the numbers' },
-    { sec: 'The branch', id: 'stream', name: 'Stream to the TV', ic: 'tv', to: 'm', href: '/orphan-transition/stream.html', own: true,
+    { sec: 'The branch', id: 'stream', name: 'Stream to the TV', ic: 'tv', to: 'm', href: '/orphan-transition/stream.html',
       blurb: 'The campaign on a screen, with no client details' },
-    { sec: 'The branch', id: 'gcmwall', name: 'Group clients wall', ic: 'tv', to: 'm', href: '/groupclientmanagement/wall.html', own: true,
+    { sec: 'The branch', id: 'gcmwall', name: 'Group clients wall', ic: 'tv', to: 'm', href: '/groupclientmanagement/wall.html',
       blurb: 'The groups on the office screen' }
   ];
+
+  /* Each role's day, in plain words: the first thing on the screen after signing in (18 October 2026: "a proper layout
+     so the agents and staff understand"). Each step opens the tool it names. */
+  var GUIDE = {
+    a: { title: 'Your day', steps: [
+      ['Hand in your papers by 12 noon', 'Log each document in the Log Book first. In by 12 catches the 1 pm bag.', 'logbook'],
+      ['Call your clients', 'My clients board lists the clients named to you. Speak to each within two working days and log every call.', 'board'],
+      ['Keep your fact finds current', 'Every client conversation goes on a fact find.', 'factfind'] ] },
+    l: { title: 'Your day', steps: [
+      ['Hand in your own papers by 12 noon', 'Log them in the Log Book. My team there shows your agents\' papers too.', 'logbook'],
+      ['Check your team\'s clients', 'The clients board shows each of your agents\' clients and who has nothing logged.', 'board'],
+      ['Make sure your team has done the tests', 'Log Book training shows who has passed and who has not taken it.', 'lbtrain'] ] },
+    s: { title: 'Your day', steps: [
+      ['Receive the papers and make the 1 pm bag', 'Sign for each document in the Log Book. Papers in by 12 go on today\'s bag.', 'logbook'],
+      ['Work your calls', 'Your calls on the clients board. Log every call the same day; take details, never advise.', 'board'],
+      ['Record every delivery', 'Each handover goes in the Delivery Book, and the client is told.', 'delivery-book'],
+      ['Before 10 am: the premium letters', 'Tick each letter you have checked on the Premium Due Desk. Group letters are approved during the week for Monday.', 'premium'] ] },
+    m: { title: 'Your day', steps: [
+      ['Start with what is urgent', 'The clients board opens on Urgent: call-backs, pressing answers and the late ones.', 'board'],
+      ['See how the work is going', 'The dashboard: the share of clients spoken to, named and completed.', 'dash'],
+      ['Check the Log Book', 'Late lines, departments that said No, contracts at day 15. The 5 pm digest has the same.', 'logbook'],
+      ['Group letters for Monday', 'Approve or rehearse before the 10 am run.', 'groups'] ] }
+  };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -216,17 +252,21 @@
     $('who').innerHTML = '<b>' + esc(ROLE_NAME[r]) + '</b>' + (s.agentNo ? ' · ' + esc(s.agentNo) : '') +
       (s.mode && s.mode !== 'live' ? '<span class="test">Test mode</span>' : '');
     $('scope').textContent = SCOPE[r];
-    var secs = [];
-    TILES.forEach(function (t) {
-      if (t.to.indexOf(r) < 0) return;
-      if (secs.indexOf(t.sec) < 0) secs.push(t.sec);
-    });
+    var ORDER = ['Every day', 'Each week', 'When you need it', 'The branch', 'Learn', 'Coming soon'];
+    var secs = ORDER.filter(function (sec) { return TILES.some(function (t) { return t.sec === sec && t.to.indexOf(r) >= 0; }); });
+    var g = GUIDE[r];
+    $('day').innerHTML = '<h2>' + esc(g.title) + '</h2><ol class="steps">' + g.steps.map(function (st, i) {
+      var t = TILES.filter(function (x) { return x.id === st[2]; })[0];
+      var href = t ? pick(t.href, r) : '';
+      return '<li><span class="n">' + (i + 1) + '</span><div><b>' + esc(st[0]) + '</b><span>' + esc(st[1]) + '</span>' +
+        (href ? '<a href="' + esc(href) + '"' + (t.ext ? ' target="_blank" rel="noopener"' : '') + '>Open ' + esc(t.name) + ' →</a>' : '') + '</div></li>';
+    }).join('') + '</ol>';
     $('sections').innerHTML = secs.map(function (sec) {
       return '<h2>' + esc(sec) + '</h2><div class="grid">' + TILES.filter(function (t) {
         return t.sec === sec && t.to.indexOf(r) >= 0;
       }).map(function (t) {
         var inner = '<div class="ic"><svg viewBox="0 0 24 24">' + IC[t.ic] + '</svg></div><b>' + esc(t.name) + '</b><span>' +
-          esc(pick(t.blurb, r)) + '</span>' + (t.soon ? '<div class="badge">Coming soon</div>' : t.own ? '<div class="badge own">Own sign-in</div>' : t.ext ? '<div class="badge own">Opens fact find</div>' : '');
+          esc(pick(t.blurb, r)) + '</span>' + (t.soon ? '<div class="badge">Coming soon</div>' : t.ext ? '<div class="badge own">Opens the fact find</div>' : '');
         return t.soon ? '<div class="app soon" aria-disabled="true">' + inner + '</div>'
           : '<a class="app" href="' + esc(pick(t.href, r)) + '"' + (t.ext ? ' target="_blank" rel="noopener"' : '') + '>' + inner + '</a>';
       }).join('') + '</div>';

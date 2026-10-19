@@ -3798,10 +3798,22 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   shows tiles by role: agents and unit managers the Log Book, the clients board, the fact find and the training; staff
   and the branch manager the Log Book, the Delivery Book, the clients board, group clients, the Premium Due Desk and the
   training; the branch manager also the dashboard, the stream and the groups wall. The scoping lives in each tool, not
-  the tiles: an agent sees their own clients and papers, a unit manager his team's. Tools with their own sign-in
-  (the clients board, group clients, the Premium Due Desk) are marked "Own sign-in". A staff sign-in by agent number now
+  the tiles: an agent sees their own clients and papers, a unit manager his team's. A staff sign-in by agent number now
   carries the Delivery Book too (`lbLoginApps_`). The access-code sign-in is gone from the page; `login` still answers.
   `manifest.webmanifest` makes Add to Home Screen open it full screen. `tests/e2e-deliverybook.js` covers the roles.
+- **One sign-in opens every tool, and the app says what each person's day is** (18 October 2026: "when they log in they
+  should not have to log back into all the apps and have a proper layout so the agents and staff understand"). The app
+  opens on "Your day" (numbered steps for the role, each with its tool), then the tiles under Every day, Each week, When
+  you need it, The branch, Learn and Coming soon. `rroperations/sso.js`, loaded first in the head of the clients board,
+  its test, the dashboard, wall, stream, responses, the group client pages and the Premium Due Desk, writes the app's
+  session into those pages' own keys as `OPS:<token>` with the agent number; a code typed into a tool is left alone, and
+  signing out of the app clears what it wrote. The tool's backend asks RR Operations `lb.whoami` who the token is (server
+  to server, kept ten minutes; never a password): `tWhoOps_` in Transition.gs finds the person on the Agent Skill Bank by
+  number, else name, with every lock `tWho_` keeps (former agents, inactive); `tCodeOk_` opens the walls and dashboard to
+  the branch manager's token only. The Premium Due Desk asks `intel.ssoin` (`iActSsoIn_` in Intelligence.gs), which finds
+  the person on its access list and issues its own session. So a person must be on the Agent Skill Bank (board, groups)
+  and the Intelligence access list (desk) under the same agent number; otherwise that tool shows its own sign-in.
+  `RROPS_URL` overrides the RR Operations address in either project. `tests/test-sso.js` covers it.
 - **Test copies go to sales support and support@ too** (18 October 2026). In test mode every Log Book e-mail and the
   Delivery Book confirmation go to `DB_TEST_INBOX`, copied to rickyrampersadsalessupport@myguardiangroup.com and
   support@rickyrampersadbranch.com (`dbTestCc_`; the `DB_TEST_CC` property replaces the two).

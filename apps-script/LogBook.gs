@@ -789,6 +789,10 @@ function lbHandle_(b) {
   if (b.action === 'lb.login') return lbLogin_(b);
   var who = lbSession_(b.token);
   if (!who) return { ok: false, error: 'signed-out' };
+  /* The branch app's one sign-in (18 October 2026: "when they log in they should not have to log back into all the
+     apps"). The clients board, group clients and the Premium Due Desk run in other projects; they ask here who a token
+     belongs to and open as that person. Name, role and number only: never a password. */
+  if (b.action === 'lb.whoami') return { ok: true, name: who.name, role: who.role, agentNo: who.agentNo || '', unit: who.unit || '', email: who.email || '' };
   if (!who.isAgent && !opsCanUse_(who, 'logbook')) return { ok: false, error: 'The Log Book is not on your access. Ask the branch to add it.' };
   var staff = !who.isAgent;
   var STAFF_ONLY = { 'lb.queue': 1, 'lb.receive': 1, 'lb.return': 1, 'lb.transmittal': 1, 'lb.unsend': 1,

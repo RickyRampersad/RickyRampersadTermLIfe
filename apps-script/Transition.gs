@@ -2465,6 +2465,11 @@ function tStillTest_() {
  *  name and answers, so an agent's own code never opens it (1 October 2026, when the codes were handed out): an agent
  *  sees their own clients on the assignment board, with their agent number and code (tWho_). */
 function tCodeOk_(code) {
+  /* the branch manager signed in to the branch app opens the walls and the dashboard as the branch code does */
+  if (/^OPS:/i.test(String(code || '').trim())) {
+    var w = tWhoOps_(String(code).trim().slice(4));
+    return { ok: !!(w.ok && w.role === 'branch'), configured: true };
+  }
   code = String(code || '').trim().toUpperCase();
   var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
   return { ok: !!(branch && code === branch), configured: !!branch };
@@ -4447,6 +4452,7 @@ function tAs_(p, team, former, viaBranch) {
  *  Portal code), both, so a password opens only the view of the person it belongs to (1 October 2026: "agent Number, and
  *  name and code"). Never a password back out, and a refusal never says which of the two was wrong. */
 function tWho_(code, who) {
+  if (/^OPS:/i.test(String(code || '').trim())) return tWhoOps_(String(code).trim().slice(4));
   code = String(code || '').trim().toUpperCase();
   who = String(who || '').trim().replace(/\s+/g, ' ');
   var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
@@ -4491,6 +4497,48 @@ function tWho_(code, who) {
   return refuse(configured
     ? 'That agent number and password do not match. Check both, or ask the branch for your password.'
     : 'Not open yet: set TEAM_CODE in Service.gs, or give each person a Password on the Agent Skill Bank.');
+}
+
+
+/* ── the branch app's one sign-in ────────────────────────────────────────────
+   18 October 2026: "when they log in they should not have to log back into all the apps". The branch app
+   (rickyrampersadbranch.com/app) signs a person in to RR Operations by agent number and fact find password. Its pages hand
+   this project the session token as the code "OPS:<token>"; this asks RR Operations who the token belongs to (name, role,
+   agent number, never a password) and keeps the answer ten minutes. RROPS_URL in Script properties overrides the address. */
+var T_OPS = { URL: 'https://script.google.com/macros/s/AKfycbyRPFW_RdQItCeSMHvP2HYEN69Zv2HQMrLxw9IUWUlnUlkzjqaVFPdvjFcg_-b-zX78/exec', CACHE_S: 600 };
+function tOpsWho_(token) {
+  token = String(token || '').trim();
+  if (!/^[A-Za-z0-9]{20,80}$/.test(token)) return null;
+  var cache = CacheService.getScriptCache(), key = 'ops-who-' + token.slice(0, 48);
+  var hit = cache.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  var url = PropertiesService.getScriptProperties().getProperty('RROPS_URL') || T_OPS.URL;
+  try {
+    var r = UrlFetchApp.fetch(url, { method: 'post', contentType: 'text/plain;charset=utf-8', followRedirects: true, muteHttpExceptions: true,
+      payload: JSON.stringify({ action: 'lb.whoami', token: token }) });
+    var j = JSON.parse(r.getContentText());
+    if (!j || !j.ok) return null;
+    var v = { name: String(j.name || ''), role: String(j.role || ''), agentNo: String(j.agentNo || ''), email: String(j.email || '') };
+    cache.put(key, JSON.stringify(v), T_OPS.CACHE_S);
+    return v;
+  } catch (e) { return null; }
+}
+
+/** The person a branch app token belongs to, as the Agent Skill Bank has them: by agent number, else by name. The same
+ *  locks as a password: someone who was the agent on these books, or is inactive, never opens. */
+function tWhoOps_(token) {
+  var team = tTeam_(), former = tFormer_();
+  var refuse = function (msg) { return { ok: false, refused: true, configured: true, error: msg }; };
+  var v = tOpsWho_(token);
+  if (!v) return refuse('Your branch app sign-in has ended. Sign in again at rickyrampersadbranch.com/app.');
+  var key = function (s) { var d = String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/^[a-z]+/, ''); return /^\d+$/.test(d) ? String(Number(d)) : ''; };
+  var no = key(v.agentNo), person = null;
+  if (no) team.people.forEach(function (p) { if (!person && key(p.no) === no) person = p; });
+  if (!person && v.name) team.people.forEach(function (p) { if (!person && tNameKey_(p.name) && tNameKey_(p.name) === tNameKey_(v.name)) person = p; });
+  if (!person || !person.active || former[tNameKey_(person.name)]) {
+    return refuse('You are signed in to the branch app, but not on the Agent Skill Bank for this page. Ask the branch to add you.');
+  }
+  return tAs_(person, team, former, false);
 }
 
 /** The menu's "check the agent access": what the Agent Skill Bank gives the board, in words. Never a password. */
