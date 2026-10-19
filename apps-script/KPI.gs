@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19k';
+var SCRIPT_VERSION = '2026-10-19l';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -566,10 +566,11 @@ var SCHEDULE = {
     blocks: { KPI1: { time: '8am – 5pm', focus: 'Sales support, agents, licensing, training and branch operations; escalations and reporting', kpi: 'Lic/Staffing/SA/HR' } }
   },
   // The Branch Manager's personal assistant: the mail run, contracts to agents,
-  // deliveries and the diary.
+  // deliveries and the diary. He closes off at 5pm (Ricky, 19 October 2026),
+  // so his "Before you leave" comes at 4:30.
   pawan: {
-    hours: '8am – 4pm', lunch: '12:00 – 1:00pm',
-    blocks: { KPI1: { time: '8am – 4pm', focus: 'Mail and contracts, deliveries and collections, the Branch Manager\'s diary, scripts and transmittals', kpi: 'Mail Management / Contracts' } }
+    hours: '8am – 5pm', lunch: '12:00 – 1:00pm',
+    blocks: { KPI1: { time: '8am – 5pm', focus: 'Mail and contracts, deliveries and collections, the Branch Manager\'s diary, scripts and transmittals', kpi: 'Mail Management / Contracts' } }
   },
   ashley: {
     hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
