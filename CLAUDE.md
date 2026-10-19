@@ -4054,6 +4054,22 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   numbers beside the plan, and the check-in copy goes to the manager and sales support. The settlement tab is read for
   the calendar year, so from January the October to December months fall out of it until Branch Intelligence keeps
   the financial year.
+- **Pawan: GI renewals, premium collection and the day ahead; his day is flexible** (19 October 2026, v2026-10-19e:
+  "deep dive in terms of the renewals this month, especially with the general insurance and premiums collecting … are
+  we renewing persons' policies … he normally updates Salesforce events", then "Pawan's time is flexible … it's when he
+  plans his day … he does not have a time that he leaves … generally his email triggers at 6 p.m."). A GI renewal is a
+  `Risk_Details__c` whose To falls in the month; it is **renewed** when a newer `Risk_Details__c` carries the same policy
+  number (spacing ignored) and starts later, which is how the branch books one; a sold vehicle is nothing to renew;
+  past its To with no renewal reads "expired, not renewed"; no task on the record reads "no task yet" (`pawanGiBook_`,
+  `pawanGiStats_`: due, renewed, still to renew, lapsed, the renewal rate of those past their date against last month,
+  the premium renewing and renewed, how many days ahead renewal work starts). Premium collection is his open
+  `Renewa/PDl/Bill` tasks that read as a payment, premium or collection (`pawanCollections_`: open, past due, no due
+  date, "waiting on someone else", three weeks old, closed this month, median days to close). The day ahead reads his
+  Salesforce events (`pawanDayAhead_`): hours booked to 6pm, the open stretches, collections booked, and payments due
+  by tomorrow with nothing on the calendar. All on his morning and close-out mails (`pawanGiCard_`), the counts in the
+  subject. **Flexible** (`FLEX_DESKS`, `isFlex_`): never late, never marked absent by the clock, never covered, never
+  signed out at a finish; his morning mail goes from 5am with everyone's (until 11), and his close-out at 6pm
+  (`FLEX_CLOSE_AT`). Pinned in `tests/test-pawangi.js`.
 - **"Not getting attention" (the command centre)** closes things, not only
   moves them (18 October 2026). Each row has a status from the record's own
   list (Salesforce's `TaskStatus`; the letter sheet's own values), its history

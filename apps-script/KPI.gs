@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19d';
+var SCRIPT_VERSION = '2026-10-19e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -567,9 +567,11 @@ var SCHEDULE = {
   },
   // The Branch Manager's personal assistant: the mail run, contracts to agents,
   // deliveries and the diary.
+  // Flexible (19 October 2026): his day starts when he plans it and ends when he closes it out;
+  // his morning mail goes early with everyone's, his close-out at 6pm (FLEX_DESKS, FLEX_CLOSE_AT).
   pawan: {
-    hours: '8am – 4pm', lunch: '12:00 – 1:00pm',
-    blocks: { KPI1: { time: '8am – 4pm', focus: 'Mail and contracts, deliveries and collections, the Branch Manager\'s diary, scripts and transmittals', kpi: 'Mail Management / Contracts' } }
+    hours: '8am – 6pm', lunch: '12:00 – 1:00pm',
+    blocks: { KPI1: { time: '8am – 6pm', focus: 'Mail and contracts, deliveries and collections, the Branch Manager\'s diary, scripts and transmittals', kpi: 'Mail Management / Contracts' } }
   },
   ashley: {
     hours: '9am – 5pm', lunch: '1:00 – 2:00pm',
@@ -3595,7 +3597,7 @@ function housekeepingTick_() {
     // reports go out at 5 AM on mornings for everyone"), the Branch Manager's
     // first; the desk's own start is still what the register measures.
     if (!props.getProperty('bmday_' + day) && mins < BM_MAIL_AT + 20) return;
-    if (!sp || mins < MORNING_MAIL_AT || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
+    if (!sp || mins < MORNING_MAIL_AT || mins > (isFlex_(sid) ? 11 * 60 : sp.start + 20) || morningSent >= MORNING_MAIL_PER_RUN) return;
     if (props.getProperty('daystart_first_' + sid + '_' + day)) return;
     try { if (sendDayStart_(sid, day, 'first')) { sent.push(p.name + ' (morning)'); morningSent++; } } catch (e) {}
   });
@@ -3682,7 +3684,7 @@ function housekeepingTick_() {
   people.forEach(function (p) {
     var sid = String(p.staffId);
     if (!expected(sid)) return;
-    var at = endFor_(sid) - HK_LEAD_MIN;
+    var at = isFlex_(sid) ? FLEX_CLOSE_AT : endFor_(sid) - HK_LEAD_MIN;
     if (mins < at || mins > at + HK_WINDOW_MIN) return;
     var key = 'hkv2_' + sid + '_' + day;   // the official close-out (16 Oct); an earlier version's send does not stop it
     if (props.getProperty(key)) return;
@@ -3691,6 +3693,7 @@ function housekeepingTick_() {
   // At the finish, half an hour after the notice: signed out by the tracker.
   people.forEach(function (p) {
     var sid = String(p.staffId), endM = endFor_(sid);
+    if (isFlex_(sid)) return;   // a flexible day ends when he closes it out
     if (!present[sid] || mins < endM || mins > endM + 60 || props.getProperty('autoout_' + sid + '_' + day)) return;
     try { if (autoSignOut_(sid, day, endM)) sent.push(p.name + ' (signed out at finish)'); props.setProperty('autoout_' + sid + '_' + day, hhmm_(now)); } catch (e) {}
   });
@@ -3802,6 +3805,13 @@ function sendMorningNow() {
 // ---------------------------------------------------------------------------
 
 var MORNING_MAIL_AT = 5 * 60;          // the day's first run: 5:00am
+/** Desks with no fixed hours (Ricky, 19 October 2026: "Pawan's time is flexible. He does not have a cutoff. It's
+ *  when he plans his day, when he clicks it … he does not have a time that he leaves, is when he closes out his days.
+ *  But generally, his email triggers at 6 p.m."). Never late, never marked absent by the clock, never covered, never
+ *  signed out at a finish; the close-out goes at FLEX_CLOSE_AT. */
+var FLEX_DESKS = ['pawan'];
+var FLEX_CLOSE_AT = 18 * 60;
+function isFlex_(sid) { return FLEX_DESKS.indexOf(String(sid)) > -1; }
 var STAFF_MAIL_LEAD = 30;              // no longer used for timing: every report goes out from 5am (19 October 2026)
 var MORNING_MAIL_PER_RUN = 3;
 var BM_MAIL_AT = 5 * 60;               // 5:00am, the Branch Manager's operations review
@@ -3870,7 +3880,7 @@ function autoAbsentTick_(day, mins, present, absent) {
   if (!autoAbsentOn_(day)) return [];
   var props = PropertiesService.getScriptProperties(), out = [];
   DAY_MAIL_DESKS.concat(['ricky']).forEach(function (sid) {
-    if (present[sid] || absent[sid]) return;
+    if (present[sid] || absent[sid] || isFlex_(sid)) return;
     var sp = parseSpan_(scheduleFor_(sid).hours || '');
     if (!sp || mins <= sp.start + ABSENT_AFTER_MIN) return;   // the start minute itself is on time
     var key = 'autoabs_' + sid + '_' + day;
@@ -3945,7 +3955,7 @@ function coverTick_(day, mins, present, absent) {
   if (!autoAbsentOn_(day) || !sfkConfigured_()) return [];
   var props = PropertiesService.getScriptProperties(), out = [];
   COVER.POOL.forEach(function (sid) {
-    if (!absent[sid]) return;
+    if (!absent[sid] || isFlex_(sid)) return;
     var sp = parseSpan_(scheduleFor_(sid).hours || '');
     if (!sp || mins < sp.start + COVER_AFTER_MIN) return;
     var key = 'cover_' + sid + '_' + day;
@@ -10423,6 +10433,192 @@ function eventLine_(e) {
     (e.what || e.who ? '<div style="font-size:12px;color:' + MAIL.muted + '">' + esc_([e.what, e.who].filter(String).join(' · ')) + '</div>' : '') + '</div>';
 }
 
+/* ─────────────── Pawan: general insurance renewals, premium collection, the day ahead (19 October 2026) ───────────────
+ *  Ricky: "we deep dive in terms of the renewals this month, especially with the general insurance and premiums
+ *  collecting and analyzing the tasks associated with premium collecting and the renewals that are due. Are we renewing
+ *  persons' policies and what's happening? Also, the event planning his day … he normally updates Salesforce events."
+ *
+ *  A GI renewal is a Risk_Details__c whose To__c falls in the month. It counts as renewed when a newer Risk_Details__c
+ *  carries the same policy number (spacing ignored) and starts after the old one did: that is how the branch books a
+ *  renewal. A sold vehicle is not a renewal to chase. The work on each one is the tasks on that record; the premium
+ *  collection is every open Renewa/PDl/Bill task of his that reads as a payment, a premium or a collection. */
+var PAWAN_GI = { AHEAD: 30, PAY_RE: /payment|premium|collect|owing|balance|refund/i, MAX: 400 };
+
+function giKey_(p) { return String(p || '').replace(/\s+/g, '').toUpperCase(); }
+function giMonthEnd_(day) { var y = Number(day.slice(0, 4)), m = Number(day.slice(5, 7)); var d = new Date(Date.UTC(y, m, 0)); return Utilities.formatDate(d, 'UTC', 'yyyy-MM-dd'); }
+function giKind_(s) {
+  s = String(s || '');
+  if (/value adjust/i.test(s)) return 'value adjustment';
+  if (/proposal|kyc/i.test(s)) return 'proposal and KYC';
+  if (/payment|premium|collect/i.test(s)) return 'payment';
+  if (/risk to renew|renewal due/i.test(s)) return 'renewal notice';
+  if (/sold/i.test(s)) return 'vehicle sold';
+  return 'other';
+}
+
+/** Every GI risk expiring from the start of last month to AHEAD days from today, with its renewal and its tasks. */
+function pawanGiBook_(day) {
+  var monthStart = day.slice(0, 8) + '01', lastStart = shiftDays_(monthStart, -1).slice(0, 8) + '01', until = shiftDays_(day, PAWAN_GI.AHEAD);
+  var rows = sfkQuery_('SELECT Id, Policy__c, Account__c, Carrier__c, From__c, To__c, Vehicle__c, Vehicle_Status__c, Risk_Classification__c, ' +
+    'Premium_Due__c, Payments_Made__c, Total_Premiums_Gov_t_Inclusive__c, Agent__c, CreatedDate FROM Risk_Details__c WHERE (To__c >= ' + lastStart +
+    ' AND To__c <= ' + until + ') OR From__c >= ' + shiftDays_(lastStart, -45) + ' ORDER BY To__c ASC LIMIT ' + PAWAN_GI.MAX) || [];
+  var byPol = {};
+  rows.forEach(function (r) { var k = giKey_(r.Policy__c); if (k) (byPol[k] = byPol[k] || []).push(r); });
+  var due = rows.filter(function (r) { return r.To__c && r.To__c >= lastStart && r.To__c <= until; });
+  var ids = due.map(function (r) { return r.Id; }), tasks = {};
+  for (var i = 0; i < ids.length; i += 150) {
+    var chunk = ids.slice(i, i + 150);
+    try {
+      sfkQuery_('SELECT Id, WhatId, Subject, Status, IsClosed, ActivityDate, CreatedDate, CompletedDateTime, Owner.Name FROM Task WHERE WhatId IN (' +
+        chunk.map(soqlStr_).join(',') + ') ORDER BY CreatedDate ASC LIMIT 2000').forEach(function (t) { (tasks[t.WhatId] = tasks[t.WhatId] || []).push(t); });
+    } catch (e) {}
+  }
+  return due.map(function (r) {
+    var k = giKey_(r.Policy__c);
+    var next = (byPol[k] || []).filter(function (y) { return y.Id !== r.Id && y.From__c && r.From__c && y.From__c > r.From__c; })
+      .sort(function (a, b) { return a.From__c < b.From__c ? -1 : 1; })[0] || null;
+    var ts = tasks[r.Id] || [], open = ts.filter(function (t) { return !t.IsClosed; });
+    var sold = /sold/i.test(r.Vehicle_Status__c || '');
+    var state = next ? 'renewed' : sold ? 'sold' : r.To__c < day ? 'lapsed' : ts.length ? 'working' : 'untouched';
+    return { id: r.Id, policy: r.Policy__c || '', who: r.Account__c || '', carrier: r.Carrier__c || '', vehicle: r.Vehicle__c || '', to: r.To__c,
+      kind: /^TT\s*A/i.test(r.Policy__c || '') ? 'motor' : /^TT\s*F/i.test(r.Policy__c || '') ? 'property' : 'other',
+      premium: Number(r.Total_Premiums_Gov_t_Inclusive__c || r.Premium_Due__c || 0), paid: Number(r.Payments_Made__c || 0),
+      state: state, renewedOn: next ? String(next.CreatedDate || '').slice(0, 10) : '', newPremium: next ? Number(next.Total_Premiums_Gov_t_Inclusive__c || next.Premium_Due__c || 0) : 0,
+      tasks: ts.length, open: open.map(function (t) { return { s: t.Subject || '', kind: giKind_(t.Subject), status: t.Status || '', due: t.ActivityDate || '', age: daysBetween_(String(t.CreatedDate).slice(0, 10), day) }; }),
+      firstTask: ts.length ? String(ts[0].CreatedDate).slice(0, 10) : '', lead: ts.length ? daysBetween_(String(ts[0].CreatedDate).slice(0, 10), r.To__c) : null,
+      inMonth: r.To__c.slice(0, 7) === day.slice(0, 7), lastMonth: r.To__c < monthStart };
+  });
+}
+
+/** His premium collection work: open payment tasks, and how fast they close. */
+function pawanCollections_(day) {
+  var u = (sfkUsers_() || {}).pawan; if (!u) return null;
+  var from = shiftDays_(day, -90);
+  var rows = sfkQuery_("SELECT Id, Subject, Status, IsClosed, ActivityDate, CreatedDate, CompletedDateTime, What.Name, What.Type FROM Task WHERE OwnerId = '" + u.id +
+    "' AND Task_Type__c = 'Renewa/PDl/Bill' AND (IsClosed = false OR CompletedDateTime >= " + sfkUtcAt_(from, 0) + ') ORDER BY CreatedDate ASC LIMIT 1000') || [];
+  var pay = rows.filter(function (t) { return PAWAN_GI.PAY_RE.test(t.Subject || ''); });
+  var open = pay.filter(function (t) { return !t.IsClosed; }).map(function (t) {
+    return { id: t.Id, s: shorten_(t.Subject || '', 90), status: t.Status || '', due: t.ActivityDate || '', age: daysBetween_(String(t.CreatedDate).slice(0, 10), day),
+      late: !!(t.ActivityDate && t.ActivityDate < day), nodue: !t.ActivityDate, waiting: /waiting/i.test(t.Status || ''), what: (t.What && t.What.Name) || '' };
+  }).sort(function (a, b) { return (b.late - a.late) || (b.age - a.age); });
+  var month = day.slice(0, 7), closed = pay.filter(function (t) { return t.IsClosed && t.CompletedDateTime; });
+  var days = closed.map(function (t) { return daysBetween_(String(t.CreatedDate).slice(0, 10), String(t.CompletedDateTime).slice(0, 10)); }).sort(function (a, b) { return a - b; });
+  var allOpen = rows.filter(function (t) { return !t.IsClosed; });
+  return { open: open, late: open.filter(function (t) { return t.late; }).length, nodue: open.filter(function (t) { return t.nodue; }).length,
+    waiting: open.filter(function (t) { return t.waiting; }).length, stale: open.filter(function (t) { return t.age >= 21; }).length,
+    closedMonth: closed.filter(function (t) { return String(t.CompletedDateTime).slice(0, 7) === month; }).length,
+    median: days.length ? days[Math.floor(days.length / 2)] : null, allOpen: allOpen.length,
+    otherOpen: allOpen.length - open.length, waitingAll: allOpen.filter(function (t) { return /waiting/i.test(t.Status || ''); }).length };
+}
+
+/** The month's renewals in numbers, and last month's for comparison. */
+function pawanGiStats_(book, day) {
+  var count = function (list, st) { return list.filter(function (x) { return x.state === st; }).length; };
+  var mk = function (list) {
+    var live = list.filter(function (x) { return x.state !== 'sold'; }), past = live.filter(function (x) { return x.to < day; });
+    return { all: list.length, live: live.length, renewed: count(list, 'renewed'), lapsed: count(list, 'lapsed'), working: count(list, 'working'),
+      untouched: count(list, 'untouched'), sold: count(list, 'sold'),
+      rate: past.length ? Math.round(100 * past.filter(function (x) { return x.state === 'renewed'; }).length / past.length) : null,
+      premium: live.reduce(function (s, x) { return s + x.premium; }, 0),
+      premiumRenewed: live.filter(function (x) { return x.state === 'renewed'; }).reduce(function (s, x) { return s + (x.newPremium || x.premium); }, 0),
+      leads: live.map(function (x) { return x.lead; }).filter(function (n) { return n != null; }).sort(function (a, b) { return a - b; }) };
+  };
+  var month = mk(book.filter(function (x) { return x.inMonth; })), last = mk(book.filter(function (x) { return x.lastMonth; }));
+  var ahead = book.filter(function (x) { return !x.inMonth && !x.lastMonth; });
+  month.leadMedian = month.leads.length ? month.leads[Math.floor(month.leads.length / 2)] : null;
+  return { month: month, last: last, ahead: ahead,
+    late: book.filter(function (x) { return x.state === 'lapsed' && !x.lastMonth; }),
+    cold: book.filter(function (x) { return x.state === 'untouched' && daysBetween_(day, x.to) <= 21; }).sort(function (a, b) { return a.to < b.to ? -1 : 1; }) };
+}
+
+/** The day ahead from his calendar: hours booked, gaps, travel without a place, collections due with nothing booked. */
+function pawanDayAhead_(day, events, coll) {
+  var lines = [], startD = 8 * 60, endD = FLEX_CLOSE_AT;
+  var timed = events.filter(function (e) { return !e.allDay && e.start != null; });
+  var booked = timed.reduce(function (s, e) { return s + Math.max(0, Math.min(endD, e.end != null ? e.end : e.start + 30) - Math.max(startD, e.start)); }, 0);
+  var gaps = [], t = startD;
+  timed.slice().sort(function (a, b) { return a.start - b.start; }).forEach(function (e) { if (e.start - t >= 90) gaps.push([t, e.start]); t = Math.max(t, e.end != null ? e.end : e.start + 30); });
+  if (endD - t >= 90) gaps.push([t, endD]);
+  if (timed.length) lines.push({ bad: booked < 120, html: '<b>' + Math.round(booked / 60 * 10) / 10 + ' hours</b> of the day to 6pm booked on the calendar' +
+    (gaps.length ? '; open from ' + gaps.slice(0, 3).map(function (g) { return twelve_(mmText_(g[0])) + ' to ' + twelve_(mmText_(g[1])); }).join(', ') + '. Put the collections and deliveries there.' : '.') });
+  var collect = events.filter(function (e) { return PAWAN_GI.PAY_RE.test(e.s + ' ' + e.what) || /deliver|pick ?up|drop/i.test(e.s); });
+  if (collect.length) lines.push({ bad: false, html: '<b>' + collect.length + '</b> collection' + (collect.length === 1 ? '' : 's') + ' or deliver' + (collect.length === 1 ? 'y' : 'ies') + ' booked today.' });
+  if (coll) {
+    var dueNow = coll.open.filter(function (c) { return c.due && c.due <= shiftDays_(day, 1); });
+    var unbooked = dueNow.filter(function (c) {
+      var key = (String(c.s).match(/[A-Z]{2,3}\s?\d{3,4}|TT\s?[A-Z]{3}\s?\d{5,8}|\d{7,10}/i) || [''])[0].replace(/\s+/g, '').toUpperCase();
+      return !events.some(function (e) { var hay = (e.s + ' ' + e.what + ' ' + e.who).replace(/\s+/g, '').toUpperCase(); return (key && hay.indexOf(key) > -1) || (c.what && hay.indexOf(c.what.replace(/\s+/g, '').toUpperCase()) > -1); });
+    });
+    if (unbooked.length) lines.push({ bad: true, html: '<b style="color:' + MAIL.red + '">' + unbooked.length + ' payment' + (unbooked.length === 1 ? '' : 's') + ' due by tomorrow with nothing on the calendar</b>: ' +
+      esc_(unbooked.slice(0, 4).map(function (c) { return shorten_(c.s, 50); }).join('; ')) + '. Book the call or the collection.' });
+  }
+  return lines;
+}
+
+/** The renewals and collections card for his morning mail. */
+function pawanGiCard_(day, st, coll) {
+  if (!st && !coll) return '';
+  var money = function (v) { return 'TT$' + Math.round(Number(v || 0)).toLocaleString(); };
+  var m = st ? st.month : null, l = st ? st.last : null, mon = Utilities.formatDate(new Date(day + 'T12:00:00Z'), 'UTC', 'MMMM');
+  var out = '';
+  if (m) {
+    out += sectionLabel_('General insurance renewals · ' + mon) + statTiles_([
+      { value: m.live, label: 'due this month' },
+      { value: m.renewed, label: 'renewed', color: MAIL.green },
+      { value: m.working + m.untouched, label: 'still to renew', color: m.working + m.untouched ? MAIL.amber : MAIL.navy },
+      { value: m.lapsed, label: 'past expiry, not renewed', color: m.lapsed ? MAIL.red : MAIL.navy }
+    ]);
+    var said = [];
+    said.push({ bad: m.rate != null && m.rate < 80, html: (m.rate == null ? 'None of this month\'s has reached its date yet.' : '<b>' + m.rate + '%</b> of the renewals that have reached their date this month are renewed') +
+      (l && l.rate != null ? ', against <b>' + l.rate + '%</b> last month (' + l.renewed + ' of ' + (l.live) + ').' : '.') });
+    if (m.premium) said.push({ bad: false, html: money(m.premium) + ' of premium renews this month; ' + money(m.premiumRenewed) + ' of it is renewed so far.' });
+    if (m.leadMedian != null) said.push({ bad: m.leadMedian < 21, html: 'Renewal work starts a median <b>' + m.leadMedian + ' days</b> before the expiry date' + (m.leadMedian < 21 ? '. Three weeks ahead gives the client time to pay.' : '.') });
+    if (m.untouched) said.push({ bad: true, html: '<b style="color:' + MAIL.red + '">' + m.untouched + '</b> due this month with no task on the record at all.' });
+    if (m.sold) said.push({ bad: false, html: m.sold + ' vehicle' + (m.sold === 1 ? '' : 's') + ' sold: nothing to renew.' });
+    out += intelBox_(said, 'Are we renewing?');
+    var list = st.late.concat(st.cold).concat(
+      st.ahead.filter(function (x) { return x.state === 'working'; }).slice(0, 4));
+    var seen = {};
+    list = list.filter(function (x) { if (seen[x.id]) return false; seen[x.id] = 1; return true; }).slice(0, 12);
+    if (list.length) out += sectionLabel_('Renewals to act on') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' + list.map(function (x) {
+      var tag = x.state === 'lapsed' ? '<b style="color:' + MAIL.red + '">expired ' + daysBetween_(x.to, day) + 'd ago, not renewed</b>'
+        : x.state === 'untouched' ? '<b style="color:' + MAIL.red + '">no task yet</b> · expires ' + esc_(shortDate_(x.to))
+        : 'expires ' + esc_(shortDate_(x.to));
+      var work = x.open.length ? x.open.map(function (o) { return esc_(o.kind) + ' (' + esc_(o.status.toLowerCase()) + (o.due && o.due < day ? ', <span style="color:' + MAIL.red + '">' + daysBetween_(o.due, day) + 'd past due</span>' : !o.due ? ', no due date' : '') + ')'; }).join('; ') : '';
+      return '<div style="font-size:12.5px;line-height:1.45;padding:6px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(shorten_(x.who, 34)) + '</b> · ' + esc_(x.policy) +
+        (x.vehicle ? ' · ' + esc_(x.vehicle) : '') + ' · ' + esc_(x.kind) + (x.premium ? ' · ' + money(x.premium) : '') + '<div>' + tag + (work ? ' · ' + work : '') + '</div></div>';
+    }).join('') + '</div>';
+  }
+  if (coll) {
+    out += sectionLabel_('Premium collection') + statTiles_([
+      { value: coll.open.length, label: 'payments open' },
+      { value: coll.late, label: 'past their due date', color: coll.late ? MAIL.red : MAIL.navy },
+      { value: coll.nodue, label: 'with no due date', color: coll.nodue ? MAIL.amber : MAIL.navy },
+      { value: coll.closedMonth, label: 'collected and closed this month', color: MAIL.green }
+    ]);
+    var cl = [];
+    if (coll.median != null) cl.push({ bad: coll.median > 10, html: 'A payment task closes in a median <b>' + coll.median + ' days</b> (last 90 days).' });
+    if (coll.waiting) cl.push({ bad: coll.waiting >= 5, html: '<b>' + coll.waiting + '</b> of the open payments read "Waiting on someone else". Say who in the Chatter, and when you will chase again.' });
+    if (coll.stale) cl.push({ bad: true, html: '<b style="color:' + MAIL.red + '">' + coll.stale + '</b> open three weeks or more.' });
+    if (coll.otherOpen) cl.push({ bad: false, html: coll.otherOpen + ' other renewal and billing task' + (coll.otherOpen === 1 ? '' : 's') + ' open (value adjustments, proposals).' });
+    out += intelBox_(cl, 'How collection is going');
+    if (coll.open.length) out += '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' + coll.open.slice(0, 10).map(function (c) {
+      return '<div style="font-size:12.5px;line-height:1.45;padding:5px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(c.s) + '</b>' +
+        (c.what ? ' <span style="color:' + MAIL.muted + '">· ' + esc_(c.what) + '</span>' : '') + ' · ' + esc_(c.status.toLowerCase()) + ' · ' + c.age + 'd open' +
+        (c.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· due ' + esc_(shortDate_(c.due)) + '</span>' : c.nodue ? ' <span style="color:' + MAIL.amber + '">· no due date</span>' : ' · due ' + esc_(shortDate_(c.due))) + '</div>';
+    }).join('') + (coll.open.length > 10 ? '<div style="font-size:12px;color:' + MAIL.muted + ';padding-top:4px">and ' + (coll.open.length - 10) + ' more.</div>' : '') + '</div>';
+  }
+  return out;
+}
+
+/** Everything the morning mail needs from the renewals side, each part optional. */
+function pawanGiIntel_(day) {
+  var book = null, st = null, coll = null;
+  try { book = pawanGiBook_(day); st = pawanGiStats_(book, day); } catch (e) { Logger.log('pawanGiBook_: ' + e); }
+  try { coll = pawanCollections_(day); } catch (e) { Logger.log('pawanCollections_: ' + e); }
+  return { book: book, st: st, coll: coll };
+}
+
 function pawanItems_(day) {
   var ev = [], tasks = [];
   try { ev = sfkEventsFor_('pawan', day, shiftDays_(day, 1)); } catch (e) {}
@@ -10445,6 +10641,7 @@ function sendPawanDay_(day, kind) {
   var answers = {};
   try { answers = progAnswers_(sid, day, 'errand-progress'); var la = progAnswers_(sid, day, 'errand-leave'); Object.keys(la).forEach(function (k) { answers[k] = la[k]; }); } catch (e) {}
   var signIn = signedInAt_(sid, day), nowM = minutesOf_(hhmm_(new Date()));
+  var gix = { st: null, coll: null }; try { gix = pawanGiIntel_(day); } catch (e) {}
 
   // What the calendar says.
   var lines = [], b_ = function (x) { return '<b>' + esc_(x) + '</b>'; }, red = function (x) { return '<b style="color:' + MAIL.red + '">' + esc_(x) + '</b>'; };
@@ -10458,6 +10655,12 @@ function sendPawanDay_(day, kind) {
   if (clash.length) lines.push({ bad: true, html: red(clash.length + ' clash' + (clash.length > 1 ? 'es' : '')) + ': ' + esc_(clash.join('; ')) + '. Move one, or tell Mr Rampersad which comes first.' });
   var noPlace = it.events.filter(function (e) { return !e.where; }).length;
   if (noPlace) lines.push({ bad: true, html: red(noPlace) + ' with no place on it. Put the location on every errand.' });
+  try { pawanDayAhead_(day, it.events, gix.coll).forEach(function (l) { lines.push(l); }); } catch (e) {}
+  if (gix.st && gix.st.month) {
+    var gm = gix.st.month;
+    lines.push({ bad: gm.lapsed > 0 || gm.untouched > 0, html: 'GI renewals this month: ' + b_(gm.renewed + ' of ' + gm.live) + ' renewed' + (gm.lapsed ? ', ' + red(gm.lapsed + ' past expiry and not renewed') : '') + (gm.untouched ? ', ' + red(gm.untouched + ' with no task') : '') + '.' });
+  }
+  if (gix.coll && gix.coll.open.length) lines.push({ bad: gix.coll.late > 0, html: b_(gix.coll.open.length) + ' premium payment' + (gix.coll.open.length === 1 ? '' : 's') + ' to collect, ' + (gix.coll.late ? red(gix.coll.late + ' past due') : '0 past due') + '.' });
   if (it.tasks.length) lines.push({ bad: it.tasks.some(function (t) { return t.late; }), html: b_(it.tasks.length) + ' Salesforce task' + (it.tasks.length === 1 ? '' : 's') + ' due or overdue, ' + it.tasks.filter(function (t) { return t.late; }).length + ' overdue.' });
   if (gi.length) lines.push({ bad: false, html: b_(gi.length) + ' general insurance polic' + (gi.length === 1 ? 'y expires' : 'ies expire') + ' in the next ' + PAWAN_GI_DAYS + ' days, first on ' + b_(shortDate_(gi[0].due)) + '. Each needs its renewal notice sent and a call.' });
   try { var pil = innovationLine_((sfkInnovation_(day) || {})[sid], day, sid); if (pil) lines.push(pil); } catch (e) {}
@@ -10496,6 +10699,7 @@ function sendPawanDay_(day, kind) {
       it.tasks.slice(0, 10).map(function (t) { return dayStartTaskLine_(t, day); }).join('') + '</div>' : '') +
     (gi.length ? sectionLabel_('General insurance expiring · next ' + PAWAN_GI_DAYS + ' days') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' +
       gi.slice(0, 12).map(function (g) { return '<div style="font-size:12.5px;padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(shortDate_(g.due)) + '</b> · ' + esc_(g.s) + (g.carrier ? ' <span style="color:' + MAIL.muted + '">· ' + esc_(g.carrier) + '</span>' : '') + '</div>'; }).join('') + '</div>' : '') +
+    (kind !== 'midday' ? pawanGiCard_(day, gix.st, gix.coll) : '') +
     (kind === 'first' ? motorCard_(day) : '') +
     (kind !== 'midday' ? sectionLabel_('Tomorrow') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' +
       (tomorrow.length ? tomorrow.map(eventLine_).join('') : '<div style="font-size:13px;color:' + (kind === 'leave' ? MAIL.red : MAIL.muted) + ';padding:8px 0">Nothing on tomorrow\'s calendar yet.</div>') + '</div>' : '') +
@@ -10503,7 +10707,8 @@ function sendPawanDay_(day, kind) {
       'Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
   var mail = { to: to,
     subject: (kind === 'first' ? 'Your day' : kind === 'midday' ? 'Progress check' : 'Before you leave') + ' · ' + name + ' · ' + shortDate_(day) +
-      ' · ' + it.events.length + ' on the calendar, ' + it.tasks.length + ' task' + (it.tasks.length === 1 ? '' : 's'),
+      ' · ' + it.events.length + ' on the calendar, ' + it.tasks.length + ' task' + (it.tasks.length === 1 ? '' : 's') +
+      (gix.st && gix.st.month && gix.st.month.live ? ' · renewals ' + gix.st.month.renewed + '/' + gix.st.month.live : ''),
     htmlBody: shell_(head, name + ' · ' + prettyDate_(day), body) };
   var cc = dayStartCc_(to, sid);
   if (cc.length) mail.cc = cc.join(',');
@@ -12432,7 +12637,7 @@ function minutesOf_(hhmm) {
 }
 function lateBy_(staffId, at) {
   var mins = minutesOf_(at);
-  if (mins == null) return 0;
+  if (mins == null || isFlex_(staffId)) return 0;
   var over = mins - startFor_(staffId);
   return over > ATT_GRACE_MIN ? over : 0;
 }
@@ -12440,6 +12645,7 @@ function lateBy_(staffId, at) {
 function attWord_(staffId, at) {
   var mins = minutesOf_(at);
   if (mins == null) return '';
+  if (isFlex_(staffId)) return 'on time';   // a flexible day starts when he plans it
   var start = startFor_(staffId);
   return mins < start ? 'early' : mins - start > ATT_GRACE_MIN ? 'late' : 'on time';
 }
