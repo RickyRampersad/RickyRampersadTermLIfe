@@ -30,7 +30,10 @@ const mails = [];
 env.MailApp = { sendEmail: m => mails.push(m), getRemainingDailyQuota: () => 90 };
 const writes = [];
 env.sfkInsert_ = (o, b) => { writes.push([o, b]); return 'FEED'; };
-env.cmdChatter_ = ids => ({ [ids[0]]: [{ at: '2026-10-18T14:00:00Z', day: '2026-10-18', by: 'Ricky Rampersad', text: 'Branch Manager · Sun 18 Oct 9:00am\n\nPlease call the client today.' }] });
+env.cmdChatter_ = ids => ({ [ids[0]]: [
+  { at: '2026-10-18T14:00:00Z', day: '2026-10-18', by: 'Ricky Rampersad', text: 'Branch Manager · Sun 18 Oct 9:00am\n\nPlease call the client today.' },
+  { at: '2026-10-17T14:00:00Z', day: '2026-10-17', by: 'Elizabeth Lee', text: 'Client asked for a call on Monday morning.', reply: true },
+  { at: '2026-10-16T14:00:00Z', day: '2026-10-16', by: 'Elizabeth Lee', text: 'First call: no answer, voicemail left.' }] });
 const P = env.PropertiesService.getScriptProperties();
 const q = s => Object.fromEntries(new URL(s).searchParams);
 
@@ -69,6 +72,9 @@ const url = new URL(env.replyUrl_('akaash', DAY, 'um'));
 const page = env.replyClick_({ parameter: Object.fromEntries(url.searchParams) }).getContent();
 ok('the page has a box under every task, each with its anchor', (page.match(/name="c_00TU/g) || []).length === 35 && new RegExp('id="i' + stored[0].id + '"').test(page));
 ok('and no Salesforce link for him', !/sf\.example\/00TU/.test(page));
+ok('and the whole history a tap away, oldest included', /The whole history \(3 notes\)/.test(page) && /First call: no answer, voicemail left\./.test(page));
+ok('a task with no notes says so', /No notes on Chatter yet\./.test(page));
+ok('the box says he can speak his comment', /Type or speak your comment/.test(page));
 ok('and the latest note on the task, so he sees the thread', /Branch Manager · Sun 18 Oct 9:00am|Branch Manager · Sun 18 Oct/.test(page) && /Please call the client today\./.test(page));
 writes.length = 0;
 const saved = env.replyPost_({ parameter: Object.assign(Object.fromEntries(url.searchParams), { ['c_' + stored[3].id]: 'Spoke to Darryl: he calls the client at 2 today.' }) }).getContent();

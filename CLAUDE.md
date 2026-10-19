@@ -4086,7 +4086,8 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
 - **A desk with no Salesforce login** (`noSfLogin_`, 19 October 2026: Akaash
   is not a registered Salesforce user). His task links go to his own comment
   page (`f=um#i<id>`), never Salesforce; the page shows the latest two notes on
-  each task and posts his comment to Chatter headed "Unit Manager · <name>";
+  each task with the whole history a tap away, invites him to speak his comment
+  (the keyboard microphone), and posts it to Chatter headed "Unit Manager · <name>";
   `um_posts_` counts them. The morning opens with "Your agents · goals and
   activity" (`teamFFCard_`) and "What you are doing" (`umSelfCard_`: plan,
   numbers, account, comments). `unitAgents_` lists each agent once.
