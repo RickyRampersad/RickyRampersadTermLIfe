@@ -3370,3 +3370,9 @@ servicing work".
   the person cc Ricky and sales support, flags two in a week. The next morning's
   plan opens with yesterday first (`yesterdayOpen_`, inputs yr_/yd_) and does not
   save until it is accounted for (`ncdone_`). Pinned in `tests/test-score.js`.
+- **The BMA's page** (`bmaScore_`, 19 October 2026): Kamla's plan page opens on
+  her job: her desks today (a dot each: in, planned, absent), Mr Rampersad's
+  instructions with no note yet (hers and her desks'), the desks' work gone
+  quiet (bars by desk, hers as "You"), Query Pal by age; each opens a card below
+  the plan. `planTally_` counts the day's plan live until the block closes, so
+  Before you leave and the 4pm report no longer read "no plan" before the close.

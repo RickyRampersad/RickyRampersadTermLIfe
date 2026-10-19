@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19f';
+var SCRIPT_VERSION = '2026-10-19g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -5423,7 +5423,7 @@ function sbBars_(vals, today, label) {
     var h = has ? (v > 0 ? Math.max(2, Math.round(room * v / max)) : 0) : 0;
     if (h) g += '<rect x="' + X.toFixed(1) + '" y="' + (base - h) + '" width="' + bw.toFixed(1) + '" height="' + h + '" rx="2" fill="' + (isT ? SB.NAVY : SB.SOFT) + '"/>';
     g += '<text x="' + cx.toFixed(1) + '" y="' + (base - h - 2.5) + '" text-anchor="middle" font-size="8" font-weight="700" fill="' + (isT ? SB.NAVY : SB.MUTED) + '">' + (has ? v : '·') + '</text>';
-    g += '<text x="' + cx.toFixed(1) + '" y="44" text-anchor="middle" font-size="7.5" font-weight="' + (isT ? 800 : 600) + '" fill="' + (isT ? SB.NAVY : SB.MUTED) + '">' + sbLetter_(x.d) + '</text>';
+    g += '<text x="' + cx.toFixed(1) + '" y="44" text-anchor="middle" font-size="7.5" font-weight="' + (isT ? 800 : 600) + '" fill="' + (isT ? SB.NAVY : SB.MUTED) + '">' + esc_(x.lab || sbLetter_(x.d)) + '</text>';
   });
   return '<svg viewBox="0 0 120 46" role="img" aria-label="' + esc_(label || 'last five working days') + '">' + g + '</svg>';
 }
@@ -5562,6 +5562,67 @@ function ssScore_(sid, day) {
     { v: late + due + ahead, tone: late ? 'r' : '', l: late + ' overdue · ' + due + ' due today · ' + ahead + ' ahead', chart: sbSplit_([{ n: late, c: SB.RED }, { n: due, c: SB.AMBER }, { n: ahead, c: SB.SOFT }]), go: 'p-blocks' },
     { v: tasks.length ? shut + ' of ' + tasks.length : 'Not saved', tone: tasks.length ? (shut >= tasks.length ? 'g' : '') : 'r', l: tasks.length ? 'planned tasks closed' : 'your plan for today', chart: sbMeter_(shut, tasks.length, shut >= tasks.length && tasks.length ? 'g' : ''), go: 'p-blocks' },
     { v: c ? Math.round(100 * n / c) + '%' : '—', tone: nt, l: n + ' of ' + c + ' closed with your note · ' + Number(me.notes || 0) + ' notes', chart: sbMeter_(n, c, nt), go: 'p-closed' }]), closed: closedListCard_(me, 'p-closed') };
+}
+
+/** Planned and done for a day: the block's own tally once it is closed, otherwise
+ *  the plan read live. One plan a day now, so the tally only lands at the close,
+ *  and until then the 4pm report and Before you leave read "no plan" (19 Oct 2026). */
+function planTally_(sid, day, plans) {
+  var of = 0, ach = 0, open = false;
+  Object.keys(plans || {}).forEach(function (b) { var o = n_(plans[b].Of) || 0; if (o) { of += o; ach += n_(plans[b].Achieved) || 0; } else open = true; });
+  if (of || !open) return { of: of, ach: ach };
+  try { var t = dayTasks_(sid, day).filter(function (x) { return x.planned; }); return { of: t.length, ach: t.filter(function (x) { return x.closed; }).length }; } catch (e) { return { of: 0, ach: 0 }; }
+}
+/** The Branch Manager's Assistant: her plan page opens on her job, not a desk's.
+ *  Ricky (19 Oct 2026): "she is supposed to be managing the staff, managing
+ *  escalations, attending to the branch manager ... ensuring the operations
+ *  are intact, training." So: her desks today (in, planned, closing), Mr
+ *  Rampersad's instructions with no note yet (hers and her desks'), the desks'
+ *  work gone quiet, and Query Pal by age. Each opens a card below the plan. */
+function bmaScore_(sid, day) {
+  var team = REBALANCE.POOL.filter(function (s) { return s !== sid; });
+  var att = {}; try { sheetObjects_(attSheet_()).forEach(function (r) { if (isoDay_(r.Date) === day) att[String(r.StaffId)] = r; }); } catch (e) {}
+  var dk = {}; try { dk = deskToday_(day) || {}; } catch (e) {}
+  var ob = {}; try { ob = sfkOpenBook_(day) || {}; } catch (e) {}
+  var rows = team.map(function (s) {
+    var a = att[s] || {}, pl = {}; try { pl = planRows_(s, day); } catch (e) {}
+    var planned = Object.keys(pl).some(function (b) { try { return planItemsOf_(pl[b].Items).length > 0; } catch (e) { return false; } });
+    var late = 0; Object.keys(ob[s] || {}).forEach(function (ty) { (ob[s][ty] || []).forEach(function (t) { if (t.late) late++; }); });
+    var d = dk[s] || {};
+    return { sid: s, name: nameFor_(s), absent: String(a.Status || '').toLowerCase() === 'absent', inAt: timeStr_(a.FirstSignIn), outAt: timeStr_(a.SignedOut),
+      planned: planned, closed: Number(d.closed || 0), noted: Number(d.noted || 0), late: late, nc: notClosedOn_(s, workDays_(shiftDays_(day, -1), 1)[0]) };
+  });
+  var plannedN = rows.filter(function (r) { return r.planned; }).length;
+  var w = { ignored: [] }; try { w = bmWaiting_(day); } catch (e) {}
+  var me = bkNk_(nameFor_(sid)), mates = {}; rows.forEach(function (r) { mates[bkNk_(r.name)] = 1; });
+  var instr = (w.ignored || []).filter(function (t) { return bkNk_(t.owner) === me || mates[bkNk_(t.owner)]; });
+  var mine = instr.filter(function (t) { return bkNk_(t.owner) === me; }).length;
+  var quiet = []; try { quiet = cmdItems_(sid, day).filter(function (x) { return x.src === 'Salesforce'; }); } catch (e) {}
+  var qp = []; try { qp = openQueries_(); } catch (e) {}
+  var old = qp.filter(function (x) { return Number(x.days || 0) > 7; }).length, mid = qp.filter(function (x) { var n = Number(x.days || 0); return n > 2 && n <= 7; }).length;
+  var per = team.concat([sid]).map(function (s) { return { d: s, lab: s === sid ? 'You' : String(nameFor_(s)).split(' ')[0].slice(0, 6), v: quiet.filter(function (x) { return x.who === s; }).length }; });
+  var colour = function (r) { return r.absent ? SB.RED : r.planned ? SB.GREEN : r.inAt ? SB.AMBER : SB.TRACK; };
+  var html = scoreboard_([
+    { v: plannedN + ' of ' + rows.length, tone: plannedN < rows.length ? 'a' : 'g', l: 'your desks planned today · a dot each', chart: sbDots_(rows.map(function (r) { return { c: colour(r), t: r.name + ': ' + (r.absent ? 'absent' : r.planned ? 'planned' : r.inAt ? 'in, no plan yet' : 'not in yet') }; })), go: 'b-desks' },
+    { v: instr.length, tone: instr.length ? 'r' : 'g', l: mine + ' yours · ' + (instr.length - mine) + ' on your desks · Mr Rampersad\'s, no note yet', chart: sbSplit_([{ n: mine, c: SB.RED }, { n: instr.length - mine, c: SB.AMBER }]), go: 'b-instr' },
+    { v: quiet.length, tone: quiet.length ? 'a' : 'g', l: 'gone quiet on the desks · by desk', chart: sbBars_(per, '', 'quiet tasks by desk'), go: 'b-quiet' },
+    { v: qp.length, tone: old ? 'r' : '', l: old + ' older than a week · Query Pal open', chart: sbSplit_([{ n: qp.length - old - mid, c: SB.SOFT }, { n: mid, c: SB.AMBER }, { n: old, c: SB.RED }]), go: 'b-qp' }]);
+  var card = function (id, title, body, foot) { return '<div class="card" id="' + id + '"><div class="bh">' + esc_(title) + '</div>' + body + (foot ? '<div class="bf" style="margin-top:6px">' + foot + '</div>' : '') + '</div>'; };
+  var cards =
+    card('b-desks', 'Your desks today', rows.map(function (r) {
+      var c = r.closed;
+      return '<div class="ln"><b>' + esc_(String(r.name).split(' ')[0]) + '</b> · ' + (r.absent ? '<b style="color:#DC3F3F">absent</b>' : r.inAt ? 'in ' + esc_(twelve_(r.inAt)) : '<span style="color:#C26A04">not in yet</span>') +
+        ' · ' + (r.planned ? 'planned' : '<b style="color:#C26A04">no plan</b>') + ' · closed ' + c + (c ? ' (' + Math.round(100 * r.noted / c) + '% noted)' : '') +
+        (r.late ? ' · <b style="color:#DC3F3F">' + r.late + ' overdue</b>' : '') + (r.outAt ? ' · signed out ' + esc_(twelve_(r.outAt)) : '') + (r.nc ? ' · <span style="color:#B4322B">yesterday not closed</span>' : '') + '</div>';
+    }).join(''), 'In, planned and closing: who needs you first.') +
+    card('b-instr', 'Mr Rampersad\'s instructions · no note yet', instr.length ? instr.slice(0, 12).map(function (t) {
+      return '<div class="ln"><b>' + esc_(String(t.owner).split(' ')[0]) + '</b> · ' + esc_(t.subject) + (t.late ? ' <span class="br2">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : '') + '</div>'; }).join('') : '<div class="ln">None waiting. Well done.</div>',
+      'Yours first; then see each desk puts its note on the task.') +
+    card('b-quiet', 'Gone quiet on the desks · untouched ' + CMD.QUIET_DAYS + '+ days', quiet.length ? quiet.slice(0, 12).map(function (x) {
+      return '<div class="ln"><b>' + esc_(String(nameFor_(x.who)).split(' ')[0]) + '</b> · ' + esc_(shorten_(x.title, 90)) + ' <span class="br2">· ' + esc_(x.why) + '</span></div>'; }).join('') + (quiet.length > 12 ? '<div class="bf">and ' + (quiet.length - 12) + ' more.</div>' : '') : '<div class="ln">Nothing has gone quiet.</div>') +
+    card('b-qp', 'Query Pal · open, oldest first', qp.length ? qp.slice(0, 8).map(function (x) {
+      return '<div class="ln">' + esc_(x.ref) + ' · ' + esc_(shorten_(x.subject || x.type, 70)) + ' <span class="br2">· ' + (x.days != null ? x.days + ' day' + (x.days === 1 ? '' : 's') : '') + (x.assigned ? ' · with ' + esc_(x.assigned) : '') + '</span></div>'; }).join('') : '<div class="ln">No open queries.</div>');
+  return { html: html, closed: cards };
 }
 
 /** Pawan: Your errands. */
@@ -8622,7 +8683,7 @@ function sendBmaReport_(day) {
     var a = att[sid] || {}, d1 = null, last = null, of = 0, ach = 0;
     try { d1 = sfkDayFor_(sid, day); } catch (e) {}
     try { last = lastSfAction_(sid, day); } catch (e) {}
-    try { var pl = planRows_(sid, day); Object.keys(pl).forEach(function (b) { of += n_(pl[b].Of) || 0; ach += n_(pl[b].Achieved) || 0; }); } catch (e) {}
+    try { var tl = planTally_(sid, day, planRows_(sid, day)); of = tl.of; ach = tl.ach; } catch (e) {}
     var book = ob[sid] || {}, over = 0, quiet = 0; Object.keys(book).forEach(function (t) { book[t].forEach(function (x) { if (x.late) over++; if (x.touched >= 5) quiet++; }); });
     var blocks = blocksSubmittedOn_(sid, day).length, owed = blocksOwed_(sid), un = d1 ? d1.closed.filter(function (t) { return !t.noted; }).length : 0;
     var nm = String(nameFor_(sid)).split(' ')[0], absent = String(a.Status || '').toLowerCase() === 'absent';
@@ -8675,7 +8736,7 @@ function sendHousekeeping_(person, day, signIn) {
   var owed = blocksOwed_(sid), done = blocksSubmittedOn_(sid, day).length;
   var plans = {}, of = 0, achieved = 0;
   try { plans = planRows_(sid, day); } catch (e) {}
-  Object.keys(plans).forEach(function (b) { of += n_(plans[b].Of) || 0; achieved += n_(plans[b].Achieved) || 0; });
+  var tally = planTally_(sid, day, plans); of = tally.of; achieved = tally.ach;
   var pct = of ? Math.round(100 * achieved / of) : null;
   var blockPct = owed ? Math.round(100 * Math.min(done, owed) / owed) : 0;
 
@@ -9854,7 +9915,7 @@ function planReplyPage_(person, day, error, notice) {
     var sp = blockSpan_(sid, b), row = plans[b];
     return sched.blocks[b] && !(row && String(row.ClosedAt || '').trim()) && !(sp && sp.end <= nowM);
   });
-  var ss = { html: '', closed: '' }; try { ss = ssScore_(sid, day); } catch (e) {}
+  var ss = { html: '', closed: '' }; try { ss = (sid === 'kamla' || String(person.role || '') === 'bma') ? bmaScore_(sid, day) : ssScore_(sid, day); } catch (e) {}
   var yo = null; try { yo = yesterdayOpen_(sid, day); } catch (e) {}
   var yCard = yo ? '<div class="card bad" id="p-yday"><div class="bh" style="color:#DC3F3F">Yesterday first · ' + esc_(prettyDate_(yo.day)) + ' was not closed</div>' +
       '<div class="bf">' + (yo.tasks.length ? 'A reason and a new date for each task left open. Your plan saves with them.' : 'Nothing was left open; saving your plan closes it.') + '</div>' +

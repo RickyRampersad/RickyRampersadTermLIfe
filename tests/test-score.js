@@ -160,5 +160,25 @@ patches.length = 0;
 env.replyPost_({ parameter: Object.assign({}, pbase, { yr_00Z1: 'Client did not bring the form', yd_00Z1: '2026-10-22' }), parameters: {} });
 ok('with them it saves, the task moves, and yesterday is accounted for', patches.some(p => p[0] === '00Z1' && p[1].ActivityDate === '2026-10-22') && !!P.getProperty('ncdone_azariah_' + DAY) && env.yesterdayOpen_('azariah', D2) === null);
 
+console.log('\nThe BMA: her page opens on her job:\n');
+TODAY = DAY; at('10:00');
+env.bmWaiting_ = () => ({ ask: [], mine: [], byOwner: {}, ignored: [{ id: '00TI', subject: 'Call the group client', due: '2026-10-16', late: true, owner: 'Kamla Dookran' },
+  { id: '00TK', subject: 'Post the reinstatement outcome', due: '2026-10-15', late: true, owner: 'Azariah Griffith' }, { id: '00TX', subject: 'Not hers', due: DAY, owner: 'Someone Else' }] });
+env.cmdItems_ = () => [{ src: 'Salesforce', who: 'azariah', title: 'Medical requirements', why: 'untouched 8 days' }, { src: 'Salesforce', who: 'kamla', title: 'Agent school room', why: 'untouched 6 days' }, { src: 'Query Pal', who: '', title: 'x', why: '' }];
+env.openQueries_ = () => [{ ref: 'QP-1', days: 9, subject: 'Surrender value' }, { ref: 'QP-2', days: 4, subject: 'Beneficiary' }, { ref: 'QP-3', days: 1, subject: 'Receipt' }];
+const bma = env.bmaScore_('kamla', DAY);
+ok('her desks today, a dot each: in, planned, not in', /your desks planned today · a dot each/.test(bma.html) && (bma.html.match(/<circle/g) || []).length === 3, (bma.html.match(/<circle/g) || []).length + ' dots');
+ok('Mr Rampersad\'s instructions with no note: hers and her desks\', nobody else\'s', /<div class="v">2<\/div>/.test(bma.html) && /1 yours · 1 on your desks/.test(bma.html) && !/Not hers/.test(bma.closed));
+ok('the desks\' work gone quiet, every one counted in the bars, hers included', /gone quiet on the desks/.test(bma.html) && />You</.test(bma.html) && /Agent school room/.test(bma.closed));
+ok('Query Pal by age: one older than a week', /1 older than a week · Query Pal open/.test(bma.html) && /QP-1 · Surrender value/.test(bma.closed) && /1 day</.test(bma.closed));
+ok('every number opens its card', ['b-desks', 'b-instr', 'b-quiet', 'b-qp'].every(id => new RegExp('data-go="' + id + '"').test(bma.html) && new RegExp('id="' + id + '"').test(bma.closed)));
+
+console.log('\nThe plan, counted before the close:\n');
+env.dayTasks_ = () => [{ id: 'a', planned: true, closed: true }, { id: 'b', planned: true, closed: false }, { id: 'c', planned: false, closed: true }];
+const tl = env.planTally_('sasha', DAY, { KPI1: { Of: '', Achieved: '' } });
+ok('one plan a day: until it closes, read live (1 of 2 planned done)', tl.of === 2 && tl.ach === 1, JSON.stringify(tl));
+ok('once the block has its tally, that is what counts', JSON.stringify(env.planTally_('sasha', DAY, { KPI1: { Of: '5', Achieved: '4' } })) === '{"of":5,"ach":4}');
+ok('no plan is no plan', JSON.stringify(env.planTally_('sasha', DAY, {})) === '{"of":0,"ach":0}');
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed.');
 process.exit(fails ? 1 : 0);
