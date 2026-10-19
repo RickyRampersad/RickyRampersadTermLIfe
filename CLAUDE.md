@@ -4062,3 +4062,15 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   close reads). Check-in e-mails at 7:00, 9:00 and 1:00 (`BM_NUDGES`), plan
   first then the next three. `showMyDayLink()` logs the link. Pinned in
   `tests/test-me.js`.
+- **Accountable** (`bmSelf_`, 18 October 2026): the Branch Manager's own day
+  on the same record as the desks'. Planned or not and when (`mgr_planat_`);
+  each check-in answered (anything logged after it, within two hours or before
+  the next: My day, the plan, the account, the `bm`/`cmd` reply pages, logged
+  in `me_log_`) or missed; each planned number against the account; accounted
+  or not; closed with his own note. The 11am and 3pm reports lead with "You
+  against your plan" (3pm adds the Mon–Fri week; the subject says "not
+  planned" / "day not accounted"), the check-ins name a missed one, My day
+  shows it with the week, the 5am review opens with yesterday's line. The
+  day's line is kept in `bm_self_` on every page view, check-in and report;
+  `acctPrune_` keeps 14 days of logs and 120 of lines. Pinned in
+  `tests/test-me.js`.

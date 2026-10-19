@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-18e';
+var SCRIPT_VERSION = '2026-10-18f';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4218,7 +4218,7 @@ function sendBranchManagerDay_(day) {
       { value: sfOk ? mineLate : '—', label: 'of them overdue', color: mineLate ? MAIL.red : MAIL.navy },
       { value: sfOk ? w.ask.length : '—', label: 'notes asking you', color: w.ask.length ? MAIL.red : MAIL.navy },
       { value: sfOk ? w.ignored.length : '—', label: 'your instructions, no note', color: w.ignored.length ? MAIL.red : MAIL.navy }
-    ]) + meButton_('ricky') + cmdButton_('ricky', day) + replyButton_(replyUrl_('ricky', day, 'um'), 'Plan my day and sign in', 'One tap, no password. Comment on your own tasks, set your numbers for the day; saving signs you in.') + answer +
+    ]) + (function () { try { return bmYesterdayLine_('ricky', day); } catch (e) { return ''; } })() + meButton_('ricky') + cmdButton_('ricky', day) + replyButton_(replyUrl_('ricky', day, 'um'), 'Plan my day and sign in', 'One tap, no password. Comment on your own tasks, set your numbers for the day; saving signs you in.') + answer +
     mgrDayCard_('ricky', day, bmDayItems_(day, w), 'Your day, filled with what is outstanding: your own tasks, what is waiting on you, the orphans to assign, and the agents who need you. Plan it from the first button; saving signs you in.') +
     sectionLabel_('The branch in full') +
     bmBranchCards_(day) +
@@ -4509,6 +4509,9 @@ function mgrWrite_(sid, day, kind, rows) {
     sh.appendRow(head.map(function (h) { return o[h] != null ? o[h] : ''; }));
   });
   forgetHr_(MGRDAY);
+  // Accountable: a plan or an account is something done; the first plan's time is kept.
+  if (day === todayISO_()) meLogAct_(sid, day);
+  if (kind === 'plan') { try { var pp = PropertiesService.getScriptProperties(), pk = 'mgr_planat_' + sid + '_' + day; if (!pp.getProperty(pk)) pp.setProperty(pk, at); } catch (e) {} }
 }
 
 // ---- the Unit Manager: 6am --------------------------------------------------
@@ -4856,6 +4859,12 @@ function sendBranchManagerProgress_(day, which) {
 
   var me = today.ricky || { closed: 0, noted: 0, notes: 0, list: [] };
   var label = which === 'eve' ? 'Three o\'clock · close out the day' : 'Eleven o\'clock · progress';
+  var self = null, selfHtml = '';
+  try {
+    self = bmSelf_('ricky', day, which === 'eve' ? 15 * 60 : 11 * 60, sfOk ? me : null); bmSelfKeep_('ricky', self);
+    selfHtml = bmSelfMail_(self, which, which === 'eve' ? bmWeek_('ricky', day, self) : null);
+  } catch (e) {}
+  if (which === 'eve') acctPrune_(day);
   var answer = replyButton_(replyUrl_('ricky', day, 'bm'), 'Respond and log', 'Reply on Chatter to anything waiting on you, close your own with a note, and log what you did today.');
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + (which === 'eve' ? 'Three o\'clock, Mr Rampersad. Time to close out the day: where the branch stands at the close, and where you stand.' : 'Eleven o\'clock, Mr Rampersad. Where the team stands so far (support, the BMA, the Unit Manager and the agents), what is urgent, and where you stand. Comment on anything as you go.') + '</div>' +
@@ -4864,7 +4873,7 @@ function sendBranchManagerProgress_(day, which) {
       { value: sfOk ? me.notes : '—', label: 'your Chatter today' },
       { value: sfOk ? w.mine.length : '—', label: 'yours still due', color: w.mine.length ? MAIL.amber : MAIL.navy },
       { value: sfOk ? w.ask.length : '—', label: 'notes asking you', color: w.ask.length ? MAIL.red : MAIL.navy }
-    ]) + meButton_('ricky') + answer +
+    ]) + selfHtml + meButton_('ricky') + answer +
     sectionLabel_('The team today') + table +
     '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Closed today against the morning\'s suggested target; closed with the owner\'s own note. ' + (moves ? moves + ' task' + (moves === 1 ? '' : 's') + ' moved between desks today.' : '') + '</div>' +
     (um ? sectionLabel_('Unit Managers') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:6px 15px">' + um + '</div>' : '') +
@@ -4877,7 +4886,7 @@ function sendBranchManagerProgress_(day, which) {
       me.list.slice(0, 10).map(function (s) { return '<div style="padding:3px 0">&#10003; ' + esc_(s) + '</div>'; }).join('') + '</div>' : '') +
     answer;
   MailApp.sendEmail({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT,
-    subject: label + ' · Branch Manager · ' + shortDate_(day) + (sfOk ? ' · you closed ' + me.closed + ', ' + w.ask.length + ' asking you' : ''),
+    subject: label + ' · Branch Manager · ' + shortDate_(day) + (self && !self.planned ? ' · not planned' : '') + (self && which === 'eve' && !self.accounted ? ' · day not accounted' : '') + (sfOk ? ' · you closed ' + me.closed + ', ' + w.ask.length + ' asking you' : ''),
     htmlBody: shell_(label + ' · the branch and you', 'Branch Manager · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()), body) });
   return true;
 }
@@ -6812,6 +6821,8 @@ function mePage_(person, day, error, notice) {
     '<div style="display:flex;gap:6px;flex-wrap:wrap">' + (m.signIn ? '<span class="badge g">Signed in ' + esc_(twelve_(m.signIn)) + '</span>' : '<span class="badge r">Not signed in</span>') +
       (m.planned ? '<span class="badge g">Planned</span>' : '<span class="badge r">Not planned</span>') +
       '<span class="badge">' + (m.today.closed || 0) + ' closed today</span><span class="badge">' + (m.today.notes || 0) + ' notes written</span></div></div>';
+  var self = null, checks = '';
+  try { self = bmSelf_(sid, day, nowM, m.today); bmSelfKeep_(sid, self); checks = meChecksCard_(self, bmWeek_(sid, day, self)); } catch (e) {}
   var planCard = m.planned ? '' : '<div class="card bad"><div class="bh" style="color:#DC3F3F">Plan first</div><div class="ln">You have not planned today. Two minutes: your numbers for the day, and a note on what matters.</div>' +
     '<a href="' + esc_(replyUrl_(sid, day, 'um')) + '" target="_top" style="display:block;text-align:center;padding:13px;margin-top:6px;background:#141C4A;color:#fff;border-radius:10px;text-decoration:none">Plan my day now &rarr;</a></div>';
   var row = function (x) {
@@ -6847,7 +6858,7 @@ function mePage_(person, day, error, notice) {
     '<a href="' + esc_(replyUrl_(sid, day, 'um')) + '" target="_top" style="display:block;padding:10px 0;border-top:1px solid #EEE">' + (m.planned ? 'Change my plan' : 'Plan my day') + ' &rarr;</a></div>';
   return replyPage_('My day · ' + prettyDate_(day), 'Keep this link on your home screen. It is the same every day.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') +
-    dayBar + planCard + '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' +
+    dayBar + planCard + checks + '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' +
       '<input type="hidden" name="rs" value="' + esc_(sid) + '"><input type="hidden" name="f" value="me"><input type="hidden" name="k" value="' + esc_(meSig_(sid)) + '">' +
       nextHtml + capture + account + '<button type="submit">Save</button></form>' + links);
 }
@@ -6898,6 +6909,7 @@ function meSave_(person, day, p, all) {
   }
   if (!out.length) return mePage_(person, day, 'Nothing to save. Reply, close, capture or account, then Save.');
   try { runlog_('me ' + sid + ' ' + out.length + ' actions'); } catch (e) {}
+  if (out.some(function (o) { return !/^NOT/.test(o.res); }) && !(rows.length || summary)) meLogAct_(sid, day);   // an account logs itself
   return mePage_(person, day, '', '<b>' + out.filter(function (o) { return !/^NOT/.test(o.res); }).length + ' of ' + out.length + ' saved.</b>' +
     out.map(function (o) { return '<div class="ln">' + (/^NOT/.test(o.res) ? '&#9888; ' : '&#10003; ') + esc_(shorten_(o.s, 80)) + ' · <b>' + esc_(o.res) + '</b></div>'; }).join(''));
 }
@@ -6908,8 +6920,12 @@ function sendMeNudge_(sid, day, at) {
   if (!to.length) return false;
   var m = meModel_(sid, day), first = String(nameFor_(sid)).split(' ')[0], when = twelve_(mmText_(at));
   var next = m.next.slice(0, ME.NEXT);
+  var self = null; try { self = bmSelf_(sid, day, at, m.today); bmSelfKeep_(sid, self); } catch (e) {}
+  var missed = self ? self.missedList : [];
   var body = '<div style="font-size:15px;line-height:1.55;margin-bottom:12px"><b>' + esc_(when) + '.</b> ' +
       (!m.planned ? '<b style="color:' + MAIL.red + '">Your day is not planned yet.</b> Plan it first: two minutes.' : (next.length ? 'Here is what is next.' : 'Nothing is waiting on you in Salesforce. Work your plan.')) + '</div>' +
+    (missed.length ? '<div style="font-size:13.5px;line-height:1.5;margin:-4px 0 12px;color:' + MAIL.red + ';font-weight:700">Nothing was logged after the ' + esc_(missed.map(function (c) { return twelve_(mmText_(c.at)); }).join(' or the ')) + ' check-in. Log what you did on My day: "Done already" counts it.</div>' : '') +
+    (self && self.items.length ? '<div style="font-size:13px;color:' + MAIL.muted + ';margin:-4px 0 12px">Your plan so far: ' + esc_(self.items.map(function (x) { return x.q + ' ' + x.done + ' of ' + x.planned; }).join(' · ')) + '</div>' : '') +
     (!m.planned ? replyButton_(replyUrl_(sid, day, 'um'), 'Plan my day now', '') : '') +
     statTiles_([
       { value: m.today.closed || 0, label: 'closed today', color: MAIL.green },
@@ -6928,6 +6944,171 @@ function sendMeNudge_(sid, day, at) {
 function sendMeNudgeNow() { return sendMeNudge_('ricky', todayISO_(), minutesOf_(hhmm_(new Date()))); }
 /** From the editor: the My day link, to save on the phone. */
 function showMyDayLink() { var u = meUrl_('ricky'); Logger.log(u); return u; }
+
+/* ─────────── Accountable (18 Oct 2026) ───────────
+ *  Ricky: "Is this included in my tracker, and am I accountable? I would need
+ *  my progress checks." His own day is held to the same record as the desks':
+ *    · planned or not, and at what time;
+ *    · each check-in (7, 9 and 1) answered or missed: answered by anything he
+ *      logs after it (My day, the plan, the account, the reply pages) within
+ *      two hours or before the next check-in, missed once that window closes
+ *      with nothing logged;
+ *    · each planned number against what he has logged;
+ *    · the day accounted or not; closed with his own note.
+ *  The 11am progress and the 3pm close-out lead with it (the subject says
+ *  "not planned" or "day not accounted"), the check-ins say when the last one
+ *  was missed, My day shows it with the week, the 5am review opens with
+ *  yesterday's line, and every save keeps the day's line so the week reads
+ *  true. Kept in Script Properties: the day's actions (me_log_, 14 days), the
+ *  plan time (mgr_planat_) and the day's line (bm_self_), 120 days. */
+var ACCT = { GRACE: 120, KEEP_LOG: 14, KEEP_DAYS: 120,
+  LABELS: { recruit: 'New recruits', interview: 'Interviews', coach: 'Coaching', perf: 'Performance talks', field: 'Joint field work',
+            pendings: 'Pendings moved', persist: 'Persistency calls', licence: 'Licensing', own: 'Own production', escal: 'Escalations' } };
+
+function meLogAct_(sid, day) {
+  try {
+    var props = PropertiesService.getScriptProperties(), k = 'me_log_' + sid + '_' + day, v = String(props.getProperty(k) || '');
+    props.setProperty(k, (v ? v + ',' : '') + hhmm_(new Date()));
+  } catch (e) {}
+}
+function meActs_(sid, day) {
+  var raw = ''; try { raw = String(PropertiesService.getScriptProperties().getProperty('me_log_' + sid + '_' + day) || ''); } catch (e) {}
+  return raw.split(',').map(minutesOf_).filter(function (m) { return m != null; }).sort(function (a, b) { return a - b; });
+}
+
+/** The day against the plan, live. nowM: minutes into the day the checks are read at. */
+function bmSelf_(sid, day, nowM, today) {
+  var td = todayISO_();
+  if (nowM == null) nowM = day < td ? 1440 : day > td ? -1 : minutesOf_(hhmm_(new Date()));
+  var plan = mgrRows_(sid, day, 'plan'), eve = mgrRows_(sid, day, 'eve'), acts = meActs_(sid, day);
+  var items = UM_CHECKS.map(function (c) {
+    var p = Number((plan[c.id] || {}).Planned || 0), d = Number((eve[c.id] || {}).Done || 0);
+    return { id: c.id, q: ACCT.LABELS[c.id] || c.q.split(':')[0], planned: p, done: d, met: p > 0 && d >= p };
+  }).filter(function (x) { return x.planned > 0; });
+  var times = meNudgeTimes_().slice().sort(function (a, b) { return a - b; });
+  var checks = times.map(function (t, i) {
+    var until = Math.min(i + 1 < times.length ? times[i + 1] : 1440, t + ACCT.GRACE);
+    var hit = acts.some(function (a) { return a >= t && a < until; });
+    return { at: t, due: nowM >= t, answered: hit, missed: nowM >= until && !hit, open: nowM >= t && nowM < until && !hit };
+  });
+  if (!today) { today = { closed: 0, noted: 0, notes: 0 }; try { today = (deskToday_(day) || {})[sid] || today; } catch (e) {} }
+  var planAt = ''; try { planAt = String(PropertiesService.getScriptProperties().getProperty('mgr_planat_' + sid + '_' + day) || ''); } catch (e) {}
+  var accounted = Object.keys(eve).length > 0;
+  return { day: day, planned: Object.keys(plan).length > 0, planAt: planAt, items: items,
+    met: items.filter(function (x) { return x.met; }).length, behind: items.filter(function (x) { return !x.met; }),
+    checks: checks, dueN: checks.filter(function (c) { return c.due; }).length,
+    answered: checks.filter(function (c) { return c.answered; }).length,
+    missedList: checks.filter(function (c) { return c.missed; }),
+    accounted: accounted, closed: Number(today.closed || 0), noted: Number(today.noted || 0), notes: Number(today.notes || 0),
+    lastAct: acts.length ? acts[acts.length - 1] : null };
+}
+
+/** The day's line, kept so the week and tomorrow's review read it. */
+function bmSelfKeep_(sid, s) {
+  try {
+    PropertiesService.getScriptProperties().setProperty('bm_self_' + sid + '_' + s.day, JSON.stringify({
+      p: s.planned ? 1 : 0, pa: s.planAt, ca: s.answered, cd: s.dueN, im: s.met, ip: s.items.length, a: s.accounted ? 1 : 0, c: s.closed, cn: s.noted }));
+  } catch (e) {}
+}
+function bmSelfRead_(sid, day) {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('bm_self_' + sid + '_' + day) || 'null'); } catch (e) { return null; }
+}
+function acctPrune_(day) {
+  try {
+    var props = PropertiesService.getScriptProperties(), logCut = shiftDays_(day, -ACCT.KEEP_LOG), cut = shiftDays_(day, -ACCT.KEEP_DAYS);
+    props.getKeys().forEach(function (k) {
+      var m = /^(me_log_|mgr_planat_|bm_self_).*_(\d{4}-\d{2}-\d{2})$/.exec(k);
+      if (m && m[2] < (m[1] === 'me_log_' ? logCut : cut)) props.deleteProperty(k);
+    });
+  } catch (e) {}
+}
+
+/** Monday to Friday of the day's week: today live, the rest as kept. */
+function bmWeek_(sid, day, live) {
+  var dow = new Date(day + 'T12:00:00Z').getUTCDay(), mon = shiftDays_(day, -((dow + 6) % 7)), td = todayISO_(), out = [];
+  for (var i = 0; i < 5; i++) {
+    var d = shiftDays_(mon, i), rec = null;
+    if (d === day && live) rec = { p: live.planned ? 1 : 0, pa: live.planAt, ca: live.answered, cd: live.dueN, im: live.met, ip: live.items.length, a: live.accounted ? 1 : 0, c: live.closed, cn: live.noted };
+    else if (d <= td) rec = bmSelfRead_(sid, d);
+    out.push({ day: d, rec: rec, future: d > td });
+  }
+  return out;
+}
+function bmWeekLine_(week) {
+  var past = week.filter(function (x) { return x.rec; });
+  if (!past.length) return '';
+  var sum = function (k) { return past.reduce(function (n, x) { return n + Number(x.rec[k] || 0); }, 0); };
+  return 'This week: planned ' + sum('p') + ' of ' + past.length + ' day' + (past.length === 1 ? '' : 's') + ' · check-ins ' + sum('ca') + ' of ' + sum('cd') +
+    ' · planned numbers met ' + sum('im') + ' of ' + sum('ip') + ' · accounted ' + sum('a') + ' of ' + past.length + ' · closed ' + sum('c') + ', ' + sum('cn') + ' with your note';
+}
+function bmWeekTable_(week) {
+  var GREEN = '#1F6B47', RED = '#B4322B', MUTED = '#6A7180';
+  var td = 'padding:5px 4px;font-size:12px;text-align:center;border-top:1px solid #E5E1D6';
+  var mark = function (rec, k) { return !rec ? '<span style="color:' + MUTED + '">·</span>' : rec[k] ? '<b style="color:' + GREEN + '">&#10003;</b>' : '<b style="color:' + RED + '">&#10007;</b>'; };
+  var frac = function (rec, a, b) { if (!rec || !Number(rec[b] || 0)) return '<span style="color:' + MUTED + '">·</span>'; var ok = Number(rec[a]) >= Number(rec[b]); return '<b style="color:' + (ok ? GREEN : RED) + '">' + rec[a] + '/' + rec[b] + '</b>'; };
+  var head = '<tr><td style="' + td + ';border-top:0;text-align:left;font-weight:800;color:' + MUTED + ';font-size:10.5px">WEEK</td>' + week.map(function (x) {
+    return '<td style="' + td + ';border-top:0;font-weight:800;font-size:11px">' + esc_(['Mon', 'Tue', 'Wed', 'Thu', 'Fri'][week.indexOf(x)]) + '<div style="font-weight:600;color:' + MUTED + '">' + Number(x.day.slice(8)) + '</div></td>'; }).join('') + '</tr>';
+  var line = function (label, f) { return '<tr><td style="' + td + ';text-align:left;color:' + MUTED + '">' + label + '</td>' + week.map(function (x) { return '<td style="' + td + '">' + (x.future ? '' : f(x.rec)) + '</td>'; }).join('') + '</tr>'; };
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #E5E1D6;border-radius:10px;padding:4px 8px;margin:6px 0">' + head +
+    line('Planned', function (r) { return mark(r, 'p'); }) +
+    line('Check-ins', function (r) { return frac(r, 'ca', 'cd'); }) +
+    line('Plan met', function (r) { return frac(r, 'im', 'ip'); }) +
+    line('Accounted', function (r) { return mark(r, 'a'); }) +
+    line('Closed', function (r) { return r ? '<b>' + Number(r.c || 0) + '</b>' : '<span style="color:' + MUTED + '">·</span>'; }) + '</table>';
+}
+
+/** One plain sentence on where the day stands. */
+function bmVerdict_(s, which) {
+  var parts = [];
+  if (!s.planned) parts.push({ bad: true, t: 'You have not planned today. Plan it before anything else.' });
+  s.missedList.forEach(function (c) { parts.push({ bad: true, t: 'Nothing was logged after the ' + twelve_(mmText_(c.at)) + ' check-in.' }); });
+  if (s.behind.length) parts.push({ bad: which === 'eve', t: 'Behind your plan on ' + s.behind.map(function (x) { return x.q + ' (' + x.done + ' of ' + x.planned + ')'; }).join(', ') + '.' });
+  if (which === 'eve' && !s.accounted) parts.push({ bad: true, t: 'Your day is not accounted. Account for it on My day before you leave; tomorrow\'s 5am review shows the gap.' });
+  if (s.closed > s.noted) parts.push({ bad: true, t: (s.closed - s.noted) + ' of the ' + s.closed + ' you closed today carry no note of yours. A closed task without a note is not closed.' });
+  if (!parts.length) parts.push({ bad: false, t: 'On track: planned' + (s.dueN ? ', every check-in answered' : '') + (s.items.length ? ', ' + s.met + ' of ' + s.items.length + ' planned numbers met' : '') + (s.accounted ? ', day accounted' : '') + '.' });
+  return parts;
+}
+
+/** The 11am and 3pm reports: you against your plan, first. */
+function bmSelfMail_(s, which, week) {
+  var v = bmVerdict_(s, which);
+  return sectionLabel_('You against your plan') +
+    statTiles_([
+      { value: s.planned ? (s.planAt ? twelve_(s.planAt) : 'Yes') : 'No', label: 'plan saved', color: s.planned ? MAIL.green : MAIL.red },
+      { value: s.dueN ? s.answered + ' of ' + s.dueN : '—', label: 'check-ins answered', color: s.missedList.length ? MAIL.red : MAIL.green },
+      { value: s.items.length ? s.met + ' of ' + s.items.length : '—', label: 'planned numbers met', color: !s.items.length ? MAIL.navy : s.met === s.items.length ? MAIL.green : MAIL.amber },
+      { value: s.accounted ? 'Yes' : 'No', label: 'day accounted', color: s.accounted ? MAIL.green : which === 'eve' ? MAIL.red : MAIL.navy }
+    ]) +
+    '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (v.some(function (x) { return x.bad; }) ? MAIL.red : MAIL.green) + ';border-radius:10px;padding:8px 15px;margin-bottom:12px">' +
+      v.map(function (x) { return '<div style="font-size:13px;line-height:1.5;padding:3px 0;' + (x.bad ? 'color:' + MAIL.red + ';font-weight:700' : '') + '">' + esc_(x.t) + '</div>'; }).join('') + '</div>' +
+    (week ? bmWeekTable_(week) + '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin:2px 0 14px">' + esc_(bmWeekLine_(week)) + '</div>' : '');
+}
+
+/** My day: the progress checks, today and the week. */
+function meChecksCard_(s, week) {
+  var badge = function (c) {
+    var t = twelve_(mmText_(c.at));
+    return c.answered ? '<span class="badge g">' + esc_(t) + ' &#10003;</span>' : c.missed ? '<span class="badge r">' + esc_(t) + ' missed</span>' : c.open ? '<span class="badge a">' + esc_(t) + ' now: log something</span>' : '<span class="badge">' + esc_(t) + '</span>';
+  };
+  var v = bmVerdict_(s, minutesOf_(hhmm_(new Date())) >= 15 * 60 ? 'eve' : 'mid');
+  return '<div class="card' + (v.some(function (x) { return x.bad; }) ? ' bad' : ' ok') + '"><div class="bh">Your progress checks</div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">' + s.checks.map(badge).join('') +
+      (s.items.length ? '<span class="badge ' + (s.met === s.items.length ? 'g' : 'a') + '">plan ' + s.met + ' of ' + s.items.length + ' met</span>' : '') +
+      '<span class="badge ' + (s.accounted ? 'g' : '') + '">' + (s.accounted ? 'accounted' : 'not accounted yet') + '</span></div>' +
+    v.map(function (x) { return '<div class="ln" style="font-size:13.5px;' + (x.bad ? 'color:#B4322B;font-weight:700' : '') + '">' + esc_(x.t) + '</div>'; }).join('') +
+    bmWeekTable_(week) + '<div class="bf">' + esc_(bmWeekLine_(week)) + '</div></div>';
+}
+
+/** The 5am review: yesterday, you against your plan, in a line. */
+function bmYesterdayLine_(sid, day) {
+  var y = lastWorkdays_(day, 1)[0], r = bmSelfRead_(sid, y);
+  if (!r) return '';
+  var bad = !r.p || !r.a || Number(r.ca) < Number(r.cd) || Number(r.im) < Number(r.ip);
+  return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (bad ? MAIL.red : MAIL.green) + ';border-radius:10px;padding:9px 15px;margin:0 0 14px;font-size:13px;line-height:1.5">' +
+    '<b>' + esc_(shortDate_(y)) + ', you against your plan:</b> ' + (r.p ? 'planned' + (r.pa ? ' at ' + esc_(twelve_(r.pa)) : '') : '<b style="color:' + MAIL.red + '">not planned</b>') +
+    ' · check-ins ' + Number(r.ca || 0) + ' of ' + Number(r.cd || 0) + (Number(r.ip) ? ' · planned numbers met ' + Number(r.im) + ' of ' + Number(r.ip) : '') +
+    ' · ' + (r.a ? 'accounted' : '<b style="color:' + MAIL.red + '">not accounted</b>') + ' · closed ' + Number(r.c || 0) + ', ' + Number(r.cn || 0) + ' with your note.</div>';
+}
 
 /** The Unit Manager: his agents' open performance letters. */
 function umLetters_(sid, day) { try { return ppmCard_(ppmLetters_(unitAgents_(sid)), day, 'Performance letters in your unit'); } catch (e) { return ''; } }
@@ -8836,6 +9017,7 @@ function replyPost_(e) {
   if (f === 'prog') return progReplySave_(person, day, p, all);
   if (f === 'errand') return errandReplySave_(person, day, p, all);
   if (f === 'undo') return undoReplySave_(person, day, p, all);
+  if ((f === 'bm' || f === 'cmd') && day === todayISO_()) meLogAct_(sid, day);   // Accountable: answering counts as acting
   if (f === 'bm') return bmReplySave_(person, day, p, all);
   if (f === 'cmd') return cmdReplySave_(person, day, p);
   if (f === 'qp') return qpDivePage_(person, day);
