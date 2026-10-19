@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19d';
+var SCRIPT_VERSION = '2026-10-19e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4551,7 +4551,7 @@ function chatterNotes_(chat, id) {
   var all = (chat || {})[id] || [];
   var one = function (n, full) {
     var t = String(n.text || ''), head = t.split('\n')[0], ours = /^(Unit Manager|Branch Manager|BMA|Agent)\b/.test(head);
-    var who = ours ? head.split(' · ').slice(0, 2).join(' · ') : n.by;
+    var who = ours ? head.split(' · ').filter(function (x) { return !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b/.test(x); }).slice(0, 2).join(' · ') : n.by;
     var body = ours ? t.split('\n').slice(1).join(' ').trim() : t;
     return '<div class="br2" style="margin-top:3px">' + (n.reply ? '&#8627; ' : '') + esc_(who) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(full ? body : shorten_(body, 160)) + '</div>';
   };
@@ -4644,7 +4644,7 @@ function sendUnitManagerMorning_(sid, day) {
       { value: book ? nLate : '—', label: 'overdue', color: nLate ? MAIL.red : MAIL.navy },
       { value: book ? nPend : '—', label: 'pendings', color: nPend ? MAIL.amber : MAIL.navy },
       { value: book ? book.closedYday : '—', label: 'closed yesterday', color: MAIL.green }
-    ]) + btn + (noSf ? '' : cmdButton_(sid, day)) +
+    ]) + unitButton_(sid) + btn + (noSf ? '' : cmdButton_(sid, day)) +
     umFFCard_(sid, day) + umSelfCard_(sid, day) +
     mgrDayCard_(sid, day, umDayItems_(sid, day, book), 'Your day is built on the Unit Manager\'s job: your unit\'s outstanding work and your manager KPIs. Open the button, set your numbers and save: <b>saving is your morning check</b>, and that is your attendance for the day. Your progress report comes at 11, the account of the day at 5:30.') +
     sectionLabel_('Your unit in full') +
@@ -4789,12 +4789,12 @@ function sendUnitManagerProgress_(sid, day) {
       { value: book ? book.open.length : '—', label: 'still open' },
       { value: book ? nLate : '—', label: 'overdue', color: nLate ? MAIL.red : MAIL.navy },
       { value: planned ? 'yes' : 'no', label: 'your plan today', color: planned ? MAIL.green : MAIL.red }
-    ]) + btn +
+    ]) + unitButton_(sid) + btn +
     (support ? sectionLabel_('Support from the branch · your unit\'s work, by who has it') + support +
       '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Closed since midnight, and what is still open, by the person it sits with in Salesforce.</div>' : '') +
     (function () { var t = ''; try { t = agentSummaryTable_(agentDaySummary_(day, unitAgents_(sid).filter(function (n) { return n !== name; }))); } catch (e) {}
       return t ? sectionLabel_('Your agents so far') + t + '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">No plan by ' + esc_(twelve_(mmText_(AGENT_ABSENT_AT))) + ' reads as absent.</div>' : ''; })() +
-    btn;
+    unitButton_(sid) + btn;
   MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
     subject: 'Progress at eleven · ' + name + ' · ' + shortDate_(day) + (book ? ' · unit closed ' + book.closedToday.length + ', ' + nLate + ' overdue' : ''),
     htmlBody: shell_('Your progress at eleven', name + ' · Unit Manager · ' + prettyDate_(day), body) });
@@ -4824,7 +4824,7 @@ function sendUnitManagerEvening_(sid, day) {
       { value: book ? book.open.length : '—', label: 'still open' },
       { value: book ? nLate : '—', label: 'overdue', color: nLate ? MAIL.red : MAIL.navy },
       { value: planned, label: 'KPIs planned this morning', color: planned ? MAIL.green : MAIL.red }
-    ]) + btn +
+    ]) + unitButton_(sid) + btn +
     (book && book.closedToday.length ? sectionLabel_('Closed in your unit today') +
       '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.green + ';border-radius:10px;padding:8px 15px;font-size:12.5px">' +
       Object.keys(perAgent).map(function (a) { return '<div style="padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(a) + '</b> · ' + perAgent[a] + '</div>'; }).join('') + '</div>' : '') +
@@ -4950,8 +4950,9 @@ function sendBranchManagerProgress_(day, which) {
 
   var um = UM_DESKS.map(function (s) {
     var pl = mgrRows_(s, day, 'plan'), ev = mgrRows_(s, day, 'eve');
-    var line = Object.keys(ev).length ? 'day accounted' : (Object.keys(pl).length ? 'plan set, day not yet accounted' : 'no plan set');
-    return '<div style="font-size:12.5px;padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(nameFor_(s)) + '</b> · Unit Manager · <span style="color:' + (Object.keys(pl).length ? MAIL.green : MAIL.red) + '">' + esc_(line) + '</span></div>';
+    var line = Object.keys(ev).length ? (which === 'eve' ? 'day accounted' : 'plan set, done being logged') : (Object.keys(pl).length ? 'plan set, day not yet accounted' : 'no plan set');
+    return '<div style="font-size:12.5px;padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(nameFor_(s)) + '</b> · Unit Manager · <span style="color:' + (Object.keys(pl).length ? MAIL.green : MAIL.red) + '">' + esc_(line) + '</span>' +
+      ' · <a href="' + esc_(unitViewUrl_(s)) + '" style="color:' + MAIL.navy + ';font-weight:700">see his page &rarr;</a></div>';
   }).join('');
 
   var me = today.ricky || { closed: 0, noted: 0, notes: 0, list: [] };
@@ -5387,6 +5388,321 @@ function teamFFCard_(names, title, day, limit) {
     'FY27 began 1 October: week ' + Math.max(1, Math.round(daysBetween_(BOOKS.FY_START, day) / 7)) + ' of 52. Comment on their tasks from the button above: it goes to Chatter as yours.');
 }
 function umFFCard_(sid, day) { try { return teamFFCard_(unitAgents_(sid), 'Your agents · goals and activity', day, 30); } catch (e) { return ''; } }
+/* ─────────── My unit (19 Oct 2026) ───────────
+ *  Ricky: "Akaash needs to see what is high priority for him: his unit, how his
+ *  pendings are being managed and who is assigned to them; post to Chatter and
+ *  look back at the history; his agents' goals against his, the unit's targets
+ *  as at the date, where he is, how they are spending the day; the admin tasks
+ *  open; how he is coaching; the day planner. All of it in one area, so he can
+ *  track his performance from today, with business intelligence to plan his day
+ *  and catch what he would overlook. Easy on every interface."
+ *  ONE LINK THAT WORKS EVERY DAY (like My day), for the phone's home screen.
+ *  A brief and "Do these first" (ranked, each with its reason), then four tabs:
+ *    · Today: your day (planned and done side by side, saved as you go), your
+ *      agents today, a task for a desk.
+ *    · Unit work: every open task by kind, who holds it, its state, the history
+ *      and a box to type or speak into; who holds the unit's work, by desk.
+ *    · Agents: the unit against its FY27 goals as at today, then each agent.
+ *    · You: your own goals, your manager numbers this week, your coaching, and
+ *      your week (planned, numbers met, done logged, comments).
+ *  He has no Salesforce login: nothing here links to Salesforce.  */
+var UNIT = { TOP: 5, LIST: 60 };
+function unitSig_(sid) { return replySig_(sid, 'always', 'unit'); }
+function unitUrl_(sid) { return execBase_() + '?rs=' + encodeURIComponent(sid) + '&f=unit&k=' + encodeURIComponent(unitSig_(sid)); }
+/** The Branch Manager's view of a Unit Manager's page: the same page, read only (nothing posts as him). */
+function unitViewSig_(sid) { return replySig_(sid, 'always', 'unitv'); }
+function unitViewUrl_(sid) { return execBase_() + '?rs=' + encodeURIComponent(sid) + '&f=unitv&k=' + encodeURIComponent(unitViewSig_(sid)); }
+function unitButton_(sid) {
+  return replyButton_(unitUrl_(sid), 'My unit', 'Everything in one place: what to do first, your unit\'s work and who holds it, your agents against their goals, and your own day and week. The same link every day: save it to your home screen.');
+}
+/** From the editor: a Unit Manager's My unit link, to save on his phone. */
+function showUnitLink(sid) { var u = unitUrl_(sid || UM_DESKS[0]); Logger.log(u); return u; }
+
+function unitKind_(t) {
+  if (t.ty === 'Pendings') return 'pend';
+  var k = ''; try { k = payoffOf_(t).key; } catch (e) {}
+  return k === 'new' ? 'new' : (k === 'retention' || k === 'orphan') ? 'ret' : 'other';
+}
+
+/** Everything the page reads, in one pass. */
+function unitModel_(sid, day) {
+  var m = { sid: sid, day: day, name: nameFor_(sid), sfOk: true, book: null };
+  try { m.book = unitBook_(sid, day); } catch (e) { m.sfOk = false; m.book = { agents: unitAgents_(sid), open: [], closedYday: 0, closedToday: [] }; }
+  var open = m.book.open || [];
+  m.tasks = open.slice().sort(function (a, b) { return (Number(b.late) - Number(a.late)) || String(a.due || '9999').localeCompare(String(b.due || '9999')); }).slice(0, UNIT.LIST);
+  m.tasks.forEach(function (t) { t.k = unitKind_(t); });
+  m.chat = {}; try { m.chat = cmdChatter_(m.tasks.map(function (t) { return t.id; })); } catch (e) {}
+  m.desks = {};
+  open.forEach(function (t) {
+    var w = t.owner || 'No one', d = m.desks[w] || (m.desks[w] = { open: 0, late: 0, quiet: 0, pend: 0 });
+    d.open++; if (t.late) d.late++; if (t.touched >= 7) d.quiet++; if (t.ty === 'Pendings') d.pend++;
+  });
+  var feed = null; try { feed = ff360Feed_(); } catch (e) {}
+  var sb = {}; try { sb = skillBank_(); } catch (e) {}
+  var today = {}; try { agentDaySummary_(day, m.book.agents).forEach(function (x) { today[bkNk_(x.name)] = x; }); } catch (e) {}
+  var letters = {}; try { ppmLetters_(m.book.agents).forEach(function (r) { letters[bkNk_(r['Agent Name'])] = r; }); } catch (e) {}
+  m.agents = (m.book.agents || []).map(function (n, i) {
+    var p = sb[bkNk_(n)], g = null; try { g = goalFor_(n, p && p.code ? String(p.code) : ''); } catch (e) {}
+    var f = (feed && ff360Agent_(feed, [n])) || { week: 0, month: 0, year: 0, pickedUp: 0, pipeline: 0, apps: 0, known: false };
+    var mine = open.filter(function (t) { return bkNk_(t.agent) === bkNk_(n); });
+    return { i: i, name: n, first: String(n).split(' ')[0], me: bkNk_(n) === bkNk_(m.name), g: g, f: f, feed: !!feed,
+      today: today[bkNk_(n)] || null, letter: letters[bkNk_(n)] || null,
+      open: mine.length, late: mine.filter(function (t) { return t.late; }).length, pend: mine.filter(function (t) { return t.ty === 'Pendings'; }).length };
+  });
+  var gs = m.agents.filter(function (a) { return a.g; });
+  m.unit = { goal: gs.reduce(function (s, a) { return s + a.g.api; }, 0), pace: gs.reduce(function (s, a) { return s + a.g.paceApi; }, 0),
+    picked: m.agents.reduce(function (s, a) { return s + Number(a.f.pickedUp || 0); }, 0),
+    ffWeek: m.agents.reduce(function (s, a) { return s + Number(a.f.week || 0); }, 0),
+    planned: m.agents.filter(function (a) { return !a.me && a.today && a.today.hasPlan; }).length,
+    n: m.agents.filter(function (a) { return !a.me; }).length, withGoal: gs.length,
+    weeksIn: Math.max(1, Math.round(daysBetween_(BOOKS.FY_START, day) / 7)) };
+  m.plan = mgrRows_(sid, day, 'plan'); m.eve = mgrRows_(sid, day, 'eve');
+  m.posts = Number(PropertiesService.getScriptProperties().getProperty('um_posts_' + sid + '_' + day) || 0);
+  m.signIn = ''; try { m.signIn = signedInAt_(sid, day); } catch (e) {}
+  m.top = unitPriorities_(m);
+  return m;
+}
+
+/** What to do first, ranked, each with its reason: the intelligence that catches what he would overlook. */
+function unitPriorities_(m) {
+  var out = [], first = String(m.name).split(' ')[0].toLowerCase();
+  var add = function (s, k, t, why, go) { out.push({ s: s, k: k, t: t, why: why, go: go || '' }); };
+  if (!Object.keys(m.plan).length) add(100, 'plan', 'Plan your day', 'Nothing is planned yet. Your numbers for the day, on the Today tab.', 'u-plan');
+  m.tasks.forEach(function (t) {
+    var last = (m.chat[t.id] || [])[0];
+    if (last && !/^Unit Manager\b/.test(String(last.text || '')) && String(last.text || '').toLowerCase().indexOf(first) > -1)
+      add(92, 'ask', String(last.by || 'Someone').split(' ')[0] + ' asks you · ' + t.subject, '"' + shorten_(String(last.text).replace(/^[^\n]*\n\n/, ''), 110) + '"', 't' + t.id);
+  });
+  m.agents.forEach(function (a) {
+    if (a.me) return;
+    if (a.today && /absent/.test(a.today.status)) add(88, 'agent', 'Call ' + a.first + ': no plan today', 'No plan by ' + twelve_(mmText_(AGENT_ABSENT_AT)) + ' reads as not working today.', 'a' + a.i);
+    if (a.g && a.g.last && (a.g.last.help || a.g.last.way)) add(82, 'help', a.first + ' asked for help', shorten_(String(a.g.last.help || a.g.last.way), 110), 'a' + a.i);
+    if (a.letter) add(70, 'letter', a.first + '\'s performance letter is open', String(a.letter['Performance Period'] || '') + ' · ' + String(a.letter['Status'] || ''), 'a' + a.i);
+    if (a.g && a.g.paceApi && a.f.pickedUp < a.g.paceApi) {
+      var gap = a.g.paceApi - Number(a.f.pickedUp || 0);
+      add(60 + Math.min(25, Math.round(25 * gap / Math.max(1, a.g.paceApi))), 'field', 'Joint field work with ' + a.first,
+        ff360Money_(gap) + ' behind API pace: ' + ff360Money_(a.f.pickedUp) + ' of ' + ff360Money_(a.g.paceApi) + ' by week ' + m.unit.weeksIn + '.', 'a' + a.i);
+    }
+    if (!a.g) add(55, 'goal', 'Sit with ' + a.first + ' on the FY27 goal plan', 'No goal plan on file, so pace cannot be measured.', 'a' + a.i);
+    if (a.feed && !a.f.week) add(50, 'ff', 'Book a fact find with ' + a.first, 'None this week' + (a.f.month ? ' (' + a.f.month + ' this month).' : ', none this month.'), 'a' + a.i);
+  });
+  m.tasks.forEach(function (t) {
+    var who = t.owner ? 'with ' + t.owner : 'with no one';
+    if (t.ty === 'Pendings' && t.late) add(74 + Math.min(10, daysBetween_(t.due, m.day)), 'pend', String(t.agent || '').split(' ')[0] + ' · ' + t.subject,
+      'Pending, overdue since ' + shortDate_(t.due) + ' · ' + who + (t.touched >= 7 ? ' · untouched ' + t.touched + ' days' : ''), 't' + t.id);
+    else if (t.touched >= 14) add(45, 'quiet', String(t.agent || '').split(' ')[0] + ' · ' + t.subject, 'Untouched ' + t.touched + ' days · ' + who, 't' + t.id);
+  });
+  out.sort(function (a, b) { return b.s - a.s; });
+  return out;
+}
+
+/** His week, Monday to Friday, from what he logs: planned, numbers met, done logged, comments. */
+function unitWeek_(sid, day) {
+  var dow = new Date(day + 'T12:00:00Z').getUTCDay(), mon = shiftDays_(day, -((dow + 6) % 7)), props = PropertiesService.getScriptProperties(), out = [];
+  for (var i = 0; i < 5; i++) {
+    var d = shiftDays_(mon, i);
+    if (d > day) { out.push({ day: d, future: true }); continue; }
+    var pl = mgrRows_(sid, d, 'plan'), ev = mgrRows_(sid, d, 'eve'), ip = 0, im = 0, tot = {};
+    UM_CHECKS.forEach(function (c) {
+      var p = Number((pl[c.id] || {}).Planned || 0), dn = Number((ev[c.id] || {}).Done || 0);
+      tot[c.id] = { p: p, d: dn, note: String((ev[c.id] || {}).Note || '') };
+      if (p > 0) { ip++; if (dn >= p) im++; }
+    });
+    out.push({ day: d, p: Object.keys(pl).length > 0, a: Object.keys(ev).length > 0, ip: ip, im: im, tot: tot,
+               posts: Number(props.getProperty('um_posts_' + sid + '_' + d) || 0) });
+  }
+  return out;
+}
+
+function unitPage_(person, day, error, notice, view) {
+  var sid = String(person.staffId), m = unitModel_(sid, day), nowM = minutesOf_(hhmm_(new Date()));
+  if (!view) { try { bigPut_('unit_ids_' + sid + '_' + day, m.tasks.map(function (t) { return { id: t.id, s: t.subject, a: t.agent }; })); } catch (e) {} }
+  var money = function (v) { return ff360Money_(Number(v || 0)); };
+  var pct = m.unit.pace ? Math.round(100 * m.unit.picked / m.unit.pace) : null;
+  var pend = m.tasks.filter(function (t) { return t.k === 'pend'; }), pendLate = pend.filter(function (t) { return t.late; }).length;
+  var planned = Object.keys(m.plan).length > 0;
+  var sp = parseSpan_(scheduleFor_(sid).hours || '') || { start: 360, end: 1080 };
+
+  // ── The brief
+  var brief = '<div class="tiles">' +
+    '<div class="tile' + (pct == null ? '' : pct >= 100 ? ' g' : pct >= 70 ? ' a' : ' r') + '"><div class="v">' + (pct == null ? '—' : pct + '%') + '</div><div class="l">of API pace · ' + esc_(money(m.unit.picked)) + ' of ' + esc_(money(m.unit.pace)) + ', week ' + m.unit.weeksIn + '</div></div>' +
+    '<div class="tile' + (pendLate ? ' r' : '') + '"><div class="v">' + pend.length + '</div><div class="l">pending' + (pend.length === 1 ? '' : 's') + ' · ' + pendLate + ' overdue</div></div>' +
+    '<div class="tile' + (m.unit.planned < m.unit.n ? ' a' : ' g') + '"><div class="v">' + m.unit.planned + ' of ' + m.unit.n + '</div><div class="l">agents planned today</div></div>' +
+    '<div class="tile' + (planned ? ' g' : ' r') + '"><div class="v">' + (planned ? 'Yes' : 'No') + '</div><div class="l">your plan today · ' + m.posts + ' comment' + (m.posts === 1 ? '' : 's') + '</div></div></div>';
+  var tops = m.top.slice(0, UNIT.TOP), more = m.top.slice(UNIT.TOP);
+  var topRow = function (x, n) {
+    return '<a class="ln" href="#' + esc_(x.go) + '" data-go="' + esc_(x.go) + '" style="display:flex;align-items:flex-start;gap:10px;text-decoration:none;font-weight:400;color:#1F2433">' +
+      '<span class="age ' + (x.s >= 80 ? 'r' : x.s >= 60 ? 'a' : '') + '">' + n + '</span><span style="flex:1"><b>' + esc_(x.t) + '</b><small style="display:block;color:#6A7180;font-size:12.5px;margin-top:2px">' + esc_(x.why) + '</small></span></a>';
+  };
+  var firstCard = '<div class="card' + (tops.length ? ' bad' : ' ok') + '"><div class="bh">Do these first</div>' +
+    (tops.length ? tops.map(function (x, k) { return topRow(x, k + 1); }).join('') : '<div class="ln">Nothing is pressing. Work your plan and your agents.</div>') +
+    (more.length ? '<details><summary>' + more.length + ' more the system sees</summary>' + more.map(function (x, k) { return topRow(x, UNIT.TOP + k + 1); }).join('') + '</details>' : '') + '</div>';
+
+  // ── Today
+  var dayRows = UM_CHECKS.map(function (c) {
+    var pv = (m.plan[c.id] || {}).Planned, dv = (m.eve[c.id] || {}).Done, nv = (m.eve[c.id] || {}).Note || (m.plan[c.id] || {}).Note || '';
+    var met = Number(pv || 0) > 0 && Number(dv || 0) >= Number(pv || 0);
+    return '<div style="padding:9px 0;border-top:1px solid #EEE"><div style="font-size:14px">' + esc_(c.q) + (met ? ' <span class="badge g">met</span>' : '') + '</div>' +
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:5px"><label style="font-size:12px;color:#6A7180">Plan<input type="number" min="0" inputmode="numeric" name="p_' + c.id + '" value="' + esc_(pv == null ? '' : pv) + '" style="width:76px;display:block"></label>' +
+      '<label style="font-size:12px;color:#6A7180">Done<input type="number" min="0" inputmode="numeric" name="d_' + c.id + '" value="' + esc_(dv == null ? '' : dv) + '" style="width:76px;display:block"></label>' +
+      '<label style="font-size:12px;color:#6A7180;flex:1">' + esc_(c.note || 'Note') + '<input type="text" name="n_' + c.id + '" value="' + esc_(nv) + '" style="display:block"></label></div></div>';
+  }).join('');
+  var dayCard = '<div class="card" id="u-plan"><div class="bh">Your day · plan it, then log what is done as you go</div>' +
+    '<div class="bf">' + (planned ? 'Planned. Put the done number in as each thing happens; the 5:30pm account reads the same record.' : 'Not planned yet: a number against what you will do today. Saving signs you in.') + '</div>' + dayRows + '</div>';
+  var agToday = m.agents.filter(function (a) { return !a.me; }).map(function (a) {
+    var st = a.today ? a.today.status : 'no plan yet', c = /absent/.test(st) ? 'r' : /closed/.test(st) ? 'g' : /plan in/.test(st) ? '' : 'a';
+    return '<a href="#a' + a.i + '" data-go="a' + a.i + '" class="ln" style="display:flex;justify-content:space-between;gap:8px;text-decoration:none;font-weight:400;color:#1F2433"><span><b>' + esc_(a.name) + '</b></span><span class="badge ' + c + '">' + esc_(st) +
+      (a.today && a.today.hasPlan ? ' · ' + a.today.planned + ' planned' : '') + (a.today && a.today.hasClose ? ' · ' + a.today.done + ' done' : '') + '</span></a>';
+  }).join('');
+  var desks = []; try { desks = cmdTargets_().filter(function (t) { return t.sid !== sid && UM_DESKS.indexOf(t.sid) === -1; }); } catch (e) {}
+  var capture = '<div class="card"><div class="bh">A task for a desk</div><div class="bf">One per line; type or speak it. It becomes that desk\'s task in Salesforce, with your note on its Chatter.</div>' +
+    '<textarea name="cap" rows="2" placeholder="e.g. Chase the medical for Darryl\'s new application"></textarea>' +
+    '<select name="capto"><option value="">Which desk</option>' + desks.map(function (t) { return '<option value="' + esc_(t.sid) + '">' + esc_(t.name) + '</option>'; }).join('') + '</select>' +
+    '<div style="display:flex;gap:8px;align-items:center;font-size:14px">Due <input type="date" name="capd" style="flex:1"></div></div>';
+  var todaySec = dayCard + '<div class="card"><div class="bh">Your agents today</div>' + (agToday || '<div class="ln">No agents on file for your unit.</div>') + '</div>' + capture;
+
+  // ── Unit work
+  var heads = { pend: 'Pendings', 'new': 'New business', ret: 'Retention and orphan adoption', other: 'Everything else open' };
+  var row = function (t) {
+    var notes = m.chat[t.id] || [], lastAt = notes.length ? notes[0].day : '';
+    return '<details class="it" id="t' + esc_(t.id) + '"><summary><div class="hd"><span class="age ' + (t.late ? 'r' : t.touched >= 7 ? 'a' : '') + '">' + (t.late ? daysBetween_(t.due, m.day) + 'd' : t.due ? 'due' : '—') + '</span>' +
+      '<div class="tt"><b>' + esc_(String(t.agent || '—').split(' ')[0]) + '</b> · ' + esc_(t.subject) +
+      '<small>with <b>' + esc_(t.owner || 'no one') + '</b>' + (t.status ? ' · ' + esc_(t.status) : '') + (t.due ? ' · ' + (t.late ? 'overdue since ' : 'due ') + esc_(shortDate_(t.due)) : '') +
+      (t.touched >= 7 ? ' · untouched ' + t.touched + ' days' : '') + ' · ' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') + (lastAt ? ', last ' + esc_(shortDate_(lastAt)) : '') : 'no notes') + '</small></div></div></summary>' +
+      chatterNotes_(m.chat, t.id) +
+      '<textarea name="c_' + esc_(t.id) + '" rows="2" placeholder="' + esc_(SPEAK_PH) + '" style="margin:8px 0 10px"></textarea></details>';
+  };
+  var workSec = ['pend', 'new', 'ret', 'other'].map(function (k) {
+    var list = m.tasks.filter(function (t) { return t.k === k; });
+    if (!list.length) return '';
+    return '<div class="card"><div class="bh">' + esc_(heads[k]) + ' (' + list.length + ')</div>' + list.map(row).join('') + '</div>';
+  }).join('') || '<div class="card ok">' + (m.sfOk ? 'Nothing open for your unit.' : 'Salesforce did not answer just now. Try again in a minute.') + '</div>';
+  var deskRows = Object.keys(m.desks).sort(function (a, b) { return m.desks[b].late - m.desks[a].late || m.desks[b].open - m.desks[a].open; }).map(function (w) {
+    var d = m.desks[w];
+    return '<div class="ln" style="display:flex;justify-content:space-between;gap:8px"><b>' + esc_(w) + '</b><span>' + d.open + ' open' + (d.pend ? ' · ' + d.pend + ' pending' + (d.pend === 1 ? '' : 's') : '') +
+      (d.late ? ' · <b style="color:#DC3F3F">' + d.late + ' overdue</b>' : '') + (d.quiet ? ' · <span style="color:#C26A04">' + d.quiet + ' untouched 7+ days</span>' : '') + '</span></div>';
+  }).join('');
+  workSec = '<div class="card"><div class="bh">Who holds your unit\'s work</div>' + (deskRows || '<div class="ln">Nothing open.</div>') +
+    '<div class="bf" style="margin-top:6px">Closed yesterday: ' + (m.book.closedYday || 0) + ' · today so far: ' + ((m.book.closedToday || []).length) + '</div></div>' + workSec;
+
+  // ── Agents
+  var agentCard = function (a) {
+    var g = a.g, f = a.f, low = g && g.paceApi && f.pickedUp < g.paceApi;
+    var plan = {}; try { if (a.today && a.today.key) plan = agRows_(a.today.key, m.day, 'plan'); } catch (e) {}
+    var planLine = Object.keys(plan).length ? AGENT_METRICS.filter(function (x) { return plan[x.id] && Number(plan[x.id].Planned || 0); }).map(function (x) { return esc_(x.q) + ' ' + esc_(plan[x.id].Planned); }).join(' · ') : '';
+    var st = a.today ? a.today.status : 'no plan yet';
+    return '<details class="it" id="a' + a.i + '"><summary><div class="hd"><span class="age ' + (low ? 'r' : g ? '' : 'a') + '">' + (g && g.paceApi ? Math.round(100 * Number(f.pickedUp || 0) / g.paceApi) + '%' : '—') + '</span>' +
+      '<div class="tt"><b>' + esc_(a.name) + '</b>' + (a.me ? ' <span class="badge">you, as an agent</span>' : '') +
+      '<small>' + (g ? esc_(money(f.pickedUp)) + ' of ' + esc_(money(g.paceApi)) + ' API pace' : 'no FY27 goal plan') + ' · ' + f.week + ' fact find' + (f.week === 1 ? '' : 's') + ' this week · ' + esc_(st) + '</small></div></div></summary>' +
+      '<div class="ln">FY27 goal: ' + (g ? '<b>' + esc_(money(g.api)) + '</b> API' + (g.apps ? ', ' + g.apps + ' apps' : '') + (g.title ? ', ' + esc_(g.title) : '') : '<b style="color:#C26A04">none on file</b>') + '</div>' +
+      (g ? '<div class="bar"><span class="n">API to date</span><span class="t"><i class="' + (low ? 'r' : 'g') + '" style="width:' + Math.min(100, Math.round(100 * Number(f.pickedUp || 0) / Math.max(1, g.paceApi))) + '%"></i></span><span class="c">' + esc_(money(f.pickedUp)) + '</span></div>' : '') +
+      '<div class="ln">Fact finds: <b>' + f.week + '</b> this week · ' + f.month + ' this month · ' + f.year + ' this year' + (f.pipeline ? ' · pipeline ' + esc_(money(f.pipeline)) : '') + '</div>' +
+      '<div class="ln">Today: <b>' + esc_(st) + '</b>' + (planLine ? ' · ' + planLine : '') + (a.today && a.today.hasClose ? ' · done ' + a.today.done + ' (' + a.today.ff + ' fact finds, ' + a.today.apps + ' apps)' : '') + '</div>' +
+      '<div class="ln">Open with the branch: <b>' + a.open + '</b>' + (a.pend ? ' · ' + a.pend + ' pending' + (a.pend === 1 ? '' : 's') : '') + (a.late ? ' · <b style="color:#DC3F3F">' + a.late + ' overdue</b>' : '') + '</div>' +
+      (g && g.last ? '<div class="ln">Last check-in: week ' + esc_(String(g.last.week)) + ' · ' + [[g.last.contacts, 'contact'], [g.last.appts, 'appointment'], [g.last.ff, 'fact find'], [g.last.apps, 'app']].map(function (x) { return x[0] + ' ' + x[1] + (x[0] === 1 ? '' : 's'); }).join(', ') +
+        (g.last.help || g.last.way ? '<div class="br2" style="margin-top:3px">Asked for: ' + esc_(shorten_(String(g.last.help || g.last.way), 160)) + '</div>' : '') + '</div>' : '') +
+      (a.letter ? '<div class="ln" style="color:#B4322B">Performance letter · ' + esc_(String(a.letter['Performance Period'] || '')) + ' · ' + esc_(String(a.letter['Status'] || '')) + '</div>' : '') + '</details>';
+  };
+  var agentsSec = '<div class="card"><div class="bh">Your unit against its FY27 goals · week ' + m.unit.weeksIn + ' of 52</div>' +
+    '<div class="bar"><span class="n">API to date</span><span class="t"><i class="' + (pct != null && pct >= 100 ? 'g' : 'r') + '" style="width:' + Math.min(100, pct || 0) + '%"></i></span><span class="c">' + (pct == null ? '—' : pct + '%') + '</span></div>' +
+    '<div class="ln">Unit goal <b>' + esc_(money(m.unit.goal)) + '</b> · pace to date <b>' + esc_(money(m.unit.pace)) + '</b> · picked up <b>' + esc_(money(m.unit.picked)) + '</b></div>' +
+    '<div class="ln">' + m.unit.ffWeek + ' fact finds this week across the unit · ' + m.unit.withGoal + ' of ' + m.agents.length + ' with a goal plan</div></div>' +
+    '<div class="card"><div class="bh">Each agent · tap for the detail</div>' + m.agents.map(agentCard).join('') + '</div>';
+
+  // ── You
+  var meA = m.agents.filter(function (a) { return a.me; })[0];
+  var week = unitWeek_(sid, day);
+  var tot = {}; UM_CHECKS.forEach(function (c) { tot[c.id] = { p: 0, d: 0, notes: [] }; });
+  week.forEach(function (w) { if (w.future) return; UM_CHECKS.forEach(function (c) { var x = w.tot[c.id]; tot[c.id].p += x.p; tot[c.id].d += x.d; if (x.note) tot[c.id].notes.push(shortDate_(w.day) + ': ' + x.note); }); });
+  var kpis = UM_CHECKS.filter(function (c) { return tot[c.id].p || tot[c.id].d; }).map(function (c) {
+    var x = tot[c.id], w = x.p ? Math.min(100, Math.round(100 * x.d / x.p)) : (x.d ? 100 : 0);
+    return '<div class="bar s"><span class="n">' + esc_(c.q) + '</span><span class="t"><i class="' + (x.p && x.d >= x.p ? 'g' : x.p ? 'r' : '') + '" style="width:' + w + '%"></i></span><span class="c">' + x.d + ' of ' + x.p + '</span></div>';
+  }).join('');
+  var coachNotes = tot.coach.notes.concat(tot.field.notes).concat(tot.perf.notes);
+  var wk = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12.5px;border-collapse:collapse"><tr><td></td>' +
+    week.map(function (w) { return '<td style="text-align:center;font-weight:800;padding:4px 2px">' + esc_(shortDate_(w.day).split(' ')[0]) + '</td>'; }).join('') + '</tr>' +
+    [['Planned', function (w) { return w.p ? '<b style="color:#1F6B47">&#10003;</b>' : '<b style="color:#B4322B">&#10007;</b>'; }],
+     ['Numbers met', function (w) { return w.ip ? '<b style="color:' + (w.im >= w.ip ? '#1F6B47' : '#B4322B') + '">' + w.im + '/' + w.ip + '</b>' : '·'; }],
+     ['Done logged', function (w) { return w.a ? '<b style="color:#1F6B47">&#10003;</b>' : '<b style="color:#B4322B">&#10007;</b>'; }],
+     ['Comments', function (w) { return '<b>' + w.posts + '</b>'; }]].map(function (r) {
+      return '<tr><td style="color:#6A7180;padding:5px 2px;border-top:1px solid #EEE">' + r[0] + '</td>' + week.map(function (w) { return '<td style="text-align:center;padding:5px 2px;border-top:1px solid #EEE">' + (w.future ? '' : r[1](w)) + '</td>'; }).join('') + '</tr>';
+    }).join('') + '</table>';
+  var youSec = '<div class="card"><div class="bh">Your goals as at ' + esc_(shortDate_(day)) + '</div>' +
+      (meA && meA.g ? '<div class="ln">Your own FY27 goal <b>' + esc_(money(meA.g.api)) + '</b> API · pace to date <b>' + esc_(money(meA.g.paceApi)) + '</b> · picked up <b>' + esc_(money(meA.f.pickedUp)) + '</b>' +
+        (meA.g.paceApi ? ' (' + Math.round(100 * Number(meA.f.pickedUp || 0) / meA.g.paceApi) + '%)' : '') + '</div>' : '<div class="ln" style="color:#C26A04">No FY27 goal plan on file for you as an agent.</div>') +
+      '<div class="ln">Your unit: <b>' + esc_(money(m.unit.picked)) + '</b> of <b>' + esc_(money(m.unit.pace)) + '</b> pace' + (pct == null ? '' : ' (' + pct + '%)') + ' toward <b>' + esc_(money(m.unit.goal)) + '</b> for the year</div></div>' +
+    '<div class="card"><div class="bh">Your manager numbers this week · done of planned</div>' + (kpis || '<div class="ln" style="color:#6A7180">Nothing planned or done yet this week. Plan on the Today tab; it shows here as you log it.</div>') + '</div>' +
+    '<div class="card"><div class="bh">How you are coaching this week</div>' +
+      (coachNotes.length ? coachNotes.slice(0, 12).map(function (s) { return '<div class="ln">' + esc_(s) + '</div>'; }).join('') : '<div class="ln" style="color:#6A7180">Nothing logged yet. Put who you coached, and on what, in the notes on the Today tab.</div>') + '</div>' +
+    '<div class="card"><div class="bh">Your week</div>' + wk + '<div class="bf" style="margin-top:6px">From what you log here: your plan, your numbers, your comments. Mr Rampersad sees the same.</div></div>';
+
+  // ── The page
+  var bar = '<div class="card"><div style="display:flex;justify-content:space-between;font-size:13px;color:#6A7180"><span>' + esc_(twelve_(mmText_(sp.start))) + '</span><b style="color:#141C4A">' + esc_(twelve_(hhmm_(new Date()))) + '</b><span>' + esc_(twelve_(mmText_(sp.end))) + '</span></div>' +
+    '<div style="height:10px;background:#EEEBE3;border-radius:6px;margin:8px 0;overflow:hidden"><i style="display:block;height:100%;width:' + Math.max(0, Math.min(100, Math.round(100 * (nowM - sp.start) / Math.max(1, sp.end - sp.start)))) + '%;background:#141C4A"></i></div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap">' + (m.signIn ? '<span class="badge g">Signed in ' + esc_(twelve_(m.signIn)) + '</span>' : '<span class="badge r">Not signed in: saving signs you in</span>') +
+      (planned ? '<span class="badge g">Planned</span>' : '<span class="badge r">Not planned</span>') + '<span class="badge">' + m.posts + ' comment' + (m.posts === 1 ? '' : 's') + ' today</span></div></div>';
+  var tabs = '<div class="tabs">' + [['today', 'Today'], ['work', 'Unit work', pendLate || ''], ['agents', 'Agents'], ['you', 'You']].map(function (t, k) {
+    return '<button type="button" class="tab' + (k ? '' : ' on') + '" data-tab="' + t[0] + '">' + t[1] + (t[2] ? '<i>' + t[2] + '</i>' : '') + '</button>'; }).join('') + '</div>';
+  var sec = function (id, html) { return '<section data-sec="' + id + '"' + (id === 'today' ? '' : ' class="sec-off"') + '>' + html + '</section>'; };
+  var js = '<script>(function(){var tb=document.querySelectorAll(".tab"),ss=document.querySelectorAll("section[data-sec]");' +
+    'function show(w){for(var x=0;x<tb.length;x++)tb[x].className=tb[x].getAttribute("data-tab")===w?"tab on":"tab";for(var y=0;y<ss.length;y++)ss[y].className=ss[y].getAttribute("data-sec")===w?"":"sec-off";}' +
+    'for(var a=0;a<tb.length;a++)tb[a].addEventListener("click",function(){show(this.getAttribute("data-tab"));window.scrollTo(0,0);});' +
+    'var go=document.querySelectorAll("[data-go]");for(var i=0;i<go.length;i++)go[i].addEventListener("click",function(e){var id=this.getAttribute("data-go"),el=document.getElementById(id);if(!el)return;e.preventDefault();' +
+    'var s=el.closest("section[data-sec]");if(s)show(s.getAttribute("data-sec"));if(el.tagName==="DETAILS")el.open=true;el.scrollIntoView({behavior:"smooth",block:"start"});});})();</script>';
+  var body = tabs + sec('today', todaySec) + sec('work', workSec) + sec('agents', agentsSec) + sec('you', youSec);
+  if (view) return replyPage_(m.name + ' · My unit · ' + prettyDate_(day), 'What ' + String(m.name).split(' ')[0] + ' sees, as it stands now. Read only: saving is his.',
+    bar + brief + firstCard + '<fieldset disabled style="border:0;padding:0;margin:0;min-width:0">' + body + '</fieldset>' + js);
+  return replyPage_('My unit · ' + prettyDate_(day), 'Keep this link on your home screen. It is the same every day. Nothing here needs a Salesforce login.',
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') +
+    bar + brief + firstCard +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' +
+      '<input type="hidden" name="rs" value="' + esc_(sid) + '"><input type="hidden" name="f" value="unit"><input type="hidden" name="k" value="' + esc_(unitSig_(sid)) + '">' +
+      body + '<button type="submit">Save</button></form>' + js);
+}
+
+function unitSave_(person, day, p) {
+  var sid = String(person.staffId), name = nameFor_(sid), at = hhmm_(new Date()), out = [], posted = 0;
+  var head = 'Unit Manager · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at);
+  var ids = bigGet_('unit_ids_' + sid + '_' + day, []);
+  ids.forEach(function (it) {
+    var txt = String(p['c_' + it.id] || '').trim();
+    if (!txt) return;
+    var res = 'posted';
+    try { sfkInsert_('FeedItem', { ParentId: it.id, Body: head + '\n\n' + txt }); posted++; }
+    catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
+    out.push({ s: (it.a ? String(it.a).split(' ')[0] + ' · ' : '') + it.s, res: res });
+  });
+  var plan = mgrRows_(sid, day, 'plan'), eve = mgrRows_(sid, day, 'eve'), pr = [], dr = [];
+  var val = function (v) { return v == null ? '' : String(v).trim(); };
+  UM_CHECKS.forEach(function (c) {
+    var pv = val(p['p_' + c.id]), dv = val(p['d_' + c.id]), nv = val(p['n_' + c.id]);
+    var op = val((plan[c.id] || {}).Planned), od = val((eve[c.id] || {}).Done), on = val((eve[c.id] || {}).Note || (plan[c.id] || {}).Note);
+    if (pv !== '' && pv !== op) pr.push({ Item: c.id, Question: c.q, Planned: pv, Note: nv });
+    if (dv !== '' && (dv !== od || nv !== on)) dr.push({ Item: c.id, Question: c.q, Done: dv, Note: nv });
+  });
+  if (pr.length) { try { mgrWrite_(sid, day, 'plan', pr); out.push({ s: 'Your plan', res: pr.length + ' number' + (pr.length === 1 ? '' : 's') + ' saved' }); } catch (e) { out.push({ s: 'Your plan', res: 'NOT SAVED: ' + String(e && e.message || e).slice(0, 120) }); } }
+  if (dr.length) { try { mgrWrite_(sid, day, 'eve', dr); out.push({ s: 'Done so far', res: dr.length + ' line' + (dr.length === 1 ? '' : 's') + ' saved' }); } catch (e) { out.push({ s: 'Done so far', res: 'NOT SAVED: ' + String(e && e.message || e).slice(0, 120) }); } }
+  var lines = String(p.cap || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length >= 3; }).slice(0, ME.CAPTURE_MAX);
+  var capd = /^\d{4}-\d{2}-\d{2}$/.test(String(p.capd || '')) ? String(p.capd) : day, tgt = null;
+  try { cmdTargets_().forEach(function (t) { if (t.sid === String(p.capto || '')) tgt = t; }); } catch (e) {}
+  if (lines.length && !tgt) out.push({ s: lines.length + ' task' + (lines.length === 1 ? '' : 's') + ' for a desk', res: 'NOT SAVED: choose which desk' });
+  else lines.forEach(function (l) {
+    var res = '';
+    try {
+      var id = sfkInsert_('Task', { Subject: l.slice(0, 255), OwnerId: tgt.id, ActivityDate: capd, Status: 'Not Started', Task_Type__c: 'RR Operations',
+        Description: 'From ' + name + ' (Unit Manager) on My unit at ' + twelve_(at) + '.' });
+      try { sfkInsert_('FeedItem', { ParentId: id, Body: head + '\n\n' + l + '\n\nNote here what you will do and by when.' }); posted++; } catch (e) {}
+      res = 'task for ' + String(tgt.name).split(' ')[0] + (capd !== day ? ', due ' + shortDate_(capd) : ', due today');
+    } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
+    out.push({ s: l, res: res });
+  });
+  umPostsAdd_(sid, day, posted);
+  if (!out.length) return unitPage_(person, day, 'Nothing to save. Comment on a task, put in a number, or write a task for a desk, then Save.');
+  var signed = null; try { signed = signInFromPage_(person); } catch (e) {}
+  try { runlog_('unit ' + sid + ' ' + out.length + ' actions'); } catch (e) {}
+  return unitPage_(person, day, '', '<b>' + out.filter(function (o) { return !/^NOT/.test(o.res); }).length + ' of ' + out.length + ' saved' + (signed && signed.first ? ' · signed in ' + esc_(twelve_(signed.at)) : '') + '.</b>' +
+    out.map(function (o) { return '<div class="ln">' + (/^NOT/.test(o.res) ? '&#9888; ' : '&#10003; ') + esc_(shorten_(o.s, 80)) + ' · <b>' + esc_(o.res) + '</b></div>'; }).join(''));
+}
 /** What the Unit Manager is doing, from what he logs on the tracker (he has no Salesforce login): the plan, the account, his comments. */
 function umSelfCard_(sid, day) {
   try {
@@ -9094,6 +9410,7 @@ function replyWeekLink_(f, day) { var d = daysBetween_(day, todayISO_()); return
 function replyPerson_(sid, f) {
   return rosterPerson_(sid) || ((f === 'undo' || f === 'bm' || f === 'cmd' || f === 'qp' || f === 'me') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
     ((f === 'um' || f === 'umeve' || f === 'cmd') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
+    (f === 'unit' && UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null) ||
     ((f === 'ag' || f === 'agc' || f === 'agff') && /^a-/.test(sid) ? agentBySid_(sid) : null);
 }
 
@@ -9103,6 +9420,15 @@ function replyClick_(e) {
   var sid = String(p.rs || '').trim();
   if (!sid) return null;
   var day = isoDay_(p.d) || todayISO_(), f = String(p.f || '');
+  // My unit: the Unit Manager's one link for every day.
+  if (f === 'unit') {
+    var up = String(p.k || '') === unitSig_(sid) ? replyPerson_(sid, 'unit') : null;
+    return up ? unitPage_(up, todayISO_(), '') : replyPage_('That link is not right.', 'Open My unit from your morning e-mail and save that link.', '');
+  }
+  if (f === 'unitv') {
+    var uv = String(p.k || '') === unitViewSig_(sid) && UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null;
+    return uv ? unitPage_(uv, todayISO_(), '', '', true) : replyPage_('That link is not right.', 'Open it from your eleven o\'clock e-mail.', '');
+  }
   // My day: one link for every day, signed without a date.
   if (f === 'me') {
     var me = String(p.k || '') === meSig_(sid) ? replyPerson_(sid, 'me') : null;
@@ -9135,6 +9461,11 @@ function replyPost_(e) {
   var sid = String(p.rs || '').trim();
   if (!sid) return null;
   var day = isoDay_(p.d) || todayISO_(), f = String(p.f || '');
+  if (f === 'unit') {
+    var upp = String(p.k || '') === unitSig_(sid) ? replyPerson_(sid, 'unit') : null;
+    if (!upp) return replyPage_('That link is not right.', 'Nothing was saved. Open My unit from your morning e-mail.', '');
+    return unitSave_(upp, todayISO_(), p);
+  }
   if (f === 'me') {
     var mp = String(p.k || '') === meSig_(sid) ? replyPerson_(sid, 'me') : null;
     if (!mp) return replyPage_('That link is not right.', 'Nothing was saved. Open My day from this morning\'s e-mail.', '');

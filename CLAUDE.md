@@ -3335,3 +3335,20 @@ servicing work".
   (`sendMailbagCall_`) goes to the router and everyone holding documents; the
   morning cards and the before-you-leave check say the 12 noon bag; anything
   collected after it goes in tomorrow's bag. Pinned in `tests/test-unit.js`.
+- **My unit** (`unitPage_`/`unitSave_`, f=`unit`, 19 October 2026): the Unit
+  Manager's one page, on one link that works every day (`unitSig_`, signed with
+  'always' like My day; `showUnitLink()` logs it). A brief (API pace as at today,
+  pendings, agents planned, his plan) and "Do these first" (`unitPriorities_`:
+  plan not set, a staff note asking him by name, an absent agent, an overdue
+  pending with who holds it, an agent asking for help, behind API pace, an open
+  performance letter, no goal plan, no fact find this week, a task untouched 14+
+  days), each with its reason and a jump to its place. Tabs: Today (plan and
+  done side by side for every UM_CHECKS number, his agents today, a task for a
+  desk), Unit work (who holds the unit's work, by desk; every open task with the
+  history and a type-or-speak box), Agents (the unit against its FY27 goals,
+  then each agent), You (his own goal, manager numbers this week, coaching notes,
+  his week). One Save posts comments as his, keeps plan/done via `mgrWrite_`,
+  makes desk tasks, signs him in. Nothing links to Salesforce. First button in
+  his 6am, 11am and 5:30pm mails. Ricky's 11am/3pm mail links a read-only view
+  (f=`unitv`, `unitViewSig_`, a disabled fieldset, no form). Pinned in
+  `tests/test-hub.js`.
