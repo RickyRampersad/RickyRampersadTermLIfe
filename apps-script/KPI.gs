@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19i';
+var SCRIPT_VERSION = '2026-10-19j';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3732,7 +3732,7 @@ function housekeepingTick_() {
     if (mins < at || mins > at + HK_WINDOW_MIN) return;
     var key = 'hkv2_' + sid + '_' + day;   // the official close-out (16 Oct); an earlier version's send does not stop it
     if (props.getProperty(key)) return;
-    if (timedSend_(props, key, now, function () { if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid] || ''); })) sent.push(p.name);
+    if (timedSend_(props, key, now, function () { if (!hkSend_(p, day, present[sid])) throw new Error(HK_NO_ADDRESS); })) sent.push(p.name);
   });
   // At the finish, still signed in: a reminder. Half an hour later the register
   // reads "Did not close the day"; no automatic sign-out any more (Ricky, 19 Oct 2026).
@@ -3778,7 +3778,7 @@ function sendEverythingNow() {
     if (!present[sid]) { out.push(nameFor_(sid) + ': not signed in today, nothing sent'); return; }
     var key = 'hkv2_' + sid + '_' + day;
     if (props.getProperty(key)) { out.push(nameFor_(sid) + ': close-out already sent at ' + props.getProperty(key)); return; }
-    try { if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid]);
+    try { if (!hkSend_(p, day, present[sid])) { out.push(nameFor_(sid) + ': NOT sent, ' + HK_NO_ADDRESS); return; }
       props.setProperty(key, hhmm_(now)); out.push(nameFor_(sid) + ': close-out sent'); }
     catch (e) { out.push(nameFor_(sid) + ': FAILED ' + (e && e.message)); }
   });
@@ -3789,7 +3789,14 @@ function sendEverythingNow() {
   return out.join('\n');
 }
 
-function sendHousekeepingNow() {
+function sendHousekeepingNow() { return hkNow_(false); }
+
+/** From the editor, when a close-off did not arrive (an address was missing,
+ *  say): sends today's close-off again to everyone past their time, even where
+ *  the day is marked as sent. Run it once; each run sends again. */
+function resendCloseOffNow() { return hkNow_(true); }
+
+function hkNow_(force) {
   var day = todayISO_(), props = PropertiesService.getScriptProperties(), out = [];
   var now = new Date(), mins = minutesOf_(hhmm_(now));
   var present = {}, absent = {};
@@ -3802,8 +3809,9 @@ function sendHousekeepingNow() {
     if (!(present[sid] || props.getProperty('daystart_first_' + sid + '_' + day))) { out.push(sid + ': not signed in, no morning mail'); return; }
     if (mins < endFor_(sid) - HK_LEAD_MIN) { out.push(sid + ': not yet (' + twelve_(mmText_(endFor_(sid) - HK_LEAD_MIN)) + ')'); return; }
     var key = 'hkv2_' + sid + '_' + day;   // the official close-out (16 Oct); an earlier version's send does not stop it
-    if (props.getProperty(key)) { out.push(sid + ': already sent ' + props.getProperty(key)); return; }
-    try { if (sid === 'pawan') sendPawanDay_(day, 'leave'); else sendHousekeeping_(p, day, present[sid] || ''); props.setProperty(key, hhmm_(now)); out.push(sid + ': sent'); }
+    if (props.getProperty(key) && !force) { out.push(sid + ': already sent ' + props.getProperty(key)); return; }
+    try { if (!hkSend_(p, day, present[sid])) { out.push(sid + ': NOT sent, ' + HK_NO_ADDRESS); return; }
+      props.setProperty(key, hhmm_(now)); out.push(sid + ': sent to ' + emailFor_(sid)); }
     catch (e) { out.push(sid + ' FAILED: ' + (e && e.message)); }
   });
   Logger.log(out.join('\n')); return out.join('\n');
@@ -8807,6 +8815,17 @@ function sendBmaReport_(day) {
   return true;
 }
 function sendBmaReportNow() { return sendBmaReport_(todayISO_()); }
+
+/** The close-off, sent: true only when a mail actually went. A person with no
+ *  e-mail on the Acess tab gets nothing, and until 19 October 2026 the day was
+ *  still marked "sent" — Azariah and Liz lost their close-off that way while
+ *  their addresses were missing. Now the day stays open until it really goes. */
+var HK_NO_ADDRESS = 'no e-mail address on the Acess tab';
+function hkSend_(p, day, signIn) {
+  var sid = String(p.staffId);
+  var ok = sid === 'pawan' ? sendPawanDay_(day, 'leave') : sendHousekeeping_(p, day, signIn || '');
+  return ok !== false;
+}
 
 function sendHousekeeping_(person, day, signIn) {
   var sid = String(person.staffId);

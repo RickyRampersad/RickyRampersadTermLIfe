@@ -4159,3 +4159,5 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   in its subject; the managers' table reads "Projected · done · balance". Sheet
   columns stay Planned/Done. Statuses: projection in / no projection yet / absent
   (no projection). Pinned in `tests/test-balance.js`.
+
+- **A close-off with no address is not sent (19 Oct 2026, 2026-10-19j).** `hkSend_` reports whether the close-off really went; with no e-mail on the Acess tab the day stays open (scheduled run counts it as a failed try; `sendHousekeepingNow` logs "NOT sent, no e-mail address on the Acess tab"). `resendCloseOffNow()` (editor) sends today's close-off again even where the day is marked. Pinned by `tests/test-closeoff-address.js`.
