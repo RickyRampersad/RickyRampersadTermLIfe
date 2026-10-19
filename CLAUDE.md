@@ -3280,3 +3280,13 @@ servicing work".
   waiting_department, waiting_client, client_unhappy, in_progress, blocked,
   unclear. Done and unhappy override the rule's advice and move the risk.
   `ANTHROPIC_MODEL` defaults to claude-haiku-5-5. No key, no call.
+- **My day** (`f=me`, `mePage_`, 18 October 2026): the Branch Manager's page
+  on ONE link that works every day (signed `replySig_(sid,'always','me')`, no
+  date), for the phone's home screen. Plan first if the day is not planned;
+  next up (notes asking him, his tasks due by payoff, his instructions with no
+  note) with reply and close-with-note; capture as a task for him, for a desk,
+  or done already (a completed task, so it counts); the account against the
+  plan saved as the day goes (`MGRDAY` kind `eve`, the same record the 3pm
+  close reads). Check-in e-mails at 7:00, 9:00 and 1:00 (`BM_NUDGES`), plan
+  first then the next three. `showMyDayLink()` logs the link. Pinned in
+  `tests/test-me.js`.
