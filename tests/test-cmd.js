@@ -77,7 +77,7 @@ env.sfkInsert_ = (obj, body) => { writes.push(['insert', obj, body]); return obj
 
 const P = { staffId: 'ricky', name: 'Ricky Rampersad' };
 const html = env.cmdReplyPage_(P, DAY, '', '').getContent();
-const block = id => { const i = html.indexOf('value="' + id + '"'); const j = html.indexOf('class="task"', i + 10); return html.slice(i, j < 0 ? undefined : j); };
+const block = id => { const i = html.indexOf('value="' + id + '"'); const st = html.lastIndexOf('<details class="it"', i); const j = html.indexOf('<details class="it"', i); return html.slice(st, j < 0 ? undefined : j); };
 
 console.log('\nThe status comes from the record\'s own list:\n');
 ok('Salesforce\'s own statuses, read from TaskStatus', soql.some(q => /FROM TaskStatus/.test(q)) && /Set to Waiting on Client/.test(block('00T1')));
@@ -102,7 +102,7 @@ ok('a desk not in today is named', /Kamla is not in today/.test(block('00T4')));
 ok('an agent who has left makes the client an orphan', /Old Agent is no longer active/.test(block('00T5')));
 ok('a letter never opened: call, and the manager sits with them', /Never opened, \d+ days past due, after 2 e-mails\. E-mail is not working: call Darryl and have Akaash sit with them/.test(block('pl:PPM-Q2-2026-DM-001')));
 ok('a quarter-old letter is called out', /Q2 2026 letter is a quarter behind/.test(block('pl:PPM-Q2-2026-DM-001')));
-ok('the summary counts what it sees', /What the system sees/.test(html) && /cannot be closed<\/b>: the client asked for an agent/.test(html) && /By who has them: Elizabeth 4/.test(html));
+ok('the summary counts what it sees', /What the system sees/.test(html) && /cannot be closed:<\/b> the client asked for an agent/.test(html) && /<b>Elizabeth<\/b> holds the most \(4/.test(html));
 ok('a quarter is old only once the next has finished', env.cmdOldPeriod_('Q2 2026', DAY) && !env.cmdOldPeriod_('Q3 2026', DAY) && env.cmdOldPeriod_('Q3 2026', '2027-01-05'));
 
 console.log('\nSaving:\n');
@@ -143,6 +143,17 @@ ok('sixty items come back whole', back.length === 60 && back[59].id === '00TX59'
 writes.length = 0;
 out = save({ id_0: '00TGONE', st_0: 'Completed', q_0: 'x' });
 ok('an item no longer on the list is not applied to another row', /no longer on the list/.test(out) && !writes.length);
+
+console.log('\nOn a phone:\n');
+ok('each row folds to one line: age, title, who, why', /<details class="it" data-f="[^"]*"><summary><div class="hd"><span class="age a">9d<\/span>/.test(html));
+ok('filter chips for what the system found, the sources and the desks', /class="chip on" data-f="all">All<i>/.test(html) && /data-f="tag-done">Reads as done<i>1/.test(html) && /data-f="who-Elizabeth">Elizabeth<i>4/.test(html));
+ok('tiles at the top', /<div class="tiles">/.test(html) && /quick wins: read as done/.test(html));
+ok('a one-tap close, with the note written for you', /data-close="Completed" data-note="Done, per Guardian&#39;s note of Fri 16 Oct\."|data-close="Completed" data-note="Done, per Guardian's note of Fri 16 Oct\."/.test(block('00T1')), (block('00T1').match(/data-close[^>]*/) || [''])[0]);
+ok('no close button where the client asked for an agent', !/data-close/.test(block('00T3')));
+ok('where it is stuck, by who holds it', /Where it is stuck/.test(html) && /<span class="n">Elizabeth<\/span>/.test(html));
+ok('your notes answered, by desk', /Your notes answered/.test(html) && /<span class="c">1 of 1<\/span>/.test(html) && /<span class="c">0 of 1<\/span>/.test(html));
+ok('the send button counts the changes', /id="send"/.test(html) && /Send "\+n\+" change/.test(html));
+ok('the page\'s boxes are 16px, so a phone does not zoom in', /font-size:16px;line-height:1\.35/.test(html) && !/font:14px\/1\.4 inherit/.test(html));
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed.');
 process.exit(fails ? 1 : 0);

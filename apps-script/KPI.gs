@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-18a';
+var SCRIPT_VERSION = '2026-10-18b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3622,6 +3622,8 @@ function housekeepingTick_() {
   // The agents: 7:00 their day, 17:00 the close-off, eight a run, never in a
   // run that is already carrying staff morning mail.
   if (!morningSent) { try { agentTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {} }
+  // The fact-find chase: Monday ask, Wednesday reminder, Friday the week.
+  if (!morningSent) { try { ffChaseTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {} }
 
   // The register: an hour after the start with no sign-in is absent, and an
   // absent desk's untouched work is covered by whoever is in.
@@ -5198,6 +5200,7 @@ function ppmCard_(list, day, title) {
 function bmBranchCards_(day) {
   var out = '';
   try { out += ppmCard_(ppmLetters_(null), day, 'Performance letters'); } catch (e) {}
+  try { out += qpMailCard_('ricky', day); } catch (e) {}
   try {
     var seen = {}, waiting = bookRows_('SKILL', BOOKS.SKILL.responses).filter(function (r) {
       if (!/open/i.test(String(r['Status'] || '')) || String(r['Assigned to'] || '').trim()) return false;
@@ -5618,7 +5621,8 @@ function cmdAdvise_(it, ctx) {
     // Read everything written since your own last note, newest first.
     var since = []; for (var j = 0; j < ch.length && ch[j].byId !== ctx.me; j++) since.push(ch[j]);
     var doneNote = since.slice(0, 3).filter(function (c) { return CMD_DONE_RE.test(c.text) && !CMD_NOT_DONE_RE.test(c.text); })[0];
-    if (doneNote) return { tone: 'done', tag: 'done', text: first(doneNote.by) + ' wrote "' + shorten_(doneNote.text, 90) + '" on ' + shortDate_(doneNote.day) + '. It reads as done: close it with your note.' };
+    if (doneNote) return { tone: 'done', tag: 'done', note: 'Done, per ' + first(doneNote.by) + '\'s note of ' + shortDate_(doneNote.day) + '.',
+      text: first(doneNote.by) + ' wrote "' + shorten_(doneNote.text, 90) + '" on ' + shortDate_(doneNote.day) + '. It reads as done: close it with your note.' };
     if (!ch.length) return { tone: 'act', tag: 'silent', text: 'Nobody has written on this task. Ask for feedback before you move it.' };
     if (last.byId === ctx.me) {
       var wait = daysBetween_(last.day, ctx.day);
@@ -5631,7 +5635,7 @@ function cmdAdvise_(it, ctx) {
   if (it.src === 'Performance letter') {
     var p = ctx.ppm[it.ref] || {}, who = first(it.ownerName), mgr = it.mgr && normEmail_(it.mgr) !== normEmail_(ctx.myEmail) ? nameFromEmail_(it.mgr) : '';
     var stale = cmdOldPeriod_(it.period, ctx.day) ? ' The ' + it.period + ' letter is a quarter behind: decide whether it still stands, or close it with the outcome.' : '';
-    if (p.resp) return { tone: 'done', tag: 'done', text: who + ' has responded' + (/^\d{4}/.test(p.resp) ? ' (' + shortDate_(p.resp) + ')' : '') + '. Review it, then close the letter with your note.' };
+    if (p.resp) return { tone: 'done', tag: 'done', note: 'Response reviewed with ' + who + '; letter closed.', text: who + ' has responded' + (/^\d{4}/.test(p.resp) ? ' (' + shortDate_(p.resp) + ')' : '') + '. Review it, then close the letter with your note.' };
     if (!it.opened && /assign/i.test(it.st))
       return { tone: 'act', tag: 'unopened', text: 'Never opened, ' + it.age + ' days past due' + (p.trail ? ', after ' + p.trail + ' e-mail' + (p.trail === 1 ? '' : 's') : '') + '. E-mail is not working: call ' + who + (mgr ? ' and have ' + first(mgr) + ' sit with them this week' : '') + '.' + stale };
     return { tone: 'act', tag: 'unsigned', text: 'Opened' + (it.opened ? ' ' + shortDate_(it.opened) : '') + ' but no signed response' + (p.esc ? ' (' + p.esc.status + ', ' + p.esc.count + ' reminders)' : '') + '. Meet ' + who + ' and get it signed, or close it with the outcome.' + stale };
@@ -5701,59 +5705,127 @@ function cmdReplyPage_(person, day, error, notice) {
 
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var opts = '<option value="">Leave where it is</option>' + targets.map(function (t) { return '<option value="' + esc_(t.sid) + '">Move to ' + esc_(t.name) + '</option>'; }).join('');
-  var sel = 'width:100%;padding:9px;border:1.5px solid #DDE4EC;border-radius:9px;font:14px inherit;margin-bottom:6px;background:#fff';
   var tone = { done: '#2C7A57', act: '#141C4A', warn: '#DC3F3F', info: '#6A7180' };
+  var badgeOf = { done: 'g', warn: 'r', act: 'a', info: '' };
+  var tagLabel = { done: 'Reads as done', agent: 'Cannot close', unanswered: 'Your note unanswered', silent: 'Nothing written', away: 'Holder not in',
+                   orphan: 'Agent has left', unopened: 'Never opened', unsigned: 'Not signed', old: '60+ days' };
+  var holder = function (it) { return String(it.who ? nameFor_(it.who) : (it.ownerName || 'Unassigned')).split(' ')[0] || 'Unassigned'; };
+  var pct = function (a, b) { return b ? Math.round(100 * a / b) : 0; };
 
-  // What the system sees, counted.
+  // ── Insight ───────────────────────────────────────────────────────────────
   var tags = {}; items.forEach(function (it) { if (it.adv && it.adv.tag) tags[it.adv.tag] = (tags[it.adv.tag] || 0) + 1; });
-  var byDesk = {}; items.forEach(function (it) { var o = it.who ? nameFor_(it.who) : (it.ownerName || 'unassigned'); o = String(o).split(' ')[0]; byDesk[o] = (byDesk[o] || 0) + 1; });
+  var oldest = items.reduce(function (m, it) { return Math.max(m, it.age || 0); }, 0);
+  var sfNoWord = items.filter(function (it) { return it.k === 'sf' && !(ctx.chatter[it.id] || []).length; }).length;
+  var tiles = '<div class="tiles">' +
+    '<div class="tile"><div class="v">' + items.length + '</div><div class="l">gone quiet</div></div>' +
+    '<div class="tile g"><div class="v">' + (tags.done || 0) + '</div><div class="l">quick wins: read as done</div></div>' +
+    '<div class="tile' + (oldest > 30 ? ' r' : '') + '"><div class="v">' + oldest + 'd</div><div class="l">the oldest</div></div>' +
+    '<div class="tile' + (sfNoWord ? ' a' : '') + '"><div class="v">' + pct(sfNoWord, sfIds.length) + '%</div><div class="l">of tasks with nothing written</div></div></div>';
+  // Where it is stuck, by who holds it.
+  var by = {};
+  items.forEach(function (it) { var h = holder(it); var x = by[h] = by[h] || { n: 0, old: 0, done: 0 }; x.n++; x.old = Math.max(x.old, it.age || 0); if (it.adv && it.adv.tag === 'done') x.done++; });
+  var hs = Object.keys(by).sort(function (a, b) { return by[b].n - by[a].n; }), maxN = hs.length ? by[hs[0]].n : 1;
+  var stuck = hs.slice(0, 8).map(function (h) { return '<div class="bar"><span class="n">' + esc_(h) + '</span><span class="t"><i style="width:' + Math.max(4, pct(by[h].n, maxN)) + '%"' + (by[h].old > 30 ? ' class="r"' : '') + '></i></span><span class="c">' + by[h].n + ' · ' + by[h].old + 'd</span></div>'; }).join('');
+  // Your notes, answered or not, by who holds the task.
+  var ans = {};
+  items.forEach(function (it) {
+    if (it.k !== 'sf' || !ctx.me) return;
+    var ch = (ctx.chatter[it.id] || []).slice().reverse(), h = holder(it);
+    ch.forEach(function (c, i) {
+      if (c.byId !== ctx.me) return;
+      var x = ans[h] = ans[h] || { asked: 0, answered: 0 }; x.asked++;
+      if (ch.slice(i + 1).some(function (d) { return d.byId !== ctx.me; })) x.answered++;
+    });
+  });
+  var ansKeys = Object.keys(ans).sort(function (a, b) { return pct(ans[a].answered, ans[a].asked) - pct(ans[b].answered, ans[b].asked); });
+  var answered = ansKeys.map(function (h) { var x = ans[h], p = pct(x.answered, x.asked);
+    return '<div class="bar"><span class="n">' + esc_(h) + '</span><span class="t"><i class="' + (p < 50 ? 'r' : 'g') + '" style="width:' + Math.max(4, p) + '%"></i></span><span class="c">' + x.answered + ' of ' + x.asked + '</span></div>'; }).join('');
   var sees = [
-    tags.done ? '<b style="color:#2C7A57">' + tags.done + ' read as done</b>: the desk or the agent has answered. Close each with your note.' : '',
-    tags.agent ? '<b style="color:#DC3F3F">' + tags.agent + ' cannot be closed</b>: the client asked for an agent.' : '',
+    tags.done ? '<b style="color:#2C7A57">' + tags.done + ' read as done.</b> The desk or the agent has answered: close each with your note. Start here.' : '',
+    tags.agent ? '<b style="color:#DC3F3F">' + tags.agent + ' cannot be closed:</b> the client asked for an agent.' : '',
     tags.unanswered ? '<b>' + tags.unanswered + '</b> carry your note with no reply.' : '',
     tags.silent ? '<b>' + tags.silent + '</b> have nothing written on them at all.' : '',
     tags.away ? '<b>' + tags.away + '</b> sit with someone who is not in today.' : '',
     tags.orphan ? '<b>' + tags.orphan + '</b> belong to an agent who has left.' : '',
     tags.unopened ? '<b>' + tags.unopened + '</b> performance letter' + (tags.unopened === 1 ? ' was' : 's were') + ' never opened.' : '',
-    tags.old ? '<b>' + tags.old + '</b> have not been touched in two months.' : '',
-    'By who has them: ' + Object.keys(byDesk).sort(function (a, b) { return byDesk[b] - byDesk[a]; }).map(function (k) { return esc_(k) + ' ' + byDesk[k]; }).join(' · ') + '.'
+    hs.length ? '<b>' + esc_(hs[0]) + '</b> holds the most (' + by[hs[0]].n + ', the oldest ' + by[hs[0]].old + ' days).' : ''
   ].filter(String);
-  var seesCard = items.length ? '<div class="card"><div class="bh">What the system sees</div>' + sees.map(function (s) { return '<div class="ln">' + s + '</div>'; }).join('') + '</div>' : '';
+  var extra = '';
+  try { if (sid === 'ricky' || sid === 'kamla') extra += cmdQpSnapshot_(sid, day); } catch (e) {}
+  try { if (sid === 'ricky' || UM_DESKS.indexOf(sid) > -1) extra += cmdFfSnapshot_(sid, day); } catch (e) {}
+  var insight = items.length ? tiles + '<details class="card" open><summary class="bh" style="padding:0">What the system sees</summary>' +
+      sees.map(function (s) { return '<div class="ln">' + s + '</div>'; }).join('') +
+      (stuck ? '<div class="bf" style="margin-top:10px">Where it is stuck · items and the oldest</div>' + stuck : '') +
+      (answered ? '<div class="bf" style="margin-top:10px">Your notes answered, by who holds the task</div>' + answered : '') + '</details>' + extra
+    : extra;
 
+  // ── Filter chips ──────────────────────────────────────────────────────────
+  var fcount = {};
+  items.forEach(function (it, i) {
+    it.f = ['all', 'src-' + it.src.replace(/\W+/g, ''), 'who-' + holder(it).replace(/\W+/g, '')].concat(it.adv && it.adv.tag ? ['tag-' + it.adv.tag] : []);
+    it.f.forEach(function (f) { fcount[f] = (fcount[f] || 0) + 1; });
+  });
+  var chip = function (f, label, on) { return fcount[f] ? '<button type="button" class="chip' + (on ? ' on' : '') + '" data-f="' + esc_(f) + '">' + esc_(label) + '<i>' + fcount[f] + '</i></button>' : ''; };
+  var chips = items.length ? '<div class="chips">' + chip('all', 'All', true) +
+    ['done', 'agent', 'unanswered', 'silent', 'away', 'orphan', 'unopened', 'old'].map(function (t) { return chip('tag-' + t, tagLabel[t]); }).join('') +
+    CMD_GROUPS.map(function (g) { return chip('src-' + g.replace(/\W+/g, ''), g); }).join('') +
+    hs.map(function (h) { return chip('who-' + h.replace(/\W+/g, ''), h); }).join('') + '</div>' : '';
+
+  // ── The rows: folded to one line each, opened with a tap ─────────────────
   var row = function (it, i) {
     var owner = it.who ? nameFor_(it.who) : (it.ownerName || '—');
-    var link = it.k === 'sf' && base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank" rel="noopener">open</a>'
-             : it.drive ? ' · <a href="https://drive.google.com/file/d/' + esc_(it.drive) + '/view" target="_blank" rel="noopener">open the letter</a>' : '';
+    var link = it.k === 'sf' && base ? '<a href="' + esc_(base + it.id) + '" target="_blank" rel="noopener">Open in Salesforce</a>'
+             : it.drive ? '<a href="https://drive.google.com/file/d/' + esc_(it.drive) + '/view" target="_blank" rel="noopener">Open the letter</a>' : '';
     var list = it.k === 'sf' ? sfSt : it.src === 'Performance letter' ? plSt : null;
-    var stSel = list ? '<select name="st_' + i + '" style="' + sel + '"><option value="">Status: ' + esc_(it.st || '—') + ' (leave)</option>' +
+    var closer = list ? (list.filter(function (s) { return s.closed; })[0] || {}).v : '';
+    var stSel = list ? '<select name="st_' + i + '"><option value="">Status: ' + esc_(it.st || '—') + ' (leave)</option>' +
       list.filter(function (s) { return s.v !== it.st && !(it.nc && s.closed); }).map(function (s) { return '<option value="' + esc_(s.v) + '">Set to ' + esc_(s.v) + (s.closed ? ' (closes it)' : '') + '</option>'; }).join('') + '</select>' : '';
     var hist = it.hist || [], shown = hist.slice(0, 2), more = hist.slice(2);
-    var hl = function (h) { return '<div style="font-size:12.5px;line-height:1.45;padding:4px 0;border-top:1px dashed #E5E1D6">' + (h.d ? '<span style="color:#6A7180">' + esc_(shortDate_(h.d)) + '</span> · ' : '') + '<b>' + esc_(h.by) + '</b>: ' + esc_(shorten_(h.text, 220)) + '</div>'; };
-    var histHtml = it.k === 'sf' && !hist.length ? '<div style="font-size:12.5px;color:#6A7180;padding:4px 0">No Chatter on this task.</div>'
-      : hist.length ? '<div style="margin:4px 0 6px">' + shown.map(hl).join('') + (more.length ? '<details><summary>' + more.length + ' earlier</summary>' + more.map(hl).join('') + '</details>' : '') + '</div>' : '';
-    var adv = it.adv ? '<div style="font-size:13px;line-height:1.45;margin:4px 0 8px;padding:7px 10px;border-radius:8px;background:#F7F5EF;border-left:3px solid ' + tone[it.adv.tone] + ';color:' + tone[it.adv.tone] + '"><b>Suggested:</b> ' + esc_(it.adv.text) + '</div>' : '';
-    var ph = it.k === 'sf' ? 'Your note: feedback wanted, an instruction, or why it is closed (goes on Chatter)'
-           : it.src === 'Performance letter' ? 'Your comment on the letter, or why it is closed (goes on its record)' : 'Instruction for the task this becomes';
-    return '<div class="task" id="it' + i + '"><input type="hidden" name="id_' + i + '" value="' + esc_(it.id) + '">' +
-      '<div><span class="tag">' + esc_(it.src) + '</span> · <b>' + esc_(owner) + '</b> · ' + esc_(it.title) + link + '</div>' +
-      '<div class="tag late" style="margin:2px 0 4px">' + esc_(it.why) + (it.st ? ' <span style="color:#141C4A">· ' + esc_(it.st) + '</span>' : '') + '</div>' +
-      histHtml + adv + stSel +
-      '<select name="to_' + i + '" style="' + sel + '">' + opts + '</select>' +
+    var hl = function (h) { return '<div style="font-size:13px;line-height:1.45;padding:5px 0;border-top:1px dashed #E5E1D6">' + (h.d ? '<span style="color:#6A7180">' + esc_(shortDate_(h.d)) + '</span> · ' : '') + '<b>' + esc_(h.by) + '</b>: ' + esc_(shorten_(h.text, 240)) + '</div>'; };
+    var histHtml = it.k === 'sf' && !hist.length ? '<div style="font-size:13px;color:#6A7180;padding:4px 0">No Chatter on this task.</div>'
+      : hist.length ? '<div style="margin:2px 0 6px">' + shown.map(hl).join('') + (more.length ? '<details><summary>' + more.length + ' earlier</summary>' + more.map(hl).join('') + '</details>' : '') + '</div>' : '';
+    var adv = it.adv ? '<div style="font-size:13.5px;line-height:1.45;margin:6px 0 8px;padding:8px 10px;border-radius:8px;background:#F7F5EF;border-left:3px solid ' + tone[it.adv.tone] + ';color:' + tone[it.adv.tone] + '"><b>Suggested:</b> ' + esc_(it.adv.text) + '</div>' : '';
+    var doneNote = it.adv && it.adv.note ? it.adv.note : '';
+    var quick = '<div class="quick">' +
+      (closer && !it.nc ? '<button type="button" class="' + (it.adv && it.adv.tag === 'done' ? 'go' : '') + '" data-close="' + esc_(closer) + '" data-note="' + esc_(doneNote) + '">Close it</button>' : '') +
+      '<button type="button" data-ask="Where does this stand? Please note the next step and the date.">Ask for an update</button></div>';
+    var ph = it.k === 'sf' ? 'Your note (goes on Chatter): feedback wanted, an instruction, or why it is closed'
+           : it.src === 'Performance letter' ? 'Your comment (goes on the letter): or why it is closed' : 'Instruction for the task this becomes';
+    var ageCls = (it.age || 0) > 30 ? ' r' : (it.age || 0) > 7 ? ' a' : '';
+    return '<details class="it" data-f="' + esc_(it.f.join(' ')) + '"><summary><div class="hd"><span class="age' + ageCls + '">' + (it.age || 0) + 'd</span>' +
+        '<div class="tt">' + esc_(shorten_(it.title, 110)) + '<small>' + esc_(owner) + ' · ' + esc_(it.why) + (it.st ? ' · ' + esc_(it.st) : '') + '</small>' +
+        (it.adv && it.adv.tag ? '<span class="badge ' + badgeOf[it.adv.tone] + '">' + esc_(tagLabel[it.adv.tag] || '') + '</span>' : '') + '</div></div></summary>' +
+      '<input type="hidden" name="id_' + i + '" value="' + esc_(it.id) + '">' +
+      (link ? '<div style="font-size:13.5px;margin:0 0 4px">' + link + '</div>' : '') + histHtml + adv + quick + stSel +
+      '<select name="to_' + i + '">' + opts + '</select>' +
       '<input type="text" name="q_' + i + '" placeholder="' + esc_(ph) + '">' +
-      '<div style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px">New date <input type="date" name="d_' + i + '" style="flex:1;padding:8px;border:1.5px solid #DDE4EC;border-radius:9px"></div></div>';
+      '<div style="display:flex;gap:8px;align-items:center;margin:6px 0 10px;font-size:14px">New date <input type="date" name="d_' + i + '" style="flex:1"></div></details>';
   };
   var groups = CMD_GROUPS.concat(items.map(function (it) { return it.src; }).filter(function (s, i, a) { return CMD_GROUPS.indexOf(s) < 0 && a.indexOf(s) === i; }));
   var cards = groups.map(function (g) {
     var idx = []; items.forEach(function (it, i) { if (it.src === g) idx.push(i); });
     if (!idx.length) return '';
-    return '<div class="card"><div class="bh">' + esc_(CMD_GROUP_LABEL[g] || g) + ' (' + idx.length + ')</div>' + idx.map(function (i) { return row(items[i], i); }).join('') + '</div>';
+    return '<div class="card grp"><div class="bh">' + esc_(CMD_GROUP_LABEL[g] || g) + ' (' + idx.length + ')</div>' + idx.map(function (i) { return row(items[i], i); }).join('') + '</div>';
   }).join('');
+  var js = '<script>(function(){' +
+    'var chips=document.querySelectorAll(".chip"),items=document.querySelectorAll("details.it");' +
+    'function apply(f){for(var i=0;i<items.length;i++){var d=items[i];d.style.display=(" "+d.getAttribute("data-f")+" ").indexOf(" "+f+" ")>-1?"":"none";}' +
+      'var g=document.querySelectorAll(".grp");for(var j=0;j<g.length;j++){var any=false,ds=g[j].querySelectorAll("details.it");for(var k=0;k<ds.length;k++)if(ds[k].style.display!=="none")any=true;g[j].style.display=any?"":"none";}}' +
+    'for(var c=0;c<chips.length;c++)chips[c].addEventListener("click",function(){for(var x=0;x<chips.length;x++)chips[x].className="chip";this.className="chip on";apply(this.getAttribute("data-f"));window.scrollTo(0,document.querySelector(".chips").offsetTop);});' +
+    'var btn=document.getElementById("send");' +
+    'function count(){var n=0;for(var i=0;i<items.length;i++){var d=items[i],ch=false,els=d.querySelectorAll("select,input[type=text],input[type=date]");for(var k=0;k<els.length;k++)if(els[k].value)ch=true;d.classList.toggle("changed",ch);if(ch)n++;}' +
+      'if(btn)btn.textContent=n?("Send "+n+" change"+(n===1?"":"s")):"Send these changes";}' +
+    'if(btn&&btn.form){btn.form.addEventListener("input",count);btn.form.addEventListener("change",count);}' +
+    'var qs=document.querySelectorAll("[data-close],[data-ask]");for(var q=0;q<qs.length;q++)qs[q].addEventListener("click",function(){' +
+      'var d=this.closest("details.it"),s=d.querySelector("select[name^=st_]"),t=d.querySelector("input[name^=q_]");' +
+      'if(this.hasAttribute("data-close")&&s)s.value=this.getAttribute("data-close");' +
+      'var note=this.getAttribute("data-note")||this.getAttribute("data-ask")||"";if(t&&!t.value&&note)t.value=note;if(t)t.focus();count();});' +
+    '})();</script>';
   var srcCount = {}; items.forEach(function (it) { srcCount[it.src] = (srcCount[it.src] || 0) + 1; });
   return replyPage_('Not getting attention · ' + prettyDate_(day),
-    items.length + ' item' + (items.length === 1 ? '' : 's') + ' gone quiet, worst first: ' + esc_(Object.keys(srcCount).map(function (k) { return k + ' ' + srcCount[k]; }).join(', ')) +
-      '. Set a status to close it, move it, re-date it or ask; leave blank what needs nothing.',
-    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') + seesCard +
-    (items.length ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'cmd') + cards + '<button type="submit">Send these changes</button></form>'
+    items.length ? items.length + ' item' + (items.length === 1 ? '' : 's') + ' gone quiet, worst first. Tap one to see its history, close it, move it or ask; untouched rows are left as they are.' : '',
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') + insight +
+    (items.length ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'cmd') + chips + cards + '<button type="submit" id="send">Send these changes</button></form>' + js
                   : '<div class="card ok">Nothing has gone quiet. Every item has been touched in the last ' + CMD.QUIET_DAYS + ' days.</div>'));
 }
 
@@ -5874,6 +5946,425 @@ function cmdReplySave_(person, day, p) {
   return cmdReplyPage_(person, day, '', '<b>' + out.filter(function (o) { return !/^NOT/.test(o.res); }).length + ' of ' + out.length + ' done.</b>' +
     out.map(function (o) { return '<div class="ln">' + (/^NOT/.test(o.res) ? '&#9888; ' : '&#10003; ') + esc_(o.s) + ' · <b>' + esc_(o.res) + '</b></div>'; }).join(''));
 }
+/* ─────────── Query Pal deep dive (18 Oct 2026) ───────────
+ *  Ricky: "also in Query Pal, a deep dive." One page, read live from the Query
+ *  Pal workbook (Queries and Comments): what is open and over its own
+ *  turnaround, who holds it, which departments are slow to reply, what
+ *  clients ask most, how queries arrive, what clients score us, how many
+ *  chases a query takes, and whether the backlog is growing. The top of the
+ *  page says it in sentences; the rest is the evidence. Read only: queries
+ *  are closed in Query Pal, so the client is told.  */
+var QP_DIVE = { WINDOW: 90, QUIET: 5, LIST: 12 };
+function qpTurn_(s) { var t = String(s || ''), m = t.match(/(\d+)\s*(working\s*)?days?/i); return m ? Number(m[1]) : /same/i.test(t) ? 0 : 3; }
+function qpDive_(day) {
+  var comments = qpComments_();
+  var q = bookRows_('QPAL', BOOKS.QPAL.tab).filter(function (r) { return String(r['Reference'] || '').trim(); }).map(function (r) {
+    var opened = sfkDay_(r['Timestamp']), closed = anyIso_(r['Date Closed']), isOpen = !/closed/i.test(String(r['Status'] || ''));
+    var turn = qpTurn_(r['Turnaround']), dtc = r['Days to Close'];
+    var days = isOpen ? daysBetween_(opened, day) : (dtc !== '' && dtc != null && !isNaN(Number(dtc)) ? Number(dtc) : (closed ? daysBetween_(opened, closed) : null));
+    var lb = String(r['Logged By'] || ''), c = comments[qpCode_(r['Reference'])] || [];
+    return { ref: String(r['Reference']), code: qpCode_(r['Reference']), opened: opened, closed: closed, open: isOpen, status: String(r['Status'] || ''),
+      channel: /^client/i.test(lb) ? 'Client (online)' : /^staff/i.test(lb) ? 'Staff' : /agent/i.test(lb) ? 'Agent' : 'Other',
+      agent: String(r['Agent'] || '').trim(), client: String(r['Client/Name'] || ''), type: String(r['Query Type'] || r['Category'] || 'Other'),
+      dept: String(r['Department'] || 'Unknown'), turn: turn, urgent: /urgent/i.test(String(r['Priority'] || '')), subject: String(r['Subject'] || ''),
+      desk: String(r['Assigned To'] || '').trim() || 'Unassigned', days: days, over: days != null && days > turn, fu: Number(r['Follow-ups'] || 0) || 0,
+      score: r['Score'] === '' || r['Score'] == null || isNaN(Number(r['Score'])) ? null : Number(r['Score']), survey: anyIso_(r['Survey Sent']),
+      deptReplied: anyIso_(r['Dept Replied']), feedback: String(r['Feedback'] || ''), last: c[0] || null, comments: c.length };
+  });
+  var since = shiftDays_(day, -QP_DIVE.WINDOW), m30 = shiftDays_(day, -30), m60 = shiftDays_(day, -60);
+  var open = q.filter(function (x) { return x.open; });
+  var recent = q.filter(function (x) { return x.opened >= since; });
+  var closedIn = function (from, to) { return q.filter(function (x) { return !x.open && x.closed && x.closed >= from && x.closed < to && x.days != null; }); };
+  var c30 = closedIn(m30, shiftDays_(day, 1)), cPrev = closedIn(m60, m30), c90 = closedIn(since, shiftDays_(day, 1));
+  var avg = function (l, f) { var v = l.map(f).filter(function (n) { return n != null && !isNaN(n); }); return v.length ? Math.round(10 * v.reduce(function (a, b) { return a + b; }, 0) / v.length) / 10 : null; };
+  var group = function (list, key) { var g = {}; list.forEach(function (x) { var k = x[key] || 'Unknown'; (g[k] = g[k] || []).push(x); }); return g; };
+  var weeks = [];
+  for (var w = 5; w >= 0; w--) {
+    var to = shiftDays_(day, -7 * w + 1), from = shiftDays_(day, -7 * w - 6);
+    weeks.push({ from: from, opened: q.filter(function (x) { return x.opened >= from && x.opened < to; }).length, closed: q.filter(function (x) { return x.closed && x.closed >= from && x.closed < to; }).length });
+  }
+  var d = {
+    q: q, open: open, over: open.filter(function (x) { return x.over; }).sort(function (a, b) { return (b.days - b.turn) - (a.days - a.turn); }),
+    urgent: open.filter(function (x) { return x.urgent; }), quiet: open.filter(function (x) { return !x.last || daysBetween_(x.last.day, day) >= QP_DIVE.QUIET; }),
+    unassigned: open.filter(function (x) { return x.desk === 'Unassigned'; }),
+    avg30: avg(c30, function (x) { return x.days; }), avgPrev: avg(cPrev, function (x) { return x.days; }),
+    onTime30: c30.length ? Math.round(100 * c30.filter(function (x) { return !x.over; }).length / c30.length) : null, closed30: c30.length,
+    ages: [['0–1 days', 0, 1], ['2–3', 2, 3], ['4–7', 4, 7], ['8–14', 8, 14], ['15–30', 15, 30], ['31+', 31, 1e9]].map(function (b) { return { l: b[0], n: open.filter(function (x) { return x.days >= b[1] && x.days <= b[2]; }).length }; }),
+    desks: [], depts: [], types: [], channels: [], agents: [], weeks: weeks,
+    scored: c90.filter(function (x) { return x.score != null; }), surveyed: c90.filter(function (x) { return x.survey; }).length, c90: c90.length,
+    heavy: c90.concat(open).filter(function (x) { return x.fu >= 3; }).sort(function (a, b) { return b.fu - a.fu; }), avgFu: avg(c90, function (x) { return x.fu; })
+  };
+  d.avgScore = avg(d.scored, function (x) { return x.score; });
+  d.low = d.scored.filter(function (x) { return x.score <= 3; });
+  var gd = group(open.concat(c90), 'desk');
+  d.desks = Object.keys(gd).map(function (k) { var l = gd[k], cl = l.filter(function (x) { return !x.open; });
+    return { k: k, open: l.filter(function (x) { return x.open; }).length, over: l.filter(function (x) { return x.open && x.over; }).length, closed: cl.length,
+             avg: avg(cl, function (x) { return x.days; }), onTime: cl.length ? Math.round(100 * cl.filter(function (x) { return !x.over; }).length / cl.length) : null }; })
+    .sort(function (a, b) { return (b.open - a.open) || (b.closed - a.closed); });
+  var gp = group(open.concat(c90), 'dept');
+  d.depts = Object.keys(gp).map(function (k) { var l = gp[k], cl = l.filter(function (x) { return !x.open; });
+    var ts = l.map(function (x) { return x.turn; }), lo = Math.min.apply(null, ts), hi = Math.max.apply(null, ts);
+    return { k: k, n: l.length, open: l.filter(function (x) { return x.open; }).length, noReply: l.filter(function (x) { return x.open && !x.deptReplied; }).length,
+             avg: avg(cl, function (x) { return x.days; }), turn: hi, turnText: lo === hi ? String(hi) : lo + '–' + hi,
+             onTime: cl.length ? Math.round(100 * cl.filter(function (x) { return !x.over; }).length / cl.length) : null }; })
+    .sort(function (a, b) { return (b.avg || 0) - (a.avg || 0); });
+  var gt = group(recent, 'type');
+  d.types = Object.keys(gt).map(function (k) { return { k: k, n: gt[k].length }; }).sort(function (a, b) { return b.n - a.n; });
+  var gc = group(recent, 'channel');
+  d.channels = Object.keys(gc).map(function (k) { return { k: k, n: gc[k].length }; }).sort(function (a, b) { return b.n - a.n; });
+  var ga = group(recent.filter(function (x) { return x.agent; }), 'agent');
+  d.agents = Object.keys(ga).map(function (k) { return { k: k, n: ga[k].length }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 6);
+  d.recent = recent.length;
+  // What it says, in sentences.
+  var says = [];
+  var o7 = weeks[5].opened, cl7 = weeks[5].closed;
+  says.push(o7 > cl7 ? 'The backlog is growing: ' + o7 + ' opened and ' + cl7 + ' closed in the last seven days.' : o7 < cl7 ? 'The backlog is coming down: ' + cl7 + ' closed against ' + o7 + ' opened in the last seven days.' : 'Steady: ' + o7 + ' opened and ' + cl7 + ' closed in the last seven days.');
+  if (d.over.length) { var od = group(d.over, 'desk'), top = Object.keys(od).sort(function (a, b) { return od[b].length - od[a].length; })[0];
+    says.push(d.over.length + ' of ' + open.length + ' open queries are past their own turnaround; ' + top + ' holds ' + od[top].length + '. The worst is ' + d.over[0].code + ', ' + d.over[0].days + ' days on a ' + d.over[0].turn + '-day turnaround.'); }
+  var slow = d.depts.filter(function (x) { return x.avg != null && x.avg > x.turn; })[0];
+  if (slow) says.push(slow.k + ' is the slowest: ' + slow.avg + ' days on average against a ' + slow.turnText + '-day turnaround' + (slow.noReply ? ', and ' + slow.noReply + ' open quer' + (slow.noReply === 1 ? 'y has' : 'ies have') + ' had no reply from them' : '') + '. Escalate to the department head.');
+  if (d.types.length && d.recent) { var tp = Math.round(100 * d.types[0].n / d.recent); if (tp >= 20) says.push('"' + d.types[0].k + '" is ' + tp + '% of what clients ask (' + d.types[0].n + ' of ' + d.recent + ' in ' + QP_DIVE.WINDOW + ' days). A ready answer, or a self-serve page on querymypolicy.com, would take that volume off the desks.'); }
+  if (d.avg30 != null && d.avgPrev != null && d.avg30 !== d.avgPrev) says.push('Average time to close is ' + d.avg30 + ' days this month, ' + (d.avg30 < d.avgPrev ? 'down' : 'up') + ' from ' + d.avgPrev + ' the month before.');
+  if (d.quiet.length) says.push(d.quiet.length + ' open quer' + (d.quiet.length === 1 ? 'y has' : 'ies have') + ' had no comment on the trail in ' + QP_DIVE.QUIET + ' days or more. A client waiting in silence is the complaint we can prevent.');
+  if (d.low.length) says.push(d.low.length + ' client' + (d.low.length === 1 ? '' : 's') + ' scored us 3 or under in ' + QP_DIVE.WINDOW + ' days. Call each one back.');
+  if (d.c90 && d.scored.length < d.c90 / 3) says.push('Only ' + d.scored.length + ' of ' + d.c90 + ' closed queries came back with a score. Ask for the score when the query closes.');
+  if (d.unassigned.length) says.push(d.unassigned.length + ' open quer' + (d.unassigned.length === 1 ? 'y is' : 'ies are') + ' not assigned to anyone.');
+  d.says = says;
+  return d;
+}
+
+function qpBars_(list, label, value, opt) {
+  opt = opt || {};
+  var max = list.reduce(function (m, x) { return Math.max(m, value(x)); }, 0) || 1;
+  // Long names (departments, query types) sit on their own line above the bar, so a phone shows them whole.
+  return list.map(function (x) { var v = value(x), w = v > 0 ? Math.max(3, Math.round(100 * v / max)) : 0;
+    return '<div class="bar' + (opt.stack ? ' s' : '') + '"><span class="n" title="' + esc_(label(x)) + '">' + esc_(label(x)) + '</span><span class="t"><i' + (opt.cls ? ' class="' + opt.cls(x) + '"' : '') + ' style="width:' + w + '%"></i></span><span class="c">' + esc_(opt.text ? opt.text(x) : String(v)) + '</span></div>'; }).join('');
+}
+
+function qpDivePage_(person, day) {
+  var d;
+  try { d = qpDive_(day); } catch (e) { return replyPage_('Query Pal deep dive', 'Query Pal could not be read just now: ' + esc_(String(e && e.message || e)), ''); }
+  var tile = function (v, l, cls) { return '<div class="tile' + (cls ? ' ' + cls : '') + '"><div class="v">' + v + '</div><div class="l">' + l + '</div></div>'; };
+  var trend = d.avg30 != null && d.avgPrev != null ? (d.avg30 < d.avgPrev ? ' ↓' : d.avg30 > d.avgPrev ? ' ↑' : '') : '';
+  var tiles = '<div class="tiles">' + tile(d.open.length, 'open now') + tile(d.over.length, 'past their turnaround', d.over.length ? 'r' : 'g') +
+    tile(d.urgent.length, 'urgent, client waiting', d.urgent.length ? 'a' : '') + tile(d.avg30 == null ? '—' : d.avg30 + 'd' + trend, 'average to close, 30 days') +
+    tile(d.onTime30 == null ? '—' : d.onTime30 + '%', 'closed on time, 30 days', d.onTime30 != null && d.onTime30 < 70 ? 'r' : 'g') +
+    tile(d.avgScore == null ? '—' : d.avgScore + '/5', 'client score (' + d.scored.length + ')', d.avgScore != null && d.avgScore < 4 ? 'a' : '') +
+    tile(d.quiet.length, 'open, silent ' + QP_DIVE.QUIET + '+ days', d.quiet.length ? 'a' : '') + tile(d.recent, 'raised in ' + QP_DIVE.WINDOW + ' days') + '</div>';
+  var says = '<div class="card"><div class="bh">What it says</div>' + d.says.map(function (s) { return '<div class="ln">' + esc_(s) + '</div>'; }).join('') + '</div>';
+  var qRow = function (x) {
+    return '<details class="it"><summary><div class="hd"><span class="age ' + (x.over ? 'r' : '') + '">' + x.days + 'd</span><div class="tt">' + esc_(x.code) + ' · ' + esc_(shorten_(x.subject || x.type, 70)) +
+      '<small>' + esc_(x.desk) + ' · ' + esc_(x.dept) + ' · ' + x.turn + '-day turnaround' + (x.urgent ? ' · urgent' : '') + '</small></div></div></summary>' +
+      '<div class="ln">Client: <b>' + esc_(x.client) + '</b>' + (x.agent ? ' · agent ' + esc_(x.agent) : '') + ' · opened ' + esc_(shortDate_(x.opened)) + ' · ' + esc_(x.status) + '</div>' +
+      '<div class="ln">Department reply: ' + (x.deptReplied ? esc_(shortDate_(x.deptReplied)) : '<b style="color:#DC3F3F">none yet</b>') + ' · chased ' + x.fu + ' time' + (x.fu === 1 ? '' : 's') + '</div>' +
+      '<div class="ln">' + (x.last ? 'Last comment ' + esc_(shortDate_(x.last.day)) + ', ' + esc_(x.last.by) + ': ' + esc_(shorten_(x.last.text, 160)) : '<b style="color:#DC3F3F">No comment on the trail.</b>') + '</div></details>';
+  };
+  var act = d.over.length ? '<div class="card"><div class="bh">Act now · past their turnaround (' + d.over.length + ')</div>' + d.over.slice(0, QP_DIVE.LIST).map(qRow).join('') +
+    (d.over.length > QP_DIVE.LIST ? '<div class="bf">and ' + (d.over.length - QP_DIVE.LIST) + ' more.</div>' : '') + '</div>' : '';
+  var rest = d.open.filter(function (x) { return !x.over; }).sort(function (a, b) { return b.days - a.days; });
+  var openCard = rest.length ? '<div class="card"><div class="bh">Open, within turnaround (' + rest.length + ')</div>' + rest.slice(0, QP_DIVE.LIST).map(qRow).join('') + '</div>' : '';
+  var ages = '<div class="card"><div class="bh">Open, by age</div>' + qpBars_(d.ages, function (x) { return x.l; }, function (x) { return x.n; }, { cls: function (x) { return /15|31/.test(x.l) ? 'r' : ''; } }) + '</div>';
+  var desks = d.desks.length ? '<div class="card"><div class="bh">By desk · open now, and closed in ' + QP_DIVE.WINDOW + ' days</div>' +
+    qpBars_(d.desks, function (x) { return x.k.split(' ')[0]; }, function (x) { return x.open; }, { cls: function (x) { return x.over ? 'r' : ''; }, text: function (x) { return x.open + ' open' + (x.over ? ', ' + x.over + ' late' : ''); } }) +
+    d.desks.filter(function (x) { return x.closed; }).map(function (x) { return '<div class="ln" style="font-size:13px">' + esc_(x.k) + ': closed <b>' + x.closed + '</b>, average <b>' + x.avg + (x.avg === 1 ? ' day' : ' days') + '</b>, on time <b' + (x.onTime < 70 ? ' style="color:#DC3F3F"' : '') + '>' + x.onTime + '%</b></div>'; }).join('') + '</div>' : '';
+  var depts = d.depts.length ? '<div class="card"><div class="bh">Departments · average days to close, slowest first</div>' +
+    qpBars_(d.depts.filter(function (x) { return x.avg != null; }).slice(0, 8), function (x) { return x.k; }, function (x) { return x.avg; }, { stack: true, cls: function (x) { return x.avg > x.turn ? 'r' : 'g'; }, text: function (x) { return x.avg + 'd / ' + x.turnText + 'd'; } }) +
+    d.depts.filter(function (x) { return x.noReply; }).map(function (x) { return '<div class="ln" style="font-size:13px"><b>' + esc_(x.k) + '</b>: ' + x.noReply + ' open with no reply from the department</div>'; }).join('') + '</div>' : '';
+  var types = d.types.length ? '<div class="card"><div class="bh">What clients ask · ' + QP_DIVE.WINDOW + ' days</div>' + qpBars_(d.types.slice(0, 8), function (x) { return x.k; }, function (x) { return x.n; }, { stack: true, text: function (x) { return x.n + ' · ' + Math.round(100 * x.n / d.recent) + '%'; } }) + '</div>' : '';
+  var chans = d.channels.length ? '<div class="card"><div class="bh">How queries arrive</div>' + qpBars_(d.channels, function (x) { return x.k; }, function (x) { return x.n; }, { text: function (x) { return Math.round(100 * x.n / d.recent) + '%'; } }) + '</div>' : '';
+  var wk = '<div class="card"><div class="bh">Six weeks · opened and closed</div>' + d.weeks.map(function (w) {
+    var m = Math.max(1, d.weeks.reduce(function (a, x) { return Math.max(a, x.opened, x.closed); }, 0));
+    return '<div class="bar"><span class="n">w/c ' + esc_(shortDate_(w.from).replace(/^\w+ /, '')) + '</span><span class="t" style="display:flex;flex-direction:column;gap:2px;height:auto;background:none"><i style="height:6px;width:' + (w.opened ? Math.max(3, Math.round(100 * w.opened / m)) : 0) + '%"></i><i class="g" style="height:6px;width:' + (w.closed ? Math.max(3, Math.round(100 * w.closed / m)) : 0) + '%"></i></span><span class="c">' + w.opened + ' in · ' + w.closed + ' out</span></div>'; }).join('') +
+    '<div class="bf">Dark: opened. Green: closed.</div></div>';
+  var sat = '<div class="card"><div class="bh">Client satisfaction · ' + QP_DIVE.WINDOW + ' days</div><div class="ln">Surveys sent on <b>' + d.surveyed + '</b> of ' + d.c90 + ' closed; <b>' + d.scored.length + '</b> scored' + (d.avgScore != null ? ', average <b>' + d.avgScore + ' / 5</b>' : '') + '.</div>' +
+    d.low.map(function (x) { return '<div class="ln" style="font-size:13px"><b style="color:#DC3F3F">' + x.score + '/5</b> · ' + esc_(x.code) + ' · ' + esc_(x.client) + ' · ' + esc_(x.desk) + (x.feedback ? ' · "' + esc_(shorten_(x.feedback, 120)) + '"' : '') + '</div>'; }).join('') + '</div>';
+  var fu = d.heavy.length || d.avgFu ? '<div class="card"><div class="bh">Chasing · follow-ups a query takes</div><div class="ln">Average <b>' + (d.avgFu || 0) + '</b> follow-ups per closed query.</div>' +
+    d.heavy.slice(0, 8).map(function (x) { return '<div class="ln" style="font-size:13px"><b>' + x.fu + ' chases</b> · ' + esc_(x.code) + ' · ' + esc_(x.dept) + (x.open ? ' · <b style="color:#DC3F3F">still open</b>' : ' · closed in ' + x.days + ' days') + '</div>'; }).join('') + '</div>' : '';
+  var ag = d.agents.length ? '<div class="card"><div class="bh">Agents raising the most · ' + QP_DIVE.WINDOW + ' days</div>' + qpBars_(d.agents, function (x) { return x.k; }, function (x) { return x.n; }) + '</div>' : '';
+  return replyPage_('Query Pal deep dive · ' + prettyDate_(day), 'Read live from Query Pal. Close queries in Query Pal itself, so the client is told.',
+    tiles + says + act + ages + desks + depts + types + chans + wk + sat + fu + ag + openCard);
+}
+/** The command centre's Query Pal card, with the way into the deep dive. */
+function cmdQpSnapshot_(sid, day) {
+  var d = qpDive_(day);
+  return '<div class="card"><div class="bh">Query Pal</div><div class="ln"><b>' + d.open.length + '</b> open · <b style="color:' + (d.over.length ? '#DC3F3F' : '#2C7A57') + '">' + d.over.length + '</b> past turnaround · <b>' + d.urgent.length + '</b> urgent' +
+    (d.avg30 != null ? ' · ' + d.avg30 + ' days to close' : '') + '</div>' + (d.says[1] ? '<div class="ln" style="font-size:13px">' + esc_(d.says[1]) + '</div>' : '') +
+    '<a href="' + esc_(replyUrl_(sid, day, 'qp')) + '" target="_top" style="display:block;text-align:center;padding:12px;margin-top:6px;border:1.5px solid #141C4A;border-radius:10px;text-decoration:none">Query Pal deep dive &rarr;</a></div>';
+}
+/** The same, for the 5am e-mail. */
+function qpMailCard_(sid, day) {
+  var d = qpDive_(day);
+  return srcCard_('Query Pal · ' + d.open.length + ' open, ' + d.over.length + ' past turnaround', d.over.length ? MAIL.red : MAIL.green,
+    d.says.slice(0, 3).map(esc_), '') + replyButton_(replyUrl_(sid, day, 'qp'), 'Query Pal deep dive', 'Who holds what, which departments are slow, what clients ask, and what they score us.');
+}
+
+/* ─────────── Fact finds: none done, a response is asked for (18 Oct 2026) ───────────
+ *  Ricky: "in the agents' fact find, if a person is not doing it, it should
+ *  trigger an e-mail requesting a response."
+ *  Monday from 7:00: every agent with no fact find in FF_CHASE.DAYS days (the
+ *  Fact Finding Interviews in Salesforce, and nothing this week on FactFind360)
+ *  is asked by e-mail for a response: what stopped them, and how many they will
+ *  complete by Friday. One page, no sign-in, and the link is good all week.
+ *  The answer is kept on the Fact Find Responses tab, sent back to the agent
+ *  with sales support and their Unit Manager copied, and when they ask for help
+ *  (appointments, names to call, the fact find itself) it becomes a Salesforce
+ *  task for their manager. Wednesday from 7:00, whoever has not answered is
+ *  reminded, their manager copied. Friday from 7:00, the Branch Manager and the
+ *  Unit Managers get the week: who was asked, who answered, what each committed
+ *  and what they have done since.
+ *  Script Property FF_CHASE: 'live' sends to the agents; 'preview' sends the
+ *  Branch Manager one sample and the list instead; 'off' stops it. Unset, it
+ *  follows AGENT_DAY. Every send checks the day's e-mail quota first.  */
+var FF_CHASE = { DAYS: 14, AT: 7 * 60, WINDOW: 150, PER_RUN: 6, QUOTA_FLOOR: 25 };
+var FFRESP = { must: ['Week', 'Agent', 'Reason'], name: 'Fact Find Responses',
+  head: ['Week', 'Agent', 'Name', 'Email', 'Manager', 'Last Fact Find', 'Reason', 'Commit', 'Who When', 'Help', 'Note', 'At'] };
+var FF_REASONS = [
+  { id: 'booked', label: 'I have fact finds booked this week' },
+  { id: 'unlogged', label: 'I did them, but they are not on FactFind360' },
+  { id: 'appts', label: 'I cannot get appointments: I need help getting in front of clients', help: true },
+  { id: 'leads', label: 'I need names to call', help: true },
+  { id: 'skills', label: 'I need help with the fact find itself', help: true },
+  { id: 'leave', label: 'I am on leave or not working this week' },
+  { id: 'other', label: 'Something else' }
+];
+function ffMode_() {
+  var p = ''; try { p = String(PropertiesService.getScriptProperties().getProperty('FF_CHASE') || '').trim().toLowerCase(); } catch (e) {}
+  return /^(live|preview|off)$/.test(p) ? p : agentMode_();
+}
+function ffWeek_(day) { return shiftDays_(day, 1 - isoDow_(day)); }
+function ffReason_(id) { return FF_REASONS.filter(function (r) { return r.id === id; })[0] || null; }
+
+/** Fact finds per agent e-mail from Salesforce: { email: { last, n14, week } }. */
+function ffSalesforce_(emails, day) {
+  var out = {}, week = ffWeek_(day);
+  for (var i = 0; i < emails.length; i += 100) {
+    try {
+      sfkQuery_('SELECT Agent_Email__c, Date_of_Interview__c, CreatedDate FROM Fact_Finding_Interviews__c WHERE Agent_Email__c IN (' +
+        emails.slice(i, i + 100).map(soqlStr_).join(',') + ') ORDER BY CreatedDate DESC LIMIT 2000').forEach(function (r) {
+        var e = String(r.Agent_Email__c || '').toLowerCase(), on = String(r.Date_of_Interview__c || r.CreatedDate || '').slice(0, 10); if (!e || !on) return;
+        var x = out[e] = out[e] || { last: '', n14: 0, week: 0 };
+        if (on > x.last) x.last = on;
+        if (daysBetween_(on, day) <= FF_CHASE.DAYS) x.n14++;
+        if (on >= week) x.week++;
+      });
+    } catch (e) {}
+  }
+  return out;
+}
+/** Every agent's fact-find position, the ones gone longest first. */
+function ffStatus_(day, onlyKey) {
+  var people = agentPeople_(), keys = Object.keys(people).filter(function (k) { return !onlyKey || k === onlyKey; });
+  var sf = ffSalesforce_(keys.map(function (k) { return String(people[k].email).toLowerCase(); }), day);
+  var feed = null; try { feed = ff360Feed_(); } catch (e) {}
+  return keys.map(function (k) {
+    var a = people[k], x = sf[String(a.email).toLowerCase()] || { last: '', n14: 0, week: 0 }, f3 = feed ? ff360Agent_(feed, [a.agentName, a.name]) : null, g = null;
+    try { g = goalFor_(a.agentName, a.code || a.agentId); } catch (e) {}
+    var since = x.last ? daysBetween_(x.last, day) : null;
+    return { a: a, last: x.last, since: since, n14: x.n14, weekSf: x.week, f3: f3, goalWk: g ? g.ffWk : 0,
+             weekDone: Math.max(x.week, f3 && f3.known ? f3.week : 0),
+             active: (since != null && since <= FF_CHASE.DAYS) || !!(f3 && f3.known && f3.week > 0) };
+  }).sort(function (p, q) { return (p.active - q.active) || ((q.since == null ? 9999 : q.since) - (p.since == null ? 9999 : p.since)); });
+}
+function ffResponses_(week) {
+  var out = {};
+  (hrRows_(FFRESP, false) || []).forEach(function (r) { if (isoDay_(r.Week) === week) out[String(r.Agent)] = r; });
+  return out;
+}
+function ffFromList_(x, a) { return { a: a, last: x.last, since: x.since, goalWk: x.g || 0, f3: x.m == null ? null : { known: true, month: x.m, year: x.y } }; }
+
+function ffAskMail_(s, week, kind) {
+  var a = s.a, first = String(a.name).split(' ')[0];
+  var lastTxt = s.last ? 'Your last fact find on record is from <b>' + esc_(shortDate_(s.last)) + '</b>, ' + s.since + ' days ago.' : 'There is <b>no fact find on record</b> under your name.';
+  var body =
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + (kind === 'remind' ? esc_(first) + ', your response on fact finds is still outstanding. ' : 'Good morning, ' + esc_(first) + '. ') +
+      lastTxt + ' Every sale starts with a fact find, and the branch needs to know what is in the way. Tell us what stopped them, and how many you will complete by Friday.</div>' +
+    statTiles_([
+      { value: s.since == null ? '—' : s.since + 'd', label: 'since your last fact find', color: MAIL.red },
+      { value: s.f3 && s.f3.known ? s.f3.month : '—', label: 'this month on FactFind360' },
+      { value: s.f3 && s.f3.known ? s.f3.year : '—', label: 'this year' },
+      { value: s.goalWk || '—', label: 'your own weekly goal' }
+    ]) +
+    replyButton_(replyUrl_(a.key, week, 'agff'), 'Give my response', 'One page, two minutes, no sign-in. The link is good all week.') +
+    '<div style="font-size:13px;color:' + MAIL.muted + ';line-height:1.55;margin-top:10px">Your answer goes to your Unit Manager and sales support. If you need help (appointments, names to call, or the fact find itself), say so and your manager gets it as a task.' +
+      (kind === 'remind' ? ' No response by Friday goes to Mr Rampersad.' : '') + '</div>' +
+    '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
+  return { subject: (kind === 'remind' ? 'Reminder: ' : '') + 'Fact finds: your response is required · ' + a.name,
+           html: shell_(kind === 'remind' ? 'Your response is outstanding' : 'Fact finds: your response', a.name + ' · week of ' + prettyDate_(week), body) };
+}
+function ffQuotaOk_() { try { return MailApp.getRemainingDailyQuota() > FF_CHASE.QUOTA_FLOOR; } catch (e) { return true; } }
+
+/** From the ten-minute tick, weekdays: ask on Monday (Tuesday for any the quota held back), remind on Wednesday, the week on Friday. */
+function ffChaseTick_(day, mins) {
+  var mode = ffMode_(); if (mode === 'off') return [];
+  if (mins < FF_CHASE.AT || mins > FF_CHASE.AT + FF_CHASE.WINDOW) return [];
+  var dow = isoDow_(day), week = ffWeek_(day), props = PropertiesService.getScriptProperties(), out = [];
+  var list = null; try { list = JSON.parse(props.getProperty('ff_list_' + week) || 'null'); } catch (e) {}
+  if (!list && dow === 1) {
+    list = ffStatus_(day).filter(function (s) { return !s.active; }).map(function (s) {
+      return { k: s.a.key, last: s.last, since: s.since, m: s.f3 && s.f3.known ? s.f3.month : null, y: s.f3 && s.f3.known ? s.f3.year : null, g: s.goalWk }; });
+    props.setProperty('ff_list_' + week, JSON.stringify(list).slice(0, 8900));
+  }
+  if (!list) return [];
+  var people = agentPeople_(), resp = null, sent = 0;
+  if (dow === 1 || dow === 2) {
+    if (mode === 'preview') {
+      if (dow !== 1 || props.getProperty('ff_prev_' + week) || !list.length) return [];
+      props.setProperty('ff_prev_' + week, hhmm_(new Date()));
+      if (ffPreview_(list, people, week)) out.push('fact-find preview, ' + list.length + ' agents');
+      return out;
+    }
+    list.forEach(function (x) {
+      var a = people[x.k];
+      if (sent >= FF_CHASE.PER_RUN || !a || props.getProperty('ffq_' + x.k + '_' + week) || !ffQuotaOk_()) return;
+      var mail = ffAskMail_(ffFromList_(x, a), week, 'ask');
+      props.setProperty('ffq_' + x.k + '_' + week, hhmm_(new Date()));
+      try { MailApp.sendEmail({ to: a.email, cc: DAYSTART_CC_DEFAULT, subject: mail.subject, htmlBody: mail.html }); sent++; out.push(a.name + ' (fact finds asked)'); }
+      catch (e) { out.push(a.name + ' fact-find ask FAILED: ' + (e && e.message)); }
+    });
+  } else if (dow === 3 && mode === 'live') {
+    resp = ffResponses_(week);
+    list.forEach(function (x) {
+      var a = people[x.k];
+      if (sent >= FF_CHASE.PER_RUN || !a || resp[x.k] || !props.getProperty('ffq_' + x.k + '_' + week) || props.getProperty('ffr_' + x.k + '_' + week) || !ffQuotaOk_()) return;
+      var mail = ffAskMail_(ffFromList_(x, a), week, 'remind'), cc = [DAYSTART_CC_DEFAULT], mgr = agentManagerEmail_(a);
+      if (mgr && cc.indexOf(mgr) < 0) cc.push(mgr);
+      props.setProperty('ffr_' + x.k + '_' + week, hhmm_(new Date()));
+      try { MailApp.sendEmail({ to: a.email, cc: cc.join(','), subject: mail.subject, htmlBody: mail.html }); sent++; out.push(a.name + ' (fact finds reminded)'); }
+      catch (e) { out.push(a.name + ' fact-find reminder FAILED: ' + (e && e.message)); }
+    });
+  } else if (dow === 5 && !props.getProperty('ff_sum_' + week)) {
+    props.setProperty('ff_sum_' + week, hhmm_(new Date()));
+    try { if (ffWeekSummary_(week, day, mode, list)) out.push('fact-find week'); } catch (e) { out.push('fact-find week FAILED: ' + (e && e.message)); }
+  }
+  return out;
+}
+
+function ffPreview_(list, people, week) {
+  var mgr = managerEmails_(); if (!mgr.length || !list.length) return false;
+  var first = people[list[0].k], sample = first ? ffAskMail_(ffFromList_(list[0], first), week, 'ask') : null;
+  var rows = list.map(function (x) { var a = people[x.k]; return a ? '<div style="font-size:12.5px;padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(a.name) + '</b> · ' + (x.last ? 'last ' + esc_(shortDate_(x.last)) + ' (' + x.since + ' days)' : 'none on record') + (x.m != null ? ' · ' + x.m + ' this month' : '') + '</div>' : ''; }).join('');
+  MailApp.sendEmail({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT, subject: '[Preview] Fact finds: ' + list.length + ' agent' + (list.length === 1 ? '' : 's') + ' with none in ' + FF_CHASE.DAYS + ' days',
+    htmlBody: '<div style="background:#EEF9FD;border:1px solid #0EA5C9;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">Preview. In live mode each of these agents is asked for a response this morning, reminded on Wednesday, and you get the week on Friday. ' +
+      'Switch on with Script Property FF_CHASE = live.</div>' + shell_('Fact finds: who would be asked', 'Week of ' + prettyDate_(week), rows) + (sample ? '<div style="margin-top:16px;font:600 12px Segoe UI,Arial;color:#6A7180">The e-mail ' + esc_(first.name) + ' would get:</div>' + sample.html : '') });
+  return true;
+}
+
+/** Friday: the week, to the Branch Manager and the Unit Managers. */
+function ffWeekSummary_(week, day, mode, list) {
+  var mgr = managerEmails_(); if (!mgr.length) return false;
+  var people = agentPeople_(), resp = ffResponses_(week), props = PropertiesService.getScriptProperties(), now = {};
+  try { ffStatus_(day).forEach(function (s) { now[s.a.key] = s; }); } catch (e) {}
+  var rows = list.filter(function (x) { return people[x.k]; }).map(function (x) {
+    var a = people[x.k], r = resp[x.k], s = now[x.k] || {}, asked = mode === 'preview' || !!props.getProperty('ffq_' + x.k + '_' + week);
+    var commit = r ? Number(r.Commit || 0) : null, done = s.weekDone || 0, rs = r ? ffReason_(String(r.Reason)) : null;
+    return { a: a, asked: asked, r: r, commit: commit, done: done, kept: commit != null && done >= commit && commit > 0, why: rs ? rs.label : '' };
+  });
+  var answered = rows.filter(function (x) { return x.r; }), silent = rows.filter(function (x) { return x.asked && !x.r; });
+  var committed = answered.reduce(function (n, x) { return n + (x.commit || 0); }, 0), done = rows.reduce(function (n, x) { return n + x.done; }, 0);
+  var line = function (x) {
+    return '<div style="font-size:12.5px;line-height:1.45;padding:6px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(x.a.name) + '</b> · ' +
+      (x.r ? esc_(x.why) + ' · committed <b>' + x.commit + '</b>, done <b style="color:' + (x.kept ? MAIL.green : MAIL.red) + '">' + x.done + '</b>' + (x.r.Help ? ' · help asked: ' + esc_(shorten_(String(x.r.Help), 90)) : '')
+           : '<b style="color:' + MAIL.red + '">no response</b>' + (x.done ? ' · ' + x.done + ' done this week' : '')) + '</div>';
+  };
+  var body = '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">The fact-find chase for the week of ' + esc_(prettyDate_(week)) + ': who had none in ' + FF_CHASE.DAYS + ' days on Monday, what they answered, and what they have done since.' + (mode === 'preview' ? ' <b>Preview mode: the agents were not e-mailed.</b>' : '') + '</div>' +
+    statTiles_([
+      { value: rows.length, label: 'asked for a response' },
+      { value: answered.length, label: 'answered', color: MAIL.green },
+      { value: silent.length, label: 'no response', color: silent.length ? MAIL.red : MAIL.navy },
+      { value: done + (committed ? ' / ' + committed : ''), label: 'done this week / committed' }
+    ]) +
+    (silent.length ? sectionLabel_('No response · call them today (' + silent.length + ')') + silent.map(line).join('') : '') +
+    (answered.length ? sectionLabel_('Answered (' + answered.length + ')') + answered.map(line).join('') : '') +
+    '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:8px">Done: fact finds since Monday, the higher of Salesforce and FactFind360.</div>';
+  var to = mgr.slice();
+  if (mode === 'live') UM_DESKS.forEach(function (s) { var e = emailFor_(s); if (e && to.indexOf(e) < 0) to.push(e); });
+  MailApp.sendEmail({ to: to.join(','), cc: DAYSTART_CC_DEFAULT, subject: 'Fact finds this week · ' + answered.length + ' of ' + rows.length + ' answered, ' + done + ' done' + (committed ? ' of ' + committed + ' committed' : ''),
+    htmlBody: shell_('Fact finds · the week', 'Week of ' + prettyDate_(week), body) });
+  return true;
+}
+
+/** The agent's page: what the record shows, and the response. */
+function ffReplyPage_(person, week, error, notice) {
+  var a = person.agent, first = String(a.name).split(' ')[0], day = todayISO_(), s = null, had = null;
+  try { s = ffStatus_(day, a.key)[0]; } catch (e) {}
+  try { had = ffResponses_(week)[a.key] || null; } catch (e) {}
+  var tile = function (v, l, cls) { return '<div class="tile' + (cls ? ' ' + cls : '') + '"><div class="v">' + v + '</div><div class="l">' + l + '</div></div>'; };
+  var tiles = s ? '<div class="tiles">' + tile(s.since == null ? '—' : s.since + 'd', 'since your last fact find', 'r') + tile(s.weekDone, 'done this week') +
+    tile(s.f3 && s.f3.known ? s.f3.month : '—', 'this month on FactFind360') + tile(s.goalWk || '—', 'your own weekly goal') + '</div>' : '';
+  var v = function (k) { return had ? String(had[k] == null ? '' : had[k]) : ''; };
+  var reasons = FF_REASONS.map(function (r) {
+    return '<label class="t"><input type="radio" name="reason" value="' + r.id + '"' + (v('Reason') === r.id ? ' checked' : '') + ' required><span>' + esc_(r.label) + '</span></label>'; }).join('');
+  return replyPage_('Your fact finds · week of ' + prettyDate_(week),
+    'Two minutes. Your answer goes to your Unit Manager and sales support' + (s && s.last ? '; your last fact find on record is from ' + esc_(shortDate_(s.last)) : '') + '.',
+    (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') +
+    (had && !notice ? '<div class="card ok">You answered on ' + esc_(String(had.At || '')) + '. Sending again replaces it.</div>' : '') + tiles +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(a.key, week, 'agff') +
+      '<div class="card"><div class="bh">What has stopped the fact finds?</div>' + reasons + '</div>' +
+      '<div class="card"><div class="bh">Your commitment</div><div class="bf">Fact finds you will complete by Friday</div>' +
+        '<input type="number" name="commit" min="0" max="50" inputmode="numeric" required value="' + esc_(v('Commit')) + '" style="width:120px">' +
+        '<div class="bf" style="margin-top:10px">Who, and when (for the ones booked or done)</div><input type="text" name="who" value="' + esc_(v('Who When')) + '" placeholder="e.g. Ann Client, Tuesday 4pm">' +
+        '<div class="bf" style="margin-top:10px">What help do you want from your manager or the branch?</div><input type="text" name="help" value="' + esc_(v('Help')) + '" placeholder="Leave blank if none">' +
+        '<div class="bf" style="margin-top:10px">Anything else</div><textarea name="note" rows="3">' + esc_(v('Note')) + '</textarea></div>' +
+      '<button type="submit">Send my response</button></form>');
+}
+
+function ffReplySave_(person, week, p) {
+  var a = person.agent, reason = String(p.reason || ''), rs = ffReason_(reason), commit = String(p.commit == null ? '' : p.commit).trim();
+  var who = String(p.who || '').trim(), help = String(p.help || '').trim(), note = String(p.note || '').trim();
+  if (!rs) return ffReplyPage_(person, week, 'Choose what has stopped the fact finds.');
+  if (!/^\d{1,2}$/.test(commit)) return ffReplyPage_(person, week, 'Put the number of fact finds you will complete by Friday; 0 if none.');
+  if ((reason === 'booked' || reason === 'unlogged') && !who) return ffReplyPage_(person, week, 'Say who and when, for the ones booked or done.');
+  if (reason === 'other' && !note) return ffReplyPage_(person, week, 'Say what has stopped them.');
+  var s = null; try { s = ffStatus_(todayISO_(), a.key)[0]; } catch (e) {}
+  var mgr = agentManagerEmail_(a), at = Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm');
+  var sh = hrTab_(FFRESP, true), head = headerOf_(sh);
+  var row = { Week: week, Agent: a.key, Name: a.name, Email: a.email, Manager: mgr, 'Last Fact Find': s && s.last ? s.last : '', Reason: reason, Commit: Number(commit), 'Who When': who, Help: help, Note: note, At: at };
+  sh.appendRow(head.map(function (h) { return row[h] != null ? row[h] : ''; }));
+  forgetHr_(FFRESP);
+  // Help asked for becomes the manager's task.
+  var task = '';
+  if (rs.help || help) {
+    try {
+      var users = sfkUsers_() || {}, owner = '';
+      Object.keys(users).forEach(function (sid) { if (!owner && mgr && normEmail_(emailFor_(sid)) === normEmail_(mgr)) owner = users[sid].id; });
+      owner = owner || bmSfId_();
+      sfkInsert_('Task', { Subject: ('[Fact finds] ' + a.name + ': ' + rs.label.replace(/^I /, '') + ' · commits ' + commit + ' by Friday').slice(0, 255), OwnerId: owner,
+        ActivityDate: shiftDays_(todayISO_(), isoDow_(todayISO_()) >= 5 ? 8 - isoDow_(todayISO_()) : 1), Status: 'Not Started', Task_Type__c: 'RR Operations',
+        Description: a.name + ' answered the fact-find chase for the week of ' + week + '.\nReason: ' + rs.label + '\nCommitment: ' + commit + ' by Friday' + (who ? '\nWho and when: ' + who : '') + (help ? '\nHelp asked for: ' + help : '') + (note ? '\n\n' + note : '') });
+      task = 'Your manager has it as a task.';
+    } catch (e) { task = ''; }
+  }
+  var body = '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Thank you, ' + esc_(String(a.name).split(' ')[0]) + '. Your response is in.</div>' +
+    srcCard_('Your response · week of ' + prettyDate_(week), MAIL.green, [ '<b>' + esc_(rs.label) + '</b>', 'Committed: <b>' + esc_(commit) + '</b> fact finds by Friday' ]
+      .concat(who ? ['Who and when: ' + esc_(who)] : []).concat(help ? ['Help asked for: ' + esc_(help)] : []).concat(note ? [esc_(note)] : []), task);
+  var mail = { subject: 'Fact finds: response received · ' + a.name + ' · ' + commit + ' by Friday', html: shell_('Your fact-find response', a.name + ' · week of ' + prettyDate_(week), body) };
+  try {
+    var mode = ffMode_(), cc = [DAYSTART_CC_DEFAULT]; if (mgr && cc.indexOf(mgr) < 0) cc.push(mgr);
+    if (mode === 'live') MailApp.sendEmail({ to: a.email, cc: cc.join(','), subject: mail.subject, htmlBody: mail.html });
+    else if (mode === 'preview') { var m = managerEmails_(); if (m.length) MailApp.sendEmail({ to: m.join(','), subject: '[Preview] ' + mail.subject, htmlBody: mail.html }); }
+  } catch (e) {}
+  return replyPage_('Thank you · your response is in', 'Your Unit Manager and sales support have it. ' + task,
+    '<div class="card ok"><div class="ln"><b>' + esc_(rs.label) + '</b></div><div class="ln">Committed: <b>' + esc_(commit) + '</b> by Friday</div>' +
+      (who ? '<div class="ln">Who and when: ' + esc_(who) + '</div>' : '') + (help ? '<div class="ln">Help asked for: ' + esc_(help) + '</div>' : '') + '</div>' +
+    '<div class="card"><div class="bf">Log each fact find on FactFind360 the day you do it, so the branch sees it.</div></div>');
+}
+
+/** The command centre's fact-find card: this week's chase. */
+function cmdFfSnapshot_(sid, day) {
+  var week = ffWeek_(day), props = PropertiesService.getScriptProperties(), list = null;
+  try { list = JSON.parse(props.getProperty('ff_list_' + week) || 'null'); } catch (e) {}
+  if (!list || !list.length) return '';
+  var people = agentPeople_(), resp = ffResponses_(week), mine = UM_DESKS.indexOf(sid) > -1 ? normEmail_(emailFor_(sid)) : '';
+  list = list.filter(function (x) { var a = people[x.k]; return a && (!mine || normEmail_(agentManagerEmail_(a)) === mine); });
+  if (!list.length) return '';
+  var ans = list.filter(function (x) { return resp[x.k]; }), silent = list.filter(function (x) { return !resp[x.k]; });
+  var committed = ans.reduce(function (n, x) { return n + Number(resp[x.k].Commit || 0); }, 0);
+  return '<div class="card"><div class="bh">Fact finds · this week\'s chase' + (ffMode_() === 'preview' ? ' (preview: agents not e-mailed)' : '') + '</div>' +
+    '<div class="ln"><b>' + list.length + '</b> with none in ' + FF_CHASE.DAYS + ' days · <b style="color:#2C7A57">' + ans.length + '</b> answered, committing <b>' + committed + '</b> · <b style="color:' + (silent.length ? '#DC3F3F' : '#2C7A57') + '">' + silent.length + '</b> silent</div>' +
+    (silent.length ? '<div class="ln" style="font-size:13px">No response: ' + esc_(silent.map(function (x) { return people[x.k].name; }).join(', ')) + '</div>' : '') +
+    ans.filter(function (x) { return resp[x.k].Help; }).map(function (x) { return '<div class="ln" style="font-size:13px"><b>' + esc_(people[x.k].name) + '</b> asks for help: ' + esc_(shorten_(String(resp[x.k].Help), 120)) + '</div>'; }).join('') + '</div>';
+}
+
 /** The Unit Manager: his agents' open performance letters. */
 function umLetters_(sid, day) { try { return ppmCard_(ppmLetters_(unitAgents_(sid)), day, 'Performance letters in your unit'); } catch (e) { return ''; } }
 /** An agent's own open performance letter. */
@@ -7483,7 +7974,7 @@ var PROG = { must: ['Date', 'StaffId', 'Check', 'TaskId'], name: 'Progress Answe
              head: ['Date', 'StaffId', 'Name', 'Check', 'TaskId', 'Subject', 'Answer', 'Reason', 'At'] };
 var REPLY_PAGES = { plan: 'Your plan', prog: 'Where each task stands', hk: 'Before you leave', 'in': 'Sign in',
                     errand: 'Your errands', undo: 'Workload moves', nudge: 'Nudge', bm: 'Respond', um: 'Your unit', umeve: 'Your day as a manager',
-                    ag: 'Your day', agc: 'Close off your day', cmd: 'Not getting attention' };
+                    ag: 'Your day', agc: 'Close off your day', cmd: 'Not getting attention', qp: 'Query Pal deep dive', agff: 'Your fact finds' };
 
 /** Today's sign-in time for a person, or ''. */
 function signedInAt_(sid, day) {
@@ -7650,15 +8141,40 @@ function replyPage_(title, sub, inner) {
       'label.t{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid #EEE;font-size:14px;cursor:pointer}' +
       'label.t input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:#141C4A}' +
       '.tag{font-size:12px;font-weight:700}.late{color:#DC3F3F}.today{color:#D97A06}.br2{color:#141C4A;font-size:11.5px}' +
-      'textarea,input[type=text]{width:100%;box-sizing:border-box;padding:10px 11px;border:1.5px solid #DDE4EC;border-radius:9px;font:14px/1.4 inherit;background:#fff}' +
+      /* PHONES FIRST (18 Oct 2026). The old rule was "font:14px/1.4 inherit",
+         which is not valid CSS (inherit cannot sit inside the shorthand), so
+         every box fell back to the browser's 13px, and an iPhone zooms the
+         page in on any box under 16px. 16px, 44px tall, and the page stays put. */
+      'textarea,input[type=text],input[type=number],input[type=date],select{box-sizing:border-box;padding:10px 12px;border:1.5px solid #DDE4EC;border-radius:10px;font-family:inherit;font-size:16px;line-height:1.35;background:#fff;color:#1F2433;min-height:44px}' +
+      'textarea,input[type=text]{width:100%}select{width:100%;margin-bottom:6px}' +
       '.seg{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.seg label{flex:1;min-width:92px;text-align:center;border:1.5px solid #DDE4EC;border-radius:9px;padding:8px 6px;font-size:13px;font-weight:700;cursor:pointer;background:#fff}' +
       '.seg input{display:none}.seg input:checked+span{color:#fff}.seg label:has(input:checked){background:#141C4A;border-color:#141C4A;color:#fff}' +
       '.task{padding:10px 0;border-top:1px solid #EEE;font-size:14px}' +
       'details summary{cursor:pointer;color:#141C4A;font-weight:700;font-size:13px;padding:8px 0}' +
-      'button{width:100%;padding:15px;border:0;border-radius:11px;background:#141C4A;color:#fff;font:800 16px inherit;cursor:pointer;margin-top:8px}' +
+      'button{width:100%;padding:15px;border:0;border-radius:11px;background:#141C4A;color:#fff;font-family:inherit;font-weight:800;font-size:16px;cursor:pointer;margin-top:8px}' +
       // The one save stays in view: Sasha, 15 Oct, typed a note under KPI 1 and
       // could not see how to save it without scrolling to the foot of the page.
-      'form>button[type=submit]:last-of-type{position:sticky;bottom:10px;box-shadow:0 6px 18px rgba(13,24,56,.25);z-index:5}' +
+      'form>button[type=submit]:last-of-type{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom));box-shadow:0 6px 18px rgba(13,24,56,.25);z-index:5}' +
+      // Shared pieces for the pages read on a phone: filter chips, tiles, bars, folding rows.
+      '.chips{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:0;z-index:6;background:#F7F5EF;margin:0 -16px 8px;padding:8px 16px 10px}' +
+      '.chip{flex:none;width:auto;margin:0;border:1.5px solid #DDE4EC;background:#fff;border-radius:999px;padding:8px 13px;font-size:13.5px;font-weight:700;color:#141C4A;white-space:nowrap;min-height:38px}' +
+      '.chip.on{background:#141C4A;border-color:#141C4A;color:#fff}.chip i{font-style:normal;opacity:.7;margin-left:5px}' +
+      '.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0 0 12px}@media(min-width:520px){.tiles{grid-template-columns:repeat(4,1fr)}}' +
+      '.tile{background:#fff;border:1px solid #E5E1D6;border-radius:12px;padding:11px 12px}.tile .v{font-size:24px;font-weight:800;line-height:1.1;color:#141C4A}' +
+      '.tile .l{font-size:12px;color:#6A7180;margin-top:3px;line-height:1.3}.tile.r .v{color:#DC3F3F}.tile.g .v{color:#2C7A57}.tile.a .v{color:#C26A04}' +
+      '.bar{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13.5px}.bar .n{width:104px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+      '.bar .t{flex:1;background:#EEEBE3;border-radius:6px;height:10px;overflow:hidden}.bar .t i{display:block;height:100%;background:#141C4A;border-radius:6px}.bar .t i.r{background:#DC3F3F}.bar .t i.g{background:#2C7A57}' +
+      '.bar .c{width:74px;flex:none;text-align:right;font-weight:700;font-size:12.5px;color:#6A7180}' +
+      '.bar.s{flex-wrap:wrap;row-gap:3px}.bar.s .n{width:100%;white-space:normal;font-size:13px}' +
+      'details.it{border-top:1px solid #EEE}details.it>summary{list-style:none;padding:12px 0;cursor:pointer}details.it>summary::-webkit-details-marker{display:none}' +
+      '.hd{display:flex;gap:9px;align-items:flex-start}.hd .tt{flex:1;font-size:14.5px;line-height:1.35}.hd .tt small{display:block;color:#6A7180;font-size:12.5px;margin-top:2px}' +
+      '.age{flex:none;min-width:34px;text-align:center;font-size:12px;font-weight:800;color:#fff;border-radius:8px;padding:5px 6px;background:#6A7180}.age.r{background:#DC3F3F}.age.a{background:#C26A04}' +
+      '.badge{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:#EEEBE3;color:#141C4A;white-space:nowrap;margin-top:4px}' +
+      '.badge.r{background:#FBE5E3;color:#B4322B}.badge.g{background:#E3F1E8;color:#1F6B47}.badge.a{background:#FDF0DC;color:#9A5A05}' +
+      '.changed>summary .tt{color:#141C4A}.changed{box-shadow:inset 3px 0 0 #D9A21B;padding-left:8px}' +
+      '.quick{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}.quick button{width:auto;flex:1;min-width:130px;padding:11px 12px;margin:0;font-size:14px;background:#fff;color:#141C4A;border:1.5px solid #141C4A}' +
+      '.quick button.go{background:#2C7A57;border-color:#2C7A57;color:#fff}' +
+      'a{color:#141C4A;font-weight:700}' +
       '.ok{border-left:4px solid #2C7A57}.bad{border-left:4px solid #DC3F3F}.warn{color:#DC3F3F;font-weight:700;font-size:13px;display:none;margin-top:6px}' +
       '.ln{padding:6px 0;border-top:1px solid #EEE;font-size:14px}.ln:first-child{border-top:0}' +
     '</style>' +
@@ -7686,6 +8202,15 @@ function linesHtml_(lines) {
   }).join('');
 }
 
+/** The fact-find link is for the week: good from its Monday to the Sunday after. */
+function replyWeekLink_(f, day) { var d = daysBetween_(day, todayISO_()); return f === 'agff' && d != null && d >= 0 && d <= 6; }
+/** Who a reply link is for: the register, or the Branch Manager, a Unit Manager or an agent for their own pages. */
+function replyPerson_(sid, f) {
+  return rosterPerson_(sid) || ((f === 'undo' || f === 'bm' || f === 'cmd' || f === 'qp') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
+    ((f === 'um' || f === 'umeve' || f === 'cmd') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
+    ((f === 'ag' || f === 'agc' || f === 'agff') && /^a-/.test(sid) ? agentBySid_(sid) : null);
+}
+
 /** GET: show a page. Never writes. */
 function replyClick_(e) {
   var p = (e && e.parameter) || {};
@@ -7695,10 +8220,8 @@ function replyClick_(e) {
   if (!REPLY_PAGES[f] || String(p.k || '') !== replySig_(sid, day, f)) {
     return replyPage_('That link has expired.', 'These links are good for the day they were sent. Open the tracker instead.', '');
   }
-  if (day !== todayISO_()) return replyPage_('That link was for ' + prettyDate_(day) + '.', 'Today\'s e-mail has today\'s link.', '');
-  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm' || f === 'cmd') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
-    ((f === 'um' || f === 'umeve' || f === 'cmd') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
-    ((f === 'ag' || f === 'agc') && /^a-/.test(sid) ? agentBySid_(sid) : null);
+  if (day !== todayISO_() && !replyWeekLink_(f, day)) return replyPage_('That link was for ' + prettyDate_(day) + '.', 'Today\'s e-mail has today\'s link.', '');
+  var person = replyPerson_(sid, f);
   if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
   if (f === 'plan' || f === 'in') return planReplyPage_(person, day, '');
   if (f === 'prog') return progReplyPage_(person, day, '');
@@ -7706,6 +8229,8 @@ function replyClick_(e) {
   if (f === 'undo') return undoReplyPage_(person, day, '');
   if (f === 'bm') return bmReplyPage_(person, day, '');
   if (f === 'cmd') return cmdReplyPage_(person, day, '', '');
+  if (f === 'qp') return qpDivePage_(person, day);
+  if (f === 'agff') return ffReplyPage_(person, day, '');
   if (f === 'um') return umReplyPage_(person, day, '');
   if (f === 'umeve') return umEveReplyPage_(person, day, '');
   if (f === 'ag' || f === 'agc') return agReplyPage_(person, day, f, '');
@@ -7719,12 +8244,10 @@ function replyPost_(e) {
   var sid = String(p.rs || '').trim();
   if (!sid) return null;
   var day = isoDay_(p.d) || todayISO_(), f = String(p.f || '');
-  if (!REPLY_PAGES[f] || String(p.k || '') !== replySig_(sid, day, f) || day !== todayISO_()) {
+  if (!REPLY_PAGES[f] || String(p.k || '') !== replySig_(sid, day, f) || (day !== todayISO_() && !replyWeekLink_(f, day))) {
     return replyPage_('That link has expired.', 'Nothing was saved. Open the tracker instead.', '');
   }
-  var person = rosterPerson_(sid) || ((f === 'undo' || f === 'bm' || f === 'cmd') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
-    ((f === 'um' || f === 'umeve' || f === 'cmd') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
-    ((f === 'ag' || f === 'agc') && /^a-/.test(sid) ? agentBySid_(sid) : null);
+  var person = replyPerson_(sid, f);
   if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
   var all = function (name) { var v = ps[name]; return v ? (Array.isArray(v) ? v : [v]) : []; };
   if (f === 'in') {
@@ -7737,6 +8260,8 @@ function replyPost_(e) {
   if (f === 'undo') return undoReplySave_(person, day, p, all);
   if (f === 'bm') return bmReplySave_(person, day, p, all);
   if (f === 'cmd') return cmdReplySave_(person, day, p);
+  if (f === 'qp') return qpDivePage_(person, day);
+  if (f === 'agff') return ffReplySave_(person, day, p);
   if (f === 'um') return umReplySave_(person, day, p);
   if (f === 'umeve') return umEveReplySave_(person, day, p);
   if (f === 'ag' || f === 'agc') return agReplySave_(person, day, f, p);

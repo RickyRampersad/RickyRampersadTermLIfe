@@ -3236,3 +3236,22 @@ servicing work".
   resolves its open escalation and writes `BM Comments` and `Audit Log` in the
   Productive Performance Management workbook. Query Pal queries are closed in
   Query Pal, so the client is told. Pinned in `tests/test-cmd.js`.
+- **The e-mail answer pages are built for a phone** (18 October 2026). Boxes
+  are 16px and 44px tall (an iPhone zooms in on anything smaller; the old
+  `font:14px/1.4 inherit` was invalid CSS and fell back to 13px). The command
+  centre folds each row to one line (age, title, who, why, a badge for what the
+  system found), filters with sticky chips (what it found, source, desk), has
+  a one-tap "Close it" that fills the status and a closing note, and counts
+  the changes on the send button.
+- **Query Pal deep dive** (`f=qp`, `qpDivePage_`): read only, from the Query
+  Pal workbook's Queries and Comments tabs. Each query is judged against its
+  own Turnaround; sentences first, then the evidence. Linked from the command
+  centre and the 5am e-mail.
+- **Fact-find chase** (`ffChaseTick_`, `f=agff`): Monday 7:00 asks every
+  agent with no fact find in 14 days (Salesforce Fact Finding Interviews, and
+  nothing this week on FactFind360) for a response; Wednesday reminds the
+  silent, manager copied; Friday sends the managers the week. Answers go to the
+  Fact Find Responses tab; help asked for becomes a Salesforce task for the
+  manager. The link is good for the week. Script Property `FF_CHASE`
+  (`live`/`preview`/`off`, unset follows `AGENT_DAY`). Every send checks the
+  daily e-mail quota first. Pinned in `tests/test-qpff.js`.
