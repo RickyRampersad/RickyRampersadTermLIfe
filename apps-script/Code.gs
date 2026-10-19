@@ -34,7 +34,15 @@ var CONFIG = {
   MAIL_TO: 'GuardianGeneralRenewals@myguardiangroup.com',
   MAIL_CC: [
     'ricky.rampersad@myguardiangroup.com',   // you
-    'salessupport@myguardiangroup.com',      // sales support team
+    // BOTH sales support addresses, deliberately. Code.gs carried the short
+    // one; Service.gs and every health renewal reminder sent this month use
+    // the long one. Only one of them may be a live mailbox, and a CC to a
+    // dead address fails silently — which is exactly how nine October health
+    // reminders reached nobody. Copying both costs a duplicate in one inbox
+    // and guarantees sales support sees every instruction. Drop whichever is
+    // wrong once you have confirmed which mailbox is monitored.
+    'rickyrampersadsalessupport@myguardiangroup.com',
+    'salessupport@myguardiangroup.com',
     'support@rickyrampersadbranch.com'       // personal support inbox
     // ,'crmsrenewals@myguardiangroup.com'   // carrier renewals desk — uncomment to copy them too
   ],
@@ -328,10 +336,28 @@ function allRenewals_() {
   return data.map(function (r, i) { return rowObj_(r, map, i + 2); });
 }
 
+/**
+ * Rows for a token — the sheet first, then Salesforce.
+ *
+ * The sheet holds 122 rows. Salesforce holds every renewal on
+ * Risk_Details__c, which is where motor lives: 32 motor policies across 108
+ * risk rows renewing in October and November 2026, TT$453,197 of premium.
+ *
+ * Until this fallback existed, a motor client could be emailed by the ladder
+ * in RenewalsSF.gs (which reads Salesforce), click the link, and be told "We
+ * couldn't find your policy" — because the portal only knew the sheet. The
+ * email and the page it pointed at were reading different books.
+ *
+ * Sheet first is deliberate: every row that works today keeps working
+ * unchanged, and only a token the sheet has never heard of costs a Salesforce
+ * round trip. See PortalSF.gs.
+ */
 function rowsForToken_(token) {
   token = String(token || '').trim();
   if (!token) return [];
-  return allRenewals_().filter(function (r) { return r.token === token; });
+  var hit = allRenewals_().filter(function (r) { return r.token === token; });
+  if (hit.length) return hit;
+  return (typeof psfRowsForToken_ === 'function') ? psfRowsForToken_(token) : [];
 }
 
 function historyForToken_(token) {
@@ -677,12 +703,27 @@ function submitInstruction(payload) {
   // stamp the policy row — skipped in test mode: this stamp is what stops
   // the reminder ladder, so a test submission must never silence a real client
   if (!testMode_()) {
-    try {
-      var sh = renewalsSheet_();
-      var map = ensureRenewalCols_();
-      sh.getRange(match.rowIndex, col_(map, 'renewal status') + 1)
-        .setValue(instruction + ' — ' + nowStamp_());
-    } catch (err) {}
+    if (match.source === 'sf') {
+      // A Salesforce-sourced row has no sheet row to stamp, and its rowIndex
+      // is a record id rather than a row number — writing it into
+      // getRange(rowIndex, ...) would either throw or, if it ever coerced to a
+      // number, stamp an unrelated client's row. The marker goes to Salesforce
+      // instead, which is also what stops the ladder chasing this policy.
+      try {
+        psfStampInstruction_(match, {
+          instruction: instruction, newValue: newValue, waiver: waiver,
+          windscreen: windscreen, wantsComp: wantsComp, payMethod: payMethod,
+          payRef: payRef, notes: notes, email: email, mobile: mobile,
+        });
+      } catch (err) {}
+    } else {
+      try {
+        var sh = renewalsSheet_();
+        var map = ensureRenewalCols_();
+        sh.getRange(match.rowIndex, col_(map, 'renewal status') + 1)
+          .setValue(instruction + ' — ' + nowStamp_());
+      } catch (err) {}
+    }
   }
 
   logActivity_(token, match.client, 'client-instruction', 'client',

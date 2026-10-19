@@ -411,6 +411,21 @@ function rsfPlan_() {
     var g = byKey[k];
     g.lead = g.rows[0];
     g.cls = rsfClass_(g.lead.policy);
+
+    // The client has already told us what to do — stop. rsfAlreadySent_ only
+    // prevents the SAME stage going twice, so without this check someone who
+    // renews 30 days out still receives the 14-day, 7-day and renewal-day
+    // emails, each one telling them to do a thing they have already done. The
+    // marker is written by psfStampInstruction_ in PortalSF.gs when an
+    // instruction arrives, and shares this tag so it needs no extra query.
+    if (typeof psfInstructed_ === 'function' &&
+        psfInstructed_(sent, g.rows.map(function (r) { return r.id; }))) {
+      g.rows.forEach(function (r) {
+        skip.push({ row: r, why: 'client already sent a renewal instruction' });
+      });
+      return;
+    }
+
     // Already sent only if EVERY risk on the policy carries this stage. A risk
     // added to the policy mid-cycle has never been told, so the group still goes.
     var all = g.rows.every(function (r) { return sent[r.id] && sent[r.id][g.stage]; });
