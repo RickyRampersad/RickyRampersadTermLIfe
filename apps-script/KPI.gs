@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19h';
+var SCRIPT_VERSION = '2026-10-19i';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -862,8 +862,24 @@ function normEmail_(s) { return String(s || '').trim().toLowerCase(); }
 /** "Sasha Lalla-Jagassar" -> "sasha". The StaffId the log has always used is
  *  the first name, lowercased. Keep it, so old rows still join to new logins. */
 function staffIdFor_(name) {
-  return String(name || '').trim().toLowerCase().split(/[\s.]+/)[0] || '';
+  return String(rosterName_(name).name || '').trim().toLowerCase().split(/[\s.]+/)[0] || '';
 }
+/* The Access tab's Name may carry the agent number in front, the way the Skill
+   Bank writes it (Ricky, 19 October 2026: "A06869 - Akaash Kalladeen",
+   "KD001 - KAMLA DOOKRAN", "EL -004 - Elizabeth lee"). Everything in the
+   tracker knows a person by the first word of their name (ricky, akaash,
+   sasha, kamla), so the number comes off the front, and a name typed in
+   capitals or with a small letter is put into ordinary capitals. */
+function rosterName_(raw) {
+  var s = String(raw || '').trim(), m = s.match(/^([A-Za-z]{1,3}[\s-]*\d{3,6})\s*-\s*(.+)$/);
+  var code = m ? m[1].replace(/[\s-]+/g, '').toUpperCase() : '', name = m ? m[2].trim() : s;
+  if (name) name = name.replace(/\s+/g, ' ').split(' ').map(function (w) {
+    if (w === w.toUpperCase() && /[A-Z]{2}/.test(w)) w = w.charAt(0) + w.slice(1).toLowerCase();
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }).join(' ').replace(/-([a-z])/g, function (x, c) { return '-' + c.toUpperCase(); });
+  return { name: name, code: code };
+}
+function agentKey_(s) { return String(s || '').toLowerCase().replace(/[\s-]+/g, ''); }
 
 /* Same reasoning as findTabBy_: the Access tab is read several times in a
    single request and it cannot change mid-request. */
@@ -879,7 +895,7 @@ function roster_() {
   var out = [];
   vals.forEach(function (r) {
     var email = normEmail_(r[idx['email']]);
-    var name = String(r[idx['name']] || '').trim();
+    var rn = rosterName_(r[idx['name']]), name = rn.name;
     if (!email && !name) return;
     // Active is decided by what the cell SAYS, not by what it fails to say.
     // Until 16 September 2026 a person stayed on the wall unless the cell was
@@ -896,7 +912,7 @@ function roster_() {
       email: email,
       name: name,
       staffId: staffIdFor_(name),
-      agentNumber: String(r[idx['agent number']] || '').trim(),
+      agentNumber: String(r[idx['agent number']] || '').trim() || rn.code,
       password: String(r[idx['password']] != null ? r[idx['password']] : ''),
       role: String(r[idx['role']] || '').trim(),
       unit: String(r[idx['unit']] || '').trim(),
@@ -1033,7 +1049,7 @@ function login_(who, password) {
   var person = null;
   for (var i = 0; i < people.length; i++) {
     var p = people[i];
-    if (normEmail_(p.email) === key || p.agentNumber.toLowerCase() === key) { person = p; break; }
+    if (normEmail_(p.email) === key || (p.agentNumber && agentKey_(p.agentNumber) === agentKey_(key))) { person = p; break; }
   }
   if (!person) {
     noteFailure_(key);
