@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19j';
+var SCRIPT_VERSION = '2026-10-19k';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4578,7 +4578,7 @@ function bigGet_(key, dflt) {
  *  notes, and the whole history a tap away (replies marked). Ricky, 19 Oct 2026: "they are only allowed
  *  to post where the task is open, view the history, and they can speak, but don't allow them to open
  *  in Salesforce". */
-function chatterNotes_(chat, id) {
+function chatterNotes_(chat, id, openAll) {
   var all = (chat || {})[id] || [];
   var one = function (n, full) {
     var t = String(n.text || ''), head = t.split('\n')[0], ours = /^(Unit Manager|Branch Manager|BMA|Agent)\b/.test(head);
@@ -4587,16 +4587,37 @@ function chatterNotes_(chat, id) {
     return '<div class="br2" style="margin-top:3px">' + (n.reply ? '&#8627; ' : '') + esc_(who) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(full ? body : shorten_(body, 160)) + '</div>';
   };
   if (!all.length) return '<div class="br2" style="margin-top:3px">No notes on Chatter yet.</div>';
+  if (openAll) return all.map(function (n) { return one(n, true); }).join('');
   return all.slice(0, 2).map(function (n) { return one(n, false); }).join('') +
     (all.length > 2 || all.some(function (n) { return String(n.text || '').length > 160; })
       ? '<details style="margin-top:4px"><summary class="br2" style="cursor:pointer">The whole history (' + all.length + ' note' + (all.length === 1 ? '' : 's') + ')</summary>' +
         all.map(function (n) { return one(n, true); }).join('') + '</details>' : '');
 }
+/** One task on a Unit Manager's page: who, what, its history, a comment box.
+ *  The task he tapped in his e-mail comes first, with every note open. */
+function umItemHtml_(it, chat, base, noSf, opened) {
+  return '<div id="i' + esc_(it.id) + '" style="padding:9px 0;border-top:1px solid #E5E1D6;scroll-margin-top:72px"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
+    (it.due ? ' <span class="br2">· ' + (it.late ? 'overdue since ' : 'due ') + esc_(shortDate_(it.due)) + '</span>' : '') +
+    (base && !noSf ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
+    (opened ? '<div class="br2" style="margin-top:6px;font-weight:800">History</div>' : '') + chatterNotes_(chat, it.id, opened) +
+    '<textarea name="c_' + esc_(it.id) + '" rows="' + (opened ? 3 : 2) + '" placeholder="' + esc_(SPEAK_PH) + '"></textarea></div>';
+}
+function umOpenedCard_(items, focus, chat, base, noSf) {
+  var it = focus ? items.filter(function (x) { return String(x.id) === String(focus); })[0] : null;
+  return it ? '<div class="card" style="border:2px solid #E0A526"><div class="bh">The task you opened</div>' + umItemHtml_(it, chat, base, noSf, true) +
+    '<button type="submit" name="only" value="1">Post my comment</button></div>' : '';
+}
+
 var SPEAK_PH = 'Type or speak your comment (tap the microphone on your keyboard). It goes on this task\'s Chatter as yours.';
 /** A desk with no Salesforce login of its own (Akaash, 19 Oct 2026): its links go to its own comment page, not Salesforce. */
 function noSfLogin_(sid) {
   if (sid === 'ricky') return false;
-  try { var u = (sfkUsers_() || {})[sid]; return !(u && u.id); } catch (e) { return true; }
+  // A Unit Manager works from his phone, through the tracker: his links open his
+  // own page, where each task shows its history and takes a comment. On 19 Oct
+  // 2026 Akaash's links went to Salesforce instead (a user record with his
+  // e-mail exists), where he could not see Darryl's history or post a comment.
+  if (UM_DESKS.indexOf(sid) > -1) return true;
+  try { var u = (sfkUsers_() || {})[sid]; return !(u && u.id && u.active !== false); } catch (e) { return true; }
 }
 
 function umTaskLine_(t, day, base, link) {
@@ -4661,7 +4682,7 @@ function sendUnitManagerMorning_(sid, day) {
 
   var nLate = book ? book.open.filter(function (t) { return t.late; }).length : 0;
   var nPend = secs.length ? secs[0].list.length : 0;
-  var noSf = noSfLogin_(sid), cLink = noSf ? function (id) { return replyUrl_(sid, day, 'um') + '#i' + id; } : null;
+  var noSf = noSfLogin_(sid), cLink = noSf ? function (id) { return replyUrl_(sid, day, 'um') + '&i=' + encodeURIComponent(id) + '#i' + id; } : null;
   var btn = replyButton_(replyUrl_(sid, day, 'um'), noSf ? 'Comment and plan my day' : 'Plan my day and sign in',
     noSf ? 'No Salesforce login needed. Write under any task: it goes on that task\'s Chatter, headed as yours, for the agent and the staff to see. Set your numbers for the day; saving signs you in.'
          : 'One tap, no password. A box under each item goes on its Chatter; set your numbers for the manager\'s KPIs; saving signs you in.');
@@ -4700,23 +4721,19 @@ function sendUnitManagerMorning_(sid, day) {
   return true;
 }
 
-function umReplyPage_(person, day, error) {
+function umReplyPage_(person, day, error, opt) {
+  opt = opt || {};
   var sid = String(person.staffId), items = [];
   try { items = bigGet_(umItemsKey_(sid, day), []); } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var head = { pend: 'Pendings', 'new': 'New business', ret: 'Retention and orphan adoption', other: 'Everything else overdue' };
   var plan = mgrRows_(sid, day, 'plan'), noSf = noSfLogin_(sid), chat = {};
   try { chat = cmdChatter_(items.map(function (it) { return it.id; })); } catch (e) {}
-  var notes = function (id) { return chatterNotes_(chat, id); };
+  var focus = opt.focus || '';
   var groups = ['pend', 'new', 'ret', 'other'].map(function (k) {
-    var list = items.filter(function (it) { return it.k === k; });
+    var list = items.filter(function (it) { return it.k === k && String(it.id) !== String(focus); });
     if (!list.length) return '';
-    return '<div class="card"><div class="bh">' + esc_(head[k]) + '</div>' + list.map(function (it) {
-      return '<div id="i' + esc_(it.id) + '" style="padding:9px 0;border-top:1px solid #E5E1D6;scroll-margin-top:72px"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
-        (it.due ? ' <span class="br2">· ' + (it.late ? 'overdue since ' : 'due ') + esc_(shortDate_(it.due)) + '</span>' : '') +
-        (base && !noSf ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' + notes(it.id) +
-        '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="' + esc_(SPEAK_PH) + '"></textarea></div>';
-    }).join('') + '</div>';
+    return '<div class="card"><div class="bh">' + esc_(head[k]) + '</div>' + list.map(function (it) { return umItemHtml_(it, chat, base, noSf, false); }).join('') + '</div>';
   }).join('');
   var checks = '<div class="card"><div class="bh">Your day as a manager · what you will do today</div>' + UM_CHECKS.map(function (c) {
     var r = plan[c.id] || {};
@@ -4726,7 +4743,7 @@ function umReplyPage_(person, day, error) {
   }).join('') + '</div>';
   return replyPage_('Your unit · ' + prettyDate_(day), 'Comment under any task; each comment goes on its Chatter as yours. Then set your numbers for the day. Saving signs you in. Leave blank what needs nothing.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
-    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'um') + groups + checks +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'um') + umOpenedCard_(items, focus, chat, base, noSf) + groups + checks +
     '<button type="submit">Save my comments and my plan</button></form>');
 }
 
@@ -4865,7 +4882,7 @@ function sendUnitManagerEvening_(sid, day) {
       return t ? sectionLabel_('Your agents today') + t + '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">No projection by ' + esc_(twelve_(mmText_(AGENT_ABSENT_AT))) + ' reads as absent; no close-off by tomorrow reads as nothing done. The balance is done against projected.</div>' : ''; })() +
     (secs.length && secs[0].list.length ? sectionLabel_('Pendings still open (' + secs[0].list.length + ')') +
       '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.amber + ';border-radius:10px;padding:8px 15px">' +
-      secs[0].list.slice(0, 6).map(function (t) { return umTaskLine_(t, day, base, noSfLogin_(sid) ? function (id) { return replyUrl_(sid, day, 'umeve') + '#i' + id; } : null); }).join('') + '</div>' : '') +
+      secs[0].list.slice(0, 6).map(function (t) { return umTaskLine_(t, day, base, noSfLogin_(sid) ? function (id) { return replyUrl_(sid, day, 'umeve') + '&i=' + encodeURIComponent(id) + '#i' + id; } : null); }).join('') + '</div>' : '') +
     btn;
   MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
     subject: 'Account for your day · ' + name + ' · ' + shortDate_(day) + (book ? ' · unit closed ' + book.closedToday.length + ', ' + nLate + ' overdue' : ''),
@@ -4873,37 +4890,39 @@ function sendUnitManagerEvening_(sid, day) {
   return true;
 }
 
-function umEveReplyPage_(person, day, error) {
-  var sid = String(person.staffId), items = [], plan = mgrRows_(sid, day, 'plan'), had = mgrRows_(sid, day, 'eve');
+function umEveReplyPage_(person, day, error, opt) {
+  opt = opt || {};
+  var sid = String(person.staffId), items = [], plan = mgrRows_(sid, day, 'plan'), had = mgrRows_(sid, day, 'eve'), keep = opt.keep || null;
   try { items = bigGet_(umItemsKey_(sid, day) + '_eve', []); } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var noSf = noSfLogin_(sid), chat = {}; try { chat = cmdChatter_(items.map(function (it) { return it.id; })); } catch (e) {}
+  var focus = opt.focus || '';
+  // What he typed before a refusal stays in the boxes: a refused page used to come back empty.
+  var val = function (k, saved) { return keep && keep[k] != null ? String(keep[k]) : (saved || ''); };
   var checks = '<div class="card"><div class="bh">Your day as a manager · what you did</div>' + UM_CHECKS.map(function (c) {
     var pl = (plan[c.id] || {}).Planned, r = had[c.id] || {};
     return '<div style="padding:8px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px">' + esc_(c.q) +
       (pl !== undefined && pl !== '' ? ' <span class="br2">· planned ' + esc_(pl) + '</span>' : '') + '</div>' +
-      '<input type="number" min="0" name="d_' + c.id + '" value="' + esc_(r.Done || '') + '" style="width:90px" placeholder="0"> ' +
-      '<input type="text" name="n_' + c.id + '" value="' + esc_(r.Note || '') + '" style="width:calc(100% - 110px)" placeholder="' + esc_(c.note || 'Note') + '"></div>';
-  }).join('') + '<div class="bf" style="margin-top:8px">The day in a line or two, for Mr Rampersad:</div><textarea name="summary" rows="3"></textarea></div>';
-  var list = items.length ? '<div class="card"><div class="bh">Your unit · comment on anything (goes to Chatter)</div>' + items.map(function (it) {
-    return '<div id="i' + esc_(it.id) + '" style="padding:9px 0;border-top:1px solid #E5E1D6;scroll-margin-top:72px"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
-      (it.late ? ' <span class="br2">· overdue since ' + esc_(shortDate_(it.due)) + '</span>' : '') + (base && !noSf ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' + chatterNotes_(chat, it.id) +
-      '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="' + esc_(SPEAK_PH) + '"></textarea></div>';
-  }).join('') + '</div>' : '';
-  return replyPage_('Your day · ' + prettyDate_(day), 'A number against each KPI, with names where it asks. Mr Rampersad gets the account.',
+      '<input type="number" min="0" name="d_' + c.id + '" value="' + esc_(val('d_' + c.id, r.Done)) + '" style="width:90px" placeholder="0"> ' +
+      '<input type="text" name="n_' + c.id + '" value="' + esc_(val('n_' + c.id, r.Note)) + '" style="width:calc(100% - 110px)" placeholder="' + esc_(c.note || 'Note') + '"></div>';
+  }).join('') + '<div class="bf" style="margin-top:8px">The day in a line or two, for Mr Rampersad:</div><textarea name="summary" rows="3">' + esc_(val('summary', '')) + '</textarea></div>';
+  var rest = items.filter(function (it) { return String(it.id) !== String(focus); });
+  var list = rest.length ? '<div class="card"><div class="bh">Your unit · comment on anything (goes to Chatter)</div>' +
+    rest.map(function (it) { return umItemHtml_(it, chat, base, noSf, false); }).join('') +
+    '<button type="submit" name="only" value="1">Post my comments</button><div class="br2" style="margin-top:4px">Posts what you typed above now; your account can follow.</div></div>' : '';
+  return replyPage_('Your day · ' + prettyDate_(day), 'A number against each KPI, with names where it asks. Mr Rampersad gets the account. A comment can go on any task at any time.',
+    (opt.posted ? '<div class="card ok">' + opt.posted + '</div>' : '') +
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
-    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'umeve') + checks + list +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'umeve') + umOpenedCard_(items, focus, chat, base, noSf) + checks + list +
     '<button type="submit">Send my account</button></form>');
 }
 
 function umEveReplySave_(person, day, p) {
   var sid = String(person.staffId), name = nameFor_(sid), items = [], at = hhmm_(new Date()), done = [];
   try { items = bigGet_(umItemsKey_(sid, day) + '_eve', []); } catch (e) {}
-  var rows = UM_CHECKS.map(function (c) {
-    return { Item: c.id, Question: c.q, Done: String(p['d_' + c.id] || '').trim(), Note: String(p['n_' + c.id] || '').trim() };
-  });
-  var filled = rows.filter(function (r) { return r.Done !== ''; }).length;
-  if (filled < UM_CHECKS.length) return umEveReplyPage_(person, day, 'Put a number against every KPI, 0 where nothing was done. ' + (UM_CHECKS.length - filled) + ' left blank.');
+  // The comments go on first, whatever else is filled in. Until 19 October 2026
+  // a comment was only posted with a complete account, so a manager who only
+  // wanted to comment on one task saw it refused, and lost what he had typed.
   items.forEach(function (it) {
     var txt = String(p['c_' + it.id] || '').trim();
     if (!txt) return;
@@ -4912,14 +4931,25 @@ function umEveReplySave_(person, day, p) {
     catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
     done.push({ s: (it.a ? it.a + ' · ' : '') + it.s, txt: txt, res: res });
   });
+  umPostsAdd_(sid, day, done.filter(function (d) { return d.res === 'posted'; }).length);
+  var postedHtml = done.map(function (d) { return '<div class="ln">' + (/^NOT/.test(d.res) ? '&#9888; ' : '&#10003; ') + esc_(d.s) + ' · ' + esc_(d.res) + '</div>'; }).join('');
+  var rows = UM_CHECKS.map(function (c) {
+    return { Item: c.id, Question: c.q, Done: String(p['d_' + c.id] || '').trim(), Note: String(p['n_' + c.id] || '').trim() };
+  });
+  var filled = rows.filter(function (r) { return r.Done !== ''; }).length;
+  if (String(p.only || '') === '1') {
+    if (!done.length) return umEveReplyPage_(person, day, 'Nothing to post: type a comment under a task first.', { keep: p });
+    return umEveReplyPage_(person, day, '', { keep: p, posted: '<b>Comment' + (done.length === 1 ? '' : 's') + ' posted on Chatter</b>' + postedHtml + '<div class="br2" style="margin-top:4px">Your account for the day can follow below.</div>' });
+  }
+  if (filled < UM_CHECKS.length) return umEveReplyPage_(person, day, 'Put a number against every KPI, 0 where nothing was done. ' + (UM_CHECKS.length - filled) + ' left blank.',
+    { keep: p, posted: done.length ? '<b>Your comment' + (done.length === 1 ? ' is' : 's are') + ' posted</b>' + postedHtml : '' });
   var summary = String(p.summary || '').trim();
   if (summary) rows.push({ Item: 'summary', Question: 'The day', Done: '', Note: summary });
   mgrWrite_(sid, day, 'eve', rows);
-  umPostsAdd_(sid, day, done.filter(function (d) { return d.res === 'posted'; }).length);
   try { umCopy_(sid, day, 'eve', done, rows.filter(function (r) { return r.Item !== 'summary'; }).concat(summary ? [{ Item: 'summary', Question: 'In his words', Done: '', Note: summary }] : [])); } catch (e) {}
   return replyPage_('Your day is in', 'Mr Rampersad has the account. Thank you.',
     '<div class="card ok">' + rows.map(function (r) { return '<div class="ln">' + esc_(r.Question) + ': <b>' + esc_(r.Done || '') + '</b>' + (r.Note ? ' · ' + esc_(r.Note) : '') + '</div>'; }).join('') +
-    done.map(function (d) { return '<div class="ln">' + (/^NOT/.test(d.res) ? '&#9888; ' : '&#10003; ') + esc_(d.s) + ' · ' + esc_(d.res) + '</div>'; }).join('') + '</div>');
+    postedHtml + '</div>');
 }
 
 // ---- the Branch Manager: 12pm and 6pm -------------------------------------------
@@ -6232,7 +6262,7 @@ function umDayItems_(sid, day, book) {
   var items = [], base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var noSf = noSfLogin_(sid);
   var open = function (id) {
-    if (noSf) return ' <a href="' + esc_(replyUrl_(sid, day, 'um') + '#i' + id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">comment &rarr;</a>';
+    if (noSf) return ' <a href="' + esc_(replyUrl_(sid, day, 'um') + '&i=' + encodeURIComponent(id) + '#i' + id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">comment &rarr;</a>';
     return base ? ' <a href="' + esc_(base + id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &rarr;</a>' : '';
   };
   if (book) book.open.slice().sort(function (a, b) { return String(a.due || '9999').localeCompare(String(b.due || '9999')); }).forEach(function (t) {
@@ -9922,8 +9952,8 @@ function replyClick_(e) {
   if (f === 'cmd') return cmdReplyPage_(person, day, '', '');
   if (f === 'qp') return qpDivePage_(person, day);
   if (f === 'agff') return ffReplyPage_(person, day, '');
-  if (f === 'um') return umReplyPage_(person, day, '');
-  if (f === 'umeve') return umEveReplyPage_(person, day, '');
+  if (f === 'um') return umReplyPage_(person, day, '', { focus: String(p.i || '') });
+  if (f === 'umeve') return umEveReplyPage_(person, day, '', { focus: String(p.i || '') });
   if (f === 'ag' || f === 'agc') return agReplyPage_(person, day, f, '');
   if (f === 'nudge') return nudgeReplyPage_(person, day, '');
   return hkReplyPage_(person, day, '');
