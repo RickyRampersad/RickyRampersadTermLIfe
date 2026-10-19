@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19a';
+var SCRIPT_VERSION = '2026-10-19b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3814,8 +3814,15 @@ var ABSENT_AFTER_MIN = 0;              // not pressed by the start is absent
 var ATT_REPORT_AT = 9 * 60 + 15;       // after the eight o'clock desks' hour has run
 var REBALANCE_AT = 10 * 60;
 var BM_SF_DEFAULT = '005A0000001NfJGIA0';   // the Branch Manager's Salesforce user
+/* Thirty minutes after a person's own start and still not pressed, their work
+   is reassigned and the whole team is told who has what (Ricky, 19 October
+   2026: "if a person does not click in 30 minutes from their start, it
+   automatically reassigns ... followed by an email for the entire team").
+   Pressing afterwards brings back whatever is still open (coverReturn_). */
+var COVER_AFTER_MIN = 30;
+var COVER_TEAM = ['ricky', 'kamla', 'sasha', 'elizabeth', 'azariah', 'pawan'];   // told of every cover
 var COVER = {
-  POOL: ['sasha', 'azariah', 'elizabeth', 'kamla'],   // whose work is covered
+  POOL: ['sasha', 'azariah', 'elizabeth', 'kamla', 'ricky'],   // whose work is covered; the Branch Manager's goes to the BMA first
   RECEIVERS: ['sasha', 'elizabeth', 'azariah', 'kamla'],
   MONEY: ['Renewa/PDl/Bill', 'Claims/ Mat'],          // to the BMA first: money and claims
   KAMLA_ONLY_MONEY: true,                              // the BMA takes money work only
@@ -3862,7 +3869,7 @@ function writeAutoAbsent_(sid, day, startM) {
 function autoAbsentTick_(day, mins, present, absent) {
   if (!autoAbsentOn_(day)) return [];
   var props = PropertiesService.getScriptProperties(), out = [];
-  DAY_MAIL_DESKS.forEach(function (sid) {
+  DAY_MAIL_DESKS.concat(['ricky']).forEach(function (sid) {
     if (present[sid] || absent[sid]) return;
     var sp = parseSpan_(scheduleFor_(sid).hours || '');
     if (!sp || mins <= sp.start + ABSENT_AFTER_MIN) return;   // the start minute itself is on time
@@ -3890,8 +3897,8 @@ function ownerNoted_(ids, ownerSfId) {
 
 /** Who takes what from an absent desk. Reads only. */
 function coverPlan_(day, sid, present, absent) {
-  var users = sfkUsers_() || {}, me = users[sid];
-  if (!me) return null;
+  var users = sfkUsers_() || {}, me = users[sid] || (sid === 'ricky' ? { id: bmSfId_() } : null);
+  if (!me || !me.id) return null;
   var book = (sfkOpenBook_(day) || {})[sid] || {}, all = [];
   Object.keys(book).forEach(function (ty) { book[ty].forEach(function (t) { t.ty = ty; all.push(t); }); });
   var tomorrow = nextWorkday_(day);
@@ -3900,8 +3907,10 @@ function coverPlan_(day, sid, present, absent) {
   var noted = ownerNoted_(due.concat(next).map(function (t) { return t.id; }), me.id);
 
   var name = nameFor_(sid), first = String(name).split(' ')[0];
+  // The Branch Manager is covered at 5:30, before anyone is in: his work goes
+  // to the BMA, who finds it when she starts, unless she is marked absent.
   var recv = COVER.RECEIVERS.filter(function (r) {
-    return r !== sid && users[r] && present[r] && !absent[r];
+    return r !== sid && users[r] && (present[r] || (sid === 'ricky' && r === 'kamla')) && !absent[r];
   }).map(function (r) { return { sid: r, name: nameFor_(r), got: 0 }; });
 
   var moves = [], kept = [];
@@ -3910,10 +3919,11 @@ function coverPlan_(day, sid, present, absent) {
     var money = COVER.MONEY.indexOf(t.ty) > -1;
     var pool = recv.filter(function (r) {
       if (r.got >= COVER.PER_RECEIVER) return false;
-      if (r.sid === 'kamla' && COVER.KAMLA_ONLY_MONEY && !money) return false;
+      if (r.sid === 'kamla' && COVER.KAMLA_ONLY_MONEY && !money && sid !== 'ricky') return false;
       return true;
     });
-    if (money && pool.some(function (r) { return r.sid === 'kamla'; })) pool = pool.filter(function (r) { return r.sid === 'kamla'; });
+    // Money and claims to the BMA first; and all of the Branch Manager's work.
+    if ((money || sid === 'ricky') && pool.some(function (r) { return r.sid === 'kamla'; })) pool = pool.filter(function (r) { return r.sid === 'kamla'; });
     pool.sort(function (a, b) { return a.got - b.got; });
     var r = pool[0];
     if (!r) { kept.push(t); return; }
@@ -3937,7 +3947,7 @@ function coverTick_(day, mins, present, absent) {
   COVER.POOL.forEach(function (sid) {
     if (!absent[sid]) return;
     var sp = parseSpan_(scheduleFor_(sid).hours || '');
-    if (!sp || mins < sp.start) return;
+    if (!sp || mins < sp.start + COVER_AFTER_MIN) return;
     var key = 'cover_' + sid + '_' + day;
     if (props.getProperty(key)) return;
     props.setProperty(key, hhmm_(new Date()));
@@ -3958,6 +3968,9 @@ function coverTick_(day, mins, present, absent) {
         day: day, moved: done.filter(function (m) { return m.ok; }).length,
         owe: asked.map(function (t) { return { id: t.id, s: shorten_(t.subject, 90), due: t.due }; }).slice(0, 25)
       }).slice(0, 8900));
+      props.setProperty('cover_moves_' + sid + '_' + day, JSON.stringify(done.filter(function (m) { return m.ok; })
+        .map(function (m) { return { id: m.t.id, to: m.to, s: shorten_(m.t.subject, 90) }; })).slice(0, 8900));
+      try { coverTeamMail_(day, plan, done); } catch (e) {}
       try { coverMail_(day, plan, done, asked); } catch (e) {}
       out.push(plan.first + ' covered (' + done.filter(function (m) { return m.ok; }).length + ' moved)');
     } catch (e) { out.push(sid + ' cover FAILED: ' + (e && e.message)); }
@@ -3971,7 +3984,8 @@ function coverMail_(day, plan, done, asked) {
     'Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
   var by = {};
   ok.forEach(function (m) { (by[m.to] = by[m.to] || []).push(m); });
-  Object.keys(by).forEach(function (sid) {
+  // Each colleague covering now learns from the one team e-mail (coverTeamMail_).
+  [].forEach(function (sid) {
     var to = emailFor_(sid);
     if (!to) return;
     var first = String(nameFor_(sid)).split(' ')[0];
@@ -3991,7 +4005,7 @@ function coverMail_(day, plan, done, asked) {
         '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(plan.first) + ', you are marked absent today. ' +
           ok.length + ' of your due and overdue tasks had nothing written on them and have gone to colleagues so no client waits. ' +
           (asked.length ? asked.length + ' due on your return carry no note from you; each now has an ACTION REQUIRED post. Answer them before 10am the day you are back. ' : '') +
-          'If you are in after all, sign in now: the register will show you as late, not absent.</div>' +
+          'If you are in after all, press ready to start my day now: the register will show you as late, not absent, and whatever is still open comes back to you.</div>' +
         (ok.length ? sectionLabel_('Covered by colleagues') + moveLines_(ok, day) : '') +
         (asked.length ? sectionLabel_('Waiting for your note') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.red + ';border-radius:10px;padding:11px 15px">' +
           asked.map(function (t) { return dayStartTaskLine_(t, day); }).join('') + '</div>' : '') + sign) });
@@ -4014,6 +4028,76 @@ function coverMail_(day, plan, done, asked) {
         ' went to whoever is in, money and claims to the BMA first. Work she has written on stays with her. Every move has a Chatter note.</div>' +
       moveLines_(done, day) +
       replyButton_(replyUrl_('ricky', day, 'undo'), 'Undo any of these', 'Tick what should go back. Script Property AUTO_ABSENT = off stops the automatic absence and cover.')) });
+}
+
+/** One e-mail to the whole team: who is not in, and who has what. */
+function coverTeamMail_(day, plan, done) {
+  var ok = done.filter(function (m) { return m.ok; });
+  var to = COVER_TEAM.map(function (s) { return emailFor_(s); }).filter(Boolean);
+  if (!to.length) return false;
+  var sp = parseSpan_(scheduleFor_(plan.sid).hours || '') || { start: 480 };
+  var by = {};
+  ok.forEach(function (m) { (by[m.to] = by[m.to] || []).push(m); });
+  var groups = Object.keys(by).map(function (r) {
+    return sectionLabel_(nameFor_(r) + ' takes ' + by[r].length) + moveLines_(by[r], day);
+  }).join('');
+  MailApp.sendEmail({ to: to.join(','), cc: DAYSTART_CC_DEFAULT,
+    subject: plan.first + ' is not in today · ' + (ok.length ? ok.length + ' task' + (ok.length === 1 ? '' : 's') + ' reassigned' : 'nothing to reassign') + ' · ' + shortDate_(day),
+    htmlBody: shell_(plan.name + ' is not in today', prettyDate_(day) + ' · ' + hhmm_(new Date()),
+      '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Team, please note that ' + esc_(plan.name) + ' is not in today: ' +
+        esc_(plan.first) + '\'s day starts at ' + esc_(twelve_(mmText_(sp.start))) + ' and ready to start was not pressed by ' + esc_(twelve_(mmText_(sp.start + COVER_AFTER_MIN))) + '. ' +
+        (ok.length ? 'The work due today or overdue, with nothing written on it, has been reassigned as follows. Each task carries a Chatter note. Work yours today and note every call in the client\'s words before you close it.'
+                   : 'Nothing due today needed moving.') +
+        ' If ' + esc_(plan.first) + ' presses ready to start later, whatever is still open goes back, and you will be told.</div>' +
+      groups +
+      (plan.kept.length ? '<div style="font-size:13px;color:' + MAIL.red + ';margin-top:8px">' + plan.kept.length + ' could not be placed: nobody else was in or free. They stay with ' + esc_(plan.first) + '.</div>' : '')) });
+  return true;
+}
+
+/** Pressed after the cover: whatever is still open and still with the colleague
+ *  goes back to the person, and the team is told. Closed or already moved on stays. */
+function coverReturn_(sid, day) {
+  var props = PropertiesService.getScriptProperties(), key = 'cover_moves_' + sid + '_' + day;
+  var raw = props.getProperty(key);
+  if (!raw) return null;
+  props.deleteProperty(key);
+  var list = []; try { list = JSON.parse(raw) || []; } catch (e) { return null; }
+  if (!list.length || !sfkConfigured_()) return null;
+  var users = sfkUsers_() || {};
+  var idOf = function (s) { return users[s] ? users[s].id : (s === 'ricky' ? bmSfId_() : ''); };
+  var meId = idOf(sid), at = hhmm_(new Date()), now = {};
+  if (!meId) return null;
+  try {
+    sfkQuery_('SELECT Id, OwnerId, IsClosed FROM Task WHERE Id IN (' + list.map(function (m) { return "'" + m.id + "'"; }).join(',') + ')')
+      .forEach(function (r) { now[r.Id] = r; });
+  } catch (e) { return null; }
+  var back = [], stayed = [];
+  list.forEach(function (m) {
+    var cur = now[m.id];
+    if (!cur || cur.IsClosed || cur.OwnerId !== idOf(m.to)) { stayed.push(m); return; }
+    try {
+      sfkSetOwner_(m.id, meId);
+      try { sfkInsert_('FeedItem', { ParentId: m.id, Body: 'RETURNED ' + shortDate_(day) + ' ' + twelve_(at) + '. ' + nameFor_(sid) + ' pressed ready to start, so this is back with ' +
+        String(nameFor_(sid)).split(' ')[0] + '. ' + String(nameFor_(m.to)).split(' ')[0] + ': anything you did on it should already be noted here.' }); } catch (e) {}
+      back.push(m);
+    } catch (e) { stayed.push(m); }
+  });
+  try { props.deleteProperty('cover_back_' + sid); } catch (e) {}
+  sfkForgetDay_(day);
+  var to = COVER_TEAM.map(function (s) { return emailFor_(s); }).filter(Boolean);
+  if (to.length) {
+    var first = String(nameFor_(sid)).split(' ')[0];
+    var line = function (m) { return '<div style="font-size:13px;line-height:1.5;padding:4px 0;border-top:1px solid ' + MAIL.line + '">' + esc_(m.s) +
+      ' <span style="color:' + MAIL.muted + '">· from ' + esc_(String(nameFor_(m.to)).split(' ')[0]) + '</span></div>'; };
+    MailApp.sendEmail({ to: to.join(','), cc: DAYSTART_CC_DEFAULT,
+      subject: first + ' is in · ' + back.length + ' task' + (back.length === 1 ? '' : 's') + ' returned · ' + shortDate_(day),
+      htmlBody: shell_(nameFor_(sid) + ' is in', prettyDate_(day) + ' · ' + twelve_(at),
+        '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Team, ' + esc_(nameFor_(sid)) + ' pressed ready to start at ' + esc_(twelve_(at)) +
+          ' and is in today, late. ' + (back.length ? 'The tasks reassigned this morning that are still open are back with ' + esc_(first) + ':' : 'Nothing reassigned was still open to give back.') + '</div>' +
+        (back.length ? '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:6px 15px">' + back.map(line).join('') + '</div>' : '') +
+        (stayed.length ? '<div style="font-size:13px;color:' + MAIL.muted + ';margin-top:10px">' + stayed.length + ' stay where they are: closed already, or moved on since.</div>' : '')) });
+  }
+  return { back: back.length, stayed: stayed.length };
 }
 
 /** The morning a desk is back: what was covered, and what she owes. Once. */
@@ -4246,7 +4330,8 @@ function sendBranchManagerDay_(day) {
     (owners ? '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-bottom:6px">By desk: ' + esc_(owners) + '</div>' : '') +
     list(w.ignored, function (t) { return row(esc_(t.subject) + ' <span style="color:' + MAIL.muted + '">· ' + esc_(t.owner) + '</span> <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' + open(t.id)); }, 10) +
     answer +
-    (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer this morning, so your lists are not shown.</div>');
+    (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer this morning, so your lists are not shown.</div>') +
+    (function () { try { return signedInAt_('ricky', day) ? '' : startDayCard_('ricky', day, startFor_('ricky')); } catch (e) { return ''; } })();
 
   MailApp.sendEmail(ownMail_('ricky', { to: mgr.join(','),
     subject: 'Your day · Branch Manager · ' + shortDate_(day) + (sfOk ? ' · ' + w.mine.length + ' yours due, ' + w.ask.length + ' asking you, ' + w.ignored.length + ' instructions not actioned' : ''),
@@ -5852,7 +5937,8 @@ function startDayCard_(staffId, date, startM) {
   return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.green + ';border-radius:10px;padding:12px 15px;margin-top:16px">' +
     '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.green + '">You have reached the end</div>' +
     '<div style="font-size:14px;line-height:1.55;margin-top:4px">When you have read the concerns above, press the button. It records you present, with the time: before ' +
-      esc_(at) + ' is early, at ' + esc_(at) + ' on time, after it late. Not pressed by ' + esc_(at) + ' and the register reads absent until you do.</div>' +
+      esc_(at) + ' is early, at ' + esc_(at) + ' on time, after it late. Not pressed by ' + esc_(at) + ' and the register reads absent until you do; not pressed by ' +
+      esc_(twelve_(mmText_(startM + COVER_AFTER_MIN))) + ' and your due work is reassigned and the team is told. Pressing later brings back whatever is still open.</div>' +
     replyButton_(replyUrl_(staffId, date, 'in'), 'I have read the concerns · ready to start my day', 'Opens your page; press the green button there. No sign-in needed.') +
     '</div>';
 }
@@ -9141,8 +9227,13 @@ function planReplyPage_(person, day, error, notice) {
   var plans = {};
   try { plans = planRows_(sid, day); } catch (e) {}
   if (!model) {
-    return replyPage_('Your plan', 'This morning\'s suggestion is not on file, so there is nothing to fill in here.',
-      '<p><a href="' + PLANNER_URL + '">Open the planner</a> and pick your tasks there.</p>');
+    var startAt = esc_(twelve_(mmText_(startFor_(sid))));
+    return replyPage_(signed ? 'You are in' : 'Ready to start your day?', signed ? 'In at ' + twelve_(signed) + '.' : 'Press once you have read this morning\'s report to the end.',
+      (notice ? '<div class="card ok"><b style="color:#2C7A57">' + esc_(notice) + '</b></div>' : '') +
+      (signed ? '' : '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card">' + replyHidden_(sid, day, 'in') +
+        '<div class="bf">It records you in at the time you press: before ' + startAt + ' is early, at ' + startAt + ' on time, after it late.</div>' +
+        '<button type="submit" style="background:#2C7A57;margin-top:4px">I have read the concerns and I am ready to start my day</button></form>') +
+      '<p><a href="' + PLANNER_URL + '">Open the planner</a></p>');
   }
   var nowM = minutesOf_(hhmm_(new Date())), sugIds = [];
   var cards = BLOCK_IDS.filter(function (b) { return sched.blocks[b]; }).map(function (b) {
@@ -9664,10 +9755,12 @@ function rebalanceApply_(day, moves) {
   } catch (e) { return out; }
   moves.forEach(function (m) {
     var cur = now[m.t.id], res = '';
-    if (!cur || cur.IsClosed || cur.OwnerId !== users[m.from].id) res = 'SKIPPED: changed since it was planned';
+    var fromId = users[m.from] ? users[m.from].id : (m.from === 'ricky' ? bmSfId_() : '');
+    var toId = users[m.to] ? users[m.to].id : (m.to === 'ricky' ? bmSfId_() : '');
+    if (!cur || cur.IsClosed || cur.OwnerId !== fromId || !toId) res = 'SKIPPED: changed since it was planned';
     else {
       try {
-        sfkSetOwner_(m.t.id, users[m.to].id);
+        sfkSetOwner_(m.t.id, toId);
         res = 'OK';
         try {
           sfkInsert_('FeedItem', { ParentId: m.t.id, Body:
@@ -11908,6 +12001,7 @@ function recordAttendance_(profile) {
                  Reason: 'Signed in at ' + twelve_(hhmm_(now)) + ', after the automatic absence' };
     writeRow_(sh, found.at, colMap_(sh), back);
     out = attOut_(Object.assign({}, found.row, back), sid); out.first = true;
+    try { out.returned = coverReturn_(sid, day); } catch (e) {}
   } else if (found) {
     writeRow_(sh, found.at, colMap_(sh), { LastSeen: hhmm_(now), UpdatedAt: now });
     out = attOut_(found.row, sid); out.first = false;

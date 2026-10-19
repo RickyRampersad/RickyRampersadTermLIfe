@@ -4008,7 +4008,15 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   when it turns to present and late. Hours: Ricky 5–3, Sasha 7–2, Liz 7–3,
   Kamla 8–5, Azariah 8–4. Near the top, `periodStrip_`: tasks closed this week,
   month and quarter to yesterday, with the trend on the same days last time,
-  and the month's attendance. Still to build: blocks grouped by what is open,
+  and the month's attendance. **Thirty minutes after the start and still not
+  pressed** (`COVER_AFTER_MIN`, v2026-10-19b), due and overdue work with no
+  note is reassigned (`coverTick_`) and one e-mail goes to the whole team
+  (`COVER_TEAM`, `coverTeamMail_`): "<name> is not in today", who takes what.
+  The Branch Manager is covered too, at 5:30, his work to the BMA first even
+  before she is in. A press after that (`coverReturn_`, from
+  `recordAttendance_`) gives back whatever is still open and with the
+  colleague, and the team is told; closed or moved-on work stays. Pinned in
+  `tests/test-cover30.js`. Still to build: blocks grouped by what is open,
   "anything else in this block?", emails owed a reply as pending work, and the
   bag from the new Log Book's rota. Pinned in `tests/test-startday.js`.
 - **"Not getting attention" (the command centre)** closes things, not only
