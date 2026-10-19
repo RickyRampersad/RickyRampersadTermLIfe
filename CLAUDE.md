@@ -4107,3 +4107,55 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   (`sendMailbagCall_`) goes to the router and everyone holding documents; the
   morning cards and the before-you-leave check say the 12 noon bag; anything
   collected after it goes in tomorrow's bag. Pinned in `tests/test-unit.js`.
+- **My unit** (`unitPage_`/`unitSave_`, f=`unit`, 19 October 2026): the Unit
+  Manager's one page, on one link that works every day (`unitSig_`, signed with
+  'always' like My day; `showUnitLink()` logs it). A brief (API pace as at today,
+  pendings, agents planned, his plan) and "Do these first" (`unitPriorities_`:
+  plan not set, a staff note asking him by name, an absent agent, an overdue
+  pending with who holds it, an agent asking for help, behind API pace, an open
+  performance letter, no goal plan, no fact find this week, a task untouched 14+
+  days), each with its reason and a jump to its place. Tabs: Today (plan and
+  done side by side for every UM_CHECKS number, his agents today, a task for a
+  desk), Unit work (who holds the unit's work, by desk; every open task with the
+  history and a type-or-speak box), Agents (the unit against its FY27 goals,
+  then each agent), You (his own goal, manager numbers this week, coaching notes,
+  his week). One Save posts comments as his, keeps plan/done via `mgrWrite_`,
+  makes desk tasks, signs him in. Nothing links to Salesforce. First button in
+  his 6am, 11am and 5:30pm mails. Ricky's 11am/3pm mail links a read-only view
+  (f=`unitv`, `unitViewSig_`, a disabled fieldset, no form). Pinned in
+  `tests/test-hub.js`.
+- **The scoreboard** (`scoreboard_`, `sbBars_`/`sbMeter_`/`sbSplit_`/`sbDots_`,
+  19 October 2026): every role's page opens with up to four numbers, each with
+  a little inline-SVG chart drawn to scale and each a link (data-go, `sbJs_`) to
+  the detail behind it. My day (`meScore_`: branch closed, waiting on you, plan
+  met, you closed), My unit, Your day (`agScore_`, with "Your year"), Your plan
+  (`ssScore_`), Your errands (`errScore_`), Before you leave (`hkScore_`). The
+  five-day bars read closed tasks per desk per day once (`deskClosedOn_`, kept
+  as `dk_<day>` for three weeks). Pages only: Outlook does not draw SVG.
+- **The register at both ends** (`NOCLOSE`, 19 October 2026): Before you leave
+  is the sign-out (sign-out ticked by default); each planned task not done needs
+  a reason and a new date (`commitRow_`/`commitTasks_`: the date patched on the
+  task, the reason on its Chatter). No automatic sign-out at the finish any more:
+  a reminder at the finish (`notClosedReminder_`), and at finish + 30
+  `markNotClosed_` writes "Did not close the day" on the register (Status
+  unchanged; Script Property NO_CLOSE_MARK=absent marks absent instead), mails
+  the person cc Ricky and sales support, flags two in a week. The next morning's
+  plan opens with yesterday first (`yesterdayOpen_`, inputs yr_/yd_) and does not
+  save until it is accounted for (`ncdone_`). Pinned in `tests/test-score.js`.
+- **The BMA's page** (`bmaScore_`, 19 October 2026): Kamla's plan page opens on
+  her job: her desks today (a dot each: in, planned, absent), Mr Rampersad's
+  instructions with no note yet (hers and her desks'), the desks' work gone
+  quiet (bars by desk, hers as "You"), Query Pal by age; each opens a card below
+  the plan. `planTally_` counts the day's plan live until the block closes, so
+  Before you leave and the 4pm report no longer read "no plan" before the close.
+- **The agent's projection and the balance** (`AGENT_METRICS` p/d/s, `agBalance_`,
+  19 October 2026): Ricky, "you can't say calls made. It's projected calls to be
+  made ... they balance off at the end of the day." The morning mail and page ask
+  what is to be done (`p`: Calls to make, Appointments to set ...), never what was
+  done; the 5:30 page asks what was done (`d`) with "you projected N" beside each
+  line and the balance as it is typed (`.agbal`, `data-proj`; filled server-side
+  when reopened). The saved close shows the day balanced (`agBalanceCard_`); the
+  copy to the manager and support carries projected, done, balance and the total
+  in its subject; the managers' table reads "Projected · done · balance". Sheet
+  columns stay Planned/Done. Statuses: projection in / no projection yet / absent
+  (no projection). Pinned in `tests/test-balance.js`.
