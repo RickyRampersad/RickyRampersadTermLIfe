@@ -76,7 +76,7 @@ async function session(b, who, attendance, rowsAttendance, absents, outs) {
   console.log('\nThe first sign-in of the day opens on the plan, at half past eleven:\n');
   let s = await session(b, P, { first:true, at:'11:30', lastSeen:'11:30', status:'in', reason:'', late:200 }, {}, absents);
   let t = await s.page.locator('body').innerText();
-  ok('it lands on the plan', /Set the day before it starts/.test(t), t.slice(0, 80));
+  ok('it lands on the plan', /Plan the day when your e-mail comes in/.test(t), t.slice(0, 80));
   ok('and says when they started, against their own start', /In at 11:30 · 200 minutes after your start/.test(t), (t.match(/In at [^\n]{0,60}/) || [''])[0]);
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
   await s.ctx.close();
@@ -84,7 +84,7 @@ async function session(b, who, attendance, rowsAttendance, absents, outs) {
   console.log('\nA second sign-in opens on the day:\n');
   s = await session(b, P, { first:false, at:'08:04', lastSeen:'11:30', status:'in', reason:'', late:0 }, {}, absents);
   t = await s.page.locator('body').innerText();
-  ok('it lands on the day, not the plan', /Each block closes itself at its end time/.test(t) && !/Set the day before it starts/.test(t));
+  ok('it lands on the day, not the plan', /Your day closes itself at your finish time/.test(t) && !/Plan the day when your e-mail comes in/.test(t));
   await s.page.click('button:has-text("Plan the day")');
   await s.page.waitForTimeout(500);
   t = await s.page.locator('body').innerText();
@@ -126,7 +126,7 @@ async function session(b, who, attendance, rowsAttendance, absents, outs) {
                     { demo:{ at:'08:04', status:'in', reason:'', late:0 } }, absents, outs);
   t = await s.page.locator('body').innerText();
   ok('the day carries a card to close it', /Close the day/.test(t), t.slice(0, 120));
-  ok('which names what is still unreported', /Still open: 4 blocks not reported and the afternoon mail sweep/.test(t),
+  ok('which names what is still unreported', /Still open: day not reported and the afternoon mail sweep/.test(t),
      (t.match(/Still open:[^\n]*/) || [''])[0]);
   ok('and says what signing out means', /Signing out closes your day on the register/.test(t));
   await s.page.click('button:has-text("Sign out and close the day")');

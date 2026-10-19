@@ -88,7 +88,7 @@ console.log('\nIt never asks what the sheet can already see:\n');
 let st = env.closeoutFor_(one(), TODAY);
 ok('nothing is in, so nothing is ticked', st.left === 3 && !st.complete, JSON.stringify(st.items.map(i => i.done)));
 ok('and each line says what it read', st.items.every(i => i.detail), JSON.stringify(st.items.map(i => i.detail)));
-ok('the blocks line counts them', /0 of 4 reported/.test(st.items.filter(i => i.auto === 'blocks')[0].detail));
+ok('the day line says it is not in', /not reported yet/.test(st.items.filter(i => i.auto === 'blocks')[0].detail));
 
 // A full day's work lands on the sheet: four blocks and the afternoon sweep.
 env.__sheets['KPI Log'].appendRow(logRow(TODAY, 'ada', 'Ada Quill', {
@@ -98,7 +98,7 @@ env.__sheets['KPI Log'].appendRow(logRow(TODAY, 'ada', 'Ada Quill', {
 forget();
 st = env.closeoutFor_(one(), TODAY);
 const byId = {}; st.items.forEach(i => { byId[i.id] = i; });
-ok('four blocks in ticks the blocks line by itself', byId.blocks.done && /4 of 4/.test(byId.blocks.detail), JSON.stringify(byId.blocks));
+ok('the day logged ticks the line by itself', byId.blocks.done && /your day is reported/.test(byId.blocks.detail), JSON.stringify(byId.blocks));
 ok('the afternoon sweep ticks itself, with the time', byId.mail.done && /14:10/.test(byId.mail.detail), JSON.stringify(byId.mail));
 ok('nothing written to today is still an open question', !byId.written.done, JSON.stringify(byId.written));
 ok('and it says so rather than pretending', /nothing noted today/.test(byId.written.detail), byId.written.detail);

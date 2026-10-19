@@ -3989,3 +3989,76 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   tint, `#FFF6F4` paper, `#6B7C96` muted — with The Knot as the mark. Guardian
   is named only where it is a matter of fact: the insurer, the form, the
   customer-service desk.
+- **The tracker has no time blocks** (Ricky, 17 October 2026). Every desk's
+  day in `KPI.gs` `SCHEDULE` is one plan, block `KPI1` labelled "Your day",
+  spanning the desk's own hours: plan by e-mail and the morning check, progress
+  before lunch (the Unit Manager at 11, agents at 12), close-out half an hour
+  before finishing, the week on Friday. No morning check reads as absent and
+  the work is shared out. Hours: Branch Manager 5am–3pm, BMA 8am–5pm, Sales
+  Support 7–2, 7–3 and 8–4, Unit Manager and agents 6am–6pm. The other block
+  columns stay on the log so history reads; do not schedule into them again
+  unless the branch splits the day.
+- **"Not getting attention" (the command centre)** closes things, not only
+  moves them (18 October 2026). Each row has a status from the record's own
+  list (Salesforce's `TaskStatus`; the letter sheet's own values), its history
+  (Chatter posts and replies; a letter's e-mail trail, escalation, response and
+  BM comments; a query's comments) and a suggestion read from that history.
+  Closing needs a note and the note is posted before the close; a task where
+  the client asked for an agent cannot be closed. A letter closed here also
+  resolves its open escalation and writes `BM Comments` and `Audit Log` in the
+  Productive Performance Management workbook. Query Pal queries are closed in
+  Query Pal, so the client is told. Pinned in `tests/test-cmd.js`.
+- **The e-mail answer pages are built for a phone** (18 October 2026). Boxes
+  are 16px and 44px tall (an iPhone zooms in on anything smaller; the old
+  `font:14px/1.4 inherit` was invalid CSS and fell back to 13px). The command
+  centre folds each row to one line (age, title, who, why, a badge for what the
+  system found), filters with sticky chips (what it found, source, desk), has
+  a one-tap "Close it" that fills the status and a closing note, and counts
+  the changes on the send button.
+- **Query Pal deep dive** (`f=qp`, `qpDivePage_`): read only, from the Query
+  Pal workbook's Queries and Comments tabs. Each query is judged against its
+  own Turnaround; sentences first, then the evidence. Linked from the command
+  centre and the 5am e-mail.
+- **Fact-find chase** (`ffChaseTick_`, `f=agff`): Monday 7:00 asks every
+  agent with no fact find in 14 days (Salesforce Fact Finding Interviews, and
+  nothing this week on FactFind360) for a response; Wednesday reminds the
+  silent, manager copied; Friday sends the managers the week. Answers go to the
+  Fact Find Responses tab; help asked for becomes a Salesforce task for the
+  manager. The link is good for the week. Script Property `FF_CHASE`
+  (`live`/`preview`/`off`, unset follows `AGENT_DAY`). Every send checks the
+  daily e-mail quota first. Pinned in `tests/test-qpff.js`.
+- **Risk score and the client in one view** on the command centre (18 October
+  2026, `cmdRisk_`, `cmdClientIndex_`). Each item's client is looked up across
+  the open Salesforce book (the task's What name), Query Pal, the log book, and
+  Branch Intelligence's cache (premiums overdue, pending business, last night's
+  lapses); names match on all their words in any order, titles dropped, or on
+  two words of four letters or more. The score (0–100) weighs the payoff order
+  (new business, orphan, retention), age, a client waiting or unhappy, money at
+  risk, the client open elsewhere and the advice tag; reads-as-done drops 20.
+  The page runs highest risk first, opens with "Do these first", and lists
+  clients open in more than one place.
+- **The command centre is in tabs under a brief** (18 October 2026): Act,
+  People, Agents, Clients, Query Pal. The brief is five or six sentences built
+  from every tab (`cmdBrief_`). People (`peopleNormal_`): each desk's closures
+  a day over the last 5 working days against their own median over the 15
+  before, absent days left out; slipping under 70%, ahead over 130%; late and
+  absent of the last 10 days; overdue and untouched; notes answered. One
+  aggregate SOQL (`DAY_ONLY(convertTimezone(CompletedDateTime))`), cached 10
+  minutes. Agents (`agentFunnel_`): FactFind360 month fact finds and apps
+  against Salesforce interviews; flags no applications, converting, none.
+- **Claude reads the notes when `ANTHROPIC_API_KEY` is set** (`cmdClaudeRead_`):
+  one call per opening for items whose newest note has not been read, cached
+  6 hours per item and note (a "no read" is cached too). States: done,
+  waiting_department, waiting_client, client_unhappy, in_progress, blocked,
+  unclear. Done and unhappy override the rule's advice and move the risk.
+  `ANTHROPIC_MODEL` defaults to claude-haiku-5-5. No key, no call.
+- **My day** (`f=me`, `mePage_`, 18 October 2026): the Branch Manager's page
+  on ONE link that works every day (signed `replySig_(sid,'always','me')`, no
+  date), for the phone's home screen. Plan first if the day is not planned;
+  next up (notes asking him, his tasks due by payoff, his instructions with no
+  note) with reply and close-with-note; capture as a task for him, for a desk,
+  or done already (a completed task, so it counts); the account against the
+  plan saved as the day goes (`MGRDAY` kind `eve`, the same record the 3pm
+  close reads). Check-in e-mails at 7:00, 9:00 and 1:00 (`BM_NUDGES`), plan
+  first then the next three. `showMyDayLink()` logs the link. Pinned in
+  `tests/test-me.js`.

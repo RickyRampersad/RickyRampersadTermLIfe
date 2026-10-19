@@ -101,9 +101,11 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   await page.waitForTimeout(2400);
 
   console.log('\nOn the plan, each block says what it is for:\n');
-  ok('the plan is what opens', await page.locator('text=Set the day before it starts').count() > 0);
+  ok('the plan is what opens', await page.locator('text=Plan the day when your e-mail comes in').count() > 0);
   const k1 = page.locator('[data-plan="KPI1"]');
-  ok('every block carries the panel', await page.locator('[data-plan]').count() === 4, String(await page.locator('[data-plan]').count()));
+  // KPI2's plan has closed, so it shows its outcome; and no desk has an
+  // unscheduled evening block any more (no time blocks, 17 October 2026).
+  ok('every open block carries the panel', await page.locator('[data-plan]').count() === 3, String(await page.locator('[data-plan]').count()));
   const k1t = await k1.innerText();
   ok('and says when it will close itself', /closes itself at 10:00/.test(k1t), k1t.slice(0, 120));
   ok('the open tasks of the picked type are there to tick', /T- PENSIONS GROUP/.test(k1t) && /Confirm funds in DISB/.test(k1t));

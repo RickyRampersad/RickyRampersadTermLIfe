@@ -27,16 +27,19 @@ ok('the first four are unchanged',
 ok('it falls due at midnight, not four', env.BLOCK_DUE_HOUR.EVE === 24, String(env.BLOCK_DUE_HOUR.EVE));
 
 console.log('\nOwed is the person\'s own schedule, not the list:\n');
-/* The Branch Manager is the only day on the schedule that runs the whole
-   envelope, because it is the only one that does. */
-ok('the Branch Manager is owed all five', env.blocksOwed_('ricky') === 5, String(env.blocksOwed_('ricky')));
-ok('his day starts at five', /^5\s*[–-]\s*10am$/.test(env.SCHEDULE.ricky.blocks.KPI1.time),
+/* NO MORE TIME BLOCKS (Ricky, 17 October 2026): every desk's day is one plan,
+   planned in the morning and closed off before leaving. */
+ok('the Branch Manager is owed one plan for the day', env.blocksOwed_('ricky') === 1, String(env.blocksOwed_('ricky')));
+ok('his day starts at five', /^5am\s*[–-]\s*3pm$/.test(env.SCHEDULE.ricky.blocks.KPI1.time),
    env.SCHEDULE.ricky.blocks.KPI1.time);
-ok('and runs to midnight', /12am/.test(env.SCHEDULE.ricky.hours), env.SCHEDULE.ricky.hours);
-ok('support staff are owed four', env.blocksOwed_('sasha') === 4, String(env.blocksOwed_('sasha')));
-ok('and are not scheduled into the evening', !env.SCHEDULE.sasha.blocks.EVE);
-ok('somebody not on the schedule is owed four, not five',
-   env.blocksOwed_('nobody-yet') === 4, String(env.blocksOwed_('nobody-yet')));
+ok('and runs to three', env.SCHEDULE.ricky.hours === '5am – 3pm', env.SCHEDULE.ricky.hours);
+ok('the BMA works eight to five', env.SCHEDULE.kamla.hours === '8am – 5pm', env.SCHEDULE.kamla.hours);
+ok('support staff are owed one plan', env.blocksOwed_('sasha') === 1, String(env.blocksOwed_('sasha')));
+ok('and no desk is scheduled into a time block', Object.keys(env.SCHEDULE).every(s => Object.keys(env.SCHEDULE[s].blocks).join() === 'KPI1'));
+ok('each day spans the desk\'s own hours', Object.keys(env.SCHEDULE).every(s => env.SCHEDULE[s].blocks.KPI1.time === env.SCHEDULE[s].hours));
+ok('somebody not on the schedule is owed one too',
+   env.blocksOwed_('nobody-yet') === 1, String(env.blocksOwed_('nobody-yet')));
+ok('and it reads as "Your day"', env.blockLabel_('KPI1') === 'Your day');
 
 console.log('\nA four-block sheet gains the fifth block\'s own columns:\n');
 /* ensureLogColumns_ used to add only the derived columns — _At, _Quality,

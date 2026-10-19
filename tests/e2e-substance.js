@@ -58,7 +58,7 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   await t[1].fill('3 tasks');
   await page.waitForTimeout(300);
 
-  await page.click('button:has-text("Submit block")');
+  await page.click('button:has-text("Submit my day")');
   await page.waitForTimeout(900);
   ok('nothing was sent yet', sent === 0, sent + ' sent');
   ok('it says what is missing', await page.locator('text=/a count, but nothing named/').count() > 0);
@@ -76,13 +76,13 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
 
   console.log('\nA real entry is never questioned at all:\n');
   sent = 0;
-  await page.locator('text=KPI 1').first().click();
+  await page.locator('[data-day="KPI1"]').first().click();
   await page.waitForTimeout(400);
   t = await page.locator('textarea:visible').all();
   await t[0].fill('Premium dues, 14 processed and 2 returned to the advisor');
   await t[1].fill('12 cleared, 2 back to the advisor');
   await page.waitForTimeout(300);
-  await page.click('button:has-text("Submit block")');
+  await page.click('button:has-text("Submit my day")');
   await page.waitForTimeout(2200);
   ok('it went straight through, no question', sent === 1, sent + ' sent');
   ok('no thin warning was shown', await page.locator('text=/reads thin/').count() === 0);
