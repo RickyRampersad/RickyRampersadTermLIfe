@@ -146,6 +146,18 @@
     Permissions-Policy = "geolocation=(), payment=()"
 
 
+# /workday shows how each role spends the day, with sample names and figures.
+# Kept out of search and out of shared-device caches; nothing to embed it.
+[[headers]]
+  for = "/workday/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-cache"
+    X-Robots-Tag = "noindex, nofollow"
+
+
 # Claims carries ID documents, medical detail and bank particulars.
 # no-store keeps it out of shared-device browser caches; no-referrer stops
 # the claim reference leaking to anything the page links out to.
