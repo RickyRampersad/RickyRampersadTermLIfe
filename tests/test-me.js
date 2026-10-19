@@ -100,7 +100,7 @@ ok('by 11: the 7:00 check-in answered, the 9:00 missed, the 1:00 not yet due', s
 ok('each planned number against the account', self.items.length === 1 && self.items[0].q === 'New recruits' && self.items[0].planned === 3 && self.items[0].done === 2 && self.met === 0);
 ok('the day is accounted', self.accounted);
 const said = env.bmVerdict_(self, 'mid').map(x => x.t).join(' ');
-ok('the verdict names the missed check-in, the shortfall and the close with no note', /9:00am check-in/.test(said) && /New recruits \(2 of 3\)/.test(said) && /1 of the 3 you closed/.test(said), said);
+ok('the verdict names the missed check-in, the shortfall and the close with no note', /9:00am check-in/.test(said) && /New recruits \(2 of 3\)/.test(said) && /1 of the 3 you closed today carries no note/.test(said), said);
 mails.length = 0;
 env.sendMeNudge_('ricky', DAY, 13 * 60);
 ok('the 1pm check-in says the 9:00 one was missed, and where the plan stands', /Nothing was logged after the 9:00am check-in/.test(mails[0].htmlBody) && /New recruits 2 of 3/.test(mails[0].htmlBody));
@@ -121,5 +121,13 @@ ok('the 5am review opens with yesterday, against the plan', /Mon 19 Oct, you aga
 page = env.replyClick_({ parameter: q(url) }).getContent();
 ok('My day shows the progress checks and the week', /Your progress checks/.test(page) && />WEEK</.test(page) && /This week:/.test(page));
 env.todayISO_ = () => DAY;
+
+console.log('\nClosing the performance letters:\n');
+const closedL = [];
+env.ppmLetters_ = () => [{ 'Letter ID': 'L1', 'Agent Name': 'Agent One', 'Performance Period': 'Q2 2026' }, { 'Letter ID': 'L2', 'Agent Name': 'Agent Two', 'Performance Period': 'Q2 2026' }];
+env.ppmSetStatus_ = (id, st, note, who) => { if (id === 'L2') throw new Error('Letter L2 is not on the sheet any more.'); closedL.push([id, st, note, who.role]); };
+const lettersSaid = env.closeOpenPerformanceLetters();
+ok('each open letter set to Completed with his note, as the Branch Manager', closedL.length === 1 && closedL[0][0] === 'L1' && closedL[0][1] === 'Completed' && /^Closed by the Branch Manager on /.test(closedL[0][2]) && closedL[0][3] === 'Branch Manager', JSON.stringify(closedL));
+ok('and it says what closed and what did not', /^Closed 1 of 2 performance letters: Agent One \(Q2 2026\)\. Not closed: Agent Two/.test(lettersSaid), lettersSaid);
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed.');
 process.exit(fails ? 1 : 0);
