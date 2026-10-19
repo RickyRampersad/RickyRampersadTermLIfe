@@ -3311,3 +3311,18 @@ servicing work".
   the PPM Letters tab goes to `Completed` through `ppmSetStatus_` (escalation
   resolved, his note on BM Comments, audit log). Returns what closed and what
   did not.
+- **A desk with no Salesforce login** (`noSfLogin_`, 19 October 2026: Akaash
+  is not a registered Salesforce user). His task links go to his own comment
+  page (`f=um#i<id>`), never Salesforce; the page shows the latest two notes on
+  each task and posts his comment to Chatter headed "Unit Manager · <name>";
+  `um_posts_` counts them. The morning opens with "Your agents · goals and
+  activity" (`teamFFCard_`) and "What you are doing" (`umSelfCard_`: plan,
+  numbers, account, comments). `unitAgents_` lists each agent once.
+- **Day items in pieces** (`bigPut_`/`bigGet_`): the unit, agent, plan and
+  fact-find lists were cut at 8,900 characters, and cut JSON read back as
+  nothing. They are kept in 8,000-character pieces now.
+- **The mailbag leaves at 12 noon** (`mailbagLeaves_`, Script Property
+  `MAILBAG_AT`): documents to the router by 11:45; the 11:15 call
+  (`sendMailbagCall_`) goes to the router and everyone holding documents; the
+  morning cards and the before-you-leave check say the 12 noon bag; anything
+  collected after it goes in tomorrow's bag. Pinned in `tests/test-unit.js`.

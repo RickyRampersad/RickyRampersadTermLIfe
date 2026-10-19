@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19a';
+var SCRIPT_VERSION = '2026-10-19b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3428,6 +3428,16 @@ var MAILBAG = {
 };
 var MAILLOG = { must: ['Date', 'Router', 'Sent'], name: 'Mailbag Log',
   head: ['Date', 'Router', 'By', 'CollectedToday', 'Backlog', 'Sent', 'Reason', 'Note', 'At', 'Source'] };
+/* Ricky, 19 Oct 2026: "the bag leaves at 12pm". Script Property MAILBAG_AT
+ * ("12:00") moves it. Documents go to the router by a quarter of an hour
+ * before; at 11:15 the router and everyone holding documents get the call;
+ * anything collected after the bag has gone travels in the next day's bag. */
+function mailbagLeaves_() {
+  var p = ''; try { p = String(PropertiesService.getScriptProperties().getProperty('MAILBAG_AT') || '').trim(); } catch (e) {}
+  var m = minutesOf_(p); return m == null ? 12 * 60 : m;
+}
+function mailbagLeavesText_() { var m = mailbagLeaves_(); return m === 12 * 60 ? '12 noon' : twelve_(mmText_(m)); }
+function mailbagByText_() { return twelve_(mmText_(mailbagLeaves_() - 15)); }
 function mailbagRota_() {
   var props = PropertiesService.getScriptProperties();
   var rota = String(props.getProperty('MAILBAG_ROTA') || '').split(',').map(function (x) { return x.trim(); }).filter(String);
@@ -3456,6 +3466,30 @@ function mailbagToday_(day) {
   });
   return out;
 }
+/** 11:15: the bag leaves at 12 noon. To the router and everyone holding documents not yet sent. */
+function sendMailbagCall_(day, absent) {
+  var rt = mailbagRouter_(day, absent || {}), mb = mailbagToday_(day);
+  if (!mb.backlogN) return false;
+  var rname = String(nameFor_(rt.router)).split(' ')[0], by = mailbagByText_(), at = mailbagLeavesText_();
+  var sidOf = {}; publicRoster_().forEach(function (p) { sidOf[firstOf_(p.name)] = String(p.staffId); });
+  var to = [emailFor_(rt.router)];
+  Object.keys(mb.backlog).forEach(function (w) { var sid = sidOf[firstOf_(w)]; if (sid && sid !== rt.router) { var e = emailFor_(sid); if (e && to.indexOf(e) < 0) to.push(e); } });
+  to = to.filter(Boolean); if (!to.length) return false;
+  var row = function (h) { return '<div style="font-size:13.5px;line-height:1.5;padding:5px 0;border-top:1px solid ' + MAIL.line + '">' + h + '</div>'; };
+  var body = '<div style="font-size:15px;line-height:1.55;margin-bottom:12px"><b>The bag leaves at ' + esc_(at) + '.</b> ' + esc_(rname) + ' routes it this week. ' +
+      'Hand your documents to ' + esc_(rname) + ' by <b>' + esc_(by) + '</b>; anything not in the bag when it leaves goes tomorrow.</div>' +
+    statTiles_([{ value: mb.backlogN, label: 'logged and not sent', color: mb.backlogN > 10 ? MAIL.red : MAIL.amber }, { value: mb.todayN, label: 'collected today' },
+                { value: mb.oldest ? shortDate_(mb.oldest) : '—', label: 'oldest not sent', color: MAIL.navy }]) +
+    sectionLabel_('Still to go, by who verified it') +
+    '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' +
+      Object.keys(mb.backlog).sort(function (a, b) { return mb.backlog[b] - mb.backlog[a]; }).map(function (w) { return row('<b>' + esc_(w) + '</b> · ' + mb.backlog[w] + ' document' + (mb.backlog[w] === 1 ? '' : 's')); }).join('') + '</div>' +
+    '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:10px">' + esc_(rname) + ': put the Date Sent in the log book as the bag goes. The before-you-leave check asks whether the ' + esc_(at) + ' bag went.</div>';
+  MailApp.sendEmail({ to: to.join(','), cc: DAYSTART_CC_DEFAULT,
+    subject: 'The mailbag leaves at ' + at + ' · ' + shortDate_(day) + ' · ' + mb.backlogN + ' to go · to ' + rname + ' by ' + by,
+    htmlBody: shell_('The mailbag · ' + at, rname + ' routes it this week · ' + prettyDate_(day), body) });
+  return true;
+}
+function sendMailbagCallNow() { return sendMailbagCall_(todayISO_(), {}); }
 function mailbagLog_(row) {
   try { var sh = hrTab_(MAILLOG, true); sh.appendRow(headerOf_(sh).map(function (h) { return row[h] != null ? row[h] : ''; })); forgetHr_(MAILLOG); } catch (e) {}
 }
@@ -3470,8 +3504,8 @@ function mailbagCard_(sid, day) {
   var backlog = mb.backlogN ? row('<b style="color:' + (mb.backlogN > 10 ? MAIL.red : MAIL.amber) + '">' + mb.backlogN + ' document' + (mb.backlogN === 1 ? '' : 's') + ' logged and not yet sent</b>' +
       (mb.oldest ? ', oldest ' + esc_(shortDate_(mb.oldest)) : '') + ' · ' + Object.keys(mb.backlog).sort().map(function (w) { return esc_(w) + ' ' + mb.backlog[w]; }).join(', ')) : row('Nothing waiting from earlier days.');
   var head = isRouter
-    ? '<b>You route the mailbag this week</b> (week ' + rt.week + ' of the rota' + (rt.scheduled !== sid ? ', covering for ' + esc_(nameFor_(rt.scheduled).split(' ')[0]) : '') + '). Confirm on the page that today\'s bag went, or why not.'
-    : '<b>' + esc_(nameFor_(rt.router).split(' ')[0]) + ' routes the mailbag this week.</b> You collected <b>' + mine + '</b> document' + (mine === 1 ? '' : 's') + ' today; confirm on the page they were handed over.';
+    ? '<b>You route the mailbag this week</b> (week ' + rt.week + ' of the rota' + (rt.scheduled !== sid ? ', covering for ' + esc_(nameFor_(rt.scheduled).split(' ')[0]) : '') + '). Confirm on the page that the ' + esc_(mailbagLeavesText_()) + ' bag went, or why not. Anything collected after it left goes in tomorrow\'s bag.'
+    : '<b>' + esc_(nameFor_(rt.router).split(' ')[0]) + ' routes the mailbag this week.</b> You collected <b>' + mine + '</b> document' + (mine === 1 ? '' : 's') + ' today; confirm on the page they were handed over by ' + esc_(mailbagByText_()) + ' for the ' + esc_(mailbagLeavesText_()) + ' bag, or are with ' + esc_(nameFor_(rt.router).split(' ')[0]) + ' for tomorrow\'s.';
   return { html: '<div style="font-size:13.5px;line-height:1.55;margin-top:6px">' + head + '</div>' + table + backlog +
       (Object.keys(mb.byRouting).length ? row('<span style="color:' + MAIL.muted + '">By routing today: ' + Object.keys(mb.byRouting).map(function (k) { return esc_(k) + ' ' + mb.byRouting[k]; }).join(' · ') + '</span>') : ''),
     ok: !isRouter, isRouter: isRouter, router: rt.router, mine: mine, data: mb };
@@ -3486,12 +3520,12 @@ function mailbagPageCard_(sid, day) {
     var rname = esc_(nameFor_(m.router).split(' ')[0]);
     if (m.isRouter) return '<div class="card" style="border-left:4px solid #0EA5C9"><div class="bh">The mailbag · you route it this week</div>' +
       '<div class="ln">' + m.data.todayN + ' collected today' + (m.data.backlogN ? ' · <b>' + m.data.backlogN + ' not yet sent</b>' : '') + '</div>' +
-      '<div class="seg"><label><input type="radio" name="mb" value="Sent" required onchange="mb(this)"><span>Bag sent today</span></label>' +
-      '<label><input type="radio" name="mb" value="Not sent" onchange="mb(this)"><span>Not sent</span></label></div>' + sel +
+      '<div class="seg"><label><input type="radio" name="mb" value="Sent" required onchange="mb(this)"><span>The ' + esc_(mailbagLeavesText_()) + ' bag went</span></label>' +
+      '<label><input type="radio" name="mb" value="Not sent" onchange="mb(this)"><span>It did not go</span></label></div>' + sel +
       '<input type="text" name="mbn" placeholder="Note: tracking number, courier, or what is still to go" style="margin-top:6px"></div>' + js;
     return '<div class="card"><div class="bh">The mailbag · ' + rname + ' routes it this week</div>' +
       '<div class="ln">You collected <b>' + m.mine + '</b> document' + (m.mine === 1 ? '' : 's') + ' today.</div>' +
-      '<div class="seg"><label><input type="radio" name="mb" value="Handed over" required onchange="mb(this)"><span>All handed to ' + rname + '</span></label>' +
+      '<div class="seg"><label><input type="radio" name="mb" value="Handed over" required onchange="mb(this)"><span>All handed to ' + rname + ' (by ' + esc_(mailbagByText_()) + ', or for tomorrow\'s bag)</span></label>' +
       '<label><input type="radio" name="mb" value="Not handed over" onchange="mb(this)"><span>Some still with me</span></label></div>' + sel +
       '<input type="text" name="mbn" placeholder="Note" style="margin-top:6px"></div>' + js;
   } catch (e) { return ''; }
@@ -3690,6 +3724,11 @@ function housekeepingTick_() {
     if (!present[sid] || mins < endM || mins > endM + 60 || props.getProperty('autoout_' + sid + '_' + day)) return;
     try { if (autoSignOut_(sid, day, endM)) sent.push(p.name + ' (signed out at finish)'); props.setProperty('autoout_' + sid + '_' + day, hhmm_(now)); } catch (e) {}
   });
+  // 11:15, the mailbag call: the bag leaves at 12 noon (Ricky, 19 Oct 2026).
+  var mbAt = mailbagLeaves_() - 45;
+  if (mins >= mbAt && mins <= mbAt + HK_WINDOW_MIN && !props.getProperty('mbcall_' + day)) {
+    if (timedSend_(props, 'mbcall_' + day, now, function () { return sendMailbagCall_(day, absent); })) sent.push('mailbag call');
+  }
   // The BMA's 4pm report.
   if (mins >= BMA_REPORT_AT && mins <= BMA_REPORT_AT + HK_WINDOW_MIN && !props.getProperty('bmarep_' + day)) {
     if (timedSend_(props, 'bmarep_' + day, now, function () { sendBmaReport_(day); })) sent.push('BMA 4pm report');
@@ -4203,7 +4242,7 @@ function sendBranchManagerDay_(day) {
       (items.length > max ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (items.length - max) + ' more in Salesforce.</div>' : '') + '</div>';
   };
   if (sfOk) { try { saveBmItems_(day, w); } catch (e) {} }
-  try { PropertiesService.getScriptProperties().setProperty(umItemsKey_('ricky', day), JSON.stringify(w.mine.slice(0, 30).map(function (t) { return { id: t.id, s: t.subject, a: '', due: t.due, late: t.late, k: t.ty === 'Pendings' ? 'pend' : t.ty === 'Opportunity' ? 'new' : 'other' }; })).slice(0, 8900)); } catch (e) {}
+  try { bigPut_(umItemsKey_('ricky', day), w.mine.slice(0, 30).map(function (t) { return { id: t.id, s: t.subject, a: '', due: t.due, late: t.late, k: t.ty === 'Pendings' ? 'pend' : t.ty === 'Opportunity' ? 'new' : 'other' }; })); } catch (e) {}
   var base = '';
   try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var open = function (id) { return base ? ' <a href="' + esc_(base + id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &rarr;</a>' : ''; };
@@ -4431,7 +4470,7 @@ function unitAgents_(sid) {
   try {
     var sb = skillBank_(), mine = [];
     Object.keys(sb).forEach(function (k) { var p = sb[k]; if (p.isAgent && p.active && bkNk_(p.unit) === bkNk_(me)) mine.push(p.name); });
-    if (mine.length) return out.concat(mine);
+    if (mine.length) { var seenN = {}; return out.concat(mine).filter(function (n) { var k = bkNk_(n); if (seenN[k]) return false; seenN[k] = 1; return true; }); }
   } catch (e) {}
   if (typeof iBuildUnits_ !== 'function') return out;
   var units = {};
@@ -4487,14 +4526,37 @@ function unitSections_(book) {
 }
 
 function umItemsKey_(sid, day) { return 'um_items_' + sid + '_' + day; }
+/** A value too long for one Script Property (9KB each), kept in 8,000-character
+ *  pieces. The day's items used to be cut at 8,900 characters, and cut JSON
+ *  reads as nothing: a big unit's page showed no comment boxes, so nothing
+ *  Akaash wrote reached Chatter (19 Oct 2026). */
+function bigPut_(key, obj) {
+  var props = PropertiesService.getScriptProperties(), js = JSON.stringify(obj), n = Math.max(1, Math.ceil(js.length / 8000));
+  var old = Number(props.getProperty(key + '_n') || 1);
+  for (var i = 0; i < n; i++) props.setProperty(key + (i ? '_' + i : ''), js.slice(i * 8000, (i + 1) * 8000));
+  for (var j = n; j < old; j++) { try { props.deleteProperty(key + '_' + j); } catch (e) {} }
+  if (n > 1) props.setProperty(key + '_n', String(n)); else { try { props.deleteProperty(key + '_n'); } catch (e) {} }
+}
+function bigGet_(key, dflt) {
+  var props = PropertiesService.getScriptProperties(), n = Number(props.getProperty(key + '_n') || 1), js = '';
+  for (var i = 0; i < n; i++) js += props.getProperty(key + (i ? '_' + i : '')) || '';
+  if (!js) return dflt;
+  try { return JSON.parse(js); } catch (e) { return dflt; }
+}
+/** A desk with no Salesforce login of its own (Akaash, 19 Oct 2026): its links go to its own comment page, not Salesforce. */
+function noSfLogin_(sid) {
+  if (sid === 'ricky') return false;
+  try { var u = (sfkUsers_() || {})[sid]; return !(u && u.id); } catch (e) { return true; }
+}
 
-function umTaskLine_(t, day, base) {
+function umTaskLine_(t, day, base, link) {
   return '<div style="font-size:12.5px;line-height:1.45;padding:5px 0;border-top:1px solid ' + MAIL.line + '">' +
     '<b>' + esc_(t.agent || '—') + '</b> · ' + esc_(t.subject) +
     (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>'
             : (t.due ? ' <span style="color:' + MAIL.muted + '">· due ' + esc_(shortDate_(t.due)) + '</span>' : '')) +
     (t.touched >= 7 ? ' <span style="color:' + MAIL.amber + '">· untouched ' + t.touched + ' days</span>' : '') +
-    (base ? ' <a href="' + esc_(base + t.id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &rarr;</a>' : '') + '</div>';
+    (link ? ' <a href="' + esc_(link(t.id)) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">comment &rarr;</a>'
+          : base ? ' <a href="' + esc_(base + t.id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &rarr;</a>' : '') + '</div>';
 }
 
 function mgrRows_(sid, day, kind) {
@@ -4529,7 +4591,7 @@ function sendUnitManagerMorning_(sid, day) {
   var secs = book ? unitSections_(book) : [];
   var items = [];
   secs.forEach(function (s) { s.list.slice(0, UM_LIST_MAX).forEach(function (t) { items.push({ id: t.id, s: t.subject, a: t.agent, due: t.due, late: t.late, k: s.k }); }); });
-  try { PropertiesService.getScriptProperties().setProperty(umItemsKey_(sid, day), JSON.stringify(items).slice(0, 8900)); } catch (e) {}
+  try { bigPut_(umItemsKey_(sid, day), items); } catch (e) {}
 
   var perAgent = {};
   if (book) book.open.forEach(function (t) {
@@ -4549,7 +4611,10 @@ function sendUnitManagerMorning_(sid, day) {
 
   var nLate = book ? book.open.filter(function (t) { return t.late; }).length : 0;
   var nPend = secs.length ? secs[0].list.length : 0;
-  var btn = replyButton_(replyUrl_(sid, day, 'um'), 'Plan my day and sign in', 'One tap, no password. A box under each item goes on its Chatter; set your numbers for the manager\'s KPIs; saving signs you in.');
+  var noSf = noSfLogin_(sid), cLink = noSf ? function (id) { return replyUrl_(sid, day, 'um') + '#i' + id; } : null;
+  var btn = replyButton_(replyUrl_(sid, day, 'um'), noSf ? 'Comment and plan my day' : 'Plan my day and sign in',
+    noSf ? 'No Salesforce login needed. Write under any task: it goes on that task\'s Chatter, headed as yours, for the agent and the staff to see. Set your numbers for the day; saving signs you in.'
+         : 'One tap, no password. A box under each item goes on its Chatter; set your numbers for the manager\'s KPIs; saving signs you in.');
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. This is your unit as Salesforce has it this morning' +
       (book ? ' (' + book.agents.length + ' agent' + (book.agents.length === 1 ? '' : 's') + ', you included)' : '') +
@@ -4560,19 +4625,19 @@ function sendUnitManagerMorning_(sid, day) {
       { value: book ? nLate : '—', label: 'overdue', color: nLate ? MAIL.red : MAIL.navy },
       { value: book ? nPend : '—', label: 'pendings', color: nPend ? MAIL.amber : MAIL.navy },
       { value: book ? book.closedYday : '—', label: 'closed yesterday', color: MAIL.green }
-    ]) + btn + cmdButton_(sid, day) +
+    ]) + btn + (noSf ? '' : cmdButton_(sid, day)) +
+    umFFCard_(sid, day) + umSelfCard_(sid, day) +
     mgrDayCard_(sid, day, umDayItems_(sid, day, book), 'Your day is built on the Unit Manager\'s job: your unit\'s outstanding work and your manager KPIs. Open the button, set your numbers and save: <b>saving is your morning check</b>, and that is your attendance for the day. Your progress report comes at 11, the account of the day at 5:30.') +
     sectionLabel_('Your unit in full') +
     (book ? secs.map(function (s) {
       if (!s.list.length) return '';
       return sectionLabel_(s.label + ' (' + s.list.length + ')') +
         '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (s.k === 'pend' ? MAIL.amber : MAIL.navy) + ';border-radius:10px;padding:8px 15px">' +
-        s.list.slice(0, UM_LIST_MAX).map(function (t) { return umTaskLine_(t, day, base); }).join('') +
+        s.list.slice(0, UM_LIST_MAX).map(function (t) { return umTaskLine_(t, day, base, cLink); }).join('') +
         (s.list.length > UM_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (s.list.length - UM_LIST_MAX) + ' more in Salesforce.</div>' : '') + '</div>';
     }).join('') + (agentTable ? sectionLabel_('By agent') + agentTable : '')
          : '<div style="font-size:13px;color:' + MAIL.muted + '">Salesforce did not answer this morning, so the unit is not listed.</div>') +
     umLetters_(sid, day) +
-    umFFCard_(sid, day) +
     sectionLabel_('Your day as a manager') +
     '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:10px 15px;font-size:13px;line-height:1.6">' +
       UM_CHECKS.map(function (c) { return '<div>&#9675; ' + esc_(c.q) + '</div>'; }).join('') +
@@ -4587,17 +4652,26 @@ function sendUnitManagerMorning_(sid, day) {
 
 function umReplyPage_(person, day, error) {
   var sid = String(person.staffId), items = [];
-  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(umItemsKey_(sid, day)) || '[]'); } catch (e) {}
+  try { items = bigGet_(umItemsKey_(sid, day), []); } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var head = { pend: 'Pendings', 'new': 'New business', ret: 'Retention and orphan adoption', other: 'Everything else overdue' };
-  var plan = mgrRows_(sid, day, 'plan');
+  var plan = mgrRows_(sid, day, 'plan'), noSf = noSfLogin_(sid), chat = {};
+  try { chat = cmdChatter_(items.map(function (it) { return it.id; })); } catch (e) {}
+  var notes = function (id) {
+    return (chat[id] || []).slice(0, 2).map(function (n) {
+      var t = String(n.text || ''), head = t.split('\n')[0];
+      var who = /^(Unit Manager|Branch Manager|BMA)\b/.test(head) ? head.split(' · ').slice(0, 2).join(' · ') : n.by;
+      var body = /^(Unit Manager|Branch Manager|BMA)\b/.test(head) ? t.split('\n').slice(1).join(' ').trim() : t;
+      return '<div class="br2" style="margin-top:3px">' + esc_(who) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(shorten_(body, 160)) + '</div>';
+    }).join('');
+  };
   var groups = ['pend', 'new', 'ret', 'other'].map(function (k) {
     var list = items.filter(function (it) { return it.k === k; });
     if (!list.length) return '';
     return '<div class="card"><div class="bh">' + esc_(head[k]) + '</div>' + list.map(function (it) {
-      return '<div style="padding:9px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
+      return '<div id="i' + esc_(it.id) + '" style="padding:9px 0;border-top:1px solid #E5E1D6;scroll-margin-top:72px"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
         (it.due ? ' <span class="br2">· ' + (it.late ? 'overdue since ' : 'due ') + esc_(shortDate_(it.due)) + '</span>' : '') +
-        (base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
+        (base && !noSf ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' + notes(it.id) +
         '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Your comment, posted to Chatter on this task"></textarea></div>';
     }).join('') + '</div>';
   }).join('');
@@ -4613,9 +4687,13 @@ function umReplyPage_(person, day, error) {
     '<button type="submit">Save my comments and my plan</button></form>');
 }
 
+function umPostsAdd_(sid, day, n) {
+  if (!n) return;
+  try { var props = PropertiesService.getScriptProperties(), k = 'um_posts_' + sid + '_' + day; props.setProperty(k, String(Number(props.getProperty(k) || 0) + n)); meLogAct_(sid, day); } catch (e) {}
+}
 function umReplySave_(person, day, p) {
   var sid = String(person.staffId), name = nameFor_(sid), items = [], at = hhmm_(new Date()), done = [];
-  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(umItemsKey_(sid, day)) || '[]'); } catch (e) {}
+  try { items = bigGet_(umItemsKey_(sid, day), []); } catch (e) {}
   items.forEach(function (it) {
     var txt = String(p['c_' + it.id] || '').trim();
     if (!txt) return;
@@ -4628,6 +4706,7 @@ function umReplySave_(person, day, p) {
     return { Item: c.id, Question: c.q, Planned: String(p['p_' + c.id] || '').trim(), Note: String(p['n_' + c.id] || '').trim() };
   }).filter(function (r) { return r.Planned !== '' || r.Note; });
   if (!done.length && !rows.length) return umReplyPage_(person, day, 'Nothing filled in. Comment on a task or set at least one number for your day.');
+  umPostsAdd_(sid, day, done.filter(function (d) { return d.res === 'posted'; }).length);
   if (rows.length) mgrWrite_(sid, day, 'plan', rows);
   var signed = null; try { signed = signInFromPage_(person); } catch (e) {}
   if (sid !== 'ricky') { try { umCopy_(sid, day, 'plan', done, rows); } catch (e) {} }
@@ -4720,7 +4799,7 @@ function sendUnitManagerEvening_(sid, day) {
   var secs = book ? unitSections_(book) : [];
   var items = [];
   secs.forEach(function (s) { s.list.slice(0, 6).forEach(function (t) { items.push({ id: t.id, s: t.subject, a: t.agent, due: t.due, late: t.late, k: s.k }); }); });
-  try { PropertiesService.getScriptProperties().setProperty(umItemsKey_(sid, day) + '_eve', JSON.stringify(items).slice(0, 8900)); } catch (e) {}
+  try { bigPut_(umItemsKey_(sid, day) + '_eve', items); } catch (e) {}
   var perAgent = {};
   if (book) book.closedToday.forEach(function (t) { perAgent[t.agent] = (perAgent[t.agent] || 0) + 1; });
   var nLate = book ? book.open.filter(function (t) { return t.late; }).length : 0;
@@ -4753,7 +4832,7 @@ function sendUnitManagerEvening_(sid, day) {
 
 function umEveReplyPage_(person, day, error) {
   var sid = String(person.staffId), items = [], plan = mgrRows_(sid, day, 'plan'), had = mgrRows_(sid, day, 'eve');
-  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(umItemsKey_(sid, day) + '_eve') || '[]'); } catch (e) {}
+  try { items = bigGet_(umItemsKey_(sid, day) + '_eve', []); } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var checks = '<div class="card"><div class="bh">Your day as a manager · what you did</div>' + UM_CHECKS.map(function (c) {
     var pl = (plan[c.id] || {}).Planned, r = had[c.id] || {};
@@ -4775,7 +4854,7 @@ function umEveReplyPage_(person, day, error) {
 
 function umEveReplySave_(person, day, p) {
   var sid = String(person.staffId), name = nameFor_(sid), items = [], at = hhmm_(new Date()), done = [];
-  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty(umItemsKey_(sid, day) + '_eve') || '[]'); } catch (e) {}
+  try { items = bigGet_(umItemsKey_(sid, day) + '_eve', []); } catch (e) {}
   var rows = UM_CHECKS.map(function (c) {
     return { Item: c.id, Question: c.q, Done: String(p['d_' + c.id] || '').trim(), Note: String(p['n_' + c.id] || '').trim() };
   });
@@ -4792,6 +4871,7 @@ function umEveReplySave_(person, day, p) {
   var summary = String(p.summary || '').trim();
   if (summary) rows.push({ Item: 'summary', Question: 'The day', Done: '', Note: summary });
   mgrWrite_(sid, day, 'eve', rows);
+  umPostsAdd_(sid, day, done.filter(function (d) { return d.res === 'posted'; }).length);
   try { umCopy_(sid, day, 'eve', done, rows.filter(function (r) { return r.Item !== 'summary'; }).concat(summary ? [{ Item: 'summary', Question: 'In his words', Done: '', Note: summary }] : [])); } catch (e) {}
   return replyPage_('Your day is in', 'Mr Rampersad has the account. Thank you.',
     '<div class="card ok">' + rows.map(function (r) { return '<div class="ln">' + esc_(r.Question) + ': <b>' + esc_(r.Done || '') + '</b>' + (r.Note ? ' · ' + esc_(r.Note) : '') + '</div>'; }).join('') +
@@ -5174,7 +5254,7 @@ function branchCards_(sid, day) {
     var mb = mailbagToday_(day), me = firstOf_(nameFor_(sid)), n = 0;
     Object.keys(mb.backlog).forEach(function (w) { if (firstOf_(w) === me) n += mb.backlog[w]; });
     if (n) out += srcCard_('Log book · documents you verified, not yet sent (' + n + ')', n > 5 ? MAIL.red : MAIL.amber,
-      [ 'Logged in the last ' + MAILBAG.BACKLOG_DAYS + ' days with no Date Sent. Hand them to <b>' + esc_(nameFor_(mailbagRouter_(day, {}).router).split(' ')[0]) + '</b> for this week\'s bag, or put the Date Sent in the log book.' ], '');
+      [ 'Logged in the last ' + MAILBAG.BACKLOG_DAYS + ' days with no Date Sent. <b>The bag leaves at ' + esc_(mailbagLeavesText_()) + '</b>: hand them to <b>' + esc_(nameFor_(mailbagRouter_(day, {}).router).split(' ')[0]) + '</b> by ' + esc_(mailbagByText_()) + ', or put the Date Sent in the log book.' ], '');
   } catch (e) {}
   // 5. Employee benefits requests (Employee Benefits · Requests), for the benefits desk
   try {
@@ -5244,7 +5324,7 @@ function bmBranchCards_(day) {
   } catch (e) {}
   try {
     var mb = mailbagToday_(shiftDays_(day, -1)), rt = mailbagRouter_(day, {});
-    out += srcCard_('Mailbag', MAIL.navy, ['<b>' + esc_(nameFor_(rt.router).split(' ')[0]) + '</b> routes it this week · <b>' + mb.backlogN + '</b> logged and not sent' + (mb.oldest ? ', oldest ' + esc_(shortDate_(mb.oldest)) : '')], '');
+    out += srcCard_('Mailbag', MAIL.navy, ['<b>' + esc_(nameFor_(rt.router).split(' ')[0]) + '</b> routes it this week · the bag leaves at <b>' + esc_(mailbagLeavesText_()) + '</b> · <b>' + mb.backlogN + '</b> logged and not sent' + (mb.oldest ? ', oldest ' + esc_(shortDate_(mb.oldest)) : '')], '');
   } catch (e) {}
   return out;
 }
@@ -5293,7 +5373,26 @@ function teamFFCard_(names, title, day, limit) {
   return sectionLabel_(title) + table + srcCard_('Who to guide this morning', MAIL.gold, flags.length ? flags : ['Everyone has a fact find this week and is on pace.'],
     'FY27 began 1 October: week ' + Math.max(1, Math.round(daysBetween_(BOOKS.FY_START, day) / 7)) + ' of 52. Comment on their tasks from the button above: it goes to Chatter as yours.');
 }
-function umFFCard_(sid, day) { try { return teamFFCard_(unitAgents_(sid), 'Your unit · fact finds and FY27 goals', day, 30); } catch (e) { return ''; } }
+function umFFCard_(sid, day) { try { return teamFFCard_(unitAgents_(sid), 'Your agents · goals and activity', day, 30); } catch (e) { return ''; } }
+/** What the Unit Manager is doing, from what he logs on the tracker (he has no Salesforce login): the plan, the account, his comments. */
+function umSelfCard_(sid, day) {
+  try {
+    var props = PropertiesService.getScriptProperties(), y = lastWorkdays_(day, 1)[0], none = { closed: 0, noted: 0, notes: 0 };
+    var line = function (d, label, past) {
+      var s = bmSelf_(sid, d, past ? 1440 : minutesOf_(hhmm_(new Date())), none), posts = Number(props.getProperty('um_posts_' + sid + '_' + d) || 0);
+      var bits = [];
+      bits.push(s.planned ? 'plan set' + (s.planAt ? ' at ' + twelve_(s.planAt) : '') : '<b style="color:' + MAIL.red + '">no plan set</b>');
+      if (s.items.length) bits.push('numbers met <b>' + s.met + ' of ' + s.items.length + '</b>' + (s.behind.length ? ' (short on ' + esc_(s.behind.map(function (x) { return x.q + ' ' + x.done + '/' + x.planned; }).join(', ')) + ')' : ''));
+      if (past) bits.push(s.accounted ? 'account given' : '<b style="color:' + MAIL.red + '">no account given</b>');
+      bits.push('<b>' + posts + '</b> comment' + (posts === 1 ? '' : 's') + ' on Chatter');
+      return '<div style="font-size:13px;line-height:1.5;padding:6px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(label) + '</b> · ' + bits.join(' · ') + '</div>';
+    };
+    return sectionLabel_('What you are doing') +
+      '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:6px 15px 8px;margin-bottom:12px">' +
+        line(y, shortDate_(y), true) + line(day, 'Today so far', false) +
+        '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:4px">From what you log on the tracker: your plan, your comments and your account at 5:30pm. Mr Rampersad sees the same.</div></div>';
+  } catch (e) { return ''; }
+}
 function bmFFCard_(day) {
   try {
     var ap = agentPeople_(), names = Object.keys(ap).map(function (k) { return ap[k].agentName || ap[k].name; });
@@ -5364,7 +5463,11 @@ function mgrDayCard_(sid, day, items, intro) {
 /** Akaash: his unit's outstanding work and his manager KPIs, placed in his blocks. */
 function umDayItems_(sid, day, book) {
   var items = [], base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
-  var open = function (id) { return base ? ' <a href="' + esc_(base + id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &rarr;</a>' : ''; };
+  var noSf = noSfLogin_(sid);
+  var open = function (id) {
+    if (noSf) return ' <a href="' + esc_(replyUrl_(sid, day, 'um') + '#i' + id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">comment &rarr;</a>';
+    return base ? ' <a href="' + esc_(base + id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &rarr;</a>' : '';
+  };
   if (book) book.open.slice().sort(function (a, b) { return String(a.due || '9999').localeCompare(String(b.due || '9999')); }).forEach(function (t) {
     if (!(t.late || t.due === day || t.ty === 'Pendings' || t.touched >= 14)) return;
     items.push({ key: t.ty || 'Servicing', late: t.late, top: t.late && t.ty === 'Pendings',
@@ -6618,11 +6721,11 @@ function ffChaseTick_(day, mins) {
   var mode = ffMode_(); if (mode === 'off') return [];
   if (mins < FF_CHASE.AT || mins > FF_CHASE.AT + FF_CHASE.WINDOW) return [];
   var dow = isoDow_(day), week = ffWeek_(day), props = PropertiesService.getScriptProperties(), out = [];
-  var list = null; try { list = JSON.parse(props.getProperty('ff_list_' + week) || 'null'); } catch (e) {}
+  var list = null; try { list = bigGet_('ff_list_' + week, null); } catch (e) {}
   if (!list && dow === 1) {
     list = ffStatus_(day).filter(function (s) { return !s.active; }).map(function (s) {
       return { k: s.a.key, last: s.last, since: s.since, m: s.f3 && s.f3.known ? s.f3.month : null, y: s.f3 && s.f3.known ? s.f3.year : null, g: s.goalWk }; });
-    props.setProperty('ff_list_' + week, JSON.stringify(list).slice(0, 8900));
+    bigPut_('ff_list_' + week, list);
   }
   if (!list) return [];
   var people = agentPeople_(), resp = null, sent = 0;
@@ -6772,7 +6875,7 @@ function ffReplySave_(person, week, p) {
 /** The command centre's fact-find card: this week's chase. */
 function cmdFfSnapshot_(sid, day) {
   var week = ffWeek_(day), props = PropertiesService.getScriptProperties(), list = null;
-  try { list = JSON.parse(props.getProperty('ff_list_' + week) || 'null'); } catch (e) {}
+  try { list = bigGet_('ff_list_' + week, null); } catch (e) {}
   if (!list || !list.length) return '';
   var people = agentPeople_(), resp = ffResponses_(week), mine = UM_DESKS.indexOf(sid) > -1 ? normEmail_(emailFor_(sid)) : '';
   list = list.filter(function (x) { var a = people[x.k]; return a && (!mine || normEmail_(agentManagerEmail_(a)) === mine); });
@@ -7214,8 +7317,8 @@ function srcPlan_(sid, day) {
     var mb = mailbagToday_(day), mine = 0, myF = firstOf_(nameFor_(sid));
     Object.keys(mb.backlog).forEach(function (w) { if (firstOf_(w) === myF) mine += mb.backlog[w]; });
     var rt = mailbagRouter_(day, {});
-    if (rt.router === sid) place(/task mgmt|report|mail|admin|document|send off/i, 'last', tag('MAILBAG') + 'You route the bag this week: <b>' + mb.backlogN + '</b> logged and not sent' + (mb.oldest ? ', oldest ' + esc_(shortDate_(mb.oldest)) : '') + '. Collect from each desk and send before you leave');
-    else if (mine) place(/task mgmt|report|mail|admin|document|send off/i, 'last', tag('LOG BOOK') + '<b>' + mine + '</b> document' + (mine === 1 ? '' : 's') + ' you verified are not sent: hand them to ' + esc_(nameFor_(rt.router).split(' ')[0]));
+    if (rt.router === sid) place(/task mgmt|report|mail|admin|document|send off/i, 'first', tag('MAILBAG') + 'You route the bag this week. <b>It leaves at ' + esc_(mailbagLeavesText_()) + '</b>: <b>' + mb.backlogN + '</b> logged and not sent' + (mb.oldest ? ', oldest ' + esc_(shortDate_(mb.oldest)) : '') + '. Collect from each desk and send before you leave');
+    else if (mine) place(/task mgmt|report|mail|admin|document|send off/i, 'last', tag('LOG BOOK') + '<b>' + mine + '</b> document' + (mine === 1 ? '' : 's') + ' you verified are not sent: hand them to ' + esc_(nameFor_(rt.router).split(' ')[0]) + ' by ' + esc_(mailbagByText_()) + '. The bag leaves at ' + esc_(mailbagLeavesText_()) + '.');
   } catch (e) {}
   return (_srcPlanMemo[mk] = out);
 }
@@ -7414,7 +7517,7 @@ function agentMorningMail_(a, day, data, cache) {
   var g = (data.goal || {})[a.key] || null, qs = (data.q || {})[a.key] || [], orp = (data.orphan || {})[a.key] || null;
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late }; });
-  try { PropertiesService.getScriptProperties().setProperty('ag_items_' + a.key + '_' + day, JSON.stringify(items).slice(0, 8900)); } catch (e) {}
+  try { bigPut_('ag_items_' + a.key + '_' + day, items); } catch (e) {}
 
   var btn = replyButton_(replyUrl_(a.key, day, 'ag'), 'Plan my day and comment', 'One page: your plan in numbers, and a comment on anything below. Comments go on Chatter. No sign-in.');
   var body =
@@ -7549,7 +7652,7 @@ function agentTick_(day, mins) {
 
 function agReplyPage_(person, day, kind, error) {
   var a = person.agent, items = [], plan = agRows_(a.key, day, 'plan'), had = agRows_(a.key, day, kind === 'agc' ? 'close' : 'plan');
-  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty('ag_items_' + a.key + '_' + day) || '[]'); } catch (e) {}
+  try { items = bigGet_('ag_items_' + a.key + '_' + day, []); } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var eve = kind === 'agc';
   var metrics = '<div class="card"><div class="bh">' + (eve ? 'What you did today' : 'Your plan today') + '</div>' + AGENT_METRICS.map(function (m) {
@@ -7574,7 +7677,7 @@ function agReplyPage_(person, day, kind, error) {
 
 function agReplySave_(person, day, kind, p) {
   var a = person.agent, eve = kind === 'agc', items = [], at = hhmm_(new Date()), comments = [];
-  try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty('ag_items_' + a.key + '_' + day) || '[]'); } catch (e) {}
+  try { items = bigGet_('ag_items_' + a.key + '_' + day, []); } catch (e) {}
   var rows = AGENT_METRICS.map(function (m) {
     var v = String(p['m_' + m.id] || '').trim();
     return eve ? { Item: m.id, Question: m.q, Done: v, Note: String(p['n_' + m.id] || '').trim() }
@@ -8807,11 +8910,11 @@ function saveIntelModel_(sid, day, blocks, suggest, loose, innov) {
   model.order.slice().reverse().forEach(function (b) {
     while (json.length > 8500 && model.b[b].more.length) { model.b[b].more.pop(); json = JSON.stringify(model); }
   });
-  try { PropertiesService.getScriptProperties().setProperty(intelModelKey_(sid, day), json); } catch (e) {}
+  try { bigPut_(intelModelKey_(sid, day), model); } catch (e) {}
 }
 
 function intelModel_(sid, day) {
-  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty(intelModelKey_(sid, day)) || 'null'); }
+  try { return bigGet_(intelModelKey_(sid, day), null); }
   catch (e) { return null; }
 }
 
@@ -9604,7 +9707,7 @@ function rebalanceApply_(day, moves) {
     if (!model) return;
     model.loose = model.loose || [];
     model.loose.unshift({ id: m.t.id, s: shorten_('Moved to you: ' + m.t.subject, 95), ty: m.t.ty || '', due: m.t.due || '', late: !!m.t.late });
-    try { PropertiesService.getScriptProperties().setProperty(intelModelKey_(m.to, day), JSON.stringify(model).slice(0, 8900)); } catch (e) {}
+    try { bigPut_(intelModelKey_(m.to, day), model); } catch (e) {}
   });
   return out;
 }
