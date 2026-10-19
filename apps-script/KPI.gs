@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19b';
+var SCRIPT_VERSION = '2026-10-19c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -5028,7 +5028,7 @@ function checkUnitAgents() { var out = UM_DESKS.map(function (s) { return s + ':
 /* Agents work six to six (Ricky, 17 October 2026): the morning check in the
    e-mail half an hour before, a progress report at midday, and the evening
    sign-off half an hour before six. */
-var AGENT_AM_AT = 5 * 60 + 30;     // 5:30am
+var AGENT_AM_AT = 5 * 60;          // 5am, with every report (Ricky, 19 October 2026)
 var AGENT_MD_AT = 12 * 60;         // midday progress
 var AGENT_PM_AT = 17 * 60 + 30;    // 5:30pm
 var AGENT_PER_RUN = 8;             // agents a ten-minute run; the rest follow
@@ -5083,21 +5083,25 @@ function checkFactFind360() {
   if (d.queue) Logger.log('Review queue: ' + JSON.stringify(d.queue));
 }
 
+// q is the label on the log; plan is asked in the morning (what you intend), done at the close-off.
 var AGENT_METRICS = [
-  { id: 'calls',   q: 'Calls made' },
-  { id: 'appts',   q: 'Appointments set' },
-  { id: 'ff',      q: 'Fact finds done' },
-  { id: 'close',   q: 'Closing interviews' },
-  { id: 'apps',    q: 'Applications written' },
-  { id: 'dues',    q: 'Premium due and lapse clients called' },
-  { id: 'pend',    q: 'Pendings moved (requirements chased or delivered)' }
+  { id: 'calls',   q: 'Calls made',             plan: 'Calls you will make today',                 done: 'Calls made' },
+  { id: 'appts',   q: 'Appointments set',       plan: 'Appointments you will set',                 done: 'Appointments set' },
+  { id: 'new',     q: 'New people met',         plan: 'New people you will meet',                  done: 'New people met' },
+  { id: 'ff',      q: 'Fact finds done',        plan: 'Fact finds you will do',                    done: 'Fact finds done' },
+  { id: 'close',   q: 'Closing interviews',     plan: 'Closing interviews you will hold',          done: 'Closing interviews held' },
+  { id: 'apps',    q: 'Applications written',   plan: 'Applications you will write',               done: 'Applications written' },
+  { id: 'reviews', q: 'Client reviews and birthday calls', plan: 'Client reviews and birthday calls you will make', done: 'Client reviews and birthday calls made' },
+  { id: 'dues',    q: 'Premium due and lapse clients called', plan: 'Premium due and lapse clients you will call', done: 'Premium due and lapse clients called' },
+  { id: 'pend',    q: 'Pendings moved (requirements chased or delivered)', plan: 'Pendings you will move (requirements chased or delivered)', done: 'Pendings moved' }
 ];
 var AGDAY = { must: ['Date', 'Agent', 'Kind', 'Item'], name: 'Agent Day',
               head: ['Date', 'Agent', 'Email', 'Manager', 'Kind', 'Item', 'Question', 'Planned', 'Done', 'Note', 'At'] };
 
 function agentMode_() {
   var m = String(PropertiesService.getScriptProperties().getProperty('AGENT_DAY') || 'preview').toLowerCase();
-  return m === 'live' || m === 'off' ? m : 'preview';
+  if (!PropertiesService.getScriptProperties().getProperty('AGENT_DAY')) return 'pilot';   // 19 Oct 2026: the pilot agents, live
+  return m === 'live' || m === 'off' || m === 'pilot' ? m : 'preview';
 }
 
 function agSlug_(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
@@ -7551,6 +7555,7 @@ function agWrite_(a, day, kind, rows) {
 function agSend_(a, subject, html, ccList) {
   var mode = agentMode_();
   if (mode === 'off') return false;
+  if (mode === 'pilot' && !a.pilot) return false;
   if (mode === 'preview') {
     var mgr = managerEmails_();
     if (!mgr.length) return false;
@@ -7569,6 +7574,350 @@ function agSend_(a, subject, html, ccList) {
 function agLine_(inner) { return '<div style="font-size:12.5px;line-height:1.45;padding:5px 0;border-top:1px solid ' + MAIL.line + '">' + inner + '</div>'; }
 function agCard_(color, inner) { return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + color + ';border-radius:10px;padding:8px 15px">' + inner + '</div>'; }
 
+/* ─────────────── The agents' 5am pilot and what the fact finds say (19 October 2026) ───────────────
+ *  Ricky: "We are only testing Neil Ramnanan and Fawaz Mohammed … triggered on the 5 a.m. The
+ *  support team and their respective manager is copied … Neil is copied under me … Fawaz under
+ *  Akaash." Then: the plan is the agent's intentions for the day (calls, appointments, fact finds,
+ *  reviews, new people), not a count of what was done; the e-mail pulls in what their fact finds
+ *  since September say (who they write, the gaps, the days they work, whether the cases closed),
+ *  and opens on one thing, built from their own behaviour and goals, that moves them today.
+ *
+ *  AGENT_DAY = pilot (the default) sends the agents' mails to the pilot agents alone, live, copied
+ *  to their manager and sales support. AGENT_PILOT = "Name:managerDesk, …" changes who; live sends
+ *  to every agent; preview sends samples to the Branch Manager; off stops it. */
+var AGENT_PILOT_DEFAULT = 'Neil Ramnanan:ricky, Fawaz Mohammed:akaash';
+var AG_FF = { TAB: 'FFRevised', SINCE: '2026-09-01', CACHE_SEC: 900 };
+
+/** Letters only, repeated letters squeezed: "Fawwaz Mohamed" and "Fawaz Mohammed" read the same. */
+function agLooseKey_(s) { return String(s || '').toLowerCase().replace(/^[a-z]{1,3}[\s-]*\d{3,6}\s*-\s*/, '').replace(/[^a-z ]/g, '').replace(/([a-z])\1+/g, '$1').replace(/\s+/g, ' ').trim(); }
+/** The same agent: the same first name and a surname that starts the same, spelling slips allowed. */
+function agSameAgent_(a, b) {
+  var x = agLooseKey_(a).split(' '), y = agLooseKey_(b).split(' ');
+  if (!x[0] || !y[0] || x[0] !== y[0]) return false;
+  var lx = x[x.length - 1], ly = y[y.length - 1];
+  return x.length === 1 || y.length === 1 || lx.slice(0, 4) === ly.slice(0, 4);
+}
+function agCodeKey_(c) { var m = String(c || '').match(/(\d{3,6})/); return m ? String(Number(m[1])) : ''; }
+
+/** [{ name, mgr }] from AGENT_PILOT, else the default. */
+function agentPilot_() {
+  var raw = ''; try { raw = PropertiesService.getScriptProperties().getProperty('AGENT_PILOT') || ''; } catch (e) {}
+  return String(raw || AGENT_PILOT_DEFAULT).split(',').map(function (s) {
+    var p = s.split(':'); return { name: String(p[0] || '').trim(), mgr: String(p[1] || '').trim().toLowerCase() };
+  }).filter(function (x) { return x.name; });
+}
+
+/** The pilot agents found on the roster, each with the manager the pilot names. */
+function agentPilotPeople_() {
+  var people = agentPeople_(), out = {};
+  agentPilot_().forEach(function (p) {
+    Object.keys(people).forEach(function (k) {
+      var a = people[k];
+      if (!agSameAgent_(a.name, p.name) && !agSameAgent_(a.agentName, p.name)) return;
+      var b = {}; Object.keys(a).forEach(function (f) { b[f] = a[f]; });
+      b.pilot = true;
+      if (p.mgr) { var m = p.mgr.indexOf('@') > -1 ? p.mgr : emailFor_(p.mgr); if (m) b.manager = m; }
+      out[k] = b;
+    });
+  });
+  return out;
+}
+
+/** Who the agents' mails go to in this mode. */
+function agentAudience_() { return agentMode_() === 'pilot' ? agentPilotPeople_() : agentPeople_(); }
+
+/** Copied on an agent's morning mail: their manager and sales support. */
+function agentCc_(a) {
+  var out = [];
+  [agentManagerEmail_(a), DAYSTART_CC_DEFAULT].forEach(function (e) { e = String(e || '').trim().toLowerCase(); if (e && e !== String(a.email).toLowerCase() && out.indexOf(e) === -1) out.push(e); });
+  return out;
+}
+
+// ---- the fact finds -----------------------------------------------------------------
+
+var AG_FF_COLS = ['Status', 'Submitted At', 'Approved At', 'App Type', 'Client Name', 'Advisor Name', 'Agent Code', 'Agent Email', 'Interview Date',
+  'DOB', 'Marital Status', 'Occupation', 'Emp Status', 'Spouse Name', 'Child 1 Name', 'Dependant 1 Name', 'Client Signed As', 'Budget Annual', 'Budget Single',
+  'Ins 1 Co', 'Final Decision', 'Case Outcome', 'Case Outcome At', 'Journey Stage', 'Closed Reason', 'Rec 1 Plan', 'Goal 1 Need'];
+
+/** FFRevised, the FactFind360 tab, only the columns the agents' mail reads. Cached. */
+function agFfRows_() {
+  var ck = 'agff_rows', memo = agFfRows_._m;
+  if (memo) return memo;
+  try { var hit = CacheService.getScriptCache().get(ck); if (hit) return (agFfRows_._m = JSON.parse(hit)); } catch (e) {}
+  var out = [];
+  try {
+    var sh = SpreadsheetApp.openById(bookId_('FF')).getSheetByName(AG_FF.TAB);
+    if (sh && sh.getLastRow() > 1) {
+      var v = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues(), h = v[0].map(function (x) { return String(x || '').trim(); });
+      var debt = []; h.forEach(function (c, j) { if (/^debt.*\bbal$/i.test(c) || /^(mortgage|loan|car|credit).*\bbal$/i.test(c)) debt.push(j); });
+      var idx = {}; AG_FF_COLS.forEach(function (c) { idx[c] = h.indexOf(c); });
+      for (var i = 1; i < v.length; i++) {
+        var o = {};
+        AG_FF_COLS.forEach(function (c) { var j = idx[c]; if (j < 0) return; var x = v[i][j]; o[c] = x instanceof Date ? Utilities.formatDate(x, CONFIG.TZ, 'yyyy-MM-dd HH:mm') : (x == null ? '' : String(x).trim()); });
+        o.debts = debt.length ? debt.some(function (j) { return v[i][j] !== '' && v[i][j] != null; }) : null;
+        if (o['Submitted At'] || o['Advisor Name']) out.push(o);
+      }
+    }
+  } catch (e) { Logger.log('agFfRows_: ' + e); return []; }
+  try { var js = JSON.stringify(out); if (js.length < 95000) CacheService.getScriptCache().put(ck, js, AG_FF.CACHE_SEC); } catch (e) {}
+  agFfRows_._m = out;
+  return out;
+}
+
+function agFfDay_(s) {
+  var t = String(s || '').trim(); if (!t) return '';
+  var m = t.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return m[1] + '-' + m[2] + '-' + m[3];
+  m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) return m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2);
+  var d = new Date(t); return isNaN(d.getTime()) ? '' : Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd');
+}
+function agAge_(dob, day) {
+  var d = agFfDay_(dob); if (!d) return null;
+  var a = Number(day.slice(0, 4)) - Number(d.slice(0, 4)); if (day.slice(5) < d.slice(5)) a--;
+  return a > 0 && a < 110 ? a : null;
+}
+
+/** What one agent's fact finds since September say. */
+function agFactFinds_(a, day, rows) {
+  rows = rows || agFfRows_();
+  var code = agCodeKey_(a.code || a.agentId), email = String(a.email || '').toLowerCase();
+  var since = AG_FF.SINCE;
+  var mine = rows.filter(function (r) {
+    if (/testing/i.test(r['Closed Reason'] || '')) return false;
+    return (code && agCodeKey_(r['Agent Code']) === code) || (email && String(r['Agent Email'] || '').toLowerCase() === email) ||
+      agSameAgent_(r['Advisor Name'], a.name) || agSameAgent_(r['Advisor Name'], a.agentName);
+  }).map(function (r) { var o = {}; Object.keys(r).forEach(function (k) { o[k] = r[k]; }); o.day = agFfDay_(r['Submitted At']); return o; })
+    .filter(function (r) { return r.day && r.day <= day; })
+    .sort(function (x, y) { return x.day < y.day ? -1 : x.day > y.day ? 1 : 0; });
+  var recent = mine.filter(function (r) { return r.day >= since; });
+  var month = day.slice(0, 7);
+  var days = []; recent.forEach(function (r) { if (days.indexOf(r.day) === -1) days.push(r.day); });
+  var wd = {}; days.forEach(function (d) { var w = Utilities.formatDate(new Date(d + 'T12:00:00Z'), 'UTC', 'EEE'); wd[w] = (wd[w] || 0) + 1; });
+  var gap = 0, prev = since; days.concat([day]).forEach(function (d) { var g = daysBetween_(prev, d); if (g > gap) gap = g; prev = d; });
+  var last = mine.length ? mine[mine.length - 1].day : '';
+  var st = function (r) { return String(r.Status || '').toLowerCase(); };
+  var outcome = function (r) { return String(r['Case Outcome'] || '').toLowerCase(); };
+  var moved = function (r) { return /submitted|picked/.test(outcome(r)) || /keyed|delivered|closed|received/i.test(r['Journey Stage'] || ''); };
+  // "said yes" and nothing recorded since: the cases that have not closed
+  var openYes = mine.filter(function (r) {
+    return !outcome(r) && !moved(r) && !/declin/.test(st(r)) && !/decline/i.test(r['Final Decision'] || '') &&
+      (/approved|advice_given|completed/.test(st(r)) || /proceed/i.test(r['Final Decision'] || '')) && daysBetween_(r.day, day) <= 180;
+  }).map(function (r) { return { client: r['Client Name'] || '—', on: r.day, days: daysBetween_(r.day, day), status: r.Status || '', type: r['App Type'] || '' }; })
+    .sort(function (x, y) { return y.days - x.days; });
+  var full = recent.filter(function (r) { return /full/i.test(r['App Type'] || ''); });
+  var pct = function (list, f) { if (!list.length) return null; return Math.round(100 * list.filter(f).length / list.length); };
+  var married = full.filter(function (r) { return /married|common/i.test(r['Marital Status'] || ''); });
+  var gaps = [
+    { k: 'signature', label: 'the client\'s signature', p: pct(full, function (r) { return !r['Client Signed As']; }) },
+    { k: 'spouse', label: 'the spouse, on a married client', p: pct(married, function (r) { return !r['Spouse Name']; }) },
+    { k: 'deps', label: 'children or dependants', p: pct(full, function (r) { return !r['Child 1 Name'] && !r['Dependant 1 Name']; }) },
+    { k: 'budget', label: 'the budget', p: pct(full, function (r) { return !r['Budget Annual'] && !r['Budget Single']; }) },
+    { k: 'ins', label: 'existing insurance', p: pct(full, function (r) { return !r['Ins 1 Co']; }) },
+    { k: 'debts', label: 'debts and liabilities', p: pct(full.filter(function (r) { return r.debts !== null; }), function (r) { return !r.debts; }) },
+    { k: 'decision', label: 'the client\'s decision', p: pct(full, function (r) { return !r['Final Decision']; }) }
+  ].filter(function (g) { return g.p !== null && g.p >= 25; }).sort(function (x, y) { return y.p - x.p; });
+  // who they write
+  var occ = {}, ages = [], mar = {};
+  recent.forEach(function (r) {
+    var o = String(r.Occupation || '').trim(); if (o) { var k = o.toLowerCase(); occ[k] = occ[k] || { n: 0, label: o }; occ[k].n++; }
+    var ag = agAge_(r.DOB, day); if (ag) ages.push(ag);
+    var m = String(r['Marital Status'] || '').trim(); if (m) mar[m] = (mar[m] || 0) + 1;
+  });
+  ages.sort(function (x, y) { return x - y; });
+  var topOcc = Object.keys(occ).map(function (k) { return occ[k]; }).sort(function (x, y) { return y.n - x.n; }).slice(0, 3);
+  return {
+    known: rows.length > 0, all: mine.length, since: recent.length, month: recent.filter(function (r) { return r.day.slice(0, 7) === month; }).length,
+    week: recent.filter(function (r) { return daysBetween_(r.day, day) < 7; }).length,
+    days: days.length, weekdays: wd, longestGap: gap, last: last, sinceLast: last ? daysBetween_(last, day) : null,
+    full: full.length, advice: recent.length - full.length,
+    approved: recent.filter(function (r) { return /approved/.test(st(r)); }).length,
+    review: recent.filter(function (r) { return /pending_review/.test(st(r)); }).length,
+    changes: recent.filter(function (r) { return /changes_requested/.test(st(r)); }).length,
+    submitted: recent.filter(function (r) { return /submitted/.test(outcome(r)); }).length,
+    pickedUp: recent.filter(function (r) { return /picked/.test(outcome(r)); }).length,
+    notProceeding: recent.filter(function (r) { return /not proceed/.test(outcome(r)); }).length,
+    openYes: openYes, gaps: gaps, topOcc: topOcc, ageMid: ages.length ? ages[Math.floor(ages.length / 2)] : null,
+    ageLo: ages[0] || null, ageHi: ages[ages.length - 1] || null, marital: mar
+  };
+}
+
+/** The branch's own measure since September: fact finds per agent who wrote any. */
+function agFfBranch_(day, rows) {
+  rows = rows || agFfRows_();
+  var by = {};
+  rows.forEach(function (r) {
+    if (/testing/i.test(r['Closed Reason'] || '')) return;
+    var d = agFfDay_(r['Submitted At']); if (!d || d < AG_FF.SINCE || d > day) return;
+    var k = agLooseKey_(r['Advisor Name']); if (!k) return; by[k] = (by[k] || 0) + 1;
+  });
+  var n = Object.keys(by).map(function (k) { return by[k]; }).sort(function (x, y) { return y - x; });
+  return { agents: n.length, total: n.reduce(function (s, x) { return s + x; }, 0), avg: n.length ? Math.round(10 * n.reduce(function (s, x) { return s + x; }, 0) / n.length) / 10 : 0, top: n[0] || 0, counts: n };
+}
+
+/** Prospects the agent sent through FactFind360: sent, opened, booked, waiting on them. */
+function agProspects_(a) {
+  var rows = []; try { rows = bookRows_('FF', 'Prospects'); } catch (e) {}
+  var code = agCodeKey_(a.code || a.agentId);
+  var mine = rows.filter(function (r) { return (code && agCodeKey_(r['Agent']) === code) || agSameAgent_(r['Advisor'], a.name) || agSameAgent_(r['Agent'], a.name); });
+  var c = function (re) { return mine.filter(function (r) { return re.test(String(r['Stage'] || '')); }).length; };
+  return { sent: mine.length, opened: c(/opened|watched|booked|picked/i), booked: c(/booked|picked/i),
+    needsYou: mine.filter(function (r) { var v = String(r['Needs you'] || '').trim(); return v && !/^(no|false|0)$/i.test(v); }).map(function (r) { return String(r['Prospect'] || '').trim(); }).filter(String) };
+}
+
+// ---- their clients in Salesforce: birthdays, policy anniversaries, lapsed with value ----
+
+function agClients_(a, day) {
+  var out = { ok: false, birthdays: [], reviews: [], lapsed: [], inForce: 0, clients: 0 };
+  var code = String(a.code || a.agentId || '').trim();
+  var m = code.match(/(\d{3,6})/); if (!m) return out;
+  var prefix = 'A' + ('00000' + m[1]).slice(-5);
+  if (typeof sfkConfigured_ === 'function' && !sfkConfigured_()) return out;
+  var rows = [];
+  try {
+    rows = sfkQuery_('SELECT FIRST_NAME__c, LAST_NAME__c, Date_Of_Birth__c, ISSUE_DATE__c, PLAN_NAME__c, Policy_Status_Description__c, POLICY__c, Contact__c, Mobile__c' +
+      " FROM CLIENT_PORTFOLIO__c WHERE AgentName__c LIKE '" + prefix + "%' LIMIT 3000") || [];
+    out.ok = true;
+  } catch (e) { return out; }
+  var live = function (s) { return /premium paying|paid up|waiver|vested|in force/i.test(String(s || '')); };
+  var y = Number(day.slice(0, 4)), seenB = {}, seenR = {}, people = {};
+  var ahead = function (mmdd) {           // days from today to the next mm-dd
+    var t = new Date(day + 'T12:00:00Z'), d = new Date(Date.UTC(y, Number(mmdd.slice(0, 2)) - 1, Number(mmdd.slice(3, 5)), 12));
+    var n = Math.round((d - t) / 864e5); if (n < 0) { d = new Date(Date.UTC(y + 1, d.getUTCMonth(), d.getUTCDate(), 12)); n = Math.round((d - t) / 864e5); }
+    return n;
+  };
+  rows.forEach(function (r) {
+    var who = (String(r.FIRST_NAME__c || '') + ' ' + String(r.LAST_NAME__c || '')).replace(/\s+/g, ' ').trim() || '—';
+    var key = r.Contact__c || who.toLowerCase();
+    people[key] = 1;
+    var isLive = live(r.Policy_Status_Description__c);
+    if (isLive) out.inForce++;
+    if (r.Date_Of_Birth__c && !seenB[key]) {
+      var n = ahead(String(r.Date_Of_Birth__c).slice(5, 10));
+      if (n <= 7) { seenB[key] = 1; out.birthdays.push({ client: who, on: String(r.Date_Of_Birth__c).slice(5, 10), inDays: n, age: agAge_(r.Date_Of_Birth__c, shiftDays_(day, n)), phone: r.Mobile__c || '' }); }
+    }
+    if (isLive && r.ISSUE_DATE__c && !seenR[key]) {
+      var k = ahead(String(r.ISSUE_DATE__c).slice(5, 10)), yrs = y - Number(String(r.ISSUE_DATE__c).slice(0, 4));
+      if (k <= 14 && yrs >= 1) { seenR[key] = 1; out.reviews.push({ client: who, plan: r.PLAN_NAME__c || 'policy', inDays: k, years: k && String(r.ISSUE_DATE__c).slice(5, 10) < day.slice(5, 10) ? yrs + 1 : yrs }); }
+    }
+    if (/lapse w\/value/i.test(String(r.Policy_Status_Description__c || ''))) out.lapsed.push({ client: who, plan: r.PLAN_NAME__c || 'policy' });
+  });
+  out.clients = Object.keys(people).length;
+  out.birthdays.sort(function (x, y2) { return x.inDays - y2.inDays; });
+  out.reviews.sort(function (x, y2) { return x.inDays - y2.inDays; });
+  return out;
+}
+
+// ---- the one thing at the top ------------------------------------------------------------
+
+/** One message, from the agent's own behaviour and goals, and the reason under it. Facts only. */
+function agMotivate_(a, day, f, g, cl, book) {
+  var first = String(a.name).split(' ')[0];
+  var wk = Utilities.formatDate(new Date(day + 'T12:00:00Z'), 'UTC', 'EEE');
+  var ffWk = g && g.ffWk ? g.ffWk : 2;
+  var bestDay = ''; if (f && f.weekdays) { var b = 0; Object.keys(f.weekdays).forEach(function (d) { if (f.weekdays[d] > b) { b = f.weekdays[d]; bestDay = d; } }); }
+  var lines = [];
+  if (f && f.openYes && f.openYes.length) {
+    lines.push({ head: f.openYes.length + ' client' + (f.openYes.length === 1 ? '' : 's') + ' said yes on a fact find and nothing has closed yet.',
+      why: 'Oldest: ' + f.openYes[0].client + ', ' + f.openYes[0].days + ' days ago. One call today to book the closing interview turns work you have already done into API.' , w: 90 });
+  }
+  if (f && f.sinceLast != null && f.sinceLast >= 7) {
+    lines.push({ head: 'Your last fact find was ' + f.sinceLast + ' days ago.',
+      why: 'Your plan says ' + ffWk + ' a week' + (bestDay ? '. Since September you write most on ' + bestDay + 's' + (bestDay === wk ? ', and today is ' + wk : '') : '') + '. Book one today and you are back in the race.', w: 70 + Math.min(20, f.sinceLast) });
+  } else if (f && f.week >= ffWk) {
+    lines.push({ head: 'You have ' + f.week + ' fact find' + (f.week === 1 ? '' : 's') + ' in the last seven days: on your plan of ' + ffWk + ' a week.',
+      why: 'Keep the run going: every fact find you close is the API on your FY27 plan.', w: 40 });
+  }
+  if (cl && cl.birthdays.length) lines.push({ head: cl.birthdays.length + ' of your clients ha' + (cl.birthdays.length === 1 ? 's a birthday' : 've birthdays') + ' this week.',
+    why: 'A call on the day is the easiest review you will book: ' + cl.birthdays.slice(0, 3).map(function (b) { return b.client + (b.inDays === 0 ? ' (today)' : ' (' + shortDate_(shiftDays_(day, b.inDays)) + ')'); }).join(', ') + '.', w: 60 + (cl.birthdays[0].inDays === 0 ? 15 : 0) });
+  if (book && book.urgent && book.urgent.length) lines.push({ head: book.urgent.length + ' of your clients are 60 days or more behind on premium.',
+    why: 'A policy kept is commission kept. ' + book.urgent.slice(0, 3).map(function (x) { return x.client; }).join(', ') + ' first.', w: 55 + Math.min(25, book.urgent.length * 3) });
+  if (g && g.paceApi && g.api) lines.push({ head: 'Week ' + g.weeksIn + ' of 52: your FY27 plan says ' + ff360Money_(g.paceApi) + ' API by now.',
+    why: 'That is ' + g.appsWk + ' application' + (g.appsWk === 1 ? '' : 's') + ' and ' + ffWk + ' fact find' + (ffWk === 1 ? '' : 's') + ' a week, from ' + g.contactsWk + ' contacts.' + (g.title ? ' You set your sights on ' + g.title + '.' : ''), w: 35 });
+  if (!g) lines.push({ head: 'You have no FY27 plan on record yet, ' + first + '.', why: 'Two minutes on factfind360.com: a goal is what the morning e-mail measures you against.', w: 50 });
+  if (!lines.length) lines.push({ head: 'Good morning, ' + first + '. Set your numbers for today.', why: 'Calls, appointments and fact finds: the three that turn into applications.', w: 0 });
+  lines.sort(function (x, y) { return y.w - x.w; });
+  return lines;
+}
+
+function agHero_(lines) {
+  var top = lines[0], rest = lines.slice(1, 3);
+  return '<div style="background:' + MAIL.navy + ';background-image:linear-gradient(135deg,#0B1230 0%,#1C2A6E 100%);border-radius:14px;padding:18px 20px;margin:0 0 16px">' +
+    '<div style="color:' + MAIL.soft + ';font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase">Today, the one that moves you</div>' +
+    '<div style="color:#fff;font-size:19px;font-weight:800;line-height:1.3;margin-top:6px">' + esc_(top.head) + '</div>' +
+    '<div style="color:#E6ECFF;font-size:13.5px;line-height:1.5;margin-top:6px">' + esc_(top.why) + '</div>' +
+    (rest.length ? '<div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.18);padding-top:10px">' + rest.map(function (l) {
+      return '<div style="color:#E6ECFF;font-size:12.5px;line-height:1.45;padding:2px 0">&#9656; <b style="color:#fff">' + esc_(l.head) + '</b></div>'; }).join('') + '</div>' : '') +
+  '</div>';
+}
+
+/** Suggested numbers for today from the agent's own weekly plan (a fifth of the week, at least one). */
+function agSuggest_(g) {
+  if (!g) return {};
+  var d = function (n) { return n ? Math.max(1, Math.ceil(n / 5)) : ''; };
+  return { calls: d(g.contactsWk), appts: d(g.apptsWk), ff: d(g.ffWk), apps: d(g.appsWk) };
+}
+
+/** The fact-find card for the morning mail. */
+function agFfCard_(f, br, pr) {
+  if (!f || !f.known) return agCard_(MAIL.amber, agLine_('FactFind360\'s sheet could not be read this morning.'));
+  var wd = Object.keys(f.weekdays).sort(function (x, y) { return f.weekdays[y] - f.weekdays[x]; }).map(function (d) { return d + ' ' + f.weekdays[d]; }).join(' · ');
+  return agCard_(f.since ? (f.sinceLast != null && f.sinceLast >= 7 ? MAIL.amber : MAIL.green) : MAIL.red,
+    agLine_('<b>' + f.since + '</b> since 1 September (' + f.full + ' full, ' + f.advice + ' advice) · <b>' + f.month + '</b> this month · <b>' + f.week + '</b> in the last 7 days' +
+      (br && br.agents ? ' · the branch averages <b>' + br.avg + '</b> an agent, the top agent ' + br.top : '')) +
+    agLine_('Days you wrote one: <b>' + f.days + '</b>' + (wd ? ' (' + esc_(wd) + ')' : '') + ' · longest gap <b>' + f.longestGap + ' days</b>' +
+      (f.last ? ' · last on <b>' + esc_(shortDate_(f.last)) + '</b>' + (f.sinceLast ? ' (' + f.sinceLast + ' days ago)' : ' (today)') : '')) +
+    agLine_('Where they went: <b>' + f.approved + '</b> approved · <b>' + f.review + '</b> waiting on review' + (f.changes ? ' · <b style="color:' + MAIL.red + '">' + f.changes + ' changes asked of you</b>' : '') +
+      ' · <b>' + f.submitted + '</b> submitted · <b>' + f.pickedUp + '</b> picked up · ' + f.notProceeding + ' not proceeding') +
+    (f.openYes.length ? agLine_('<b style="color:' + MAIL.red + '">Said yes, nothing closed yet (' + f.openYes.length + '):</b> ' +
+      esc_(f.openYes.slice(0, 5).map(function (x) { return x.client + ' · ' + shortDate_(x.on) + ' (' + x.days + 'd)'; }).join(', ')) + '. Has any of these closed? Record the outcome on FactFind360.') : '') +
+    (f.gaps.length ? agLine_('<b>Gaps on your full fact finds:</b> ' + esc_(f.gaps.slice(0, 4).map(function (g) { return g.label + ' blank on ' + g.p + '%'; }).join(' · ')) + '. A complete fact find is the one the reviewer approves first time.') : '') +
+    (f.topOcc.length || f.ageMid ? agLine_('<b>Who you are writing:</b> ' + esc_(f.topOcc.map(function (o) { return o.label + (o.n > 1 ? ' (' + o.n + ')' : ''); }).join(', ') || '—') +
+      (f.ageMid ? ' · ages ' + f.ageLo + ' to ' + f.ageHi + ', middle ' + f.ageMid : '') + '. Ask each of them for two names like them.') : '') +
+    (pr && pr.sent ? agLine_('<b>Prospects you sent:</b> ' + pr.sent + ' · opened ' + pr.opened + ' · booked ' + pr.booked +
+      (pr.needsYou.length ? ' · <b style="color:' + MAIL.red + '">waiting on you: ' + esc_(pr.needsYou.slice(0, 4).join(', ')) + '</b>' : '')) : ''));
+}
+
+/** Birthdays, anniversary reviews and lapsed-with-value policies, for the morning mail. */
+function agClientsCard_(cl, day) {
+  if (!cl || !cl.ok) return '';
+  if (!cl.birthdays.length && !cl.reviews.length && !cl.lapsed.length) return '';
+  return sectionLabel_('Your clients this week · reviews and birthdays') + agCard_(MAIL.gold,
+    (cl.birthdays.length ? agLine_('<b>Birthdays (' + cl.birthdays.length + '):</b> ' + esc_(cl.birthdays.slice(0, 6).map(function (b) {
+      return b.client + (b.inDays === 0 ? ' today' : ' ' + shortDate_(shiftDays_(day, b.inDays))) + (b.age ? ', ' + b.age : ''); }).join(' · '))) : '') +
+    (cl.reviews.length ? agLine_('<b>Policy anniversaries, a review due (' + cl.reviews.length + '):</b> ' + esc_(cl.reviews.slice(0, 6).map(function (r) {
+      return r.client + ' · ' + r.plan + ' · ' + r.years + ' yr' + (r.years === 1 ? '' : 's') + (r.inDays === 0 ? ' today' : ' in ' + r.inDays + 'd'); }).join(' · '))) : '') +
+    (cl.lapsed.length ? agLine_('<b>Lapsed with value, worth a reinstatement call (' + cl.lapsed.length + '):</b> ' + esc_(cl.lapsed.slice(0, 5).map(function (x) { return x.client; }).join(', '))) : '') +
+    agLine_('<span style="color:' + MAIL.muted + '">' + cl.clients + ' clients on your book, ' + cl.inForce + ' policies in force.</span>'));
+}
+
+/** What the numbers say about how the agent works, and what help to ask for. Facts only. */
+function agCoach_(a, day, f, g, plans) {
+  var out = [];
+  if (plans && plans.days) {
+    out.push('Last ' + plans.span + ' working days: a plan on <b>' + plans.days + '</b>, a close-off on <b>' + plans.closed + '</b>' +
+      (plans.calls.p ? ' · calls planned ' + plans.calls.p + ', made ' + plans.calls.d : '') + (plans.ff.p ? ' · fact finds planned ' + plans.ff.p + ', done ' + plans.ff.d : '') + '.');
+    if (plans.calls.p && plans.calls.d < plans.calls.p * 0.6) out.push('Calls are landing under 60% of plan. Block the first hour for calls before anything else.');
+  } else out.push('No plans on record in the last two weeks. Set today\'s from the button: the evening close-off measures you against it.');
+  if (f && f.since && f.days && f.since / Math.max(1, f.days) >= 1.5) out.push('You write fact finds in bursts (' + f.since + ' on ' + f.days + ' days). Spreading them across the week keeps the pipeline full.');
+  if (f && f.longestGap >= 14) out.push('Your longest gap since September is ' + f.longestGap + ' days. Two appointments booked ahead each Friday closes that gap.');
+  if (f && f.review >= 2) out.push(f.review + ' fact finds are waiting on review. Ask your manager to clear them this week.');
+  if (f && f.openYes.length >= 2) out.push('Closing is where the API is: ' + f.openYes.length + ' yes-decisions have no outcome. Ask your manager for a joint closing interview on the oldest.');
+  if (f && f.gaps.length && f.gaps[0].p >= 50) out.push('Most often left blank: ' + f.gaps[0].label + ' (' + f.gaps[0].p + '%). Ask for a five-minute walkthrough of that section.');
+  if (g && g.last && g.last.help) out.push('You asked for help with: <i>' + esc_(shorten_(g.last.help, 90)) + '</i>. Your manager is copied on this e-mail.');
+  return out;
+}
+
+/** The agent's own plans and close-offs over the last two weeks. */
+function agPlanHistory_(a, day) {
+  var rows = []; try { rows = hrRows_(AGDAY, true) || []; } catch (e) {}
+  var from = shiftDays_(day, -14), days = {}, closed = {}, sum = { calls: { p: 0, d: 0 }, ff: { p: 0, d: 0 } };
+  rows.forEach(function (r) {
+    var d = isoDay_(r.Date); if (String(r.Agent) !== a.key || d < from || d >= day) return;
+    if (String(r.Kind) === 'plan') { days[d] = 1; if (sum[r.Item]) sum[r.Item].p += Number(r.Planned || 0); }
+    if (String(r.Kind) === 'close') { closed[d] = 1; if (sum[r.Item]) sum[r.Item].d += Number(r.Done || 0); }
+  });
+  return { span: 10, days: Object.keys(days).length, closed: Object.keys(closed).length, calls: sum.calls, ff: sum.ff };
+}
+
 function agentMorningMail_(a, day, data, cache) {
   var first = String(a.name).split(' ')[0];
   var open = (data.open[a.key] || []).slice().sort(function (x, y) { return (x.late === y.late ? 0 : x.late ? -1 : 1) || String(x.due).localeCompare(String(y.due)); });
@@ -7580,20 +7929,32 @@ function agentMorningMail_(a, day, data, cache) {
   var f3 = (data.f360 || {})[a.key] || null;
   var g = (data.goal || {})[a.key] || null, qs = (data.q || {})[a.key] || [], orp = (data.orphan || {})[a.key] || null;
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
+  var ffRows = []; try { ffRows = agFfRows_(); } catch (e) {}
+  var fx = null, br = null, pr = null, cl = null, plans = null;
+  try { fx = agFactFinds_(a, day, ffRows); } catch (e) {}
+  try { br = agFfBranch_(day, ffRows); } catch (e) {}
+  try { pr = agProspects_(a); } catch (e) {}
+  try { cl = agClients_(a, day); } catch (e) {}
+  try { plans = agPlanHistory_(a, day); } catch (e) {}
+  var sug = agSuggest_(g), coach = agCoach_(a, day, fx, g, plans), hero = agHero_(agMotivate_(a, day, fx, g, cl, book));
   var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late }; });
   try { PropertiesService.getScriptProperties().setProperty('ag_items_' + a.key + '_' + day, JSON.stringify(items).slice(0, 8900)); } catch (e) {}
 
   var btn = replyButton_(replyUrl_(a.key, day, 'ag'), 'Plan my day and comment', 'One page: your plan in numbers, and a comment on anything below. Comments go on Chatter. No sign-in.');
-  var body =
-    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. Here is what the branch is working on for your clients today, what your book says, and where your fact finds stand. ' +
+  var body = hero +
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. Plan your day first: the calls you will make, the appointments, the fact finds, the new people you will meet. Below is what your fact finds, your clients and your book say to plan around. ' +
       'Set your plan for the day from the button: no plan by ' + esc_(twelve_(mmText_(AGENT_ABSENT_AT))) + ' reads as not working today. At midday you get your progress so far, and at 5:30 you close the day off.</div>' +
     statTiles_([
       { value: open.length, label: 'being worked for you', color: MAIL.navy },
       { value: book ? book.urgent.length : '—', label: 'premiums 60+ days', color: book && book.urgent.length ? MAIL.red : MAIL.navy },
       { value: book ? book.pend.length : '—', label: 'pendings stuck', color: book && book.pend.length ? MAIL.amber : MAIL.navy },
-      (f3 && f3.known ? { value: f3.month, label: 'fact finds this month', color: f3.month ? MAIL.green : MAIL.red }
+      (fx && fx.known ? { value: fx.sinceLast == null ? '—' : fx.sinceLast + 'd', label: 'since your last fact find', color: fx.sinceLast == null || fx.sinceLast >= 7 ? MAIL.red : MAIL.green }
+        : f3 && f3.known ? { value: f3.month, label: 'fact finds this month', color: f3.month ? MAIL.green : MAIL.red }
         : { value: ffDays == null ? '—' : ffDays + 'd', label: 'since last fact find', color: ffDays == null || ffDays > 30 ? MAIL.red : MAIL.green })
     ]) + btn +
+    sectionLabel_('Your fact finds since September · FactFind360') + agFfCard_(fx, br, pr) +
+    agClientsCard_(cl, day) +
+    (coach.length ? sectionLabel_('How you are working · what help to ask for') + agCard_(MAIL.navy, coach.map(function (c) { return agLine_(c); }).join('')) : '') +
     sectionLabel_('What the branch is actioning for you today (' + open.length + ')') +
     (open.length ? agCard_(MAIL.navy, open.slice(0, AGENT_LIST_MAX).map(function (t) {
       return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
@@ -7626,11 +7987,11 @@ function agentMorningMail_(a, day, data, cache) {
       (data.feed && data.feed.queue && Number(data.feed.queue.pending) ? agLine_('Branch review queue: <b>' + Number(data.feed.queue.pending) + '</b> waiting' + (Number(data.feed.queue.breaching) ? ', <b style="color:' + MAIL.red + '">' + Number(data.feed.queue.breaching) + ' past 3 days</b>' : '')) : '') +
       agLine_(ff.length ? '<b>' + ff.length + '</b> on record · <b>' + ff30 + '</b> in the last 30 days · last on <b>' + esc_(shortDate_(lastFF)) + '</b> (' + ffDays + ' days ago)' : '<b>No fact finds in Salesforce</b> under your e-mail.') +
       ff.slice(0, 3).map(function (f) { return agLine_(esc_(f.name || '—') + (f.occ ? ' · ' + esc_(f.occ) : '') + ' · ' + esc_(shortDate_(f.on)) + ' <span style="color:' + MAIL.muted + '">(' + daysSince_(f.on) + ' days: has it moved to a closing interview?)</span>'); }).join('')) +
-    sectionLabel_('Your plan today') + agCard_(MAIL.gold, AGENT_METRICS.map(function (m) { return '<div style="font-size:13px;padding:2px 0">&#9675; ' + esc_(m.q) + '</div>'; }).join('') +
-      '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:6px">A number against each on the page. At 5:30 you give what was done.</div>') + btn +
+    sectionLabel_('Your plan today') + agCard_(MAIL.gold, AGENT_METRICS.map(function (m) { return '<div style="font-size:13px;padding:2px 0">&#9675; ' + esc_(m.plan || m.q) + (sug[m.id] ? ' <span style="color:' + MAIL.muted + '">· your weekly plan suggests ' + sug[m.id] + '</span>' : '') + '</div>'; }).join('') +
+      '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:6px">A number against each on the page: what you intend today. At 5:30 you close the day off against it.</div>') + btn +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
   return agSend_(a, 'Your day · ' + a.name + ' · ' + shortDate_(day) + ' · ' + open.length + ' being worked for you' + (book ? ', ' + book.urgent.length + ' premiums 60+ days' : ''),
-    shell_('Good morning · your day', a.name + ' · ' + prettyDate_(day), body), []);
+    shell_('Good morning · your day', a.name + ' · ' + prettyDate_(day), body), agentCc_(a));
 }
 
 /** Midday: how the day is going against the morning's plan, and what the
@@ -7689,7 +8050,7 @@ function agentTick_(day, mins) {
            : (mins >= AGENT_MD_AT && mins <= AGENT_MD_AT + 90 ? 'md'
            : (mins >= AGENT_PM_AT && mins <= 19 * 60 ? 'pm' : ''));
   if (!kind) return [];
-  var people = agentPeople_(), keys = Object.keys(people).sort();
+  var people = agentAudience_(), keys = Object.keys(people).sort();
   var done = function (k) { return props.getProperty('ag_' + kind + '_' + k + '_' + day); };
   if (mode === 'preview') {
     var n = Number(props.getProperty('ag_prev_' + kind + '_' + day) || 0);
@@ -7718,12 +8079,14 @@ function agReplyPage_(person, day, kind, error) {
   var a = person.agent, items = [], plan = agRows_(a.key, day, 'plan'), had = agRows_(a.key, day, kind === 'agc' ? 'close' : 'plan');
   try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty('ag_items_' + a.key + '_' + day) || '[]'); } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
-  var eve = kind === 'agc';
+  var eve = kind === 'agc', sug = {};
+  try { sug = agSuggest_(goalFor_(a.agentName, a.code || a.agentId)); } catch (e) {}
   var metrics = '<div class="card"><div class="bh">' + (eve ? 'What you did today' : 'Your plan today') + '</div>' + AGENT_METRICS.map(function (m) {
     var pl = (plan[m.id] || {}).Planned, r = had[m.id] || {};
-    return '<div style="padding:8px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px">' + esc_(m.q) +
-      (eve && pl !== undefined && pl !== '' ? ' <span class="br2">· planned ' + esc_(pl) + '</span>' : '') + '</div>' +
-      '<input type="number" min="0" name="m_' + m.id + '" value="' + esc_(eve ? (r.Done || '') : (r.Planned || '')) + '" style="width:90px" placeholder="0"> ' +
+    return '<div style="padding:8px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px">' + esc_(eve ? (m.done || m.q) : (m.plan || m.q)) +
+      (eve && pl !== undefined && pl !== '' ? ' <span class="br2">· planned ' + esc_(pl) + '</span>' : '') +
+      (!eve && sug[m.id] ? ' <span class="br2">· your weekly plan suggests ' + esc_(sug[m.id]) + '</span>' : '') + '</div>' +
+      '<input type="number" min="0" name="m_' + m.id + '" value="' + esc_(eve ? (r.Done || '') : (r.Planned || '')) + '" style="width:90px" placeholder="' + esc_(!eve && sug[m.id] ? sug[m.id] : 0) + '"> ' +
       '<input type="text" name="n_' + m.id + '" value="' + esc_(r.Note || '') + '" style="width:calc(100% - 110px)" placeholder="Who, or a note"></div>';
   }).join('') + '<div class="bf" style="margin-top:8px">' + (eve ? 'The day in a line or two:' : 'Your plan in words: who you are seeing, what you are closing:') + '</div>' +
     '<textarea name="summary" rows="3"></textarea></div>';
@@ -7843,6 +8206,19 @@ function sendAgentPreviewNow() {
   finally { if (save) PropertiesService.getScriptProperties().setProperty('AGENT_DAY', save); else PropertiesService.getScriptProperties().deleteProperty('AGENT_DAY'); }
   var msg = 'Preview sent for: ' + batch.map(function (a) { return a.name; }).join(', ') + ' (of ' + Object.keys(people).length + ' agents found).';
   Logger.log(msg); return msg;
+}
+/** From the editor: send the pilot agents their morning mail now, as at 5am (live, copied). */
+function sendAgentPilotNow() {
+  var day = todayISO_(), people = agentPilotPeople_(), batch = Object.keys(people).sort().map(function (k) { return people[k]; });
+  if (!batch.length) { Logger.log('No pilot agent found on the roster: ' + agentPilot_().map(function (p) { return p.name; }).join(', ')); return 'none'; }
+  var data = agentBatchData_(batch, day), cache = null;
+  try { cache = iLoadCache_(); } catch (e) {}
+  var save = PropertiesService.getScriptProperties().getProperty('AGENT_DAY');
+  PropertiesService.getScriptProperties().setProperty('AGENT_DAY', 'pilot');
+  var sent = [];
+  try { batch.forEach(function (a) { if (agentMorningMail_(a, day, data, cache)) sent.push(a.name + ' → ' + a.email + ' cc ' + agentCc_(a).join(', ')); }); }
+  finally { if (save) PropertiesService.getScriptProperties().setProperty('AGENT_DAY', save); else PropertiesService.getScriptProperties().deleteProperty('AGENT_DAY'); }
+  var msg = 'Pilot sent: ' + sent.join(' | '); Logger.log(msg); return msg;
 }
 function listAgents() { var p = agentPeople_(); var out = Object.keys(p).sort().map(function (k) { return p[k].name + ' · ' + p[k].email + ' · manager ' + (agentManagerEmail_(p[k]) || '—'); }).join('\n'); Logger.log(out); return out; }
 function mailQuotaLeft() { var n = MailApp.getRemainingDailyQuota(); Logger.log('E-mail recipients left today: ' + n); return n; }

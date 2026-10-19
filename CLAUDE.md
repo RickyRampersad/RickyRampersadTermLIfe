@@ -4019,6 +4019,27 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   `tests/test-cover30.js`. Still to build: blocks grouped by what is open,
   "anything else in this block?", emails owed a reply as pending work, and the
   bag from the new Log Book's rota. Pinned in `tests/test-startday.js`.
+- **The agents' 5am pilot** (19 October 2026, v2026-10-19c: "We are only testing Neil Ramnanan and Fawaz Mohammed …
+  the support team and their respective manager is copied … Neil is copied under me … Fawaz is copied under Akash", then
+  "the agent's day is supposed to be planned around activities … asking them how much calls they intend to make … make it
+  motivating, something at the top"). `AGENT_DAY` unset now means **pilot**: the agents' mails go live to the agents in
+  `AGENT_PILOT` alone (default `Neil Ramnanan:ricky, Fawaz Mohammed:akaash`, matched loosely, so the Skill Bank's
+  "Fawwaz Mohamed" is found), with the manager the pilot names; `live`, `preview` and `off` work as before. The morning
+  mail goes at **5:00** (`AGENT_AM_AT`), copied to the manager and sales support (`agentCc_`). It opens on **the one that
+  moves you** (`agMotivate_`, `agHero_`: the clients who said yes on a fact find with nothing closed, days since the last
+  fact find against their weekly plan and the weekday they usually write, birthdays this week, premiums 60+ days, the
+  FY27 pace), then **the fact finds since September** read live from **FFRevised** on the fact find workbook
+  (`agFfRows_`, `agFactFinds_`: how many, the days they wrote and the longest gap, approved / waiting on review /
+  changes asked / submitted / picked up / not proceeding, the "said yes, nothing closed" list, the gaps on their full
+  fact finds, who they write, against the branch average, `agFfBranch_`; the old Jotform tab stops on 22 June), the
+  prospects they sent (`agProspects_`), **their clients from Salesforce** (`agClients_`, by `AgentName__c` beginning
+  with their agent number: birthdays in the next seven days, policy anniversaries in fourteen as reviews, lapsed with
+  value), and **how they are working** (`agCoach_`, from their own plans and close-offs, `agPlanHistory_`). The plan
+  page asks what they **intend** (`AGENT_METRICS.plan`: calls, appointments, new people, fact finds, closing interviews,
+  applications, reviews and birthday calls, premium calls, pendings), each with a suggestion of a fifth of their weekly
+  plan (`agSuggest_`); the close-off asks what was done (`.done`). Two FFRevised columns look unwritten by the system
+  (Smoker/Vaper always, Rationale since September), so neither counts as a gap. `sendAgentPilotNow()` from the editor
+  sends it at once. Pinned in `tests/test-agentpilot.js`.
 - **"Not getting attention" (the command centre)** closes things, not only
   moves them (18 October 2026). Each row has a status from the record's own
   list (Salesforce's `TaskStatus`; the letter sheet's own values), its history
