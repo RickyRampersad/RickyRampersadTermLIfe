@@ -3376,3 +3376,14 @@ servicing work".
   quiet (bars by desk, hers as "You"), Query Pal by age; each opens a card below
   the plan. `planTally_` counts the day's plan live until the block closes, so
   Before you leave and the 4pm report no longer read "no plan" before the close.
+- **The agent's projection and the balance** (`AGENT_METRICS` p/d/s, `agBalance_`,
+  19 October 2026): Ricky, "you can't say calls made. It's projected calls to be
+  made ... they balance off at the end of the day." The morning mail and page ask
+  what is to be done (`p`: Calls to make, Appointments to set ...), never what was
+  done; the 5:30 page asks what was done (`d`) with "you projected N" beside each
+  line and the balance as it is typed (`.agbal`, `data-proj`; filled server-side
+  when reopened). The saved close shows the day balanced (`agBalanceCard_`); the
+  copy to the manager and support carries projected, done, balance and the total
+  in its subject; the managers' table reads "Projected · done · balance". Sheet
+  columns stay Planned/Done. Statuses: projection in / no projection yet / absent
+  (no projection). Pinned in `tests/test-balance.js`.

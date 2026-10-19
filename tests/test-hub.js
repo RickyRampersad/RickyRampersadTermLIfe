@@ -92,7 +92,7 @@ ok('Unit work: who holds the unit\'s work, by desk, with overdue and quiet', /Wh
 ok('Unit work: by kind, each task with agent, who has it, status, due, untouched', /Pendings \(2\)/.test(page) && /New business \(1\)/.test(page) && /with <b>Elizabeth Lee<\/b> · In Progress · overdue since/.test(page) && /untouched 9 days/.test(page));
 ok('Unit work: the whole history and a box to type or speak into', /The whole history \(3 notes\)/.test(page) && /Medical ordered\./.test(page) && (page.match(/name="c_00T/g) || []).length === 4 && /Type or speak your comment/.test(page));
 ok('Agents: the unit against its FY27 goals as at today', /Your unit against its FY27 goals · week 3 of 52/.test(page) && /Unit goal <b>\$280k<\/b>/.test(page));
-ok('Agents: each agent, goal, pace, fact finds, today, open work, letter', /Stephanie Rajkumar[^]*\$9k of \$6k API pace/.test(page) && /Last check-in: week 2/.test(page) && /Asked for: Joint calls/.test(page) && /Performance letter · Q3 FY26/.test(page) && /Calls made 10 · Appointments set 2/.test(page));
+ok('Agents: each agent, goal, pace, fact finds, today, open work, letter', /Stephanie Rajkumar[^]*\$9k of \$6k API pace/.test(page) && /Last check-in: week 2/.test(page) && /Asked for: Joint calls/.test(page) && /Performance letter · Q3 FY26/.test(page) && /Calls to make 10 · Appointments to set 2/.test(page));
 ok('You: his own goal and the unit\'s, as at today', /Your goals as at/.test(page) && /Your own FY27 goal <b>\$60k<\/b>/.test(page));
 ok('You: manager numbers this week, coaching, and his week', /Your manager numbers this week/.test(page) && /How you are coaching this week/.test(page) && /Your week/.test(page) && /Numbers met/.test(page));
 
