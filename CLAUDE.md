@@ -3352,3 +3352,21 @@ servicing work".
   his 6am, 11am and 5:30pm mails. Ricky's 11am/3pm mail links a read-only view
   (f=`unitv`, `unitViewSig_`, a disabled fieldset, no form). Pinned in
   `tests/test-hub.js`.
+- **The scoreboard** (`scoreboard_`, `sbBars_`/`sbMeter_`/`sbSplit_`/`sbDots_`,
+  19 October 2026): every role's page opens with up to four numbers, each with
+  a little inline-SVG chart drawn to scale and each a link (data-go, `sbJs_`) to
+  the detail behind it. My day (`meScore_`: branch closed, waiting on you, plan
+  met, you closed), My unit, Your day (`agScore_`, with "Your year"), Your plan
+  (`ssScore_`), Your errands (`errScore_`), Before you leave (`hkScore_`). The
+  five-day bars read closed tasks per desk per day once (`deskClosedOn_`, kept
+  as `dk_<day>` for three weeks). Pages only: Outlook does not draw SVG.
+- **The register at both ends** (`NOCLOSE`, 19 October 2026): Before you leave
+  is the sign-out (sign-out ticked by default); each planned task not done needs
+  a reason and a new date (`commitRow_`/`commitTasks_`: the date patched on the
+  task, the reason on its Chatter). No automatic sign-out at the finish any more:
+  a reminder at the finish (`notClosedReminder_`), and at finish + 30
+  `markNotClosed_` writes "Did not close the day" on the register (Status
+  unchanged; Script Property NO_CLOSE_MARK=absent marks absent instead), mails
+  the person cc Ricky and sales support, flags two in a week. The next morning's
+  plan opens with yesterday first (`yesterdayOpen_`, inputs yr_/yd_) and does not
+  save until it is accounted for (`ncdone_`). Pinned in `tests/test-score.js`.
