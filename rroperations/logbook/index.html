@@ -498,7 +498,7 @@
 
   /* ── the bag ────────────────────────────────────────────── */
   var BAG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#00E5FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.5 14l2 2 3.5-4"/></svg>';
-  function h12(h) { return h === 12 ? '12 noon' : (h > 12 ? h - 12 : h) + ':00 ' + (h >= 12 ? 'pm' : 'am'); }
+  function h12(h) { h = Number(h); var hh = Math.floor(h), mm = Math.round((h - hh) * 60); if (hh === 12 && !mm) return '12 noon'; return (hh > 12 ? hh - 12 : hh) + ':' + (mm < 10 ? '0' : '') + mm + ' ' + (hh >= 12 ? 'pm' : 'am'); }
   function dayLabel(iso) { return new Date(iso).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ }); }
   function hrsOf(iso) { var d = new Date(iso); var p = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ }).format(d).split(':'); return +p[0] + (+p[1]) / 60; }
   function left(ms) {
@@ -939,7 +939,7 @@
       tile('Sent today', sentToday.length, 'ok', 'qToday');
     $('qTiles').querySelectorAll('[data-go]').forEach(function (t) { t.addEventListener('click', function () { var el = $(t.getAttribute('data-go')); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
     var n = $('n-queue'); if (n) { n.hidden = !(late.length + logged.length); n.textContent = late.length || logged.length; n.className = 'n' + (late.length ? ' bad' : ''); }
-    $('qCut').textContent = 'In by ' + h12(q.cutoff) + ', on the ' + h12((q.bag && q.bag.at) || 13) + ' bag';
+    $('qCut').textContent = 'In by ' + h12(q.cutoff) + ', on the ' + h12((q.bag && q.bag.at) || 12) + ' bag';
 
     $('qLate').hidden = !late.length;
     $('qLateList').innerHTML = late.map(function (l) {

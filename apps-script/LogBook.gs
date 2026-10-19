@@ -38,14 +38,14 @@
  *   Sent      the staff member builds the transmittal for a department, prints
  *             it and sends it. This is the date sent.
  *   Returned  the papers went back to the agent, with the reason.
- * The bag (17 October 2026): one bag a day, in and out at the bag exchange at
- * 1:00 pm (LB.BAG.AT). It comes in, is cleared and the mail distributed, and
+ * The bag (17 October 2026; times corrected 19 October): one bag a day, leaving at
+ * 12 noon (LB.BAG.AT). It comes in, is cleared and the mail distributed, and
  * goes back down with the day's transmittals. Papers in the branch's hands
- * before 12:00 noon (LB.BAG.CUTOFF) are checked, put on a transmittal and go
- * on that day's bag; anything after 12:00, or on a weekend, goes on the next
+ * before 11:30 am (LB.BAG.CUTOFF) are checked, put on a transmittal and go
+ * on that day's bag; anything after 11:30, or on a weekend, goes on the next
  * working day's bag. One staff member has the bag each week (the Bag Rota
- * tab, else the staff in turn). At 11:00 an agent with papers logged and not
- * handed in is told there is an hour to catch the bag; at 12:00 the person on
+ * tab, else the staff in turn). From 10:00 an agent with papers logged and not
+ * handed in is told to hand them in by 11:30; from 11:00 the person on
  * the bag gets the list to prepare; and once the bag has gone, every received
  * line that missed it is asked about, while everyone is still in (the staff
  * leave from 2:00 pm), with sales support and the agent copied. The reason is
@@ -89,7 +89,9 @@ var LB = {
   TABS: { LINES: 'Log Book', TRANS: 'Transmittals', AGENTS: 'Agents', DEPTS: 'Departments' },
   TYPES: ['Documents for Guardian', 'Contract for delivery'],
   CUTOFF_HOUR: 12,
-  BAG: { CUTOFF: 12, AT: 13, NUDGE: 11, GRACE_MIN: 60, ROTA_FROM: '2026-10-19',
+  /* 19 October 2026: the bag leaves at 12 noon, and papers must be in by 11:30 to catch it (Ricky). Hours may be
+     fractional (11.5 is 11:30); LB_BAG_CUTOFF and LB_BAG_HOUR take 11.5 or "11:30". */
+  BAG: { CUTOFF: 11.5, AT: 12, NUDGE: 10, GRACE_MIN: 15, ROTA_FROM: '2026-10-19',
          /* The branch's rota (17 October 2026): the three who do transmittals, one week each, Azariah first
             from 19 October. Kamla does not do transmittals and is never on it. A Bag Rota tab overrides this. */
          ROTA: [{ who: 'Azariah', leaves: '4:00 pm' }, { who: 'Elizabeth', also: 'Liz', leaves: '3:00 pm' }, { who: 'Sasha', leaves: '2:00 pm' }] },
@@ -399,7 +401,14 @@ function lbSet_(rows, obj) {
 }
 
 function lbDay_(d) { return d ? Utilities.formatDate(d, dbTz_(), 'yyyy-MM-dd') : ''; }
-function lbHour_(d) { return Number(Utilities.formatDate(d, dbTz_(), 'HH:mm').split(':')[0]); }
+/* The hour of a moment in the branch's time, with the minutes as a fraction (11:30 is 11.5). */
+function lbHour_(d) { var p = Utilities.formatDate(d, dbTz_(), 'HH:mm').split(':'); return Number(p[0]) + Number(p[1]) / 60; }
+/* An hour (fractional) as the branch says it: 11:30 am, 12 noon, 1:00 pm. */
+function lbHm_(h) {
+  h = Number(h); var hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+  if (hh === 12 && !mm) return '12 noon';
+  return (hh > 12 ? hh - 12 : hh) + ':' + (mm < 10 ? '0' : '') + mm + ' ' + (hh >= 12 ? 'pm' : 'am');
+}
 function lbWeekend_(d) { var w = new Date(lbDay_(d) + 'T12:00:00Z').getUTCDay(); return w === 0 || w === 6; }
 
 /* Working days from one day to another: the same day is 0, Friday to Monday 1.
@@ -416,7 +425,8 @@ function lbCalDays_(a, b) {
   return Math.round((new Date(lbDay_(b) + 'T12:00:00Z') - new Date(lbDay_(a) + 'T12:00:00Z')) / 86400000);
 }
 function lbHourProp_(name, def, lo, hi) {
-  var h = parseInt(dbProp_(name, def), 10);
+  var v = String(dbProp_(name, def)).trim(), m = v.match(/^(\d{1,2}):(\d{2})$/);
+  var h = m ? Number(m[1]) + Number(m[2]) / 60 : parseFloat(v);
   return isFinite(h) && h >= lo && h <= hi ? h : def;
 }
 /* The hour papers must be in to catch that day's bag. */
@@ -426,7 +436,7 @@ function lbCutoff_() {
   return LB_HOURS_.cut;
 }
 /* The hour of the bag exchange. */
-function lbBagHour_() { lbCutoff_(); return Math.max(LB_HOURS_.cut + 1, LB_HOURS_.at); }
+function lbBagHour_() { lbCutoff_(); return Math.max(LB_HOURS_.cut + 0.5, LB_HOURS_.at); }
 
 /* ============================== the bag ============================== */
 
@@ -438,6 +448,7 @@ function lbNextWorkDay_(day) {
 }
 /* A moment on a day, in the branch's time. */
 function lbAt_(day, hour, min) {
+  hour = Number(hour); min = Number(min || 0) + Math.round((hour - Math.floor(hour)) * 60); hour = Math.floor(hour);
   return Utilities.parseDate(day + ' ' + (hour < 10 ? '0' : '') + hour + ':' + (min < 10 ? '0' : '') + (min || 0), dbTz_(), 'yyyy-MM-dd HH:mm');
 }
 /* The bag that papers in the branch's hands at t catch: that day's when it is
@@ -577,7 +588,7 @@ function lbBagOf_(r, now) {
   if (r.type !== LB.TYPES[0]) return null;
   if (r.status === 'Logged') {
     var d = lbBagDay_(now);
-    return { state: 'waiting', bagDay: d, label: d === lbDay_(now) ? 'Hand in by ' + lbCutoff_() + ':00 for today\'s bag' : 'Next bag ' + Utilities.formatDate(lbAt_(d, 12, 0), dbTz_(), 'EEE d MMM') };
+    return { state: 'waiting', bagDay: d, label: d === lbDay_(now) ? 'Hand in by ' + lbHm_(lbCutoff_()) + ' for today\'s bag' : 'Next bag ' + Utilities.formatDate(lbAt_(d, 12, 0), dbTz_(), 'EEE d MMM') };
   }
   if (!r.receivedAt) return null;
   var bd = lbBagDay_(r.receivedAt);
@@ -1057,7 +1068,7 @@ function lbSubmit_(b, who) {
 /* What the bag means for papers logged now, in one sentence. */
 function lbBagLine_(now) {
   var d = lbBagDay_(now), cut = lbCutoff_(), at = lbBagHour_();
-  var h12 = function (h) { return (h > 12 ? h - 12 : h) + ':00 ' + (h >= 12 ? 'pm' : 'am'); };
+  var h12 = lbHm_;
   if (d === lbDay_(now)) return 'In the branch\'s hands by ' + h12(cut) + ' today, they go on today\'s ' + h12(at) + ' bag.';
   return 'Today\'s bag has closed (' + h12(cut) + '). In the branch\'s hands by ' + h12(cut) + ' on ' +
     Utilities.formatDate(lbAt_(d, 12, 0), dbTz_(), 'EEEE d MMMM') + ', they go on that day\'s ' + h12(at) + ' bag.';
@@ -1550,7 +1561,7 @@ function lbHourly() {
   var out = [];
   if (h >= lbBagHour_()) out.push(lbChaseLate_(now));
   if (h >= LB.BAG.NUDGE && h < lbCutoff_()) out.push(lbNudgeAgents_(now));
-  if (h >= lbCutoff_()) out.push(lbBagPrep_(now));
+  if (h >= lbBagHour_() - 1) out.push(lbBagPrep_(now));   // the hour before the bag leaves, so it is prepared in time
   if (h >= 9) { out.push(lbChaseContracts_(now)); out.push(lbConfirmRun_(now)); out.push(lbDigestRun_(now)); }
   return out.join('; ');
 }
@@ -1583,12 +1594,12 @@ function lbChaseLate_(now) {
     });
     var html = lbMailHtml_('Missed the bag: the reason, please',
       '<p>' + dbEsc_(staff.split(' ')[0] || staff) + ', the documents below were in the branch\'s hands in time for their bag and did not go on it. ' +
-      'The branch standard: in by 12:00 noon, on that day\'s 1:00 pm bag. The transmittal prints the date collected and the date sent, and the reason beside them.</p>' +
+      'The branch standard: in by ' + lbHm_(lbCutoff_()) + ', on that day\'s ' + lbHm_(lbBagHour_()) + ' bag. The transmittal prints the date collected and the date sent, and the reason beside them.</p>' +
       (link ? '<div style="margin:18px 0 6px">' + lbBtn_(link, 'Give the reason &rarr;', '#1D5BC4', '#ffffff') + '</div>' : '') +
       '<p style="color:#5b6b7f;font-size:13px">Then put them on tomorrow\'s bag from the Log Book. You will be asked again each working day until they go or a reason is given.</p>',
       ['Client', 'Document', 'Policy', 'Department', 'Received', 'Working days'], rows,
       '<p style="color:#5b6b7f;font-size:13px">Agent: ' + dbEsc_(list[0].agent) + '. Sales support and the agent are copied.</p>',
-      { tone: 'warn', kicker: 'Missed the ' + (lbBagHour_() - 12) + ':00 pm bag',
+      { tone: 'warn', kicker: 'Missed the ' + lbHm_(lbBagHour_()) + ' bag',
         tiles: [['Documents waiting', list.length, 'warn'],
                 ['Oldest, working days', list.reduce(function (m, r) { return Math.max(m, lbWorkDays_(r.receivedAt, now)); }, 0), 'bad'],
                 ['Departments', Object.keys(list.reduce(function (o, r) { o[r.department] = 1; return o; }, {})).length, 'info']] });
@@ -1615,13 +1626,13 @@ function lbBagPrep_(now) {
   ready.forEach(function (r) { depts[r.department] = (depts[r.department] || 0) + r.quantity; });
   var html = lbMailHtml_('Today\'s bag: ' + ready.length + ' line' + (ready.length === 1 ? '' : 's') + ' to prepare',
     '<p>' + dbEsc_(duty ? duty.name.split(' ')[0] : 'Team') + ', the bag closes now. Check these, put them on their transmittals and seal the bag for the ' +
-    (lbBagHour_() - 12) + ':00 pm exchange. Anything received after 12:00 goes on tomorrow\'s bag.</p>',
+    lbHm_(lbBagHour_()) + ' bag. Anything received after ' + lbHm_(lbCutoff_()) + ' goes on tomorrow\'s bag.</p>',
     ['Department', 'Documents'], Object.keys(depts).sort().map(function (k) { return [k, String(depts[k])]; }),
     (notIn.length ? '<p style="font-size:13px;color:#5b6b7f">Logged by agents and not handed in yet: ' + notIn.length + '. They miss today\'s bag.</p>' : ''),
-    { tone: ready.length ? 'info' : 'ok', kicker: 'Bag closes ' + lbCutoff_() + ':00 · exchange ' + (lbBagHour_() - 12) + ':00 pm',
+    { tone: ready.length ? 'info' : 'ok', kicker: 'Bag closes ' + lbHm_(lbCutoff_()) + ' · leaves ' + lbHm_(lbBagHour_()),
       tiles: [['To prepare', ready.length, ready.length ? 'warn' : 'ok'], ['Departments', Object.keys(depts).length, 'info'], ['Not handed in', notIn.length, notIn.length ? 'warn' : 'ok']] });
   var to = duty ? lbStaffEmail_(duty.name) : '';
-  var res = lbMail_({ to: [to || lbSalesSupport_()], cc: [lbSalesSupport_()], subject: 'Today\'s bag: ' + ready.length + ' to prepare by ' + (lbBagHour_() - 12) + ':00 pm', html: html });
+  var res = lbMail_({ to: [to || lbSalesSupport_()], cc: [lbSalesSupport_()], subject: 'Today\'s bag: ' + ready.length + ' to prepare by ' + lbHm_(lbBagHour_()), html: html });
   if (/sent/i.test(res)) dbProps_().setProperty('lb_bag_prep_day', today);
   return 'bag: ' + res;
 }
@@ -1638,12 +1649,12 @@ function lbNudgeAgents_(now) {
   Object.keys(byAgent).forEach(function (k) {
     var list = byAgent[k];
     var html = lbMailHtml_('One hour to catch today\'s bag',
-      '<p>You logged these and the branch does not have the papers yet. The bag goes down at ' + (lbBagHour_() - 12) + ':00 pm, and papers in the branch\'s hands by ' +
-      lbCutoff_() + ':00 noon go on it. After that they wait for tomorrow\'s bag. If they are not coming, withdraw the entry in the Log Book.</p>',
+      '<p>You logged these and the branch does not have the papers yet. The bag leaves at ' + lbHm_(lbBagHour_()) + ', and papers in the branch\'s hands by ' +
+      lbHm_(lbCutoff_()) + ' go on it. After that they wait for tomorrow\'s bag. If they are not coming, withdraw the entry in the Log Book.</p>',
       ['Reference', 'Client', 'Document', 'Logged'],
       list.map(function (r) { return [r.ref, r.client, r.document, Utilities.formatDate(r.loggedAt, dbTz_(), 'EEE d MMM')]; }), '',
-      { tone: 'warn', kicker: 'Hand them in by ' + lbCutoff_() + ':00', tiles: [['Not yet handed in', list.length, 'warn'], ['Bag closes', lbCutoff_() + ':00 noon', 'warn']] });
-    var res = lbMail_({ to: [k], cc: [lbSalesSupport_()], subject: 'Log Book: hand in by ' + lbCutoff_() + ':00 for today\'s bag (' + list.length + ')', html: html });
+      { tone: 'warn', kicker: 'Hand them in by ' + lbHm_(lbCutoff_()), tiles: [['Not yet handed in', list.length, 'warn'], ['Bag closes', lbHm_(lbCutoff_()), 'warn']] });
+    var res = lbMail_({ to: [k], cc: [lbSalesSupport_()], subject: 'Log Book: hand in by ' + lbHm_(lbCutoff_()) + ' for today\'s bag (' + list.length + ')', html: html });
     if (/sent/i.test(res)) lbMarkAlert_(list, 'nudged ' + today);
   });
   return 'nudged: ' + Object.keys(byAgent).length;
@@ -2233,7 +2244,7 @@ function lbStats_(b, who) {
   var byHour = {};
   rows.forEach(function (r) {
     if (!r.receivedAt) return;
-    var h = Math.max(7, Math.min(18, lbHour_(r.receivedAt)));
+    var h = Math.max(7, Math.min(18, Math.floor(lbHour_(r.receivedAt))));
     var o = byHour[h] = byHour[h] || { hour: h, lines: 0, sent: 0, onBag: 0, late1: 0, late2: 0, never: 0 };
     o.lines++;
     var n = lbBagsLate_(r);
@@ -2428,7 +2439,7 @@ function lbSetup() {
   var notes = [
     'Mode: ' + dbMode_() + (dbMode_() === 'live' ? '' : ' (every Log Book e-mail goes to ' + (dbProp_('DB_TEST_INBOX') || 'the script owner') + ')'),
     'Hourly chase: ' + (have ? 'already on' : 'installed'),
-    'The bag: in by ' + lbCutoff_() + ':00, exchange at ' + lbBagHour_() + ':00; this week ' + ((lbDuty_(lbDay_(new Date())) || {}).name || 'nobody: add the Bag Rota tab'),
+    'The bag: in by ' + lbHm_(lbCutoff_()) + ', leaves at ' + lbHm_(lbBagHour_()) + '; this week ' + ((lbDuty_(lbDay_(new Date())) || {}).name || 'nobody: add the Bag Rota tab'),
     'People who can sign in: ' + agents.filter(function (a) { return a.active && a.code; }).length +
       ' (the Agents tab and the fact find\'s Access tab' + (agents.length ? '' : ': none found, check the script owner can open the fact find workbook') + ')',
     'Departments: ' + lbDeptNames_().length + (noMail ? ' (' + noMail + ' with no Email: their 3-day check goes to sales support)' : ''),

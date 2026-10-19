@@ -3930,6 +3930,13 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   only 28 seconds long, so it is chained eight times with 3-second equal-power crossfades into one 3:25 bed first
   (`motivation-long.wav` in the scratchpad), so the repeat is not heard, then given to `usetrack.py` for `lbagent` and `lbstaff`; it is kept outside the repository, so the Kevin MacLeod credit is not on
   the films page.
+- **The bag times were corrected on 19 October 2026: in by 11:30 am, the bag leaves at 12 noon** (Ricky: "the bag leaves at
+  12pm so a correction is needed"; he chose 11:30 for the cut-off). `LB.BAG` is now `CUTOFF: 11.5, AT: 12, NUDGE: 10,
+  GRACE_MIN: 15`; hours may be fractional everywhere (`lbHour_` returns 11.5 for 11:30, `lbAt_` takes it, `lbHm_` says
+  it as "11:30 am" / "12 noon"; `LB_BAG_CUTOFF` and `LB_BAG_HOUR` take "11:30" or 11.5). The agents' reminder goes from
+  10:00, the list to prepare from 11:00 (the hour before the bag), late lines are asked about from 12:00. The page
+  reads the times from the backend; the training manual says the new times. The two Log Book films still say 12 noon
+  and 1 pm, and need a re-cut. The rest of this bullet is the 17 October design, with those times moved.
 - **The bag: in by 12 noon, down at 1 pm** (17 October 2026: "the bags actually come in once a day and leave once a day …
   around 1pm bags come in … rotated by 1 staff member weekly … once it comes in before 12 … it should be able to catch the bag …
   agents should be aware if it will catch the bag"). `LB.BAG` (`LB_BAG_CUTOFF` 12, `LB_BAG_HOUR` 13): papers in the branch's
@@ -4070,6 +4077,22 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   subject. **Flexible** (`FLEX_DESKS`, `isFlex_`): never late, never marked absent by the clock, never covered, never
   signed out at a finish; his morning mail goes from 5am with everyone's (until 11), and his close-out at 6pm
   (`FLEX_CLOSE_AT`). Pinned in `tests/test-pawangi.js`.
+- **The Unit Manager is not a Salesforce user, and sees his agents' goals and day** (19 October 2026, v2026-10-19f: Akaash's
+  screen recording showed every "open →" in his mail landing on "Salesforce mobile web is now unavailable" and a login he
+  does not have; "Akaash cannot when he updates text it's not posted on the chatter task … where is his agents goals and
+  activities and what he is doing"; "Remember Akaash is not a salesforce user"). Nothing in his mails links to
+  Salesforce: every task carries "comment →" (`umCommentLink_`), opening his page at that task (`#t-<id>`), and what he
+  types there posts to the task's Chatter through the tracker, headed "Unit Manager · <name>". Every task the mail shows
+  has a box (`umPageItems_`: the sections in full and the day's items; until then only ten a section, so a quiet task
+  outside every section had none), and the list is kept as whole JSON under 9 KB (`umFitJson_`; it was cut at 8,900
+  characters, which broke the JSON and left the page with no boxes). The agents' pages lost their Salesforce links too
+  and got the same anchors. **His agents** (`umAgentsCard_`, `umAgentRows_`), on the 6am, 11am and 5:30 mails: one row an
+  agent, him first, with FY27 API against the goal and ahead or behind pace, fact finds since 1 September from FFRevised
+  with the last one, clients who said yes and nothing closed, and today's plan, check-in and close-off; then who is behind
+  pace, who has gone 14 days without a fact find, who said yes, who has no goal plan, and (after 10:30) who has no plan
+  today. `unitAgents_` no longer lists him twice, and the "no fact finds this week" flag reads FFRevised. The screen in
+  the recording ("Your day, block by block", 6–9am …) is an older deploy: the current script has no time blocks. Pinned in
+  `tests/test-umagents.js`.
 - **"Not getting attention" (the command centre)** closes things, not only
   moves them (18 October 2026). Each row has a status from the record's own
   list (Salesforce's `TaskStatus`; the letter sheet's own values), its history
