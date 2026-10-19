@@ -4040,6 +4040,20 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   plan (`agSuggest_`); the close-off asks what was done (`.done`). Two FFRevised columns look unwritten by the system
   (Smoker/Vaper always, Rationale since September), so neither counts as a gap. `sendAgentPilotNow()` from the editor
   sends it at once. Pinned in `tests/test-agentpilot.js`.
+  **Production against the FY27 goal** (v2026-10-19d, the same day: "a big part … is their production … the target
+  based on the goals, the API … they are required moving forward to check in"). The target is the API on the agent's
+  FY27 goal plan (FactFind360's FY27 Goal Plans; its Q1–Q4 API when filled, else a quarter of the year), never tenure.
+  Production is settled API from Branch Intelligence's settlement tab (`agProduction_`, through `agScope_`, which scopes
+  the cache once per agent per run), months from 1 October only; FactFind360's picked-up figure when the settlement has
+  nothing for them. The card (`agProdCard_`) shows API against the goal with a bar and a pace mark, ahead or behind
+  today's pace, the quarter (`agFyQuarter_`: Q1 Oct–Dec) with what a week it needs and how many applications at their
+  own average, this month, the last seven days, a week to finish the year, and the pipeline (said yes, pendings,
+  FactFind360). Behind the goal leads the morning (`agProdLine_`). It is on the morning, the midday and the 5:30 mails.
+  **The midday mail is now a required check-in** (`agm`, Kind `check` on Agent Day): numbers so far against the plan,
+  by 2pm (`AGENT_CHECK_BY`); the managers' view reads "plan in, no check-in" after it, the close-off shows the midday
+  numbers beside the plan, and the check-in copy goes to the manager and sales support. The settlement tab is read for
+  the calendar year, so from January the October to December months fall out of it until Branch Intelligence keeps
+  the financial year.
 - **"Not getting attention" (the command centre)** closes things, not only
   moves them (18 October 2026). Each row has a status from the record's own
   list (Salesforce's `TaskStatus`; the letter sheet's own values), its history

@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19c';
+var SCRIPT_VERSION = '2026-10-19d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -5074,7 +5074,7 @@ function ff360Agent_(feed, names) {
            pipeline: Math.max(n(w, 'pipeline'), n(m, 'pipeline'), n(y, 'pipeline')),
            apps: Math.max(n(w, 'apps'), n(m, 'apps'), n(y, 'apps')), known: true };
 }
-function ff360Money_(v) { v = Number(v || 0); return v >= 1000 ? '$' + Math.round(v / 1000).toLocaleString() + 'k' : '$' + Math.round(v).toLocaleString(); }
+function ff360Money_(v) { v = Number(v || 0); if (Math.abs(v) >= 1e6) return '$' + (Math.round(v / 1e5) / 10).toFixed(1) + 'm'; return v >= 1000 ? '$' + Math.round(v / 1000).toLocaleString() + 'k' : '$' + Math.round(v).toLocaleString(); }
 function checkFactFind360() {
   var d = ff360Feed_();
   if (!d) { Logger.log('FactFind360: not reachable (check FACTFIND_WALL_URL / FACTFIND_WALL_KEY)'); return; }
@@ -5179,7 +5179,7 @@ function goalFor_(name, code) {
   if (!plan) return null;
   var n = function (k) { return Number(plan[k] || 0) || 0; };
   var weeks = Math.max(1, Math.round(daysBetween_(BOOKS.FY_START, todayISO_()) / 7));
-  return { api: n('API Goal'), fyc: n('FYC Goal'), apps: n('Apps Goal'), contactsWk: n('Contacts / wk'), apptsWk: n('Appointments / wk'), ffWk: n('Fact finds / wk'), appsWk: n('Apps / wk'),
+  return { q: [n('Q1 API'), n('Q2 API'), n('Q3 API'), n('Q4 API')], api: n('API Goal'), fyc: n('FYC Goal'), apps: n('Apps Goal'), contactsWk: n('Contacts / wk'), apptsWk: n('Appointments / wk'), ffWk: n('Fact finds / wk'), appsWk: n('Apps / wk'),
     title: String(plan['Title Goal'] || ''), submitted: String(plan['Submitted At'] || '').slice(0, 10), weeksIn: weeks,
     paceApi: Math.round(n('API Goal') * Math.min(1, weeks / 52)),
     last: last ? { week: last['Week'], contacts: Number(last['Contacts'] || 0), appts: Number(last['Appointments'] || 0), ff: Number(last['Fact finds'] || 0), apps: Number(last['Apps'] || 0), win: String(last['Win'] || ''), way: String(last['In The Way'] || ''), help: String(last['Help'] || '') } : null };
@@ -7519,7 +7519,7 @@ function agentBatchData_(list, day) {
 function agentBook_(a, cache) {
   if (!cache || typeof iScope_ !== 'function') return null;
   try {
-    var mine = iScope_(cache, { role: 'agent', agentName: a.agentName, agentId: a.agentId, name: a.name });
+    var mine = agScope_(a, cache); if (!mine) return null;
     var chase = (mine.dues && mine.dues.chase) || [];
     var mv = mine.movements || {};
     return {
@@ -7806,15 +7806,131 @@ function agClients_(a, day) {
   return out;
 }
 
+// ---- production against the FY27 goal (19 October 2026) --------------------------------
+// Ricky: "a big part that the agent is supposed to actually have in front of them is their
+// production. Our financial year started on the 1st of October … we will not look at tenure,
+// but … the target based on the goals, the API." The target is the API on the agent's FY27
+// goal plan (FactFind360's FY27 Goal Plans, with its Q1–Q4 split when given). Production is
+// settled API from Branch Intelligence's settlement tab; FactFind360's picked-up figure when the
+// settlement is not there for them.
+
+/** One agent's slice of the Branch Intelligence cache, scoped once per run. */
+var _agScope = {};
+function agScope_(a, cache) {
+  if (!cache || typeof iScope_ !== 'function') return null;
+  var k = a.key || a.name;
+  if (_agScope[k] && _agScope[k].c === cache) return _agScope[k].s;
+  var s = null; try { s = iScope_(cache, { role: 'agent', agentName: a.agentName, agentId: a.agentId, name: a.name }); } catch (e) {}
+  _agScope[k] = { c: cache, s: s };
+  return s;
+}
+
+/** The FY27 quarter a day falls in: { n: 1..4, from, to } (the year runs 1 October to 30 September). */
+function agFyQuarter_(day) {
+  var fy = BOOKS.FY_START, y = Number(fy.slice(0, 4));
+  var q = [ [y + '-10-01', y + '-12-31'], [(y + 1) + '-01-01', (y + 1) + '-03-31'], [(y + 1) + '-04-01', (y + 1) + '-06-30'], [(y + 1) + '-07-01', (y + 1) + '-09-30'] ];
+  for (var i = 0; i < 4; i++) if (day >= q[i][0] && day <= q[i][1]) return { n: i + 1, from: q[i][0], to: q[i][1] };
+  return { n: day < q[0][0] ? 1 : 4, from: q[day < q[0][0] ? 0 : 3][0], to: q[day < q[0][0] ? 0 : 3][1] };
+}
+
+/** Production to date against the goal, and what it takes from here. */
+function agProduction_(a, day, cache, g, f3, fx, book) {
+  var fyFrom = BOOKS.FY_START, fyTo = shiftDays_(String(Number(fyFrom.slice(0, 4)) + 1) + fyFrom.slice(4), -1);
+  var q = agFyQuarter_(day);
+  var out = { source: '', api: 0, apps: 0, month: 0, week: 0, qApi: 0, target: g ? g.api : 0, qTarget: 0, rows: [] };
+  var sc = agScope_(a, cache), pr = sc && sc.production && !sc.production.error ? sc.production : null;
+  if (pr) {
+    var curY = Number(day.slice(0, 4)), curM = Number(day.slice(5, 7)), monthsApi = {};
+    (pr.byAgent || []).forEach(function (x) { Object.keys(x.months || {}).forEach(function (m) { monthsApi[m] = (monthsApi[m] || 0) + Number(x.months[m] || 0); }); });
+    // The settlement tab is read for the calendar year, so each month key is a month of this year.
+    var inFy = function (m) { var d = curY + '-' + ('0' + m).slice(-2) + '-01'; return d >= fyFrom.slice(0, 8) + '01' && d <= day; };
+    var inQ = function (m) { var d = curY + '-' + ('0' + m).slice(-2) + '-15'; return d >= q.from && d <= q.to; };
+    Object.keys(monthsApi).forEach(function (m) { if (inFy(+m)) out.api += monthsApi[m]; if (inQ(+m)) out.qApi += monthsApi[m]; });
+    out.month = monthsApi[curM] || 0;
+    (pr.rows || []).forEach(function (r) {
+      if (!r.settled || r.settled < fyFrom || r.settled > day) return;
+      out.apps += Number(r.apps || 0);
+      if (daysBetween_(r.settled, day) < 7) out.week += Number(r.api || 0);
+      out.rows.push(r);
+    });
+    out.source = 'settled';
+  }
+  if (!out.source && f3 && f3.known) { out.api = Number(f3.pickedUp || 0); out.apps = Number(f3.apps || 0); out.qApi = out.api; out.source = 'factfind360'; }
+  if (g) {
+    var qs = g.q || [];
+    out.qTarget = Number(qs[q.n - 1] || 0) || Math.round(out.target / 4);
+  }
+  var fyDays = daysBetween_(fyFrom, fyTo) + 1, inDays = Math.max(1, daysBetween_(fyFrom, day) + 1);
+  out.q = q; out.fyFrom = fyFrom; out.fyTo = fyTo;
+  out.weeksLeft = Math.max(1, Math.ceil((daysBetween_(day, fyTo) + 1) / 7));
+  out.qDaysLeft = Math.max(0, daysBetween_(day, q.to));
+  out.qWeeksLeft = Math.max(1, Math.ceil((out.qDaysLeft + 1) / 7));
+  out.pct = out.target ? Math.round(100 * out.api / out.target) : null;
+  out.pace = out.target ? Math.round(out.target * Math.min(1, inDays / fyDays)) : 0;
+  out.gap = out.target ? out.api - out.pace : 0;
+  out.qPct = out.qTarget ? Math.round(100 * out.qApi / out.qTarget) : null;
+  out.perWeek = out.target ? Math.max(0, Math.ceil((out.target - out.api) / out.weeksLeft)) : 0;
+  out.qPerWeek = out.qTarget ? Math.max(0, Math.ceil((out.qTarget - out.qApi) / out.qWeeksLeft)) : 0;
+  out.avgApp = out.apps > 0 && out.api > 0 ? Math.round(out.api / out.apps) : (g && g.api && g.apps ? Math.round(g.api / g.apps) : 0);
+  out.qAppsNeeded = out.avgApp && out.qTarget > out.qApi ? Math.ceil((out.qTarget - out.qApi) / out.avgApp) : 0;
+  out.pipeYes = fx && fx.openYes ? fx.openYes.length : 0;
+  out.pipePend = book && book.pend ? book.pend.length : 0;
+  out.pipe360 = f3 && f3.known ? Number(f3.pipeline || 0) : 0;
+  return out;
+}
+
+/** A bar for the e-mail: filled share, and a tick where the pace should be. */
+function agBar_(pct, pacePct, color) {
+  var p = Math.max(0, Math.min(100, pct || 0)), t = Math.max(0, Math.min(100, pacePct || 0));
+  return '<div style="position:relative;height:12px;background:#E6EBF7;border-radius:6px;margin:6px 0 4px;overflow:hidden">' +
+    '<div style="width:' + p + '%;height:12px;background:' + color + ';border-radius:6px"></div>' +
+    (pacePct != null ? '<div style="position:absolute;top:0;left:' + t + '%;width:2px;height:12px;background:' + MAIL.ink + '"></div>' : '') + '</div>';
+}
+
+/** The production card, near the top of every agent mail. */
+function agProdCard_(p, compact) {
+  if (!p) return '';
+  if (!p.target) return agCard_(MAIL.red, agLine_('<b>No FY27 API goal on record.</b> Your production is measured against your own goal: set it on factfind360.com today.' +
+    (p.api ? ' So far this year: <b>' + ff360Money_(p.api) + '</b> API.' : '')));
+  var behind = p.gap < 0, col = behind ? MAIL.red : MAIL.green, pacePct = p.target ? Math.round(100 * p.pace / p.target) : 0;
+  var src = p.source === 'settled' ? 'settled API, Branch Intelligence' : p.source === 'factfind360' ? 'picked up, FactFind360' : 'no production found yet';
+  return agCard_(col,
+    '<div style="font-size:12px;color:' + MAIL.muted + ';font-weight:700;text-transform:uppercase;letter-spacing:.8px">FY27 · 1 Oct to 30 Sep · ' + esc_(src) + '</div>' +
+    '<div style="font-size:22px;font-weight:800;margin-top:4px;color:' + MAIL.ink + '">' + ff360Money_(p.api) + ' <span style="font-size:14px;color:' + MAIL.muted + ';font-weight:600">of ' + ff360Money_(p.target) + ' · ' + p.pct + '%</span></div>' +
+    agBar_(p.pct, pacePct, col) +
+    '<div style="font-size:12.5px;color:' + (behind ? MAIL.red : MAIL.green) + ';font-weight:700">' +
+      (behind ? ff360Money_(-p.gap) + ' behind' : ff360Money_(p.gap) + ' ahead of') + ' where your goal says you should be today (' + ff360Money_(p.pace) + ').</div>' +
+    (compact ? '' :
+      agLine_('<b>Q' + p.q.n + '</b> (to ' + esc_(shortDate_(p.q.to)) + ', ' + p.qDaysLeft + ' days left): <b>' + ff360Money_(p.qApi) + '</b> of ' + ff360Money_(p.qTarget) +
+        (p.qPct != null ? ' · ' + p.qPct + '%' : '') + (p.qPerWeek ? ' · <b>' + ff360Money_(p.qPerWeek) + ' a week</b> to make the quarter' : ' · <b style="color:' + MAIL.green + '">quarter made</b>') +
+        (p.qAppsNeeded ? ' · about <b>' + p.qAppsNeeded + ' application' + (p.qAppsNeeded === 1 ? '' : 's') + '</b> at your average of ' + ff360Money_(p.avgApp) : '')) +
+      agLine_('This year: <b>' + p.apps + '</b> application' + (p.apps === 1 ? '' : 's') + ' · this month <b>' + ff360Money_(p.month) + '</b> · last 7 days <b>' + ff360Money_(p.week) + '</b>' +
+        ' · to finish the year: <b>' + ff360Money_(p.perWeek) + ' a week</b> for ' + p.weeksLeft + ' weeks') +
+      ((p.pipeYes || p.pipePend || p.pipe360) ? agLine_('<b>In your pipeline:</b> ' + [p.pipeYes ? p.pipeYes + ' client' + (p.pipeYes === 1 ? '' : 's') + ' said yes on a fact find' : '',
+        p.pipePend ? p.pipePend + ' pending case' + (p.pipePend === 1 ? '' : 's') + ' holding money' : '', p.pipe360 ? ff360Money_(p.pipe360) + ' on FactFind360' : ''].filter(String).join(' · ') +
+        '. Closing these is the quickest API you will write.') : '')));
+}
+
+/** The production line for the top of the mail: a heading and a reason. */
+function agProdLine_(p) {
+  if (!p || !p.target) return null;
+  if (p.gap < 0) return { head: 'You are ' + ff360Money_(-p.gap) + ' behind your FY27 API goal today: ' + ff360Money_(p.api) + ' of ' + ff360Money_(p.target) + '.',
+    why: 'Q' + p.q.n + ' needs ' + ff360Money_(p.qPerWeek) + ' a week' + (p.qAppsNeeded ? ', about ' + p.qAppsNeeded + ' application' + (p.qAppsNeeded === 1 ? '' : 's') + ' at your average' : '') +
+      ', with ' + p.qDaysLeft + ' days left in the quarter.' + (p.pipeYes ? ' ' + p.pipeYes + ' client' + (p.pipeYes === 1 ? ' has' : 's have') + ' already said yes.' : ''), w: 92 };   // behind the goal leads the morning: production is the first thing in front of them
+  return { head: 'You are ' + ff360Money_(p.gap) + ' ahead of your FY27 goal: ' + ff360Money_(p.api) + ' of ' + ff360Money_(p.target) + ' (' + p.pct + '%).',
+    why: 'Hold the lead: ' + ff360Money_(p.perWeek) + ' a week finishes the year, and every week ahead now is room in the quarter you will need it.', w: 45 };
+}
+
 // ---- the one thing at the top ------------------------------------------------------------
 
 /** One message, from the agent's own behaviour and goals, and the reason under it. Facts only. */
-function agMotivate_(a, day, f, g, cl, book) {
+function agMotivate_(a, day, f, g, cl, book, prod) {
   var first = String(a.name).split(' ')[0];
   var wk = Utilities.formatDate(new Date(day + 'T12:00:00Z'), 'UTC', 'EEE');
   var ffWk = g && g.ffWk ? g.ffWk : 2;
   var bestDay = ''; if (f && f.weekdays) { var b = 0; Object.keys(f.weekdays).forEach(function (d) { if (f.weekdays[d] > b) { b = f.weekdays[d]; bestDay = d; } }); }
   var lines = [];
+  var pl = agProdLine_(prod); if (pl) lines.push(pl);
   if (f && f.openYes && f.openYes.length) {
     lines.push({ head: f.openYes.length + ' client' + (f.openYes.length === 1 ? '' : 's') + ' said yes on a fact find and nothing has closed yet.',
       why: 'Oldest: ' + f.openYes[0].client + ', ' + f.openYes[0].days + ' days ago. One call today to book the closing interview turns work you have already done into API.' , w: 90 });
@@ -7830,7 +7946,7 @@ function agMotivate_(a, day, f, g, cl, book) {
     why: 'A call on the day is the easiest review you will book: ' + cl.birthdays.slice(0, 3).map(function (b) { return b.client + (b.inDays === 0 ? ' (today)' : ' (' + shortDate_(shiftDays_(day, b.inDays)) + ')'); }).join(', ') + '.', w: 60 + (cl.birthdays[0].inDays === 0 ? 15 : 0) });
   if (book && book.urgent && book.urgent.length) lines.push({ head: book.urgent.length + ' of your clients are 60 days or more behind on premium.',
     why: 'A policy kept is commission kept. ' + book.urgent.slice(0, 3).map(function (x) { return x.client; }).join(', ') + ' first.', w: 55 + Math.min(25, book.urgent.length * 3) });
-  if (g && g.paceApi && g.api) lines.push({ head: 'Week ' + g.weeksIn + ' of 52: your FY27 plan says ' + ff360Money_(g.paceApi) + ' API by now.',
+  if (!pl && g && g.paceApi && g.api) lines.push({ head: 'Week ' + g.weeksIn + ' of 52: your FY27 plan says ' + ff360Money_(g.paceApi) + ' API by now.',
     why: 'That is ' + g.appsWk + ' application' + (g.appsWk === 1 ? '' : 's') + ' and ' + ffWk + ' fact find' + (ffWk === 1 ? '' : 's') + ' a week, from ' + g.contactsWk + ' contacts.' + (g.title ? ' You set your sights on ' + g.title + '.' : ''), w: 35 });
   if (!g) lines.push({ head: 'You have no FY27 plan on record yet, ' + first + '.', why: 'Two minutes on factfind360.com: a goal is what the morning e-mail measures you against.', w: 50 });
   if (!lines.length) lines.push({ head: 'Good morning, ' + first + '. Set your numbers for today.', why: 'Calls, appointments and fact finds: the three that turn into applications.', w: 0 });
@@ -7936,13 +8052,14 @@ function agentMorningMail_(a, day, data, cache) {
   try { pr = agProspects_(a); } catch (e) {}
   try { cl = agClients_(a, day); } catch (e) {}
   try { plans = agPlanHistory_(a, day); } catch (e) {}
-  var sug = agSuggest_(g), coach = agCoach_(a, day, fx, g, plans), hero = agHero_(agMotivate_(a, day, fx, g, cl, book));
+  var prod = null; try { prod = agProduction_(a, day, cache, g, f3, fx, book); } catch (e) {}
+  var sug = agSuggest_(g), coach = agCoach_(a, day, fx, g, plans), hero = agHero_(agMotivate_(a, day, fx, g, cl, book, prod));
   var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late }; });
   try { PropertiesService.getScriptProperties().setProperty('ag_items_' + a.key + '_' + day, JSON.stringify(items).slice(0, 8900)); } catch (e) {}
 
   var btn = replyButton_(replyUrl_(a.key, day, 'ag'), 'Plan my day and comment', 'One page: your plan in numbers, and a comment on anything below. Comments go on Chatter. No sign-in.');
-  var body = hero +
-    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. Plan your day first: the calls you will make, the appointments, the fact finds, the new people you will meet. Below is what your fact finds, your clients and your book say to plan around. ' +
+  var body = hero + sectionLabel_('Your production against your FY27 goal') + agProdCard_(prod) +
+    '<div style="font-size:14px;line-height:1.55;margin:14px 0">Good morning, ' + esc_(first) + '. Plan your day first: the calls you will make, the appointments, the fact finds, the new people you will meet. Below is what your fact finds, your clients and your book say to plan around. ' +
       'Set your plan for the day from the button: no plan by ' + esc_(twelve_(mmText_(AGENT_ABSENT_AT))) + ' reads as not working today. At midday you get your progress so far, and at 5:30 you close the day off.</div>' +
     statTiles_([
       { value: open.length, label: 'being worked for you', color: MAIL.navy },
@@ -7990,58 +8107,65 @@ function agentMorningMail_(a, day, data, cache) {
     sectionLabel_('Your plan today') + agCard_(MAIL.gold, AGENT_METRICS.map(function (m) { return '<div style="font-size:13px;padding:2px 0">&#9675; ' + esc_(m.plan || m.q) + (sug[m.id] ? ' <span style="color:' + MAIL.muted + '">· your weekly plan suggests ' + sug[m.id] + '</span>' : '') + '</div>'; }).join('') +
       '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:6px">A number against each on the page: what you intend today. At 5:30 you close the day off against it.</div>') + btn +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
-  return agSend_(a, 'Your day · ' + a.name + ' · ' + shortDate_(day) + ' · ' + open.length + ' being worked for you' + (book ? ', ' + book.urgent.length + ' premiums 60+ days' : ''),
+  return agSend_(a, 'Your day · ' + a.name + ' · ' + shortDate_(day) + (prod && prod.target ? ' · FY27 ' + prod.pct + '% of goal' : '') + ' · ' + open.length + ' being worked for you' + (book ? ', ' + book.urgent.length + ' premiums 60+ days' : ''),
     shell_('Good morning · your day', a.name + ' · ' + prettyDate_(day), body), agentCc_(a));
 }
 
-/** Midday: how the day is going against the morning's plan, and what the
- *  branch has closed and still has open for the agent's clients. */
-function agentMiddayMail_(a, day, data) {
+/** Midday: the check-in (Ricky, 19 October 2026: "they are required moving forward to check in").
+ *  Their production first, then the numbers so far against the morning's plan, one page to give them.
+ *  No check-in by AGENT_CHECK_BY reads as missed on the managers' view. */
+var AGENT_CHECK_BY = 14 * 60;   // 2pm
+function agentMiddayMail_(a, day, data, cache) {
   var first = String(a.name).split(' ')[0], plan = agRows_(a.key, day, 'plan'), planned = Object.keys(plan).length;
   var closed = data.closed[a.key] || [], open = data.open[a.key] || [];
-  var late = open.filter(function (t) { return t.late; }).length;
-  var btn = replyButton_(replyUrl_(a.key, day, 'ag'), planned ? 'Update my plan' : 'Plan my day now',
-    planned ? 'Your plan from this morning, to change if the day has moved. Comments go on Chatter. No sign-in.' : 'No plan is in yet. One page, no sign-in.');
-  var body =
-    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is midday. Here is your progress so far' +
-      (planned ? ', against the plan you set this morning' : ': <b style="color:' + MAIL.red + '">no plan was set this morning</b>') + '. At 5:30 you close the day off.</div>' +
+  var g = (data.goal || {})[a.key] || null, f3 = (data.f360 || {})[a.key] || null, prod = null, fx = null, book = agentBook_(a, cache);
+  try { fx = agFactFinds_(a, day); } catch (e) {}
+  try { prod = agProduction_(a, day, cache, g, f3, fx, book); } catch (e) {}
+  var pl = agProdLine_(prod);
+  var btn = replyButton_(replyUrl_(a.key, day, 'agm'), 'Check in now', 'Your numbers so far against this morning\'s plan. One page, no sign-in. Required by ' + twelve_(mmText_(AGENT_CHECK_BY)) + '.');
+  var hero = agHero_([{ head: first + ', it is midday: check in.', why: (planned ? 'Your plan this morning: ' + AGENT_METRICS.filter(function (m) { return plan[m.id] && Number(plan[m.id].Planned || 0); }).slice(0, 3).map(function (m) { return plan[m.id].Planned + ' ' + String(m.q).toLowerCase(); }).join(', ') + '. Where are you against it?' : 'No plan came in this morning. Check in with what you have done so far, and set the afternoon.'), w: 100 }].concat(pl ? [pl] : []));
+  var body = hero + btn +
+    sectionLabel_('Your production against your FY27 goal') + agProdCard_(prod, true) +
     statTiles_([
+      { value: planned ? 'yes' : 'no', label: 'plan set today', color: planned ? MAIL.green : MAIL.red },
       { value: closed.length, label: 'the branch closed for you today', color: MAIL.green },
-      { value: open.length, label: 'still open, due', color: open.length ? MAIL.amber : MAIL.navy },
-      { value: late, label: 'of them overdue', color: late ? MAIL.red : MAIL.navy },
-      { value: planned ? 'yes' : 'no', label: 'plan set today', color: planned ? MAIL.green : MAIL.red }
-    ]) + btn +
+      { value: open.length, label: 'still open for your clients', color: open.length ? MAIL.amber : MAIL.navy }
+    ]) +
     (planned ? sectionLabel_('Your plan this morning') + agCard_(MAIL.gold, AGENT_METRICS.filter(function (m) { return plan[m.id]; }).map(function (m) {
       return '<div style="font-size:13px;padding:2px 0">' + esc_(m.q) + ': <b>' + esc_(plan[m.id].Planned || '—') + '</b></div>'; }).join('')) : '') +
     (closed.length ? sectionLabel_('Done for your clients so far') + agCard_(MAIL.green, closed.slice(0, AGENT_LIST_MAX).map(function (t) {
       return agLine_('&#10003; <b>' + esc_(String(t.owner).split(' ')[0]) + '</b> · ' + esc_(t.subject)); }).join('')) : '') +
     (open.length ? sectionLabel_('Still open for your clients (' + open.length + ')') + agCard_(MAIL.amber, open.slice(0, AGENT_LIST_MAX).map(function (t) {
       return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
-        (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : '')); }).join('')) : '');
-  return agSend_(a, 'Midday progress · ' + a.name + ' · ' + shortDate_(day) + ' · ' + closed.length + ' closed, ' + open.length + ' open',
-    shell_('Midday progress', a.name + ' · ' + prettyDate_(day), body), []);
+        (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : '')); }).join('')) : '') + btn;
+  return agSend_(a, 'Check in · ' + a.name + ' · ' + shortDate_(day) + (prod && prod.target ? ' · FY27 ' + prod.pct + '% of goal' : ''),
+    shell_('Midday check-in', a.name + ' · ' + prettyDate_(day), body), agentCc_(a));
 }
 
-function agentEveningMail_(a, day, data) {
-  var first = String(a.name).split(' ')[0], plan = agRows_(a.key, day, 'plan'), planned = Object.keys(plan).length;
+function agentEveningMail_(a, day, data, cache) {
+  var first = String(a.name).split(' ')[0], plan = agRows_(a.key, day, 'plan'), planned = Object.keys(plan).length, check = agRows_(a.key, day, 'check');
+  var checked = Object.keys(check).length;
   var closed = data.closed[a.key] || [], open = data.open[a.key] || [];
+  var g = (data.goal || {})[a.key] || null, f3 = (data.f360 || {})[a.key] || null, prod = null;
+  try { prod = agProduction_(a, day, cache, g, f3, null, agentBook_(a, cache)); } catch (e) {}
   var btn = replyButton_(replyUrl_(a.key, day, 'agc'), 'Close off my day', 'One page: what you did against your plan, in numbers. No answer reads as nothing done today.');
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is half past five. Close off your day' +
-      (planned ? ' against the plan you set this morning' : ' (no plan was set this morning)') + '. It goes to your manager and sales support.</div>' +
+      (planned ? ' against the plan you set this morning' : ' (no plan was set this morning)') + (checked ? '' : '. <b style="color:' + MAIL.red + '">No check-in came in at midday.</b>') + ' It goes to your manager and sales support.</div>' +
     statTiles_([
-      { value: closed.length, label: 'the branch closed for you', color: MAIL.green },
-      { value: open.length, label: 'still open, due', color: open.length ? MAIL.amber : MAIL.navy },
-      { value: planned ? 'yes' : 'no', label: 'plan set today', color: planned ? MAIL.green : MAIL.red }
+      { value: planned ? 'yes' : 'no', label: 'plan set today', color: planned ? MAIL.green : MAIL.red },
+      { value: checked ? 'yes' : 'no', label: 'checked in at midday', color: checked ? MAIL.green : MAIL.red },
+      { value: closed.length, label: 'the branch closed for you', color: MAIL.green }
     ]) + btn +
+    sectionLabel_('Your production against your FY27 goal') + agProdCard_(prod, true) +
     (closed.length ? sectionLabel_('Done for your clients today') + agCard_(MAIL.green, closed.slice(0, AGENT_LIST_MAX).map(function (t) {
       return agLine_('&#10003; <b>' + esc_(String(t.owner).split(' ')[0]) + '</b> · ' + esc_(t.subject)); }).join('')) : '') +
-    (planned ? sectionLabel_('Your plan this morning') + agCard_(MAIL.gold, AGENT_METRICS.filter(function (m) { return plan[m.id]; }).map(function (m) {
-      return '<div style="font-size:13px;padding:2px 0">' + esc_(m.q) + ': <b>' + esc_(plan[m.id].Planned || '—') + '</b></div>'; }).join('')) : '') + btn;
+    (planned ? sectionLabel_('Your plan this morning' + (checked ? ' · and at midday' : '')) + agCard_(MAIL.gold, AGENT_METRICS.filter(function (m) { return plan[m.id]; }).map(function (m) {
+      return '<div style="font-size:13px;padding:2px 0">' + esc_(m.q) + ': <b>' + esc_(plan[m.id].Planned || '—') + '</b>' + (check[m.id] ? ' · midday ' + esc_(check[m.id].Done || '0') : '') + '</div>'; }).join('')) : '') + btn;
   return agSend_(a, 'Close off your day · ' + a.name + ' · ' + shortDate_(day), shell_('Close off your day', a.name + ' · ' + prettyDate_(day), body), []);
 }
 
-/** Runs from the day tick: the morning check from 5:30, the midday progress from 12:00, the sign-off from 17:30. */
+/** Runs from the day tick: the morning plan from 5:00, the midday check-in from 12:00, the sign-off from 17:30. */
 function agentTick_(day, mins) {
   var mode = agentMode_();
   if (mode === 'off') return [];
@@ -8061,11 +8185,11 @@ function agentTick_(day, mins) {
   if (!batch.length) return [];
   var data = agentBatchData_(batch, day);
   var cache = null;
-  if (kind === 'am') { try { cache = typeof iLoadCache_ === 'function' ? iLoadCache_() : null; } catch (e) {} }
+  try { cache = typeof iLoadCache_ === 'function' ? iLoadCache_() : null; } catch (e) {}
   batch.forEach(function (a) {
     props.setProperty('ag_' + kind + '_' + a.key + '_' + day, hhmm_(new Date()));
     try {
-      var ok = kind === 'am' ? agentMorningMail_(a, day, data, cache) : kind === 'md' ? agentMiddayMail_(a, day, data) : agentEveningMail_(a, day, data);
+      var ok = kind === 'am' ? agentMorningMail_(a, day, data, cache) : kind === 'md' ? agentMiddayMail_(a, day, data, cache) : agentEveningMail_(a, day, data, cache);
       if (ok) out.push(a.name + ' (agent ' + kind + ')');
     } catch (e) { out.push(a.name + ' agent mail FAILED: ' + (e && e.message)); }
   });
@@ -8075,35 +8199,43 @@ function agentTick_(day, mins) {
 
 // ---- the agent's pages ------------------------------------------------------------
 
+/** ag: the morning plan (intentions); agm: the midday check-in (so far); agc: the close-off (done). */
+function agKindOf_(kind) { return kind === 'agc' ? 'close' : kind === 'agm' ? 'check' : 'plan'; }
+
 function agReplyPage_(person, day, kind, error) {
-  var a = person.agent, items = [], plan = agRows_(a.key, day, 'plan'), had = agRows_(a.key, day, kind === 'agc' ? 'close' : 'plan');
+  var a = person.agent, items = [], mode = agKindOf_(kind), plan = agRows_(a.key, day, 'plan'), had = agRows_(a.key, day, mode);
+  var check = mode === 'close' ? agRows_(a.key, day, 'check') : {};
   try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty('ag_items_' + a.key + '_' + day) || '[]'); } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
-  var eve = kind === 'agc', sug = {};
+  var eve = mode !== 'plan', sug = {};
   try { sug = agSuggest_(goalFor_(a.agentName, a.code || a.agentId)); } catch (e) {}
-  var metrics = '<div class="card"><div class="bh">' + (eve ? 'What you did today' : 'Your plan today') + '</div>' + AGENT_METRICS.map(function (m) {
+  var label = function (m) { return mode === 'plan' ? (m.plan || m.q) : mode === 'check' ? (m.done || m.q) + ' so far' : (m.done || m.q); };
+  var metrics = '<div class="card"><div class="bh">' + (mode === 'close' ? 'What you did today' : mode === 'check' ? 'Where you are at midday' : 'Your plan today') + '</div>' + AGENT_METRICS.map(function (m) {
     var pl = (plan[m.id] || {}).Planned, r = had[m.id] || {};
-    return '<div style="padding:8px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px">' + esc_(eve ? (m.done || m.q) : (m.plan || m.q)) +
+    return '<div style="padding:8px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px">' + esc_(label(m)) +
       (eve && pl !== undefined && pl !== '' ? ' <span class="br2">· planned ' + esc_(pl) + '</span>' : '') +
+      (mode === 'close' && check[m.id] ? ' <span class="br2">· midday ' + esc_(check[m.id].Done || '0') + '</span>' : '') +
       (!eve && sug[m.id] ? ' <span class="br2">· your weekly plan suggests ' + esc_(sug[m.id]) + '</span>' : '') + '</div>' +
       '<input type="number" min="0" name="m_' + m.id + '" value="' + esc_(eve ? (r.Done || '') : (r.Planned || '')) + '" style="width:90px" placeholder="' + esc_(!eve && sug[m.id] ? sug[m.id] : 0) + '"> ' +
       '<input type="text" name="n_' + m.id + '" value="' + esc_(r.Note || '') + '" style="width:calc(100% - 110px)" placeholder="Who, or a note"></div>';
-  }).join('') + '<div class="bf" style="margin-top:8px">' + (eve ? 'The day in a line or two:' : 'Your plan in words: who you are seeing, what you are closing:') + '</div>' +
+  }).join('') + '<div class="bf" style="margin-top:8px">' + (mode === 'close' ? 'The day in a line or two:' : mode === 'check' ? 'The afternoon: who you are seeing, what you are closing, any help you need:' : 'Your plan in words: who you are seeing, what you are closing:') + '</div>' +
     '<textarea name="summary" rows="3"></textarea></div>';
   var list = items.length ? '<div class="card"><div class="bh">Being worked for your clients · comment on anything (goes to Chatter)</div>' + items.map(function (it) {
     return '<div style="padding:9px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px"><b>' + esc_(String(it.o || '').split(' ')[0]) + '</b> · ' + esc_(it.s) +
       (it.late ? ' <span class="br2">· overdue since ' + esc_(shortDate_(it.due)) + '</span>' : '') + (base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
       '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Your comment for the team, posted to Chatter on this task"></textarea></div>';
   }).join('') + '</div>' : '';
-  return replyPage_((eve ? 'Close off your day · ' : 'Your day · ') + prettyDate_(day),
-    eve ? 'A number against each, 0 where nothing was done. Your manager and sales support get it.' : 'Set your plan in numbers and comment on anything the team is working for you. One save at the bottom.',
+  return replyPage_((mode === 'close' ? 'Close off your day · ' : mode === 'check' ? 'Check in · ' : 'Your day · ') + prettyDate_(day),
+    mode === 'close' ? 'A number against each, 0 where nothing was done. Your manager and sales support get it.'
+      : mode === 'check' ? 'Your numbers so far, 0 where there is none yet. Your manager and sales support get it.'
+      : 'What you intend to do today, in numbers, and a comment on anything the team is working for you. One save at the bottom.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(a.key, day, kind) + metrics + list +
-    '<button type="submit">' + (eve ? 'Close off my day' : 'Save my plan') + '</button></form>');
+    '<button type="submit">' + (mode === 'close' ? 'Close off my day' : mode === 'check' ? 'Check in' : 'Save my plan') + '</button></form>');
 }
 
 function agReplySave_(person, day, kind, p) {
-  var a = person.agent, eve = kind === 'agc', items = [], at = hhmm_(new Date()), comments = [];
+  var a = person.agent, mode = agKindOf_(kind), eve = mode !== 'plan', items = [], at = hhmm_(new Date()), comments = [];
   try { items = JSON.parse(PropertiesService.getScriptProperties().getProperty('ag_items_' + a.key + '_' + day) || '[]'); } catch (e) {}
   var rows = AGENT_METRICS.map(function (m) {
     var v = String(p['m_' + m.id] || '').trim();
@@ -8121,15 +8253,17 @@ function agReplySave_(person, day, kind, p) {
     comments.push({ s: it.s, txt: txt, res: res });
   });
   var summary = String(p.summary || '').trim();
-  if (summary) rows.push({ Item: 'summary', Question: eve ? 'The day' : 'The plan', Note: summary });
-  agWrite_(a, day, eve ? 'close' : 'plan', rows);
-  try { agCopy_(a, day, eve, rows, comments); } catch (e) {}
-  return replyPage_(eve ? 'Your day is closed off' : 'Your plan is in', 'Your manager and sales support have a copy. Thank you.',
+  if (summary) rows.push({ Item: 'summary', Question: mode === 'close' ? 'The day' : mode === 'check' ? 'The afternoon' : 'The plan', Note: summary });
+  agWrite_(a, day, mode, rows);
+  try { agCopy_(a, day, mode, rows, comments); } catch (e) {}
+  return replyPage_(mode === 'close' ? 'Your day is closed off' : mode === 'check' ? 'You are checked in' : 'Your plan is in', 'Your manager and sales support have a copy. Thank you.',
     '<div class="card ok">' + rows.map(function (r) { return '<div class="ln">' + esc_(r.Question) + ': <b>' + esc_(eve ? (r.Done || '') : (r.Planned || '')) + '</b>' + (r.Note ? ' · ' + esc_(r.Note) : '') + '</div>'; }).join('') +
     comments.map(function (c) { return '<div class="ln">' + (/^NOT/.test(c.res) ? '&#9888; ' : '&#10003; ') + esc_(c.s) + ' · ' + esc_(c.res) + '</div>'; }).join('') + '</div>');
 }
 
-function agCopy_(a, day, eve, rows, comments) {
+function agCopy_(a, day, mode, rows, comments) {
+  if (mode === true) mode = 'close'; else if (mode === false) mode = 'plan';
+  var eve = mode !== 'plan';
   var mgr = agentManagerEmail_(a), to = [mgr || (managerEmails_() || [])[0]].filter(String);
   if (!to.length) return;
   var plan = eve ? agRows_(a.key, day, 'plan') : {};
@@ -8137,14 +8271,15 @@ function agCopy_(a, day, eve, rows, comments) {
   var table = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px">' +
     rows.filter(function (r) { return r.Item !== 'summary'; }).map(function (r) {
       var pl = eve ? String((plan[r.Item] || {}).Planned || '') : '';
-      var short = eve && pl !== '' && Number(r.Done || 0) < Number(pl);
+      var short = mode === 'close' && pl !== '' && Number(r.Done || 0) < Number(pl);
       return '<tr><td style="' + td + '">' + esc_(r.Question) + (r.Note ? '<div style="color:' + MAIL.muted + ';font-size:11.5px">' + esc_(r.Note) + '</div>' : '') + '</td>' +
         (eve ? '<td style="' + td + 'text-align:right">' + esc_(pl || '—') + '</td>' : '') +
         '<td style="' + td + 'text-align:right;font-weight:700;' + (short ? 'color:' + MAIL.red : '') + '">' + esc_(eve ? r.Done : r.Planned) + '</td></tr>';
     }).join('') + '</table>';
   var sum = rows.filter(function (r) { return r.Item === 'summary'; })[0];
-  agSendCopy_(to, [DAYSTART_CC_DEFAULT], (eve ? 'Day closed off · ' : 'Plan received · ') + a.name + ' · Agent · ' + shortDate_(day),
-    shell_(eve ? 'The agent\'s day' : 'The agent\'s plan', a.name + ' · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()),
+  var title = mode === 'close' ? 'Day closed off · ' : mode === 'check' ? 'Checked in · ' : 'Plan received · ';
+  agSendCopy_(to, [DAYSTART_CC_DEFAULT], title + a.name + ' · Agent · ' + shortDate_(day),
+    shell_(mode === 'close' ? 'The agent\'s day' : mode === 'check' ? 'The agent\'s midday check-in' : 'The agent\'s plan', a.name + ' · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()),
       table + (sum ? '<div style="font-size:13.5px;margin-top:10px">"' + esc_(sum.Note) + '"</div>' : '') +
       (comments.length ? sectionLabel_('Comments, now on Chatter') + comments.map(function (c) { return agLine_('<b>' + esc_(c.s) + '</b><div>' + esc_(c.txt) + '</div>'); }).join('') : '')), a);
 }
@@ -8167,17 +8302,19 @@ function agentDaySummary_(day, filterNames) {
   return Object.keys(people).sort().map(function (k) {
     var a = people[k];
     if (want && want.indexOf(nk(a.agentName)) === -1 && want.indexOf(nk(a.name)) === -1) return null;
-    var plan = {}, close = {};
+    var plan = {}, close = {}, check = {};
     rows.forEach(function (r) {
       if (isoDay_(r.Date) !== day || String(r.Agent) !== k) return;
+      if (String(r.Kind) === 'check') check[String(r.Item)] = r;
       if (String(r.Kind) === 'plan') plan[String(r.Item)] = r;
       if (String(r.Kind) === 'close') close[String(r.Item)] = r;
     });
     var hasPlan = Object.keys(plan).length > 0, hasClose = Object.keys(close).length > 0;
-    var status = hasClose ? 'closed off' : hasPlan ? 'plan in' : (nowM >= AGENT_ABSENT_AT ? 'absent (no plan)' : 'no plan yet');
+    var hasCheck = Object.keys(check).length > 0;
+    var status = hasClose ? 'closed off' : hasCheck ? 'checked in' : hasPlan ? (nowM >= AGENT_CHECK_BY ? 'plan in, no check-in' : 'plan in') : (nowM >= AGENT_ABSENT_AT ? 'absent (no plan)' : 'no plan yet');
     var sum = function (o, f) { return AGENT_METRICS.reduce(function (s, m) { return s + Number((o[m.id] || {})[f] || 0); }, 0); };
     return { key: k, name: a.name, status: status, planned: sum(plan, 'Planned'), done: sum(close, 'Done'),
-             ff: Number((close.ff || {}).Done || 0), apps: Number((close.apps || {}).Done || 0), hasPlan: hasPlan, hasClose: hasClose };
+             ff: Number((close.ff || {}).Done || 0), apps: Number((close.apps || {}).Done || 0), hasPlan: hasPlan, hasClose: hasClose, hasCheck: hasCheck };
   }).filter(Boolean);
 }
 
@@ -8188,7 +8325,7 @@ function agentSummaryTable_(list) {
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px">' +
     '<tr><td style="' + th + ';text-align:left">Agent</td><td style="' + th + '">Today</td><td style="' + th + '">Planned · done</td><td style="' + th + '">FF · apps</td></tr>' +
     list.map(function (x) {
-      var c = /absent/.test(x.status) ? MAIL.red : x.hasClose ? MAIL.green : x.hasPlan ? MAIL.navy : MAIL.amber;
+      var c = /absent/.test(x.status) ? MAIL.red : x.hasClose ? MAIL.green : /no check-in/.test(x.status) ? MAIL.amber : x.hasPlan ? MAIL.navy : MAIL.amber;
       return '<tr><td style="' + td + '">' + esc_(x.name) + '</td><td style="' + td + 'text-align:right;color:' + c + ';font-weight:700">' + esc_(x.status) + '</td>' +
         '<td style="' + td + 'text-align:right">' + (x.hasPlan ? x.planned : '—') + ' · ' + (x.hasClose ? x.done : '—') + '</td>' +
         '<td style="' + td + 'text-align:right">' + (x.hasClose ? x.ff + ' · ' + x.apps : '—') + '</td></tr>';
@@ -9283,7 +9420,7 @@ var PROG = { must: ['Date', 'StaffId', 'Check', 'TaskId'], name: 'Progress Answe
              head: ['Date', 'StaffId', 'Name', 'Check', 'TaskId', 'Subject', 'Answer', 'Reason', 'At'] };
 var REPLY_PAGES = { plan: 'Your plan', prog: 'Where each task stands', hk: 'Before you leave', 'in': 'Sign in',
                     errand: 'Your errands', undo: 'Workload moves', nudge: 'Nudge', bm: 'Respond', um: 'Your unit', umeve: 'Your day as a manager',
-                    ag: 'Your day', agc: 'Close off your day', cmd: 'Not getting attention', qp: 'Query Pal deep dive', agff: 'Your fact finds', me: 'My day' };
+                    ag: 'Your day', agm: 'Check in', agc: 'Close off your day', cmd: 'Not getting attention', qp: 'Query Pal deep dive', agff: 'Your fact finds', me: 'My day' };
 
 /** Today's sign-in time for a person, or ''. */
 function signedInAt_(sid, day) {
@@ -9521,7 +9658,7 @@ function replyWeekLink_(f, day) { var d = daysBetween_(day, todayISO_()); return
 function replyPerson_(sid, f) {
   return rosterPerson_(sid) || ((f === 'undo' || f === 'bm' || f === 'cmd' || f === 'qp' || f === 'me') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
     ((f === 'um' || f === 'umeve' || f === 'cmd') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
-    ((f === 'ag' || f === 'agc' || f === 'agff') && /^a-/.test(sid) ? agentBySid_(sid) : null);
+    ((f === 'ag' || f === 'agm' || f === 'agc' || f === 'agff') && /^a-/.test(sid) ? agentBySid_(sid) : null);
 }
 
 /** GET: show a page. Never writes. */
@@ -9551,7 +9688,7 @@ function replyClick_(e) {
   if (f === 'agff') return ffReplyPage_(person, day, '');
   if (f === 'um') return umReplyPage_(person, day, '');
   if (f === 'umeve') return umEveReplyPage_(person, day, '');
-  if (f === 'ag' || f === 'agc') return agReplyPage_(person, day, f, '');
+  if (f === 'ag' || f === 'agm' || f === 'agc') return agReplyPage_(person, day, f, '');
   if (f === 'nudge') return nudgeReplyPage_(person, day, '');
   return hkReplyPage_(person, day, '');
 }
@@ -9590,7 +9727,7 @@ function replyPost_(e) {
   if (f === 'agff') return ffReplySave_(person, day, p);
   if (f === 'um') return umReplySave_(person, day, p);
   if (f === 'umeve') return umEveReplySave_(person, day, p);
-  if (f === 'ag' || f === 'agc') return agReplySave_(person, day, f, p);
+  if (f === 'ag' || f === 'agm' || f === 'agc') return agReplySave_(person, day, f, p);
   if (f === 'nudge') return nudgeReplySave_(person, day, p, all);
   return hkReplySave_(person, day, p, all);
 }

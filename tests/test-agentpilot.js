@@ -95,5 +95,46 @@ sent.length = 0;
 env.agentMorningMail_(people['a-varun-seegolam'], DAY, data, null);
 ok('an agent outside the pilot gets nothing', sent.length === 0);
 
+console.log('\nProduction against the FY27 goal:\n');
+const goal = { api: 120000, apps: 24, q: [30000, 30000, 30000, 30000], ffWk: 2, appsWk: 1, contactsWk: 20, apptsWk: 5, weeksIn: 3, paceApi: 6900 };
+const cache = { tag: 'c' };
+env.iScope_ = () => ({ production: { byAgent: [{ agentId: '10024', months: { 9: 50000, 10: 5000 } }],
+  rows: [ { settled: '2026-09-20', apps: 1, api: 50000 }, { settled: '2026-10-08', apps: 1, api: 3000 }, { settled: '2026-10-16', apps: 1, api: 2000 } ] } });
+const prod = env.agProduction_(pilot['a-neil-ramnanan'], DAY, cache, goal, null, f, { pend: [1, 2] });
+ok('only FY27 counts: October, not September', prod.api === 5000 && prod.apps === 2, JSON.stringify({ api: prod.api, apps: prod.apps }));
+ok('target is his goal\'s API', prod.target === 120000 && prod.pct === 4);
+ok('Q1 is October to December, from the goal\'s Q1', prod.q.n === 1 && prod.q.to === '2026-12-31' && prod.qTarget === 30000);
+ok('pace on 19 Oct is 19 days of 365', prod.pace === Math.round(120000 * 19 / 365), String(prod.pace));
+ok('behind pace by the difference', prod.gap === 5000 - prod.pace);
+ok('the last 7 days', prod.week === 2000);
+ok('applications needed for the quarter, at his average', prod.avgApp === 2500 && prod.qAppsNeeded === 10, JSON.stringify({ avg: prod.avgApp, n: prod.qAppsNeeded }));
+ok('pipeline: said yes and pendings', prod.pipeYes === 2 && prod.pipePend === 2);
+const card = env.agProdCard_(prod);
+ok('the card shows the API, the goal and behind', /\$5k/.test(card) && /\$120k/.test(card) && /behind/.test(card) && /Q1/.test(card), card.slice(0, 300));
+const top = env.agMotivate_(pilot['a-neil-ramnanan'], DAY, f, goal, null, null, prod);
+ok('behind the goal, production leads the morning', /behind your FY27 API goal/.test(top[0].head), top[0].head);
+const q2 = env.agFyQuarter_('2027-02-10'); ok('February is Q2', q2.n === 2 && q2.from === '2027-01-01');
+const ahead = env.agProduction_(pilot['a-neil-ramnanan'], DAY, { tag: 'd' }, { api: 10000, q: [] }, null, null, null);
+ok('ahead of the goal says so', env.agProdLine_(ahead).head.indexOf('ahead') > -1 && ahead.qTarget === 2500);
+const nogoal = env.agProdCard_(env.agProduction_(pilot['a-neil-ramnanan'], DAY, cache, null, null, null, null));
+ok('no goal on record: says to set it', /No FY27 API goal/.test(nogoal));
+
+console.log('\nThe midday check-in:\n');
+sent.length = 0;
+env.goalFor_ = () => goal;
+env.agentBook_ = () => null;
+env.agentMiddayMail_(pilot['a-neil-ramnanan'], DAY, Object.assign({}, data, { goal: { 'a-neil-ramnanan': goal } }), cache);
+ok('a check-in mail to Neil, copied', sent.length === 1 && /Check in/.test(sent[0].subject) && sent[0].cc === 'ricky@example.com,rickyrampersadsalessupport@myguardiangroup.com', sent[0] && sent[0].subject);
+ok('it carries the check-in link and his production', sent[0] && /f=agm/.test(sent[0].htmlBody) && /FY27/.test(sent[0].htmlBody));
+const pg = env.agReplyPage_({ agent: pilot['a-neil-ramnanan'] }, DAY, 'agm', '');
+const pgs = typeof pg === 'string' ? pg : (pg.getContent ? pg.getContent() : JSON.stringify(pg));
+ok('the check-in page asks "so far"', /so far/.test(pgs) && /Check in/.test(pgs));
+const written = [];
+env.agWrite_ = (a, d, kind, rows) => written.push({ kind, n: rows.length });
+env.agCopy_ = () => {};
+const form = {}; env.AGENT_METRICS.forEach(m => { form['m_' + m.id] = '1'; });
+env.agReplySave_({ agent: pilot['a-neil-ramnanan'] }, DAY, 'agm', form);
+ok('saved as a check-in', written.length === 1 && written[0].kind === 'check', JSON.stringify(written));
+
 console.log('\n' + (fails ? fails + ' FAILED' : 'all green') + '\n');
 process.exit(fails ? 1 : 0);
