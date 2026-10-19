@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19c';
+var SCRIPT_VERSION = '2026-10-19d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4543,6 +4543,25 @@ function bigGet_(key, dflt) {
   if (!js) return dflt;
   try { return JSON.parse(js); } catch (e) { return dflt; }
 }
+/** A task's Chatter on the tracker's own pages, for people with no Salesforce login: the latest two
+ *  notes, and the whole history a tap away (replies marked). Ricky, 19 Oct 2026: "they are only allowed
+ *  to post where the task is open, view the history, and they can speak, but don't allow them to open
+ *  in Salesforce". */
+function chatterNotes_(chat, id) {
+  var all = (chat || {})[id] || [];
+  var one = function (n, full) {
+    var t = String(n.text || ''), head = t.split('\n')[0], ours = /^(Unit Manager|Branch Manager|BMA|Agent)\b/.test(head);
+    var who = ours ? head.split(' · ').slice(0, 2).join(' · ') : n.by;
+    var body = ours ? t.split('\n').slice(1).join(' ').trim() : t;
+    return '<div class="br2" style="margin-top:3px">' + (n.reply ? '&#8627; ' : '') + esc_(who) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(full ? body : shorten_(body, 160)) + '</div>';
+  };
+  if (!all.length) return '<div class="br2" style="margin-top:3px">No notes on Chatter yet.</div>';
+  return all.slice(0, 2).map(function (n) { return one(n, false); }).join('') +
+    (all.length > 2 || all.some(function (n) { return String(n.text || '').length > 160; })
+      ? '<details style="margin-top:4px"><summary class="br2" style="cursor:pointer">The whole history (' + all.length + ' note' + (all.length === 1 ? '' : 's') + ')</summary>' +
+        all.map(function (n) { return one(n, true); }).join('') + '</details>' : '');
+}
+var SPEAK_PH = 'Type or speak your comment (tap the microphone on your keyboard). It goes on this task\'s Chatter as yours.';
 /** A desk with no Salesforce login of its own (Akaash, 19 Oct 2026): its links go to its own comment page, not Salesforce. */
 function noSfLogin_(sid) {
   if (sid === 'ricky') return false;
@@ -4657,21 +4676,7 @@ function umReplyPage_(person, day, error) {
   var head = { pend: 'Pendings', 'new': 'New business', ret: 'Retention and orphan adoption', other: 'Everything else overdue' };
   var plan = mgrRows_(sid, day, 'plan'), noSf = noSfLogin_(sid), chat = {};
   try { chat = cmdChatter_(items.map(function (it) { return it.id; })); } catch (e) {}
-  // The task's Chatter, newest first: the latest two, and the whole history a tap away (he cannot open Salesforce).
-  var notes = function (id) {
-    var all = chat[id] || [];
-    var one = function (n, full) {
-      var t = String(n.text || ''), head = t.split('\n')[0], ours = /^(Unit Manager|Branch Manager|BMA)\b/.test(head);
-      var who = ours ? head.split(' · ').slice(0, 2).join(' · ') : n.by;
-      var body = ours ? t.split('\n').slice(1).join(' ').trim() : t;
-      return '<div class="br2" style="margin-top:3px">' + (n.reply ? '&#8627; ' : '') + esc_(who) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(full ? body : shorten_(body, 160)) + '</div>';
-    };
-    if (!all.length) return '<div class="br2" style="margin-top:3px">No notes on Chatter yet.</div>';
-    return all.slice(0, 2).map(function (n) { return one(n, false); }).join('') +
-      (all.length > 2 || all.some(function (n) { return String(n.text || '').length > 160; })
-        ? '<details style="margin-top:4px"><summary class="br2" style="cursor:pointer">The whole history (' + all.length + ' note' + (all.length === 1 ? '' : 's') + ')</summary>' +
-          all.map(function (n) { return one(n, true); }).join('') + '</details>' : '');
-  };
+  var notes = function (id) { return chatterNotes_(chat, id); };
   var groups = ['pend', 'new', 'ret', 'other'].map(function (k) {
     var list = items.filter(function (it) { return it.k === k; });
     if (!list.length) return '';
@@ -4679,7 +4684,7 @@ function umReplyPage_(person, day, error) {
       return '<div id="i' + esc_(it.id) + '" style="padding:9px 0;border-top:1px solid #E5E1D6;scroll-margin-top:72px"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
         (it.due ? ' <span class="br2">· ' + (it.late ? 'overdue since ' : 'due ') + esc_(shortDate_(it.due)) + '</span>' : '') +
         (base && !noSf ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' + notes(it.id) +
-        '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Type or speak your comment (tap the microphone on your keyboard). It goes on this task\'s Chatter as yours."></textarea></div>';
+        '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="' + esc_(SPEAK_PH) + '"></textarea></div>';
     }).join('') + '</div>';
   }).join('');
   var checks = '<div class="card"><div class="bh">Your day as a manager · what you will do today</div>' + UM_CHECKS.map(function (c) {
@@ -4829,7 +4834,7 @@ function sendUnitManagerEvening_(sid, day) {
       return t ? sectionLabel_('Your agents today') + t + '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">No plan by ' + esc_(twelve_(mmText_(AGENT_ABSENT_AT))) + ' reads as absent; no close-off by tomorrow reads as nothing done.</div>' : ''; })() +
     (secs.length && secs[0].list.length ? sectionLabel_('Pendings still open (' + secs[0].list.length + ')') +
       '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.amber + ';border-radius:10px;padding:8px 15px">' +
-      secs[0].list.slice(0, 6).map(function (t) { return umTaskLine_(t, day, base); }).join('') + '</div>' : '') +
+      secs[0].list.slice(0, 6).map(function (t) { return umTaskLine_(t, day, base, noSfLogin_(sid) ? function (id) { return replyUrl_(sid, day, 'umeve') + '#i' + id; } : null); }).join('') + '</div>' : '') +
     btn;
   MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
     subject: 'Account for your day · ' + name + ' · ' + shortDate_(day) + (book ? ' · unit closed ' + book.closedToday.length + ', ' + nLate + ' overdue' : ''),
@@ -4841,6 +4846,7 @@ function umEveReplyPage_(person, day, error) {
   var sid = String(person.staffId), items = [], plan = mgrRows_(sid, day, 'plan'), had = mgrRows_(sid, day, 'eve');
   try { items = bigGet_(umItemsKey_(sid, day) + '_eve', []); } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
+  var noSf = noSfLogin_(sid), chat = {}; try { chat = cmdChatter_(items.map(function (it) { return it.id; })); } catch (e) {}
   var checks = '<div class="card"><div class="bh">Your day as a manager · what you did</div>' + UM_CHECKS.map(function (c) {
     var pl = (plan[c.id] || {}).Planned, r = had[c.id] || {};
     return '<div style="padding:8px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px">' + esc_(c.q) +
@@ -4849,9 +4855,9 @@ function umEveReplyPage_(person, day, error) {
       '<input type="text" name="n_' + c.id + '" value="' + esc_(r.Note || '') + '" style="width:calc(100% - 110px)" placeholder="' + esc_(c.note || 'Note') + '"></div>';
   }).join('') + '<div class="bf" style="margin-top:8px">The day in a line or two, for Mr Rampersad:</div><textarea name="summary" rows="3"></textarea></div>';
   var list = items.length ? '<div class="card"><div class="bh">Your unit · comment on anything (goes to Chatter)</div>' + items.map(function (it) {
-    return '<div style="padding:9px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
-      (it.late ? ' <span class="br2">· overdue since ' + esc_(shortDate_(it.due)) + '</span>' : '') + (base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
-      '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Type or speak your comment (tap the microphone on your keyboard). It goes on this task\'s Chatter as yours."></textarea></div>';
+    return '<div id="i' + esc_(it.id) + '" style="padding:9px 0;border-top:1px solid #E5E1D6;scroll-margin-top:72px"><div style="font-size:14px"><b>' + esc_(it.a || '') + '</b> · ' + esc_(it.s) +
+      (it.late ? ' <span class="br2">· overdue since ' + esc_(shortDate_(it.due)) + '</span>' : '') + (base && !noSf ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' + chatterNotes_(chat, it.id) +
+      '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="' + esc_(SPEAK_PH) + '"></textarea></div>';
   }).join('') + '</div>' : '';
   return replyPage_('Your day · ' + prettyDate_(day), 'A number against each KPI, with names where it asks. Mr Rampersad gets the account.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
@@ -6273,7 +6279,7 @@ function cmdReplyPage_(person, day, error, notice) {
   // ── The rows: folded to one line each, opened with a tap ─────────────────
   var row = function (it, i) {
     var owner = it.who ? nameFor_(it.who) : (it.ownerName || '—');
-    var link = it.k === 'sf' && base ? '<a href="' + esc_(base + it.id) + '" target="_blank" rel="noopener">Open in Salesforce</a>'
+    var link = it.k === 'sf' && base && !noSfLogin_(sid) ? '<a href="' + esc_(base + it.id) + '" target="_blank" rel="noopener">Open in Salesforce</a>'
              : it.drive ? '<a href="https://drive.google.com/file/d/' + esc_(it.drive) + '/view" target="_blank" rel="noopener">Open the letter</a>' : '';
     var list = it.k === 'sf' ? sfSt : it.src === 'Performance letter' ? plSt : null;
     var closer = list ? (list.filter(function (s) { return s.closed; })[0] || {}).v : '';
@@ -7541,7 +7547,7 @@ function agentMorningMail_(a, day, data, cache) {
     (open.length ? agCard_(MAIL.navy, open.slice(0, AGENT_LIST_MAX).map(function (t) {
       return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
         (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : ' <span style="color:' + MAIL.amber + '">· due today</span>') +
-        (base ? ' <a href="' + esc_(base + t.id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &rarr;</a>' : ''));
+        ' <a href="' + esc_(replyUrl_(a.key, day, 'ag') + '#i' + t.id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">comment &rarr;</a>');
     }).join('') + (open.length > AGENT_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (open.length - AGENT_LIST_MAX) + ' more on the page.</div>' : ''))
       : '<div style="font-size:13px;color:' + MAIL.muted + '">Nothing due for your clients today.</div>') +
     (book ? sectionLabel_('Your book') + agCard_(MAIL.red,
@@ -7660,7 +7666,7 @@ function agentTick_(day, mins) {
 function agReplyPage_(person, day, kind, error) {
   var a = person.agent, items = [], plan = agRows_(a.key, day, 'plan'), had = agRows_(a.key, day, kind === 'agc' ? 'close' : 'plan');
   try { items = bigGet_('ag_items_' + a.key + '_' + day, []); } catch (e) {}
-  var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
+  var chat = {}; try { chat = cmdChatter_(items.map(function (it) { return it.id; })); } catch (e) {}
   var eve = kind === 'agc';
   var metrics = '<div class="card"><div class="bh">' + (eve ? 'What you did today' : 'Your plan today') + '</div>' + AGENT_METRICS.map(function (m) {
     var pl = (plan[m.id] || {}).Planned, r = had[m.id] || {};
@@ -7671,9 +7677,9 @@ function agReplyPage_(person, day, kind, error) {
   }).join('') + '<div class="bf" style="margin-top:8px">' + (eve ? 'The day in a line or two:' : 'Your plan in words: who you are seeing, what you are closing:') + '</div>' +
     '<textarea name="summary" rows="3"></textarea></div>';
   var list = items.length ? '<div class="card"><div class="bh">Being worked for your clients · comment on anything (goes to Chatter)</div>' + items.map(function (it) {
-    return '<div style="padding:9px 0;border-top:1px solid #E5E1D6"><div style="font-size:14px"><b>' + esc_(String(it.o || '').split(' ')[0]) + '</b> · ' + esc_(it.s) +
-      (it.late ? ' <span class="br2">· overdue since ' + esc_(shortDate_(it.due)) + '</span>' : '') + (base ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
-      '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="Your comment for the team, posted to Chatter on this task"></textarea></div>';
+    return '<div id="i' + esc_(it.id) + '" style="padding:9px 0;border-top:1px solid #E5E1D6;scroll-margin-top:72px"><div style="font-size:14px"><b>' + esc_(String(it.o || '').split(' ')[0]) + '</b> · ' + esc_(it.s) +
+      (it.late ? ' <span class="br2">· overdue since ' + esc_(shortDate_(it.due)) + '</span>' : '') + '</div>' + chatterNotes_(chat, it.id) +
+      '<textarea name="c_' + esc_(it.id) + '" rows="2" placeholder="' + esc_(SPEAK_PH) + '"></textarea></div>';
   }).join('') + '</div>' : '';
   return replyPage_((eve ? 'Close off your day · ' : 'Your day · ') + prettyDate_(day),
     eve ? 'A number against each, 0 where nothing was done. Your manager and sales support get it.' : 'Set your plan in numbers and comment on anything the team is working for you. One save at the bottom.',

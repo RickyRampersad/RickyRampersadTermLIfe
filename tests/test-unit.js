@@ -55,7 +55,7 @@ env.UM_LIST_MAX = 25;   // a full unit: four sections of a long list each
 const open = [];
 for (let i = 0; i < 40; i++) open.push({ id: '00TU' + String(i).padStart(3, '0'), subject: (i % 2 ? 'SQ- Laura Goberdhan- 5004185506/8004274889/5003944438/1000463745/1000463737/500356230 follow up with the client on the outstanding requirements and the medical, the signed proposal and the first premium, then post the result ' : 'Premium Dues Report 14 Oct: Branch Manager\'s instructions not actioned (Purandaye, Akaash, orphan follow up); every client on the list to be called and the call posted on Chatter the same day ') + i,
   agent: i % 3 ? 'Darryl Manick' : 'Akaash Kalladeen', due: '2026-10-1' + (i % 9), late: true, ty: i % 4 ? 'Pendings' : 'Servicing', touched: 3 });
-env.unitBook_ = () => ({ agents: ['Akaash Kalladeen', 'Darryl Manick', 'Stephanie Rajkumar'], open, closedYday: 4 });
+env.unitBook_ = () => ({ agents: ['Akaash Kalladeen', 'Darryl Manick', 'Stephanie Rajkumar'], open, closedYday: 4, closedToday: [] });
 env.ff360Feed_ = () => null;
 mails.length = 0;
 env.sendUnitManagerMorning_('akaash', DAY);
@@ -82,6 +82,26 @@ ok('his comment goes on that task\'s Chatter, headed as his', writes.some(w => w
 ok('and it counts in what he is doing', P.getProperty('um_posts_akaash_' + DAY) === '1');
 const self = env.umSelfCard_('akaash', DAY);
 ok('what you are doing: yesterday and today, comments counted', /What you are doing/.test(self) && /Today so far/.test(self) && /<b>1<\/b> comment on Chatter/.test(self), (self.match(/Today so far[^<]*<\/b>[^]*?<\/div>/) || [''])[0].replace(/<[^>]+>/g, '').slice(0, 160));
+
+console.log('\nNo Salesforce links for anyone without a login:\n');
+env.agentBook_ = () => null;
+const AG = { key: 'a-darryl', name: 'Darryl Manick', email: 'darryl@example.com' };
+const agTasks = [{ id: '00TA1', subject: 'Pending: medical for a new application', owner: 'Elizabeth Lee', due: '2026-10-16', late: true },
+                 { id: '00TA2', subject: 'Orphan response: call me', owner: 'Sasha Lalla-Jagassar', due: DAY, late: false }];
+let agOut = null;
+try { agOut = env.agentMorningMail_(AG, DAY, { open: { 'a-darryl': agTasks }, ff: {}, f360: {}, goal: {}, q: {}, orphan: {} }, {}); } catch (e) { agOut = { error: String(e) }; }
+const agHtml = agOut && (agOut.htmlBody || agOut.html || agOut.body || (mails.length && mails[mails.length - 1].htmlBody) || JSON.stringify(agOut)) || '';
+ok('an agent\'s morning: comment links to his page, none to Salesforce', !/sf\.example\/00TA/.test(agHtml) && /f=ag[^"]*#i00TA1/.test(agHtml) && /comment &rarr;/.test(agHtml), String(agHtml).slice(0, 120));
+let agPage = '';
+try { agPage = env.agReplyPage_({ agent: AG }, DAY, 'ag').getContent(); } catch (e) { agPage = 'ERR ' + e; }
+ok('an agent\'s page: the history under each task, speak to comment, no Salesforce', /No notes on Chatter yet\.|The whole history|Please call the client today/.test(agPage) && /Type or speak your comment/.test(agPage) && !/sf\.example\/00TA/.test(agPage) && /id="i00TA1"/.test(agPage), agPage.slice(0, 100));
+mails.length = 0;
+try { env.sendUnitManagerEvening_('akaash', DAY); } catch (e) { console.log('EVE ERR', e.message); }
+const eveMail = mails.find(m => /Account for your day/.test(m.subject));
+ok('his 5:30pm mail: comment links to his 5:30 page, none to Salesforce', !!eveMail && !/sf\.example\/00TU/.test(eveMail.htmlBody) && (/f=umeve[^"]*#i00TU/.test(eveMail.htmlBody) || !/open &rarr;/.test(eveMail.htmlBody)), eveMail && eveMail.subject);
+const eveUrl = new URL(env.replyUrl_('akaash', DAY, 'umeve'));
+const evePage = env.replyClick_({ parameter: Object.fromEntries(eveUrl.searchParams) }).getContent();
+ok('his 5:30pm page: the history, speak to comment, no Salesforce', !/sf\.example\/00TU/.test(evePage) && /Type or speak your comment/.test(evePage) && /(No notes on Chatter yet|The whole history|Please call the client today)/.test(evePage), evePage.slice(0, 80));
 
 console.log('\nThe mailbag leaves at 12 noon:\n');
 ok('12 noon by default; hand over by 11:45', env.mailbagLeavesText_() === '12 noon' && env.mailbagByText_() === '11:45am', env.mailbagByText_());

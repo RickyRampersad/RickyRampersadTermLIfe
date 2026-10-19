@@ -4091,6 +4091,14 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   `um_posts_` counts them. The morning opens with "Your agents · goals and
   activity" (`teamFFCard_`) and "What you are doing" (`umSelfCard_`: plan,
   numbers, account, comments). `unitAgents_` lists each agent once.
+- **No Salesforce links for anyone without a login** (19 October 2026: "they
+  are only allowed to post where the task is open, view the history, and they
+  can speak, but don't allow them to open in Salesforce"). Unit Managers with no
+  login (`noSfLogin_`) and every agent: task links in their morning, 5:30pm and
+  agent mails go to their own comment page (`f=um`, `f=umeve`, `f=ag`, anchored
+  `#i<id>`); those pages show `chatterNotes_` (latest two, the whole history a
+  tap away) and the `SPEAK_PH` box; the command centre drops "Open in
+  Salesforce" for them. Ricky and the staff keep their Salesforce links.
 - **Day items in pieces** (`bigPut_`/`bigGet_`): the unit, agent, plan and
   fact-find lists were cut at 8,900 characters, and cut JSON read back as
   nothing. They are kept in 8,000-character pieces now.
