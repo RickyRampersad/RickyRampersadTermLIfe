@@ -3306,3 +3306,8 @@ servicing work".
   copy anyone on mine"): the 5am review, the 11am progress, the 3pm close-out
   and the check-ins carry no Cc. Every other desk's mail, and outbound client
   drafts, still copy sales support.
+- **`closeOpenPerformanceLetters()`** (19 October 2026, run from the editor):
+  Ricky asked for every open performance letter to be closed. Each open row on
+  the PPM Letters tab goes to `Completed` through `ppmSetStatus_` (escalation
+  resolved, his note on BM Comments, audit log). Returns what closed and what
+  did not.

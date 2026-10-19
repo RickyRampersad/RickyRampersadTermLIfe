@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-18g';
+var SCRIPT_VERSION = '2026-10-19a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -6274,6 +6274,23 @@ function ppmSetStatus_(letterId, status, note, who) {
   try { bookAppend_('PPM', 'Audit Log', { Timestamp: now, Email: who.email, Role: who.role, Action: 'STATUS CHANGE', 'Letter ID': letterId,
     Details: 'Set to "' + status + '" from the KPI tracker by ' + who.name + (note ? ': ' + note : '') }); } catch (e) {}
 }
+/** Ricky, 19 Oct 2026: "Close off any task assigned to me called performance letters."
+ *  Run once from the editor: every open performance letter is set to Completed
+ *  the same way Close on the command centre does it (the escalation resolved,
+ *  his note on the BM Comments tab, the audit log written). Says what closed. */
+function closeOpenPerformanceLetters() {
+  var day = todayISO_(), who = { name: nameFor_('ricky'), email: emailFor_('ricky'), role: 'Branch Manager' };
+  var note = 'Closed by the Branch Manager on ' + prettyDate_(day) + '.';
+  var open = ppmLetters_(null), done = [], failed = [];
+  open.forEach(function (r) {
+    try { ppmSetStatus_(r['Letter ID'], PPM_CLOSE_STATUS, note, who); done.push(r['Agent Name'] + ' (' + r['Performance Period'] + ')'); }
+    catch (e) { failed.push(r['Agent Name'] + ': ' + String(e && e.message || e)); }
+  });
+  var msg = 'Closed ' + done.length + ' of ' + open.length + ' performance letters' + (done.length ? ': ' + done.join(', ') : '') + (failed.length ? '. Not closed: ' + failed.join('; ') : '');
+  msg = msg.replace(/\.*$/, '.');
+  Logger.log(msg); try { runlog_(msg.slice(0, 300)); } catch (e) {}
+  return msg;
+}
 /** A comment on a letter's record: the BM Comments tab for the Branch Manager; the audit log for anyone else. */
 function ppmComment_(letterId, note, who, action, quiet) {
   var now = new Date();
@@ -7068,7 +7085,7 @@ function bmVerdict_(s, which) {
   s.missedList.forEach(function (c) { parts.push({ bad: true, t: 'Nothing was logged after the ' + twelve_(mmText_(c.at)) + ' check-in.' }); });
   if (s.behind.length) parts.push({ bad: which === 'eve', t: 'Behind your plan on ' + s.behind.map(function (x) { return x.q + ' (' + x.done + ' of ' + x.planned + ')'; }).join(', ') + '.' });
   if (which === 'eve' && !s.accounted) parts.push({ bad: true, t: 'Your day is not accounted. Account for it on My day before you leave; tomorrow\'s 5am review shows the gap.' });
-  if (s.closed > s.noted) parts.push({ bad: true, t: (s.closed - s.noted) + ' of the ' + s.closed + ' you closed today carry no note of yours. A closed task without a note is not closed.' });
+  if (s.closed > s.noted) parts.push({ bad: true, t: (s.closed - s.noted) + ' of the ' + s.closed + ' you closed today ' + (s.closed - s.noted === 1 ? 'carries' : 'carry') + ' no note of yours. A closed task without a note is not closed.' });
   if (!parts.length) parts.push({ bad: false, t: 'On track: planned' + (s.dueN ? ', every check-in answered' : '') + (s.items.length ? ', ' + s.met + ' of ' + s.items.length + ' planned numbers met' : '') + (s.accounted ? ', day accounted' : '') + '.' });
   return parts;
 }
