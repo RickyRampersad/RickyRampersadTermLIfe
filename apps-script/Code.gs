@@ -54,6 +54,13 @@ var CONFIG = {
   // Deployed Apps Script web app (Deploy > New deployment > Web app).
   WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec',
 
+  // The address that goes in client emails. It forwards to WEBAPP_URL carrying
+  // the token, so a fresh /exec URL after a redeploy is a one-line edit to
+  // motorrenewals/index.html on the branch site instead of a re-wire — and no
+  // link already in a client's inbox breaks. Served by GitHub Pages from
+  // motorrenewals/ in this repository. Set to '' to email the /exec URL direct.
+  PORTAL_FRONT_DOOR: 'https://rickyrampersadbranch.com/motorrenewals',
+
   // Staff access key — the staff dashboard link is WEBAPP_URL?staff=THIS_KEY.
   // Set it ONLY in your Apps Script copy, never in this repository: this file
   // is served on the public website, so any value committed here is public.
@@ -1099,8 +1106,29 @@ function ctaBtn_(link, label) {
     ';color:' + BRAND.navy + ';text-decoration:none;font-weight:bold;padding:13px 30px;border-radius:8px;display:inline-block">' +
     label + '</a></p>';
 }
+/**
+ * The link a client clicks in a renewal email.
+ *
+ * Prefers CONFIG.PORTAL_FRONT_DOOR — rickyrampersadbranch.com/motorrenewals —
+ * which forwards to WEBAPP_URL carrying the token. Two reasons it is worth the
+ * extra hop:
+ *
+ *  1. A link already sitting in a client's inbox survives a redeploy.
+ *     Re-deploying the Apps Script with "New deployment" rather than "New
+ *     version" issues a fresh /exec URL, and every link sent before that
+ *     moment dies with the old one. Through the front door, a redeploy is a
+ *     one-line edit to the HTML on the branch site.
+ *
+ *  2. Clients click it. "rickyrampersadbranch.com/motorrenewals" reads as the
+ *     branch; "script.google.com/macros/s/AKfy…" reads as something to be
+ *     careful of — and the clients most likely to hesitate are the least
+ *     likely to ring and ask.
+ *
+ * Set PORTAL_FRONT_DOOR to '' to go straight at the web app again.
+ */
 function portalLink_(token) {
-  return CONFIG.WEBAPP_URL + (CONFIG.WEBAPP_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + encodeURIComponent(token);
+  var base = CONFIG.PORTAL_FRONT_DOOR || CONFIG.WEBAPP_URL;
+  return base + (base.indexOf('?') > -1 ? '&' : '?') + 't=' + encodeURIComponent(token);
 }
 
 var STAGES = {
