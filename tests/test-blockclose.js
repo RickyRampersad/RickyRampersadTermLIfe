@@ -48,12 +48,12 @@ ok('a desk not on the schedule gets one plan for the day', env.blockSpan_('nobod
 env.DEFAULT_SCHEDULE = { hours: '8am – 4pm', lunch: 'Flexible', blocks: {
   KPI1: { time: '8 – 10am', focus: 'KPI Block 1', kpi: '' }, KPI2: { time: '10 – 12pm', focus: 'KPI Block 2', kpi: '' },
   PM1: { time: '1 – 3pm', focus: 'Afternoon 1', kpi: '' }, PM2: { time: '3 – 4pm', focus: 'Afternoon 2', kpi: '' } } };
-env.SCHEDULE.ricky = { hours: '6am – 6pm', lunch: '12:00 – 1:00pm', blocks: {
-  KPI1: { time: '6 – 9am', focus: 'Recruitment, licensing and staffing', kpi: 'Lic/Staffing/SA/HR' },
-  KPI2: { time: '9 – 12pm', focus: 'Production, pipeline and own book', kpi: 'Opportunity' },
+env.SCHEDULE.ricky = { hours: '5am – 12am', lunch: 'Flexible', blocks: {
+  KPI1: { time: '5 – 10am', focus: 'Recruitment, licensing and staffing', kpi: 'Lic/Staffing/SA/HR' },
+  KPI2: { time: '10 – 12pm', focus: 'Production, pipeline and own book', kpi: 'Opportunity' },
   PM1: { time: '1 – 3pm', focus: 'Agent development and field training', kpi: 'Training' },
-  PM2: { time: '3 – 4:30pm', focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' },
-  EVE: { time: '4:30 – 6pm', focus: 'Close-out: what is still being moved', kpi: 'Opportunity' } } };
+  PM2: { time: '3 – 4pm', focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' },
+  EVE: { time: '4pm – 12am', focus: 'After four: what is still being moved', kpi: 'Opportunity' } } };
 ok('local eight is 12:00Z — Port of Spain is four behind, all year', env.sfkUtcAt_(TODAY, 480) === '2026-09-17T12:00:00Z');
 ok('local midnight is 04:00Z the next day', env.sfkUtcAt_(TODAY, 1440) === '2026-09-18T04:00:00Z');
 
@@ -156,9 +156,9 @@ ok('the block carries the schedule\'s KPI', adaRow && adaRow[H.indexOf('KPI1')] 
 ok('the day is marked submitted, with a timestamp on the block', adaRow && adaRow[H.indexOf('Status')] === 'Submitted' && !!adaRow[H.indexOf('KPI1_At')]);
 ok('plan row says who filed', plan.Filed === 'auto');
 
-const adaMail = sent.find(m => m.to === 'ada@example.com');
+const adaMail = sent.find(m => m.to === 'ada@example.com' && / closed · /.test(m.subject));   // the plan receipt goes first
 ok('ada is e-mailed, because two things were missed', !!adaMail, sent.map(m => m.to).join(','));
-ok('the subject says the score', adaMail && /KPI 1 closed · Thu 17 Sep · 1 of 3 done/.test(adaMail.subject), adaMail && adaMail.subject);
+ok('the subject says the score', adaMail && /Your day closed · Thu 17 Sep · 1 of 3 done/.test(adaMail.subject), adaMail && adaMail.subject);
 ok('the body says the percentage', adaMail && /1 of 3 done — <b>33%<\/b>/.test(adaMail.htmlBody));
 ok('the done one is ticked', adaMail && /&#10003;<\/span> Send the renewal notice/.test(adaMail.htmlBody));
 ok('the moved one says so, and how it would count', adaMail && /moved, not closed/.test(adaMail.htmlBody) && /close it in Salesforce and it counts/.test(adaMail.htmlBody));
