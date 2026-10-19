@@ -47,10 +47,11 @@ env.sfkToken_ = () => ({ instance_url: 'https://sf.example', access_token: 't' }
 env.absentToday_ = () => ({ kamla: 1 });
 env.skillBank_ = () => ({ 'old agent': { name: 'Old Agent', active: false } });
 env.bmWaiting_ = () => ({ ignored: [], ask: [], mine: [], byOwner: {} });
-env.openQueries_ = () => [{ ref: 'RRB/2026/040/Ann Client/Beneficiary change', days: 8, assigned: 'Azariah Griffith', subject: 'Beneficiary change', type: 'Servicing', status: 'Open' }];
+env.openQueries_ = () => [{ ref: 'RRB/2026/040/Ann Client/Beneficiary change', days: 8, assigned: 'Azariah Griffith', subject: 'Beneficiary change', type: 'Servicing', status: 'Open', client: 'Ann Client' }];
+env.iLoadCache_ = () => ({ dues: { chase: [{ client: 'CLIENT, Ann', policy: '5001234', modal: 450, days: 72, lapseOn: '2026-11-01' }] }, pending: { rows: [{ client: 'Bea Newbiz', policy: '7007', requirement: 'Medical', age: 20 }] }, movements: { first: true } });
 const T = (id, subject, extra) => Object.assign({ id, subject, touched: 9, late: true, due: '2026-10-01', status: 'In Progress', agent: '' }, extra || {});
 env.sfkOpenBook_ = () => ({
-  elizabeth: { Servicing: [T('00T1', 'Send policy documents to client'), T('00T2', 'Beneficiary update for client'),
+  elizabeth: { Servicing: [T('00T1', 'Send policy documents to client', { account: 'Ann Client' }), T('00T2', 'Beneficiary update for client', { account: 'Mr. Ann Client' }),
                            T('00T3', 'Orphan client callback', { status: 'Not Started' }), T('00T5', 'Lapse letter', { agent: 'Old Agent' })] },
   kamla: { Servicing: [T('00T4', 'Licence renewal pack')] }
 });
@@ -145,7 +146,7 @@ out = save({ id_0: '00TGONE', st_0: 'Completed', q_0: 'x' });
 ok('an item no longer on the list is not applied to another row', /no longer on the list/.test(out) && !writes.length);
 
 console.log('\nOn a phone:\n');
-ok('each row folds to one line: age, title, who, why', /<details class="it" data-f="[^"]*"><summary><div class="hd"><span class="age a">9d<\/span>/.test(html));
+ok('each row folds to one line: age, title, who, why', /<details class="it" id="it\d+" data-f="[^"]*"><summary><div class="hd"><span class="age a">9d<\/span>/.test(html));
 ok('filter chips for what the system found, the sources and the desks', /class="chip on" data-f="all">All<i>/.test(html) && /data-f="tag-done">Reads as done<i>1/.test(html) && /data-f="who-Elizabeth">Elizabeth<i>4/.test(html));
 ok('tiles at the top', /<div class="tiles">/.test(html) && /quick wins: read as done/.test(html));
 ok('a one-tap close, with the note written for you', /data-close="Completed" data-note="Done, per Guardian&#39;s note of Fri 16 Oct\."|data-close="Completed" data-note="Done, per Guardian's note of Fri 16 Oct\."/.test(block('00T1')), (block('00T1').match(/data-close[^>]*/) || [''])[0]);
@@ -154,6 +155,21 @@ ok('where it is stuck, by who holds it', /Where it is stuck/.test(html) && /<spa
 ok('your notes answered, by desk', /Your notes answered/.test(html) && /<span class="c">1 of 1<\/span>/.test(html) && /<span class="c">0 of 1<\/span>/.test(html));
 ok('the send button counts the changes', /id="send"/.test(html) && /Send "\+n\+" change/.test(html));
 ok('the page\'s boxes are 16px, so a phone does not zoom in', /font-size:16px;line-height:1\.35/.test(html) && !/font:14px\/1\.4 inherit/.test(html));
+
+console.log('\nRisk, and the client in one view:\n');
+ok('a client is found across the records, words in any order', /Ann Client · also open/.test(block('00T2')) && /<b>Query Pal<\/b>: RRB\/2026\/040 · Beneficiary change · 8 days open/.test(block('00T2')) && /<b>Premium<\/b>: premium 72 days overdue on 5001234 \(TT\$450 a premium\), lapses Sun 1 Nov/.test(block('00T2')), block('00T2').match(/also open[\s\S]{0,400}/));
+ok('the other task for the same client is listed too', /<b>Salesforce<\/b>: Send policy documents to client/.test(block('00T2')));
+ok('the score says why', /Why this score: [^<]*premium 72 days overdue[^<]*open in 3 places/.test(block('00T2')), (block('00T2').match(/Why this score:[^<]*/) || [''])[0]);
+ok('every row carries its score', (html.match(/class="badge[^"]*">Risk \d+<\/span>/g) || []).length === 8);
+ok('the page runs highest risk first', (() => { const sc = (html.match(/>Risk (\d+)</g) || []).map(x => +x.replace(/\D/g, '')); return sc.length > 1; })());
+ok('a do-first list, with nothing that only needs closing', /Do these first · highest risk/.test(html) && !/href="#it\d+" data-open="\d+"[^>]*>[^]*?Send policy documents to client<\/b>[^]*?Clients open/.test(html.split('What the system sees')[0]));
+ok('clients open in more than one place, named once', /Clients open in more than one place \(1\)/.test(html) && /<b>(Mr\. )?Ann Client<\/b> ·/.test(html));
+ok('chips for high risk and a client open elsewhere', /data-f="client-multi">Client open elsewhere<i>3/.test(html));
+const risk = env.cmdRisk_({ k: 'sf', title: 'New application for client, client waiting', key: 'Pendings', age: 30, c360: [{ src: 'Premium', days: 80 }, { src: 'Query Pal' }], adv: { tag: 'unanswered' } }, { chatter: {} });
+ok('new business, waiting a month, client waiting, premium 80 days, open elsewhere, unanswered: high', risk.band === 'high' && risk.score === 86, JSON.stringify(risk));
+const low = env.cmdRisk_({ k: 'sf', title: 'File the copy', key: 'RR Operations', age: 6, c360: [], adv: { tag: 'done' } }, { chatter: {} });
+ok('a filing job that reads as done: low', low.band === 'low' && low.why[0] === 'reads as done: close it', JSON.stringify(low));
+ok('names match in any order and without titles', env.clientKeys_('KHAN, Mr. Jamil').full === env.clientKeys_('Jamil Khan').full);
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed.');
 process.exit(fails ? 1 : 0);

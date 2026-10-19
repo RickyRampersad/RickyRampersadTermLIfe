@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-18b';
+var SCRIPT_VERSION = '2026-10-18c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4451,7 +4451,7 @@ function unitBook_(sid, day) {
   var t = function (r) {
     return { id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
              late: !!(r.ActivityDate && r.ActivityDate < day), agent: (r.Agent__r && r.Agent__r.Name) || '',
-             owner: (r.Owner && r.Owner.Name) || '', touched: daysSince_(r.LastModifiedDate), status: r.Status || '' };
+             owner: (r.Owner && r.Owner.Name) || '', touched: daysSince_(r.LastModifiedDate), status: r.Status || '', account: (r.What && r.What.Name) || '' };
   };
   var todayFrom = sfkUtcAt_(day, 0);
   return { agents: agents, open: open.map(t),
@@ -5414,7 +5414,7 @@ function cmdItems_(sid, day) {
         Object.keys(ob[desk]).forEach(function (ty) {
           ob[desk][ty].forEach(function (t) {
             if (!(t.touched >= CMD.QUIET_DAYS && (t.late || !t.due))) return;
-            push({ k: 'sf', id: t.id, src: 'Salesforce', key: ty, who: desk, title: t.subject, age: t.touched, st: t.status || '',
+            push({ k: 'sf', id: t.id, src: 'Salesforce', key: ty, who: desk, title: t.subject, age: t.touched, st: t.status || '', client: t.account || '',
                    why: 'untouched ' + t.touched + ' days' + (t.late ? ', overdue since ' + shortDate_(t.due) : ''), agent: t.agent || '' });
           });
         });
@@ -5423,7 +5423,7 @@ function cmdItems_(sid, day) {
   } else {
     try {
       var bk = unitBook_(sid, day);
-      bk.open.forEach(function (t) { if (t.touched >= CMD.QUIET_DAYS || t.late) push({ k: 'sf', id: t.id, src: 'Salesforce', key: t.ty || 'Servicing', who: '', ownerName: t.owner, title: t.subject, age: t.touched, st: t.status || '',
+      bk.open.forEach(function (t) { if (t.touched >= CMD.QUIET_DAYS || t.late) push({ k: 'sf', id: t.id, src: 'Salesforce', key: t.ty || 'Servicing', who: '', ownerName: t.owner, title: t.subject, age: t.touched, st: t.status || '', client: t.account || '',
         why: (t.late ? 'overdue since ' + shortDate_(t.due) + ', ' : '') + 'untouched ' + t.touched + ' days', agent: t.agent }); });
     } catch (e) {}
   }
@@ -5436,19 +5436,19 @@ function cmdItems_(sid, day) {
   if (scope !== 'unit') {
     // 3. Query Pal past three days.
     try { openQueries_().filter(function (q) { return q.days > 3; }).forEach(function (q) {
-      push({ k: 'sheet', id: 'qp:' + q.ref, src: 'Query Pal', key: 'query', who: '', ownerName: q.assigned, title: q.ref + ' · ' + (q.subject || q.type), age: q.days, st: q.status || '', ref: q.ref, why: q.days + ' days open, ' + (q.assigned ? 'with ' + q.assigned : 'unassigned') }); });
+      push({ k: 'sheet', id: 'qp:' + q.ref, src: 'Query Pal', key: 'query', who: '', ownerName: q.assigned, title: q.ref + ' · ' + (q.subject || q.type), age: q.days, st: q.status || '', ref: q.ref, client: q.client || '', why: q.days + ' days open, ' + (q.assigned ? 'with ' + q.assigned : 'unassigned') }); });
     } catch (e) {}
     // 4. Cash and cheque approvals with no BM decision.
     try { bookRows_('APPROVE', BOOKS.APPROVE.tab).forEach(function (r, i) {
       var d = anyIso_(r['Submission Date']); if (!d || daysBetween_(d, day) > CMD.APPROVE_DAYS || String(r['BM Cash Approval'] || '').trim()) return;
       var who = String(r['Agent Name'] || ''), cl = (String(r['Client Name - First Name'] || '') + ' ' + String(r['Client Name - Last Name'] || '')).trim();
-      push({ k: 'sheet', id: 'ap:' + (r['Submission ID'] || i), src: 'BM approval', key: 'ask', who: '', ownerName: who, title: String(r['Approval Type'] || 'Approval') + ' · ' + cl + ' · ' + String(r['Policy Number'] || ''), age: daysBetween_(d, day), why: 'no BM decision recorded' + (r['Reason For Cheque/Cash Collection'] ? ', reason: ' + r['Reason For Cheque/Cash Collection'] : '') });
+      push({ k: 'sheet', id: 'ap:' + (r['Submission ID'] || i), src: 'BM approval', key: 'ask', who: '', ownerName: who, client: cl, title: String(r['Approval Type'] || 'Approval') + ' · ' + cl + ' · ' + String(r['Policy Number'] || ''), age: daysBetween_(d, day), why: 'no BM decision recorded' + (r['Reason For Cheque/Cash Collection'] ? ', reason: ' + r['Reason For Cheque/Cash Collection'] : '') });
     }); } catch (e) {}
     // 5. Log book lines logged and not sent on.
     try { bookRows_('DELIVERY', BOOKS.DELIVERY.log).forEach(function (r) {
       if (!/logged|received/i.test(String(r['Status'] || '')) || String(r['Sent At'] || '').trim()) return;
       var d = anyIso_(r['Logged At']); var age = d ? daysBetween_(d, day) : 0; if (age < 1) return;
-      push({ k: 'sheet', id: 'lb:' + r['Line Id'], src: 'Log book', key: 'mailbag', who: '', ownerName: String(r['Logged By'] || ''), title: String(r['Document'] || '') + ' · ' + String(r['Client'] || '') + ' · ' + String(r['Policy #'] || '') + ' → ' + String(r['Department'] || ''), age: age, why: 'logged ' + shortDate_(d) + ', not sent' + (r['Salesforce Task'] ? '' : ', no task') });
+      push({ k: 'sheet', id: 'lb:' + r['Line Id'], src: 'Log book', key: 'mailbag', who: '', ownerName: String(r['Logged By'] || ''), client: String(r['Client'] || ''), title: String(r['Document'] || '') + ' · ' + String(r['Client'] || '') + ' · ' + String(r['Policy #'] || '') + ' → ' + String(r['Department'] || ''), age: age, why: 'logged ' + shortDate_(d) + ', not sent' + (r['Salesforce Task'] ? '' : ', no task') });
     }); } catch (e) {}
     // 6. Petty cash spent with no receipt, or not reviewed.
     try { bookRows_('PETTY', BOOKS.PETTY.tab).forEach(function (r) {
@@ -5685,6 +5685,113 @@ function cmdLoad_(sid, day) {
   try { return JSON.parse(js || '[]'); } catch (e) { return []; }
 }
 
+/* ─────────── Risk and the client in one view (18 Oct 2026) ───────────
+ *  "A priority score per item" and "one view per client" (Ricky: ok).
+ *  Every client named on an item is looked up across the branch's records:
+ *  the open Salesforce book, Query Pal, the log book, and from Branch
+ *  Intelligence the premiums overdue, the pending business and last night's
+ *  lapses. A name matches on all its words in any order ("KHAN, Jamil" is
+ *  "Jamil Khan"), or, failing that, on two words of four letters or more.
+ *  The score (0 to 100) then ranks the page by what is at stake rather than
+ *  by age, and says why in a few words. It weighs, in order: what the work
+ *  is (new business, orphan adoption, retention: the branch's own payoff
+ *  order); how long it has waited; a client waiting or unhappy; the client's
+ *  money at risk (a premium past 60 days, a lapse, business pending); the
+ *  same client open in more than one place; and what the record says (the
+ *  client asked for an agent, your note unanswered, the desk out, the agent
+ *  gone). An item that reads as done drops down: it needs a close, not a chase. */
+var CLIENT_TITLES = /^(mr|mrs|miss|ms|dr|rev|mstr|master|the)$/;
+var RISK_WAITING_RE = /\b(complain\w*|urgent|client waiting|escalat\w*|ombuds\w*|unhappy|angry|upset|cancel\w*|surrender\w*|threat\w*|lawyer|legal)\b/i;
+function clientTokens_(s) {
+  return String(s || '').toLowerCase().replace(/[‘’'`-]/g, '').replace(/[^a-z\s]/g, ' ').split(/\s+/)
+    .filter(function (w) { return w.length >= 2 && !CLIENT_TITLES.test(w); });
+}
+function clientKeys_(s) {
+  var t = clientTokens_(s); if (t.length < 2 || t.length > 6) return { full: '', pairs: [] };
+  var long = t.filter(function (w) { return w.length >= 4; }), pairs = [];
+  for (var i = 0; i < long.length; i++) for (var j = i + 1; j < long.length; j++) pairs.push([long[i], long[j]].sort().join(' '));
+  return { full: t.slice().sort().join(' '), pairs: pairs };
+}
+/** Everything open for every client the branch's records name, looked up by name. */
+function cmdClientIndex_(day) {
+  var full = {}, pair = {}, n = 0;
+  var add = function (client, e) {
+    var k = clientKeys_(client); if (!k.full) return;
+    e.client = String(client); n++;
+    (full[k.full] = full[k.full] || []).push(e);
+    k.pairs.forEach(function (p) { (pair[p] = pair[p] || []).push(e); });
+  };
+  try { var ob = sfkOpenBook_(day) || {};
+    Object.keys(ob).forEach(function (desk) { Object.keys(ob[desk]).forEach(function (ty) { ob[desk][ty].forEach(function (t) {
+      if (t.account) add(t.account, { src: 'Salesforce', id: t.id, text: t.subject + ' · ' + String(nameFor_(desk)).split(' ')[0] + (t.late ? ' · overdue since ' + shortDate_(t.due) : ''), late: t.late, payoff: payoffOf_({ subject: t.subject, ty: ty }).key });
+    }); }); });
+  } catch (e) {}
+  try { openQueries_().forEach(function (q) { add(q.client, { src: 'Query Pal', id: 'qp:' + q.ref, text: qpCode_(q.ref) + ' · ' + (q.subject || q.type) + ' · ' + q.days + ' days open', days: q.days }); }); } catch (e) {}
+  try { bookRows_('DELIVERY', BOOKS.DELIVERY.log).forEach(function (r) {
+    if (!/logged|received/i.test(String(r['Status'] || '')) || String(r['Sent At'] || '').trim()) return;
+    add(r['Client'], { src: 'Log book', id: 'lb:' + r['Line Id'], text: String(r['Document'] || 'Document') + ' → ' + String(r['Department'] || '') + ', not sent on' });
+  }); } catch (e) {}
+  var cache = null; try { cache = typeof iLoadCache_ === 'function' ? iLoadCache_() : null; } catch (e) {}
+  if (cache) {
+    try { ((cache.dues || {}).chase || []).forEach(function (x) {
+      add(x.client, { src: 'Premium', id: 'du:' + (x.policy || x.clientNo), days: x.days, modal: x.modal,
+        text: 'premium ' + x.days + ' days overdue' + (x.policy ? ' on ' + x.policy : '') + (x.modal ? ' (TT$' + Math.round(x.modal).toLocaleString() + ' a premium)' : '') + (x.lapseOn ? ', lapses ' + shortDate_(x.lapseOn) : '') });
+    }); } catch (e) {}
+    try { ((cache.pending || {}).rows || []).forEach(function (x) {
+      add(x.client, { src: 'Pending', id: 'pe:' + x.policy, text: 'new business pending' + (x.policy ? ' on ' + x.policy : '') + (x.requirement ? ': ' + x.requirement : (x.status ? ': ' + x.status : '')) + (x.age != null ? ', ' + x.age + ' days' : '') });
+    }); } catch (e) {}
+    try { if (cache.movements && !cache.movements.first) (cache.movements.lapsed || []).forEach(function (x) {
+      add(x.client, { src: 'Lapsed', id: 'la:' + x.policy, text: 'lapsed last night' + (x.policy ? ': ' + x.policy : '') });
+    }); } catch (e) {}
+  }
+  return {
+    size: n,
+    lookup: function (name, selfId) {
+      var k = clientKeys_(name); if (!k.full) return [];
+      var hits = full[k.full] || [];
+      if (!hits.length) { var seen = {}; k.pairs.forEach(function (p) { (pair[p] || []).forEach(function (e) { if (!seen[e.id]) { seen[e.id] = 1; hits.push(e); } }); }); }
+      return hits.filter(function (e) { return e.id !== selfId; });
+    }
+  };
+}
+/** The client a work item is about, when its record names one. */
+function cmdClientOf_(it) {
+  var c = String(it.client || '').trim();
+  return /^[A-Za-z][A-Za-z .,'’-]+$/.test(c) && clientTokens_(c).length >= 2 ? c : '';
+}
+/** 0–100, and why. */
+function cmdRisk_(it, ctx) {
+  var s = 0, why = [];
+  var pay = it.k === 'sf' ? payoffOf_({ subject: it.title, ty: it.key }).key : '';
+  var base = it.k === 'sf' ? ({ 'new': 30, orphan: 25, retention: 22 }[pay] || 10)
+           : it.src === 'Query Pal' ? (/urgent/i.test(it.why + ' ' + (it.st || '')) ? 25 : 15)
+           : it.src === 'BM approval' ? 22 : it.src === 'Performance letter' ? (it.opened ? 15 : 20) : it.src === 'Log book' ? 15 : it.src === 'Petty cash' ? 8 : 12;
+  s += base;
+  if (pay === 'new') why.push('new business'); else if (pay === 'orphan') why.push('orphan adoption'); else if (pay === 'retention') why.push('retention');
+  else if (it.src === 'BM approval') why.push('money waiting on your decision');
+  var age = it.age || 0; s += Math.min(25, Math.round(age * 0.6)); if (age >= 14) why.push(age + ' days');
+  var said = it.title + ' ' + (it.k === 'sf' ? (ctx.chatter[it.id] || []).slice(0, 5).map(function (c) { return c.text; }).join(' ') : '');
+  if (RISK_WAITING_RE.test(said)) { s += 12; why.push('client waiting or unhappy'); }
+  var c = it.c360 || [];
+  var due = c.filter(function (e) { return e.src === 'Premium'; }).sort(function (a, b) { return b.days - a.days; })[0];
+  if (due && due.days >= 60) { s += 15; why.push('premium ' + due.days + ' days overdue'); } else if (due && due.days >= 30) { s += 8; why.push('premium ' + due.days + ' days overdue'); }
+  if (c.some(function (e) { return e.src === 'Lapsed'; })) { s += 10; why.push('a policy lapsed last night'); }
+  if (c.some(function (e) { return e.src === 'Pending'; })) { s += 8; why.push('business pending'); }
+  var places = {}; c.forEach(function (e) { places[e.src] = 1; }); delete places.Premium; delete places.Pending; delete places.Lapsed;
+  var nPlaces = Object.keys(places).length;
+  if (nPlaces) { s += Math.min(10, 5 * nPlaces); why.push('open in ' + (nPlaces + 1) + ' places'); }
+  var tag = it.adv && it.adv.tag;
+  if (tag === 'agent') { s += 10; why.push('client asked for an agent'); }
+  else if (tag === 'orphan') { s += 8; why.push('agent has left'); }
+  else if (tag === 'unanswered') { s += 6; why.push('your note unanswered'); }
+  else if (tag === 'away') { s += 6; why.push('holder out today'); }
+  else if (tag === 'silent') s += 4;
+  else if (tag === 'unopened') { s += 6; why.push('never opened'); }
+  if (tag === 'done') { s -= 20; why.unshift('reads as done: close it'); }
+  s = Math.max(0, Math.min(100, s));
+  return { score: s, band: s >= 70 ? 'high' : s >= 45 ? 'med' : 'low', why: why.slice(0, 4) };
+}
+
 var CMD_GROUPS = ['Your instruction', 'Salesforce', 'Performance letter', 'Query Pal', 'BM approval', 'Log book', 'Petty cash'];
 var CMD_GROUP_LABEL = { 'Your instruction': 'Your instructions with no note', 'Salesforce': 'Salesforce tasks gone quiet', 'Performance letter': 'Performance letters past due',
   'Query Pal': 'Query Pal past three days', 'BM approval': 'Approvals waiting on you', 'Log book': 'Log book lines not sent on', 'Petty cash': 'Petty cash' };
@@ -5701,6 +5808,14 @@ function cmdReplyPage_(person, day, error, notice) {
   var sfSt = sfIds.length ? sfTaskStatuses_() : [], plSt = items.some(function (it) { return it.src === 'Performance letter'; }) ? ppmStatuses_() : [];
 
   items.forEach(function (it) { it.adv = cmdAdvise_(it, ctx); it.hist = cmdHistory_(it, ctx); it.nc = !!(it.adv && it.adv.tag === 'agent'); });
+  // The client in one view, and the risk that ranks the page.
+  try { ctx.clients = items.length ? cmdClientIndex_(day) : null; } catch (e) { ctx.clients = null; }
+  items.forEach(function (it) {
+    var cl = cmdClientOf_(it);
+    it.cname = cl.replace(/^\s*(mr|mrs|miss|ms|dr|rev)\.?\s+/i, ''); it.c360 = cl && ctx.clients ? ctx.clients.lookup(cl, it.id) : [];
+    it.risk = cmdRisk_(it, ctx);
+  });
+  items.sort(function (a, b) { return (b.risk.score - a.risk.score) || ((b.age || 0) - (a.age || 0)); });
   try { cmdStore_(sid, day, items.map(function (it) { return { k: it.k, id: it.id, src: it.src, t: String(it.title).slice(0, 120), who: it.who, on: it.ownerName || '', why: it.why, st: it.st || '', ref: it.ref || '', nc: it.nc ? 1 : 0 }; })); } catch (e) {}
 
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
@@ -5715,12 +5830,23 @@ function cmdReplyPage_(person, day, error, notice) {
   // ── Insight ───────────────────────────────────────────────────────────────
   var tags = {}; items.forEach(function (it) { if (it.adv && it.adv.tag) tags[it.adv.tag] = (tags[it.adv.tag] || 0) + 1; });
   var oldest = items.reduce(function (m, it) { return Math.max(m, it.age || 0); }, 0);
+  var nHigh = items.filter(function (it) { return it.risk.band === 'high'; }).length;
+  // Clients with work in more than one place: each client once, their items and what else is open.
+  var cseen = {}, multi = [];
+  items.forEach(function (it, i) {
+    if (!it.cname || !it.c360.length) return;
+    var k = clientKeys_(it.cname).full; if (cseen[k]) { cseen[k].items.push(i); cseen[k].score = Math.max(cseen[k].score, it.risk.score); return; }
+    cseen[k] = { name: it.cname, items: [i], other: it.c360, score: it.risk.score }; multi.push(cseen[k]);
+  });
+  multi.sort(function (a, b) { return b.score - a.score; });
   var sfNoWord = items.filter(function (it) { return it.k === 'sf' && !(ctx.chatter[it.id] || []).length; }).length;
   var tiles = '<div class="tiles">' +
     '<div class="tile"><div class="v">' + items.length + '</div><div class="l">gone quiet</div></div>' +
     '<div class="tile g"><div class="v">' + (tags.done || 0) + '</div><div class="l">quick wins: read as done</div></div>' +
     '<div class="tile' + (oldest > 30 ? ' r' : '') + '"><div class="v">' + oldest + 'd</div><div class="l">the oldest</div></div>' +
-    '<div class="tile' + (sfNoWord ? ' a' : '') + '"><div class="v">' + pct(sfNoWord, sfIds.length) + '%</div><div class="l">of tasks with nothing written</div></div></div>';
+    '<div class="tile' + (sfNoWord ? ' a' : '') + '"><div class="v">' + pct(sfNoWord, sfIds.length) + '%</div><div class="l">of tasks with nothing written</div></div>' +
+    '<div class="tile' + (nHigh ? ' r' : ' g') + '"><div class="v">' + nHigh + '</div><div class="l">high risk: do these first</div></div>' +
+    '<div class="tile' + (multi.length ? ' a' : '') + '"><div class="v">' + multi.length + '</div><div class="l">clients open in more than one place</div></div></div>';
   // Where it is stuck, by who holds it.
   var by = {};
   items.forEach(function (it) { var h = holder(it); var x = by[h] = by[h] || { n: 0, old: 0, done: 0 }; x.n++; x.old = Math.max(x.old, it.age || 0); if (it.adv && it.adv.tag === 'done') x.done++; });
@@ -5753,20 +5879,30 @@ function cmdReplyPage_(person, day, error, notice) {
   var extra = '';
   try { if (sid === 'ricky' || sid === 'kamla') extra += cmdQpSnapshot_(sid, day); } catch (e) {}
   try { if (sid === 'ricky' || UM_DESKS.indexOf(sid) > -1) extra += cmdFfSnapshot_(sid, day); } catch (e) {}
-  var insight = items.length ? tiles + '<details class="card" open><summary class="bh" style="padding:0">What the system sees</summary>' +
+  var first5 = items.map(function (it, i) { return { it: it, i: i }; }).filter(function (x) { return x.it.risk.band !== 'low' && !(x.it.adv && x.it.adv.tag === 'done'); }).slice(0, 5);
+  var riskCls = function (b) { return b === 'high' ? 'r' : b === 'med' ? 'a' : ''; };
+  var doFirst = first5.length ? '<div class="card"><div class="bh">Do these first · highest risk</div>' + first5.map(function (x) {
+      return '<a href="#it' + x.i + '" data-open="' + x.i + '" style="display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-top:1px solid #EEE;text-decoration:none;font-weight:400;color:#1F2433">' +
+        '<span class="age ' + riskCls(x.it.risk.band) + '">' + x.it.risk.score + '</span><span style="flex:1;font-size:14px;line-height:1.35"><b>' + esc_(shorten_(x.it.title, 80)) + '</b>' +
+        '<small style="display:block;color:#6A7180;font-size:12.5px;margin-top:2px">' + esc_(holder(x.it)) + ' · ' + esc_(x.it.risk.why.join(' · ')) + '</small></span></a>'; }).join('') +
+      '<div class="bf" style="margin-top:6px">The score weighs the work (new business first), how long it has waited, a client waiting, the client\'s money at risk, and the same client open elsewhere.</div></div>' : '';
+  var clientsCard = multi.length ? '<details class="card"' + (multi.length <= 3 ? ' open' : '') + '><summary class="bh" style="padding:0">Clients open in more than one place (' + multi.length + ')</summary>' + multi.slice(0, 8).map(function (m) {
+      return '<div class="ln"><b>' + esc_(m.name) + '</b> · ' + m.items.map(function (i) { return '<a href="#it' + i + '" data-open="' + i + '">' + esc_(items[i].src) + '</a>'; }).join(', ') +
+        m.other.slice(0, 4).map(function (e) { return '<div style="font-size:13px;color:#6A7180;margin-top:2px">' + esc_(e.src) + ': ' + esc_(shorten_(e.text, 120)) + '</div>'; }).join('') + '</div>'; }).join('') + '</details>' : '';
+  var insight = items.length ? tiles + doFirst + '<details class="card" open><summary class="bh" style="padding:0">What the system sees</summary>' +
       sees.map(function (s) { return '<div class="ln">' + s + '</div>'; }).join('') +
       (stuck ? '<div class="bf" style="margin-top:10px">Where it is stuck · items and the oldest</div>' + stuck : '') +
-      (answered ? '<div class="bf" style="margin-top:10px">Your notes answered, by who holds the task</div>' + answered : '') + '</details>' + extra
+      (answered ? '<div class="bf" style="margin-top:10px">Your notes answered, by who holds the task</div>' + answered : '') + '</details>' + clientsCard + extra
     : extra;
 
   // ── Filter chips ──────────────────────────────────────────────────────────
   var fcount = {};
   items.forEach(function (it, i) {
-    it.f = ['all', 'src-' + it.src.replace(/\W+/g, ''), 'who-' + holder(it).replace(/\W+/g, '')].concat(it.adv && it.adv.tag ? ['tag-' + it.adv.tag] : []);
+    it.f = ['all', 'src-' + it.src.replace(/\W+/g, ''), 'who-' + holder(it).replace(/\W+/g, ''), 'risk-' + it.risk.band].concat(it.adv && it.adv.tag ? ['tag-' + it.adv.tag] : []).concat(it.c360.length ? ['client-multi'] : []);
     it.f.forEach(function (f) { fcount[f] = (fcount[f] || 0) + 1; });
   });
   var chip = function (f, label, on) { return fcount[f] ? '<button type="button" class="chip' + (on ? ' on' : '') + '" data-f="' + esc_(f) + '">' + esc_(label) + '<i>' + fcount[f] + '</i></button>' : ''; };
-  var chips = items.length ? '<div class="chips">' + chip('all', 'All', true) +
+  var chips = items.length ? '<div class="chips">' + chip('all', 'All', true) + chip('risk-high', 'High risk') + chip('client-multi', 'Client open elsewhere') +
     ['done', 'agent', 'unanswered', 'silent', 'away', 'orphan', 'unopened', 'old'].map(function (t) { return chip('tag-' + t, tagLabel[t]); }).join('') +
     CMD_GROUPS.map(function (g) { return chip('src-' + g.replace(/\W+/g, ''), g); }).join('') +
     hs.map(function (h) { return chip('who-' + h.replace(/\W+/g, ''), h); }).join('') + '</div>' : '';
@@ -5789,12 +5925,19 @@ function cmdReplyPage_(person, day, error, notice) {
     var quick = '<div class="quick">' +
       (closer && !it.nc ? '<button type="button" class="' + (it.adv && it.adv.tag === 'done' ? 'go' : '') + '" data-close="' + esc_(closer) + '" data-note="' + esc_(doneNote) + '">Close it</button>' : '') +
       '<button type="button" data-ask="Where does this stand? Please note the next step and the date.">Ask for an update</button></div>';
-    var ph = it.k === 'sf' ? 'Your note (goes on Chatter): feedback wanted, an instruction, or why it is closed'
-           : it.src === 'Performance letter' ? 'Your comment (goes on the letter): or why it is closed' : 'Instruction for the task this becomes';
+    var ph = it.k === 'sf' ? 'Your note (goes on Chatter)' : it.src === 'Performance letter' ? 'Your comment (goes on the letter)' : 'Instruction for the task this becomes';
     var ageCls = (it.age || 0) > 30 ? ' r' : (it.age || 0) > 7 ? ' a' : '';
-    return '<details class="it" data-f="' + esc_(it.f.join(' ')) + '"><summary><div class="hd"><span class="age' + ageCls + '">' + (it.age || 0) + 'd</span>' +
+    var rb = it.risk.band === 'high' ? 'r' : it.risk.band === 'med' ? 'a' : '';
+    var c360 = it.c360.length ? '<div style="margin:4px 0 8px;padding:8px 10px;border:1px solid #E5E1D6;border-radius:8px;background:#fff">' +
+        '<div class="bf" style="margin:0 0 4px;font-weight:700;color:#141C4A">' + esc_(it.cname) + ' · also open</div>' +
+        it.c360.slice(0, 6).map(function (e) { return '<div style="font-size:13px;line-height:1.45;padding:3px 0;border-top:1px dashed #E5E1D6"><b>' + esc_(e.src) + '</b>: ' + esc_(shorten_(e.text, 150)) + '</div>'; }).join('') +
+        (it.c360.length > 6 ? '<div class="bf">and ' + (it.c360.length - 6) + ' more</div>' : '') + '</div>' : '';
+    return '<details class="it" id="it' + i + '" data-f="' + esc_(it.f.join(' ')) + '"><summary><div class="hd"><span class="age' + ageCls + '">' + (it.age || 0) + 'd</span>' +
         '<div class="tt">' + esc_(shorten_(it.title, 110)) + '<small>' + esc_(owner) + ' · ' + esc_(it.why) + (it.st ? ' · ' + esc_(it.st) : '') + '</small>' +
-        (it.adv && it.adv.tag ? '<span class="badge ' + badgeOf[it.adv.tone] + '">' + esc_(tagLabel[it.adv.tag] || '') + '</span>' : '') + '</div></div></summary>' +
+        '<span class="badge ' + rb + '">Risk ' + it.risk.score + '</span> ' +
+        (it.adv && it.adv.tag ? '<span class="badge ' + badgeOf[it.adv.tone] + '">' + esc_(tagLabel[it.adv.tag] || '') + '</span>' : '') +
+        (it.c360.length ? ' <span class="badge">' + esc_(it.cname.split(' ')[0]) + ': ' + it.c360.length + ' more open</span>' : '') + '</div></div></summary>' +
+      (it.risk.why.length ? '<div style="font-size:12.5px;color:#6A7180;margin:-2px 0 6px">Why this score: ' + esc_(it.risk.why.join(' · ')) + '</div>' : '') + c360 +
       '<input type="hidden" name="id_' + i + '" value="' + esc_(it.id) + '">' +
       (link ? '<div style="font-size:13.5px;margin:0 0 4px">' + link + '</div>' : '') + histHtml + adv + quick + stSel +
       '<select name="to_' + i + '">' + opts + '</select>' +
@@ -5816,6 +5959,8 @@ function cmdReplyPage_(person, day, error, notice) {
     'function count(){var n=0;for(var i=0;i<items.length;i++){var d=items[i],ch=false,els=d.querySelectorAll("select,input[type=text],input[type=date]");for(var k=0;k<els.length;k++)if(els[k].value)ch=true;d.classList.toggle("changed",ch);if(ch)n++;}' +
       'if(btn)btn.textContent=n?("Send "+n+" change"+(n===1?"":"s")):"Send these changes";}' +
     'if(btn&&btn.form){btn.form.addEventListener("input",count);btn.form.addEventListener("change",count);}' +
+    'var os=document.querySelectorAll("[data-open]");for(var o=0;o<os.length;o++)os[o].addEventListener("click",function(ev){var d=document.getElementById("it"+this.getAttribute("data-open"));if(!d)return;ev.preventDefault();' +
+      'for(var x=0;x<chips.length;x++)chips[x].className="chip";if(chips[0])chips[0].className="chip on";apply("all");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"});});' +
     'var qs=document.querySelectorAll("[data-close],[data-ask]");for(var q=0;q<qs.length;q++)qs[q].addEventListener("click",function(){' +
       'var d=this.closest("details.it"),s=d.querySelector("select[name^=st_]"),t=d.querySelector("input[name^=q_]");' +
       'if(this.hasAttribute("data-close")&&s)s.value=this.getAttribute("data-close");' +
@@ -5823,7 +5968,7 @@ function cmdReplyPage_(person, day, error, notice) {
     '})();</script>';
   var srcCount = {}; items.forEach(function (it) { srcCount[it.src] = (srcCount[it.src] || 0) + 1; });
   return replyPage_('Not getting attention · ' + prettyDate_(day),
-    items.length ? items.length + ' item' + (items.length === 1 ? '' : 's') + ' gone quiet, worst first. Tap one to see its history, close it, move it or ask; untouched rows are left as they are.' : '',
+    items.length ? items.length + ' item' + (items.length === 1 ? '' : 's') + ' gone quiet, highest risk first. Tap one to see its history and the client\'s other open work, then close it, move it or ask; untouched rows are left as they are.' : '',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') + insight +
     (items.length ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'cmd') + chips + cards + '<button type="submit" id="send">Send these changes</button></form>' + js
                   : '<div class="card ok">Nothing has gone quiet. Every item has been touched in the last ' + CMD.QUIET_DAYS + ' days.</div>'));
@@ -8166,7 +8311,7 @@ function replyPage_(title, sub, inner) {
       '.bar .t{flex:1;background:#EEEBE3;border-radius:6px;height:10px;overflow:hidden}.bar .t i{display:block;height:100%;background:#141C4A;border-radius:6px}.bar .t i.r{background:#DC3F3F}.bar .t i.g{background:#2C7A57}' +
       '.bar .c{width:74px;flex:none;text-align:right;font-weight:700;font-size:12.5px;color:#6A7180}' +
       '.bar.s{flex-wrap:wrap;row-gap:3px}.bar.s .n{width:100%;white-space:normal;font-size:13px}' +
-      'details.it{border-top:1px solid #EEE}details.it>summary{list-style:none;padding:12px 0;cursor:pointer}details.it>summary::-webkit-details-marker{display:none}' +
+      'details.it{border-top:1px solid #EEE;scroll-margin-top:72px}details.it>summary{list-style:none;padding:12px 0;cursor:pointer}details.it>summary::-webkit-details-marker{display:none}' +
       '.hd{display:flex;gap:9px;align-items:flex-start}.hd .tt{flex:1;font-size:14.5px;line-height:1.35}.hd .tt small{display:block;color:#6A7180;font-size:12.5px;margin-top:2px}' +
       '.age{flex:none;min-width:34px;text-align:center;font-size:12px;font-weight:800;color:#fff;border-radius:8px;padding:5px 6px;background:#6A7180}.age.r{background:#DC3F3F}.age.a{background:#C26A04}' +
       '.badge{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:#EEEBE3;color:#141C4A;white-space:nowrap;margin-top:4px}' +

@@ -3255,3 +3255,13 @@ servicing work".
   manager. The link is good for the week. Script Property `FF_CHASE`
   (`live`/`preview`/`off`, unset follows `AGENT_DAY`). Every send checks the
   daily e-mail quota first. Pinned in `tests/test-qpff.js`.
+- **Risk score and the client in one view** on the command centre (18 October
+  2026, `cmdRisk_`, `cmdClientIndex_`). Each item's client is looked up across
+  the open Salesforce book (the task's What name), Query Pal, the log book, and
+  Branch Intelligence's cache (premiums overdue, pending business, last night's
+  lapses); names match on all their words in any order, titles dropped, or on
+  two words of four letters or more. The score (0–100) weighs the payoff order
+  (new business, orphan, retention), age, a client waiting or unhappy, money at
+  risk, the client open elsewhere and the advice tag; reads-as-done drops 20.
+  The page runs highest risk first, opens with "Do these first", and lists
+  clients open in more than one place.
