@@ -3265,3 +3265,18 @@ servicing work".
   risk, the client open elsewhere and the advice tag; reads-as-done drops 20.
   The page runs highest risk first, opens with "Do these first", and lists
   clients open in more than one place.
+- **The command centre is in tabs under a brief** (18 October 2026): Act,
+  People, Agents, Clients, Query Pal. The brief is five or six sentences built
+  from every tab (`cmdBrief_`). People (`peopleNormal_`): each desk's closures
+  a day over the last 5 working days against their own median over the 15
+  before, absent days left out; slipping under 70%, ahead over 130%; late and
+  absent of the last 10 days; overdue and untouched; notes answered. One
+  aggregate SOQL (`DAY_ONLY(convertTimezone(CompletedDateTime))`), cached 10
+  minutes. Agents (`agentFunnel_`): FactFind360 month fact finds and apps
+  against Salesforce interviews; flags no applications, converting, none.
+- **Claude reads the notes when `ANTHROPIC_API_KEY` is set** (`cmdClaudeRead_`):
+  one call per opening for items whose newest note has not been read, cached
+  6 hours per item and note (a "no read" is cached too). States: done,
+  waiting_department, waiting_client, client_unhappy, in_progress, blocked,
+  unclear. Done and unhappy override the rule's advice and move the risk.
+  `ANTHROPIC_MODEL` defaults to claude-haiku-5-5. No key, no call.

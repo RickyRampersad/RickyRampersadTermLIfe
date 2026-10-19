@@ -171,5 +171,43 @@ const low = env.cmdRisk_({ k: 'sf', title: 'File the copy', key: 'RR Operations'
 ok('a filing job that reads as done: low', low.band === 'low' && low.why[0] === 'reads as done: close it', JSON.stringify(low));
 ok('names match in any order and without titles', env.clientKeys_('KHAN, Mr. Jamil').full === env.clientKeys_('Jamil Khan').full);
 
+console.log('\nThe brief, tabs, people against their own normal, agents, and Claude reading the notes:\n');
+{
+  // Elizabeth closed ten a day for three weeks and four a day last week; Kamla was absent two days.
+  const days = env.lastWorkdays_(DAY, 20), AGG = [];
+  days.forEach((d, i) => { AGG.push({ OwnerId: '005L', d, n: i >= 15 ? 4 : 10 }); AGG.push({ OwnerId: '005K', d, n: 6 }); });
+  env.__mkSheet('Attendance', 20, env.ATT.head.slice(), [[days[18], 'kamla', 'Kamla Dookran', '', '', '', 'absent', 'Sick', 'kamla', ''], [days[19], 'kamla', 'Kamla Dookran', '', '', '', 'absent', 'Sick', 'kamla', '']]);
+  const AGENTS = { 'a-neil': { key: 'a-neil', name: 'Neil Agent', agentName: 'Neil Agent', email: 'neil@example.com' }, 'a-joy': { key: 'a-joy', name: 'Joy Agent', agentName: 'Joy Agent', email: 'joy@example.com' }, 'a-dee': { key: 'a-dee', name: 'Dee Agent', agentName: 'Dee Agent', email: 'dee@example.com' } };
+  env.agentPeople_ = () => AGENTS; env.agentManagerEmail_ = () => 'akaash.kalladeen@example.com'; env.goalFor_ = () => ({ ffWk: 3 });
+  env.ff360Feed_ = () => ({ leaders: [{ name: 'Neil Agent', count: 2 }, { name: 'Joy Agent', count: 1 }], monthLeaders: [{ name: 'Neil Agent', count: 6, apps: 0, pickedUp: 0, pipeline: 40000 }, { name: 'Joy Agent', count: 2, apps: 2, pickedUp: 30000, pipeline: 0 }] });
+  const prevQ = env.sfkQuery_;
+  env.sfkQuery_ = q => /GROUP BY OwnerId, DAY_ONLY/.test(q) ? AGG.filter(r => q.indexOf("'" + r.OwnerId + "'") > -1) : prevQ(q);
+  // Claude reads the notes: Kamla's licence task is an unhappy client.
+  env.PropertiesService.getScriptProperties().setProperty('ANTHROPIC_API_KEY', 'test-key');
+  const calls = [];
+  env.UrlFetchApp = { fetch: (url, o) => { calls.push({ url, o }); const body = JSON.parse(o.payload);
+    return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ '00T4': { state: 'client_unhappy', summary: 'Agent is upset the licence pack is three weeks late', next: 'Kamla to call the agent today' } }) }] }) }; } };
+  const c = env.CacheService.getScriptCache(); ['people_norm_' + DAY + '_sasha,elizabeth,azariah,kamla,pawan,akaash', 'ag_funnel_' + DAY + '_'].forEach(k => c.remove(k));
+  const h2 = env.cmdReplyPage_(P, DAY, '', '').getContent();
+  const sec = id => { const i = h2.indexOf('<section data-sec="' + id + '"'); const j = h2.indexOf('<section data-sec=', i + 10); return i < 0 ? '' : h2.slice(i, j < 0 ? undefined : j); };
+  ok('a brief leads the page', /The brief · /.test(h2) && /gone quiet/.test(h2.split('class="tabs"')[0]));
+  ok('in tabs: Act, People, Agents, Clients, Query Pal', /data-tab="act">Act/.test(h2) && /data-tab="people">People/.test(h2) && /data-tab="agents">Agents/.test(h2) && /data-tab="clients">Clients/.test(h2));
+  ok('Act is open; the others wait their turn', /<section data-sec="act">/.test(h2) && /<section data-sec="people" class="sec-off">/.test(h2));
+  ok('Elizabeth is slipping against her own normal', /Elizabeth is closing 4 a day this week against a normal 10: down 60%\./.test(sec('people')), (sec('people').match(/Elizabeth is[^<]*/) || [''])[0]);
+  ok('and the brief says so too', /Elizabeth is closing 4 a day/.test(h2.split('class="tabs"')[0]));
+  ok('absent days are left out of the normal, and counted', /Kamla Dookran[\s\S]*?absent 2 of 10 days/.test(sec('people')));
+  ok('each person has a sparkline of twenty days', (sec('people').match(/title="absent"/g) || []).length === 2);
+  ok('agents: doing fact finds and writing nothing', /Neil \(6\) is doing fact finds and writing no applications/.test(sec('agents')));
+  ok('agents: converting well but doing few', /Joy converts well but did few fact finds/.test(sec('agents')));
+  ok('agents: none in fourteen days', /1 agent has done no fact find in 14 days/.test(sec('agents')));
+  ok('the branch funnel', /This month: 8 fact finds, 2 applications \(25%\)/.test(sec('agents')));
+  ok('Claude was asked once, with the notes and not the empty items', calls.length === 1 && /claude-haiku-5-5/.test(calls[0].o.payload) && /Where is this\?/.test(calls[0].o.payload) && !/00T2/.test(calls[0].o.payload) && calls[0].o.headers['x-api-key'] === 'test-key');
+  ok('its read shows on the item', /Claude's read · Client unhappy:<\/b> Agent is upset the licence pack is three weeks late/.test(h2) && /Next: Kamla to call the agent today/.test(h2));
+  ok('and changes the advice and the risk', /Claude reads an unhappy client/.test(h2) && /client unhappy \(Claude&#39;s read\)|client unhappy \(Claude's read\)/.test(h2));
+  env.cmdReplyPage_(P, DAY, '', '');
+  ok('read once: the next opening uses the cached read', calls.length === 1);
+  env.PropertiesService.getScriptProperties().deleteProperty('ANTHROPIC_API_KEY');
+}
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed.');
 process.exit(fails ? 1 : 0);
