@@ -4074,3 +4074,7 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   day's line is kept in `bm_self_` on every page view, check-in and report;
   `acctPrune_` keeps 14 days of logs and 120 of lines. Pinned in
   `tests/test-me.js`.
+- **Ricky's own mails go to him alone** (`ownMail_`, 18 October 2026: "Don't
+  copy anyone on mine"): the 5am review, the 11am progress, the 3pm close-out
+  and the check-ins carry no Cc. Every other desk's mail, and outbound client
+  drafts, still copy sales support.
