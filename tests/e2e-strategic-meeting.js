@@ -28,7 +28,9 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
     if (req.method() === 'POST') p = JSON.parse(req.postData() || '{}');
     const me = p.code === 'BRANCH' ? { name: 'Branch', role: 'branch', canWrite: true } : p.code === 'AK' ? { name: 'Akaash Kalladeen', role: 'unit', canWrite: true } : null;
     const reply = o => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
-    if (!linked) return reply({ ok: false, error: 'Unknown action' });
+    if (p.action === 'ping') return reply({ ok: true, service: 'Service Questionnaire', campaign: 7 });
+    /* the live backend without StrategicMeeting.gs: an unknown action is a redirect to the form, which the browser blocks */
+    if (!linked) return route.abort('failed');
     if (!me) return reply({ ok: false, refused: true, error: 'That agent number and password do not match.' });
     switch (p.action) {
       case 'sm.me': return reply({ ok: true, me, ai: false });
