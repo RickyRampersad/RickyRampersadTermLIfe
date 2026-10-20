@@ -49,8 +49,10 @@ ok('a seven o\'clock desk starts at 420', env.startFor_('sasha') === 420 && env.
 ok('an eight o\'clock desk starts at 480', env.startFor_('azariah') === 480);
 ok('a nine o\'clock desk starts at 540', env.startFor_('ashley') === 540);
 ok('a stranger to the schedule defaults to eight', env.startFor_('nobody') === 480);
-ok('08:07 is on time for an eight o\'clock start', env.lateBy_('azariah', '08:07') === 0);
-ok('08:25 is fifteen minutes over the grace', env.lateBy_('azariah', '08:25') === 25);
+// 20 Oct 2026: five minutes' grace, not ten (Ricky: absent five minutes after the start).
+ok('08:05 is on time for an eight o\'clock start', env.lateBy_('azariah', '08:05') === 0);
+ok('08:07 is late by seven minutes', env.lateBy_('azariah', '08:07') === 7);
+ok('08:25 is late by twenty-five', env.lateBy_('azariah', '08:25') === 25);
 ok('and 09:05 is on time for a nine o\'clock start', env.lateBy_('ashley', '09:05') === 0);
 ok('08:07 is an hour and seven minutes after a seven o\'clock start', env.lateBy_('sasha', '08:07') === 67);
 

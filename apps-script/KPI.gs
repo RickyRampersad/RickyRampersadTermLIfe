@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-20d';
+var SCRIPT_VERSION = '2026-10-20e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3277,14 +3277,14 @@ function sendDayStart_(staffId, date, kind, opt) {
   var intro = sysDay
     ? 'Good morning, ' + esc_(first) + (signIn ? ', and thank you for checking in at <b>' + esc_(twelve_(signIn)) + '</b>. ' : '. Your day starts at <b>' + esc_(twelve_(mmText_(startM))) + '</b>. ') +
       'Your day is set for you: the system has read Salesforce, Query Pal and the log book and put your work in order, each task with what to do. ' +
-      (signIn ? 'Work down the list on your page.' : 'Open the button and check in: that is the attendance register. In after ' + esc_(twelve_(mmText_(startM + ATT_GRACE_MIN))) + ' is late; no check-in by <b>' +
-        esc_(twelve_(mmText_(startM + ABSENT_AFTER_MIN))) + '</b> marks you absent and your due work goes to colleagues.')
+      (signIn ? 'Work down the list on your page.' : 'Open the button and check in: that is the attendance register. No check-in by <b>' +
+        esc_(twelve_(mmText_(startM + ABSENT_AFTER_MIN))) + '</b> marks you absent, and at ' + esc_(twelve_(mmText_(startM + COVER.AFTER_MIN))) + ' your due work goes to colleagues. Check in late and you are late, not absent.')
     : kind === 'plan'
     ? 'Thank you, ' + esc_(first) + '. Your plan is in' + (signIn ? ' (signed in at ' + esc_(twelve_(signIn)) + ')' : '') + '. Below: whether it holds up against your record, the day as planned, and what Salesforce still has waiting.'
     : 'Good morning, ' + esc_(first) + (signIn
         ? ', and thank you for signing in at <b>' + esc_(twelve_(signIn)) + '</b>. '
         : '. Your day starts at <b>' + esc_(twelve_(mmText_(startM))) + '</b>. Review your plan below, then open the button and save it: saving signs you in, and that is the attendance register. ' +
-          'In after ' + esc_(twelve_(mmText_(startM + ATT_GRACE_MIN))) + ' is late; no sign-in by <b>' + esc_(twelve_(mmText_(startM + ABSENT_AFTER_MIN))) + '</b> marks you absent and your due work goes to colleagues. ') +
+          'No sign-in by <b>' + esc_(twelve_(mmText_(startM + ABSENT_AFTER_MIN))) + '</b> marks you absent, and at ' + esc_(twelve_(mmText_(startM + COVER.AFTER_MIN))) + ' your due work goes to colleagues. ') +
       'Below is what your record shows over the last ' + INTEL_DAYS + ' working days, your day as you have filed it, and a plan for the day built from what Salesforce, Query Pal and the inbox have waiting.';
 
   var ask = sysDay
@@ -3898,7 +3898,7 @@ var MORNING_MAIL_AT = 5 * 60;          // the day's first run: 5:00am
 var STAFF_MAIL_LEAD = 30;              // a desk's morning e-mail, half an hour before its start
 var MORNING_MAIL_PER_RUN = 3;
 var BM_MAIL_AT = 5 * 60;               // 5:00am, the Branch Manager's operations review
-var ABSENT_AFTER_MIN = 60;             // no sign-in by start + 60 is absent
+var ABSENT_AFTER_MIN = 5;              // no sign-in by start + 5 is absent (Ricky, 20 Oct 2026); the work moves at start + COVER.AFTER_MIN
 var ATT_REPORT_AT = 9 * 60 + 15;       // after the eight o'clock desks' hour has run
 var REBALANCE_AT = 10 * 60;
 var BM_SF_DEFAULT = '005A0000001NfJGIA0';   // the Branch Manager's Salesforce user
@@ -3907,7 +3907,13 @@ var COVER = {
   RECEIVERS: ['sasha', 'elizabeth', 'azariah', 'kamla'],
   MONEY: ['Renewa/PDl/Bill', 'Claims/ Mat'],          // to the BMA first: money and claims
   KAMLA_ONLY_MONEY: true,                              // the BMA takes money work only
-  PER_RECEIVER: 20, PER_DAY: 40, ASK_MAX: 25
+  PER_RECEIVER: 20, PER_DAY: 40, ASK_MAX: 25,
+  /* Two clocks (Ricky, 20 Oct 2026): the register marks absent at start + 5; the work moves at start + 30, at the
+     start itself when the absence was marked ahead with a reason; a second pass at 8:15, once the 8:00 desks are in.
+     Each receiver takes no more than their own pace in a day across every absence (5 to PER_RECEIVER). Checking in
+     before noon brings back what the colleague has not touched. The BMA's own work waits for her. */
+  AFTER_MIN: 30, SECOND_AT: 8 * 60 + 15, RETURN_UNTIL: 12 * 60, CAP_MIN: 5,
+  KEEP: { kamla: ['Lic/Staffing/SA/HR', 'Training', 'RR Operations', 'Innovation&Creativity'] }
 };
 
 var AUTO_ABSENT_FROM = '2026-10-16';   // the staff are told on the 15th; the clock marks from the 16th
@@ -3918,7 +3924,19 @@ var AUTO_ABSENT_FROM = '2026-10-16';   // the staff are told on the 15th; the cl
 function autoAbsentOn_(day) {
   var props = PropertiesService.getScriptProperties();
   if (String(props.getProperty('AUTO_ABSENT') || '').toLowerCase() === 'off') return false;
+  if (branchClosed_(day || todayISO_())) return false;
   return String(day || todayISO_()) >= String(props.getProperty('AUTO_ABSENT_FROM') || AUTO_ABSENT_FROM);
+}
+
+/** A day the branch is closed (a public holiday): Script Property BRANCH_CLOSED, dates comma separated. Nobody is marked. */
+function branchClosed_(day) {
+  var v = ''; try { v = String(PropertiesService.getScriptProperties().getProperty('BRANCH_CLOSED') || ''); } catch (e) {}
+  return v.split(/[\s,]+/).indexOf(String(day)) > -1;
+}
+/** How many of an absent colleague's tasks one person takes in a day: their own pace, 5 to PER_RECEIVER. */
+function coverCap_(sid, day) {
+  var pace = null; try { pace = (intelFor_(sid, day) || {}).pace; } catch (e) {}
+  return pace ? Math.max(COVER.CAP_MIN, Math.min(COVER.PER_RECEIVER, Math.ceil(pace))) : COVER.PER_RECEIVER;
 }
 
 /** Next working day after `day`. */
@@ -3950,7 +3968,7 @@ function writeAutoAbsent_(sid, day, startM) {
 function autoAbsentTick_(day, mins, present, absent) {
   if (!autoAbsentOn_(day)) return [];
   var props = PropertiesService.getScriptProperties(), out = [];
-  DAY_MAIL_DESKS.forEach(function (sid) {
+  DAY_MAIL_DESKS.concat(UM_DESKS).forEach(function (sid) {
     if (present[sid] || absent[sid]) return;
     var sp = parseSpan_(scheduleFor_(sid).hours || '');
     if (!sp || mins < sp.start + ABSENT_AFTER_MIN) return;
@@ -3988,16 +4006,19 @@ function coverPlan_(day, sid, present, absent) {
   var noted = ownerNoted_(due.concat(next).map(function (t) { return t.id; }), me.id);
 
   var name = nameFor_(sid), first = String(name).split(' ')[0];
+  var had = {}; try { had = JSON.parse(PropertiesService.getScriptProperties().getProperty('cover_got_' + day) || '{}') || {}; } catch (e) {}
   var recv = COVER.RECEIVERS.filter(function (r) {
     return r !== sid && users[r] && present[r] && !absent[r];
-  }).map(function (r) { return { sid: r, name: nameFor_(r), got: 0 }; });
+  }).map(function (r) { return { sid: r, name: nameFor_(r), got: Number(had[r] || 0), cap: coverCap_(r, day) }; });
+  var keepTypes = (COVER.KEEP || {})[sid] || [];
 
-  var moves = [], kept = [];
+  var moves = [], kept = [], own = [];
   due.filter(function (t) { return !noted[t.id]; }).sort(intelOrder_).forEach(function (t) {
+    if (keepTypes.indexOf(t.ty) > -1) { own.push(t); return; }   // the BMA's own work waits for her
     if (moves.length >= COVER.PER_DAY) { kept.push(t); return; }
     var money = COVER.MONEY.indexOf(t.ty) > -1;
     var pool = recv.filter(function (r) {
-      if (r.got >= COVER.PER_RECEIVER) return false;
+      if (r.got >= Math.min(COVER.PER_RECEIVER, r.cap || COVER.PER_RECEIVER)) return false;
       if (r.sid === 'kamla' && COVER.KAMLA_ONLY_MONEY && !money) return false;
       return true;
     });
@@ -4014,7 +4035,7 @@ function coverPlan_(day, sid, present, absent) {
         first + ': when you return, post here anything you did on this that is not recorded.' });
   });
   var ask = next.filter(function (t) { return !noted[t.id]; }).slice(0, COVER.ASK_MAX);
-  return { sid: sid, name: name, first: first, moves: moves, kept: kept, ask: ask,
+  return { sid: sid, name: name, first: first, moves: moves, kept: kept, ask: ask, own: own,
            noted: due.filter(function (t) { return noted[t.id]; }).length, receivers: recv };
 }
 
@@ -4022,19 +4043,31 @@ function coverPlan_(day, sid, present, absent) {
 function coverTick_(day, mins, present, absent) {
   if (!autoAbsentOn_(day) || !sfkConfigured_()) return [];
   var props = PropertiesService.getScriptProperties(), out = [];
+  var att = {}; try { (hrRows_(ATT, true) || []).forEach(function (r) { if (isoDay_(r.Date) === day) att[String(r.StaffId)] = r; }); } catch (e) {}
   COVER.POOL.forEach(function (sid) {
     if (!absent[sid]) return;
     var sp = parseSpan_(scheduleFor_(sid).hours || '');
-    if (!sp || mins < sp.start) return;
-    var key = 'cover_' + sid + '_' + day;
-    if (props.getProperty(key)) return;
-    props.setProperty(key, hhmm_(new Date()));
+    if (!sp) return;
+    // Marked ahead with a reason (leave, a workshop): the work moves at the start. The clock's own mark: at start + 30.
+    var known = att[sid] && String(att[sid].MarkedBy || '') !== 'tracker';
+    var at = sp.start + (known ? 0 : COVER.AFTER_MIN);
+    var key = 'cover_' + sid + '_' + day, key2 = 'cover2_' + sid + '_' + day;
+    var first = !props.getProperty(key) && mins >= at;
+    var second = !first && !!props.getProperty(key) && !props.getProperty(key2) && mins >= Math.max(COVER.SECOND_AT, at + 15);
+    if (!first && !second) return;
+    props.setProperty(first ? key : key2, hhmm_(new Date()));
     try {
       var plan = coverPlan_(day, sid, present, absent);
       if (!plan) return;
       var done = plan.moves.length ? rebalanceApply_(day, plan.moves) : [];
+      var okMoves = done.filter(function (m) { return m.ok; });
+      // What each person has taken today, across every absence, so nobody is given more than their own pace.
+      try { var got = JSON.parse(props.getProperty('cover_got_' + day) || '{}') || {};
+        okMoves.forEach(function (m) { got[m.to] = Number(got[m.to] || 0) + 1; }); props.setProperty('cover_got_' + day, JSON.stringify(got)); } catch (e) {}
+      // Each receiver's day readjusts: what moved goes to the top, their own lowest-priority work drops to "next".
+      try { coverAbsorb_(day, okMoves); } catch (e) {}
       var asked = [];
-      plan.ask.forEach(function (t) {
+      if (first) plan.ask.forEach(function (t) {
         try {
           sfkInsert_('FeedItem', { ParentId: t.id, Body: 'ACTION REQUIRED · ' + plan.name + '. Posted ' + shortDate_(day) + '.\n\n' +
             'This task is due ' + prettyDate_(t.due) + ' and carries no written note from you. A status alone does not tell the branch what was done.\n\n' +
@@ -4042,15 +4075,92 @@ function coverTick_(day, mins, present, absent) {
           asked.push(t);
         } catch (e) {}
       });
-      props.setProperty('cover_back_' + sid, JSON.stringify({
-        day: day, moved: done.filter(function (m) { return m.ok; }).length,
-        owe: asked.map(function (t) { return { id: t.id, s: shorten_(t.subject, 90), due: t.due }; }).slice(0, 25)
-      }).slice(0, 8900));
-      try { coverMail_(day, plan, done, asked); } catch (e) {}
-      out.push(plan.first + ' covered (' + done.filter(function (m) { return m.ok; }).length + ' moved)');
+      var back = {}; try { back = JSON.parse(props.getProperty('cover_back_' + sid) || '{}') || {}; } catch (e) {}
+      if (back.day !== day) back = { day: day, moved: 0, owe: [] };
+      back.moved = Number(back.moved || 0) + okMoves.length;
+      back.owe = (back.owe || []).concat(asked.map(function (t) { return { id: t.id, s: shorten_(t.subject, 90), due: t.due }; })).slice(0, 25);
+      props.setProperty('cover_back_' + sid, JSON.stringify(back).slice(0, 8900));
+      if (first || okMoves.length) { try { coverMail_(day, plan, done, asked); } catch (e) {} }
+      out.push(plan.first + ' covered' + (second ? ' (second pass)' : '') + ' (' + okMoves.length + ' moved' + (plan.kept.length ? ', ' + plan.kept.length + ' waiting for someone to take them' : '') + ')');
     } catch (e) { out.push(sid + ' cover FAILED: ' + (e && e.message)); }
   });
   return out;
+}
+
+/** A receiver's day, readjusted after work moved to them: what moved goes to the top of the plan, and as many of
+ *  their own lowest-priority tasks go to "when your list is done", so the day keeps its size. */
+function coverAbsorb_(day, moves) {
+  if (!systemDayOn_() || !moves.length) return;
+  var by = {}; moves.forEach(function (m) { (by[m.to] = by[m.to] || []).push(m); });
+  Object.keys(by).forEach(function (sid) {
+    var person = rosterPerson_(sid) || { staffId: sid, name: nameFor_(sid) };
+    var plans = {}; try { plans = planRows_(sid, day); } catch (e) {}
+    if (!plans.KPI1) return;   // not checked in yet: their day is set, with what moved first, when they do
+    var have = planItemsOf_(plans.KPI1.Items), size = have.filter(function (it) { return it.k === 'sf'; }).length, ids = {};
+    have.forEach(function (it) { if (it.k === 'sf') ids[it.id] = 1; });
+    var add = by[sid].filter(function (m) { return !ids[m.t.id]; }).map(function (m) { return { k: 'sf', id: m.t.id, subject: m.t.subject, type: m.t.ty || '' }; });
+    if (!add.length) return;
+    var states = {}; try { states = sfkTaskStates_(have.filter(function (it) { return it.k === 'sf'; }).map(function (it) { return it.id; })); } catch (e) {}
+    var own = have.filter(function (it) { return it.k === 'sf' && !/^(completed|closed)/i.test(String(states[it.id] || '')); });
+    var drop = own.slice(Math.max(0, own.length - add.length));   // the plan is in priority order: the last are the lowest
+    var keepIds = {}; drop.forEach(function (it) { keepIds[it.id] = 1; });
+    var items = add.concat(have.filter(function (it) { return !keepIds[it.id]; }));
+    var lock = takeLock_();
+    if (!lock) return;
+    try {
+      var clean = cleanPlanItems_(items.slice(0, PLAN_MAX_ITEMS));
+      planWrite_(person, day, 'KPI1', { Items: clean.list || items.slice(0, PLAN_MAX_ITEMS) });
+      var model = intelModel_(sid, day);
+      if (model && drop.length) {
+        var b = model.b.KPI1 || (model.b.KPI1 = { sug: [], more: [] });
+        b.sug = b.sug.filter(function (t) { return !keepIds[t.id]; });
+        b.more = drop.map(function (it) { return { id: it.id, s: shorten_(it.subject, 95), ty: shorten_(it.type || '', 30), due: '', late: false }; }).concat(b.more || []).slice(0, 12);
+        bigPut_(intelModelKey_(sid, day), model);
+      }
+    } catch (e) {} finally { lock.releaseLock(); }
+  });
+}
+
+/** Back after all: checking in before noon brings back every task moved away this morning that the colleague has
+ *  not touched (no note on it since the move, still open, still in their name). Touched ones stay where they are. */
+function coverReturn_(person, day) {
+  var sid = String(person.staffId), nowM = minutesOf_(hhmm_(new Date()));
+  if (!sfkConfigured_() || nowM == null || nowM >= COVER.RETURN_UNTIL) return [];
+  var rows = []; try { rows = (hrRows_(MOVES, false) || []).filter(function (r) {
+    return isoDay_(r.Date) === day && String(r.From) === sid && /^OK/.test(String(r.Result || '')) && !String(r.UndoneAt || '').trim(); }); } catch (e) { return []; }
+  if (!rows.length) return [];
+  var users = sfkUsers_() || {}, ids = rows.map(function (r) { return String(r.TaskId); }), cur = {}, touched = {};
+  try { sfkQuery_('SELECT Id, OwnerId, IsClosed, Subject, Task_Type__c, ActivityDate, LastModifiedById FROM Task WHERE Id IN (' + ids.map(soqlStr_).join(',') + ')').forEach(function (t) { cur[t.Id] = t; }); } catch (e) { return []; }
+  // Touched: the colleague wrote on it, or changed it, since it moved. The script's own posts do not count.
+  try { sfkQuery_('SELECT ParentId, Body, CreatedById FROM FeedItem WHERE ParentId IN (' + ids.map(soqlStr_).join(',') + ') AND CreatedDate >= ' + sfkUtcAt_(day, 0) + ' LIMIT 1000').forEach(function (f) {
+    var b = String(f.Body || '').replace(/<[^>]+>/g, ' ').trim();
+    if (!/^(MOVED|ACTION REQUIRED|BACK)\b/.test(b)) (touched[f.ParentId] = touched[f.ParentId] || {})[f.CreatedById] = 1; }); } catch (e) {}
+  var moves = [];
+  rows.forEach(function (r) {
+    var t = cur[String(r.TaskId)], to = String(r.To);
+    if (!t || t.IsClosed || !users[to] || t.OwnerId !== users[to].id) return;
+    if ((touched[t.Id] || {})[users[to].id] || t.LastModifiedById === users[to].id) return;
+    moves.push({ t: { id: t.Id, subject: t.Subject, ty: t.Task_Type__c || '', due: t.ActivityDate || '' }, from: to, to: sid, fromName: nameFor_(to), toName: nameFor_(sid),
+      why: String(nameFor_(sid)).split(' ')[0] + ' checked in, and nothing had been done on it yet',
+      note: 'BACK ' + shortDate_(day) + '. ' + nameFor_(sid) + ' checked in at ' + twelve_(hhmm_(new Date())) + ', so this task goes back to ' + String(nameFor_(sid)).split(' ')[0] + ': ' + String(nameFor_(to)).split(' ')[0] + ' had not noted or changed it since it moved this morning.' });
+  });
+  if (!moves.length) return [];
+  var done = rebalanceApply_(day, moves).filter(function (m) { return m.ok; });
+  // The colleague's day gives them up.
+  var by = {}; done.forEach(function (m) { (by[m.from] = by[m.from] || []).push(m.t.id); });
+  Object.keys(by).forEach(function (rs) {
+    var gone = {}; by[rs].forEach(function (id) { gone[id] = 1; });
+    var lock = takeLock_(); if (!lock) return;
+    try {
+      var pl = planRows_(rs, day);
+      if (pl.KPI1) planWrite_(rosterPerson_(rs) || { staffId: rs, name: nameFor_(rs) }, day, 'KPI1', { Items: planItemsOf_(pl.KPI1.Items).filter(function (it) { return !gone[it.id]; }) });
+      var md = intelModel_(rs, day);
+      if (md) { md.loose = (md.loose || []).filter(function (t) { return !gone[t.id]; }); bigPut_(intelModelKey_(rs, day), md); }
+      var got = JSON.parse(PropertiesService.getScriptProperties().getProperty('cover_got_' + day) || '{}') || {};
+      got[rs] = Math.max(0, Number(got[rs] || 0) - by[rs].length); PropertiesService.getScriptProperties().setProperty('cover_got_' + day, JSON.stringify(got));
+    } catch (e) {} finally { lock.releaseLock(); }
+  });
+  return done;
 }
 
 function coverMail_(day, plan, done, asked) {
@@ -4069,7 +4179,8 @@ function coverMail_(day, plan, done, asked) {
         '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(first) + ', ' + esc_(plan.name) + ' is absent today. ' +
           'These were due or overdue with nothing written on them, so the client is waiting. They are in your name in Salesforce now, each with a note. ' +
           'Work them today, high-payoff first, and note every call in the client\'s words before you close it.</div>' +
-        moveLines_(by[sid], day) + replyButton_(replyUrl_(sid, day, 'plan'), 'Add them to my plan', 'They are at the top of your plan page, under "Not in today\'s plan".') + sign) });
+        moveLines_(by[sid], day) + (systemDayOn_() ? replyButton_(replyUrl_(sid, day, 'plan'), 'Open my day', 'They are at the top of your day, marked Moved to you; your own lowest-priority tasks moved to "when your list is done".')
+          : replyButton_(replyUrl_(sid, day, 'plan'), 'Add them to my plan', 'They are at the top of your plan page, under "Not in today\'s plan".')) + sign) });
   });
   var absentTo = emailFor_(plan.sid);
   if (absentTo) {
@@ -4079,7 +4190,7 @@ function coverMail_(day, plan, done, asked) {
         '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(plan.first) + ', you are marked absent today. ' +
           ok.length + ' of your due and overdue tasks had nothing written on them and have gone to colleagues so no client waits. ' +
           (asked.length ? asked.length + ' due on your return carry no note from you; each now has an ACTION REQUIRED post. Answer them before 10am the day you are back. ' : '') +
-          'If you are in after all, sign in now: the register will show you as late, not absent.</div>' +
+          'If you are in after all, check in now: the register will show you as late, not absent, and before noon anything nobody has touched comes back to you.</div>' +
         (ok.length ? sectionLabel_('Covered by colleagues') + moveLines_(ok, day) : '') +
         (asked.length ? sectionLabel_('Waiting for your note') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.red + ';border-radius:10px;padding:11px 15px">' +
           asked.map(function (t) { return dayStartTaskLine_(t, day); }).join('') + '</div>' : '') + sign) });
@@ -4096,6 +4207,7 @@ function coverMail_(day, plan, done, asked) {
         { value: ok.length, label: 'moved to cover', color: MAIL.navy },
         { value: plan.noted, label: 'kept: has her note', color: MAIL.green },
         { value: plan.kept.length, label: 'kept: no one free', color: plan.kept.length ? MAIL.red : MAIL.navy },
+        { value: (plan.own || []).length, label: 'own work, waits for the return', color: (plan.own || []).length ? MAIL.amber : MAIL.navy },
         { value: asked.length, label: 'due next: note asked', color: asked.length ? MAIL.amber : MAIL.navy }
       ]) +
       '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Due and overdue work with no note from ' + esc_(plan.first) +
@@ -5849,7 +5961,7 @@ function sdPage_(person, day, error, notice) {
         '<div style="height:8px;background:#EEEBE3;border-radius:6px;margin:8px 0 0;overflow:hidden"><i style="display:block;height:100%;width:' + pct + '%;background:#2C7A57"></i></div></div>'
     : '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card bad">' + replyHidden_(sid, day, 'in') +
         '<div class="bh">Check in</div><div class="bf">This is the register: the time you press it is your sign-in. Your day is set for you below.' +
-        ' In after ' + esc_(twelve_(mmText_(sp.start + ATT_GRACE_MIN))) + ' is late; no check-in by ' + esc_(twelve_(mmText_(sp.start + ABSENT_AFTER_MIN))) + ' marks you absent and your work goes to colleagues.</div>' +
+        ' No check-in by ' + esc_(twelve_(mmText_(sp.start + ABSENT_AFTER_MIN))) + ' marks you absent; at ' + esc_(twelve_(mmText_(sp.start + COVER.AFTER_MIN))) + ' your due work goes to colleagues. Check in late and you are marked late, and before noon whatever nobody has touched comes back to you.</div>' +
         '<button type="submit" style="background:#2C7A57;margin-top:6px">Check in and start my day</button></form>';
   var yo = null; try { yo = yesterdayOpen_(sid, day); } catch (e) {}
   var yCard = yo ? '<div class="card bad" id="p-yday"><div class="bh" style="color:#DC3F3F">Yesterday first · ' + esc_(prettyDate_(yo.day)) + ' was not closed</div>' +
@@ -5979,7 +6091,7 @@ function sdPrune_(day) {
   var props = PropertiesService.getScriptProperties(), cut = shiftDays_(day, -21), n = 0;
   var keys = typeof props.getKeys === 'function' ? props.getKeys() : Object.keys(props.getProperties());
   keys.forEach(function (k) {
-    var m = String(k).match(/^(?:intel_model_|intel_plan_|intel_target_|daystart_(?:first|plan)_|md_|hkv2_|autoabs_|cover_|notclosed_|ncchk_|ncrem_|ncdone_|um_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|sd_(?:list|qids)_)[A-Za-z0-9_.-]*?(\d{4}-\d{2}-\d{2})(?:_\d+|_n)?$/);
+    var m = String(k).match(/^(?:intel_model_|intel_plan_|intel_target_|daystart_(?:first|plan)_|md_|hkv2_|autoabs_|cover_|cover2_|notclosed_|ncchk_|ncrem_|ncdone_|um_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|sd_(?:list|qids)_)[A-Za-z0-9_.-]*?(\d{4}-\d{2}-\d{2})(?:_\d+|_n)?$/);
     if (m && m[1] < cut) { try { props.deleteProperty(k); n++; } catch (e) {} }
   });
   return n;
@@ -14608,7 +14720,7 @@ function standing_(profile, staffId) {
 var ATT = { must: ['Date', 'StaffId', 'FirstSignIn'], name: 'Attendance',
             head: ['Date', 'StaffId', 'Name', 'FirstSignIn', 'LastSeen', 'SignedOut', 'Status',
                    'Reason', 'MarkedBy', 'UpdatedAt'] };
-var ATT_GRACE_MIN = 10;
+var ATT_GRACE_MIN = 5;   // late after five minutes (Ricky, 20 Oct 2026)
 
 /** "8am – 4pm" -> 480. The first token of the hours string, in minutes. */
 function startFor_(staffId) {
@@ -14695,12 +14807,15 @@ function recordAttendance_(profile) {
 
   var sh = attSheet_(), rows = sheetObjects_(sh), now = new Date();
   var found = attRow_(rows, day, sid), out;
-  if (found && !timeStr_(found.row.FirstSignIn) && String(found.row.MarkedBy || '') === 'tracker') {
-    // Marked absent by the clock, and here after all: in, late by the minute.
+  if (found && !timeStr_(found.row.FirstSignIn) && (String(found.row.MarkedBy || '') === 'tracker' || String(found.row.Status || '').toLowerCase() === 'absent')) {
+    // Marked absent (by the clock, or ahead by a manager), and here after all: in, late by the minute (20 Oct 2026: whoever marked it).
+    var auto = String(found.row.MarkedBy || '') === 'tracker';
     var back = { FirstSignIn: hhmm_(now), LastSeen: hhmm_(now), Status: 'in', MarkedBy: sid, UpdatedAt: now,
-                 Reason: 'Signed in at ' + twelve_(hhmm_(now)) + ', after the automatic absence' };
+                 Reason: 'Signed in at ' + twelve_(hhmm_(now)) + (auto ? ', after the automatic absence' : ', though marked absent (' + String(found.row.Reason || 'no reason') + ')') };
     writeRow_(sh, found.at, colMap_(sh), back);
     out = attOut_(Object.assign({}, found.row, back), sid); out.first = true;
+    // What moved away this morning and nobody has touched comes back.
+    try { out.back = coverReturn_(profile, day).length; } catch (e) {}
   } else if (found) {
     writeRow_(sh, found.at, colMap_(sh), { LastSeen: hhmm_(now), UpdatedAt: now });
     out = attOut_(found.row, sid); out.first = false;
