@@ -635,6 +635,11 @@ function clientPage_(p) {
         balance: r.balance, payStatus: r.payStatus,
         policy: r.policy, mobile: r.mobile, email: r.email,
         renewalStatus: r.renewalStatus,
+        // What this cover level actually gives, from the policy wording and
+        // the 2021 proposal rather than from hand-written copy. Guarded with
+        // typeof so the portal still renders if MotorProduct.gs is absent.
+        product: (typeof mpForRisk === 'function')
+          ? mpForRisk(r.coverage, { Windscreen__c: r.windscreen || 0 }) : null,
         valueHistory: comp ? valueHistory_(token, r.policy) : [],
         guide: comp && typeof motorValueGuide_ === 'function'
           ? motorValueGuide_(vehicleValueHistory_(r), r.sumInsured || latestCompValue_(r.client, r.token, r.email))
@@ -685,6 +690,16 @@ function submitInstruction(payload) {
   var payRef = String(payload.payRef || '').slice(0, 120);
   var isComp = /comprehensive/i.test(match.coverage);
 
+  // The free entitlement. The 2021 proposal states that an individual
+  // policyholder may have one of Courtesy Car or Hospitalisation at no cost,
+  // and until now nobody was told. 'e' and 'g' are the proposal's own item
+  // letters; anything else is treated as no choice made.
+  var freeKey = String(payload.freePick || '').trim();
+  var FREE = { e: 'Courtesy Car / Loss of Use (max 10 days)',
+               g: 'Hospitalisation Benefit ($15,000 per 12 months)' };
+  var freePick = FREE[freeKey] || '';
+  var askAbout = String(payload.askAbout || '').slice(0, 600);
+
   var cc = CONFIG.MAIL_CC.filter(String).join(',');
   appendResponse_({
     'Timestamp': new Date(), 'Token': token, 'Client': match.client,
@@ -696,6 +711,7 @@ function submitInstruction(payload) {
     'Emailed To': testMode_() ? testInbox_() + ' (TEST MODE)' : CONFIG.MAIL_TO + (cc ? ' cc ' + cc : ''),
     'Status': testMode_() ? 'TEST' : 'Received',
     'Waiver of Excess': waiver, 'Windscreen Cover': windscreen,
+    'Free Benefit Chosen': freePick, 'Asked About': askAbout,
   });
 
   // pre-filled Guardian General value-confirmation letter (comprehensive only)
@@ -756,6 +772,12 @@ function submitInstruction(payload) {
       (newValue ? tr_('Updated vehicle value', fmtMoney_(newValue) + ' — signed confirmation letter attached') : '') +
       (isComp ? tr_('<b>Waiver of Excess</b>', waiver ? '<b>YES — client requests the Waiver of Excess benefit (quote & bill the difference)</b>' : 'Declined / not selected') : '') +
       (windscreen ? tr_('<b>Windscreen (TP)</b>', '<b>YES — client requests the NEW third-party windscreen cover (quote & bill)</b>') : '') +
+      (freePick ? tr_('<b>FREE BENEFIT ELECTED</b>',
+        '<b>' + esc_(freePick) + '</b><br><span style="font-size:12px">The 2021 proposal ' +
+        '(GG-MOT-APV-PRO-09/2021 Q19) entitles an individual policyholder to one of item (e) ' +
+        'or (g) at no additional cost. Please add this to the renewal \u2014 no premium ' +
+        'difference expected.</span>') : '') +
+      (askAbout ? tr_('<b>Asked us to quote</b>', '<b>' + esc_(askAbout) + '</b>') : '') +
       (wantsComp ? tr_('Upsell', 'Client requests a COMPREHENSIVE quote') : '') +
       (payMethod ? tr_('Payment method', esc_(payMethod)) : '') +
       (payRef ? tr_('Payment reference', esc_(payRef)) : '') +
@@ -775,7 +797,12 @@ function submitInstruction(payload) {
         '<p>Dear ' + esc_((match.contact || match.client).split(' ')[0]) + ',</p>' +
         '<p>Thank you — we received your instruction: <b>' + esc_(instruction) + '</b>' +
         (match.policy ? ' for policy <b>' + esc_(match.policy) + '</b>' : '') + '.</p>' +
-        (waiver ? eduBox_('You asked to add the <b>Waiver of Excess</b> benefit — we will include it in your renewal terms and confirm the premium difference with you before anything is billed.') : '') +
+        (freePick ? eduBox_('You chose <b>' + esc_(freePick) + '</b> as your free benefit. As an ' +
+          'individual policyholder you are entitled to one of these two at no additional cost, and we ' +
+          'have asked Guardian General to add it to your renewal.') : '') +
+        (askAbout ? eduBox_('You asked us to quote: <b>' + esc_(askAbout) + '</b>. We will come back ' +
+          'to you with the cost before anything is added or billed.') : '') +
+        (waiver ? eduBox_('You asked us to check the <b>excess waiver</b> — we will confirm whether it is already on your policy, and quote it if it is not, before anything is billed.') : '') +
         (windscreen ? eduBox_('You asked to add the new <b>windscreen cover</b> — we will include it in your renewal terms and confirm the premium difference with you.') : '') +
         (letter ? '<p>Attached is your pre-filled <b>value confirmation letter</b> for Guardian General — please check it, <b>sign it, and reply to this email with a photo or scan</b> (or bring it to the branch).</p>' : '') +
         (Number(match.balance) > 0 ?

@@ -75,7 +75,7 @@ function psfRowsForToken_(token) {
     risks = rsfQ_(
       'SELECT Id, Policy__c, Next_Renewal_Date__c, Motor_Vehicle_Coverage_Type__c, ' +
       'Property_Coverage_Type__c, Cover1__c, Premium_Due__c, Payments_Made__c, ' +
-      'Total_Premiums__c, Email__c, Portal_Token__c, Account__c, Contact_First_Name__c, ' +
+      'Total_Premiums__c, Windscreen__c, Email__c, Portal_Token__c, Account__c, Contact_First_Name__c, ' +
       'Last_Name__c, Salutation__c, Vehicle_Make__c, Model__c, Vehicle_Status__c ' +
       'FROM Risk_Details__c ' +
       "WHERE Portal_Token__c = '" + token + "' " +
@@ -166,6 +166,10 @@ function psfGroupRow_(rs) {
     // Extra, for the schedule block on the card. Harmless to the sheet path.
     vehicles: vehicles,
     riskCount: rs.length,
+    // Highest glass limit on the policy. Used only to stop offering a client
+    // glass cover they demonstrably already carry.
+    windscreen: rs.reduce(function (m, r) {
+      return Math.max(m, Number(r.Windscreen__c) || 0); }, 0),
   };
 }
 
