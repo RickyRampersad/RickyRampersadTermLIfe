@@ -771,7 +771,8 @@ function lbLogin_(b) {
     'Agent No': a.agentNo, 'Email': a.email, 'Unit': a.unit }));
   dbPruneSessions_(sh);
   return { ok: true, token: token, name: name, role: role, mode: dbMode_(),
-           agentNo: a.agentNo, apps: opsAppsFor_(lbLoginApps_(staff)) };
+           agentNo: a.agentNo, apps: opsAppsFor_(lbLoginApps_(staff)),
+           docTypes: DB.DOC_TYPES, relationships: DB.RELATIONSHIPS, methods: DB.METHODS };
 }
 
 /* What one sign-in by agent number opens in RR Operations (18 October 2026: "an

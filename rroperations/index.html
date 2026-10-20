@@ -86,6 +86,7 @@
   [hidden]{display:none!important}
   @media (max-width:420px){.hello{font-size:21px}.grid{grid-template-columns:1fr 1fr;gap:10px}.app{min-height:128px;padding:14px}
     .app b{font-size:14px}.app span{font-size:12px}.badge{position:static;display:inline-block;margin-top:8px}}
+  .linkish{background:none;border:0;color:#6FA8FF;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;margin-top:12px;padding:6px 0}
 </style>
 </head>
 <body>
@@ -103,6 +104,18 @@
     <button class="btn gold" type="submit" id="lockBtn">Sign in</button>
     <div class="err" id="lockErr" role="alert"></div>
     <div class="hint">Use the same agent number and password as the fact find. Staff use theirs too. One sign-in opens every tool here.</div>
+    <button type="button" class="linkish" id="useCode">Staff: sign in with your access code instead</button>
+  </form>
+  <form class="lock-card" id="codeForm" autocomplete="off" hidden>
+    <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
+    <h1>Ricky Rampersad Branch</h1>
+    <div class="tag">Staff access code</div>
+    <p>The code the branch gave you for the Delivery Book. It opens the Delivery Book and the Log Book.</p>
+    <label for="code">Access code</label>
+    <input id="code" type="password" autocomplete="off" placeholder="ACCESS CODE" required>
+    <button class="btn gold" type="submit" id="codeBtn">Sign in</button>
+    <div class="err" id="codeErr" role="alert"></div>
+    <button type="button" class="linkish" id="useNo">Sign in with your agent number instead</button>
   </form>
 </div>
 
@@ -282,9 +295,20 @@
       .catch(function (err) { $('lockErr').textContent = /fetch/i.test(err.message) ? 'Could not reach the branch. Check your connection.' : err.message; })
       .then(function () { $('lockBtn').disabled = false; $('lockBtn').textContent = 'Sign in'; });
   });
+  /* Staff with a Delivery Book access code (20 October 2026: cheques were coming in and the agent-number sign-in did
+     not carry the Delivery Book until LogBook.gs is pasted). The code still opens what its Access row allows. */
+  $('useCode').addEventListener('click', function () { $('lockForm').hidden = true; $('codeForm').hidden = false; $('code').focus(); });
+  $('useNo').addEventListener('click', function () { $('codeForm').hidden = true; $('lockForm').hidden = false; $('no').focus(); });
+  $('codeForm').addEventListener('submit', function (e) {
+    e.preventDefault(); $('codeErr').textContent = ''; $('codeBtn').disabled = true; $('codeBtn').textContent = 'Signing in…';
+    api('login', { code: $('code').value.trim() })
+      .then(function (s) { store.set(s); $('code').value = ''; show(s); })
+      .catch(function (err) { $('codeErr').textContent = /fetch/i.test(err.message) ? 'Could not reach the branch. Check your connection.' : err.message; })
+      .then(function () { $('codeBtn').disabled = false; $('codeBtn').textContent = 'Sign in'; });
+  });
   $('signOut').addEventListener('click', function () {
     var s = store.get(); if (s && s.token) api('signOut', { token: s.token }).catch(function () {});
-    store.del(); $('home').hidden = true; $('lock').hidden = false; $('no').value = ''; $('pw').value = '';
+    store.del(); $('home').hidden = true; $('lock').hidden = false; $('no').value = ''; $('pw').value = ''; $('code').value = ''; $('codeForm').hidden = true; $('lockForm').hidden = false;
   });
 
   /* A saved sign-in opens at once, then is checked. */

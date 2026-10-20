@@ -146,7 +146,12 @@
 <!-- Signing in happens once, on the RR Operations launcher; this page uses that sign-in. -->
 <div id="lock"><div class="lock-card"><div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
   <h1>Delivery Book</h1><p id="lockMsg">Opening…</p>
-  <a class="btn gold block" href="/rroperations/?next=delivery-book" style="text-decoration:none">Sign in</a></div></div>
+  <form id="codeForm" hidden autocomplete="off" style="margin-bottom:12px">
+    <input id="code" type="password" placeholder="STAFF ACCESS CODE" aria-label="Staff access code" required>
+    <button class="btn gold block" type="submit" id="codeBtn" style="margin-top:10px">Open the Delivery Book</button>
+    <p id="codeErr" role="alert" style="color:#ff8a80;margin:8px 0 0"></p>
+  </form>
+  <a class="btn gold block" id="lockGo" href="/rroperations/?next=delivery-book" style="text-decoration:none">Sign in</a></div></div>
 
 <header>
   <div class="top">
@@ -318,6 +323,20 @@
     fillSelect($('rel'), S.rels, '', 'Choose…');
     $('lock').hidden = true;
     resetLog();
+    /* A sign-in by agent number (the branch app) carries no lists, so the document list (Cheque, Policy Contract …)
+       came up empty for staff (20 October 2026). The backend's public ping has them: fill from it. */
+    if (!S.docTypes.length || !S.rels.length || !S.methods.length) {
+      fetch(API_URL + (API_URL.indexOf('?') < 0 ? '?' : '&') + 'action=ping').then(function (r) { return r.json(); }).then(function (j) {
+        if (!j || !j.ok) return;
+        S.docTypes = S.docTypes.length ? S.docTypes : (j.docTypes || []);
+        S.rels = S.rels.length ? S.rels : (j.relationships || []);
+        S.methods = S.methods.length ? S.methods : (j.methods || []);
+        s.docTypes = S.docTypes; s.relationships = S.rels; s.methods = S.methods;
+        store.set(SESSION_KEY, JSON.stringify(s));
+        fillSelect($('method'), S.methods, 'In person');
+        fillSelect($('rel'), S.rels, '', 'Choose…');
+      }).catch(function () {});
+    }
   }
   function fillSelect(sel, list, def, blank) {
     sel.innerHTML = (blank ? '<option value="">' + esc(blank) + '</option>' : '') +
@@ -716,7 +735,21 @@
   try { saved = JSON.parse(store.get(SESSION_KEY) || 'null'); } catch (e) {}
   var allowed = saved && (saved.apps || []).some(function (a) { return a.id === 'delivery-book' && a.status === 'live'; });
   if (saved && saved.token && allowed) applySession(saved);
-  else if (saved && saved.token) $('lockMsg').textContent = 'The Delivery Book is not on your access. Ask the branch to add it.';
+  else if (saved && saved.token) {
+    /* Staff signed in by agent number before LogBook.gs carries the Delivery Book (20 October 2026): their access
+       code opens it here, without leaving the page. */
+    $('lockMsg').textContent = 'Your agent-number sign-in does not open the Delivery Book yet. Enter your staff access code to record a cheque or contract.';
+    $('codeForm').hidden = false; $('lockGo').textContent = 'Back to the branch app'; $('lockGo').href = '/rroperations/';
+    $('codeForm').addEventListener('submit', function (e) {
+      e.preventDefault(); $('codeErr').textContent = ''; $('codeBtn').disabled = true;
+      api('login', { code: $('code').value.trim() }).then(function (s2) {
+        var ok = (s2.apps || []).some(function (a) { return a.id === 'delivery-book' && a.status === 'live'; });
+        if (!ok) throw new Error('That code does not include the Delivery Book. Ask the branch to add it.');
+        store.set(SESSION_KEY, JSON.stringify(s2)); $('code').value = ''; applySession(s2);
+      }).catch(function (err) { $('codeErr').textContent = err.message; })
+        .then(function () { $('codeBtn').disabled = false; });
+    });
+  }
   else location.replace('/rroperations/?next=delivery-book');
 })();
 </script>

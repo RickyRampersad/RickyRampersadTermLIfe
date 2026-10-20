@@ -3814,6 +3814,13 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   the person on its access list and issues its own session. So a person must be on the Agent Skill Bank (board, groups)
   and the Intelligence access list (desk) under the same agent number; otherwise that tool shows its own sign-in.
   `RROPS_URL` overrides the RR Operations address in either project. `tests/test-sso.js` covers it.
+- **A sign-in by agent number must carry the Delivery Book's lists** (20 October 2026: "staff is not seeing the ability
+  to give a cheque or a contract"). `lb.login` returned no `docTypes`, `relationships` or `methods`, so the Delivery
+  Book's document list (Cheque, Policy Contract …) came up empty for anyone who signed in through the branch app; and
+  until LogBook.gs is pasted, a staff agent-number session does not carry the Delivery Book at all. The page now fills
+  the lists from the public `ping` when a session lacks them, `lb.login` returns them, and both the app and the
+  Delivery Book take a staff access code again (`login`, the Access tab) as the way in until the paste.
+  `tests/e2e-deliverybook.js` signs staff in as the deployed script answers.
 - **Test copies go to sales support and support@ too** (18 October 2026). In test mode every Log Book e-mail and the
   Delivery Book confirmation go to `DB_TEST_INBOX`, copied to rickyrampersadsalessupport@myguardiangroup.com and
   support@rickyrampersadbranch.com (`dbTestCc_`; the `DB_TEST_CC` property replaces the two).
