@@ -28,8 +28,12 @@ const sec = (t) => console.log('\n' + t);
    test pinned to the Saturday the wall was read would have exercised none
    of them. It is movable, so the weekend skip is asserted for real rather
    than inferred. ───────────────────────────────────────────────────────── */
+// KPI_SHEET_ID is the tracker's own workbook and has no default: pointing it
+// at the Branch Portfolio by mistake is what made every day read as "no KPI
+// Log" on the first cut. openById in the harness hands back this same book.
 const env = makeEnv({ props: { SF_KEY: 'k', SF_SECRET: 's', SF_LOGIN_URL: 'https://x.my.salesforce.com',
                                FACTFIND_WALL_URL: 'https://ff/exec', FACTFIND_WALL_KEY: 'wk',
+                               KPI_SHEET_ID: 'tracker-workbook',
                                DESK_TO: 'chair@example.com' } });
 const RealDate = env.Date;
 let NOW = new RealDate('2026-10-16T10:00:00');
@@ -127,7 +131,8 @@ const SF = {
 // layers have to go, which is also the answer when a figure on the real desk
 // looks ten minutes stale.
 const clearCaches = () => env.CacheService.getScriptCache()
-  .removeAll(['acc.pipe', 'acc.tasks', 'acc.ff', 'acc.goals', 'acc.rem', 'ffwall', 'ffgoals']);
+  .removeAll(['acc.pipe', 'acc.tasks', 'acc.ff', 'acc.goals', 'acc.rem', 'ffwall', 'ffgoals',
+              'acc.trk.2026-10-16', 'acc.filed.2026-10-16']);
 
 let fetched = [];
 env.UrlFetchApp = { fetch: (url) => {
@@ -511,6 +516,21 @@ ok('and an absence with its reason',
 ok('the close-out list drops an inactive line',
    trk.items.length === 4 && !trk.items.some(i => i.id === 'dormant'), trk.items.length + '');
 ok('and comes back in its own order', trk.items[0].id === 'blocks' && trk.items[3].id === 'unitpipe');
+/* Pointed at the wrong book — the Branch Portfolio has no KPI Log — the desk
+   must say which property to set, not fail silently or read a day of zeros. */
+{
+  const saved = env.__sheets['KPI Log'];
+  delete env.__sheets['KPI Log'];
+  clearCaches();
+  const wrong = env.accTracker_('2026-10-16');
+  ok('the wrong workbook is named, not read', wrong.live === false &&
+     /No KPI Log/.test(wrong.why), wrong.why);
+  const d = env.accDayFor_({ name: 'Sasha Someone', role: 'staff' }, env.accSnapshot_());
+  ok('and a day built on it carries the reason', d.live === false && !!d.why);
+  env.__sheets['KPI Log'] = saved;
+  clearCaches();
+}
+
 ok('a hand tick is read with its reason',
    trk.ticks['gita'].portfolio.status === 'not done' &&
    trk.ticks['gita'].portfolio.reason === 'Waiting on head office');

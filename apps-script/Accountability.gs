@@ -2347,11 +2347,22 @@ function accTopicsNow() {
  * =================================================================== */
 
 var ACC_DAY = {
-  /*  The tracker's workbook. The same ID Intelligence.gs already
-   *  carries, so nothing new is public; the Script Property overrides
-   *  it, which is what a test or a second branch uses. */
+  /*  THE KPI TRACKER'S OWN WORKBOOK, which is not the Branch Portfolio.
+   *
+   *  This shipped on 17 October pointing at INTEL.WORKBOOK, the branch
+   *  intelligence workbook, on the assumption that the tracker was
+   *  bound to it. It is not: that one is the Branch Portfolio, eleven
+   *  megabytes of policy rows and no KPI Log anywhere in it, so every
+   *  read of a day said "No KPI Log in the tracker workbook" and no
+   *  desk's blocks would ever have filled. The guard did its job and
+   *  said so honestly, which is the only reason it was not worse.
+   *
+   *  The ID stays out of this file because the file is published on the
+   *  branch site: set KPI_SHEET_ID in Script Properties to the RRB KPI
+   *  Tracker. With nothing set, the desk says which property to set
+   *  rather than reading the wrong book. */
   PROP_BOOK: 'KPI_SHEET_ID',
-  BOOK: '1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs',
+  BOOK: '',
 
   /*  The log tab is found by its headers, never by its name, because
    *  that is how the tracker itself finds it. */
@@ -2490,6 +2501,11 @@ function accStaffId_(person) {
 function accTrackerBook_() {
   var id = accStr_(PropertiesService.getScriptProperties().getProperty(ACC_DAY.PROP_BOOK))
            || ACC_DAY.BOOK;
+  if (!id) {
+    throw new Error('Set ' + ACC_DAY.PROP_BOOK + ' in Script Properties to the RRB KPI ' +
+                    'Tracker workbook. It is not the Branch Portfolio: that one carries ' +
+                    'the policy rows and has no KPI Log in it.');
+  }
   return SpreadsheetApp.openById(id);
 }
 
