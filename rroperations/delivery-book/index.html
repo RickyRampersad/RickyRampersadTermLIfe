@@ -278,7 +278,22 @@
   </section>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" async></script>
+<script>
+/* 20 October 2026: "unable to open the delivery book" (the page stayed on "Opening…"). Whatever stops the page from
+   starting is shown on the card, with the ways in, instead of a page that never moves. */
+(function () {
+  function stuck(why) {
+    var m = document.getElementById('lockMsg'), lk = document.getElementById('lock');
+    if (!m || !lk || lk.hidden || !/Opening/.test(m.textContent)) return;
+    m.innerHTML = 'The Delivery Book could not start' + (why ? ' (' + String(why).replace(/[<>&]/g, '') + ')' : '') +
+      '. <a href="/rroperations/?next=delivery-book" style="color:#6FA8FF">Sign in again</a> or ' +
+      '<a href="javascript:location.reload()" style="color:#6FA8FF">reload</a>.';
+  }
+  window.addEventListener('error', function (e) { stuck(e && e.message); });
+  setTimeout(function () { stuck('it took too long'); }, 8000);
+})();
+</script>
 <script src="/rroperations/ops-config.js"></script>
 <script>
 (function () {
