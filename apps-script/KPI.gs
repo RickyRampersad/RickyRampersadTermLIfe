@@ -3437,6 +3437,7 @@ function previewDayStart(staffId) {
 
 var HK_LEAD_MIN = 30;          // minutes before the finishing time
 var HK_WINDOW_MIN = 20;        // keepWarm runs every 10; a 20-minute window catches one run
+var HK_BUDGET_MS = 4 * 60 * 1000;   // past four minutes a run leaves the catch-up work (inbox, game, ratings) to the next one: Apps Script stops a run at six
 var HK_ITEMS = [
   { ItemId: 'hk_tasks', Item: 'Tasks verified: every task touched today has my note, and anything planned and not done has a reason',
     Who: 'All', Auto: '', Order: 5, Active: 'Yes', Note: 'Housekeeping, 14 Oct 2026. Asked half an hour before the finishing time.' },
@@ -3638,10 +3639,17 @@ function runlog_(line) {
   try { var props = PropertiesService.getScriptProperties(), cur = String(props.getProperty('RUNLOG') || '').split('\n').filter(String); cur.push(todayISO_() + ' ' + line); props.setProperty('RUNLOG', cur.slice(-40).join('\n')); } catch (e) {}
 }
 /** Run from the editor: the last 40 timed sends and failures, with reasons. */
-function showRunLog() { Logger.log(PropertiesService.getScriptProperties().getProperty('RUNLOG') || 'No timed sends recorded yet.'); }
+function showRunLog() {
+  var p = PropertiesService.getScriptProperties(), day = todayISO_();
+  var fails = Object.keys(p.getProperties()).filter(function (k) { return /^FAIL_/.test(k) && k.indexOf(day) > -1; }).map(function (k) { return k + ' = ' + p.getProperty(k) + ' tries'; });
+  var m = (p.getProperty('RUNLOG') || 'No timed sends recorded yet.') + '\n\nLast run: ' + (p.getProperty('tick_last') || 'not recorded yet') +
+    '\nLongest run today: ' + (p.getProperty('tick_long_' + day) || 'not recorded yet') + '\nFailed today: ' + (fails.length ? fails.join(', ') : 'none');
+  Logger.log(m); return m;
+}
 
 function housekeepingTick_() {
   var now = new Date();
+  var t0 = Date.now(), late = function () { return Date.now() - t0 > HK_BUDGET_MS; };
   var dow = Number(Utilities.formatDate(now, CONFIG.TZ, 'u'));   // 1 Mon .. 7 Sun
   if (dow > 5) return '';
   var mins = minutesOf_(hhmm_(now));
@@ -3694,10 +3702,49 @@ function housekeepingTick_() {
     if (timedSend_(props, key, now, function () { return sendBranchManagerProgress_(day, at >= 15 * 60 ? 'eve' : 'mid'); })) sent.push('Branch Manager progress');
   });
 
+  /* The staff's own timed mail goes before the heavy work below (20 Oct 2026). On 19 and 20 October the
+     progress check and the 2:30 close-out never reached anyone: they sat at the end of this run, after the
+     inbox, the game, the agents and the cover, and a run that ran out of time stopped before it got to them.
+     The morning mail, at the top, always went. */
+  // The progress check, half an hour before each person's lunch.
+  people.forEach(function (p) {
+    var sid = String(p.staffId);
+    if (!expected(sid)) return;
+    var at = middayAt_(sid);
+    if (mins < at || mins > at + HK_WINDOW_MIN) return;
+    var key = 'md_' + sid + '_' + day;
+    if (props.getProperty(key)) return;
+    if (timedSend_(props, key, now, function () { if (sid === 'pawan') sendPawanDay_(day, 'midday'); else sendMidday_(p, day, present[sid] || ''); })) sent.push(p.name + ' (progress)');
+  });
+
+  // Before you leave, half an hour before each person's finish.
+  people.forEach(function (p) {
+    var sid = String(p.staffId);
+    if (!expected(sid)) return;
+    var at = endFor_(sid) - HK_LEAD_MIN;
+    if (mins < at || mins > at + HK_WINDOW_MIN) return;
+    var key = 'hkv2_' + sid + '_' + day;   // the official close-out (16 Oct); an earlier version's send does not stop it
+    if (props.getProperty(key)) return;
+    if (timedSend_(props, key, now, function () { if (!hkSend_(p, day, present[sid])) throw new Error(HK_NO_ADDRESS); })) sent.push(p.name);
+  });
+  // At the finish, still signed in: a reminder. Half an hour later the register
+  // reads "Did not close the day"; no automatic sign-out any more (Ricky, 19 Oct 2026).
+  people.forEach(function (p) {
+    var sid = String(p.staffId), endM = endFor_(sid);
+    if (!present[sid]) return;
+    var rk = 'ncrem_' + sid + '_' + day, mk = 'ncchk_' + sid + '_' + day;
+    if (mins >= endM && mins <= endM + HK_WINDOW_MIN && !props.getProperty(rk)) {
+      if (timedSend_(props, rk, now, function () { return notClosedReminder_(p, day); })) sent.push(p.name + ' (close your day)');
+    }
+    if (mins >= endM + NOCLOSE.GRACE && mins <= endM + NOCLOSE.GRACE + 60 && !props.getProperty(mk)) {
+      try { if (markNotClosed_(sid, day)) sent.push(p.name + ' (' + NOCLOSE.LABEL.toLowerCase() + ')'); props.setProperty(mk, hhmm_(now)); } catch (e) {}
+    }
+  });
+
   // Once a day, the working copies older than three weeks are dropped (20 Oct 2026).
   if (props.getProperty('sd_prune') !== day) { props.setProperty('sd_prune', day); try { sdPrune_(day); } catch (e) {} }
   // His inbox and his day's log, every hour of his day (20 Oct 2026): what came in, what he answered, what he did in Salesforce.
-  if (inboxOn_() && mins >= INBOX.REFRESH_FROM && mins <= INBOX.REFRESH_TO) {
+  if (inboxOn_() && mins >= INBOX.REFRESH_FROM && mins <= INBOX.REFRESH_TO && !late()) {
     var inboxHr = day + '_' + Math.floor(mins / 60);
     if (props.getProperty('inbox_hr') !== inboxHr) {
       props.setProperty('inbox_hr', inboxHr);
@@ -3707,9 +3754,9 @@ function housekeepingTick_() {
     }
   }
   // The game, every hour of the working day; Friday 1pm the awards for the branch meeting (20 Oct 2026).
-  try { gameTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {}
+  if (!late()) try { gameTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {}
   // Service ratings: a task closed for an agent or a client, rated within minutes of the close (20 Oct 2026).
-  try { rateTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {}
+  if (!late()) try { rateTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {}
   // The Unit Managers: 5:30 their unit, 11:00 their progress, 17:30 the account of their day.
   UM_DESKS.forEach(function (sid) {
     if (absent[sid]) return;
@@ -3761,40 +3808,6 @@ function housekeepingTick_() {
     try { var rb = rebalanceTick_(day, present, absent); if (rb) sent.push(rb); } catch (e) {}
   }
 
-  // The progress check, half an hour before each person's lunch.
-  people.forEach(function (p) {
-    var sid = String(p.staffId);
-    if (!expected(sid)) return;
-    var at = middayAt_(sid);
-    if (mins < at || mins > at + HK_WINDOW_MIN) return;
-    var key = 'md_' + sid + '_' + day;
-    if (props.getProperty(key)) return;
-    if (timedSend_(props, key, now, function () { if (sid === 'pawan') sendPawanDay_(day, 'midday'); else sendMidday_(p, day, present[sid] || ''); })) sent.push(p.name + ' (progress)');
-  });
-
-  // Before you leave, half an hour before each person's finish.
-  people.forEach(function (p) {
-    var sid = String(p.staffId);
-    if (!expected(sid)) return;
-    var at = endFor_(sid) - HK_LEAD_MIN;
-    if (mins < at || mins > at + HK_WINDOW_MIN) return;
-    var key = 'hkv2_' + sid + '_' + day;   // the official close-out (16 Oct); an earlier version's send does not stop it
-    if (props.getProperty(key)) return;
-    if (timedSend_(props, key, now, function () { if (!hkSend_(p, day, present[sid])) throw new Error(HK_NO_ADDRESS); })) sent.push(p.name);
-  });
-  // At the finish, still signed in: a reminder. Half an hour later the register
-  // reads "Did not close the day"; no automatic sign-out any more (Ricky, 19 Oct 2026).
-  people.forEach(function (p) {
-    var sid = String(p.staffId), endM = endFor_(sid);
-    if (!present[sid]) return;
-    var rk = 'ncrem_' + sid + '_' + day, mk = 'ncchk_' + sid + '_' + day;
-    if (mins >= endM && mins <= endM + HK_WINDOW_MIN && !props.getProperty(rk)) {
-      if (timedSend_(props, rk, now, function () { return notClosedReminder_(p, day); })) sent.push(p.name + ' (close your day)');
-    }
-    if (mins >= endM + NOCLOSE.GRACE && mins <= endM + NOCLOSE.GRACE + 60 && !props.getProperty(mk)) {
-      try { if (markNotClosed_(sid, day)) sent.push(p.name + ' (' + NOCLOSE.LABEL.toLowerCase() + ')'); props.setProperty(mk, hhmm_(now)); } catch (e) {}
-    }
-  });
   // 11:15, the mailbag call: the bag leaves at 12 noon (Ricky, 19 Oct 2026).
   var mbAt = mailbagLeaves_() - 45;
   if (mins >= mbAt && mins <= mbAt + HK_WINDOW_MIN && !props.getProperty('mbcall_' + day)) {
@@ -3804,6 +3817,10 @@ function housekeepingTick_() {
   if (mins >= BMA_REPORT_AT && mins <= BMA_REPORT_AT + HK_WINDOW_MIN && !props.getProperty('bmarep_' + day)) {
     if (timedSend_(props, 'bmarep_' + day, now, function () { sendBmaReport_(day); })) sent.push('BMA 4pm report');
   }
+  // How long the run took, and the day's longest, for showRunLog.
+  try { var secs = Math.round((Date.now() - t0) / 1000), lk = 'tick_long_' + day, lg = Number(String(props.getProperty(lk) || '0').split(' ')[0]) || 0;
+    props.setProperty('tick_last', hhmm_(now) + ' ' + secs + 's' + (late() ? ' (over budget: catch-up work left to the next run)' : ''));
+    if (secs > lg) props.setProperty(lk, secs + 's at ' + hhmm_(now)); } catch (e) {}
   return sent.length ? 'Day mail sent: ' + sent.join(', ') : '';
 }
 
