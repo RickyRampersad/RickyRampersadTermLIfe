@@ -158,19 +158,46 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = v => { const n=Number(v); return (!v&&v!==0)||isNaN(n) ? esc(v) : 'TT$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); };
 
+/* ------------------------------------------------------------------
+   From the policy itself, not from memory. Two sources, both in the
+   branch's Motor folder:
+
+     W = Private Motor Vehicle Policy     GG-MOT-POL-APV-10/09
+     P = Private Motor Insurance Proposal GG-MOT-APV-PRO-09/2021, Q19
+
+   THE SPLIT IS THE POLICY'S OWN, from its front page:
+     COMPREHENSIVE  Sections 1, 2, 3, 4, Section 6 sub-sections 1 and 2
+     THIRD PARTY    Sections 1, 3, and Section 4 SUB-SECTION 5 ONLY
+
+   That last line is why medical expenses, personal accident, garage fire
+   and luggage are listed for comprehensive only: they are sub-sections 1
+   to 4 of Section 4, and a third-party policy is granted sub-section 5
+   alone. Listing them for a third-party client would describe cover they
+   have not bought.
+
+   What was here before got three things wrong. It promised third-party
+   clients nothing they do not have, but it told comprehensive clients
+   that step-back meant one claim could not erase their discount — false
+   below the third year, where one claim takes 30% or 40% to ZERO. The
+   server-side copy of all this, with the other eight optional benefits
+   and the eligibility rules, is apps-script/MotorProduct.gs.
+   ------------------------------------------------------------------ */
 const BENEFITS_COMP = [
-  '<b>Your own vehicle covered</b> — accident, fire and theft, not just other people’s',
-  '<b>Liability to others</b> — injury to third parties and damage to their property',
-  '<b>Damage to your garage by fire</b> — even though it’s not the vehicle',
-  '<b>Medical expenses</b> after an accident, for you, your driver or passengers',
-  '<b>Personal accident benefit</b> for you and your spouse, including weekly payments while disabled',
-  '<b>No Claim Discount up to 60%</b> after 4 claim-free years — with step-back protection so one claim doesn’t erase it',
+  '<b>Your own vehicle covered</b> — accidental loss, including theft, or damage, up to your sum insured less your excess <i>(W s2.1)</i>',
+  '<b>Liability to others</b> — injury to third parties and damage to their property, including the claimant’s costs <i>(W s3.1)</i>',
+  '<b>Towing to safety</b> if the vehicle is disabled by an insured loss <i>(W s2.2)</i>',
+  '<b>Medical expenses</b> for you, your driver or any passenger injured in connection with the vehicle <i>(W s4.2)</i>',
+  '<b>Personal accident benefit</b> for you and your spouse — plus $50 a week while totally disabled, up to 26 weeks, for ages 17 to 65 <i>(W s4.3)</i>',
+  '<b>Damage to your garage by fire</b>, where it is not covered by any other insurance <i>(W s4.1)</i>',
+  '<b>Luggage and personal effects</b> in or on the vehicle — money, jewellery, cameras, laptops and phones excluded <i>(W s4.4)</i>',
+  '<b>No Claim Discount to 60%</b> — 30% after one claim-free year, then 40%, 50%, 60%. <b>Step-back starts only once you have earned the third-year discount:</b> below that, one claim takes the discount to nothing <i>(W s6.2)</i>',
 ];
 const BENEFITS_TP = [
-  '<b>Liability to others</b> — injury to third parties and damage to their property',
-  '<b>Legal defence costs</b> connected to a covered accident',
-  '<b>No Claim Discount up to 35%</b> after 4 claim-free years',
-  '<b>🆕 Windscreen cover now available</b> — new from Guardian General, third-party policies can now add windscreen protection (see Step 2)',
+  '<b>Liability to others</b> — injury to third parties and damage to their property, including the claimant’s costs <i>(W s3.1)</i>',
+  '<b>Your authorised drivers and passengers are covered too</b>, on the same terms as you <i>(W s3.2)</i>',
+  '<b>Legal costs</b> — inquest representation and the defence of proceedings <i>(W s3.3)</i>',
+  '<b>Emergency treatment does not cost you your discount</b> — where it is the only payment it is not counted as a claim <i>(W s3.8)</i>',
+  '<b>No Claim Discount to 35%</b> — 15% after one claim-free year, then 20%, 25%, 35% <i>(W s6.3)</i>',
 ];
 
 function dueChip(p){
@@ -212,20 +239,26 @@ function render(){
       <div class="step">Step 1 · Know what you have</div>
       <div class="benefits"><h3>🛡 Your Guardian MotorGuard benefits</h3>
         <ul>${benefits.map(b=>`<li>${b}</li>`).join('')}</ul>
-        ${comp?'':'<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">Third party protects <b>others</b> — not your own vehicle. Upgrading to comprehensive adds accident, fire &amp; theft cover for your car and a bigger NCD scale (60% vs 35%). Tick the box in Step 3 for a free comparison quote.</div>'}
+        ${comp?'':'<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">Third party protects <b>others</b> — not your own vehicle. Comprehensive adds accident, fire and theft cover for your car, a bigger discount scale (60% against 35%), medical expenses, personal accident benefit and luggage cover — and it is the only cover that can add <b>flood and storm</b> protection, which third party cannot have at all <i>(P 19(a))</i>. Tick the box in Step 3 for a free comparison quote.</div>'}
       </div>
 
       ${comp?`
       <div class="step">Step 2 · Your vehicle's value this year</div>
       ${valueBlock(p,i)}
 
-      <div class="edu" style="margin-top:14px"><b>⚠️ Important change: Waiver of Excess.</b><br>
-      Guardian General no longer includes the waiver of excess free after three claim-free years — it's now an optional benefit you purchase. With it, <b>you pay no excess when you claim</b>; without it, the excess in your schedule comes out of your pocket on every claim.</div>
-      <label class="check"><input type="checkbox" id="waiv${i}" checked> <span><b>Yes — add the Waiver of Excess to my renewal (recommended).</b> Include the premium difference in my renewal terms and confirm the amount with me.</span></label>`
+      <div class="edu" style="margin-top:14px"><b>Excess waiver.</b><br>
+      The excess is your contribution towards a claim. The excess waiver removes it, and it is an
+      optional benefit at additional cost <i>(P 19(h))</i>. <b>We cannot tell from your record whether you
+      already have it</b> — that field holds a label rather than a value — so tick the box only if you
+      would like us to check it and quote it.</div>
+      <label class="check"><input type="checkbox" id="waiv${i}"> <span><b>Please check whether I have the excess waiver, and quote it if I do not.</b> Confirm the premium difference with me before anything is billed.</span></label>`
       :`<div class="step">Step 2 · Worth considering</div>
-      <div class="edu"><b>🆕 New: windscreen cover for third-party policies.</b><br>
-      Until now, a cracked or shattered windscreen on a third-party policy came entirely out of your pocket. Guardian General now lets you add windscreen cover to your policy.</div>
-      <label class="check"><input type="checkbox" id="ws${i}"> <span><b>Yes — add windscreen cover to my renewal.</b> Include the premium difference in my renewal terms and confirm the amount with me.</span></label>`}
+      <div class="edu"><b>Windscreen — front and back glass.</b><br>
+      Glass breakage is not covered as standard, so a cracked windscreen comes out of your pocket
+      <i>(W s2 excl 4)</i>. A third-party policy can add <b>front and back glass</b> — the all-glass
+      version is comprehensive and fire-and-theft only <i>(P 19(b), 19(c))</i>. Worth knowing: a
+      glass-only claim carries <b>no excess and does not affect your No Claim Discount</b> <i>(W OEB 2)</i>.</div>
+      <label class="check"><input type="checkbox" id="ws${i}"> <span><b>Yes — quote me front and back glass cover with my renewal.</b> Confirm the premium difference with me before anything is billed.</span></label>`}
       ${comp?'':'<label class="check"><input type="checkbox" id="comp'+i+'"> <span><b>Yes — send me a free comprehensive quote</b> with my renewal, no obligation.</span></label>'}
 
       <div class="step">Step 3 · Your renewal instruction</div>

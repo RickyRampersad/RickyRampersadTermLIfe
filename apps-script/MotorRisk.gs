@@ -512,16 +512,21 @@ function mrInsights_(r, history, years) {
     } else if (r.Year_of_Manufacture__c) {
       var age = yr - Number(r.Year_of_Manufacture__c);
       if (age >= 1 && cur) {
-        // Straight-line guide only. The client's own figure always wins; this
-        // is a starting point to react to, not a valuation.
-        var lo = Math.round(cur * 0.80 / 1000) * 1000;
-        var hi = Math.round(cur * 0.92 / 1000) * 1000;
+        // 15% a year is the product's OWN figure, not an invented one: it is
+        // the pre-agreed depreciation under Agreed Value (OEB 5 of
+        // GG-MOT-POL-APV-10/09). The range brackets it so the client has room
+        // either side; their own figure always wins. A banded guide at 80-92%
+        // was here before and had no basis in the policy at all.
+        var lo = Math.round(cur * 0.80 / 1000) * 1000;   // ~20% off
+        var hi = Math.round(cur * 0.90 / 1000) * 1000;   // ~10% off, 15% mid
         out.push({
           kind: 'value', tone: 'info', asks: 'Cover1__c',
           title: 'A year on, ' + mrMoney_(lo) + ' – ' + mrMoney_(hi) + ' is the usual range',
           body: 'You are insured for ' + mrMoney_(cur) + ' now. Your ' +
                 (age + 1) + '-year-old ' + (r.Vehicle_Make__c || 'vehicle') +
-                ' has depreciated since. The figure you give us is the one we use.',
+                ' has depreciated since — Guardian\u2019s own pre-agreed rate is 15% a year. ' +
+                'The figure you give us is the one we use, and on a claim you are paid the ' +
+                'market value or the sum insured, whichever is lower.',
         });
       }
     }
