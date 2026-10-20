@@ -77,6 +77,18 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   ok('"Log the definition" opens the slot with the kind set', await pg.isVisible('#s-d2-recruit .bd'));
   await pg.click('[data-tab="brief"]');
   ok('the brief carries the logged contribution under its session', /Reward the output/.test(await pg.textContent('#p-brief')) && (await pg.$$('#p-brief article.sess')).length >= 11);
+  await pg.click('[data-tab="circ"]');
+  ok('the circles tab lays 2025 beside 2026: six pairs, ten outputs, the goals', (await pg.$$('#p-circ .pair')).length === 6 && (await pg.$$('#p-circ .outs > li')).length === 10 && /\$250M/.test(await pg.textContent('#p-circ')));
+  pg.once('dialog', d => d.accept('Not seen at the branch.'));
+  await pg.click('#o-c25-onboard .st button:nth-of-type(3)');
+  await pg.waitForFunction(() => /Not issued/.test(document.querySelector('#o-c25-onboard .now').textContent));
+  ok('marking an output logs it and shows the mark with the note', /Not seen at the branch/.test(await pg.textContent('#o-c25-onboard')) && /1 not issued/.test(await pg.textContent('#p-circ')));
+  await pg.click('[data-tab="d1"]');
+  ok('a session last year covered carries the 2025 pill, and the new subject does not', /2025 too/.test(await pg.textContent('#s-d1-career .cnt')) && !/2025 too/.test(await pg.textContent('#s-d2-transfers .cnt')));
+  await pg.click('#s-d1-career .hd');
+  ok('opened, it shows last year in the agenda\'s words and what to ask', /Last year, 2025/.test(await pg.textContent('#s-d1-career .prior')) && /Foundation/.test(await pg.textContent('#s-d1-career .prior')) && /So ask:/.test(await pg.textContent('#s-d1-career .prior')));
+  await pg.click('[data-tab="brief"]');
+  ok('the brief carries the 2025 outputs with the mark', /Last year, this year/.test(await pg.textContent('#p-brief')) && /Not issued/.test(await pg.textContent('#p-brief')));
   await pg.click('[data-tab="log"]');
   ok('the logistics tab has the memo', /Wrightson Road/.test(await pg.textContent('#p-log')));
   await ctx.close();
@@ -89,7 +101,7 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   await pg.waitForSelector('#app:not(.hide)');
   ok('a device signed in to the board is signed in here', /Akaash Kalladeen · Unit manager/.test(await pg.textContent('#whoami')));
   ok('the unit manager sees the branch\'s contribution and cannot remove it', (await pg.$$('#s-d2-recruit .item')).length === 1 && !(await pg.$('#s-d2-recruit .item .x')));
-  for (const t of ['d1', 'd2', 'sb', 'log', 'brief']) {
+  for (const t of ['d1', 'd2', 'circ', 'sb', 'log', 'brief']) {
     await pg.click('[data-tab="' + t + '"]');
     const over = await pg.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok('no sideways scroll on ' + t, over <= 1, over + 'px');
