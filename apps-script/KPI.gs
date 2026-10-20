@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-20k';
+var SCRIPT_VERSION = '2026-10-20l';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -7411,6 +7411,19 @@ function wallStaff_(day, outside) {
       par: sc ? sc.par : 0, parDone: sc ? sc.parDone : 0, parMet: !!(sc && sc.parMet), quests: sc ? sc.quests : 0, questsOf: sc ? sc.questList.length : 0,
       streak: stk.n, gain: outside && g.pct != null && g.pct < 0 ? null : g.pct, bestDay: !!g.bestDay };   // outside: progress only
     if (!outside) { p.inAt = first ? wallAt_(minutesOf_(first)) : ''; p.late = first ? lateBy_(s, first) : 0; p.points = sc ? sc.points : null; }
+    // Celebrations (20 Oct 2026): the top skill, a level reached today, and today's thank-yous. Wins only, never a shortfall.
+    if (p.game) {
+      p.topSkill = null; p.levelUps = []; p.thanks = 0;
+      try {
+        var sk = gameSkills_(s, day, hist, sc || null), was = {};
+        gameSkills_(s, day, hist, { kinds: {} }).forEach(function (x) { was[x.k] = x.lvl; });
+        if (sk.length && sk[0].lvl > 0) p.topSkill = { name: sk[0].name, lvl: sk[0].lvl };
+        if (sc) p.levelUps = sk.filter(function (x) { return x.lvl > 0 && x.lvl > (was[x.k] || 0); }).map(function (x) { return { name: x.name, lvl: x.lvl }; });
+      } catch (e) {}
+      try { p.thanks = gameThanksTo_(s, day).filter(function (x) { return x.day === day; }).length; } catch (e) {}
+      p.levelUps.forEach(function (l) { ev.push({ m: sc && sc.last ? sc.last : nowM, who: p.name, what: 'levelled up: ' + l.name + ', level ' + l.lvl }); });
+      if (p.thanks) ev.push({ m: nowM, who: p.name, what: 'was thanked for covering' + (p.thanks > 1 ? ', ' + p.thanks + ' times' : '') });
+    }
     if (first) ev.push({ m: minutesOf_(first), who: p.name, what: outside ? 'is in' : 'checked in' });
     if (sc && sc.parMet && sc.last) ev.push({ m: sc.last, who: p.name, what: 'reached par: today\'s list is done' });
     return p;

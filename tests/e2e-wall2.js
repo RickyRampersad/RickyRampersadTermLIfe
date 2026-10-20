@@ -18,6 +18,7 @@ const server = http.createServer((q, r) => {
   fs.createReadStream(f).pipe(r);
 });
 let fails = 0;
+const all0 = t => t.join('\n');
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x ? '  ' + x : '')); if (!c) fails++; };
 
 (async () => {
@@ -32,7 +33,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     await page.goto('http://localhost:8798/wall/?demo=1' + (view === 'outside' ? '&view=outside' : ''), { waitUntil: 'domcontentloaded' });
     await page.click('#goQuiet');
     const seen = [], spill = [], text = [];
-    for (let i = 0; i < 11; i++) {
+    for (let i = 0; i < 12; i++) {
       await page.waitForTimeout(2700);
       const k = await page.evaluate(() => { const e = document.querySelector('.scene.on .kick'); return e ? e.innerText : 'ident'; });
       seen.push(k);
@@ -41,7 +42,8 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       text.push(await page.evaluate(() => document.querySelector('.scene.on').innerText));
       await page.keyboard.press('ArrowRight');
     }
-    ok('eleven scenes, staff to live, the Branch Manager\'s day and how we served among them', seen.length === 11 && new Set(seen).size === 11 && /LIVE/.test(seen[10]) && seen.some(k => /BRANCH MANAGER'S DAY/.test(k)) && seen.some(k => /HOW WE SERVED/.test(k)), seen.join(' | '));
+    ok('twelve scenes, staff to live, the Branch Manager\'s day, how we served and the shout-outs among them', seen.length === 12 && new Set(seen).size === 12 && /LIVE/.test(seen[11]) && seen.some(k => /BRANCH MANAGER'S DAY/.test(k)) && seen.some(k => /HOW WE SERVED/.test(k)) && seen.some(k => /SHOUT-OUTS/.test(k)), seen.join(' | '));
+    ok('the shout-outs: par, five stars, a level up, a streak and a thank-you', /Today's wins/.test(all0(text)) && /PAR/.test(all0(text)) && /FIVE STARS/.test(all0(text)) && /LEVEL UP/.test(all0(text)) && /ON A STREAK/.test(all0(text)) && /THANK YOU/.test(all0(text)));
     ok('nothing spills sideways', !spill.length, spill.join(', '));
     ok('no page errors', !errs.length, errs.join(' | '));
     ok('the sample is marked', /SAMPLE/.test(await page.innerText('#mode')));
@@ -66,12 +68,14 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     await pg.goto('http://localhost:8798/wall/?demo=1&view=outside', { waitUntil: 'domcontentloaded' });
     await pg.click('#goQuiet');
     const off = [];
-    for (let i = 0; i < 11; i++) {
+    for (let i = 0; i < 12; i++) {
       await pg.waitForTimeout(2700);
       const r = await pg.evaluate(() => ({ k: (document.querySelector('.scene.on .kick') || {}).innerText || 'ident', sw: document.documentElement.scrollWidth, iw: innerWidth,
         out: [...document.querySelectorAll('.scene.on *')].filter(e => { const b = e.getBoundingClientRect(); return b.width > 0 && (b.right > innerWidth + 2 || b.left < -2); }).length }));
       if (r.sw > r.iw + 1 || r.out) off.push(r.k + ' (' + r.out + ')');
       if (process.env.SHOTS) await pg.screenshot({ path: process.env.SHOTS + '/mob_' + w + '_' + i + '.png', fullPage: h > w });
+      if (i === 3) { const c = await pg.evaluate(() => { CELE.q.unshift({ k: 'level', who: 'Elizabeth', text: 'Premium fixer · level 4' }); CELE.busy = false; celePlay(); return new Promise(r => setTimeout(() => { const b = document.querySelector('#cele .cc').getBoundingClientRect(); r(b.left >= 0 && b.right <= innerWidth && b.top >= 0 && b.bottom <= innerHeight); }, 900)); });
+        if (!c) off.push('celebration card'); }
       await pg.keyboard.press('ArrowRight');
     }
     ok(name + ': the stacked layout', await pg.evaluate(() => document.body.classList.contains('mob')));
@@ -91,6 +95,30 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     const n = await pg.evaluate(() => document.querySelectorAll('#stage .scene').length);
     ok('quick taps: one scene on the stage, not two on top of each other', n === 1, String(n));
     await pg.close();
+  }
+  // Celebrations: a win gets its card and confetti every few scenes; with reduced motion, the card and no confetti.
+  for (const calmView of [false, true]) {
+    const ctx = await b.newContext({ viewport: { width: 1920, height: 1080 }, reducedMotion: calmView ? 'reduce' : 'no-preference' });
+    const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(String(e)));
+    await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
+    await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.click('#goQuiet');
+    let card = '', bits = 0;
+    for (let i = 0; i < 5 && !card; i++) {
+      await pg.keyboard.press('ArrowRight');
+      for (let t = 0; t < 8 && !card; t++) { await pg.waitForTimeout(500);
+        const r = await pg.evaluate(() => ({ c: document.querySelector('#cele.on .ct') ? document.querySelector('#cele .ck').innerText + ' ' + document.querySelector('#cele .ct').innerText : '', n: (confetti.ps || []).length }));
+        card = r.c; bits = Math.max(bits, r.n); }
+    }
+    await pg.waitForTimeout(700); bits = Math.max(bits, await pg.evaluate(() => (confetti.ps || []).length));
+    const tag = calmView ? 'reduced motion: ' : 'celebrations: ';
+    ok(tag + 'a win gets its card', /PAR Elizabeth|FIVE STARS|LEVEL UP|ON A STREAK|BEST DAY|THANK YOU/.test(card), card);
+    ok(tag + (calmView ? 'and no confetti' : 'and confetti'), calmView ? bits === 0 : bits > 50, String(bits));
+    await pg.waitForTimeout(4500);
+    ok(tag + 'the card goes again, the wall carries on', await pg.evaluate(() => !document.querySelector('#cele').classList.contains('on') && !CELE.busy));
+    ok(tag + 'no page errors', !errs.length, errs.join(' | '));
+    await ctx.close();
   }
   // Sound on, no recording and no Andrew voice in this browser: captions, and the wall still moves on by itself.
   const page = await b.newPage({ viewport: { width: 1920, height: 1080 } });
