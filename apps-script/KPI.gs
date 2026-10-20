@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-20c';
+var SCRIPT_VERSION = '2026-10-20d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3273,7 +3273,13 @@ function sendDayStart_(staffId, date, kind, opt) {
   // Plan by half an hour after the start, or after now if the day is under way.
   var startM = (parseSpan_(sched.hours || '') || { start: 480 }).start;
   var replanBy = twelve_(mmText_(Math.max(minutesOf_(hhmm_(new Date())), startM) + DAYSTART_REPLAN_MIN));
-  var intro = kind === 'plan'
+  var sysDay = systemDayOn_() && kind === 'first';
+  var intro = sysDay
+    ? 'Good morning, ' + esc_(first) + (signIn ? ', and thank you for checking in at <b>' + esc_(twelve_(signIn)) + '</b>. ' : '. Your day starts at <b>' + esc_(twelve_(mmText_(startM))) + '</b>. ') +
+      'Your day is set for you: the system has read Salesforce, Query Pal and the log book and put your work in order, each task with what to do. ' +
+      (signIn ? 'Work down the list on your page.' : 'Open the button and check in: that is the attendance register. In after ' + esc_(twelve_(mmText_(startM + ATT_GRACE_MIN))) + ' is late; no check-in by <b>' +
+        esc_(twelve_(mmText_(startM + ABSENT_AFTER_MIN))) + '</b> marks you absent and your due work goes to colleagues.')
+    : kind === 'plan'
     ? 'Thank you, ' + esc_(first) + '. Your plan is in' + (signIn ? ' (signed in at ' + esc_(twelve_(signIn)) + ')' : '') + '. Below: whether it holds up against your record, the day as planned, and what Salesforce still has waiting.'
     : 'Good morning, ' + esc_(first) + (signIn
         ? ', and thank you for signing in at <b>' + esc_(twelve_(signIn)) + '</b>. '
@@ -3281,7 +3287,10 @@ function sendDayStart_(staffId, date, kind, opt) {
           'In after ' + esc_(twelve_(mmText_(startM + ATT_GRACE_MIN))) + ' is late; no sign-in by <b>' + esc_(twelve_(mmText_(startM + ABSENT_AFTER_MIN))) + '</b> marks you absent and your due work goes to colleagues. ') +
       'Below is what your record shows over the last ' + INTEL_DAYS + ' working days, your day as you have filed it, and a plan for the day built from what Salesforce, Query Pal and the inbox have waiting.';
 
-  var ask = kind === 'plan'
+  var ask = sysDay
+    ? (target ? '<b>' + target + ' tasks</b> today, in order: high-payoff work first, then the oldest overdue' + (intel && intel.pace != null ? ', sized from your own record (' + intel.pace + ' closed a day over the last ' + intel.days + ' working days)' : '') + '. ' : '') +
+      'Each task says what to do and what its notes say is outstanding. Close it with a note, move it with a reason, or note it. Your progress is read from Salesforce before lunch and at your close-off.'
+    : kind === 'plan'
     ? (missingTotal
         ? 'There are still <b>' + missingTotal + '</b> due or overdue tasks not in your plan. Add them in the planner, or note in each why it waits.'
         : 'Everything due or overdue is in your plan. Your progress check comes before lunch; close the day off before you leave.')
@@ -3312,10 +3321,11 @@ function sendDayStart_(staffId, date, kind, opt) {
         check.lines.map(function (l) { return '<div style="font-size:13.5px;line-height:1.55;padding:5px 0;border-top:1px solid ' + MAIL.line + '"><span style="color:' + (l.bad ? MAIL.red : MAIL.green) + ';font-weight:800">' + (l.bad ? '&#9679;' : '&#10003;') + '</span> ' + l.html + '</div>'; }).join('') +
         (check.ok ? '' : replyButton_(replyUrl_(staffId, date, 'plan'), 'Fix my plan', 'Opens your plan with today\'s suggestion ticked. Change it and save; no sign-in.')) + '</div>' : '') +
     '<div style="background:#fff;border:1px solid ' + MAIL.gold + ';border-radius:10px;padding:12px 15px;font-size:14px;line-height:1.55;margin-bottom:6px">' + ask +
-      (kind === 'first' && sfOk && target ? replyButton_(replyUrl_(staffId, date, 'plan'), 'Review and save this plan', 'One tap opens it ticked. Untick what you will not do, add your own, save. No sign-in.') : '') +
-      '<div style="margin-top:9px"><a href="' + PLANNER_URL + '" style="font-size:12.5px;color:' + MAIL.navy + ';font-weight:700">or open the planner</a></div></div>' +
+      (sysDay ? replyButton_(replyUrl_(staffId, date, 'plan'), signIn ? 'Open my day' : 'Check in and start my day', 'One tap. Checking in is the register; your day is already set.') :
+       (kind === 'first' && sfOk && target ? replyButton_(replyUrl_(staffId, date, 'plan'), 'Review and save this plan', 'One tap opens it ticked. Untick what you will not do, add your own, save. No sign-in.') : '')) +
+      (sysDay ? '' : '<div style="margin-top:9px"><a href="' + PLANNER_URL + '" style="font-size:12.5px;color:' + MAIL.navy + ';font-weight:700">or open the planner</a></div>') + '</div>' +
     (kind === 'first' ? '<div style="background:' + MAIL.paper + ';border:1px dashed ' + MAIL.gold + ';border-radius:10px;padding:11px 15px;margin:10px 0 4px;font-size:13.5px;line-height:1.55">' +
-        '<b>First fifteen minutes: the scrub.</b> Go through your inbox and the branch WhatsApp. Anything from Mr Rampersad, a manager, an agent or a client that needs doing goes in the scrub box on your plan page, and becomes a Salesforce task in your name before you start. ' +
+        '<b>First fifteen minutes: the scrub.</b> Go through your inbox, the branch WhatsApp and your calls. Anything from Mr Rampersad, a manager, an agent or a client that needs doing goes in the scrub box on your ' + (systemDayOn_() ? 'day' : 'plan') + ' page, and becomes a Salesforce task in your name before you start. ' +
         '<b>High-payoff work goes first:</b> new business, then orphan adoption, then retention.</div>' : '') +
     (function () {
       if (kind !== 'first') return '';
@@ -3667,6 +3677,8 @@ function housekeepingTick_() {
     if (timedSend_(props, key, now, function () { return sendBranchManagerProgress_(day, at >= 15 * 60 ? 'eve' : 'mid'); })) sent.push('Branch Manager progress');
   });
 
+  // Once a day, the working copies older than three weeks are dropped (20 Oct 2026).
+  if (props.getProperty('sd_prune') !== day) { props.setProperty('sd_prune', day); try { sdPrune_(day); } catch (e) {} }
   // His inbox and his day's log, every hour of his day (20 Oct 2026): what came in, what he answered, what he did in Salesforce.
   if (inboxOn_() && mins >= INBOX.REFRESH_FROM && mins <= INBOX.REFRESH_TO) {
     var inboxHr = day + '_' + Math.floor(mins / 60);
@@ -5624,6 +5636,353 @@ function bmdSec_(m, extras) {
       (r.Kind !== 'checkin' && r.Group ? ' <span style="color:#6A7180">· ' + esc_(r.Group) + '</span>' : '') + '</span></div>'; }).join('') : '<div class="ln" style="color:#6A7180">Nothing yet.</div>') + '</div>';
   var js = '<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest?e.target.closest("[data-use]"):null;if(!a)return;e.preventDefault();var t=document.querySelector("[name=\'"+a.getAttribute("data-use")+"\']");if(t){t.value=a.getAttribute("data-txt");t.focus();}});})();</script>';
   return urgent + drafts + inbox + important + today + (extras || '') + js;
+}
+
+/* ─────────── How to work each kind of task (20 October 2026) ───────────
+ *  Ricky: "tasks are broken down by task types. So you have pending, you have
+ *  premium overdues, you have subject line due dates, who to follow up with.
+ *  Can intelligence be built in so they can work more or less effectively to
+ *  the task that's assigned?"
+ *  Each open task is matched, by its subject first and its type second, to a
+ *  short playbook: what to do, who to contact, and what closes it. The task's
+ *  own history adds the rest (the last note, how long it has been quiet, what
+ *  it waits on), so every line on a person's day says what to do next.
+ *  Order matters: the first rule that matches wins.
+ */
+var PLAYBOOK = [
+  { k: 'cancel', re: /asked to cancel|wants? to cancel|cancel(l)?ation request/i, must: true, label: 'Client wants to cancel',
+    todo: 'Call the client today, before any form. Go through what the policy holds and what they would give up. If they still want to cancel, tell Mr Rampersad before anything is sent.',
+    close: 'Close when the client has decided, with the decision and the call in the note.' },
+  { k: 'former', re: /former agent in touch|former agent/i, must: true, label: 'Former agent in touch',
+    todo: 'Call the client today: the policy stays with the branch and nothing needs signing. Note what the former agent said, and tell Mr Rampersad.',
+    close: 'Close when the client is called and Mr Rampersad has it.' },
+  { k: 'callme', re: /call me|call-back|call back|nobody has called|walk me through|talk it through|\blate\b/i, must: true, label: 'Client asked for a call',
+    todo: 'Call the client today on the number on file. Note the call, what they asked and what was agreed; book the agent introduction if they want one.',
+    close: 'Close when the call is made and noted.' },
+  { k: 'paidto', re: /paid-?to date|premium due|premiums? owed|arrears|paid,? not showing|not reflected|payments? not/i, label: 'Premium owed or not showing',
+    todo: 'Check the paid-to date and what is owed. If paid and not showing, get the receipt and send it to Customer Service with the policy number. If owed, call the client for a payment date before the lapse date.',
+    close: 'Close when the payment shows, or the client has given a date (in the note) and the task is moved to it.' },
+  { k: 'pays', re: /confirm what the policy pays|what the policy pays/i, label: 'Confirm what the policy pays',
+    todo: 'Take the benefit and the beneficiaries from the in-force record. Write them to the client in plain words: how much, on what, to whom.',
+    close: 'Close when it is sent, with what was sent in the note.' },
+  { k: 'built', re: /what the policy has built|cash value|fund value|statement/i, label: 'What the policy has built',
+    todo: 'Request the cash value or fund statement (or the projection) and send it to the client with a line on what it means.',
+    close: 'Close when it is sent.' },
+  { k: 'newagent', re: /who is my new agent|new agent|assign(ment)?/i, label: 'Client asks for an agent',
+    todo: 'Check Ricky assigns for the agent named; give the client the agent\'s name and number in writing, and tell the agent.',
+    close: 'Close when the client and the agent both have it.' },
+  { k: 'wrote', re: /wrote to us|e-?mailed us/i, label: 'Client wrote in',
+    todo: 'Read what the client wrote (Query Pal or the inbox) and answer the same day. If it needs a department, send it and say when they will hear.',
+    close: 'Close when the client has the answer.' },
+  { k: 'email', re: /wrong e-?mail|e-?mail address|address on file|change of address/i, label: 'Contact details',
+    todo: 'Confirm the right details with the client by phone, update them, and resend what bounced.',
+    close: 'Close when updated and resent.' },
+  { k: 'contract', re: /contract received|acknowledg/i, label: 'Contract acknowledgement',
+    todo: 'Record the acknowledgement in Salesforce and on the policy file.',
+    close: 'Close when recorded.' },
+  { k: 'app', re: /finish the application|application/i, label: 'Application to finish',
+    todo: 'Call the client to finish the application and book the agent; note what is still missing.',
+    close: 'Close when the application is in.' },
+  { k: 'medical', re: /medical|ecg|electrocardiogram|cbc|blood|urine|exam|lab|sedimentation|physician/i, label: 'Medical requirement',
+    todo: 'Confirm the clinic appointment with the client (book it if none). Once done, chase the results to underwriting. Note the date.',
+    close: 'Close when underwriting has the results.' },
+  { k: 'quest', re: /questionnaire|declaration|\bform\b|signed/i, label: 'Form or questionnaire outstanding',
+    todo: 'Send the form to the agent or client, say what to fill in, and chase it until it is signed. Submit it to underwriting.',
+    close: 'Close when it is submitted.' },
+  { k: 'uw', re: /underwrit|\buw\b|follow up with/i, label: 'Waiting on underwriting',
+    todo: 'E-mail underwriting for where it stands and what is still needed. Note their answer and the next date.',
+    close: 'Close when underwriting has decided; move it to the date they give otherwise.' },
+  { k: 'cob', re: /\bcob\b|change of beneficiar|beneficiar/i, label: 'Change of beneficiary',
+    todo: 'Check the form is signed and witnessed and the ID is attached; send it to Customer Service and note the reference.',
+    close: 'Close when Customer Service confirms.' },
+  { k: 'sq', re: /\bsq\b/i, label: 'SQ outstanding',
+    todo: 'Chase the signed SQ from the agent or client; check every policy number on it; submit it.',
+    close: 'Close when submitted.' },
+  { k: 'renewal', re: /renewal|renewa\/pdl|motor value|vehicle/i, label: 'Renewal',
+    todo: 'Confirm the renewal notice and premium with CRMS; contact the client for payment or changes; note the date they will pay.',
+    close: 'Close when renewed or paid.' },
+  { k: 'collect', re: /payment (follow|to collect)|collect|premium payment reminder/i, label: 'Payment to collect',
+    todo: 'Call the client for a payment date; arrange collection with Pawan; note the date and amount.',
+    close: 'Close when the payment is received.' },
+  { k: 'group', re: /\bgroup\b|pension|billing date|variance recon/i, label: 'Group client',
+    todo: 'Check the billing or renewal figures against the plan, send them to the client\'s contact, and note when they will pay or confirm.',
+    close: 'Close when the client confirms.' },
+  { k: 'claim', re: /\bclaims?\b|death|surrender|maturity (claim|payout|benefit)/i, label: 'Claim or maturity',
+    todo: 'Check every document is in (claim form, ID, certificate) and send the file to Claims; tell the client what happens next.',
+    close: 'Close when Claims has the complete file.' },
+  { k: 'amend', re: /amendment|increase|change|request/i, label: 'Policy change',
+    todo: 'Check the request form is complete and signed; send it to the department and note the reference.',
+    close: 'Close when the department confirms the change.' }
+];
+var PLAYBOOK_BY_TYPE = {
+  'Pendings': { k: 'pend', label: 'New business pending', todo: 'Find what underwriting still needs (the last note, or the pending list); get it from the agent or client today; submit it.', close: 'Close when underwriting has it.' },
+  'Renewa/PDl/Bill': { k: 'renewal', label: 'Renewal or billing', todo: 'Confirm the figure, contact the client, and note the date they will pay.', close: 'Close when paid or renewed.' },
+  'Opportunity': { k: 'opp', label: 'New business', todo: 'Call the client to book the review or the fact find; note the date; tell the agent.', close: 'Close when the meeting is booked.' },
+  'Claims/ Mat': { k: 'claim', label: 'Claim or maturity', todo: 'Check every document is in and the file is with Claims; tell the client what happens next.', close: 'Close when Claims has the complete file.' },
+  'Lic/Staffing/SA/HR': { k: 'staff', label: 'Staffing or licensing', todo: 'Do the step that is outstanding (form, renewal, document) and send it to HR or the regulator.', close: 'Close when it is sent.' },
+  'RR Operations': { k: 'ops', label: 'Branch operations', todo: 'Do what Mr Rampersad asked, today, and say in the note what was done.', close: 'Close when done.' },
+  'Servicing': { k: 'svc', label: 'Servicing', todo: 'Do what the client asked, tell the client, and note what was done.', close: 'Close when the client has it.' }
+};
+/** The playbook for a task, with what its own history adds: { k, label, todo, close, must, next, quiet, waiting }. */
+function playbookFor_(t, notes, day) {
+  var s = String(t.subject || t.s || ''), ty = String(t.ty || '');
+  var hit = null;
+  for (var i = 0; i < PLAYBOOK.length; i++) if (PLAYBOOK[i].re.test(s)) { hit = PLAYBOOK[i]; break; }
+  hit = hit || PLAYBOOK_BY_TYPE[ty] || { k: 'other', label: ty || 'Task', todo: 'Do what the task asks, and note what was done.', close: 'Close when done, with a note.' };
+  var out = { k: hit.k, label: hit.label, todo: hit.todo, close: hit.close, must: !!hit.must };
+  var last = (notes || [])[0], txt = last ? String(last.text || '').replace(/\s+/g, ' ') : '';
+  out.quiet = last && last.day ? daysBetween_(last.day, day) : (t.created ? daysBetween_(t.created, day) : null);
+  if (last) {
+    out.last = shorten_(txt.replace(/^[^\n]*(Branch Manager|Unit Manager|Branch Intelligence)[^:]*·[^·]*·\s*/, ''), 160);
+    var w = txt.match(/\b(waiting|await\w*|pending|chas\w+)\b[^.]{0,60}\b(client|agent|underwrit\w*|uw|department|customer service|claims|clinic|lab|crms|bank)\b/i);
+    if (w) out.waiting = w[2].replace(/^uw$/i, 'underwriting').toLowerCase();
+  }
+  var m = s.match(/\b(\d{10})\b\s*-?\s*([A-Z][A-Z' .-]{3,})?/);
+  if (m) { out.policy = m[1]; if (m[2]) out.client = m[2].trim(); }
+  if (out.waiting) out.next = 'It waits on the ' + out.waiting + ': chase them today and note what they say.';
+  else if (out.quiet == null || out.quiet >= 3) out.next = last ? 'No note in ' + out.quiet + ' days: do the next step and note it.' : 'Nothing has been noted since it was opened: start it today.';
+  return out;
+}
+
+/* ─────────── The system sets each desk's day (20 October 2026) ───────────
+ *  Ricky: "it's no longer the planning theory. It is the system determining
+ *  what they are to do, review more or less everything, and they check in"
+ *  ... "this system actually plans their day for them and they check in. When
+ *  they check in, it's an attendance register."
+ *
+ *  For the desks on the plan page (sales support and the BMA; Pawan keeps his
+ *  calendar day). SYSTEM_DAY = off brings the old plan page back.
+ *   · The morning e-mail carries one button: Check in and start my day.
+ *   · Checking in (f=in, a form of its own so nothing can hold it up) is the
+ *     register's sign-in, and it sets the day: the morning's choice of tasks
+ *     (sized to the desk's own pace, high payoff first) is written as the plan,
+ *     so the progress check, the close-off and the Branch Manager's views read
+ *     it as before. "Plan saved" now means checked in and the day set.
+ *   · The page is the day, in order: yesterday first (a reason and a new date
+ *     for each task left open), then the work, numbered: tasks moved to them
+ *     first, then what cannot wait (a client asking to cancel, a call asked
+ *     for, a former agent in touch), then the rest in the morning's order.
+ *     Each says what to do (playbookFor_), what its history adds (the last
+ *     note, what it waits on, how long it has been quiet) and closes, moves or
+ *     takes a note in place. Then their Query Pal queries, the scrub (inbox,
+ *     WhatsApp and calls: each line a task in the day), and what to take next
+ *     when the list is done.
+ *   · A close needs a note and a move needs a reason (Ricky: a closed task
+ *     without a note is not closed); each move is kept with its before and
+ *     after on Task Changes and Due Moves.
+ */
+var SDAY = { CLEAR_DAYS: 5, NEXT: 8, QP: 10 };
+function systemDayOn_() { return String(PropertiesService.getScriptProperties().getProperty('SYSTEM_DAY') || '').trim().toLowerCase() !== 'off'; }
+function sdRole_(sid) { return sid === 'kamla' ? 'BMA' : 'Sales Support'; }
+function sdQueries_(sid) {
+  var me = nameFor_(sid), f = bkNk_(me).split(' ')[0];
+  return openQueries_().filter(function (x) { var a = bkNk_(x.assigned); return a === bkNk_(me) || (f && a.split(' ')[0] === f); });
+}
+/** The day's work for a desk, in order: what was moved to them, what cannot wait, then the morning's order. */
+function sdList_(sid, day) {
+  var model = intelModel_(sid, day), plans = {}, list = [], seen = {};
+  try { plans = planRows_(sid, day); } catch (e) {}
+  var known = modelTasks_(model);
+  var add = function (t, moved) {
+    if (!t || !t.id || seen[t.id]) return; seen[t.id] = 1;
+    var k = known[t.id] || {};
+    list.push({ id: t.id, s: String(t.s || t.subject || k.s || t.id).replace(/^Moved to you: /, ''), ty: t.ty || t.type || k.ty || '', due: t.due || k.due || '', late: !!(t.late || k.late), moved: !!moved });
+  };
+  ((model && model.loose) || []).forEach(function (t) { if (/^Moved to you: /.test(String(t.s || ''))) add(t, true); });
+  var planned = [];
+  BLOCK_IDS.forEach(function (b) { (plans[b] ? planItemsOf_(plans[b].Items) : []).forEach(function (it) { if (it.k === 'sf') planned.push({ id: it.id, s: it.subject, ty: it.type }); }); });
+  if (planned.length) planned.forEach(function (t) { add(t); });
+  else if (model) (model.order || Object.keys(model.b || {})).forEach(function (b) { ((model.b[b] || {}).sug || []).forEach(function (t) { add(t); }); });
+  else {
+    // No morning choice on file (Salesforce did not answer at the e-mail): choose now, the same way.
+    try {
+      var book = (sfkOpenBook_(day) || {})[sid] || {}, waiting = [];
+      Object.keys(book).forEach(function (ty) { book[ty].forEach(function (t) { if (t.late || t.due === day) waiting.push({ id: t.id, s: t.subject, subject: t.subject, ty: ty, due: t.due, late: t.late }); }); });
+      waiting.sort(intelOrder_);
+      var intel = null; try { intel = intelFor_(sid, day); } catch (e) {}
+      var dueToday = waiting.filter(function (t) { return !t.late; }).length, overdue = waiting.length - dueToday;
+      waiting.slice(0, intelTarget_(intel, dueToday, overdue, waiting.length)).forEach(function (t) { add(t); });
+    } catch (e) {}
+  }
+  return list;
+}
+/** Check in: the register, and the day set as the plan if it is not set yet. */
+function sdCheckin_(person, day) {
+  var sid = String(person.staffId), si = signInFromPage_(person), set = false;
+  var plans = {}; try { plans = planRows_(sid, day); } catch (e) {}
+  var has = BLOCK_IDS.some(function (b) { return plans[b] && planItemsOf_(plans[b].Items).some(function (it) { return it.k === 'sf'; }); });
+  if (!has) {
+    var list = sdList_(sid, day);
+    if (list.length) {
+      var lock = takeLock_();
+      if (lock) {
+        try {
+          markStaffWrite_();
+          var clean = cleanPlanItems_(list.map(function (t) { return { k: 'sf', id: t.id, subject: t.s, type: t.ty }; }).slice(0, PLAN_MAX_ITEMS));
+          planWrite_(person, day, 'KPI1', { Items: clean.list || [], Note: 'Set by the system at check-in, ' + twelve_(si.at) });
+          set = true;
+        } catch (e) {} finally { lock.releaseLock(); }
+      }
+    }
+  }
+  try { var pr = PropertiesService.getScriptProperties(); if (!pr.getProperty('daystart_plan_' + sid + '_' + day)) pr.setProperty('daystart_plan_' + sid + '_' + day, '1|' + Date.now()); } catch (e) {}
+  return { at: si.at, first: si.first, set: set };
+}
+
+/** Their day, as a page. */
+function sdPage_(person, day, error, notice) {
+  var sid = String(person.staffId), first = String(person.name || nameFor_(sid)).split(' ')[0], sched = scheduleFor_(sid);
+  var signed = signedInAt_(sid, day), list = sdList_(sid, day), chat = {}, states = {}, moves = {};
+  try { if (list.length) chat = cmdChatter_(list.map(function (t) { return t.id; })); } catch (e) {}
+  try { if (list.length) states = sfkTaskStates_(list.map(function (t) { return t.id; })); } catch (e) {}
+  try { moves = dueMovesByTask_(); } catch (e) {}
+  var isDone = function (t) { return /^(completed|closed)/i.test(String(states[t.id] || '')); };
+  list.forEach(function (t) { t.pb = playbookFor_({ subject: t.s, ty: t.ty, created: '' }, chat[t.id] || [], day); });
+  var open = list.filter(function (t) { return !isDone(t); }), done = list.filter(isDone);
+  open.sort(function (a, b) { return Number(b.moved) - Number(a.moved) || Number(b.pb.must) - Number(a.pb.must); });
+  var sp = parseSpan_(sched.hours || '') || { start: 480, end: 960 }, nowM = minutesOf_(hhmm_(new Date()));
+  // Check in: a form of its own, so nothing on the page can hold up the register.
+  var pct = list.length ? Math.round(100 * done.length / list.length) : 0;
+  var inCard = signed
+    ? '<div class="card ok"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b style="color:#1F6B47;font-size:15px">&#10003; Checked in ' + esc_(twelve_(signed)) + '</b>' +
+        '<span style="font-size:13px;color:#6A7180">' + done.length + ' of ' + list.length + ' done</span></div>' +
+        '<div style="height:8px;background:#EEEBE3;border-radius:6px;margin:8px 0 0;overflow:hidden"><i style="display:block;height:100%;width:' + pct + '%;background:#2C7A57"></i></div></div>'
+    : '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card bad">' + replyHidden_(sid, day, 'in') +
+        '<div class="bh">Check in</div><div class="bf">This is the register: the time you press it is your sign-in. Your day is set for you below.' +
+        ' In after ' + esc_(twelve_(mmText_(sp.start + ATT_GRACE_MIN))) + ' is late; no check-in by ' + esc_(twelve_(mmText_(sp.start + ABSENT_AFTER_MIN))) + ' marks you absent and your work goes to colleagues.</div>' +
+        '<button type="submit" style="background:#2C7A57;margin-top:6px">Check in and start my day</button></form>';
+  var yo = null; try { yo = yesterdayOpen_(sid, day); } catch (e) {}
+  var yCard = yo ? '<div class="card bad" id="p-yday"><div class="bh" style="color:#DC3F3F">Yesterday first · ' + esc_(prettyDate_(yo.day)) + ' was not closed</div>' +
+      '<div class="bf">' + (yo.tasks.length ? 'A reason and a new date for each task left open, then Save.' : 'Nothing was left open; Save closes it.') + '</div>' +
+      yo.tasks.map(function (t) { return commitRow_(t, day, {}, 'y'); }).join('') + '</div>' : '';
+  var row = function (t, i) {
+    var pb = t.pb, notes = chat[t.id] || [], mv = moves[t.id];
+    return '<details class="it" id="w' + esc_(t.id) + '"' + (i < 3 ? ' open' : '') + '><summary><div class="hd"><span class="age ' + (t.moved || pb.must ? 'r' : t.late ? 'a' : '') + '">' + (i + 1) + '</span>' +
+      '<div class="tt">' + esc_(t.s) + '<small><span class="badge' + (pb.must ? ' r' : '') + '" style="margin:0 4px 0 0">' + esc_(t.moved ? 'Moved to you' : pb.label) + '</span>' +
+        (t.late ? 'overdue since ' + esc_(shortDate_(t.due)) : t.due === day ? 'due today' : t.due ? 'due ' + esc_(shortDate_(t.due)) : '') + '</small></div></div></summary>' +
+      '<div class="br2" style="margin-top:6px;font-size:13.5px;color:#1F2433"><b>What to do:</b> ' + esc_(pb.todo) + '</div>' +
+      (pb.next ? '<div class="br2" style="margin-top:3px;color:#B4322B"><b>' + esc_(pb.next) + '</b></div>' : '') +
+      '<div class="br2" style="margin-top:3px">' + esc_(pb.close) + (pb.client ? ' · Client: ' + esc_(pb.client) : '') + (pb.policy ? ' · Policy ' + esc_(pb.policy) : '') + (t.ty ? ' · ' + esc_(t.ty) : '') + '</div>' +
+      (mv ? '<div class="br2" style="margin-top:2px">' + esc_(dueMovesLine_(mv)) + '</div>' : '') +
+      chatterNotes_(chat, t.id) +
+      '<label style="display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;margin:10px 0 6px"><input type="checkbox" name="x_' + esc_(t.id) + '" value="1" style="width:22px;height:22px;margin:0;flex:none"> Done: close it (say what was done below)</label>' +
+      '<label style="display:block;font-size:13px;color:#6A7180;margin:0 0 4px">Or it cannot be done today: the new date' +
+        '<input type="date" name="m_' + esc_(t.id) + '" min="' + esc_(shiftDays_(day, 1)) + '" style="display:block;width:100%;box-sizing:border-box;margin:4px 0 0"></label>' +
+      '<textarea name="n_' + esc_(t.id) + '" rows="2" placeholder="What was done, who you spoke to, or why the date moves. It goes on the task\'s Chatter." style="margin:4px 0 10px"></textarea></details>';
+  };
+  var work = '<div class="card" id="p-work"><div class="bh">Your work today · ' + open.length + ' to do' + (done.length ? ' · ' + done.length + ' done' : '') + '</div>' +
+    '<div class="bf">Set for you from Salesforce, in this order. Each says what to do. Close it with a note, give it a new date with a reason, or write a note. Then Save at the bottom.</div>' +
+    (open.length ? open.map(row).join('') : list.length ? '<div class="ln" style="color:#2C7A57"><b>All done.</b> Take the next ones below.</div>' : '<div class="ln">Nothing is set for today yet. Check in, and the day is set.</div>') +
+    (done.length ? '<details style="margin-top:8px"><summary style="font-weight:800;font-size:14px;padding:6px 0;cursor:pointer">Done today (' + done.length + ')</summary>' +
+      done.map(function (t) { return '<div class="ln" style="font-size:13.5px">&#10003; ' + esc_(t.s) + '</div>'; }).join('') + '</details>' : '') + '</div>';
+  // Query Pal
+  var qs = []; try { qs = sdQueries_(sid).slice(0, SDAY.QP); } catch (e) {}
+  var qCard = qs.length ? '<div class="card" id="p-qp"><div class="bh">Your client queries · Query Pal (' + qs.length + ')</div>' +
+    '<div class="bf">Oldest first. Past the turnaround: answer the client today, or note on the trail why it waits.</div>' +
+    qs.map(function (q, i) {
+      return '<details class="it"><summary><div class="hd"><span class="age ' + (q.over ? 'r' : '') + '">' + (q.days == null ? '—' : q.days + 'd') + '</span><div class="tt">' + esc_(q.client || 'Client') + ' · ' + esc_(q.subject || q.type) +
+        '<small>' + esc_(q.ref) + (q.over ? ' · <b style="color:#DC3F3F">past turnaround</b>' : '') + (q.dept ? ' · ' + esc_(q.dept) : '') + '</small></div></div></summary>' +
+        (q.desc ? '<div class="br2" style="margin-top:4px">' + esc_(q.desc) + '</div>' : '') +
+        '<textarea name="q_' + i + '" rows="2" placeholder="Where it stands. It goes on the query\'s trail in Query Pal, internal." style="margin:8px 0 10px"></textarea></details>';
+    }).join('') + '</div>' : '';
+  try { bigPut_('sd_qids_' + sid + '_' + day, qs.map(function (q) { return { ref: q.ref, c: q.client }; })); } catch (e) {}
+  // The scrub
+  var scrub = '<div class="card" id="p-scrub"><div class="bh">The scrub · inbox, WhatsApp and calls</div>' +
+    '<div class="bf">First fifteen minutes, and again after lunch. Anything from Mr Rampersad, a manager, an agent or a client that needs doing: one per line. Each becomes a Salesforce task in your name, due today, in your day.</div>' +
+    '<textarea name="scrub" rows="3" placeholder="e.g. Agent Persad asked for the Mohammed medical requirements"></textarea>' +
+    '<select name="scrub_type" style="width:100%;padding:9px;border:1.5px solid #DDE4EC;border-radius:9px;font:14px inherit;margin-top:8px">' +
+      sfTypeList_().map(function (t) { return '<option value="' + esc_(t) + '"' + (t === 'Servicing' ? ' selected' : '') + '>' + esc_(SF_TYPES[t]) + '</option>'; }).join('') + '</select></div>';
+  // When the list is done: the next ones, in the same order.
+  var model = intelModel_(sid, day), have = {}; list.forEach(function (t) { have[t.id] = 1; });
+  var next = []; if (model) Object.keys(model.b || {}).forEach(function (b) { ((model.b[b] || {}).more || []).forEach(function (t) { if (!have[t.id]) next.push(t); }); });
+  ((model && model.loose) || []).forEach(function (t) { if (!have[t.id] && !/^Moved to you: /.test(String(t.s || ''))) next.push(t); });
+  var nextCard = next.length ? '<div class="card"><details><summary style="font-weight:800;font-size:14px;cursor:pointer">When your list is done: the next ' + Math.min(next.length, SDAY.NEXT) + '</summary>' +
+    '<div class="bf" style="margin-top:6px">Tick one to take it into today.</div>' +
+    next.slice(0, SDAY.NEXT).map(function (t) { return '<label class="t"><input type="checkbox" name="t_take" value="' + esc_(t.id) + '"><span>' + esc_(t.s) + taskTag_(t, day) + '</span></label>'; }).join('') + '</details></div>' : '';
+  try { bigPut_('sd_list_' + sid + '_' + day, list.map(function (t) { return { id: t.id, s: t.s, ty: t.ty, due: t.due }; }).concat(next.slice(0, SDAY.NEXT).map(function (t) { return { id: t.id, s: t.s, ty: t.ty, due: t.due, next: 1 }; }))); } catch (e) {}
+  var inner = (notice ? '<div class="card ok"><b style="color:#2C7A57">' + notice + '</b></div>' : '') + (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + inCard +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'plan') + yCard + work + qCard + scrub + nextCard +
+    '<div class="card"><div class="bh">Comment for Mr Rampersad</div><textarea name="comment" rows="2" placeholder="Anything he should know about today"></textarea></div>' +
+    '<button type="submit">Save</button></form>' + sbJs_();
+  return replyPage_('Your day · ' + prettyDate_(day), esc_(first) + ', your day is set for you: check in, then work down the list. Every task says what to do. Your progress is read from Salesforce at ' +
+    esc_(twelve_(mmText_(middayAtSafe_(sid)))) + ' and at your close-off.', inner);
+}
+function middayAtSafe_(sid) { try { return middayAt_(sid); } catch (e) { return 12 * 60; } }
+
+/** Saving the day: yesterday first, then each task closed, moved or noted, the queries, the scrub and what they took on. */
+function sdSave_(person, day, p, all) {
+  var sid = String(person.staffId), name = nameFor_(sid), at = hhmm_(new Date()), out = [];
+  var head = sdRole_(sid) + ' · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at);
+  var yo = null, yc = null; try { yo = yesterdayOpen_(sid, day); } catch (e) {}
+  if (yo) { yc = commitTasks_(person, yo.day, yo.tasks, p, 'y'); if (yc.missing) { try { signInFromPage_(person); } catch (e) {} return sdPage_(person, day, 'Yesterday first: a reason and a new date for each task left open on ' + shortDate_(yo.day) + '. Then Save.'); } }
+  var si = null; try { si = sdCheckin_(person, day); } catch (e) {}
+  if (yc) {
+    var lock = takeLock_();
+    try { progWrite_(person, yo.day, 'leave', yc.rows); PropertiesService.getScriptProperties().setProperty('ncdone_' + sid + '_' + yo.day, hhmm_(new Date())); } catch (e) {} finally { if (lock) lock.releaseLock(); }
+    try { yc.apply(); out.push({ s: 'Yesterday', res: yc.rows.length + ' task' + (yc.rows.length === 1 ? '' : 's') + ' given a reason and a new date' }); } catch (e) {}
+  }
+  var list = []; try { list = bigGet_('sd_list_' + sid + '_' + day, []) || []; } catch (e) {}
+  list.filter(function (t) { return !t.next; }).forEach(function (t) {
+    var txt = String(p['n_' + t.id] || '').trim(), done = String(p['x_' + t.id] || '') === '1', to = String(p['m_' + t.id] || '').trim(), label = shorten_(t.s, 70), parts = [];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(to) || to <= day) to = '';
+    if (!txt && !done && !to) return;
+    if ((done || to) && !txt) { out.push({ s: label, res: done ? 'NOT CLOSED: say what was done, in the note' : 'NOT MOVED: say why, in the note' }); return; }
+    try { sfkInsert_('FeedItem', { ParentId: t.id, Body: head + '\n\n' + txt }); parts.push('note posted'); } catch (e) { out.push({ s: label, res: 'NOT SAVED: ' + String(e && e.message || e).slice(0, 100) }); return; }
+    if (done) {
+      try { sfkPatchTask_(t.id, { Status: 'Completed' }); parts.push('closed');
+        taskChangeLog_({ TaskId: t.id, Subject: t.s, Field: 'Status', Before: 'open', After: 'Completed', Why: txt, By: name, Result: 'OK' }); }
+      catch (e) { parts.push('NOT CLOSED: ' + String(e && e.message || e).slice(0, 80)); }
+    } else if (to) {
+      try { sfkPatchTask_(t.id, { ActivityDate: to }); parts.push('moved to ' + shortDate_(to));
+        taskChangeLog_({ TaskId: t.id, Subject: t.s, Field: 'Due date', Before: t.due, After: to, Why: txt, By: name, Result: 'OK' });
+        try { var dm = hrTab_(DUEMOVES, true), dh = headerOf_(dm), o = { Date: day, TaskId: t.id, Subject: t.s, Owner: name, Agent: '', From: t.due, To: to, Noted: 'yes' };
+          dm.appendRow(dh.map(function (h) { return o[h] != null ? o[h] : ''; })); forgetHr_(DUEMOVES); _dueMovesMemo = null; } catch (e) {}
+      } catch (e) { parts.push('NOT MOVED: ' + String(e && e.message || e).slice(0, 80)); }
+    }
+    out.push({ s: label, res: parts.join(' · ') });
+  });
+  // Query Pal notes, internal.
+  var qids = []; try { qids = bigGet_('sd_qids_' + sid + '_' + day, []) || []; } catch (e) {}
+  qids.forEach(function (q, i) {
+    var txt = String(p['q_' + i] || '').trim(); if (!txt) return;
+    try { qpNote_(q.ref, name + ' (' + sdRole_(sid) + ')', txt); out.push({ s: (q.c || q.ref) + ' · Query Pal', res: 'noted on the trail (internal)' }); }
+    catch (e) { out.push({ s: q.ref, res: 'NOT SAVED: ' + String(e && e.message || e).slice(0, 100) }); }
+  });
+  // What they took on, and the scrub: both join today's plan.
+  var take = all('t_take'), add = [];
+  list.filter(function (t) { return t.next && take.indexOf(t.id) > -1; }).forEach(function (t) { add.push({ k: 'sf', id: t.id, subject: t.s, type: t.ty }); out.push({ s: shorten_(t.s, 70), res: 'taken into today' }); });
+  if (add.length) {
+    var lk = takeLock_();
+    if (lk) { try { var plans = planRows_(sid, day), have = plans.KPI1 ? planItemsOf_(plans.KPI1.Items) : []; var clean = cleanPlanItems_(have.concat(add).slice(0, PLAN_MAX_ITEMS)); planWrite_(person, day, 'KPI1', { Items: clean.list || have }); } catch (e) {} finally { lk.releaseLock(); } }
+  }
+  var scrubType = SF_TYPES[String(p.scrub_type || '')] ? String(p.scrub_type) : 'Servicing';
+  String(p.scrub || '').split(/\r?\n/).map(function (l) { return l.replace(/\s+/g, ' ').trim(); }).filter(function (l) { return l.length >= 4; }).slice(0, 10).forEach(function (l) {
+    try { var ct = createTask_({ staffId: sid, subject: l, type: scrubType, due: day, date: day, block: 'KPI1' }, { staffId: sid, name: person.name });
+      out.push({ s: l, res: ct && ct.ok ? 'a task in your day' : 'NOT CREATED: ' + (ct && ct.error || 'add it in Salesforce') }); }
+    catch (e) { out.push({ s: l, res: 'NOT CREATED: add it in Salesforce' }); }
+  });
+  var comment = String(p.comment || '').trim().slice(0, REASON_MAX);
+  if (comment) {
+    try { progWrite_(person, day, 'comment', [{ id: '_plan', s: 'Comment with the day', a: 'note', r: comment }]); } catch (e) {}
+    try { replyCopy_(person, day, 'Day comment', [{ id: '_plan', s: 'With the day', a: 'note', r: comment }], { note: 'Comment' }); } catch (e) {}
+    out.push({ s: 'Comment for Mr Rampersad', res: 'sent' });
+  }
+  try { runlog_('day ' + sid + ' ' + out.length + ' actions'); } catch (e) {}
+  var bad = out.filter(function (o) { return /^NOT/.test(o.res); }).length;
+  return sdPage_(person, day, '', (si && si.first ? 'Checked in at ' + esc_(twelve_(si.at)) + '. ' : '') + (out.length ? (out.length - bad) + ' of ' + out.length + ' saved.' +
+    out.map(function (o) { return '<div class="ln" style="font-weight:400">' + (/^NOT/.test(o.res) ? '&#9888; ' : '&#10003; ') + esc_(o.s) + ' · <b>' + esc_(o.res) + '</b></div>'; }).join('') : 'Nothing to save yet: close, move or note a task, then Save.'));
+}
+
+/** Once a day: drop the morning's working copies (models, targets, choices, mail marks) older than three weeks.
+ *  Nothing reads them after the next day; left alone they fill the script's property store. */
+function sdPrune_(day) {
+  var props = PropertiesService.getScriptProperties(), cut = shiftDays_(day, -21), n = 0;
+  var keys = typeof props.getKeys === 'function' ? props.getKeys() : Object.keys(props.getProperties());
+  keys.forEach(function (k) {
+    var m = String(k).match(/^(?:intel_model_|intel_plan_|intel_target_|daystart_(?:first|plan)_|md_|hkv2_|autoabs_|cover_|notclosed_|ncchk_|ncrem_|ncdone_|um_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|sd_(?:list|qids)_)[A-Za-z0-9_.-]*?(\d{4}-\d{2}-\d{2})(?:_\d+|_n)?$/);
+    if (m && m[1] < cut) { try { props.deleteProperty(k); n++; } catch (e) {} }
+  });
+  return n;
 }
 
 /** From the editor: Mr Rampersad's My branch link, to save on his phone. */
@@ -10930,7 +11289,10 @@ function intelBox_(lines, title) {
 
 /** Today's number. */
 function intelTarget_(r, dueToday, overdue, waiting) {
-  var need = dueToday + Math.ceil(overdue / INTEL_CLEAR_DAYS);
+  // The system sets the day (20 Oct 2026): the overdue cleared in a working week, never less than the desk's own median day.
+  var sys = systemDayOn_();
+  var need = dueToday + Math.ceil(overdue / (sys ? SDAY.CLEAR_DAYS : INTEL_CLEAR_DAYS));
+  if (sys && r && r.median) need = Math.max(need, Math.round(r.median));
   var stretch = r && r.pace ? Math.ceil(r.pace * INTEL_STRETCH) : need;
   return Math.max(0, Math.min(waiting, need, Math.max(stretch, 1)));
 }
@@ -11497,7 +11859,7 @@ function replyClick_(e) {
   if (day !== todayISO_() && !replyWeekLink_(f, day)) return replyPage_('That link was for ' + prettyDate_(day) + '.', 'Today\'s e-mail has today\'s link.', '');
   var person = replyPerson_(sid, f);
   if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
-  if (f === 'plan' || f === 'in') return planReplyPage_(person, day, '');
+  if (f === 'plan' || f === 'in') return systemDayOn_() && sid !== 'pawan' ? sdPage_(person, day, '') : planReplyPage_(person, day, '');
   if (f === 'prog') return progReplyPage_(person, day, '');
   if (f === 'errand') return errandReplyPage_(person, day, String(p.c || 'progress'), '');
   if (f === 'undo') return undoReplyPage_(person, day, '');
@@ -11534,11 +11896,15 @@ function replyPost_(e) {
   var person = replyPerson_(sid, f);
   if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
   var all = function (name) { var v = ps[name]; return v ? (Array.isArray(v) ? v : [v]) : []; };
+  if (f === 'in' && systemDayOn_() && sid !== 'pawan') {
+    var ci = sdCheckin_(person, day);
+    return sdPage_(person, day, '', (ci.first ? 'Checked in at ' : 'You were already checked in at ') + esc_(twelve_(ci.at)) + '. Your day is set below: work down the list.');
+  }
   if (f === 'in') {
     var si = signInFromPage_(person);
     return planReplyPage_(person, day, '', (si.first ? 'Signed in at ' : 'You were already signed in at ') + twelve_(si.at) + '. Now plan your day.');
   }
-  if (f === 'plan') return planReplySave_(person, day, p, all);
+  if (f === 'plan') return systemDayOn_() && sid !== 'pawan' ? sdSave_(person, day, p, all) : planReplySave_(person, day, p, all);
   if (f === 'prog') return progReplySave_(person, day, p, all);
   if (f === 'errand') return errandReplySave_(person, day, p, all);
   if (f === 'undo') return undoReplySave_(person, day, p, all);
