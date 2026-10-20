@@ -73,15 +73,16 @@ const page = env.replyClick_({ parameter: q(env.unitUrl_('akaash')) }).getConten
 const work = page.slice(page.indexOf('data-sec="work"'), page.indexOf('data-sec="agents"'));
 ok('his agents\' open queries are there', /Client queries · Query Pal \(2\)/.test(work) && /Client Q/.test(work) && /Client R/.test(work));
 ok('and nobody else\'s', !/Client S/.test(page));
-ok('a filter bar: search, kinds, agents, how it stands', /id="uf-q"/.test(work) && /data-fk="pend"/.test(work) && /data-fk="qp"/.test(work) && /data-fa="darryl manick"/.test(work) && /data-fs="late"/.test(work) && /data-fs="quiet"/.test(work));
-ok('the counts are right: 6 in all, 2 queries, Darryl 3, overdue 3', /data-fk="">Everything <b>6<\/b>/.test(work) && /data-fk="qp">Queries <b>2<\/b>/.test(work) && /data-fa="darryl manick">Darryl <b>3<\/b>/.test(work) && /data-fs="late">Overdue <b>3<\/b>/.test(work),
-  (work.match(/data-f[kas]="[^"]*">[^<]*<b>\d+<\/b>/g) || []).join(' | '));
+ok('a plain filter bar: an agent, what to show, a search', /id="uf-a"/.test(work) && /id="uf-v"/.test(work) && /id="uf-q"/.test(work) && /value="k:pend"/.test(work) && /value="k:qp"/.test(work) && /value="darryl manick"/.test(work) && /value="s:late"/.test(work) && /value="s:quiet"/.test(work) && !/class="chip/.test(work));
+ok('the counts are right: 6 in all, 2 queries, Darryl 3, overdue 3', /value="">Everything · 6</.test(work) && /value="k:qp">Client queries · 2</.test(work) && /value="darryl manick">Darryl Manick · 3</.test(work) && /value="s:late">Overdue · 3</.test(work),
+  (work.match(/<option value="[^"]*">[^<]*</g) || []).join(' | '));
+ok('who holds the work comes after the lists, not before', work.indexOf('id="u-work"') > work.indexOf('Client queries · Query Pal'));
 ok('each item says whose, what kind and how it stands', /id="tP1"|id="t00TP1" data-ag="darryl manick" data-kind="pend" data-late="1" data-quiet="1" data-nonote="0"/.test(work) && /id="q0" data-ag="darryl manick" data-kind="qp" data-late="1"/.test(work));
 ok('and its words, for the search: a policy number finds the query', /id="q0"[^>]*data-q="[^"]*1000801276/.test(work));
 
 console.log('\nA query, opened:\n');
 const q0 = work.slice(work.indexOf('id="q0"'), work.indexOf('id="q1"'));
-ok('its reference, policy, turnaround and how long it has been open', /RRB\/2026\/093/.test(q0) && /policy 1000801276/.test(q0) && /turnaround 3 days/.test(q0) && /10 days open/.test(q0) && /past its 3-day turnaround/.test(q0) && /2 follow-ups/.test(q0));
+ok('its reference, policy, turnaround and how long it has been open', /RRB\/2026\/093/.test(q0) && /policy 1000801276/.test(q0) && /turnaround 3 days/.test(q0) && /10 days open/.test(q0) && /past turnaround/.test(q0) && /2 follow-ups/.test(q0));
 ok('who holds it', /with <b>Elizabeth Lee<\/b>/.test(q0));
 ok('its whole trail, newest first', /History/.test(q0) && q0.indexOf('Client progress update') < q0.indexOf('Asked Policy Services'));
 ok('a box for his note, saying the client will not see it', /name="q_0"/.test(q0) && /internal: the client does not see it/.test(q0));
@@ -100,7 +101,7 @@ ok('and it counts among his comments today', P.getProperty('um_posts_akaash_' + 
 
 console.log('\nFrom an agent to his work:\n');
 const agents = page.slice(page.indexOf('data-sec="agents"'), page.indexOf('data-sec="you"'));
-ok('Darryl\'s card: his queries counted, and a way into his work', /client queries: <b>1<\/b>/.test(agents) && /data-fag="darryl manick">Darryl's pendings and queries/.test(agents));
+ok('Darryl\'s card: his queries counted, and a way into his work', /client queries: <b>1<\/b>/.test(agents) && /data-fag="darryl manick"[^>]*>Darryl's pendings and queries/.test(agents));
 ok('the filters run on the page', /UNIT|data-fclear/.test(page) && /function apply\(\)/.test(page));
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');

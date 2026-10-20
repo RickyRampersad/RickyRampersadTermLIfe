@@ -6003,30 +6003,33 @@ function unitFilterBar_(m) {
   var items = m.tasks.map(function (t) { return { ag: bkNk_(t.agent), k: t.k, late: !!t.late, quiet: t.touched >= 7, none: !(m.chat[t.id] || []).length }; })
     .concat(m.queries.map(function (q) { var n = m.qpc[qpCode_(q.ref)] || []; return { ag: bkNk_(q.agent), k: 'qp', late: !!q.over, quiet: unitQueryQuiet_(q, n, m.day), none: !n.length }; }));
   var cnt = function (f) { return items.filter(f).length; };
-  var chip = function (attr, val, label, n, on) { return '<span class="chip ufc' + (on ? ' on' : '') + '" role="button" tabindex="0" data-' + attr + '="' + esc_(val) + '">' + esc_(label) + (n != null ? ' <b>' + n + '</b>' : '') + '</span>'; };
-  var row = function (html) { return '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:3px 0">' + html + '</div>'; };
-  var kinds = [['pend', 'Pendings'], ['qp', 'Queries'], ['new', 'New business'], ['ret', 'Retention'], ['other', 'Other']];
-  var ags = m.agents.map(function (a) { return { k: bkNk_(a.name), n: a.first, c: cnt(function (x) { return x.ag === bkNk_(a.name); }) }; }).filter(function (a) { return a.c; });
-  return '<style>.ufc{box-sizing:border-box;display:inline-flex;align-items:center;gap:5px;cursor:pointer;min-height:34px;padding:6px 12px;font-size:13.5px}.ufc b{font-weight:800}</style>' +
-    '<div id="uf" style="position:sticky;top:0;z-index:6;background:#F7F5EF;margin:0 -16px 8px;padding:8px 16px 8px;border-bottom:1px solid #E5E1D6">' +
-    '<input type="search" id="uf-q" placeholder="Search: a client, a policy number, a word" autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin:0 0 6px;font-size:16px;padding:10px 12px;border:1.5px solid #DDE4EC;border-radius:10px;background:#fff">' +
-    row(chip('fk', '', 'Everything', items.length, true) + kinds.map(function (k) { var n = cnt(function (x) { return x.k === k[0]; }); return n ? chip('fk', k[0], k[1], n) : ''; }).join('')) +
-    row(chip('fa', '', 'All agents', null, true) + ags.map(function (a) { return chip('fa', a.k, a.n, a.c); }).join('')) +
-    row(chip('fs', '', 'Any', null, true) + chip('fs', 'late', 'Overdue', cnt(function (x) { return x.late; })) + chip('fs', 'quiet', 'Quiet 7+ days', cnt(function (x) { return x.quiet; })) + chip('fs', 'nonote', 'No notes', cnt(function (x) { return x.none; }))) +
-    '<div class="bf" id="uf-n" style="margin:4px 0 0">Showing all ' + items.length + '. Tap one to open it: its history and a box for your note.</div></div>';
+  var opt = function (val, label, n) { return n === 0 ? '' : '<option value="' + esc_(val) + '">' + esc_(label) + (n != null ? ' · ' + n : '') + '</option>'; };
+  var ags = m.agents.map(function (a) { return opt(bkNk_(a.name), a.name, cnt(function (x) { return x.ag === bkNk_(a.name); })); }).join('');
+  var views = opt('', 'Everything', items.length) +
+    [['k:pend', 'Pendings', function (x) { return x.k === 'pend'; }], ['k:qp', 'Client queries', function (x) { return x.k === 'qp'; }],
+     ['k:new', 'New business', function (x) { return x.k === 'new'; }], ['k:ret', 'Retention', function (x) { return x.k === 'ret'; }], ['k:other', 'Other', function (x) { return x.k === 'other'; }],
+     ['s:late', 'Overdue', function (x) { return x.late; }], ['s:quiet', 'Quiet 7+ days', function (x) { return x.quiet; }], ['s:nonote', 'No notes yet', function (x) { return x.none; }]]
+      .map(function (v) { return opt(v[0], v[1], cnt(v[2])); }).join('');
+  var sel = 'flex:1;min-width:0;margin:0';
+  return '<div id="uf" style="position:sticky;top:0;z-index:6;background:#F7F5EF;margin:0 -16px 10px;padding:8px 16px;border-bottom:1px solid #E5E1D6">' +
+    '<div style="display:flex;gap:8px"><select id="uf-a" aria-label="Agent" style="' + sel + '">' + opt('', 'All agents', null) + ags + '</select>' +
+    '<select id="uf-v" aria-label="Show" style="' + sel + '">' + views + '</select></div>' +
+    '<input type="search" id="uf-q" placeholder="Search a client or policy number" autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin:8px 0 0;font-size:16px;padding:10px 12px;border:1.5px solid #DDE4EC;border-radius:10px;background:#fff">' +
+    '<div class="bf" id="uf-n" style="margin:6px 0 0">' + items.length + ' items</div></div>';
 }
-var UNIT_FILTER_JS = '<script>(function(){var st={k:"",a:"",s:"",q:""},sec=document.querySelector("section[data-sec=work]");if(!sec)return;' +
-  'var its=sec.querySelectorAll("details.it[data-kind]"),n=document.getElementById("uf-n"),none=document.getElementById("uf-none"),qi=document.getElementById("uf-q");' +
-  'function apply(){var shown=0;for(var i=0;i<its.length;i++){var e=its[i],ok=(!st.k||e.getAttribute("data-kind")===st.k)&&(!st.a||e.getAttribute("data-ag")===st.a)&&(!st.s||e.getAttribute("data-"+st.s)==="1")&&(!st.q||e.getAttribute("data-q").indexOf(st.q)>-1);e.style.display=ok?"":"none";if(ok)shown++;}' +
-  'var cards=sec.querySelectorAll(".card");for(var c=0;c<cards.length;c++){var l=cards[c].querySelectorAll("details.it[data-kind]");if(!l.length)continue;var v=0;for(var j=0;j<l.length;j++)if(l[j].style.display!=="none")v++;cards[c].style.display=v?"":"none";}' +
-  'var any=st.k||st.a||st.s||st.q,uw=document.getElementById("u-work");if(uw)uw.style.display=any?"none":"";if(n)n.innerHTML=any?"Showing <b>"+shown+"</b> of "+its.length+". <span class=\\"chip ufc\\" role=\\"button\\" tabindex=\\"0\\" data-fclear=\\"1\\">Clear</span>":"Showing all "+its.length+". Tap one to open it: its history and a box for your note.";if(none)none.style.display=shown?"none":"";}' +
-  'function pick(attr,val){var map={fk:"k",fa:"a",fs:"s"};st[map[attr]]=val;var cs=document.querySelectorAll("[data-"+attr+"]");for(var i=0;i<cs.length;i++){if(cs[i].closest("#uf"))cs[i].className=cs[i].getAttribute("data-"+attr)===val?"chip ufc on":"chip ufc";}apply();}' +
-  'function clear(){st={k:"",a:"",s:"",q:""};if(qi)qi.value="";pick("fk","");pick("fa","");pick("fs","");}' +
-  'document.addEventListener("click",function(ev){var t=ev.target.closest?ev.target.closest("[data-fk],[data-fa],[data-fs],[data-fag],[data-fclear]"):null;if(!t)return;ev.preventDefault();' +
-  'if(t.hasAttribute("data-fclear")){clear();return;}' +
-  'if(t.hasAttribute("data-fag")){var tb=document.querySelector(".tab[data-tab=work]");if(tb)tb.click();clear();pick("fa",t.getAttribute("data-fag"));window.scrollTo(0,0);return;}' +
-  'if(t.hasAttribute("data-fk"))pick("fk",t.getAttribute("data-fk"));else if(t.hasAttribute("data-fa"))pick("fa",t.getAttribute("data-fa"));else pick("fs",t.getAttribute("data-fs"));});' +
-  'if(qi){qi.disabled=false;qi.addEventListener("input",function(){st.q=qi.value.trim().toLowerCase();apply();});qi.addEventListener("keydown",function(e){if(e.key==="Enter")e.preventDefault();});}})();</script>';
+var UNIT_FILTER_JS = '<script>(function(){var sec=document.querySelector("section[data-sec=work]"),uf=document.getElementById("uf");if(!sec||!uf)return;' +
+  // Read-only view: the page sits in a disabled fieldset, so the filters move out of it and follow the Unit work tab.
+  'var fs=uf.closest("fieldset[disabled]");if(fs){fs.parentNode.insertBefore(uf,fs);uf.style.display="none";var tbs=document.querySelectorAll(".tab");for(var t=0;t<tbs.length;t++)tbs[t].addEventListener("click",function(){uf.style.display=this.getAttribute("data-tab")==="work"?"":"none";});}' +
+  'var its=sec.querySelectorAll("details.it[data-kind]"),a=document.getElementById("uf-a"),v=document.getElementById("uf-v"),qi=document.getElementById("uf-q"),n=document.getElementById("uf-n"),none=document.getElementById("uf-none");' +
+  'function apply(){var ag=a.value,vw=v.value,q=qi.value.trim().toLowerCase(),k=vw.indexOf("k:")===0?vw.slice(2):"",s=vw.indexOf("s:")===0?vw.slice(2):"",shown=0;' +
+  'for(var i=0;i<its.length;i++){var e=its[i],ok=(!k||e.getAttribute("data-kind")===k)&&(!ag||e.getAttribute("data-ag")===ag)&&(!s||e.getAttribute("data-"+s)==="1")&&(!q||e.getAttribute("data-q").indexOf(q)>-1);e.style.display=ok?"":"none";if(ok)shown++;}' +
+  'var cards=sec.querySelectorAll(".card");for(var c=0;c<cards.length;c++){var l=cards[c].querySelectorAll("details.it[data-kind]");if(!l.length)continue;var vis=0;for(var j=0;j<l.length;j++)if(l[j].style.display!=="none")vis++;cards[c].style.display=vis?"":"none";}' +
+  'var any=ag||vw||q,uw=document.getElementById("u-work");if(uw)uw.style.display=any?"none":"";' +
+  'n.innerHTML=any?"<b>"+shown+"</b> of "+its.length+" · <a href=\\"#\\" data-fclear=\\"1\\">show all</a>":its.length+" items";if(none)none.style.display=shown?"none":"";}' +
+  'function clear(){a.value="";v.value="";qi.value="";apply();}' +
+  'a.addEventListener("change",apply);v.addEventListener("change",apply);qi.addEventListener("input",apply);qi.addEventListener("keydown",function(e){if(e.key==="Enter")e.preventDefault();});' +
+  'document.addEventListener("click",function(ev){var t=ev.target.closest?ev.target.closest("[data-fag],[data-fclear]"):null;if(!t)return;ev.preventDefault();' +
+  'if(t.hasAttribute("data-fclear")){clear();return;}var tb=document.querySelector(".tab[data-tab=work]");if(tb)tb.click();clear();a.value=t.getAttribute("data-fag");apply();window.scrollTo(0,0);});})();</script>';
 
 function unitPage_(person, day, error, notice, view) {
   var sid = String(person.staffId), m = unitModel_(sid, day), nowM = minutesOf_(hhmm_(new Date()));
@@ -6087,8 +6090,9 @@ function unitPage_(person, day, error, notice, view) {
     var notes = m.chat[t.id] || [], lastAt = notes.length ? notes[0].day : '';
     return '<details class="it" id="t' + esc_(t.id) + '"' + unitFilterAttrs_(t.agent, t.k, t.late, t.touched >= 7, !notes.length, [t.subject, t.agent, t.owner, t.status]) + '><summary><div class="hd"><span class="age ' + (t.late ? 'r' : t.touched >= 7 ? 'a' : '') + '">' + (t.late ? daysBetween_(t.due, m.day) + 'd' : t.due ? 'due' : '—') + '</span>' +
       '<div class="tt"><b>' + esc_(String(t.agent || '—').split(' ')[0]) + '</b> · ' + esc_(t.subject) +
-      '<small>with <b>' + esc_(t.owner || 'no one') + '</b>' + (t.status ? ' · ' + esc_(t.status) : '') + (t.due ? ' · ' + (t.late ? 'overdue since ' : 'due ') + esc_(shortDate_(t.due)) : '') +
-      (t.touched >= 7 ? ' · untouched ' + t.touched + ' days' : '') + ' · ' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') + (lastAt ? ', last ' + esc_(shortDate_(lastAt)) : '') : 'no notes') + '</small></div></div></summary>' +
+      '<small>with <b>' + esc_(t.owner || 'no one') + '</b>' + (t.due ? ' · ' + (t.late ? 'overdue since ' : 'due ') + esc_(shortDate_(t.due)) : '') +
+      ' · ' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') : 'no notes') + '</small></div></div></summary>' +
+      '<div class="br2" style="margin-top:4px">' + esc_(t.status || 'Open') + (t.touched >= 7 ? ' · untouched ' + t.touched + ' days' : '') + (lastAt ? ' · last note ' + esc_(shortDate_(lastAt)) : '') + '</div>' +
       chatterNotes_(m.chat, t.id) +
       '<textarea name="c_' + esc_(t.id) + '" rows="2" placeholder="' + esc_(SPEAK_PH) + '" style="margin:8px 0 10px"></textarea></details>';
   };
@@ -6097,10 +6101,10 @@ function unitPage_(person, day, error, notice, view) {
     return '<details class="it" id="q' + i + '"' + unitFilterAttrs_(q.agent, 'qp', q.over, quiet, !notes.length, [q.client, q.subject, q.type, q.ref, q.policy, q.agent, q.assigned, q.dept]) + '><summary><div class="hd">' +
       '<span class="age ' + (q.over ? 'r' : quiet ? 'a' : '') + '">' + (q.days == null ? '—' : q.days + 'd') + '</span>' +
       '<div class="tt"><b>' + esc_(String(q.agent || '—').split(' ')[0]) + '</b> · ' + esc_(q.client || 'Client') + ' · ' + esc_(q.subject || q.type) +
-      '<small>with <b>' + esc_(q.assigned || 'no one yet') + '</b>' + (q.dept ? ' · ' + esc_(q.dept) : '') + (q.status ? ' · ' + esc_(q.status) : '') +
-      (q.over ? ' · <b style="color:#DC3F3F">past its ' + q.turn + '-day turnaround</b>' : '') + ' · ' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') + (lastAt ? ', last ' + esc_(shortDate_(lastAt)) : '') : 'no notes') + '</small></div></div></summary>' +
+      '<small>with <b>' + esc_(q.assigned || 'no one yet') + '</b>' + (q.over ? ' · <b style="color:#DC3F3F">past turnaround</b>' : '') +
+      ' · ' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') : 'no notes') + '</small></div></div></summary>' +
       '<div class="ln">Reference <b>' + esc_(q.ref) + '</b>' + (q.policy ? ' · policy ' + esc_(q.policy) : '') + '</div>' +
-      '<div class="ln">' + esc_(q.type || 'Query') + (q.dept ? ' · ' + esc_(q.dept) : '') + ' · turnaround ' + q.turn + ' day' + (q.turn === 1 ? '' : 's') + (q.priority ? ' · ' + esc_(q.priority) : '') +
+      '<div class="ln">' + esc_(q.type || 'Query') + (q.dept ? ' · ' + esc_(q.dept) : '') + (q.status ? ' · ' + esc_(q.status) : '') + ' · turnaround ' + q.turn + ' day' + (q.turn === 1 ? '' : 's') + (q.priority ? ' · ' + esc_(q.priority) : '') +
         ' · opened ' + esc_(shortDate_(sfkDay_(q.when))) + ', ' + (q.days == null ? '' : q.days + ' day' + (q.days === 1 ? '' : 's') + ' open') + (q.fu ? ' · ' + q.fu + ' follow-up' + (q.fu === 1 ? '' : 's') + ' to the department' : '') + '</div>' +
       (q.desc ? '<div class="br2" style="margin-top:3px">' + esc_(q.desc) + '</div>' : '') +
       '<div class="br2" style="margin-top:6px;font-weight:800">History</div>' +
@@ -6115,14 +6119,14 @@ function unitPage_(person, day, error, notice, view) {
     return '<div class="card"><div class="bh">' + esc_(heads[k]) + ' (' + list.length + ')</div>' + list.map(row).join('') + '</div>';
   }).join('');
   var filterBar = lists ? unitFilterBar_(m) : '';
-  var workSec = (lists ? lists + '<div class="card" id="uf-none" style="display:none"><div class="ln">Nothing matches. <span class="chip ufc" role="button" tabindex="0" data-fclear="1">Clear the filters</span></div></div>' : '') || '<div class="card ok">' + (m.sfOk ? 'Nothing open for your unit.' : 'Salesforce did not answer just now. Try again in a minute.') + '</div>';
+  var workSec = (lists ? lists + '<div class="card" id="uf-none" style="display:none"><div class="ln">Nothing matches. <a href="#" data-fclear="1">Show all</a></div></div>' : '') || '<div class="card ok">' + (m.sfOk ? 'Nothing open for your unit.' : 'Salesforce did not answer just now. Try again in a minute.') + '</div>';
   var deskRows = Object.keys(m.desks).sort(function (a, b) { return m.desks[b].late - m.desks[a].late || m.desks[b].open - m.desks[a].open; }).map(function (w) {
     var d = m.desks[w];
     return '<div class="ln" style="display:flex;justify-content:space-between;gap:8px"><b>' + esc_(w) + '</b><span>' + d.open + ' open' + (d.pend ? ' · ' + d.pend + ' pending' + (d.pend === 1 ? '' : 's') : '') +
       (d.late ? ' · <b style="color:#DC3F3F">' + d.late + ' overdue</b>' : '') + (d.quiet ? ' · <span style="color:#C26A04">' + d.quiet + ' untouched 7+ days</span>' : '') + '</span></div>';
   }).join('');
-  workSec = filterBar + '<div class="card" id="u-work"><div class="bh">Who holds your unit\'s work</div>' + (deskRows || '<div class="ln">Nothing open.</div>') +
-    '<div class="bf" style="margin-top:6px">Closed yesterday: ' + (m.book.closedYday || 0) + ' · today so far: ' + ((m.book.closedToday || []).length) + '</div></div>' + workSec;
+  workSec = filterBar + workSec + '<div class="card" id="u-work"><div class="bh">Who holds your unit\'s work</div>' + (deskRows || '<div class="ln">Nothing open.</div>') +
+    '<div class="bf" style="margin-top:6px">Closed yesterday: ' + (m.book.closedYday || 0) + ' · today so far: ' + ((m.book.closedToday || []).length) + '</div></div>';
 
   // ── Agents
   var agentCard = function (a) {
@@ -6139,7 +6143,7 @@ function unitPage_(person, day, error, notice, view) {
       '<div class="ln">Today: <b>' + esc_(st) + '</b>' + (planLine ? ' · projected: ' + planLine : '') + (a.today && a.today.hasClose ? ' · done ' + a.today.done + ' of ' + a.today.planned + ' projected, balance <b style="color:' + (a.today.done < a.today.planned ? '#DC3F3F' : '#2C7A57') + '">' + agBalText_(a.today.done - a.today.planned) + '</b> (' + a.today.ff + ' fact finds, ' + a.today.apps + ' apps)' : '') + '</div>' +
       '<div class="ln">Open with the branch: <b>' + a.open + '</b>' + (a.pend ? ' · ' + a.pend + ' pending' + (a.pend === 1 ? '' : 's') : '') + (a.late ? ' · <b style="color:#DC3F3F">' + a.late + ' overdue</b>' : '') +
         ' · client queries: <b>' + (a.queries || 0) + '</b></div>' +
-      (a.open || a.queries ? '<div style="margin:6px 0 8px"><span class="chip ufc" role="button" tabindex="0" data-fag="' + esc_(bkNk_(a.name)) + '">' + esc_(a.first) + '\'s pendings and queries &rarr;</span></div>' : '') +
+      (a.open || a.queries ? '<div class="ln"><a href="#" data-fag="' + esc_(bkNk_(a.name)) + '" style="font-weight:800">' + esc_(a.first) + '\'s pendings and queries &rarr;</a></div>' : '') +
       (g && g.last ? '<div class="ln">Last check-in: week ' + esc_(String(g.last.week)) + ' · ' + [[g.last.contacts, 'contact'], [g.last.appts, 'appointment'], [g.last.ff, 'fact find'], [g.last.apps, 'app']].map(function (x) { return x[0] + ' ' + x[1] + (x[0] === 1 ? '' : 's'); }).join(', ') +
         (g.last.help || g.last.way ? '<div class="br2" style="margin-top:3px">Asked for: ' + esc_(shorten_(String(g.last.help || g.last.way), 160)) + '</div>' : '') + '</div>' : '') +
       (a.letter ? '<div class="ln" style="color:#B4322B">Performance letter · ' + esc_(String(a.letter['Performance Period'] || '')) + ' · ' + esc_(String(a.letter['Status'] || '')) + '</div>' : '') + '</details>';
