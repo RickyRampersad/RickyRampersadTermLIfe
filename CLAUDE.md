@@ -3821,6 +3821,13 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   the lists from the public `ping` when a session lacks them, `lb.login` returns them, and both the app and the
   Delivery Book take a staff access code again (`login`, the Access tab) as the way in until the paste.
   `tests/e2e-deliverybook.js` signs staff in as the deployed script answers.
+- **The Delivery Book film** (20 October 2026: "a small video on the revised delivery process as it also looks up the
+  client etc and the client gets an email confirming delivery"). *The Delivery Book, for staff* (`dbstaff`, 1:45):
+  `rroperations/delivery-book/deliverybook-staff.mp4`, poster `film.jpg`, page `/deliverybook-film/` (Open Graph for
+  WhatsApp), the app's Learn tile (staff and the branch manager) and "▶ Film" in the Delivery Book's header. Drawn by
+  `build-boardfilm.py dbstaff` (`s_db*` scenes, `DB_CSS`) from `dbstaff-lines.json`, voiced like the Log Book films
+  (Andrew -4% on the tts-run runner) over the Music_Motivation bed; clients and figures made up, Sasha Lalla the staff
+  member. Short addresses `/deliverybook`, `/delivery-book`, `/delivery`, `/deliveries` forward to the Delivery Book.
 - **Test copies go to sales support and support@ too** (18 October 2026). In test mode every Log Book e-mail and the
   Delivery Book confirmation go to `DB_TEST_INBOX`, copied to rickyrampersadsalessupport@myguardiangroup.com and
   support@rickyrampersadbranch.com (`dbTestCc_`; the `DB_TEST_CC` property replaces the two).
