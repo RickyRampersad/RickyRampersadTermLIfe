@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Vehicle Review — Motor Renewals</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+<!--
+  WALKTHROUGH, NOT THE LIVE PAGE.
+
+  This is the client experience for "type your registration number and we'll
+  pull up your vehicle", so it can be looked at and argued with before it goes
+  near a client. The insight rules below mirror mrInsights_ in
+  apps-script/MotorRisk.gs one for one; the live page calls that instead of
+  carrying its own copy.
+
+  EVERY VEHICLE, PLATE, NAME AND FIGURE HERE IS INVENTED. Client data does not
+  go in this repository, so the three samples are written to exercise the
+  insight paths rather than to resemble anybody:
+
+    PCX 4471  comprehensive, insured for the same figure three years running,
+              no chassis on file, no driver's permit on file
+    TDH 2208  third party, a permit expiry from 2014, no engine number
+    PBM 991   everything on file, permit expiring in six weeks, premium up 12%
+
+  THE FIELDS ARE REAL. Vehicle__c, Chassis__c, Engine__c, CC__c,
+  Drivers_Permit__c, Drivers_Permit_Expiry__c, Year_of_Manufacture__c,
+  Cover1__c and Motor_Vehicle_Coverage_Type__c all exist on Risk_Details__c,
+  and the fill rates quoted in the footer are measured, not guessed.
+-->
+
+<style>
+:root{
+  --navy:#07131f; --surf:#0d1f31; --surf2:#112941; --gold:#efc24b; --gold2:#c9942c;
+  --teal:#00CFEA; --ink:#e8eef5; --mut:#8fa3ba; --line:#1d3350;
+  --ok:#2ecc8f; --okbg:#0c2b22; --warn:#f5b73d; --warnbg:#2e2412; --bad:#ff6b5d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--navy);color:var(--ink);
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;padding:0 0 60px;
+}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+
+header{padding:26px 0 8px;display:flex;gap:13px;align-items:center}
+.mark{width:46px;height:46px;flex:0 0 46px;border-radius:13px;overflow:hidden;
+  background:#07131f;display:grid;place-items:center}
+.mark img{width:100%;height:100%;display:block}
+.eyebrow{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
+h1{font-size:19px;letter-spacing:-.2px;margin-top:1px}
+
+.demobar{
+  background:#1d1405;border:1px solid #4a3410;border-radius:10px;
+  padding:9px 13px;margin:16px 0 0;font-size:12px;color:#f0d48a;
+}
+
+/* ---------- step 1: the plate ---------- */
+.plate-step{margin-top:26px;text-align:center}
+.q{font-size:15px;color:var(--mut);margin-bottom:16px}
+.plate{
+  display:inline-flex;align-items:stretch;border-radius:9px;overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);border:2px solid #cfd8e3;background:#eef2f7;
+}
+.plate .tt{
+  background:#1d3350;color:#fff;font-size:10px;font-weight:800;letter-spacing:.1em;
+  display:grid;place-items:center;padding:0 9px;
+}
+.plate input{
+  border:none;outline:none;background:#eef2f7;color:#0b1a2b;
+  font:800 27px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.14em;text-align:center;text-transform:uppercase;
+  padding:14px 16px;width:220px;
+}
+.plate input::placeholder{color:#9fb0c4;letter-spacing:.1em}
+.go{
+  margin-top:16px;border:none;border-radius:11px;padding:13px 26px;cursor:pointer;
+  font:800 15px/1 inherit;color:#07131f;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+}
+.go:hover{filter:brightness(1.07)}
+.go:disabled{opacity:.45;cursor:default}
+.samples{margin-top:18px;font-size:12.5px;color:var(--mut)}
+.samples b{color:var(--ink);font-weight:600}
+.chip{
+  display:inline-block;margin:5px 4px 0;padding:5px 11px;border-radius:999px;
+  border:1px solid var(--line);background:var(--surf);cursor:pointer;
+  font:700 12px/1.4 ui-monospace,Menlo,monospace;color:var(--teal);
+}
+.chip:hover{border-color:var(--teal)}
+
+/* ---------- the scan ---------- */
+.scan{display:none;margin-top:30px;text-align:center}
+.scan.on{display:block}
+.scanbox{
+  position:relative;width:230px;height:72px;margin:0 auto 14px;border-radius:9px;
+  border:1px dashed #37557a;overflow:hidden;background:var(--surf);
+}
+.scanline{
+  position:absolute;left:0;right:0;height:2px;background:var(--teal);
+  box-shadow:0 0 14px 3px rgba(0,207,234,.6);animation:sweep 1s ease-in-out infinite;
+}
+@keyframes sweep{0%,100%{top:6px}50%{top:64px}}
+.scanplate{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font:800 22px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#6f8cae;
+}
+.scanmsg{font-size:13px;color:var(--teal);min-height:20px}
+
+/* ---------- step 2: what we hold ---------- */
+.result{display:none}
+.result.on{display:block}
+.card{
+  background:var(--surf);border:1px solid var(--line);border-radius:16px;
+  padding:20px;margin-top:16px;
+  opacity:0;transform:translateY(14px);
+  animation:rise .5s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes rise{to{opacity:1;transform:none}}
+.card h2{font-size:15px;margin-bottom:3px}
+.card .sub{font-size:12.5px;color:var(--mut)}
+
+.veh{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.vehmain{flex:1 1 200px;min-width:0}
+.vehreg{
+  font:800 19px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:var(--ink);
+}
+.badge{
+  display:inline-block;margin-left:7px;padding:3px 9px;border-radius:999px;
+  font-size:10px;font-weight:800;letter-spacing:.04em;vertical-align:2px;
+}
+.b-comp{background:#0c2b22;color:var(--ok)}
+.b-tp{background:var(--warnbg);color:var(--warn)}
+
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin-top:16px}
+.kv .k{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.kv .v{font-size:15px;font-weight:700;margin-top:2px}
+.kv .v.gap{color:var(--warn);font-weight:600;font-size:13.5px}
+.countup{font-variant-numeric:tabular-nums}
+
+/* ---------- the value trend ---------- */
+.trend{display:flex;gap:9px;align-items:flex-end;height:74px;margin-top:16px}
+.tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tbar{
+  width:100%;max-width:40px;border-radius:5px 5px 0 0;
+  background:linear-gradient(180deg,var(--teal),#0a6b7d);
+  height:0;transition:height .85s cubic-bezier(.22,1,.36,1);
+}
+.tb.flat .tbar{background:linear-gradient(180deg,var(--warn),#7a5610)}
+.tb .ty{font-size:10.5px;color:var(--mut)}
+.tb .tv{font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums}
+
+/* ---------- insights ---------- */
+.ins{
+  border-radius:13px;padding:15px 16px;margin-top:11px;border:1px solid transparent;
+  opacity:0;transform:translateY(12px) scale(.99);
+  animation:rise .55s cubic-bezier(.22,1,.36,1) forwards;
+}
+.ins h3{font-size:14px;margin-bottom:5px;display:flex;gap:8px;align-items:baseline}
+.ins p{font-size:13.5px;color:#c3d2e2}
+.ins .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;margin-top:5px}
+.i-warn{background:var(--warnbg);border-color:#4a3410}
+.i-warn .dot{background:var(--warn)}
+.i-info{background:#0b2231;border-color:#1b4258}
+.i-info .dot{background:var(--teal)}
+.i-good{background:var(--okbg);border-color:#1b4a38}
+.i-good .dot{background:var(--ok)}
+.fixbtn{
+  margin-top:11px;border:1px solid currentColor;background:transparent;border-radius:9px;
+  padding:7px 13px;font:700 12.5px/1 inherit;cursor:pointer;color:var(--teal);
+}
+.i-warn .fixbtn{color:var(--warn)}
+.fixbtn:hover{background:rgba(255,255,255,.06)}
+
+/* ---------- the form ---------- */
+label{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--mut);margin:14px 0 6px;font-weight:700}
+input[type=text],input[type=date],input[type=number],select,textarea{
+  width:100%;background:#071726;border:1px solid var(--line);border-radius:10px;
+  padding:12px 13px;font:inherit;color:var(--ink);
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal)}
+textarea{min-height:76px;resize:vertical}
+.hl{animation:flash 1.5s ease-out}
+@keyframes flash{0%,100%{border-color:var(--line)}25%,60%{border-color:var(--gold);box-shadow:0 0 0 3px rgba(239,194,75,.16)}}
+.feed{font-size:12.5px;margin-top:7px;min-height:18px}
+.feed.ok{color:var(--ok)} .feed.bad{color:var(--bad)} .feed.info{color:var(--teal)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.row{grid-template-columns:1fr}}
+.note{font-size:12px;color:var(--mut);margin-top:9px}
+
+.send{
+  width:100%;margin-top:20px;border:none;border-radius:12px;padding:15px;cursor:pointer;
+  font:800 15.5px/1 inherit;color:#07131f;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+}
+.send:hover{filter:brightness(1.07)}
+.done{
+  display:none;background:var(--okbg);border:1px solid #1b4a38;border-radius:13px;
+  padding:18px;margin-top:16px;
+}
+.done.on{display:block;animation:rise .5s cubic-bezier(.22,1,.36,1) forwards}
+.done h3{color:var(--ok);font-size:15px;margin-bottom:7px}
+.done ul{list-style:none;margin-top:10px;font-size:13px}
+.done li{padding:4px 0 4px 20px;position:relative;color:#c3d2e2}
+.done li:before{content:'→';position:absolute;left:2px;color:var(--ok)}
+.tick{
+  width:46px;height:46px;border-radius:50%;background:var(--ok);display:grid;
+  place-items:center;margin:0 auto 12px;animation:pop .45s cubic-bezier(.3,1.5,.5,1)}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.tick svg{width:24px;height:24px}
+
+footer{
+  max-width:720px;margin:34px auto 0;padding:18px 18px 0;border-top:1px solid var(--line);
+  font-size:11.5px;color:#6b819b;line-height:1.55;
+}
+footer b{color:var(--mut)}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .card,.ins{opacity:1;transform:none}
+  .tbar{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div>
+    <div class="eyebrow">Ricky Rampersad Branch</div>
+    <h1>Review your vehicle</h1>
+  </div>
+</header>
+
+<div class="demobar">
+  <b>Walkthrough.</b> Every plate, vehicle and figure here is invented. The field names
+  and the insight rules are the real ones.
+</div>
+
+<!-- step 1 -->
+<div class="plate-step" id="step1">
+  <p class="q">Start with the registration number of the vehicle you want to review.</p>
+  <div class="plate">
+    <div class="tt">TT</div>
+    <input id="reg" type="text" placeholder="PCX 4471" autocomplete="off"
+           autocapitalize="characters" spellcheck="false" maxlength="12">
+  </div>
+  <div><button class="go" id="look" disabled>Pull up my vehicle</button></div>
+  <div class="samples">
+    Try one: <span class="chip" data-s="PCX4471">PCX 4471</span>
+    <span class="chip" data-s="TDH2208">TDH 2208</span>
+    <span class="chip" data-s="PBM991">PBM 991</span>
+    <br><b>Spacing and dashes do not matter</b> — pcx-4471 finds it too.
+  </div>
+</div>
+
+<!-- the scan -->
+<div class="scan" id="scan">
+  <div class="scanbox"><div class="scanline"></div><div class="scanplate" id="scanplate"></div></div>
+  <div class="scanmsg" id="scanmsg"></div>
+</div>
+
+<!-- step 2 -->
+<div class="result" id="result"></div>
+</div>
+
+<footer>
+  <b>Measured, not guessed.</b> Across the 230 motor risks renewing in the twelve months
+  from October 2026: registration number on 225 (98%) — which is why the plate is the way
+  in; year of manufacture 211; chassis 177; engine 167; sum insured 77; engine size 73;
+  driver's permit 69; permit expiry 62; No Claim Discount 1; excess 0.
+  <br><br>
+  <b>Why the permit is asked about rather than asserted.</b> Of the 62 permit expiry dates
+  on file, the same date is pasted across every vehicle on an account and the newest is
+  years old. So the page says we do not hold a current one and asks — it never tells a
+  client their permit has expired, because we do not know that.
+  <br><br>
+  <b>What a client types does not overwrite the carrier.</b> A field we hold blank gets
+  filled. A field we already hold goes to Guardian General as a proposed amendment, with
+  sales support copied. Nothing about cover or price is ever written from a web form.
+</footer>
+
+<script>
+/* ------------------------------------------------------------------
+   Invented samples. Shaped exactly like mrLookupVehicle's response so
+   the live page can drop the real call in with no other change.
+   ------------------------------------------------------------------ */
+var YR = new Date().getFullYear();
+function iso(offsetDays){ var d=new Date(Date.now()+offsetDays*864e5); return d.toISOString().slice(0,10); }
+
+var SAMPLES = {
+  PCX4471: {
+    reg:'PCX 4471', riskId:'demo1',
+    current:{ reg:'PCX 4471', make:'Toyota', model:'Hilux', year:YR-6, age:6,
+      chassis:'', engine:'2TR0998871', cc:'2700', permit:'', permitExpiry:'',
+      coverage:'Private Comprehensive', comp:true, sumInsured:180000, premium:6480,
+      policy:'TT APU 1600095', nextDue:iso(26), status:'Current' },
+    history:[
+      {year:String(YR-3), sumInsured:180000, premium:6150},
+      {year:String(YR-2), sumInsured:180000, premium:6290},
+      {year:String(YR-1), sumInsured:180000, premium:6480}
+    ]
+  },
+  TDH2208: {
+    reg:'TDH 2208', riskId:'demo2',
+    current:{ reg:'TDH 2208', make:'Nissan', model:'Frontier', year:YR-11, age:11,
+      chassis:'JN1CD0000X112233', engine:'', cc:'', permit:'20041188',
+      permitExpiry:'2014-08-19', coverage:'Private Third Party', comp:false,
+      sumInsured:0, premium:2240, policy:'TT APG 1350726', nextDue:iso(12), status:'Current' },
+    history:[
+      {year:String(YR-2), sumInsured:0, premium:2180},
+      {year:String(YR-1), sumInsured:0, premium:2240}
+    ]
+  },
+  PBM991: {
+    reg:'PBM 991', riskId:'demo3',
+    current:{ reg:'PBM 991', make:'Honda', model:'Civic', year:YR-2, age:2,
+      chassis:'SHHFK7790NU004412', engine:'L15B7-220041', cc:'1500',
+      permit:'19885544', permitExpiry:iso(42),
+      coverage:'Private Comprehensive', comp:true, sumInsured:142000, premium:5120,
+      policy:'TT APC 1591888', nextDue:iso(34), status:'Current' },
+    history:[
+      {year:String(YR-1), sumInsured:165000, premium:4570},
+      {year:String(YR),   sumInsured:142000, premium:5120}
+    ]
+  }
+};
+
+/* ------------------------------------------------------------------
+   The insight rules, mirroring mrInsights_ in MotorRisk.gs.
+   ------------------------------------------------------------------ */
+function money(n){ return 'TT$'+(Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
+function niceDate(s){
+  var d=new Date(s+'T00:00:00'); if(isNaN(d)) return s;
+  var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.getDate()+' '+m[d.getMonth()]+' '+d.getFullYear();
+}
+function daysTo(s){ var d=new Date(s+'T00:00:00'); if(isNaN(d)) return null;
+  var t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/864e5); }
+
+function insights(r, hist){
+  var out=[];
+  if(r.status==='Sold') out.push({tone:'warn',asks:null,
+    title:'Our records show this vehicle as sold',
+    body:'If you still own it, tell us in the notes and we will put it right before renewal.'});
+
+  if(!r.chassis) out.push({tone:'warn',asks:'chassis',
+    title:'We do not have your chassis number',
+    body:'It is stamped on your certificate of insurance, and we cannot issue the new one '+
+         'without it. It is on your old certificate, on the vehicle registration, and usually '+
+         "on a plate inside the driver's door frame."});
+
+  if(!r.permit && !r.permitExpiry) out.push({tone:'warn',asks:'permit',
+    title:"We do not have your driver's permit on file",
+    body:'Adding it now means we are not chasing you for it at claim time, when it matters most.'});
+  else if(r.permitExpiry){
+    var d=daysTo(r.permitExpiry);
+    if(d!==null && d<0) out.push({tone:'warn',asks:'permitExpiry',
+      title:"Is your driver's permit still current?",
+      body:'The expiry we hold is '+niceDate(r.permitExpiry)+', which has passed — our records '+
+           'on this have not been kept up, so it is very likely out of date rather than your '+
+           'permit. Put the current expiry in and we will correct it.'});
+    else if(d!==null && d<=90) out.push({tone:'info',asks:'permitExpiry',
+      title:"Your driver's permit expires in "+d+' day'+(d===1?'':'s'),
+      body:'On '+niceDate(r.permitExpiry)+'. Worth renewing it alongside the policy so the two '+
+           'do not drift apart.'});
+  }
+
+  if(r.comp){
+    var vals=hist.map(function(h){return Number(h.sumInsured)||0}).filter(function(v){return v>0});
+    var uniq={}; vals.forEach(function(v){uniq[v]=1});
+    if(!r.sumInsured) out.push({tone:'warn',asks:'sumInsured',
+      title:'We do not hold a sum insured for this vehicle',
+      body:'On a comprehensive policy that figure is the most you can be paid if the vehicle is '+
+           'written off, so it is worth getting right.'});
+    else if(vals.length>=2 && Object.keys(uniq).length===1) out.push({tone:'warn',asks:'sumInsured',
+      title:'Insured for the same figure '+vals.length+' years running',
+      body:'Still '+money(r.sumInsured)+'. A vehicle is worth less every year, and you cannot be '+
+           'paid more than it is worth — so holding the figure steady usually means paying premium '+
+           'on value that has already gone.'});
+    else if(r.year){
+      var lo=Math.round(r.sumInsured*0.80/1000)*1000, hi=Math.round(r.sumInsured*0.92/1000)*1000;
+      out.push({tone:'info',asks:'sumInsured',
+        title:'A year on, '+money(lo)+' – '+money(hi)+' is the usual range',
+        body:'You are insured for '+money(r.sumInsured)+' now. Your '+(r.age+1)+'-year-old '+
+             r.make+' has depreciated since. The figure you give us is the one we use.'});
+    }
+  } else if(r.coverage){
+    out.push({tone:'info',asks:null,
+      title:'You are on '+r.coverage.toLowerCase(),
+      body:'Third party covers the damage you do to others — not your own vehicle. If it were '+
+           'stolen or written off tomorrow, that is yours to carry. We will quote comprehensive '+
+           'with your renewal, no obligation.'});
+  }
+
+  if(hist.length>=2){
+    var a=Number(hist[hist.length-2].premium)||0, b=Number(hist[hist.length-1].premium)||0;
+    if(a>0&&b>0&&Math.abs(b-a)/a>=0.05){
+      var up=b>a;
+      out.push({tone:up?'info':'good',asks:null,
+        title:'Your premium went '+(up?'up':'down')+' '+Math.round(Math.abs(b-a)/a*100)+'% last renewal',
+        body:money(a)+' to '+money(b)+'. If your cover or the vehicle value has changed since, '+
+             'this is the moment to say so.'});
+    }
+  }
+
+  if(!r.engine) out.push({tone:'info',asks:'engine',
+    title:'Engine number missing',
+    body:'It sits beside the chassis number on your certificate. Quick to add while you are here.'});
+
+  return out;
+}
+
+/* ---------------- plate entry ---------------- */
+var regEl=document.getElementById('reg'), lookBtn=document.getElementById('look');
+function norm(s){ return String(s||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase(); }
+regEl.addEventListener('input', function(){ lookBtn.disabled = norm(regEl.value).length < 3; });
+regEl.addEventListener('keydown', function(e){ if((e.key==='Enter')&&!lookBtn.disabled) go(); });
+lookBtn.onclick = go;
+Array.prototype.forEach.call(document.querySelectorAll('.chip'), function(c){
+  c.onclick = function(){ regEl.value = c.textContent.trim(); lookBtn.disabled=false; go(); };
+});
+
+var SCAN_MSGS = ['Checking your policy…','Found it — pulling your renewal history…','Working out what is missing…'];
+
+function go(){
+  var want = norm(regEl.value);
+  document.getElementById('step1').style.display='none';
+  var scan=document.getElementById('scan'); scan.classList.add('on');
+  document.getElementById('scanplate').textContent = regEl.value.toUpperCase();
+  var msg=document.getElementById('scanmsg'), i=0;
+  msg.textContent = SCAN_MSGS[0];
+  var t=setInterval(function(){ i++; if(SCAN_MSGS[i]) msg.textContent=SCAN_MSGS[i]; }, 620);
+  setTimeout(function(){
+    clearInterval(t); scan.classList.remove('on');
+    var hit = SAMPLES[want];
+    if(hit) render(hit); else notFound(regEl.value);
+  }, 1900);
+}
+
+function notFound(typed){
+  var el=document.getElementById('result'); el.classList.add('on');
+  el.innerHTML =
+    '<div class="card"><h2>We could not find '+esc(typed.toUpperCase())+' on your policy</h2>'+
+    '<p class="sub">These are the vehicles we hold for you:</p>'+
+    '<div style="margin-top:12px">'+
+      Object.keys(SAMPLES).map(function(k){
+        return '<span class="chip" onclick="document.getElementById(\'reg\').value=\''+
+               SAMPLES[k].reg+'\';location.reload()">'+SAMPLES[k].reg+'</span>'; }).join('')+
+    '</div>'+
+    '<p class="note">In the live page this lists your own vehicles. If one is genuinely '+
+    'missing, call (868) 678-5921 and we will add it.</p></div>';
+}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function render(d){
+  var r=d.current, hist=d.history, ins=insights(r,hist);
+  var el=document.getElementById('result'); el.classList.add('on');
+
+  var gap = function(v, what){ return v ? esc(v) : '<span class="v gap">not on file</span>'; };
+
+  el.innerHTML =
+  /* what we hold */
+  '<div class="card" style="animation-delay:.02s">'+
+    '<div class="veh"><div class="vehmain">'+
+      '<div class="vehreg">'+esc(r.reg)+
+        '<span class="badge '+(r.comp?'b-comp':'b-tp')+'">'+(r.comp?'COMPREHENSIVE':'THIRD PARTY')+'</span>'+
+      '</div>'+
+      '<div class="sub" style="margin-top:4px">'+esc(r.make)+' '+esc(r.model)+
+        (r.year?' · '+r.year+' · '+r.age+' years old':'')+
+        ' · renews '+niceDate(r.nextDue)+'</div>'+
+    '</div></div>'+
+    '<div class="kv">'+
+      '<div><div class="k">Policy</div><div class="v" style="font-size:13px">'+esc(r.policy)+'</div></div>'+
+      (r.comp?'<div><div class="k">Insured for</div><div class="v countup" data-to="'+r.sumInsured+'">—</div></div>':'')+
+      '<div><div class="k">Premium</div><div class="v countup" data-to="'+r.premium+'">—</div></div>'+
+      '<div><div class="k">Chassis</div><div class="v" style="font-size:12.5px">'+gap(r.chassis)+'</div></div>'+
+      '<div><div class="k">Engine</div><div class="v" style="font-size:12.5px">'+gap(r.engine)+'</div></div>'+
+      '<div><div class="k">Engine size</div><div class="v" style="font-size:13px">'+gap(r.cc?r.cc+'cc':'')+'</div></div>'+
+      "<div><div class=\"k\">Driver's permit</div><div class=\"v\" style=\"font-size:12.5px\">"+gap(r.permit)+'</div></div>'+
+      '<div><div class="k">Permit expiry</div><div class="v" style="font-size:12.5px">'+
+        (r.permitExpiry?niceDate(r.permitExpiry):'<span class="v gap">not on file</span>')+'</div></div>'+
+    '</div>'+
+    (r.comp && hist.length>1 ? trendHtml(hist) : '')+
+  '</div>'+
+
+  /* insights */
+  (ins.length ?
+    '<div class="card" style="animation-delay:.1s"><h2>What stands out</h2>'+
+    '<p class="sub">Worked out from your own record, live.</p>'+
+    ins.map(function(i,n){
+      return '<div class="ins i-'+i.tone+'" style="animation-delay:'+(0.22+n*0.13)+'s">'+
+        '<h3><span class="dot"></span><span>'+esc(i.title)+'</span></h3>'+
+        '<p>'+esc(i.body)+'</p>'+
+        (i.asks?'<button class="fixbtn" data-go="'+i.asks+'">Fix this now ↓</button>':'')+
+      '</div>'; }).join('')+
+    '</div>' : '')+
+
+  /* the form */
+  '<div class="card" style="animation-delay:'+(0.22+ins.length*0.13)+'s"><h2>Put it right</h2>'+
+  '<p class="sub">Anything we hold blank, we save. Anything that changes your cover goes to '+
+  'Guardian General as a request, with sales support copied.</p>'+
+
+  '<div class="row">'+
+    '<div><label for="f-chassis">Chassis number</label>'+
+      '<input type="text" id="f-chassis" maxlength="50" value="'+esc(r.chassis)+'" '+
+      'placeholder="e.g. JTEBU29J105012345"></div>'+
+    '<div><label for="f-engine">Engine number</label>'+
+      '<input type="text" id="f-engine" maxlength="30" value="'+esc(r.engine)+'" '+
+      'placeholder="e.g. 2TR0998871"></div>'+
+  '</div>'+
+  '<div class="row">'+
+    "<div><label for=\"f-permit\">Driver's permit number</label>"+
+      '<input type="text" id="f-permit" value="'+esc(r.permit)+'" placeholder="e.g. 19885544"></div>'+
+    "<div><label for=\"f-permitExpiry\">Driver's permit expiry</label>"+
+      '<input type="date" id="f-permitExpiry" value="'+esc(r.permitExpiry)+'">'+
+      '<div class="feed" id="fb-permit"></div></div>'+
+  '</div>'+
+
+  (r.comp ?
+    '<label for="f-sumInsured">What is the vehicle worth today? (TT$)</label>'+
+    '<input type="text" id="f-sumInsured" inputmode="numeric" '+
+      'value="'+(r.sumInsured?Number(r.sumInsured).toLocaleString('en-US'):'')+'" '+
+      'data-cur="'+r.sumInsured+'">'+
+    '<div class="feed" id="fb-value"></div>'+
+    '<p class="note">Leave it as it is to keep '+money(r.sumInsured)+'. We prepare your '+
+    'Guardian General value-confirmation letter automatically, pre-filled for one signature.</p>'
+    :
+    '<label>Cover</label>'+
+    '<select id="f-upgrade"><option value="">Keep third party</option>'+
+    '<option value="quote">Send me a comprehensive quote with my renewal</option></select>')+
+
+  '<label for="f-notes">Anything else we should know?</label>'+
+  '<textarea id="f-notes" placeholder="Changed address, added a driver, sold the vehicle, a question…"></textarea>'+
+
+  '<button class="send" id="send">Send my renewal instruction</button>'+
+  '<p class="note">Nothing is bound until Guardian confirms your renewal. Never send card '+
+  'numbers through this page.</p>'+
+  '</div>'+
+
+  '<div class="done" id="done"></div>';
+
+  /* count the money up */
+  Array.prototype.forEach.call(el.querySelectorAll('.countup'), function(n){
+    var to=Number(n.dataset.to)||0, t0=null, dur=820;
+    if(!to){ n.textContent='—'; return; }
+    requestAnimationFrame(function step(ts){
+      if(!t0) t0=ts;
+      var p=Math.min(1,(ts-t0)/dur), e=1-Math.pow(1-p,3);
+      n.textContent=money(Math.round(to*e));
+      if(p<1) requestAnimationFrame(step);
+    });
+  });
+
+  /* grow the trend bars */
+  setTimeout(function(){
+    Array.prototype.forEach.call(el.querySelectorAll('.tbar'), function(b){
+      b.style.height=b.dataset.h+'px';
+    });
+  }, 260);
+
+  /* "fix this now" jumps to the field and flashes it */
+  Array.prototype.forEach.call(el.querySelectorAll('.fixbtn'), function(b){
+    b.onclick=function(){
+      var t=document.getElementById('f-'+b.dataset.go);
+      if(!t) return;
+      t.scrollIntoView({behavior:'smooth',block:'center'});
+      t.classList.remove('hl'); void t.offsetWidth; t.classList.add('hl');
+      setTimeout(function(){ t.focus(); }, 420);
+    };
+  });
+
+  wireValue(r);
+  wirePermit();
+  document.getElementById('send').onclick=function(){ submit(r); };
+}
+
+function trendHtml(hist){
+  var max=Math.max.apply(null, hist.map(function(h){return Number(h.sumInsured)||0}).concat([1]));
+  var uniq={}; hist.forEach(function(h){ uniq[h.sumInsured]=1; });
+  var flat=Object.keys(uniq).length===1;
+  return '<div class="trend">'+hist.map(function(h){
+    var v=Number(h.sumInsured)||0;
+    return '<div class="tb'+(flat?' flat':'')+'">'+
+      '<div class="tv">'+money(v)+'</div>'+
+      '<div class="tbar" data-h="'+Math.max(5,Math.round(v/max*48))+'"></div>'+
+      '<div class="ty">'+esc(h.year)+'</div></div>';
+  }).join('')+'</div>'+
+  '<p class="note">'+(flat
+    ? 'Flat for '+hist.length+' years — that is the one worth a second look.'
+    : 'Your insured value across '+hist.length+' renewals.')+'</p>';
+}
+
+function wirePermit(){
+  var el=document.getElementById('f-permitExpiry'), fb=document.getElementById('fb-permit');
+  if(!el||!fb) return;
+  el.addEventListener('change', function(){
+    var v=el.value; if(!v){ fb.className='feed'; fb.textContent=''; return; }
+    var d=daysTo(v);
+    if(d===null){ fb.className='feed bad'; fb.textContent='That date is not readable.'; }
+    else if(d<0){ fb.className='feed bad';
+      fb.textContent='That is in the past — a permit has to be current at renewal.'; }
+    else if(d<=90){ fb.className='feed info';
+      fb.textContent='Noted — '+d+' days. We will remind you before it lapses.'; }
+    else { fb.className='feed ok'; fb.textContent='Noted, thank you. That is current.'; }
+  });
+}
+
+function wireValue(r){
+  var el=document.getElementById('f-sumInsured'), fb=document.getElementById('fb-value');
+  if(!el||!fb) return;
+  var cur=Number(el.dataset.cur)||0;
+  var num=function(s){ return Number(String(s).replace(/[^0-9.]/g,''))||0; };
+  var upd=function(){
+    var v=num(el.value);
+    if(!v){ fb.className='feed'; fb.textContent=''; return; }
+    if(cur && v>cur*1.05){
+      fb.className='feed bad';
+      fb.textContent='That is above what you carry now. You cannot be paid more than the '+
+        'vehicle is worth, so a higher figure usually buys premium, not protection.';
+    } else if(cur && v<cur*0.55){
+      fb.className='feed bad';
+      fb.textContent='That looks low. If it is worth more than '+money(v)+' and it is written '+
+        'off, this is all you can be paid — and a partial claim is cut in the same proportion.';
+    } else {
+      fb.className='feed ok';
+      fb.textContent = (cur&&v<cur)
+        ? 'Noted. About '+money(cur-v)+' of value comes off — your premium should follow.'
+        : 'Noted. Guardian confirms the final figure and premium with you.';
+    }
+  };
+  el.addEventListener('input', upd);
+  el.addEventListener('blur', function(){ var n=num(el.value); el.value=n?n.toLocaleString('en-US'):''; upd(); });
+}
+
+function submit(r){
+  var val = function(id){ var e=document.getElementById(id); return e?String(e.value||'').trim():''; };
+  var filled=[], proposed=[];
+  [['chassis','Chassis number'],['engine','Engine number'],
+   ['permit',"Driver's permit number"],['permitExpiry',"Driver's permit expiry"]]
+  .forEach(function(p){
+    var v=val('f-'+p[0]); if(!v) return;
+    var had=r[p[0]]||'';
+    if(!had) filled.push(p[1]+': '+v);
+    else if(String(had)!==v) proposed.push(p[1]+': '+had+' → '+v);
+  });
+  var sv=val('f-sumInsured').replace(/[^0-9.]/g,'');
+  if(sv && Number(sv)!==Number(r.sumInsured))
+    proposed.push('Sum insured: '+money(r.sumInsured)+' → '+money(Number(sv)));
+  var up=val('f-upgrade'); if(up==='quote') proposed.push('Comprehensive quote requested');
+  var notes=val('f-notes'); if(notes) proposed.push('Note: '+notes);
+
+  var d=document.getElementById('done');
+  d.innerHTML =
+    '<div class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="#07131f" stroke-width="3.2" '+
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.2 5.2L20 7"/></svg></div>'+
+    '<h3 style="text-align:center">Sent — your renewal is with Guardian General</h3>'+
+    '<p style="font-size:13px;color:#c3d2e2;text-align:center">Sales support is copied, and '+
+    'a confirmation is on its way to you.</p>'+
+    (filled.length?'<ul><li><b>Saved to your record</b> (we held these blank)</li>'+
+      filled.map(function(x){return '<li style="padding-left:34px">'+esc(x)+'</li>'}).join('')+'</ul>':'')+
+    (proposed.length?'<ul><li><b>Sent as a request</b> (we hold something different, so a '+
+      'person checks it)</li>'+
+      proposed.map(function(x){return '<li style="padding-left:34px">'+esc(x)+'</li>'}).join('')+'</ul>':'')+
+    (!filled.length&&!proposed.length?'<p style="font-size:13px;color:#c3d2e2;text-align:center;'+
+      'margin-top:8px">No changes — we have logged that you reviewed and confirmed your cover.</p>':'')+
+    '<p class="note" style="text-align:center;margin-top:14px">Walkthrough — nothing was '+
+    'actually sent.</p>';
+  d.classList.add('on');
+  d.scrollIntoView({behavior:'smooth',block:'center'});
+}
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

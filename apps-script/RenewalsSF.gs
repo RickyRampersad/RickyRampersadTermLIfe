@@ -161,6 +161,27 @@ function rsfCreate_(sobject, fields) {
   return JSON.parse(res.getContentText());
 }
 
+/**
+ * Patch one record. Used by MotorRisk.gs to fill in a blank chassis or
+ * driver's permit a client has given us.
+ *
+ * A successful PATCH returns 204 with an empty body, so unlike rsfCreate_
+ * there is nothing to parse — attempting to JSON.parse('') would throw on a
+ * call that actually worked.
+ */
+function rsfUpdate_(sobject, id, fields) {
+  var tok = rsfToken_();
+  var res = UrlFetchApp.fetch(
+    tok.instance_url + '/services/data/' + RSF.API + '/sobjects/' + sobject + '/' + id,
+    { method: 'patch', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + tok.access_token },
+      payload: JSON.stringify(fields) });
+  if (res.getResponseCode() >= 300)
+    throw new Error('Update ' + sobject + ' ' + id + ' failed: ' +
+                    res.getContentText().slice(0, 300));
+  return true;
+}
+
 /* ============================ reading the book ============================ */
 
 function rsfIso_(d) {
