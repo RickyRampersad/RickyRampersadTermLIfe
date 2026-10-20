@@ -121,9 +121,10 @@ env.sfkQuery_ = q => /OwnerId = '005R'/.test(q) ? MINE : prevQ(q);
 const patches = []; env.sfkPatchTask_ = (id, b) => { patches.push([id, b]); return true; };
 posts.length = 0;
 const mp = env.replyClick_({ parameter: Object.fromEntries(new URL(env.unitUrl_('ricky')).searchParams) }).getContent();
-const mineSec = mp.slice(mp.indexOf('data-sec="mine"'), mp.indexOf('data-sec="work"'));
-ok('a My tasks tab, before Branch work', /data-tab="mine">My tasks/.test(mp) && /data-tab="work">Branch work/.test(mp) && mp.indexOf('data-tab="mine"') < mp.indexOf('data-tab="work"'));
-ok('his tasks by type, counted, overdue shown', /Opportunity \(2 · 1 overdue\)/.test(mineSec) && /Servicing \(1 · 1 overdue\)/.test(mineSec), (mineSec.match(/class="bh">[^<]*/g) || []).join(' | '));
+// 20 Oct 2026: his tasks moved from a My tasks tab to Important on My day, the first tab.
+const mineSec = mp.slice(mp.indexOf('id="md-imp"'), mp.indexOf('id="md-log"'));
+ok('My day is the first tab, before Branch work, with his tasks under Important', /data-tab="day">My day/.test(mp) && mp.indexOf('data-tab="day"') < mp.indexOf('data-tab="work"') && !/data-tab="mine"/.test(mp) && mineSec.length > 0);
+ok('his tasks by type, counted, overdue shown', /New business \(2 · 1 overdue\)/.test(mineSec) && /Servicing \(1 · 1 overdue\)/.test(mineSec), (mineSec.match(/class="bh"[^>]*>[^<]*/g) || []).join(' | '));
 ok('each with a tick to close, a date to move it, and a note', /name="done_00TM1"/.test(mineSec) && /type="date" name="mv_00TM1"/.test(mineSec) && /name="c_00TM1"/.test(mineSec));
 const U = Object.fromEntries(new URL(env.unitUrl_('ricky')).searchParams);
 let sv = env.replyPost_({ parameter: Object.assign({}, U, { mv_00TM3: '2026-10-27' }) }).getContent();
