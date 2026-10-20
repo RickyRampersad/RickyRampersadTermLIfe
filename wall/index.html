@@ -254,7 +254,7 @@ function demo(outside){
   const team=[0,1,2,3,4,5,6,7,8,9,10].map(h=>H[0][h]+H[1][h]+H[3][h]);
   const tick=[["2:10","Elizabeth","reached par: today's list is done"],["1:52","Azariah","closed a new business task with a note"],["1:30","Devendra","sent in the day's projection"],
     ["12:40","Kamla","closed a retention task over a month old with a note"],["11:05","Azariah","is covering for Sasha: 5 tasks so no client waits"],["10:20","Elizabeth","closed a retention task with a note"],
-    ["9:44","Elizabeth","closed a orphan adoption task with a note"],["8:12","Azariah",outside?"is in":"checked in"],["7:30","Elizabeth","is covering for Sasha: 7 tasks so no client waits"],["6:55","Elizabeth",outside?"is in":"checked in"]]
+    ["9:44","Elizabeth","closed an orphan adoption task with a note"],["8:12","Azariah",outside?"is in":"checked in"],["7:30","Elizabeth","is covering for Sasha: 7 tasks so no client waits"],["6:55","Elizabeth",outside?"is in":"checked in"]]
     .map(x=>({at:x[0],who:x[1],what:x[2],k:/new business/.test(x[2])?"new":/retention/.test(x[2])?"retention":/orphan/.test(x[2])?"orphan":""}));
   const rows=[["Devendra",6,2,2,74,true,false],["Marissa",4,1,1,61,true,false],["Kevin",3,1,1,40,true,false],["Anita",2,0,1,22,false,false],["Rajesh",0,0,0,0,false,false]]
     .map(r=>{const o={name:r[0],ffMonth:r[1],appsMonth:r[2],ffWeek:r[3],pace:r[4],plan:r[5],close:r[6]}; if(!outside){o.planAt=r[5]?"7:4"+r[3]:"";o.closeAt="";} return o;})

@@ -6859,7 +6859,7 @@ function wallStaff_(day, outside) {
     if (h >= 0 && h < H) team[h]++;
     mix[k]++;
     var old = c.due && daysBetween_(c.due, c.day) >= GAME.OLD_DAYS;
-    ev.push({ m: c.min, who: gameFirst_(c.sid), what: 'closed a ' + WALL_KIND[k] + ' task' + (old ? ' over a month old' : '') + ' with a note', k: k });
+    ev.push({ m: c.min, who: gameFirst_(c.sid), what: 'closed ' + (/^[aeiou]/.test(WALL_KIND[k]) ? 'an ' : 'a ') + WALL_KIND[k] + ' task' + (old ? ' over a month old' : '') + ' with a note', k: k });
   });
   var people = desks.map(function (s) {
     var a = att[s], first = a ? timeStr_(a.FirstSignIn) : '', st = a ? String(a.Status || '').toLowerCase() : '';
