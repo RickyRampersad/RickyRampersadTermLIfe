@@ -411,7 +411,7 @@ function blockState(row,sch,col,nowMin){
   return (end!=null&&nowMin>end+GRACE_MIN)?"due":"off";
 }
 
-let roster=[], schedule={}, lastGood=null;
+let roster=[], schedule={}, lastGood=null, GAME=null;
 // One colour per task type, used on every card that shows types. A pile that
 // is Renewals on card six has to be the same colour on card seven or the eye
 // learns nothing.
@@ -1030,13 +1030,53 @@ function sFlow(){
     "</div></div>";
 }
 
+// ---- the team game (20 Oct 2026) ----------------------------------------
+// One bar for the whole branch, and each person against their own usual
+// week. No points, no ranking, no task or client: a wall the whole office
+// watches is for encouragement, not for comparing people.
+function sGame(){
+  const G=GAME, g=G.goal, P=G.people||[];
+  const rows=P.map(p=>{
+    const pct=p.par?Math.min(100,Math.round(p.parDone/p.par*100)):0;
+    const bits=[];
+    if(p.streak) bits.push("on time "+p.streak+" day"+(p.streak===1?"":"s")+" running");
+    if(p.questsOf) bits.push(p.quests+" of "+p.questsOf+" quests");
+    if(p.gain!=null) bits.push((p.gain>=0?"+":"")+p.gain+"% on their usual week");
+    if(p.bestDay) bits.push('<span style="color:var(--green)">best day yet</span>');
+    if(p.thanks) bits.push(p.thanks+" thank-you"+(p.thanks===1?"":"s"));
+    // Name, bar and score on one line, the rest under it: long notes never squeeze a name.
+    return '<div style="display:grid;grid-template-columns:9em 1fr 5.5em;gap:.4vh 1vw;align-items:center;padding:1.3vh 0;border-top:1px solid var(--line);font-size:2.2vh">'+
+      '<b style="white-space:nowrap">'+esc(p.name)+'</b>'+
+      '<span class="stack">'+(pct?'<span style="width:'+pct+'%;background:'+(p.parMet?"var(--gold)":"var(--green)")+'"></span>':"")+"</span>"+
+      '<b style="text-align:right;font-variant-numeric:tabular-nums;color:'+(p.parMet?"var(--gold)":"#fff")+'">'+(p.par?(p.parMet?"PAR":p.parDone+"/"+p.par):"&mdash;")+"</b>"+
+      '<span style="grid-column:2/-1;color:var(--muted);font-size:1.7vh">'+(bits.join(" · ")||"the day is starting")+"</span></div>";
+  }).join("");
+  const goal=g&&g.now!=null
+    ? '<div style="font-size:5.2vh;font-weight:800;color:'+(g.met?"var(--gold)":"#fff")+'">'+g.start+' &rarr; '+g.now+"</div>"+
+      '<div class="stack" style="margin:1.2vh 0 .8vh"><span style="width:'+g.pct+'%;background:'+(g.met?"var(--gold)":"var(--green)")+'"></span></div>'+
+      '<div style="font-size:1.9vh;color:var(--muted);line-height:1.5">Overdue across the desks since Monday. Goal <b style="color:#fff">'+g.goal+"</b> by Friday"+
+      (g.met?" &mdash; <b style=\"color:var(--gold)\">met</b>.":", "+(g.now-g.goal)+" to go. Every close with a note, by anyone, brings it down.")+"</div>"
+    : '<div style="font-size:1.9vh;color:var(--muted)">The branch bar fills in once Salesforce answers.</div>';
+  const aw=(G.awards||[]).map(a=>'<div style="font-size:1.9vh;padding:.6vh 0;border-top:1px solid var(--line)"><b style="color:var(--gold)">'+esc(a.title)+
+    "</b> &nbsp;"+esc(a.who.join(" and "))+' <span style="color:var(--muted)">· '+esc(a.why)+"</span></div>").join("");
+  return '<div class="kick">13 · The team game</div>'+
+    "<h2>Everybody in, nobody ranked</h2>"+
+    '<p class="lede">The bar fills as each person works through today&rsquo;s list: par is every task on it closed or moved with a reason. '+
+      'Each person is measured against their own usual week, never against each other, and the overdue is one number the branch brings down together.</p>'+
+    '<div class="body"><div class="cols">'+
+    '<div class="panel"><h3>Today, against par</h3><div>'+rows+"</div></div>"+
+    '<div class="panel"><h3>The branch, together</h3>'+goal+
+      (aw?'<h3 style="margin-top:2vh">This week&rsquo;s awards so far</h3>'+aw:"")+
+    "</div></div></div>";
+}
+
 // ---- deck --------------------------------------------------------------
 let cur=0, timer=null, paused=false;
 function render(rows){
   const cards=judge(rows);
   const slides=[sBlocks(cards),sWaitingToday(cards),sSubstance(cards),sReconcile(cards),sToday(),
                 sOverdue(),sTypes(cards),sWaitingOn(),sInbound(),sRhythm(),sBeforeYouLeave(),
-                sFlow()];
+                sFlow()].concat(GAME&&GAME.people&&GAME.people.length?[sGame()]:[]);
   $("#slides").innerHTML=slides.map(h=>'<section class="slide">'+h+"</section>").join("");
   const nav=$("#dotsNav"); nav.innerHTML="";
   slides.forEach((_,i)=>{const d=document.createElement("i");
@@ -1163,6 +1203,7 @@ async function refresh(){
     try{
       const w=await call({action:"wall",token:store.get()});
       if(w&&w.ok&&w.tasks) adoptLive(w.tasks);
+      if(w&&w.ok&&w.game) GAME=w.game;
     }catch(e){}
 
     render(lastGood);
