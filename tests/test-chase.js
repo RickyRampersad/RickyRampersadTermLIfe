@@ -53,6 +53,8 @@ ok('a task asked about yesterday is left alone; one noted 2 days ago too', !post
 ok('only the desks\' tasks, due within the week or overdue', queries.some(q => /OwnerId IN \('005A','005E'\)|OwnerId IN \('005E','005A'\)/.test(q) && /ActivityDate <= 2026-10-26/.test(q)), queries[queries.length - 1]);
 ok('Mr Rampersad gets the list', mails.length === 1 && mails[0].to === 'ricky@example.com' && /Branch Intelligence asked on 2 tasks/.test(mails[0].subject) && /Change of address on a policy/.test(mails[0].htmlBody));
 
+env.__mkSheet('Workload Moves', 21, ['Date', 'At', 'TaskId', 'Subject', 'Type', 'From', 'To', 'Why', 'Result', 'UndoneAt'], []);
+
 console.log('\nDay two: a date moved forward with no note\n');
 env.todayISO_ = () => '2026-10-20';
 posts.length = 0; mails.length = 0;
@@ -66,6 +68,7 @@ ok('saying the date moved from 21 to 28 Oct with no note', /Azariah, the date on
 ok('a move with a note is not asked about', !posts.some(p => p[1].ParentId === '00T5'));
 ok('tasks asked yesterday are left alone today', !posts.some(p => ['00T1', '00T3'].includes(p[1].ParentId)));
 const mv = env.SpreadsheetApp.getActive().getSheetByName('Due Moves');
+ok('the tracker\'s own Workload Moves tab is left alone', env.SpreadsheetApp.getActive().getSheetByName('Workload Moves')._grid.length === 1);
 ok('both moves are logged, noted or not', !!mv && mv._grid.length === 3 && mv._grid.some(x => x[1] === '00T2' && x[7] === 'no') && mv._grid.some(x => x[1] === '00T5' && x[7] === 'yes'), mv && JSON.stringify(mv._grid.slice(1)));
 env._dueMovesMemo = null;
 ok('and the history under the task says so', env.dueMovesLine_(env.dueMovesByTask_()['00T2']) === 'due date moved 1 time · last Wed 21 Oct → Wed 28 Oct, with no note', env.dueMovesLine_(env.dueMovesByTask_()['00T2']));
@@ -107,6 +110,30 @@ ok('his link opens My branch', /My branch · /.test(page), page.slice(0, 200).re
 ok('agents grouped by unit in the drop-down', /<optgroup label="Akaash Kalladeen"><option value="darryl manick">/.test(page) && /<optgroup label="Ricky Rampersad">/.test(page));
 ok('and the history under the task shows the date move', /due date moved 1 time · last Wed 21 Oct/.test(page) || !/00T2/.test(page));
 ok('his notes are signed as Branch Manager', /Branch Manager/.test(env.unitRole_('ricky')) && env.unitRole_('akaash') === 'Unit Manager');
+
+console.log('\nMy tasks, on My branch:\n');
+const MINE = [T('00TM1', 'Investment Discussions - Neal Balroop', 'Ricky Rampersad', '005R', '2026-09-18', '2026-08-01'),
+              T('00TM2', 'Premium follow up - New Quote - Shivonne Sammy', 'Ricky Rampersad', '005R', '2026-10-23', '2026-10-01'),
+              T('00TM3', 'Portfolio to Review - Ian Curtis Persad', 'Ricky Rampersad', '005R', '2026-09-17', '2026-08-01')];
+MINE[0].Task_Type__c = 'Opportunity'; MINE[1].Task_Type__c = 'Opportunity'; MINE[2].Task_Type__c = 'Servicing';
+const prevQ = env.sfkQuery_;
+env.sfkQuery_ = q => /OwnerId = '005R'/.test(q) ? MINE : prevQ(q);
+const patches = []; env.sfkPatchTask_ = (id, b) => { patches.push([id, b]); return true; };
+posts.length = 0;
+const mp = env.replyClick_({ parameter: Object.fromEntries(new URL(env.unitUrl_('ricky')).searchParams) }).getContent();
+const mineSec = mp.slice(mp.indexOf('data-sec="mine"'), mp.indexOf('data-sec="work"'));
+ok('a My tasks tab, before Branch work', /data-tab="mine">My tasks/.test(mp) && /data-tab="work">Branch work/.test(mp) && mp.indexOf('data-tab="mine"') < mp.indexOf('data-tab="work"'));
+ok('his tasks by type, counted, overdue shown', /Opportunity \(2 · 1 overdue\)/.test(mineSec) && /Servicing \(1 · 1 overdue\)/.test(mineSec), (mineSec.match(/class="bh">[^<]*/g) || []).join(' | '));
+ok('each with a tick to close, a date to move it, and a note', /name="done_00TM1"/.test(mineSec) && /type="date" name="mv_00TM1"/.test(mineSec) && /name="c_00TM1"/.test(mineSec));
+const U = Object.fromEntries(new URL(env.unitUrl_('ricky')).searchParams);
+let sv = env.replyPost_({ parameter: Object.assign({}, U, { mv_00TM3: '2026-10-27' }) }).getContent();
+ok('a date moved with no reason is refused', /NOT MOVED: say why the date moves/.test(sv) && !patches.length);
+sv = env.replyPost_({ parameter: Object.assign({}, U, { mv_00TM3: '2026-10-27', c_00TM3: 'Client travelling; review booked for the 27th.', done_00TM1: '1' }) }).getContent();
+ok('with a reason it moves, and the reason goes on the task', patches.some(x => x[0] === '00TM3' && x[1].ActivityDate === '2026-10-27') && posts.some(x => x[1].ParentId === '00TM3' && /Branch Manager · Ricky Rampersad/.test(x[1].Body) && /review booked for the 27th/.test(x[1].Body)));
+ok('the tick closes the other', patches.some(x => x[0] === '00TM1' && x[1].Status === 'Completed') && /closed/.test(sv));
+const tc = env.SpreadsheetApp.getActive().getSheetByName('Task Changes');
+ok('both changes kept with before and after, to undo', !!tc && tc._grid.some(r => r[2] === '00TM3' && r[4] === 'Due date' && r[5] === '2026-09-17' && r[6] === '2026-10-27') && tc._grid.some(r => r[2] === '00TM1' && r[4] === 'Status' && r[6] === 'Completed'), tc && JSON.stringify(tc._grid.slice(1)));
+ok('and the move is on Due Moves, noted', env.SpreadsheetApp.getActive().getSheetByName('Due Moves')._grid.some(r => r[1] === '00TM3' && r[7] === 'yes'));
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');
 process.exit(fails ? 1 : 0);

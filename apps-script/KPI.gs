@@ -4569,6 +4569,45 @@ function branchAgents_() {
 }
 /** Who the page is for: the Branch Manager's whole branch, or a Unit Manager's unit. */
 function unitRole_(sid) { return sid === 'ricky' ? 'Branch Manager' : 'Unit Manager'; }
+/** Mr Rampersad's own open tasks, for the My tasks tab of My branch (Ricky, 20
+ *  October 2026: "my opened task by type I am not seeing, and a tick for me to
+ *  close off, or move the date forward"). */
+function myTasks_(day) {
+  return sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, CreatedDate, LastModifiedDate, What.Name, Who.Name, Agent__r.Name FROM Task' +
+    " WHERE IsClosed = false AND OwnerId = '" + bmSfId_() + "' AND (NOT Subject LIKE '%Email: Happy Birthday%') ORDER BY ActivityDate ASC NULLS LAST LIMIT 200")
+    .map(function (r) { return { id: r.Id, subject: shorten_(r.Subject, 140), ty: r.Task_Type__c || 'No type', due: r.ActivityDate || '', late: !!(r.ActivityDate && r.ActivityDate < day),
+      status: r.Status || '', created: String(r.CreatedDate || '').slice(0, 10), touched: daysSince_(r.LastModifiedDate), client: (r.What && r.What.Name) || '', who: (r.Who && r.Who.Name) || '',
+      agent: (r.Agent__r && r.Agent__r.Name) || '' }; });
+}
+/* Every change made to a task from a page is kept with its before and after, so any one can be undone. */
+var TASKCHG = { must: ['Date', 'TaskId', 'Field', 'Before', 'After'], name: 'Task Changes', head: ['Date', 'At', 'TaskId', 'Subject', 'Field', 'Before', 'After', 'Why', 'By', 'Result'] };
+function taskChangeLog_(o) {
+  try { var sh = hrTab_(TASKCHG, true), head = headerOf_(sh); o.Date = o.Date || todayISO_(); o.At = o.At || hhmm_(new Date());
+    sh.appendRow(head.map(function (h) { return o[h] != null ? o[h] : ''; })); forgetHr_(TASKCHG); } catch (e) {}
+}
+function myTasksSec_(m) {
+  if (!m.mine) return '';
+  if (!m.mine.length) return '<div class="card ok"><div class="ln">Nothing open in your name.</div></div>';
+  var types = [], by = {};
+  m.mine.forEach(function (t) { if (!by[t.ty]) { by[t.ty] = []; types.push(t.ty); } by[t.ty].push(t); });
+  types.sort(function (a, b) { return by[b].filter(function (t) { return t.late; }).length - by[a].filter(function (t) { return t.late; }).length || by[b].length - by[a].length; });
+  var row = function (t) {
+    var notes = m.chat[t.id] || [], mv = (m.moves || {})[t.id];
+    return '<details class="it" id="m' + esc_(t.id) + '"><summary><div class="hd"><span class="age ' + (t.late ? 'r' : t.due === m.day ? 'a' : '') + '">' + (t.late ? daysBetween_(t.due, m.day) + 'd' : t.due === m.day ? 'today' : t.due ? 'due' : '—') + '</span>' +
+      '<div class="tt">' + esc_(t.subject) + '<small>' + (t.due ? (t.late ? 'overdue since ' : 'due ') + esc_(shortDate_(t.due)) : 'no date') + ' · ' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') : 'no notes') + '</small></div></div></summary>' +
+      '<div class="br2" style="margin-top:4px">' + esc_(t.status || 'Open') + (t.client ? ' · ' + esc_(t.client) : '') + (t.who ? ' · ' + esc_(t.who) : '') + (t.created ? ' · opened ' + esc_(shortDate_(t.created)) : '') + '</div>' +
+      (mv ? '<div class="br2" style="margin-top:2px">' + esc_(dueMovesLine_(mv)) + '</div>' : '') +
+      chatterNotes_(m.chat, t.id) +
+      '<label style="display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;margin:10px 0 6px"><input type="checkbox" name="done_' + esc_(t.id) + '" value="1" style="width:22px;height:22px;margin:0;flex:none"> Done: close it</label>' +
+      '<label style="display:block;font-size:13px;color:#6A7180;margin:0 0 4px">Or move it to a new date' +
+        '<input type="date" name="mv_' + esc_(t.id) + '" value="" style="display:block;width:100%;box-sizing:border-box;margin:4px 0 0"></label>' +
+      '<textarea name="c_' + esc_(t.id) + '" rows="2" placeholder="A note: what was done, or why the date moves. It goes on the task." style="margin:4px 0 10px"></textarea></details>';
+  };
+  return '<div class="card"><div class="bf">Your open tasks by type. Tick one to close it, give a new date to move it (say why in the note), or write a note. Then Save.</div></div>' +
+    types.map(function (ty) { var l = by[ty], late = l.filter(function (t) { return t.late; }).length;
+      return '<div class="card"><div class="bh">' + esc_(ty) + ' (' + l.length + (late ? ' · ' + late + ' overdue' : '') + ')</div>' + l.map(row).join('') + '</div>'; }).join('');
+}
+
 /** From the editor: Mr Rampersad's My branch link, to save on his phone. */
 function showBranchLink() { var u = unitUrl_('ricky'); Logger.log(u); return u; }
 
@@ -5977,6 +6016,12 @@ function unitModel_(sid, day) {
   m.agents.forEach(function (a) { a.queries = m.queries.filter(function (q) { return bkNk_(q.agent) === bkNk_(a.name); }).length; });
   m.notes = {}; try { m.notes = umNotes_(day, 30); } catch (e) {}
   m.moves = {}; try { m.moves = dueMovesByTask_(); } catch (e) {}
+  if (sid === 'ricky') {
+    m.mine = []; try { m.mine = myTasks_(day); } catch (e) { m.mine = null; }
+    if (m.mine && m.mine.length) { try { var mc = cmdChatter_(m.mine.map(function (t) { return t.id; })); Object.keys(mc).forEach(function (k) { m.chat[k] = mc[k]; }); } catch (e) {} }
+    // A task of his own shows once, on My tasks, where it can be closed or moved.
+    if (m.mine && m.mine.length) { var mineIds = {}; m.mine.forEach(function (t) { mineIds[t.id] = 1; }); m.tasks = m.tasks.filter(function (t) { return !mineIds[t.id]; }); }
+  }
   var gs = m.agents.filter(function (a) { return a.g; });
   m.unit = { goal: gs.reduce(function (s, a) { return s + a.g.api; }, 0), pace: gs.reduce(function (s, a) { return s + a.g.paceApi; }, 0),
     picked: m.agents.reduce(function (s, a) { return s + Number(a.f.pickedUp || 0); }, 0),
@@ -6120,7 +6165,8 @@ function unitPage_(person, day, error, notice, view) {
   var sid = String(person.staffId), m = unitModel_(sid, day), nowM = minutesOf_(hhmm_(new Date()));
   if (!view) { try { bigPut_('unit_ids_' + sid + '_' + day, m.tasks.map(function (t) { return { id: t.id, s: t.subject, a: t.agent }; })); } catch (e) {}
                try { bigPut_('unit_qids_' + sid + '_' + day, m.queries.map(function (q) { return { ref: q.ref, c: q.client, a: q.agent }; })); } catch (e) {}
-               try { bigPut_('unit_ags_' + sid + '_' + day, m.agents.map(function (a) { return a.name; })); } catch (e) {} }
+               try { bigPut_('unit_ags_' + sid + '_' + day, m.agents.map(function (a) { return a.name; })); } catch (e) {}
+               if (m.mine) { try { bigPut_('unit_mine_' + sid + '_' + day, m.mine.map(function (t) { return { id: t.id, s: t.subject, due: t.due, ty: t.ty, st: t.status }; })); } catch (e) {} } }
   var money = function (v) { return ff360Money_(Number(v || 0)); };
   var pct = m.unit.pace ? Math.round(100 * m.unit.picked / m.unit.pace) : null;
   var pend = m.tasks.filter(function (t) { return t.k === 'pend'; }), pendLate = pend.filter(function (t) { return t.late; }).length;
@@ -6273,7 +6319,9 @@ function unitPage_(person, day, error, notice, view) {
     '<div style="height:10px;background:#EEEBE3;border-radius:6px;margin:8px 0;overflow:hidden"><i style="display:block;height:100%;width:' + Math.max(0, Math.min(100, Math.round(100 * (nowM - sp.start) / Math.max(1, sp.end - sp.start)))) + '%;background:#141C4A"></i></div>' +
     '<div style="display:flex;gap:6px;flex-wrap:wrap">' + (m.signIn ? '<span class="badge g">Signed in ' + esc_(twelve_(m.signIn)) + '</span>' : '<span class="badge r">Not signed in: saving signs you in</span>') +
       (planned ? '<span class="badge g">Planned</span>' : '<span class="badge r">Not planned</span>') + '<span class="badge">' + m.posts + ' comment' + (m.posts === 1 ? '' : 's') + ' today</span></div></div>';
-  var tabs = '<div class="tabs">' + [['today', 'Today'], ['work', 'Unit work', pendLate || ''], ['agents', 'Agents'], ['you', 'You']].map(function (t, k) {
+  var mineLate = m.mine ? m.mine.filter(function (t) { return t.late; }).length : 0;
+  var tabs = '<div class="tabs">' + (m.mine ? [['today', 'Today'], ['mine', 'My tasks', mineLate || ''], ['work', 'Branch work', pendLate || ''], ['agents', 'Agents'], ['you', 'You']]
+                                            : [['today', 'Today'], ['work', 'Unit work', pendLate || ''], ['agents', 'Agents'], ['you', 'You']]).map(function (t, k) {
     return '<button type="button" class="tab' + (k ? '' : ' on') + '" data-tab="' + t[0] + '">' + t[1] + (t[2] ? '<i>' + t[2] + '</i>' : '') + '</button>'; }).join('') + '</div>';
   var sec = function (id, html) { return '<section data-sec="' + id + '"' + (id === 'today' ? '' : ' class="sec-off"') + '>' + html + '</section>'; };
   var js = '<script>(function(){var tb=document.querySelectorAll(".tab"),ss=document.querySelectorAll("section[data-sec]");' +
@@ -6282,7 +6330,7 @@ function unitPage_(person, day, error, notice, view) {
     'var go=document.querySelectorAll("[data-go]");for(var i=0;i<go.length;i++)go[i].addEventListener("click",function(e){var id=this.getAttribute("data-go"),el=document.getElementById(id);if(!el)return;e.preventDefault();' +
     'var s=el.closest("section[data-sec]");if(s)show(s.getAttribute("data-sec"));if(el.tagName==="DETAILS")el.open=true;el.scrollIntoView({behavior:"smooth",block:"start"});});})();</script>';
   js += UNIT_FILTER_JS;
-  var body = tabs + sec('today', todaySec) + sec('work', workSec) + sec('agents', agentsSec) + sec('you', youSec);
+  var body = tabs + sec('today', todaySec) + (m.mine ? sec('mine', myTasksSec_(m)) : '') + sec('work', workSec) + sec('agents', agentsSec) + sec('you', youSec);
   if (view) return replyPage_(m.name + ' · My unit · ' + prettyDate_(day), 'What ' + String(m.name).split(' ')[0] + ' sees, as it stands now. Read only: saving is his.',
     bar + brief + firstCard + '<fieldset disabled style="border:0;padding:0;margin:0;min-width:0">' + body + '</fieldset>' + js);
   return replyPage_((sid === 'ricky' ? 'My branch · ' : 'My unit · ') + prettyDate_(day), sid === 'ricky' ? 'Every agent and every unit. Pick an agent for his day, his work and a note. Keep this link on your home screen.' : 'Keep this link on your home screen. It is the same every day. Nothing here needs a Salesforce login.',
@@ -6297,13 +6345,38 @@ function unitSave_(person, day, p) {
   var sid = String(person.staffId), name = nameFor_(sid), at = hhmm_(new Date()), out = [], posted = 0;
   var head = unitRole_(sid) + ' · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at);
   var ids = bigGet_('unit_ids_' + sid + '_' + day, []);
+  var mineSet = {}; try { (bigGet_('unit_mine_' + sid + '_' + day, []) || []).forEach(function (x) { mineSet[x.id] = 1; }); } catch (e) {}
   ids.forEach(function (it) {
+    if (mineSet[it.id]) return;   // his own task: handled below with its tick and date
     var txt = String(p['c_' + it.id] || '').trim();
     if (!txt) return;
     var res = 'posted';
     try { sfkInsert_('FeedItem', { ParentId: it.id, Body: head + '\n\n' + txt }); posted++; }
     catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
     out.push({ s: (it.a ? String(it.a).split(' ')[0] + ' · ' : '') + it.s, res: res });
+  });
+  // His own tasks: a tick closes one, a date moves one (only with a note saying why), a note goes on it.
+  var mine = []; try { mine = bigGet_('unit_mine_' + sid + '_' + day, []); } catch (e) {}
+  mine.forEach(function (it) {
+    var txt = String(p['c_' + it.id] || '').trim(), done = String(p['done_' + it.id] || '') === '1', to = String(p['mv_' + it.id] || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(to) || to === it.due) to = '';
+    if (!txt && !done && !to) return;
+    var label = shorten_(it.s, 70), parts = [];
+    if (to && !txt && !done) { out.push({ s: label, res: 'NOT MOVED: say why the date moves, in the note' }); return; }
+    if (txt) { try { sfkInsert_('FeedItem', { ParentId: it.id, Body: head + '\n\n' + txt }); posted++; parts.push('note posted'); } catch (e) { parts.push('NOT SAVED: note, ' + String(e && e.message || e).slice(0, 80)); } }
+    if (to && !done) {
+      try { sfkPatchTask_(it.id, { ActivityDate: to }); parts.push('moved to ' + shortDate_(to));
+        taskChangeLog_({ TaskId: it.id, Subject: it.s, Field: 'Due date', Before: it.due, After: to, Why: txt, By: name, Result: 'OK' });
+        try { var dm = hrTab_(DUEMOVES, true), dh = headerOf_(dm), o = { Date: day, TaskId: it.id, Subject: it.s, Owner: name, Agent: '', From: it.due, To: to, Noted: 'yes' };
+          dm.appendRow(dh.map(function (h) { return o[h] != null ? o[h] : ''; })); forgetHr_(DUEMOVES); _dueMovesMemo = null; } catch (e) {}
+      } catch (e) { parts.push('NOT MOVED: ' + String(e && e.message || e).slice(0, 80)); }
+    }
+    if (done) {
+      try { sfkPatchTask_(it.id, { Status: 'Completed' }); parts.push('closed');
+        taskChangeLog_({ TaskId: it.id, Subject: it.s, Field: 'Status', Before: it.st || 'open', After: 'Completed', Why: txt, By: name, Result: 'OK' }); }
+      catch (e) { parts.push('NOT CLOSED: ' + String(e && e.message || e).slice(0, 80)); }
+    }
+    out.push({ s: label, res: parts.join(' · ') });
   });
   // A note on one of his agents' client queries goes on the query in Query Pal, internal.
   var qids = []; try { qids = bigGet_('unit_qids_' + sid + '_' + day, []); } catch (e) {}
@@ -7075,7 +7148,7 @@ function agentSection_(f) {
    asks the right question), plainly otherwise. At most 30 a day; never the same
    task twice in 3 days; Mr Rampersad gets the list. CHASE_QUIET = off stops it. */
 var CHASE = { QUIET_DAYS: 3, MAX: 30, AT: 9 * 60 + 15, EVERY_DAYS: 3, AHEAD: 7 };
-var DUEMOVES = { must: ['Date', 'TaskId', 'From', 'To'], name: 'Due Moves', head: ['Date', 'TaskId', 'Subject', 'Owner', 'Agent', 'From', 'To', 'Noted'] };
+var DUEMOVES = { must: ['Date', 'TaskId', 'From', 'To', 'Noted'], name: 'Due Moves', head: ['Date', 'TaskId', 'Subject', 'Owner', 'Agent', 'From', 'To', 'Noted'] };
 function chaseOn_() { return !/^(off|no|0|false)$/i.test(String(PropertiesService.getScriptProperties().getProperty('CHASE_QUIET') || 'on').trim()); }
 function chaseOurs_(n) { return /^Branch Intelligence\b/.test(String(n.text || '')); }
 
@@ -7116,6 +7189,10 @@ function dueMovesByTask_() {
   try { (hrRows_(DUEMOVES, false) || []).forEach(function (r) {
     var id = String(r.TaskId || ''); if (!id) return;
     (out[id] = out[id] || []).push({ day: isoDay_(r.Date), from: isoDay_(r.From) || String(r.From || ''), to: isoDay_(r.To) || String(r.To || ''), noted: /^y/i.test(String(r.Noted || '')) });
+  }); } catch (e) {}
+  try { (hrRows_(MOVES, false) || []).forEach(function (r) {
+    var id = String(r.TaskId || ''); if (!id || !/^OK/.test(String(r.Result || '')) || String(r.UndoneAt || '').trim()) return;
+    (out[id] = out[id] || []).push({ day: isoDay_(r.Date), from: isoDay_(r.From) || String(r.From || ''), to: isoDay_(r.To) || String(r.To || ''), noted: !!String(r.Why || '').trim(), why: String(r.Why || '') });
   }); } catch (e) {}
   Object.keys(out).forEach(function (k) { out[k].sort(function (a, b) { return String(b.day).localeCompare(String(a.day)); }); });
   return (_dueMovesMemo = out);
