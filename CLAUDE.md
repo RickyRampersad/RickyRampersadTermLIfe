@@ -3970,6 +3970,51 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).
 
+## The strategic meeting page — the two days, the record under each session, and what the branch will say
+
+`strategic-meeting/index.html` (short address `/strategicmeeting`) and `apps-script/StrategicMeeting.gs`, a fourth
+file in the Service Questionnaire project, routed by two lines in `Service.gs` (`sm.*`), the way `GroupClients.gs`
+is. Asked for on 20 October 2026, two days before the Joint Sales Managers' Strategic Meeting (Hyatt Regency, 22 and
+23 October): "build a framework with all you have under rickyrampersadbranch/strategic meeting so you can have the
+days and topics and make a contribution, you and Akaash can log in to contribute items and business intelligence can
+guide you. In your session review notes on the step back in place from all memory."
+
+- **The page** holds the agenda as the company issued it (every session, its time, its facilitator, its brief and
+  its guiding question), and under each session three things written from the house notes: what the branch's own
+  record says (counts and dates, never a client), a position the branch could take, and questions to put to the
+  room. Then the contributions logged for that session, the add form, and the AI guide. Tabs: Day 1, Day 2,
+  Step-Back notes, Logistics (the memo of 16 October), and a printable brief for the room. The branch manager's own
+  slot (Friday 11:25 to 12:00, Recruitment & Retention, with Gregg Mannette) opens by itself and is marked. The
+  agenda is company-internal, so the whole page sits behind the sign-in.
+- **Sign-in is the assignment board's** (`tWho_`: the branch code, or an agent number and the password from the
+  Agent Skill Bank; the same two localStorage keys, so a phone signed in to the board is signed in here). **The
+  branch manager and a unit manager write; staff and agents read** (`smCanWrite_`). A contribution is a kind (fact,
+  position, question, recommendation, definition, note), the point, the evidence it rests on and what it asks of the
+  room; it is a row on the **Strategic Meeting** tab of the Service Questionnaire sheet. Taking one back marks the
+  row removed and by whom; the row stays. A unit manager takes back only his own; the branch anyone's.
+- **The live counts beside the notes** (`smFacts_`, kept ten minutes) are the campaign stream's own answer (households
+  answered, letters, reminders, answers after the reminder, outcomes on the board in seven days: counts, no names),
+  the TT$200 claims found, submitted and paid, and the team on the Agent Skill Bank by role and unit. Each source is
+  read inside its own try, so a tab that is not there leaves a gap, never an error.
+- **The AI guide** ("Guide me: three points from the facts", `smGuide_`, through `gcmClaude_` and the same
+  `ANTHROPIC_API_KEY`) is sent the session, the page's notes for it, the live counts, every definition logged, and
+  the contributions so far, and answers three points as JSON, each with its evidence and its ask, plus one caution on
+  what the material cannot support. It is told to invent nothing, add no number not given, and never name a client
+  or a former agent. One read per session and set of contributions, kept half an hour. "Use this" fills the form; a
+  person edits and logs it. Without the key the button is off and says what to set.
+- **The Step-Back notes say plainly what the record does not hold.** Nothing on the branch's record defines the
+  Step-Back Approach as a recruitment or career-path method; the only "step back" on file is the motor No Claim
+  Discount rule. The tab gives what bears on the agenda's question (how the tracker counts recruitment, the licence
+  tenure bands, what September's departures did to the roll, the measure and the position the branch can put on the
+  table) and asks for the definition in the company's words, logged with the kind "definition", which the guide then
+  reads for every session. Do not write a definition into the page from memory: it has to come from the company.
+- **Until the paste** (Service.gs and StrategicMeeting.gs, then a New version), the backend answers "Unknown action":
+  the gate says so to a fresh sign-in, a device already signed in opens with a notice, contributions are kept on the
+  device (`rrb-sm-local`) and offered to the sheet once the backend is linked.
+- Tests: `tests/test-strategic-meeting.js` (60 checks, the script under the fake Sheets with the sign-in, the stream
+  and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (26, Playwright,
+  a laptop as the branch, a phone as the unit manager, and the unlinked backend).
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and
