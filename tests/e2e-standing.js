@@ -91,11 +91,11 @@ async function session(b, withStanding, noted) {
   console.log('\nThe day view carries the quarter:\n');
   let s = await session(b, true, noted);
   let t = await s.page.locator('body').innerText();
-  ok('it opens on the day', /Each block closes itself at its end time/.test(t), t.slice(0, 80));
+  ok('it opens on the day', /Your day closes itself at your finish time/.test(t), t.slice(0, 80));
   ok('with the quarter under the blocks', /Your quarter · 2026 Q3/i.test(t) && /49 days in · 17 left/.test(t));
-  ok('every goal with what the record says', /27 blocks · 401 closed · 4 open, 1 untouched/.test(t), (t.match(/27 blocks[^\n]*/) || [''])[0]);
+  ok('every goal with what the record says', /27 days logged · 401 closed · 4 open, 1 untouched/.test(t), (t.match(/27 days[^\n]*/) || [''])[0]);
   ok('and how it stands against the target', /landed 78% · target 90%/.test(t) && /landed 100% · target 90%/.test(t));
-  ok('a goal with no blocks says so', /no blocks yet/.test(t));
+  ok('a goal with no blocks says so', /nothing logged yet/.test(t));
   ok('the competencies with how much sits behind each', /Customer Service · 1 moment/.test(t));
   // Elizabeth was reminded four times in one morning about the same
   // spreadsheet and nothing in the record could say so. The count is read off
@@ -127,7 +127,7 @@ async function session(b, withStanding, noted) {
   await s.page.waitForTimeout(1500);
   t = await s.page.locator('body').innerText();
   ok('the goals say where you stand this quarter', /Where you stand this quarter — 2026 Q3, 49 working days in, 17 left/.test(t), (t.match(/Where you stand[^\n]*/) || [''])[0]);
-  ok('with the evidence under each goal', /27 blocks worked/.test(t) && /21 met · 5 partly · 1 not yet/.test(t) && /401 closed in Salesforce/.test(t));
+  ok('with the evidence under each goal', /27 days logged/.test(t) && /21 met · 5 partly · 1 not yet/.test(t) && /401 closed in Salesforce/.test(t));
   await s.page.click('button:has-text("Competencies")');
   await s.page.waitForTimeout(400);
   t = await s.page.locator('body').innerText();
@@ -175,7 +175,7 @@ async function session(b, withStanding, noted) {
   s = await session(b, false, noted);
   t = await s.page.locator('body').innerText();
   // The strip still names "Your quarter" as a door; what must be absent is the card itself.
-  ok('the day opens with no quarter card and no error', /Each block closes itself at its end time/.test(t) && !/Your quarter · /.test(t) && !/days in · /.test(t));
+  ok('the day opens with no quarter card and no error', /Your day closes itself at your finish time/.test(t) && !/Your quarter · /.test(t) && !/days in · /.test(t));
   await s.page.click('button:has-text("← Branch")');
   await s.page.waitForTimeout(400);
   await s.page.click('button:has-text("My performance")');

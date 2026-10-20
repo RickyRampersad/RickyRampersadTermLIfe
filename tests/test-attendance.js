@@ -44,12 +44,17 @@ const PAWAN = { staffId:'pawan', name:'Pawan Probhu', role:'pa', manager:false }
 const RICKY = { staffId:'ricky', name:'Ricky Rampersad', role:'bm', manager:true };
 
 console.log('\nEach person is measured against their own start:\n');
-ok('an eight o\'clock desk starts at 480', env.startFor_('sasha') === 480);
-ok('a nine o\'clock desk starts at 540', env.startFor_('elizabeth') === 540);
+// The hours from 17 October 2026: Sasha and Liz at 7, Azariah at 8, Ashley at 9.
+ok('a seven o\'clock desk starts at 420', env.startFor_('sasha') === 420 && env.startFor_('elizabeth') === 420);
+ok('an eight o\'clock desk starts at 480', env.startFor_('azariah') === 480);
+ok('a nine o\'clock desk starts at 540', env.startFor_('ashley') === 540);
 ok('a stranger to the schedule defaults to eight', env.startFor_('nobody') === 480);
-ok('08:07 is on time for an eight o\'clock start', env.lateBy_('sasha', '08:07') === 0);
-ok('08:25 is fifteen minutes over the grace', env.lateBy_('sasha', '08:25') === 25);
-ok('and 09:05 is on time for a nine o\'clock start', env.lateBy_('elizabeth', '09:05') === 0);
+// 20 Oct 2026: five minutes' grace, not ten (Ricky: absent five minutes after the start).
+ok('08:05 is on time for an eight o\'clock start', env.lateBy_('azariah', '08:05') === 0);
+ok('08:07 is late by seven minutes', env.lateBy_('azariah', '08:07') === 7);
+ok('08:25 is late by twenty-five', env.lateBy_('azariah', '08:25') === 25);
+ok('and 09:05 is on time for a nine o\'clock start', env.lateBy_('ashley', '09:05') === 0);
+ok('08:07 is an hour and seven minutes after a seven o\'clock start', env.lateBy_('sasha', '08:07') === 67);
 
 console.log('\nThe first sign-in of the day is the start of the day:\n');
 env.resetRequestMemo_();
@@ -104,7 +109,7 @@ NOW = new Date('2026-09-07T16:32:00');
 env.resetRequestMemo_(); expire();
 const so = env.signOutDay_({}, SASHA);
 ok('recorded, with the time', so.ok && so.out === '16:32' && so.date === TODAY, JSON.stringify(so));
-ok('and it says how much of the day went in', so.blocksDone === 0 && so.blocksLeft === 4, JSON.stringify(so));
+ok('and it says how much of the day went in', so.blocksDone === 0 && so.blocksLeft === 1, JSON.stringify(so));
 env.resetRequestMemo_(); expire();
 const backIn = env.recordAttendance_(SASHA);
 ok('the morning sign-in is untouched', backIn.at === '08:07' && backIn.first === false, JSON.stringify(backIn));

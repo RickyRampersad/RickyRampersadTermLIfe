@@ -3977,6 +3977,65 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).
 
+## The strategic meeting page — the two days, the record under each session, and what the branch will say
+
+`strategic-meeting/index.html` (short address `/strategicmeeting`) and `apps-script/StrategicMeeting.gs`, a fourth
+file in the Service Questionnaire project, routed by two lines in `Service.gs` (`sm.*`), the way `GroupClients.gs`
+is. Asked for on 20 October 2026, two days before the Joint Sales Managers' Strategic Meeting (Hyatt Regency, 22 and
+23 October): "build a framework with all you have under rickyrampersadbranch/strategic meeting so you can have the
+days and topics and make a contribution, you and Akaash can log in to contribute items and business intelligence can
+guide you. In your session review notes on the step back in place from all memory."
+
+- **The page** holds the agenda as the company issued it (every session, its time, its facilitator, its brief and
+  its guiding question), and under each session three things written from the house notes: what the branch's own
+  record says (counts and dates, never a client), a position the branch could take, and questions to put to the
+  room. Then the contributions logged for that session, the add form, and the AI guide. Tabs: Day 1, Day 2,
+  Step-Back notes, Logistics (the memo of 16 October), and a printable brief for the room. The branch manager's own
+  slot (Friday 11:25 to 12:00, Recruitment & Retention, with Gregg Mannette) opens by itself and is marked. The
+  agenda is company-internal, so the whole page sits behind the sign-in.
+- **Sign-in is the assignment board's** (`tWho_`: the branch code, or an agent number and the password from the
+  Agent Skill Bank; the same two localStorage keys, so a phone signed in to the board is signed in here). **The
+  branch manager and a unit manager write; staff and agents read** (`smCanWrite_`). A contribution is a kind (fact,
+  position, question, recommendation, definition, note), the point, the evidence it rests on and what it asks of the
+  room; it is a row on the **Strategic Meeting** tab of the Service Questionnaire sheet. Taking one back marks the
+  row removed and by whom; the row stays. A unit manager takes back only his own; the branch anyone's.
+- **The live counts beside the notes** (`smFacts_`, kept ten minutes) are the campaign stream's own answer (households
+  answered, letters, reminders, answers after the reminder, outcomes on the board in seven days: counts, no names),
+  the TT$200 claims found, submitted and paid, and the team on the Agent Skill Bank by role and unit. Each source is
+  read inside its own try, so a tab that is not there leaves a gap, never an error.
+- **The AI guide** ("Guide me: three points from the facts", `smGuide_`, through `gcmClaude_` and the same
+  `ANTHROPIC_API_KEY`) is sent the session, the page's notes for it, the live counts, every definition logged, and
+  the contributions so far, and answers three points as JSON, each with its evidence and its ask, plus one caution on
+  what the material cannot support. It is told to invent nothing, add no number not given, and never name a client
+  or a former agent. One read per session and set of contributions, kept half an hour. "Use this" fills the form; a
+  person edits and logs it. Without the key the button is off and says what to set.
+- **The industry evidence sits beside the record, with its source on every line** (asked for the same day: "research
+  the web and build in intelligence so you could contribute meaningfully towards each topic … we need to have our
+  objective and make our voice heard"). `EVIDENCE` in the page is one block per session, each line a finding with a
+  key into `SRC` (name and https link, 20 sources on 20 October 2026: LIMRA's 2025 conference deck with the FP
+  Production & Retention curve, the 2019 Career Profile study and the 2022 LIMRA/FINSECA retention study; DDI's
+  Global Leadership Forecast 2025; Gallup on managers and on recognition; Capgemini and LIMRA's World Life Insurance
+  Report 2027; J.D. Power 2025; the NAIC, the IAIS and ACFE 2024 on fraud; the Central Bank's 28 July 2023 market
+  conduct circular; the Broker Protocol study in the Journal of Financial Economics). A vendor's claim (Atidot on
+  orphan lapses) and a second-hand figure (the J.D. Power 63%) are marked as such in the line itself, so the room
+  hears the caveat with the number. `SAY` is a sixty-second template for each key session: the branch's record
+  first, the evidence, the position, the ask, with the live numbers in brackets to read off the tiles. `OBJECTIVE`
+  is the branch's own five-line objective for the two days, a draft the branch manager edits by logging a position
+  against the session key `objective`. The brief prints all three and ends with the sources. The guide is sent the
+  evidence and the sixty seconds with the notes.
+- **The Step-Back notes say plainly what the record does not hold.** Nothing on the branch's record defines the
+  Step-Back Approach as a recruitment or career-path method; the only "step back" on file is the motor No Claim
+  Discount rule. The tab gives what bears on the agenda's question (how the tracker counts recruitment, the licence
+  tenure bands, what September's departures did to the roll, the measure and the position the branch can put on the
+  table) and asks for the definition in the company's words, logged with the kind "definition", which the guide then
+  reads for every session. Do not write a definition into the page from memory: it has to come from the company.
+- **Until the paste** (Service.gs and StrategicMeeting.gs, then a New version), the backend answers "Unknown action":
+  the gate says so to a fresh sign-in, a device already signed in opens with a notice, contributions are kept on the
+  device (`rrb-sm-local`) and offered to the sheet once the backend is linked.
+- Tests: `tests/test-strategic-meeting.js` (65 checks, the script under the fake Sheets with the sign-in, the stream
+  and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (28, Playwright,
+  a laptop as the branch, a phone as the unit manager, and the unlinked backend).
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and
@@ -3996,3 +4055,196 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   tint, `#FFF6F4` paper, `#6B7C96` muted — with The Knot as the mark. Guardian
   is named only where it is a matter of fact: the insurer, the form, the
   customer-service desk.
+- **The tracker has no time blocks** (Ricky, 17 October 2026). Every desk's
+  day in `KPI.gs` `SCHEDULE` is one plan, block `KPI1` labelled "Your day",
+  spanning the desk's own hours: plan by e-mail and the morning check, progress
+  before lunch (the Unit Manager at 11, agents at 12), close-out half an hour
+  before finishing, the week on Friday. No morning check reads as absent and
+  the work is shared out. Hours: Branch Manager 5am–3pm, BMA 8am–5pm, Sales
+  Support 7–2, 7–3 and 8–4, Unit Manager and agents 6am–6pm. The other block
+  columns stay on the log so history reads; do not schedule into them again
+  unless the branch splits the day.
+- **"Not getting attention" (the command centre)** closes things, not only
+  moves them (18 October 2026). Each row has a status from the record's own
+  list (Salesforce's `TaskStatus`; the letter sheet's own values), its history
+  (Chatter posts and replies; a letter's e-mail trail, escalation, response and
+  BM comments; a query's comments) and a suggestion read from that history.
+  Closing needs a note and the note is posted before the close; a task where
+  the client asked for an agent cannot be closed. A letter closed here also
+  resolves its open escalation and writes `BM Comments` and `Audit Log` in the
+  Productive Performance Management workbook. Query Pal queries are closed in
+  Query Pal, so the client is told. Pinned in `tests/test-cmd.js`.
+- **The e-mail answer pages are built for a phone** (18 October 2026). Boxes
+  are 16px and 44px tall (an iPhone zooms in on anything smaller; the old
+  `font:14px/1.4 inherit` was invalid CSS and fell back to 13px). The command
+  centre folds each row to one line (age, title, who, why, a badge for what the
+  system found), filters with sticky chips (what it found, source, desk), has
+  a one-tap "Close it" that fills the status and a closing note, and counts
+  the changes on the send button.
+- **Query Pal deep dive** (`f=qp`, `qpDivePage_`): read only, from the Query
+  Pal workbook's Queries and Comments tabs. Each query is judged against its
+  own Turnaround; sentences first, then the evidence. Linked from the command
+  centre and the 5am e-mail.
+- **Fact-find chase** (`ffChaseTick_`, `f=agff`): Monday 7:00 asks every
+  agent with no fact find in 14 days (Salesforce Fact Finding Interviews, and
+  nothing this week on FactFind360) for a response; Wednesday reminds the
+  silent, manager copied; Friday sends the managers the week. Answers go to the
+  Fact Find Responses tab; help asked for becomes a Salesforce task for the
+  manager. The link is good for the week. Script Property `FF_CHASE`
+  (`live`/`preview`/`off`, unset follows `AGENT_DAY`). Every send checks the
+  daily e-mail quota first. Pinned in `tests/test-qpff.js`.
+- **Risk score and the client in one view** on the command centre (18 October
+  2026, `cmdRisk_`, `cmdClientIndex_`). Each item's client is looked up across
+  the open Salesforce book (the task's What name), Query Pal, the log book, and
+  Branch Intelligence's cache (premiums overdue, pending business, last night's
+  lapses); names match on all their words in any order, titles dropped, or on
+  two words of four letters or more. The score (0–100) weighs the payoff order
+  (new business, orphan, retention), age, a client waiting or unhappy, money at
+  risk, the client open elsewhere and the advice tag; reads-as-done drops 20.
+  The page runs highest risk first, opens with "Do these first", and lists
+  clients open in more than one place.
+- **The command centre is in tabs under a brief** (18 October 2026): Act,
+  People, Agents, Clients, Query Pal. The brief is five or six sentences built
+  from every tab (`cmdBrief_`). People (`peopleNormal_`): each desk's closures
+  a day over the last 5 working days against their own median over the 15
+  before, absent days left out; slipping under 70%, ahead over 130%; late and
+  absent of the last 10 days; overdue and untouched; notes answered. One
+  aggregate SOQL (`DAY_ONLY(convertTimezone(CompletedDateTime))`), cached 10
+  minutes. Agents (`agentFunnel_`): FactFind360 month fact finds and apps
+  against Salesforce interviews; flags no applications, converting, none.
+- **Claude reads the notes when `ANTHROPIC_API_KEY` is set** (`cmdClaudeRead_`):
+  one call per opening for items whose newest note has not been read, cached
+  6 hours per item and note (a "no read" is cached too). States: done,
+  waiting_department, waiting_client, client_unhappy, in_progress, blocked,
+  unclear. Done and unhappy override the rule's advice and move the risk.
+  `ANTHROPIC_MODEL` defaults to claude-haiku-5-5. No key, no call.
+- **My day** (`f=me`, `mePage_`, 18 October 2026): the Branch Manager's page
+  on ONE link that works every day (signed `replySig_(sid,'always','me')`, no
+  date), for the phone's home screen. Plan first if the day is not planned;
+  next up (notes asking him, his tasks due by payoff, his instructions with no
+  note) with reply and close-with-note; capture as a task for him, for a desk,
+  or done already (a completed task, so it counts); the account against the
+  plan saved as the day goes (`MGRDAY` kind `eve`, the same record the 3pm
+  close reads). Check-in e-mails at 7:00, 9:00 and 1:00 (`BM_NUDGES`), plan
+  first then the next three. `showMyDayLink()` logs the link. Pinned in
+  `tests/test-me.js`.
+- **Accountable** (`bmSelf_`, 18 October 2026): the Branch Manager's own day
+  on the same record as the desks'. Planned or not and when (`mgr_planat_`);
+  each check-in answered (anything logged after it, within two hours or before
+  the next: My day, the plan, the account, the `bm`/`cmd` reply pages, logged
+  in `me_log_`) or missed; each planned number against the account; accounted
+  or not; closed with his own note. The 11am and 3pm reports lead with "You
+  against your plan" (3pm adds the Mon–Fri week; the subject says "not
+  planned" / "day not accounted"), the check-ins name a missed one, My day
+  shows it with the week, the 5am review opens with yesterday's line. The
+  day's line is kept in `bm_self_` on every page view, check-in and report;
+  `acctPrune_` keeps 14 days of logs and 120 of lines. Pinned in
+  `tests/test-me.js`.
+- **Ricky's own mails go to him alone** (`ownMail_`, 18 October 2026: "Don't
+  copy anyone on mine"): the 5am review, the 11am progress, the 3pm close-out
+  and the check-ins carry no Cc. Every other desk's mail, and outbound client
+  drafts, still copy sales support.
+- **`closeOpenPerformanceLetters()`** (19 October 2026, run from the editor):
+  Ricky asked for every open performance letter to be closed. Each open row on
+  the PPM Letters tab goes to `Completed` through `ppmSetStatus_` (escalation
+  resolved, his note on BM Comments, audit log). Returns what closed and what
+  did not.
+- **A desk with no Salesforce login** (`noSfLogin_`, 19 October 2026: Akaash
+  is not a registered Salesforce user). His task links go to his own comment
+  page (`f=um#i<id>`), never Salesforce; the page shows the latest two notes on
+  each task with the whole history a tap away, invites him to speak his comment
+  (the keyboard microphone), and posts it to Chatter headed "Unit Manager · <name>";
+  `um_posts_` counts them. The morning opens with "Your agents · goals and
+  activity" (`teamFFCard_`) and "What you are doing" (`umSelfCard_`: plan,
+  numbers, account, comments). `unitAgents_` lists each agent once.
+- **No Salesforce links for anyone without a login** (19 October 2026: "they
+  are only allowed to post where the task is open, view the history, and they
+  can speak, but don't allow them to open in Salesforce"). Unit Managers with no
+  login (`noSfLogin_`) and every agent: task links in their morning, 5:30pm and
+  agent mails go to their own comment page (`f=um`, `f=umeve`, `f=ag`, anchored
+  `#i<id>`); those pages show `chatterNotes_` (latest two, the whole history a
+  tap away) and the `SPEAK_PH` box; the command centre drops "Open in
+  Salesforce" for them. Ricky and the staff keep their Salesforce links.
+- **Day items in pieces** (`bigPut_`/`bigGet_`): the unit, agent, plan and
+  fact-find lists were cut at 8,900 characters, and cut JSON read back as
+  nothing. They are kept in 8,000-character pieces now.
+- **The mailbag leaves at 12 noon** (`mailbagLeaves_`, Script Property
+  `MAILBAG_AT`): documents to the router by 11:45; the 11:15 call
+  (`sendMailbagCall_`) goes to the router and everyone holding documents; the
+  morning cards and the before-you-leave check say the 12 noon bag; anything
+  collected after it goes in tomorrow's bag. Pinned in `tests/test-unit.js`.
+- **My unit** (`unitPage_`/`unitSave_`, f=`unit`, 19 October 2026): the Unit
+  Manager's one page, on one link that works every day (`unitSig_`, signed with
+  'always' like My day; `showUnitLink()` logs it). A brief (API pace as at today,
+  pendings, agents planned, his plan) and "Do these first" (`unitPriorities_`:
+  plan not set, a staff note asking him by name, an absent agent, an overdue
+  pending with who holds it, an agent asking for help, behind API pace, an open
+  performance letter, no goal plan, no fact find this week, a task untouched 14+
+  days), each with its reason and a jump to its place. Tabs: Today (plan and
+  done side by side for every UM_CHECKS number, his agents today, a task for a
+  desk), Unit work (who holds the unit's work, by desk; every open task with the
+  history and a type-or-speak box), Agents (the unit against its FY27 goals,
+  then each agent), You (his own goal, manager numbers this week, coaching notes,
+  his week). One Save posts comments as his, keeps plan/done via `mgrWrite_`,
+  makes desk tasks, signs him in. Nothing links to Salesforce. First button in
+  his 6am, 11am and 5:30pm mails. Ricky's 11am/3pm mail links a read-only view
+  (f=`unitv`, `unitViewSig_`, a disabled fieldset, no form). Pinned in
+  `tests/test-hub.js`.
+- **The scoreboard** (`scoreboard_`, `sbBars_`/`sbMeter_`/`sbSplit_`/`sbDots_`,
+  19 October 2026): every role's page opens with up to four numbers, each with
+  a little inline-SVG chart drawn to scale and each a link (data-go, `sbJs_`) to
+  the detail behind it. My day (`meScore_`: branch closed, waiting on you, plan
+  met, you closed), My unit, Your day (`agScore_`, with "Your year"), Your plan
+  (`ssScore_`), Your errands (`errScore_`), Before you leave (`hkScore_`). The
+  five-day bars read closed tasks per desk per day once (`deskClosedOn_`, kept
+  as `dk_<day>` for three weeks). Pages only: Outlook does not draw SVG.
+- **The register at both ends** (`NOCLOSE`, 19 October 2026): Before you leave
+  is the sign-out (sign-out ticked by default); each planned task not done needs
+  a reason and a new date (`commitRow_`/`commitTasks_`: the date patched on the
+  task, the reason on its Chatter). No automatic sign-out at the finish any more:
+  a reminder at the finish (`notClosedReminder_`), and at finish + 30
+  `markNotClosed_` writes "Did not close the day" on the register (Status
+  unchanged; Script Property NO_CLOSE_MARK=absent marks absent instead), mails
+  the person cc Ricky and sales support, flags two in a week. The next morning's
+  plan opens with yesterday first (`yesterdayOpen_`, inputs yr_/yd_) and does not
+  save until it is accounted for (`ncdone_`). Pinned in `tests/test-score.js`.
+- **The BMA's page** (`bmaScore_`, 19 October 2026): Kamla's plan page opens on
+  her job: her desks today (a dot each: in, planned, absent), Mr Rampersad's
+  instructions with no note yet (hers and her desks'), the desks' work gone
+  quiet (bars by desk, hers as "You"), Query Pal by age; each opens a card below
+  the plan. `planTally_` counts the day's plan live until the block closes, so
+  Before you leave and the 4pm report no longer read "no plan" before the close.
+- **The agent's projection and the balance** (`AGENT_METRICS` p/d/s, `agBalance_`,
+  19 October 2026): Ricky, "you can't say calls made. It's projected calls to be
+  made ... they balance off at the end of the day." The morning mail and page ask
+  what is to be done (`p`: Calls to make, Appointments to set ...), never what was
+  done; the 5:30 page asks what was done (`d`) with "you projected N" beside each
+  line and the balance as it is typed (`.agbal`, `data-proj`; filled server-side
+  when reopened). The saved close shows the day balanced (`agBalanceCard_`); the
+  copy to the manager and support carries projected, done, balance and the total
+  in its subject; the managers' table reads "Projected · done · balance". Sheet
+  columns stay Planned/Done. Statuses: projection in / no projection yet / absent
+  (no projection). Pinned in `tests/test-balance.js`.
+
+- **A close-off with no address is not sent (19 Oct 2026, 2026-10-19j).** `hkSend_` reports whether the close-off really went; with no e-mail on the Acess tab the day stays open (scheduled run counts it as a failed try; `sendHousekeepingNow` logs "NOT sent, no e-mail address on the Acess tab"). `resendCloseOffNow()` (editor) sends today's close-off again even where the day is marked. Pinned by `tests/test-closeoff-address.js`.
+
+- **Unit Manager links open his page, with the task's history and a box (19 Oct 2026, 2026-10-19k).** `noSfLogin_` is true for every `UM_DESKS` member (and for an inactive Salesforce user): Akaash's 5:30 mail had sent "open →" to Salesforce because a user record carries his e-mail, and there he could not see Darryl's history or post. Comment links carry `&i=<taskId>`; `umReplyPage_`/`umEveReplyPage_` open with "The task you opened" (whole history, its own box, **Post my comment**). `umEveReplySave_` posts comments first: `only=1` posts them alone, and an account with blanks keeps the comments posted and the numbers typed. Pinned by `tests/test-um-comment.js`.
+
+- **My unit: filters, and his agents' queries beside the pendings (19 Oct 2026, 2026-10-19m).** Unit work opens with a sticky filter bar (`unitFilterBar_`), kept plain after Ricky called the first version cluttered: two drop-downs (an agent; what to show: Everything, Pendings, Client queries, New business, Retention, Other, Overdue, Quiet 7+ days, No notes yet, each counted) and a search box (client, policy number, any word). "Who holds your unit's work" sits below the lists, and each item's line is short (who has it, due, notes) with status and untouched inside. Items carry `data-ag/kind/late/quiet/nonote/q` (`unitFilterAttrs_`); `UNIT_FILTER_JS` does the rest in the page; in Ricky's read-only view the bar is moved out of the disabled fieldset so it still works. `unitModel_` adds `m.queries` (open Query Pal queries for the unit's agents) and `m.qpc` (their trails); a query opens to reference, policy, turnaround, days open, follow-ups, description and the whole trail. A note on a query (`q_<i>`) goes on Query Pal's Comments tab through `qpNote_`, role staff, marked **internal** in the unheaded sixth column, so the client never sees it. Each agent card counts his queries and has "<name>'s pendings and queries →", which opens Unit work filtered to him. "Quiet" ignores Query Pal's own System progress mails. Pinned by `tests/test-unit-filters.js`.
+- **Pick an agent on My unit: his day, and a note with no task (19 Oct 2026, same version).** Ricky: "if there are no tasks he should know, and an area to place comments on if he does not see anything". Every agent is in the agent drop-down, even with nothing open. Picking him shows `unitAgentDayCards_`: status, what he projected, done and balance after the close, API pace and fact finds this week, "Nothing open for <name>: no pendings, no client queries" when so, his last notes, and a box `an_<name key>`. A note goes to the tracker's **Manager Notes** tab (`MGRNOTE`: Date, Agent, From, Note, At, Sent) and into the agent's next morning e-mail under "From your manager" (`umNotesUnsent_`, last 7 days); it is marked Sent only when the mail really goes to the agent (AGENT_DAY live), never on a preview. The page keeps its agent list (`unit_ags_`) for the save.
+
+- **Branch Intelligence asks why on quiet and re-dated tasks (19 Oct 2026, 2026-10-19n).** Ricky: "use AI intelligence: if there are no Chatter notes on a task, especially over 3 days, post a note asking why, especially when tasks are being moved forward." Once each weekday at 9:15 (`housekeepingTick_`, key `chase_<day>`), `chaseQuiet_` reads the desks' open tasks due within 7 days or overdue (`chaseTasks_`, owners = `DAY_MAIL_DESKS` with a Salesforce user), keeps a daily snapshot of due dates (`due_snap`) and logs every forward move on the **Due Moves** tab (`DUEMOVES`, Noted yes/no). It posts one Chatter note headed `Branch Intelligence · <date>` on a task moved with no note (first) or with no note from a person in `CHASE.QUIET_DAYS` (3) days, never twice in `CHASE.EVERY_DAYS` (3), at most `CHASE.MAX` (30) a day. `chaseWrite_` has Claude write each note from the task and its notes when `ANTHROPIC_API_KEY` is set (model `ANTHROPIC_MODEL` or `CLAUDE_READ.MODEL`), a plain question otherwise or on any failure. Mr Rampersad gets the list (`chaseReport_`). `CHASE_QUIET = off` stops it; `chaseQuietPreview()` shows what would be asked, posting nothing; `chaseQuietNow()` runs it. The history under a task (My unit, the command centre) shows its date moves (`dueMovesByTask_`, `dueMovesLine_`), opened date and client. Pinned by `tests/test-chase.js`.
+- **My branch for Mr Rampersad (same version).** "And me?": `unitUrl_('ricky')` opens the My unit page for the whole branch: `unitAgents_('ricky')` → `branchAgents_()` (every active Skill Bank agent, by unit), the agent drop-down grouped by unit (`<optgroup>`), posts signed `Branch Manager` (`unitRole_`). A **My branch** button is in his 5am mail; `showBranchLink()` logs the link.
+- **My tasks on My branch (20 Oct 2026, same version).** Ricky: "my opened task by type I am not seeing, and a tick for me to close off, or move the date forward". For `ricky` the page has a **My tasks** tab (`myTasks_`, `myTasksSec_`): his open Salesforce tasks grouped by type (most overdue first), each with its status, client, opened date, date moves and history, a **Done: close it** tick (`done_<id>`), a **move to a new date** box (`mv_<id>`) and a note (`c_<id>`). A move needs a note saying why (refused otherwise); the note goes on the task; the move is logged on Due Moves as noted. Every close and move is kept with before and after on a **Task Changes** tab (`TASKCHG`, `taskChangeLog_`) for undo. His own tasks show only on My tasks, not again under Branch work. `DUEMOVES.must` includes `Noted` so it is never mistaken for Workload Moves (same four other headers); `dueMovesByTask_` also reads Workload Moves (the tracker's own re-dates, with their reason).
+
+- **The agents, ready to go live (20 Oct 2026, 2026-10-20a).** Ricky: "remove from the agents the underperformance letters … just as Akaash, have the task open on the agent's pendings, the ability to post an update in a text field that will send it directly to Chatter … I would like to activate this morning." The agent's morning mail no longer carries `agLetter_`. Each task link says "open & comment" and carries `&i=<taskId>`; `agReplyPage_` opens with "The task you opened" (who has it, due, date moves, the whole history, its box, **Post my update**), the rest listed with a box each and **Post my updates**. `agReplySave_` posts updates first: `only=1` posts them alone; a projection or close-off with blanks keeps the updates posted and the numbers typed. Previews use `agp_` marks, so this morning's previews never stop an agent's own mail once `AGENT_DAY` is live (the morning window runs to 10:00, eight agents a run). Pinned by `tests/test-agent-ready.js`.
+
+- **Renewals and premiums owed on My branch (20 Oct 2026, 2026-10-20b).** Ricky: "built into my module … the renewals that are coming for the week, tomorrow, and for the month, and year-to-date analytics, as well as the open tasks associated with renewals, the ability to move forward the task, comment on the task, and premiums that are owed for the month and year-to-date, and what is happening with it." For `ricky` My branch has a **Renewals** tab (`rnModel_`, `renewSec_`), between My tasks and Branch work. General insurance: `rnRisks_` reads Risk_Details__c (one query, terms ending this year and successors to March two years on); a term renews the day after its cover ends (`Next_Renewal_Date__c` when it is within 3 days of `To__c`, else `To__c` + 1); duplicate rows (policy, vehicle, end date) count once; renewed = a later term (60+ days on) on file for the same policy and vehicle, or the same vehicle under a new number. Tiles: tomorrow, next 7 days, the month, renewed so far this year (count and premium due, never "owed"); lists for today, tomorrow, the rest of the week, the rest of the month and "due earlier this month, no renewal on file", each showing the renewal on file, or its task and last note, or that nothing is on it; month-by-month bars (`rnMonthsSvg_`) and table; the year's no-renewal list, largest first. Open tasks (`rnTasks_`): the `Renewa/PDl/Bill` type, any open task on a risk renewing this month (WhatId), any open task naming a policy under premiums owed; his own stay on My tasks; each has a note (`rc_<id>`) and a new date (`rmv_<id>`, needs a note, not in the past), logged on Task Changes and Due Moves; renewal tasks no longer repeat under Branch work. Life premiums owed (`rnLife_`, from `iLoadCache_().dues`, a digest kept 20 minutes in CacheService as `rn_life_<day>`): owed now, fell due in the last 30 days (0–30 band), since 1 January (chase list paid-to ≥ 1 Jan plus the 0–30 band), lapsed this month and year, the ageing bands, lapsing next (15, soonest), lapsed this month (12, largest), owed 31+ days by agent; what is happening on each = the open task naming the policy, else the last one closed in 30 days (`rnClosedFor_`), else "no one is on it". Do these first gains "renewals due by tomorrow with nothing on file" and "life policies lapsing within a week with no one on them". Pinned by `tests/test-renewals.js`.
+
+- **The inbox scrub and My day for the Branch Manager (20 Oct 2026, 2026-10-20c).** Ricky: "it scrubs the inbox and see what urgent things should I actually go to in terms of planning my day. And when it's done, the progress check if it's completed or not", then "simplify this view and a button to plan my day or login ... when I check in, it has the time I check in, then I go into my urgent, my drafts, the inbox, and then I look at what is important. But everything I touch, email, reply on, it's written in a progress report as the day goes by." **Inbox** (`inboxScrub_`, `inboxRead_`, `inboxParse_`, `inboxConvs_`, `inboxSort_`, tab **Inbox Scrub** `INBOXTAB`): reads the tracker's Gmail inbox (`GmailApp`, needs the Gmail permission once: run `inboxScrubNow`), Primary and Updates; GoDaddy's "New message for querymypolicy.com" notices are copies of the branch mailbox (support@) and are unwrapped to the real sender and subject. Grouped by conversation (subject without Re:/Fw:, `inboxNormSubj_`); dropped when his own message is newest (`inboxSelf_`), automated (`INBOX_AUTO`) or an auto-reply (`INBOX_AUTOSUBJ`). Claude sorts the rest (now/today/later/none, why, ask, owner, gist; mail text is data, not instructions), rules otherwise (`inboxRule_`). Dealt with when ticked, when he or the owning desk replied on the thread since, or when its task is closed. Read at 5:00 (in the morning mail), every hour 6:00–15:30 (tick key `inbox_hr`), and before the 11:00 and 3:00 mails; `INBOX_SCRUB = off` stops it; `inboxScrubPreview()` writes nothing. **My day** is the first tab of My branch for `ricky` (`bmdSec_`): a check-in button (`ci`, logs the time) then 1 Urgent (`bmdUrgent_`), 2 Drafts (Gmail drafts `gmailDrafts_`; notes written for him `bmdDrafts_`: replies to people asking him, chases on his instructions with no note, Claude's notes on his quiet tasks; each posts only with its tick `dp_<id>`, text `dn_<id>`), 3 Inbox (`inboxCard_`: `ixd_` done, `ixt_`/`ixw_` make it a Salesforce task for a desk, `ixn_` note), 4 Important (his open tasks grouped by `dayGroup_`, each with close/move/note/in hand and why from `bmdAdvice_`: rules on the page, Claude's reading warmed hourly by `bmdWarm_` and kept 6 hours as `bmd_adv_<day>`; `done_`/`mv_`/`c_` as before), 5 Today so far (tab **My Day Log** `DAYLOG`, `dayLogMany_` once per Ref: check-in, his Gmail replies and his Guardian replies copied to the branch mailbox `dayLogEmails_`, notes/closes in his own Salesforce name `dayLogSalesforce_`, every note, close, move, task and inbox action from the page; where his time went against where the work needs him, `bmdFocus_`). The My tasks tab is gone for him (now Important); the brief tiles moved to Branch work, his agents' day to Agents, his numbers and a task for a desk fold at the foot of My day. The 5:00 mail: one button (Check in and start my day), urgent, the inbox, the tiles and the team. The 11:00 and 3:00 mails lead with Today so far (`bmdMailSoFar_`), still urgent and the inbox dealt with N of M, with one Open my day button. Pinned by `tests/test-inbox.js`.
+
+- **The system sets each desk's day; checking in is the register (20 Oct 2026, 2026-10-20d).** Ricky: "this system actually plans their day for them and they check in. When they check in, it's a attendance register" and "tasks are broken down by task types ... can intelligence be built in so they can work more or less effectively to the task that's assigned?" `PLAYBOOK` (first match on the subject wins: cancel, former agent, call me, premium owed or not showing, what the policy pays, what it has built, new agent, wrote in, contact details, contract, application, medical, form, underwriting, change of beneficiary, SQ, renewal, collect, group, claim, change), then `PLAYBOOK_BY_TYPE`; `playbookFor_` adds the last note, days quiet, what it waits on and the next step. With `SYSTEM_DAY` not `off`, every desk but Pawan gets `sdPage_` for `f=plan`/`f=in`: check in (`sdCheckin_` = `signInFromPage_` + the day written as the KPI1 plan, "Set by the system at check-in"), yesterday first, the work list (moved first, then the plan, else the model's suggestions, else the open book: `sdList_`) each with its playbook and close (needs a note) / move (needs a reason and a later date) / note, logged on Task Changes and Due Moves; Query Pal notes (`q_i`), the scrub, take the next (`t_take`). `intelTarget_` for the system day: due today + overdue/5, never under the desk's median. The morning mail's one button: "Check in and start my day". `sdPrune_` drops working copies older than 21 days. Pinned by `tests/test-sday.js`.
+
+- **Absence and cover: two clocks (20 Oct 2026, 2026-10-20e).** Ricky: "I would like the absent rule to be applied 5 minutes after sign-in ... unless she goes back and she can change it. The same applies to everybody", "the staff who is absent, the task will have to be automatically reassigned as staff gets their day, so the day will have to now be readjusted", then "cater for all of these things ... agents as well, managers, BMA, everyone who operates in the operation." **Register:** `ABSENT_AFTER_MIN = 5`, `ATT_GRACE_MIN = 5` (in after start + 5 is late); `autoAbsentTick_` covers `DAY_MAIL_DESKS` and `UM_DESKS` (Akaash). `recordAttendance_` turns any absence with no sign-in (the clock's or a manager's) into in, late by the minute, and calls `coverReturn_`. **Cover** (`coverTick_`): the work moves at start + `COVER.AFTER_MIN` (30), at the start when the absence was marked ahead by a person (MarkedBy not `tracker`); a second pass (`cover2_<sid>_<day>`) at max(8:15, first + 15) reaches the eight o'clock desks; ACTION REQUIRED posts on the first pass only. Each receiver takes no more than `coverCap_` (their pace, 5 to `PER_RECEIVER`) in a day across every absence (`cover_got_<day>`). `COVER.KEEP.kamla` (staffing and licensing, training, RR operations, innovation) stays with the BMA (`plan.own`, a tile in the mail to Mr Rampersad). `coverAbsorb_`: moved tasks go to the top of a checked-in receiver's KPI1 plan and as many of their own lowest open items go to "when your list is done", so the day keeps its size. `coverReturn_`: checking in before `RETURN_UNTIL` (noon) moves back each of today's OK moves still open and in the receiver's name that the receiver has neither noted nor changed (script posts MOVED/ACTION/BACK do not count), with a BACK note, out of the receiver's plan and count. `BRANCH_CLOSED` (Script Property, dates) marks and covers nobody. Pawan and Akaash are on the register and nothing of theirs moves; Mr Rampersad is on neither. Pinned by `tests/test-cover.js`; `tests/test-attendance.js` has the five-minute grace.
+
+- **The game for the staff desks (20 Oct 2026, 2026-10-20f).** Ricky: "can we gamify this a lot more so the staff will not feel overwhelmed? ... really have everybody in it and not make it mundane", then "build this first for staff, then agents afterwards." `GAME.DESKS` (sasha, elizabeth, azariah, kamla); agents next. **Scoring** (`gameRange_` = `gameCloses_` + `gameCtx_` + `gameScoreDay_`): a close counts only with a proper note (`gameProperNote_`: 25+ characters, five words, not MOVED/ACTION REQUIRED/BACK/IDEA ACCEPTED/Branch Intelligence) in the person's name (CreatedById, or the day page's header line "· Full Name ·", `gameNoteHead_`) within 7 days before the close; a copied note (`gameNoteKey_`, digits ignored) counts once. 1 a close, +2 high-payoff (`payoffOf_` rank 1–3), +1 a month overdue, +1 a task moved to them (Workload Moves, 14 days); Query Pal closed inside its turnaround 1 (`Assigned To` via `gameWho_`, Liz alias); on time 1; signed out 1; each quest +2; par +3 (every KPI1 plan item closed with a note or moved with a reason on Task Changes, two in three closed); each idea accepted +3. `work` = closes + Query Pal, the figure weeks are compared on. **Kept**: tab **Game Days** (`GAMETAB`), `gameSave_` hourly 6:00–18:30 from `gameTick_` (the first run of a day re-reads the last five working days so a reopened task drops out; the first run ever reads the last 20, `gameBackfillNow`), today live in CacheService `game_all_<day>` for 5 minutes (`gameForget_` on every Save). **Quests** (`gameQuests_`, `game_q_<sid>_<day>`, chosen once): save the client who wants to cancel / former agent / call me, else the top high-payoff; the two oldest overdue; the Query Pal past turnaround, else the work moved to them; else par an hour before the end. **Streak** (`gameStreak_`): on-time check-ins from the Attendance tab, today once in; leave marked ahead by a manager is neutral, a closed branch is skipped, the first miss of a month is forgiven. **Skills** (`gameSkills_`, `GAME_SKILL` by playbook kind, levels at 5/15/30/60/100). **The week** (`gameGain_`): work points Monday to today against the same days of their own last four weeks; best day yet. **The branch's bar** (`gameGoal_`, `game_goal_<monday>`): overdue across the desks at the week's first read, goal 25% under it (`GAME_GOAL_CUT`). **Page**: `gameCard_` above the work (ring `gameRing_`, points, week, streak, quests, thanks received, what earned nothing and why, the bar, skills, how points work); the work card shows the next three and folds the rest (`GAME.NEXT`); `gameThanksForm_` after an absence (`cover_back_`, Workload Moves less BACK) and `gameIdeaForm_` (an Innovation & Creativity task due Friday, not on today's list), saved by `gameSaveForm_` into tab **Game Log** (`GAMELOG`). **Morning mail** (system day): `gameMailCard_` replaces the overdue / due today / planned tiles. **Mr Rampersad**: My day card 6 `gameBmSec_` (the bar, each person's ring and line, ideas to accept `gia_<taskId>` → Game Log + an IDEA ACCEPTED Chatter post, `gameBmSave_`; the week's awards with the WhatsApp text in a copy box); Friday 13:00 `gameAwardsMail_` to him alone. **Awards** (`gameAwards_`): Client Saver (cancel + former kinds + retention closes), Clean Sweep (a month old), Team Player (cover + 2 × thanks), Quest Master, Most Improved (gain, usual ≥ 5), Best Note (`gameBestNote_`: Claude picks once a day, else the longest), Idea of the Week (accepted this week); `gameAwardsText_` single-asterisk bold, no emojis, no client. **Wall**: `case 'wall'` returns `game: gameWall_()` (first names, par, quests, streaks, gains, thanks, award titles; no points, task, client or note); `wall/index.html` slide 13 `sGame` appears only when it is there. `GAME = off` hides everything. Pinned by `tests/test-game.js`.

@@ -116,7 +116,7 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   ok('and the self assessment 90%', /90%/.test(t));
   ok('with the standard named', /standard of 72%/.test(t));
   ok('and how the number is made', /× 80/.test(t) && /× 20/.test(t));
-  ok('the evidence sits under the goal', /27 blocks worked/.test(t) && /401 closed in Salesforce/.test(t));
+  ok('the evidence sits under the goal', /27 days logged/.test(t) && /401 closed in Salesforce/.test(t));
   ok('with a line of what was actioned', /14 processed/.test(t));
   ok('the person\'s half is theirs to write', /Self assessment\s+· yours/i.test(t));
   ok('the People Leader\'s half is read-only, and shown', /Consistent and on time/.test(t));
