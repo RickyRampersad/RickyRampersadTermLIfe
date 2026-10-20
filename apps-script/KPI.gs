@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-19m';
+var SCRIPT_VERSION = '2026-10-19n';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3657,6 +3657,10 @@ function housekeepingTick_() {
     if (mins < at || mins > at + HK_WINDOW_MIN || props.getProperty(key)) return;
     if (timedSend_(props, key, now, function () { return sendMeNudge_('ricky', day, at); })) sent.push('Branch Manager check-in');
   });
+  // Branch Intelligence asks why on quiet and re-dated tasks, once a weekday at 9:15.
+  if (chaseOn_() && mins >= CHASE.AT && mins <= CHASE.AT + HK_WINDOW_MIN && !props.getProperty('chase_' + day)) {
+    if (timedSend_(props, 'chase_' + day, now, function () { return chaseQuiet_(day, false).posted > 0; })) sent.push('Branch Intelligence follow-ups');
+  }
   BM_PROGRESS_AT.forEach(function (at) {
     var key = 'bmprog_' + at + '_' + day;
     if (mins < at || mins > at + HK_WINDOW_MIN || props.getProperty(key)) return;
@@ -4293,7 +4297,8 @@ function sendBranchManagerDay_(day) {
       { value: sfOk ? mineLate : '—', label: 'of them overdue', color: mineLate ? MAIL.red : MAIL.navy },
       { value: sfOk ? w.ask.length : '—', label: 'notes asking you', color: w.ask.length ? MAIL.red : MAIL.navy },
       { value: sfOk ? w.ignored.length : '—', label: 'your instructions, no note', color: w.ignored.length ? MAIL.red : MAIL.navy }
-    ]) + (function () { try { return bmYesterdayLine_('ricky', day); } catch (e) { return ''; } })() + meButton_('ricky') + cmdButton_('ricky', day) + replyButton_(replyUrl_('ricky', day, 'um'), 'Plan my day and sign in', 'One tap, no password. Comment on your own tasks, set your numbers for the day; saving signs you in.') + answer +
+    ]) + (function () { try { return bmYesterdayLine_('ricky', day); } catch (e) { return ''; } })() + meButton_('ricky') + cmdButton_('ricky', day) +
+    replyButton_(unitUrl_('ricky'), 'My branch', 'Every agent and every unit: pick an agent for his day, his pendings and queries, and a note. The same link every day.') + replyButton_(replyUrl_('ricky', day, 'um'), 'Plan my day and sign in', 'One tap, no password. Comment on your own tasks, set your numbers for the day; saving signs you in.') + answer +
     mgrDayCard_('ricky', day, bmDayItems_(day, w), 'Your day, filled with what is outstanding: your own tasks, what is waiting on you, the orphans to assign, and the agents who need you. Plan it from the first button; saving signs you in.') +
     sectionLabel_('The branch in full') +
     bmBranchCards_(day) +
@@ -4528,6 +4533,7 @@ function unitAgents_(sid) {
   var props = PropertiesService.getScriptProperties();
   var forced = props.getProperty('UNIT_AGENTS_' + sid);
   if (forced) return forced.split(',').map(function (s) { return s.trim(); }).filter(String);
+  if (sid === 'ricky') return branchAgents_();
   var me = nameFor_(sid), out = [me];
   try {
     var sb = skillBank_(), mine = [];
@@ -4550,11 +4556,27 @@ function unitAgents_(sid) {
   return out;
 }
 
+/** The whole branch, for the Branch Manager's own page (Ricky, 19 October 2026:
+ *  "And me?" — every agent, every unit). Every active agent on the Skill Bank,
+ *  Mr Rampersad first; his page groups them by unit. */
+function branchAgents_() {
+  var me = nameFor_('ricky'), out = [me], seen = {}; seen[bkNk_(me)] = 1;
+  try { var sb = skillBank_(); Object.keys(sb).map(function (k) { return sb[k]; })
+    .filter(function (p) { return p.isAgent && p.active; })
+    .sort(function (a, b) { return String(a.unit || '').localeCompare(String(b.unit || '')) || String(a.name).localeCompare(String(b.name)); })
+    .forEach(function (p) { var k = bkNk_(p.name); if (!seen[k]) { seen[k] = 1; out.push(p.name); } }); } catch (e) {}
+  return out;
+}
+/** Who the page is for: the Branch Manager's whole branch, or a Unit Manager's unit. */
+function unitRole_(sid) { return sid === 'ricky' ? 'Branch Manager' : 'Unit Manager'; }
+/** From the editor: Mr Rampersad's My branch link, to save on his phone. */
+function showBranchLink() { var u = unitUrl_('ricky'); Logger.log(u); return u; }
+
 /** Open and recently closed tasks for the unit's agents. */
 function unitBook_(sid, day) {
   var agents = unitAgents_(sid);
   var inList = agents.map(soqlStr_).join(',');
-  var open = sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__r.Name, What.Name, LastModifiedDate FROM Task' +
+  var open = sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__r.Name, What.Name, LastModifiedDate, CreatedDate FROM Task' +
     ' WHERE IsClosed = false AND Agent__r.Name IN (' + inList + ") AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') ORDER BY ActivityDate ASC NULLS LAST LIMIT 500");
   var since = sfkUtcAt_(lastWorkdays_(day, 1)[0], 0);
   var closed = sfkQuery_('SELECT Id, Subject, Task_Type__c, CompletedDateTime, Owner.Name, Agent__r.Name FROM Task' +
@@ -4562,7 +4584,8 @@ function unitBook_(sid, day) {
   var t = function (r) {
     return { id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
              late: !!(r.ActivityDate && r.ActivityDate < day), agent: (r.Agent__r && r.Agent__r.Name) || '',
-             owner: (r.Owner && r.Owner.Name) || '', touched: daysSince_(r.LastModifiedDate), status: r.Status || '', account: (r.What && r.What.Name) || '' };
+             owner: (r.Owner && r.Owner.Name) || '', touched: daysSince_(r.LastModifiedDate), status: r.Status || '', account: (r.What && r.What.Name) || '',
+             created: String(r.CreatedDate || '').slice(0, 10) };
   };
   var todayFrom = sfkUtcAt_(day, 0);
   return { agents: agents, open: open.map(t),
@@ -4612,7 +4635,7 @@ function bigGet_(key, dflt) {
 function chatterNotes_(chat, id, openAll) {
   var all = (chat || {})[id] || [];
   var one = function (n, full) {
-    var t = String(n.text || ''), head = t.split('\n')[0], ours = /^(Unit Manager|Branch Manager|BMA|Agent)\b/.test(head);
+    var t = String(n.text || ''), head = t.split('\n')[0], ours = /^(Unit Manager|Branch Manager|BMA|Agent|Branch Intelligence)\b/.test(head);
     var who = ours ? head.split(' · ').filter(function (x) { return !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b/.test(x); }).slice(0, 2).join(' · ') : n.by;
     var body = ours ? t.split('\n').slice(1).join(' ').trim() : t;
     return '<div class="br2" style="margin-top:3px">' + (n.reply ? '&#8627; ' : '') + esc_(who) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(full ? body : shorten_(body, 160)) + '</div>';
@@ -5943,7 +5966,7 @@ function unitModel_(sid, day) {
     var p = sb[bkNk_(n)], g = null; try { g = goalFor_(n, p && p.code ? String(p.code) : ''); } catch (e) {}
     var f = (feed && ff360Agent_(feed, [n])) || { week: 0, month: 0, year: 0, pickedUp: 0, pipeline: 0, apps: 0, known: false };
     var mine = open.filter(function (t) { return bkNk_(t.agent) === bkNk_(n); });
-    return { i: i, name: n, first: String(n).split(' ')[0], me: bkNk_(n) === bkNk_(m.name), g: g, f: f, feed: !!feed,
+    return { i: i, name: n, first: String(n).split(' ')[0], me: bkNk_(n) === bkNk_(m.name), g: g, f: f, feed: !!feed, unit: (p && p.unit) || '',
       today: today[bkNk_(n)] || null, letter: letters[bkNk_(n)] || null,
       open: mine.length, late: mine.filter(function (t) { return t.late; }).length, pend: mine.filter(function (t) { return t.ty === 'Pendings'; }).length };
   });
@@ -5953,6 +5976,7 @@ function unitModel_(sid, day) {
   m.qpc = {}; if (m.queries.length) { try { m.qpc = qpComments_(); } catch (e) {} }
   m.agents.forEach(function (a) { a.queries = m.queries.filter(function (q) { return bkNk_(q.agent) === bkNk_(a.name); }).length; });
   m.notes = {}; try { m.notes = umNotes_(day, 30); } catch (e) {}
+  m.moves = {}; try { m.moves = dueMovesByTask_(); } catch (e) {}
   var gs = m.agents.filter(function (a) { return a.g; });
   m.unit = { goal: gs.reduce(function (s, a) { return s + a.g.api; }, 0), pace: gs.reduce(function (s, a) { return s + a.g.paceApi; }, 0),
     picked: m.agents.reduce(function (s, a) { return s + Number(a.f.pickedUp || 0); }, 0),
@@ -6059,7 +6083,12 @@ function unitFilterBar_(m) {
   var cnt = function (f) { return items.filter(f).length; };
   var opt = function (val, label, n) { return n === 0 ? '' : '<option value="' + esc_(val) + '">' + esc_(label) + (n != null ? ' · ' + n : '') + '</option>'; };
   // Every agent is in the list, even with nothing open: picking him shows his day and a box for a note.
-  var ags = m.agents.map(function (a) { var c = cnt(function (x) { return x.ag === bkNk_(a.name); }); return '<option value="' + esc_(bkNk_(a.name)) + '">' + esc_(a.name) + ' · ' + c + '</option>'; }).join('');
+  var agOpt = function (a) { var c = cnt(function (x) { return x.ag === bkNk_(a.name); }); return '<option value="' + esc_(bkNk_(a.name)) + '">' + esc_(a.name) + ' · ' + c + '</option>'; };
+  var units = [], byUnit = {};
+  m.agents.forEach(function (a) { var u = a.unit || 'No unit on file'; if (!byUnit[u]) { byUnit[u] = []; units.push(u); } byUnit[u].push(a); });
+  var ags = m.sid === 'ricky' && units.length > 1
+    ? units.map(function (u) { return '<optgroup label="' + esc_(u) + '">' + byUnit[u].map(agOpt).join('') + '</optgroup>'; }).join('')
+    : m.agents.map(agOpt).join('');
   var views = opt('', 'Everything', items.length) +
     [['k:pend', 'Pendings', function (x) { return x.k === 'pend'; }], ['k:qp', 'Client queries', function (x) { return x.k === 'qp'; }],
      ['k:new', 'New business', function (x) { return x.k === 'new'; }], ['k:ret', 'Retention', function (x) { return x.k === 'ret'; }], ['k:other', 'Other', function (x) { return x.k === 'other'; }],
@@ -6149,7 +6178,9 @@ function unitPage_(person, day, error, notice, view) {
       '<div class="tt"><b>' + esc_(String(t.agent || '—').split(' ')[0]) + '</b> · ' + esc_(t.subject) +
       '<small>with <b>' + esc_(t.owner || 'no one') + '</b>' + (t.due ? ' · ' + (t.late ? 'overdue since ' : 'due ') + esc_(shortDate_(t.due)) : '') +
       ' · ' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') : 'no notes') + '</small></div></div></summary>' +
-      '<div class="br2" style="margin-top:4px">' + esc_(t.status || 'Open') + (t.touched >= 7 ? ' · untouched ' + t.touched + ' days' : '') + (lastAt ? ' · last note ' + esc_(shortDate_(lastAt)) : '') + '</div>' +
+      '<div class="br2" style="margin-top:4px">' + esc_(t.status || 'Open') + (t.created ? ' · opened ' + esc_(shortDate_(t.created)) : '') + (t.account ? ' · ' + esc_(t.account) : '') +
+        (t.touched >= 7 ? ' · untouched ' + t.touched + ' days' : '') + (lastAt ? ' · last note ' + esc_(shortDate_(lastAt)) : '') + '</div>' +
+      ((m.moves || {})[t.id] ? '<div class="br2" style="margin-top:2px;color:' + ((m.moves[t.id][0] || {}).noted ? '#141C4A' : '#B4322B') + '">' + esc_(dueMovesLine_(m.moves[t.id])) + '</div>' : '') +
       chatterNotes_(m.chat, t.id) +
       '<textarea name="c_' + esc_(t.id) + '" rows="2" placeholder="' + esc_(SPEAK_PH) + '" style="margin:8px 0 10px"></textarea></details>';
   };
@@ -6254,7 +6285,7 @@ function unitPage_(person, day, error, notice, view) {
   var body = tabs + sec('today', todaySec) + sec('work', workSec) + sec('agents', agentsSec) + sec('you', youSec);
   if (view) return replyPage_(m.name + ' · My unit · ' + prettyDate_(day), 'What ' + String(m.name).split(' ')[0] + ' sees, as it stands now. Read only: saving is his.',
     bar + brief + firstCard + '<fieldset disabled style="border:0;padding:0;margin:0;min-width:0">' + body + '</fieldset>' + js);
-  return replyPage_('My unit · ' + prettyDate_(day), 'Keep this link on your home screen. It is the same every day. Nothing here needs a Salesforce login.',
+  return replyPage_((sid === 'ricky' ? 'My branch · ' : 'My unit · ') + prettyDate_(day), sid === 'ricky' ? 'Every agent and every unit. Pick an agent for his day, his work and a note. Keep this link on your home screen.' : 'Keep this link on your home screen. It is the same every day. Nothing here needs a Salesforce login.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') +
     bar + brief + firstCard +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' +
@@ -6264,7 +6295,7 @@ function unitPage_(person, day, error, notice, view) {
 
 function unitSave_(person, day, p) {
   var sid = String(person.staffId), name = nameFor_(sid), at = hhmm_(new Date()), out = [], posted = 0;
-  var head = 'Unit Manager · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at);
+  var head = unitRole_(sid) + ' · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at);
   var ids = bigGet_('unit_ids_' + sid + '_' + day, []);
   ids.forEach(function (it) {
     var txt = String(p['c_' + it.id] || '').trim();
@@ -6280,7 +6311,7 @@ function unitSave_(person, day, p) {
     var txt = String(p['q_' + i] || '').trim();
     if (!txt) return;
     var res = 'noted on the query in Query Pal (internal)';
-    try { qpNote_(q.ref, name + ' (Unit Manager)', txt); posted++; }
+    try { qpNote_(q.ref, name + ' (' + unitRole_(sid) + ')', txt); posted++; }
     catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
     out.push({ s: (q.a ? String(q.a).split(' ')[0] + ' · ' : '') + (q.c || q.ref), res: res });
   });
@@ -6312,7 +6343,7 @@ function unitSave_(person, day, p) {
     var res = '';
     try {
       var id = sfkInsert_('Task', { Subject: l.slice(0, 255), OwnerId: tgt.id, ActivityDate: capd, Status: 'Not Started', Task_Type__c: 'RR Operations',
-        Description: 'From ' + name + ' (Unit Manager) on My unit at ' + twelve_(at) + '.' });
+        Description: 'From ' + name + ' (' + unitRole_(sid) + ') on ' + (sid === 'ricky' ? 'My branch' : 'My unit') + ' at ' + twelve_(at) + '.' });
       try { sfkInsert_('FeedItem', { ParentId: id, Body: head + '\n\n' + l + '\n\nNote here what you will do and by when.' }); posted++; } catch (e) {}
       res = 'task for ' + String(tgt.name).split(' ')[0] + (capd !== day ? ', due ' + shortDate_(capd) : ', due today');
     } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
@@ -6743,6 +6774,8 @@ function cmdHistory_(it, ctx) {
   var out = [];
   if (it.k === 'sf') {
     (ctx.chatter[it.id] || []).forEach(function (c) { out.push({ d: c.day, by: c.by + (c.reply ? ' (reply)' : ''), text: c.text }); });
+    try { (dueMovesByTask_()[it.id] || []).forEach(function (mv) { out.push({ d: mv.day, by: 'Due date', text: 'moved ' + shortDate_(mv.from) + ' → ' + shortDate_(mv.to) + (mv.noted ? '' : ', with no note') }); }); } catch (e) {}
+    out.sort(function (a, b) { return String(b.d || '').localeCompare(String(a.d || '')); });
   } else if (it.src === 'Performance letter') {
     var p = ctx.ppm[it.ref] || {};
     if (p.bm) out.push({ d: p.bm.d, by: 'Your comment', text: p.bm.text });
@@ -7030,6 +7063,145 @@ function agentSection_(f) {
         '<div style="font-size:12.5px;color:#6A7180">' + (r.last ? 'last in Salesforce ' + esc_(shortDate_(r.last)) + ' (' + r.since + 'd)' : r.ff ? 'on FactFind360, not yet in Salesforce' : 'no fact find on record') + (r.pickedUp ? ' · picked up ' + ff360Money_(r.pickedUp) : '') + (r.goalWk ? ' · goal ' + r.goalWk + '/week' : '') + '</div></div>';
     }).join('') + '</div>';
 }
+
+/* ── Branch Intelligence asks why (19 October 2026) ───────────────────────────
+   Ricky: "use AI intelligence: if there are no Chatter notes on a task,
+   especially over 3 days, post a note asking why, especially when tasks are
+   being moved forward." Once each weekday at 9:15 the tracker reads every open
+   task the desks hold (due within the week, or overdue), and posts one note on
+   a task that has gone 3 days with no note from a person, or whose date was
+   moved forward with no note. The note is written by Claude when the
+   ANTHROPIC_API_KEY Script Property is set (it reads the task and its notes and
+   asks the right question), plainly otherwise. At most 30 a day; never the same
+   task twice in 3 days; Mr Rampersad gets the list. CHASE_QUIET = off stops it. */
+var CHASE = { QUIET_DAYS: 3, MAX: 30, AT: 9 * 60 + 15, EVERY_DAYS: 3, AHEAD: 7 };
+var DUEMOVES = { must: ['Date', 'TaskId', 'From', 'To'], name: 'Due Moves', head: ['Date', 'TaskId', 'Subject', 'Owner', 'Agent', 'From', 'To', 'Noted'] };
+function chaseOn_() { return !/^(off|no|0|false)$/i.test(String(PropertiesService.getScriptProperties().getProperty('CHASE_QUIET') || 'on').trim()); }
+function chaseOurs_(n) { return /^Branch Intelligence\b/.test(String(n.text || '')); }
+
+/** The desks' open tasks due within the week or overdue. */
+function chaseTasks_(day) {
+  var users = sfkUsers_() || {}, ids = [], bySf = {};
+  DAY_MAIL_DESKS.forEach(function (sd) { var u = users[sd]; if (u && u.id && u.active !== false) { ids.push("'" + u.id + "'"); bySf[u.id] = sd; } });
+  if (!ids.length) return [];
+  return sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, CreatedDate, OwnerId, Owner.Name, Agent__r.Name, What.Name FROM Task' +
+    ' WHERE IsClosed = false AND OwnerId IN (' + ids.join(',') + ') AND ActivityDate <= ' + shiftDays_(day, CHASE.AHEAD) +
+    " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') ORDER BY ActivityDate ASC LIMIT 600")
+    .map(function (r) { return { id: r.Id, subject: shorten_(r.Subject, 140), ty: r.Task_Type__c || '', due: r.ActivityDate || '', status: r.Status || '',
+      created: String(r.CreatedDate || '').slice(0, 10), owner: (r.Owner && r.Owner.Name) || '', desk: bySf[r.OwnerId] || '',
+      agent: (r.Agent__r && r.Agent__r.Name) || '', account: (r.What && r.What.Name) || '' }; });
+}
+
+/** Dates moved forward since the last look, from a daily snapshot of each task's due date; each move is logged on the Due Moves tab. */
+function chaseMoves_(tasks, day, chat) {
+  var snap = {}; try { snap = bigGet_('due_snap', {}) || {}; } catch (e) {}
+  var prevDay = snap.day || '', prev = snap.due || {}, moved = {};
+  if (prevDay && prevDay < day) tasks.forEach(function (t) {
+    var was = prev[t.id]; if (!was || !t.due || t.due <= was) return;
+    var noted = ((chat || {})[t.id] || []).some(function (n) { return !chaseOurs_(n) && n.day && n.day >= prevDay; });
+    moved[t.id] = { from: was, to: t.due, since: prevDay, noted: noted };
+    try { var sh = hrTab_(DUEMOVES, true), head = headerOf_(sh), o = { Date: day, TaskId: t.id, Subject: t.subject, Owner: t.owner, Agent: t.agent, From: was, To: t.due, Noted: noted ? 'yes' : 'no' };
+      sh.appendRow(head.map(function (h) { return o[h] != null ? o[h] : ''; })); } catch (e) {}
+  });
+  if (prevDay !== day) { var cur = {}; tasks.forEach(function (t) { if (t.due) cur[t.id] = t.due; }); try { bigPut_('due_snap', { day: day, due: cur }); } catch (e) {} }
+  try { forgetHr_(DUEMOVES); } catch (e) {}
+  _dueMovesMemo = null;
+  return moved;
+}
+/** Every logged date move by task, newest first: for the history under a task. */
+var _dueMovesMemo = null;
+function dueMovesByTask_() {
+  if (_dueMovesMemo) return _dueMovesMemo;
+  var out = {};
+  try { (hrRows_(DUEMOVES, false) || []).forEach(function (r) {
+    var id = String(r.TaskId || ''); if (!id) return;
+    (out[id] = out[id] || []).push({ day: isoDay_(r.Date), from: isoDay_(r.From) || String(r.From || ''), to: isoDay_(r.To) || String(r.To || ''), noted: /^y/i.test(String(r.Noted || '')) });
+  }); } catch (e) {}
+  Object.keys(out).forEach(function (k) { out[k].sort(function (a, b) { return String(b.day).localeCompare(String(a.day)); }); });
+  return (_dueMovesMemo = out);
+}
+function dueMovesLine_(moves) {
+  if (!moves || !moves.length) return '';
+  var m0 = moves[0];
+  return 'due date moved ' + moves.length + (moves.length === 1 ? ' time' : ' times') + ' · last ' + shortDate_(m0.from) + ' → ' + shortDate_(m0.to) + (m0.noted ? '' : ', with no note');
+}
+
+/** The tasks to ask about, worst first: moved with no note, then the longest quiet. */
+function chasePick_(tasks, chat, moved, day) {
+  var out = [];
+  tasks.forEach(function (t) {
+    var notes = chat[t.id] || [], ours = notes.filter(chaseOurs_)[0], human = notes.filter(function (n) { return !chaseOurs_(n); })[0];
+    if (ours && ours.day && daysBetween_(ours.day, day) < CHASE.EVERY_DAYS) return;
+    var mv = moved[t.id], quiet = human && human.day ? daysBetween_(human.day, day) : (t.created ? daysBetween_(t.created, day) : null);
+    if (mv && !mv.noted) out.push({ t: t, why: 'moved', mv: mv, quiet: quiet, notes: notes });
+    else if (quiet != null && quiet >= CHASE.QUIET_DAYS) out.push({ t: t, why: 'quiet', quiet: quiet, notes: notes, never: !human });
+  });
+  out.sort(function (a, b) { return (a.why === 'moved' ? 0 : 1) - (b.why === 'moved' ? 0 : 1) || (b.quiet || 0) - (a.quiet || 0); });
+  return out.slice(0, CHASE.MAX);
+}
+
+/** The note for each task: Claude writes it from the task and its notes when the key is set; a plain question otherwise. */
+function chaseWrite_(picks, day) {
+  var out = {}, first = function (n) { return String(n || '').split(' ')[0] || 'Team'; };
+  picks.forEach(function (c) {
+    var t = c.t;
+    out[t.id] = c.why === 'moved'
+      ? first(t.owner) + ', the date on this task moved from ' + shortDate_(c.mv.from) + ' to ' + shortDate_(c.mv.to) + ' with no note. What held it up, what is still outstanding, and what will be done by ' + shortDate_(c.mv.to) + '?'
+      : first(t.owner) + ', ' + (c.never ? 'there is no note on this task in the ' + c.quiet + ' days since it was opened' : 'no note on this task in ' + c.quiet + ' days') + '. Where does it stand, what is outstanding, and what is the next step and its date?';
+  });
+  var props = PropertiesService.getScriptProperties(), key = String(props.getProperty('ANTHROPIC_API_KEY') || '').trim();
+  if (!key || !picks.length) return out;
+  var model = String(props.getProperty('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL).trim();
+  var ask = picks.map(function (c) { var t = c.t; return { id: t.id, task: t.subject, type: t.ty, status: t.status, holder: t.owner, agent: t.agent, client: t.account,
+    due: t.due, opened: t.created, why: c.why === 'moved' ? 'due date moved from ' + c.mv.from + ' to ' + c.mv.to + ' with no note' : 'no note from a person in ' + c.quiet + ' days',
+    notes: c.notes.filter(function (n) { return !chaseOurs_(n); }).slice(0, 4).reverse().map(function (n) { return (n.day || '') + ' ' + n.by + ': ' + shorten_(n.text, 280); }) }; });
+  var prompt = 'You write short follow-up notes for the branch manager of a life-insurance branch in Trinidad. Each note is posted on a work task ' +
+    'that has gone quiet or whose due date was moved forward with no explanation, and it is read by the staff member holding the task. ' +
+    'For each task, write one note of at most 45 words: address the holder by first name; say plainly what is missing (no note in N days, or the date moved from X to Y with no note); ' +
+    'ask the one or two questions that matter for this task, using its subject, type and notes (for example a medical, a signed form, a department reply, a client call-back); ' +
+    'and ask for the next step and its date. Firm and courteous; no greeting or sign-off; never invent facts that are not in the task or its notes. ' +
+    'Reply with JSON only: an object keyed by task id, each value the note as a string.\n\n' + JSON.stringify(ask);
+  try {
+    var res = UrlFetchApp.fetch(CLAUDE_READ.URL, { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      payload: JSON.stringify({ model: model, max_tokens: 4000, messages: [{ role: 'user', content: prompt }] }) });
+    if (res.getResponseCode() !== 200) return out;
+    var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
+    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    Object.keys(js).forEach(function (id) { var v = String(js[id] || '').replace(/\s+/g, ' ').trim(); if (out[id] && v.length >= 20) out[id] = v.slice(0, 400); });
+    out._ai = true;
+  } catch (e) {}
+  return out;
+}
+
+/** The day's run. dry: say what would be asked, post nothing. */
+function chaseQuiet_(day, dry) {
+  var tasks = chaseTasks_(day);
+  var chat = {}; try { chat = cmdChatter_(tasks.map(function (t) { return t.id; })); } catch (e) {}
+  var moved = dry ? {} : chaseMoves_(tasks, day, chat);
+  var picks = chasePick_(tasks, chat, moved, day), notes = chaseWrite_(picks, day), at = hhmm_(new Date()), done = [];
+  picks.forEach(function (c) {
+    var t = c.t, text = notes[t.id], res = dry ? 'would ask' : 'asked';
+    if (!dry) { try { sfkInsert_('FeedItem', { ParentId: t.id, Body: 'Branch Intelligence · ' + shortDate_(day) + ' ' + twelve_(at) + '\n\n' + text }); } catch (e) { res = 'NOT POSTED: ' + String(e && e.message || e).slice(0, 120); } }
+    done.push({ t: t, why: c.why === 'moved' ? 'moved ' + shortDate_(c.mv.from) + ' → ' + shortDate_(c.mv.to) + ', no note' : (c.never ? 'no note since opened, ' : 'no note in ') + c.quiet + ' days', text: text, res: res });
+  });
+  if (!dry && done.length) { try { chaseReport_(day, done, tasks.length, !!notes._ai); } catch (e) {} }
+  return { looked: tasks.length, posted: done.filter(function (d) { return d.res === 'asked'; }).length, done: done, ai: !!notes._ai };
+}
+function chaseReport_(day, done, looked, ai) {
+  var mgr = managerEmails_(); if (!mgr.length) return;
+  var td = 'padding:7px 6px;font-size:12.5px;border-top:1px solid ' + MAIL.line + ';vertical-align:top;';
+  var body = '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Branch Intelligence read ' + looked + ' open tasks on the desks and asked on ' + done.length +
+    ': each had gone ' + CHASE.QUIET_DAYS + '+ days with no note, or had its date moved forward with no note. The question is on the task' + (ai ? ', written by Claude from the task and its notes.' : '.') + '</div>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px">' +
+    done.map(function (d) { return '<tr><td style="' + td + 'width:28%"><b>' + esc_(String(d.t.owner).split(' ')[0]) + '</b><br><span style="color:' + MAIL.muted + '">' + esc_(d.why) + '</span></td><td style="' + td + '"><b>' + esc_(d.t.subject) + '</b><br>' + esc_(d.text) + (/^NOT/.test(d.res) ? '<br><b style="color:' + MAIL.red + '">' + esc_(d.res) + '</b>' : '') + '</td></tr>'; }).join('') + '</table>';
+  MailApp.sendEmail({ to: mgr.join(','), subject: 'Branch Intelligence asked on ' + done.length + ' task' + (done.length === 1 ? '' : 's') + ' · ' + shortDate_(day),
+    htmlBody: shell_('Tasks gone quiet', prettyDate_(day) + ' · ' + hhmm_(new Date()), body) });
+}
+/** From the editor: what would be asked today, posting nothing. */
+function chaseQuietPreview() { var r = chaseQuiet_(todayISO_(), true); var out = r.looked + ' tasks read, ' + r.done.length + ' to ask' + (r.ai ? ' (Claude wrote them)' : '') + ':\n' + r.done.map(function (d) { return '· ' + d.t.owner + ' · ' + d.t.subject + ' · ' + d.why + '\n    ' + d.text; }).join('\n'); Logger.log(out); return out; }
+/** From the editor: ask now. */
+function chaseQuietNow() { var r = chaseQuiet_(todayISO_(), false); var out = r.looked + ' tasks read, asked on ' + r.posted; Logger.log(out); return out; }
 
 /** Claude reads each item's newest notes, when a key is set. { itemId: { state, summary, next } } */
 var CLAUDE_READ = { URL: 'https://api.anthropic.com/v1/messages', MODEL: 'claude-haiku-5-5', MAX: 40, TTL: 21600 };
@@ -10090,7 +10262,7 @@ function replyWeekLink_(f, day) { var d = daysBetween_(day, todayISO_()); return
 function replyPerson_(sid, f) {
   return rosterPerson_(sid) || ((f === 'undo' || f === 'bm' || f === 'cmd' || f === 'qp' || f === 'me') && sid === 'ricky' ? { staffId: 'ricky', name: 'Ricky Rampersad' } : null) ||
     ((f === 'um' || f === 'umeve' || f === 'cmd') && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
-    (f === 'unit' && UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null) ||
+    (f === 'unit' && (UM_DESKS.indexOf(sid) > -1 || sid === 'ricky') ? { staffId: sid, name: nameFor_(sid) } : null) ||
     ((f === 'ag' || f === 'agc' || f === 'agff') && /^a-/.test(sid) ? agentBySid_(sid) : null);
 }
 
