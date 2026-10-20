@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-20f';
+var SCRIPT_VERSION = '2026-10-20g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2171,6 +2171,8 @@ function handle_(action, data, token) {
                     salesforce: sfkConfigured_() } };
   }
   if (action === 'login') return login_(data.who || data.email, data.password);
+  // The wall's outside link: no sign-in, the outside read only (20 Oct 2026).
+  if (action === 'wallout') return wallOutside_(data.k);
 
   var profile = readToken_(token);
   if (!profile) return { ok: false, error: 'Session expired. Sign in again.', authRequired: true };
@@ -2325,6 +2327,10 @@ function handle_(action, data, token) {
                : { ok: true, tasks: null, game: gw,
                    note: 'Salesforce did not answer. The wall keeps the last figures it had.' };
     }
+
+    // The new wall (20 Oct 2026): the Branch Manager sees the inside read; anyone else signed in, the outside one.
+    case 'wall2':
+      return { ok: true, intel: wallIntel_(todayISO_(), !profile.manager), inside: !!profile.manager };
 
     case 'checkpoint':
       if (!profile.manager) return { ok: false, error: 'Branch Manager only.' };
@@ -6103,7 +6109,7 @@ function sdPrune_(day) {
   var props = PropertiesService.getScriptProperties(), cut = shiftDays_(day, -21), n = 0;
   var keys = typeof props.getKeys === 'function' ? props.getKeys() : Object.keys(props.getProperties());
   keys.forEach(function (k) {
-    var m = String(k).match(/^(?:intel_model_|intel_plan_|intel_target_|daystart_(?:first|plan)_|md_|hkv2_|autoabs_|cover_|cover2_|notclosed_|ncchk_|ncrem_|ncdone_|um_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|sd_(?:list|qids)_|game_)[A-Za-z0-9_.-]*?(\d{4}-\d{2}-\d{2})(?:_\d+|_n)?$/);
+    var m = String(k).match(/^(?:intel_model_|intel_plan_|intel_target_|daystart_(?:first|plan)_|md_|hkv2_|autoabs_|cover_|cover2_|notclosed_|ncchk_|ncrem_|ncdone_|um_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|sd_(?:list|qids)_|game_|wall2_)[A-Za-z0-9_.-]*?(\d{4}-\d{2}-\d{2})(?:_\d+|_n)?$/);
     if (m && m[1] < cut) { try { props.deleteProperty(k); n++; } catch (e) {} }
   });
   return n;
@@ -6801,6 +6807,195 @@ function gameTick_(day, mins) {
     try { if (gameAwardsMail_(day)) out.push('the week\'s awards'); } catch (e) {}
   }
   return out;
+}
+
+/* ─────────── Wall intelligence: the feed behind the new wall (20 October 2026) ───────────
+ *  Ricky: "the wall needs to be redesigned with a lot of animation and motions and graphics ... what the managers
+ *  do, what the agents do, and what staff actually does ... serious analytics ... this is streamed outside as well
+ *  as inside", then "streams outside without client's name so the agents can see what is being actioned, who is
+ *  doing what, who is out today, and what is happening throughout the day".
+ *  One read, three channels and a running feed, kept five minutes so every screen shares it:
+ *   · staff: who is in, out today and covering; tasks closed with a note hour by hour; the kind of work; par,
+ *     quests, streaks and each person against their own usual.
+ *   · agents: the agent day (projection and close-off), fact finds and applications this month, conversion, and
+ *     the year's goal against the time gone.
+ *   · managers: where the Branch Manager's day went against what waits on him; the unit in the field; cover.
+ *  Never on the wall, inside or out: a client's name, a policy number, a note, a task subject, or why someone is out.
+ *  Outside (the shared link, or anyone but the Branch Manager signed in) also drops times of arrival, lateness,
+ *  points, dollar figures, and anything that only shows who has not done something.
+ */
+var WALL2 = { CACHE_SEC: 300, FROM_H: 7, TO_H: 17, TICKER: 40, EXTRA: ['pawan'] };
+var WALL_KIND = { 'new': 'new business', orphan: 'orphan adoption', retention: 'retention', claims: 'claims', other: 'servicing' };
+
+/** The kind of work a closed task was, in words fit for any screen. */
+function wallKind_(t) {
+  var po = payoffOf_({ subject: t.s || t.subject, ty: t.ty });
+  if (po.rank <= 3) return po.key;
+  var k = playbookFor_({ subject: t.s || t.subject, ty: t.ty }, [], todayISO_()).k;
+  return k === 'claim' ? 'claims' : 'other';
+}
+function wallMin_(v) { var s = timeStr_(v); return s ? minutesOf_(s) : null; }
+function wallAt_(m) { if (m == null) return ''; var h = Math.floor(m / 60), mm = m % 60; return (h % 12 || 12) + ':' + (mm < 10 ? '0' : '') + mm; }
+
+function wallStaff_(day, outside) {
+  var desks = GAME.DESKS.concat(WALL2.EXTRA), att = {}, moves = [], nowM = minutesOf_(hhmm_(new Date()));
+  try { (hrRows_(ATT, true) || []).forEach(function (r) { if (isoDay_(r.Date) === day) att[String(r.StaffId)] = r; }); } catch (e) {}
+  try { (hrRows_(MOVES, false) || []).forEach(function (r) {
+    if (isoDay_(r.Date) !== day || !/^OK/.test(String(r.Result || '')) || String(r.UndoneAt || '').trim()) return;
+    moves.push({ from: String(r.From), to: String(r.To), m: wallMin_(r.At) });
+  }); } catch (e) {}
+  var live = null, hist = {}, closes = [];
+  try { live = gameToday_(day); } catch (e) {}
+  try { hist = gameHist_(); } catch (e) {}
+  try { closes = gameCloses_(day, day, GAME.DESKS); } catch (e) {}
+  var H = WALL2.TO_H - WALL2.FROM_H + 1, team = [], mix = { 'new': 0, orphan: 0, retention: 0, claims: 0, other: 0 }, ev = [];
+  for (var i = 0; i < H; i++) team.push(0);
+  var byDesk = {}, seen = {};
+  closes.forEach(function (c) {
+    if (!c.note) return;                                   // a close without a note is not closed
+    var key = c.sid + '|' + gameNoteKey_(c.note); if (seen[key]) return; seen[key] = 1;
+    var h = Math.floor(c.min / 60) - WALL2.FROM_H, k = wallKind_(c);
+    (byDesk[c.sid] = byDesk[c.sid] || []).push(c);
+    if (h >= 0 && h < H) team[h]++;
+    mix[k]++;
+    var old = c.due && daysBetween_(c.due, c.day) >= GAME.OLD_DAYS;
+    ev.push({ m: c.min, who: gameFirst_(c.sid), what: 'closed a ' + WALL_KIND[k] + ' task' + (old ? ' over a month old' : '') + ' with a note', k: k });
+  });
+  var people = desks.map(function (s) {
+    var a = att[s], first = a ? timeStr_(a.FirstSignIn) : '', st = a ? String(a.Status || '').toLowerCase() : '';
+    var sp = parseSpan_(scheduleFor_(s).hours || '') || { start: 480, end: 960 };
+    var status = first ? 'in' : (st === 'absent' ? 'out' : (nowM != null && nowM < sp.start + ABSENT_AFTER_MIN ? 'later' : 'out'));
+    var hours = []; for (var j = 0; j < H; j++) hours.push(0);
+    (byDesk[s] || []).forEach(function (c) { var h = Math.floor(c.min / 60) - WALL2.FROM_H; if (h >= 0 && h < H) hours[h]++; });
+    var sc = live && live[s], g = sc ? gameGain_(s, day, hist, sc) : { pct: null }, stk = GAME.DESKS.indexOf(s) > -1 ? gameStreak_(s, day) : { n: 0 };
+    var covering = moves.filter(function (m) { return m.to === s && m.from !== s; }).length;
+    var by = {}; moves.forEach(function (m) { if (m.from === s && m.to !== s) by[m.to] = (by[m.to] || 0) + 1; });
+    var p = { sid: s, name: gameFirst_(s), status: status, game: GAME.DESKS.indexOf(s) > -1, startAt: wallAt_(sp.start),
+      closes: (byDesk[s] || []).length, hours: hours, covering: covering, coveredBy: Object.keys(by).map(function (t) { return { name: gameFirst_(t), n: by[t] }; }),
+      par: sc ? sc.par : 0, parDone: sc ? sc.parDone : 0, parMet: !!(sc && sc.parMet), quests: sc ? sc.quests : 0, questsOf: sc ? sc.questList.length : 0,
+      streak: stk.n, gain: outside && g.pct != null && g.pct < 0 ? null : g.pct, bestDay: !!g.bestDay };   // outside: progress only
+    if (!outside) { p.inAt = first ? wallAt_(minutesOf_(first)) : ''; p.late = first ? lateBy_(s, first) : 0; p.points = sc ? sc.points : null; }
+    if (first) ev.push({ m: minutesOf_(first), who: p.name, what: outside ? 'is in' : 'checked in' });
+    if (sc && sc.parMet && sc.last) ev.push({ m: sc.last, who: p.name, what: 'reached par: today\'s list is done' });
+    return p;
+  });
+  var cov = {}; moves.forEach(function (m) { var k = m.from + '>' + m.to; if (!cov[k]) cov[k] = { from: gameFirst_(m.from), to: gameFirst_(m.to), n: 0, m: m.m }; cov[k].n++; });
+  Object.keys(cov).forEach(function (k) { var c = cov[k]; ev.push({ m: c.m, who: c.to, what: 'is covering for ' + c.from + ': ' + c.n + ' task' + (c.n === 1 ? '' : 's') + ' so no client waits' }); });
+  var qp = 0, quests = 0, questsOf = 0;
+  GAME.DESKS.forEach(function (s) { var sc = live && live[s]; if (!sc) return; qp += sc.qp; quests += sc.quests; questsOf += sc.questList.length; });
+  var tot = 0; Object.keys(mix).forEach(function (k) { tot += mix[k]; });
+  var best = 0; team.forEach(function (v, i2) { if (v > team[best]) best = i2; });
+  return { people: people, team: team, fromH: WALL2.FROM_H, toH: WALL2.TO_H, nowH: nowM == null ? null : Math.floor(nowM / 60),
+    mix: Object.keys(mix).map(function (k) { return { k: k, label: WALL_KIND[k].charAt(0).toUpperCase() + WALL_KIND[k].slice(1), n: mix[k] }; }),
+    payoffPct: tot ? Math.round(100 * (mix['new'] + mix.orphan + mix.retention) / tot) : null,
+    busiest: tot ? { at: wallAt_((WALL2.FROM_H + best) * 60), to: wallAt_((WALL2.FROM_H + best + 1) * 60), n: team[best] } : null,
+    tiles: { closes: tot, qp: qp, quests: quests, questsOf: questsOf, covered: moves.length, inNow: people.filter(function (p) { return p.status === 'in'; }).length, of: people.length,
+      out: people.filter(function (p) { return p.status === 'out'; }).map(function (p) { return p.name; }) },
+    events: ev };
+}
+
+function wallAgents_(day, outside) {
+  var people = {}; try { people = agentPeople_(); } catch (e) {}
+  var f = { rows: [], total: { ff: 0, apps: 0, pickedUp: 0, pipeline: 0 }, known: false }; try { f = agentFunnel_(day) || f; } catch (e) {}
+  var feed = null; try { feed = ff360Feed_(); } catch (e) {}
+  var sum = {}; try { agentDaySummary_(day).forEach(function (x) { sum[bkNk_(x.name)] = x; }); } catch (e) {}
+  var times = {}; try { (hrRows_(AGDAY, false) || []).forEach(function (r) {
+    if (isoDay_(r.Date) !== day) return; var k = String(r.Agent), m = wallMin_(r.At), o = times[k] = times[k] || {};
+    if (m == null) return; var kind = String(r.Kind); if (kind === 'plan' || kind === 'close') { if (o[kind] == null || m < o[kind]) o[kind] = m; }
+  }); } catch (e) {}
+  var byName = {}; (f.rows || []).forEach(function (r) { byName[bkNk_(r.name)] = r; });
+  var goal = 0, pace = 0, picked = 0, ev = [], on = false; try { on = agentMode_(); } catch (e) {}
+  var rows = Object.keys(people).map(function (key) {
+    var a = people[key], r = byName[bkNk_(a.name)] || { ff: 0, apps: 0, pickedUp: 0 }, g = null, y = null, d = sum[bkNk_(a.name)] || {}, t = times[key] || {};
+    try { g = goalFor_(a.agentName || a.name, a.code || a.agentId || ''); } catch (e) {}
+    try { y = feed ? ff360Agent_(feed, [a.agentName, a.name]) : null; } catch (e) {}
+    if (g) { goal += g.api; pace += g.paceApi; }
+    picked += Number((y && y.pickedUp) || 0);
+    var first = String(a.name).split(' ')[0];
+    if (t.plan != null) ev.push({ m: t.plan, who: first, what: 'sent in the day\'s projection' });
+    if (t.close != null) ev.push({ m: t.close, who: first, what: 'closed off the day' });
+    return { name: first, full: a.name, ffMonth: Number(r.ff || 0), appsMonth: Number(r.apps || 0), ffWeek: Number((y && y.week) || 0),
+      pace: g && g.paceApi ? Math.round(100 * Number((y && y.pickedUp) || 0) / g.paceApi) : null,
+      plan: !!d.hasPlan, close: !!d.hasClose, planAt: t.plan != null ? wallAt_(t.plan) : '', closeAt: t.close != null ? wallAt_(t.close) : '' };
+  }).sort(function (a, b) { return (b.ffMonth - a.ffMonth) || (b.appsMonth - a.appsMonth) || a.name.localeCompare(b.name); });
+  var weeks = Math.max(1, Math.round(daysBetween_(BOOKS.FY_START, day) / 7));
+  var out = { n: rows.length, live: on, planned: rows.filter(function (r) { return r.plan; }).length, closed: rows.filter(function (r) { return r.close; }).length,
+    ffMonth: Number(f.total.ff || 0), appsMonth: Number(f.total.apps || 0), conv: f.total.ff ? Math.round(100 * f.total.apps / f.total.ff) : null,
+    ffWeek: rows.reduce(function (s, r) { return s + r.ffWeek; }, 0), known: !!f.known, week: weeks,
+    fy: { pct: goal ? Math.round(1000 * picked / goal) / 10 : null, gone: Math.round(1000 * Math.min(1, daysBetween_(BOOKS.FY_START, day) / 365)) / 10, ahead: pace ? Math.round(100 * picked / pace) : null },
+    rows: rows.map(function (r) { var o = { name: r.name, ffMonth: r.ffMonth, appsMonth: r.appsMonth, ffWeek: r.ffWeek, pace: r.pace, plan: r.plan, close: r.close };
+      if (!outside) { o.planAt = r.planAt; o.closeAt = r.closeAt; } return o; }),
+    events: ev };
+  if (!outside) { out.fy.goal = goal; out.fy.picked = picked; out.fy.paceApi = pace; out.pickedMonth = Number(f.total.pickedUp || 0); out.pipeline = Number(f.total.pipeline || 0); }
+  else out.rows = out.rows.filter(function (r) { return r.ffMonth > 0 || r.appsMonth > 0 || r.plan || r.close; });
+  return out;
+}
+
+function wallManagers_(day, outside, staff) {
+  var out = { groups: [], unit: null, cover: { out: [], moves: [], total: 0 }, qp: null, inbox: null };
+  // The Branch Manager's day: what he did by kind of work, against what waits in his name.
+  var done = {}, wait = {};
+  try { (dayLogRows_(day) || []).forEach(function (r) { if (String(r.Kind) === 'checkin') return; var g = String(r.Group || '') || 'Other'; done[g] = (done[g] || 0) + 1; }); } catch (e) {}
+  try { (myTasks_(day) || []).forEach(function (t) { var g = dayGroup_(t.ty, t.subject) || 'Other'; wait[g] = (wait[g] || 0) + 1; }); } catch (e) {}
+  var gs = {}; Object.keys(done).concat(Object.keys(wait)).forEach(function (g) { gs[g] = 1; });
+  out.groups = Object.keys(gs).map(function (g) { return { g: g, done: done[g] || 0, wait: wait[g] || 0 }; })
+    .sort(function (a, b) { return (b.done + b.wait) - (a.done + a.wait); }).slice(0, 7);
+  out.doneToday = Object.keys(done).reduce(function (s, g) { return s + done[g]; }, 0);
+  // The unit in the field: Akaash's agents.
+  try {
+    var um = UM_DESKS[0], names = unitAgents_(um).map(bkNk_), f = agentFunnel_(day) || { rows: [] }, sum = {};
+    try { agentDaySummary_(day).forEach(function (x) { sum[bkNk_(x.name)] = x; }); } catch (e) {}
+    var mine = (f.rows || []).filter(function (r) { return names.indexOf(bkNk_(r.name)) > -1; });
+    out.unit = { lead: gameFirst_(um), n: Math.max(0, names.length - 1), ffMonth: mine.reduce(function (s, r) { return s + Number(r.ff || 0); }, 0),
+      appsMonth: mine.reduce(function (s, r) { return s + Number(r.apps || 0); }, 0),
+      planned: names.filter(function (n) { return sum[n] && sum[n].hasPlan; }).length };
+  } catch (e) {}
+  // Cover, from the staff read.
+  if (staff) {
+    out.cover.out = staff.people.filter(function (p) { return p.status === 'out'; }).map(function (p) { return { name: p.name, by: p.coveredBy }; });
+    out.cover.total = staff.tiles.covered;
+  }
+  // Query Pal: answered this week; past turnaround only inside.
+  try {
+    var mon = weekStart_(day), closed = 0;
+    bookRows_('QPAL', BOOKS.QPAL.tab).forEach(function (r) { var d = anyIso_(r['Date Closed']); if (/closed/i.test(String(r['Status'] || '')) && d && d >= mon && d <= day) closed++; });
+    out.qp = { answeredWeek: closed };
+    if (!outside) out.qp.over = openQueries_().filter(function (q) { return q.over; }).length;
+  } catch (e) {}
+  if (!outside) { try { var iv = inboxView_(day); out.inbox = { done: iv.done.length, all: iv.items.length }; } catch (e) {} }
+  return out;
+}
+
+/** The whole read, for one kind of screen. */
+function wallIntel_(day, outside) {
+  var key = 'wall2_' + (outside ? 'out' : 'in') + '_' + day, cache = null;
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  var out = { day: day, asOf: hhmm_(new Date()), outside: !!outside, version: SCRIPT_VERSION, salesforce: sfkConfigured_() };
+  try { out.staff = wallStaff_(day, outside); } catch (e) { out.staff = null; out.err = String(e && e.message || e).slice(0, 120); }
+  try { out.agents = wallAgents_(day, outside); } catch (e) { out.agents = null; }
+  try { out.managers = wallManagers_(day, outside, out.staff); } catch (e) { out.managers = null; }
+  try { out.goal = gameOn_() ? gameGoal_(day) : null; } catch (e) { out.goal = null; }
+  try { var gw = gameWall_(day); out.awards = gw ? gw.awards : []; } catch (e) { out.awards = []; }
+  var ev = [].concat((out.staff && out.staff.events) || [], (out.agents && out.agents.events) || []);
+  ev.sort(function (a, b) { return (b.m || 0) - (a.m || 0); });
+  out.ticker = ev.slice(0, WALL2.TICKER).map(function (x) { return { at: wallAt_(x.m), who: x.who, what: x.what, k: x.k || '' }; });
+  if (out.staff) delete out.staff.events;
+  if (out.agents) delete out.agents.events;
+  try { cache.put(key, JSON.stringify(out).slice(0, 99000), WALL2.CACHE_SEC); } catch (e) {}
+  return out;
+}
+
+/** The outside link: no sign-in, the outside read only, and only with the key from wallOutsideLink(). */
+function wallOutside_(k) {
+  var want = String(PropertiesService.getScriptProperties().getProperty('WALL_OUTSIDE_KEY') || '');
+  if (!want || String(k || '') !== want) return { ok: false, error: 'This wall link is not valid. Ask the Branch Manager for the current one.' };
+  return { ok: true, intel: wallIntel_(todayISO_(), true) };
+}
+/** From the editor: the link for agents and staff (made once; WALL_OUTSIDE_KEY = a new value changes it). */
+function wallOutsideLink() {
+  var props = PropertiesService.getScriptProperties(), k = props.getProperty('WALL_OUTSIDE_KEY');
+  if (!k) { k = Utilities.getUuid().replace(/-/g, '').slice(0, 16); props.setProperty('WALL_OUTSIDE_KEY', k); }
+  var u = 'https://rickyrampersadbranch.com/wall/?k=' + k; Logger.log(u); return u;
 }
 
 /** From the editor: Mr Rampersad's My branch link, to save on his phone. */
