@@ -58,6 +58,8 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   ok('a Day 1 session is closed until tapped', !(await pg.isVisible('#s-d1-protect .bd')));
   await pg.click('#s-d1-protect .hd');
   ok('tapping opens it with the question, the record and the live counts', await pg.isVisible('#s-d1-protect .bd') && /Should the business we preserve/.test(await pg.textContent('#s-d1-protect .q')) && /Households answered 410/.test(await pg.textContent('#s-d1-protect .live')));
+  ok('the evidence block carries sources that open in a new tab, and the sixty seconds is drawn', (await pg.$$('#s-d1-protect .evi li a[target=_blank]')).length >= 4 && /In the room, in sixty seconds/.test(await pg.textContent('#s-d1-protect .say')));
+  ok('the objective is drawn with its five lines and a button for the branch', (await pg.$$('#objective ol li')).length === 5 && !!(await pg.$('#objective .btn')));
   await pg.click('[data-tab="d2"]');
   ok('the branch manager\'s slot opens by itself, marked', await pg.isVisible('#s-d2-recruit .bd') && /Your slot/.test(await pg.textContent('#s-d2-recruit .cnt')));
   await pg.selectOption('#k-d2-recruit', 'position'); await pg.fill('#p-d2-recruit', 'Reward the output, not the input.'); await pg.fill('#e-d2-recruit', 'The tracker counts names and interviews.');

@@ -84,6 +84,14 @@ h2{font-family:var(--f);font-size:21px;color:var(--ink);margin:26px 0 10px;lette
 .rec{background:#fbf7ea;border:1px solid #efe2b5;border-radius:10px;padding:12px 16px;margin:10px 0}
 .rec h4,.pos h4,.con h4{font-family:var(--f);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;color:var(--gold2)}
 .rec ul{margin:0;padding-left:20px}.rec li{margin:5px 0;font-size:14.5px}
+.evi{background:#f3f6fb;border:1px solid #d6dff0;border-radius:10px;padding:12px 16px;margin:10px 0}
+.evi h4{font-family:var(--f);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;color:#2f4f8f}
+.evi ul{margin:0;padding-left:20px}.evi li{margin:6px 0;font-size:14.5px}.evi li a{font-size:12.5px;color:#2f4f8f;white-space:nowrap}
+.say{background:var(--navy);color:#eaf4ff;border-radius:10px;padding:12px 16px;margin:10px 0}
+.say h4{font-family:var(--f);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;color:var(--gold)}.say p{margin:0;font-size:15px;line-height:1.55}
+.src a{overflow-wrap:anywhere;word-break:break-all}
+.obj{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:14px 18px;margin:14px 0}
+.obj h3{margin:0 0 6px}.obj ol{margin:4px 0 0;padding-left:22px}.obj li{margin:5px 0;font-size:15px;color:var(--ink)}.obj p{margin:6px 0 0}
 .pos{background:var(--okbg);border:1px solid #c8e3d6;border-radius:10px;padding:12px 16px;margin:10px 0;color:var(--ink)}
 .pos h4{color:var(--ok)}.pos p{margin:4px 0;font-size:14.5px}
 .ask{margin:6px 0 0;padding-left:20px}.ask li{margin:4px 0;font-size:14.5px}
@@ -147,6 +155,7 @@ h2{font-family:var(--f);font-size:21px;color:var(--ink);margin:26px 0 10px;lette
     <h1 class="page">Co-creating our future: people, performance, integrity</h1>
     <p class="sub">Two days, every session with its guiding question, what the branch's own record says under each, and the contributions logged for the room. Signed in: <b id="whoami"></b>.</p>
     <div id="linknote"></div>
+    <div class="obj" id="objective"></div>
 
     <div class="hero">
       <div>
@@ -309,6 +318,113 @@ const SESSIONS = [
  { day: 2, key: 'd2-barbados', brk: true, t: '3:30', e: '5:00', title: 'Barbados Career Path Discussion (Barbados managers only)' },
 ];
 
+/* ── the industry evidence, researched on the web on 20 October 2026 ────────────────────────────────────────────────
+   One block per session: what published research says that bears on the guiding question, each line with its source.
+   A vendor's claim or a figure reported second-hand is marked as such; the room should hear the caveat with the number. */
+const SRC = {
+  limra25: ['LIMRA, "Building High-Performing Sales Teams", 2025 Annual Conference', 'https://www.limra.com/globalassets/limra-loma/events-learning-and-networking/conferences/2025/limra-annual-conference/session-16-building-high-performing-sales-teams.pdf'],
+  inn: ['InsuranceNewsNet, "A path to better agent retention"', 'https://insurancenewsnet.com/innarticle/a-path-to-better-agent-retention'],
+  jams: ['Journal of the Academy of Marketing Science, "How do firms value sales career paths?", 2023', 'https://link.springer.com/article/10.1007/s11747-023-00952-4'],
+  ddi: ['DDI, Global Leadership Forecast 2025 and succession planning blog', 'https://www.ddi.com/blog/succession-planning-best-practices'],
+  ddihr: ['DDI, HR Insights Report 2025', 'https://www.ddi.com/about/media/hr-insights-report-2025'],
+  gallupMgr: ['Gallup, State of the Global Workplace 2025', 'https://www.gallup.com/workplace/349484/state-of-the-global-workplace.aspx'],
+  gallupRec: ['Gallup and Workhuman, "Employee retention depends on getting recognition right", 2024', 'https://www.gallup.com/workplace/650174/employee-retention-depends-getting-recognition-right.aspx'],
+  vertafore: ['Celent and Vertafore survey of 600+ life and health agents', 'https://www.vertafore.com/resources/blog/what-health-insurance-agents-want-carrier-compensation'],
+  cogent: ['Cogent Business & Management, "Exploring the silent struggle of life insurance agents", 2023', 'https://www.tandfonline.com/doi/full/10.1080/23311975.2023.2279346'],
+  capgemini: ['Capgemini and LIMRA, World Life Insurance Report 2027 (September 2026)', 'https://www.capgemini.com/us-en/news/press-releases/life-insurers-under-pressure-42-of-consumers-are-confused-and-unconvinced-by-policies/'],
+  jdp: ['J.D. Power 2025 U.S. Individual Life Insurance Study', 'https://www.jdpower.com/business/press-releases/2025-us-individual-life-insurance-study/'],
+  wharton: ['Gottlieb and Smetters, "Lapse-Based Insurance", Wharton, citing LIMRA', 'https://faculty.wharton.upenn.edu/wp-content/uploads/2016/11/Insurance41.pdf'],
+  atidot: ['Atidot (a vendor), Orphan Policy Management Suite launch, 2019', 'https://insurance-edge.net/2019/09/24/legacy-it-atidot-launches-orphan-policy-management-suite/'],
+  fca: ['FCA Occasional Paper 2, "Encouraging consumers to claim redress" (Adams and Hunt, 2013)', 'https://www.fca.org.uk/publications/occasional-papers/occasional-paper-no-2-encouraging-consumers-claim-redress'],
+  naic: ['NAIC, Insurance fraud topic page', 'https://content.naic.org/insurance-topics/insurance-fraud'],
+  iais: ['IAIS, Guidance Paper on preventing, detecting and remedying fraud in insurance', 'https://www.iais.org/uploads/2022/01/Guidance_paper_on_preveting__detecting_and_remedying_fraud_in_insurance.pdf.pdf'],
+  acfe: ['ACFE, Occupational Fraud 2024: A Report to the Nations', 'https://www.ivey.uwo.ca/media/kjljj5cy/2024-report-to-the-nations.pdf'],
+  cbtt: ['Central Bank of Trinidad and Tobago, circular of 28 July 2023 issuing the Market Conduct Guideline for Registrants under the Insurance Act, 2018', 'https://www.central-bank.org.tt/cbtt_storage/2026/01/circular-letter-market-conduct-guideline-July-2023-jan2026.pdf'],
+  jfe: ['Journal of Financial Economics, "Unlocking clients: the importance of relationships in the financial advisory industry", 2021', 'https://www.sciencedirect.com/science/article/abs/pii/S0304405X21001562'],
+  zeplyn: ['J.D. Power figure as reported by Zeplyn (second-hand)', 'https://www.zeplyn.ai/blogs/why-financial-advisory-client-churn'],
+  cbttreg: ['Central Bank of Trinidad and Tobago, agencies registered under the Insurance Act 2018 as at 1 October 2025', 'https://www.central-bank.org.tt/wp-content/uploads/2025/11/agencies-registered-as-at-oct-1-2025-november-2025.pdf'],
+};
+const EVIDENCE = {
+  'd1-mahogany': [
+    ['Gallup finds the manager accounts for about 70% of the variance in a team\'s engagement, and that manager engagement itself fell from 30% to 27% in 2024, its lowest in twelve years. Coaching for performance is the lever the company is pulling in the right place.', 'gallupMgr'],
+    ['In LIMRA and FINSECA\'s 2022 study of field and home office leaders, 71% of field leaders said a strong pre-contract programme has a strong impact on retention. Training that happens before the contract is what the evidence rewards.', 'limra25'],
+    ['LIMRA\'s own retention curves show the first year "typically doesn\'t show a difference" because new agents are carried by onboarding, coaching and leadership; the second year is the cliff, when that support is withdrawn. A support structure that stops at twelve months is a structure that stops where the losses begin.', 'limra25'],
+  ],
+  'd1-career': [
+    ['Industry-wide four-year agent retention has sat at about 14% for years (LIMRA FP Production & Retention, 2006 to 2019: between 11% and 16% every year), and "the average FP retention for agency-building companies has not exceeded 20 percent". That is the base rate any career path has to beat.', 'limra25'],
+    ['Most departures happen in years one and two, and about 15 of every 100 recruits are still with their hiring company after four years (LIMRA, reported by the trade press).', 'inn'],
+    ['One-year retention differs by who did the recruiting: 44% when a recruiter did, 50% a sales manager, 55% the office head (LIMRA Career Profile Validity Study, 2019). The person who recruits is part of the path.', 'limra25'],
+    ['A study of about 25,000 sales employees found most newly promoted sales managers came sideways from other management roles rather than up from sales. A path from agent to manager does not form by itself; it has to be built and counted.', 'jams'],
+  ],
+  'd1-succession': [
+    ['DDI\'s Global Leadership Forecast 2025 (over 10,000 leaders and 2,000 HR professionals in more than 50 countries): only 20% of HR leaders say they have leaders ready to fill their most critical roles; 80% of organisations lack confidence in their bench.', 'ddi'],
+    ['DDI: performance in the current role does not show readiness for the next one; "a high-performing salesperson won\'t automatically succeed as a sales leader." Readiness has to be observed in the next role\'s work, not inferred from this one\'s numbers.', 'ddi'],
+    ['DDI\'s HR Insights Report 2025: on average only about half (49%) of critical leadership roles could be filled at once by an internal candidate.', 'ddihr'],
+  ],
+  'd1-awards': [
+    ['Gallup and Workhuman followed about 3,400 employees from 2022 to 2024: well-recognised employees were 45% less likely to have left after two years, and those receiving high-quality recognition on at least four of five pillars were 65% less likely to be looking elsewhere. Only about a third of employees say their employer has a formal recognition programme.', 'gallupRec'],
+    ['A Celent and Vertafore survey of more than 600 life and health agents: 27% said commission drives where they place business, and respondents asked for plans that emphasise persistency and income continuity. Agents themselves ask to be paid on what stays.', 'vertafore'],
+    ['A 2023 qualitative study of life insurance agents found awards and public recognition carry a meaning distinct from pay: "a different feeling from ordinary commission". Recognition is not a cheaper substitute for money; it is a second currency.', 'cogent'],
+  ],
+  'd1-protect': [
+    ['Capgemini and LIMRA\'s World Life Insurance Report 2027 (6,175 consumers in 18 countries, September 2026): 36% of policyholders rarely or never hear from their insurer after purchase (the press release rounds it to nearly 40%); about half of those who discontinue do so within the first three years, before acquisition costs are recovered; 48% say they would be more likely to stay with an insurer that offers proactive guidance after the sale.', 'capgemini'],
+    ['J.D. Power\'s 2025 U.S. Individual Life Insurance Study (5,065 customers): any communication from the insurer in the past twelve months lifts satisfaction, about 50 points on a 1,000-point scale by one trade report, and personalised communication lifts it more than account messages. Satisfaction swung by double digits at 70% of insurers in a year, which J.D. Power ties to relationship management.', 'jdp'],
+    ['About 4.2% of life policies lapse each year in the United States (LIMRA, as cited in a Wharton paper). Against that base rate, a book whose agent has just left is the place the lapse rate moves.', 'wharton'],
+    ['A vendor, Atidot, claims that lapse rates on orphaned policies "can more than double" even after reassignment. A vendor\'s claim, unverified, but it is the industry\'s working assumption and it matches what the branch is seeing in its own answers.', 'atidot'],
+    ['The FCA\'s randomised trial on redress letters (Adams and Hunt, 2013): short bullets and a reminder at three to six weeks lifted response more than any change of words, while a big-name signature lowered it. The branch\'s letters, reminder and receipt were built on it.', 'fca'],
+  ],
+  'd1-fraud': [
+    ['The NAIC names premium diversion, an agent keeping the client\'s premium instead of remitting it, as the most common fraud scheme among insurance producers.', 'naic'],
+    ['The IAIS guidance paper puts fraud risk management on the board and senior management, says anti-fraud controls must apply to every branch, lists the intermediary red flags (complaints and regulatory inquiries, financial distress, unauthorised third-party business), and suggests insurers not pay commission before the first premium has been received.', 'iais'],
+    ['ACFE\'s 2024 Report to the Nations (1,921 cases, 138 countries): the median loss was US$145,000 and the typical scheme ran twelve months before it was caught; schemes caught by surveillance and monitoring had the lowest median loss (US$65,000) and the shortest life (six months). Monitoring is the control that halves the damage.', 'acfe'],
+    ['The Central Bank issued the Market Conduct Guideline for Registrants under the Insurance Act, 2018 on 28 July 2023, with "discouraging financial fraud on policyholders" among its three stated aims, and required every registrant to submit a board-approved action plan against its gaps within six months. The supervisory accountability this session asks about is already a regulatory expectation.', 'cbtt'],
+  ],
+  'd2-succession': [
+    ['DDI, Global Leadership Forecast 2025: only 20% of HR leaders have leaders ready for their most critical roles, and strong performance in the current role is not evidence of readiness for the next. Eligibility is what the file shows; readiness is what the next role\'s work shows.', 'ddi'],
+    ['Gallup: the manager explains about 70% of the variance in team engagement. A manager\'s readiness is therefore visible in the team\'s record, which is what the branch measures daily.', 'gallupMgr'],
+    ['DDI, HR Insights Report 2025: about 49% of critical leadership roles could be filled at once from inside. The other half is the gap a readiness record closes.', 'ddihr'],
+  ],
+  'd2-transfers': [
+    ['A Journal of Financial Economics study of the Broker Protocol estimated that an adviser takes about 40% of clients, on average, when changing firms, as a lower bound, and found that the transferability of client relationships is a major factor in advisers\' decisions to move.', 'jfe'],
+    ['A J.D. Power figure reported second-hand: 63% of investors say they would likely follow their adviser to a new firm. Stated intent overstates behaviour, but it says where the pull is.', 'zeplyn'],
+    ['Capgemini and LIMRA: half of the policyholders who discontinue do so within three years of buying, and 36% rarely or never hear from the insurer after the sale. The weeks after a departure are when the company\'s own voice decides who the client hears.', 'capgemini'],
+    ['The Central Bank publishes the register of agencies under the Insurance Act 2018 each quarter; comparing editions shows where agencies are being appointed. Where a departed agent is registered next is on the public record.', 'cbttreg'],
+  ],
+  'd2-recruit': [
+    ['LIMRA: industry-wide four-year retention of recruits has been about 14% for years, between 11% and 16% in every year from 2006 to 2019, and the average for agency-building companies "has not exceeded 20 percent". Rewarding recruitment activity against that base rate pays for the 86 in 100 who leave.', 'limra25'],
+    ['LIMRA, 2019: one-year retention is 44% when a recruiter did the recruiting, 50% a sales manager, 55% the office head. Who recruits, and how close they stay, is measurable and should be paid for.', 'limra25'],
+    ['LIMRA and LOMA, assessment users against non-users: two-year retention 40% against 30%, four-year 18% against 13%; first-year commissions roughly double. Selection, not volume, moves the curve.', 'limra25'],
+    ['LIMRA and FINSECA, 2022: 71% of field leaders say a strong pre-contract programme has a strong impact on retention; job history (stability) is a key indicator of success; successful candidates bring a natural market.', 'limra25'],
+    ['Most departures happen in years one and two (LIMRA, trade press). So a manager rewarded at contract is rewarded before the risk; one rewarded at twelve and twenty-four months is rewarded after it.', 'inn'],
+    ['No published source found on 20 October 2026 defines a "Step-Back Approach" to recruiting or the career path; the term does not appear in LIMRA\'s public material or the trade press. Ask for the company\'s own definition before the slot.', 'limra25'],
+  ],
+  'd2-forum': [
+    ['Gallup: the manager explains about 70% of team engagement. Capgemini and LIMRA: 36% of policyholders rarely or never hear from their insurer after the sale. LIMRA: 14% of recruits are still there after four years. Every one of those is a number a daily, time-stamped record changes.', 'gallupMgr'],
+  ],
+};
+/* ── in the room, in sixty seconds: a template for the key sessions, the branch's record first, the evidence second,
+   the position, the ask. Live numbers in brackets are read off the tiles on the day. ── */
+const SAY = {
+  'd1-mahogany': 'Our old paper log book, measured over 3,634 lines: 41% sent the same day, 13% never dated. Since 15 October every document is stamped four times and a reason is asked for the same day. LIMRA says the second year is the retention cliff, when support is withdrawn; Gallup says the manager is 70% of engagement. So our ask of Project Mahogany: whatever Sales Administration becomes, the time-stamped record stays with the branch, and the manual-and-test pattern we built becomes the standard.',
+  'd1-career': 'The industry keeps 14 recruits in 100 after four years, and agency builders have never passed 20. We are rebuilding from 28 agents in two units after ten resignations. One-year retention is 55% when the office head recruits and 44% when a recruiter does. Our position: the next step on the path should be defined by a record anyone can read, recruits still producing at twelve and twenty-four months, not by tenure. Our ask: what must a unit manager hold to stay one, and over what rebuilding period?',
+  'd1-succession': 'DDI finds only one organisation in five has leaders ready for its critical roles. Our branch runs on scheduled triggers: the 5 am review, the 11 and 3 o\'clock reports, Monday\'s letters, the 10 o\'clock premium send, the 5 pm Log Book digest. This week, while we are in this room, it runs without me. Readiness is two things: the system runs without the person, and the record shows who is ready. We have the first; the second we can print today for every unit manager and staff member.',
+  'd1-awards': 'Gallup followed 3,400 people for two years: the well-recognised were 45% less likely to leave. Agents in the Celent survey asked to be paid on persistency. We pay staff points for outcomes, not activity: reached 3, met 5, a household named 5, a conversion 10. A questionnaire after a naming earns the agent TT$200 and is chased daily until Salesforce carries the payment date. Our ask: a retention measure in the award thresholds, with the same weight as production.',
+  'd1-protect': 'Capgemini and LIMRA, last month: 36% of policyholders never hear from their insurer after the sale, and half of those who leave do so inside three years. We wrote to [1,477] clients of the departed books within four days of the effective date; [323] answered by 6 October, 128 of them to a single reminder. Every answer lands on a board; households are named as one unit; a person follows after three automatic e-mails at most. Premium-due letters go at 45, 60, 75 and 90 days, each ticked by a person. Yes, preserved business should be recognised: the unit is a review filed, a conversion, a premium retained, and we already pay and track TT$200 on one of them.',
+  'd1-fraud': 'The NAIC says the commonest producer fraud is premium diversion; ACFE says the typical scheme runs a year, and six months where monitoring exists. Our control is the record: who logged each document, who received it, who sent it, each with a time; a GPS pin and a signature on every delivery; a client e-mailed the same day; and what clients report about former agents sent to Head Office at 17:00 every working day. The one control every manager needs is a time-stamped record kept by the system, not the person. Our ask: what is the company\'s response path when a branch documents a former agent in touch with clients, and how fast?',
+  'd2-succession': 'DDI: one in five organisations has a ready bench, and current performance does not show readiness for the next role. We measure each desk against its own record: closures against its own median, the day planned and accounted for, agents\' projections balanced at 5:30. Eligible is tenure and a clean file. Ready is a record of running a unit\'s work for a period, which we can print. Our ask: the same few readiness measures in every branch.',
+  'd2-transfers': 'The research says an adviser takes about 40% of clients when they move, and 63% of clients say they would follow. Ten agents left us on 21 September and within days were telling clients they were still with the company. We wrote to the books in four days, in the company\'s words, with three branch lines and Guardian Direct to confirm the notice, and we document every report to Head Office daily. An agent\'s right to move is not a right to the book; the client\'s right is to be told, fast, by the company. Our ask: a standard, in days, for writing to a departed book, and a counted rebuilding period for the manager.',
+  'd2-recruit': 'The industry keeps 14 recruits in 100 after four years. One-year retention is 55% when the office head recruits and 44% when a recruiter does. Selection moves the curve: assessment users keep 18 in 100 at four years against 13. Most departures are in years one and two. So rewarding recruitment activity pays before the risk; rewarding retained, licensed, producing recruits at twelve and twenty-four months pays after it. Our position: only the output should pay. Our ask: write the Step-Back Approach down in one paragraph, and count a rebuilding period for a manager after a departure like September\'s.',
+  'd2-forum': 'One change: make the record of the work, time-stamped and visible the same day, the basis for every reward and every advancement. Everything else in these two days follows from it.',
+};
+/* ── the branch's objective for the two days: a draft for the branch manager to edit by logging a position ── */
+const OBJECTIVE = [
+  'Put the record on the table: a branch run on analytics, every desk accountable every day, is where the company says it wants to go, and it is running now.',
+  'Get business preserved recognised beside business produced, with a unit the system can count: a review filed, a conversion, a premium retained.',
+  'Get a company standard for writing to a departed agent\'s book inside days, in the company\'s words, and a counted rebuilding period for the manager who loses one.',
+  'Get the readiness record accepted as the basis for advancement, ahead of tenure.',
+  'Leave with an owner and a date on at least one of these.',
+];
+
 function toast(msg, bad) { const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', bad ? 8000 : 4000); }
 async function api(params) {
   const q = Object.entries(Object.assign({}, params, { code: AUTH.code, who: AUTH.who })).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
@@ -374,7 +490,7 @@ async function open() {
       $('linknote').innerHTML = '<div class="note">' + pending.length + ' contribution' + (pending.length === 1 ? '' : 's') + ' saved on this device before the backend was linked. <button class="btn sm gold" onclick="pushLocal()">Send them to the sheet</button></div>';
     }
   }
-  renderTiles(); renderDays(); renderNotes(); renderLog(); renderBrief(); showTab(TAB);
+  renderObjective(); renderTiles(); renderDays(); renderNotes(); renderLog(); renderBrief(); showTab(TAB);
 }
 async function pushLocal() {
   const pending = localItems(); let sent = 0;
@@ -387,6 +503,21 @@ async function pushLocal() {
   toast(sent + ' sent to the sheet.'); renderDays(); renderBrief();
 }
 
+/* ── the branch's objective: the draft, and any position the branch has logged against it ── */
+function renderObjective() {
+  const mine = ITEMS.filter(i => i.session === 'objective');
+  $('objective').innerHTML = '<h3>Our objective for the two days</h3><p class="small muted">They have their outputs; this is ours. A draft from the record: edit it by logging a position against it.</p>' +
+    '<ol>' + OBJECTIVE.map(o => '<li>' + esc(o) + '</li>').join('') + '</ol>' +
+    (mine.length ? mine.map(i => itemHtml(i, ME && ME.canWrite && (ME.role === 'branch' || i.by === ME.name))).join('') : '') +
+    (ME && ME.canWrite ? '<p><button class="btn ghost sm" onclick="addObjective()">Log a position on the objective</button></p>' : '');
+}
+async function addObjective() {
+  const point = prompt('Our objective, in your words (one or two sentences):'); if (!point || !point.trim()) return;
+  if (LINKED === false) { const it = { id: 'L-' + Date.now(), session: 'objective', day: 0, title: 'Our objective', kind: 'position', point: point.trim(), evidence: '', ask: '', by: ME.name || 'Branch', role: ME.role, when: 'on this device' }; const list = localItems(); list.push(it); localSave(list); ITEMS = list; renderObjective(); renderTiles(); return; }
+  const r = await post({ action: 'sm.add', session: 'objective', day: 0, title: 'Our objective', kind: 'position', point: point.trim(), evidence: '', ask: '' });
+  if (!r.ok) { toast(r.error || 'Could not log it.', true); return; }
+  ITEMS.push(r.item); renderObjective(); renderTiles(); toast('Logged.');
+}
 /* ── tiles: the countdown and the live counts ── */
 function daysTo(d) { const now = new Date(); const t = new Date(d + 'T08:30:00-04:00'); return Math.ceil((t - now) / 86400000); }
 function renderTiles() {
@@ -424,6 +555,11 @@ function itemHtml(i, canX) {
     '<div class="k"><span class="pill">' + esc(KIND_WORDS[i.kind] || i.kind) + '</span><span>' + esc(i.by) + (i.when ? ' · ' + esc(i.when) : '') + '</span></div>' +
     '<p>' + esc(i.point) + '</p>' + (i.evidence ? '<p class="ev"><b>Evidence:</b> ' + esc(i.evidence) + '</p>' : '') + (i.ask ? '<p class="ev"><b>Ask:</b> ' + esc(i.ask) + '</p>' : '') + '</div>';
 }
+function eviHtml(key) {
+  const e = EVIDENCE[key]; if (!e || !e.length) return '';
+  return '<div class="evi"><h4>What the industry evidence says</h4><ul>' + e.map(([t, k]) => '<li>' + esc(t) + ' <a href="' + esc(SRC[k][1]) + '" target="_blank" rel="noopener" title="' + esc(SRC[k][0]) + '">source</a></li>').join('') + '</ul></div>';
+}
+function sayHtml(key) { const t = SAY[key]; return t ? '<div class="say"><h4>In the room, in sixty seconds</h4><p>' + esc(t) + '</p></div>' : ''; }
 function sessHtml(s) {
   if (s.brk) return '<div class="brk">' + esc(s.t) + ' to ' + esc(s.e) + ' · ' + esc(s.title) + '</div>';
   const items = itemsFor(s.key), opened = isOpen(s);
@@ -438,7 +574,9 @@ function sessHtml(s) {
       (s.question ? '<div class="q"><b>To consider</b>' + esc(s.question) + '</div>' : '') +
       (s.record ? '<div class="rec"><h4>What the branch\'s record says</h4><ul>' + s.record.map(r => '<li>' + esc(r) + '</li>').join('') + '</ul></div>' : '') +
       liveHtml(s) +
+      eviHtml(s.key) +
       (s.position ? '<div class="pos"><h4>A position the branch could take</h4><p>' + esc(s.position) + '</p></div>' : '') +
+      sayHtml(s.key) +
       (s.asks ? '<h3>Questions to put to the room</h3><ul class="ask">' + s.asks.map(a => '<li>' + esc(a) + '</li>').join('') + '</ul>' : '') +
       '<div class="con"><h4>Contributions logged (' + items.length + ')</h4>' +
         (items.length ? items.map(i => itemHtml(i, canX && (ME.role === 'branch' || i.by === ME.name))).join('') : '<p class="small muted">Nothing logged for this session yet.</p>') +
@@ -489,7 +627,7 @@ async function removeItem(id) {
 async function guide(key) {
   const s = SESSIONS.find(x => x.key === key), box = $('sug-' + key);
   box.innerHTML = '<div class="sug"><h4>Guide</h4><p class="small muted">Reading the facts…</p></div>';
-  const notes = [].concat(s.record || [], s.position ? ['Position: ' + s.position] : [], (s.asks || []).map(a => 'Question: ' + a)).join('\n');
+  const notes = [].concat(s.record || [], (EVIDENCE[key] || []).map(([t, k]) => 'Industry evidence (' + SRC[k][0] + '): ' + t), s.position ? ['Position: ' + s.position] : [], SAY[key] ? ['Draft in the room: ' + SAY[key]] : [], (s.asks || []).map(a => 'Question: ' + a)).join('\n');
   const r = await post({ action: 'sm.guide', session: key, title: s.title, brief: s.brief || '', question: s.question || '', notes });
   if (!r.ok) { box.innerHTML = '<div class="sug"><h4>Guide</h4><p class="small" style="color:var(--stop)">' + esc(r.error || 'No answer.') + '</p></div>'; return; }
   window._SUG = window._SUG || {}; window._SUG[key] = r.points;
@@ -520,6 +658,11 @@ function renderNotes() {
     '<li>Ten agents resigned together with effect from 21 September 2026 and one contract was terminated on 10 September. Two of the ten were unit heads.</li>' +
     '<li>Read from Salesforce on 9 October: 28 active agents in two live units; a third unit left with one agent and a fourth with none.</li>' +
     '<li>The books were written to within four days and are being reassigned by household; each questionnaire after a naming earns the receiving agent TT$200.</li></ul>' +
+    '<h3>What the research says (web, 20 October 2026)</h3><ul>' +
+    '<li>No published source defines a "Step-Back Approach" to recruiting or to the career path: the term is in none of LIMRA\'s public material, the trade press or the company\'s public pages found that day. The definition has to come from the company.</li>' +
+    '<li>LIMRA: four-year retention of recruits has been about 14% industry-wide for years (between 11% and 16% every year from 2006 to 2019), and agency-building companies have never averaged above 20%. Most departures are in years one and two; the second year is the cliff, when the first year\'s support is withdrawn.</li>' +
+    '<li>LIMRA, 2019: one-year retention is 44% when a recruiter recruited, 50% a sales manager, 55% the office head. LIMRA and LOMA: assessment users keep 40% at two years and 18% at four, against 30% and 13% without. LIMRA and FINSECA, 2022: 71% of field leaders say a strong pre-contract programme has a strong impact on retention; job stability is a key indicator; a natural market predicts success.</li>' +
+    '<li>Read against the agenda\'s question: recruitment activity is counted at the contract, before the risk; manpower development is counted at twelve and twenty-four months, after it. A reward paid at the contract pays for the 86 in 100 who leave.</li></ul>' +
     '<h3>What the branch can put on the table</h3><ul>' +
     '<li>A measure of development rather than activity: recruits licensed and still producing at twelve and twenty-four months, by the manager who developed them, against names added and interviews held in the same period. The tracker already holds the activity side; the development side is a Salesforce read of licence date, employment status and production.</li>' +
     '<li>The position: reward the output. A recruit who leaves inside a year counts against activity, not development. Recruitment activity is the input; manpower development is the output, and only the output should pay.</li>' +
@@ -556,18 +699,23 @@ function renderLog() {
 /* ── the brief for the room: every session with a record or a contribution, printable ── */
 function renderBrief() {
   const rows = SESSIONS.filter(s => !s.brk && (s.record || itemsFor(s.key).length));
-  $('p-brief').innerHTML = '<h2>Brief for the room</h2><p class="sub">Every session with something to say: the question, the record, the position, the questions to put, and what has been logged. Print gives you the two days on paper.</p>' +
+  const obj = ITEMS.filter(i => i.session === 'objective');
+  $('p-brief').innerHTML = '<h2>Brief for the room</h2><p class="sub">Every session with something to say: the question, the record, the evidence, the position, the sixty seconds, the questions to put, and what has been logged. Print gives you the two days on paper.</p>' +
     '<p><button class="btn gold sm" onclick="window.print()">Print the brief</button></p>' +
+    '<div class="obj"><h3>Our objective</h3><ol>' + OBJECTIVE.map(o => '<li>' + esc(o) + '</li>').join('') + '</ol>' + obj.map(i => itemHtml(i, false)).join('') + '</div>' +
     [1, 2].map(d => '<h3>' + (d === 1 ? 'Day 1 · Thursday 22 October' : 'Day 2 · Friday 23 October') + '</h3>' + rows.filter(s => s.day === d).map(s => {
       const items = itemsFor(s.key);
       return '<article class="sess' + (s.mine ? ' mine' : '') + '"><div class="hd"><div class="tm">' + esc(s.t) + '<small>to ' + esc(s.e) + '</small></div><div class="ti">' + esc(s.title) + '<i>' + esc(s.who || '') + '</i></div><div class="cnt">' + (s.mine ? '<span class="pill gold">Your slot</span>' : '') + '</div></div>' +
         '<div class="bd">' + (s.question ? '<div class="q"><b>To consider</b>' + esc(s.question) + '</div>' : '') +
         (s.record ? '<div class="rec"><h4>The record</h4><ul>' + s.record.map(r => '<li>' + esc(r) + '</li>').join('') + '</ul></div>' : '') +
+        eviHtml(s.key) +
         (s.position ? '<div class="pos"><h4>Position</h4><p>' + esc(s.position) + '</p></div>' : '') +
+        sayHtml(s.key) +
         (s.asks ? '<ul class="ask">' + s.asks.map(a => '<li>' + esc(a) + '</li>').join('') + '</ul>' : '') +
         (items.length ? '<div class="con"><h4>Logged</h4>' + items.map(i => itemHtml(i, false)).join('') + '</div>' : '') +
         '</div></article>';
-    }).join('')).join('');
+    }).join('')).join('') +
+    '<h3>Sources</h3><ol class="small src">' + Object.keys(SRC).map(k => '<li>' + esc(SRC[k][0]) + ': <a href="' + esc(SRC[k][1]) + '">' + esc(SRC[k][1]) + '</a></li>').join('') + '</ol>';
 }
 
 boot();

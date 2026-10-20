@@ -173,6 +173,16 @@ ok('the page says the record has no definition of the Step-Back Approach', /no w
 ok('no client name and no per-book count on the page', !/\b(Mohammed|Persad|Ramroach|Sookdeo)\b/.test(page.replace(/Ricky Rampersad|Rampersad Branch/g, '')));
 ok('the page keeps contributions on the device until the backend is linked', /rrb-sm-local/.test(page) && /Unknown action/i.test(page));
 ok('the short address forwards to the page', /url=\/strategic-meeting\//.test(stub) && /location\.replace\('\/strategic-meeting\/'/.test(stub));
+ok('every evidence line names a source that exists, and every source is https', (() => {
+  const src = [...page.matchAll(/^  (\w+): \['[^\n]*?', '(https:\/\/[^']+)'\],?$/gm)].map(m => m[1]);
+  const used = [...page.matchAll(/', '([a-zA-Z0-9]+)'\],\n/g)].map(m => m[1]);
+  return src.length >= 18 && used.length >= 30 && used.every(k => src.includes(k)) && !/'http:\/\//.test(page);
+})());
+ok('the key sessions carry evidence and a sixty-second line', ['d1-mahogany', 'd1-career', 'd1-succession', 'd1-awards', 'd1-protect', 'd1-fraud', 'd2-succession', 'd2-transfers', 'd2-recruit'].every(k => page.indexOf("'" + k + "': [") >= 0 && page.indexOf("'" + k + "': '") >= 0));
+ok('a vendor claim and a second-hand figure are marked as such', /A vendor, Atidot, claims/.test(page) && /reported second-hand/.test(page));
+ok('the Step-Back notes carry the LIMRA figures and say no source defines the approach', /about 14% industry-wide/.test(page) && /No published source defines/.test(page));
+ok('the objective is on the page and in the brief', /Our objective for the two days/.test(page) && /const OBJECTIVE = \[/.test(page) && /Our objective<\/h3>/.test(page));
+ok('the guide is sent the evidence and the sixty seconds', /Industry evidence \(' \+ SRC\[k\]\[0\]/.test(page) && /Draft in the room: /.test(page));
 ok('the memo\'s logistics are on the page', /Hyatt Regency Trinidad, 1 Wrightson Road/.test(page) && /Business casual/.test(page) && /3:30 pm/.test(page));
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall passed\n');

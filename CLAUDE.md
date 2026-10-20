@@ -4002,6 +4002,20 @@ guide you. In your session review notes on the step back in place from all memor
   what the material cannot support. It is told to invent nothing, add no number not given, and never name a client
   or a former agent. One read per session and set of contributions, kept half an hour. "Use this" fills the form; a
   person edits and logs it. Without the key the button is off and says what to set.
+- **The industry evidence sits beside the record, with its source on every line** (asked for the same day: "research
+  the web and build in intelligence so you could contribute meaningfully towards each topic … we need to have our
+  objective and make our voice heard"). `EVIDENCE` in the page is one block per session, each line a finding with a
+  key into `SRC` (name and https link, 20 sources on 20 October 2026: LIMRA's 2025 conference deck with the FP
+  Production & Retention curve, the 2019 Career Profile study and the 2022 LIMRA/FINSECA retention study; DDI's
+  Global Leadership Forecast 2025; Gallup on managers and on recognition; Capgemini and LIMRA's World Life Insurance
+  Report 2027; J.D. Power 2025; the NAIC, the IAIS and ACFE 2024 on fraud; the Central Bank's 28 July 2023 market
+  conduct circular; the Broker Protocol study in the Journal of Financial Economics). A vendor's claim (Atidot on
+  orphan lapses) and a second-hand figure (the J.D. Power 63%) are marked as such in the line itself, so the room
+  hears the caveat with the number. `SAY` is a sixty-second template for each key session: the branch's record
+  first, the evidence, the position, the ask, with the live numbers in brackets to read off the tiles. `OBJECTIVE`
+  is the branch's own five-line objective for the two days, a draft the branch manager edits by logging a position
+  against the session key `objective`. The brief prints all three and ends with the sources. The guide is sent the
+  evidence and the sixty seconds with the notes.
 - **The Step-Back notes say plainly what the record does not hold.** Nothing on the branch's record defines the
   Step-Back Approach as a recruitment or career-path method; the only "step back" on file is the motor No Claim
   Discount rule. The tab gives what bears on the agenda's question (how the tracker counts recruitment, the licence
@@ -4011,8 +4025,8 @@ guide you. In your session review notes on the step back in place from all memor
 - **Until the paste** (Service.gs and StrategicMeeting.gs, then a New version), the backend answers "Unknown action":
   the gate says so to a fresh sign-in, a device already signed in opens with a notice, contributions are kept on the
   device (`rrb-sm-local`) and offered to the sheet once the backend is linked.
-- Tests: `tests/test-strategic-meeting.js` (60 checks, the script under the fake Sheets with the sign-in, the stream
-  and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (26, Playwright,
+- Tests: `tests/test-strategic-meeting.js` (65 checks, the script under the fake Sheets with the sign-in, the stream
+  and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (28, Playwright,
   a laptop as the branch, a phone as the unit manager, and the unlinked backend).
 
 ## Standing rules
