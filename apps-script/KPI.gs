@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-20l';
+var SCRIPT_VERSION = '2026-10-20m';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -7344,7 +7344,7 @@ function rateClientApprove(name) {
  *  Outside (the shared link, or anyone but the Branch Manager signed in) also drops times of arrival, lateness,
  *  points, dollar figures, and anything that only shows who has not done something.
  */
-var WALL2 = { CACHE_SEC: 300, FROM_H: 7, TO_H: 17, TICKER: 40, EXTRA: ['pawan'], BM_FROM_H: 5, BM_TO_H: 18 };   // his day starts at 5am (Ricky, 20 Oct 2026)
+var WALL2 = { CACHE_SEC: 300, FROM_H: 7, TO_H: 17, TICKER: 40, EXTRA: ['pawan', 'akaash'], BM_FROM_H: 5, BM_TO_H: 18 };   // his day starts at 5am (Ricky, 20 Oct 2026)
 var WALL_KIND = { 'new': 'new business', orphan: 'orphan adoption', retention: 'retention', claims: 'claims', other: 'servicing' };
 
 /** The kind of work a closed task was, in words fit for any screen. */
@@ -7410,6 +7410,7 @@ function wallStaff_(day, outside) {
       closes: (byDesk[s] || []).length, hours: hours, covering: covering, coveredBy: Object.keys(by).map(function (t) { return { name: gameFirst_(t), n: by[t] }; }),
       par: sc ? sc.par : 0, parDone: sc ? sc.parDone : 0, parMet: !!(sc && sc.parMet), quests: sc ? sc.quests : 0, questsOf: sc ? sc.questList.length : 0,
       streak: stk.n, gain: outside && g.pct != null && g.pct < 0 ? null : g.pct, bestDay: !!g.bestDay };   // outside: progress only
+    if (UM_DESKS.indexOf(s) > -1) p.role = 'Unit manager';   // Akaash on the wall with the desks (20 Oct 2026: "where is Akaash")
     if (!outside) { p.inAt = first ? wallAt_(minutesOf_(first)) : ''; p.late = first ? lateBy_(s, first) : 0; p.points = sc ? sc.points : null; }
     // Celebrations (20 Oct 2026): the top skill, a level reached today, and today's thank-yous. Wins only, never a shortfall.
     if (p.game) {
@@ -7530,7 +7531,12 @@ function wallManagers_(day, outside, staff) {
     var mine = (f.rows || []).filter(function (r) { return names.indexOf(bkNk_(r.name)) > -1; });
     out.unit = { lead: gameFirst_(um), n: Math.max(0, names.length - 1), ffMonth: mine.reduce(function (s, r) { return s + Number(r.ff || 0); }, 0),
       appsMonth: mine.reduce(function (s, r) { return s + Number(r.apps || 0); }, 0),
-      planned: names.filter(function (n) { return sum[n] && sum[n].hasPlan; }).length };
+      planned: names.filter(function (n) { return sum[n] && sum[n].hasPlan; }).length,
+      // His agents by first name, most fact finds first (20 Oct 2026: "I need the agent names as well"); outside, only those with something to show.
+      agents: mine.filter(function (r) { return bkNk_(r.name) !== bkNk_(nameFor_(um)); }).map(function (r) { return { name: String(r.name || '').split(' ')[0], ff: Number(r.ff || 0), apps: Number(r.apps || 0),
+          planned: !!(sum[bkNk_(r.name)] && sum[bkNk_(r.name)].hasPlan) }; })
+        .filter(function (a) { return a.name && (!outside || a.ff || a.apps || a.planned); })
+        .sort(function (a, b) { return b.ff - a.ff || b.apps - a.apps; }).slice(0, 8) };
   } catch (e) {}
   // Cover, from the staff read.
   if (staff) {
