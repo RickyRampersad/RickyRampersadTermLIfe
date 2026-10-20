@@ -428,8 +428,16 @@ const OBJECTIVE = [
 function toast(msg, bad) { const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', bad ? 8000 : 4000); }
 async function api(params) {
   const q = Object.entries(Object.assign({}, params, { code: AUTH.code, who: AUTH.who })).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
-  try { const txt = await (await fetch(SVC + '?' + q + '&z=' + Date.now())).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, error: 'The backend answered with a page instead of data.' }; } }
-  catch (e) { return { ok: false, error: 'Could not reach the branch backend. Check the connection and try again.' }; }
+  let r;
+  try { const txt = await (await fetch(SVC + '?' + q + '&z=' + Date.now())).text(); try { r = JSON.parse(txt); } catch (e) { r = { ok: false, error: 'The backend answered with a page instead of data.', unread: true }; } }
+  catch (e) { r = { ok: false, error: 'Could not reach the branch backend. Check the connection and try again.', unread: true }; }
+  /* A backend without StrategicMeeting.gs sends an unknown action to the questionnaire form, a page the browser blocks.
+     If its own ping still answers, the backend is up and simply does not carry the meeting yet. */
+  if (r.unread && /^sm\./.test(String(params.action || '')) && await backendUp()) return { ok: false, error: 'Unknown action' };
+  return r;
+}
+async function backendUp() {
+  try { const j = JSON.parse(await (await fetch(SVC + '?action=ping&z=' + Date.now())).text()); return !!(j && j.ok); } catch (e) { return false; }
 }
 async function post(body) {
   try { const txt = await (await fetch(SVC, { method: 'POST', body: JSON.stringify(Object.assign({}, body, { code: AUTH.code, who: AUTH.who })) })).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, error: 'The backend answered with a page instead of data.' }; } }
@@ -450,7 +458,11 @@ async function signIn() {
   const r = await api({ action: 'sm.me' });
   $('gbtn').disabled = false;
   if (!r.ok) {
-    if (/unknown action/i.test(r.error || '')) { $('gerr').textContent = 'The backend does not carry the strategic meeting yet: paste Service.gs and StrategicMeeting.gs into the Service Questionnaire project and publish a New version.'; return; }
+    /* a backend not yet pasted cannot check the code: open on this device, contributions kept here until it is */
+    if (/unknown action/i.test(r.error || '')) {
+      try { localStorage.setItem('rrb-transition-code', AUTH.code); localStorage.setItem('rrb-assign-who', AUTH.who); } catch (e) {}
+      LINKED = false; ME = { name: AUTH.who || 'Branch', role: 'branch', canWrite: true }; await open(); return;
+    }
     $('gerr').textContent = r.error || 'Could not sign in.'; AUTH = { code: '', who: '' }; return;
   }
   try { localStorage.setItem('rrb-transition-code', AUTH.code); localStorage.setItem('rrb-assign-who', AUTH.who); } catch (e) {}

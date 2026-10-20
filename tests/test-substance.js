@@ -115,7 +115,7 @@ console.log('\nThe sheet, the tracker and the wall must read every entry the sam
 
   // …and the wall's copy, which reads the raw log text so the branch can see
   // how the day is being written without waiting on an Apps Script redeploy.
-  const wall = fs.readFileSync(path.join(__dirname, '..', 'wall', 'index.html'), 'utf8');
+  const wall = fs.readFileSync(path.join(__dirname, '..', 'wall', 'classic', 'index.html'), 'utf8');   // the block wall, at /wall/classic/ since 20 Oct 2026
   const wa = wall.indexOf('const FILLER_RE');
   const wb = wall.indexOf('\n}\n', wall.indexOf('function readStandards')) + 3;
   const wctx = { console, String, Number, Object, Array, RegExp };
