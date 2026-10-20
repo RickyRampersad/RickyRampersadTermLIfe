@@ -123,6 +123,7 @@ function mrLookupVehicle(token, reg) {
       'Motor_Vehicle_Coverage_Type__c, Cover1__c, CY_Cover__c, Total_Premiums__c, ' +
       'Renewal_PremiUM_cy__c, NCD__c, Deductible__c, Windscreen__c, Waiver_of_Excess__c, ' +
       'Policy__c, Next_Renewal_Date__c, Renewal_Date__c, Vehicle_Status__c, ' +
+      'TRANSACTIONS__c, Payments_Made__c, Premium_Due__c, ' +
       'Account__c, Email__c, Portal_Token__c ' +
       'FROM Risk_Details__c ' +
       // The token is the authorisation. The plate only filters what this token
@@ -168,16 +169,148 @@ function mrLookupVehicle(token, reg) {
   var current = mine[0];
   var history = mrHistory_(mine);
 
+  // `rows` is every risk this token covers, which lets mrYears_ work out how
+  // many vehicles share a transaction without a second query — a payment sits
+  // on the transaction, so on a fleet policy it covers all of them at once.
+  var years = mrYears_(mine, rows);
+
   return {
     ok: true,
     reg: current.Vehicle__c,
     riskId: current.Id,
     current: mrView_(current),
     history: history,
+    years: years,
     missing: mrMissing_(current),
-    insights: mrInsights_(current, history),
+    insights: mrInsights_(current, history, years),
     records: mine.length,
   };
+}
+
+/* ===================== last year, and what was paid ===================== */
+
+/**
+ * One row per TERM for this vehicle: what it was insured for, what it cost,
+ * and what actually reached us.
+ *
+ * KEYED ON Renewal_Date__c, NOT Next_Renewal_Date__c. Renewal_Date__c is the
+ * term's START; Next_Renewal_Date__c is its END. Keying on the end date puts
+ * two terms in one bucket — TDY459 carries two rows both ending 2024-11-29,
+ * written a year apart — and silently drops one of them from the history.
+ *
+ * WHAT WAS PAID IS A POLICY FIGURE, NEVER A VEHICLE ONE. Payments__c hangs off
+ * TRANSACTIONS__c, and one transaction can cover a whole fleet. So each row
+ * says how many vehicles the payment covered, and `paidIsPolicyWide` is set
+ * when that is more than one. Showing a fleet's payment beside one van as if
+ * it were that van's would overstate what the client paid for it several times
+ * over.
+ *
+ * Premium_Billed__c REPEATS THE WHOLE INVOICE ON EVERY INSTALMENT ROW. The
+ * 2019 term on TDY459 has two payment rows, each carrying 8,635.94 as the
+ * billed figure. So billed takes max() and paid takes sum(); adding the billed
+ * column up would double the policy.
+ */
+function mrYears_(mine, allRows) {
+  // How many of this client's risks sit on each transaction.
+  var share = {};
+  (allRows || mine).forEach(function (r) {
+    var t = r.TRANSACTIONS__c;
+    if (t) share[t] = (share[t] || 0) + 1;
+  });
+
+  // One bucket per term start, newest first. Where two rows share a term, the
+  // one carrying a sum insured wins — a blank Cover1__c is a thinner record,
+  // not a different term.
+  var byTerm = {}, order = [];
+  mine.forEach(function (r) {
+    var term = r.Renewal_Date__c || r.Next_Renewal_Date__c || '';
+    if (!term) return;
+    if (!byTerm[term]) { byTerm[term] = r; order.push(term); }
+    else if (!byTerm[term].Cover1__c && r.Cover1__c) byTerm[term] = r;
+  });
+  order.sort().reverse();
+
+  var txIds = [];
+  order.forEach(function (t) {
+    var id = byTerm[t].TRANSACTIONS__c;
+    if (id && txIds.indexOf(id) < 0) txIds.push(id);
+  });
+
+  var pay = mrPayments_(txIds);
+
+  return order.map(function (term) {
+    var r = byTerm[term];
+    var tx = r.TRANSACTIONS__c;
+    var p = (tx && pay[tx]) || null;
+    var covers = (tx && share[tx]) || 1;
+
+    var status;
+    if (!p)                                   status = 'not-recorded';
+    else if (p.paid <= 0)                     status = 'not-recorded';
+    else if (p.billed && p.paid >= p.billed - 1) status = 'paid-full';
+    else if (!p.billed)                       status = 'paid-some';
+    else                                      status = 'part-paid';
+
+    return {
+      term: term,
+      year: String(term).slice(0, 4),
+      sumInsured: r.Cover1__c || r.CY_Cover__c || 0,
+      premium: r.Total_Premiums__c || r.Renewal_PremiUM_cy__c || 0,
+      policyBilled: p ? p.billed : 0,
+      policyPaid: p ? p.paid : 0,
+      policyOwing: p ? Math.max(0, (p.billed || 0) - p.paid) : 0,
+      paidStatus: status,
+      paidOn: p ? p.first : '',
+      lastPaidOn: p ? p.last : '',
+      instalments: p ? p.n : 0,
+      how: p ? p.how.join(', ') : '',
+      where: p ? p.where.join(', ') : '',
+      paidIsPolicyWide: covers > 1,
+      vehiclesOnPolicy: covers,
+      coverage: r.Motor_Vehicle_Coverage_Type__c || '',
+    };
+  });
+}
+
+/** Payments folded per transaction. Empty object if we cannot reach them. */
+function mrPayments_(txIds) {
+  var out = {};
+  if (!txIds || !txIds.length || typeof rsfQ_ !== 'function') return out;
+
+  var safe = txIds.filter(function (x) { return /^[a-zA-Z0-9]{15,18}$/.test(x); })
+                  .slice(0, 60);
+  if (!safe.length) return out;
+
+  var rows;
+  try {
+    rows = rsfQ_(
+      'SELECT PMTS__c, Premium_Billed__c, Payment_Made__c, Date_Paid__c, ' +
+      'Payment_Type__c, Payment_Location__c, Bank__c, Receipt__c ' +
+      "FROM Payments__c WHERE PMTS__c IN ('" + safe.join("','") + "') " +
+      'ORDER BY Date_Paid__c'
+    );
+  } catch (err) {
+    return out;   // no payment history is a gap in the page, not an error
+  }
+
+  (rows || []).forEach(function (p) {
+    var k = p.PMTS__c;
+    if (!k) return;
+    var d = out[k] || (out[k] = { billed: 0, paid: 0, n: 0, first: '', last: '',
+                                  how: [], where: [] });
+    // max, not sum — the billed figure is the whole invoice on every row
+    d.billed = Math.max(d.billed, Number(p.Premium_Billed__c) || 0);
+    d.paid  += Number(p.Payment_Made__c) || 0;
+    d.n     += 1;
+    if (p.Date_Paid__c) {
+      if (!d.first || p.Date_Paid__c < d.first) d.first = p.Date_Paid__c;
+      if (!d.last  || p.Date_Paid__c > d.last)  d.last  = p.Date_Paid__c;
+    }
+    if (p.Payment_Type__c && d.how.indexOf(p.Payment_Type__c) < 0) d.how.push(p.Payment_Type__c);
+    var w = p.Payment_Location__c || p.Bank__c;
+    if (w && d.where.indexOf(w) < 0) d.where.push(w);
+  });
+  return out;
 }
 
 /** The newest record, shaped for the page. */
@@ -204,14 +337,28 @@ function mrView_(r) {
   };
 }
 
-/** The same plate across renewals, oldest first, for the trend. */
+/**
+ * The same plate across renewals, oldest first, for the trend.
+ *
+ * Keyed on Renewal_Date__c — the term's START — and de-duplicated, for the
+ * reason set out on mrYears_: TDY459 carries two rows both ending 2024-11-29,
+ * written a year apart. Sorting on the END date buckets two terms together and
+ * drops one, which then feeds a wrong answer into the flat-value and
+ * premium-trend insights.
+ */
 function mrHistory_(mine) {
-  return mine.slice().sort(function (a, b) {
-    return String(a.Next_Renewal_Date__c || '').localeCompare(String(b.Next_Renewal_Date__c || ''));
-  }).map(function (r) {
+  var byTerm = {}, order = [];
+  mine.forEach(function (r) {
+    var term = r.Renewal_Date__c || r.Next_Renewal_Date__c || '';
+    if (!term) return;
+    if (!byTerm[term]) { byTerm[term] = r; order.push(term); }
+    else if (!byTerm[term].Cover1__c && r.Cover1__c) byTerm[term] = r;
+  });
+  return order.sort().map(function (term) {
+    var r = byTerm[term];
     return {
-      when: r.Next_Renewal_Date__c || r.Renewal_Date__c || '',
-      year: (r.Next_Renewal_Date__c || '').slice(0, 4),
+      when: term,
+      year: String(term).slice(0, 4),
       sumInsured: r.Cover1__c || r.CY_Cover__c || 0,
       premium: r.Total_Premiums__c || r.Renewal_PremiUM_cy__c || 0,
       coverage: r.Motor_Vehicle_Coverage_Type__c || '',
@@ -238,10 +385,50 @@ function mrMissing_(r) {
  * `asks` names the field the page should scroll them to, so an insight is
  * never a dead end — it always points at the thing that resolves it.
  */
-function mrInsights_(r, history) {
+function mrInsights_(r, history, years) {
   var out = [];
   var now = new Date(); now.setHours(0, 0, 0, 0);
   var yr = now.getFullYear();
+
+  /* ---- last year's money, where we can evidence it ---- */
+
+  if (years && years.length >= 2) {
+    // years[0] is the term being renewed; years[1] is the one just finishing.
+    var last = years[1];
+    var pol = last.paidIsPolicyWide
+      ? ' across the ' + last.vehiclesOnPolicy + ' vehicles on the policy'
+      : '';
+    if (last.paidStatus === 'paid-full') {
+      out.push({
+        kind: 'paid', tone: 'good', asks: null,
+        title: 'Last year you paid ' + mrMoney2_(last.policyPaid) + ' in full',
+        body: 'Settled ' + mrNiceDate_(last.lastPaidOn || last.paidOn) +
+              (last.how ? ' by ' + last.how.toLowerCase() : '') + pol +
+              (last.instalments > 1 ? ', over ' + last.instalments + ' payments' : '') +
+              '. Thank you — nothing is outstanding on that term.',
+      });
+    } else if (last.paidStatus === 'part-paid') {
+      out.push({
+        kind: 'paid', tone: 'warn', asks: null,
+        title: mrMoney2_(last.policyOwing) + ' still shows as outstanding on last year',
+        body: mrMoney2_(last.policyPaid) + ' of ' + mrMoney2_(last.policyBilled) +
+              ' reached us' + pol + ', last on ' + mrNiceDate_(last.lastPaidOn) +
+              '. If you have settled it since, say so below and we will chase the ' +
+              'receipt rather than you.',
+      });
+    } else if (last.paidStatus === 'not-recorded') {
+      // Our payment records are thin, not the client's conduct. Of the seven
+      // terms on TDY459 only five carry a payment row, and the two most recent
+      // carry none. So this is never phrased as "you did not pay".
+      out.push({
+        kind: 'paid', tone: 'info', asks: null,
+        title: 'We cannot see last year’s payment on our side',
+        body: 'Your cover ran, so it was almost certainly settled — our payment ' +
+              'records simply do not go back reliably. Nothing for you to do; we ' +
+              'are mentioning it so the figures below make sense.',
+      });
+    }
+  }
 
   /* ---- the certificate blockers, first, because they stop a renewal ---- */
 
@@ -545,9 +732,25 @@ function mrClean_(d, raw) {
 
 /* ===================== small helpers ===================== */
 
+/**
+ * Rounded, for figures a client is being asked to think about rather than pay
+ * — a sum insured, a depreciation range. Cents there are noise.
+ */
 function mrMoney_(n) {
   n = Number(n) || 0;
   return 'TT$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+/**
+ * Exact, for money that has moved or is owed.
+ *
+ * A balance must carry its cents. "TT$3,186 outstanding" against a bill of
+ * TT$3,185.97 reads as a different number from the one on the invoice, and the
+ * client who notices rings up to ask which is right.
+ */
+function mrMoney2_(n) {
+  n = Number(n) || 0;
+  return 'TT$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function mrNiceDate_(iso) {

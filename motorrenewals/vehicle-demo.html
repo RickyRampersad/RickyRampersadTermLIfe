@@ -141,6 +141,25 @@ h1{font-size:19px;letter-spacing:-.2px;margin-top:1px}
 .countup{font-variant-numeric:tabular-nums}
 
 /* ---------- the value trend ---------- */
+.yrs{margin-top:18px}
+.yhd{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);
+  font-weight:700;margin-bottom:9px}
+.ytab{width:100%;border-collapse:collapse;font-size:12.5px}
+.ytab th{text-align:left;font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--mut);font-weight:700;padding:0 8px 7px 0;border-bottom:1px solid var(--line)}
+.ytab td{padding:11px 8px 11px 0;border-bottom:1px solid #15283d;vertical-align:top;
+  opacity:0;animation:rise .5s cubic-bezier(.22,1,.36,1) forwards}
+.ytab tr:last-child td{border-bottom:none}
+.ynow{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);
+  font-weight:700;margin-top:3px}
+.ymut{color:var(--mut);font-size:10.5px;margin-top:3px;line-height:1.45}
+.yow{color:var(--warn);font-size:10.5px;font-weight:700;margin-top:2px}
+.ybadge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:9.5px;
+  font-weight:800;letter-spacing:.03em;margin-bottom:4px;white-space:nowrap}
+.ybadge.i-good{background:var(--okbg);color:var(--ok)}
+.ybadge.i-warn{background:var(--warnbg);color:var(--warn)}
+.ybadge.i-info{background:#0b2231;color:var(--teal)}
+@media (max-width:480px){.ytab{font-size:11.5px}.ytab td{padding:9px 5px 9px 0}}
 .trend{display:flex;gap:9px;align-items:flex-end;height:74px;margin-top:16px}
 .tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
 .tbar{
@@ -299,10 +318,10 @@ var SAMPLES = {
       chassis:'', engine:'2TR0998871', cc:'2700', permit:'', permitExpiry:'',
       coverage:'Private Comprehensive', comp:true, sumInsured:180000, premium:6480,
       policy:'TT APU 1600095', nextDue:iso(26), status:'Current' },
-    history:[
-      {year:String(YR-3), sumInsured:180000, premium:6150},
-      {year:String(YR-2), sumInsured:180000, premium:6290},
-      {year:String(YR-1), sumInsured:180000, premium:6480}
+    years:[
+      {year:String(YR),   sumInsured:180000, premium:6480, policyBilled:0,       policyPaid:0,       policyOwing:0,      paidStatus:'not-recorded', paidOn:'',             lastPaidOn:'',            instalments:0, how:'',            where:'',                       paidIsPolicyWide:false, vehiclesOnPolicy:1},
+      {year:String(YR-1), sumInsured:180000, premium:6290, policyBilled:6671.74, policyPaid:6671.74, policyOwing:0,      paidStatus:'paid-full',    paidOn:(YR-1)+'-11-28', lastPaidOn:(YR-1)+'-11-28', instalments:1, how:'Wire Transfer', where:'Head Office',          paidIsPolicyWide:false, vehiclesOnPolicy:1},
+      {year:String(YR-2), sumInsured:180000, premium:6150, policyBilled:6519.00, policyPaid:4019.00, policyOwing:2500.00, paidStatus:'part-paid',   paidOn:(YR-2)+'-11-30', lastPaidOn:(YR-2)+'-12-19', instalments:2, how:'Cash',        where:'Chaguanas Service Center', paidIsPolicyWide:false, vehiclesOnPolicy:1}
     ]
   },
   TDH2208: {
@@ -311,9 +330,9 @@ var SAMPLES = {
       chassis:'JN1CD0000X112233', engine:'', cc:'', permit:'20041188',
       permitExpiry:'2014-08-19', coverage:'Private Third Party', comp:false,
       sumInsured:0, premium:2240, policy:'TT APG 1350726', nextDue:iso(12), status:'Current' },
-    history:[
-      {year:String(YR-2), sumInsured:0, premium:2180},
-      {year:String(YR-1), sumInsured:0, premium:2240}
+    years:[
+      {year:String(YR),   sumInsured:0, premium:2240, policyBilled:0,       policyPaid:0,       policyOwing:0, paidStatus:'not-recorded', paidOn:'',             lastPaidOn:'',            instalments:0, how:'',       where:'',                paidIsPolicyWide:true,  vehiclesOnPolicy:4},
+      {year:String(YR-1), sumInsured:0, premium:2180, policyBilled:9840.00, policyPaid:9840.00, policyOwing:0, paidStatus:'paid-full',    paidOn:(YR-1)+'-10-09', lastPaidOn:(YR-1)+'-10-09', instalments:1, how:'Cheque', where:'Republic',        paidIsPolicyWide:true,  vehiclesOnPolicy:4}
     ]
   },
   PBM991: {
@@ -323,17 +342,26 @@ var SAMPLES = {
       permit:'19885544', permitExpiry:iso(42),
       coverage:'Private Comprehensive', comp:true, sumInsured:142000, premium:5120,
       policy:'TT APC 1591888', nextDue:iso(34), status:'Current' },
-    history:[
-      {year:String(YR-1), sumInsured:165000, premium:4570},
-      {year:String(YR),   sumInsured:142000, premium:5120}
+    years:[
+      {year:String(YR),   sumInsured:142000, premium:5120, policyBilled:0,       policyPaid:0,       policyOwing:0, paidStatus:'not-recorded', paidOn:'',             lastPaidOn:'',            instalments:0, how:'',            where:'',          paidIsPolicyWide:false, vehiclesOnPolicy:1},
+      {year:String(YR-1), sumInsured:165000, premium:4570, policyBilled:4844.20, policyPaid:4844.20, policyOwing:0, paidStatus:'paid-full',    paidOn:(YR-1)+'-11-22', lastPaidOn:(YR-1)+'-11-22', instalments:1, how:'Credit card', where:'Scotia',  paidIsPolicyWide:false, vehiclesOnPolicy:1}
     ]
   }
 };
+
+/* history is derived from years, oldest first, so the two cannot disagree */
+Object.keys(SAMPLES).forEach(function(k){
+  SAMPLES[k].history = SAMPLES[k].years.slice().reverse().map(function(y){
+    return {year:y.year, sumInsured:y.sumInsured, premium:y.premium};
+  });
+});
 
 /* ------------------------------------------------------------------
    The insight rules, mirroring mrInsights_ in MotorRisk.gs.
    ------------------------------------------------------------------ */
 function money(n){ return 'TT$'+(Number(n)||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
+/* exact, for money that has moved or is owed - a balance must carry its cents */
+function money2(n){ return 'TT$'+(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function niceDate(s){
   var d=new Date(s+'T00:00:00'); if(isNaN(d)) return s;
   var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -342,8 +370,30 @@ function niceDate(s){
 function daysTo(s){ var d=new Date(s+'T00:00:00'); if(isNaN(d)) return null;
   var t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/864e5); }
 
-function insights(r, hist){
+function insights(r, hist, years){
   var out=[];
+  /* last year's money first - it is what a client checks before anything else */
+  if(years && years.length>=2){
+    var last=years[1];
+    var pol = last.paidIsPolicyWide
+      ? ' across the '+last.vehiclesOnPolicy+' vehicles on the policy' : '';
+    if(last.paidStatus==='paid-full') out.push({tone:'good',asks:null,
+      title:'Last year you paid '+money2(last.policyPaid)+' in full',
+      body:'Settled '+niceDate(last.lastPaidOn||last.paidOn)+
+           (last.how?' by '+last.how.toLowerCase():'')+pol+
+           (last.instalments>1?', over '+last.instalments+' payments':'')+
+           '. Thank you \u2014 nothing is outstanding on that term.'});
+    else if(last.paidStatus==='part-paid') out.push({tone:'warn',asks:null,
+      title:money2(last.policyOwing)+' still shows as outstanding on last year',
+      body:money2(last.policyPaid)+' of '+money2(last.policyBilled)+' reached us'+pol+
+           ', last on '+niceDate(last.lastPaidOn)+'. If you have settled it since, say so '+
+           'below and we will chase the receipt rather than you.'});
+    else out.push({tone:'info',asks:null,
+      title:'We cannot see last year\u2019s payment on our side',
+      body:'Your cover ran, so it was almost certainly settled \u2014 our payment records '+
+           'simply do not go back reliably. Nothing for you to do; we are mentioning it so '+
+           'the figures below make sense.'});
+  }
   if(r.status==='Sold') out.push({tone:'warn',asks:null,
     title:'Our records show this vehicle as sold',
     body:'If you still own it, tell us in the notes and we will put it right before renewal.'});
@@ -460,7 +510,7 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
 function render(d){
-  var r=d.current, hist=d.history, ins=insights(r,hist);
+  var r=d.current, hist=d.history, yrs=d.years||[], ins=insights(r,hist,yrs);
   var el=document.getElementById('result'); el.classList.add('on');
 
   var gap = function(v, what){ return v ? esc(v) : '<span class="v gap">not on file</span>'; };
@@ -488,6 +538,7 @@ function render(d){
         (r.permitExpiry?niceDate(r.permitExpiry):'<span class="v gap">not on file</span>')+'</div></div>'+
     '</div>'+
     (r.comp && hist.length>1 ? trendHtml(hist) : '')+
+    (yrs.length ? yearsHtml(yrs) : '')+
   '</div>'+
 
   /* insights */
@@ -579,6 +630,36 @@ function render(d){
   wireValue(r);
   wirePermit();
   document.getElementById('send').onclick=function(){ submit(r); };
+}
+
+function yearsHtml(yrs){
+  var PILL={'paid-full':['i-good','Paid in full'],'part-paid':['i-warn','Part paid'],
+            'paid-some':['i-info','Payment received'],'not-recorded':['i-info','Not recorded']};
+  return '<div class="yrs"><div class="yhd">Year by year</div>'+
+  '<table class="ytab"><thead><tr><th>Term</th><th>Insured for</th><th>Premium</th>'+
+  '<th>What reached us</th></tr></thead><tbody>'+
+  yrs.map(function(y,n){
+    var pill=PILL[y.paidStatus]||PILL['not-recorded'];
+    var paid;
+    if(y.paidStatus==='not-recorded') paid='<span class="ymut">no record</span>';
+    else paid='<b>'+money2(y.policyPaid)+'</b>'+
+      (y.policyOwing>0?'<div class="yow">'+money2(y.policyOwing)+' short</div>':'')+
+      '<div class="ymut">'+esc(y.how||'')+
+      (y.lastPaidOn?' \u00b7 '+niceDate(y.lastPaidOn):'')+
+      (y.instalments>1?' \u00b7 '+y.instalments+' payments':'')+
+      (y.paidIsPolicyWide?'<br>covers '+y.vehiclesOnPolicy+' vehicles on the policy':'')+'</div>';
+    return '<tr><td style="animation-delay:'+(0.30+n*0.08)+'s"><b>'+esc(y.year)+'</b>'+
+        (n===0?'<div class="ynow">renewing now</div>':'')+'</td>'+
+      '<td style="animation-delay:'+(0.32+n*0.08)+'s">'+
+        (y.sumInsured?money(y.sumInsured):'<span class="ymut">\u2014</span>')+'</td>'+
+      '<td style="animation-delay:'+(0.34+n*0.08)+'s">'+money2(y.premium)+'</td>'+
+      '<td style="animation-delay:'+(0.36+n*0.08)+'s">'+
+        '<span class="ybadge '+pill[0]+'">'+pill[1]+'</span><div>'+paid+'</div></td></tr>';
+  }).join('')+'</tbody></table>'+
+  '<p class="note">What reached us is the figure against the whole policy, not this vehicle '+
+  'alone \u2014 a payment sits on the policy, so on a fleet it covers every vehicle at once. '+
+  'Where it says no record the cover still ran; our payment history does not go back '+
+  'reliably.</p></div>';
 }
 
 function trendHtml(hist){
