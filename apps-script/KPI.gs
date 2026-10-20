@@ -4490,6 +4490,36 @@ var UM_CHECKS = [
 
 var MGRDAY = { must: ['Date', 'StaffId', 'Kind', 'Item'], name: 'Manager Day',
                head: ['Date', 'StaffId', 'Kind', 'Item', 'Question', 'Planned', 'Done', 'Note', 'At'] };
+/* A Unit Manager's note for one agent, not tied to any task (19 October 2026):
+   when there is nothing open for an agent, there is still something to say.
+   The agent gets it in his next morning e-mail; Sent records when. */
+var MGRNOTE = { must: ['Date', 'Agent', 'From', 'Note'], name: 'Manager Notes',
+                head: ['Date', 'Agent', 'From', 'Note', 'At', 'Sent'] };
+function umNoteWrite_(sid, day, agent, text) {
+  var sh = hrTab_(MGRNOTE, true), head = headerOf_(sh), o = { Date: day, Agent: agent, From: nameFor_(sid), Note: text, At: hhmm_(new Date()), Sent: '' };
+  sh.appendRow(head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+  forgetHr_(MGRNOTE);
+}
+/** Notes by agent (name key), newest first, from the last `days` days. */
+function umNotes_(day, days) {
+  var out = {}, from = shiftDays_(day, -(days || 30));
+  try { (hrRows_(MGRNOTE, false) || []).forEach(function (r) {
+    var d = isoDay_(r.Date); if (!d || d < from || d > day || !String(r.Note || '').trim()) return;
+    (out[bkNk_(r.Agent)] = out[bkNk_(r.Agent)] || []).push({ day: d, at: timeStr_(r.At) || String(r.At || ''), by: String(r.From || ''), text: String(r.Note), sent: String(r.Sent || '') });
+  }); } catch (e) {}
+  Object.keys(out).forEach(function (k) { out[k].sort(function (a, b) { return (b.day + b.at).localeCompare(a.day + a.at); }); });
+  return out;
+}
+/** The notes an agent has not had yet (last 7 days), and marking them sent once his morning mail goes. */
+function umNotesUnsent_(agent, day) { return ((umNotes_(day, 7)[bkNk_(agent)]) || []).filter(function (n) { return !n.sent; }).reverse(); }
+function umNotesMarkSent_(agent, day) {
+  var sh = hrTab_(MGRNOTE, false); if (!sh || sh.getLastRow() < 2) return 0;
+  var head = headerOf_(sh), v = sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues(), ia = head.indexOf('Agent'), is = head.indexOf('Sent'), n = 0;
+  if (ia < 0 || is < 0) return 0;
+  v.forEach(function (r, i) { if (bkNk_(r[ia]) === bkNk_(agent) && !String(r[is] || '').trim()) { sh.getRange(i + 2, is + 1).setValue(day + ' ' + hhmm_(new Date())); n++; } });
+  forgetHr_(MGRNOTE);
+  return n;
+}
 
 function soqlStr_(s) { return "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'"; }
 
@@ -5922,6 +5952,7 @@ function unitModel_(sid, day) {
   m.queries = []; try { m.queries = openQueries_().filter(function (q) { return agKey[bkNk_(q.agent)]; }); } catch (e) {}
   m.qpc = {}; if (m.queries.length) { try { m.qpc = qpComments_(); } catch (e) {} }
   m.agents.forEach(function (a) { a.queries = m.queries.filter(function (q) { return bkNk_(q.agent) === bkNk_(a.name); }).length; });
+  m.notes = {}; try { m.notes = umNotes_(day, 30); } catch (e) {}
   var gs = m.agents.filter(function (a) { return a.g; });
   m.unit = { goal: gs.reduce(function (s, a) { return s + a.g.api; }, 0), pace: gs.reduce(function (s, a) { return s + a.g.paceApi; }, 0),
     picked: m.agents.reduce(function (s, a) { return s + Number(a.f.pickedUp || 0); }, 0),
@@ -5987,6 +6018,29 @@ function unitWeek_(sid, day) {
   return out;
 }
 
+/** One card per agent, shown when Akaash picks him: his day (projected, done,
+ *  balance), his pace, "nothing open" when that is so, his notes, and a box for
+ *  a note that needs no task. Ricky, 19 October 2026: "if there are no tasks he
+ *  should know, and an area to place comments on if he does not see anything". */
+function unitAgentDayCards_(m) {
+  return m.agents.filter(function (a) { return !a.me; }).map(function (a) {
+    var key = bkNk_(a.name), st = a.today ? a.today.status : 'no projection yet', plan = {};
+    try { if (a.today && a.today.key) plan = agRows_(a.today.key, m.day, 'plan'); } catch (e) {}
+    var proj = AGENT_METRICS.filter(function (x) { return plan[x.id] && Number(plan[x.id].Planned || 0); }).map(function (x) { return esc_(x.p) + ' ' + esc_(plan[x.id].Planned); }).join(' · ');
+    var bal = a.today && a.today.hasClose ? a.today.done - a.today.planned : null;
+    var c = /absent/.test(st) ? 'r' : /closed/.test(st) ? 'g' : /plan in|projection in/.test(st) ? '' : 'a';
+    var pace = a.g && a.g.paceApi ? Math.round(100 * Number(a.f.pickedUp || 0) / a.g.paceApi) + '% of API pace' : 'no FY27 goal plan';
+    var notes = (m.notes || {})[key] || [];
+    return '<div class="card" data-dayfor="' + esc_(key) + '" style="display:none;border-color:#141C4A">' +
+      '<div class="bh">' + esc_(a.first) + ' today</div>' +
+      '<div class="ln"><span class="badge ' + c + '">' + esc_(st) + '</span>' + (proj ? ' · projected ' + proj : '') + '</div>' +
+      (bal != null ? '<div class="ln">Done <b>' + a.today.done + '</b> of ' + a.today.planned + ' projected · balance <b style="color:' + (bal < 0 ? '#DC3F3F' : '#2C7A57') + '">' + (bal > 0 ? '+' : bal < 0 ? '−' : '') + (bal ? Math.abs(bal) : 'even') + '</b></div>' : '') +
+      '<div class="ln">' + esc_(pace) + ' · ' + Number(a.f.week || 0) + ' fact find' + (Number(a.f.week || 0) === 1 ? '' : 's') + ' this week</div>' +
+      (!a.open && !a.queries ? '<div class="ln"><b>Nothing open for ' + esc_(a.first) + ':</b> no pendings, no client queries.</div>' : '') +
+      (notes.length ? notes.slice(0, 3).map(function (n) { return '<div class="br2" style="margin-top:3px">' + esc_(String(n.by).split(' ')[0] || 'You') + ' · ' + esc_(shortDate_(n.day)) + ': ' + esc_(n.text) + '</div>'; }).join('') : '') +
+      '<textarea name="an_' + esc_(key) + '" rows="2" placeholder="A note for ' + esc_(a.first) + ': what you discussed, what he does next. He gets it in his morning e-mail." style="margin:8px 0 6px"></textarea></div>';
+  }).join('');
+}
 /** A query is quiet when it is a week old and no person has written on it for a week; the system's own progress mails do not count. */
 function unitQueryQuiet_(q, notes, day) {
   var human = (notes || []).filter(function (n) { return !/^system$/i.test(String(n.by || '').trim()); })[0];
@@ -6004,7 +6058,8 @@ function unitFilterBar_(m) {
     .concat(m.queries.map(function (q) { var n = m.qpc[qpCode_(q.ref)] || []; return { ag: bkNk_(q.agent), k: 'qp', late: !!q.over, quiet: unitQueryQuiet_(q, n, m.day), none: !n.length }; }));
   var cnt = function (f) { return items.filter(f).length; };
   var opt = function (val, label, n) { return n === 0 ? '' : '<option value="' + esc_(val) + '">' + esc_(label) + (n != null ? ' · ' + n : '') + '</option>'; };
-  var ags = m.agents.map(function (a) { return opt(bkNk_(a.name), a.name, cnt(function (x) { return x.ag === bkNk_(a.name); })); }).join('');
+  // Every agent is in the list, even with nothing open: picking him shows his day and a box for a note.
+  var ags = m.agents.map(function (a) { var c = cnt(function (x) { return x.ag === bkNk_(a.name); }); return '<option value="' + esc_(bkNk_(a.name)) + '">' + esc_(a.name) + ' · ' + c + '</option>'; }).join('');
   var views = opt('', 'Everything', items.length) +
     [['k:pend', 'Pendings', function (x) { return x.k === 'pend'; }], ['k:qp', 'Client queries', function (x) { return x.k === 'qp'; }],
      ['k:new', 'New business', function (x) { return x.k === 'new'; }], ['k:ret', 'Retention', function (x) { return x.k === 'ret'; }], ['k:other', 'Other', function (x) { return x.k === 'other'; }],
@@ -6024,8 +6079,9 @@ var UNIT_FILTER_JS = '<script>(function(){var sec=document.querySelector("sectio
   'function apply(){var ag=a.value,vw=v.value,q=qi.value.trim().toLowerCase(),k=vw.indexOf("k:")===0?vw.slice(2):"",s=vw.indexOf("s:")===0?vw.slice(2):"",shown=0;' +
   'for(var i=0;i<its.length;i++){var e=its[i],ok=(!k||e.getAttribute("data-kind")===k)&&(!ag||e.getAttribute("data-ag")===ag)&&(!s||e.getAttribute("data-"+s)==="1")&&(!q||e.getAttribute("data-q").indexOf(q)>-1);e.style.display=ok?"":"none";if(ok)shown++;}' +
   'var cards=sec.querySelectorAll(".card");for(var c=0;c<cards.length;c++){var l=cards[c].querySelectorAll("details.it[data-kind]");if(!l.length)continue;var vis=0;for(var j=0;j<l.length;j++)if(l[j].style.display!=="none")vis++;cards[c].style.display=vis?"":"none";}' +
+  'var dc=sec.querySelectorAll("[data-dayfor]");for(var d=0;d<dc.length;d++)dc[d].style.display=ag&&dc[d].getAttribute("data-dayfor")===ag?"":"none";' +
   'var any=ag||vw||q,uw=document.getElementById("u-work");if(uw)uw.style.display=any?"none":"";' +
-  'n.innerHTML=any?"<b>"+shown+"</b> of "+its.length+" · <a href=\\"#\\" data-fclear=\\"1\\">show all</a>":its.length+" items";if(none)none.style.display=shown?"none":"";}' +
+  'n.innerHTML=any?"<b>"+shown+"</b> of "+its.length+" · <a href=\\"#\\" data-fclear=\\"1\\">show all</a>":its.length+" items";if(none)none.style.display=shown||(ag&&!vw&&!q)?"none":"";}' +
   'function clear(){a.value="";v.value="";qi.value="";apply();}' +
   'a.addEventListener("change",apply);v.addEventListener("change",apply);qi.addEventListener("input",apply);qi.addEventListener("keydown",function(e){if(e.key==="Enter")e.preventDefault();});' +
   'document.addEventListener("click",function(ev){var t=ev.target.closest?ev.target.closest("[data-fag],[data-fclear]"):null;if(!t)return;ev.preventDefault();' +
@@ -6034,7 +6090,8 @@ var UNIT_FILTER_JS = '<script>(function(){var sec=document.querySelector("sectio
 function unitPage_(person, day, error, notice, view) {
   var sid = String(person.staffId), m = unitModel_(sid, day), nowM = minutesOf_(hhmm_(new Date()));
   if (!view) { try { bigPut_('unit_ids_' + sid + '_' + day, m.tasks.map(function (t) { return { id: t.id, s: t.subject, a: t.agent }; })); } catch (e) {}
-               try { bigPut_('unit_qids_' + sid + '_' + day, m.queries.map(function (q) { return { ref: q.ref, c: q.client, a: q.agent }; })); } catch (e) {} }
+               try { bigPut_('unit_qids_' + sid + '_' + day, m.queries.map(function (q) { return { ref: q.ref, c: q.client, a: q.agent }; })); } catch (e) {}
+               try { bigPut_('unit_ags_' + sid + '_' + day, m.agents.map(function (a) { return a.name; })); } catch (e) {} }
   var money = function (v) { return ff360Money_(Number(v || 0)); };
   var pct = m.unit.pace ? Math.round(100 * m.unit.picked / m.unit.pace) : null;
   var pend = m.tasks.filter(function (t) { return t.k === 'pend'; }), pendLate = pend.filter(function (t) { return t.late; }).length;
@@ -6118,7 +6175,7 @@ function unitPage_(person, day, error, notice, view) {
     if (!list.length) return '';
     return '<div class="card"><div class="bh">' + esc_(heads[k]) + ' (' + list.length + ')</div>' + list.map(row).join('') + '</div>';
   }).join('');
-  var filterBar = lists ? unitFilterBar_(m) : '';
+  var filterBar = lists ? unitFilterBar_(m) + unitAgentDayCards_(m) : '';
   var workSec = (lists ? lists + '<div class="card" id="uf-none" style="display:none"><div class="ln">Nothing matches. <a href="#" data-fclear="1">Show all</a></div></div>' : '') || '<div class="card ok">' + (m.sfOk ? 'Nothing open for your unit.' : 'Salesforce did not answer just now. Try again in a minute.') + '</div>';
   var deskRows = Object.keys(m.desks).sort(function (a, b) { return m.desks[b].late - m.desks[a].late || m.desks[b].open - m.desks[a].open; }).map(function (w) {
     var d = m.desks[w];
@@ -6226,6 +6283,16 @@ function unitSave_(person, day, p) {
     try { qpNote_(q.ref, name + ' (Unit Manager)', txt); posted++; }
     catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
     out.push({ s: (q.a ? String(q.a).split(' ')[0] + ' · ' : '') + (q.c || q.ref), res: res });
+  });
+  // A note for an agent, tied to no task: kept, and sent with his next morning e-mail.
+  var agByKey = {}; try { (bigGet_('unit_ags_' + sid + '_' + day, []) || []).forEach(function (n) { agByKey[bkNk_(n)] = n; }); } catch (e) {}
+  Object.keys(p).forEach(function (k) {
+    if (k.indexOf('an_') !== 0) return;
+    var txt = String(p[k] || '').trim(), ag = agByKey[k.slice(3)];
+    if (!txt || !ag) return;
+    var res = 'kept: he gets it in his next morning e-mail';
+    try { umNoteWrite_(sid, day, ag, txt); posted++; } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
+    out.push({ s: 'A note for ' + String(ag).split(' ')[0], res: res });
   });
   var plan = mgrRows_(sid, day, 'plan'), eve = mgrRows_(sid, day, 'eve'), pr = [], dr = [];
   var val = function (v) { return v == null ? '' : String(v).trim(); };
@@ -8422,6 +8489,7 @@ function agentMorningMail_(a, day, data, cache) {
   try { bigPut_('ag_items_' + a.key + '_' + day, items); } catch (e) {}
 
   var btn = replyButton_(replyUrl_(a.key, day, 'ag'), 'Project my day and comment', 'One page: what you expect to do today, in numbers, and a comment on anything below. Comments go on Chatter. No sign-in.');
+  var mgrNotes = []; try { mgrNotes = umNotesUnsent_(a.agentName || a.name, day); } catch (e) {}
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. Here is what the branch is working on for your clients today, what your book says, and where your fact finds stand. ' +
       'Project your day from the button: no projection by ' + esc_(twelve_(mmText_(AGENT_ABSENT_AT))) + ' reads as not working today. At midday you get your progress so far, and at 5:30 you close the day off against your projection.</div>' +
@@ -8432,6 +8500,8 @@ function agentMorningMail_(a, day, data, cache) {
       (f3 && f3.known ? { value: f3.month, label: 'fact finds this month', color: f3.month ? MAIL.green : MAIL.red }
         : { value: ffDays == null ? '—' : ffDays + 'd', label: 'since last fact find', color: ffDays == null || ffDays > 30 ? MAIL.red : MAIL.green })
     ]) + btn +
+    (mgrNotes.length ? sectionLabel_('From your manager') + agCard_(MAIL.gold, mgrNotes.map(function (n) {
+      return agLine_('<b>' + esc_(n.by || 'Your manager') + '</b> · ' + esc_(shortDate_(n.day)) + ': ' + esc_(n.text)); }).join('')) : '') +
     sectionLabel_('What the branch is actioning for you today (' + open.length + ')') +
     (open.length ? agCard_(MAIL.navy, open.slice(0, AGENT_LIST_MAX).map(function (t) {
       return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
@@ -8467,8 +8537,11 @@ function agentMorningMail_(a, day, data, cache) {
     sectionLabel_('Your projection for today') + agCard_(MAIL.gold, AGENT_METRICS.map(function (m) { return '<div style="font-size:13px;padding:2px 0">&#9675; ' + esc_(m.p) + '</div>'; }).join('') +
       '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:6px">A number against each on the page: what you expect to do today. At 5:30 you give what was done, and the day balances against your projection.</div>') + btn +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
-  return agSend_(a, 'Your day · ' + a.name + ' · ' + shortDate_(day) + ' · ' + open.length + ' being worked for you' + (book ? ', ' + book.urgent.length + ' premiums 60+ days' : ''),
+  var sentOk = agSend_(a, 'Your day · ' + a.name + ' · ' + shortDate_(day) + ' · ' + open.length + ' being worked for you' + (book ? ', ' + book.urgent.length + ' premiums 60+ days' : ''),
     shell_('Good morning · your day', a.name + ' · ' + prettyDate_(day), body), []);
+  // A preview goes to Mr Rampersad, not the agent: the notes wait for the agent's own mail.
+  if (sentOk && mgrNotes.length && agentMode_() === 'live') { try { umNotesMarkSent_(a.agentName || a.name, day); } catch (e) {} }
+  return sentOk;
 }
 
 /** Midday: how the day is going against the morning's plan, and what the

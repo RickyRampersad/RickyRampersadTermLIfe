@@ -68,6 +68,8 @@ env.openQueries_ = () => QS.map(x => Object.assign({}, x));
 env.qpComments_ = () => ({ 'RRB/2026/093': [{ day: '2026-10-17', by: 'System', text: 'Client progress update #1 sent' }, { day: '2026-10-12', by: 'Elizabeth Lee', text: 'Asked Policy Services for the statement.' }] });
 env.__mkSheet('Comments', 9, ['When', 'Reference', 'Author', 'Role', 'Comment', ''], [['2026-10-17', 'RRB/2026/093/Client Q/Cash Value Statement', 'System', 'system', 'Client progress update #1 sent', 'internal']]);
 
+env.unitBook_ = () => ({ agents: AG.concat(['Malcolm Sooknanan']), open, closedYday: 3, closedToday: [{ id: 'x' }] });
+
 console.log('\nUnit work, with his agents\' queries:\n');
 const page = env.replyClick_({ parameter: q(env.unitUrl_('akaash')) }).getContent();
 const work = page.slice(page.indexOf('data-sec="work"'), page.indexOf('data-sec="agents"'));
@@ -103,6 +105,37 @@ console.log('\nFrom an agent to his work:\n');
 const agents = page.slice(page.indexOf('data-sec="agents"'), page.indexOf('data-sec="you"'));
 ok('Darryl\'s card: his queries counted, and a way into his work', /client queries: <b>1<\/b>/.test(agents) && /data-fag="darryl manick"[^>]*>Darryl's pendings and queries/.test(agents));
 ok('the filters run on the page', /UNIT|data-fclear/.test(page) && /function apply\(\)/.test(page));
+
+console.log('\nPick an agent: his day, and a note when there is nothing to comment on:\n');
+const page2 = env.replyClick_({ parameter: q(env.unitUrl_('akaash')) }).getContent();
+const work2 = page2.slice(page2.indexOf('data-sec="work"'), page2.indexOf('data-sec="agents"'));
+const card = n => { const i = work2.indexOf('data-dayfor="' + n + '"'); return i < 0 ? '' : work2.slice(i, work2.indexOf('</textarea>', i)); };
+ok('a card for each agent, hidden until he is picked', /data-dayfor="darryl manick" style="display:none/.test(work2) && !!card('malcolm sooknanan') && !card('akaash kalladeen'));
+ok('Stephanie\'s day: her status and what she projected', /plan in/.test(card('stephanie rajkumar')) && /projected Calls to make 10 · Appointments to set 2/.test(card('stephanie rajkumar')), card('stephanie rajkumar').slice(0, 300));
+ok('Malcolm has nothing open, and it says so', /Nothing open for Malcolm:<\/b> no pendings, no client queries/.test(card('malcolm sooknanan')));
+ok('and a box for a note that needs no task', /name="an_malcolm sooknanan"/.test(card('malcolm sooknanan')) && /He gets it in his morning e-mail/.test(card('malcolm sooknanan')));
+const said = 'Malcolm, nothing open with the branch: book two fact finds this week.';
+const r2 = env.replyPost_({ parameter: Object.assign(q(env.unitUrl_('akaash')), { 'an_malcolm sooknanan': said }) }).getContent();
+const notesTab = env.SpreadsheetApp.getActive().getSheetByName('Manager Notes');
+ok('the note is kept', !!notesTab && notesTab._grid.length === 2 && notesTab._grid[1][1] === 'Malcolm Sooknanan' && notesTab._grid[1][3] === said && notesTab._grid[1][2] === 'Akaash Kalladeen', notesTab && JSON.stringify(notesTab._grid[1]));
+ok('the page says where it goes', /A note for Malcolm · <b>kept: he gets it in his next morning e-mail/.test(r2));
+const page3 = env.replyClick_({ parameter: q(env.unitUrl_('akaash')) }).getContent();
+ok('and it shows on his card next time', /Akaash · Mon 19 Oct: Malcolm, nothing open/.test(page3.slice(page3.indexOf('data-dayfor="malcolm sooknanan"'))));
+
+console.log('\nThe note in Malcolm\'s morning e-mail:\n');
+const MAL = { key: 'a-malcolm', name: 'Malcolm Sooknanan', agentName: 'Malcolm Sooknanan', email: 'malcolm@example.com' };
+env.agentBook_ = () => null;
+const sent = [];
+env.agSend_ = (a, subject, html) => { sent.push({ subject, html }); return true; };
+env.agentMode_ = () => 'preview';
+env.agentMorningMail_(MAL, '2026-10-20', { open: {}, ff: {}, f360: {}, goal: {}, q: {}, orphan: {} }, null);
+ok('in preview, the note is in the mail', sent.length === 1 && /From your manager/.test(sent[0].html) && sent[0].html.indexOf(said) > -1);
+ok('but not marked sent: the agent has not had it', !notesTab._grid[1][5]);
+env.agentMode_ = () => 'live';
+env.agentMorningMail_(MAL, '2026-10-20', { open: {}, ff: {}, f360: {}, goal: {}, q: {}, orphan: {} }, null);
+ok('live, it goes to him and is marked sent', /From your manager/.test(sent[1].html) && /^2026-10-20 /.test(String(notesTab._grid[1][5])), String(notesTab._grid[1][5]));
+env.agentMorningMail_(MAL, '2026-10-21', { open: {}, ff: {}, f360: {}, goal: {}, q: {}, orphan: {} }, null);
+ok('and the next morning it is not sent again', !/From your manager/.test(sent[2].html));
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');
 process.exit(fails ? 1 : 0);
