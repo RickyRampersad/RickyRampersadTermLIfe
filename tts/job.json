@@ -2,8 +2,18 @@
  "voice": "en-US-AndrewNeural",
  "rate": "-4%",
  "films": {
-  "rota": [
-   "The three of you who do transmittals take the bag in turn, a week each. This week Sasha. Next week Azariah, then Liz. The bag is done by one o'clock, while the team is still in. Sasha leaves at two, Liz at three, and Azariah at four."
+  "dbstaff": [
+   "This is the Delivery Book. Every cheque, policy contract and certificate the branch hands over is recorded here, the same day.",
+   "Open the branch app, and tap Delivery Book. If it asks, enter your staff access code. The Log Book is for papers going to head office. Anything you hand over goes here.",
+   "Step one. Find the client. Type a policy number or the client's name, and press Find. The Delivery Book looks the client up in Salesforce for you.",
+   "Every policy they hold comes up, grouped by type. Tick the policy, and choose what you are handing over. A cheque, a policy contract, or a certificate.",
+   "Their e-mail on file is filled in for you. That is where the confirmation goes. If there is none, ask for it, and type it in.",
+   "Step three. The handover. Who collected it, and their name. Then their signature, with a finger on the screen. A cheque also needs a photo.",
+   "Your location is stamped when you save. It stays with the branch, and never goes to the client.",
+   "Press Record the delivery. You get a reference at once, and the delivery goes on the client's record in Salesforce.",
+   "The client gets an e-mail the same minute. What was delivered, on which policy, who collected it, and who delivered it. And five stars, to rate us.",
+   "The Book tab holds every delivery, the old Jotform ones included. Search a client, a policy or a collector. The ratings from clients are there too.",
+   "Cheques and contracts, in the Delivery Book. The client told, the same day."
   ]
  }
 }
