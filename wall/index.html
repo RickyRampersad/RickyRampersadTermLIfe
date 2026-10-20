@@ -190,7 +190,7 @@
   .fb{height:6.4rem}.fbl{font-weight:800;font-size:1.7rem}.fbn{font-weight:800;font-size:3.6rem;font-stretch:78%}
 
   /* ---- phones and small tablets, either way up: a stacked, scrolling layout (body.mob, set by the script) ---- */
-  body.mob{overflow-y:auto;overflow-x:hidden;height:auto;min-height:100%;padding-bottom:8.6rem}
+  body.mob{overflow:visible;overflow-x:clip;height:auto;min-height:100%;padding-bottom:8.6rem}   /* clip, not hidden: hidden made the body a scroll box and the top bar scrolled away */
   html:has(body.mob){overflow-y:auto;height:auto}
   body.mob header{position:sticky;top:0;z-index:3;height:3.6rem;padding:0 1rem;background:rgba(18,19,23,.92);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
   body.mob .brand{gap:.6rem}
@@ -216,9 +216,9 @@
   body.mob .tile .l{font-size:.85rem}
   body.mob .panel{padding:1rem;overflow:visible;gap:.7rem;border-radius:1rem}
   body.mob .ph{font-size:.72rem;letter-spacing:.16em}
-  body.mob .people{grid-template-columns:minmax(0,1fr)!important;gap:.6rem}
-  body.mob .pc{padding:.75rem .9rem;gap:.8rem}
-  body.mob .pc .nm{font-size:1.2rem} body.mob .pc .st{font-size:.85rem}
+  body.mob .people{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.55rem}
+  body.mob .pc{padding:.6rem .65rem;gap:.55rem;align-items:flex-start}
+  body.mob .pc .nm{font-size:1.02rem} body.mob .pc .st{font-size:.72rem;line-height:1.3}
   body.mob .chip{font-size:.75rem;padding:.25rem .6rem}
   body.mob .heat{gap:.22rem}
   body.mob .cell{height:1.75rem;font-size:.7rem;border-radius:.35rem}
@@ -295,7 +295,56 @@
   .win .wt{font-size:1.2rem;color:#CDD1DA;line-height:1.4}
   .win::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 15%,color-mix(in srgb,var(--wc) 22%,transparent),transparent 55%);pointer-events:none}
   body.mob .win .ww{font-size:1.3rem} body.mob .win .wt{font-size:.9rem} body.mob .win .wi{width:2.6rem;height:2.6rem}
-  @media (prefers-reduced-motion: reduce){ .a,.draw,.ring,.seg,.flow,#tick,#bgfx *{animation:none!important} }
+  /* Akaash and his unit (20 Oct 2026) */
+  .umh{display:flex;align-items:center;gap:1.1rem;background:var(--panel2);border:1px solid var(--line);border-radius:1.1rem;padding:.9rem 1.1rem}
+  .umn{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+  .uma{display:flex;flex-direction:column;gap:.6rem}
+  .pdot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--violet);margin-right:.45rem;vertical-align:.12em;box-shadow:0 0 .6rem var(--violet)}
+  body.mob .umn{grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+  body.mob .umh{padding:.7rem .8rem;gap:.7rem}
+  /* a laptop: a slimmer frame (20 Oct 2026) */
+  body.lap header{height:5rem;padding:0 3rem}
+  body.lap #clock{font-size:2.1rem} body.lap #date{font-size:.9rem}
+  body.lap #cap{height:3rem;font-size:1.32rem;padding:0 3rem}
+  body.lap footer{height:6.8rem;gap:.55rem;padding:0 3rem}
+  body.lap #tick{font-size:1.15rem}
+  body.lap .scene{padding:1.5rem 3rem 1rem;gap:1.15rem}
+  body.lap h2{font-size:4.35rem}
+  body.lap .lede{font-size:1.34rem}
+  /* a phone: tighter cards, the lede to three lines, the shout-outs two by two */
+  body.mob .lede{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  body.mob .win{padding:.8rem .85rem;gap:.3rem}
+  body.mob .win .wk{font-size:.62rem;letter-spacing:.16em}
+  body.mob .win .ww{font-size:1.12rem} body.mob .win .wt{font-size:.78rem;line-height:1.3}
+  body.mob .win .wi{width:2.2rem;height:2.2rem} body.mob .win .wi svg{width:1.25rem;height:1.25rem}
+  body.mob .scene.fits{min-height:calc(100vh - 12.2rem)}
+  /* motion that pops (20 Oct 2026: "more animations and motion that pops") */
+  .scene{transform:translateY(1.8rem) scale(.975);filter:blur(10px);transition:opacity .7s cubic-bezier(.2,.9,.2,1),transform .95s cubic-bezier(.2,.9,.2,1),filter .7s ease}
+  .scene.on{opacity:1;transform:none;filter:none}
+  .scene.off{opacity:0;transform:scale(1.04) translateY(-1rem);filter:blur(9px);transition-duration:.5s}
+  .kick{display:flex;align-items:center;gap:.8rem}
+  .kick .kb{width:2.8rem;height:.32rem;border-radius:.2rem;background:currentColor;transform-origin:left center;animation:grow .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:.1s;box-shadow:0 0 .8rem currentColor}
+  h2 .w.rise{animation-name:wordUp;animation-duration:.95s;animation-timing-function:cubic-bezier(.2,1.25,.3,1)}
+  @keyframes wordUp{0%{opacity:0;transform:translateY(.6em) rotate(5deg) scale(.9);filter:blur(7px)}55%{opacity:1;filter:none}100%{opacity:1;transform:none}}
+  .tiles{perspective:90rem}
+  .tile.rise{animation-name:tileIn;animation-duration:1s;animation-timing-function:cubic-bezier(.2,1.25,.3,1);transform-origin:50% 0}
+  @keyframes tileIn{0%{opacity:0;transform:rotateX(-80deg) translateY(.8rem)}100%{opacity:1;transform:none}}
+  .tile::after{transform-origin:center bottom;animation:barUp 1.1s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0s) + .35s)}
+  @keyframes barUp{from{transform:scaleY(0)}to{transform:none}}
+  .tile .done-pop{animation:dpop .5s ease;text-shadow:0 0 1.4rem color-mix(in srgb,var(--acc,#E3B85A) 75%,transparent)}
+  .grid>.panel:not(.a){animation:panelIn .9s cubic-bezier(.2,1.1,.3,1) both}
+  .grid>.panel:not(.a):nth-child(1){animation-delay:.3s}.grid>.panel:not(.a):nth-child(2){animation-delay:.45s}.grid>.panel:not(.a):nth-child(3){animation-delay:.6s}.grid>.panel:not(.a):nth-child(4){animation-delay:.75s}
+  @keyframes panelIn{0%{opacity:0;transform:translateY(2.2rem) scale(.95)}100%{opacity:1;transform:none}}
+  .grid>.panel:not(.win)::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--chc,#E3B85A),transparent) no-repeat;background-size:45% 100%;background-position:-60% 0;opacity:0;animation:edge 2.6s ease 1s both;pointer-events:none}
+  @keyframes edge{0%{opacity:0;background-position:-60% 0}25%{opacity:1}100%{opacity:0;background-position:160% 0}}
+  .huge{text-shadow:0 0 2.6rem color-mix(in srgb,currentColor 35%,transparent);animation:hover 3.4s ease-in-out 2.2s infinite}
+  @keyframes hover{50%{transform:translateY(-.3rem)}}
+  .ev.slide:first-child{box-shadow:0 0 0 1px color-mix(in srgb,var(--chc,#E3B85A) 45%,transparent),0 0 1.6rem color-mix(in srgb,var(--chc,#E3B85A) 18%,transparent)}
+  .cell.lite{animation-name:cellIn}
+  @keyframes cellIn{0%{opacity:0;transform:scale(.3) rotate(-8deg)}70%{opacity:1;transform:scale(1.08)}100%{transform:none}}
+  .pc.pop:not(.breathe){animation-name:pcIn}
+  @keyframes pcIn{0%{opacity:0;transform:translateY(1.2rem) scale(.85)}65%{opacity:1;transform:translateY(-.2rem) scale(1.02)}100%{transform:none}}
+  @media (prefers-reduced-motion: reduce){ .a,.draw,.ring,.seg,.flow,#tick,#bgfx *,.kick .kb,.tile::after,.grid>.panel,.grid>.panel::after,.huge{animation:none!important} .scene{transform:none!important;filter:none!important} }
 </style>
 </head>
 <body>
@@ -381,9 +430,11 @@ const KIND_COL={"new":COL.teal,orphan:COL.sky,retention:COL.gold,claims:COL.cora
 let D=null, INSIDE=true, sound=false, paused=false, cur=-1, timer=null, safety=null, started=false, MOB=false, lastCh=null;
 // Phones and small tablets (either way up) get a stacked layout that scrolls; TVs and laptops get the 16:9 wall.
 function sizeUp(){
-  const m=innerWidth<900||innerHeight<560, sh=m&&innerHeight<560&&innerWidth>innerHeight;
-  document.body.classList.toggle("short",sh);
-  document.documentElement.style.fontSize=!m?"":(sh?Math.max(11,Math.min(14,innerHeight*0.034)):Math.max(13,Math.min(16,innerWidth*0.039))).toFixed(1)+"px";
+  const m=innerWidth<900||innerHeight<560, sh=m&&innerHeight<560&&innerWidth>innerHeight, lap=!m&&(innerWidth<1700||innerHeight<950);
+  document.body.classList.toggle("short",sh); document.body.classList.toggle("lap",lap);
+  // A laptop gets a slimmer frame, so the same scene is drawn larger (20 Oct 2026); a TV keeps 1rem = 16px at 1920 x 1080.
+  document.documentElement.style.fontSize=m?(sh?Math.max(11,Math.min(14,innerHeight*0.034)):Math.max(13,Math.min(16,innerWidth*0.039))).toFixed(1)+"px"
+    :lap?Math.min(innerWidth/114,innerHeight/63.4).toFixed(2)+"px":"";
   if(m!==MOB){ MOB=m; document.body.classList.toggle("mob",m); if(started&&cur>=0) go(cur,true); }
 }
 const mq=(tv,mob)=>MOB?mob:tv;
@@ -391,35 +442,38 @@ const mq=(tv,mob)=>MOB?mob:tv;
 // ---- sample data: ?demo=1 (and ?demo=1&view=outside), clearly marked SAMPLE ----------
 function demo(outside){
   const H=[[1,3,4,3,2,1,2,2,0,0,0],[0,2,3,4,3,1,2,1,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,1,2,2,3,2,1,2,0,0,0]];
-  const ppl=[["sasha","Sasha","out"],["elizabeth","Elizabeth","in"],["azariah","Azariah","in"],["kamla","Kamla","in"],["pawan","Pawan","in"]].map((p,i)=>{
-    const o={sid:p[0],name:p[1],status:p[2],game:p[0]!=="pawan",startAt:p[0]==="azariah"||p[0]==="kamla"||p[0]==="pawan"?"8:00":"7:00",
-      closes:p[0]==="pawan"?0:(H[[2,0,1,3][i]]||[]).reduce((a,b)=>a+b,0),hours:p[0]==="pawan"?H[2]:H[[2,0,1,3][i]],
+  const ppl=[["sasha","Sasha","out"],["elizabeth","Elizabeth","in"],["azariah","Azariah","in"],["kamla","Kamla","in"],["pawan","Pawan","in"],["akaash","Akaash","in"]].map((p,i)=>{
+    const o={sid:p[0],name:p[1],status:p[2],game:p[0]!=="pawan"&&p[0]!=="akaash",startAt:p[0]==="akaash"?"6:00":p[0]==="azariah"||p[0]==="kamla"||p[0]==="pawan"?"8:00":"7:00",
+      closes:i>3?0:(H[[2,0,1,3][i]]||[]).reduce((a,b)=>a+b,0),hours:i>3?H[2]:H[[2,0,1,3][i]],
       covering:p[0]==="elizabeth"?7:p[0]==="azariah"?5:0,coveredBy:p[0]==="sasha"?[{name:"Elizabeth",n:7},{name:"Azariah",n:5}]:[],
-      par:[0,12,10,8,0][i],parDone:[0,12,6,5,0][i],parMet:i===1,quests:[0,3,2,1,0][i],questsOf:[0,3,3,3,0][i],streak:[0,15,6,9,0][i],gain:[null,42,11,-4,null][i],bestDay:i===1,
-      topSkill:[null,{name:"Premium fixer",lvl:4},{name:"Client saver",lvl:3},{name:"Contracts",lvl:2},null][i],
-      levelUps:i===2?[{name:"Client saver",lvl:3}]:[],thanks:[0,1,1,0,0][i]};
-    if(!outside){o.inAt=["","6:55","8:12","7:58","7:50"][i];o.late=[0,0,12,0,0][i];o.points=[0,31,14,11,0][i];}
+      par:[0,12,10,8,0,0][i],parDone:[0,12,6,5,0,0][i],parMet:i===1,quests:[0,3,2,1,0,0][i],questsOf:[0,3,3,3,0,0][i],streak:[0,15,6,9,0,0][i],gain:[null,42,11,-4,null,null][i],bestDay:i===1,
+      topSkill:[null,{name:"Premium fixer",lvl:4},{name:"Client saver",lvl:3},{name:"Contracts",lvl:2},null,null][i],
+      levelUps:i===2?[{name:"Client saver",lvl:3}]:[],thanks:[0,1,1,0,0,0][i]};
+    if(p[0]==="akaash") o.role="Unit manager";
+    if(!outside){o.inAt=["","6:55","8:12","7:58","7:50","6:02"][i];o.late=[0,0,12,0,0,0][i];o.points=[0,31,14,11,0,0][i];}
     else if(o.gain!=null&&o.gain<0) o.gain=null;   // outside: progress only, as the feed sends it
     return o;});
   const team=[0,1,2,3,4,5,6,7,8,9,10].map(h=>H[0][h]+H[1][h]+H[3][h]);
-  const tick=[["2:12","Azariah","levelled up: Client saver, level 3"],["2:10","Elizabeth","reached par: today's list is done"],["2:05","Elizabeth","was given 5 stars by an agent for a task closed for them"],["1:52","Azariah","closed a new business task with a note"],["1:30","Devendra","sent in the day's projection"],
+  const tick=[["2:12","Azariah","levelled up: Client saver, level 3"],["2:10","Elizabeth","reached par: today's list is done"],["2:05","Elizabeth","was given 5 stars by an agent for a task closed for them"],["1:52","Azariah","closed a new business task with a note"],["1:30","Fawwaz","sent in the day's projection"],
     ["12:40","Kamla","closed a retention task over a month old with a note"],["11:05","Azariah","is covering for Sasha: 5 tasks so no client waits"],["10:20","Elizabeth","closed a retention task with a note"],
     ["9:44","Elizabeth","closed an orphan adoption task with a note"],["8:12","Azariah",outside?"is in":"checked in"],["7:30","Elizabeth","is covering for Sasha: 7 tasks so no client waits"],["6:55","Elizabeth",outside?"is in":"checked in"]]
     .map(x=>({at:x[0],who:x[1],what:x[2],k:/new business/.test(x[2])?"new":/retention/.test(x[2])?"retention":/orphan/.test(x[2])?"orphan":""}));
-  const rows=[["Devendra",6,2,2,74,true,false],["Marissa",4,1,1,61,true,false],["Kevin",3,1,1,40,true,false],["Anita",2,0,1,22,false,false],["Rajesh",0,0,0,0,false,false]]
+  // The branch's own agents by first name; every figure beside them is a sample.
+  const rows=[["Fawwaz",5,2,2,74,true,false],["Stephanie",4,1,2,66,true,false],["Malcolm",3,1,1,52,true,false],["Darryl",3,1,1,48,true,false],["Randolph",3,1,1,45,true,false],
+              ["Neil",2,1,1,38,true,false],["Narissa",2,1,1,33,true,false],["Daniel",1,0,0,18,false,false]]
     .map(r=>{const o={name:r[0],ffMonth:r[1],appsMonth:r[2],ffWeek:r[3],pace:r[4],plan:r[5],close:r[6]}; if(!outside){o.planAt=r[5]?"7:4"+r[3]:"";o.closeAt="";} return o;})
     .filter(r=>!outside||r.ffMonth||r.appsMonth||r.plan);
   const ag={n:12,live:true,planned:7,closed:0,ffMonth:23,appsMonth:8,conv:35,ffWeek:9,known:true,week:3,fy:{pct:8.6,gone:5.5,ahead:156},rows:rows};
   if(!outside){ag.fy.goal=4800000;ag.fy.picked=412000;}
   return {day:"",asOf:"2:15",outside:!!outside,sample:true,
     staff:{people:ppl,team:team,fromH:7,toH:17,nowH:14,mix:[{k:"new",label:"New business",n:9},{k:"orphan",label:"Orphan adoption",n:5},{k:"retention",label:"Retention",n:11},{k:"claims",label:"Claims",n:2},{k:"other",label:"Servicing",n:7}],
-      payoffPct:74,busiest:{at:"9:00",to:"10:00",n:9},tiles:{closes:34,qp:4,quests:6,questsOf:9,covered:12,inNow:4,of:5,out:["Sasha"]},
+      payoffPct:74,busiest:{at:"9:00",to:"10:00",n:9},tiles:{closes:34,qp:4,quests:6,questsOf:9,covered:12,inNow:5,of:6,out:["Sasha"]},
       svc:{avg:4.7,n:23,five:17,fivePct:74,agents:15,clients:8,recent:[{at:"2:05",who:"Elizabeth",n:5,from:"an agent"},{at:"1:40",who:"Azariah",n:5,from:"a client"},{at:"12:15",who:"Kamla",n:4,from:"an agent"},{at:"11:02",who:"Elizabeth",n:5,from:"a client"},{at:"19 Oct",who:"Sasha",n:5,from:"an agent"}]}},
     agents:ag,
     managers:{groups:[{g:"New business",done:6,wait:9},{g:"Renewals & billing",done:4,wait:12},{g:"Orphan clients",done:3,wait:7},{g:"Agents & the unit",done:5,wait:4},{g:"Servicing",done:7,wait:5}],doneToday:25,
       bm:Object.assign({fromH:5,toH:18,hours:[3,5,2,4,6,3,2,0,0,0,0,0,0,0],n:25,notes:11,closes:6,emails:8,moves:2,tasks:1,inbox:9,busiest:{at:"9:00",to:"10:00",n:6},
         feed:[{at:"9:52",what:"wrote a note on a new business task"},{at:"9:40",what:"answered an e-mail"},{at:"9:31",what:"closed an orphan clients task"},{at:"9:12",what:"set a task for a desk"},{at:"8:55",what:"moved a renewals & billing task to a new date, with the reason"},{at:"8:20",what:"dealt with an item in the inbox"},{at:"7:45",what:"answered a desk on a pendings task"}]},outside?{}:{inAt:"5:04"}),
-      unit:{lead:"Akaash",n:6,ffMonth:14,appsMonth:5,planned:4},cover:{out:[{name:"Sasha",by:[{name:"Elizabeth",n:7},{name:"Azariah",n:5}]}],total:12},
+      unit:{lead:"Akaash",n:5,ffMonth:12,appsMonth:4,planned:4,agents:[{name:"Stephanie",ff:4,apps:1,planned:true},{name:"Darryl",ff:3,apps:1,planned:true},{name:"Neil",ff:2,apps:1,planned:true},{name:"Narissa",ff:2,apps:1,planned:true},{name:"Daniel",ff:1,apps:0,planned:false}]},cover:{out:[{name:"Sasha",by:[{name:"Elizabeth",n:7},{name:"Azariah",n:5}]}],total:12},
       qp:outside?{answeredWeek:27}:{answeredWeek:27,over:3},inbox:outside?null:{done:18,all:22}},
     goal:{start:152,goal:114,now:128,pct:63,met:false},
     awards:[{title:"Client Saver",who:["Elizabeth"],why:"6 clients kept or premium put right"},{title:"Team Player",who:["Azariah"],why:"5 tasks covered for colleagues, 1 thank-you"},{title:"Service Star",who:["Elizabeth"],why:"4.9 stars from 7 ratings by agents and clients"}],
@@ -441,7 +495,7 @@ function ring(done,par,size,col,d,mid,sub){
 function head(ch,kick,title,lede){
   const c={staff:COL.teal,agents:COL.violet,managers:COL.gold,live:COL.coral,ident:COL.gold}[ch];
   const words=String(title).split(" ").map((w,i)=>'<span class="w a rise" style="--d:'+(.12+i*.07).toFixed(2)+'s">'+esc(w)+'</span>').join(" ");
-  return '<div><div class="kick a rise" style="color:'+c+'">'+esc(kick)+'</div><h2>'+words+'</h2>'+(lede?'<div class="lede a rise" style="--d:.45s">'+esc(lede)+'</div>':'')+'</div>';
+  return '<div><div class="kick a rise" style="color:'+c+'">'+(kick?'<i class="kb"></i>':'')+esc(kick)+'</div><h2>'+words+'</h2>'+(lede?'<div class="lede a rise" style="--d:.45s">'+esc(lede)+'</div>':'')+'</div>';
 }
 const S=()=>D&&D.staff, A=()=>D&&D.agents, M=()=>D&&D.managers;
 const gamePeople=()=>(S()?S().people.filter(p=>p.game):[]);
@@ -468,9 +522,9 @@ const SCENES=[
   html:()=>{ const s=S(), t=s.tiles, ppl=s.people;
     const card=(p,i)=>{
       const col=p.status==="in"?COL.teal:p.status==="out"?COL.coral:COL.dim;
-      const st=p.status==="in"?(p.inAt?"In at "+p.inAt+(p.late?" · "+p.late+" min after the start":""):"In today"):p.status==="out"?"Out today":"Starts at "+p.startAt;
+      const st=(p.role?p.role+" · ":"")+(p.status==="in"?(p.inAt?(p.role?"in at ":"In at ")+p.inAt+(p.late?" · "+p.late+" min after the start":""):(p.role?"in today":"In today")):p.status==="out"?(p.role?"out today":"Out today"):(p.role?"starts at ":"Starts at ")+p.startAt);
       return '<div class="pc a pop '+(p.status==="out"?"out breathe":"")+'" '+d_(.35+i*.12)+'>'+
-        ring(p.status==="in"?0.999:0,1,MOB?54:(ppl.length>4?66:82),col,.5+i*.12,(p.name||"?").charAt(0),"")+
+        ring(p.status==="in"?0.999:0,1,MOB?40:(ppl.length>4?66:82),col,.5+i*.12,(p.name||"?").charAt(0),"")+
         '<div style="min-width:0"><div class="nm">'+esc(p.name)+'</div><div class="st">'+esc(st)+'</div>'+
         (p.covering?'<div style="margin-top:.5rem"><span class="chip" style="background:rgba(79,193,176,.16);color:'+COL.teal+'">covering '+p.covering+'</span></div>':'')+
         (p.status==="out"&&p.coveredBy.length?'<div style="margin-top:.4rem;font-size:.95rem;color:#CDD1DA">covered by '+esc(andList(p.coveredBy.map(c=>c.name)))+'</div>':'')+'</div></div>'; };
@@ -516,13 +570,14 @@ const SCENES=[
     return head("staff","STAFF · THE DAY, HOUR BY HOUR","What is being actioned, hour by hour",
         "Every square is an hour; the brighter it is, the more tasks were closed with a note in it. The dashed ones are still to come.")+
       '<div class="grid" style="grid-template-rows:auto 1fr"><div class="panel" style="gap:.55rem">'+grid+'</div>'+
-      '<div class="panel rowp" style="flex-direction:row;align-items:center;gap:2rem"><div style="flex:1;min-width:0"><div class="ph">THE DESKS TOGETHER</div>'+
-        '<svg class="fit" viewBox="0 0 '+W+' '+(Hh+30)+'" width="100%" height="'+(Hh+30)+'" role="img" aria-label="Tasks closed with a note across the day">'+
+      '<div class="panel rowp" style="flex-direction:row;align-items:stretch;gap:2rem"><div style="flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:.4rem"><div class="ph">THE DESKS TOGETHER</div>'+
+        // the chart takes whatever height the panel has, on a TV, a laptop or a phone (20 Oct 2026)
+        '<svg class="fit" viewBox="0 0 '+W+' '+(Hh+30)+'" style="flex:1 1 0;min-height:'+mq('6rem','8rem')+';width:100%;height:auto" role="img" aria-label="Tasks closed with a note across the day">'+
         (area?'<polygon class="a lite" points="'+area+'" fill="'+COL.teal+'" fill-opacity=".14" style="--d:1.4s"/>':'')+
         '<polyline class="a draw" points="'+line+'" fill="none" stroke="'+COL.teal+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="--len:2400;--d:.6s"/>'+
         (live.length?'<circle class="live" cx="'+live[live.length-1][0]+'" cy="'+live[live.length-1][1]+'" r="9" fill="'+COL.gold+'"/>':'')+
         pts.map((p,i)=>'<text x="'+p[0]+'" y="'+(Hh+22)+'" text-anchor="middle" font-size="17" fill="#737886" font-family="JetBrains Mono,monospace">'+hl[i]+'</text>').join("")+'</svg></div>'+
-        (b?'<div class="a pop" style="--d:1.6s;flex:none;text-align:right"><div class="ph">THE BUSIEST HOUR</div><div class="big" style="font-weight:800;font-size:3.6rem;font-stretch:78%;line-height:1.05">'+esc(b.at)+' – '+esc(b.to)+'</div><div style="font-size:1.25rem;color:var(--muted)">'+plural(b.n,"task")+' closed with a note</div></div>':'')+'</div></div>'; },
+        (b?'<div class="a pop" style="--d:1.6s;flex:none;text-align:right;align-self:center"><div class="ph">THE BUSIEST HOUR</div><div class="big" style="font-weight:800;font-size:3.6rem;font-stretch:78%;line-height:1.05">'+esc(b.at)+' – '+esc(b.to)+'</div><div style="font-size:1.25rem;color:var(--muted)">'+plural(b.n,"task")+' closed with a note</div></div>':'')+'</div></div>'; },
   line:()=>{ const s=S(), b=s.busiest;
     return {live:"Hour by hour. "+plural(s.tiles.closes,"task")+" closed with a note so far today."+(b?" The busiest hour was "+b.at+" to "+b.to+".":""), rec:"Hour by hour: what is being actioned at the branch, and when."}; }},
 
@@ -595,22 +650,22 @@ const SCENES=[
 
  // Shout-outs (20 Oct 2026): today's wins, everybody's, nobody against anybody.
  {id:"n11",ch:"staff",dwell:14000,when:()=>wins().length>0,
-  html:()=>{ const ws=wins().slice(0,MOB?8:9);
+  html:()=>{ const ws=wins().slice(0,MOB?6:9);
     const card=(w,i)=>{ const c=CELE_KIND[w.k]||CELE_KIND.par;
       return '<div class="panel win a pop" style="--d:'+(.35+i*.14).toFixed(2)+'s;--wc:'+c.col+'"><div class="wi">'+ICON[c.icon]()+'</div>'+
         '<div class="wk">'+esc(c.kick)+'</div><div class="ww">'+esc(w.who)+'</div><div class="wt">'+esc(w.text||c.say)+(w.at?' <span class="mono" style="color:var(--muted)">· '+esc(w.at)+'</span>':'')+'</div></div>'; };
     return head("staff","STAFF · SHOUT-OUTS","Today's wins",
         "Par reached, five-star service, levels up, streaks and every thank-you. Everybody's wins, nobody against anybody.")+
-      '<div class="grid" data-burst-scene="1" style="grid-template-columns:repeat('+(MOB?2:3)+',minmax(0,1fr))">'+ws.map(card).join("")+'</div>'; },
+      '<div class="grid two" data-burst-scene="1" style="grid-template-columns:repeat('+(MOB?2:3)+',minmax(0,1fr))">'+ws.map(card).join("")+'</div>'; },
   line:()=>{ const ws=wins(), par=ws.filter(w=>w.k==="par").map(w=>w.who), st=ws.filter(w=>w.k==="stars").length;
     return {live:"Shout-outs. "+plural(ws.length,"win")+" today"+(par.length?". "+andList(par)+" reached par":"")+(st?". "+plural(st,"five-star rating"):"")+". Well done, everybody.",
       rec:"Shout-outs. Today's wins: par reached, five-star service, levels up, streaks, and every thank-you."}; }},
 
  {id:"n5",ch:"agents",dwell:16000,when:()=>!!A()&&A().n>0,
   html:()=>{ const a=A(), rows=a.rows.slice(0,9), mx=Math.max(1,...rows.map(r=>r.ffMonth));
-    const row=(r,i)=>'<div class="row a slide" style="grid-template-columns:'+(MOB?'minmax(0,1fr) auto':'11rem '+(a.live?'24rem ':'')+'minmax(0,1fr) 10rem')+';row-gap:.4rem;--d:'+(.4+i*.1).toFixed(2)+'s"><div style="font-weight:800;font-size:'+mq('1.4rem','1rem')+'">'+esc(r.name)+'</div>'+
+    const row=(r,i)=>'<div class="row a slide" style="grid-template-columns:'+(MOB?'minmax(0,1fr) auto':'11rem '+(a.live?'24rem ':'')+'minmax(0,1fr) 10rem')+';row-gap:.3rem;--d:'+(.4+i*.1).toFixed(2)+'s"><div style="font-weight:800;font-size:'+mq('1.4rem','1rem')+'">'+(MOB&&r.plan?'<i class="pdot"></i>':'')+esc(r.name)+'</div>'+
       (MOB?'<div class="mono" style="text-align:right;font-size:.75rem;color:#CDD1DA;white-space:nowrap">'+r.ffMonth+' ff · '+r.appsMonth+' app'+(r.appsMonth===1?'':'s')+'</div>':'')+
-      (a.live?'<div style="display:flex;gap:.5rem;white-space:nowrap;flex-wrap:wrap'+(MOB?';grid-column:1 / -1':'')+'">'+[["Projection",r.plan,r.planAt],["Close-off",r.close,r.closeAt]].map(b=>'<span class="chip a pop" style="--d:'+(.6+i*.1).toFixed(2)+'s;'+(b[1]?'background:rgba(171,148,232,.18);color:'+COL.violet:'border:1px solid #3A3F4A;color:#737886')+'">'+(b[1]?'&#10003; ':'')+esc(b[0])+(b[2]?' '+esc(b[2]):'')+'</span>').join("")+'</div>':'')+
+      (a.live&&!MOB?'<div style="display:flex;gap:.5rem;white-space:nowrap;flex-wrap:wrap">'+[["Projection",r.plan,r.planAt],["Close-off",r.close,r.closeAt]].map(b=>'<span class="chip a pop" style="--d:'+(.6+i*.1).toFixed(2)+'s;'+(b[1]?'background:rgba(171,148,232,.18);color:'+COL.violet:'border:1px solid #3A3F4A;color:#737886')+'">'+(b[1]?'&#10003; ':'')+esc(b[0])+(b[2]?' '+esc(b[2]):'')+'</span>').join("")+'</div>':'')+
       '<div style="display:flex;flex-direction:column;gap:.3rem'+(MOB?';grid-column:1 / -1':'')+'"><div class="track" style="height:.9rem"><div class="fill a grow" style="width:'+Math.round(100*r.ffMonth/mx)+'%;background:'+COL.violet+';--d:'+(.6+i*.1).toFixed(2)+'s"></div></div>'+
         '<div class="track" style="height:.55rem"><div class="fill a grow" style="width:'+Math.round(100*r.appsMonth/mx)+'%;background:'+COL.teal+';--d:'+(.8+i*.1).toFixed(2)+'s"></div></div></div>'+
       (MOB?'':'<div class="mono" style="text-align:right;font-size:1.1rem;color:#CDD1DA;white-space:nowrap">'+r.ffMonth+' ff · '+r.appsMonth+' app'+(r.appsMonth===1?'':'s')+'</div>')+'</div>';
@@ -675,11 +730,12 @@ const SCENES=[
         tile(m.qp?m.qp.answeredWeek:null,"","client queries answered this week",COL.sky,.44)+tile(cv.total,"","tasks covered today",COL.gold,.56)+'</div>'+
       '<div class="grid" style="grid-template-columns:1fr 1fr">'+
         '<div class="panel"><div class="ph" style="color:'+COL.violet+'">'+(u?esc(u.lead.toUpperCase())+"'S UNIT":"THE UNIT")+'</div>'+
-          (u?'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2rem">'+[[u.ffMonth,"fact finds this month"],[u.appsMonth,"applications this month"],[u.planned,"projections in today"],[u.n,"agents in the unit"]].map((x,i)=>'<div class="a pop" style="--d:'+(.5+i*.15).toFixed(2)+'s"><div class="big" style="font-weight:800;font-size:3.4rem;line-height:1;font-stretch:80%">'+cnt(x[0],.5+i*.15)+'</div><div style="font-size:'+mq('1.15rem','.85rem')+';color:#CDD1DA;margin-top:.3rem">'+x[1]+'</div></div>').join("")+'</div>':'<div style="color:var(--muted);font-size:1.2rem">The unit\'s read is not in yet.</div>')+'</div>'+
+          (u?umCard(u)+'<div class="umn">'+[[u.ffMonth,"fact finds this month"],[u.appsMonth,"applications"],[u.planned,"projections in today"],[u.n,"agents in the unit"]].map((x,i)=>'<div class="a pop" style="--d:'+(.6+i*.12).toFixed(2)+'s"><div class="big" style="font-weight:800;font-size:'+mq('3rem','2.2rem')+';line-height:1;font-stretch:80%">'+cnt(x[0],.6+i*.12)+'</div><div style="font-size:'+mq('1.02rem','.78rem')+';color:#CDD1DA;margin-top:.25rem">'+x[1]+'</div></div>').join("")+'</div>'+
+            ((u.agents||[]).length?'<div class="uma" data-trim>'+umAgents(u.agents)+'</div>':''):'<div style="color:var(--muted);font-size:1.2rem">The unit\'s read is not in yet.</div>')+'</div>'+
         '<div class="panel"><div class="ph">COVER TODAY</div><div style="font-size:'+mq('1.35rem','.95rem')+';line-height:1.5">'+
           (cv.out.length?cv.out.map((o,i)=>'<div class="a slide" style="--d:'+(.5+i*.2).toFixed(2)+'s;padding:.5rem 0;border-top:1px solid var(--line)"><b>'+esc(o.name)+'</b> is out today<br><span style="color:#CDD1DA">covered by '+esc(andList(o.by.map(b=>b.name+" ("+b.n+")"))||"no one yet")+'</span></div>').join(""):'<div class="a pop" style="--d:.5s">Every desk is in.</div>')+
           (m.qp&&m.qp.over!=null?'<div class="a rise" style="--d:1s;margin-top:.8rem;color:'+COL.coral+'">'+m.qp.over+' Query Pal quer'+(m.qp.over===1?'y':'ies')+' past turnaround</div>':'')+'</div></div></div>'; },
-  line:()=>{ const m=M(), u=m.unit, cv=m.cover||{total:0}; return {live:"Leading the branch."+(u?" "+u.lead+"'s unit has "+plural(u.ffMonth,"fact find")+" this month.":"")+(cv.total?" "+plural(cv.total,"task")+" covered today, so no client waits.":" Every desk is in."), rec:"Managers: leading the branch, the unit in the field, and every desk covered."}; }},
+  line:()=>{ const m=M(), u=m.unit, cv=m.cover||{total:0}; return {live:"Leading the branch."+(u?" "+u.lead+"'s unit has "+plural(u.ffMonth,"fact find")+" this month.":"")+(cv.total?" "+plural(cv.total,"task")+" covered today, so no client waits.":" Every desk is in."), rec:"Managers: leading the branch, Akaash's unit in the field, and every desk covered."}; }},
 
  {id:"n8",ch:"live",dwell:16000,when:()=>!!(D&&D.ticker&&D.ticker.length),
   html:()=>{ const ev=D.ticker.slice(0,8);
@@ -688,6 +744,72 @@ const SCENES=[
       '<div class="panel shine" style="justify-content:center;text-align:center"><div class="ph">TODAY SO FAR</div><div class="huge" style="font-weight:800;font-size:8rem;line-height:1;font-stretch:72%;color:'+COL.coral+'">'+cnt(D.ticker.length,.4)+'</div><div style="font-size:1.3rem;color:#CDD1DA">things done and noted on this feed</div></div></div>'; },
   line:()=>{ const e=D.ticker[0]; return {live:"And live, right now: "+e.who+" "+e.what+". That is the branch, as it happens.", rec:"And that is what is happening now, live, across the branch."}; }}
 ];
+
+// Akaash at the head of his unit, and his agents by name with their month (20 Oct 2026: "where is Akaash").
+function umCard(u){
+  const p=(S()&&S().people||[]).find(x=>x.role==="Unit manager"||x.name===u.lead)||{name:u.lead,status:"in"};
+  const st=p.status==="in"?(p.inAt?"in at "+p.inAt:"in today"):p.status==="out"?"out today":"starts at "+(p.startAt||"6:00");
+  return '<div class="umh a pop" style="--d:.35s">'+ring(p.status==="in"?.999:0,1,mq(78,54),p.status==="in"?COL.violet:COL.coral,.45,(u.lead||"?").charAt(0),"")+
+    '<div style="min-width:0"><div style="font-weight:800;font-size:'+mq('1.9rem','1.25rem')+';line-height:1.1">'+esc(u.lead)+'</div><div style="font-size:'+mq('1.1rem','.82rem')+';color:#CDD1DA">Unit manager · '+esc(st)+'</div></div>'+
+    '<span class="chip a pop" style="--d:.8s;margin-left:auto;background:rgba(171,148,232,.18);color:'+COL.violet+'">leading '+plural(u.n,"agent")+'</span></div>';
+}
+function umAgents(ag){
+  const mx=Math.max(1,...ag.map(a=>a.ff));
+  return ag.map((a,i)=>'<div class="row a slide" style="grid-template-columns:'+mq('8.5rem minmax(0,1fr) 7rem','5.2rem minmax(0,1fr) 4.4rem')+';--d:'+(.9+i*.1).toFixed(2)+'s">'+
+    '<b style="font-size:'+mq('1.2rem','.88rem')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(a.planned?'<i class="pdot"></i>':'')+esc(a.name)+'</b>'+
+    '<div class="track" style="height:'+mq('.8rem','.55rem')+'"><div class="fill a grow" style="width:'+Math.max(4,Math.round(100*a.ff/mx))+'%;background:'+COL.violet+';--d:'+(1+i*.1).toFixed(2)+'s"></div></div>'+
+    '<span class="mono" style="text-align:right;font-size:'+mq('1rem','.72rem')+';color:#CDD1DA;white-space:nowrap">'+a.ff+' ff · '+a.apps+' app'+(a.apps===1?'':'s')+'</span></div>').join("");
+}
+
+// ---- fitting a scene to the screen (20 Oct 2026) -------------------------------------------
+// Ricky: "scale more proper for mobile and laptop ... make use of space, it's jumbled". On a TV or a laptop a panel
+// keeps whole rows only: a list gives up its last rows rather than being cut through a line, and a panel that still
+// does not fit is drawn a little smaller. On a phone the whole scene is fitted to the screen (down to 80%), and a
+// scene still taller than that scrolls itself, gently, while it is on; a finger on the screen stops it.
+const TRIMS=".feed, [data-trim]";   // never the desks: everybody stays on the wall
+const over=(p,slack)=>p.scrollHeight>p.clientHeight+(slack||2);
+function trimIn(box,test,keep){
+  const lists=[...box.querySelectorAll(TRIMS)].concat(box.matches&&box.matches(TRIMS)?[box]:[]);
+  let guard=60;
+  while(test()&&guard--){
+    const l=lists.map(x=>({x,v:[...x.children].filter(c=>c.style.display!=="none")})).filter(o=>o.v.length>keep).sort((a,b)=>b.v.length-a.v.length)[0];
+    if(!l) return false;
+    l.v[l.v.length-1].style.display="none";
+  }
+  return !test();
+}
+function fitScene(el){
+  if(!el||!el.isConnected) return;
+  if(!MOB){
+    el.querySelectorAll(".grid>.panel, .grid>.feed").forEach(p=>{
+      if(!over(p)) return;
+      if(trimIn(p,()=>over(p),2)) return;
+      for(const k of [.94,.88,.82,.76]){ [...p.children].forEach(c=>c.style.zoom=k); if(!over(p)) break; }
+    });
+    return;
+  }
+  // a phone: the room between the bar at the top and the bars at the bottom
+  const hb=($("header")||{}).offsetHeight||0, fb=($("footer")||{}).offsetHeight||0, cp=$("#cap"), cb=cp&&getComputedStyle(cp).display!=="none"?cp.offsetHeight:0;
+  // The scene's own height, whether it is still waiting to come on (absolute) or on (in the flow); its parts are
+  // drawn smaller, never the scene box, so they keep the full width of the screen.
+  const room=innerHeight-hb-fb-cb, kids=[...el.children], vis=()=>el.scrollHeight, tall=()=>vis()>room+4;
+  kids.forEach(c=>c.style.zoom="");
+  if(!tall()) { el.classList.add("fits"); return; }
+  trimIn(el,()=>vis()>room*1.18,3);
+  const k=Math.max(.8,Math.min(1,room/vis()));
+  if(k<.995) kids.forEach(c=>c.style.zoom=k.toFixed(3));
+  if(tall()) el.dataset.roll="1"; else el.classList.add("fits");
+}
+// On a phone, a scene taller than the screen rolls up through its dwell, and back to the top for the next.
+function roll(el,dwell){
+  cancelAnimationFrame(roll.r); if(!MOB||!el||el.dataset.roll!=="1") return;
+  if(window.__dwell) dwell=window.__dwell;   // the film recorder sets each scene's length
+  const se=document.scrollingElement, max=()=>Math.max(0,se.scrollHeight-innerHeight), t0=performance.now()+3400, dur=Math.max(3500,dwell-3400-2600);
+  let stop=false; const halt=()=>{ stop=true; }; addEventListener("touchstart",halt,{once:true,passive:true}); addEventListener("wheel",halt,{once:true,passive:true});
+  const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+  const step=t=>{ if(stop||!el.isConnected||!el.classList.contains("on")) return; const q=(t-t0)/dur; if(q>=0) se.scrollTop=Math.round(max()*ease(Math.min(1,q))); if(q<1) roll.r=requestAnimationFrame(step); };
+  roll.r=requestAnimationFrame(step);
+}
 
 // ---- engine ------------------------------------------------------------------------------
 function list(){ return SCENES.filter(s=>{ try{ return !s.when||s.when(); }catch(e){ return false; } }); }
@@ -715,7 +837,9 @@ function go(i,stay){
     b.innerHTML='<div class="band"></div><div class="bt">'+CHN[s.ch][0]+'</div><div class="bs">'+CHN[s.ch][1]+'</div>'; st.appendChild(b); setTimeout(()=>b.remove(),1600); }
   const el=document.createElement("section"); el.className="scene";
   try{ el.innerHTML=s.html(); }catch(e){ el.innerHTML=head(s.ch,"","Reading the branch…",""); }
-  const mount=()=>{ st.appendChild(el); requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("on"))); runCounters(el); try{ celeAfterMount(el,s); }catch(e){} };
+  el.style.setProperty("--chc",(CHN[s.ch]||[0,0,COL.gold])[2]);
+  const mount=()=>{ st.appendChild(el); try{ fitScene(el); }catch(e){} requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("on"))); runCounters(el); try{ celeAfterMount(el,s); }catch(e){}
+    setTimeout(()=>{ try{ if(!MOB) fitScene(el); roll(el,s.dwell); }catch(e){} },700); };
   if(bump) go.mt=setTimeout(mount,780); else mount();
   if(MOB&&!stay) try{ scrollTo({top:0,behavior:"smooth"}); }catch(e){}
   setChannel(s.ch);
@@ -723,7 +847,7 @@ function go(i,stay){
   setCaption(line.live);
   const pr=$("#prog"); pr.style.transition="none"; pr.style.width="0"; void pr.offsetWidth; pr.style.transition="width "+s.dwell+"ms linear"; pr.style.width="100%";
   let spoke=!sound, dwelled=false;
-  const next=()=>{ if(spoke&&dwelled&&!paused) go(cur+1); };
+  const next=()=>{ if(spoke&&dwelled&&!paused&&!window.__dwell) go(cur+1); };   // the film recorder moves the scenes itself
   clearTimeout(timer); clearTimeout(safety);
   timer=setTimeout(()=>{ dwelled=true; next(); },s.dwell);
   safety=setTimeout(()=>{ spoke=true; next(); },s.dwell+22000);
@@ -744,6 +868,7 @@ const recorded={};
 function say(line,id,done){
   const vm=Q.get("voice")||"auto"; let fin=false; const end=()=>{ if(fin) return; fin=true; duck(false); done&&done(); };
   if(vm==="off"){ end(); return; }
+  if(vm==="film"){ setCaption(line.rec); end(); return; }   // recording the film: Andrew's own words as the caption, his voice mixed in after
   const live=()=>{ if(!andrew||!("speechSynthesis" in window)||!line.live) return false;
     try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(line.live); u.voice=andrew; u.lang=andrew.lang; u.rate=.92;
       u.onstart=()=>duck(true); u.onend=end; u.onerror=end; speechSynthesis.speak(u); return true; }catch(e){ return false; } };
@@ -891,6 +1016,11 @@ $("#gPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#gGo").click(
 $("#goSound").onclick=()=>begin(true);
 $("#goQuiet").onclick=()=>begin(false);
 $("#bSound").onclick=()=>{ setSound(!sound); if(sound&&cur>=0) go(cur); };
+// A phone: swipe left for the next scene, right for the one before.
+(()=>{ let x0=null,y0=null;
+  addEventListener("touchstart",e=>{ const t=e.touches[0]; x0=t.clientX; y0=t.clientY; },{passive:true});
+  addEventListener("touchend",e=>{ if(x0==null||!started) return; const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null;
+    if(Math.abs(dx)>60&&Math.abs(dx)>1.6*Math.abs(dy)) go(cur+(dx<0?1:-1)); },{passive:true}); })();
 $("#bPlay").onclick=()=>{ paused=!paused; $("#bPlay").classList.toggle("on",paused); if(!paused&&go.next) go.next(); };
 document.addEventListener("keydown",e=>{
   if(!$("#gate").classList.contains("hidden")) return;

@@ -16,7 +16,7 @@ say n10 "How we served: every task closed for an agent or a client, rated by the
 say n11 "Shout-outs. Today's wins: par reached, five-star service, levels up, streaks, and every thank-you."
 say n5 "Agents: the day in the field, and the fact finds that turn into cover."
 say n6 "From a fact find to a family covered: the month, and the year's goal against the time gone."
-say n7 "Managers: leading the branch, the unit in the field, and every desk covered."
+say n7 "Managers: leading the branch, Akaash's unit in the field, and every desk covered."
 say n9 "The Branch Manager's day: everything done from his desk since five, as it happens."
 say n8 "And that is what is happening now, live, across the branch."
 echo "Done. Commit the twelve wall/audio/v2/*.mp3 files and the wall uses them."
