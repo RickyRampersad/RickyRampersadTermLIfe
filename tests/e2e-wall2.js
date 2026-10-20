@@ -32,8 +32,8 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     await page.goto('http://localhost:8798/wall/?demo=1' + (view === 'outside' ? '&view=outside' : ''), { waitUntil: 'domcontentloaded' });
     await page.click('#goQuiet');
     const seen = [], spill = [], text = [];
-    for (let i = 0; i < 9; i++) {
-      await page.waitForTimeout(2300);
+    for (let i = 0; i < 10; i++) {
+      await page.waitForTimeout(2700);
       const k = await page.evaluate(() => { const e = document.querySelector('.scene.on .kick'); return e ? e.innerText : 'ident'; });
       seen.push(k);
       const bad = await page.evaluate(() => [...document.querySelectorAll('.scene.on .panel, .scene.on .tile')].filter(p => p.scrollWidth > p.clientWidth + 6).length);
@@ -41,7 +41,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       text.push(await page.evaluate(() => document.querySelector('.scene.on').innerText));
       await page.keyboard.press('ArrowRight');
     }
-    ok('nine scenes, staff to live', seen.length === 9 && new Set(seen).size === 9 && /LIVE/.test(seen[8]), seen.join(' | '));
+    ok('ten scenes, staff to live, the Branch Manager\'s day among them', seen.length === 10 && new Set(seen).size === 10 && /LIVE/.test(seen[9]) && seen.some(k => /BRANCH MANAGER'S DAY/.test(k)), seen.join(' | '));
     ok('nothing spills sideways', !spill.length, spill.join(', '));
     ok('no page errors', !errs.length, errs.join(' | '));
     ok('the sample is marked', /SAMPLE/.test(await page.innerText('#mode')));
@@ -55,6 +55,28 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       ok('inside: arrival times and dollars', /In at 6:55/.test(all) && /\$412k/.test(all));
     }
     await page.close();
+  }
+  // A phone, upright and on its side: the stacked layout, nothing off the side of the screen, every scene.
+  for (const [w, h, name] of [[390, 844, 'phone upright'], [844, 390, 'phone on its side']]) {
+    const pg = await b.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    const errs = []; pg.on('pageerror', e => errs.push(String(e)));
+    await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
+    await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await pg.goto('http://localhost:8798/wall/?demo=1&view=outside', { waitUntil: 'domcontentloaded' });
+    await pg.click('#goQuiet');
+    const off = [];
+    for (let i = 0; i < 10; i++) {
+      await pg.waitForTimeout(2700);
+      const r = await pg.evaluate(() => ({ k: (document.querySelector('.scene.on .kick') || {}).innerText || 'ident', sw: document.documentElement.scrollWidth, iw: innerWidth,
+        out: [...document.querySelectorAll('.scene.on *')].filter(e => { const b = e.getBoundingClientRect(); return b.width > 0 && (b.right > innerWidth + 2 || b.left < -2); }).length }));
+      if (r.sw > r.iw + 1 || r.out) off.push(r.k + ' (' + r.out + ')');
+      if (process.env.SHOTS) await pg.screenshot({ path: process.env.SHOTS + '/mob_' + w + '_' + i + '.png', fullPage: h > w });
+      await pg.keyboard.press('ArrowRight');
+    }
+    ok(name + ': the stacked layout', await pg.evaluate(() => document.body.classList.contains('mob')));
+    ok(name + ': nothing off the side of the screen', !off.length, off.join(', '));
+    ok(name + ': no page errors', !errs.length, errs.join(' | '));
+    await pg.close();
   }
   // Sound on, no recording and no Andrew voice in this browser: captions, and the wall still moves on by itself.
   const page = await b.newPage({ viewport: { width: 1920, height: 1080 } });

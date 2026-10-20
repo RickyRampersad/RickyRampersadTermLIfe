@@ -77,7 +77,9 @@ env.agentDaySummary_ = () => [{ name: 'Devendra Singh', hasPlan: true, hasClose:
 env.__mkSheet('Agent Day', 4, env.AGDAY.head, [[DAY, 'a-dev', 'dev@example.com', '', 'plan', 'ff', '', 2, '', '', '07:40']]);
 env.unitAgents_ = () => ['Akaash Kalladeen', 'Devendra Singh', 'Marissa Khan'];
 // The Branch Manager's day
-env.dayLogRows_ = () => [{ Kind: 'checkin', Group: '', What: 'Checked in' }, { Kind: 'note', Group: 'New business', What: 'Note on Follow up with UW - 1000894223' }, { Kind: 'close', Group: 'Orphan clients', What: 'Closed REENA' }];
+env.dayLogRows_ = () => [{ Kind: 'checkin', Group: '', What: 'Checked in', At: '05:04' }, { Kind: 'note', Group: 'New business', What: 'Note on Follow up with UW - 1000894223', At: '05:40' },
+  { Kind: 'close', Group: 'Orphan clients', What: 'Closed REENA', At: '10:30' }, { Kind: 'email', Group: 'Servicing', What: 'Re: SEEPARSAN premium', At: '10:45' }];
+env.dayLogSalesforce_ = () => 0;
 env.myTasks_ = () => [{ ty: 'Pendings', subject: 'Follow up with UW - 1000894223 RAVI' }, { ty: 'Renewa/PDl/Bill', subject: 'Premium due 5001816653' }];
 env.inboxView_ = () => ({ done: [1, 2], items: [1, 2, 3, 4] });
 
@@ -118,7 +120,8 @@ ok('the busiest hour', outside.staff.busiest.at === '9:00' && outside.staff.busi
 
 console.log('\nThe running feed:\n');
 const tk = outside.ticker;
-ok('newest first', tk[0].at === '10:05' && /Elizabeth closed a new business task with a note/.test(tk[0].who + ' ' + tk[0].what), JSON.stringify(tk[0]));
+const mins = t => { const [h, m] = t.at.split(':').map(Number); return (h < 5 ? h + 12 : h) * 60 + m; };
+ok('newest first', tk.every((t, i) => i === 0 || mins(tk[i - 1]) >= mins(t)) && tk.some(t => t.at === '10:05' && /Elizabeth closed a new business task with a note/.test(t.who + ' ' + t.what)), JSON.stringify(tk.slice(0, 3)));
 ok('a task over a month old says so', tk.some(t => t.who === 'Elizabeth' && /retention task over a month old/.test(t.what)));
 ok('cover is in it', tk.some(t => t.who === 'Azariah' && /covering for Sasha: 1 task/.test(t.what)));
 ok('outside says "is in", inside "checked in"', tk.some(t => t.what === 'is in') && inside.ticker.some(t => t.what === 'checked in'));
@@ -128,9 +131,17 @@ console.log('\nAgents and managers:\n');
 ok('fact finds and applications this month, conversion', outside.agents.ffMonth === 9 && outside.agents.appsMonth === 3 && outside.agents.conv === 33);
 ok('the year: a percentage of the goal, against the year gone', outside.agents.fy.pct === 4.2 && outside.agents.fy.gone === 5.2, JSON.stringify(outside.agents.fy));
 ok('inside: the dollars', inside.agents.fy.goal === 3600000 && inside.agents.pickedMonth === 53000);
-ok('his day: by kind of work, against what waits', inside.managers.groups.length >= 2 && inside.managers.doneToday === 2);
+ok('his day: by kind of work, against what waits', inside.managers.groups.length >= 2 && inside.managers.doneToday === 3);
 ok('the unit: Akaash and two agents', inside.managers.unit.lead === 'Akaash' && inside.managers.unit.n === 2 && inside.managers.unit.ffMonth === 9 && inside.managers.unit.planned === 1);
 ok('Query Pal answered this week', outside.managers.qp.answeredWeek === 1 && inside.managers.qp.over === 1);
+
+console.log('\nThe Branch Manager\'s day, from 5am:\n');
+const bm = outside.managers.bm;
+ok('three things done, the check-in not counted', bm.n === 3 && bm.notes === 1 && bm.closes === 1 && bm.emails === 1);
+ok('the hours start at 5am: a note in the 5 o\'clock hour, two at 10', bm.fromH === 5 && bm.hours[0] === 1 && bm.hours[5] === 2, JSON.stringify(bm.hours));
+ok('his feed says what kind, never the subject', bm.feed[0].what === 'answered an e-mail' && bm.feed.some(f => f.what === 'closed an orphan clients task') && bm.feed.some(f => f.what === 'wrote a note on a new business task'));
+ok('and he is in the running feed', outside.ticker.some(t => t.who === 'Mr Rampersad' && /orphan clients task/.test(t.what)));
+ok('inside: in at 5:04; outside: no time', inside.managers.bm.inAt === '5:04' && !('inAt' in bm));
 
 console.log('\nThe links:\n');
 ok('no key, no wall', env.wallOutside_('').ok === false);
