@@ -527,5 +527,36 @@
    129.62,
    130.07
   ]
+ },
+ "dbstaff": {
+  "cap": "cap-dbstaff",
+  "vox": "vodbstaff",
+  "music": "bed-dbstaff.wav",
+  "mix": "dbstaff-mix.wav",
+  "ass": "captions-dbstaff.ass",
+  "dur": 105.1,
+  "durs": [
+   10.0,
+   11.7,
+   10.7,
+   11.0,
+   8.9,
+   9.9,
+   7.0,
+   8.2,
+   10.7,
+   10.8,
+   6.2
+  ],
+  "out": "deliverybook-staff.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "dark": [
+   10
+  ],
+  "sfx": "sfx-dbstaff.wav",
+  "start": 0,
+  "ticks": [],
+  "hits": []
  }
 }

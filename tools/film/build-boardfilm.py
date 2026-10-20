@@ -47,11 +47,12 @@ ROOT = HERE.parent.parent
 SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
 PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
-         'lbagent': 'film-agents.html', 'lbstaff': 'film-staff.html'}
+         'lbagent': 'film-agents.html', 'lbstaff': 'film-staff.html', 'dbstaff': 'film.html'}
 TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
-          'lbagent': 'The Log Book, for agents', 'lbstaff': 'The Log Book, for staff'}
-LB = KEY.startswith('lb')   # the Log Book films (17 October 2026): rroperations/logbook/, same look and machinery
-OUT = (ROOT / 'rroperations' / 'logbook' if LB else ROOT / 'orphan-transition') / PAGES[KEY]
+          'lbagent': 'The Log Book, for agents', 'lbstaff': 'The Log Book, for staff', 'dbstaff': 'The Delivery Book, for staff'}
+LB = KEY.startswith('lb') or KEY.startswith('db')   # the Log Book films (17 October 2026) and the Delivery Book's (20 October): same look and machinery
+DBF = KEY.startswith('db')
+OUT = (ROOT / 'rroperations' / ('delivery-book' if DBF else 'logbook') if LB else ROOT / 'orphan-transition') / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
 LINES, ROLE = SCRIPT['scenes'], SCRIPT['role']
@@ -1058,6 +1059,184 @@ R_LB = {'lbsignin': s_lbsignin, 'lbdoc': s_lbdoc, 'lbclient': s_lbclient, 'lbcom
         'lbinsights': s_lbinsights, 'lbdigest': s_lbdigest, 'lbbag': s_lbbag, 'lbhistory': s_lbhistory, 'lbnudge': s_lbnudge,
         'lbbagday': s_lbbagday, 'lbrota': s_lbrota, 'lbprep': s_lbprep, 'lbbaglog': s_lbbaglog}
 
+# ── the Delivery Book film (20 October 2026: "a small video on the revised delivery process") ──────────
+def dbtabs(on):
+    t = [('log', 'Log a delivery'), ('book', 'Book'), ('map', 'Map')]
+    return '<div class="ptabs">' + ''.join(f'<span class="{"on" if k == on else ""}">{x}</span>' for k, x in t) + '</div>'
+
+def dbphone(i, body, extra=''):
+    return phone(i, body, title='Delivery Book', who='Sasha', extra=extra)
+
+def s_dbopen(i, sc, D):
+    tA, tT, tC, tL, tH = w(i, 'app'), w(i, 'tap'), w(i, 'code'), w(i, 'Log', 1), w(i, 'here')
+    tiles = ''.join(f'<div class="dbt {c}"><span class="dbti">{ico(ic)}</span><b>{n}</b><i>{x}</i></div>' for (n, x, ic, c) in [
+        ('Log Book', 'Papers in, sent on the bag', 'file', 'lbk'), ('Delivery Book', 'Cheques, contracts, certificates', 'bag', 'dbk'),
+        ('My clients board', 'Your calls', 'users', ''), ('Group clients', 'The Monday letters', 'chart', '')])
+    home = (f'<div class="dbhome"><div class="dbhello"><b>Good morning, Sasha</b><span>Staff</span></div><div class="dbgrid">{tiles}</div></div>')
+    gate = (f'<div class="dbcode until" style="--at:{ms(tC - 400)};--to:{ms(tL - 300)}"><div class="lbgl">{mark()}<b>Delivery Book</b><span>Enter your staff access code</span></div>'
+            f'<div class="fld">{typed(tC, "••••••", 110)}</div><div class="bbtn wide prs" style="--at:{ms(tC + 1100)}">Open the Delivery Book</div></div>')
+    no = at(tL, 'at pop dbno', inner=f'{ico("x", "ii")} Not the Log Book')
+    yes = at(tH, 'at pop dbyes', inner=f'{ico("check", "ii")} Cheques &middot; contracts &middot; certificates')
+    extra = (glow(tL, '.dbt.lbk') + glow(tH, '.dbt.dbk') + cursor([(300, 150, 420), (tT - 30, '.dbt.dbk')], kind='touch') + click(tT, '.dbt.dbk'))
+    body = home + gate + no + yes
+    cues = [(tA, 'rickyrampersadbranch.com/app', False), (tC, 'Your staff access code, if it asks', False),
+            (tL, 'The Log Book: papers to head office', False), (tH, 'Anything you hand over: the Delivery Book', True)]
+    return stage(side(i, sc, cues), phone(i, body, title='Branch app', who='Sasha', extra=extra))
+
+def s_dbfind(i, sc, D):
+    tP, tT, tF, tS = w(i, 'policy'), w(i, 'Type'), w(i, 'Find'), w(i, 'Salesforce')
+    q = f'<div class="dbq"><div class="fld">{typed(tT + 200, "TT FCP 0700001", 90)}</div><div class="bbtn prs dbfb" style="--at:{ms(tF)}">Find</div></div>'
+    look = at(tF + 300, 'at up dblook', inner=f'<i class="dbspin"></i> Looking up Salesforce&hellip;')
+    found = at(tS, 'at pop lbcl', inner=f'{avatar("Anika Pretend", "sm")}<div><b>Anika Pretend</b><i>Client &middot; anika@example.com &middot; 3 policies</i></div>{ico("check", "lbok")}')
+    body = dbtabs('log') + lbcard(1, 'Find the client', f"<label>Policy number or client&rsquo;s name</label>{q}<div class=\"dbst\">{look}{found}</div>")
+    extra = cursor([(300, 150, 420), (tT, '.dbq .fld'), (tF - 30, '.dbfb')], kind='touch') + click(tF, '.dbfb') + glow(tS + 300, '.lbcl')
+    cues = [(tP, 'A policy number', False), (w(i, 'name'), 'or the client&rsquo;s name', False), (tF, 'Press Find', False), (tS, 'Looked up in Salesforce for you', True)]
+    return stage(side(i, sc, cues), dbphone(i, body, extra))
+
+def s_dbpolicies(i, sc, D):
+    tE, tG, tT, tC, tK, tCe = w(i, 'Every'), w(i, 'grouped'), w(i, 'Tick'), w(i, 'cheque'), w(i, 'contract'), w(i, 'certificate')
+    def grp(t, name, rows):
+        return at(t, 'at up dbgrp', inner=f'<div class="dbgh">{name}</div>' + rows)
+    sel = (f'<span class="dbsel"><span class="sw2"><span class="sa until" style="--at:0ms;--to:{ms(tC)}">Policy Contract ▾</span>'
+           f'<span class="sb until" style="--at:{ms(tC)};--to:{ms(tK)}">Cheque ▾</span><span class="sb at" style="--at:{ms(tK)}">Policy Contract ▾</span></span></span>')
+    life = (f'<div class="lbpr on"><span class="bx prs" style="--at:{ms(tT)}">{ico("check")}</span><div><b>9000000101</b><i>Term to 65 &middot; in force</i></div>{at(tT + 300, "at pop", inner=sel)}</div>')
+    prop = (f'<div class="lbpr"><span class="bx"></span><div><b>TT FCP 0700001</b><i>Home</i></div><span class="dbsel dim">Certificate ▾</span></div>')
+    mot = (f'<div class="lbpr"><span class="bx"></span><div><b>TTMV 00000001</b><i>Motor</i></div><span class="dbsel dim">Certificate ▾</span></div>')
+    menu = (f'<div class="dbmenu until" style="--at:{ms(tC - 500)};--to:{ms(tCe + 900)}">' + ''.join(
+        f'<span class="{c}">{x}</span>' for (x, c) in [('Policy Contract', 'hk'), ('Certificate', 'hc'), ('Cheque', 'hq'), ('Renewal Notice', ''), ('Cover Note', '')]) + '</div>')
+    hl = (f'<style>.scene.act .dbmenu .hq{{animation:dbHi .5s {ms(tC)} both}}.scene.act .dbmenu .hk{{animation:dbHi .5s {ms(tK)} both}}'
+          f'.scene.act .dbmenu .hc{{animation:dbHi .5s {ms(tCe)} both}}</style>')
+    body = dbtabs('log') + lbcard(2, 'What was delivered', grp(tG, 'Life', life) + grp(tG + 250, 'Property', prop) + grp(tG + 500, 'Motor', mot)) + menu + hl
+    extra = cursor([(300, 150, 420), (tT - 30, '.lbpr.on .bx'), (tC - 400, '.lbpr.on .dbsel')], kind='touch') + click(tT, '.lbpr.on .bx') + click(tC - 400, '.lbpr.on .dbsel')
+    cues = [(tE, 'Every policy they hold', False), (tG, 'Grouped by type', False), (tT, 'Tick the policy', False), (tC, 'A cheque, a contract or a certificate', True)]
+    return stage(side(i, sc, cues), dbphone(i, body, extra))
+
+def s_dbemail(i, sc, D):
+    tE, tC, tN, tT = w(i, 'e-mail'), w(i, 'confirmation'), w(i, 'none'), w(i, 'type')
+    em = (f'<label>Client&rsquo;s e-mail for the confirmation</label><div class="fld dbem">anika@example.com {ico("lock", "ii")}</div>'
+          + at(tE + 400, 'at up lbsugg', inner=f'{ico("check", "ii")} From her record in Salesforce'))
+    none = at(tN, 'at up dbnone', inner=(f'<label>No e-mail on file?</label><div class="fld">{typed(tT, "ask, and type it in", 70)}</div>'))
+    body = dbtabs('log') + lbcard(2, 'What was delivered', '<div class="lbpr on"><span class="bx" style="background:var(--blue);border-color:var(--blue);color:#fff">' + ico('check') + '</span><div><b>9000000101</b><i>Policy Contract</i></div></div>' + em) + none
+    extra = glow(tE, '.dbem') + spot(tC, tN - 200, '.dbem', 8)
+    cues = [(tE, 'Filled in from the record', False), (tC, 'Where the confirmation goes', False), (tN, 'None on file? Ask for it', True)]
+    return stage(side(i, sc, cues), dbphone(i, body, extra))
+
+def s_dbhandover(i, sc, D):
+    tW, tN, tS, tP = w(i, 'Who'), w(i, 'name'), w(i, 'signature'), w(i, 'photo')
+    rel = f'<div class="dbrow"><div><label>Who collected it</label><div class="fld">{typed(tW + 200, "Spouse", 90)}</div></div><div><label>How</label><div class="fld">In person</div></div></div>'
+    nm = f'<div class="dbrow"><div><label>First name</label><div class="fld">{typed(tN, "Marlon", 90)}</div></div><div><label>Last name</label><div class="fld">{typed(tN + 700, "Pretend", 90)}</div></div></div>'
+    pad = (f'<div class="lbpad dbpad at" style="--at:{ms(tS - 300)}"><small>Signature of the person collecting</small><svg viewBox="0 0 300 80" aria-hidden="true">'
+           f'<path class="lbsig" style="--at:{ms(tS + 100)}" pathLength="1" d="M16 54 C34 14 48 20 52 44 S70 66 84 34 S108 16 116 46 S136 62 150 32 C160 18 168 52 182 44 S210 22 224 46 S250 60 284 30"/></svg></div>')
+    photo = at(tP, 'at pop dbphoto', inner=f'<span class="dbcam">{ico("eye")}</span><div><b>Photo of the handover</b><i>Needed for a cheque</i></div>{ico("check", "lbok")}')
+    body = dbtabs('log') + lbcard(3, 'The handover', rel + nm + pad) + photo
+    extra = cursor([(300, 150, 420), (tW, '.dbrow .fld'), (tS + 100, '.dbpad svg'), (tP + 200, '.dbphoto')], kind='touch') + click(tP + 250, '.dbphoto')
+    cues = [(tW, 'Who collected it', False), (tN, 'Their name', False), (tS, 'Their signature, with a finger', False), (tP, 'A cheque also needs a photo', True)]
+    return stage(side(i, sc, cues), dbphone(i, body, extra))
+
+def s_dbgps(i, sc, D):
+    tL, tS, tB, tN = w(i, 'location'), w(i, 'save'), w(i, 'branch'), w(i, 'never')
+    mp = (f'<div class="dbmap"><i class="dbroad r1"></i><i class="dbroad r2"></i><i class="dbroad r3"></i>'
+          f'<b class="dbpin at" style="--at:{ms(tL + 200)}">{ico("pin")}</b><i class="dbacc at" style="--at:{ms(tL + 400)}"></i></div>')
+    loc = (f'<label>Location</label>{mp}' + at(tS, 'at up lbsugg', inner=f'{ico("check", "ii")} 10.5176, -61.4138 &middot; &plusmn;15 m &middot; 0.3 km from the address on file'))
+    who = (at(tB, 'at pop dbkeep', inner=f'{ico("lock", "ii")} Kept by the branch, on the record')
+           + at(tN, 'at pop dbnot', inner=f'{ico("x", "ii")} Never in the client&rsquo;s e-mail'))
+    body = dbtabs('log') + lbcard(3, 'The handover', loc) + who
+    cues = [(tL, 'Your location, stamped', False), (tS, 'when you save', False), (tB, 'It stays with the branch', False), (tN, 'Never sent to the client', True)]
+    return stage(side(i, sc, cues), dbphone(i, body))
+
+def s_dbsave(i, sc, D):
+    tP, tR, tO, tS = w(i, 'Press'), w(i, 'reference'), w(i, 'once'), w(i, 'Salesforce')
+    form = f'<div class="bbtn wide prs dbgo" style="--at:{ms(tP + 500)}">Record the delivery</div>'
+    done = (f'<div class="lbdone after" style="--at:{ms(tR - 400)}"><span class="lbdi">{ico("check")}</span><b>Delivery recorded</b>'
+            f'<div class="lbref">{typed(tR, "DB-261020-AB12", 60)}</div><span>Policy Contract &middot; 9000000101<br>for Anika Pretend</span>'
+            + at(tS - 200, 'at pop dbsf', inner=f'{ico("sync", "ii")} On her record in Salesforce') + at(tS + 500, 'at pop dbsf ml', inner=f'{ico("mail", "ii")} Confirmation sent to her') + '</div>')
+    body = dbtabs('log') + f'<div class="lbsw until" style="--at:0ms;--to:{ms(tR - 400)}">' + lbcard(3, 'The handover', '<div class="lbsugg">' + ico('check', 'ii') + ' Signed &middot; located &middot; ready</div>' + form) + '</div>' + done
+    extra = cursor([(300, 150, 420), (tP + 470, '.dbgo')], kind='touch') + click(tP + 500, '.dbgo')
+    cues = [(tP, 'Record the delivery', False), (tR, 'A reference at once', False), (tS, 'On the client&rsquo;s record in Salesforce', True)]
+    return stage(side(i, sc, cues), dbphone(i, body, extra))
+
+def s_dbmail(i, sc, D):
+    tM, tW, tP, tC, tD, tF = w(i, 'minute'), w(i, 'What'), w(i, 'policy'), w(i, 'collected'), w(i, 'delivered', 2), w(i, 'stars')
+    hl = lambda t, x: f'<span class="lbhot" style="--at:{ms(t)}">{x}</span>'
+    stars = ''.join(f'<i class="dbstar at" style="--at:{ms(tF + 120 * k)}">&#9733;</i>' for k in range(5))
+    body = ('<div class="lbmail dbm">' + f'<div class="lbmh">{mark()}<div><small>RICKY RAMPERSAD BRANCH</small><b>Delivery confirmation</b></div></div><i class="lbrule"></i>'
+            + '<div class="lbmb"><p>Dear Anika,</p><p>This confirms the delivery made to you on <b>20 October 2026, 10:42</b>.</p>'
+            + f'<table class="dbtab"><tr><th>Item</th><th>Policy</th><th>Type</th></tr><tr><td>{hl(tW, "Policy Contract")}</td><td>{hl(tP, "9000000101")}</td><td>Life</td></tr></table>'
+            + f'<p>It was received by {hl(tC, "Marlon Pretend (spouse)")} and delivered by {hl(tD, "Sasha Lalla")} of our team.</p>'
+            + f'<div class="dbrate at" style="--at:{ms(tF - 300)}"><b>How did we do?</b><div>{stars}</div><span>One tap rates this delivery</span></div>'
+            + '<p class="dbfine">Reference DB-261020-AB12</p></div></div>')
+    note = at(tM, 'at pop nban dbban', inner=f'{mark()}<div><small>support@rickyrampersadbranch.com &middot; now</small><b>Delivery confirmation</b><span>Policy Contract (DB-261020-AB12)</span></div>')
+    cues = [(tM, 'The same minute', False), (tW, 'What, and on which policy', False), (tC, 'Who collected it, who delivered it', False), (tF, 'Five stars, to rate us', True)]
+    return stage(side(i, sc, cues), lbwin('Mail &middot; anika@example.com', body + note))
+
+def s_dbbook(i, sc, D):
+    tB, tJ, tS, tR = w(i, 'Book'), w(i, 'Jotform'), w(i, 'Search'), w(i, 'ratings')
+    rows = [('20 Oct', 'Anika Pretend', 'Policy Contract', 'Sasha Lalla', 'App', '&#9733;&#9733;&#9733;&#9733;&#9733;', ''),
+            ('20 Oct', 'Devon Madeup', 'Cheque', 'Liz Lee', 'App', '', ''),
+            ('1 Oct', 'Marcus Sample', 'Policy Contract', 'Pawan', 'Jotform', '', 'jf'),
+            ('21 Sep', 'Zoe Invented', 'Certificate', 'Pawan', 'Jotform', '', 'jf'),
+            ('3 Sep', 'Tyre Traders Ltd', 'Cheque', 'Pawan', 'Jotform', '', 'jf')]
+    tr = ''.join(at(tB + 200 + k * 160, f'at l dbr {c}', inner=f'<span>{d}</span><span><b>{n}</b></span><span>{doc}</span><span>{by}</span><span class="dbsrc">{src}</span><span class="dbst5">{st}</span>')
+                 for k, (d, n, doc, by, src, st, c) in enumerate(rows))
+    search = f'<div class="fld dbsearch">{ico("eye", "ii")} {typed(tS + 300, "Marcus", 110)}</div>'
+    team = at(tR, 'at pop dbteam', inner='<b>Ratings from clients</b><span>Sasha Lalla &middot; 4.9 &#9733; &middot; 12</span><span>Liz Lee &middot; 4.8 &#9733; &middot; 9</span>')
+    main = (f'<div class="dbbk">{search}<div class="dbr dbh"><span>When</span><span>Client</span><span>Document</span><span>By</span><span>From</span><span>Rating</span></div>{tr}</div>{team}')
+    extra = f'<style>.scene.act .dbr.jf .dbsrc{{animation:dbHi .5s {ms(tJ)} both}}</style>' + glow(tR + 200, '.dbteam')
+    cues = [(tB, 'Every delivery, in the Book tab', False), (tJ, 'The Jotform history included', False), (tS, 'Search a client, policy or collector', False), (tR, 'And the clients&rsquo; ratings', True)]
+    return stage(side(i, sc, cues), lbwin('rickyrampersadbranch.com/rroperations/delivery-book &middot; Book', dbtabs('book') + main + extra))
+
+R_DB = {'dbopen': s_dbopen, 'dbfind': s_dbfind, 'dbpolicies': s_dbpolicies, 'dbemail': s_dbemail, 'dbhandover': s_dbhandover,
+        'dbgps': s_dbgps, 'dbsave': s_dbsave, 'dbmail': s_dbmail, 'dbbook': s_dbbook}
+
+DB_CSS = r"""
+/* ══ the Delivery Book film (20 October 2026) ══ */
+.bf .ptabs{display:flex;gap:4px;background:#EEF2F8;border-radius:10px;padding:3px;margin-bottom:6px} .bf .ptabs span{flex:1;text-align:center;font:600 11px var(--body);padding:6px 4px;border-radius:8px;color:#334155} .bf .ptabs .on{background:var(--blue);color:#fff}
+.bf .dbhome{padding:6px 2px} .bf .dbhello b{display:block;font:700 16px var(--head)} .bf .dbhello span{font-size:11px;color:var(--mute)}
+.bf .dbgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px} .bf .dbt{position:relative;background:#fff;border:1px solid #E1E7F0;border-radius:12px;padding:10px}
+.bf .dbt b{display:block;font:700 12.5px var(--head);margin-top:6px} .bf .dbt i{font-style:normal;font-size:10.5px;color:var(--mute)}
+.bf .dbti{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--sky);color:var(--blue)} .bf .dbti .ico{width:17px;height:17px}
+.bf .dbt.dbk{border-color:var(--blue3)} .bf .dbt.dbk .dbti{background:var(--blue);color:#fff}
+.bf .dbcode{position:absolute;left:10px;right:10px;top:52px;background:#fff;border-radius:14px;padding:18px 14px;border:1px solid #E1E7F0;box-shadow:0 18px 40px rgba(14,27,46,.25);z-index:5}
+.bf .dbno,.bf .dbyes{position:absolute;left:14px;right:14px;z-index:6;display:flex;align-items:center;gap:6px;font:600 12px var(--body);border-radius:10px;padding:8px 10px}
+.bf .dbno{bottom:62px;background:var(--redbg);color:var(--red)} .bf .dbyes{bottom:18px;background:var(--grnbg);color:var(--grn)}
+.bf .dbq{display:flex;gap:6px;align-items:stretch} .bf .dbq .fld{flex:1} .bf .dbq .bbtn{margin:0}
+.bf .dbst{position:relative;min-height:60px} .bf .dbst>div{position:absolute;left:0;right:0;top:0}
+.bf .dblook{display:flex;align-items:center;gap:7px;font:600 11.5px var(--body);color:var(--blue2);margin-top:10px}
+.bf .dbspin{width:14px;height:14px;border-radius:50%;border:2px solid #BFD3F7;border-top-color:var(--blue);animation:dbSpin .8s linear infinite} @keyframes dbSpin{to{transform:rotate(360deg)}}
+.bf .dbgh{font:700 10px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--blue2);margin:8px 0 2px}
+.bf .dbsel{margin-left:auto;font:600 11px var(--body);background:#F0F5FF;border:1px solid #BFD3F7;border-radius:7px;padding:4px 8px;white-space:nowrap;display:inline-grid} .bf .dbsel.dim{opacity:.5}
+.bf .dbsel .sw2{display:inline-grid} .bf .dbsel .sw2>span{grid-area:1/1}
+.bf .dbmenu{position:absolute;right:16px;top:150px;z-index:6;background:#fff;border-radius:10px;box-shadow:0 16px 36px rgba(14,27,46,.28);padding:4px;display:grid;width:160px}
+.bf .dbmenu span{font:600 12px var(--body);padding:7px 9px;border-radius:7px}
+@keyframes dbHi{to{background:var(--blue);color:#fff}}
+.bf .dbem{display:flex;justify-content:space-between;align-items:center;background:#F7F9FD} .bf .dbem .ico{width:14px;height:14px;color:var(--mute)}
+.bf .dbnone{margin-top:8px;border:1px dashed #CBD5E1;border-radius:10px;padding:6px 10px}
+.bf .dbrow{display:grid;grid-template-columns:1fr 1fr;gap:8px} .bf .dbpad{width:auto}
+.bf .dbphoto{display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid var(--blue3);border-radius:12px;padding:9px 10px;margin-top:8px}
+.bf .dbphoto b{display:block;font:700 12.5px var(--head)} .bf .dbphoto i{font-style:normal;font-size:11px;color:var(--mute)} .bf .dbphoto .lbok{margin-left:auto;width:16px;height:16px;color:var(--grn)}
+.bf .dbcam{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--sky);color:var(--blue)} .bf .dbcam .ico{width:18px;height:18px}
+.bf .dbmap{position:relative;height:150px;border-radius:10px;overflow:hidden;background:#E8EEF6}
+.bf .dbroad{position:absolute;background:#fff;border-radius:4px} .bf .dbroad.r1{left:-10px;right:-10px;top:60px;height:12px;transform:rotate(-8deg)} .bf .dbroad.r2{top:-10px;bottom:-10px;left:120px;width:10px;transform:rotate(12deg)} .bf .dbroad.r3{left:-10px;right:-10px;top:112px;height:7px;transform:rotate(5deg)}
+.bf .dbpin{position:absolute;left:calc(50% - 16px);top:38px;width:32px;height:32px;color:var(--red);z-index:2} .bf .dbpin .ico{width:32px;height:32px;fill:#fff}
+.scene.act .dbpin{animation:pinDrop .6s cubic-bezier(.2,1.4,.4,1) var(--at) both} @keyframes pinDrop{from{opacity:0;transform:translateY(-50px)}to{opacity:1;transform:none}}
+.bf .dbacc{position:absolute;left:calc(50% - 40px);top:30px;width:80px;height:80px;border-radius:50%;background:rgba(29,91,196,.15);border:1.5px solid rgba(29,91,196,.4)}
+.scene.act .dbacc{animation:accPulse 1.6s ease-out var(--at) infinite} @keyframes accPulse{from{opacity:.9;transform:scale(.3)}to{opacity:0;transform:scale(1.4)}}
+.bf .dbkeep,.bf .dbnot{display:flex;align-items:center;gap:6px;font:600 12px var(--body);border-radius:10px;padding:8px 10px;margin-top:8px}
+.bf .dbkeep{background:var(--sky);color:var(--blue2)} .bf .dbnot{background:var(--redbg);color:var(--red)}
+.bf .dbsf{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;background:#FEF0C7;color:#93370D;font:600 12px var(--body);border-radius:999px;padding:6px 12px}
+.bf .dbsf.ml{background:var(--grnbg);color:var(--grn)}
+.bf .dbm{width:520px} .bf .dbtab{width:100%;border-collapse:collapse;margin:6px 0 10px;font-size:12px} .bf .dbtab th{background:#F6F8FB;text-align:left;padding:6px 8px;font-size:11px} .bf .dbtab td{padding:7px 8px;border-bottom:1px solid #E6EBF1}
+.bf .dbrate{text-align:center;background:#F6F8FB;border-radius:10px;padding:10px;margin:8px 0} .bf .dbrate b{display:block;font:700 13px var(--head)} .bf .dbrate span{font-size:11px;color:var(--mute)}
+.bf .dbstar{display:inline-block;font-style:normal;font-size:28px;color:#F5B23F;margin:0 3px} .scene.act .dbstar{animation:bfPop .45s cubic-bezier(.2,1.6,.4,1) var(--at) both}
+.bf .dbfine{font-size:11px;color:var(--mute)}
+.bf .dbban{position:absolute;right:16px;top:14px;left:auto;width:300px}
+.bf .dbbk{background:#fff;border-radius:12px;padding:10px 12px;width:640px} .bf .dbsearch{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12.5px} .bf .dbsearch .ico{width:14px;height:14px;color:var(--mute)}
+.bf .dbr{display:grid;grid-template-columns:.6fr 1.3fr 1.1fr .9fr .6fr .8fr;gap:6px;padding:7px 2px;border-bottom:1px solid #EDF1F5;font-size:12px;align-items:center}
+.bf .dbr.dbh{font:600 10px var(--body);color:var(--mute);text-transform:uppercase;letter-spacing:.06em} .bf .dbr b{font-weight:700}
+.bf .dbsrc{border-radius:6px;padding:2px 6px;justify-self:start} .bf .dbst5{color:#F5B23F;letter-spacing:1px}
+.bf .dbteam{position:absolute;right:20px;bottom:16px;background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 14px 32px rgba(14,27,46,.2);display:grid;gap:3px;font-size:12px} .bf .dbteam b{font:700 13px var(--head)}
+"""
+
 LB_CSS = r"""
 /* ══ the Log Book films (17 October 2026) ══ */
 /* ── the bag (17 October 2026) ── */
@@ -1289,7 +1468,7 @@ R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_uni
      'yourwork': s_yourwork, 'clock': s_clock, 'title': s_title, 'flow': s_flow, 'signin': s_signin, 'urgent': s_urgent, 'agents': s_agents, 'table': s_table, 'batches': s_batches,
      'assign': s_assign, 'named': s_named, 'list': s_list, 'client': s_client, 'logcall': s_logcall, 'comment': s_comment, 'counts': s_counts,
      'sees': s_sees, 'close': s_close}
-R.update(R_LB)
+R.update(R_LB); R.update(R_DB)
 BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close', 'lbbag', 'lbhistory', 'lbbagday', 'lbrota'}
 
 def bgfx(i, blue):
@@ -1847,10 +2026,10 @@ chrome_end = s.index('</div>', s.index('<div id="chrome">')) + len('</div>')
 tap = s.index('<div class="tapzone" id="zL"')
 out = s[:chrome_end] + '\n' + SCENES + '\n\n' + s[tap:]
 last = out.rindex('</style>')
-out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + (LB_CSS if LB else '') + '\n' + out[last:]
+out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + (LB_CSS if LB else '') + (DB_CSS if DBF else '') + '\n' + out[last:]
 out = re.sub(r'<title>.*?</title>', '<title>' + TITLES[KEY] + ' — Ricky Rampersad Branch</title>', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="mark mk"></i>', out, count=1, flags=re.S)
-out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
+out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
 out = re.sub(r'<span class="live">.*?</span>', '', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="biglogo" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="biglogo mk"></i>', out, count=1, flags=re.S)
 FAVICON = 'data:image/svg+xml,' + (ROOT / 'favicon.svg').read_text().replace('#', '%23').replace('<', '%3C').replace('>', '%3E').replace('"', "'").replace('\n', '')
@@ -1859,9 +2038,9 @@ out = re.sub(r'const cols = \[[^\]]*\]', 'const cols = ["#ffffff", "#00E5FF", "#
 out = re.sub(r'<h1>The launch of<br>donthaveanagent<em>\.com</em></h1>', '<h1>' + TITLES[KEY].replace(', ', ',<br><em>') + '</em></h1>', out, count=1)
 out = re.sub(r'<div class="eyebrow" style="margin-top:16px">[^<]*</div>', '<div class="eyebrow" style="margin-top:16px">A Ricky Rampersad Branch film</div>', out, count=1)
 out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 120000 else 'two and a half minutes') + '</button>', out, count=1)
-out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('Log it, hand it in, see it sent: the same day.' if LB else 'How the branch names agents, and how agents report back.'), out, count=1)
-MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
-       '  "▶ https://rickyrampersadbranch.com/' + ('logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
+out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'How the branch names agents, and how agents report back.'), out, count=1)
+MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
+       '  "▶ https://rickyrampersadbranch.com/' + ('deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
 out = re.sub(r'const MSG = ".*?";', lambda m: MSG, out, count=1, flags=re.S)
 out = out.replace('document.getElementById("waBtn").href =', 'if (document.getElementById("waBtn")) document.getElementById("waBtn").href =')
 # the narration and the bed are in the MP4; the page itself plays no music of its own
