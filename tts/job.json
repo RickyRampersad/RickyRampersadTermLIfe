@@ -1,20 +1,20 @@
 {
  "voice": "en-US-AndrewNeural",
- "rate": "-4%",
+ "rate": "-12%",
  "films": {
-  "dbstaff": [
-   "This is the Delivery Book. Every cheque, policy contract and certificate the branch hands over is recorded here, the same day.",
-   "Open the branch app, and tap Delivery Book. If it asks, enter your staff access code. The Log Book is for papers going to head office. Anything you hand over goes here.",
-   "Step one. Find the client. Type a policy number or the client's name, and press Find. The Delivery Book looks the client up in Salesforce for you.",
-   "Every policy they hold comes up, grouped by type. Tick the policy, and choose what you are handing over. A cheque, a policy contract, or a certificate.",
-   "Their e-mail on file is filled in for you. That is where the confirmation goes. If there is none, ask for it, and type it in.",
-   "Step three. The handover. Who collected it, and their name. Then their signature, with a finger on the screen. A cheque also needs a photo.",
-   "Your location is stamped when you save. It stays with the branch, and never goes to the client.",
-   "Press Record the delivery. You get a reference at once, and the delivery goes on the client's record in Salesforce.",
-   "The client gets an e-mail the same minute. What was delivered, on which policy, who collected it, and who delivered it. And five stars, to rate us.",
-   "The Book tab holds every delivery, the old Jotform ones included. Search a client, a policy or a collector. The ratings from clients are there too.",
-   "Cheques and contracts, in the Delivery Book. The client told, the same day."
+  "wall": [
+   "This is Ricky Rampersad Branch, live. Here is how the day is going, for staff, agents and managers.",
+   "Staff. Who is in, who is out today, and who is covering, so no client waits.",
+   "Hour by hour: what is being actioned at the branch, and when.",
+   "Where the work went: high-payoff first, new business, orphan adoption and retention.",
+   "The team game: everybody in, nobody ranked. Each person against their own usual week.",
+   "How we served: every task closed for an agent or a client, rated by the people we serve.",
+   "Shout-outs. Today's wins: par reached, five-star service, levels up, streaks, and every thank-you.",
+   "Agents: the day in the field, and the fact finds that turn into cover.",
+   "From a fact find to a family covered: the month, and the year's goal against the time gone.",
+   "The Branch Manager's day: everything done from his desk since five, as it happens.",
+   "Managers: leading the branch, Akaash's unit in the field, and every desk covered.",
+   "And that is what is happening now, live, across the branch."
   ]
- },
- "n": 2
+ }
 }
