@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-20a';
+var SCRIPT_VERSION = '2026-10-20b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4608,6 +4608,319 @@ function myTasksSec_(m) {
       return '<div class="card"><div class="bh">' + esc_(ty) + ' (' + l.length + (late ? ' · ' + late + ' overdue' : '') + ')</div>' + l.map(row).join('') + '</div>'; }).join('');
 }
 
+/* ─────────── Renewals and premiums, on My branch (20 October 2026) ───────────
+ *  Ricky: "built into my module, the branch managers module, the renewals that
+ *  are coming for the week, tomorrow, and for the month, and year-to-date
+ *  analytics, as well as the open tasks associated with renewals, the ability
+ *  to move forward the task, comment on the task, and premiums that are owed
+ *  for the month and year-to-date, and what is happening with it."
+ *
+ *  General insurance renewals come from the risks (Risk_Details__c). A term
+ *  renews the day after its cover ends (Next_Renewal_Date__c, the date the
+ *  renewal tasks quote), and it counts as renewed when the next term is on
+ *  file: a later record, 60+ days on, for the same policy and vehicle, or for
+ *  the same vehicle under a new policy number. Duplicate rows (same policy,
+ *  vehicle and end date) count once. The premium shown is the premium due on
+ *  the term, never "owed": payments are not kept on the risk.
+ *
+ *  Premiums owed are life premiums in arrears, from Branch Intelligence's
+ *  overnight dues (modal instalments, not annual premium), with lapses this
+ *  month and this year. What is happening with each is the task that names
+ *  the policy (open, or closed in the last 30 days) and its last note.
+ *
+ *  The open tasks are the renewals type (Renewa/PDl/Bill), any other open task
+ *  on a risk renewing this month, and any open task naming a policy listed
+ *  under premiums owed. Each can take a note (it goes on its Chatter, signed
+ *  as Branch Manager) and a new date, which needs a note saying why; every
+ *  move is kept with its before and after (Task Changes, Due Moves).
+ */
+var RENEW = { TYPE: 'Renewa/PDl/Bill', SOON: 7, TOP: 15, LAPSED: 12, NOREN: 25, AGENTS: 8, CACHE_MIN: 20 };
+var RN_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function rnNorm_(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+function rnMoney_(v) { return '$' + Math.round(Number(v || 0)).toLocaleString('en-US'); }
+function rnMonthEnd_(day) { var y = Number(day.slice(0, 4)), mo = Number(day.slice(5, 7)); return shiftDays_(mo === 12 ? (y + 1) + '-01-01' : y + '-' + ('0' + (mo + 1)).slice(-2) + '-01', -1); }
+
+/** Every general insurance term renewing this year (and in the next few weeks), each marked renewed when its next term is on file. */
+function rnRisks_(day) {
+  var y = Number(day.slice(0, 4)), lastIn = shiftDays_(day, 40) > y + '-12-31' ? shiftDays_(day, 40) : y + '-12-31';
+  var rows = sfkQuery_('SELECT Id, Account__c, Policy__c, Vehicle__c, Carrier__c, From__c, To__c, Next_Renewal_Date__c, Premium_Due__c, Agent__c FROM Risk_Details__c' +
+    ' WHERE To__c >= ' + shiftDays_(y + '-01-01', -3) + ' AND To__c <= ' + (y + 2) + '-03-31 ORDER BY To__c ASC LIMIT 5000');
+  var seen = {}, all = [];
+  rows.forEach(function (r) {
+    if (!r.To__c) return;
+    var p = rnNorm_(r.Policy__c), v = rnNorm_(r.Vehicle__c), k = p + '|' + v + '|' + r.To__c;
+    if ((!p && !v) || seen[k]) return;
+    seen[k] = 1;
+    var nx = r.Next_Renewal_Date__c, ren = nx && nx >= r.To__c && daysBetween_(r.To__c, nx) <= 3 ? nx : shiftDays_(r.To__c, 1);
+    all.push({ id: r.Id, client: String(r.Account__c || '').trim(), policy: String(r.Policy__c || '').trim(), vehicle: String(r.Vehicle__c || '').trim(),
+      carrier: String(r.Carrier__c || ''), to: r.To__c, ren: ren, prem: Number(r.Premium_Due__c || 0), p: p, v: v });
+  });
+  var byPV = {}, byV = {};
+  all.forEach(function (t) { (byPV[t.p + '|' + t.v] = byPV[t.p + '|' + t.v] || []).push(t); if (t.v) (byV[t.v] = byV[t.v] || []).push(t); });
+  var later = function (list, t) { return (list || []).filter(function (x) { return x !== t && daysBetween_(t.to, x.to) >= 60; })[0] || null; };
+  return all.filter(function (t) { return t.ren >= y + '-01-01' && t.ren <= lastIn; }).map(function (t) {
+    var nx = later(byPV[t.p + '|' + t.v], t) || (t.v ? later(byV[t.v], t) : null);
+    return { id: t.id, client: t.client, policy: t.policy, vehicle: t.vehicle, carrier: t.carrier, to: t.to, ren: t.ren, prem: t.prem, p: t.p,
+      renewed: !!nx, next: nx ? { id: nx.id, to: nx.to, prem: nx.prem, policy: nx.policy } : null };
+  });
+}
+
+/** Life premiums owed, from Branch Intelligence's overnight dues: a small digest, kept 20 minutes so the page stays quick. */
+function rnLife_(day) {
+  var ck = 'rn_life_' + day;
+  try { var c = CacheService.getScriptCache().get(ck); if (c) return JSON.parse(c); } catch (e) {}
+  var cache = null; try { cache = typeof iLoadCache_ === 'function' ? iLoadCache_() : null; } catch (e) {}
+  var d = cache && cache.dues;
+  if (!d || d.error) return null;
+  var y0 = day.slice(0, 4) + '-01-01', m0 = day.slice(0, 7) + '-01', ag = d.ageing || {}, bks = d.buckets || ['0-30', '31-60', '61-90', '91-180', '181-365', '365+'];
+  var sum = function (l) { return { n: l.length, modal: l.reduce(function (s, x) { return s + Number(x.modal || 0); }, 0) }; };
+  var pick = function (x) { return { policy: String(x.policy || ''), client: String(x.client || ''), agent: String(x.agent || ''), modal: Number(x.modal || 0), days: x.days,
+    paidTo: x.paidTo || '', lapseOn: x.lapseOn || '', lapsedOn: x.lapsedOn || '' }; };
+  var chase = d.chase || [], lapsed = d.lapsedRecent || [], recent = ag['0-30'] || { policies: 0, modal: 0 };
+  var yr = sum(chase.filter(function (x) { return x.paidTo && x.paidTo >= y0; }));
+  // The 0–30 band fell due in the last 30 days; from February on, all of it is this year.
+  if (daysBetween_(y0, day) >= 30) { yr.n += Number(recent.policies || 0); yr.modal += Number(recent.modal || 0); }
+  var lm = lapsed.filter(function (x) { return x.lapsedOn >= m0 && x.lapsedOn <= day; }), ly = lapsed.filter(function (x) { return x.lapsedOn >= y0 && x.lapsedOn <= day; });
+  var coming = chase.filter(function (x) { return x.policy && x.lapseOn && x.lapseOn >= day; })
+    .sort(function (a, b) { return String(a.lapseOn).localeCompare(String(b.lapseOn)) || Number(b.modal || 0) - Number(a.modal || 0); });
+  var out = { asOf: String(cache.asOf || ''), basis: String(d.basis || ''),
+    owed: { n: Number((d.counts || {}).overdue || 0), modal: Number(d.modalOverdue || 0) },
+    ageing: bks.map(function (k) { return { b: k, n: Number((ag[k] || {}).policies || 0), modal: Number((ag[k] || {}).modal || 0) }; }),
+    recent: { n: Number(recent.policies || 0), modal: Number(recent.modal || 0) }, year: yr,
+    lapsedMonth: sum(lm), lapsedYear: sum(ly), lapseWeek: sum(coming.filter(function (x) { return x.lapseOn <= shiftDays_(day, RENEW.SOON); })),
+    next: coming.slice(0, RENEW.TOP).map(pick), lapsed: lm.sort(function (a, b) { return Number(b.modal || 0) - Number(a.modal || 0); }).slice(0, RENEW.LAPSED).map(pick),
+    byAgent: (d.byAgent || []).filter(function (a) { return a.chase; }).sort(function (a, b) { return Number(b.modal || 0) - Number(a.modal || 0); }).slice(0, RENEW.AGENTS)
+      .map(function (a) { return { agent: String(a.agent || ''), n: Number(a.chase || 0), modal: Number(a.modal || 0) }; }) };
+  try { CacheService.getScriptCache().put(ck, JSON.stringify(out), RENEW.CACHE_MIN * 60); } catch (e) {}
+  return out;
+}
+
+/** The open tasks for renewals and premiums: the renewals type, any task on a risk renewing now, any task naming a policy owed. */
+function rnTasks_(day, riskIds, pols) {
+  var sel = 'SELECT Id, Subject, Task_Type__c, ActivityDate, Status, CreatedDate, LastModifiedDate, Owner.Name, Agent__r.Name, What.Name, WhatId FROM Task WHERE IsClosed = false AND ';
+  var out = [], seen = {};
+  var add = function (r) {
+    if (seen[r.Id] || /Email: Happy Birthday/i.test(String(r.Subject || ''))) return;
+    seen[r.Id] = 1;
+    out.push({ id: r.Id, subject: shorten_(r.Subject, 140), ty: r.Task_Type__c || 'No type', due: r.ActivityDate || '', late: !!(r.ActivityDate && r.ActivityDate < day),
+      status: r.Status || '', created: String(r.CreatedDate || '').slice(0, 10), touched: daysSince_(r.LastModifiedDate), owner: (r.Owner && r.Owner.Name) || '',
+      agent: (r.Agent__r && r.Agent__r.Name) || '', what: (r.What && r.What.Name) || '', whatId: r.WhatId || '' });
+  };
+  sfkQuery_(sel + 'Task_Type__c = ' + soqlStr_(RENEW.TYPE) + ' ORDER BY ActivityDate ASC NULLS LAST LIMIT 300').forEach(add);
+  for (var i = 0; i < riskIds.length; i += 150) {
+    try { sfkQuery_(sel + 'WhatId IN (' + riskIds.slice(i, i + 150).map(soqlStr_).join(',') + ') LIMIT 200').forEach(add); } catch (e) {}
+  }
+  if (pols.length) { try { sfkQuery_(sel + '(' + pols.map(function (p) { return 'Subject LIKE ' + soqlStr_('%' + p + '%'); }).join(' OR ') + ') LIMIT 200').forEach(add); } catch (e) {} }
+  return out;
+}
+/** Tasks naming these policies closed in the last 30 days: what was last done, when nothing is open. */
+function rnClosedFor_(pols) {
+  if (!pols.length) return [];
+  return sfkQuery_('SELECT Id, Subject, Status, CompletedDateTime, LastModifiedDate, Owner.Name FROM Task WHERE IsClosed = true AND LastModifiedDate = LAST_N_DAYS:30 AND (' +
+    pols.map(function (p) { return 'Subject LIKE ' + soqlStr_('%' + p + '%'); }).join(' OR ') + ') ORDER BY LastModifiedDate DESC LIMIT 100')
+    .map(function (r) { return { id: r.Id, subject: shorten_(r.Subject, 120), status: r.Status || 'Closed', on: String(r.CompletedDateTime || r.LastModifiedDate || '').slice(0, 10), owner: (r.Owner && r.Owner.Name) || '', s: rnNorm_(r.Subject) }; });
+}
+
+/** Everything the Renewals tab shows, for Mr Rampersad's My branch. Each part stands alone: one that fails says so and the rest still shows. */
+function rnModel_(day, m) {
+  var r = { day: day, tmr: shiftDays_(day, 1), wk: shiftDays_(day, RENEW.SOON), m0: day.slice(0, 7) + '-01', mEnd: rnMonthEnd_(day), y0: day.slice(0, 4) + '-01-01',
+    risks: [], life: null, tasks: [], closed: [], errRisks: '', mineN: 0 };
+  try { r.risks = rnRisks_(day); } catch (e) { r.errRisks = String(e && e.message || e).slice(0, 160); }
+  try { r.life = rnLife_(day); } catch (e) {}
+  var lifeList = r.life ? r.life.next.concat(r.life.lapsed) : [], pols = [], ps = {};
+  lifeList.forEach(function (x) { var p = String(x.policy || '').replace(/[^A-Za-z0-9 ]/g, '').trim(); if (p.length >= 6 && !ps[p]) { ps[p] = 1; pols.push(p); } });
+  var lastSoon = r.wk > r.mEnd ? r.wk : r.mEnd;
+  var soon = r.risks.filter(function (k) { return k.ren >= r.m0 && k.ren <= lastSoon; });
+  var rIds = []; soon.forEach(function (k) { rIds.push(k.id); if (k.next) rIds.push(k.next.id); });
+  try { r.tasks = rnTasks_(day, rIds, pols); } catch (e) { r.errTasks = String(e && e.message || e).slice(0, 160); }
+  try { r.closed = rnClosedFor_(pols); } catch (e) {}
+  // His own show once, on My tasks, where they can be closed as well.
+  var mine = {}; (m.mine || []).forEach(function (t) { mine[t.id] = 1; });
+  r.mineN = r.tasks.filter(function (t) { return mine[t.id]; }).length;
+  r.tasks = r.tasks.filter(function (t) { return !mine[t.id]; });
+  if (r.tasks.length) { try { var ch = cmdChatter_(r.tasks.map(function (t) { return t.id; })); Object.keys(ch).forEach(function (k) { m.chat[k] = ch[k]; }); } catch (e) {} }
+  // Which task belongs to which risk, and which to which policy owed.
+  var tn = r.tasks.map(function (t) { return { t: t, s: rnNorm_(t.subject) }; });
+  soon.forEach(function (k) {
+    k.tasks = tn.filter(function (x) { return x.t.whatId === k.id || (k.next && x.t.whatId === k.next.id) || (k.p.length >= 6 && x.s.indexOf(k.p) > -1); }).map(function (x) { return x.t; });
+  });
+  lifeList.forEach(function (x) {
+    var p = rnNorm_(x.policy); if (p.length < 6) { x.tasks = []; x.closed = []; return; }
+    x.tasks = tn.filter(function (z) { return z.s.indexOf(p) > -1; }).map(function (z) { return z.t; });
+    x.closed = r.closed.filter(function (c) { return c.s.indexOf(p) > -1; });
+  });
+  var cnt = function (l) { return { n: l.length, prem: l.reduce(function (s, k) { return s + k.prem; }, 0), ren: l.filter(function (k) { return k.renewed; }).length,
+    renPrem: l.filter(function (k) { return k.renewed; }).reduce(function (s, k) { return s + k.prem; }, 0) }; };
+  r.list = {
+    today: r.risks.filter(function (k) { return k.ren === day; }),
+    tomorrow: r.risks.filter(function (k) { return k.ren === r.tmr; }),
+    week: r.risks.filter(function (k) { return k.ren > r.tmr && k.ren <= r.wk; }),
+    month: r.risks.filter(function (k) { return k.ren > r.wk && k.ren <= r.mEnd; }),
+    gone: r.risks.filter(function (k) { return k.ren >= r.m0 && k.ren < day && !k.renewed; })
+  };
+  r.c = { tomorrow: cnt(r.list.tomorrow), week: cnt(r.risks.filter(function (k) { return k.ren >= r.tmr && k.ren <= r.wk; })),
+    month: cnt(r.risks.filter(function (k) { return k.ren >= r.m0 && k.ren <= r.mEnd; })), monthPast: cnt(r.risks.filter(function (k) { return k.ren >= r.m0 && k.ren <= day; })),
+    ytd: cnt(r.risks.filter(function (k) { return k.ren >= r.y0 && k.ren <= day; })) };
+  r.months = RN_MON.map(function (lab, i) {
+    var mm = r.y0.slice(0, 5) + ('0' + (i + 1)).slice(-2), l = r.risks.filter(function (k) { return k.ren.slice(0, 7) === mm; }), c = cnt(l);
+    c.lab = lab; c.past = rnMonthEnd_(mm + '-01') < day; c.now = mm === day.slice(0, 7); return c;
+  });
+  r.noRen = r.risks.filter(function (k) { return k.ren >= r.y0 && k.ren < day && !k.renewed; }).sort(function (a, b) { return b.prem - a.prem; });
+  r.late = r.tasks.filter(function (t) { return t.late; }).length;
+  return r;
+}
+
+/** Twelve months of renewals as bars: renewed in green, not renewed in red once the month is past, still to come in soft navy. */
+function rnMonthsSvg_(months) {
+  var W = 300, base = 74, room = 56, gap = 5, bw = (W - gap * 11) / 12, max = 1;
+  months.forEach(function (c) { if (c.n > max) max = c.n; });
+  var g = '<line x1="0" y1="' + base + '" x2="' + W + '" y2="' + base + '" stroke="' + SB.TRACK + '" stroke-width="1"/>';
+  months.forEach(function (c, i) {
+    var X = i * (bw + gap), cx = X + bw / 2, h = c.n ? Math.max(2, Math.round(room * c.n / max)) : 0, hr = c.n ? Math.round(h * c.ren / c.n) : 0;
+    if (h) {
+      if (h - hr > 0) g += '<rect x="' + X.toFixed(1) + '" y="' + (base - h) + '" width="' + bw.toFixed(1) + '" height="' + (h - hr) + '" rx="2" fill="' + (c.past ? SB.RED : SB.SOFT) + '"><title>' + c.lab + ': ' + (c.n - c.ren) + ' not renewed</title></rect>';
+      if (hr) g += '<rect x="' + X.toFixed(1) + '" y="' + (base - hr) + '" width="' + bw.toFixed(1) + '" height="' + hr + '" rx="2" fill="' + SB.GREEN + '"><title>' + c.lab + ': ' + c.ren + ' renewed</title></rect>';
+    }
+    g += '<text x="' + cx.toFixed(1) + '" y="' + (base - h - 3) + '" text-anchor="middle" font-size="8.5" font-weight="700" fill="' + (c.now ? SB.NAVY : SB.MUTED) + '">' + c.n + '</text>';
+    g += '<text x="' + cx.toFixed(1) + '" y="87" text-anchor="middle" font-size="8" font-weight="' + (c.now ? 800 : 600) + '" fill="' + (c.now ? SB.NAVY : SB.MUTED) + '">' + c.lab.charAt(0) + '</text>';
+  });
+  return '<svg viewBox="0 0 300 92" role="img" aria-label="Renewals by month this year" style="display:block;width:100%;height:auto;margin:6px 0 4px">' + g + '</svg>';
+}
+
+function renewSec_(m) {
+  var r = m.renew;
+  if (!r) return '';
+  var day = r.day, money = function (v) { return ff360Money_(v); }, first = function (n) { return String(n || '—').split(' ')[0]; };
+  var pctOf = function (a, b) { return b ? Math.round(100 * a / b) : null; };
+  var lastNote = function (id) { var n = (m.chat[id] || [])[0]; return n ? esc_(first(n.by)) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(shorten_(String(n.text || '').replace(/^[^\n]*\n\n/, ''), 120)) : 'no notes on the task'; };
+  var taskLine = function (t) {
+    return '<div class="br2" style="margin-top:3px"><span class="badge' + (t.late ? ' r' : '') + '" style="white-space:normal">' + esc_(first(t.owner)) + ' · ' + esc_(t.status || 'Open') + (t.due ? ' · ' + (t.late ? 'overdue since ' : 'due ') + esc_(shortDate_(t.due)) : '') + '</span>' +
+      '<div style="margin-top:2px">' + lastNote(t.id) + ' · <a href="#r' + esc_(t.id) + '" data-go="r' + esc_(t.id) + '" style="font-weight:800;white-space:nowrap">note or move it &darr;</a></div></div>';
+  };
+
+  // ── General insurance renewals: the tiles
+  var tile = function (c, label, go, tone) {
+    var todo = c.n - c.ren;
+    return { v: c.n, tone: tone || '', l: label + ' · ' + money(c.prem) + (c.n ? ' · ' + (todo ? todo + ' to renew' : 'all renewed') : ''), go: go,
+      chart: sbSplit_([{ n: c.ren, c: SB.GREEN }, { n: todo, c: tone === 'r' ? SB.RED : SB.SOFT }]) };
+  };
+  var ret = pctOf(r.c.ytd.ren, r.c.ytd.n), todoTmr = r.c.tomorrow.n - r.c.tomorrow.ren;
+  var giTiles = r.errRisks ? '<div class="card bad"><div class="ln">The renewals did not load from Salesforce just now (' + esc_(r.errRisks) + '). Try again in a minute.</div></div>' : scoreboard_([
+    tile(r.c.tomorrow, 'renewing tomorrow', 'rn-soon', todoTmr ? 'a' : ''),
+    tile(r.c.week, 'in the next 7 days', 'rn-soon'),
+    tile(r.c.month, 'renewing in ' + RN_MON[Number(day.slice(5, 7)) - 1], 'rn-soon'),
+    { v: ret == null ? '—' : ret + '%', tone: ret == null ? '' : ret >= 90 ? 'g' : ret >= 75 ? 'a' : 'r', go: 'rn-year',
+      l: 'renewed so far this year · ' + r.c.ytd.ren + ' of ' + r.c.ytd.n + ' · ' + money(r.c.ytd.renPrem) + ' of ' + money(r.c.ytd.prem),
+      chart: sbMeter_(r.c.ytd.ren, r.c.ytd.n, ret == null ? '' : ret >= 90 ? 'g' : ret >= 75 ? 'a' : 'r') }]);
+
+  // ── What is coming, with what is happening on each
+  var riskRow = function (k) {
+    var tk = (k.tasks || [])[0];
+    var st = k.renewed ? '<span class="badge g">renewal on file · to ' + esc_(shortDate_(k.next.to).split(' ').slice(1).join(' ') + ' ' + k.next.to.slice(0, 4)) + (k.next.prem ? ' · ' + esc_(rnMoney_(k.next.prem)) : '') + '</span>'
+      : tk ? '' : '<span class="badge ' + (k.ren < day ? 'r' : k.ren <= r.wk ? 'r' : 'a') + '">' + (k.ren < day ? 'no renewal on file · no task' : 'not renewed yet · no task') + '</span>';
+    return '<div style="padding:9px 0;border-top:1px solid #EEE;font-size:14px"><div><b>' + esc_(k.client || 'Client') + '</b> · ' + esc_(k.policy) + (k.vehicle ? ' · ' + esc_(k.vehicle) : '') + '</div>' +
+      '<div class="br2" style="margin-top:2px">' + (k.ren < day ? 'was due ' : 'renews ') + esc_(shortDate_(k.ren)) + ' · ' + esc_(rnMoney_(k.prem)) + ' premium due' + (k.carrier ? ' · ' + esc_(k.carrier) : '') + '</div>' +
+      (st ? '<div>' + st + '</div>' : '') + (!k.renewed && tk ? (k.tasks || []).slice(0, 2).map(taskLine).join('') : '') + '</div>';
+  };
+  var group = function (label, list, open) {
+    if (!list.length) return '';
+    var todo = list.filter(function (k) { return !k.renewed; }).length;
+    return '<details' + (open ? ' open' : '') + ' style="margin-top:6px"><summary style="font-weight:800;font-size:14px;padding:6px 0;cursor:pointer">' + esc_(label) + ' (' + list.length +
+      (todo && todo < list.length ? ' · ' + todo + ' to renew' : todo ? '' : ' · all renewed') + ')</summary>' +
+      list.slice().sort(function (a, b) { return Number(a.renewed) - Number(b.renewed) || String(a.ren).localeCompare(String(b.ren)) || b.prem - a.prem; }).map(riskRow).join('') + '</details>';
+  };
+  var monName = RN_MON[Number(day.slice(5, 7)) - 1];
+  var soonCard = r.errRisks ? '' : '<div class="card" id="rn-soon"><div class="bh">Renewals coming up · general insurance</div>' +
+    '<div class="bf">Each with where it stands: the renewal on file, or the task on it and its last note. Renewed ones last.</div>' +
+    (group('Today · ' + shortDate_(day), r.list.today, true) + group('Tomorrow · ' + shortDate_(r.tmr), r.list.tomorrow, true) +
+     group('The rest of the week, to ' + shortDate_(r.wk), r.list.week, true) + group('The rest of ' + monName, r.list.month, false) +
+     group('Due earlier in ' + monName + ', no renewal on file', r.list.gone, r.list.gone.length <= 8) ||
+     '<div class="ln">Nothing renewing for the rest of ' + monName + '.</div>') +
+    (r.c.monthPast.ren ? '<div class="bf" style="margin-top:8px">Renewed so far in ' + monName + ': ' + r.c.monthPast.ren + ' of ' + r.c.monthPast.n + ' due, ' + esc_(money(r.c.monthPast.renPrem)) + ' of ' + esc_(money(r.c.monthPast.prem)) + '.</div>' : '') + '</div>';
+
+  // ── The year so far
+  var mRows = r.months.map(function (c) {
+    var todo = c.n - c.ren, w = 'padding:4px 2px;border-top:1px solid #EEE;text-align:right';
+    return '<tr' + (c.now ? ' style="font-weight:800"' : '') + '><td style="padding:4px 2px;border-top:1px solid #EEE">' + c.lab + '</td><td style="' + w + '">' + c.n + '</td>' +
+      '<td style="' + w + ';color:#1F6B47">' + c.ren + '</td><td style="' + w + ';color:' + (todo && c.past ? '#B4322B' : '#6A7180') + '">' + (todo ? todo : '·') + '</td><td style="' + w + '">' + esc_(money(c.prem)) + '</td></tr>';
+  }).join('');
+  var lost = r.c.ytd.n - r.c.ytd.ren;
+  var yearCard = r.errRisks ? '' : '<div class="card" id="rn-year"><div class="bh">This year, month by month</div>' +
+    '<div class="ln">Due 1 Jan to today: <b>' + r.c.ytd.n + '</b> · ' + esc_(rnMoney_(r.c.ytd.prem)) + ' premium. Renewed <b style="color:#2C7A57">' + r.c.ytd.ren + '</b> (' + (ret == null ? '—' : ret + '%') + ') · ' + esc_(rnMoney_(r.c.ytd.renPrem)) +
+      '. No renewal on file <b style="color:' + (lost ? '#DC3F3F' : '#2C7A57') + '">' + lost + '</b> · ' + esc_(rnMoney_(r.c.ytd.prem - r.c.ytd.renPrem)) + '.</div>' +
+    rnMonthsSvg_(r.months) +
+    '<div class="bf">Green renewed · red not renewed, month past · soft still to come.</div>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12.5px;border-collapse:collapse;margin-top:6px"><tr style="color:#6A7180"><td style="padding:4px 2px">Month</td><td style="padding:4px 2px;text-align:right">Due</td><td style="padding:4px 2px;text-align:right">Renewed</td><td style="padding:4px 2px;text-align:right">Not</td><td style="padding:4px 2px;text-align:right">Premium</td></tr>' + mRows + '</table>' +
+    (r.noRen.length ? '<details style="margin-top:8px"><summary style="font-weight:800;font-size:14px;padding:6px 0;cursor:pointer">No renewal on file this year (' + r.noRen.length + '), largest first</summary>' +
+      r.noRen.slice(0, RENEW.NOREN).map(function (k) { return '<div class="ln" style="font-size:13.5px"><b>' + esc_(k.client || 'Client') + '</b> · ' + esc_(k.policy) + (k.vehicle ? ' · ' + esc_(k.vehicle) : '') +
+        ' · was due ' + esc_(shortDate_(k.ren)) + ' · ' + esc_(rnMoney_(k.prem)) + '</div>'; }).join('') +
+      (r.noRen.length > RENEW.NOREN ? '<div class="bf">and ' + (r.noRen.length - RENEW.NOREN) + ' smaller.</div>' : '') + '</details>' : '') +
+    '<div class="bf" style="margin-top:6px">Renewed means the next term is on file in Salesforce. A renewal not yet keyed in shows as not renewed.</div></div>';
+
+  // ── The open tasks, each with a note and a date
+  var trow = function (t) {
+    var notes = m.chat[t.id] || [], mv = (m.moves || {})[t.id];
+    return '<details class="it" id="r' + esc_(t.id) + '"><summary><div class="hd"><span class="age ' + (t.late ? 'r' : t.due === day ? 'a' : '') + '">' + (t.late ? daysBetween_(t.due, day) + 'd' : t.due === day ? 'today' : t.due ? 'due' : '—') + '</span>' +
+      '<div class="tt"><b>' + esc_(first(t.owner)) + '</b> · ' + esc_(t.subject) + '<small>' + (t.due ? (t.late ? 'overdue since ' : 'due ') + esc_(shortDate_(t.due)) : 'no date') + ' · ' + esc_(t.status || 'Open') +
+      ' · ' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') : 'no notes') + '</small></div></div></summary>' +
+      '<div class="br2" style="margin-top:4px">' + esc_(t.ty) + (t.what ? ' · ' + esc_(t.what) : '') + (t.agent ? ' · agent ' + esc_(t.agent) : '') + (t.created ? ' · opened ' + esc_(shortDate_(t.created)) : '') +
+        (t.touched >= 7 ? ' · untouched ' + t.touched + ' days' : '') + '</div>' +
+      (mv ? '<div class="br2" style="margin-top:2px;color:' + ((mv[0] || {}).noted ? '#141C4A' : '#B4322B') + '">' + esc_(dueMovesLine_(mv)) + '</div>' : '') +
+      chatterNotes_(m.chat, t.id) +
+      '<label style="display:block;font-size:13px;color:#6A7180;margin:10px 0 4px">Move it to a new date' +
+        '<input type="date" name="rmv_' + esc_(t.id) + '" value="" min="' + esc_(day) + '" style="display:block;width:100%;box-sizing:border-box;margin:4px 0 0"></label>' +
+      '<textarea name="rc_' + esc_(t.id) + '" rows="2" placeholder="A note: where it stands, what is next, or why the date moves. It goes on the task\'s Chatter, signed as you." style="margin:4px 0 10px"></textarea></details>';
+  };
+  var byDue = function (a, b) { return String(a.due || '9999').localeCompare(String(b.due || '9999')); };
+  var tg = [['Overdue', function (t) { return t.late; }], ['Due today', function (t) { return t.due === day; }],
+            ['Due this week, to ' + shortDate_(r.wk), function (t) { return t.due > day && t.due <= r.wk; }], ['Later, or no date', function (t) { return !t.due || t.due > r.wk; }]];
+  var taskCard = '<div class="card" id="rn-tasks"><div class="bh">Open renewal and premium tasks (' + r.tasks.length + (r.late ? ' · ' + r.late + ' overdue' : '') + ')</div>' +
+    '<div class="bf">The renewals type, any task on a risk renewing this month, and any task naming a premium owed below. Write a note, or give a new date and say why in the note. Then Save.' +
+      (r.mineN ? ' ' + r.mineN + ' of your own ' + (r.mineN === 1 ? 'is' : 'are') + ' on My tasks.' : '') + '</div>' +
+    (r.errTasks ? '<div class="ln" style="color:#B4322B">The tasks did not load from Salesforce just now. Try again in a minute.</div>' : '') +
+    (r.tasks.length ? tg.map(function (g) { var l = r.tasks.filter(g[1]).sort(byDue); return l.length ? '<div class="bh" style="margin-top:10px;font-size:14px">' + esc_(g[0]) + ' (' + l.length + ')</div>' + l.map(trow).join('') : ''; }).join('')
+                    : '<div class="ln">No open renewal or premium tasks.</div>') + '</div>';
+
+  // ── Life premiums owed, and what is happening with each
+  var L = r.life, lifeCard;
+  if (!L) lifeCard = '<div class="card" id="rn-life"><div class="bh">Premiums owed · life</div><div class="ln">Branch Intelligence has no dues on file yet. They come from the overnight dues extract.</div></div>';
+  else {
+    var maxA = 1; L.ageing.forEach(function (a) { if (a.modal > maxA) maxA = a.modal; });
+    var happening = function (x) {
+      if ((x.tasks || []).length) return x.tasks.slice(0, 2).map(taskLine).join('');
+      if ((x.closed || []).length) { var c = x.closed[0]; return '<div class="br2" style="margin-top:3px"><span class="badge a">no task open</span> last: ' + esc_(first(c.owner)) + ' closed ' + esc_(shortDate_(c.on)) + ' · ' + esc_(c.subject) + '</div>'; }
+      return '<div class="br2" style="margin-top:3px"><span class="badge r">no one is on it</span> no task names this policy</div>';
+    };
+    var lifeRow = function (x, lapsed) {
+      return '<div style="padding:9px 0;border-top:1px solid #EEE;font-size:14px"><div><b>' + esc_(x.client || 'Client') + '</b> · ' + esc_(x.policy) + (x.agent ? ' · ' + esc_(x.agent) : '') + '</div>' +
+        '<div class="br2" style="margin-top:2px">' + esc_(rnMoney_(x.modal)) + ' a premium · ' + (lapsed ? 'lapsed ' + esc_(shortDate_(x.lapsedOn))
+          : (x.days != null ? x.days + ' days behind' : 'behind') + (x.paidTo ? ', paid to ' + esc_(shortDate_(x.paidTo)) : '') + ' · <b style="color:#B4322B">lapses ' + esc_(shortDate_(x.lapseOn)) + '</b>' +
+            (daysBetween_(day, x.lapseOn) <= RENEW.SOON ? ' (in ' + daysBetween_(day, x.lapseOn) + ' day' + (daysBetween_(day, x.lapseOn) === 1 ? '' : 's') + ')' : '')) + '</div>' + happening(x) + '</div>';
+    };
+    var lifeTiles = scoreboard_([
+      { v: L.owed.n.toLocaleString('en-US'), tone: L.owed.n ? 'r' : 'g', l: 'policies behind now · ' + money(L.owed.modal) + ' in premiums owed', go: 'rn-life',
+        chart: sbSplit_(L.ageing.map(function (a, i) { return { n: a.n, c: i === 0 ? SB.SOFT : i === 1 ? SB.AMBER : SB.RED }; })) },
+      { v: L.recent.n.toLocaleString('en-US'), tone: '', l: 'fell due in the last 30 days, unpaid · ' + money(L.recent.modal), go: 'rn-life' },
+      { v: L.year.n.toLocaleString('en-US'), tone: L.year.n ? 'a' : 'g', l: 'fell due since 1 Jan, unpaid · ' + money(L.year.modal), go: 'rn-life' },
+      { v: L.lapsedMonth.n, tone: L.lapsedMonth.n ? 'r' : 'g', l: 'lapsed in ' + monName + ' · ' + L.lapsedYear.n + ' this year, ' + money(L.lapsedYear.modal), go: 'rn-lapsed' }]);
+    lifeCard = '<div class="card" id="rn-life"><div class="bh">Premiums owed · life</div>' +
+      '<div class="bf">From Branch Intelligence' + (L.asOf ? ', as at ' + esc_(shortDate_(L.asOf)) : '') + '. Amounts are the instalment due (monthly, quarterly and so on), not annual premium.</div>' +
+      lifeTiles +
+      '<div class="bh" style="font-size:14px;margin-top:4px">How long behind</div>' +
+      L.ageing.map(function (a, i) { return '<div class="bar"><span class="n">' + esc_(a.b.replace('-', '–')) + ' days</span><span class="t"><i class="' + (i === 0 ? '' : 'r') + '" style="width:' + Math.round(100 * a.modal / maxA) + '%' + (i === 1 ? ';background:#C26A04' : '') + '"></i></span><span class="c">' + a.n + ' · ' + esc_(money(a.modal)) + '</span></div>'; }).join('') +
+      '<div class="bf">Up to 30 days is inside the grace period. From 31 days the agent and the branch chase it.</div>' +
+      '<div class="bh" style="font-size:14px;margin-top:12px">Lapsing next' + (L.lapseWeek.n ? ' · ' + L.lapseWeek.n + ' in the next 7 days, ' + esc_(money(L.lapseWeek.modal)) : '') + '</div>' +
+      (L.next.length ? L.next.map(function (x) { return lifeRow(x, false); }).join('') : '<div class="ln">None due to lapse.</div>') +
+      (L.byAgent.length ? '<details style="margin-top:8px"><summary style="font-weight:800;font-size:14px;padding:6px 0;cursor:pointer">Owed 31+ days, by agent</summary>' +
+        L.byAgent.map(function (a) { return '<div class="ln" style="display:flex;justify-content:space-between;gap:8px"><span>' + esc_(a.agent) + '</span><span><b>' + a.n + '</b> · ' + esc_(money(a.modal)) + '</span></div>'; }).join('') + '</details>' : '') + '</div>' +
+      '<div class="card" id="rn-lapsed"><div class="bh">Lapsed in ' + monName + ' (' + L.lapsedMonth.n + ' · ' + esc_(money(L.lapsedMonth.modal)) + ')</div>' +
+      (L.lapsed.length ? L.lapsed.map(function (x) { return lifeRow(x, true); }).join('') + (L.lapsedMonth.n > L.lapsed.length ? '<div class="bf">The ' + L.lapsed.length + ' largest shown.</div>' : '')
+                       : '<div class="ln">No lapses this month.</div>') +
+      '<div class="bf" style="margin-top:6px">This year: ' + L.lapsedYear.n + ' lapsed, ' + esc_(money(L.lapsedYear.modal)) + ' in instalments.</div></div>';
+  }
+  return giTiles + soonCard + yearCard + taskCard + lifeCard;
+}
+
 /** From the editor: Mr Rampersad's My branch link, to save on his phone. */
 function showBranchLink() { var u = unitUrl_('ricky'); Logger.log(u); return u; }
 
@@ -6021,6 +6334,9 @@ function unitModel_(sid, day) {
     if (m.mine && m.mine.length) { try { var mc = cmdChatter_(m.mine.map(function (t) { return t.id; })); Object.keys(mc).forEach(function (k) { m.chat[k] = mc[k]; }); } catch (e) {} }
     // A task of his own shows once, on My tasks, where it can be closed or moved.
     if (m.mine && m.mine.length) { var mineIds = {}; m.mine.forEach(function (t) { mineIds[t.id] = 1; }); m.tasks = m.tasks.filter(function (t) { return !mineIds[t.id]; }); }
+    // Renewals and premiums owed (20 Oct 2026). A renewal task shows once, on Renewals, where it can be noted and moved.
+    m.renew = null; try { m.renew = rnModel_(day, m); } catch (e) { m.renew = null; }
+    if (m.renew) { var rIds = {}; m.renew.tasks.forEach(function (t) { rIds[t.id] = 1; }); m.tasks = m.tasks.filter(function (t) { return !rIds[t.id] && t.ty !== RENEW.TYPE; }); }
   }
   var gs = m.agents.filter(function (a) { return a.g; });
   m.unit = { goal: gs.reduce(function (s, a) { return s + a.g.api; }, 0), pace: gs.reduce(function (s, a) { return s + a.g.paceApi; }, 0),
@@ -6065,6 +6381,16 @@ function unitPriorities_(m) {
       'Pending, overdue since ' + shortDate_(t.due) + ' · ' + who + (t.touched >= 7 ? ' · untouched ' + t.touched + ' days' : ''), 't' + t.id);
     else if (t.touched >= 14) add(45, 'quiet', String(t.agent || '').split(' ')[0] + ' · ' + t.subject, 'Untouched ' + t.touched + ' days · ' + who, 't' + t.id);
   });
+  if (m.renew && !m.renew.errRisks) {
+    var bare = m.renew.list.today.concat(m.renew.list.tomorrow).filter(function (k) { return !k.renewed && !(k.tasks || []).length; });
+    if (bare.length) add(80, 'renew', bare.length + ' renewal' + (bare.length === 1 ? '' : 's') + ' due by tomorrow with nothing on file',
+      'No renewal keyed in and no task: ' + bare.slice(0, 3).map(function (k) { return k.client || k.policy; }).join(', ') + (bare.length > 3 ? ' and ' + (bare.length - 3) + ' more' : '') + '.', 'rn-soon');
+  }
+  if (m.renew && m.renew.life) {
+    var lw = m.renew.life.next.filter(function (x) { return daysBetween_(m.day, x.lapseOn) <= RENEW.SOON && !(x.tasks || []).length; });
+    if (lw.length) add(78, 'lapse', lw.length + ' life polic' + (lw.length === 1 ? 'y lapses' : 'ies lapse') + ' within a week, with no one on ' + (lw.length === 1 ? 'it' : 'them'),
+      lw.slice(0, 3).map(function (x) { return (x.client || x.policy) + ' ' + rnMoney_(x.modal); }).join(', ') + (lw.length > 3 ? ' and ' + (lw.length - 3) + ' more' : '') + '. No task names the policy.', 'rn-life');
+  }
   out.sort(function (a, b) { return b.s - a.s; });
   return out;
 }
@@ -6166,7 +6492,8 @@ function unitPage_(person, day, error, notice, view) {
   if (!view) { try { bigPut_('unit_ids_' + sid + '_' + day, m.tasks.map(function (t) { return { id: t.id, s: t.subject, a: t.agent }; })); } catch (e) {}
                try { bigPut_('unit_qids_' + sid + '_' + day, m.queries.map(function (q) { return { ref: q.ref, c: q.client, a: q.agent }; })); } catch (e) {}
                try { bigPut_('unit_ags_' + sid + '_' + day, m.agents.map(function (a) { return a.name; })); } catch (e) {}
-               if (m.mine) { try { bigPut_('unit_mine_' + sid + '_' + day, m.mine.map(function (t) { return { id: t.id, s: t.subject, due: t.due, ty: t.ty, st: t.status }; })); } catch (e) {} } }
+               if (m.mine) { try { bigPut_('unit_mine_' + sid + '_' + day, m.mine.map(function (t) { return { id: t.id, s: t.subject, due: t.due, ty: t.ty, st: t.status }; })); } catch (e) {} }
+               if (m.renew) { try { bigPut_('unit_rtasks_' + sid + '_' + day, m.renew.tasks.map(function (t) { return { id: t.id, s: t.subject, due: t.due, o: t.owner, a: t.agent }; })); } catch (e) {} } }
   var money = function (v) { return ff360Money_(Number(v || 0)); };
   var pct = m.unit.pace ? Math.round(100 * m.unit.picked / m.unit.pace) : null;
   var pend = m.tasks.filter(function (t) { return t.k === 'pend'; }), pendLate = pend.filter(function (t) { return t.late; }).length;
@@ -6320,7 +6647,7 @@ function unitPage_(person, day, error, notice, view) {
     '<div style="display:flex;gap:6px;flex-wrap:wrap">' + (m.signIn ? '<span class="badge g">Signed in ' + esc_(twelve_(m.signIn)) + '</span>' : '<span class="badge r">Not signed in: saving signs you in</span>') +
       (planned ? '<span class="badge g">Planned</span>' : '<span class="badge r">Not planned</span>') + '<span class="badge">' + m.posts + ' comment' + (m.posts === 1 ? '' : 's') + ' today</span></div></div>';
   var mineLate = m.mine ? m.mine.filter(function (t) { return t.late; }).length : 0;
-  var tabs = '<div class="tabs">' + (m.mine ? [['today', 'Today'], ['mine', 'My tasks', mineLate || ''], ['work', 'Branch work', pendLate || ''], ['agents', 'Agents'], ['you', 'You']]
+  var tabs = '<div class="tabs">' + (m.mine ? [['today', 'Today'], ['mine', 'My tasks', mineLate || '']].concat(m.renew ? [['renew', 'Renewals', m.renew.late || '']] : []).concat([['work', 'Branch work', pendLate || ''], ['agents', 'Agents'], ['you', 'You']])
                                             : [['today', 'Today'], ['work', 'Unit work', pendLate || ''], ['agents', 'Agents'], ['you', 'You']]).map(function (t, k) {
     return '<button type="button" class="tab' + (k ? '' : ' on') + '" data-tab="' + t[0] + '">' + t[1] + (t[2] ? '<i>' + t[2] + '</i>' : '') + '</button>'; }).join('') + '</div>';
   var sec = function (id, html) { return '<section data-sec="' + id + '"' + (id === 'today' ? '' : ' class="sec-off"') + '>' + html + '</section>'; };
@@ -6330,10 +6657,10 @@ function unitPage_(person, day, error, notice, view) {
     'var go=document.querySelectorAll("[data-go]");for(var i=0;i<go.length;i++)go[i].addEventListener("click",function(e){var id=this.getAttribute("data-go"),el=document.getElementById(id);if(!el)return;e.preventDefault();' +
     'var s=el.closest("section[data-sec]");if(s)show(s.getAttribute("data-sec"));if(el.tagName==="DETAILS")el.open=true;el.scrollIntoView({behavior:"smooth",block:"start"});});})();</script>';
   js += UNIT_FILTER_JS;
-  var body = tabs + sec('today', todaySec) + (m.mine ? sec('mine', myTasksSec_(m)) : '') + sec('work', workSec) + sec('agents', agentsSec) + sec('you', youSec);
+  var body = tabs + sec('today', todaySec) + (m.mine ? sec('mine', myTasksSec_(m)) : '') + (m.renew ? sec('renew', renewSec_(m)) : '') + sec('work', workSec) + sec('agents', agentsSec) + sec('you', youSec);
   if (view) return replyPage_(m.name + ' · My unit · ' + prettyDate_(day), 'What ' + String(m.name).split(' ')[0] + ' sees, as it stands now. Read only: saving is his.',
     bar + brief + firstCard + '<fieldset disabled style="border:0;padding:0;margin:0;min-width:0">' + body + '</fieldset>' + js);
-  return replyPage_((sid === 'ricky' ? 'My branch · ' : 'My unit · ') + prettyDate_(day), sid === 'ricky' ? 'Every agent and every unit. Pick an agent for his day, his work and a note. Keep this link on your home screen.' : 'Keep this link on your home screen. It is the same every day. Nothing here needs a Salesforce login.',
+  return replyPage_((sid === 'ricky' ? 'My branch · ' : 'My unit · ') + prettyDate_(day), sid === 'ricky' ? 'Every agent and every unit. Pick an agent for his day, his work and a note. Renewals and premiums owed on the Renewals tab. Keep this link on your home screen.' : 'Keep this link on your home screen. It is the same every day. Nothing here needs a Salesforce login.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') +
     bar + brief + firstCard +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' +
@@ -6375,6 +6702,26 @@ function unitSave_(person, day, p) {
       try { sfkPatchTask_(it.id, { Status: 'Completed' }); parts.push('closed');
         taskChangeLog_({ TaskId: it.id, Subject: it.s, Field: 'Status', Before: it.st || 'open', After: 'Completed', Why: txt, By: name, Result: 'OK' }); }
       catch (e) { parts.push('NOT CLOSED: ' + String(e && e.message || e).slice(0, 80)); }
+    }
+    out.push({ s: label, res: parts.join(' · ') });
+  });
+  // Renewal and premium tasks (Renewals tab): a note goes on the task; a new date moves it, only with a note saying why.
+  var rtasks = []; try { rtasks = bigGet_('unit_rtasks_' + sid + '_' + day, []) || []; } catch (e) {}
+  rtasks.forEach(function (it) {
+    if (mineSet[it.id]) return;
+    var txt = String(p['rc_' + it.id] || '').trim(), to = String(p['rmv_' + it.id] || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(to) || to === it.due) to = '';
+    if (!txt && !to) return;
+    var label = (it.o ? String(it.o).split(' ')[0] + ' · ' : '') + shorten_(it.s, 70), parts = [];
+    if (to && !txt) { out.push({ s: label, res: 'NOT MOVED: say why the date moves, in the note' }); return; }
+    if (to && to < day) { out.push({ s: label, res: 'NOT MOVED: pick a date from today on' }); to = ''; if (!txt) return; }
+    if (txt) { try { sfkInsert_('FeedItem', { ParentId: it.id, Body: head + '\n\n' + txt }); posted++; parts.push('note posted'); } catch (e) { parts.push('NOT SAVED: note, ' + String(e && e.message || e).slice(0, 80)); } }
+    if (to) {
+      try { sfkPatchTask_(it.id, { ActivityDate: to }); parts.push('moved to ' + shortDate_(to));
+        taskChangeLog_({ TaskId: it.id, Subject: it.s, Field: 'Due date', Before: it.due, After: to, Why: txt, By: name, Result: 'OK' });
+        try { var dm = hrTab_(DUEMOVES, true), dh = headerOf_(dm), o = { Date: day, TaskId: it.id, Subject: it.s, Owner: it.o || '', Agent: it.a || '', From: it.due, To: to, Noted: 'yes' };
+          dm.appendRow(dh.map(function (h) { return o[h] != null ? o[h] : ''; })); forgetHr_(DUEMOVES); _dueMovesMemo = null; } catch (e) {}
+      } catch (e) { parts.push('NOT MOVED: ' + String(e && e.message || e).slice(0, 80)); }
     }
     out.push({ s: label, res: parts.join(' · ') });
   });
