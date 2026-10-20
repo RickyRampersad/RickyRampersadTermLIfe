@@ -450,7 +450,11 @@ async function signIn() {
   const r = await api({ action: 'sm.me' });
   $('gbtn').disabled = false;
   if (!r.ok) {
-    if (/unknown action/i.test(r.error || '')) { $('gerr').textContent = 'The backend does not carry the strategic meeting yet: paste Service.gs and StrategicMeeting.gs into the Service Questionnaire project and publish a New version.'; return; }
+    /* a backend not yet pasted cannot check the code: open on this device, contributions kept here until it is */
+    if (/unknown action/i.test(r.error || '')) {
+      try { localStorage.setItem('rrb-transition-code', AUTH.code); localStorage.setItem('rrb-assign-who', AUTH.who); } catch (e) {}
+      LINKED = false; ME = { name: AUTH.who || 'Branch', role: 'branch', canWrite: true }; await open(); return;
+    }
     $('gerr').textContent = r.error || 'Could not sign in.'; AUTH = { code: '', who: '' }; return;
   }
   try { localStorage.setItem('rrb-transition-code', AUTH.code); localStorage.setItem('rrb-assign-who', AUTH.who); } catch (e) {}

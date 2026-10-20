@@ -4030,7 +4030,7 @@ guide you. In your session review notes on the step back in place from all memor
   table) and asks for the definition in the company's words, logged with the kind "definition", which the guide then
   reads for every session. Do not write a definition into the page from memory: it has to come from the company.
 - **Until the paste** (Service.gs and StrategicMeeting.gs, then a New version), the backend answers "Unknown action":
-  the gate says so to a fresh sign-in, a device already signed in opens with a notice, contributions are kept on the
+  a sign-in opens on the device (the code cannot be checked yet) with a notice saying so, contributions are kept on the
   device (`rrb-sm-local`) and offered to the sheet once the backend is linked.
 - Tests: `tests/test-strategic-meeting.js` (65 checks, the script under the fake Sheets with the sign-in, the stream
   and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (28, Playwright,
