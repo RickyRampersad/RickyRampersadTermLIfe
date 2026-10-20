@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-20g';
+var SCRIPT_VERSION = '2026-10-20h';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -6824,7 +6824,7 @@ function gameTick_(day, mins) {
  *  Outside (the shared link, or anyone but the Branch Manager signed in) also drops times of arrival, lateness,
  *  points, dollar figures, and anything that only shows who has not done something.
  */
-var WALL2 = { CACHE_SEC: 300, FROM_H: 7, TO_H: 17, TICKER: 40, EXTRA: ['pawan'] };
+var WALL2 = { CACHE_SEC: 300, FROM_H: 7, TO_H: 17, TICKER: 40, EXTRA: ['pawan'], BM_FROM_H: 5, BM_TO_H: 18 };   // his day starts at 5am (Ricky, 20 Oct 2026)
 var WALL_KIND = { 'new': 'new business', orphan: 'orphan adoption', retention: 'retention', claims: 'claims', other: 'servicing' };
 
 /** The kind of work a closed task was, in words fit for any screen. */
@@ -6835,6 +6835,22 @@ function wallKind_(t) {
   return k === 'claim' ? 'claims' : 'other';
 }
 function wallMin_(v) { var s = timeStr_(v); return s ? minutesOf_(s) : null; }
+function wallArt_(w) { return /^[aeiou]/i.test(String(w || '')) ? 'an ' : 'a '; }
+/** One line of the Branch Manager's day, from its kind and group only: never the subject, which carries the client. */
+function wallBmWhat_(kind, group) {
+  var g = group && group !== 'Other' ? String(group).toLowerCase() : '', on = g ? ' ' + wallArt_(g) + g + ' task' : ' a task';
+  switch (String(kind)) {
+    case 'email': return 'answered an e-mail';
+    case 'note': return 'wrote a note on' + on;
+    case 'close': return 'closed' + on;
+    case 'move': return 'moved' + on + ' to a new date, with the reason';
+    case 'task': return 'set a task for a desk';
+    case 'inbox': return 'dealt with an item in the inbox';
+    case 'draft': case 'reply': return 'answered a desk on' + on;
+    case 'chase': return 'chased' + on;
+    default: return 'worked on' + on;
+  }
+}
 function wallAt_(m) { if (m == null) return ''; var h = Math.floor(m / 60), mm = m % 60; return (h % 12 || 12) + ':' + (mm < 10 ? '0' : '') + mm; }
 
 function wallStaff_(day, outside) {
@@ -6935,9 +6951,31 @@ function wallManagers_(day, outside, staff) {
   var out = { groups: [], unit: null, cover: { out: [], moves: [], total: 0 }, qp: null, inbox: null };
   // The Branch Manager's day: what he did by kind of work, against what waits in his name.
   var done = {}, wait = {};
+  try { dayLogSalesforce_(day); } catch (e) {}
   try { (dayLogRows_(day) || []).forEach(function (r) { if (String(r.Kind) === 'checkin') return; var g = String(r.Group || '') || 'Other'; done[g] = (done[g] || 0) + 1; }); } catch (e) {}
   try { (myTasks_(day) || []).forEach(function (t) { var g = dayGroup_(t.ty, t.subject) || 'Other'; wait[g] = (wait[g] || 0) + 1; }); } catch (e) {}
   var gs = {}; Object.keys(done).concat(Object.keys(wait)).forEach(function (g) { gs[g] = 1; });
+  // His day as it happens, from 5am: by the hour, by kind, and the latest, never with a subject (20 Oct 2026).
+  var BH = WALL2.BM_TO_H - WALL2.BM_FROM_H + 1, hrs = [], kinds = {}, bev = [], inM = null, rows = [];
+  for (var hh = 0; hh < BH; hh++) hrs.push(0);
+  try { rows = dayLogRows_(day) || []; } catch (e) {}
+  rows.forEach(function (r) {
+    var m = wallMin_(r.At), k = String(r.Kind || '');
+    if (k === 'checkin') { if (m != null && (inM == null || m < inM)) inM = m; return; }
+    kinds[k] = (kinds[k] || 0) + 1;
+    if (m != null) { var h = Math.floor(m / 60) - WALL2.BM_FROM_H; if (h >= 0 && h < BH) hrs[h]++; }
+    bev.push({ m: m, who: 'Mr Rampersad', what: wallBmWhat_(k, String(r.Group || '')), k: '' });
+  });
+  if (inM != null) bev.push({ m: inM, who: 'Mr Rampersad', what: outside ? 'is in' : 'checked in', k: '' });
+  bev.sort(function (a, b) { return (b.m || 0) - (a.m || 0); });
+  var bb = 0; hrs.forEach(function (v, i) { if (v > hrs[bb]) bb = i; });
+  var nAll = rows.filter(function (r) { return String(r.Kind) !== 'checkin'; }).length;
+  out.bm = { fromH: WALL2.BM_FROM_H, toH: WALL2.BM_TO_H, hours: hrs, n: nAll, notes: kinds.note || 0, closes: kinds.close || 0, emails: kinds.email || 0,
+    moves: kinds.move || 0, tasks: kinds.task || 0, inbox: kinds.inbox || 0,
+    busiest: nAll ? { at: wallAt_((WALL2.BM_FROM_H + bb) * 60), to: wallAt_((WALL2.BM_FROM_H + bb + 1) * 60), n: hrs[bb] } : null,
+    feed: bev.slice(0, 8).map(function (x) { return { at: wallAt_(x.m), what: x.what }; }) };
+  if (!outside) out.bm.inAt = inM != null ? wallAt_(inM) : '';
+  out.events = bev;
   out.groups = Object.keys(gs).map(function (g) { return { g: g, done: done[g] || 0, wait: wait[g] || 0 }; })
     .sort(function (a, b) { return (b.done + b.wait) - (a.done + a.wait); }).slice(0, 7);
   out.doneToday = Object.keys(done).reduce(function (s, g) { return s + done[g]; }, 0);
@@ -6976,11 +7014,12 @@ function wallIntel_(day, outside) {
   try { out.managers = wallManagers_(day, outside, out.staff); } catch (e) { out.managers = null; }
   try { out.goal = gameOn_() ? gameGoal_(day) : null; } catch (e) { out.goal = null; }
   try { var gw = gameWall_(day); out.awards = gw ? gw.awards : []; } catch (e) { out.awards = []; }
-  var ev = [].concat((out.staff && out.staff.events) || [], (out.agents && out.agents.events) || []);
+  var ev = [].concat((out.staff && out.staff.events) || [], (out.agents && out.agents.events) || [], (out.managers && out.managers.events) || []);
   ev.sort(function (a, b) { return (b.m || 0) - (a.m || 0); });
   out.ticker = ev.slice(0, WALL2.TICKER).map(function (x) { return { at: wallAt_(x.m), who: x.who, what: x.what, k: x.k || '' }; });
   if (out.staff) delete out.staff.events;
   if (out.agents) delete out.agents.events;
+  if (out.managers) delete out.managers.events;
   try { cache.put(key, JSON.stringify(out).slice(0, 99000), WALL2.CACHE_SEC); } catch (e) {}
   return out;
 }
