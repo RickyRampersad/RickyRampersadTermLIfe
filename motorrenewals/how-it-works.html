@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Motor Renewals — How It Works</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+<!--
+  STAFF WALKTHROUGH. Built to be put on a screen in a branch meeting.
+
+  It plays the whole loop in order: the e-mail goes out, the client clicks,
+  they see what we hold, they correct it, they choose, they renew, and the
+  instruction lands with Guardian General and sales support. Nine panels,
+  auto-advancing, with a pause.
+
+  EVERY NAME, PLATE AND FIGURE IS INVENTED. Client data does not go in this
+  repository. The field names, the benefit limits, the policy references and
+  the routing are the real ones.
+-->
+
+<style>
+:root{
+  --navy:#07131f; --surf:#0d1f31; --surf2:#112941; --gold:#efc24b; --gold2:#c9942c;
+  --teal:#00CFEA; --ink:#e8eef5; --mut:#8fa3ba; --line:#1d3350;
+  --ok:#2ecc8f; --okbg:#0c2b22; --warn:#f5b73d; --warnbg:#2e2412; --bad:#ff6b5d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--navy);color:var(--ink);
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;padding-bottom:90px}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+
+header{padding:26px 0 6px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.mark{width:52px;height:52px;flex:0 0 52px;border-radius:13px;overflow:hidden;
+  background:#07131f;display:grid;place-items:center}
+.mark img{width:100%;height:100%;display:block}
+.eyebrow{font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--gold);font-weight:700}
+h1{font-size:24px;letter-spacing:-.3px;margin-top:2px}
+.sub{color:var(--mut);font-size:13.5px;margin-top:4px}
+.demobar{background:#1d1405;border:1px solid #4a3410;border-radius:10px;
+  padding:9px 14px;margin:16px 0 0;font-size:12px;color:#f0d48a}
+
+/* scene frame */
+.scene{display:none;margin-top:22px}
+.scene.on{display:block;animation:in .55s cubic-bezier(.22,1,.36,1)}
+@keyframes in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.sh{display:flex;gap:12px;align-items:baseline;margin-bottom:4px;flex-wrap:wrap}
+.num{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;
+  font-weight:800;font-size:14px}
+.sh h2{font-size:19px;letter-spacing:-.2px}
+.who{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+  padding:3px 9px;border-radius:999px;margin-left:auto}
+.who.client{background:#0b2231;color:var(--teal)}
+.who.us{background:var(--warnbg);color:var(--warn)}
+.sd{color:var(--mut);font-size:14px;margin:0 0 14px 42px}
+@media(max-width:620px){.sd{margin-left:0}}
+
+.card{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:12px}
+.card h3{font-size:14px;margin-bottom:9px}
+.note{font-size:12.5px;color:var(--mut);margin-top:10px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+/* a mock email */
+.mail{background:#f7f9fb;color:#16202e;border-radius:14px;overflow:hidden;
+  box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.mail .hd{background:#07131f;color:#fff;padding:13px 17px;font-size:12.5px}
+.mail .hd b{color:var(--gold)}
+.mail .bd{padding:18px}
+.mail h4{font-size:17px;margin-bottom:9px;color:#07131f}
+.mail p{font-size:14px;margin-bottom:10px}
+.mail .cta{display:inline-block;background:linear-gradient(135deg,#efc24b,#c9942c);
+  color:#07131f;font-weight:800;padding:13px 22px;border-radius:10px;
+  text-decoration:none;font-size:15px;margin:6px 0}
+.mail .sig{font-size:13px;color:#5a6b80;margin-top:12px;border-top:1px solid #dde3ea;padding-top:11px}
+.mail .url{font-size:12px;color:#5a6b80;margin-top:9px}
+.mail .url b{color:#07131f}
+
+/* plate */
+.plate{display:inline-flex;border:2px solid #cfd8e3;border-radius:8px;overflow:hidden;background:#eef2f7}
+.plate .tt{background:#1d3350;color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.1em;
+  display:grid;place-items:center;padding:0 8px}
+.plate .n{font:800 22px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#0b1a2b;padding:11px 15px}
+
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:11px;margin-top:14px}
+.kv .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.kv .v{font-size:15px;font-weight:700;margin-top:2px}
+.kv .v.gap{color:var(--warn);font-size:13px;font-weight:600}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:10px;font-weight:800;margin-left:7px}
+.b-comp{background:var(--okbg);color:var(--ok)}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:12px}
+th{text-align:left;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);
+  font-weight:700;padding:0 8px 7px 0;border-bottom:1px solid var(--line)}
+td{padding:10px 8px 10px 0;border-bottom:1px solid #15283d;vertical-align:top}
+tr:last-child td{border-bottom:none}
+.ymut{color:var(--mut);font-size:10.5px;margin-top:3px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:9.5px;font-weight:800}
+.p-ok{background:var(--okbg);color:var(--ok)} .p-warn{background:var(--warnbg);color:var(--warn)}
+.p-info{background:#0b2231;color:var(--teal)}
+
+.ins{border-radius:12px;padding:14px 16px;margin-top:10px;border:1px solid transparent}
+.ins h4{font-size:13.5px;margin-bottom:4px}
+.ins p{font-size:13px;color:#c3d2e2}
+.i-warn{background:var(--warnbg);border-color:#4a3410}
+.i-info{background:#0b2231;border-color:#1b4258}
+.i-good{background:var(--okbg);border-color:#1b4a38}
+
+.free{background:linear-gradient(135deg,rgba(239,194,75,.13),rgba(201,148,44,.06));
+  border:1px solid rgba(239,194,75,.42);border-radius:14px;padding:16px}
+.free h3{color:var(--gold);font-size:12px;text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px}
+.opt2{display:block;background:var(--surf2);border:1px solid var(--line);border-radius:10px;
+  padding:11px 13px;margin:7px 0;font-size:13.5px}
+.opt2.pick{border-color:var(--gold);background:rgba(239,194,75,.1)}
+.opt2 .d{display:block;color:var(--mut);font-size:12.5px;margin-top:3px}
+
+.fld{background:#071726;border:1px solid var(--line);border-radius:9px;padding:11px 13px;
+  font-size:14px;margin-top:5px}
+.fld.typed{border-color:var(--ok)}
+.lab{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-top:13px}
+.feed{font-size:12.5px;margin-top:6px}
+.feed.ok{color:var(--ok)} .feed.warn{color:var(--warn)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:620px){.row2{grid-template-columns:1fr}}
+
+.arrow{text-align:center;color:var(--gold);font-size:22px;margin:12px 0 2px}
+.flow{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center}
+@media(max-width:720px){.flow{grid-template-columns:1fr}.flow .mid{text-align:center}}
+.box{background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.box h4{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin-bottom:7px}
+.box ul{list-style:none;font-size:12.5px}
+.box li{padding:4px 0 4px 17px;position:relative;color:#c3d2e2}
+.box li:before{content:'';position:absolute;left:3px;top:12px;width:6px;height:6px;
+  border-radius:50%;background:var(--gold)}
+
+.tolist{font-size:12.5px;color:var(--mut);margin-bottom:10px;line-height:1.7}
+.tolist b{color:var(--ink)}
+
+/* controls */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(7,19,31,.96);
+  border-top:1px solid var(--line);padding:11px 20px;backdrop-filter:blur(8px);z-index:20}
+.bw{max-width:980px;margin:0 auto;display:flex;gap:11px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surf);color:var(--ink);border-radius:9px;
+  padding:9px 15px;font:700 13.5px/1 inherit;cursor:pointer}
+.btn:hover{border-color:var(--teal)}
+.btn.main{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;border:none}
+.dots{display:flex;gap:6px;margin-left:auto}
+.dot{width:9px;height:9px;border-radius:50%;background:#27405e;cursor:pointer}
+.dot.on{background:var(--gold);transform:scale(1.25)}
+.pos{font-size:12px;color:var(--mut);min-width:44px}
+@media(max-width:620px){.dots{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div>
+    <div class="eyebrow">Ricky Rampersad Branch</div>
+    <h1>Motor renewals — how it works</h1>
+    <div class="sub">The whole loop, in order. Information goes out, and comes back.</div>
+  </div>
+</header>
+<div class="demobar"><b>Walkthrough.</b> Every name, plate and figure is invented. The fields, the
+benefit limits, the policy references and the routing are real.</div>
+
+<!-- 1 -->
+<section class="scene on" data-t="9">
+  <div class="sh"><span class="num">1</span><h2>The reminder goes out</h2><span class="who us">We send</span></div>
+  <p class="sd">Automatically, on a ladder: 30 days out, 14, 7, renewal day, then 3 and 7 days late. It
+    stops the moment the client replies — and it goes to the client, not only to the agent.</p>
+  <div class="mail">
+    <div class="hd"><b>From:</b> Ricky Rampersad — Guardian Renewals &nbsp;·&nbsp;
+      <b>To:</b> the client &nbsp;·&nbsp; <b>Subject:</b> Your motor policy renews on 25 Nov 2026</div>
+    <div class="bd">
+      <h4>Your motor policy renews on 25 November 2026</h4>
+      <p>Dear Anand,</p>
+      <p>Your <b>Private Comprehensive</b> motor policy <b>TT APU 1600095</b> renews on
+        <b>25 November 2026</b>. Renewal takes two minutes — review your cover, tell us about any
+        changes, and send your instruction.</p>
+      <a class="cta" href="#">Review &amp; renew my policy</a>
+      <div class="url">The link goes to <b>rickyrampersadbranch.com/motorrenewals</b> — our own
+        address, so it reads as the branch and not as a stranger.</div>
+      <div class="sig">Ricky Rampersad · (868) 678-5921<br>Guardian Group</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="scene" data-t="8">
+  <div class="sh"><span class="num">2</span><h2>They type their registration number</h2><span class="who client">Client does</span></div>
+  <p class="sd">The plate is the one motor field that is actually filled in — 225 of 230 records carry
+    it. Spacing and dashes do not matter: <span class="mono">pcx-4471</span> finds
+    <span class="mono">PCX 4471</span>.</p>
+  <div class="card" style="text-align:center">
+    <div class="plate"><div class="tt">TT</div><div class="n">PCX 4471</div></div>
+    <p class="note">Looked up against <b>their own policy only</b>. Nobody can type a stranger's plate
+      and see their chassis number, permit or address — the link's access code is the authorisation,
+      and the plate only narrows down what that code can already see.</p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="scene" data-t="11">
+  <div class="sh"><span class="num">3</span><h2>They see exactly what we hold</h2><span class="who client">Client sees</span></div>
+  <p class="sd">Including the gaps. This is the half that has never existed — the client finding out
+    what our record says about them.</p>
+  <div class="card">
+    <div><span class="mono" style="font-size:18px;font-weight:800">PCX 4471</span>
+      <span class="badge b-comp">COMPREHENSIVE</span></div>
+    <div class="sub" style="margin-top:3px">Toyota Hilux · 2020 · renews 25 Nov 2026 · TT APU 1600095</div>
+    <div class="kv">
+      <div><div class="k">Insured for</div><div class="v mono">TT$180,000</div></div>
+      <div><div class="k">Premium</div><div class="v mono">TT$6,480.00</div></div>
+      <div><div class="k">Chassis</div><div class="v gap">not on file</div></div>
+      <div><div class="k">Engine</div><div class="v mono" style="font-size:13px">2TR0998871</div></div>
+      <div><div class="k">Driver's permit</div><div class="v gap">not on file</div></div>
+      <div><div class="k">Permit expiry</div><div class="v gap">not on file</div></div>
+    </div>
+    <h3 style="margin-top:20px">Year by year — and what reached us</h3>
+    <table><thead><tr><th>Term</th><th>Insured for</th><th>Premium</th><th>What reached us</th></tr></thead>
+    <tbody>
+      <tr><td><b>2026</b><div class="ymut">renewing now</div></td><td class="mono">TT$180,000</td>
+        <td class="mono">TT$6,480.00</td><td><span class="pill p-info">Not recorded</span></td></tr>
+      <tr><td><b>2025</b></td><td class="mono">TT$180,000</td><td class="mono">TT$6,290.00</td>
+        <td><span class="pill p-ok">Paid in full</span><div class="ymut">TT$6,671.74 · wire transfer · 28 Nov 2025</div></td></tr>
+      <tr><td><b>2024</b></td><td class="mono">TT$180,000</td><td class="mono">TT$6,150.00</td>
+        <td><span class="pill p-warn">Part paid</span><div class="ymut">TT$4,019.00 of TT$6,519.00 · cash · 2 payments</div></td></tr>
+    </tbody></table>
+    <p class="note">What reached us is the figure against the whole policy, not one vehicle. Where it
+      says no record, the cover still ran — our payment history does not go back reliably, and the page
+      says so rather than implying the client did not pay.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="scene" data-t="11">
+  <div class="sh"><span class="num">4</span><h2>And what stands out</h2><span class="who us">We work out</span></div>
+  <p class="sd">Worked out live from their own record. Each one has a button that jumps straight to the
+    field that fixes it, so nothing is a dead end.</p>
+  <div class="card">
+    <div class="ins i-warn"><h4>We do not have your chassis number</h4>
+      <p>It is stamped on your certificate of insurance, and we cannot issue the new one without it.</p></div>
+    <div class="ins i-warn"><h4>Insured for the same figure 3 years running</h4>
+      <p>Still TT$180,000. A vehicle is worth less every year, and you cannot be paid more than it is
+        worth — so holding the figure steady usually means paying premium on value that has already gone.
+        Guardian's own pre-agreed rate is 15% a year.</p></div>
+    <div class="ins i-warn"><h4>We do not have your driver's permit on file</h4>
+      <p>Adding it now means we are not chasing you for it at claim time, when it matters most.</p></div>
+    <div class="ins i-good"><h4>Last year you paid TT$6,671.74 in full</h4>
+      <p>Settled 28 Nov 2025 by wire transfer. Thank you — nothing is outstanding on that term.</p></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="scene" data-t="10">
+  <div class="sh"><span class="num">5</span><h2>They fix it, and we learn something</h2><span class="who client">Client types</span></div>
+  <p class="sd">This is the information coming back the other way. A field we hold blank gets filled —
+    the client knows their own chassis number better than we do. A field we already hold is never
+    overwritten; it goes to Guardian General as a request.</p>
+  <div class="card">
+    <div class="row2">
+      <div><div class="lab">Chassis number</div>
+        <div class="fld typed mono">JTEBU29J105099412</div>
+        <div class="feed ok">Saved to your record — we had this blank.</div></div>
+      <div><div class="lab">Driver's permit expiry</div>
+        <div class="fld typed mono">2029-03-14</div>
+        <div class="feed ok">Noted, thank you. That is current.</div></div>
+    </div>
+    <div class="lab">What is the vehicle worth today?</div>
+    <div class="fld typed mono">153,000</div>
+    <div class="feed ok">Noted. About TT$27,000 of value comes off — your premium should follow.</div>
+    <p class="note">A reasonable range this year is TT$144,000 – TT$162,000, from Guardian's own 15% a
+      year. The figure the client gives is the one we use.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="scene" data-t="10">
+  <div class="sh"><span class="num">6</span><h2>The benefit they never knew they had</h2><span class="who us">We offer</span></div>
+  <p class="sd">The proposal form says it in one line, and no client has ever been told: <b>an individual
+    policyholder is entitled to one of these two, free.</b></p>
+  <div class="free">
+    <h3>⭐ One of these is free — which would you like?</h3>
+    <label class="opt2"><b>Courtesy car / loss of use</b>
+      <span class="d">A substitute vehicle while yours is repaired, or up to $100 a day towards a
+        rental, for up to 10 days.</span></label>
+    <label class="opt2 pick"><b>✓ Hospitalisation benefit</b>
+      <span class="d">Up to $15,000 in any 12 months — surgery, room and board, intensive care,
+        ambulance.</span></label>
+    <label class="opt2"><b>Neither for now</b><span class="d">We will leave it.</span></label>
+    <p class="note">Source: GG-MOT-APV-PRO-09/2021 Q19. Comprehensive only, because the courtesy car is
+      comprehensive-only — a third-party client sees no prompt rather than a prompt with one option.</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="scene" data-t="7">
+  <div class="sh"><span class="num">7</span><h2>They press renew</h2><span class="who client">Client sends</span></div>
+  <p class="sd">One button. Nothing is bound — it is an instruction, and Guardian confirms.</p>
+  <div class="card" style="text-align:center">
+    <div style="display:inline-block;background:linear-gradient(135deg,var(--gold),var(--gold2));
+      color:#07131f;font-weight:800;padding:15px 30px;border-radius:12px;font-size:16px">
+      Send my renewal instruction</div>
+    <p class="note">The reminder ladder stops for this policy the moment this arrives. A client who has
+      renewed never gets another "your policy renews today".</p>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="scene" data-t="13">
+  <div class="sh"><span class="num">8</span><h2>It lands with support, ready to action</h2><span class="who us">We receive</span></div>
+  <p class="sd">This is the panel that matters to the team. Everything the client did arrives in one
+    e-mail, sorted into what is already done and what needs a person.</p>
+  <div class="mail">
+    <div class="hd"><b>To:</b> GuardianGeneralRenewals@myguardiangroup.com &nbsp;·&nbsp;
+      <b>Cc:</b> sales support, the branch</div>
+    <div class="bd">
+      <h4>RENEWAL INSTRUCTION — Anand P. — TT APU 1600095 — RENEW, proceed</h4>
+      <table style="color:#16202e">
+        <tbody>
+        <tr><td style="color:#5a6b80;width:38%">Coverage</td><td><b>Private Comprehensive</b></td></tr>
+        <tr><td style="color:#5a6b80">Renewal due</td><td><b>25 Nov 2026</b></td></tr>
+        <tr><td style="color:#5a6b80">INSTRUCTION</td><td><b>RENEW — proceed</b></td></tr>
+        <tr><td style="color:#5a6b80">Updated vehicle value</td>
+          <td><b>TT$153,000</b> — signed confirmation letter attached</td></tr>
+        <tr><td style="color:#5a6b80"><b>FREE BENEFIT ELECTED</b></td>
+          <td><b>Hospitalisation Benefit ($15,000 per 12 months)</b><br>
+          <span style="font-size:12px;color:#5a6b80">Q19 entitles an individual policyholder to one of
+          item (e) or (g) at no additional cost. Please add — no premium difference expected.</span></td></tr>
+        <tr><td style="color:#5a6b80">Filled in on the record</td>
+          <td>Chassis JTEBU29J105099412 · permit expiry 14 Mar 2029</td></tr>
+        <tr><td style="color:#5a6b80">Asked us to quote</td><td><b>Special Perils (flood)</b></td></tr>
+        </tbody></table>
+      <p style="font-size:12.5px;color:#5a6b80;margin-top:12px">Pre-filled Guardian General
+        value-confirmation letter attached, ready for one signature.</p>
+    </div>
+  </div>
+  <div class="flow" style="margin-top:16px">
+    <div class="box"><h4>Already done, no action</h4><ul>
+      <li>Chassis written to the record</li>
+      <li>Permit expiry written to the record</li>
+      <li>Reminder ladder stopped</li>
+      <li>Instruction logged against the policy</li>
+      <li>Client sent a confirmation</li></ul></div>
+    <div class="mid arrow">→</div>
+    <div class="box"><h4>Needs a person</h4><ul>
+      <li>Re-rate at TT$153,000</li>
+      <li>Add the free hospitalisation benefit</li>
+      <li>Quote Special Perils</li>
+      <li>Send renewal terms back</li></ul></div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="scene" data-t="12">
+  <div class="sh"><span class="num">9</span><h2>Why it is worth doing</h2><span class="who us">The point</span></div>
+  <p class="sd">Last month, across the health book, six reminders went straight to the client and all six
+    paid. Twenty-nine went to an agent and one payment was logged. Same month, same ledger, different
+    inbox.</p>
+  <div class="card">
+    <div class="flow">
+      <div class="box"><h4>What goes out</h4><ul>
+        <li>The renewal date and the premium</li>
+        <li>What the cover actually gives, from the policy</li>
+        <li>What we are missing</li>
+        <li>What last year cost, and what reached us</li>
+        <li>A free benefit they are entitled to</li></ul></div>
+      <div class="mid arrow">⇄</div>
+      <div class="box"><h4>What comes back</h4><ul>
+        <li>Chassis, engine, permit and expiry</li>
+        <li>A current vehicle value</li>
+        <li>A renewal instruction</li>
+        <li>Benefits they want quoted</li>
+        <li>A current e-mail and mobile</li></ul></div>
+    </div>
+    <p class="note" style="margin-top:16px">Across 223 motor risks renewing in the next twelve months we
+      are missing the chassis on 53, the driver's permit on 161 and a sum insured on 153. Every renewal
+      worked this way closes some of that — without anyone keying it in.</p>
+  </div>
+</section>
+
+</div>
+
+<div class="bar"><div class="bw">
+  <button class="btn main" id="pp">Pause</button>
+  <button class="btn" id="prev">←</button>
+  <button class="btn" id="next">→</button>
+  <span class="pos" id="pos">1 / 9</span>
+  <div class="dots" id="dots"></div>
+</div></div>
+
+<script>
+const S = Array.prototype.slice.call(document.querySelectorAll('.scene'));
+const posEl = document.getElementById('pos'), dotsEl = document.getElementById('dots');
+const pp = document.getElementById('pp');
+let at = 0, playing = true, timer = null;
+
+S.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i ? '' : ' on');
+  d.onclick = () => { go(i); stop(); };
+  dotsEl.appendChild(d);
+});
+
+function go(i){
+  at = (i + S.length) % S.length;
+  S.forEach((s, n) => s.classList.toggle('on', n === at));
+  Array.prototype.forEach.call(dotsEl.children, (d, n) => d.classList.toggle('on', n === at));
+  posEl.textContent = (at + 1) + ' / ' + S.length;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (playing) arm();
+}
+function arm(){
+  clearTimeout(timer);
+  // each panel declares how long it needs to be read aloud over
+  const secs = Number(S[at].dataset.t) || 9;
+  timer = setTimeout(() => { if (playing) go(at + 1); }, secs * 1000);
+}
+function stop(){ playing = false; clearTimeout(timer); pp.textContent = 'Play'; }
+function start(){ playing = true; pp.textContent = 'Pause'; arm(); }
+
+pp.onclick = () => playing ? stop() : start();
+document.getElementById('next').onclick = () => { go(at + 1); stop(); };
+document.getElementById('prev').onclick = () => { go(at - 1); stop(); };
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight'){ go(at + 1); stop(); }
+  if (e.key === 'ArrowLeft'){ go(at - 1); stop(); }
+  if (e.key === ' '){ e.preventDefault(); playing ? stop() : start(); }
+});
+arm();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
