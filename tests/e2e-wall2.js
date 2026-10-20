@@ -32,7 +32,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     await page.goto('http://localhost:8798/wall/?demo=1' + (view === 'outside' ? '&view=outside' : ''), { waitUntil: 'domcontentloaded' });
     await page.click('#goQuiet');
     const seen = [], spill = [], text = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 11; i++) {
       await page.waitForTimeout(2700);
       const k = await page.evaluate(() => { const e = document.querySelector('.scene.on .kick'); return e ? e.innerText : 'ident'; });
       seen.push(k);
@@ -41,7 +41,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       text.push(await page.evaluate(() => document.querySelector('.scene.on').innerText));
       await page.keyboard.press('ArrowRight');
     }
-    ok('ten scenes, staff to live, the Branch Manager\'s day among them', seen.length === 10 && new Set(seen).size === 10 && /LIVE/.test(seen[9]) && seen.some(k => /BRANCH MANAGER'S DAY/.test(k)), seen.join(' | '));
+    ok('eleven scenes, staff to live, the Branch Manager\'s day and how we served among them', seen.length === 11 && new Set(seen).size === 11 && /LIVE/.test(seen[10]) && seen.some(k => /BRANCH MANAGER'S DAY/.test(k)) && seen.some(k => /HOW WE SERVED/.test(k)), seen.join(' | '));
     ok('nothing spills sideways', !spill.length, spill.join(', '));
     ok('no page errors', !errs.length, errs.join(' | '));
     ok('the sample is marked', /SAMPLE/.test(await page.innerText('#mode')));
@@ -51,6 +51,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       ok('no arrival times or lateness', !/In at \d|min after the start/.test(all));
       ok('no week below someone\'s usual', !/-\d+% on their usual/.test(all));
       ok('who is out, by name', /Sasha/.test(all) && /Out today/i.test(all));
+      ok('how we served: the branch\'s stars and four and five by name', /Rated by the people we serve/.test(all) && /FOUR AND FIVE STARS/.test(all) && /from an agent/.test(all));
     } else {
       ok('inside: arrival times and dollars', /In at 6:55/.test(all) && /\$412k/.test(all));
     }
@@ -65,7 +66,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     await pg.goto('http://localhost:8798/wall/?demo=1&view=outside', { waitUntil: 'domcontentloaded' });
     await pg.click('#goQuiet');
     const off = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 11; i++) {
       await pg.waitForTimeout(2700);
       const r = await pg.evaluate(() => ({ k: (document.querySelector('.scene.on .kick') || {}).innerText || 'ident', sw: document.documentElement.scrollWidth, iw: innerWidth,
         out: [...document.querySelectorAll('.scene.on *')].filter(e => { const b = e.getBoundingClientRect(); return b.width > 0 && (b.right > innerWidth + 2 || b.left < -2); }).length }));
@@ -76,6 +77,19 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     ok(name + ': the stacked layout', await pg.evaluate(() => document.body.classList.contains('mob')));
     ok(name + ': nothing off the side of the screen', !off.length, off.join(', '));
     ok(name + ': no page errors', !errs.length, errs.join(' | '));
+    await pg.close();
+  }
+  // Quick taps through a channel's bumper: one scene on the stage at the end, never two on top of each other.
+  {
+    const pg = await b.newPage({ viewport: { width: 1920, height: 1080 } });
+    await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
+    await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.click('#goQuiet');
+    for (let i = 0; i < 6; i++) { await pg.waitForTimeout(250); await pg.keyboard.press('ArrowRight'); }
+    await pg.waitForTimeout(2500);
+    const n = await pg.evaluate(() => document.querySelectorAll('#stage .scene').length);
+    ok('quick taps: one scene on the stage, not two on top of each other', n === 1, String(n));
     await pg.close();
   }
   // Sound on, no recording and no Andrew voice in this browser: captions, and the wall still moves on by itself.

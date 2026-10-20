@@ -82,6 +82,8 @@
   .grow{transform-origin:left center;animation-name:grow;animation-duration:1.3s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
   .growc{transform-origin:center;animation-name:grow;animation-duration:1.3s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
   @keyframes grow{from{transform:scaleX(0)}to{transform:none}}
+  .reveal{animation-name:reveal;animation-duration:1.8s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+  @keyframes reveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
   .growy{transform-origin:center bottom;animation-name:growy;animation-duration:1.2s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
   @keyframes growy{from{transform:scaleY(0)}to{transform:none}}
   .lite{animation-name:lite;animation-duration:.6s;animation-timing-function:ease-out}
@@ -367,7 +369,7 @@ function demo(outside){
     else if(o.gain!=null&&o.gain<0) o.gain=null;   // outside: progress only, as the feed sends it
     return o;});
   const team=[0,1,2,3,4,5,6,7,8,9,10].map(h=>H[0][h]+H[1][h]+H[3][h]);
-  const tick=[["2:10","Elizabeth","reached par: today's list is done"],["1:52","Azariah","closed a new business task with a note"],["1:30","Devendra","sent in the day's projection"],
+  const tick=[["2:10","Elizabeth","reached par: today's list is done"],["2:05","Elizabeth","was given 5 stars by an agent for a task closed for them"],["1:52","Azariah","closed a new business task with a note"],["1:30","Devendra","sent in the day's projection"],
     ["12:40","Kamla","closed a retention task over a month old with a note"],["11:05","Azariah","is covering for Sasha: 5 tasks so no client waits"],["10:20","Elizabeth","closed a retention task with a note"],
     ["9:44","Elizabeth","closed an orphan adoption task with a note"],["8:12","Azariah",outside?"is in":"checked in"],["7:30","Elizabeth","is covering for Sasha: 7 tasks so no client waits"],["6:55","Elizabeth",outside?"is in":"checked in"]]
     .map(x=>({at:x[0],who:x[1],what:x[2],k:/new business/.test(x[2])?"new":/retention/.test(x[2])?"retention":/orphan/.test(x[2])?"orphan":""}));
@@ -378,7 +380,8 @@ function demo(outside){
   if(!outside){ag.fy.goal=4800000;ag.fy.picked=412000;}
   return {day:"",asOf:"2:15",outside:!!outside,sample:true,
     staff:{people:ppl,team:team,fromH:7,toH:17,nowH:14,mix:[{k:"new",label:"New business",n:9},{k:"orphan",label:"Orphan adoption",n:5},{k:"retention",label:"Retention",n:11},{k:"claims",label:"Claims",n:2},{k:"other",label:"Servicing",n:7}],
-      payoffPct:74,busiest:{at:"9:00",to:"10:00",n:9},tiles:{closes:34,qp:4,quests:6,questsOf:9,covered:12,inNow:4,of:5,out:["Sasha"]}},
+      payoffPct:74,busiest:{at:"9:00",to:"10:00",n:9},tiles:{closes:34,qp:4,quests:6,questsOf:9,covered:12,inNow:4,of:5,out:["Sasha"]},
+      svc:{avg:4.7,n:23,five:17,fivePct:74,agents:15,clients:8,recent:[{at:"2:05",who:"Elizabeth",n:5,from:"an agent"},{at:"1:40",who:"Azariah",n:5,from:"a client"},{at:"12:15",who:"Kamla",n:4,from:"an agent"},{at:"11:02",who:"Elizabeth",n:5,from:"a client"},{at:"19 Oct",who:"Sasha",n:5,from:"an agent"}]}},
     agents:ag,
     managers:{groups:[{g:"New business",done:6,wait:9},{g:"Renewals & billing",done:4,wait:12},{g:"Orphan clients",done:3,wait:7},{g:"Agents & the unit",done:5,wait:4},{g:"Servicing",done:7,wait:5}],doneToday:25,
       bm:Object.assign({fromH:5,toH:18,hours:[3,5,2,4,6,3,2,0,0,0,0,0,0,0],n:25,notes:11,closes:6,emails:8,moves:2,tasks:1,inbox:9,busiest:{at:"9:00",to:"10:00",n:6},
@@ -386,7 +389,7 @@ function demo(outside){
       unit:{lead:"Akaash",n:6,ffMonth:14,appsMonth:5,planned:4},cover:{out:[{name:"Sasha",by:[{name:"Elizabeth",n:7},{name:"Azariah",n:5}]}],total:12},
       qp:outside?{answeredWeek:27}:{answeredWeek:27,over:3},inbox:outside?null:{done:18,all:22}},
     goal:{start:152,goal:114,now:128,pct:63,met:false},
-    awards:[{title:"Client Saver",who:["Elizabeth"],why:"6 clients kept or premium put right"},{title:"Team Player",who:["Azariah"],why:"5 tasks covered for colleagues, 1 thank-you"}],
+    awards:[{title:"Client Saver",who:["Elizabeth"],why:"6 clients kept or premium put right"},{title:"Team Player",who:["Azariah"],why:"5 tasks covered for colleagues, 1 thank-you"},{title:"Service Star",who:["Elizabeth"],why:"4.9 stars from 7 ratings by agents and clients"}],
     ticker:tick};
 }
 
@@ -529,6 +532,33 @@ const SCENES=[
   line:()=>{ const ppl=gamePeople(), met=ppl.filter(p=>p.parMet).length, q=ppl.reduce((a,p)=>a+p.quests,0), g=D.goal;
     return {live:"The team game. "+met+" of "+ppl.length+" have reached par, and "+plural(q,"quest")+" are done today."+(g&&g.now!=null?" Overdue is down from "+g.start+" to "+g.now+", with a goal of "+g.goal+" by Friday.":""), rec:"The team game: everybody in, nobody ranked. Each person against their own usual week."}; }},
 
+ // How we served (20 Oct 2026): the agents and clients the week's closes were for, rating the service. The branch as one,
+ // and four or five stars by name; never a low rating by name, a comment or a client.
+ {id:"n10",ch:"staff",dwell:14000,when:()=>!!S()&&!!S().svc&&S().svc.n>0,
+  html:()=>{ const v=S().svc, pct=Math.round(100*Math.max(0,Math.min(1,v.avg/5)));
+    const P='M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z';
+    const stars=(fill,stroke,sz)=>'<div style="display:flex;gap:'+mq('.5rem','.3rem')+'">'+[0,1,2,3,4].map(()=>'<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" aria-hidden="true" style="flex:none"><path d="'+P+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.2" stroke-linejoin="round"/></svg>').join("")+'</div>';
+    const sz=mq(96,46), small=n=>'<span style="color:'+COL.gold+';letter-spacing:.08em">'+"&#9733;".repeat(n)+'</span><span style="color:#3A3F4A;letter-spacing:.08em">'+"&#9733;".repeat(5-n)+'</span>';
+    const big='<div style="position:relative;display:inline-block" role="img" aria-label="'+v.avg+' of 5 stars">'+stars("#262A33","#3A3F4A",sz)+
+      '<div class="a reveal" style="--d:.7s;position:absolute;inset:0;width:'+pct+'%;overflow:hidden">'+stars(COL.gold,COL.gold,sz)+'</div></div>';
+    const rec=(v.recent||[]).map((r,i)=>'<div class="row a slide" style="grid-template-columns:'+mq('9rem minmax(0,1fr) 8rem','minmax(0,1fr) auto')+';font-size:'+mq('1.35rem','.95rem')+';row-gap:.3rem;--d:'+(.6+i*.14).toFixed(2)+'s">'+
+      (MOB?'<b>'+esc(r.who)+'</b><span class="mono" style="text-align:right;color:var(--muted);font-size:.75rem">'+esc(r.at)+'</span>'+
+           '<span style="grid-column:1 / -1;font-size:1rem">'+small(r.n)+' <span style="color:#CDD1DA;font-size:.8rem">from '+esc(r.from)+'</span></span>'
+         :'<b>'+esc(r.who)+'</b><span style="font-size:1.5rem">'+small(r.n)+' <span style="color:#CDD1DA;font-size:1.1rem">from '+esc(r.from)+'</span></span>'+
+           '<span class="mono" style="text-align:right;color:var(--muted);font-size:1.05rem">'+esc(r.at)+'</span>')+'</div>').join("");
+    return head("staff","STAFF · HOW WE SERVED","Rated by the people we serve",
+        "Every task closed with a note for an agent or a client asks them to rate the service. The week so far, the branch as one.")+
+      '<div class="tiles" style="grid-template-columns:repeat(4,minmax(0,1fr))">'+
+        '<div class="tile shine a rise" style="--d:.2s;--acc:'+COL.gold+'"><div class="v">'+cnt(v.avg,.2,1)+'<small>of 5</small></div><div class="l">average stars</div></div>'+
+        tile(v.n,"","ratings this week",COL.teal,.32)+tile(v.fivePct,"%","gave five stars",COL.violet,.44)+tile(v.agents,"/ "+v.clients,"agents / clients",COL.sky,.56)+'</div>'+
+      '<div class="grid" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">'+
+        '<div class="panel shine a rise" style="--d:.5s;align-items:center;justify-content:center;text-align:center;gap:1rem">'+big+
+          '<div class="huge" style="font-weight:800;font-size:8rem;line-height:1;font-stretch:72%;color:'+COL.gold+'">'+cnt(v.avg,.6,1)+'</div>'+
+          '<div style="font-size:'+mq('1.35rem','.95rem')+';color:#CDD1DA;line-height:1.45">out of 5, from '+plural(v.agents,"agent")+' and '+plural(v.clients,"client")+' this week.</div></div>'+
+        '<div class="panel"><div class="ph">FOUR AND FIVE STARS</div><div style="display:flex;flex-direction:column;gap:.9rem">'+(rec||'<div style="font-size:1.2rem;color:var(--muted)">The first four- and five-star ratings show here.</div>')+'</div></div></div>'; },
+  line:()=>{ const v=S().svc; return {live:"How we served. Agents and clients gave the branch "+v.avg+" stars out of 5 this week, from "+plural(v.n,"rating")+".",
+    rec:"How we served: every task closed for an agent or a client, rated by the people we serve."}; }},
+
  {id:"n5",ch:"agents",dwell:16000,when:()=>!!A()&&A().n>0,
   html:()=>{ const a=A(), rows=a.rows.slice(0,9), mx=Math.max(1,...rows.map(r=>r.ffMonth));
     const row=(r,i)=>'<div class="row a slide" style="grid-template-columns:'+(MOB?'minmax(0,1fr) auto':'11rem '+(a.live?'24rem ':'')+'minmax(0,1fr) 10rem')+';row-gap:.4rem;--d:'+(.4+i*.1).toFixed(2)+'s"><div style="font-weight:800;font-size:'+mq('1.4rem','1rem')+'">'+esc(r.name)+'</div>'+
@@ -627,8 +657,11 @@ const CHN={staff:["STAFF","CHANNEL 1 · THE DESKS",COL.teal],agents:["AGENTS","C
 function go(i,stay){
   const L=list(); if(!L.length) return;
   cur=((i%L.length)+L.length)%L.length; const s=L[cur];
-  const st=$("#stage"), old=st.querySelector(".scene.on");
-  if(old){ old.classList.remove("on"); old.classList.add("off"); setTimeout(()=>old.remove(),700); }
+  // Every scene still on the stage goes, including one a bumper was about to mount: two quick taps used to leave
+  // the earlier scene stuck under the next (20 Oct 2026).
+  const st=$("#stage"); clearTimeout(go.mt);
+  st.querySelectorAll(".scene:not(.off)").forEach(old=>{ old.classList.remove("on"); old.classList.add("off"); setTimeout(()=>old.remove(),700); });
+  st.querySelectorAll(".bumper").forEach(b=>b.remove());
   // A new channel opens with its bumper: a band of its colour and its name, then the scene builds.
   const bump=!stay&&s.ch!==lastCh&&CHN[s.ch]&&!matchMedia("(prefers-reduced-motion: reduce)").matches; lastCh=s.ch;
   if(bump){ const b=document.createElement("div"); b.className="bumper"; b.style.setProperty("--bc",CHN[s.ch][2]);
@@ -636,7 +669,7 @@ function go(i,stay){
   const el=document.createElement("section"); el.className="scene";
   try{ el.innerHTML=s.html(); }catch(e){ el.innerHTML=head(s.ch,"","Reading the branch…",""); }
   const mount=()=>{ st.appendChild(el); requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("on"))); runCounters(el); };
-  if(bump) setTimeout(mount,780); else mount();
+  if(bump) go.mt=setTimeout(mount,780); else mount();
   if(MOB&&!stay) try{ scrollTo({top:0,behavior:"smooth"}); }catch(e){}
   setChannel(s.ch);
   let line={live:"",rec:""}; try{ line=s.line(); }catch(e){}
