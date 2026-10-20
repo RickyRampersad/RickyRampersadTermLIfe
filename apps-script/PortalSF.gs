@@ -206,6 +206,13 @@ function psfDaysUntil_(iso) {
  */
 function psfStampInstruction_(match, detail) {
   if (typeof rsfCreate_ !== 'function') return;
+
+  // Belt and braces. submitInstruction already calls this only outside test
+  // mode, but this marker is what STOPS THE REMINDER LADDER — so if it is
+  // ever called from somewhere else during a rehearsal it would silence a
+  // real client's reminders and nobody would notice until they lapsed.
+  // Code.gs makes the same point about the sheet stamp it replaces.
+  if ((typeof testMode_ === 'function') && testMode_()) return;
   var tag = (typeof RSF !== 'undefined' && RSF.TASK_TAG) ? RSF.TASK_TAG : 'Auto-reminder';
   rsfCreate_('Task', {
     Subject: tag + ' [' + PSF.INSTRUCTED + '] ' +

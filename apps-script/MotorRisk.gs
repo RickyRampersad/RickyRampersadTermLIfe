@@ -658,10 +658,19 @@ function mrSaveVehicle(token, riskId, changes) {
   }
 
   // One task carrying the lot, so a human sees it even if the write failed.
+  //
+  // In TEST MODE the task is still written but prefixed [TEST], which is the
+  // convention the rest of the project uses — logActivity_ prefixes 'TEST:'
+  // and appendResponse_ stamps the status 'TEST'. Suppressing it would hide a
+  // rehearsal failure; writing it unmarked would put something on a real
+  // client's record that reads exactly like a real client instruction, and
+  // the person who has to tell the difference is Pawan.
+  var tm = (typeof testMode_ === 'function') && testMode_();
   if (typeof rsfCreate_ === 'function') {
     try {
       rsfCreate_('Task', {
-        Subject: MR.TASK_TAG + ' [vehicle] ' + (r.Vehicle__c || 'vehicle') +
+        Subject: (tm ? '[TEST] ' : '') + MR.TASK_TAG + ' [vehicle] ' +
+                 (r.Vehicle__c || 'vehicle') +
                  ' — client updated ' + (filled.length + proposed.length) + ' detail(s)',
         WhatId: r.Id,
         Status: proposed.length ? 'Not Started' : 'Completed',
@@ -677,7 +686,10 @@ function mrSaveVehicle(token, riskId, changes) {
 }
 
 function mrSaveBody_(r, filled, proposed, wrote) {
-  var L = ['Client updated vehicle details through the renewal portal.', ''];
+  var L = [];
+  if ((typeof testMode_ === 'function') && testMode_())
+    L.push('*** TEST MODE — this is a rehearsal, not a client. Safe to delete. ***', '');
+  L.push('Client updated vehicle details through the renewal portal.', '');
   L.push('Vehicle: ' + (r.Vehicle__c || '(none)') + '   Policy: ' + (r.Policy__c || '(none)'));
   L.push('');
   if (filled.length) {
@@ -763,4 +775,115 @@ function mrNiceDate_(iso) {
   if (isNaN(d.getTime())) return String(iso);
   var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return d.getDate() + ' ' + mo[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+/* ===================== before you rehearse ===================== */
+
+/**
+ * mrReadyCheck — run this from the Apps Script editor before any test run.
+ *
+ * It writes nothing, sends nothing and calls no client. It answers one
+ * question: if I run the ladder right now, can a real client receive
+ * anything, and will the rehearsal actually prove anything?
+ *
+ * The order matters. Test mode is checked first and loudest, because every
+ * other safeguard in this project routes through it: sendMail_ reroutes on
+ * it, the sheet stamp and the Salesforce stamp are both skipped on it, and
+ * the vehicle task is marked on it. With it off, nothing else matters.
+ */
+function mrReadyCheck() {
+  var L = ['MOTOR RENEWAL — READINESS CHECK', 'Nothing was sent, written or stamped.', ''];
+  var stop = [], warn = [];
+
+  /* ---- 1. test mode ---- */
+  var tm = null;
+  try { tm = (typeof testMode_ === 'function') ? testMode_() : null; } catch (e) {}
+  if (tm === true) {
+    L.push('TEST MODE IS ON.');
+    try { L.push('  Every email reroutes to ' + testInbox_() + ' with a [TEST] subject.'); } catch (e) {}
+    L.push('  No reminder stamp, no renewal-status stamp, no Salesforce field write.');
+    L.push('  Vehicle tasks are written but prefixed [TEST] so you can find and delete them.');
+  } else if (tm === false) {
+    L.push('*** TEST MODE IS OFF. A RUN WOULD EMAIL REAL CLIENTS. ***');
+    L.push('    Guardian Renewals menu -> Turn test mode ON, then run this again.');
+    stop.push('test mode off');
+  } else {
+    L.push('COULD NOT READ TEST MODE — testMode_() is missing. Treat as OFF.');
+    stop.push('test mode unreadable');
+  }
+  L.push('');
+
+  /* ---- 2. is the daily trigger already live? ---- */
+  try {
+    var on = (typeof rsfAutomationOn_ === 'function') ? rsfAutomationOn_() : null;
+    L.push(on === true  ? 'Daily trigger: INSTALLED — it will fire on its own at 08:00.'
+         : on === false ? 'Daily trigger: not installed. Rehearse by running rsfDailyAutomation by hand.'
+         :                'Daily trigger: unknown.');
+    if (on === true && tm !== true) stop.push('trigger live while test mode is off');
+  } catch (e) { L.push('Daily trigger: could not check.'); }
+  L.push('');
+
+  /* ---- 3. the pieces this flow needs ---- */
+  var need = ['rsfQ_', 'rsfCreate_', 'rsfUpdate_', 'rsfPolKey_', 'rsfStage_', 'rsfPlan_',
+              'psfRowsForToken_', 'psfInstructed_', 'mpForRisk', 'mrLookupVehicle',
+              'mrSaveVehicle', 'portalLink_', 'sendMail_', 'testMode_'];
+  L.push('Functions this flow depends on:');
+  need.forEach(function (fn) {
+    var ok = false;
+    try { ok = (eval('typeof ' + fn) === 'function'); } catch (e) {}
+    L.push('  ' + (ok ? 'OK       ' : 'MISSING  ') + fn);
+    if (!ok) stop.push('missing ' + fn);
+  });
+  L.push('');
+
+  /* ---- 4. where the client's link points ---- */
+  try {
+    var fd = CONFIG.PORTAL_FRONT_DOOR || '';
+    L.push(fd ? 'Client links go to ' + fd
+              : 'Client links go straight to the /exec URL (no front door set).');
+    if (fd) L.push('  That page must be live on the branch site, or every link 404s.');
+  } catch (e) {}
+  L.push('');
+
+  /* ---- 5. can the ladder actually reach anyone? ---- */
+  try {
+    if (typeof rsfPlan_ === 'function') {
+      var plan = rsfPlan_();
+      L.push('Today the ladder would send ' + plan.send.length + ' email(s) covering ' +
+             plan.risks + ' risk(s), from ' + plan.total + ' in the window.');
+      if (!plan.send.length) {
+        L.push('  NOTHING would send today, so a run proves nothing. Either wait for a');
+        L.push('  renewal to come into range, or test the portal directly with a token.');
+        warn.push('nothing due today');
+      }
+      var noTok = plan.skip.filter(function (s) { return /portal token/i.test(s.why); }).length;
+      if (noTok) {
+        L.push('  ' + noTok + ' risk(s) are due but have no portal token, so they are skipped.');
+        warn.push(noTok + ' without a token');
+      }
+    }
+  } catch (e) { L.push('Could not build the plan: ' + e.message); warn.push('plan failed'); }
+  L.push('');
+
+  /* ---- verdict ---- */
+  L.push('----------------------------------------------------------');
+  if (stop.length) {
+    L.push('DO NOT RUN YET. ' + stop.length + ' thing(s) must change first:');
+    stop.forEach(function (x) { L.push('   - ' + x); });
+  } else {
+    L.push('SAFE TO REHEARSE. Nothing here can reach a client.');
+    if (warn.length) {
+      L.push('Worth knowing: ' + warn.join('; ') + '.');
+    }
+    L.push('');
+    L.push('Suggested order:');
+    L.push('  1. rsfPreview()           — see today’s plan, sends nothing');
+    L.push('  2. rsfDailyAutomation()   — the real run, rerouted to you');
+    L.push('  3. open the link in that email and work the portal as a client');
+    L.push('  4. rsfShowStatus()        — confirm what was and was not stamped');
+  }
+  var out = L.join('\n');
+  Logger.log(out);
+  try { SpreadsheetApp.getUi().alert(out.slice(0, 1400)); } catch (e) {}
+  return out;
 }
