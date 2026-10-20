@@ -106,12 +106,11 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   await pg.goto(base + '/strategic-meeting/');
   await pg.waitForSelector('#gate:not(.hide)');
   await pg.fill('#code', 'BRANCH'); await pg.click('#gbtn');
-  await pg.waitForFunction(() => document.getElementById('gerr').textContent.length > 0);
-  ok('the gate says to paste Service.gs and StrategicMeeting.gs', /StrategicMeeting\.gs/.test(await pg.textContent('#gerr')));
-  await pg.addInitScript(() => { localStorage.setItem('rrb-transition-code', 'BRANCH'); localStorage.setItem('rrb-assign-who', ''); });
+  await pg.waitForSelector('#app:not(.hide)');
+  ok('a fresh sign-in opens on the device and says to paste StrategicMeeting.gs', /kept on this device only/.test(await pg.textContent('#linknote')) && /StrategicMeeting\.gs/.test(await pg.textContent('#linknote')));
   await pg.goto(base + '/strategic-meeting/');
   await pg.waitForSelector('#app:not(.hide)');
-  ok('a device already signed in opens with the device-only notice', /kept on this device only/.test(await pg.textContent('#linknote')));
+  ok('the device stays signed in after a reload', /kept on this device only/.test(await pg.textContent('#linknote')));
   await pg.click('[data-tab="d2"]');
   await pg.fill('#p-d2-recruit', 'Kept here.'); await pg.click('#s-d2-recruit .add .btn.gold');
   await pg.waitForFunction(() => document.querySelectorAll('#s-d2-recruit .item').length === 1);
