@@ -2178,7 +2178,8 @@ function handle_(action, data, token) {
              has: { write:   typeof updateTask_ === 'function',
                     waiting: typeof sfkWaitingSafe_ === 'function',
                     intel:   typeof intelRoute_ === 'function',
-                    salesforce: sfkConfigured_() } };
+                    salesforce: sfkConfigured_(),
+                    mailRelay: typeof mailRelayReady_ === 'function' && mailRelayReady_() } };
   }
   if (action === 'login') return login_(data.who || data.email, data.password);
   // The wall's outside link: no sign-in, the outside read only (20 Oct 2026).
@@ -2525,7 +2526,7 @@ function sendCheckpoint(dateOpt) {
   var r = checkpointReport_(dateOpt);
   var to = managerEmails_();
   if (!to.length) throw new Error('No manager email configured.');
-  MailApp.sendEmail({
+  mailSend_({
     to: to.join(','), cc: salesSupportCc_(to.join(',')),
     subject: 'RRB 3pm Checkpoint · ' + shortDate_(r.date) + ' · ' +
              r.reported + '/' + r.headcount + ' logged',
@@ -2658,7 +2659,7 @@ function sendWeekly(dateOpt) {
   var r = weeklyReport_(dateOpt);
   var to = managerEmails_();
   if (!to.length) throw new Error('No manager email configured.');
-  MailApp.sendEmail({
+  mailSend_({
     to: to.join(','), cc: salesSupportCc_(to.join(',')),
     subject: 'RRB Weekly Summary · ' + shortDate_(r.weekStart) + ' – ' + shortDate_(r.weekEnd) +
              ' · ' + r.totals.closed + ' closed, ' + r.totals.valueAdds + ' value adds',
@@ -2909,7 +2910,7 @@ function emailBlockReceipt_(staffId, date, blockId, d, payload, done) {
         : 'Your day is logged. Your progress check comes before lunch, and the close-out half an hour before you leave.') +
     '</div>';
 
-  MailApp.sendEmail({
+  mailSend_({
     to: to, cc: salesSupportCc_(to),
     subject: blockLabel_(blockId) + ' · logged · ' + shortDate_(date) +
              (owedIds.length > 1 ? ' · ' + doneOwed + '/' + owedIds.length + ' in' : ''),
@@ -2940,7 +2941,7 @@ function nudge_(staffId, date, missing, heading, message) {
     '</div>';
   }).join('');
 
-  MailApp.sendEmail({
+  mailSend_({
     to: to,
     cc: dayStartCc_(to).join(',') || undefined,
     subject: heading + ' · ' + shortDate_(date),
@@ -3387,7 +3388,7 @@ function sendDayStart_(staffId, date, kind, opt) {
   };
   var cc = dayStartCc_(to);
   if (cc.length) mail.cc = cc.join(',');
-  MailApp.sendEmail(mail);
+  mailSend_(mail);
   return true;
 }
 
@@ -3529,7 +3530,7 @@ function sendMailbagCall_(day, absent) {
     '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' +
       Object.keys(mb.backlog).sort(function (a, b) { return mb.backlog[b] - mb.backlog[a]; }).map(function (w) { return row('<b>' + esc_(w) + '</b> · ' + mb.backlog[w] + ' document' + (mb.backlog[w] === 1 ? '' : 's')); }).join('') + '</div>' +
     '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:10px">' + esc_(rname) + ': put the Date Sent in the log book as the bag goes. The before-you-leave check asks whether the ' + esc_(at) + ' bag went.</div>';
-  MailApp.sendEmail({ to: to.join(','), cc: DAYSTART_CC_DEFAULT,
+  mailSend_({ to: to.join(','), cc: DAYSTART_CC_DEFAULT,
     subject: 'The mailbag leaves at ' + at + ' · ' + shortDate_(day) + ' · ' + mb.backlogN + ' to go · to ' + rname + ' by ' + by,
     htmlBody: shell_('The mailbag · ' + at, rname + ' routes it this week · ' + prettyDate_(day), body) });
   return true;
@@ -4211,7 +4212,7 @@ function coverMail_(day, plan, done, asked) {
     var to = emailFor_(sid);
     if (!to) return;
     var first = String(nameFor_(sid)).split(' ')[0];
-    MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
+    mailSend_({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
       subject: 'Covering for ' + plan.first + ' today · ' + by[sid].length + ' task' + (by[sid].length === 1 ? '' : 's') + ' · ' + shortDate_(day),
       htmlBody: shell_('Covering for ' + plan.first + ' today', nameFor_(sid) + ' · ' + prettyDate_(day),
         '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(first) + ', ' + esc_(plan.name) + ' is absent today. ' +
@@ -4222,7 +4223,7 @@ function coverMail_(day, plan, done, asked) {
   });
   var absentTo = emailFor_(plan.sid);
   if (absentTo) {
-    MailApp.sendEmail({ to: absentTo, cc: dayStartCc_(absentTo, plan.sid).join(',') || undefined,
+    mailSend_({ to: absentTo, cc: dayStartCc_(absentTo, plan.sid).join(',') || undefined,
       subject: 'While you are out · ' + ok.length + ' covered, ' + asked.length + ' need your note · ' + shortDate_(day),
       htmlBody: shell_('While you are out', plan.name + ' · ' + prettyDate_(day),
         '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(plan.first) + ', you are marked absent today. ' +
@@ -4238,7 +4239,7 @@ function coverMail_(day, plan, done, asked) {
   var kam = emailFor_('kamla');
   var cc = [DAYSTART_CC_DEFAULT].concat(kam && plan.sid !== 'kamla' ? [kam] : []);
   var counts = Object.keys(by).map(function (s) { return String(nameFor_(s)).split(' ')[0] + ' ' + by[s].length; }).join(', ');
-  MailApp.sendEmail({ to: mgr.join(','), cc: cc.join(','),
+  mailSend_({ to: mgr.join(','), cc: cc.join(','),
     subject: plan.first + ' absent · ' + ok.length + ' covered' + (counts ? ' (' + counts + ')' : '') + ' · ' + shortDate_(day),
     htmlBody: shell_(plan.name + ' is absent today', prettyDate_(day) + ' · ' + hhmm_(new Date()),
       statTiles_([
@@ -4338,7 +4339,7 @@ function sendAttendanceReport_(day) {
         '<td style="' + td + 'text-align:right">' + x.late + ' · ' + x.abs + ' · ' + esc_(x.avg) + '</td></tr>';
     }).join('') + '</table>';
   var kam = emailFor_('kamla');
-  MailApp.sendEmail({ to: mgr.join(','), cc: [DAYSTART_CC_DEFAULT].concat(kam ? [kam] : []).join(','),
+  mailSend_({ to: mgr.join(','), cc: [DAYSTART_CC_DEFAULT].concat(kam ? [kam] : []).join(','),
     subject: 'Attendance · ' + shortDate_(day) + ' · ' + nIn + ' in' + (nLate ? ', ' + nLate + ' late' : '') + (nOut ? ', ' + nOut + ' out' : ''),
     htmlBody: shell_('Attendance register', prettyDate_(day) + ' · ' + hhmm_(new Date()),
       statTiles_([{ value: nIn, label: 'in', color: MAIL.green }, { value: nLate, label: 'late', color: nLate ? MAIL.amber : MAIL.navy },
@@ -4492,7 +4493,7 @@ function sendBranchManagerDay_(day) {
       ((w.ask.length || w.mine.length || w.ignored.length) ? ' · <a href="' + esc_(replyUrl_('ricky', day, 'bm')) + '" style="color:' + MAIL.navy + ';font-weight:700">respond to these on one page</a>' : '') + '</div>' +
     (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer this morning, so your lists are not shown.</div>');
 
-  MailApp.sendEmail(ownMail_('ricky', { to: mgr.join(','),
+  mailSend_(ownMail_('ricky', { to: mgr.join(','),
     subject: 'Your day · Branch Manager · ' + shortDate_(day) + (urgent.length ? ' · ' + urgent.length + ' urgent' : '') + (inbox && inbox.open.length ? ' · inbox ' + inbox.open.length + ' to act on' : '') + (sfOk ? ' · ' + w.mine.length + ' yours due, ' + w.ask.length + ' asking you' : ''),
     htmlBody: shell_('Good morning · the branch today', 'Branch Manager · ' + prettyDate_(day), body) }));
   return true;
@@ -6840,7 +6841,7 @@ function gameAwardsMail_(day) {
     sectionLabel_('For the branch WhatsApp group') +
     '<div style="background:' + MAIL.paper + ';border:1px dashed ' + MAIL.gold + ';border-radius:10px;padding:11px 14px;font-size:14px;line-height:1.55;white-space:pre-wrap;font-family:inherit">' + esc_(text) + '</div>' +
     '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:8px">Script Property GAME = off hides the game everywhere.</div>';
-  MailApp.sendEmail({ to: to.join(','), subject: 'This week\'s awards · for the 2pm meeting · ' + shortDate_(day), htmlBody: shell_('This week\'s awards', 'For the 2pm branch meeting · ' + prettyDate_(day), body) });
+  mailSend_({ to: to.join(','), subject: 'This week\'s awards · for the 2pm meeting · ' + shortDate_(day), htmlBody: shell_('This week\'s awards', 'For the 2pm branch meeting · ' + prettyDate_(day), body) });
   return true;
 }
 
@@ -6967,7 +6968,7 @@ function rateClientShell_(title, inner) {
 }
 function rateSend_(to, mail, kind) {
   var test = rateProp_('RATE_TEST_TO');
-  MailApp.sendEmail({ to: test || to, subject: (test ? '[Test · for ' + to + '] ' : '') + mail.subject, htmlBody: mail.html, name: 'Ricky Rampersad Branch' });
+  mailSend_({ to: test || to, subject: (test ? '[Test · for ' + to + '] ' : '') + mail.subject, htmlBody: mail.html, name: 'Ricky Rampersad Branch' });
   return test ? 'test' : 'sent';
 }
 /** What was done, in two sentences for the agent, from the closing note; Claude reads them once a run, the note itself otherwise. */
@@ -7135,7 +7136,7 @@ function ratePost_(e) {
 function rateAlert_(row) {
   var to = managerEmails_(); if (!to.length) return false;
   var link = ''; try { var tk = sfkToken_(); if (tk && tk.instance_url) link = tk.instance_url + '/' + String(row.TaskId); } catch (e) {}
-  MailApp.sendEmail({ to: to.join(','), subject: 'Low rating · ' + row.Rating + ' of 5 from ' + (String(row.Kind) === 'agent' ? 'agent ' + String(row.ToName || '') : 'a client') + ' · closed by ' + gameFirst_(String(row.Closer)),
+  mailSend_({ to: to.join(','), subject: 'Low rating · ' + row.Rating + ' of 5 from ' + (String(row.Kind) === 'agent' ? 'agent ' + String(row.ToName || '') : 'a client') + ' · closed by ' + gameFirst_(String(row.Closer)),
     htmlBody: shell_('A low service rating', prettyDate_(todayISO_()) + ' · ' + hhmm_(new Date()),
       statTiles_([{ value: row.Rating + '/5', label: 'rating', color: MAIL.red }, { value: row.Days, label: 'days it took', color: MAIL.navy }]) +
       '<div style="font-size:14px;line-height:1.6"><b>' + esc_(String(row.ToName || '')) + '</b> (' + esc_(String(row.Kind)) + ') rated the ' + esc_(String(row.What || 'task')).toLowerCase() + ' closed by <b>' + esc_(String(row.CloserName || row.Closer)) + '</b>.</div>' +
@@ -7174,8 +7175,8 @@ function rateClientPreview() {
   var list = '<div style="font:13px/1.55 Segoe UI,Arial;margin:12px 0 0;padding:10px 14px;border:1px dashed #E3B85A">' +
     '<b>"We have now taken care of ..." takes one of these, by the kind of task. Never the task\'s subject or the notes.</b><br>' + phrases.map(esc_).join('<br>') +
     '<br><br><b>Three days or more</b> it says how many days it took and thanks them for their patience; <b>under three days</b> it reads instead: "Thank you for giving us the chance to help." Never for a claim; once a fortnight a client at most; a link to stop on every one.</div>';
-  MailApp.sendEmail({ to: to.join(','), subject: '[Preview] The client rating e-mail', htmlBody: note + c.html + list });
-  MailApp.sendEmail({ to: to.join(','), subject: '[Preview] The agent rating e-mail', htmlBody: note + a.html });
+  mailSend_({ to: to.join(','), subject: '[Preview] The client rating e-mail', htmlBody: note + c.html + list });
+  mailSend_({ to: to.join(','), subject: '[Preview] The agent rating e-mail', htmlBody: note + a.html });
   return 'Two previews sent. Wording ' + rateHash_() + '.';
 }
 /** From the editor: approve the client wording you have read, and switch client ratings on. */
@@ -7625,7 +7626,7 @@ function sendUnitManagerMorning_(sid, day) {
       '<div style="color:' + MAIL.muted + ';margin-top:6px">Put a number against each on the page: what you will do today. At 5:30pm you give the actual.</div></div>' +
     btn +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
-  MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
+  mailSend_({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
     subject: 'Your unit · ' + name + ' · ' + shortDate_(day) + (book ? ' · ' + nPend + ' pendings, ' + nLate + ' overdue' : ''),
     htmlBody: shell_('Good morning · your unit', name + ' · Unit Manager · ' + prettyDate_(day), body) });
   return true;
@@ -7702,7 +7703,7 @@ function umCopy_(sid, day, kind, comments, rows) {
         (kind === 'eve' ? '<td style="' + td + 'text-align:right">' + esc_(pl || '—') + '</td>' : '') +
         '<td style="' + td + 'text-align:right;font-weight:700;' + (short ? 'color:' + MAIL.red : '') + '">' + esc_(kind === 'eve' ? (r.Done || '0') : (r.Planned || '—')) + '</td></tr>';
     }).join('') + '</table>' : '';
-  MailApp.sendEmail({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT,
+  mailSend_({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT,
     subject: (kind === 'eve' ? 'Day accounted · ' : 'Plan received · ') + name + ' · Unit Manager · ' + shortDate_(day) +
       ' · ' + comments.length + ' comment' + (comments.length === 1 ? '' : 's'),
     htmlBody: shell_(kind === 'eve' ? 'The Unit Manager\'s day' : 'The Unit Manager\'s plan', name + ' · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()),
@@ -7753,7 +7754,7 @@ function sendUnitManagerProgress_(sid, day) {
     (function () { var t = ''; try { t = agentSummaryTable_(agentDaySummary_(day, unitAgents_(sid).filter(function (n) { return n !== name; }))); } catch (e) {}
       return t ? sectionLabel_('Your agents so far') + t + '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">No projection by ' + esc_(twelve_(mmText_(AGENT_ABSENT_AT))) + ' reads as absent.</div>' : ''; })() +
     unitButton_(sid) + btn;
-  MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
+  mailSend_({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
     subject: 'Progress at eleven · ' + name + ' · ' + shortDate_(day) + (book ? ' · unit closed ' + book.closedToday.length + ', ' + nLate + ' overdue' : ''),
     htmlBody: shell_('Your progress at eleven', name + ' · Unit Manager · ' + prettyDate_(day), body) });
   return true;
@@ -7794,7 +7795,7 @@ function sendUnitManagerEvening_(sid, day) {
       '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.amber + ';border-radius:10px;padding:8px 15px">' +
       secs[0].list.slice(0, 6).map(function (t) { return umTaskLine_(t, day, base, noSfLogin_(sid) ? function (id) { return replyUrl_(sid, day, 'umeve') + '&i=' + encodeURIComponent(id) + '#i' + id; } : null); }).join('') + '</div>' : '') +
     btn;
-  MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
+  mailSend_({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
     subject: 'Account for your day · ' + name + ' · ' + shortDate_(day) + (book ? ' · unit closed ' + book.closedToday.length + ', ' + nLate + ' overdue' : ''),
     htmlBody: shell_('Your day as a manager', name + ' · Unit Manager · ' + prettyDate_(day), body) });
   return true;
@@ -7960,7 +7961,7 @@ function sendBranchManagerProgress_(day, which) {
     (me.list.length ? sectionLabel_('What you closed today') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.green + ';border-radius:10px;padding:8px 15px;font-size:12.5px">' +
       me.list.slice(0, 10).map(function (s) { return '<div style="padding:3px 0">&#10003; ' + esc_(s) + '</div>'; }).join('') + '</div>' : '') +
     answer;
-  MailApp.sendEmail(ownMail_('ricky', { to: mgr.join(','),
+  mailSend_(ownMail_('ricky', { to: mgr.join(','),
     subject: label + ' · Branch Manager · ' + shortDate_(day) + (inbox && inbox.items.length ? ' · inbox ' + inbox.done.length + ' of ' + inbox.items.length + ' dealt with' : '') + (self && !self.planned ? ' · not planned' : '') + (self && which === 'eve' && !self.accounted ? ' · day not accounted' : '') + (sfOk ? ' · you closed ' + me.closed + ', ' + w.ask.length + ' asking you' : ''),
     htmlBody: shell_(label + ' · the branch and you', 'Branch Manager · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()), body) }));
   return true;
@@ -8697,7 +8698,7 @@ function notClosedReminder_(person, day) {
   if (!to || signedOutAt_(sid, day)) return false;
   var first = String(nameFor_(sid)).split(' ')[0], btn = sid === 'pawan' ? replyButton_(replyUrl_(sid, day, 'errand') + '&c=leave', 'Close my day', 'Answer each errand and sign out.')
     : replyButton_(replyUrl_(sid, day, 'hk'), 'Close my day and sign out', 'A reason and a new date for anything not done, the checks, and sign out. Two minutes.');
-  MailApp.sendEmail({ to: to, subject: 'Your day is not closed · ' + shortDate_(day),
+  mailSend_({ to: to, subject: 'Your day is not closed · ' + shortDate_(day),
     htmlBody: shell_('Your day is not closed', prettyDate_(day), '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(first) + ', you are still signed in. Close your day now: in half an hour the register reads "' + NOCLOSE.LABEL + '" and Mr Rampersad is told.</div>' + btn) });
   return true;
 }
@@ -8721,7 +8722,7 @@ function markNotClosed_(sid, day) {
     (open.length ? sectionLabel_('Planned and not accounted for (' + open.length + ')') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:6px 15px;font-size:12.5px">' +
       open.slice(0, 10).map(function (t) { return '<div style="padding:4px 0;border-top:1px solid ' + MAIL.line + '">' + esc_(t.s) + '</div>'; }).join('') + '</div>' : '') +
     '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:10px">Tomorrow morning the plan opens with these first: a reason and a new date for each.</div>';
-  if (to) MailApp.sendEmail({ to: to, cc: mgr.concat(dayStartCc_(to, sid)).filter(function (e, i, a) { return e && a.indexOf(e) === i && normEmail_(e) !== normEmail_(to); }).join(',') || undefined,
+  if (to) mailSend_({ to: to, cc: mgr.concat(dayStartCc_(to, sid)).filter(function (e, i, a) { return e && a.indexOf(e) === i && normEmail_(e) !== normEmail_(to); }).join(',') || undefined,
     subject: NOCLOSE.LABEL + ' · ' + name + ' · ' + shortDate_(day) + (wk >= NOCLOSE.WEEK_FLAG ? ' · ' + wk + ' this week' : ''), htmlBody: shell_(NOCLOSE.LABEL, prettyDate_(day), body) });
   return true;
 }
@@ -10178,7 +10179,7 @@ function chaseReport_(day, done, looked, ai) {
     ': each had gone ' + CHASE.QUIET_DAYS + '+ days with no note, or had its date moved forward with no note. The question is on the task' + (ai ? ', written by Claude from the task and its notes.' : '.') + '</div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px">' +
     done.map(function (d) { return '<tr><td style="' + td + 'width:28%"><b>' + esc_(String(d.t.owner).split(' ')[0]) + '</b><br><span style="color:' + MAIL.muted + '">' + esc_(d.why) + '</span></td><td style="' + td + '"><b>' + esc_(d.t.subject) + '</b><br>' + esc_(d.text) + (/^NOT/.test(d.res) ? '<br><b style="color:' + MAIL.red + '">' + esc_(d.res) + '</b>' : '') + '</td></tr>'; }).join('') + '</table>';
-  MailApp.sendEmail({ to: mgr.join(','), subject: 'Branch Intelligence asked on ' + done.length + ' task' + (done.length === 1 ? '' : 's') + ' · ' + shortDate_(day),
+  mailSend_({ to: mgr.join(','), subject: 'Branch Intelligence asked on ' + done.length + ' task' + (done.length === 1 ? '' : 's') + ' · ' + shortDate_(day),
     htmlBody: shell_('Tasks gone quiet', prettyDate_(day) + ' · ' + hhmm_(new Date()), body) });
 }
 /** From the editor: what would be asked today, posting nothing. */
@@ -10836,7 +10837,7 @@ function ffAskMail_(s, week, kind) {
   return { subject: (kind === 'remind' ? 'Reminder: ' : '') + 'Fact finds: your response is required · ' + a.name,
            html: shell_(kind === 'remind' ? 'Your response is outstanding' : 'Fact finds: your response', a.name + ' · week of ' + prettyDate_(week), body) };
 }
-function ffQuotaOk_() { try { return MailApp.getRemainingDailyQuota() > FF_CHASE.QUOTA_FLOOR; } catch (e) { return true; } }
+function ffQuotaOk_() { if (mailRelayReady_()) return true; try { return MailApp.getRemainingDailyQuota() > FF_CHASE.QUOTA_FLOOR; } catch (e) { return true; } }
 
 /** From the ten-minute tick, weekdays: ask on Monday (Tuesday for any the quota held back), remind on Wednesday, the week on Friday. */
 function ffChaseTick_(day, mins) {
@@ -10863,7 +10864,7 @@ function ffChaseTick_(day, mins) {
       if (sent >= FF_CHASE.PER_RUN || !a || props.getProperty('ffq_' + x.k + '_' + week) || !ffQuotaOk_()) return;
       var mail = ffAskMail_(ffFromList_(x, a), week, 'ask');
       props.setProperty('ffq_' + x.k + '_' + week, hhmm_(new Date()));
-      try { MailApp.sendEmail({ to: a.email, cc: DAYSTART_CC_DEFAULT, subject: mail.subject, htmlBody: mail.html }); sent++; out.push(a.name + ' (fact finds asked)'); }
+      try { mailSend_({ to: a.email, cc: DAYSTART_CC_DEFAULT, subject: mail.subject, htmlBody: mail.html }); sent++; out.push(a.name + ' (fact finds asked)'); }
       catch (e) { out.push(a.name + ' fact-find ask FAILED: ' + (e && e.message)); }
     });
   } else if (dow === 3 && mode === 'live') {
@@ -10874,7 +10875,7 @@ function ffChaseTick_(day, mins) {
       var mail = ffAskMail_(ffFromList_(x, a), week, 'remind'), cc = [DAYSTART_CC_DEFAULT], mgr = agentManagerEmail_(a);
       if (mgr && cc.indexOf(mgr) < 0) cc.push(mgr);
       props.setProperty('ffr_' + x.k + '_' + week, hhmm_(new Date()));
-      try { MailApp.sendEmail({ to: a.email, cc: cc.join(','), subject: mail.subject, htmlBody: mail.html }); sent++; out.push(a.name + ' (fact finds reminded)'); }
+      try { mailSend_({ to: a.email, cc: cc.join(','), subject: mail.subject, htmlBody: mail.html }); sent++; out.push(a.name + ' (fact finds reminded)'); }
       catch (e) { out.push(a.name + ' fact-find reminder FAILED: ' + (e && e.message)); }
     });
   } else if (dow === 5 && !props.getProperty('ff_sum_' + week)) {
@@ -10888,7 +10889,7 @@ function ffPreview_(list, people, week) {
   var mgr = managerEmails_(); if (!mgr.length || !list.length) return false;
   var first = people[list[0].k], sample = first ? ffAskMail_(ffFromList_(list[0], first), week, 'ask') : null;
   var rows = list.map(function (x) { var a = people[x.k]; return a ? '<div style="font-size:12.5px;padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(a.name) + '</b> · ' + (x.last ? 'last ' + esc_(shortDate_(x.last)) + ' (' + x.since + ' days)' : 'none on record') + (x.m != null ? ' · ' + x.m + ' this month' : '') + '</div>' : ''; }).join('');
-  MailApp.sendEmail({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT, subject: '[Preview] Fact finds: ' + list.length + ' agent' + (list.length === 1 ? '' : 's') + ' with none in ' + FF_CHASE.DAYS + ' days',
+  mailSend_({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT, subject: '[Preview] Fact finds: ' + list.length + ' agent' + (list.length === 1 ? '' : 's') + ' with none in ' + FF_CHASE.DAYS + ' days',
     htmlBody: '<div style="background:#EEF9FD;border:1px solid #0EA5C9;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">Preview. In live mode each of these agents is asked for a response this morning, reminded on Wednesday, and you get the week on Friday. ' +
       'Switch on with Script Property FF_CHASE = live.</div>' + shell_('Fact finds: who would be asked', 'Week of ' + prettyDate_(week), rows) + (sample ? '<div style="margin-top:16px;font:600 12px Segoe UI,Arial;color:#6A7180">The e-mail ' + esc_(first.name) + ' would get:</div>' + sample.html : '') });
   return true;
@@ -10923,7 +10924,7 @@ function ffWeekSummary_(week, day, mode, list) {
     '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:8px">Done: fact finds since Monday, the higher of Salesforce and FactFind360.</div>';
   var to = mgr.slice();
   if (mode === 'live') UM_DESKS.forEach(function (s) { var e = emailFor_(s); if (e && to.indexOf(e) < 0) to.push(e); });
-  MailApp.sendEmail({ to: to.join(','), cc: DAYSTART_CC_DEFAULT, subject: 'Fact finds this week · ' + answered.length + ' of ' + rows.length + ' answered, ' + done + ' done' + (committed ? ' of ' + committed + ' committed' : ''),
+  mailSend_({ to: to.join(','), cc: DAYSTART_CC_DEFAULT, subject: 'Fact finds this week · ' + answered.length + ' of ' + rows.length + ' answered, ' + done + ' done' + (committed ? ' of ' + committed + ' committed' : ''),
     htmlBody: shell_('Fact finds · the week', 'Week of ' + prettyDate_(week), body) });
   return true;
 }
@@ -10985,8 +10986,8 @@ function ffReplySave_(person, week, p) {
   var mail = { subject: 'Fact finds: response received · ' + a.name + ' · ' + commit + ' by Friday', html: shell_('Your fact-find response', a.name + ' · week of ' + prettyDate_(week), body) };
   try {
     var mode = ffMode_(), cc = [DAYSTART_CC_DEFAULT]; if (mgr && cc.indexOf(mgr) < 0) cc.push(mgr);
-    if (mode === 'live') MailApp.sendEmail({ to: a.email, cc: cc.join(','), subject: mail.subject, htmlBody: mail.html });
-    else if (mode === 'preview') { var m = managerEmails_(); if (m.length) MailApp.sendEmail({ to: m.join(','), subject: '[Preview] ' + mail.subject, htmlBody: mail.html }); }
+    if (mode === 'live') mailSend_({ to: a.email, cc: cc.join(','), subject: mail.subject, htmlBody: mail.html });
+    else if (mode === 'preview') { var m = managerEmails_(); if (m.length) mailSend_({ to: m.join(','), subject: '[Preview] ' + mail.subject, htmlBody: mail.html }); }
   } catch (e) {}
   return replyPage_('Thank you · your response is in', 'Your Unit Manager and sales support have it. ' + task,
     '<div class="card ok"><div class="ln"><b>' + esc_(rs.label) + '</b></div><div class="ln">Committed: <b>' + esc_(commit) + '</b> by Friday</div>' +
@@ -11184,7 +11185,7 @@ function sendMeNudge_(sid, day, at) {
     (next.length ? sectionLabel_('Next up') + next.map(function (x, i) { return '<div style="font-size:14px;line-height:1.45;padding:7px 0;border-top:1px solid ' + MAIL.line + '"><b>' + (i + 1) + '.</b> ' + esc_(x.text) + '<div style="font-size:12.5px;color:' + MAIL.muted + '">' + esc_(x.sub) + '</div></div>'; }).join('') : '') +
     meButton_(sid) +
     '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:6px">Log what you did as you go: "Done already" on My day counts it in your day.</div>';
-  MailApp.sendEmail(ownMail_(sid, { to: to.join(','),
+  mailSend_(ownMail_(sid, { to: to.join(','),
     subject: when + ' check-in · ' + (!m.planned ? 'plan your day' : next.length ? 'next: ' + shorten_(next[0].text, 60) : 'nothing waiting on you'),
     htmlBody: shell_('Check-in · ' + when, first + ' · ' + prettyDate_(day), body) }));
   return true;
@@ -11614,7 +11615,7 @@ function agSend_(a, subject, html, ccList) {
   if (mode === 'preview') {
     var mgr = managerEmails_();
     if (!mgr.length) return false;
-    MailApp.sendEmail({ to: mgr.join(','), subject: '[Preview] ' + subject,
+    mailSend_({ to: mgr.join(','), subject: '[Preview] ' + subject,
       htmlBody: '<div style="background:#EEF9FD;border:1px solid #0EA5C9;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">' +
         'Preview. In live mode this goes to ' + esc_(a.email) + (ccList && ccList.length ? ', copied to ' + esc_(ccList.join(', ')) : '') +
         '. Switch on with Script Property AGENT_DAY = live.</div>' + html });
@@ -11622,7 +11623,7 @@ function agSend_(a, subject, html, ccList) {
   }
   var mail = { to: a.email, subject: subject, htmlBody: html };
   if (ccList && ccList.length) mail.cc = ccList.join(',');
-  MailApp.sendEmail(mail);
+  mailSend_(mail);
   return true;
 }
 
@@ -11894,12 +11895,12 @@ function agCopy_(a, day, eve, rows, comments) {
 
 function agSendCopy_(to, cc, subject, html, a) {
   if (agentMode_() === 'preview') {
-    MailApp.sendEmail({ to: (managerEmails_() || []).join(','), subject: '[Preview] ' + subject,
+    mailSend_({ to: (managerEmails_() || []).join(','), subject: '[Preview] ' + subject,
       htmlBody: '<div style="background:#EEF9FD;border:1px solid #0EA5C9;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">Preview. In live mode this goes to ' +
         esc_(to.concat(cc).join(', ')) + '.</div>' + html });
     return;
   }
-  MailApp.sendEmail({ to: to.join(','), cc: cc.join(','), subject: subject, htmlBody: html });
+  mailSend_({ to: to.join(','), cc: cc.join(','), subject: subject, htmlBody: html });
 }
 
 /** For the managers' mail: each agent's day so far. Absent = no plan by 10:30; nothing done = no close-off. */
@@ -11953,7 +11954,72 @@ function sendAgentPreviewNow() {
   Logger.log(msg); return msg;
 }
 function listAgents() { var p = agentPeople_(); var out = Object.keys(p).sort().map(function (k) { return p[k].name + ' · ' + p[k].email + ' · manager ' + (agentManagerEmail_(p[k]) || '—'); }).join('\n'); Logger.log(out); return out; }
-function mailQuotaLeft() { var n = MailApp.getRemainingDailyQuota(); Logger.log('E-mail recipients left today: ' + n); return n; }
+function mailQuotaLeft() {
+  var n = MailApp.getRemainingDailyQuota(), day = todayISO_();
+  var m = 'Gmail recipients left today: ' + n + (mailRelayReady_() ? '\nRelay (support@): ' + (mailRelayProp_('relay_sent_' + day) || 0) + ' sent today, ' + (mailRelayProp_('relay_left') || 'left not reported yet') +
+    (mailRelayProp_('MAIL_RELAY_LAST') ? '\nLast relay problem: ' + mailRelayProp_('MAIL_RELAY_LAST') : '') : '\nRelay: not set up (MAIL_RELAY_URL, MAIL_RELAY_KEY)');
+  Logger.log(m); return m;
+}
+
+/* ─────────── Mail from support@, through the relay (20 October 2026) ───────────
+ *  Ricky, 3:26pm: "So am I not using the rickyrampersadbranch account as you did have a workspace set up".
+ *  This project runs under the personal Gmail: about 100 recipients a day, and every staff e-mail counts three
+ *  (the desk, his Guardian address, sales support). On 19 and 20 October it ran out after 1pm and the progress
+ *  checks and close-outs never went. Every e-mail here now goes through mailSend_: to the Mail Relay
+ *  (apps-script/MailRelay.gs), a small project under support@rickyrampersadbranch.com, Google Workspace, about
+ *  1,500 a day, when MAIL_RELAY_URL and MAIL_RELAY_KEY are in Script properties; the e-mail goes out from support@.
+ *  Not set, or the relay refuses or cannot be reached: Gmail, as before, so nothing goes silent. A relay that
+ *  fails is left alone for fifteen minutes so a run does not wait on it e-mail after e-mail.
+ */
+var MAIL_RELAY = { DOWN_SEC: 15 * 60, TIMEOUT_NOTE: 'the relay did not answer' };
+function mailRelayProp_(k) { try { return String(PropertiesService.getScriptProperties().getProperty(k) || '').trim(); } catch (e) { return ''; } }
+function mailRelayReady_() { return !!(mailRelayProp_('MAIL_RELAY_URL') && mailRelayProp_('MAIL_RELAY_KEY')); }
+function mailRelaySign_(text, key) {
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(String(text), String(key))).replace(/=+$/, '');
+}
+function mailRelayNote_(k, v) { try { PropertiesService.getScriptProperties().setProperty(k, v); } catch (e) {} }
+/** Hand one e-mail ({ to, cc, bcc, subject, htmlBody, body, name, replyTo }) to the relay; true when it went. */
+function mailViaRelay_(o) {
+  if (!mailRelayReady_()) return false;
+  var cache = null; try { cache = CacheService.getScriptCache(); if (cache.get('mail_relay_down')) return false; } catch (e) {}
+  var why = '';
+  try {
+    var m = {}; ['to', 'cc', 'bcc', 'subject', 'htmlBody', 'body', 'name', 'replyTo'].forEach(function (k) { if (o[k] != null && o[k] !== '') m[k] = String(o[k]); });
+    if (!m.name) m.name = 'Ricky Rampersad Branch';
+    var body = JSON.stringify(m), t = String(Date.now());
+    var res = UrlFetchApp.fetch(mailRelayProp_('MAIL_RELAY_URL'), { method: 'post', contentType: 'application/json', muteHttpExceptions: true, followRedirects: true,
+      payload: JSON.stringify({ m: body, t: t, s: mailRelaySign_(body + '|' + t, mailRelayProp_('MAIL_RELAY_KEY')) }) });
+    var j = {}; try { j = JSON.parse(res.getContentText() || '{}'); } catch (e2) { why = 'answer ' + res.getResponseCode() + ', not the relay (is it deployed for Anyone?)'; }
+    if (j.ok) {
+      var day = todayISO_(); mailRelayNote_('relay_sent_' + day, String(Number(mailRelayProp_('relay_sent_' + day) || 0) + 1));
+      if (j.left != null) mailRelayNote_('relay_left', j.left + ' at ' + hhmm_(new Date()));
+      return true;
+    }
+    why = why || String(j.error || ('answer ' + res.getResponseCode()));
+  } catch (e) { why = String(e && e.message || e).slice(0, 160) || MAIL_RELAY.TIMEOUT_NOTE; }
+  mailRelayNote_('MAIL_RELAY_LAST', hhmm_(new Date()) + ' ' + todayISO_() + ': ' + why + ' (sent from Gmail instead)');
+  try { if (cache) cache.put('mail_relay_down', why.slice(0, 200), MAIL_RELAY.DOWN_SEC); } catch (e) {}
+  return false;
+}
+/** Every e-mail this tracker sends: the relay (from support@) when it is set up, Gmail otherwise. */
+function mailSend_(o) {
+  if (mailViaRelay_(o)) return 'relay';
+  MailApp.sendEmail(o);
+  return 'gmail';
+}
+/** From the editor: one test e-mail to the Branch Manager, and which way it went. */
+function mailRouteTest() {
+  var to = managerEmails_(), was = '';
+  try { CacheService.getScriptCache().remove('mail_relay_down'); } catch (e) {}
+  if (!to.length) return 'No manager e-mail on file.';
+  var via = mailSend_({ to: to.join(','), subject: 'Mail route test · ' + shortDate_(todayISO_()) + ' ' + hhmm_(new Date()),
+    htmlBody: shell_('Mail route test', prettyDate_(todayISO_()), '<div style="font-size:14px;line-height:1.55">If this came from <b>support@rickyrampersadbranch.com</b>, the tracker is sending through the relay. ' +
+      'If it came from the Gmail account, look at the log in the editor for the reason.</div>') });
+  var m = via === 'relay' ? 'Sent through the relay, from support@. Relay recipients left today: ' + (mailRelayProp_('relay_left') || 'not reported')
+    : (mailRelayReady_() ? 'Sent from Gmail: the relay refused or did not answer. ' + mailRelayProp_('MAIL_RELAY_LAST') : 'Sent from Gmail: MAIL_RELAY_URL and MAIL_RELAY_KEY are not both in Script properties yet.');
+  Logger.log(m); return m;
+}
+
 
 
 /** The desks the day mail runs for: the support staff, the BMA, and the
@@ -12192,7 +12258,7 @@ function sendBmaReport_(day) {
     '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Quiet: open and untouched five days or more.</div>' +
     srcCard_('Areas of concern today (' + concerns.length + ')', concerns.length ? MAIL.red : MAIL.green, concerns.length ? concerns.map(function (c) { return esc_(c); }) : ['Every desk is on track.'], '') +
     (sysHtml ? sectionLabel_('Branch sheets still open, by desk') + sysHtml : '') + week;
-  MailApp.sendEmail({ to: to, cc: [DAYSTART_CC_DEFAULT].concat(managerEmails_()).join(','),
+  mailSend_({ to: to, cc: [DAYSTART_CC_DEFAULT].concat(managerEmails_()).join(','),
     subject: (friday ? 'The branch at 4pm and the week · ' : 'The branch at 4pm · ') + shortDate_(day) + ' · ' + concerns.length + ' concern' + (concerns.length === 1 ? '' : 's'),
     htmlBody: shell_(friday ? 'The branch at 4pm · and the week' : 'The branch at 4pm', 'For the BMA · ' + prettyDate_(day), body) });
   return true;
@@ -12346,7 +12412,7 @@ function sendHousekeeping_(person, day, signIn) {
   };
   var cc = dayStartCc_(to);
   if (cc.length) mail.cc = cc.join(',');
-  MailApp.sendEmail(mail);
+  mailSend_(mail);
   return true;
 }
 
@@ -12364,7 +12430,7 @@ function signOutNotice_(sid, day, at) {
       '<div style="font-size:13px;font-weight:700">' + esc_(r.item) + '</div>' +
       '<div style="font-size:12.5px;color:' + (r.reason ? MAIL.ink : MAIL.red) + ';margin-top:3px">' + esc_(r.reason ? 'Not done: ' + r.reason : 'No answer given') + '</div></div>';
   }).join('');
-  MailApp.sendEmail({
+  mailSend_({
     to: cc.join(','),
     subject: 'Signed out with close-out open · ' + (person.name || sid) + ' · ' + shortDate_(day) + ' · ' + at + ' · ' + left.length + ' of ' + state.of + ' not done',
     htmlBody: shell_('Signed out with the close-out open', (person.name || sid) + ' · ' + prettyDate_(day) + ' · ' + at,
@@ -12993,7 +13059,7 @@ function sendMidday_(person, day, signIn, nowOpt) {
   };
   var cc = dayStartCc_(to);
   if (cc.length) mail.cc = cc.join(',');
-  MailApp.sendEmail(mail);
+  mailSend_(mail);
   return true;
 }
 
@@ -13649,7 +13715,7 @@ function replyCopy_(person, day, what, rows, label) {
   }).join('');
   var notToday = rows.filter(function (x) { return x.a === 'not' || x.a === 'Not done'; }).length;
   var word = what === 'Progress' ? 'not today' : 'not done';
-  MailApp.sendEmail({
+  mailSend_({
     to: cc.join(','),
     subject: what + ' answered · ' + (person.name || person.staffId) + ' · ' + shortDate_(day) + ' · ' + hhmm_(new Date()) +
       (notToday ? ' · ' + notToday + ' ' + word : ''),
@@ -13951,7 +14017,7 @@ function rebalanceMail_(day, plan, done) {
     var to = emailFor_(sid);
     if (!to) return;
     var first = String(nameFor_(sid)).split(' ')[0];
-    MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
+    mailSend_({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
       subject: 'Moved to you this morning · ' + toMe[sid].length + ' task' + (toMe[sid].length === 1 ? '' : 's') + ' · ' + shortDate_(day),
       htmlBody: shell_('Moved to you this morning', nameFor_(sid) + ' · ' + prettyDate_(day),
         '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(first) + ', you have room today, so these have come to you from colleagues who are further behind. ' +
@@ -13962,7 +14028,7 @@ function rebalanceMail_(day, plan, done) {
     var to = emailFor_(sid);
     if (!to) return;
     var first = String(nameFor_(sid)).split(' ')[0];
-    MailApp.sendEmail({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
+    mailSend_({ to: to, cc: dayStartCc_(to, sid).join(',') || undefined,
       subject: 'Moved off your list today · ' + fromMe[sid].length + ' task' + (fromMe[sid].length === 1 ? '' : 's') + ' · ' + shortDate_(day),
       htmlBody: shell_('Moved off your list today', nameFor_(sid) + ' · ' + prettyDate_(day),
         '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(first) + ', your due and overdue work is more than your pace can clear, so these have gone to a colleague with room. ' +
@@ -13975,7 +14041,7 @@ function rebalanceMail_(day, plan, done) {
       '<td style="padding:6px;font-size:13px;text-align:right;border-top:1px solid ' + MAIL.line + '">' + p.start + ' → <b>' + p.load + '</b></td>' +
       '<td style="padding:6px;font-size:13px;text-align:right;border-top:1px solid ' + MAIL.line + '">' + (p.load / p.pace).toFixed(1) + ' days</td></tr>';
   }).join('');
-  MailApp.sendEmail({ to: cc.join(','),
+  mailSend_({ to: cc.join(','),
     subject: 'Workload balanced · ' + shortDate_(day) + ' · ' + ok.length + ' moved' + (done.length > ok.length ? ', ' + (done.length - ok.length) + ' not' : ''),
     htmlBody: shell_('Workload balanced', prettyDate_(day) + ' · ' + hhmm_(new Date()),
       '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Due and overdue work, before → after, and how many days of work that is at each person\'s own pace.</div>' +
@@ -14140,7 +14206,7 @@ function sendPawanDay_(day, kind) {
     htmlBody: shell_(head, name + ' · ' + prettyDate_(day), body) };
   var cc = dayStartCc_(to, sid);
   if (cc.length) mail.cc = cc.join(',');
-  MailApp.sendEmail(mail);
+  mailSend_(mail);
   return true;
 }
 
@@ -14310,7 +14376,7 @@ function sendInnovationBoard_(day) {
       '<div style="font-size:12.5px;color:' + (ans ? MAIL.ink : MAIL.red) + ';margin-top:4px">Thursday\'s hour: ' + (ans ? '"' + esc_(ans) + '"' : 'nothing said') + '</div></div>';
   }).join('');
   var ccList = [kamla, DAYSTART_CC_DEFAULT].filter(function (e, i, a) { return e && a.indexOf(e) === i; });
-  MailApp.sendEmail({ to: (cc.length ? cc : [kamla]).join(','), cc: ccList.join(',') || undefined,
+  mailSend_({ to: (cc.length ? cc : [kamla]).join(','), cc: ccList.join(',') || undefined,
     subject: 'Innovation board · ' + shortDate_(day) + ' · for the branch meeting',
     htmlBody: shell_('Innovation board', prettyDate_(day) + ' · before the branch meeting',
       '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Each desk\'s innovation, how long since it moved, and what they said their Thursday hour moved.</div>' + rows) });
@@ -14361,7 +14427,7 @@ function sendTeamBoard_(day) {
         cell(esc_(plan), (r.sid === 'pawan' ? !r.events : !r.planned) || r.holds === false ? MAIL.red : MAIL.green) +
         cell(r.overdue, r.overdue ? MAIL.red : '') + cell(r.due) + '</tr>';
     }).join('') + '</table>';
-  MailApp.sendEmail({ to: to || cc.join(','), cc: to && cc.length ? cc.join(',') : undefined,
+  mailSend_({ to: to || cc.join(','), cc: to && cc.length ? cc.join(',') : undefined,
     subject: 'Team board · ' + shortDate_(day) + ' · ' + (unplanned.length ? unplanned.length + ' without a plan' : 'every plan in'),
     htmlBody: shell_('Team board', prettyDate_(day) + ' · ' + twelve_(hhmm_(new Date())),
       '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Kamla, here is the team as the morning runs. ' +
@@ -14390,7 +14456,7 @@ function nudgeReplySave_(person, day, p, all) {
     if (!to) return;
     var first = String(nameFor_(sid)).split(' ')[0];
     var cc = [emailFor_(person.staffId)].concat(dayStartCc_(to, sid)).filter(function (e, i, a) { return e && a.indexOf(e) === i && e !== to; });
-    MailApp.sendEmail({ to: to, cc: cc.join(',') || undefined,
+    mailSend_({ to: to, cc: cc.join(',') || undefined,
       subject: 'Your plan is not in yet · ' + shortDate_(day),
       htmlBody: shell_('Your plan is not in yet', nameFor_(sid) + ' · ' + prettyDate_(day),
         '<div style="font-size:14px;line-height:1.55;margin-bottom:8px">' + esc_(first) + ', your day has started and your plan is not in. ' +
@@ -16357,7 +16423,7 @@ function sendBranchPulse(dateOpt) {
   var text = branchPulseText_(r);
   var words = text.split(/\s+/).filter(Boolean).length;
 
-  MailApp.sendEmail({
+  mailSend_({
     to: managerEmails_().join(','), cc: salesSupportCc_(managerEmails_().join(',')),
     subject: 'For the branch group · ' + shortDate_(r.date) + ' · ' + words + ' words',
     htmlBody: shell_('Ready for the group', prettyDate_(r.date) + ' · two o’clock',
@@ -16764,7 +16830,7 @@ function sendCloseout(dateOpt) {
     var state = closeoutFor_(p, day);
     if (!state.of) return;                       // an empty list is not worth an e-mail
     if (state.complete) { clear.push(p.name); return; }
-    MailApp.sendEmail({
+    mailSend_({
       to: to, cc: dayStartCc_(to).join(',') || undefined,
       subject: 'Before you leave · ' + shortDate_(day) + ' · ' + state.left +
                (state.left === 1 ? ' thing left' : ' things left'),
@@ -17436,7 +17502,7 @@ function emailBlockClose_(p, day, b, span, items, act, done, of, pct, at, nothin
         (act.closed.length > 6 ? '<br>and ' + (act.closed.length - 6) + ' more' : '') + '</div>' : '') + '</div>';
   }
 
-  MailApp.sendEmail({
+  mailSend_({
     to: to,
     cc: dayStartCc_(to).join(',') || undefined,
     subject: lab + ' closed · ' + shortDate_(day) + ' · ' +
