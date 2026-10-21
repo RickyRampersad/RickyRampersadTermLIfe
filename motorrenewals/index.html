@@ -2,222 +2,283 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- A client's access code arrives in the query string. Never index this. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Motor Renewals — Ricky Rampersad Branch</title>
+<title>Motor Renewals</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="canonical" href="https://rickyrampersadbranch.com/motorrenewals">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 
 <!--
-  rickyrampersadbranch.com/motorrenewals
-  ======================================
+  rickyrampersadbranch.com/motorrenewals — the front door.
 
-  WHY THIS PAGE EXISTS, AND WHY IT IS WORTH A FILE OF ITS OWN
+  Takes ?t=ACCESS_CODE from a renewal e-mail and forwards to the Apps Script
+  portal, carrying the code (and &survey=1 for the QA survey link). The portal
+  runs server code so it cannot be served by GitHub Pages; this page can, which
+  is what lets the link in a client's inbox survive a redeploy.
 
-  The renewal portal itself is an Apps Script web app — it runs server code,
-  so it cannot live on GitHub Pages. This page is the front door to it: it
-  takes ?t=ACCESS_CODE from a renewal email and forwards straight through,
-  carrying the code (and &survey=1 when the QA survey link is used).
+  Edit PORTAL_URL and nothing else if the /exec URL ever changes.
 
-  That indirection buys two things.
-
-  1. THE LINK IN A CLIENT'S INBOX SURVIVES A REDEPLOY. Re-deploying the
-     Apps Script with "New deployment" instead of "New version" issues a
-     brand new /exec URL, and every link already sitting in a client's inbox
-     dies with the old one. Pointing the emails here means a redeploy is a
-     one-line edit to PORTAL_URL below — not a re-wire, and certainly not an
-     apology to every client whose link stopped working.
-
-  2. A CLIENT WILL ACTUALLY CLICK IT. "rickyrampersadbranch.com/motorrenewals"
-     reads as the branch. A raw script.google.com/macros/s/AKfy… link reads as
-     something to be careful of, and the clients most likely to hesitate are
-     the ones least likely to ring up and ask.
-
-  There is an older stub at /renewal-gateway that forwards the same way. It
-  predates the branch palette, draws its own shield rather than using
-  logo-mark.png, and its owner note still says "re-upload to Netlify" though
-  this repository is served by GitHub Pages. Prefer this page.
-
-  THE MARK is logo-mark.png from the repository root, per the house rule —
-  the gold shield with the white check. Nothing here draws a substitute.
+  DESIGN. The brand is the gold shield on navy, per the house notes. Navy is
+  ink and chrome here, not the page: a dark field behind small type is hard to
+  read, and this page is read by clients who are deciding whether to trust a
+  link. So the page is paper, the ink is navy, and gold appears as one rule and
+  on the mark. The type is set like a document rather than an app, because that
+  is what an insurance renewal is.
 -->
 
 <style>
+/* Layout: one measured column; a navy chrome band for the mark, paper below. */
 :root{
-  --navy:#07131f; --surf:#0d1f31; --gold:#efc24b; --gold2:#c9942c;
-  --teal:#00CFEA; --ink:#e8eef5; --mut:#8fa3ba; --line:#1d3350;
+  /* light — the default, and the one most clients will see */
+  --paper:#f6f7f9; --card:#ffffff; --sunk:#eef1f5;
+  --ink:#0d1b2a; --ink-2:#48596b; --ink-3:#78899b;
+  --rule:#dbe1e8; --rule-2:#c8d1db;
+  --navy:#07131f; --navy-2:#132a3f;
+  --gold:#a97c1e; --gold-lt:#efc24b; --gold-wash:#fdf6e4;
+  --teal:#0d6f80;
+  --good:#1a6b4a; --good-wash:#e9f4ee;
+  --warn:#8a5a00; --warn-wash:#fcf3e2;
+  --bad:#99291d;  --bad-wash:#fbecea;
+  --shadow:0 1px 2px rgba(13,27,42,.05), 0 8px 24px -12px rgba(13,27,42,.14);
+
+  --display:'Newsreader',Georgia,'Times New Roman',serif;
+  --sans:'Public Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100%}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0b141d; --card:#121e29; --sunk:#0e1822;
+    --ink:#e8edf2; --ink-2:#a6b6c6; --ink-3:#73879a;
+    --rule:#223241; --rule-2:#2d4256;
+    --navy:#060f18; --navy-2:#132a3f;
+    --gold:#e0b253; --gold-lt:#efc24b; --gold-wash:#221a07;
+    --teal:#4fc3d4;
+    --good:#5cc895; --good-wash:#0d2419;
+    --warn:#e3ab4d; --warn-wash:#241c09;
+    --bad:#f08a7c;  --bad-wash:#2a1310;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0b141d; --card:#121e29; --sunk:#0e1822;
+  --ink:#e8edf2; --ink-2:#a6b6c6; --ink-3:#73879a;
+  --rule:#223241; --rule-2:#2d4256;
+  --navy:#060f18; --navy-2:#132a3f;
+  --gold:#e0b253; --gold-lt:#efc24b; --gold-wash:#221a07;
+  --teal:#4fc3d4;
+  --good:#5cc895; --good-wash:#0d2419;
+  --warn:#e3ab4d; --warn-wash:#241c09;
+  --bad:#f08a7c;  --bad-wash:#2a1310;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
 body{
-  font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-  background:var(--navy); color:var(--ink);
-  display:flex; align-items:center; justify-content:center;
-  padding:24px 20px 40px;
+  background:var(--paper); color:var(--ink);
+  font:400 16.5px/1.6 var(--sans);
+  -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:column; min-height:100%;
 }
-.box{width:100%;max-width:440px;text-align:center}
 
-/* the branch mark — logo-mark.png, never a drawn substitute */
-.mark{
-  width:62px;height:62px;margin:0 auto 18px;
-  border-radius:13px;overflow:hidden;background:#07131f;
-  display:grid;place-items:center;
+/* chrome band — the one place navy belongs */
+.chrome{background:var(--navy); color:#fff}
+.band{
+  max-width:640px; margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:16px;
+  display:flex; gap:13px; align-items:center;
 }
+.mark{width:38px;height:38px;flex:0 0 38px;border-radius:10px;overflow:hidden;
+  background:#07131f;display:grid;place-items:center}
 .mark img{width:100%;height:100%;display:block}
+.chrome .who{font:600 13.5px/1.25 var(--sans);letter-spacing:.01em}
+.chrome .where{font:400 11.5px/1.3 var(--sans);color:#8ba3bb;
+  letter-spacing:.09em;text-transform:uppercase;margin-top:2px}
+.rule-gold{height:2px;background:linear-gradient(90deg,var(--gold-lt),#c9942c 60%,transparent)}
 
-.eyebrow{
-  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--gold);font-weight:700;margin-bottom:7px;
+main{flex:1 0 auto;width:100%}
+.col{
+  max-width:640px; margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:40px 28px;
 }
-h1{font-size:23px;line-height:1.25;margin-bottom:9px;letter-spacing:-.2px}
-#msg{color:var(--mut);font-size:14.5px}
 
-.spin{
-  margin:26px auto 0;width:34px;height:34px;border-radius:50%;
-  border:3px solid #1b304d;border-top-color:var(--gold);
-  animation:r .9s linear infinite;
-}
-@keyframes r{to{transform:rotate(360deg)}}
+h1{font:500 30px/1.2 var(--display);letter-spacing:-.01em;text-wrap:balance;margin:0 0 10px}
+.lede{font:400 16.5px/1.6 var(--sans);color:var(--ink-2);margin:0;max-width:52ch}
 
-.card{
-  display:none;background:var(--surf);border:1px solid var(--line);
-  border-radius:16px;padding:22px;margin-top:24px;text-align:left;
-}
-.card.show{display:block}
-label{
-  display:block;font-size:11.5px;font-weight:700;color:var(--mut);
-  text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;
-}
-input{
-  width:100%;border:1px solid var(--line);border-radius:11px;
-  padding:14px 15px;font:inherit;font-weight:700;letter-spacing:.1em;
-  text-align:center;background:#071726;color:var(--ink);
-}
-input:focus{outline:none;border-color:var(--teal)}
-button{
-  width:100%;margin-top:11px;border:none;border-radius:11px;padding:14px;
-  font:inherit;font-weight:800;font-size:15px;cursor:pointer;color:#07131f;
-  background:linear-gradient(135deg,var(--gold),var(--gold2));
-}
-button:hover{filter:brightness(1.07)}
-.err{
-  display:none;background:#5c1d18;color:#ffd9d6;border-radius:9px;
-  padding:9px 12px;font-size:13px;margin-top:10px;
-}
-.hint{font-size:12.5px;color:var(--mut);margin-top:14px;line-height:1.55}
-.hint a{color:var(--gold)}
+/* A class that sets `display` beats the UA rule for [hidden], so el.hidden
+   silently stops working. This keeps the attribute authoritative. */
+[hidden]{display:none!important}
 
-.does{margin-top:26px;text-align:left;font-size:13.5px;color:var(--mut)}
-.does h2{
-  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--teal);font-weight:700;margin-bottom:10px;
-}
-.does ul{list-style:none}
-.does li{padding:5px 0 5px 22px;position:relative}
-.does li:before{
-  content:'';position:absolute;left:4px;top:13px;
-  width:7px;height:7px;border-radius:50%;background:var(--gold);
-}
-.does b{color:var(--ink);font-weight:600}
+/* the forwarding state */
+.working{display:flex;gap:12px;align-items:center;margin-top:26px;color:var(--ink-2);font-size:15px}
+.spin{width:19px;height:19px;flex:0 0 19px;border-radius:50%;
+  border:2px solid var(--rule-2);border-top-color:var(--gold);animation:spin .85s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-.warn{
-  display:none;background:#5c1d18;border-radius:12px;
-  padding:15px;margin-top:22px;font-size:13px;text-align:left;
+/* sign-in */
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:12px;
+  box-shadow:var(--shadow);padding:22px;margin-top:26px}
+label{display:block;font:600 11.5px/1.3 var(--sans);letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+input{width:100%;border:1px solid var(--rule-2);border-radius:8px;background:var(--card);
+  color:var(--ink);padding:13px 14px;font:500 19px/1.2 var(--mono);letter-spacing:.1em;
+  text-align:center}
+input:focus-visible{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
+button{margin-top:12px;width:100%;border:none;border-radius:8px;background:var(--navy);
+  color:#fff;padding:14px;font:600 15.5px/1 var(--sans);cursor:pointer}
+button:hover{background:var(--navy-2)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.err{display:none;margin-top:10px;background:var(--bad-wash);color:var(--bad);
+  border-radius:7px;padding:9px 12px;font-size:14px}
+.hint{margin:14px 0 0;font-size:14px;color:var(--ink-2);line-height:1.55}
+.hint a{color:var(--teal);text-decoration-thickness:1px;text-underline-offset:2px}
+.hint .num{font-family:var(--mono);font-weight:500;color:var(--ink)}
+
+/* what's inside */
+section.does{margin-top:36px;border-top:1px solid var(--rule);padding-top:26px}
+h2{font:600 11.5px/1.3 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 16px}
+dl{margin:0;display:grid;gap:18px}
+dt{font:500 17px/1.35 var(--display);color:var(--ink);margin-bottom:3px}
+dd{margin:0;font-size:15px;color:var(--ink-2);line-height:1.58}
+
+.fall{display:none;margin-top:22px;font-size:14.5px;color:var(--ink-2)}
+.fall a{color:var(--teal)}
+.notice{display:none;margin-top:22px;background:var(--warn-wash);border:1px solid var(--rule);
+  border-left:3px solid var(--warn);border-radius:8px;padding:14px 16px;font-size:14px}
+
+footer{background:var(--sunk);border-top:1px solid var(--rule);margin-top:40px}
+footer .band{padding-block:20px;display:block;color:var(--ink-3);font-size:13px;line-height:1.6}
+footer b{color:var(--ink-2);font-weight:600}
+
+@media (max-width:460px){
+  h1{font-size:25px}
+  .col{padding-block:30px 22px}
+  input{font-size:17px}
 }
-.fall{margin-top:20px;font-size:13px;color:var(--mut)}
-.fall a{color:var(--gold)}
-.foot{
-  margin-top:28px;padding-top:18px;border-top:1px solid var(--line);
-  font-size:11.5px;color:#6b819b;line-height:1.5;text-align:left;
-}
-@media (max-width:420px){ h1{font-size:20px} }
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div class="box">
 
-  <div class="mark"><img src="../logo-mark.png" alt=""></div>
-  <div class="eyebrow">Ricky Rampersad Branch</div>
-  <h1>Motor Renewals</h1>
-  <p id="msg">Opening your secure renewal portal…</p>
-  <div class="spin" id="spin"></div>
-
-  <!-- no access code in the link: let them type the one from their email -->
-  <div class="card" id="login">
-    <label for="code">Your access code</label>
-    <input id="code" type="text" placeholder="e.g. 3Ew-v0JD" autocomplete="off"
-           autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text">
-    <button id="go">Open my renewal &rarr;</button>
-    <div class="err" id="err">Please enter the access code from your renewal email.</div>
-    <div class="hint">
-      Your access code is in your renewal email — or simply click the button in that
-      email and you will come straight in, no code needed.<br><br>
-      Don't have it? Call <b>(868) 678-5921</b> or email
-      <a href="mailto:ricky.rampersad@myguardiangroup.com">ricky.rampersad@myguardiangroup.com</a>
-      and we will send your link again.
+<div class="chrome">
+  <div class="band">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div>
+      <div class="who">Ricky Rampersad Branch</div>
+      <div class="where">Guardian Group &middot; Trinidad &amp; Tobago</div>
     </div>
   </div>
+</div>
+<div class="rule-gold"></div>
 
-  <div class="does" id="does">
-    <h2>What you can do in there</h2>
-    <ul>
-      <li><b>Review your cover</b> — every vehicle on the policy, what each is insured for, and the premium</li>
-      <li><b>Adjust your sum insured.</b> A car is worth less each year. You should not pay premium on value that has gone, and you cannot claim more than the car is worth — so we show you a reasonable range and you tell us the figure</li>
-      <li><b>Add the Waiver of Excess.</b> Guardian General no longer includes it free after three claim-free years. With it you pay no excess when you claim</li>
-      <li><b>Third party?</b> Add windscreen cover, or ask for a comprehensive quote with no obligation</li>
-      <li><b>Send your instruction</b> — it goes straight to Guardian General with our sales support team copied</li>
-    </ul>
+<main><div class="col">
+
+  <h1 id="head">Motor renewals</h1>
+  <p class="lede" id="lede">Opening your renewal&hellip;</p>
+
+  <div class="working" id="working"><span class="spin"></span><span>One moment</span></div>
+
+  <div class="panel" id="signin" hidden>
+    <label for="code">Your access code</label>
+    <input id="code" type="text" inputmode="text" autocomplete="off" autocapitalize="characters"
+           autocorrect="off" spellcheck="false" placeholder="3Ew-v0JD" aria-describedby="hint">
+    <button id="go" type="button">Open my renewal</button>
+    <div class="err" id="err" role="alert">Enter the access code from your renewal email.</div>
+    <p class="hint" id="hint">The code is in your renewal email. Clicking the button in that
+      email brings you straight in, with no code to type.<br><br>
+      Can&rsquo;t find it? Call <span class="num">(868)&nbsp;678&#8209;5921</span> or email
+      <a href="mailto:ricky.rampersad@myguardiangroup.com">ricky.rampersad@myguardiangroup.com</a>
+      and we&rsquo;ll send the link again.</p>
   </div>
 
-  <div class="warn" id="warn"></div>
+  <section class="does" id="does">
+    <h2>What you can do there</h2>
+    <dl>
+      <div>
+        <dt>Check your cover</dt>
+        <dd>Every vehicle on the policy, what each is insured for, and the premium.</dd>
+      </div>
+      <div>
+        <dt>Set this year&rsquo;s value</dt>
+        <dd>A claim pays the market value or the sum insured, whichever is lower. A figure
+          left too high is premium you can never collect on, so we show you where it should
+          be and you tell us the number.</dd>
+      </div>
+      <div>
+        <dt>Fill in what&rsquo;s missing</dt>
+        <dd>Chassis number, driver&rsquo;s permit and expiry. We can&rsquo;t issue a
+          certificate without the chassis, and we&rsquo;d rather not chase you for the permit
+          at claim time.</dd>
+      </div>
+      <div>
+        <dt>Take the benefit you&rsquo;re owed</dt>
+        <dd>An individual policyholder is entitled to one of a courtesy car or $15,000 of
+          hospitalisation cover at no extra cost. Choose which.</dd>
+      </div>
+      <div>
+        <dt>Send your instruction</dt>
+        <dd>It goes to Guardian General with our sales support team copied. Nothing is bound
+          until Guardian confirms your renewal.</dd>
+      </div>
+    </dl>
+  </section>
 
   <noscript>
-    <div class="fall" style="display:block">
-      Your browser has JavaScript switched off, so we cannot open your portal
-      automatically. Please use the button in your renewal email, or call
-      <b>(868) 678-5921</b>.
+    <div class="notice" style="display:block">
+      JavaScript is switched off, so we can&rsquo;t open your renewal automatically. Use the
+      button in your renewal email, or call <span class="num">(868) 678-5921</span>.
     </div>
   </noscript>
 
-  <div class="fall" id="fall" style="display:none">
-    Not moving? <a id="manual" href="#">Open your renewal portal</a>.
-  </div>
+  <div class="fall" id="fall">Still here? <a id="manual" href="#">Open your renewal portal</a>.</div>
+  <div class="notice" id="notice"></div>
 
-  <div class="foot">
-    Nothing is bound until Guardian confirms your renewal. Never send card numbers
-    through this page or by email — our team will arrange secure payment with you.
-  </div>
-</div>
+</div></main>
+
+<footer><div class="band">
+  <b>Nothing is bound until Guardian confirms your renewal.</b> Never send card numbers through
+  this page or by email &mdash; our team will arrange secure payment with you.
+</div></footer>
 
 <script>
-/* ==========================================================================
-   EDIT THIS ONE LINE if the Apps Script web app is ever redeployed with
-   "New deployment" rather than "New version", which issues a fresh /exec URL.
-   Changing it here keeps every renewal link already sitting in a client's
-   inbox working.
-   ========================================================================== */
+/* ============================================================
+   EDIT THIS ONE LINE if the Apps Script web app is redeployed with
+   "New deployment" rather than "New version", which issues a fresh
+   /exec URL. Changing it here keeps every renewal link already sitting
+   in a client's inbox working.
+   ============================================================ */
 var PORTAL_URL = 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec';
-/* ========================================================================== */
+/* ============================================================ */
 
 (function () {
-  var q     = location.search || '';
-  var msg   = document.getElementById('msg');
-  var spin  = document.getElementById('spin');
-  var login = document.getElementById('login');
-  var does  = document.getElementById('does');
-  var fall  = document.getElementById('fall');
-
-  function hideSpinner() { spin.style.display = 'none'; }
+  var q       = location.search || '';
+  var head    = document.getElementById('head');
+  var lede    = document.getElementById('lede');
+  var working = document.getElementById('working');
+  var signin  = document.getElementById('signin');
+  var does    = document.getElementById('does');
+  var fall    = document.getElementById('fall');
+  var notice  = document.getElementById('notice');
 
   if (PORTAL_URL.indexOf('https://') !== 0) {
-    hideSpinner();
-    msg.textContent = 'This page is not configured yet.';
-    var w = document.getElementById('warn');
-    w.style.display = 'block';
-    w.innerHTML = '<b>Branch note:</b> open <b>motorrenewals/index.html</b>, paste the ' +
-                  'Apps Script web app /exec URL into <b>PORTAL_URL</b>, then commit and ' +
-                  'push — this site is served by GitHub Pages, so the push is the deploy.';
+    working.hidden = true;
+    head.textContent = 'Not configured yet';
+    lede.textContent = 'This page cannot open a renewal until it is pointed at the portal.';
+    notice.style.display = 'block';
+    notice.innerHTML = '<b>Branch note:</b> open <b>motorrenewals/index.html</b>, paste the ' +
+      'Apps Script web app /exec URL into <b>PORTAL_URL</b>, then commit and push — this ' +
+      'site is served by GitHub Pages, so the push is the deploy.';
     return;
   }
 
@@ -225,29 +286,29 @@ var PORTAL_URL = 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_F
     return PORTAL_URL + (PORTAL_URL.indexOf('?') > -1 ? '&' : '?') + query;
   }
 
-  /* A personal link was used (?t=CODE, plus &survey=1 on the QA survey link).
-     Forward straight through, carrying everything after the "?" verbatim so a
-     parameter added to the portal later needs no change here. */
+  /* A personal link was used (?t=CODE, plus &survey=1 on the survey link).
+     Forward through, carrying everything after the "?" verbatim so a parameter
+     added to the portal later needs no change here. */
   if (/[?&]t=/.test(q)) {
     var url = target(q.slice(1));
-    does.style.display = 'none';
-    /* A manual link appears after a moment, so a blocked or slow redirect
-       leaves the client something to click rather than a spinner forever. */
-    var a = document.getElementById('manual');
-    a.href = url;
+    does.hidden = true;
+    document.getElementById('manual').href = url;
+    /* A manual link appears after a moment, so a blocked or slow redirect leaves
+       the client something to click rather than a spinner for ever. */
     setTimeout(function () {
       fall.style.display = 'block';
-      msg.textContent = 'Taking you to your renewal…';
+      lede.textContent = 'Taking you to your renewal…';
     }, 2500);
     location.replace(url);
     return;
   }
 
-  /* No code in the link — show the sign-in. */
-  hideSpinner();
-  msg.innerHTML = 'Sign in with the access code from your renewal email to review ' +
-                  'your cover and renew.';
-  login.classList.add('show');
+  /* No code in the link — ask for it. */
+  working.hidden = true;
+  head.textContent = 'Your motor renewal';
+  lede.textContent = 'Sign in with the access code from your renewal email to review your ' +
+                     'cover and renew.';
+  signin.hidden = false;
 
   var code = document.getElementById('code');
   var err  = document.getElementById('err');
@@ -259,11 +320,11 @@ var PORTAL_URL = 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_F
     location.href = target('t=' + encodeURIComponent(v));
   }
 
-  document.getElementById('go').onclick = submit;
+  document.getElementById('go').addEventListener('click', submit);
   code.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.keyCode === 13) submit();
   });
-  /* Don't steal focus on a phone — the keyboard covering the page on arrival
+  /* Don't steal focus on a phone: the keyboard covering the page on arrival
      hides the explanation of what this is. */
   if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) code.focus();
 })();
