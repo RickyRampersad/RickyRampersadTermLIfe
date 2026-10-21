@@ -295,6 +295,36 @@ const signIn = (env, email) => { post(env, { action: 'requestCode', email }); re
   ok('the full door still needs the permit', full.ok === false && /permit/i.test(full.error));
 }
 
+/* ── Guardian's Motor Quotation Request form, filled and attached ── */
+{
+  const { env, mails } = world(SFPROPS);
+  const tok = signIn(env, 'anika@example.com'); mails.length = 0;
+  const RPDF = Buffer.from('%PDF-1.7 request').toString('base64');
+  const Q = { flow: 'quick', name: 'Anika Pretend', mobile: '868-555-0101', make: 'MG', model: 'ZS', year: '2026', value: '212645', condition: 'Second hand',
+    secondAcc: 'Yes', secondAccDetails: 'Rear bumper, 2023', newUnreg: 'Yes', cover: 'Comprehensive', drivingYears: '9', ncd: '3 years', use: 'Private use',
+    marital: 'Married', employer: 'Sample Ltd', homePhone: '868-555-0102', address: '1 Sample Road, Sampletown', firstGG: 'No', otherGG: 'Yes', otherGGType: 'Life',
+    chassis: 'abc123', antiTheft: 'Immobiliser', windscreen: 'Yes', windscreenLimit: '5000', ncdPct: '30',
+    accidents: 'Yes', accidentDetails: 'One claim', qa0date: '2024-03-04', qa0own: '12000', qa0ins: 'Sample Insurer', qa0drv: 'Self',
+    young: 'Yes', yd0name: 'Pat Pretend', yd0dob: '2007-01-09', yd0dp: 'DP1' };
+  const r = post(env, { action: 'submit', token: tok, quote: Q, files: [{ kind: 'request', name: 'motor-quotation-request.pdf', type: 'application/pdf', data: RPDF }] });
+  ok('a quick quote takes the filled request form', r.ok, r.error || '');
+  const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0], row = sh._grid[sh._grid.length - 1], col = n => row[hdr.indexOf(n)];
+  ok('the new columns are on the tab, at the end', ['Marital status', 'Home address', 'Employer', 'First GG client', 'Chassis #', 'Use of vehicle', 'Young drivers', 'Request form'].every(n => hdr.indexOf(n) > -1));
+  ok('the row holds the form\'s answers', col('Marital status') === 'Married' && col('Employer') === 'Sample Ltd' && col('Use of vehicle') === 'Private use' && col('Request form') === 'attached' &&
+    /Rear bumper/.test(col('Second-hand accident')) && col('Young drivers') === 'Yes' && col('Chassis #') === 'ABC123' && col('Other GG business') === 'Yes: Life');
+  const desk = mails.find(m => /Motor quote request/.test(m.subject));
+  ok('the desk e-mail says the form is attached, and attaches it', desk && /Motor Quotation Request form is attached/.test(desk.htmlBody.replace(/&#39;/g, "'")) && desk.attachments.length === 1);
+  ok('the accident and young driver rows reach the desk', /Sample Insurer/.test(desk.htmlBody) && /Pat Pretend/.test(desk.htmlBody));
+  mails.length = 0;
+  const img = post(env, { action: 'submit', token: tok, quote: Object.assign({}, Q, { reg: 'PDX 9', newUnreg: '' }), files: [{ kind: 'request', name: 'x.jpg', type: 'image/jpeg', data: PNG }] });
+  const d2 = mails.find(m => /Motor quote request/.test(m.subject)), r2 = env.__sheets['Motor Quotes']._grid.slice(-1)[0];
+  ok('a request form that is not a PDF is dropped', img.ok && !(d2.attachments || []).length && !/Quotation Request form is attached/.test(d2.htmlBody) && r2[hdr.indexOf('Request form')] === '');
+  mails.length = 0;
+  const no = post(env, { action: 'submit', token: tok, quote: Object.assign({}, Q, { accidents: 'No', young: 'No', otherGG: 'No', windscreen: 'No', condition: 'New', secondAcc: 'Yes' }) });
+  const d3 = mails.find(m => /Motor quote request/.test(m.subject));
+  ok('details that no longer apply are cleared', no.ok && !/Sample Insurer|Pat Pretend|Rear bumper/.test(d3.htmlBody));
+}
+
 /* ── the renewal: first, with its history, read again at the send ─── */
 const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const RISKS = [
@@ -330,10 +360,11 @@ const RISKS = [
   const { env, mails } = world(Object.assign({}, SFPROPS, { MQ_RENEW_TO: 'renewals@example.com' }), { risks: RISKS });
   const tok = signIn(env, 'anika@example.com'); mails.length = 0;
   const r = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'pdx1234', renewChoice: 'Renew as it is',
-    renewOnText: '1 January 1999', lastPremium: 1 } });
+    renewOnText: '1 January 1999', lastPremium: 1 }, files: [{ kind: 'request', name: 'motor-quotation-request.pdf', type: 'application/pdf', data: Buffer.from('%PDF-1.7').toString('base64') }] });
   ok('a renewal goes as it is, with nothing else typed', r.ok && r.flow === 'renew' && r.sentTo === 'renewals@example.com', r.error || '');
   const desk = mails.find(m => /Motor renewal request/.test(m.subject));
   ok('the subject says renewal, the vehicle, when it renews and what the client asks', desk && /2019 Toyota Aqua \(PDX 1234\) · renews \d+ \w+ \d{4} · Renew as it is · Anika Pretend/.test(desk.subject));
+  ok('a renewal never carries the request form', !(desk.attachments || []).length && !/Quotation Request form/.test(desk.htmlBody));
   ok('the date and the premium come from Salesforce, never from the page', !/1999/.test(desk.htmlBody) && /TT\$ 4,322/.test(desk.htmlBody));
   ok('the desk gets every term on file and what the record shows', /Third Party/.test(desk.htmlBody) && /With us since/.test(desk.htmlBody) && /TT\$ 95,000/.test(desk.htmlBody));
   ok('MQ_RENEW_TO is named in the test banner', /renewals@example.com/.test(desk.htmlBody));
@@ -463,6 +494,22 @@ const PFILES = [{ kind: 'quote', name: 'quote.pdf', type: 'application/pdf', dat
       ok('Know Your Policy: the name in block letters, the date as the form asks', kf.getTextField('Text1').getText() === 'ANIKA PRETEND' && kf.getTextField('Text2').getText() === '10/21/26');
       ok('the representative\'s half is left for the branch', !kf.getTextField('Text6').getText() && !kf.getTextField('Text8').getText());
       ok('dates go on the form as MM/DD/YY', forms.mdy('2026-10-16') === '10/16/26');
+      const tr = fs.readFileSync(path.join(ROOT, 'motor-quote/forms/gg-motor-quotation-request.pdf'));
+      const RA = { name: 'Anika Pretend', email: 'anika@example.com', dob: '1988-04-12', marital: 'Married', occupation: 'Teacher', mobile: '868-555-0101',
+        make: 'MG', model: 'ZS', year: '2026', value: '212645', condition: 'Second hand', secondAcc: 'No', chassis: 'abc123', reg: 'pdx 9', cover: 'Comprehensive',
+        use: 'Private use', firstGG: 'No', otherGG: 'No', prevInsurer: 'Sample Insurer', accidents: 'Yes', qa0date: '2024-03-04', qa0ins: 'Sample Insurer',
+        young: 'No', ncd: '3 years', mortgaged: 'Yes', institution: 'Sample Credit Union', address: '1 Sample Road, Sampletown' };
+      const R = await forms.fillRequest(PDFLib, tr, RA), rd = await PDFLib.PDFDocument.load(R), rf = rd.getForm();
+      const tx = n => rf.getTextField(n).getText();
+      ok('the request form stays Guardian\'s one US Legal page', rd.getPageCount() === 1 && rd.getPages()[0].getHeight() === 1008);
+      ok('the request form: name, birth date written out, vehicle, value', tx('Name') === 'Anika Pretend' && tx('Date of Birth') === '12 Apr 1988' && tx('Make') === 'MG' && tx('Market Value') === 'TT$ 212,645');
+      ok('the request form: registration and chassis in capitals, the mortgagee', tx('Reg No') === 'PDX 9' && tx('Chassis No') === 'ABC123' && tx('Mortgagee') === 'Sample Credit Union');
+      ok('the request form ticks its own boxes', rf.getCheckBox('Married').isChecked() && rf.getCheckBox('Second Hand').isChecked() && rf.getCheckBox('Comprehensive').isChecked() && !rf.getCheckBox('New').isChecked());
+      ok('the request form: accidents yes, young drivers no, first-time client no', rf.getRadioGroup('Have you ever had any accidents\\claims').getSelected() === 'Yes' &&
+        rf.getRadioGroup('Will any young inexperience drive be using your vehicle').getSelected() === 'No_5' && rf.getRadioGroup('FirstTime GG Client').getSelected() === 'No' &&
+        rf.getRadioGroup('Have you ever insured a vehicle before').getSelected() === 'Yes');
+      ok('the request form: the claim on its row', tx('Date1') === '4 Mar 2024' && tx('Insurer1') === 'Sample Insurer');
+      ok('the request form carries no staff name in its properties', !rd.getAuthor());
     })();
     module.exports = done;
   } else ok('pdf-lib is in motor-quote/vendor', false);

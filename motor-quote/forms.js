@@ -210,6 +210,83 @@
     return pdf.save();
   }
 
-  var api = { PROPOSAL: PROPOSAL, KYP: KYP, fillProposal: fillProposal, fillKyp: fillKyp, mdy: mdy, ansi: ansi };
+  /* Guardian's MOTOR QUOTATION REQUEST (the "GG Motor Quotation Fillable form", sent by the quotes desk on
+     21 October 2026). A real fillable form: every answer goes into its own named field, so nothing is placed
+     by measuring. The field names are Guardian's own, typos included ("Divorce", "Claw", "inexperience drive"). */
+  var REQUEST = {
+    marital: { Single: 'Single', Married: 'Married', Divorced: 'Divorce', Separated: 'Separated', Widowed: 'Widowed', 'Common-law': 'Claw' },
+    ncdYear: { '1 year': 'year', '2 years': 'year_2', '3 years': 'year_3', '4 years': 'year_4', '5 years or more': 'year_4' },
+    condition: { 'New': 'New', 'Foreign used': 'Foreign Used', 'Second hand': 'Second Hand', 'Used': 'Second Hand' },
+    cover: { 'Comprehensive': 'Comprehensive', 'Third Party, Fire & Theft': 'Third Party Fire and Theft', 'Third Party Only': 'Third Party Only' },
+    radio: { firstGG: 'FirstTime GG Client', otherGG: 'Do you have any other Business with Guardian', insuredBefore: 'Have you ever insured a vehicle before',
+      accidents: 'Have you ever had any accidents\\claims', young: 'Will any young inexperience drive be using your vehicle',
+      secondAcc: 'If Second Hand have the vehicle ever been involved in an accident' },
+    accRow: [['Date', 'date'], ['Amt settled for own damage', 'own'], ['Insurer', 'ins'], ['Amt settled for Third party', 'tp'], ['Third party insurer', 'tpins'], ['Driver', 'drv']],
+    ydRow: [['Drivers name', 'name'], ['Occupation', 'occ'], ['Date of birth', 'dob'], ['DP no', 'dp'], ['Date of issue', 'iss']],
+  };
+  /* yyyy-mm-dd as "12 Apr 1988": a date nobody can read the wrong way round. */
+  function dmy(v) {
+    var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? (+m[3]) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1] + ' ' + m[1] : String(v || '');
+  }
+  /* What the quote request answers say, in the form's own terms. Used by the page and by the tests. */
+  function requestValues(A) {
+    var prev = String(A.prevInsurer || '');
+    var insured = A.insuredBefore || (prev ? (/^none/i.test(prev) ? 'No' : 'Yes') : '');
+    var used = /used|second/i.test(A.condition || '');
+    var v = {
+      text: {
+        'Name': A.name, 'Date of Birth': dmy(A.dob), 'Occupation': A.occupation,
+        'If Yes Client DP': A.permit, 'Date of issue': dmy(A.permitIssued), 'No of years driving': A.drivingYears,
+        'Home no': A.homePhone, 'Mobile': A.mobile, 'Email': A.email,
+        'Employers Name': A.employer, 'If Yes state type': yes(A.otherGG) ? A.otherGGType : '',
+        'If Yes name of company': yes(insured) && !/^none/i.test(prev) ? prev : '',
+        'If yes please give details': yes(A.accidents) ? A.accidentDetails : '',
+        'No Claim Discount Entitlement': String(A.ncdPct || '').replace(/[^0-9.]/g, ''),
+        'If yes please given details': yes(A.young) ? A.youngDetails : '',
+        'Make': A.make, 'Model': A.model, 'year of Manufacture': A.year,
+        'Reg No': String(A.reg || '').toUpperCase() || (yes(A.newUnreg) ? 'Not registered yet' : ''), 'CCHP': A.cc, 'Chassis No': String(A.chassis || '').toUpperCase(),
+        'Seating Capacity': A.seating, 'Type of Body': A.body, 'Market Value': A.value ? 'TT$ ' + money(A.value) : '',
+        'If yes please given details_2': used && yes(A.secondAcc) ? A.secondAccDetails : '',
+        'Name any Antitheft Devices that are fitted to the vehicle': A.antiTheft,
+        'Mortgagee': yes(A.mortgaged) ? A.institution : '', 'Use of the Vehicle': A.use,
+        'Windscreen Limit': yes(A.windscreen) ? (A.windscreenLimit ? 'TT$ ' + money(A.windscreenLimit) : 'Yes') : '',
+      },
+      address: A.address || '',
+      checks: [REQUEST.marital[A.marital], REQUEST.ncdYear[A.ncd], REQUEST.condition[A.condition], REQUEST.cover[A.cover]].filter(Boolean),
+      radios: {},
+    };
+    var r = { firstGG: A.firstGG, otherGG: A.otherGG, insuredBefore: insured, accidents: A.accidents, young: A.young, secondAcc: used ? A.secondAcc : '' };
+    Object.keys(r).forEach(function (k) { if (yes(r[k]) || no(r[k])) v.radios[REQUEST.radio[k]] = yes(r[k]) ? 0 : 1; });
+    [0, 1, 2].forEach(function (i) {
+      if (yes(A.accidents)) REQUEST.accRow.forEach(function (c) { var x = A['qa' + i + c[1]]; v.text[c[0] + (i + 1)] = c[1] === 'date' ? dmy(x) : /own|tp$/.test(c[1]) && x ? money(x) : x; });
+      if (yes(A.young)) REQUEST.ydRow.forEach(function (c) { var x = A['yd' + i + c[1]]; v.text[c[0] + (i + 1)] = /dob|iss/.test(c[1]) ? dmy(x) : x; });
+    });
+    return v;
+  }
+  async function fillRequest(PDFLib, templateBytes, A) {
+    var pdf = await PDFLib.PDFDocument.load(templateBytes), form = pdf.getForm();
+    var bold = await pdf.embedFont(PDFLib.StandardFonts.HelveticaBold), v = requestValues(A);
+    /* Bold at 10 pt where it fits, smaller (never under 6.5) where it would not. */
+    var put = function (name, val) {
+      var t; try { t = form.getTextField(name); } catch (e) { return; }
+      var txt = ansi(val); if (!txt) return;
+      var w = t.acroField.getWidgets()[0].getRectangle().width - 4, s = 10;
+      while (s > 6.5 && bold.widthOfTextAtSize(txt, s) > w) s -= 0.5;
+      t.setText(txt); t.setFontSize(s);
+    };
+    Object.keys(v.text).forEach(function (k) { put(k, v.text[k]); });
+    /* The home address over its two lines, broken between words. */
+    var addr = ansi(v.address);
+    if (addr) { var w1 = form.getTextField('Home Address 1').acroField.getWidgets()[0].getRectangle().width - 4, f1 = fit(bold, addr, w1, 10, true);
+      put('Home Address 1', f1.text); put('Home Address 2', f1.rest); }
+    v.checks.forEach(function (n) { try { var c = form.getCheckBox(n); c.check(); c.updateAppearances(); } catch (e) {} });
+    Object.keys(v.radios).forEach(function (n) { try { var g = form.getRadioGroup(n); g.select(g.getOptions()[v.radios[n]]); } catch (e) {} });
+    form.updateFieldAppearances(bold);
+    pdf.setAuthor(''); pdf.setCreator('Ricky Rampersad Branch motor quote');
+    return pdf.save();
+  }
+
+  var api = { PROPOSAL: PROPOSAL, KYP: KYP, REQUEST: REQUEST, fillProposal: fillProposal, fillKyp: fillKyp, fillRequest: fillRequest, requestValues: requestValues, mdy: mdy, dmy: dmy, ansi: ansi };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.MQForms = api;
 })(typeof window !== 'undefined' ? window : this);

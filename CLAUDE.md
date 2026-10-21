@@ -3837,7 +3837,7 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     from Salesforce. It goes to `MQ_RENEW_TO`, else the quotes desk.
   - New columns go on the end of the Motor Quotes tab, added by name (`mqQuotesSheet_`), and a row is placed by the
     tab's own headers.
-  - Tests: `tests/test-motor-quote.js` (131 checks) and `tests/e2e-motor-quote.js` (79, every door on a phone).
+  - Tests: `tests/test-motor-quote.js` (146 checks) and `tests/e2e-motor-quote.js` (106, every door on a phone).
 - **Taking the quote fills Guardian's own PDFs** (21 October 2026: "once they agree on the quote … upload the certified
   copy … extract all the details on the vehicles … fill out the proposal form very fast", then "it has to be exactly on
   the Guardian PDF and know your [policy], ensuring that they can answer it").
@@ -3861,6 +3861,26 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     properly"). The signature is cut to its ink (`trimSig`) before it goes on page 4 of the proposal and the KYP's
     signature line, so it fills the line.
   - When Guardian revises either form, replace the PDF and re-measure the positions in `forms.js`.
+- **Every quote request carries Guardian's own Motor Quotation Request form, filled in** (21 October 2026: "see guardian
+  motor request form so the data collected should be proper on this form as it will be attached").
+  - The form is `motor-quote/forms/gg-motor-quotation-request.pdf`: Guardian's fillable one-page US Legal form, taken
+    from the e-mail it came in, with its file properties and XMP cleared.
+  - It is filled on the phone by field name (`fillRequest`, `requestValues` in `forms.js`), so nothing is measured.
+    Dates are written out ("12 Apr 1988"), the registration and chassis in capitals, and the value as "TT$ 212,645".
+    The boxes and yes/no buttons are the form's own, ticked with pdf-lib's mark.
+  - **The page asks every question the form asks.**
+    - The full door asks: marital status, occupation and employer, home number, address, a first-time Guardian client,
+      other business with Guardian, the chassis, new, foreign used or second hand (and an accident if second hand),
+      the use, anti-theft, the windscreen limit, the no-claim percentage.
+    - "Your history" asks accidents and young drivers. On the full door each Yes opens a table of up to three rows.
+    - The quick quote asks the use and the history. The rest of the form sits in a fold, "Guardian's request form asks
+      a little more" (optional). The fold opens by itself when any of it is already known.
+  - The client can preview the filled form on the review step. It travels to the desk as `motor-quotation-request.pdf`,
+    still fillable, with a green note saying so.
+  - A renewal never carries it. Nor does a request form that is not a PDF, which the script drops. A form that cannot be
+    filled never stops the request.
+  - The answers are on new columns at the end of **Motor Quotes**, ending with "Request form" (attached).
+  - When Guardian revises the form, replace the PDF and check its field names against `REQUEST` in `forms.js`.
 - **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
   layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
   its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):

@@ -65,7 +65,7 @@
  */
 
 var MQ = {
-  VERSION: '2026-10-21b',
+  VERSION: '2026-10-21c',
   BRAND: 'Ricky Rampersad Branch',
   LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',   // the blue shield (the manager's choice, 21 Oct 2026); hosted PNG: Gmail strips SVG and data URIs
   SITE: 'https://rickyrampersadbranch.com/motor-quote/',
@@ -88,7 +88,7 @@ var MQ = {
 
   CODE_TTL_MIN: 10, CODE_MAX_TRIES: 5, CODE_SENDS_PER_HOUR: 4,
   SESSION_DAYS: 30,
-  MAX_FILE_BYTES: 6 * 1024 * 1024, MAX_FILES: 4, MAX_PROPOSAL_FILES: 7,
+  MAX_FILE_BYTES: 6 * 1024 * 1024, MAX_FILES: 5, MAX_PROPOSAL_FILES: 7,
   TASK_DUE_DAYS: 2,
 
   TABS: { quotes: 'Motor Quotes', files: 'Quote Files', log: 'Quote Log', sessions: 'Sessions' },
@@ -112,7 +112,10 @@ var MQ_COLS = ['Ref', 'Received', 'Status', 'Client', 'Email', 'Mobile', 'Contac
   'Notes', 'Files', 'Drive folder', 'SF task', 'Sent to', 'Mail result', 'Quoted on', 'Quoted premium', 'Staff note',
   /* Added 21 October 2026 with the three doors. New columns only ever go on
      the end, and mqQuotesSheet_ adds any a tab made earlier lacks. */
-  'Request type', 'Renewal date', 'Renewal choice', 'Renewal changes', 'Last premium', 'Invoice read'];
+  'Request type', 'Renewal date', 'Renewal choice', 'Renewal changes', 'Last premium', 'Invoice read',
+  /* Added 21 October 2026 with Guardian's Motor Quotation Request form: what it asks that the page did not. */
+  'Marital status', 'Home no.', 'Home address', 'Employer', 'First GG client', 'Other GG business', 'Chassis #', 'Use of vehicle',
+  'Anti-theft', 'Second-hand accident', 'Windscreen limit', 'NCD %', 'Young drivers', 'Request form'];
 
 /* The questions, in the order the e-mail to the quotes desk lists them. Each
    key is a field the page sends; the label is what the desk reads. */
@@ -122,19 +125,23 @@ var MQ_FIELDS = [
   ['lastPremium', 'Premium on file for this term'], ['renewHistory', 'Terms on file'], ['invoiceFacts', 'Read from the document'],
   ['section', 'The client'],
   ['name', 'Client name'], ['email', 'E-mail'], ['mobile', 'Mobile'], ['gender', 'Gender'], ['dob', 'Date of birth'],
-  ['occupation', 'Occupation'], ['ownerType', 'Vehicle owned by'], ['company', 'Company name'], ['companyEmail', 'Company e-mail'],
+  ['occupation', 'Occupation'], ['marital', 'Marital status'], ['employer', "Employer's name"], ['homePhone', 'Home number'], ['address', 'Home address'],
+  ['firstGG', 'First-time Guardian General client'], ['otherGGLine', 'Other business with Guardian General'],
+  ['ownerType', 'Vehicle owned by'], ['company', 'Company name'], ['companyEmail', 'Company e-mail'],
   ['agent', 'Agent'], ['agentEmail', 'Agent e-mail'],
   ['section', 'The vehicle'],
   ['reg', 'Vehicle #'], ['make', 'Make'], ['model', 'Model'], ['year', 'Year of manufacture'], ['body', 'Body type'],
-  ['seating', 'Seating'], ['cc', 'CC rating'], ['value', 'Vehicle value (TT$)'], ['condition', 'New or used'],
+  ['seating', 'Seating'], ['cc', 'CC rating'], ['chassis', 'Chassis #'], ['value', 'Vehicle value (TT$)'], ['condition', 'New or used'],
+  ['secondAccLine', 'Second hand: ever in an accident'], ['use', 'Use of the vehicle'], ['antiTheft', 'Anti-theft devices'],
   ['mortgaged', 'Mortgaged'], ['institution', 'Financial institution'],
   ['section', 'The cover'],
-  ['cover', 'Cover type'], ['windscreen', 'Windscreen cover'], ['existingPolicy', 'Adding to existing policy'],
+  ['cover', 'Cover type'], ['windscreen', 'Windscreen cover'], ['windscreenLimit', 'Windscreen limit (TT$)'], ['existingPolicy', 'Adding to existing policy'],
   ['existingVehicles', 'Existing vehicles with Guardian General'], ['prevInsurer', 'Previous insurer'],
-  ['ncd', 'No claim discount'], ['drivingYears', 'Years driving'],
+  ['ncd', 'No claim discount'], ['ncdPct', 'No claim discount %'], ['drivingYears', 'Years driving'],
   ['section', 'The driver'],
   ['permit', "Driver's permit #"], ['permitIssued', 'Permit issued'], ['permitExpires', 'Permit expires'],
-  ['accidents', 'Any accidents'], ['accidentDetails', 'Accident details'],
+  ['accidents', 'Any accidents or claims'], ['accidentDetails', 'Accident details'], ['accidentRows', 'Accidents and claims, one by one'],
+  ['young', 'Young or inexperienced drivers'], ['youngDetails', 'About them'], ['youngRows', 'Young drivers, one by one'],
   ['section', 'Anything else'],
   ['notes', 'Other notes'],
 ];
@@ -641,6 +648,9 @@ function mqSubmit_(b) {
   if (d.accidents === 'Yes' && !d.accidentDetails) return { ok: false, error: 'Please say a little about the accident.' };
   if (d.flow === 'renew' && /changes/i.test(d.renewChoice) && !d.renewChanges) return { ok: false, error: 'Please say what you would like changed.' };
   var files = mqFiles_(b.files);
+  /* Guardian's request form travels only with a new quote, and only as a PDF. */
+  files = files.filter(function (f) { return f.kind !== 'request' || (d.flow !== 'renew' && f.type === 'application/pdf'); });
+  d.requestForm = files.some(function (f) { return f.kind === 'request'; });
 
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -700,13 +710,20 @@ function mqRead_(q, s) {
     agent: g('agent', 120), agentEmail: mqNormEmail_(g('agentEmail', 120)),
     reg: g('reg', 20).toUpperCase().replace(/^NOT REGISTERED YET$/, ''), make: g('make', 60), model: g('model', 60), year: g('year', 4).replace(/\D/g, ''),
     body: g('body', 40), seating: g('seating', 3).replace(/\D/g, ''), cc: g('cc', 6).replace(/\D/g, ''),
-    value: g('value', 14).replace(/[^0-9.]/g, ''), condition: g('condition', 10),
+    value: g('value', 14).replace(/[^0-9.]/g, ''), condition: g('condition', 20),
     mortgaged: yn('mortgaged'), institution: g('institution', 120),
     cover: g('cover', 60), windscreen: yn('windscreen'), existingPolicy: g('existingPolicy', 40),
     existingVehicles: g('existingVehicles', 200), prevInsurer: g('prevInsurer', 80), ncd: g('ncd', 40),
     drivingYears: g('drivingYears', 3).replace(/\D/g, ''),
     permit: g('permit', 40), permitIssued: g('permitIssued', 10), permitExpires: g('permitExpires', 10),
     accidents: yn('accidents'), accidentDetails: g('accidentDetails', 600), notes: g('notes', 1000),
+    marital: g('marital', 20), homePhone: g('homePhone', 40), address: g('address', 300), employer: g('employer', 120),
+    firstGG: yn('firstGG'), otherGG: yn('otherGG'), otherGGType: g('otherGGType', 120), chassis: g('chassis', 40).toUpperCase(),
+    use: g('use', 60), antiTheft: g('antiTheft', 160), secondAcc: yn('secondAcc'), secondAccDetails: g('secondAccDetails', 400),
+    windscreenLimit: g('windscreenLimit', 14).replace(/[^0-9.]/g, ''), ncdPct: g('ncdPct', 6).replace(/[^0-9.]/g, ''),
+    young: yn('young'), youngDetails: g('youngDetails', 600),
+    accidentRows: mqRows_(q, 'qa', [['date', 'on'], ['own', 'own damage TT$'], ['ins', 'insurer'], ['tp', 'third party TT$'], ['tpins', 'third party insurer'], ['drv', 'driver']]),
+    youngRows: mqRows_(q, 'yd', [['name', ''], ['occ', ''], ['dob', 'born'], ['dp', 'permit'], ['iss', 'issued']]),
     sfVehicle: g('sfVehicle', 40),
     newUnreg: yn('newUnreg'),
     renewChoice: /change/i.test(g('renewChoice', 40)) ? 'Renew with changes' : /as it is|as is/i.test(g('renewChoice', 40)) ? 'Renew as it is' : '',
@@ -721,13 +738,29 @@ function mqRead_(q, s) {
   d.flowLabel = MQ_FLOW_LABEL[d.flow] + (d.invoiceFacts ? ', from the client\'s document' : '');
   if (d.ownerType !== 'Company') { d.company = ''; d.companyEmail = ''; }
   if (d.mortgaged !== 'Yes') d.institution = '';
-  if (d.accidents !== 'Yes') d.accidentDetails = '';
+  if (d.accidents !== 'Yes') { d.accidentDetails = ''; d.accidentRows = ''; }
+  if (d.young !== 'Yes') { d.youngDetails = ''; d.youngRows = ''; }
+  if (d.otherGG !== 'Yes') d.otherGGType = '';
+  if (!/used|second/i.test(d.condition) || d.secondAcc !== 'Yes') d.secondAccDetails = '';
+  if (d.windscreen !== 'Yes') d.windscreenLimit = '';
+  d.otherGGLine = d.otherGG === 'Yes' ? 'Yes' + (d.otherGGType ? ': ' + d.otherGGType : '') : d.otherGG;
+  d.secondAccLine = /used|second/i.test(d.condition) && d.secondAcc ? d.secondAcc + (d.secondAccDetails ? ': ' + d.secondAccDetails : '') : '';
   if (d.companyEmail && !mqEmailOk_(d.companyEmail)) d.companyEmail = '';
   if (d.agentEmail && !mqEmailOk_(d.agentEmail)) d.agentEmail = '';
   if (d.value) { var v = Number(d.value); d.value = isNaN(v) ? '' : String(Math.round(v)); }
   if (d.year && (Number(d.year) < 1950 || Number(d.year) > new Date().getFullYear() + 1)) d.year = '';
   d.first = d.name.split(/\s+/)[0] || '';
   return d;
+}
+
+/** Up to three rows of a table on Guardian's form (accidents, young drivers), as one line each for the desk. */
+function mqRows_(q, pre, cols) {
+  var out = [];
+  for (var i = 0; i < 3; i++) {
+    var parts = cols.map(function (c) { var v = mqClean_(q[pre + i + c[0]], 80); return v ? (c[1] ? c[1] + ' ' : '') + v : ''; }).filter(Boolean);
+    if (parts.length) out.push((i + 1) + '. ' + parts.join(', '));
+  }
+  return out.join('\n');
 }
 
 /** The uploads: base64 in the request, each under MAX_FILE_BYTES, images or
@@ -785,6 +818,11 @@ function mqRow_(ref, d, contact, files, folder) {
     'SF task': '', 'Sent to': '', 'Mail result': '', 'Quoted on': '', 'Quoted premium': '', 'Staff note': '',
     'Request type': d.flowLabel, 'Renewal date': d.renewDate, 'Renewal choice': d.renewChoice, 'Renewal changes': d.renewChanges,
     'Last premium': d.lastPremium, 'Invoice read': d.invoiceFacts,
+    'Marital status': d.marital, 'Home no.': d.homePhone, 'Home address': d.address, 'Employer': d.employer, 'First GG client': d.firstGG,
+    'Other GG business': d.otherGGLine, 'Chassis #': d.chassis, 'Use of vehicle': d.use, 'Anti-theft': d.antiTheft,
+    'Second-hand accident': d.secondAccLine, 'Windscreen limit': d.windscreenLimit, 'NCD %': d.ncdPct,
+    'Young drivers': d.young + (d.youngDetails ? ': ' + d.youngDetails : ''),
+    'Request form': files.some(function (f) { return f.kind === 'request'; }) ? 'attached' : '',
   };
 }
 
@@ -1230,6 +1268,8 @@ function mqDeskMail_(ref, d, contact, folder) {
     (contact.id ? ' · Salesforce contact ' + mqEsc_(contact.id) + ' (' + mqEsc_(contact.action) + ')' : ' · ' + mqEsc_(contact.action)) +
     (folder ? ' · <a href="' + mqEsc_(folder) + '" style="color:#3A7BD5">documents in Drive</a>' : '') +
     '. The driver\'s permit and the certified copy, where the client attached them, are attached to this e-mail.</p>';
+  if (d.requestForm) intro += '<p style="background:#EEF6EE;border-radius:10px;padding:10px 12px;font-size:14px"><b>Guardian\'s Motor Quotation Request form is attached</b>, ' +
+    'filled in from the client\'s answers (motor-quotation-request.pdf). It is still a fillable form: add or correct anything before you price.</p>';
   return mqWrap_('Motor quote request ' + ref, intro + mqFieldsHtml_(d) + tail, true);
 }
 

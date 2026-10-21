@@ -142,13 +142,34 @@ const calls = []; let requests = [];
   await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
   ok('the quick quote still needs the cover and the years driving', /cover/.test(await txt('#formErr')) && /driving/.test(await txt('#formErr')));
   await page.click('.opts button:has-text("Comprehensive")'); await page.selectOption('select[data-k=drivingYears]', '10');
+  const pk = async (k, v) => page.click(`#step button[onclick^="pick('${k}','${v}'"]`);
+  await page.click('#btnNext'); await page.waitForFunction(() => /accidents/.test(document.getElementById('formErr').textContent));
+  ok('a quick quote asks the two history questions Guardian\'s form needs', /accidents or claims/.test(await txt('#formErr')) && /young or new drivers/.test(await txt('#formErr')));
+  await pk('accidents', 'No'); await pk('young', 'No'); await page.selectOption('select[data-k=use]', 'Private use and to work');
+  ok('the rest of Guardian\'s form is in an optional fold, open because we already hold some of it', await page.evaluate(() => { const d = document.querySelector('#step details.more'); return !!d && d.open && /Optional/.test(d.textContent); }) &&
+    await page.inputValue('#step details.more [data-k=occupation]') === 'Teacher'); await page.selectOption('#step details.more select[data-k=marital]', 'Married'); await page.fill('#step details.more [data-k=employer]', 'Ministry of Education');
+  await page.fill('#step details.more [data-k=address]', '12A Sample Road, Chaguanas');
   await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
   const qrev = await txt('.rev');
+  ok('the review offers Guardian\'s request form to preview', /Motor Quotation Request/.test(await txt('.formcard')) && await page.isVisible('.formcard button'));
+  const rpop = page.waitForEvent('popup'); await page.click('.formcard button'); const rp = await rpop;
+  await rp.waitForURL(/^blob:/, { timeout: 15000 }).catch(() => {});
+  ok('"Preview the form" opens the filled PDF', /^blob:/.test(rp.url())); await rp.close();
   ok('the review says new quote (quick), read from the dealer\'s document, not registered yet', /New quote \(quick\)/.test(qrev) && /Sample Motors/.test(qrev) && /Not registered yet/.test(qrev) && /TT\$ 212,645/.test(qrev));
   await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
   const qsub = calls.filter(c => c.action === 'submit').pop();
-  ok('it is sent as a quick quote with what was read and the document attached', qsub.quote.flow === 'quick' && qsub.quote.newUnreg === 'Yes' && qsub.quote.invoice && qsub.quote.invoice.dealer === 'Sample Motors Ltd' &&
-    qsub.files.length === 1 && qsub.files[0].kind === 'invoice');
+  ok('it is sent as a quick quote with what was read, the document and Guardian\'s form attached', qsub.quote.flow === 'quick' && qsub.quote.newUnreg === 'Yes' && qsub.quote.invoice && qsub.quote.invoice.dealer === 'Sample Motors Ltd' &&
+    qsub.files.length === 2 && qsub.files[0].kind === 'invoice' && qsub.files[1].kind === 'request' && qsub.files[1].type === 'application/pdf');
+  {
+    const LL = require(path.join(ROOT, 'motor-quote/vendor/pdf-lib-1.17.1.min.js'));
+    const rf = (await LL.PDFDocument.load(Buffer.from(qsub.files[1].data, 'base64'))).getForm();
+    const T = n => rf.getTextField(n).getText() || '';
+    ok('Guardian\'s form carries her answers in its own fields: name, e-mail, the vehicle, the value, the use', T('Name') === 'Anika Pretend' && T('Email') === 'anika@example.com' && T('Make') === 'MG' &&
+      T('Model') === 'ZS HEV Lux' && T('year of Manufacture') === '2026' && T('Market Value') === 'TT$ 212,645' && T('Use of the Vehicle') === 'Private use and to work' && T('Reg No') === 'Not registered yet');
+    ok('…and the boxes: married, new, comprehensive, no accidents, no young drivers', rf.getCheckBox('Married').isChecked() && rf.getCheckBox('New').isChecked() && rf.getCheckBox('Comprehensive').isChecked() &&
+      rf.getRadioGroup('Have you ever had any accidents\\claims').getSelected() === 'No' && rf.getRadioGroup('Will any young inexperience drive be using your vehicle').getSelected() === 'No_5');
+    ok('…and the address and employer from the optional fold', T('Home Address 1') === '12A Sample Road, Chaguanas' && T('Employers Name') === 'Ministry of Education');
+  }
   ok('the done screen says the permit comes when the quote is taken', /permit/.test(await txt('#doneMsg')) || /Test mode/.test(await txt('#doneMsg')));
   await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
   ok('home lists both requests, newest first, with their type', /Quick quote[\s\S]*Renewal/.test(await txt('#reqs')));
@@ -177,7 +198,12 @@ const calls = []; let requests = [];
   ok('step 2: the vehicle picked is filled in', await page.inputValue('[data-k=reg]') === 'PDX 1234' && await page.inputValue('[data-k=make]') === 'Toyota' && await page.inputValue('[data-k=year]') === '2019' && await page.inputValue('[data-k=value]') === '95000');
   ok('make, year, body, seats and engine are drop-downs', (await page.$$('select.fld')).length >= 5 && (await page.$$('select[data-k=make] option')).length > 20);
   await page.selectOption('select[data-k=body]', 'Hatchback'); await page.selectOption('select[data-k=seating]', '5'); await page.selectOption('select[data-k=cc]', '1500');
-  await page.click('.opts button:has-text("Used")'); await page.click('.opts button:has-text("Yes")');
+  const pk2 = async (k, v) => page.click(`#step button[onclick^="pick('${k}','${v}'"]`);
+  ok('new or used is the form\'s three: new, foreign used, second hand', /New[\s\S]*Foreign used[\s\S]*Second hand/.test(await txt('#step .opts')));
+  await pk2('condition', 'Second hand');
+  ok('second hand asks whether it was ever in an accident', await page.isVisible('#step button[onclick^="pick(\'secondAcc\',\'Yes\'"]'));
+  await pk2('secondAcc', 'No'); await page.fill('[data-k=chassis]', 'zze0000000test'); await page.selectOption('select[data-k=use]', 'Private use');
+  await pk2('mortgaged', 'Yes');
   await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
   ok('on a loan needs the institution', /institution/.test(await txt('#formErr')) && await page.isVisible('#instBox'));
   await page.selectOption('select[data-k=institution]', 'Other'); await page.fill('#instBox .other input', 'Sample Credit Union');
@@ -190,10 +216,15 @@ const calls = []; let requests = [];
   await page.selectOption('select[data-k=drivingYears]', '10'); await page.selectOption('select[data-k=ncd]', '3 years');
   ok('"Other" on a drop-down took the typed institution', await page.evaluate(() => JSON.parse(localStorage.getItem('rrb-mq-draft')).institution === 'Sample Credit Union'));
   await page.click('#btnNext'); await page.waitForFunction(() => /The driver/.test(document.getElementById('step').textContent));
-  await page.fill('[data-k=permit]', 'DP-000000'); await page.click('.opts button:has-text("Yes")');
+  await page.fill('[data-k=permit]', 'DP-000000'); await pk2('accidents', 'Yes'); await pk2('young', 'Yes');
+  ok('a Yes opens the form\'s own table, three rows each', (await page.$$('[data-k^=qa][data-k$=date]')).length === 3 && (await page.$$('[data-k^=yd][data-k$=name]')).length === 3);
   await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
   ok('an accident needs its details', /accident/.test(await txt('#formErr')));
   await page.fill('[data-k=accidentDetails]', 'A small bump in a car park, 2024, no claim made.');
+  await page.fill('[data-k=qa0date]', '2024-03-04'); await page.fill('[data-k=qa0own]', '2500'); await page.fill('[data-k=qa0drv]', 'Anika Pretend');
+  await page.click('#btnNext'); await page.waitForFunction(() => /young or new driver/.test(document.getElementById('formErr').textContent));
+  ok('a young driver needs a name', /young or new driver/.test(await txt('#formErr')));
+  await page.fill('[data-k=yd0name]', 'Sam Pretend'); await page.fill('[data-k=yd0dob]', '2007-01-09');
   await page.click('#btnNext'); await page.waitForFunction(() => /Your documents/.test(document.getElementById('step').textContent));
     await page.setInputFiles('input[data-kind=permit]', { name: 'permit.png', mimeType: 'image/png', buffer: png });
   await page.waitForFunction(() => /permit\.jpg/.test(document.getElementById('files').textContent));
@@ -206,7 +237,17 @@ const calls = []; let requests = [];
   ok('nothing goes without the tick', /tick/.test(await txt('#formErr')) && calls.filter(c => c.action === 'submit').length === sentBefore);
   await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
   const sub = calls.filter(c => c.action === 'submit').pop();
-  ok('the request is sent with the facts and the photo, as text/plain JSON', sub && sub.quote.flow === 'full' && sub.quote.reg === 'PDX 1234' && sub.quote.accidents === 'Yes' && sub.quote.ncd === '3 years' && sub.files.length === 1 && sub.files[0].type === 'image/jpeg' && sub.files[0].data.length > 100);
+  ok('the request is sent with the facts and the photo, as text/plain JSON', sub && sub.quote.flow === 'full' && sub.quote.reg === 'PDX 1234' && sub.quote.accidents === 'Yes' && sub.quote.ncd === '3 years' && sub.files.length === 2 && sub.files[0].type === 'image/jpeg' && sub.files[0].data.length > 100 && sub.files[1].kind === 'request');
+  {
+    const LL = require(path.join(ROOT, 'motor-quote/vendor/pdf-lib-1.17.1.min.js'));
+    const rf = (await LL.PDFDocument.load(Buffer.from(sub.files[1].data, 'base64'))).getForm(), T = n => rf.getTextField(n).getText() || '';
+    ok('every detail fills the tables: the accident row and the young driver row, dates written out', T('Date1') === '4 Mar 2024' && T('Amt settled for own damage1') === '2,500' && T('Driver1') === 'Anika Pretend' &&
+      T('Drivers name1') === 'Sam Pretend' && T('Date of birth1') === '9 Jan 2007' && T('Date of Birth') === '12 Apr 1988');
+    ok('…second hand ticked, its accident No, the chassis in capitals, the permit as the DP, NCD third year', rf.getCheckBox('Second Hand').isChecked() &&
+      rf.getRadioGroup('If Second Hand have the vehicle ever been involved in an accident').getSelected() === 'No' && T('Chassis No') === 'ZZE0000000TEST' &&
+      T('If Yes Client DP') === 'DP-000000' && rf.getCheckBox('year_3').isChecked() && T('Mortgagee') === 'Sample Credit Union');
+    ok('…a client of ours is not a first-time Guardian General client', rf.getRadioGroup('FirstTime GG Client').getSelected() === 'No');
+  }
   ok('the done screen shows the reference and the test-mode line', /^MQ-261021-00\d$/.test(await txt('#doneRef')) && /Test mode/.test(await txt('#doneMsg')));
   ok('the draft is cleared after sending', await page.evaluate(() => JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}').sent === true));
   await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');

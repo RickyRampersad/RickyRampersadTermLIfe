@@ -234,6 +234,18 @@
   .sigline{position:absolute;left:18px;right:18px;bottom:26%;border-bottom:2px solid #C9D8EE;font-style:normal;color:#9DBBE4;font-weight:800;font-size:18px;line-height:1;padding:0 0 4px}
   .sigfoot{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:8px 0 0;font-size:13.5px;color:var(--body)}
   .accrow{border-left:3px solid var(--line);padding-left:12px;margin:0 0 12px}
+  .accrow .rt{display:block;color:var(--ink);font-size:13.5px;margin:0 0 8px}.accrow .rt span{color:var(--dim);font-weight:500}
+  details.more{border:1.5px dashed #C9DDF5;border-radius:14px;padding:4px 14px;margin:6px 0 14px;background:#FAFCFE}
+  details.more[open]{padding-bottom:6px}
+  details.more summary{cursor:pointer;list-style:none;padding:10px 0;display:flex;flex-direction:column;gap:2px}
+  details.more summary::-webkit-details-marker{display:none}
+  details.more summary b{color:var(--c,var(--blue));font-size:15px}details.more summary b:after{content:" ›";display:inline-block;transition:transform .2s}
+  details.more[open] summary b:after{transform:rotate(90deg)}
+  details.more summary small{color:var(--dim);font-size:12.5px}
+  .formcard{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;border:1.5px solid #C9DDF5;background:var(--sky);border-radius:14px;padding:12px 14px;margin:14px 0 4px}
+  .formcard .ic{font-size:24px}.formcard>span:nth-child(2){flex:1;min-width:180px}
+  .formcard b{display:block;color:var(--ink);font-size:14.5px}.formcard small{color:var(--dim);font-size:12.5px}
+  .formcard .ghost{width:auto;margin:0;padding:9px 14px;min-height:42px}
 
   /* three paths, never mixed: a renewal (teal), a new quote (blue), accepting a quote (violet) */
   .t-renew{--c:var(--rn);--c2:var(--rn2);--bg:var(--rnbg)}
@@ -659,7 +671,7 @@ const FULL_STEPS = [
   { key: 'you', title: 'About you', short: 'You', render: stepYou, check: d => need(d, ['name', 'mobile']) || (d.ownerType === 'Company' && !d.company ? 'Please give the company name.' : '') },
   { key: 'vehicle', title: 'Your vehicle', short: 'Vehicle', render: stepVehicle, check: d => need(d, ['reg', 'make', 'model', 'year', 'value']) || (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') },
   { key: 'cover', title: 'The cover', short: 'Cover', render: stepCover, check: d => need(d, ['cover', 'drivingYears']) },
-  { key: 'driver', title: 'The driver', short: 'Driver', render: stepDriver, check: d => need(d, ['permit']) || (d.accidents === 'Yes' && !d.accidentDetails ? 'Please say a little about the accident.' : '') },
+  { key: 'driver', title: 'The driver', short: 'Driver', render: stepDriver, check: d => need(d, ['permit', 'accidents', 'young']) || historyCheck(d) },
   { key: 'docs', title: 'Your documents', short: 'Papers', render: stepDocs, check: () => '' },
   { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' },
 ];
@@ -683,13 +695,19 @@ const steps = () => FLOWS[draft.flow] || FULL_STEPS;
 function checkQuick(d) {
   return need(d, ['name', 'mobile', 'make', 'model', 'year', 'value', 'cover', 'drivingYears']) ||
     (!String(d.reg || '').trim() && d.newUnreg !== 'Yes' ? 'Still needed: the registration number, or tick "New vehicle, not registered yet".' : '') ||
-    (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '');
+    (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') ||
+    need(d, ['accidents', 'young']) || historyCheck(d);
+}
+/* Guardian's request form asks for the accidents and the young drivers; a Yes needs a word on each. */
+function historyCheck(d) {
+  return (d.accidents === 'Yes' && !String(d.accidentDetails || '').trim() && !d.qa0date ? 'Please say a little about the accident or claim.' : '') ||
+    (d.young === 'Yes' && !String(d.youngDetails || '').trim() && !d.yd0name ? 'Please say who the young or new driver is.' : '');
 }
 function checkRenew(d) {
   return need(d, ['name', 'mobile', 'renewChoice']) || (/changes/.test(d.renewChoice || '') && !String(d.renewChanges || '').trim() ? 'Please say what you would like changed.' : '');
 }
 
-const LABELS = { renewChoice: 'whether to renew as it is or with changes', name: 'your name', mobile: 'your mobile', company: 'the company name', reg: 'the vehicle number', make: 'the make', model: 'the model', year: 'the year', value: 'the vehicle value', cover: 'the cover you want', drivingYears: 'how long you have been driving', permit: "your driver's permit number" };
+const LABELS = { renewChoice: 'whether to renew as it is or with changes', name: 'your name', mobile: 'your mobile', company: 'the company name', reg: 'the vehicle number', make: 'the make', model: 'the model', year: 'the year', value: 'the vehicle value', cover: 'the cover you want', drivingYears: 'how long you have been driving', permit: "your driver's permit number", accidents: 'whether you have had any accidents or claims', young: 'whether young or new drivers will use the vehicle' };
 function need(d, keys) { const m = keys.filter(k => !String(d[k] || '').trim()); return m.length ? 'Still needed: ' + m.map(k => LABELS[k] || k).join(', ') + '.' : ''; }
 
 /* Starts a door. What we hold about the client is carried in; what belonged to
@@ -719,7 +737,9 @@ function startFlow(flow, vehIx, keep) {
       value: v.sumInsured ? String(Math.round(Number(v.sumInsured))) : '', prevInsurer: v.carrier || '', windscreen: v.windscreen ? 'Yes' : '' });
   }
   if (!draft.ownerType) draft.ownerType = 'Individual';
+  if (!draft.firstGG && me && me.found && ((me.vehicles || []).length || (me.policies || []).length)) draft.firstGG = 'No';
   saveDraft(); stepIx = 0; show('s-form'); render();
+  if (flow !== 'renew') pdfLib().catch(() => {});
 }
 function startNew(vehIx) { startFlow('full', vehIx); }
 function startRenew(vehIx, choice) { startFlow('renew', vehIx); draft.renewChoice = choice; saveDraft(); render(); }
@@ -734,7 +754,7 @@ function applyInvoice(F) {
   set('model', F.model);
   if (F.year) set('year', YEARS.indexOf(F.year) > -1 ? F.year : '');
   set('value', F.value);
-  set('condition', F.condition);
+  set('condition', /^new$/i.test(F.condition || '') ? 'New' : '');   // a used vehicle is foreign used or second hand: the client says which
   set('body', ci(BODIES, F.bodyType));
   set('cc', F.fuel === 'Electric' ? 'Electric' : ci(CCS, F.engineCc));
   set('seating', ci(SEATS, F.seats));
@@ -885,7 +905,7 @@ function stepQuick(d) {
     sec('🚗', 'The vehicle') +
     '<div class="row">' + sel('make', 'Make', MAKES, { req: 1 }) + inp('model', 'Model', { ph: 'e.g. Aqua', req: 1 }) + '</div>' +
     '<div class="row">' + sel('year', 'Year', YEARS, { req: 1 }) + inp('value', 'Value (TT$)', { mode: 'numeric', ph: 'e.g. 95000', req: 1, hint: 'The price on the invoice, or what it would sell for today.' }) + '</div>' +
-    opts('condition', 'New or used', ['New', 'Used']) +
+    opts('condition', 'New or used', CONDITIONS) +
     inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20 }) +
     '<label class="chk" style="margin:-6px 0 14px"><input type="checkbox" data-k="newUnreg"' + (d.newUnreg === 'Yes' ? ' checked' : '') + '> <span>New vehicle, not registered yet' + tag('newUnreg') + '</span></label>' +
     sec('🛡️', 'The cover') +
@@ -893,8 +913,18 @@ function stepQuick(d) {
     '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS) + '</div>' +
     opts('mortgaged', 'On a loan or hire purchase?', ['Yes', 'No']) +
     '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + sel('institution', 'Financial institution', BANKS) + '</div>' +
+    sel('use', 'Use of the vehicle', USES) +
+    sec('🧾', 'Your history') + historyHtml(false) +
     sec('👤', 'You') +
     '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>' +
+    '<details class="more"' + (['dob', 'marital', 'occupation', 'employer', 'address', 'chassis', 'antiTheft', 'firstGG'].some(k => d[k]) ? ' open' : '') + '><summary><b>Guardian\'s request form asks a little more</b><small>Optional. Every answer here makes the quote faster.</small></summary>' +
+      '<div class="row">' + inp('dob', 'Date of birth', { type: 'date' }) + sel('marital', 'Marital status', MARITAL) + '</div>' +
+      '<div class="row">' + inp('occupation', 'Occupation', { ph: 'e.g. Teacher' }) + inp('employer', "Employer's name") + '</div>' +
+      '<div class="row">' + inp('homePhone', 'Home number', { type: 'tel', mode: 'tel', ph: '868-' }) + inp('chassis', 'Chassis number', { ac: 'off' }) + '</div>' +
+      area('address', 'Home address', 'House number, street, town') +
+      inp('antiTheft', 'Anti-theft devices fitted', { ph: 'e.g. immobiliser, tracker; or none' }) +
+      opts('windscreen', 'Add windscreen cover?', ['Yes', 'No']) + when('windscreen=Yes', inp('windscreenLimit', 'Windscreen limit you want (TT$)', { mode: 'numeric' })) +
+      inp('ncdPct', 'No claim discount as a %, if you know it', { mode: 'numeric' }) + ggHtml() + '</details>' +
     (inv ? sec('📄', 'Your document') + '<div class="files">' + fileRow('invoice') + '</div>' : '');
 }
 /* The renewal: the vehicle and its record, then what the client wants. */
@@ -919,6 +949,24 @@ const PDFLIB_URL = '/motor-quote/vendor/pdf-lib-1.17.1.min.js';   // MIT, kept h
 const FORM_PROPOSAL = '/motor-quote/forms/gg-private-motor-proposal.pdf', FORM_KYP = '/motor-quote/forms/gg-know-your-policy-private-motor.pdf';
 const TITLES = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Other'];
 const MARITAL = ['Single', 'Married', 'Common-law', 'Divorced', 'Separated', 'Widowed'];
+/* Guardian's Motor Quotation Request, filled here and attached to the request for the quotes desk (forms.js fillRequest). */
+const FORM_REQUEST = '/motor-quote/forms/gg-motor-quotation-request.pdf';
+const USES = ['Private use', 'Private use and to work', 'Business use', 'Other'];
+const CONDITIONS = ['New', 'Foreign used', 'Second hand'];
+const ACC_COLS = [['date', 'Date', 'date'], ['own', 'Paid for your vehicle (TT$)', 'numeric'], ['ins', 'Your insurer then'], ['tp', 'Paid to the other party (TT$)', 'numeric'], ['tpins', "The other party's insurer"], ['drv', 'Who was driving']];
+const YD_COLS = [['name', "Driver's name"], ['occ', 'Occupation'], ['dob', 'Date of birth', 'date'], ['dp', 'Permit (DP) number'], ['iss', 'Permit issued', 'date']];
+/* Up to three rows of a table on Guardian's form, as cards a phone can fill. */
+function rows3(pre, cols, title) {
+  return [0, 1, 2].map(i => '<div class="accrow"><b class="rt">' + title + ' ' + (i + 1) + (i ? ' <span>(if any)</span>' : '') + '</b><div class="row">' +
+    cols.map(c => inp(pre + i + c[0], c[1], c[2] === 'date' ? { type: 'date' } : c[2] ? { mode: c[2] } : {})).join('') + '</div></div>').join('');
+}
+const historyHtml = full => ynq('accidents', 'Have you ever had any accidents or claims?') +
+  when('accidents=Yes', area('accidentDetails', 'Tell us briefly what happened', 'When, what happened, what was paid') + (full ? rows3('qa', ACC_COLS, 'Accident or claim') : '')) +
+  ynq('young', 'Will any young or inexperienced drivers use the vehicle?') +
+  when('young=Yes', area('youngDetails', 'Who, and how long they have driven', 'e.g. my son, 19, driving one year') + (full ? rows3('yd', YD_COLS, 'Driver') : ''));
+const ggHtml = () => opts('firstGG', 'Is this your first policy with Guardian General?', ['Yes', 'No']) +
+  opts('otherGG', 'Any other business with Guardian General?', ['Yes', 'No'], 'Life, health, home, another vehicle…') +
+  when('otherGG=Yes', inp('otherGGType', 'What is it?', { ph: 'e.g. Home, Life' }));
 const LEVELS = ['Level 1 ($3,000)', 'Level 2 ($5,000)', 'Level 3 ($8,000)'], EV_LIMITS = ['$50,000', '$75,000', '$100,000', '$120,000'];
 const BODY_TYPES = ['Sedan', 'Hatchback', 'SUV', 'Crossover', 'Wagon', 'Pickup', 'Van', 'Coupe', 'Convertible', 'Motorcycle', 'Other'];
 function docLabel(k) { const t = KINDS[k] || TDOCS[k]; return t ? t[0] : k; }
@@ -1237,7 +1285,11 @@ function stepYou(d) {
   const held = me && me.found ? '<p class="muted">Filled in from our records. Change anything that is different.</p>' : '';
   return held + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) +
     '<div class="row">' + opts('gender', 'Gender', ['Female', 'Male']) + inp('dob', 'Date of birth', { type: 'date' }) + '</div>' +
-    inp('occupation', 'Occupation', { ph: 'e.g. Teacher', list: 'jobs' }) +
+    sel('marital', 'Marital status', MARITAL) +
+    '<div class="row">' + inp('occupation', 'Occupation', { ph: 'e.g. Teacher', list: 'jobs' }) + inp('employer', "Employer's name", { ph: 'e.g. Ministry of Education' }) + '</div>' +
+    inp('homePhone', 'Home number', { type: 'tel', mode: 'tel', ph: '868-' }) +
+    area('address', 'Home address', 'House number, street, town') +
+    ggHtml() +
     '<datalist id="jobs">' + ['Teacher', 'Nurse', 'Police Officer', 'Soldier', 'Civil Servant', 'Clerk', 'Accountant', 'Engineer', 'Driver', 'Mechanic', 'Electrician', 'Business Owner', 'Sales', 'Manager', 'Doctor', 'Lawyer', 'Student', 'Retired', 'Self-employed'].map(x => '<option value="' + x + '">').join('') + '</datalist>' +
     opts('ownerType', 'The vehicle is owned by', ['Individual', 'Company']) +
     '<div id="companyBox" class="' + (d.ownerType === 'Company' ? '' : 'hide') + '">' + inp('company', 'Company name') + inp('companyEmail', 'Company e-mail', { type: 'email', mode: 'email' }) + '</div>' +
@@ -1245,19 +1297,25 @@ function stepYou(d) {
 }
 function stepVehicle(d) {
   return inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20, req: 1 }) +
+    inp('chassis', 'Chassis number', { ac: 'off', hint: 'On the certified copy.' }) +
     '<div class="row">' + sel('make', 'Make', MAKES, { req: 1 }) + inp('model', 'Model', { ph: 'e.g. Aqua', req: 1 }) + '</div>' +
     '<div class="row">' + sel('year', 'Year of manufacture', YEARS, { req: 1 }) + sel('cc', 'Engine size (cc)', CCS) + '</div>' +
     '<div class="row">' + sel('body', 'Body type', BODIES) + sel('seating', 'Seats, including the driver', SEATS) + '</div>' +
     inp('value', 'Value of the vehicle (TT$)', { mode: 'numeric', ph: 'e.g. 95000', req: 1 }) +
-    opts('condition', 'New or used', ['New', 'Used']) +
+    opts('condition', 'New or used', CONDITIONS) +
+    when('condition=Foreign used|Second hand', ynq('secondAcc', 'Has it ever been in an accident?') + when('secondAcc=Yes', area('secondAccDetails', 'What happened?'))) +
+    sel('use', 'Use of the vehicle', USES) +
+    inp('antiTheft', 'Anti-theft devices fitted', { ph: 'e.g. immobiliser, tracker; or none' }) +
     opts('mortgaged', 'On a loan or hire purchase?', ['Yes', 'No']) +
     '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + sel('institution', 'Financial institution', BANKS) + '</div>';
 }
 function stepCover(d) {
   return opts('cover', 'The cover you want', COVERS, '', true) +
     opts('windscreen', 'Add windscreen cover?', ['Yes', 'No']) +
+    when('windscreen=Yes', inp('windscreenLimit', 'Windscreen limit you want (TT$)', { mode: 'numeric', ph: 'e.g. 10000' })) +
     sec('🪪', 'Your driving record') +
     '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS) + '</div>' +
+    inp('ncdPct', 'No claim discount as a %, if you know it', { mode: 'numeric', ph: 'e.g. 30' }) +
     sel('prevInsurer', 'Current or last insurer', INSURERS) +
     sec('📄', 'Already with Guardian General?') +
     inp('existingPolicy', 'Existing motor policy number', { hint: 'Leave blank for a new policy.' }) +
@@ -1266,8 +1324,7 @@ function stepCover(d) {
 function stepDriver(d) {
   return inp('permit', "Driver's permit number", { ac: 'off', req: 1 }) +
     '<div class="row">' + inp('permitIssued', 'Permit first issued', { type: 'date' }) + inp('permitExpires', 'Permit expires', { type: 'date' }) + '</div>' +
-    opts('accidents', 'Any accidents or claims in the last three years?', ['Yes', 'No']) +
-    '<div id="accBox" class="' + (d.accidents === 'Yes' ? '' : 'hide') + '"><label class="f"><b>Tell us a little about it</b><textarea class="fld" data-k="accidentDetails">' + esc(d.accidentDetails || '') + '</textarea></label></div>' +
+    sec('🧾', 'Your history', 'As Guardian\'s request form asks it') + historyHtml(true) +
     '<label class="f"><b>Anything else we should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';
 }
 const KINDS = { 'invoice': ['The dealer\'s invoice', 'A photo or a PDF of the car dealer\'s bill.'], 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
@@ -1319,20 +1376,38 @@ function prepFile(file, kind, maxPx) {
 }
 function stepReview(d) {
   const G = [['The request', [['Request', FLOW_NAME[d.flow] || ''], ['Renews on', d.renewOnText], ['You ask', d.renewChoice], ['Changes', d.renewChanges], ['Read from', d.invoice ? d.docLabel : '']]],
-    ['The client', [['Name', d.name], ['E-mail', session && session.email], ['Mobile', d.mobile], ['Gender', d.gender], ['Date of birth', d.dob], ['Occupation', d.occupation], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', d.agent]]],
-    ['The vehicle', [['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
-    ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', d.ncd], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
-    ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents', d.accidents + (d.accidentDetails ? ': ' + d.accidentDetails : '')], ['Notes', d.notes]]],
+    ['The client', [['Name', d.name], ['E-mail', session && session.email], ['Mobile', d.mobile], ['Home number', d.homePhone], ['Gender', d.gender], ['Date of birth', d.dob], ['Marital status', d.marital], ['Occupation', d.occupation], ['Employer', d.employer], ['Home address', d.address], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', d.agent], ['First policy with GG', d.firstGG], ['Other business with GG', d.otherGG === 'Yes' ? 'Yes' + (d.otherGGType ? ': ' + d.otherGGType : '') : d.otherGG]]],
+    ['The vehicle', [['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['Chassis', d.chassis], ['Use', d.use], ['Anti-theft', d.antiTheft], ['Ever in an accident', /used|second/i.test(d.condition || '') && d.secondAcc === 'Yes' ? 'Yes' + (d.secondAccDetails ? ': ' + d.secondAccDetails : '') : ''], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
+    ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen === 'Yes' && d.windscreenLimit ? 'Yes, TT$ ' + Number(d.windscreenLimit).toLocaleString() : d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', [d.ncd, d.ncdPct ? d.ncdPct + '%' : ''].filter(Boolean).join(', ')], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
+    ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents or claims', d.accidents === 'Yes' ? 'Yes' + (d.accidentDetails ? ': ' + d.accidentDetails : '') : d.accidents === 'No' ? 'None' : ''], ['Young or new drivers', d.young === 'Yes' ? 'Yes' + (d.youngDetails ? ': ' + d.youngDetails : '') : d.young === 'No' ? 'None' : ''], ['Notes', d.notes]]],
     ['Documents', [['Attached', files.length ? files.map(f => docLabel(f.kind)).join(', ') : (d.flow === 'full' ? 'none' : '')]]]];
   return '<p class="muted">Check it over. Tap Back to change anything. A receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
     G.map(g => [g[0], g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()))]).filter(g => g[1].length).map(g => '<h3>' + g[0] + '</h3>' + g[1].map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
+    (d.flow !== 'renew' ? '<div class="formcard"><span class="ic">📝</span><span><b>Guardian\'s Motor Quotation Request, filled in for you</b><small>It goes to the quotes desk with your request. Check it if you wish.</small></span>' +
+      '<button type="button" class="ghost" onclick="previewRequest()">Preview the form</button></div>' : '') +
     '<label class="chk"><input type="checkbox" id="agree"> <span>This is true to the best of my knowledge. Please ' + (d.flow === 'renew' ? 'renew my cover.' : 'get me a quote.') + '</span></label>';
+}
+async function buildRequest() {
+  const L = await pdfLib(), t = await fetch(FORM_REQUEST).then(r => { if (!r.ok) throw new Error('The form could not load.'); return r.arrayBuffer(); });
+  return MQForms.fillRequest(L, t, Object.assign({}, draft, { email: session && session.email }));
+}
+async function previewRequest() {
+  const w = window.open('', '_blank');
+  try { collect(); const b = await buildRequest(); const url = URL.createObjectURL(new Blob([b], { type: 'application/pdf' })); if (w) w.location = url; else location.href = url; }
+  catch (e) { if (w) w.close(); $('formErr').textContent = e.message; }
 }
 async function submit() {
   if (!$('agree') || !$('agree').checked) { $('formErr').textContent = 'Please tick the box to send.'; return; }
-  $('btnNext').disabled = true; $('btnNext').textContent = 'Sending…';
+  $('btnNext').disabled = true;
   try {
-    const j = await api('submit', { token: session.token, quote: draft, files: files.map(f => ({ kind: f.kind, name: f.name, type: f.type, data: f.data })) });
+    const out = files.map(f => ({ kind: f.kind, name: f.name, type: f.type, data: f.data }));
+    /* Guardian's own request form goes with every new quote. If it cannot be made, the request still goes: the desk has every answer in the e-mail. */
+    if (draft.flow !== 'renew') {
+      $('btnNext').textContent = 'Filling in Guardian\'s form…';
+      try { out.push({ kind: 'request', name: 'motor-quotation-request.pdf', type: 'application/pdf', data: bytesToB64(await buildRequest()) }); } catch (e) {}
+    }
+    $('btnNext').textContent = 'Sending…';
+    const j = await api('submit', { token: session.token, quote: draft, files: out });
     requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
     $('doneRef').textContent = j.ref;
     $('doneTitle').textContent = j.flow === 'renew' ? 'Your renewal request has gone.' : 'Your request has gone.';

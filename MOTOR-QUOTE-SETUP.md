@@ -47,6 +47,10 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
   forms back. Each proposal is a row on the **Motor Proposals** tab (`MP-yyMMdd-nnn`). The representative's half of the
   Know Your Policy form is left for the branch. Compliance must confirm the signed-on-screen proposal is accepted.
   When Guardian revises a form, replace the PDF and re-measure: the positions in `forms.js` are taken off its characters.
+- **Guardian's Motor Quotation Request form.** Every new quote (quick or full, never a renewal) carries Guardian's own
+  fillable request form (`motor-quote/forms/gg-motor-quotation-request.pdf`), filled in on the phone from the client's
+  answers and attached to the desk e-mail as `motor-quotation-request.pdf`. It stays fillable, so the desk can add or
+  correct anything. The client can preview it before sending.
 
 ## Install (once, about ten minutes)
 
