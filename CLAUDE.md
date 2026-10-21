@@ -112,6 +112,17 @@ the first cut of both wall films and the note back was "I am hearing a different
 language" — which was exactly what it was. `en-US-AndrewNeural` is the same warm,
 confident read with no language detection in it.
 
+**Changed for the wall and the FY27 film, 21 October 2026.** Mr Rampersad heard
+`en-US-AndrewNeural` at -4% as "robotic" ("needs to be more human"), listened to
+five samples over the branch track and chose **"Andrew Expressive"**:
+`en-US-AndrewMultilingualNeural` at +0%, with the lines rewritten in spoken,
+conversational wording (contractions, short sentences, "we" and "you"). Because
+the Multilingual voice can still slip into another language, every clip made on
+the runner is transcribed with Whisper (`tts.yml`, `"check": true` in the job,
+results in `tts/out/check.json`) and any clip not heard as English, or whose words
+differ, is re-worded and re-made before it is used. Other films keep the rule above
+until he says otherwise.
+
 Output is 24 kHz mono MP3 — plenty for speech over a music bed.
 
 **Why these settings.** Andrew at `-12%` reads under natural pace, lets a full
