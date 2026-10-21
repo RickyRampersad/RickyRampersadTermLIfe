@@ -8092,13 +8092,14 @@ function wallStaff_(day, outside) {
     var a = att[s], first = a ? timeStr_(a.FirstSignIn) : '', st = a ? String(a.Status || '').toLowerCase() : '';
     var sp = parseSpan_(scheduleFor_(s).hours || '') || { start: 480, end: 960 };
     var status = first ? 'in' : (st === 'absent' ? 'out' : (nowM != null && nowM < sp.start + ABSENT_AFTER_MIN ? 'later' : 'out'));
-    var hours = []; for (var j = 0; j < H; j++) hours.push(0);
-    (byDesk[s] || []).forEach(function (c) { var h = Math.floor(c.min / 60) - WALL2.FROM_H; if (h >= 0 && h < H) hours[h]++; });
+    var hours = [], hourKinds = []; for (var j = 0; j < H; j++) { hours.push(0); hourKinds.push({}); }
+    // Each hour's closes by kind of task, so the wall colours the hour (21 Oct 2026: "the task type should be in a colour inside the green").
+    (byDesk[s] || []).forEach(function (c) { var h = Math.floor(c.min / 60) - WALL2.FROM_H; if (h >= 0 && h < H) { hours[h]++; var k = wallKind_(c); hourKinds[h][k] = (hourKinds[h][k] || 0) + 1; } });
     var sc = live && live[s], g = sc ? gameGain_(s, day, hist, sc) : { pct: null }, stk = GAME.DESKS.indexOf(s) > -1 ? gameStreak_(s, day) : { n: 0 };
     var covering = moves.filter(function (m) { return m.to === s && m.from !== s; }).length;
     var by = {}; moves.forEach(function (m) { if (m.from === s && m.to !== s) by[m.to] = (by[m.to] || 0) + 1; });
     var p = { sid: s, name: gameFirst_(s), status: status, game: GAME.DESKS.indexOf(s) > -1, startAt: wallAt_(sp.start),
-      closes: (byDesk[s] || []).length, hours: hours, covering: covering, coveredBy: Object.keys(by).map(function (t) { return { name: gameFirst_(t), n: by[t] }; }),
+      closes: (byDesk[s] || []).length, hours: hours, hourKinds: hourKinds, covering: covering, coveredBy: Object.keys(by).map(function (t) { return { name: gameFirst_(t), n: by[t] }; }),
       par: sc ? sc.par : 0, parDone: sc ? sc.parDone : 0, parMet: !!(sc && sc.parMet), quests: sc ? sc.quests : 0, questsOf: sc ? sc.questList.length : 0,
       streak: stk.n, gain: outside && g.pct != null && g.pct < 0 ? null : g.pct, bestDay: !!g.bestDay };   // outside: progress only
     if (UM_DESKS.indexOf(s) > -1) p.role = 'Unit manager';   // Akaash on the wall with the desks (20 Oct 2026: "where is Akaash")
@@ -8137,7 +8138,15 @@ function wallStaff_(day, outside) {
   } catch (e) {}
   var tot = 0; Object.keys(mix).forEach(function (k) { tot += mix[k]; });
   var best = 0; team.forEach(function (v, i2) { if (v > team[best]) best = i2; });
-  return { people: people, team: team, fromH: WALL2.FROM_H, toH: WALL2.TO_H, nowH: nowM == null ? null : Math.floor(nowM / 60),
+  // Who has the bag today, on the hour it leaves (21 Oct 2026: "who does the bag as well built in"): the mailbag rota by week,
+  // the next one in when the router is out (mailbagRouter_), leaving at MAILBAG_AT (12 noon), papers in a quarter before.
+  var bag = null;
+  try {
+    var outNow = {}; people.forEach(function (p) { if (p.status === 'out') outNow[p.sid] = 1; });
+    var rt = mailbagRouter_(day, outNow), lv = mailbagLeaves_();
+    if (rt && rt.router) bag = { who: gameFirst_(rt.router), at: wallAt_(lv), h: Math.floor(lv / 60), cutoff: wallAt_(lv - 15), covering: rt.router !== rt.scheduled ? gameFirst_(rt.scheduled) : '' };
+  } catch (e) {}
+  return { people: people, team: team, bag: bag, fromH: WALL2.FROM_H, toH: WALL2.TO_H, nowH: nowM == null ? null : Math.floor(nowM / 60),
     mix: Object.keys(mix).map(function (k) { return { k: k, label: WALL_KIND[k].charAt(0).toUpperCase() + WALL_KIND[k].slice(1), n: mix[k] }; }),
     payoffPct: tot ? Math.round(100 * (mix['new'] + mix.orphan + mix.retention) / tot) : null,
     busiest: tot ? { at: wallAt_((WALL2.FROM_H + best) * 60), to: wallAt_((WALL2.FROM_H + best + 1) * 60), n: team[best] } : null,
