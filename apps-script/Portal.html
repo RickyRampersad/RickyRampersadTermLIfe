@@ -466,8 +466,15 @@ function wireValue(i){
     if(!v){ fb.className='vfeed'; fb.innerHTML=''; return; }
     if(lo&&v<lo*0.8){
       fb.className='vfeed bad';
-      fb.innerHTML=`<b>That looks low.</b> If the car is worth more than ${m0(v)} and it is written off,
-        this is all you can be paid — and a partial claim is cut in the same proportion.`;
+      /* Motor has NO average clause — checked against GG-MOT-POL-APV-10/09. The
+         only mechanic is the cap in s2.4.1: the most payable is the market value
+         or the sum insured, WHICHEVER IS LESS. So underinsurance bites on a TOTAL
+         loss, where the client carries the shortfall; a partial repair is not
+         scaled down. The old wording borrowed the 85% average clause from the
+         property policy, where it is true, and applied it to a car, where it is
+         not. */
+      fb.innerHTML=`<b>That looks low.</b> If the car is worth more than ${m0(v)} and it is
+        written off, ${m0(v)} is the most you can be paid — you would carry the rest yourself.`;
     } else if(hi&&v>cur*1.05){
       fb.className='vfeed bad';
       fb.innerHTML=`<b>That is above what you carry now.</b> You cannot be paid more than the car is worth,

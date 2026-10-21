@@ -707,8 +707,9 @@ function wireValue(r){
         'vehicle is worth, so a higher figure usually buys premium, not protection.';
     } else if(cur && v<cur*0.55){
       fb.className='feed bad';
+      /* no average clause in motor — see the note in Portal.html */
       fb.textContent='That looks low. If it is worth more than '+money(v)+' and it is written '+
-        'off, this is all you can be paid — and a partial claim is cut in the same proportion.';
+        'off, '+money(v)+' is the most you can be paid — you would carry the rest yourself.';
     } else {
       fb.className='feed ok';
       fb.textContent = (cur&&v<cur)
