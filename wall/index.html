@@ -1458,14 +1458,16 @@ function wins(){
   const s=S(); if(!s) return [];
   if(Array.isArray(s.celebrate)) return s.celebrate;
   const out=[];
-  (s.people||[]).filter(p=>p.game).forEach(p=>{
+  // Only someone signed in today is celebrated: a streak or a rating never pops up for a desk that is out (21 Oct 2026).
+  const isIn=p=>!p.status||p.status==="in", inByName=n=>(s.people||[]).some(p=>p.name===n&&isIn(p));
+  (s.people||[]).filter(p=>p.game&&isIn(p)).forEach(p=>{
     if(p.parMet) out.push({k:"par",who:p.name,text:"Today's list is done"});
     if(p.bestDay) out.push({k:"best",who:p.name,text:"The best day yet"});
     (p.levelUps||[]).forEach(l=>out.push({k:"level",who:p.name,text:l.name+" · level "+l.lvl}));
     if(p.streak>=5&&p.streak%5===0) out.push({k:"streak",who:p.name,text:p.streak+" days on time, running"});
     if(p.thanks) out.push({k:"thanks",who:p.name,text:plural(p.thanks,"thank-you")+" for covering"});
   });
-  ((s.svc||{}).recent||[]).filter(r=>r.n===5&&/:/.test(r.at||"")).forEach(r=>out.push({k:"stars",who:r.who,text:"Staff · served "+r.from+", rated five stars",at:r.at}));   // the staff member served; the agent or client rated it (21 Oct 2026)
+  ((s.svc||{}).recent||[]).filter(r=>r.n===5&&/:/.test(r.at||"")&&inByName(r.who)).forEach(r=>out.push({k:"stars",who:r.who,text:"Staff · served "+r.from+", rated five stars",at:r.at}));   // the staff member served; the agent or client rated it (21 Oct 2026)
   return out;
 }
 const CELE={seen:{},q:[],busy:false,first:true,gap:0};
@@ -1511,11 +1513,11 @@ function celePlay(){
 }
 /** After a scene lands: its own bursts (a ring at par), then now and then the next win's moment. */
 function celeAfterMount(el,s){
-  if((s.id==="n11"||s.id==="n0"||s.ch==="newway")&&CELE.busy){ const c=$("#cele"); c.classList.remove("on"); clearTimeout(celePlay.t); celePlay.t=setTimeout(()=>{ c.innerHTML=""; CELE.busy=false; },400); }
+  if((s.id==="n11"||s.ch!=="staff")&&CELE.busy){ const c=$("#cele"); c.classList.remove("on"); clearTimeout(celePlay.t); celePlay.t=setTimeout(()=>{ c.innerHTML=""; CELE.busy=false; },400); }
   el.querySelectorAll("[data-burst]").forEach(b=>setTimeout(()=>{ if(!el.isConnected) return; const r=b.getBoundingClientRect(); confetti(r.left+r.width/2,r.top+r.height/2,MOB?36:70,.75); },(+b.dataset.burst||1.6)*1000));
   if(el.querySelector("[data-burst-scene]")) setTimeout(()=>{ if(el.isConnected) { confetti(innerWidth/2,innerHeight*.35,MOB?90:150,1); chime(); } },900);
   CELE.gap++;
-  if(s.id!=="n11"&&s.id!=="n0"&&s.ch!=="newway"&&CELE.q.length&&CELE.gap>=3) setTimeout(()=>{ if(el.isConnected&&celePlay()) CELE.gap=0; },2600);
+  if(s.ch==="staff"&&s.id!=="n11"&&CELE.q.length&&CELE.gap>=3) setTimeout(()=>{ if(el.isConnected&&celePlay()) CELE.gap=0; },2600);
 }
 
 // ---- the strip --------------------------------------------------------------------------------
