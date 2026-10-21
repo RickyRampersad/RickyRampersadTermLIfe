@@ -37,6 +37,24 @@ jobs:
                               await asyncio.sleep(5 * (attempt + 1))
           asyncio.run(main())
           PY
+      - name: check the language of every clip
+        run: |
+          python3 - <<'PY'
+          import json, glob, os
+          job = json.load(open('tts/job.json'))
+          if not job.get('check'): raise SystemExit(0)
+          os.system('pip install -q faster-whisper')
+          from faster_whisper import WhisperModel
+          m = WhisperModel('base', compute_type='int8')
+          out = {}
+          for key in job['films']:
+              for f in sorted(glob.glob(f'tts/out/{key}/*.mp3')):
+                  try:
+                      segs, info = m.transcribe(f)
+                      out[f] = [info.language, round(info.language_probability, 3), ' '.join(x.text.strip() for x in segs)]
+                  except Exception as e: out[f] = ['err', 0, str(e)]
+          json.dump(out, open('tts/out/check.json', 'w'), indent=1)
+          PY
       - if: always()
         run: |
           git config user.name tts-bot; git config user.email tts-bot@users.noreply.github.com

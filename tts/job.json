@@ -1,35 +1,94 @@
 {
- "voice": "en-US-AndrewNeural",
- "rate": "-4%",
- "voices": {
-  "s1": "en-US-AndrewNeural",
-  "s2": "en-US-AndrewNeural",
-  "s3": "en-US-AndrewMultilingualNeural",
-  "s4": "en-US-BrianMultilingualNeural",
-  "s5": "en-US-AvaMultilingualNeural"
- },
- "rates": {
-  "s1": "-4%",
-  "s2": "+0%",
-  "s3": "+0%",
-  "s4": "+0%",
-  "s5": "+0%"
- },
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "check": true,
  "films": {
-  "s1": [
-   "Our meetings, built by everyone. Each person signs in, adds to the agenda and says what they'll present. Every item has a name on it, and every voice is heard."
+  "n0": [
+   "Welcome to the Ricky Rampersad Branch, live. Here's how the day's going, for our staff, our agents and our managers."
   ],
-  "s2": [
+  "n1": [
+   "Let's start with the staff. Who's in, who's out today, and who's covering, so no client is kept waiting."
+  ],
+  "n2": [
+   "Hour by hour, here's what's getting done. The colours show the kind of task, and the gold square is the bag."
+  ],
+  "n3": [
+   "Here's where the work went. The high-payoff work comes first: new business, orphan adoption and retention."
+  ],
+  "n4": [
+   "Now the team game. Everybody plays, and nobody's ranked. Each person plays against their own usual week."
+  ],
+  "n10": [
+   "How did we serve? Every task we close for an agent or a client gets rated, by the people we serve."
+  ],
+  "n11": [
+   "Shout-outs! Today's wins. Par reached, five-star service, new levels, streaks, and every single thank-you."
+  ],
+  "n5": [
+   "Now, over to the agents. Their day in the field, and the fact finds that turn into cover."
+  ],
+  "n6": [
+   "From a fact find to a family covered. Here's the month, and the year's goal against the time gone."
+  ],
+  "n9": [
+   "The Branch Manager's day. Everything done from his desk since five this morning, as it happens."
+  ],
+  "n7": [
+   "And the managers. Leading the branch, Akaash's unit out in the field, and every desk covered."
+  ],
+  "n8": [
+   "And that's what's happening right now, live, across the whole branch."
+  ],
+  "w1": [
+   "It's a new financial year, and we've got a new way of working. Let me show you what's changed."
+  ],
+  "w2": [
+   "One app, and one sign-in. Every tool we use, from the Log Book to the forms, lives at rickyrampersadbranch dot com, slash app."
+  ],
+  "w3": [
+   "So, who does what, every day? The Branch Manager, the Unit Manager, the BMA, Sales Support and our agents. Each one has a rhythm."
+  ],
+  "w4": [
+   "And every week has its beat. Premium letters every morning, group letters on Monday, our branch meeting on Wednesday, and the awards on Friday."
+  ],
+  "w8": [
+   "Here's how the papers move, end to end. The agent logs them, Sales Support signs for them, they're in by noon, and they go out on a transmittal."
+  ],
+  "w17": [
+   "And the transmittal? It's built for you now. Staff receive the papers on the phone, press one button, and out it comes, numbered, stamped and ready to print. Three days later, the department confirms it all arrived."
+  ],
+  "w9": [
+   "Shared work. When someone's out, their work moves to whoever's in, within thirty minutes, at each person's own pace. So no client waits."
+  ],
+  "w5": [
+   "This is Branch Intelligence. It reads a task's whole history, tells you where it stands, and drafts the reply. The managers check it and post it, and Sales Support get a brief."
+  ],
+  "w16": [
+   "Let's watch it work. One tap, and it reads everything on the task, says where things stand, and writes the reply in your voice. Want it firmer, shorter, or kinder? One more tap. And nothing posts until you say so."
+  ],
+  "w11": [
+   "So what does each manager see? The Branch Manager, the Unit Manager and the BMA each open one page in the morning, and they can comment under any task, with Branch Intelligence drafting it."
+  ],
+  "w13": [
    "Here's what's different about our meetings now. Everyone signs in on their phone, and that's the register. You add your item to the agenda, you say what you're presenting, and every slot has a name on it. So every voice gets heard."
   ],
-  "s3": [
-   "Here's what's different about our meetings now. Everyone signs in on their phone, and that's the register. You add your item to the agenda, you say what you're presenting, and every slot has a name on it. So every voice gets heard."
+  "w15": [
+   "And inside the meeting, it's all there. Your item's ready, the actions from last week come back, and the minutes are written as we go."
   ],
-  "s4": [
-   "Here's what's different about our meetings now. Everyone signs in on their phone, and that's the register. You add your item to the agenda, you say what you're presenting, and every slot has a name on it. So every voice gets heard."
+  "w10": [
+   "Fact find insights. Every conversation goes on a fact find, and we read them every single day: the fact finds, the applications, and the year's goals."
   ],
-  "s5": [
-   "Here's what's different about our meetings now. Everyone signs in on their phone, and that's the register. You add your item to the agenda, you say what you're presenting, and every slot has a name on it. So every voice gets heard."
+  "w6": [
+   "And here's the game for the new year. Par, three quests a day, streaks and levels, and one team goal: get the backlog down by Friday."
+  ],
+  "w14": [
+   "And the client feels it. Queries answered on time, every handover recorded, and the people we serve rating us."
+  ],
+  "w12": [
+   "Our walls are live in the branch. Everyone sees the score, all day, and every win. That's how we build a high-performance branch."
+  ],
+  "w7": [
+   "The Branch Manager, the Unit Manager, the BMA, Sales Support, and every one of our agents. One branch. Thank you, team. Here's to our new financial year!"
   ]
  }
 }
