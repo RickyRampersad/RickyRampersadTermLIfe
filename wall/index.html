@@ -72,6 +72,15 @@
   #date{font-size:1rem;color:var(--muted);margin-top:.25rem;text-align:right}
 
   #stage{flex:1;min-height:0;position:relative}
+  /* the slide number, top right of every scene (21 Oct 2026: "the slide number") */
+  #sno{position:absolute;top:1.5rem;right:2.2rem;z-index:6;display:flex;align-items:center;gap:.55rem;padding:.3rem .85rem .3rem .35rem;border-radius:99px;
+    background:rgba(18,19,23,.78);border:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-weight:800;font-size:1.1rem;color:var(--ink);pointer-events:none}
+  #sno:empty{display:none}
+  #sno svg{width:2rem;height:2rem;flex:none}
+  #sno b{color:var(--chg,var(--gold))}
+  #sno small{color:var(--muted);font-weight:600;font-size:.9em}
+  #sno.pop{animation:pop .55s cubic-bezier(.3,1.5,.5,1) both}
+  body.mob #sno{top:.55rem;right:.7rem;font-size:.72rem;padding:.2rem .55rem .2rem .25rem}body.mob #sno svg{width:1.3rem;height:1.3rem}
   .scene{position:absolute;inset:0;padding:1.9rem 3.4rem 1.2rem;display:flex;flex-direction:column;gap:1.4rem;opacity:0;transition:opacity .6s ease, filter .6s ease}
   .scene.on{opacity:1}
   .scene.off{opacity:0;filter:blur(6px)}
@@ -131,6 +140,17 @@
   .heat{display:grid;gap:.45rem;align-items:center}
   .cell{height:3.1rem;border-radius:.65rem;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.15rem}
   .hl{font-size:.95rem;color:var(--muted);text-align:center}
+  .cell{position:relative;overflow:hidden}
+  .cell .kb{position:absolute;left:.35rem;right:.35rem;bottom:.3rem;height:.6rem;display:flex;gap:2px;border-radius:.3rem;overflow:hidden}
+  .cell .kb i{display:block;height:100%;transform-origin:left center;animation:grow .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
+  .cell.kd{align-items:flex-start;padding-top:.25rem}
+  .cell.bag{outline:.22rem solid var(--gold);outline-offset:-.22rem}
+  .cell .bg{position:absolute;top:.2rem;right:.25rem;width:1.3rem;height:1.3rem}
+  .klg{display:flex;flex-wrap:wrap;gap:.45rem 1.1rem;align-items:center;font-size:1.02rem;font-weight:700}
+  .klg span{display:inline-flex;align-items:center;gap:.4rem}.klg i{width:.95rem;height:.95rem;border-radius:.25rem;display:inline-block}
+  .klg .bagc{margin-left:auto;padding:.3rem .8rem;border-radius:99px;border:1px solid var(--gold);color:var(--gold);background:rgba(227,184,90,.1)}
+  body.mob .cell .kb{left:.12rem;right:.12rem;bottom:.12rem;height:.28rem}body.mob .cell .bg{width:.8rem;height:.8rem;top:.05rem;right:.05rem}
+  body.mob .klg{font-size:.72rem;gap:.3rem .6rem}body.mob .klg .bagc{margin-left:0}
   .now{outline:2px solid var(--coral);outline-offset:2px}
   /* rows */
   .row{display:grid;gap:1rem;align-items:center}
@@ -356,6 +376,8 @@
   @keyframes hover{50%{transform:translateY(-.3rem)}}
   .ev.slide:first-child{box-shadow:0 0 0 1px color-mix(in srgb,var(--chc,#E3B85A) 45%,transparent),0 0 1.6rem color-mix(in srgb,var(--chc,#E3B85A) 18%,transparent)}
   .cell.lite{animation-name:cellIn}
+  /* the hour now: in once, then the pulse (it used to loop the entrance every 1.5 s, a flicker on the TV) */
+  .cell.lite.now{animation:cellIn .7s cubic-bezier(.3,1.5,.5,1) var(--d,0s) both, nowp 1.5s ease-in-out calc(var(--d,0s) + .7s) infinite}
   @keyframes cellIn{0%{opacity:0;transform:scale(.3) rotate(-8deg)}70%{opacity:1;transform:scale(1.08)}100%{transform:none}}
   .pc.pop:not(.breathe){animation-name:pcIn}
   @keyframes pcIn{0%{opacity:0;transform:translateY(1.2rem) scale(.85)}65%{opacity:1;transform:translateY(-.2rem) scale(1.02)}100%{transform:none}}
@@ -428,6 +450,40 @@
   body.mob .nwleg .tt{font-size:.82rem}body.mob .nwleg small{font-size:.7rem}body.mob .nwleg>span>b{font-size:.72rem}
   body.mob .nwstep{font-size:.92rem;padding:.5rem .7rem}body.mob .nwstep small{font-size:.75rem}
   @media (prefers-reduced-motion:reduce){.nwlap img,.nwph.shots img{animation:none;opacity:0}.nwlap img.last,.nwph.shots img.last{opacity:1}.nwstep{animation:none;opacity:1}}
+  /* channel 5: Branch Intelligence, step by step (w16) — the tracker's own page, light, as staff see it */
+  .wr{opacity:0;animation:wrin .28s ease forwards;animation-delay:var(--d,0s)}
+  @keyframes wrin{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:none}}
+  .nwrail{display:flex;gap:.6rem;flex-wrap:wrap}
+  .nwstep2{display:inline-flex;align-items:center;gap:.55rem;padding:.4rem .95rem .4rem .45rem;border-radius:99px;font-weight:800;font-size:1.1rem;background:var(--panel2);border:1px solid var(--line);animation:nwlit var(--len) ease both var(--d);--c:var(--green)}
+  .nwstep2:last-child{animation-name:nwlitl}
+  .nwstep2 i{font-style:normal;width:1.7rem;height:1.7rem;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#16171B;font-size:.9rem}
+  .nwnote{position:relative;display:flex;gap:.9rem;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);border-radius:.9rem;padding:.75rem .95rem;font-size:1.15rem}
+  .nwnote>.mono{flex:none;color:var(--muted);font-size:.95rem;padding-top:.15rem;width:3.6rem}
+  .nwnote b{display:block;font-size:1rem;color:var(--teal)}.nwnote div>span{color:#E6E2D8;line-height:1.35}
+  .nwnote::after{content:"";position:absolute;inset:-1px;border-radius:.9rem;border:2px solid var(--teal);opacity:0;animation:nwread .9s ease forwards;animation-delay:var(--sd)}
+  @keyframes nwread{0%{opacity:0;box-shadow:0 0 0 0 rgba(79,193,176,0)}40%{opacity:1;box-shadow:0 0 1.6rem .2rem rgba(79,193,176,.45)}100%{opacity:.55;box-shadow:none}}
+  .nwpage{background:#F7F5EF;color:#1F2433;border-radius:1.3rem;padding:.9rem 1.4rem 1rem;display:flex;flex-direction:column;gap:.4rem;box-shadow:0 1.6rem 3.4rem rgba(0,0,0,.45);position:relative;overflow:hidden;min-height:0}
+  .nwpgh{display:flex;align-items:baseline;gap:.8rem;border-bottom:1px solid #E5E1D6;padding-bottom:.45rem}.nwpgh b{font-size:1.25rem;color:#141C4A}.nwpgh span{color:#6A7180;font-size:.95rem}
+  .nwpgt{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem .7rem}.nwpgt b{font-size:1.25rem;color:#141C4A}.nwpgt small{width:100%;color:#6A7180;font-size:.95rem}
+  .nwbtn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .95rem;border-radius:.8rem;font-weight:700;font-size:1rem;border:1px solid #D9D3C3;background:#fff;color:#1F2433}
+  .nwbtn.ai,.nwbtn.pri{background:linear-gradient(120deg,#2C7A57,#1E5E43);color:#fff;border-color:transparent;animation:nwpress .35s ease both var(--ts)}
+  .nwpage .tap{position:absolute;width:2.6rem;height:2.6rem;border-radius:50%;background:rgba(44,122,87,.45);transform:scale(0);animation:nwtap .7s ease-out forwards var(--ts)}
+  .nwout2{position:relative;display:flex;flex-direction:column;gap:.25rem;min-height:0}
+  .nwout2 .k{font-size:.82rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#6A7180;margin-top:.15rem;display:flex;align-items:center;gap:.6rem}
+  .nwout2 .tg{font-size:.78rem;letter-spacing:.08em;padding:.15rem .55rem;border-radius:99px;background:#FBEFD5;color:#9A6B12}
+  .nwout2 .rd{font-size:1.06rem;line-height:1.4}
+  .nwout2 .rp{font-size:1.12rem;line-height:1.45;background:#fff;border:1px solid #E5E1D6;border-left:.3rem solid #2C7A57;border-radius:.7rem;padding:.6rem .85rem}
+  .nwadd{margin:0;padding-left:1.2rem;font-size:1.05rem;line-height:1.45;color:#2B3245}
+  .nwbtns{display:flex;flex-wrap:wrap;gap:.45rem;position:relative;margin-top:.35rem}
+  .nwwait{position:absolute;left:0;top:.2rem;display:flex;align-items:center;gap:.35rem;font-size:1.05rem;color:#2C7A57;font-weight:700;opacity:0;animation:nwin .3s ease forwards var(--in), nwout .3s ease forwards var(--out)}
+  .nwwait i{width:.5rem;height:.5rem;border-radius:50%;background:#2C7A57;animation:nwdot 1s ease-in-out infinite}.nwwait i:nth-child(2){animation-delay:.15s}.nwwait i:nth-child(3){animation-delay:.3s}
+  @keyframes nwdot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-.35rem);opacity:1}}
+  .nwposted{position:absolute;right:1.2rem;bottom:1.1rem;padding:.6rem 1.1rem;border-radius:99px;background:#2C7A57;color:#fff;font-weight:800;font-size:1.05rem;box-shadow:0 .8rem 1.6rem rgba(44,122,87,.35)}
+  body.mob .nwstep2{font-size:.72rem;padding:.25rem .6rem .25rem .3rem}body.mob .nwstep2 i{width:1.2rem;height:1.2rem;font-size:.65rem}
+  body.mob .nwnote{font-size:.85rem;padding:.55rem .7rem}body.mob .nwnote>.mono{font-size:.7rem;width:2.6rem}
+  body.mob .nwpage{padding:.8rem .9rem 3.2rem}body.mob .nwpgh b,body.mob .nwpgt b{font-size:.95rem}body.mob .nwout2 .rd,body.mob .nwadd{font-size:.85rem}body.mob .nwout2 .rp{font-size:.88rem}
+  body.mob .nwbtn{font-size:.75rem;padding:.35rem .6rem}body.mob .nwposted{font-size:.78rem;right:.7rem;bottom:.6rem}
+  @media (prefers-reduced-motion:reduce){.wr{animation:none;opacity:1}.nwwait{display:none}.nwstep2{animation:none}.nwnote::after{animation:none}}
   /* the phone */
   .nwph{flex:none;width:19rem;height:38rem;border-radius:2.8rem;border:.55rem solid #2A2E37;background:#121317;position:relative;overflow:hidden;box-shadow:0 2rem 4rem rgba(0,0,0,.45),0 0 0 1px #3A3F4A;
     animation:pop .8s cubic-bezier(.3,1.4,.5,1) both;animation-delay:.3s}
@@ -596,7 +652,7 @@
   <div class="right"><span class="mode" id="mode">INSIDE</span><div><div id="clock">–:–</div><div id="date"></div></div></div>
 </header>
 
-<main id="stage" aria-live="polite"></main>
+<main id="stage" aria-live="polite"><div id="sno" aria-hidden="true"></div></main>
 <button id="pausedCard" class="hidden" type="button" aria-label="Play"><span class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5l13 7.5-13 7.5z" fill="currentColor"/></svg></span><span><b>Paused</b><small>Tap to play · Space on a keyboard</small></span></button>
 <canvas id="party" aria-hidden="true"></canvas>
 <div id="cele" aria-live="polite"></div>
@@ -634,6 +690,7 @@ async function call(body){
 }
 function trini(){ if(window.__now) return new Date(window.__now); return new Date(new Date().toLocaleString("en-US",{timeZone:TZ})); }
 const COL={teal:"#4FC1B0",gold:"#E3B85A",coral:"#EF8A6B",violet:"#AB94E8",sky:"#8CC3EC",green:"#78D198",dim:"#737886"};
+const BAG_SVG='<svg class="bg" viewBox="0 0 24 24" fill="none" stroke="#E3B85A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>';
 const KIND_COL={"new":COL.teal,orphan:COL.sky,retention:COL.gold,claims:COL.coral,other:COL.violet};
 let D=null, INSIDE=true, sound=false, paused=false, cur=-1, timer=null, safety=null, started=false, MOB=false, lastCh=null;
 // Phones and small tablets (either way up) get a stacked layout that scrolls; TVs and laptops get the 16:9 wall.
@@ -657,6 +714,8 @@ function demo(outside){
       par:[0,12,10,8,0,0][i],parDone:[0,12,6,5,0,0][i],parMet:i===1,quests:[0,3,2,1,0,0][i],questsOf:[0,3,3,3,0,0][i],streak:[0,15,6,9,0,0][i],gain:[null,42,11,-4,null,null][i],bestDay:i===1,
       topSkill:[null,{name:"Premium fixer",lvl:4},{name:"Client saver",lvl:3},{name:"Contracts",lvl:2},null,null][i],
       levelUps:i===2?[{name:"Client saver",lvl:3}]:[],thanks:[0,1,1,0,0,0][i]};
+    // Each hour's closes by kind of task (sample): the mix turns through the day, a little different per desk.
+    const KS=["retention","new","other","orphan","claims"]; o.hourKinds=(o.hours||[]).map((v,ci)=>{ const k={}; for(let j=0;j<v;j++){ const kk=KS[(ci*2+j+i)%KS.length]; k[kk]=(k[kk]||0)+1; } return k; });
     if(p[0]==="akaash") o.role="Unit manager";
     if(!outside){o.inAt=["","6:55","8:12","7:58","7:50","6:02"][i];o.late=[0,0,12,0,0,0][i];o.points=[0,31,14,11,0,0][i];}
     else if(o.gain!=null&&o.gain<0) o.gain=null;   // outside: progress only, as the feed sends it
@@ -675,7 +734,7 @@ function demo(outside){
   if(!outside){ag.fy.goal=4800000;ag.fy.picked=412000;}
   return {day:"",asOf:"2:15",outside:!!outside,sample:true,
     staff:{people:ppl,team:team,fromH:7,toH:17,nowH:14,mix:[{k:"new",label:"New business",n:9},{k:"orphan",label:"Orphan adoption",n:5},{k:"retention",label:"Retention",n:11},{k:"claims",label:"Claims",n:2},{k:"other",label:"Servicing",n:7}],
-      payoffPct:74,busiest:{at:"9:00",to:"10:00",n:9},tiles:{closes:34,qp:4,quests:6,questsOf:9,covered:12,inNow:5,of:6,out:["Sasha"]},
+      payoffPct:74,busiest:{at:"9:00",to:"10:00",n:9},bag:{who:"Azariah",at:"12:00",h:12},tiles:{closes:34,qp:4,quests:6,questsOf:9,covered:12,inNow:5,of:6,out:["Sasha"]},
       svc:{avg:4.7,n:23,five:17,fivePct:74,agents:15,clients:8,recent:[{at:"2:05",who:"Elizabeth",n:5,from:"an agent"},{at:"1:40",who:"Azariah",n:5,from:"a client"},{at:"12:15",who:"Kamla",n:4,from:"an agent"},{at:"11:02",who:"Elizabeth",n:5,from:"a client"},{at:"19 Oct",who:"Sasha",n:5,from:"an agent"}]}},
     agents:ag,
     managers:{groups:[{g:"New business",done:6,wait:9},{g:"Renewals & billing",done:4,wait:12},{g:"Orphan clients",done:3,wait:7},{g:"Agents & the unit",done:5,wait:4},{g:"Servicing",done:7,wait:5}],doneToday:25,
@@ -714,7 +773,7 @@ const andList=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.leng
 // On the office wall it plays every other time round (the first time round included); in the sample and on the film every
 // time. ?newway=off takes it off the wall, ?newway=always keeps it on every time; ?film=newway is the film's own cut.
 let LOOPN=0;
-const NW_FILM=["n0","w1","w2","w3","w4","w8","w9","w5","w11","w13","w15","w10","w6","w14","w12","n11","w7"];
+const NW_FILM=["n0","w1","w2","w3","w4","w8","w9","w5","w16","w11","w13","w15","w10","w6","w14","w12","n11","w7"];
 function nwOn(){ const f=Q.get("newway"); if(f==="off") return false; if(DEMO||f==="always"||Q.get("film")==="newway") return true; return LOOPN%2===0; }
 // Each day's mark on the week: letters, a bill, an approval twice, a trophy, a report.
 const NW_GLYPH=[
@@ -824,8 +883,8 @@ const SCENES=[
 
  {id:"w4",ch:"newway",dwell:16000,when:()=>nwOn(),
   html:()=>{ const t=trini(), dow=D&&D.sample?3:t.getDay(), ag=A(), fy=ag&&ag.fy;
-    const days=[["Mon",1,[["Group letters go out at ten",COL.coral]]],["Tue",2,[["Group billings go out",COL.coral]]],["Wed",3,[["Monday's group letters approved",COL.gold]]],
-      ["Thu",4,[["Monday's group letters approved",COL.gold]]],["Fri",5,[["1 pm the week's awards",COL.green],["2 pm the branch meeting, built by everyone",COL.sky],["The week wrapped up",COL.violet]]],["Sat",6,[["The weekly report",COL.gold]]]];
+    const days=[["Mon",1,[["Group letters go out at ten",COL.coral]]],["Tue",2,[["Group billings go out",COL.coral]]],["Wed",3,[["9 am the branch meeting, built by everyone",COL.sky],["Monday's group letters approved",COL.gold]]],
+      ["Thu",4,[["Monday's group letters approved",COL.gold]]],["Fri",5,[["1 pm the week's awards",COL.green],["The week wrapped up",COL.violet]]],["Sat",6,[["The weekly report",COL.gold]]]];
     const bar=(lab,v,c,d)=>'<div style="display:flex;flex-direction:column;gap:.35rem"><div style="display:flex;justify-content:space-between;font-size:'+mq('1.15rem','.85rem')+';color:#CDD1DA"><span>'+esc(lab)+'</span><b class="mono" style="color:'+c+'">'+cnt(v,d,1)+'%</b></div>'+
       '<div class="track" style="height:'+mq('1.1rem','.7rem')+'"><div class="fill a grow" style="width:'+Math.max(2,Math.min(100,v))+'%;background:'+c+';--d:'+d+'s"></div></div></div>';
     return head("newway","FY27 · THE WEEK, AND THE YEAR","Every week has its beat",
@@ -837,8 +896,8 @@ const SCENES=[
         (fy?'<div class="panel shine" style="justify-content:center;gap:1.1rem"><div class="ph">FY27 SO FAR</div><div style="font-weight:800;font-size:'+mq('4.6rem','2.6rem')+';line-height:1;font-stretch:72%">Week '+cnt(ag.week||1,.6)+'</div>'+
           bar("Of the year's goal",fy.pct||0,COL.green,.9)+bar("Of the year gone",fy.gone||0,COL.dim,1.1)+
           '<div style="font-size:'+mq('1.15rem','.85rem')+';color:#CDD1DA;line-height:1.4">'+((fy.pct||0)>=(fy.gone||0)?'Ahead of the calendar. Keep the beat.':'Behind the calendar: every week counts.')+'</div></div>':'')+'</div>'; },
-  line:()=>{ const ag=A(), w=ag&&ag.week; return {live:(w?"Week "+w+" of the new financial year. ":"")+"Premium letters every morning, group letters on Monday, the awards and the branch meeting on Friday.",
-    rec:"And every week. Premium letters each morning, group letters on Monday, and the awards and the branch meeting on Friday."}; }},
+  line:()=>{ const ag=A(), w=ag&&ag.week; return {live:(w?"Week "+w+" of the new financial year. ":"")+"Premium letters every morning, group letters on Monday, the branch meeting on Wednesday, and the awards on Friday.",
+    rec:"And every week. Premium letters each morning, group letters on Monday, the branch meeting on Wednesday, and the awards on Friday."}; }},
 
 
  /* Ricky, 10:18am: "so transmittals, reassignments, the wall, the shared work distribution, the fact find insights, what each
@@ -894,6 +953,41 @@ const SCENES=[
   line:()=>{ const s=S(), c=s&&s.tiles?s.tiles.closes:null; return {live:"Branch Intelligence reads a task's whole history, says where it stands, and drafts the reply."+(c!=null?" "+plural(c,"task")+" closed with a note so far today.":""),
     rec:"Branch Intelligence reads a task's whole history, says where it stands, and drafts the reply. The Branch Manager, the Unit Manager and the BMA check it and post it. Sales Support get a brief."}; }},
 
+ {id:"w16",ch:"newway",dwell:19000,when:()=>nwOn(),
+  // Ricky, 21 Oct 12:27: "show the branch intelligence draft, how it's done, with a sample". Draft my reply as it runs on
+  // the Branch Manager's page (the tracker's own labels: Draft my reply, Reading the whole history and the record, Where it
+  // stands, Your reply, Next step, To make it stronger, Use this reply, Firmer, Shorter, Kinder, Again), on a sample task.
+  html:()=>{ const wr=(t,st,per)=>String(t).split(" ").map((w,i)=>'<span class="wr" style="--d:'+(st+i*per).toFixed(2)+'s">'+esc(w)+'</span>').join(" ");
+    const H=[["Day 1","Sales Support","Application sent to underwriting."],["Day 3","Underwriting","Medical outstanding before a decision."],["Day 5","The agent","The client did the medical on Tuesday."],["Day 6","The agent","Any update? The client is asking."]];
+    const STEP=[["Tap",1],["It reads",1.6],["Where it stands",4.6],["Your reply",6.6],["Tone",12.6],["You post",14.8]];
+    const T={tap:1, read:1.5, readOut:4.3, where:4.6, reply:6.7, next:10.6, add:11.6, btns:12.6, use:14.6, post:15.2};
+    const page='<div class="nwpage a rise" style="--d:.5s">'+
+      '<div class="nwpgh"><b>My day</b><span>Branch Manager · 5:00 am</span></div>'+
+      '<div class="nwpgt"><span class="chip" style="background:#E3F1EA;color:#2C7A57">New business</span><b>Application: has underwriting decided?</b><small>Open 6 days · 4 notes · agent: Neil</small></div>'+
+      '<div style="position:relative"><span class="nwbtn ai" style="--ts:'+T.tap+'s">&#10024; Draft my reply</span><span class="tap" style="left:6rem;top:.2rem;--ts:'+T.tap+'s"></span></div>'+
+      '<div class="nwout2">'+
+        '<div class="nwwait" style="--in:'+T.read+'s;--out:'+T.readOut+'s"><i></i><i></i><i></i> Reading the whole history and the record…</div>'+
+        '<div class="k a rise" style="--d:'+T.where+'s">Where it stands <span class="tg a pop" style="--d:'+(T.where+1.4)+'s">CHASE UNDERWRITING</span></div>'+
+        '<div class="rd">'+wr("The medical is in since Tuesday and underwriting has it; nothing has come back in two days.",T.where+.3,.07)+'</div>'+
+        '<div class="k a rise" style="--d:'+T.reply+'s">Your reply</div>'+
+        '<div class="rp a rise" style="--d:'+T.reply+'s">'+wr("Neil, underwriting has had the medical since Tuesday. I have asked them for the decision by Thursday, and you will hear from me the same day.",T.reply+.3,.13)+'</div>'+
+        '<div class="k a rise" style="--d:'+T.next+'s">Next step</div><div class="rd">'+wr("Chase underwriting today; diary Thursday.",T.next+.2,.09)+'</div>'+
+        '<div class="k a rise" style="--d:'+T.add+'s">To make it stronger</div><ul class="nwadd"><li class="a slide" style="--d:'+(T.add+.2)+'s">Give the date the medical reached underwriting</li></ul>'+
+        '<div class="nwbtns a rise" style="--d:'+T.btns+'s"><span class="nwbtn pri" style="--ts:'+T.use+'s">Use this reply</span><span class="nwbtn">Firmer</span><span class="nwbtn">Shorter</span><span class="nwbtn">Kinder</span><span class="nwbtn">Again</span>'+
+          '<span class="tap" style="left:3rem;top:.1rem;--ts:'+T.use+'s"></span></div>'+
+      '</div>'+
+      '<div class="nwposted a pop" style="--d:'+T.post+'s">&#10003; Posted on the task · Neil is told</div></div>';
+    return head("newway","FY27 · BRANCH INTELLIGENCE, STEP BY STEP","Watch it write a reply",
+        "A sample task, no client details. One tap reads the whole history, says where it stands and drafts the reply in your voice. Nothing posts until you say so.")+
+      '<div class="nwrail">'+STEP.map((x,i)=>'<span class="nwstep2" style="--d:'+x[1]+'s;--len:'+((STEP[i+1]?STEP[i+1][1]:19)-x[1]).toFixed(2)+'s"><i class="mono">'+(i+1)+'</i>'+esc(x[0])+'</span>').join("")+'</div>'+
+      '<div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.25fr)">'+
+        '<div class="panel" style="gap:.7rem"><div class="ph">THE TASK · A SAMPLE, NO CLIENT DETAILS</div>'+
+          H.map((h,i)=>'<div class="nwnote a slide" style="--d:'+(.4+i*.2).toFixed(2)+'s;--sd:'+(T.read+.2+i*.6).toFixed(2)+'s"><span class="mono">'+h[0]+'</span><div style="min-width:0"><b>'+esc(h[1])+'</b><span>'+esc(h[2])+'</span></div></div>').join("")+
+          '<div class="nwrib a rise" style="--d:'+(T.readOut).toFixed(2)+'s;margin-top:auto"><span>Up to <em>25</em>notes</span><span><em>8</em>related tasks</span><span><em>1</em>tap</span></div></div>'+
+        page+'</div>'; },
+  line:()=>({live:"Here's Branch Intelligence drafting a reply. It reads the whole history, says where things stand, and writes the reply in your voice. Make it firmer, shorter or kinder, and nothing posts until you say so.",
+    rec:"Here's Branch Intelligence drafting a reply. It reads the whole history, says where things stand, and writes the reply in your voice. Make it firmer, shorter or kinder, and nothing posts until you say so."})},
+
  {id:"w11",ch:"newway",dwell:17000,when:()=>nwOn(),
   html:()=>{ const bm=M()&&M().bm, u=M()&&M().unit, s=S(), t=s&&s.tiles;
     const C=[{role:"Branch Manager",who:"Ricky",c:COL.gold,mail:"5:00 · My day",sees:["Urgent first: call-backs and the late ones","Every desk, every agent, every unit","His inbox and his drafts, ready to send","Draft my reply on everything waiting on him"],
@@ -920,10 +1014,10 @@ const SCENES=[
     forget that will make an impact". The Meeting Builder (/meetings/) as it runs, and what the client feels. */
  {id:"w13",ch:"newway",dwell:19000,when:()=>nwOn(),
   html:()=>{ const R={bm:["Branch Manager",COL.gold],um:["Unit Manager",COL.violet],ss:["Sales Support",COL.teal],bma:["BMA",COL.coral],ag:["An agent",COL.sky],all:["Everyone",COL.green]};
-    // The Friday meeting, 2:00 to 3:30: ninety minutes, a name on every item, fifteen of them the chair's.
-    const AG=[["2:00","Carried-forward actions","bm",10],["2:10","The pipeline","ss",10],["2:20","Unit round","um",15],["2:35","Premium dues, 45 and 75 days","bma",10],
-      ["2:45","What worked for me","ag",10],["2:55","One client each","all",15],["3:10","Training","um",15],["3:25","Close, and the actions","bm",5]];
-    const bar='<div class="nwruler mono"><span>2:00</span><span>2:30</span><span>3:00</span><span>3:30</span></div><div class="nwbar">'+AG.map((a,i)=>
+    // The Wednesday meeting, 9:00 to 10:30: ninety minutes, a name on every item, fifteen of them the chair's.
+    const AG=[["9:00","Carried-forward actions","bm",10],["9:10","The pipeline","ss",10],["9:20","Unit round","um",15],["9:35","Premium dues, 45 and 75 days","bma",10],
+      ["9:45","What worked for me","ag",10],["9:55","One client each","all",15],["10:10","Training","um",15],["10:25","Close, and the actions","bm",5]];
+    const bar='<div class="nwruler mono"><span>9:00</span><span>9:30</span><span>10:00</span><span>10:30</span></div><div class="nwbar">'+AG.map((a,i)=>
       '<i class="a grow" style="--m:'+a[3]+';--c:'+R[a[2]][1]+';--d:'+(1+i*.3).toFixed(2)+'s">'+(a[3]>=10?a[0]:"")+'</i>').join("")+'</div>';
     const leg='<div class="nwleg">'+AG.map((a,i)=>'<span class="a rise" style="--c:'+R[a[2]][1]+';--d:'+(1.15+i*.3).toFixed(2)+'s"><b class="mono">'+a[0]+'</b>'+
       '<span style="min-width:0"><span class="tt">'+esc(a[1])+'</span><small>'+esc(R[a[2]][0])+' · '+a[3]+' min</small></span></span>').join("")+'</div>';
@@ -935,20 +1029,20 @@ const SCENES=[
       '<div class="scr" style="--in:.6s;--out:4.7s"><div class="mk">RRB</div><div class="t1">Branch Meeting Builder</div><div class="t2">Signing in is the register.</div>'+
         '<div class="t2" style="margin-top:.4rem">Agent number</div><div class="fld"><span class="typ" style="--n:5;--ts:1.3s;--td:.7s">40427</span><i class="car"></i></div>'+
         '<div class="t2">Password</div><div class="fld"><span class="typ" style="--n:8;--ts:2.2s;--td:.8s">••••••••</span></div><div class="go" style="--ts:3.6s">Sign in</div></div>'+
-      '<div class="scr" style="--in:5s;--out:10.4s"><div class="hi">Good day, Fawwaz</div><div class="t2">Friday · Branch meeting · 2:00 to 3:30</div>'+
-        '<div class="tl" style="--c:'+COL.green+';--td2:5.6s"><span class="si">ON THE REGISTER · IN AT 1:52</span><b>You are signed in</b><small>Phones on the charging station</small></div>'+
-        '<div class="tl" style="--c:'+COL.sky+';--td2:6.4s"><span class="si" style="color:'+COL.sky+'">YOUR ITEM · 2:45 · 10 MIN</span><b>What worked for me</b><small>On the agenda, with your name on it</small></div>'+
+      '<div class="scr" style="--in:5s;--out:10.4s"><div class="hi">Good day, Fawwaz</div><div class="t2">Wednesday · Branch meeting · 9:00 to 10:30</div>'+
+        '<div class="tl" style="--c:'+COL.green+';--td2:5.6s"><span class="si">ON THE REGISTER · IN AT 8:52</span><b>You are signed in</b><small>Phones on the charging station</small></div>'+
+        '<div class="tl" style="--c:'+COL.sky+';--td2:6.4s"><span class="si" style="color:'+COL.sky+'">YOUR ITEM · 9:45 · 10 MIN</span><b>What worked for me</b><small>On the agenda, with your name on it</small></div>'+
         '<div class="tl" style="--c:'+COL.gold+';--td2:7.2s"><span class="si" style="color:'+COL.gold+'">CARRIED FORWARD</span><b>2 actions from last week</b><small>One done, one due today</small></div></div>'+
-      '<div class="scr last" style="--in:10.8s"><div class="t1">What are you presenting?</div><div class="t2">What worked for me · 2:45</div>'+
+      '<div class="scr last" style="--in:10.8s"><div class="t1">What are you presenting?</div><div class="t2">What worked for me · 9:45</div>'+
         '<div class="fld" style="font-size:.8rem"><span class="typ" style="--n:23;--ts:11.6s;--td:1.6s">Two referrals in a week</span><i class="car"></i></div>'+
         '<div class="go" style="--ts:13.6s">Add to the agenda</div><span class="tap" style="left:45%;top:52%;--ts:13.6s"></span>'+
-        '<div class="tl" style="--c:'+COL.green+';--td2:14.2s"><span class="si">ADDED</span><b>You are on at 2:45</b><small>Everyone sees it before we meet</small></div></div></div>';
+        '<div class="tl" style="--c:'+COL.green+';--td2:14.2s"><span class="si">ADDED</span><b>You are on at 9:45</b><small>Everyone sees it before we meet</small></div></div></div>';
     return head("newway","FY27 · OUR MEETINGS, BUILT BY EVERYONE","Every voice heard, with a structure",
         "Launching at our next branch meeting: everyone signs in, adds to the agenda and says what they will present. Ninety minutes, a name on every item.")+
       '<div class="grid" style="grid-template-columns:auto minmax(0,1fr)">'+
         '<div class="panel" style="align-items:center;justify-content:center;background:transparent;border:0;padding:0">'+phone+'</div>'+
         '<div style="display:flex;flex-direction:column;gap:'+mq('1rem','.8rem')+';min-width:0;min-height:0">'+
-          '<div class="panel" style="gap:.7rem"><div class="ph">FRIDAY, 2:00 TO 3:30 · THE AGENDA, WRITTEN FOR US</div>'+bar+leg+'</div>'+
+          '<div class="panel" style="gap:.7rem"><div class="ph">WEDNESDAY, 9:00 TO 10:30 · THE AGENDA, WRITTEN FOR US</div>'+bar+leg+'</div>'+
           '<div class="panel rowp" style="flex-direction:row;align-items:center;gap:1.4rem">'+
             '<div class="a pop" style="--d:3.6s;display:flex;align-items:center;gap:1rem;flex:none">'+ring(75,90,mq(150,104),COL.teal,3.6,"75","of 90 min")+
               '<div style="max-width:'+mq('13rem','100%')+';font-size:'+mq('1.15rem','.9rem')+';line-height:1.35"><b>The team holds 75 minutes.</b> <span style="color:var(--muted)">The chair holds 15.</span></div></div>'+
@@ -1086,7 +1180,9 @@ const SCENES=[
 
  {id:"n2",ch:"staff",dwell:16000,when:()=>!!S(),
   html:()=>{ const s=S(), n=s.toH-s.fromH+1, hl=[...Array(n)].map((_,i)=>{const h=s.fromH+i; return (h%12||12)+(h<12?"a":"p");});
-    const rows=s.people.filter(p=>p.game||p.closes);
+    const rows=s.people.filter(p=>p.game||p.closes), bag=s.bag||null;
+    const legend=((s.mix||[]).length||bag)?'<div class="klg a rise" style="--d:.25s">'+(s.mix||[]).map(m=>'<span><i style="background:'+(KIND_COL[m.k]||COL.violet)+'"></i>'+esc(m.label)+'</span>').join("")+
+      (bag?'<span class="bagc">'+BAG_SVG.replace('class="bg"','style="width:1.2rem;height:1.2rem"')+'The bag today: '+esc(bag.who)+(bag.at?' · leaves '+esc(bag.at):'')+'</span>':'')+'</div>':'';
     const mx=Math.max(1,...rows.flatMap(p=>p.hours));
     const cols='grid-template-columns:'+mq('9rem','4.3rem')+' repeat('+n+',minmax(0,1fr))';
     const grid='<div class="heat" style="'+cols+'"><div></div>'+hl.map(l=>'<div class="hl mono">'+l+'</div>').join("")+'</div>'+
@@ -1094,15 +1190,17 @@ const SCENES=[
         (p.status==="out"?'<div class="cell a lite" style="--d:'+(.3+ri*.06).toFixed(2)+'s;grid-column:2 / -1;justify-content:flex-start;padding-left:'+mq('1.4rem','.6rem')+';border:1px dashed #6A4A42;background:rgba(239,138,107,.08);color:#F2C4B4;font-weight:700">Out today'+(p.coveredBy.length?' · covered by '+esc(andList(p.coveredBy.map(c=>c.name))):'')+'</div>':
         p.hours.map((v,ci)=>{ const h=s.fromH+ci, fut=s.nowH!=null&&h>s.nowH, isNow=h===s.nowH;
           const a=v?0.22+0.73*Math.min(1,v/mx):0.06;
-          return '<div class="cell a lite'+(isNow?' now':'')+'" style="--d:'+(.3+ci*.1+ri*.06).toFixed(2)+'s;'+(fut?'border:1px dashed #3A3F4A;background:transparent':'background:rgba(79,193,176,'+a.toFixed(2)+')')+';color:'+(a>.55?'#16171B':'#F4F1EA')+'">'+(v||'')+'</div>'; }).join(""))+'</div>').join("");
+          const kd=v&&p.hourKinds&&p.hourKinds[ci]?Object.keys(p.hourKinds[ci]).filter(k=>p.hourKinds[ci][k]>0):[], isBag=bag&&bag.who===p.name&&bag.h===h;
+          const kb=kd.length?'<span class="kb">'+kd.map((k,ki)=>'<i style="flex:'+p.hourKinds[ci][k]+' 1 0;background:'+(KIND_COL[k]||COL.violet)+';--d:'+(.8+ci*.1+ri*.06+ki*.05).toFixed(2)+'s"></i>').join("")+'</span>':'';
+          return '<div class="cell a lite'+(isNow?' now':'')+(kd.length?' kd':'')+(isBag?' bag':'')+'" style="--d:'+(.3+ci*.1+ri*.06).toFixed(2)+'s;'+(fut&&!isBag?'border:1px dashed #3A3F4A;background:transparent':'background:rgba(79,193,176,'+a.toFixed(2)+')')+';color:'+(a>.55?'#16171B':'#F4F1EA')+'"'+(isBag?' title="The bag"':'')+'>'+(v||'')+kb+(isBag?BAG_SVG:'')+'</div>'; }).join(""))+'</div>').join("");
     // the team, as a line over the day
     const W=1100,Hh=170, tm=s.team, tmx=Math.max(1,...tm), pts=tm.map((v,i)=>[Math.round(20+i*(W-40)/(n-1)),Math.round(Hh-16-(v/tmx)*(Hh-36))]);
     const upto=s.nowH!=null?Math.max(1,Math.min(n,s.nowH-s.fromH+1)):n, live=pts.slice(0,upto);
     const line=live.map(p=>p.join(",")).join(" "), area=live.length?live[0][0]+","+(Hh-8)+" "+line+" "+live[live.length-1][0]+","+(Hh-8):"";
     const b=s.busiest;
     return head("staff","STAFF · THE DAY, HOUR BY HOUR","What is being actioned, hour by hour",
-        "Every square is an hour; the brighter it is, the more tasks were closed with a note in it. The dashed ones are still to come.")+
-      '<div class="grid" style="grid-template-rows:auto 1fr"><div class="panel" style="gap:.55rem">'+grid+'</div>'+
+        "Every square is an hour: the brighter it is, the more tasks closed with a note, and the colours inside are the kinds of task. The gold square is the bag.")+
+      '<div class="grid" style="grid-template-rows:auto 1fr"><div class="panel" style="gap:.55rem">'+legend+grid+'</div>'+
       '<div class="panel rowp" style="flex-direction:row;align-items:stretch;gap:2rem"><div style="flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:.4rem"><div class="ph">THE DESKS TOGETHER</div>'+
         // the chart takes whatever height the panel has, on a TV, a laptop or a phone (20 Oct 2026)
         '<svg class="fit" viewBox="0 0 '+W+' '+(Hh+30)+'" style="flex:1 1 0;min-height:'+mq('6rem','8rem')+';width:100%;height:auto" role="img" aria-label="Tasks closed with a note across the day">'+
@@ -1368,6 +1466,11 @@ function runCounters(root){
 function setChannel(ch){ document.querySelectorAll(".chan[data-c]").forEach(c=>c.classList.toggle("on",c.dataset.c===ch)); }
 function setCaption(t){ const c=$("#capText"); c.classList.remove("on"); setTimeout(()=>{ c.textContent=t||""; if(t) c.classList.add("on"); },250); }
 const CHN={newway:["FY27","CHANNEL 5 · OUR NEW WAY OF WORK",COL.green],staff:["STAFF","CHANNEL 1 · THE DESKS",COL.teal],agents:["AGENTS","CHANNEL 2 · THE FIELD",COL.violet],managers:["MANAGERS","CHANNEL 3 · LEADING THE BRANCH",COL.gold],live:["LIVE","RIGHT NOW, ACROSS THE BRANCH",COL.coral]};
+function slideNo(i,n){
+  const e=$("#sno"); if(!e) return; const f=(i+1)/n, C=2*Math.PI*15, p2=x=>String(x).padStart(2,"0");
+  e.innerHTML='<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#2A2E37" stroke-width="5"/><circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" style="color:var(--chg,#E3B85A)" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+(C*f).toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 20 20)"/></svg><b>'+p2(i+1)+'</b><small>/ '+p2(n)+'</small>';
+  e.classList.remove("pop"); void e.offsetWidth; e.classList.add("pop");
+}
 function go(i,stay){
   let L=list(); if(!L.length) return;
   if(!stay&&i>=L.length&&cur>=0){ LOOPN++; L=list(); i=0; }   // round again: channel 5 plays every other time round
@@ -1388,7 +1491,7 @@ function go(i,stay){
     setTimeout(()=>{ try{ if(!MOB) fitScene(el); roll(el,s.dwell); }catch(e){} },700); };
   if(bump) go.mt=setTimeout(mount,780); else mount();
   if(MOB&&!stay) try{ scrollTo({top:0,behavior:"smooth"}); }catch(e){}
-  setChannel(s.ch);
+  setChannel(s.ch); slideNo(cur,L.length);
   let line={live:"",rec:""}; try{ line=s.line(); }catch(e){}
   setCaption(line.live);
   const pr=$("#prog"); pr.style.transition="none"; pr.style.width="0"; void pr.offsetWidth; pr.style.transition="width "+s.dwell+"ms linear"; pr.style.width="100%";
