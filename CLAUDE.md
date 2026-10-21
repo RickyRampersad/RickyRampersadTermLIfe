@@ -45,6 +45,15 @@ the letters read, and e-mail is the one place the tile earns its keep: a
 transparent PNG lands on the client's white background and the white check
 disappears into it. So: `logo-mark.svg` on the web, `logo-mark.png` in e-mail.
 
+**A fourth exception, decided 21 October 2026: the homepage carries the blue
+shield.** Asked for in those words — *"change the gold!!!"*. `index.html` now
+uses `orphan-transition/board-mark.png`, the mark already carried by the
+assignment board, the board films and RR Operations. The reason is not
+fashion: on the homepage's light ground the gold measures 1.68:1, below even
+the 3:1 floor for non-text, so it cannot be a logo that reads. See the
+homepage section below. Every other page keeps the gold shield until asked,
+and `logo-mark.png` itself does not move.
+
 The palette that goes with it: navy `#0d1f33`, gold `#efc24b` into `#c9942c`,
 teal `#00CFEA`.
 
@@ -127,50 +136,137 @@ exactly that reason.
 iframe and a linked image does not load there. The builder folds it in as a
 data URI under the `mark` key.
 
-## The homepage look — spatial glass, decided 21 October 2026
+## The homepage look — light, and off gold, decided 21 October 2026
 
-Asked for in these words: *"a totally different look and feel, a more modern,
-realistic and futuristic site"*. The gold shield, the navy and the teal all
-stayed; what changed is how they are used.
+Asked for in these words: *"horrible a total professional makeover different
+colors and change the gold!!! more graphics and motion as well scalled
+intelligently and professionally"*, and then, decisively, *"i said the black
+hurts the eyes!!"*.
 
-- **Display face is Space Grotesk**; DM Sans still carries body copy. Montserrat
-  is still loaded for the pages that have not moved.
-- **Surfaces are one material:** a translucent fill, a hairline border and a lit
-  top edge (`inset 0 1px 0`). The lit edge is what makes a panel read as a real
-  surface instead of a rectangle with a border.
-- **The ground** is a fixed layer with three light sources bled into it and a
-  fine grain over the top. The grain is what stops a large gradient reading as
-  flat plastic.
-- **Nothing on the page is an emoji.** There were 28, and they were the single
-  thing that made it look improvised: every operating system draws them
-  differently, they carry their own colour, and they ignore the page's own
-  weight and grid. They are now one drawn set on a 24-unit grid at a single
-  stroke weight, as `<symbol>`s in one sprite, referenced by `<use>`.
-- **Sections are bento, not a repeated three-across grid.** The same card grid
-  five times reads as a list however good the cards are.
+Two dark redesigns were rejected on the same day. The second one took the
+ground back to near-black `#070e1c` — **darker than the `#07131f` he had
+already asked to be lifted off black that morning**. Read the complaint
+before reaching for a palette: "I don't like the blacks" meant go light, not
+go to a richer dark.
 
-### Two performance rules this cost us a day to learn
+**The homepage is light.** Ground `#faf9f2`, white cards, deep blue ink.
+Those values are sampled from **Guardian Life of the Caribbean's own live
+stylesheet**, so the branch now matches its parent company, and the answer to
+"why did the gold go?" is that Guardian itself has no gold anywhere.
 
-Both were measured, not guessed, and both turn a 60fps page into a 10fps one:
+| token | value | measured on the ground |
+|---|---|---|
+| `--ground` | `#faf9f2` warm off-white | — |
+| `--card` | `#ffffff` | — |
+| `--ink` headings | `#0d3f5e` | 10.53:1 |
+| `--body` | `#2b3b47` | 10.94:1 |
+| `--muted` | `#5b6670` | 5.56:1 |
+| `--action` | `#00728d` | 5.25:1, white on it 5.54:1 |
+| `--line` decorative | `#e4e0d4` | 1.25:1, separators only |
+| `--line-strong` controls | `#7d8890` | 3.43:1 |
 
-- **`backdrop-filter` goes on a handful of chrome surfaces, never on cards that
-  scroll.** Each one re-samples and re-blurs what is behind it every frame. It
-  is on the floating nav, the three hero panes and the two modals — seven
-  elements. The forty-odd cards get the same look from a translucent fill and a
-  lit edge, which costs nothing.
-- **Never `filter: blur()` on a layer that moves.** The two aurora lights had
-  `blur(90px)` on half-viewport blobs: 183ms a frame, about 5fps. A radial
-  gradient with a long transparent falloff looks the same and composites for
-  free. Scaling such a layer is worse than moving it, because the blur has to
-  be rasterised again at the new size — but removing the scale was not enough;
-  the blur itself had to go.
-- `background-attachment: fixed` repaints the whole document on every scroll
-  frame, and `mix-blend-mode` on a full-screen fixed layer forces the entire
-  stacking context to re-composite. Both are gone; the ground is a fixed
-  pseudo-element instead.
+**Gold could not stay, and this is arithmetic rather than taste.** On a light
+ground `#efc24b` measures **1.68:1** against white and `#c9942c` **2.71:1** —
+both below even the 3:1 floor for non-text, so gold can never again be a
+button, a link, a focus ring or a distinguishable icon. The branch teal
+`#00CFEA` fails identically at **1.89:1**. They only ever worked because the
+page was dark. The homepage therefore carries the **blue shield**
+(`orphan-transition/board-mark.png`), the mark already used by the assignment
+board, the board films and RR Operations.
 
-Measured after: 16.7ms a frame, cumulative layout shift 0, on the same machine
-where the first cut of this design managed 183ms.
+**`logo-mark.png` is still untouched and still gold**, on purpose: every
+client letter already sent loads it from the server, and changing that file
+changes the masthead of letters sitting in people's inboxes. Gold shield in
+e-mail, blue shield on the homepage.
+
+**Two tokens for borders, not one.** Almost no border reaches 3:1, and only
+the one defining a control has to. A separator uses `--line`; an input
+outline or focus ring uses `--line-strong`.
+
+**Pick the muted grey against the real ground, never against white.** Stripe's
+`#64748d` measures 4.75:1 on pure white but exactly **4.50** on `#faf9f2` —
+on the line, so effectively a fail. That is why `--muted` is `#5b6670`.
+
+### What the research changed, and what it cost us to learn twice
+
+- **Light against dark splits on sector lines.** Regulated retail money is
+  light (Ethos, Marshmallow, MetLife, Policygenius, Wise, Monzo); dev tools
+  and trading are dark (Linear, Vercel, Robinhood). A dark life-insurance
+  site is a trading-app aesthetic on the wrong product.
+- **Bento cards with soft 3D is a named tell.** A study of 808 juried
+  Awwwards winners lists it among the patterns that make work read as
+  machine-generated, and found **no single effect moves the jury score by
+  more than ±0.05**. Effects are table stakes; composition and story are not.
+  Do not rebuild this page as a grid of equal glass tiles.
+- **Montserrat and Poppins appear on none of 27 live finance sites** checked
+  for their actual font stacks. Open Sans does (Chase, Prudential), Inter
+  does (Wise, Revolut, Brex, Ethos), Lato does (Lemonade). Free fonts are not
+  the problem; those two specifically are the wrong signal. The page uses
+  **Inter Tight** for display and **Inter** for copy.
+- **The local bar is low and that is an argument, not a boast.** Four of the
+  five live T&T insurer sites serve WordPress/Elementor default colour values
+  in their markup, and one declares `'Chewy', cursive`.
+
+### Rules the rebuild is built on
+
+- **Motion is opt-in, never opt-out.** Every finished state is the plain CSS
+  default and movement lives only inside
+  `@media (prefers-reduced-motion: no-preference)`. That satisfies WCAG 2.3.3
+  with no second code path, can never strand content invisible if an
+  animation fails, and degrades silently in Firefox, which still has
+  scroll-driven animations behind a flag.
+- **No animation library.** Native `animation-timeline: view()` covers the
+  reveals, `scroll(root)` draws the nav progress, `@starting-style` with
+  `allow-discrete` covers the dialogs. `animation-timeline` must be declared
+  **after** the `animation` shorthand, which resets it.
+- **`backdrop-filter` on three surfaces only** — the nav and the two dialogs.
+  It re-samples and re-blurs its backdrop every frame; one measured case put
+  a GPU process at 400–470MB with it on cards.
+- **Never animate `box-shadow`** — it is on web.dev's do-not-animate list.
+  Hover lift uses `translate`.
+- **`min()` inside every auto-fit grid**:
+  `repeat(auto-fit, minmax(min(100%, 18rem), 1fr))`. Without the `min()` the
+  page overflows at 320–360px, and that is the commonest amateur tell in a
+  hand-written grid.
+- **One space token for every section's `padding-block`.** It is `--sp-2xl`,
+  not `--sp-3xl`: two adjacent sections each contribute it, so `--sp-3xl`
+  made every boundary a ~240px hole.
+- **No two adjacent sections share a column shape.** A repeated three-across
+  card grid reads as a list however good the cards are.
+- **Type bounds in a `clamp()` are rem, never px** — a px bound is WCAG
+  failure F94 and defeats the 200% zoom requirement. Form controls use
+  `max(16px, 1rem)`, because iOS zooms on a *computed* size under 16.
+- **Icons follow Lucide's published rules**: 24×24 canvas, exactly 2px
+  stroke, round joins and caps, ≥1px padding inside the canvas. One stroke
+  weight across the set is what makes it read as designed. Every icon is
+  `aria-hidden` with no accessible name; the text beside it is the label.
+- **No emoji.** Not taste: they render differently per OS, cannot inherit
+  `currentColor`, sit on font metrics so they never align to a grid, and
+  screen readers announce their Unicode names.
+- **Shadows take their hue from the ground, not from black.** `--sh` is
+  `32deg 20% 42%`; transparent black desaturates a warm surface.
+
+### The audit harness
+
+`qa/audit.js` in the session scratchpad measures the page rather than
+asserting it: no sideways scroll at the real-world widths (360/375/390/414
+and 1280/1366/1536/1920 — phones cluster at the first four), WCAG AA contrast
+**composited through translucency**, WCAG 2.2 2.5.8 touch targets with the
+inline-link exception, iOS input zoom, reduced motion, CLS, and content
+hygiene. It caught three genuine bugs this build: a specificity collision
+where `.nav-links a` (class + type) outranked `.btn-1` and rendered the Get a
+Quote button's text dark-on-teal at 2.08:1; a 4px overflow at 360px from a
+blanket `white-space: nowrap`; and the old page's 14px footer links.
+
+Two of its own false positives are worth knowing about, because both would
+otherwise be mistaken for page bugs: `color-mix()` computes to
+`color(srgb r g b / a)` whose **channels run 0–1, not 0–255**, so a naive
+parser reads a near-white nav as near-black; and gradient-backed text cannot
+be read from computed style at all, so it is reported for the eye rather than
+failed, the way axe reports "incomplete".
+
+Measured after: every check passing, 16.7ms a frame across three passes,
+cumulative layout shift 0.
 
 ## The voice — narration on every film
 
