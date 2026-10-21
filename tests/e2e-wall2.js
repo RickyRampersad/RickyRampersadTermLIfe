@@ -83,6 +83,41 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     ok(name + ': no page errors', !errs.length, errs.join(' | '));
     await pg.close();
   }
+  // A laptop (20 Oct 2026: "scale proper ... it's jumbled"): the slimmer frame, and no panel cut through a line, every scene.
+  {
+    const pg = await b.newPage({ viewport: { width: 1280, height: 680 } });
+    const errs = []; pg.on('pageerror', e => errs.push(String(e)));
+    await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
+    await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.click('#goQuiet');
+    const cut = [], seen = [];
+    for (let i = 0; i < 12; i++) {
+      await pg.waitForTimeout(2600);
+      const r = await pg.evaluate(() => ({ k: (document.querySelector('.scene.on .kick') || {}).innerText || 'ident', txt: (document.querySelector('.scene.on') || {}).innerText || '',
+        cut: [...document.querySelectorAll('.scene.on .grid>.panel')].filter(p => p.scrollHeight > p.clientHeight + 3).length }));
+      if (r.cut) cut.push(r.k + ' (' + r.cut + ')'); seen.push(r.txt);
+      await pg.keyboard.press('ArrowRight');
+    }
+    ok('laptop: the slimmer frame', await pg.evaluate(() => document.body.classList.contains('lap')));
+    ok('laptop: no panel cut through a line', !cut.length, cut.join(', '));
+    ok('laptop: Akaash with the desks and at the head of his unit, his agents by name', /Akaash\s+Unit manager/.test(seen.join('\n')) && /AKAASH'S UNIT/.test(seen.join('\n')) && /Stephanie/.test(seen.join('\n')));
+    ok('laptop: the agents are the branch\'s own', /Fawwaz/.test(seen.join('\n')) && !/Devendra|Marissa/.test(seen.join('\n')));
+    ok('laptop: no page errors', !errs.length, errs.join(' | '));
+    await pg.close();
+  }
+  // A phone keeps everybody on the desks, Akaash too.
+  {
+    const pg = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
+    await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.click('#goQuiet'); await pg.waitForTimeout(1500); await pg.keyboard.press('ArrowRight'); await pg.waitForTimeout(2600);
+    const vis = await pg.evaluate(() => [...document.querySelectorAll('.scene.on .pc')].filter(c => c.style.display !== 'none').map(c => c.querySelector('.nm').innerText));
+    ok('phone: all six on the desks, Akaash among them', vis.length === 6 && vis.includes('Akaash'), vis.join(', '));
+    ok('phone: the top bar stays put while a scene scrolls', await pg.evaluate(() => { scrollTo(0, 400); return document.querySelector('header').getBoundingClientRect().top === 0; }));
+    await pg.close();
+  }
   // Quick taps through a channel's bumper: one scene on the stage at the end, never two on top of each other.
   {
     const pg = await b.newPage({ viewport: { width: 1920, height: 1080 } });
@@ -120,8 +155,22 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     ok(tag + 'no page errors', !errs.length, errs.join(' | '));
     await ctx.close();
   }
+  // Andrew's recorded lines are on the site (20 Oct 2026): sound on plays them, and the wall moves on when he has finished.
+  {
+    const pg = await b.newPage({ viewport: { width: 1920, height: 1080 } });
+    await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
+    await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.click('#goSound');
+    let moved = false;
+    for (let t = 0; t < 30 && !moved; t++) { await pg.waitForTimeout(700); moved = /STAFF/.test(await pg.evaluate(() => { const e = document.querySelector('.scene.on .kick'); return e ? e.innerText : ''; })); }
+    ok('recorded Andrew: every line is on the site', ['n0','n1','n2','n3','n4','n10','n11','n5','n6','n9','n7','n8'].every(id => fs.existsSync(path.join(ROOT, 'wall/audio/v2/' + id + '.mp3'))));
+    ok('recorded Andrew: the wall moves on after his line', moved);
+    await pg.close();
+  }
   // Sound on, no recording and no Andrew voice in this browser: captions, and the wall still moves on by itself.
   const page = await b.newPage({ viewport: { width: 1920, height: 1080 } });
+  await page.route('**/wall/audio/v2/**', r => r.fulfill({ status: 404, body: 'no' }));
   await page.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
