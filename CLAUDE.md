@@ -45,14 +45,36 @@ the letters read, and e-mail is the one place the tile earns its keep: a
 transparent PNG lands on the client's white background and the white check
 disappears into it. So: `logo-mark.svg` on the web, `logo-mark.png` in e-mail.
 
-**A fourth exception, decided 21 October 2026: the homepage carries the blue
-shield.** Asked for in those words — *"change the gold!!!"*. `index.html` now
-uses `orphan-transition/board-mark.png`, the mark already carried by the
-assignment board, the board films and RR Operations. The reason is not
-fashion: on the homepage's light ground the gold measures 1.68:1, below even
-the 3:1 floor for non-text, so it cannot be a logo that reads. See the
-homepage section below. Every other page keeps the gold shield until asked,
-and `logo-mark.png` itself does not move.
+**A fourth exception, decided 21 October 2026 and settled the same evening:
+the homepage carries its own mark, in the homepage's own colours.**
+
+It went blue first — asked for as *"change the gold!!!"* — using
+`orphan-transition/board-mark.png`, the mark the assignment board, the board
+films and RR Operations carry. That was wrong, and the manager said so:
+*"Every thing is off and the site is horrible, all colors even the logo is
+off!!!!"*. He was right, and the fault is nameable: the page was running
+**three unrelated blues**. The mark was Guardian corporate `#13408F →
+#2A6DE0` with a cyan check, the headings were `#0d3f5e`, the buttons were
+teal `#00728d`. A mark that shares no hue family with anything around it
+reads as pasted on.
+
+Offered the two ways to unify — move the page to the mark's blue, or move the
+mark to the page's teal — he chose **the mark follows the page**.
+
+So the homepage carries **`site-mark.svg`**: `favicon.svg`'s own shield and
+check, no tile, filled `#0e93b0 → #00728d → #0a3350`, the check white over a
+navy casing. `site-icon.svg` is the same on a `#faf9f2` tile, for the tab,
+and `index.html` alone declares it. Nothing is redrawn: it is the brand's own
+silhouette in the page's colours, which is what `gcm-mark.png` and
+`board-mark.png` already are in theirs.
+
+**What this costs, and he accepted it:** the homepage mark no longer matches
+the assignment board, the three board films or RR Operations, which keep the
+corporate-blue shield; every other page and every letter keeps the gold one.
+Four marks now, one per context. That is the price of a homepage whose logo
+belongs to its own palette, and it was his call to pay it.
+
+`logo-mark.png` does not move, as ever: the letters already sent load it.
 
 The palette that goes with it: navy `#0d1f33`, gold `#efc24b` into `#c9942c`,
 teal `#00CFEA`.
@@ -170,9 +192,10 @@ ground `#efc24b` measures **1.68:1** against white and `#c9942c` **2.71:1** —
 both below even the 3:1 floor for non-text, so gold can never again be a
 button, a link, a focus ring or a distinguishable icon. The branch teal
 `#00CFEA` fails identically at **1.89:1**. They only ever worked because the
-page was dark. The homepage therefore carries the **blue shield**
-(`orphan-transition/board-mark.png`), the mark already used by the assignment
-board, the board films and RR Operations.
+page was dark. The homepage therefore carries **`site-mark.svg`**, the brand's
+own shield in this page's teal and navy — see the mark section above for why
+it is not the blue one any more. Its lightest stop `#0e93b0` measures 3.42:1
+on the ground, so the mark reads as a shape and not only as a colour.
 
 **`logo-mark.png` is still untouched and still gold**, on purpose: every
 client letter already sent loads it from the server, and changing that file
