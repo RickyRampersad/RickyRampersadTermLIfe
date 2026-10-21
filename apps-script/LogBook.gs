@@ -747,6 +747,39 @@ function lbStaffEmail_(name) {
    access tabs (any tab with a name, an e-mail and an Access Code or Password column), name, e-mail or agent number
    with that tab's own code. LB_INTEL_SHEET_ID overrides the workbook. */
 var LB_INTEL_ID = '1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs';
+/* The secret's column, whatever the tab calls it ("Access Number" on the Branch Portfolio's, 21 October 2026). */
+var LB_INTEL_CODE_COLS = ['access code', 'access number', 'access no', 'access #', 'password', 'pass', 'pw', 'pin'];
+
+/** Run from the editor: lbCheckSignIn('Pawan'). Says whether this script is the new one, which tabs of the Branch
+ *  Portfolio it reads as access lists, and whether the person is on one, with their role, Active and whether a code
+ *  is filled in. It never prints a code. */
+function lbCheckSignIn(who) {
+  who = String(who || 'Pawan');
+  var out = ['Sign-in check for "' + who + '" (LogBook.gs with name sign-in is in this project).'];
+  var a = lbFindAgent_(who) || lbFindByName_(who);
+  out.push(a ? 'On the fact find / agent lists as ' + a.name + ' (' + (a.role || 'no role') + ', ' + (a.active ? 'active' : 'NOT active') + ', code ' + (a.code ? 'set' : 'EMPTY') + ').'
+             : 'Not on the fact find / agent lists.');
+  var book;
+  try { book = SpreadsheetApp.openById(String(dbProp_('LB_INTEL_SHEET_ID', LB_INTEL_ID)).trim()); }
+  catch (e) { out.push('Could not open the Branch Portfolio: ' + e); Logger.log(out.join('\n')); return out.join('\n'); }
+  book.getSheets().forEach(function (sh) {
+    var lc = sh.getLastColumn(), lr = sh.getLastRow();
+    if (lr < 2 || lc < 2 || lc > 40) return;
+    var head = sh.getRange(1, 1, 1, lc).getValues()[0].map(function (h) { return String(h || '').trim(); });
+    var low = head.map(function (h) { return h.toLowerCase(); });
+    var has = function (names) { return low.some(function (h) { return names.some(function (n) { return h === n || h.indexOf(n) === 0; }); }); };
+    if (!has(['name'])) return;
+    if (!has(LB_INTEL_CODE_COLS)) { out.push('Tab "' + sh.getName() + '": has names but no code column I know. Headers: ' + head.join(' | ')); return; }
+    if (lr > 2000) { out.push('Tab "' + sh.getName() + '": too long to be an access list (' + lr + ' rows).'); return; }
+    var vals = sh.getRange(2, 1, lr - 1, lc).getValues();
+    var k = lbNameKey_(who), hit = vals.filter(function (r) {
+      return r.some(function (c) { var v = lbNameKey_(c); return v && (v === k || v.split(' ')[0] === k) || lbAgentKey_(c) === lbAgentKey_(who); });
+    });
+    out.push('Tab "' + sh.getName() + '" (headers: ' + head.join(' | ') + '): ' + (hit.length ? hit.length + ' row(s) for "' + who + '".' : 'no row for "' + who + '".'));
+  });
+  Logger.log(out.join('\n'));
+  return out.join('\n');
+}
 
 function lbFindByName_(who) {
   var k = lbNameKey_(who);
@@ -779,14 +812,14 @@ function lbIntelPerson_(who, code) {
         if (head[j] === names[i] || head[j].indexOf(names[i]) === 0) return j;
       return -1;
     };
-    var cName = col(['name']), cMail = col(['email', 'e-mail']), cCode = col(['access code', 'password', 'pass', 'pw']);
-    if (cName < 0 || cMail < 0 || cCode < 0 || lr > 2000) continue;
+    var cName = col(['name']), cMail = col(['email', 'e-mail']), cCode = col(LB_INTEL_CODE_COLS);
+    if (cName < 0 || cCode < 0 || lr > 2000) continue;
     var cNo = col(['agent number', 'agent no', 'agent id']), cAgent = col(['agent name']);
     var cRole = col(['role']), cUnit = col(['unit']), cAct = col(['active']);
     var vals = sh.getRange(2, 1, lr - 1, lc).getValues();
     for (var r = 0; r < vals.length; r++) {
       var row = vals[r];
-      var name = String(row[cName] || '').trim(), mail = String(row[cMail] || '').trim();
+      var name = String(row[cName] || '').trim(), mail = cMail >= 0 ? String(row[cMail] || '').trim() : '';
       var no = cNo >= 0 ? String(row[cNo] || '').trim() : '', agent = cAgent >= 0 ? String(row[cAgent] || '').trim() : '';
       var match = (mail && mail.toLowerCase() === who) || (name && lbNameKey_(name) === lbNameKey_(who)) ||
                   (agent && lbNameKey_(agent) === lbNameKey_(who)) || (no && lbAgentKey_(no) === lbAgentKey_(who)) ||

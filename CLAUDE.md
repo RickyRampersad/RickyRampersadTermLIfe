@@ -3824,7 +3824,7 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
 - **No agent number: a name and the Branch Portfolio's code** (21 October 2026: Pawan, the driver, "trying to log in as
   Pawan and not allowing … see pawan from the access link", the Branch Portfolio workbook). `lbLogin_` takes a name or an
   e-mail in the number box: a name only one person on the agent lists carries (`lbFindByName_`), then the Branch
-  Portfolio's access tabs (`lbIntelPerson_`: any small tab with a name, an e-mail and an Access Code or Password column;
+  Portfolio's access tabs (`lbIntelPerson_`: any small tab with a name and an Access Code, Access Number or Password column, `LB_INTEL_CODE_COLS`; `lbCheckSignIn("Pawan")` in the editor says which tabs it reads and whether the person is on one, never a code;
   `LB_INTEL_SHEET_ID` overrides `LB_INTEL_ID`), matched by name, first name, e-mail or agent number with that row's own
   code. A Driver role (`lbIsDriverRole_`) gets the Delivery Book alone. The app's box reads "Agent number or name".
   `tests/test-logbook.js` covers it.
