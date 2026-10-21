@@ -97,5 +97,37 @@ ok('an answer that is not JSON says so', /came back empty/.test(env.umDraft({ rs
 P.setProperty('ANTHROPIC_API_KEY', ''); asked = [];
 ok('no key: says so and calls nobody', /not set up/.test(env.umDraft({ rs: 'ricky', d: DAY, k, id: ID }).error) && !asked.length);
 
+
+console.log('\nThe BMA is a manager too: her day page has the same:\n');
+P.setProperty('ANTHROPIC_API_KEY', 'sk-test');
+const KT = { id: '00TBMA000000000001', s: 'Renewal - Leemar Marketing Limited - two instalments outstanding', ty: 'Renewa/PDl/Bill', due: '2026-10-19' };
+env.sdList_ = () => [Object.assign({}, KT)];
+env.sfkTaskStates_ = () => ({}); env.dueMovesByTask_ = () => ({}); env.signedInAt_ = () => '08:01'; env.yesterdayOpen_ = () => null;
+env.sdQueries_ = () => []; env.intelModel_ = () => null; env.gameOn_ = () => false; env.middayAt_ = () => 12 * 60 + 30;
+CHAT[KT.id] = [{ day: '2026-10-13', by: 'Kamla Dookran', text: 'Client advised he will pay the two outstanding instalments by cheque, collected on Friday.' }];
+const kpage = env.sdPage_({ staffId: 'kamla', name: 'Kamla Dookran' }, DAY).getContent();
+ok('Kamla\'s card has Draft my reply', /onclick="umAI\('00TBMA000000000001',''\)"/.test(kpage));
+ok('and her page the Intelligence card, with the note box wording', /Branch Intelligence writes your replies/.test(kpage) && /then Close now, Move now or Post note/.test(kpage));
+const kk = env.replySig_('kamla', DAY, 'card');
+ok('her page says it is a card page, filling the note box', kpage.indexOf('"k":"' + kk + '","via":"card","f":"n_"') > -1);
+let kparsed = true; (kpage.match(/<script>([\s\S]*?)<\/script>/g) || []).forEach(x => { try { new Function(x.replace(/^<script>|<\/script>$/g, '')); } catch (e) { kparsed = false; console.log('    ' + e.message); } });
+ok('its scripts parse', kparsed);
+const spage = env.sdPage_({ staffId: 'sasha', name: 'Sasha Lalla-Jagassar' }, DAY).getContent();
+ok('Sasha\'s day page does not have it (staff, not a manager)', !/umAI\(/.test(spage) && !/Branch Intelligence writes your replies/.test(spage));
+asked = [];
+reply = JSON.stringify({ read: 'Overdue since 19 Oct; the cheques were due Friday.', reply: 'Collected the two instalment cheques from [blank] on [date]; receipts to follow. Next step: deposit and update the policy by Friday.', next: 'Kamla to confirm the cheques by Fri.', add: ['Record the cheques in the Delivery Book'], action: 'wait' });
+const kr = env.umDraft({ rs: 'kamla', d: DAY, k: kk, via: 'card', id: KT.id });
+ok('umDraft on her card answers', kr.ok && /instalment cheques/.test(kr.reply), JSON.stringify(kr).slice(0, 120));
+const kp = asked[0].messages[0].content;
+ok('in her voice, as the BMA and a manager', /Kamla Dookran, the Branch Manager's Assistant \(BMA\), a manager/.test(kp));
+ok('and when she is the one to act, it is her own note', /when the writer is the one who must act/.test(kp));
+ok('the card page\'s signature is checked', /expired/.test(env.umDraft({ rs: 'kamla', d: DAY, k: env.replySig_('kamla', DAY, 'um'), via: 'card', id: KT.id }).error));
+ok('a task not on her list is refused', /no longer on this page/.test(env.umDraft({ rs: 'kamla', d: DAY, k: kk, via: 'card', id: '00TNOPE' }).error));
+const sk = env.replySig_('sasha', DAY, 'card');
+ok('a staff desk is refused', /managers' pages/.test(env.umDraft({ rs: 'sasha', d: DAY, k: sk, via: 'card', id: KT.id }).error));
+P.setProperty('INTEL_REPLY_DESKS', 'kamla, sasha');
+ok('unless INTEL_REPLY_DESKS adds it', env.umDraft({ rs: 'sasha', d: DAY, k: sk, via: 'card', id: KT.id }).ok);
+P.setProperty('INTEL_REPLY_DESKS', '');
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);
