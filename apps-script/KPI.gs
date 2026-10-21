@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-21f';
+var SCRIPT_VERSION = '2026-10-21g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -7375,7 +7375,8 @@ var RATE = {
   SKIP_SUBJ: /^\s*Email:|Happy Birthday|Premium Dues Report|instructions not actioned/i,
   CLIENT_SKIP_TYPES: ['Claims/ Mat'],
   CLIENT_COOL_DAYS: 14, AGENT_MAX_PER_DAY: 6, PER_RUN: 40, EVERY_MIN: 5, LOW: 2, PATIENT_DAYS: 3,
-  LIVE_PHRASE: 'send to clients', FROM_MIN: 7 * 60, LAG_MIN: 10, STAR_MIN: 3
+  LIVE_PHRASE: 'send to clients', FROM_MIN: 7 * 60, LAG_MIN: 10, STAR_MIN: 3,
+  SAMPLES: 3, SAMPLE_GAP_MIN: 2   // sample e-mails to the Branch Manager (2026-10-21g); the page's button waits two minutes before sending again
 };
 var RATETAB = { must: ['Token', 'Kind', 'TaskId', 'Rating'], name: 'Service Ratings',
   head: ['Token', 'Sent', 'Kind', 'TaskId', 'Type', 'What', 'Closer', 'CloserName', 'ToName', 'Email', 'Days', 'Status', 'Rating', 'RatedAt', 'Comment', 'Alerted', 'OptOut',
@@ -7542,6 +7543,7 @@ function rateRun_(day, since) {
   var bmName = bkNk_(nameFor_('ricky'));
   var rows = rateRows_(), today = {}, recent = {}, opted = {}, cool = shiftDays_(day, -RATE.CLIENT_COOL_DAYS);
   rows.forEach(function (r) { var em = String(r.Email || '').toLowerCase(), d = isoDay_(r.Sent);
+    if (rateIsSample_(r)) return;   // a sample is no one's cap, cool-down or opt-out
     if (String(r.OptOut || '') === 'yes') opted[em] = 1;
     if (String(r.Kind) === 'agent' && d === day) today[em] = (today[em] || 0) + 1;
     if (String(r.Kind) === 'client' && d >= cool && /^(sent|test)$/.test(String(r.Status || ''))) recent[em] = 1; });
@@ -7605,7 +7607,8 @@ function ratePage_(title, sub, inner) { return replyPage_(title, sub, inner || '
 function rateClick_(e) {
   var p = (e && e.parameter) || {}, f = rateFind_(p.sr);
   if (!f) return ratePage_('That link has expired.', 'If you would like to tell us something, reply to the e-mail or call the branch.');
-  var map = colMap_(f.sh), row = f.row;
+  var map = colMap_(f.sh), row = f.row, sample = rateIsSample_(row);
+  if (p.out && sample) return ratePage_('Nothing was changed.', 'This was a sample rating e-mail: there is no one to stop asking.');
   if (p.out) {
     var em = String(row.Email || '').toLowerCase();
     sheetObjects_(f.sh).forEach(function (r, i) { if (String(r.Email || '').toLowerCase() === em) writeRow_(f.sh, i + 2, map, { OptOut: 'yes' }); });
@@ -7617,14 +7620,17 @@ function rateClick_(e) {
   if (p.r) {
     writeRow_(f.sh, f.at, map, { Rating: n, RatedAt: new Date() }); forgetHr_(RATETAB);
     var who = String(row.Kind) === 'agent' ? 'the agent, ' + String(row.ToName || '').split(' ')[0] : 'the client';
-    try { sfkInsert_('FeedItem', { ParentId: String(row.TaskId), Body: 'SERVICE RATING · ' + n + ' of 5 from ' + who + '. Thank you, ' + gameFirst_(String(row.Closer)) + '.' }); } catch (err) {}
+    // A sample leaves no trace on the task: nothing on its Chatter (21 Oct 2026, 2026-10-21g).
+    if (!sample) { try { sfkInsert_('FeedItem', { ParentId: String(row.TaskId), Body: 'SERVICE RATING · ' + n + ' of 5 from ' + who + '. Thank you, ' + gameFirst_(String(row.Closer)) + '.' }); } catch (err) {} }
     if (n <= RATE.LOW && !String(row.Alerted || '')) { try { rateAlert_(Object.assign({}, row, { Rating: n })); writeRow_(f.sh, f.at, map, { Alerted: hhmm_(new Date()) }); } catch (err) {} }
   }
   var stars = '<div style="font-size:40px;color:#E3B85A;letter-spacing:4px;margin:4px 0 10px">' + '&#9733;'.repeat(n) + '<span style="color:#DDD">' + '&#9733;'.repeat(5 - n) + '</span></div>';
   var form = '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card"><input type="hidden" name="sr" value="' + esc_(String(row.Token)) + '">' +
     '<div class="bh">Anything to add?</div><div class="bf">Optional. It goes to the branch with your rating.</div>' +
     '<textarea name="comment" rows="3" placeholder="' + (n <= RATE.LOW ? 'What should we have done better?' : 'What went well?') + '"></textarea><button type="submit">Send</button></form>';
-  return ratePage_('Thank you.', 'Your rating of ' + n + ' out of 5 has been recorded and will be read by the branch.', '<div class="card">' + stars + '</div>' + form);
+  var note = sample ? '<div class="card" style="border-left:4px solid #D9A21B"><div class="bh">A sample</div><div class="bf" style="margin:2px 0 0">Recorded on its sample row only: nothing on the task\'s Chatter, ' +
+    'and it counts nowhere (not the week, the game or the wall).' + (n <= RATE.LOW ? ' The low-rating e-mail has gone to you, marked [Sample].' : ' Try 1 or 2 stars to see the low-rating e-mail.') + '</div></div>' : '';
+  return ratePage_('Thank you.', 'Your rating of ' + n + ' out of 5 has been recorded and will be read by the branch.', '<div class="card">' + stars + '</div>' + note + form);
 }
 function ratePost_(e) {
   var p = (e && e.parameter) || {}, f = rateFind_(p.sr);
@@ -7632,7 +7638,7 @@ function ratePost_(e) {
   var c = String(p.comment || '').replace(/\s+/g, ' ').trim().slice(0, 1000);
   if (c) {
     writeRow_(f.sh, f.at, colMap_(f.sh), { Comment: c }); forgetHr_(RATETAB);
-    try { sfkInsert_('FeedItem', { ParentId: String(f.row.TaskId), Body: 'SERVICE RATING · comment from ' + (String(f.row.Kind) === 'agent' ? 'the agent' : 'the client') + ': "' + c + '"' }); } catch (err) {}
+    if (!rateIsSample_(f.row)) { try { sfkInsert_('FeedItem', { ParentId: String(f.row.TaskId), Body: 'SERVICE RATING · comment from ' + (String(f.row.Kind) === 'agent' ? 'the agent' : 'the client') + ': "' + c + '"' }); } catch (err) {} }
     var n = Number(f.row.Rating) || 0;
     if (n && n <= RATE.LOW) { try { rateAlert_(Object.assign({}, f.row, { Comment: c })); } catch (err) {} }
   }
@@ -7641,10 +7647,12 @@ function ratePost_(e) {
 /** 1 or 2 stars: to Mr Rampersad alone, at once. */
 function rateAlert_(row) {
   var to = managerEmails_(); if (!to.length) return false;
-  var link = ''; try { var tk = sfkToken_(); if (tk && tk.instance_url) link = tk.instance_url + '/' + String(row.TaskId); } catch (e) {}
+  var sample = rateIsSample_(row);
+  var link = ''; try { var tk = sfkToken_(); if (tk && tk.instance_url && String(row.TaskId || '')) link = tk.instance_url + '/' + String(row.TaskId); } catch (e) {}
   var card = ''; try { if (row.Token) card = rateIntelUrl_('ricky', String(row.Token)); } catch (e) {}
-  mailSend_({ to: to.join(','), subject: 'Low rating · ' + row.Rating + ' of 5 from ' + (String(row.Kind) === 'agent' ? 'agent ' + String(row.ToName || '') : 'a client') + ' · closed by ' + gameFirst_(String(row.Closer)),
+  mailSend_({ to: to.join(','), subject: (sample ? '[Sample] ' : '') + 'Low rating · ' + row.Rating + ' of 5 from ' + (String(row.Kind) === 'client' ? 'a client' : 'agent ' + String(row.ToName || '')) + ' · closed by ' + gameFirst_(String(row.Closer)),
     htmlBody: shell_('A low service rating', prettyDate_(todayISO_()) + ' · ' + hhmm_(new Date()),
+      (sample ? '<div style="background:#FBF6E6;border:1px solid #EADFB8;border-radius:10px;padding:9px 13px;margin:0 0 12px;font-size:13px;line-height:1.5"><b>A sample.</b> This is what comes to you the moment an agent or a client gives 1 or 2 stars. Nothing went on the task, and it counts nowhere.</div>' : '') +
       statTiles_([{ value: row.Rating + '/5', label: 'rating', color: MAIL.red }, { value: row.Days, label: 'days it took', color: MAIL.navy }]) +
       '<div style="font-size:14px;line-height:1.6"><b>' + esc_(String(row.ToName || '')) + '</b> (' + esc_(String(row.Kind)) + ') rated the ' + esc_(String(row.What || 'task')).toLowerCase() + ' closed by <b>' + esc_(String(row.CloserName || row.Closer)) + '</b>.</div>' +
       (row.Comment ? '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.red + ';border-radius:10px;padding:10px 14px;margin:10px 0;font-size:14px">"' + esc_(String(row.Comment)) + '"</div>' : '') +
@@ -7659,7 +7667,7 @@ function rateAlert_(row) {
 function rateStats_(from, to) {
   var by = {}, all = { n: 0, sum: 0, five: 0, agents: 0, clients: 0 }, list = [];
   rateRows_().forEach(function (r) {
-    var n = Number(r.Rating) || 0, d = isoDay_(r.RatedAt); if (!n || !d || d < from || d > to) return;
+    var n = Number(r.Rating) || 0, d = isoDay_(r.RatedAt); if (!n || !d || d < from || d > to || rateIsSample_(r)) return;   // samples never count (2026-10-21g)
     var s = String(r.Closer || ''), o = by[s] = by[s] || { n: 0, sum: 0, five: 0 };
     o.n++; o.sum += n; if (n === 5) o.five++;
     all.n++; all.sum += n; if (n === 5) all.five++; if (String(r.Kind) === 'agent') all.agents++; else all.clients++;
@@ -7925,17 +7933,21 @@ var RATEPG_CSS = '<style>' +
   '.tl li div{color:#3A4050}.tl li b{color:#141C4A}' +
   '.rflt{position:sticky;top:0;z-index:6;background:#F7F5EF;margin:0 -16px 10px;padding:8px 16px;display:grid;grid-template-columns:1fr 1fr;gap:6px}.rflt select{margin:0}' +
   '.rcn{grid-column:1/-1;font-size:12.5px;color:#6A7180}.rc{scroll-margin-top:150px}.rc.hl{box-shadow:0 0 0 3px #E3B85A}' +
+  '.rsm{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700;color:#141C4A;cursor:pointer}.rsm input{width:20px;height:20px;margin:0;accent-color:#141C4A}' +
+  '.rc.sm{border-style:dashed;border-color:#D9A21B}' +
   '</style>';
 /** Every rating, task by task. Reads the Service Ratings tab only: nothing here asks Salesforce. */
-function rateIntelPage_(person, day, focus) {
+function rateIntelPage_(person, day, focus, notice) {
   focus = /^[A-Za-z0-9_-]{1,64}$/.test(String(focus || '')) ? String(focus) : '';
   var all = rateRows_().map(function (r, i) { var s = rateAt_(r.Sent); return { r: r, i: i, s: s ? s.day + ' ' + (s.hm || '00:00') : '' }; });
   all.sort(function (a, b) { return a.s < b.s ? 1 : a.s > b.s ? -1 : b.i - a.i; });
   var from = weekStart_(day), inWeek = function (v) { var a = rateAt_(v); return !!a && a.day >= from && a.day <= day; };
   var isSent = function (r) { return /^(sent|test)$/.test(String(r.Status || '')); };
-  var st = rateStats_(from, day), asked = all.filter(function (w) { return isSent(w.r) && inWeek(w.r.Sent); });
+  // Samples (2026-10-21g) have cards, marked, but are never in the week's figures.
+  var real = all.filter(function (w) { return !rateIsSample_(w.r); }), nSamples = all.length - real.length;
+  var st = rateStats_(from, day), asked = real.filter(function (w) { return isSent(w.r) && inWeek(w.r.Sent); });
   var answered = asked.filter(function (w) { return Number(w.r.Rating) > 0; }).length;
-  var rated = all.filter(function (w) { return Number(w.r.Rating) > 0 && inWeek(w.r.RatedAt); });
+  var rated = real.filter(function (w) { return Number(w.r.Rating) > 0 && inWeek(w.r.RatedAt); });
   var pct = function (a, b) { return b ? Math.round(100 * a / b) + '%' : '—'; };
   var tiles = '<div class="tiles">' +
     '<div class="tile"><div class="v">' + st.all.n + '</div><div class="l">ratings this week</div></div>' +
@@ -7970,29 +7982,30 @@ function rateIntelPage_(person, day, focus) {
   if (focus && !list.some(function (w) { return String(w.r.Token) === focus; })) list = list.concat(all.filter(function (w) { return String(w.r.Token) === focus; }));
   var dash = function (v) { v = String(v == null ? '' : v).trim(); return v ? esc_(v) : '<span class="nd">—</span>'; };
   var card = function (w) {
-    var r = w.r, tok = String(r.Token || ''), n = Math.max(0, Math.min(5, Number(r.Rating) || 0)), status = String(r.Status || ''), sent = isSent(r);
+    var r = w.r, tok = String(r.Token || ''), n = Math.max(0, Math.min(5, Number(r.Rating) || 0)), status = String(r.Status || ''), sm = rateIsSample_(r), sent = isSent(r) || sm;
     var kind = String(r.Kind || ''), closer = String(r.Closer || ''), type = String(r.Type || '') || 'No type', tl = rateTl_(r.Timeline), open = !!focus && tok === focus;
-    var top = n ? '<span class="rs" aria-label="' + n + ' of 5">' + '&#9733;'.repeat(n) + '<s>' + '&#9733;'.repeat(5 - n) + '</s></span> <b>' + n + ' of 5</b>'
+    var top = (sm ? '<span class="badge a">Sample</span> ' : '') + (n ? '<span class="rs" aria-label="' + n + ' of 5">' + '&#9733;'.repeat(n) + '<s>' + '&#9733;'.repeat(5 - n) + '</s></span> <b>' + n + ' of 5</b>'
+      : sm ? '<span class="badge">waiting for your tap</span>'
       : sent ? '<span class="badge a">Waiting for a rating</span>'
-      : '<span class="badge">Not sent' + (status === 'held' ? ': client mail is held until the wording is approved' : status ? ': ' + esc_(status) : '') + '</span>';
+      : '<span class="badge">Not sent' + (status === 'held' ? ': client mail is held until the wording is approved' : status ? ': ' + esc_(status) : '') + '</span>');
     var tlHtml = tl.length
       ? '<details class="rtl"' + (open ? ' open' : '') + '><summary>Timeline · ' + tl.length + ' step' + (tl.length === 1 ? '' : 's') + '</summary><ol class="tl">' + tl.map(function (e) {
           var hd = rateTlHead_(e);
           return '<li class="k-' + rateAttr_(e.k) + '">' + (e.a ? '<b>' + esc_(rateAtText_(e.a)) + '</b> ' : '') + esc_(hd) + (e.x ? (hd ? '<div>' : '<div class="nd">') + esc_(e.x) + '</div>' : '') + '</li>'; }).join('') + '</ol></details>'
       : '<div class="bf">Timeline: <span class="nd">—</span> (kept for ratings from 21 Oct 2026)</div>';
-    return '<div class="card rc" id="c' + rateAttr_(tok) + '" data-closer="' + rateAttr_(closer) + '" data-kind="' + rateAttr_(kind) + '" data-type="' + rateAttr_(type) + '" data-stars="' +
+    return '<div class="card rc' + (sm ? ' sm' : '') + '" id="c' + rateAttr_(tok) + '"' + (sm ? ' data-sample="1"' : '') + ' data-closer="' + rateAttr_(closer) + '" data-kind="' + rateAttr_(kind) + '" data-type="' + rateAttr_(type) + '" data-stars="' +
         (n ? (n <= RATE.LOW ? 'low' : String(n)) : sent ? 'wait' : 'none') + '">' +
       '<div class="rtop">' + top + (String(r.Alerted || '').trim() ? ' <span class="badge r">sent to you at ' + esc_(twelve_(timeStr_(r.Alerted))) + '</span>' : '') +
         (String(r.OptOut || '') === 'yes' ? ' <span class="badge">asked not to be asked again</span>' : '') + '</div>' +
       '<div class="rwho"><b>' + esc_(closer ? gameFirst_(closer) : String(r.CloserName || '—')) + '</b> closed it for <b>' + dash(r.ToName) + '</b> · ' +
-        (kind === 'agent' ? 'the agent' : kind === 'client' ? 'the client' : esc_(kind)) + '</div>' +
+        (kind === 'agent' ? 'the agent' : kind === 'client' ? 'the client' : sm ? 'a sample of the agent\'s e-mail, sent to you' : esc_(kind)) + '</div>' +
       (String(r.Comment || '').trim() ? '<div class="rq">&ldquo;' + esc_(String(r.Comment)) + '&rdquo;</div>' : '') +
       '<div class="rf"><div><span>Client</span>' + dash(r.Client) + '</div><div><span>Department</span>' + dash(r.Department) + '</div>' +
         '<div><span>Agent</span>' + dash(r.Agent) + '</div><div><span>Type</span>' + dash(r.Type) + (String(r.What || '').trim() ? ' · ' + esc_(String(r.What)) : '') + '</div>' +
         '<div><span>Opened &rarr; closed</span>' + (rateAt_(r.Opened) || rateAt_(r.Closed) ? esc_(rateAtText_(r.Opened)) + ' &rarr; ' + esc_(rateAtText_(r.Closed)) : '<span class="nd">—</span>') + '</div>' +
         '<div><span>Days · notes</span>' + dash(r.Days) + ' · ' + dash(r.Notes) + '</div></div>' +
       '<div class="ri"><b>Intelligence</b>' + dash(r.Intel) + '</div>' + tlHtml +
-      '<div class="bf" style="margin:6px 0 0">Asked ' + esc_(rateAtText_(r.Sent)) + (status === 'test' ? ' (to the test address)' : '') + (n && rateAt_(r.RatedAt) ? ' · rated ' + esc_(rateAtText_(r.RatedAt)) : '') + '</div></div>';
+      '<div class="bf" style="margin:6px 0 0">' + (sm ? 'Sample sent to you ' : 'Asked ') + esc_(rateAtText_(r.Sent)) + (status === 'test' ? ' (to the test address)' : '') + (n && rateAt_(r.RatedAt) ? ' · rated ' + esc_(rateAtText_(r.RatedAt)) : '') + '</div></div>';
   };
   var opt = function (v, l) { return '<option value="' + rateAttr_(v) + '">' + esc_(l) + '</option>'; };
   var who = {}, tys = {}; list.forEach(function (w) { if (w.r.Closer) who[String(w.r.Closer)] = 1; tys[String(w.r.Type || '') || 'No type'] = 1; });
@@ -8001,23 +8014,113 @@ function rateIntelPage_(person, day, focus) {
     '<select data-f="kind" aria-label="Agent or client">' + opt('', 'Agents, clients') + opt('agent', 'Agents') + opt('client', 'Clients') + '</select>' +
     '<select data-f="type" aria-label="Type">' + opt('', 'Every type') + Object.keys(tys).sort().map(function (k) { return opt(k, k); }).join('') + '</select>' +
     '<select data-f="stars" aria-label="Stars">' + opt('', 'Any stars') + opt('5', '5 stars') + opt('4', '4 stars') + opt('3', '3 stars') + opt('low', '1 or 2 stars') + opt('wait', 'Waiting for a rating') + opt('none', 'Not sent') + '</select>' +
+    (nSamples ? '<label class="rsm"><input type="checkbox" id="hidesm"> Hide samples (' + nSamples + ')</label>' : '') +
     '<div class="rcn" id="rcn"></div></div>';
   var js = '<script>(function(){' +
-    'var sel=document.querySelectorAll(".rflt select"),cards=document.querySelectorAll(".rc"),cnt=document.getElementById("rcn");' +
+    'var sel=document.querySelectorAll(".rflt select"),cards=document.querySelectorAll(".rc"),cnt=document.getElementById("rcn"),hs=document.getElementById("hidesm");' +
     'function apply(){var f={},n=0,i,j,k;for(i=0;i<sel.length;i++)f[sel[i].getAttribute("data-f")]=sel[i].value;' +
-      'for(j=0;j<cards.length;j++){var c=cards[j],ok=true;for(k in f){if(f[k]&&c.getAttribute("data-"+k)!==f[k])ok=false;}c.style.display=ok?"":"none";if(ok)n++;}' +
+      'for(j=0;j<cards.length;j++){var c=cards[j],ok=!(hs&&hs.checked&&c.getAttribute("data-sample"));for(k in f){if(f[k]&&c.getAttribute("data-"+k)!==f[k])ok=false;}c.style.display=ok?"":"none";if(ok)n++;}' +
       'if(cnt)cnt.textContent="Showing "+n+" of "+cards.length;}' +
-    'for(var i=0;i<sel.length;i++)sel[i].addEventListener("change",apply);' +
-    'function go(t){var c=document.getElementById("c"+t);if(!c)return;for(var i=0;i<sel.length;i++)sel[i].value="";apply();' +
+    'for(var i=0;i<sel.length;i++)sel[i].addEventListener("change",apply);if(hs)hs.addEventListener("change",apply);' +
+    'function go(t){var c=document.getElementById("c"+t);if(!c)return;for(var i=0;i<sel.length;i++)sel[i].value="";if(hs)hs.checked=false;apply();' +
       'var d=c.querySelectorAll("details");for(var k=0;k<d.length;k++)d[k].open=true;if(c.className.indexOf(" hl")<0)c.className+=" hl";c.scrollIntoView({block:"start"});}' +
     'var gs=document.querySelectorAll("[data-go]");for(var g=0;g<gs.length;g++)gs[g].addEventListener("click",function(e){e.preventDefault();go(this.getAttribute("data-go"));});' +
     'apply();var F=' + JSON.stringify(focus).replace(/</g, '\\u003c') + ';if(F)setTimeout(function(){go(F);},80);' +
     '})();</script>';
-  var oldest = all.length ? rateAt_(all[all.length - 1].r.Sent) : null;
+  var oldest = real.length ? rateAt_(real[real.length - 1].r.Sent) : null;
+  // "Send me sample ratings" (Ricky, 1:55pm, 21 Oct 2026: "send some samples to see the revised and let me click"). The Branch Manager alone.
+  var samples = String(person.staffId) === 'ricky' ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card">' +
+      '<input type="hidden" name="rs" value="ricky"><input type="hidden" name="f" value="rate"><input type="hidden" name="k" value="' + esc_(rateIntelSig_('ricky')) + '"><input type="hidden" name="act" value="samples">' +
+      '<div class="bh">Try it yourself</div><div class="bf">Up to ' + RATE.SAMPLES + ' agent rating e-mails exactly as the agents get them, built from the latest real ones, to you alone. ' +
+      'Tap a star, add a comment, give 1 or 2 stars to see the low-rating e-mail. Samples are marked here and count nowhere: not the week, the game or the wall, and nothing goes on a task\'s Chatter.</div>' +
+      '<button type="submit">Send me sample ratings</button></form>' : '';
   return replyPage_('Service ratings',
     'Every rating, newest first: who closed it and for whom, the client or the department, the timeline and the notes, and a read on how it went. ' +
-      all.length + ' asked for' + (oldest ? ' since ' + esc_(shortDate_(oldest.day)) : '') + (all.length > list.length ? '; the latest ' + list.length + ' are here, the rest on the Service Ratings tab' : '') + '. The same link every day.',
-    RATEPG_CSS + tiles + week + (list.length ? filters + list.map(card).join('') : '<div class="card">No rating has been asked for yet.</div>') + js);
+      real.length + ' asked for' + (oldest ? ' since ' + esc_(shortDate_(oldest.day)) : '') + (nSamples ? ', and ' + nSamples + ' sample' + (nSamples === 1 ? '' : 's') : '') +
+      (all.length > list.length ? '; the latest ' + list.length + ' are here, the rest on the Service Ratings tab' : '') + '. The same link every day.',
+    (notice ? '<div class="card ok">' + notice + '</div>' : '') + RATEPG_CSS + tiles + week + samples +
+      (list.length ? filters + list.map(card).join('') : '<div class="card">No rating has been asked for yet.</div>') + js);
+}
+
+/* ─────────── Sample ratings for the Branch Manager (21 October 2026, 2026-10-21g) ───────────
+ *  Ricky, 1:55pm: "send some samples to see the revised and let me click". rateSamples(n) from the editor, or Send me
+ *  sample ratings on his Ratings page (a signed POST, him alone): up to RATE.SAMPLES agent rating e-mails in the real
+ *  format (rateAgentMail_, subject "[Sample] ..."), to managerEmails_() only, each built from one of the latest real
+ *  agent rows (its subject from the timeline, kind, days, closer, the closing note as what was done, and the record's
+ *  columns), or, with none, from a made-up task with no client in it. Each has its own token and row (Kind and Status
+ *  'sample'), so every link works: the stars, the thank-you page, a comment, and the [Sample] low-rating e-mail with
+ *  See the whole task. Then one e-mail with every sample's links and his page. A sample leaves no trace: nothing on
+ *  a task's Chatter, no opt-out, and rateStats_ (the week, the game, the Service Star, the wall and its ticker), the
+ *  agent cap and the cool-down all skip it. Client e-mail stays held: samples are agent e-mails only.
+ */
+var RATE_SAMPLE_MADE = [
+  { subject: 'Contract received - sample policy', type: 'Servicing', what: 'Contract acknowledgement', days: 1, closer: 'elizabeth', dept: 'Customer Service',
+    note: 'Recorded the contract acknowledgement in Salesforce and on the policy file, and e-mailed the agent to confirm it is done.' },
+  { subject: 'Medical requirement - sample application', type: 'Pendings', what: 'Medical requirement', days: 4, closer: 'sasha', dept: 'Underwriting',
+    note: 'The clinic sent the ECG results to underwriting; underwriting confirmed receipt and moved the application to approval. The agent was told by e-mail.' },
+  { subject: 'Statement request - sample policy', type: 'Servicing', what: 'What the policy has built', days: 2, closer: 'azariah', dept: 'Customer Service',
+    note: 'Requested the annual statement from Customer Service and e-mailed it to the agent with a line on what it shows.' }
+];
+function rateIsSample_(r) { return String((r || {}).Kind || '') === 'sample' || /^sample\b/.test(String((r || {}).Status || '')); }
+/** From the editor: up to three sample agent rating e-mails to you, and one with all their links. Says what was sent. */
+function rateSamples(n) { var out = rateSamplesSend_(n, false); Logger.log(out.line); return out.line; }
+function rateSamplesSend_(n, fromPage) {
+  var to = managerEmails_(); if (!to.length) return { sent: 0, line: 'No manager e-mail on file: nothing was sent.' };
+  var props = PropertiesService.getScriptProperties(), last = Number(props.getProperty('rate_samples_at') || 0);
+  if (fromPage && last && Date.now() - last < RATE.SAMPLE_GAP_MIN * 60000) return { sent: 0, line: 'Samples went to you at ' + twelve_(hhmm_(new Date(last))) + ': they are in your inbox. Nothing more was sent.' };
+  n = Math.max(1, Math.min(RATE.SAMPLES, parseInt(n, 10) || RATE.SAMPLES));
+  var day = todayISO_(), now = new Date(), nowHm = hhmm_(now);
+  // The latest real agent ratings, one per task.
+  var rows = rateRows_(), seen = {}, base = [];
+  for (var i = rows.length - 1; i >= 0 && base.length < n; i--) {
+    var r = rows[i]; if (String(r.Kind) !== 'agent' || !String(r.TaskId || '') || seen[r.TaskId]) continue;
+    seen[r.TaskId] = 1; base.push(r);
+  }
+  var picks = base.map(function (r) {
+    var tl = rateTl_(r.Timeline), op = tl.filter(function (e) { return e.k === 'open'; })[0], cl = tl.filter(function (e) { return e.k === 'close'; })[0];
+    var sentDay = (rateAt_(r.Sent) || {}).day || day, days = Number(r.Days) || 0;
+    var o = {}; RATETAB.head.forEach(function (h) { o[h] = r[h] != null ? r[h] : ''; });
+    return { row: o, subject: op && op.x ? String(op.x).split(' · due ')[0] : String(r.What || r.Type || 'Task'), summary: cl && cl.x ? String(cl.x) : 'The ' + String(r.What || 'task').toLowerCase() + ' was closed with a note in Salesforce.',
+      first: String(r.ToName || '').split(' ')[0] || 'Agent', opened: (rateAt_(r.Opened) || {}).day || shiftDays_(sentDay, -days), closed: (rateAt_(r.Closed) || {}).day || sentDay, days: days };
+  });
+  if (!picks.length) picks = RATE_SAMPLE_MADE.slice(0, n).map(function (m) {
+    var op = shiftDays_(day, -m.days), tl = [{ a: op + ' 09:00', k: 'open', b: nameFor_('ricky'), x: m.subject }, { a: day + ' ' + nowHm, k: 'close', b: nameFor_(m.closer), x: m.note }];
+    var f = { notes: 1, replies: 0, moves: 0, how: ['e-mail'], wait: null, waitOn: '', said: true };
+    return { row: { TaskId: '', Type: m.type, What: m.what, Closer: m.closer, CloserName: nameFor_(m.closer), ToName: 'Sample Agent', Days: m.days, Agent: 'Sample Agent', Client: '',
+        Department: m.dept, Opened: op + ' 09:00', Closed: day + ' ' + nowHm, Notes: 1, Timeline: JSON.stringify(tl), Intel: rateIntelPlain_(f, m.days) },
+      subject: m.subject, summary: m.note, first: 'Agent', opened: op, closed: day, days: m.days };
+  });
+  var sh = rateTab_(), head = rateCols_(sh), add = [], sent = [];
+  picks.forEach(function (x) {
+    var token = 'r' + String(Utilities.getUuid()).replace(/[^a-z0-9]/gi, '').slice(0, 24), status = 'sample';
+    var mail = rateAgentMail_({ first: x.first, closerFirst: gameFirst_(String(x.row.Closer || '')), subject: x.subject, kind: String(x.row.What || x.row.Type || ''), opened: shortDate_(x.opened),
+      closed: shortDate_(x.closed), days: x.days, summary: shorten_(x.summary, 400), token: token });
+    try { mailSend_({ to: to.join(','), subject: '[Sample] ' + mail.subject, htmlBody: mail.html, name: 'Ricky Rampersad Branch' }); sent.push({ token: token, x: x }); }
+    catch (e) { status = 'sample failed: ' + String(e && e.message || e).slice(0, 60); }
+    var o = Object.assign({}, x.row, { Token: token, Sent: now, Kind: 'sample', Email: String(to[0]), Status: status, Rating: '', RatedAt: '', Comment: '', Alerted: '', OptOut: '' });
+    add.push(head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+  });
+  if (add.length) { sh.getRange(sh.getLastRow() + 1, 1, add.length, head.length).setValues(add); forgetHr_(RATETAB); }
+  props.setProperty('rate_samples_at', String(Date.now()));
+  if (!sent.length) return { sent: 0, line: 'The sample e-mails did not send: ' + (add.length ? 'see the Status column on the Service Ratings tab.' : 'nothing to send.') };
+  // One e-mail with every sample's links and his page, so he can open everything from one place.
+  var star = function (tk, k) { return '<a href="' + esc_(rateLink_(tk, '&r=' + k)) + '" style="display:inline-block;text-decoration:none;color:#E3B85A;font-size:22px;padding:0 3px" title="' + k + ' of 5">&#9733;<span style="font-size:11px;color:' + MAIL.muted + '">' + k + '</span></a>'; };
+  var list = sent.map(function (s, i) {
+    return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:10px 14px;margin:0 0 10px">' +
+      '<div style="font-size:13.5px;font-weight:700">' + (i + 1) + '. ' + esc_(shorten_(s.x.subject, 80)) + '</div>' +
+      '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin:2px 0 4px">' + esc_(gameFirst_(String(s.x.row.Closer || ''))) + ' for ' + esc_(String(s.x.row.ToName || 'the agent')) + ' · ' + esc_(String(s.x.row.What || '')) + ' · ' + s.x.days + ' day' + (s.x.days === 1 ? '' : 's') + '</div>' +
+      [1, 2, 3, 4, 5].map(function (k) { return star(s.token, k); }).join('') +
+      '<div style="font-size:12.5px;margin-top:4px"><a href="' + esc_(rateIntelUrl_('ricky', s.token)) + '" style="color:' + MAIL.navy + ';font-weight:700">its card on your Ratings page &rarr;</a></div></div>';
+  }).join('');
+  mailSend_({ to: to.join(','), subject: '[Sample] ' + sent.length + ' sample rating e-mail' + (sent.length === 1 ? '' : 's') + ' to try · ' + shortDate_(day),
+    htmlBody: shell_('Sample ratings to try', prettyDate_(day) + ' · ' + twelve_(nowHm),
+      '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + sent.length + ' sample' + (sent.length === 1 ? ' is' : 's are') + ' in your inbox, each exactly as the agent gets it' +
+        (base.length ? ', built from the latest real ratings' : ', on made-up tasks (there are no real agent ratings yet)') + '. Tap a star here or in the e-mail: the thank-you page opens, you can add a comment, ' +
+        'and 1 or 2 stars brings the low-rating e-mail, marked [Sample], with See the whole task. Samples count nowhere and nothing goes on a task\'s Chatter. Client e-mail stays held.</div>' +
+      list + replyButton_(rateIntelUrl_('ricky'), 'Open Service ratings', 'Every rating, task by task. Samples are marked Sample; tick Hide samples to put them away.')) });
+  var line = 'Sent ' + sent.length + ' sample rating e-mail' + (sent.length === 1 ? '' : 's') + ' to ' + to.join(', ') + (base.length ? ', from the latest real ones (' +
+    sent.map(function (s) { return gameFirst_(String(s.x.row.Closer || '')) + ' · ' + String(s.x.row.What || ''); }).join('; ') + ')' : ', on made-up tasks') + ', and one e-mail with all their links and your Ratings page.';
+  return { sent: sent.length, line: line };
 }
 
 /* ─────────── Wall intelligence: the feed behind the new wall (20 October 2026) ───────────
@@ -14892,6 +14995,13 @@ function replyPost_(e) {
     var upp = String(p.k || '') === unitSig_(sid) ? replyPerson_(sid, 'unit') : null;
     if (!upp) return replyPage_('That link is not right.', 'Nothing was saved. Open My unit from your morning e-mail.', '');
     return unitSave_(upp, todayISO_(), p);
+  }
+  // Send me sample ratings, from his Ratings page (2026-10-21g): the Branch Manager alone.
+  if (f === 'rate') {
+    var rq = sid === 'ricky' && String(p.k || '') === rateIntelSig_(sid) ? rateIntelPerson_(sid) : null;
+    if (!rq) return replyPage_('That link is not right.', 'Nothing was sent. Open Service ratings from your morning e-mail.', '');
+    var sr = String(p.act || '') === 'samples' ? rateSamplesSend_(RATE.SAMPLES, true) : { line: '' };
+    return rateIntelPage_(rq, todayISO_(), '', esc_(sr.line));
   }
   if (f === 'me') {
     var mp = String(p.k || '') === meSig_(sid) ? replyPerson_(sid, 'me') : null;
