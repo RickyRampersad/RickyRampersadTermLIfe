@@ -47,7 +47,7 @@
 var MQ = {
   VERSION: '2026-10-21a',
   BRAND: 'Ricky Rampersad Branch',
-  LOGO: 'https://rickyrampersadbranch.com/logo-mark.png',   // hosted PNG: Gmail strips SVG and data URIs
+  LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',   // the blue shield (the manager's choice, 21 Oct 2026); hosted PNG: Gmail strips SVG and data URIs
   SITE: 'https://rickyrampersadbranch.com/motor-quote/',
 
   /* Where a quote request goes. Guardian General's quotes desk, as the
@@ -236,8 +236,8 @@ function mqRequestCode_(b) {
     to: [email], subject: code + ' is your motor quote sign-in code',
     html: mqWrap_('Your sign-in code',
       '<p>Your sign-in code for the motor quote is:</p>' +
-      '<p style="background:#f6f1e3;border:1px solid #e3d3a6;border-radius:10px;padding:16px;text-align:center">' +
-      '<b style="font-size:30px;letter-spacing:8px;color:#07131f">' + code + '</b></p>' +
+      '<p style="background:#E8F0FF;border:1px solid #C9D8F0;border-radius:10px;padding:16px;text-align:center">' +
+      '<b style="font-size:30px;letter-spacing:8px;color:#13408F">' + code + '</b></p>' +
       '<p>It works for ' + MQ.CODE_TTL_MIN + ' minutes. If you did not ask for it, ignore this e-mail: nobody can get in without the code in your inbox.</p>'),
     client: true,
   });
@@ -696,7 +696,7 @@ function mqReceipt_(ref, d) {
     '<li>The quotes desk prices the cover from what you told us.</li>' +
     '<li>The quote comes back to our branch and to you at this address, usually within two working days.</li>' +
     '<li>A member of our team calls you to go through it and, if you wish, to put the cover in place.</li></ol>' +
-    '<p>Your reference is <b style="color:#07131f">' + mqEsc_(ref) + '</b>. Sign in again at <a href="' + MQ.SITE + '" style="color:#07606f">' +
+    '<p>Your reference is <b style="color:#13408F">' + mqEsc_(ref) + '</b>. Sign in again at <a href="' + MQ.SITE + '" style="color:#07606f">' +
     MQ.SITE.replace('https://', '') + '</a> any time to see where it stands.</p>' +
     '<p>If anything you told us needs correcting, reply to this e-mail or call the branch on ' + MQ.BRANCH_TEL + '.</p>' +
     mqFieldsHtml_(d));
@@ -707,11 +707,11 @@ function mqReceipt_(ref, d) {
 function mqWrap_(title, body, internal) {
   return '<div style="background:#eef4f7;padding:18px 0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#33465a;font-size:15px;line-height:1.55">' +
     '<table cellpadding="0" cellspacing="0" style="width:100%;max-width:620px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #d7e3ea">' +
-    '<tr><td style="background:#07131f;padding:16px 22px;border-bottom:3px solid #efc24b">' +
-    '<table cellpadding="0" cellspacing="0"><tr><td style="width:40px;height:40px;border-radius:10px;background:#07131f;vertical-align:middle">' +
-    '<img src="' + MQ.LOGO + '" width="40" height="40" alt="" style="display:block;border-radius:10px"></td>' +
-    '<td style="padding-left:12px;color:#eaf4ff;font-weight:800;font-size:15px;line-height:1.25">' + MQ.BRAND +
-    '<span style="display:block;font-weight:500;font-size:12px;color:#8fd8e6">Motor quotes</span></td></tr></table></td></tr>' +
+    '<tr><td style="background:#13408F;padding:16px 22px;border-bottom:3px solid #2A6DE0">' +
+    '<table cellpadding="0" cellspacing="0"><tr><td style="width:46px;height:46px;border-radius:12px;background:#13408F;vertical-align:middle">' +
+    '<img src="' + MQ.LOGO + '" width="46" height="46" alt="" style="display:block;border-radius:12px"></td>' +
+    '<td style="padding-left:12px;color:#ffffff;font-weight:800;font-size:16px;line-height:1.25">' + MQ.BRAND +
+    '<span style="display:block;font-weight:500;font-size:12px;color:#BFE9FF">Motor quotes</span></td></tr></table></td></tr>' +
     '<tr><td style="padding:22px 22px 8px"><h1 style="margin:0 0 10px;font-size:21px;line-height:1.3;color:#12202e">' + title + '</h1>' + body + '</td></tr>' +
     '<tr><td style="padding:14px 22px 18px;font-size:12px;color:#5d7186;border-top:1px solid #e6edf2">' +
     (internal ? 'Internal: this e-mail carries a client\'s details. Do not forward it outside Guardian and the branch.'

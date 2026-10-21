@@ -3787,6 +3787,13 @@ own Google Sheet** (own `doGet`/`doPost`: never beside `Claims.gs` or `Service.g
 Salesforce if he is an existing client by his email, if not a contact is created, then asks data that will generate a motor
 quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-SETUP.md` has the steps.
 
+- **It carries the blue shield, not the gold** (21 October 2026, shown the page: "i dont like the log with the gold and
+  black its not scales and look"): `orphan-transition/board-mark.png` at 46 px on a `#13408F` tile in the header, as the
+  favicon, and as `MQ.LOGO` on both e-mails, as the Delivery Book does. The page is light (a soft blue-white ground, a
+  corporate-blue header band, white cards, blue actions); a first cut on a midnight ground was turned down the same
+  hour ("dont lie the blacks and make more easy on the eyes"). Long answers are drop-downs (make, year, engine, body,
+  seats, years driving, no-claim discount, insurer, financial institution, each with Other and a box to type); yes or no
+  answers stay as taps.
 - **Sign-in is the claims portal's**: e-mail, six-digit code to that inbox, no password. Anyone may sign in; the answer never
   says who is a client. The signed-in e-mail is the client's e-mail whatever the form sends (`mqRead_`).
 - **What Salesforce holds is filled in** (`mqLookup_`, by e-mail): the Contact (name, mobile, Title as occupation,

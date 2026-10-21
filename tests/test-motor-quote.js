@@ -166,7 +166,7 @@ const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex').toString('bas
   ok('in test mode both go to the test inbox only, marked', desk.to === 'test@example.com' && rcpt.to === 'test@example.com' && /^\[TEST\]/.test(desk.subject) && !desk.cc);
   ok('the desk e-mail names who it would have gone to, with the copies', /CRMSQuotes@guardianonline.onmicrosoft.com/.test(desk.htmlBody) && /rickyrampersadsalessupport@myguardiangroup.com/.test(desk.htmlBody));
   ok('the desk e-mail carries the facts and the attachment', /Sample Credit Union/.test(desk.htmlBody) && /TT\$ 95,000/.test(desk.htmlBody) && desk.attachments && desk.attachments.length === 1);
-  ok('the desk e-mail carries the hosted gold shield, never a data URI', /rickyrampersadbranch\.com\/logo-mark\.png/.test(desk.htmlBody) && !/data:image/.test(desk.htmlBody));
+  ok('the desk e-mail carries the hosted blue shield, never a data URI', /rickyrampersadbranch\.com\/orphan-transition\/board-mark\.png/.test(desk.htmlBody) && !/data:image/.test(desk.htmlBody));
   ok('the receipt carries the reference and what happens next', new RegExp(r.ref).test(rcpt.htmlBody) && /What happens next/.test(rcpt.htmlBody));
   ok('Salesforce was read, never written, in test mode', SF.created.length === 0 && MS.sent.length === 0 && col('SF task') === '');
   ok('the client\'s requests come back with the new one first', r.requests.length === 1 && r.requests[0].ref === r.ref && r.requests[0].status === 'Sent to quotes desk');
@@ -221,7 +221,7 @@ const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex').toString('bas
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   const key = (gs.match(/SITE_KEY: '([^']+)'/) || [])[1];
   ok('the page and the script share one site key', key && page.indexOf('SITE_KEY: "' + key + '"') > -1);
-  ok('the page carries the gold shield and the view beacon', /logo-mark\.png/.test(page) && /rrb-views/.test(page) && /script\.google\.com\/macros\/s\//.test(page));
+  ok('the page carries the blue shield and the view beacon', /orphan-transition\/board-mark\.png/.test(page) && /rrb-views/.test(page) && /script\.google\.com\/macros\/s\//.test(page));
   ok('the page sends every request as text/plain (no CORS preflight)', /text\/plain;charset=utf-8/.test(page));
   ok('the home page points at the new address, and the Motor Quotation JotForm is gone from it', home.indexOf('href="/motor-quote/"') > -1 && home.indexOf('jotform.com/223376649264061') < 0);
   ok('the short address forwards', /location\.replace\('\/motor-quote\/'/.test(fs.readFileSync(path.join(ROOT, 'motorquote/index.html'), 'utf8')));
