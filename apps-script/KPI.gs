@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-20n';
+var SCRIPT_VERSION = '2026-10-21a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2123,6 +2123,8 @@ function doGet(e) {
     catch (err) { return replyPage_('Thank you.', 'Your rating did not record this time. Reply to the e-mail and the branch will take it from there.', ''); }
   }
   if (p.rs) {
+    // A link from an e-mail opens at once: a light page, and the page built behind it (21 Oct 2026). openPage() builds it with full=1.
+    if (FAST.KINDS[String(p.f || '')] && String(p.full || '') !== '1') { try { return fastShell_(p); } catch (err) {} }
     try { var rs = replyClick_(e); if (rs) return rs; }
     catch (err) { return replyPage_('That page did not open.', esc_(String(err && err.message || err)), ''); }
   }
@@ -2761,6 +2763,8 @@ function keepWarm() {
   try { ss_().getSheets()[0].getRange(1, 1).getValue(); } catch (e) {}
   // Housekeeping rides on this ten-minute trigger rather than adding one.
   try { housekeepingTick_(); } catch (e) {}
+  // His day, built ahead on a working morning so his first tap opens it at once (21 Oct 2026).
+  try { var fp = fastPrebuildTick_(); if (fp) runlog_('fast page: ' + fp); } catch (e) {}
 }
 
 function installTriggers() {
@@ -5838,7 +5842,7 @@ function bmdCheckin_(m, nowM, sp) {
   var acts = (m.log || []).filter(function (r) { return r.Kind !== 'checkin'; }).length;
   if (!m.signIn) return '<div class="card bad" id="md-in"><div class="bh">Start your day</div>' +
     '<div class="ln">Check in first. Your day is laid out below: urgent, drafts, inbox, then what is important.</div>' +
-    '<button type="submit" name="ci" value="1" style="margin-top:8px">Check in and start my day</button></div>';
+    '<button type="submit" name="ci" value="1" style="margin-top:8px" onclick="return ciNow(this,' + esc_(JSON.stringify({ rs: 'ricky', f: 'unit', k: unitSig_('ricky') })).replace(/"/g, '&quot;') + ')">Check in and start my day</button></div>' + CHECKIN_JS;
   return '<div class="card ok" id="md-in"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:15px;color:#1F6B47">&#10003; Checked in ' + esc_(twelve_(m.signIn)) + '</b>' +
     '<span style="font-size:13px;color:#6A7180">' + esc_(twelve_(hhmm_(new Date()))) + ' · ' + acts + ' thing' + (acts === 1 ? '' : 's') + ' done so far</span></div>' +
     '<div style="height:8px;background:#EEEBE3;border-radius:6px;margin:8px 0 2px;overflow:hidden"><i style="display:block;height:100%;width:' + pct + '%;background:#141C4A"></i></div>' +
@@ -6378,7 +6382,7 @@ function sdPage_(person, day, error, notice) {
     : '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card bad">' + replyHidden_(sid, day, 'in') +
         '<div class="bh">Check in</div><div class="bf">This is the register: the time you press it is your sign-in. Your day is set for you below.' +
         ' No check-in by ' + esc_(twelve_(mmText_(sp.start + ABSENT_AFTER_MIN))) + ' marks you absent; at ' + esc_(twelve_(mmText_(sp.start + COVER.AFTER_MIN))) + ' your due work goes to colleagues. Check in late and you are marked late, and before noon whatever nobody has touched comes back to you.</div>' +
-        '<button type="submit" style="background:#2C7A57;margin-top:6px">Check in and start my day</button></form>';
+        '<button type="submit" style="background:#2C7A57;margin-top:6px" onclick="return ciNow(this,' + esc_(JSON.stringify({ rs: sid, f: 'in', d: day, k: replySig_(sid, day, 'in') })).replace(/"/g, '&quot;') + ')">Check in and start my day</button></form>' + CHECKIN_JS;
   var yo = null; try { yo = yesterdayOpen_(sid, day); } catch (e) {}
   var yCard = yo ? '<div class="card bad" id="p-yday"><div class="bh" style="color:#DC3F3F">Yesterday first · ' + (yo.why === 'unanswered' ? yo.tasks.length + ' left from your ' + esc_(twelve_(yo.at)) + ' close-out on ' + esc_(shortDate_(yo.day)) : esc_(prettyDate_(yo.day)) + ' was not closed') + '</div>' +
       '<div class="bf">' + (yo.tasks.length ? 'A reason and a new date for each task left open, then Save.' : 'Nothing was left open; Save closes it.') + '</div>' +
@@ -7677,7 +7681,7 @@ function wallStaff_(day, outside) {
       var good = rs.list.filter(function (x) { return x.n >= 4 && desks.indexOf(x.closer) > -1; });
       svc = { avg: rs.all.avg, n: rs.all.n, five: rs.all.five, fivePct: Math.round(100 * rs.all.five / rs.all.n), agents: rs.all.agents, clients: rs.all.clients,
         recent: good.slice(0, 6).map(function (x) { return { at: x.day === day ? wallAt_(x.m) : shortDate_(x.day).replace(/^\w+ /, ''), who: gameFirst_(x.closer), n: x.n, from: x.kind === 'agent' ? 'an agent' : 'a client' }; }) };
-      good.forEach(function (x) { if (x.day === day && x.m != null) ev.push({ m: x.m, who: gameFirst_(x.closer), what: 'was given ' + x.n + ' stars by ' + (x.kind === 'agent' ? 'an agent' : 'a client') + ' for a task closed for them' }); });
+      good.forEach(function (x) { if (x.day === day && x.m != null) ev.push({ m: x.m, who: gameFirst_(x.closer), what: 'served ' + (x.kind === 'agent' ? 'an agent' : 'a client') + ', who rated the service ' + x.n + ' stars' }); });
     }
   } catch (e) {}
   var tot = 0; Object.keys(mix).forEach(function (k) { tot += mix[k]; });
@@ -14085,6 +14089,116 @@ function replyClick_(e) {
   if (f === 'nudge') return nudgeReplyPage_(person, day, '');
   return hkReplyPage_(person, day, '');
 }
+
+/* ─────────── Pages open at once (21 October 2026, 2026-10-21a) ───────────
+ *  Ricky, 6:21am: "when I click my day to start my day ... It's not opening ... it's opening the script, but it's
+ *  taking very long. Can anything be done on this?" A page behind an e-mail button was built in full before the
+ *  phone saw anything. His day (My branch) reads Salesforce, Chatter, his inbox and drafts, the agents and Query Pal:
+ *  up to a minute, and the mail app's browser gave up first. Now:
+ *    · the link answers at once with a light page ("Opening your day", a moving bar, the seconds) and the page is
+ *      built behind it through google.script.run (openPage), then drawn in place; if that fails, it says so and offers
+ *      to try again;
+ *    · his day is also built ahead between 5am and 8:30am on the ten-minute run (fastPrebuildTick_, every 40 minutes
+ *      until he opens it), kept in the cache, and handed over on his first tap with "Prepared at 6:10 · bring it up to
+ *      date"; after that every open is live;
+ *    · Check in on his day and on a staff day page is done there and then (checkInNow), without rebuilding the page.
+ */
+var FAST = { KINDS: { unit: 1, me: 1, plan: 1, 'in': 1, prog: 1, bm: 1, cmd: 1, um: 1, umeve: 1, hk: 1, ag: 1, agc: 1, nudge: 1, qp: 1, agff: 1, errand: 1, undo: 1 },
+             PRE_FROM: 5 * 60, PRE_TO: 8 * 60 + 30, PRE_EVERY_MIN: 40, KEEP_SEC: 4 * 3600, CHUNK: 45000 };
+function fastKey_(sid, f, day) { return 'fastpg_' + sid + '_' + f + '_' + day; }
+function fastCachePut_(key, html) {
+  var c = CacheService.getScriptCache(), n = Math.max(1, Math.ceil(html.length / FAST.CHUNK)), o = {};
+  for (var i = 0; i < n; i++) o[key + '_' + i] = html.slice(i * FAST.CHUNK, (i + 1) * FAST.CHUNK);
+  o[key + '_n'] = String(n); o[key + '_at'] = hhmm_(new Date());
+  c.putAll(o, FAST.KEEP_SEC);
+}
+/** The page built ahead, once: whoever takes it, it is gone (so a second open is live). */
+function fastCacheTake_(key) {
+  var c = CacheService.getScriptCache(), n = Number(c.get(key + '_n') || 0); if (!n) return null;
+  var ks = []; for (var i = 0; i < n; i++) ks.push(key + '_' + i);
+  var got = c.getAll(ks.concat([key + '_at'])), html = '';
+  for (var j = 0; j < n; j++) { if (got[ks[j]] == null) return null; html += got[ks[j]]; }
+  c.removeAll(ks.concat([key + '_n', key + '_at']));
+  return { html: html, at: got[key + '_at'] || '' };
+}
+function fastShell_(p, note) {
+  var keep = {}; ['rs', 'd', 'f', 'k', 'c', 'i'].forEach(function (k) { if (p[k] != null && p[k] !== '') keep[k] = String(p[k]); });
+  if (note) keep.note = String(note);
+  var f = String(p.f || ''), what = f === 'unit' && String(p.rs) === 'ricky' ? 'your day' : f === 'unit' ? 'your unit' : f === 'plan' || f === 'in' || f === 'me' ? 'your day' : 'the page';
+  var js = JSON.stringify(keep).replace(/</g, '\\u003c');
+  var html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Opening ' + esc_(what) + '…</title>' +
+    '<style>body{margin:0;background:#F7F5EF}.w{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:600px;margin:0 auto;padding:40px 16px;color:#1F2433}' +
+    '.br{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0EA5C9}h1{font-size:22px;margin:8px 0 4px;color:#141C4A}.sub{color:#6A7180;margin:0 0 18px}' +
+    '.bar{height:8px;background:#E5E1D6;border-radius:6px;overflow:hidden;position:relative}.bar i{position:absolute;top:0;bottom:0;width:35%;border-radius:6px;background:#2C7A57;animation:go 1.1s ease-in-out infinite alternate}' +
+    '@keyframes go{from{left:-10%}to{left:75%}}#t{color:#6A7180;font-size:13px;margin-top:10px}a{color:#2C7A57;font-weight:700}</style>' +
+    '<div class="w"><div class="br">Ricky Rampersad Branch</div><h1>Opening ' + esc_(what) + '…</h1>' +
+    '<p class="sub" id="msg">Reading Salesforce, the inbox and the team. It appears here by itself in a few seconds.</p><div class="bar"><i></i></div><div id="t"></div></div>' +
+    '<script>var P=' + js + ',t0=Date.now();setInterval(function(){var e=document.getElementById("t");if(e)e.textContent=Math.round((Date.now()-t0)/1000)+" s";},1000);' +
+    'function show(h){document.open();document.write(h);document.close();}' +
+    'function fail(e){var m=document.getElementById("msg");if(m)m.innerHTML="It did not open this time ("+String(e&&e.message||e).replace(/[<>&]/g,"")+"). <a href=\\"#\\" onclick=\\"go();return false\\">Try again</a>";}' +
+    'function go(){var m=document.getElementById("msg");if(m)m.textContent="Reading Salesforce, the inbox and the team. It appears here by itself in a few seconds.";' +
+    'if(!(window.google&&google.script&&google.script.run)){location.replace(location.href+(location.href.indexOf("?")<0?"?":"&")+"full=1");return;}' +
+    'google.script.run.withSuccessHandler(show).withFailureHandler(fail).openPage(P);}go();</script>';
+  return HtmlService.createHtmlOutput(html).setTitle('Opening ' + what).addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+/** Called from the light page: the full page, checked and built exactly as the link would have, as HTML. */
+function openPage(params) {
+  resetRequestMemo_();
+  var p = {}; Object.keys(params || {}).forEach(function (k) { p[k] = String(params[k]); }); p.full = '1';
+  var sid = String(p.rs || ''), f = String(p.f || ''), day = todayISO_(), note = String(p.note || '');
+  var html = '';
+  if (f === 'unit' && sid === 'ricky' && String(p.fresh || '') !== '1' && String(p.k || '') === unitSig_(sid)) {
+    var hit = null; try { hit = fastCacheTake_(fastKey_(sid, f, day)); } catch (e) {}
+    try { PropertiesService.getScriptProperties().setProperty('fastpg_opened_' + sid + '_' + day, hhmm_(new Date())); } catch (e) {}
+    if (hit) html = fastBanner_(hit.html, 'Prepared at ' + twelve_(hit.at) + '. <a href="#" onclick="return fastFresh()">Bring it up to date</a>', p);
+  }
+  if (!html) { var out = replyClick_({ parameter: p }); html = out && out.getContent ? out.getContent() : String(out || ''); }
+  if (note) html = fastBanner_(html, esc_(note), p);
+  return html;
+}
+function fastBanner_(html, msg, p) {
+  var keep = {}; ['rs', 'd', 'f', 'k', 'c', 'i'].forEach(function (k) { if (p[k] != null && p[k] !== '') keep[k] = String(p[k]); }); keep.fresh = '1';
+  var bar = '<div style="background:#FBF6E6;border:1px solid #EADFB8;border-radius:10px;padding:8px 12px;margin:0 0 12px;font-size:13.5px">' + msg + '</div>' +
+    '<script>function fastFresh(){if(!(window.google&&google.script&&google.script.run))return false;document.body.style.opacity=".55";' +
+    'google.script.run.withSuccessHandler(function(h){document.open();document.write(h);document.close();}).withFailureHandler(function(){document.body.style.opacity="1";}).openPage(' +
+    JSON.stringify(keep).replace(/</g, '\\u003c') + ');return false;}</script>';
+  var at = html.indexOf('<div class="w">');
+  return at < 0 ? bar + html : html.slice(0, at + 15) + bar + html.slice(at + 15);
+}
+/** His day built ahead, between 5 and 8:30 on a working morning, every 40 minutes until he opens it. */
+function fastPrebuildTick_() {
+  var day = todayISO_(), nowM = minutesOf_(hhmm_(new Date())), props = PropertiesService.getScriptProperties();
+  if (nowM == null || nowM < FAST.PRE_FROM || nowM > FAST.PRE_TO) return '';
+  try { if (typeof nothingToReport_ === 'function' && nothingToReport_(day)) return ''; } catch (e) {}
+  if (props.getProperty('fastpg_opened_ricky_' + day)) return '';
+  var last = props.getProperty('fastpg_built_ricky_' + day), lastM = last ? minutesOf_(last) : null;
+  if (lastM != null && nowM - lastM < FAST.PRE_EVERY_MIN) return '';
+  var person = replyPerson_('ricky', 'unit'); if (!person) return '';
+  var t0 = Date.now(), out = unitPage_(person, day, ''), html = out && out.getContent ? out.getContent() : '';
+  if (!html) return '';
+  fastCachePut_(fastKey_('ricky', 'unit', day), html);
+  props.setProperty('fastpg_built_ricky_' + day, hhmm_(new Date()));
+  return 'built in ' + Math.round((Date.now() - t0) / 1000) + ' s';
+}
+/** Check in from the page itself, without building the page again: his day (f=unit), a staff day page (f=in). */
+function checkInNow(o) {
+  o = o || {}; var sid = String(o.rs || ''), f = String(o.f || ''), day = todayISO_(), person = null;
+  if (f === 'unit' && String(o.k || '') === unitSig_(sid)) person = replyPerson_(sid, 'unit');
+  else if (f === 'in' && isoDay_(o.d) === day && String(o.k || '') === replySig_(sid, day, 'in')) person = replyPerson_(sid, 'in');
+  if (!person) return { ok: false, msg: 'This page has expired: open it again from today\'s e-mail.' };
+  var at = '', first = false;
+  if (f === 'in') { var ci = sdCheckin_(person, day); at = ci.at; first = !!ci.first; }
+  else {
+    var signed = signInFromPage_(person); at = signed && signed.at || hhmm_(new Date()); first = !!(signed && signed.first);
+    if (sid === 'ricky' && signed && signed.at) { try { dayLogMany_(day, [{ at: signed.at, kind: 'checkin', group: '', what: 'Checked in', ref: 'ci:' + day }]); } catch (e) {} }
+  }
+  try { runlog_('checkin ' + sid + ' ' + f + ' ' + at); } catch (e) {}
+  return { ok: true, at: twelve_(at), first: first };
+}
+var CHECKIN_JS = '<script>function ciNow(b,P){if(!(window.google&&google.script&&google.script.run))return true;b.disabled=true;b.textContent="Checking in…";' +
+  'google.script.run.withSuccessHandler(function(r){var c=b.closest(".card");if(r&&r.ok&&c){c.className="card ok";c.innerHTML="<b style=\\"color:#1F6B47;font-size:15px\\">&#10003; "+(r.first?"Checked in ":"You were already checked in at ")+r.at+"</b><div class=\\"ln\\">Your day is below.</div>";}' +
+  'else{b.disabled=false;b.textContent="Check in and start my day";alert((r&&r.msg)||"That did not record. Try again.");}})' +
+  '.withFailureHandler(function(){b.disabled=false;b.textContent="Check in and start my day";}).checkInNow(P);return false;}</script>';
 
 /** POST: write, then show what was written. */
 function replyPost_(e) {

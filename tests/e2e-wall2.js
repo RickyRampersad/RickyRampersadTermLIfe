@@ -43,7 +43,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       await page.keyboard.press('ArrowRight');
     }
     ok('twelve scenes, staff to live, the Branch Manager\'s day, how we served and the shout-outs among them', seen.length === 12 && new Set(seen).size === 12 && /LIVE/.test(seen[11]) && seen.some(k => /BRANCH MANAGER'S DAY/.test(k)) && seen.some(k => /HOW WE SERVED/.test(k)) && seen.some(k => /SHOUT-OUTS/.test(k)), seen.join(' | '));
-    ok('the shout-outs: par, five stars, a level up, a streak and a thank-you', /Today's wins/.test(all0(text)) && /PAR/.test(all0(text)) && /FIVE STARS/.test(all0(text)) && /LEVEL UP/.test(all0(text)) && /ON A STREAK/.test(all0(text)) && /THANK YOU/.test(all0(text)));
+    ok('the shout-outs: par, five stars, a level up, a streak and a thank-you', /Today's wins/.test(all0(text)) && /PAR/.test(all0(text)) && /FIVE-STAR SERVICE/.test(all0(text)) && /served an agent, rated five stars/.test(all0(text)) && /LEVEL UP/.test(all0(text)) && /ON A STREAK/.test(all0(text)) && /THANK YOU/.test(all0(text)));
     ok('nothing spills sideways', !spill.length, spill.join(', '));
     ok('no page errors', !errs.length, errs.join(' | '));
     ok('the sample is marked', /SAMPLE/.test(await page.innerText('#mode')));
@@ -148,7 +148,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     }
     await pg.waitForTimeout(700); bits = Math.max(bits, await pg.evaluate(() => (confetti.ps || []).length));
     const tag = calmView ? 'reduced motion: ' : 'celebrations: ';
-    ok(tag + 'a win gets its card', /PAR Elizabeth|FIVE STARS|LEVEL UP|ON A STREAK|BEST DAY|THANK YOU/.test(card), card);
+    ok(tag + 'a win gets its card', /PAR Elizabeth|FIVE-STAR SERVICE|LEVEL UP|ON A STREAK|BEST DAY|THANK YOU/.test(card), card);
     ok(tag + (calmView ? 'and no confetti' : 'and confetti'), calmView ? bits === 0 : bits > 50, String(bits));
     await pg.waitForTimeout(4500);
     ok(tag + 'the card goes again, the wall carries on', await pg.evaluate(() => !document.querySelector('#cele').classList.contains('on') && !CELE.busy));

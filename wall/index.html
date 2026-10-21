@@ -484,7 +484,7 @@ function demo(outside){
     else if(o.gain!=null&&o.gain<0) o.gain=null;   // outside: progress only, as the feed sends it
     return o;});
   const team=[0,1,2,3,4,5,6,7,8,9,10].map(h=>H[0][h]+H[1][h]+H[3][h]);
-  const tick=[["2:12","Azariah","levelled up: Client saver, level 3"],["2:10","Elizabeth","reached par: today's list is done"],["2:05","Elizabeth","was given 5 stars by an agent for a task closed for them"],["1:52","Azariah","closed a new business task with a note"],["1:30","Fawwaz","sent in the day's projection"],
+  const tick=[["2:12","Azariah","levelled up: Client saver, level 3"],["2:10","Elizabeth","reached par: today's list is done"],["2:05","Elizabeth","served an agent, who rated the service 5 stars"],["1:52","Azariah","closed a new business task with a note"],["1:30","Fawwaz","sent in the day's projection"],
     ["12:40","Kamla","closed a retention task over a month old with a note"],["11:05","Azariah","is covering for Sasha: 5 tasks so no client waits"],["10:20","Elizabeth","closed a retention task with a note"],
     ["9:44","Elizabeth","closed an orphan adoption task with a note"],["8:12","Azariah",outside?"is in":"checked in"],["7:30","Elizabeth","is covering for Sasha: 7 tasks so no client waits"],["6:55","Elizabeth",outside?"is in":"checked in"]]
     .map(x=>({at:x[0],who:x[1],what:x[2],k:/new business/.test(x[2])?"new":/retention/.test(x[2])?"retention":/orphan/.test(x[2])?"orphan":""}));
@@ -930,7 +930,7 @@ const ICON={
 };
 const CELE_KIND={
   par:{icon:"ring",col:"#E3B85A",kick:"PAR",say:"Today's list is done"},
-  stars:{icon:"star",col:"#E3B85A",kick:"FIVE STARS",say:"Five stars for the service"},
+  stars:{icon:"star",col:"#E3B85A",kick:"FIVE-STAR SERVICE",say:"Service rated five stars"},
   level:{icon:"up",col:"#AB94E8",kick:"LEVEL UP",say:"A skill levelled up"},
   streak:{icon:"flame",col:"#EF8A6B",kick:"ON A STREAK",say:"In on time, day after day"},
   best:{icon:"trophy",col:"#78D198",kick:"BEST DAY YET",say:"The best day yet"},
@@ -948,7 +948,7 @@ function wins(){
     if(p.streak>=5&&p.streak%5===0) out.push({k:"streak",who:p.name,text:p.streak+" days on time, running"});
     if(p.thanks) out.push({k:"thanks",who:p.name,text:plural(p.thanks,"thank-you")+" for covering"});
   });
-  ((s.svc||{}).recent||[]).filter(r=>r.n===5&&/:/.test(r.at||"")).forEach(r=>out.push({k:"stars",who:r.who,text:"Five stars from "+r.from,at:r.at}));
+  ((s.svc||{}).recent||[]).filter(r=>r.n===5&&/:/.test(r.at||"")).forEach(r=>out.push({k:"stars",who:r.who,text:"Staff · served "+r.from+", rated five stars",at:r.at}));   // the staff member served; the agent or client rated it (21 Oct 2026)
   return out;
 }
 const CELE={seen:{},q:[],busy:false,first:true,gap:0};
