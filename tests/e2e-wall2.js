@@ -30,7 +30,8 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     const errs = []; page.on('pageerror', e => errs.push(String(e)));
     await page.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
     await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
-    await page.goto('http://localhost:8798/wall/?demo=1' + (view === 'outside' ? '&view=outside' : ''), { waitUntil: 'domcontentloaded' });
+    // The four channels on their own; channel 5 (FY27) is walked below (21 Oct 2026).
+    await page.goto('http://localhost:8798/wall/?demo=1&newway=off' + (view === 'outside' ? '&view=outside' : ''), { waitUntil: 'domcontentloaded' });
     await page.click('#goQuiet');
     const seen = [], spill = [], text = [];
     for (let i = 0; i < 12; i++) {
@@ -59,13 +60,66 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     }
     await page.close();
   }
+  // Channel 5, FY27: our new way of work (21 Oct 2026). In the sample it comes straight after the ident, seven scenes, the
+  // last one closing the round; the film's own cut is the ident, the six, the shout-outs and the close.
+  {
+    console.log('\nchannel 5, FY27:\n');
+    const page = await b.newPage({ viewport: { width: 1920, height: 1080 } });
+    const errs = []; page.on('pageerror', e => errs.push(String(e)));
+    await page.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
+    await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await page.goto('http://localhost:8798/wall/?demo=1&view=outside', { waitUntil: 'domcontentloaded' });
+    await page.click('#goQuiet');
+    const ids = await page.evaluate(() => list().map(s => s.id));
+    ok('twenty-four scenes in the sample: the ident, FY27\'s eleven, the twelve, and FY27\'s close at the end', ids.length === 24 && ids.slice(0, 12).join() === 'n0,w1,w2,w3,w4,w8,w9,w5,w11,w10,w6,w12' && ids[23] === 'w7', ids.join(','));
+    const kicks = [], spill = [], text = [];
+    for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w9', 'w5', 'w11', 'w10', 'w6', 'w12', 'w7']) {
+      await page.evaluate(id => go(list().findIndex(s => s.id === id), true), id);
+      await page.waitForTimeout(2600);
+      kicks.push(await page.evaluate(() => { const e = document.querySelector('.scene.on .kick'); return e ? e.innerText : ''; }));
+      if (await page.evaluate(() => [...document.querySelectorAll('.scene.on .panel, .scene.on .tile, .scene.on .nwc, .scene.on .nwday')].filter(p => p.scrollWidth > p.clientWidth + 6).length)) spill.push(id);
+      text.push(await page.evaluate(() => document.querySelector('.scene.on').innerText));
+    }
+    ok('each scene opens under FY27', kicks.every(k => /^FY27 · /.test(k)), kicks.join(' | '));
+    ok('the header lights FY27', /FY27/.test(await page.evaluate(() => (document.querySelector('.chan.on') || {}).innerText || '')));
+    const all = text.join('\n');
+    ok('what changed, the app, the day, the week, Branch Intelligence, the game, the team', /We changed the way we work/.test(all) && /rickyrampersadbranch.com\/app/.test(all) && /Every role has its rhythm/.test(all) &&
+      /Every week has its beat/.test(all) && /Draft my reply/.test(all) && /Brief me/.test(all) && /Nobody is ranked/.test(all) && /One branch/.test(all) &&
+      /Transmittal/.test(all) && /no client waits/.test(all) && /Every manager, one page each morning/.test(all) && /FACT FIND INSIGHTS/.test(all) && /Everyone sees the score/.test(all), all.slice(0, 120));
+    ok('the example task carries no client details', /AN EXAMPLE TASK · NO CLIENT DETAILS/.test(all));
+    ok('every role named: Branch Manager, Unit Manager, BMA, Sales Support, Agents', ['Branch Manager', 'Unit Manager', 'BMA', 'Sales Support', 'Agents'].every(r => all.indexOf(r) > -1));
+    ok('nothing spills sideways', !spill.length, spill.join(', '));
+    ok('no page errors', !errs.length, errs.join(' | '));
+    await page.goto('http://localhost:8798/wall/?demo=1&film=newway', { waitUntil: 'domcontentloaded' });
+    ok('?film=newway: the film\'s own cut', (await page.evaluate(() => list().map(s => s.id).join())) === 'n0,w1,w2,w3,w4,w8,w9,w5,w11,w10,w6,w12,n11,w7');
+    await page.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
+    ok('?newway=off: the four channels only', (await page.evaluate(() => list().filter(s => /^w/.test(s.id)).length)) === 0);
+    await page.close();
+    for (const [w, h, name] of [[390, 844, 'phone'], [1366, 768, 'laptop']]) {
+      const pg = await b.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: w < 900 ? 2 : 1, isMobile: w < 900, hasTouch: w < 900 });
+      const e2 = []; pg.on('pageerror', e => e2.push(String(e)));
+      await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
+      await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+      await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+      await pg.click('#goQuiet');
+      const off = [];
+      for (const id of ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7']) {
+        await pg.evaluate(id => go(list().findIndex(s => s.id === id), true), id);
+        await pg.waitForTimeout(1800);
+        if (await pg.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2 || [...document.querySelectorAll('.scene.on *')].some(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 2 || r.left < -2); }))) off.push(id);
+      }
+      ok('FY27 on a ' + name + ': nothing off the side of the screen', !off.length, off.join(', '));
+      ok('FY27 on a ' + name + ': no page errors', !e2.length, e2.join(' | '));
+      await pg.close();
+    }
+  }
   // A phone, upright and on its side: the stacked layout, nothing off the side of the screen, every scene.
   for (const [w, h, name] of [[390, 844, 'phone upright'], [844, 390, 'phone on its side']]) {
     const pg = await b.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const errs = []; pg.on('pageerror', e => errs.push(String(e)));
     await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
     await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
-    await pg.goto('http://localhost:8798/wall/?demo=1&view=outside', { waitUntil: 'domcontentloaded' });
+    await pg.goto('http://localhost:8798/wall/?demo=1&newway=off&view=outside', { waitUntil: 'domcontentloaded' });
     await pg.click('#goQuiet');
     const off = [];
     for (let i = 0; i < 12; i++) {
@@ -89,7 +143,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     const errs = []; pg.on('pageerror', e => errs.push(String(e)));
     await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
     await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
-    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
     await pg.click('#goQuiet');
     const cut = [], seen = [];
     for (let i = 0; i < 12; i++) {
@@ -111,7 +165,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     const pg = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
     await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
-    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
     await pg.click('#goQuiet'); await pg.waitForTimeout(1500); await pg.keyboard.press('ArrowRight'); await pg.waitForTimeout(2600);
     const vis = await pg.evaluate(() => [...document.querySelectorAll('.scene.on .pc')].filter(c => c.style.display !== 'none').map(c => c.querySelector('.nm').innerText));
     ok('phone: all six on the desks, Akaash among them', vis.length === 6 && vis.includes('Akaash'), vis.join(', '));
@@ -123,7 +177,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     const pg = await b.newPage({ viewport: { width: 1920, height: 1080 } });
     await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
     await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
-    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
     await pg.click('#goQuiet');
     for (let i = 0; i < 6; i++) { await pg.waitForTimeout(250); await pg.keyboard.press('ArrowRight'); }
     await pg.waitForTimeout(2500);
@@ -137,7 +191,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(String(e)));
     await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
     await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
-    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
     await pg.click('#goQuiet');
     let card = '', bits = 0;
     for (let i = 0; i < 5 && !card; i++) {
@@ -160,7 +214,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     const pg = await b.newPage({ viewport: { width: 1920, height: 1080 } });
     await pg.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
     await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
-    await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+    await pg.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
     await pg.click('#goSound');
     let moved = false;
     for (let t = 0; t < 30 && !moved; t++) { await pg.waitForTimeout(700); moved = /STAFF/.test(await pg.evaluate(() => { const e = document.querySelector('.scene.on .kick'); return e ? e.innerText : ''; })); }
@@ -173,7 +227,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
   await page.route('**/wall/audio/v2/**', r => r.fulfill({ status: 404, body: 'no' }));
   await page.route('**/macros/s/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":false}' }));
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
-  await page.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
+  await page.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
   await page.click('#goSound');
   await page.waitForTimeout(1500);
   ok('the caption carries Andrew\'s line', /Ricky Rampersad Branch, live/.test(await page.innerText('#capText')));
