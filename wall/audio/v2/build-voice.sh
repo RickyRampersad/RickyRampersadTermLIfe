@@ -32,4 +32,7 @@ say w9 "Shared work. When a desk is out, the work moves to whoever is in within 
 say w11 "What each manager sees. The Branch Manager, the Unit Manager and the BMA each open one page in the morning, and comment under any task, with Branch Intelligence drafting it."
 say w10 "Fact find insights. Every conversation goes on a fact find, and the branch reads them every day: fact finds, applications, and the year's goals."
 say w12 "Our walls, live in the branch. Everyone sees the score, all day, and every win. That's how we build a high-performance branch."
+say w13 "Our meetings, built by everyone. Each person signs in, adds to the agenda and says what they'll present. Every item has a name on it, and every voice is heard."
+say w14 "And the client feels it. Queries answered on time, every handover recorded, and the people we serve rating the service."
+say w15 "Inside the meeting. Signing in is the register, your item is ready, what we said we'd do comes back the next week, and the minutes are written as we go."
 echo "Done. Commit the twenty-four wall/audio/v2/*.mp3 files and the wall uses them."

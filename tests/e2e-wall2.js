@@ -71,9 +71,9 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     await page.goto('http://localhost:8798/wall/?demo=1&view=outside', { waitUntil: 'domcontentloaded' });
     await page.click('#goQuiet');
     const ids = await page.evaluate(() => list().map(s => s.id));
-    ok('twenty-four scenes in the sample: the ident, FY27\'s eleven, the twelve, and FY27\'s close at the end', ids.length === 24 && ids.slice(0, 12).join() === 'n0,w1,w2,w3,w4,w8,w9,w5,w11,w10,w6,w12' && ids[23] === 'w7', ids.join(','));
+    ok('twenty-seven scenes in the sample: the ident, FY27\'s fourteen, the twelve, and FY27\'s close at the end', ids.length === 27 && ids.slice(0, 15).join() === 'n0,w1,w2,w3,w4,w8,w9,w5,w11,w13,w15,w10,w6,w14,w12' && ids[26] === 'w7', ids.join(','));
     const kicks = [], spill = [], text = [];
-    for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w9', 'w5', 'w11', 'w10', 'w6', 'w12', 'w7']) {
+    for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w9', 'w5', 'w11', 'w13', 'w15', 'w10', 'w6', 'w14', 'w12', 'w7']) {
       await page.evaluate(id => go(list().findIndex(s => s.id === id), true), id);
       await page.waitForTimeout(2600);
       kicks.push(await page.evaluate(() => { const e = document.querySelector('.scene.on .kick'); return e ? e.innerText : ''; }));
@@ -85,13 +85,16 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     const all = text.join('\n');
     ok('what changed, the app, the day, the week, Branch Intelligence, the game, the team', /We changed the way we work/.test(all) && /rickyrampersadbranch.com\/app/.test(all) && /Every role has its rhythm/.test(all) &&
       /Every week has its beat/.test(all) && /Draft my reply/.test(all) && /Brief me/.test(all) && /Nobody is ranked/.test(all) && /One branch/.test(all) &&
-      /Transmittal/.test(all) && /no client waits/.test(all) && /Every manager, one page each morning/.test(all) && /FACT FIND INSIGHTS/.test(all) && /Everyone sees the score/.test(all), all.slice(0, 120));
+      /Transmittal/.test(all) && /no client waits/.test(all) && /Every manager, one page each morning/.test(all) && /FACT FIND INSIGHTS/.test(all) && /Everyone sees the score/.test(all) &&
+      /Every voice heard, with a structure/.test(all) && /The team holds 75 minutes/.test(all) && /Signing in is the register/.test(all) && /The minutes, the same day/.test(all) &&
+      /The work shows up for the client/.test(all), all.slice(0, 120));
     ok('the example task carries no client details', /AN EXAMPLE TASK · NO CLIENT DETAILS/.test(all));
     ok('every role named: Branch Manager, Unit Manager, BMA, Sales Support, Agents', ['Branch Manager', 'Unit Manager', 'BMA', 'Sales Support', 'Agents'].every(r => all.indexOf(r) > -1));
     ok('nothing spills sideways', !spill.length, spill.join(', '));
     ok('no page errors', !errs.length, errs.join(' | '));
     await page.goto('http://localhost:8798/wall/?demo=1&film=newway', { waitUntil: 'domcontentloaded' });
-    ok('?film=newway: the film\'s own cut', (await page.evaluate(() => list().map(s => s.id).join())) === 'n0,w1,w2,w3,w4,w8,w9,w5,w11,w10,w6,w12,n11,w7');
+    ok('?film=newway: the film\'s own cut', (await page.evaluate(() => list().map(s => s.id).join())) === 'n0,w1,w2,w3,w4,w8,w9,w5,w11,w13,w15,w10,w6,w14,w12,n11,w7');
+    ok('the meeting screens are on the site', (await page.evaluate(async () => (await Promise.all(['build-lap','agenda-lap','register-lap','actions-lap','minutes-lap','signin-ph','onreg-ph','prep-ph'].map(k => fetch('/wall/img/meet/' + k + '.jpg').then(r => r.ok)))).every(Boolean))));
     await page.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
     ok('?newway=off: the four channels only', (await page.evaluate(() => list().filter(s => /^w/.test(s.id)).length)) === 0);
     await page.close();
@@ -103,7 +106,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
       await pg.click('#goQuiet');
       const off = [];
-      for (const id of ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7']) {
+      for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w9', 'w5', 'w11', 'w13', 'w15', 'w10', 'w6', 'w14', 'w12', 'w7']) {
         await pg.evaluate(id => go(list().findIndex(s => s.id === id), true), id);
         await pg.waitForTimeout(1800);
         if (await pg.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2 || [...document.querySelectorAll('.scene.on *')].some(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 2 || r.left < -2); }))) off.push(id);
