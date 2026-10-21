@@ -236,8 +236,8 @@ function mqRequestCode_(b) {
     to: [email], subject: code + ' is your motor quote sign-in code',
     html: mqWrap_('Your sign-in code',
       '<p>Your sign-in code for the motor quote is:</p>' +
-      '<p style="background:#E8F0FF;border:1px solid #C9D8F0;border-radius:10px;padding:16px;text-align:center">' +
-      '<b style="font-size:30px;letter-spacing:8px;color:#13408F">' + code + '</b></p>' +
+      '<p style="background:#EAF3FD;border:1px solid #C9DDF5;border-radius:10px;padding:16px;text-align:center">' +
+      '<b style="font-size:30px;letter-spacing:8px;color:#2C5FA8">' + code + '</b></p>' +
       '<p>It works for ' + MQ.CODE_TTL_MIN + ' minutes. If you did not ask for it, ignore this e-mail: nobody can get in without the code in your inbox.</p>'),
     client: true,
   });
@@ -667,7 +667,7 @@ function mqFieldsHtml_(d) {
     if (r.section) {
       /* A section with nothing under it is not printed. */
       var next = rows[i + 1]; if (!next || next.section) return;
-      h += '<tr><td colspan="2" style="padding:14px 0 6px;color:#1D5BC4;font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase">' + mqEsc_(r.section) + '</td></tr>';
+      h += '<tr><td colspan="2" style="padding:14px 0 6px;color:#3A7BD5;font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase">' + mqEsc_(r.section) + '</td></tr>';
       return;
     }
     h += '<tr><td style="padding:6px 10px 6px 0;color:#5d7186;border-top:1px solid #e6edf2;width:42%;vertical-align:top">' + mqEsc_(r.label) +
@@ -678,11 +678,11 @@ function mqFieldsHtml_(d) {
 
 function mqDeskMail_(ref, d, contact, folder) {
   var intro = '<p>Good day,</p><p>Please quote for the following, requested by the client on the branch website (' +
-    '<a href="' + MQ.SITE + '" style="color:#07606f">' + MQ.SITE.replace('https://', '') + '</a>). ' +
+    '<a href="' + MQ.SITE + '" style="color:#3A7BD5">' + MQ.SITE.replace('https://', '') + '</a>). ' +
     'Reply to this e-mail and the quote reaches the branch and the client together.</p>';
   var tail = '<p style="margin-top:18px;font-size:13px;color:#5d7186">Reference <b>' + mqEsc_(ref) + '</b>' +
     (contact.id ? ' · Salesforce contact ' + mqEsc_(contact.id) + ' (' + mqEsc_(contact.action) + ')' : ' · ' + mqEsc_(contact.action)) +
-    (folder ? ' · <a href="' + mqEsc_(folder) + '" style="color:#07606f">documents in Drive</a>' : '') +
+    (folder ? ' · <a href="' + mqEsc_(folder) + '" style="color:#3A7BD5">documents in Drive</a>' : '') +
     '. The driver\'s permit and the certified copy, where the client attached them, are attached to this e-mail.</p>';
   return mqWrap_('Motor quote request ' + ref, intro + mqFieldsHtml_(d) + tail, true);
 }
@@ -696,7 +696,7 @@ function mqReceipt_(ref, d) {
     '<li>The quotes desk prices the cover from what you told us.</li>' +
     '<li>The quote comes back to our branch and to you at this address, usually within two working days.</li>' +
     '<li>A member of our team calls you to go through it and, if you wish, to put the cover in place.</li></ol>' +
-    '<p>Your reference is <b style="color:#13408F">' + mqEsc_(ref) + '</b>. Sign in again at <a href="' + MQ.SITE + '" style="color:#07606f">' +
+    '<p>Your reference is <b style="color:#2C5FA8">' + mqEsc_(ref) + '</b>. Sign in again at <a href="' + MQ.SITE + '" style="color:#3A7BD5">' +
     MQ.SITE.replace('https://', '') + '</a> any time to see where it stands.</p>' +
     '<p>If anything you told us needs correcting, reply to this e-mail or call the branch on ' + MQ.BRANCH_TEL + '.</p>' +
     mqFieldsHtml_(d));
@@ -707,11 +707,11 @@ function mqReceipt_(ref, d) {
 function mqWrap_(title, body, internal) {
   return '<div style="background:#eef4f7;padding:18px 0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#33465a;font-size:15px;line-height:1.55">' +
     '<table cellpadding="0" cellspacing="0" style="width:100%;max-width:620px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #d7e3ea">' +
-    '<tr><td style="background:#13408F;padding:16px 22px;border-bottom:3px solid #2A6DE0">' +
-    '<table cellpadding="0" cellspacing="0"><tr><td style="width:46px;height:46px;border-radius:12px;background:#13408F;vertical-align:middle">' +
+    '<tr><td style="background:#3A7BD5;padding:16px 22px;border-bottom:3px solid #4C94E6">' +
+    '<table cellpadding="0" cellspacing="0"><tr><td style="width:46px;height:46px;border-radius:12px;background:#2C5FA8;vertical-align:middle">' +
     '<img src="' + MQ.LOGO + '" width="46" height="46" alt="" style="display:block;border-radius:12px"></td>' +
     '<td style="padding-left:12px;color:#ffffff;font-weight:800;font-size:16px;line-height:1.25">' + MQ.BRAND +
-    '<span style="display:block;font-weight:500;font-size:12px;color:#BFE9FF">Motor quotes</span></td></tr></table></td></tr>' +
+    '<span style="display:block;font-weight:500;font-size:12px;color:#EAF3FD">Motor quotes</span></td></tr></table></td></tr>' +
     '<tr><td style="padding:22px 22px 8px"><h1 style="margin:0 0 10px;font-size:21px;line-height:1.3;color:#12202e">' + title + '</h1>' + body + '</td></tr>' +
     '<tr><td style="padding:14px 22px 18px;font-size:12px;color:#5d7186;border-top:1px solid #e6edf2">' +
     (internal ? 'Internal: this e-mail carries a client\'s details. Do not forward it outside Guardian and the branch.'

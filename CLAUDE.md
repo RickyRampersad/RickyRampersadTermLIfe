@@ -3789,9 +3789,14 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
 
 - **It carries the blue shield, not the gold** (21 October 2026, shown the page: "i dont like the log with the gold and
   black its not scales and look"): `orphan-transition/board-mark.png` at 46 px on a `#13408F` tile in the header, as the
-  favicon, and as `MQ.LOGO` on both e-mails, as the Delivery Book does. The page is light (a soft blue-white ground, a
-  corporate-blue header band, white cards, blue actions); a first cut on a midnight ground was turned down the same
-  hour ("dont lie the blacks and make more easy on the eyes"). Long answers are drop-downs (make, year, engine, body,
+  favicon, and as `MQ.LOGO` on both e-mails, as the Delivery Book does. The page is light (a soft blue-white ground, white cards) in a **softer ocean blue** (`#3A7BD5` into `#4C94E6`,
+  deep `#2C5FA8`, sky `#EAF3FD`, teal `#1FA8A0` for the start button), not the corporate blue: a first cut on a midnight
+  ground was turned down ("dont lie the blacks and make more easy on the eyes"), then the corporate blue ("this one is
+  hard on the eyes, research and she what color for clients"). What the research supports (21 October 2026): blue as the
+  dominant colour draws the most trust and black the least (an MWAIS 2007 pilot; a 2021 web-store experiment found
+  the effect stronger in risk-averse markets); text at 4.5:1 contrast and nothing said by colour alone (so the required
+  star has the words "starred answers are needed" beside it); three to five colours; drop-downs for make and model;
+  one column on a phone. White on `#3A7BD5` is about 4.6:1. No study compares colours on insurance quote forms. Long answers are drop-downs (make, year, engine, body,
   seats, years driving, no-claim discount, insurer, financial institution, each with Other and a box to type); yes or no
   answers stay as taps.
 - **Sign-in is the claims portal's**: e-mail, six-digit code to that inbox, no password. Anyone may sign in; the answer never
