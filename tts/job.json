@@ -3,14 +3,23 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "w18": [
-   "Nothing slips through. When a client says yes, the system follows it every day until it closes. A fact find started and never sent gets flagged on Monday. And the managers see every answer."
+  "w4": [
+   "And every week has its beat. Premium letters every morning, group letters on Monday, and on Wednesday, our branch meeting, where we celebrate the week's wins."
   ],
-  "w19": [
-   "And here's the production wall. Every policy picked up, this week, this month and this year, and the money already written and waiting to come in."
+  "w21": [
+   "Every Wednesday at the meeting, we celebrate the week's wins. Agents and staff, side by side. There's a Starbucks ticket, Movie Town tickets, and everyone gets acknowledged."
   ],
-  "w20": [
-   "And our goals are aligned. Each agent builds their goal from their own numbers, all the way down to fact finds a week. Those add up to the unit, the unit adds up to the branch, and the pace is checked every single morning."
+  "w22": [
+   "For our clients, it's one journey, and we're there at every touch point. From the first fact find to the policy in their hands, and every year after. And our agents never walk it alone."
+  ],
+  "w23": [
+   "And all of it is built to the Central Bank's market conduct rules, under the Insurance Act. Needs first, advice in writing, policies delivered on time, and every complaint answered."
+  ],
+  "w24": [
+   "Here's the digital fact find, end to end. Needs first, then the client's plan in writing, checked by a manager within a day, confirmed by the client, and followed every morning until it closes. And the result? Since we launched it in August, not a single lapse."
+  ],
+  "w25": [
+   "And every step has its letter. The client gets their plan in plain words, the manager gets the sign-off, the agent gets their copy, and the client signs and rates the agent. Nothing is left to memory."
   ]
  }
 }
