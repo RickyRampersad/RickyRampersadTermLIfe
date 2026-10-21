@@ -1,9 +1,35 @@
 {
  "voice": "en-US-AndrewNeural",
  "rate": "-4%",
+ "voices": {
+  "s1": "en-US-AndrewNeural",
+  "s2": "en-US-AndrewNeural",
+  "s3": "en-US-AndrewMultilingualNeural",
+  "s4": "en-US-BrianMultilingualNeural",
+  "s5": "en-US-AvaMultilingualNeural"
+ },
+ "rates": {
+  "s1": "-4%",
+  "s2": "+0%",
+  "s3": "+0%",
+  "s4": "+0%",
+  "s5": "+0%"
+ },
  "films": {
-  "fy27e": [
-   "Inside the meeting. Signing in is the register, your item is ready, what we said we'd do comes back the next week, and the minutes are written as we go."
+  "s1": [
+   "Our meetings, built by everyone. Each person signs in, adds to the agenda and says what they'll present. Every item has a name on it, and every voice is heard."
+  ],
+  "s2": [
+   "Here's what's different about our meetings now. Everyone signs in on their phone, and that's the register. You add your item to the agenda, you say what you're presenting, and every slot has a name on it. So every voice gets heard."
+  ],
+  "s3": [
+   "Here's what's different about our meetings now. Everyone signs in on their phone, and that's the register. You add your item to the agenda, you say what you're presenting, and every slot has a name on it. So every voice gets heard."
+  ],
+  "s4": [
+   "Here's what's different about our meetings now. Everyone signs in on their phone, and that's the register. You add your item to the agenda, you say what you're presenting, and every slot has a name on it. So every voice gets heard."
+  ],
+  "s5": [
+   "Here's what's different about our meetings now. Everyone signs in on their phone, and that's the register. You add your item to the agenda, you say what you're presenting, and every slot has a name on it. So every voice gets heard."
   ]
  }
 }

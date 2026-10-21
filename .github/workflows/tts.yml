@@ -18,7 +18,7 @@ jobs:
           job = json.load(open('tts/job.json'))
           out = pathlib.Path('tts/out'); out.mkdir(exist_ok=True)
           async def one(key, i, text):
-              c = edge_tts.Communicate(text, job.get('voice','en-US-AndrewNeural'), rate=job.get('rate','-12%'), boundary='WordBoundary')
+              c = edge_tts.Communicate(text, job.get('voices',{}).get(key, job.get('voice','en-US-AndrewNeural')), rate=job.get('rates',{}).get(key, job.get('rate','-12%')), pitch=job.get('pitches',{}).get(key, '+0Hz'), boundary='WordBoundary')
               audio = bytearray(); words = []
               async for ch in c.stream():
                   if ch['type'] == 'audio': audio += ch['data']
