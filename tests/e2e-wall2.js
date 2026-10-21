@@ -60,8 +60,8 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     }
     await page.close();
   }
-  // Channel 5, FY27: our new way of work (21 Oct 2026). In the sample it comes straight after the ident, seven scenes, the
-  // last one closing the round; the film's own cut is the ident, the six, the shout-outs and the close.
+  // Channel 5, FY27: our new way of work (21 Oct 2026). In the sample it comes straight after the ident, its last scene
+  // closing the round; the film's own cut is the tight story in NW_FILM's order, about five minutes.
   {
     console.log('\nchannel 5, FY27:\n');
     const page = await b.newPage({ viewport: { width: 1920, height: 1080 } });
@@ -71,9 +71,9 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     await page.goto('http://localhost:8798/wall/?demo=1&view=outside', { waitUntil: 'domcontentloaded' });
     await page.click('#goQuiet');
     const ids = await page.evaluate(() => list().map(s => s.id));
-    ok('thirty-two scenes in the sample: the ident, FY27\'s nineteen, the twelve, and FY27\'s close at the end', ids.length === 32 && ids.slice(0, 20).join() === 'n0,w1,w2,w3,w4,w8,w17,w9,w5,w16,w11,w13,w15,w10,w18,w20,w6,w14,w19,w12' && ids[31] === 'w7', ids.join(','));
+    ok('thirty-eight scenes in the sample: the ident, FY27\'s twenty-five, the twelve, and FY27\'s close at the end', ids.length === 38 && ids.slice(0, 26).join() === 'n0,w1,w22,w2,w3,w4,w8,w26,w17,w9,w5,w16,w11,w13,w15,w24,w25,w10,w18,w23,w20,w6,w21,w14,w19,w12' && ids[37] === 'w7', ids.join(','));
     const kicks = [], spill = [], text = [];
-    for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w17', 'w9', 'w5', 'w16', 'w11', 'w13', 'w15', 'w10', 'w18', 'w20', 'w6', 'w14', 'w19', 'w12', 'w7']) {
+    for (const id of ['w1', 'w22', 'w2', 'w3', 'w4', 'w8', 'w26', 'w17', 'w9', 'w5', 'w16', 'w11', 'w13', 'w15', 'w24', 'w25', 'w10', 'w18', 'w23', 'w20', 'w6', 'w21', 'w14', 'w19', 'w12', 'w7']) {
       await page.evaluate(id => go(list().findIndex(s => s.id === id), true), id);
       await page.waitForTimeout(2600);
       kicks.push(await page.evaluate(() => { const e = document.querySelector('.scene.on .kick'); return e ? e.innerText : ''; }));
@@ -90,13 +90,21 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       /The work shows up for the client/.test(all) &&
       /Received, stamped, printed, confirmed/.test(all) && /REASON IF NOT SAME DAY/.test(all) && /Watch it write a reply/.test(all) && /Use this reply/.test(all) && /WEDNESDAY, 9:00 TO 10:30/.test(all) &&
       /Every yes is followed until it closes/.test(all) && /Did this close\?/.test(all) && /Every dollar picked up, on the wall/.test(all) && /WHO IS CARRYING THE YEAR/.test(all) && /Your numbers add up to the branch's/.test(all) && /No plan, no fact find/.test(all), all.slice(0, 120));
+    ok('the client\'s journey: six touch points, the client and who stands behind the agent', /With them at every touch point/.test(all) && ['The fact find', 'Their plan, in writing', 'The application', 'The policy, delivered', 'Every question', 'The years after'].every(t => all.indexOf(t) > -1) && /BEHIND THE AGENT/.test(all));
+    ok('compliant at every touch point: the Market Conduct Guideline under the Insurance Act, clause by clause', /Built to the market conduct rules/.test(all) && /Insurance Act, 2018/.test(all) && ['5.2', '5.2.2', '5.3.1', '5.4.2', '5.4.3', '5.6', '5.7'].every(c => all.indexOf(c) > -1));
+    ok('the digital fact find end to end, and the lapses since August 2026', /Needs first, then every step followed/.test(all) && /THE NEEDS ANALYSIS/.test(all) && /lapses since the digital fact find launched/.test(all) && /August 2026/.test(all));
+    ok('every step has its letter: the client, the manager, the agent', /Every step has its letter/.test(all) && /TO THE CLIENT/.test(all) && /TO THE MANAGER/.test(all) && /TO THE AGENT/.test(all) && /never on the client's letters/.test(all));
+    ok('the Log Book in the agent\'s hand, and the clean data behind it', /Type a name, and it all pulls up/.test(all) && /OUR CLEAN DATA, AT WORK/.test(all) && /GLOC CS RSC - CHAGUANAS/.test(all) && /3,634/.test(all));
+    ok('the week\'s wins on Wednesday: staff and agents, the prizes, everyone acknowledged', /Every win, acknowledged/.test(all) && /Starbucks/.test(all) && /MovieTowne/.test(all) && /EVERYONE ACKNOWLEDGED/.test(all) && !/awards on Friday/i.test(all));
     ok('the example task carries no client details', /AN EXAMPLE TASK · NO CLIENT DETAILS/.test(all));
     ok('every role named: Branch Manager, Unit Manager, BMA, Sales Support, Agents', ['Branch Manager', 'Unit Manager', 'BMA', 'Sales Support', 'Agents'].every(r => all.indexOf(r) > -1));
     ok('nothing spills sideways', !spill.length, spill.join(', '));
     ok('no page errors', !errs.length, errs.join(' | '));
     await page.goto('http://localhost:8798/wall/?demo=1&film=newway', { waitUntil: 'domcontentloaded' });
-    ok('?film=newway: the film\'s own cut', (await page.evaluate(() => list().map(s => s.id).join())) === 'n0,w1,w2,w3,w4,w8,w17,w9,w5,w16,w11,w13,w15,w10,w18,w20,w6,w14,w19,w12,n11,w7');
+    ok('?film=newway: the film\'s own cut', (await page.evaluate(() => list().map(s => s.id).join())) === 'n0,w1,w22,w24,w25,w18,w23,w3,w26,w17,w11,w16,w13,w15,w20,w21,w14,w19,w12,w7');
     ok('every scene carries its slide number', await page.evaluate(() => { go(3, true); const t = document.querySelector('#sno').innerText.replace(/\s+/g, ' ').trim(); return t === '04 / ' + String(list().length).padStart(2, '0'); }));
+    ok('the fact find\'s letters, the Log Book\'s screens and the journey\'s are on the site', (await page.evaluate(async () => (await Promise.all(['ff/01-client-draft','ff/02-manager-signoff','ff/03-agent-your-copy','ff/04-client-approval-page','ff/05-client-sign-and-rate','ff/06-did-this-close','ff/07-started-never-sent','ff/08-manager-insights',
+      'lb/clock-ph','lb/find-ph','lb/route-ph','lb/together-ph','lb/logged-ph','lb/mylog-ph','lb/received-ph','lb/sent-ph','jr/1-factfind','jr/2-plan','jr/3-close','jr/4-delivered','jr/5-question'].map(k => fetch('/wall/img/' + k + '.jpg').then(r => r.ok)))).every(Boolean))));
     ok('the meeting screens are on the site', (await page.evaluate(async () => (await Promise.all(['build-lap','agenda-lap','register-lap','actions-lap','minutes-lap','signin-ph','onreg-ph','prep-ph'].map(k => fetch('/wall/img/meet/' + k + '.jpg').then(r => r.ok)))).every(Boolean))));
     await page.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
     ok('?newway=off: the four channels only', (await page.evaluate(() => list().filter(s => /^w/.test(s.id)).length)) === 0);
@@ -109,7 +117,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
       await pg.click('#goQuiet');
       const off = [];
-      for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w17', 'w9', 'w5', 'w16', 'w11', 'w13', 'w15', 'w10', 'w18', 'w20', 'w6', 'w14', 'w19', 'w12', 'w7']) {
+      for (const id of ['w1', 'w22', 'w2', 'w3', 'w4', 'w8', 'w26', 'w17', 'w9', 'w5', 'w16', 'w11', 'w13', 'w15', 'w24', 'w25', 'w10', 'w18', 'w23', 'w20', 'w6', 'w21', 'w14', 'w19', 'w12', 'w7']) {
         await pg.evaluate(id => go(list().findIndex(s => s.id === id), true), id);
         await pg.waitForTimeout(1800);
         if (await pg.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2 || [...document.querySelectorAll('.scene.on *')].some(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 2 || r.left < -2); }))) off.push(id);
