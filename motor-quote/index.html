@@ -17,7 +17,8 @@
 <style>
   :root{
     --mid:#2C5FA8;--mid2:#2C5FA8;--blue:#3A7BD5;--blue2:#4C94E6;--cyan:#7CC8F5;--cyan2:#1FA8A0;--amber:#FFB020;--gold:#efc24b;--sky:#EAF3FD;
-    --ink:#1B2A44;--body:#3A4A66;--dim:#6F7F9C;--line:#DDE6F2;--card:#fff;--soft:#F3F7FC;--ok:#0F8A5F;--okbg:#E6F7EF;--bad:#C0392B;--badbg:#FDECEA;--warn:#7A4B00;--warnbg:#FFF4DB
+    --ink:#1B2A44;--body:#3A4A66;--dim:#6F7F9C;--line:#DDE6F2;--card:#fff;--soft:#F3F7FC;--ok:#0F8A5F;--okbg:#E6F7EF;
+    --rn:#0B6F69;--rn2:#138A82;--rnbg:#E5F5F3;--qt:#2C5FA8;--qt2:#3A7BD5;--qtbg:#EAF3FD;--ac:#4F44C2;--ac2:#7468E4;--acbg:#EFEDFD;--bad:#C0392B;--badbg:#FDECEA;--warn:#7A4B00;--warnbg:#FFF4DB
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
@@ -30,6 +31,7 @@
   .brand{color:#fff;font-weight:800;font-size:16px;line-height:1.2;flex:1;letter-spacing:.01em}
   .brand i{display:block;font-style:normal;font-weight:600;font-size:11.5px;color:#EAF3FD;letter-spacing:.06em;text-transform:uppercase}
   @media (max-width:430px){.brand .gg{display:none}}
+  @media (max-width:400px){header{padding:10px 12px;gap:9px}.mark{width:40px;height:40px;border-radius:11px}.brand{font-size:14.5px}.brand i{font-size:10.5px}.who b{max-width:96px}}
   .who{color:#EAF3FD;font-size:12.5px;text-align:right;line-height:1.3}
   .who b{display:block;color:#fff;font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .who button{font:inherit;font-size:12px;color:#fff;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
@@ -191,7 +193,7 @@
   .rnw .when{font-size:14px;color:var(--body)}
   .rnw .when b{color:var(--ink)}
   .facts{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
-  .facts li{background:#fff;border:1px solid #DCE7F5;border-radius:999px;padding:5px 11px;font-size:12.5px;color:var(--body);animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+  .facts li{background:#fff;border:1px solid #DCE7F5;border-radius:10px;padding:5px 11px;font-size:12.5px;color:var(--body);animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
   .facts li:nth-child(2){animation-delay:.06s}.facts li:nth-child(3){animation-delay:.12s}.facts li:nth-child(4){animation-delay:.18s}.facts li:nth-child(n+5){animation-delay:.24s}
   .tl{list-style:none;margin:14px 0 0;padding:0 0 0 18px;border-left:2px solid #DCE7F5}
   .tl li{position:relative;padding:0 0 10px 6px;font-size:13.5px;color:var(--body)}
@@ -216,11 +218,11 @@
   .reading .doc:after{content:"";position:absolute;left:0;right:0;height:26px;top:-26px;background:linear-gradient(180deg,transparent,rgba(31,168,160,.45),transparent);animation:scan 1.6s ease-in-out infinite}
   .reading b{display:block;color:var(--ink);font-size:17px;margin:0 0 4px}
   .reading small{color:var(--dim);font-size:13px}
-  .takedoor{display:flex;gap:12px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--body);background:linear-gradient(135deg,#F0F8F7,#EEF5FD);border:1.5px solid #BFE3DF;border-radius:16px;padding:13px 14px;margin:4px 0 6px;cursor:pointer;transition:transform .12s,box-shadow .15s}
-  .takedoor:hover{box-shadow:0 8px 20px rgba(31,168,160,.15);transform:translateY(-1px)}
+  .takedoor{display:flex;gap:12px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--body);background:linear-gradient(135deg,#F4F2FE,#EEF5FD);border:1.5px solid #CFCAF6;border-radius:16px;padding:13px 14px;margin:4px 0 6px;cursor:pointer;transition:transform .12s,box-shadow .15s}
+  .takedoor:hover{box-shadow:0 8px 20px rgba(79,68,194,.16);transform:translateY(-1px)}
   .takedoor .ic{font-size:24px;width:46px;height:46px;border-radius:12px;background:#fff;display:grid;place-items:center;flex:none}
   .takedoor b{display:block;color:var(--ink);font-size:15.5px}.takedoor small{display:block;color:var(--dim);font-size:13px;line-height:1.4}
-  .takedoor .go{margin-left:auto;color:var(--cyan2);font-weight:800;font-size:20px}
+  .takedoor .go{margin-left:auto;color:var(--ac2);font-weight:800;font-size:20px}
   .kyp{border:1.5px solid var(--line);border-radius:16px;padding:13px 14px 4px;margin:0 0 12px;background:#fff}
   .kyp p{font-size:14px;color:var(--body);margin:0 0 10px}
   .kypinfo{background:var(--soft);border-radius:12px;padding:10px 12px;font-size:13.5px;margin:0 0 12px}
@@ -232,6 +234,114 @@
   .sigline{position:absolute;left:18px;right:18px;bottom:26%;border-bottom:2px solid #C9D8EE;font-style:normal;color:#9DBBE4;font-weight:800;font-size:18px;line-height:1;padding:0 0 4px}
   .sigfoot{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:8px 0 0;font-size:13.5px;color:var(--body)}
   .accrow{border-left:3px solid var(--line);padding-left:12px;margin:0 0 12px}
+
+  /* three paths, never mixed: a renewal (teal), a new quote (blue), accepting a quote (violet) */
+  .t-renew{--c:var(--rn);--c2:var(--rn2);--bg:var(--rnbg)}
+  .t-quote{--c:var(--qt);--c2:var(--qt2);--bg:var(--qtbg)}
+  .t-take{--c:var(--ac);--c2:var(--ac2);--bg:var(--acbg)}
+  .paths{display:grid;grid-template-columns:1fr;gap:10px;margin:2px 0 6px}
+  @media (min-width:640px){.paths{grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:12px}}
+  .path{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--body);background:#fff;border:1.5px solid var(--line);border-left:6px solid var(--c2);border-radius:16px;padding:12px 14px;min-height:68px;cursor:pointer;position:relative;overflow:hidden;transition:transform .14s,box-shadow .18s,border-color .18s;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .path:nth-child(2){animation-delay:.07s}.path:nth-child(3){animation-delay:.14s}
+  .path:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(30,60,120,.12)}
+  .path:active{transform:scale(.98)}
+  .path:focus-visible{outline:3px solid var(--c2);outline-offset:2px}
+  @media (min-width:640px){.path{flex-direction:column;align-items:stretch;border-left-width:1.5px;border-top:6px solid var(--c2);padding:16px 16px 14px;min-height:168px;gap:8px}}
+  .path .pi{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;display:grid;place-items:center;font-size:22px;flex:none;box-shadow:0 6px 14px rgba(20,40,90,.18)}
+  .path .pt{flex:1;min-width:0}
+  .path b{display:block;color:var(--ink);font-size:17px;line-height:1.25}
+  .path small{display:block;color:var(--dim);font-size:13.5px;line-height:1.35;margin-top:2px}
+  .path em{display:inline-block;font-style:normal;background:var(--bg);color:var(--c);font-weight:800;font-size:12px;border-radius:999px;padding:4px 10px;white-space:nowrap;margin-top:7px}
+  @media (min-width:640px){.path .pt{display:flex;flex-direction:column;height:100%}.path em{margin-top:auto;align-self:flex-start}}
+  .path .go{color:var(--c2);font-weight:900;font-size:20px;flex:none}
+  @media (min-width:640px){.path .go{display:none}}
+  div.path{cursor:default}div.path:hover{transform:none;box-shadow:none}
+  .track{margin:26px 0 0;scroll-margin-top:84px;border-radius:18px;transition:box-shadow .3s}
+  .track.flash{animation:flash 1.4s ease-out}
+  .th{display:flex;gap:12px;align-items:center;margin:0 0 12px;padding:0 0 10px;border-bottom:2px solid var(--bg)}
+  .th .tn{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;display:grid;place-items:center;font-size:20px;flex:none}
+  .th .tt{flex:1;min-width:0}
+  .th b{display:block;color:var(--ink);font-size:clamp(17px,1rem + .4vw,20px);line-height:1.2}
+  .th small{display:block;color:var(--dim);font-size:13px}
+  .th .lbl{flex:none;font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--c);background:var(--bg);border-radius:999px;padding:5px 10px}
+  @media (max-width:599px){.th .lbl{display:none}}
+  .journey{display:flex;align-items:flex-start;margin:0 0 14px;padding:13px 4px 11px;background:var(--bg);border-radius:14px;list-style:none;counter-reset:j}
+  .journey li{flex:1;min-width:0;text-align:center;font-size:12px;line-height:1.3;color:var(--ink);position:relative;padding:0 3px;font-weight:600;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .journey li:nth-child(2){animation-delay:.1s}.journey li:nth-child(3){animation-delay:.2s}.journey li:nth-child(4){animation-delay:.3s}
+  .journey li:before{counter-increment:j;content:counter(j);display:grid;place-items:center;width:28px;height:28px;margin:0 auto 6px;border-radius:50%;background:#fff;border:2.5px solid var(--c2);color:var(--c);font-weight:900;font-size:13px;position:relative;z-index:1}
+  .journey li:after{content:"";position:absolute;top:13px;left:calc(50% + 17px);right:calc(-50% + 17px);height:3px;background:repeating-linear-gradient(90deg,var(--c2) 0 6px,transparent 6px 11px);background-size:11px 3px;animation:march 1s linear infinite}
+  .journey li:last-child:after{display:none}
+  @media (min-width:600px){.journey li{font-size:13px}}
+  .t-renew .rnw:before{background:linear-gradient(180deg,var(--rn2),var(--rn))}
+  .t-renew .rnw{border-color:#BFE3DF;background:linear-gradient(180deg,#F1FAF9 0%,#fff 60%)}
+  .t-renew .ring{--c:var(--rn2)}
+  .t-renew .rnw .eyebrow{color:var(--rn)}
+  .t-renew .tl li:before{border-color:var(--rn2)}.t-renew .tl li:first-child:before{background:var(--rn2);box-shadow:0 0 0 4px rgba(21,154,146,.18)}
+  .send.tc{background:linear-gradient(135deg,var(--c2) 0%,var(--c) 100%);box-shadow:0 8px 20px rgba(20,40,90,.22)}
+  .ghost.tc{color:var(--c);border-color:var(--c2)}
+  /* a premium chart, a cover-year bar, a request tracker */
+  .pchart{margin:14px 0 0;background:#fff;border:1px solid #DCE7F5;border-radius:14px;padding:12px 12px 10px}
+  .pc-h{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--c,var(--blue));margin:0 0 6px}
+  .pc-h span{letter-spacing:0;text-transform:none;font-weight:700;color:var(--body)}
+  .pc-bars{display:flex;align-items:flex-end;justify-content:center;gap:16px;height:128px;border-bottom:1.5px solid var(--line);padding:0 4px}
+  .pc-col{flex:0 1 120px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0}
+  .pc-v{font-size:11.5px;font-weight:800;color:var(--ink);margin:0 0 4px;white-space:nowrap}
+  .pc-b{display:block;width:min(58px,100%);min-height:6px;border-radius:8px 8px 2px 2px;background:#C7E7E3;transform-origin:bottom;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
+  .pc-col.now .pc-b{background:linear-gradient(180deg,var(--rn2),var(--rn))}
+  .pc-ys{display:flex;justify-content:center;gap:16px;padding:5px 4px 0}
+  .pc-ys span{flex:0 1 120px;text-align:center;font-size:11.5px;color:var(--dim);font-weight:700;min-width:0}
+  @media (min-width:760px){.rnw-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}.rnw-grid .tl{margin-top:20px}}
+  .yr{display:block;height:8px;border-radius:99px;background:#E3ECF7;overflow:hidden;margin:8px 0 4px}
+  .yr i{display:block;height:100%;width:var(--w);border-radius:99px;background:linear-gradient(90deg,var(--rn2),var(--rn));transform-origin:left;animation:growx 1s cubic-bezier(.2,.8,.2,1) both}
+  .yr.end i{background:linear-gradient(90deg,#E0703A,var(--bad))}
+  .veh .vt{flex:1;min-width:0}
+  .veh .yrl{font-size:12.5px;color:var(--body)}
+  .veh .yrl b{display:inline;font-size:12.5px;color:var(--ink)}
+  .veh .act{display:inline-block!important;margin-top:8px;font-size:12.5px;font-weight:800;color:var(--c)!important;background:var(--bg);border-radius:999px;padding:5px 11px;white-space:nowrap}
+  .reqsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+  .reqsum div{background:var(--soft);border-radius:12px;padding:10px;text-align:center;font-size:12px;color:var(--dim);font-weight:700;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .reqsum b{display:block;font-size:24px;color:var(--ink);font-weight:900;line-height:1.1}
+  .req{border:1.5px solid var(--line);border-left:6px solid var(--c2,var(--blue2));border-radius:14px;padding:13px 14px;margin:0 0 10px;font-size:14px;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .req .rh{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+  .req .kind{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--c);background:var(--bg);border-radius:999px;padding:4px 9px}
+  .req .rm{color:var(--dim);font-size:12.5px}
+  .req .rv{color:var(--ink);font-weight:700;margin:6px 0 2px}
+  .trk{display:flex;list-style:none;margin:10px 0 2px;padding:0;position:relative}
+  .trk li{flex:1;min-width:0;text-align:center;font-size:11px;line-height:1.25;color:var(--dim);font-weight:700;position:relative;padding:0 2px}
+  .trk li:before{content:"";display:block;width:16px;height:16px;margin:0 auto 5px;border-radius:50%;background:#fff;border:3px solid var(--line);position:relative;z-index:1;box-sizing:border-box}
+  .trk li:after{content:"";position:absolute;top:6.5px;left:calc(50% + 8px);right:calc(-50% + 8px);height:3px;background:var(--line)}
+  .trk li:last-child:after{display:none}
+  .trk li.done{color:var(--ink)}
+  .trk li.done:before{background:var(--c2);border-color:var(--c2)}
+  .trk li.done:after{background:linear-gradient(90deg,var(--c2),var(--c2));transform-origin:left;animation:growx .8s cubic-bezier(.2,.8,.2,1) both}
+  .trk li.now{color:var(--c)}
+  .trk li.now:before{border-color:var(--c2);box-shadow:0 0 0 0 var(--c2);animation:beat 1.8s ease-out infinite}
+  .trk.big li{font-size:12.5px}
+  .trk.big li:before{width:24px;height:24px;margin-bottom:7px}
+  .trk.big li:after{top:10.5px;left:calc(50% + 12px);right:calc(-50% + 12px)}
+  .trk.big li.done:before{content:"✓";color:#fff;font-size:13px;font-weight:900;display:grid;place-items:center}
+  .flowtag{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:10px 12px;border-radius:14px;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.3}
+  .flowtag .pi{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;display:grid;place-items:center;font-size:18px;flex:none}
+  .flowtag b{display:block;color:var(--c);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase}
+  .flowtag span{display:block;min-width:0;overflow-wrap:anywhere}
+  #s-form > .card{border-top:6px solid var(--c2,var(--blue2))}
+  #s-form .stepper i.on:before{background:var(--c2,var(--blue));border-color:var(--c2,var(--blue))}
+  #s-form .stepper .fill{background:linear-gradient(90deg,var(--ok),var(--c2,var(--blue)))}
+  #s-form .eyebrow{color:var(--c,var(--blue2))}
+  #s-form .opts button{color:var(--c,var(--blue))}
+  #s-form .opts button:hover{border-color:var(--c2,var(--blue2))}
+  #s-form .opts button.on{color:#fff;background:linear-gradient(135deg,var(--c,var(--blue)),var(--c2,var(--blue2)))}
+  #s-form .nav .send{background:linear-gradient(135deg,var(--c2,var(--blue2)) 0%,var(--c,var(--blue)) 100%)}
+  .side h4{color:var(--c,var(--ink))}
+  #s-done .trk{margin:14px 0 6px}
+  .band .stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+  .band .stats span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);border-radius:12px;padding:6px 11px;font-size:12.5px;font-weight:700;color:#fff;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .band .stats b{font-size:17px;font-weight:900;margin-right:4px}
+  @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  @keyframes growx{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @keyframes march{to{background-position:11px 0}}
+  @keyframes beat{0%{box-shadow:0 0 0 0 rgba(58,123,213,.45)}100%{box-shadow:0 0 0 9px rgba(58,123,213,0)}}
+  @keyframes flash{0%{box-shadow:0 0 0 0 rgba(58,123,213,0)}25%{box-shadow:0 0 0 6px rgba(58,123,213,.22)}100%{box-shadow:0 0 0 0 rgba(58,123,213,0)}}
   @keyframes scan{from{top:-26px}to{top:120px}}
   @keyframes sheen{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
   @keyframes glow{from{box-shadow:0 0 0 6px rgba(31,168,160,.28)}to{box-shadow:0 0 0 0 rgba(31,168,160,0)}}
@@ -258,7 +368,7 @@
       <div class="big">🚗</div>
       <h1>Get your motor quote.</h1>
       <p>Sign in with your e-mail. Our clients see their details filled in. New to us? Welcome, it takes five minutes.</p>
-      <div class="chips"><span>No password</span><span>Upload your invoice</span><span>Renew in a tap</span></div>
+      <div class="chips"><span>No password</span><span>Your details filled in</span><span>About five minutes</span></div>
     </div>
     <div id="emailBox">
       <label class="f"><b>Your e-mail</b><input class="fld" id="email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com"></label>
@@ -272,10 +382,11 @@
       <button class="ghost" onclick="backToEmail()">Use a different e-mail</button>
     </div>
     <p class="err" id="signinErr"></p>
-    <div class="why">
-      <div><b>1</b>Tell us about your car</div>
-      <div><b>2</b>We price it</div>
-      <div><b>3</b>We call you</div>
+    <div class="sec" style="margin-top:22px"><span class="ic">🧭</span><div><b>Three things you can do here</b><small>Each one is separate, so nothing gets mixed up</small></div></div>
+    <div class="paths">
+      <div class="path t-renew"><span class="pi">🔄</span><span class="pt"><b>Renew</b><small>A vehicle we already insure: next year's cover.</small></span></div>
+      <div class="path t-quote"><span class="pi">🧮</span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet: we price it for you.</small></span></div>
+      <div class="path t-take"><span class="pi">✍️</span><span class="pt"><b>Accept a quote</b><small>You have our quote: sign it online and get covered.</small></span></div>
     </div>
   </section>
 
@@ -285,26 +396,48 @@
       <div class="eyebrow" style="color:#BFE9FF">Welcome<span id="homeBack"></span></div>
       <h1 id="homeTitle">Good day.</h1>
       <p id="homeLead"></p>
+      <div class="stats" id="homeStats"></div>
     </div>
-    <div id="renewals"></div>
-    <div class="sec" id="quoteHead"><span class="ic">⚡</span><div><b>Get a quote</b><small>The fastest way first</small></div></div>
-    <div class="doors">
-      <label class="door primary" id="doorInv"><span class="tag">Fastest</span><span class="ic">📄</span><b>Upload your invoice</b>
-        <small>The dealer's quotation or invoice, a photo or a PDF. We read it and fill in the details for you.</small>
-        <input type="file" id="invFile" accept="image/*,application/pdf"></label>
-      <button type="button" class="door" id="doorQuick" onclick="startFlow('quick')"><span class="ic">⚡</span><b>Quick quote</b>
-        <small>No invoice to hand? About eight answers.</small></button>
+    <div class="paths" id="paths">
+      <button type="button" class="path t-renew" id="pathRenew" onclick="toTrack('trRenew')"><span class="pi">🔄</span><span class="pt"><b>Renew</b><small>A vehicle we already insure</small><em id="pathRenewN"></em></span><span class="go">›</span></button>
+      <button type="button" class="path t-quote" onclick="toTrack('trQuote')"><span class="pi">🧮</span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet</small><em>About 2 min</em></span><span class="go">›</span></button>
+      <button type="button" class="path t-take" onclick="toTrack('trTake')"><span class="pi">✍️</span><span class="pt"><b>Accept a quote</b><small>You have our quote and want the cover</small><em>Sign online</em></span><span class="go">›</span></button>
     </div>
-    <button type="button" class="takedoor" id="doorTake" onclick="startTake()"><span class="ic">✍️</span><span><b>Got your quotation? Take it</b>
-      <small>Upload the quotation, your certified copy and your permit. We fill in Guardian's proposal and Know Your Policy form, you check and sign.</small></span><span class="go">›</span></button>
-    <button type="button" class="linkbtn" onclick="startFlow('full')">Or give us every detail now: permit, documents and driving record</button>
-    <div id="homeVeh"></div>
+
+    <section class="track t-renew" id="trRenew">
+      <div class="th"><span class="tn">🔄</span><div class="tt"><b>Renew a vehicle we insure</b><small>Next year's cover for the same vehicle</small></div><span class="lbl">Renewal</span></div>
+      <ol class="journey"><li>Check your record</li><li>Renew as it is, or with changes</li><li>Your renewal by e‑mail</li></ol>
+      <div id="renewals"></div>
+      <div id="homeVeh"></div>
+    </section>
+
+    <section class="track t-quote" id="trQuote">
+      <div class="th" id="quoteHead"><span class="tn">🧮</span><div class="tt"><b>Get a new quote</b><small>For a vehicle we don't insure yet</small></div><span class="lbl">New quote</span></div>
+      <ol class="journey"><li>Tell us about the vehicle</li><li>We price it</li><li>Your quote by e‑mail</li></ol>
+      <div class="doors">
+        <label class="door primary" id="doorInv"><span class="tag">Fastest</span><span class="ic">📄</span><b>I have the dealer's invoice</b>
+          <small>The car dealer's bill for the vehicle you are buying. A photo or a PDF: we read it and fill in the details for you.</small>
+          <input type="file" id="invFile" accept="image/*,application/pdf"></label>
+        <button type="button" class="door" id="doorQuick" onclick="startFlow('quick')"><span class="ic">⚡</span><b>No invoice? Answer a few questions</b>
+          <small>About eight answers: the vehicle, its value and the cover you want.</small></button>
+      </div>
+      <button type="button" class="linkbtn" onclick="startFlow('full')">Prefer to give every detail now (permit, papers, driving record)? Start the full quote</button>
+    </section>
+
+    <section class="track t-take" id="trTake">
+      <div class="th"><span class="tn">✍️</span><div class="tt"><b>Accept a quote</b><small>You have the quote we e‑mailed you and want the cover</small></div><span class="lbl">Accept</span></div>
+      <ol class="journey"><li>Upload your quote and papers</li><li>Check the forms we fill in</li><li>Sign on screen</li><li>Covered once paid</li></ol>
+      <button type="button" class="takedoor" id="doorTake" onclick="startTake()"><span class="ic">✍️</span><span><b>Accept my quote</b>
+        <small>Upload the quote we sent you, your certified copy and your driver's permit. We fill in Guardian's proposal and Know Your Policy form; you check and sign.</small></span><span class="go">›</span></button>
+    </section>
+
     <div id="reqs"></div>
   </section>
 
   <!-- the steps -->
   <div class="grid two hide" id="s-form">
     <section class="card">
+      <div class="flowtag" id="flowTag"></div>
       <div class="stepper" id="steps"></div>
       <div id="step"></div>
       <p class="err" id="formErr"></p>
@@ -313,7 +446,7 @@
         <button class="send" id="btnNext" onclick="go(1)">Continue</button>
       </div>
     </section>
-    <aside class="side"><div class="card"><h4>Your request so far</h4><div id="sideSum"></div>
+    <aside class="side"><div class="card"><h4 id="sideH">Your request so far</h4><div id="sideSum"></div>
       <div class="help"><b>Need a hand?</b>Call the branch on <a href="tel:+18682266461">(868) 226-6461</a> and we finish it with you on the line.</div></div></aside>
   </div>
 
@@ -324,13 +457,13 @@
     <p class="muted">Your reference</p>
     <p class="ref" id="doneRef"></p>
     <p id="doneMsg" style="text-align:left"></p>
-    <div class="why" id="doneSteps" style="text-align:left"></div>
+    <div id="doneSteps"></div>
     <p class="muted" style="margin-top:12px;text-align:left">A receipt is on its way to your inbox. Sign in any time to see where it stands.</p>
-    <button class="ghost" onclick="showHome()">Back to my quotes</button>
+    <button class="ghost" onclick="showHome()">Back to home</button>
   </section>
 </main>
 <div class="reading hide" id="reading" role="status" aria-live="polite"><div class="box"><div class="doc"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-  <b>Reading your document…</b><small id="readingMsg">This takes a few seconds.</small></div></div>
+  <b id="readingT">Reading your document…</b><small id="readingMsg">This takes a few seconds.</small></div></div>
 <footer>Ricky Rampersad Branch · Guardian Group · Chaguanas · <a href="tel:+18682266461">(868) 226-6461</a><br>Your information is used only to prepare and look after your cover, and is never sold or disclosed without your express consent.</footer>
 
 <script src="/motor-quote/forms.js"></script>
@@ -423,6 +556,26 @@ const vehName = v => [v.year, v.make, v.model].filter(Boolean).join(' ') || v.re
 const money = n => 'TT$ ' + Math.round(Number(n)).toLocaleString();
 const longDay = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''; };
 const dueNow = v => v.renewState === 'due' || v.renewState === 'lapsed';
+/* Which path a request or a draft is on. The three never share a colour or a word. */
+const PATH = {
+  renew: { cls: 't-renew', ic: '🔄', name: 'Renewal', side: 'Your renewal so far' },
+  quick: { cls: 't-quote', ic: '🧮', name: 'New quote', side: 'Your new quote so far' },
+  full: { cls: 't-quote', ic: '🧮', name: 'New quote', side: 'Your new quote so far' },
+  take: { cls: 't-take', ic: '✍️', name: 'Accepting a quote', side: 'Accepting your quote' } };
+const FLOW_NAME = { quick: 'New quote (quick)', full: 'New quote (every detail)', renew: 'Renewal', take: 'Accepting a quote' };
+const termYear = t => { const a = String(t.from || '').slice(0, 4), b = String(t.to || '').slice(0, 4); return a && b && a !== b ? a + '–' + b.slice(2) : (b || a); };
+/* The premium on each term, as bars: the current term in full colour. */
+function premChart(terms) {
+  const t = (terms || []).filter(x => Number(x.premium) > 0).slice(0, 4).reverse();
+  if (t.length < 2) return '';
+  const max = Math.max.apply(null, t.map(x => +x.premium)), last = +t[t.length - 1].premium, prev = +t[t.length - 2].premium;
+  const ch = prev ? Math.round(1000 * (last - prev) / prev) / 10 : 0;
+  return '<div class="pchart" role="img" aria-label="' + esc('Premium by year: ' + t.map(x => termYear(x) + ' ' + money(x.premium)).join(', ')) + '">' +
+    '<div class="pc-h">Premium by year<span>' + (ch ? (ch > 0 ? '▲ ' : '▼ ') + Math.abs(ch) + '% on the year before' : 'Same as the year before') + '</span></div>' +
+    '<div class="pc-bars">' + t.map((x, i) => '<div class="pc-col' + (i === t.length - 1 ? ' now' : '') + '"><span class="pc-v">' + esc(money(x.premium)) + '</span>' +
+      '<span class="pc-b" style="height:' + Math.max(8, Math.round(92 * x.premium / max)) + 'px;animation-delay:' + (i * 0.12).toFixed(2) + 's"></span></div>').join('') + '</div>' +
+    '<div class="pc-ys">' + t.map(x => '<span>' + esc(termYear(x)) + '</span>').join('') + '</div></div>';
+}
 function renewalCard(v, i) {
   const lapsed = v.renewState === 'lapsed', n = Math.abs(v.renewIn || 0);
   const pct = lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)));
@@ -430,12 +583,45 @@ function renewalCard(v, i) {
     esc([t.cover, t.sum ? money(t.sum) : '', t.premium ? 'premium ' + money(t.premium) : ''].filter(Boolean).join(' · ') || 'Details not on file') + '</span></li>').join('');
   return '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" data-reg="' + esc(v.reg) + '"><div class="rnw-top">' +
     '<div class="ring" style="--p:' + pct + '"><span><b>' + n + '</b><small>' + (lapsed ? 'days ago' : n === 1 ? 'day' : 'days') + '</small></span></div>' +
-    '<div><div class="eyebrow">' + (lapsed ? 'Your cover has ended' : 'Your renewal') + '</div><h3>' + esc(vehName(v)) + '</h3>' +
+    '<div><div class="eyebrow">' + (lapsed ? 'Your cover has ended' : 'Due for renewal') + '</div><h3>' + esc(vehName(v)) + '</h3>' +
     '<div class="when">' + esc(v.reg) + ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(v.renewOnText || longDay(v.renewOn)) + '</b></div></div></div>' +
     (v.facts && v.facts.length ? '<ul class="facts">' + v.facts.map(f => '<li>' + esc(f) + '</li>').join('') + '</ul>' : '') +
-    (terms ? '<ol class="tl">' + terms + '</ol>' : '') +
-    '<div class="rnw-act"><button type="button" class="send" onclick="startRenew(' + i + ',\'Renew as it is\')">Renew as it is</button>' +
-    '<button type="button" class="ghost" onclick="startRenew(' + i + ',\'Renew with changes\')">Renew with changes</button></div></div>';
+    '<div class="rnw-grid">' + premChart(v.terms) +
+    (terms ? '<ol class="tl">' + terms + '</ol>' : '') + '</div>' +
+    '<div class="rnw-act"><button type="button" class="send tc" onclick="startRenew(' + i + ',\'Renew as it is\')">Renew as it is</button>' +
+    '<button type="button" class="ghost tc" onclick="startRenew(' + i + ',\'Renew with changes\')">Renew with changes</button></div></div>';
+}
+/* A vehicle we insure that is not due yet: how far through its cover year it is, and renewing early. */
+function vehRow(v, ix) {
+  const ended = v.renewState === 'ended', n = Math.max(0, Number(v.renewIn) || 0);
+  const w = ended ? 100 : Math.max(3, Math.min(100, Math.round(100 - 100 * n / 365)));
+  const when = v.renewOn ? (ended ? 'Cover ended <b>' + esc(longDay(v.renewOn)) + '</b>' : 'Renews <b>' + esc(longDay(v.renewOn)) + '</b> · in ' + n + ' day' + (n === 1 ? '' : 's'))
+    : v.to ? 'Cover to <b>' + esc(longDay(v.to)) + '</b>' : '';
+  return '<button type="button" class="veh" onclick="' + (ended ? 'startFlow(\'quick\',' + ix + ')' : 'startRenew(' + ix + ',\'\')') + '"><span class="ic">🚗</span><span class="vt"><b>' + esc(vehName(v)) +
+    '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + '</span>' +
+    (when ? '<span class="yr' + (ended ? ' end' : '') + '" aria-hidden="true"><i style="--w:' + w + '%"></i></span><span class="yrl">' + when + '</span>' : '') +
+    '<span class="act">' + (ended ? 'Get a new quote' : 'Renew early') + '</span></span><span class="go">›</span></button>';
+}
+/* Where a request stands, in the words of its own path. */
+const STAGES = { renew: ['Sent', 'Being prepared', 'Renewal ready', 'Renewed'], quote: ['Sent', 'Being priced', 'Quote ready', 'Accepted'] };
+function reqStage(r, kind) {
+  const s = String(r.status || '').toLowerCase();
+  if (kind === 'renew') return /renewed|bound|done|complete/.test(s) ? 4 : (r.quotedOn || /renewal sent|notice sent|quoted/.test(s)) ? 3 : /progress|working|prepar|review/.test(s) ? 2 : 1;
+  return /accepted|proposal|bound|taken|covered/.test(s) ? 4 : (r.quotedOn || /quote sent|quoted/.test(s)) ? 3 : /progress|pricing|working|review/.test(s) ? 2 : 1;
+}
+const tracker = (labels, at, big) => '<ol class="trk' + (big ? ' big' : '') + '">' + labels.map((l, i) => '<li class="' + (i < at ? 'done' : i === at ? 'now' : '') + '" style="animation-delay:' + (i * .15) + 's">' + esc(l) + '</li>').join('') + '</ol>';
+function reqCard(r) {
+  const kind = r.type === 'Renewal' ? 'renew' : 'quote', st = reqStage(r, kind), P = kind === 'renew' ? PATH.renew : PATH.quick;
+  return '<div class="req ' + P.cls + '"><div class="rh"><span class="kind">' + P.ic + ' ' + P.name + '</span><b>' + esc(r.ref) + '</b><span class="rm">' + esc(r.when) + (r.type && kind !== 'renew' ? ' · ' + esc(r.type) : '') + '</span></div>' +
+    '<div class="rv">' + esc(r.vehicle || r.reg || 'Vehicle') + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + (r.cover ? ' · ' + esc(r.cover) : '') + '</div>' +
+    tracker(STAGES[kind], st) +
+    '<div class="rm">' + esc(r.status || 'Received') + (r.quotedOn ? ' · ' + (kind === 'renew' ? 'renewal sent ' : 'quoted ') + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</div>' +
+    (kind === 'quote' && st < 4 ? '<button type="button" class="linkbtn" style="padding:6px 0 0;color:var(--ac)" onclick="startTake(\'' + esc(r.ref) + '\')">Accept this quote ›</button>' : '') + '</div>';
+}
+function toTrack(id) {
+  const el = $(id); if (!el) return;
+  el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
 }
 function showHome() {
   show('s-home');
@@ -444,21 +630,28 @@ function showHome() {
   const vs = (me && me.vehicles) || [], all = vs.map((v, i) => [v, i]), due = all.filter(x => dueNow(x[0])), rest = all.filter(x => !dueNow(x[0]));
   $('homeTitle').textContent = first ? 'Good day, ' + first + '.' : 'Good day.';
   $('homeBack').textContent = me && me.found ? ' back' : '';
+  const soon = due.filter(x => x[0].renewState === 'due').map(x => Math.abs(x[0].renewIn || 0)).sort((a, b) => a - b)[0];
   $('homeLead').textContent = due.length
-    ? (due.length === 1 ? 'Your renewal is ready below.' : due.length + ' renewals are ready below.') + ' Or get a quote for another vehicle.'
-    : 'Upload your invoice and we fill it in, or answer a few questions. The quote comes to ' + ((session && session.email) || 'your e-mail') + '.';
+    ? (due.length === 1 ? 'One vehicle is due for renewal.' : due.length + ' vehicles are due for renewal.') + ' Choose what you would like to do.'
+    : 'What would you like to do today? Choose one of the three below.';
+  /* The band's figures: what we hold, at a glance. */
+  const open = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') < 4).length;
+  $('homeStats').innerHTML = [vs.length ? '<span><b>' + vs.length + '</b>vehicle' + (vs.length === 1 ? '' : 's') + ' with us</span>' : '',
+    due.length ? '<span><b>' + due.length + '</b>due for renewal</span>' : '', requests.length ? '<span><b>' + open + '</b>request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
+  /* No vehicle with us: no renewal path at all. */
+  $('pathRenew').classList.toggle('hide', !vs.length); $('trRenew').classList.toggle('hide', !vs.length);
+  $('paths').style.setProperty('--n', vs.length ? 3 : 2);
+  $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length + ' vehicle' + (vs.length === 1 ? '' : 's');
   $('renewals').innerHTML = due.map(x => renewalCard(x[0], x[1])).join('');
-  $('quoteHead').querySelector('b').textContent = due.length ? 'Another vehicle?' : 'Get a quote';
   $('homeVeh').innerHTML = rest.length
-    ? '<div class="sec" style="margin-top:22px"><span class="ic">🚘</span><div><b>Your vehicles with us</b><small>Tap one to quote it again</small></div></div>' + rest.map(x => { const v = x[0];
-      return '<button type="button" class="veh" onclick="startFlow(\'quick\',' + x[1] + ')"><span class="ic">🚗</span><span><b>' + esc(vehName(v)) +
-      '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + (v.renewOn ? ' · ' + (v.renewState === 'ended' ? 'ended ' : 'renews ') + esc(longDay(v.renewOn)) : v.to ? ' · cover to ' + esc(longDay(v.to)) : '') +
-      '</span></span><span class="go">›</span></button>'; }).join('')
+    ? '<div class="sec" style="margin-top:' + (due.length ? 18 : 4) + 'px"><span class="ic" style="background:linear-gradient(135deg,var(--rn),var(--rn2))">🚘</span><div><b>' + (due.length ? 'Your other vehicles with us' : 'Your vehicles with us') +
+      '</b><small>The bar is how far through its year of cover each one is</small></div></div>' + rest.map(x => vehRow(x[0], x[1])).join('')
     : '';
-  $('reqs').innerHTML = requests.length ? '<div class="sec" style="margin-top:22px"><span class="ic">🧾</span><div><b>Your requests</b><small>Where each one stands</small></div></div>' + requests.map(r =>
-    '<div class="req"><b>' + esc(r.ref) + '</b> · ' + esc(r.when) + (r.type ? ' · ' + esc(r.type) : '') + '<br>' + esc(r.vehicle || r.reg) + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + (r.cover ? ' · ' + esc(r.cover) : '') +
-    '<br><span class="st' + (r.quotedOn || /quote sent|bound|done|renewed/i.test(r.status || '') ? ' ok' : '') + '">' + esc(r.status || 'Received') + (r.quotedOn ? ' · quoted ' + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</span>' +
-    (r.type !== 'Renewal' && !/accepted|proposal/i.test(r.status || '') ? '<br><button type="button" class="linkbtn" style="padding:6px 0 0" onclick="startTake(\'' + esc(r.ref) + '\')">Take this quote ›</button>' : '') + '</div>').join('') : '';
+  if (!requests.length) { $('reqs').innerHTML = ''; return; }
+  const quoted = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') === 3).length, doneN = requests.length - open;
+  $('reqs').innerHTML = '<section class="track" id="trReqs"><div class="th" style="--c:var(--mid);--c2:var(--blue2);--bg:var(--soft)"><span class="tn">🧾</span><div class="tt"><b>Your requests</b><small>Each one says which path it is on, and how far it has got</small></div></div>' +
+    '<div class="reqsum"><div><b>' + requests.length + '</b>sent</div><div><b>' + quoted + '</b>answered</div><div><b>' + doneN + '</b>completed</div></div>' +
+    requests.map(reqCard).join('') + '</section>';
 }
 
 /* ---- the steps ---- */
@@ -473,7 +666,7 @@ const FULL_STEPS = [
 /* Three doors, one page: the quick quote (with or without the invoice), the renewal, and every detail. */
 const FLOWS = {
   full: FULL_STEPS,
-  quick: [{ key: 'quick', title: 'Your quick quote', short: 'Details', render: stepQuick, check: checkQuick },
+  quick: [{ key: 'quick', title: 'Your new quote', short: 'Details', render: stepQuick, check: checkQuick },
           { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' }],
   renew: [{ key: 'renew', title: 'Your renewal', short: 'Renewal', render: stepRenew, check: checkRenew },
           { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' }],
@@ -553,13 +746,13 @@ function applyInvoice(F) {
   if (!draft.mobile && F.buyerPhone) set('mobile', F.buyerPhone);
   draft.fromDoc = got;
   draft.invoice = F;
-  draft.docLabel = [F.docType || 'document', F.dealer ? 'from ' + F.dealer : ''].filter(Boolean).join(' ');
+  draft.docLabel = [/invoice/i.test(F.docType || '') ? 'dealer\'s invoice' : 'dealer\'s document', F.dealer ? 'from ' + F.dealer : ''].filter(Boolean).join(' ');
   delete draft.invoiceMsg;
 }
 async function onInvoice(file) {
   if (!file) return;
   $('formErr').textContent = ''; $('signinErr').textContent = '';
-  $('reading').classList.remove('hide'); $('readingMsg').textContent = 'This takes a few seconds.';
+  $('reading').classList.remove('hide'); $('readingT').textContent = 'Reading the dealer\'s invoice…'; $('readingMsg').textContent = 'This takes a few seconds.';
   const t0 = Date.now(), tick = setInterval(() => { $('readingMsg').textContent = 'Reading… ' + Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
   try {
     const f = await prepFile(file, 'invoice', 2000);
@@ -569,7 +762,7 @@ async function onInvoice(file) {
     if (draft.flow !== 'quick' || $('s-form').classList.contains('hide')) startFlow('quick', null, true);
     files = files.filter(x => x.kind !== 'invoice'); files.push(f);
     if (j.read && j.fields) applyInvoice(j.fields);
-    else { draft.fromDoc = []; delete draft.invoice; draft.docLabel = 'your document (attached)'; draft.invoiceMsg = j.message || 'We attached your document. Please fill in the details below.'; }
+    else { draft.fromDoc = []; delete draft.invoice; draft.docLabel = 'dealer\'s document (attached)'; draft.invoiceMsg = j.message || 'We attached your document. Please fill in the details below.'; }
     saveDraft(); stepIx = 0; render();
   } catch (e) {
     if ($('s-form').classList.contains('hide')) { $('homeLead').textContent = e.message; } else { $('formErr').textContent = e.message; }
@@ -577,14 +770,24 @@ async function onInvoice(file) {
   clearInterval(tick); $('reading').classList.add('hide');
   const inv = $('invFile'); if (inv) inv.value = '';
 }
+function flowTag() {
+  const P = PATH[draft.flow] || PATH.full, veh = [draft.year, draft.make, draft.model].filter(Boolean).join(' ') || draft.reg || '';
+  const what = draft.flow === 'renew' ? [veh, draft.reg && veh !== draft.reg ? draft.reg : ''].filter(Boolean).join(' · ')
+    : draft.flow === 'take' ? (draft.quoteRef ? 'Your quote ' + draft.quoteRef : 'The quote we e-mailed you')
+    : draft.invoice ? 'From the dealer\'s invoice' + (veh ? ' · ' + veh : '') : (veh || 'A vehicle we don\'t insure yet');
+  ['t-renew', 't-quote', 't-take'].forEach(c => $('s-form').classList.toggle(c, c === P.cls));
+  $('flowTag').innerHTML = '<span class="pi">' + P.ic + '</span><span><b>' + esc(FLOW_NAME[draft.flow] || P.name) + '</b>' + esc(what) + '</span>';
+  $('sideH').textContent = P.side;
+}
 function render() {
+  flowTag();
   const STEPS = steps();
   $('steps').innerHTML = '<span class="fill"></span>' + STEPS.map((s, i) => '<i data-n="' + (i + 1) + '" class="' + (i < stepIx ? 'done' : i === stepIx ? 'on' : '') + '"><span>' + s.short + '</span></i>').join('');
   requestAnimationFrame(() => { const f = $('steps').querySelector('.fill'); if (f) f.style.width = (84 * stepIx / (STEPS.length - 1)) + '%'; });
   const s = STEPS[stepIx];
   $('step').innerHTML = '<div class="eyebrow">Step ' + (stepIx + 1) + ' of ' + STEPS.length + (/\breq: 1\b/.test(String(s.render)) ? ' · <span style="font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)">starred answers are needed</span>' : '') + '</div><h2>' + s.title + '</h2>' + s.render(draft);
   $('formErr').textContent = '';
-  $('btnBack').textContent = stepIx === 0 ? 'My quotes' : 'Back';
+  $('btnBack').textContent = stepIx === 0 ? 'Home' : 'Back';
   $('btnNext').textContent = stepIx === STEPS.length - 1 ? (draft.flow === 'take' ? 'Sign and send' : 'Send my request') : 'Continue';
   $('btnNext').disabled = false;
   if (s.key === 'docs') wireFiles();
@@ -642,7 +845,7 @@ async function go(dir) {
 /* The summary beside the form on a wide screen. */
 function side() {
   const d = draft, el = $('sideSum'); if (!el) return;
-  const rows = [['Request', { quick: 'Quick quote', renew: 'Renewal', full: 'Every detail' }[d.flow] || ''], ['Renews', d.renewOnText], ['You ask', d.renewChoice], ['Read from', d.docLabel], ['Name', d.name], ['Mobile', d.mobile], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')],
+  const rows = [['Request', FLOW_NAME[d.flow] || ''], ['Renews', d.renewOnText], ['You ask', d.renewChoice], ['Read from', d.docLabel], ['Name', d.name], ['Mobile', d.mobile], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')],
     ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears],
     ['No claim discount', d.ncd], ['Permit', d.permit], ['Documents', files.length ? files.map(f => docLabel(f.kind)).join(', ') : '']].filter(r => r[1]);
   el.innerHTML = rows.length ? rows.map(r => '<div class="kv"><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('') : '<p class="empty">What you fill in appears here as you go.</p>';
@@ -675,9 +878,9 @@ const sec = (ic, t, sub) => '<div class="sec"><span class="ic">' + ic + '</span>
 function stepQuick(d) {
   const inv = files.find(f => f.kind === 'invoice');
   const head = d.invoice
-    ? '<div class="docnote"><span class="ic">✨</span><div><b>We read your ' + esc(d.docLabel) + '.</b> Check each field marked <span class="fromdoc">from your document</span> and change anything that is wrong. The document goes with your request.</div></div>'
+    ? '<div class="docnote"><span class="ic">✨</span><div><b>We read the ' + esc(d.docLabel) + '.</b> Check each field marked <span class="fromdoc">from your document</span> and change anything that is wrong. The document goes with your request.</div></div>'
     : d.invoiceMsg ? '<div class="docnote"><span class="ic">📎</span><div>' + esc(d.invoiceMsg) + '</div></div>'
-    : '<p class="muted">The minimum we need to price it. Have the dealer\'s invoice? <label class="linkbtn" style="padding:0">Upload it<input type="file" class="invIn" accept="image/*,application/pdf" style="display:none"></label> and we fill it in.</p>';
+    : '<p class="muted">For a vehicle we don\'t insure yet: the minimum we need to price it. Have the dealer\'s invoice? <label class="linkbtn" style="padding:0">Upload it<input type="file" class="invIn" accept="image/*,application/pdf" style="display:none"></label> and we fill it in.</p>';
   return head +
     sec('🚗', 'The vehicle') +
     '<div class="row">' + sel('make', 'Make', MAKES, { req: 1 }) + inp('model', 'Model', { ph: 'e.g. Aqua', req: 1 }) + '</div>' +
@@ -719,8 +922,8 @@ const MARITAL = ['Single', 'Married', 'Common-law', 'Divorced', 'Separated', 'Wi
 const LEVELS = ['Level 1 ($3,000)', 'Level 2 ($5,000)', 'Level 3 ($8,000)'], EV_LIMITS = ['$50,000', '$75,000', '$100,000', '$120,000'];
 const BODY_TYPES = ['Sedan', 'Hatchback', 'SUV', 'Crossover', 'Wagon', 'Pickup', 'Van', 'Coupe', 'Convertible', 'Motorcycle', 'Other'];
 function docLabel(k) { const t = KINDS[k] || TDOCS[k]; return t ? t[0] : k; }
-function doneSteps(list) { $('doneSteps').innerHTML = list.map((t, i) => '<div><b>' + (i + 1) + '</b>' + t + '</div>').join(''); }
-const TDOCS = { quote: ['The quotation you are taking', 'Guardian General\'s quotation schedule or invoice, the PDF or a photo.', 1],
+function doneSteps(list, flow) { const P = PATH[flow] || PATH.quick; $('doneSteps').className = P.cls; $('doneSteps').innerHTML = tracker(['Sent'].concat(list), 1, true); }
+const TDOCS = { quote: ['Your Guardian quote', 'The quote we e-mailed you (Guardian General\'s Quotation Schedule), the PDF or a photo.', 1],
   certified: ['Certified copy, or the dealer\'s invoice for a new vehicle', 'We read the registration, chassis and engine numbers off it.', 0],
   permit: ['Your driver\'s permit', 'A photo of the front. We read the number, the date of issue and the class.', 0] };
 /* The Know Your Policy points, in Guardian's own words (the form, Motor Guard, Private Motor - Individual). */
@@ -728,7 +931,7 @@ const KYP_POINTS = [
   ['Loss of use / courtesy car', 'Comprehensive cover includes loss of use up to 10 days (courtesy car) or the monetary amount stated in the schedule, provided you have this cover.', 'Do you understand that the loss of use payment OR courtesy car will apply ONLY for the length of time the adjuster advises it will take to repair your vehicle subject to the maximum number of days stated on the policy schedule and ONLY commences when the vehicle is sent to the garage and repairs have started?'],
   ['Loss of use / courtesy car', '', 'Do you understand that the loss of use OR courtesy car cover is calculated on a reducing balance basis? Once any of the ten (10) days are used, you will only be entitled to the remaining balance for the rest of the policy period and the full ten (10) days of cover will be reinstated at policy renewal.'],
   ['Excesses', 'An excess is the amount of each claim that you are responsible for when you are insured for either Comprehensive or Third-Party Fire and Theft coverage. For example, if you claim $2,000 and your excess is $500, once the claim is valid you will be paid $1,500. If you are not at fault, Guardian General will attempt to recover your excess from the other insurer, on your behalf.', 'Do you understand that the excess must be paid whether you are at fault or NOT?'],
-  ['Excesses', 'The excesses that apply to you are in the Excess Table on your quotation. Answer No and we call you to go through them before your cover starts.', 'Did the representative explain the excesses that will apply to your policy?'],
+  ['Excesses', 'The excesses that apply to you are in the Excess Table on your Guardian quote. Answer No and we call you to go through them before your cover starts.', 'Did the representative explain the excesses that will apply to your policy?'],
   ['Windscreen', 'Once part of the windscreen limit is claimed anytime during the period of insurance, we will reduce the limit of coverage available by the amount of the claim. If the entire windscreen limit is claimed anytime during the period of insurance, we will automatically restore the cover to a limit of $2,500.00 for the remainder of the policy period. However, you may repurchase the benefit and adjust to your preferred limit for the balance of your insurance period.', 'Do you understand the above?'],
   ['Contribution / depreciation', 'When settling a claim for repairs to your vehicle, we will pay to replace your damaged parts with parts of similar age and use. When used parts or foreign used parts are not available, Guardian General will allow new parts, but you will be required to contribute towards the cost (i.e. difference in costs between new and used parts).', 'Do you understand the above?'],
   ['Total loss', 'This question does not apply if you have purchased the Agreed Depreciation benefit. In the event of a total loss, the settlement will be based on market value or sum insured (insured value) whichever is LESS at the time of the loss. Market value is how much you can fetch on the open market if you sell your vehicle in its current condition (prior to the loss).', 'Do you understand the above?'],
@@ -768,7 +971,7 @@ const T_IF = [['otherGG', 'Yes', 'otherGGd', 'your other insurance with Guardian
   ['q16a', 'Yes', 'q16ad', 'the business use'], ['q16b', 'Yes', 'q16bd', 'the racing or hire use'], ['q16c', 'No', 'q16cd', 'how the vehicle is used'],
   ['b19b', 'Yes', 'b19bLimit', 'the windscreen limit']];
 function checkTake(key, d) {
-  if (key === 'tdocs') return files.some(f => f.kind === 'quote') ? '' : 'Please upload the quotation you are taking.';
+  if (key === 'tdocs') return files.some(f => f.kind === 'quote') ? '' : 'Please upload your Guardian quote first: the quote we e-mailed you.';
   const miss = [];
   Object.entries(T_REQ[key] || {}).forEach(([k, l]) => { if (!String(d[k] || '').trim()) miss.push(l); });
   (T_YN[key] || []).forEach(k => { if (!/^(Yes|No)$/.test(d[k] || '')) miss.push(key === 'tkyp' ? 'point ' + k.slice(1) : 'a Yes or No on every question'); });
@@ -816,7 +1019,7 @@ function stepTveh(d) {
     '<div class="row">' + inp('chassis', 'Chassis number', { req: 1 }) + inp('engine', 'Engine number', { req: 1 }) + '</div>' +
     '<div class="row">' + inp('year', 'Year of make', { req: 1, mode: 'numeric', max: 4 }) + inp('cc', 'C.C.', { req: 1, mode: 'numeric' }) + '</div>' +
     '<div class="row">' + inp('seating', 'Seating', { req: 1, mode: 'numeric' }) + sel('body', 'Type of body', BODY_TYPES, { req: 1 }) + '</div>' +
-    inp('sumInsured', 'Sum insured (TT$)', { req: 1, mode: 'numeric', hint: 'As on the quotation you are taking.' }) +
+    inp('sumInsured', 'Sum insured (TT$)', { req: 1, mode: 'numeric', hint: 'As on your Guardian quote.' }) +
     ynq('acc', 'Do you wish to insure items installed in addition to, or replacing, the manufacturer\'s standard items?') +
     when('acc=Yes', '<div class="row">' + inp('accAudio', 'Audio/visual equipment (TT$)', { mode: 'numeric' }) + inp('accPaint', 'Special paint, advertising, graphics (TT$)', { mode: 'numeric' }) + '</div>' +
       '<div class="row">' + inp('accRims', 'Mag rims (TT$)', { mode: 'numeric' }) + inp('accOther', 'Any other major accessories (TT$)', { mode: 'numeric' }) + '</div>') +
@@ -852,7 +1055,7 @@ function stepTdrv(d) {
     ynq('q16c', 'Will it be used only for social, domestic and pleasure purposes and for travelling to and from your place of business?') + when('q16c=No', inp('q16cd', 'Please give details'));
 }
 function stepTcov(d) {
-  return (d.quoteRead ? '<div class="docnote"><span class="ic">🧾</span><div>These are from <b>the quotation you are taking</b>. Change one and the premium may change: we confirm it with you before cover starts.</div></div>' : '') +
+  return (d.quoteRead ? '<div class="docnote"><span class="ic">🧾</span><div>These are from <b>your Guardian quote</b>. Change one and the premium may change: we confirm it with you before cover starts.</div></div>' : '') +
     opts('cover', 'Type of cover required ' + req, [['Comprehensive', ''], ['Third Party Fire and Theft', ''], ['Third Party', '']], '', true) +
     '<div class="row">' + inp('from', 'Period of insurance from', { type: 'date', req: 1 }) + inp('to', 'To', { type: 'date', req: 1 }) + '</div>' +
     sec('➕', 'Optional extra benefits', 'Individual policyholders are entitled to one of (e) or (g) free.') +
@@ -884,7 +1087,7 @@ function stepTsign(d) {
 async function onDoc(kind, file) {
   if (!file) return;
   $('formErr').textContent = '';
-  $('reading').classList.remove('hide');
+  $('reading').classList.remove('hide'); $('readingT').textContent = 'Reading your ' + ({ quote: 'Guardian quote', certified: 'certified copy', permit: 'driver\'s permit' }[kind] || 'document') + '…';
   const t0 = Date.now(), tick = setInterval(() => { $('readingMsg').textContent = 'Reading… ' + Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
   try {
     const f = await prepFile(file, kind, 2000);
@@ -1012,7 +1215,7 @@ async function submitTake() {
     requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
     $('doneRef').textContent = j.ref;
     $('doneTitle').textContent = 'Your proposal has gone.';
-    doneSteps(['The desk checks your signed forms', 'We call you about the premium', 'Cover starts once it is paid']);
+    doneSteps(['The desk checks your forms', 'We call about the premium', 'Covered once paid'], 'take');
     $('doneMsg').textContent = (j.mode === 'test' ? 'Test mode: it went to the branch test inbox, not to the desk. ' : 'It went to Guardian General\'s desk, with our branch copied. ') +
       'Your signed proposal and Know Your Policy form are on their way to your inbox. We call you to arrange the premium: cover starts once it is paid.';
     show('s-done');
@@ -1067,7 +1270,7 @@ function stepDriver(d) {
     '<div id="accBox" class="' + (d.accidents === 'Yes' ? '' : 'hide') + '"><label class="f"><b>Tell us a little about it</b><textarea class="fld" data-k="accidentDetails">' + esc(d.accidentDetails || '') + '</textarea></label></div>' +
     '<label class="f"><b>Anything else we should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';
 }
-const KINDS = { 'invoice': ['The invoice or quotation', 'The dealer\'s, a photo or a PDF.'], 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
+const KINDS = { 'invoice': ['The dealer\'s invoice', 'A photo or a PDF of the car dealer\'s bill.'], 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
 function stepDocs() {
   return '<p class="muted">Photograph them with your phone. Optional, but the quote is firmer with them.</p><div class="files" id="files">' +
     Object.keys(KINDS).filter(k => k !== 'invoice').map(k => fileRow(k)).join('') + '</div>';
@@ -1115,7 +1318,7 @@ function prepFile(file, kind, maxPx) {
   });
 }
 function stepReview(d) {
-  const G = [['The request', [['Request', { quick: 'Quick quote', renew: 'Renewal', full: 'Every detail' }[d.flow] || ''], ['Renews on', d.renewOnText], ['You ask', d.renewChoice], ['Changes', d.renewChanges], ['Read from', d.invoice ? d.docLabel : '']]],
+  const G = [['The request', [['Request', FLOW_NAME[d.flow] || ''], ['Renews on', d.renewOnText], ['You ask', d.renewChoice], ['Changes', d.renewChanges], ['Read from', d.invoice ? d.docLabel : '']]],
     ['The client', [['Name', d.name], ['E-mail', session && session.email], ['Mobile', d.mobile], ['Gender', d.gender], ['Date of birth', d.dob], ['Occupation', d.occupation], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', d.agent]]],
     ['The vehicle', [['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
     ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', d.ncd], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
@@ -1133,7 +1336,7 @@ async function submit() {
     requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
     $('doneRef').textContent = j.ref;
     $('doneTitle').textContent = j.flow === 'renew' ? 'Your renewal request has gone.' : 'Your request has gone.';
-    doneSteps(j.flow === 'renew' ? ['We check your renewal', 'The renewal reaches your e-mail', 'We call you'] : ['We price it', 'The quote reaches your e-mail', 'We call you']);
+    doneSteps(j.flow === 'renew' ? ['We check your renewal', 'Your renewal by e‑mail', 'We call you'] : ['We price it', 'Your quote by e‑mail', 'We call you'], j.flow === 'renew' ? 'renew' : 'quick');
     $('doneMsg').textContent = j.mode === 'test' ? 'Test mode: this request went to the branch test inbox, not to the desk.' : 'It went to Guardian General\'s desk at ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ', with our branch copied.' +
       (j.flow === 'quick' ? ' When you take the quote we will ask for your driver\'s permit and the certified copy.' : '');
     show('s-done');

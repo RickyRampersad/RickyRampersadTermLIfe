@@ -98,9 +98,17 @@ const calls = []; let requests = [];
   const rn = await txt('#renewals');
   ok('it says when, in days, with the vehicle', /21/.test(await txt('#renewals .ring')) && /Toyota Aqua/.test(rn) && /11 November 2026/.test(rn));
   ok('it shows every term on file and what the record shows', (await page.$$('#renewals .tl li')).length === 3 && (await page.$$('#renewals .facts li')).length === 6 && /changed from Third Party/.test(rn));
-  ok('the vehicle not due is under "Your vehicles with us", with its renewal date', /Nissan Note/.test(await txt('#homeVeh')) && /renews/.test(await txt('#homeVeh')) && !/Toyota/.test(await txt('#homeVeh')));
+  ok('the premium is a bar chart, a bar a term with its figure, the current term last', (await page.$$('#renewals .pc-col')).length === 2 && /4,100[\s\S]*4,322/.test(await txt('#renewals .pchart')) && /5\.4%/.test(await txt('#renewals .pchart')));
+  ok('three paths, each in its own words: Renew, New quote, Accept a quote', /Renew[\s\S]*New quote[\s\S]*Accept a quote/.test(await txt('#paths')) && /Due in 21 days/.test(await txt('#pathRenew')));
+  ok('each path has its own section, its own colour and its own steps', await page.evaluate(() => ['trRenew', 'trQuote', 'trTake'].every(id => document.getElementById(id).querySelectorAll('.journey li').length >= 3) &&
+    new Set(['trRenew', 'trQuote', 'trTake'].map(id => getComputedStyle(document.getElementById(id)).getPropertyValue('--c2').trim())).size === 3));
+  ok('the invoice is only on the new-quote path, and only as the dealer\'s', await page.evaluate(() => !!document.querySelector('#trQuote #doorInv') && !/invoice/i.test(document.getElementById('trRenew').textContent) && !/invoice/i.test(document.getElementById('trTake').textContent)) && /dealer's invoice/.test(await txt('#doorInv')));
+  ok('the vehicle not due shows how far through its cover year it is, and renews early', (await page.$$('#homeVeh .yr i')).length === 1 && /Renew early/.test(await txt('#homeVeh')));
+  ok('the band gives the figures: vehicles with us, due for renewal', /2\s*vehicles with us/.test(await txt('#homeStats')) && /1\s*due for renewal/.test(await txt('#homeStats')));
+  ok('the vehicle not due is under "Your vehicles with us", with its renewal date', /Nissan Note/.test(await txt('#homeVeh')) && /renews/i.test(await txt('#homeVeh')) && !/Toyota/.test(await txt('#homeVeh')));
   ok('nothing runs wider than the phone on the home screen', await wide());
   await page.click('#renewals .rnw .ghost'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('the form says which path it is on: Renewal, the vehicle', /Renewal/.test(await txt('#flowTag')) && /Toyota Aqua/.test(await txt('#flowTag')) && await page.evaluate(() => document.getElementById('s-form').classList.contains('t-renew')));
   ok('"Renew with changes" opens the renewal with that chosen and the changes box open', /Your renewal/.test(await txt('#step')) && (await page.$('.opts button.on:has-text("Renew with changes")')) !== null && await page.isVisible('#chgBox'));
   ok('the renewal is two steps, filled from what we hold', (await page.$$('#steps i')).length === 2 && await page.inputValue('[data-k=name]') === 'Anika Pretend');
   await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
@@ -113,14 +121,14 @@ const calls = []; let requests = [];
   const rsub = calls.filter(c => c.action === 'submit').pop();
   ok('the renewal is sent as flow "renew" with the vehicle and what she asked', rsub.quote.flow === 'renew' && rsub.quote.reg === 'PDX 1234' && rsub.quote.renewChoice === 'Renew with changes' && /son/.test(rsub.quote.renewChanges));
   ok('the done screen says renewal', /renewal request has gone/.test(await txt('#doneTitle')));
-  ok('the renewal done screen gives the renewal\'s own next steps', /check your renewal/.test(await txt('#doneSteps')));
+  ok('the renewal done screen gives the renewal\'s own next steps, as a tracker with Sent ticked', /check your renewal/.test(await txt('#doneSteps')) && (await page.$$('#doneSteps .trk li.done')).length === 1);
   await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
 
   /* ── the invoice: upload, read, filled in, checked ── */
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR4nGNgYGD4z8DAwMAAAA0IAgCp5mD/AAAAAElFTkSuQmCC', 'base64');
   await page.setInputFiles('#invFile', { name: 'quotation.png', mimeType: 'image/png', buffer: png });
   await page.waitForSelector('#reading:not(.hide)');
-  ok('a reading screen shows while the document is read', /Reading your document/.test(await txt('#reading')));
+  ok('a reading screen shows while the dealer\'s invoice is read', /Reading the dealer's invoice/.test(await txt('#reading')));
   await page.waitForSelector('#s-form:not(.hide) .docnote'); await page.waitForSelector('#reading.hide', { state: 'attached' });
   const rd = calls.find(c => c.action === 'readInvoice');
   ok('the photo is sent to be read as a JPEG, signed in', rd && rd.token && rd.file.type === 'image/jpeg' && rd.file.data.length > 100);
@@ -129,14 +137,14 @@ const calls = []; let requests = [];
   ok('a new vehicle with no number is ticked "not registered yet", and New is chosen', await page.isChecked('[data-k=newUnreg]') && (await page.$('.opts button.on:has-text("New")')) !== null);
   ok('each field read is marked "from your document", and the note names the dealer', (await page.$$('.fromdoc')).length >= 5 && /Sample Motors Ltd/.test(await txt('.docnote')));
   ok('her own name stands: the buyer on the document never replaces it', await page.inputValue('[data-k=name]') === 'Anika Pretend' && await page.inputValue('[data-k=mobile]') === '868-555-0101');
-  ok('the document is listed to go with the request', /The invoice or quotation/.test(await txt('#step .files')));
+  ok('the document is listed to go with the request, as the dealer\'s invoice', /The dealer's invoice/.test(await txt('#step .files')) && /New quote/.test(await txt('#flowTag')) && /dealer's invoice/.test(await txt('#flowTag')));
   ok('nothing runs wider than the phone on the quick quote', await wide());
   await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
   ok('the quick quote still needs the cover and the years driving', /cover/.test(await txt('#formErr')) && /driving/.test(await txt('#formErr')));
   await page.click('.opts button:has-text("Comprehensive")'); await page.selectOption('select[data-k=drivingYears]', '10');
   await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
   const qrev = await txt('.rev');
-  ok('the review says quick quote, read from the dealer\'s document, not registered yet', /Quick quote/.test(qrev) && /Sample Motors/.test(qrev) && /Not registered yet/.test(qrev) && /TT\$ 212,645/.test(qrev));
+  ok('the review says new quote (quick), read from the dealer\'s document, not registered yet', /New quote \(quick\)/.test(qrev) && /Sample Motors/.test(qrev) && /Not registered yet/.test(qrev) && /TT\$ 212,645/.test(qrev));
   await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
   const qsub = calls.filter(c => c.action === 'submit').pop();
   ok('it is sent as a quick quote with what was read and the document attached', qsub.quote.flow === 'quick' && qsub.quote.newUnreg === 'Yes' && qsub.quote.invoice && qsub.quote.invoice.dealer === 'Sample Motors Ltd' &&
@@ -144,6 +152,9 @@ const calls = []; let requests = [];
   ok('the done screen says the permit comes when the quote is taken', /permit/.test(await txt('#doneMsg')) || /Test mode/.test(await txt('#doneMsg')));
   await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
   ok('home lists both requests, newest first, with their type', /Quick quote[\s\S]*Renewal/.test(await txt('#reqs')));
+  ok('each request is labelled by its path and carries a four-stage tracker', /New quote/.test(await txt('#reqs .req.t-quote .kind')) && /Renewal/.test(await txt('#reqs .req.t-renew .kind')) &&
+    (await page.$$('#reqs .req.t-quote .trk li')).length === 4 && /Being priced/.test(await txt('#reqs .req.t-quote .trk')) && /Being prepared/.test(await txt('#reqs .req.t-renew .trk')));
+  ok('a renewal is never offered as a quote to accept', !(await page.$('#reqs .req.t-renew button')));
 
   /* ── the quick quote with no invoice, and every detail ── */
   await page.click('#doorQuick'); await page.waitForSelector('#s-form:not(.hide)');
@@ -202,11 +213,12 @@ const calls = []; let requests = [];
   /* ── taking a quote: Guardian's proposal and Know Your Policy ── */
   const yn = async (k, v) => page.click(`#step button[onclick^="pick('${k}','${v}'"]`);
   const next = async () => { await page.click('#btnNext'); await page.waitForTimeout(150); };
-  ok('home offers "Got your quotation? Take it", and each quote request "Take this quote"', await page.isVisible('#doorTake') && (await page.$$('#reqs button:has-text("Take this quote")')).length >= 1);
+  ok('home offers "Accept my quote", and each quote request "Accept this quote"', await page.isVisible('#doorTake') && /Accept my quote/.test(await txt('#doorTake')) && (await page.$$('#reqs button:has-text("Accept this quote")')).length >= 1);
   const qref = await page.evaluate(() => requests.find(r => r.type !== 'Renewal').ref);
-  await page.click('#reqs button:has-text("Take this quote")'); await page.waitForSelector('#s-form:not(.hide)');
+  await page.click('#reqs button:has-text("Accept this quote")'); await page.waitForSelector('#s-form:not(.hide)');
   ok('taking a quote is seven steps, starting with the papers', (await page.$$('#steps i')).length === 7 && /Your quote and papers/.test(await txt('#step')));
-  await next(); ok('the quotation is needed first', /quotation you are taking/.test(await txt('#formErr')));
+  ok('the form says Accepting a quote, with the quote\'s reference', /Accepting a quote/.test(await txt('#flowTag')) && /MQ-/.test(await txt('#flowTag')));
+  await next(); ok('the Guardian quote is needed first', /Guardian quote/.test(await txt('#formErr')));
   const pdf = Buffer.from('%PDF-1.4\n% made-up quotation\n'), png2 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR4nGNgYGD4z8DAwMAAAA0IAgCp5mD/AAAAAElFTkSuQmCC', 'base64');
   for (const [kind, file] of [['quote', { name: 'quotation.pdf', mimeType: 'application/pdf', buffer: pdf }], ['certified', { name: 'cc.png', mimeType: 'image/png', buffer: png2 }], ['permit', { name: 'permit.png', mimeType: 'image/png', buffer: png2 }]]) {
     await page.setInputFiles(`input.tdocIn[data-kind=${kind}]`, file);

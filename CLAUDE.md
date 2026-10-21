@@ -3861,6 +3861,16 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     properly"). The signature is cut to its ink (`trimSig`) before it goes on page 4 of the proposal and the KYP's
     signature line, so it fills the line.
   - When Guardian revises either form, replace the PDF and re-measure the positions in `forms.js`.
+- **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
+  layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
+  its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):
+  **Renew** (a vehicle we already insure; hidden when the client has none), **New quote** (a vehicle we don't insure yet;
+  the only place the word invoice appears, always "the dealer's invoice"), **Accept a quote** (the quote we e-mailed; called
+  "your Guardian quote", never a quotation or an invoice). Every form carries a tag naming its path (`flowTag`), and the
+  stepper, choices and main button take the path's colour. Charts: the renewal's premium by term as bars with the change
+  on the year before (`premChart`), each other vehicle's cover year as a bar with "Renew early", every request as a
+  four-stage tracker in its path's words (`reqStage`: a renewal is never offered as a quote to accept), and the done page
+  as a tracker with Sent ticked. Checked at 360, 390, 820 and 1366 px wide.
 - The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
   until the page is live and wired; disable it then, so an old link does not take a client back to it.
 
