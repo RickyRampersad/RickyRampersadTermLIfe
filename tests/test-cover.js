@@ -77,6 +77,10 @@ env.coverMail_ = (day, plan, done, asked) => coverMails.push({ plan, done, asked
 
 console.log('\nThe register: absent five minutes after the start:\n');
 const present = { ricky: 1, elizabeth: 1 }, absent = {};
+// Her morning e-mail has not gone: no check-in link, so no absence (21 Oct 2026, test-morning-retry.js).
+at('07:06');
+ok('7:06 and Sasha\'s morning e-mail has not gone: not absent', env.autoAbsentTick_(DAY, M('07:06'), Object.assign({ akaash: 1 }, present), {}).indexOf('sasha') === -1);
+P.setProperty('daystart_first_sasha_' + DAY, '06:30');   // it went at 6:30, as it should
 at('07:04');
 const early = env.autoAbsentTick_(DAY, M('07:04'), present, absent);
 ok('7:04 and Sasha is not in: not yet absent', early.indexOf('sasha') === -1);
