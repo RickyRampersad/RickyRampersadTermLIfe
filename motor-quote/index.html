@@ -21,7 +21,8 @@
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;min-height:100vh;color:var(--body);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  html{font-size:clamp(15px,0.9rem + 0.35vw,17.5px)}
+  body{margin:0;min-height:100vh;color:var(--body);font:1rem/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
     background:radial-gradient(900px 420px at 0% -10%,#E3EEFB 0%,transparent 60%),radial-gradient(700px 400px at 100% 0%,#E6F6F5 0%,transparent 55%),linear-gradient(180deg,#F7FAFD 0%,#F1F5FA 100%)}
   header{position:sticky;top:0;z-index:5;background:linear-gradient(90deg,#3A7BD5,#4C94E6);box-shadow:0 4px 18px rgba(58,123,213,.22);padding:12px 16px;display:flex;align-items:center;gap:11px}
   .mark{width:46px;height:46px;border-radius:13px;overflow:hidden;background:#2C5FA8;display:grid;place-items:center;flex:none;box-shadow:0 4px 12px rgba(0,0,0,.15)}
@@ -31,20 +32,23 @@
   .who{color:#EAF3FD;font-size:12.5px;text-align:right;line-height:1.3}
   .who b{display:block;color:#fff;font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .who button{font:inherit;font-size:12px;color:#fff;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
-  main{width:min(1040px,100% - 28px);margin:18px auto 110px}
+  main{width:min(1080px,100% - 28px);margin:18px auto 110px}
+  @media (min-width:600px){main{width:min(1080px,100% - 48px);margin-top:26px}}
+  .grid:not(.two){max-width:640px;margin-inline:auto}
   .grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
-  @media (min-width:900px){.grid.two{grid-template-columns:minmax(0,1fr) 330px}main{margin-bottom:40px}}
-  .card{background:var(--card);border-radius:20px;padding:22px 20px 20px;margin:0 0 16px;box-shadow:0 10px 30px rgba(58,123,213,.09);border:1px solid #E3EAF5;position:relative;overflow:hidden}
+  @media (min-width:900px){.grid.two{grid-template-columns:minmax(0,1fr) 340px;gap:22px}main{margin-bottom:40px}.card{padding:28px 28px 24px}.band{margin:0 -28px 20px;padding:32px 28px 26px}}
+  .card{animation:rise .5s cubic-bezier(.2,.8,.2,1) both;background:var(--card);border-radius:20px;padding:22px 20px 20px;margin:0 0 16px;box-shadow:0 10px 30px rgba(58,123,213,.09);border:1px solid #E3EAF5;position:relative;overflow:hidden}
   .card.hero{padding-top:0}
   .band{margin:0 -20px 18px;padding:26px 20px 22px;background:linear-gradient(135deg,#3A7BD5 0%,#4C94E6 60%,#62B0EE 120%);color:#fff;position:relative}
   .band:after{content:"";position:absolute;right:-30px;top:-30px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.08)}
-  .band .big{font-size:44px;line-height:1;margin:0 0 8px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
-  .band h1{color:#fff;margin:0 0 6px;font-size:26px;line-height:1.2;letter-spacing:-.01em}
+  .band .big{font-size:52px;line-height:1;margin:0 0 8px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));animation:float 3.2s ease-in-out infinite;display:inline-block}
+  .band h1{color:#fff;margin:0 0 6px;font-size:clamp(24px,1.3rem + 1.2vw,34px);line-height:1.15;letter-spacing:-.015em}
   .band p{color:#F0F6FF;margin:0;font-size:15.5px}
   .band .chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
-  .band .chips span{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:700}
-  h1{margin:0 0 6px;color:var(--ink);font-size:23px;line-height:1.25;letter-spacing:-.01em}
-  h2{margin:0 0 4px;color:var(--ink);font-size:20px;letter-spacing:-.01em}
+  .band .chips span{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:700;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .band .chips span:nth-child(2){animation-delay:.08s}.band .chips span:nth-child(3){animation-delay:.16s}
+  h1{margin:0 0 6px;color:var(--ink);font-size:clamp(22px,1.2rem + 1vw,30px);line-height:1.25;letter-spacing:-.01em}
+  h2{margin:0 0 4px;color:var(--ink);font-size:clamp(20px,1.1rem + .8vw,26px);letter-spacing:-.01em}
   p{margin:0 0 10px}
   .lead{font-size:15.5px}
   .eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--blue2);margin:0 0 6px}
@@ -55,19 +59,22 @@
   /* stepper */
   .stepper{display:flex;align-items:flex-start;margin:4px 0 18px;position:relative}
   .stepper:before{content:"";position:absolute;left:8%;right:8%;top:15px;height:3px;background:var(--line);border-radius:2px}
+  .stepper .fill{position:absolute;left:8%;top:15px;height:3px;background:linear-gradient(90deg,var(--ok),var(--blue));border-radius:2px;width:0;transition:width .6s cubic-bezier(.2,.8,.2,1)}
   .stepper i{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;font-style:normal;font-size:10.5px;font-weight:700;color:var(--dim);text-align:center;letter-spacing:.02em}
   .stepper i:before{content:attr(data-n);width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid var(--line);color:var(--dim);display:grid;place-items:center;font-size:12.5px;font-weight:800}
   .stepper i.done:before{content:"✓";background:var(--ok);border-color:var(--ok);color:#fff}
   .stepper i.done{color:var(--ok)}
-  .stepper i.on:before{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(58,123,213,.18)}
+  .stepper i.on:before{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(58,123,213,.18);animation:pulse 1.8s ease-in-out infinite}
   .stepper i.on{color:var(--ink)}
   @media (max-width:420px){.stepper i span{display:none}.stepper i.on span{display:block}}
   /* fields */
-  label.f{display:block;margin:0 0 13px}
+  #step>*{animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+  #step>*:nth-child(2){animation-delay:.04s}#step>*:nth-child(3){animation-delay:.08s}#step>*:nth-child(4){animation-delay:.12s}#step>*:nth-child(5){animation-delay:.16s}#step>*:nth-child(6){animation-delay:.2s}#step>*:nth-child(7){animation-delay:.24s}#step>*:nth-child(8){animation-delay:.28s}#step>*:nth-child(n+9){animation-delay:.32s}
+  label.f{display:block;margin:0 0 14px}
   label.f b{display:block;color:var(--ink);font-size:14px;margin:0 0 5px;font-weight:700}
   label.f b em{font-style:normal;color:var(--bad)}
   label.f small{display:block;color:var(--dim);font-size:12.5px;margin:4px 0 0}
-  .fld{display:block;width:100%;font:inherit;font-size:16px;color:var(--ink);background:#FAFCFE;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;min-height:48px;transition:border-color .15s,box-shadow .15s,background .15s}
+  .fld{display:block;width:100%;font:inherit;font-size:max(16px,1rem);color:var(--ink);background:#FAFCFE;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;min-height:52px;transition:border-color .15s,box-shadow .15s,background .15s}
   .fld:focus{outline:0;background:#fff;border-color:var(--blue2);box-shadow:0 0 0 4px rgba(76,148,230,.18)}
   select.fld{appearance:none;-webkit-appearance:none;padding-right:40px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233A7BD5' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center}
   select.fld.empty{color:var(--dim)}
@@ -75,15 +82,17 @@
   .row{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
   @media (max-width:420px){.row{grid-template-columns:1fr}}
   .opts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 4px}
-  .opts button{font:inherit;font-size:14.5px;font-weight:700;color:var(--blue);background:#fff;border:1.5px solid #CFDDF0;border-radius:999px;padding:9px 15px;cursor:pointer;min-height:44px;transition:all .12s}
+  .opts button{font:inherit;font-size:15px;font-weight:700;color:var(--blue);background:#fff;border:1.5px solid #CFDDF0;border-radius:999px;padding:10px 18px;cursor:pointer;min-height:48px;transition:transform .12s,background .15s,border-color .15s,box-shadow .15s}
+  .opts button:active{transform:scale(.96)}
   .opts button:hover{border-color:var(--blue2)}
   .opts button.on{background:linear-gradient(135deg,var(--blue),var(--blue2));border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(58,123,213,.3)}
   .opts.big{display:grid;grid-template-columns:1fr;gap:10px}
   .opts.big button{border-radius:14px;text-align:left;padding:13px 15px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:60px}
   .opts.big button small{font-weight:500;font-size:12.5px;color:var(--dim)}
   .opts.big button.on small{color:#EAF3FD}
-  .send{display:block;width:100%;margin:14px 0 4px;font:inherit;font-size:16px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);border:0;border-radius:14px;padding:15px 16px;cursor:pointer;min-height:52px;box-shadow:0 8px 20px rgba(58,123,213,.35);transition:transform .1s,box-shadow .1s}
+  .send{display:block;width:100%;margin:14px 0 4px;font:inherit;font-size:1.05rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);border:0;border-radius:14px;padding:15px 16px;cursor:pointer;min-height:52px;box-shadow:0 8px 20px rgba(58,123,213,.35);transition:transform .1s,box-shadow .1s}
   .send:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(58,123,213,.4)}
+  .send:active{transform:scale(.98)}
   .send:disabled{opacity:.55;cursor:default;transform:none}
   .send.cy{background:linear-gradient(135deg,#1FA8A0 0%,#3A9BD9 100%);color:#fff;box-shadow:0 8px 20px rgba(31,168,160,.3)}
   .ghost{display:block;width:100%;margin:8px 0 0;font:inherit;font-size:15px;font-weight:700;color:var(--blue);background:#fff;border:1.5px solid #CFDDF0;border-radius:14px;padding:12px 14px;cursor:pointer;min-height:48px}
@@ -94,13 +103,17 @@
   .note{background:var(--warnbg);border:1px solid #F3D48A;color:var(--warn);border-radius:12px;padding:10px 13px;font-size:14px;margin:0 0 14px}
   .err{color:var(--bad);font-weight:700;font-size:14.5px;margin:10px 0 0;min-height:0}
   .err:not(:empty){background:var(--badbg);border-radius:10px;padding:9px 12px}
-  .veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:16px;padding:12px 13px;margin:0 0 10px;cursor:pointer;background:#fff;width:100%;text-align:left;font:inherit;color:var(--body);transition:all .12s}
+  .veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:16px;padding:13px 14px;margin:0 0 10px;cursor:pointer;background:#fff;width:100%;text-align:left;font:inherit;color:var(--body);transition:transform .12s,border-color .15s,box-shadow .15s;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .veh:nth-of-type(2){animation-delay:.08s}.veh:nth-of-type(3){animation-delay:.16s}
+  .veh:active{transform:scale(.98)}
   .veh:hover{border-color:var(--blue2);box-shadow:0 8px 20px rgba(58,123,213,.12)}
   .veh .ic{width:46px;height:46px;border-radius:12px;background:var(--sky);display:grid;place-items:center;font-size:24px;flex:none}
   .veh b{display:block;color:var(--ink);font-size:15.5px}
   .veh span{display:block;font-size:13px;color:var(--dim)}
   .veh .go{margin-left:auto;color:var(--blue2);font-weight:800;font-size:20px}
-  .tick{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--ok),#28C286);color:#fff;display:grid;place-items:center;font-size:38px;font-weight:800;margin:0 auto 12px;box-shadow:0 12px 30px rgba(15,138,95,.35)}
+  .tick{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,var(--ok),#28C286);color:#fff;display:grid;place-items:center;font-size:44px;font-weight:800;margin:0 auto 14px;box-shadow:0 12px 30px rgba(15,138,95,.35);animation:pop .6s cubic-bezier(.2,1.4,.3,1) both}
+  .tick:after{content:"";position:absolute;width:84px;height:84px;border-radius:50%;border:3px solid var(--ok);animation:ring 1.2s ease-out .2s both}
+  #s-done{position:relative}
   .ref{font-size:30px;font-weight:900;color:var(--mid);letter-spacing:.03em;background:var(--sky);border:2px dashed #C9DDF5;border-radius:14px;padding:12px;text-align:center;margin:4px 0 12px}
   .req{border:1.5px solid var(--line);border-radius:14px;padding:12px 13px;margin:0 0 10px;font-size:14.5px}
   .req b{color:var(--ink);font-size:15px}
@@ -141,9 +154,16 @@
   .side .help b{color:var(--ink);display:block;margin:0 0 3px}
   .side .help a{color:var(--blue)}
   .why{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px}
-  .why div{background:var(--soft);border-radius:12px;padding:10px 10px 8px;font-size:12.5px;color:var(--body);line-height:1.35}
+  .why div{background:var(--soft);border-radius:12px;padding:10px 10px 8px;font-size:12.5px;color:var(--body);line-height:1.35;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .why div:nth-child(2){animation-delay:.1s}.why div:nth-child(3){animation-delay:.2s}
   .why div b{display:block;font-size:20px;margin:0 0 2px}
   @media (max-width:420px){.why{grid-template-columns:1fr 1fr 1fr;gap:6px}.why div{padding:8px 7px 6px;font-size:11.5px}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes ring{from{transform:scale(1);opacity:.7}to{transform:scale(2.2);opacity:0}}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 5px rgba(58,123,213,.18)}50%{box-shadow:0 0 0 9px rgba(58,123,213,.08)}}
+  @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -159,14 +179,14 @@
   <section class="card hero" id="s-signin">
     <div class="band">
       <div class="big">🚗</div>
-      <h1>Your motor quote, from your phone.</h1>
-      <p>Sign in with your e-mail. If you are already a client of ours, we fill in what we hold. If not, welcome: it takes about five minutes.</p>
-      <div class="chips"><span>No password</span><span>Guardian General</span><span>Reply in two working days</span></div>
+      <h1>Get your motor quote.</h1>
+      <p>Sign in with your e-mail. Our clients see their details filled in. New to us? Welcome, it takes five minutes.</p>
+      <div class="chips"><span>No password</span><span>Guardian General</span><span>Answer in two working days</span></div>
     </div>
     <div id="emailBox">
       <label class="f"><b>Your e-mail</b><input class="fld" id="email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com"></label>
       <button class="send" id="btnCode" onclick="requestCode()">Send me a sign-in code</button>
-      <p class="muted" style="margin-top:10px">A six-digit code comes to your inbox. Nothing to remember.</p>
+      <p class="muted" style="margin-top:10px">We e-mail you a six-digit code.</p>
     </div>
     <div id="codeBox" class="hide">
       <p id="codeMsg"></p>
@@ -176,9 +196,9 @@
     </div>
     <p class="err" id="signinErr"></p>
     <div class="why">
-      <div><b>1</b>Tell us about the vehicle</div>
-      <div><b>2</b>The desk prices it</div>
-      <div><b>3</b>We call you with the quote</div>
+      <div><b>1</b>Tell us about your car</div>
+      <div><b>2</b>We price it</div>
+      <div><b>3</b>We call you</div>
     </div>
   </section>
 
@@ -217,11 +237,11 @@
     <p class="ref" id="doneRef"></p>
     <p id="doneMsg" style="text-align:left"></p>
     <div class="why" style="text-align:left">
-      <div><b>1</b>The desk prices the cover</div>
-      <div><b>2</b>The quote comes to your e-mail</div>
-      <div><b>3</b>We call you to go through it</div>
+      <div><b>1</b>We price it</div>
+      <div><b>2</b>The quote reaches your e-mail</div>
+      <div><b>3</b>We call you</div>
     </div>
-    <p class="muted" style="margin-top:12px;text-align:left">A receipt with everything you told us is on its way to your inbox. Sign in here any time to see where your request stands.</p>
+    <p class="muted" style="margin-top:12px;text-align:left">A receipt is on its way to your inbox. Sign in any time to see where it stands.</p>
     <button class="ghost" onclick="showHome()">Back to my quotes</button>
   </section>
 </main>
@@ -317,8 +337,8 @@ function showHome() {
   $('homeTitle').textContent = first ? 'Good day, ' + first + '.' : 'Good day.';
   $('homeBack').textContent = me && me.found ? ' back' : '';
   $('homeLead').textContent = me && me.found
-    ? 'You are a client of ours, so we have filled in what we already hold. Pick one of your vehicles to quote again, or start with a new one.'
-    : 'Tell us about your vehicle and the cover you want. The quote comes back to ' + ((session && session.email) || 'your e-mail') + '.';
+    ? 'Tap a vehicle to quote it again, or start a new one.'
+    : 'Tell us about your vehicle. The quote comes to ' + ((session && session.email) || 'your e-mail') + '.';
   $('homeVeh').innerHTML = (me && me.vehicles && me.vehicles.length)
     ? '<div class="sec"><span class="ic">🚘</span><div><b>Your vehicles with us</b><small>Tap one to quote it again</small></div></div>' + me.vehicles.map((v, i) =>
       '<button type="button" class="veh" onclick="startNew(' + i + ')"><span class="ic">🚗</span><span><b>' + esc([v.year, v.make, v.model].filter(Boolean).join(' ') || v.reg) +
@@ -363,7 +383,8 @@ function startNew(vehIx) {
   saveDraft(); stepIx = 0; files = []; show('s-form'); render();
 }
 function render() {
-  $('steps').innerHTML = STEPS.map((s, i) => '<i data-n="' + (i + 1) + '" class="' + (i < stepIx ? 'done' : i === stepIx ? 'on' : '') + '"><span>' + s.short + '</span></i>').join('');
+  $('steps').innerHTML = '<span class="fill"></span>' + STEPS.map((s, i) => '<i data-n="' + (i + 1) + '" class="' + (i < stepIx ? 'done' : i === stepIx ? 'on' : '') + '"><span>' + s.short + '</span></i>').join('');
+  requestAnimationFrame(() => { const f = $('steps').querySelector('.fill'); if (f) f.style.width = (84 * stepIx / (STEPS.length - 1)) + '%'; });
   const s = STEPS[stepIx];
   $('step').innerHTML = '<div class="eyebrow">Step ' + (stepIx + 1) + ' of ' + STEPS.length + (/\breq: 1\b/.test(String(s.render)) ? ' · <span style="font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)">starred answers are needed</span>' : '') + '</div><h2>' + s.title + '</h2>' + s.render(draft);
   $('formErr').textContent = '';
@@ -401,12 +422,18 @@ function onPick(k) {
   const dep = { ownerType: 'companyBox', mortgaged: 'instBox', accidents: 'accBox' }[k];
   if (dep && $(dep)) $(dep).classList.toggle('hide', !(draft[k] === 'Company' || draft[k] === 'Yes'));
 }
+function slide(dir) {
+  try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; $('step').animate([{ opacity: 0, transform: 'translateX(' + (dir < 0 ? -22 : 22) + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) {}
+}
+function shake() {
+  try { $('formErr').animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], { duration: 260 }); } catch (e) {}
+}
 async function go(dir) {
   collect();
-  if (dir < 0) { if (stepIx === 0) { showHome(); return; } stepIx--; render(); return; }
+  if (dir < 0) { if (stepIx === 0) { showHome(); return; } stepIx--; render(); slide(-1); return; }
   const err = STEPS[stepIx].check(draft);
-  if (err) { $('formErr').textContent = err; return; }
-  if (stepIx < STEPS.length - 1) { stepIx++; render(); return; }
+  if (err) { $('formErr').textContent = err; shake(); return; }
+  if (stepIx < STEPS.length - 1) { stepIx++; render(); slide(1); return; }
   await submit();
 }
 /* The summary beside the form on a wide screen. */
@@ -440,48 +467,45 @@ const opts = (k, label, list, hint, big) => '<div class="f" style="margin:0 0 13
 const sec = (ic, t, sub) => '<div class="sec"><span class="ic">' + ic + '</span><div><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>';
 
 function stepYou(d) {
-  const held = me && me.found ? '<p class="muted">Filled in from what we hold for you. Correct anything that has changed.</p>' : '<p class="muted">Who the quote is for.</p>';
-  return held + sec('👤', 'Who you are') + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) +
+  const held = me && me.found ? '<p class="muted">Filled in from our records. Change anything that is different.</p>' : '';
+  return held + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) +
     '<div class="row">' + opts('gender', 'Gender', ['Female', 'Male']) + inp('dob', 'Date of birth', { type: 'date' }) + '</div>' +
     inp('occupation', 'Occupation', { ph: 'e.g. Teacher', list: 'jobs' }) +
     '<datalist id="jobs">' + ['Teacher', 'Nurse', 'Police Officer', 'Soldier', 'Civil Servant', 'Clerk', 'Accountant', 'Engineer', 'Driver', 'Mechanic', 'Electrician', 'Business Owner', 'Sales', 'Manager', 'Doctor', 'Lawyer', 'Student', 'Retired', 'Self-employed'].map(x => '<option value="' + x + '">').join('') + '</datalist>' +
-    sec('🏢', 'The owner') + opts('ownerType', 'The vehicle is owned by', ['Individual', 'Company']) +
+    opts('ownerType', 'The vehicle is owned by', ['Individual', 'Company']) +
     '<div id="companyBox" class="' + (d.ownerType === 'Company' ? '' : 'hide') + '">' + inp('company', 'Company name') + inp('companyEmail', 'Company e-mail', { type: 'email', mode: 'email' }) + '</div>' +
-    inp('agent', 'Your agent, if you have one', { hint: 'Optional. Your agent is copied on the quote.' });
+    inp('agent', 'Your agent, if you have one', { hint: 'Optional.' });
 }
 function stepVehicle(d) {
-  return '<p class="muted">The vehicle to insure.</p>' + sec('🚗', 'The vehicle') +
-    inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20, req: 1 }) +
+  return inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20, req: 1 }) +
     '<div class="row">' + sel('make', 'Make', MAKES, { req: 1 }) + inp('model', 'Model', { ph: 'e.g. Aqua', req: 1 }) + '</div>' +
     '<div class="row">' + sel('year', 'Year of manufacture', YEARS, { req: 1 }) + sel('cc', 'Engine size (cc)', CCS) + '</div>' +
     '<div class="row">' + sel('body', 'Body type', BODIES) + sel('seating', 'Seats, including the driver', SEATS) + '</div>' +
-    inp('value', 'Value of the vehicle (TT$)', { mode: 'numeric', ph: 'e.g. 95000', hint: 'What it would cost to replace today.', req: 1 }) +
+    inp('value', 'Value of the vehicle (TT$)', { mode: 'numeric', ph: 'e.g. 95000', req: 1 }) +
     opts('condition', 'New or used', ['New', 'Used']) +
-    sec('🏦', 'Finance') + opts('mortgaged', 'Is the vehicle on a loan or hire purchase?', ['Yes', 'No']) +
+    opts('mortgaged', 'On a loan or hire purchase?', ['Yes', 'No']) +
     '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + sel('institution', 'Financial institution', BANKS) + '</div>';
 }
 function stepCover(d) {
-  return '<p class="muted">What you want the policy to do.</p>' + sec('🛡️', 'The cover') +
-    opts('cover', 'The cover you want', COVERS, '', true) +
+  return opts('cover', 'The cover you want', COVERS, '', true) +
     opts('windscreen', 'Add windscreen cover?', ['Yes', 'No']) +
     sec('🪪', 'Your driving record') +
-    '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS, { hint: 'With your current or last insurer.' }) + '</div>' +
-    sel('prevInsurer', 'Previous or current insurer', INSURERS) +
-    sec('📄', 'With Guardian General already?') +
-    inp('existingPolicy', 'Adding to an existing motor policy? Its policy number', { hint: 'Leave blank for a new policy.' }) +
-    inp('existingVehicles', 'Other vehicles you already insure with Guardian General', { ph: 'registration numbers, if any' });
+    '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS) + '</div>' +
+    sel('prevInsurer', 'Current or last insurer', INSURERS) +
+    sec('📄', 'Already with Guardian General?') +
+    inp('existingPolicy', 'Existing motor policy number', { hint: 'Leave blank for a new policy.' }) +
+    inp('existingVehicles', 'Other vehicles insured with Guardian General', { ph: 'registration numbers, if any' });
 }
 function stepDriver(d) {
-  return '<p class="muted">The main driver\'s permit and record.</p>' + sec('🪪', "Driver's permit") +
-    inp('permit', "Driver's permit number", { ac: 'off', req: 1 }) +
+  return inp('permit', "Driver's permit number", { ac: 'off', req: 1 }) +
     '<div class="row">' + inp('permitIssued', 'Permit first issued', { type: 'date' }) + inp('permitExpires', 'Permit expires', { type: 'date' }) + '</div>' +
-    sec('⚠️', 'Accidents and claims') + opts('accidents', 'Any accidents or claims in the last three years?', ['Yes', 'No']) +
+    opts('accidents', 'Any accidents or claims in the last three years?', ['Yes', 'No']) +
     '<div id="accBox" class="' + (d.accidents === 'Yes' ? '' : 'hide') + '"><label class="f"><b>Tell us a little about it</b><textarea class="fld" data-k="accidentDetails">' + esc(d.accidentDetails || '') + '</textarea></label></div>' +
-    '<label class="f"><b>Anything else the quotes desk should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';
+    '<label class="f"><b>Anything else we should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';
 }
 const KINDS = { 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
 function stepDocs() {
-  return '<p class="muted">Photograph them with your phone. Both are optional now, but the quote is firmer with them.</p>' + sec('📷', 'Your documents') + '<div class="files" id="files">' +
+  return '<p class="muted">Photograph them with your phone. Optional, but the quote is firmer with them.</p><div class="files" id="files">' +
     Object.keys(KINDS).map(k => fileRow(k)).join('') + '</div>';
 }
 function fileRow(kind) {
@@ -527,9 +551,9 @@ function stepReview(d) {
     ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', d.ncd], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
     ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents', d.accidents + (d.accidentDetails ? ': ' + d.accidentDetails : '')], ['Notes', d.notes]]],
     ['Documents', [['Attached', files.length ? files.map(f => f.kind).join(', ') : 'none']]]];
-  return '<p class="muted">Check it over. Tap Back to change anything. When you send, the request goes to Guardian General\'s quotes desk with our branch copied, and a receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
+  return '<p class="muted">Check it over. Tap Back to change anything. A receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
     G.map(g => '<h3>' + g[0] + '</h3>' + g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()) || r[0] === 'Cover').map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
-    '<label class="chk"><input type="checkbox" id="agree"> <span>What I have given is true to the best of my knowledge, and I ask the branch to obtain a quote for me.</span></label>';
+    '<label class="chk"><input type="checkbox" id="agree"> <span>This is true to the best of my knowledge. Please get me a quote.</span></label>';
 }
 async function submit() {
   if (!$('agree') || !$('agree').checked) { $('formErr').textContent = 'Please tick the box to send.'; return; }
