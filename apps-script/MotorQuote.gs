@@ -667,7 +667,7 @@ function mqFieldsHtml_(d) {
     if (r.section) {
       /* A section with nothing under it is not printed. */
       var next = rows[i + 1]; if (!next || next.section) return;
-      h += '<tr><td colspan="2" style="padding:14px 0 6px;color:#c9942c;font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase">' + mqEsc_(r.section) + '</td></tr>';
+      h += '<tr><td colspan="2" style="padding:14px 0 6px;color:#1D5BC4;font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase">' + mqEsc_(r.section) + '</td></tr>';
       return;
     }
     h += '<tr><td style="padding:6px 10px 6px 0;color:#5d7186;border-top:1px solid #e6edf2;width:42%;vertical-align:top">' + mqEsc_(r.label) +
