@@ -2,14 +2,10 @@
  "voice": "en-US-AndrewNeural",
  "rate": "-4%",
  "films": {
-  "fy27": [
-   "A new financial year, and a new way of work. Here's what's changed at the branch.",
-   "One app, one sign-in. Every tool we use, from the Log Book to the forms, at rickyrampersadbranch dot com, slash app.",
-   "Who does what, every day. Each role has its rhythm, from the Branch Manager's five o'clock start to the last close-out.",
-   "And every week. Premium letters each morning, group letters on Monday, and the awards and the branch meeting on Friday.",
-   "Branch Intelligence reads a task's whole history, says where it stands, and drafts the reply. Managers check it and post it. Staff get a brief.",
-   "The game for the new year. Par, three quests a day, streaks and levels, and one team goal: bring the backlog down by Friday.",
-   "Every desk, every agent, one branch. Thank you, team. Here's to our new financial year."
+  "fy27b": [
+   "Who does what, every day. The Branch Manager, the Unit Manager, the BMA, Sales Support and the agents, each with its own rhythm.",
+   "Branch Intelligence reads a task's whole history, says where it stands, and drafts the reply. The Branch Manager, the Unit Manager and the BMA check it and post it. Sales Support get a brief.",
+   "The Branch Manager, the Unit Manager, the BMA, Sales Support and every agent. One branch. Thank you, team. Here's to our new financial year."
   ]
  }
 }
