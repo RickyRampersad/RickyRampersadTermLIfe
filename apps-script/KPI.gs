@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-21g';
+var SCRIPT_VERSION = '2026-10-21h';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3831,7 +3831,7 @@ function housekeepingTick_() {
       try { bmdWarm_(day); } catch (e) {}
     }
   }
-  // The game, every hour of the working day; Friday 1pm the awards for the branch meeting (20 Oct 2026).
+  // The game, every hour of the working day; Wednesday 7:00 the awards for the 9:00 branch meeting (21 Oct 2026).
   if (!late()) try { gameTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {}
   // Service ratings: a task closed for an agent or a client, rated within minutes of the close (20 Oct 2026).
   if (!late()) try { rateTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {}
@@ -3874,8 +3874,8 @@ function housekeepingTick_() {
     try { if (sendAttendanceReport_(day)) sent.push('attendance report'); } catch (e) {}
   }
 
-  // Friday 7:30, before the branch meeting: the innovation board.
-  if (dow === 5 && mins >= 7 * 60 + 30 && mins <= 7 * 60 + 30 + HK_WINDOW_MIN && !props.getProperty('innoboard_' + day)) {
+  // Wednesday 7:30, before the 9:00 branch meeting: the innovation board (the branch meets on a Wednesday, 21 Oct 2026).
+  if (dow === INNOVATION.BOARD_DOW && mins >= 7 * 60 + 30 && mins <= 7 * 60 + 30 + HK_WINDOW_MIN && !props.getProperty('innoboard_' + day)) {
     props.setProperty('innoboard_' + day, hhmm_(now));
     try { if (sendInnovationBoard_(day)) sent.push('innovation board'); } catch (e) {}
   }
@@ -6630,8 +6630,13 @@ function sdPrune_(day) {
  *   · Three quests a day from the person's own list (+2 each); a streak of on-time check-ins with one free miss a
  *     month; skill levels by kind of task; each week against their own last four, never against each other.
  *   · The backlog is the branch's one bar: everyone's work brings it down by Friday.
- *   · Thank-yous for cover; ideas (Innovation & Creativity tasks) Mr Rampersad accepts, +3; Friday awards at 1pm
- *     for the 2pm branch meeting, with a WhatsApp-ready text.
+ *   · Thank-yous for cover; ideas (Innovation & Creativity tasks) Mr Rampersad accepts, +3; the week's wins at the
+ *     Wednesday branch meeting, with a WhatsApp-ready text.
+ *  THE WINS ON A WEDNESDAY (21 Oct 2026). Ricky: "awards day cannot be a Friday. It's the weekly wins celebrated on a
+ *  Wednesday in the meeting, during our meeting ... awarding the wins from agents, the staff, everyone gets
+ *  acknowledged". The branch meets Wednesday 9:00 to 10:30. The awards cover Wednesday to Tuesday, the seven days
+ *  ending the night before, working days only (gameAwardsWeek_), and reach him alone at 7:00 on the Wednesday
+ *  (gameTick_, GAME.AWARDS_DOW / AWARDS_AT, until MEETING_AT). The backlog goal keeps its Monday-to-Friday week.
  *  Script Property GAME = off hides all of it; GAME_GOAL_CUT sets the week's cut in the overdue (default 25%).
  */
 var GAME = {
@@ -6639,7 +6644,9 @@ var GAME = {
   PTS: { close: 1, payoff: 2, oldest: 1, cover: 1, qp: 1, ontime: 1, signout: 1, quest: 2, par: 3, idea: 3 },
   OLD_DAYS: 30, NOTE_CHARS: 25, NOTE_WORDS: 5, NOTE_BACK: 7, COVER_BACK: 14,
   LEVELS: [5, 15, 30, 60, 100], BASE_WEEKS: 4, GOAL_CUT: 25, CACHE_SEC: 300, BACKFILL: 20, BACK_DAYS: 5,
-  AWARDS_AT: 13 * 60, PAR_CLOSED: 2 / 3, NEXT: 3, FROM: 6 * 60, TO: 18 * 60 + 30
+  // The awards: Wednesday (isoDow_ 3) at 7:00, for the 9:00 branch meeting; a run that misses 7:00 sends up to 9:00.
+  AWARDS_DOW: 3, AWARDS_AT: 7 * 60, MEETING_AT: 9 * 60,
+  PAR_CLOSED: 2 / 3, NEXT: 3, FROM: 6 * 60, TO: 18 * 60 + 30
 };
 var GAMETAB = { must: ['Date', 'StaffId', 'Points', 'Work', 'ParMet'], name: 'Game Days',
   head: ['Date', 'StaffId', 'Name', 'Points', 'Work', 'Closes', 'Noted', 'Empty', 'Payoff', 'Oldest', 'Cover', 'QP', 'OnTime', 'SignedOut',
@@ -6901,9 +6908,10 @@ function gameSkills_(sid, day, hist, live) {
     return { k: k, name: GAME_SKILL[k] || 'All-rounder', n: n, lvl: lvl, next: hi, pct: hi ? Math.round(100 * (n - lo) / (hi - lo)) : 100 };
   }).sort(function (a, b) { return b.n - a.n; });
 }
-/** This week's work points against the same days of their own last four weeks. */
-function gameGain_(sid, day, hist, live) {
-  var h = (hist || {})[sid] || {}, mon = weekStart_(day), span = daysBetween_(mon, day), now = 0;
+/** This week's work points against the same days of their own last four weeks. The week starts on Monday, or on
+ *  `from` when given (the awards' Wednesday to Tuesday, gameAwardsWeek_). */
+function gameGain_(sid, day, hist, live, from) {
+  var h = (hist || {})[sid] || {}, mon = from || weekStart_(day), span = daysBetween_(mon, day), now = 0;
   for (var i = 0; i < span; i++) { var x = h[shiftDays_(mon, i)]; if (x) now += Number(x.work || 0); }
   now += live ? Number(live.work || 0) : Number((h[day] || {}).work || 0);
   var base = [];
@@ -7002,24 +7010,47 @@ function gameAccepted_() {
   var out = {}; (hrRows_(GAMELOG, false) || []).forEach(function (r) { if (String(r.Kind) === 'idea' && r.Ref) out[String(r.Ref)] = { status: String(r.Status || ''), on: isoDay_(r.DecidedOn) }; });
   return out;
 }
-/** Friday of this week, or the next one: when an idea is shown at the branch meeting. */
-function gameFriday_(day) { var d = day; while (isoDow_(d) !== 5) d = shiftDays_(d, 1); return d; }
+/** The next Wednesday branch meeting after today (the branch meets Wednesday 9:00 to 10:30, 21 Oct 2026): when an
+ *  idea is shown. On a Wednesday the meeting has been, so the week after. */
+function gameMeetingDay_(day) { var d = shiftDays_(day, 1); while (isoDow_(d) !== GAME.AWARDS_DOW) d = shiftDays_(d, 1); return d; }
+/** The meeting's time as people say it: 9:00. */
+function gameMeetingAt_() { return wallAt_(GAME.MEETING_AT); }
 
 // ---- the awards -------------------------------------------------------------------
+/** The days the awards cover: Wednesday to Tuesday (21 Oct 2026). On the Wednesday, the seven days ending the night
+ *  before, finished (final); any other day, from the last Wednesday to today, so far. Working days only count. */
+function gameAwardsWeek_(day) {
+  var dow = isoDow_(day), fin = dow === GAME.AWARDS_DOW;
+  var from = fin ? shiftDays_(day, -7) : shiftDays_(day, -((dow - GAME.AWARDS_DOW + 7) % 7)), to = fin ? shiftDays_(day, -1) : day;
+  var days = []; for (var d = from; d <= to; d = shiftDays_(d, 1)) if (gameWeekday_(d)) days.push(d);
+  return { from: from, to: to, final: fin, days: days };
+}
+/** The awards' week in words: "Wednesday 14 to Tuesday 20 October" (month and year only where they change). */
+function gameAwardsSpan_(w) {
+  var a = prettyDate_(w.from).split(' '), z = prettyDate_(w.to).split(' ');   // Wednesday 14 October 2026
+  var sameY = w.from.slice(0, 4) === w.to.slice(0, 4), sameM = sameY && w.from.slice(0, 7) === w.to.slice(0, 7);
+  return a.slice(0, sameM ? 2 : sameY ? 3 : 4).join(' ') + ' to ' + z.slice(0, sameY ? 3 : 4).join(' ');
+}
+/** For the wall and anything else that shows the awards: the week they cover, short. */
+function gameAwardsWeekOut_(w) {
+  return { from: shortDate_(w.from), to: shortDate_(w.to), fromDay: w.from, toDay: w.to, final: !!w.final, label: gameAwardsSpan_(w) };
+}
 function gameAwards_(day, live, hist) {
-  var mon = weekStart_(day), days = [], t = {};
-  for (var d = mon; d <= day; d = shiftDays_(d, 1)) if (gameWeekday_(d)) days.push(d);
+  var w = gameAwardsWeek_(day), from = w.from, to = w.to, days = w.days, t = {};
+  // Today's live read counts only when today is in the window (never on the Wednesday: that week ended last night).
+  var lv = to === day ? live : null;
   GAME.DESKS.forEach(function (s) {
     var o = t[s] = { saves: 0, oldest: 0, cover: 0, thanks: 0, points: 0, quests: 0, best: null };
     days.forEach(function (dd) {
-      var h = dd === day && live && live[s] ? live[s] : ((hist[s] || {})[dd]); if (!h) return;
+      var h = dd === day && lv && lv[s] ? lv[s] : ((hist[s] || {})[dd]); if (!h) return;
       var k = h.kinds || {};
       o.saves += Number(k.cancel || 0) + Number(k.former || 0) + Number(k.p_retention || 0);
       o.oldest += Number(h.oldest || 0); o.cover += Number(h.cover || 0); o.points += Number(h.points || 0); o.quests += Number(h.quests || 0);
       if (h.best && h.best.n && (!o.best || h.best.n.length > o.best.n.length)) o.best = h.best;
     });
   });
-  (hrRows_(GAMELOG, false) || []).forEach(function (r) { if (String(r.Kind) === 'thanks' && isoDay_(r.Date) >= mon && t[String(r.To)]) t[String(r.To)].thanks++; });
+  var inW = function (d) { return !!d && d >= from && d <= to; };
+  (hrRows_(GAMELOG, false) || []).forEach(function (r) { if (String(r.Kind) === 'thanks' && inW(isoDay_(r.Date)) && t[String(r.To)]) t[String(r.To)].thanks++; });
   var top = function (f) { var mx = 0; GAME.DESKS.forEach(function (s) { mx = Math.max(mx, f(t[s])); }); return mx > 0 ? { n: mx, who: GAME.DESKS.filter(function (s) { return f(t[s]) === mx; }) } : null; };
   var out = [], a, pl = function (n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); };
   if ((a = top(function (o) { return o.saves; }))) out.push({ k: 'saver', title: 'Client Saver', who: a.who, why: pl(a.n, 'client') + ' kept or premium put right' });
@@ -7027,28 +7058,30 @@ function gameAwards_(day, live, hist) {
   if ((a = top(function (o) { return o.cover * 1 + o.thanks * 2; }))) out.push({ k: 'team', title: 'Team Player', who: a.who,
     why: a.who.map(function (s) { return pl(t[s].cover, 'task') + ' covered for colleagues' + (t[s].thanks ? ', ' + pl(t[s].thanks, 'thank-you') : ''); })[0] });
   if ((a = top(function (o) { return o.quests; }))) out.push({ k: 'quest', title: 'Quest Master', who: a.who, why: pl(a.n, 'quest') + ' done' });
-  var gains = {}; GAME.DESKS.forEach(function (s) { var g = gameGain_(s, day, hist, live && live[s]); gains[s] = g && g.pct != null && g.usual >= 5 ? g.pct : 0; });
+  // Each person's week (Wednesday to Tuesday) against the same days of their own last four: Most Improved, and the mail.
+  var gains = {}; GAME.DESKS.forEach(function (s) { var g = gameGain_(s, to, hist, lv && lv[s], from);
+    t[s].week = g.now; t[s].usual = g.usual; t[s].gain = g.pct; gains[s] = g && g.pct != null && g.usual >= 5 ? g.pct : 0; });
   var mx = 0; GAME.DESKS.forEach(function (s) { mx = Math.max(mx, gains[s]); });
   if (mx > 0) out.push({ k: 'improved', title: 'Most Improved', who: GAME.DESKS.filter(function (s) { return gains[s] === mx; }), why: mx + '% above their own usual week' });
   var cands = GAME.DESKS.filter(function (s) { return t[s].best; }).map(function (s) { return { sid: s, s: t[s].best.s, n: t[s].best.n }; });
-  var bn = cands.length ? gameBestNote_(cands, day) : null;
+  var bn = cands.length ? gameBestNote_(cands, day, from) : null;
   if (bn) out.push({ k: 'note', title: 'Best Note', who: [bn.sid], why: 'the clearest note of the week', note: bn.n, task: bn.s });
-  var acc = (hrRows_(GAMELOG, false) || []).filter(function (r) { return String(r.Kind) === 'idea' && /^accepted/i.test(String(r.Status || '')) && isoDay_(r.DecidedOn) >= mon && t[String(r.StaffId)]; });
+  var acc = (hrRows_(GAMELOG, false) || []).filter(function (r) { return String(r.Kind) === 'idea' && /^accepted/i.test(String(r.Status || '')) && inW(isoDay_(r.DecidedOn)) && t[String(r.StaffId)]; });
   if (acc.length) { var last = acc[acc.length - 1]; out.push({ k: 'idea', title: 'Idea of the Week', who: [String(last.StaffId)], why: '"' + shorten_(String(last.Text || '').replace(/^Idea:\s*/i, ''), 90) + '"' }); }
   // Service Star: the best average from the agents and clients the week's closes were for, at least three ratings (20 Oct 2026).
-  var rs = null; try { rs = rateStats_(mon, day); } catch (e) {}
+  var rs = null; try { rs = rateStats_(from, to); } catch (e) {}
   if (rs) {
     var ok = function (s) { var o = rs.by[s]; return o && o.n >= RATE.STAR_MIN; }, sb = 0;
     GAME.DESKS.forEach(function (s) { if (ok(s)) sb = Math.max(sb, rs.by[s].avg); });
     if (sb) { var sw = GAME.DESKS.filter(function (s) { return ok(s) && rs.by[s].avg === sb; });
       out.push({ k: 'service', title: 'Service Star', who: sw, why: rateAvg_(sb) + ' stars from ' + pl(rs.by[sw[0]].n, 'rating') + ' by agents and clients' }); }
   }
-  return { list: out, totals: t };
+  return { list: out, totals: t, week: w };
 }
-/** The best note of the week: Claude reads the candidates once a day; the longest proper note otherwise. */
-function gameBestNote_(cands, day) {
+/** The best note of the week (the awards' week, from `from`): Claude reads the candidates once a day; the longest proper note otherwise. */
+function gameBestNote_(cands, day, from) {
   var longest = cands.slice().sort(function (a, b) { return b.n.length - a.n.length; })[0];
-  var props = PropertiesService.getScriptProperties(), key = 'game_bn_' + weekStart_(day);
+  var props = PropertiesService.getScriptProperties(), key = 'game_bn_' + (from || weekStart_(day));
   try { var hit = JSON.parse(props.getProperty(key) || 'null'); if (hit && hit.day === day) { var f = cands.filter(function (c) { return c.sid === hit.sid; })[0]; if (f) return f; } } catch (e) {}
   var api = String(props.getProperty('ANTHROPIC_API_KEY') || '').trim(), pick = longest;
   if (api && cands.length > 1) {
@@ -7069,16 +7102,18 @@ function gameBestNote_(cands, day) {
   try { props.setProperty(key, JSON.stringify({ day: day, sid: pick.sid })); } catch (e) {}
   return pick;
 }
-/** For the branch WhatsApp group: no emojis, no sign-off, single-asterisk bold, no client names. */
+/** For the branch WhatsApp group: no emojis, no sign-off, single-asterisk bold, no client names. The wins of the week
+ *  the awards cover, Wednesday to Tuesday ("Wednesday 14 to Tuesday 20 October"), for the Wednesday branch meeting. */
 function gameAwardsText_(day, aw, goal) {
-  var names = function (w) { return w.map(gameFirst_).join(' and '); };
-  var L = ['*This week\'s awards* · ' + prettyDate_(day)];
+  var names = function (w) { return w.map(gameFirst_).join(' and '); }, wk = gameAwardsWeek_(day);
+  var L = ['*This week\'s wins' + (wk.final ? '' : ' so far') + '* · ' + gameAwardsSpan_(wk)];
   aw.forEach(function (a) { L.push('*' + a.title + ':* ' + names(a.who) + ' · ' + a.why); });
-  if (goal && goal.now != null) L.push('*Team goal:* overdue from ' + goal.start + ' to ' + goal.now + ' this week, goal ' + goal.goal + (goal.met ? '. Met.' : ''));
+  // The backlog keeps its own Monday-to-Friday week.
+  if (goal && goal.now != null) L.push('*Team goal:* overdue from ' + goal.start + ' on Monday to ' + goal.now + ' now, the week\'s goal ' + goal.goal + (goal.met ? '. Met.' : ''));
   return L.join('\n');
 }
 
-// ---- everybody, at a glance (the wall, Mr Rampersad's page, the Friday mail) --------------
+// ---- everybody, at a glance (the wall, Mr Rampersad's page, the Wednesday mail) --------------
 function gameBoard_(day) {
   var live = null, hist = {}; try { live = gameToday_(day); } catch (e) {} try { hist = gameHist_(); } catch (e) {}
   var rs = null; try { rs = rateStats_(weekStart_(day), day); } catch (e) {}
@@ -7091,16 +7126,20 @@ function gameBoard_(day) {
   var goal = null; try { goal = gameGoal_(day); } catch (e) {}
   var aw = { list: [], totals: {} }; try { aw = gameAwards_(day, live, hist); } catch (e) {}
   var teamWeek = 0; people.forEach(function (p) { teamWeek += p.week || 0; });
-  return { day: day, people: people, goal: goal, awards: aw.list, team: { week: teamWeek, quests: people.reduce(function (a, p) { return a + p.quests; }, 0) }, live: !!live,
+  // The awards (and only they) run Wednesday to Tuesday: awardsWeek says which days, awardTotals each desk's figures for them.
+  return { day: day, people: people, goal: goal, awards: aw.list, awardsWeek: gameAwardsWeekOut_(aw.week || gameAwardsWeek_(day)), awardTotals: aw.totals || {},
+    team: { week: teamWeek, quests: people.reduce(function (a, p) { return a + p.quests; }, 0) }, live: !!live,
     svc: rs && rs.all.n ? rs.all : null, ratings: rs ? rs.list : [] };
 }
-/** The wall's copy: first names, par, streaks, gains and award titles only; no task, client or note. */
+/** The wall's copy: first names, par, streaks, gains and award titles only; no task, client or note. awardsWeek (21 Oct
+ *  2026) is the Wednesday to Tuesday the awards cover, e.g. { from: 'Wed 14 Oct', to: 'Tue 20 Oct', final: true }. */
 function gameWall_(day) {
   if (!gameOn_()) return null;
   var b = gameBoard_(day);
   return { day: day, goal: b.goal, team: b.team, people: b.people.map(function (p) { return { name: p.name, par: p.par, parDone: p.parDone, parMet: p.parMet, quests: p.quests,
       questsOf: p.questsOf, streak: p.streak, gain: p.gain, bestDay: p.bestDay, thanks: p.thanks }; }),
-    awards: b.awards.map(function (a) { return { title: a.title, who: a.who.map(gameFirst_), why: a.k === 'idea' ? 'idea accepted' : a.why }; }) };
+    awards: b.awards.map(function (a) { return { title: a.title, who: a.who.map(gameFirst_), why: a.k === 'idea' ? 'idea accepted' : a.why }; }),
+    awardsWeek: b.awardsWeek };
 }
 
 // ---- drawing it -------------------------------------------------------------------
@@ -7127,7 +7166,7 @@ function gameHowCard_() {
     '<div>&#9679; Close a task with a proper note in your name: <b>' + P.close + '</b>. High-payoff (new business, orphan adoption, retention): <b>+' + P.payoff + '</b>. Over a month old: <b>+' + P.oldest + '</b>. Covering a colleague: <b>+' + P.cover + '</b>.</div>' +
     '<div>&#9679; A Query Pal query closed inside its turnaround: <b>' + P.qp + '</b>. In on time: <b>' + P.ontime + '</b>. A clean close, every close-out item answered and signed out: <b>' + P.signout + '</b>.</div>' +
     '<div>&#9679; Each quest: <b>+' + P.quest + '</b>. Par (every task on today\'s list closed or moved with a reason, two in three closed): <b>+' + P.par + '</b>. An idea Mr Rampersad accepts: <b>+' + P.idea + '</b>.</div>' +
-    '<div>&#9679; The agent or client a task was for rates it when you close it with a note: that is your service rating, and the week\'s best is Friday\'s <b>Service Star</b> (three ratings or more). Ratings earn no points.</div>' +
+    '<div>&#9679; The agent or client a task was for rates it when you close it with a note: that is your service rating, and the week\'s best (Wednesday to Tuesday) is the <b>Service Star</b> at Wednesday\'s branch meeting (three ratings or more). Ratings earn no points.</div>' +
     '<div style="color:#6A7180;margin-top:4px">A close with no note, or a note copied onto several tasks, earns nothing: a closed task without a note is not closed. You are measured against your own usual week, never against anyone else.</div></div></details>';
 }
 
@@ -7186,7 +7225,7 @@ function gameThanksForm_(sid, day) {
   var open = cv.list.filter(function (x) { return !x.thanked; });
   if (!open.length) return '';
   return '<div class="card ok" id="p-thanks"><div class="bh" style="color:#2C7A57">While you were out · ' + esc_(prettyDate_(cv.day)) + '</div>' +
-    '<div class="bf">' + open.map(function (x) { return esc_(x.name) + ' took ' + x.n + ' of yours'; }).join(', ') + '. Say thanks: it goes on their game, and on Friday\'s Team Player award.</div>' +
+    '<div class="bf">' + open.map(function (x) { return esc_(x.name) + ' took ' + x.n + ' of yours'; }).join(', ') + '. Say thanks: it goes on their game, and on Wednesday\'s Team Player award.</div>' +
     open.map(function (x) { return '<label class="t"><input type="checkbox" name="gthx_' + esc_(x.to) + '" value="1"><span>Thank <b>' + esc_(x.name) + '</b></span></label>'; }).join('') + '</div>';
 }
 function gameIdeaForm_(sid, day) {
@@ -7194,7 +7233,7 @@ function gameIdeaForm_(sid, day) {
   var mine = []; try { mine = ((sfkInnovation_(day) || {})[sid] || {}).open || []; } catch (e) {}
   var acc = {}; try { acc = gameAccepted_(); } catch (e) {}
   return '<div class="card" id="p-idea"><div class="bh" style="color:#9A7A22">Idea of the week</div>' +
-    '<div class="bf">One thing that would make your job, or the client\'s experience, better. It becomes your Innovation &amp; Creativity task for Friday\'s meeting; when Mr Rampersad accepts it, +' + GAME.PTS.idea + '.</div>' +
+    '<div class="bf">One thing that would make your job, or the client\'s experience, better. It becomes your Innovation &amp; Creativity task for Wednesday\'s branch meeting; when Mr Rampersad accepts it, +' + GAME.PTS.idea + '.</div>' +
     (mine.length ? mine.slice(0, 3).map(function (t) { var a = acc[t.id];
       return '<div class="ln" style="font-size:13.5px">' + (a && /^accepted/i.test(a.status) ? '<b style="color:#2C7A57">&#10003; Accepted</b> · ' : '<span style="color:#6A7180">With Mr Rampersad</span> · ') + esc_(t.subject) + '</div>'; }).join('') : '') +
     '<textarea name="gidea" rows="2" placeholder="e.g. A text to clients the day before their premium is due"></textarea></div>';
@@ -7210,8 +7249,8 @@ function gameSaveForm_(person, day, p) {
   } catch (e) {}
   var idea = String(p.gidea || '').replace(/\s+/g, ' ').trim();
   if (idea.length >= 8) {
-    try { var ct = createTask_({ staffId: sid, subject: 'Idea: ' + idea, type: INNOVATION.TYPE, due: gameFriday_(day), date: day }, { staffId: sid, name: person.name });
-      out.push({ s: 'Your idea', res: ct && ct.ok ? 'an Innovation & Creativity task, for Friday' : 'NOT SAVED: ' + (ct && ct.error || 'add it in Salesforce') });
+    try { var ct = createTask_({ staffId: sid, subject: 'Idea: ' + idea, type: INNOVATION.TYPE, due: gameMeetingDay_(day), date: day }, { staffId: sid, name: person.name });
+      out.push({ s: 'Your idea', res: ct && ct.ok ? 'an Innovation & Creativity task, for Wednesday\'s meeting' : 'NOT SAVED: ' + (ct && ct.error || 'add it in Salesforce') });
       try { CacheService.getScriptCache().remove('sfk_inno_' + day); } catch (e) {} }
     catch (e) { out.push({ s: 'Your idea', res: 'NOT SAVED: add it in Salesforce' }); }
   }
@@ -7255,7 +7294,9 @@ function gameBmSec_(day, num) {
       '<small style="display:block;color:#6A7180;font-size:12.5px">' + esc_(bits.join(' · ')) + '</small></span></div>';
   };
   var text = gameAwardsText_(day, b.awards, b.goal);
-  var awards = b.awards.length ? '<div class="bh" style="font-size:14px;margin-top:12px">The week\'s awards so far' + (isoDow_(day) === 5 ? ' · for the 2pm meeting' : '') + '</div>' +
+  var aws = b.awardsWeek || gameAwardsWeekOut_(gameAwardsWeek_(day));
+  var awards = b.awards.length ? '<div class="bh" style="font-size:14px;margin-top:12px">' + (aws.final ? 'This week\'s wins · ' + esc_(aws.from) + ' to ' + esc_(aws.to) + ' · for the ' + gameMeetingAt_() + ' meeting'
+      : 'This week\'s wins so far · since ' + esc_(aws.from)) + '</div>' +
     b.awards.map(function (a) { return '<div class="ln" style="font-size:13.5px"><b>' + esc_(a.title) + ':</b> ' + esc_(a.who.map(gameFirst_).join(' and ')) + ' · ' + esc_(a.why) +
       (a.note ? '<small style="display:block;color:#6A7180;font-size:12.5px;margin-top:2px">On "' + esc_(a.task) + '": "' + esc_(a.note) + '"</small>' : '') + '</div>'; }).join('') +
     '<div class="bf" style="margin-top:8px">For the branch WhatsApp group, ready to copy:</div><textarea readonly rows="' + Math.min(14, text.split('\n').length * 2 + 1) + '" style="font-size:14px" onclick="this.select()">' + esc_(text) + '</textarea>' : '';
@@ -7286,7 +7327,7 @@ function gameBmSave_(day, p, name) {
     if (String(p['gia_' + x.id] || '') !== '1' || acc[x.id]) return;
     try {
       gameLogAdd_({ Kind: 'idea', StaffId: x.sid, Text: x.s, Status: 'accepted', DecidedOn: day, Ref: x.id });
-      try { sfkInsert_('FeedItem', { ParentId: x.id, Body: 'IDEA ACCEPTED · ' + shortDate_(day) + '. ' + (name || 'Mr Rampersad') + ' accepted this idea: +' + GAME.PTS.idea + ' on your game. Take it forward and show where it stands at Friday\'s branch meeting.' }); } catch (e) {}
+      try { sfkInsert_('FeedItem', { ParentId: x.id, Body: 'IDEA ACCEPTED · ' + shortDate_(day) + '. ' + (name || 'Mr Rampersad') + ' accepted this idea: +' + GAME.PTS.idea + ' on your game. Take it forward and show where it stands at Wednesday\'s branch meeting.' }); } catch (e) {}
       out.push({ s: gameFirst_(x.sid) + '\'s idea · ' + shorten_(x.s, 60), res: 'accepted, +' + GAME.PTS.idea });
     } catch (e) { out.push({ s: shorten_(x.s, 60), res: 'NOT SAVED: ' + String(e && e.message || e).slice(0, 80) }); }
   });
@@ -7294,32 +7335,39 @@ function gameBmSave_(day, p, name) {
   return out;
 }
 
-/** Friday 1pm, for the 2pm branch meeting: the awards, the team bar and everyone's week, with the WhatsApp text. To him alone. */
+/** Wednesday 7:00, for the 9:00 branch meeting (21 Oct 2026): the week's wins, Wednesday to Tuesday, the team bar and
+ *  everyone's week, with the WhatsApp text. To him alone. */
 function gameAwardsMail_(day) {
   var to = managerEmails_(); if (!to.length) return false;
-  var b = gameBoard_(day), text = gameAwardsText_(day, b.awards, b.goal);
-  var body = (b.goal && b.goal.now != null ? statTiles_([
+  var b = gameBoard_(day), text = gameAwardsText_(day, b.awards, b.goal), w = gameAwardsWeek_(day), aws = b.awardsWeek || gameAwardsWeekOut_(w), tot = b.awardTotals || {};
+  var wq = 0; GAME.DESKS.forEach(function (s) { wq += Number((tot[s] || {}).quests || 0); });
+  var at = gameMeetingAt_(), span = gameAwardsSpan_(w);
+  var body = '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">The week <b>' + esc_(span) + '</b>, working days only' +
+      (w.final ? ', for the branch meeting at ' + at + ' today.' : ', so far, for Wednesday\'s branch meeting.') + '</div>' +
+    (b.goal && b.goal.now != null ? statTiles_([
       { value: b.goal.start, label: 'overdue on Monday', color: MAIL.navy }, { value: b.goal.now, label: 'overdue now', color: b.goal.met ? MAIL.green : MAIL.amber },
-      { value: b.goal.goal, label: 'the week\'s goal', color: MAIL.navy }, { value: b.team.quests, label: 'quests done today', color: MAIL.navy }]) : '') +
+      { value: b.goal.goal, label: 'the week\'s goal', color: MAIL.navy }, { value: wq, label: 'quests, ' + aws.from.split(' ')[0] + ' to ' + aws.to.split(' ')[0], color: MAIL.navy }]) : '') +
     sectionLabel_('The awards') + (b.awards.length ? b.awards.map(function (a) {
       return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.gold + ';border-radius:10px;padding:10px 14px;margin-bottom:8px">' +
         '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' + esc_(a.title) + '</div>' +
         '<div style="font-size:15px;font-weight:800;margin-top:2px">' + esc_(a.who.map(function (s) { return nameFor_(s); }).join(' and ')) + '</div>' +
         '<div style="font-size:13px;color:' + MAIL.muted + '">' + esc_(a.why) + '</div>' +
         (a.note ? '<div style="font-size:13px;line-height:1.5;margin-top:6px;background:' + MAIL.paper + ';border-radius:8px;padding:7px 10px">On "' + esc_(a.task) + '": "' + esc_(a.note) + '"</div>' : '') + '</div>'; }).join('')
-      : '<div style="font-size:13.5px">Nothing to award yet this week.</div>') +
-    sectionLabel_('Everyone\'s week, against their own usual') + b.people.map(function (p) {
-      return '<div style="font-size:13.5px;line-height:1.5;padding:6px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(p.name) + '</b> · ' + (p.week || 0) + ' work points this week' +
-        (p.usual != null ? ' against a usual ' + p.usual + (p.gain != null ? ' (' + (p.gain >= 0 ? '+' : '') + p.gain + '%)' : '') : '') + ' · on time ' + p.streak + ' running' + (p.thanks ? ' · ' + p.thanks + ' thank-you' + (p.thanks === 1 ? '' : 's') : '') + '</div>'; }).join('') +
+      : '<div style="font-size:13.5px">Nothing to award ' + (w.final ? 'this week' : 'yet this week') + '.</div>') +
+    sectionLabel_('Everyone\'s week, ' + aws.from + ' to ' + aws.to + ', against their own usual') + b.people.map(function (p) {
+      var t = tot[p.sid] || {}, wk = t.week != null ? t.week : (p.week || 0), us = t.week != null ? t.usual : p.usual, gn = t.week != null ? t.gain : p.gain, th = t.week != null ? t.thanks || 0 : p.thanks;
+      return '<div style="font-size:13.5px;line-height:1.5;padding:6px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(p.name) + '</b> · ' + (wk || 0) + ' work points' +
+        (us != null ? ' against a usual ' + us + (gn != null ? ' (' + (gn >= 0 ? '+' : '') + gn + '%)' : '') : '') + ' · on time ' + p.streak + ' running' + (th ? ' · ' + th + ' thank-you' + (th === 1 ? '' : 's') : '') + '</div>'; }).join('') +
     sectionLabel_('For the branch WhatsApp group') +
     '<div style="background:' + MAIL.paper + ';border:1px dashed ' + MAIL.gold + ';border-radius:10px;padding:11px 14px;font-size:14px;line-height:1.55;white-space:pre-wrap;font-family:inherit">' + esc_(text) + '</div>' +
     '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:8px">Script Property GAME = off hides the game everywhere.</div>';
-  mailSend_({ to: to.join(','), subject: 'This week\'s awards · for the 2pm meeting · ' + shortDate_(day), htmlBody: shell_('This week\'s awards', 'For the 2pm branch meeting · ' + prettyDate_(day), body) });
+  mailSend_({ to: to.join(','), subject: 'This week\'s wins · for the ' + at + ' meeting · ' + shortDate_(day), htmlBody: shell_('This week\'s wins', 'For the Wednesday branch meeting · ' + span, body) });
   return true;
 }
 
 /** The tick: the four weeks before the first run, then each hour 6:00–18:30 today re-read (the last five working days on the
- *  first run of a day, so a reopened task drops its points), and Friday 1pm the awards. */
+ *  first run of a day, so a reopened task drops its points, Tuesday's included before the awards), and on Wednesday at 7:00
+ *  the awards for the 9:00 branch meeting: once, retried by later runs up to the meeting if a send fails (timedSend_). */
 function gameTick_(day, mins) {
   var out = [];
   if (!gameOn_() || !sfkConfigured_() || !gameWeekday_(day) || mins < GAME.FROM || mins > GAME.TO) return out;
@@ -7336,9 +7384,11 @@ function gameTick_(day, mins) {
     var first = props.getProperty('game_back') !== day; if (first) props.setProperty('game_back', day);
     try { gameSave_(first ? lastWorkdays_(day, GAME.BACK_DAYS)[0] : day, day); } catch (e) {}
   }
-  if (isoDow_(day) === 5 && mins >= GAME.AWARDS_AT && mins <= GAME.AWARDS_AT + 120 && !props.getProperty('game_aw_' + day)) {
-    props.setProperty('game_aw_' + day, hhmm_(new Date()));
-    try { if (gameAwardsMail_(day)) out.push('the week\'s awards'); } catch (e) {}
+  var awKey = 'game_aw_' + day;
+  if (isoDow_(day) === GAME.AWARDS_DOW && mins >= GAME.AWARDS_AT && mins < GAME.MEETING_AT && !props.getProperty(awKey)) {
+    var went = false;
+    timedSend_(props, awKey, new Date(), function () { return (went = gameAwardsMail_(day)); });
+    if (went) out.push('the week\'s awards');
   }
   return out;
 }
@@ -8366,7 +8416,7 @@ function wallIntel_(day, outside) {
   try { out.agents = wallAgents_(day, outside); } catch (e) { out.agents = null; }
   try { out.managers = wallManagers_(day, outside, out.staff); } catch (e) { out.managers = null; }
   try { out.goal = gameOn_() ? gameGoal_(day) : null; } catch (e) { out.goal = null; }
-  try { var gw = gameWall_(day); out.awards = gw ? gw.awards : []; } catch (e) { out.awards = []; }
+  try { var gw = gameWall_(day); out.awards = gw ? gw.awards : []; out.awardsWeek = gw ? gw.awardsWeek || null : null; } catch (e) { out.awards = []; out.awardsWeek = null; }
   var ev = [].concat((out.staff && out.staff.events) || [], (out.agents && out.agents.events) || [], (out.managers && out.managers.events) || []);
   ev.sort(function (a, b) { return (b.m || 0) - (a.m || 0); });
   out.ticker = ev.slice(0, WALL2.TICKER).map(function (x) { return { at: wallAt_(x.m), who: x.who, what: x.what, k: x.k || '' }; });
@@ -13852,7 +13902,7 @@ function sendHousekeeping_(person, day, signIn) {
   var trend = intel ? intelLines_(intel).filter(function (l) { return l.bad; }).slice(0, 3) : [];
   try {
     var innoX = (sfkInnovation_(day) || {})[sid];
-    if (innovationBlock_(sid, day)) today.push({ bad: true, html: '<b>Innovation hour today.</b> The close-out page asks what it moved; that answer goes on Friday\'s board.' });
+    if (innovationBlock_(sid, day)) today.push({ bad: true, html: '<b>Innovation hour today.</b> The close-out page asks what it moved; that answer goes on the innovation board for Wednesday\'s branch meeting.' });
     var il = innovationLine_(innoX, day, sid); if (il && il.bad) trend.push(il);
   } catch (e) {}
 
@@ -15056,7 +15106,7 @@ function planReplyPage_(person, day, error, notice) {
     var haveIds = {}; have.forEach(function (it) { if (it.k === 'sf') haveIds[it.id] = 1; });
     var isInno = model.inno === b;
     var head = '<div class="bh">' + esc_(blockLabel_(b)) + (sb.time ? ' · ' + esc_(sb.time) : '') + (isInno ? ' · Innovation hour · protected' : '') + '</div>' +
-      '<div class="bf">' + (isInno ? 'Move your innovation forward. No ordinary tasks here today; bring what moved to Friday\'s branch meeting.' : esc_(sb.focus || '')) + '</div>';
+      '<div class="bf">' + (isInno ? 'Move your innovation forward. No ordinary tasks here today; bring what moved to Wednesday\'s branch meeting.' : esc_(sb.focus || '')) + '</div>';
     if (row && String(row.ClosedAt || '').trim()) return '<div class="card">' + head + '<div class="bf">Your day has closed.</div></div>';
     if (sp && sp.end <= nowM) return '<div class="card">' + head + '<div class="bf">Your day has ended.</div></div>';
     var box = function (t, checked, suggested) {
@@ -15375,7 +15425,7 @@ function hkReplyPage_(person, day, error) {
     '<div class="card"><div class="bh">The three checks</div>' + checks + '</div>' +
     mailbagPageCard_(sid, day) +
     (innovationBlock_(sid, day) ? '<div class="card" style="border-left:4px solid #0EA5C9"><div class="bh">Innovation hour · what moved?</div>' +
-      '<div class="bf">One or two lines. It goes on Friday\'s innovation board for the branch meeting. Put the same on the task\'s Chatter.</div>' +
+      '<div class="bf">One or two lines. It goes on the innovation board for Wednesday\'s branch meeting. Put the same on the task\'s Chatter.</div>' +
       '<textarea name="inno" rows="2" required placeholder="What you built, tested or found, and the next step">' + esc_(((progAnswers_(sid, day, 'innovation') || {})._inno || {}).r || '') + '</textarea></div>' : '') +
     '<div class="card"><div class="bh">Comment for Mr Rampersad</div><textarea name="comment" rows="2" placeholder="Anything he should know before tomorrow"></textarea></div>' +
     '<div class="card"><label class="t" style="border:0"><input type="checkbox" name="out" value="1" checked><span>Sign me out now: this is the register</span></label></div>' +
@@ -15884,11 +15934,12 @@ function errandReplySave_(person, day, p, all) {
 //  this as well." (Ricky, 14 October 2026.) Since 1 October one new
 //  innovation item had been closed in the whole team, and two people had
 //  never had one. So one block on Thursday is protected for it, the day
-//  before the branch meeting, so there is something to show on the Friday:
+//  before the branch meeting (then on a Friday), so there is something to show:
 //    · the morning e-mail puts no ordinary tasks in that block; it puts the
 //      person's open innovation task in it, or tells them they have none
 //    · before you leave asks what moved, and an answer is required
-//    · Friday at 7:30 the Branch Manager and the BMA get the board
+//    · Wednesday at 7:30 the Branch Manager and the BMA get the board: the
+//      branch meets Wednesday 9:00 to 10:30 since 21 October 2026
 //  Every morning, whatever the day, says where the person's innovation stands.
 //  What to improve is theirs to propose, in their own job area; the tracker
 //  only makes the time and keeps the record.
@@ -15896,6 +15947,7 @@ function errandReplySave_(person, day, p, all) {
 
 var INNOVATION = {
   DOW: 4,                       // Thursday (1 Monday .. 7 Sunday)
+  BOARD_DOW: 3,                 // the board, Wednesday 7:30, before the 9:00 branch meeting (21 Oct 2026)
   TYPE: 'Innovation&Creativity',
   /* No protected block any more: the day is one plan (see SCHEDULE, 17
      October 2026), so the innovation hour is Thursday's own time, asked about
@@ -15952,7 +16004,7 @@ function innovationLine_(inno, day, sid) {
   return { bad: stale || t.late, html: 'Your innovation: ' + b_(t.subject) + ' · ' +
     (stale ? red('untouched ' + t.touched + ' days') : 'last touched ' + (t.touched ? t.touched + ' day' + (t.touched === 1 ? '' : 's') + ' ago' : 'today')) +
     (t.late ? ', ' + red('overdue since ' + shortDate_(t.due)) : (t.due ? ', due ' + esc_(shortDate_(t.due)) : ', ' + red('no due date'))) +
-    '. Innovation hour: ' + esc_(when) + ', ' + esc_(blk) + '; show it at Friday\'s branch meeting.' };
+    '. Innovation hour: ' + esc_(when) + ', ' + esc_(blk) + '; show it at Wednesday\'s branch meeting.' };
 }
 
 /** The card for the protected block in the morning e-mail. */
@@ -15962,18 +16014,18 @@ function innovationCard_(sid, day, b, sb, inno) {
     : '<div style="font-size:13px;color:' + MAIL.red + ';font-weight:700;margin-top:6px">No innovation task open. Propose one in your own job area and put it in the scrub box as Innovation &amp; Creativity before this block starts.</div>';
   return '<div style="background:#EEF9FD;border:1px solid ' + MAIL.gold + ';border-left:4px solid ' + MAIL.gold + ';border-radius:10px;padding:13px 15px;margin-bottom:10px">' +
     '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + MAIL.gold + '">' + esc_(blockLabel_(b)) + (sb.time ? ' · ' + esc_(sb.time) : '') + ' · Innovation hour · protected</div>' +
-    '<div style="font-size:13px;line-height:1.5;margin:5px 0 4px">No ordinary tasks go in this block today. Move your innovation forward, write on the task what moved, and bring it to Friday\'s branch meeting.</div>' +
+    '<div style="font-size:13px;line-height:1.5;margin:5px 0 4px">No ordinary tasks go in this block today. Move your innovation forward, write on the task what moved, and bring it to Wednesday\'s branch meeting.</div>' +
     list + '</div>';
 }
 
-/** Friday, before the branch meeting: the board, to the Branch Manager and the BMA. */
+/** Wednesday, before the 9:00 branch meeting: the board, to the Branch Manager and the BMA, with what the last Thursday's hour moved. */
 function sendInnovationBoard_(day) {
   var cc = managerEmails_(), kamla = '';
   try { kamla = emailFor_('kamla'); } catch (e) {}
   if (!cc.length && !kamla) return false;
   var inno = {};
   try { inno = sfkInnovation_(day) || {}; } catch (e) {}
-  var thu = shiftDays_(day, -1);
+  var thu = shiftDays_(day, -1); while (isoDow_(thu) !== INNOVATION.DOW) thu = shiftDays_(thu, -1);   // the last innovation hour before the board
   var rows = DAY_MAIL_DESKS.map(function (sid) {
     var x = inno[sid] || { open: [] }, said = {};
     try { said = progAnswers_(sid, thu, 'innovation'); } catch (e) {}
@@ -15984,7 +16036,7 @@ function sendInnovationBoard_(day) {
       '<div style="font-size:13.5px;font-weight:800;color:' + MAIL.navy + '">' + esc_(nameFor_(sid)) + '</div>' +
       '<div style="font-size:13px;margin-top:3px">' + (t ? esc_(t.subject) + ' <span style="color:' + (stale ? MAIL.red : MAIL.muted) + '">· touched ' + (t.touched || 0) + ' days ago' + (t.due ? (t.late ? ' · overdue since ' : ' · due ') + esc_(shortDate_(t.due)) : ' · no due date') + '</span>'
         : '<span style="color:' + MAIL.red + ';font-weight:700">No innovation task open.</span>' + (x.lastClosed ? ' <span style="color:' + MAIL.muted + '">Last closed ' + esc_(shortDate_(x.lastClosed)) + ': ' + esc_(x.lastSubject) + '</span>' : ' <span style="color:' + MAIL.muted + '">None on record.</span>')) + '</div>' +
-      '<div style="font-size:12.5px;color:' + (ans ? MAIL.ink : MAIL.red) + ';margin-top:4px">Thursday\'s hour: ' + (ans ? '"' + esc_(ans) + '"' : 'nothing said') + '</div></div>';
+      '<div style="font-size:12.5px;color:' + (ans ? MAIL.ink : MAIL.red) + ';margin-top:4px">Thursday\'s hour (' + esc_(shortDate_(thu)) + '): ' + (ans ? '"' + esc_(ans) + '"' : 'nothing said') + '</div></div>';
   }).join('');
   var ccList = [kamla, DAYSTART_CC_DEFAULT].filter(function (e, i, a) { return e && a.indexOf(e) === i; });
   mailSend_({ to: (cc.length ? cc : [kamla]).join(','), cc: ccList.join(',') || undefined,
