@@ -35,6 +35,11 @@
   #bgfx .glow{animation:drift 26s ease-in-out infinite alternate}
   @keyframes spin{to{transform:rotate(360deg)}}
   @keyframes drift{from{transform:translate(-120px,-40px)}to{transform:translate(160px,60px)}}
+  /* the room takes the channel's colour (20 Oct 2026: "more motion") */
+  #bgfx .chs{stop-color:var(--chg,#4FC1B0);transition:stop-color 1.6s ease}
+  #bgfx .glow2{animation:drift2 34s ease-in-out infinite alternate} #bgfx .glow3{animation:drift3 27s ease-in-out infinite alternate}
+  @keyframes drift2{from{transform:translate(0,0) scale(1)}to{transform:translate(520px,-260px) scale(1.25)}}
+  @keyframes drift3{from{transform:translate(0,0) scale(.9)}to{transform:translate(-460px,-180px) scale(1.15)}}
 
   header,#stage,#cap,footer{position:relative;z-index:1}
   header{height:6.2rem;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 3.4rem;border-bottom:1px solid var(--line)}
@@ -344,13 +349,38 @@
   @keyframes cellIn{0%{opacity:0;transform:scale(.3) rotate(-8deg)}70%{opacity:1;transform:scale(1.08)}100%{transform:none}}
   .pc.pop:not(.breathe){animation-name:pcIn}
   @keyframes pcIn{0%{opacity:0;transform:translateY(1.2rem) scale(.85)}65%{opacity:1;transform:translateY(-.2rem) scale(1.02)}100%{transform:none}}
-  @media (prefers-reduced-motion: reduce){ .a,.draw,.ring,.seg,.flow,#tick,#bgfx *,.kick .kb,.tile::after,.grid>.panel,.grid>.panel::after,.huge{animation:none!important} .scene{transform:none!important;filter:none!important} }
+  /* more motion (20 Oct 2026, 8:35pm: "more motion as well") */
+  .bumper .band.b2{background:#16171B;opacity:.18;animation-delay:.12s}
+  .bumper .bl{display:inline-block;animation:bl .7s cubic-bezier(.2,1.4,.3,1) both;animation-delay:calc(.18s + var(--i) * .05s)}
+  @keyframes bl{0%{opacity:0;transform:translateY(-.6em) rotate(-12deg) scale(1.4)}100%{opacity:1;transform:none}}
+  .fill{position:relative;overflow:hidden}
+  .fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent) no-repeat;background-size:35% 100%;background-position:-60% 0;animation:sheen 3.2s ease-in-out 2s infinite}
+  @keyframes sheen{0%{background-position:-60% 0}55%,100%{background-position:170% 0}}
+  .ring{filter:drop-shadow(0 0 .45rem rgba(79,193,176,.35))}
+  .now{animation:nowp 1.5s ease-in-out infinite}
+  @keyframes nowp{0%,100%{outline-color:var(--coral);box-shadow:0 0 0 0 rgba(239,138,107,0)}50%{outline-color:#F7B39C;box-shadow:0 0 1.2rem .2rem rgba(239,138,107,.35)}}
+  body:not(.mob) .scene.on .grid{animation:kb 18s ease-in-out 1.6s both}
+  @keyframes kb{from{transform:none}to{transform:scale(1.016)}}
+  .kick .kb{background-image:linear-gradient(90deg,currentColor,#fff,currentColor);background-size:200% 100%;animation:grow .9s cubic-bezier(.2,.8,.2,1) .1s both,kbs 2.4s linear 1.2s infinite}
+  @keyframes kbs{to{background-position:-200% 0}}
+  .tile .v{display:inline-block}
+  .scene.on .tile .v{animation:vfloat 4s ease-in-out 2.4s infinite}
+  .scene.on .tile:nth-child(2) .v{animation-delay:2.9s}.scene.on .tile:nth-child(3) .v{animation-delay:3.4s}.scene.on .tile:nth-child(4) .v{animation-delay:3.9s}
+  @keyframes vfloat{0%,100%{transform:none}50%{transform:translateY(-.25rem)}}
+  #tick b{animation:tb 2.2s ease-in-out infinite}
+  @keyframes tb{50%{color:#F7D98C;text-shadow:0 0 .6rem rgba(227,184,90,.6)}}
+  .ev .dot{animation:dotp 2.4s ease-in-out infinite}
+  @keyframes dotp{50%{transform:scale(1.35);box-shadow:0 0 .7rem currentColor}}
+  @media (prefers-reduced-motion: reduce){ .a,.draw,.ring,.seg,.flow,#tick,#bgfx *,.kick .kb,.tile::after,.grid>.panel,.grid>.panel::after,.huge,.fill::after,.now,.scene .grid,.tile .v,#tick b,.ev .dot,.bumper .bl{animation:none!important} .scene{transform:none!important;filter:none!important} }
 </style>
 </head>
 <body>
 <svg id="bgfx" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <defs><radialGradient id="gl" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#E3B85A" stop-opacity=".10"/><stop offset="1" stop-color="#E3B85A" stop-opacity="0"/></radialGradient></defs>
+  <defs><radialGradient id="gl" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#E3B85A" stop-opacity=".10"/><stop offset="1" stop-color="#E3B85A" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gch" cx="50%" cy="50%" r="50%"><stop class="chs" offset="0" stop-opacity=".13"/><stop class="chs" offset="1" stop-opacity="0"/></radialGradient></defs>
   <circle class="glow" cx="1500" cy="260" r="520" fill="url(#gl)"/>
+  <circle class="glow2" cx="380" cy="860" r="640" fill="url(#gch)"/>
+  <circle class="glow3" cx="1100" cy="700" r="420" fill="url(#gch)"/>
   <g class="arc" fill="none" stroke="#2A2E37" stroke-width="1.5">
     <circle cx="960" cy="540" r="700" stroke-dasharray="2 18"/><circle cx="960" cy="540" r="880" stroke-dasharray="120 60"/>
   </g>
@@ -516,7 +546,7 @@ const SCENES=[
       '<div class="a rise ident-title" style="--d:1.2s;font-weight:800;font-size:6.4rem;line-height:1;font-stretch:72%">Wall Intelligence</div>'+
       '<div class="a rise" style="--d:1.6s;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">'+["STAFF","AGENTS","MANAGERS","LIVE"].map((c,i)=>'<span class="chan a pop" style="--d:'+(1.8+i*.25)+'s">'+c+'</span>').join("")+'</div>'+
       '<div class="a rise mono" style="--d:2.6s;font-size:1.2rem;color:var(--muted)">'+esc(t.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}))+(D&&D.outside?" · no client details on this screen":"")+'</div></div>'; },
-  line:()=>({live:"This is Ricky Rampersad Branch, live. Here is how the day is going, for staff, agents and managers.",rec:"This is Ricky Rampersad Branch, live. Here is how the day is going, for staff, agents and managers."})},
+  line:()=>({live:"This is Ricky Rampersad Branch, live. Here is how the day is going, for staff, agents and managers.",rec:"This is the Ricky Rampersad Branch, live. Here's how the day's going, for staff, agents and managers."})},
 
  {id:"n1",ch:"staff",dwell:16000,when:()=>!!S(),
   html:()=>{ const s=S(), t=s.tiles, ppl=s.people;
@@ -549,7 +579,7 @@ const SCENES=[
         '<div class="panel"><div class="ph">COVER TODAY</div>'+flow+'</div></div>'; },
   line:()=>{ const s=S(), t=s.tiles, outs=s.people.filter(p=>p.status==="out");
     const cov=outs.length?" "+andList(outs.map(o=>o.name))+(outs.length===1?" is":" are")+" out today, and "+andList([...new Set(outs.flatMap(o=>o.coveredBy.map(c=>c.name)))])+" "+(outs.flatMap(o=>o.coveredBy).length===1?"is":"are")+" covering, so no client waits.":" Everyone is in.";
-    return {live:"Staff. "+t.inNow+" of "+t.of+" desks are in."+cov, rec:"Staff. Who is in, who is out today, and who is covering, so no client waits."}; }},
+    return {live:"Staff. "+t.inNow+" of "+t.of+" desks are in."+cov, rec:"First, the staff. Who's in, who's out today, and who's covering, so no client waits."}; }},
 
  {id:"n2",ch:"staff",dwell:16000,when:()=>!!S(),
   html:()=>{ const s=S(), n=s.toH-s.fromH+1, hl=[...Array(n)].map((_,i)=>{const h=s.fromH+i; return (h%12||12)+(h<12?"a":"p");});
@@ -579,7 +609,7 @@ const SCENES=[
         pts.map((p,i)=>'<text x="'+p[0]+'" y="'+(Hh+22)+'" text-anchor="middle" font-size="17" fill="#737886" font-family="JetBrains Mono,monospace">'+hl[i]+'</text>').join("")+'</svg></div>'+
         (b?'<div class="a pop" style="--d:1.6s;flex:none;text-align:right;align-self:center"><div class="ph">THE BUSIEST HOUR</div><div class="big" style="font-weight:800;font-size:3.6rem;font-stretch:78%;line-height:1.05">'+esc(b.at)+' – '+esc(b.to)+'</div><div style="font-size:1.25rem;color:var(--muted)">'+plural(b.n,"task")+' closed with a note</div></div>':'')+'</div></div>'; },
   line:()=>{ const s=S(), b=s.busiest;
-    return {live:"Hour by hour. "+plural(s.tiles.closes,"task")+" closed with a note so far today."+(b?" The busiest hour was "+b.at+" to "+b.to+".":""), rec:"Hour by hour: what is being actioned at the branch, and when."}; }},
+    return {live:"Hour by hour. "+plural(s.tiles.closes,"task")+" closed with a note so far today."+(b?" The busiest hour was "+b.at+" to "+b.to+".":""), rec:"Hour by hour, here's what's being actioned at the branch, and when."}; }},
 
  {id:"n3",ch:"staff",dwell:14000,when:()=>!!S()&&S().tiles.closes>0,
   html:()=>{ const s=S(), tot=s.mix.reduce((a,m)=>a+m.n,0)||1, C=2*Math.PI*90; let at=0;
@@ -599,7 +629,7 @@ const SCENES=[
           '<text x="120" y="128" text-anchor="middle" font-size="44" font-weight="800" fill="#F4F1EA" font-family="Archivo,sans-serif">'+tot+'</text><text x="120" y="152" text-anchor="middle" font-size="14" fill="#A9AEBA" font-family="Archivo,sans-serif">closed today</text></svg></div>'+
         '<div class="panel"><div class="ph">BY KIND</div><div style="display:flex;flex-direction:column;gap:1rem">'+leg+'</div></div>'+
         '<div class="panel shine" style="justify-content:center"><div class="ph">HIGH-PAYOFF SHARE</div><div class="huge" style="font-weight:800;font-size:9rem;line-height:1;font-stretch:72%;color:'+COL.gold+'">'+cnt(s.payoffPct,.6)+'<span style="font-size:.45em">%</span></div><div style="font-size:1.35rem;color:#CDD1DA;line-height:1.45">of today\'s closed work: new business, orphan adoption and retention.</div></div></div>'; },
-  line:()=>({live:"Where the work went. "+S().payoffPct+" percent of today's closed work is high-payoff: new business, orphan adoption and retention.",rec:"Where the work went: high-payoff first, new business, orphan adoption and retention."})},
+  line:()=>({live:"Where the work went. "+S().payoffPct+" percent of today's closed work is high-payoff: new business, orphan adoption and retention.",rec:"Where the work went. High-payoff work comes first: new business, orphan adoption, and retention."})},
 
  {id:"n4",ch:"staff",dwell:16000,when:()=>gamePeople().some(p=>p.par||p.streak),
   html:()=>{ const ppl=gamePeople(), g=D.goal, aw=D.awards||[];
@@ -619,7 +649,7 @@ const SCENES=[
       '<div class="grid two" style="grid-template-columns:repeat('+ppl.length+',minmax(0,1fr)) '+(aw.length?'1.2fr':'')+'">'+ppl.map(card).join("")+
       (aw.length?'<div class="panel a rise span" style="--d:1.2s"><div class="ph">AWARDS SO FAR</div>'+aw.map((a,i)=>'<div class="a slide" style="--d:'+(1.4+i*.2).toFixed(2)+'s;border-top:1px solid var(--line);padding-top:.7rem"><div style="font-weight:800;color:'+COL.gold+';font-size:1.25rem">'+esc(a.title)+'</div><div style="font-size:1.4rem;font-weight:800">'+esc(a.who.join(" and "))+'</div><div style="font-size:1.1rem;color:var(--muted)">'+esc(a.why)+'</div></div>').join("")+'</div>':'')+'</div>'; },
   line:()=>{ const ppl=gamePeople(), met=ppl.filter(p=>p.parMet).length, q=ppl.reduce((a,p)=>a+p.quests,0), g=D.goal;
-    return {live:"The team game. "+met+" of "+ppl.length+" have reached par, and "+plural(q,"quest")+" are done today."+(g&&g.now!=null?" Overdue is down from "+g.start+" to "+g.now+", with a goal of "+g.goal+" by Friday.":""), rec:"The team game: everybody in, nobody ranked. Each person against their own usual week."}; }},
+    return {live:"The team game. "+met+" of "+ppl.length+" have reached par, and "+plural(q,"quest")+" are done today."+(g&&g.now!=null?" Overdue is down from "+g.start+" to "+g.now+", with a goal of "+g.goal+" by Friday.":""), rec:"The team game. Everybody's in, and nobody's ranked. Each person plays against their own usual week."}; }},
 
  // How we served (20 Oct 2026): the agents and clients the week's closes were for, rating the service. The branch as one,
  // and four or five stars by name; never a low rating by name, a comment or a client.
@@ -646,7 +676,7 @@ const SCENES=[
           '<div style="font-size:'+mq('1.35rem','.95rem')+';color:#CDD1DA;line-height:1.45">out of 5, from '+plural(v.agents,"agent")+' and '+plural(v.clients,"client")+' this week.</div></div>'+
         '<div class="panel"><div class="ph">FOUR AND FIVE STARS</div><div style="display:flex;flex-direction:column;gap:.9rem">'+(rec||'<div style="font-size:1.2rem;color:var(--muted)">The first four- and five-star ratings show here.</div>')+'</div></div></div>'; },
   line:()=>{ const v=S().svc; return {live:"How we served. Agents and clients gave the branch "+v.avg+" stars out of 5 this week, from "+plural(v.n,"rating")+".",
-    rec:"How we served: every task closed for an agent or a client, rated by the people we serve."}; }},
+    rec:"How we served. Every task closed for an agent or a client gets rated by the people we serve."}; }},
 
  // Shout-outs (20 Oct 2026): today's wins, everybody's, nobody against anybody.
  {id:"n11",ch:"staff",dwell:14000,when:()=>wins().length>0,
@@ -659,7 +689,7 @@ const SCENES=[
       '<div class="grid two" data-burst-scene="1" style="grid-template-columns:repeat('+(MOB?2:3)+',minmax(0,1fr))">'+ws.map(card).join("")+'</div>'; },
   line:()=>{ const ws=wins(), par=ws.filter(w=>w.k==="par").map(w=>w.who), st=ws.filter(w=>w.k==="stars").length;
     return {live:"Shout-outs. "+plural(ws.length,"win")+" today"+(par.length?". "+andList(par)+" reached par":"")+(st?". "+plural(st,"five-star rating"):"")+". Well done, everybody.",
-      rec:"Shout-outs. Today's wins: par reached, five-star service, levels up, streaks, and every thank-you."}; }},
+      rec:"Shout-outs! Today's wins: par reached, five-star service, levels up, streaks, and every thank-you."}; }},
 
  {id:"n5",ch:"agents",dwell:16000,when:()=>!!A()&&A().n>0,
   html:()=>{ const a=A(), rows=a.rows.slice(0,9), mx=Math.max(1,...rows.map(r=>r.ffMonth));
@@ -674,7 +704,7 @@ const SCENES=[
       '<div class="tiles" style="grid-template-columns:repeat(4,minmax(0,1fr))">'+(a.live?tile(a.planned,"of "+a.n,"projections in today",COL.violet,.2):tile(a.n,"","agents in the branch",COL.violet,.2))+
         tile(a.ffWeek,"","fact finds this week",COL.teal,.32)+tile(a.ffMonth,"","fact finds this month",COL.sky,.44)+tile(a.appsMonth,"","applications this month",COL.gold,.56)+'</div>'+
       '<div class="panel" style="flex:1"><div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem"><div class="ph" style="color:'+COL.violet+'">'+(a.live?"THE AGENT DAY · AND THE MONTH SO FAR":"THE MONTH SO FAR, BY AGENT")+'</div><div class="legend"><span><i class="sw" style="background:'+COL.violet+'"></i>fact finds</span><span><i class="sw" style="background:'+COL.teal+'"></i>applications</span></div></div><div style="display:flex;flex-direction:column;gap:.85rem">'+rows.map(row).join("")+'</div></div>'; },
-  line:()=>{ const a=A(); return {live:"Agents. "+(a.live?a.planned+" of "+a.n+" projections are in today. ":"")+plural(a.ffWeek,"fact find")+" this week, and "+plural(a.appsMonth,"application")+" this month.", rec:"Agents: the day in the field, and the fact finds that turn into cover."}; }},
+  line:()=>{ const a=A(); return {live:"Agents. "+(a.live?a.planned+" of "+a.n+" projections are in today. ":"")+plural(a.ffWeek,"fact find")+" this week, and "+plural(a.appsMonth,"application")+" this month.", rec:"Now, the agents. Their day in the field, and the fact finds that turn into cover."}; }},
 
  {id:"n6",ch:"agents",dwell:15000,when:()=>!!A()&&(A().ffMonth>0||A().fy.pct!=null),
   html:()=>{ const a=A(), fy=a.fy, L=Math.PI*200;
@@ -696,7 +726,7 @@ const SCENES=[
           '<text x="250" y="205" text-anchor="middle" font-size="74" font-weight="800" fill="#F4F1EA" font-family="Archivo,sans-serif">'+(fy.pct==null?'—':fy.pct+'%')+'</text><text x="250" y="240" text-anchor="middle" font-size="20" fill="#A9AEBA" font-family="Archivo,sans-serif">of the year\'s goal</text></svg>'+
           '<div class="a rise" style="--d:1.2s;font-size:1.35rem;text-align:center"><span class="legend" style="display:inline-flex"><span><i class="sw" style="background:'+COL.teal+'"></i>the goal</span><span><i class="sw" style="background:'+COL.gold+'"></i>'+gone+'% of the year gone</span></span>'+(fy.ahead!=null?' · <b style="color:'+(fy.ahead>=100?COL.green:COL.gold)+'">'+fy.ahead+'% of pace</b>':'')+'</div>'+
           (fy.goal?'<div class="a rise" style="--d:1.4s;font-size:1.2rem;color:var(--muted)">'+money(fy.picked||0)+' picked up of a '+money(fy.goal)+' goal</div>':'')+'</div></div>'; },
-  line:()=>{ const a=A(); return {live:"From review to cover. "+plural(a.ffMonth,"fact find")+" this month became "+plural(a.appsMonth,"application")+(a.conv!=null?", "+a.conv+" percent":"")+"."+(a.fy.pct!=null?" The year's goal is "+a.fy.pct+" percent done, with "+a.fy.gone+" percent of the year gone.":""), rec:"From a fact find to a family covered: the month, and the year's goal against the time gone."}; }},
+  line:()=>{ const a=A(); return {live:"From review to cover. "+plural(a.ffMonth,"fact find")+" this month became "+plural(a.appsMonth,"application")+(a.conv!=null?", "+a.conv+" percent":"")+"."+(a.fy.pct!=null?" The year's goal is "+a.fy.pct+" percent done, with "+a.fy.gone+" percent of the year gone.":""), rec:"From a fact find to a family covered. Here's the month, and the year's goal against the time gone."}; }},
 
  {id:"n9",ch:"managers",dwell:17000,when:()=>!!(M()&&M().bm),
   html:()=>{ const m=M(), b=m.bm, gs=m.groups||[], mx=Math.max(1,...gs.map(g=>Math.max(g.done,g.wait)));
@@ -720,7 +750,7 @@ const SCENES=[
           '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem;margin-top:.5rem"><div class="ph">DONE TODAY, AGAINST WHAT WAITS</div><div class="legend"><span><i class="sw" style="background:'+COL.gold+'"></i>done</span><span><i class="sw" style="background:'+COL.teal+'"></i>waiting</span></div></div>'+
           '<div style="display:flex;flex-direction:column;gap:.65rem">'+gs.slice(0,5).map(row).join("")+'</div></div>'+
         '<div class="panel"><div class="ph">AS IT HAPPENS</div><div class="feed">'+(feed||'<div style="color:var(--muted)">Nothing yet today.</div>')+'</div></div></div>'; },
-  line:()=>{ const b=M().bm; return {live:"The Branch Manager's day. "+plural(b.n,"thing")+" done since five this morning: "+plural(b.notes,"note")+" written, "+plural(b.closes,"task")+" closed and "+plural(b.emails,"e-mail")+" answered.", rec:"The Branch Manager's day: everything done from his desk since five, as it happens."}; }},
+  line:()=>{ const b=M().bm; return {live:"The Branch Manager's day. "+plural(b.n,"thing")+" done since five this morning: "+plural(b.notes,"note")+" written, "+plural(b.closes,"task")+" closed and "+plural(b.emails,"e-mail")+" answered.", rec:"The Branch Manager's day. Everything done from his desk since five this morning, as it happens."}; }},
 
  {id:"n7",ch:"managers",dwell:15000,when:()=>!!M(),
   html:()=>{ const m=M(), u=m.unit, cv=m.cover||{out:[],total:0};
@@ -735,14 +765,14 @@ const SCENES=[
         '<div class="panel"><div class="ph">COVER TODAY</div><div style="font-size:'+mq('1.35rem','.95rem')+';line-height:1.5">'+
           (cv.out.length?cv.out.map((o,i)=>'<div class="a slide" style="--d:'+(.5+i*.2).toFixed(2)+'s;padding:.5rem 0;border-top:1px solid var(--line)"><b>'+esc(o.name)+'</b> is out today<br><span style="color:#CDD1DA">covered by '+esc(andList(o.by.map(b=>b.name+" ("+b.n+")"))||"no one yet")+'</span></div>').join(""):'<div class="a pop" style="--d:.5s">Every desk is in.</div>')+
           (m.qp&&m.qp.over!=null?'<div class="a rise" style="--d:1s;margin-top:.8rem;color:'+COL.coral+'">'+m.qp.over+' Query Pal quer'+(m.qp.over===1?'y':'ies')+' past turnaround</div>':'')+'</div></div></div>'; },
-  line:()=>{ const m=M(), u=m.unit, cv=m.cover||{total:0}; return {live:"Leading the branch."+(u?" "+u.lead+"'s unit has "+plural(u.ffMonth,"fact find")+" this month.":"")+(cv.total?" "+plural(cv.total,"task")+" covered today, so no client waits.":" Every desk is in."), rec:"Managers: leading the branch, Akaash's unit in the field, and every desk covered."}; }},
+  line:()=>{ const m=M(), u=m.unit, cv=m.cover||{total:0}; return {live:"Leading the branch."+(u?" "+u.lead+"'s unit has "+plural(u.ffMonth,"fact find")+" this month.":"")+(cv.total?" "+plural(cv.total,"task")+" covered today, so no client waits.":" Every desk is in."), rec:"The managers. Leading the branch, Akaash's unit in the field, and every desk covered."}; }},
 
  {id:"n8",ch:"live",dwell:16000,when:()=>!!(D&&D.ticker&&D.ticker.length),
   html:()=>{ const ev=D.ticker.slice(0,8);
     return head("live","LIVE · WHAT IS HAPPENING NOW","What is happening now","The latest across the branch, newest first. No client is ever named on this wall.")+
       '<div class="grid" style="grid-template-columns:1fr 22rem"><div class="feed">'+ev.map((e,i)=>'<div class="ev a slide" style="--d:'+(.3+i*.22).toFixed(2)+'s"><span class="t">'+esc(e.at)+'</span><span class="dot'+(i===0?' rip':'')+'" style="background:'+(KIND_COL[e.k]||COL.gold)+';color:'+(KIND_COL[e.k]||COL.gold)+'"></span><span><b>'+esc(e.who)+'</b> '+esc(e.what)+'</span></div>').join("")+'</div>'+
       '<div class="panel shine" style="justify-content:center;text-align:center"><div class="ph">TODAY SO FAR</div><div class="huge" style="font-weight:800;font-size:8rem;line-height:1;font-stretch:72%;color:'+COL.coral+'">'+cnt(D.ticker.length,.4)+'</div><div style="font-size:1.3rem;color:#CDD1DA">things done and noted on this feed</div></div></div>'; },
-  line:()=>{ const e=D.ticker[0]; return {live:"And live, right now: "+e.who+" "+e.what+". That is the branch, as it happens.", rec:"And that is what is happening now, live, across the branch."}; }}
+  line:()=>{ const e=D.ticker[0]; return {live:"And live, right now: "+e.who+" "+e.what+". That is the branch, as it happens.", rec:"And that's what's happening right now, live, across the branch."}; }}
 ];
 
 // Akaash at the head of his unit, and his agents by name with their month (20 Oct 2026: "where is Akaash").
@@ -834,10 +864,10 @@ function go(i,stay){
   // A new channel opens with its bumper: a band of its colour and its name, then the scene builds.
   const bump=!stay&&s.ch!==lastCh&&CHN[s.ch]&&!matchMedia("(prefers-reduced-motion: reduce)").matches; lastCh=s.ch;
   if(bump){ const b=document.createElement("div"); b.className="bumper"; b.style.setProperty("--bc",CHN[s.ch][2]);
-    b.innerHTML='<div class="band"></div><div class="bt">'+CHN[s.ch][0]+'</div><div class="bs">'+CHN[s.ch][1]+'</div>'; st.appendChild(b); setTimeout(()=>b.remove(),1600); }
+    b.innerHTML='<div class="band"></div><div class="band b2"></div><div class="bt">'+[...CHN[s.ch][0]].map((c,i)=>'<span class="bl" style="--i:'+i+'">'+c+'</span>').join("")+'</div><div class="bs">'+CHN[s.ch][1]+'</div>'; st.appendChild(b); setTimeout(()=>b.remove(),1600); }
   const el=document.createElement("section"); el.className="scene";
   try{ el.innerHTML=s.html(); }catch(e){ el.innerHTML=head(s.ch,"","Reading the branch…",""); }
-  el.style.setProperty("--chc",(CHN[s.ch]||[0,0,COL.gold])[2]);
+  el.style.setProperty("--chc",(CHN[s.ch]||[0,0,COL.gold])[2]); document.body.style.setProperty("--chg",(CHN[s.ch]||[0,0,COL.gold])[2]);
   const mount=()=>{ st.appendChild(el); try{ fitScene(el); }catch(e){} requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("on"))); runCounters(el); try{ celeAfterMount(el,s); }catch(e){}
     setTimeout(()=>{ try{ if(!MOB) fitScene(el); roll(el,s.dwell); }catch(e){} },700); };
   if(bump) go.mt=setTimeout(mount,780); else mount();
