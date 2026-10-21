@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Motor quote | Ricky Rampersad Branch</title>
 <meta name="description" content="Get a motor insurance quote from Guardian General through the Ricky Rampersad Branch. Sign in with your e-mail, tell us about your vehicle, and the quote comes back to you.">
-<meta name="theme-color" content="#07131f">
+<meta name="theme-color" content="#13408F">
 <meta property="og:title" content="Motor quote | Ricky Rampersad Branch">
 <meta property="og:description" content="Sign in with your e-mail, tell us about your vehicle, and your Guardian General motor quote comes back to you.">
 <link rel="icon" href="/favicon.svg">
@@ -21,19 +21,19 @@
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
   body{margin:0;min-height:100vh;color:var(--body);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-    background:radial-gradient(1200px 600px at 10% -10%,#1B3A8C 0%,transparent 60%),radial-gradient(900px 500px at 110% 10%,rgba(0,229,255,.18) 0%,transparent 55%),linear-gradient(180deg,var(--mid) 0%,var(--mid2) 60%,#0A1536 100%);background-attachment:fixed}
-  header{position:sticky;top:0;z-index:5;background:rgba(7,15,38,.92);backdrop-filter:blur(10px);border-bottom:2px solid var(--cyan);padding:12px 16px;display:flex;align-items:center;gap:11px}
-  .mark{width:38px;height:38px;border-radius:11px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px rgba(0,229,255,.25)}
+    background:radial-gradient(900px 420px at 0% -10%,#DCEBFF 0%,transparent 60%),radial-gradient(700px 400px at 100% 0%,#D9F8FD 0%,transparent 55%),linear-gradient(180deg,#F3F7FD 0%,#EEF3FA 100%)}
+  header{position:sticky;top:0;z-index:5;background:linear-gradient(90deg,#13408F,#1D5BC4);box-shadow:0 4px 18px rgba(19,64,143,.25);padding:12px 16px;display:flex;align-items:center;gap:11px}
+  .mark{width:38px;height:38px;border-radius:11px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
   .mark img{width:100%;height:100%;display:block}
   .brand{color:#fff;font-weight:800;font-size:15px;line-height:1.2;flex:1;letter-spacing:.01em}
-  .brand i{display:block;font-style:normal;font-weight:600;font-size:11.5px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase}
-  .who{color:#9FB4E8;font-size:12.5px;text-align:right;line-height:1.3}
+  .brand i{display:block;font-style:normal;font-weight:600;font-size:11.5px;color:#BFE9FF;letter-spacing:.06em;text-transform:uppercase}
+  .who{color:#DCE8FF;font-size:12.5px;text-align:right;line-height:1.3}
   .who b{display:block;color:#fff;font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .who button{font:inherit;font-size:12px;color:var(--cyan);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+  .who button{font:inherit;font-size:12px;color:#fff;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
   main{width:min(1040px,100% - 28px);margin:18px auto 110px}
   .grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
   @media (min-width:900px){.grid.two{grid-template-columns:minmax(0,1fr) 330px}main{margin-bottom:40px}}
-  .card{background:var(--card);border-radius:20px;padding:22px 20px 20px;margin:0 0 16px;box-shadow:0 18px 50px rgba(2,8,30,.45);position:relative;overflow:hidden}
+  .card{background:var(--card);border-radius:20px;padding:22px 20px 20px;margin:0 0 16px;box-shadow:0 10px 30px rgba(19,64,143,.10);border:1px solid #E3EAF5;position:relative;overflow:hidden}
   .card.hero{padding-top:0}
   .band{margin:0 -20px 18px;padding:26px 20px 22px;background:linear-gradient(135deg,var(--blue) 0%,var(--blue2) 55%,var(--cyan2) 130%);color:#fff;position:relative}
   .band:after{content:"";position:absolute;right:-30px;top:-30px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.08)}
@@ -58,7 +58,7 @@
   .stepper i:before{content:attr(data-n);width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid var(--line);color:var(--dim);display:grid;place-items:center;font-size:12.5px;font-weight:800}
   .stepper i.done:before{content:"✓";background:var(--ok);border-color:var(--ok);color:#fff}
   .stepper i.done{color:var(--ok)}
-  .stepper i.on:before{background:var(--mid);border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 0 5px rgba(0,229,255,.18)}
+  .stepper i.on:before{background:var(--blue2);border-color:var(--blue2);color:#fff;box-shadow:0 0 0 5px rgba(42,109,224,.18)}
   .stepper i.on{color:var(--ink)}
   @media (max-width:420px){.stepper i span{display:none}.stepper i.on span{display:block}}
   /* fields */
@@ -84,7 +84,7 @@
   .send{display:block;width:100%;margin:14px 0 4px;font:inherit;font-size:16px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);border:0;border-radius:14px;padding:15px 16px;cursor:pointer;min-height:52px;box-shadow:0 10px 24px rgba(29,91,196,.4);transition:transform .1s,box-shadow .1s}
   .send:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(29,91,196,.45)}
   .send:disabled{opacity:.55;cursor:default;transform:none}
-  .send.cy{background:linear-gradient(135deg,var(--cyan) 0%,#2BB9FF 100%);color:var(--mid);box-shadow:0 10px 24px rgba(0,229,255,.35)}
+  .send.cy{background:linear-gradient(135deg,#00B8D9 0%,#1D8FE0 100%);color:#fff;box-shadow:0 10px 24px rgba(0,184,217,.3)}
   .ghost{display:block;width:100%;margin:8px 0 0;font:inherit;font-size:15px;font-weight:700;color:var(--blue);background:#fff;border:1.5px solid #C9D8F0;border-radius:14px;padding:12px 14px;cursor:pointer;min-height:48px}
   .nav{display:flex;gap:10px;margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line)}
   .nav .ghost{margin:0;width:auto;flex:0 0 auto;padding:12px 18px}
@@ -100,7 +100,7 @@
   .veh span{display:block;font-size:13px;color:var(--dim)}
   .veh .go{margin-left:auto;color:var(--blue2);font-weight:800;font-size:20px}
   .tick{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--ok),#28C286);color:#fff;display:grid;place-items:center;font-size:38px;font-weight:800;margin:0 auto 12px;box-shadow:0 12px 30px rgba(15,138,95,.35)}
-  .ref{font-size:30px;font-weight:900;color:var(--mid);letter-spacing:.03em;background:var(--soft);border:2px dashed #C9D8F0;border-radius:14px;padding:12px;text-align:center;margin:4px 0 12px}
+  .ref{font-size:30px;font-weight:900;color:var(--blue);letter-spacing:.03em;background:var(--soft);border:2px dashed #C9D8F0;border-radius:14px;padding:12px;text-align:center;margin:4px 0 12px}
   .req{border:1.5px solid var(--line);border-radius:14px;padding:12px 13px;margin:0 0 10px;font-size:14.5px}
   .req b{color:var(--ink);font-size:15px}
   .req .st{display:inline-block;background:#E8F0FF;color:var(--blue);border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700;margin:6px 0 0}
@@ -123,8 +123,8 @@
   .code{letter-spacing:.35em;text-align:center;font-size:26px;font-weight:800}
   .hide{display:none!important}
   .muted{color:var(--dim);font-size:13.5px}
-  footer{text-align:center;color:#9FB4E8;font-size:12px;padding:0 16px 28px}
-  footer a{color:var(--cyan)}
+  footer{text-align:center;color:var(--dim);font-size:12px;padding:0 16px 28px}
+  footer a{color:var(--blue)}
   .chk{display:flex;gap:10px;align-items:flex-start;margin:14px 0 0;font-size:14.5px;cursor:pointer;background:var(--soft);border-radius:12px;padding:11px 12px}
   .chk input{width:22px;height:22px;margin:1px 0 0;flex:none;accent-color:var(--blue2)}
   /* the live summary on a wide screen */
@@ -136,9 +136,9 @@
   .side .kv span:first-child{color:var(--dim)}
   .side .kv span:last-child{color:var(--ink);font-weight:700;text-align:right;overflow-wrap:anywhere}
   .side .empty{color:var(--dim);font-size:13.5px}
-  .side .help{margin:12px 0 0;padding:12px;border-radius:12px;background:linear-gradient(135deg,#0C1C45,#1B3A8C);color:#DCE8FF;font-size:13px}
-  .side .help b{color:#fff;display:block;margin:0 0 3px}
-  .side .help a{color:var(--cyan)}
+  .side .help{margin:12px 0 0;padding:12px;border-radius:12px;background:#E8F0FF;color:var(--body);font-size:13px}
+  .side .help b{color:var(--ink);display:block;margin:0 0 3px}
+  .side .help a{color:var(--blue)}
   .why{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px}
   .why div{background:var(--soft);border-radius:12px;padding:10px 10px 8px;font-size:12.5px;color:var(--body);line-height:1.35}
   .why div b{display:block;font-size:20px;margin:0 0 2px}
