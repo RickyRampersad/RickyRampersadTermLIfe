@@ -80,6 +80,7 @@
   #sno b{color:var(--chg,var(--gold))}
   #sno small{color:var(--muted);font-weight:600;font-size:.9em}
   #sno.pop{animation:pop .55s cubic-bezier(.3,1.5,.5,1) both}
+  body.mob .scene .kick{padding-right:4.8rem}
   body.mob #sno{top:.55rem;right:.7rem;font-size:.72rem;padding:.2rem .55rem .2rem .25rem}body.mob #sno svg{width:1.3rem;height:1.3rem}
   .scene{position:absolute;inset:0;padding:1.9rem 3.4rem 1.2rem;display:flex;flex-direction:column;gap:1.4rem;opacity:0;transition:opacity .6s ease, filter .6s ease}
   .scene.on{opacity:1}
@@ -507,6 +508,41 @@
   .nwaft b{display:block;font-size:1.12rem}.nwaft span{display:block;font-size:.95rem;color:#CDD1DA;line-height:1.35}
   body.mob .nwppr{transform:none;padding:.7rem .7rem .9rem}body.mob .nwppr table{font-size:.58rem}body.mob .nwppr th{font-size:.5rem}body.mob .nwpprm{font-size:.7rem}
   body.mob .nwstamp{font-size:.7rem;top:3.4rem}body.mob .nwprint{font-size:.72rem}body.mob .nwaft b{font-size:.9rem}body.mob .nwaft span{font-size:.75rem}
+  /* channel 5: reminders (w18), the production wall (w19), goals aligned (w20) */
+  .nwwk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.5rem;flex:1;min-height:0}
+  .nwwd{position:relative;display:flex;flex-direction:column;gap:.45rem;background:var(--panel2);border:1px solid var(--line);border-radius:.9rem;padding:.6rem .55rem 2.2rem;min-height:14rem}
+  .nwwd>b{font-size:1.15rem}
+  .nwping{border-radius:.7rem;padding:.45rem .55rem;background:color-mix(in srgb,var(--c) 16%,transparent);border:1px solid color-mix(in srgb,var(--c) 55%,transparent);font-size:.92rem;line-height:1.3;font-weight:700}
+  .nwping em{display:block;font-style:normal;color:var(--c);font-size:.85rem}
+  .nwdaily{position:absolute;left:50%;bottom:.7rem;width:1.1rem;height:1.1rem;margin-left:-.55rem;border-radius:50%;background:var(--teal);box-shadow:0 0 .9rem rgba(79,193,176,.7)}
+  .nwdl{display:flex;align-items:center;gap:.55rem;font-size:1.15rem;color:#E6E2D8}.nwdl i{width:2.4rem;height:.3rem;border-radius:.2rem;background:var(--teal)}.nwdl b.mono{color:var(--teal)}
+  .nwph .nwpick{animation:nwpress .35s ease both var(--ts),nwpickg .4s ease forwards var(--ts)}
+  @keyframes nwpickg{to{background:var(--green);color:#16171B;box-shadow:0 0 .8rem rgba(120,209,152,.7)}}
+  .nwpipe{display:flex;flex-direction:column;gap:.3rem;margin-top:.3rem;font-size:.8rem}.nwpipe>div{display:flex;justify-content:space-between;color:var(--muted)}.nwpipe>div b{color:var(--ink);font-size:.9rem}
+  .nwpipe .bar{display:block;height:.5rem;border-radius:.3rem;background:#2A2E37;overflow:hidden}.nwpipe .bar>i{display:block;height:100%;border-radius:.3rem}
+  .nwshrink{width:58%;background:#7A808E;animation:nwshr .9s cubic-bezier(.2,.8,.2,1) forwards var(--ts)}@keyframes nwshr{to{width:39%}}
+  .nwgrow2{width:52%;background:var(--gold);animation:nwgr2 .9s cubic-bezier(.2,.8,.2,1) forwards var(--ts)}@keyframes nwgr2{to{width:63%}}
+  .nwswap{display:inline-grid}.nwswap i{grid-area:1/1;font-style:normal}.nwswap i:first-child{animation:nwfo .3s ease forwards var(--ts)}.nwswap i:last-child{opacity:0;animation:nwfi .3s ease forwards var(--ts)}
+  @keyframes nwfo{to{opacity:0}}@keyframes nwfi{to{opacity:1}}
+  .nwmbars{flex:1;min-height:9rem;display:flex;align-items:flex-end;gap:.55rem}
+  .nwmbars>div{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:.3rem;min-width:0}
+  .nwmbars>div>span{font-size:.8rem;color:var(--muted)}.nwmbars>div>b{font-size:.85rem;color:var(--muted)}
+  .nwmbars>div>i{width:100%;border-radius:.45rem .45rem .2rem .2rem;background:var(--teal);display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden}
+  .nwmbars>div>i>i{display:block;width:100%;background:var(--gold)}
+  .nwmbars>div:last-child>i{box-shadow:0 0 1rem rgba(79,193,176,.6)}
+  .nwhb{display:flex;gap:3px;height:1.8rem;border-radius:.5rem;overflow:hidden}.nwhb i{display:block;height:100%;transform-origin:left center}
+  .nwld{display:grid;grid-template-columns:6.4rem minmax(0,1fr) 3.6rem;align-items:center;gap:.6rem;font-size:1.2rem;font-weight:700;padding:.35rem 0}
+  .nwld>i{display:block;height:1.1rem;border-radius:.4rem;background:#2A2E37;overflow:hidden}.nwld>i>i{display:block;height:100%;border-radius:.4rem;transform-origin:left center}.nwld b{text-align:right;color:var(--muted)}
+  .nwchain{display:flex;align-items:stretch;gap:.4rem;flex-wrap:nowrap}
+  .nwlink2{flex:1 1 0;min-width:0;border-radius:.9rem;padding:.55rem .7rem;background:var(--panel2);border:1px solid var(--line);border-top:.3rem solid var(--c,var(--teal));display:flex;flex-direction:column;gap:.15rem}
+  .nwlink2 span{font-size:.9rem;color:var(--muted);font-weight:700}.nwlink2 b{font-size:1.25rem;color:var(--ink)}
+  .nwarr{align-self:center;color:var(--teal);font-weight:800;font-size:1.4rem}
+  .nwrings{display:flex;justify-content:space-around;gap:.5rem;flex-wrap:wrap}.nwrings>div{display:flex;flex-direction:column;align-items:center;gap:.25rem}.nwrings b{font-size:1rem}
+  .nwgate{align-self:flex-start;padding:.5rem 1rem;border-radius:.7rem;border:2px solid var(--coral);color:var(--coral);font-weight:800;font-size:1.1rem;letter-spacing:.04em;background:rgba(239,138,107,.08)}
+  body.mob .nwwk{grid-template-columns:repeat(4,minmax(0,1fr))}body.mob .nwwd{min-height:8rem;padding-bottom:1.6rem}body.mob .nwping{font-size:.68rem}body.mob .nwdl{font-size:.8rem}
+  body.mob .nwchain{flex-wrap:wrap}body.mob .nwlink2{flex:1 1 30%}body.mob .nwlink2 b{font-size:.85rem}body.mob .nwarr{display:none}
+  body.mob .nwld{grid-template-columns:4.6rem minmax(0,1fr) 2.6rem;font-size:.8rem}body.mob .nwmbars{min-height:7rem}
+  @media (prefers-reduced-motion:reduce){.nwshrink{width:39%;animation:none}.nwgrow2{width:63%;animation:none}.nwswap i:first-child{opacity:0;animation:none}.nwswap i:last-child{opacity:1;animation:none}}
   /* the phone */
   .nwph{flex:none;width:19rem;height:38rem;border-radius:2.8rem;border:.55rem solid #2A2E37;background:#121317;position:relative;overflow:hidden;box-shadow:0 2rem 4rem rgba(0,0,0,.45),0 0 0 1px #3A3F4A;
     animation:pop .8s cubic-bezier(.3,1.4,.5,1) both;animation-delay:.3s}
@@ -796,7 +832,7 @@ const andList=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.leng
 // On the office wall it plays every other time round (the first time round included); in the sample and on the film every
 // time. ?newway=off takes it off the wall, ?newway=always keeps it on every time; ?film=newway is the film's own cut.
 let LOOPN=0;
-const NW_FILM=["n0","w1","w2","w3","w4","w8","w17","w9","w5","w16","w11","w13","w15","w10","w6","w14","w12","n11","w7"];
+const NW_FILM=["n0","w1","w2","w3","w4","w8","w17","w9","w5","w16","w11","w13","w15","w10","w18","w20","w6","w14","w19","w12","n11","w7"];
 function nwOn(){ const f=Q.get("newway"); if(f==="off") return false; if(DEMO||f==="always"||Q.get("film")==="newway") return true; return LOOPN%2===0; }
 // Each day's mark on the week: letters, a bill, an approval twice, a trophy, a report.
 const NW_GLYPH=[
@@ -1139,6 +1175,61 @@ const SCENES=[
   line:()=>{ const a=A(); return {live:"Fact find insights. "+plural(a.ffMonth||0,"fact find")+" and "+plural(a.appsMonth||0,"application")+" this month.",
     rec:"Fact find insights. Every conversation goes on a fact find, and we read them every single day: the fact finds, the applications, and the year's goals."}; }},
 
+ {id:"w18",ch:"newway",dwell:18000,when:()=>nwOn(),
+  // Ricky, 21 Oct 12:28: "not seeing reminders on fact finds". The follow-up that never lets a yes go quiet: FactFind360's
+  // daily "Did this close?" (about 9:24) and Monday's "started but never sent" (about 8:14), the tracker's fact-find chase
+  // (no fact find in 14 days: Monday asks, Wednesday reminds with the Unit Manager copied, Friday the week to the managers),
+  // and the agent's morning: the book, the FY27 goal, the fact finds. Sample agent and sample figures; no client.
+  html:()=>{ const D7=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const P=[[0,"7:00","No fact find in 14 days? Your response, please",COL.coral],[0,"8:14","Fact finds started, never sent",COL.violet],[2,"7:00","Reminder, the Unit Manager copied",COL.gold],[4,"7:00","The week's answers to the managers",COL.sky]];
+    const week='<div class="nwwk">'+D7.map((d,i)=>'<div class="nwwd a rise" style="--d:'+(.4+i*.08).toFixed(2)+'s"><b>'+d+'</b>'+
+        P.filter(p=>p[0]===i).map((p,j)=>'<div class="nwping a pop" style="--d:'+(1.2+P.indexOf(p)*.55).toFixed(2)+'s;--c:'+p[3]+'"><em class="mono">'+p[1]+'</em>'+esc(p[2])+'</div>').join("")+
+        '<i class="nwdaily a pop" style="--d:'+(3.6+i*.12).toFixed(2)+'s" title="9:24 · Did this close?"></i></div>').join("")+'</div>'+
+      '<div class="nwdl a rise" style="--d:3.4s"><i></i><b class="mono">9:24</b> every day · <b>Did this close?</b> Every yes followed until it is picked up</div>';
+    const phone='<div class="nwph wide" aria-hidden="true" style="height:auto;min-height:33rem">'+
+      '<div class="scr" style="--in:.6s;padding-top:2.4rem"><div class="t2 mono" style="color:var(--teal)">FACT FIND INSIGHTS</div><div class="hi">Darryl, 2 cases need an answer</div>'+
+        '<div class="t2">TT$18k of premium is sitting in pipeline against your name.</div>'+
+        '<div class="tl" style="--td2:1.4s"><b style="font-size:.95rem">2 applications · TT$6k API</b><small>42 days since the fact find</small>'+
+          '<div class="pl" style="margin-top:.35rem"><span class="g nwpick" style="--ts:6.4s">Picked up</span><span>Submitted</span><span>At the branch</span><span>Still working</span><span>Not proceeding</span></div></div>'+
+        '<span class="tap" style="left:2.2rem;top:15.2rem;--ts:6.4s"></span>'+
+        '<div class="t2" style="margin-top:.2rem">Only <b>Picked up</b> counts as API. Nothing here is a reprimand.</div>'+
+        '<div class="nwpipe"><div><span>In pipeline</span><b class="mono"><span class="nwswap" style="--ts:6.9s"><i>TT$18k</i><i>TT$12k</i></span></b></div><i class="bar"><i class="nwshrink" style="--ts:6.9s"></i></i>'+
+          '<div><span>Picked up this month</span><b class="mono" style="color:var(--gold)"><span class="nwswap" style="--ts:6.9s"><i>TT$31k</i><i>TT$37k</i></span></b></div><i class="bar"><i class="nwgrow2" style="--ts:6.9s"></i></i></div>'+
+      '</div></div>';
+    return head("newway","FY27 · NOTHING SLIPS: THE SYSTEM ASKS","Every yes is followed until it closes",
+        "Fact finds and the cases they open are chased for us, on a fixed beat: the agent answers in one tap, the manager sees the answers, and the pipeline stays honest.")+
+      '<div class="grid" style="grid-template-columns:minmax(0,1fr) auto">'+
+        '<div class="panel" style="gap:.8rem"><div class="ph">THE WEEK OF REMINDERS</div>'+week+
+          '<div class="nwrib a rise" style="--d:4.6s"><span><em>5:30</em>Your day: your book, your FY27 goal, your fact finds</span><span><em>1 tap</em>to answer</span></div></div>'+
+        '<div class="panel" style="align-items:center;justify-content:center;background:transparent;border:0;padding:0">'+phone+'</div></div>'; },
+  line:()=>({live:"Nothing slips through. When a client says yes, the system follows it every day until it closes. A fact find started and never sent gets flagged on Monday. And the managers see every answer.",
+    rec:"Nothing slips through. When a client says yes, the system follows it every day until it closes. A fact find started and never sent gets flagged on Monday. And the managers see every answer."})},
+
+ {id:"w20",ch:"newway",dwell:18000,when:()=>nwOn(),
+  // Ricky, 21 Oct 12:29: "and the goals are aligned". Each agent's FY27 Flight Plan on factfind360.com/goals works back
+  // from income need to contacts a week; the unit's goal is the sum of its agents' plans, the branch's the sum of all;
+  // pace is the API goal times the weeks gone over 52, checked every morning; no plan, no fact find (GOAL_GATE).
+  html:()=>{ const a=A()||{}, fy=a.fy||{}, wk=a.week||3;
+    const CH=[["Income need","TT$180k"],["FYC","TT$95k"],["API goal","TT$240k"],["Applications","24 a year"],["Fact finds","2 a week"],["Appointments","4 a week"],["Contacts","20 a week"]];
+    const AG=[["Stephanie",119],["Darryl",96],["Neil",104],["Narissa",74],["Daniel",58]];
+    return head("newway","FY27 · OUR GOALS, ALIGNED","Your numbers add up to the branch's",
+        "Every agent builds the year from their own income need, down to fact finds a week. Agents add up to the unit, the unit to the branch, and the pace is checked every morning.")+
+      '<div class="panel" style="gap:.5rem"><div class="ph">ONE AGENT\'S FY27 FLIGHT PLAN · SAMPLE</div><div class="nwchain">'+CH.map((c,i)=>
+        (i?'<span class="nwarr a lite" style="--d:'+(.5+i*.32).toFixed(2)+'s">→</span>':'')+'<div class="nwlink2 a pop" style="--d:'+(.4+i*.32).toFixed(2)+'s'+(i===2?';--c:var(--gold)':'')+'"><span>'+esc(c[0])+'</span><b class="mono">'+esc(c[1])+'</b></div>').join("")+'</div></div>'+
+      '<div class="grid" style="grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr) minmax(0,1fr)">'+
+        '<div class="panel" style="gap:.5rem"><div class="ph">EACH AGENT · % OF API PACE</div><div class="nwrings" style="flex:1;align-items:center">'+AG.map((g,i)=>
+          '<div class="a pop" style="--d:'+(3+i*.18).toFixed(2)+'s">'+ring(Math.min(g[1],100),100,mq(132,62),g[1]>=100?COL.green:g[1]>=70?COL.gold:COL.coral,3+i*.18,g[1]+"%","")+'<b>'+esc(g[0])+'</b></div>').join("")+'</div>'+
+          '<div class="nwq a rise" style="--d:4.4s;font-size:'+mq('1.05rem','.82rem')+'"><span style="color:var(--gold);font-weight:800">Behind pace</span> joint field work · <span style="color:var(--coral);font-weight:800">No plan</span> sit with them</div></div>'+
+        '<div class="panel" style="gap:.5rem;align-items:center;justify-content:space-around;text-align:center"><div class="ph">AKAASH\'S UNIT</div>'+
+          '<div class="a pop" style="--d:4.6s">'+ring(100,100,mq(210,104),COL.violet,4.6,"107%","of pace")+'</div>'+
+          '<div class="a rise" style="--d:5s;font-size:'+mq('1.05rem','.82rem')+';line-height:1.45">Unit goal <b>TT$1.5m</b><br>pace to date <b>TT$86k</b> · picked up <b>TT$92k</b></div></div>'+
+        '<div class="panel" style="gap:.6rem;justify-content:center"><div class="ph">THE BRANCH · FY27 WEEK '+wk+' OF 52</div>'+
+          '<div class="nwob a rise" style="--d:5.6s"><div><span>Of the year\'s goal</span><b class="mono" style="color:var(--green)">'+(fy.pct!=null?fy.pct:8.6)+'%</b></div><i><i class="a grow" style="width:'+Math.min(100,(fy.pct!=null?fy.pct:8.6)*5)+'%;background:var(--green);--d:5.8s"></i></i></div>'+
+          '<div class="nwob a rise" style="--d:5.9s"><div><span>Of the year gone</span><b class="mono" style="color:var(--muted)">'+(fy.gone!=null?fy.gone:5.5)+'%</b></div><i><i class="a grow" style="width:'+Math.min(100,(fy.gone!=null?fy.gone:5.5)*5)+'%;background:#6B7080;--d:6.1s"></i></i></div>'+
+          '<div class="nwgate a pop" style="--d:6.6s">No plan, no fact find</div></div></div>'; },
+  line:()=>({live:"And our goals are aligned. Each agent builds their goal from their own numbers, all the way down to fact finds a week. Those add up to the unit, the unit adds up to the branch, and the pace is checked every single morning.",
+    rec:"And our goals are aligned. Each agent builds their goal from their own numbers, all the way down to fact finds a week. Those add up to the unit, the unit adds up to the branch, and the pace is checked every single morning."})},
+
  {id:"w6",ch:"newway",dwell:17000,when:()=>nwOn(),
   html:()=>{ const s=S(), t=s&&s.tiles, g=D&&D.goal, ppl=gamePeople(), streaks=ppl.filter(p=>(p.streak||0)>=5).length;
     const star='<svg viewBox="0 0 24 24"><path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="'+COL.gold+'"/></svg>';
@@ -1184,16 +1275,41 @@ const SCENES=[
           '<div style="color:var(--muted)">The first ratings arrive as the work is closed.</div>')+'</div></div>'; },
   line:()=>{ const v=S()&&S().svc||{}; return {live:"And the client feels it."+(v.avg!=null?" The service is rated "+v.avg+" out of 5 by the people we serve.":"")+" Queries answered on time, and every handover recorded.",
     rec:"And the client feels it. Queries answered on time, every handover recorded, and the people we serve rating us."}; }},
+ {id:"w19",ch:"newway",dwell:17000,when:()=>nwOn(),
+  // Ricky, 21 Oct 12:29: "where is the production wall". /board/production.html: the week, the month, the year to date
+  // (picked up: new business and increases), the money written and waiting by age, month by month, who is carrying the
+  // year, the latest pickups. Sample figures and sample names.
+  html:()=>{ const M=[["Feb",310,22],["Mar",420,35],["Apr",380,30],["May",455,41],["Jun",500,38],["Jul",470,52],["Aug",540,47],["Sep",610,58],["Oct",412,31]], mx=700;
+    const HB=[["Under 2 weeks",0.6,COL.gold],["2 to 4 weeks",0.9,"#E9A55F"],["1 to 2 months",1.7,COL.coral],["Over 2 months",5.2,"#C8553D"]], hbT=HB.reduce((a,b)=>a+b[1],0);
+    const LD=[["Stephanie",612],["Darryl",540],["Neil",488],["Narissa",401],["Daniel",322]];
+    return head("newway","FY27 · THE PRODUCTION WALL","Every dollar picked up, on the wall",
+        "The week, the month and the year, the money already written and waiting, and who is carrying the year. Live in the branch, all day.")+
+      '<div class="tiles" style="grid-template-columns:repeat(4,minmax(0,1fr))">'+
+        [["This week","TT$86k","12 pickups · ▲ on last week",COL.teal],["October so far","TT$412k","58 pickups · ▲ on October last year",COL.green],["Year to date","TT$4.9m","618 pickups · ▲ on last year",COL.gold],["Written and waiting","TT$8.4m","152 applications not yet picked up",COL.coral]]
+        .map((t,i)=>'<div class="tile shine a rise" style="--d:'+(.3+i*.15).toFixed(2)+'s;--acc:'+t[3]+'"><div class="l" style="margin:0 0 .2rem">'+t[0]+'</div><div class="v" style="color:'+t[3]+'">'+t[1]+'</div><div class="l">'+t[2]+'</div></div>').join("")+'</div>'+
+      '<div class="grid" style="grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,.9fr)">'+
+        '<div class="panel" style="gap:.5rem"><div class="ph">PICKED UP, MONTH BY MONTH · TT$ THOUSANDS</div><div class="nwmbars">'+M.map((m,i)=>
+          '<div><span class="mono">'+m[1]+'</span><i class="a growy" style="height:'+(100*m[1]/mx).toFixed(1)+'%;--d:'+(.7+i*.12).toFixed(2)+'s"><i style="height:'+(100*m[2]/m[1]).toFixed(1)+'%"></i></i><b>'+m[0]+'</b></div>').join("")+'</div>'+
+          '<div class="klg"><span><i style="background:'+COL.teal+'"></i>New business</span><span><i style="background:'+COL.gold+'"></i>Increases</span></div></div>'+
+        '<div class="panel" style="gap:.6rem"><div class="ph" style="color:'+COL.coral+'">WRITTEN AND WAITING, BY AGE</div><div class="nwhb">'+HB.map((h,i)=>'<i class="a grow" style="flex:'+h[1]+' 1 0;background:'+h[2]+';--d:'+(1.4+i*.2).toFixed(2)+'s"></i>').join("")+'</div>'+
+          HB.map((h,i)=>'<div class="nwq a slide" style="--d:'+(1.6+i*.2).toFixed(2)+'s;font-size:'+mq('1.1rem','.85rem')+'"><i style="width:.9rem;height:.9rem;border-radius:.25rem;background:'+h[2]+';flex:none"></i>'+h[0]+'<em>TT$'+h[1].toFixed(1)+'m</em></div>').join("")+
+          '<div style="font-size:'+mq('1rem','.8rem')+';color:var(--muted)">'+Math.round(100*HB[3][1]/hbT)+'% of it is over two months old: the files to chase first.</div></div>'+
+        '<div class="panel" style="gap:.5rem;justify-content:space-between"><div class="ph" style="color:'+COL.gold+'">WHO IS CARRYING THE YEAR</div>'+LD.map((l,i)=>
+          '<div class="nwld a slide" style="--d:'+(2.2+i*.2).toFixed(2)+'s"><span>'+esc(l[0])+'</span><i><i class="a grow" style="width:'+(100*l[1]/LD[0][1]).toFixed(0)+'%;background:'+(i<3?COL.gold:COL.teal)+';--d:'+(2.4+i*.2).toFixed(2)+'s"></i></i><b class="mono">'+l[1]+'k</b></div>').join("")+
+          '<div style="margin-top:auto;font-size:'+mq('.95rem','.75rem')+';color:var(--muted)">API picked up, sample figures</div></div></div>'; },
+  line:()=>({live:"And here's the production wall. Every policy picked up, this week, this month and this year, and the money already written and waiting to come in.",
+    rec:"And here's the production wall. Every policy picked up, this week, this month and this year, and the money already written and waiting to come in."})},
+
  {id:"w12",ch:"newway",dwell:15000,when:()=>nwOn(),
   html:()=>{ const W=[["Wall Intelligence","Staff, agents, managers and the live feed",COL.green,"chans"],["The Fact Find wall","Fact finds and goals for the year",COL.violet,"bars"],
-      ["The Intelligence wall","Pendings, requirements, lapses and birthdays",COL.sky,"list"],["The groups wall","Every employer group and its open items",COL.gold,"rings"]];
+      ["The Intelligence wall","Pendings, requirements, lapses and birthdays",COL.sky,"list"],["The groups wall","Every employer group and its open items",COL.gold,"rings"],["The production wall","Every dollar picked up, and the money waiting",COL.green,"bars"]];
     const mini=(k,c)=>k==="bars"?'<div class="nwmini bars">'+[62,80,45,92,70].map((h,i)=>'<i class="a growy" style="height:'+h+'%;background:'+c+';--d:'+(.6+i*.12).toFixed(2)+'s"></i>').join("")+'</div>':
       k==="list"?'<div class="nwmini list">'+[1,2,3,4].map(i=>'<i class="a slide" style="--d:'+(.6+i*.15).toFixed(2)+'s;background:'+c+'"></i>').join("")+'</div>':
       k==="rings"?'<div class="nwmini rings">'+[.8,.55,.9].map((f,i)=>'<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#2A2E37" stroke-width="5"/><circle class="a ring" cx="20" cy="20" r="15" fill="none" stroke="'+c+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="94.2" transform="rotate(-90 20 20)" style="--c:94.2;--to:'+(94.2*(1-f)).toFixed(1)+';--d:'+(.6+i*.2).toFixed(2)+'s"/></svg>').join("")+'</div>':
       '<div class="nwmini chans">'+["STAFF","AGENTS","MANAGERS","LIVE","FY27"].map((x,i)=>'<span class="a pop" style="--d:'+(.6+i*.15).toFixed(2)+'s;'+(i===4?'background:'+c+';color:#16171B':'')+'">'+x+'</span>').join("")+'</div>';
     return head("newway","FY27 · OUR WALLS, LIVE IN THE BRANCH","Everyone sees the score",
         "Building a high-performance branch: the work, the goals and the wins on the office screens all day, the same numbers for everyone.")+
-      '<div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">'+W.map((w,i)=>
+      '<div class="grid" style="grid-template-columns:repeat('+mq(5,1)+',minmax(0,1fr))">'+W.map((w,i)=>
         '<div class="panel a pop nwtv" style="--d:'+(.35+i*.25).toFixed(2)+'s;--c:'+w[2]+'"><div class="nwscr">'+mini(w[3],w[2])+'<span class="nwlive"><i></i>LIVE</span></div>'+
           '<b style="font-size:'+mq('1.5rem','1rem')+'">'+esc(w[0])+'</b><span style="font-size:'+mq('1.1rem','.8rem')+';color:var(--muted);line-height:1.4">'+esc(w[1])+'</span></div>').join("")+'</div>'+
       '<div class="nwrib a rise" style="--d:1.8s;justify-content:center"><span>The same numbers for everyone</span><span>Every win seen</span><span>Progress, never a ranking</span><span>Live, all day</span></div>'; },

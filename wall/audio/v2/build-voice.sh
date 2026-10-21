@@ -40,3 +40,6 @@ say w15 "And inside the meeting, it's all there. Your item's ready, the actions 
 echo "Done. Commit the twenty-four wall/audio/v2/*.mp3 files and the wall uses them."
 say w17 "And the transmittal? It's built for you now. Staff receive the papers on the phone, press one button, and out it comes, numbered, stamped and ready to print. Three days later, the department confirms it all arrived."
 say w16 "Let's watch it work. One tap, and it reads everything on the task, says where things stand, and writes the reply in your voice. Want it firmer, shorter, or kinder? One more tap. And nothing posts until you say so."
+say w18 "Nothing slips through. When a client says yes, the system follows it every day until it closes. A fact find started and never sent gets flagged on Monday. And the managers see every answer."
+say w19 "And here's the production wall. Every policy picked up, this week, this month and this year, and the money already written and waiting to come in."
+say w20 "And our goals are aligned. Each agent builds their goal from their own numbers, all the way down to fact finds a week. Those add up to the unit, the unit adds up to the branch, and the pace is checked every single morning."

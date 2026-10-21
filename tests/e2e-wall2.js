@@ -71,9 +71,9 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     await page.goto('http://localhost:8798/wall/?demo=1&view=outside', { waitUntil: 'domcontentloaded' });
     await page.click('#goQuiet');
     const ids = await page.evaluate(() => list().map(s => s.id));
-    ok('twenty-nine scenes in the sample: the ident, FY27\'s sixteen, the twelve, and FY27\'s close at the end', ids.length === 29 && ids.slice(0, 17).join() === 'n0,w1,w2,w3,w4,w8,w17,w9,w5,w16,w11,w13,w15,w10,w6,w14,w12' && ids[28] === 'w7', ids.join(','));
+    ok('thirty-two scenes in the sample: the ident, FY27\'s nineteen, the twelve, and FY27\'s close at the end', ids.length === 32 && ids.slice(0, 20).join() === 'n0,w1,w2,w3,w4,w8,w17,w9,w5,w16,w11,w13,w15,w10,w18,w20,w6,w14,w19,w12' && ids[31] === 'w7', ids.join(','));
     const kicks = [], spill = [], text = [];
-    for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w17', 'w9', 'w5', 'w16', 'w11', 'w13', 'w15', 'w10', 'w6', 'w14', 'w12', 'w7']) {
+    for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w17', 'w9', 'w5', 'w16', 'w11', 'w13', 'w15', 'w10', 'w18', 'w20', 'w6', 'w14', 'w19', 'w12', 'w7']) {
       await page.evaluate(id => go(list().findIndex(s => s.id === id), true), id);
       await page.waitForTimeout(2600);
       kicks.push(await page.evaluate(() => { const e = document.querySelector('.scene.on .kick'); return e ? e.innerText : ''; }));
@@ -88,13 +88,14 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       /Transmittal/.test(all) && /no client waits/.test(all) && /Every manager, one page each morning/.test(all) && /FACT FIND INSIGHTS/.test(all) && /Everyone sees the score/.test(all) &&
       /Every voice heard, with a structure/.test(all) && /The team holds 75 minutes/.test(all) && /Signing in is the register/.test(all) && /The minutes, the same day/.test(all) &&
       /The work shows up for the client/.test(all) &&
-      /Received, stamped, printed, confirmed/.test(all) && /REASON IF NOT SAME DAY/.test(all) && /Watch it write a reply/.test(all) && /Use this reply/.test(all) && /WEDNESDAY, 9:00 TO 10:30/.test(all), all.slice(0, 120));
+      /Received, stamped, printed, confirmed/.test(all) && /REASON IF NOT SAME DAY/.test(all) && /Watch it write a reply/.test(all) && /Use this reply/.test(all) && /WEDNESDAY, 9:00 TO 10:30/.test(all) &&
+      /Every yes is followed until it closes/.test(all) && /Did this close\?/.test(all) && /Every dollar picked up, on the wall/.test(all) && /WHO IS CARRYING THE YEAR/.test(all) && /Your numbers add up to the branch's/.test(all) && /No plan, no fact find/.test(all), all.slice(0, 120));
     ok('the example task carries no client details', /AN EXAMPLE TASK · NO CLIENT DETAILS/.test(all));
     ok('every role named: Branch Manager, Unit Manager, BMA, Sales Support, Agents', ['Branch Manager', 'Unit Manager', 'BMA', 'Sales Support', 'Agents'].every(r => all.indexOf(r) > -1));
     ok('nothing spills sideways', !spill.length, spill.join(', '));
     ok('no page errors', !errs.length, errs.join(' | '));
     await page.goto('http://localhost:8798/wall/?demo=1&film=newway', { waitUntil: 'domcontentloaded' });
-    ok('?film=newway: the film\'s own cut', (await page.evaluate(() => list().map(s => s.id).join())) === 'n0,w1,w2,w3,w4,w8,w17,w9,w5,w16,w11,w13,w15,w10,w6,w14,w12,n11,w7');
+    ok('?film=newway: the film\'s own cut', (await page.evaluate(() => list().map(s => s.id).join())) === 'n0,w1,w2,w3,w4,w8,w17,w9,w5,w16,w11,w13,w15,w10,w18,w20,w6,w14,w19,w12,n11,w7');
     ok('every scene carries its slide number', await page.evaluate(() => { go(3, true); const t = document.querySelector('#sno').innerText.replace(/\s+/g, ' ').trim(); return t === '04 / ' + String(list().length).padStart(2, '0'); }));
     ok('the meeting screens are on the site', (await page.evaluate(async () => (await Promise.all(['build-lap','agenda-lap','register-lap','actions-lap','minutes-lap','signin-ph','onreg-ph','prep-ph'].map(k => fetch('/wall/img/meet/' + k + '.jpg').then(r => r.ok)))).every(Boolean))));
     await page.goto('http://localhost:8798/wall/?demo=1&newway=off', { waitUntil: 'domcontentloaded' });
@@ -108,7 +109,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
       await pg.goto('http://localhost:8798/wall/?demo=1', { waitUntil: 'domcontentloaded' });
       await pg.click('#goQuiet');
       const off = [];
-      for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w17', 'w9', 'w5', 'w16', 'w11', 'w13', 'w15', 'w10', 'w6', 'w14', 'w12', 'w7']) {
+      for (const id of ['w1', 'w2', 'w3', 'w4', 'w8', 'w17', 'w9', 'w5', 'w16', 'w11', 'w13', 'w15', 'w10', 'w18', 'w20', 'w6', 'w14', 'w19', 'w12', 'w7']) {
         await pg.evaluate(id => go(list().findIndex(s => s.id === id), true), id);
         await pg.waitForTimeout(1800);
         if (await pg.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2 || [...document.querySelectorAll('.scene.on *')].some(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 2 || r.left < -2); }))) off.push(id);
