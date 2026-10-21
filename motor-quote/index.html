@@ -14,85 +14,140 @@
      needs, and the request goes to Guardian General's quotes desk from support@ with the branch
      copied. Backend: apps-script/MotorQuote.gs. Setup: MOTOR-QUOTE-SETUP.md. -->
 <style>
-  :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#5d7186;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--tdark:#07606f;--line:#d7e3ea;--paper:#eef4f7;--card:#fff;--okbg:#eef7f2;--ok:#1f6f4a;--warnbg:#fff7df;--warn:#5c3d00;--bad:#8a3324}
+  :root{
+    --mid:#070F26;--mid2:#0C1C45;--blue:#1D5BC4;--blue2:#2A6DE0;--cyan:#00E5FF;--cyan2:#00B8D9;--amber:#FFB020;--gold:#efc24b;
+    --ink:#0E1B33;--body:#2F3F5C;--dim:#6B7A99;--line:#DCE5F2;--card:#fff;--soft:#F1F5FC;--ok:#0F8A5F;--okbg:#E6F7EF;--bad:#C0392B;--badbg:#FDECEA;--warn:#7A4B00;--warnbg:#FFF4DB
+  }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--paper);color:var(--body);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-  header{background:var(--navy);border-bottom:3px solid var(--gold);padding:12px 16px;display:flex;align-items:center;gap:10px}
-  .mark{width:34px;height:34px;border-radius:9px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  body{margin:0;min-height:100vh;color:var(--body);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 10% -10%,#1B3A8C 0%,transparent 60%),radial-gradient(900px 500px at 110% 10%,rgba(0,229,255,.18) 0%,transparent 55%),linear-gradient(180deg,var(--mid) 0%,var(--mid2) 60%,#0A1536 100%);background-attachment:fixed}
+  header{position:sticky;top:0;z-index:5;background:rgba(7,15,38,.92);backdrop-filter:blur(10px);border-bottom:2px solid var(--cyan);padding:12px 16px;display:flex;align-items:center;gap:11px}
+  .mark{width:38px;height:38px;border-radius:11px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px rgba(0,229,255,.25)}
   .mark img{width:100%;height:100%;display:block}
-  .brand{color:#eaf4ff;font-weight:800;font-size:14.5px;line-height:1.25;flex:1}
-  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#8fd8e6}
-  .who{color:#8fd8e6;font-size:12.5px;text-align:right;line-height:1.3}
-  .who b{display:block;color:#eaf4ff;font-weight:700;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .who button{font:inherit;font-size:12px;color:#8fd8e6;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
-  main{width:min(600px,100% - 32px);margin:16px auto 28px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin:0 0 14px}
-  .hero{border-top:4px solid var(--gold)}
-  h1{margin:0 0 6px;color:var(--ink);font-size:22px;line-height:1.3}
-  h2{margin:0 0 10px;color:var(--ink);font-size:17px}
+  .brand{color:#fff;font-weight:800;font-size:15px;line-height:1.2;flex:1;letter-spacing:.01em}
+  .brand i{display:block;font-style:normal;font-weight:600;font-size:11.5px;color:var(--cyan);letter-spacing:.06em;text-transform:uppercase}
+  .who{color:#9FB4E8;font-size:12.5px;text-align:right;line-height:1.3}
+  .who b{display:block;color:#fff;font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .who button{font:inherit;font-size:12px;color:var(--cyan);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+  main{width:min(1040px,100% - 28px);margin:18px auto 110px}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+  @media (min-width:900px){.grid.two{grid-template-columns:minmax(0,1fr) 330px}main{margin-bottom:40px}}
+  .card{background:var(--card);border-radius:20px;padding:22px 20px 20px;margin:0 0 16px;box-shadow:0 18px 50px rgba(2,8,30,.45);position:relative;overflow:hidden}
+  .card.hero{padding-top:0}
+  .band{margin:0 -20px 18px;padding:26px 20px 22px;background:linear-gradient(135deg,var(--blue) 0%,var(--blue2) 55%,var(--cyan2) 130%);color:#fff;position:relative}
+  .band:after{content:"";position:absolute;right:-30px;top:-30px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.08)}
+  .band .big{font-size:44px;line-height:1;margin:0 0 8px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
+  .band h1{color:#fff;margin:0 0 6px;font-size:26px;line-height:1.2;letter-spacing:-.01em}
+  .band p{color:#DCE8FF;margin:0;font-size:15.5px}
+  .band .chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+  .band .chips span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:700}
+  h1{margin:0 0 6px;color:var(--ink);font-size:23px;line-height:1.25;letter-spacing:-.01em}
+  h2{margin:0 0 4px;color:var(--ink);font-size:20px;letter-spacing:-.01em}
   p{margin:0 0 10px}
   .lead{font-size:15.5px}
-  .steps{display:flex;gap:6px;margin:0 0 14px}
-  .steps i{flex:1;height:5px;border-radius:3px;background:#d8e3ea}
-  .steps i.on{background:var(--gold)}
-  .steps i.done{background:var(--tdark)}
-  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold2);margin:0 0 4px}
-  label.f{display:block;margin:0 0 12px}
-  label.f b{display:block;color:var(--ink);font-size:14.5px;margin:0 0 5px}
-  label.f small{display:block;color:var(--dim);font-size:12.5px;margin:3px 0 0}
-  .fld{display:block;width:100%;font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid #bfd9e2;border-radius:10px;padding:10px 12px;min-height:46px}
-  .fld:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
-  textarea.fld{min-height:84px;resize:vertical}
+  .eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--blue2);margin:0 0 6px}
+  .sec{display:flex;align-items:center;gap:10px;margin:18px 0 10px;padding:0 0 8px;border-bottom:2px solid var(--soft)}
+  .sec .ic{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--cyan2));color:#fff;display:grid;place-items:center;font-size:17px;flex:none}
+  .sec b{color:var(--ink);font-size:15px}
+  .sec small{display:block;color:var(--dim);font-size:12.5px;font-weight:500}
+  /* stepper */
+  .stepper{display:flex;align-items:flex-start;margin:4px 0 18px;position:relative}
+  .stepper:before{content:"";position:absolute;left:8%;right:8%;top:15px;height:3px;background:var(--line);border-radius:2px}
+  .stepper i{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;font-style:normal;font-size:10.5px;font-weight:700;color:var(--dim);text-align:center;letter-spacing:.02em}
+  .stepper i:before{content:attr(data-n);width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid var(--line);color:var(--dim);display:grid;place-items:center;font-size:12.5px;font-weight:800}
+  .stepper i.done:before{content:"✓";background:var(--ok);border-color:var(--ok);color:#fff}
+  .stepper i.done{color:var(--ok)}
+  .stepper i.on:before{background:var(--mid);border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 0 5px rgba(0,229,255,.18)}
+  .stepper i.on{color:var(--ink)}
+  @media (max-width:420px){.stepper i span{display:none}.stepper i.on span{display:block}}
+  /* fields */
+  label.f{display:block;margin:0 0 13px}
+  label.f b{display:block;color:var(--ink);font-size:14px;margin:0 0 5px;font-weight:700}
+  label.f b em{font-style:normal;color:var(--bad)}
+  label.f small{display:block;color:var(--dim);font-size:12.5px;margin:4px 0 0}
+  .fld{display:block;width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--soft);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;min-height:48px;transition:border-color .15s,box-shadow .15s,background .15s}
+  .fld:focus{outline:0;background:#fff;border-color:var(--blue2);box-shadow:0 0 0 4px rgba(42,109,224,.15)}
+  select.fld{appearance:none;-webkit-appearance:none;padding-right:40px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231D5BC4' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center}
+  select.fld.empty{color:var(--dim)}
+  textarea.fld{min-height:90px;resize:vertical}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
   @media (max-width:420px){.row{grid-template-columns:1fr}}
   .opts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 4px}
-  .opts button{font:inherit;font-size:15px;font-weight:700;color:var(--tdark);background:#fff;border:1px solid #bfd9e2;border-radius:10px;padding:9px 13px;cursor:pointer;min-height:44px}
-  .opts button.on{background:var(--okbg);border-color:#9fd0b6;color:var(--ok)}
-  .send{display:block;width:100%;margin:14px 0 4px;font:inherit;font-size:16px;font-weight:800;color:var(--gold);background:var(--navy);border:0;border-radius:12px;padding:14px 16px;cursor:pointer;min-height:50px}
-  .send:disabled{opacity:.55;cursor:default}
-  .ghost{display:block;width:100%;margin:8px 0 0;font:inherit;font-size:15px;font-weight:700;color:var(--tdark);background:#fff;border:1px solid #bfd9e2;border-radius:12px;padding:11px 14px;cursor:pointer;min-height:46px}
-  .nav{display:flex;gap:10px;margin:14px 0 0}
-  .nav .ghost{margin:0;width:auto;flex:0 0 auto;padding:11px 16px}
+  .opts button{font:inherit;font-size:14.5px;font-weight:700;color:var(--blue);background:#fff;border:1.5px solid #C9D8F0;border-radius:999px;padding:9px 15px;cursor:pointer;min-height:44px;transition:all .12s}
+  .opts button:hover{border-color:var(--blue2)}
+  .opts button.on{background:linear-gradient(135deg,var(--blue),var(--blue2));border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(29,91,196,.35)}
+  .opts.big{display:grid;grid-template-columns:1fr;gap:10px}
+  .opts.big button{border-radius:14px;text-align:left;padding:13px 15px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:60px}
+  .opts.big button small{font-weight:500;font-size:12.5px;color:var(--dim)}
+  .opts.big button.on small{color:#DCE8FF}
+  .send{display:block;width:100%;margin:14px 0 4px;font:inherit;font-size:16px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);border:0;border-radius:14px;padding:15px 16px;cursor:pointer;min-height:52px;box-shadow:0 10px 24px rgba(29,91,196,.4);transition:transform .1s,box-shadow .1s}
+  .send:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(29,91,196,.45)}
+  .send:disabled{opacity:.55;cursor:default;transform:none}
+  .send.cy{background:linear-gradient(135deg,var(--cyan) 0%,#2BB9FF 100%);color:var(--mid);box-shadow:0 10px 24px rgba(0,229,255,.35)}
+  .ghost{display:block;width:100%;margin:8px 0 0;font:inherit;font-size:15px;font-weight:700;color:var(--blue);background:#fff;border:1.5px solid #C9D8F0;border-radius:14px;padding:12px 14px;cursor:pointer;min-height:48px}
+  .nav{display:flex;gap:10px;margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+  .nav .ghost{margin:0;width:auto;flex:0 0 auto;padding:12px 18px}
   .nav .send{margin:0;flex:1}
-  .note{background:var(--warnbg);border:1px solid #efd9a0;color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px;margin:0 0 12px}
-  .err{color:var(--bad);font-weight:600;font-size:14.5px;margin:8px 0 0;min-height:0}
-  .okmsg{color:var(--ok);font-weight:700;font-size:14.5px;margin:8px 0 0}
-  .veh{display:flex;gap:10px;align-items:center;border:1px solid #bfd9e2;border-radius:12px;padding:11px 12px;margin:0 0 8px;cursor:pointer;background:#fff;width:100%;text-align:left;font:inherit;color:var(--body)}
-  .veh.on{border-color:#9fd0b6;background:var(--okbg)}
-  .veh .ic{width:38px;height:38px;border-radius:9px;background:#eef4f7;display:grid;place-items:center;font-size:20px;flex:none}
-  .veh b{display:block;color:var(--ink);font-size:15px}
+  @media (max-width:899px){.nav{position:sticky;bottom:0;background:#fff;margin:18px -20px -20px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -10px 24px rgba(2,8,30,.08)}}
+  .note{background:var(--warnbg);border:1px solid #F3D48A;color:var(--warn);border-radius:12px;padding:10px 13px;font-size:14px;margin:0 0 14px}
+  .err{color:var(--bad);font-weight:700;font-size:14.5px;margin:10px 0 0;min-height:0}
+  .err:not(:empty){background:var(--badbg);border-radius:10px;padding:9px 12px}
+  .veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:16px;padding:12px 13px;margin:0 0 10px;cursor:pointer;background:#fff;width:100%;text-align:left;font:inherit;color:var(--body);transition:all .12s}
+  .veh:hover{border-color:var(--blue2);box-shadow:0 8px 20px rgba(29,91,196,.12)}
+  .veh .ic{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#E8F0FF,#D6FBFF);display:grid;place-items:center;font-size:24px;flex:none}
+  .veh b{display:block;color:var(--ink);font-size:15.5px}
   .veh span{display:block;font-size:13px;color:var(--dim)}
-  .tick{width:46px;height:46px;border-radius:50%;background:var(--okbg);color:var(--ok);display:grid;place-items:center;font-size:26px;font-weight:800;margin:0 0 8px}
-  .ref{font-size:26px;font-weight:800;color:var(--navy);letter-spacing:.02em}
-  .req{border-top:1px solid var(--line);padding:10px 0 4px;font-size:14.5px}
-  .req b{color:var(--ink)}
-  .req .st{display:inline-block;background:#eef4f7;color:var(--tdark);border-radius:8px;padding:2px 8px;font-size:12.5px;font-weight:700;margin:4px 0 0}
+  .veh .go{margin-left:auto;color:var(--blue2);font-weight:800;font-size:20px}
+  .tick{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--ok),#28C286);color:#fff;display:grid;place-items:center;font-size:38px;font-weight:800;margin:0 auto 12px;box-shadow:0 12px 30px rgba(15,138,95,.35)}
+  .ref{font-size:30px;font-weight:900;color:var(--mid);letter-spacing:.03em;background:var(--soft);border:2px dashed #C9D8F0;border-radius:14px;padding:12px;text-align:center;margin:4px 0 12px}
+  .req{border:1.5px solid var(--line);border-radius:14px;padding:12px 13px;margin:0 0 10px;font-size:14.5px}
+  .req b{color:var(--ink);font-size:15px}
+  .req .st{display:inline-block;background:#E8F0FF;color:var(--blue);border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700;margin:6px 0 0}
+  .req .st.ok{background:var(--okbg);color:var(--ok)}
   .rev{font-size:14.5px}
-  .rev h3{margin:12px 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold2)}
-  .rev div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #e6edf2;padding:5px 0}
+  .rev h3{margin:14px 0 4px;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue2)}
+  .rev div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--soft);padding:6px 0}
   .rev div span:first-child{color:var(--dim);flex:0 0 42%}
-  .rev div span:last-child{color:var(--ink);font-weight:600;text-align:right;overflow-wrap:anywhere}
-  .files{display:flex;flex-direction:column;gap:8px}
-  .file{display:flex;align-items:center;gap:10px;border:1px dashed #bfd9e2;border-radius:12px;padding:10px 12px;background:#fff}
-  .file img{width:48px;height:48px;object-fit:cover;border-radius:8px;background:#eef4f7;flex:none}
-  .file .nm{flex:1;font-size:14px;color:var(--ink);overflow-wrap:anywhere}
-  .file .nm small{display:block;color:var(--dim);font-size:12.5px}
-  .file label{color:var(--tdark);font-weight:700;cursor:pointer;font-size:14.5px}
+  .rev div span:last-child{color:var(--ink);font-weight:700;text-align:right;overflow-wrap:anywhere}
+  .files{display:flex;flex-direction:column;gap:10px}
+  .file{display:flex;align-items:center;gap:12px;border:2px dashed #C9D8F0;border-radius:14px;padding:11px 13px;background:var(--soft)}
+  .file.has{border-style:solid;border-color:#9FD8C4;background:var(--okbg)}
+  .file img{width:52px;height:52px;object-fit:cover;border-radius:10px;background:#fff;flex:none}
+  .file .ph{width:52px;height:52px;border-radius:10px;background:#fff;display:grid;place-items:center;font-size:26px;flex:none}
+  .file .nm{flex:1;font-size:14px;color:var(--ink);font-weight:700;overflow-wrap:anywhere}
+  .file .nm small{display:block;color:var(--dim);font-size:12.5px;font-weight:500}
+  .file label{color:#fff;background:var(--blue2);border-radius:999px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:14px;flex:none}
   .file input{display:none}
-  .file button{font:inherit;font-size:13px;color:var(--bad);background:none;border:0;cursor:pointer;padding:4px}
-  .code{letter-spacing:.3em;text-align:center;font-size:24px;font-weight:800}
+  .file button{font:inherit;font-size:13px;color:var(--bad);background:none;border:0;cursor:pointer;padding:4px;font-weight:700}
+  .code{letter-spacing:.35em;text-align:center;font-size:26px;font-weight:800}
   .hide{display:none!important}
   .muted{color:var(--dim);font-size:13.5px}
-  footer{text-align:center;color:var(--dim);font-size:12px;padding:0 16px 24px}
-  footer a{color:var(--tdark)}
-  .chk{display:flex;gap:9px;align-items:flex-start;margin:9px 0 0;font-size:14.5px;cursor:pointer}
-  .chk input{width:20px;height:20px;margin:2px 0 0;flex:none}
+  footer{text-align:center;color:#9FB4E8;font-size:12px;padding:0 16px 28px}
+  footer a{color:var(--cyan)}
+  .chk{display:flex;gap:10px;align-items:flex-start;margin:14px 0 0;font-size:14.5px;cursor:pointer;background:var(--soft);border-radius:12px;padding:11px 12px}
+  .chk input{width:22px;height:22px;margin:1px 0 0;flex:none;accent-color:var(--blue2)}
+  /* the live summary on a wide screen */
+  .side{display:none}
+  @media (min-width:900px){.side{display:block;position:sticky;top:78px}}
+  .side .card{padding:18px 18px 14px}
+  .side h4{margin:0 0 10px;color:var(--ink);font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+  .side .kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;border-top:1px solid var(--soft);padding:6px 0}
+  .side .kv span:first-child{color:var(--dim)}
+  .side .kv span:last-child{color:var(--ink);font-weight:700;text-align:right;overflow-wrap:anywhere}
+  .side .empty{color:var(--dim);font-size:13.5px}
+  .side .help{margin:12px 0 0;padding:12px;border-radius:12px;background:linear-gradient(135deg,#0C1C45,#1B3A8C);color:#DCE8FF;font-size:13px}
+  .side .help b{color:#fff;display:block;margin:0 0 3px}
+  .side .help a{color:var(--cyan)}
+  .why{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px}
+  .why div{background:var(--soft);border-radius:12px;padding:10px 10px 8px;font-size:12.5px;color:var(--body);line-height:1.35}
+  .why div b{display:block;font-size:20px;margin:0 0 2px}
+  @media (max-width:420px){.why{grid-template-columns:1fr 1fr 1fr;gap:6px}.why div{padding:8px 7px 6px;font-size:11.5px}}
 </style>
 </head>
 <body>
 <header>
-  <div class="mark"><img src="/logo-mark.png" width="34" height="34" alt=""></div>
+  <div class="mark"><img src="/logo-mark.png" width="38" height="38" alt=""></div>
   <div class="brand">Ricky Rampersad Branch<i>Motor quotes · Guardian General</i></div>
   <div class="who hide" id="who"><b id="whoName"></b><button type="button" onclick="signOut()">Sign out</button></div>
 </header>
@@ -101,13 +156,16 @@
 
   <!-- 0 · sign in -->
   <section class="card hero" id="s-signin">
-    <div class="eyebrow">Your motor quote</div>
-    <h1>Tell us about your vehicle. We bring back the price.</h1>
-    <p class="lead">Sign in with your e-mail. If you are already a client of ours, we fill in what we hold for you. If not, welcome: it takes about five minutes.</p>
+    <div class="band">
+      <div class="big">🚗</div>
+      <h1>Your motor quote, from your phone.</h1>
+      <p>Sign in with your e-mail. If you are already a client of ours, we fill in what we hold. If not, welcome: it takes about five minutes.</p>
+      <div class="chips"><span>No password</span><span>Guardian General</span><span>Reply in two working days</span></div>
+    </div>
     <div id="emailBox">
       <label class="f"><b>Your e-mail</b><input class="fld" id="email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com"></label>
       <button class="send" id="btnCode" onclick="requestCode()">Send me a sign-in code</button>
-      <p class="muted" style="margin-top:8px">A six-digit code comes to your inbox. No password to remember.</p>
+      <p class="muted" style="margin-top:10px">A six-digit code comes to your inbox. Nothing to remember.</p>
     </div>
     <div id="codeBox" class="hide">
       <p id="codeMsg"></p>
@@ -116,43 +174,53 @@
       <button class="ghost" onclick="backToEmail()">Use a different e-mail</button>
     </div>
     <p class="err" id="signinErr"></p>
+    <div class="why">
+      <div><b>1</b>Tell us about the vehicle</div>
+      <div><b>2</b>The desk prices it</div>
+      <div><b>3</b>We call you with the quote</div>
+    </div>
   </section>
 
   <!-- home when signed in -->
-  <section class="card hide" id="s-home">
-    <div class="eyebrow">Welcome<span id="homeBack"></span></div>
-    <h1 id="homeTitle">Good day.</h1>
-    <p id="homeLead" class="lead"></p>
+  <section class="card hero hide" id="s-home">
+    <div class="band">
+      <div class="eyebrow" style="color:#BFE9FF">Welcome<span id="homeBack"></span></div>
+      <h1 id="homeTitle">Good day.</h1>
+      <p id="homeLead"></p>
+    </div>
     <div id="homeVeh"></div>
-    <button class="send" onclick="startNew()">Start a motor quote</button>
+    <button class="send cy" onclick="startNew()">Start a motor quote</button>
     <div id="reqs"></div>
   </section>
 
   <!-- the steps -->
-  <section class="card hide" id="s-form">
-    <div class="steps" id="steps"></div>
-    <div id="step"></div>
-    <p class="err" id="formErr"></p>
-    <div class="nav">
-      <button class="ghost" id="btnBack" onclick="go(-1)">Back</button>
-      <button class="send" id="btnNext" onclick="go(1)">Continue</button>
-    </div>
-  </section>
+  <div class="grid two hide" id="s-form">
+    <section class="card">
+      <div class="stepper" id="steps"></div>
+      <div id="step"></div>
+      <p class="err" id="formErr"></p>
+      <div class="nav">
+        <button class="ghost" id="btnBack" onclick="go(-1)">Back</button>
+        <button class="send" id="btnNext" onclick="go(1)">Continue</button>
+      </div>
+    </section>
+    <aside class="side"><div class="card"><h4>Your request so far</h4><div id="sideSum"></div>
+      <div class="help"><b>Need a hand?</b>Call the branch on <a href="tel:+18682266461">(868) 226-6461</a> and we finish it with you on the line.</div></div></aside>
+  </div>
 
   <!-- done -->
-  <section class="card hero hide" id="s-done">
+  <section class="card hide" id="s-done" style="text-align:center">
     <div class="tick">✓</div>
     <h1>Your request has gone.</h1>
-    <p>Your reference is</p>
+    <p class="muted">Your reference</p>
     <p class="ref" id="doneRef"></p>
-    <p id="doneMsg"></p>
-    <p><b>What happens next</b></p>
-    <ol style="padding-left:20px;margin:0 0 12px">
-      <li>The quotes desk prices the cover from what you told us.</li>
-      <li>The quote comes back to our branch and to your e-mail, usually within two working days.</li>
-      <li>A member of our team calls you to go through it and, if you wish, to put the cover in place.</li>
-    </ol>
-    <p class="muted">A receipt with everything you told us is on its way to your inbox. Sign in here any time to see where your request stands.</p>
+    <p id="doneMsg" style="text-align:left"></p>
+    <div class="why" style="text-align:left">
+      <div><b>1</b>The desk prices the cover</div>
+      <div><b>2</b>The quote comes to your e-mail</div>
+      <div><b>3</b>We call you to go through it</div>
+    </div>
+    <p class="muted" style="margin-top:12px;text-align:left">A receipt with everything you told us is on its way to your inbox. Sign in here any time to see where your request stands.</p>
     <button class="ghost" onclick="showHome()">Back to my quotes</button>
   </section>
 </main>
@@ -173,9 +241,17 @@ let session = null, me = null, requests = [], draft = {}, files = [], stepIx = 0
 try { session = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) {}
 try { draft = JSON.parse(localStorage.getItem(DKEY) || '{}') || {}; } catch (e) {}
 
-const COVERS = ['Comprehensive', 'Third Party, Fire & Theft', 'Third Party Only'];
+/* The lists behind the drop-downs. "Other" is always there, and a typed answer is kept. */
+const COVERS = [['Comprehensive', 'Your own vehicle, and damage to others'], ['Third Party, Fire & Theft', 'Others, plus fire and theft of yours'], ['Third Party Only', 'Damage to others only']];
+const MAKES = ['Toyota', 'Nissan', 'Honda', 'Hyundai', 'Kia', 'Suzuki', 'Mazda', 'Mitsubishi', 'Ford', 'Chevrolet', 'Volkswagen', 'Mercedes-Benz', 'BMW', 'Audi', 'Lexus', 'Subaru', 'Isuzu', 'Jeep', 'Land Rover', 'Peugeot', 'Haval', 'BYD', 'MG', 'Chery', 'Other'];
 const BODIES = ['Sedan', 'Hatchback', 'SUV', 'Pickup', 'Van', 'Truck', 'Motorcycle', 'Other'];
+const SEATS = ['2', '4', '5', '6', '7', '8', '9 or more'];
+const CCS = ['Under 1000', '1000', '1200', '1300', '1500', '1600', '1800', '2000', '2400', '2500', '2700', '3000', '3500', 'Over 3500', 'Electric'];
 const NCDS = ['None', '1 year', '2 years', '3 years', '4 years', '5 years or more'];
+const DRIVING = ['Less than 1', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'More than 10'];
+const INSURERS = ['None, first vehicle', 'Guardian General', 'Beacon Insurance', 'Sagicor General', 'TATIL', 'Maritime General', 'COLFIRE', 'Gulf Insurance', 'Trinre', 'Furness Anchorage General', 'NAGICO', 'Massy United Insurance', 'Bankers Insurance', 'Capital Insurance', 'Motor One', 'Other'];
+const BANKS = ['Republic Bank', 'Scotiabank', 'RBC Royal Bank', 'First Citizens', 'JMMB Bank', 'Eastern Credit Union', 'TECU Credit Union', 'Venture Credit Union', 'RHAND Credit Union', 'Aero Services Credit Union', 'Guardian Group', 'A car dealer\'s finance', 'Other'];
+const YEARS = (() => { const y = new Date().getFullYear() + 1, out = []; for (let i = y; i >= 1990; i--) out.push(String(i)); out.push('Before 1990'); return out; })();
 
 /* ---- API ---- */
 async function api(action, body) {
@@ -243,23 +319,23 @@ function showHome() {
     ? 'You are a client of ours, so we have filled in what we already hold. Pick one of your vehicles to quote again, or start with a new one.'
     : 'Tell us about your vehicle and the cover you want. The quote comes back to ' + ((session && session.email) || 'your e-mail') + '.';
   $('homeVeh').innerHTML = (me && me.vehicles && me.vehicles.length)
-    ? '<p class="eyebrow" style="margin-top:6px">Your vehicles with us</p>' + me.vehicles.map((v, i) =>
+    ? '<div class="sec"><span class="ic">🚘</span><div><b>Your vehicles with us</b><small>Tap one to quote it again</small></div></div>' + me.vehicles.map((v, i) =>
       '<button type="button" class="veh" onclick="startNew(' + i + ')"><span class="ic">🚗</span><span><b>' + esc([v.year, v.make, v.model].filter(Boolean).join(' ') || v.reg) +
-      '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + (v.to ? ' · cover to ' + esc(String(v.to).slice(0, 10)) : '') + '</span></span></button>').join('')
+      '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + (v.to ? ' · cover to ' + esc(String(v.to).slice(0, 10)) : '') + '</span></span><span class="go">›</span></button>').join('')
     : '';
-  $('reqs').innerHTML = requests.length ? '<p class="eyebrow" style="margin-top:16px">Your requests</p>' + requests.map(r =>
+  $('reqs').innerHTML = requests.length ? '<div class="sec" style="margin-top:22px"><span class="ic">🧾</span><div><b>Your requests</b><small>Where each one stands</small></div></div>' + requests.map(r =>
     '<div class="req"><b>' + esc(r.ref) + '</b> · ' + esc(r.when) + '<br>' + esc(r.vehicle || r.reg) + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + ' · ' + esc(r.cover) +
-    '<br><span class="st">' + esc(r.status || 'Received') + (r.quotedOn ? ' · quoted ' + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</span></div>').join('') : '';
+    '<br><span class="st' + (r.quotedOn || /quote sent|bound|done/i.test(r.status || '') ? ' ok' : '') + '">' + esc(r.status || 'Received') + (r.quotedOn ? ' · quoted ' + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</span></div>').join('') : '';
 }
 
 /* ---- the steps ---- */
 const STEPS = [
-  { key: 'you', title: 'About you', render: stepYou, check: d => need(d, ['name', 'mobile']) || (d.ownerType === 'Company' && !d.company ? 'Please give the company name.' : '') },
-  { key: 'vehicle', title: 'Your vehicle', render: stepVehicle, check: d => need(d, ['reg', 'make', 'model', 'year', 'value']) || (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') },
-  { key: 'cover', title: 'The cover', render: stepCover, check: d => need(d, ['cover', 'drivingYears']) },
-  { key: 'driver', title: 'The driver', render: stepDriver, check: d => need(d, ['permit']) || (d.accidents === 'Yes' && !d.accidentDetails ? 'Please say a little about the accident.' : '') },
-  { key: 'docs', title: 'Your documents', render: stepDocs, check: () => '' },
-  { key: 'review', title: 'Check and send', render: stepReview, check: () => '' },
+  { key: 'you', title: 'About you', short: 'You', render: stepYou, check: d => need(d, ['name', 'mobile']) || (d.ownerType === 'Company' && !d.company ? 'Please give the company name.' : '') },
+  { key: 'vehicle', title: 'Your vehicle', short: 'Vehicle', render: stepVehicle, check: d => need(d, ['reg', 'make', 'model', 'year', 'value']) || (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') },
+  { key: 'cover', title: 'The cover', short: 'Cover', render: stepCover, check: d => need(d, ['cover', 'drivingYears']) },
+  { key: 'driver', title: 'The driver', short: 'Driver', render: stepDriver, check: d => need(d, ['permit']) || (d.accidents === 'Yes' && !d.accidentDetails ? 'Please say a little about the accident.' : '') },
+  { key: 'docs', title: 'Your documents', short: 'Papers', render: stepDocs, check: () => '' },
+  { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' },
 ];
 const LABELS = { name: 'your name', mobile: 'your mobile', company: 'the company name', reg: 'the vehicle number', make: 'the make', model: 'the model', year: 'the year', value: 'the vehicle value', cover: 'the cover you want', drivingYears: 'how long you have been driving', permit: "your driver's permit number" };
 function need(d, keys) { const m = keys.filter(k => !String(d[k] || '').trim()); return m.length ? 'Still needed: ' + m.map(k => LABELS[k] || k).join(', ') + '.' : ''; }
@@ -278,7 +354,7 @@ function startNew(vehIx) {
   if (vehIx != null && me && me.vehicles[vehIx]) {
     const v = me.vehicles[vehIx];
     Object.assign(draft, { reg: v.reg || '', make: v.make || '', model: v.model || '', year: v.year ? String(v.year) : '', sfVehicle: v.reg || '',
-      cover: v.cover ? (COVERS.find(c => c.toLowerCase().indexOf(String(v.cover).toLowerCase().split(' ')[0]) === 0) || draft.cover || '') : (draft.cover || ''),
+      cover: v.cover ? ((COVERS.find(c => c[0].toLowerCase().indexOf(String(v.cover).toLowerCase().split(' ')[0]) === 0) || [draft.cover || ''])[0]) : (draft.cover || ''),
       value: v.sumInsured ? String(Math.round(Number(v.sumInsured))) : (draft.value || ''), prevInsurer: v.carrier || draft.prevInsurer || '',
       windscreen: v.windscreen ? 'Yes' : (draft.windscreen || '') });
   }
@@ -286,7 +362,7 @@ function startNew(vehIx) {
   saveDraft(); stepIx = 0; files = []; show('s-form'); render();
 }
 function render() {
-  $('steps').innerHTML = STEPS.map((s, i) => '<i class="' + (i < stepIx ? 'done' : i === stepIx ? 'on' : '') + '"></i>').join('');
+  $('steps').innerHTML = STEPS.map((s, i) => '<i data-n="' + (i + 1) + '" class="' + (i < stepIx ? 'done' : i === stepIx ? 'on' : '') + '"><span>' + s.short + '</span></i>').join('');
   const s = STEPS[stepIx];
   $('step').innerHTML = '<div class="eyebrow">Step ' + (stepIx + 1) + ' of ' + STEPS.length + '</div><h2>' + s.title + '</h2>' + s.render(draft);
   $('formErr').textContent = '';
@@ -294,17 +370,31 @@ function render() {
   $('btnNext').textContent = stepIx === STEPS.length - 1 ? 'Send my request' : 'Continue';
   $('btnNext').disabled = false;
   if (s.key === 'docs') wireFiles();
+  $('step').querySelectorAll('select.fld').forEach(el => { el.classList.toggle('empty', !el.value); el.addEventListener('change', () => { el.classList.toggle('empty', !el.value); otherBox(el); collect(); side(); }); otherBox(el); });
+  $('step').querySelectorAll('input.fld, textarea.fld').forEach(el => el.addEventListener('input', () => { collect(); side(); }));
+  side();
   window.scrollTo(0, 0);
 }
+/* A drop-down's "Other" opens a box to type the answer; the typed answer is what is sent. */
+function otherBox(el) {
+  const box = el.parentNode.querySelector('.other');
+  if (!box) return;
+  box.classList.toggle('hide', !/^other$/i.test(el.value));
+}
 function collect() {
-  $('step').querySelectorAll('[data-k]').forEach(el => { draft[el.dataset.k] = el.type === 'checkbox' ? (el.checked ? 'Yes' : 'No') : el.value.trim(); });
+  $('step').querySelectorAll('[data-k]').forEach(el => {
+    if (el.type === 'checkbox') { draft[el.dataset.k] = el.checked ? 'Yes' : 'No'; return; }
+    if (el.tagName === 'SELECT' && /^other$/i.test(el.value)) { const o = el.parentNode.querySelector('.other input'); draft[el.dataset.k] = (o && o.value.trim()) || 'Other'; return; }
+    if (el.dataset.other) return;
+    draft[el.dataset.k] = el.value.trim();
+  });
   saveDraft();
 }
 function pick(k, v, el) {
   draft[k] = v; saveDraft(); el.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el));
-  /* A typed box for the same answer (years driving) takes the tap too, or collect() would read it back empty. */
+  /* A typed box for the same answer takes the tap too, or collect() would read it back empty. */
   const box = $('step').querySelector('[data-k="' + k + '"]'); if (box) box.value = v;
-  onPick(k);
+  onPick(k); side();
 }
 function onPick(k) {
   const dep = { ownerType: 'companyBox', mortgaged: 'instBox', accidents: 'accBox' }[k];
@@ -318,59 +408,84 @@ async function go(dir) {
   if (stepIx < STEPS.length - 1) { stepIx++; render(); return; }
   await submit();
 }
+/* The summary beside the form on a wide screen. */
+function side() {
+  const d = draft, el = $('sideSum'); if (!el) return;
+  const rows = [['Name', d.name], ['Mobile', d.mobile], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Registration', d.reg],
+    ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears],
+    ['No claim discount', d.ncd], ['Permit', d.permit], ['Documents', files.length ? files.map(f => f.kind).join(', ') : '']].filter(r => r[1]);
+  el.innerHTML = rows.length ? rows.map(r => '<div class="kv"><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('') : '<p class="empty">What you fill in appears here as you go.</p>';
+}
 
 /* ---- field helpers ---- */
-const inp = (k, label, o = {}) => '<label class="f"><b>' + label + '</b><input class="fld" data-k="' + k + '" type="' + (o.type || 'text') + '" value="' + esc(draft[k] || '') + '"' +
-  (o.ph ? ' placeholder="' + esc(o.ph) + '"' : '') + (o.mode ? ' inputmode="' + o.mode + '"' : '') + (o.ac ? ' autocomplete="' + o.ac + '"' : '') + (o.max ? ' maxlength="' + o.max + '"' : '') + '>' +
+const req = '<em>*</em>';
+const inp = (k, label, o = {}) => '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + '</b><input class="fld" data-k="' + k + '" type="' + (o.type || 'text') + '" value="' + esc(draft[k] || '') + '"' +
+  (o.ph ? ' placeholder="' + esc(o.ph) + '"' : '') + (o.mode ? ' inputmode="' + o.mode + '"' : '') + (o.ac ? ' autocomplete="' + o.ac + '"' : '') + (o.max ? ' maxlength="' + o.max + '"' : '') + (o.list ? ' list="' + o.list + '"' : '') + '>' +
   (o.hint ? '<small>' + o.hint + '</small>' : '') + '</label>';
-const opts = (k, label, list, hint) => '<div class="f" style="margin:0 0 12px"><b style="display:block;color:var(--ink);font-size:14.5px;margin:0 0 6px">' + label + '</b><div class="opts">' +
-  list.map(v => '<button type="button" class="' + (draft[k] === v ? 'on' : '') + '" onclick="pick(\'' + k + '\',\'' + v.replace(/'/g, "\\'") + '\',this)">' + esc(v) + '</button>').join('') + '</div>' +
-  (hint ? '<small style="display:block;color:var(--dim);font-size:12.5px;margin:4px 0 0">' + hint + '</small>' : '') + '</div>';
+/* A drop-down. A value already held that is not on the list is shown as its own option, so nothing from Salesforce is lost. */
+const sel = (k, label, list, o = {}) => {
+  const v = draft[k] || '', known = list.indexOf(v) > -1, other = v && !known && list.indexOf('Other') > -1;
+  return '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + '</b><select class="fld" data-k="' + k + '">' +
+    '<option value="">' + esc(o.ph || 'Choose…') + '</option>' +
+    (v && !known && !other ? '<option value="' + esc(v) + '" selected>' + esc(v) + '</option>' : '') +
+    list.map(x => '<option value="' + esc(x) + '"' + ((x === v) || (other && x === 'Other') ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' +
+    (list.indexOf('Other') > -1 ? '<span class="other' + (other ? '' : ' hide') + '"><input class="fld" data-other="1" style="margin-top:8px" placeholder="Please type it" value="' + esc(other ? v : '') + '"></span>' : '') +
+    (o.hint ? '<small>' + o.hint + '</small>' : '') + '</label>';
+};
+const opts = (k, label, list, hint, big) => '<div class="f" style="margin:0 0 13px"><b style="display:block;color:var(--ink);font-size:14px;margin:0 0 6px">' + label + '</b><div class="opts' + (big ? ' big' : '') + '">' +
+  list.map(x => { const v = Array.isArray(x) ? x[0] : x, sub = Array.isArray(x) ? x[1] : '';
+    return '<button type="button" class="' + (draft[k] === v ? 'on' : '') + '" onclick="pick(\'' + k + '\',\'' + v.replace(/'/g, "\\'") + '\',this)">' + esc(v) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</button>'; }).join('') + '</div>' +
+  (hint ? '<small style="display:block;color:var(--dim);font-size:12.5px;margin:5px 0 0">' + hint + '</small>' : '') + '</div>';
+const sec = (ic, t, sub) => '<div class="sec"><span class="ic">' + ic + '</span><div><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>';
 
 function stepYou(d) {
-  const held = me && me.found ? '<p class="muted">Filled in from what we hold for you. Correct anything that has changed.</p>' : '';
-  return held + inp('name', 'Your full name', { ac: 'name' }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-' }) +
+  const held = me && me.found ? '<p class="muted">Filled in from what we hold for you. Correct anything that has changed.</p>' : '<p class="muted">Who the quote is for.</p>';
+  return held + sec('👤', 'Who you are') + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) +
     '<div class="row">' + opts('gender', 'Gender', ['Female', 'Male']) + inp('dob', 'Date of birth', { type: 'date' }) + '</div>' +
-    inp('occupation', 'Occupation', { ph: 'e.g. Teacher' }) +
-    opts('ownerType', 'The vehicle is owned by', ['Individual', 'Company']) +
+    inp('occupation', 'Occupation', { ph: 'e.g. Teacher', list: 'jobs' }) +
+    '<datalist id="jobs">' + ['Teacher', 'Nurse', 'Police Officer', 'Soldier', 'Civil Servant', 'Clerk', 'Accountant', 'Engineer', 'Driver', 'Mechanic', 'Electrician', 'Business Owner', 'Sales', 'Manager', 'Doctor', 'Lawyer', 'Student', 'Retired', 'Self-employed'].map(x => '<option value="' + x + '">').join('') + '</datalist>' +
+    sec('🏢', 'The owner') + opts('ownerType', 'The vehicle is owned by', ['Individual', 'Company']) +
     '<div id="companyBox" class="' + (d.ownerType === 'Company' ? '' : 'hide') + '">' + inp('company', 'Company name') + inp('companyEmail', 'Company e-mail', { type: 'email', mode: 'email' }) + '</div>' +
     inp('agent', 'Your agent, if you have one', { hint: 'Optional. Your agent is copied on the quote.' });
 }
 function stepVehicle(d) {
-  return inp('reg', 'Vehicle registration number', { ph: 'e.g. PDX 1234', max: 20 }) +
-    '<div class="row">' + inp('make', 'Make', { ph: 'e.g. Toyota' }) + inp('model', 'Model', { ph: 'e.g. Aqua' }) + '</div>' +
-    '<div class="row">' + inp('year', 'Year of manufacture', { mode: 'numeric', max: 4, ph: 'e.g. 2019' }) + inp('cc', 'Engine (cc)', { mode: 'numeric', max: 6, ph: 'e.g. 1500' }) + '</div>' +
-    opts('body', 'Body type', BODIES) +
-    '<div class="row">' + inp('seating', 'Seats, including the driver', { mode: 'numeric', max: 3, ph: 'e.g. 5' }) +
-    inp('value', 'Value of the vehicle (TT$)', { mode: 'numeric', ph: 'e.g. 95000', hint: 'What it would cost to replace today.' }) + '</div>' +
+  return '<p class="muted">The vehicle to insure.</p>' + sec('🚗', 'The vehicle') +
+    inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20, req: 1 }) +
+    '<div class="row">' + sel('make', 'Make', MAKES, { req: 1 }) + inp('model', 'Model', { ph: 'e.g. Aqua', req: 1 }) + '</div>' +
+    '<div class="row">' + sel('year', 'Year of manufacture', YEARS, { req: 1 }) + sel('cc', 'Engine size (cc)', CCS) + '</div>' +
+    '<div class="row">' + sel('body', 'Body type', BODIES) + sel('seating', 'Seats, including the driver', SEATS) + '</div>' +
+    inp('value', 'Value of the vehicle (TT$)', { mode: 'numeric', ph: 'e.g. 95000', hint: 'What it would cost to replace today.', req: 1 }) +
     opts('condition', 'New or used', ['New', 'Used']) +
-    opts('mortgaged', 'Is the vehicle on a loan or hire purchase?', ['Yes', 'No']) +
-    '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + inp('institution', 'Financial institution', { ph: 'e.g. the bank or credit union' }) + '</div>';
+    sec('🏦', 'Finance') + opts('mortgaged', 'Is the vehicle on a loan or hire purchase?', ['Yes', 'No']) +
+    '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + sel('institution', 'Financial institution', BANKS) + '</div>';
 }
 function stepCover(d) {
-  return opts('cover', 'The cover you want', COVERS, 'Comprehensive covers your own vehicle too. Third party covers damage to others.') +
+  return '<p class="muted">What you want the policy to do.</p>' + sec('🛡️', 'The cover') +
+    opts('cover', 'The cover you want', COVERS, '', true) +
     opts('windscreen', 'Add windscreen cover?', ['Yes', 'No']) +
-    opts('drivingYears', 'How long have you been driving?', ['1', '2', '3', '5', '10']) +
-    '<p class="muted" style="margin-top:-2px">Tap the nearest, or type the years:</p>' + inp('drivingYears', 'Years driving', { mode: 'numeric', max: 2 }) +
-    opts('ncd', 'Your no claim discount with your current or last insurer', NCDS) +
-    inp('prevInsurer', 'Previous or current insurer', { ph: 'e.g. none, or the company name' }) +
-    inp('existingPolicy', 'Adding to an existing Guardian General motor policy? Its policy number', { hint: 'Leave blank if this is a new policy.' }) +
+    sec('🪪', 'Your driving record') +
+    '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS, { hint: 'With your current or last insurer.' }) + '</div>' +
+    sel('prevInsurer', 'Previous or current insurer', INSURERS) +
+    sec('📄', 'With Guardian General already?') +
+    inp('existingPolicy', 'Adding to an existing motor policy? Its policy number', { hint: 'Leave blank for a new policy.' }) +
     inp('existingVehicles', 'Other vehicles you already insure with Guardian General', { ph: 'registration numbers, if any' });
 }
 function stepDriver(d) {
-  return inp('permit', "Driver's permit number", { ac: 'off' }) +
+  return '<p class="muted">The main driver\'s permit and record.</p>' + sec('🪪', "Driver's permit") +
+    inp('permit', "Driver's permit number", { ac: 'off', req: 1 }) +
     '<div class="row">' + inp('permitIssued', 'Permit first issued', { type: 'date' }) + inp('permitExpires', 'Permit expires', { type: 'date' }) + '</div>' +
-    opts('accidents', 'Any accidents or claims in the last three years?', ['Yes', 'No']) +
+    sec('⚠️', 'Accidents and claims') + opts('accidents', 'Any accidents or claims in the last three years?', ['Yes', 'No']) +
     '<div id="accBox" class="' + (d.accidents === 'Yes' ? '' : 'hide') + '"><label class="f"><b>Tell us a little about it</b><textarea class="fld" data-k="accidentDetails">' + esc(d.accidentDetails || '') + '</textarea></label></div>' +
     '<label class="f"><b>Anything else the quotes desk should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';
 }
+const KINDS = { 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
 function stepDocs() {
-  return '<p>Photograph them with your phone. Both are optional now, but the quote is firmer with them.</p><div class="files" id="files">' +
-    fileRow('permit', "Your driver's permit", 'Front, in good light.') + fileRow('certified', 'Certified copy of ownership', 'The vehicle\'s certified copy.') + fileRow('other', 'Anything else', 'A valuation or a previous policy, if you have one.') + '</div>';
+  return '<p class="muted">Photograph them with your phone. Both are optional now, but the quote is firmer with them.</p>' + sec('📷', 'Your documents') + '<div class="files" id="files">' +
+    Object.keys(KINDS).map(k => fileRow(k)).join('') + '</div>';
 }
-function fileRow(kind, label, hint) {
-  const f = files.find(x => x.kind === kind);
-  return '<div class="file" data-kind="' + kind + '">' + (f ? '<img src="' + (f.preview || '') + '" alt="">' : '<span style="font-size:26px">📷</span>') +
+function fileRow(kind) {
+  const f = files.find(x => x.kind === kind), [label, hint] = KINDS[kind];
+  return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph">📄</span>') : '<span class="ph">📷</span>') +
     '<div class="nm">' + esc(label) + '<small>' + (f ? esc(f.name) + ' · ' + Math.round(f.bytes / 1024) + ' KB' : esc(hint)) + '</small></div>' +
     (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" accept="image/*,application/pdf" capture="environment" data-kind="' + kind + '"></label>') + '</div>';
 }
@@ -378,7 +493,7 @@ function wireFiles() {
   $('step').querySelectorAll('input[type=file]').forEach(el => el.addEventListener('change', async ev => {
     const file = ev.target.files[0]; if (!file) return;
     $('formErr').textContent = ''; $('btnNext').disabled = true;
-    try { files = files.filter(f => f.kind !== el.dataset.kind); files.push(await prepFile(file, el.dataset.kind)); $('files').innerHTML = ['permit', 'certified', 'other'].map(k => fileRow(k, { permit: "Your driver's permit", certified: 'Certified copy of ownership', other: 'Anything else' }[k], '')).join(''); wireFiles(); }
+    try { files = files.filter(f => f.kind !== el.dataset.kind); files.push(await prepFile(file, el.dataset.kind)); $('files').innerHTML = Object.keys(KINDS).map(k => fileRow(k)).join(''); wireFiles(); side(); }
     catch (e) { $('formErr').textContent = e.message; }
     $('btnNext').disabled = false;
   }));
@@ -407,11 +522,11 @@ function prepFile(file, kind) {
 }
 function stepReview(d) {
   const G = [['The client', [['Name', d.name], ['E-mail', session && session.email], ['Mobile', d.mobile], ['Gender', d.gender], ['Date of birth', d.dob], ['Occupation', d.occupation], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', d.agent]]],
-    ['The vehicle', [['Registration', d.reg], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + ' cc' : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
+    ['The vehicle', [['Registration', d.reg], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
     ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', d.ncd], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
     ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents', d.accidents + (d.accidentDetails ? ': ' + d.accidentDetails : '')], ['Notes', d.notes]]],
     ['Documents', [['Attached', files.length ? files.map(f => f.kind).join(', ') : 'none']]]];
-  return '<p>Check it over. Tap Back to change anything. When you send, the request goes to Guardian General\'s quotes desk with our branch copied, and a receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
+  return '<p class="muted">Check it over. Tap Back to change anything. When you send, the request goes to Guardian General\'s quotes desk with our branch copied, and a receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
     G.map(g => '<h3>' + g[0] + '</h3>' + g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()) || r[0] === 'Cover').map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
     '<label class="chk"><input type="checkbox" id="agree"> <span>What I have given is true to the best of my knowledge, and I ask the branch to obtain a quote for me.</span></label>';
 }
