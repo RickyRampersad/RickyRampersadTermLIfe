@@ -15,7 +15,8 @@
  */
 (function (root) {
   var H = 1008;
-  var INK = [0.05, 0.13, 0.42];            // a dark blue pen, so the answers read as filled in
+  var INK = [0.02, 0.09, 0.36];            // a dark blue pen, so the answers read as filled in
+  var SIZE = 10.5, CELL = 9;               // bold, the size of the form's own print (21 Oct 2026: "more bold and scaled properly")
 
   /* A YES____NO____ pair: the two underscore runs. */
   function yn(p, top, yes0, yes1, no0, no1) { return { t: 'yn', p: p, top: top, yes: [yes0, yes1], no: [no0, no1] }; }
@@ -86,7 +87,7 @@
     b19k: yn(4, 436.4, 509.0, 531.2, 546.3, 568.5),
     b19kLimit: pick(4, 457.1, { '50000': [196.1, 212.7], '75000': [261.1, 277.8], '100000': [326.1, 342.7], '120000': [396.7, 413.4] }),
     signDate: bl(4, 931.3, 123, 216),
-    signature: { t: 'sig', p: 4, x0: 360, x1: 574, bottom: 940, h: 30 },
+    signature: { t: 'sig', p: 4, x0: 362, x1: 572, bottom: 940, h: 40 },
   };
 
   /* The KYP form's own fields: question, YES box, NO box. */
@@ -98,7 +99,7 @@
     ['k17', 'ChkBox-28', 'ChkBox-29'],
   ];
   /* The signature box on the KYP's last page (Text3, "Insured's signature"), for the drawn signature. */
-  var KYP_SIG = { p: 4, x0: 171, x1: 416, top: 595, bottom: 619 };
+  var KYP_SIG = { p: 4, x0: 173, x1: 416, top: 592, bottom: 620 };
 
   /* The standard fonts encode WinAnsi only: anything else would stop the save. */
   function ansi(s) {
@@ -128,18 +129,18 @@
 
   async function fillProposal(PDFLib, templateBytes, A, signaturePng) {
     var pdf = await PDFLib.PDFDocument.load(templateBytes);
-    var font = await pdf.embedFont(PDFLib.StandardFonts.Helvetica), bold = await pdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
+    var bold = await pdf.embedFont(PDFLib.StandardFonts.HelveticaBold), font = bold;
     var pages = pdf.getPages(), ink = PDFLib.rgb(INK[0], INK[1], INK[2]);
     var page = function (n) { return pages[n - 1]; };
     var text = function (p, s, x, top, size, f) { page(p).drawText(s, { x: x, y: H - top, size: size, font: f || font, color: ink }); };
     /* On a blank: the baseline sits just above the underline. */
     var onBlank = function (spec, value, size, keep) {
       var v = ansi(value); if (!v) return '';
-      var f = fit(font, v, spec.x1 - spec.x0 - 2, size || spec.size || 9, keep);
+      var f = fit(font, v, spec.x1 - spec.x0 - 2, size || SIZE, keep);
       text(spec.p, f.text, spec.x0 + 1, spec.top + 7.6, f.size);
       return f.rest;
     };
-    var mark = function (p, top, run) { var w = bold.widthOfTextAtSize('X', 10); text(p, 'X', (run[0] + run[1]) / 2 - w / 2, top + 8, 10, bold); };
+    var mark = function (p, top, run) { var w = bold.widthOfTextAtSize('X', 12); text(p, 'X', (run[0] + run[1]) / 2 - w / 2, top + 8.4, 12, bold); };
     var A2 = Object.assign({}, A, {
       name1: [A.title, A.first].filter(Boolean).join(' '), dob: mdy(A.dob), permitIssued: mdy(A.permitIssued), d3dob: mdy(A.d3dob),
       d3issued: mdy(A.d3issued), from: mdy(A.from), to: mdy(A.to), signDate: mdy(A.signDate),
@@ -155,7 +156,7 @@
       if (spec.t === 'multi') {
         var rest = ansi(v);
         /* Every line but the last keeps the full size and breaks at a word; the last may shrink to hold the rest. */
-        spec.lines.forEach(function (l, i) { if (rest) rest = onBlank({ p: spec.p, top: l[0], x0: l[1], x1: l[2] }, rest, 9, i < spec.lines.length - 1); });
+        spec.lines.forEach(function (l, i) { if (rest) rest = onBlank({ p: spec.p, top: l[0], x0: l[1], x1: l[2] }, rest, SIZE, i < spec.lines.length - 1); });
         return;
       }
       if (spec.t === 'row' || spec.t === 'rows') {
@@ -164,11 +165,11 @@
           var d = data[i]; if (!d) return;
           Object.keys(spec.cols).forEach(function (c) {
             var raw = c === 'sumInsured' || c === 'cost' ? (d[c] ? '$' + money(d[c]) : '') : c === 'date' ? mdy(d[c]) : d[c];
-            var rest2 = ansi(raw), col = spec.cols[c], y = r[0] + 12, lines = 0;
+            var rest2 = ansi(raw), col = spec.cols[c], y = r[0] + 13, lines = 0;
             while (rest2 && lines < 3 && y < r[1] - 2) {
-              var f2 = fit(font, rest2, col[1] - col[0] - 4, 8);
+              var f2 = fit(font, rest2, col[1] - col[0] - 4, CELL, true);   // a cell wraps at full size (a 17-character chassis number takes two lines)
               text(spec.p, f2.text, col[0] + 2, y, f2.size);
-              rest2 = f2.rest; y += 10; lines++;
+              rest2 = f2.rest; y += 11; lines++;
             }
           });
         });
@@ -187,7 +188,7 @@
 
   async function fillKyp(PDFLib, templateBytes, A, signaturePng) {
     var pdf = await PDFLib.PDFDocument.load(templateBytes), form = pdf.getForm();
-    var set = function (name, v) { try { form.getTextField(name).setText(ansi(v)); } catch (e) {} };
+    var set = function (name, v) { try { var t = form.getTextField(name); t.setText(ansi(v)); t.setFontSize(name === 'I' ? 10.5 : 11.5); } catch (e) {} };
     KYP.forEach(function (q) {
       var y = form.getCheckBox(q[1]), n = form.getCheckBox(q[2]);
       y.uncheck(); n.uncheck();
@@ -204,7 +205,7 @@
       var sc = Math.min((s.x1 - s.x0) / img.width, (s.bottom - s.top + 6) / img.height);
       pg.drawImage(img, { x: s.x0, y: H - s.bottom, width: img.width * sc, height: img.height * sc });
     }
-    form.updateFieldAppearances();
+    form.updateFieldAppearances(await pdf.embedFont(PDFLib.StandardFonts.HelveticaBold));
     pdf.setAuthor(''); pdf.setCreator('Ricky Rampersad Branch motor quote');
     return pdf.save();
   }

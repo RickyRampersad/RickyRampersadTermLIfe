@@ -226,7 +226,10 @@
   .decl{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13.5px;max-height:320px;overflow:auto;margin:0 0 12px}
   .decl p{margin:0 0 8px}
   .sigbox{display:block;border:2px dashed #9DBBE4;border-radius:14px;background:#fff;overflow:hidden}
-  .sigbox canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+  .sigbox{position:relative}
+  .sigbox canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair;position:relative;z-index:1}
+  .sigline{position:absolute;left:18px;right:18px;bottom:26%;border-bottom:2px solid #C9D8EE;font-style:normal;color:#9DBBE4;font-weight:800;font-size:18px;line-height:1;padding:0 0 4px}
+  .sigfoot{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:8px 0 0;font-size:13.5px;color:var(--body)}
   .accrow{border-left:3px solid var(--line);padding-left:12px;margin:0 0 12px}
   @keyframes scan{from{top:-26px}to{top:120px}}
   @keyframes sheen{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
@@ -871,8 +874,10 @@ function stepTsign(d) {
   return '<div class="decl"><div class="eyebrow">Declaration</div>' + DECLARATION + '</div>' +
     '<div class="row"><button type="button" class="ghost" onclick="previewForm(\'proposal\')">Preview the proposal</button><button type="button" class="ghost" onclick="previewForm(\'kyp\')">Preview Know Your Policy</button></div>' +
     /* A div, never a label: a click inside a label also clicks its first button, which here was Clear. */
-    '<div class="f" style="margin-top:14px"><b style="display:block;color:var(--ink);font-size:14px;margin:0 0 5px">Sign here ' + req + '</b><span class="sigbox"><canvas id="sig" width="900" height="240" aria-label="Signature pad"></canvas></span>' +
-    '<small style="display:block;color:var(--dim);font-size:12.5px;margin:4px 0 0">With your finger or the mouse. <button type="button" class="linkbtn" style="padding:0;font-size:12.5px" onclick="clearSig()">Clear</button></small></div>' +
+    '<div class="f" style="margin-top:14px"><b style="display:block;color:var(--ink);font-size:15px;margin:0 0 6px">Sign here ' + req + '</b>' +
+    '<span class="sigbox"><canvas id="sig" width="900" height="300" aria-label="Signature pad"></canvas><i class="sigline">✕</i></span>' +
+    '<span class="sigfoot"><span>Your signature goes on page 4 of the proposal and on the Know Your Policy form.</span>' +
+    '<button type="button" class="ghost" style="width:auto;margin:0;padding:8px 16px;min-height:40px" onclick="clearSig()">Clear and sign again</button></span></div>' +
     '<label class="chk"><input type="checkbox" id="agree"> <span>I have read the declaration, the statements in this proposal are true and complete, and I sign the proposal and the Know Your Policy form.</span></label>';
 }
 
@@ -933,11 +938,11 @@ function applyDoc(kind, F) {
 let sigDirty = false;
 function wireSig() {
   const c = $('sig'); if (!c) return;
-  const x = c.getContext('2d'); x.lineWidth = 5; x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#0D2270';
+  const x = c.getContext('2d'); x.lineWidth = 6; x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#061758';
   if (draft.sigData) { const im = new Image(); im.onload = () => x.drawImage(im, 0, 0); im.src = draft.sigData; sigDirty = true; }
   let down = false, last = null;
   const pt = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
-  c.addEventListener('pointerdown', e => { down = true; last = pt(e); c.setPointerCapture(e.pointerId); e.preventDefault(); });
+  c.addEventListener('pointerdown', e => { down = true; last = pt(e); c.setPointerCapture(e.pointerId); e.preventDefault(); if (/sign in the box/.test($('formErr').textContent)) $('formErr').textContent = ''; });
   c.addEventListener('pointermove', e => { if (!down) return; const p = pt(e); x.beginPath(); x.moveTo(last[0], last[1]); x.lineTo(p[0], p[1]); x.stroke(); last = p; sigDirty = true; e.preventDefault(); });
   const up = () => { if (down) { down = false; draft.sigData = c.toDataURL('image/png'); saveDraft(); } };
   c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up); c.addEventListener('pointerleave', up);
@@ -963,9 +968,29 @@ function takeAnswers() {
   A.b19kLimit = String(d.b19kLimit || '').replace(/\D/g, '');
   return A;
 }
+/* The signature, cut to the ink, so it fills its line on the forms instead of shrinking with the empty pad around it. */
+function trimSig(dataUrl) {
+  return new Promise(ok => {
+    if (!dataUrl) return ok(null);
+    const im = new Image();
+    im.onload = () => {
+      const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+      const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+      const px = x.getImageData(0, 0, c.width, c.height).data;
+      let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+      for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) if (px[(y * c.width + i) * 4 + 3] > 10) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 < 0) return ok(null);
+      const pad = 6, w = x1 - x0 + 1 + pad * 2, h = y1 - y0 + 1 + pad * 2, o = document.createElement('canvas'); o.width = w; o.height = h;
+      o.getContext('2d').drawImage(c, x0 - pad, y0 - pad, w, h, 0, 0, w, h);
+      ok(b64ToBytes(o.toDataURL('image/png').split(',')[1]));
+    };
+    im.onerror = () => ok(b64ToBytes(dataUrl.split(',')[1]));
+    im.src = dataUrl;
+  });
+}
 async function buildForms() {
   const L = await pdfLib(), A = takeAnswers();
-  const sig = draft.sigData ? b64ToBytes(draft.sigData.split(',')[1]) : null;
+  const sig = await trimSig(draft.sigData);
   const [tp, tk] = await Promise.all([FORM_PROPOSAL, FORM_KYP].map(u => fetch(u).then(r => { if (!r.ok) throw new Error('The form could not load.'); return r.arrayBuffer(); })));
   return { A, proposal: await MQForms.fillProposal(L, tp, A, sig), kyp: await MQForms.fillKyp(L, tk, A, sig) };
 }

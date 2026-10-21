@@ -3856,6 +3856,10 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     go first. The client gets their own signed forms. The row goes on **Motor Proposals**, and the quote request is
     marked taken only when it is the signed-in client's.
   - The signature pad is in a div, never a label: a click in a label also clicks its first button, which was Clear.
+  - The answers print in bold at 10.5 pt (table cells 9 pt, wrapping at full size, so a chassis number takes two
+    lines rather than shrinking), and the KYP's fields at 11.5 pt bold (21 October 2026: "fonts more bold and scaled
+    properly"). The signature is cut to its ink (`trimSig`) before it goes on page 4 of the proposal and the KYP's
+    signature line, so it fills the line.
   - When Guardian revises either form, replace the PDF and re-measure the positions in `forms.js`.
 - The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
   until the page is live and wired; disable it then, so an old link does not take a client back to it.

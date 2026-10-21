@@ -250,6 +250,7 @@ const calls = []; let requests = [];
   await page.mouse.move(box.x + 20, box.y + box.height / 2); await page.mouse.down();
   for (let i = 1; i <= 12; i++) await page.mouse.move(box.x + 20 + i * 22, box.y + box.height / 2 + (i % 2 ? -18 : 18));
   await page.mouse.up();
+  ok('signing clears the "please sign" warning', !/sign in the box/.test(await txt('#formErr')));
   const [popup] = await Promise.all([page.waitForEvent('popup'), page.click('button:has-text("Preview the proposal")')]);
   await popup.waitForURL(/^blob:/, { timeout: 15000 }).catch(() => {});
   ok('"Preview the proposal" opens the filled PDF', /^blob:/.test(popup.url())); await popup.close();
