@@ -35,7 +35,7 @@ jobs:
                           except Exception as e:
                               import traceback; open('tts/out/error.txt', 'a').write(f'{key} {i} attempt {attempt}: ' + traceback.format_exc() + '\n')
                               await asyncio.sleep(5 * (attempt + 1))
-          asyncio.run(main())
+          if not job.get('only_check'): asyncio.run(main())
           PY
       - name: check the language of every clip
         run: |
@@ -50,7 +50,9 @@ jobs:
           for key in job['films']:
               for f in sorted(glob.glob(f'tts/out/{key}/*.mp3')):
                   try:
-                      segs, info = m.transcribe(f)
+                      import subprocess, numpy as np
+                      raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', f, '-ar', '16000', '-ac', '1', '-f', 's16le', '-'], capture_output=True, check=True).stdout
+                      segs, info = m.transcribe(np.frombuffer(raw, np.int16).astype(np.float32) / 32768)
                       out[f] = [info.language, round(info.language_probability, 3), ' '.join(x.text.strip() for x in segs)]
                   except Exception as e: out[f] = ['err', 0, str(e)]
           json.dump(out, open('tts/out/check.json', 'w'), indent=1)
