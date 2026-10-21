@@ -124,7 +124,14 @@ const seen = [];
   await page.waitForSelector('#home:not([hidden])');
   names = await tileNames();
   ok('staff see the Delivery Book, group clients and the Premium Due Desk', ['Delivery Book', 'Group clients', 'Premium Due Desk'].every(n => names.includes(n)), names.join(', '));
-  ok('the two trackers are coming soon', (await page.$$('.app.soon')).length === 2);
+  // The desk app (21 Oct 2026): petty cash and the gas log are under Forms until they move into the app; Find a tool knows the old names.
+  ok('petty cash and the gas log are under Forms', (await page.$$eval('.form-row b', els => els.map(e => e.textContent))).filter(n => /Petty Cash|Gas Log/.test(n)).length === 2);
+  await page.fill('#find', 'transmittal');
+  ok('Find a tool: "transmittal" finds it', (await tileNames()).join() === 'Transmittal', (await tileNames()).join());
+  await page.fill('#find', 'orphan');
+  ok('and "orphan" finds the clients board', (await tileNames()).includes('My clients board'));
+  await page.fill('#find', '');
+  ok('the old names are shown with where they went', /JotForm Delivery Book → Delivery Book/.test(await page.textContent('#moved')));
   ok('test mode is shown', /Test mode/.test(await page.textContent('#who')));
   ok('greets him by name', /Pat/.test(await page.textContent('#hello')));
   ok('nothing runs off a phone', await page.evaluate(() => document.documentElement.scrollWidth <= 390));
