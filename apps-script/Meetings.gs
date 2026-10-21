@@ -6498,7 +6498,7 @@ function json_(obj) {
 
 var CYCLE = {
   CLOSE_HOUR: 20,          /* Sunday evening. The week is over and nobody is filing. */
-  BUILD_HOUR: 7,           /* The meeting day, hours before the room sits at two.   */
+  BUILD_HOUR: 6,           /* The meeting day, before the 7:00 note, so it sees today. */
   START: '14:00',          /* MEET.MEETING_TIME, 2:00 PM, on the 24-hour clock      */
   END:   '15:30'           /* ninety minutes — the rota is built to fit it          */
 };
