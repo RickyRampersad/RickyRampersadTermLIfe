@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-21a';
+var SCRIPT_VERSION = '2026-10-21b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3144,11 +3144,44 @@ function sendDayStart_(staffId, date, kind, opt) {
     if (!to) return false;
     props.setProperty(onceKey, (n + 1) + '|' + Date.now());
   } else {
-    if (had) return false;
+    /* Ricky, 21 Oct 2026 7:06am: "liz is asking as she has not seen her day, did it go out". The mark
+       used to be the time, written BEFORE the e-mail was built: a run that stopped part-way (Sasha's
+       and Liz's are built in the same 6:30 run, and Google stops a run at six minutes) left Liz marked
+       as sent, nothing tried again, and nothing was logged. Now the mark says "try" while it is being
+       built and becomes the time only once the e-mail has gone; a failure clears it, and a try that
+       never finished is taken up by the next run. */
+    if (dsMarkHolds_(had)) return false;
+    if (had) runlog_('morning ' + staffId + ': the ' + dsTryAt_(had) + ' try did not finish, trying again');
     var to = emailFor_(staffId);
     if (!to) return false;
-    props.setProperty(onceKey, hhmm_(new Date()));
+    props.setProperty(onceKey, DS_TRY + Date.now());
   }
+  var res;
+  try { res = dayStartBuildSend_(staffId, date, kind, opt, to); }
+  catch (e) {
+    try { if (kind === 'plan' && had) props.setProperty(onceKey, had); else props.deleteProperty(onceKey); } catch (e2) {}
+    if (kind !== 'plan') runlog_('morning ' + staffId + ' FAILED ' + hhmm_(new Date()) + ': ' + String(e && e.message || e).slice(0, 160));
+    throw e;
+  }
+  if (kind !== 'plan') props.setProperty(onceKey, hhmm_(new Date()));
+  return res;
+}
+
+/** The morning mark: "try <ms>" while the e-mail is being built, the time once it has gone. */
+var DS_TRY = 'try ', DS_TRY_MS = 8 * 60000;
+/** Sent, or being built by a run that started under eight minutes ago: either way, not now. */
+function dsMarkHolds_(v) {
+  v = String(v || '');
+  if (!v) return false;
+  var m = /^try (\d+)$/.exec(v);
+  return m ? Date.now() - Number(m[1]) < DS_TRY_MS : true;
+}
+/** The e-mail went (a try that is still being built has not). */
+function dsSent_(v) { v = String(v || ''); return !!v && v.indexOf(DS_TRY) !== 0; }
+function dsTryAt_(v) { var m = /^try (\d+)$/.exec(String(v || '')); return m ? hhmm_(new Date(Number(m[1]))) : String(v || ''); }
+
+function dayStartBuildSend_(staffId, date, kind, opt, to) {
+  var props = PropertiesService.getScriptProperties();
   // The assistant's day is a calendar of errands and deliveries, not KPI
   // blocks, so it has a mail of its own.
   if (staffId === 'pawan') return kind === 'first' ? sendPawanDay_(date, 'first') : false;
@@ -3649,9 +3682,40 @@ function showRunLog() {
   var p = PropertiesService.getScriptProperties(), day = todayISO_();
   var fails = Object.keys(p.getProperties()).filter(function (k) { return /^FAIL_/.test(k) && k.indexOf(day) > -1; }).map(function (k) { return k + ' = ' + p.getProperty(k) + ' tries'; });
   var m = (p.getProperty('RUNLOG') || 'No timed sends recorded yet.') + '\n\nLast run: ' + (p.getProperty('tick_last') || 'not recorded yet') +
-    '\nLongest run today: ' + (p.getProperty('tick_long_' + day) || 'not recorded yet') + '\nFailed today: ' + (fails.length ? fails.join(', ') : 'none');
+    '\nLongest run today: ' + (p.getProperty('tick_long_' + day) || 'not recorded yet') + '\nFailed today: ' + (fails.length ? fails.join(', ') : 'none') +
+    '\n\nMorning e-mail today:\n' + morningMailStatus_(day);
   Logger.log(m); return m;
 }
+
+/** Each desk's morning e-mail today: sent at what time, being built, or not sent (21 Oct 2026). */
+function morningMailStatus_(day) {
+  var p = PropertiesService.getScriptProperties();
+  return DAY_MAIL_DESKS.map(function (sid) {
+    var v = p.getProperty('daystart_first_' + sid + '_' + day) || '';
+    return nameFor_(sid) + ': ' + (!v ? 'not sent' : dsSent_(v) ? 'sent at ' + v : 'being built since ' + dsTryAt_(v) + (dsMarkHolds_(v) ? '' : ', did not finish: the next run tries again'));
+  }).join('\n');
+}
+/** From the editor: who has had the morning e-mail today. */
+function morningMailStatus() { var m = morningMailStatus_(todayISO_()); Logger.log(m); return m; }
+/** From the editor: send one desk its morning e-mail again now, whatever the record says, and say which way it went. */
+function resendMorning_(sid) {
+  var p = PropertiesService.getScriptProperties(), day = todayISO_(), key = 'daystart_first_' + sid + '_' + day;
+  var was = p.getProperty(key) || 'not sent', before = Number(p.getProperty('relay_sent_' + day) || 0), out;
+  p.deleteProperty(key);
+  try {
+    out = sendDayStart_(sid, day, 'first')
+      ? 'Sent to ' + emailFor_(sid) + (Number(p.getProperty('relay_sent_' + day) || 0) > before ? ', from support@' : ', from Gmail')
+      : 'NOT sent: no e-mail address on file for ' + nameFor_(sid);
+  } catch (e) { out = 'FAILED: ' + String(e && e.message || e); }
+  out = nameFor_(sid) + ' (the record said: ' + (dsSent_(was) || was === 'not sent' ? was : 'being built since ' + dsTryAt_(was)) + '). ' + out;
+  runlog_('morning ' + sid + ' resent by hand: ' + out.slice(0, 200));
+  Logger.log(out); return out;
+}
+function resendMorningSasha()   { return resendMorning_('sasha'); }
+function resendMorningLiz()     { return resendMorning_('elizabeth'); }
+function resendMorningAzariah() { return resendMorning_('azariah'); }
+function resendMorningKamla()   { return resendMorning_('kamla'); }
+function resendMorningPawan()   { return resendMorning_('pawan'); }
 
 function housekeepingTick_() {
   var now = new Date();
@@ -3673,7 +3737,7 @@ function housekeepingTick_() {
     var sid = String(p.staffId);
     return SCHEDULE[sid] && DAY_MAIL_DESKS.indexOf(sid) > -1 && !absent[sid];
   });
-  var expected = function (sid) { return present[sid] || props.getProperty('daystart_first_' + sid + '_' + day); };
+  var expected = function (sid) { return present[sid] || dsSent_(props.getProperty('daystart_first_' + sid + '_' + day)); };
 
   // The morning e-mail, half an hour before each desk's start (Ricky, 15
   // October 2026: "all will receive the email 30 minutes before they get in
@@ -3684,8 +3748,11 @@ function housekeepingTick_() {
   people.forEach(function (p) {
     var sid = String(p.staffId), sp = parseSpan_(scheduleFor_(sid).hours || '');
     if (!sp || mins < sp.start - STAFF_MAIL_LEAD || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
-    if (props.getProperty('daystart_first_' + sid + '_' + day)) return;
-    try { if (sendDayStart_(sid, day, 'first')) { sent.push(p.name + ' (morning)'); morningSent++; } } catch (e) {}
+    if (dsMarkHolds_(props.getProperty('daystart_first_' + sid + '_' + day))) return;
+    // Past the budget a second build waits ten minutes for the next run rather than be stopped part-way (21 Oct 2026).
+    if (morningSent && late()) return;
+    // A failure is logged and cleared by sendDayStart_ itself, so the next run tries again.
+    try { if (sendDayStart_(sid, day, 'first')) { sent.push(p.name + ' (morning)'); morningSent++; runlog_('morning ' + sid + ' sent ' + hhmm_(new Date())); } } catch (e) {}
   });
 
   // 5:00, the Branch Manager's own day; 11:00 his progress; 15:00 he closes out the day.
@@ -3887,7 +3954,7 @@ function hkNow_(force) {
   publicRoster_().forEach(function (p) {
     var sid = String(p.staffId);
     if (!SCHEDULE[sid] || DAY_MAIL_DESKS.indexOf(sid) < 0 || absent[sid]) return;
-    if (!(present[sid] || props.getProperty('daystart_first_' + sid + '_' + day))) { out.push(sid + ': not signed in, no morning mail'); return; }
+    if (!(present[sid] || dsSent_(props.getProperty('daystart_first_' + sid + '_' + day)))) { out.push(sid + ': not signed in, no morning mail'); return; }
     if (mins < closeoutAt_(sid)) { out.push(sid + ': not yet (' + twelve_(mmText_(closeoutAt_(sid))) + ')'); return; }
     var key = 'hkv2_' + sid + '_' + day;   // the official close-out (16 Oct); an earlier version's send does not stop it
     if (props.getProperty(key) && !force) { out.push(sid + ': already sent ' + props.getProperty(key)); return; }
@@ -3904,7 +3971,7 @@ function sendMorningNow() {
   var absent = {};
   try { (hrRows_(ATT, true) || []).forEach(function (r) { if (isoDay_(r.Date) === day && String(r.Status || '').toLowerCase() === 'absent') absent[String(r.StaffId)] = 1; }); } catch (e) {}
   DAY_MAIL_DESKS.forEach(function (sid) {
-    if (absent[sid] || props.getProperty('daystart_first_' + sid + '_' + day)) return;
+    if (absent[sid] || dsMarkHolds_(props.getProperty('daystart_first_' + sid + '_' + day))) return;
     var sp = parseSpan_(scheduleFor_(sid).hours || '');
     if (sp && nowM < sp.start - 10) return;          // their day has not started; the clock will send it
     try { if (sendDayStart_(sid, day, 'first')) out.push(sid); } catch (e) { out.push(sid + ' FAILED: ' + (e && e.message)); }
@@ -4018,18 +4085,34 @@ function writeAutoAbsent_(sid, day, startM) {
   return true;
 }
 
-/** Start + 60 and no sign-in: absent. Returns the desks marked this run. */
+/** When the clock may mark this desk absent: start + 5; for a desk the morning e-mail goes to, not before
+ *  that e-mail has gone, and then not sooner than ABSENT_GRACE_MIN after it. Null: not today, the e-mail
+ *  has not gone. Ricky, 21 Oct 2026: Liz's 6:30 e-mail never went, so she had no check-in link, the clock
+ *  marked her absent at 7:05 and her work was due to move at 7:30. No e-mail, no absence, no cover. */
+var ABSENT_GRACE_MIN = 15;
+function absentDueAt_(sid, day, startM, props) {
+  var due = startM + ABSENT_AFTER_MIN;
+  if (DAY_MAIL_DESKS.indexOf(sid) < 0) return due;
+  var v = (props || PropertiesService.getScriptProperties()).getProperty('daystart_first_' + sid + '_' + day);
+  if (!dsSent_(v)) return null;
+  var at = minutesOf_(String(v));
+  return at == null ? due : Math.max(due, at + ABSENT_GRACE_MIN);
+}
+
+/** Start + 5 and no sign-in (the morning e-mail gone first): absent. Returns the desks marked this run. */
 function autoAbsentTick_(day, mins, present, absent) {
   if (!autoAbsentOn_(day)) return [];
   var props = PropertiesService.getScriptProperties(), out = [];
   DAY_MAIL_DESKS.concat(UM_DESKS).forEach(function (sid) {
     if (present[sid] || absent[sid]) return;
     var sp = parseSpan_(scheduleFor_(sid).hours || '');
-    if (!sp || mins < sp.start + ABSENT_AFTER_MIN) return;
+    if (!sp) return;
+    var due = absentDueAt_(sid, day, sp.start, props);
+    if (due == null || mins < due) return;
     var key = 'autoabs_' + sid + '_' + day;
     if (props.getProperty(key)) return;
     props.setProperty(key, hhmm_(new Date()));
-    try { if (writeAutoAbsent_(sid, day, sp.start)) { absent[sid] = 1; out.push(sid); } } catch (e) {}
+    try { if (writeAutoAbsent_(sid, day, due - ABSENT_AFTER_MIN)) { absent[sid] = 1; out.push(sid); } } catch (e) {}
   });
   return out;
 }
@@ -4105,6 +4188,9 @@ function coverTick_(day, mins, present, absent) {
     // Marked ahead with a reason (leave, a workshop): the work moves at the start. The clock's own mark: at start + 30.
     var known = att[sid] && String(att[sid].MarkedBy || '') !== 'tracker';
     var at = sp.start + (known ? 0 : COVER.AFTER_MIN);
+    // The clock's mark made late (the morning e-mail went late): the same 25 minutes after the mark before the work moves (21 Oct 2026).
+    var marked = known ? null : minutesOf_(String(props.getProperty('autoabs_' + sid + '_' + day) || ''));
+    if (marked != null) at = Math.max(at, marked + COVER.AFTER_MIN - ABSENT_AFTER_MIN);
     var key = 'cover_' + sid + '_' + day, key2 = 'cover2_' + sid + '_' + day;
     var first = !props.getProperty(key) && mins >= at;
     var second = !first && !!props.getProperty(key) && !props.getProperty(key2) && mins >= Math.max(COVER.SECOND_AT, at + 15);
