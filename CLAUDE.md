@@ -311,13 +311,41 @@ about the dark build was the **colour**. The composition was right and was
 thrown away with the palette. When a look is rejected, change the thing that
 was named and keep the rest.
 
-The hero is a stage: the mark hovering at the centre, three instrument panes
-floating in front of it at their own depths, a dot mesh, three rings, two arcs
-sweeping against them and two satellites. The whole scene tilts to the
-pointer, which is what reads as hovering — one rotation on a `preserve-3d`
-parent moves things at different `translateZ` by different amounts, so there
-is real parallax inside the scene. Mouse and trackpad only: a tilt that sticks
-where a finger left it looks broken.
+**Nothing sits on the mark.** The first cut put three instrument panes in
+front of it, and the manager was right about them: *"things should be
+circling around in terms of the lines that we covered, because that's the
+shield, the objective of the shield. Not things blocking the shield is what
+I'm seeing."* The panes were covering the thing the scene is about, and
+their figures already repeated in the band directly below, so nothing was
+lost in taking them out.
+
+The hero is a stage: the mark at the centre, and **the eight lines of cover
+circling it** on two rings — Life, Health, Motor and Property inside,
+Critical illness, Pensions, Employee benefits and Education outside. That is
+a diagram of the business, not decoration. Behind them a dot mesh, two drawn
+rings, two arcs sweeping against the spin, and three pings leaving the
+shield. The whole scene tilts to the pointer, which is what reads as
+hovering. Mouse and trackpad only: a tilt that sticks where a finger left it
+looks broken.
+
+**How a chip stays upright.** Each is placed with
+`rotate(a) translate(r) rotate(-a)` — the classic place-on-a-circle
+one-liner — and an inner span counters the ring's own spin at the same
+duration. The ring animates the `rotate` **property** while the node holds a
+static `transform`: separate properties, so they compose instead of one
+overwriting the other. `ring-out` reverses both its ring and its chips,
+which still cancels.
+
+**Short labels inside, long ones outside, and none at all on a phone.**
+Labels at the 9 and 3 o'clock positions reach back across the inner ring, so
+they wrap at `6.5rem` rather than running on, and the four short names take
+the inner ring. Below 35rem the ring is icons only: the names cannot fit
+around a circle that size without landing on each other or on the mark, and
+the live strip immediately beneath the hero carries them instead.
+
+**The stage is capped by the viewport too** — `min(32rem, 100%, 100vw -
+2.5rem)`. The grid area can be wider than the page's own gutters allow, and
+a stage wider than the screen puts the outer ring under `overflow: clip`.
 
 **The mark is inlined, and it is still the mark.** The hero's SVG is the same
 artwork as `orphan-transition/board-mark.svg` — which is `favicon.svg`'s own

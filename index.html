@@ -423,7 +423,10 @@ section { padding-block: var(--sp-2xl); }   /* ONE token for every section.
    one measured case put a GPU process at 400–470MB with it on cards.       */
 .hero-art { position: relative; display: grid; justify-items: center; gap: var(--sp-l); }
 .stage {
-  position: relative; width: min(30rem, 100%); aspect-ratio: 1;
+  /* the third term matters: the grid area can be wider than the viewport's
+     own gutters allow, and a stage wider than the screen puts the outer
+     ring's chips under the clip */
+  position: relative; width: min(32rem, 100%, 100vw - 2.5rem); aspect-ratio: 1;
   display: grid; place-items: center;
 }
 
@@ -433,6 +436,11 @@ section { padding-block: var(--sp-2xl); }   /* ONE token for every section.
    drew the rings at 23px and they were simply invisible. A stretched grid
    item has a definite size. */
 .halo, .mesh, .orbit, .mark { grid-area: 1 / 1; }
+.ping {
+  position: absolute; inset: 0; margin: auto;
+  width: 8rem; height: 8rem; border-radius: 50%;
+  border: 1px solid var(--action); opacity: 0; pointer-events: none;
+}
 .halo { place-self: stretch; pointer-events: none; }
 /* An SVG is a replaced element, so `stretch` leaves it at its natural size
    and `height:100%` has no definite basis. Its own square aspect-ratio
@@ -460,84 +468,67 @@ section { padding-block: var(--sp-2xl); }   /* ONE token for every section.
 /* the live arcs: a quarter of the circumference, drawn in the action colour */
 .o-arc {
   fill: none; stroke: var(--action); stroke-width: 2.4; stroke-linecap: round;
-  stroke-dasharray: 180 813; stroke-opacity: .55;
+  stroke-dasharray: 130 435; stroke-opacity: .55;
   transform-box: view-box; transform-origin: 50% 50%;
 }
-.o-arc2 { stroke-dasharray: 96 1073; stroke-opacity: .32; stroke-width: 1.8; }
+.o-arc2 { stroke-dasharray: 115 878; stroke-opacity: .32; stroke-width: 1.8; }
 .o-sat  { fill: var(--action); }
 .o-sat2 { fill: var(--ink); opacity: .5; }
 
-.mark { position: relative; width: 52%; z-index: 1; }
+.mark { position: relative; width: 29%; z-index: 1; }
+@media (max-width: 35rem) { .mark { width: 26%; } }
 .mark svg {
   width: 100%; height: auto; display: block;
   filter: drop-shadow(0 1.5rem 2.75rem rgba(10,51,80,.30));
 }
 
-.pane {
-  position: absolute; margin: 0;
+/* ── the lines we cover, circling the shield ──
+   Nothing sits on the mark any more. Each chip is placed on its ring with
+   rotate(a) translate(r) rotate(-a) — the classic place-and-keep-upright
+   one-liner — and an inner span counters the ring's own spin at the same
+   duration, so the label never turns over. The ring animates the `rotate`
+   property and the node holds a static `transform`: separate properties, so
+   they compose instead of one overwriting the other. */
+.ring {
+  position: absolute; inset: 0; margin: 0; padding: 0; list-style: none;
+  --chip: 2.75rem;
+}
+.ring-in  { --r: clamp(5.2rem, 21vw, 7.2rem); --dur: 48s; }
+.ring-out { --r: clamp(8.4rem, 36vw, 12.6rem); --dur: 70s; }
+.node {
+  position: absolute; top: 50%; left: 50%;
+  width: var(--chip); height: var(--chip);
+  margin: calc(var(--chip) / -2) 0 0 calc(var(--chip) / -2);
+  transform: rotate(var(--a)) translate(var(--r)) rotate(calc(var(--a) * -1));
+}
+.spin { display: block; position: relative; height: 100%; }
+.chip-o {
+  display: grid; place-items: center;
+  width: 100%; height: 100%; border-radius: 50%;
   background: var(--card); border: 1px solid var(--line);
-  border-radius: var(--r-l); box-shadow: var(--e4);
-  padding: var(--sp-xs) var(--sp-s);
+  box-shadow: var(--e3); color: var(--action);
 }
-/* Mobile first. The mark is the point, so on a narrow stage only two panes
-   are shown and neither crosses the middle: the first cut put the product
-   list straight over the check and the mark read as a blue smudge. */
-.pane-a { top: 0;    left: 0;    width: 52%; }
-.pane-b { display: none; }
-.pane-c { bottom: 0; right: 0;   width: 54%; }
-@media (min-width: 48rem) {
-  .pane-b { display: block; bottom: 20%; right: 0; width: 50%; }
-  .pane-c { bottom: 0; left: 0; right: auto; width: 54%; }
-}
-@media (min-width: 60rem) {
-  .pane-a { top: -1%;   left: -6%;  width: 52%; }
-  .pane-b { bottom: 21%; right: -7%; width: 50%; }
-  .pane-c { bottom: -2%; left: -2%;  width: 52%; }
-}
-
-.pane figcaption {
-  display: flex; align-items: center; gap: .45rem;
+/* The label wraps rather than running on: at the 9 and 3 o'clock positions
+   a nowrap "Employee benefits" reaches back over the inner ring's chip. */
+.node b {
+  position: absolute; top: 100%; left: 50%;
+  translate: -50% .35rem;
+  width: 6.5rem; text-align: center; line-height: 1.25;
   font-family: var(--display); font-size: .6875rem; font-weight: 600;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
-  margin-bottom: .3rem;
+  letter-spacing: .01em; color: var(--body);
 }
-.live { width: .4rem; height: .4rem; border-radius: 50%; background: var(--ok); flex: none; }
-.pane-fig {
-  font-family: var(--display); font-weight: 700; font-size: var(--f-4);
-  line-height: 1; letter-spacing: -.04em; color: var(--ink);
-}
-.pane-fig i {
-  font-style: normal; font-family: var(--text); font-size: var(--f--2);
-  font-weight: 500; color: var(--muted); letter-spacing: 0; margin-left: .45rem;
-}
-.spark { display: flex; align-items: flex-end; gap: .25rem; height: 1.6rem; margin-top: .55rem; }
-.spark b {
-  flex: 1; height: var(--h); border-radius: 2px;
-  background: linear-gradient(180deg, var(--action), var(--action-a14));
-  transform-origin: 50% 100%;
+/* On a small screen the labels cannot fit around a circle this size without
+   landing on each other or on the mark, so the ring becomes icons only and
+   the live strip directly beneath the hero carries the names instead. */
+@media (max-width: 35rem) {
+  .ring { --chip: 2.1rem; }
+  .node b { display: none; }
+  .ring-in  { --r: clamp(4.9rem, 23vw, 7.2rem); }
+  .ring-out { --r: clamp(7.6rem, 36vw, 12.6rem); }
 }
 
-.pane-b { list-style: none; }
-.pane-b li {
-  display: flex; align-items: center; gap: .5rem;
-  padding: .34rem 0; font-size: var(--f--1); color: var(--body);
-  border-bottom: 1px solid var(--line);
-}
-.pane-b li:last-child { border-bottom: none; }
-.pane-b svg { width: 1rem; height: 1rem; color: var(--action); flex: none; }
-.pane-b span { flex: 1; font-weight: 500; }
-.pane-b em {
-  font-style: normal; font-family: var(--display); font-size: var(--f--2);
-  font-weight: 600; color: var(--action); letter-spacing: .02em;
-}
-
-.pane-two { display: flex; gap: var(--sp-s); }
-.pane-two span { font-size: var(--f--2); color: var(--muted); line-height: 1.3; }
-.pane-two b {
-  display: block; font-family: var(--display); font-weight: 700;
-  font-size: var(--f-3); color: var(--ink); letter-spacing: -.03em; line-height: 1;
-  margin-bottom: .15rem;
-}
+.chip-o svg { width: 1.25rem; height: 1.25rem; }
+@media (max-width: 35rem) { .chip-o svg { width: 1rem; height: 1rem; } }
 
 .art-foot {
   display: flex; align-items: center; justify-content: center;
@@ -969,39 +960,38 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
     90%           { translate: 122px 0; opacity: 0; }
   }
 
-  .orbit  { animation: ring-spin 70s linear infinite; }
-  .o-dash { transform-box: view-box; transform-origin: 50% 50%; animation: ring-spin 48s linear infinite reverse; }
-  .sat-g  { transform-box: view-box; transform-origin: 200px 200px; animation: ring-spin 17s linear infinite; }
-  .o-arc  { animation: ring-spin 11s linear infinite; }
-  .o-arc2 { animation: ring-spin 19s linear infinite reverse; }
-  .sat-b  { animation-duration: 29s; animation-direction: reverse; }
-  @keyframes ring-spin { to { rotate: 360deg } }
+  /* The two rings turn at their own speed and the chips counter-turn at the
+     same duration, so a label never goes over. ring-out runs both its ring
+     and its chips in reverse, which still cancels. */
+  .ring  { animation: ring-spin var(--dur) linear infinite; }
+  .spin  { animation: ring-unspin var(--dur) linear infinite; }
+  .ring-out, .ring-out .spin { animation-direction: reverse; }
+  @keyframes ring-spin   { to { rotate:  360deg } }
+  @keyframes ring-unspin { to { rotate: -360deg } }
+
+  .orbit  { animation: ring-spin 90s linear infinite; }
+  .o-dash { transform-box: view-box; transform-origin: 50% 50%; animation: ring-spin 56s linear infinite reverse; }
+  .o-arc  { animation: ring-spin 13s linear infinite; }
+  .o-arc2 { animation: ring-spin 21s linear infinite reverse; }
   .halo { animation: halo-breathe 6s ease-in-out infinite; }
   @keyframes halo-breathe { 0%,100% { opacity:.85; scale:1 } 50% { opacity:1; scale:1.07 } }
 
-  .pane { animation: pane-in .9s var(--ease-out) backwards, pane-float 9s ease-in-out infinite; }
-  @keyframes pane-in    { from { opacity:0; scale:.9 } to { opacity:1; scale:1 } }
-  @keyframes pane-float { 0%,100% { translate: 0 0 } 50% { translate: 0 -11px } }
-  .pane-a { transform: translateZ(62px) rotateY(9deg)   rotateX(5deg);  animation-delay: .6s,  0s; }
-  .pane-b { transform: translateZ(48px) rotateY(-8deg)  rotateX(4deg);  animation-delay: .75s, -3s; }
-  .pane-c { transform: translateZ(86px) rotateY(11deg)  rotateX(-5deg); animation-delay: .9s,  -6s; }
+  /* protection leaving the shield: scale and opacity only, so these run on
+     the compositor and never re-rasterise */
+  .ping    { animation: ping 5.4s ease-out infinite; }
+  .ping.p2 { animation-delay: 1.8s; }
+  .ping.p3 { animation-delay: 3.6s; }
+  @keyframes ping {
+    0%   { scale: .62; opacity: 0 }
+    12%  { opacity: .45 }
+    100% { scale: 2.9; opacity: 0 }
+  }
 
-  .spark b {
-    animation: bar-rise .65s var(--ease-out) backwards;
-    animation-delay: calc(var(--i, 0) * 70ms + 1.1s);
-  }
-  @keyframes bar-rise { from { scale: 1 0 } to { scale: 1 1 } }
-  .live { position: relative; }
-  .live::after {
-    content: ''; position: absolute; inset: 0; border-radius: 50%;
-    border: 1px solid var(--ok);
-    animation: ring-out 2.4s ease-out infinite;
-  }
-  @keyframes ring-out {
-    0%   { opacity: .7; scale: 1 }
-    70%  { opacity: 0;  scale: 3.2 }
-    100% { opacity: 0;  scale: 3.2 }
-  }
+  /* a chip answers a hover: it lifts and takes the action colour */
+  .chip-o { transition: translate var(--t-mid) var(--ease),
+                        border-color var(--t-mid) var(--ease),
+                        color var(--t-mid) var(--ease); }
+  .node:hover .chip-o { translate: 0 -3px; border-color: var(--action); }
 
   /* ── parking ──
         The hero's loops are the most expensive thing on the page. They are
@@ -1013,13 +1003,14 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
         rather than every entrance being frozen at its invisible start. */
   .hero.rest .mark,
   .hero.rest .mark *,
-  .hero.rest .pane,
+  .hero.rest .ring,
+  .hero.rest .spin,
+  .hero.rest .ping,
   .hero.rest .halo,
   .hero.rest .orbit,
   .hero.rest .o-dash,
   .hero.rest .o-arc,
   .hero.rest .sat-g,
-  .hero.rest .live,
   .hero.rest::before,
   .hero.rest::after { animation-play-state: paused; }
 
@@ -1358,6 +1349,10 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
     <div class="hero-art">
       <div class="stage" id="stage">
         <span class="halo" aria-hidden="true"></span>
+        <!-- protection reaching out: three rings leaving the shield -->
+        <span class="ping" aria-hidden="true"></span>
+        <span class="ping p2" aria-hidden="true"></span>
+        <span class="ping p3" aria-hidden="true"></span>
 
         <svg class="mesh" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
           <defs>
@@ -1365,7 +1360,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
               <circle cx="1.4" cy="1.4" r="1.4" fill="currentColor"/>
             </pattern>
             <radialGradient id="bmFade">
-              <stop offset="35%" stop-color="#fff" stop-opacity="1"/>
+              <stop offset="30%" stop-color="#fff" stop-opacity="1"/>
               <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
             </radialGradient>
             <mask id="bmMask"><rect width="400" height="400" fill="url(#bmFade)"/></mask>
@@ -1374,14 +1369,11 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
         </svg>
 
         <svg class="orbit" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
-          <circle class="o-ring" cx="200" cy="200" r="126"/>
+          <circle class="o-ring" cx="200" cy="200" r="90"/>
           <circle class="o-ring o-dash" cx="200" cy="200" r="158"/>
-          <circle class="o-ring" cx="200" cy="200" r="186"/>
-          <!-- two live arcs, swept the opposite way to the rings -->
-          <circle class="o-arc" cx="200" cy="200" r="158"/>
-          <circle class="o-arc o-arc2" cx="200" cy="200" r="186"/>
-          <g class="sat-g"><circle class="o-sat" cx="200" cy="14" r="5"/></g>
-          <g class="sat-g sat-b"><circle class="o-sat o-sat2" cx="200" cy="42" r="3.5"/></g>
+          <!-- a live arc travels each path the chips ride -->
+          <circle class="o-arc"  cx="200" cy="200" r="90"/>
+          <circle class="o-arc o-arc2" cx="200" cy="200" r="158"/>
         </svg>
 
         <!-- The branch mark, inline so the check can be stroked on and a
@@ -1408,26 +1400,21 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
           </svg>
         </div>
 
-        <figure class="pane pane-a">
-          <figcaption><span class="live"></span>Lines of cover</figcaption>
-          <p class="pane-fig"><span class="num" data-to="8">8</span><i>under one roof</i></p>
-          <span class="spark" aria-hidden="true"><b style="--i:0;--h:44%"></b><b style="--i:1;--h:70%"></b><b style="--i:2;--h:56%"></b><b style="--i:3;--h:86%"></b><b style="--i:4;--h:64%"></b><b style="--i:5;--h:96%"></b></span>
-        </figure>
-
-        <ul class="pane pane-b" aria-label="Quote in minutes">
-          <li><svg aria-hidden="true" focusable="false"><use href="#i-heart"/></svg><span>Life</span><em>Instant</em></li>
-          <li><svg aria-hidden="true" focusable="false"><use href="#i-health"/></svg><span>Health</span><em>Online</em></li>
-          <li><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg><span>Motor</span><em>Quote</em></li>
+        <!-- The lines we cover, circling the shield. Real text, not an
+             illustration: each chip rides its ring and counter-rotates by
+             the same duration, so the label stays the right way up. -->
+        <ul class="ring ring-in">
+          <li class="node" style="--a:0deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-heart"/></svg></span><b>Life</b></span></li>
+          <li class="node" style="--a:90deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-health"/></svg></span><b>Health</b></span></li>
+          <li class="node" style="--a:180deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><b>Motor</b></span></li>
+          <li class="node" style="--a:270deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><b>Property</b></span></li>
         </ul>
-
-        <figure class="pane pane-c">
-          <figcaption>The branch record</figcaption>
-          <p class="pane-two">
-            <span><b class="num" data-to="23" data-suffix="&times;">23&times;</b>MDRT qualifications</span>
-            <span><b class="num" data-to="32">32</b>Years in Trinidad</span>
-          </p>
-        </figure>
-      </div>
+        <ul class="ring ring-out">
+          <li class="node" style="--a:45deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></span><b>Critical illness</b></span></li>
+          <li class="node" style="--a:135deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-bank"/></svg></span><b>Pensions</b></span></li>
+          <li class="node" style="--a:225deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-users"/></svg></span><b>Employee benefits</b></span></li>
+          <li class="node" style="--a:315deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-cap"/></svg></span><b>Education</b></span></li>
+        </ul>
 
       <p class="art-foot">
         <span><svg aria-hidden="true" focusable="false"><use href="#i-pin"/></svg>Chaguanas, Trinidad &amp; Tobago</span>
@@ -1455,22 +1442,22 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   </div>
   <div class="g-4">
     <a class="card rise" href="https://xpresslifett.com" target="_blank" rel="noopener">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-heart"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-heart"/></svg></span>
       <h3>Life</h3>
       <p>Term life protection for your family's future — starting with Xpress Life.</p>
     </a>
     <a class="card rise" href="https://healthquotee.netlify.app/" target="_blank" rel="noopener">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-health"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-health"/></svg></span>
       <h3>Health</h3>
       <p>Individual and group health coverage — quote online with our health system.</p>
     </a>
     <a class="card rise" href="https://form.jotform.com/223376649264061" target="_blank" rel="noopener">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span>
       <h3>Motor</h3>
       <p>Cover for your car, van or truck — request your quotation online.</p>
     </a>
     <a class="card rise" href="https://form.jotform.com/201953408200849" target="_blank" rel="noopener">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span>
       <h3>Property</h3>
       <p>Buildings and contents protection for your home or business.</p>
     </a>
@@ -1532,7 +1519,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
       <a class="btn btn-g ext" href="https://xpresslifett.com" target="_blank" rel="noopener">Visit XpressLifeTT</a>
     </div>
     <div class="card hov rise" style="display:flex;flex-direction:column;justify-content:center">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-compass"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-compass"/></svg></span>
       <h3 style="font-size:var(--f-2)">Not sure what coverage you need?</h3>
       <p style="margin-bottom:var(--sp-m)">FactFind360 is our needs analysis. Answer a few questions about your life, family and finances — it shows you exactly what protection fits and where your gaps are.</p>
       <a class="btn btn-1 ext" href="https://factfind360.com" target="_blank" rel="noopener" style="align-self:flex-start">Start My FactFind</a>
@@ -1714,19 +1701,19 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   </div>
   <div class="g-3">
     <a class="card rise" href="#clients">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-user"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-user"/></svg></span>
       <h3>Client Portal</h3>
       <p style="margin-bottom:var(--sp-s)">Claims, premium notices, surveys and every client service — open to all our clients, no code needed.</p>
       <span class="btn btn-3" style="padding-inline:0">Enter client area<svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></span>
     </a>
     <a class="card rise" href="groupclientmanagement/client.html">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-building"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-building"/></svg></span>
       <h3>Group Client Portal</h3>
       <p style="margin-bottom:var(--sp-s)">For employers: every open item on your group plans, our service record this year, and your rating. Access code required.</p>
       <span class="btn btn-3" style="padding-inline:0">Group sign in<svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></span>
     </a>
     <a class="card rise" href="/app">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-app"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-app"/></svg></span>
       <h3>Branch App</h3>
       <p style="margin-bottom:var(--sp-s)">For agents, unit managers and staff: one sign-in for the Log Book, your clients, the Delivery Book, fact finds, forms and training.</p>
       <span class="btn btn-3" style="padding-inline:0">Agent &amp; staff sign in<svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></span>
@@ -1754,10 +1741,10 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
     </figure>
 
     <div class="g-2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:var(--sp-s)">
-      <div class="card rise"><span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-trophy"/></svg></span><h3 style="font-size:var(--f-0)">A living MDRT culture</h3><p>Twenty-three qualifications aren't luck — they're a system.</p></div>
-      <div class="card rise"><span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-users"/></svg></span><h3 style="font-size:var(--f-0)">Mentorship by design</h3><p>Our Executive Agents and Senior Sales Consultants are required to mentor.</p></div>
-      <div class="card rise"><span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-target"/></svg></span><h3 style="font-size:var(--f-0)">A manager in your corner</h3><p>Every advisor here was interviewed and selected personally — then coached after.</p></div>
-      <div class="card rise"><span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-medal"/></svg></span><h3 style="font-size:var(--f-0)">Recognition on a schedule</h3><p>Promotions announced on stage — Blastoff in January, Mid-Year in July.</p></div>
+      <div class="card rise"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-trophy"/></svg></span><h3 style="font-size:var(--f-0)">A living MDRT culture</h3><p>Twenty-three qualifications aren't luck — they're a system.</p></div>
+      <div class="card rise"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-users"/></svg></span><h3 style="font-size:var(--f-0)">Mentorship by design</h3><p>Our Executive Agents and Senior Sales Consultants are required to mentor.</p></div>
+      <div class="card rise"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-target"/></svg></span><h3 style="font-size:var(--f-0)">A manager in your corner</h3><p>Every advisor here was interviewed and selected personally — then coached after.</p></div>
+      <div class="card rise"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-medal"/></svg></span><h3 style="font-size:var(--f-0)">Recognition on a schedule</h3><p>Promotions announced on stage — Blastoff in January, Mid-Year in July.</p></div>
     </div>
   </div>
 
@@ -1829,19 +1816,19 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   </div>
   <div class="g-2">
     <a class="card hov rise cc" href="tel:+18686785921">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-phone"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-phone"/></svg></span>
       <span><span class="cc-k">Call the branch</span><span class="cc-v num">(868) 678-5921</span><span class="cc-n">Monday to Friday, 8:00am – 4:00pm</span></span>
     </a>
     <a class="card hov rise cc" href="https://wa.me/18686785921" target="_blank" rel="noopener">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></span>
       <span><span class="cc-k">WhatsApp</span><span class="cc-v">Message the branch</span><span class="cc-n">Quickest for a short question or a photo of a document.</span></span>
     </a>
     <a class="card hov rise cc" href="mailto:support@rickyrampersadbranch.com">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-mail"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-mail"/></svg></span>
       <span><span class="cc-k">Email</span><span class="cc-v">support@rickyrampersadbranch.com</span><span class="cc-n">Policy servicing, claims and general branch support.</span></span>
     </a>
     <a class="card hov rise cc ext" href="https://www.google.com/maps/search/?api=1&amp;query=9-13+Endeavour+1st+Street+Chaguanas+Trinidad" target="_blank" rel="noopener">
-      <span class="chip"><svg aria-hidden="true" focusable="false"><use href="#i-pin"/></svg></span>
+      <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-pin"/></svg></span>
       <span><span class="cc-k">Visit us</span><span class="cc-v">9–13 Endeavour 1st Street</span><span class="cc-n">Chaguanas, Trinidad and Tobago — open in Maps</span></span>
     </a>
   </div>
