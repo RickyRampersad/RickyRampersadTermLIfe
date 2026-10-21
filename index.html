@@ -371,7 +371,10 @@ section { padding-block: var(--sp-2xl); }   /* ONE token for every section.
 }
 @supports not (overflow: clip) { .hero { overflow: hidden; } }
 .hero-grid {
-  display: grid; gap: var(--sp-xl);
+  display: grid;
+  /* Stacked, the stage brings its own ring of whitespace, so a full gap on
+     top of it reads as a hole. Side by side it needs the full column gap. */
+  gap: var(--sp-s);
   grid-template-columns: 1fr;
   align-items: center;
 }
@@ -396,7 +399,12 @@ section { padding-block: var(--sp-2xl); }   /* ONE token for every section.
   font-size: var(--f-6); font-weight: 700;
   letter-spacing: -.032em;
   margin: var(--sp-m) 0 var(--sp-s);
+  text-wrap: balance;
 }
+/* Headings even their lines; body copy avoids a one-word last line. Both
+   degrade to the normal algorithm where they are not supported. */
+h2, h3, .lede p { text-wrap: balance; }
+p, li { text-wrap: pretty; }
 .hero h1 em {
   font-style: normal; color: var(--action);
 }
@@ -483,52 +491,81 @@ section { padding-block: var(--sp-2xl); }   /* ONE token for every section.
 }
 
 /* ── the lines we cover, circling the shield ──
-   Nothing sits on the mark any more. Each chip is placed on its ring with
+   Nothing sits on the mark. Each chip is placed on its ring with
    rotate(a) translate(r) rotate(-a) — the classic place-and-keep-upright
    one-liner — and an inner span counters the ring's own spin at the same
    duration, so the label never turns over. The ring animates the `rotate`
    property and the node holds a static `transform`: separate properties, so
-   they compose instead of one overwriting the other. */
+   they compose instead of one overwriting the other.
+
+   Eight slots, twelve lines: four slots carry two and cycle between them, so
+   the whole book is shown without a ring of twelve, which reads as clutter.
+   Every line is in the markup, the resting ones at opacity 0 — still in the
+   accessibility tree, so a screen reader hears all twelve. */
 .ring {
   position: absolute; inset: 0; margin: 0; padding: 0; list-style: none;
   --chip: 2.75rem;
 }
-.ring-in  { --r: clamp(5.2rem, 21vw, 7.2rem); --dur: 48s; }
+.ring-in  { --r: clamp(5.2rem, 21vw, 7.2rem);  --dur: 48s; }
 .ring-out { --r: clamp(8.4rem, 36vw, 12.6rem); --dur: 70s; }
+
+/* The composition is a fraction of the stage, not of the viewport, so it is
+   the same drawing at 320px and at 1920. The vw clamps above are the
+   fallback where container queries are not supported. */
+@supports (container-type: size) {
+  .stage    { container-type: size; }
+  .ring     { --chip: 8.6cqw; }
+  .ring-in  { --r: 22.5cqw; }
+  .ring-out { --r: 39.5cqw; }
+}
+
 .node {
   position: absolute; top: 50%; left: 50%;
   width: var(--chip); height: var(--chip);
   margin: calc(var(--chip) / -2) 0 0 calc(var(--chip) / -2);
-  transform: rotate(var(--a)) translate(var(--r)) rotate(calc(var(--a) * -1));
+  transform: rotate(var(--ang)) translate(var(--r)) rotate(calc(var(--ang) * -1));
+  /* --a is the shared slot a pair cycles through; --a2 is the line's own
+     place on the ring. With motion off the script never runs, so each pair
+     would leave one line invisible for ever: every line takes --a2 instead
+     and the ring shows all six, sixty degrees apart. */
+  --ang: var(--a2);
 }
-.spin { display: block; position: relative; height: 100%; }
+@media (prefers-reduced-motion: no-preference) { .node { --ang: var(--a); } }
+.spin { display: block; position: relative; width: 100%; height: 100%; }
+/* A paired line rests out of sight while its partner holds the slot — but
+   only where the cycle actually runs. With motion off every line is shown,
+   at its own angle, so none is stranded invisible. It stays in the
+   accessibility tree either way, so a screen reader hears all twelve. */
+@media (prefers-reduced-motion: no-preference) {
+  .node[data-pair]:not(.on) { opacity: 0; scale: .55; pointer-events: none; }
+}
 .chip-o {
   display: grid; place-items: center;
   width: 100%; height: 100%; border-radius: 50%;
   background: var(--card); border: 1px solid var(--line);
   box-shadow: var(--e3); color: var(--action);
 }
+/* `.stage .chip-o svg`: svg:not([width]) at the top of this sheet is
+   (0,1,1) and would otherwise tie with a bare class and win on order. */
+.stage .chip-o svg { width: 45%; height: 45%; }
 /* The label wraps rather than running on: at the 9 and 3 o'clock positions
    a nowrap "Employee benefits" reaches back over the inner ring's chip. */
 .node b {
   position: absolute; top: 100%; left: 50%;
   translate: -50% .35rem;
-  width: 6.5rem; text-align: center; line-height: 1.25;
-  font-family: var(--display); font-size: .6875rem; font-weight: 600;
+  width: 7rem; text-align: center; line-height: 1.25;
+  font-family: var(--display); font-weight: 600;
+  font-size: clamp(.625rem, 2.3cqw, .75rem);
   letter-spacing: .01em; color: var(--body);
 }
 /* On a small screen the labels cannot fit around a circle this size without
    landing on each other or on the mark, so the ring becomes icons only and
    the live strip directly beneath the hero carries the names instead. */
 @media (max-width: 35rem) {
-  .ring { --chip: 2.1rem; }
   .node b { display: none; }
   .ring-in  { --r: clamp(4.9rem, 23vw, 7.2rem); }
   .ring-out { --r: clamp(7.6rem, 36vw, 12.6rem); }
 }
-
-.chip-o svg { width: 1.25rem; height: 1.25rem; }
-@media (max-width: 35rem) { .chip-o svg { width: 1rem; height: 1rem; } }
 
 .art-foot {
   display: flex; align-items: center; justify-content: center;
@@ -1404,16 +1441,20 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
              illustration: each chip rides its ring and counter-rotates by
              the same duration, so the label stays the right way up. -->
         <ul class="ring ring-in">
-          <li class="node" style="--a:0deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-heart"/></svg></span><b>Life</b></span></li>
-          <li class="node" style="--a:90deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-health"/></svg></span><b>Health</b></span></li>
-          <li class="node" style="--a:180deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><b>Motor</b></span></li>
-          <li class="node" style="--a:270deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><b>Property</b></span></li>
+          <li class="node on" style="--a:0deg;--a2:0deg" data-pair="ina"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-heart"/></svg></span><b>Life</b></span></li>
+          <li class="node" style="--a:0deg;--a2:60deg" data-pair="ina"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-pa"/></svg></span><b>Personal accident</b></span></li>
+          <li class="node on" style="--a:90deg;--a2:120deg" data-pair="inb"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-health"/></svg></span><b>Health</b></span></li>
+          <li class="node" style="--a:90deg;--a2:180deg" data-pair="inb"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-up"/></svg></span><b>Investments</b></span></li>
+          <li class="node on" style="--a:180deg;--a2:240deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><b>Motor</b></span></li>
+          <li class="node on" style="--a:270deg;--a2:300deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><b>Property</b></span></li>
         </ul>
         <ul class="ring ring-out">
-          <li class="node" style="--a:45deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></span><b>Critical illness</b></span></li>
-          <li class="node" style="--a:135deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-bank"/></svg></span><b>Pensions</b></span></li>
-          <li class="node" style="--a:225deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-users"/></svg></span><b>Employee benefits</b></span></li>
-          <li class="node" style="--a:315deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-cap"/></svg></span><b>Education</b></span></li>
+          <li class="node on" style="--a:45deg;--a2:30deg" data-pair="utc"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></span><b>Critical illness</b></span></li>
+          <li class="node" style="--a:45deg;--a2:90deg" data-pair="utc"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-user"/></svg></span><b>Key person</b></span></li>
+          <li class="node on" style="--a:135deg;--a2:150deg" data-pair="utd"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-bank"/></svg></span><b>Pensions</b></span></li>
+          <li class="node" style="--a:135deg;--a2:210deg" data-pair="utd"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-building"/></svg></span><b>Group plans</b></span></li>
+          <li class="node on" style="--a:225deg;--a2:270deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-users"/></svg></span><b>Employee benefits</b></span></li>
+          <li class="node on" style="--a:315deg;--a2:330deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-cap"/></svg></span><b>Education</b></span></li>
         </ul>
 
       <p class="art-foot">
@@ -2124,6 +2165,39 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
     art.addEventListener('pointerleave', function () { ax = ay = 0; queue(); });
   }
 
+  /* ── Twelve lines, eight slots. Four slots are shared by two lines that
+        take it in turn, one changing every few seconds, so the whole book
+        is shown without a ring of twelve, which reads as clutter. Every
+        line is already in the markup; this only moves which one is lit,
+        and with motion off it never runs — the CSS then spreads all twelve
+        around the rings instead, so none is left invisible. ──────────── */
+  var pairs = {};
+  document.querySelectorAll('.ring .node[data-pair]').forEach(function (n) {
+    (pairs[n.dataset.pair] = pairs[n.dataset.pair] || []).push(n);
+  });
+  var groups = Object.keys(pairs).map(function (k) { return pairs[k]; });
+  if (groups.length && !noMotion.matches) {
+    var turn = 0, spinTimer = null;
+    function nextLine() {
+      var g = groups[turn % groups.length];
+      for (var i = 0; i < g.length; i++) {
+        if (g[i].classList.contains('on')) {
+          g[i].classList.remove('on');
+          g[(i + 1) % g.length].classList.add('on');
+          break;
+        }
+      }
+      turn++;
+    }
+    /* Stopped with the rest of the hero's motion once it is off screen,
+       so nothing runs for a scene nobody can see. */
+    window.addEventListener('rrb:hero', function (e) {
+      if (e.detail && !spinTimer) spinTimer = setInterval(nextLine, 3400);
+      else if (!e.detail && spinTimer) { clearInterval(spinTimer); spinTimer = null; }
+    });
+    spinTimer = setInterval(nextLine, 3400);
+  }
+
   /* ── Park the hero's loops once it is off screen. The class is ADDED
         when the hero leaves, never the other way round: with no JS there
         is no class, everything runs, and no entrance can be frozen at
@@ -2131,7 +2205,9 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   var heroEl = document.querySelector('.hero');
   if (heroEl && 'IntersectionObserver' in window) {
     new IntersectionObserver(function (es) {
-      heroEl.classList.toggle('rest', !es[0].isIntersecting);
+      var live = es[0].isIntersecting;
+      heroEl.classList.toggle('rest', !live);
+      window.dispatchEvent(new CustomEvent('rrb:hero', { detail: live }));
     }, { rootMargin: '80px' }).observe(heroEl);
   }
 

@@ -319,10 +319,30 @@ I'm seeing."* The panes were covering the thing the scene is about, and
 their figures already repeated in the band directly below, so nothing was
 lost in taking them out.
 
-The hero is a stage: the mark at the centre, and **the eight lines of cover
-circling it** on two rings — Life, Health, Motor and Property inside,
-Critical illness, Pensions, Employee benefits and Education outside. That is
-a diagram of the business, not decoration. Behind them a dot mesh, two drawn
+The hero is a stage: the mark at the centre, and **the twelve lines of cover
+circling it** on two rings. That is a diagram of the business, not
+decoration.
+
+**Eight slots, twelve lines.** A ring of twelve reads as clutter, so four
+slots are shared by two lines that take it in turn, one changing every 3.4
+seconds. Every line is in the markup; the resting one sits at opacity 0,
+which keeps it in the accessibility tree, so a screen reader hears all
+twelve either way.
+
+**With motion off, the ring spreads instead of cycling.** Each line carries
+two angles: `--a`, the slot its pair shares, and `--a2`, its own place on
+the ring. `--ang` is `--a2` by default and becomes `--a` only inside
+`prefers-reduced-motion: no-preference`, and the opacity-0 rule for a
+resting pair lives in that query too. Without this the script never runs and
+four lines are invisible for ever — which the audit caught, and which is the
+house rule about never stranding content. Six to a ring, sixty degrees
+apart, and the static diagram is arguably the better drawing of the two.
+
+**The composition is a fraction of the stage, not of the viewport.** The
+stage is a container (`container-type: size`) and the radii, the chip and
+the label size are `cqw`, so the drawing is identical at 320px and at 1920;
+the `vw` clamps are the fallback where container queries are not supported.
+Measured: the mark is 28.8% of the stage at every width from 768 up. Behind them a dot mesh, two drawn
 rings, two arcs sweeping against the spin, and three pings leaving the
 shield. The whole scene tilts to the pointer, which is what reads as
 hovering. Mouse and trackpad only: a tilt that sticks where a finger left it
