@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>Branch App | Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex"/>
-<meta name="description" content="The Ricky Rampersad Branch app: one sign-in for the Log Book, the Delivery Book, your clients and your training."/>
-<meta name="theme-color" content="#070F26"/>
+<meta name="description" content="The Ricky Rampersad Branch app: one sign-in for the Log Book, the Delivery Book, your clients, fact finds, forms and training."/>
+<meta name="theme-color" content="#121317" media="(prefers-color-scheme: dark)"/>
+<meta name="theme-color" content="#F2F3F6" media="(prefers-color-scheme: light)"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="RR Branch"/>
@@ -14,115 +15,267 @@
 <link rel="manifest" href="/rroperations/manifest.webmanifest"/>
 <link rel="icon" type="image/png" href="/orphan-transition/board-mark.png"/>
 <link rel="apple-touch-icon" href="/orphan-transition/board-mark.png"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#070F26;--card:#163553;--card2:#1b3d61;--gold:#6FA8FF;--cyan:#00CFEA;
-    --text:#edf4fb;--muted:#a9bbcf;--line:rgba(255,255,255,.09);--bad:#f87171}
+  /* The Branch App, 21 October 2026 (Ricky: "hate the color scheme and layout ... a lot more animation and motion to
+     make this site pop ... scale for devices ... modern and easy to use"). The wall's family: graphite, warm ink and
+     six accents, one per kind of tool; Archivo at its wide setting for the big words. Light when the phone is light.
+     Layout: a home screen. Today up top, Find a tool, the day's steps, then the tools by kind behind tabs; on a phone
+     a bar at the bottom for the thumb. */
+  :root{
+    --bg:#121317; --bg2:#17191E; --panel:#1C1F26; --panel2:#232730; --line:#2E323C; --line2:#3A3F4B;
+    --ink:#F4F1EA; --muted:#A9AEBA; --dim:#737886;
+    --teal:#4FC1B0; --gold:#E3B85A; --coral:#EF8A6B; --violet:#AB94E8; --sky:#8CC3EC; --green:#78D198; --bad:#F08080;
+    --glass:rgba(28,31,38,.72); --shadow:0 18px 40px rgba(0,0,0,.35); --tilebg:linear-gradient(165deg,#1E222A,#1A1D23);
+    --onacc:#101215; --display:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+    color-scheme:dark;
+  }
+  @media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+    --bg:#F2F3F6; --bg2:#E9EBF0; --panel:#FFFFFF; --panel2:#F6F7F9; --line:#E1E4EA; --line2:#CDD2DB;
+    --ink:#15171C; --muted:#5B6170; --dim:#8A90A0;
+    --teal:#1E9C8A; --gold:#B8862A; --coral:#D9644A; --violet:#7A62D0; --sky:#2F82C0; --green:#3A9B5E; --bad:#C94444;
+    --glass:rgba(255,255,255,.78); --shadow:0 14px 34px rgba(30,40,60,.12); --tilebg:linear-gradient(165deg,#FFFFFF,#FAFBFC); --onacc:#FFFFFF;
+    color-scheme:light } }
+  :root[data-theme="light"]{
+    --bg:#F2F3F6; --bg2:#E9EBF0; --panel:#FFFFFF; --panel2:#F6F7F9; --line:#E1E4EA; --line2:#CDD2DB;
+    --ink:#15171C; --muted:#5B6170; --dim:#8A90A0;
+    --teal:#1E9C8A; --gold:#B8862A; --coral:#D9644A; --violet:#7A62D0; --sky:#2F82C0; --green:#3A9B5E; --bad:#C94444;
+    --glass:rgba(255,255,255,.78); --shadow:0 14px 34px rgba(30,40,60,.12); --tilebg:linear-gradient(165deg,#FFFFFF,#FAFBFC); --onacc:#FFFFFF;
+    color-scheme:light }
+
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
-    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.10),transparent);
-    padding-bottom:env(safe-area-inset-bottom)}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:var(--display);font-stretch:100%;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:clip;
+    -webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
   button,input{font:inherit;color:inherit}
-  .mark{border-radius:12px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
+  a{color:inherit}
+  [hidden]{display:none!important}
+  .mono{font-family:var(--mono)}
+
+  /* The room: three slow lights behind everything. */
+  .room{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .room i{position:absolute;width:62vmax;height:62vmax;border-radius:50%;filter:blur(70px);opacity:.20}
+  .room i:nth-child(1){background:var(--teal);top:-28vmax;left:-18vmax;animation:drift1 26s ease-in-out infinite alternate}
+  .room i:nth-child(2){background:var(--violet);top:-10vmax;right:-30vmax;animation:drift2 32s ease-in-out infinite alternate}
+  .room i:nth-child(3){background:var(--coral);bottom:-40vmax;left:10vmax;opacity:.12;animation:drift3 38s ease-in-out infinite alternate}
+  @keyframes drift1{to{transform:translate(18vmax,10vmax) scale(1.1)}}
+  @keyframes drift2{to{transform:translate(-14vmax,16vmax) scale(.9)}}
+  @keyframes drift3{to{transform:translate(12vmax,-10vmax) scale(1.15)}}
+
+  .mark{border-radius:13px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none;box-shadow:0 6px 18px rgba(0,0,0,.25)}
   .mark img{width:100%;height:100%;display:block}
-  #lock{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
-  .lock-card{width:min(380px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
-    border:1px solid var(--line);border-radius:22px;padding:32px 24px}
-  .lock-card .mark{width:72px;height:72px;border-radius:18px;margin:0 auto 16px}
-  .lock-card h1{font-family:'Montserrat';font-weight:800;font-size:22px;color:#fff;margin-bottom:4px}
-  .lock-card .tag{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px}
-  .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
-  .lock-card label{display:block;text-align:left;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px 2px}
-  .lock-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.28);
-    font-size:16px;margin-bottom:12px;outline:none}
-  .lock-card input:focus{border-color:rgba(111,168,255,.55)}
-  .btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 18px;border-radius:12px;border:0;cursor:pointer;
-    font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px}
-  .btn.gold{width:100%;background:linear-gradient(135deg,#2A6DE0,#13408F);color:#fff}
-  .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);padding:8px 12px;min-height:36px;font-size:12px}
+
+  /* ── Sign in ── */
+  #lock{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+  .lock-card{width:min(400px,100%);background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--line);border-radius:26px;padding:30px 24px 24px;box-shadow:var(--shadow);animation:rise .6s cubic-bezier(.2,.9,.25,1.2) both}
+  .lock-card .mark{width:68px;height:68px;border-radius:20px;margin:0 0 18px;animation:bob 5s ease-in-out infinite}
+  .lock-card h1{font-weight:800;font-stretch:118%;font-size:26px;line-height:1.05;letter-spacing:-.01em}
+  .lock-card .tag{display:inline-block;margin:8px 0 6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+  .lock-card p{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+  .lock-card label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px 2px;letter-spacing:.02em}
+  .lock-card input{width:100%;padding:14px 15px;border-radius:14px;border:1.5px solid var(--line);background:var(--panel2);
+    font-size:16px;margin-bottom:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+  .lock-card input:focus{border-color:var(--teal);box-shadow:0 0 0 4px color-mix(in srgb,var(--teal) 22%,transparent)}
+  .btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 18px;border-radius:14px;border:0;cursor:pointer;
+    font-weight:800;font-size:15px;min-height:48px;transition:transform .15s,box-shadow .2s}
+  .btn:active{transform:scale(.97)}
+  .btn.go{width:100%;color:var(--onacc);background:linear-gradient(120deg,var(--teal),var(--green));box-shadow:0 10px 24px color-mix(in srgb,var(--teal) 30%,transparent)}
+  .btn.go::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-120%);animation:sheen 3.2s ease-in-out infinite}
   .btn:disabled{opacity:.6;cursor:wait}
   .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px;min-height:16px}
-  .hint{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5}
-  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
-  .top{display:flex;align-items:center;gap:12px}
-  .top .mark{width:44px;height:44px}
-  .top h1{font-family:'Montserrat';font-size:18px;font-weight:800;color:#fff}
-  .top small{display:block;color:var(--muted);font-size:13px}
-  .top .sp{flex:1}
-  .hello{font-family:'Montserrat';font-size:24px;font-weight:800;margin:28px 0 4px}
-  .who{color:var(--muted);font-size:14px;margin-bottom:6px}
-  .who b{color:var(--gold)}
-  .scope{display:inline-block;font-size:12px;font-weight:700;color:var(--cyan);background:rgba(0,207,234,.1);
-    border:1px solid rgba(0,207,234,.25);border-radius:99px;padding:4px 10px;margin-bottom:6px}
-  h2{font-family:'Montserrat';font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-  .app{display:block;text-decoration:none;color:inherit;background:linear-gradient(160deg,var(--card),var(--card2));
-    border:1px solid var(--line);border-radius:18px;padding:16px;min-height:136px;position:relative;transition:transform .15s,border-color .15s}
-  a.app:hover,a.app:focus-visible{transform:translateY(-2px);border-color:rgba(111,168,255,.55);outline:none}
-  .app .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:rgba(111,168,255,.12);margin-bottom:12px}
-  .app .ic svg{width:23px;height:23px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .app b{display:block;font-family:'Montserrat';font-size:15px;font-weight:800}
-  .app span{display:block;color:var(--muted);font-size:13px;margin-top:4px;line-height:1.4}
-  .app.soon{opacity:.55}
-  .badge{position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;
-    background:rgba(255,255,255,.08);color:var(--muted)}
-  .badge.own{background:rgba(111,168,255,.14);color:var(--gold)}
-  .install{margin-top:28px;font-size:13px;color:var(--muted);background:rgba(255,255,255,.04);border:1px dashed var(--line);
-    border-radius:14px;padding:12px 14px;line-height:1.5}
-  .install b{color:var(--text)}
-  .test{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:#fbbf24;background:rgba(251,191,36,.12);
-    border-radius:99px;padding:3px 8px;vertical-align:middle}
-  .day{margin-top:18px;background:linear-gradient(160deg,rgba(42,109,224,.22),rgba(19,64,143,.12));border:1px solid rgba(111,168,255,.3);
-    border-radius:18px;padding:4px 16px 14px}
-  .day h2{margin:14px 0 8px;color:#fff}
-  .steps{list-style:none;display:grid;gap:10px}
-  .steps li{display:flex;gap:12px;align-items:flex-start}
-  .steps .n{flex:none;width:28px;height:28px;border-radius:50%;background:#2A6DE0;color:#fff;font-family:'Montserrat';font-weight:800;
-    font-size:14px;display:grid;place-items:center;margin-top:1px}
-  .steps b{display:block;font-size:15px}
-  .steps span{display:block;color:var(--muted);font-size:13px;line-height:1.45;margin-top:2px}
-  .steps a{display:inline-block;margin-top:5px;font-size:13px;font-weight:700;color:var(--gold);text-decoration:none}
-  .steps a:hover{text-decoration:underline}
-  [hidden]{display:none!important}
-  @media (max-width:420px){.hello{font-size:21px}.grid{grid-template-columns:1fr 1fr;gap:10px}.app{min-height:128px;padding:14px}
-    .app b{font-size:14px}.app span{font-size:12px}.badge{position:static;display:inline-block;margin-top:8px}}
-  .linkish{background:none;border:0;color:#6FA8FF;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;margin-top:12px;padding:6px 0}
-  /* The desk app (21 October 2026): find any tool by name, what signs you in, the forms in one place. */
-  .find{margin:18px 0 0;position:relative}
-  .find input{width:100%;padding:14px 14px 14px 44px;border-radius:14px;border:1px solid rgba(111,168,255,.35);background:rgba(0,0,0,.25);font-size:16px;outline:none}
-  .find input:focus{border-color:var(--cyan)}
-  .find svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2}
-  .moved{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin:10px 2px 0;line-height:1.5}
-  .moved b{color:var(--text);font-weight:700}
-  .nores{margin:18px 2px 0;color:var(--muted);font-size:14px}
-  .chip{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--muted)}
-  .chip.in{background:rgba(52,211,153,.12);color:#6ee7b7}
-  .chip svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4}
-  .signin-note{font-size:12.5px;color:var(--muted);margin:8px 2px 0;line-height:1.5}
-  .forms{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
-  .form-row{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
-  .form-row:hover,.form-row:focus-visible{border-color:rgba(111,168,255,.55);outline:none}
-  .form-row svg{width:20px;height:20px;flex:none;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .form-row b{display:block;font-size:14px}
-  .form-row span{display:block;font-size:12px;color:var(--muted)}
-  .preview{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:#00CFEA;background:rgba(0,207,234,.12);border-radius:99px;padding:3px 8px;vertical-align:middle}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.5}
+  .linkish{background:none;border:0;color:var(--teal);font-size:13.5px;font-weight:700;cursor:pointer;margin-top:10px;padding:8px 0;text-decoration:underline;text-underline-offset:3px}
+
+  /* ── Home ── */
+  #home{position:relative;z-index:1}
+  .wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);padding-top:env(safe-area-inset-top,0px)}
+  .bar .wrap{display:flex;align-items:center;gap:12px;padding-block:10px}
+  .bar .mark{width:38px;height:38px;border-radius:11px}
+  .bar h1{font-size:16px;font-weight:800;font-stretch:112%;line-height:1.1}
+  .bar small{display:block;font-size:12px;color:var(--muted);font-weight:500}
+  .bar .sp{flex:1}
+  .avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;color:var(--onacc);
+    background:conic-gradient(from 200deg,var(--teal),var(--gold),var(--coral),var(--violet),var(--teal));animation:turn 12s linear infinite}
+  .avatar span{animation:turn 12s linear infinite reverse}
+  .ghost{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:38px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);transition:border-color .2s}
+  .ghost:hover{border-color:var(--line2)}
+
+  /* Today */
+  .hero{position:relative;overflow:hidden;margin-top:16px;border-radius:28px;padding:24px 22px 22px;border:1px solid var(--line);
+    background:linear-gradient(140deg,color-mix(in srgb,var(--panel) 92%,var(--teal)),var(--panel) 55%,color-mix(in srgb,var(--panel) 88%,var(--violet)));box-shadow:var(--shadow)}
+  .hero .aur{position:absolute;inset:-40%;pointer-events:none;background:
+    radial-gradient(closest-side at 30% 40%,color-mix(in srgb,var(--teal) 45%,transparent),transparent),
+    radial-gradient(closest-side at 70% 30%,color-mix(in srgb,var(--violet) 40%,transparent),transparent),
+    radial-gradient(closest-side at 55% 75%,color-mix(in srgb,var(--coral) 32%,transparent),transparent);
+    opacity:.5;animation:aurora 18s ease-in-out infinite alternate}
+  @keyframes aurora{0%{transform:translate(-6%,-4%) rotate(0)}50%{transform:translate(5%,3%) rotate(8deg)}100%{transform:translate(-2%,6%) rotate(-6deg)}}
+  .hero > *{position:relative}
+  .hero .date{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .hero .clock{color:var(--ink);font-variant-numeric:tabular-nums}
+  .hello{font-weight:800;font-stretch:122%;font-size:clamp(30px,7.4vw,52px);line-height:1.02;letter-spacing:-.02em;margin:10px 0 10px;text-wrap:balance}
+  .hello .w{display:inline-block;animation:word .7s cubic-bezier(.2,.9,.25,1.25) both}
+  .who{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:99px;background:color-mix(in srgb,var(--panel2) 80%,transparent);border:1px solid var(--line)}
+  .pill.role{color:var(--onacc);background:var(--gold);border-color:transparent}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 var(--green);animation:ping 2s infinite}
+  .test,.preview{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:99px}
+  .test{color:var(--onacc);background:var(--gold)} .preview{color:var(--onacc);background:var(--sky)}
+  .scope{margin-top:12px;font-size:14px;color:var(--muted);max-width:60ch}
+  .hero .start{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+  .hero .start .btn{width:auto;padding:12px 18px}
+  .hero .in{display:grid;gap:18px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-self:center}
+  .stat{border-radius:18px;padding:14px 14px 12px;background:color-mix(in srgb,var(--panel2) 70%,transparent);border:1px solid var(--line);animation:pop .6s cubic-bezier(.2,.9,.25,1.25) both}
+  .stat b{display:block;font-weight:800;font-stretch:120%;font-size:30px;line-height:1;font-variant-numeric:tabular-nums;color:var(--c)}
+  .stat span{display:block;margin-top:6px;font-size:12px;font-weight:700;color:var(--muted)}
+  @media (min-width:900px){.hero .in{grid-template-columns:1.5fr 1fr;align-items:center}}
+
+  /* Find a tool */
+  .find{position:sticky;top:calc(59px + env(safe-area-inset-top,0px));z-index:15;margin-top:16px;padding-block:6px}
+  .find .box{position:relative}
+  .find input{width:100%;padding:16px 16px 16px 50px;border-radius:18px;border:1.5px solid var(--line);background:var(--panel);font-size:16px;outline:none;
+    box-shadow:var(--shadow);transition:border-color .2s,box-shadow .2s}
+  .find input:focus{border-color:var(--teal);box-shadow:0 0 0 5px color-mix(in srgb,var(--teal) 20%,transparent),var(--shadow)}
+  .find svg{position:absolute;left:17px;top:50%;transform:translateY(-50%);width:20px;height:20px;stroke:var(--teal);fill:none;stroke-width:2.2}
+  .quick{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-top:10px;padding-bottom:2px}
+  .quick::-webkit-scrollbar{display:none}
+  .quick button{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;transition:transform .15s,border-color .2s}
+  .quick button:hover{border-color:var(--teal);transform:translateY(-1px)}
+  .moved{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-top:10px;font-size:12.5px;color:var(--muted);align-items:center}
+  .moved::-webkit-scrollbar{display:none}
+  .moved em{flex:none;font-style:normal;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+  .moved span{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:9px;background:color-mix(in srgb,var(--panel) 70%,transparent);border:1px dashed var(--line)}
+  .moved b{color:var(--ink);font-weight:700}
+
+  /* Your day: the steps, in order */
+  .sect{margin-top:28px}
+  .sect-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .sect-h h2{font-weight:800;font-stretch:115%;font-size:20px;letter-spacing:-.01em}
+  .sect-h small{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .steps{list-style:none;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,82%);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;scrollbar-width:thin}
+  .steps li{scroll-snap-align:start;position:relative;border-radius:20px;padding:18px 16px 16px;background:var(--tilebg);border:1px solid var(--line);
+    display:flex;flex-direction:column;gap:6px;animation:pop .55s cubic-bezier(.2,.9,.25,1.25) both}
+  .steps .n{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:16px;color:var(--onacc);background:var(--c,var(--teal));margin-bottom:6px}
+  .steps b{font-size:16px;line-height:1.25;font-weight:800}
+  .steps span{font-size:13.5px;color:var(--muted);line-height:1.5}
+  .steps a{margin-top:auto;align-self:flex-start;display:inline-flex;align-items:center;gap:6px;padding-top:10px;font-size:13.5px;font-weight:800;color:var(--c,var(--teal));text-decoration:none}
+  .steps a:hover{text-decoration:underline;text-underline-offset:3px}
+  .steps a i{font-style:normal;transition:transform .2s}
+  .steps a:hover i{transform:translateX(4px)}
+  .signin-note{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5;display:flex;gap:8px;align-items:flex-start}
+  .signin-note b{color:var(--ink)}
+
+  /* The tabs */
+  .tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:4px;border-radius:16px;background:var(--panel);border:1px solid var(--line);position:relative}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{position:relative;z-index:1;flex:none;border:0;background:none;padding:9px 14px;border-radius:12px;font-size:13.5px;font-weight:800;cursor:pointer;color:var(--muted);transition:color .25s}
+  .tabs button[aria-selected="true"]{color:var(--onacc)}
+  .tabs .ind{position:absolute;z-index:0;top:4px;bottom:4px;left:0;width:0;border-radius:12px;background:var(--c,var(--teal));transition:transform .35s cubic-bezier(.3,1.2,.4,1),width .35s cubic-bezier(.3,1.2,.4,1),background .3s}
+
+  /* The tools */
+  .group{margin-top:22px}
+  .group h3{display:flex;align-items:center;gap:10px;font-size:13px;font-family:var(--mono);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+  .group h3::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--c)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .app{position:relative;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--tilebg);
+    border:1px solid var(--line);border-radius:22px;padding:16px;min-height:150px;transition:transform .25s cubic-bezier(.2,.9,.3,1.3),border-color .25s,box-shadow .25s;
+    animation:pop .5s cubic-bezier(.2,.9,.25,1.25) both;-webkit-tap-highlight-color:transparent}
+  .app::before{content:"";position:absolute;inset:auto -30% -60% auto;width:160px;height:160px;border-radius:50%;background:var(--c);opacity:.0;filter:blur(30px);transition:opacity .35s}
+  a.app:hover,a.app:focus-visible{transform:translateY(-4px);border-color:color-mix(in srgb,var(--c) 60%,var(--line));box-shadow:var(--shadow);outline:none}
+  a.app:hover::before,a.app:focus-visible::before{opacity:.35}
+  .app .ic{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;margin-bottom:14px;
+    background:linear-gradient(140deg,var(--c),color-mix(in srgb,var(--c) 55%,#000));box-shadow:0 8px 18px color-mix(in srgb,var(--c) 35%,transparent);transition:transform .35s cubic-bezier(.2,.9,.3,1.4)}
+  a.app:hover .ic{transform:rotate(-8deg) scale(1.08)}
+  .app .ic svg{width:25px;height:25px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .app b{display:block;font-size:16px;font-weight:800;font-stretch:108%;line-height:1.2}
+  .app span{display:block;color:var(--muted);font-size:13px;margin-top:5px;line-height:1.45}
+  .chip{margin-top:auto;padding-top:12px;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--muted)}
+  .chip svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.4}
+  .chip.in{color:var(--green)}
+  .chip.in i{width:7px;height:7px;border-radius:50%;background:var(--green);animation:ping 2.4s infinite}
+  .ripple{position:absolute;border-radius:50%;transform:scale(0);background:color-mix(in srgb,var(--c,var(--teal)) 40%,transparent);animation:rip .6s ease-out forwards;pointer-events:none}
+
+  /* Forms */
+  .forms{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+  .form-row{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;background:var(--tilebg);border:1px solid var(--line);border-radius:16px;padding:12px 14px;
+    transition:transform .2s,border-color .2s;animation:pop .45s cubic-bezier(.2,.9,.25,1.25) both}
+  .form-row:hover,.form-row:focus-visible{transform:translateX(4px);border-color:color-mix(in srgb,var(--gold) 60%,var(--line));outline:none}
+  .form-row .fi{width:36px;height:36px;flex:none;border-radius:11px;display:grid;place-items:center;background:color-mix(in srgb,var(--gold) 18%,transparent)}
+  .form-row svg{width:19px;height:19px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .form-row b{display:block;font-size:14.5px;font-weight:800}
+  .form-row span{display:block;font-size:12.5px;color:var(--muted)}
+  .form-row .arr{margin-left:auto;color:var(--dim);font-weight:800}
+  .nores{margin-top:22px;padding:22px;border-radius:20px;border:1px dashed var(--line2);color:var(--muted);font-size:14.5px;text-align:center}
+
+  .install{margin:30px 0 24px;display:flex;gap:14px;align-items:center;font-size:13.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;line-height:1.5}
+  .install b{color:var(--ink)}
+  .install .ph{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--sky) 20%,transparent);animation:bob 4s ease-in-out infinite}
+  .install svg{width:22px;height:22px;stroke:var(--sky);fill:none;stroke-width:2}
+
+  /* The thumb bar, on a phone */
+  .dock{display:none}
+  @media (max-width:720px){
+    .dock{display:flex;position:fixed;z-index:30;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));
+      justify-content:space-around;padding:8px;border-radius:22px;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);box-shadow:var(--shadow);
+      animation:rise .6s .3s cubic-bezier(.2,.9,.25,1.2) both}
+    .dock button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;padding:6px 4px;border-radius:14px;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer}
+    .dock button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s}
+    .dock button.on{color:var(--ink);background:color-mix(in srgb,var(--teal) 16%,transparent)}
+    .dock button.on svg{stroke:var(--teal);transform:translateY(-2px)}
+    #home{padding-bottom:96px}
+    .grid{grid-template-columns:1fr 1fr;gap:10px}
+    .app{min-height:150px;padding:14px;border-radius:20px}
+    .app .ic{width:44px;height:44px;border-radius:14px;margin-bottom:12px}
+    .app b{font-size:15px}
+    .app span{font-size:12.5px}
+    .hero{padding:20px 18px 18px;border-radius:24px}
+    .bar .who-name{display:none}
+    /* On a phone the tabs stay under the bar and Find is one tap away in the dock. */
+    .find{position:relative;top:auto}
+    .tabs{position:sticky;top:calc(60px + env(safe-area-inset-top,0px));z-index:14;box-shadow:var(--shadow)}
+  }
+  #tools,#day,.find{scroll-margin-top:calc(76px + env(safe-area-inset-top,0px))}
+  @media (min-width:900px){
+    .steps{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));overflow:visible}
+    .hero{padding:32px 32px 28px}
+  }
+
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
+  @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+  @keyframes word{from{opacity:0;transform:translateY(.4em) rotate(4deg)}to{opacity:1;transform:none}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  @keyframes ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--green) 70%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @keyframes sheen{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+  @keyframes turn{to{transform:rotate(360deg)}}
+  @keyframes rip{to{transform:scale(4);opacity:0}}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+    .room i,.hero .aur{animation:none!important}
+  }
+  :focus-visible{outline:2.5px solid var(--teal);outline-offset:2px}
 </style>
 </head>
 <body>
+<div class="room" aria-hidden="true"><i></i><i></i><i></i></div>
 
 <div id="lock">
   <form class="lock-card" id="lockForm" autocomplete="on">
     <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
     <h1>Ricky Rampersad Branch</h1>
-    <div class="tag">The branch app</div>
-    <p>One sign-in for your Log Book, your clients and your training.</p>
+    <div class="tag">The Branch App</div>
+    <p>One sign-in for your Log Book, your clients, fact finds, forms and training.</p>
     <label for="no">Agent number</label>
     <input id="no" name="username" autocomplete="username" placeholder="e.g. A00427" required>
     <label for="pw">Password</label>
     <input id="pw" name="password" type="password" autocomplete="current-password" placeholder="Your fact find password" required>
-    <button class="btn gold" type="submit" id="lockBtn">Sign in</button>
+    <button class="btn go" type="submit" id="lockBtn">Sign in</button>
     <div class="err" id="lockErr" role="alert"></div>
-    <div class="hint">Use the same agent number and password as the fact find. Staff use theirs too. One sign-in opens every tool here.</div>
+    <div class="hint">Use the same agent number and password as the fact find. Staff use theirs too. One sign-in opens every tool marked Signed in.</div>
     <button type="button" class="linkish" id="useCode">Staff: sign in with your access code instead</button>
   </form>
   <form class="lock-card" id="codeForm" autocomplete="off" hidden>
@@ -132,34 +285,63 @@
     <p>The code the branch gave you for the Delivery Book. It opens the Delivery Book and the Log Book.</p>
     <label for="code">Access code</label>
     <input id="code" type="password" autocomplete="off" placeholder="ACCESS CODE" required>
-    <button class="btn gold" type="submit" id="codeBtn">Sign in</button>
+    <button class="btn go" type="submit" id="codeBtn">Sign in</button>
     <div class="err" id="codeErr" role="alert"></div>
     <button type="button" class="linkish" id="useNo">Sign in with your agent number instead</button>
   </form>
 </div>
 
-<main class="wrap" id="home" hidden>
-  <div class="top">
+<main id="home" hidden>
+  <header class="bar"><div class="wrap">
     <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
     <div><h1>Branch App</h1><small>Ricky Rampersad Branch</small></div>
     <div class="sp"></div>
-    <button class="btn ghost" id="signOut">Sign out</button>
+    <button class="ghost" id="signOut" type="button">Sign out</button>
+    <div class="avatar" id="avatar" aria-hidden="true"><span id="initials"></span></div>
+  </div></header>
+
+  <div class="wrap">
+    <section class="hero" id="today">
+      <div class="aur" aria-hidden="true"></div>
+      <div class="in"><div>
+      <div class="date"><span id="date"></span><span class="clock" id="clock"></span></div>
+      <div class="hello" id="hello"></div>
+      <div class="who" id="who"></div>
+      <div class="scope" id="scope"></div>
+      <div class="start"><button class="btn go" type="button" id="startDay">Start your day</button></div>
+      </div><div class="stats" id="stats"></div></div>
+    </section>
+
+    <div class="find" role="search">
+      <div class="box">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="find" type="search" placeholder="What do you need?" aria-label="Find a tool" autocomplete="off">
+      </div>
+    </div>
+    <div class="quick" id="quick"></div>
+    <div class="moved" id="moved"></div>
+
+    <section class="sect" id="day"></section>
+
+    <section class="sect" id="tools">
+      <div class="sect-h"><h2>Your tools</h2><small id="count"></small></div>
+      <div class="tabs" role="tablist" id="tabs"><span class="ind" id="ind"></span></div>
+      <div id="sections"></div>
+      <div class="nores" id="nores" hidden></div>
+    </section>
+
+    <div class="install" id="install">
+      <div class="ph"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></div>
+      <div><b>Put it on your phone:</b> open this page in Chrome or Safari, tap the menu or the Share button, then <b>Add to Home Screen</b>. It opens like an app, already signed in.</div>
+    </div>
   </div>
-  <div class="hello" id="hello"></div>
-  <div class="who" id="who"></div>
-  <div class="scope" id="scope"></div>
-  <div class="find" role="search">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <input id="find" type="search" placeholder="Find a tool: orphans, transmittal, query, petty cash…" aria-label="Find a tool" autocomplete="off">
-  </div>
-  <div class="moved" id="moved"></div>
-  <section class="day" id="day"></section>
-  <div id="sections"></div>
-  <div class="nores" id="nores" hidden></div>
-  <div class="install" id="install">
-    <b>Put it on your phone:</b> open this page in Chrome or Safari, tap the menu or the Share button, then
-    <b>Add to Home Screen</b>. It opens like an app, already signed in.
-  </div>
+
+  <nav class="dock" id="dock" aria-label="Quick">
+    <button type="button" data-go="home" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+    <button type="button" data-go="find"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Find</button>
+    <button type="button" data-go="Forms"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Forms</button>
+    <button type="button" data-go="Learn"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5-10-5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Learn</button>
+  </nav>
 </main>
 
 <script src="/rroperations/ops-config.js"></script>
@@ -376,44 +558,96 @@
 
   var SI = { ff: 'Fact find sign-in', kpi: 'Tracker sign-in', mtg: 'Meeting code', open: 'No sign-in', jf: 'JotForm' };
   var LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-  var TICK = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
   var SEC_ORDER = ['Every day', 'Clients and queries', 'Goals and reports', 'Walls', 'Meetings', 'Forms', 'Learn'];
-  var ROLE = 'a';
+  /* Each kind of tool has its own colour, the wall's six. */
+  var SEC_C = { 'Every day': 'teal', 'Clients and queries': 'coral', 'Goals and reports': 'gold', 'Walls': 'violet', 'Meetings': 'sky', 'Forms': 'gold', 'Learn': 'green' };
+  var TAB_NAME = { 'Every day': 'Every day', 'Clients and queries': 'Clients', 'Goals and reports': 'Goals', 'Walls': 'Walls', 'Meetings': 'Meetings', 'Forms': 'Forms', 'Learn': 'Learn' };
+  var QUICK = { a: ['Orphans', 'Log', 'Fact find', 'Goals', 'Licence'], l: ['Orphans', 'Log', 'Goals', 'Insights', 'Meeting'],
+                s: ['Orphans', 'Transmittal', 'Delivery', 'Query', 'Petty cash'], m: ['Orphans', 'Transmittal', 'Wall', 'KPI', 'Approval'] };
+  var ROLE = 'a', TAB = 'All';
   function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function mine(t) { return t.to.indexOf(ROLE) >= 0 && !(t.until && today() > t.until); }
+  function cvar(sec) { return 'var(--' + (SEC_C[sec] || 'teal') + ')'; }
   function chip(t) {
-    return t.si ? '<div class="chip">' + (t.si === 'open' ? '' : LOCK) + esc(SI[t.si]) + '</div>' : '<div class="chip in">' + TICK + 'Signed in</div>';
+    return t.si ? '<div class="chip">' + (t.si === 'open' ? '' : LOCK) + esc(SI[t.si]) + '</div>' : '<div class="chip in"><i></i>Signed in</div>';
   }
   function words(t) { return (t.name + ' ' + (t.tags || '') + ' ' + (typeof t.blurb === 'string' ? t.blurb : (t.blurb && t.blurb[ROLE]) || '')).toLowerCase(); }
   function hits(t, q) { if (!q) return true; var w = words(t); return q.split(/\s+/).every(function (x) { return w.indexOf(x) > -1; }); }
-  function tileHtml(t) {
+  function tileHtml(t, i) {
     var href = pick(t.href, ROLE), ext = /^https?:/.test(href);
-    return '<a class="app" href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') + '><div class="ic"><svg viewBox="0 0 24 24">' + IC[t.ic] + '</svg></div><b>' + esc(t.name) +
-      '</b><span>' + esc(pick(t.blurb, ROLE)) + '</span>' + chip(t) + '</a>';
+    return '<a class="app" style="--c:' + cvar(t.sec) + ';animation-delay:' + Math.min(i * 35, 600) + 'ms" href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') +
+      '><div class="ic"><svg viewBox="0 0 24 24">' + IC[t.ic] + '</svg></div><b>' + esc(t.name) + '</b><span>' + esc(pick(t.blurb, ROLE)) + '</span>' + chip(t) + '</a>';
   }
-  function formHtml(f) {
-    return '<a class="form-row" href="' + JF + f.id + '" target="_blank" rel="noopener"><svg viewBox="0 0 24 24">' + IC.form + '</svg><div><b>' + esc(f.name) +
-      '</b><span>' + esc(f.blurb) + ' · JotForm</span></div></a>';
+  function formHtml(f, i) {
+    return '<a class="form-row" style="animation-delay:' + Math.min(i * 30, 500) + 'ms" href="' + JF + f.id + '" target="_blank" rel="noopener"><div class="fi"><svg viewBox="0 0 24 24">' + IC.form +
+      '</svg></div><div><b>' + esc(f.name) + '</b><span>' + esc(f.blurb) + ' · JotForm</span></div><span class="arr">›</span></a>';
   }
-  /* The sections, filtered by what is typed in Find a tool. */
+  function myForms(q) { return FORMS.filter(function (f) { return f.to.indexOf(ROLE) >= 0 && hits({ name: f.name, tags: f.tags + ' form forms jotform', blurb: f.blurb }, q); }); }
+  /* The tools, by kind, filtered by the tab and by what is typed in Find a tool. */
   function draw(q) {
     q = String(q || '').trim().toLowerCase();
+    var n = 0, k = 0;
     var out = SEC_ORDER.map(function (sec) {
+      if (TAB !== 'All' && TAB !== sec && !q) return '';
+      var head = '<div class="group" style="--c:' + cvar(sec) + '"><h3>' + esc(sec) + '</h3>';
       if (sec === 'Forms') {
-        var fs = FORMS.filter(function (f) { return f.to.indexOf(ROLE) >= 0 && hits({ name: f.name, tags: f.tags + ' form forms jotform', blurb: f.blurb }, q); });
-        return fs.length ? '<h2>Forms</h2><div class="forms">' + fs.map(formHtml).join('') + '</div>' : '';
+        var fs = myForms(q); n += fs.length;
+        return fs.length ? head + '<div class="forms">' + fs.map(function (f) { return formHtml(f, k++); }).join('') + '</div></div>' : '';
       }
-      var ts = TILES.filter(function (t) { return t.sec === sec && mine(t) && hits(t, q); });
-      return ts.length ? '<h2>' + esc(sec) + '</h2><div class="grid">' + ts.map(tileHtml).join('') + '</div>' : '';
+      var ts = TILES.filter(function (t) { return t.sec === sec && mine(t) && hits(t, q); }); n += ts.length;
+      return ts.length ? head + '<div class="grid">' + ts.map(function (t) { return tileHtml(t, k++); }).join('') + '</div></div>' : '';
     }).join('');
     $('sections').innerHTML = out;
     $('day').hidden = !!q;
     $('nores').hidden = !!out;
-    if (!out) $('nores').textContent = 'Nothing by that name. Try a shorter word, such as log, client, query, form or wall.';
+    if (!out) $('nores').textContent = 'Nothing by that name yet. Try a shorter word, such as log, client, query, form or wall.';
+    $('count').textContent = q ? n + ' found' : '';
+    $('tabs').style.opacity = q ? '.45' : '';
   }
+  function drawTabs() {
+    var have = ['All'].concat(SEC_ORDER.filter(function (sec) {
+      return sec === 'Forms' ? myForms('').length : TILES.some(function (t) { return t.sec === sec && mine(t); });
+    }));
+    $('tabs').innerHTML = '<span class="ind" id="ind"></span>' + have.map(function (sec) {
+      return '<button type="button" role="tab" data-tab="' + esc(sec) + '" aria-selected="' + (sec === TAB) + '" style="--c:' + (sec === 'All' ? 'var(--ink)' : cvar(sec)) + '">' + esc(sec === 'All' ? 'All' : TAB_NAME[sec]) + '</button>';
+    }).join('');
+    moveInd();
+  }
+  function moveInd() {
+    var b = document.querySelector('#tabs button[aria-selected="true"]'), ind = $('ind');
+    if (!b || !ind) return;
+    ind.style.width = b.offsetWidth + 'px'; ind.style.transform = 'translateX(' + b.offsetLeft + 'px)';
+    ind.style.background = TAB === 'All' ? 'var(--ink)' : cvar(TAB);
+    var tb = $('tabs'); if (tb.scrollWidth > tb.clientWidth) tb.scrollTo({ left: b.offsetLeft - tb.clientWidth / 2 + b.offsetWidth / 2, behavior: 'smooth' });
+  }
+  function setTab(sec, scroll) {
+    TAB = sec; $('find').value = '';
+    Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function (b) { b.setAttribute('aria-selected', b.getAttribute('data-tab') === sec ? 'true' : 'false'); });
+    moveInd(); draw('');
+    if (scroll) $('tools').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  }
+  function dock(on) { Array.prototype.forEach.call(document.querySelectorAll('#dock button'), function (b) { b.classList.toggle('on', b.getAttribute('data-go') === on); }); }
+
+  /* The counts in Today run up from nothing. */
+  function countUp() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    Array.prototype.forEach.call(document.querySelectorAll('#stats b[data-n]'), function (el) {
+      var n = Number(el.getAttribute('data-n')), t0 = performance.now(), dur = 900;
+      (function step(t) { var k = Math.min(1, (t - t0) / dur); el.textContent = Math.round(n * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); })(t0);
+    });
+  }
+  /* The date and a ticking clock in Today. */
+  function tick() {
+    var d = new Date();
+    $('date').textContent = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    $('clock').textContent = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+  /* The search box suggests what people look for. */
+  var hintI = 0, HINTS = ['What do you need?', 'Try: orphans', 'Try: transmittal', 'Try: query', 'Try: petty cash', 'Try: licence'];
+  setInterval(function () { var f = $('find'); if (f && !f.value && document.activeElement !== f) { hintI = (hintI + 1) % HINTS.length; f.placeholder = HINTS[hintI]; } }, 2600);
 
   function show(s, demo) {
-    var r = roleOf(s); ROLE = r;
+    var r = roleOf(s); ROLE = r; TAB = 'All';
     /* Sent here from an app to sign in: go straight back to it. */
     if (next && !demo) {
       var back = TILES.filter(function (t) { return t.id === next && t.to.indexOf(r) >= 0; })[0];
@@ -422,25 +656,57 @@
     var first = String(s.name || '').split(' ')[0];
     first = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
     var h = new Date().getHours();
-    $('hello').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (first ? ', ' + first : '');
-    $('who').innerHTML = '<b>' + esc(ROLE_NAME[r]) + '</b>' + (s.agentNo ? ' · ' + esc(s.agentNo) : '') +
+    var greet = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (first ? ', ' + first : '');
+    $('hello').setAttribute('aria-label', greet);
+    $('hello').innerHTML = greet.split(' ').map(function (w, i) { return '<span class="w" aria-hidden="true" style="animation-delay:' + (i * 90) + 'ms">' + esc(w) + '</span>'; }).join(' ');
+    $('initials').textContent = (String(s.name || ROLE_NAME[r]).trim().split(/\s+/).map(function (x) { return x.charAt(0); }).join('').slice(0, 2) || '?').toUpperCase();
+    $('who').innerHTML = '<span class="pill role">' + esc(ROLE_NAME[r]) + '</span>' + (s.agentNo ? '<span class="pill">' + esc(s.agentNo) + '</span>' : '') +
+      '<span class="pill"><span class="dot"></span>Signed in</span>' +
       (demo ? '<span class="preview">Preview</span>' : s.mode && s.mode !== 'live' ? '<span class="test">Test mode</span>' : '');
     $('scope').textContent = SCOPE[r];
-    $('moved').innerHTML = MOVED[r].map(function (m) { return '<span>' + esc(m[0]) + ' → <b>' + esc(m[1]) + '</b></span>'; }).join('');
-    var g = GUIDE[r];
-    $('day').innerHTML = '<h2>' + esc(g.title) + '</h2><ol class="steps">' + g.steps.map(function (st, i) {
+    tick();
+    $('quick').innerHTML = QUICK[r].map(function (w) { return '<button type="button" data-q="' + esc(w.toLowerCase()) + '">' + esc(w) + '</button>'; }).join('');
+    $('moved').innerHTML = '<em>Moved</em>' + MOVED[r].map(function (m) { return '<span>' + esc(m[0]) + ' → <b>' + esc(m[1]) + '</b></span>'; }).join('');
+    var g = GUIDE[r], COLS = ['teal', 'coral', 'gold', 'violet', 'sky'];
+    $('day').innerHTML = '<div class="sect-h"><h2>' + esc(g.title) + '</h2><small>' + g.steps.length + ' steps, in order</small></div><ol class="steps">' + g.steps.map(function (st, i) {
       var t = st[2] ? TILES.filter(function (x) { return x.id === st[2]; })[0] : null;
       var href = t ? pick(t.href, r) : '';
-      return '<li><span class="n">' + (i + 1) + '</span><div><b>' + esc(st[0]) + '</b><span>' + esc(st[1]) + '</span>' +
-        (href ? '<a href="' + esc(href) + '"' + (/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : '') + '>Open ' + esc(t.name) + ' →</a>' : '') + '</div></li>';
-    }).join('') + '</ol><div class="signin-note">This app signs you in to every tool marked <b>Signed in</b>. A tool with a lock asks for its own sign-in the first time on this phone.</div>';
+      return '<li style="--c:var(--' + COLS[i % COLS.length] + ');animation-delay:' + (150 + i * 90) + 'ms"><span class="n">' + (i + 1) + '</span><b>' + esc(st[0]) + '</b><span>' + esc(st[1]) + '</span>' +
+        (href ? '<a href="' + esc(href) + '"' + (/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : '') + '>Open ' + esc(t.name) + ' <i>→</i></a>' : '') + '</li>';
+    }).join('') + '</ol><div class="signin-note"><span class="chip in" style="padding:0;margin:0"><i></i></span><span>This app signs you in to every tool marked <b>Signed in</b>. A tool with a lock asks for its own sign-in the first time on this phone.</span></div>';
+    var nT = TILES.filter(mine).length, nIn = TILES.filter(function (t) { return mine(t) && !t.si; }).length, nF = myForms('').length;
+    $('stats').innerHTML = [[nT, 'tools for you', 'teal'], [nIn, 'open signed in', 'green'], [nF, 'forms', 'gold']].map(function (x, i) {
+      return '<div class="stat" style="--c:var(--' + x[2] + ');animation-delay:' + (250 + i * 110) + 'ms"><b data-n="' + x[0] + '">' + x[0] + '</b><span>' + esc(x[1]) + '</span></div>'; }).join('');
+    countUp();
     $('find').value = '';
-    draw('');
+    drawTabs(); draw('');
     try { if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) $('install').hidden = true; } catch (e) {}
     $('signOut').hidden = !!demo;
     $('lock').hidden = true; $('home').hidden = false;
+    moveInd();
   }
   $('find').addEventListener('input', function () { draw(this.value); });
+  $('find').addEventListener('focus', function () { dock('find'); });
+  $('tabs').addEventListener('click', function (e) { var b = e.target.closest('button[data-tab]'); if (b) setTab(b.getAttribute('data-tab'), false); });
+  $('quick').addEventListener('click', function (e) { var b = e.target.closest('button[data-q]'); if (!b) return; $('find').value = b.getAttribute('data-q'); draw($('find').value); $('find').focus(); });
+  $('startDay').addEventListener('click', function () { $('day').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); });
+  $('dock').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-go]'); if (!b) return;
+    var go = b.getAttribute('data-go'); dock(go);
+    if (go === 'home') { setTab('All', false); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    else if (go === 'find') { $('find').focus(); $('find').scrollIntoView({ block: 'center' }); }
+    else setTab(go, true);
+  });
+  window.addEventListener('resize', moveInd);
+  setInterval(function () { if (!$('home').hidden) tick(); }, 20000);
+  /* A ripple where the finger lands. */
+  document.addEventListener('pointerdown', function (e) {
+    var el = e.target.closest && e.target.closest('.app,.btn');
+    if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var r = el.getBoundingClientRect(), d = Math.max(r.width, r.height), sp = document.createElement('span');
+    sp.className = 'ripple'; sp.style.width = sp.style.height = d + 'px'; sp.style.left = (e.clientX - r.left - d / 2) + 'px'; sp.style.top = (e.clientY - r.top - d / 2) + 'px';
+    el.appendChild(sp); setTimeout(function () { sp.remove(); }, 650);
+  });
 
   /* ?demo=a|l|s|m: what each role sees, without signing in (for the film and for showing the layout). Every tool still
      asks for its own sign-in; nothing is opened by it. */
