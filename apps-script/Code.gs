@@ -656,7 +656,10 @@ function clientPage_(p) {
     agent: { name: CONFIG.AGENT_NAME, phone: CONFIG.AGENT_PHONE },
   });
   return t.evaluate().setTitle('Guardian Group — Policy Renewal')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    // viewport-fit=cover: Portal.html lays its gutters out with
+    // max(16px, env(safe-area-inset-*)), which only resolves to a real inset
+    // when the page is allowed under the phone's rounded corners and bars.
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 

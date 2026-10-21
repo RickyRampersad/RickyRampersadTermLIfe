@@ -1,173 +1,319 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <base target="_top">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
-  --gold:#efc24b; --gold2:#dca530; --teal:#00CFEA; --teal2:#00A8C5;
-  --text:#edf4fb; --muted:#a9bbcf; --line:rgba(255,255,255,.10);
-  --good:#35d07f; --bad:#ff7a7a;
-  --navy:var(--text); --blue:var(--teal); --light:var(--bg2); --ink:var(--text); --ink2:var(--muted);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font:15px/1.65 'DM Sans',sans-serif;color:var(--text);
-  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
-  min-height:100vh;padding-bottom:60px}
-h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
-.head{padding:20px 18px;border-bottom:1px solid var(--line)}
-.head .in{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:13px}
-.gmark{width:46px;height:46px;flex-shrink:0}
-.head .brand{font:800 15px/1.15 'Montserrat',sans-serif;color:var(--gold);letter-spacing:.3px}
-.head .sub{font-size:12px;color:var(--muted);margin-top:2px}
-.wrap{max-width:680px;margin:0 auto;padding:20px 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:18px}
-.card h2{font-size:17px;font-weight:800;color:var(--text);margin-bottom:4px}
-.badge{display:inline-block;font:700 10.5px 'Montserrat';padding:3px 11px;border-radius:99px;vertical-align:middle;letter-spacing:.04em}
-.b-comp{background:rgba(53,208,127,.15);color:var(--good)}.b-tp{background:rgba(0,207,234,.15);color:var(--teal)}
-.due{display:inline-block;font:700 11px 'Montserrat';padding:3px 11px;border-radius:99px;background:rgba(239,194,75,.15);color:var(--gold);margin-left:4px}
-.due.over{background:rgba(255,122,122,.15);color:var(--bad)}
-.facts{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
-.facts td{padding:8px 11px;border:1px solid var(--line)}
-.facts td:first-child{background:var(--bg2);color:var(--muted);width:44%}
-.owing{background:rgba(255,122,122,.08);border-left:3px solid var(--bad);border-radius:0 12px 12px 0;padding:12px 15px;margin:10px 0;font-size:13.5px}
-.owing b{color:var(--bad)}
-.edu{background:rgba(239,194,75,.08);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:13px 16px;margin:12px 0;font-size:13.5px}
-.edu b{color:var(--gold)}
-.benefits{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin:12px 0;font-size:13.5px}
-.benefits h3{font-size:12px;color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
-.benefits ul{padding-left:18px}
-.benefits li{margin:5px 0}
-.benefits b{color:var(--text)}
-/* the entitlement nobody was being told about */
-.free{background:linear-gradient(135deg,rgba(239,194,75,.13),rgba(201,148,44,.07));
-  border:1px solid rgba(239,194,75,.42);border-radius:14px;padding:15px 17px;margin:12px 0}
-.free h3{font-size:12px;color:var(--gold,#efc24b);text-transform:uppercase;
-  letter-spacing:.08em;margin-bottom:6px}
-.free .lead{font-size:13.5px;margin-bottom:10px}
-.free .opt2{display:block;background:var(--bg2);border:1px solid var(--line);
-  border-radius:10px;padding:11px 13px;margin:7px 0;cursor:pointer;font-size:13.5px}
-.free .opt2:hover{border-color:var(--teal)}
-.free .opt2 input{margin-right:8px}
-.free .opt2 .d{display:block;color:var(--muted);font-size:12.5px;margin:4px 0 0 24px}
-.free .src{font-size:11.5px;color:var(--muted);margin-top:8px}
-.asks{background:var(--bg2);border:1px solid var(--line);border-radius:14px;
-  padding:15px 17px;margin:12px 0;font-size:13.5px}
-.asks h3{font-size:12px;color:var(--teal);text-transform:uppercase;
-  letter-spacing:.08em;margin-bottom:4px}
-.asks .lead{color:var(--muted);font-size:12.5px;margin-bottom:9px}
-.asks label{display:block;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
-.asks label:first-of-type{border-top:none}
-.asks .d{display:block;color:var(--muted);font-size:12.5px;margin:3px 0 0 24px}
-.asks .nw{color:var(--gold,#efc24b);font-size:11.5px}
-.step{font:800 11.5px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.12em;margin:22px 0 8px}
-label{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin:12px 0 5px}
-input[type=text],input[type=email],textarea,select{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 13px;font:14px 'DM Sans';background:var(--bg);color:var(--text);outline:none}
-input[type=text]:focus,input[type=email]:focus,textarea:focus,select:focus{border-color:var(--teal)}
-select option{background:var(--bg2);color:var(--text)}
-textarea{min-height:64px;resize:vertical}
-.opt{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:9px;cursor:pointer;background:var(--bg2);transition:.15s}
-.opt:hover{border-color:var(--teal2)}
-.opt.sel{border-color:var(--teal);background:rgba(0,207,234,.08);box-shadow:0 0 0 1px var(--teal)}
-.opt input{margin-top:4px;accent-color:var(--teal)}
-.opt b{display:block;font-size:14px;font-family:'Montserrat'}
-.opt span{font-size:12.5px;color:var(--muted)}
-.check{display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;cursor:pointer;font-size:13.5px}
-.check input{margin-top:3px;accent-color:var(--teal)}
-.btn{width:100%;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#04202b;font:800 15px 'Montserrat';border:none;border-radius:13px;padding:15px;cursor:pointer;margin-top:14px;transition:.15s}
-.btn:hover{filter:brightness(1.1)}
-.btn:disabled{opacity:.5;cursor:wait}
-.ok{background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.4);color:var(--good);border-radius:12px;padding:14px;margin-top:12px;font-weight:600;display:none}
-.err{background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:var(--bad);border-radius:12px;padding:14px;margin-top:12px;display:none}
-.hist td,.hist th{padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}
-.hist th{color:var(--teal);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
-.vhist{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
-.vhist td,.vhist th{padding:6px 10px;border:1px solid var(--line);text-align:left}
-.vhist th{background:var(--bg2);color:var(--muted);font-size:11px;text-transform:uppercase}
-details{border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:10px 0;background:var(--bg2)}
-details summary{cursor:pointer;font-weight:700;color:var(--teal);font-size:13.5px}
-.foot{max-width:680px;margin:6px auto;padding:0 14px;font-size:11px;color:#5c7590;line-height:1.6}
-.nf{max-width:560px;margin:60px auto;text-align:center;padding:20px}
-.stars{display:flex;gap:6px;margin:6px 0 2px}
-.stars button{font-size:30px;background:none;border:none;cursor:pointer;color:#3a5570;line-height:1}
-.stars button.on{color:var(--gold)}
-.note{font-size:12px;color:var(--muted)}
-.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
-@media(max-width:520px){.vgrid{grid-template-columns:1fr}}
-.vnow,.vguide{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
-.vguide{border-color:var(--teal)}
-.vnow .k,.vguide .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-.vnow .v{font:800 19px 'Montserrat';margin-top:3px}
-.vguide .v{font:800 19px 'Montserrat';color:var(--teal);margin-top:3px}
-.vguide .why{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5}
-.warnpill{display:inline-block;margin-top:6px;font:700 10.5px 'Montserrat';background:rgba(239,194,75,.16);
-  color:var(--gold);border-radius:5px;padding:3px 8px}
-.vtrend{display:flex;align-items:flex-end;gap:8px;height:74px;margin:12px 0 2px}
-.vtrend .vb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
-.vtrend .vbar{width:100%;max-width:44px;background:linear-gradient(180deg,var(--teal),var(--teal2));border-radius:4px 4px 2px 2px}
-.vtrend .vy{font-size:10px;color:var(--muted)}
-.vfeed{font-size:12.5px;line-height:1.55;margin-top:7px;padding:0}
-.vfeed.ok{color:var(--good);background:rgba(53,208,127,.10);border-radius:9px;padding:9px 12px}
-.vfeed.bad{color:var(--bad);background:rgba(255,122,122,.10);border-radius:9px;padding:9px 12px}
-.vfeed b{color:inherit}
-/* progress tracker */
-.tstep{display:grid;grid-template-columns:34px 1fr;gap:12px;padding-bottom:16px;position:relative}
-.tstep::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
-.tstep:last-child::before{display:none}
-.tdot{width:34px;height:34px;border-radius:50%;background:var(--bg2);border:2px solid var(--line);color:var(--muted);display:grid;place-items:center;font:800 13px 'Montserrat';z-index:1}
-.tstep.done .tdot{background:var(--good);border-color:var(--good);color:#04202b}
-.tstep.now .tdot{background:var(--gold);border-color:var(--gold);color:#3a2c05}
-.tstep h4{font-size:13.5px}
-.tstep.todo h4{color:var(--muted)}
-.tstep p{font-size:12px;color:var(--muted);margin:0}
-.citem{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
-.citem:last-child{border-bottom:none}
-.cdot{width:9px;height:9px;border-radius:50%;margin-top:6px;flex-shrink:0}
-.cdot.us{background:var(--teal)}
-.cdot.you{background:var(--gold)}
-.cwhen{font-size:11.5px;color:var(--muted)}
+/* ------------------------------------------------------------------
+   Set like a policy schedule, not a dashboard. Paper ground, navy ink,
+   figures in tabular mono, hairline rules, and one gold moment for the
+   benefit the client is owed.
 
-/* ---- colour themes: Midnight (default) · Ocean · Daylight ---- */
-html[data-theme="ocean"]{
-  --bg:#03151c; --bg2:#062430; --card:#0b3140; --card2:#0e3c4e;
-  --gold:#ffd166; --gold2:#e6b34a; --teal:#2ee6c8; --teal2:#19b89e;
-  --text:#eafffa; --muted:#9cc4bd; --faint:#6f948e; --line:rgba(255,255,255,.10);
-  --good:#3ce08a; --bad:#ff8585; --green:#3ce08a; --red:#ff8585; --amber:#ffd166;
-  --navy:#eafffa; --blue:#2ee6c8; --light:#062430; --ink:#eafffa; --ink2:#9cc4bd;
+   Navy #07131f is the branch's chrome and ink colour. It was the page
+   background here, behind 13px figures, which is what made this hard to
+   read. It is now the masthead band, the primary button and the type.
+
+   THEMES. Bare :root carries the complete light palette. The two dark
+   blocks only redefine tokens, so a token is never defined for one theme
+   only. The picker writes data-theme on <html>: "" follows the device,
+   "light" and "dark" override it in both directions.
+   ------------------------------------------------------------------ */
+:root{
+  --paper:#f6f7f9; --card:#ffffff; --sunk:#eef1f5;
+  --ink:#0d1b2a; --ink-2:#48596b; --ink-3:#78899b;
+  --rule:#dbe1e8; --rule-2:#c8d1db;
+  --navy:#07131f; --navy-2:#132a3f;
+  --gold:#a97c1e; --gold-lt:#efc24b; --gold-wash:#fdf6e4; --gold-edge:#e8d49a;
+  --teal:#0d6f80; --teal-wash:#e8f2f4; --teal-edge:#b5d5dc;
+  --good:#1a6b4a; --good-wash:#e9f4ee; --good-edge:#b8ddc8;
+  --warn:#8a5a00; --warn-wash:#fcf3e2; --warn-edge:#e8d49a;
+  --bad:#99291d;  --bad-wash:#fbecea;  --bad-edge:#eec4bd;
+  --fill:#cfd8e2; --fill-warn:#d9a441;
+  --shadow:0 1px 2px rgba(13,27,42,.05), 0 8px 24px -12px rgba(13,27,42,.14);
+  --display:'Newsreader',Georgia,'Times New Roman',serif;
+  --sans:'Public Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  /* kept so any older rule or inline style still resolves */
+  --bg:var(--paper); --bg2:var(--sunk); --card2:var(--sunk);
+  --text:var(--ink); --muted:var(--ink-2); --line:var(--rule);
+  --gold2:var(--gold); --teal2:var(--teal);
+  --navy-t:var(--ink); --blue:var(--teal); --light:var(--sunk); --ink2:var(--ink-2);
 }
-html[data-theme="daylight"]{
-  --bg:#eef3f8; --bg2:#ffffff; --card:#ffffff; --card2:#f4f8fc;
-  --gold:#a1720a; --gold2:#8a5f06; --teal:#0092b0; --teal2:#006e86;
-  --text:#152738; --muted:#54677b; --faint:#7d8fa3; --line:rgba(16,42,70,.14);
-  --good:#1e7d4f; --bad:#b3261e; --green:#1e7d4f; --red:#b3261e; --amber:#a1720a;
-  --navy:#152738; --blue:#0092b0; --light:#eef3f8; --ink:#152738; --ink2:#54677b;
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0b141d; --card:#121e29; --sunk:#0e1822;
+    --ink:#e8edf2; --ink-2:#a6b6c6; --ink-3:#73879a;
+    --rule:#223241; --rule-2:#2d4256;
+    --navy:#060f18; --navy-2:#132a3f;
+    --gold:#e0b253; --gold-lt:#efc24b; --gold-wash:#211a08; --gold-edge:#4a3a14;
+    --teal:#4fc3d4; --teal-wash:#0c2630; --teal-edge:#1c4756;
+    --good:#5cc895; --good-wash:#0d2419; --good-edge:#1d4733;
+    --warn:#e3ab4d; --warn-wash:#241c09; --warn-edge:#4a3a14;
+    --bad:#f08a7c;  --bad-wash:#2a1310;  --bad-edge:#5a2620;
+    --fill:#334b61; --fill-warn:#8a6418;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
 }
-html[data-theme="daylight"] body{background:linear-gradient(180deg,#eef3f8,#ffffff 55%,#eef3f8)}
-html[data-theme="daylight"] .card{box-shadow:0 2px 14px rgba(20,50,90,.07)}
-.thpick{display:flex;gap:7px;align-items:center}
-.thpick button{width:22px;height:22px;border-radius:50%;border:2px solid rgba(127,127,127,.35);cursor:pointer;padding:0}
-.thpick button.on{border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,160,190,.35)}
+:root[data-theme="dark"]{
+  --paper:#0b141d; --card:#121e29; --sunk:#0e1822;
+  --ink:#e8edf2; --ink-2:#a6b6c6; --ink-3:#73879a;
+  --rule:#223241; --rule-2:#2d4256;
+  --navy:#060f18; --navy-2:#132a3f;
+  --gold:#e0b253; --gold-lt:#efc24b; --gold-wash:#211a08; --gold-edge:#4a3a14;
+  --teal:#4fc3d4; --teal-wash:#0c2630; --teal-edge:#1c4756;
+  --good:#5cc895; --good-wash:#0d2419; --good-edge:#1d4733;
+  --warn:#e3ab4d; --warn-wash:#241c09; --warn-edge:#4a3a14;
+  --bad:#f08a7c;  --bad-wash:#2a1310;  --bad-edge:#5a2620;
+  --fill:#334b61; --fill-warn:#8a6418;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font:400 16px/1.65 var(--sans);color:var(--ink);background:var(--paper);
+  min-height:100vh;padding-bottom:48px;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--display);font-weight:500;letter-spacing:-.01em}
+b,strong{font-weight:600}
+a{color:var(--teal)}
+
+/* ---------- masthead ---------- */
+.head{background:var(--navy);color:#fff;border-bottom:2px solid var(--gold-lt)}
+.head .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:13px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+.gmark{width:42px;height:42px;flex:0 0 42px;border-radius:11px;overflow:hidden;
+  background:#07131f;display:grid;place-items:center}
+.gmark img{width:100%;height:100%;display:block}
+.head .brand{font:600 14px/1.25 var(--sans);color:#fff;letter-spacing:0}
+.head .sub{font:400 11.5px/1.3 var(--sans);color:#8ba3bb;letter-spacing:.09em;
+  text-transform:uppercase;margin-top:3px}
+.thpick{display:flex;gap:4px;align-items:center;margin-left:auto;flex:0 0 auto}
+.thpick button{border:1px solid rgba(255,255,255,.2);background:transparent;color:#8ba3bb;
+  border-radius:6px;padding:5px 9px;cursor:pointer;font:600 10px/1.3 var(--sans);
+  letter-spacing:.07em;text-transform:uppercase}
+.thpick button:hover{color:#fff;border-color:rgba(255,255,255,.42)}
+.thpick button.on{color:#07131f;background:var(--gold-lt);border-color:var(--gold-lt)}
+.thpick button:focus-visible{outline:2px solid var(--gold-lt);outline-offset:2px}
+
+.wrap{max-width:720px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:26px}
+
+/* ---------- the policy card ---------- */
+.card{background:var(--card);border:1px solid var(--rule);border-radius:12px;
+  box-shadow:var(--shadow);padding:24px;margin-bottom:20px}
+.card h2{font-size:23px;line-height:1.2;color:var(--ink);margin-bottom:7px;text-wrap:balance}
+.badge{display:inline-block;font:600 10.5px/1.3 var(--sans);padding:4px 10px;border-radius:5px;
+  vertical-align:2px;letter-spacing:.1em;text-transform:uppercase}
+.b-comp{background:var(--good-wash);color:var(--good);border:1px solid var(--good-edge)}
+.b-tp{background:var(--warn-wash);color:var(--warn);border:1px solid var(--warn-edge)}
+.due{display:inline-block;font:600 10.5px/1.3 var(--sans);padding:4px 10px;border-radius:5px;
+  background:var(--sunk);color:var(--ink-2);border:1px solid var(--rule-2);margin-left:5px;
+  letter-spacing:.1em;text-transform:uppercase;vertical-align:2px}
+.due.over{background:var(--bad-wash);color:var(--bad);border-color:var(--bad-edge)}
+
+/* key facts: hairline rules, no boxed grid, figures in mono */
+.facts{width:100%;border-collapse:collapse;margin:18px 0;font-size:15px}
+.facts td{padding:11px 0;border:none;border-bottom:1px solid var(--rule);vertical-align:top;
+  font-variant-numeric:tabular-nums;font-family:var(--mono);font-weight:500}
+.facts tr:last-child td{border-bottom:none}
+.facts td:first-child{background:none;width:46%;color:var(--ink-3);padding-right:14px;
+  font:600 10.5px/1.5 var(--sans);letter-spacing:.09em;text-transform:uppercase}
+
+/* callouts: tone on the rule and the heading word, never as a filled slab */
+.owing{background:var(--bad-wash);border:1px solid var(--bad-edge);border-left:3px solid var(--bad);
+  border-radius:0 9px 9px 0;padding:14px 16px;margin:14px 0;font-size:14.5px;color:var(--ink-2)}
+.owing b{color:var(--bad);font-weight:600}
+.edu{background:var(--card);border-bottom:1px solid var(--rule);border-left:3px solid var(--teal);
+  border-radius:0;padding:14px 0 14px 16px;margin:14px 0;font-size:14.5px;color:var(--ink-2)}
+.edu b{color:var(--ink);font-weight:600}
+.note{font-size:13.5px;color:var(--ink-3);line-height:1.6}
+
+/* what the cover gives */
+.benefits{background:var(--sunk);border:1px solid var(--rule);border-radius:10px;
+  padding:18px 20px;margin:16px 0;font-size:14.5px;color:var(--ink-2)}
+.benefits h3{font:600 10.5px/1.3 var(--sans);color:var(--ink-3);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:11px}
+.benefits ul{padding-left:19px}
+.benefits li{margin:8px 0;line-height:1.6}
+.benefits b{color:var(--ink);font-weight:600}
+.benefits .src,.free .src,.asks .src{font-size:12.5px;color:var(--ink-3)}
+
+/* the entitlement nobody was being told about — the one gold moment */
+.free{background:var(--gold-wash);border:1px solid var(--gold-edge);border-radius:12px;
+  padding:20px;margin:16px 0}
+.free h3{font:600 10.5px/1.3 var(--sans);color:var(--gold);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:8px}
+.free .lead{font-size:14.5px;margin-bottom:12px;color:var(--ink-2);line-height:1.6}
+/* .opt2 is a <label>, so it has to undo the uppercase field-label rule below */
+.free .opt2{display:block;background:var(--card);border:1px solid var(--rule-2);
+  border-radius:8px;padding:13px 15px;margin:9px 0 0;cursor:pointer;
+  font:400 15px/1.5 var(--sans);letter-spacing:normal;text-transform:none;color:var(--ink)}
+.free .opt2:hover{border-color:var(--gold)}
+.free .opt2 input{margin-right:9px;accent-color:var(--gold)}
+.free .opt2 b{font-weight:600}
+.free .opt2 .d{display:block;color:var(--ink-2);font-size:13.5px;margin:4px 0 0 25px;
+  line-height:1.5;letter-spacing:normal;text-transform:none}
+.free .src{margin-top:12px}
+
+/* anything else they want quoted */
+.asks{background:var(--card);border:1px solid var(--rule);border-radius:10px;
+  padding:18px 20px;margin:16px 0;font-size:14.5px}
+.asks h3{font:600 10.5px/1.3 var(--sans);color:var(--ink-3);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:5px}
+.asks .lead{color:var(--ink-2);font-size:14px;margin-bottom:11px;line-height:1.6}
+.asks label{display:block;padding:12px 0;border-top:1px solid var(--rule);cursor:pointer;
+  font:400 15px/1.5 var(--sans);letter-spacing:normal;text-transform:none;color:var(--ink);
+  margin:0}
+.asks label:first-of-type{border-top:none}
+.asks label input{accent-color:var(--teal);margin-right:9px}
+.asks .d{display:block;color:var(--ink-2);font-size:13.5px;margin:4px 0 0 25px;line-height:1.5;
+  letter-spacing:normal;text-transform:none}
+.asks .nw{color:var(--warn);font-size:12.5px}
+
+/* ---------- the form ---------- */
+.step{font:600 10.5px/1.3 var(--sans);color:var(--ink-3);text-transform:uppercase;
+  letter-spacing:.11em;margin:30px 0 12px;padding-bottom:9px;border-bottom:2px solid var(--ink)}
+label{display:block;font:600 10.5px/1.3 var(--sans);letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);margin:20px 0 7px}
+input[type=text],input[type=email],textarea,select{width:100%;border:1px solid var(--rule-2);
+  border-radius:8px;padding:12px 13px;font:400 16px/1.4 var(--sans);background:var(--card);
+  color:var(--ink);outline:none}
+input[type=text]:focus-visible,input[type=email]:focus-visible,textarea:focus-visible,
+select:focus-visible{border-color:var(--teal);outline:2px solid var(--teal);outline-offset:1px}
+select option{background:var(--card);color:var(--ink)}
+textarea{min-height:84px;resize:vertical;font-family:var(--sans)}
+/* .opt and .check are <label>s too, so they must undo the uppercase
+   field-label rule above or the whole instruction reads as shouting */
+.opt{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--rule-2);border-radius:9px;
+  padding:14px 16px;margin:0 0 10px;cursor:pointer;background:var(--card);transition:.15s;
+  font:400 15px/1.5 var(--sans);letter-spacing:normal;text-transform:none;color:var(--ink)}
+.opt:hover{border-color:var(--teal)}
+.opt.sel{border-color:var(--teal);background:var(--teal-wash);box-shadow:0 0 0 1px var(--teal)}
+.opt input{margin-top:4px;accent-color:var(--teal)}
+.opt b{display:block;font:600 15.5px/1.4 var(--sans);color:var(--ink)}
+.opt span{font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.check{display:flex;gap:11px;align-items:flex-start;background:var(--sunk);
+  border:1px solid var(--rule);border-radius:9px;padding:13px 15px;margin:12px 0;cursor:pointer;
+  font:400 14.5px/1.55 var(--sans);letter-spacing:normal;text-transform:none;color:var(--ink-2)}
+.check input{margin-top:3px;accent-color:var(--teal)}
+.btn{width:100%;background:var(--navy);color:#fff;font:600 16px/1 var(--sans);border:none;
+  border-radius:8px;padding:16px;cursor:pointer;margin-top:18px;transition:.15s}
+.btn:hover{background:var(--navy-2)}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:wait}
+.ok{background:var(--good-wash);border:1px solid var(--good-edge);color:var(--good);
+  border-radius:9px;padding:15px;margin-top:14px;font-weight:600;display:none}
+.err{background:var(--bad-wash);border:1px solid var(--bad-edge);color:var(--bad);
+  border-radius:9px;padding:15px;margin-top:14px;display:none}
+
+/* ---------- tables ---------- */
+.hist td,.hist th{padding:12px 10px 12px 0;border-bottom:1px solid var(--rule);font-size:14px;
+  text-align:left;font-variant-numeric:tabular-nums}
+.hist th{color:var(--ink-3);font:600 10.5px/1.3 var(--sans);text-transform:uppercase;
+  letter-spacing:.09em;border-bottom:1px solid var(--rule-2)}
+.vhist{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0;
+  font-variant-numeric:tabular-nums}
+.vhist td,.vhist th{padding:11px 10px 11px 0;border:none;border-bottom:1px solid var(--rule);
+  text-align:left}
+.vhist td{font-family:var(--mono);font-weight:500}
+.vhist th{background:none;color:var(--ink-3);font:600 10.5px/1.3 var(--sans);
+  text-transform:uppercase;letter-spacing:.09em;border-bottom:1px solid var(--rule-2)}
+details{border:1px solid var(--rule);border-radius:9px;padding:13px 16px;margin:12px 0;
+  background:var(--card)}
+details summary{cursor:pointer;font:600 14.5px/1.4 var(--sans);color:var(--teal)}
+details summary:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+.foot{max-width:720px;margin:10px auto 0;font-size:12.5px;color:var(--ink-3);line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+.nf{max-width:560px;margin:60px auto;text-align:center;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+.stars{display:flex;gap:7px;margin:8px 0 2px}
+.stars button{font-size:30px;background:none;border:none;cursor:pointer;color:var(--rule-2);
+  line-height:1;padding:0}
+.stars button.on{color:var(--gold-lt)}
+.stars button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* ---------- what it is worth ---------- */
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.vnow,.vguide{background:var(--sunk);border:1px solid var(--rule);border-radius:10px;
+  padding:15px 17px;min-width:0}
+.vguide{background:var(--teal-wash);border-color:var(--teal-edge)}
+.vnow .k,.vguide .k{font:600 10.5px/1.3 var(--sans);color:var(--ink-3);text-transform:uppercase;
+  letter-spacing:.09em}
+.vnow .v{font:500 21px/1.2 var(--mono);font-variant-numeric:tabular-nums;margin-top:6px}
+.vguide .v{font:500 21px/1.2 var(--mono);font-variant-numeric:tabular-nums;color:var(--teal);
+  margin-top:6px}
+.vguide .why{font-size:12.5px;color:var(--ink-2);margin-top:7px;line-height:1.55}
+.warnpill{display:inline-block;margin-top:8px;font:600 10px/1.35 var(--sans);
+  background:var(--warn-wash);color:var(--warn);border:1px solid var(--warn-edge);
+  border-radius:5px;padding:4px 9px;letter-spacing:.08em;text-transform:uppercase}
+.vtrend{display:flex;align-items:flex-end;gap:12px;height:96px;margin:16px 0 2px}
+.vtrend .vb{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;
+  align-items:center;gap:6px;height:100%}
+.vtrend .vbar{width:100%;max-width:52px;background:var(--fill);border-radius:3px 3px 0 0}
+.vtrend .vy{font:500 11px/1.3 var(--mono);color:var(--ink-3)}
+.vfeed{font-size:13.5px;line-height:1.6;margin-top:9px;padding:0;color:var(--ink-2)}
+.vfeed.ok{color:var(--good);background:var(--good-wash);border:1px solid var(--good-edge);
+  border-radius:8px;padding:11px 13px}
+.vfeed.bad{color:var(--bad);background:var(--bad-wash);border:1px solid var(--bad-edge);
+  border-radius:8px;padding:11px 13px}
+.vfeed b{color:inherit;font-weight:600}
+
+/* ---------- where your renewal is up to ---------- */
+.tstep{display:grid;grid-template-columns:32px 1fr;gap:14px;padding-bottom:18px;position:relative}
+.tstep::before{content:"";position:absolute;left:15px;top:32px;bottom:0;width:2px;
+  background:var(--rule)}
+.tstep:last-child::before{display:none}
+.tdot{width:32px;height:32px;border-radius:50%;background:var(--card);
+  border:1.5px solid var(--rule-2);color:var(--ink-3);display:grid;place-items:center;
+  font:600 13px/1 var(--sans);z-index:1}
+.tstep.done .tdot{background:var(--good);border-color:var(--good);color:#fff}
+.tstep.now .tdot{background:var(--gold-lt);border-color:var(--gold-lt);color:#07131f}
+.tstep h4{font:500 17px/1.35 var(--display)}
+.tstep.todo h4{color:var(--ink-3)}
+.tstep p{font-size:13.5px;color:var(--ink-2);margin:3px 0 0;line-height:1.55}
+
+/* ---------- how we have looked after you ---------- */
+.citem{display:flex;gap:12px;align-items:flex-start;padding:12px 0;
+  border-bottom:1px solid var(--rule);font-size:14.5px;line-height:1.55}
+.citem:last-child{border-bottom:none}
+.cdot{width:8px;height:8px;border-radius:50%;margin-top:7px;flex-shrink:0}
+.cdot.us{background:var(--teal)}
+.cdot.you{background:var(--gold-lt)}
+.cwhen{font:500 12.5px/1.4 var(--mono);color:var(--ink-3)}
+
+@media (max-width:520px){
+  .card{padding:18px}
+  .card h2{font-size:20px}
+  .vgrid{grid-template-columns:1fr}
+  .head .in{flex-wrap:wrap}
+  .thpick{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="head"><div class="in">
-  <svg class="gmark" viewBox="0 0 88 88" aria-hidden="true">
-    <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-    </linearGradient></defs>
-    <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
-    <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  <div><div class="brand">Ricky Rampersad<br>Branch</div><div class="sub">Motor Renewal · Guardian Group</div></div>
-  <div class="thpick" style="margin-left:auto" title="Colour theme" aria-label="Colour theme">
-  <button data-th="" style="background:linear-gradient(135deg,#0d2137 55%,#efc24b 55%)" title="Midnight"></button>
-  <button data-th="ocean" style="background:linear-gradient(135deg,#062430 55%,#2ee6c8 55%)" title="Ocean"></button>
-  <button data-th="daylight" style="background:linear-gradient(135deg,#ffffff 55%,#0092b0 55%)" title="Daylight"></button>
-</div>
+  <div class="gmark"><img src="https://rickyrampersadbranch.com/logo-mark.png" alt=""></div>
+  <div>
+    <div class="brand">Ricky Rampersad Branch</div>
+    <div class="sub">Motor renewal &middot; Guardian Group</div>
+  </div>
+  <!-- The picker writes data-theme on <html>. "" removes it, so the device
+       setting decides; "light" and "dark" override it in either direction. -->
+  <div class="thpick" title="Appearance" aria-label="Appearance">
+    <button type="button" data-th="" title="Follow your device">Auto</button>
+    <button type="button" data-th="light" title="Light">Light</button>
+    <button type="button" data-th="dark" title="Dark">Dark</button>
+  </div>
 </div></div>
 
 <div id="app" class="wrap"></div>
@@ -235,7 +381,7 @@ const BENEFITS_TP = [
 function freeBlock(p,i){
   const f = p.product && p.product.freeChoice;
   if(!f) return '';
-  return `<div class="free"><h3>&#11088; One of these is free — which would you like?</h3>
+  return `<div class="free"><h3>One of these is free — which would you like?</h3>
     <div class="lead">${esc(f.d)}</div>
     ${f.options.map(o=>`<label class="opt2">
       <input type="radio" name="free${i}" value="${esc(o.k)}"><b>${esc(o.t)}</b>
@@ -280,7 +426,7 @@ function render(){
   }
   if(DATA.survey){ renderSurvey(app); return; }
 
-  let html = `<div class="card"><h2>Welcome, ${esc(DATA.firstName)} 👋</h2>
+  let html = `<div class="card"><h2>Welcome, ${esc(DATA.firstName)}</h2>
     <p style="font-size:13.5px;color:var(--ink2)">Here ${DATA.policies.length===1?'is your motor policy':'are your '+DATA.policies.length+' motor policies'} with us. Three quick steps for each: <b>check your benefits</b>, <b>tell us about changes</b>, and <b>send your instruction</b>.</p></div>`;
 
   DATA.policies.forEach((p,i)=>{
@@ -300,7 +446,7 @@ function render(){
       ${owing?`<div class="owing">A balance of <b>${money(p.balance)}</b> shows on this policy. Renewal completes once it's settled — use the payment section below or choose "Please call me".</div>`:''}
 
       <div class="step">Step 1 · Know what you have</div>
-      <div class="benefits"><h3>🛡 Your Guardian MotorGuard benefits</h3>
+      <div class="benefits"><h3>Your Guardian MotorGuard benefits</h3>
         <ul>${benefits.map(b=>`<li>${b}</li>`).join('')}</ul>
         ${comp?'':'<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">Third party protects <b>others</b> — not your own vehicle. Comprehensive adds accident, fire and theft cover for your car, a bigger discount scale (60% against 35%), medical expenses, personal accident benefit and luggage cover — and it is the only cover that can add <b>flood and storm</b> protection, which third party cannot have at all <i>(P 19(a))</i>. Tick the box in Step 3 for a free comparison quote.</div>'}
       </div>
@@ -328,11 +474,11 @@ function render(){
 
       <div class="step">Step 3 · Your renewal instruction</div>
       <label class="opt"><input type="radio" name="inst${i}" value="RENEW — proceed">
-        <div><b>✅ Renew my policy</b><span>Proceed with my renewal${comp?' (with my updated value above, if given)':''}</span></div></label>
+        <div><b>Renew my policy</b><span>Proceed with my renewal${comp?' (with my updated value above, if given)':''}</span></div></label>
       <label class="opt"><input type="radio" name="inst${i}" value="RENEW WITH CHANGES">
-        <div><b>✏️ Renew with changes</b><span>I've described the changes in the notes box</span></div></label>
+        <div><b>Renew with changes</b><span>I've described the changes in the notes box</span></div></label>
       <label class="opt"><input type="radio" name="inst${i}" value="PLEASE CALL ME">
-        <div><b>📞 Please call me first</b><span>I'd like to discuss before renewing${owing?' (or arrange the balance)':''}</span></div></label>
+        <div><b>Please call me first</b><span>I'd like to discuss before renewing${owing?' (or arrange the balance)':''}</span></div></label>
 
       <label>How will you pay?</label>
       <select id="pay${i}">
@@ -358,7 +504,7 @@ function render(){
   });
 
   if (DATA.vehicles && DATA.vehicles.length){
-    html += `<div class="card"><h2>🚗 Your vehicle details on record</h2>
+    html += `<div class="card"><h2>Your vehicle details on record</h2>
       <p class="note" style="margin-top:2px">Please check these carefully — if anything is wrong or has changed (sold, new engine, modifications), tell us in the notes box above. Undisclosed changes can affect a claim.</p>
       ${DATA.vehicles.map(v=>`
         <table class="facts" style="margin-top:12px">
@@ -367,12 +513,12 @@ function render(){
           ${v.chassis?`<tr><td>Chassis #</td><td>${esc(v.chassis)}</td></tr>`:''}
           ${v.engine?`<tr><td>Engine #</td><td>${esc(v.engine)}</td></tr>`:''}
           ${v.value?`<tr><td>Insured value</td><td><b>${money(v.value)}</b></td></tr>`:''}
-          ${v.since?`<tr><td>Insured with us since</td><td><b>${esc(v.since)}</b>${v.years?` — <b>${esc(v.years)} year${Number(v.years)===1?'':'s'}</b> of loyalty, thank you 🏆`:''}</td></tr>`:''}
+          ${v.since?`<tr><td>Insured with us since</td><td><b>${esc(v.since)}</b>${v.years?` — <b>${esc(v.years)} year${Number(v.years)===1?'':'s'}</b> with us, thank you`:''}</td></tr>`:''}
           ${v.ncd?`<tr><td>No Claim Discount</td><td><b>${esc(v.ncd)}%</b> — protect it: it's real money off every renewal</td></tr>`:''}
           ${v.windscreen?`<tr><td>Windscreen limit</td><td>${money(v.windscreen)}</td></tr>`:''}
           ${v.policy?`<tr><td>Policy #</td><td>${esc(v.policy)}${v.carrier?' · '+esc(v.carrier):''}</td></tr>`:''}
         </table>
-        ${v.valueHistory && v.valueHistory.length>1?`<details><summary>📉 ${esc(v.reg)} — insured value over time (${v.valueHistory.length} renewals)</summary>
+        ${v.valueHistory && v.valueHistory.length>1?`<details><summary>${esc(v.reg)} — insured value over time (${v.valueHistory.length} renewals)</summary>
           <table class="vhist"><tr><th>Period ending</th><th>Insured value</th></tr>
           ${v.valueHistory.map(h=>`<tr><td>${esc(h.when)}</td><td>${esc(h.value)}</td></tr>`).join('')}</table>
           <div class="note">Your insured value steps down as the vehicle depreciates — that's how your premium stays fair. If you've added accessories or the market moved, request an adjustment above.</div></details>`:''}
@@ -380,7 +526,7 @@ function render(){
     </div>`;
   }
   html += `<div class="card"><h2>Your renewal history</h2><div id="hist">${histTable(DATA.history)}</div></div>`;
-  if(DATA.crossSell==='home') html += `<div class="card"><h2>🏡 One branch for everything you protect</h2>
+  if(DATA.crossSell==='home') html += `<div class="card"><h2>One branch for everything you protect</h2>
     <p>You trust us with your vehicle — thank you. Many of our motor clients also place their <b>home</b> with the branch,
     and it gets the same careful treatment you see on this page: the rebuilding value reviewed every year so the
     <b>average clause</b> never catches you short, your contents and extras on the record, and one person to call
@@ -411,7 +557,7 @@ function motorTracker(p){
     ['Renewed — documents issued', 'Your cover is renewed and your documents are on their way.'],
   ];
   const at = renewed ? 3 : 1;   // steps completed
-  return `<div class="card"><h2>📍 Your renewal progress${p.policy?' — '+esc(p.policy):''}</h2>
+  return `<div class="card"><h2>Your renewal progress${p.policy?' — '+esc(p.policy):''}</h2>
     <p class="note" style="margin:2px 0 12px">We update this as your renewal moves — no need to call and ask.</p>
     ${steps.map((s,i)=>{
       const cls = i<at ? 'done' : i===at ? 'now' : 'todo';
@@ -437,7 +583,7 @@ function valueBlock(p,i){
       <div class="note">Your insured value across ${hist.length} renewals.</div>`;
   })() : '';
   return `
-  <div class="edu"><b>💡 Your car is worth less this year than last.</b>
+  <div class="edu"><b>Your car is worth less this year than last.</b>
     That is normal — and it matters, because you should not pay premium on value that has gone,
     and you cannot claim more than the car is worth. So the figure below should follow the market down.</div>
   ${bars}
@@ -494,7 +640,7 @@ function wireValue(i){
 function commsCard(){
   const c = DATA.comms||[];
   if(!c.length) return '';
-  return `<div class="card"><h2>📨 Communication history</h2>
+  return `<div class="card"><h2>Communication history</h2>
     <p class="note" style="margin-top:2px">Every touchpoint between us on this renewal — so you always know where things stand.</p>
     <div style="margin-top:10px">${c.map(x=>`
       <div class="citem"><span class="cdot ${x.from}"></span>
