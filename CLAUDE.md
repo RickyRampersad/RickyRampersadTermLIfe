@@ -3512,8 +3512,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       about a letter, and a code, they never had. Send the letter again, or the welcome, first.
   - **The go.** `gcmRateRemindTest` (editor Run) sends the branch manager one of each kind, marked TEST, with who would get it,
     who rated and who would not. `gcmRateRemindNow` sends it now to every group on the list. It also sets `GCM_RATE_ON`, so
-    from then on the hourly run sends each group that has not responded one reminder a working day, 10:00 to 16:00.
-    `gcmRateRemindStop` ends that. A group that never answers gets its Monday letter and up to four reminders a week.
+    from then on each group that has not responded gets one reminder a working day. Since 21 October that is in the 10:30
+    group day (below), not the hourly run. `gcmRateRemindStop` ends that. A group that never answers gets its Monday letter
+    and up to four reminders a week.
   - **The staff page:**
     - the accounts table's "Opened · rated" column;
     - filters for "Not rated their last letter" and "Opened their page";
@@ -3523,6 +3524,49 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     A failed reminder is logged as failed and goes on the next run.
   - `rate/rate-test.js` (60 checks), `rate/page.js` (19, Playwright) and `rate/real/dry.js` (the real tabs and the replies in
     support@, nothing sent) in the session scratchpad cover it.
+
+- **10:30 every working day: the group day** (21 October 2026: "emails are supposed to be triggering with insights to
+  clients for a response if they got the email but did not provide a rating, as well an email to the respective staff to
+  provide a response as to why this week's email was not approved so it could have sent out at 10am on Monday, reference
+  the training … done at 10:30am daily", then "a task is opened for the respective staff as this pertains to task type
+  Lic/HR … as this is a KPI"). Until then neither part ran: the star reminder was never pasted, and nothing asked staff
+  anything. `gcmDay_` runs once a working day from a 10:30 trigger (`gcmDay1030`). The hourly refresh runs it from 11:00
+  to 16:00 if 10:30 did not fire (`gcmDayCatchUp_`), and `GCM_DAY_LAST` keeps it to once a day. In order:
+  - **On a Monday, the queue first.** Any approved letter the 10:00 run has not reached goes, so it is never called missed.
+  - **The star reminder** (above), for every group that had a letter and has not rated or written, with the reminder's
+    own summary folded into the day's.
+  - **Each staff member whose group had no letter this week is asked why** (`gcmChaseList_`, `gcmChaseMail_`). A group
+    misses the week when it was ready and no weekly letter went since the Monday run. The e-mail gives:
+    - each group, with why it did not go (not approved, approved after the run, or held at the run with the reason) and
+      what to do today;
+    - the groups that did have their letter, and what came back from each;
+    - the groups that cannot have one yet, and what is missing;
+    - three passages of the training manual (Friday is the day to approve; Monday 10:00 the letters go; no answer by
+      Friday means a call). They are quoted in `GCM_DAY.TRAIN`; change them with the manual.
+
+    It asks for a reply by 12 noon, goes from support@ with the branch manager copied, and replies go to him. A group
+    whose owner is not an active Salesforce user goes to the branch manager. A group approved for this week's run and not
+    yet sent is never asked about.
+  - **A Salesforce task for each group that missed the week** (`gcmChaseTasks_`), because the reason is a KPI:
+    - Task Type `Lic/Staffing/SA/HR`, owned by the staff member, on the group's account, Priority High, Not Started, due
+      that day;
+    - subject `RR/<NAME> - GROUP LETTER NOT SENT - <group> - week of <Monday>: reason needed`, the branch's own pattern;
+    - closed by the staff member with the reason.
+
+    The owner is found by e-mail among **standard** users only: the branch manager's address is also on four site guest
+    users, and a task must never go to one. One task per group per week, remembered in `GCM_CHASE_TASKS` and checked
+    against the tasks already in Salesforce, so a run again by hand or a lost property never opens a second.
+    `gcmExcluded_` already treats the type as internal, so the task never reaches a group's page.
+  - **One summary to the branch manager** (`gcmDaySummary_`): how many ready groups had the week's letter, each that
+    missed with its owner, its reason and its task, what came back from those that had one, each star reminder, and
+    who was asked.
+
+  **The go.** `gcmGroupDayTest` (editor Run) sends the branch manager every e-mail as it would go, marked TEST, and opens
+  no task. `gcmGroupDayStart` turns on the star reminder and the staff e-mails and tasks, makes the 10:30 trigger, and
+  runs today. If the project has no trigger left, it says so, and the hourly run takes the day at 11:00.
+  `gcmGroupDayStop` ends all of it. `gcmRateRemindNow` also makes the 10:30 trigger, for the star reminder alone.
+  `day/day-test.js` (37 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
+  scratchpad cover it. On those tabs one staff member would have been asked about five groups and another about one.
 
 - **Applications and increases still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
   also see at the top … applications that remain pending … the name, days outstanding, who it's assigned, what's
