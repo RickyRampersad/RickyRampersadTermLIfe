@@ -23,14 +23,17 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
 
 ## Install (once, about ten minutes)
 
-1. Make a new Google Sheet called **Motor Quotes**. Extensions → Apps Script. Paste `MotorQuote.gs` over the
-   default file. Save.
+1. **Signed in as support@rickyrampersadbranch.com (the Google Workspace account), not the personal Gmail**, make a
+   new Google Sheet called **Motor Quotes**. Extensions → Apps Script. Paste `MotorQuote.gs` over the default file.
+   Save. Owned by the Workspace account, every e-mail the script sends goes from support@ by itself, with the
+   Workspace's allowance (about 1,500 a day), and the `MS_*` properties below are not needed. (A consumer Gmail owner
+   gets about 100 recipients a day and sends from its own address with support@ only as reply-to.)
 2. **Script properties** (Project settings → Script properties):
    - `SF_KEY`, `SF_SECRET`, `SF_LOGIN_URL` — copied from the KPI Tracker project (client credentials; the login
      URL is the My Domain address). Without them the page still works; nothing is pre-filled and no task is made.
-   - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET` — copied from the Service Questionnaire project, so e-mail goes from
-     support@ through Microsoft Graph. Without them it goes from this Google account with support@ as reply-to
-     (about 100 recipients a day).
+   - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET` — only if the script is NOT owned by the support@ Workspace account:
+     copied from the Service Questionnaire project, so e-mail goes from support@ through Microsoft Graph. Owned by
+     support@, leave them out.
    - `MQ_TEST_INBOX` — where every e-mail goes in test mode (default: the script owner).
    - Optional: `MQ_QUOTES_TO` (overrides the quotes desk), `MQ_CC` (more copies, comma-separated),
      `MQ_SF_OWNER` (the Salesforce user id that owns new Contacts and tasks), `MQ_SF_TASK_TYPE` (default

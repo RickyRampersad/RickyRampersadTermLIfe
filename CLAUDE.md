@@ -3799,6 +3799,10 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
   one column on a phone. White on `#3A7BD5` is about 4.6:1. No study compares colours on insurance quote forms. Long answers are drop-downs (make, year, engine, body,
   seats, years driving, no-claim discount, insurer, financial institution, each with Other and a box to type); yes or no
   answers stay as taps.
+- **The project is owned by the support@rickyrampersadbranch.com Workspace account** (21 October 2026: "remember i d
+  have a workspace"), never the personal Gmail: `mqMail_` then sends from support@ through MailApp by itself, under the
+  Workspace's allowance, and the `MS_*` Graph properties are not needed. A sheet made under the personal Gmail on 21
+  October ("Motor Quotes", in that Drive) is not the one to use.
 - **Sign-in is the claims portal's**: e-mail, six-digit code to that inbox, no password. Anyone may sign in; the answer never
   says who is a client. The signed-in e-mail is the client's e-mail whatever the form sends (`mqRead_`).
 - **What Salesforce holds is filled in** (`mqLookup_`, by e-mail): the Contact (name, mobile, Title as occupation,
