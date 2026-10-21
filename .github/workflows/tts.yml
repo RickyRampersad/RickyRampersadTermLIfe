@@ -43,7 +43,8 @@ jobs:
           import json, glob, os
           job = json.load(open('tts/job.json'))
           if not job.get('check'): raise SystemExit(0)
-          os.system('pip install -q faster-whisper')
+          os.system('pip install -q faster-whisper imageio-ffmpeg')
+          import imageio_ffmpeg; FF = imageio_ffmpeg.get_ffmpeg_exe()
           from faster_whisper import WhisperModel
           m = WhisperModel('base', compute_type='int8')
           out = {}
@@ -51,7 +52,7 @@ jobs:
               for f in sorted(glob.glob(f'tts/out/{key}/*.mp3')):
                   try:
                       import subprocess, numpy as np
-                      raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', f, '-ar', '16000', '-ac', '1', '-f', 's16le', '-'], capture_output=True, check=True).stdout
+                      raw = subprocess.run([FF, '-v', 'error', '-i', f, '-ar', '16000', '-ac', '1', '-f', 's16le', '-'], capture_output=True, check=True).stdout
                       segs, info = m.transcribe(np.frombuffer(raw, np.int16).astype(np.float32) / 32768)
                       out[f] = [info.language, round(info.language_probability, 3), ' '.join(x.text.strip() for x in segs)]
                   except Exception as e: out[f] = ['err', 0, str(e)]
