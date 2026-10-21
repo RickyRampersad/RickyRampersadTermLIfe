@@ -1,147 +1,17 @@
 {
- "tts/out/n0/01.mp3": [
+ "tts/out/w18/01.mp3": [
+  "en",
+  0.999,
+  "Nothing slips through. When a client says yes, the system follows it every day until it closes. A fact finds started and never synch gets flagged on Monday and the managers see every answer."
+ ],
+ "tts/out/w19/01.mp3": [
+  "en",
+  0.997,
+  "And here's the production wall. Every policy picked up this week, this month, and this year, and the money already written and waiting to come in."
+ ],
+ "tts/out/w20/01.mp3": [
   "en",
   0.996,
-  "Welcome to the Ricky Rampersad Branch live. Here's how the day is going for our staff, our agents, and our managers."
- ],
- "tts/out/n1/01.mp3": [
-  "en",
-  0.997,
-  "Let's start with the staff. Who's in? Who's out today? And who's covering? So no client is kept waiting."
- ],
- "tts/out/n2/01.mp3": [
-  "en",
-  0.999,
-  "Hour by hour, here's what's getting done. The colors show the kind of task and the gold square is the back."
- ],
- "tts/out/n3/01.mp3": [
-  "en",
-  0.998,
-  "Here's where the work went. The high payoff work comes first. New business, orphan adoption and retention."
- ],
- "tts/out/n4/01.mp3": [
-  "en",
-  0.998,
-  "Now the team game, everybody plays and nobody's ranked. Each person plays against their own usual week."
- ],
- "tts/out/n10/01.mp3": [
-  "en",
-  0.999,
-  "How do we serve? Every task we close for an agent or client gets rated by the people we serve."
- ],
- "tts/out/n11/01.mp3": [
-  "en",
-  0.99,
-  "Shoutouts, today's wins, par reached, five-star service, new levels, streaks, and every single thank you."
- ],
- "tts/out/n5/01.mp3": [
-  "en",
-  0.997,
-  "Now, over to the agents. They're day in the field, and the fact finds that turn into cover."
- ],
- "tts/out/n6/01.mp3": [
-  "en",
-  0.998,
-  "From a fact fine to a family covered, here's the month and the year's goal against the time gone."
- ],
- "tts/out/n9/01.mp3": [
-  "en",
-  0.993,
-  "The branch manager's day, everything done from his desk since 5 this morning, as it happens."
- ],
- "tts/out/n7/01.mp3": [
-  "en",
-  0.996,
-  "And the managers leading the branch Akasha's unit out in the field and every desk covered."
- ],
- "tts/out/n8/01.mp3": [
-  "en",
-  0.997,
-  "And that's what's happening right now. Live across the whole branch."
- ],
- "tts/out/w1/01.mp3": [
-  "en",
-  0.99,
-  "It's a new financial year and we've got a new way of working. Let me show you what's changed."
- ],
- "tts/out/w2/01.mp3": [
-  "en",
-  0.997,
-  "One app and one sign in. Every tool we use from the logbook to the forms lives at rickorampersadbranch.com. Slash app."
- ],
- "tts/out/w3/01.mp3": [
-  "en",
-  0.998,
-  "So, who does what every day? The branch manager, the unit manager, the BMA, sales support, and our agents. Each one has a rhythm."
- ],
- "tts/out/w4/01.mp3": [
-  "en",
-  0.996,
-  "and every week has its beat. Premium letters every morning, group letters on Monday, our branch meeting on Wednesday and the awards on Friday."
- ],
- "tts/out/w8/01.mp3": [
-  "en",
-  0.999,
-  "Here's how the papers move and to end. The agent logs them, sales support signs for them. They're in by noon and they go out on a transmittal."
- ],
- "tts/out/w17/01.mp3": [
-  "en",
-  0.997,
-  "and a transmittal. It's bill for you now. Staff receive the papers on the phone, press one button, and out it comes numbered stamped and ready to print. Three days later, the department confirms it all arrived."
- ],
- "tts/out/w9/01.mp3": [
-  "en",
-  0.992,
-  "Shared work. When someone's out, their work moves to whoever's in within 30 minutes at each person's own pace, so no client waits."
- ],
- "tts/out/w5/01.mp3": [
-  "en",
-  0.999,
-  "This is Branch Intelligence. It reads a task's whole history, tells you where it stands, and drafts the reply. The managers check it and post it, and sales support get a brief."
- ],
- "tts/out/w16/01.mp3": [
-  "en",
-  0.999,
-  "Let's watch a work. One tap, and it reads everything on the task, says where things stand, and writes the reply in your voice. Want it firmer, shorter, or kinder? One more tap, and nothing posts until you say so."
- ],
- "tts/out/w11/01.mp3": [
-  "en",
-  0.999,
-  "So what does each manager see? The branch manager, the unit manager, and the BMA each open one page in the morning, and they can comment under any task with branch intelligence drafting it."
- ],
- "tts/out/w13/01.mp3": [
-  "en",
-  0.999,
-  "Here's what's different about our meetings now. Everyone signs in on their phone and that's the register. You add your item to the agenda. You say what you're presenting and every slot has a name on it. So every voice gets heard."
- ],
- "tts/out/w15/01.mp3": [
-  "en",
-  0.996,
-  "And inside the meeting, it's all there. Your items ready, the actions from last week come back, and the minutes are written as we go."
- ],
- "tts/out/w10/01.mp3": [
-  "en",
-  0.999,
-  "Fact find insights. Every conversation goes on a fact find, and we read them every single day. The fact finds, the applications, and the year's goals."
- ],
- "tts/out/w6/01.mp3": [
-  "en",
-  0.997,
-  "And here's the game for the new year. Par, three quests a day, streaks and levels, and one team goal. Get the backlog down by Friday."
- ],
- "tts/out/w14/01.mp3": [
-  "en",
-  0.997,
-  "and the client feels it, queries answered on time, every hand over recorded and the people we serve rating us."
- ],
- "tts/out/w12/01.mp3": [
-  "en",
-  0.998,
-  "Our walls are living to branch. Everyone sees the score all day and every win. That's how we build a high-performance branch."
- ],
- "tts/out/w7/01.mp3": [
-  "en",
-  0.998,
-  "The branch manager, the unit manager, the BMA, sales support, and every one of our agents. One branch, thank you team. Here's to our new financial year."
+  "And our goals are aligned. Each agent builds their goal from their own numbers all the way down to fact find a week. Those add up to the unit. The unit adds up to the branch and the pace is checked every single morning."
  ]
 }
