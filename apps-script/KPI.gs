@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-21b';
+var SCRIPT_VERSION = '2026-10-21c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -7979,9 +7979,7 @@ function bigGet_(key, dflt) {
 function chatterNotes_(chat, id, openAll) {
   var all = (chat || {})[id] || [];
   var one = function (n, full) {
-    var t = String(n.text || ''), head = t.split('\n')[0], ours = /^(Unit Manager|Branch Manager|BMA|Agent|Branch Intelligence)\b/.test(head);
-    var who = ours ? head.split(' · ').filter(function (x) { return !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b/.test(x); }).slice(0, 2).join(' · ') : n.by;
-    var body = ours ? t.split('\n').slice(1).join(' ').trim() : t;
+    var np = noteParts_(n.text), who = np.ours ? np.who : n.by, body = np.body;
     return '<div class="br2" style="margin-top:3px">' + (n.reply ? '&#8627; ' : '') + esc_(who) + (n.day ? ' · ' + esc_(shortDate_(n.day)) : '') + ': ' + esc_(full ? body : shorten_(body, 160)) + '</div>';
   };
   if (!all.length) return '<div class="br2" style="margin-top:3px">No notes on Chatter yet.</div>';
@@ -7991,6 +7989,16 @@ function chatterNotes_(chat, id, openAll) {
       ? '<details style="margin-top:4px"><summary class="br2" style="cursor:pointer">The whole history (' + all.length + ' note' + (all.length === 1 ? '' : 's') + ')</summary>' +
         all.map(function (n) { return one(n, true); }).join('') + '</details>' : '');
 }
+/** A note posted from the tracker reads "Unit Manager · Ricky Rampersad · Tue 20 Oct 9:14am" and then the words. cmdChatter_
+ *  joins a note's lines into one, so the words follow the head on the same line: on 21 Oct 2026 every one of his notes
+ *  showed in the history as "Unit Manager · Ricky Rampersad · Tue 20 Oct:" and nothing after it. */
+var NOTE_HEAD_RE = /^((?:Unit Manager|Branch Manager|BMA|Sales Support|Agent|Branch Intelligence)\b[^\n]*?\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d{1,2} [A-Z][a-z]{2}(?: \d{1,2}:\d{2}\s?[ap]m)?)\s*[:.\-–]?\s*([\s\S]*)$/;
+function noteParts_(text) {
+  var t = String(text || '').trim(), m = NOTE_HEAD_RE.exec(t);
+  if (!m) return { ours: false, who: '', body: t };
+  var who = m[1].split(' · ').filter(function (x) { return !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b/.test(x); }).slice(0, 2).join(' · ');
+  return { ours: true, who: who, body: m[2].trim() };
+}
 /** One task on a Unit Manager's page: who, what, its history, a comment box.
  *  The task he tapped in his e-mail comes first, with every note open. */
 function umItemHtml_(it, chat, base, noSf, opened, draft) {
@@ -7998,12 +8006,145 @@ function umItemHtml_(it, chat, base, noSf, opened, draft) {
     (it.due ? ' <span class="br2">· ' + (it.late ? 'overdue since ' : 'due ') + esc_(shortDate_(it.due)) + '</span>' : '') +
     (base && !noSf ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
     (opened ? '<div class="br2" style="margin-top:6px;font-weight:800">History</div>' : '') + chatterNotes_(chat, it.id, opened) + draftBox_(it.id, draft, 'c_' + it.id) +
-    '<textarea name="c_' + esc_(it.id) + '" rows="' + (opened ? 3 : 2) + '" placeholder="' + esc_(SPEAK_PH) + '"></textarea></div>';
+    '<textarea name="c_' + esc_(it.id) + '" rows="' + (opened ? 3 : 2) + '" placeholder="' + esc_(SPEAK_PH) + '"></textarea>' + umAiButton_(it.id) + '</div>';
 }
 function umOpenedCard_(items, focus, chat, base, noSf, drafts) {
   var it = focus ? items.filter(function (x) { return String(x.id) === String(focus); })[0] : null;
   return it ? '<div class="card" style="border:2px solid #E0A526"><div class="bh">The task you opened</div>' + umItemHtml_(it, chat, base, noSf, true, (drafts || {})[it.id]) +
     '<button type="submit" name="only" value="1">Post my comment</button></div>' : '';
+}
+
+/* Branch Intelligence writes the reply (Ricky, 21 Oct 2026 9:14am: "in my day, how do you build the Intelligence response
+   from me instead of me typing to send in chatter, as this is supposed to analyze for a response, and you are to guide and
+   advise what can be added to make responding for me easy using all the tools and resources I have"). Under each task on
+   the comment page, "Draft my reply" reads the task, its whole Chatter, the record it sits on and the other open tasks on
+   that record, and comes back with where it stands, the reply in his voice, the next step and who takes it, and what
+   would make the reply stronger, from the branch's own tools. Use this reply puts it in the box; nothing posts until he
+   saves. Firmer, Shorter and Kinder write it again; anything he types or speaks first becomes the reply's substance. */
+var UMAI = { MAX_TOKENS: 900, NOTES: 25, RELATED: 8,
+  TOOLS: 'Log Book (documents agents hand in, who signed for them, where each went), Delivery Book (cheques, policy contracts and certificates handed over), ' +
+    'Premium Due Desk (the 45 to 96 day premium letters), Query Pal (clients\' online queries), the clients board (orphan clients, calls logged, households), ' +
+    'FactFind360 (agents\' fact finds, leads and goals), Branch Intelligence (lapsed and slipped policies, pendings, requirements), the KPI tracker (staff attendance and their days), ' +
+    'Salesforce (the task, the client record, its other tasks)' };
+function umAiButton_(id) {
+  return '<div class="uai"><button type="button" class="uaib" onclick="umAI(\'' + esc_(id) + '\',\'\')"><span>&#10024;</span> Draft my reply</button>' +
+    '<div class="uaio" id="ai_' + esc_(id) + '" hidden></div></div>';
+}
+function umAiIntro_(items) {
+  if (!items || !items.length) return '';
+  return '<div class="card uaic"><div class="bh">Branch Intelligence writes your replies</div><div class="bf">Tap <b>Draft my reply</b> under a task. It reads the whole history and the record, ' +
+    'tells you where it stands, writes the reply in your voice, names the next step, and says what would make it stronger. Type or speak a few words first and it builds the reply from them. ' +
+    'Nothing posts until you save.</div><button type="button" class="uaiall" onclick="umAIAll()">&#10024; Draft replies for all ' + items.length + '</button><div class="uaist" id="ai_all"></div></div>';
+}
+var UMAI_CSS = '<style>.uai{margin:6px 0 4px}.uaib,.uaiall{width:auto;display:inline-flex;align-items:center;gap:6px;margin:0;padding:9px 14px;font-size:14px;border-radius:12px;' +
+  'background:linear-gradient(120deg,#1E9C8A,#3A9B5E);color:#fff;border:0;box-shadow:0 6px 16px rgba(30,156,138,.25);transition:transform .15s}' +
+  '.uaib:active,.uaiall:active{transform:scale(.97)}.uaib:disabled,.uaiall:disabled{opacity:.55}.uaic{border:1.5px solid #9ED8CD;background:linear-gradient(160deg,#F2FBF8,#fff)}' +
+  '.uaist{font-size:12.5px;color:#4A6B66;margin-top:6px;min-height:16px}' +
+  '.uaio{margin-top:8px;border:1.5px solid #9ED8CD;border-radius:14px;background:#F6FCFA;padding:12px 13px;animation:uaiIn .4s cubic-bezier(.2,.9,.25,1.2) both}' +
+  '@keyframes uaiIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}' +
+  '.uaio .k{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#1E7D6F;margin:8px 0 3px}.uaio .k:first-child{margin-top:0}' +
+  '.uaio .rd{font-size:13.5px;color:#26313A;line-height:1.5}.uaio .rp{font-size:14.5px;line-height:1.5;background:#fff;border:1px solid #CFE9E3;border-radius:10px;padding:9px 11px;white-space:pre-wrap}' +
+  '.uaio ul{margin:2px 0 0 18px;padding:0;font-size:13px;line-height:1.5;color:#26313A}.uaio .ac{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;' +
+  'padding:2px 8px;border-radius:99px;background:#E3F1E8;color:#1F6B47;margin-left:6px;vertical-align:1px}.uaio .bt{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}' +
+  '.uaio .bt button{width:auto;margin:0;padding:8px 12px;font-size:13px;border-radius:10px;background:#fff;color:#1F2433;border:1.5px solid #CFE9E3}.uaio .bt .use{background:#1E9C8A;color:#fff;border-color:#1E9C8A}' +
+  '.uaio .wt{display:flex;align-items:center;gap:8px;font-size:13.5px;color:#1E7D6F;font-weight:700}.uaio .wt i{width:8px;height:8px;border-radius:50%;background:#1E9C8A;animation:uaiDot 1s infinite alternate}' +
+  '.uaio .wt i:nth-child(2){animation-delay:.2s}.uaio .wt i:nth-child(3){animation-delay:.4s}@keyframes uaiDot{from{opacity:.25;transform:translateY(0)}to{opacity:1;transform:translateY(-3px)}}' +
+  '.uaio .er{color:#B4322B;font-weight:700;font-size:13.5px}@media (prefers-reduced-motion:reduce){.uaio,.uaio .wt i{animation:none}}</style>';
+var UMAI_JS = '<script>(function(){' +
+  'function e(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;"}[c];});}' +
+  'function ta(id){return document.getElementsByName("c_"+id)[0];}' +
+  'var LAST={};' +
+  'function show(id,r){var b=document.getElementById("ai_"+id);if(!b)return;b.hidden=false;LAST[id]=r;' +
+    'b.innerHTML="<div class=k>Where it stands"+(r.action?"<span class=ac>"+e(r.action)+"</span>":"")+"</div><div class=rd>"+e(r.read)+"</div>"+' +
+    '"<div class=k>Your reply</div><div class=rp id=rp_"+e(id)+">"+e(r.reply)+"</div>"+' +
+    '(r.next?"<div class=k>Next step</div><div class=rd>"+e(r.next)+"</div>":"")+' +
+    '(r.add&&r.add.length?"<div class=k>To make it stronger</div><ul>"+r.add.map(function(x){return "<li>"+e(x)+"</li>";}).join("")+"</ul>":"")+' +
+    '"<div class=bt><button type=button class=use onclick=\\"umUse(\'"+e(id)+"\')\\">Use this reply</button>"+' +
+    '"<button type=button onclick=\\"umAI(\'"+e(id)+"\',\'firmer\')\\">Firmer</button><button type=button onclick=\\"umAI(\'"+e(id)+"\',\'shorter\')\\">Shorter</button>"+' +
+    '"<button type=button onclick=\\"umAI(\'"+e(id)+"\',\'kinder\')\\">Kinder</button><button type=button onclick=\\"umAI(\'"+e(id)+"\',\'again\')\\">Again</button></div>";}' +
+  'window.umUse=function(id){var t=ta(id),r=LAST[id];if(!t||!r)return;t.value=r.reply;t.rows=Math.max(3,Math.ceil(r.reply.length/70));t.focus();var i=t.value.indexOf("[");if(i>-1){var j=t.value.indexOf("]",i);try{t.setSelectionRange(i,j>i?j+1:i);}catch(x){}}};' +
+  'window.umAI=function(id,tone,done){var b=document.getElementById("ai_"+id),t=ta(id);if(!b)return;' +
+    'if(!(window.google&&google.script&&google.script.run)){b.hidden=false;b.innerHTML="<div class=er>Open this page from the e-mail button to use Branch Intelligence.</div>";if(done)done();return;}' +
+    'b.hidden=false;b.innerHTML="<div class=wt><i></i><i></i><i></i> Reading the whole history and the record\\u2026</div>";' +
+    'var bt=b.parentNode.querySelector(".uaib");if(bt)bt.disabled=true;' +
+    'var o={rs:UMK.rs,d:UMK.d,k:UMK.k,id:id,tone:tone||"",said:t&&t.value&&(!LAST[id]||t.value!==LAST[id].reply)?t.value:"",was:LAST[id]?LAST[id].reply:""};' +
+    'google.script.run.withSuccessHandler(function(r){if(bt)bt.disabled=false;r=r||{};if(!r.ok){b.innerHTML="<div class=er>"+e(r.error||"Branch Intelligence did not answer. Try again.")+"</div>";}else show(id,r);if(done)done();})' +
+      '.withFailureHandler(function(x){if(bt)bt.disabled=false;b.innerHTML="<div class=er>That did not go through ("+e((x&&x.message)||x)+"). Try again.</div>";if(done)done();}).umDraft(o);};' +
+  'window.umAIAll=function(){var bs=document.querySelectorAll(".uaio"),ids=[],st=document.getElementById("ai_all");for(var i=0;i<bs.length;i++)ids.push(bs[i].id.slice(3));' +
+    'var seen={};ids=ids.filter(function(x){if(seen[x])return false;seen[x]=1;return true;});var n=0;' +
+    'function go(){if(n>=ids.length){if(st)st.textContent="\\u2713 "+ids.length+" replies drafted. Check each, tap Use this reply on the ones you want, then save.";return;}' +
+      'if(st)st.textContent="Drafting "+(n+1)+" of "+ids.length+"\\u2026";var id=ids[n++];umAI(id,"",go);}go();};' +
+  '})();</script>';
+function umAiScript_(sid, day) {
+  return UMAI_CSS + '<script>var UMK=' + JSON.stringify({ rs: sid, d: day, k: replySig_(sid, day, 'um') }).replace(/</g, '\\u003c') + ';</script>' + UMAI_JS;
+}
+/** The task's record and its neighbours in Salesforce: what the reply can lean on. Reads only. */
+function umTaskContext_(id) {
+  var ctx = { record: null, related: [] }, q = String(id).replace(/[^A-Za-z0-9]/g, '');
+  try {
+    var r = (sfkQuery_("SELECT Id, Subject, Status, Priority, ActivityDate, Description, CreatedDate, WhatId, What.Name, Who.Name, Owner.Name, CreatedBy.Name FROM Task WHERE Id = '" + q + "' LIMIT 1") || [])[0];
+    if (r) {
+      ctx.record = { subject: r.Subject || '', status: r.Status || '', priority: r.Priority || '', due: r.ActivityDate || '', created: String(r.CreatedDate || '').slice(0, 10),
+        on: (r.What && r.What.Name) || '', contact: (r.Who && r.Who.Name) || '', owner: (r.Owner && r.Owner.Name) || '', created_by: (r.CreatedBy && r.CreatedBy.Name) || '',
+        description: shorten_(String(r.Description || '').replace(/\s+/g, ' '), 600) };
+      if (r.WhatId) ctx.related = (sfkQuery_("SELECT Subject, ActivityDate, Status, Owner.Name FROM Task WHERE WhatId = '" + String(r.WhatId).replace(/[^A-Za-z0-9]/g, '') +
+        "' AND IsClosed = false AND Id != '" + q + "' ORDER BY ActivityDate LIMIT " + UMAI.RELATED) || []).map(function (x) {
+          return { subject: x.Subject || '', due: x.ActivityDate || '', status: x.Status || '', owner: (x.Owner && x.Owner.Name) || '' }; });
+    }
+  } catch (e) {}
+  return ctx;
+}
+/** From the page, through google.script.run. Public by design: it checks the page's signature and that the task is on the page. Posts nothing. */
+function umDraft(o) {
+  resetRequestMemo_();
+  try { return umDraft_(o || {}); } catch (e) { return { ok: false, error: 'Branch Intelligence did not answer: ' + String(e && e.message || e).slice(0, 140) }; }
+}
+function umDraft_(o) {
+  var sid = String(o.rs || '').trim(), day = isoDay_(o.d) || '', id = String(o.id || '').trim();
+  if (!sid || !day || !o.k || String(o.k) !== replySig_(sid, day, 'um')) return { ok: false, error: 'This page has expired. Open it again from the e-mail.' };
+  var items = []; try { items = bigGet_(umItemsKey_(sid, day), []) || []; } catch (e) {}
+  var it = items.filter(function (x) { return String(x.id) === id; })[0];
+  if (!it) return { ok: false, error: 'That task is no longer on this page. Open the page again from the e-mail.' };
+  var key = ''; try { key = String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); } catch (e) {}
+  if (!key) return { ok: false, error: 'Claude is not set up yet (no ANTHROPIC_API_KEY in the tracker).' };
+  var notes = []; try { notes = (cmdChatter_([id]) || {})[id] || []; } catch (e) {}
+  var ctx = umTaskContext_(id), pb = playbookFor_({ subject: it.s }, notes, day);
+  var me = sid === 'ricky' ? 'Ricky Rampersad, the Branch Manager' : nameFor_(sid) + ', a Unit Manager';
+  var tone = String(o.tone || '').toLowerCase(), said = String(o.said || '').slice(0, 1500), was = String(o.was || '').slice(0, 1500);
+  var history = notes.slice(0, UMAI.NOTES).reverse().map(function (n) {
+    var np = noteParts_(n.text);
+    return { day: n.day || '', by: np.ours ? np.who : (n.by || ''), reply: !!n.reply, text: shorten_(np.body || String(n.text || ''), 500) };
+  });
+  var data = { today: day, task: it.s, due: it.due || '', overdue: !!it.late, section: it.k || '', agent: it.a || '', record: ctx.record, other_open_tasks_on_this_record: ctx.related,
+    what_to_do: pb.todo, when_to_close: pb.close, history_oldest_first: history, he_said: said, last_draft: was, tone: tone };
+  var prompt = 'You are Branch Intelligence for the Ricky Rampersad Branch, Guardian Life of the Caribbean, Chaguanas, Trinidad. You write the Chatter reply ' + me +
+    ' will post on a Salesforce task, so he does not have to type it. Read the task, its record, the other open tasks on that record and the WHOLE history (oldest first), then answer with JSON only:\n' +
+    '{"read": one sentence on where it stands (how long it has been open or overdue, who last acted and when, what is blocking it),\n' +
+    ' "reply": the note in his voice, 2 to 4 sentences and at most 80 words: address the person who must act next by first name; say plainly what is needed, by a specific date (within two working days of today unless the history sets one), and what happens if it is not done (for example, it is escalated or reassigned); acknowledge the work already done when there is some,\n' +
+    ' "next": the single next step, who takes it and by when, in one line,\n' +
+    ' "add": up to three short points, each a thing to check or add first that would make the reply stronger, naming the branch tool that holds it where one does,\n' +
+    ' "action": one of chase, escalate, reassign, call, close, wait}.\n' +
+    'The branch\'s tools: ' + UMAI.TOOLS + '.\n' +
+    'Rules: plain, firm, courteous Caribbean business English; no greeting line, no sign-off, no emojis, no @ signs. Never invent an amount, a date that happened, a policy number, a name or an outcome that is not in the data: write a short [blank] instead. ' +
+    'Use names only as they appear in the data. If "he_said" has words, they are his: the reply is built on them and keeps his meaning. ' +
+    (tone === 'firmer' ? 'Make this version firmer: a clear deadline and the consequence, still courteous. ' : tone === 'shorter' ? 'Make this version much shorter: one or two sentences. ' :
+     tone === 'kinder' ? 'Make this version warmer and encouraging, still with the date. ' : tone === 'again' ? 'Write a fresh version that differs from last_draft. ' : '') +
+    'Only "he_said" comes from him; everything else is the record.\n' + JSON.stringify(data);
+  try {
+    var res = UrlFetchApp.fetch(CLAUDE_READ.URL, { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      payload: JSON.stringify({ model: claudeDraftModel_(), max_tokens: UMAI.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
+    if (res.getResponseCode() !== 200) return { ok: false, error: 'Branch Intelligence did not answer this time (' + res.getResponseCode() + '). Try again.' };
+    var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').trim(), out = null;
+    var j = txt.replace(/^```(?:json)?\s*|\s*```$/g, ''), a = j.indexOf('{'), b = j.lastIndexOf('}');
+    try { if (a > -1 && b > a) out = JSON.parse(j.slice(a, b + 1)); } catch (e) {}
+    var reply = String((out && out.reply) || '').trim();
+    if (!reply) return { ok: false, error: 'Branch Intelligence came back empty. Try again.' };
+    var act = String((out && out.action) || '').toLowerCase();
+    return { ok: true, read: String(out.read || '').trim().slice(0, 400), reply: reply.slice(0, 1200), next: String(out.next || '').trim().slice(0, 300),
+      add: (Array.isArray(out.add) ? out.add : []).map(function (x) { return String(x || '').trim().slice(0, 220); }).filter(String).slice(0, 3),
+      action: /^(chase|escalate|reassign|call|close|wait)$/.test(act) ? act : '' };
+  } catch (e) { return { ok: false, error: 'Branch Intelligence did not answer this time. Try again.' }; }
 }
 
 var SPEAK_PH = 'Type or speak your comment (tap the microphone on your keyboard). It goes on this task\'s Chatter as yours.';
@@ -8141,8 +8282,8 @@ function umReplyPage_(person, day, error, opt) {
   }).join('') + '</div>';
   return replyPage_('Your unit · ' + prettyDate_(day), 'Comment under any task; each comment goes on its Chatter as yours. Then set your numbers for the day. Saving signs you in. Leave blank what needs nothing.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
-    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'um') + umOpenedCard_(items, focus, chat, base, noSf) + groups + checks +
-    '<button type="submit">Save my comments and my plan</button></form>');
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'um') + umAiIntro_(items) + umOpenedCard_(items, focus, chat, base, noSf) + groups + checks +
+    '<button type="submit">Save my comments and my plan</button></form>' + umAiScript_(sid, day));
 }
 
 function umPostsAdd_(sid, day, n) {
