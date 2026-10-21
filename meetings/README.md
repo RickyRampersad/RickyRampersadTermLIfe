@@ -180,13 +180,17 @@ What the app already does: five wrong tries locks the account for fifteen
 minutes, every sign-in is logged with a time, and the meeting sheet stores a
 salted hash rather than the password itself.
 
-## The template — the standing shape of a Wednesday
+## The template — the standing shape of a Friday
 
 `meetings/template.html`, served at **`/meetings/template.html`** and linked
 from the app's nav and from the framework page. It is the page to send anybody
 who asks what the new meetings look like.
 
-It carries the standing agenda — **eleven slots, 9:00 to 10:30** — with the
+The branch meets on **Friday, 2:00 to 3:30 pm**; it moved from Wednesday
+morning in 2026. The template page and the films below were made for the old
+9:00 slot and still show it until they are redone.
+
+It carries the standing agenda — **eleven slots, 2:00 to 3:30** — with the
 minutes and the owner against each, the four-week cycle that fills the one
 rotating slot, the arithmetic that holds the chair to 15 of the 90 minutes,
 the register rule, and the live unit roster. Sixteen of those ninety minutes
@@ -331,7 +335,7 @@ rotating slot is the producer board, and week 4 is the Flight Plan. The wall and
 the plan are both in the app's nav, because a board nobody opens is a board
 nobody built.
 
-## The Monday brief — named cases, answered before Wednesday
+## The Monday brief — named cases, answered before Friday
 
 The branch's standing opportunities are not a mystery. They are rows in
 Salesforce that nobody is asked about by name. Pulled live on 10 October 2026:
@@ -351,11 +355,11 @@ set to, and the house rule against a placeholder no longer forces the wall to sa
 "target not set".
 
 So: Monday 07:00, every agent gets **their own cases by reference**, one question
-each — did you make contact. Wednesday reads the answers instead of asking the
+each — did you make contact. Friday reads the answers instead of asking the
 room. `mondayBrief()` sends; `installMondayBrief()` schedules it.
 
 **Asking is the whole mechanism.** A list nobody is asked about is a report. A
-list each person is asked about by name, where the answer is read out two days
+list each person is asked about by name, where the answer is read out four days
 later, is accountability — and the difference is one e-mail and a column.
 
 **Answered and contacted are counted separately**, because they are different
@@ -571,17 +575,17 @@ how many people are presenting, and how many items nobody owns. Over about a
 third and it says so in words. The point is that the drift is arguable on the
 day rather than in next year's minutes.
 
-## The daily note — how Wednesday gets built
+## The daily note — how Friday gets built
 
-The branch meets **Wednesday morning**. On each working morning the app sends
-every person one short note that counts down to it and asks for the one thing
-only they can bring:
+The branch meets **Friday, 2:00 to 3:30 pm**. On each working morning the app
+sends every person one short note that counts down to it and asks for the one
+thing only they can bring:
 
-- **Your item on Wednesday** — and whether your material is in. An item marked
+- **Your item on Friday** — and whether your material is in. An item marked
   *materials required* is not ready until a file is on it.
 - **Your action items** — open, and which are past the date.
 - **Your own measures**, from the KPI tab.
-- **One ask, every day:** add something to Wednesday's agenda. A question, a
+- **One ask, every day:** add something to Friday's agenda. A question, a
   concern, something that worked.
 
 Turn it on once: *Branch Meetings → Turn on the daily note*. Read it before the
@@ -640,7 +644,7 @@ the live org:
 ## The daily time blocks — two notes a day, fifteen seconds each
 
 Separate from the daily note, and answering a different question. The note
-tells a person what is owed before Wednesday. The time blocks ask what they
+tells a person what is owed before Friday. The time blocks ask what they
 actually did.
 
 **Two sends a day, weekdays only.** 10:00 asks about *3pm yesterday to 10am
