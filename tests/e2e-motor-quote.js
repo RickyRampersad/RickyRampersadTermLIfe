@@ -113,6 +113,7 @@ const calls = []; let requests = [];
   const rsub = calls.filter(c => c.action === 'submit').pop();
   ok('the renewal is sent as flow "renew" with the vehicle and what she asked', rsub.quote.flow === 'renew' && rsub.quote.reg === 'PDX 1234' && rsub.quote.renewChoice === 'Renew with changes' && /son/.test(rsub.quote.renewChanges));
   ok('the done screen says renewal', /renewal request has gone/.test(await txt('#doneTitle')));
+  ok('the renewal done screen gives the renewal\'s own next steps', /check your renewal/.test(await txt('#doneSteps')));
   await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
 
   /* ── the invoice: upload, read, filled in, checked ── */
@@ -265,6 +266,7 @@ const calls = []; let requests = [];
   ok('the Know Your Policy PDF is Guardian\'s form with her answers: point 4 ticked No, her name', kf.getCheckBox('ChkBox-5').isChecked() && !kf.getCheckBox('ChkBox-4').isChecked() && kf.getTextField('Text1').getText() === 'ANIKA PRETEND');
   ok('the proposal PDF is Guardian\'s four pages, signed (an image on page 4)', pd.getPageCount() === 4 && pr.files[3].data.length > 200000);
   ok('the done screen says the proposal has gone', /proposal has gone/.test(await txt('#doneTitle')) && /MP-261021-001/.test(await txt('#doneRef')));
+  ok('the proposal done screen gives the proposal\'s next steps, not the quote\'s', /premium/.test(await txt('#doneSteps')) && !/We price it/.test(await txt('#doneSteps')));
   await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
   ok('nothing runs wider than the phone', await wide());
   await page.reload({ waitUntil: 'domcontentloaded' }); await page.waitForSelector('#s-home:not(.hide)');

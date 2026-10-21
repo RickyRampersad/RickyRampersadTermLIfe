@@ -29,6 +29,7 @@
   .mark img{width:100%;height:100%;display:block}
   .brand{color:#fff;font-weight:800;font-size:16px;line-height:1.2;flex:1;letter-spacing:.01em}
   .brand i{display:block;font-style:normal;font-weight:600;font-size:11.5px;color:#EAF3FD;letter-spacing:.06em;text-transform:uppercase}
+  @media (max-width:430px){.brand .gg{display:none}}
   .who{color:#EAF3FD;font-size:12.5px;text-align:right;line-height:1.3}
   .who b{display:block;color:#fff;font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .who button{font:inherit;font-size:12px;color:#fff;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
@@ -245,7 +246,7 @@
 <body>
 <header>
   <div class="mark"><img src="/orphan-transition/board-mark.png" width="46" height="46" alt=""></div>
-  <div class="brand">Ricky Rampersad Branch<i>Motor quotes · Guardian General</i></div>
+  <div class="brand">Ricky Rampersad Branch<i>Motor quotes<span class="gg"> · Guardian General</span></i></div>
   <div class="who hide" id="who"><b id="whoName"></b><button type="button" onclick="signOut()">Sign out</button></div>
 </header>
 <main>
@@ -323,11 +324,7 @@
     <p class="muted">Your reference</p>
     <p class="ref" id="doneRef"></p>
     <p id="doneMsg" style="text-align:left"></p>
-    <div class="why" style="text-align:left">
-      <div><b>1</b>We price it</div>
-      <div><b>2</b>The quote reaches your e-mail</div>
-      <div><b>3</b>We call you</div>
-    </div>
+    <div class="why" id="doneSteps" style="text-align:left"></div>
     <p class="muted" style="margin-top:12px;text-align:left">A receipt is on its way to your inbox. Sign in any time to see where it stands.</p>
     <button class="ghost" onclick="showHome()">Back to my quotes</button>
   </section>
@@ -647,7 +644,7 @@ function side() {
   const d = draft, el = $('sideSum'); if (!el) return;
   const rows = [['Request', { quick: 'Quick quote', renew: 'Renewal', full: 'Every detail' }[d.flow] || ''], ['Renews', d.renewOnText], ['You ask', d.renewChoice], ['Read from', d.docLabel], ['Name', d.name], ['Mobile', d.mobile], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')],
     ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears],
-    ['No claim discount', d.ncd], ['Permit', d.permit], ['Documents', files.length ? files.map(f => KINDS[f.kind] ? KINDS[f.kind][0] : f.kind).join(', ') : '']].filter(r => r[1]);
+    ['No claim discount', d.ncd], ['Permit', d.permit], ['Documents', files.length ? files.map(f => docLabel(f.kind)).join(', ') : '']].filter(r => r[1]);
   el.innerHTML = rows.length ? rows.map(r => '<div class="kv"><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('') : '<p class="empty">What you fill in appears here as you go.</p>';
 }
 
@@ -721,6 +718,8 @@ const TITLES = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Other'];
 const MARITAL = ['Single', 'Married', 'Common-law', 'Divorced', 'Separated', 'Widowed'];
 const LEVELS = ['Level 1 ($3,000)', 'Level 2 ($5,000)', 'Level 3 ($8,000)'], EV_LIMITS = ['$50,000', '$75,000', '$100,000', '$120,000'];
 const BODY_TYPES = ['Sedan', 'Hatchback', 'SUV', 'Crossover', 'Wagon', 'Pickup', 'Van', 'Coupe', 'Convertible', 'Motorcycle', 'Other'];
+function docLabel(k) { const t = KINDS[k] || TDOCS[k]; return t ? t[0] : k; }
+function doneSteps(list) { $('doneSteps').innerHTML = list.map((t, i) => '<div><b>' + (i + 1) + '</b>' + t + '</div>').join(''); }
 const TDOCS = { quote: ['The quotation you are taking', 'Guardian General\'s quotation schedule or invoice, the PDF or a photo.', 1],
   certified: ['Certified copy, or the dealer\'s invoice for a new vehicle', 'We read the registration, chassis and engine numbers off it.', 0],
   permit: ['Your driver\'s permit', 'A photo of the front. We read the number, the date of issue and the class.', 0] };
@@ -1013,6 +1012,7 @@ async function submitTake() {
     requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
     $('doneRef').textContent = j.ref;
     $('doneTitle').textContent = 'Your proposal has gone.';
+    doneSteps(['The desk checks your signed forms', 'We call you about the premium', 'Cover starts once it is paid']);
     $('doneMsg').textContent = (j.mode === 'test' ? 'Test mode: it went to the branch test inbox, not to the desk. ' : 'It went to Guardian General\'s desk, with our branch copied. ') +
       'Your signed proposal and Know Your Policy form are on their way to your inbox. We call you to arrange the premium: cover starts once it is paid.';
     show('s-done');
@@ -1120,7 +1120,7 @@ function stepReview(d) {
     ['The vehicle', [['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
     ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', d.ncd], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
     ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents', d.accidents + (d.accidentDetails ? ': ' + d.accidentDetails : '')], ['Notes', d.notes]]],
-    ['Documents', [['Attached', files.length ? files.map(f => KINDS[f.kind] ? KINDS[f.kind][0] : f.kind).join(', ') : (d.flow === 'full' ? 'none' : '')]]]];
+    ['Documents', [['Attached', files.length ? files.map(f => docLabel(f.kind)).join(', ') : (d.flow === 'full' ? 'none' : '')]]]];
   return '<p class="muted">Check it over. Tap Back to change anything. A receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
     G.map(g => [g[0], g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()))]).filter(g => g[1].length).map(g => '<h3>' + g[0] + '</h3>' + g[1].map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
     '<label class="chk"><input type="checkbox" id="agree"> <span>This is true to the best of my knowledge. Please ' + (d.flow === 'renew' ? 'renew my cover.' : 'get me a quote.') + '</span></label>';
@@ -1133,6 +1133,7 @@ async function submit() {
     requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
     $('doneRef').textContent = j.ref;
     $('doneTitle').textContent = j.flow === 'renew' ? 'Your renewal request has gone.' : 'Your request has gone.';
+    doneSteps(j.flow === 'renew' ? ['We check your renewal', 'The renewal reaches your e-mail', 'We call you'] : ['We price it', 'The quote reaches your e-mail', 'We call you']);
     $('doneMsg').textContent = j.mode === 'test' ? 'Test mode: this request went to the branch test inbox, not to the desk.' : 'It went to Guardian General\'s desk at ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ', with our branch copied.' +
       (j.flow === 'quick' ? ' When you take the quote we will ask for your driver\'s permit and the certified copy.' : '');
     show('s-done');
