@@ -567,5 +567,107 @@ ok('a desk is sent to the tracker instead of asked twice',
    deskClose.ok === false && deskClose.onTracker === true &&
    /15:45/.test(deskClose.error), deskClose.error);
 
+
+/* =======================================================================
+   15. THE BRANCH'S OWN ROUTING, AND THE DAY PLAN
+   The shapes are the live tracker's, read on 21 October 2026: Workload
+   Moves with its reason in words, Manager Day with a Planned count and
+   what was Done, and an Agent Day tab that exists and has never had a
+   row in it. Every name and subject here is invented.
+   ======================================================================= */
+sec('The branch\'s own routing');
+
+env.__mkSheet('Workload Moves', 80,
+  ['Date', 'At', 'TaskId', 'Subject', 'Type', 'From', 'To', 'Why', 'Result', 'UndoneAt'], [
+  // load, by pace — six on one morning, one reason between them
+  ...Array.from({ length: 6 }, (_, i) => ['2026-10-14', '8:33', 'T' + i,
+    'A client request ' + i, 'Servicing', 'gita', 'farida',
+    'Gita had 77 due or overdue (17.9 days at her pace); Farida had 12 (0.7 days)', 'OK', '']),
+  // absence cover — a different reason, and its own finding
+  ...Array.from({ length: 3 }, (_, i) => ['2026-10-15', '8:02', 'A' + i,
+    'A pending ' + i, 'Pendings', 'farida', 'devi',
+    'Farida is absent today and this was due today with no note from Farida', 'OK', '']),
+  // one that was undone: it must count as nothing
+  ['2026-10-15', '9:00', 'U1', 'Undone one', 'Servicing', 'gita', 'devi',
+   'Moved in error', 'OK', '2026-10-15T09:10:00'],
+  // older than the week: out of range
+  ['2026-09-01', '8:00', 'OLD', 'Old one', 'Servicing', 'gita', 'farida',
+   'Long ago', 'OK', '']
+]);
+env.__mkSheet('Manager Day', 81,
+  ['Date', 'StaffId', 'Kind', 'Item', 'Question', 'Planned', 'Done', 'Note', 'At'], [
+  // the live tracker writes the same row three times; the desk folds them
+  ...Array.from({ length: 3 }, () => ['2026-10-15', 'ricky', 'eve', 'coach',
+    'Coaching: agents coached one to one', 1, 'Devi', 'Spoke about managing agents', '14:24']),
+  ['2026-10-16', 'ricky', 'plan', 'coach', 'Coaching: agents coached one to one', 3,
+   'Devi, Hamid, Rajiv', '', '6:00'],
+  ['2026-10-16', 'gita', 'plan', 'dues', 'Premium dues worked', 20, '', '', '8:10']
+]);
+env.__mkSheet('Agent Day', 82,
+  ['Date', 'Agent', 'Email', 'Manager', 'Kind', 'Item', 'Question', 'Planned', 'Done', 'Note', 'At'], []);
+env.__mkSheet('Mailbag Log', 83,
+  ['Date', 'Router', 'By', 'CollectedToday', 'Backlog', 'Sent', 'Reason', 'Note', 'At', 'Source'], [
+  ['2026-10-14', 'Gita Imaginary', 'Kerry Notional', 0, 24, 'Handed over',
+   'Not applicable today for collection of documents', '', '19:52', 'email']
+]);
+
+clearCaches();
+const trk2 = env.accTracker_('2026-10-16');
+ok('Workload Moves is found by its headers', (trk2.moves || []).length > 0,
+   String((trk2.moves || []).length));
+ok('a move older than the week is left out',
+   !trk2.moves.some(m => m.day === '2026-09-01'));
+ok('an undone move is carried, marked undone',
+   trk2.moves.filter(m => m.undone).length === 1);
+ok('the plan is read', (trk2.plan || []).length === 5, String((trk2.plan || []).length));
+ok('the Agent Day tab is seen, and seen to be empty',
+   trk2.agentPlanTab === true && (trk2.agentPlan || []).length === 0);
+ok('the mail run is read with its backlog',
+   (trk2.bag || []).length === 1 && trk2.bag[0].backlog === 24);
+
+/* ---- what one desk sees of it ---- */
+const gitaP = { name: 'Sasha Someone', role: 'staff' };   // staffId 'sasha' on the seed
+const mvG = env.accMovesFor_({ name: 'Gita Imaginary', role: 'staff' }, trk2);
+//  Seven rows name this desk as the one work came off, but one of them was
+//  undone. A move that was reversed is not work somebody else is carrying,
+//  so it must not read as one: six.
+ok('a desk sees what was moved off it, and an undone move is not one',
+   mvG.off.length === 6, String(mvG.off.length));
+ok('and the reason once, not once a row',
+   mvG.reasons.length === 1 && mvG.reasons[0].n === 6,
+   mvG.reasons.map(r => r.n + '×').join(' '));
+const mvF = env.accMovesFor_({ name: 'Farida Notreal', role: 'staff' }, trk2);
+ok('a desk sees what was moved onto it', mvF.on.length === 6);
+ok('and what was moved off it for being absent',
+   mvF.off.length === 3 && /absent/.test(mvF.off[0].why));
+
+/* ---- the plan, folded ---- */
+const planR = env.accPlanFor_({ name: 'Ricky Someone', role: 'manager' }, trk2);
+ok('three identical plan rows fold into one', planR.length === 2, String(planR.length));
+ok('and the fold is counted, not hidden',
+   planR.some(r => r.times === 3), JSON.stringify(planR.map(r => r.times)));
+ok('the plan carries what was planned against what was done',
+   planR.some(r => r.planned === 3 && /Devi, Hamid, Rajiv/.test(r.done)));
+
+/* ---- the findings ---- */
+clearCaches();
+const F3 = env.accFindings_(env.accSnapshot_());
+const k3 = F3.map(x => x.key);
+ok('absence cover is its own finding', k3.indexOf('moves.cover') > -1);
+ok('and load balancing is reported, not alarmed about',
+   F3.filter(x => x.key === 'moves.load')[0].severity === 1);
+ok('no advisor having filed a plan is a finding', k3.indexOf('plan.agents') > -1);
+ok('the duplicate plan rows are a finding against the writer, not the person',
+   k3.indexOf('plan.dup') > -1 &&
+   /overstated/.test(F3.filter(x => x.key === 'plan.dup')[0].finding));
+ok('the mail backlog is a finding', k3.indexOf('bag.backlog') > -1);
+
+/* ---- no client name leaves the desk it belongs to ---- */
+clearCaches();
+const chair = env.apiDesk_('T-CHAIR');
+ok('the branch block carries the reasons, never a move subject',
+   JSON.stringify(chair.branch.moves).indexOf('A client request') === -1 &&
+   chair.branch.moves.length > 0);
+
 console.log('\n' + (fails ? fails + ' FAILED' : 'All checks passed'));
 process.exit(fails ? 1 : 0);

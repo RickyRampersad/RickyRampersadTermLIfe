@@ -405,8 +405,25 @@ function accPipeline_() {
         });
       });
 
+      /*  HOW MANY OF THE STUCK ONES HAVE A TASK ON THEM AT ALL. Checked
+       *  on 21 October 2026: three of a hundred and ninety-seven. So the
+       *  tracker's own Workload Moves, which routes tasks, cannot see
+       *  the other hundred and ninety-four, and nothing in Salesforce is
+       *  chasing the API inside them. That is why this file routes
+       *  applications even though the branch already routes tasks: the
+       *  two do not overlap, and the figure proves it rather than
+       *  asserting it. */
+      var withTask = 0;
+      try {
+        var tq = accSfQuery_(
+          'SELECT COUNT(Id) n FROM Task WHERE IsClosed = false AND WhatId IN (' +
+          'SELECT Id FROM CLIENT_PORTFOLIO__c WHERE (' + where + ') ' +
+          'AND App_Received_Date__c < LAST_N_DAYS:' + ACC.STUCK_DAYS + ')');
+        withTask = tq.length ? accNum_(tq[0].n || tq[0].expr0) : 0;
+      } catch (e) { withTask = -1; }      /* -1: not known, never 0 by guess */
+
       return {
-        live: true, total: tot,
+        live: true, total: tot, withTask: withTask,
         stuck: stuck.sort(function (a, b) { return b.days - a.days; }),
         byAgent: accRank_(byAgent), bySupport: accRank_(bySupport),
         byStatus: accRank_(byStatus),
@@ -1470,6 +1487,22 @@ function accFindings_(S) {
     }
   }
 
+  /*  THE GAP BETWEEN THE TWO ROUTINGS. The tracker moves tasks; these
+   *  applications mostly have no task to move, so nothing in Salesforce
+   *  is chasing them and no load-balancing pass can ever reach them.
+   *  Only said when the count is known: -1 means the query did not
+   *  answer, and a guess here would read as a clean bill. */
+  if (S.pipe.live && S.pipe.total.stuck > 0 && S.pipe.withTask >= 0) {
+    var bare = S.pipe.total.stuck - S.pipe.withTask;
+    if (bare > 0) {
+      f('pipe.notask', 3, 'Most of the stuck pipeline has nothing chasing it',
+        bare + ' of the ' + S.pipe.total.stuck + ' applications over ' + ACC.STUCK_DAYS +
+        ' days have no open task on them at all. The branch routes tasks, so none of ' +
+        'these can be reached by that routing, and nobody is being moved onto them.',
+        bare, 'Salesforce');
+    }
+  }
+
   /* ------------------- recommended against written ------------------- */
   if (S.ff.live && S.ff.year.apiRec > 0 && S.ff.year.conversion !== null) {
     var c = S.ff.year.conversion;
@@ -1608,6 +1641,65 @@ function accFindings_(S) {
     if (S.rem.set > 0) {
       f('rem.on', 1, 'Reminders set', S.rem.set + ' policies have a premium reminder set.',
         S.rem.set, 'Salesforce');
+    }
+  }
+
+  /* ----------------------- the branch's routing ----------------------- */
+  var trk = accTracker_(accDayKey_(S.at || new Date()));
+  if (trk.live) {
+    var mv = (trk.moves || []).filter(function (m) { return !m.undone; });
+    if (mv.length) {
+      /*  Absence cover is its own finding. A desk that was out and whose
+       *  due work had to be moved is a gap in the day, not a tidy-up. */
+      var cover = mv.filter(function (m) { return /absent|no note/i.test(m.why); });
+      if (cover.length) {
+        var who = {};
+        cover.forEach(function (m) { who[m.from] = (who[m.from] || 0) + 1; });
+        var names = Object.keys(who).map(function (k) { return k + ' (' + who[k] + ')'; });
+        f('moves.cover', 2, 'Work was moved because somebody was out',
+          cover.length + ' task' + (cover.length === 1 ? '' : 's') + ' moved off a desk ' +
+          'that was absent with nothing logged: ' + names.join(', ') + '. Somebody else ' +
+          'is carrying it.', cover.length, 'The tracker');
+      }
+      var load = mv.length - cover.length;
+      if (load > 0) {
+        f('moves.load', 1, 'The branch balanced its own load',
+          load + ' task' + (load === 1 ? '' : 's') + ' moved between desks on pace this ' +
+          'week, each with its reason recorded.', load, 'The tracker');
+      }
+    }
+
+    /*  THE PLAN NOBODY FILLS. Agent Day exists and has never had a row
+     *  in it, which is a different thing from a tab that is not there. */
+    if (trk.agentPlanTab && !(trk.agentPlan || []).length) {
+      f('plan.agents', 2, 'No advisor has filed a day plan',
+        'The Agent Day tab is there and empty. Nothing records what any advisor ' +
+        'planned to do, so there is nothing to hold the week against.',
+        0, 'The tracker');
+    }
+
+    /*  The same plan row written more than once is a writer fault, not a
+     *  person filing twice, and it makes every count off that tab wrong. */
+    var dup = 0;
+    var seenP = {};
+    (trk.plan || []).forEach(function (r) {
+      var k = [r.day, r.who, r.kind, r.item, r.planned, r.done].join('|');
+      if (seenP[k]) dup++; else seenP[k] = 1;
+    });
+    if (dup > 0) {
+      f('plan.dup', 2, 'The day plan is being written more than once',
+        dup + ' duplicate row' + (dup === 1 ? '' : 's') + ' on the plan tabs this week — ' +
+        'the same entry, the same minute. Every count read off that tab is overstated ' +
+        'until whatever writes it stops repeating.', dup, 'The tracker');
+    }
+
+    /*  The mail run, when it was last logged. */
+    var bag = (trk.bag || []).slice().sort(function (a, b) {
+      return a.day < b.day ? 1 : a.day > b.day ? -1 : 0; })[0];
+    if (bag && accNum_(bag.backlog) > 0) {
+      f('bag.backlog', 2, 'Documents waiting in the mail run',
+        bag.backlog + ' in the backlog when it was last logged, on ' + bag.day +
+        (bag.router ? ', routed by ' + bag.router : '') + '.', bag.backlog, 'The tracker');
     }
   }
 
@@ -2143,7 +2235,13 @@ function apiDesk_(token) {
       reminders: S.rem.live ? S.rem : null,
       quiet: accQuietAgents_(S),
       topics: accTopics_(S),
-      days: accDayAll_(S)
+      days: accDayAll_(S),
+      /*  The branch's own routing, as it happened, with each reason
+       *  said once. The subjects carry client names, so they stay on
+       *  the desk they belong to and only the reasons come here. */
+      moves: accWhyOnce_((accTracker_(accDayKey_(new Date())).moves || [])
+        .filter(function (m) { return !m.undone; })),
+      plan: (accTracker_(accDayKey_(new Date())).plan || [])
     };
   } else if (isUnitMgr_(me)) {
     var unit = accLow_(me.unit || me.name);
@@ -2566,12 +2664,34 @@ var ACC_TRK = {
   LOG:  ['StaffId', 'KPI1_Actioned'],
   CLO:  ['ItemId', 'Item', 'Who'],
   CLOG: ['Date', 'StaffId', 'ItemId'],
-  CLOSEOUT_AT: '15:45'
+
+  /*  THE BRANCH'S OWN ROUTING, which was already running and which this
+   *  file did not read. Workload Moves records every task the tracker
+   *  moved from one desk to another, with the reason in its own words:
+   *  "Elizabeth had 77 due or overdue (17.9 days at her pace); Sasha had
+   *  12 (0.7 days)" for load, and "Sasha is absent today and this was
+   *  due today with no note from Sasha" for cover. The desk shows these;
+   *  it never writes one. */
+  MOVES: ['Date', 'TaskId', 'From', 'To', 'Why'],
+
+  /*  The day PLAN, which is the half of accountability the blocks do not
+   *  carry: what a person said they would do, against what they did.
+   *  Manager Day is filled; Agent Day has never had a row in it, and
+   *  that emptiness is a finding rather than a missing feature. */
+  MPLAN: ['Date', 'StaffId', 'Kind', 'Item', 'Planned'],
+  APLAN: ['Date', 'Agent', 'Manager', 'Kind', 'Item'],
+
+  /*  The mail run, logged once a day by whoever routed it. */
+  BAG: ['Date', 'Router', 'CollectedToday', 'Backlog'],
+
+  CLOSEOUT_AT: '15:45',
+  MOVE_DAYS: 7
 };
 
 function accTracker_(dayKey) {
   return accCached_('trk.' + dayKey, function () {
     var out = { live: false, why: '', att: {}, log: {}, items: [], ticks: {},
+                moves: [], plan: [], agentPlan: [], bag: [], agentPlanTab: false,
                 closeoutAt: ACC_TRK.CLOSEOUT_AT };
     var ss;
     try { ss = accTrackerBook_(); }
@@ -2634,6 +2754,62 @@ function accTracker_(dayKey) {
       out.items.sort(function (a, b) { return a.order - b.order; });
     }
 
+    /*  The moves. Read over a week, not a day: a task moved off a desk
+     *  on Monday is still that desk's missing work on Wednesday, and the
+     *  reason is what the meeting needs rather than the count. */
+    var cut = accShiftDay_(dayKey, -ACC_TRK.MOVE_DAYS);
+    var mv = accTrackerTab_(ss, ACC_TRK.MOVES);
+    if (mv) {
+      accTrackerRows_(mv, 800).forEach(function (r) {
+        var d = accRowDay_(r['Date']);
+        if (!d || d < cut) return;
+        out.moves.push({
+          day: d, at: accTime_(r['At']), subject: accStr_(r['Subject']),
+          type: accStr_(r['Type']), from: accLow_(r['From']), to: accLow_(r['To']),
+          why: accStr_(r['Why']), result: accStr_(r['Result']),
+          undone: !!accStr_(r['UndoneAt'])
+        });
+      });
+    }
+
+    /*  The plan. One row per thing a person said they would do, with
+     *  Planned, what was Done and a note. Kind separates the morning
+     *  plan from the evening's account of it. */
+    var mp = accTrackerTab_(ss, ACC_TRK.MPLAN);
+    if (mp) {
+      accTrackerRows_(mp, 600).forEach(function (r) {
+        var d = accRowDay_(r['Date']);
+        if (!d || d < cut) return;
+        out.plan.push({ day: d, who: accLow_(r['StaffId']), kind: accLow_(r['Kind']),
+                        item: accStr_(r['Item']), question: accStr_(r['Question']),
+                        planned: accNum_(r['Planned']), done: accStr_(r['Done']),
+                        note: accStr_(r['Note']), at: accTime_(r['At']) });
+      });
+    }
+    var ap = accTrackerTab_(ss, ACC_TRK.APLAN);
+    out.agentPlanTab = !!ap;
+    if (ap) {
+      accTrackerRows_(ap, 600).forEach(function (r) {
+        var d = accRowDay_(r['Date']);
+        if (!d || d < cut) return;
+        out.agentPlan.push({ day: d, who: accLow_(r['Agent']), kind: accLow_(r['Kind']),
+                             item: accStr_(r['Item']), planned: accNum_(r['Planned']),
+                             done: accStr_(r['Done']), note: accStr_(r['Note']) });
+      });
+    }
+
+    var bag = accTrackerTab_(ss, ACC_TRK.BAG);
+    if (bag) {
+      accTrackerRows_(bag, 200).forEach(function (r) {
+        var d = accRowDay_(r['Date']);
+        if (!d || d < cut) return;
+        out.bag.push({ day: d, router: accStr_(r['Router']), by: accStr_(r['By']),
+                       collected: accNum_(r['CollectedToday']),
+                       backlog: accNum_(r['Backlog']), sent: accStr_(r['Sent']),
+                       reason: accStr_(r['Reason']), at: accTime_(r['At']) });
+      });
+    }
+
     var clog = accTrackerTab_(ss, ACC_TRK.CLOG);
     if (clog) {
       accTrackerRows_(clog, 600).forEach(function (r) {
@@ -2650,6 +2826,14 @@ function accTracker_(dayKey) {
 
     return out;
   });
+}
+
+/** A yyyy-MM-dd key, n days either side of another. */
+function accShiftDay_(key, n) {
+  var d = new Date(key + 'T00:00:00');
+  if (isNaN(d.getTime())) return key;
+  d.setDate(d.getDate() + n);
+  return accDayKey_(d);
 }
 
 function accRowDay_(v) {
@@ -2719,6 +2903,8 @@ function accDayFor_(person, S) {
     return {
       live: trk.live, why: trk.why, onTracker: false, staffId: id,
       blocks: [], items: [], ownCloseOff: true,
+      moves: accMovesFor_(person, trk), plan: accPlanFor_(person, trk),
+      agentPlanTab: trk.agentPlanTab,
       none: person.role === 'agent'
         ? 'Advisors are not on the KPI tracker: no blocks, no mail sweep. ' +
           'Your day is your flight plan, your fact finds and what you wrote below.'
@@ -2768,6 +2954,7 @@ function accDayFor_(person, S) {
 
   return {
     live: trk.live, why: trk.why, onTracker: true, staffId: id,
+    moves: accMovesFor_(person, trk), plan: accPlanFor_(person, trk),
     hours: mine.hours, lunch: mine.lunch,
     arrived: att ? att.in : '', signedOut: att ? att.out : '',
     absent: !!(att && att.status === 'absent'),
@@ -2850,6 +3037,62 @@ function accBlockNow_(b, hour) {
   var start = Number(m[1]);
   if (/^(PM1|PM2|EVE)$/.test(b.id) && start < 12) start += 12;
   return hour >= start && (!b.due || hour < b.due);
+}
+
+/*  WHAT THE BRANCH MOVED, for one desk. A task moved off a person is
+ *  not their work any more and a task moved onto them is, and the reason
+ *  the tracker recorded is the only part a meeting can act on. The
+ *  subject carries a client's name, so it stays on the person's own
+ *  screen and out of every count and finding. */
+function accMovesFor_(person, trk) {
+  var id = accStaffId_(person);
+  var off = [], on = [];
+  (trk.moves || []).forEach(function (m) {
+    if (m.undone) return;
+    if (m.from === id) off.push(m);
+    else if (m.to === id) on.push(m);
+  });
+  return { off: off, on: on,
+           /*  Why, said once rather than once a row: twelve moves on one
+            *  morning share one reason, and twelve copies of it is not
+            *  twelve findings. */
+           reasons: accWhyOnce_(off.concat(on)) };
+}
+
+function accWhyOnce_(moves) {
+  var seen = {}, out = [];
+  moves.forEach(function (m) {
+    var k = m.day + '|' + accStr_(m.why).slice(0, 80);
+    if (seen[k]) { seen[k].n++; return; }
+    seen[k] = { day: m.day, why: m.why, n: 1 };
+    out.push(seen[k]);
+  });
+  return out.sort(function (a, b) { return b.n - a.n; });
+}
+
+/*  WHAT THEY SAID THEY WOULD DO, against what they did. The blocks say a
+ *  block was filed; the plan says what was promised in it. The manager's
+ *  plan is filled; Agent Day has never had a row, and the desk reports
+ *  that emptiness rather than drawing an empty table.
+ *
+ *  The tracker writes the same plan row more than once — the 19 October
+ *  coaching entry appears three times at 14:24 and the 20 October plan
+ *  three times — so the desk folds identical rows together rather than
+ *  showing a person their own morning in triplicate. */
+function accPlanFor_(person, trk) {
+  var id = accStaffId_(person);
+  var mine = (trk.plan || []).filter(function (r) { return r.who === id; })
+    .concat((trk.agentPlan || []).filter(function (r) { return r.who === id; }));
+  var seen = {}, rows = [];
+  mine.forEach(function (r) {
+    var k = [r.day, r.kind, r.item, r.planned, r.done, r.note].join('|');
+    if (seen[k]) { seen[k].times++; return; }
+    seen[k] = { day: r.day, kind: r.kind, item: r.item, question: r.question,
+                planned: r.planned, done: r.done, note: r.note, at: r.at, times: 1 };
+    rows.push(seen[k]);
+  });
+  rows.sort(function (a, b) { return a.day < b.day ? 1 : a.day > b.day ? -1 : 0; });
+  return rows;
 }
 
 /** Every desk's day, for the branch and for a unit manager's team. */
