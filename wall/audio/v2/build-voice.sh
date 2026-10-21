@@ -19,4 +19,12 @@ say n6 "From a fact find to a family covered. Here's the month, and the year's g
 say n9 "The Branch Manager's day. Everything done from his desk since five this morning, as it happens."
 say n7 "The managers. Leading the branch, Akaash's unit in the field, and every desk covered."
 say n8 "And that's what's happening right now, live, across the branch."
-echo "Done. Commit the twelve wall/audio/v2/*.mp3 files and the wall uses them."
+# Channel 5, FY27: our new way of work (21 Oct 2026; runner key "fy27").
+say w1 "A new financial year, and a new way of work. Here's what's changed at the branch."
+say w2 "One app, one sign-in. Every tool we use, from the Log Book to the forms, at rickyrampersadbranch dot com, slash app."
+say w3 "Who does what, every day. Each role has its rhythm, from the Branch Manager's five o'clock start to the last close-out."
+say w4 "And every week. Premium letters each morning, group letters on Monday, and the awards and the branch meeting on Friday."
+say w5 "Branch Intelligence reads a task's whole history, says where it stands, and drafts the reply. Managers check it and post it. Staff get a brief."
+say w6 "The game for the new year. Par, three quests a day, streaks and levels, and one team goal: bring the backlog down by Friday."
+say w7 "Every desk, every agent, one branch. Thank you, team. Here's to our new financial year."
+echo "Done. Commit the nineteen wall/audio/v2/*.mp3 files and the wall uses them."
