@@ -28,13 +28,48 @@ Asked for in those words: *"remove the shield in this wall so persons will know
 what wall they are watching."* A nameplate is a slide's name, not a substitute
 logo; the rule against inventing a mark stands everywhere, this one included.
 ```css
-.mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+.mark{display:grid;place-items:center}
 .mark img{width:100%;height:100%;display:block}
 ```
 
-The palette that goes with it: navy `#07131f`, gold `#efc24b` into `#c9942c`,
-teal `#00CFEA`. Those are the values in `IBRAND` in `Intelligence.gs`, which is
-what the client letters read.
+**The mark has no dark tile behind it on the web, decided 21 October 2026.**
+Asked for in those words: *"logo and changes as i dont like the blacks"*. The
+shield and check are unchanged; what went was the rounded `#07131f` square they
+sat on, which read as a black chip against the page. Web screens use
+**`logo-mark.svg`** — the same artwork with nothing behind it — so the mark sits
+on whatever colour the page is. `favicon.svg` keeps a tile, because a browser
+tab needs one, but in the new navy.
+
+**`logo-mark.png` is unchanged and still has its tile, on purpose.** It is what
+the letters read, and e-mail is the one place the tile earns its keep: a
+transparent PNG lands on the client's white background and the white check
+disappears into it. So: `logo-mark.svg` on the web, `logo-mark.png` in e-mail.
+
+The palette that goes with it: navy `#0d1f33`, gold `#efc24b` into `#c9942c`,
+teal `#00CFEA`.
+
+**The navy was lifted off near-black on 21 October 2026** — *"i dont like the
+blacks"*. `#07131f` was dark enough to read as black, and worse, panels across
+the site were flat `rgba(0,0,0,…)` laid over it, which on a coloured ground
+reads as a grey haze rather than depth. The homepage and the 404 page now run:
+
+| | old | new |
+|---|---|---|
+| base | `#07131f` | `#0d1f33` |
+| raised | `#0d2137` | `#14314f` |
+| card | `#163553` | `#1b4268` |
+| card top | `#1b3d61` | `#22527f` |
+| muted text | `#a9bbcf` | `#b9cadd` |
+
+Gold and teal did not move. Two rules came out of it: **no flat black anywhere**
+— panels are `--panel`/`--panel2` (navy tints) and shadows are `rgba(4,14,26,…)`
+so they stay in the blue family; and **nothing dark sits on gold or teal except
+`--ink` `#0a1a2b`**, never `#02141a` and never black. The muted grey had to come
+up with the cards or it fell under 4.5:1 on `--card2`.
+
+`IBRAND` in `Intelligence.gs` still carries the old navy, and the client letters
+read it. Those were not touched here: an e-mail masthead is a different problem
+from a web page, and changing it means re-checking every letter in Gmail first.
 
 **A second exception, decided 8 October 2026: group client management** (the
 four pages in `groupclientmanagement/` and the Monday letter built by
