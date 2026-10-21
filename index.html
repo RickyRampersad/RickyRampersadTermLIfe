@@ -34,7 +34,7 @@
 <meta name="twitter:image" content="https://rickyrampersadbranch.com/og-image.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     /* Surfaces: a richer navy, lifted off near-black. Nothing on this page is
@@ -452,6 +452,7 @@
   .tile.gold-tile .go { color: var(--gold); }
   .tile:hover .go { gap: 10px; }
   .tile .go::after { content: '→'; transition: transform .2s; }
+  .go.go-ext::after { content: '\2197'; }
 
   .badge {
     position: absolute; top: 16px; right: 16px;
@@ -1099,6 +1100,358 @@
     .hero .kicker { font-size: 9.5px; letter-spacing: 1.2px; }
   }
 
+
+  /* ══════════════════════════════════════════════════════════════════
+     THE SPATIAL LAYER
+     A different look from the ground up: real materials instead of flat
+     panels, light that comes from somewhere, and depth you can read.
+     It sits last in the sheet so it wins on source order without having
+     to out-specify every rule above it.
+     ══════════════════════════════════════════════════════════════════ */
+  :root {
+    --ink-0:  #070e1c;   /* deepest, behind everything */
+    --ink-1:  #0b1729;
+    --ink-2:  #0f2039;
+    --violet: #6b4bd6;
+    --cyan:   #22d3ee;
+    --glass:        rgba(255,255,255,.045);
+    --glass-2:      rgba(255,255,255,.075);
+    --edge:         rgba(255,255,255,.10);
+    --edge-bright:  rgba(255,255,255,.20);
+    --display: 'Space Grotesk', 'Montserrat', sans-serif;
+  }
+
+  /* ── GROUND ──
+     A dark field with three light sources bled into it, plus a fine grain.
+     The grain is what stops a big gradient reading as flat plastic. */
+  body { background: var(--ink-1); }
+  /* The ground is a fixed layer rather than a fixed background-attachment:
+     attachment:fixed repaints the whole document on every scroll frame, while
+     this is rasterised once and then only composited. */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+    background-image:
+      radial-gradient(60% 45% at 12% 0%,   rgba(107,75,214,.26), transparent 70%),
+      radial-gradient(55% 40% at 88% 8%,   rgba(34,211,238,.18), transparent 70%),
+      radial-gradient(70% 50% at 50% 104%, rgba(239,194,75,.10), transparent 70%),
+      linear-gradient(180deg, var(--ink-1) 0%, var(--ink-0) 55%, var(--ink-1) 100%);
+  }
+  /* Grain, with no blend mode: mix-blend-mode on a full-screen fixed layer
+     forces the entire stacking context to re-composite as the page moves. */
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    opacity: .22;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.38'/%3E%3C/svg%3E");
+  }
+  main, .nav, footer, #toTop, #helpBtn, #helpPanel, #profiler { position: relative; z-index: 1; }
+
+  /* Two slow lights drifting behind the page. Transform only, on their own
+     layer, and stopped dead under reduced motion. */
+  .aurora { position: fixed; inset: -20vh -20vw; z-index: 0; pointer-events: none; overflow: hidden; }
+  .aurora i {
+    position: absolute; display: block; border-radius: 50%;
+    opacity: .34; will-change: transform;
+  }
+  .aurora i:nth-child(1) {
+    width: 46vw; height: 46vw; left: -6vw; top: 2vh;
+    background: radial-gradient(circle closest-side, rgba(107,75,214,.62), rgba(107,75,214,.26) 42%, transparent 72%);
+    animation: au1 34s ease-in-out infinite;
+  }
+  .aurora i:nth-child(2) {
+    width: 38vw; height: 38vw; right: -4vw; top: 28vh;
+    background: radial-gradient(circle closest-side, rgba(34,211,238,.46), rgba(34,211,238,.18) 44%, transparent 74%);
+    animation: au2 42s ease-in-out infinite;
+  }
+  /* Translate only, never scale. A transform that just moves a layer is
+     composited; scaling one forces its 90px blur to be rasterised again on
+     every frame, and on two half-viewport blobs that alone took the page from
+     60fps to about 10. Measured, not guessed. */
+  @keyframes au1 { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(7vw,9vh,0); } }
+  @keyframes au2 { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(-9vw,-7vh,0); } }
+
+  /* ── TYPE ── */
+  .hero h1, section h2, .tile h3, .line-card h3, .careers-h, .cc-val,
+  .stat .num, .f-brand, .faq summary, .fc-num, .cs-num {
+    font-family: var(--display);
+    letter-spacing: -.02em;
+  }
+  .hero h1 { font-weight: 700; font-size: clamp(38px, 6.4vw, 76px); line-height: 1.02; letter-spacing: -.035em; }
+  section h2 { font-weight: 600; font-size: clamp(26px, 3.6vw, 40px); letter-spacing: -.028em; line-height: 1.12; }
+  .section-label {
+    font-family: var(--display); font-weight: 500; font-size: 11px;
+    letter-spacing: .22em; color: var(--cyan);
+  }
+  .section-label::after { background: linear-gradient(90deg, rgba(34,211,238,.4), transparent); }
+  .section-sub { font-size: 15.5px; line-height: 1.7; max-width: 60ch; }
+
+  /* ── GLASS ──
+     One material, used everywhere: a translucent pane, a lit top edge, a
+     soft shadow underneath. The lit edge is what makes it read as a real
+     surface rather than a flat rectangle with a border. */
+  .tile, .cc, .line-card, .feature-banner, .orphan, .faq details,
+  .hours-strip, .why-card, .road, .obj, .gates, .apply-flow, .bm-quote, .step {
+    background: linear-gradient(170deg, var(--glass-2), var(--glass));
+    border: 1px solid var(--edge);
+    box-shadow:
+      inset 0 1px 0 var(--edge-bright),
+      0 18px 46px rgba(4,10,22,.5);
+    border-radius: 20px;
+  }
+  .tile:hover, .cc:hover, .line-card:hover {
+    border-color: rgba(34,211,238,.42);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.28),
+      0 28px 70px rgba(4,10,22,.62),
+      0 0 0 1px rgba(34,211,238,.16);
+  }
+  /* The pointer spotlight keeps its own layer on top of the glass. */
+  .tile {
+    background:
+      radial-gradient(300px circle at var(--mx) var(--my), rgba(34,211,238,var(--spot, 0)), transparent 70%),
+      linear-gradient(170deg, var(--glass-2), var(--glass));
+  }
+  .tile.gold-tile {
+    background:
+      radial-gradient(300px circle at var(--mx) var(--my), rgba(239,194,75,var(--spot, 0)), transparent 70%),
+      linear-gradient(170deg, rgba(239,194,75,.10), rgba(239,194,75,.03));
+    border-color: rgba(239,194,75,.26);
+  }
+  .tile.gold-tile:hover { border-color: rgba(239,194,75,.55); }
+  .cc {
+    background:
+      radial-gradient(280px circle at var(--mx) var(--my), rgba(34,211,238,var(--spot, 0)), transparent 70%),
+      linear-gradient(170deg, var(--glass-2), var(--glass));
+  }
+  .cc.cc-gold {
+    background:
+      radial-gradient(280px circle at var(--mx) var(--my), rgba(239,194,75,var(--spot, 0)), transparent 70%),
+      linear-gradient(170deg, rgba(239,194,75,.09), rgba(239,194,75,.02));
+    border-color: rgba(239,194,75,.26);
+  }
+
+  /* ── NAV: a floating pane, not a bar stuck to the top ── */
+  .nav { background: transparent; border-bottom: none; padding-top: 10px; }
+  .nav-inner {
+    background: rgba(11,23,41,.62);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid var(--edge);
+    box-shadow: inset 0 1px 0 var(--edge-bright), 0 14px 40px rgba(4,10,22,.42);
+    border-radius: 18px;
+    padding-inline: 14px;
+  }
+  .nav.is-stuck { background: transparent; box-shadow: none; }
+  .nav.is-stuck .nav-inner {
+    background: rgba(11,23,41,.86);
+    box-shadow: inset 0 1px 0 var(--edge-bright), 0 18px 48px rgba(4,10,22,.6);
+  }
+  .nav-prog { left: 14px; right: 14px; bottom: 0; border-radius: 2px; background: linear-gradient(90deg, var(--cyan), var(--gold)); }
+  .nav-brand span { font-family: var(--display); font-weight: 600; letter-spacing: -.01em; }
+  .nav-links a { font-family: var(--display); font-weight: 500; letter-spacing: 0; }
+  .nav-links a.nav-cta {
+    background: linear-gradient(135deg, var(--cyan), #0ea5c4);
+    box-shadow: 0 6px 22px rgba(34,211,238,.32);
+  }
+
+  /* ── STATS: a strip of readouts, not a bordered band ── */
+  .stats { border: none; background: none; }
+  .stats-inner {
+    background: linear-gradient(170deg, var(--glass-2), var(--glass));
+    border: 1px solid var(--edge);
+    box-shadow: inset 0 1px 0 var(--edge-bright), 0 18px 46px rgba(4,10,22,.45);
+    border-radius: 22px;
+    max-width: 1060px; margin: 0 auto; padding: 26px 20px;
+  }
+  .stat .num { font-weight: 700; font-size: clamp(30px, 4vw, 44px); letter-spacing: -.04em; }
+  .stat .num span { color: var(--cyan); }
+  .stat .lbl { font-size: 11.5px; letter-spacing: .06em; }
+
+  /* ── BUTTONS ── */
+  .btn { font-family: var(--display); font-weight: 600; letter-spacing: -.01em; border-radius: 14px; }
+  .btn-teal {
+    background: linear-gradient(135deg, var(--cyan), #0ea5c4);
+    box-shadow: 0 10px 30px rgba(34,211,238,.30), inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .btn-teal:hover { box-shadow: 0 16px 44px rgba(34,211,238,.46), inset 0 1px 0 rgba(255,255,255,.4); }
+  .btn-gold { box-shadow: 0 10px 30px rgba(239,194,75,.26), inset 0 1px 0 rgba(255,255,255,.34); }
+  .btn-outline, .btn-ghost-line {
+    background: var(--glass); border: 1px solid var(--edge-bright);
+  }
+
+  /* ── PRODUCT CARDS: lit from their own colour ── */
+  .lc-life, .lc-health, .lc-motor, .lc-prop { background: linear-gradient(170deg, var(--glass-2), var(--glass)); }
+  .lc-life   { box-shadow: inset 0 1px 0 var(--edge-bright), inset 0 -60px 80px -60px rgba(239,194,75,.5), 0 18px 46px rgba(4,10,22,.5); }
+  .lc-health { box-shadow: inset 0 1px 0 var(--edge-bright), inset 0 -60px 80px -60px rgba(34,211,238,.5),  0 18px 46px rgba(4,10,22,.5); }
+  .lc-motor  { box-shadow: inset 0 1px 0 var(--edge-bright), inset 0 -60px 80px -60px rgba(96,165,250,.5),  0 18px 46px rgba(4,10,22,.5); }
+  .lc-prop   { box-shadow: inset 0 1px 0 var(--edge-bright), inset 0 -60px 80px -60px rgba(167,139,250,.5), 0 18px 46px rgba(4,10,22,.5); }
+
+  /* ── FOOTER ── */
+  footer { background: none; border-top: 1px solid var(--edge); margin-top: 72px; }
+  footer .f-brand { font-family: var(--display); font-weight: 600; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurora i { animation: none !important; }
+    .pane { animation: none !important; }
+  }
+
+
+  /* ── ICONS ── */
+  .ic { width: 1.5em; height: 1.5em; display: block; color: inherit; flex-shrink: 0; }
+  .ic-inline { display: inline-block; vertical-align: -.28em; width: 1.1em; height: 1.1em; }
+  .tile .ico {
+    width: 46px; height: 46px; border-radius: 14px; font-size: 0;
+    background: linear-gradient(160deg, rgba(34,211,238,.18), rgba(34,211,238,.05));
+    border: 1px solid rgba(34,211,238,.3); color: var(--cyan);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  .tile .ico .ic { width: 23px; height: 23px; }
+  .tile.gold-tile .ico {
+    background: linear-gradient(160deg, rgba(239,194,75,.2), rgba(239,194,75,.05));
+    border-color: rgba(239,194,75,.34); color: var(--gold);
+  }
+  .cc-ico { color: var(--cyan); }
+  .cc-ico .ic { width: 22px; height: 22px; }
+  .cc-gold .cc-ico { color: var(--gold); }
+  .why-ico { color: var(--gold); font-size: 0; }
+  .why-ico .ic { width: 26px; height: 26px; }
+  .hr-ico { color: var(--cyan); display: inline-flex; }
+  .hr-ico .ic { width: 19px; height: 19px; }
+  .hb b { color: var(--cyan); display: inline-flex; }
+  .hb b .ic { width: 15px; height: 15px; }
+  .pf-ic {
+    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+    display: grid; place-items: center; color: var(--cyan);
+    background: rgba(34,211,238,.12); border: 1px solid rgba(34,211,238,.26);
+  }
+  .pf-ic .ic { width: 19px; height: 19px; }
+  .line-card svg:not(.ic) { color: inherit; }
+
+  .nav-tel .ic { width: 15px; height: 15px; }
+  #profiler button .ic, #helpPanel button .ic { width: 15px; height: 15px; margin: auto; }
+  /* ── HERO: a stage with real depth ── */
+  .hero { padding: 52px 0 40px; }
+  .hero-grid { grid-template-columns: 1.08fr .92fr; gap: 44px; }
+  .hero .kicker {
+    font-family: var(--display); font-weight: 500; letter-spacing: .18em;
+    color: var(--cyan); background: rgba(34,211,238,.08);
+    border: 1px solid rgba(34,211,238,.22); border-radius: 999px;
+    padding: 7px 14px;
+  }
+  .rotator-line { color: var(--gold); }
+  .rotator {
+    background: linear-gradient(100deg, var(--gold) 8%, #ffe9b0 42%, var(--gold2) 78%);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+  .hero p.sub { font-size: 17px; line-height: 1.68; max-width: 54ch; }
+  .hb {
+    background: var(--glass); border: 1px solid var(--edge);
+    border-radius: 999px; padding: 8px 14px;
+  }
+
+  .hero-art { perspective: 1400px; min-height: 460px; display: block; position: relative; }
+  .stage { position: relative; width: min(440px, 100%); margin-inline: auto; aspect-ratio: 1 / 1; transform-style: preserve-3d; }
+  .pane {
+    position: absolute; border-radius: 18px; padding: 15px 17px;
+    background: linear-gradient(165deg, rgba(255,255,255,.10), rgba(255,255,255,.035));
+    backdrop-filter: blur(26px) saturate(150%);
+    -webkit-backdrop-filter: blur(26px) saturate(150%);
+    border: 1px solid var(--edge-bright);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 26px 60px rgba(4,10,22,.6);
+    animation: paneFloat 9s ease-in-out infinite;
+  }
+  /* The panes sit at the corners so the middle of the stage stays clear:
+     the shield is the mark, and a pane across its check turns it to a smudge. */
+  .pane-a { top: -2%;   left: -7%;  width: 53%; transform: translateZ(70px) rotateY(10deg)  rotateX(5deg); }
+  .pane-b { bottom: 20%; right: -8%; width: 53%; transform: translateZ(55px) rotateY(-9deg) rotateX(4deg); animation-delay: -3s; }
+  .pane-c { bottom: -3%; left: 1%;   width: 45%; transform: translateZ(95px) rotateY(12deg) rotateX(-5deg); animation-delay: -6s; }
+  @keyframes paneFloat { 0%,100% { translate: 0 0; } 50% { translate: 0 -12px; } }
+
+  .pane-top {
+    font-family: var(--display); font-size: 10.5px; font-weight: 500;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+    display: flex; align-items: center; gap: 7px; margin-bottom: 8px;
+  }
+  .dot-live { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 0 0 rgba(34,211,238,.6); animation: pulse 2s ease-out infinite; }
+  .pane-fig { font-family: var(--display); font-weight: 700; font-size: 38px; line-height: 1; letter-spacing: -.04em; color: var(--text); }
+  .pane-fig i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 7px; letter-spacing: 0; }
+  .pane-bars { display: flex; align-items: flex-end; gap: 5px; height: 36px; margin-top: 12px; }
+  .pane-bars b { flex: 1; height: var(--h); border-radius: 3px; background: linear-gradient(180deg, var(--cyan), rgba(34,211,238,.25)); }
+  .pane-row {
+    display: flex; align-items: center; gap: 10px; padding: 7px 0;
+    font-size: 13px; color: var(--text); border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .pane-row:last-child { border-bottom: none; }
+  .pane-row .ic { width: 17px; height: 17px; color: var(--cyan); }
+  .pane-row span { flex: 1; font-weight: 500; }
+  .pane-row em { font-style: normal; font-size: 11px; color: var(--gold); font-family: var(--display); letter-spacing: .04em; }
+  .pane-mini { font-size: 13px; color: var(--text); }
+  .pane-mini b { font-family: var(--display); color: var(--gold); }
+
+  .shield-wrap {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    transform: translateZ(-30px);
+  }
+  .shield-wrap::before {
+    content: ''; position: absolute; width: 74%; aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(circle, rgba(239,194,75,.30), transparent 68%);
+    filter: blur(34px);
+  }
+  .hero-shield {
+    position: relative; width: 47%;
+    filter: drop-shadow(0 26px 54px rgba(239,194,75,.34));
+  }
+
+  /* ── BENTO ──
+     The page used to be the same three-across grid over and over, which
+     reads as a list however good the cards are. These give the things that
+     matter more room and break the rhythm. */
+  .grid { gap: 16px; }
+  #quotes .grid {
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-flow: dense;
+  }
+  #quotes .grid > * { grid-column: span 2; }
+  #quotes .grid > *:nth-child(1) { grid-column: span 3; }
+  #quotes .grid > *:nth-child(2) { grid-column: span 3; }
+  #quotes .grid > *:nth-child(7) { grid-column: span 3; }
+  #quotes .grid > *:nth-child(8) { grid-column: span 3; }
+  #clients .grid { grid-template-columns: repeat(6, 1fr); }
+  #clients .grid > * { grid-column: span 2; }
+  #clients .grid > *:nth-child(1) { grid-column: span 4; }
+  @media (max-width: 900px) {
+    #quotes .grid, #clients .grid { grid-template-columns: repeat(2, 1fr); }
+    #quotes .grid > *, #clients .grid > * { grid-column: span 1 !important; }
+  }
+  @media (max-width: 560px) {
+    #quotes .grid, #clients .grid { grid-template-columns: 1fr; }
+  }
+  .tile { padding: 24px; }
+  .tile h3 { font-size: 17px; font-weight: 600; letter-spacing: -.02em; }
+  .tile p { font-size: 13.5px; line-height: 1.62; }
+  .go { font-family: var(--display); font-weight: 500; letter-spacing: 0; }
+  .badge {
+    font-family: var(--display); font-weight: 600; letter-spacing: .1em;
+    background: rgba(34,211,238,.14); color: var(--cyan);
+    border-color: rgba(34,211,238,.3);
+  }
+
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    /* The headline leads on a phone. The stage is decoration, and putting it
+       first pushed the actual message below the fold. */
+    .hero-art { min-height: 330px; order: 2; margin-top: 14px; }
+    .stage { max-width: 320px; }
+    /* No negative offsets here: on a narrow screen they hang the panes off
+       both edges, where overflow-x:hidden simply cuts them in half. */
+    .pane-a { top: 0;      left: 0;     width: 56%; }
+    .pane-b { bottom: 16%; right: 0;    width: 56%; }
+    .pane-c { bottom: 0;   left: 4%;    width: 48%; }
+    .pane { padding: 12px 14px; }
+    .pane-fig { font-size: 30px; }
+    .pane-bars { height: 28px; }
+  }
+
   /* ── REDUCED MOTION ──
      Everything off, including the ambient loops and the entrance, and every
      element left in its finished state rather than its starting one. */
@@ -1226,6 +1579,51 @@
 
 <a class="skip" href="#main">Skip to content</a>
 
+<!-- ICONS
+     One drawn set on a 24-unit grid at a single stroke weight, so every
+     icon on the page belongs to the same family. This replaces the emoji
+     the page used to use: emoji render as a different picture on every
+     operating system, carry their own colour, and are the one thing that
+     made the page read as improvised. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><defs>
+<g id="ib" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></g>
+</defs>
+<symbol id="i-life" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.4 3.8 12.2a4.9 4.9 0 0 1 6.9-6.9l1.3 1.3 1.3-1.3a4.9 4.9 0 0 1 6.9 6.9Z"/></symbol>
+<symbol id="i-ribbon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="4"/><path d="M9.6 11 6.5 21l5.5-3.4L17.5 21l-3.1-10"/></symbol>
+<symbol id="i-health" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12.5h3.4l1.8-5 3.2 10 2.2-7.3 1.3 2.3H21"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 14.5 6 10.2A2.8 2.8 0 0 1 8.7 8.3h6.6a2.8 2.8 0 0 1 2.7 1.9l1.4 4.3"/><rect x="3" y="14.5" width="18" height="4.6" rx="1.8"/><circle cx="7.4" cy="19.1" r="1.15"/><circle cx="16.6" cy="19.1" r="1.15"/></symbol>
+<symbol id="i-house" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 10.8 12 4.2l8.6 6.6"/><path d="M5.6 10v9.6h12.8V10"/><path d="M10 19.6v-4.4h4v4.4"/></symbol>
+<symbol id="i-pa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6.4" r="2.6"/><path d="M6.6 20v-2.5a5.4 5.4 0 0 1 10.8 0V20"/><path d="M3.4 12.4a9.6 9.6 0 0 1 2.1-4.6M20.6 12.4a9.6 9.6 0 0 0-2.1-4.6"/></symbol>
+<symbol id="i-bank" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 9.8 12 4.6l8.4 5.2"/><path d="M6 10.6v7.6M10 10.6v7.6M14 10.6v7.6M18 10.6v7.6"/><path d="M3.6 19.6h16.8"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="8.2" r="3"/><path d="M3.4 19.2v-1.4a5.8 5.8 0 0 1 11.6 0v1.4"/><path d="M16.4 5.6a3 3 0 0 1 0 5.6M17.6 13.6a5 5 0 0 1 3 4.6v1"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 20V5.2a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V20"/><path d="M13.6 10.4h4.8a1 1 0 0 1 1 1V20"/><path d="M3.2 20h17.6"/><path d="M7.4 8h3M7.4 11.6h3M7.4 15.2h3M16 14h1.2M16 17h1.2"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4 19.6 6.8v5C19.6 16.6 16.4 20 12 20.9 7.6 20 4.4 16.6 4.4 11.8v-5Z"/><path d="M9 11.8 11.2 14l4-4.4"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="10.8" r="6"/><path d="m15.2 15.2 4.6 4.6"/></symbol>
+<symbol id="i-renew" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19.6 11.4a7.6 7.6 0 0 0-13.4-4.2"/><path d="M4.4 12.6a7.6 7.6 0 0 0 13.4 4.2"/><path d="M6 3.6v3.8h3.8M18 20.4v-3.8h-3.8"/></symbol>
+<symbol id="i-app" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6.6" y="2.8" width="10.8" height="18.4" rx="2.4"/><path d="M10.6 5.6h2.8"/><path d="M12 18.2h.01"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 3.4 10.8 13.2"/><path d="M20.6 3.4 14.4 20.6l-3.6-7.4-7.4-3.6Z"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 12.2c0 4-3.8 7.2-8.4 7.2a9.6 9.6 0 0 1-2.6-.35L4.6 20.6l1.3-3.6A6.9 6.9 0 0 1 3.6 12.2C3.6 8.2 7.4 5 12 5s8.4 3.2 8.4 7.2Z"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.6 2.6 5.3 5.8.85-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.85Z"/></symbol>
+<symbol id="i-hands" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 10.4 6.6 7l3.2 2.6 2.2-.5 4 3.4"/><path d="m21.2 10.4-3.8-3.4-3.2 2.6"/><path d="M9.8 9.6 7.2 12a1.7 1.7 0 0 0 2.2 2.5l.8-.6"/><path d="m10.2 13.9 1.9 1.6M12.6 12.8l2 1.7M15 11.9l1.8 1.5"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 4.4H6.8a1.8 1.8 0 0 0-1.8 1.8v13a1.8 1.8 0 0 0 1.8 1.8h10.4a1.8 1.8 0 0 0 1.8-1.8v-13a1.8 1.8 0 0 0-1.8-1.8h-1.8"/><rect x="8.6" y="2.6" width="6.8" height="3.6" rx="1.2"/><path d="M8.4 11.4h7.2M8.4 15h7.2M8.4 18h4.4"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 4.2h9.2v4.4a4.6 4.6 0 0 1-9.2 0Z"/><path d="M7.4 5.8H4.8v1.4a3 3 0 0 0 2.6 3M16.6 5.8h2.6v1.4a3 3 0 0 1-2.6 3"/><path d="M12 13.2v3.4M8.6 20.4h6.8l-.8-3.8H9.4Z"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1"/></symbol>
+<symbol id="i-medal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14.6" r="5.2"/><path d="M12 12.6v4M10.4 14.6h3.2" opacity=".55"/><path d="M8.6 10 6 3.6h4.2L12 8M15.4 10 18 3.6h-4.2L12 8"/></symbol>
+<symbol id="i-cap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m2.6 9.4 9.4-4.6 9.4 4.6-9.4 4.6Z"/><path d="M6.6 11.4v4.4c0 1.6 2.4 2.9 5.4 2.9s5.4-1.3 5.4-2.9v-4.4"/><path d="M21.4 9.4v5"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2.6 4.8 13.4h6L10.6 21.4l8.6-10.8h-6Z"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.4v-1.2a7 7 0 0 1 14 0v1.2"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.2" width="18" height="13.6" rx="2.4"/><path d="m3.6 7 7.3 5.3a2 2 0 0 0 2.2 0L20.4 7"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.2 3.6 10.4 8l-2 1.9a12 12 0 0 0 5.7 5.7l1.9-2 4.4 2.2v3a1.8 1.8 0 0 1-2 1.8C10.6 20 4 13.4 3.4 5.6a1.8 1.8 0 0 1 1.8-2Z"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.2c3.8-4.4 6.4-7.7 6.4-10.9a6.4 6.4 0 1 0-12.8 0c0 3.2 2.6 6.5 6.4 10.9Z"/><circle cx="12" cy="10.2" r="2.4"/></symbol>
+<symbol id="i-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="m15.2 8.8-1.8 4.6-4.6 1.8 1.8-4.6Z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.6" y="10.4" width="14.8" height="10" rx="2.4"/><path d="M8 10.4V7.6a4 4 0 0 1 8 0v2.8"/><path d="M12 14.4v2.2"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.2V12l3.2 2"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.4 6.4 17.6 17.6M17.6 6.4 6.4 17.6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m4.8 12.6 4.6 4.6L19.2 7"/></symbol>
+</svg>
+
+<div class="aurora" aria-hidden="true"><i></i><i></i></div>
+
 <!-- NAV -->
 <nav class="nav" id="nav">
   <div class="nav-prog" id="navProg" aria-hidden="true"></div>
@@ -1252,7 +1650,7 @@
       <a href="#careers">Careers</a>
       <a href="#portals">Portals</a>
       <a href="#contact">Contact</a>
-      <a class="nav-tel" href="tel:+18686785921" aria-label="Call the branch on 868 678 5921">&#128222;<span>(868) 678-5921</span></a>
+      <a class="nav-tel" href="tel:+18686785921" aria-label="Call the branch on 868 678 5921"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><span>(868) 678-5921</span></a>
       <a class="nav-cta" href="#quotes" onclick="openProfiler(); return false;">Get a Quote</a>
     </div>
   </div>
@@ -1276,46 +1674,44 @@
         <a class="btn btn-gold" href="https://factfind360.com" target="_blank" rel="noopener">Needs Analysis ↗</a>
       </div>
       <div class="hero-badges">
-        <span class="hb"><b>⚡</b> Fast online quotes</span>
-        <span class="hb"><b>✓</b> Real advisors behind every policy</span>
-        <span class="hb"><b>🔒</b> Secure online forms</span>
+        <span class="hb"><b><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg></b> Fast online quotes</span>
+        <span class="hb"><b><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></b> Real advisors behind every policy</span>
+        <span class="hb"><b><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></b> Secure online forms</span>
       </div>
     </div>
     <div class="hero-art" aria-hidden="true">
-      <div class="shield-glow"></div>
-      <div class="orbit">
-        <span class="orbit-ico oi1">❤️</span>
-        <span class="orbit-ico oi2">🚗</span>
-        <span class="orbit-ico oi3">🏠</span>
-        <span class="orbit-ico oi4">🩺</span>
-      </div>
-      <div class="orbit orbit-inner">
-        <span class="orbit-ico oi1">🎗️</span>
-        <span class="orbit-ico oi2">🏦</span>
-        <span class="orbit-ico oi3">👥</span>
-        <span class="orbit-ico oi4">🎓</span>
-      </div>
-      <span class="spark sp1"></span><span class="spark sp2"></span>
-      <span class="spark sp3"></span><span class="spark sp4"></span>
-      <svg class="hero-shield" viewBox="0 0 88 88">
-        <defs>
-          <linearGradient id="gh" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#f0c448"/>
-            <stop offset="60%" stop-color="#c9942c"/>
-            <stop offset="100%" stop-color="#7a5810"/>
-          </linearGradient>
-        </defs>
-        <path class="shield-body" d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gh)"/>
-        <path class="tick" d="M28 44L39 55L60 31" stroke="#0d1f33" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path class="tick" d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <div class="float-card fc1">
-        <div class="fc-num">8+</div>
-        <div class="fc-lbl">product lines covered</div>
-      </div>
-      <div class="float-card fc2">
-        <div class="fc-num">24/7</div>
-        <div class="fc-lbl">start online anytime</div>
+      <div class="stage">
+        <div class="pane pane-a">
+          <div class="pane-top"><span class="dot-live"></span>Cover in force</div>
+          <div class="pane-fig">8<i>lines</i></div>
+          <div class="pane-bars"><b style="--h:46%"></b><b style="--h:72%"></b><b style="--h:58%"></b><b style="--h:88%"></b><b style="--h:66%"></b><b style="--h:94%"></b></div>
+        </div>
+
+        <div class="pane pane-b">
+          <div class="pane-row"><svg class="ic" aria-hidden="true"><use href="#i-life"/></svg><span>Life</span><em>Instant</em></div>
+          <div class="pane-row"><svg class="ic" aria-hidden="true"><use href="#i-health"/></svg><span>Health</span><em>Online</em></div>
+          <div class="pane-row"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg><span>Motor</span><em>Quote</em></div>
+        </div>
+
+        <div class="shield-wrap">
+          <svg class="hero-shield" viewBox="0 0 88 88">
+            <defs>
+              <linearGradient id="gh" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ffd978"/>
+                <stop offset="55%" stop-color="#efc24b"/>
+                <stop offset="100%" stop-color="#9a6f16"/>
+              </linearGradient>
+            </defs>
+            <path class="shield-body" d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gh)"/>
+            <path class="tick" d="M28 44L39 55L60 31" stroke="#0b1729" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path class="tick" d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <div class="pane pane-c">
+          <div class="pane-top">Claim filed</div>
+          <div class="pane-mini">about <b>10 min</b></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1401,7 +1797,7 @@
 
     <div class="feature-banner reveal">
       <div class="fb-text">
-        <h3>⚡ Xpress Life — Specialized Instant-Issue Cover</h3>
+        <h3><svg class="ic ic-inline" aria-hidden="true"><use href="#i-bolt"/></svg> Xpress Life — Specialized Instant-Issue Cover</h3>
         <p>A specialized product for a specific market: fast, simplified term life for qualifying applicants — 5 health questions, no medicals. It has its own dedicated site.</p>
       </div>
       <a class="btn btn-gold" href="https://xpresslifett.com" target="_blank" rel="noopener">Visit XpressLifeTT ↗</a>
@@ -1409,7 +1805,7 @@
 
     <div class="feature-banner reveal" style="background:linear-gradient(135deg, rgba(0,207,234,.12), rgba(0,207,234,.04)); border-color:rgba(0,207,234,.3)">
       <div class="fb-text">
-        <h3 style="color:var(--teal)">🧭 Not sure what coverage you need?</h3>
+        <h3 style="color:var(--teal)"><svg class="ic ic-inline" aria-hidden="true"><use href="#i-compass"/></svg> Not sure what coverage you need?</h3>
         <p>FactFind360 is our cutting-edge needs analysis. Answer a few questions about your life, family and finances — it shows you exactly what protection fits and where your gaps are.</p>
       </div>
       <a class="btn btn-teal" href="https://factfind360.com" target="_blank" rel="noopener">Start My FactFind ↗</a>
@@ -1418,58 +1814,58 @@
     <div class="grid">
       <a class="tile gold-tile reveal" href="https://xpresslifett.com" target="_blank" rel="noopener">
         <span class="badge">Live</span>
-        <div class="ico">❤️</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-life"/></svg></div>
         <h3>Life Insurance</h3>
         <p>Xpress Life term coverage — instant-issue, no medicals. Get your quote on our dedicated Xpress Life site.</p>
-        <span class="go">Get Life Quote ↗</span>
+        <span class="go go-ext">Get Life Quote</span>
       </a>
       <a class="tile reveal" href="https://form.jotform.com/261288212990057" target="_blank" rel="noopener">
         <span class="badge">Live</span>
-        <div class="ico">🎗️</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-ribbon"/></svg></div>
         <h3>Critical Illness</h3>
         <p>Lump-sum protection if serious illness strikes. Use our online quote engine to see your options.</p>
         <span class="go">Open Quote Engine</span>
       </a>
       <a class="tile reveal" href="https://form.jotform.com/223376649264061" target="_blank" rel="noopener">
         <span class="badge">Live</span>
-        <div class="ico">🚗</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg></div>
         <h3>Motor</h3>
         <p>Request a quote to insure your car, van or truck. Tell us about your vehicle and we'll come back with your price.</p>
         <span class="go">Request Motor Quote</span>
       </a>
       <a class="tile reveal" href="https://form.jotform.com/201953408200849" target="_blank" rel="noopener">
         <span class="badge">Live</span>
-        <div class="ico">🏠</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-house"/></svg></div>
         <h3>Property</h3>
         <p>Protect your home or business property. Request a quotation for buildings and contents coverage.</p>
         <span class="go">Request Property Quote</span>
       </a>
       <a class="tile reveal" href="https://healthquotee.netlify.app/" target="_blank" rel="noopener">
         <span class="badge">New</span>
-        <div class="ico">🩺</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-health"/></svg></div>
         <h3>Health</h3>
         <p>Our brand-new online health quote system — get your health coverage quote in minutes.</p>
-        <span class="go">Get Health Quote ↗</span>
+        <span class="go go-ext">Get Health Quote</span>
       </a>
       <a class="tile reveal" href="https://personalaccident.netlify.app/" target="_blank" rel="noopener">
         <span class="badge">New</span>
-        <div class="ico">🦺</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-pa"/></svg></div>
         <h3>Personal Accident</h3>
         <p>Personal accident & income protection — get your quote with our new online system.</p>
-        <span class="go">Get PA Quote ↗</span>
+        <span class="go go-ext">Get PA Quote</span>
       </a>
       <div class="tile is-soon reveal">
-        <div class="ico">🏦</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-bank"/></svg></div>
         <h3>Pension</h3>
         <p>Retirement and pension quotations are being added.</p>
         <span class="go" style="color:var(--muted)">Coming Soon</span>
       </div>
       <a class="tile reveal" href="https://www.employeebenefitstt.com/" target="_blank" rel="noopener">
         <span class="badge">New</span>
-        <div class="ico">👥</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg></div>
         <h3>Employee Benefits</h3>
         <p>For employers: quote, track and customize your group plan — sent directly to Guardian.</p>
-        <span class="go">Employer Portal ↗</span>
+        <span class="go go-ext">Employer Portal</span>
       </a>
     </div>
   </section>
@@ -1481,19 +1877,19 @@
     <p class="section-sub reveal">Clients and employers each have their own portal. Agents and staff use the Branch App.</p>
     <div class="grid">
       <a class="tile reveal" href="#clients">
-        <div class="ico">🙋</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></div>
         <h3>Client Portal</h3>
         <p>Claims, premium notices, surveys and every client service — open to all our clients, no code needed.</p>
         <span class="go">Enter Client Area</span>
       </a>
       <a class="tile reveal" href="groupclientmanagement/client.html">
-        <div class="ico">🏢</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-building"/></svg></div>
         <h3>Group Client Portal</h3>
         <p>For employers: every open item on your group plans, our service record this year, and your rating. Access code required.</p>
         <span class="go">Group Sign In</span>
       </a>
       <a class="tile gold-tile reveal" href="/app">
-        <div class="ico">📱</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-app"/></svg></div>
         <h3>Branch App</h3>
         <p>For agents, unit managers and staff: one sign-in for the Log Book, your clients, the Delivery Book, fact finds, forms and training. Save it to your phone's home screen.</p>
         <span class="go">Agent &amp; Staff Sign In</span>
@@ -1509,25 +1905,25 @@
     <div class="grid">
       <a class="tile reveal" href="https://form.jotform.com/203424506456048" target="_blank" rel="noopener">
         <span class="badge">Most Popular</span>
-        <div class="ico">⚡</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg></div>
         <h3>Xpress Life Application</h3>
         <p>Apply for instant-issue term life coverage. Five health questions, no medical exams — coverage sorted in one sitting.</p>
         <span class="go">Apply Now</span>
       </a>
       <a class="tile reveal" href="https://healthquotee.netlify.app/" target="_blank" rel="noopener">
-        <div class="ico">🩺</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-health"/></svg></div>
         <h3>Health Coverage</h3>
         <p>Quote and start your health coverage with our new online health system.</p>
-        <span class="go">Start Online ↗</span>
+        <span class="go go-ext">Start Online</span>
       </a>
       <a class="tile reveal" href="https://form.jotform.com/262153130319043" target="_blank" rel="noopener">
-        <div class="ico">🏢</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-building"/></svg></div>
         <h3>Key Person Protection</h3>
         <p>Protect your business against the loss of a key employee or partner — client application and full document pack.</p>
         <span class="go">Start Application</span>
       </a>
       <a class="tile reveal" href="https://form.jotform.com/261587989836079" target="_blank" rel="noopener">
-        <div class="ico">📋</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></div>
         <h3>OAS Enrollment</h3>
         <p>Guardian Life OAS enrollment — complete your enrollment form online.</p>
         <span class="go">Enroll Online</span>
@@ -1565,59 +1961,59 @@
     <div class="grid">
       <a class="tile gold-tile reveal" href="csec/start.html">
         <span class="badge">New</span>
-        <div class="ico">🎓</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-cap"/></svg></div>
         <h3>SEA &amp; CSEC Study Hub — free for your family</h3>
         <p>Standard 1 to Form 5, through both examinations. Ten minutes a night aimed at whatever is weakest, real past papers from the Ministry, SEA practice and mock papers built to the official blueprint, and progress you can actually see. No password, nothing to install, free.</p>
         <span class="go">Set It Up Free</span>
       </a>
       <a class="tile gold-tile reveal" href="claims/">
         <span class="badge">New</span>
-        <div class="ico">🛡️</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg></div>
         <h3>File a Claim — Claims TT</h3>
         <p>Motor, health, property, life or pension. Photograph your documents, upload them from your phone, and get a claim reference in about ten minutes.</p>
         <span class="go">Start My Claim</span>
       </a>
       <a class="tile reveal" href="claims/#track">
-        <div class="ico">🔎</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></div>
         <h3>Track a Claim</h3>
         <p>Already filed? Check where your claim stands and see exactly what documents we are still waiting on.</p>
         <span class="go">Check My Claim</span>
       </a>
       <a class="tile gold-tile reveal" href="service/">
         <span class="badge">New</span>
-        <div class="ico">📋</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></div>
         <h3>Policy Service Review</h3>
         <p>Your service questionnaire, online. Confirm your records, tell us how we're doing, and get your free Protection Score — about four minutes.</p>
         <span class="go">Start My Review</span>
       </a>
       <a class="tile reveal" href="https://donthaveanagent.com" target="_blank" rel="noopener">
         <span class="badge">New</span>
-        <div class="ico">🤝</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-hands"/></svg></div>
         <h3>Don't Have An Agent?</h3>
         <p>Agent retired or stopped calling? Our branch project for policyholders nobody calls. Free review, your records fixed, an agent assigned if you want one. We service policies issued by Guardian Life of the Caribbean — anything else, we tell you plainly and point you home.</p>
         <span class="go">donthaveanagent.com</span>
       </a>
       <a class="tile reveal" href="https://form.jotform.com/232374116479056" target="_blank" rel="noopener">
-        <div class="ico">💬</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg></div>
         <h3>Premium Due Feedback</h3>
         <p>Received a premium due notice? Let us know your payment status or ask a question about it here.</p>
         <span class="go">Respond Online</span>
       </a>
       <a class="tile reveal" href="https://form.jotform.com/213058098808059" target="_blank" rel="noopener">
-        <div class="ico">⭐</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg></div>
         <h3>Client Welcome Survey</h3>
         <p>New to the branch? Tell us about your experience so we can serve you better.</p>
         <span class="go">Take the Survey</span>
       </a>
       <a class="tile gold-tile reveal" href="https://querymypolicies.netlify.app" target="_blank" rel="noopener">
         <span class="badge">Fast Response</span>
-        <div class="ico">📨</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg></div>
         <h3>Log a Query — QueryPal</h3>
         <p>Have a question, concern or issue? Log it on QueryPal and our team tracks it until it's resolved.</p>
-        <span class="go">Log My Query ↗</span>
+        <span class="go go-ext">Log My Query</span>
       </a>
       <a class="tile reveal" href="renewal/" >
-        <div class="ico">🔄</div>
+        <div class="ico"><svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg></div>
         <h3>Policy Renewals</h3>
         <p>Motor or property policy coming up for renewal? Review your cover and send your renewal instructions online.</p>
         <span class="go">Open Renewal Portal</span>
@@ -1737,22 +2133,22 @@
 
       <div class="careers-why reveal">
         <div class="why-card">
-          <div class="why-ico">🏆</div>
+          <div class="why-ico"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg></div>
           <h3>A living MDRT culture</h3>
           <p>Twenty-three qualifications aren't luck — they're a system. When qualification is normal around you, it becomes normal for you.</p>
         </div>
         <div class="why-card">
-          <div class="why-ico">🤝</div>
+          <div class="why-ico"><svg class="ic" aria-hidden="true"><use href="#i-hands"/></svg></div>
           <h3>Mentorship by design</h3>
           <p>Our Executive Agents and Senior Sales Consultants are required to mentor. You sit beside people who've already done it.</p>
         </div>
         <div class="why-card">
-          <div class="why-ico">🎯</div>
+          <div class="why-ico"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg></div>
           <h3>A Branch Manager in your corner</h3>
           <p>Every advisor here was interviewed and selected personally — then coached after. 32 years of market knowledge, applied to your book.</p>
         </div>
         <div class="why-card">
-          <div class="why-ico">🎖️</div>
+          <div class="why-ico"><svg class="ic" aria-hidden="true"><use href="#i-medal"/></svg></div>
           <h3>Recognition on a schedule</h3>
           <p>Wins don't vanish into a WhatsApp group. Promotions and qualifications are announced on stage — Blastoff in January, Mid-Year in July.</p>
         </div>
@@ -1843,25 +2239,25 @@
 
     <div class="contact-grid">
       <a class="cc cc-gold reveal" href="tel:+18686785921">
-        <span class="cc-ico" aria-hidden="true">&#128222;</span>
+        <span class="cc-ico" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></span>
         <span class="cc-lbl">Call the branch</span>
         <span class="cc-val">(868) 678-5921</span>
         <span class="cc-note">Monday to Friday, 8:00am &ndash; 4:00pm</span>
       </a>
       <a class="cc reveal" href="https://wa.me/18686785921" target="_blank" rel="noopener">
-        <span class="cc-ico" aria-hidden="true">&#128172;</span>
+        <span class="cc-ico" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg></span>
         <span class="cc-lbl">WhatsApp</span>
         <span class="cc-val">Message the branch</span>
         <span class="cc-note">Quickest for a short question or a photo of a document.</span>
       </a>
       <a class="cc reveal" href="mailto:support@rickyrampersadbranch.com">
-        <span class="cc-ico" aria-hidden="true">&#9993;</span>
+        <span class="cc-ico" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg></span>
         <span class="cc-lbl">Email</span>
         <span class="cc-val cc-em">support@<wbr>rickyrampersadbranch.com</span>
         <span class="cc-note">Policy servicing, claims and general branch support.</span>
       </a>
       <a class="cc reveal" href="https://www.google.com/maps/search/?api=1&amp;query=9-13+Endeavour+1st+Street+Chaguanas+Trinidad" target="_blank" rel="noopener">
-        <span class="cc-ico" aria-hidden="true">&#128205;</span>
+        <span class="cc-ico" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg></span>
         <span class="cc-lbl">Visit us</span>
         <span class="cc-val">9&ndash;13 Endeavour 1st Street</span>
         <span class="cc-note">Chaguanas, Trinidad and Tobago &mdash; open in Maps &#8599;</span>
@@ -1937,51 +2333,51 @@
       <b>How can we help?</b>
       <span>Ricky Rampersad Branch</span>
     </div>
-    <button onclick="helpClose()" aria-label="Close">✕</button>
+    <button onclick="helpClose()" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
   </div>
   <div class="help-body">
     <button class="help-row" onclick="helpClose(); openProfiler();">
-      <span class="hr-ico">💬</span>
+      <span class="hr-ico"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg></span>
       <span class="hr-txt"><b>Get a quote</b><span>Life, health, motor, property & more</span></span>
       <span class="hr-go">→</span>
     </button>
     <a class="help-row" href="https://querymypolicies.netlify.app" target="_blank" rel="noopener">
-      <span class="hr-ico">📨</span>
+      <span class="hr-ico"><svg class="ic" aria-hidden="true"><use href="#i-send"/></svg></span>
       <span class="hr-txt"><b>Log a query</b><span>Question, concern or issue — we track it</span></span>
       <span class="hr-go">→</span>
     </a>
     <a class="help-row" href="service/">
-      <span class="hr-ico">📋</span>
+      <span class="hr-ico"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></span>
       <span class="hr-txt"><b>Review my policy service</b><span>Update my records &amp; tell you how we're doing</span></span>
       <span class="hr-go">→</span>
     </a>
     <a class="help-row" href="https://donthaveanagent.com" target="_blank" rel="noopener">
-      <span class="hr-ico">🤝</span>
+      <span class="hr-ico"><svg class="ic" aria-hidden="true"><use href="#i-hands"/></svg></span>
       <span class="hr-txt"><b>I don't have an agent</b><span>Person or company — nobody services you? donthaveanagent.com takes you in</span></span>
       <span class="hr-go">→</span>
     </a>
     <a class="help-row" href="renewal/">
-      <span class="hr-ico">🔄</span>
+      <span class="hr-ico"><svg class="ic" aria-hidden="true"><use href="#i-renew"/></svg></span>
       <span class="hr-txt"><b>Renew my policy</b><span>Motor & property renewals</span></span>
       <span class="hr-go">→</span>
     </a>
     <a class="help-row" href="claims/">
-      <span class="hr-ico">🛡️</span>
+      <span class="hr-ico"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg></span>
       <span class="hr-txt"><b>Make a claim</b><span>Motor, health, property, life &amp; pension</span></span>
       <span class="hr-go">→</span>
     </a>
     <a class="help-row" href="https://donthaveanagent.com" target="_blank" rel="noopener">
-      <span class="hr-ico">🙋</span>
+      <span class="hr-ico"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></span>
       <span class="hr-txt"><b>I don't have an agent</b><span>Free review for orphan policies — any company</span></span>
       <span class="hr-go">→</span>
     </a>
     <a class="help-row" href="https://factfind360.com" target="_blank" rel="noopener">
-      <span class="hr-ico">🧭</span>
+      <span class="hr-ico"><svg class="ic" aria-hidden="true"><use href="#i-compass"/></svg></span>
       <span class="hr-txt"><b>Not sure what I need</b><span>FactFind360 needs analysis</span></span>
       <span class="hr-go">→</span>
     </a>
     <a class="help-row" href="/app">
-      <span class="hr-ico">📱</span>
+      <span class="hr-ico"><svg class="ic" aria-hidden="true"><use href="#i-app"/></svg></span>
       <span class="hr-txt"><b>Agent &amp; staff sign in</b><span>The Branch App, for our team</span></span>
       <span class="hr-go">→</span>
     </a>
@@ -1993,7 +2389,7 @@
   <div style="width:min(560px,100%); max-height:88vh; overflow-y:auto; background:linear-gradient(160deg,var(--card),var(--card2)); border:1px solid rgba(0,207,234,.3); border-radius:22px; padding:28px;">
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
       <button id="pfBack" onclick="pfHome()" style="display:none; background:none; border:none; color:var(--teal); cursor:pointer; font-family:'Montserrat',sans-serif; font-weight:700; font-size:13px;">← Back</button>
-      <button onclick="closeProfiler()" aria-label="Close" style="margin-left:auto; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--muted); cursor:pointer; border-radius:50%; width:32px; height:32px; font-size:15px;">✕</button>
+      <button onclick="closeProfiler()" aria-label="Close" style="margin-left:auto; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--muted); cursor:pointer; border-radius:50%; width:32px; height:32px; font-size:15px;"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
     </div>
     <h3 id="pfTitle" style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:20px; margin-bottom:4px;"></h3>
     <p id="pfSub" style="font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.6;"></p>
@@ -2010,48 +2406,48 @@
       title: 'What would you like to protect?',
       sub: "Pick one and we'll take you straight to the right quote.",
       options: [
-        { ico: '❤️', label: 'My life & family', desc: 'Life insurance protection', go: 'life' },
-        { ico: '🎗️', label: 'Against critical illness', desc: 'Lump-sum cover if serious illness strikes', url: 'https://form.jotform.com/261288212990057' },
-        { ico: '🩺', label: 'My health', desc: 'Medical & health coverage', go: 'health' },
-        { ico: '🚗', label: 'My vehicle', desc: 'Car, van or truck insurance', url: 'https://form.jotform.com/223376649264061' },
-        { ico: '🏠', label: 'My home or property', desc: 'Buildings & contents cover', url: 'https://form.jotform.com/201953408200849' },
-        { ico: '🦺', label: 'My income, against accidents', desc: 'Personal accident & income protection', url: 'https://personalaccident.netlify.app/' },
-        { ico: '👥', label: 'My business & employees', desc: 'Key person & group benefits', go: 'business' },
-        { ico: '🏦', label: 'My retirement', desc: 'Pensions & long-term savings', go: 'retirement' },
-        { ico: '🙋', label: 'I already have a policy — but no agent', desc: 'Free review for orphan policies, whichever company they are with', url: 'https://donthaveanagent.com' }
+        { ico: 'life', label: 'My life & family', desc: 'Life insurance protection', go: 'life' },
+        { ico: 'ribbon', label: 'Against critical illness', desc: 'Lump-sum cover if serious illness strikes', url: 'https://form.jotform.com/261288212990057' },
+        { ico: 'health', label: 'My health', desc: 'Medical & health coverage', go: 'health' },
+        { ico: 'car', label: 'My vehicle', desc: 'Car, van or truck insurance', url: 'https://form.jotform.com/223376649264061' },
+        { ico: 'house', label: 'My home or property', desc: 'Buildings & contents cover', url: 'https://form.jotform.com/201953408200849' },
+        { ico: 'pa', label: 'My income, against accidents', desc: 'Personal accident & income protection', url: 'https://personalaccident.netlify.app/' },
+        { ico: 'users', label: 'My business & employees', desc: 'Key person & group benefits', go: 'business' },
+        { ico: 'bank', label: 'My retirement', desc: 'Pensions & long-term savings', go: 'retirement' },
+        { ico: 'user', label: 'I already have a policy — but no agent', desc: 'Free review for orphan policies, whichever company they are with', url: 'https://donthaveanagent.com' }
       ]
     },
     life: {
       title: 'Life insurance — which fits you?',
       sub: 'Two ways to get covered, depending on what you need.',
       options: [
-        { ico: '⚡', label: 'Fast, simplified cover — Xpress Life', desc: 'Specialized instant-issue product: 5 health questions, no medicals. For qualifying applicants.', url: 'https://xpresslifett.com' },
-        { ico: '🧭', label: 'Full life & investment plan', desc: 'Life Evolution and comprehensive planning — start with our FactFind360 needs analysis.', url: 'https://factfind360.com' }
+        { ico: 'bolt', label: 'Fast, simplified cover — Xpress Life', desc: 'Specialized instant-issue product: 5 health questions, no medicals. For qualifying applicants.', url: 'https://xpresslifett.com' },
+        { ico: 'compass', label: 'Full life & investment plan', desc: 'Life Evolution and comprehensive planning — start with our FactFind360 needs analysis.', url: 'https://factfind360.com' }
       ]
     },
     health: {
       title: 'Health coverage',
       sub: 'Get your quote with our new online health system.',
       options: [
-        { ico: '🩺', label: 'Get a health quote', desc: 'Our brand-new online health quote system — see your options in minutes.', url: 'https://healthquotee.netlify.app/' },
-        { ico: '🧭', label: 'Not sure what you need?', desc: 'Run the FactFind360 needs analysis first.', url: 'https://factfind360.com' }
+        { ico: 'health', label: 'Get a health quote', desc: 'Our brand-new online health quote system — see your options in minutes.', url: 'https://healthquotee.netlify.app/' },
+        { ico: 'compass', label: 'Not sure what you need?', desc: 'Run the FactFind360 needs analysis first.', url: 'https://factfind360.com' }
       ]
     },
     business: {
       title: 'Business & employee protection',
       sub: 'Protection for your company and your people.',
       options: [
-        { ico: '👥', label: 'Employee Benefits — quote & customize', desc: 'Our dedicated employer portal: get a group quote, track it, and customize your plan — direct to Guardian.', url: 'https://www.employeebenefitstt.com/' },
-        { ico: '🏢', label: 'Key Person Protection', desc: 'Protect the business against the loss of a key employee or partner.', url: 'https://form.jotform.com/262153130319043' },
-        { ico: '🧭', label: 'Not sure where to start?', desc: 'Run a FactFind360 needs analysis for your business.', url: 'https://factfind360.com' }
+        { ico: 'users', label: 'Employee Benefits — quote & customize', desc: 'Our dedicated employer portal: get a group quote, track it, and customize your plan — direct to Guardian.', url: 'https://www.employeebenefitstt.com/' },
+        { ico: 'building', label: 'Key Person Protection', desc: 'Protect the business against the loss of a key employee or partner.', url: 'https://form.jotform.com/262153130319043' },
+        { ico: 'compass', label: 'Not sure where to start?', desc: 'Run a FactFind360 needs analysis for your business.', url: 'https://factfind360.com' }
       ]
     },
     retirement: {
       title: 'Retirement & pensions',
       sub: 'Our pension quote system is in build. Start planning today:',
       options: [
-        { ico: '🧭', label: 'Retirement needs analysis', desc: 'FactFind360 shows your retirement gap and what it takes to close it.', url: 'https://factfind360.com' },
-        { ico: '💬', label: 'Talk to the branch', desc: 'Send us your details through the client welcome form and an advisor will reach out.', url: 'https://form.jotform.com/213058098808059' }
+        { ico: 'compass', label: 'Retirement needs analysis', desc: 'FactFind360 shows your retirement gap and what it takes to close it.', url: 'https://factfind360.com' },
+        { ico: 'chat', label: 'Talk to the branch', desc: 'Send us your details through the client welcome form and an advisor will reach out.', url: 'https://form.jotform.com/213058098808059' }
       ]
     }
   };
@@ -2070,7 +2466,7 @@
       el.onmouseout = function(){ el.style.borderColor = ''; };
       if (o.url) { el.href = o.url; el.target = '_blank'; el.rel = 'noopener'; }
       else { el.onclick = function () { pfRender(o.go); }; }
-      el.innerHTML = '<span style="font-size:22px;flex-shrink:0">' + o.ico + '</span>' +
+      el.innerHTML = '<span class="pf-ic"><svg class="ic" aria-hidden="true"><use href="#i-' + o.ico + '"/></svg></span>' +
         '<span><b style="display:block;font-family:Montserrat,sans-serif;font-size:14px;font-weight:700">' + o.label + '</b>' +
         '<span style="font-size:12px;color:var(--muted);line-height:1.5">' + o.desc + '</span></span>' +
         '<span style="margin-left:auto;color:var(--teal);font-weight:700">→</span>';

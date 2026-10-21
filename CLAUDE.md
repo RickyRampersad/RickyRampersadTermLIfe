@@ -127,6 +127,51 @@ exactly that reason.
 iframe and a linked image does not load there. The builder folds it in as a
 data URI under the `mark` key.
 
+## The homepage look — spatial glass, decided 21 October 2026
+
+Asked for in these words: *"a totally different look and feel, a more modern,
+realistic and futuristic site"*. The gold shield, the navy and the teal all
+stayed; what changed is how they are used.
+
+- **Display face is Space Grotesk**; DM Sans still carries body copy. Montserrat
+  is still loaded for the pages that have not moved.
+- **Surfaces are one material:** a translucent fill, a hairline border and a lit
+  top edge (`inset 0 1px 0`). The lit edge is what makes a panel read as a real
+  surface instead of a rectangle with a border.
+- **The ground** is a fixed layer with three light sources bled into it and a
+  fine grain over the top. The grain is what stops a large gradient reading as
+  flat plastic.
+- **Nothing on the page is an emoji.** There were 28, and they were the single
+  thing that made it look improvised: every operating system draws them
+  differently, they carry their own colour, and they ignore the page's own
+  weight and grid. They are now one drawn set on a 24-unit grid at a single
+  stroke weight, as `<symbol>`s in one sprite, referenced by `<use>`.
+- **Sections are bento, not a repeated three-across grid.** The same card grid
+  five times reads as a list however good the cards are.
+
+### Two performance rules this cost us a day to learn
+
+Both were measured, not guessed, and both turn a 60fps page into a 10fps one:
+
+- **`backdrop-filter` goes on a handful of chrome surfaces, never on cards that
+  scroll.** Each one re-samples and re-blurs what is behind it every frame. It
+  is on the floating nav, the three hero panes and the two modals — seven
+  elements. The forty-odd cards get the same look from a translucent fill and a
+  lit edge, which costs nothing.
+- **Never `filter: blur()` on a layer that moves.** The two aurora lights had
+  `blur(90px)` on half-viewport blobs: 183ms a frame, about 5fps. A radial
+  gradient with a long transparent falloff looks the same and composites for
+  free. Scaling such a layer is worse than moving it, because the blur has to
+  be rasterised again at the new size — but removing the scale was not enough;
+  the blur itself had to go.
+- `background-attachment: fixed` repaints the whole document on every scroll
+  frame, and `mix-blend-mode` on a full-screen fixed layer forces the entire
+  stacking context to re-composite. Both are gone; the ground is a fixed
+  pseudo-element instead.
+
+Measured after: 16.7ms a frame, cumulative layout shift 0, on the same machine
+where the first cut of this design managed 183ms.
+
 ## The voice — narration on every film
 
 Rendered with **edge-tts**. Free, no account, no licence, so nothing here needs
