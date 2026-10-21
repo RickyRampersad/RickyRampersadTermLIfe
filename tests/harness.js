@@ -6,7 +6,9 @@ function makeEnv(opts = {}) {
   const cacheStub = { get: k => (k in cacheMap ? cacheMap[k] : null),
                       put: (k, v) => { cacheMap[k] = String(v); },
                       remove: k => { delete cacheMap[k]; },
-                      removeAll: ks => ks.forEach(k => delete cacheMap[k]) };
+                      removeAll: ks => ks.forEach(k => delete cacheMap[k]),
+                      putAll: o => Object.keys(o).forEach(k => { cacheMap[k] = String(o[k]); }),
+                      getAll: ks => { const r = {}; ks.forEach(k => { if (k in cacheMap) r[k] = cacheMap[k]; }); return r; } };
   const calls = { getValues: 0, getValue: 0, setValue: 0, setValues: 0, getLastRow: 0,
                   getLastColumn: 0, appendRow: 0, deleteRow: 0, mail: 0 };
   const sheets = {};

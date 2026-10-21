@@ -33,7 +33,8 @@ env.UrlFetchApp = { fetch: (url, o) => {
 const sig = env.replySig_('ricky', DAY, 'bm');
 const post = params => env.doPost({ parameter: Object.assign({ rs: 'ricky', d: DAY, f: 'bm', k: sig }, params), parameters: {} }).getContent();
 
-const page = env.doGet({ parameter: { rs: 'ricky', d: DAY, f: 'bm', k: sig } }).getContent();
+// The link answers with a light page first (2026-10-21a); full=1 is the page it then builds (openPage).
+const page = env.doGet({ parameter: { rs: 'ricky', d: DAY, f: 'bm', k: sig, full: '1' } }).getContent();
 ok('every item has its own "tell Claude what to say" box and button', (page.match(/name="ai_00TASK/g) || []).length === 2 && (page.match(/name="draft" value="00TASK/g) || []).length === 2);
 ok('and the free box at the foot', /Ask Claude for anything else/.test(page) && /name="draft" value="_free"/.test(page));
 ok('Enter in a box drafts that item, not the first one', /onkeydown="askEnter\(event,this\)"/.test(page) && /function askEnter/.test(page));

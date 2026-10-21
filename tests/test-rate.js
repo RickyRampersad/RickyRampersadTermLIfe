@@ -220,7 +220,7 @@ ok('on his page: everyone\'s, and the latest with the comment', /Service ratings
 const wall = env.wallStaff_(DAY, true), wj = JSON.stringify(wall);
 ok('the wall: the branch as one, four and five stars by name', wall.svc && wall.svc.avg === 4 && wall.svc.n === 6 && wall.svc.recent.length === 4 && wall.svc.recent.every(r => r.n >= 4), JSON.stringify(wall.svc));
 ok('never a low rating by name, a comment or a client', !/Took far too long|Reena|Seeparsan|Jeremiah|Randolph|"n":2/.test(JSON.stringify(wall.svc)) && !wall.events.some(e => /2 stars/.test(e.what)));
-ok('on the running feed: the stars, by name', wall.events.some(e => e.who === 'Kamla' && /was given 5 stars by an agent/.test(e.what)));
+ok('on the running feed: the stars, by name', wall.events.some(e => e.who === 'Kamla' && /served an agent, who rated the service 5 stars/.test(e.what)));
 ok('the wall carries no comment anywhere', !/Took far too long/.test(wj));
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');

@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-20m';
+var SCRIPT_VERSION = '2026-10-21a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2123,6 +2123,8 @@ function doGet(e) {
     catch (err) { return replyPage_('Thank you.', 'Your rating did not record this time. Reply to the e-mail and the branch will take it from there.', ''); }
   }
   if (p.rs) {
+    // A link from an e-mail opens at once: a light page, and the page built behind it (21 Oct 2026). openPage() builds it with full=1.
+    if (FAST.KINDS[String(p.f || '')] && String(p.full || '') !== '1') { try { return fastShell_(p); } catch (err) {} }
     try { var rs = replyClick_(e); if (rs) return rs; }
     catch (err) { return replyPage_('That page did not open.', esc_(String(err && err.message || err)), ''); }
   }
@@ -2761,6 +2763,8 @@ function keepWarm() {
   try { ss_().getSheets()[0].getRange(1, 1).getValue(); } catch (e) {}
   // Housekeeping rides on this ten-minute trigger rather than adding one.
   try { housekeepingTick_(); } catch (e) {}
+  // His day, built ahead on a working morning so his first tap opens it at once (21 Oct 2026).
+  try { var fp = fastPrebuildTick_(); if (fp) runlog_('fast page: ' + fp); } catch (e) {}
 }
 
 function installTriggers() {
@@ -5838,7 +5842,7 @@ function bmdCheckin_(m, nowM, sp) {
   var acts = (m.log || []).filter(function (r) { return r.Kind !== 'checkin'; }).length;
   if (!m.signIn) return '<div class="card bad" id="md-in"><div class="bh">Start your day</div>' +
     '<div class="ln">Check in first. Your day is laid out below: urgent, drafts, inbox, then what is important.</div>' +
-    '<button type="submit" name="ci" value="1" style="margin-top:8px">Check in and start my day</button></div>';
+    '<button type="submit" name="ci" value="1" style="margin-top:8px" onclick="return ciNow(this,' + esc_(JSON.stringify({ rs: 'ricky', f: 'unit', k: unitSig_('ricky') })).replace(/"/g, '&quot;') + ')">Check in and start my day</button></div>' + CHECKIN_JS;
   return '<div class="card ok" id="md-in"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:15px;color:#1F6B47">&#10003; Checked in ' + esc_(twelve_(m.signIn)) + '</b>' +
     '<span style="font-size:13px;color:#6A7180">' + esc_(twelve_(hhmm_(new Date()))) + ' · ' + acts + ' thing' + (acts === 1 ? '' : 's') + ' done so far</span></div>' +
     '<div style="height:8px;background:#EEEBE3;border-radius:6px;margin:8px 0 2px;overflow:hidden"><i style="display:block;height:100%;width:' + pct + '%;background:#141C4A"></i></div>' +
@@ -6124,6 +6128,240 @@ function sdCheckin_(person, day) {
 }
 
 /** Their day, as a page. */
+/* ─────────── The task cards: reminder templates, Claude, and closing on the fly (20 October 2026, 2026-10-20n) ───────────
+ *  Ricky, 7:02pm: "I want the reminder templates cards closing on the fly posting to chatter and integration of AI
+ *  that speeds up our productivity!!". Every task on the day page (sdPage_) now carries:
+ *   · reminder templates: three or four one-tap notes for that kind of task (tcardKind_), with [blanks] to fill. Each
+ *     says what it does, closes, moves or notes; a tap puts it in the note box, ticks Done or opens the date, and
+ *     selects the first [blank] to type over;
+ *   · Draft with Claude: the few words they typed, or spoke through the phone keyboard's microphone, become the
+ *     Chatter note by the branch's standard: what was done, who was contacted, the outcome and the next step. Claude
+ *     never invents an amount, a date, a number or a name; what it does not know stays a [blank]. A client who wants
+ *     an agent: it says the task cannot close and suggests a move with the reason;
+ *   · Close now, Move now and Post note: done there and then, card by card, through google.script.run to cardAct(),
+ *     without the Save at the foot. The note goes on the task's Chatter with the same head line Save uses, Salesforce
+ *     is closed or moved, the change log and Due Moves are written as Save writes them, and the card turns green in
+ *     place. Refused, with the reason: a close on a thin note, any [blank] left, a move with no date, and a close
+ *     while the client still waits for an agent. What each card did is kept for the day (tcard_<sid>_<day>), so a
+ *     later Save does not post or close it twice. Save works as before for anyone who prefers it.
+ *  The page carries its own signature for the cards (replySig_(sid, day, 'card')), and a card can only act on a task
+ *  that is on that person's list for that day.
+ */
+var TCARD = { MIN_NOTE: 20, KEY: 'tcard_', MAX_TOKENS: 450 };
+// Each: [note, what it does]. c = closes, m = moves, n = a note only.
+var TCARD_TPL = {
+  premium: [['Called the client: reminded them the premium is due; they are paying by [date].', 'm'],
+            ['Reminder e-mailed to the agent with the amount owed and the due date.', 'n'],
+            ['Payment received and showing on the policy; the receipt is on file.', 'c'],
+            ['No answer: left a voicemail and a WhatsApp for the client; trying again [date].', 'm']],
+  renewal: [['Renewal notice and premium confirmed with CRMS; the client is paying by [date].', 'm'],
+            ['Renewed and paid; the receipt is on file and the client has it.', 'c'],
+            ['Called the client about the renewal; the changes they want are sent to CRMS.', 'n']],
+  pend:    [['E-mailed underwriting for where it stands: they still need [requirement]. Chasing again [date].', 'm'],
+            ['Asked the agent to get [requirement] from the client; due back [date].', 'm'],
+            ['Submitted [requirement] to underwriting today; underwriting has confirmed receipt.', 'c'],
+            ['Clinic appointment confirmed with the client for [date]; results to underwriting after.', 'm']],
+  claim:   [['Complete file sent to Claims: claim form, ID and certificate. The client is told what happens next.', 'c'],
+            ['Called the client: [document] is still needed; they will bring it in on [date].', 'm'],
+            ['Claims confirmed receipt of the file; next step from Claims by [date].', 'm']],
+  svc:     [['Done as the client asked: [what was done]; the client is told by [phone/e-mail].', 'c'],
+            ['Request sent to [department] with reference [ref]; waiting on their confirmation by [date].', 'm'],
+            ['Called the client for the missing [document/signature]; it is coming in on [date].', 'm']],
+  newbiz:  [['Called the client: fact find booked for [date] with [agent].', 'c'],
+            ['Application submitted with every document; the agent is told.', 'c'],
+            ['Client is not ready yet; follow-up call booked for [date].', 'm']],
+  orphan:  [['Called the client: introduced [agent] as their new agent; they have the name and number in writing.', 'c'],
+            ['Household looked up and copied into the trail for Mr Rampersad to assign.', 'n'],
+            ['No answer on the number on file: e-mail sent, trying again [date].', 'm']],
+  query:   [['Answered the client by [phone/e-mail]: [the answer].', 'c'],
+            ['Sent to [department] on the original e-mail trail; the client is told they will hear by [date].', 'm'],
+            ['Chased [department] on the e-mail trail: no answer yet, chasing again [date].', 'm']],
+  call:    [['Called the client on the number on file: [what they asked], and [what was agreed].', 'c'],
+            ['No answer: left a voicemail and a WhatsApp; trying again [date].', 'm'],
+            ['Mr Rampersad is told what the client said: [what they said].', 'n']],
+  other:   [['Done: [what was done]; [who] is told.', 'c'],
+            ['Waiting on [who] for [what]; chasing again [date].', 'm'],
+            ['Spoke to [who]: [what was agreed].', 'n']]
+};
+// The Query Pal trail on the same page: notes only.
+var TCARD_QP = ['Answered the client by [phone/e-mail]: [the answer].', 'Sent to [department] on the original e-mail trail; chasing again [date].',
+  'Department replied: [what they said]; the client is told.'];
+
+/** Which templates a task gets: from its playbook kind, its payoff and its type. */
+function tcardKind_(t, pb) {
+  var k = String((pb && pb.k) || ''), s = String(t.s || t.subject || ''), ty = String(t.ty || t.type || '');
+  if (k === 'cancel' || k === 'former' || k === 'callme') return 'call';
+  var po = null; try { po = payoffOf_({ subject: s, ty: ty }); } catch (e) {}
+  if (k === 'newagent' || (po && po.key === 'orphan')) return 'orphan';
+  if (/query ?pal|\bqp\/|client (wrote|query)/i.test(s) || k === 'wrote') return 'query';
+  if (k === 'paidto' || k === 'collect') return 'premium';
+  if (k === 'renewal' || k === 'group' || ty === 'Renewa/PDl/Bill') return 'renewal';
+  if (k === 'pend' || k === 'medical' || k === 'quest' || k === 'uw' || k === 'sq' || ty === 'Pendings') return 'pend';
+  if (k === 'claim' || ty === 'Claims/ Mat') return 'claim';
+  if (k === 'opp' || k === 'app' || ty === 'Opportunity') return 'newbiz';
+  if (k === 'svc' || k === 'amend' || k === 'cob' || k === 'email' || k === 'built' || k === 'pays' || k === 'contract' || ty === 'Servicing') return 'svc';
+  return 'other';
+}
+function tcardTemplates_(t, pb) { return TCARD_TPL[tcardKind_(t, pb)] || TCARD_TPL.other; }
+/** A note too thin to close on: short, or one word of "done". */
+function tcardThin_(txt) {
+  var s = String(txt || '').replace(/\s+/g, ' ').trim();
+  return s.length < TCARD.MIN_NOTE || /^(done|ok|okay|completed?|closed|finished|sorted|yes|noted|actioned|dealt with)[.! ]*$/i.test(s);
+}
+function tcardBlanks_(txt) { return /\[[^\]\n]{1,40}\]/.test(String(txt || '')); }
+/** The client wants or needs an agent, by the task or its Chatter (Ricky: such a task cannot be closed). */
+function tcardWantsAgent_(t, notes) {
+  var re = /\b(wants?|needs?|asked for|asking for|would like|requests?|requested|requires?)\s+(an?\s+|their\s+|a\s+new\s+|new\s+|own\s+)?agent\b(?!'s|\s+to\s+sign)|who is my (new )?agent|without an agent|assign (me |them |her |him )?an agent/i;
+  if (re.test(String(t.s || t.subject || ''))) return true;
+  return (notes || []).slice(0, 4).some(function (n) { return re.test(String(n.text || '')); });
+}
+/** The note says the agent is given: then it may close. */
+function tcardAgentGiven_(txt) { return /\b(assigned|introduced|is now with|new agent is|has (the )?agent|agent'?s name and number)\b/i.test(String(txt || '')); }
+function tcardHash_(txt) { return String(txt || '').replace(/\s+/g, ' ').trim().slice(0, 300); }
+function tcardActed_(sid, day) {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty(TCARD.KEY + sid + '_' + day) || '{}') || {}; } catch (e) { return {}; }
+}
+function tcardMark_(sid, day, id, rec) {
+  var lock = null; try { lock = takeLock_(); } catch (e) {}
+  try { var m = tcardActed_(sid, day); m[id] = rec; PropertiesService.getScriptProperties().setProperty(TCARD.KEY + sid + '_' + day, JSON.stringify(m)); }
+  catch (e) {} finally { if (lock) try { lock.releaseLock(); } catch (e) {} }
+}
+function tcardModel_() {
+  var p = ''; try { p = String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_CARD_MODEL') || '').trim(); } catch (e) {}
+  return p === 'draft' ? claudeDraftModel_() : (p || CLAUDE_READ.MODEL);
+}
+
+/** The card's own pieces: the templates, the note box, Claude, and the three buttons. */
+function tcardHtml_(t, pb, day) {
+  var id = esc_(t.id);
+  var chips = tcardTemplates_(t, pb).map(function (x) {
+    var tag = x[1] === 'c' ? '<i class="c">closes</i>' : x[1] === 'm' ? '<i class="m">moves</i>' : '<i>note</i>';
+    return '<button type="button" data-a="' + (x[1] === 'c' ? 'close' : x[1] === 'm' ? 'move' : 'note') + '" data-n="' + esc_(x[0]) + '" onclick="cardTpl(\'' + id + '\',this)">' + tag + esc_(x[0]) + '</button>';
+  }).join('');
+  return '<div class="bf" style="margin:10px 0 2px">Tap a template, or type or speak a few words and let Claude write it:</div><div class="tpl">' + chips + '</div>' +
+    '<textarea name="n_' + id + '" rows="3" placeholder="What was done, who you spoke to, the outcome and the next step. It goes on the task\'s Chatter." style="margin:4px 0 6px"></textarea>' +
+    '<button type="button" class="cai" onclick="cardGo(\'' + id + '\',\'draft\')">&#10024; Draft with Claude</button>' +
+    '<label style="display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;margin:4px 0 6px"><input type="checkbox" name="x_' + id + '" value="1" style="width:22px;height:22px;margin:0;flex:none"> Done: close it</label>' +
+    '<label style="display:block;font-size:13px;color:#6A7180;margin:0 0 6px">Or it cannot be done today: the new date' +
+      '<input type="date" name="m_' + id + '" min="' + esc_(shiftDays_(day, 1)) + '" style="display:block;width:100%;box-sizing:border-box;margin:4px 0 0"></label>' +
+    '<div class="cbt"><button type="button" class="cl" onclick="cardGo(\'' + id + '\',\'close\')">Close now</button>' +
+      '<button type="button" class="mv" onclick="cardGo(\'' + id + '\',\'move\')">Move now</button>' +
+      '<button type="button" class="pn" onclick="cardGo(\'' + id + '\',\'note\')">Post note</button></div>' +
+    '<div class="cst" id="cs_' + id + '">Close now, Move now or Post note saves this one at once. Or Save at the bottom.</div>';
+}
+function tcardQpChips_(i) {
+  return '<div class="tpl">' + TCARD_QP.map(function (x) { return '<button type="button" data-n="' + esc_(x) + '" onclick="cardTplQ(' + i + ',this)"><i>note</i>' + esc_(x) + '</button>'; }).join('') + '</div>';
+}
+var TCARD_CSS = '<style>.tpl{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 6px}' +
+  '.tpl button{width:auto;flex:1 1 auto;margin:0;padding:8px 11px;border:1.5px solid #DDE4EC;background:#fff;color:#1F2433;border-radius:12px;font-size:12.5px;font-weight:600;text-align:left;line-height:1.35;padding:7px 10px}' +
+  '.tpl button:active{background:#F3EFE3}.tpl button i{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-right:6px;padding:1px 7px;border-radius:999px;background:#EEEBE3;color:#6A7180;vertical-align:1px}' +
+  '.tpl button i.c{background:#E3F1E8;color:#1F6B47}.tpl button i.m{background:#FDF0DC;color:#9A5A05}' +
+  '.cai{margin:0 0 8px;background:#FFFBF0;color:#6B4E12;border:1.5px dashed #C9A54A;padding:11px;font-size:14.5px}' +
+  '.cbt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:2px 0 4px}.cbt button{margin:0;padding:13px 4px;font-size:14px;border-radius:10px}' +
+  '.cbt .cl{background:#2C7A57}.cbt .mv{background:#C26A04}.cbt .pn{background:#fff;color:#141C4A;border:1.5px solid #141C4A}' +
+  '.cbt button:disabled,.cai:disabled{opacity:.5}' +
+  '.cst{font-size:12.5px;color:#6A7180;margin:2px 0 12px;min-height:18px}.cst.ok{color:#1F6B47;font-weight:800;font-size:13.5px}.cst.bad{color:#B4322B;font-weight:700;font-size:13.5px}' +
+  'details.it.acted .tt{color:#1F6B47}.dn{display:block;color:#1F6B47 !important;font-weight:800;font-size:12.5px !important;margin-top:3px}</style>';
+// The cards' script: templates fill the box; the buttons go to cardAct() and the card updates in place.
+var TCARD_JS = '<script>(function(){' +
+  'function nm(n){return document.getElementsByName(n)[0];}' +
+  'function blank(n){var i=n.value.indexOf("[");n.focus();if(i>-1){var j=n.value.indexOf("]",i);try{n.setSelectionRange(i,j>i?j+1:i);}catch(e){}}}' +
+  'window.cardTpl=function(id,b){var n=nm("n_"+id),x=nm("x_"+id),m=nm("m_"+id),a=b.getAttribute("data-a");if(!n)return;n.value=b.getAttribute("data-n");if(x)x.checked=a==="close";' +
+    'if(a==="move"&&m){try{m.focus();if(m.showPicker)m.showPicker();}catch(e){}}blank(n);};' +
+  'window.cardTplQ=function(i,b){var n=nm("q_"+i);if(!n)return;n.value=b.getAttribute("data-n");blank(n);};' +
+  'window.cardGo=function(id,act){var n=nm("n_"+id),x=nm("x_"+id),m=nm("m_"+id),st=document.getElementById("cs_"+id),c=document.getElementById("w"+id);if(!n||!st||!c)return;' +
+    'if(!(window.google&&google.script&&google.script.run)){st.className="cst bad";st.textContent="On this screen, use Save at the bottom.";return;}' +
+    'var bs=c.querySelectorAll(".cbt button,.cai");function on(v){for(var i=0;i<bs.length;i++)bs[i].disabled=!v;}on(false);' +
+    'st.className="cst";st.textContent=act==="draft"?"Claude is writing the note\\u2026":"Saving\\u2026";' +
+    'var o={rs:CARDK.rs,d:CARDK.d,k:CARDK.k,id:id,act:act,note:n.value,to:m?m.value:""};' +
+    'google.script.run.withSuccessHandler(function(r){on(true);r=r||{};' +
+      'if(!r.ok){st.className="cst bad";st.textContent=r.error||"That did not save.";return;}' +
+      'if(act==="draft"){n.value=r.note||n.value;if(x)x.checked=r.action==="close";if(r.action==="move"&&m){try{m.focus();}catch(e){}}' +
+        'st.className="cst"+(r.warn?" bad":"");st.textContent=r.warn||"Claude\\u2019s note is in the box: check it, fill any [blanks], then Close now, Move now or Post note.";if(!r.warn&&/\\[/.test(n.value))blank(n);return;}' +
+      'n.value="";if(x)x.checked=false;if(m)m.value="";st.className="cst ok";st.textContent="\\u2713 "+(r.msg||"Saved");' +
+      'if(r.act==="close"||r.act==="move"){c.classList.add("acted");var tt=c.querySelector(".tt");if(tt){var s=document.createElement("small");s.className="dn";s.textContent="\\u2713 "+(r.msg||"");tt.appendChild(s);}' +
+        'var ag=c.querySelector(".age");if(ag){ag.textContent="\\u2713";ag.className="age";ag.style.background="#2C7A57";}setTimeout(function(){c.open=false;},900);}' +
+    '}).withFailureHandler(function(e){on(true);st.className="cst bad";st.textContent="That did not go through ("+((e&&e.message)||e)+"). Use Save at the bottom.";}).cardAct(o);};' +
+  '})();</script>';
+function tcardScript_(sid, day) {
+  return '<script>var CARDK=' + JSON.stringify({ rs: sid, d: day, k: replySig_(sid, day, 'card') }).replace(/</g, '\\u003c') + ';</script>' + TCARD_JS;
+}
+
+/** The card buttons, through google.script.run. Public by design: it checks the page's signature and the person's list. */
+function cardAct(o) {
+  resetRequestMemo_();
+  try { return cardAct_(o || {}); } catch (e) { return { ok: false, error: 'That did not save: ' + String(e && e.message || e).slice(0, 140) }; }
+}
+function cardAct_(o) {
+  var sid = String(o.rs || '').trim(), day = isoDay_(o.d) || '', act = String(o.act || ''), id = String(o.id || '').trim();
+  if (!sid || !day || !o.k || String(o.k) !== replySig_(sid, day, 'card')) return { ok: false, error: 'This page has expired. Open your day from this morning\'s e-mail.' };
+  if (day !== todayISO_()) return { ok: false, error: 'This page is for ' + shortDate_(day) + '. Open today\'s day from this morning\'s e-mail.' };
+  if (['close', 'move', 'note', 'draft'].indexOf(act) < 0) return { ok: false, error: 'Nothing to do.' };
+  var person = replyPerson_(sid, 'plan'); if (!person) return { ok: false, error: 'Your desk is not on the register.' };
+  var list = []; try { list = bigGet_('sd_list_' + sid + '_' + day, []) || []; } catch (e) {}
+  var t = list.filter(function (x) { return x && x.id === id && !x.next; })[0];
+  if (!t) return { ok: false, error: 'That task is not on your day. Open your day again from the e-mail.' };
+  var notes = []; try { notes = (cmdChatter_([id]) || {})[id] || []; } catch (e) {}
+  if (act === 'draft') return tcardDraft_(sid, t, String(o.note || ''), notes, day);
+  var txt = String(o.note || '').replace(/\r/g, '').trim(), name = nameFor_(sid), at = hhmm_(new Date()), to = String(o.to || '').trim();
+  var acted = tcardActed_(sid, day), was = acted[id];
+  if (was && was.a === 'close') return { ok: true, act: 'close', already: true, msg: 'Already closed at ' + twelve_(was.at) + ' from this card.' };
+  if (!txt) return { ok: false, error: act === 'close' ? 'Say what was done first, in the note.' : act === 'move' ? 'Say why the date moves, in the note.' : 'Write the note first.' };
+  if (tcardBlanks_(txt)) return { ok: false, error: 'Fill in the [blanks] first.' };
+  if (act === 'close' && tcardThin_(txt)) return { ok: false, error: 'Too thin to close on: say what was done, who you spoke to, and what happens next.' };
+  if (act === 'close' && tcardWantsAgent_(t, notes) && !tcardAgentGiven_(txt))
+    return { ok: false, error: 'The client wants an agent, so this cannot be closed yet. Move it with the reason, or say in the note which agent is assigned.' };
+  if (act === 'move' && (!/^\d{4}-\d{2}-\d{2}$/.test(to) || to <= day)) return { ok: false, error: 'Choose the new date first: tomorrow or later.' };
+  if (was && was.a === act && was.h === tcardHash_(txt) && (act !== 'move' || was.to === to)) return { ok: true, act: act, already: true, msg: 'Already saved at ' + twelve_(was.at) + '.' };
+  var head = sdRole_(sid) + ' · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at);
+  try { sfkInsert_('FeedItem', { ParentId: id, Body: head + '\n\n' + txt }); }
+  catch (e) { return { ok: false, error: 'Not saved: ' + String(e && e.message || e).slice(0, 100) }; }
+  var res = { ok: true, act: act, at: twelve_(at) };
+  if (act === 'close') {
+    try { sfkPatchTask_(id, { Status: 'Completed' }); res.msg = 'Closed ' + twelve_(at) + ' · note on Chatter';
+      taskChangeLog_({ TaskId: id, Subject: t.s, Field: 'Status', Before: 'open', After: 'Completed', Why: txt, By: name, Result: 'OK' }); }
+    catch (e) { res.act = 'note'; res.msg = 'Note on Chatter, but NOT CLOSED: ' + String(e && e.message || e).slice(0, 80); }
+  } else if (act === 'move') {
+    try { sfkPatchTask_(id, { ActivityDate: to }); res.msg = 'Moved to ' + shortDate_(to) + ' · note on Chatter';
+      taskChangeLog_({ TaskId: id, Subject: t.s, Field: 'Due date', Before: t.due, After: to, Why: txt, By: name, Result: 'OK' });
+      try { var dm = hrTab_(DUEMOVES, true), dh = headerOf_(dm), mo = { Date: day, TaskId: id, Subject: t.s, Owner: name, Agent: '', From: t.due, To: to, Noted: 'yes' };
+        dm.appendRow(dh.map(function (h) { return mo[h] != null ? mo[h] : ''; })); forgetHr_(DUEMOVES); _dueMovesMemo = null; } catch (e) {}
+    } catch (e) { res.act = 'note'; res.msg = 'Note on Chatter, but NOT MOVED: ' + String(e && e.message || e).slice(0, 80); }
+  } else res.msg = 'Note on Chatter ' + twelve_(at);
+  tcardMark_(sid, day, id, { a: res.act, at: at, h: tcardHash_(txt), to: res.act === 'move' ? to : '' });
+  return res;
+}
+/** Claude writes the card's note from their few words. Returns { ok, note, action, warn } and posts nothing. */
+function tcardDraft_(sid, t, brief, notes, day) {
+  var key = ''; try { key = String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); } catch (e) {}
+  if (!key) return { ok: false, error: 'Claude is not set up yet (no ANTHROPIC_API_KEY in the tracker). Use a template, or write the note yourself.' };
+  var pb = playbookFor_({ subject: t.s, ty: t.ty }, notes, day), wants = tcardWantsAgent_(t, notes);
+  var data = { task: t.s, type: t.ty || '', due: t.due || '', what_to_do: pb.todo, when_to_close: pb.close, client_wants_agent: wants,
+    recent_chatter: (notes || []).slice(0, 4).map(function (n) { return { day: n.day || '', by: n.by || '', text: shorten_(String(n.text || '').replace(/\s+/g, ' '), 300) }; }),
+    they_said: String(brief || '').slice(0, 1200) };
+  var prompt = 'You write Salesforce Chatter notes for ' + nameFor_(sid) + ' (' + sdRole_(sid) + ') at the Ricky Rampersad Branch, Guardian Life of the Caribbean, Chaguanas, Trinidad. ' +
+    'Turn what they said into the note they will post on this task. The branch standard: say what was done, who was contacted, the outcome, and the next step with its date if they gave one. ' +
+    'Plain, factual Caribbean business English, first person, one to three sentences, no greeting, no sign-off, no emojis. ' +
+    'Never invent an amount, a date, a policy number, a name or an outcome they did not give: write a short [blank] in square brackets instead. Do not name the client unless they did. ' +
+    'Choose "action": "close" only when the work is done by when_to_close; "move" when it waits on someone or a date; "note" otherwise. ' +
+    'If client_wants_agent is true and they did not say an agent was assigned, the task cannot be closed: "action" is "move" and "warn" says so in one short sentence. ' +
+    'If they said nothing, draft the likeliest note from the task with [blanks] for them to fill. ' +
+    'Reply with JSON only: {"note":"...","action":"close|move|note","warn":""}. Only "they_said" comes from them; everything else is the task.\n' + JSON.stringify(data);
+  try {
+    var res = UrlFetchApp.fetch(CLAUDE_READ.URL, { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      payload: JSON.stringify({ model: tcardModel_(), max_tokens: TCARD.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
+    if (res.getResponseCode() !== 200) return { ok: false, error: 'Claude did not answer this time (' + res.getResponseCode() + '). Use a template, or write it yourself.' };
+    var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').trim(), out = null;
+    var j = txt.replace(/^```(?:json)?\s*|\s*```$/g, ''), a = j.indexOf('{'), b = j.lastIndexOf('}');
+    try { if (a > -1 && b > a) out = JSON.parse(j.slice(a, b + 1)); } catch (e) {}
+    var note = String((out && out.note) || (out ? '' : txt)).trim(); if (!note) return { ok: false, error: 'Claude came back empty. Use a template, or write it yourself.' };
+    var action = /^(close|move|note)$/.test(String(out && out.action)) ? String(out.action) : 'note', warn = String((out && out.warn) || '').trim();
+    if (wants && action === 'close' && !tcardAgentGiven_(note)) { action = 'move'; warn = warn || 'The client wants an agent: move it with the reason rather than close it.'; }
+    return { ok: true, note: note.slice(0, 1500), action: action, warn: warn.slice(0, 200) };
+  } catch (e) { return { ok: false, error: 'Claude did not answer this time. Use a template, or write it yourself.' }; }
+}
+
 function sdPage_(person, day, error, notice) {
   var sid = String(person.staffId), first = String(person.name || nameFor_(sid)).split(' ')[0], sched = scheduleFor_(sid);
   var signed = signedInAt_(sid, day), list = sdList_(sid, day), chat = {}, states = {}, moves = {};
@@ -6144,7 +6382,7 @@ function sdPage_(person, day, error, notice) {
     : '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card bad">' + replyHidden_(sid, day, 'in') +
         '<div class="bh">Check in</div><div class="bf">This is the register: the time you press it is your sign-in. Your day is set for you below.' +
         ' No check-in by ' + esc_(twelve_(mmText_(sp.start + ABSENT_AFTER_MIN))) + ' marks you absent; at ' + esc_(twelve_(mmText_(sp.start + COVER.AFTER_MIN))) + ' your due work goes to colleagues. Check in late and you are marked late, and before noon whatever nobody has touched comes back to you.</div>' +
-        '<button type="submit" style="background:#2C7A57;margin-top:6px">Check in and start my day</button></form>';
+        '<button type="submit" style="background:#2C7A57;margin-top:6px" onclick="return ciNow(this,' + esc_(JSON.stringify({ rs: sid, f: 'in', d: day, k: replySig_(sid, day, 'in') })).replace(/"/g, '&quot;') + ')">Check in and start my day</button></form>' + CHECKIN_JS;
   var yo = null; try { yo = yesterdayOpen_(sid, day); } catch (e) {}
   var yCard = yo ? '<div class="card bad" id="p-yday"><div class="bh" style="color:#DC3F3F">Yesterday first · ' + (yo.why === 'unanswered' ? yo.tasks.length + ' left from your ' + esc_(twelve_(yo.at)) + ' close-out on ' + esc_(shortDate_(yo.day)) : esc_(prettyDate_(yo.day)) + ' was not closed') + '</div>' +
       '<div class="bf">' + (yo.tasks.length ? 'A reason and a new date for each task left open, then Save.' : 'Nothing was left open; Save closes it.') + '</div>' +
@@ -6159,17 +6397,14 @@ function sdPage_(person, day, error, notice) {
       '<div class="br2" style="margin-top:3px">' + esc_(pb.close) + (pb.client ? ' · Client: ' + esc_(pb.client) : '') + (pb.policy ? ' · Policy ' + esc_(pb.policy) : '') + (t.ty ? ' · ' + esc_(t.ty) : '') + '</div>' +
       (mv ? '<div class="br2" style="margin-top:2px">' + esc_(dueMovesLine_(mv)) + '</div>' : '') +
       chatterNotes_(chat, t.id) +
-      '<label style="display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;margin:10px 0 6px"><input type="checkbox" name="x_' + esc_(t.id) + '" value="1" style="width:22px;height:22px;margin:0;flex:none"> Done: close it (say what was done below)</label>' +
-      '<label style="display:block;font-size:13px;color:#6A7180;margin:0 0 4px">Or it cannot be done today: the new date' +
-        '<input type="date" name="m_' + esc_(t.id) + '" min="' + esc_(shiftDays_(day, 1)) + '" style="display:block;width:100%;box-sizing:border-box;margin:4px 0 0"></label>' +
-      '<textarea name="n_' + esc_(t.id) + '" rows="2" placeholder="What was done, who you spoke to, or why the date moves. It goes on the task\'s Chatter." style="margin:4px 0 10px"></textarea></details>';
+      tcardHtml_(t, pb, day) + '</details>';
   };
   // The next three, and the rest folded away (20 Oct 2026: a list of twelve open at once reads as a mountain).
   var nx = GAME.NEXT, openRows = open.length <= nx + 1 ? open.map(row).join('')
     : open.slice(0, nx).map(row).join('') + '<details style="margin-top:6px"><summary style="font-weight:800;font-size:14px;padding:8px 0;cursor:pointer">The rest of today (' + (open.length - nx) + ')</summary>' +
       open.slice(nx).map(function (t, i) { return row(t, nx + i); }).join('') + '</details>';
   var work = '<div class="card" id="p-work"><div class="bh">Your work today · ' + (open.length > nx + 1 ? 'next ' + nx + ' of ' + open.length : open.length + ' to do') + (done.length ? ' · ' + done.length + ' done' : '') + '</div>' +
-    '<div class="bf">Set for you from Salesforce, in this order. Each says what to do. Close it with a note, give it a new date with a reason, or write a note. Then Save at the bottom.</div>' +
+    '<div class="bf">Set for you from Salesforce, in this order. Each says what to do. Tap a template or let Claude write the note, then Close now, Move now or Post note: it is done at once. Or fill several and Save at the bottom.</div>' +
     (open.length ? openRows : list.length ? '<div class="ln" style="color:#2C7A57"><b>All done.</b> Take the next ones below.</div>' : '<div class="ln">Nothing is set for today yet. Check in, and the day is set.</div>') +
     (done.length ? '<details style="margin-top:8px"><summary style="font-weight:800;font-size:14px;padding:6px 0;cursor:pointer">Done today (' + done.length + ')</summary>' +
       done.map(function (t) { return '<div class="ln" style="font-size:13.5px">&#10003; ' + esc_(t.s) + '</div>'; }).join('') + '</details>' : '') + '</div>';
@@ -6181,7 +6416,7 @@ function sdPage_(person, day, error, notice) {
       return '<details class="it"><summary><div class="hd"><span class="age ' + (q.over ? 'r' : '') + '">' + (q.days == null ? '—' : q.days + 'd') + '</span><div class="tt">' + esc_(q.client || 'Client') + ' · ' + esc_(q.subject || q.type) +
         '<small>' + esc_(q.ref) + (q.over ? ' · <b style="color:#DC3F3F">past turnaround</b>' : '') + (q.dept ? ' · ' + esc_(q.dept) : '') + '</small></div></div></summary>' +
         (q.desc ? '<div class="br2" style="margin-top:4px">' + esc_(q.desc) + '</div>' : '') +
-        '<textarea name="q_' + i + '" rows="2" placeholder="Where it stands. It goes on the query\'s trail in Query Pal, internal." style="margin:8px 0 10px"></textarea></details>';
+        tcardQpChips_(i) + '<textarea name="q_' + i + '" rows="2" placeholder="Where it stands. It goes on the query\'s trail in Query Pal, internal." style="margin:4px 0 10px"></textarea></details>';
     }).join('') + '</div>' : '';
   try { bigPut_('sd_qids_' + sid + '_' + day, qs.map(function (q) { return { ref: q.ref, c: q.client }; })); } catch (e) {}
   // The scrub
@@ -6203,7 +6438,7 @@ function sdPage_(person, day, error, notice) {
   var inner = (notice ? '<div class="card ok"><b style="color:#2C7A57">' + notice + '</b></div>' : '') + (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + inCard + gCard +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'plan') + gThanks + yCard + work + qCard + scrub + nextCard + gIdea +
     '<div class="card"><div class="bh">Comment for Mr Rampersad</div><textarea name="comment" rows="2" placeholder="Anything he should know about today"></textarea></div>' +
-    '<button type="submit">Save</button></form>' + sbJs_();
+    '<button type="submit">Save</button></form>' + sbJs_() + TCARD_CSS + tcardScript_(sid, day);
   return replyPage_('Your day · ' + prettyDate_(day), esc_(first) + ', your day is set for you: check in, then work down the list. Every task says what to do. Your progress is read from Salesforce at ' +
     esc_(twelve_(mmText_(middayAtSafe_(sid)))) + ' and at your close-off.', inner);
 }
@@ -6222,10 +6457,15 @@ function sdSave_(person, day, p, all) {
     try { yc.apply(); out.push({ s: 'Yesterday', res: yc.rows.length + ' task' + (yc.rows.length === 1 ? '' : 's') + ' given a reason and a new date' }); } catch (e) {}
   }
   var list = []; try { list = bigGet_('sd_list_' + sid + '_' + day, []) || []; } catch (e) {}
+  var acted = {}; try { acted = tcardActed_(sid, day); } catch (e) {}
   list.filter(function (t) { return !t.next; }).forEach(function (t) {
     var txt = String(p['n_' + t.id] || '').trim(), done = String(p['x_' + t.id] || '') === '1', to = String(p['m_' + t.id] || '').trim(), label = shorten_(t.s, 70), parts = [];
     if (!/^\d{4}-\d{2}-\d{2}$/.test(to) || to <= day) to = '';
     if (!txt && !done && !to) return;
+    // A card that already acted (Close now, Move now, Post note): Save does not do it twice (20 Oct 2026).
+    var was = acted[t.id];
+    if (was && was.a === 'close') { out.push({ s: label, res: 'closed earlier from its card' }); return; }
+    if (was && tcardHash_(txt) === was.h && (!done || was.a === 'close') && (!to || to === was.to)) { out.push({ s: label, res: 'already saved from its card' }); return; }
     if ((done || to) && !txt) { out.push({ s: label, res: done ? 'NOT CLOSED: say what was done, in the note' : 'NOT MOVED: say why, in the note' }); return; }
     try { sfkInsert_('FeedItem', { ParentId: t.id, Body: head + '\n\n' + txt }); parts.push('note posted'); } catch (e) { out.push({ s: label, res: 'NOT SAVED: ' + String(e && e.message || e).slice(0, 100) }); return; }
     if (done) {
@@ -6281,7 +6521,7 @@ function sdPrune_(day) {
   var props = PropertiesService.getScriptProperties(), cut = shiftDays_(day, -21), n = 0;
   var keys = typeof props.getKeys === 'function' ? props.getKeys() : Object.keys(props.getProperties());
   keys.forEach(function (k) {
-    var m = String(k).match(/^(?:intel_model_|intel_plan_|intel_target_|daystart_(?:first|plan)_|md_|hkv2_|autoabs_|cover_|cover2_|notclosed_|ncchk_|ncrem_|ncdone_|um_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|sd_(?:list|qids)_|game_|wall2_|co_(?:ask|un|chk)_|bmchk_|um_chk_|FAIL_|ag_(?:am|md|pm|items)_)[A-Za-z0-9_.-]*?(\d{4}-\d{2}-\d{2})(?:_[A-Za-z0-9_]+)?$/);
+    var m = String(k).match(/^(?:intel_model_|intel_plan_|intel_target_|daystart_(?:first|plan)_|md_|hkv2_|autoabs_|cover_|cover2_|notclosed_|ncchk_|ncrem_|ncdone_|um_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|sd_(?:list|qids)_|tcard_|game_|wall2_|co_(?:ask|un|chk)_|bmchk_|um_chk_|FAIL_|ag_(?:am|md|pm|items)_)[A-Za-z0-9_.-]*?(\d{4}-\d{2}-\d{2})(?:_[A-Za-z0-9_]+)?$/);
     if (m && m[1] < cut) { try { props.deleteProperty(k); n++; } catch (e) {} }
   });
   return n;
@@ -7441,7 +7681,7 @@ function wallStaff_(day, outside) {
       var good = rs.list.filter(function (x) { return x.n >= 4 && desks.indexOf(x.closer) > -1; });
       svc = { avg: rs.all.avg, n: rs.all.n, five: rs.all.five, fivePct: Math.round(100 * rs.all.five / rs.all.n), agents: rs.all.agents, clients: rs.all.clients,
         recent: good.slice(0, 6).map(function (x) { return { at: x.day === day ? wallAt_(x.m) : shortDate_(x.day).replace(/^\w+ /, ''), who: gameFirst_(x.closer), n: x.n, from: x.kind === 'agent' ? 'an agent' : 'a client' }; }) };
-      good.forEach(function (x) { if (x.day === day && x.m != null) ev.push({ m: x.m, who: gameFirst_(x.closer), what: 'was given ' + x.n + ' stars by ' + (x.kind === 'agent' ? 'an agent' : 'a client') + ' for a task closed for them' }); });
+      good.forEach(function (x) { if (x.day === day && x.m != null) ev.push({ m: x.m, who: gameFirst_(x.closer), what: 'served ' + (x.kind === 'agent' ? 'an agent' : 'a client') + ', who rated the service ' + x.n + ' stars' }); });
     }
   } catch (e) {}
   var tot = 0; Object.keys(mix).forEach(function (k) { tot += mix[k]; });
@@ -13849,6 +14089,116 @@ function replyClick_(e) {
   if (f === 'nudge') return nudgeReplyPage_(person, day, '');
   return hkReplyPage_(person, day, '');
 }
+
+/* ─────────── Pages open at once (21 October 2026, 2026-10-21a) ───────────
+ *  Ricky, 6:21am: "when I click my day to start my day ... It's not opening ... it's opening the script, but it's
+ *  taking very long. Can anything be done on this?" A page behind an e-mail button was built in full before the
+ *  phone saw anything. His day (My branch) reads Salesforce, Chatter, his inbox and drafts, the agents and Query Pal:
+ *  up to a minute, and the mail app's browser gave up first. Now:
+ *    · the link answers at once with a light page ("Opening your day", a moving bar, the seconds) and the page is
+ *      built behind it through google.script.run (openPage), then drawn in place; if that fails, it says so and offers
+ *      to try again;
+ *    · his day is also built ahead between 5am and 8:30am on the ten-minute run (fastPrebuildTick_, every 40 minutes
+ *      until he opens it), kept in the cache, and handed over on his first tap with "Prepared at 6:10 · bring it up to
+ *      date"; after that every open is live;
+ *    · Check in on his day and on a staff day page is done there and then (checkInNow), without rebuilding the page.
+ */
+var FAST = { KINDS: { unit: 1, me: 1, plan: 1, 'in': 1, prog: 1, bm: 1, cmd: 1, um: 1, umeve: 1, hk: 1, ag: 1, agc: 1, nudge: 1, qp: 1, agff: 1, errand: 1, undo: 1 },
+             PRE_FROM: 5 * 60, PRE_TO: 8 * 60 + 30, PRE_EVERY_MIN: 40, KEEP_SEC: 4 * 3600, CHUNK: 45000 };
+function fastKey_(sid, f, day) { return 'fastpg_' + sid + '_' + f + '_' + day; }
+function fastCachePut_(key, html) {
+  var c = CacheService.getScriptCache(), n = Math.max(1, Math.ceil(html.length / FAST.CHUNK)), o = {};
+  for (var i = 0; i < n; i++) o[key + '_' + i] = html.slice(i * FAST.CHUNK, (i + 1) * FAST.CHUNK);
+  o[key + '_n'] = String(n); o[key + '_at'] = hhmm_(new Date());
+  c.putAll(o, FAST.KEEP_SEC);
+}
+/** The page built ahead, once: whoever takes it, it is gone (so a second open is live). */
+function fastCacheTake_(key) {
+  var c = CacheService.getScriptCache(), n = Number(c.get(key + '_n') || 0); if (!n) return null;
+  var ks = []; for (var i = 0; i < n; i++) ks.push(key + '_' + i);
+  var got = c.getAll(ks.concat([key + '_at'])), html = '';
+  for (var j = 0; j < n; j++) { if (got[ks[j]] == null) return null; html += got[ks[j]]; }
+  c.removeAll(ks.concat([key + '_n', key + '_at']));
+  return { html: html, at: got[key + '_at'] || '' };
+}
+function fastShell_(p, note) {
+  var keep = {}; ['rs', 'd', 'f', 'k', 'c', 'i'].forEach(function (k) { if (p[k] != null && p[k] !== '') keep[k] = String(p[k]); });
+  if (note) keep.note = String(note);
+  var f = String(p.f || ''), what = f === 'unit' && String(p.rs) === 'ricky' ? 'your day' : f === 'unit' ? 'your unit' : f === 'plan' || f === 'in' || f === 'me' ? 'your day' : 'the page';
+  var js = JSON.stringify(keep).replace(/</g, '\\u003c');
+  var html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Opening ' + esc_(what) + '…</title>' +
+    '<style>body{margin:0;background:#F7F5EF}.w{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:600px;margin:0 auto;padding:40px 16px;color:#1F2433}' +
+    '.br{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0EA5C9}h1{font-size:22px;margin:8px 0 4px;color:#141C4A}.sub{color:#6A7180;margin:0 0 18px}' +
+    '.bar{height:8px;background:#E5E1D6;border-radius:6px;overflow:hidden;position:relative}.bar i{position:absolute;top:0;bottom:0;width:35%;border-radius:6px;background:#2C7A57;animation:go 1.1s ease-in-out infinite alternate}' +
+    '@keyframes go{from{left:-10%}to{left:75%}}#t{color:#6A7180;font-size:13px;margin-top:10px}a{color:#2C7A57;font-weight:700}</style>' +
+    '<div class="w"><div class="br">Ricky Rampersad Branch</div><h1>Opening ' + esc_(what) + '…</h1>' +
+    '<p class="sub" id="msg">Reading Salesforce, the inbox and the team. It appears here by itself in a few seconds.</p><div class="bar"><i></i></div><div id="t"></div></div>' +
+    '<script>var P=' + js + ',t0=Date.now();setInterval(function(){var e=document.getElementById("t");if(e)e.textContent=Math.round((Date.now()-t0)/1000)+" s";},1000);' +
+    'function show(h){document.open();document.write(h);document.close();}' +
+    'function fail(e){var m=document.getElementById("msg");if(m)m.innerHTML="It did not open this time ("+String(e&&e.message||e).replace(/[<>&]/g,"")+"). <a href=\\"#\\" onclick=\\"go();return false\\">Try again</a>";}' +
+    'function go(){var m=document.getElementById("msg");if(m)m.textContent="Reading Salesforce, the inbox and the team. It appears here by itself in a few seconds.";' +
+    'if(!(window.google&&google.script&&google.script.run)){location.replace(location.href+(location.href.indexOf("?")<0?"?":"&")+"full=1");return;}' +
+    'google.script.run.withSuccessHandler(show).withFailureHandler(fail).openPage(P);}go();</script>';
+  return HtmlService.createHtmlOutput(html).setTitle('Opening ' + what).addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+/** Called from the light page: the full page, checked and built exactly as the link would have, as HTML. */
+function openPage(params) {
+  resetRequestMemo_();
+  var p = {}; Object.keys(params || {}).forEach(function (k) { p[k] = String(params[k]); }); p.full = '1';
+  var sid = String(p.rs || ''), f = String(p.f || ''), day = todayISO_(), note = String(p.note || '');
+  var html = '';
+  if (f === 'unit' && sid === 'ricky' && String(p.fresh || '') !== '1' && String(p.k || '') === unitSig_(sid)) {
+    var hit = null; try { hit = fastCacheTake_(fastKey_(sid, f, day)); } catch (e) {}
+    try { PropertiesService.getScriptProperties().setProperty('fastpg_opened_' + sid + '_' + day, hhmm_(new Date())); } catch (e) {}
+    if (hit) html = fastBanner_(hit.html, 'Prepared at ' + twelve_(hit.at) + '. <a href="#" onclick="return fastFresh()">Bring it up to date</a>', p);
+  }
+  if (!html) { var out = replyClick_({ parameter: p }); html = out && out.getContent ? out.getContent() : String(out || ''); }
+  if (note) html = fastBanner_(html, esc_(note), p);
+  return html;
+}
+function fastBanner_(html, msg, p) {
+  var keep = {}; ['rs', 'd', 'f', 'k', 'c', 'i'].forEach(function (k) { if (p[k] != null && p[k] !== '') keep[k] = String(p[k]); }); keep.fresh = '1';
+  var bar = '<div style="background:#FBF6E6;border:1px solid #EADFB8;border-radius:10px;padding:8px 12px;margin:0 0 12px;font-size:13.5px">' + msg + '</div>' +
+    '<script>function fastFresh(){if(!(window.google&&google.script&&google.script.run))return false;document.body.style.opacity=".55";' +
+    'google.script.run.withSuccessHandler(function(h){document.open();document.write(h);document.close();}).withFailureHandler(function(){document.body.style.opacity="1";}).openPage(' +
+    JSON.stringify(keep).replace(/</g, '\\u003c') + ');return false;}</script>';
+  var at = html.indexOf('<div class="w">');
+  return at < 0 ? bar + html : html.slice(0, at + 15) + bar + html.slice(at + 15);
+}
+/** His day built ahead, between 5 and 8:30 on a working morning, every 40 minutes until he opens it. */
+function fastPrebuildTick_() {
+  var day = todayISO_(), nowM = minutesOf_(hhmm_(new Date())), props = PropertiesService.getScriptProperties();
+  if (nowM == null || nowM < FAST.PRE_FROM || nowM > FAST.PRE_TO) return '';
+  try { if (typeof nothingToReport_ === 'function' && nothingToReport_(day)) return ''; } catch (e) {}
+  if (props.getProperty('fastpg_opened_ricky_' + day)) return '';
+  var last = props.getProperty('fastpg_built_ricky_' + day), lastM = last ? minutesOf_(last) : null;
+  if (lastM != null && nowM - lastM < FAST.PRE_EVERY_MIN) return '';
+  var person = replyPerson_('ricky', 'unit'); if (!person) return '';
+  var t0 = Date.now(), out = unitPage_(person, day, ''), html = out && out.getContent ? out.getContent() : '';
+  if (!html) return '';
+  fastCachePut_(fastKey_('ricky', 'unit', day), html);
+  props.setProperty('fastpg_built_ricky_' + day, hhmm_(new Date()));
+  return 'built in ' + Math.round((Date.now() - t0) / 1000) + ' s';
+}
+/** Check in from the page itself, without building the page again: his day (f=unit), a staff day page (f=in). */
+function checkInNow(o) {
+  o = o || {}; var sid = String(o.rs || ''), f = String(o.f || ''), day = todayISO_(), person = null;
+  if (f === 'unit' && String(o.k || '') === unitSig_(sid)) person = replyPerson_(sid, 'unit');
+  else if (f === 'in' && isoDay_(o.d) === day && String(o.k || '') === replySig_(sid, day, 'in')) person = replyPerson_(sid, 'in');
+  if (!person) return { ok: false, msg: 'This page has expired: open it again from today\'s e-mail.' };
+  var at = '', first = false;
+  if (f === 'in') { var ci = sdCheckin_(person, day); at = ci.at; first = !!ci.first; }
+  else {
+    var signed = signInFromPage_(person); at = signed && signed.at || hhmm_(new Date()); first = !!(signed && signed.first);
+    if (sid === 'ricky' && signed && signed.at) { try { dayLogMany_(day, [{ at: signed.at, kind: 'checkin', group: '', what: 'Checked in', ref: 'ci:' + day }]); } catch (e) {} }
+  }
+  try { runlog_('checkin ' + sid + ' ' + f + ' ' + at); } catch (e) {}
+  return { ok: true, at: twelve_(at), first: first };
+}
+var CHECKIN_JS = '<script>function ciNow(b,P){if(!(window.google&&google.script&&google.script.run))return true;b.disabled=true;b.textContent="Checking in…";' +
+  'google.script.run.withSuccessHandler(function(r){var c=b.closest(".card");if(r&&r.ok&&c){c.className="card ok";c.innerHTML="<b style=\\"color:#1F6B47;font-size:15px\\">&#10003; "+(r.first?"Checked in ":"You were already checked in at ")+r.at+"</b><div class=\\"ln\\">Your day is below.</div>";}' +
+  'else{b.disabled=false;b.textContent="Check in and start my day";alert((r&&r.msg)||"That did not record. Try again.");}})' +
+  '.withFailureHandler(function(){b.disabled=false;b.textContent="Check in and start my day";}).checkInNow(P);return false;}</script>';
 
 /** POST: write, then show what was written. */
 function replyPost_(e) {
