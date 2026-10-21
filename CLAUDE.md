@@ -3779,6 +3779,37 @@ servicing work".
   the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
   Playwright; `world.js`, the fake workbook and Salesforce).
 
+## The motor quote — the client signs in, Salesforce fills in, the desk quotes
+
+`motor-quote/index.html` (short address `/motorquote`) and `apps-script/MotorQuote.gs`, **its own Apps Script project on its
+own Google Sheet** (own `doGet`/`doPost`: never beside `Claims.gs` or `Service.gs`). Built 21 October 2026, replacing the
+" Motor Quotation" JotForm (id 223376649264061, 41 questions, 2 submissions ever): "a client logs in, the data read from
+Salesforce if he is an existing client by his email, if not a contact is created, then asks data that will generate a motor
+quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-SETUP.md` has the steps.
+
+- **Sign-in is the claims portal's**: e-mail, six-digit code to that inbox, no password. Anyone may sign in; the answer never
+  says who is a client. The signed-in e-mail is the client's e-mail whatever the form sends (`mqRead_`).
+- **What Salesforce holds is filled in** (`mqLookup_`, by e-mail): the Contact (name, mobile, Title as occupation,
+  Birthdate), motor policies (`CLIENT_PORTFOLIO__c`, MOTOR record type) and vehicles (`Risk_Details__c`, by `Insured__c` or
+  `Email__c`; two years of one vehicle merge, newest first, a blank never erasing: the claims portal's rule). A client picks a
+  vehicle to quote again, or adds one. Every read is in its own try: Salesforce down still signs the client in.
+- **Every question the JotForm asked is still asked**, in six steps; `tests/test-motor-quote.js` checks the list. The permit
+  and the certified copy are photographed on the phone, resized to a 1600 px JPEG on the device, PDFs under 6 MB as they are.
+- **Send**: a row on **Motor Quotes** (`MQ-yyMMdd-nnn`), the documents into Drive (Motor Quotes / year / ref), one e-mail
+  to the quotes desk from support@ through Graph (`mqMail_`, the Log Book's pattern; this Google account with support@ as
+  reply-to when the `MS_*` properties are not set) with sales support and support@ in visible Cc, the agent too when the
+  client names one, and the documents attached; a receipt to the client with the reference; a Salesforce task on the Contact
+  due two working days on. **A client not in Salesforce becomes a Contact at the send**, when a name is held, never on the
+  sign-in alone (`mqEnsureContact_`, `Contact_Type__c` Prospect; the same e-mail on file is the same client).
+- **Test mode is the default** (`MQ_MODE` unset): every e-mail to `MQ_TEST_INBOX` with a banner naming who it was for, and
+  Salesforce read but never written. `mqGoLive()` when the manager says so. The quotes desk never hears from a test.
+- **Signing in again shows the client their requests and where each stands**: the tab's Status, Quoted on and Quoted
+  premium columns, kept by staff by hand.
+- Tests: `tests/test-motor-quote.js` (57 checks, a Salesforce and a Microsoft in memory) and `tests/e2e-motor-quote.js`
+  (Playwright, a phone, the six steps against a fake backend; it caught a tap and a typed box fighting over one answer).
+- The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
+  until the page is live and wired; disable it then, so an old link does not take a client back to it.
+
 ## RR Operations and the Delivery Book — one sign-in, the client told the same day
 
 `rroperations/` and `apps-script/DeliveryBook.gs` (its own Apps Script project,

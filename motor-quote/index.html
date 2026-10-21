@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motor quote | Ricky Rampersad Branch</title>
+<meta name="description" content="Get a motor insurance quote from Guardian General through the Ricky Rampersad Branch. Sign in with your e-mail, tell us about your vehicle, and the quote comes back to you.">
+<meta name="theme-color" content="#07131f">
+<meta property="og:title" content="Motor quote | Ricky Rampersad Branch">
+<meta property="og:description" content="Sign in with your e-mail, tell us about your vehicle, and your Guardian General motor quote comes back to you.">
+<link rel="icon" href="/favicon.svg">
+<!-- Replaces the " Motor Quotation" JotForm (21 October 2026). The client signs in with their
+     e-mail, what we already hold in Salesforce is filled in, the page asks only what the quote
+     needs, and the request goes to Guardian General's quotes desk from support@ with the branch
+     copied. Backend: apps-script/MotorQuote.gs. Setup: MOTOR-QUOTE-SETUP.md. -->
+<style>
+  :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#5d7186;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--tdark:#07606f;--line:#d7e3ea;--paper:#eef4f7;--card:#fff;--okbg:#eef7f2;--ok:#1f6f4a;--warnbg:#fff7df;--warn:#5c3d00;--bad:#8a3324}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--body);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  header{background:var(--navy);border-bottom:3px solid var(--gold);padding:12px 16px;display:flex;align-items:center;gap:10px}
+  .mark{width:34px;height:34px;border-radius:9px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{color:#eaf4ff;font-weight:800;font-size:14.5px;line-height:1.25;flex:1}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#8fd8e6}
+  .who{color:#8fd8e6;font-size:12.5px;text-align:right;line-height:1.3}
+  .who b{display:block;color:#eaf4ff;font-weight:700;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .who button{font:inherit;font-size:12px;color:#8fd8e6;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+  main{width:min(600px,100% - 32px);margin:16px auto 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin:0 0 14px}
+  .hero{border-top:4px solid var(--gold)}
+  h1{margin:0 0 6px;color:var(--ink);font-size:22px;line-height:1.3}
+  h2{margin:0 0 10px;color:var(--ink);font-size:17px}
+  p{margin:0 0 10px}
+  .lead{font-size:15.5px}
+  .steps{display:flex;gap:6px;margin:0 0 14px}
+  .steps i{flex:1;height:5px;border-radius:3px;background:#d8e3ea}
+  .steps i.on{background:var(--gold)}
+  .steps i.done{background:var(--tdark)}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold2);margin:0 0 4px}
+  label.f{display:block;margin:0 0 12px}
+  label.f b{display:block;color:var(--ink);font-size:14.5px;margin:0 0 5px}
+  label.f small{display:block;color:var(--dim);font-size:12.5px;margin:3px 0 0}
+  .fld{display:block;width:100%;font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid #bfd9e2;border-radius:10px;padding:10px 12px;min-height:46px}
+  .fld:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
+  textarea.fld{min-height:84px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+  @media (max-width:420px){.row{grid-template-columns:1fr}}
+  .opts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 4px}
+  .opts button{font:inherit;font-size:15px;font-weight:700;color:var(--tdark);background:#fff;border:1px solid #bfd9e2;border-radius:10px;padding:9px 13px;cursor:pointer;min-height:44px}
+  .opts button.on{background:var(--okbg);border-color:#9fd0b6;color:var(--ok)}
+  .send{display:block;width:100%;margin:14px 0 4px;font:inherit;font-size:16px;font-weight:800;color:var(--gold);background:var(--navy);border:0;border-radius:12px;padding:14px 16px;cursor:pointer;min-height:50px}
+  .send:disabled{opacity:.55;cursor:default}
+  .ghost{display:block;width:100%;margin:8px 0 0;font:inherit;font-size:15px;font-weight:700;color:var(--tdark);background:#fff;border:1px solid #bfd9e2;border-radius:12px;padding:11px 14px;cursor:pointer;min-height:46px}
+  .nav{display:flex;gap:10px;margin:14px 0 0}
+  .nav .ghost{margin:0;width:auto;flex:0 0 auto;padding:11px 16px}
+  .nav .send{margin:0;flex:1}
+  .note{background:var(--warnbg);border:1px solid #efd9a0;color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px;margin:0 0 12px}
+  .err{color:var(--bad);font-weight:600;font-size:14.5px;margin:8px 0 0;min-height:0}
+  .okmsg{color:var(--ok);font-weight:700;font-size:14.5px;margin:8px 0 0}
+  .veh{display:flex;gap:10px;align-items:center;border:1px solid #bfd9e2;border-radius:12px;padding:11px 12px;margin:0 0 8px;cursor:pointer;background:#fff;width:100%;text-align:left;font:inherit;color:var(--body)}
+  .veh.on{border-color:#9fd0b6;background:var(--okbg)}
+  .veh .ic{width:38px;height:38px;border-radius:9px;background:#eef4f7;display:grid;place-items:center;font-size:20px;flex:none}
+  .veh b{display:block;color:var(--ink);font-size:15px}
+  .veh span{display:block;font-size:13px;color:var(--dim)}
+  .tick{width:46px;height:46px;border-radius:50%;background:var(--okbg);color:var(--ok);display:grid;place-items:center;font-size:26px;font-weight:800;margin:0 0 8px}
+  .ref{font-size:26px;font-weight:800;color:var(--navy);letter-spacing:.02em}
+  .req{border-top:1px solid var(--line);padding:10px 0 4px;font-size:14.5px}
+  .req b{color:var(--ink)}
+  .req .st{display:inline-block;background:#eef4f7;color:var(--tdark);border-radius:8px;padding:2px 8px;font-size:12.5px;font-weight:700;margin:4px 0 0}
+  .rev{font-size:14.5px}
+  .rev h3{margin:12px 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold2)}
+  .rev div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #e6edf2;padding:5px 0}
+  .rev div span:first-child{color:var(--dim);flex:0 0 42%}
+  .rev div span:last-child{color:var(--ink);font-weight:600;text-align:right;overflow-wrap:anywhere}
+  .files{display:flex;flex-direction:column;gap:8px}
+  .file{display:flex;align-items:center;gap:10px;border:1px dashed #bfd9e2;border-radius:12px;padding:10px 12px;background:#fff}
+  .file img{width:48px;height:48px;object-fit:cover;border-radius:8px;background:#eef4f7;flex:none}
+  .file .nm{flex:1;font-size:14px;color:var(--ink);overflow-wrap:anywhere}
+  .file .nm small{display:block;color:var(--dim);font-size:12.5px}
+  .file label{color:var(--tdark);font-weight:700;cursor:pointer;font-size:14.5px}
+  .file input{display:none}
+  .file button{font:inherit;font-size:13px;color:var(--bad);background:none;border:0;cursor:pointer;padding:4px}
+  .code{letter-spacing:.3em;text-align:center;font-size:24px;font-weight:800}
+  .hide{display:none!important}
+  .muted{color:var(--dim);font-size:13.5px}
+  footer{text-align:center;color:var(--dim);font-size:12px;padding:0 16px 24px}
+  footer a{color:var(--tdark)}
+  .chk{display:flex;gap:9px;align-items:flex-start;margin:9px 0 0;font-size:14.5px;cursor:pointer}
+  .chk input{width:20px;height:20px;margin:2px 0 0;flex:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="mark"><img src="/logo-mark.png" width="34" height="34" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Motor quotes · Guardian General</i></div>
+  <div class="who hide" id="who"><b id="whoName"></b><button type="button" onclick="signOut()">Sign out</button></div>
+</header>
+<main>
+  <div id="notice" class="note hide"></div>
+
+  <!-- 0 · sign in -->
+  <section class="card hero" id="s-signin">
+    <div class="eyebrow">Your motor quote</div>
+    <h1>Tell us about your vehicle. We bring back the price.</h1>
+    <p class="lead">Sign in with your e-mail. If you are already a client of ours, we fill in what we hold for you. If not, welcome: it takes about five minutes.</p>
+    <div id="emailBox">
+      <label class="f"><b>Your e-mail</b><input class="fld" id="email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com"></label>
+      <button class="send" id="btnCode" onclick="requestCode()">Send me a sign-in code</button>
+      <p class="muted" style="margin-top:8px">A six-digit code comes to your inbox. No password to remember.</p>
+    </div>
+    <div id="codeBox" class="hide">
+      <p id="codeMsg"></p>
+      <label class="f"><b>The code from your e-mail</b><input class="fld code" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"></label>
+      <button class="send" id="btnVerify" onclick="verifyCode()">Sign in</button>
+      <button class="ghost" onclick="backToEmail()">Use a different e-mail</button>
+    </div>
+    <p class="err" id="signinErr"></p>
+  </section>
+
+  <!-- home when signed in -->
+  <section class="card hide" id="s-home">
+    <div class="eyebrow">Welcome<span id="homeBack"></span></div>
+    <h1 id="homeTitle">Good day.</h1>
+    <p id="homeLead" class="lead"></p>
+    <div id="homeVeh"></div>
+    <button class="send" onclick="startNew()">Start a motor quote</button>
+    <div id="reqs"></div>
+  </section>
+
+  <!-- the steps -->
+  <section class="card hide" id="s-form">
+    <div class="steps" id="steps"></div>
+    <div id="step"></div>
+    <p class="err" id="formErr"></p>
+    <div class="nav">
+      <button class="ghost" id="btnBack" onclick="go(-1)">Back</button>
+      <button class="send" id="btnNext" onclick="go(1)">Continue</button>
+    </div>
+  </section>
+
+  <!-- done -->
+  <section class="card hero hide" id="s-done">
+    <div class="tick">✓</div>
+    <h1>Your request has gone.</h1>
+    <p>Your reference is</p>
+    <p class="ref" id="doneRef"></p>
+    <p id="doneMsg"></p>
+    <p><b>What happens next</b></p>
+    <ol style="padding-left:20px;margin:0 0 12px">
+      <li>The quotes desk prices the cover from what you told us.</li>
+      <li>The quote comes back to our branch and to your e-mail, usually within two working days.</li>
+      <li>A member of our team calls you to go through it and, if you wish, to put the cover in place.</li>
+    </ol>
+    <p class="muted">A receipt with everything you told us is on its way to your inbox. Sign in here any time to see where your request stands.</p>
+    <button class="ghost" onclick="showHome()">Back to my quotes</button>
+  </section>
+</main>
+<footer>Ricky Rampersad Branch · Guardian Group · Chaguanas · <a href="tel:+18682266461">(868) 226-6461</a><br>Your information is used only to prepare and look after your cover, and is never sold or disclosed without your express consent.</footer>
+
+<script>
+const CONFIG = {
+  /* The /exec address of apps-script/MotorQuote.gs. Leave "" until it is deployed: the page then says so. */
+  API_URL: "",
+  /* Must equal MQ.SITE_KEY in MotorQuote.gs. Not a secret. */
+  SITE_KEY: "rrb-motor-quote-1",
+};
+const SKEY = 'rrb-mq-session', DKEY = 'rrb-mq-draft';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+let session = null, me = null, requests = [], draft = {}, files = [], stepIx = 0;
+try { session = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) {}
+try { draft = JSON.parse(localStorage.getItem(DKEY) || '{}') || {}; } catch (e) {}
+
+const COVERS = ['Comprehensive', 'Third Party, Fire & Theft', 'Third Party Only'];
+const BODIES = ['Sedan', 'Hatchback', 'SUV', 'Pickup', 'Van', 'Truck', 'Motorcycle', 'Other'];
+const NCDS = ['None', '1 year', '2 years', '3 years', '4 years', '5 years or more'];
+
+/* ---- API ---- */
+async function api(action, body) {
+  if (!CONFIG.API_URL || CONFIG.API_URL.indexOf('http') !== 0) throw new Error('This page is not connected yet. Please call the branch on (868) 226-6461 for your quote.');
+  const res = await fetch(CONFIG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ action, siteKey: CONFIG.SITE_KEY }, body || {})) });
+  const j = await res.json();
+  if (j && j.signedOut) { clearSession(); showSignin(); }
+  if (!j || !j.ok) throw new Error((j && j.error) || 'Something went wrong. Please try again.');
+  return j;
+}
+function saveDraft() { try { localStorage.setItem(DKEY, JSON.stringify(draft)); } catch (e) {} }
+function clearSession() { session = null; me = null; try { localStorage.removeItem(SKEY); } catch (e) {} }
+function show(id) { ['s-signin', 's-home', 's-form', 's-done'].forEach(s => $(s).classList.toggle('hide', s !== id)); window.scrollTo(0, 0); }
+
+/* ---- sign in ---- */
+function showSignin() { show('s-signin'); $('who').classList.add('hide'); }
+function backToEmail() { $('codeBox').classList.add('hide'); $('emailBox').classList.remove('hide'); $('signinErr').textContent = ''; }
+async function requestCode() {
+  const email = $('email').value.trim().toLowerCase();
+  $('signinErr').textContent = '';
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) { $('signinErr').textContent = 'Please type a full e-mail address.'; return; }
+  $('btnCode').disabled = true;
+  try {
+    const j = await api('requestCode', { email });
+    $('codeMsg').textContent = j.message;
+    $('emailBox').classList.add('hide'); $('codeBox').classList.remove('hide'); $('code').focus();
+  } catch (e) { $('signinErr').textContent = e.message; }
+  $('btnCode').disabled = false;
+}
+async function verifyCode() {
+  const email = $('email').value.trim().toLowerCase(), code = $('code').value.replace(/\D/g, '');
+  $('signinErr').textContent = '';
+  if (code.length !== 6) { $('signinErr').textContent = 'The code is six digits.'; return; }
+  $('btnVerify').disabled = true;
+  try {
+    const j = await api('verifyCode', { email, code });
+    session = { token: j.token, email }; try { localStorage.setItem(SKEY, JSON.stringify(session)); } catch (e) {}
+    me = j.me; requests = j.requests || []; modeNotice(j.mode);
+    showHome();
+  } catch (e) { $('signinErr').textContent = e.message; }
+  $('btnVerify').disabled = false;
+}
+async function signOut() {
+  try { if (session) await api('signOut', { token: session.token }); } catch (e) {}
+  clearSession(); draft = {}; files = []; saveDraft(); $('email').value = ''; $('code').value = ''; backToEmail(); showSignin();
+}
+async function resume() {
+  if (!session) { showSignin(); return; }
+  try { const j = await api('me', { token: session.token }); me = j.me; requests = j.requests || []; modeNotice(j.mode); showHome(); }
+  catch (e) { if (session) { showSignin(); $('signinErr').textContent = e.message; } }
+}
+function modeNotice(mode) {
+  if (mode === 'test') { $('notice').textContent = 'Test mode: requests are sent to the branch test inbox only, not to the quotes desk.'; $('notice').classList.remove('hide'); }
+}
+
+/* ---- home ---- */
+function showHome() {
+  show('s-home');
+  $('who').classList.remove('hide'); $('whoName').textContent = (me && me.name) || (session && session.email) || '';
+  const first = me && (me.first || (me.name || '').split(' ')[0]);
+  $('homeTitle').textContent = first ? 'Good day, ' + first + '.' : 'Good day.';
+  $('homeBack').textContent = me && me.found ? ' back' : '';
+  $('homeLead').textContent = me && me.found
+    ? 'You are a client of ours, so we have filled in what we already hold. Pick one of your vehicles to quote again, or start with a new one.'
+    : 'Tell us about your vehicle and the cover you want. The quote comes back to ' + ((session && session.email) || 'your e-mail') + '.';
+  $('homeVeh').innerHTML = (me && me.vehicles && me.vehicles.length)
+    ? '<p class="eyebrow" style="margin-top:6px">Your vehicles with us</p>' + me.vehicles.map((v, i) =>
+      '<button type="button" class="veh" onclick="startNew(' + i + ')"><span class="ic">🚗</span><span><b>' + esc([v.year, v.make, v.model].filter(Boolean).join(' ') || v.reg) +
+      '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + (v.to ? ' · cover to ' + esc(String(v.to).slice(0, 10)) : '') + '</span></span></button>').join('')
+    : '';
+  $('reqs').innerHTML = requests.length ? '<p class="eyebrow" style="margin-top:16px">Your requests</p>' + requests.map(r =>
+    '<div class="req"><b>' + esc(r.ref) + '</b> · ' + esc(r.when) + '<br>' + esc(r.vehicle || r.reg) + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + ' · ' + esc(r.cover) +
+    '<br><span class="st">' + esc(r.status || 'Received') + (r.quotedOn ? ' · quoted ' + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</span></div>').join('') : '';
+}
+
+/* ---- the steps ---- */
+const STEPS = [
+  { key: 'you', title: 'About you', render: stepYou, check: d => need(d, ['name', 'mobile']) || (d.ownerType === 'Company' && !d.company ? 'Please give the company name.' : '') },
+  { key: 'vehicle', title: 'Your vehicle', render: stepVehicle, check: d => need(d, ['reg', 'make', 'model', 'year', 'value']) || (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') },
+  { key: 'cover', title: 'The cover', render: stepCover, check: d => need(d, ['cover', 'drivingYears']) },
+  { key: 'driver', title: 'The driver', render: stepDriver, check: d => need(d, ['permit']) || (d.accidents === 'Yes' && !d.accidentDetails ? 'Please say a little about the accident.' : '') },
+  { key: 'docs', title: 'Your documents', render: stepDocs, check: () => '' },
+  { key: 'review', title: 'Check and send', render: stepReview, check: () => '' },
+];
+const LABELS = { name: 'your name', mobile: 'your mobile', company: 'the company name', reg: 'the vehicle number', make: 'the make', model: 'the model', year: 'the year', value: 'the vehicle value', cover: 'the cover you want', drivingYears: 'how long you have been driving', permit: "your driver's permit number" };
+function need(d, keys) { const m = keys.filter(k => !String(d[k] || '').trim()); return m.length ? 'Still needed: ' + m.map(k => LABELS[k] || k).join(', ') + '.' : ''; }
+
+function startNew(vehIx) {
+  draft = Object.assign({}, draft.sent ? {} : draft);
+  delete draft.sent;
+  if (me) {
+    if (!draft.name && me.name) draft.name = me.name;
+    if (!draft.mobile && me.mobile) draft.mobile = me.mobile;
+    if (!draft.occupation && me.occupation) draft.occupation = me.occupation;
+    if (!draft.dob && me.dob) draft.dob = String(me.dob).slice(0, 10);
+    if (me.found && !draft.existingVehicles && me.vehicles && me.vehicles.length) draft.existingVehicles = me.vehicles.map(v => v.reg).join(', ');
+    if (me.found && !draft.existingPolicy && me.policies && me.policies.length) draft.existingPolicy = me.policies[0].policy;
+  }
+  if (vehIx != null && me && me.vehicles[vehIx]) {
+    const v = me.vehicles[vehIx];
+    Object.assign(draft, { reg: v.reg || '', make: v.make || '', model: v.model || '', year: v.year ? String(v.year) : '', sfVehicle: v.reg || '',
+      cover: v.cover ? (COVERS.find(c => c.toLowerCase().indexOf(String(v.cover).toLowerCase().split(' ')[0]) === 0) || draft.cover || '') : (draft.cover || ''),
+      value: v.sumInsured ? String(Math.round(Number(v.sumInsured))) : (draft.value || ''), prevInsurer: v.carrier || draft.prevInsurer || '',
+      windscreen: v.windscreen ? 'Yes' : (draft.windscreen || '') });
+  }
+  if (!draft.ownerType) draft.ownerType = 'Individual';
+  saveDraft(); stepIx = 0; files = []; show('s-form'); render();
+}
+function render() {
+  $('steps').innerHTML = STEPS.map((s, i) => '<i class="' + (i < stepIx ? 'done' : i === stepIx ? 'on' : '') + '"></i>').join('');
+  const s = STEPS[stepIx];
+  $('step').innerHTML = '<div class="eyebrow">Step ' + (stepIx + 1) + ' of ' + STEPS.length + '</div><h2>' + s.title + '</h2>' + s.render(draft);
+  $('formErr').textContent = '';
+  $('btnBack').textContent = stepIx === 0 ? 'My quotes' : 'Back';
+  $('btnNext').textContent = stepIx === STEPS.length - 1 ? 'Send my request' : 'Continue';
+  $('btnNext').disabled = false;
+  if (s.key === 'docs') wireFiles();
+  window.scrollTo(0, 0);
+}
+function collect() {
+  $('step').querySelectorAll('[data-k]').forEach(el => { draft[el.dataset.k] = el.type === 'checkbox' ? (el.checked ? 'Yes' : 'No') : el.value.trim(); });
+  saveDraft();
+}
+function pick(k, v, el) {
+  draft[k] = v; saveDraft(); el.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el));
+  /* A typed box for the same answer (years driving) takes the tap too, or collect() would read it back empty. */
+  const box = $('step').querySelector('[data-k="' + k + '"]'); if (box) box.value = v;
+  onPick(k);
+}
+function onPick(k) {
+  const dep = { ownerType: 'companyBox', mortgaged: 'instBox', accidents: 'accBox' }[k];
+  if (dep && $(dep)) $(dep).classList.toggle('hide', !(draft[k] === 'Company' || draft[k] === 'Yes'));
+}
+async function go(dir) {
+  collect();
+  if (dir < 0) { if (stepIx === 0) { showHome(); return; } stepIx--; render(); return; }
+  const err = STEPS[stepIx].check(draft);
+  if (err) { $('formErr').textContent = err; return; }
+  if (stepIx < STEPS.length - 1) { stepIx++; render(); return; }
+  await submit();
+}
+
+/* ---- field helpers ---- */
+const inp = (k, label, o = {}) => '<label class="f"><b>' + label + '</b><input class="fld" data-k="' + k + '" type="' + (o.type || 'text') + '" value="' + esc(draft[k] || '') + '"' +
+  (o.ph ? ' placeholder="' + esc(o.ph) + '"' : '') + (o.mode ? ' inputmode="' + o.mode + '"' : '') + (o.ac ? ' autocomplete="' + o.ac + '"' : '') + (o.max ? ' maxlength="' + o.max + '"' : '') + '>' +
+  (o.hint ? '<small>' + o.hint + '</small>' : '') + '</label>';
+const opts = (k, label, list, hint) => '<div class="f" style="margin:0 0 12px"><b style="display:block;color:var(--ink);font-size:14.5px;margin:0 0 6px">' + label + '</b><div class="opts">' +
+  list.map(v => '<button type="button" class="' + (draft[k] === v ? 'on' : '') + '" onclick="pick(\'' + k + '\',\'' + v.replace(/'/g, "\\'") + '\',this)">' + esc(v) + '</button>').join('') + '</div>' +
+  (hint ? '<small style="display:block;color:var(--dim);font-size:12.5px;margin:4px 0 0">' + hint + '</small>' : '') + '</div>';
+
+function stepYou(d) {
+  const held = me && me.found ? '<p class="muted">Filled in from what we hold for you. Correct anything that has changed.</p>' : '';
+  return held + inp('name', 'Your full name', { ac: 'name' }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-' }) +
+    '<div class="row">' + opts('gender', 'Gender', ['Female', 'Male']) + inp('dob', 'Date of birth', { type: 'date' }) + '</div>' +
+    inp('occupation', 'Occupation', { ph: 'e.g. Teacher' }) +
+    opts('ownerType', 'The vehicle is owned by', ['Individual', 'Company']) +
+    '<div id="companyBox" class="' + (d.ownerType === 'Company' ? '' : 'hide') + '">' + inp('company', 'Company name') + inp('companyEmail', 'Company e-mail', { type: 'email', mode: 'email' }) + '</div>' +
+    inp('agent', 'Your agent, if you have one', { hint: 'Optional. Your agent is copied on the quote.' });
+}
+function stepVehicle(d) {
+  return inp('reg', 'Vehicle registration number', { ph: 'e.g. PDX 1234', max: 20 }) +
+    '<div class="row">' + inp('make', 'Make', { ph: 'e.g. Toyota' }) + inp('model', 'Model', { ph: 'e.g. Aqua' }) + '</div>' +
+    '<div class="row">' + inp('year', 'Year of manufacture', { mode: 'numeric', max: 4, ph: 'e.g. 2019' }) + inp('cc', 'Engine (cc)', { mode: 'numeric', max: 6, ph: 'e.g. 1500' }) + '</div>' +
+    opts('body', 'Body type', BODIES) +
+    '<div class="row">' + inp('seating', 'Seats, including the driver', { mode: 'numeric', max: 3, ph: 'e.g. 5' }) +
+    inp('value', 'Value of the vehicle (TT$)', { mode: 'numeric', ph: 'e.g. 95000', hint: 'What it would cost to replace today.' }) + '</div>' +
+    opts('condition', 'New or used', ['New', 'Used']) +
+    opts('mortgaged', 'Is the vehicle on a loan or hire purchase?', ['Yes', 'No']) +
+    '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + inp('institution', 'Financial institution', { ph: 'e.g. the bank or credit union' }) + '</div>';
+}
+function stepCover(d) {
+  return opts('cover', 'The cover you want', COVERS, 'Comprehensive covers your own vehicle too. Third party covers damage to others.') +
+    opts('windscreen', 'Add windscreen cover?', ['Yes', 'No']) +
+    opts('drivingYears', 'How long have you been driving?', ['1', '2', '3', '5', '10']) +
+    '<p class="muted" style="margin-top:-2px">Tap the nearest, or type the years:</p>' + inp('drivingYears', 'Years driving', { mode: 'numeric', max: 2 }) +
+    opts('ncd', 'Your no claim discount with your current or last insurer', NCDS) +
+    inp('prevInsurer', 'Previous or current insurer', { ph: 'e.g. none, or the company name' }) +
+    inp('existingPolicy', 'Adding to an existing Guardian General motor policy? Its policy number', { hint: 'Leave blank if this is a new policy.' }) +
+    inp('existingVehicles', 'Other vehicles you already insure with Guardian General', { ph: 'registration numbers, if any' });
+}
+function stepDriver(d) {
+  return inp('permit', "Driver's permit number", { ac: 'off' }) +
+    '<div class="row">' + inp('permitIssued', 'Permit first issued', { type: 'date' }) + inp('permitExpires', 'Permit expires', { type: 'date' }) + '</div>' +
+    opts('accidents', 'Any accidents or claims in the last three years?', ['Yes', 'No']) +
+    '<div id="accBox" class="' + (d.accidents === 'Yes' ? '' : 'hide') + '"><label class="f"><b>Tell us a little about it</b><textarea class="fld" data-k="accidentDetails">' + esc(d.accidentDetails || '') + '</textarea></label></div>' +
+    '<label class="f"><b>Anything else the quotes desk should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';
+}
+function stepDocs() {
+  return '<p>Photograph them with your phone. Both are optional now, but the quote is firmer with them.</p><div class="files" id="files">' +
+    fileRow('permit', "Your driver's permit", 'Front, in good light.') + fileRow('certified', 'Certified copy of ownership', 'The vehicle\'s certified copy.') + fileRow('other', 'Anything else', 'A valuation or a previous policy, if you have one.') + '</div>';
+}
+function fileRow(kind, label, hint) {
+  const f = files.find(x => x.kind === kind);
+  return '<div class="file" data-kind="' + kind + '">' + (f ? '<img src="' + (f.preview || '') + '" alt="">' : '<span style="font-size:26px">📷</span>') +
+    '<div class="nm">' + esc(label) + '<small>' + (f ? esc(f.name) + ' · ' + Math.round(f.bytes / 1024) + ' KB' : esc(hint)) + '</small></div>' +
+    (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" accept="image/*,application/pdf" capture="environment" data-kind="' + kind + '"></label>') + '</div>';
+}
+function wireFiles() {
+  $('step').querySelectorAll('input[type=file]').forEach(el => el.addEventListener('change', async ev => {
+    const file = ev.target.files[0]; if (!file) return;
+    $('formErr').textContent = ''; $('btnNext').disabled = true;
+    try { files = files.filter(f => f.kind !== el.dataset.kind); files.push(await prepFile(file, el.dataset.kind)); $('files').innerHTML = ['permit', 'certified', 'other'].map(k => fileRow(k, { permit: "Your driver's permit", certified: 'Certified copy of ownership', other: 'Anything else' }[k], '')).join(''); wireFiles(); }
+    catch (e) { $('formErr').textContent = e.message; }
+    $('btnNext').disabled = false;
+  }));
+}
+function dropFile(kind) { files = files.filter(f => f.kind !== kind); render(); }
+/* A phone photo is 3 to 8 MB; sent as a 1600 px JPEG it is about 300 KB and still readable. PDFs go as they are, under 6 MB. */
+function prepFile(file, kind) {
+  return new Promise((ok, bad) => {
+    if (file.type === 'application/pdf') {
+      if (file.size > 6 * 1024 * 1024) return bad(new Error('That PDF is over 6 MB. Please send a smaller one.'));
+      const r = new FileReader(); r.onload = () => ok({ kind, name: file.name, type: file.type, bytes: file.size, data: String(r.result).split(',')[1], preview: '' }); r.onerror = () => bad(new Error('Could not read that file.')); r.readAsDataURL(file); return;
+    }
+    if (!/^image\//.test(file.type)) return bad(new Error('Please add a photo or a PDF.'));
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 1600, sc = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const dataUrl = c.toDataURL('image/jpeg', 0.82); URL.revokeObjectURL(url);
+      const b64 = dataUrl.split(',')[1];
+      ok({ kind, name: file.name.replace(/\.[^.]+$/, '') + '.jpg', type: 'image/jpeg', bytes: Math.round(b64.length * 0.75), data: b64, preview: dataUrl });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); bad(new Error('Could not read that photo. Try another.')); };
+    img.src = url;
+  });
+}
+function stepReview(d) {
+  const G = [['The client', [['Name', d.name], ['E-mail', session && session.email], ['Mobile', d.mobile], ['Gender', d.gender], ['Date of birth', d.dob], ['Occupation', d.occupation], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', d.agent]]],
+    ['The vehicle', [['Registration', d.reg], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + ' cc' : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
+    ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', d.ncd], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
+    ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents', d.accidents + (d.accidentDetails ? ': ' + d.accidentDetails : '')], ['Notes', d.notes]]],
+    ['Documents', [['Attached', files.length ? files.map(f => f.kind).join(', ') : 'none']]]];
+  return '<p>Check it over. Tap Back to change anything. When you send, the request goes to Guardian General\'s quotes desk with our branch copied, and a receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
+    G.map(g => '<h3>' + g[0] + '</h3>' + g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()) || r[0] === 'Cover').map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
+    '<label class="chk"><input type="checkbox" id="agree"> <span>What I have given is true to the best of my knowledge, and I ask the branch to obtain a quote for me.</span></label>';
+}
+async function submit() {
+  if (!$('agree') || !$('agree').checked) { $('formErr').textContent = 'Please tick the box to send.'; return; }
+  $('btnNext').disabled = true; $('btnNext').textContent = 'Sending…';
+  try {
+    const j = await api('submit', { token: session.token, quote: draft, files: files.map(f => ({ kind: f.kind, name: f.name, type: f.type, data: f.data })) });
+    requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
+    $('doneRef').textContent = j.ref;
+    $('doneMsg').textContent = j.mode === 'test' ? 'Test mode: this request went to the branch test inbox, not to the quotes desk.' : 'It went to Guardian General\'s quotes desk at ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ', with our branch copied.';
+    show('s-done');
+  } catch (e) { $('formErr').textContent = e.message; $('btnNext').disabled = false; $('btnNext').textContent = 'Send my request'; }
+}
+
+/* ---- start ---- */
+if (!CONFIG.API_URL || CONFIG.API_URL.indexOf('http') !== 0) { $('notice').textContent = 'This page is being connected. Until then, call the branch on (868) 226-6461 for a motor quote.'; $('notice').classList.remove('hide'); }
+const qs = new URLSearchParams(location.search);
+if (qs.get('agent')) { draft.agent = qs.get('agent'); saveDraft(); }
+if (qs.get('email') && !session) $('email').value = qs.get('email');
+$('code').addEventListener('keydown', e => { if (e.key === 'Enter') verifyCode(); });
+$('email').addEventListener('keydown', e => { if (e.key === 'Enter') requestCode(); });
+resume();
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
