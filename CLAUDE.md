@@ -246,6 +246,48 @@ on the line, so effectively a fail. That is why `--muted` is `#5b6670`.
 - **Shadows take their hue from the ground, not from black.** `--sh` is
   `32deg 20% 42%`; transparent black desaturates a warm surface.
 
+### The impact layer, added the same day
+
+First cut of the light page was correct and dead: *"there is no motion nor
+apealing and not impactful"*. Correct is not the same as alive. What went in,
+all of it still inside the no-preference query:
+
+- **Kinetic headlines, word by word, never letter by letter.** Splitting to
+  characters is the dated form and it wrecks the screen-reader read. The split
+  is done in JS only when motion is allowed, and the heading first gets its
+  whole sentence as an `aria-label`, so assistive tech reads the sentence
+  rather than walking a pile of spans. The hero splits on load; every other
+  heading splits when it is nearly in view.
+- **Counters count UP TO the figure already in the markup**, never to it. The
+  true number ships in the HTML, so no JS — or a thrown error — still leaves
+  the right figure on screen. Shipping `0` and filling it in by script is how
+  a page ends up showing zeros.
+- **Two drifting colour fields behind the hero**, radial gradients with a long
+  transparent falloff. Not `filter: blur()` on a moving layer: that has to be
+  re-rasterised every frame and is what took an earlier build to about 5fps.
+- **Hover depth moves an opacity, not a shadow.** The lift shadow lives on a
+  `::after` and only its opacity transitions, because `box-shadow` is on
+  web.dev's do-not-animate list.
+- **A moving strip of what the branch covers**, paused on hover, and the
+  open/closed dot breathes, so the page has a pulse at rest.
+- **One statement moment** between the quotes and the applications: large
+  type, scroll-driven, saying the thing the whole site is for.
+
+Measured after: 16.7ms a frame over three passes, cumulative layout shift 0.
+
+### `scrollWidth` is not a test for sideways scroll
+
+The audit used `scrollWidth > clientWidth` and it is the wrong measure in both
+directions. With `overflow-x: clip` on the body — which **propagates to the
+viewport**, so the body ends up visible and the html element clips — a
+deliberately clipped marquee reads as a failure though nothing can scroll.
+Worse, it hid a real one: the hero's decorative field at `right: -8vw` was
+genuinely scrollable, 102px of sideways drag at 1280, and the proxy never
+distinguished the two. The check now *attempts the scroll* and reads
+`scrollX`, and separately reports any element overflowing with no clipping
+ancestor. `.hero` takes `overflow: clip` (not `hidden`, which would make it a
+scroll container).
+
 ### The audit harness
 
 `qa/audit.js` in the session scratchpad measures the page rather than

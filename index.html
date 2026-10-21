@@ -708,6 +708,231 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   @view-transition { navigation: auto; }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOTION, PART TWO — the impact layer.
+
+   Still opt-in: every finished state above is the plain CSS default, and
+   nothing below exists outside the no-preference query. A study of 808
+   juried award winners found no single effect moves the score by more than
+   ±0.05 — so none of this is here to be clever. It is here because a page
+   that never moves reads as a document, and this one has to sell.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* ── the ground: two soft colour fields drifting behind the hero.
+        Radial gradients with a long transparent falloff, NOT filter:blur()
+        on a moving layer — a blur has to be re-rasterised every frame and
+        that is what took an earlier build from 60fps to about 5. ──────── */
+  /* clip, not hidden: clip contains the drifting fields without making the
+     hero a scroll container. Without it the -8vw field is scrollable — 102px
+     of sideways scroll at 1280, which is exactly 8% of the viewport. */
+  .hero { position: relative; isolation: isolate; overflow: clip; }
+  @supports not (overflow: clip) { .hero { overflow: hidden; } }
+  .hero::before, .hero::after {
+    content: ''; position: absolute; z-index: -1;
+    border-radius: 50%; pointer-events: none;
+    will-change: transform;
+  }
+  .hero::before {
+    width: 46vw; height: 46vw; left: -10vw; top: -14vh;
+    background: radial-gradient(circle closest-side,
+      rgba(0,114,141,.13), rgba(0,114,141,.05) 45%, transparent 72%);
+    animation: drift-a 26s ease-in-out infinite;
+  }
+  .hero::after {
+    width: 40vw; height: 40vw; right: -8vw; bottom: -18vh;
+    background: radial-gradient(circle closest-side,
+      rgba(13,63,94,.12), rgba(13,63,94,.04) 45%, transparent 72%);
+    animation: drift-b 34s ease-in-out infinite;
+  }
+  @keyframes drift-a {
+    0%,100% { transform: translate3d(0,0,0) }
+    50%     { transform: translate3d(5vw,4vh,0) }
+  }
+  @keyframes drift-b {
+    0%,100% { transform: translate3d(0,0,0) }
+    50%     { transform: translate3d(-4vw,-5vh,0) }
+  }
+
+  /* ── kinetic headline. Word by word, never letter by letter: splitting to
+        characters is the dated form and it wrecks the screen-reader read.
+        The spans are added by JS only when motion is allowed, so the plain
+        markup is what a reader and a crawler get. ────────────────────── */
+  .w { display: inline-block; }
+  .w > i {
+    display: inline-block; font-style: inherit;
+    animation: word-in .72s var(--ease-out) backwards;
+    animation-delay: calc(var(--wi, 0) * 52ms + 120ms);
+  }
+  @keyframes word-in {
+    from { opacity: 0; transform: translateY(.5em) rotate(1.5deg); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* the hero's supporting pieces follow the headline in */
+  .hero .pill,
+  .hero .hero-sub,
+  .hero .hero-cta,
+  .hero .hero-marks { animation: lift-in .8s var(--ease-out) backwards; }
+  .hero .pill       { animation-delay: 60ms; }
+  .hero .hero-sub   { animation-delay: 420ms; }
+  .hero .hero-cta   { animation-delay: 540ms; }
+  .hero .hero-marks { animation-delay: 640ms; }
+  .hero .proof      { animation: panel-in 1s var(--ease-out) .3s backwards; }
+  @keyframes lift-in  { from { opacity:0; transform: translateY(14px) } to { opacity:1; transform:none } }
+  @keyframes panel-in { from { opacity:0; transform: translateY(26px) scale(.985) } to { opacity:1; transform:none } }
+
+  /* ── section headings reveal as they arrive, driven by the scroll ── */
+  @supports (animation-timeline: view()) {
+    .lede .eyebrow {
+      animation: eyebrow-in .6s var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 22%;
+    }
+    @keyframes eyebrow-in { from { opacity:0; transform: translateX(-10px) } to { opacity:1; transform:none } }
+
+    .lede h2 {
+      animation: head-in .8s var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 12% cover 28%;
+    }
+    @keyframes head-in { from { opacity:0; transform: translateY(20px) } to { opacity:1; transform:none } }
+
+    /* cards and rows stagger against their own neighbours */
+    .g-4 > *, .g-3 > *, .g-2 > *, .rows > *, .steps > *, .band-grid > * {
+      animation: card-in .72s var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 20%;
+    }
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(22px) scale(.985); }
+      to   { opacity: 1; transform: none; }
+    }
+    /* Entrances scale from 95%, not 80% — the smaller distance is what
+       makes a set of cards read as calm rather than bouncy. */
+    .g-4 > *:nth-child(2), .g-3 > *:nth-child(2), .rows > *:nth-child(2) { animation-delay: 60ms; }
+    .g-4 > *:nth-child(3), .g-3 > *:nth-child(3), .rows > *:nth-child(3) { animation-delay: 120ms; }
+    .g-4 > *:nth-child(4), .g-3 > *:nth-child(4), .rows > *:nth-child(4) { animation-delay: 180ms; }
+    .rows > *:nth-child(5) { animation-delay: 240ms; }
+    .rows > *:nth-child(6) { animation-delay: 300ms; }
+
+    /* the deep panels arrive as a move rather than a fade */
+    .deep {
+      animation: deep-in .9s var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 6% cover 26%;
+    }
+    @keyframes deep-in {
+      from { opacity: 0; transform: translateY(30px) scale(.98); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* the step rule draws itself between the numbers */
+    .step::after {
+      animation: rule-draw .9s var(--ease) both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 34%;
+      transform-origin: 0 50%;
+    }
+    @keyframes rule-draw { from { scale: 0 1 } to { scale: 1 1 } }
+
+    /* the proof band's left rules grow */
+    .band-grid > div {
+      animation: bar-grow .7s var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 26%;
+    }
+    @keyframes bar-grow {
+      from { opacity:0; border-left-color: transparent; transform: translateX(-8px) }
+      to   { opacity:1; transform: none }
+    }
+  }
+
+  /* ── depth on hover. The shadow lives on a pseudo-element and only its
+        opacity moves: box-shadow is on web.dev's do-not-animate list. ── */
+  .card, a.card, .row { position: relative; }
+  .card::after, .row::after {
+    content: ''; position: absolute; inset: 0;
+    border-radius: inherit; pointer-events: none;
+    box-shadow: var(--e3);
+    opacity: 0; transition: opacity var(--t-mid) var(--ease);
+  }
+  a.card:hover::after, .card.hov:hover::after, .row:hover::after { opacity: 1; }
+
+  /* the icon chip answers the hover */
+  .chip, .row-ic { transition: transform var(--t-mid) var(--ease-out),
+                               background var(--t-fast) var(--ease); }
+  a.card:hover .chip, .card.hov:hover .chip { transform: translateY(-2px) scale(1.06) rotate(-3deg); }
+  .row:hover .row-ic { transform: scale(1.08); background: var(--action); color: #fff; }
+
+  /* a light sweeps the primary button */
+  .btn-1 { position: relative; overflow: hidden; }
+  .btn-1::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 45%;
+    left: -60%; pointer-events: none;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.26), transparent);
+    transition: left .7s var(--ease);
+  }
+  .btn-1:hover::after { left: 115%; }
+
+  /* ── the live strip: what the branch covers, always moving ── */
+  .ticker:hover .ticker-run { animation-play-state: paused; }
+  .ticker-run { animation: ticker 38s linear infinite; }
+  @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+
+  /* the open/closed dot breathes, so the page has a pulse even at rest */
+  .dot:not(.off) { animation: beat 2.4s ease-in-out infinite; }
+  @keyframes beat {
+    0%,100% { box-shadow: 0 0 0 0 rgba(15,122,82,.45) }
+    70%     { box-shadow: 0 0 0 7px rgba(15,122,82,0) }
+  }
+}
+
+/* ═══ THE LIVE STRIP ═══ (structure is outside the motion query, so it
+   still reads as a plain list of what the branch covers when motion is off) */
+.ticker {
+  overflow: hidden; border-block: 1px solid var(--line);
+  background: var(--card); padding-block: var(--sp-s);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.ticker-run { display: flex; width: max-content; gap: var(--sp-l); align-items: center; }
+.ticker-run span {
+  display: inline-flex; align-items: center; gap: var(--sp-2xs);
+  font-family: var(--display); font-size: var(--f-1); font-weight: 600;
+  color: var(--ink); white-space: nowrap; letter-spacing: -.015em;
+}
+.ticker-run span svg { width: 1.1rem; height: 1.1rem; color: var(--action); }
+.ticker-run b { color: var(--line-strong); font-weight: 400; }
+
+/* ═══ THE STATEMENT ═══ one large moment, between the quotes and the apply */
+.say { text-align: center; padding-block: var(--sp-2xl); }
+.say p {
+  font-family: var(--display);
+  font-size: var(--f-5); font-weight: 600; line-height: 1.15;
+  letter-spacing: -.028em; color: var(--ink);
+  max-width: 22ch; margin-inline: auto; text-wrap: balance;
+}
+.say p em { font-style: normal; color: var(--action); }
+.say cite {
+  display: block; margin-top: var(--sp-m);
+  font-style: normal; font-size: var(--f--1); color: var(--muted);
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .say p {
+      animation: say-in 1s var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 14% cover 36%;
+    }
+    @keyframes say-in {
+      from { opacity: 0; transform: translateY(26px) scale(.97); }
+      to   { opacity: 1; transform: none; }
+    }
+  }
+}
+
 /* Print: the page should survive being printed for a client in the office. */
 @media print {
   .nav, .fab, dialog, .hero-cta, #toTop { display: none !important; }
@@ -834,7 +1059,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   <div class="hero-grid">
     <div>
       <span class="pill"><span class="dot" id="openDot"></span><span id="openTxt">Branch open now</span></span>
-      <h1>Protecting your <em>family</em> and everything else that matters to you</h1>
+      <h1 data-words>Protecting your <em>family</em> and everything else that matters to you</h1>
       <p class="hero-sub">Life, critical illness, health, pensions, motor, property and employee benefits — with online quotes and applications you can start from your phone in minutes.</p>
       <div class="hero-cta">
         <a class="btn btn-1" href="#quotes">Request a Quote<svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a>
@@ -853,9 +1078,9 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
         <svg aria-hidden="true" focusable="false" width="22" height="22" style="color:var(--action)"><use href="#i-shield-check"/></svg>
       </div>
       <div class="proof-grid">
-        <div><span class="stat-v num">23&times;</span><span class="stat-k">MDRT qualifications</span></div>
-        <div><span class="stat-v num">32</span><span class="stat-k">Years in Trinidad</span></div>
-        <div><span class="stat-v num">8</span><span class="stat-k">Lines of cover</span></div>
+        <div><span class="stat-v num" data-to="23" data-suffix="&times;">23&times;</span><span class="stat-k">MDRT qualifications</span></div>
+        <div><span class="stat-v num" data-to="32">32</span><span class="stat-k">Years in Trinidad</span></div>
+        <div><span class="stat-v num" data-to="8">8</span><span class="stat-k">Lines of cover</span></div>
         <div><span class="stat-v num">24/7</span><span class="stat-k">Quotes and claims online</span></div>
       </div>
       <p class="proof-foot"><svg aria-hidden="true" focusable="false" width="16" height="16"><use href="#i-pin"/></svg>Chaguanas, Trinidad and Tobago</p>
@@ -863,11 +1088,20 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   </div>
 </header>
 
+
+<!-- ═══ WHAT THE BRANCH COVERS — a strip that keeps moving ═══ -->
+<div class="ticker" aria-label="What we cover">
+  <div class="ticker-run">
+    <span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Life</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Critical illness</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Health</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Motor</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Property</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Personal accident</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Pensions</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Employee benefits</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Education</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Investments</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Key person</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Group plans</span><b>&middot;</b>
+    <span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Life</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Critical illness</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Health</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Motor</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Property</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Personal accident</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Pensions</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Employee benefits</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Education</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Investments</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Key person</span><b>&middot;</b><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Group plans</span><b>&middot;</b>
+  </div>
+</div>
+
 <!-- ═══ WHAT WE COVER — 4 up ═══ -->
 <section id="cover" class="layout">
   <div class="lede">
     <span class="eyebrow">What we cover</span>
-    <h2>Every protection. One branch.</h2>
+    <h2 data-words>Every protection. One branch.</h2>
     <p>Life, critical illness, health, pensions, education, investments, motor, property and employee benefits — whatever you're protecting, we have a policy for it.</p>
   </div>
   <div class="g-4">
@@ -897,9 +1131,9 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <!-- ═══ PROOF BAND — a different shape from the section above ═══ -->
 <div class="band layout">
   <div class="band-grid">
-    <div><span class="stat-v num">23&times;</span><span class="stat-k">MDRT branch</span></div>
-    <div><span class="stat-v num">32</span><span class="stat-k">Years in Trinidad</span></div>
-    <div><span class="stat-v num">8</span><span class="stat-k">Product lines</span></div>
+    <div><span class="stat-v num" data-to="23" data-suffix="&times;">23&times;</span><span class="stat-k">MDRT branch</span></div>
+    <div><span class="stat-v num" data-to="32">32</span><span class="stat-k">Years in Trinidad</span></div>
+    <div><span class="stat-v num" data-to="8">8</span><span class="stat-k">Product lines</span></div>
     <div><span class="stat-v num">2</span><span class="stat-k">Minutes to apply online</span></div>
   </div>
 </div>
@@ -908,7 +1142,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <section id="how" class="layout">
   <div class="lede">
     <span class="eyebrow">How it works</span>
-    <h2>Covered in three simple steps</h2>
+    <h2 data-words>Covered in three simple steps</h2>
     <p>No office visit needed — everything starts right here on your phone.</p>
   </div>
   <div class="steps">
@@ -931,7 +1165,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <section id="quotes" class="layout">
   <div class="lede">
     <span class="eyebrow">Get a quote</span>
-    <h2>Know your price before you commit</h2>
+    <h2 data-words>Know your price before you commit</h2>
     <p>Pick your product — each one opens its own quotation. Free and no-obligation. More quote systems are being added as we build them.</p>
   </div>
 
@@ -999,11 +1233,18 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   </div>
 </section>
 
+
+<!-- ═══ THE STATEMENT — one large moment ═══ -->
+<section class="say layout">
+  <p>Everything here starts online. <em>Every policy is still looked after by a person.</em></p>
+  <cite>23&times; MDRT branch &middot; 32 years in Trinidad &middot; Chaguanas</cite>
+</section>
+
 <!-- ═══ APPLY — a list with one marked recommendation ═══ -->
 <section id="apply" class="layout" style="background:var(--ground-2);border-block:1px solid var(--line)">
   <div class="lede">
     <span class="eyebrow">Apply &amp; enroll</span>
-    <h2>Ready to get covered?</h2>
+    <h2 data-words>Ready to get covered?</h2>
     <p>Complete your application online — securely, from any device. Your information goes straight to our branch for processing.</p>
   </div>
   <div class="rows">
@@ -1034,7 +1275,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <section id="clients" class="layout">
   <div class="lede">
     <span class="eyebrow">Existing clients</span>
-    <h2>We're here after the sale too</h2>
+    <h2 data-words>We're here after the sale too</h2>
     <p>Already insured with us? File a claim, respond to a premium notice, renew a policy, or tell us how we're doing.</p>
   </div>
 
@@ -1113,7 +1354,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <section id="portals" class="layout" style="background:var(--ground-2);border-block:1px solid var(--line)">
   <div class="lede">
     <span class="eyebrow">Portals</span>
-    <h2>Sign in to your area</h2>
+    <h2 data-words>Sign in to your area</h2>
     <p>Clients and employers each have their own portal. Agents and staff use the Branch App.</p>
   </div>
   <div class="g-3">
@@ -1142,7 +1383,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <section id="careers" class="layout">
   <div class="lede">
     <span class="eyebrow">Careers &middot; now selecting &middot; Chaguanas</span>
-    <h2>The environment decides. We select the driven.</h2>
+    <h2 data-words>The environment decides. We select the driven.</h2>
     <p>Talent gets you in the game — environment decides how far you go. This is a 23&times; MDRT branch with 32 years in Trinidad, opening a handful of seats to proven advisors ready for a branch that backs them, and to sharp newcomers ready to be built properly.</p>
   </div>
 
@@ -1186,7 +1427,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <section id="faq" class="layout" style="background:var(--ground-2);border-block:1px solid var(--line)">
   <div class="lede">
     <span class="eyebrow">Questions</span>
-    <h2>The things people ask us first</h2>
+    <h2 data-words>The things people ask us first</h2>
   </div>
   <div class="faq-l">
     <details class="faq-i">
@@ -1228,7 +1469,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <section id="contact" class="layout">
   <div class="lede">
     <span class="eyebrow">Contact</span>
-    <h2>Talk to a real person at the branch</h2>
+    <h2 data-words>Talk to a real person at the branch</h2>
     <p>Everything here starts online — but there is always someone to call, and an office you can walk into.</p>
   </div>
   <div class="g-2">
@@ -1433,6 +1674,85 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
       el.addEventListener('click', function () { dlg.close(); });
     });
   }
+
+  /* ── Kinetic headlines. Words, never characters: splitting to characters
+        is the dated form and it breaks the screen-reader read. The split
+        happens only when motion is allowed, and the heading keeps its whole
+        text as an accessible name so assistive tech reads the sentence
+        rather than walking a pile of spans. ─────────────────────────── */
+  function splitWords(el) {
+    if (!el.getAttribute('aria-label')) {
+      el.setAttribute('aria-label', el.textContent.replace(/\s+/g, ' ').trim());
+    }
+    var i = 0;
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (n) {
+        if (n.nodeType === 3) {
+          if (!n.textContent.trim()) return;
+          var frag = document.createDocumentFragment();
+          n.textContent.split(/(\s+)/).forEach(function (tok) {
+            if (!tok) return;
+            if (!tok.trim()) { frag.appendChild(document.createTextNode(tok)); return; }
+            var w = document.createElement('span'); w.className = 'w';
+            var inner = document.createElement('i');
+            inner.textContent = tok;
+            inner.style.setProperty('--wi', i++);
+            w.appendChild(inner);
+            frag.appendChild(w);
+          });
+          node.replaceChild(frag, n);
+        } else if (n.nodeType === 1) { walk(n); }
+      });
+    })(el);
+  }
+
+  if (!noMotion.matches) {
+    /* the hero splits at once; the rest wait until they are nearly in view,
+       so a heading never animates where nobody is looking */
+    var h1 = document.querySelector('.hero [data-words]');
+    if (h1) splitWords(h1);
+
+    var rest = document.querySelectorAll('section [data-words]');
+    if ('IntersectionObserver' in window && rest.length) {
+      var hw = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          hw.unobserve(e.target);
+          splitWords(e.target);
+        });
+      }, { rootMargin: '0px 0px -12% 0px' });
+      rest.forEach(function (el) { hw.observe(el); });
+    }
+  }
+
+  /* ── Counters. The true figure is already in the markup, so this only
+        ever counts UP TO what is on screen: if the script never runs, the
+        number is still right. ──────────────────────────────────────── */
+  var nums = document.querySelectorAll('[data-to]');
+  if (nums.length && !noMotion.matches && 'IntersectionObserver' in window) {
+    var cio = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        cio.unobserve(e.target);
+        var el = e.target;
+        var to = parseFloat(el.getAttribute('data-to')) || 0;
+        var suffix = el.getAttribute('data-suffix') || '';
+        var t0 = 0, dur = 1100;
+        function frame(t) {
+          if (!t0) t0 = t;
+          var k = Math.min(1, (t - t0) / dur);
+          /* ease-out cubic: fast first, settles rather than stopping dead */
+          var v = Math.round(to * (1 - Math.pow(1 - k, 3)));
+          el.innerHTML = v + suffix;
+          if (k < 1) requestAnimationFrame(frame);
+        }
+        el.innerHTML = '0' + suffix;
+        requestAnimationFrame(frame);
+      });
+    }, { threshold: .4 });
+    nums.forEach(function (el) { cio.observe(el); });
+  }
+
   wire(document.getElementById('helpBtn'), document.getElementById('helpDlg'));
   wire(document.getElementById('burger'),  document.getElementById('menuDlg'));
 })();
