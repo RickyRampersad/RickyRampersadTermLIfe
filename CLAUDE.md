@@ -275,6 +275,67 @@ all of it still inside the no-preference query:
 
 Measured after: 16.7ms a frame over three passes, cumulative layout shift 0.
 
+### The hero is the hovering shield, and it is not to be removed again
+
+Asked for on 21 October 2026, after a rebuild replaced it with a stat panel:
+*"I found the shield before with the motions and the logo and the animation
+with it hovering, etc., was very effective. Just the color was not nice. And
+I've asked you to improve on this and you've went backwards. We are very tech
+driven."*
+
+Read that carefully, because it is the whole lesson of the week. The complaint
+about the dark build was the **colour**. The composition was right and was
+thrown away with the palette. When a look is rejected, change the thing that
+was named and keep the rest.
+
+The hero is a stage: the mark hovering at the centre, three instrument panes
+floating in front of it at their own depths, a dot mesh, three rings, two arcs
+sweeping against them and two satellites. The whole scene tilts to the
+pointer, which is what reads as hovering — one rotation on a `preserve-3d`
+parent moves things at different `translateZ` by different amounts, so there
+is real parallax inside the scene. Mouse and trackpad only: a tilt that sticks
+where a finger left it looks broken.
+
+**The mark is inlined, and it is still the mark.** The hero's SVG is the same
+artwork as `orphan-transition/board-mark.svg` — which is `favicon.svg`'s own
+shape in the board blue — inlined so the check can be stroked on rather than
+arriving already drawn. Nothing there is redrawn or invented; the rule against
+a substitute mark stands. `orphan-transition/board-mark.svg` is new and the
+nav and footer use it, because a vector beats a 352px PNG on a web page.
+**`board-mark.png` is untouched**: the board pages and the three films load it,
+and the films carry it as a data URI.
+
+The panes carry what the stat card carried — lines of cover, the MDRT record,
+the years — so the move lost no content.
+
+**Two traps, both of which drew the rings invisibly at first:**
+
+- An absolutely positioned SVG with `width: 100%` inside a grid whose height
+  comes from `aspect-ratio` has no percentage basis to resolve against. They
+  are grid items in the one cell now (`grid-area: 1 / 1`), sized by their own
+  square `aspect-ratio`. `place-self: stretch` does **not** help: an SVG is a
+  replaced element and stretch leaves it at its natural size.
+- `svg:not([width])` near the top of the sheet is specificity (0,1,1) and
+  outranks a bare class, which pinned them to 20px even once they were grid
+  items. The rule has to be `.stage .mesh`, `.stage .orbit`.
+
+**On a phone, two panes, never three.** The first cut put the product pane
+straight across the check and the mark read as a blue smudge. Below 48rem
+`.pane-b` is hidden; the three products are in the ticker directly beneath
+anyway.
+
+**The loops park by a class added on exit, never removed on entry.**
+`.hero.rest` pauses them when the hero leaves the screen. The other polarity
+— JS adds `.live` to start things — freezes every `backwards`-filled entrance
+at its invisible first frame when the script does not run.
+
+**"How it works" was a void** and is the template for any section that reads
+flat: each step carries an icon chip with its number on the shoulder, the
+connector draws itself on scroll and a pulse runs along it (two animations,
+one touching `scale` and the other `background-position`, so they compose —
+`animation-timeline: view(), auto`), and the section sits on the same dot
+field as the stage. `.mesh-bg` is that field, reusable.
+
 ### `scrollWidth` is not a test for sideways scroll
 
 The audit used `scrollWidth > clientWidth` and it is the wrong measure in both
