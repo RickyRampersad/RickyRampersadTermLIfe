@@ -552,6 +552,25 @@
   .nwprize>div{border-radius:1rem;padding:1rem;text-align:center;background:linear-gradient(140deg,rgba(227,184,90,.2),rgba(227,184,90,.05));border:1px solid rgba(227,184,90,.5)}
   .nwprize b{display:block;font-size:1.6rem;color:var(--gold)}.nwprize span{font-size:1rem;color:#CDD1DA}
   body.mob .nwwins{grid-template-columns:minmax(0,1fr)}body.mob .nwwin b{font-size:1.1rem}body.mob .nwprize b{font-size:1.1rem}
+  /* channel 5: the client's journey (w22) and compliance (w23) */
+  .nwjrny{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.7rem;flex:1;min-height:0;padding-top:1.6rem}
+  .nwjline{position:absolute;left:2%;right:2%;top:2.6rem;height:.35rem;border-radius:.2rem;background:linear-gradient(90deg,var(--teal),var(--violet),var(--sky),var(--gold),var(--green),var(--coral));transform-origin:left center}
+  .nwjdot{position:absolute;top:2.1rem;left:2%;width:1.4rem;height:1.4rem;border-radius:50%;background:#F4F1EA;box-shadow:0 0 1rem rgba(255,255,255,.7);animation:nwwalk 4s cubic-bezier(.45,.05,.55,.95) 1s both}
+  @keyframes nwwalk{from{left:2%}to{left:calc(98% - 1.4rem)}}
+  .nwstop{position:relative;display:flex;flex-direction:column;gap:.55rem;background:var(--panel2);border:1px solid var(--line);border-top:.35rem solid var(--c);border-radius:1rem;padding:2.1rem .9rem .9rem;margin-top:1.4rem}
+  .nwstop .n{position:absolute;top:-1.5rem;left:50%;margin-left:-1.3rem;width:2.6rem;height:2.6rem;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#16171B;font-weight:800;font-size:1.1rem;box-shadow:0 0 0 .35rem var(--bg,#16171B)}
+  .nwstop>b{font-size:1.35rem;line-height:1.15;text-align:center}
+  .nwstop .cg,.nwstop .bh{font-size:1.02rem;line-height:1.35;border-radius:.7rem;padding:.55rem .65rem}
+  .nwstop .cg{background:color-mix(in srgb,var(--c) 14%,transparent);color:#F4F1EA}.nwstop .bh{background:#1B1E25;color:#CDD1DA;margin-top:auto}
+  .nwstop small{display:block;font-size:.72rem;font-weight:800;letter-spacing:.12em;color:var(--c);margin-bottom:.15rem}.nwstop .bh small{color:var(--muted)}
+  .nwcmh{display:grid;grid-template-columns:5.4rem minmax(0,1fr) minmax(0,1.6fr) 2.6rem;gap:1rem;font-size:.85rem;font-weight:800;letter-spacing:.14em;color:var(--muted);padding:0 1rem}
+  .nwcmh span:first-child{grid-column:1 / 3}
+  .nwcm{display:grid;grid-template-columns:5.4rem minmax(0,1fr) minmax(0,1.6fr) 2.6rem;gap:1rem;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:.9rem;padding:.6rem 1rem}
+  .nwcm em{font-style:normal;color:var(--gold);font-weight:800;font-size:1.1rem}.nwcm b{font-size:1.22rem;line-height:1.2}.nwcm span{font-size:1.08rem;color:#CDD1DA;line-height:1.35}
+  .nwcm .ok{font-style:normal;width:2.2rem;height:2.2rem;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#16171B;font-weight:800;font-size:1.2rem}
+  body.mob .nwjrny{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.6rem .6rem}body.mob .nwjline,body.mob .nwjdot{display:none}body.mob .nwstop>b{font-size:.95rem}body.mob .nwstop .cg,body.mob .nwstop .bh{font-size:.75rem}
+  body.mob .nwcm,body.mob .nwcmh{grid-template-columns:3rem minmax(0,1fr) 1.6rem;gap:.5rem;padding:.5rem .6rem}body.mob .nwcm span{grid-column:2 / 3;font-size:.75rem}body.mob .nwcm b{font-size:.88rem}body.mob .nwcm .ok{grid-row:1 / 3;grid-column:3;width:1.5rem;height:1.5rem;font-size:.8rem}body.mob .nwcmh{display:none}
+  @media (prefers-reduced-motion:reduce){.nwjdot{animation:none;left:calc(98% - 1.4rem)}}
   /* the phone */
   .nwph{flex:none;width:19rem;height:38rem;border-radius:2.8rem;border:.55rem solid #2A2E37;background:#121317;position:relative;overflow:hidden;box-shadow:0 2rem 4rem rgba(0,0,0,.45),0 0 0 1px #3A3F4A;
     animation:pop .8s cubic-bezier(.3,1.4,.5,1) both;animation-delay:.3s}
@@ -901,6 +920,25 @@ const SCENES=[
         '<div class="lab g">NOW</div><div class="nwnow"><i>✓</i><span>'+esc(c[1])+'</span></div></div>').join("")+'</div>'; },
   line:()=>({live:"A new financial year, and a new way of work. Here is what has changed at the branch.",rec:"It's a new financial year, and we've got a new way of working. Let me show you what's changed."})},
 
+ {id:"w22",ch:"newway",dwell:19000,when:()=>nwOn(),
+  // Ricky, 21 Oct 5:53pm: "frame it properly: for our client it's a journey at every touch point, and our agents count on
+  // the support". Each stop: what the client gets, and who stands behind the agent there. From the branch's own systems:
+  // FactFind360, the Log Book and Delivery Book, Query Pal, Branch Intelligence, the premium-due process, the watchlists.
+  html:()=>{ const J=[["The fact find","Their needs, their family, what they can afford","The agent, with the digital fact find",COL.teal],
+      ["Their plan, in writing","A draft in plain words, their own copy","Independently checked; the manager signs off",COL.violet],
+      ["The application","Followed every day until it is decided","Sales Support and Branch Intelligence chase it",COL.sky],
+      ["The policy, delivered","In their hands within 20 days, signed for","The Delivery Book; the client e-mailed and asked to rate",COL.gold],
+      ["Every question","Logged online, answered on time, in writing","Query Pal; Sales Support chase it to the end",COL.green],
+      ["The years after","Premiums watched; maturities and reviews ahead","45 and 75-day dues; the watchlists for agents",COL.coral]];
+    return head("newway","FY27 · THE CLIENT'S JOURNEY","With them at every touch point",
+        "For a client, it is one journey from the first conversation to the years after. At every stop something is sent, checked or followed, and the agent never walks it alone.")+
+      '<div class="panel" style="gap:.7rem;flex:1;min-height:0"><div class="nwjrny"><i class="nwjline a grow" style="--d:.5s"></i><i class="nwjdot" aria-hidden="true"></i>'+J.map((j,i)=>
+        '<div class="nwstop a pop" style="--d:'+(.8+i*.55).toFixed(2)+'s;--c:'+j[3]+'"><span class="n mono">'+(i+1)+'</span><b>'+esc(j[0])+'</b>'+
+          '<div class="cg"><small>THE CLIENT</small>'+esc(j[1])+'</div><div class="bh"><small>BEHIND THE AGENT</small>'+esc(j[2])+'</div></div>').join("")+'</div>'+
+        '<div class="nwrib a rise" style="--d:4.4s;justify-content:center"><span>Agents</span><span>Sales Support</span><span>The BMA</span><span>The Unit Manager</span><span>The Branch Manager</span><span><em>+</em>the system, every day</span></div></div>'; },
+  line:()=>({live:"For our clients, it's one journey, and we're there at every touch point. From the first fact find to the policy in their hands, and every year after. And our agents never walk it alone.",
+    rec:"For our clients, it's one journey, and we're there at every touch point. From the first fact find to the policy in their hands, and every year after. And our agents never walk it alone."})},
+
  {id:"w2",ch:"newway",dwell:16000,when:()=>nwOn(),
   html:()=>{ const tools=[["Log Book",COL.teal],["Transmittal",COL.teal],["My clients board",COL.teal],["Delivery Book",COL.teal],["Premium Due Desk",COL.teal],["Query Pal",COL.coral],
       ["Fact Find",COL.coral],["Group clients",COL.coral],["FY27 Flight Plan",COL.gold],["The walls",COL.violet],["Meetings",COL.sky],["Forms",COL.gold]];
@@ -1183,6 +1221,25 @@ const SCENES=[
           '<span class="mono" style="text-align:right;white-space:nowrap;font-size:'+mq('1.05rem','.72rem')+';color:#CDD1DA">'+(r.ffMonth||0)+' ff · '+(r.appsMonth||0)+' app'+(r.appsMonth===1?'':'s')+'</span></div>').join("")+'</div></div></div>'; },
   line:()=>{ const a=A(); return {live:"Fact find insights. "+plural(a.ffMonth||0,"fact find")+" and "+plural(a.appsMonth||0,"application")+" this month.",
     rec:"Fact find insights. Every conversation goes on a fact find, and we read them every single day: the fact finds, the applications, and the year's goals."}; }},
+
+ {id:"w23",ch:"newway",dwell:18000,when:()=>nwOn(),
+  // Ricky, 21 Oct 5:53pm: "knowing proper fact find and keeping compliant according to the act is key, so in the video we
+  // must be shown as fully compliant according to the Insurance Act, market conduct". The Central Bank of Trinidad and
+  // Tobago's Market Conduct Guideline (July 2023), issued under the Insurance Act, 2018, clause by clause, against what
+  // the branch's systems do.
+  html:()=>{ const C=[["5.2","Needs before a recommendation","Every sale starts with the digital fact find: needs, dependants, what they can afford, and their duty to disclose"],
+      ["5.2.2","Advice in writing, in plain words","The client gets their plan in writing, and a copy is kept on file"],
+      ["5.3.1","Intermediaries monitored","Each fact find independently checked; the manager signs off; every outcome followed"],
+      ["5.4.2","Policies delivered within 20 business days","Every contract tracked from collection to the client's signature, chased before the deadline"],
+      ["5.4.3","Kept informed after the sale","Premium dues at 45 and 75 days, handovers e-mailed the same minute"],
+      ["5.6","Their information kept private","Agents see only their own clients; no client is ever named on a wall"],
+      ["5.7","Complaints handled promptly","Every query logged, owned, answered on time and in writing"]];
+    return head("newway","FY27 · COMPLIANT AT EVERY TOUCH POINT","Built to the market conduct rules",
+        "Mapped to the Central Bank's Market Conduct Guideline, issued under the Insurance Act, 2018: what it asks for, and how the branch does it every day.")+
+      '<div class="panel" style="gap:.45rem"><div class="nwcmh"><span>THE GUIDELINE</span><span>HOW THE BRANCH DOES IT</span></div>'+C.map((c,i)=>
+        '<div class="nwcm a slide" style="--d:'+(.5+i*.38).toFixed(2)+'s"><em class="mono">'+c[0]+'</em><b>'+esc(c[1])+'</b><span>'+esc(c[2])+'</span><i class="ok a pop" style="--d:'+(.9+i*.38).toFixed(2)+'s">&#10003;</i></div>').join("")+'</div>'; },
+  line:()=>({live:"And all of it is built to the Central Bank's market conduct rules, under the Insurance Act. Needs first, advice in writing, policies delivered on time, and every complaint answered.",
+    rec:"And all of it is built to the Central Bank's market conduct rules, under the Insurance Act. Needs first, advice in writing, policies delivered on time, and every complaint answered."})},
 
  {id:"w18",ch:"newway",dwell:18000,when:()=>nwOn(),
   // Ricky, 21 Oct 12:28: "not seeing reminders on fact finds". The follow-up that never lets a yes go quiet: FactFind360's
