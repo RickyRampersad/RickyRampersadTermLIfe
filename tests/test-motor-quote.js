@@ -369,6 +369,105 @@ const RISKS = [
   ok('the new row lands under the right headers, the old row untouched', row[hdr.indexOf('Vehicle #')] === 'PDX 1234' && row[hdr.indexOf('Request type')] === 'Quote, full details' && sh._grid[1][0] === 'MQ-261020-001');
 }
 
+/* ── taking the quote: the quotation, the certified copy, the permit read; the proposal sent ── */
+const QUOTE_READ = { policyNo: 'TT APG 0000001', quoteNo: 'TTQT0000', insuredName: 'Anika Pretend', insuredAddress: '#1 Pretend Street, Couva', periodFrom: '2026-10-16',
+  periodTo: '2027-10-15', cover: 'C', year: '2026', make: 'MG', model: 'ZS LUX', body: 'Crossover/ Crossover SUV/ CUV', seating: '5', cc: '1600', reg: '.', chassis: '.', engine: '.',
+  sumInsured: '$ 213,387', premium: '8,270.51', tax: '496.23', total: '$8,766.74', ncd: '40%', discounts: '10% Anti-Theft, 40% NCD', antiTheft: 'yes', specialPerils: 'Yes',
+  windscreenAll: 'Yes', windscreenLimit: '$10,000', windscreenFrontBack: '', windscreenFrontBackLimit: '', paPassengers: 'Yes', courtesyCar: 'Yes', agreedDepreciation: '',
+  hospitalisation: '', excessWaiver: 'Yes', mechanical: '', mechanicalLevel: '', survivors: '', evBattery: 'maybe', evBatteryLimit: '', notes: '' };
+const CERT_READ = { reg: 'pdz 9999', make: 'Jeep', model: 'Wrangler', description: '4DR GAS A/T 4WD', colour: 'Black', chassis: '1abcd23efg4567890', engine: 'eb0000000',
+  cc: '1,956', seating: '5 INCL. DRIVER', year: '2020', body: 'SUV', fuel: 'GAS', ownerName: 'Anika Pretend', ownerAddress: '1 Pretend Street', notes: '' };
+{
+  const { env, AI } = world(Object.assign({}, SFPROPS, { ANTHROPIC_API_KEY: 'sk-test' }), { ai: QUOTE_READ });
+  const tok = signIn(env, 'anika@example.com');
+  const q = post(env, { action: 'readDoc', kind: 'quote', token: tok, file: { name: 'quote.pdf', type: 'application/pdf', data: PNG } });
+  const F = q.fields || {};
+  ok('the quotation is read with its own fields, and the instructions name it', q.ok && q.read && q.kind === 'quote' && /Quotation Schedule/.test(AI.calls[0].body.system) &&
+    AI.calls[0].body.output_config.format.schema.required.indexOf('policyNo') > -1);
+  ok('the quotation: "Cover : C" is Comprehensive, dates kept, money as numbers', F.cover === 'Comprehensive' && F.periodFrom === '2026-10-16' && F.total === '8766.74' && F.sumInsured === '213387' && F.windscreenLimit === '10000');
+  ok('the quotation: a dot is no registration, chassis or engine', F.reg === '' && F.chassis === '' && F.engine === '');
+  ok('the quotation: a benefit is Yes only when it says yes', F.specialPerils === 'Yes' && F.antiTheft === 'Yes' && F.evBattery === '' && F.hospitalisation === '');
+  ok('an unknown kind of document is refused', post(env, { action: 'readDoc', kind: 'passport', token: tok, file: { name: 'p.jpg', type: 'image/jpeg', data: PNG } }).ok === false);
+}
+{
+  const { env, AI } = world(Object.assign({}, SFPROPS, { ANTHROPIC_API_KEY: 'sk-test' }), { ai: CERT_READ });
+  const tok = signIn(env, 'anika@example.com');
+  const c = post(env, { action: 'readDoc', kind: 'certified', token: tok, file: { name: 'cc.pdf', type: 'application/pdf', data: PNG } }).fields || {};
+  ok('the certified copy: chassis and engine exactly, upper-cased; seating as a number', c.chassis === '1ABCD23EFG4567890' && c.engine === 'EB0000000' && c.seating === '5' && c.cc === '1956' && c.reg === 'PDZ 9999');
+  ok('the certified copy: GAS is the proposal\'s Gas, and only the current owner is asked for', c.fuel === 'Gas' && /CURRENT registered owner/.test(AI.calls[0].body.output_config.format.schema.properties.ownerName.description) &&
+    /Never any earlier owner/.test(AI.calls[0].body.output_config.format.schema.properties.ownerName.description));
+}
+const PA = { title: 'Ms', first: 'Anika', surname: 'Pretend', dob: '1988-04-12', pob: 'San Fernando', nationality: 'Trinidad and Tobago', residence: 'Trinidad and Tobago', marital: 'Married',
+  address: '1 Pretend Street, Couva', phone: '868-555-0101', occupation: 'Teacher', employer: 'A school', pep: 'No', permitNo: 'DP000000', permitIssued: '2010-05-01', permitClass: '1',
+  otherGG: 'No', q3a: 'No', q3b: 'No', q4: 'Yes', fuel: 'Hybrid', reg: 'Not registered yet', makeModel: 'MG ZS LUX', chassis: 'LSJ000', engine: 'EN000', year: '2026', cc: '1600', seating: '5',
+  body: 'SUV', sumInsured: '213387', acc: 'No', q6: 'No', cond: 'New', q7b: 'Yes', q7c: 'No', q7d: 'No', q7e: 'No', q8: 'Yes', q9: 'Yes', q9d: 'Factory immobiliser, October 2026',
+  q10: 'Locked garage', q11: 'No', q12: 'No', q13: 'Yes', q13d: 'PDX 1234 with Another Insurer', q14a: 'No', q14b: 'No', q14c: 'No', q15: 'Yes',
+  accidents: [{ date: '2024-06-01', cost: '3500', driver: 'Anika Pretend', details: 'A small bump in a car park.' }], q16a: 'No', q16b: 'No', q16c: 'Yes',
+  cover: 'Comprehensive', from: '2026-10-16', to: '2027-10-15', b19a: 'Yes', b19b: 'Yes', b19bLimit: '10000', b19c: 'No', b19d: 'Yes', b19e: 'Yes', b19f: 'No', b19g: 'No', b19h: 'Yes',
+  b19i: 'No', b19j: 'No', b19k: 'No', signDate: '2026-10-21', policyNo: 'TT APG 0000001', quoteTotal: '8766.74', email: 'someone-else@example.com' };
+for (let i = 1; i <= 17; i++) PA['k' + i] = i === 4 ? 'No' : 'Yes';
+const PDF = Buffer.from('%PDF-1.4 sample').toString('base64');
+const PFILES = [{ kind: 'quote', name: 'quote.pdf', type: 'application/pdf', data: PDF }, { kind: 'certified', name: 'cc.jpg', type: 'image/jpeg', data: PNG },
+  { kind: 'permit', name: 'permit.jpg', type: 'image/jpeg', data: PNG }, { kind: 'proposal', name: 'proposal.pdf', type: 'application/pdf', data: PDF },
+  { kind: 'kyp', name: 'kyp.pdf', type: 'application/pdf', data: PDF }];
+{
+  const { env, mails, SF } = world(Object.assign({}, SFPROPS, { MQ_BIND_TO: 'binding@example.com' }));
+  const tok = signIn(env, 'anika@example.com');
+  const qr = post(env, { action: 'submit', token: tok, quote: GOOD }).ref;
+  mails.length = 0;
+  const none = post(env, { action: 'propose', token: tok, answers: Object.assign({}, PA, { pep: '', q12: 'maybe', k9: '' }), files: PFILES });
+  ok('a proposal missing a declaration is refused whole, naming what is missing, nothing filed', none.ok === false && none.missing.indexOf('pep') > -1 && none.missing.indexOf('q12') > -1 &&
+    none.missing.indexOf('Know Your Policy point 9') > -1 && !env.__sheets['Motor Proposals']);
+  const det = post(env, { action: 'propose', token: tok, answers: Object.assign({}, PA, { q9d: '', q15: 'Yes', accidents: [] }), files: PFILES });
+  ok('a Yes that asks for details needs them', det.ok === false && det.missing.indexOf('the anti-theft device and when it was fitted') > -1 && det.missing.indexOf('the accidents or claims') > -1);
+  const nopdf = post(env, { action: 'propose', token: tok, answers: PA, files: PFILES.filter(f => f.kind !== 'kyp') });
+  ok('without the signed forms nothing goes', nopdf.ok === false && /did not come through/.test(nopdf.error));
+  const noq = post(env, { action: 'propose', token: tok, answers: PA, files: PFILES.filter(f => f.kind !== 'quote') });
+  ok('without the quotation nothing goes', noq.ok === false && /quotation/.test(noq.error));
+  const r = post(env, { action: 'propose', token: tok, quoteRef: qr, answers: PA, files: PFILES });
+  ok('a complete proposal is accepted with an MP reference', r.ok && /^MP-\d{6}-001$/.test(r.ref) && r.sentTo === 'binding@example.com', r.error || '');
+  const sh = env.__sheets['Motor Proposals'], hdr = sh._grid[0], row = sh._grid[1], col = n => row[hdr.indexOf(n)];
+  ok('the row: the signed-in e-mail, the vehicle, the policy number, the quote it takes', col('Email') === 'anika@example.com' && col('Chassis') === 'LSJ000' && col('Policy number') === 'TT APG 0000001' && col('Quote ref') === qr);
+  ok('the row says what needs attention and what the client did not understand', /Accidents or claims/.test(col('Needs attention')) && /4\. The representative explained the excesses/.test(col('KYP not understood')));
+  const desk = mails.find(m => /Motor proposal MP-/.test(m.subject)), rcpt = mails.find(m => /Your motor proposal is in/.test(m.subject));
+  ok('the desk gets one e-mail with all five documents', desk && /Anika Pretend · MG ZS LUX 2026 \(Not registered yet\) · TT APG 0000001 · taking the quote/.test(desk.subject) && desk.attachments.length === 5);
+  ok('the desk e-mail puts what to read first at the top', /Read first/.test(desk.htmlBody) && /Accidents or claims in the past three years/.test(desk.htmlBody) && /Call the client before cover is placed/.test(desk.htmlBody));
+  ok('the client gets their own signed proposal and Know Your Policy form', rcpt && rcpt.attachments.length === 2 && /Cover starts once the premium is paid/.test(rcpt.htmlBody));
+  ok('the quote request is marked as taken', env.__sheets['Motor Quotes']._grid[1][env.__sheets['Motor Quotes']._grid[0].indexOf('Status')] === 'Accepted: proposal ' + r.ref + ' sent');
+  ok('in test mode nothing is written to Salesforce', SF.created.length === 0);
+}
+{
+  const { env } = world(SFPROPS);
+  const t1 = signIn(env, 'anika@example.com'), qr = post(env, { action: 'submit', token: t1, quote: GOOD }).ref;
+  const t2 = signIn(env, 'newperson@example.com');
+  const r = post(env, { action: 'propose', token: t2, quoteRef: qr, answers: PA, files: PFILES });
+  ok('a proposal never marks someone else\'s quote request', r.ok && env.__sheets['Motor Quotes']._grid[1][env.__sheets['Motor Quotes']._grid[0].indexOf('Status')] === 'Sent to quotes desk');
+}
+
+/* ── Guardian's own forms, filled where their blanks are ──────────── */
+{
+  const forms = require(path.join(ROOT, 'motor-quote/forms.js'));
+  let PDFLib = null; try { PDFLib = require(path.join(ROOT, 'motor-quote/vendor/pdf-lib-1.17.1.min.js')); } catch (e) {}
+  ok('the filler knows every key the script checks', ['pep', 'otherGG', 'q3a', 'q3b', 'q4', 'acc', 'q6', 'q7b', 'q7c', 'q7d', 'q7e', 'q8', 'q9', 'q11', 'q12', 'q13', 'q14a', 'q14b', 'q14c', 'q15', 'q16a', 'q16b', 'q16c',
+    'b19a', 'b19b', 'b19c', 'b19d', 'b19e', 'b19f', 'b19g', 'b19h', 'b19i', 'b19j', 'b19k'].every(k => forms.PROPOSAL[k] && forms.PROPOSAL[k].t === 'yn') && forms.KYP.length === 17);
+  if (PDFLib) {
+    const done = (async () => {
+      const tp = fs.readFileSync(path.join(ROOT, 'motor-quote/forms/gg-private-motor-proposal.pdf')), tk = fs.readFileSync(path.join(ROOT, 'motor-quote/forms/gg-know-your-policy-private-motor.pdf'));
+      const kypDoc = await PDFLib.PDFDocument.load(tk), names = kypDoc.getForm().getFields().map(f => f.getName());
+      ok('Guardian\'s Know Your Policy form has every box the filler ticks', forms.KYP.every(q => names.indexOf(q[1]) > -1 && names.indexOf(q[2]) > -1) && ['I', 'Text1', 'Text2', 'Text4', 'Text5'].every(n => names.indexOf(n) > -1));
+      const P = await forms.fillProposal(PDFLib, tp, PA, null), K = await forms.fillKyp(PDFLib, tk, PA, null);
+      const pd = await PDFLib.PDFDocument.load(P), kd = await PDFLib.PDFDocument.load(K), kf = kd.getForm();
+      ok('the proposal stays Guardian\'s four US Legal pages', pd.getPageCount() === 4 && pd.getPages().every(pg => pg.getHeight() === 1008 && pg.getWidth() === 612));
+      ok('Know Your Policy: each answer ticks its own box, a No its NO box', kf.getCheckBox('ChkBox').isChecked() && !kf.getCheckBox('ChkBox-0').isChecked() &&
+        !kf.getCheckBox('ChkBox-4').isChecked() && kf.getCheckBox('ChkBox-5').isChecked());
+      ok('Know Your Policy: the name in block letters, the date as the form asks', kf.getTextField('Text1').getText() === 'ANIKA PRETEND' && kf.getTextField('Text2').getText() === '10/21/26');
+      ok('the representative\'s half is left for the branch', !kf.getTextField('Text6').getText() && !kf.getTextField('Text8').getText());
+      ok('dates go on the form as MM/DD/YY', forms.mdy('2026-10-16') === '10/16/26');
+    })();
+    module.exports = done;
+  } else ok('pdf-lib is in motor-quote/vendor', false);
+}
+
 /* ── the pages ───────────────────────────────────────────────────── */
 {
   const page = fs.readFileSync(path.join(ROOT, 'motor-quote/index.html'), 'utf8');
@@ -390,5 +489,7 @@ const RISKS = [
   ok('no client name in the script or the page', !/Rampersad\b(?! Branch)/.test(gs.replace(/Ricky Rampersad Branch/g, '')) && !/@gmail\.com|@hotmail\.com|@yahoo\.com/.test(gs + page));
 }
 
-console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');
-process.exit(fails ? 1 : 0);
+Promise.resolve(module.exports && module.exports.then ? module.exports : null).catch(e => { console.log('  FAIL  ' + e.message); fails++; }).then(() => {
+  console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');
+  process.exit(fails ? 1 : 0);
+});

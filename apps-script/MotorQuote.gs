@@ -88,7 +88,7 @@ var MQ = {
 
   CODE_TTL_MIN: 10, CODE_MAX_TRIES: 5, CODE_SENDS_PER_HOUR: 4,
   SESSION_DAYS: 30,
-  MAX_FILE_BYTES: 6 * 1024 * 1024, MAX_FILES: 3,
+  MAX_FILE_BYTES: 6 * 1024 * 1024, MAX_FILES: 4, MAX_PROPOSAL_FILES: 7,
   TASK_DUE_DAYS: 2,
 
   TABS: { quotes: 'Motor Quotes', files: 'Quote Files', log: 'Quote Log', sessions: 'Sessions' },
@@ -173,7 +173,9 @@ function doPost(e) {
       case 'verifyCode':  out = mqVerifyCode_(b); break;
       case 'me':          out = mqMe_(b); break;
       case 'submit':      out = mqSubmit_(b); break;
-      case 'readInvoice': out = mqReadInvoice_(b); break;
+      case 'readInvoice': out = mqReadDoc_(b, 'invoice'); break;
+      case 'readDoc':     out = mqReadDoc_(b, mqClean_(b.kind, 20)); break;
+      case 'propose':     out = mqPropose_(b); break;
       case 'signOut':     out = mqSignOut_(b); break;
       default:            out = { ok: false, error: 'Unknown action' };
     }
@@ -431,6 +433,12 @@ function mqLookup_(email) {
       ' OR Preferred_Email__c = ' + mqQ_(email) + ' ORDER BY LastModifiedDate DESC LIMIT 5');
   } catch (e) { mqLog_('(lookup)', 'contact-failed', String(e)); }
   if (contacts.length) {
+    /* The address, for the proposal form: asked apart, so an org without these fields still signs the client in. */
+    try {
+      var adr = mqSoql_('SELECT Id, Salutation, MailingStreet, MailingCity, MailingCountry FROM Contact WHERE Id = ' + mqQ_(contacts[0].Id) + ' LIMIT 1')[0] || {};
+      me.salutation = adr.Salutation || '';
+      me.address = [adr.MailingStreet, adr.MailingCity].filter(Boolean).join(', ').replace(/\s*\n\s*/g, ', ');
+    } catch (e) { mqLog_('(lookup)', 'address-failed', String(e)); }
     var c = contacts[0];
     me.found = true; me.contactId = c.Id; me.name = c.Name || ''; me.first = c.FirstName || ''; me.last = c.LastName || '';
     me.mobile = c.MobilePhone || c.Phone || ''; me.occupation = mqNiceTitle_(c.Title); me.dob = c.Birthdate || '';
@@ -595,13 +603,13 @@ function mqTask_(d, ref, contactId) {
     while (n < MQ.TASK_DUE_DAYS) { due.setDate(due.getDate() + 1); if (due.getDay() !== 0 && due.getDay() !== 6) n++; }
     var body = {
       WhoId: contactId,
-      Subject: (d.flow === 'renew' ? 'Motor renewal ' : 'Motor quote ') + ref + ': ' + [d.year, d.make, d.model].filter(Boolean).join(' ') +
+      Subject: (d.flow === 'renew' ? 'Motor renewal ' : d.flow === 'proposal' ? 'Motor proposal ' : 'Motor quote ') + ref + ': ' + [d.year, d.make, d.model].filter(Boolean).join(' ') +
         ' (' + d.reg + ') · ' + (d.flow === 'renew' ? d.renewChoice + (d.renewDate ? ', renews ' + d.renewDate : '') : d.cover),
       Status: 'In Progress', Priority: 'Normal',
       ActivityDate: Utilities.formatDate(due, mqTz_(), 'yyyy-MM-dd'),
-      Description: ((d.flow === 'renew' ? 'Renewal' : 'Quote') + ' requested on ' + MQ.SITE + ' and sent to ' +
+      Description: ((d.flow === 'renew' ? 'Renewal' : d.flow === 'proposal' ? 'Proposal (the client is taking the quote)' : 'Quote') + ' requested on ' + MQ.SITE + ' and sent to ' +
         (d.flow === 'renew' ? mqRenewTo_() : mqQuotesTo_()) + ' on ' + mqDate_() + '.\n\n' +
-        mqFieldsText_(d) + '\n\nReference ' + ref + '. Close this task when the quote has reached the client.').slice(0, 31000),
+        mqFieldsText_(d) + '\n\nReference ' + ref + (d.flow === 'proposal' ? '. Close this task when the premium is paid and the policy issued.' : '. Close this task when the quote has reached the client.')).slice(0, 31000),
     };
     var owner = mqProp_('MQ_SF_OWNER');
     if (mqIsSfId_(owner)) body.OwnerId = owner;
@@ -724,9 +732,10 @@ function mqRead_(q, s) {
 
 /** The uploads: base64 in the request, each under MAX_FILE_BYTES, images or
  *  PDFs only, at most MAX_FILES. Anything else is refused whole. */
-function mqFiles_(list) {
+function mqFiles_(list, max) {
   if (!list || !list.length) return [];
-  if (list.length > MQ.MAX_FILES) throw new Error('Please attach no more than ' + MQ.MAX_FILES + ' files.');
+  max = max || MQ.MAX_FILES;
+  if (list.length > max) throw new Error('Please attach no more than ' + max + ' files.');
   return list.map(function (f) {
     var kind = mqClean_(f.kind, 40) || 'document', name = mqClean_(f.name, 120).replace(/[\\\/:*?"<>|]/g, '_') || 'file';
     var type = mqClean_(f.type, 80).toLowerCase();
@@ -867,41 +876,95 @@ var MQ_INV_SYSTEM = 'You read a document a client uploads to get a motor insuran
   'Never guess. Leave a field as an empty string when it is not printed or cannot be read with confidence. ' +
   'Dates as yyyy-mm-dd, digits only for numbers, no currency signs or commas.';
 
+/* The other documents the client uploads to take a quote (21 October 2026: "once they agree on the quote … they can
+   upload the certified copy, it should extract all the details on the vehicles … and also fill out the proposal form
+   very fast"). Each is read the same way as the invoice, with its own fields. */
+var MQ_QUOTE_FIELDS = {
+  policyNo: 'The policy number at the top right (e.g. "TT APG 0000000").', quoteNo: 'The invoice or quotation number, if printed.',
+  insuredName: 'The insured, as printed.', insuredAddress: 'The address under "TO:", as printed.',
+  periodFrom: 'Period of insurance from, as yyyy-mm-dd.', periodTo: 'Period of insurance to, as yyyy-mm-dd.',
+  cover: 'Comprehensive, Third Party Fire and Theft, or Third Party ("Cover : C" is Comprehensive).',
+  year: 'Year of the vehicle, four digits.', make: 'The make.', model: 'The model and trim.', body: 'The body type, as printed.',
+  seating: 'Seating, digits only.', cc: 'CC, digits only.', reg: 'Registration mark, if printed (a dot means none).',
+  chassis: 'Chassis number, if printed (a dot means none).', engine: 'Engine number, if printed (a dot means none).',
+  sumInsured: 'Sum insured, digits only.', premium: 'The transaction or total premium before tax, digits and a decimal point only.',
+  tax: 'Government tax, digits and a decimal point only.', total: 'The invoice total, digits and a decimal point only.',
+  ncd: 'The no-claim discount percentage, digits only.', discounts: 'Every discount listed, one line, as printed.',
+  antiTheft: 'Yes when an anti-theft discount or an anti-theft device warranty is listed; else empty.',
+  specialPerils: 'Yes when "Special Perils" is an optional extra benefit; else empty.',
+  windscreenAll: 'Yes when windscreen and all glass damage is included; else empty.', windscreenLimit: 'Its limit, digits only.',
+  windscreenFrontBack: 'Yes when front and back windscreen only (third party) is included; else empty.', windscreenFrontBackLimit: 'Its limit, digits only.',
+  paPassengers: 'Yes when personal accident benefit to un-named passengers is included; else empty.',
+  courtesyCar: 'Yes when courtesy car or loss of use is included; else empty.', agreedDepreciation: 'Yes when agreed depreciation is included; else empty.',
+  hospitalisation: 'Yes when hospitalisation benefit is included; else empty.', excessWaiver: 'Yes when waiver of excess is included; else empty.',
+  mechanical: 'Yes when mechanical repair benefit is included; else empty.', mechanicalLevel: '1, 2 or 3, if stated.',
+  survivors: 'Yes when survivors benefit is included; else empty.', evBattery: 'Yes when electric vehicle battery cover is included; else empty.',
+  evBatteryLimit: 'Its limit, digits only.', notes: 'One short sentence on anything unreadable or unusual; else empty.',
+};
+var MQ_CERT_FIELDS = {
+  reg: 'The number of the identification plate (the registration), as printed.', make: 'The make, in normal case.',
+  model: 'The model, in normal case.', description: 'The description line, as printed.', colour: 'The colour.',
+  chassis: 'The chassis number, every character exactly.', engine: 'The engine number, every character exactly.',
+  cc: 'CC, digits only.', seating: 'Seating accommodation, digits only ("5 INCL. DRIVER" gives 5).', year: 'The year of the vehicle, four digits, if printed.',
+  body: 'The body type, if printed or plain from the description.', fuel: 'Petrol, Diesel, Hybrid, Electric or CNG, if printed or plain from the description (GAS is Petrol).',
+  ownerName: 'The CURRENT registered owner: the newest entry only. Never any earlier owner.', ownerAddress: 'The current owner\'s address, newest entry only.',
+  notes: 'One short sentence on anything unreadable; else empty.',
+};
+var MQ_PERMIT_FIELDS = {
+  permitNo: 'The permit number.', name: 'The holder\'s name, as printed.', dob: 'Date of birth, as yyyy-mm-dd.', issued: 'Date of issue, as yyyy-mm-dd.',
+  expires: 'Date of expiry, as yyyy-mm-dd.', classes: 'The classes, as printed (e.g. 1, 2).', notes: 'One short sentence on anything unreadable; else empty.',
+};
+var MQ_DOC_KINDS = {
+  invoice: { fields: function () { return MQ_INV_FIELDS; }, clean: function (o) { return mqInvClean_(o); },
+             what: 'a document a client uploads to get a motor insurance quote: usually a car dealer\'s quotation or invoice, sometimes a valuation, a certified copy of ownership or an old insurance certificate' },
+  quote: { fields: function () { return MQ_QUOTE_FIELDS; }, clean: function (o) { return mqDocClean_(o, MQ_QUOTE_FIELDS); },
+           what: 'Guardian General Insurance\'s motor Quotation Schedule or Quotation Schedule/Invoice, which the client is accepting' },
+  certified: { fields: function () { return MQ_CERT_FIELDS; }, clean: function (o) { return mqDocClean_(o, MQ_CERT_FIELDS); },
+               what: 'a Trinidad and Tobago Licensing Authority true certified copy of a vehicle\'s registration (it may be scanned sideways)' },
+  permit: { fields: function () { return MQ_PERMIT_FIELDS; }, clean: function (o) { return mqDocClean_(o, MQ_PERMIT_FIELDS); },
+            what: 'a Trinidad and Tobago driver\'s permit (a photo of the card)' },
+};
+
 /** The client's document, read by Claude for the page to fill in. Nothing is
  *  stored here: the document is attached to the request when it is sent. */
-function mqReadInvoice_(b) {
+function mqReadInvoice_(b) { return mqReadDoc_(b, 'invoice'); }
+function mqReadDoc_(b, kind) {
   var s = mqSession_(b.token);
   if (!s) return { ok: false, error: 'Please sign in again.', signedOut: true };
+  var K = MQ_DOC_KINDS[kind];
+  if (!K) return { ok: false, error: 'Unknown document.' };
   var f = b.file || {};
-  mqFiles_([{ kind: 'invoice', name: f.name, type: f.type, data: f.data }]);   // refuses anything not a photo or a PDF, or too large
+  mqFiles_([{ kind: kind, name: f.name, type: f.type, data: f.data }]);   // refuses anything not a photo or a PDF, or too large
   var type = mqClean_(f.type, 80).toLowerCase().replace('image/jpg', 'image/jpeg');
   var data = String(f.data || '').replace(/^data:[^,]*,/, '');
-  var none = function (why, message) { return { ok: true, read: false, why: why, message: message }; };
+  var none = function (why, message) { return { ok: true, read: false, kind: kind, why: why, message: message }; };
   if (!mqAiReady_()) return none('nokey', 'We attached your document. Please fill in the details below.');
   if (!/^(image\/(jpeg|png|webp|gif)|application\/pdf)$/.test(type)) return none('type', 'We attached it, but could not read that kind of photo. Please fill in the details below.');
   var cache = CacheService.getScriptCache(), slot = 'mq.ai.' + mqHash_(s.email), used = Number(cache.get(slot) || 0);
   if (used >= MQ.AI_READS_PER_DAY) return none('limit', 'We attached it. Please fill in the details below.');
   cache.put(slot, String(used + 1), 21600);
   var fields;
-  try { fields = mqClaudeRead_(type, data); }
+  try { fields = K.clean(mqClaudeRead_(type, data, K.fields(), K.what)); }
   catch (e) {
-    mqLog_('(invoice)', 'read-failed', s.email + ' · ' + String(e && e.message || e));
+    mqLog_('(' + kind + ')', 'read-failed', s.email + ' · ' + String(e && e.message || e));
     return none('failed', 'We could not read it this time. It is attached: please fill in the details below.');
   }
-  mqLog_('(invoice)', 'read', s.email + ' · ' + [fields.docType, fields.year, fields.make, fields.model].filter(Boolean).join(' '));
-  return { ok: true, read: true, fields: fields };
+  mqLog_('(' + kind + ')', 'read', s.email + ' · ' + [fields.docType, fields.year, fields.make, fields.model, fields.policyNo].filter(Boolean).join(' '));
+  return { ok: true, read: true, kind: kind, fields: fields };
 }
 
-function mqClaudeRead_(type, data) {
-  var props = {}, req = Object.keys(MQ_INV_FIELDS);
-  req.forEach(function (k) { props[k] = { type: 'string', description: MQ_INV_FIELDS[k] }; });
+function mqClaudeRead_(type, data, fieldsSpec, what) {
+  fieldsSpec = fieldsSpec || MQ_INV_FIELDS;
+  var props = {}, req = Object.keys(fieldsSpec);
+  req.forEach(function (k) { props[k] = { type: 'string', description: fieldsSpec[k] }; });
   var block = type === 'application/pdf'
     ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: data } }
     : { type: 'image', source: { type: 'base64', media_type: type, data: data } };
+  var system = what ? MQ_INV_SYSTEM.replace(/^You read [^:]+:[^.]+\./, 'You read ' + what + '.') : MQ_INV_SYSTEM;
   var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,
     headers: { 'x-api-key': mqProp_('ANTHROPIC_API_KEY'), 'anthropic-version': '2023-06-01' },
-    payload: JSON.stringify({ model: mqProp_('MQ_AI_MODEL', MQ.AI_MODEL), max_tokens: 2000, system: MQ_INV_SYSTEM,
+    payload: JSON.stringify({ model: mqProp_('MQ_AI_MODEL', MQ.AI_MODEL), max_tokens: 3000, system: system,
       output_config: { format: { type: 'json_schema', schema: { type: 'object', properties: props, required: req, additionalProperties: false } } },
       messages: [{ role: 'user', content: [block, { type: 'text', text: 'Read this document and fill in the fields.' }] }] }),
   });
@@ -910,7 +973,26 @@ function mqClaudeRead_(type, data) {
   if (code !== 200) throw new Error('HTTP ' + code + ' ' + String((body.error && body.error.message) || '').slice(0, 200));
   if (body.stop_reason === 'refusal') throw new Error('declined');
   var text = (body.content || []).filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('').trim();
-  return mqInvClean_(JSON.parse(text));
+  return JSON.parse(text);
+}
+
+/** The quotation, the certified copy and the permit, cleaned field by field:
+ *  dates kept only as dates, numbers only as numbers, "Yes" only as Yes. */
+function mqDocClean_(o, spec) {
+  var out = {}, now = new Date().getFullYear();
+  Object.keys(spec).forEach(function (k) { out[k] = mqClean_(o && o[k], /notes|address|discounts|description/i.test(k) ? 240 : 120); });
+  var digits = function (k, max) { if (k in out) { out[k] = String(out[k]).replace(/[^0-9]/g, '').slice(0, max || 9); } };
+  var amount = function (k) { if (k in out) { var n = Number(String(out[k]).replace(/[^0-9.]/g, '')); out[k] = n ? String(Math.round(n * 100) / 100) : ''; } };
+  var date = function (k) { if (k in out && !/^\d{4}-\d{2}-\d{2}$/.test(out[k])) out[k] = ''; };
+  ['periodFrom', 'periodTo', 'dob', 'issued', 'expires'].forEach(date);
+  ['seating', 'cc', 'ncd', 'mechanicalLevel'].forEach(function (k) { digits(k, k === 'cc' ? 5 : 3); });
+  ['sumInsured', 'premium', 'tax', 'total', 'windscreenLimit', 'windscreenFrontBackLimit', 'evBatteryLimit'].forEach(amount);
+  if ('year' in out) { var y = (out.year.match(/\b(19[5-9]\d|20\d\d)\b/) || [])[1] || ''; out.year = y && Number(y) <= now + 2 ? y : ''; }
+  Object.keys(spec).forEach(function (k) { if (/^Yes when/.test(spec[k])) out[k] = /^y/i.test(out[k]) ? 'Yes' : ''; });
+  ['reg', 'chassis', 'engine'].forEach(function (k) { if (k in out) { out[k] = out[k].replace(/^[.\-\s]+$/, '').toUpperCase(); } });
+  if ('cover' in out) out.cover = /fire|theft/i.test(out.cover) ? 'Third Party Fire and Theft' : /third/i.test(out.cover) ? 'Third Party' : /comp|^c$/i.test(out.cover) ? 'Comprehensive' : '';
+  if ('fuel' in out) out.fuel = /hybrid|hev/i.test(out.fuel) ? 'Hybrid' : /electric|\bev\b/i.test(out.fuel) ? 'Electric' : /cng/i.test(out.fuel) ? 'CNG' : /gas|petrol/i.test(out.fuel) ? 'Gas' : '';
+  return out;
 }
 
 /** What came back, cleaned the way the page's own fields are. */
@@ -943,6 +1025,160 @@ function mqInvoiceFacts_(o) {
     ['Colour', g('colour')], ['Financed by', g('lender')], ['Note', g('notes')],
   ].filter(function (l) { return l[1]; });
   return lines.map(function (l) { return l[0] + ': ' + l[1]; }).join('\n').slice(0, 1500);
+}
+
+/* ============================== taking the quote: the proposal ============================== */
+
+/* The tab for proposals sent. A proposal is a client taking a quote: Guardian's own proposal form and Know Your
+   Policy form, filled and signed on the page, travel with the quotation, the certified copy and the permit. */
+var MQ_PCOLS = ['Ref', 'Received', 'Status', 'Quote ref', 'Client', 'Email', 'Mobile', 'Policy number', 'Vehicle', 'Registration',
+  'Chassis', 'Engine', 'Cover', 'Sum insured', 'Period', 'Premium total', 'Needs attention', 'KYP not understood', 'Files', 'Drive folder',
+  'Mail result', 'SF task', 'Answers'];
+
+/* Every yes/no the client must answer themselves: Guardian's declarations, never pre-ticked. */
+var MQ_P_YN = ['pep', 'otherGG', 'q3a', 'q3b', 'q4', 'acc', 'q6', 'q7b', 'q7c', 'q7d', 'q7e', 'q8', 'q9', 'q11', 'q12', 'q13',
+  'q14a', 'q14b', 'q14c', 'q15', 'q16a', 'q16b', 'q16c', 'b19a', 'b19b', 'b19c', 'b19d', 'b19e', 'b19f', 'b19g', 'b19h', 'b19i', 'b19j', 'b19k'];
+var MQ_P_TEXT = { first: 'first name', surname: 'surname', dob: 'date of birth', nationality: 'nationality', residence: 'country of residence',
+  marital: 'marital status', address: 'address', phone: 'contact number', occupation: 'occupation', permitNo: 'driver\'s permit number',
+  permitIssued: 'permit date of issue', permitClass: 'permit class', fuel: 'fuel type', reg: 'registration', makeModel: 'make and model', chassis: 'chassis number',
+  engine: 'engine number', year: 'year of make', cc: 'C.C.', seating: 'seating', body: 'type of body', sumInsured: 'sum insured', cond: 'new, secondhand or foreign used',
+  q10: 'where the vehicle is kept at night', cover: 'type of cover', from: 'period from', to: 'period to', signDate: 'date' };
+/* The details a Yes (or a No) asks for. */
+var MQ_P_IF = [['q3a', 'Yes', 'd3name', 'the young or new driver\'s name'], ['q3b', 'Yes', 'd3name', 'the young or new driver\'s name'],
+  ['q4', 'No', 'q4d', 'how long since you drove'], ['q6', 'Yes', 'q6d', 'the modifications'], ['q7d', 'Yes', 'trailerReg', 'the trailer\'s registration'],
+  ['q7e', 'Yes', 'financeName', 'the finance company'], ['q9', 'Yes', 'q9d', 'the anti-theft device and when it was fitted'],
+  ['q11', 'Yes', 'q11d', 'the disability or infirmity'], ['q12', 'Yes', 'q12d', 'the conviction or violation'], ['q13', 'Yes', 'q13d', 'the vehicles and insurers'],
+  ['q16a', 'Yes', 'q16ad', 'the business use'], ['q16b', 'Yes', 'q16bd', 'the racing or hire use'], ['q16c', 'No', 'q16cd', 'how the vehicle is used'],
+  ['otherGG', 'Yes', 'otherGGd', 'your other insurance with Guardian Group'], ['b19b', 'Yes', 'b19bLimit', 'the windscreen limit']];
+var MQ_KYP_N = 17;
+/* The yes answers an underwriter reads first. */
+var MQ_P_FLAG = { pep: 'Politically exposed person: a PEP Memorandum must accompany the proposal', q3a: 'A driver under 25', q3b: 'A driver with under 2 years\' experience',
+  q6: 'Vehicle modified', q7c: 'Left hand drive', q11: 'A driver with a disability or infirmity', q12: 'A conviction, violation or prosecution pending',
+  q14a: 'An insurer declined or cancelled', q14b: 'An insurer increased the premium or imposed conditions', q14c: 'An insurer refused to renew',
+  q15: 'Accidents or claims in the past three years', q16a: 'Business use', q16b: 'Racing or hire use' };
+var MQ_KYP_TEXT = ['Courtesy car only for the repair time', 'Loss of use on a reducing balance', 'The excess is paid whether at fault or not',
+  'The representative explained the excesses', 'Windscreen limit reduces after a claim', 'Contribution for new parts', 'Total loss: market value or sum insured',
+  'Motor Assist', 'The no claim discount may be affected', 'Your duties under the policy', 'What to do on a claim', 'Policy cancellation', 'Sale of the vehicle',
+  'Claims appeal process', 'Complaints process', 'Offered the optional benefits', 'Sharing of data and electronic signatures'];
+
+function mqProposalsSheet_() { return mqSheet_('Motor Proposals', MQ_PCOLS); }
+
+/** The client takes a quote: the filled forms and the documents, checked whole, then one e-mail to the desk with
+ *  everything attached, the client's own signed copy back to them, a row, a task. */
+function mqPropose_(b) {
+  var s = mqSession_(b.token);
+  if (!s) return { ok: false, error: 'Your sign-in has expired. Sign in again; what you typed is kept on this device.', signedOut: true };
+  var A = {}, q = b.answers || {};
+  Object.keys(q).forEach(function (k) { if (/^[a-zA-Z0-9]{1,24}$/.test(k) && typeof q[k] !== 'object') A[k] = mqClean_(q[k], 600); });
+  A.accidents = (Array.isArray(q.accidents) ? q.accidents : []).slice(0, 3).map(function (r) {
+    return { date: mqClean_(r && r.date, 10), cost: mqClean_(r && r.cost, 20), driver: mqClean_(r && r.driver, 80), details: mqClean_(r && r.details, 300) };
+  }).filter(function (r) { return r.date || r.details; });
+  A.email = s.email;
+  var miss = [];
+  MQ_P_YN.forEach(function (k) { if (!/^(Yes|No)$/.test(A[k] || '')) miss.push(k); });
+  Object.keys(MQ_P_TEXT).forEach(function (k) { if (!A[k]) miss.push(MQ_P_TEXT[k]); });
+  MQ_P_IF.forEach(function (r) { if (A[r[0]] === r[1] && !A[r[2]]) miss.push(r[3]); });
+  if (A.q15 === 'Yes' && !A.accidents.length) miss.push('the accidents or claims');
+  if (A.acc === 'Yes' && !(A.accAudio || A.accPaint || A.accRims || A.accOther)) miss.push('the items and their values');
+  for (var k = 1; k <= MQ_KYP_N; k++) if (!/^(Yes|No)$/.test(A['k' + k] || '')) miss.push('Know Your Policy point ' + k);
+  if (miss.length) return { ok: false, error: 'Still needed: ' + miss.slice(0, 6).join(', ') + (miss.length > 6 ? ' and ' + (miss.length - 6) + ' more' : '') + '.', missing: miss };
+  var files = mqFiles_(b.files, MQ.MAX_PROPOSAL_FILES);
+  var has = function (kind) { return files.some(function (f) { return f.kind === kind && f.type === 'application/pdf'; }); };
+  if (!has('proposal') || !has('kyp')) return { ok: false, error: 'The signed proposal and Know Your Policy form did not come through. Please press Send again.' };
+  if (!files.some(function (f) { return f.kind === 'quote'; })) return { ok: false, error: 'Please upload the quotation you are taking.' };
+
+  var name = [A.first, A.surname].join(' ').trim(), veh = A.makeModel + (A.year ? ' ' + A.year : '');
+  var flags = Object.keys(MQ_P_FLAG).filter(function (k) { return A[k] === 'Yes'; }).map(function (k) { return MQ_P_FLAG[k]; });
+  var kypNo = []; for (var i = 1; i <= MQ_KYP_N; i++) if (A['k' + i] === 'No') kypNo.push(i + '. ' + MQ_KYP_TEXT[i - 1]);
+  var quoteRef = mqClean_(b.quoteRef, 20);
+
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  var ref, folder;
+  try {
+    var sh = mqProposalsSheet_(), day = mqDate_(new Date(), 'yyMMdd'), n = 0;
+    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().forEach(function (r) { if (String(r[0]).indexOf('MP-' + day + '-') === 0) n++; });
+    ref = 'MP-' + day + '-' + ('00' + (n + 1)).slice(-3);
+    files.forEach(function (f) {
+      var nm = { proposal: 'Proposal', kyp: 'Know Your Policy', quote: 'Quotation', certified: 'Certified copy', invoice: 'Invoice', permit: 'Driver permit' }[f.kind] || f.kind;
+      f.blob.setName ? f.blob.setName(nm + ' - ' + name + ' - ' + A.reg + (f.type === 'application/pdf' ? '.pdf' : '.jpg')) : null;
+    });
+    folder = mqStoreFiles_(ref, { name: name }, files);
+    var row = { 'Ref': ref, 'Received': new Date(), 'Status': 'Proposal sent to desk', 'Quote ref': quoteRef, 'Client': name, 'Email': s.email, 'Mobile': A.phone,
+      'Policy number': A.policyNo || '', 'Vehicle': veh, 'Registration': A.reg, 'Chassis': A.chassis, 'Engine': A.engine, 'Cover': A.cover,
+      'Sum insured': A.sumInsured, 'Period': A.from + ' to ' + A.to, 'Premium total': A.quoteTotal || '', 'Needs attention': flags.join('; '),
+      'KYP not understood': kypNo.join('; '), 'Files': files.map(function (f) { return f.kind; }).join(', '), 'Drive folder': folder,
+      'Mail result': '', 'SF task': '', 'Answers': JSON.stringify(A).slice(0, 45000) };
+    var hm = mqHeaderMap_(sh), line = []; for (var c = 0; c < Math.max(sh.getLastColumn(), MQ_PCOLS.length); c++) line.push('');
+    MQ_PCOLS.forEach(function (h) { if (h in hm) line[hm[h]] = row[h] == null ? '' : row[h]; });
+    sh.appendRow(line);
+  } finally { lock.releaseLock(); }
+  if (quoteRef) mqSetIfMine_(quoteRef, s.email, 'Status', 'Accepted: proposal ' + ref + ' sent');
+
+  var deskTo = mqProp_('MQ_BIND_TO', mqQuotesTo_());
+  var sent = mqMail_({
+    to: [deskTo], cc: mqCc_(), replyTo: MQ.SUPPORT_FROM,
+    subject: 'Motor proposal ' + ref + ': ' + name + ' · ' + veh + ' (' + A.reg + ')' + (A.policyNo ? ' · ' + A.policyNo : '') + ' · taking the quote',
+    html: mqProposalMail_(ref, A, flags, kypNo, folder, quoteRef), attachments: files.map(function (f) { return f.blob; }),
+  });
+  mqPSet_(ref, 'Mail result', sent);
+  mqMail_({
+    to: [s.email], subject: 'Your motor proposal is in, ' + (A.first || name) + ' (' + ref + ')', client: true,
+    html: mqProposalReceipt_(ref, A), attachments: files.filter(function (f) { return f.kind === 'proposal' || f.kind === 'kyp'; }).map(function (f) { return f.blob; }),
+  });
+  var taskId = mqTask_({ flow: 'proposal', year: A.year, make: '', model: A.makeModel, reg: A.reg, cover: A.cover, name: name, email: s.email }, ref, s.contactId);
+  if (taskId) mqPSet_(ref, 'SF task', taskId);
+  mqLog_(ref, 'proposal', s.email + ' · ' + A.reg + ' · ' + sent);
+  return { ok: true, ref: ref, mode: mqMode_(), sentTo: deskTo, flags: flags.length, kypNo: kypNo.length, requests: mqRequests_(s.email) };
+}
+
+function mqPSet_(ref, col, value) {
+  try {
+    var sh = mqProposalsSheet_(), m = mqHeaderMap_(sh);
+    if (!(col in m) || sh.getLastRow() < 2) return;
+    var refs = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();
+    for (var i = refs.length - 1; i >= 0; i--) if (String(refs[i][0]) === ref) { sh.getRange(i + 2, m[col] + 1).setValue(value); return; }
+  } catch (e) {}
+}
+/* The quote request is marked only when it belongs to the signed-in client. */
+function mqSetIfMine_(ref, email, col, value) {
+  try {
+    var sh = mqQuotesSheet_(), m = mqHeaderMap_(sh);
+    if (sh.getLastRow() < 2) return;
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+    for (var i = rows.length - 1; i >= 0; i--) {
+      if (String(rows[i][0]) === ref && String(rows[i][m['Email']] || '').toLowerCase() === email) { sh.getRange(i + 2, m[col] + 1).setValue(value); return; }
+    }
+  } catch (e) {}
+}
+
+function mqProposalMail_(ref, A, flags, kypNo, folder, quoteRef) {
+  var row = function (l, v) { return v ? '<tr><td style="padding:6px 10px 6px 0;color:#5d7186;border-top:1px solid #e6edf2;width:40%">' + mqEsc_(l) +
+    '</td><td style="padding:6px 0;color:#12202e;border-top:1px solid #e6edf2;font-weight:600">' + mqEsc_(v) + '</td></tr>' : ''; };
+  var attn = (flags.length || kypNo.length)
+    ? '<div style="background:#FFF4DB;border:1px solid #F3D48A;border-radius:10px;padding:10px 13px;margin:12px 0;font-size:14px;color:#5c3d00"><b>Read first</b><ul style="margin:6px 0 0;padding-left:18px">' +
+      flags.map(function (f) { return '<li>' + mqEsc_(f) + ' (details on the proposal)</li>'; }).join('') +
+      kypNo.map(function (k) { return '<li>Know Your Policy, answered No: ' + mqEsc_(k) + '. Call the client before cover is placed.</li>'; }).join('') + '</ul></div>' : '';
+  return mqWrap_('Motor proposal ' + ref,
+    '<p>Good day,</p><p>The client is taking the attached quotation. Guardian\'s Private Motor proposal (GG-MOT-APV-PRO-02/2025v2) and the Know Your Policy form are attached, ' +
+    'filled in and signed by the client on the branch website, with the quotation, the certified copy and the driver\'s permit. The client answered every declaration themselves.</p>' + attn +
+    '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:14px">' +
+    row('Client', [A.title, A.first, A.surname].filter(Boolean).join(' ')) + row('E-mail', A.email) + row('Mobile', A.phone) +
+    row('Policy number', A.policyNo) + row('Quote request', quoteRef) + row('Cover', A.cover) + row('Period', A.from + ' to ' + A.to) +
+    row('Vehicle', A.makeModel + ' ' + A.year) + row('Registration', A.reg) + row('Chassis', A.chassis) + row('Engine', A.engine) +
+    row('Sum insured', A.sumInsured ? mqMoney_(A.sumInsured) : '') + row('Quotation total', A.quoteTotal ? mqMoney_(A.quoteTotal) : '') + '</table>' +
+    '<p style="margin-top:16px;font-size:13px;color:#5d7186">Reference <b>' + mqEsc_(ref) + '</b>' + (folder ? ' · <a href="' + mqEsc_(folder) + '" style="color:#3A7BD5">documents in Drive</a>' : '') +
+    '. The representative\'s half of the Know Your Policy form is left for the branch to complete.</p>', true);
+}
+
+function mqProposalReceipt_(ref, A) {
+  return mqWrap_('Your proposal is in, ' + mqEsc_(A.first || '') + '.',
+    '<p>Thank you. Your proposal for <b>' + mqEsc_(A.makeModel + ' ' + A.year) + '</b> (' + mqEsc_(A.reg) + '), ' + mqEsc_(A.cover) +
+    ', went to Guardian General\'s desk at ' + mqDate_(new Date(), 'h:mm a') + ' today, with our branch copied. Your signed proposal and Know Your Policy form are attached for your records.</p>' +
+    '<p><b>What happens next</b></p><ol style="padding-left:20px;margin:6px 0 12px">' +
+    '<li>The desk checks your proposal against the quotation.</li>' +
+    '<li>A member of our team calls you to arrange the premium. Cover starts once the premium is paid.</li>' +
+    '<li>Your policy and certificate come to you at this address.</li></ol>' +
+    '<p>Your reference is <b style="color:#2C5FA8">' + mqEsc_(ref) + '</b>. If anything on the forms needs correcting, reply to this e-mail or call the branch on ' + MQ.BRANCH_TEL + '.</p>');
 }
 
 /* ============================== e-mail ============================== */

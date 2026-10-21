@@ -36,6 +36,17 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
   it is, or with changes. At the send the script reads the vehicle again from Salesforce, so the desk gets the dates,
   the premium and the terms from the record, never from the page. It goes to `MQ_RENEW_TO`, else the quotes desk.
 - **Every detail** is the original six steps, a link under the two doors.
+- **Take the quote** ("Got your quotation? Take it", or "Take this quote" on a request). The client uploads the
+  quotation from Guardian General, the certified copy (or the dealer's invoice for a new vehicle) and the driver's
+  permit. Each is read and fills Guardian's own **Private Motor proposal (GG-MOT-APV-PRO-02/2025v2)** and **Know Your
+  Policy** form, which sit in `motor-quote/forms/` exactly as Guardian issues them. The client answers every
+  declaration and every Know Your Policy point with a tap, none pre-ticked. They then sign on the screen. The two forms
+  are filled on the phone (`motor-quote/forms.js`, with pdf-lib kept in `motor-quote/vendor/`), and the desk gets one
+  e-mail with the signed proposal, the Know Your Policy form, the quotation, the certified copy and the permit. Any Yes
+  an underwriter must see, and any Know Your Policy point answered No, is listed first. The client gets their signed
+  forms back. Each proposal is a row on the **Motor Proposals** tab (`MP-yyMMdd-nnn`). The representative's half of the
+  Know Your Policy form is left for the branch. Compliance must confirm the signed-on-screen proposal is accepted.
+  When Guardian revises a form, replace the PDF and re-measure: the positions in `forms.js` are taken off its characters.
 
 ## Install (once, about ten minutes)
 
@@ -54,6 +65,7 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
    - `ANTHROPIC_API_KEY` — turns on the invoice reader. Each signed-in e-mail may have 15 documents read a day.
      `MQ_AI_MODEL` changes the model (default `claude-sonnet-5-5`).
    - `MQ_RENEW_TO` — where renewals go (default: the quotes desk).
+   - `MQ_BIND_TO` — where signed proposals go (default: the quotes desk).
    - Optional: `MQ_QUOTES_TO` (overrides the quotes desk), `MQ_CC` (more copies, comma-separated),
      `MQ_SF_OWNER` (the Salesforce user id that owns new Contacts and tasks), `MQ_SF_TASK_TYPE` (default
      "New Business"; a value the org refuses is left off), `MQ_DRIVE_FOLDER` (a folder id; else a "Motor Quotes"
@@ -78,6 +90,7 @@ fresh `/exec` and the page would have to be re-wired.
 
 ## Tabs
 
+- **Motor Proposals** — one row a proposal: the quote it takes, the vehicle, what needs attention, the answers.
 - **Motor Quotes** — one row a request. Staff keep **Status**, **Quoted on**, **Quoted premium**, **Staff note**.
 - **Quote Files** — each uploaded document and its Drive id.
 - **Quote Log** — sign-ins, sends, failures.

@@ -215,6 +215,19 @@
   .reading .doc:after{content:"";position:absolute;left:0;right:0;height:26px;top:-26px;background:linear-gradient(180deg,transparent,rgba(31,168,160,.45),transparent);animation:scan 1.6s ease-in-out infinite}
   .reading b{display:block;color:var(--ink);font-size:17px;margin:0 0 4px}
   .reading small{color:var(--dim);font-size:13px}
+  .takedoor{display:flex;gap:12px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--body);background:linear-gradient(135deg,#F0F8F7,#EEF5FD);border:1.5px solid #BFE3DF;border-radius:16px;padding:13px 14px;margin:4px 0 6px;cursor:pointer;transition:transform .12s,box-shadow .15s}
+  .takedoor:hover{box-shadow:0 8px 20px rgba(31,168,160,.15);transform:translateY(-1px)}
+  .takedoor .ic{font-size:24px;width:46px;height:46px;border-radius:12px;background:#fff;display:grid;place-items:center;flex:none}
+  .takedoor b{display:block;color:var(--ink);font-size:15.5px}.takedoor small{display:block;color:var(--dim);font-size:13px;line-height:1.4}
+  .takedoor .go{margin-left:auto;color:var(--cyan2);font-weight:800;font-size:20px}
+  .kyp{border:1.5px solid var(--line);border-radius:16px;padding:13px 14px 4px;margin:0 0 12px;background:#fff}
+  .kyp p{font-size:14px;color:var(--body);margin:0 0 10px}
+  .kypinfo{background:var(--soft);border-radius:12px;padding:10px 12px;font-size:13.5px;margin:0 0 12px}
+  .decl{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13.5px;max-height:320px;overflow:auto;margin:0 0 12px}
+  .decl p{margin:0 0 8px}
+  .sigbox{display:block;border:2px dashed #9DBBE4;border-radius:14px;background:#fff;overflow:hidden}
+  .sigbox canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+  .accrow{border-left:3px solid var(--line);padding-left:12px;margin:0 0 12px}
   @keyframes scan{from{top:-26px}to{top:120px}}
   @keyframes sheen{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
   @keyframes glow{from{box-shadow:0 0 0 6px rgba(31,168,160,.28)}to{box-shadow:0 0 0 0 rgba(31,168,160,0)}}
@@ -278,6 +291,8 @@
       <button type="button" class="door" id="doorQuick" onclick="startFlow('quick')"><span class="ic">⚡</span><b>Quick quote</b>
         <small>No invoice to hand? About eight answers.</small></button>
     </div>
+    <button type="button" class="takedoor" id="doorTake" onclick="startTake()"><span class="ic">✍️</span><span><b>Got your quotation? Take it</b>
+      <small>Upload the quotation, your certified copy and your permit. We fill in Guardian's proposal and Know Your Policy form, you check and sign.</small></span><span class="go">›</span></button>
     <button type="button" class="linkbtn" onclick="startFlow('full')">Or give us every detail now: permit, documents and driving record</button>
     <div id="homeVeh"></div>
     <div id="reqs"></div>
@@ -318,6 +333,7 @@
   <b>Reading your document…</b><small id="readingMsg">This takes a few seconds.</small></div></div>
 <footer>Ricky Rampersad Branch · Guardian Group · Chaguanas · <a href="tel:+18682266461">(868) 226-6461</a><br>Your information is used only to prepare and look after your cover, and is never sold or disclosed without your express consent.</footer>
 
+<script src="/motor-quote/forms.js"></script>
 <script>
 const CONFIG = {
   /* The /exec address of apps-script/MotorQuote.gs. Leave "" until it is deployed: the page then says so. */
@@ -441,7 +457,8 @@ function showHome() {
     : '';
   $('reqs').innerHTML = requests.length ? '<div class="sec" style="margin-top:22px"><span class="ic">🧾</span><div><b>Your requests</b><small>Where each one stands</small></div></div>' + requests.map(r =>
     '<div class="req"><b>' + esc(r.ref) + '</b> · ' + esc(r.when) + (r.type ? ' · ' + esc(r.type) : '') + '<br>' + esc(r.vehicle || r.reg) + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + (r.cover ? ' · ' + esc(r.cover) : '') +
-    '<br><span class="st' + (r.quotedOn || /quote sent|bound|done|renewed/i.test(r.status || '') ? ' ok' : '') + '">' + esc(r.status || 'Received') + (r.quotedOn ? ' · quoted ' + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</span></div>').join('') : '';
+    '<br><span class="st' + (r.quotedOn || /quote sent|bound|done|renewed/i.test(r.status || '') ? ' ok' : '') + '">' + esc(r.status || 'Received') + (r.quotedOn ? ' · quoted ' + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</span>' +
+    (r.type !== 'Renewal' && !/accepted|proposal/i.test(r.status || '') ? '<br><button type="button" class="linkbtn" style="padding:6px 0 0" onclick="startTake(\'' + esc(r.ref) + '\')">Take this quote ›</button>' : '') + '</div>').join('') : '';
 }
 
 /* ---- the steps ---- */
@@ -461,6 +478,14 @@ const FLOWS = {
   renew: [{ key: 'renew', title: 'Your renewal', short: 'Renewal', render: stepRenew, check: checkRenew },
           { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' }],
 };
+FLOWS.take = [
+  { key: 'tdocs', title: 'Your quote and papers', short: 'Papers', render: stepTdocs, check: d => checkTake('tdocs', d) },
+  { key: 'tyou', title: 'About you', short: 'You', render: stepTyou, check: d => checkTake('tyou', d) },
+  { key: 'tveh', title: 'The vehicle', short: 'Vehicle', render: stepTveh, check: d => checkTake('tveh', d) },
+  { key: 'tdrv', title: 'Drivers and history', short: 'Drivers', render: stepTdrv, check: d => checkTake('tdrv', d) },
+  { key: 'tcov', title: 'Your cover', short: 'Cover', render: stepTcov, check: d => checkTake('tcov', d) },
+  { key: 'tkyp', title: 'Know your policy', short: 'Policy', render: stepTkyp, check: d => checkTake('tkyp', d) },
+  { key: 'tsign', title: 'Sign and send', short: 'Sign', render: stepTsign, check: () => '' }];
 const steps = () => FLOWS[draft.flow] || FULL_STEPS;
 function checkQuick(d) {
   return need(d, ['name', 'mobile', 'make', 'model', 'year', 'value', 'cover', 'drivingYears']) ||
@@ -560,10 +585,12 @@ function render() {
   $('step').innerHTML = '<div class="eyebrow">Step ' + (stepIx + 1) + ' of ' + STEPS.length + (/\breq: 1\b/.test(String(s.render)) ? ' · <span style="font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)">starred answers are needed</span>' : '') + '</div><h2>' + s.title + '</h2>' + s.render(draft);
   $('formErr').textContent = '';
   $('btnBack').textContent = stepIx === 0 ? 'My quotes' : 'Back';
-  $('btnNext').textContent = stepIx === STEPS.length - 1 ? 'Send my request' : 'Continue';
+  $('btnNext').textContent = stepIx === STEPS.length - 1 ? (draft.flow === 'take' ? 'Sign and send' : 'Send my request') : 'Continue';
   $('btnNext').disabled = false;
   if (s.key === 'docs') wireFiles();
   $('step').querySelectorAll('input.invIn').forEach(el => el.addEventListener('change', ev => onInvoice(ev.target.files[0])));
+  $('step').querySelectorAll('input.tdocIn').forEach(el => el.addEventListener('change', ev => onDoc(el.dataset.kind, ev.target.files[0])));
+  if (s.key === 'tsign') wireSig();
   $('step').querySelectorAll('input[type=checkbox][data-k]').forEach(el => el.addEventListener('change', () => { collect(); side(); }));
   $('step').querySelectorAll('select.fld').forEach(el => { el.classList.toggle('empty', !el.value); el.addEventListener('change', () => { el.classList.toggle('empty', !el.value); otherBox(el); collect(); side(); }); otherBox(el); });
   $('step').querySelectorAll('input.fld, textarea.fld').forEach(el => el.addEventListener('input', () => { collect(); side(); }));
@@ -594,6 +621,8 @@ function pick(k, v, el) {
 function onPick(k) {
   const dep = { ownerType: 'companyBox', mortgaged: 'instBox', accidents: 'accBox', renewChoice: 'chgBox' }[k];
   if (dep && $(dep)) $(dep).classList.toggle('hide', !(draft[k] === 'Company' || draft[k] === 'Yes' || draft[k] === 'Renew with changes'));
+  /* Details a Yes (or a No) asks for: data-when="key=Value", keys or values joined by | */
+  $('step').querySelectorAll('[data-when]').forEach(el => el.classList.toggle('hide', !whenOn(el.dataset.when)));
 }
 function slide(dir) {
   try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; $('step').animate([{ opacity: 0, transform: 'translateX(' + (dir < 0 ? -22 : 22) + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) {}
@@ -608,7 +637,7 @@ async function go(dir) {
   const err = STEPS[stepIx].check(draft);
   if (err) { $('formErr').textContent = err; shake(); return; }
   if (stepIx < STEPS.length - 1) { stepIx++; render(); slide(1); return; }
-  await submit();
+  await (draft.flow === 'take' ? submitTake() : submit());
 }
 /* The summary beside the form on a wide screen. */
 function side() {
@@ -678,6 +707,304 @@ function stepRenew(d) {
     sec('👤', 'You') +
     '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>';
 }
+/* ---- taking the quote: Guardian's proposal and Know Your Policy, filled and signed here ---- */
+/* Asked for on 21 October 2026: "once they agree on the quote … upload the certified copy … extract all the details on
+   the vehicles … fill out the proposal form very fast", then "it has to be exactly on the Guardian PDF and know your
+   [policy], ensuring that they can answer it". The documents fill what they hold; every declaration is the client's
+   own tap, never pre-ticked; the forms are Guardian's own PDFs (motor-quote/forms/), filled by forms.js. */
+const PDFLIB_URL = '/motor-quote/vendor/pdf-lib-1.17.1.min.js';   // MIT, kept here so the forms never depend on an outside script
+const FORM_PROPOSAL = '/motor-quote/forms/gg-private-motor-proposal.pdf', FORM_KYP = '/motor-quote/forms/gg-know-your-policy-private-motor.pdf';
+const TITLES = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Other'];
+const MARITAL = ['Single', 'Married', 'Common-law', 'Divorced', 'Separated', 'Widowed'];
+const LEVELS = ['Level 1 ($3,000)', 'Level 2 ($5,000)', 'Level 3 ($8,000)'], EV_LIMITS = ['$50,000', '$75,000', '$100,000', '$120,000'];
+const BODY_TYPES = ['Sedan', 'Hatchback', 'SUV', 'Crossover', 'Wagon', 'Pickup', 'Van', 'Coupe', 'Convertible', 'Motorcycle', 'Other'];
+const TDOCS = { quote: ['The quotation you are taking', 'Guardian General\'s quotation schedule or invoice, the PDF or a photo.', 1],
+  certified: ['Certified copy, or the dealer\'s invoice for a new vehicle', 'We read the registration, chassis and engine numbers off it.', 0],
+  permit: ['Your driver\'s permit', 'A photo of the front. We read the number, the date of issue and the class.', 0] };
+/* The Know Your Policy points, in Guardian's own words (the form, Motor Guard, Private Motor - Individual). */
+const KYP_POINTS = [
+  ['Loss of use / courtesy car', 'Comprehensive cover includes loss of use up to 10 days (courtesy car) or the monetary amount stated in the schedule, provided you have this cover.', 'Do you understand that the loss of use payment OR courtesy car will apply ONLY for the length of time the adjuster advises it will take to repair your vehicle subject to the maximum number of days stated on the policy schedule and ONLY commences when the vehicle is sent to the garage and repairs have started?'],
+  ['Loss of use / courtesy car', '', 'Do you understand that the loss of use OR courtesy car cover is calculated on a reducing balance basis? Once any of the ten (10) days are used, you will only be entitled to the remaining balance for the rest of the policy period and the full ten (10) days of cover will be reinstated at policy renewal.'],
+  ['Excesses', 'An excess is the amount of each claim that you are responsible for when you are insured for either Comprehensive or Third-Party Fire and Theft coverage. For example, if you claim $2,000 and your excess is $500, once the claim is valid you will be paid $1,500. If you are not at fault, Guardian General will attempt to recover your excess from the other insurer, on your behalf.', 'Do you understand that the excess must be paid whether you are at fault or NOT?'],
+  ['Excesses', 'The excesses that apply to you are in the Excess Table on your quotation. Answer No and we call you to go through them before your cover starts.', 'Did the representative explain the excesses that will apply to your policy?'],
+  ['Windscreen', 'Once part of the windscreen limit is claimed anytime during the period of insurance, we will reduce the limit of coverage available by the amount of the claim. If the entire windscreen limit is claimed anytime during the period of insurance, we will automatically restore the cover to a limit of $2,500.00 for the remainder of the policy period. However, you may repurchase the benefit and adjust to your preferred limit for the balance of your insurance period.', 'Do you understand the above?'],
+  ['Contribution / depreciation', 'When settling a claim for repairs to your vehicle, we will pay to replace your damaged parts with parts of similar age and use. When used parts or foreign used parts are not available, Guardian General will allow new parts, but you will be required to contribute towards the cost (i.e. difference in costs between new and used parts).', 'Do you understand the above?'],
+  ['Total loss', 'This question does not apply if you have purchased the Agreed Depreciation benefit. In the event of a total loss, the settlement will be based on market value or sum insured (insured value) whichever is LESS at the time of the loss. Market value is how much you can fetch on the open market if you sell your vehicle in its current condition (prior to the loss).', 'Do you understand the above?'],
+  ['Motor Assist', 'If you qualify for this benefit, it provides emergency roadside assistance. The weight of your vehicle (unloaded) must not be greater than three (3) tons. You must be onsite of the breakdown and ensure that your vehicle is ready for towing. Refer to our Motor Assist brochure for more details.', 'Do you understand the above?'],
+  ['No Claim Discount', 'Applicable to all cover types.', 'Do you understand that whether you are at fault or NOT, in an accident, your No Claim Discount (NCD) may be affected?'],
+  ['Your duties under the policy', 'You are required to: take reasonable steps to safeguard against accidents, injury, loss or damage; ensure that your vehicle is maintained in a road worthy condition complying with all applicable laws; provide accurate information at all times (proposal and claim stages) and not withhold any information; inform us of any material change to your vehicle at the point of inception or during the policy period (e.g. engine change, printed artwork, new colour, change in size of rims from standard, special audio equipment).', 'Do you understand the above?'],
+  ['If you have a potential loss or claim', 'You are required to: notify us in writing (by completing a claim form) as soon as possible but no later than 30 days of a potential loss/claim, by sending it to any of our offices, e-mailing ggilpcclaims@myguardiangroup.com or using our portal at myguardiangroup.com; not attempt to negotiate any settlement with third parties; provide estimates to repair damage; report the incident to the police and provide a copy of the report receipt and report; send us any summons, writ or legal process in connection with any third-party claim against you, immediately upon receipt; give all necessary information, documentation and assistance to process any claim under the policy, including access to view the vehicle at any time.', 'Do you understand the above?'],
+  ['Policy cancellation', 'If you cancel your policy, you may not always be entitled to a refund premium and cancellation can only take effect on the date on which you return the original certificate of insurance.', 'Do you understand the above?'],
+  ['Sale of vehicle', 'If you sell your vehicle or transfer its ownership, your insurance is NOT transferable to the new owner, and the motor certificate must be returned to Guardian General for the insurance to be cancelled. If you do not, and a claim occurs while in the possession of the new owner, it will not be honoured. In accordance with the law (Motor Vehicle & Road Traffic Act, Chapter 48:50, Section 19 (1)(b)(2), 3 and 4), a vehicle must be transferred within seven (7) days of it being sold.', 'Do you understand the above?'],
+  ['Claims appeal process', 'If you are unsatisfied with the outcome of your claim, you can appeal to the Office of the Financial Services Ombudsman (OFSO), an agency under the Central Bank of Trinidad and Tobago: Parliament Building, Level 2 Tower D, International Waterfront Centre, Wrightson Road, Port of Spain; 800-4FSO (4376), 621-2288 or 235-2288. You also have the options of mediation (to address an appeal), arbitration (if you are disputing the settlement amount) and legal redress (filed in the courts of Trinidad and Tobago).', 'Do you understand the above?'],
+  ['Complaints process', 'Should you have a complaint or observation/suggestion which you wish for us to address, contact CXAssurance@myguardiangroup.com or Guardian General\'s Client Engagement Centre: 877-myGG (6944).', 'Do you understand the above?'],
+  ['Optional benefits', '', 'Were you offered the choice to purchase any other optional benefits?'],
+  ['Sharing of data', 'I/We consent (a) to conduct business with Guardian General Insurance Limited online and electronically including but not limited to effecting and/or renewing insurance coverages, requesting and receiving quotations and/or updates, sending and receiving all documents, communications, notices, contracts and all other correspondence electronically; (b) that any document delivered in connection with this proposal may be electronically signed and the electronic signatures of the parties are intended to have the same force and effect as manual signatures; (c) the sharing of my/our information including personal information with other companies in Guardian Holdings Limited and parent company, NCB Financial Group Limited (NCB Group) and/or their subsidiaries and any other entity/ies that may become part of the NCB Group and with all duly authorized regulatory bodies and/or agencies and business partners; (d) the seeking of information from other insurers, finance companies, databases and/or other duly authorized bodies to verify the answers provided by me/us.', 'Do you agree?'],
+];
+const PEP_TEXT = 'A PEP is an Individual such as a Head of State or Government, senior politician, senior government, judicial or military official, senior executive of State-owned corporations and important political party official who is or has been entrusted with prominent functions by a foreign country or domestically in the territory; or a person who is or has been entrusted with a prominent function by an international organisation (members of senior management such as directors and members of the board or equivalent functions). This category also includes immediate family members and close personal and professional associates. If Yes is selected, this Proposal form must be accompanied by a PEP Memorandum.';
+const DECLARATION = '<p>I/We wish to effect insurance with <b>Guardian General Insurance Limited</b> on the terms, conditions and exclusions of the Policy to be issued by the Company.</p><p>I/We warrant that: (a) the statements and particulars given by me/us in this proposal are to the best of my/our knowledge and belief true and complete; (b) no material fact/s affecting the assessment of the risk has been misrepresented mis-stated suppressed or withheld; (c) the motor vehicle(s) is/are in good condition and repair.</p><p>I/We consent to: (a) conduct business with Guardian General Insurance Limited online and electronically including but not limited to effecting and/or renewing insurance coverages, requesting and receiving quotations and/or updates, sending and receiving all documents, communications, notices, contracts and all other correspondence electronically; (b) the sharing of my/our information including personal information with other companies in Guardian Holdings Limited and parent company, NCB Financial Group Limited (referred to herein as NCB Group) and/or their subsidiaries and any other entity/ies that may become part of the NCB Group and with all duly authorized regulatory bodies and/or Agencies and business partners; (c) the seeking of information from other insurers, finance companies, databases and/or other duly authorized bodies to verify the answers provided by me/us.</p><p>I/We agree that this Proposal and Declaration shall form the basis of the contract between me/us and <b>Guardian General Insurance Limited</b> and shall be deemed to be incorporated in the Policy to be issued.</p>';
+const BENEFITS = [['b19a', '(a) Special Perils: flood, hurricane, windstorm, tornado, earthquake, volcanic eruption or any other convulsion of nature (Comprehensive only)'],
+  ['b19b', '(b) Windscreen and ALL glass damage (Comprehensive and Fire & Theft only)'], ['b19c', '(c) Windscreen front and back glass damage only (Third Party only)'],
+  ['b19d', '(d) Personal Accident Benefit to un-named passengers, ages 17 to 65 ($5,000 per person or $35,000 aggregate)'], ['b19e', '(e) Courtesy car / loss of use, maximum 10 days (Comprehensive only)'],
+  ['b19f', '(f) Agreed Depreciation: pre-agreed depreciation for total losses (Comprehensive & Fire/Theft, subject to valuation)'],
+  ['b19g', '(g) Hospitalisation Benefits, max. $15,000 per 12 months (subject to a Health Questionnaire)'], ['b19h', '(h) Excess waiver'],
+  ['b19i', '(i) Mechanical Repair Benefit'], ['b19j', '(j) Survivors Benefit'], ['b19k', '(k) Electric Vehicle Battery Replacement or Repair (Electric vehicles, Comprehensive only)']];
+/* What each step must have, the same rules the script checks again. */
+const T_YN = { tyou: ['pep', 'otherGG'], tveh: ['q4', 'acc', 'q6', 'q7b', 'q7c', 'q7d', 'q7e', 'q8', 'q9'],
+  tdrv: ['q3a', 'q3b', 'q11', 'q12', 'q13', 'q14a', 'q14b', 'q14c', 'q15', 'q16a', 'q16b', 'q16c'], tcov: BENEFITS.map(b => b[0]),
+  tkyp: KYP_POINTS.map((p, i) => 'k' + (i + 1)) };
+const T_REQ = { tyou: { first: 'your first name', surname: 'your surname', dob: 'your date of birth', nationality: 'your nationality', residence: 'your country of residence',
+    marital: 'your marital status', address: 'your address', phone: 'your contact number', occupation: 'your occupation', permitNo: 'your permit number',
+    permitIssued: 'the permit\'s date of issue', permitClass: 'the permit class' },
+  tveh: { fuel: 'the fuel type', reg: 'the registration (or "Not registered yet")', makeModel: 'the make and model', chassis: 'the chassis number', engine: 'the engine number',
+    year: 'the year of make', cc: 'the C.C.', seating: 'the seating', body: 'the type of body', sumInsured: 'the sum insured', cond: 'new, secondhand or foreign used', q10: 'where it is kept at night' },
+  tcov: { cover: 'the type of cover', from: 'the start of the period', to: 'the end of the period' } };
+const T_IF = [['otherGG', 'Yes', 'otherGGd', 'your other insurance with Guardian Group'], ['q4', 'No', 'q4d', 'how long since you drove'],
+  ['q6', 'Yes', 'q6d', 'the modifications'], ['q7d', 'Yes', 'trailerReg', 'the trailer\'s registration'], ['q7e', 'Yes', 'financeName', 'the finance company'],
+  ['q9', 'Yes', 'q9d', 'the anti-theft device and when it was fitted'], ['q3a', 'Yes', 'd3name', 'the driver\'s name'], ['q3b', 'Yes', 'd3name', 'the driver\'s name'],
+  ['q11', 'Yes', 'q11d', 'the disability or infirmity'], ['q12', 'Yes', 'q12d', 'the conviction or violation'], ['q13', 'Yes', 'q13d', 'the vehicles and insurers'],
+  ['q16a', 'Yes', 'q16ad', 'the business use'], ['q16b', 'Yes', 'q16bd', 'the racing or hire use'], ['q16c', 'No', 'q16cd', 'how the vehicle is used'],
+  ['b19b', 'Yes', 'b19bLimit', 'the windscreen limit']];
+function checkTake(key, d) {
+  if (key === 'tdocs') return files.some(f => f.kind === 'quote') ? '' : 'Please upload the quotation you are taking.';
+  const miss = [];
+  Object.entries(T_REQ[key] || {}).forEach(([k, l]) => { if (!String(d[k] || '').trim()) miss.push(l); });
+  (T_YN[key] || []).forEach(k => { if (!/^(Yes|No)$/.test(d[k] || '')) miss.push(key === 'tkyp' ? 'point ' + k.slice(1) : 'a Yes or No on every question'); });
+  T_IF.forEach(r => { if ((T_YN[key] || []).indexOf(r[0]) > -1 && d[r[0]] === r[1] && !String(d[r[2]] || '').trim()) miss.push(r[3]); });
+  if (key === 'tdrv' && d.q15 === 'Yes' && !(d.acc0date || d.acc0details)) miss.push('the accident or claim');
+  if (key === 'tveh' && d.acc === 'Yes' && !(d.accAudio || d.accPaint || d.accRims || d.accOther)) miss.push('the items and their values');
+  const uniq = miss.filter((m, i) => miss.indexOf(m) === i);
+  return uniq.length ? 'Still needed: ' + uniq.slice(0, 5).join(', ') + (uniq.length > 5 ? ' and ' + (uniq.length - 5) + ' more' : '') + '.' : '';
+}
+const ynq = (k, label, hint) => opts(k, label + ' ' + req, ['Yes', 'No'], hint || '');
+const whenOn = cond => { const [ks, vs] = cond.split('='); return ks.split('|').some(k => vs.split('|').indexOf(draft[k] || '') > -1); };
+const when = (cond, html) => '<div data-when="' + esc(cond) + '" class="' + (whenOn(cond) ? '' : 'hide') + '">' + html + '</div>';
+const area = (k, label, ph) => '<label class="f"><b>' + label + tag(k) + '</b><textarea class="fld" data-k="' + k + '" placeholder="' + esc(ph || '') + '">' + esc(draft[k] || '') + '</textarea></label>';
+
+function stepTdocs() {
+  return '<p class="muted">Upload what you have. We read each one and fill in Guardian\'s proposal for you. You check everything before you sign.</p><div class="files">' +
+    Object.keys(TDOCS).map(k => tdocRow(k)).join('') + '</div>';
+}
+function tdocRow(kind) {
+  const f = files.find(x => x.kind === kind), [label, hint, must] = TDOCS[kind], read = (draft.readDocs || {})[kind];
+  return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph">📄</span>') : '<span class="ph">' + (kind === 'permit' ? '🪪' : kind === 'quote' ? '🧾' : '📑') + '</span>') +
+    '<div class="nm">' + esc(label) + (must ? ' ' + req : '') + '<small>' + (f ? esc(f.name) + (read ? ' · ' + esc(read) : '') : esc(hint)) + '</small></div>' +
+    (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" class="tdocIn" accept="image/*,application/pdf" data-kind="' + kind + '"></label>') + '</div>';
+}
+function stepTyou(d) {
+  return '<div class="row">' + sel('title', 'Title', TITLES) + inp('first', 'First name', { req: 1, ac: 'given-name' }) + '</div>' +
+    inp('surname', 'Surname', { req: 1, ac: 'family-name' }) +
+    '<div class="row">' + inp('dob', 'Date of birth', { type: 'date', req: 1 }) + inp('pob', 'Place of birth') + '</div>' +
+    '<div class="row">' + inp('nationality', 'Nationality', { req: 1, ph: 'e.g. Trinidad and Tobago' }) + inp('residence', 'Country of residence', { req: 1, ph: 'e.g. Trinidad and Tobago' }) + '</div>' +
+    sel('marital', 'Marital status', MARITAL, { req: 1 }) +
+    area('address', 'Residential address ' + req, 'House number, street, town') + inp('mailing', 'Mailing address, if different') +
+    '<div class="row">' + inp('phone', 'Contact number', { type: 'tel', mode: 'tel', req: 1 }) + inp('occupation', 'Trade, occupation, profession', { req: 1 }) + '</div>' +
+    inp('employer', 'Employer, and its business', { ph: 'e.g. Ministry of Education, teaching' }) +
+    sec('🪪', 'Your driver\'s permit') +
+    '<div class="row">' + inp('permitNo', 'Permit number', { req: 1 }) + inp('permitIssued', 'Date of issue', { type: 'date', req: 1 }) + '</div>' + inp('permitClass', 'Class(es)', { req: 1, ph: 'e.g. 1, 2' }) +
+    sec('❓', 'Two questions') +
+    ynq('pep', 'Are you a Politically Exposed Person (PEP) or an immediate family member of a PEP?', PEP_TEXT) +
+    ynq('otherGG', 'Do you have any other insurance(s) with Guardian Group?') + when('otherGG=Yes', inp('otherGGd', 'Please give particulars'));
+}
+function stepTveh(d) {
+  return ynq('q4', 'Have you been driving a motor vehicle regularly during the past twelve months?') + when('q4=No', inp('q4d', 'How long has it been since you drove?')) +
+    sec('🚗', 'Particulars of the vehicle') +
+    opts('fuel', 'Is your motor vehicle ' + req, ['Gas', 'Electric', 'Hybrid', 'CNG']) +
+    '<div class="row">' + inp('reg', 'Registration', { req: 1, ph: 'or "Not registered yet"' }) + inp('makeModel', 'Make and model', { req: 1 }) + '</div>' +
+    '<div class="row">' + inp('chassis', 'Chassis number', { req: 1 }) + inp('engine', 'Engine number', { req: 1 }) + '</div>' +
+    '<div class="row">' + inp('year', 'Year of make', { req: 1, mode: 'numeric', max: 4 }) + inp('cc', 'C.C.', { req: 1, mode: 'numeric' }) + '</div>' +
+    '<div class="row">' + inp('seating', 'Seating', { req: 1, mode: 'numeric' }) + sel('body', 'Type of body', BODY_TYPES, { req: 1 }) + '</div>' +
+    inp('sumInsured', 'Sum insured (TT$)', { req: 1, mode: 'numeric', hint: 'As on the quotation you are taking.' }) +
+    ynq('acc', 'Do you wish to insure items installed in addition to, or replacing, the manufacturer\'s standard items?') +
+    when('acc=Yes', '<div class="row">' + inp('accAudio', 'Audio/visual equipment (TT$)', { mode: 'numeric' }) + inp('accPaint', 'Special paint, advertising, graphics (TT$)', { mode: 'numeric' }) + '</div>' +
+      '<div class="row">' + inp('accRims', 'Mag rims (TT$)', { mode: 'numeric' }) + inp('accOther', 'Any other major accessories (TT$)', { mode: 'numeric' }) + '</div>') +
+    ynq('q6', 'Has your vehicle been modified in any way, or fitted with oversized tyres or a high performance engine or equipment, or is it your intention to do so?') + when('q6=Yes', area('q6d', 'Please give details')) +
+    opts('cond', 'Is your motor vehicle ' + req, ['New', 'Secondhand', 'Foreign used']) +
+    ynq('q7b', 'Is it registered in your name?') + ynq('q7c', 'Is it left hand drive?') +
+    ynq('q7d', 'Is it used to draw any trailer?') + when('q7d=Yes', '<div class="row">' + inp('trailerReg', 'Trailer registration') + inp('trailerMake', 'Trailer make and model') + '</div>') +
+    ynq('q7e', 'Is it the subject of a hire purchase, lease or mortgage agreement?') + when('q7e=Yes', inp('financeName', 'Name of the finance company') + inp('financeAddr', 'Its address')) +
+    ynq('q8', 'Is your motor vehicle in good condition and repair, and will it be kept so?') +
+    ynq('q9', 'Is it fitted with an anti-theft device?') + when('q9=Yes', area('q9d', 'The name and type of the device, and the date installed')) +
+    area('q10', 'Where will it be kept during the night? ' + req, 'A locked garage, an open carport within a fenced and locked area, or otherwise');
+}
+function stepTdrv(d) {
+  const accRow = i => '<div class="accrow"><div class="row">' + inp('acc' + i + 'date', 'Date', { type: 'date' }) + inp('acc' + i + 'cost', 'Cost, paid or estimated (TT$)', { mode: 'numeric' }) + '</div>' +
+    inp('acc' + i + 'driver', 'Driver') + area('acc' + i + 'details', 'Brief details') + '</div>';
+  return sec('👥', 'Who will drive it') +
+    ynq('q3a', 'Will anyone driving your vehicle be less than 25 years of age?') + ynq('q3b', 'Will anyone driving it have less than 2 years regular driving experience?') +
+    '<div data-when="q3a|q3b=Yes" class="' + (d.q3a === 'Yes' || d.q3b === 'Yes' ? '' : 'hide') + '">' +
+      '<div class="row">' + inp('d3name', 'Driver\'s name') + inp('d3dob', 'Date of birth', { type: 'date' }) + '</div>' +
+      '<div class="row">' + inp('d3permit', 'Driver\'s permit number') + inp('d3issued', 'Date of issue', { type: 'date' }) + '</div>' + inp('d3class', 'Class(es)') + '</div>' +
+    sec('📋', 'You and anyone who will drive it') +
+    ynq('q11', 'Have you, or anyone who will drive it, ever suffered from defective vision, hearing, epilepsy or any other physical disability or infirmity?') + when('q11=Yes', area('q11d', 'The nature of it, and any corrective action taken')) +
+    ynq('q12', 'Have you, or anyone who will drive it, ever been convicted of any offence or traffic violation, or have any prosecution pending?') + when('q12=Yes', area('q12d', 'The date and nature of it')) +
+    ynq('q13', 'Have you ever insured a motor vehicle in your name?') + when('q13=Yes', inp('q13d', 'The vehicle number(s) and the insurer(s)')) +
+    '<div class="f" style="margin:0 0 6px"><b style="display:block;color:var(--ink);font-size:14px">Has any insurer ever</b></div>' +
+    ynq('q14a', '(a) declined your proposal or cancelled your policy?') + ynq('q14b', '(b) increased your premium or imposed special conditions on your policy?') + ynq('q14c', '(c) refused to continue or renew your policy?') +
+    '<div data-when="q14a|q14b|q14c=Yes" class="' + (d.q14a === 'Yes' || d.q14b === 'Yes' || d.q14c === 'Yes' ? '' : 'hide') + '">' + area('q14d', 'Please give details') + '</div>' +
+    ynq('q15', 'Have you, or anyone who will drive it, had any accidents or losses (including total losses) or made any claims (including windscreen) during the past three years, with this or any other vehicle?') +
+    when('q15=Yes', '<p class="muted">Up to three. Each one in full.</p>' + [0, 1, 2].map(accRow).join('')) +
+    sec('🛣️', 'How it will be used') +
+    ynq('q16a', 'Will it be used for any purpose in connection with a business or trade?') + when('q16a=Yes', inp('q16ad', 'Please give details')) +
+    ynq('q16b', 'Will it be used for racing, pacemaking, speed testing, competitions, rallies or trials, or the carriage of passengers for hire or reward?') + when('q16b=Yes', inp('q16bd', 'Please give details')) +
+    ynq('q16c', 'Will it be used only for social, domestic and pleasure purposes and for travelling to and from your place of business?') + when('q16c=No', inp('q16cd', 'Please give details'));
+}
+function stepTcov(d) {
+  return (d.quoteRead ? '<div class="docnote"><span class="ic">🧾</span><div>These are from <b>the quotation you are taking</b>. Change one and the premium may change: we confirm it with you before cover starts.</div></div>' : '') +
+    opts('cover', 'Type of cover required ' + req, [['Comprehensive', ''], ['Third Party Fire and Theft', ''], ['Third Party', '']], '', true) +
+    '<div class="row">' + inp('from', 'Period of insurance from', { type: 'date', req: 1 }) + inp('to', 'To', { type: 'date', req: 1 }) + '</div>' +
+    sec('➕', 'Optional extra benefits', 'Individual policyholders are entitled to one of (e) or (g) free.') +
+    BENEFITS.map(b => ynq(b[0], b[1]) +
+      (b[0] === 'b19b' ? when('b19b=Yes', inp('b19bLimit', 'Limit required (TT$)', { mode: 'numeric' })) : '') +
+      (b[0] === 'b19c' ? when('b19c=Yes', inp('b19cLimit', 'Limit required (TT$)', { mode: 'numeric' })) : '') +
+      (b[0] === 'b19i' ? when('b19i=Yes', opts('b19iLevel', 'Level', LEVELS)) : '') +
+      (b[0] === 'b19k' ? when('b19k=Yes', opts('b19kLimit', 'Limit', EV_LIMITS)) : '')).join('');
+}
+function stepTkyp(d) {
+  return '<div class="docnote"><span class="ic">📘</span><div><b>Know Your Policy.</b> Guardian\'s own summary of your Private Motor cover. Read each point and answer it. ' +
+    'A No is fine: we call you to go through it before your cover starts.</div></div>' +
+    '<div class="kypinfo"><b>Who is allowed to drive the vehicle.</b> The persons driving must be (a) at least 25 years old and driving for at least 2 years claims free, or (b) declared drivers who do not fall into (a). Please notify us if any persons not meeting this description will be driving the vehicle.</div>' +
+    KYP_POINTS.map((p, i) => '<div class="kyp"><div class="eyebrow">' + (i + 1) + ' · ' + esc(p[0]) + '</div>' + (p[1] ? '<p>' + esc(p[1]) + '</p>' : '') + opts('k' + (i + 1), esc(p[2]) + ' ' + req, ['Yes', 'No']) + '</div>').join('') +
+    '<div class="kypinfo"><b>Misrepresentation.</b> Non-disclosure or providing false information will result in denial of claims.</div>';
+}
+function stepTsign(d) {
+  return '<div class="decl"><div class="eyebrow">Declaration</div>' + DECLARATION + '</div>' +
+    '<div class="row"><button type="button" class="ghost" onclick="previewForm(\'proposal\')">Preview the proposal</button><button type="button" class="ghost" onclick="previewForm(\'kyp\')">Preview Know Your Policy</button></div>' +
+    /* A div, never a label: a click inside a label also clicks its first button, which here was Clear. */
+    '<div class="f" style="margin-top:14px"><b style="display:block;color:var(--ink);font-size:14px;margin:0 0 5px">Sign here ' + req + '</b><span class="sigbox"><canvas id="sig" width="900" height="240" aria-label="Signature pad"></canvas></span>' +
+    '<small style="display:block;color:var(--dim);font-size:12.5px;margin:4px 0 0">With your finger or the mouse. <button type="button" class="linkbtn" style="padding:0;font-size:12.5px" onclick="clearSig()">Clear</button></small></div>' +
+    '<label class="chk"><input type="checkbox" id="agree"> <span>I have read the declaration, the statements in this proposal are true and complete, and I sign the proposal and the Know Your Policy form.</span></label>';
+}
+
+/* The documents: read on the server, filled in here, every field marked for the client to check. */
+async function onDoc(kind, file) {
+  if (!file) return;
+  $('formErr').textContent = '';
+  $('reading').classList.remove('hide');
+  const t0 = Date.now(), tick = setInterval(() => { $('readingMsg').textContent = 'Reading… ' + Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
+  try {
+    const f = await prepFile(file, kind, 2000);
+    files = files.filter(x => x.kind !== kind); files.push(f);
+    const j = await api('readDoc', { token: session.token, kind, file: { name: f.name, type: f.type, data: f.data } })
+      .catch(e => { if (/Unknown action/i.test(e.message)) return { ok: true, read: false }; throw e; });
+    draft.readDocs = draft.readDocs || {};
+    if (j.read && j.fields) { applyDoc(kind, j.fields); }
+    else draft.readDocs[kind] = 'attached; please fill in its details';
+    saveDraft(); render();
+  } catch (e) { $('formErr').textContent = e.message; }
+  clearInterval(tick); $('reading').classList.add('hide');
+}
+function applyDoc(kind, F) {
+  const got = draft.fromDoc || [], set = (k, v, force) => { if (v != null && String(v).trim() !== '' && (force || !String(draft[k] || '').trim())) { draft[k] = String(v).trim(); if (got.indexOf(k) < 0) got.push(k); } };
+  const split = n => { const p = String(n || '').trim().split(/\s+/); return p.length > 1 ? [titleCase(p.slice(0, -1).join(' ')), titleCase(p[p.length - 1])] : ['', titleCase(p[0] || '')]; };
+  if (kind === 'quote') {
+    set('policyNo', F.policyNo, true); set('cover', F.cover, true); set('from', F.periodFrom, true); set('to', F.periodTo, true); set('sumInsured', F.sumInsured, true);
+    set('year', F.year); set('makeModel', [F.make, F.model].filter(Boolean).join(' ')); set('body', ci(BODY_TYPES, (F.body || '').split(/[\/ ]/)[0]) || F.body);
+    set('seating', F.seating); set('cc', F.cc); set('reg', F.reg); set('chassis', F.chassis); set('engine', F.engine);
+    if (!draft.address && F.insuredAddress) set('address', titleCase(F.insuredAddress));
+    const B = { b19a: F.specialPerils, b19b: F.windscreenAll, b19c: F.windscreenFrontBack, b19d: F.paPassengers, b19e: F.courtesyCar, b19f: F.agreedDepreciation,
+      b19g: F.hospitalisation, b19h: F.excessWaiver, b19i: F.mechanical, b19j: F.survivors, b19k: F.evBattery };
+    Object.keys(B).forEach(k => set(k, B[k] === 'Yes' ? 'Yes' : 'No', true));
+    set('b19bLimit', F.windscreenLimit, true); set('b19cLimit', F.windscreenFrontBackLimit, true); set('b19iLevel', LEVELS[Number(F.mechanicalLevel) - 1], true); set('b19kLimit', EV_LIMITS.find(l => l.replace(/\D/g, '') === String(Math.round(Number(F.evBatteryLimit) || 0))), true);
+    if (F.antiTheft === 'Yes') set('q9', 'Yes');
+    draft.quoteTotal = F.total || ''; draft.quoteRead = true;
+    draft.readDocs.quote = [F.policyNo, F.cover, F.total ? 'TT$ ' + Number(F.total).toLocaleString() : ''].filter(Boolean).join(' · ') || 'read';
+  }
+  if (kind === 'certified') {
+    set('reg', F.reg, true); set('chassis', F.chassis, true); set('engine', F.engine, true); set('makeModel', [F.make, F.model].filter(Boolean).join(' '));
+    set('cc', F.cc); set('seating', F.seating); set('year', F.year); set('body', ci(BODY_TYPES, F.body) || F.body); set('fuel', F.fuel);
+    if (F.ownerName) {
+      const mine = [draft.first, draft.surname].filter(Boolean).join(' ') || (me && me.name) || '';
+      const norm = s => String(s || '').toUpperCase().replace(/[^A-Z ]/g, ' ').split(/\s+/).filter(w => w.length > 1);
+      const a = norm(F.ownerName), b = norm(mine);
+      if (a.length && b.length) set('q7b', b.every(w => a.indexOf(w) > -1) || a.every(w => b.indexOf(w) > -1) ? 'Yes' : 'No', true);
+    }
+    draft.readDocs.certified = [F.reg, F.chassis ? 'chassis ' + F.chassis : '', F.engine ? 'engine ' + F.engine : ''].filter(Boolean).join(' · ') || 'read';
+  }
+  if (kind === 'permit') {
+    set('permitNo', F.permitNo, true); set('permitIssued', F.issued, true); set('permitClass', F.classes, true); set('dob', F.dob);
+    if (F.name && !draft.first && !draft.surname) { const n = split(F.name); set('first', n[0]); set('surname', n[1]); }
+    draft.readDocs.permit = [F.permitNo, F.classes ? 'class ' + F.classes : ''].filter(Boolean).join(' · ') || 'read';
+  }
+  draft.fromDoc = got;
+}
+
+/* The signature pad. */
+let sigDirty = false;
+function wireSig() {
+  const c = $('sig'); if (!c) return;
+  const x = c.getContext('2d'); x.lineWidth = 5; x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#0D2270';
+  if (draft.sigData) { const im = new Image(); im.onload = () => x.drawImage(im, 0, 0); im.src = draft.sigData; sigDirty = true; }
+  let down = false, last = null;
+  const pt = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
+  c.addEventListener('pointerdown', e => { down = true; last = pt(e); c.setPointerCapture(e.pointerId); e.preventDefault(); });
+  c.addEventListener('pointermove', e => { if (!down) return; const p = pt(e); x.beginPath(); x.moveTo(last[0], last[1]); x.lineTo(p[0], p[1]); x.stroke(); last = p; sigDirty = true; e.preventDefault(); });
+  const up = () => { if (down) { down = false; draft.sigData = c.toDataURL('image/png'); saveDraft(); } };
+  c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up); c.addEventListener('pointerleave', up);
+}
+function clearSig() { const c = $('sig'); if (!c) return; c.getContext('2d').clearRect(0, 0, c.width, c.height); sigDirty = false; delete draft.sigData; saveDraft(); }
+
+/* pdf-lib, loaded only when a client takes a quote. */
+let pdfLibP = null;
+function pdfLib() {
+  if (window.PDFLib) return Promise.resolve(window.PDFLib);
+  if (!pdfLibP) pdfLibP = new Promise((ok, bad) => { const s = document.createElement('script'); s.src = PDFLIB_URL; s.onload = () => ok(window.PDFLib); s.onerror = () => { pdfLibP = null; bad(new Error('The form could not load. Check your connection and try again.')); }; document.head.appendChild(s); });
+  return pdfLibP;
+}
+const b64ToBytes = b => Uint8Array.from(atob(b), c => c.charCodeAt(0));
+const bytesToB64 = u => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+function takeAnswers() {
+  const d = draft, A = Object.assign({}, d);
+  ['readDocs', 'fromDoc', 'sigData', 'invoice', 'docLabel'].forEach(k => delete A[k]);
+  A.accidents = [0, 1, 2].map(i => ({ date: d['acc' + i + 'date'] || '', cost: d['acc' + i + 'cost'] || '', driver: d['acc' + i + 'driver'] || '', details: d['acc' + i + 'details'] || '' })).filter(r => r.date || r.details);
+  A.email = session && session.email; A.insuredName = [d.first, d.surname].filter(Boolean).join(' ');
+  A.signDate = new Date().toISOString().slice(0, 10);
+  A.b19iLevel = (String(d.b19iLevel || '').match(/Level (\d)/) || [])[1] || '';
+  A.b19kLimit = String(d.b19kLimit || '').replace(/\D/g, '');
+  return A;
+}
+async function buildForms() {
+  const L = await pdfLib(), A = takeAnswers();
+  const sig = draft.sigData ? b64ToBytes(draft.sigData.split(',')[1]) : null;
+  const [tp, tk] = await Promise.all([FORM_PROPOSAL, FORM_KYP].map(u => fetch(u).then(r => { if (!r.ok) throw new Error('The form could not load.'); return r.arrayBuffer(); })));
+  return { A, proposal: await MQForms.fillProposal(L, tp, A, sig), kyp: await MQForms.fillKyp(L, tk, A, sig) };
+}
+async function previewForm(which) {
+  const w = window.open('', '_blank');
+  try { collect(); const f = await buildForms(); const url = URL.createObjectURL(new Blob([f[which]], { type: 'application/pdf' })); if (w) w.location = url; else location.href = url; }
+  catch (e) { if (w) w.close(); $('formErr').textContent = e.message; }
+}
+async function submitTake() {
+  if (!draft.sigData || !sigDirty) { $('formErr').textContent = 'Please sign in the box.'; return; }
+  if (!$('agree') || !$('agree').checked) { $('formErr').textContent = 'Please tick the box to sign and send.'; return; }
+  $('btnNext').disabled = true; $('btnNext').textContent = 'Preparing your forms…';
+  try {
+    const f = await buildForms();
+    $('btnNext').textContent = 'Sending…';
+    const docs = files.filter(x => TDOCS[x.kind]).map(x => ({ kind: x.kind, name: x.name, type: x.type, data: x.data }));
+    docs.push({ kind: 'proposal', name: 'proposal.pdf', type: 'application/pdf', data: bytesToB64(f.proposal) });
+    docs.push({ kind: 'kyp', name: 'know-your-policy.pdf', type: 'application/pdf', data: bytesToB64(f.kyp) });
+    const j = await api('propose', { token: session.token, quoteRef: draft.quoteRef || '', answers: f.A, files: docs });
+    requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
+    $('doneRef').textContent = j.ref;
+    $('doneTitle').textContent = 'Your proposal has gone.';
+    $('doneMsg').textContent = (j.mode === 'test' ? 'Test mode: it went to the branch test inbox, not to the desk. ' : 'It went to Guardian General\'s desk, with our branch copied. ') +
+      'Your signed proposal and Know Your Policy form are on their way to your inbox. We call you to arrange the premium: cover starts once it is paid.';
+    show('s-done');
+  } catch (e) { $('formErr').textContent = e.message; $('btnNext').disabled = false; $('btnNext').textContent = 'Sign and send'; }
+}
+function startTake(quoteRef) {
+  startFlow('take'); draft.quoteRef = quoteRef || '';
+  if (me) {
+    const p = String(me.name || '').trim().split(/\s+/);
+    if (!draft.first) draft.first = me.first || p.slice(0, -1).join(' '); if (!draft.surname) draft.surname = me.last || p[p.length - 1] || '';
+    if (!draft.title && me.salutation) draft.title = String(me.salutation).replace(/\.$/, '');
+    if (!draft.address && me.address) draft.address = me.address;
+    if (!draft.phone && me.mobile) draft.phone = me.mobile;
+  }
+  saveDraft(); render(); pdfLib().catch(() => {});
+}
+
 function stepYou(d) {
   const held = me && me.found ? '<p class="muted">Filled in from our records. Change anything that is different.</p>' : '';
   return held + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) +
@@ -738,6 +1065,7 @@ function wireFiles() {
 function dropFile(kind) {
   files = files.filter(f => f.kind !== kind);
   if (kind === 'invoice') { delete draft.invoice; delete draft.invoiceMsg; delete draft.docLabel; draft.fromDoc = []; saveDraft(); }
+  if (TDOCS[kind] && draft.readDocs) { delete draft.readDocs[kind]; saveDraft(); }
   render();
 }
 /* A phone photo is 3 to 8 MB; sent as a 1600 px JPEG it is about 300 KB and still readable. PDFs go as they are, under 6 MB. */

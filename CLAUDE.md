@@ -3837,7 +3837,26 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     from Salesforce. It goes to `MQ_RENEW_TO`, else the quotes desk.
   - New columns go on the end of the Motor Quotes tab, added by name (`mqQuotesSheet_`), and a row is placed by the
     tab's own headers.
-  - Tests: `tests/test-motor-quote.js` (104 checks) and `tests/e2e-motor-quote.js` (54, the three doors on a phone).
+  - Tests: `tests/test-motor-quote.js` (131 checks) and `tests/e2e-motor-quote.js` (79, every door on a phone).
+- **Taking the quote fills Guardian's own PDFs** (21 October 2026: "once they agree on the quote … upload the certified
+  copy … extract all the details on the vehicles … fill out the proposal form very fast", then "it has to be exactly on
+  the Guardian PDF and know your [policy], ensuring that they can answer it").
+  - The forms are `motor-quote/forms/gg-private-motor-proposal.pdf` (GG-MOT-APV-PRO-02/2025v2, four US Legal pages,
+    no fields) and `gg-know-your-policy-private-motor.pdf` (45 fields), with their file properties and XMP cleared,
+    because a staff member's name was in them and the site is public.
+  - `motor-quote/forms.js` (browser and Node) prints each answer at the position of its own blank, measured off the
+    PDF's characters: the YES____NO____ underscore runs, the blanks, the two tables' cells. It ticks the KYP's own
+    boxes by field name, with pdf-lib's check mark, because the form's "on" glyph renders garbled in some viewers.
+  - pdf-lib 1.17.1 is kept in `motor-quote/vendor/` (MIT), never loaded from outside.
+  - `readDoc` reads `quote`, `certified` and `permit` (the certified copy: only the current owner, never an earlier
+    one). Every declaration is the client's own tap, never pre-ticked. A fact off a document (registered in your
+    name, anti-theft from the quote's discount, the benefits on the quote) is filled and marked.
+  - `propose` checks every yes/no, every detail a Yes asks for, all 17 KYP points and both signed PDFs, then e-mails
+    the desk (`MQ_BIND_TO`, else the quotes desk) with the five documents. A Yes an underwriter must see and a KYP No
+    go first. The client gets their own signed forms. The row goes on **Motor Proposals**, and the quote request is
+    marked taken only when it is the signed-in client's.
+  - The signature pad is in a div, never a label: a click in a label also clicks its first button, which was Clear.
+  - When Guardian revises either form, replace the PDF and re-measure the positions in `forms.js`.
 - The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
   until the page is live and wired; disable it then, so an old link does not take a client back to it.
 
