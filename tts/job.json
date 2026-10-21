@@ -2,10 +2,12 @@
  "voice": "en-US-AndrewNeural",
  "rate": "-4%",
  "films": {
-  "fy27b": [
-   "Who does what, every day. The Branch Manager, the Unit Manager, the BMA, Sales Support and the agents, each with its own rhythm.",
-   "Branch Intelligence reads a task's whole history, says where it stands, and drafts the reply. The Branch Manager, the Unit Manager and the BMA check it and post it. Sales Support get a brief.",
-   "The Branch Manager, the Unit Manager, the BMA, Sales Support and every agent. One branch. Thank you, team. Here's to our new financial year."
+  "fy27c": [
+   "The papers, end to end. Logged by the agent, signed for by Sales Support, in by noon, and sent with a transmittal to each department.",
+   "Shared work. When a desk is out, the work moves to whoever is in within thirty minutes, at each person's own pace, so no client waits.",
+   "What each manager sees. The Branch Manager, the Unit Manager and the BMA each open one page in the morning, and comment under any task, with Branch Intelligence drafting it.",
+   "Fact find insights. Every conversation goes on a fact find, and the branch reads them every day: fact finds, applications, and the year's goals.",
+   "Our walls, live in the branch. Everyone sees the score, all day, and every win. That's how we build a high-performance branch."
   ]
  }
 }
