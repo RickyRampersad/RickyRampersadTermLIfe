@@ -35,7 +35,8 @@ env.__mkSheet('Attendance', 2, env.ATT.head, [
   [DAY, 'azariah', 'Azariah Griffith', '08:12', '', '', 'in', '', 'azariah', ''],
   [DAY, 'sasha', 'Sasha Lalla-Jagassar', '', '', '', 'absent', 'Sick with the flu', 'ricky', ''],
   [DAY, 'kamla', 'Kamla Dookran', '07:58', '', '', 'in', '', 'kamla', ''],
-  [DAY, 'pawan', 'Pawan Probhu', '07:50', '', '', 'in', '', 'pawan', '']]);
+  [DAY, 'pawan', 'Pawan Probhu', '07:50', '', '', 'in', '', 'pawan', ''],
+  [DAY, 'akaash', 'Akaash Kalladeen', '06:02', '', '', 'in', '', 'akaash', '']]);
 env.__mkSheet('Workload Moves', 3, env.MOVES.head, [
   [DAY, '07:00', '00TWALL00000000001', 'Premium due - 5001816653 REENA SEEPARSAN', 'Renewa/PDl/Bill', 'sasha', 'elizabeth', 'Sasha absent', 'OK', ''],
   [DAY, '07:00', '00TWALL00000000002', 'Follow up with UW - 1000894223 RAVI', 'Pendings', 'sasha', 'elizabeth', 'Sasha absent', 'OK', ''],
@@ -107,7 +108,8 @@ ok('Liz took two of hers and Azariah one', JSON.stringify(sa('sasha').coveredBy)
 ok('and they show as covering', sa('elizabeth').covering === 2 && sa('azariah').covering === 1);
 ok('Pawan is on the board too', sa('pawan').status === 'in' && sa('pawan').game === false);
 ok('inside: in at 8:12, late 12', inside.staff.people.find(p => p.sid === 'azariah').inAt === '8:12' && inside.staff.people.find(p => p.sid === 'azariah').late === 12);
-ok('the tile: 4 of 5 in, Sasha out', outside.staff.tiles.inNow === 4 && outside.staff.tiles.of === 5 && outside.staff.tiles.out.join() === 'Sasha');
+ok('the tile: 5 of 6 in, Sasha out', outside.staff.tiles.inNow === 5 && outside.staff.tiles.of === 6 && outside.staff.tiles.out.join() === 'Sasha');
+ok('Akaash is on the board, as the unit manager, out of the game', (() => { const a = inside.staff.people.find(p => p.sid === 'akaash'); return a && a.status === 'in' && a.role === 'Unit manager' && a.game === false && a.inAt === '6:02'; })());
 
 console.log('\nHour by hour, and the kind of work:\n');
 ok('three closed with a note (one without a note is left off)', outside.staff.tiles.closes === 3);
@@ -134,6 +136,7 @@ ok('inside: the dollars', inside.agents.fy.goal === 3600000 && inside.agents.pic
 ok('his day: by kind of work, against what waits', inside.managers.groups.length >= 2 && inside.managers.doneToday === 3);
 ok('the unit: Akaash and two agents', inside.managers.unit.lead === 'Akaash' && inside.managers.unit.n === 2 && inside.managers.unit.ffMonth === 9 && inside.managers.unit.planned === 1);
 ok('Query Pal answered this week', outside.managers.qp.answeredWeek === 1 && inside.managers.qp.over === 1);
+ok('his agents by first name, most fact finds first', (() => { const g = inside.managers.unit.agents || []; return g.length === 2 && g[0].name === 'Devendra' && g[0].ff === 6 && g[1].name === 'Marissa' && g[0].planned === true; })(), JSON.stringify(inside.managers.unit.agents));
 
 console.log('\nThe Branch Manager\'s day, from 5am:\n');
 const bm = outside.managers.bm;
