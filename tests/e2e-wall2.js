@@ -213,6 +213,15 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     await pg.waitForTimeout(4500);
     ok(tag + 'the card goes again, the wall carries on', await pg.evaluate(() => !document.querySelector('#cele').classList.contains('on') && !CELE.busy));
     ok(tag + 'no page errors', !errs.length, errs.join(' | '));
+    if (!calmView) {
+      // Staff wins stay on the staff channel, and nobody who is out is celebrated (21 Oct 2026: "on the managers it shows and highlighted Liz").
+      const mg = await pg.evaluate(async () => { CELE.q.length = 0; CELE.q.push({ k: 'streak', who: 'Elizabeth', text: '5 days on time, running' }); CELE.gap = 9; CELE.busy = false;
+        go(list().findIndex(s => s.ch === 'managers'), true); await new Promise(r => setTimeout(r, 3600)); return !!document.querySelector('#cele.on'); });
+      ok('celebrations: none over the managers channel', !mg);
+      const outWins = await pg.evaluate(() => { const p = S().people.find(x => x.game); const was = p.status; p.status = 'out'; p.parMet = true; p.streak = 5;
+        const w = wins().filter(x => x.who === p.name).length; p.status = was; return w; });
+      ok('celebrations: nobody who is out today', outWins === 0, String(outWins));
+    }
     await ctx.close();
   }
   // Andrew's recorded lines are on the site (20 Oct 2026): sound on plays them, and the wall moves on when he has finished.
