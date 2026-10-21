@@ -3821,6 +3821,13 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   the lists from the public `ping` when a session lacks them, `lb.login` returns them, and both the app and the
   Delivery Book take a staff access code again (`login`, the Access tab) as the way in until the paste.
   `tests/e2e-deliverybook.js` signs staff in as the deployed script answers.
+- **No agent number: a name and the Branch Portfolio's code** (21 October 2026: Pawan, the driver, "trying to log in as
+  Pawan and not allowing … see pawan from the access link", the Branch Portfolio workbook). `lbLogin_` takes a name or an
+  e-mail in the number box: a name only one person on the agent lists carries (`lbFindByName_`), then the Branch
+  Portfolio's access tabs (`lbIntelPerson_`: any small tab with a name, an e-mail and an Access Code or Password column;
+  `LB_INTEL_SHEET_ID` overrides `LB_INTEL_ID`), matched by name, first name, e-mail or agent number with that row's own
+  code. A Driver role (`lbIsDriverRole_`) gets the Delivery Book alone. The app's box reads "Agent number or name".
+  `tests/test-logbook.js` covers it.
 - **The Delivery Book film** (20 October 2026: "a small video on the revised delivery process as it also looks up the
   client etc and the client gets an email confirming delivery"). *The Delivery Book, for staff* (`dbstaff`, 1:45):
   `rroperations/delivery-book/deliverybook-staff.mp4`, poster `film.jpg`, page `/deliverybook-film/` (Open Graph for

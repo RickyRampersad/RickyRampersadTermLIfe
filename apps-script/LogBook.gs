@@ -741,6 +741,67 @@ function lbStaffEmail_(name) {
   return a ? a.email : '';
 }
 
+/* People with no agent number (21 October 2026: Pawan, the driver, "see pawan from the access link", the Access tab of
+   the Branch Portfolio workbook, which the tracker and the Premium Due Desk sign in from). Sign-in takes a name or an
+   e-mail in the number box: first a name only one person on the agent lists carries, then the Branch Portfolio's
+   access tabs (any tab with a name, an e-mail and an Access Code or Password column), name, e-mail or agent number
+   with that tab's own code. LB_INTEL_SHEET_ID overrides the workbook. */
+var LB_INTEL_ID = '1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs';
+
+function lbFindByName_(who) {
+  var k = lbNameKey_(who);
+  if (!k || /\d/.test(String(who))) return null;
+  var hits = lbAgents_().filter(function (a) {
+    var n = lbNameKey_(a.name);
+    return n && (n === k || (k.indexOf(' ') < 0 && n.split(' ')[0] === k));
+  });
+  return hits.length === 1 ? hits[0] : null;
+}
+
+/* A driver delivers: the Delivery Book, nothing else. */
+function lbIsDriverRole_(role) { return /driver|courier|messenger|runner|dispatch/i.test(String(role || '')); }
+
+function lbIntelPerson_(who, code) {
+  who = String(who || '').trim().toLowerCase();
+  code = String(code || '').trim();
+  if (!who || !code) return null;
+  var book;
+  try { book = SpreadsheetApp.openById(String(dbProp_('LB_INTEL_SHEET_ID', LB_INTEL_ID)).trim()); }
+  catch (e) { Logger.log('branch portfolio access: ' + e); return null; }
+  var inactive = /^(no|false|not active|inactive|resigned|terminated|disabled|off)/i;
+  var sheets = book.getSheets();
+  for (var t = 0; t < sheets.length; t++) {
+    var sh = sheets[t], lc = sh.getLastColumn(), lr = sh.getLastRow();
+    if (lr < 2 || lc < 2 || lc > 40) continue;
+    var head = sh.getRange(1, 1, 1, lc).getValues()[0].map(function (h) { return String(h || '').trim().toLowerCase(); });
+    var col = function (names) {
+      for (var i = 0; i < names.length; i++) for (var j = 0; j < head.length; j++)
+        if (head[j] === names[i] || head[j].indexOf(names[i]) === 0) return j;
+      return -1;
+    };
+    var cName = col(['name']), cMail = col(['email', 'e-mail']), cCode = col(['access code', 'password', 'pass', 'pw']);
+    if (cName < 0 || cMail < 0 || cCode < 0 || lr > 2000) continue;
+    var cNo = col(['agent number', 'agent no', 'agent id']), cAgent = col(['agent name']);
+    var cRole = col(['role']), cUnit = col(['unit']), cAct = col(['active']);
+    var vals = sh.getRange(2, 1, lr - 1, lc).getValues();
+    for (var r = 0; r < vals.length; r++) {
+      var row = vals[r];
+      var name = String(row[cName] || '').trim(), mail = String(row[cMail] || '').trim();
+      var no = cNo >= 0 ? String(row[cNo] || '').trim() : '', agent = cAgent >= 0 ? String(row[cAgent] || '').trim() : '';
+      var match = (mail && mail.toLowerCase() === who) || (name && lbNameKey_(name) === lbNameKey_(who)) ||
+                  (agent && lbNameKey_(agent) === lbNameKey_(who)) || (no && lbAgentKey_(no) === lbAgentKey_(who)) ||
+                  (name && who.indexOf(' ') < 0 && lbNameKey_(name).split(' ')[0] === lbNameKey_(who));
+      if (!match) continue;
+      var pw = String(row[cCode] == null ? '' : row[cCode]).trim();
+      if (!pw || pw.toUpperCase() !== code.toUpperCase()) continue;
+      return { agentNo: no || name, name: name || agent, email: mail, unit: cUnit >= 0 ? String(row[cUnit] || '').trim() : '',
+               code: pw, role: cRole >= 0 ? String(row[cRole] || '').trim() : '',
+               active: !(cAct >= 0 && inactive.test(String(row[cAct] || '').trim())), key: lbAgentKey_(no || name) };
+    }
+  }
+  return null;
+}
+
 /** Sign-in by agent number and password, both. A refusal never says which
  *  was wrong. Ten wrong tries on one number close it for fifteen minutes. */
 function lbLogin_(b) {
@@ -751,14 +812,17 @@ function lbLogin_(b) {
   var cache = CacheService.getScriptCache();
   var fails = Number(cache.get(key) || 0);
   if (fails >= 10) throw new Error('Too many tries on that number. Try again in fifteen minutes.');
-  var a = lbFindAgent_(no);
+  var a = lbFindAgent_(no) || lbFindByName_(no);
+  if (!a || !a.active || !a.code || a.code.toUpperCase() !== code.toUpperCase()) a = lbIntelPerson_(no, code) || a;
   if (!a || !a.active || !a.code || a.code.toUpperCase() !== code.toUpperCase()) {
     cache.put(key, String(fails + 1), 900);
     throw new Error('That agent number and password do not match.');
   }
-  var staff = lbIsStaffRole_(a.role);
-  var role = staff ? a.role : /^unit manager$/i.test(String(a.role).trim()) ? 'Unit Manager' : 'Agent';
+  var driver = lbIsDriverRole_(a.role);
+  var staff = !driver && lbIsStaffRole_(a.role);
+  var role = driver ? 'Driver' : staff ? a.role : /^unit manager$/i.test(String(a.role).trim()) ? 'Unit Manager' : 'Agent';
   var name = a.name || ('Agent ' + a.agentNo);
+  var appsCell = driver ? 'delivery-book' : lbLoginApps_(staff);
   var token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
   var now = new Date();
   var exp = new Date(now.getTime() + DB.SESSION_HOURS * 3600000);
@@ -767,11 +831,11 @@ function lbLogin_(b) {
   var need = LB_SESS_EXTRA.filter(function (c) { return !(c in hm.map); });
   if (need.length) { sh.getRange(1, hm.head.length + 1, 1, need.length).setValues([need]); hm = dbHeaderMap_(sh); }
   sh.appendRow(dbRowFor_(sh, { 'Token': token, 'Name': name, 'Role': role,
-    'Salesforce User Id': '', 'Issued': now, 'Expires': exp, 'Apps': lbLoginApps_(staff),
+    'Salesforce User Id': '', 'Issued': now, 'Expires': exp, 'Apps': appsCell,
     'Agent No': a.agentNo, 'Email': a.email, 'Unit': a.unit }));
   dbPruneSessions_(sh);
   return { ok: true, token: token, name: name, role: role, mode: dbMode_(),
-           agentNo: a.agentNo, apps: opsAppsFor_(lbLoginApps_(staff)),
+           agentNo: a.agentNo, apps: opsAppsFor_(appsCell),
            docTypes: DB.DOC_TYPES, relationships: DB.RELATIONSHIPS, methods: DB.METHODS };
 }
 
