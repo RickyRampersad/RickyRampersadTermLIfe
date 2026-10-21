@@ -3802,7 +3802,7 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
 - **The project is owned by the support@rickyrampersadbranch.com Workspace account** (21 October 2026: "remember i d
   have a workspace"), never the personal Gmail: `mqMail_` then sends from support@ through MailApp by itself, under the
   Workspace's allowance, and the `MS_*` Graph properties are not needed. A sheet made under the personal Gmail on 21
-  October ("Motor Quotes", in that Drive) is not the one to use.
+  October ("Motor Quotes", in that Drive) is not the one to use. **The sheet must be owned by support@, not shared with it**: an editor can run the script but Deploy refuses with "You do not have permission to perform this action" (21 October 2026). The fix was File → Make a copy while signed in as support@ alone, then the Script properties entered again (a copy does not carry them). Deployed the same day; its `/exec` address is `CONFIG.API_URL` in the page.
 - **Sign-in is the claims portal's**: e-mail, six-digit code to that inbox, no password. Anyone may sign in; the answer never
   says who is a client. The signed-in e-mail is the client's e-mail whatever the form sends (`mqRead_`).
 - **What Salesforce holds is filled in** (`mqLookup_`, by e-mail): the Contact (name, mobile, Title as occupation,

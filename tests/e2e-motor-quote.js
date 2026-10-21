@@ -15,7 +15,7 @@ const server = http.createServer((req, res) => {
   if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
   if (!fs.existsSync(f)) { res.writeHead(404); return res.end('no'); }
   let body = fs.readFileSync(f);
-  if (f.endsWith('motor-quote/index.html')) body = Buffer.from(body.toString().replace('API_URL: ""', 'API_URL: "' + API + '"'));
+  if (f.endsWith('motor-quote/index.html')) body = Buffer.from(body.toString().replace(/API_URL: "[^"]*"/, 'API_URL: "' + API + '"'));
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' }); res.end(body);
 });
 let fails = 0;
@@ -49,7 +49,7 @@ const calls = []; let requests = [];
   const wide = async () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
   const txt = async sel => (await page.textContent(sel)) || '';
 
-  await page.goto(base + '/motor-quote/');
+  await page.goto(base + '/motor-quote/', { waitUntil: 'domcontentloaded' });
   ok('opens on the sign-in, no "being connected" notice once wired', await page.isVisible('#s-signin') && !(await page.isVisible('#notice')));
   await page.fill('#email', 'Anika@Example.com'); await page.click('#btnCode');
   await page.waitForSelector('#codeBox:not(.hide)');
@@ -104,7 +104,7 @@ const calls = []; let requests = [];
   await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
   ok('home lists the request with its status', /MQ-261021-001/.test(await txt('#reqs')) && /Sent to quotes desk/.test(await txt('#reqs')));
   ok('nothing runs wider than the phone', await wide());
-  await page.reload(); await page.waitForSelector('#s-home:not(.hide)');
+  await page.reload({ waitUntil: 'domcontentloaded' }); await page.waitForSelector('#s-home:not(.hide)');
   ok('a reload keeps her signed in (me is asked)', calls.some(c => c.action === 'me'));
   await page.click('#who button'); await page.waitForSelector('#s-signin:not(.hide)');
   ok('sign out returns to the sign-in and forgets the device', await page.evaluate(() => !localStorage.getItem('rrb-mq-session')));

@@ -42,6 +42,8 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
 3. Run `mqSetup()` once; grant the permissions (Sheets, Drive, Gmail, external requests). It makes the four tabs
    and says what is linked.
 4. Deploy → New deployment → Web app, **Execute as: Me**, **Who has access: Anyone**. Copy the `/exec` address.
+   If Deploy says "You do not have permission to perform this action", the sheet is owned by another account
+   and support@ is only an editor: File → Make a copy as support@, enter the Script properties again, deploy the copy.
 5. In `motor-quote/index.html`, set `CONFIG.API_URL` to it. `CONFIG.SITE_KEY` must equal `MQ.SITE_KEY`.
 6. Open the page, sign in with your own e-mail, send a request. In test mode it reaches `MQ_TEST_INBOX` only,
    banner on top saying who it would have gone to. `mqPreviewToMe()` sends the two e-mails to the owner without
