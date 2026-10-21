@@ -158,6 +158,66 @@
   .why div:nth-child(2){animation-delay:.1s}.why div:nth-child(3){animation-delay:.2s}
   .why div b{display:block;font-size:20px;margin:0 0 2px}
   @media (max-width:420px){.why{grid-template-columns:1fr 1fr 1fr;gap:6px}.why div{padding:8px 7px 6px;font-size:11.5px}}
+  /* the two doors to a quote */
+  .doors{display:grid;grid-template-columns:1fr;gap:12px;margin:4px 0 8px}
+  @media (min-width:600px){.doors{grid-template-columns:1.25fr 1fr}}
+  .door{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;font:inherit;color:var(--body);background:#fff;border:1.5px solid #CFDDF0;border-radius:18px;padding:16px 16px 15px;cursor:pointer;min-height:118px;overflow:hidden;transition:transform .14s,box-shadow .18s,border-color .18s;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .door:nth-child(2){animation-delay:.08s}
+  .door:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(58,123,213,.16);border-color:var(--blue2)}
+  .door:active{transform:scale(.98)}
+  .door .ic{font-size:28px;line-height:1;width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:var(--sky);margin:0 0 6px}
+  .door b{color:var(--ink);font-size:17px}
+  .door small{color:var(--dim);font-size:13.5px;line-height:1.4}
+  .door.primary{background:linear-gradient(135deg,#3A7BD5 0%,#4C94E6 70%,#62B0EE 120%);border-color:transparent;color:#fff;box-shadow:0 10px 26px rgba(58,123,213,.3)}
+  .door.primary b{color:#fff}.door.primary small{color:#EAF3FD}
+  .door.primary .ic{background:rgba(255,255,255,.2)}
+  .door.primary:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.28) 50%,transparent 70%);transform:translateX(-120%);animation:sheen 3.6s ease-in-out 1s infinite}
+  .door .tag{position:absolute;top:12px;right:12px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#fff;color:var(--blue);border-radius:999px;padding:4px 9px}
+  .door input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  .linkbtn{font:inherit;font-size:14px;font-weight:700;color:var(--blue);background:none;border:0;padding:8px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  /* the renewal, first on the home screen */
+  .rnw{border:1.5px solid #CFE0F5;border-radius:20px;padding:16px;margin:0 0 14px;background:linear-gradient(180deg,#F5F9FE 0%,#fff 60%);animation:rise .55s cubic-bezier(.2,.8,.2,1) both;position:relative;overflow:hidden}
+  .rnw:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--blue2),var(--cyan2))}
+  .rnw.lapsed:before{background:linear-gradient(180deg,#E0703A,var(--bad))}
+  .rnw-top{display:flex;gap:14px;align-items:center}
+  .ring{--p:50;--c:var(--blue);width:78px;height:78px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),#E3ECF7 0);position:relative;animation:pop .6s cubic-bezier(.2,1.4,.3,1) both}
+  .ring:before{content:"";position:absolute;inset:7px;border-radius:50%;background:#fff}
+  .ring span{position:relative;text-align:center;line-height:1}
+  .ring b{display:block;font-size:24px;color:var(--ink);font-weight:900}
+  .ring small{font-size:10.5px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .rnw.lapsed .ring{--c:var(--bad)}
+  .rnw h3{margin:2px 0 2px;color:var(--ink);font-size:18px;line-height:1.25}
+  .rnw .when{font-size:14px;color:var(--body)}
+  .rnw .when b{color:var(--ink)}
+  .facts{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
+  .facts li{background:#fff;border:1px solid #DCE7F5;border-radius:999px;padding:5px 11px;font-size:12.5px;color:var(--body);animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+  .facts li:nth-child(2){animation-delay:.06s}.facts li:nth-child(3){animation-delay:.12s}.facts li:nth-child(4){animation-delay:.18s}.facts li:nth-child(n+5){animation-delay:.24s}
+  .tl{list-style:none;margin:14px 0 0;padding:0 0 0 18px;border-left:2px solid #DCE7F5}
+  .tl li{position:relative;padding:0 0 10px 6px;font-size:13.5px;color:var(--body)}
+  .tl li:before{content:"";position:absolute;left:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:#fff;border:2.5px solid var(--blue2)}
+  .tl li:first-child:before{background:var(--blue2);box-shadow:0 0 0 4px rgba(76,148,230,.18)}
+  .tl li b{color:var(--ink)}
+  .tl .k{display:block;font-size:12.5px;color:var(--dim)}
+  .rnw-act{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 0}
+  .rnw-act .send,.rnw-act .ghost{margin:0;min-height:50px;font-size:15px}
+  @media (max-width:380px){.rnw-act{grid-template-columns:1fr}}
+  /* read from the client's document */
+  .docnote{display:flex;gap:11px;align-items:flex-start;background:linear-gradient(135deg,#EAF3FD,#E9F8F6);border:1px solid #C9DDF5;border-radius:14px;padding:12px 13px;margin:0 0 14px;font-size:14px;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .docnote .ic{font-size:22px;line-height:1}
+  .docnote b{color:var(--ink)}
+  .fromdoc{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#0E6E68;background:#DDF4F1;border-radius:999px;padding:2px 7px;vertical-align:middle}
+  .fld.got{background:#F2FBFA;border-color:#9BD9D2;animation:glow 1.6s ease-out both}
+  .reading{position:fixed;inset:0;z-index:20;background:rgba(17,35,64,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:20px}
+  .reading .box{background:#fff;border-radius:22px;padding:24px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);animation:pop .4s cubic-bezier(.2,1.4,.3,1) both}
+  .reading .doc{width:96px;height:120px;margin:0 auto 14px;border-radius:10px;background:#fff;border:2px solid #CFDDF0;position:relative;overflow:hidden;box-shadow:0 8px 18px rgba(58,123,213,.15)}
+  .reading .doc i{display:block;height:6px;border-radius:3px;background:#E3ECF7;margin:12px 12px 0}
+  .reading .doc i:nth-child(2){width:50%}.reading .doc i:nth-child(4){width:65%}
+  .reading .doc:after{content:"";position:absolute;left:0;right:0;height:26px;top:-26px;background:linear-gradient(180deg,transparent,rgba(31,168,160,.45),transparent);animation:scan 1.6s ease-in-out infinite}
+  .reading b{display:block;color:var(--ink);font-size:17px;margin:0 0 4px}
+  .reading small{color:var(--dim);font-size:13px}
+  @keyframes scan{from{top:-26px}to{top:120px}}
+  @keyframes sheen{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+  @keyframes glow{from{box-shadow:0 0 0 6px rgba(31,168,160,.28)}to{box-shadow:0 0 0 0 rgba(31,168,160,0)}}
   @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes ring{from{transform:scale(1);opacity:.7}to{transform:scale(2.2);opacity:0}}
@@ -181,7 +241,7 @@
       <div class="big">🚗</div>
       <h1>Get your motor quote.</h1>
       <p>Sign in with your e-mail. Our clients see their details filled in. New to us? Welcome, it takes five minutes.</p>
-      <div class="chips"><span>No password</span><span>Guardian General</span><span>Answer in two working days</span></div>
+      <div class="chips"><span>No password</span><span>Upload your invoice</span><span>Renew in a tap</span></div>
     </div>
     <div id="emailBox">
       <label class="f"><b>Your e-mail</b><input class="fld" id="email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com"></label>
@@ -209,8 +269,17 @@
       <h1 id="homeTitle">Good day.</h1>
       <p id="homeLead"></p>
     </div>
+    <div id="renewals"></div>
+    <div class="sec" id="quoteHead"><span class="ic">⚡</span><div><b>Get a quote</b><small>The fastest way first</small></div></div>
+    <div class="doors">
+      <label class="door primary" id="doorInv"><span class="tag">Fastest</span><span class="ic">📄</span><b>Upload your invoice</b>
+        <small>The dealer's quotation or invoice, a photo or a PDF. We read it and fill in the details for you.</small>
+        <input type="file" id="invFile" accept="image/*,application/pdf"></label>
+      <button type="button" class="door" id="doorQuick" onclick="startFlow('quick')"><span class="ic">⚡</span><b>Quick quote</b>
+        <small>No invoice to hand? About eight answers.</small></button>
+    </div>
+    <button type="button" class="linkbtn" onclick="startFlow('full')">Or give us every detail now: permit, documents and driving record</button>
     <div id="homeVeh"></div>
-    <button class="send cy" onclick="startNew()">Start a motor quote</button>
     <div id="reqs"></div>
   </section>
 
@@ -232,7 +301,7 @@
   <!-- done -->
   <section class="card hide" id="s-done" style="text-align:center">
     <div class="tick">✓</div>
-    <h1>Your request has gone.</h1>
+    <h1 id="doneTitle">Your request has gone.</h1>
     <p class="muted">Your reference</p>
     <p class="ref" id="doneRef"></p>
     <p id="doneMsg" style="text-align:left"></p>
@@ -245,6 +314,8 @@
     <button class="ghost" onclick="showHome()">Back to my quotes</button>
   </section>
 </main>
+<div class="reading hide" id="reading" role="status" aria-live="polite"><div class="box"><div class="doc"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <b>Reading your document…</b><small id="readingMsg">This takes a few seconds.</small></div></div>
 <footer>Ricky Rampersad Branch · Guardian Group · Chaguanas · <a href="tel:+18682266461">(868) 226-6461</a><br>Your information is used only to prepare and look after your cover, and is never sold or disclosed without your express consent.</footer>
 
 <script>
@@ -330,27 +401,51 @@ function modeNotice(mode) {
 }
 
 /* ---- home ---- */
+/* The renewal comes first: a vehicle whose cover ends within 60 days, or ended
+   in the last 45, with every term on file and what the record shows. */
+const vehName = v => [v.year, v.make, v.model].filter(Boolean).join(' ') || v.reg;
+const money = n => 'TT$ ' + Math.round(Number(n)).toLocaleString();
+const longDay = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''; };
+const dueNow = v => v.renewState === 'due' || v.renewState === 'lapsed';
+function renewalCard(v, i) {
+  const lapsed = v.renewState === 'lapsed', n = Math.abs(v.renewIn || 0);
+  const pct = lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)));
+  const terms = (v.terms || []).slice(0, 4).map(t => '<li><b>' + esc(longDay(t.from) || 'Start not on file') + ' to ' + esc(longDay(t.to)) + '</b><span class="k">' +
+    esc([t.cover, t.sum ? money(t.sum) : '', t.premium ? 'premium ' + money(t.premium) : ''].filter(Boolean).join(' · ') || 'Details not on file') + '</span></li>').join('');
+  return '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" data-reg="' + esc(v.reg) + '"><div class="rnw-top">' +
+    '<div class="ring" style="--p:' + pct + '"><span><b>' + n + '</b><small>' + (lapsed ? 'days ago' : n === 1 ? 'day' : 'days') + '</small></span></div>' +
+    '<div><div class="eyebrow">' + (lapsed ? 'Your cover has ended' : 'Your renewal') + '</div><h3>' + esc(vehName(v)) + '</h3>' +
+    '<div class="when">' + esc(v.reg) + ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(v.renewOnText || longDay(v.renewOn)) + '</b></div></div></div>' +
+    (v.facts && v.facts.length ? '<ul class="facts">' + v.facts.map(f => '<li>' + esc(f) + '</li>').join('') + '</ul>' : '') +
+    (terms ? '<ol class="tl">' + terms + '</ol>' : '') +
+    '<div class="rnw-act"><button type="button" class="send" onclick="startRenew(' + i + ',\'Renew as it is\')">Renew as it is</button>' +
+    '<button type="button" class="ghost" onclick="startRenew(' + i + ',\'Renew with changes\')">Renew with changes</button></div></div>';
+}
 function showHome() {
   show('s-home');
   $('who').classList.remove('hide'); $('whoName').textContent = (me && me.name) || (session && session.email) || '';
   const first = me && (me.first || (me.name || '').split(' ')[0]);
+  const vs = (me && me.vehicles) || [], all = vs.map((v, i) => [v, i]), due = all.filter(x => dueNow(x[0])), rest = all.filter(x => !dueNow(x[0]));
   $('homeTitle').textContent = first ? 'Good day, ' + first + '.' : 'Good day.';
   $('homeBack').textContent = me && me.found ? ' back' : '';
-  $('homeLead').textContent = me && me.found
-    ? 'Tap a vehicle to quote it again, or start a new one.'
-    : 'Tell us about your vehicle. The quote comes to ' + ((session && session.email) || 'your e-mail') + '.';
-  $('homeVeh').innerHTML = (me && me.vehicles && me.vehicles.length)
-    ? '<div class="sec"><span class="ic">🚘</span><div><b>Your vehicles with us</b><small>Tap one to quote it again</small></div></div>' + me.vehicles.map((v, i) =>
-      '<button type="button" class="veh" onclick="startNew(' + i + ')"><span class="ic">🚗</span><span><b>' + esc([v.year, v.make, v.model].filter(Boolean).join(' ') || v.reg) +
-      '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + (v.to ? ' · cover to ' + esc(String(v.to).slice(0, 10)) : '') + '</span></span><span class="go">›</span></button>').join('')
+  $('homeLead').textContent = due.length
+    ? (due.length === 1 ? 'Your renewal is ready below.' : due.length + ' renewals are ready below.') + ' Or get a quote for another vehicle.'
+    : 'Upload your invoice and we fill it in, or answer a few questions. The quote comes to ' + ((session && session.email) || 'your e-mail') + '.';
+  $('renewals').innerHTML = due.map(x => renewalCard(x[0], x[1])).join('');
+  $('quoteHead').querySelector('b').textContent = due.length ? 'Another vehicle?' : 'Get a quote';
+  $('homeVeh').innerHTML = rest.length
+    ? '<div class="sec" style="margin-top:22px"><span class="ic">🚘</span><div><b>Your vehicles with us</b><small>Tap one to quote it again</small></div></div>' + rest.map(x => { const v = x[0];
+      return '<button type="button" class="veh" onclick="startFlow(\'quick\',' + x[1] + ')"><span class="ic">🚗</span><span><b>' + esc(vehName(v)) +
+      '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + (v.renewOn ? ' · ' + (v.renewState === 'ended' ? 'ended ' : 'renews ') + esc(longDay(v.renewOn)) : v.to ? ' · cover to ' + esc(longDay(v.to)) : '') +
+      '</span></span><span class="go">›</span></button>'; }).join('')
     : '';
   $('reqs').innerHTML = requests.length ? '<div class="sec" style="margin-top:22px"><span class="ic">🧾</span><div><b>Your requests</b><small>Where each one stands</small></div></div>' + requests.map(r =>
-    '<div class="req"><b>' + esc(r.ref) + '</b> · ' + esc(r.when) + '<br>' + esc(r.vehicle || r.reg) + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + ' · ' + esc(r.cover) +
-    '<br><span class="st' + (r.quotedOn || /quote sent|bound|done/i.test(r.status || '') ? ' ok' : '') + '">' + esc(r.status || 'Received') + (r.quotedOn ? ' · quoted ' + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</span></div>').join('') : '';
+    '<div class="req"><b>' + esc(r.ref) + '</b> · ' + esc(r.when) + (r.type ? ' · ' + esc(r.type) : '') + '<br>' + esc(r.vehicle || r.reg) + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + (r.cover ? ' · ' + esc(r.cover) : '') +
+    '<br><span class="st' + (r.quotedOn || /quote sent|bound|done|renewed/i.test(r.status || '') ? ' ok' : '') + '">' + esc(r.status || 'Received') + (r.quotedOn ? ' · quoted ' + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</span></div>').join('') : '';
 }
 
 /* ---- the steps ---- */
-const STEPS = [
+const FULL_STEPS = [
   { key: 'you', title: 'About you', short: 'You', render: stepYou, check: d => need(d, ['name', 'mobile']) || (d.ownerType === 'Company' && !d.company ? 'Please give the company name.' : '') },
   { key: 'vehicle', title: 'Your vehicle', short: 'Vehicle', render: stepVehicle, check: d => need(d, ['reg', 'make', 'model', 'year', 'value']) || (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') },
   { key: 'cover', title: 'The cover', short: 'Cover', render: stepCover, check: d => need(d, ['cover', 'drivingYears']) },
@@ -358,31 +453,107 @@ const STEPS = [
   { key: 'docs', title: 'Your documents', short: 'Papers', render: stepDocs, check: () => '' },
   { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' },
 ];
-const LABELS = { name: 'your name', mobile: 'your mobile', company: 'the company name', reg: 'the vehicle number', make: 'the make', model: 'the model', year: 'the year', value: 'the vehicle value', cover: 'the cover you want', drivingYears: 'how long you have been driving', permit: "your driver's permit number" };
+/* Three doors, one page: the quick quote (with or without the invoice), the renewal, and every detail. */
+const FLOWS = {
+  full: FULL_STEPS,
+  quick: [{ key: 'quick', title: 'Your quick quote', short: 'Details', render: stepQuick, check: checkQuick },
+          { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' }],
+  renew: [{ key: 'renew', title: 'Your renewal', short: 'Renewal', render: stepRenew, check: checkRenew },
+          { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' }],
+};
+const steps = () => FLOWS[draft.flow] || FULL_STEPS;
+function checkQuick(d) {
+  return need(d, ['name', 'mobile', 'make', 'model', 'year', 'value', 'cover', 'drivingYears']) ||
+    (!String(d.reg || '').trim() && d.newUnreg !== 'Yes' ? 'Still needed: the registration number, or tick "New vehicle, not registered yet".' : '') ||
+    (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '');
+}
+function checkRenew(d) {
+  return need(d, ['name', 'mobile', 'renewChoice']) || (/changes/.test(d.renewChoice || '') && !String(d.renewChanges || '').trim() ? 'Please say what you would like changed.' : '');
+}
+
+const LABELS = { renewChoice: 'whether to renew as it is or with changes', name: 'your name', mobile: 'your mobile', company: 'the company name', reg: 'the vehicle number', make: 'the make', model: 'the model', year: 'the year', value: 'the vehicle value', cover: 'the cover you want', drivingYears: 'how long you have been driving', permit: "your driver's permit number" };
 function need(d, keys) { const m = keys.filter(k => !String(d[k] || '').trim()); return m.length ? 'Still needed: ' + m.map(k => LABELS[k] || k).join(', ') + '.' : ''; }
 
-function startNew(vehIx) {
-  draft = Object.assign({}, draft.sent ? {} : draft);
-  delete draft.sent;
+/* Starts a door. What we hold about the client is carried in; what belonged to
+   another request (a vehicle, an invoice) is not, unless keep says so. */
+function startFlow(flow, vehIx, keep) {
+  const carry = ['name', 'mobile', 'gender', 'dob', 'occupation', 'agent', 'ownerType', 'company', 'companyEmail', 'drivingYears', 'ncd'];
+  const old = draft.sent ? {} : draft;
+  draft = {};
+  carry.forEach(k => { if (old[k]) draft[k] = old[k]; });
+  if (!keep) files = [];
+  draft.flow = flow;
   if (me) {
     if (!draft.name && me.name) draft.name = me.name;
     if (!draft.mobile && me.mobile) draft.mobile = me.mobile;
     if (!draft.occupation && me.occupation) draft.occupation = me.occupation;
     if (!draft.dob && me.dob) draft.dob = String(me.dob).slice(0, 10);
-    if (me.found && !draft.existingVehicles && me.vehicles && me.vehicles.length) draft.existingVehicles = me.vehicles.map(v => v.reg).join(', ');
-    if (me.found && !draft.existingPolicy && me.policies && me.policies.length) draft.existingPolicy = me.policies[0].policy;
+    if (me.found && me.vehicles && me.vehicles.length) draft.existingVehicles = me.vehicles.map(v => v.reg).join(', ');
+    if (me.found && me.policies && me.policies.length) draft.existingPolicy = me.policies[0].policy;
   }
   if (vehIx != null && me && me.vehicles[vehIx]) {
     const v = me.vehicles[vehIx];
-    Object.assign(draft, { reg: v.reg || '', make: v.make || '', model: v.model || '', year: v.year ? String(v.year) : '', sfVehicle: v.reg || '',
-      cover: v.cover ? ((COVERS.find(c => c[0].toLowerCase().indexOf(String(v.cover).toLowerCase().split(' ')[0]) === 0) || [draft.cover || ''])[0]) : (draft.cover || ''),
-      value: v.sumInsured ? String(Math.round(Number(v.sumInsured))) : (draft.value || ''), prevInsurer: v.carrier || draft.prevInsurer || '',
-      windscreen: v.windscreen ? 'Yes' : (draft.windscreen || '') });
+    Object.assign(draft, { reg: v.reg || '', make: v.make || '', model: v.model || '', year: v.year ? String(v.year) : '', sfVehicle: v.reg || '' });
+    if (flow === 'renew') Object.assign(draft, { renewOn: v.renewOn || '', renewOnText: v.renewOnText || '', renewIn: v.renewIn, renewState: v.renewState || '',
+      existingPolicy: v.policy || draft.existingPolicy || '', lastCover: v.cover || '', lastSum: v.sumInsured || '', lastPremium: v.lastPremium || '' });
+    else Object.assign(draft, {
+      cover: v.cover ? ((COVERS.find(c => c[0].toLowerCase().indexOf(String(v.cover).toLowerCase().split(' ')[0]) === 0) || [''])[0]) : '',
+      value: v.sumInsured ? String(Math.round(Number(v.sumInsured))) : '', prevInsurer: v.carrier || '', windscreen: v.windscreen ? 'Yes' : '' });
   }
   if (!draft.ownerType) draft.ownerType = 'Individual';
-  saveDraft(); stepIx = 0; files = []; show('s-form'); render();
+  saveDraft(); stepIx = 0; show('s-form'); render();
+}
+function startNew(vehIx) { startFlow('full', vehIx); }
+function startRenew(vehIx, choice) { startFlow('renew', vehIx); draft.renewChoice = choice; saveDraft(); render(); }
+
+/* ---- the invoice: read on the server, filled in here, checked by the client ---- */
+const ci = (list, v) => list.find(x => x.toLowerCase() === String(v || '').toLowerCase().trim());
+const titleCase = s => String(s || '').toLowerCase().replace(/(^|[\s\-'’])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+function applyInvoice(F) {
+  const got = [];
+  const set = (k, v) => { if (v != null && String(v).trim() !== '') { draft[k] = String(v).trim(); got.push(k); } };
+  set('make', ci(MAKES, F.make) || F.make);
+  set('model', F.model);
+  if (F.year) set('year', YEARS.indexOf(F.year) > -1 ? F.year : '');
+  set('value', F.value);
+  set('condition', F.condition);
+  set('body', ci(BODIES, F.bodyType));
+  set('cc', F.fuel === 'Electric' ? 'Electric' : ci(CCS, F.engineCc));
+  set('seating', ci(SEATS, F.seats));
+  if (F.reg) set('reg', F.reg);
+  else if (F.condition === 'New') { draft.reg = ''; set('newUnreg', 'Yes'); }
+  if (F.lender) { set('mortgaged', 'Yes'); set('institution', BANKS.find(b => b.toLowerCase().indexOf(F.lender.toLowerCase().split(' ')[0]) === 0) || F.lender); }
+  /* The buyer on the document fills only what is blank: the signed-in client's own details always stand. */
+  if (!draft.name && F.buyerName) set('name', titleCase(F.buyerName));
+  if (!draft.mobile && F.buyerPhone) set('mobile', F.buyerPhone);
+  draft.fromDoc = got;
+  draft.invoice = F;
+  draft.docLabel = [F.docType || 'document', F.dealer ? 'from ' + F.dealer : ''].filter(Boolean).join(' ');
+  delete draft.invoiceMsg;
+}
+async function onInvoice(file) {
+  if (!file) return;
+  $('formErr').textContent = ''; $('signinErr').textContent = '';
+  $('reading').classList.remove('hide'); $('readingMsg').textContent = 'This takes a few seconds.';
+  const t0 = Date.now(), tick = setInterval(() => { $('readingMsg').textContent = 'Reading… ' + Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
+  try {
+    const f = await prepFile(file, 'invoice', 2000);
+    /* A backend older than the reader answers "Unknown action": the document is still attached and the client types. */
+    const j = await api('readInvoice', { token: session.token, file: { name: f.name, type: f.type, data: f.data } })
+      .catch(e => { if (/Unknown action/i.test(e.message)) return { ok: true, read: false }; throw e; });
+    if (draft.flow !== 'quick' || $('s-form').classList.contains('hide')) startFlow('quick', null, true);
+    files = files.filter(x => x.kind !== 'invoice'); files.push(f);
+    if (j.read && j.fields) applyInvoice(j.fields);
+    else { draft.fromDoc = []; delete draft.invoice; draft.docLabel = 'your document (attached)'; draft.invoiceMsg = j.message || 'We attached your document. Please fill in the details below.'; }
+    saveDraft(); stepIx = 0; render();
+  } catch (e) {
+    if ($('s-form').classList.contains('hide')) { $('homeLead').textContent = e.message; } else { $('formErr').textContent = e.message; }
+  }
+  clearInterval(tick); $('reading').classList.add('hide');
+  const inv = $('invFile'); if (inv) inv.value = '';
 }
 function render() {
+  const STEPS = steps();
   $('steps').innerHTML = '<span class="fill"></span>' + STEPS.map((s, i) => '<i data-n="' + (i + 1) + '" class="' + (i < stepIx ? 'done' : i === stepIx ? 'on' : '') + '"><span>' + s.short + '</span></i>').join('');
   requestAnimationFrame(() => { const f = $('steps').querySelector('.fill'); if (f) f.style.width = (84 * stepIx / (STEPS.length - 1)) + '%'; });
   const s = STEPS[stepIx];
@@ -392,6 +563,8 @@ function render() {
   $('btnNext').textContent = stepIx === STEPS.length - 1 ? 'Send my request' : 'Continue';
   $('btnNext').disabled = false;
   if (s.key === 'docs') wireFiles();
+  $('step').querySelectorAll('input.invIn').forEach(el => el.addEventListener('change', ev => onInvoice(ev.target.files[0])));
+  $('step').querySelectorAll('input[type=checkbox][data-k]').forEach(el => el.addEventListener('change', () => { collect(); side(); }));
   $('step').querySelectorAll('select.fld').forEach(el => { el.classList.toggle('empty', !el.value); el.addEventListener('change', () => { el.classList.toggle('empty', !el.value); otherBox(el); collect(); side(); }); otherBox(el); });
   $('step').querySelectorAll('input.fld, textarea.fld').forEach(el => el.addEventListener('input', () => { collect(); side(); }));
   side();
@@ -419,8 +592,8 @@ function pick(k, v, el) {
   onPick(k); side();
 }
 function onPick(k) {
-  const dep = { ownerType: 'companyBox', mortgaged: 'instBox', accidents: 'accBox' }[k];
-  if (dep && $(dep)) $(dep).classList.toggle('hide', !(draft[k] === 'Company' || draft[k] === 'Yes'));
+  const dep = { ownerType: 'companyBox', mortgaged: 'instBox', accidents: 'accBox', renewChoice: 'chgBox' }[k];
+  if (dep && $(dep)) $(dep).classList.toggle('hide', !(draft[k] === 'Company' || draft[k] === 'Yes' || draft[k] === 'Renew with changes'));
 }
 function slide(dir) {
   try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; $('step').animate([{ opacity: 0, transform: 'translateX(' + (dir < 0 ? -22 : 22) + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) {}
@@ -430,6 +603,7 @@ function shake() {
 }
 async function go(dir) {
   collect();
+  const STEPS = steps();
   if (dir < 0) { if (stepIx === 0) { showHome(); return; } stepIx--; render(); slide(-1); return; }
   const err = STEPS[stepIx].check(draft);
   if (err) { $('formErr').textContent = err; shake(); return; }
@@ -439,33 +613,71 @@ async function go(dir) {
 /* The summary beside the form on a wide screen. */
 function side() {
   const d = draft, el = $('sideSum'); if (!el) return;
-  const rows = [['Name', d.name], ['Mobile', d.mobile], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Registration', d.reg],
+  const rows = [['Request', { quick: 'Quick quote', renew: 'Renewal', full: 'Every detail' }[d.flow] || ''], ['Renews', d.renewOnText], ['You ask', d.renewChoice], ['Read from', d.docLabel], ['Name', d.name], ['Mobile', d.mobile], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')],
     ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears],
-    ['No claim discount', d.ncd], ['Permit', d.permit], ['Documents', files.length ? files.map(f => f.kind).join(', ') : '']].filter(r => r[1]);
+    ['No claim discount', d.ncd], ['Permit', d.permit], ['Documents', files.length ? files.map(f => KINDS[f.kind] ? KINDS[f.kind][0] : f.kind).join(', ') : '']].filter(r => r[1]);
   el.innerHTML = rows.length ? rows.map(r => '<div class="kv"><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('') : '<p class="empty">What you fill in appears here as you go.</p>';
 }
 
 /* ---- field helpers ---- */
 const req = '<em>*</em>';
-const inp = (k, label, o = {}) => '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + '</b><input class="fld" data-k="' + k + '" type="' + (o.type || 'text') + '" value="' + esc(draft[k] || '') + '"' +
+const fromDoc = k => (draft.fromDoc || []).indexOf(k) > -1;
+const tag = k => fromDoc(k) ? '<span class="fromdoc">from your document</span>' : '';
+const inp = (k, label, o = {}) => '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + tag(k) + '</b><input class="fld' + (fromDoc(k) ? ' got' : '') + '" data-k="' + k + '" type="' + (o.type || 'text') + '" value="' + esc(draft[k] || '') + '"' +
   (o.ph ? ' placeholder="' + esc(o.ph) + '"' : '') + (o.mode ? ' inputmode="' + o.mode + '"' : '') + (o.ac ? ' autocomplete="' + o.ac + '"' : '') + (o.max ? ' maxlength="' + o.max + '"' : '') + (o.list ? ' list="' + o.list + '"' : '') + '>' +
   (o.hint ? '<small>' + o.hint + '</small>' : '') + '</label>';
 /* A drop-down. A value already held that is not on the list is shown as its own option, so nothing from Salesforce is lost. */
 const sel = (k, label, list, o = {}) => {
   const v = draft[k] || '', known = list.indexOf(v) > -1, other = v && !known && list.indexOf('Other') > -1;
-  return '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + '</b><select class="fld" data-k="' + k + '">' +
+  return '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + tag(k) + '</b><select class="fld' + (fromDoc(k) ? ' got' : '') + '" data-k="' + k + '">' +
     '<option value="">' + esc(o.ph || 'Choose…') + '</option>' +
     (v && !known && !other ? '<option value="' + esc(v) + '" selected>' + esc(v) + '</option>' : '') +
     list.map(x => '<option value="' + esc(x) + '"' + ((x === v) || (other && x === 'Other') ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' +
     (list.indexOf('Other') > -1 ? '<span class="other' + (other ? '' : ' hide') + '"><input class="fld" data-other="1" style="margin-top:8px" placeholder="Please type it" value="' + esc(other ? v : '') + '"></span>' : '') +
     (o.hint ? '<small>' + o.hint + '</small>' : '') + '</label>';
 };
-const opts = (k, label, list, hint, big) => '<div class="f" style="margin:0 0 13px"><b style="display:block;color:var(--ink);font-size:14px;margin:0 0 6px">' + label + '</b><div class="opts' + (big ? ' big' : '') + '">' +
+const opts = (k, label, list, hint, big) => '<div class="f" style="margin:0 0 13px"><b style="display:block;color:var(--ink);font-size:14px;margin:0 0 6px">' + label + tag(k) + '</b><div class="opts' + (big ? ' big' : '') + '">' +
   list.map(x => { const v = Array.isArray(x) ? x[0] : x, sub = Array.isArray(x) ? x[1] : '';
     return '<button type="button" class="' + (draft[k] === v ? 'on' : '') + '" onclick="pick(\'' + k + '\',\'' + v.replace(/'/g, "\\'") + '\',this)">' + esc(v) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</button>'; }).join('') + '</div>' +
   (hint ? '<small style="display:block;color:var(--dim);font-size:12.5px;margin:5px 0 0">' + hint + '</small>' : '') + '</div>';
 const sec = (ic, t, sub) => '<div class="sec"><span class="ic">' + ic + '</span><div><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>';
 
+/* The quick quote: what the desk prices from, on one screen. */
+function stepQuick(d) {
+  const inv = files.find(f => f.kind === 'invoice');
+  const head = d.invoice
+    ? '<div class="docnote"><span class="ic">✨</span><div><b>We read your ' + esc(d.docLabel) + '.</b> Check each field marked <span class="fromdoc">from your document</span> and change anything that is wrong. The document goes with your request.</div></div>'
+    : d.invoiceMsg ? '<div class="docnote"><span class="ic">📎</span><div>' + esc(d.invoiceMsg) + '</div></div>'
+    : '<p class="muted">The minimum we need to price it. Have the dealer\'s invoice? <label class="linkbtn" style="padding:0">Upload it<input type="file" class="invIn" accept="image/*,application/pdf" style="display:none"></label> and we fill it in.</p>';
+  return head +
+    sec('🚗', 'The vehicle') +
+    '<div class="row">' + sel('make', 'Make', MAKES, { req: 1 }) + inp('model', 'Model', { ph: 'e.g. Aqua', req: 1 }) + '</div>' +
+    '<div class="row">' + sel('year', 'Year', YEARS, { req: 1 }) + inp('value', 'Value (TT$)', { mode: 'numeric', ph: 'e.g. 95000', req: 1, hint: 'The price on the invoice, or what it would sell for today.' }) + '</div>' +
+    opts('condition', 'New or used', ['New', 'Used']) +
+    inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20 }) +
+    '<label class="chk" style="margin:-6px 0 14px"><input type="checkbox" data-k="newUnreg"' + (d.newUnreg === 'Yes' ? ' checked' : '') + '> <span>New vehicle, not registered yet' + tag('newUnreg') + '</span></label>' +
+    sec('🛡️', 'The cover') +
+    opts('cover', 'The cover you want', COVERS, '', true) +
+    '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS) + '</div>' +
+    opts('mortgaged', 'On a loan or hire purchase?', ['Yes', 'No']) +
+    '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + sel('institution', 'Financial institution', BANKS) + '</div>' +
+    sec('👤', 'You') +
+    '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>' +
+    (inv ? sec('📄', 'Your document') + '<div class="files">' + fileRow('invoice') + '</div>' : '');
+}
+/* The renewal: the vehicle and its record, then what the client wants. */
+function stepRenew(d) {
+  const lapsed = d.renewState === 'lapsed', n = Math.abs(d.renewIn || 0);
+  return '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" style="margin-top:6px"><div class="rnw-top"><div class="ring" style="--p:' + (lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)))) + '"><span><b>' + n + '</b><small>' + (lapsed ? 'days ago' : 'days') + '</small></span></div>' +
+    '<div><h3>' + esc([d.year, d.make, d.model].filter(Boolean).join(' ') || d.reg) + '</h3><div class="when">' + esc(d.reg) + ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(d.renewOnText || '') + '</b></div>' +
+    '<div class="when" style="font-size:13px;color:var(--dim)">' + esc([d.lastCover, d.lastSum ? 'insured for ' + money(d.lastSum) : '', d.lastPremium ? 'premium ' + money(d.lastPremium) : ''].filter(Boolean).join(' · ')) + '</div></div></div></div>' +
+    opts('renewChoice', 'What would you like?', [['Renew as it is', 'The same cover and the same value'], ['Renew with changes', 'Change the cover, the value, a driver or anything else']], '', true) +
+    '<div id="chgBox" class="' + (d.renewChoice === 'Renew with changes' ? '' : 'hide') + '">' +
+    '<label class="f"><b>What would you like changed? ' + req + '</b><textarea class="fld" data-k="renewChanges" placeholder="e.g. add my son as a driver, lower the value to TT$ 80,000">' + esc(d.renewChanges || '') + '</textarea></label>' +
+    '<div class="row">' + sel('cover', 'Cover', COVERS.map(c => c[0]), { ph: 'Keep as it is' }) + inp('value', 'New value (TT$)', { mode: 'numeric', ph: 'only if it changes' }) + '</div></div>' +
+    sec('👤', 'You') +
+    '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>';
+}
 function stepYou(d) {
   const held = me && me.found ? '<p class="muted">Filled in from our records. Change anything that is different.</p>' : '';
   return held + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) +
@@ -503,29 +715,33 @@ function stepDriver(d) {
     '<div id="accBox" class="' + (d.accidents === 'Yes' ? '' : 'hide') + '"><label class="f"><b>Tell us a little about it</b><textarea class="fld" data-k="accidentDetails">' + esc(d.accidentDetails || '') + '</textarea></label></div>' +
     '<label class="f"><b>Anything else we should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';
 }
-const KINDS = { 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
+const KINDS = { 'invoice': ['The invoice or quotation', 'The dealer\'s, a photo or a PDF.'], 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
 function stepDocs() {
   return '<p class="muted">Photograph them with your phone. Optional, but the quote is firmer with them.</p><div class="files" id="files">' +
-    Object.keys(KINDS).map(k => fileRow(k)).join('') + '</div>';
+    Object.keys(KINDS).filter(k => k !== 'invoice').map(k => fileRow(k)).join('') + '</div>';
 }
 function fileRow(kind) {
   const f = files.find(x => x.kind === kind), [label, hint] = KINDS[kind];
   return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph">📄</span>') : '<span class="ph">📷</span>') +
     '<div class="nm">' + esc(label) + '<small>' + (f ? esc(f.name) + ' · ' + Math.round(f.bytes / 1024) + ' KB' : esc(hint)) + '</small></div>' +
-    (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" accept="image/*,application/pdf" capture="environment" data-kind="' + kind + '"></label>') + '</div>';
+    (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" accept="image/*,application/pdf"' + (kind === 'invoice' ? ' class="invIn"' : ' capture="environment" data-kind="' + kind + '"') + '></label>') + '</div>';
 }
 function wireFiles() {
   $('step').querySelectorAll('input[type=file]').forEach(el => el.addEventListener('change', async ev => {
     const file = ev.target.files[0]; if (!file) return;
     $('formErr').textContent = ''; $('btnNext').disabled = true;
-    try { files = files.filter(f => f.kind !== el.dataset.kind); files.push(await prepFile(file, el.dataset.kind)); $('files').innerHTML = Object.keys(KINDS).map(k => fileRow(k)).join(''); wireFiles(); side(); }
+    try { files = files.filter(f => f.kind !== el.dataset.kind); files.push(await prepFile(file, el.dataset.kind)); $('files').innerHTML = Object.keys(KINDS).filter(k => k !== 'invoice').map(k => fileRow(k)).join(''); wireFiles(); side(); }
     catch (e) { $('formErr').textContent = e.message; }
     $('btnNext').disabled = false;
   }));
 }
-function dropFile(kind) { files = files.filter(f => f.kind !== kind); render(); }
+function dropFile(kind) {
+  files = files.filter(f => f.kind !== kind);
+  if (kind === 'invoice') { delete draft.invoice; delete draft.invoiceMsg; delete draft.docLabel; draft.fromDoc = []; saveDraft(); }
+  render();
+}
 /* A phone photo is 3 to 8 MB; sent as a 1600 px JPEG it is about 300 KB and still readable. PDFs go as they are, under 6 MB. */
-function prepFile(file, kind) {
+function prepFile(file, kind, maxPx) {
   return new Promise((ok, bad) => {
     if (file.type === 'application/pdf') {
       if (file.size > 6 * 1024 * 1024) return bad(new Error('That PDF is over 6 MB. Please send a smaller one.'));
@@ -534,10 +750,10 @@ function prepFile(file, kind) {
     if (!/^image\//.test(file.type)) return bad(new Error('Please add a photo or a PDF.'));
     const img = new Image(), url = URL.createObjectURL(file);
     img.onload = () => {
-      const max = 1600, sc = Math.min(1, max / Math.max(img.width, img.height));
+      const max = maxPx || 1600, sc = Math.min(1, max / Math.max(img.width, img.height));
       const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      const dataUrl = c.toDataURL('image/jpeg', 0.82); URL.revokeObjectURL(url);
+      const dataUrl = c.toDataURL('image/jpeg', maxPx ? 0.86 : 0.82); URL.revokeObjectURL(url);
       const b64 = dataUrl.split(',')[1];
       ok({ kind, name: file.name.replace(/\.[^.]+$/, '') + '.jpg', type: 'image/jpeg', bytes: Math.round(b64.length * 0.75), data: b64, preview: dataUrl });
     };
@@ -546,14 +762,15 @@ function prepFile(file, kind) {
   });
 }
 function stepReview(d) {
-  const G = [['The client', [['Name', d.name], ['E-mail', session && session.email], ['Mobile', d.mobile], ['Gender', d.gender], ['Date of birth', d.dob], ['Occupation', d.occupation], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', d.agent]]],
-    ['The vehicle', [['Registration', d.reg], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
+  const G = [['The request', [['Request', { quick: 'Quick quote', renew: 'Renewal', full: 'Every detail' }[d.flow] || ''], ['Renews on', d.renewOnText], ['You ask', d.renewChoice], ['Changes', d.renewChanges], ['Read from', d.invoice ? d.docLabel : '']]],
+    ['The client', [['Name', d.name], ['E-mail', session && session.email], ['Mobile', d.mobile], ['Gender', d.gender], ['Date of birth', d.dob], ['Occupation', d.occupation], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', d.agent]]],
+    ['The vehicle', [['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
     ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', d.ncd], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
     ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents', d.accidents + (d.accidentDetails ? ': ' + d.accidentDetails : '')], ['Notes', d.notes]]],
-    ['Documents', [['Attached', files.length ? files.map(f => f.kind).join(', ') : 'none']]]];
+    ['Documents', [['Attached', files.length ? files.map(f => KINDS[f.kind] ? KINDS[f.kind][0] : f.kind).join(', ') : (d.flow === 'full' ? 'none' : '')]]]];
   return '<p class="muted">Check it over. Tap Back to change anything. A receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
-    G.map(g => '<h3>' + g[0] + '</h3>' + g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()) || r[0] === 'Cover').map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
-    '<label class="chk"><input type="checkbox" id="agree"> <span>This is true to the best of my knowledge. Please get me a quote.</span></label>';
+    G.map(g => [g[0], g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()))]).filter(g => g[1].length).map(g => '<h3>' + g[0] + '</h3>' + g[1].map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
+    '<label class="chk"><input type="checkbox" id="agree"> <span>This is true to the best of my knowledge. Please ' + (d.flow === 'renew' ? 'renew my cover.' : 'get me a quote.') + '</span></label>';
 }
 async function submit() {
   if (!$('agree') || !$('agree').checked) { $('formErr').textContent = 'Please tick the box to send.'; return; }
@@ -562,7 +779,9 @@ async function submit() {
     const j = await api('submit', { token: session.token, quote: draft, files: files.map(f => ({ kind: f.kind, name: f.name, type: f.type, data: f.data })) });
     requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
     $('doneRef').textContent = j.ref;
-    $('doneMsg').textContent = j.mode === 'test' ? 'Test mode: this request went to the branch test inbox, not to the quotes desk.' : 'It went to Guardian General\'s quotes desk at ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ', with our branch copied.';
+    $('doneTitle').textContent = j.flow === 'renew' ? 'Your renewal request has gone.' : 'Your request has gone.';
+    $('doneMsg').textContent = j.mode === 'test' ? 'Test mode: this request went to the branch test inbox, not to the desk.' : 'It went to Guardian General\'s desk at ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ', with our branch copied.' +
+      (j.flow === 'quick' ? ' When you take the quote we will ask for your driver\'s permit and the certified copy.' : '');
     show('s-done');
   } catch (e) { $('formErr').textContent = e.message; $('btnNext').disabled = false; $('btnNext').textContent = 'Send my request'; }
 }
@@ -574,6 +793,7 @@ if (qs.get('agent')) { draft.agent = qs.get('agent'); saveDraft(); }
 if (qs.get('email') && !session) $('email').value = qs.get('email');
 $('code').addEventListener('keydown', e => { if (e.key === 'Enter') verifyCode(); });
 $('email').addEventListener('keydown', e => { if (e.key === 'Enter') requestCode(); });
+$('invFile').addEventListener('change', ev => onInvoice(ev.target.files[0]));
 resume();
 </script>
 <!-- rrb-views -->

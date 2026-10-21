@@ -3821,8 +3821,23 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
   Salesforce read but never written. `mqGoLive()` when the manager says so. The quotes desk never hears from a test.
 - **Signing in again shows the client their requests and where each stands**: the tab's Status, Quoted on and Quoted
   premium columns, kept by staff by hand.
-- Tests: `tests/test-motor-quote.js` (57 checks, a Salesforce and a Microsoft in memory) and `tests/e2e-motor-quote.js`
-  (Playwright, a phone, the six steps against a fake backend; it caught a tap and a typed box fighting over one answer).
+- **Three doors, the renewal first** (21 October 2026: "when a person wants a quote they normally have the invoice …
+  upload the invoice and all key fields presented … If they don't, just minimum to quote … a person log in to renew and
+  have the renewal at the forefront with renewal history and intelligence").
+  - *The invoice*: `readInvoice` sends the photo or PDF to Claude (`ANTHROPIC_API_KEY`, `MQ_AI_MODEL`, default
+    `claude-sonnet-5-5`, structured output, 15 a day per e-mail). The document is data: the system prompt says so,
+    and `mqInvClean_` drops whatever is not a year or an amount. The page fills the quick quote, marks each field
+    "from your document", and never lets the buyer on the document replace the signed-in client's name or mobile.
+    The document travels to the desk; what was read is on the **Invoice read** column.
+  - *The quick quote* (`flow` quick): `MQ_REQUIRED_BY.quick`, no permit; "New vehicle, not registered yet" is allowed.
+  - *The renewal* (`flow` renew): `mqRenewal_` gives each vehicle its terms (one per policy and end date), the renewal
+    date (the day after the cover ends, or `Next_Renewal_Date__c` within three days of it), the days to it and the
+    facts off the record, never advice. Due within `RENEW_AHEAD` (60) or lapsed within `RENEW_BACK` (45) comes first
+    on the home screen. `mqRenewFromRecord_` reads the vehicle again at the send, so the date, premium and terms come
+    from Salesforce. It goes to `MQ_RENEW_TO`, else the quotes desk.
+  - New columns go on the end of the Motor Quotes tab, added by name (`mqQuotesSheet_`), and a row is placed by the
+    tab's own headers.
+  - Tests: `tests/test-motor-quote.js` (104 checks) and `tests/e2e-motor-quote.js` (54, the three doors on a phone).
 - The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
   until the page is live and wired; disable it then, so an old link does not take a client back to it.
 
