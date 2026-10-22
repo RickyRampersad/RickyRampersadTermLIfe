@@ -5606,17 +5606,45 @@ function tSfAssignWrite_(done, agent, now) {
     var want = {}, all = [];
     done.forEach(function (c) { var p = tClientPols_(c.token, c.no, ha); want[c.token] = p; p.forEach(function (x) { if (all.indexOf(x) < 0) all.push(x); }); });
     if (!all.length) return { on: true, ok: false, why: 'no policy numbers on file for ' + (done.length === 1 ? 'this client' : 'these clients') };
-    var recs = {};
+    var recs = {}, F = 'Id, Name, POLICY__c, Policy_Status_Description__c, Contact__c, Contact__r.Name, Contact__r.AccountId, Contact__r.Account.Name';
     for (var i = 0; i < all.length; i += 100) {
-      tSfQuery_('SELECT Id, POLICY__c, Policy_Status_Description__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' +
+      tSfQuery_('SELECT ' + F + ' FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' +
         all.slice(i, i + 100).map(function (p) { return "'" + svcSoqlLit_(p) + "'"; }).join(',') + ')').forEach(function (r) { recs[tPolNo_(r.POLICY__c)] = r; });
     }
-    var day = Utilities.formatDate(now, tTz_(), 'yyyy-MM-dd'), upd = [], clients = 0, none = 0;
+    /* 22 October 2026, the branch manager: "when you assign the agent you need to update the campaign to Orphan and the date
+       assigned as well". Every policy record of the client, in force or not: the ones found by policy number, and every
+       other record on the client's own Contact (a policy the sheets never listed, an application never issued). A policy the
+       client owns on someone else's life sits on that person's Contact and is found by its number; that person's other
+       policies are not the client's and are never touched. */
+    var own = {};
     done.forEach(function (c) {
-      var mine = want[c.token].map(function (p) { return recs[p]; }).filter(Boolean);
+      want[c.token].forEach(function (p) {
+        var r = recs[p];
+        if (r && r.Contact__c && r.Contact__r && tSameClient_(r.Contact__r.Name, c.client)) own[r.Contact__c] = true;
+      });
+    });
+    var byContact = {}, cids = Object.keys(own);
+    for (var k = 0; k < cids.length; k += 100) {
+      tSfQuery_('SELECT ' + F + ' FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN (' + tSoqlIn_(cids.slice(k, k + 100)) + ')').forEach(function (r) {
+        (byContact[r.Contact__c] = byContact[r.Contact__c] || []).push(r);
+      });
+    }
+    var day = Utilities.formatDate(now, tTz_(), 'yyyy-MM-dd'), upd = [], clients = 0, none = 0, per = {}, seen = {};
+    done.forEach(function (c) {
+      var mine = want[c.token].map(function (p) { return recs[p]; }).filter(Boolean), ids = {};
+      mine.forEach(function (r) { ids[r.Id] = true; });
+      mine.forEach(function (r) {
+        if (r.Contact__c && own[r.Contact__c] && r.Contact__r && tSameClient_(r.Contact__r.Name, c.client)) {
+          (byContact[r.Contact__c] || []).forEach(function (x) { if (!ids[x.Id]) { ids[x.Id] = true; mine.push(x); } });
+        }
+      });
       if (!mine.length) { none++; return; }
-      var live = mine.filter(function (r) { return T_SF_LIVE.test(r.Policy_Status_Description__c || ''); });
-      (live.length ? live : mine.slice(0, 1)).forEach(function (r) {
+      var self = mine.filter(function (r) { return r.Contact__r && tSameClient_(r.Contact__r.Name, c.client); })[0] || mine[0];
+      per[c.token] = { recs: mine.map(function (r) { return { id: r.Id, rec: r.Name || '', no: tPolNo_(r.POLICY__c), st: String(r.Policy_Status_Description__c || '') }; }),
+        contact: self.Contact__c || '', account: self.Contact__r ? self.Contact__r.AccountId || '' : '', accountName: self.Contact__r && self.Contact__r.Account ? self.Contact__r.Account.Name || '' : '' };
+      mine.forEach(function (r) {
+        if (seen[r.Id]) return;
+        seen[r.Id] = true;
         upd.push({ attributes: { type: 'CLIENT_PORTFOLIO__c' }, id: r.Id, Assigned_Agent__c: who.id, Date_Assigned_to_Agent__c: day, Campaign__c: T_MATCH.CAMPAIGN });
       });
       clients++;
@@ -5626,9 +5654,120 @@ function tSfAssignWrite_(done, agent, now) {
       var res = tSfSend_('patch', '/composite/sobjects', { allOrNone: false, records: upd.slice(j, j + 200) });
       (Array.isArray(res) ? res : []).forEach(function (x) { if (x && x.success) ok++; else bad.push(x && x.errors && x.errors[0] ? x.errors[0].message : 'refused'); });
     }
-    return { on: true, ok: !bad.length && !none, policies: ok, clients: clients, none: none,
+    return { on: true, ok: !bad.length && !none, policies: ok, clients: clients, none: none, per: per, day: day,
       why: (bad.length ? bad.length + ' polic' + (bad.length === 1 ? 'y' : 'ies') + ' refused: ' + bad[0] : '') + (none ? (bad.length ? '; ' : '') + none + ' client' + (none === 1 ? '' : 's') + ' not found in Salesforce' : '') };
   } catch (e) { return { on: true, ok: false, why: String(e && e.message ? e.message : e).slice(0, 200) }; }
+}
+/** Whether a Contact's name is the client's own: the same name, or the same first name with the surname inside the other
+ *  (a married name, "Lalla" and "Lalla-Jagassar"). A child's or a spouse's Contact is not. */
+function tSameClient_(a, b) {
+  var ka = tNameKey_(a), kb = tNameKey_(b);
+  if (!ka || !kb) return false;
+  if (ka === kb) return true;
+  var pa = String(a).toLowerCase().replace(/\([^)]*\)/g, ' ').split(/[^a-z]+/).filter(Boolean), pb = String(b).toLowerCase().replace(/\([^)]*\)/g, ' ').split(/[^a-z]+/).filter(Boolean);
+  if (!pa.length || !pb.length || pa[0] !== pb[0]) return false;
+  var la = pa[pa.length - 1], lb = pb[pb.length - 1];
+  return la === lb || ka.indexOf(lb) >= 0 || kb.indexOf(la) >= 0;
+}
+
+/* ── the household task for the agent's support person ───────────────────
+   22 October 2026, the branch manager: "Create a task on the Household assigning to the agent Support", then "yes": every
+   naming, on the board or in Salesforce, opens one task on the household Account ("<SURNAME>, <FIRST> HH", the client's
+   Contact's account) for the person who supports that agent: "Orphan Project: follow up with <agent> re <client>
+   (assigned <date>)", the pattern of the branch's own tasks of 21 October. It stays open until the service questionnaire
+   is signed, so a person on the branch side keeps the agent's progress on the record.
+   Who supports an agent: the Support column on the Agent Skill Bank when there is one (a name, as the tab writes it),
+   else T_SUPPORT.MAP (the split the records suggested on 22 October: who already serves each agent's clients, and an even
+   share of the households each agent is getting), else whichever of T_SUPPORT.POOL has the fewest open orphan tasks.
+   Never two: a household with an open "Orphan Project: follow up with <agent>" task already gets nothing more. */
+var T_SUPPORT = {
+  ON: true,
+  SUBJECT: 'Orphan Project: follow up with ',
+  POOL: ['Sasha Lalla-Jagassar', 'Azariah Griffith', 'Elizabeth Lee'],
+  MAP: {   // agent → support person; the Agent Skill Bank's Support column wins over this
+    'Neil Ramnanan': 'Elizabeth Lee', 'Felicia Rampersad': 'Elizabeth Lee', 'Rajiv Soodoo': 'Elizabeth Lee', 'Randolph Gonzales': 'Elizabeth Lee',
+    'Varun Seegolam': 'Sasha Lalla-Jagassar', 'Fawwaz Mohamed': 'Sasha Lalla-Jagassar', 'Malcolm Sooknanan': 'Sasha Lalla-Jagassar',
+    'Premchand Dookran': 'Azariah Griffith', 'Darryl Manick': 'Azariah Griffith', 'Meera Persad Khan': 'Azariah Griffith',
+    'Narissa Mohammed': 'Azariah Griffith', 'Daniel Bhagwandas': 'Azariah Griffith'
+  }
+};
+/** The support person for an agent: { name, id (their Salesforce user, or ''), via: 'Skill Bank' | 'default' | 'fewest open' }. */
+function tSupportFor_(agentName, load) {
+  var k = tNameKey_(agentName), name = '', via = '';
+  try {
+    var t = tSheetRows_(SVC.TEAM_SHEET || 'Agent Skill Bank'), ia = -1, is = -1;
+    t.head.forEach(function (h, i) { var s = String(h).trim().toLowerCase(); if (ia < 0 && (s === 'agent' || s === 'name')) ia = i; if (s === 'support' || s === 'support person') is = i; });
+    if (ia >= 0 && is >= 0) t.rows.forEach(function (v) { if (!name && tNameKey_(tCleanName_(v[ia])) === k && String(v[is] || '').trim()) { name = String(v[is]).trim(); via = 'Skill Bank'; } });
+  } catch (e) {}
+  if (!name) Object.keys(T_SUPPORT.MAP).forEach(function (a) { if (!name && tNameKey_(a) === k) { name = T_SUPPORT.MAP[a]; via = 'default'; } });
+  if (!name && load) {
+    var best = null;
+    T_SUPPORT.POOL.forEach(function (p) { var n = load[tNameKey_(p)] || 0; if (!best || n < best.n) best = { p: p, n: n }; });
+    if (best) { name = best.p; via = 'fewest open'; load[tNameKey_(best.p)] = best.n + 1; }
+  }
+  return { name: tNiceName_(name), id: name ? (tSfUserId_(name) || '') : '', via: via };
+}
+/** Open orphan tasks per owner, by name key, for the fallback. {} when Salesforce does not answer. */
+function tOrphanLoad_() {
+  var out = {};
+  try {
+    tSfQuery_("SELECT Owner.Name, COUNT(Id) n FROM Task WHERE IsClosed = false AND Subject LIKE 'Orphan%' GROUP BY Owner.Name").forEach(function (r) {
+      var nm = r.Name || (r.Owner && r.Owner.Name) || ''; if (nm) out[tNameKey_(nm)] = Number(r.n || r.expr0 || 0);
+    });
+  } catch (e) {}
+  return out;
+}
+/** One household task per household named (clients: the naming's cards, sfw: tSfAssignWrite_'s answer with `per`).
+ *  { made: n, skipped: n, tasks: [{ id, subject, owner }], why }. Never throws. */
+function tSfHouseholdTasks_(clients, agent, at, by, hhOf, sfw) {
+  var out = { made: 0, skipped: 0, tasks: [], why: '' };
+  if (!T_SUPPORT.ON) { out.why = 'switched off'; return out; }
+  if (!tSfOn_()) { out.why = 'Salesforce is not linked in this project yet'; return out; }
+  if (!sfw || !sfw.per) { out.why = 'no policy records were written'; return out; }
+  try {
+    var tz = tTz_(), on = Utilities.formatDate(at, tz, 'd MMM yyyy'), day = Utilities.formatDate(at, tz, 'yyyy-MM-dd');
+    var groups = {}, order = [];
+    clients.forEach(function (c) {
+      var p = sfw.per[c.token];
+      if (!p || !p.account) return;
+      var g = (hhOf && hhOf[c.token]) || ('S' + c.token);
+      if (!groups[g]) { groups[g] = []; order.push(g); }
+      groups[g].push({ c: c, p: p });
+    });
+    if (!order.length) { out.why = 'no household account found in Salesforce'; return out; }
+    var sup = tSupportFor_(agent.name, tOrphanLoad_());
+    var owner = sup.id || tSfUserId_(TRANSITION.MANAGER.name) || '';
+    var supFirst = String(sup.name || TRANSITION.MANAGER.name).split(/\s+/)[0], agFirst = String(agent.name).split(/\s+/)[0];
+    order.forEach(function (g) {
+      var m = groups[g], head = m[0];
+      var lead = T_SUPPORT.SUBJECT + agent.name;
+      var exists = tSfQuery_("SELECT Id FROM Task WHERE IsClosed = false AND WhatId = '" + svcSoqlLit_(head.p.account) + "' AND Subject LIKE '" + svcSoqlLit_(lead) + "%' LIMIT 1");
+      if (exists.length) { out.skipped++; return; }
+      var names = m.map(function (x) { return x.c.client; });
+      var subject = (lead + ' re ' + (names.length > 2 ? names[0] + ' and ' + (names.length - 1) + ' family members' : names.join(' and ')) + ' (assigned ' + on + ')').slice(0, 255);
+      var lines = ['Orphan Project. Agent ' + agent.name + ' assigned ' + on + ' by ' + tNiceName_(by) + '.'];
+      m.forEach(function (x) {
+        lines.push('Client: ' + x.c.client + (x.p.accountName ? ' (' + x.p.accountName + ')' : ''));
+        lines.push('Policies: ' + x.p.recs.map(function (r) { return r.no + (r.rec ? ' (' + r.rec + ')' : '') + (r.st ? ' - ' + r.st : ''); }).join('; '));
+        if (x.c.book) lines.push('Former agent: ' + x.c.book);
+        var said = [];
+        (x.c.answers || []).forEach(function (a) { var s = T_HA_SAID[a.code] || ''; if (s && said.indexOf(s) < 0) said.push(s); });
+        (x.c.taps || []).forEach(function (t) { var s = T_HA_SAID[t.tap] || ''; if (s && said.indexOf(s) < 0) said.push(s); });
+        if (said.length) lines.push('What the client told us: ' + said.slice(0, 5).join('; ') + '.');
+      });
+      lines.push('');
+      lines.push(supFirst + ': follow up with ' + agFirst + ' on contact made with the client and the outcome. Log ' + agFirst + '’s feedback in the task trail. Keep this task open until the service questionnaire is signed.');
+      var rec = { Subject: subject, Status: 'Not Started', Priority: 'High', ActivityDate: day, WhatId: head.p.account, Description: lines.join('\n') };
+      if (head.p.contact) rec.WhoId = head.p.contact;
+      if (owner) rec.OwnerId = owner;
+      var made = null;
+      try { made = tSfSend_('post', '/sobjects/Task', Object.assign({ Type: T_SFTASK.TYPE }, rec)); }
+      catch (e) { made = tSfSend_('post', '/sobjects/Task', rec); }
+      if (made && made.id) { out.made++; out.tasks.push({ id: made.id, subject: subject, owner: sup.name || TRANSITION.MANAGER.name }); }
+    });
+    out.support = sup.name; out.via = sup.via;
+  } catch (e) { out.why = String(e && e.message ? e.message : e).slice(0, 200); }
+  return out;
 }
 
 /** The roster agent a name means: the full name, or a first name that only one agent on the roster carries. */
@@ -5888,6 +6027,10 @@ function transitionAssign_(p) {
     /* and in Salesforce, the way the branch names an agent there (8 October 2026: "if that is updated there, it updates on
        the Salesforce backend"): skipped, and said, until Salesforce is linked in this project */
     var sf = tSfAssignWrite_(done, agent, now);
+    /* and the household task for the agent's support person (22 October 2026: "Create a task on the Household assigning to
+       the agent Support"), one per household, never two */
+    var hhTask = { made: 0, skipped: 0, tasks: [] };
+    if (sf.on && sf.per) { try { hhTask = tSfHouseholdTasks_(done, agent, now, byStaff || (w.me && w.me.name) || TRANSITION.MANAGER.name, hhOf, sf); } catch (e) { hhTask.why = String(e && e.message ? e.message : e); } }
     /* and a line on each client's open Salesforce tasks (15 October 2026): the naming, the date and who named, so the task
        that stays open until the matter is closed carries it */
     var sfNotes = 0;
@@ -5932,9 +6075,11 @@ function transitionAssign_(p) {
          (missing.length ? ' · ' + missing.length + ' unknown' : '') +
          (added.length ? ' · ' + added.length + ' household member' + (added.length === 1 ? '' : 's') + ' named with them' : '') +
          (sf.on ? ' · Salesforce: ' + (sf.policies ? sf.policies + ' polic' + (sf.policies === 1 ? 'y' : 'ies') + ' updated' : 'not updated') + (sf.why ? ' (' + sf.why + ')' : '') : '') +
+         (hhTask.made ? ' · ' + hhTask.made + ' household task' + (hhTask.made === 1 ? '' : 's') + ' for ' + (hhTask.support || 'support') : '') +
          (sfNotes ? ' · ' + sfNotes + ' task note' + (sfNotes === 1 ? '' : 's') : ''));
+    if (sf.per) delete sf.per;   // the board needs the counts, not the records
     return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, introHeld: introHeld, introDue: introDue, notAnswered: notAnswered, missing: missing, warnings: warnings, sf: sf,
-             households: Object.keys(hhNamed).length, family: added.length, sfNotes: sfNotes };
+             households: Object.keys(hhNamed).length, family: added.length, sfNotes: sfNotes, hhTask: { made: hhTask.made, skipped: hhTask.skipped, support: hhTask.support || '', why: hhTask.why || '' } };
   } finally { lock.releaseLock(); }
 }
 
@@ -8920,6 +9065,17 @@ function tSfBriefs_(opts) {
       out.sent++; out.clients += clients.length; out.agents.push(agent.name + ' (' + clients.length + ')');
       if (opts.test) out.to = m.to;
       else clients.forEach(function (c) { log.push({ tok: c.token, client: c.client, agent: agent.name, on: g.on, source: 'Salesforce', status: 'sent' }); });
+      /* the rest of what a naming writes (22 October 2026): Campaign Orphan and the date on every policy record of the client,
+         not only the ones named by hand, and the household task for the agent's support person */
+      if (!opts.test && tSfOn_()) {
+        try {
+          var dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(g.on || ''), at = dm ? new Date(Number(dm[1]), Number(dm[2]) - 1, Number(dm[3]), 12) : new Date();
+          var sfw = tSfAssignWrite_(clients, agent, at), hhOf = {};
+          try { hhOf = tHouseholds_().byTok || {}; } catch (e) {}
+          var ht = sfw.per ? tSfHouseholdTasks_(clients, agent, at, TRANSITION.MANAGER.name, hhOf, sfw) : { made: 0 };
+          out.policies = (out.policies || 0) + (sfw.policies || 0); out.hhTasks = (out.hhTasks || 0) + (ht.made || 0);
+        } catch (e) { log_('transition', 'salesforce-naming-complete-failed', agent.name + ': ' + String(e && e.message ? e.message : e)); }
+      }
     } catch (e) {
       out.failed++;
       log_('transition', 'salesforce-brief-failed', agent.name + ': ' + String(e && e.message ? e.message : e));
@@ -8928,7 +9084,8 @@ function tSfBriefs_(opts) {
   if (!opts.test) {
     tBriefLog_(log);
     if (out.sent || out.held || out.failed) log_('transition', 'salesforce-briefs', out.sent + ' brief' + (out.sent === 1 ? '' : 's') + ' for ' + out.clients + ' client' + (out.clients === 1 ? '' : 's') +
-      (out.agents.length ? ': ' + out.agents.join(', ') : '') + (out.held ? ' · ' + out.held + ' held (agent not on the Agent Skill Bank)' : '') + (out.failed ? ' · ' + out.failed + ' failed' : ''));
+      (out.agents.length ? ': ' + out.agents.join(', ') : '') + (out.held ? ' · ' + out.held + ' held (agent not on the Agent Skill Bank)' : '') + (out.failed ? ' · ' + out.failed + ' failed' : '') +
+      (out.policies ? ' · ' + out.policies + ' policy records marked Orphan' : '') + (out.hhTasks ? ' · ' + out.hhTasks + ' household task' + (out.hhTasks === 1 ? '' : 's') : ''));
   }
   return out;
 }

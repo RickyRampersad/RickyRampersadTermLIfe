@@ -2564,10 +2564,18 @@ voice under the new timing and the caption gives it away.
     subject `Orphan Project: follow up with <agent> re <client> (assigned <d Mon yyyy>)`, owned by the agent's support
     person, due the day of the naming, High, Call. Description: who assigned the agent and when, the client and
     household, every policy with its status, the former agent, what the client asked, then "<support>: follow up with
-    <agent> on contact made with the client and outcome. Log his feedback in the task trail. Keep this task open until
-    the service questionnaire is signed." Liz is the support on Neil Ramnanan's clients (the 21 and 22 Oct tasks).
-  - `tSfAssignWrite_` (the board's naming) still writes only the in-force policies, else the first, and opens no
-    household task: until it is changed, a naming made from the board needs both done by hand.
+    <agent> on contact made with the client and the outcome. Log <agent>'s feedback in the task trail. Keep this task
+    open until the service questionnaire is signed." One task a household and agent: an open one with that subject on
+    the Account is found and none is added.
+  - **Both are automatic** on every naming: the board's (`transitionAssign_`), Match's and staff's, and a naming made in
+    Salesforce (`tSfBriefs_`, after the brief). `tSfAssignWrite_` reads the client's policies by number and then every
+    record on their own Contact (`tSameClient_`, so a daughter's own policy on her own Contact is never touched), and
+    `tSfHouseholdTasks_` opens the task. The board's answer says how many records and tasks (`sf.policies`, `hhTask`).
+  - **Who supports whom** (`T_SUPPORT`, `tSupportFor_`): a **Support** column on the Agent Skill Bank wins, when one is
+    added; else `T_SUPPORT.MAP` (Liz for Neil, Felicia, Rajiv and Randolph; Sasha for Varun, Fawwaz and Malcolm;
+    Azariah for Premchand, Darryl, Meera, Narissa and Daniel, from who has owned each agent's tasks); else whichever of
+    Sasha, Azariah and Liz has the fewest open orphan tasks. The owner is that person's Salesforce user, else the
+    branch manager's. `hh22/test.js` (21 checks) and `hh22/sf-test.js` (5) in the scratchpad cover it.
 - **A naming in Salesforce now briefs the agent, as a naming on the board does** (22 October 2026: "can a template be
   created that will trigger a notification to Neil once the Assignment is done? … log in and place his comments in the
   portal … and give a lot of intelligence"). Until then Salesforce sent nothing (no flow on the policy record reads
