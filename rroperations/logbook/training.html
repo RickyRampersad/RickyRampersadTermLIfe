@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Log Book Training | Ricky Rampersad Branch</title>
+<meta name="description" content="The Log Book manual for agents and staff, and the test that goes with it."/>
+<meta name="robots" content="noindex"/>
+<meta property="og:title" content="Log Book training"/>
+<meta property="og:description" content="Read your part of the manual, take the test, get your score."/>
+<meta property="og:image" content="https://rickyrampersadbranch.com/rroperations/logbook/film-agents.jpg"/>
+<link rel="icon" type="image/png" href="/orphan-transition/board-mark.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* The Log Book training (17 October 2026). The manual is here; the questions and answers are on the
+     private "Log Book Questions" tab and reach the page without their answers. */
+  :root{
+    --bg:#070F26; --card:#163553; --card2:#1b3d61; --field:rgba(0,0,0,.28);
+    --gold:#6FA8FF; --gold2:#1D5BC4; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.09); --teal:#00CFEA; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.08),transparent);font-size:16px;line-height:1.55}
+  button,input{font:inherit;color:inherit}
+  a{color:var(--gold)}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  h1,h2,h3{font-family:'Montserrat',system-ui,sans-serif;line-height:1.2}
+  [hidden]{display:none!important}
+  .wrap{max-width:860px;margin:0 auto;padding:0 16px 96px}
+  .mark{width:38px;height:38px;border-radius:10px;overflow:hidden;background:#13408F;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+
+  /* gate */
+  #lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px;overflow:auto}
+  .lock-card{width:min(400px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:22px;padding:30px 22px}
+  .lock-card .mark{width:64px;height:64px;border-radius:16px;margin:0 auto 14px}
+  .lock-card h1{font-weight:800;font-size:21px;color:var(--gold);margin-bottom:6px}
+  .lock-card p{font-size:14px;color:var(--muted);margin-bottom:16px}
+  .seg{display:flex;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:14px}
+  .seg button{flex:1;border:0;background:none;padding:9px 6px;border-radius:9px;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--gold);color:#06183a}
+  .lock-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--field);text-align:center;
+    letter-spacing:2px;font-family:'Montserrat';font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:10px;outline:none}
+  .err{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:#fecaca;border-radius:10px;padding:10px 12px;font-size:14px;margin:8px 0;text-align:left}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px 20px;font-weight:700;cursor:pointer;
+    background:linear-gradient(135deg,#2A6DE0,#13408F);color:#fff;text-decoration:none}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+  .btn.wide{width:100%}
+  .btn:disabled{opacity:.55;cursor:default}
+
+  /* top */
+  header{position:sticky;top:0;z-index:20;background:rgba(7,15,38,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top{max-width:860px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+  .top h1{font-size:16px;font-weight:800;color:var(--gold)}
+  .top small{display:block;color:var(--muted);font-size:12.5px}
+  .top .sp{flex:1}
+  .tabs{max-width:860px;margin:0 auto;display:flex;gap:2px;padding:0 10px;overflow-x:auto}
+  .tabs button{flex:1 0 auto;background:none;border:0;padding:10px 12px 11px;color:var(--muted);font-weight:700;font-size:14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+  .tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--gold)}
+
+  /* hero and progress */
+  .hero{margin-top:20px;background:linear-gradient(150deg,#13408F,#0B1F4F 55%,#070F26);border:1px solid var(--line);border-radius:20px;padding:22px}
+  .hero .eb{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+  .hero h2{font-size:clamp(22px,4.6vw,30px);font-weight:800;margin:6px 0 8px}
+  .hero p{color:#BFD3F7;max-width:62ch}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+  .step{background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .step b{display:block;font-size:14px}
+  .step span{font-size:13px;color:var(--muted)}
+  .step.done{border-color:rgba(74,222,128,.45)} .step.done b::before{content:'✓ ';color:var(--ok)}
+  .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:8px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#2A6DE0,var(--teal));width:0;transition:width .4s}
+  @media (max-width:600px){.steps{grid-template-columns:1fr}}
+
+  /* manual */
+  .films{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+  .film{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-decoration:none;color:var(--text)}
+  .film img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;flex:none}
+  .film b{display:block;font-size:14px} .film span{font-size:13px;color:var(--muted)}
+  @media (max-width:600px){.films{grid-template-columns:1fr}}
+  .sec{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;margin-top:14px;overflow:hidden}
+  .sec>summary{list-style:none;cursor:pointer;padding:16px;display:flex;align-items:center;gap:12px}
+  .sec>summary::-webkit-details-marker{display:none}
+  .sec .no{width:30px;height:30px;border-radius:50%;background:rgba(111,168,255,.18);color:var(--gold);display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+  .sec.read .no{background:rgba(74,222,128,.2);color:var(--ok)}
+  .sec h3{font-size:16px;font-weight:800;flex:1}
+  .sec .st{font-size:12px;color:var(--muted)}
+  .sec.read .st{color:var(--ok)}
+  .sec .body{padding:0 16px 16px 58px}
+  .sec .body p,.sec .body li{color:#d6e2f0;font-size:15px}
+  .sec .body p+p,.sec .body ul,.sec .body ol{margin-top:8px}
+  .sec .body ul,.sec .body ol{padding-left:20px}
+  .sec .body li+li{margin-top:4px}
+  .rule{background:rgba(0,207,234,.08);border-left:3px solid var(--teal);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:14.5px}
+  .tick{margin-top:14px;display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer}
+  .tick input{width:22px;height:22px;accent-color:var(--ok)}
+  .top .btn{white-space:nowrap}
+  @media (max-width:480px){.top h1{font-size:15px}.top .btn{padding:7px 10px!important;font-size:12.5px!important}.top .mark{width:32px;height:32px}}
+  @media (max-width:600px){.sec .body{padding-left:16px}}
+
+  /* the test */
+  .q{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:12px}
+  .q .meta{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+  .q .meta .crit{color:var(--warn)}
+  .q h3{font-family:'DM Sans',system-ui,sans-serif;font-size:16.5px;font-weight:700;margin:6px 0 10px}
+  .opt{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-top:8px;cursor:pointer}
+  .opt .l{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+  .opt[aria-pressed=true]{border-color:var(--gold);background:rgba(111,168,255,.12)}
+  .opt[aria-pressed=true] .l{background:var(--gold);color:#06183a;border-color:var(--gold)}
+  .opt.right{border-color:rgba(74,222,128,.6);background:rgba(74,222,128,.1)}
+  .opt.right .l{background:var(--ok);color:#052e16;border-color:var(--ok)}
+  .opt.wrong{border-color:rgba(248,113,113,.6);background:rgba(248,113,113,.1)}
+  .opt.wrong .l{background:var(--bad);color:#450a0a;border-color:var(--bad)}
+  .why{margin-top:10px;font-size:14.5px;border-radius:10px;padding:10px 12px}
+  .why.ok{background:rgba(74,222,128,.1);color:#bbf7d0} .why.no{background:rgba(248,113,113,.1);color:#fecaca}
+  .sticky{position:sticky;bottom:0;margin-top:16px;background:rgba(7,15,38,.95);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+  .sticky .sp{flex:1}
+  .score{margin-top:18px;border-radius:20px;padding:22px;text-align:center;border:1px solid var(--line)}
+  .score.pass{background:linear-gradient(150deg,rgba(74,222,128,.18),rgba(7,15,38,.6))}
+  .score.not{background:linear-gradient(150deg,rgba(251,191,36,.16),rgba(7,15,38,.6))}
+  .score .big{font-family:'Montserrat';font-weight:800;font-size:52px;line-height:1}
+  .score .word{font-weight:800;font-size:18px;margin-top:6px}
+  .score p{color:var(--muted);margin-top:6px}
+
+  /* results */
+  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  .card h2{font-size:15px;font-weight:800;margin-bottom:10px}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+  .tile b{display:block;font-family:'Montserrat';font-size:24px}
+  .tile span{font-size:12.5px;color:var(--muted)}
+  @media (max-width:600px){.tiles{grid-template-columns:1fr 1fr}}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;color:var(--muted);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:8px 6px;border-bottom:1px solid var(--line)}
+  td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  td.n{text-align:right;white-space:nowrap}
+  .tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px}
+  .tag.ok{background:rgba(74,222,128,.15);color:var(--ok)} .tag.warn{background:rgba(251,191,36,.15);color:var(--warn)} .tag.bad{background:rgba(248,113,113,.15);color:var(--bad)}
+  .tbl{overflow-x:auto}
+  .qbar{height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:5px;max-width:220px}
+  .qbar i{display:block;height:100%;background:var(--bad)}
+  .muted{color:var(--muted)}
+  .empty{color:var(--muted);text-align:center;padding:18px}
+  footer{max-width:860px;margin:0 auto;padding:0 16px 40px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <form class="lock-card" id="lockForm" autocomplete="off">
+    <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
+    <h1>Log Book training</h1>
+    <p>Sign in the way you sign in to the Log Book. You get your own part of the manual and your own test.</p>
+    <div class="seg" role="group" aria-label="Who is signing in">
+      <button type="button" data-who="agent" aria-pressed="true">Agent number</button>
+      <button type="button" data-who="staff" aria-pressed="false">Staff access code</button>
+    </div>
+    <div id="gAgent">
+      <input id="gNo" placeholder="Agent number" inputmode="text" aria-label="Agent number">
+      <input id="gCode" type="password" placeholder="Fact find password" aria-label="Password">
+    </div>
+    <div id="gStaff" hidden><input id="gAccess" type="password" placeholder="Access code" aria-label="Access code"></div>
+    <div class="err" id="gErr" hidden></div>
+    <button class="btn wide" id="gBtn">Sign in</button>
+  </form>
+</div>
+
+<header id="hdr" hidden>
+  <div class="top">
+    <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
+    <div><h1>Log Book training</h1><small id="who"></small></div>
+    <div class="sp"></div>
+    <a class="btn ghost" href="/logbook" style="padding:8px 12px;font-size:13px">Log Book</a>
+    <button class="btn ghost" id="signOut" style="padding:8px 12px;font-size:13px">Sign out</button>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="manual" aria-selected="true">1 · The manual</button>
+    <button role="tab" data-tab="test" aria-selected="false">2 · The test</button>
+    <button role="tab" data-tab="results" aria-selected="false">3 · Results</button>
+  </nav>
+</header>
+
+<main class="wrap" id="main" hidden>
+
+  <!-- ─────────────── the manual ─────────────── -->
+  <section id="tab-manual">
+    <div class="hero">
+      <div class="eb" id="heroEb">For agents and unit managers</div>
+      <h2 id="heroH">Learn the Log Book in fifteen minutes</h2>
+      <p>Read each section and tick it. Then take the test. A pass is <b id="passMark">80</b>% with all three rules right, and you can take it again as often as you like.</p>
+      <div class="steps">
+        <div class="step" id="st1"><b>Read the manual</b><span id="st1s">0 of 0 sections</span><div class="bar"><i id="readBar"></i></div></div>
+        <div class="step" id="st2"><b>Take the test</b><span id="st2s">Not taken yet</span></div>
+        <div class="step" id="st3"><b>Pass</b><span id="st3s">Your best score shows here</span></div>
+      </div>
+    </div>
+
+    <div class="films">
+      <a class="film" id="filmMine" href="/logbookdemoagent/"><img id="filmImg" src="/rroperations/logbook/film-agents.jpg" alt=""><div><b id="filmT">Watch first: the Log Book, for agents</b><span>Two minutes</span></div></a>
+      <a class="film" id="filmOther" href="/logbookdemostaff/"><img id="filmImg2" src="/rroperations/logbook/film-staff.jpg" alt=""><div><b id="filmT2">The other side: for staff</b><span>What happens after you hand in</span></div></a>
+    </div>
+
+    <!-- The three rules: everyone -->
+    <details class="sec" data-sec="R" open>
+      <summary><span class="no">★</span><h3>The three rules, for everyone</h3><span class="st">To read</span></summary>
+      <div class="body">
+        <ol>
+          <li><b>In by 12 noon, down at 1 pm.</b> Papers in the branch's hands before 12 noon on a working day go on that day's 1 pm bag. Anything later goes on the next working day's bag. Friday after 12 is Monday's bag.</li>
+          <li><b>Logged is not handed in.</b> Logging tells the branch what is coming. Nothing goes down until a staff member has the papers in hand and signs for them.</li>
+          <li><b>One sign-in.</b> Your agent number and the password you use for the fact find. Staff can also use their RR Operations access code. What you see depends on your role.</li>
+        </ol>
+        <div class="rule">Why: in our old book, 57% of documents reached us after 12 noon, and only 41% went down the day they came in. These three rules are how we change that.</div>
+        <label class="tick"><input type="checkbox" data-read="R"> I have read this</label>
+      </div>
+    </details>
+
+    <!-- ─────── the agent's part ─────── -->
+    <div data-role="agent">
+      <details class="sec" data-sec="A1">
+        <summary><span class="no">1</span><h3>Sign in</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <p>Open <b>rickyrampersadbranch.com/logbook</b>. Enter your agent number and your fact find password. Your phone stays signed in until you press Sign out.</p>
+          <p>The bag bar at the top shows the time left to 12 noon, who has the bag this week, and whether papers handed in now catch today's bag.</p>
+          <label class="tick"><input type="checkbox" data-read="A1"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="A2">
+        <summary><span class="no">2</span><h3>Log a document</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <ol>
+            <li><b>Choose the document first.</b> The Log Book suggests the department it has gone to before. You can change it; the line records the change.</li>
+            <li><b>Find the client</b> by name, e-mail or policy number, then tick their policies. You see only clients on your own policies.</li>
+            <li><b>Not in Salesforce yet?</b> Type the client in. The line is flagged for staff to check.</li>
+            <li><b>Log it.</b> You get a reference at once, and the screen tells you whether the papers catch today's bag if they are in by 12 noon.</li>
+          </ol>
+          <label class="tick"><input type="checkbox" data-read="A2"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="A3">
+        <summary><span class="no">3</span><h3>Nothing left behind</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <p>The Log Book learned from three years of our own book which documents travel together: an ACH form and a bank statement, a surrender and proof of ID. When one usually comes with another and you have not added it, it asks. Add it with one tap, or log anyway and the line is flagged.</p>
+          <label class="tick"><input type="checkbox" data-read="A3"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="A4">
+        <summary><span class="no">4</span><h3>Hand it in</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <p>Bring the papers to the branch. Staff tick them on the Queue and sign for them, and from then on they are the branch's.</p>
+          <ul>
+            <li><b>11:00:</b> if you have papers logged and not handed in, you get an e-mail: one hour to catch today's bag.</li>
+            <li><b>Still not in after a working day</b> you are reminded again on day 3. Papers never handed in count against you in the Log Book's quality score.</li>
+          </ul>
+          <label class="tick"><input type="checkbox" data-read="A4"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="A5">
+        <summary><span class="no">5</span><h3>My log</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <p>Every line you logged, with each step stamped: Logged, Received, Sent on the transmittal, and the department's answer three working days later.</p>
+          <ul>
+            <li><b>Withdraw</b> works only while a line still reads Logged, before staff receive it.</li>
+            <li><b>Returned:</b> staff send papers back with a reason by e-mail when something is missing or unsigned. Put them right and log them again.</li>
+          </ul>
+          <label class="tick"><input type="checkbox" data-read="A5"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="A6">
+        <summary><span class="no">6</span><h3>Contracts you deliver</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <p>Log a policy contract you collect as <b>Contract for delivery</b>. The Act (section 155(6)) gives 20 days to put it in the client's hands.</p>
+          <ul>
+            <li>You are reminded on day 15 and day 18. The branch manager is told on day 20.</li>
+            <li>Record the delivery in the <b>Delivery Book</b>: that closes the line by itself.</li>
+          </ul>
+          <label class="tick"><input type="checkbox" data-read="A6"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="A7">
+        <summary><span class="no">7</span><h3>Unit managers</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <p>Sign in the same way. You log your own clients like an agent, and <b>My team</b> shows your own papers, the whole team's, or one agent's. You can withdraw only your own lines.</p>
+          <label class="tick"><input type="checkbox" data-read="A7"> I have read this</label>
+        </div>
+      </details>
+    </div>
+
+    <!-- ─────── the staff part ─────── -->
+    <div data-role="staff">
+      <details class="sec" data-sec="S1">
+        <summary><span class="no">1</span><h3>Sign in and your screens</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <p>Open <b>rickyrampersadbranch.com/logbook</b> and sign in with your agent number and fact find password, or your access code. You get the staff side: the <b>Queue</b>, <b>Transmittals</b> and <b>Insights</b>.</p>
+          <label class="tick"><input type="checkbox" data-read="S1"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="S2">
+        <summary><span class="no">2</span><h3>The bag day and whose bag it is</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <ul>
+            <li><b>Until 12 noon:</b> papers come in and are received.</li>
+            <li><b>12 noon:</b> the bag closes; they are checked and put on transmittals.</li>
+            <li><b>1 pm:</b> the bag comes in, is cleared, the mail given out, and it goes back down with the day's transmittals.</li>
+          </ul>
+          <div class="rule"><b>The rota:</b> Azariah, then Liz, then Sasha, one week each, Azariah from Monday 19 October. Kamla does not do transmittals. Sasha leaves at 2, Liz at 3 and Azariah at 4, so the bag is done by 1 pm while all three are in.</div>
+          <label class="tick"><input type="checkbox" data-read="S2"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="S3">
+        <summary><span class="no">3</span><h3>Receive and sign</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <ol>
+            <li>On the <b>Queue</b>, tick the lines whose papers are in your hand.</li>
+            <li>Check each department. Correct it if it is wrong: the Log Book learns from your correction.</li>
+            <li>Press <b>Receive &amp; sign</b> and sign. The date collected is now stamped.</li>
+          </ol>
+          <p>Something missing or unsigned? <b>Return to the agent</b> with the reason. The agent gets an e-mail and logs it again once it is right.</p>
+          <label class="tick"><input type="checkbox" data-read="S3"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="S4">
+        <summary><span class="no">4</span><h3>12 noon: the transmittals</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <p>At 12:00 whoever has the bag gets an e-mail of what to prepare, by department.</p>
+          <p>A transmittal is for <b>one department</b>. Choose its lines and press <b>Build transmittal</b>: it prints with the date collected, the date sent and any reason. OFT (FedEx) needs the tracking number.</p>
+          <label class="tick"><input type="checkbox" data-read="S4"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="S5">
+        <summary><span class="no">5</span><h3>1 pm: the bag, and anything late</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <ul>
+            <li>Press <b>Bag in</b> when the bag is cleared and the mail given out, and <b>Bag out</b> when it is sealed and gone.</li>
+            <li>A line still here after its bag has gone is <b>late</b>. A transmittal will not take it without a reason, and the reason prints beside the dates.</li>
+            <li>From 1 pm the Log Book asks for that reason by e-mail, to whoever received the papers and whoever has the bag, sales support and the agent copied.</li>
+          </ul>
+          <label class="tick"><input type="checkbox" data-read="S5"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="S6">
+        <summary><span class="no">6</span><h3>Three working days on</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <p>The department is asked by e-mail whether the transmittal arrived: <b>Yes</b> or <b>No</b>. Yes is recorded. No asks what is missing, goes to sales support for a response, and opens a High-priority Salesforce task, due the next working day, for whoever collected the papers.</p>
+          <label class="tick"><input type="checkbox" data-read="S6"> I have read this</label>
+        </div>
+      </details>
+      <details class="sec" data-sec="S7">
+        <summary><span class="no">7</span><h3>Contracts, Insights and the 5 pm digest</h3><span class="st">To read</span></summary>
+        <div class="body">
+          <ul>
+            <li><b>Contracts with agents</b> on the Queue shows each contract's day out of 20. A delivery in the Delivery Book, or <b>Delivered</b>, closes it.</li>
+            <li><b>Insights</b>: the share that made its bag, by hour received, by department and by agent.</li>
+            <li><b>5 pm</b>: the branch manager gets the day's digest, sales support copied: late lines with no reason, departments that said No or have not answered, contracts at day 15 or more, papers logged and not handed in.</li>
+          </ul>
+          <label class="tick"><input type="checkbox" data-read="S7"> I have read this</label>
+        </div>
+      </details>
+    </div>
+
+    <div style="margin-top:18px;text-align:center"><button class="btn" id="toTest">I'm ready: take the test</button></div>
+  </section>
+
+  <!-- ─────────────── the test ─────────────── -->
+  <section id="tab-test" hidden>
+    <div class="hero">
+      <div class="eb" id="testEb">The test</div>
+      <h2 id="testH">Questions</h2>
+      <p>Choose one answer for each. Questions marked <b style="color:var(--warn)">rule</b> must all be right to pass. After you send it, every answer shows with the reason.</p>
+    </div>
+    <div id="testBody"></div>
+    <div id="testScore"></div>
+  </section>
+
+  <!-- ─────────────── results ─────────────── -->
+  <section id="tab-results" hidden>
+    <div id="resBody"><div class="empty">Loading…</div></div>
+  </section>
+</main>
+
+<footer id="foot" hidden>Ricky Rampersad Branch · the Log Book at <a href="/logbook">rickyrampersadbranch.com/logbook</a> · the films: <a href="/logbookdemoagent/">agents</a>, <a href="/logbookdemostaff/">staff</a></footer>
+
+<script src="/rroperations/ops-config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API_URL = window.RR_OPS.API_URL, SESSION_KEY = window.RR_OPS.SESSION_KEY;
+  var READ_KEY = 'rrb-lb-train-read';
+  var $ = function (id) { return document.getElementById(id); };
+  var S = { token: '', gate: 'agent', data: null, answers: {}, started: 0, done: null };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var store = {
+    get: function () { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; } },
+    set: function (s) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {} },
+    del: function () { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+  };
+  function api(action, body) {
+    if (/RR_OPERATIONS_DEPLOYMENT_ID/.test(API_URL)) return Promise.reject(new Error('RR Operations is not connected yet.'));
+    var payload = Object.assign({ action: action, token: S.token }, body || {});
+    return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.error === 'signed-out') { gate('Your sign-in ended. Sign in again.'); throw new Error('Signed out.'); }
+        if (!j || !j.ok) throw new Error((j && j.error) || 'Something went wrong.');
+        return j;
+      });
+  }
+  function showErr(el, msg) { el.textContent = msg || ''; el.hidden = !msg; }
+  function fmt(iso) { return iso ? new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/Port_of_Spain' }) : ''; }
+
+  /* ── the gate ── */
+  document.querySelectorAll('[data-who]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      S.gate = b.getAttribute('data-who');
+      document.querySelectorAll('[data-who]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      $('gAgent').hidden = S.gate !== 'agent'; $('gStaff').hidden = S.gate !== 'staff';
+    });
+  });
+  $('lockForm').addEventListener('submit', function (e) {
+    e.preventDefault(); showErr($('gErr'), ''); $('gBtn').disabled = true;
+    var p = S.gate === 'agent' ? api('lb.login', { agentNo: $('gNo').value, code: $('gCode').value }) : api('login', { code: $('gAccess').value });
+    p.then(function (s) { store.set(s); S.token = s.token; return start(); })
+      .catch(function (err) { showErr($('gErr'), err.message); })
+      .then(function () { $('gBtn').disabled = false; });
+  });
+  function gate(msg) {
+    store.del(); S.token = '';
+    $('lock').hidden = false; $('hdr').hidden = true; $('main').hidden = true; $('foot').hidden = true;
+    showErr($('gErr'), msg || '');
+  }
+  $('signOut').addEventListener('click', function () { api('signOut', {}).catch(function () {}); gate(''); });
+
+  /* ── tabs ── */
+  function tab(name) {
+    document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-tab') === name ? 'true' : 'false'); });
+    ['manual', 'test', 'results'].forEach(function (t) { $('tab-' + t).hidden = t !== name; });
+    if (name === 'results') loadResults();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('[data-tab]').forEach(function (b) { b.addEventListener('click', function () { tab(b.getAttribute('data-tab')); }); });
+  $('toTest').addEventListener('click', function () { tab('test'); });
+
+  /* ── the manual: what you have read is kept on this device ── */
+  function readKey() { return READ_KEY + ':' + (S.data ? S.data.role : '') + ':' + (S.who || ''); }
+  function readSet() { try { return JSON.parse(localStorage.getItem(readKey()) || '{}'); } catch (e) { return {}; } }
+  function mySecs() { return Array.prototype.filter.call(document.querySelectorAll('.sec'), function (d) { return !d.closest('[hidden]'); }); }
+  function paintRead() {
+    var r = readSet(), secs = mySecs(), n = 0;
+    secs.forEach(function (d) {
+      var k = d.getAttribute('data-sec'), on = !!r[k];
+      if (on) n++;
+      d.classList.toggle('read', on);
+      d.querySelector('.st').textContent = on ? 'Read ✓' : 'To read';
+      var cb = d.querySelector('[data-read]'); if (cb) cb.checked = on;
+    });
+    $('st1s').textContent = n + ' of ' + secs.length + ' sections';
+    $('readBar').style.width = (secs.length ? n * 100 / secs.length : 0) + '%';
+    $('st1').classList.toggle('done', n === secs.length && n > 0);
+  }
+  document.querySelectorAll('[data-read]').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      var r = readSet(); r[cb.getAttribute('data-read')] = cb.checked;
+      try { localStorage.setItem(readKey(), JSON.stringify(r)); } catch (e) {}
+      paintRead();
+      if (cb.checked) { var d = cb.closest('.sec'); d.open = false; var nx = mySecs()[mySecs().indexOf(d) + 1]; if (nx) nx.open = true; }
+    });
+  });
+
+  /* ── start ── */
+  function start() {
+    return api('lb.train').catch(function (e) {
+      if (/Unknown action/i.test(e.message)) throw new Error('Your sign-in worked, but the training is still being switched on by the branch. Please try again later today.');
+      throw e;
+    }).then(function (d) {
+      S.data = d; S.who = (d.name || '').toLowerCase();
+      $('lock').hidden = true; $('hdr').hidden = false; $('main').hidden = false; $('foot').hidden = false;
+      var staff = d.role === 'staff';
+      $('who').textContent = (d.name || '') + (staff ? ' · staff' : d.lead ? ' · unit manager' : ' · agent');
+      document.querySelector('[data-role="agent"]').hidden = staff;
+      document.querySelector('[data-role="staff"]').hidden = !staff;
+      $('heroEb').textContent = staff ? 'For Client Support and the branch' : 'For agents and unit managers';
+      $('passMark').textContent = d.pass || 80;
+      if (staff) {
+        $('filmMine').href = '/logbookdemostaff/'; $('filmImg').src = '/rroperations/logbook/film-staff.jpg'; $('filmT').textContent = 'Watch first: the Log Book, for staff';
+        $('filmOther').href = '/logbookdemoagent/'; $('filmImg2').src = '/rroperations/logbook/film-agents.jpg'; $('filmT2').textContent = 'The other side: for agents';
+        $('filmOther').querySelector('span').textContent = 'What agents do before it reaches you';
+      }
+      paintRead(); paintProgress(); drawTest();
+    });
+  }
+  function best() { return (S.data.mine || []).reduce(function (m, r) { return Math.max(m, r.pct); }, -1); }
+  function paintProgress() {
+    var mine = S.data.mine || [], b = best(), passed = mine.some(function (r) { return r.pass; });
+    $('st2s').textContent = mine.length ? 'Taken ' + mine.length + (mine.length === 1 ? ' time' : ' times') : 'Not taken yet';
+    $('st2').classList.toggle('done', mine.length > 0);
+    $('st3s').textContent = passed ? 'Passed · best ' + b + '%' : b >= 0 ? 'Best so far ' + b + '%' : 'Your best score shows here';
+    $('st3').classList.toggle('done', passed);
+  }
+
+  /* ── the test ── */
+  function drawTest() {
+    var d = S.data;
+    if (!d.linked) {
+      $('testBody').innerHTML = '<div class="card"><h2>The questions are not set up yet</h2><p class="muted">The branch adds them to the RR Operations sheet. Read the manual meanwhile.</p></div>';
+      return;
+    }
+    $('testEb').textContent = (d.role === 'staff' ? 'Staff' : 'Agents') + ' · ' + d.questions.length + ' questions';
+    $('testH').textContent = 'The test';
+    S.answers = {}; S.done = null; S.started = Date.now();
+    $('testScore').innerHTML = '';
+    $('testBody').innerHTML = d.questions.map(function (q, i) {
+      return '<div class="q" data-q="' + esc(q.id) + '"><div class="meta">Question ' + (i + 1) + ' of ' + d.questions.length + ' · ' + esc(q.section) +
+        (q.crit ? ' · <span class="crit">rule</span>' : '') + '</div><h3>' + esc(q.q) + '</h3>' +
+        q.opts.map(function (o, k) { var L = 'ABCD'[k]; return o ? '<button type="button" class="opt" data-l="' + L + '" aria-pressed="false"><span class="l">' + L + '</span><span>' + esc(o) + '</span></button>' : ''; }).join('') +
+        '<div class="whyslot"></div></div>';
+    }).join('') +
+      '<div class="sticky"><span id="left"></span><span class="sp"></span><div class="err" id="tErr" hidden style="margin:0"></div><button class="btn" id="send">Send my answers</button></div>';
+    $('testBody').querySelectorAll('.opt').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (S.done) return;
+        var q = b.closest('.q');
+        q.querySelectorAll('.opt').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+        S.answers[q.getAttribute('data-q')] = b.getAttribute('data-l');
+        left();
+      });
+    });
+    $('send').addEventListener('click', send);
+    left();
+  }
+  function left() {
+    var n = S.data.questions.length - Object.keys(S.answers).length;
+    $('left').textContent = n ? n + ' to answer' : 'All answered';
+    $('send').disabled = n > 0;
+  }
+  function send() {
+    showErr($('tErr'), ''); $('send').disabled = true; $('send').textContent = 'Marking…';
+    api('lb.trainSubmit', { answers: S.answers, seconds: Math.round((Date.now() - S.started) / 1000) }).then(function (r) {
+      S.done = r;
+      r.marked.forEach(function (m) {
+        var q = document.querySelector('.q[data-q="' + m.id + '"]');
+        q.querySelectorAll('.opt').forEach(function (o) {
+          var L = o.getAttribute('data-l');
+          if (L === m.ans) o.classList.add('right'); else if (L === m.given) o.classList.add('wrong');
+          o.disabled = true;
+        });
+        q.querySelector('.whyslot').innerHTML = '<div class="why ' + (m.right ? 'ok' : 'no') + '"><b>' + (m.right ? 'Right.' : 'Not quite: the answer is ' + m.ans + '.') + '</b> ' + esc(m.why) + '</div>';
+      });
+      $('testScore').innerHTML = '<div class="score ' + (r.pass ? 'pass' : 'not') + '"><div class="big">' + r.pct + '%</div>' +
+        '<div class="word">' + (r.pass ? 'Passed. Well done.' : 'Not yet') + '</div>' +
+        '<p>' + r.score + ' of ' + r.outOf + ' right. ' + (r.pass ? 'Your result has been e-mailed to you and the branch manager.' :
+          (r.critMissed.length ? 'One of the three rules was missed. ' : '') + 'Read the reasons above, look at the manual again, and take it once more.') + '</p>' +
+        '<div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" id="again">Take it again</button><button class="btn ghost" id="toRes">See results</button></div></div>';
+      var sticky = document.querySelector('.sticky'); if (sticky) sticky.remove();
+      $('again').addEventListener('click', function () { drawTest(); window.scrollTo(0, 0); });
+      $('toRes').addEventListener('click', function () { tab('results'); });
+      S.data.mine = (S.data.mine || []).concat([{ when: new Date().toISOString(), pct: r.pct, pass: r.pass, score: r.score, outOf: r.outOf }]);
+      paintProgress();
+      $('testScore').scrollIntoView({ behavior: 'smooth' });
+    }).catch(function (e) {
+      showErr($('tErr'), e.message); $('send').disabled = false; $('send').textContent = 'Send my answers';
+    });
+  }
+
+  /* ── results ── */
+  function loadResults() {
+    $('resBody').innerHTML = '<div class="empty">Loading…</div>';
+    api('lb.trainView').then(function (v) {
+      var html = '';
+      var people = v.people.slice().sort(function (a, b) { return (b.passed - a.passed) || (b.best - a.best); });
+      if (v.scope !== 'me') {
+        var passed = people.filter(function (p) { return p.passed; }).length;
+        var avg = people.length ? Math.round(people.reduce(function (s, p) { return s + p.best; }, 0) / people.length) : 0;
+        html += '<div class="tiles">' +
+          '<div class="tile"><b>' + people.length + '</b><span>have taken it</span></div>' +
+          '<div class="tile"><b style="color:var(--ok)">' + passed + '</b><span>passed</span></div>' +
+          '<div class="tile"><b>' + avg + '%</b><span>average best score</span></div>' +
+          '<div class="tile"><b style="color:var(--warn)">' + v.notYet.length + '</b><span>not taken yet</span></div></div>';
+      }
+      html += '<div class="card"><h2>' + (v.scope === 'me' ? 'Your attempts' : v.scope === 'team' ? 'Your team' : 'Everyone') + '</h2>';
+      if (!people.length) html += '<div class="empty">No attempts yet.</div>';
+      else html += '<div class="tbl"><table><thead><tr><th>Name</th><th>Role</th><th class="n">Tries</th><th class="n">Best</th><th class="n">Last</th><th>Result</th></tr></thead><tbody>' +
+        people.map(function (p) {
+          return '<tr><td>' + esc(p.name) + '</td><td class="muted">' + esc(p.role) + '</td><td class="n">' + p.tries + '</td><td class="n">' + p.best + '%</td>' +
+            '<td class="n">' + (p.last ? p.last.pct + '%<br><span class="muted" style="font-size:12px">' + esc(fmt(p.last.when)) + '</span>' : '') + '</td>' +
+            '<td>' + (p.passed ? '<span class="tag ok">Passed</span>' : '<span class="tag warn">Not yet</span>') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+      html += '</div>';
+      if (v.notYet.length) html += '<div class="card"><h2>Not taken yet (' + v.notYet.length + ')</h2><p class="muted">' + v.notYet.map(function (p) { return esc(p.name); }).join(' · ') + '</p></div>';
+      var qs = (v.questions || []).filter(function (q) { return q.asked; }).sort(function (a, b) { return b.wrong / b.asked - a.wrong / a.asked; });
+      if (v.scope !== 'me' && qs.length) {
+        html += '<div class="card"><h2>What the team got wrong most</h2><p class="muted" style="margin-bottom:8px">Each question\'s share answered wrongly. The ones at the top are what to explain again at the next meeting.</p><div class="tbl"><table><thead><tr><th>Question</th><th>For</th><th class="n">Wrong</th></tr></thead><tbody>' +
+          qs.slice(0, 12).map(function (q) {
+            var p = Math.round(q.wrong * 100 / q.asked);
+            return '<tr><td>' + esc(q.q) + (q.crit ? ' <span class="tag warn">rule</span>' : '') + '<div class="qbar"><i style="width:' + p + '%"></i></div></td><td class="muted">' + esc(q.roles) + '</td><td class="n">' + p + '%<br><span class="muted" style="font-size:12px">' + q.wrong + ' of ' + q.asked + '</span></td></tr>';
+          }).join('') + '</tbody></table></div></div>';
+      }
+      $('resBody').innerHTML = html;
+    }).catch(function (e) { $('resBody').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; });
+  }
+
+  /* ── go ── */
+  var s = store.get();
+  if (s && s.token) { S.token = s.token; start().catch(function (e) { if (!/Signed out/.test(e.message)) gate(e.message); }); }
+  else gate('');
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

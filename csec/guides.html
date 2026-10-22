@@ -18,11 +18,18 @@
   .step span{font-size:.83rem;color:var(--muted);line-height:1.6}
   .wline{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);align-items:flex-start}
   .wline:last-child{border-bottom:none}
-  .wline .w{flex:none;min-width:210px;font-family:'Montserrat',sans-serif;font-size:.9rem;font-weight:600;color:var(--text)}
-  .wline .c{font-size:.83rem;color:var(--muted);line-height:1.6}
+  /* A letter and a report are laid out down the page — an address block, a date,
+     a greeting, To/From/Date lines. So the work column honours its line breaks,
+     and it has to be able to shrink: flex:none sizes to max-content, which sent
+     a long worked line straight off the right of a laptop screen. */
+  .wline .w{flex:1 1 210px;min-width:0;max-width:52%;white-space:pre-line;overflow-wrap:anywhere;
+            font-family:'Montserrat',sans-serif;font-size:.9rem;font-weight:600;color:var(--text);line-height:1.55}
+  .wline .c{flex:1 1 auto;min-width:0;font-size:.83rem;color:var(--muted);line-height:1.6;overflow-wrap:anywhere}
+  /* A topic can arrive with bulleted instructions under it; keep its shape. */
+  .wprob{font-weight:600;margin-bottom:14px;font-size:.95rem;white-space:pre-line}
   .pit li{font-size:.87rem;line-height:1.7;color:var(--muted);margin-left:18px}
   .pit li::marker{color:var(--bad)}
-  @media (max-width:640px){ .wline{flex-direction:column;gap:4px} .wline .w{min-width:0} }
+  @media (max-width:640px){ .wline{flex-direction:column;gap:4px} .wline .w{min-width:0;max-width:100%} }
 </style>
 </head>
 <body>
@@ -71,6 +78,16 @@
   var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
   var G=window.CSEC_GUIDES||[];
   var me=CSEC.current();
+
+  /* A guide is a method for one examination. A Standard 5 has no use for the
+     CSEC argumentative essay, and listing it buries the SEA writing methods
+     they actually sit in March. So a student is shown the methods for the
+     paper they sit next and nothing from beyond it. Parents and teachers keep
+     the whole list, because they work across the ladder. */
+  if(me && me.role==='student'){
+    var stg=CSEC.nextExam(me.level), ceil=(stg&&stg.examLevel)||10;
+    G=G.filter(function(g){ return g.level<=ceil; });
+  }
   var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
 
   $('nav').innerHTML = me
@@ -136,7 +153,7 @@
 
         '<div class="section-label">Worked example</div>'+
         '<div class="card" style="background:rgba(0,0,0,.24)">'+
-          '<p style="font-weight:600;margin-bottom:14px;font-size:.95rem">'+esc(g.worked.problem)+'</p>'+
+          '<p class="wprob">'+esc(g.worked.problem)+'</p>'+
           g.worked.lines.map(function(l){
             return '<div class="wline"><span class="w">'+esc(l.work)+'</span><span class="c">'+esc(l.note)+'</span></div>';
           }).join('')+
@@ -147,7 +164,13 @@
 
         (me && me.role==='student'
           ? '<div style="margin-top:20px;display:flex;gap:9px;flex-wrap:wrap">'+
-            '<a class="btn sm" href="practice.html?strand='+encodeURIComponent(g.strand)+'">Practise this now →</a>'+
+            /* Writing is practised by writing. A multiple-choice question cannot
+               ask a child to answer a topic, which is the whole skill these
+               methods teach, so a writing guide sends them to the real papers
+               and everything else to the question bank. */
+            (g.subj==='p-ela-writing'
+              ? '<a class="btn sm" href="sea.html?s=p-ela-writing">Write one now \u2192</a>'
+              : '<a class="btn sm" href="practice.html?strand='+encodeURIComponent(g.strand)+'">Practise this now \u2192</a>')+
             '<a class="btn ghost sm" href="planner.html">See it in the syllabus</a></div>'
           : '')+
       '</div></details>';

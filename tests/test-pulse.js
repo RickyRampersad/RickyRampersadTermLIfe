@@ -109,8 +109,10 @@ env.sfkMetricsSafe_ = sf({ ada: { closed: 31, overdue: 0, aged60: 0, open: 12, n
                            cleo: { closed: 2, overdue: 0, aged60: 0, open: 3, noDate: 0 } });
 env.resetRequestMemo_();
 const tShort = env.branchPulse();
-ok('a desk short of three blocks is a finding, and still not a name',
-   /One of us is short of three blocks/.test(tShort) && !/Bram is short|Cleo/.test(tShort), paras(tShort)[2]);
+// One plan a day (17 October 2026): a desk with its day logged is not short
+// of anything, so the day is clean — and still no name.
+ok('a desk with its day logged is not short, and still not a name',
+   /Every desk has reported/.test(tShort) && !/Bram is|Cleo/.test(tShort), paras(tShort)[2]);
 env.__sheets['KPI Log']._grid.forEach(r => {
   if (r[LOGH.indexOf('StaffId')] === 'bram') {
     r[LOGH.indexOf('KPI2')] = 'Renewa/PDl/Bill'; r[LOGH.indexOf('KPI2_Actioned')] = 5;

@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Delivery Book | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/png" href="/orphan-transition/board-mark.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+  :root{
+    --bg:#070F26; --bg2:#0d2137; --card:#163553; --card2:#1b3d61; --field:rgba(0,0,0,.28);
+    --gold:#6FA8FF; --gold2:#1D5BC4; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.09); --teal:#00CFEA; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.07),transparent);font-size:15px;line-height:1.45}
+  button,input,select,textarea{font:inherit;color:inherit}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px 96px}
+  h1,h2,h3{font-family:'Montserrat',sans-serif}
+  .mark{width:38px;height:38px;border-radius:10px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+
+  /* lock */
+  #lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px}
+  .lock-card{width:min(380px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:32px 24px}
+  .lock-card .mark{width:64px;height:64px;border-radius:16px;margin:0 auto 16px}
+  .lock-card h1{font-weight:800;font-size:20px;color:var(--gold);margin-bottom:6px}
+  .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
+  .lock-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--field);
+    text-align:center;letter-spacing:3px;font-family:'Montserrat';font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:12px}
+
+  /* top */
+  header{position:sticky;top:0;z-index:20;background:rgba(7,19,31,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top{max-width:760px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+  .top h1{font-size:16px;font-weight:800;color:var(--gold);line-height:1.1}
+  .top small{display:block;color:var(--muted);font-size:12px;font-family:'DM Sans'}
+  .top .sp{flex:1}
+  .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;letter-spacing:.4px}
+  .pill.test{background:rgba(251,191,36,.15);color:var(--warn);border:1px solid rgba(251,191,36,.4)}
+  .pill.live{background:rgba(74,222,128,.12);color:var(--ok);border:1px solid rgba(74,222,128,.35)}
+  .tabs{max-width:760px;margin:0 auto;display:flex;gap:4px;padding:0 12px}
+  .tabs button{flex:1;background:none;border:0;padding:10px 6px 11px;color:var(--muted);font-weight:700;font-size:14px;
+    border-bottom:3px solid transparent;cursor:pointer}
+  .tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--gold)}
+
+  /* cards and fields */
+  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  .card h2{font-size:15px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .step{width:24px;height:24px;border-radius:50%;background:var(--gold);color:#06183a;display:grid;place-items:center;font-size:12px;flex:none}
+  .card.dim{opacity:.45;pointer-events:none}
+  label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 6px;letter-spacing:.2px}
+  label:first-child{margin-top:0}
+  input[type=text],input[type=email],input[type=tel],input[type=datetime-local],input[type=number],select,textarea{
+    width:100%;padding:12px 13px;border-radius:11px;border:1px solid var(--line);background:var(--field);outline:none;min-height:46px}
+  input:focus,select:focus,textarea:focus{border-color:rgba(111,168,255,.55)}
+  select option{background:#0d2137}
+  textarea{min-height:76px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+  @media (max-width:420px){.row{grid-template-columns:1fr}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 18px;border-radius:12px;border:0;
+    cursor:pointer;font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px}
+  .btn.gold{background:linear-gradient(135deg,#2A6DE0,#13408F);color:#fff}
+  .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text)}
+  .btn.block{width:100%}
+  .btn:disabled{opacity:.5;cursor:default}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px;min-height:1px}
+  .search{display:flex;gap:8px}
+  .search input{flex:1}
+
+  /* clients */
+  .client{display:block;width:100%;text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);margin-top:8px;cursor:pointer}
+  .client b{display:block;font-size:15px}
+  .client span{display:block;font-size:12px;color:var(--muted)}
+  .client.sel{border-color:var(--gold);background:rgba(111,168,255,.08)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin:4px 4px 0 0}
+  .tag.warn{background:rgba(251,191,36,.14);color:var(--warn)}
+  .tag.bad{background:rgba(248,113,113,.14);color:var(--bad)}
+  .tag.ok{background:rgba(74,222,128,.12);color:var(--ok)}
+  .tag.info{background:rgba(0,207,234,.12);color:var(--teal)}
+
+  /* policies */
+  .grp{margin-top:12px}
+  .grp h3{font-size:12px;letter-spacing:1px;color:var(--gold);margin-bottom:6px;display:flex;justify-content:space-between}
+  .pol{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:6px;background:rgba(255,255,255,.03)}
+  .pol.on{border-color:rgba(111,168,255,.6);background:rgba(111,168,255,.07)}
+  .pol .head{display:flex;align-items:center;gap:12px;cursor:pointer}
+  .pol input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);flex:none}
+  .pol .num{font-family:'Montserrat';font-weight:700;font-size:14px}
+  .pol .sub{font-size:12px;color:var(--muted)}
+  .pol .more{display:none;margin-top:10px}
+  .pol.on .more{display:grid}
+
+  /* signature */
+  .sig{position:relative;border-radius:12px;border:1px dashed rgba(111,168,255,.5);background:#fff;touch-action:none;overflow:hidden}
+  .sig canvas{display:block;width:100%;height:170px}
+  .sig .x{position:absolute;right:8px;top:8px;background:#070F26;color:var(--gold);border:0;border-radius:8px;padding:6px 10px;font-weight:700;font-size:12px}
+  .sig .ph{position:absolute;inset:auto 0 12px;text-align:center;color:#9aa6b4;font-size:13px;pointer-events:none}
+
+  /* location */
+  .loc{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;background:rgba(0,0,0,.22);border:1px solid var(--line)}
+  .dot{width:12px;height:12px;border-radius:50%;background:var(--muted);flex:none}
+  .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+  .mini{height:150px;border-radius:12px;margin-top:10px;overflow:hidden;display:none}
+  input[type=file]{width:100%;font-size:13px;color:var(--muted)}
+  input[type=file]::file-selector-button{margin-right:12px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(255,255,255,.08);color:var(--text);font-weight:700;cursor:pointer}
+  .photo-prev{max-width:100%;max-height:200px;border-radius:12px;margin-top:8px;display:none}
+
+  /* result */
+  .done{text-align:center}
+  .done .ref{font-family:'Montserrat';font-size:24px;font-weight:800;color:var(--gold);margin:6px 0 12px;letter-spacing:1px}
+  .facts{text-align:left;font-size:14px;margin:12px 0}
+  .facts div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .facts div span:first-child{color:var(--muted)}
+
+  /* book */
+  .team{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  .who{flex:none;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:130px}
+  .who b{display:block;font-size:13px}
+  .stars{color:var(--gold);letter-spacing:1px}
+  .stars .off{color:rgba(255,255,255,.18)}
+  .entry{padding:12px 0;border-bottom:1px solid var(--line)}
+  .entry:last-child{border-bottom:0}
+  .entry .l1{display:flex;justify-content:space-between;gap:10px}
+  .entry .l1 b{font-size:15px}
+  .entry .meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .entry .items{font-size:13px;margin-top:4px}
+  .entry a{color:var(--teal);font-size:12px;font-weight:700;text-decoration:none}
+  .entry .cmt{font-size:13px;font-style:italic;color:var(--muted);margin-top:4px}
+  #map{height:min(70vh,560px);border-radius:16px;margin-top:14px;border:1px solid var(--line)}
+  .leaflet-popup-content{font-family:'DM Sans';font-size:13px;color:#13202e}
+  .empty{color:var(--muted);text-align:center;padding:24px 8px;font-size:14px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- Signing in happens once, on the RR Operations launcher; this page uses that sign-in. -->
+<div id="lock"><div class="lock-card"><div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
+  <h1>Delivery Book</h1><p id="lockMsg">Opening…</p>
+  <form id="codeForm" hidden autocomplete="off" style="margin-bottom:12px">
+    <input id="code" type="password" placeholder="STAFF ACCESS CODE" aria-label="Staff access code" required>
+    <button class="btn gold block" type="submit" id="codeBtn" style="margin-top:10px">Open the Delivery Book</button>
+    <p id="codeErr" role="alert" style="color:#ff8a80;margin:8px 0 0"></p>
+  </form>
+  <a class="btn gold block" id="lockGo" href="/rroperations/?next=delivery-book" style="text-decoration:none">Sign in</a></div></div>
+
+<header>
+  <div class="top">
+    <a href="/rroperations/" class="mark" title="All apps" aria-label="All apps"><img src="/orphan-transition/board-mark.png" alt=""></a>
+    <div><h1>Delivery Book</h1><small id="me">—</small></div>
+    <div class="sp"></div>
+    <span class="pill test" id="modePill" hidden>TEST</span>
+    <a class="btn ghost" href="/deliverybook-film/" style="padding:8px 12px;min-height:36px;font-size:12px;text-decoration:none">&#9654; Film</a>
+    <a class="btn ghost" href="/rroperations/" style="padding:8px 12px;min-height:36px;font-size:12px;text-decoration:none">All apps</a>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="log">Log a delivery</button>
+    <button role="tab" aria-selected="false" data-tab="book">Book</button>
+    <button role="tab" aria-selected="false" data-tab="map">Map</button>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <!-- ─────────── LOG ─────────── -->
+  <section id="tab-log">
+    <form id="logForm" novalidate>
+
+      <div class="card" id="c1">
+        <h2><span class="step">1</span>Find the client</h2>
+        <label for="q">Policy number or client's name</label>
+        <div class="search">
+          <input id="q" type="text" placeholder="e.g. TT APU 0100004 or Jane Doe" autocomplete="off" enterkeyhint="search">
+          <button class="btn gold" type="button" id="findBtn">Find</button>
+        </div>
+        <div class="hint">A policy number can be typed with or without spaces.</div>
+        <div class="err" id="findErr" role="alert"></div>
+        <div id="results"></div>
+        <button class="btn ghost block" type="button" id="notInSf" style="margin-top:12px" hidden>Not in Salesforce — add a new client</button>
+        <div id="newClient" hidden>
+          <div class="hint" style="margin:10px 0 0">A new contact is created in Salesforce when you submit. Check the spelling first.</div>
+          <div class="row">
+            <div><label for="ncFirst">First name</label><input id="ncFirst" type="text" autocomplete="off"></div>
+            <div><label for="ncLast">Last name or company</label><input id="ncLast" type="text" autocomplete="off"></div>
+          </div>
+          <div class="row">
+            <div><label for="ncEmail">E-mail</label><input id="ncEmail" type="email" autocomplete="off" inputmode="email"></div>
+            <div><label for="ncMobile">Mobile</label><input id="ncMobile" type="tel" autocomplete="off"></div>
+          </div>
+          <label for="clientType">Client type</label>
+          <select id="clientType"><option>Individual</option><option>Business</option><option>Group</option></select>
+        </div>
+      </div>
+
+      <div class="card dim" id="c2">
+        <h2><span class="step">2</span>What was delivered</h2>
+        <div id="clientLine" class="hint" style="margin-top:-6px"></div>
+        <div id="policies"></div>
+        <button class="btn ghost block" type="button" id="addItem" style="margin-top:12px">+ Add an item not listed</button>
+        <div id="extra"></div>
+        <div id="emailBox" hidden>
+          <label for="email">Client's e-mail for the confirmation</label>
+          <input id="email" type="email" inputmode="email" autocomplete="off" placeholder="none on file">
+          <div class="hint" id="emailHint"></div>
+        </div>
+      </div>
+
+      <div class="card dim" id="c3">
+        <h2><span class="step">3</span>The handover</h2>
+        <div class="row">
+          <div><label for="method">How</label><select id="method"></select></div>
+          <div><label for="when">When</label><input id="when" type="datetime-local"></div>
+        </div>
+        <label for="rel">Who collected it</label>
+        <select id="rel"><option value="">Choose…</option></select>
+        <div class="row">
+          <div><label for="cFirst">Collector's first name</label><input id="cFirst" type="text" autocomplete="off"></div>
+          <div><label for="cLast">Collector's last name</label><input id="cLast" type="text" autocomplete="off"></div>
+        </div>
+
+        <label>Signature of the person collecting</label>
+        <div class="sig"><canvas id="sig" aria-label="Signature pad"></canvas>
+          <button type="button" class="x" id="sigClear">Clear</button>
+          <div class="ph" id="sigPh">Sign here with your finger</div></div>
+
+        <label for="photo">Photo of the handover <span id="photoReq"></span></label>
+        <input id="photo" type="file" accept="image/*" capture="environment">
+        <img id="photoPrev" class="photo-prev" alt="Photo preview">
+
+        <label>Location</label>
+        <div class="loc"><span class="dot" id="locDot"></span><div style="flex:1"><b id="locText">Finding your location…</b>
+          <div class="hint" id="locSub" style="margin-top:2px"></div></div>
+          <button type="button" class="btn ghost" id="locRetry" style="min-height:36px;padding:8px 12px;font-size:12px">Retry</button></div>
+        <div class="mini" id="mini"></div>
+        <div id="locWhyBox" hidden>
+          <label for="locWhy">Location could not be captured — why?</label>
+          <input id="locWhy" type="text" placeholder="e.g. phone location switched off">
+        </div>
+
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" maxlength="500"></textarea>
+
+        <div class="err" id="subErr" role="alert"></div>
+        <button class="btn gold block" type="submit" id="submitBtn" style="margin-top:14px">Record the delivery</button>
+      </div>
+    </form>
+
+    <div class="card done" id="result" hidden></div>
+  </section>
+
+  <!-- ─────────── BOOK ─────────── -->
+  <section id="tab-book" hidden>
+    <div class="card">
+      <h2>Ratings from clients</h2>
+      <div class="team" id="team"></div>
+    </div>
+    <div class="card">
+      <div class="row3">
+        <input id="bookQ" type="text" placeholder="Search client, policy, collector" aria-label="Search the book">
+        <select id="bookDays" aria-label="Period"><option value="30">30 days</option><option value="90" selected>90 days</option><option value="365">A year</option></select>
+      </div>
+      <div id="book" style="margin-top:6px"></div>
+    </div>
+  </section>
+
+  <!-- ─────────── MAP ─────────── -->
+  <section id="tab-map" hidden>
+    <div id="map"></div>
+    <div class="hint" id="mapNote" style="text-align:center;margin-top:8px"></div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" async></script>
+<script>
+/* 20 October 2026: "unable to open the delivery book" (the page stayed on "Opening…"). Whatever stops the page from
+   starting is shown on the card, with the ways in, instead of a page that never moves. */
+(function () {
+  function stuck(why) {
+    var m = document.getElementById('lockMsg'), lk = document.getElementById('lock');
+    if (!m || !lk || lk.hidden || !/Opening/.test(m.textContent)) return;
+    m.innerHTML = 'The Delivery Book could not start' + (why ? ' (' + String(why).replace(/[<>&]/g, '') + ')' : '') +
+      '. <a href="/rroperations/?next=delivery-book" style="color:#6FA8FF">Sign in again</a> or ' +
+      '<a href="javascript:location.reload()" style="color:#6FA8FF">reload</a>.';
+  }
+  window.addEventListener('error', function (e) { stuck(e && e.message); });
+  setTimeout(function () { stuck('it took too long'); }, 8000);
+})();
+</script>
+<script src="/rroperations/ops-config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* The RR Operations backend's /exec address lives in ops-config.js. */
+  var API_URL = window.RR_OPS.API_URL, SESSION_KEY = window.RR_OPS.SESSION_KEY;
+
+  var S = { token: '', name: '', role: '', mode: 'test', docTypes: [], rels: [], methods: [],
+            client: null, otherIds: [], notInSf: false, picked: {}, extra: [], loc: null,
+            sigDirty: false, photo: '', bookRows: [], mapRows: [] };
+  var $ = function (id) { return document.getElementById(id); };
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  function api(action, body) {
+    if (/RR_OPERATIONS_DEPLOYMENT_ID/.test(API_URL)) return Promise.reject(new Error('RR Operations is not connected yet.'));
+    var payload = Object.assign({ action: action, token: S.token }, body || {});
+    return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.error === 'signed-out') { signOutLocal(); throw new Error('Your session ended. Sign in again.'); }
+        if (!j || !j.ok) throw new Error((j && j.error) || 'Something went wrong.');
+        return j;
+      });
+  }
+
+  /* ── sign in ───────────────────────────────────────────── */
+  function applySession(s) {
+    S.token = s.token; S.name = s.name; S.role = s.role; S.mode = s.mode || 'test';
+    S.docTypes = s.docTypes || []; S.rels = s.relationships || []; S.methods = s.methods || [];
+    $('me').textContent = S.name + ' · ' + S.role;
+    var pill = $('modePill'); pill.hidden = false;
+    pill.textContent = S.mode === 'live' ? 'LIVE' : 'TEST'; pill.className = 'pill ' + (S.mode === 'live' ? 'live' : 'test');
+    pill.title = S.mode === 'live' ? 'Client e-mails and Salesforce are live' : 'Test mode: e-mails go to the test inbox; nothing is written to Salesforce';
+    fillSelect($('method'), S.methods, 'In person');
+    fillSelect($('rel'), S.rels, '', 'Choose…');
+    $('lock').hidden = true;
+    resetLog();
+    /* A sign-in by agent number (the branch app) carries no lists, so the document list (Cheque, Policy Contract …)
+       came up empty for staff (20 October 2026). The backend's public ping has them: fill from it. */
+    if (!S.docTypes.length || !S.rels.length || !S.methods.length) {
+      fetch(API_URL + (API_URL.indexOf('?') < 0 ? '?' : '&') + 'action=ping').then(function (r) { return r.json(); }).then(function (j) {
+        if (!j || !j.ok) return;
+        S.docTypes = S.docTypes.length ? S.docTypes : (j.docTypes || []);
+        S.rels = S.rels.length ? S.rels : (j.relationships || []);
+        S.methods = S.methods.length ? S.methods : (j.methods || []);
+        s.docTypes = S.docTypes; s.relationships = S.rels; s.methods = S.methods;
+        store.set(SESSION_KEY, JSON.stringify(s));
+        fillSelect($('method'), S.methods, 'In person');
+        fillSelect($('rel'), S.rels, '', 'Choose…');
+      }).catch(function () {});
+    }
+  }
+  function fillSelect(sel, list, def, blank) {
+    sel.innerHTML = (blank ? '<option value="">' + esc(blank) + '</option>' : '') +
+      list.map(function (v) { return '<option' + (v === def ? ' selected' : '') + '>' + esc(v) + '</option>'; }).join('');
+  }
+  function signOutLocal() { store.del(SESSION_KEY); S.token = ''; location.replace('/rroperations/?next=delivery-book'); }
+
+  /* ── tabs ──────────────────────────────────────────────── */
+  document.querySelectorAll('[data-tab]').forEach(function (b) {
+    b.addEventListener('click', function () { showTab(b.getAttribute('data-tab')); });
+  });
+  function showTab(t) {
+    document.querySelectorAll('[data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === t)); });
+    ['log', 'book', 'map'].forEach(function (k) { $('tab-' + k).hidden = k !== t; });
+    if (t === 'book' || t === 'map') loadBook();
+  }
+
+  /* ── 1. find the client ────────────────────────────────── */
+  function find() {
+    var q = $('q').value.trim();
+    $('findErr').textContent = ''; $('results').innerHTML = '';
+    if (q.length < 2) { $('findErr').textContent = 'Type a policy number or at least two letters of the name.'; return; }
+    var isPolicy = /\d{4,}/.test(q);
+    $('findBtn').disabled = true;
+    api('lookup', isPolicy ? { policy: q } : { name: q }).then(function (r) {
+      $('notInSf').hidden = false;
+      if (!r.clients.length) {
+        $('results').innerHTML = '<div class="empty">' + esc(r.note || 'No one by that name in Salesforce.') + '</div>';
+        return;
+      }
+      var ids = r.clients.map(function (c) { return c.id; });
+      $('results').innerHTML = (r.via === 'policy' ? '<div class="hint">Policy ' + esc(r.policy) + ' is held by:</div>' : '') +
+        r.clients.map(function (c, i) {
+          var dup = c.sameEmailAs && c.sameEmailAs.filter(function (x) { return ids.indexOf(x) >= 0; }).length;
+          return '<button type="button" class="client" data-i="' + i + '"><b>' + esc(c.name) + '</b>' +
+            '<span>' + (c.email ? esc(c.email) : 'No e-mail on file') + (c.mobile ? ' · ' + esc(c.mobile) : '') + '</span>' +
+            (c.account ? '<span>' + esc(c.account) + '</span>' : '') +
+            (!c.email ? '<span class="tag warn">No e-mail</span>' : '') +
+            (dup ? '<span class="tag bad">Filed twice — same e-mail as another record</span>' : '') +
+            (/agent|staff/i.test(c.type) ? '<span class="tag info">' + esc(c.type) + '</span>' : '') + '</button>';
+        }).join('');
+      $('results').querySelectorAll('.client').forEach(function (b) {
+        b.addEventListener('click', function () {
+          $('results').querySelectorAll('.client').forEach(function (x) { x.classList.remove('sel'); });
+          b.classList.add('sel');
+          var c = r.clients[Number(b.getAttribute('data-i'))];
+          pickClient(c, (c.sameEmailAs || []).filter(function (x) { return ids.indexOf(x) >= 0; }), r.via === 'policy' ? r.policy : '');
+        });
+      });
+      if (r.clients.length === 1) $('results').querySelector('.client').click();
+    }).catch(function (err) { $('findErr').textContent = err.message; })
+      .then(function () { $('findBtn').disabled = false; });
+  }
+  $('findBtn').addEventListener('click', find);
+  $('q').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); find(); } });
+
+  $('notInSf').addEventListener('click', function () {
+    S.notInSf = true; S.client = null; S.picked = {};
+    $('results').innerHTML = ''; $('newClient').hidden = false; $('notInSf').hidden = true;
+    $('policies').innerHTML = '<div class="hint">No policies on record for a new client. Add what was delivered below.</div>';
+    $('clientLine').textContent = '';
+    $('emailBox').hidden = true;
+    open(2); open(3);
+    if (!S.extra.length) addExtra();
+  });
+
+  /* ── 2. what was delivered ─────────────────────────────── */
+  function defaultDoc(type) {
+    return /LIFE|PENSION|HEALTH|ANNUITY/.test(type) ? 'Policy Contract' : 'Certificate';
+  }
+  function pickClient(c, otherIds, policyHit) {
+    S.client = c; S.otherIds = otherIds || []; S.notInSf = false; S.picked = {};
+    $('newClient').hidden = true;
+    $('clientLine').innerHTML = 'For <b>' + esc(c.name) + '</b>';
+    $('policies').innerHTML = '<div class="hint">Loading their policies…</div>';
+    open(2); open(3);
+    // Collector defaults to the client; changed if someone else collects.
+    if (!$('cFirst').value && !$('cLast').value) { $('cFirst').value = c.first || ''; $('cLast').value = c.last || ''; }
+    $('emailBox').hidden = false;
+    $('email').value = c.email || '';
+    $('email').readOnly = !!c.email;
+    $('emailHint').textContent = c.email ? 'On file in Salesforce. The confirmation goes here.'
+      : 'No e-mail on file. Enter one and it is saved to Salesforce and used for the confirmation.';
+    api('policies', { contactIds: [c.id].concat(S.otherIds) }).then(function (r) {
+      if (!r.groups.length) { $('policies').innerHTML = '<div class="hint">No policies on record. Add what was delivered below.</div>'; return; }
+      $('policies').innerHTML = (r.alsoFiled && r.alsoFiled.length ? '<span class="tag bad">Also filed as ' +
+          esc(r.alsoFiled.map(function (x) { return x.name; }).join(', ')) + ' — policies from both are shown</span>' : '') +
+        r.groups.map(function (g) {
+          return '<div class="grp"><h3><span>' + esc(g.type) + '</span><span>' + g.policies.length + '</span></h3>' +
+            g.policies.map(function (p) {
+              var key = p.portfolioId;
+              return '<div class="pol" data-k="' + esc(key) + '"><div class="head">' +
+                '<input type="checkbox" aria-label="Delivered ' + esc(p.policy || p.record) + '">' +
+                '<div style="flex:1"><div class="num">' + esc(p.policy || 'No policy number (' + p.record + ')') + '</div>' +
+                '<div class="sub">' + esc([p.plan, p.status, p.issued ? 'issued ' + p.issued : ''].filter(Boolean).join(' · ') || g.type) + '</div></div></div>' +
+                '<div class="more row3"><select aria-label="Document">' + S.docTypes.map(function (d) {
+                  return '<option' + (d === defaultDoc(g.type) ? ' selected' : '') + '>' + esc(d) + '</option>'; }).join('') +
+                '</select><input type="number" min="1" max="20" value="1" aria-label="Quantity"></div></div>';
+            }).join('') + '</div>';
+        }).join('');
+      var all = {};
+      r.groups.forEach(function (g) { g.policies.forEach(function (p) { all[p.portfolioId] = p; }); });
+      $('policies').querySelectorAll('.pol').forEach(function (el) {
+        var cb = el.querySelector('input[type=checkbox]');
+        var p = all[el.getAttribute('data-k')];
+        var sync = function () {
+          el.classList.toggle('on', cb.checked);
+          if (cb.checked) S.picked[p.portfolioId] = { p: p, el: el }; else delete S.picked[p.portfolioId];
+          updatePhotoReq();
+        };
+        el.querySelector('.head').addEventListener('click', function (e) { if (e.target !== cb) { cb.checked = !cb.checked; } sync(); });
+        el.querySelector('select').addEventListener('change', updatePhotoReq);
+        // The policy that found the client is ticked for them.
+        if (policyHit && p.policy && norm(p.policy) === norm(policyHit)) { cb.checked = true; sync(); }
+      });
+    }).catch(function (err) { $('policies').innerHTML = '<div class="err">' + esc(err.message) + '</div>'; });
+  }
+  function norm(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
+  function addExtra() {
+    var i = S.extra.length;
+    var div = document.createElement('div');
+    div.className = 'pol on';
+    div.innerHTML = '<div class="row"><div><label>Policy number</label><input type="text" data-f="policy" autocomplete="off"></div>' +
+      '<div><label>Type</label><select data-f="type"><option value="">—</option><option>LIFE</option><option>PENSION</option>' +
+      '<option>HEALTH</option><option>MOTOR</option><option>PROPERTY</option><option>OTHER</option></select></div></div>' +
+      '<div class="row3"><div><label>Document</label><select data-f="document">' + S.docTypes.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('') +
+      '</select></div><div><label>Qty</label><input type="number" min="1" max="20" value="1" data-f="quantity"></div></div>' +
+      '<button type="button" class="btn ghost" style="margin-top:8px;min-height:34px;padding:6px 10px;font-size:12px">Remove</button>';
+    div.querySelector('button').addEventListener('click', function () { S.extra[i] = null; div.remove(); updatePhotoReq(); });
+    div.querySelector('[data-f=document]').addEventListener('change', updatePhotoReq);
+    $('extra').appendChild(div);
+    S.extra.push(div);
+  }
+  $('addItem').addEventListener('click', addExtra);
+
+  function items() {
+    var out = Object.keys(S.picked).map(function (k) {
+      var x = S.picked[k];
+      return { portfolioId: x.p.portfolioId, policy: x.p.policy, type: x.p.type, plan: x.p.plan,
+               document: x.el.querySelector('select').value, quantity: Number(x.el.querySelector('input[type=number]').value) || 1 };
+    });
+    S.extra.forEach(function (div) {
+      if (!div) return;
+      var f = function (n) { return div.querySelector('[data-f=' + n + ']').value; };
+      out.push({ policy: f('policy').trim(), type: f('type'), document: f('document'), quantity: Number(f('quantity')) || 1 });
+    });
+    return out;
+  }
+  function updatePhotoReq() {
+    var cheque = items().some(function (it) { return it.document === 'Cheque'; });
+    $('photoReq').textContent = cheque ? '(required for a cheque)' : '(optional)';
+  }
+
+  function open(n) { $('c' + n).classList.remove('dim'); if (n === 3) startLocation(); }
+
+  /* ── 3. the handover ───────────────────────────────────── */
+  $('rel').addEventListener('change', function () {
+    if ($('rel').value !== 'Self' && S.client && $('cFirst').value === (S.client.first || '') && $('cLast').value === (S.client.last || '')) {
+      $('cFirst').value = ''; $('cLast').value = ''; $('cFirst').focus();
+    }
+  });
+
+  // signature pad
+  var cv = $('sig'), ctx = cv.getContext('2d'), drawing = false, lastPt = null;
+  function sizePad() {
+    var r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    var keep = S.sigDirty ? cv.toDataURL() : null;
+    cv.width = Math.max(1, r.width * dpr); cv.height = Math.max(1, r.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0b1b2b';
+    if (keep) { var im = new Image(); im.onload = function () { ctx.drawImage(im, 0, 0, r.width, r.height); }; im.src = keep; }
+  }
+  function pt(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+  cv.addEventListener('pointerdown', function (e) { drawing = true; lastPt = pt(e); cv.setPointerCapture(e.pointerId); e.preventDefault(); });
+  cv.addEventListener('pointermove', function (e) {
+    if (!drawing) return; var p = pt(e);
+    ctx.beginPath(); ctx.moveTo(lastPt.x, lastPt.y); ctx.lineTo(p.x, p.y); ctx.stroke(); lastPt = p;
+    if (!S.sigDirty) { S.sigDirty = true; $('sigPh').hidden = true; if (/sign/.test($('subErr').textContent)) $('subErr').textContent = ''; }
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { cv.addEventListener(ev, function () { drawing = false; }); });
+  $('sigClear').addEventListener('click', function () { ctx.clearRect(0, 0, cv.width, cv.height); S.sigDirty = false; $('sigPh').hidden = false; });
+  window.addEventListener('resize', sizePad);
+
+  // photo, shrunk on the phone before it is sent
+  $('photo').addEventListener('change', function () {
+    var f = $('photo').files[0]; S.photo = '';
+    if (!f) { $('photoPrev').style.display = 'none'; return; }
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function () {
+      var max = 1600, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
+      var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      S.photo = c.toDataURL('image/jpeg', 0.8);
+      $('photoPrev').src = S.photo; $('photoPrev').style.display = 'block';
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  });
+
+  // location
+  var mini = null, miniPin = null, locStarted = false;
+  function setLoc(state, text, sub) {
+    $('locDot').className = 'dot ' + state; $('locText').textContent = text; $('locSub').textContent = sub || '';
+    $('locWhyBox').hidden = state !== 'bad';
+  }
+  function startLocation(force) {
+    if (locStarted && !force) return;
+    locStarted = true;
+    if (!navigator.geolocation) { setLoc('bad', 'This phone cannot share its location', 'Say why below.'); return; }
+    setLoc('', 'Finding your location…');
+    navigator.geolocation.getCurrentPosition(function (p) {
+      S.loc = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: Math.round(p.coords.accuracy) };
+      var weak = S.loc.accuracy > 200;
+      setLoc(weak ? 'warn' : 'ok', weak ? 'Located, but the signal is weak' : 'Location captured',
+        '±' + S.loc.accuracy + ' m · ' + S.loc.lat.toFixed(5) + ', ' + S.loc.lng.toFixed(5) + (weak ? ' · step outside and retry if you can' : ''));
+      showMini();
+    }, function (err) {
+      S.loc = null;
+      setLoc('bad', err.code === 1 ? 'Location is blocked for this page' : 'Location not available',
+        err.code === 1 ? 'Allow location for this site in your browser settings, then Retry.' : 'Retry, or say why below.');
+    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+  }
+  $('locRetry').addEventListener('click', function () { startLocation(true); });
+  function showMini() {
+    if (typeof L === 'undefined' || !S.loc) return;
+    $('mini').style.display = 'block';
+    if (!mini) {
+      mini = L.map('mini', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mini);
+    }
+    mini.setView([S.loc.lat, S.loc.lng], 16);
+    if (miniPin) miniPin.remove();
+    miniPin = L.circleMarker([S.loc.lat, S.loc.lng], { radius: 9, color: '#1D5BC4', fillColor: '#6FA8FF', fillOpacity: 1, weight: 3 }).addTo(mini);
+    setTimeout(function () { mini.invalidateSize(); }, 50);
+  }
+
+  /* ── submit ────────────────────────────────────────────── */
+  $('logForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var err = $('subErr'); err.textContent = '';
+    var list = items();
+    var problem =
+      (!S.client && !S.notInSf) ? 'Find and pick the client first.' :
+      (S.notInSf && !$('ncLast').value.trim()) ? 'Enter the new client\'s name.' :
+      !list.length ? 'Tick at least one policy, or add an item.' :
+      !$('rel').value ? 'Choose who collected it.' :
+      (!$('cFirst').value.trim() || !$('cLast').value.trim()) ? 'Enter the collector\'s first and last name.' :
+      !S.sigDirty ? 'The collector has to sign.' :
+      (list.some(function (it) { return it.document === 'Cheque'; }) && !S.photo) ? 'A cheque needs a photo of the handover.' :
+      (!S.loc && !$('locWhy').value.trim()) ? 'Location is needed. Retry, or say why it could not be captured.' : '';
+    if (problem) { err.textContent = problem; return; }
+
+    var when = $('when').value ? new Date($('when').value) : new Date();
+    var d = {
+      method: $('method').value, deliveredAt: when.toISOString(),
+      contactId: S.client ? S.client.id : '', notInSalesforce: S.notInSf,
+      newContact: S.notInSf ? { first: $('ncFirst').value, last: $('ncLast').value, email: $('ncEmail').value, mobile: $('ncMobile').value } : null,
+      clientType: S.notInSf ? $('clientType').value : 'Individual',
+      email: S.notInSf ? $('ncEmail').value : $('email').value,
+      items: list, collectorFirst: $('cFirst').value, collectorLast: $('cLast').value, relationship: $('rel').value,
+      signature: sigPng(), photo: S.photo, notes: $('notes').value,
+      lat: S.loc ? S.loc.lat : null, lng: S.loc ? S.loc.lng : null, accuracy: S.loc ? S.loc.accuracy : null,
+      locationNote: S.loc ? '' : $('locWhy').value
+    };
+    $('submitBtn').disabled = true; $('submitBtn').textContent = 'Recording…';
+    api('submit', { delivery: d }).then(showResult)
+      .catch(function (x) { err.textContent = x.message; })
+      .then(function () { $('submitBtn').disabled = false; $('submitBtn').textContent = 'Record the delivery'; });
+  });
+
+  /* The signature on white, trimmed of nothing: what was signed is what is kept. */
+  function sigPng() {
+    var c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height;
+    var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(cv, 0, 0);
+    return c.toDataURL('image/png');
+  }
+
+  function showResult(r) {
+    $('logForm').hidden = true;
+    var box = $('result'); box.hidden = false;
+    box.innerHTML = '<h2 style="justify-content:center">Delivery recorded' + (r.mode === 'test' ? ' (test)' : '') + '</h2>' +
+      '<div class="ref">' + esc(r.ref) + '</div>' +
+      '<div class="facts">' +
+      '<div><span>Client</span><span>' + esc(r.client) + '</span></div>' +
+      '<div><span>Confirmation e-mail</span><span>' + esc(r.emailStatus) + '</span></div>' +
+      '<div><span>Salesforce</span><span>' + esc(/^00T/.test(r.task) ? 'Task logged' : r.task) + '</span></div>' +
+      (r.contactAction && r.contactAction !== 'Existing' ? '<div><span>Contact</span><span>' + esc(r.contactAction) + '</span></div>' : '') +
+      '<div><span>Location</span><span>' + (r.pin ? '<a style="color:var(--teal)" target="_blank" rel="noopener" href="' + esc(r.pin) + '">' +
+        esc(r.address || 'Open pin') + '</a>' : 'Not captured') + '</span></div>' +
+      (r.distanceKm !== '' && r.distanceKm != null ? '<div><span>From address on file</span><span>' + esc(r.distanceKm) + ' km</span></div>' : '') +
+      '</div>' +
+      (r.flags && r.flags.length ? r.flags.map(function (f) { return '<span class="tag warn">' + esc(f) + '</span>'; }).join('') : '') +
+      '<button class="btn gold block" type="button" id="again" style="margin-top:16px">Log another delivery</button>';
+    $('again').addEventListener('click', resetLog);
+    window.scrollTo(0, 0);
+  }
+
+  function resetLog() {
+    S.client = null; S.otherIds = []; S.notInSf = false; S.picked = {}; S.extra = []; S.photo = ''; S.sigDirty = false;
+    $('logForm').reset(); $('logForm').hidden = false; $('result').hidden = true;
+    ['results', 'policies', 'extra', 'clientLine', 'findErr', 'subErr'].forEach(function (id) { $(id).innerHTML = ''; });
+    $('newClient').hidden = true; $('notInSf').hidden = true; $('emailBox').hidden = true; $('email').readOnly = false;
+    $('photoPrev').style.display = 'none'; $('sigPh').hidden = false;
+    $('c2').classList.add('dim'); $('c3').classList.add('dim');
+    var now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    $('when').value = now.toISOString().slice(0, 16);
+    fillSelect($('method'), S.methods, 'In person'); fillSelect($('rel'), S.rels, '', 'Choose…');
+    locStarted = false; S.loc = null; setLoc('', 'Location is captured when you reach this step');
+    updatePhotoReq();
+    requestAnimationFrame(sizePad);
+  }
+
+  /* ── book and map ──────────────────────────────────────── */
+  function starsHtml(n) {
+    if (!n) return '';
+    var s = ''; for (var i = 1; i <= 5; i++) s += i <= n ? '★' : '<span class="off">★</span>';
+    return '<span class="stars" aria-label="' + n + ' of 5 stars">' + s + '</span>';
+  }
+  function fmt(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString('en-TT', { day: 'numeric', month: 'short' }) + ', ' +
+      d.toLocaleTimeString('en-TT', { hour: 'numeric', minute: '2-digit' });
+  }
+  function loadBook() {
+    $('book').innerHTML = '<div class="empty">Loading…</div>';
+    api('book', { days: $('bookDays').value }).then(function (r) {
+      S.bookRows = r.deliveries;
+      $('team').innerHTML = r.team && r.team.length ? r.team.map(function (t) {
+        return '<div class="who"><b>' + esc(t.name) + '</b>' + starsHtml(Math.round(t.average)) +
+          '<div class="hint" style="margin:2px 0 0">' + t.average.toFixed(1) + ' from ' + t.ratings + ' rating' + (t.ratings > 1 ? 's' : '') + '</div></div>';
+      }).join('') : '<div class="hint">No ratings yet. Each confirmation e-mail asks the client to rate the delivery.</div>';
+      renderBook(); renderMap();
+    }).catch(function (err) { $('book').innerHTML = '<div class="empty">' + esc(err.message) + '</div>'; });
+  }
+  function renderBook() {
+    var q = norm($('bookQ').value);
+    var rows = S.bookRows.filter(function (d) {
+      if (!q) return true;
+      return norm([d.client, d.collector, d.by].concat(d.items.map(function (i) { return i.policy; })).join(' ')).indexOf(q) >= 0;
+    });
+    $('book').innerHTML = rows.length ? rows.map(function (d) {
+      var tags = [];
+      if (!d.signed) tags.push('<span class="tag bad">No signature</span>');
+      if (d.lat == null) tags.push('<span class="tag warn">No GPS</span>');
+      if (/^Sent|Test copy/.test(d.email)) tags.push('<span class="tag ok">Client e-mailed</span>');
+      else if (d.email) tags.push('<span class="tag warn">' + esc(d.email) + '</span>');
+      if (/Jotform/.test(d.source)) tags.push('<span class="tag info">From Jotform</span>');
+      if (/test/i.test(d.source)) tags.push('<span class="tag warn">Test</span>');
+      return '<div class="entry"><div class="l1"><b>' + esc(d.client || '—') + '</b>' + starsHtml(d.stars) + '</div>' +
+        '<div class="meta">' + esc(fmt(d.deliveredAt)) + ' · by ' + esc(d.by || '—') + ' · collected by ' + esc(d.collector || '—') +
+        (d.relationship ? ' (' + esc(d.relationship.toLowerCase()) + ')' : '') + '</div>' +
+        '<div class="items">' + d.items.map(function (i) { return esc(i.document) + (i.policy ? ' — ' + esc(i.policy) : ''); }).join('<br>') + '</div>' +
+        (d.comment ? '<div class="cmt">“' + esc(d.comment) + '”</div>' : '') +
+        '<div>' + tags.join('') + '</div>' +
+        (d.pin ? '<a href="' + esc(d.pin) + '" target="_blank" rel="noopener">📍 ' + esc(d.address || 'Pin') + '</a>' : '') +
+        (d.signatureUrl ? ' · <a href="' + esc(d.signatureUrl) + '" target="_blank" rel="noopener">Signature</a>' : '') +
+        (d.photoUrl ? ' · <a href="' + esc(d.photoUrl) + '" target="_blank" rel="noopener">Photo</a>' : '') +
+        '</div>';
+    }).join('') : '<div class="empty">No deliveries in this period.</div>';
+  }
+  $('bookQ').addEventListener('input', renderBook);
+  $('bookDays').addEventListener('change', loadBook);
+
+  var map = null, layer = null;
+  function renderMap() {
+    if ($('tab-map').hidden) return;
+    if (typeof L === 'undefined') { $('mapNote').textContent = 'The map could not load. Check the connection.'; return; }
+    if (!map) {
+      map = L.map('map').setView([10.45, -61.3], 9);   // Trinidad
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+    }
+    if (layer) layer.remove();
+    layer = L.featureGroup().addTo(map);
+    var pins = S.bookRows.filter(function (d) { return d.lat != null && d.lng != null; });
+    pins.forEach(function (d) {
+      L.circleMarker([d.lat, d.lng], { radius: 9, color: '#070F26', weight: 2, fillColor: d.stars && d.stars <= 2 ? '#f87171' : '#6FA8FF', fillOpacity: .95 })
+        .bindPopup('<b>' + esc(d.client) + '</b><br>' + esc(fmt(d.deliveredAt)) + '<br>' +
+          d.items.map(function (i) { return esc(i.document) + (i.policy ? ' — ' + esc(i.policy) : ''); }).join('<br>') +
+          '<br>By ' + esc(d.by) + ' · to ' + esc(d.collector) + (d.stars ? '<br>' + '★'.repeat(d.stars) : '') +
+          (d.pin ? '<br><a href="' + esc(d.pin) + '" target="_blank" rel="noopener">Open in Google Maps</a>' : ''))
+        .addTo(layer);
+    });
+    $('mapNote').textContent = pins.length + ' of ' + S.bookRows.length + ' deliveries have a pin' +
+      (S.bookRows.length - pins.length ? ' — the rest were logged without GPS.' : '.');
+    setTimeout(function () { map.invalidateSize(); if (pins.length) map.fitBounds(layer.getBounds().pad(0.2), { maxZoom: 15 }); }, 60);
+  }
+  document.querySelector('[data-tab=map]').addEventListener('click', function () { setTimeout(renderMap, 0); });
+
+  /* ── start ─────────────────────────────────────────────── */
+  /* Signed in on the launcher, and the Delivery Book on this person's access:
+     open. Otherwise back to the launcher, which brings them straight here
+     once they have signed in. */
+  var saved = null;
+  try { saved = JSON.parse(store.get(SESSION_KEY) || 'null'); } catch (e) {}
+  var allowed = saved && (saved.apps || []).some(function (a) { return a.id === 'delivery-book' && a.status === 'live'; });
+  if (saved && saved.token && allowed) applySession(saved);
+  else if (saved && saved.token) {
+    /* Staff signed in by agent number before LogBook.gs carries the Delivery Book (20 October 2026): their access
+       code opens it here, without leaving the page. */
+    $('lockMsg').textContent = 'Your agent-number sign-in does not open the Delivery Book yet. Enter your staff access code to record a cheque or contract.';
+    $('codeForm').hidden = false; $('lockGo').textContent = 'Back to the branch app'; $('lockGo').href = '/rroperations/';
+    $('codeForm').addEventListener('submit', function (e) {
+      e.preventDefault(); $('codeErr').textContent = ''; $('codeBtn').disabled = true;
+      api('login', { code: $('code').value.trim() }).then(function (s2) {
+        var ok = (s2.apps || []).some(function (a) { return a.id === 'delivery-book' && a.status === 'live'; });
+        if (!ok) throw new Error('That code does not include the Delivery Book. Ask the branch to add it.');
+        store.set(SESSION_KEY, JSON.stringify(s2)); $('code').value = ''; applySession(s2);
+      }).catch(function (err) { $('codeErr').textContent = err.message; })
+        .then(function () { $('codeBtn').disabled = false; });
+    });
+  }
+  else location.replace('/rroperations/?next=delivery-book');
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

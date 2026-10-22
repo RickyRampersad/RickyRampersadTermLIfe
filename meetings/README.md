@@ -573,9 +573,9 @@ day rather than in next year's minutes.
 
 ## The daily note — how Wednesday gets built
 
-The branch meets **Wednesday morning**. On each working morning the app sends
-every person one short note that counts down to it and asks for the one thing
-only they can bring:
+The branch meets **Wednesday, 9:00 to 10:30 am**. On each working morning the
+app sends every person one short note that counts down to it and asks for the
+one thing only they can bring:
 
 - **Your item on Wednesday** — and whether your material is in. An item marked
   *materials required* is not ready until a file is on it.

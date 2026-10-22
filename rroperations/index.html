@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Branch App | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex"/>
+<meta name="description" content="The Ricky Rampersad Branch app: one sign-in for the Log Book, the Delivery Book, your clients and your training."/>
+<meta name="theme-color" content="#070F26"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="RR Branch"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="manifest" href="/rroperations/manifest.webmanifest"/>
+<link rel="icon" type="image/png" href="/orphan-transition/board-mark.png"/>
+<link rel="apple-touch-icon" href="/orphan-transition/board-mark.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070F26;--card:#163553;--card2:#1b3d61;--gold:#6FA8FF;--cyan:#00CFEA;
+    --text:#edf4fb;--muted:#a9bbcf;--line:rgba(255,255,255,.09);--bad:#f87171}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.10),transparent);
+    padding-bottom:env(safe-area-inset-bottom)}
+  button,input{font:inherit;color:inherit}
+  .mark{border-radius:12px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  #lock{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+  .lock-card{width:min(380px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:32px 24px}
+  .lock-card .mark{width:72px;height:72px;border-radius:18px;margin:0 auto 16px}
+  .lock-card h1{font-family:'Montserrat';font-weight:800;font-size:22px;color:#fff;margin-bottom:4px}
+  .lock-card .tag{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px}
+  .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
+  .lock-card label{display:block;text-align:left;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px 2px}
+  .lock-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.28);
+    font-size:16px;margin-bottom:12px;outline:none}
+  .lock-card input:focus{border-color:rgba(111,168,255,.55)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 18px;border-radius:12px;border:0;cursor:pointer;
+    font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px}
+  .btn.gold{width:100%;background:linear-gradient(135deg,#2A6DE0,#13408F);color:#fff}
+  .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);padding:8px 12px;min-height:36px;font-size:12px}
+  .btn:disabled{opacity:.6;cursor:wait}
+  .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px;min-height:16px}
+  .hint{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5}
+  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+  .top{display:flex;align-items:center;gap:12px}
+  .top .mark{width:44px;height:44px}
+  .top h1{font-family:'Montserrat';font-size:18px;font-weight:800;color:#fff}
+  .top small{display:block;color:var(--muted);font-size:13px}
+  .top .sp{flex:1}
+  .hello{font-family:'Montserrat';font-size:24px;font-weight:800;margin:28px 0 4px}
+  .who{color:var(--muted);font-size:14px;margin-bottom:6px}
+  .who b{color:var(--gold)}
+  .scope{display:inline-block;font-size:12px;font-weight:700;color:var(--cyan);background:rgba(0,207,234,.1);
+    border:1px solid rgba(0,207,234,.25);border-radius:99px;padding:4px 10px;margin-bottom:6px}
+  h2{font-family:'Montserrat';font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+  .app{display:block;text-decoration:none;color:inherit;background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:18px;padding:16px;min-height:136px;position:relative;transition:transform .15s,border-color .15s}
+  a.app:hover,a.app:focus-visible{transform:translateY(-2px);border-color:rgba(111,168,255,.55);outline:none}
+  .app .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:rgba(111,168,255,.12);margin-bottom:12px}
+  .app .ic svg{width:23px;height:23px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .app b{display:block;font-family:'Montserrat';font-size:15px;font-weight:800}
+  .app span{display:block;color:var(--muted);font-size:13px;margin-top:4px;line-height:1.4}
+  .app.soon{opacity:.55}
+  .badge{position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;
+    background:rgba(255,255,255,.08);color:var(--muted)}
+  .badge.own{background:rgba(111,168,255,.14);color:var(--gold)}
+  .install{margin-top:28px;font-size:13px;color:var(--muted);background:rgba(255,255,255,.04);border:1px dashed var(--line);
+    border-radius:14px;padding:12px 14px;line-height:1.5}
+  .install b{color:var(--text)}
+  .test{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:#fbbf24;background:rgba(251,191,36,.12);
+    border-radius:99px;padding:3px 8px;vertical-align:middle}
+  .day{margin-top:18px;background:linear-gradient(160deg,rgba(42,109,224,.22),rgba(19,64,143,.12));border:1px solid rgba(111,168,255,.3);
+    border-radius:18px;padding:4px 16px 14px}
+  .day h2{margin:14px 0 8px;color:#fff}
+  .steps{list-style:none;display:grid;gap:10px}
+  .steps li{display:flex;gap:12px;align-items:flex-start}
+  .steps .n{flex:none;width:28px;height:28px;border-radius:50%;background:#2A6DE0;color:#fff;font-family:'Montserrat';font-weight:800;
+    font-size:14px;display:grid;place-items:center;margin-top:1px}
+  .steps b{display:block;font-size:15px}
+  .steps span{display:block;color:var(--muted);font-size:13px;line-height:1.45;margin-top:2px}
+  .steps a{display:inline-block;margin-top:5px;font-size:13px;font-weight:700;color:var(--gold);text-decoration:none}
+  .steps a:hover{text-decoration:underline}
+  [hidden]{display:none!important}
+  @media (max-width:420px){.hello{font-size:21px}.grid{grid-template-columns:1fr 1fr;gap:10px}.app{min-height:128px;padding:14px}
+    .app b{font-size:14px}.app span{font-size:12px}.badge{position:static;display:inline-block;margin-top:8px}}
+  .linkish{background:none;border:0;color:#6FA8FF;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;margin-top:12px;padding:6px 0}
+  /* The desk app (21 October 2026): find any tool by name, what signs you in, the forms in one place. */
+  .find{margin:18px 0 0;position:relative}
+  .find input{width:100%;padding:14px 14px 14px 44px;border-radius:14px;border:1px solid rgba(111,168,255,.35);background:rgba(0,0,0,.25);font-size:16px;outline:none}
+  .find input:focus{border-color:var(--cyan)}
+  .find svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2}
+  .moved{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin:10px 2px 0;line-height:1.5}
+  .moved b{color:var(--text);font-weight:700}
+  .nores{margin:18px 2px 0;color:var(--muted);font-size:14px}
+  .chip{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--muted)}
+  .chip.in{background:rgba(52,211,153,.12);color:#6ee7b7}
+  .chip svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4}
+  .signin-note{font-size:12.5px;color:var(--muted);margin:8px 2px 0;line-height:1.5}
+  .forms{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+  .form-row{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .form-row:hover,.form-row:focus-visible{border-color:rgba(111,168,255,.55);outline:none}
+  .form-row svg{width:20px;height:20px;flex:none;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .form-row b{display:block;font-size:14px}
+  .form-row span{display:block;font-size:12px;color:var(--muted)}
+  .preview{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;color:#00CFEA;background:rgba(0,207,234,.12);border-radius:99px;padding:3px 8px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <form class="lock-card" id="lockForm" autocomplete="on">
+    <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
+    <h1>Ricky Rampersad Branch</h1>
+    <div class="tag">The branch app</div>
+    <p>One sign-in for your Log Book, your clients and your training.</p>
+    <label for="no">Agent number or name</label>
+    <input id="no" name="username" autocomplete="username" placeholder="e.g. A00427, or Pawan" required>
+    <label for="pw">Password</label>
+    <input id="pw" name="password" type="password" autocomplete="current-password" placeholder="Your fact find password" required>
+    <button class="btn gold" type="submit" id="lockBtn">Sign in</button>
+    <div class="err" id="lockErr" role="alert"></div>
+    <div class="hint">Use the same agent number and password as the fact find. No agent number? Type your name and the code the branch gave you. One sign-in opens every tool here.</div>
+    <button type="button" class="linkish" id="useCode">Staff: sign in with your access code instead</button>
+  </form>
+  <form class="lock-card" id="codeForm" autocomplete="off" hidden>
+    <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
+    <h1>Ricky Rampersad Branch</h1>
+    <div class="tag">Staff access code</div>
+    <p>The code the branch gave you for the Delivery Book. It opens the Delivery Book and the Log Book.</p>
+    <label for="code">Access code</label>
+    <input id="code" type="password" autocomplete="off" placeholder="ACCESS CODE" required>
+    <button class="btn gold" type="submit" id="codeBtn">Sign in</button>
+    <div class="err" id="codeErr" role="alert"></div>
+    <button type="button" class="linkish" id="useNo">Sign in with your agent number instead</button>
+  </form>
+</div>
+
+<main class="wrap" id="home" hidden>
+  <div class="top">
+    <div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
+    <div><h1>Branch App</h1><small>Ricky Rampersad Branch</small></div>
+    <div class="sp"></div>
+    <button class="btn ghost" id="signOut">Sign out</button>
+  </div>
+  <div class="hello" id="hello"></div>
+  <div class="who" id="who"></div>
+  <div class="scope" id="scope"></div>
+  <div class="find" role="search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="find" type="search" placeholder="Find a tool: orphans, transmittal, query, petty cash…" aria-label="Find a tool" autocomplete="off">
+  </div>
+  <div class="moved" id="moved"></div>
+  <section class="day" id="day"></section>
+  <div id="sections"></div>
+  <div class="nores" id="nores" hidden></div>
+  <div class="install" id="install">
+    <b>Put it on your phone:</b> open this page in Chrome or Safari, tap the menu or the Share button, then
+    <b>Add to Home Screen</b>. It opens like an app, already signed in.
+  </div>
+</main>
+
+<script src="/rroperations/ops-config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var C = window.RR_OPS, $ = function (id) { return document.getElementById(id); };
+  var IC = {
+    book: '<path d="M5 3h11a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3V3z"/><path d="M5 18a3 3 0 0 1 3-3h11"/><path d="M9 7h6M9 10.5h4"/>',
+    box: '<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
+    people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14a6 6 0 0 1 3.5 6"/>',
+    form: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    cap: '<path d="M2 9l10-5 10 5-10 5-10-5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',
+    play: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/>',
+    flow: '<circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h6a4 4 0 0 1 0 8h-2a4 4 0 0 0 0 8"/>',
+    building: '<path d="M4 21V5l8-3v19"/><path d="M12 21V9l8 3v9"/><path d="M7 8h2M7 12h2M7 16h2M15 14h2M15 17h2"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    tv: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+    fuel: '<path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16"/><path d="M3 21h13"/><path d="M15 9h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3"/>',
+    cash: '<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/>',
+    send: '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/>',
+    chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9 11h6M9 14h4"/>',
+    spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+    list: '<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/>',
+    cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+  };
+
+  /* Every tile, and who sees it. a = agent, l = unit manager, s = staff, m = branch manager.
+     The desk app (Ricky, 21 October 2026: "it is a lot of sites to remember ... this replaces the JotForm app ...
+     everything is interconnected"): every branch tool in one place, grouped by what it is for, the same order for
+     everyone; a search that knows the old names (the orphan app, the digital log, the JotForms); and on each tile
+     how it signs you in. si: none = this app signs you in (/rroperations/sso.js); ff = the fact find's own sign-in;
+     kpi = the tracker's; mtg = the meeting code; jf = a JotForm (no sign-in); open = no sign-in.
+     tags: the words people use for it. until: hidden after that day. */
+  var TILES = [
+    { sec: 'Every day', id: 'logbook', name: 'Log Book', ic: 'book', to: 'alsm', href: '/rroperations/logbook/',
+      tags: 'digital log log book documents papers bag mailbag hand in jotform log',
+      blurb: { a: 'Log your documents and see where each one is', l: 'Your documents, and your team\'s', s: 'Receive, sign for and route the papers', m: 'Every line in the branch' } },
+    { sec: 'Every day', id: 'transmittal', name: 'Transmittal', ic: 'send', to: 'sm', href: '/rroperations/logbook/#trans',
+      tags: 'transmittal transmittals bag mailbag departments head office print',
+      blurb: 'The bag: what goes to each department, printed and signed' },
+    { sec: 'Every day', id: 'board', name: 'My clients board', ic: 'people', to: 'alsm', href: '/orphanmanagement',
+      tags: 'orphan orphans orphan app clients calls households assign transition',
+      blurb: { a: 'The clients named to you, and the calls to log', l: 'Your team\'s clients and their progress', s: 'Your calls and the clients to name', m: 'Urgent, agents, households and the dashboard' } },
+    { sec: 'Every day', id: 'delivery-book', name: 'Delivery Book', ic: 'box', to: 'sm', href: '/rroperations/delivery-book/',
+      tags: 'delivery cheque cheques contract certificate handed over collected jotform delivery',
+      blurb: 'Cheques, contracts and certificates handed over, and the history of every delivery' },
+    { sec: 'Every day', id: 'premium', name: 'Premium Due Desk', ic: 'clock', to: 'sm', href: '/premium-due/',
+      tags: 'premium due letters 45 day 90 day lapse',
+      blurb: 'Before 10 am: check the 45 to 90 day letters' },
+
+    { sec: 'Clients and queries', id: 'factfind', name: 'Fact Find', ic: 'form', to: 'alm', href: 'https://factfind360.com/ffproject', si: 'ff',
+      tags: 'fact find factfind360 ff client needs',
+      blurb: 'Complete a client fact find' },
+    { sec: 'Clients and queries', id: 'querypal', name: 'Query Pal', ic: 'chat', to: 'alsm', href: 'https://querymypolicies.netlify.app', si: 'open',
+      tags: 'query queries query pal querymypolicy client question complaint',
+      blurb: { a: 'Where your clients log a query online: send them the link', l: 'Where clients log a query online', s: 'Where clients log a query; each one lands in your notes to close', m: 'Where clients log a query online' } },
+    { sec: 'Clients and queries', id: 'leads', name: 'Leads', ic: 'spark', to: 'alm', href: 'https://factfind360.com/leads', si: 'ff',
+      tags: 'leads new leads prospects referrals',
+      blurb: 'Your new leads, from the fact find' },
+    { sec: 'Clients and queries', id: 'groups', name: 'Group clients', ic: 'building', to: 'sm', href: '/groupclientmanagement/',
+      tags: 'group groups employer billing monday letters',
+      blurb: 'Your employer groups and the Monday letters' },
+
+    { sec: 'Goals and reports', id: 'goals', name: 'FY27 Flight Plan', ic: 'target', to: 'alm', href: 'https://factfind360.com/goals', si: 'ff',
+      tags: 'goals goal flight plan fy27 targets alignment',
+      blurb: { a: 'Your goals for the year, and where you are against them', l: 'Your team\'s goals and where they stand', m: 'Every agent\'s goals and where they stand' } },
+    { sec: 'Goals and reports', id: 'insights', name: 'Fact Find insights', ic: 'chart', to: 'lm', href: 'https://factfind360.com/insights', si: 'ff',
+      tags: 'insights reports fact find report activity',
+      blurb: 'What the fact finds show, by agent' },
+    { sec: 'Goals and reports', id: 'dash', name: 'Clients dashboard', ic: 'chart', to: 'm', href: '/orphan-transition/dashboard.html',
+      tags: 'dashboard letters responses transition report',
+      blurb: 'The letters: what went out, who answered, what is late' },
+    { sec: 'Goals and reports', id: 'kpi', name: 'KPI reports', ic: 'list', to: 'm', href: '/kpi/', si: 'kpi',
+      tags: 'kpi tracker attendance register reports staff',
+      blurb: 'The tracker: attendance, the staff\'s days and the reports' },
+
+    { sec: 'Walls', id: 'wall', name: 'Wall Intelligence', ic: 'tv', to: 'm', href: '/wall/', si: 'kpi',
+      tags: 'wall walls screen tv office shout outs',
+      blurb: 'The office screen: staff, agents, the feed and the shout-outs' },
+    { sec: 'Walls', id: 'ffwall', name: 'Fact Find wall', ic: 'tv', to: 'alm', href: 'https://factfind360.com/wall', si: 'ff',
+      tags: 'wall fact find wall production goals screen',
+      blurb: 'Fact finds and goals, as the office screen shows them' },
+    { sec: 'Walls', id: 'intelwall', name: 'Intelligence wall', ic: 'tv', to: 'm', href: '/intelwall', si: 'open',
+      tags: 'intelligence wall pending requirements lapses birthdays screen',
+      blurb: 'Pendings, requirements, lapses and birthdays, on a screen' },
+    { sec: 'Walls', id: 'stream', name: 'Stream to the TV', ic: 'tv', to: 'm', href: '/orphan-transition/stream.html',
+      tags: 'stream tv transition campaign screen',
+      blurb: 'The clients campaign on a screen, with no client details' },
+    { sec: 'Walls', id: 'gcmwall', name: 'Group clients wall', ic: 'tv', to: 'm', href: '/groupclientmanagement/wall.html',
+      tags: 'group wall groups screen',
+      blurb: 'The groups on the office screen' },
+
+    { sec: 'Meetings', id: 'meetings', name: 'Branch meetings', ic: 'cal', to: 'alsm', href: '/meetings/', si: 'mtg',
+      tags: 'meeting meetings agenda minutes register friday',
+      blurb: 'The agenda, the register, the actions and the minutes' },
+    { sec: 'Meetings', id: 'strategic', name: 'Strategic meeting', ic: 'cal', to: 'alsm', href: '/strategic-meeting/', until: '2026-10-23',
+      tags: 'strategic meeting joint sales managers',
+      blurb: { a: 'The joint sales managers\' meeting, 22 and 23 October', l: 'Your contributions for 22 and 23 October', s: 'The joint sales managers\' meeting, 22 and 23 October', m: 'The agenda, the record and the contributions' } },
+
+    { sec: 'Learn', id: 'howwework', name: 'How we work', ic: 'flow', to: 'alsm', href: '/workday/', si: 'open',
+      tags: 'how we work workday manual guide new way of work',
+      blurb: 'How each role spends the day' },
+    { sec: 'Learn', id: 'workfilm', name: 'Our workday, the film', ic: 'play', to: 'alsm', href: '/workday/video/', si: 'open',
+      tags: 'film video workday how we work',
+      blurb: 'The branch\'s day, in a few minutes' },
+    { sec: 'Learn', id: 'lbtrain', name: 'Log Book training', ic: 'cap', to: 'alsm', href: '/rroperations/logbook/training.html',
+      tags: 'training test log book manual',
+      blurb: 'The manual and your scored test' },
+    { sec: 'Learn', id: 'lbfilm', name: 'Log Book film', ic: 'play', to: 'alsm', href: { a: '/logbookdemoagent/', l: '/logbookdemoagent/', s: '/logbookdemostaff/', m: '/rroperations/logbook/films.html' }, si: 'open',
+      tags: 'film video log book',
+      blurb: 'How it works, in two minutes' },
+    { sec: 'Learn', id: 'dbfilm', name: 'Delivery Book film', ic: 'play', to: 'sm', href: '/deliverybook-film/', si: 'open',
+      tags: 'film video delivery book',
+      blurb: 'Recording a cheque or contract, in under two minutes' },
+    { sec: 'Learn', id: 'orphtrain', name: 'Clients board test', ic: 'cap', to: 'alsm', href: '/orphan-transition/training.html',
+      tags: 'test training clients board orphan',
+      blurb: 'The workflow and your role\'s test' },
+    { sec: 'Learn', id: 'workflow', name: 'The workflow', ic: 'flow', to: 'alsm', href: { a: '/orphan-transition/workflow.html#agents', l: '/orphan-transition/workflow.html#managers', s: '/orphan-transition/workflow.html#staff', m: '/orphan-transition/workflow.html#managers' }, si: 'open',
+      tags: 'workflow steps orphan clients',
+      blurb: 'What you do on every client, step by step' },
+    { sec: 'Learn', id: 'boardfilm', name: 'Board films', ic: 'play', to: 'alsm', href: '/orphan-transition/board-films.html', si: 'open',
+      tags: 'film video clients board',
+      blurb: 'The clients board, for agents, staff and managers' },
+    { sec: 'Learn', id: 'gcmtrain', name: 'Group clients training', ic: 'cap', to: 'sm', href: '/groupclientmanagement/training.html',
+      tags: 'training test group clients',
+      blurb: 'The manual and test before you send a letter' }
+  ];
+
+  /* The JotForms the old Agent and Staff portals held, each until it moves into the app. The Log Book and the Delivery
+     Book JotForms are not here: the app replaced them. */
+  var JF = 'https://form.jotform.com/';
+  var FORMS = [
+    { name: 'Petty Cash', id: '241483891208057', to: 'sm', tags: 'petty cash float spend', blurb: 'Spends and top-ups' },
+    { name: 'Gas Log', id: '241483999222062', to: 'sm', tags: 'gas fuel receipts mileage', blurb: 'Fuel and receipts' },
+    { name: 'Branch Manager\'s approval', id: '223202266473046', to: 'sm', tags: 'approval approve request bm', blurb: 'Ask for an approval' },
+    { name: 'Visitors log', id: '260423829588064', to: 'sm', tags: 'persons entering visitors log entry', blurb: 'Persons entering the branch' },
+    { name: 'Interview room booking', id: '261425231887056', to: 'alsm', tags: 'interview room booking book room', blurb: 'Book the room' },
+    { name: 'Event register', id: '222973456476064', to: 'sm', tags: 'event register attendance', blurb: 'Who attended an event' },
+    { name: 'Administrative forms', id: '260188888037066', to: 'sm', tags: 'admin administrative forms', blurb: 'Leave and other admin' },
+    { name: 'Weekly Manager Pulse', id: '260093665530052', to: 'lm', tags: 'weekly manager pulse check in', blurb: 'Your week, in a few questions' },
+    { name: 'VUMI contracting', id: '261815112882052', to: 'alm', tags: 'vumi contracting contract agent packet', blurb: 'The agent contracting packet' },
+    { name: 'Salesman renewal', id: '223234996117864', to: 'alm', tags: 'salesman renewal licence license', blurb: 'Renew your licence' },
+    { name: 'Salesman renewal (provisional)', id: '240725330426853', to: 'alm', tags: 'salesman renewal provisional licence license', blurb: 'The provisional renewal' },
+    { name: 'CBTT licence guide', id: '260200980564049', to: 'alm', tags: 'cbtt licence license provisional guide', blurb: 'The provisional licence, step by step' },
+    { name: 'Premium dues status update', id: '252993636637068', to: 'alm', tags: 'premium dues status update', blurb: 'Report on your premium dues' },
+    { name: 'Premium dues quiz', id: '261674603309054', to: 'alm', tags: 'premium dues quiz procedures test', blurb: 'The procedures, and the quiz' },
+    { name: 'Monthly performance review', id: '250374299480868', to: 'alm', tags: 'monthly performance review', blurb: 'Your month, reviewed' },
+    { name: 'Task management guidelines', id: '231723364633050', to: 'alm', tags: 'task management guidelines tasks', blurb: 'How tasks are handled' },
+    { name: 'Group health and life enrolment', id: '211671623815858', to: 'alsm', tags: 'group health life enrolment enrollment', blurb: 'Enrol an employee' },
+    { name: 'Dansteel employee benefits', id: '261587344654062', to: 'alsm', tags: 'dansteel employee benefits eb', blurb: 'Dansteel\'s enrolment' }
+  ];
+
+  /* Old names, and where each one is now: the first thing a returning person looks for. */
+  var MOVED = {
+    a: [['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['Agent Portal forms', 'Forms, below']],
+    l: [['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['Agent Portal forms', 'Forms, below']],
+    s: [['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['JotForm Delivery Book', 'Delivery Book'], ['Staff Portal forms', 'Forms, below']],
+    m: [['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['JotForm Delivery Book', 'Delivery Book'], ['Portal forms', 'Forms, below']]
+  };
+
+  /* Each role's day, in plain words: the first thing on the screen after signing in (18 October 2026: "a proper layout
+     so the agents and staff understand"). Each step opens the tool it names; a step with no tool is done elsewhere. */
+  var GUIDE = {
+    a: { title: 'Your day', steps: [
+      ['Hand in your papers by 12 noon', 'Log each document in the Log Book first. In by 12 catches the 1 pm bag.', 'logbook'],
+      ['Call your clients', 'My clients board lists the clients named to you. Speak to each within two working days and log every call.', 'board'],
+      ['Keep your fact finds current, and your goals in view', 'Every client conversation goes on a fact find. The Flight Plan shows where you are against your goals.', 'factfind'] ] },
+    l: { title: 'Your day', steps: [
+      ['Hand in your own papers by 12 noon', 'Log them in the Log Book. My team there shows your agents\' papers too.', 'logbook'],
+      ['Check your team\'s clients', 'The clients board shows each of your agents\' clients and who has nothing logged.', 'board'],
+      ['Your team against its goals', 'The Flight Plan and the fact find insights show each agent\'s year so far.', 'goals'] ] },
+    s: { title: 'Your day', steps: [
+      ['Check in from your morning e-mail', 'It arrives half an hour before you start. Press Check in: that is the register, and your day is laid out on that page.', ''],
+      ['Receive the papers and make the bag', 'Sign for each document in the Log Book; the Transmittal tab prints the bag for each department.', 'logbook'],
+      ['Record every cheque and contract handed over', 'Each cheque, policy contract or certificate given to a client or an agent goes in the Delivery Book (not the Log Book), and the client is told.', 'delivery-book'],
+      ['Before 10 am: the premium letters', 'Tick each letter you have checked on the Premium Due Desk. Group letters are approved during the week for Monday.', 'premium'] ] },
+    m: { title: 'Your day', steps: [
+      ['Check in and start your day', 'Your 5:00 e-mail: Check in and start my day opens My branch, the same link every day.', ''],
+      ['Start with what is urgent', 'The clients board opens on Urgent: call-backs, pressing answers and the late ones.', 'board'],
+      ['Check the Log Book', 'Late lines, departments that said No, contracts at day 15. The 5 pm digest has the same.', 'logbook'],
+      ['Group letters for Monday', 'Approve or rehearse before the 10 am run.', 'groups'] ] }
+  };
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var store = {
+    get: function () { try { return JSON.parse(localStorage.getItem(C.SESSION_KEY) || 'null'); } catch (e) { return null; } },
+    set: function (s) { try { localStorage.setItem(C.SESSION_KEY, JSON.stringify(s)); } catch (e) {} },
+    del: function () { try { localStorage.removeItem(C.SESSION_KEY); } catch (e) {} }
+  };
+  function api(action, body) {
+    return fetch(C.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action: action }, body || {})) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || 'Something went wrong.'); return j; });
+  }
+  /* The role a session carries, as one letter. */
+  function roleOf(s) {
+    var r = String(s.role || '').trim().toLowerCase();
+    if (r === 'branch manager') return 'm';
+    if (r === 'unit manager') return 'l';
+    if (r === 'agent') return 'a';
+    return 's';
+  }
+  var ROLE_NAME = { a: 'Agent', l: 'Unit Manager', s: 'Staff', m: 'Branch Manager' };
+  var SCOPE = { a: 'You see your own clients and documents', l: 'You see your own work and your team\'s',
+                s: 'You see the branch\'s work, with no figures on the clients board', m: 'You see the whole branch' };
+  function pick(v, r) { return v && typeof v === 'object' ? v[r] : v; }
+
+  var next = (new URLSearchParams(location.search).get('next') || '').replace(/[^a-z-]/g, '');
+
+  var SI = { ff: 'Fact find sign-in', kpi: 'Tracker sign-in', mtg: 'Meeting code', open: 'No sign-in', jf: 'JotForm' };
+  var LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  var TICK = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
+  var SEC_ORDER = ['Every day', 'Clients and queries', 'Goals and reports', 'Walls', 'Meetings', 'Forms', 'Learn'];
+  var ROLE = 'a';
+  function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function mine(t) { return t.to.indexOf(ROLE) >= 0 && !(t.until && today() > t.until); }
+  function chip(t) {
+    return t.si ? '<div class="chip">' + (t.si === 'open' ? '' : LOCK) + esc(SI[t.si]) + '</div>' : '<div class="chip in">' + TICK + 'Signed in</div>';
+  }
+  function words(t) { return (t.name + ' ' + (t.tags || '') + ' ' + (typeof t.blurb === 'string' ? t.blurb : (t.blurb && t.blurb[ROLE]) || '')).toLowerCase(); }
+  function hits(t, q) { if (!q) return true; var w = words(t); return q.split(/\s+/).every(function (x) { return w.indexOf(x) > -1; }); }
+  function tileHtml(t) {
+    var href = pick(t.href, ROLE), ext = /^https?:/.test(href);
+    return '<a class="app" href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener"' : '') + '><div class="ic"><svg viewBox="0 0 24 24">' + IC[t.ic] + '</svg></div><b>' + esc(t.name) +
+      '</b><span>' + esc(pick(t.blurb, ROLE)) + '</span>' + chip(t) + '</a>';
+  }
+  function formHtml(f) {
+    return '<a class="form-row" href="' + JF + f.id + '" target="_blank" rel="noopener"><svg viewBox="0 0 24 24">' + IC.form + '</svg><div><b>' + esc(f.name) +
+      '</b><span>' + esc(f.blurb) + ' · JotForm</span></div></a>';
+  }
+  /* The sections, filtered by what is typed in Find a tool. */
+  function draw(q) {
+    q = String(q || '').trim().toLowerCase();
+    var out = SEC_ORDER.map(function (sec) {
+      if (sec === 'Forms') {
+        var fs = FORMS.filter(function (f) { return f.to.indexOf(ROLE) >= 0 && hits({ name: f.name, tags: f.tags + ' form forms jotform', blurb: f.blurb }, q); });
+        return fs.length ? '<h2>Forms</h2><div class="forms">' + fs.map(formHtml).join('') + '</div>' : '';
+      }
+      var ts = TILES.filter(function (t) { return t.sec === sec && mine(t) && hits(t, q); });
+      return ts.length ? '<h2>' + esc(sec) + '</h2><div class="grid">' + ts.map(tileHtml).join('') + '</div>' : '';
+    }).join('');
+    $('sections').innerHTML = out;
+    $('day').hidden = !!q;
+    $('nores').hidden = !!out;
+    if (!out) $('nores').textContent = 'Nothing by that name. Try a shorter word, such as log, client, query, form or wall.';
+  }
+
+  function show(s, demo) {
+    var r = roleOf(s); ROLE = r;
+    /* Sent here from an app to sign in: go straight back to it. */
+    if (next && !demo) {
+      var back = TILES.filter(function (t) { return t.id === next && t.to.indexOf(r) >= 0; })[0];
+      if (back) { location.replace(pick(back.href, r)); return; }
+    }
+    var first = String(s.name || '').split(' ')[0];
+    first = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+    var h = new Date().getHours();
+    $('hello').textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (first ? ', ' + first : '');
+    $('who').innerHTML = '<b>' + esc(ROLE_NAME[r]) + '</b>' + (s.agentNo ? ' · ' + esc(s.agentNo) : '') +
+      (demo ? '<span class="preview">Preview</span>' : s.mode && s.mode !== 'live' ? '<span class="test">Test mode</span>' : '');
+    $('scope').textContent = SCOPE[r];
+    $('moved').innerHTML = MOVED[r].map(function (m) { return '<span>' + esc(m[0]) + ' → <b>' + esc(m[1]) + '</b></span>'; }).join('');
+    var g = GUIDE[r];
+    $('day').innerHTML = '<h2>' + esc(g.title) + '</h2><ol class="steps">' + g.steps.map(function (st, i) {
+      var t = st[2] ? TILES.filter(function (x) { return x.id === st[2]; })[0] : null;
+      var href = t ? pick(t.href, r) : '';
+      return '<li><span class="n">' + (i + 1) + '</span><div><b>' + esc(st[0]) + '</b><span>' + esc(st[1]) + '</span>' +
+        (href ? '<a href="' + esc(href) + '"' + (/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : '') + '>Open ' + esc(t.name) + ' →</a>' : '') + '</div></li>';
+    }).join('') + '</ol><div class="signin-note">This app signs you in to every tool marked <b>Signed in</b>. A tool with a lock asks for its own sign-in the first time on this phone.</div>';
+    $('find').value = '';
+    draw('');
+    try { if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) $('install').hidden = true; } catch (e) {}
+    $('signOut').hidden = !!demo;
+    $('lock').hidden = true; $('home').hidden = false;
+  }
+  $('find').addEventListener('input', function () { draw(this.value); });
+
+  /* ?demo=a|l|s|m: what each role sees, without signing in (for the film and for showing the layout). Every tool still
+     asks for its own sign-in; nothing is opened by it. */
+  var DEMO = { a: 'Agent', l: 'Unit Manager', s: 'Staff', m: 'Branch Manager' };
+  var demoRole = (new URLSearchParams(location.search).get('demo') || '').toLowerCase();
+  if (DEMO[demoRole]) { show({ name: { a: 'Kevin', l: 'Akaash', s: 'Sasha', m: 'Ricky' }[demoRole], role: DEMO[demoRole] }, true); return; }
+
+  $('lockForm').addEventListener('submit', function (e) {
+    e.preventDefault(); $('lockErr').textContent = ''; $('lockBtn').disabled = true; $('lockBtn').textContent = 'Signing in…';
+    api('lb.login', { agentNo: $('no').value.trim(), code: $('pw').value })
+      .then(function (s) { store.set(s); $('pw').value = ''; show(s); })
+      .catch(function (err) { $('lockErr').textContent = /fetch/i.test(err.message) ? 'Could not reach the branch. Check your connection.' : err.message; })
+      .then(function () { $('lockBtn').disabled = false; $('lockBtn').textContent = 'Sign in'; });
+  });
+  /* Staff with a Delivery Book access code (20 October 2026: cheques were coming in and the agent-number sign-in did
+     not carry the Delivery Book until LogBook.gs is pasted). The code still opens what its Access row allows. */
+  $('useCode').addEventListener('click', function () { $('lockForm').hidden = true; $('codeForm').hidden = false; $('code').focus(); });
+  $('useNo').addEventListener('click', function () { $('codeForm').hidden = true; $('lockForm').hidden = false; $('no').focus(); });
+  $('codeForm').addEventListener('submit', function (e) {
+    e.preventDefault(); $('codeErr').textContent = ''; $('codeBtn').disabled = true; $('codeBtn').textContent = 'Signing in…';
+    api('login', { code: $('code').value.trim() })
+      .then(function (s) { store.set(s); $('code').value = ''; show(s); })
+      .catch(function (err) { $('codeErr').textContent = /fetch/i.test(err.message) ? 'Could not reach the branch. Check your connection.' : err.message; })
+      .then(function () { $('codeBtn').disabled = false; $('codeBtn').textContent = 'Sign in'; });
+  });
+  $('signOut').addEventListener('click', function () {
+    var s = store.get(); if (s && s.token) api('signOut', { token: s.token }).catch(function () {});
+    store.del(); $('home').hidden = true; $('lock').hidden = false; $('no').value = ''; $('pw').value = ''; $('code').value = ''; $('codeForm').hidden = true; $('lockForm').hidden = false;
+  });
+
+  /* A saved sign-in opens at once, then is checked. */
+  var s = store.get();
+  if (s && s.token) {
+    show(s);
+    api('apps', { token: s.token }).then(function (r) { s.mode = r.mode; store.set(s); })
+      .catch(function (err) { if (/signed-out/.test(err.message)) { store.del(); $('home').hidden = true; $('lock').hidden = false; } });
+  }
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

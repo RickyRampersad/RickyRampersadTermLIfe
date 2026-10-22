@@ -43,6 +43,10 @@ const COMPS = ['Courtesy & Interpersonal Skills','Customer Service','Growth','In
 
 // The clock: Wednesday 19 August 2026, seven weeks into the third quarter.
 const env = makeEnv();
+// These cases were written on Sasha's old eight o'clock start (her hours are
+// 7am from 17 October 2026); the fixture keeps it so the arithmetic still reads.
+env.SCHEDULE.sasha = Object.assign({}, env.SCHEDULE.sasha, { hours: '8am – 4pm' });
+
 let NOW = new Date('2026-08-19T11:00:00');
 const realDate = env.Date;
 env.Date = new Proxy(realDate, { construct(t, a) { return a.length ? new realDate(...a) : new realDate(NOW.getTime()); },
@@ -125,10 +129,10 @@ console.log('\nWhat the record says about each competency:\n');
 const comp = n => st.competencies.find(c => c.competency === n);
 const sig = (n, label) => { const x = (comp(n).signals || []).find(s => s.label === label); return x ? String(x.value) + (x.tone ? '/' + x.tone : '') : '(none)'; };
 ok('reliability reads the register: days in, not in, after the start', sig('Reliability', 'Days in') === '2' && sig('Reliability', 'Not in') === '1/amber' && sig('Reliability', 'After your start') === '1/amber', JSON.stringify(comp('Reliability').signals));
-ok('and the blocks against the days in', sig('Reliability', 'Blocks submitted') === '3 of 8/amber');
+ok('and the days logged against the days in', sig('Reliability', 'Days reported') === '2 of 2/green', JSON.stringify(comp('Reliability').signals));
 ok('responsiveness reads untouched, late, no reason', sig('Responsiveness', 'Untouched 7+ days') === '2/amber' && sig('Responsiveness', 'Late') === '1/amber' && sig('Responsiveness', 'Late with no reason') === '1/amber', JSON.stringify(comp('Responsiveness').signals));
 ok('and what closed', sig('Responsiveness', 'Closed this quarter') === '48');
-ok('quality reads landed and the billing flags', sig('Quality', 'Blocks landed') === '67%/amber' && sig('Quality', 'Billing flags') === '0/green', JSON.stringify(comp('Quality').signals));
+ok('quality reads landed and the billing flags', sig('Quality', 'Reports landed') === '67%/amber' && sig('Quality', 'Billing flags') === '0/green', JSON.stringify(comp('Quality').signals));
 ok('customer service reads value added and servicing', sig('Customer Service', 'Value-added lines') === '1' && sig('Customer Service', 'Servicing closed') === '3', JSON.stringify(comp('Customer Service').signals));
 ok('with the value-added line itself', comp('Customer Service').lines.length === 1 && /reinstatement forms/.test(comp('Customer Service').lines[0].text));
 ok('and both moments, newest first', comp('Customer Service').moments.length === 2 && comp('Customer Service').moments[0].by === 'sasha' && comp('Customer Service').moments[1].by === 'kamla', JSON.stringify(comp('Customer Service').moments));

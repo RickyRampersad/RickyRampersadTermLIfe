@@ -85,7 +85,7 @@ async function session(b, who, first, mail, sent, ended) {
   console.log('\nThe morning sweep, on the plan, in the mandated order:\n');
   let s = await session(b, P, true, {}, sent);
   let t = await s.page.locator('body').innerText();
-  ok('it lands on the plan', /Set the day before it starts/.test(t), t.slice(0, 80));
+  ok('it lands on the plan', /Plan the day when your e-mail comes in/.test(t), t.slice(0, 80));
   ok('the sweep is there, in this order', /Morning mail — in this order/i.test(t), (t.match(/Morning mail[^\n]*/) || [''])[0]);
   const order = ['1. Branch Manager', '2. Assistant Branch Manager', '3. Unit Managers', '4. Executive Agents', '5. Agents'];
   ok('Branch Manager, ABM, Unit Managers, Executive Agents, Agents', order.every((o, i) => t.indexOf(o) > -1 && (i === 0 || t.indexOf(o) > t.indexOf(order[i - 1]))));

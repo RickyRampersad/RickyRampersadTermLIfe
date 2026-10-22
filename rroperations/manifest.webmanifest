@@ -1,0 +1,13 @@
+{
+  "name": "Ricky Rampersad Branch",
+  "short_name": "RR Branch",
+  "description": "One sign-in for the Log Book, the Delivery Book, your clients and your training.",
+  "start_url": "/rroperations/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070F26",
+  "theme_color": "#070F26",
+  "icons": [
+    { "src": "/orphan-transition/board-mark.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

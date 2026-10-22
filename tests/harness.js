@@ -6,7 +6,9 @@ function makeEnv(opts = {}) {
   const cacheStub = { get: k => (k in cacheMap ? cacheMap[k] : null),
                       put: (k, v) => { cacheMap[k] = String(v); },
                       remove: k => { delete cacheMap[k]; },
-                      removeAll: ks => ks.forEach(k => delete cacheMap[k]) };
+                      removeAll: ks => ks.forEach(k => delete cacheMap[k]),
+                      putAll: o => Object.keys(o).forEach(k => { cacheMap[k] = String(o[k]); }),
+                      getAll: ks => { const r = {}; ks.forEach(k => { if (k in cacheMap) r[k] = cacheMap[k]; }); return r; } };
   const calls = { getValues: 0, getValue: 0, setValue: 0, setValues: 0, getLastRow: 0,
                   getLastColumn: 0, appendRow: 0, deleteRow: 0, mail: 0 };
   const sheets = {};
@@ -105,7 +107,10 @@ function makeEnv(opts = {}) {
       formatDate: (d, tz, f) => {
         const p = n => String(n).padStart(2, '0');
         if (f === 'HH:mm') return p(d.getHours()) + ':' + p(d.getMinutes());
+        if (f === 'h a') { const h = d.getHours(); return ((h % 12) || 12) + ' ' + (h < 12 ? 'AM' : 'PM'); }
         if (f === 'yyyy-MM-dd') return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        // The day of the week, 1 Monday .. 7 Sunday, as housekeepingTick_ reads it.
+        if (f === 'u') return String(d.getDay() || 7);
         // Every date a person reads is built in UTC by prettyDate_/shortDate_,
         // so an e-mail's own subject line stayed an ISO timestamp in tests and
         // nothing could assert on it.
@@ -115,6 +120,7 @@ function makeEnv(opts = {}) {
         if (f === 'EEEE d MMMM yyyy') return DAY[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
         return d.toISOString();
       },
+      parseDate: (s, tz, f) => new Date(String(s).replace(' ', 'T') + (String(s).length <= 16 ? ':00' : '')),
       getUuid: () => 'uuid-' + Math.random().toString(36).slice(2),
       base64Encode: s => Buffer.from(String(s)).toString('base64'),
       base64EncodeWebSafe: b => Buffer.from(Array.isArray(b) ? b : String(b))
@@ -166,7 +172,10 @@ function makeEnv(opts = {}) {
   };
   g.globalThis = g;
   vm.createContext(g);
-  new vm.Script(fs.readFileSync(process.env.GS_PATH || (__dirname + '/../apps-script/KPI.gs'), 'utf8'), { filename: 'KPI.gs' }).runInContext(g);
+  // GS_PATH may list several files, comma-separated, for a project of more
+  // than one script (the RR Operations project is DeliveryBook.gs and LogBook.gs).
+  String(process.env.GS_PATH || (__dirname + '/../apps-script/KPI.gs')).split(',').forEach(f =>
+    new vm.Script(fs.readFileSync(f, 'utf8'), { filename: require('path').basename(f) }).runInContext(g));
   return g;
 }
 /* THE LIVE ORG'S OWN REFUSAL, kept so a test cannot pass a query the org
