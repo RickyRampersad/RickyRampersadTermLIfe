@@ -74,9 +74,20 @@ manager chose "the films and the board pages" over the films alone or the
 whole site. So `assign.html` (the board), `board-films.html`, `wall.html`,
 `dashboard.html`, `stream.html` and `responses.html` carry the blue shield
 (their `.mark` tile is `#13408F` behind it, and their favicon is the same
-file); never `gcm-mark.png`, never a redrawn shape. Every other page and
-every letter keeps the gold shield, and the hosted `logo-mark.png` is
-untouched: the letters already sent load it.
+file); never `gcm-mark.png`, never a redrawn shape. **The agent introduction
+joined them on 16 October 2026** ("change the color i have said i do not like
+the yello inside the logo nor the black!!!!!", on seeing the gold shield on
+the near-black masthead of the Felicia sample): the "Meet your agent" e-mail
+(`tIntroBuild_`, `tIntroTeamHtml_`, colours in `T_INTRO_LOOK`), the client's
+page `your-policy/agent.html` and the sample carry the blue shield, and no
+gold or near-black anywhere. The same evening the saturated blue masthead was
+turned down too ("improve on the color as this is hurting the eyes"): a pale
+`#F2F6FD` header, white panels on `#F4F6FA`, deep blue type `#14284B` and one
+action blue `#2D5BB9`, with the moving banner `orphan-transition/intro-motion.gif`
+for the impact (see the introduction below). Anything new built for the board
+or sent from it takes the same blues. Every other page and every letter
+keeps the gold shield, and the hosted `logo-mark.png` is untouched: the
+letters already sent load it.
 
 The letter's logo is the hosted copy at
 `https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
@@ -1812,7 +1823,17 @@ voice under the new timing and the caption gives it away.
   internal footer) and, when the box is left ticked, the client the
   introduction the receipt promised ("Meet your agent: Name", through
   `clientMail_`, so from support@ when the Entra properties exist), once per
-  client per agent, marked `[intro Name]`. The roster is the Agent Skill
+  client per agent, marked `[intro Name]`. **Since 16 October 2026 the brief is a first look, not the file** ("we can just
+  give a sneak peek, but he is required to log into the portal"): per client the name, age, town, the former book,
+  what they do (occupation and employer) and how they pay, since when they have been with Guardian, how many policies
+  (in force, lapsed, applications), the household and whether it was named with them, up to four lines of what the
+  records show (`tInsightsFor_`: who the policies pay, cover ending, a premium due, a record to check; never the cover
+  against income), how we have served them (the letter's service record, `tSvcOf_`), the one thing they told us that
+  matters most, an open call-back, and a link that opens that client on the board (`/orphanmanagement#t=…`); never a
+  phone number, address, e-mail, words or money figure of the client. Then **Your
+  TT$200** (`tBriefClaims_`, from the Retention Payments tab, their own claims only): owed (with the Retention unit),
+  found and held, to be paid on the commission run, paid, and still to earn (every client named to them with no claim,
+  TT$200 each). `brief16/brief-test.js` in the scratchpad covers it (39 checks). The roster is the Agent Skill
   Bank: name, e-mail, Areas covered, Active, Portal code, and a Phone column
   if one is added, which the introduction then carries; the sheet has no
   client phone numbers unless a Phone column is added to Transition Send
@@ -1822,6 +1843,152 @@ voice under the new timing and the caption gives it away.
   (Playwright, mocked endpoint) in the session scratchpad cover it. A paste
   of Service.gs blanks `TEAM_CODE`: put the branch code back before the New
   version, or every screen locks out.
+- **The introduction shows who the agent is, and the client picks when and how they call** (16 October 2026: "write a
+  very nice bio on each of the agents. So different ones would template differently to show the caliber of the agents
+  … the backing of the entire branch … the client checks when can the agent call and the preferred method … it directly
+  goes to the agent and copy the branch manager and the sales support team, as well as the agent's manager", then
+  "don't depend on the agent skill bank … Depend on pulling social media, LinkedIn, Facebook, anything at all to build a
+  profile, and let's help the agent build their profiles").
+  - **The Agent Profiles tab** (Name, Kind, Shown as, Title, Since, Headline, Bio, Ask me about, Before Guardian,
+    Designations, Awards, Education, Phone, E-mail, Photo, Found online, To confirm, Agent approved, Branch approved,
+    Updated, Updated by) holds one row a person: every agent, the branch manager (`manager`), the support lead (`lead`)
+    and sales support (`support`). The drafts were written in the scratchpad (`profiles17/build-profiles.py`) from the
+    agent records in Salesforce, the Central Bank's registers of sales representatives and agents, TTAIFA's award pages
+    and membership listings, Guardian's own pages and the person's own pages, and imported once
+    (`Agent-Profiles-import.xlsx`). A draft bio states only what a source confirms with high confidence; everything
+    else is a question under To confirm with the sentence it would become. No pronouns: nobody's were given. **No draft
+    and no source about anyone goes in this repository**, which is public; the tab is private.
+  - **Two approvals, both on the last words.** A person opens "Your profile" on the board (agents, unit managers and
+    staff; matched by `tProfSame_`, so "SASHA LALLA" finds "Sasha Lalla-Jagassar"), edits, presses "See it as a client
+    does" (the real e-mail with a made-up client, `profile=preview`) and "This is me". The branch manager (or the branch
+    code) has "Profiles": every row with where it stands, the sources and the questions, and "Approve for clients" or
+    "Take it off clients". An edit by the person takes the branch's approval away and an edit by the branch takes the
+    person's, so a client never reads words their person has not read last. The branch code's "This is me" is the
+    branch manager's own. A client reads a profile's words only when both are on (`state` `live`); until then the
+    introduction carries the card with the Salesforce dates and no words. Everything goes through `action=board&profile=`
+    (`tProfileApi_`), so Service.gs needs no paste.
+  - **The dates are never typed.** `tSfAgentFacts_` reads every agent record with a hire date (Date Hired, License Date
+    Life and General, mobile, e-mail; kept six hours) and `tProfFacts_` gives the years with Guardian, the year licensed
+    and whether both licences are held. A general licence dated before 1950 is a placeholder and never shown. The number
+    on the card is the profile's, else the Salesforce mobile; the e-mail is the profile's, else a myguardiangroup.com
+    address on Salesforce, never another (one record holds a personal Gmail, one an outside agency's address).
+  - **The template follows the years with Guardian** (`T_PROF_TIER`): veteran 20 and more (the years lead the
+    headline: "27 years of looking after families like yours"), seasoned 10 to 19, established 3 to 9 ("your agent
+    from today", licensed since), new under 3 ("your new agent, with our whole branch behind them", and the branch team
+    comes before the picker). On 16 October: 2 veteran, 5 seasoned, 8 established, 3 new.
+  - **The e-mail** (`tIntroBuild_`, sent by `tIntroMail_` through `clientMail_` as before), calm since the evening of
+    16 October (`T_INTRO_LOOK`, see the mark section). In order:
+    - the moving banner, `orphan-transition/intro-motion.gif` (you, our branch, your agent; 1200×300, about 5 s,
+      under 240 KB, made by `motion/make.py` in the scratchpad). Its first frame is the whole picture, because
+      Outlook on Windows shows only that frame, and Gmail strips CSS animation;
+    - a pale header: the shield, the tier's eyebrow and line, "<first name>, meet <agent>.", the agent's photo or
+      initials, "Your agent · Sales representative of Guardian Life" (what the register lists), number, e-mail and
+      three figures;
+    - **You told us** (below), then **Our record with you**: "We have looked after you since <first year>." and up to
+      three figures off the send row's service record (requests and documents handled, premium reminders, the last
+      birthday note; never the reminders on letters I or G);
+    - the picker and "When <agent> calls:", then About (headline, bio, their own words, what they can help with
+      two-up, the promise, and a short table: works with, covers, speaks, awards, before Guardian, outside work,
+      registered with the link). A new agent's template puts About and the support team before the picker;
+    - **the support team only** (`tIntroTeamHtml_`, 16 October: "branch manager and support staff pooled too much
+      for the client they need to just see the support"): their faces in a row, first names, "<names> handle every
+      request with <agent> …", one figure for the team's client requests in the past year, and how to reach them.
+      The branch manager is no longer on the client's e-mail; he is still copied on it;
+    - Query Pal (`T_INTRO.QUERY`, www.querymypolicy.com, the branch's 24-hour query service), the branch and
+      Guardian Direct numbers, and the sign-off.
+
+    The hold on introductions (`HOLD_INTROS`) still stands: nothing goes to a client until the branch releases
+    client e-mail. `transitionIntroTest` (the editor's Run button) sends the branch manager one of each template from
+    the real profiles, drafts included and marked TEST.
+  - **The client's choice.** Every tap opens `/your-policy/agent.html` with the choice made; the client confirms it with
+    one press (a mail scanner opening every link never chooses, and a scripted browser sends nothing). It files one
+    Client Responses row, Response `informed`, Page `/your-policy/agent?q=when_<part>&h=<way>`, Referrer `intro <agent
+    key>: <the day and time>` (`tPickRow_`, `tPickWords_`), and offers a calendar entry. The five-minute run
+    (`tIntroPicks_`) sends the agent one internal e-mail per client with the newest choice and a link to the client on
+    the board (never the client's number), copied to `TRANSITION.CC` and the agent's unit manager (the Unit column of
+    the Agent Skill Bank), posts it on the client's open Salesforce tasks, and marks the rows `[pick sent d MMM → Name]`.
+    No receipt goes for it (`tReceipts_` skips it): the agent's call is the answer. The card shows "Asked for a call".
+  - **Photos are the person's own, never found by a face.** A Photo is a hosted https link (the e-mail cannot carry a
+    picture otherwise), shown in a circle on the card and beside a team line. The first three (16 October) came from
+    screenshots the branch manager sent of pictures that name the person themselves: an agent's own Instagram profile,
+    a Guardian "Advisor of the Week" card, the branch's own Facebook post. A picture that names nobody is never matched
+    to a person by their face: the branch says who it is. Each person approves their photo with the rest of the profile.
+    Four more came the same evening, in screenshots the branch manager sent and named one by one. One (sunglasses,
+    in a car) is held for a head-and-shoulders picture, and one, cut from a group photo, asks for a sharper one. Kamla's
+    Salesforce user record carries a profile photo; Sasha's and Azariah's do not. Until a photo is in, the team line
+    shows the person's initials.
+  - **Skillsets, from what clients look for** (16 October 2026, evening: "add more to this ok more skillsets etc do
+    industry research as to what clients look for and build in"). Seven columns on Agent Profiles:
+    - *Works with* (the clients an agent knows best, from `T_PROF_WORKS` or their own words);
+    - *Areas* and *Languages*;
+    - *Promise* (one thing a client can hold them to, in their own words, printed in a navy band);
+    - *Own words* (why they do this work, printed as a quote under their name);
+    - *Outside work*;
+    - *Registered as* (what the Central Bank's register lists them as; the branch alone sets it, and it prints as a
+      "Registered" badge with a link to the register when `T_INTRO.REGISTER` holds one).
+
+    "Ask me about" now prints as "What <first name> can help you with", each topic with one line in plain words from
+    `T_PROF_SKILLS` (`tProfSkills_`, up to six); Motor and home shows only with a general licence on the agent record.
+    The board's form offers the topics and the client types as taps. Every introduction now says what happens on the
+    first call (a hello, what the client holds in plain words, anything to look at noted; no charge, nothing changes
+    unless they ask) and that a review follows every six months and in the birthday month.
+  - **The team's own record** (`tTeamRecord_`): the client requests each of them closed in Salesforce in the past year.
+    The client reads the team's total in one sentence; the per-person counts stay on the sample page for the branch.
+    Logged e-mails, the birthday flow and internal work (training, staffing, operations) never count; under 20 for a
+    person, their count is left out.
+  - **"You told us": every answer replied to by a named person, on the board** (16 October 2026: "the ai is supposed
+    to have read the questions … to show we are listening", then "the ones that answered the questions they are to see
+    who answered it as felicia and team need to answer this on the portal and reflected in the email template … a very
+    interactive email").
+    - **Where the answers are written.** A board card for a client who told us something has "What they told us ·
+      answer each one" (`answerPanel` in `assign.html`, shown when the backend says `answersApi`): each answer
+      (`tClientItems_`: the letter's questions by their code, a tap as `tap_<type>`, their own words as `words`, most
+      pressing first) with a box, **Draft with AI** and **Save answer**. Whoever may open the client may answer (`tOpenClient_`):
+      the agent named on them, Client Support, the branch, and a unit manager on his team's clients; another agent
+      may not. Every route is
+      `action=board&answer=save|draft|preview|send` (`tAnswerApi_`), so Service.gs needs no paste.
+    - **The Answer Replies tab** (When, Token, Client, Key, Question, Answer, Reply, By, Role, Drafted by AI), made the
+      first time: one row a save, the newest per client and answer counts (`tRepliesAll_`), an empty reply takes it
+      back. A reply starting with `=`, `+`, `-` or `@` is written as text. **Role** is the writer's as the client reads
+      it (`tReplyRole_`): Your agent, Client Support, Branch Manager, Unit Manager.
+    - **Draft with AI** (`T_REPLY.SYSTEM`, `gcmClaude_`, the `ANTHROPIC_API_KEY` Script property) writes a first answer
+      in the writer's voice from the question and the client's answer, their words fenced as data. `tHeardOk_` checks it
+      (length, a link, an amount or long number, a refund, guarantee or promise, a greeting or sign-off, the former
+      agent's name from the Agent column); a draft that fails is not offered. Nothing is saved until the person edits
+      it and presses Save, and the row says it began as a draft.
+    - **In the e-mail** (`tIntroHeard_`) each answer shows, under the client's own words, the reply with the writer's
+      first name, role and initials, and two taps: "✓ That helps" and "Talk to me about this" (`k=<key>&v=ok|call` on
+      `your-policy/agent.html`). Only when nobody has replied to anything does one short line stand in: the AI's,
+      written from the answers under `T_HEARD.SYSTEM` and checked by `tHeardOk_` (kept six hours, so the preview and
+      the send read the same words), else the plain line ("Thank you for telling us. <agent> has your answers and will
+      start your first call with what matters most to you."). A test with no answers shows `T_HEARD_SAMPLE` (one reply
+      by the agent, one by the first support person) and says so.
+    - **The introduction waits for them** (`T_REPLY.WAIT`, true). Naming an agent no longer sends it: the naming
+      answer counts it as `introDue`, the board marks the card, and the agent (or Client Support, or the branch) answers,
+      presses **Preview the introduction** (the e-mail exactly as the client reads it, `answer=preview`) and **Send the
+      introduction** twice (`answer=send`). Send keeps every rule of the naming: only a client who answered, never twice
+      to one agent, never a held or bounced row, never while client e-mail is held. `WAIT` false brings back the send
+      at the naming.
+    - **The client's tap back.** "That helps" sends at once on a press; "Talk to me about this" sends on a press and
+      keeps the time picker under it. Each files `informed`, `/your-policy/agent?q=reply_<ok|call>_<key>`, Referrer
+      `intro <agent key>: reply <v>`; no receipt goes for it (`tPickRow_`). `tIntroPicks_` adds it to the agent's
+      five-minute e-mail with his own reply beside it ("<client> wants a call about your answer" when no time came with
+      it), copies `TRANSITION.CC` and the unit manager as before, and puts it on the Salesforce task. The card shows
+      "Client tapped: talk to me about this" under that answer (`c.replyTaps`).
+  - **The e-mail is short on purpose**: four topics at most (`T_PROF.SKILLS_MAIL`), the first call in two sentences,
+    the support team in one paragraph, one line of help. Under 820 words with every part filled in and two answers
+    replied to.
+  - **The sample**: Felicia's introduction, drawn by the script from her draft, is the example for the whole branch.
+    It is published as a private Artifact page the branch manager shares, never on the website: the drafts are not
+    in this repository. The page shows the e-mail on a computer and in a phone frame side by side, a moving mock of
+    the board where Felicia types her answer and it lands in the client's e-mail beside Sasha's, the four steps, a note
+    on every part, the research and the team. Jordan, the client, is made up, and so are his answers and record; three
+    fields carry sample wording, marked, until Felicia writes her own. Built by `sample17/build-email.js`, `pins.py` and
+    `assemble.py` in the scratchpad.
+  - `profiles17/prof-test.js` in the scratchpad covers it (194 checks, the AI mocked: Node on the 16 October tabs with
+    the drafts and a mocked Salesforce, then Playwright on the board as an agent and the branch, the answer panel from
+    save to send, a phone, and the client's page with its reply taps). The demo backend has no network, so the test
+    puts the site's `receipt.json` and `receipt.html` in the cache; without them no board card carries an answer.
 - **After a call, one press on the board marks the file and can write to the
   client in the manager's name.** Asked for on 28 September 2026 ("a button
   where I click so I can update the notes and let them know that I will
@@ -2048,7 +2215,18 @@ voice under the new timing and the caption gives it away.
   connector pulls). The morning build rewrites it straight from Salesforce
   (`tProfileRefresh_`) once this project has the four `SF_*` Script
   properties that `ServiceSalesforce.gs` uses; until then the imported tab
-  stands, and the build's message says which. The refresh asks by policy
+  stands, and the build's message says which. **It was never written live until 16 October
+  2026**, for two reasons. `svcSfQuery_` puts the query in the web address,
+  and URL Fetch refuses one over 2 KB; two hundred policy numbers make
+  about 3 KB. And the build gave the profile only what was left of its
+  five minutes after the workbook. Every query in Transition.gs now goes
+  through `tSfQuery_`: a long one is sent in the body of a composite
+  request (`tSfComposite_`, which also reads every page), a short one as
+  before. When the build has used `T_PROFILE.INLINE_MS`, it marks the
+  profile due (`profile_due`). The five-minute run then refreshes it in a
+  run of its own, after releasing the lock (`tProfileDue_`).
+  `transitionRefreshClientProfile`, on the editor's Run button, does it at
+  once. `sfq16/sfq-test.js` in the scratchpad covers it (13 checks). The refresh asks by policy
   number, never by client number: clients opened from about mid-2026
   (numbers from about 0000745000) carry no `Client_Number__c` there.
   **The name and date of birth on a policy record are the life insured's,
@@ -2387,6 +2565,106 @@ voice under the new timing and the caption gives it away.
   `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
   `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
   cover it.
+- **What a naming writes in Salesforce, every time** (22 October 2026, the branch manager: "when you assign the agent
+  you need to update the campaign to Orphan and the date assigned as well. Create a task on the Household assigning to
+  the agent Support"):
+  - **Every policy record of the client** (their Contact's records, and a policy they own on someone else's life):
+    Assigned Agent (the agent's Contact), Date Assigned to Agent (the day), and Campaign `Orphan`, over whatever
+    Campaign held before ("Disbursement" included).
+  - **One task on the household Account** ("<SURNAME>, <FIRST> HH", the Contact's AccountId), WhoId the client:
+    subject `Orphan Project: follow up with <agent> re <client> (assigned <d Mon yyyy>)`, owned by the agent's support
+    person, due the day of the naming, High, Call. Description: who assigned the agent and when, the client and
+    household, every policy with its status, the former agent, what the client asked, then "<support>: follow up with
+    <agent> on contact made with the client and the outcome. Log <agent>'s feedback in the task trail. Keep this task
+    open until the service questionnaire is signed." One task a household and agent: an open one with that subject on
+    the Account is found and none is added.
+  - **Both are automatic** on every naming: the board's (`transitionAssign_`), Match's and staff's, and a naming made in
+    Salesforce (`tSfBriefs_`, after the brief). `tSfAssignWrite_` reads the client's policies by number and then every
+    record on their own Contact (`tSameClient_`, so a daughter's own policy on her own Contact is never touched), and
+    `tSfHouseholdTasks_` opens the task. The board's answer says how many records and tasks (`sf.policies`, `hhTask`).
+  - **Who supports whom** (`T_SUPPORT`, `tSupportFor_`): a **Support** column on the Agent Skill Bank wins, when one is
+    added; else `T_SUPPORT.MAP` (Liz for Neil, Felicia, Rajiv and Randolph; Sasha for Varun, Fawwaz and Malcolm;
+    Azariah for Premchand, Darryl, Meera, Narissa and Daniel, from who has owned each agent's tasks); else whichever of
+    Sasha, Azariah and Liz has the fewest open orphan tasks. The owner is that person's Salesforce user, else the
+    branch manager's. `hh22/test.js` (21 checks) and `hh22/sf-test.js` (5) in the scratchpad cover it.
+- **Every orphan on the branch's board, the open tasks, a comment on one chosen task, and an AI guide** (22 October 2026:
+  "on my log in i am not seeing all the orphans and must be able to search and must be able to see the tasks opened and
+  build in intelligence, agent when logged in must be able to post on a chatter on the task … and use our AI for
+  intelligent guided responses").
+  - **Every client of the books, by default, for the branch.** The board used to ask for the clients who had not answered
+    only when "include clients who have not answered yet" was ticked, and it never showed a client whose letter was held
+    (a check, no e-mail, bounced, the manager's hold): 239 of 2,473 on 22 October. The page now asks with `all=1` unless
+    that device turned it off (`rrb-assign-all`), and `tBoard_` adds the held and unsent clients as states `held` and
+    `unsent` (never one `T_NOT_BOOK` leaves out), each with its policy numbers (`pn`). `all` counts for the branch only:
+    staff, unit managers and agents get their own lists whatever the page asks. About 3.4 MB for the branch.
+  - **The search** (`hay`) reaches the name, client number, every policy number, the e-mail, the phone numbers (as digits
+    too), town, address, occupation, the former agent ("was with …"), the agent named, the letter and the household.
+  - **Tasks** (a tab under Act on, for every role; `tTasksView_` through `action=board&tasks=1`, so Service.gs needs no
+    paste): every open Salesforce task whose subject starts "Orphan", matched to its client by the policy record, or by the
+    contact for a household task on the Account (`tPolTokens_`), with who holds it, its age in working days, its due date,
+    the last post and its writer (a board post is read by the name at its head), and whether the agent named on the client
+    has written on it. Tiles for overdue, nothing posted, quiet two working days, agent named with no word, not matched; a
+    row per person holding them. The branch and staff see every task, a unit manager his team's clients and tasks, an agent
+    their own. Read once every five minutes (`T_TASKS`). "Open and post" opens the client (`#t=…&k=<task id>`) with the
+    comment set to that task.
+  - **A comment on one task.** Each open task on a client's details has "Post on this task", and the comment box says where
+    it goes; `transitionComment_` takes `task` and posts only there, and only if it is one of that client's open tasks.
+    Without one it goes to the newest three, as before. An agent named in Salesforce can open the client and post.
+  - **Guide me** (`tGuideApi_`, `action=board&guide=1&token=…`): on a client's details, the Claude API (`GCM.AI_MODEL`,
+    structured output, effort low, `ANTHROPIC_API_KEY`) reads what the board holds on them (where they stand, what they
+    told us, the call-back, the file notes, the history, the policies and what the records show, the open tasks and their
+    last posts) and writes where things stand, a priority, what to do next, what to say first, what to ask, what to be
+    careful of, and a note for the task with [brackets] to fill. The client is "[first name]" to the API and the page puts
+    the name back; the former agent is "the former agent"; numbers, e-mails and links are taken out both ways. Staff's
+    facts carry no figure, and the rules say Client Support never advises. Nothing is saved or sent: "Use as my comment"
+    puts the note in the box. Kept six hours for the same facts.
+  - `hh22/tasks-test.js` (38, Node) and `hh22/page-test.js` (37, Playwright, a phone included) in the scratchpad cover it,
+    Salesforce and the API mocked.
+- **Follow-ups: the clients chasing us, and who on the team answers** (22 October 2026: "run a report on customers who
+  are following up and analyze the staff who are not responding … and have my log in to my dashboard filled with all
+  that was asked for"). A tab second on the branch's board, after Urgent (`tFollowupsView_`, `action=board&followups=1`,
+  so Service.gs needs no paste; the branch alone; kept ten minutes, `T_FU`).
+  - **The clients**: everyone who came back on a later day than their first answer (Client Responses, campaign tokens,
+    never a Test row, a detail taken on a call, a naming or an answer that looks automated). Each is *chasing* (their
+    words ask why nobody called, for an update or a person, `T_FU.CHASE`, or they asked again for the same thing),
+    *wrote with details*, *declined* (`T_FU.DECLINE`) or *came back with more answers*. Then whether anyone answered after
+    their last message: a post by staff or an agent on their task, a call marked on the board, or the task closed; with
+    the working days it took, or the working days they have been waiting.
+  - **The team**: every person holding orphan tasks. The branch's asks are the manager's posts on their tasks (follow-ups,
+    moves, reopenings, notes, his own posts), addressed by the name in the post, else to the owner; never a hold, a
+    carry-on or a board naming note. An answer is any post or comment by that person after the ask (a board post is read
+    by the name at its head; the tracker's "not done" lines by the person they name, "not touched" never an answer).
+    Per person: asks, answered, the same working day, the median wait, the asks unanswered now on open tasks with the
+    working days since their own last entry or since the task became theirs (a move counts from the move), the days of
+    the last ten working days they did anything, open, overdue, untouched, and the tasks closed (with the standard "no
+    questions or concerns" text, with nothing written that day) and reopened by the branch.
+  - **Waiting on the branch**: staff questions to the manager ("who to assign …", "awaiting new agent") on a client nobody
+    is named on yet.
+  - On 22 October: 87 clients came back (21 chasing, 2 with no answer since); 1,036 asks in 21 days, 50% answered, 12%
+    the same day; 96 unanswered now; 53 clients waiting on the branch to name an agent. `fu22/run.js` (the view on the
+    real sheet and Salesforce as pulled that afternoon) and `fu22/page.js` (13, Playwright, a phone included) in the
+    scratchpad cover it; `fu22/build-xlsx.py` writes the same view as a workbook.
+- **A naming in Salesforce now briefs the agent, as a naming on the board does** (22 October 2026: "can a template be
+  created that will trigger a notification to Neil once the Assignment is done? … log in and place his comments in the
+  portal … and give a lot of intelligence"). Until then Salesforce sent nothing (no flow on the policy record reads
+  Assigned Agent, and no e-mail went to any agent after a Salesforce naming), and the sync only copied the name to the
+  board.
+  - **When:** `tSfBriefs_` runs after each `tHaSync_` in the five-minute run (so every 15 minutes). It takes the
+    Household Assignments rows with Source `Salesforce` dated on or after `T_SFBRIEF.FROM` (22 Oct), groups them by agent
+    and sends each agent one `tBriefMail_` (from the script owner's account, internal, nothing to a client, so no hold
+    applies).
+  - **Once:** per client per agent, recorded on the **Agent Briefs** tab (When, Token, Client, Agent, Named on, Source,
+    Status), made the first time. A board naming writes it too, and a board naming from before the tab is known by its
+    Assignment Log row, so a naming the board made and wrote to Salesforce is never briefed twice. A reassignment in
+    Salesforce briefs the new agent. An agent not active on the Agent Skill Bank is recorded `held: …` and not sent;
+    delete that row once the Skill Bank is right and the next run sends it. A send that fails records nothing.
+  - **The brief** (every brief, the board's too): "The branch named you as their agent in Salesforce on <date>" for a
+    Salesforce naming; a numbered **What to do** (sign in, read the file, call within two working days, Log call the same
+    day, Save comment under History · tasks · comments; both go onto the Salesforce task); up to six lines of what the
+    records show (`T_BRIEF_INS`, four until then). Still no client phone, address, e-mail, words or money figure.
+  - `transitionSfBriefTest` (editor Run) sends the branch manager the brief for the newest Salesforce naming, marked
+    TEST, recording nothing; `transitionSfBriefsNow` syncs and sends at once. `sfbrief22/test.js` in the scratchpad
+    covers it (30 checks, the 21 Oct tabs), with `brief16/brief-test.js` (39) still passing.
 - **A questionnaire after the naming earns the agent TT$200, and the claim
   is chased until Salesforce has the payment date** (3 October 2026; ping
   `campaign: 7`). The manager asked: "when a questionnaire is recieved the
@@ -2446,6 +2724,41 @@ voice under the new timing and the caption gives it away.
   the e-mails still go, and the tab says to enter the dates by hand.
   `claims/claims-harness.js` (68 checks) and `claims/claims-test.js`
   (Playwright, 31) in the scratchpad cover it.
+  **Since 16 October 2026 the questionnaire's dates in Salesforce drive every claim** (`T_SQ`, `tSqRun_`; `T_SQ.ON`
+  false puts back the flow above). The manager: "the date service received is updated by the staff … sales support
+  follows up with customer service … after 5 working days … a follow up email is sent attaching the trail as support is
+  copied. If … date SQ processed by CSR is filled then there is no further automation. Once the date SQ processed is
+  filled an automated email to GLOC retention is sent … with a 3 working days timeframe with reminders [until] date SQ
+  comm paid". Every claim since 1 October had been submitted by hand, and none started from a questionnaire on the sheet.
+  - **The fields** (CLIENT_PORTFOLIO__c): `Date_SQ_submitted__c` (the completed questionnaire, staff),
+    `Date_SQ_submitted_to_CSR__c` and `Date_SQ_processed_by_CSR__c` (sales support; both new on 16 October, and both
+    dates), `Date_Subm_to_Retention__c` and `Was_Agent_Paid__c` ("Was Agent Paid for Orphan?", the system),
+    `Date_Comm_Paid__c` ("Date SQ Comm Paid", Retention or sales support). The integration user needs read and edit on
+    the two new fields, or the query fails.
+  - **A claim** is one client (their Contact, else client number) and one questionnaire (the day it went to Customer
+    Service), with every policy that carries those dates. Only dates from 16 October (`T_SQ.FROM`) count. It is a row on
+    the Retention Payments tab (`SQ key`, `Records`, `Sent to CSR`, `CSR follow-ups`, `Last CSR follow-up`, `Processed
+    by CSR`, added by name to an older tab), so the board, the brief and the points read it as before; the board shows
+    the new stage as "with Customer Service".
+  - **Customer Service**: every 5 working days (`CSR_DAYS`, counted as `tWorkingDays_` counts them) until processed is
+    filled, in the first run from 10:00 on a working day, one follow-up: to the desk the SQ task went to (the task's
+    contact when it is a desk, else `CSR_TO`), sales support and the task's owner copied, a reply to sales support; the
+    task's subject as its own, the trail in the body (the task and its Chatter), and the original e-mail attached as
+    `.eml` when support@ was copied on it (found by policy number, `tSqOriginal_`). A line goes on the task's Chatter.
+  - **Retention**: the day processed is filled (8:00 to 17:00, working days) the claim goes to `T_CLAIM.TO`, the manager,
+    sales support and the agent copied, to be paid within 3 working days (`RET_DAYS`), and Date Subm to Retention (and
+    Was Agent Paid No) is written on each policy. A reminder every 3 working days at 10:00, never copying the agent,
+    until Date SQ Comm Paid is in; then Was Agent Paid Yes and the agent told (`tClaimPaidMail_`). A Date Subm to
+    Retention already entered is "Submitted by hand", never e-mailed, still reminded.
+  - **Held**: no agent; an agent who left (`tFormer_`); not active on the Agent Skill Bank; a questionnaire received
+    before the Date Assigned to Agent. A second questionnaire for a client already claimed is Void.
+  - **The agent paid** is Assigned Agent, else the agent on the policy (`AGENT__c`, which is who Sasha's by-hand claims
+    paid).
+  - Nothing goes before the go (`claims_live`); `transitionSqTest` sends the manager one follow-up, one claim and one
+    reminder, marked TEST, from the real records where there are some; `transitionSqNow` runs it at once.
+  - `sq16/sq-test.js` in the scratchpad covers it (54 checks, a made-up Salesforce and mailbox, the clock moved over two
+    weeks). The board film's claim line ("at once … every working day at ten") is now out of date: re-voice it with the
+    next cut.
 - **One client in full on the board: the history, their Salesforce tasks,
   and the team's comments** (3 October 2026, the same request: "so the agent
   can see the email and history and tasks opened on salesforce assigned to
@@ -2757,7 +3070,7 @@ voice under the new timing and the caption gives it away.
   - **The service record.** Every card shows the record the letter printed from the send row (`tSvcOf_`: `svc_docs`,
     `svc_requests`, `svc_reminders`, `svc_birthday`, as at 24 September), or says plainly that the branch had nothing on
     record for that client. Under History, `tSfService_` reads every Salesforce task on the client's policy records and
-    contact record, ever (up to `T_SVC.MAX`): requests handled and since when, the last served, days to close (median and
+    contact record, ever (up to `T_SVCREC.MAX`): requests handled and since when, the last served, days to close (median and
     average), the share closed within a day and by the due date, open and overdue now, by year, by kind of work (the
     Task Type in words: "Renewa/PDl/Bill" reads Premiums and billing, Pendings Applications, "Claims/ Mat" Claims and
     maturities) and by who served them, then every task behind a fold. Logged e-mails and the birthday flow are counted
@@ -2993,6 +3306,17 @@ voice under the new timing and the caption gives it away.
     the routine's late-client follow-ups chase.
   - *The board, for agents* (`boardagent`, 1:48): your list every day, opening a client, Log call, comments, what
     counts, two days to a conversation, the branch sees it.
+  - *The client transition, start to finish* (`boardflow`, 3:48, `board-workflow.html` and `.mp4`), added 16 October 2026
+    for everyone ("where is the revised video to post that will guide all on the revised process, workflow etc so all
+    will understand and take the test"). It is the storyboard approved the day before, one client from the letter to the
+    TT$200: the letter, the answer or Client Support's call, the three rules, the household named, families the records
+    missed, what a naming does, the agent's call, the service record, Log call, the Salesforce task, the claim and the
+    10:00 list, what the branch sees, the seven outcomes (`workflow.html`'s O section, in its order), and the training
+    page. It sits first on `board-films.html` (`#start-to-finish`), at the top of `training.html` above the sign-in, under
+    the title of `workflow.html`, and in the board's Help ("The film: start to finish, for everyone"). It draws six
+    visuals of its own (`letter`, `family`, `record`, `claim`, `outcomes`, `test`), and a scene may carry `role` to show
+    another sign-in's board (its Client Support scene does). The test scene shows the question as grey bars, never a
+    question from the private sheet. If a rule in the workflow changes, re-voice the line that says it.
 
   Each is a page drawn by `tools/film/build-boardfilm.py <key>` from `<key>-lines.json` and `<key>-timing.json`
   (`orphan-transition/board-management.html`, `board-client-support.html`, `board-agents.html`), recorded and mixed
