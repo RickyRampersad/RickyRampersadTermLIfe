@@ -4150,6 +4150,52 @@ a repeated question. `build-forms.py` refuses to write a page where two do,
 and that guard immediately caught the OAS form carrying two sections both
 named "About you" (the second is "Your details" now).
 
+### The refinements the review pass found, the same day
+
+Asked for as *"aNY FURTHER refinements"*. Six, and the first three were
+silent faults nobody would have reported:
+
+- **The rail was invisible exactly when it was wanted.** Both bars stick, and
+  with `top: 0` the rail parked behind the topbar — 69px of overlap, its whole
+  height — so the progress vanished the moment the client scrolled into the
+  form. Its top is now `var(--bar)`, which `form.js` sets from the topbar's
+  **measured** height on load and on resize, so a longer brand name or a
+  bigger font can never put it back.
+- **The backend's bot guard was dead code twice over.** `quoteSubmit_` checked
+  `core.website`, and no page emitted a honeypot at all; once one was added,
+  it still never travelled, because `payload()` only walks `.f` blocks and the
+  honeypot sits outside them. The forms harness caught the second half by
+  accident, flagging a filled field that did not reach the payload. The
+  honeypot is off screen (never `display: none` — some bots skip those), out
+  of the tab order, `aria-hidden`, read explicitly into `core.website`, and
+  excluded from the progress count and the draft.
+- **A restored draft said nothing.** Answers reappearing with no explanation
+  read as somebody else's form. It now says *"We kept what you had started 20
+  minutes ago. 2 answers are filled in below"* with **Start again, empty**, and
+  a draft over **14 days** old is dropped rather than put back in front of
+  them. Only answered fields are saved: `FormData` hands back every empty box
+  too, and the first cut claimed 17 answers for 2.
+- **Enter no longer sends.** The browser's default is to submit from any
+  single-line input; on a form of twenty-five answers a stray Enter halfway
+  down is a submission nobody meant. Enter moves to the next box, and only the
+  Send button sends.
+- **The index carries the stage too**, circling the **six lines** as each
+  form's own circles its sections: the same drawing, one level up. `form.js`
+  used to return early on any page with no form, so `/quote/` got neither the
+  measured bar nor the kinetic headline; the page-wide motion now runs before
+  that guard.
+- **Two surfaces went opaque.** The rail was frosted at 92% and a form field
+  ghosted through it under the topbar, reading as a rendering fault; it is
+  solid now, which also keeps `backdrop-filter` to one surface on these pages.
+  The topbar sits at 94% rather than the homepage's 88%, because frost reads
+  as craft on an editorial page and as a fault over the field somebody is
+  filling.
+- Smaller: the rail is a real `role="progressbar"` whose `aria-valuenow`
+  tracks the count (the visible text is `aria-hidden`, so it is not read
+  twice), and a radio group's legend no longer inherits the flex gap meant
+  for a section number — it was pushing the required asterisk a full space
+  away from the question.
+
 - Tests in the session scratchpad: `qa/forms.js` (24 checks, Playwright: the
   pages, sideways scroll at seven widths, iOS input zoom, touch targets,
   contrast composited through translucency, the validation summary, the
@@ -4163,7 +4209,11 @@ named "About you" (the second is "Your details" now).
   chip, the split headline both ways, nothing running or invisible with
   motion off, the frame cost with the ring spinning, the loops parking off
   screen, no chip crossing the clip at 6 stages × 10 widths, the mark as a
-  constant fraction of the stage, and layout shift).
+  constant fraction of the stage, layout shift, the rail still visible under
+  the topbar after a 1600px scroll, the honeypot's four properties and that a
+  filled one adds nothing to the count, Enter moving on rather than sending,
+  the restored-draft notice and its count, Start again, and the index's own
+  stage, headline and measured bar).
 
 ## The English B essay workshop — it asks, the student writes
 

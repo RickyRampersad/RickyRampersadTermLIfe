@@ -17,6 +17,52 @@
 (function () {
   'use strict';
 
+  var noMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  /* ── every page ─────────────────────────────────────────────────────── */
+
+  /* Both bars stick. The rail's own top has to be the topbar's height or it
+     parks behind it and the progress vanishes exactly when it is wanted —
+     the moment the client scrolls into the form. Measured, not guessed, so
+     a longer brand name or a bigger font can never put it back. */
+  (function () {
+    var bar = document.querySelector('.topbar');
+    if (!bar) return;
+    var set = function () {
+      document.documentElement.style.setProperty('--bar', bar.offsetHeight + 'px');
+    };
+    set();
+    if ('ResizeObserver' in window) new ResizeObserver(set).observe(bar);
+    else window.addEventListener('resize', set);
+  })();
+
+  /* The headline, word by word. Never letter by letter: that is the dated
+     form and it wrecks the screen-reader read. The whole sentence goes on
+     as an aria-label first, so assistive tech reads the sentence rather
+     than walking a pile of spans, and the split only happens when motion
+     is allowed. */
+  if (!noMotion.matches) {
+    [].forEach.call(document.querySelectorAll('.lede h1'), function (h) {
+      var text = h.textContent.replace(/\s+/g, ' ').trim();
+      h.setAttribute('aria-label', text);
+      h.innerHTML = text.split(' ').map(function (w, i) {
+        return '<span class="w" style="--wi:' + i + '" aria-hidden="true">' + w + '</span>';
+      }).join(' ');
+    });
+
+    /* The loops park by a class added on EXIT, never removed on entry:
+       the other polarity freezes a backwards-filled entrance at its
+       invisible first frame on any browser where the script does not run. */
+    var stage = document.querySelector('.stage');
+    if (stage && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) { document.body.classList.toggle('rest', !e.isIntersecting); });
+      }, { rootMargin: '80px' }).observe(stage);
+    }
+  }
+
+  /* ── the rest needs a form ──────────────────────────────────────────── */
+
   var form = document.querySelector('form[data-form]');
   if (!form) return;
 
@@ -75,7 +121,6 @@
      section and the chip on the stage all read the same one pass. It runs on
      input and on change, never on a timer and never on scroll.            */
 
-  var noMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   var rail = document.querySelector('.rail');
   var railBar = rail && rail.querySelector('.rail-bar i');
   var railN = rail && rail.querySelector('.rail-n');
@@ -83,7 +128,7 @@
   var chips = [].slice.call(document.querySelectorAll('.stage .chip'));
 
   function answered(el) {
-    if (el.disabled || el.closest('.hid')) return null;        // not asked
+    if (el.disabled || el.closest('.hid') || el.closest('.hp')) return null;  // not asked
     if (el.type === 'radio')   return !!form.querySelector('[name="' + el.name + '"]:checked');
     if (el.type === 'checkbox') return el.checked;
     return !!String(el.value || '').trim();
@@ -108,7 +153,11 @@
       if (chips[i]) chips[i].classList.toggle('on', full);
     });
 
-    if (railBar) railBar.style.setProperty('--p', (asked ? Math.round(got / asked * 100) : 0) + '%');
+    if (railBar) {
+      railBar.style.setProperty('--p', (asked ? Math.round(got / asked * 100) : 0) + '%');
+      var box = railBar.parentElement;
+      if (box) { box.setAttribute('aria-valuenow', got); box.setAttribute('aria-valuemax', asked); }
+    }
     if (railN) railN.innerHTML = '<b>' + got + '</b> of ' + asked + ' answered';
     if (rail) rail.classList.toggle('full', asked > 0 && got === asked);
   }
@@ -117,24 +166,65 @@
 
   function saveDraft() {
     try {
-      var d = {};
-      new FormData(form).forEach(function (v, k) { d[k] = v; });
+      /* only what they actually answered: FormData hands back every empty
+         box too, and the notice would then claim 17 answers for 2 */
+      var d = { _at: Date.now() };
+      new FormData(form).forEach(function (v, k) {
+        if (k !== 'website' && String(v).trim()) d[k] = v;
+      });
       localStorage.setItem(DRAFT, JSON.stringify(d));
     } catch (e) { /* private window, blocked storage: the form still works */ }
   }
+
+  /* A draft older than this is somebody's forgotten half-answer, not work in
+     progress: it is dropped rather than put back in front of them. */
+  var DRAFT_DAYS = 14;
 
   function loadDraft() {
     var d;
     try { d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); } catch (e) { return; }
     if (!d) return;
+    var at = +d._at || 0;
+    if (at && Date.now() - at > DRAFT_DAYS * 864e5) { clearDraft(); return; }
+
+    var n = 0;
     Object.keys(d).forEach(function (k) {
+      if (k === '_at') return;
       var els = form.querySelectorAll('[name="' + k + '"]');
       if (!els.length) return;
       if (els[0].type === 'radio' || els[0].type === 'checkbox') {
         [].forEach.call(els, function (e) { if (e.value === d[k] || e.type === 'checkbox') e.checked = true; });
       } else { els[0].value = d[k]; }
+      n++;
     });
     applyConds();
+    if (n) sayRestored(n, at);
+  }
+
+  /* Answers reappearing with no explanation read as somebody else's form, or
+     as a page that has gone wrong. Say what happened and offer the way out. */
+  function sayRestored(n, at) {
+    var box = document.getElementById('draft');
+    if (!box) return;
+    var when = '';
+    if (at) {
+      var mins = Math.round((Date.now() - at) / 60000);
+      when = mins < 2 ? ' just now'
+           : mins < 60 ? ' ' + mins + ' minutes ago'
+           : mins < 2880 ? ' ' + Math.round(mins / 60) + ' hours ago'
+           : ' on ' + new Date(at).toLocaleDateString();
+    }
+    box.innerHTML = '<span><b>We kept what you had started' + when + '.</b> '
+      + n + (n === 1 ? ' answer is' : ' answers are') + ' filled in below.</span>'
+      + '<button type="button">Start again, empty</button>';
+    box.hidden = false;
+    box.querySelector('button').addEventListener('click', function () {
+      clearDraft();
+      form.reset();
+      box.hidden = true;
+      refresh();
+      form.querySelector('input, select, textarea').focus();
+    });
   }
 
   function clearDraft() { try { localStorage.removeItem(DRAFT); } catch (e) {} }
@@ -146,31 +236,24 @@
   loadDraft();
   refresh();
 
-  /* ── the headline, word by word ──────────────────────────────────────
-     Never letter by letter: that is the dated form and it wrecks the
-     screen-reader read. The whole sentence goes on as an aria-label first,
-     so assistive tech reads the sentence rather than walking a pile of
-     spans, and the split only happens when motion is allowed.           */
+  /* ── Enter moves to the next box, it does not send ─────────────────
+     The browser's default is to submit from any single-line input. On a
+     form of twenty-five answers a stray Enter halfway down is a submission
+     nobody meant; only the Send button sends.                          */
 
-  if (!noMotion.matches) {
-    [].forEach.call(document.querySelectorAll('.lede h1'), function (h) {
-      var text = h.textContent.replace(/\s+/g, ' ').trim();
-      h.setAttribute('aria-label', text);
-      h.innerHTML = text.split(' ').map(function (w, i) {
-        return '<span class="w" style="--wi:' + i + '" aria-hidden="true">' + w + '</span>';
-      }).join(' ');
+  form.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey) return;
+    var el = e.target;
+    if (!el.form || el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON') return;
+    if (el.type === 'submit' || el.type === 'checkbox' || el.type === 'radio') return;
+    e.preventDefault();
+    var boxes = [].filter.call(form.querySelectorAll('input, select, textarea'), function (i) {
+      return !i.disabled && !i.closest('.hid') && !i.closest('.hp') && i.type !== 'hidden';
     });
-
-    /* The loops park by a class added on EXIT, never removed on entry:
-       the other polarity freezes a backwards-filled entrance at its
-       invisible first frame on any browser where the script does not run. */
-    var stage = document.querySelector('.stage');
-    if (stage && 'IntersectionObserver' in window) {
-      new IntersectionObserver(function (es) {
-        es.forEach(function (e) { document.body.classList.toggle('rest', !e.isIntersecting); });
-      }, { rootMargin: '80px' }).observe(stage);
-    }
-  }
+    var next = boxes[boxes.indexOf(el) + 1];
+    if (next) next.focus();
+    else form.querySelector('[type=submit]').focus();
+  });
 
   /* ── validation. The browser's own messages are fine for a type, but
          a form this long needs one summary at the top that says what is
@@ -245,6 +328,11 @@
 
   function payload() {
     var f = answers(), core = {};
+    /* The honeypot sits outside every .f block, so answers() never sees it
+       and it has to be read on its own — without this the field is on the
+       page and the backend's guard still has nothing to catch. */
+    var hp = form.querySelector('.hp input');
+    if (hp && String(hp.value).trim()) core.website = String(hp.value).slice(0, 40);
     ['name', 'email', 'phone', 'reach', 'when', 'agent', 'notes'].forEach(function (k) {
       var hit = null;
       f.forEach(function (a) { if (a.k === k) hit = a.value; });

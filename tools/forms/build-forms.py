@@ -290,12 +290,18 @@ def page(f, common):
   </div>
 
   <div class="rail"><div class="rail-in layout">
-    <div class="rail-bar"><i></i></div>
-    <span class="rail-n"><b>0</b> of {asks} answered</span>
+    <div class="rail-bar" role="progressbar" aria-valuemin="0" aria-valuemax="{asks}"
+         aria-valuenow="0" aria-label="Answered so far"><i></i></div>
+    <span class="rail-n" aria-hidden="true"><b>0</b> of {asks} answered</span>
   </div></div>
 
   <form class="layout" data-form="{key}" novalidate>
+    <div class="draft" id="draft" hidden></div>
     <div class="err" id="err" role="alert" hidden></div>
+    <div class="hp" aria-hidden="true">
+      <label for="{key}-website">Leave this blank</label>
+      <input type="text" id="{key}-website" name="website" tabindex="-1" autocomplete="off">
+    </div>
     <noscript>
       <div class="note" style="border-color:var(--warn);background:var(--warn-bg)">
         <strong>This form needs JavaScript to send itself.</strong> Fill it in to see what we ask,
@@ -380,6 +386,9 @@ INDEX_CSS = """
 
 def index(forms):
     """One page listing the six, so /quote/ is a door and not a 404."""
+    # the stage here circles the six LINES, as each form's own circles its
+    # sections: the same drawing, one level up
+    six = [{'name': f['line'], 'icon': f['icon']} for f in forms]
     cards = ''.join(
         '<a class="qcard" href="/%s/"><span class="ic">%s</span><h2>%s</h2><p>%s</p>'
         '<span class="go">%s %s</span></a>'
@@ -404,6 +413,7 @@ def index(forms):
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/forms/form.css">
+<script src="/forms/form.js" defer></script>
 <style>{css}</style>
 </head>
 <body>
@@ -416,15 +426,20 @@ def index(forms):
 
 <main>
   <div class="lede layout">
-    <span class="eyebrow">Quote &amp; apply</span>
-    <h1>Start it here, and we have it.</h1>
-    <p>Every one of these is our own form. It files on the branch's worklist the moment
-       you press send, your reference appears on screen, and a licensed agent calls you
-       at the time you choose.</p>
-    <p class="meta">
-      <span>{lock_ic}Straight to the branch &mdash; never to a third party</span>
-      <span>{clock_ic}Two to four minutes each</span>
-    </p>
+    <div class="lede-grid">
+      <div>
+        <span class="eyebrow">Quote &amp; apply</span>
+        <h1>Start it here, and we have it.</h1>
+        <p>Every one of these is our own form. It files on the branch's worklist the moment
+           you press send, your reference appears on screen, and a licensed agent calls you
+           at the time you choose.</p>
+        <p class="meta">
+          <span>{lock_ic}Straight to the branch &mdash; never to a third party</span>
+          <span>{clock_ic}Two to four minutes each</span>
+        </p>
+      </div>
+      {stage}
+    </div>
   </div>
   <div class="layout">
     <div class="cards">{cards}</div>
@@ -454,6 +469,7 @@ def index(forms):
 </body>
 </html>
 """.format(css=INDEX_CSS.strip(), cards=cards, tel=TEL, telh=TEL_H, support=SUPPORT,
+           stage=stage(six),
            phone_ic=ic('phone'), lock_ic=ic('lock'), clock_ic=ic('clock'))
 
 

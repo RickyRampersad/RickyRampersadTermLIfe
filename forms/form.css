@@ -108,7 +108,10 @@ h1, h2, h3, legend { font-family: var(--display); color: var(--ink); line-height
   position: sticky; top: 0; z-index: 20;
   display: flex; align-items: center; gap: var(--sp-s);
   padding: var(--sp-xs) var(--sp-s);
-  background: color-mix(in srgb, var(--ground) 86%, transparent);
+  /* 94%, not the homepage's 88%: frost reads as craft on an editorial page
+     and as a rendering fault over a form, where the ghost under it is a
+     field the client is in the middle of filling. */
+  background: color-mix(in srgb, var(--ground) 94%, transparent);
   border-bottom: 1px solid var(--line);
 }
 @supports (backdrop-filter: blur(1px)) {
@@ -147,10 +150,17 @@ h1, h2, h3, legend { font-family: var(--display); color: var(--ink); line-height
 
 /* ═══ the rail. A form this long is worth a horizon: how much is answered,
        and how much is left. It moves on input, never on scroll. ═══ */
-.rail { position: sticky; top: 0; z-index: 15;
-        background: color-mix(in srgb, var(--ground) 92%, transparent);
+/* --bar is the topbar's measured height, set by form.js on load and on
+   resize. Both bars stick, so with top:0 the rail parked exactly behind the
+   topbar and the progress disappeared the moment anybody scrolled — which
+   is the only time it is wanted. The rem value is the fallback. */
+.rail { position: sticky; top: var(--bar, 4.3rem); z-index: 15;
+        background: var(--ground);
         border-bottom: 1px solid var(--line); }
-@supports (backdrop-filter: blur(1px)) { .rail { backdrop-filter: blur(10px); } }
+/* The rail is opaque, and deliberately: frosted at 92% a form field ghosted
+   through it a few pixels under the topbar and read as a rendering fault.
+   It also keeps backdrop-filter to one surface here, which is cheap — it
+   re-samples and re-blurs its backdrop every frame. */
 .rail-in { display: flex; align-items: center; gap: var(--sp-s);
            padding-block: var(--sp-2xs); }
 .rail-bar { flex: 1 1 auto; height: 6px; border-radius: 999px;
@@ -274,8 +284,9 @@ fieldset.done legend { color: var(--ok); }
         margin-top: var(--sp-s); }
 .f-wide { grid-column: 1 / -1; }
 
-.f > label, .f > .q { display: block; font-weight: 600; color: var(--ink);
-                      font-size: var(--f--1); margin-bottom: var(--sp-3xs); }
+.f > label, .f .q { display: block; font-weight: 600; color: var(--ink);
+                    font-size: var(--f--1); margin-bottom: var(--sp-3xs);
+                    gap: 0; }
 .f .help { display: block; font-size: var(--f--2); color: var(--muted);
            margin-top: var(--sp-3xs); text-wrap: pretty; }
 .f .req { color: var(--stop); margin-inline-start: .2em; font-weight: 700; }
@@ -379,6 +390,11 @@ input[aria-invalid=true], select[aria-invalid=true], textarea[aria-invalid=true]
    transition with allow-discrete, so it still leaves the layout and the
    accessibility tree completely — hidden has to mean hidden. */
 .hid { display: none; }
+
+/* The honeypot. Not display:none — some bots skip those. Off the screen, out
+   of the tab order, hidden from assistive tech, and no label a person sees. */
+.hp { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px;
+      overflow: hidden; }
 @media (prefers-reduced-motion: no-preference) {
   .f[data-show] {
     transition: opacity var(--t-mid) var(--ease-out),
@@ -422,6 +438,25 @@ input[aria-invalid=true], select[aria-invalid=true], textarea[aria-invalid=true]
   .btn:hover:not([disabled]) { translate: 0 -2px; }   /* translate, never box-shadow */
 }
 .send p { font-size: var(--f--2); color: var(--muted); max-width: 32ch; }
+
+/* a restored draft has to say so: answers appearing from a week ago with no
+   explanation read as somebody else's form */
+.draft {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-xs);
+  margin-top: var(--sp-s); padding: var(--sp-xs) var(--sp-s);
+  background: var(--action-lt); border-left: 4px solid var(--action);
+  border-radius: 0 var(--r-s) var(--r-s) 0;
+  font-size: var(--f--1); color: var(--body);
+}
+.draft[hidden] { display: none; }
+.draft b { color: var(--ink); }
+.draft button {
+  font: 600 var(--f--2)/1 var(--text); color: var(--action-dk);
+  background: none; border: 0; padding: var(--sp-3xs) var(--sp-2xs);
+  min-height: 32px; border-radius: var(--r-s); cursor: pointer;
+  text-decoration: underline; text-underline-offset: .2em;
+}
+.draft button:hover { background: var(--action-a14); }
 
 .err {
   margin-top: var(--sp-s); padding: var(--sp-xs) var(--sp-s);

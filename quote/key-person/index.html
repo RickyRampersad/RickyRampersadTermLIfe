@@ -59,12 +59,18 @@
   </div>
 
   <div class="rail"><div class="rail-in layout">
-    <div class="rail-bar"><i></i></div>
-    <span class="rail-n"><b>0</b> of 25 answered</span>
+    <div class="rail-bar" role="progressbar" aria-valuemin="0" aria-valuemax="25"
+         aria-valuenow="0" aria-label="Answered so far"><i></i></div>
+    <span class="rail-n" aria-hidden="true"><b>0</b> of 25 answered</span>
   </div></div>
 
   <form class="layout" data-form="key-person" novalidate>
+    <div class="draft" id="draft" hidden></div>
     <div class="err" id="err" role="alert" hidden></div>
+    <div class="hp" aria-hidden="true">
+      <label for="key-person-website">Leave this blank</label>
+      <input type="text" id="key-person-website" name="website" tabindex="-1" autocomplete="off">
+    </div>
     <noscript>
       <div class="note" style="border-color:var(--warn);background:var(--warn-bg)">
         <strong>This form needs JavaScript to send itself.</strong> Fill it in to see what we ask,
