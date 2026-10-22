@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-22c';
+var SCRIPT_VERSION = '2026-10-22d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4703,8 +4703,8 @@ function bmDeepDraft_(day, items, said, chatIn) {
       headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
       payload: JSON.stringify({ model: claudeDraftModel_(), max_tokens: BM_DEEP.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) { try { runlog_('deep drafts: Claude answered ' + res.getResponseCode()); } catch (e) {} return out; }
-    var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').replace(/^```(?:json)?\s*|\s*```$/g, '');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var txt = claudeText_(res), js = claudeJsonParse_(txt) || {};
+    if (!Object.keys(js).length) { try { runlog_('deep drafts: no JSON (' + claudeStop_(res) + ', ' + txt.length + ' chars): ' + txt.slice(0, 200)); } catch (e) {} }
     items.forEach(function (it) {
       var v = js[it.id]; if (!v || !String(v.reply || '').trim()) return;
       var act = String(v.action || '').toLowerCase();
@@ -5679,7 +5679,7 @@ function inboxSort_(cands, day) {
       payload: JSON.stringify({ model: model, max_tokens: 6000, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) { try { runlog_('inbox sort ' + res.getResponseCode()); } catch (e) {} return out; }
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     Object.keys(js).forEach(function (id) {
       var v = js[id]; if (!out[id] || !v || !/^(now|today|later|none)$/.test(String(v.u))) return;
       out[id] = { u: String(v.u), why: shorten_(String(v.why || ''), 120), ask: shorten_(String(v.ask || ''), 140) || out[id].ask,
@@ -6067,7 +6067,7 @@ function bmdAdviceChunk_(day, m, need, out, have, lastAt, props, key) {
       payload: JSON.stringify({ model: String(props.getProperty('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL).trim(), max_tokens: 5000, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) { try { runlog_('my day advice: Claude answered ' + res.getResponseCode()); } catch (e) {} return out; }
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     need.forEach(function (x) {
       var v = js[x.k]; if (!v || !/^(close|move|note|keep|reply)$/.test(String(v.act))) return;
       out[x.k] = { act: String(v.act), why: shorten_(String(v.why || ''), 120) || out[x.k].why, note: shorten_(String(v.note || ''), 320), ai: true, n: x.a ? String(x.a.at || '') : lastAt(x.k) };
@@ -6659,8 +6659,7 @@ function tcardDraft_(sid, t, brief, notes, day) {
       payload: JSON.stringify({ model: tcardModel_(), max_tokens: TCARD.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return { ok: false, error: 'Claude did not answer this time (' + res.getResponseCode() + '). Use a template, or write it yourself.' };
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').trim(), out = null;
-    var j = txt.replace(/^```(?:json)?\s*|\s*```$/g, ''), a = j.indexOf('{'), b = j.lastIndexOf('}');
-    try { if (a > -1 && b > a) out = JSON.parse(j.slice(a, b + 1)); } catch (e) {}
+    out = claudeJsonParse_(txt);
     var note = String((out && out.note) || (out ? '' : txt)).trim(); if (!note) return { ok: false, error: 'Claude came back empty. Use a template, or write it yourself.' };
     var action = /^(close|move|note)$/.test(String(out && out.action)) ? String(out.action) : 'note', warn = String((out && out.warn) || '').trim();
     if (wants && action === 'close' && !tcardAgentGiven_(note)) { action = 'move'; warn = warn || 'The client wants an agent: move it with the reason rather than close it.'; }
@@ -7311,7 +7310,7 @@ function gameBestNote_(cands, day, from) {
         payload: JSON.stringify({ model: String(props.getProperty('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL).trim(), max_tokens: 100, messages: [{ role: 'user', content: prompt }] }) });
       if (res.getResponseCode() === 200) {
         var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-        var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)), i = Number(js.pick);
+        var js = claudeJsonParse_(txt) || {}, i = Number(js.pick);
         if (cands[i]) pick = cands[i];
       }
     } catch (e) {}
@@ -7748,7 +7747,7 @@ function rateReads_(work, facts) {
       payload: JSON.stringify({ model: rateProp_('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL, max_tokens: Math.min(8000, 600 + 260 * items.length), messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return { sum: sum, intel: intel };
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     Object.keys(js).forEach(function (id) {
       if (sum[id] == null) return;
       var v = js[id], s = typeof v === 'string' ? v : (v && v.summary), i = v && typeof v === 'object' ? v.intel : '';
@@ -8765,7 +8764,7 @@ function umOpenedCard_(items, focus, chat, base, noSf, drafts) {
    that record, and comes back with where it stands, the reply in his voice, the next step and who takes it, and what
    would make the reply stronger, from the branch's own tools. Use this reply puts it in the box; nothing posts until he
    saves. Firmer, Shorter and Kinder write it again; anything he types or speaks first becomes the reply's substance. */
-var UMAI = { MAX_TOKENS: 900, NOTES: 25, RELATED: 8,
+var UMAI = { MAX_TOKENS: 1600, NOTES: 25, RELATED: 8,
   TOOLS: 'Log Book (documents agents hand in, who signed for them, where each went), Delivery Book (cheques, policy contracts and certificates handed over), ' +
     'Premium Due Desk (the 45 to 96 day premium letters), Query Pal (clients\' online queries), the clients board (orphan clients, calls logged, households), ' +
     'FactFind360 (agents\' fact finds, leads and goals), Branch Intelligence (lapsed and slipped policies, pendings, requirements), the KPI tracker (staff attendance and their days), ' +
@@ -8909,10 +8908,13 @@ function umDraft_(o) {
       payload: JSON.stringify({ model: claudeDraftModel_(), max_tokens: UMAI.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return { ok: false, error: 'Branch Intelligence did not answer this time (' + res.getResponseCode() + '). Try again.' };
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').trim(), out = null;
-    var j = txt.replace(/^```(?:json)?\s*|\s*```$/g, ''), a = j.indexOf('{'), b = j.lastIndexOf('}');
-    try { if (a > -1 && b > a) out = JSON.parse(j.slice(a, b + 1)); } catch (e) {}
+    out = claudeJsonParse_(txt);
     var reply = String((out && out.reply) || '').trim();
-    if (!reply) return { ok: false, error: 'Branch Intelligence came back empty. Try again.' };
+    if (!reply) {
+      var stop = claudeStop_(res);
+      try { runlog_('draft my reply: no reply (' + stop + ', ' + txt.length + ' chars): ' + txt.slice(0, 200)); } catch (e) {}
+      return { ok: false, error: 'Branch Intelligence came back without a reply' + (stop === 'max_tokens' ? ' (it ran out of room)' : stop === 'refusal' ? ' (it declined this one)' : !txt ? ' (nothing in the answer)' : '') + '. Try again.' };
+    }
     var act = String((out && out.action) || '').toLowerCase();
     return { ok: true, read: String(out.read || '').trim().slice(0, 400), reply: reply.slice(0, 1200), next: String(out.next || '').trim().slice(0, 300),
       add: (Array.isArray(out.add) ? out.add : []).map(function (x) { return String(x || '').trim().slice(0, 220); }).filter(String).slice(0, 3),
@@ -8953,8 +8955,7 @@ function umBrief_(sid, day, it, o) {
       payload: JSON.stringify({ model: claudeDraftModel_(), max_tokens: UMAI.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return { ok: false, error: 'Branch Intelligence did not answer this time (' + res.getResponseCode() + '). Try again.' };
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').trim(), out = null;
-    var j = txt.replace(/^```(?:json)?\s*|\s*```$/g, ''), a = j.indexOf('{'), b = j.lastIndexOf('}');
-    try { if (a > -1 && b > a) out = JSON.parse(j.slice(a, b + 1)); } catch (e) {}
+    out = claudeJsonParse_(txt);
     var read = String((out && out.read) || '').trim();
     if (!read) return { ok: false, error: 'Branch Intelligence came back empty. Try again.' };
     var reply = String(out.reply || '').trim(), act = String(out.action || '').toLowerCase();
@@ -10357,11 +10358,70 @@ function claudeDrafts_(items, who) {
       payload: JSON.stringify({ model: claudeDraftModel_(), max_tokens: 4000, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) { try { runlog_('drafts: Claude answered ' + res.getResponseCode()); } catch (e) {} return out; }
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     Object.keys(js).forEach(function (id) { var v = js[id] || {}; if (String(v.note || '').trim()) out[id] = { why: shorten_(String(v.why || ''), 140), note: shorten_(String(v.note), 420) }; });
   } catch (e) { try { runlog_('drafts failed: ' + (e && e.message)); } catch (e2) {} }
   return out;
 }
+/* ── Claude's answer, read even when it is untidy or cut short (22 October 2026) ──
+ *  Ricky, 9:07am, on his page: "Draft my reply" said "Branch Intelligence came back empty. Try again." The answer comes
+ *  back as JSON, and the old reading needed it perfect: one raw line break inside the reply, a word before or after the
+ *  braces, or an answer cut off at its length limit, and the whole of it was thrown away. claudeJsonParse_ tries it as
+ *  it is; then with line breaks inside the text made safe; then keeps every complete part ("reply", or each task's
+ *  entry) and drops only an unfinished one. A reply that was itself cut off is never kept. claudeText_ joins the text
+ *  blocks and claudeStop_ says why it stopped, for the message and the run log.
+ */
+function claudeText_(res) {
+  try { var j = JSON.parse(res.getContentText()); return (j.content || []).filter(function (b) { return b && b.type !== 'thinking'; }).map(function (b) { return b.text || ''; }).join('').trim(); } catch (e) { return ''; }
+}
+function claudeStop_(res) { try { return String(JSON.parse(res.getContentText()).stop_reason || ''); } catch (e) { return ''; } }
+function claudeJsonFix_(t) {   // raw line breaks and tabs inside "..." made safe
+  var out = '', inStr = false, esc = false;
+  for (var i = 0; i < t.length; i++) {
+    var c = t.charAt(i);
+    if (inStr) {
+      if (esc) { out += c; esc = false; continue; }
+      if (c === '\\') { out += c; esc = true; continue; }
+      if (c === '"') { inStr = false; out += c; continue; }
+      if (c === '\n') { out += '\\n'; continue; } if (c === '\r') { continue; } if (c === '\t') { out += '\\t'; continue; }
+      out += c;
+    } else { if (c === '"') inStr = true; out += c; }
+  }
+  return out;
+}
+function claudeJsonEnd_(t, i) {   // the index of the bracket closing the one at i, or -1 when it never closes
+  var depth = 0, inStr = false, esc = false;
+  for (var k = i; k < t.length; k++) {
+    var c = t.charAt(k);
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{' || c === '[') depth++;
+    else if (c === '}' || c === ']') { depth--; if (depth === 0) return k; }
+  }
+  return -1;
+}
+function claudeJsonParse_(txt) {
+  var t = String(txt || '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+  var a = t.indexOf('{'); if (a < 0) return null;
+  var b = t.lastIndexOf('}');
+  if (b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch (e) {} }
+  var f = claudeJsonFix_(t.slice(a));
+  var e1 = claudeJsonEnd_(f, 0); if (e1 > 0) { try { return JSON.parse(f.slice(0, e1 + 1)); } catch (e) {} }
+  // Keep every complete top-level entry; drop only an unfinished one.
+  var out = {}, got = false, i = 1, re = /\s*,?\s*"((?:[^"\\]|\\.)*)"\s*:\s*/g;
+  while (i < f.length) {
+    re.lastIndex = i; var m = re.exec(f); if (!m || m.index !== i) break;
+    var k = m[1], j = re.lastIndex, ch = f.charAt(j), end = -1;
+    if (ch === '{' || ch === '[') end = claudeJsonEnd_(f, j);
+    else if (ch === '"') { var esc = false; for (var q = j + 1; q < f.length; q++) { var c = f.charAt(q); if (esc) { esc = false; continue; } if (c === '\\') { esc = true; continue; } if (c === '"') { end = q; break; } } }
+    else { var mm = /^[^,}\]]*/.exec(f.slice(j)); end = mm && /[,}\]]/.test(f.charAt(j + mm[0].length)) ? j + mm[0].length - 1 : -1; }
+    if (end < 0) break;
+    try { out[k] = JSON.parse(f.slice(j, end + 1).trim()); got = true; } catch (e) {}
+    i = end + 1;
+  }
+  return got ? out : null;
+}
+
 /** The box under an item: Claude's reply, and the button that puts it in the reply box. Nothing is sent by this. */
 function draftBox_(id, d, field) {
   if (!d || !d.note) return '';
@@ -11904,7 +11964,7 @@ function chaseWrite_(picks, day) {
       payload: JSON.stringify({ model: model, max_tokens: 4000, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return out;
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     Object.keys(js).forEach(function (id) { var v = String(js[id] || '').replace(/\s+/g, ' ').trim(); if (out[id] && v.length >= 20) out[id] = v.slice(0, 400); });
     out._ai = true;
   } catch (e) {}
