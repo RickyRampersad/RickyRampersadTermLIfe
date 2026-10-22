@@ -2560,7 +2560,7 @@ function gcmRateRun_(o) {
   o = o || {};
   if (!tMsCreds_()) return { ok: false, said: 'Microsoft 365 is not set up (MS_TENANT, MS_CLIENT, MS_SECRET): nothing was sent.' };
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(60000)) return { ok: false, said: 'Busy: the letters or the refresh are running. Run it again in a minute.' };
+  if (!lock.tryLock(60000)) return { ok: false, busy: true, said: 'Busy: the letters or the refresh are running. Run it again in a minute.' };
   try {
     var L = gcmLoad_(), list = gcmRateInbox_(L, gcmRateList_(L, {})), E = tEsc_, me = (GCM_TRAIN.TO_MANAGER || [])[0], sent = [], failed = [];
     var name = function (x) { return x.g.name + ' (' + { answered: 'answered the items, no stars', viewed: 'opened the page, no answer', waiting: 'no answer yet' }[x.st.kind] +
@@ -2667,6 +2667,7 @@ function gcmRemind_(b) {
 var GCM_DAY = {
   HOUR: 10, MINUTE: 30, LAST_HOUR: 16, REPLY_BY: '12 noon',
   ON_PROP: 'GCM_CHASE_ON', LAST_PROP: 'GCM_DAY_LAST', TASKS_PROP: 'GCM_CHASE_TASKS',
+  RETRY_PROP: 'GCM_RATE_RETRY',   // the day the star reminder found the lock busy twice: the hourly run tries again
   TASK_TYPE: 'Lic/Staffing/SA/HR', TASK_TAG: 'GROUP LETTER NOT SENT',
   MANUAL: 'training.html',
   TRAIN: [
@@ -2692,8 +2693,14 @@ function gcmDay1030() {
 function gcmDayCatchUp_(d, h) {
   if (!(gcmRateOn_() || gcmChaseOn_())) return;
   try { gcmDayTrigger_(); } catch (e) {}
-  var last = PropertiesService.getScriptProperties().getProperty(GCM_DAY.LAST_PROP) || '';
-  if (d <= 5 && h > GCM_DAY.HOUR && h <= GCM_DAY.LAST_HOUR && last !== gcmToday_()) gcmDay_({});
+  var props = PropertiesService.getScriptProperties(), today = gcmToday_(), last = props.getProperty(GCM_DAY.LAST_PROP) || '';
+  if (d > 5 || h <= GCM_DAY.HOUR || h > GCM_DAY.LAST_HOUR) return;
+  if (last !== today) { gcmDay_({}); return; }
+  /* the day ran, but the star reminder found the lock busy: try it again, with its own summary to the branch */
+  if (props.getProperty(GCM_DAY.RETRY_PROP) === today && gcmRateOn_()) {
+    var r = gcmRateRun_({ auto: true });
+    if (!r.busy) props.deleteProperty(GCM_DAY.RETRY_PROP);
+  }
 }
 
 /** Editor Run, first: the branch manager gets the star reminder as each kind of group would, every staff e-mail as it
@@ -2725,15 +2732,23 @@ function gcmDay_(o) {
   /* on a Monday, any approved letter the 10:00 run has not reached goes first, so it is never called missed */
   if (!o.test && gcmDow_(today) === GCM.SEND_DAY) { try { gcmQueueRun_(); } catch (e) {} }
   var rate = null, said = [];
-  if (o.test || gcmRateOn_()) {
-    try { rate = gcmRateRun_(o.test ? { test: true } : { auto: true, quiet: true }); } catch (e) { rate = { ok: false, said: 'Star reminder: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
-    said.push('Star reminder: ' + (rate.said || ''));
-  }
+  var runRate = function () {
+    try { return gcmRateRun_(o.test ? { test: true } : { auto: true, quiet: true }); }
+    catch (e) { return { ok: false, said: String(e && e.message ? e.message : e).slice(0, 200) }; }
+  };
+  /* the script lock is the whole project's: the hourly refresh or the campaign's five-minute runs may hold it. On 21
+     October 2026 the reminder found it busy, said so in the summary, and nothing tried again that day. Now a busy lock
+     is tried again after the staff part, and failing that by the hourly run from 11:00 (gcmDayCatchUp_). */
+  if (o.test || gcmRateOn_()) rate = runRate();
   var chase = null;
   if (o.test || gcmChaseOn_()) {
     try { chase = gcmChaseRun_({ test: !!o.test }); } catch (e) { chase = { ok: false, said: String(e && e.message ? e.message : e).slice(0, 200) }; }
-    said.push('Staff: ' + (chase.said || ''));
   }
+  if (rate && rate.busy) rate = runRate();
+  if (!o.test) { if (rate && rate.busy) props.setProperty(GCM_DAY.RETRY_PROP, today); else props.deleteProperty(GCM_DAY.RETRY_PROP); }
+  if (rate && rate.busy) rate.said = 'the letters or the refresh were running, twice: the hourly run tries again from 11:00, and its own summary tells you what went.';
+  if (rate) said.push('Star reminder: ' + (rate.said || ''));
+  if (chase) said.push('Staff: ' + (chase.said || ''));
   try { gcmDaySummary_({ test: !!o.test, rate: rate, chase: chase }); said.push('Summary sent to ' + gcmDayManager_() + '.'); }
   catch (e) { said.push('The summary did not go: ' + String(e && e.message ? e.message : e).slice(0, 160)); }
   out.said = said.join(' ');

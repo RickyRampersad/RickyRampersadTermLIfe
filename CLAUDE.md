@@ -3573,7 +3573,11 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   no task. `gcmGroupDayStart` turns on the star reminder and the staff e-mails and tasks, makes the 10:30 trigger, and
   runs today. If the project has no trigger left, it says so, and the hourly run takes the day at 11:00.
   `gcmGroupDayStop` ends all of it. `gcmRateRemindNow` also makes the 10:30 trigger, for the star reminder alone.
-  `day/day-test.js` (37 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
+  **A busy lock is tried again** (22 October 2026). The script lock is the whole project's, and on the first live run
+  (21 October) the hourly refresh held it: the summary read "Busy: the letters or the refresh are running", and no
+  group was reminded that day. The reminder now tries again after the staff part, and failing that the hourly run tries
+  it from 11:00 (`GCM_RATE_RETRY`), with its own summary to the branch; the staff are never asked twice.
+  `day/day-test.js` (46 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
   scratchpad cover it. On those tabs one staff member would have been asked about five groups and another about one.
 
 - **Applications and increases still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
