@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-22b';
+var SCRIPT_VERSION = '2026-10-22d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3838,8 +3838,18 @@ function housekeepingTick_() {
       props.setProperty('inbox_hr', inboxHr);
       try { inboxScrub_(day, 'hour'); } catch (e) {}
       try { dayLogSalesforce_(day); } catch (e) {}
-      try { bmdWarm_(day); } catch (e) {}
-      try { bmDeepWarm_(day, BM_DEEP.HOUR_BUDGET_MS); } catch (e) {}
+    }
+  }
+  // 22 Oct 2026: Claude's reading of his day gets a run of its own, twenty minutes after the scrub's. It used to follow the
+  // scrub in the same run, and a long scrub took the run to Apps Script's six minutes before Claude was asked: on the
+  // morning of 22 Oct My day had no drafts and every task's advice was the plain rule.
+  if (inboxOn_() && mins >= INBOX.REFRESH_FROM && mins <= INBOX.REFRESH_TO + 30 && (mins % 60) >= BM_DEEP.SLOT_MIN && !late()) {
+    var aiHr = day + '_' + Math.floor(mins / 60);
+    if (props.getProperty('bmai_hr') !== aiHr) {
+      props.setProperty('bmai_hr', aiHr);
+      var w0 = Date.now();
+      try { bmdWarm_(day); } catch (e) { try { runlog_('my day advice failed: ' + (e && e.message)); } catch (e2) {} }
+      try { var dn = bmDeepWarm_(day, Math.min(BM_DEEP.HOUR_BUDGET_MS, Math.max(30000, HK_BUDGET_MS - (Date.now() - t0) - 20000))); runlog_('deep drafts ' + aiHr + ': ' + dn + ' in ' + Math.round((Date.now() - w0) / 1000) + 's'); } catch (e) { try { runlog_('deep drafts failed: ' + (e && e.message)); } catch (e2) {} }
     }
   }
   // The game, every hour of the working day; Wednesday 7:00 the awards for the 9:00 branch meeting (21 Oct 2026).
@@ -4627,8 +4637,8 @@ function sendBranchManagerDay_(day) {
  *  hour for anything new or with a new note. The 5:00 mail, the respond page, My day and the 3:00 and 3:45 mails all
  *  read them, and Draft with Claude uses the same read with his own words. Nothing posts by itself.
  */
-var BM_DEEP = { AT: 4 * 60 + 40, BATCH: 3, ASK: 8, MINE: 8, IGNORED: 4, NOTES: 25, NOTE_LEN: 500, MAIL: 3, MAIL_DAYS: 30, MAX_TOKENS: 2400,
-  BUDGET_MS: 270000, HOUR_BUDGET_MS: 90000,
+var BM_DEEP = { AT: 4 * 60 + 40, BATCH: 4, ASK: 20, MINE: 10, IGNORED: 6, NOTES: 25, NOTE_LEN: 500, MAIL: 3, MAIL_DAYS: 30, MAX_TOKENS: 3200,
+  BUDGET_MS: 280000, HOUR_BUDGET_MS: 150000, SLOT_MIN: 20,
   KIND: { ask: 'a colleague on the branch team asks him on this task; the reply answers them',
           mine: 'his own task, due or overdue; the note is his own: what was done, the outcome and the next step with its date, or a chase to whoever must act',
           ignored: 'his instruction to a desk, overdue, with no note from that person; the note chases them by first name' } };
@@ -4693,8 +4703,8 @@ function bmDeepDraft_(day, items, said, chatIn) {
       headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
       payload: JSON.stringify({ model: claudeDraftModel_(), max_tokens: BM_DEEP.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) { try { runlog_('deep drafts: Claude answered ' + res.getResponseCode()); } catch (e) {} return out; }
-    var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').replace(/^```(?:json)?\s*|\s*```$/g, '');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var txt = claudeText_(res), js = claudeJsonParse_(txt) || {};
+    if (!Object.keys(js).length) { try { runlog_('deep drafts: no JSON (' + claudeStop_(res) + ', ' + txt.length + ' chars): ' + txt.slice(0, 200)); } catch (e) {} }
     items.forEach(function (it) {
       var v = js[it.id]; if (!v || !String(v.reply || '').trim()) return;
       var act = String(v.action || '').toLowerCase();
@@ -4719,6 +4729,16 @@ function bmDeepWarm_(day, budgetMs) {
     try { bigPut_(bmDeepKey_(day), have); } catch (e) {}
   }
   return done;
+}
+
+/** From the editor: Branch Intelligence reads and drafts all of his items now, without waiting for the hour (22 Oct 2026). */
+function draftMyRepliesNow() {
+  var day = todayISO_(), t0 = Date.now(), adv = 0, deep = 0;
+  try { var a = bmdWarm_(day) || {}; adv = Object.keys(a).filter(function (k) { return a[k] && a[k].ai; }).length; } catch (e) { Logger.log('Quick read failed: ' + (e && e.message)); }
+  try { deep = bmDeepWarm_(day, 300000 - (Date.now() - t0)); } catch (e) { Logger.log('Full read failed: ' + (e && e.message)); }
+  var held = Object.keys(bmDeepGet_(day)).length;
+  var m = 'Branch Intelligence: ' + deep + ' written at full depth just now, ' + held + ' held for today; ' + adv + ' read quickly for My day. Took ' + Math.round((Date.now() - t0) / 1000) + 's. Open My day.';
+  Logger.log(m); return m;
 }
 
 /* ── 5:00: what Claude wrote for each of his tasks, in the mail itself (22 October 2026) ──
@@ -5659,7 +5679,7 @@ function inboxSort_(cands, day) {
       payload: JSON.stringify({ model: model, max_tokens: 6000, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) { try { runlog_('inbox sort ' + res.getResponseCode()); } catch (e) {} return out; }
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     Object.keys(js).forEach(function (id) {
       var v = js[id]; if (!out[id] || !v || !/^(now|today|later|none)$/.test(String(v.u))) return;
       out[id] = { u: String(v.u), why: shorten_(String(v.why || ''), 120), ask: shorten_(String(v.ask || ''), 140) || out[id].ask,
@@ -5903,7 +5923,7 @@ function inboxSave_(sid, day, p, head, name) {
  *  The 5:00 mail carries one button, the urgent list and the inbox; the 11:00
  *  and 3:00 mails lead with today so far, the focus, and what is still open.
  */
-var MYDAY = { URGENT: 8, QUIET: 3, ADVICE: 30, DRAFTS: 12, LOG: 60 };
+var MYDAY = { URGENT: 8, QUIET: 3, ADVICE: 75, CHUNK: 25, DRAFTS: 12, LOG: 60 };
 var DAYLOG = { must: ['Kind', 'Group', 'What', 'Ref'], name: 'My Day Log', head: ['Date', 'At', 'Kind', 'Group', 'What', 'Ref'] };
 var DAY_GROUPS = [
   ['Renewals & billing', /renewa|pdl\/bill|\bbill(ing)?\b|renewal|premium payment|payment (follow|to collect)|\bmotor\b|vehicle|cancellation|\bcollect/i],
@@ -5926,7 +5946,8 @@ function dayGroup_(ty, text) {
 function dayLogRows_(day) {
   var sh = hrTab_(DAYLOG, false); if (!sh || sh.getLastRow() < 2) return [];
   var head = headerOf_(sh);
-  return sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues().map(function (r) { var o = {}; head.forEach(function (h, c) { if (h) o[h] = r[c]; }); return o; })
+  // 22 Oct 2026: the sheet turns "07:08" into a time value, which printed as "Sat Dec 30 1899 07:08:00 GMT-0358"; back to "07:08".
+  return sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues().map(function (r) { var o = {}; head.forEach(function (h, c) { if (h) o[h] = r[c]; }); o.At = timeStr_(o.At) || String(o.At || ''); return o; })
     .filter(function (o) { return isoDay_(o.Date) === day; });
 }
 /** Write what he did, once each (the Ref says what it was). list: [{ at, kind, group, what, ref }]. */
@@ -6019,7 +6040,14 @@ function bmdAdvice_(day, m, useAi) {
   });
   var props = PropertiesService.getScriptProperties(), key = String(props.getProperty('ANTHROPIC_API_KEY') || '').trim();
   if (!useAi || !key || !need.length) return out;
-  need = need.slice(0, MYDAY.ADVICE);
+  // 22 Oct 2026: the people waiting on his word first (on 22 Oct his 41 own tasks took all 30 places and the 24 asks got nothing),
+  // and the list read in chunks of MYDAY.CHUNK, so one long answer is never cut off and lost.
+  need = need.filter(function (x) { return x.a; }).concat(need.filter(function (x) { return !x.a; })).slice(0, MYDAY.ADVICE);
+  for (var ci = 0; ci < need.length; ci += MYDAY.CHUNK) bmdAdviceChunk_(day, m, need.slice(ci, ci + MYDAY.CHUNK), out, have, lastAt, props, key);
+  try { cache.put(ck, JSON.stringify(have), 21600); } catch (e) {}
+  return out;
+}
+function bmdAdviceChunk_(day, m, need, out, have, lastAt, props, key) {
   var ask = need.map(function (x) {
     if (x.a) return { id: x.k, kind: 'reply', task: x.a.subject, asked_by: x.a.by, they_said: x.a.said,
       notes: (m.chat[x.a.id] || []).slice(0, 4).reverse().map(function (n) { return (n.day || '') + ' ' + n.by + ': ' + shorten_(n.text, 260); }) };
@@ -6037,15 +6065,14 @@ function bmdAdvice_(day, m, useAi) {
     var res = UrlFetchApp.fetch(CLAUDE_READ.URL, { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
       headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
       payload: JSON.stringify({ model: String(props.getProperty('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL).trim(), max_tokens: 5000, messages: [{ role: 'user', content: prompt }] }) });
-    if (res.getResponseCode() !== 200) return out;
+    if (res.getResponseCode() !== 200) { try { runlog_('my day advice: Claude answered ' + res.getResponseCode()); } catch (e) {} return out; }
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     need.forEach(function (x) {
       var v = js[x.k]; if (!v || !/^(close|move|note|keep|reply)$/.test(String(v.act))) return;
       out[x.k] = { act: String(v.act), why: shorten_(String(v.why || ''), 120) || out[x.k].why, note: shorten_(String(v.note || ''), 320), ai: true, n: x.a ? String(x.a.at || '') : lastAt(x.k) };
       have[x.k] = out[x.k];
     });
-    try { cache.put(ck, JSON.stringify(have), 21600); } catch (e) {}
   } catch (e) { try { runlog_('my day advice failed: ' + (e && e.message)); } catch (e2) {} }
   return out;
 }
@@ -6632,8 +6659,7 @@ function tcardDraft_(sid, t, brief, notes, day) {
       payload: JSON.stringify({ model: tcardModel_(), max_tokens: TCARD.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return { ok: false, error: 'Claude did not answer this time (' + res.getResponseCode() + '). Use a template, or write it yourself.' };
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').trim(), out = null;
-    var j = txt.replace(/^```(?:json)?\s*|\s*```$/g, ''), a = j.indexOf('{'), b = j.lastIndexOf('}');
-    try { if (a > -1 && b > a) out = JSON.parse(j.slice(a, b + 1)); } catch (e) {}
+    out = claudeJsonParse_(txt);
     var note = String((out && out.note) || (out ? '' : txt)).trim(); if (!note) return { ok: false, error: 'Claude came back empty. Use a template, or write it yourself.' };
     var action = /^(close|move|note)$/.test(String(out && out.action)) ? String(out.action) : 'note', warn = String((out && out.warn) || '').trim();
     if (wants && action === 'close' && !tcardAgentGiven_(note)) { action = 'move'; warn = warn || 'The client wants an agent: move it with the reason rather than close it.'; }
@@ -7284,7 +7310,7 @@ function gameBestNote_(cands, day, from) {
         payload: JSON.stringify({ model: String(props.getProperty('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL).trim(), max_tokens: 100, messages: [{ role: 'user', content: prompt }] }) });
       if (res.getResponseCode() === 200) {
         var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-        var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)), i = Number(js.pick);
+        var js = claudeJsonParse_(txt) || {}, i = Number(js.pick);
         if (cands[i]) pick = cands[i];
       }
     } catch (e) {}
@@ -7721,7 +7747,7 @@ function rateReads_(work, facts) {
       payload: JSON.stringify({ model: rateProp_('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL, max_tokens: Math.min(8000, 600 + 260 * items.length), messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return { sum: sum, intel: intel };
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     Object.keys(js).forEach(function (id) {
       if (sum[id] == null) return;
       var v = js[id], s = typeof v === 'string' ? v : (v && v.summary), i = v && typeof v === 'object' ? v.intel : '';
@@ -8738,7 +8764,7 @@ function umOpenedCard_(items, focus, chat, base, noSf, drafts) {
    that record, and comes back with where it stands, the reply in his voice, the next step and who takes it, and what
    would make the reply stronger, from the branch's own tools. Use this reply puts it in the box; nothing posts until he
    saves. Firmer, Shorter and Kinder write it again; anything he types or speaks first becomes the reply's substance. */
-var UMAI = { MAX_TOKENS: 900, NOTES: 25, RELATED: 8,
+var UMAI = { MAX_TOKENS: 1600, NOTES: 25, RELATED: 8,
   TOOLS: 'Log Book (documents agents hand in, who signed for them, where each went), Delivery Book (cheques, policy contracts and certificates handed over), ' +
     'Premium Due Desk (the 45 to 96 day premium letters), Query Pal (clients\' online queries), the clients board (orphan clients, calls logged, households), ' +
     'FactFind360 (agents\' fact finds, leads and goals), Branch Intelligence (lapsed and slipped policies, pendings, requirements), the KPI tracker (staff attendance and their days), ' +
@@ -8882,10 +8908,13 @@ function umDraft_(o) {
       payload: JSON.stringify({ model: claudeDraftModel_(), max_tokens: UMAI.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return { ok: false, error: 'Branch Intelligence did not answer this time (' + res.getResponseCode() + '). Try again.' };
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').trim(), out = null;
-    var j = txt.replace(/^```(?:json)?\s*|\s*```$/g, ''), a = j.indexOf('{'), b = j.lastIndexOf('}');
-    try { if (a > -1 && b > a) out = JSON.parse(j.slice(a, b + 1)); } catch (e) {}
+    out = claudeJsonParse_(txt);
     var reply = String((out && out.reply) || '').trim();
-    if (!reply) return { ok: false, error: 'Branch Intelligence came back empty. Try again.' };
+    if (!reply) {
+      var stop = claudeStop_(res);
+      try { runlog_('draft my reply: no reply (' + stop + ', ' + txt.length + ' chars): ' + txt.slice(0, 200)); } catch (e) {}
+      return { ok: false, error: 'Branch Intelligence came back without a reply' + (stop === 'max_tokens' ? ' (it ran out of room)' : stop === 'refusal' ? ' (it declined this one)' : !txt ? ' (nothing in the answer)' : '') + '. Try again.' };
+    }
     var act = String((out && out.action) || '').toLowerCase();
     return { ok: true, read: String(out.read || '').trim().slice(0, 400), reply: reply.slice(0, 1200), next: String(out.next || '').trim().slice(0, 300),
       add: (Array.isArray(out.add) ? out.add : []).map(function (x) { return String(x || '').trim().slice(0, 220); }).filter(String).slice(0, 3),
@@ -8926,8 +8955,7 @@ function umBrief_(sid, day, it, o) {
       payload: JSON.stringify({ model: claudeDraftModel_(), max_tokens: UMAI.MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return { ok: false, error: 'Branch Intelligence did not answer this time (' + res.getResponseCode() + '). Try again.' };
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('').trim(), out = null;
-    var j = txt.replace(/^```(?:json)?\s*|\s*```$/g, ''), a = j.indexOf('{'), b = j.lastIndexOf('}');
-    try { if (a > -1 && b > a) out = JSON.parse(j.slice(a, b + 1)); } catch (e) {}
+    out = claudeJsonParse_(txt);
     var read = String((out && out.read) || '').trim();
     if (!read) return { ok: false, error: 'Branch Intelligence came back empty. Try again.' };
     var reply = String(out.reply || '').trim(), act = String(out.action || '').toLowerCase();
@@ -10330,11 +10358,70 @@ function claudeDrafts_(items, who) {
       payload: JSON.stringify({ model: claudeDraftModel_(), max_tokens: 4000, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) { try { runlog_('drafts: Claude answered ' + res.getResponseCode()); } catch (e) {} return out; }
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     Object.keys(js).forEach(function (id) { var v = js[id] || {}; if (String(v.note || '').trim()) out[id] = { why: shorten_(String(v.why || ''), 140), note: shorten_(String(v.note), 420) }; });
   } catch (e) { try { runlog_('drafts failed: ' + (e && e.message)); } catch (e2) {} }
   return out;
 }
+/* ── Claude's answer, read even when it is untidy or cut short (22 October 2026) ──
+ *  Ricky, 9:07am, on his page: "Draft my reply" said "Branch Intelligence came back empty. Try again." The answer comes
+ *  back as JSON, and the old reading needed it perfect: one raw line break inside the reply, a word before or after the
+ *  braces, or an answer cut off at its length limit, and the whole of it was thrown away. claudeJsonParse_ tries it as
+ *  it is; then with line breaks inside the text made safe; then keeps every complete part ("reply", or each task's
+ *  entry) and drops only an unfinished one. A reply that was itself cut off is never kept. claudeText_ joins the text
+ *  blocks and claudeStop_ says why it stopped, for the message and the run log.
+ */
+function claudeText_(res) {
+  try { var j = JSON.parse(res.getContentText()); return (j.content || []).filter(function (b) { return b && b.type !== 'thinking'; }).map(function (b) { return b.text || ''; }).join('').trim(); } catch (e) { return ''; }
+}
+function claudeStop_(res) { try { return String(JSON.parse(res.getContentText()).stop_reason || ''); } catch (e) { return ''; } }
+function claudeJsonFix_(t) {   // raw line breaks and tabs inside "..." made safe
+  var out = '', inStr = false, esc = false;
+  for (var i = 0; i < t.length; i++) {
+    var c = t.charAt(i);
+    if (inStr) {
+      if (esc) { out += c; esc = false; continue; }
+      if (c === '\\') { out += c; esc = true; continue; }
+      if (c === '"') { inStr = false; out += c; continue; }
+      if (c === '\n') { out += '\\n'; continue; } if (c === '\r') { continue; } if (c === '\t') { out += '\\t'; continue; }
+      out += c;
+    } else { if (c === '"') inStr = true; out += c; }
+  }
+  return out;
+}
+function claudeJsonEnd_(t, i) {   // the index of the bracket closing the one at i, or -1 when it never closes
+  var depth = 0, inStr = false, esc = false;
+  for (var k = i; k < t.length; k++) {
+    var c = t.charAt(k);
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{' || c === '[') depth++;
+    else if (c === '}' || c === ']') { depth--; if (depth === 0) return k; }
+  }
+  return -1;
+}
+function claudeJsonParse_(txt) {
+  var t = String(txt || '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+  var a = t.indexOf('{'); if (a < 0) return null;
+  var b = t.lastIndexOf('}');
+  if (b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch (e) {} }
+  var f = claudeJsonFix_(t.slice(a));
+  var e1 = claudeJsonEnd_(f, 0); if (e1 > 0) { try { return JSON.parse(f.slice(0, e1 + 1)); } catch (e) {} }
+  // Keep every complete top-level entry; drop only an unfinished one.
+  var out = {}, got = false, i = 1, re = /\s*,?\s*"((?:[^"\\]|\\.)*)"\s*:\s*/g;
+  while (i < f.length) {
+    re.lastIndex = i; var m = re.exec(f); if (!m || m.index !== i) break;
+    var k = m[1], j = re.lastIndex, ch = f.charAt(j), end = -1;
+    if (ch === '{' || ch === '[') end = claudeJsonEnd_(f, j);
+    else if (ch === '"') { var esc = false; for (var q = j + 1; q < f.length; q++) { var c = f.charAt(q); if (esc) { esc = false; continue; } if (c === '\\') { esc = true; continue; } if (c === '"') { end = q; break; } } }
+    else { var mm = /^[^,}\]]*/.exec(f.slice(j)); end = mm && /[,}\]]/.test(f.charAt(j + mm[0].length)) ? j + mm[0].length - 1 : -1; }
+    if (end < 0) break;
+    try { out[k] = JSON.parse(f.slice(j, end + 1).trim()); got = true; } catch (e) {}
+    i = end + 1;
+  }
+  return got ? out : null;
+}
+
 /** The box under an item: Claude's reply, and the button that puts it in the reply box. Nothing is sent by this. */
 function draftBox_(id, d, field) {
   if (!d || !d.note) return '';
@@ -11877,7 +11964,7 @@ function chaseWrite_(picks, day) {
       payload: JSON.stringify({ model: model, max_tokens: 4000, messages: [{ role: 'user', content: prompt }] }) });
     if (res.getResponseCode() !== 200) return out;
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
-    var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    var js = claudeJsonParse_(txt) || {};
     Object.keys(js).forEach(function (id) { var v = String(js[id] || '').replace(/\s+/g, ' ').trim(); if (out[id] && v.length >= 20) out[id] = v.slice(0, 400); });
     out._ai = true;
   } catch (e) {}

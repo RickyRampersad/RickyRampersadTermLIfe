@@ -124,5 +124,41 @@ if (dow <= 5) {
   env.bmDeepWarm_ = realWarm;
 } else ok('the tick at 4:40 (weekday only; skipped today)', true);
 
+console.log('\nClaude gets its own run, asks first, in chunks (2026-10-22c):\n');
+if (dow <= 5) {
+  let qw = 0, dw = 0; const rq = env.bmdWarm_, rd = env.bmDeepWarm_;
+  env.bmdWarm_ = () => { qw++; return {}; }; env.bmDeepWarm_ = () => { dw++; return 0; }; env.inboxOn_ = () => true; env.dayLogSalesforce_ = () => 0; env.inboxScrub_ = () => null;
+  props.deleteProperty('bmai_hr'); props.deleteProperty('inbox_hr');
+  env.hhmm_ = () => '09:04'; env.housekeepingTick_();
+  ok('at :04 the scrub runs and Claude waits for its own run', qw === 0 && dw === 0, qw + '/' + dw);
+  env.hhmm_ = () => '09:24'; env.housekeepingTick_(); env.housekeepingTick_();
+  ok('at :24 Claude reads his day, once that hour', qw === 1 && dw === 1, qw + '/' + dw);
+  env.hhmm_ = () => '10:21'; env.housekeepingTick_();
+  ok('and again the next hour', qw === 2 && dw === 2, qw + '/' + dw);
+  env.bmdWarm_ = rq; env.bmDeepWarm_ = rd;
+} else ok('Claude\'s own run (weekday only; skipped today)', true);
+
+// The light read: 41 tasks of his own and 24 people asking him; everyone gets read, the asks first.
+const many = { day: DAY, chat: {}, mine: [], w: { ask: [], ignored: [] } };
+for (let i = 0; i < 41; i++) many.mine.push({ id: '00TMANY' + i, subject: 'Own task ' + i, due: '2026-09-01', late: true, ty: 'Servicing' });
+for (let i = 0; i < 24; i++) many.w.ask.push({ id: '00TASK' + i, subject: 'Orphan ' + i, by: 'Elizabeth Lee', said: 'Awaiting a new agent', at: DAY + 'T0' + (i % 9) + ':00:00.000Z' });
+env.CacheService.getScriptCache().remove && env.CacheService.getScriptCache().remove('bmd_adv_' + DAY);
+calls = []; answer = null;
+env.UrlFetchApp = { fetch: (u, o) => { const body = JSON.parse(o.payload); calls.push(body.messages[0].content);
+  const items = JSON.parse(body.messages[0].content.slice(body.messages[0].content.lastIndexOf('\n\n') + 2)); const js = {};
+  items.forEach(it => { js[it.id] = it.kind === 'reply' ? { act: 'reply', why: 'Assign the agent?', note: 'Elizabeth, thank you. I will name the agent today.' } : { act: 'note', why: 'No note', note: 'Where does this stand?' }; });
+  return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(js) }] }) }; } };
+const adv = env.bmdAdvice_(DAY, many, true);
+const first = JSON.parse(calls[0].slice(calls[0].lastIndexOf('\n\n') + 2));
+ok('the 24 people waiting on him are read first', first.slice(0, 24).every(x => x.kind === 'reply'), first.slice(0, 3).map(x => x.kind).join());
+ok('in chunks of 25, so nothing is cut off', calls.length === 3 && first.length === 25, String(calls.length));
+ok('every ask has Claude\'s reply, and his own tasks too', many.w.ask.every(a => adv['a:' + a.id] && adv['a:' + a.id].ai) && many.mine.filter(t => adv[t.id] && adv[t.id].ai).length === 41);
+
+// The day log's times: a sheet time value printed as "Sat Dec 30 1899 07:08:00".
+const env2 = makeEnv();   // a fresh workbook: the runs above made a log tab of their own
+env2.__mkSheet('My Day Log', 1, ['Date', 'At', 'Kind', 'Group', 'What', 'Ref'], [[DAY, new Date(1899, 11, 30, 7, 8), 'note', 'Servicing', 'Note on a task', 'r1']]);
+const lr = env2.dayLogRows_(DAY);
+ok('the day log shows 07:08, not 1899', lr.length === 1 && lr[0].At === '07:08', lr[0] && String(lr[0].At));
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');
 process.exit(fails ? 1 : 0);
