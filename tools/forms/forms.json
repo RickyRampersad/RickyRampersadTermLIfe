@@ -1,0 +1,319 @@
+{
+  "_note": "The six branch-owned forms that replaced the homepage JotForms on 22 October 2026. Edit this file and run tools/forms/build-forms.py — never edit a generated page. Every form posts q.quote to the Service Questionnaire backend (apps-script/Quotes.gs) and the client gets a reference back. Deliberately NOT collected anywhere here: national ID or driver's permit numbers, policy card numbers, bank or card details, and any health declaration. Those are taken by a person, on the call or on the signed form.",
+
+  "forms": [
+    {
+      "key": "motor",
+      "code": "QM",
+      "dir": "quote/motor",
+      "title": "Motor insurance quote",
+      "line": "Motor",
+      "icon": "car",
+      "eyebrow": "Request a quote",
+      "lede": "Tell us about the vehicle and who drives it. We come back with your price — and your reference is on screen the moment you press send.",
+      "cta": "Send my quote request",
+      "mins": "3 minutes",
+      "sections": [
+        {
+          "name": "The vehicle",
+          "fields": [
+            { "k": "veh_year",  "t": "number", "label": "Year of manufacture", "req": true, "min": 1960, "max": 2028, "w": "s", "ph": "2019" },
+            { "k": "veh_make",  "t": "text",   "label": "Make", "req": true, "w": "s", "ph": "Toyota" },
+            { "k": "veh_model", "t": "text",   "label": "Model", "req": true, "w": "s", "ph": "Corolla" },
+            { "k": "veh_body",  "t": "select", "label": "Body type", "req": true, "w": "s",
+              "opts": ["Private car", "SUV", "Station wagon", "Van", "Pickup", "Truck", "Motorcycle", "Other"] },
+            { "k": "veh_value", "t": "money",  "label": "Estimated value today", "req": true, "w": "s", "help": "What it would cost to replace. A fair estimate is fine." },
+            { "k": "veh_cc",    "t": "number", "label": "Engine size (cc)", "w": "s", "ph": "1500", "help": "If you know it." },
+            { "k": "veh_use",   "t": "radio",  "label": "How is it used?", "req": true,
+              "opts": ["Private use only", "Private and business use", "Commercial / goods carrying", "Hire or taxi"] },
+            { "k": "veh_reg",   "t": "text",   "label": "Registration number", "w": "s", "ph": "PCX 1234", "help": "If it is already registered. Leave blank for a new vehicle." }
+          ]
+        },
+        {
+          "name": "Who drives it",
+          "fields": [
+            { "k": "drv_dob",      "t": "date",   "label": "Main driver's date of birth", "req": true, "w": "s" },
+            { "k": "drv_licensed", "t": "number", "label": "Years holding a licence", "req": true, "w": "s", "min": 0, "max": 70, "ph": "12" },
+            { "k": "drv_young",    "t": "radio",  "label": "Will anyone under 25 drive it?", "req": true, "opts": ["No", "Yes"] },
+            { "k": "drv_claims",   "t": "radio",  "label": "Any accidents or claims in the last three years?", "req": true, "opts": ["No", "Yes"] },
+            { "k": "drv_claims_d", "t": "textarea", "label": "Tell us what happened", "rows": 3, "showIf": "drv_claims=Yes",
+              "help": "Roughly when, and whether a claim was paid. It does not have to be exact." }
+          ]
+        },
+        {
+          "name": "The cover you want",
+          "fields": [
+            { "k": "cov_type",  "t": "radio",  "label": "Type of cover", "req": true,
+              "opts": ["Comprehensive", "Third party, fire and theft", "Third party only", "Not sure — advise me"] },
+            { "k": "cov_from",  "t": "date",   "label": "When do you need it from?", "w": "s", "future": true },
+            { "k": "cur_insurer", "t": "text", "label": "Current insurer", "w": "s", "help": "If you are insured now. Leave blank if not." },
+            { "k": "cur_ncd",   "t": "select", "label": "No-claim discount you hold", "w": "s",
+              "opts": ["None", "1 year", "2 years", "3 years", "4 years", "5 years or more", "Not sure"] }
+          ]
+        }
+      ]
+    },
+
+    {
+      "key": "property",
+      "code": "QP",
+      "dir": "quote/property",
+      "title": "Property insurance quote",
+      "line": "Property",
+      "icon": "house",
+      "eyebrow": "Request a quote",
+      "lede": "Buildings, contents or both — for your home or your business. Tell us what is there and we come back with your price.",
+      "cta": "Send my quote request",
+      "mins": "4 minutes",
+      "sections": [
+        {
+          "name": "The property",
+          "fields": [
+            { "k": "prop_addr",  "t": "text",   "label": "Street address", "req": true, "ph": "12 Mango Road" },
+            { "k": "prop_town",  "t": "text",   "label": "Town or district", "req": true, "w": "s", "ph": "Chaguanas" },
+            { "k": "prop_type",  "t": "select", "label": "Type of property", "req": true, "w": "s",
+              "opts": ["House", "Townhouse", "Apartment", "Commercial building", "Mixed residential and commercial", "Other"] },
+            { "k": "prop_occ",   "t": "radio",  "label": "Who lives or works there?", "req": true,
+              "opts": ["Owner occupied", "Rented out to a tenant", "Unoccupied at present", "My own business operates there"] },
+            { "k": "prop_built", "t": "number", "label": "Approximate year built", "w": "s", "min": 1850, "max": 2028, "ph": "2008" },
+            { "k": "prop_walls", "t": "select", "label": "Walls", "req": true, "w": "s",
+              "opts": ["Concrete", "Concrete and wood", "Wood", "Steel frame", "Other"] },
+            { "k": "prop_roof",  "t": "select", "label": "Roof", "req": true, "w": "s",
+              "opts": ["Concrete", "Galvanise on timber", "Shingle", "Steel sheeting", "Other"] },
+            { "k": "prop_floors","t": "select", "label": "Storeys", "w": "s", "opts": ["1", "2", "3", "More than 3"] }
+          ]
+        },
+        {
+          "name": "What to cover",
+          "fields": [
+            { "k": "cov_what",      "t": "radio", "label": "Cover", "req": true,
+              "opts": ["Buildings and contents", "Buildings only", "Contents only"] },
+            { "k": "sum_building",  "t": "money", "label": "Sum insured — buildings", "w": "s", "showIf": "cov_what!=Contents only",
+              "help": "What it would cost to rebuild, not the market price." },
+            { "k": "sum_contents",  "t": "money", "label": "Sum insured — contents", "w": "s", "showIf": "cov_what!=Buildings only",
+              "help": "Furniture, appliances, equipment and belongings." },
+            { "k": "prop_mort",     "t": "radio", "label": "Is the property mortgaged?", "req": true, "opts": ["No", "Yes"] },
+            { "k": "prop_bank",     "t": "text",  "label": "Which bank or institution?", "w": "s", "showIf": "prop_mort=Yes" }
+          ]
+        },
+        {
+          "name": "Your history with cover",
+          "fields": [
+            { "k": "cur_insurer",  "t": "text",  "label": "Current insurer", "w": "s", "help": "Leave blank if the property is not insured now." },
+            { "k": "cur_renewal",  "t": "date",  "label": "Renewal date", "w": "s", "future": true, "help": "If you are insured now." },
+            { "k": "prop_claims",  "t": "radio", "label": "Any claims on this property in the last three years?", "req": true, "opts": ["No", "Yes"] },
+            { "k": "prop_claims_d","t": "textarea", "label": "Tell us what happened", "rows": 3, "showIf": "prop_claims=Yes" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "key": "critical-illness",
+      "code": "QC",
+      "dir": "quote/critical-illness",
+      "title": "Critical illness quote",
+      "line": "Critical illness",
+      "icon": "shield",
+      "eyebrow": "Request a quote",
+      "lede": "A lump sum paid on diagnosis, so the bills do not wait on your recovery. Tell us who it is for and we come back with your price.",
+      "cta": "Send my quote request",
+      "mins": "2 minutes",
+      "note": "This asks nothing about your health. The health questions come on the application itself, with a licensed agent, once you have seen the price.",
+      "sections": [
+        {
+          "name": "Who the cover is for",
+          "fields": [
+            { "k": "for_whom", "t": "radio", "label": "The cover is for", "req": true,
+              "opts": ["Myself", "My husband or wife", "My child", "Myself and my spouse"] },
+            { "k": "life_dob",    "t": "date",   "label": "Date of birth of the person to be covered", "req": true, "w": "s" },
+            { "k": "life_gender", "t": "select", "label": "Gender", "req": true, "w": "s", "opts": ["Female", "Male"] },
+            { "k": "life_job",    "t": "text",   "label": "Occupation", "req": true, "w": "s", "ph": "Teacher" },
+            { "k": "life_smoke",  "t": "radio",  "label": "Smoked or used tobacco in the last 12 months?", "req": true, "opts": ["No", "Yes"],
+              "help": "It changes the rate, which is why we ask it at quote stage." }
+          ]
+        },
+        {
+          "name": "The cover you want",
+          "fields": [
+            { "k": "sum_want",  "t": "money",  "label": "Amount you have in mind", "w": "s", "help": "Leave blank and we will show you two or three levels." },
+            { "k": "term_want", "t": "select", "label": "For how long?", "w": "s",
+              "opts": ["10 years", "15 years", "20 years", "To age 65", "For life", "Not sure — advise me"] },
+            { "k": "have_life", "t": "radio",  "label": "Do you hold life cover with Guardian Life already?", "req": true,
+              "opts": ["Yes", "No", "Not sure"] }
+          ]
+        }
+      ]
+    },
+
+    {
+      "key": "key-person",
+      "code": "QK",
+      "dir": "quote/key-person",
+      "title": "Key person protection quote",
+      "line": "Key person",
+      "icon": "building",
+      "eyebrow": "For your business",
+      "lede": "If the person the business runs on is gone tomorrow, this is what keeps the doors open. Tell us about the business and we come back with your price.",
+      "cta": "Send my quote request",
+      "mins": "4 minutes",
+      "note": "No health questions here. Those come on the application, with a licensed agent, once the business has seen the price.",
+      "sections": [
+        {
+          "name": "The business",
+          "fields": [
+            { "k": "biz_name",  "t": "text",   "label": "Registered business name", "req": true },
+            { "k": "biz_trade", "t": "text",   "label": "What the business does", "req": true, "ph": "Civil engineering contractor" },
+            { "k": "biz_years", "t": "number", "label": "Years trading", "w": "s", "min": 0, "max": 150, "ph": "11" },
+            { "k": "biz_staff", "t": "select", "label": "People employed", "w": "s",
+              "opts": ["Fewer than 5", "5 to 19", "20 to 49", "50 to 99", "100 or more"] },
+            { "k": "biz_role",  "t": "text",   "label": "Your role in the business", "req": true, "w": "s", "ph": "Managing Director" }
+          ]
+        },
+        {
+          "name": "The key person",
+          "fields": [
+            { "k": "kp_count",  "t": "select", "label": "How many key people to cover?", "req": true, "w": "s",
+              "opts": ["1", "2", "3", "4 or more"] },
+            { "k": "kp_role",   "t": "text",   "label": "Their role", "req": true, "w": "s", "ph": "Technical Director" },
+            { "k": "kp_dob",    "t": "date",   "label": "Their date of birth", "req": true, "w": "s" },
+            { "k": "kp_gender", "t": "select", "label": "Gender", "req": true, "w": "s", "opts": ["Female", "Male"] },
+            { "k": "kp_smoke",  "t": "radio",  "label": "Smoked or used tobacco in the last 12 months?", "req": true, "opts": ["No", "Yes"] },
+            { "k": "kp_earn",   "t": "money",  "label": "What they earn a year", "w": "s",
+              "help": "Or what the business would lose in a year without them. An estimate is fine." },
+            { "k": "kp_more",   "t": "textarea", "label": "The other key people", "rows": 3, "showIf": "kp_count!=1",
+              "help": "Role, date of birth and whether they smoke, one per line. We quote them together." }
+          ]
+        },
+        {
+          "name": "What the cover is for",
+          "fields": [
+            { "k": "kp_why",  "t": "radio",  "label": "What the money would do", "req": true,
+              "opts": ["Replace the profit the business would lose", "Repay a loan or release a personal guarantee", "Buy out a partner's share", "Recruit and train a replacement", "More than one of these", "Not sure — advise me"] },
+            { "k": "kp_loan", "t": "money",  "label": "Amount of the loan or guarantee", "w": "s", "showIf": "kp_why=Repay a loan or release a personal guarantee" },
+            { "k": "sum_want","t": "money",  "label": "Cover you have in mind", "w": "s", "help": "Leave blank and we will work it out with you." },
+            { "k": "term_want","t": "select","label": "For how long?", "w": "s",
+              "opts": ["5 years", "10 years", "15 years", "20 years", "To the key person's retirement", "Not sure — advise me"] },
+            { "k": "kp_buysell", "t": "radio", "label": "Is there a buy-sell or shareholders' agreement in place?", "opts": ["Yes", "No", "Not sure"] }
+          ]
+        }
+      ]
+    },
+
+    {
+      "key": "oas",
+      "code": "QO",
+      "dir": "enrol/oas",
+      "title": "OAS enrolment",
+      "line": "OAS enrolment",
+      "icon": "doc",
+      "eyebrow": "Enrol",
+      "lede": "Start your enrolment here. We check it against your record, then send you the enrolment form and the payment authority to sign.",
+      "cta": "Start my enrolment",
+      "mins": "3 minutes",
+      "note": "This starts the enrolment and gives you a reference. The signed form and the payment authority come to you from the branch — we never ask for an ID number, a bank account or a card on a web page.",
+      "done_extra": "Watch for an e-mail from the branch with your enrolment form and the payment authority. Sign it, send it back, and your first contribution goes on the next run.",
+      "sections": [
+        {
+          "name": "About you",
+          "fields": [
+            { "k": "you_dob",   "t": "date",   "label": "Your date of birth", "req": true, "w": "s" },
+            { "k": "you_town",  "t": "text",   "label": "Town or district you live in", "req": true, "w": "s", "ph": "San Fernando" },
+            { "k": "have_pol",  "t": "radio",  "label": "Do you hold any policy with Guardian Life already?", "req": true,
+              "opts": ["Yes", "No", "Not sure"] }
+          ]
+        },
+        {
+          "name": "Where you work",
+          "fields": [
+            { "k": "emp_name",  "t": "text",   "label": "Employer", "req": true, "help": "Leave as self-employed if that is the case." },
+            { "k": "emp_job",   "t": "text",   "label": "Your job title", "w": "s", "ph": "Operations Officer" },
+            { "k": "emp_no",    "t": "text",   "label": "Employee or payroll number", "w": "s", "help": "If you know it. It helps us find the right list." },
+            { "k": "emp_group", "t": "radio",  "label": "Is there a Guardian Life plan at your workplace?", "req": true,
+              "opts": ["Yes", "No", "Not sure"] }
+          ]
+        },
+        {
+          "name": "Your contribution",
+          "fields": [
+            { "k": "contrib",     "t": "money",  "label": "How much a month?", "req": true, "w": "s" },
+            { "k": "pay_how",     "t": "radio",  "label": "How would you like to pay?", "req": true,
+              "opts": ["Salary deduction through my employer", "Bank standing order", "Credit card", "At the branch"] },
+            { "k": "start_month", "t": "text",   "label": "Which month should it start?", "w": "s", "ph": "December 2026" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "key": "xpress-life",
+      "code": "QX",
+      "dir": "apply/xpress-life",
+      "title": "Xpress Life application",
+      "line": "Xpress Life",
+      "icon": "bolt",
+      "eyebrow": "Apply",
+      "lede": "Term life cover, instant issue, no medical exams. Start here so the branch has your file and your reference — then finish it online, or have an agent sit with you and do it.",
+      "cta": "Start my application",
+      "mins": "2 minutes",
+      "note": "Nothing here asks about your health. The five health questions are on the Xpress Life application itself, which is where the cover is actually issued.",
+      "finish_url": "https://xpresslifett.com",
+      "finish_label": "Finish it now on Xpress Life",
+      "done_extra": "You can finish the application online right now, or wait for us — whichever you chose. Either way the branch has your file under this reference.",
+      "sections": [
+        {
+          "name": "Who the cover is for",
+          "fields": [
+            { "k": "for_whom",    "t": "radio",  "label": "The cover is for", "req": true,
+              "opts": ["Myself", "My husband or wife", "Myself and my spouse"] },
+            { "k": "life_dob",    "t": "date",   "label": "Date of birth of the person to be covered", "req": true, "w": "s" },
+            { "k": "life_gender", "t": "select", "label": "Gender", "req": true, "w": "s", "opts": ["Female", "Male"] },
+            { "k": "life_job",    "t": "text",   "label": "Occupation", "req": true, "w": "s", "ph": "Electrician" },
+            { "k": "life_smoke",  "t": "radio",  "label": "Smoked or used tobacco in the last 12 months?", "req": true, "opts": ["No", "Yes"],
+              "help": "It changes the rate, which is why we ask it here." }
+          ]
+        },
+        {
+          "name": "The cover you want",
+          "fields": [
+            { "k": "sum_want",  "t": "money",  "label": "Amount of cover", "w": "s", "help": "Leave blank and we will show you two or three levels." },
+            { "k": "term_want", "t": "select", "label": "For how long?", "w": "s",
+              "opts": ["10 years", "15 years", "20 years", "To age 65", "Not sure — advise me"] },
+            { "k": "pays_who",  "t": "select", "label": "Who would it pay?", "w": "s",
+              "opts": ["My husband or wife", "My children", "My parents", "My estate", "Not decided yet"],
+              "help": "You name the person on the application itself. This is just so we quote it right." },
+            { "k": "how_finish","t": "radio",  "label": "How would you like to finish it?", "req": true,
+              "opts": ["I will complete it online myself now", "Have an agent sit with me and do it", "Either — call me and we will decide"] }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "common": {
+    "you": {
+      "name": "About you",
+      "fields": [
+        { "k": "name",    "t": "text",   "label": "Your full name", "req": true, "ac": "name" },
+        { "k": "email",   "t": "email",  "label": "E-mail", "req": true, "w": "s", "ac": "email",
+          "help": "Your reference and your quote come here." },
+        { "k": "phone",   "t": "tel",    "label": "Phone", "req": true, "w": "s", "ac": "tel", "ph": "868 123 4567" },
+        { "k": "reach",   "t": "radio",  "label": "Best way to reach you", "req": true,
+          "opts": ["Call me", "WhatsApp", "E-mail"] },
+        { "k": "when",    "t": "radio",  "label": "Best time", "req": true,
+          "opts": ["Morning", "Afternoon", "Evening", "Any time"] },
+        { "k": "agent",   "t": "text",   "label": "The agent who sent you", "w": "s",
+          "help": "If someone from the branch asked you to fill this in, their name here keeps the file with them." }
+      ]
+    },
+    "last": {
+      "name": "Anything else",
+      "fields": [
+        { "k": "notes", "t": "textarea", "label": "Anything we should know", "rows": 4,
+          "help": "Optional. Anything that would change the price or the advice." },
+        { "k": "consent", "t": "check", "req": true, "short": "Your permission to quote",
+          "label": "I am happy for the Ricky Rampersad Branch of Guardian Life of the Caribbean to use these details to prepare my quotation and to contact me about it." }
+      ]
+    }
+  }
+}

@@ -1,0 +1,362 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   The branch's own forms — shared stylesheet
+   Ricky Rampersad Branch · 22 October 2026
+
+   The six forms that replaced the homepage JotForms. The palette is the
+   homepage's, sampled from Guardian Life of the Caribbean's own live
+   stylesheet, and every pair below was computed against the real ground
+   (#faf9f2), never against pure white.
+
+   Rules this sheet is built on, all of them house rules:
+     · a form control is max(16px, 1rem) — iOS zooms on a COMPUTED size
+       under 16, so a 15px input moves the whole page on a tap
+     · two border tokens: --line for a separator, --line-strong for
+       anything that defines a control or draws a focus ring
+     · type bounds in a clamp() are rem, never px (WCAG failure F94)
+     · min() inside every auto-fit grid, or the page overflows at 320
+     · motion lives only inside prefers-reduced-motion: no-preference;
+       every finished state is the plain CSS default
+     · never animate box-shadow — the lift moves a translate
+     · no emoji anywhere: they render per-OS, cannot inherit currentColor
+       and screen readers announce their Unicode names
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --ground:   #faf9f2;
+  --ground-2: #f4f2e8;
+  --card:     #ffffff;
+  --card-2:   #fdfcf7;
+
+  --ink:    #0d3f5e;
+  --ink-2:  #0a3350;
+  --body:   #2b3b47;
+  --muted:  #5b6670;
+
+  --action:    #00728d;
+  --action-dk: #005a70;
+  --action-lt: #e8f3f6;
+  --action-a8:  rgba(0,114,141,.08);
+  --action-a14: rgba(0,114,141,.14);
+
+  --line:        #e4e0d4;
+  --line-strong: #7d8890;
+
+  --ok:    #0f7a52;  --ok-bg:   #e7f4ee;
+  --warn:  #8a5a00;  --warn-bg: #fbf1dd;
+  --stop:  #b3261e;  --stop-bg: #fbeceb;
+
+  --sh: 32deg 20% 42%;
+  --e1: 0 1px 1px hsl(var(--sh) / .05), 0 2px 2px hsl(var(--sh) / .05);
+  --e2: 0 1px 2px hsl(var(--sh) / .06), 0 3px 6px hsl(var(--sh) / .06),
+        0 6px 12px hsl(var(--sh) / .04);
+  --e3: 0 2px 4px hsl(var(--sh) / .06), 0 6px 12px hsl(var(--sh) / .06),
+        0 12px 24px hsl(var(--sh) / .05);
+
+  --display: 'Inter Tight', 'Inter', system-ui, sans-serif;
+  --text:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --f--2: clamp(0.8125rem, 0.7917rem + 0.1042vw, 0.875rem);
+  --f--1: clamp(0.9375rem, 0.9167rem + 0.1042vw, 1rem);
+  --f-0:  clamp(1.0625rem, 1.0417rem + 0.1042vw, 1.125rem);
+  --f-1:  clamp(1.1875rem, 1.1458rem + 0.2083vw, 1.3125rem);
+  --f-2:  clamp(1.3125rem, 1.2292rem + 0.4167vw, 1.5625rem);
+  --f-3:  clamp(1.5rem, 1.3542rem + 0.7292vw, 1.9375rem);
+  --f-4:  clamp(1.6875rem, 1.4375rem + 1.25vw, 2.4375rem);
+
+  --sp-3xs: 0.25rem; --sp-2xs: 0.5rem; --sp-xs: 0.75rem; --sp-s: 1rem;
+  --sp-m: 1.5rem;
+  --sp-l:  clamp(2rem, 1.8333rem + 0.8333vw, 2.5rem);
+  --sp-xl: clamp(3rem, 2.6667rem + 1.6667vw, 4rem);
+
+  --t-fast: 110ms; --t-mid: 240ms; --t-slow: 400ms;
+  --ease:     cubic-bezier(.2, 0, .38, .9);
+  --ease-out: cubic-bezier(0, 0, .3, 1);
+
+  --r-s: 8px; --r-m: 12px; --r-l: 18px; --r-xl: 26px;
+  --measure: 62ch;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  background: var(--ground);
+  color: var(--body);
+  font: var(--f-0)/1.65 var(--text);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;               /* clip, not hidden: propagates to the viewport */
+}
+
+:where(a) { color: var(--action); text-underline-offset: .18em; }
+:where(a:hover) { color: var(--action-dk); }
+
+:focus-visible {
+  outline: 3px solid var(--line-strong);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1, h2, h3, legend { font-family: var(--display); color: var(--ink); line-height: 1.15;
+                     letter-spacing: -.015em; text-wrap: balance; }
+
+/* ═══ chrome ═══ */
+
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: var(--sp-s);
+  padding: var(--sp-xs) var(--sp-s);
+  background: color-mix(in srgb, var(--ground) 86%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+@supports (backdrop-filter: blur(1px)) {
+  /* one of only three surfaces on the branch site that gets this: it
+     re-samples and re-blurs its backdrop every frame */
+  .topbar { backdrop-filter: blur(12px) saturate(1.3); }
+}
+.topbar .brand { display: flex; align-items: center; gap: var(--sp-2xs);
+                 font-family: var(--display); font-weight: 600; color: var(--ink);
+                 text-decoration: none; font-size: var(--f--1); }
+.topbar .brand img { width: 30px; height: 30px; display: block; flex: none; }
+.topbar .brand span { white-space: nowrap; }
+
+/* On a phone the number's digits would push the branch's own name onto
+   three lines. The number becomes its icon, and the span stays in the
+   accessibility tree, so the link is still announced and dialled as
+   "(868) 226-6461". */
+@media (max-width: 30rem) {
+  .topbar .tel span {
+    position: absolute; width: 1px; height: 1px;
+    clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+  }
+  .topbar .tel { padding-inline: var(--sp-2xs); min-width: 44px; justify-content: center; }
+}
+.topbar .spacer { flex: 1 1 auto; }
+.topbar .tel {
+  display: inline-flex; align-items: center; gap: .4em;
+  white-space: nowrap;            /* "(868) 226-6461" is one thing, never three lines */
+  min-height: 44px; padding: 0 var(--sp-xs);
+  font-size: var(--f--1); font-weight: 600; text-decoration: none;
+  border-radius: var(--r-s);
+}
+.topbar .tel:hover { background: var(--action-a8); }
+
+.layout { width: min(100% - 2.5rem, 54rem); margin-inline: auto; }
+
+/* ═══ head of the page ═══ */
+
+.lede { padding-block: var(--sp-l) var(--sp-m); }
+.eyebrow {
+  display: inline-block; font-size: var(--f--2); font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--action);
+  margin-bottom: var(--sp-2xs);
+}
+.lede h1 { font-size: var(--f-4); margin-bottom: var(--sp-xs); }
+.lede p  { max-width: var(--measure); color: var(--body); text-wrap: pretty; }
+
+.meta { display: flex; flex-wrap: wrap; gap: var(--sp-xs) var(--sp-s);
+        margin-top: var(--sp-s); font-size: var(--f--1); color: var(--muted); }
+.meta span { display: inline-flex; align-items: center; gap: .45em; }
+.meta svg { width: 18px; height: 18px; flex: none; }
+
+.note {
+  margin-top: var(--sp-m); padding: var(--sp-s) var(--sp-m);
+  background: var(--action-lt); border-left: 4px solid var(--action);
+  border-radius: 0 var(--r-m) var(--r-m) 0;
+  font-size: var(--f--1); color: var(--body); max-width: var(--measure);
+}
+.note strong { color: var(--ink); }
+
+/* ═══ the form ═══ */
+
+form { padding-bottom: var(--sp-xl); }
+
+fieldset {
+  border: 1px solid var(--line); border-radius: var(--r-l);
+  background: var(--card); box-shadow: var(--e1);
+  padding: var(--sp-m); margin-top: var(--sp-m);
+}
+legend {
+  font-size: var(--f-1); font-weight: 650;
+  padding-inline: var(--sp-2xs); margin-inline-start: calc(var(--sp-2xs) * -1);
+}
+
+/* min() inside the auto-fit, or it overflows at 320–360 */
+.grid { display: grid; gap: var(--sp-s) var(--sp-m);
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+        margin-top: var(--sp-s); }
+.f-wide { grid-column: 1 / -1; }
+
+.f > label, .f > .q { display: block; font-weight: 600; color: var(--ink);
+                      font-size: var(--f--1); margin-bottom: var(--sp-3xs); }
+.f .help { display: block; font-size: var(--f--2); color: var(--muted);
+           margin-top: var(--sp-3xs); text-wrap: pretty; }
+.f .req { color: var(--stop); margin-inline-start: .2em; font-weight: 700; }
+
+input[type=text], input[type=email], input[type=tel], input[type=date],
+input[type=number], select, textarea {
+  width: 100%;
+  font: inherit;
+  font-size: max(16px, 1rem);        /* iOS zooms on a computed size under 16 */
+  line-height: 1.4;
+  min-height: 48px;
+  padding: var(--sp-2xs) var(--sp-xs);
+  color: var(--body);
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-s);
+  transition: border-color var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
+}
+textarea { min-height: 7rem; resize: vertical; padding-block: var(--sp-xs); }
+select { appearance: none; padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%235b6670' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right .7rem center;
+  background-size: 20px 20px; }
+
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none;
+  border-color: var(--action);
+  box-shadow: 0 0 0 3px var(--action-a14);
+}
+input[aria-invalid=true], select[aria-invalid=true], textarea[aria-invalid=true] {
+  border-color: var(--stop); background: var(--stop-bg);
+}
+
+.money { position: relative; }
+.money > span { position: absolute; left: var(--sp-xs); top: 50%; translate: 0 -50%;
+                color: var(--muted); font-size: var(--f--1); pointer-events: none; }
+.money input { padding-left: 3.4rem; }
+
+/* radios: a tappable card each, so a thumb never misses */
+.opts { display: grid; gap: var(--sp-2xs); margin-top: var(--sp-2xs); }
+.opts.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+.opt {
+  display: flex; align-items: flex-start; gap: var(--sp-2xs);
+  min-height: 48px; padding: var(--sp-2xs) var(--sp-xs);
+  border: 1px solid var(--line-strong); border-radius: var(--r-s);
+  background: var(--card); cursor: pointer;
+  font-size: var(--f--1); line-height: 1.45;
+  transition: background var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease);
+}
+.opt:hover { background: var(--action-a8); }
+.opt input { flex: none; width: 22px; height: 22px; margin-top: .18em;
+             accent-color: var(--action); }
+.opt:has(input:checked) { border-color: var(--action); background: var(--action-lt); }
+.opt:has(input:checked) span { color: var(--ink); font-weight: 600; }
+.opt:has(input:focus-visible) { outline: 3px solid var(--line-strong); outline-offset: 2px; }
+
+/* .f > label sets 600; a whole sentence of consent in semibold shouts */
+.check { display: flex; align-items: flex-start; gap: var(--sp-xs); font-weight: 400;
+         padding: var(--sp-xs); border: 1px solid var(--line-strong);
+         border-radius: var(--r-m); background: var(--card-2);
+         font-size: var(--f--1); line-height: 1.5; cursor: pointer; }
+.check input { flex: none; width: 24px; height: 24px; margin-top: .1em;
+               accent-color: var(--action); }
+.check:has(input:focus-visible) { outline: 3px solid var(--line-strong); outline-offset: 2px; }
+
+.hid { display: none; }
+
+/* ═══ the send bar ═══ */
+
+.send { margin-top: var(--sp-m); display: flex; flex-wrap: wrap;
+        align-items: center; gap: var(--sp-s); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5em;
+  min-height: 52px; padding: 0 var(--sp-m);
+  font: 650 var(--f--1)/1 var(--display); letter-spacing: -.005em;
+  color: #fff; background: var(--action);
+  border: 1px solid var(--action-dk); border-radius: 999px;
+  cursor: pointer; text-decoration: none;
+  transition: background var(--t-fast) var(--ease), translate var(--t-fast) var(--ease);
+}
+.btn:hover:not([disabled]) { background: var(--action-dk); color: #fff; }
+.btn[disabled] { opacity: .6; cursor: progress; }
+.btn svg { width: 20px; height: 20px; }
+.btn-2 { color: var(--action); background: var(--card); border-color: var(--line-strong); }
+.btn-2:hover { background: var(--action-a8); color: var(--action-dk); }
+@media (prefers-reduced-motion: no-preference) {
+  .btn:hover:not([disabled]) { translate: 0 -2px; }   /* translate, never box-shadow */
+}
+.send p { font-size: var(--f--2); color: var(--muted); max-width: 32ch; }
+
+.err {
+  margin-top: var(--sp-s); padding: var(--sp-xs) var(--sp-s);
+  background: var(--stop-bg); border-left: 4px solid var(--stop);
+  border-radius: 0 var(--r-s) var(--r-s) 0;
+  font-size: var(--f--1); color: var(--body);
+}
+.err[hidden] { display: none; }
+.err b { color: var(--stop); }
+
+/* ═══ the done screen ═══ */
+
+.done { padding-block: var(--sp-l) var(--sp-xl); }
+.done-card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--r-xl); box-shadow: var(--e3);
+  padding: var(--sp-l); text-align: left;
+}
+.done-ic { display: grid; place-items: center; width: 64px; height: 64px;
+           border-radius: 50%; background: var(--ok-bg); color: var(--ok);
+           margin-bottom: var(--sp-s); }
+.done-ic svg { width: 34px; height: 34px; }
+.done-card h1 { font-size: var(--f-3); margin-bottom: var(--sp-2xs); }
+.done-card > p { max-width: var(--measure); text-wrap: pretty; }
+.refbox {
+  margin: var(--sp-m) 0; padding: var(--sp-s) var(--sp-m);
+  background: var(--action-lt); border: 1px solid var(--action);
+  border-radius: var(--r-m);
+}
+.refbox .k { display: block; font-size: var(--f--2); font-weight: 700;
+             letter-spacing: .08em; text-transform: uppercase; color: var(--action-dk); }
+.refbox .v { display: block; font-family: var(--display); font-size: var(--f-2);
+             font-weight: 700; color: var(--ink); letter-spacing: .02em;
+             font-variant-numeric: tabular-nums; }
+.steps { list-style: none; margin-top: var(--sp-m); display: grid; gap: var(--sp-xs); }
+.steps li { display: flex; gap: var(--sp-xs); align-items: flex-start;
+            font-size: var(--f--1); }
+.steps .n { flex: none; display: grid; place-items: center;
+            width: 26px; height: 26px; border-radius: 50%;
+            background: var(--ink); color: #fff;
+            font: 700 var(--f--2)/1 var(--display); }
+
+/* ═══ foot ═══ */
+
+footer { border-top: 1px solid var(--line); background: var(--ground-2);
+         padding-block: var(--sp-m); margin-top: var(--sp-l); }
+footer .layout { display: flex; flex-wrap: wrap; gap: var(--sp-s) var(--sp-m);
+                 align-items: center; font-size: var(--f--1); color: var(--muted); }
+footer a { font-weight: 600; }
+footer .spacer { flex: 1 1 auto; }
+
+/* ═══ motion. Opt-in: every finished state above is the plain default,
+       so nothing here can ever strand content invisible. ═══ */
+@media (prefers-reduced-motion: no-preference) {
+  /* ON LOAD, never on scroll. A scroll-driven reveal is right on an
+     editorial page and wrong on a form: animation-timeline: view() holds
+     every field below the fold at opacity 0 until somebody scrolls to
+     it, and prints the page blank. Everything here is finished inside
+     half a second whether the page is scrolled or not. */
+  .lede { animation: rise var(--t-slow) var(--ease-out) both; }
+  form > fieldset {
+    animation: rise var(--t-slow) var(--ease-out) both;
+    animation-delay: calc(60ms * var(--i, 0));
+  }
+  form > fieldset:nth-of-type(1) { --i: 1 } form > fieldset:nth-of-type(2) { --i: 2 }
+  form > fieldset:nth-of-type(3) { --i: 3 } form > fieldset:nth-of-type(4) { --i: 4 }
+  form > fieldset:nth-of-type(5) { --i: 5 } form > fieldset:nth-of-type(n+6) { --i: 6 }
+  .done-card { animation: pop var(--t-slow) var(--ease-out) both; }
+  @keyframes rise { from { opacity: 0; translate: 0 14px; } }
+  @keyframes pop  { from { opacity: 0; scale: .97; } }
+}
+
+@media print {
+  .topbar, .send, footer, .note { display: none; }
+  fieldset { break-inside: avoid; box-shadow: none; }
+  /* whatever an animation was part-way through, paper gets the finished state */
+  *, *::before, *::after { animation: none !important; opacity: 1 !important; }
+}

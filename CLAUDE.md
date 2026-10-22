@@ -3981,6 +3981,118 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - `coming/coming-test.js` (32 checks) and `coming/page.js` (11, Playwright) in the session scratchpad cover it, on
     the made-up branch.
 
+## The branch's own forms — no client link opens a JotForm
+
+`quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`
+and `forms/form.js`, and `apps-script/Quotes.gs`. Asked for on 22 October
+2026: *"never closed by our online resources. So you need to ensure that
+every link is not opening up a Jot form as well."*
+
+**What was wrong.** Six of the homepage's busiest links went out to JotForm:
+Motor, Property, Critical Illness, Key Person, OAS enrolment and the Xpress
+Life application. A JotForm submission never reached the Service
+Questionnaire sheet, never got a reference, and never landed in anybody's
+day. A client filled one in and heard nothing unless somebody happened to
+check an inbox. That is the loop that was never closed — not the look of the
+form.
+
+**What they are now.** Six branch pages, each posting `q.quote` to the same
+Service Questionnaire `/exec` the other six front ends hold. Every
+submission files one row on the **Quote Requests** tab (it makes itself),
+e-mails sales support with every answer, and e-mails the client a
+confirmation carrying the reference. The reference is on screen before the
+client leaves the page.
+
+| page | reference | what it asks |
+|---|---|---|
+| `/quote/motor/` | `QM-yyMMdd-nnn` | the vehicle, who drives it, the cover |
+| `/quote/property/` | `QP-` | the property, what to cover, claims history |
+| `/quote/critical-illness/` | `QC-` | who it is for, the cover |
+| `/quote/key-person/` | `QK-` | the business, the key person, what the money does |
+| `/enrol/oas/` | `QO-` | you, your employer, your contribution |
+| `/apply/xpress-life/` | `QX-` | who it is for, the cover, how to finish |
+
+`/quote/` lists all six. The branch app carries a **Quote & apply** tile to
+it, and its "where did it go" line names the old JotForms.
+
+- **Edit `tools/forms/forms.json` and run `tools/forms/build-forms.py`,
+  never a generated page.** One run rewrites all seven. The spec is the
+  single source of the fields, the conditional rules, the reference prefixes
+  and the words; the generator writes real HTML, so every field is in the
+  markup and the form reads and fills with `form.js` blocked.
+- **Never collected, on any of them:** a national ID or driver's permit
+  number, a policy card number, bank or card details, and any health
+  declaration. A web page is the wrong place for all of them; they are taken
+  by a person, on the call or on the signed form. That is why the critical
+  illness, key person and Xpress Life pages say in a panel that they ask
+  nothing about health — the five Xpress Life health questions are on the
+  Xpress Life application itself, which is where cover is actually issued.
+  Date of birth and smoker status are asked, because they are rating factors
+  and change the price.
+- **Two of the six hand over rather than pretend.** `/apply/xpress-life/`
+  opens the file, gives the reference and then offers
+  **xpresslifett.com** to finish the instant-issue application; `/enrol/oas/`
+  starts the enrolment and says the signed form and the payment authority
+  come from the branch. Neither invents an underwriting question or a
+  deduction authority nobody can stand behind.
+- **The client's confirmation is not held** by the hold on automatic client
+  e-mail, for the reason the questionnaire's confirmation is not: they
+  pressed send ten seconds ago and the reference has to reach them. It goes
+  through `clientMail_`, so from support@ with the confidentiality footer
+  when the Microsoft 365 properties are set. Its masthead is the hosted
+  **gold** `logo-mark.png`, never an SVG and never a data URI.
+- **The pages carry `site-mark.svg`**, the light-ground mark, because they
+  are the homepage's own family in the homepage's palette. Gold on `#faf9f2`
+  measures 1.68:1 and can never be an icon that reads as a shape — the
+  arithmetic in the homepage section above. Gold shield in e-mail, teal
+  shield on these pages.
+- **A reference is read off the tab, never from a stored counter**, so a row
+  that failed to write cannot take a number with it, and a reference from
+  another day cannot move today's count.
+- **A second tap gives back the first reference.** The same form from the
+  same address inside `DEDUPE_MIN` (12 minutes) returns the reference it
+  already has rather than making a second row and a second pair of e-mails.
+- **Nothing is lost to a bad minute of signal.** If the backend does not
+  answer inside 12 seconds, the page still shows a reference, says plainly
+  that it could not reach us, and opens the client's mail app with every
+  answer in it — the road `service/index.html` already takes. The done
+  screen is painted *before* the mail app opens, so whatever the handler
+  does to the tab, the reference is already in front of them.
+- **The POST is `text/plain`**, which is what stops the browser asking Apps
+  Script for a CORS preflight it cannot answer.
+- **Motion runs on load, never on scroll.** `animation-timeline: view()` is
+  right on an editorial page and wrong on a form: it holds every field below
+  the fold at opacity 0 until somebody scrolls to it, and prints the page
+  blank. A full-page screenshot caught it; the audit, which only tested with
+  motion off, did not. Everything finishes inside half a second, and
+  `@media print` forces the finished state.
+- **A conditional field is hidden from everything**: out of the layout *and*
+  `disabled`, so a stale answer can never travel with the form.
+- **A radio group's label is its `<legend class="q">`**, and it has to be
+  looked for before `label`: `querySelector('label')` inside a radio block
+  finds the first option's own label, which would name the field after one
+  of its answers.
+- **Paste `Quotes.gs` and `Service.gs`, put `TEAM_CODE` back, then Manage
+  deployments → pencil → New version.** `?action=q.ping` answers
+  `quotes: 1` from a browser once the live deployment carries them, and the
+  main `ping` carries `quotes` too.
+- `agent.html` and `staff.html` are redirect stubs to `/app` now — the
+  Agent and Staff Portals are retired and every tool they held is in the
+  branch app. A redirect stub carries no view beacon, as ever.
+- **The 19 JotForms left in the branch app's Forms group are staff admin
+  forms** (petty cash, the gas log, licence renewals, the visitors log),
+  already standing "each until it moves into the app". No link a *client*
+  can reach opens a JotForm.
+- Tests in the session scratchpad: `qa/forms.js` (24 checks, Playwright: the
+  pages, sideways scroll at seven widths, iOS input zoom, touch targets,
+  contrast composited through translucency, the validation summary, the
+  conditional rules, a real send on all six, a dead backend, reduced motion,
+  the form with JS off, and no JotForm on any client-facing page) and
+  `qa/quotes.js` (22, Node with Sheets and MailApp made of nothing: the tab,
+  the numbering, the duplicate guard, the honeypot, the row, both e-mails,
+  and that the page and the e-mail promise the same three things word for
+  word).
+
 ## The English B essay workshop — it asks, the student writes
 
 `englishb/index.html` (rickyrampersadbranch.com/englishb/) and `apps-script/EssayWorkshop.gs`, **its own Apps Script
