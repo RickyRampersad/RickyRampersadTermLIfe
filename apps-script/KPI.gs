@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-21h';
+var SCRIPT_VERSION = '2026-10-22a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4575,6 +4575,7 @@ function sendBranchManagerDay_(day) {
         urgent.slice(0, 6).map(function (x, i) { return row('<b>' + (i + 1) + '. ' + esc_(x.t) + '</b><div style="color:' + MAIL.muted + ';margin-top:2px">' + esc_(x.why) + '</div>'); }).join('') +
         (urgent.length > 6 ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (urgent.length - 6) + ' more on My day.</div>' : '') + '</div>'
     : '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:10px 15px;font-size:13px;color:' + MAIL.green + '">Nothing urgent this morning.</div>';
+  var ai = bmMorningAi_(mm);
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, Mr Rampersad. Check in and your day is on one page: urgent, drafts, your inbox, then what is important. ' +
       'Everything you do there, in Salesforce and by e-mail is written into your progress as the day goes; it comes to you at 11:00 and 3:00.</div>' +
@@ -4588,6 +4589,7 @@ function sendBranchManagerDay_(day) {
       { value: inbox ? inbox.open.length : '—', label: 'in your inbox to act on', color: inbox && inbox.open.some(function (x) { return x.u === 'now'; }) ? MAIL.red : MAIL.navy }
     ]) +
     sectionLabel_('Urgent (' + urgent.length + ')') + urgentList +
+    ai.html +
     inboxMailSection_(inbox, 'am', day) +
     sectionLabel_('The team this morning') + teamTable +
     '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Closed yesterday and closed with the owner\'s own note. A closed task without a note is not closed.</div>' +
@@ -4597,9 +4599,56 @@ function sendBranchManagerDay_(day) {
     (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer this morning, so your lists are not shown.</div>');
 
   mailSend_(ownMail_('ricky', { to: mgr.join(','),
-    subject: 'Your day · Branch Manager · ' + shortDate_(day) + (urgent.length ? ' · ' + urgent.length + ' urgent' : '') + (inbox && inbox.open.length ? ' · inbox ' + inbox.open.length + ' to act on' : '') + (sfOk ? ' · ' + w.mine.length + ' yours due, ' + w.ask.length + ' asking you' : ''),
+    subject: 'Your day · Branch Manager · ' + shortDate_(day) + (urgent.length ? ' · ' + urgent.length + ' urgent' : '') + (inbox && inbox.open.length ? ' · inbox ' + inbox.open.length + ' to act on' : '') + (sfOk ? ' · ' + w.mine.length + ' yours due, ' + w.ask.length + ' asking you' : '') + (ai.n ? ' · Claude has written ' + ai.n : ''),
     htmlBody: shell_('Good morning · the branch today', 'Branch Manager · ' + prettyDate_(day), body) }));
   return true;
+}
+
+/* ── 5:00: what Claude wrote for each of his tasks, in the mail itself (22 October 2026) ──
+ *  Ricky, 6:22am: "I am not seeing any AI writing my tasks in the morning report to me at 5??". The 5:00 run already
+ *  has Claude read his tasks and who is waiting on him (unitModel_ with ai: bmdAdvice_, kept for the day), but the
+ *  mail, simplified on 20 October, only linked to My day. Now it shows, under each, what Claude says to do and the
+ *  words it wrote: a reply to each person asking him, and for his own tasks close it, move it or write a note. The
+ *  respond page and My day carry the same words; nothing posts until he ticks or sends.
+ */
+var BM_AI = { ASK: 6, MINE: 8, ACT: { close: 'Close it', move: 'Move it', note: 'Write a note', reply: 'Reply' } };
+function bmMorningAi_(mm) {
+  if (!mm) return { n: 0, html: '' };
+  var key = ''; try { key = String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); } catch (e) {}
+  if (!key) return { n: 0, html: '' };
+  var adv = mm.adv || {}, rows = [], tried = 0;
+  var box = function (label, why, note) {
+    return '<div style="font-size:12.5px;line-height:1.5;background:#F3F7FF;border-left:3px solid #3557A8;border-radius:6px;padding:6px 9px;margin-top:4px">' +
+      '<b style="color:#3557A8">' + esc_(label) + (why ? ' · ' + esc_(why) : '') + (note ? ':' : '') + '</b>' + (note ? ' ' + esc_(note) : '') + '</div>';
+  };
+  ((mm.w && mm.w.ask) || []).slice(0, BM_AI.ASK * 2).forEach(function (a) {
+    tried++; var v = adv['a:' + a.id];
+    if (!v || !v.ai || !v.note || rows.filter(function (r) { return r.k === 'ask'; }).length >= BM_AI.ASK) return;
+    rows.push({ k: 'ask', s: 100, html: '<b>' + esc_(String(a.by || 'Someone')) + '</b> asks you on ' + esc_(a.subject || '') +
+      (a.said ? '<div style="color:' + MAIL.muted + '">"' + esc_(shorten_(a.said, 180)) + '"</div>' : '') + box('Claude\'s reply', v.why, v.note) });
+  });
+  (mm.mine || []).forEach(function (t) {
+    tried++; var v = adv[t.id];
+    if (!v || !v.ai || v.act === 'keep' || !BM_AI.ACT[v.act]) return;
+    var late = t.late && t.due ? daysBetween_(t.due, mm.day || todayISO_()) : 0;
+    rows.push({ k: 'mine', s: 50 + Math.min(late, 40) + (v.act === 'close' ? 5 : 0), html: '<b>' + esc_(t.subject || '') + '</b>' +
+      (t.due ? ' <span style="color:' + MAIL.muted + '">· ' + (t.late ? 'overdue since ' : 'due ') + esc_(shortDate_(t.due)) + '</span>' : '') +
+      box('Claude: ' + BM_AI.ACT[v.act], v.why, v.note) });
+  });
+  if (!rows.length) {
+    if (!tried) return { n: 0, html: '' };
+    return { n: 0, html: sectionLabel_('Claude\'s drafts') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:10px 15px;font-size:13px;color:' + MAIL.muted + '">' +
+      'Claude did not answer at 5:00, so nothing is written here. Your drafts are on My day after the 6:00 refresh.</div>' };
+  }
+  var asks = rows.filter(function (r) { return r.k === 'ask'; }), mine = rows.filter(function (r) { return r.k === 'mine'; }).sort(function (a, b) { return b.s - a.s; }).slice(0, BM_AI.MINE);
+  var list = function (rs) { return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid #3557A8;border-radius:10px;padding:6px 15px">' +
+    rs.map(function (r) { return '<div style="font-size:12.5px;line-height:1.45;padding:7px 0;border-top:1px solid ' + MAIL.line + '">' + r.html + '</div>'; }).join('') + '</div>'; };
+  var n = asks.length + mine.length;
+  return { n: n, html: sectionLabel_('Claude has written these for you (' + n + ')') +
+    '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin:-2px 0 8px">Claude read each task and its notes this morning. Nothing is posted: open your page, change anything, and send.</div>' +
+    (asks.length ? '<div style="font-size:12px;font-weight:800;color:' + MAIL.navy + ';margin:2px 0 4px">People waiting on your word (' + asks.length + ')</div>' + list(asks) : '') +
+    (mine.length ? '<div style="font-size:12px;font-weight:800;color:' + MAIL.navy + ';margin:10px 0 4px">Your own tasks (' + mine.length + ')</div>' + list(mine) : '') +
+    replyButton_(replyUrl_('ricky', mm.day || todayISO_(), 'bm'), 'Post Claude\'s replies', 'One page: each one is written. Tap "Use Claude\'s reply", change anything, send. A tick closes one of your own.') };
 }
 
 /** From the editor: send this morning's Branch Manager e-mail now. */
