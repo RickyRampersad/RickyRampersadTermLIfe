@@ -2554,6 +2554,20 @@ voice under the new timing and the caption gives it away.
   `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
   `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
   cover it.
+- **What a naming writes in Salesforce, every time** (22 October 2026, the branch manager: "when you assign the agent
+  you need to update the campaign to Orphan and the date assigned as well. Create a task on the Household assigning to
+  the agent Support"):
+  - **Every policy record of the client** (their Contact's records, and a policy they own on someone else's life):
+    Assigned Agent (the agent's Contact), Date Assigned to Agent (the day), and Campaign `Orphan`, over whatever
+    Campaign held before ("Disbursement" included).
+  - **One task on the household Account** ("<SURNAME>, <FIRST> HH", the Contact's AccountId), WhoId the client:
+    subject `Orphan Project: follow up with <agent> re <client> (assigned <d Mon yyyy>)`, owned by the agent's support
+    person, due the day of the naming, High, Call. Description: who assigned the agent and when, the client and
+    household, every policy with its status, the former agent, what the client asked, then "<support>: follow up with
+    <agent> on contact made with the client and outcome. Log his feedback in the task trail. Keep this task open until
+    the service questionnaire is signed." Liz is the support on Neil Ramnanan's clients (the 21 and 22 Oct tasks).
+  - `tSfAssignWrite_` (the board's naming) still writes only the in-force policies, else the first, and opens no
+    household task: until it is changed, a naming made from the board needs both done by hand.
 - **A naming in Salesforce now briefs the agent, as a naming on the board does** (22 October 2026: "can a template be
   created that will trigger a notification to Neil once the Assignment is done? … log in and place his comments in the
   portal … and give a lot of intelligence"). Until then Salesforce sent nothing (no flow on the policy record reads
