@@ -553,6 +553,26 @@
   details.tdesc p{margin:4px 0 0;font-size:14px;white-space:pre-line}
   .cmt .csf{display:block;font-size:12px;color:var(--dim);margin-top:3px}
   .cmtbox{display:block;width:100%;margin-top:8px;font:15px var(--fb);padding:9px 11px;border:1px solid var(--field);border-radius:9px;min-height:70px;resize:vertical;color:var(--ink);background:#fff}
+  .tkbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px} .tkbar input,.tkbar select{font:15px var(--fb);padding:7px 10px;border:1px solid var(--field);border-radius:9px;background:#fff;color:var(--ink);min-width:0;max-width:100%}
+  .tkbar input{flex:1 1 220px}
+  .tkn{font-size:13.5px;color:var(--dim);margin:2px 0 6px} .tkn b{color:var(--ink)}
+  .tkrow{border-top:1px solid var(--line2);padding:10px 2px;min-width:0} .tkrow:first-of-type{border-top:0}
+  .tkh{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline} .tkh a{color:var(--ink);text-decoration:none} .tkh a:hover{text-decoration:underline} .tks{color:var(--body);font-size:14.5px;overflow-wrap:anywhere}
+  .tkm{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:13px;color:var(--dim);margin-top:4px} .tkm b{color:var(--body);font-weight:600}
+  .tkl{font-size:13.5px;color:var(--body);margin-top:5px;padding-left:9px;border-left:3px solid var(--line);overflow-wrap:anywhere} .tkl b{color:var(--ink)}
+  .tka{display:flex;gap:12px;margin-top:6px;font-size:13.5px} .tka a{color:var(--tdark);font-weight:600} .tka a.tkgo{color:#fff;background:var(--navy);padding:4px 11px;border-radius:999px;text-decoration:none}
+  .tkown th{white-space:nowrap} .tkown tr[data-tko]{cursor:pointer} .tkown tr.on td{background:#eef6ff} .dh2{font:700 14px var(--fh);color:var(--ink);margin:0 0 6px}
+  .task.picked{border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,128,150,.18)}
+  .tpost{margin-left:auto;font:600 13px var(--fb);color:var(--tdark);background:#fff;border:1px solid var(--field);border-radius:999px;padding:4px 11px;cursor:pointer}
+  .task.picked .tpost{background:var(--tdark);border-color:var(--tdark);color:#fff}
+  .cmtto{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:13.5px;color:var(--body)} .cmtto select{font:14px var(--fb);max-width:100%;padding:5px 8px;border:1px solid var(--field);border-radius:8px;background:#fff;color:var(--ink)}
+  .guide{border:1px solid #c9d8f2;background:linear-gradient(180deg,#f4f8ff,#fff);border-radius:var(--r2);padding:11px 13px;margin:0 0 12px;min-width:0}
+  .guide .gh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px} .guide .gh b{font:700 15.5px var(--fh);color:var(--ink)} .guide .gh small{font-size:12.5px;color:var(--dim)}
+  .gbtn{margin-top:8px;font:600 14.5px var(--fb);color:#fff;background:var(--navy);border:0;border-radius:9px;padding:8px 14px;cursor:pointer} .gbtn.sm{font-size:13.5px;padding:6px 12px;margin-top:6px}
+  .gbody{margin-top:6px} .gstand{margin:4px 0 8px;font-size:15px;color:var(--ink);line-height:1.5} .gsec{margin:8px 0} .gsec i{display:block;font-style:normal;font:700 12.5px var(--fb);letter-spacing:.04em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+  .gsec ol,.gsec ul{margin:0;padding-left:20px;font-size:14.5px;line-height:1.5;color:var(--body)} .gsec li{margin:2px 0}
+  .gq{margin:0;font-size:15px;color:var(--ink);font-style:italic} .gpost{margin:0;padding:8px 10px;background:#fff;border:1px dashed var(--field);border-radius:8px;font-size:14px;color:var(--body);white-space:pre-wrap}
+  .gcare li{color:var(--stop)} .gfoot{margin:8px 0 0;font-size:12.5px;color:var(--dim)} .gfoot a{color:var(--tdark);cursor:pointer;font-weight:600}
   .cmtbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap} .cmtbar span{font-size:13px;color:var(--dim);margin-right:auto}
   .cmtgo{background:var(--navy);color:#fff;border:0;border-radius:9px;padding:9px 15px;font:700 14px var(--fh);cursor:pointer}
   .cmtgo[disabled]{opacity:.55;cursor:default}
@@ -853,7 +873,7 @@
         <details class="bdet" id="bdet"><summary>Breakdowns <span id="bdetSum"></span></summary><div class="bars" id="bars"></div></details></section>
       <div class="subs" id="subs"></div>
       <div class="toolbar">
-        <input type="search" id="fSearch" placeholder="Search a name, client number, town or occupation" aria-label="Search">
+        <input type="search" id="fSearch" placeholder="Search a name, client or policy number, phone, e-mail, town, occupation or agent" aria-label="Search">
         <button type="button" class="tbtn" id="fToggle" aria-expanded="false">Filters</button>
         <select id="fOrder" aria-label="Order"><option value="">Most pressing first</option><option value="value">Most at stake first</option><option value="town">By town</option><option value="name">By name</option></select>
       </div>
@@ -866,7 +886,7 @@
         <label>What they need<select id="fNeed"><option value="">anything</option></select></label>
         <label>What the records say<select id="fIns"><option value="">anything</option><option value="due">a premium due</option><option value="ends">life cover ends within five years</option><option value="estate">pays the estate</option><option value="provisions">beneficiary in the special provisions</option><option value="role">beneficiary only a role</option><option value="nolife">no life cover in force</option><option value="lapsed">a lapsed policy</option><option value="income">cover against income</option><option value="birthday">a birthday this month</option><option value="hhgap">someone in the family with no life cover</option><option value="payroll">paid through their employer or military pay</option><option value="waived">a premium waived</option><option value="surr">surrendered a policy before</option><option value="noci">life cover, no critical illness cover</option></select></label>
         <label id="sugWrap">Suggested agent<select id="fSug"><option value="">anyone</option></select></label>
-        <label class="chk" id="allWrap"><input type="checkbox" id="fAll"> include clients who have not answered yet</label>
+        <label class="chk" id="allWrap"><input type="checkbox" id="fAll" checked> every client of the books, those who have not answered and the letters held included</label>
         <div class="fbtns"><button type="button" class="tbtn" id="fClear">Clear the filters</button></div>
       </div>
       <p class="showing" id="showing"></p>
@@ -900,6 +920,27 @@
       <div class="card dcard" id="dAgents"></div>
       <div class="card dcard" id="dBy"></div>
       <p class="pnote" id="dHow"></p>
+    </div>
+
+    <!-- Tasks: every open orphan task in Salesforce, matched to its client (22 October 2026) -->
+    <div class="pane" id="paneTasks" hidden>
+      <div class="panehead"><h2>Tasks</h2><span id="tkSub">Every open orphan task in Salesforce: who holds it, how long it has been open, and the last post on it</span></div>
+      <div class="agstate" id="tkState"></div>
+      <div id="tkBody" hidden>
+        <div class="card dcard"><div class="dtiles" id="tkTiles"></div><p class="pnote" id="tkWhat"></p></div>
+        <div class="card dcard" id="tkOwners"></div>
+        <div class="card dcard">
+          <div class="tkbar">
+            <input type="search" id="tkQ" placeholder="Search a client, subject or name" aria-label="Search the tasks">
+            <select id="tkOwner" aria-label="Who holds it"></select>
+            <select id="tkShow" aria-label="Which tasks">
+              <option value="">every open task</option><option value="overdue">past their due date</option><option value="nopost">nothing posted yet</option>
+              <option value="quiet">quiet for days</option><option value="agent">agent named, no word from them</option><option value="hh">household tasks</option><option value="nomatch">not matched to a client</option>
+            </select>
+          </div>
+          <div id="tkList"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Agents: how each agent is getting on, and the households nobody is named on, in batches (14 October 2026) -->
@@ -1054,6 +1095,8 @@ function load() {
   if (!shown) { var g = $('gateErr'); g.className = 'box'; g.textContent = 'Opening… the sheet is answering. This takes about fifteen seconds.'; g.style.display = 'block'; }
   var p = { action: 'board', code: CODE };
   if (WHO) p.who = WHO;
+  /* every client of the books, for the branch, unless this device turned it off (22 October 2026: "on my log in i am not
+     seeing all the orphans"); nobody else's board carries them, whatever the page asks */
   if ($('fAll').checked) p.all = '1';
   p.dev = (window.innerWidth < 760 ? 'phone' : 'desk') + ' ' + window.innerWidth;   // for the Sign-ins tab: the device, never the browser
   api(p).then(function (d) {
@@ -1122,13 +1165,13 @@ function notYet() { if (!STALE) return false; toast(STALE_MSG, true); return tru
 var FILTER_IDS = ['fSearch', 'fSeg', 'fTown', 'fBook', 'fCaller', 'fAge', 'fNeed', 'fIns', 'fSug', 'fOrder', 'hSearch'];
 function forget() {
   dropSnap(); STALE = false; AGAIN = false;   // the picture of the last board goes with the person who saw it
-  FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; OPENX = {}; EXP = {};
+  FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; OPENX = {}; EXP = {}; GUIDE = {}; TASK_PICK = {}; TKV = null; TKV_AT = 0; TKF.q = TKF.owner = ''; TKF.show = '';
   PAIRX = {}; PAIR_OPEN = {}; MFSHOW = 15;   // a possible family opened in full goes too: the branch's figures never reach the next person
   PF = null; PF_OPEN = ''; PF_PREV = null; PF_BUSY = false;   // and every profile read or being edited
   M = { scope: 'open', town: '', agent: -1, opp: '', show: MSTEP }; MW = null;
   TAB = ''; SUB = ''; HSUB = ''; SHOW_N = SHOW_STEP; HSHOW_N = HSTEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true; $('barIntro').disabled = false; $('barIntroWhy').textContent = '';
   FILTER_IDS.forEach(function (id) { $(id).value = ''; });
-  $('fAll').checked = false; $('filters').hidden = true;
+  $('fAll').checked = allPref(); $('filters').hidden = true;
   var t = $('toast'); clearTimeout(t._t); t.className = 'toast';
 }
 $('gateForm').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('code').value.trim(); WHO = $('who').value.trim(); forget(); if (CODE) load(); });
@@ -1159,7 +1202,7 @@ function needsOf(c) {
   return s;
 }
 function stateOf(c) { return c.state === 'open' && c.late ? 'late' : c.state; }
-var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', reached: 'reached by phone', named: 'named, no answer yet', silent: 'not answered yet',
+var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', reached: 'reached by phone', named: 'named, no answer yet', silent: 'not answered yet', held: 'letter held', unsent: 'not written to yet',
   called: 'called, no answer yet', tocall: 'to call', dnc: 'do not call', family: 'family' };
 /* the letters, in a few words each (letters/manifest.json) */
 var LETTER_WORDS = { A: 'matured, or about to', F1: 'in force, under 2 years', F2: 'in force, 2 to 3 years', F3: 'in force, 3 to 5 years', F4: 'in force, 5 to 10 years',
@@ -1201,7 +1244,7 @@ var TAB = '', SUB = '', HSUB = '';
 var TABDEF = {
   urgent: { label: 'Urgent', title: 'Urgent', hot: true, grp: 'act', test: urgentOf },
   mine: { label: 'Your calls', title: 'Your calls', grp: 'you', test: myCall },
-  assign: { label: 'To assign', title: 'To assign', grp: 'act', test: function (c) { return !c.assigned && ((isCard(c) && c.state !== 'done') || c.state === 'silent' || c.state === 'family'); } },
+  assign: { label: 'To assign', title: 'To assign', grp: 'act', test: function (c) { return !c.assigned && ((isCard(c) && c.state !== 'done') || c.state === 'silent' || c.state === 'family' || c.state === 'held' || c.state === 'unsent'); } },
   calls: { label: 'Call list', title: 'The call list', grp: 'lists', test: function (c) { return onCalls(c) || c.state === 'dnc'; } },
   progress: { label: 'In progress', title: 'In progress', grp: 'lists', test: function (c) { return !!c.assigned && c.state !== 'done' && isCard(c); } },
   open: { label: 'To call', title: 'To call', grp: 'you', test: function (c) { return isCard(c) && c.state !== 'done'; } },
@@ -1211,6 +1254,7 @@ var TABDEF = {
   work: { label: 'Your work', grp: 'you', pane: 'paneWork' },
   dash: { label: 'Dashboard', grp: 'act', pane: 'paneDash' },
   agents: { label: 'Agents', grp: 'act', pane: 'paneAgents' },
+  tasks: { label: 'Tasks', grp: 'act', pane: 'paneTasks' },
   match: { label: 'Match', grp: 'act', pane: 'paneMatch' },
   team: { label: 'Team', grp: 'branch', pane: 'paneTeam' },
   insights: { label: 'Insights', grp: 'branch', pane: 'paneInsights' },
@@ -1226,13 +1270,13 @@ function tabsFor(d) {
   var r = d.role, claims = !!(d.claims && d.claims.rows && d.claims.rows.length);
   /* Match (8 October 2026) for whoever names agents, once the backend sends it */
   var match = d.match ? ['match'] : [];
-  if (r === 'branch') return ['urgent', 'dash', 'agents'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights', 'profiles']);
+  if (r === 'branch') return ['urgent', 'dash', 'agents', 'tasks'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights', 'profiles']);
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
   var prof = d.me && d.me.name ? ['profile'] : [];
   /* Team for staff too (15 October 2026: "all staff and managers are supposed to see the progress each support has") */
-  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, prof, ['urgent', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all', 'team']);
-  var out = ['open'].concat(work, prof, claims ? ['claims'] : []);
+  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, prof, ['urgent', 'tasks', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all', 'team']);
+  var out = ['open', 'tasks'].concat(work, prof, claims ? ['claims'] : []);
   if (r === 'unit') out.push('dash', 'agents');
   if (d.clients.some(urgentOf)) out.push('urgent');
   out = out.concat(['done', 'all']);
@@ -1242,11 +1286,11 @@ function tabsFor(d) {
 /* the sub-lists of each tab, with their test */
 var SUBS = {
   urgent: [['agent', 'Licensed agent call-back, nobody named', 'stop'], ['branch', 'Branch call-back', 'stop'], ['named', 'Call-back, agent named'], ['pressing', 'Pressing answers', 'stop'], ['late', 'Waiting too long', 'stop']],
-  assign: [['answered', 'Answered the letter'], ['reached', 'Reached by phone'], ['called', 'Called from the board'], ['silent', 'Not answered yet'], ['family', 'Family of someone who answered']],
+  assign: [['answered', 'Answered the letter'], ['reached', 'Reached by phone'], ['called', 'Called from the board'], ['silent', 'Not answered yet'], ['held', 'Letter held'], ['family', 'Family of someone who answered']],
   calls: [['mine', 'Your calls'], ['tocall', 'Still to call'], ['called', 'Called, no answer yet'], ['nonum', 'No number on file', 'stop'], ['dnc', 'Asked not to be called']],
   progress: [['assigned', 'Answered, agent named'], ['named', 'Named before they answered'], ['reached', 'Reached by phone'], ['late', 'Late', 'stop']],
   open: [['assigned', 'Answered'], ['named', 'Named before they answered'], ['late', 'Late', 'stop']],
-  all: [['open', 'Nobody named'], ['assigned', 'Named'], ['reached', 'Reached by phone'], ['named', 'Named, no answer'], ['tocall', 'To call'], ['called', 'Called'], ['done', 'Done'], ['noted', 'Noted only'], ['silent', 'Not answered yet']]
+  all: [['open', 'Nobody named'], ['assigned', 'Named'], ['reached', 'Reached by phone'], ['named', 'Named, no answer'], ['tocall', 'To call'], ['called', 'Called'], ['done', 'Done'], ['noted', 'Noted only'], ['silent', 'Not answered yet'], ['held', 'Letter held'], ['unsent', 'Not written to yet']]
 };
 function subTest(c, tab, s) {
   if (tab === 'urgent') return urgentGroup(c) === s;
@@ -1400,13 +1444,14 @@ function pickTab(t, keep) {
 }
 function showPane() {
   var def = TABDEF[TAB] || {}, pane = def.pane || 'paneList';
-  ['paneList', 'paneHouseholds', 'paneDash', 'paneAgents', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims', 'paneProfile'].forEach(function (p) { $(p).hidden = p !== pane; });
+  ['paneList', 'paneHouseholds', 'paneDash', 'paneAgents', 'paneTasks', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims', 'paneProfile'].forEach(function (p) { $(p).hidden = p !== pane; });
   if (pane !== 'paneAgents') AG_VISIBLE = false;
   if (pane === 'paneList') listPane();
   else if (pane === 'paneHouseholds') householdsPane();
   else if (pane === 'paneWork') workPane();
   else if (pane === 'paneDash') dashPane();
   else if (pane === 'paneAgents') agentsPane(true);
+  else if (pane === 'paneTasks') tasksPane();
   else if (pane === 'paneMatch') matchPane();
   else if (pane === 'paneTeam') teamPane();
   else if (pane === 'paneInsights') insightsPane();
@@ -1574,7 +1619,16 @@ function everyone() {
   D.clients.concat(D.silent || [], D.family || []).forEach(function (c) { if (!seen[c.token]) { seen[c.token] = 1; out.push(c); } });
   return out;
 }
-function hay(c) { return (c.client + ' ' + (c.no || '') + ' ' + townOf(c) + ' ' + occOf(c) + ' ' + (c.contact && c.contact.addr || '')).toLowerCase(); }
+/* what the search box looks in (22 October 2026: "must be able to search"): the name, the client number, every policy
+   number, the e-mail and the numbers (as digits too), the town, address and occupation, the former agent, the agent named,
+   the letter and the household's name */
+function hay(c) {
+  var pols = (c.pol && c.pol.list || []).map(function (p) { return p.no; }).join(' ') + ' ' + (c.pn || '');
+  var tels = [c.phone || ''].concat((c.contact && c.contact.phones || []).map(function (p) { return p.n; })).join(' ');
+  var hn = D && D.hhInfo && c.hh && D.hhInfo[c.hh] ? (D.hhInfo[c.hh].name || '') : '';
+  return [c.client, c.no || '', pols, c.email || '', tels, digits(tels), townOf(c), occOf(c), c.contact && c.contact.addr || '',
+    c.book ? 'was with ' + c.book : '', c.assigned || '', c.seg || '', hn, c.token].join(' ').toLowerCase();
+}
 function matches(c) {
   if (FOCUS) return c.token === FOCUS;
   var def = TABDEF[TAB] || TABDEF.all;
@@ -1635,7 +1689,7 @@ function list() {
       var g = urgentGroup(c);
       if (g !== grp) { grp = g; var w = UGROUP_WORDS[g] || ['Other', '']; html += '<h3 class="grp' + (g === 'named' ? ' calm' : '') + '">' + esc(w[0]) + ' <span>' + (gcount[g] || 0) + '</span><i>' + esc(w[1]) + '</i></h3>'; }
     }
-    html += c.state === 'tocall' || c.state === 'dnc' ? callRow(c, manager, namer) : c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager, namer);
+    html += c.state === 'tocall' || c.state === 'dnc' ? callRow(c, manager, namer) : c.state === 'silent' || c.state === 'family' || c.state === 'held' || c.state === 'unsent' ? silentRow(c, manager) : card(c, manager, namer);
   });
   $('list').innerHTML = rows.length ? html + (rest > 0 ? '<button type="button" class="more" id="showMore">Show the next ' + Math.min(SHOW_STEP, rest) + ' (' + rest + ' more)</button>' : '')
     : '<div class="empty">' + (FOCUS ? (looking ? 'Looking for this client…'
@@ -1662,6 +1716,15 @@ function wireList() {
   each('#list [data-det-retry]', function (el) { el.addEventListener('click', function () { loadDetail(el.getAttribute('data-det-retry')); }); });
   each('#list textarea.cmtbox', function (el) { el.addEventListener('input', function () { DRAFT[el.getAttribute('data-cmt')] = el.value; }); });
   each('#list button.cmtgo', function (el) { el.addEventListener('click', function () { saveComment(el.getAttribute('data-cmt-go'), el); }); });
+  /* the task a comment goes on, and the AI guide (22 October 2026) */
+  each('#list select[data-cmt-to]', function (el) { el.addEventListener('change', function () { var t = el.getAttribute('data-cmt-to'); if (el.value) TASK_PICK[t] = el.value; else delete TASK_PICK[t]; list(); }); });
+  each('#list button[data-tpick]', function (el) { el.addEventListener('click', function () {
+    var v = el.getAttribute('data-tpick').split('|'); if (TASK_PICK[v[0]] === v[1]) delete TASK_PICK[v[0]]; else TASK_PICK[v[0]] = v[1]; list();
+    var box = document.querySelector('textarea.cmtbox[data-cmt="' + v[0] + '"]'); if (box && TASK_PICK[v[0]]) { box.focus(); try { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
+  }); });
+  each('#list button[data-guide]', function (el) { el.addEventListener('click', function () { loadGuide(el.getAttribute('data-guide')); }); });
+  each('#list [data-guide-retry]', function (el) { el.addEventListener('click', function () { loadGuide(el.getAttribute('data-guide-retry')); }); });
+  each('#list button[data-guide-use]', function (el) { el.addEventListener('click', function () { useGuide(el.getAttribute('data-guide-use')); }); });
   /* answers to what the client told us, and their introduction (16 October 2026) */
   each('#list textarea.ansbox', function (el) { el.addEventListener('input', function () { ANS[el.getAttribute('data-ans')] = { text: el.value, ai: (ANS[el.getAttribute('data-ans')] || {}).ai }; }); });
   each('#list button[data-ans-save]', function (el) { el.addEventListener('click', function () { ansSave(el.getAttribute('data-ans-save'), el); }); });
@@ -1701,9 +1764,13 @@ function clearFilters() {
 }
 /* #t=TOKEN&s=SEG, a link from the calls sheet or the team panel: the board opens on that one client */
 var FOCUS = '', FOCUS_SEG = '', focusTried = false;
+/* the AI guide read for each client, and the task each client's comment goes on (22 October 2026); a link may name the task */
+var GUIDE = {}, TASK_PICK = {};
 function readHash() {
   var h = location.hash || '', t = /[#&]t=([A-Za-z0-9_-]{1,64})/.exec(h), s = /[#&]s=([A-Za-z0-9]{1,3})/.exec(h);
   FOCUS = t ? t[1] : ''; FOCUS_SEG = s ? s[1].toUpperCase() : ''; focusTried = false;
+  var k = /[#&]k=([A-Za-z0-9]{15,18})/.exec(h);
+  if (FOCUS && k) TASK_PICK[FOCUS] = k[1];
 }
 readHash();
 window.addEventListener('hashchange', function () { readHash(); if (D) { if (FOCUS && TABDEF[TAB] && TABDEF[TAB].pane) TAB = tabsFor(D).filter(function (t) { return !TABDEF[t].pane; })[0]; drawTabs(tabsFor(D)); showPane(); } });
@@ -2151,7 +2218,8 @@ function silentRow(c, manager) {
   var kin = c.state === 'family' || familyAnswered(c) ? (familyOf(c) || []).filter(function (m) { return m.state === 'answered'; }).map(function (m) { return m.client; }) : [];
   var who = [c.age !== undefined ? c.age : '', c.occ || '', c.town || ''].filter(function (x) { return x !== ''; });
   return '<div class="srow" id="c-' + esc(c.token) + '">' + (manager ? '<input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '">' : '') +
-    '<b>' + esc(c.client) + '</b><span class="no">' + esc(c.no || '') + '</span><span class="pill seg">' + esc(c.seg || '') + '</span><span class="pill silent">' + esc(c.state === 'family' ? c.fstate : 'not answered yet') + '</span>' +
+    '<b>' + esc(c.client) + '</b><span class="no">' + esc(c.no || '') + '</span><span class="pill seg">' + esc(c.seg || '') + '</span><span class="pill silent">' + esc(c.state === 'family' ? c.fstate : c.state === 'held' ? 'letter held' : c.state === 'unsent' ? 'not written to yet' : 'not answered yet') + '</span>' +
+    (c.state === 'held' && c.held ? '<span class="no" title="' + esc(c.held) + '">' + esc(heldWords(c.held)) + '</span>' : '') +
     (who.length ? '<span class="no">' + esc(who.join(' · ')) + '</span>' : '') +
     valuePill(c) + (manager ? sugTag(c) : '') + (kin.length ? '<span class="no">family of <b>' + esc(kin.join(', ')) + '</b>, who answered</span>' : '') +
     (c.book ? '<span class="no">was with ' + esc(c.book) + '</span>' : '') + (c.sent ? '<span class="no">written to ' + esc(c.sent) + '</span>' : '') +
@@ -2161,6 +2229,17 @@ function silentRow(c, manager) {
     detButton(c, true) +
     (POL_OPEN[c.token] && POLS[c.token] ? '<div class="polrow">' + silentDetails(c, POLS[c.token], manager) + '</div>' : '') +
     (DET_OPEN[c.token] ? '<div class="detrow">' + detPanel(c) + '</div>' : '') + '</div>';
+}
+/* why a letter is held, in a few words: the reason as the sheet has it, cut at its first clause */
+function heldWords(h) {
+  var s = String(h || ''), m = /^bounced:\s*([^(]+)/i.exec(s);
+  if (/^no e-?mail/i.test(s)) return 'no e-mail on file';
+  if (/^bounced/i.test(s)) return 'the letter bounced' + (m ? ': ' + m[1].trim() : '');
+  if (/^hold: manager/i.test(s)) return 'held by the branch manager';
+  if (/^hold: e-?mail by phone/i.test(s)) return 'e-mail taken by phone, waiting for the go';
+  if (/same name and inbox/i.test(s)) return 'likely one person on two client numbers';
+  if (/shares an inbox/i.test(s)) return 'shares an inbox: confirm the address';
+  return s.split(/[:(]/)[0].trim() || 'held';
 }
 function silentDetails(c, x, manager) {
   var fake = { token: c.token, contact: x.contact || null, profile: x.profile || null, pol: x.pol || null, hh: c.hh, hhSize: c.hhSize, phone: c.phone, email: c.email };
@@ -2705,6 +2784,104 @@ var AG_BUCKETS = [
 var AG_CS = { asked: 'answered', noted: 'answered: noted', reached: 'reached by phone', called: 'called, no answer yet', tocall: 'on a call list, not called yet',
   dnc: 'asked not to be called', silent: 'written to, no answer', held: 'letter held', unsent: 'not written to yet' };
 function agState(html) { $('agState').innerHTML = html || ''; }
+
+/* ---- Tasks (22 October 2026: "must be able to see the tasks opened and build in intelligence") ----
+   Every open orphan task in Salesforce (tTasksView_), matched to its client: who holds it, how long it has been open, when it
+   is due, the last post and who wrote it, and whether the agent named on the client has written on it. The branch and staff
+   see every task, a unit manager his team's, an agent their own. A client's name opens them on the board with their details,
+   and their comment box set to post on that task. Read when the tab opens and again after five minutes, never on the
+   two-minute refresh. */
+var TKV = null, TKV_AT = 0, TKV_BUSY = false, TKF = { q: '', owner: '', show: '' }, TK_STEP = 60, TK_N = 60;
+var TK_OLD = 'The Tasks list needs the new backend: paste Transition.gs, then Deploy → Manage deployments → New version.';
+function tkState(html) { $('tkState').innerHTML = html || ''; }
+function tkLoad(force) {
+  if (!D || TKV_BUSY || (!force && TKV && Date.now() - TKV_AT < 300000)) return;
+  TKV_BUSY = true;
+  if (TAB === 'tasks') tkState(TKV && TKV.on ? 'Reading Salesforce again&hellip;' : 'Reading every open orphan task from Salesforce&hellip; about twenty seconds.');
+  api(signed({ action: 'board', tasks: '1' })).then(function (r) {
+    TKV_BUSY = false;
+    var nv = r && r.ok ? (r.tasksView || { on: false, why: TK_OLD }) : { on: false, why: r && r.notUpdated ? TK_OLD : ((r && r.error) || 'The sheet did not answer.') };
+    if ((nv.on && !nv.error) || !(TKV && TKV.on && !TKV.error)) TKV = nv;   // a failed read again keeps the last good picture
+    TKV_AT = Date.now();
+    if (TAB === 'tasks') tasksPane();
+  }).catch(function () { TKV_BUSY = false; if (!TKV) TKV = { on: false, why: 'The sheet did not answer.' }; if (TAB === 'tasks') tasksPane(); });
+}
+function tkTest(t) {
+  var s = TKF.show;
+  if (s === 'overdue' && !t.overdue) return false;
+  if (s === 'nopost' && t.posts) return false;
+  if (s === 'quiet' && t.quiet < (TKV.quietDays || 2)) return false;
+  if (s === 'agent' && !(t.named && !t.agentPosted)) return false;
+  if (s === 'hh' && t.on !== 'household') return false;
+  if (s === 'nomatch' && t.tok) return false;
+  if (TKF.owner && t.owner !== TKF.owner) return false;
+  if (TKF.q) {
+    var hay = [t.client, t.subject, t.owner, t.named, t.by, t.last ? t.last.by + ' ' + t.last.text : ''].join(' ').toLowerCase();
+    if (hay.indexOf(TKF.q.toLowerCase()) < 0) return false;
+  }
+  return true;
+}
+function tasksPane() {
+  if (!D) return;
+  var v = TKV;
+  if (!v) { $('tkBody').hidden = true; tkState('Reading every open orphan task from Salesforce&hellip; about twenty seconds.'); tkLoad(); return; }
+  if (!v.on || v.error) {
+    $('tkBody').hidden = true;
+    tkState('<span class="stop">' + esc(v.why || v.error) + '</span>' + (TKV_BUSY ? '' : ' <button type="button" id="tkRetry">Try again</button>'));
+    if ($('tkRetry')) $('tkRetry').addEventListener('click', function () { tkLoad(true); tasksPane(); });
+    return;
+  }
+  tkState(TKV_BUSY ? 'Reading Salesforce again&hellip;' : '');
+  $('tkBody').hidden = false;
+  if (Date.now() - TKV_AT > 300000) tkLoad();
+  var c = v.counts || {}, role = D.role, onBoard = {};
+  everyone().forEach(function (x) { onBoard[x.token] = x; });
+  $('tkSub').textContent = role === 'agent' ? 'The open orphan tasks on your clients, and the ones you hold: post on them from the client’s details' :
+    role === 'unit' ? 'The open orphan tasks on your team’s clients, and the ones your team holds' :
+    'Every open orphan task in Salesforce: who holds it, how long it has been open, and the last post on it';
+  $('tkTiles').innerHTML = dTile(c.open || 0, 'Open tasks', 'as at ' + (v.at || ''), '', 's:') +
+    dTile(c.overdue || 0, 'Past their due date', '', c.overdue ? 'crit' : '', 's:overdue') +
+    dTile(c.noPost || 0, 'Nothing posted yet', 'no Chatter on the task', c.noPost ? 'crit' : '', 's:nopost') +
+    dTile(c.quiet || 0, 'Quiet ' + (v.quietDays || 2) + '+ working days', 'no post or change since', '', 's:quiet') +
+    dTile(c.agentQuiet || 0, 'Agent named, no word from them', 'the agent has not posted on it yet', c.agentQuiet ? 'crit' : '', 's:agent') +
+    (c.noClient ? dTile(c.noClient, 'Not matched to a client', 'no policy of the books on it', '', 's:nomatch') : '');
+  var worst = (v.owners || []).filter(function (o) { return o.open; }).sort(function (a, b) { return (b.overdue + b.noPost) - (a.overdue + a.noPost); })[0];
+  $('tkWhat').innerHTML = [c.open ? pc(c.open - (c.noPost || 0), c.open) + '% of the open tasks have at least one post.' : '',
+    c.overdue ? c.overdue + ' ' + (c.overdue === 1 ? 'is' : 'are') + ' past the date set on them.' : '',
+    worst && (worst.overdue + worst.noPost) ? esc(worst.name) + ' holds the most to catch up on: ' + worst.overdue + ' overdue, ' + worst.noPost + ' with nothing posted.' : '',
+    c.agentQuiet ? c.agentQuiet + ' sit on clients whose agent is named and has not written on the task yet.' : ''].filter(Boolean).join(' ');
+  /* who holds them */
+  var ow = v.owners || [];
+  $('tkOwners').innerHTML = ow.length ? '<div class="dh2">Who holds them</div><div class="svwrap"><table class="svlist tkown"><tr><th>Held by</th><th>Open</th><th>Overdue</th><th>No post</th><th>Quiet</th></tr>' +
+    ow.map(function (o) {
+      return '<tr data-tko="' + esc(o.name) + '"' + (TKF.owner === o.name ? ' class="on"' : '') + '><td>' + esc(o.name) + '</td><td class="n">' + o.open + '</td><td class="n' + (o.overdue ? ' late' : '') + '">' + o.overdue + '</td>' +
+        '<td class="n' + (o.noPost ? ' late' : '') + '">' + o.noPost + '</td><td class="n">' + o.quiet + '</td></tr>';
+    }).join('') + '</table></div>' : '';
+  fill($('tkOwner'), ow.map(function (o) { return o.name; }), 'held by anyone');
+  $('tkOwner').value = TKF.owner; $('tkShow').value = TKF.show;
+  if ($('tkQ').value !== TKF.q) $('tkQ').value = TKF.q;
+  var rows = (v.tasks || []).filter(tkTest), drawn = rows.slice(0, TK_N);
+  $('tkList').innerHTML = '<p class="tkn"><b>' + rows.length + '</b> of ' + (v.tasks || []).length + ' open task' + ((v.tasks || []).length === 1 ? '' : 's') + '</p>' +
+    (drawn.length ? drawn.map(function (t) {
+      var cl = t.tok && onBoard[t.tok], go = cl ? '#t=' + encodeURIComponent(t.tok) + '&s=' + encodeURIComponent(t.seg || '') + '&k=' + encodeURIComponent(t.id) : '';
+      var who = t.client ? (go ? '<a href="' + go + '"><b>' + esc(t.client) + '</b></a>' : '<b>' + esc(t.client) + '</b>') : '<span class="mut">not matched to a client of the books</span>';
+      var flags = (t.overdue ? '<span class="pill late">overdue</span>' : t.dueToday ? '<span class="pill assigned">due today</span>' : '') +
+        (!t.posts ? '<span class="pill open">nothing posted</span>' : '') + (t.on === 'household' ? '<span class="pill hh">household</span>' : '') +
+        (t.named ? '<span class="pill ' + (t.agentPosted ? 'done' : 'named') + '">' + esc(firstName(t.named)) + (t.agentPosted ? ' has written' : ': no word yet') + '</span>' : '');
+      return '<div class="tkrow"><div class="tkh">' + who + '<span class="tks">' + esc(t.subject) + '</span></div>' +
+        '<div class="tkm">' + flags + '<span>held by <b>' + esc(t.owner || 'nobody') + '</b></span><span>' + esc(t.status) + '</span>' +
+        (t.opened ? '<span>opened ' + esc(t.opened) + ' (' + t.age + ' working day' + (t.age === 1 ? '' : 's') + ')</span>' : '') + (t.due ? '<span>due ' + esc(t.due) + '</span>' : '') + '</div>' +
+        (t.last ? '<div class="tkl"><b>' + esc(t.last.by) + '</b> · ' + esc(t.last.when) + ': ' + esc(t.last.text) + '</div>' : '') +
+        '<div class="tka">' + (go ? '<a class="tkgo" href="' + go + '">Open and post</a>' : '') + (t.url ? '<a href="' + esc(t.url) + '" target="_blank" rel="noopener">Salesforce</a>' : '') + '</div></div>';
+    }).join('') + (rows.length > drawn.length ? '<button type="button" class="more" id="tkMore">Show the next ' + Math.min(TK_STEP, rows.length - drawn.length) + '</button>' : '')
+    : '<p class="dnone">No open task matches.</p>');
+  each('#tkTiles [data-go]', function (b) { b.addEventListener('click', function () { TKF.show = b.getAttribute('data-go').slice(2); TK_N = TK_STEP; tasksPane(); }); });
+  each('#tkOwners tr[data-tko]', function (tr) { tr.addEventListener('click', function () { var o = tr.getAttribute('data-tko'); TKF.owner = TKF.owner === o ? '' : o; TK_N = TK_STEP; tasksPane(); }); });
+  if ($('tkMore')) $('tkMore').addEventListener('click', function () { TK_N += TK_STEP; tasksPane(); });
+}
+$('tkOwner').addEventListener('change', function () { TKF.owner = $('tkOwner').value; TK_N = TK_STEP; tasksPane(); });
+$('tkShow').addEventListener('change', function () { TKF.show = $('tkShow').value; TK_N = TK_STEP; tasksPane(); });
+(function () { var qt = null; $('tkQ').addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(function () { TKF.q = $('tkQ').value.trim(); TK_N = TK_STEP; tasksPane(); }, 250); }); })();
 /* who a client has been named to, oldest first: [[d MMM, agent, 'board'|'Salesforce', by]] (tAssignHist_) */
 function histLine(h) {
   return 'History: ' + h.map(function (x) {
@@ -3734,12 +3911,13 @@ function postHtml(p, cls) {
   return '<div class="' + cls + '"><span class="pw"><b>' + esc(p.by || '') + '</b>' + (p.when ? ' · ' + esc(p.when) : '') + '</span><p>' + esc(p.text) + '</p>' +
     (p.replies || []).map(function (r) { return postHtml(r, 'rep'); }).join('') + '</div>';
 }
-function taskCard(t) {
+function taskCard(t, tok) {
   var meta = [t.owner ? 'assigned to <b>' + esc(t.owner) + '</b>' : '', t.due ? 'due ' + esc(t.due) : '', t.opened ? 'opened ' + esc(t.opened) + (t.by ? ' by ' + esc(t.by) : '') : '',
-    t.policy ? 'policy ' + esc(t.policy) : ''].filter(Boolean).join(' · ');
-  var posts = t.posts || [];
-  return '<div class="task' + (t.open ? '' : ' shut') + '"><div class="tt"><b>' + esc(t.subject) + '</b><span class="pill ' + (t.open ? 'open' : 'done') + '">' + esc(t.status || (t.open ? 'open' : 'closed')) + '</span>' +
-    (t.priority && !/^normal$/i.test(t.priority) ? '<span class="pill late">' + esc(t.priority) + '</span>' : '') + '</div>' +
+    t.policy ? 'policy ' + esc(t.policy) : t.household ? 'on the household' : ''].filter(Boolean).join(' · ');
+  var posts = t.posts || [], picked = tok && TASK_PICK[tok] === t.id;
+  return '<div class="task' + (t.open ? '' : ' shut') + (picked ? ' picked' : '') + '"><div class="tt"><b>' + esc(t.subject) + '</b><span class="pill ' + (t.open ? 'open' : 'done') + '">' + esc(t.status || (t.open ? 'open' : 'closed')) + '</span>' +
+    (t.priority && !/^normal$/i.test(t.priority) ? '<span class="pill late">' + esc(t.priority) + '</span>' : '') +
+    (t.open && tok ? '<button type="button" class="tpost" data-tpick="' + esc(tok) + '|' + esc(t.id) + '">' + (picked ? '✓ Your comment goes here' : 'Post on this task') + '</button>' : '') + '</div>' +
     '<div class="tm">' + meta + (t.url ? ' · <a href="' + esc(t.url) + '" target="_blank" rel="noopener">open in Salesforce</a>' : '') + '</div>' +
     (t.desc ? '<details class="tdesc"><summary>What the task says</summary><p>' + esc(t.desc) + '</p></details>' : '') +
     (posts.length ? postHtml(posts[0], 'post') : '') +
@@ -3758,15 +3936,60 @@ function detPanel(c) {
   h += '<div class="dh">Salesforce tasks <small>' + (x.sf ? (tasks.length ? open + ' open · ' : '') + 'on their policies and contact record: open, and any changed in the last ' + esc(x.taskDays || 14) + ' days' : '') + '</small></div>';
   if (x.tasksError) h += '<p class="derr">' + esc(x.tasksError) + '</p>';
   else if (!x.sf) h += '<p class="dnone">' + esc(x.tasksWhy) + '</p>';
-  else h += tasks.length ? tasks.map(taskCard).join('') : '<p class="dnone">' + esc(x.tasksWhy || 'No task on this client’s policies.') + '</p>';
-  h += '<div class="dh">Comments <small>' + (x.sf ? 'kept here, and posted to the client&rsquo;s open tasks in Salesforce in your name' : 'kept on the Board Comments tab') + '</small></div>' +
+  else h += tasks.length ? tasks.map(function (t) { return taskCard(t, c.token); }).join('') : '<p class="dnone">' + esc(x.tasksWhy || 'No task on this client’s policies.') + '</p>';
+  var openT = tasks.filter(function (t) { return t.open; });
+  if (TASK_PICK[c.token] && !openT.some(function (t) { return t.id === TASK_PICK[c.token]; })) delete TASK_PICK[c.token];
+  h += '<div class="dh">Comments <small>' + (x.sf ? 'kept here, and posted in Salesforce in your name' : 'kept on the Board Comments tab') + '</small></div>' +
     (x.comments || []).map(function (m) {
       return '<div class="cmt"><span class="pw"><b>' + esc(m.by) + '</b>' + (m.role ? ' · ' + esc(m.role) : '') + ' · ' + esc(m.when) + '</span><p>' + esc(m.text) + '</p>' +
         (m.sf ? '<span class="csf">Salesforce: ' + esc(m.sf) + '</span>' : '') + '</div>';
     }).join('') +
     '<textarea class="cmtbox" data-cmt="' + esc(c.token) + '" maxlength="800" placeholder="What you did, what you found, what happens next" aria-label="A comment on ' + esc(c.client) + '">' + esc(DRAFT[c.token] || '') + '</textarea>' +
+    (x.sf && openT.length ? '<label class="cmtto">Post it on <select data-cmt-to="' + esc(c.token) + '"><option value="">the newest open tasks (up to 3)</option>' +
+      openT.map(function (t) { return '<option value="' + esc(t.id) + '"' + (TASK_PICK[c.token] === t.id ? ' selected' : '') + '>' + esc(t.subject.slice(0, 70)) + (t.owner ? ' · ' + esc(t.owner) : '') + '</option>'; }).join('') + '</select></label>' : '') +
     '<div class="cmtbar"><span>The team sees it; the client never does.</span><button type="button" class="cmtgo" data-cmt-go="' + esc(c.token) + '">Save comment</button></div>';
-  return h + '</div>';
+  return guideHtml(c) + h + '</div>';
+}
+/* ---- the AI guide (22 October 2026: "use our AI for intelligent guided responses") ----
+   One press on a client's details: where things stand, what to do next, what to say first, what to ask, what to be careful
+   of, and a note to post on the task after the call, written by the Claude API from what the board holds on them
+   (tGuideApi_). Nothing is saved or sent by it: "Use as my comment" puts the note in the box, to edit and save. */
+var PRIO_WORDS = { now: ['Act now', 'late'], 'this week': ['This week', 'assigned'], routine: ['Routine', 'done'] };
+function guideHtml(c) {
+  var g = GUIDE[c.token], name = c.firstName || 'the client';
+  var put = function (s) { return esc(String(s || '').split('[first name]').join(name)); };
+  var head = '<div class="guide"><div class="gh"><b>Guide me</b><small>written by AI from what the board and Salesforce hold on ' + esc(name) + ': check it against the file before you act</small></div>';
+  if (!g) return head + '<button type="button" class="gbtn" data-guide="' + esc(c.token) + '">✦ Guide me with AI</button></div>';
+  if (g.loading) return head + '<p class="dload">Reading the file and writing the guide&hellip; about twenty seconds.</p></div>';
+  if (g.error) return head + '<p class="derr">' + esc(g.error) + ' <a data-guide-retry="' + esc(c.token) + '">Try again</a></p></div>';
+  var x = g.guide || {}, pr = PRIO_WORDS[x.priority] || PRIO_WORDS.routine;
+  var ul = function (a, tag) { return a && a.length ? '<' + tag + '>' + a.map(function (s) { return '<li>' + put(s) + '</li>'; }).join('') + '</' + tag + '>' : ''; };
+  return head + '<div class="gbody"><p class="gstand"><span class="pill ' + pr[1] + '">' + esc(pr[0]) + '</span> ' + put(x.stands) + '</p>' +
+    (x.next && x.next.length ? '<div class="gsec"><i>What to do</i>' + ul(x.next, 'ol') + '</div>' : '') +
+    (x.opener ? '<div class="gsec"><i>What to say first</i><p class="gq">“' + put(x.opener) + '”</p></div>' : '') +
+    (x.ask && x.ask.length ? '<div class="gsec"><i>What to ask</i>' + ul(x.ask, 'ul') + '</div>' : '') +
+    (x.careful && x.careful.length ? '<div class="gsec gcare"><i>Be careful</i>' + ul(x.careful, 'ul') + '</div>' : '') +
+    (x.post ? '<div class="gsec"><i>A note for the task, after the call</i><p class="gpost">' + put(x.post) + '</p><button type="button" class="gbtn sm" data-guide-use="' + esc(c.token) + '">Use as my comment</button></div>' : '') +
+    '<p class="gfoot">' + (g.at ? 'Written ' + esc(g.at) + (g.cached ? ' (kept from earlier today)' : '') + ' · ' : '') + '<a data-guide-retry="' + esc(c.token) + '">Ask again</a></p></div></div>';
+}
+function loadGuide(tok) {
+  if (notYet()) return;
+  GUIDE[tok] = { loading: true }; list();
+  api(signed({ action: 'board', guide: '1', token: tok })).then(function (r) {
+    if (!r || !r.ok) GUIDE[tok] = { error: r && r.notUpdated ? 'The guide needs the new backend: paste Transition.gs, then Deploy → Manage deployments → New version.' : ((r && r.error) || 'The sheet did not answer.') };
+    else if (!r.guide) GUIDE[tok] = { error: 'The guide needs the new backend: paste Transition.gs, then Deploy → Manage deployments → New version.' };
+    else GUIDE[tok] = r;
+    list();
+  }).catch(function () { GUIDE[tok] = { error: 'The sheet did not answer.' }; list(); });
+}
+function useGuide(tok) {
+  var g = GUIDE[tok], c = everyone().filter(function (x) { return x.token === tok; })[0] || {};
+  if (!g || !g.guide || !g.guide.post) return;
+  DRAFT[tok] = String(g.guide.post).split('[first name]').join(c.firstName || 'the client');
+  list();
+  var box = document.querySelector('textarea.cmtbox[data-cmt="' + tok + '"]');
+  if (box) { box.focus(); try { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
+  toast('The note is in the comment box. Fill in the brackets with what happened, then press Save comment.');
 }
 /* everything the branch has done for the client, from Salesforce, with the service levels (16 October 2026: "all that we have
    done to service their account pulling all our salesforce history so a person can see the service levels") */
@@ -3800,7 +4023,9 @@ function saveComment(tok, btn) {
   DRAFT[tok] = text;
   if (notYet()) return;
   btn.disabled = true; btn.textContent = 'Saving…';
-  api(signed({ action: 'comment', token: tok, text: text })).then(function (r) {
+  var cp = { action: 'comment', token: tok, text: text };
+  if (TASK_PICK[tok]) cp.task = TASK_PICK[tok];
+  api(signed(cp)).then(function (r) {
     btn.disabled = false; btn.textContent = 'Save comment';
     if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Your comment is still in the box: try again.', true); return; }
     delete DRAFT[tok];
@@ -4561,7 +4786,11 @@ $('fToggle').addEventListener('click', function () { var f = $('filters'); f.hid
 /* the order is a way of looking, not a filter: it is kept on this device and Clear leaves it */
 try { var ORD = localStorage.getItem('rrb-assign-order'); if (/^(value|town|name)$/.test(ORD || '')) $('fOrder').value = ORD; } catch (e) {}
 $('fOrder').addEventListener('change', function () { try { localStorage.setItem('rrb-assign-order', $('fOrder').value); } catch (e) {} });
-$('fAll').addEventListener('change', function () { if (D) load(); });
+/* whether this device reads every client (the clients who have not answered and the letters held included): on unless
+   someone turned it off here */
+function allPref() { try { return localStorage.getItem('rrb-assign-all') !== '0'; } catch (e) { return true; } }
+$('fAll').checked = allPref();
+$('fAll').addEventListener('change', function () { try { localStorage.setItem('rrb-assign-all', $('fAll').checked ? '1' : '0'); } catch (e) {} if (D) load(); });
 $('fClear').addEventListener('click', clearFilters);
 (function () {
   /* folded until someone opens them (8 October 2026: the charts above the list were half of what made the board confusing);

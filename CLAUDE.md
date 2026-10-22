@@ -2576,6 +2576,39 @@ voice under the new timing and the caption gives it away.
     Azariah for Premchand, Darryl, Meera, Narissa and Daniel, from who has owned each agent's tasks); else whichever of
     Sasha, Azariah and Liz has the fewest open orphan tasks. The owner is that person's Salesforce user, else the
     branch manager's. `hh22/test.js` (21 checks) and `hh22/sf-test.js` (5) in the scratchpad cover it.
+- **Every orphan on the branch's board, the open tasks, a comment on one chosen task, and an AI guide** (22 October 2026:
+  "on my log in i am not seeing all the orphans and must be able to search and must be able to see the tasks opened and
+  build in intelligence, agent when logged in must be able to post on a chatter on the task … and use our AI for
+  intelligent guided responses").
+  - **Every client of the books, by default, for the branch.** The board used to ask for the clients who had not answered
+    only when "include clients who have not answered yet" was ticked, and it never showed a client whose letter was held
+    (a check, no e-mail, bounced, the manager's hold): 239 of 2,473 on 22 October. The page now asks with `all=1` unless
+    that device turned it off (`rrb-assign-all`), and `tBoard_` adds the held and unsent clients as states `held` and
+    `unsent` (never one `T_NOT_BOOK` leaves out), each with its policy numbers (`pn`). `all` counts for the branch only:
+    staff, unit managers and agents get their own lists whatever the page asks. About 3.4 MB for the branch.
+  - **The search** (`hay`) reaches the name, client number, every policy number, the e-mail, the phone numbers (as digits
+    too), town, address, occupation, the former agent ("was with …"), the agent named, the letter and the household.
+  - **Tasks** (a tab under Act on, for every role; `tTasksView_` through `action=board&tasks=1`, so Service.gs needs no
+    paste): every open Salesforce task whose subject starts "Orphan", matched to its client by the policy record, or by the
+    contact for a household task on the Account (`tPolTokens_`), with who holds it, its age in working days, its due date,
+    the last post and its writer (a board post is read by the name at its head), and whether the agent named on the client
+    has written on it. Tiles for overdue, nothing posted, quiet two working days, agent named with no word, not matched; a
+    row per person holding them. The branch and staff see every task, a unit manager his team's clients and tasks, an agent
+    their own. Read once every five minutes (`T_TASKS`). "Open and post" opens the client (`#t=…&k=<task id>`) with the
+    comment set to that task.
+  - **A comment on one task.** Each open task on a client's details has "Post on this task", and the comment box says where
+    it goes; `transitionComment_` takes `task` and posts only there, and only if it is one of that client's open tasks.
+    Without one it goes to the newest three, as before. An agent named in Salesforce can open the client and post.
+  - **Guide me** (`tGuideApi_`, `action=board&guide=1&token=…`): on a client's details, the Claude API (`GCM.AI_MODEL`,
+    structured output, effort low, `ANTHROPIC_API_KEY`) reads what the board holds on them (where they stand, what they
+    told us, the call-back, the file notes, the history, the policies and what the records show, the open tasks and their
+    last posts) and writes where things stand, a priority, what to do next, what to say first, what to ask, what to be
+    careful of, and a note for the task with [brackets] to fill. The client is "[first name]" to the API and the page puts
+    the name back; the former agent is "the former agent"; numbers, e-mails and links are taken out both ways. Staff's
+    facts carry no figure, and the rules say Client Support never advises. Nothing is saved or sent: "Use as my comment"
+    puts the note in the box. Kept six hours for the same facts.
+  - `hh22/tasks-test.js` (38, Node) and `hh22/page-test.js` (37, Playwright, a phone included) in the scratchpad cover it,
+    Salesforce and the API mocked.
 - **A naming in Salesforce now briefs the agent, as a naming on the board does** (22 October 2026: "can a template be
   created that will trigger a notification to Neil once the Assignment is done? … log in and place his comments in the
   portal … and give a lot of intelligence"). Until then Salesforce sent nothing (no flow on the policy record reads
