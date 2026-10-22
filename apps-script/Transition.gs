@@ -1109,7 +1109,10 @@ function transitionReceipts() {
     try { tSharedInboxRows_(); } catch (e) { log_('transition', 'shared-inbox-failed', String(e && e.message ? e.message : e)); }
     try { tAgainCol_(); } catch (e) { log_('transition', 'send-again-column-failed', String(e && e.message ? e.message : e)); }
     try { tFilePhoneEmails_(); } catch (e) { log_('transition', 'phone-emails-failed', String(e && e.message ? e.message : e)); }
-    try { tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
+    var hs = null;
+    try { hs = tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
+    /* after each sync (every T_HA.EVERY_MIN minutes): the brief for a client the branch named in Salesforce (22 October 2026) */
+    if (hs && !hs.skipped) { try { tSfBriefs_(); } catch (e) { log_('transition', 'salesforce-briefs-failed', String(e && e.message ? e.message : e)); } }
     var out = tReceipts_();
     try { tIntroPicks_(); } catch (e) { log_('transition', 'intro-picks-failed', String(e && e.message ? e.message : e)); }   // a client's time for the agent's call
     tClaimsRun_(false);   // the TT$200 retention claims, after the receipts; never throws
@@ -5904,6 +5907,8 @@ function transitionAssign_(p) {
     if (done.length && wantBrief) {
       try { tBriefMail_(agent, done, b); briefed = true; }
       catch (e) { warnings.push('The brief to ' + agent.name + ' did not send: ' + String(e && e.message ? e.message : e)); }
+      /* the ledger the Salesforce pass reads (tSfBriefs_): this naming also reaches Salesforce, and must not be briefed twice */
+      if (briefed) tBriefLog_(done.map(function (c) { return { tok: c.token, client: c.client, agent: agent.name, on: now, source: 'board', status: 'sent' }; }));
     }
     if (done.length && wantIntro) {
       /* one introduction per inbox in one press (a family sharing an e-mail reads it once), and none to an address
@@ -6311,15 +6316,19 @@ function tTellClient_(tok, key, status, line) {
  *  and an agent could call from the e-mail without ever opening the board. From the script
  *  owner's account, never to a client, and it says it is internal. */
 var T_BRIEF_FULL = 25;   // clients shown in one brief; a larger batch lists the rest by name, and the board has every one
+var T_BRIEF_INS = 6;     // lines of "what the records show" a client (22 October 2026: "give a lot of intelligence"; four until then)
 var T_BOARD_URL = 'https://rickyrampersadbranch.com/orphanmanagement';
-function tBriefMail_(agent, clients, board) {
+/** o (optional): { via: 'Salesforce', on: 'yyyy-MM-dd' } for a naming made in Salesforce (tSfBriefs_); { test: true, to }
+ *  sends it to `to` marked TEST, as the agent would read it. */
+function tBriefMail_(agent, clients, board, o) {
+  o = o || {};
   var F = 'Inter,Arial,sans-serif', esc = tEsc_, mute = '#64798e', ink = '#12202e';
-  var to = agent.email || TRANSITION.COPY_TO || SVC.AGENT_EMAIL, first = String(agent.name).split(/\s+/)[0];
+  var to = o.to || agent.email || TRANSITION.COPY_TO || SVC.AGENT_EMAIL, first = String(agent.name).split(/\s+/)[0];
   var pl = function (n, one, many) { return n + ' ' + (n === 1 ? one : many); };
   var hhs = {};
   clients.forEach(function (c) { hhs[c.hh || ('S' + c.token)] = 1; });
   var nh = Object.keys(hhs).length, names = clients.map(function (c) { return c.client; });
-  var subject = (agent.email ? '' : '(no e-mail on the roster for ' + agent.name + ') ') + 'Named to you: ' +
+  var subject = (o.test ? '[TEST for ' + agent.name + '] ' : '') + (agent.email || o.test ? '' : '(no e-mail on the roster for ' + agent.name + ') ') + 'Named to you: ' +
     names.slice(0, 2).join(', ') + (names.length > 2 ? ' and ' + (names.length - 2) + ' more' : '') + ' · sign in to the board to see the file';
   /* one client, a first look: the household, how many policies, the one thing to raise first, the way in */
   var peek = function (c) {
@@ -6351,7 +6360,7 @@ function tBriefMail_(agent, clients, board) {
        own lines (tInsightsFor_), the most pressing four, never the cover against income */
     var ins = c.ins && c.ins.length ? c.ins : [];
     if (!ins.length && pp) { try { ins = tInsightsFor_(pp, pf, today); } catch (e) { ins = []; } }
-    ins = (ins || []).filter(function (x) { return !T_MONEY_INS[x.k]; }).slice(0, 4);
+    ins = (ins || []).filter(function (x) { return !T_MONEY_INS[x.k]; }).slice(0, T_BRIEF_INS);
     /* how we have served them: the record the letter printed (tSvcOf_), the whole Salesforce record being on the board */
     var sr = sendBy[c.token] ? tSvcOf_(sendBy[c.token]) : null, served = [];
     if (sr) {
@@ -6391,10 +6400,14 @@ function tBriefMail_(agent, clients, board) {
   var sendBy = {};
   try { tRead_().rows.forEach(function (r) { var t = tText_(r.Token); if (t) sendBy[t] = r; }); } catch (e) {}
   var tt = tBriefClaims_(agent, clients, board);
+  var onDay = o.on ? tDmy_(o.on) : '';
   var html = '<div style="font:15px/1.5 ' + F + ';color:#33465a;max-width:640px">' +
+    (o.test ? '<div style="background:#fff1d6;border:1px solid #efc24b;border-radius:8px;padding:8px 12px;margin:0 0 12px;font-size:13.5px"><b>TEST.</b> This is the brief ' +
+      esc(agent.name) + ' receives' + (agent.email ? ' at ' + esc(agent.email) : '') + '. Nothing was sent to the agent and nothing was recorded.</div>' : '') +
     '<h2 style="font:800 20px ' + F + ';color:' + ink + ';margin:0 0 4px">' + esc(agent.name) + ', you have been named on ' + pl(clients.length, 'client', 'clients') +
     (nh < clients.length ? ' in ' + pl(nh, 'household', 'households') : '') + '.</h2>' +
-    '<p style="margin:0 0 12px;color:' + mute + '">Here is a first look. Their full file is on the board: read it before you call, within two working days.</p>' +
+    (o.via === 'Salesforce' ? '<p style="margin:0 0 4px">The branch named you as their agent in Salesforce' + (onDay ? ' on ' + esc(onDay) : '') + '.</p>' : '') +
+    '<p style="margin:0 0 12px;color:' + mute + '">Here is a first look, from the Branch Intelligence workbook and Salesforce. Their full file is on the board: read it before you call, within two working days.</p>' +
     '<p style="margin:0 0 6px"><a href="' + T_BOARD_URL + '" style="display:inline-block;background:#13408F;color:#fff;font-weight:700;text-decoration:none;padding:11px 18px;border-radius:9px">Sign in to your list on the board</a></p>' +
     '<p style="margin:0 0 14px;font-size:13.5px;color:' + mute + '">' + esc(T_BOARD_URL.replace(/^https:\/\//, '')) + ' · your agent number and your password</p>' +
     '<div style="background:#f3f7fb;border-radius:10px;padding:10px 14px;margin:0 0 6px;font-size:14px"><b>On the board, for each client</b>' +
@@ -6405,16 +6418,24 @@ function tBriefMail_(agent, clients, board) {
     '<li>everything between us and them, from the letter to today</li>' +
     '<li>our service record: every request we handled for them, and their birthday notes</li>' +
     '<li>their open Salesforce task: a comment you write on the board goes onto it</li></ul></div>' +
+    '<div style="border:1px solid #c9d8ef;border-radius:10px;padding:10px 14px;margin:10px 0 6px;font-size:14px"><b style="color:' + ink + '">What to do</b>' +
+    '<ol style="margin:4px 0 0;padding-left:20px">' +
+    '<li>Sign in to the board today with your agent number and your password.</li>' +
+    '<li>Open each client below and read their file before you call: the policies, the household, what they told us, and our history with them.</li>' +
+    '<li>Call within two working days.</li>' +
+    '<li>After every call, press <b>Log call</b> the same day: what happened, and one line for the file.</li>' +
+    '<li>Anything else the team should know goes under <b>History · tasks · comments</b>: write it and press <b>Save comment</b>.</li></ol>' +
+    '<p style="margin:6px 0 0;color:' + mute + '">Your call log and your comments go onto the client’s Salesforce task, so the branch sees them without asking.</p></div>' +
     clients.slice(0, T_BRIEF_FULL).map(peek).join('') +
     (clients.length > T_BRIEF_FULL ? '<p style="margin:14px 0 4px"><b>And ' + (clients.length - T_BRIEF_FULL) + ' more</b> <span style="color:' + mute + '">(each on your list on the board)</span></p>' +
       '<p style="margin:0;font-size:13.5px">' + clients.slice(T_BRIEF_FULL).map(function (c) { return esc(c.client) + ' <span style="color:' + mute + '">' + esc(c.no || '') + '</span>'; }).join(' · ') + '</p>' : '') +
     tt +
     '<div style="background:#fff6df;border-left:4px solid #efc24b;padding:10px 14px;margin:14px 0;font-size:13.5px">' +
-    '<b>After every call</b>, press Log call on the board the same day: what happened and one line for the file. It goes onto their Salesforce task. ' +
     '<b>Three rules.</b> Nothing about the former agent beyond what the letter said. If the client says the former agent has been in touch, or that they pay in person, thank them, say a person calls before anything else, and do not ask what was said. ' +
     'Nothing needs to be signed or paid until they have spoken to the branch.</div>' +
     '<p style="font:12px ' + F + ';color:' + mute + ';margin-top:18px">' + esc(tInternal_(tReceipt_())) + '</p></div>';
   MailApp.sendEmail(to, subject, 'Open in a mail app that shows HTML.', { htmlBody: html, name: TRANSITION.FROM_NAME });
+  return { to: to, subject: subject, html: html };
 }
 
 /** The agent's own TT$200, for the foot of the brief: what the Retention Payments tab holds for them (paid, or to be paid on
@@ -8785,6 +8806,149 @@ function tAlogRead_() {
     });
   } catch (e) {}
   return by;
+}
+
+/* ── the agent's brief when the branch names a client in Salesforce ───────────
+   22 October 2026: "can a template be created that will trigger a notification to Neil once the Assignment is done? it
+   will search the branch Intelligence sheet as him to log in and place his comments in the portal … and give a lot of
+   intelligence". A naming on the board e-mails the agent the brief (tBriefMail_). A naming the branch makes in Salesforce
+   (Assigned Agent on the policy record) reached the board through tHaSync_ and sent nothing, so the agent learnt of it
+   only by signing in. tSfBriefs_ runs after each sync and sends each agent one brief for the clients Salesforce has newly
+   named to them: the same first look, read from the Client Book (built each morning from the Branch Intelligence
+   workbook), the Client Profile and the send list, with the way in to the board and what to log there.
+   - Once per client per agent, recorded on the Agent Briefs tab (made the first time). The board's namings write it too.
+   - A naming the board made, before this tab existed, was briefed by the board: the Assignment Log says so.
+   - A naming dated before FROM is never briefed, so the first run after the paste does not brief October over again.
+   - An agent who is not active on the Agent Skill Bank is recorded "held" and not sent; delete that row on the tab, once
+     the Skill Bank is put right, and the next run sends it.
+   - A brief that fails to send records nothing, so the next run tries again.
+   Internal mail from the script owner's account, like every brief: nothing goes to a client, so no hold applies. */
+var T_SFBRIEF = { ON: true, FROM: '2026-10-22', SHEET: 'Agent Briefs', HEAD: ['When', 'Token', 'Client', 'Agent', 'Named on', 'Source', 'Status'], MAX: 120 };
+/** Appends to the Agent Briefs tab, made the first time: [{ tok, client, agent, on, source, status }]. Never throws. */
+function tBriefLog_(list) {
+  if (!list || !list.length) return;
+  try {
+    var ss = ss_(), sh = ss.getSheetByName(T_SFBRIEF.SHEET);
+    if (!sh) {
+      sh = ss.insertSheet(T_SFBRIEF.SHEET);
+      sh.getRange(1, 1, 1, T_SFBRIEF.HEAD.length).setValues([T_SFBRIEF.HEAD]);
+      try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_SFBRIEF.HEAD.length).setFontWeight('bold'); } catch (e) {}
+    }
+    var now = new Date();
+    var rows = list.map(function (x) { return [now, x.tok, x.client || '', x.agent || '', x.on ? (x.on instanceof Date ? x.on : tHaDate_(x.on) || '') : '', x.source || '', x.status || '']; });
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, T_SFBRIEF.HEAD.length).setValues(rows);
+  } catch (e) { log_('transition', 'agent-briefs-log-failed', String(e && e.message ? e.message : e)); }
+}
+/** The Agent Briefs tab as { 'token|agentkey': status }. Empty when there is no tab yet. */
+function tBriefLogRead_() {
+  var by = {};
+  try {
+    var t = tSheetRows_(T_SFBRIEF.SHEET), ix = {};
+    t.head.forEach(function (h, i) { ix[String(h).trim()] = i; });
+    if (ix.Token === undefined || ix.Agent === undefined) return by;
+    t.rows.forEach(function (v) {
+      var tok = String(v[ix.Token] || '').trim(), ag = tNameKey_(v[ix.Agent]);
+      if (tok && ag) by[tok + '|' + ag] = String(v[ix.Status] || 'sent');
+    });
+  } catch (e) {}
+  return by;
+}
+/** The namings Salesforce made that no brief has covered, by agent: { key: { name, rows: [Household Assignments rows], on } }. */
+function tSfBriefsDue_() {
+  var ha = tHaRead_();
+  if (!ha) return {};
+  var done = tBriefLogRead_(), alog = tAlogRead_(), due = {}, n = 0;
+  ha.rows.forEach(function (r) {
+    if (r.source !== 'Salesforce' || !r.agent || !r.token || n >= T_SFBRIEF.MAX) return;
+    var day = tDay_(r.date);
+    if (!day || day < T_SFBRIEF.FROM) return;
+    var k = tNameKey_(r.agent);
+    if (!k || done[r.token + '|' + k]) return;
+    if ((alog[r.token] || []).some(function (x) { return /^board$/i.test(x.via) && tNameKey_(x.agent) === k; })) return;   // the board named and briefed
+    var g = due[k] = due[k] || { name: r.agent, rows: [], on: '' };
+    g.rows.push(r);
+    if (day > g.on) g.on = day;
+    n++;
+  });
+  return due;
+}
+/** Sends the briefs due. opts.test: the newest naming's brief goes to the branch manager, marked TEST, and nothing is
+ *  recorded (with nothing due, the newest Salesforce naming on the tab shows the template). Returns what it did. */
+function tSfBriefs_(opts) {
+  opts = opts || {};
+  var out = { sent: 0, clients: 0, held: 0, failed: 0, agents: [] };
+  if (!T_SFBRIEF.ON && !opts.test) { out.off = true; return out; }
+  var due = tSfBriefsDue_(), keys = Object.keys(due);
+  if (opts.test && !keys.length) {
+    /* nothing due: the newest naming Salesforce made, whatever its date, so the template can be read */
+    var ha = tHaRead_(), best = null;
+    (ha ? ha.rows : []).forEach(function (r) { var d = tDay_(r.date); if (r.source === 'Salesforce' && r.agent && r.token && d && (!best || d > best.d)) best = { r: r, d: d }; });
+    if (best) { due[tNameKey_(best.r.agent)] = { name: best.r.agent, rows: [best.r], on: best.d }; keys = Object.keys(due); }
+  }
+  if (!keys.length) return out;
+  var roster = tRoster_();
+  var b = tBoard_({ ok: true, role: 'branch', me: null }, true, true), map = {}, sendRows = null;
+  [b.clients, b.silent, b.family].forEach(function (list) { (list || []).forEach(function (c) { map[c.token] = c; }); });
+  var log = [];
+  keys.forEach(function (k) {
+    if (opts.test && out.sent) return;   // the test shows one brief: the first agent it can brief
+    var g = due[k], agent = null;
+    roster.forEach(function (a) { if (!agent && tNameKey_(a.name) === k) agent = a; });
+    if (!agent) agent = tRosterMatch_(roster, g.name);
+    if (!agent) {
+      out.held += g.rows.length;
+      if (!opts.test) g.rows.forEach(function (r) { log.push({ tok: r.token, client: r.client, agent: g.name, on: g.on, source: 'Salesforce', status: 'held: ' + g.name + ' is not active on the Agent Skill Bank' }); });
+      return;
+    }
+    var clients = [];
+    g.rows.forEach(function (r) {
+      var c = map[r.token];
+      if (!c) {
+        /* a client the board does not show (a letter held or not sent yet), as transitionAssign_ builds one */
+        if (!sendRows) { sendRows = {}; tRead_().rows.forEach(function (s) { var t = tText_(s.Token); if (t) sendRows[t] = s; }); }
+        var s = sendRows[r.token];
+        if (!s || tYes_(s.Test)) return;
+        c = { token: r.token, client: tText_(s.Client) || r.client, firstName: tText_(s['First name']), no: tText_(s['Client number']) || r.cno,
+          seg: tText_(s.Segment).toUpperCase(), book: tText_(s.Agent), hh: r.hh, rows: [], answers: [], taps: [], notes: [], state: 'held' };
+      }
+      c.assigned = agent.name;
+      clients.push(c);
+    });
+    if (!clients.length) return;
+    try {
+      var m = tBriefMail_(agent, clients, b, opts.test ? { via: 'Salesforce', on: g.on, test: true, to: T_CLAIM.COPY || SVC.AGENT_EMAIL } : { via: 'Salesforce', on: g.on });
+      out.sent++; out.clients += clients.length; out.agents.push(agent.name + ' (' + clients.length + ')');
+      if (opts.test) out.to = m.to;
+      else clients.forEach(function (c) { log.push({ tok: c.token, client: c.client, agent: agent.name, on: g.on, source: 'Salesforce', status: 'sent' }); });
+    } catch (e) {
+      out.failed++;
+      log_('transition', 'salesforce-brief-failed', agent.name + ': ' + String(e && e.message ? e.message : e));
+    }
+  });
+  if (!opts.test) {
+    tBriefLog_(log);
+    if (out.sent || out.held || out.failed) log_('transition', 'salesforce-briefs', out.sent + ' brief' + (out.sent === 1 ? '' : 's') + ' for ' + out.clients + ' client' + (out.clients === 1 ? '' : 's') +
+      (out.agents.length ? ': ' + out.agents.join(', ') : '') + (out.held ? ' · ' + out.held + ' held (agent not on the Agent Skill Bank)' : '') + (out.failed ? ' · ' + out.failed + ' failed' : ''));
+  }
+  return out;
+}
+/** The editor's Run button: sends the briefs due now, without waiting for the next sync. */
+function transitionSfBriefsNow() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return tSay_('another run is busy: try again in a minute');
+  try {
+    try { tHaSync_(true); } catch (e) {}
+    var r = tSfBriefs_();
+    return tSay_(r.off ? 'The Salesforce briefs are switched off (T_SFBRIEF.ON).' : r.sent || r.held || r.failed ?
+      'Briefs sent: ' + r.sent + (r.agents.length ? ' (' + r.agents.join(', ') + ')' : '') + (r.held ? '; ' + r.held + ' held: the agent is not active on the Agent Skill Bank' : '') + (r.failed ? '; ' + r.failed + ' did not send (see the log)' : '') + '.' :
+      'No new namings in Salesforce to brief.');
+  } finally { lock.releaseLock(); }
+}
+/** The editor's Run button: the brief for the newest naming in Salesforce, sent to the branch manager alone, marked TEST. */
+function transitionSfBriefTest() {
+  var r = tSfBriefs_({ test: true });
+  return tSay_(r.sent ? 'Test brief sent to ' + r.to + ': ' + r.agents.join(', ') + '. Nothing went to the agent and nothing was recorded.' :
+    r.held ? 'The newest naming is to an agent who is not active on the Agent Skill Bank, so there is no brief to show.' : 'No naming in Salesforce found on the Household Assignments tab.');
 }
 /* ---- who signs in (15 October 2026: "i want the login to see whats happening and is staff logging in and agents?") ---- */
 /** The Sign-ins tab: one row a person an hour (T_SIGN.EVERY_MIN, a cache key), written on a board request that passed

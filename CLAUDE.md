@@ -2554,6 +2554,27 @@ voice under the new timing and the caption gives it away.
   `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
   `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
   cover it.
+- **A naming in Salesforce now briefs the agent, as a naming on the board does** (22 October 2026: "can a template be
+  created that will trigger a notification to Neil once the Assignment is done? … log in and place his comments in the
+  portal … and give a lot of intelligence"). Until then Salesforce sent nothing (no flow on the policy record reads
+  Assigned Agent, and no e-mail went to any agent after a Salesforce naming), and the sync only copied the name to the
+  board.
+  - **When:** `tSfBriefs_` runs after each `tHaSync_` in the five-minute run (so every 15 minutes). It takes the
+    Household Assignments rows with Source `Salesforce` dated on or after `T_SFBRIEF.FROM` (22 Oct), groups them by agent
+    and sends each agent one `tBriefMail_` (from the script owner's account, internal, nothing to a client, so no hold
+    applies).
+  - **Once:** per client per agent, recorded on the **Agent Briefs** tab (When, Token, Client, Agent, Named on, Source,
+    Status), made the first time. A board naming writes it too, and a board naming from before the tab is known by its
+    Assignment Log row, so a naming the board made and wrote to Salesforce is never briefed twice. A reassignment in
+    Salesforce briefs the new agent. An agent not active on the Agent Skill Bank is recorded `held: …` and not sent;
+    delete that row once the Skill Bank is right and the next run sends it. A send that fails records nothing.
+  - **The brief** (every brief, the board's too): "The branch named you as their agent in Salesforce on <date>" for a
+    Salesforce naming; a numbered **What to do** (sign in, read the file, call within two working days, Log call the same
+    day, Save comment under History · tasks · comments; both go onto the Salesforce task); up to six lines of what the
+    records show (`T_BRIEF_INS`, four until then). Still no client phone, address, e-mail, words or money figure.
+  - `transitionSfBriefTest` (editor Run) sends the branch manager the brief for the newest Salesforce naming, marked
+    TEST, recording nothing; `transitionSfBriefsNow` syncs and sends at once. `sfbrief22/test.js` in the scratchpad
+    covers it (30 checks, the 21 Oct tabs), with `brief16/brief-test.js` (39) still passing.
 - **A questionnaire after the naming earns the agent TT$200, and the claim
   is chased until Salesforce has the payment date** (3 October 2026; ping
   `campaign: 7`). The manager asked: "when a questionnaire is recieved the
