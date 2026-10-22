@@ -2644,6 +2644,61 @@ voice under the new timing and the caption gives it away.
     the same day; 96 unanswered now; 53 clients waiting on the branch to name an agent. `fu22/run.js` (the view on the
     real sheet and Salesforce as pulled that afternoon) and `fu22/page.js` (13, Playwright, a phone included) in the
     scratchpad cover it; `fu22/build-xlsx.py` writes the same view as a workbook.
+- **Branch Intelligence on the named clients: the clock, the chasing alert, naming by e-mail, the note check** (22 October
+  2026). A client named to an agent by the branch manager's e-mail on 16 October wrote six days later that nobody had been in
+  touch: the e-mail had named the agent nowhere, and the support person's task had sat untouched. The manager: "more
+  intelligence to help me manage this properly", and he chose all four. One block at the end of Transition.gs (`T_WATCH`);
+  every row it writes is on the **Branch Watch** tab (When, Kind, Token, Client, Agent, Key, To, What, Ref, Status).
+  - **The clock** (`tClockList_`, `tClockRun_`). It times every client named to an agent from `T_WATCH.FROM`, from the
+    Agents view's own progress (`g` `named`: no call, comment or feedback since the naming). A client is also off the clock
+    when the agent wrote on one of their open orphan tasks, or the last word on one names the agent with a contact word and
+    no "not yet" (`tWatchLoggedOnTasks_`). Working days count the naming day once it is over (`tClockDays_`: named Thursday,
+    1 at Friday 11:00). At the first run from 11:00 on a working day:
+    - level 1: a line on the support person's "follow up with <agent>" task (else the client's newest open task), and one
+      e-mail to the agent listing every client waiting, the support person copied;
+    - level 2: the unit manager (the Unit column) is e-mailed his agents' clients, and the line on the task says so;
+    - level 3: the line says the branch manager has been told, and the client is on his 5:00 list.
+
+    Each level goes once per naming. A client first found at a higher level is acted on at that level alone, the lower ones
+    recorded as passed. Clients named to the branch manager himself are left out.
+  - **The 5:00 list** (`tWatchDaily_`, the first run from 5:00 on a working day, to the branch manager alone): named clients
+    with nothing logged for 3 working days or more, by agent; the count at 1 and 2; clients chasing us in the last three days;
+    namings in his e-mails waiting for a press; the staff notes asked about.
+  - **The chasing alert** (`tChaseAlerts_`, from `tReceipts_`): a client's own words that say nobody has been in touch
+    (`T_WATCH.CHASED`, or `T_FU.CHASE`) reach the agent and the support person at once, the branch manager and sales support
+    copied, with a line on the support person's task. A line drafted for the branch manager (`tChaseDraft_`: the AI under
+    `T_CHASE_SYSTEM`, refused for any digit, link, bracket or the former agent's name, else a plain line) is sent from the
+    board's card as the new manager's note `sorry` (an apology, then his line, then the close; no "thank you for your time
+    today"), from support@ in his name. Once started, the plain wrote-in alert leaves those clients out, so the branch hears
+    once.
+  - **Naming by e-mail** (`tNamingFromMail_`, in `tInbox_`). The branch manager's own e-mail copied to support@ (until then
+    passed over as ours) is read for an assigning word (`T_WATCH.NAMING`) and one agent or unit manager named. Names typed
+    another way are allowed ("Fawaaz" for "Fawwaz", `tLev_`), and the branch manager's own signature never counts. The client
+    is the one whose address is on the message, else the first name it greets; when several clients share that name, the one
+    whose full name or address is in the quoted thread, else nobody. It becomes a naming to confirm on the card, and he is
+    e-mailed a link to it. One press runs the board's own `assign`: Salesforce, the support person's task and the brief. It
+    leaves the list once that client is named to that agent, or on "Not a naming".
+  - **The note check** (`tNoteCheckRun_`, hourly from 8:00 to 17:00). It reads the staff's own posts (`T_WATCH.STAFF`) on open
+    orphan tasks since it last looked; the board's posts and its own are passed over. The AI (`T_NOTE_SYSTEM`, structured
+    output; the rules in `tNoteRule_` without the key) flags these:
+    - a pasted message;
+    - the standard client e-mail text;
+    - a client's ask passed over (the task subject says what they asked);
+    - a note with no outcome.
+
+    Each flagged note is asked about once, as a comment on that post ("the client asked us to confirm what the policy pays.
+    This note does not say that was done").
+  - **Nothing reaches staff or agents until the branch's go**: Start it on the card (`watch=start`, the `watch_live` property;
+    `transitionWatchStart` / `transitionWatchStop` on the editor's Run button). Until then:
+    - the board shows the clock, the chasing and the namings;
+    - the notes it would ask about are a dry read, kept half an hour, with no AI call in the hourly run;
+    - a chasing alert goes to the branch manager alone;
+    - the 5:00 list still comes.
+  - **The board**: a Branch Intelligence card at the top of the Follow-ups tab, for the branch alone (`action=board&watch=1`,
+    so Service.gs needs no paste). Every e-mail it sends links `#watch`, which opens that tab. All of it runs after the
+    five-minute run's lock, never two at once (`watch-running`), and each part in its own try.
+  - `wi22/test.js` (67 checks, Node, the 22 October afternoon tabs, Salesforce, Microsoft and the AI mocked) and `wi22/page.js`
+    (23, Playwright, a laptop, a phone and staff) in the scratchpad cover it.
 - **A naming in Salesforce now briefs the agent, as a naming on the board does** (22 October 2026: "can a template be
   created that will trigger a notification to Neil once the Assignment is done? … log in and place his comments in the
   portal … and give a lot of intelligence"). Until then Salesforce sent nothing (no flow on the policy record reads
