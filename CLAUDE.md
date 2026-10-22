@@ -2609,6 +2609,30 @@ voice under the new timing and the caption gives it away.
     puts the note in the box. Kept six hours for the same facts.
   - `hh22/tasks-test.js` (38, Node) and `hh22/page-test.js` (37, Playwright, a phone included) in the scratchpad cover it,
     Salesforce and the API mocked.
+- **Follow-ups: the clients chasing us, and who on the team answers** (22 October 2026: "run a report on customers who
+  are following up and analyze the staff who are not responding … and have my log in to my dashboard filled with all
+  that was asked for"). A tab second on the branch's board, after Urgent (`tFollowupsView_`, `action=board&followups=1`,
+  so Service.gs needs no paste; the branch alone; kept ten minutes, `T_FU`).
+  - **The clients**: everyone who came back on a later day than their first answer (Client Responses, campaign tokens,
+    never a Test row, a detail taken on a call, a naming or an answer that looks automated). Each is *chasing* (their
+    words ask why nobody called, for an update or a person, `T_FU.CHASE`, or they asked again for the same thing),
+    *wrote with details*, *declined* (`T_FU.DECLINE`) or *came back with more answers*. Then whether anyone answered after
+    their last message: a post by staff or an agent on their task, a call marked on the board, or the task closed; with
+    the working days it took, or the working days they have been waiting.
+  - **The team**: every person holding orphan tasks. The branch's asks are the manager's posts on their tasks (follow-ups,
+    moves, reopenings, notes, his own posts), addressed by the name in the post, else to the owner; never a hold, a
+    carry-on or a board naming note. An answer is any post or comment by that person after the ask (a board post is read
+    by the name at its head; the tracker's "not done" lines by the person they name, "not touched" never an answer).
+    Per person: asks, answered, the same working day, the median wait, the asks unanswered now on open tasks with the
+    working days since their own last entry or since the task became theirs (a move counts from the move), the days of
+    the last ten working days they did anything, open, overdue, untouched, and the tasks closed (with the standard "no
+    questions or concerns" text, with nothing written that day) and reopened by the branch.
+  - **Waiting on the branch**: staff questions to the manager ("who to assign …", "awaiting new agent") on a client nobody
+    is named on yet.
+  - On 22 October: 87 clients came back (21 chasing, 2 with no answer since); 1,036 asks in 21 days, 50% answered, 12%
+    the same day; 96 unanswered now; 53 clients waiting on the branch to name an agent. `fu22/run.js` (the view on the
+    real sheet and Salesforce as pulled that afternoon) and `fu22/page.js` (13, Playwright, a phone included) in the
+    scratchpad cover it; `fu22/build-xlsx.py` writes the same view as a workbook.
 - **A naming in Salesforce now briefs the agent, as a naming on the board does** (22 October 2026: "can a template be
   created that will trigger a notification to Neil once the Assignment is done? … log in and place his comments in the
   portal … and give a lot of intelligence"). Until then Salesforce sent nothing (no flow on the policy record reads

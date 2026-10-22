@@ -553,6 +553,13 @@
   details.tdesc p{margin:4px 0 0;font-size:14px;white-space:pre-line}
   .cmt .csf{display:block;font-size:12px;color:var(--dim);margin-top:3px}
   .cmtbox{display:block;width:100%;margin-top:8px;font:15px var(--fb);padding:9px 11px;border:1px solid var(--field);border-radius:9px;min-height:70px;resize:vertical;color:var(--ink);background:#fff}
+  .fust td,.fust th{white-space:nowrap} .fust tr[data-fup]{cursor:pointer} .fust tr.on td{background:#eef6ff} .fust td.late{color:var(--stop);font-weight:700}
+  .fustrip{display:inline-flex;gap:2px;vertical-align:middle} .fustrip i{width:9px;height:14px;border-radius:2px;background:#e4e9ef} .fustrip i.y{background:var(--teal)}
+  .fuopen td{white-space:normal;background:#fafcff} .fuw{display:grid;gap:8px;padding:4px 0} .fuwr{border-left:3px solid var(--line);padding-left:9px;min-width:0}
+  .fuchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 6px}
+  .furow{border-top:1px solid var(--line2);padding:10px 2px;min-width:0} .furow:first-of-type{border-top:0}
+  .fuq{font-size:14px;color:var(--body);margin:6px 0 0;padding:6px 10px;background:#f8fafc;border-radius:8px;overflow-wrap:anywhere} .fuq i{font-style:normal;color:var(--dim);font-size:12.5px;margin-right:4px}
+  .fuq.ch{background:var(--stopbg);border:1px solid var(--stopline)} .fut{font-size:13px;margin-top:5px} .fua{margin-top:7px;font-size:14px;color:var(--body)} .fua .tkl{margin-top:4px}
   .tkbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px} .tkbar input,.tkbar select{font:15px var(--fb);padding:7px 10px;border:1px solid var(--field);border-radius:9px;background:#fff;color:var(--ink);min-width:0;max-width:100%}
   .tkbar input{flex:1 1 220px}
   .tkn{font-size:13.5px;color:var(--dim);margin:2px 0 6px} .tkn b{color:var(--ink)}
@@ -922,6 +929,19 @@
       <p class="pnote" id="dHow"></p>
     </div>
 
+    <!-- Follow-ups: the clients chasing us, and who on the team is answering (22 October 2026) -->
+    <div class="pane" id="paneFollow" hidden>
+      <div class="panehead"><h2>Follow-ups</h2><span>The clients who came back to us, whether anyone answered, and how each person on the team answers your asks</span></div>
+      <div class="agstate" id="fuState"></div>
+      <div id="fuBody" hidden>
+        <div class="card dcard"><div class="dtiles" id="fuTiles"></div><p class="pnote" id="fuWhat"></p></div>
+        <div class="card dcard" id="fuStaff"></div>
+        <div class="card dcard" id="fuClients"></div>
+        <div class="card dcard" id="fuBranch"></div>
+        <p class="pnote" id="fuHow"></p>
+      </div>
+    </div>
+
     <!-- Tasks: every open orphan task in Salesforce, matched to its client (22 October 2026) -->
     <div class="pane" id="paneTasks" hidden>
       <div class="panehead"><h2>Tasks</h2><span id="tkSub">Every open orphan task in Salesforce: who holds it, how long it has been open, and the last post on it</span></div>
@@ -1166,6 +1186,7 @@ var FILTER_IDS = ['fSearch', 'fSeg', 'fTown', 'fBook', 'fCaller', 'fAge', 'fNeed
 function forget() {
   dropSnap(); STALE = false; AGAIN = false;   // the picture of the last board goes with the person who saw it
   FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; OPENX = {}; EXP = {}; GUIDE = {}; TASK_PICK = {}; TKV = null; TKV_AT = 0; TKF.q = TKF.owner = ''; TKF.show = '';
+  FUV = null; FUV_AT = 0; FUF.kind = 'chasing'; FUF.wait = false; FUF.open = '';
   PAIRX = {}; PAIR_OPEN = {}; MFSHOW = 15;   // a possible family opened in full goes too: the branch's figures never reach the next person
   PF = null; PF_OPEN = ''; PF_PREV = null; PF_BUSY = false;   // and every profile read or being edited
   M = { scope: 'open', town: '', agent: -1, opp: '', show: MSTEP }; MW = null;
@@ -1255,6 +1276,7 @@ var TABDEF = {
   dash: { label: 'Dashboard', grp: 'act', pane: 'paneDash' },
   agents: { label: 'Agents', grp: 'act', pane: 'paneAgents' },
   tasks: { label: 'Tasks', grp: 'act', pane: 'paneTasks' },
+  follow: { label: 'Follow-ups', grp: 'act', pane: 'paneFollow', hot: true },
   match: { label: 'Match', grp: 'act', pane: 'paneMatch' },
   team: { label: 'Team', grp: 'branch', pane: 'paneTeam' },
   insights: { label: 'Insights', grp: 'branch', pane: 'paneInsights' },
@@ -1270,7 +1292,7 @@ function tabsFor(d) {
   var r = d.role, claims = !!(d.claims && d.claims.rows && d.claims.rows.length);
   /* Match (8 October 2026) for whoever names agents, once the backend sends it */
   var match = d.match ? ['match'] : [];
-  if (r === 'branch') return ['urgent', 'dash', 'agents', 'tasks'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights', 'profiles']);
+  if (r === 'branch') return ['urgent', 'follow', 'dash', 'agents', 'tasks'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights', 'profiles']);
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
   var prof = d.me && d.me.name ? ['profile'] : [];
@@ -1444,7 +1466,7 @@ function pickTab(t, keep) {
 }
 function showPane() {
   var def = TABDEF[TAB] || {}, pane = def.pane || 'paneList';
-  ['paneList', 'paneHouseholds', 'paneDash', 'paneAgents', 'paneTasks', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims', 'paneProfile'].forEach(function (p) { $(p).hidden = p !== pane; });
+  ['paneList', 'paneHouseholds', 'paneDash', 'paneAgents', 'paneTasks', 'paneFollow', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims', 'paneProfile'].forEach(function (p) { $(p).hidden = p !== pane; });
   if (pane !== 'paneAgents') AG_VISIBLE = false;
   if (pane === 'paneList') listPane();
   else if (pane === 'paneHouseholds') householdsPane();
@@ -1452,6 +1474,7 @@ function showPane() {
   else if (pane === 'paneDash') dashPane();
   else if (pane === 'paneAgents') agentsPane(true);
   else if (pane === 'paneTasks') tasksPane();
+  else if (pane === 'paneFollow') followPane();
   else if (pane === 'paneMatch') matchPane();
   else if (pane === 'paneTeam') teamPane();
   else if (pane === 'paneInsights') insightsPane();
@@ -2784,6 +2807,118 @@ var AG_BUCKETS = [
 var AG_CS = { asked: 'answered', noted: 'answered: noted', reached: 'reached by phone', called: 'called, no answer yet', tocall: 'on a call list, not called yet',
   dnc: 'asked not to be called', silent: 'written to, no answer', held: 'letter held', unsent: 'not written to yet' };
 function agState(html) { $('agState').innerHTML = html || ''; }
+
+/* ---- Follow-ups (22 October 2026: "run a report on customers who are following up and analyze the staff who are not
+   responding … and have my log in to my dashboard filled with all that was asked for") ----
+   The branch's own tab (tFollowupsView_). The clients who came back to us after their first answer, what they said each
+   time, and whether anyone answered after their last message; how each person holding orphan tasks answers the branch's
+   asks, what is still unanswered, the days they did anything, and how they closed; and the questions waiting on the
+   branch. Read when the tab opens and again after ten minutes, never on the two-minute refresh. */
+var FUV = null, FUV_AT = 0, FUV_BUSY = false, FUF = { kind: 'chasing', wait: false, open: '' };
+var FU_KIND = { chasing: ['Chasing us', 'their words ask why nobody called, for an update or for a person, or they asked again'], details: ['Wrote with details', 'a number, a time, a document'],
+  declined: ['Declined', 'do not want an agent now, or are staying with the former agent'], more: ['Came back with more answers', 'ticked more of the letter on a later day'] };
+var FU_OLD = 'The Follow-ups tab needs the new backend: paste Transition.gs, then Deploy → Manage deployments → New version.';
+function fuState(html) { $('fuState').innerHTML = html || ''; }
+function fuLoad(force) {
+  if (!D || FUV_BUSY || (!force && FUV && Date.now() - FUV_AT < 600000)) return;
+  FUV_BUSY = true;
+  if (TAB === 'follow') fuState(FUV && FUV.on ? 'Reading the sheet and Salesforce again&hellip;' : 'Reading every client who came back to us, and every task&rsquo;s Chatter&hellip; about thirty seconds.');
+  api(signed({ action: 'board', followups: '1' })).then(function (r) {
+    FUV_BUSY = false;
+    var nv = r && r.ok ? (r.followups || { on: false, why: FU_OLD }) : { on: false, why: r && r.notUpdated ? FU_OLD : ((r && r.error) || 'The sheet did not answer.') };
+    if (nv.on || !(FUV && FUV.on)) FUV = nv;
+    FUV_AT = Date.now();
+    if (TAB === 'follow') followPane();
+  }).catch(function () { FUV_BUSY = false; if (!FUV) FUV = { on: false, why: 'The sheet did not answer.' }; if (TAB === 'follow') followPane(); });
+}
+function fuLink(tok, name) { return tok ? '<a href="#t=' + encodeURIComponent(tok) + '"><b>' + esc(name || 'the client') + '</b></a>' : '<b>' + esc(name || '') + '</b>'; }
+function followPane() {
+  if (!D) return;
+  var v = FUV;
+  if (!v) { $('fuBody').hidden = true; fuState('Reading every client who came back to us, and every task&rsquo;s Chatter&hellip; about thirty seconds.'); fuLoad(); return; }
+  if (!v.on) {
+    $('fuBody').hidden = true;
+    fuState('<span class="stop">' + esc(v.why) + '</span>' + (FUV_BUSY ? '' : ' <button type="button" id="fuRetry">Try again</button>'));
+    if ($('fuRetry')) $('fuRetry').addEventListener('click', function () { fuLoad(true); followPane(); });
+    return;
+  }
+  fuState(FUV_BUSY ? 'Reading again&hellip;' : '');
+  $('fuBody').hidden = false;
+  if (Date.now() - FUV_AT > 600000) fuLoad();
+  var c = v.counts || {}, P = v.people || [], C = v.chasers || [], B = v.branch || [];
+  var by = function (k) { return C.filter(function (x) { return x.kind === k; }); };
+  var waitingC = by('chasing').filter(function (x) { return !x.answer; });
+  var asks = P.reduce(function (s, p) { return s + p.asks; }, 0), ans = P.reduce(function (s, p) { return s + p.answered; }, 0), same = P.reduce(function (s, p) { return s + p.sameDay; }, 0);
+  $('fuTiles').innerHTML = dTile(by('chasing').length, 'Clients chasing us', waitingC.length ? waitingC.length + ' with no answer yet since' : 'every one has had an answer since', waitingC.length ? 'crit' : '', 'k:chasing') +
+    dTile(by('details').length, 'Wrote with details', by('details').filter(function (x) { return !x.answer; }).length + ' not answered since', '', 'k:details') +
+    dTile(c.unanswered || 0, 'Your asks unanswered now', 'open tasks where the owner has said nothing since your last post', c.unanswered ? 'crit' : '', 'staff') +
+    dTile(pc(ans, asks) + '%', 'Of your asks answered', ans + ' of ' + asks + ' in ' + (v.days || 21) + ' days; ' + pc(same, asks) + '% the same day', '', 'staff') +
+    dTile(B.length, 'Waiting on you to name', 'staff asked who to assign; nobody named yet', B.length ? 'crit' : '', 'branch');
+  /* what stands out: computed, never advice */
+  var worst = P.slice().sort(function (a, b) { return b.unanswered - a.unanswered; })[0], best = P.slice().filter(function (p) { return p.asks >= 10; }).sort(function (a, b) { return (b.answered / b.asks) - (a.answered / a.asks); })[0];
+  var lines = [];
+  if (worst && worst.unanswered) lines.push(esc(worst.name) + ' has ' + worst.unanswered + ' of your asks with no word since, ' + worst.neverWrote + ' of them on tasks with nothing ever written by ' + esc(firstName(worst.name)) + ', and was active ' + worst.activeDays + ' of the last ' + (worst.strip || []).length + ' working days.');
+  if (best) lines.push(esc(best.name) + ' answered ' + pc(best.answered, best.asks) + '% of your asks, ' + pc(best.sameDay, best.asks) + '% the same day.');
+  var std = P.reduce(function (s, p) { return s + p.closedStd; }, 0), clo = P.reduce(function (s, p) { return s + p.closed; }, 0);
+  if (std) lines.push(std + ' of the ' + clo + ' tasks closed in ' + (v.days || 21) + ' days were closed with the standard "no questions or concerns" text.');
+  if (B.length) lines.push(B.length + ' clients wait on the branch: staff asked who to assign and nobody is named yet, the oldest ' + B.reduce(function (m, x) { return Math.max(m, x.wait); }, 0) + ' working days ago.');
+  if (waitingC.length) lines.push(waitingC.length + ' client' + (waitingC.length === 1 ? ' is' : 's are') + ' chasing us with no answer since their last message.');
+  $('fuWhat').innerHTML = lines.join(' ');
+  /* the team */
+  var stripHead = (v.strip || []).map(function (d) { return '<i title="' + esc(d) + '">' + esc(d.split(' ')[0]) + '</i>'; }).join('');
+  $('fuStaff').innerHTML = '<div class="dh2">Who is answering your asks <small>since ' + esc(v.since || '') + ' · your follow-ups, moves, reopenings, notes and posts on their tasks</small></div>' +
+    '<div class="svwrap"><table class="svlist fust"><tr><th>Person</th><th>Open</th><th>Overdue</th><th>Your asks</th><th>Answered</th><th>Same day</th><th>Median wait</th><th>Unanswered now</th><th>Silent 5+ days</th><th>Active</th><th>Closed</th><th>Reopened by you</th></tr>' +
+    P.map(function (p) {
+      var silent = (p.waiting || []).filter(function (x) { return x.quiet >= 5; }).length, rate = pc(p.answered, p.asks);
+      return '<tr data-fup="' + esc(p.name) + '"' + (FUF.open === p.name ? ' class="on"' : '') + '><td><b>' + esc(p.name) + '</b></td><td class="n">' + p.open + '</td><td class="n' + (p.overdue ? ' late' : '') + '">' + p.overdue + '</td>' +
+        '<td class="n">' + p.asks + '</td><td class="n' + (rate < 50 ? ' late' : '') + '">' + p.answered + ' <span class="mut">(' + rate + '%)</span></td><td class="n">' + pc(p.sameDay, p.asks) + '%</td>' +
+        '<td class="n">' + (p.median === null ? '–' : p.median < 24 ? p.median + ' h' : Math.round(p.median / 24 * 10) / 10 + ' days') + '</td>' +
+        '<td class="n' + (p.unanswered ? ' late' : '') + '">' + p.unanswered + '</td><td class="n' + (silent ? ' late' : '') + '">' + silent + '</td>' +
+        '<td><span class="fustrip" title="the last ' + (p.strip || []).length + ' working days">' + (p.strip || []).map(function (n, i) { return '<i class="' + (n ? 'y' : '') + '" title="' + esc((v.strip || [])[i] || '') + ': ' + n + '"></i>'; }).join('') + '</span> ' + p.activeDays + '/' + (p.strip || []).length + '</td>' +
+        '<td class="n">' + p.closed + (p.closed ? ' <span class="mut">(' + p.closedStd + ' standard, ' + p.closedBare + ' no note)</span>' : '') + '</td><td class="n">' + p.reopened + '</td></tr>' +
+        (FUF.open === p.name ? '<tr class="fuopen"><td colspan="12">' + fuWaiting(p) + '</td></tr>' : '');
+    }).join('') + '</table></div><p class="pnote">Tap a person for the tasks where your last ask has had no answer. Active: a square for each of the last working days, filled when they posted, commented or closed a task that day. An answer is any post or comment by them after your post, a "not touched" carry-over excepted.</p>';
+  /* the clients */
+  var list = C.filter(function (x) { return x.kind === FUF.kind && (!FUF.wait || !x.answer); });
+  $('fuClients').innerHTML = '<div class="dh2">Clients who came back to us</div><div class="fuchips">' +
+    ['chasing', 'details', 'declined', 'more'].map(function (k) { return '<button type="button" class="subc' + (FUF.kind === k ? ' on' : '') + '" data-fuk="' + k + '">' + esc(FU_KIND[k][0]) + ' <b>' + by(k).length + '</b></button>'; }).join('') +
+    '<label class="chk"><input type="checkbox" id="fuWait"' + (FUF.wait ? ' checked' : '') + '> only those with no answer since</label></div>' +
+    '<p class="pnote">' + esc(FU_KIND[FUF.kind][1]) + '.</p>' +
+    (list.length ? list.map(function (x) {
+      var said = (x.contacts || []).filter(function (k) { return k.words; }).map(function (k) { return '<div class="fuq' + (k.chase ? ' ch' : '') + '"><i>' + esc(k.at) + '</i> “' + esc(k.words.slice(0, 320)) + (k.words.length > 320 ? '…' : '') + '”</div>'; }).join('');
+      var taps = (x.contacts || []).filter(function (k) { return k.tap; }).map(function (k) { return k.at.split(',')[0]; });
+      return '<div class="furow"><div class="tkh">' + fuLink(x.tok, x.client) + '<span class="pill seg">' + esc(x.seg) + '</span><span class="mut">was with ' + esc(x.book) + ' · first answered ' + esc(x.first) + '</span></div>' +
+        said + (taps.length ? '<div class="mut fut">Came back to tick ' + (x.again && x.again.length ? 'the same request again' : 'more answers') + ' on ' + esc(taps.join(', ')) + '</div>' : '') +
+        '<div class="fua">' + (x.answer ? '<span class="pill done">answered</span> by <b>' + esc(x.answer.by) + '</b> ' + esc(x.answer.at) + (x.took ? ' <span class="mut">(after ' + x.took + ' working day' + (x.took === 1 ? '' : 's') + ')</span>' : '') +
+            '<div class="tkl">' + esc(x.answer.how) + '</div>' : '<span class="pill late">no answer since</span> <b>' + x.wait + ' working day' + (x.wait === 1 ? '' : 's') + '</b> since ' + esc(x.last)) +
+        '</div><div class="tkm">' + (x.task ? '<span>task with <b>' + esc(x.task.owner) + '</b></span>' : '<span>' + (x.tasks ? 'no open task' : 'no task in Salesforce') + '</span>') + '<span>agent: <b>' + esc(x.named || 'nobody named') + '</b></span></div></div>';
+    }).join('') : '<p class="dnone">Nobody here.</p>');
+  /* waiting on the branch */
+  $('fuBranch').innerHTML = '<div class="dh2">Waiting on you <small>staff asked who to assign; nobody is named on the client yet</small></div>' +
+    (B.length ? B.map(function (x) {
+      return '<div class="furow"><div class="tkh">' + fuLink(x.tok, x.client) + '<span class="pill seg">' + esc(x.seg) + '</span><span class="mut">' + esc(x.by) + ', ' + esc(x.at) + (x.wait ? ' · ' + x.wait + ' working day' + (x.wait === 1 ? '' : 's') + ' ago' : ' · today') + '</span></div><div class="tkl">' + esc(x.text) + '</div></div>';
+    }).join('') : '<p class="dnone">Nothing waiting on you.</p>');
+  $('fuHow').innerHTML = 'Read ' + esc(v.at || '') + '. Clients: Client Responses, the campaign\u2019s own clients, never a detail taken on a call or an answer that looks automated; answered means a post by staff or an agent on their task, a call marked on the board, or the task closed, after their last message. Team: every orphan task in Salesforce and its Chatter since ' + esc(v.since || '') + '.';
+  each('#fuTiles [data-go]', function (b) { b.addEventListener('click', function () {
+    var g = b.getAttribute('data-go');
+    if (/^k:/.test(g)) { FUF.kind = g.slice(2); FUF.wait = g === 'k:chasing'; followPane(); try { $('fuClients').scrollIntoView({ behavior: 'smooth' }); } catch (e) {} }
+    else try { $(g === 'branch' ? 'fuBranch' : 'fuStaff').scrollIntoView({ behavior: 'smooth' }); } catch (e) {}
+  }); });
+  each('#fuStaff tr[data-fup]', function (tr) { tr.addEventListener('click', function () { var n = tr.getAttribute('data-fup'); FUF.open = FUF.open === n ? '' : n; followPane(); }); });
+  each('#fuClients [data-fuk]', function (b) { b.addEventListener('click', function () { FUF.kind = b.getAttribute('data-fuk'); followPane(); }); });
+  if ($('fuWait')) $('fuWait').addEventListener('change', function () { FUF.wait = $('fuWait').checked; followPane(); });
+}
+function fuWaiting(p) {
+  var w = p.waiting || [], map = {};
+  everyone().forEach(function (x) { map[x.token] = x; });
+  if (!w.length) return '<p class="dnone">Nothing unanswered.</p>';
+  return '<div class="fuw">' + w.map(function (x) {
+    var cl = x.tok && map[x.tok];
+    return '<div class="fuwr"><div>' + (cl ? fuLink(x.tok, cl.client) : '<b>' + esc(x.subject.replace(/^Orphan[^:]*:\s*/, '').slice(0, 60)) + '</b>') + ' <span class="mut">' + esc(x.subject.slice(0, 90)) + '</span></div>' +
+      '<div class="tkm"><span class="' + (x.quiet >= 5 ? 'late' : '') + '"><b>' + x.quiet + '</b> working days with no word' + (x.ever ? ' since their last entry (' + esc(x.since) + ')' : ' since it became theirs (' + esc(x.since) + '), nothing ever written') + '</span>' +
+      '<span>your asks since: <b>' + x.asks + '</b></span><span>last ask ' + esc(x.ask) + '</span>' + (x.due ? '<span>due ' + esc(x.due) + '</span>' : '') + '</div></div>';
+  }).join('') + '</div>';
+}
 
 /* ---- Tasks (22 October 2026: "must be able to see the tasks opened and build in intelligence") ----
    Every open orphan task in Salesforce (tTasksView_), matched to its client: who holds it, how long it has been open, when it

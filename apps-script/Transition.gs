@@ -4695,6 +4695,11 @@ function transitionBoard_(p) {
       try { return { ok: true, tasksView: tTasksView_(w) }; }
       catch (err) { return { ok: true, tasksView: { on: false, why: 'The tasks could not be read: ' + String(err && err.message ? err.message : err) } }; }
     }
+    /* the clients chasing us and who on the team is answering (tFollowupsView_, 22 October 2026): the branch alone */
+    if (/^(1|yes|true)$/i.test(String(p.followups || ''))) {
+      try { return { ok: true, followups: tFollowupsView_(w) }; }
+      catch (err) { return { ok: true, followups: { on: false, why: 'The follow-ups could not be read: ' + String(err && err.message ? err.message : err).slice(0, 200) } }; }
+    }
     /* the AI guide on one client (tGuideApi_, 22 October 2026) */
     if (/^(1|yes|true)$/i.test(String(p.guide || ''))) {
       try { return tGuideApi_(p, w); }
@@ -11341,6 +11346,263 @@ function tGuideNames_(text, names, by) {
       out = out.replace(new RegExp('(^|[^A-Za-z\u00C0-\u024F])' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Za-z\u00C0-\u024F])', 'gi'), function (m, pre) { return pre + by; });
     });
   return out;
+}
+/* ── Follow-ups: the clients chasing us, and who on the team is answering (22 October 2026) ─────────────
+   "run a report on customers who are following up and analyze the staff who are not responding … and have my log in to
+   my dashboard filled with all that was asked for". For the branch alone (action=board&followups=1, so Service.gs needs
+   no paste), read when the tab opens and kept ten minutes.
+   - The clients: everyone who came back to us on a later day than their first answer (Client Responses, the campaign's own
+     tokens, never a Test row, a detail taken on a call, a naming or an answer that looks automated). What they said each
+     time, and whether they are chasing (their words ask why nobody has called, for an update, for a person; or they asked
+     again for something they had asked before), giving us details, or declining. Then, from Salesforce and the board,
+     whether anyone answered after their last message: a post by staff or an agent on their task, a call marked on the
+     board, or the task closed. A client still waiting shows how many working days.
+   - The team: every person holding orphan tasks. The branch's asks to them on their tasks (the follow-ups, the moves, the
+     reopenings, the notes passed on and the manager's own posts, addressed by name or to the owner), how many they
+     answered, how many the same working day, how long they took, and the asks still unanswered now with the oldest wait;
+     the days they did anything in Salesforce; their open, overdue and untouched tasks; and the tasks they closed, with the
+     standard "no questions or concerns" text, or with nothing written that day, and how many the branch reopened.
+   - Waiting on the branch: staff questions to the manager ("who to assign …") on a client nobody is named on yet. */
+var T_FU = { DAYS: 21, ACTIVE_WD: 10, CACHE_S: 600, KEY: 'followups-v2', CHUNK: 120,
+  CHASE: /(no (one|call|calls|response|reply|feedback)\b|did not (receive|get) (any )?(call|response)|not (yet )?(received|heard|been (called|contacted))|haven'?t (heard|received|been)|still (waiting|no|have not|haven'?t)|any (update|news|feedback)|an update|update on (this|my)|follow(ing)?[ -]?up on|kindly seeking|seeking your response|taking so long|why (is )?(my|it)\b[^.?]{0,40}(long|taking)|real person|is there a number|number i can call|whereabouts|don'?t you guys|(no|not)\b[^.]{0,30}\bto date|been waiting|waiting (on|for) (a|your|the) (call|response|reply)|nobody (has )?(called|contacted)|when (will|can) i expect|time ?frame)/i,
+  DECLINE: /((do not|don'?t|not)( currently| really| yet)? (want|need|wish)[^.]{0,40}(agent|change|support))|agent ?less|go under|still (be|able to be) my agent|good with .{1,30} being my agent|waiting for (him|her) and|choose my new agent|already have someone|will select an agent/i,
+  ASKQ: /^(callme|urgent|paid|pay|deliver|finish|stop|review|stay_talk|rate_better|life_changed|walk_yes|built_yes|more_yes|pays_confirm|contact_yes|pay_person|pay_unsure|contract_unsure|contract_missing|k_unsure|k_outstanding|value_yes)$/,
+  STD: /no questions or concerns/i,
+  WHO: /who (to|should|do i|do we|will)\b[^.?]{0,20}assign|advise (us )?who|confirm who|assign (same|client|him|her) to|awaiting (a |the )?new agent/i,
+  NOASK: /^(HOLD|CARRY ON|From the assignment board)/ };
+function tFollowupsView_(w) {
+  if (!w || w.role !== 'branch') return { on: false, why: 'The follow-ups are for the branch.' };
+  var cache = null;
+  try { cache = CacheService.getScriptCache(); var hit = tCacheGetBig_(cache, T_FU.KEY); if (hit) return hit; } catch (e) {}
+  var out = tFollowupsBuild_(new Date());
+  try { if (cache && out.on) tCachePutBig_(cache, T_FU.KEY, out, T_FU.CACHE_S); } catch (e) {}
+  return out;
+}
+function tFollowupsBuild_(now) {
+  var tz = tTz_(), fmt = function (d, f) { return d ? Utilities.formatDate(d, tz, f || 'd MMM, HH:mm') : ''; };
+  var since = new Date(now.getTime() - T_FU.DAYS * 86400000), mgr = tNameKey_(TRANSITION.MANAGER.name);
+  /* the clients, off the sheet */
+  var send = {};
+  tRead_().rows.forEach(function (r) { var tk = tText_(r.Token); if (tk && !tYes_(r.Test) && !/^test:/i.test(tText_(r.Agent))) send[tk] = r; });
+  var named = {};
+  try { named = tNamedAll_(); } catch (e) {}
+  var resp = tSheetRows_(SVC.RESP_SHEET), by = {}, stamps = {};
+  resp.rows.forEach(function (v) {
+    var tok = String(v[1] || '').trim(), page = String(v[5] || ''), note = String(v[10] || '');
+    if (!send[tok]) return;
+    var re = /\[(called|met|no answer|declined|closed) (\d{1,2}) ([A-Z][a-z]{2}) · ([^\]]+)\]/g, m;
+    while ((m = re.exec(note))) (stamps[tok] = stamps[tok] || []).push({ what: m[1], day: m[2] + ' ' + m[3], by: m[4].trim() });
+    if (tOursRow_(page) || /^\/(orphan-video|assign|call)\b/.test(page) || /verify/.test(page) || /look automated/.test(note)) return;
+    var at = v[0] instanceof Date ? v[0] : null;
+    if (!at) return;
+    var q = tQOf_(page), type = String(v[3] || '').toLowerCase();
+    var wrote = /^\/reply|^\/your-policy\/words/.test(page) || q === 'wrote';
+    (by[tok] = by[tok] || []).push({ at: at, q: q || type, wrote: wrote, words: wrote ? tNoteWords_(note).slice(0, 500) : '' });
+  });
+  var chasers = [];
+  Object.keys(by).forEach(function (tok) {
+    var ev = by[tok].sort(function (a, b) { return a.at - b.at; }), d0 = Utilities.formatDate(ev[0].at, tz, 'yyyy-MM-dd');
+    var first = ev.filter(function (e) { return Utilities.formatDate(e.at, tz, 'yyyy-MM-dd') === d0; });
+    var later = ev.filter(function (e) { return Utilities.formatDate(e.at, tz, 'yyyy-MM-dd') > d0; });
+    if (!later.length) return;
+    var askedBefore = {};
+    first.forEach(function (e) { if (T_FU.ASKQ.test(e.q)) askedBefore[e.q] = true; });
+    var chase = false, decline = false, details = false, again = [], contacts = [], seenDay = {};
+    later.forEach(function (e) {
+      if (e.wrote && e.words) {
+        if (T_FU.CHASE.test(e.words)) chase = true;
+        else if (T_FU.DECLINE.test(e.words)) decline = true;
+        else details = true;
+        contacts.push({ at: fmt(e.at), words: e.words, chase: T_FU.CHASE.test(e.words) });
+      } else if (askedBefore[e.q] && T_FU.ASKQ.test(e.q)) { if (again.indexOf(e.q) < 0) again.push(e.q); }
+      var day = Utilities.formatDate(e.at, tz, 'yyyy-MM-dd');
+      if (!e.wrote && !seenDay[day]) { seenDay[day] = true; contacts.push({ at: fmt(e.at), tap: true }); }
+    });
+    if (again.length && !chase) chase = true;
+    var r = send[tok];
+    chasers.push({ tok: tok, client: tText_(r.Client) || tText_(r['First name']), seg: tText_(r.Segment).toUpperCase(), book: tText_(r.Agent),
+      first: fmt(ev[0].at, 'd MMM'), firstQ: first.map(function (e) { return e.q; }).filter(function (q, i, a) { return q && a.indexOf(q) === i; }),
+      contacts: contacts, again: again, kind: chase ? 'chasing' : decline ? 'declined' : details ? 'details' : 'more',
+      lastAt: later[later.length - 1].at, last: fmt(later[later.length - 1].at), named: named[tok] || '' });
+  });
+  /* the tasks, their Chatter, and who answered what */
+  if (!tSfOn_()) return { on: false, why: 'Salesforce is not linked to this project yet: copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings → Script properties.' };
+  var tasks = tSfQuery_("SELECT Id, Subject, Status, IsClosed, Owner.Name, ActivityDate, CreatedDate, CompletedDateTime, WhoId, WhatId FROM Task WHERE Subject LIKE 'Orphan%' AND (IsClosed = false OR CompletedDateTime >= " +
+    Utilities.formatDate(new Date(since.getTime() - 20 * 86400000), 'UTC', "yyyy-MM-dd'T'HH:mm:ss'Z'") + ') ORDER BY CreatedDate');
+  var posts = {};
+  for (var i = 0; i < tasks.length; i += T_FU.CHUNK) {
+    tSfQuery_('SELECT Id, ParentId, CreatedBy.Name, CreatedDate, Body, (SELECT CreatedBy.Name, CreatedDate, CommentBody FROM FeedComments ORDER BY CreatedDate) FROM FeedItem WHERE Type = \'TextPost\' AND ParentId IN (' +
+      tSoqlIn_(tasks.slice(i, i + T_FU.CHUNK).map(function (t) { return t.Id; })) + ') ORDER BY CreatedDate').forEach(function (f) {
+      var list = posts[f.ParentId] = posts[f.ParentId] || [];
+      list.push(tFuEntry_(f.Body, f.CreatedBy ? f.CreatedBy.Name : '', f.CreatedDate, mgr));
+      ((f.FeedComments && f.FeedComments.records) || []).forEach(function (c) { list.push(tFuEntry_(c.CommentBody, c.CreatedBy ? c.CreatedBy.Name : '', c.CreatedDate, mgr)); });
+    });
+  }
+  /* each task to its client: the policy number in its subject, else its contact's records */
+  var polTok = tPolTokens_(), whoNeed = [];
+  tasks.forEach(function (t) {
+    t.tok = '';
+    (String(t.Subject || '').match(/\b\d{7,12}\b/g) || []).some(function (n) { if (polTok[n]) { t.tok = polTok[n]; return true; } return false; });
+    if (!t.tok && t.WhoId && whoNeed.indexOf(t.WhoId) < 0) whoNeed.push(t.WhoId);
+  });
+  if (whoNeed.length) {
+    var conTok = {};
+    for (var j = 0; j < whoNeed.length; j += T_FU.CHUNK) tSfQuery_('SELECT POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN (' + tSoqlIn_(whoNeed.slice(j, j + T_FU.CHUNK)) + ')').forEach(function (r) {
+      var tk = polTok[tPolNo_(r.POLICY__c)]; if (tk) conTok[String(r.Contact__c).slice(0, 15)] = tk;
+    });
+    tasks.forEach(function (t) { if (!t.tok && t.WhoId) t.tok = conTok[String(t.WhoId).slice(0, 15)] || ''; });
+  }
+  var people = {}, today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  var person = function (n) {
+    var k = tNameKey_(n);
+    return people[k] = people[k] || { name: n, open: 0, overdue: 0, untouched: 0, asks: 0, answered: 0, sameDay: 0, hours: [], waiting: [], days: {}, closed: 0, closedStd: 0, closedBare: 0,
+      reopened: 0, notTouched: 0, posts: 0 };
+  };
+  var first = function (s) { return String(s || '').split(/\s+/)[0].toLowerCase(); };
+  var ownerOf = {}, whoFor = function (text, owner) {
+    var h = String(text || '').slice(0, 200), m;
+    if ((m = /^(?:FOLLOW-UP|ACTION REQUIRED|NOTE)\s+—\s+([A-Z][\w'-]+)/.exec(h)) || (m = /now with ([A-Z][\w'-]+)/.exec(h)) || (m = /^RETURNED to ([A-Z][\w'-]+)/i.exec(h)) ||
+        (m = /^REASSIGNED TO ([A-Z][\w'-]+)/i.exec(h)) || (m = / to ([A-Z][\w'-]+) [A-Z][\w'-]+ by the branch workload/.exec(h)) || (m = /^([A-Z][a-z]+),/.exec(h))) {
+      var f = m[1].toLowerCase() === 'liz' ? 'elizabeth' : m[1].toLowerCase();
+      var hitP = Object.keys(ownerOf).filter(function (k) { return first(ownerOf[k]) === f; })[0];
+      if (hitP) return ownerOf[hitP];
+    }
+    return owner;
+  };
+  tasks.forEach(function (t) { var o = t.Owner && t.Owner.Name; if (o && tNameKey_(o) !== mgr) ownerOf[tNameKey_(o)] = o; });
+  var reach = {}, whoAsk = [];
+  tasks.forEach(function (t) {
+    var owner = t.Owner && t.Owner.Name || '', mine = owner && tNameKey_(owner) !== mgr, list = (posts[t.Id] || []).sort(function (a, b) { return a.t - b.t; });
+    var due = String(t.ActivityDate || '').slice(0, 10);
+    if (mine) {
+      var p = person(owner);
+      if (!t.IsClosed) {
+        p.open++;
+        if (due && due < today) p.overdue++;
+        if (!list.some(function (e) { return !e.mgr; })) p.untouched++;
+      }
+    }
+    /* the branch's asks, and the reply each got */
+    var lastAsk = {};
+    list.forEach(function (e, ix) {
+      if (e.mgr) {
+        if (e.ask) {
+          var to = whoFor(e.text, owner);
+          if (!to || tNameKey_(to) === mgr) return;
+          var pp = person(to), at = e.t;
+          if (/^REOPENED|^Reopened/.test(e.text)) pp.reopened++;
+          if (at < since) { lastAsk[tNameKey_(to)] = e; return; }
+          pp.asks++;
+          var reply = null;
+          for (var k = ix + 1; k < list.length; k++) if (!list[k].mgr && tNameKey_(list[k].by) === tNameKey_(to) && !list[k].notTouched) { reply = list[k]; break; }
+          if (reply) {
+            pp.answered++;
+            pp.hours.push((reply.t - at) / 3600000);
+            if (Utilities.formatDate(reply.t, tz, 'yyyy-MM-dd') === Utilities.formatDate(at, tz, 'yyyy-MM-dd')) pp.sameDay++;
+          }
+          lastAsk[tNameKey_(to)] = e;
+        }
+        return;
+      }
+      var w0 = person(e.by);
+      if (e.t >= since) { w0.posts++; w0.days[Utilities.formatDate(e.t, tz, 'yyyy-MM-dd')] = (w0.days[Utilities.formatDate(e.t, tz, 'yyyy-MM-dd')] || 0) + 1; }
+      if (e.notTouched) w0.notTouched++;
+      if (T_FU.WHO.test(e.text)) whoAsk.push({ task: t, e: e });
+    });
+    /* still waiting: the newest ask to the owner of an open task, with nothing from them since */
+    if (mine && !t.IsClosed) {
+      var la = lastAsk[tNameKey_(owner)];
+      if (la && !list.some(function (e) { return !e.mgr && e.t > la.t && tNameKey_(e.by) === tNameKey_(owner) && !e.notTouched; })) {
+        /* how long the owner has said nothing on it: since their own last entry, else since the task was opened */
+        var mineE = list.filter(function (e) { return !e.mgr && tNameKey_(e.by) === tNameKey_(owner) && !e.notTouched; }), lastMine = mineE.length ? mineE[mineE.length - 1].t : null;
+        /* a task moved to them counts from the move, not from when it was opened */
+        var start = new Date(String(t.CreatedDate).replace(/\.\d+\+0000$/, 'Z'));
+        list.forEach(function (e) { if (e.ask && /^(MOVED|Moved|RETURNED|REASSIGNED)/.test(e.text) && tNameKey_(whoFor(e.text, owner)) === tNameKey_(owner) && e.t > start) start = e.t; });
+        var from = lastMine && lastMine > start ? lastMine : start;
+        person(owner).waiting.push({ id: t.Id, tok: t.tok, subject: tTaskSubject_(t.Subject).slice(0, 120), ask: fmt(la.t), kind: la.kind, wait: tWorkingDays_(la.t, now), due: due,
+          quiet: tWorkingDays_(from, now), since: fmt(from, 'd MMM'), ever: !!lastMine,
+          asks: list.filter(function (e) { return e.ask && e.t > from && tNameKey_(whoFor(e.text, owner)) === tNameKey_(owner); }).length });
+      }
+    }
+    /* closures */
+    if (t.IsClosed && t.CompletedDateTime && mine) {
+      var c = new Date(String(t.CompletedDateTime).replace(/\.\d+\+0000$/, 'Z'));
+      if (c >= since) {
+        var p2 = person(owner), cd = Utilities.formatDate(c, tz, 'yyyy-MM-dd');
+        p2.closed++;
+        p2.days[cd] = (p2.days[cd] || 0) + 1;
+        var theirs = list.filter(function (e) { return !e.mgr && tNameKey_(e.by) === tNameKey_(owner) && Utilities.formatDate(e.t, tz, 'yyyy-MM-dd') === cd; });
+        if (!theirs.length) p2.closedBare++;
+        else if (theirs.some(function (e) { return T_FU.STD.test(e.text); })) p2.closedStd++;
+      }
+    }
+    /* what reached the client's task: for the chasers */
+    if (t.tok) {
+      var rr = reach[t.tok] = reach[t.tok] || { tasks: [], replies: [] };
+      rr.tasks.push({ id: t.Id, owner: owner, open: !t.IsClosed, closedAt: t.CompletedDateTime ? new Date(String(t.CompletedDateTime).replace(/\.\d+\+0000$/, 'Z')) : null, subject: tTaskSubject_(t.Subject).slice(0, 100) });
+      list.forEach(function (e) { if (!e.mgr && !e.notTouched) rr.replies.push({ t: e.t, by: e.by, text: e.text.slice(0, 160) }); });
+    }
+  });
+  /* the clients: answered since their last message? */
+  chasers.forEach(function (c) {
+    var rr = reach[c.tok] || { tasks: [], replies: [] }, after = null;
+    rr.replies.forEach(function (x) { if (x.t > c.lastAt && (!after || x.t < after.t)) after = x; });
+    var closed = rr.tasks.filter(function (x) { return x.closedAt && x.closedAt > c.lastAt; })[0];
+    var st = (stamps[c.tok] || []).filter(function (s) {
+      var dm = s.day.split(' '), d = new Date(c.lastAt.getFullYear(), T_MON.indexOf(dm[1]), Number(dm[0]), 23, 59);
+      return d > c.lastAt;
+    })[0];
+    var when = after ? after.t : closed ? closed.closedAt : null;
+    c.answer = after ? { by: after.by, at: fmt(after.t), how: after.text } : closed ? { by: closed.owner, at: fmt(closed.closedAt), how: 'closed the task' } : st ? { by: st.by, at: st.day, how: 'marked "' + st.what + '" on the board' } : null;
+    if (c.answer) c.took = when ? tWorkingDays_(c.lastAt, when) : 0;
+    c.wait = c.answer ? 0 : tWorkingDays_(c.lastAt, now);
+    var open = rr.tasks.filter(function (x) { return x.open; })[0];
+    c.task = open ? { id: open.id, owner: open.owner, subject: open.subject } : null;
+    c.tasks = rr.tasks.length;
+    delete c.lastAt;
+  });
+  var kOrder = { chasing: 0, details: 1, declined: 2, more: 3 };
+  chasers.sort(function (a, b) { return (kOrder[a.kind] - kOrder[b.kind]) || ((a.answer ? 1 : 0) - (b.answer ? 1 : 0)) || (b.wait - a.wait); });
+  /* waiting on the branch: a staff question on who to name, on a client nobody is named on yet */
+  var waitBranch = [], seenTok = {};
+  whoAsk.sort(function (a, b) { return b.e.t - a.e.t; }).forEach(function (x) {
+    var tk = x.task.tok;
+    if (!tk || seenTok[tk] || named[tk]) return;
+    seenTok[tk] = true;
+    var r = send[tk];
+    var named2 = (posts[x.task.Id] || []).some(function (e) { return e.t > x.e.t && /^From the assignment board · Named to/.test(e.raw); });
+    if (named2) return;
+    waitBranch.push({ tok: tk, client: r ? tText_(r.Client) : '', seg: r ? tText_(r.Segment).toUpperCase() : '', by: x.e.by, at: fmt(x.e.t), text: x.e.text.slice(0, 200), wait: tWorkingDays_(x.e.t, now), task: x.task.Id });
+  });
+  /* the people, the last ACTIVE_WD working days as a strip */
+  var strip = [], d = new Date(now.getTime());
+  while (strip.length < T_FU.ACTIVE_WD) { if (d.getDay() !== 0 && d.getDay() !== 6) strip.unshift(Utilities.formatDate(d, tz, 'yyyy-MM-dd')); d = new Date(d.getTime() - 86400000); }
+  var list = Object.keys(people).map(function (k) { return people[k]; }).filter(function (p) { return tNameKey_(p.name) !== mgr && (p.open || p.asks || p.closed); }).map(function (p) {
+    var hs = p.hours.slice().sort(function (a, b) { return a - b; });
+    p.waiting.sort(function (a, b) { return b.quiet - a.quiet || b.asks - a.asks; });
+    return { name: p.name, open: p.open, overdue: p.overdue, untouched: p.untouched, asks: p.asks, answered: p.answered, sameDay: p.sameDay,
+      median: hs.length ? Math.round(hs[Math.floor(hs.length / 2)] * 10) / 10 : null, unanswered: p.waiting.length, oldest: p.waiting.length ? p.waiting[0].quiet : 0,
+      neverWrote: p.waiting.filter(function (x) { return !x.ever; }).length,
+      waiting: p.waiting.slice(0, 150), strip: strip.map(function (s) { return p.days[s] || 0; }), activeDays: strip.filter(function (s) { return p.days[s]; }).length,
+      closed: p.closed, closedStd: p.closedStd, closedBare: p.closedBare, reopened: p.reopened, notTouched: p.notTouched, posts: p.posts };
+  }).sort(function (a, b) { return b.unanswered - a.unanswered || b.open - a.open; });
+  var counts = { chasers: chasers.length, chasing: chasers.filter(function (c) { return c.kind === 'chasing'; }).length,
+    waitingNow: chasers.filter(function (c) { return c.kind === 'chasing' && !c.answer; }).length, unanswered: list.reduce(function (s, p) { return s + p.unanswered; }, 0),
+    asks: list.reduce(function (s, p) { return s + p.asks; }, 0), answered: list.reduce(function (s, p) { return s + p.answered; }, 0), branch: waitBranch.length };
+  return { on: true, at: fmt(now), since: fmt(since, 'd MMM'), days: T_FU.DAYS, strip: strip.map(function (s) { return tDmy_(s).replace(/ \d{4}$/, ''); }), counts: counts,
+    people: list, chasers: chasers, branch: waitBranch };
+}
+/** One Chatter entry, read: who wrote it (the board posts in the integration user's name, headed with the writer's; the
+ *  tracker's "not done" lines carry the person's name), when, its text, and whether it is the branch's ask. */
+function tFuEntry_(body, by, at, mgr) {
+  var text = tPlain_(body).replace(/\s+/g, ' ').trim(), t = new Date(String(at).replace(/\.\d+\+0000$/, 'Z')), m;
+  var e = { t: t, by: by, text: text, raw: text, mgr: tNameKey_(by) === mgr, ask: false, kind: '', notTouched: false };
+  if (e.mgr && (m = /^From the assignment board · ([^,(]+?)\s*(?:\([^)]*\))?,/.exec(text))) { e.by = m[1].trim(); e.mgr = tNameKey_(e.by) === mgr; e.text = text.replace(/^From the assignment board · [\s\S]*?\d{1,2}:\d{2}:\s*/, ''); }
+  else if (e.mgr && (m = /^[A-Z][\w ]{1,30} · ([A-Z][\w'-]+(?: [A-Z][\w'-]+){0,3}) · [^:]{0,40}Not done on [^:]+:\s*([\s\S]*)$/.exec(text))) {
+    e.by = m[1].trim(); e.mgr = tNameKey_(e.by) === mgr; e.notTouched = /^not touched/i.test(m[2].trim()); e.text = m[2];
+  }
+  if (e.mgr && !T_FU.NOASK.test(text)) { e.ask = true; e.kind = (/^([A-Z][A-Z-]+(?: [A-Z]+)?)\b/.exec(text) || [])[1] || 'note'; }
+  return e;
 }
 /** The Claude API with structured output, as the Premium Due Desk calls it. */
 function tGuideClaude_(system, user, schema) {
