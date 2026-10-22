@@ -505,7 +505,7 @@ function gcmRefresh_() {
   /* the tasks: open, or opened this year. Salesforce takes a subquery only at the top of a WHERE, never inside an OR,
      so each way in is its own query, and a task found twice is kept once (the first way in wins: the group's own
      account, its billing, its name, then its employees) */
-  var F = 'Id, Subject, Type, Task_Type__c, Status, IsClosed, ActivityDate, CreatedDate, CompletedDateTime, LastModifiedDate, WhatId, WhoId, Owner.Name, Who.Name, What.Name, What.Type';
+  var F = 'Id, Subject, Type, Task_Type__c, Status, IsClosed, IsRecurrence, ActivityDate, CreatedDate, CompletedDateTime, LastModifiedDate, WhatId, WhoId, Owner.Name, Who.Name, What.Name, What.Type';
   var W = ' AND (IsClosed = false OR CreatedDate = THIS_YEAR)';
   var polSub = polWhere.length ? '(SELECT Id FROM CLIENT_PORTFOLIO__c WHERE ' + polWhere.join(' OR ') + ')' : '';
   var conSub = polWhere.length ? '(SELECT Contact__c FROM CLIENT_PORTFOLIO__c WHERE ' + polWhere.join(' OR ') + ')' : '';
@@ -514,6 +514,9 @@ function gcmRefresh_() {
     var id = gcmId15_(t.Id);
     if (seen[id] || gi === undefined) return;
     seen[id] = true;
+    /* a recurring series is the pattern its tasks are made from, not a piece of work: Salesforce hides it from search and
+       refuses any note on it, so a group could never be given the reason its 30 days asked for (22 October 2026) */
+    if (t.IsRecurrence) { excluded++; return; }
     var subject = String(t.Subject || ''), type = String(t.Task_Type__c || t.Type || '');
     if (gcmExcluded_(subject, type)) { excluded++; return; }
     var cat = gcmCategory_(subject, type);
@@ -3059,7 +3062,9 @@ function gcmShare_(b) {
     var said = String(b.text || '').trim().slice(0, 2000);
     if (!said) return { ok: false, error: 'Write the comment first.' };
     if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the comment cannot go onto the task.' };
-    var cres = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'Comment for the team from ' + who.name + ' (not shown to the group):\n' + said });
+    var cres;
+    try { cres = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'Comment for the team from ' + who.name + ' (not shown to the group):\n' + said }); }
+    catch (e) { return { ok: false, error: gcmFeedRefused_(e) }; }
     row.Kind = 'comment'; row.Value = String(cres.id || '');
   } else if (b.kind === 'show') {
     if (t.priv && gcmYes_(b.value)) return { ok: false, error: 'This item names a member’s health or a claim: it stays with staff.' };
@@ -3074,11 +3079,24 @@ function gcmShare_(b) {
     if (!text) return { ok: false, error: 'Write the note first.' };
     if (t.priv) return { ok: false, error: 'This item stays with staff.' };
     if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the note cannot go onto the task.' };
-    var res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + gcmSigner_(who, g) + ':\n' + text });
+    var res;
+    try { res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + gcmSigner_(who, g) + ':\n' + text }); }
+    catch (e) { return { ok: false, error: gcmFeedRefused_(e) }; }
     row.Kind = 'post'; row.Value = String(res.id || '') + ' Y';
   } else return { ok: false, error: 'Unknown change.' };
   gcmAppend_(GCM.SHARES, [row]);
   return { ok: true };
+}
+
+/** Salesforce's refusal of a note, in words staff can act on. A recurring series (or an event) takes no Chatter post at
+ *  all: such an item is an internal reminder, so the answer is to stop showing it to the group, which also lifts the
+ *  30-day rule on it. */
+function gcmFeedRefused_(e) {
+  var m = String(e && e.message ? e.message : e);
+  if (/INVALID_CROSS_REFERENCE_KEY|recurring series|proposed events/i.test(m))
+    return 'Salesforce takes no notes on this item: it is a recurring series of tasks, an internal reminder rather than ' +
+      'work for the group. Untick “The group sees this item” on it instead; the letter then no longer waits for a reason on it.';
+  return 'Salesforce did not take the note, so nothing was saved. ' + m.replace(/^Salesforce did not take it:\s*/, '').slice(0, 200);
 }
 
 /* ── the group's own page ────────────────────────────────────────── */

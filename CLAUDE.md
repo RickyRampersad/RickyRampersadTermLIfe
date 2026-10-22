@@ -3232,6 +3232,14 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   wishes to its staff; counted, they show an on-time record the work does not
   have (`GCM_LOGGED`). "On time" counts only tasks with a due date, and the
   dashboard shows average days beside it because a due date can be moved.
+- **A recurring series of tasks is never a group item** (22 October 2026). A staff member could not send a group's
+  letter: an internal reminder on its account, set up in Salesforce as a recurring task in January 2025, counted as an
+  item the group sees open more than 30 days, and Salesforce refuses any Chatter post on a recurring series
+  ("INVALID_CROSS_REFERENCE_KEY … a recurring series of tasks"), so its reason could never be written. Salesforce's own
+  search does not show a series either. The refresh now reads `IsRecurrence` and leaves a series out, as it does a
+  logged e-mail (the org held 11 open series that day); the tasks made from a series are ordinary tasks and stay. A
+  note or team comment Salesforce refuses now says so in plain words (`gcmFeedRefused_`); for a series, untick "The
+  group sees this item", which lifts the 30-day rule on it. `day/series-test.js` in the scratchpad covers it (12 checks).
 - **Salesforce takes a subquery only at the top of a WHERE, never inside an
   OR**, so the refresh asks five ways (account, billing, name, employees'
   policies, employees' contacts) and keeps a task once. Every query goes
