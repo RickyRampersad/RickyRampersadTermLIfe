@@ -215,7 +215,7 @@
       "done_extra": "Watch for an e-mail from the branch with your enrolment form and the payment authority. Sign it, send it back, and your first contribution goes on the next run.",
       "sections": [
         {
-          "name": "About you",
+          "name": "Your details",
           "fields": [
             { "k": "you_dob",   "t": "date",   "label": "Your date of birth", "req": true, "w": "s" },
             { "k": "you_town",  "t": "text",   "label": "Town or district you live in", "req": true, "w": "s", "ph": "San Fernando" },

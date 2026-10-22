@@ -4083,6 +4083,73 @@ it, and its "where did it go" line names the old JotForms.
   forms** (petty cash, the gas log, licence renewals, the visitors log),
   already standing "each until it moves into the app". No link a *client*
   can reach opens a JotForm.
+### The motion, added the same day
+
+Asked for as *"so review again enhance and more motion"*. What went in is
+motion that tells the client something, not decoration:
+
+- **The stage.** Beside the headline, the branch's own shield with **this
+  form's own sections circling it** — one chip a section, in that order. It
+  is a diagram of what the form asks. A chip **lights green when its section
+  is finished**, so the drawing fills in as the client works down the page.
+  Behind it a dot field (masked to a circle, so it has no square edge), a
+  dashed orbit that drifts, three pings leaving the shield, a sweep across
+  the shield and the check stroking itself on.
+- **The ring animates the `rotate` property while each chip holds a static
+  `transform`** — separate properties, so they compose instead of one
+  overwriting the other — and the icon inside counter-spins at the same
+  duration, which is what keeps it upright. Same trick as the homepage hero.
+- **The rail.** Under the lede, sticky: a bar and "<b>7</b> of 25 answered",
+  moving on input, never on scroll. It turns green when the form is complete.
+  A conditional field opening raises the total asked, so the count is honest.
+- **Every answered field gets a tick beside its label**, and every finished
+  section turns its number into a tick. One pass computes the field ticks,
+  the section ticks, the chips and the rail, so they can never disagree.
+- **The headline lands word by word** (never letter by letter — the dated
+  form, and it wrecks the screen-reader read). The whole sentence goes on as
+  an `aria-label` first and the split only happens when motion is allowed.
+- **A conditional field opens** rather than appearing: `display` is in the
+  transition with `allow-discrete` and `@starting-style`, so it still leaves
+  the layout and the accessibility tree completely.
+- **The chosen option fills from the control that was tapped** (a `clip-path`
+  circle growing from the radio), and the radio pops. `.opt > *` has to carry
+  `z-index: 1`, or the fill paints over the option's own words — which it did,
+  and a screenshot caught it with "WhatsApp" gone from the chosen card.
+- **The send button** carries a sheen on hover and runs it on a loop while it
+  is sending, so the wait has a pulse.
+- **The done screen is drawn, not shown**: the tick strokes itself on, a ring
+  of light leaves it twice, the reference lands character by character (with
+  the whole string on `aria-label` and `title`, so it is still one thing to
+  read and to copy), and the three steps arrive in turn.
+- **The loops park by a class added on exit, never removed on entry.**
+  `body.rest` pauses the stage when it leaves the screen. The other polarity
+  freezes every `backwards`-filled entrance at its invisible first frame on
+  any browser where the script does not run.
+
+Measured after: **16.7 ms a frame over three passes with the ring spinning**,
+cumulative layout shift 0 on three pages, nothing animating and nothing
+invisible with `prefers-reduced-motion: reduce`, and the mark exactly **46%
+of the stage at every width from 320 to 1920**.
+
+**Two sizing traps, both the same shape, both caught by measuring:**
+
+- **A rule that overrides another has to come after it.** Twice a rule meant
+  to size the stage sat *before* the rule it overrides and silently did
+  nothing: the phone `max-width`, and then the `@supports
+  (container-type: size)` block — `.stage .ring` is (0,2,0) in both places,
+  so source order decides, and `--r` stayed at its `5.7rem` fallback on a
+  146px stage, throwing the outer chips 32px past `overflow: clip`.
+- **`min(15rem, 100%, …)` inside an `auto` grid track is circular**: the
+  percentage resolves against a track sized by its own content, so the whole
+  stage collapsed to **0×0** and nothing rendered. The track needs a definite
+  size (`clamp(9rem, 19vw, 15rem)`) and the stage then takes `width: 100%`.
+  The same family as the homepage hero's invisible rings.
+
+**No two sections on one stage may share an icon** — a repeated glyph reads as
+a repeated question. `build-forms.py` refuses to write a page where two do,
+and that guard immediately caught the OAS form carrying two sections both
+named "About you" (the second is "Your details" now).
+
 - Tests in the session scratchpad: `qa/forms.js` (24 checks, Playwright: the
   pages, sideways scroll at seven widths, iOS input zoom, touch targets,
   contrast composited through translucency, the validation summary, the
@@ -4091,7 +4158,12 @@ it, and its "where did it go" line names the old JotForms.
   `qa/quotes.js` (22, Node with Sheets and MailApp made of nothing: the tab,
   the numbering, the duplicate guard, the honeypot, the row, both e-mails,
   and that the page and the e-mail promise the same three things word for
-  word).
+  word), and `qa/motion.js` (14: the rail against what is answered, a
+  conditional field raising the total, a section ticking and lighting its
+  chip, the split headline both ways, nothing running or invisible with
+  motion off, the frame cost with the ring spinning, the loops parking off
+  screen, no chip crossing the clip at 6 stages × 10 widths, the mark as a
+  constant fraction of the stage, and layout shift).
 
 ## The English B essay workshop — it asks, the student writes
 

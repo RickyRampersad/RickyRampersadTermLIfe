@@ -47,6 +47,12 @@ ICONS = {
   'lock':     '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
   'phone':    '<path d="M6.5 3.5h3l1.5 4-2 1.5a10.5 10.5 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z"/>',
   'arrow':    '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  'user':     '<circle cx="12" cy="8" r="3.8"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/>',
+  'chat':     '<path d="M20 4.5H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3v3.5l4-3.5h9a1 1 0 0 0 1-1v-10a1 1 0 0 0-1-1Z"/>',
+  'check':    '<path d="M20 6L9 17l-5-5"/>',
+  'id':       '<rect x="3" y="5.5" width="18" height="13" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16a3.2 3.2 0 0 1 6 0M14 10h4M14 13.5h4"/>',
+  'heart':    '<path d="M12 20s-7-4.4-7-9.2A4.3 4.3 0 0 1 12 8a4.3 4.3 0 0 1 7 2.8C19 15.6 12 20 12 20Z"/>',
+  'coins':    '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.2A3 3 0 0 0 9.6 11c0 2.3 4.8 1.1 4.8 3.4a3 3 0 0 1-4.9 1.6M12 7.3v1.4M12 15.6V17"/>',
 }
 
 
@@ -135,10 +141,70 @@ def field(f, fkey):
             % (' '.join(cls), attrs, fid, esc(f['label']), star, ctrl, help_))
 
 
-def section(sec, fkey):
+MARK = """<svg class="mark" viewBox="6 3 76 82" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="fmG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0e93b0"/><stop offset="52%" stop-color="#00728d"/>
+          <stop offset="100%" stop-color="#0a3350"/>
+        </linearGradient>
+        <linearGradient id="fmS" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#fff" stop-opacity=".34"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </linearGradient>
+        <clipPath id="fmC"><path d="M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5C27.5 72 15 60.5 15 41V21.5Z"/></clipPath>
+      </defs>
+      <path d="M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5C27.5 72 15 60.5 15 41V21.5Z" fill="url(#fmG)"/>
+      <g clip-path="url(#fmC)"><rect class="sweep" x="4" y="4" width="26" height="82" fill="url(#fmS)"/></g>
+      <path d="M30 44L39.5 53.5L58 32.5" stroke="#0a3350" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="tk" d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>"""
+
+# the dot field behind the stage: one tile, repeated
+MESH = ('<svg class="mesh" viewBox="0 0 100 100" aria-hidden="true" focusable="false">'
+        '<defs><pattern id="fmD" width="7" height="7" patternUnits="userSpaceOnUse">'
+        '<circle cx="1" cy="1" r=".7" fill="#7d8890" fill-opacity=".3"/></pattern></defs>'
+        '<rect width="100" height="100" fill="url(#fmD)"/></svg>')
+
+
+def stage(sections):
+    """The mark at the centre and the form's own sections circling it. A
+    diagram of what the form asks, not decoration: each chip lights when its
+    section is finished. Every section is in the markup, so with motion off
+    the ring is simply a static drawing of the same thing."""
+    n = len(sections)
+    seen = [s.get('icon', 'doc') for s in sections]
+    if len(set(seen)) != len(seen):
+        raise SystemExit('two sections share an icon on one stage: %s' % seen)
+    chips = ''.join(
+        '<span class="chip" style="--a:%ddeg" title="%s">%s</span>'
+        % (round(i * 360 / n) - 90, esc(s['name']), ic(s.get('icon', 'doc')))
+        for i, s in enumerate(sections))
+    return ('<div class="stage" aria-hidden="true">' + MESH
+            + '<svg class="orbit" viewBox="0 0 100 100" focusable="false">'
+              '<circle cx="50" cy="50" r="38"/></svg>'
+            + '<span class="ping"></span><span class="ping b"></span><span class="ping c"></span>'
+            + MARK + '<div class="ring">' + chips + '</div></div>')
+
+
+# One icon a section, and no two the same on one stage: the chips are the
+# form's own sections, so a repeated glyph reads as a repeated question.
+SEC_ICON = {
+  'About you': 'user', 'Anything else': 'chat',
+  'The vehicle': 'car', 'Who drives it': 'id', 'The cover you want': 'shield',
+  'The property': 'house', 'What to cover': 'shield', 'Your history with cover': 'clock',
+  'Who the cover is for': 'heart',
+  'The business': 'building', 'The key person': 'id', 'What the cover is for': 'shield',
+  'Your details': 'id', 'Where you work': 'building', 'Your contribution': 'coins',
+}
+
+
+def section(sec, fkey, n=0):
     fields = ''.join(field(f, fkey) for f in sec['fields'])
-    return ('<fieldset><legend>%s</legend><div class="grid">%s</div></fieldset>'
-            % (esc(sec['name']), fields))
+    return ('<fieldset data-sec="%d"><legend>'
+            '<span class="lg-n"><span>%d</span>%s</span>%s</legend>'
+            '<div class="grid">%s</div></fieldset>'
+            % (n, n, ic('check'), esc(sec['name']), fields))
 
 
 STEPS = {
@@ -161,7 +227,10 @@ def page(f, common):
     depth = f['dir'].count('/') + 1          # how far up the root is
 
     secs = [common['you']] + f['sections'] + [common['last']]
-    body = ''.join(section(s, key) for s in secs)
+    for sec in secs:
+        sec.setdefault('icon', SEC_ICON.get(sec['name'], 'doc'))
+    body = ''.join(section(s, key, i + 1) for i, s in enumerate(secs))
+    asks = sum(len(s['fields']) for s in secs)
 
     cfg = {
         'api': API, 'code': f['code'], 'line': f['line'], 'title': f['title'],
@@ -204,16 +273,26 @@ def page(f, common):
 
 <main id="page">
   <div class="lede layout">
-    <span class="eyebrow">{eyebrow}</span>
-    <h1>{title}</h1>
-    <p>{lede}</p>
-    <p class="meta">
-      <span>{clock_ic}About {mins}</span>
-      <span>{lock_ic}Goes straight to the branch &mdash; never to a third party</span>
-      <span>{line_ic}{line}</span>
-    </p>
+    <div class="lede-grid">
+      <div>
+        <span class="eyebrow">{eyebrow}</span>
+        <h1>{title}</h1>
+        <p>{lede}</p>
+        <p class="meta">
+          <span>{clock_ic}About {mins}</span>
+          <span>{lock_ic}Goes straight to the branch &mdash; never to a third party</span>
+          <span>{line_ic}{line}</span>
+        </p>
+      </div>
+      {stage}
+    </div>
     {note}
   </div>
+
+  <div class="rail"><div class="rail-in layout">
+    <div class="rail-bar"><i></i></div>
+    <span class="rail-n"><b>0</b> of {asks} answered</span>
+  </div></div>
 
   <form class="layout" data-form="{key}" novalidate>
     <div class="err" id="err" role="alert" hidden></div>
@@ -257,7 +336,7 @@ def page(f, common):
         title=esc(f['title']), desc=esc(f['lede'])[:155], eyebrow=esc(f['eyebrow']),
         lede=esc(f['lede']), mins=esc(f['mins']), line=esc(f['line']), note=note,
         key=key, body=body, cta=esc(f['cta']),
-        tel=TEL, telh=TEL_H, support=SUPPORT,
+        tel=TEL, telh=TEL_H, support=SUPPORT, stage=stage(secs), asks=asks,
         phone_ic=ic('phone'), clock_ic=ic('clock'), lock_ic=ic('lock'),
         line_ic=ic(f['icon']), arrow_ic=ic('arrow'),
         cfg=json.dumps(cfg, ensure_ascii=False),

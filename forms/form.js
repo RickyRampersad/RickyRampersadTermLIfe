@@ -54,8 +54,9 @@
     });
   }
 
-  form.addEventListener('change', applyConds);
-  applyConds();
+  function refresh() { applyConds(); tally(); }
+  form.addEventListener('change', refresh);
+  form.addEventListener('input', tally);
 
   /* Date bounds are set here, not baked into the page: a max of "today"
      written into the markup is wrong the next morning. */
@@ -68,6 +69,49 @@
       i.min = today;
     });
   })();
+
+  /* ── how far along they are ─────────────────────────────────────────
+     The rail, the tick on each answered field, the number on each finished
+     section and the chip on the stage all read the same one pass. It runs on
+     input and on change, never on a timer and never on scroll.            */
+
+  var noMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var rail = document.querySelector('.rail');
+  var railBar = rail && rail.querySelector('.rail-bar i');
+  var railN = rail && rail.querySelector('.rail-n');
+  var sets = [].slice.call(form.querySelectorAll('fieldset[data-sec]'));
+  var chips = [].slice.call(document.querySelectorAll('.stage .chip'));
+
+  function answered(el) {
+    if (el.disabled || el.closest('.hid')) return null;        // not asked
+    if (el.type === 'radio')   return !!form.querySelector('[name="' + el.name + '"]:checked');
+    if (el.type === 'checkbox') return el.checked;
+    return !!String(el.value || '').trim();
+  }
+
+  function tally() {
+    var asked = 0, got = 0, seen = {};
+    sets.forEach(function (fs, i) {
+      var a = 0, g = 0;
+      [].forEach.call(fs.querySelectorAll('.f'), function (wrap) {
+        var el = wrap.querySelector('input, select, textarea');
+        if (!el) return;
+        var ok = answered(el);
+        if (ok === null) { wrap.classList.remove('ok'); return; }
+        if (el.type === 'radio') { if (seen[el.name]) return; seen[el.name] = 1; }
+        a++; if (ok) g++;
+        wrap.classList.toggle('ok', !!ok);
+      });
+      asked += a; got += g;
+      var full = a > 0 && g === a;
+      fs.classList.toggle('done', full);
+      if (chips[i]) chips[i].classList.toggle('on', full);
+    });
+
+    if (railBar) railBar.style.setProperty('--p', (asked ? Math.round(got / asked * 100) : 0) + '%');
+    if (railN) railN.innerHTML = '<b>' + got + '</b> of ' + asked + ' answered';
+    if (rail) rail.classList.toggle('full', asked > 0 && got === asked);
+  }
 
   /* ── draft, so a long form survives a stray tap ─────────────────── */
 
@@ -100,6 +144,33 @@
     clearTimeout(saveT); saveT = setTimeout(saveDraft, 400);
   });
   loadDraft();
+  refresh();
+
+  /* ── the headline, word by word ──────────────────────────────────────
+     Never letter by letter: that is the dated form and it wrecks the
+     screen-reader read. The whole sentence goes on as an aria-label first,
+     so assistive tech reads the sentence rather than walking a pile of
+     spans, and the split only happens when motion is allowed.           */
+
+  if (!noMotion.matches) {
+    [].forEach.call(document.querySelectorAll('.lede h1'), function (h) {
+      var text = h.textContent.replace(/\s+/g, ' ').trim();
+      h.setAttribute('aria-label', text);
+      h.innerHTML = text.split(' ').map(function (w, i) {
+        return '<span class="w" style="--wi:' + i + '" aria-hidden="true">' + w + '</span>';
+      }).join(' ');
+    });
+
+    /* The loops park by a class added on EXIT, never removed on entry:
+       the other polarity freezes a backwards-filled entrance at its
+       invisible first frame on any browser where the script does not run. */
+    var stage = document.querySelector('.stage');
+    if (stage && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) { document.body.classList.toggle('rest', !e.isIntersecting); });
+      }, { rootMargin: '80px' }).observe(stage);
+    }
+  }
 
   /* ── validation. The browser's own messages are fine for a type, but
          a form this long needs one summary at the top that says what is
@@ -237,15 +308,21 @@
       + '<div class="done-ic"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>'
       + '<h1>Thank you. We have it.</h1>'
       + '<p>' + (CFG.done_line || 'Your request is with the branch team.') + '</p>'
-      + '<div class="refbox"><span class="k">Your reference</span><span class="v">' + ref + '</span></div>'
+      + '<div class="refbox"><span class="k">Your reference</span><span class="v">'
+      + String(ref).split('').map(function (c, i) {
+          return '<span style="--ci:' + i + '">' + (c === ' ' ? '&nbsp;' : c) + '</span>';
+        }).join('')
+      + '</span></div>'
       + (steps.length ? '<ol class="steps">' + steps.map(function (s, i) {
-          return '<li><span class="n">' + (i + 1) + '</span><span>' + s + '</span></li>';
+          return '<li style="--si:' + i + '"><span class="n">' + (i + 1) + '</span><span>' + s + '</span></li>';
         }).join('') + '</ol>' : '')
       + extra + finish + warn
       + '<p style="margin-top:var(--sp-m);font-size:var(--f--1);color:var(--muted)">'
       + 'Need us sooner? Call the branch on <a href="tel:+18682266461">(868) 226-6461</a>.</p>'
       + '</div></div>';
-    document.title = 'Thank you — ' + (CFG.title || 'Request');
+    var v = wrap.querySelector('.refbox .v');
+    if (v) { v.setAttribute('aria-label', ref); v.title = ref; }   // one string to read and to copy
+    document.title = 'Thank you \u2014 ' + (CFG.title || 'Request');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
