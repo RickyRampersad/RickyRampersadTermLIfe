@@ -4331,6 +4331,27 @@ guide you. In your session review notes on the step back in place from all memor
   - **No `ANTHROPIC_API_KEY`:** no section.
 
   Pinned by `tests/test-bm-morning-ai.js`.
+- **His items at full depth: the whole Chatter, the record, the inbox (22 Oct 2026, 2026-10-22b).** Ricky, 6:48am: "did it build in all the intelligence and all the chatter, including the inbox scrub and anything at all on it that will help build an intelligent response? So I can post on chatter. And am I using the intelligence properly". It had not. The 5:00 read (`bmdAdvice_`) gave the quick model (`ANTHROPIC_MODEL`, else Haiku) the last four notes. Draft with Claude on his respond page gave the last six. The full read was only on the Unit Manager's and BMA's pages, and no draft looked at his inbox.
+  - **`bmDeepDraft_(day, items, said)`**, on the drafting model (`claudeDraftModel_`), `BM_DEEP.BATCH` 3 a call. Each item carries the same full read as `umDraft_`:
+    - the whole Chatter, 25 notes, oldest first;
+    - `umTaskContext_`: the record (description, account, contact, owner) and the other open tasks on it;
+    - `playbookFor_`;
+    - `bmDeepMail_`: up to 3 of the inbox scrub's rows from 30 days that were made into this task, or name the same policy number, or the client by full name.
+
+    It returns `{read, reply, next, add[], action, mail}`.
+  - **`bmDeepWarm_(day, budget)`**:
+    - runs at 4:40 from `housekeepingTick_`, before the 5:00 guard, once (`bmdeep_<day>`);
+    - runs hourly with the inbox scrub;
+    - drafts only items that are new or have a new note;
+    - keeps them in `bm_deep_<day>` (`bigPut_`, pruned).
+  - **Who reads them:**
+    - the 5:00 mail (`bmMorningAi_`: Where it stands, Claude's reply, Next, Check first, "Read with n e-mails from your inbox", plus his instructions with no note);
+    - `bmDraftsFor_` (the respond page, 3:00, 3:45);
+    - `bmdDrafts_` (My day);
+    - `bmDraftOne_`, which tries the full read first with his words as `he_said`, falling back to `claudeDrafts_`.
+  - **The ping:** `has.claude` and `claude: {draftModel, readModel, fullDepthToday}`, never the key.
+
+  Pinned by `tests/test-bm-morning-ai.js` and `tests/test-ask-claude.js`.
 
 - **Wall Intelligence, the new wall (20 Oct 2026, 2026-10-20g).** Ricky: "the wall needs to be redesigned with a lot of animation and motions and graphics ... what the managers do, what the agents do, and what staff actually does ... streamed outside as well as inside", then "I would like sound ... Andrew's voice, this song ... streams outside without client's name so the agents can see what is being actioned, who is doing what, who is out today ... and the gamification." **`/wall/` is now Wall Intelligence** (`wall/index.html`); the block wall moved to **`/wall/classic/`** (`tests/e2e-wall.js` and `tests/test-substance.js` read it there). **Feed** (`wallIntel_(day, outside)`, cached 5 minutes as `wall2_in_<day>` / `wall2_out_<day>`): `wallStaff_` (who is in, out today or later; cover from Workload Moves; tasks closed with a proper note by hour 7–17 and by kind `wallKind_`: new, orphan, retention, claims, other; par, quests, streaks, gain from the game), `wallAgents_` (`agentPeople_`, `agentFunnel_`, `ff360Agent_`, `goalFor_`, `agentDaySummary_` and Agent Day `At` times; the year as % of goal against % of the year gone), `wallManagers_` (My Day Log groups against `myTasks_` by `dayGroup_`, Akaash's unit, cover, Query Pal answered this week), and a running feed newest first. **Never on the wall, inside or out:** a client, a policy number, a note, a task subject, why someone is out. **Outside** also drops arrival times, lateness, points, dollars, agents with nothing yet, agent projection times, the inbox, Query Pal past turnaround, and gains below someone's usual. **Access:** `handle_` action `wall2` (signed in: the Branch Manager gets inside, anyone else outside) and `wallout` (no sign-in, `WALL_OUTSIDE_KEY`; run `wallOutsideLink()` in the editor for the link `https://rickyrampersadbranch.com/wall/?k=…`; a new key changes it). **Page:** an ident, then Staff (who is in / cover flow; hour by hour; the kind of work; the team game), Agents (the field today; review to cover and FY27), Managers, Live; heavy motion (rings, bars, donut, heat grid, flows, counters), warm graphite ground (no saturated blue), the branch bar and a ticker always along the bottom, captions. **Sound:** the branch Motivation track (`/rr-branch-theme.mp3`) under Andrew; recorded lines `wall/audio/v2/n0..n8.mp3` (made with `wall/audio/v2/build-voice.sh` on Ricky's computer, en-US-AndrewNeural at −12%, since the speech service is blocked from the sandbox) play on any screen, else Microsoft Edge's built-in plain Andrew voice reads the live lines with today's numbers, else captions only; `?voice=recorded|live|off`. `?demo=1` (and `&view=outside`) shows a marked sample. Pinned by `tests/test-wall2.js` and `tests/e2e-wall2.js`.
 
