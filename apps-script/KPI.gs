@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-22b';
+var SCRIPT_VERSION = '2026-10-22c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3838,8 +3838,18 @@ function housekeepingTick_() {
       props.setProperty('inbox_hr', inboxHr);
       try { inboxScrub_(day, 'hour'); } catch (e) {}
       try { dayLogSalesforce_(day); } catch (e) {}
-      try { bmdWarm_(day); } catch (e) {}
-      try { bmDeepWarm_(day, BM_DEEP.HOUR_BUDGET_MS); } catch (e) {}
+    }
+  }
+  // 22 Oct 2026: Claude's reading of his day gets a run of its own, twenty minutes after the scrub's. It used to follow the
+  // scrub in the same run, and a long scrub took the run to Apps Script's six minutes before Claude was asked: on the
+  // morning of 22 Oct My day had no drafts and every task's advice was the plain rule.
+  if (inboxOn_() && mins >= INBOX.REFRESH_FROM && mins <= INBOX.REFRESH_TO + 30 && (mins % 60) >= BM_DEEP.SLOT_MIN && !late()) {
+    var aiHr = day + '_' + Math.floor(mins / 60);
+    if (props.getProperty('bmai_hr') !== aiHr) {
+      props.setProperty('bmai_hr', aiHr);
+      var w0 = Date.now();
+      try { bmdWarm_(day); } catch (e) { try { runlog_('my day advice failed: ' + (e && e.message)); } catch (e2) {} }
+      try { var dn = bmDeepWarm_(day, Math.min(BM_DEEP.HOUR_BUDGET_MS, Math.max(30000, HK_BUDGET_MS - (Date.now() - t0) - 20000))); runlog_('deep drafts ' + aiHr + ': ' + dn + ' in ' + Math.round((Date.now() - w0) / 1000) + 's'); } catch (e) { try { runlog_('deep drafts failed: ' + (e && e.message)); } catch (e2) {} }
     }
   }
   // The game, every hour of the working day; Wednesday 7:00 the awards for the 9:00 branch meeting (21 Oct 2026).
@@ -4627,8 +4637,8 @@ function sendBranchManagerDay_(day) {
  *  hour for anything new or with a new note. The 5:00 mail, the respond page, My day and the 3:00 and 3:45 mails all
  *  read them, and Draft with Claude uses the same read with his own words. Nothing posts by itself.
  */
-var BM_DEEP = { AT: 4 * 60 + 40, BATCH: 3, ASK: 8, MINE: 8, IGNORED: 4, NOTES: 25, NOTE_LEN: 500, MAIL: 3, MAIL_DAYS: 30, MAX_TOKENS: 2400,
-  BUDGET_MS: 270000, HOUR_BUDGET_MS: 90000,
+var BM_DEEP = { AT: 4 * 60 + 40, BATCH: 4, ASK: 20, MINE: 10, IGNORED: 6, NOTES: 25, NOTE_LEN: 500, MAIL: 3, MAIL_DAYS: 30, MAX_TOKENS: 3200,
+  BUDGET_MS: 280000, HOUR_BUDGET_MS: 150000, SLOT_MIN: 20,
   KIND: { ask: 'a colleague on the branch team asks him on this task; the reply answers them',
           mine: 'his own task, due or overdue; the note is his own: what was done, the outcome and the next step with its date, or a chase to whoever must act',
           ignored: 'his instruction to a desk, overdue, with no note from that person; the note chases them by first name' } };
@@ -4719,6 +4729,16 @@ function bmDeepWarm_(day, budgetMs) {
     try { bigPut_(bmDeepKey_(day), have); } catch (e) {}
   }
   return done;
+}
+
+/** From the editor: Branch Intelligence reads and drafts all of his items now, without waiting for the hour (22 Oct 2026). */
+function draftMyRepliesNow() {
+  var day = todayISO_(), t0 = Date.now(), adv = 0, deep = 0;
+  try { var a = bmdWarm_(day) || {}; adv = Object.keys(a).filter(function (k) { return a[k] && a[k].ai; }).length; } catch (e) { Logger.log('Quick read failed: ' + (e && e.message)); }
+  try { deep = bmDeepWarm_(day, 300000 - (Date.now() - t0)); } catch (e) { Logger.log('Full read failed: ' + (e && e.message)); }
+  var held = Object.keys(bmDeepGet_(day)).length;
+  var m = 'Branch Intelligence: ' + deep + ' written at full depth just now, ' + held + ' held for today; ' + adv + ' read quickly for My day. Took ' + Math.round((Date.now() - t0) / 1000) + 's. Open My day.';
+  Logger.log(m); return m;
 }
 
 /* ── 5:00: what Claude wrote for each of his tasks, in the mail itself (22 October 2026) ──
@@ -5903,7 +5923,7 @@ function inboxSave_(sid, day, p, head, name) {
  *  The 5:00 mail carries one button, the urgent list and the inbox; the 11:00
  *  and 3:00 mails lead with today so far, the focus, and what is still open.
  */
-var MYDAY = { URGENT: 8, QUIET: 3, ADVICE: 30, DRAFTS: 12, LOG: 60 };
+var MYDAY = { URGENT: 8, QUIET: 3, ADVICE: 75, CHUNK: 25, DRAFTS: 12, LOG: 60 };
 var DAYLOG = { must: ['Kind', 'Group', 'What', 'Ref'], name: 'My Day Log', head: ['Date', 'At', 'Kind', 'Group', 'What', 'Ref'] };
 var DAY_GROUPS = [
   ['Renewals & billing', /renewa|pdl\/bill|\bbill(ing)?\b|renewal|premium payment|payment (follow|to collect)|\bmotor\b|vehicle|cancellation|\bcollect/i],
@@ -5926,7 +5946,8 @@ function dayGroup_(ty, text) {
 function dayLogRows_(day) {
   var sh = hrTab_(DAYLOG, false); if (!sh || sh.getLastRow() < 2) return [];
   var head = headerOf_(sh);
-  return sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues().map(function (r) { var o = {}; head.forEach(function (h, c) { if (h) o[h] = r[c]; }); return o; })
+  // 22 Oct 2026: the sheet turns "07:08" into a time value, which printed as "Sat Dec 30 1899 07:08:00 GMT-0358"; back to "07:08".
+  return sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues().map(function (r) { var o = {}; head.forEach(function (h, c) { if (h) o[h] = r[c]; }); o.At = timeStr_(o.At) || String(o.At || ''); return o; })
     .filter(function (o) { return isoDay_(o.Date) === day; });
 }
 /** Write what he did, once each (the Ref says what it was). list: [{ at, kind, group, what, ref }]. */
@@ -6019,7 +6040,14 @@ function bmdAdvice_(day, m, useAi) {
   });
   var props = PropertiesService.getScriptProperties(), key = String(props.getProperty('ANTHROPIC_API_KEY') || '').trim();
   if (!useAi || !key || !need.length) return out;
-  need = need.slice(0, MYDAY.ADVICE);
+  // 22 Oct 2026: the people waiting on his word first (on 22 Oct his 41 own tasks took all 30 places and the 24 asks got nothing),
+  // and the list read in chunks of MYDAY.CHUNK, so one long answer is never cut off and lost.
+  need = need.filter(function (x) { return x.a; }).concat(need.filter(function (x) { return !x.a; })).slice(0, MYDAY.ADVICE);
+  for (var ci = 0; ci < need.length; ci += MYDAY.CHUNK) bmdAdviceChunk_(day, m, need.slice(ci, ci + MYDAY.CHUNK), out, have, lastAt, props, key);
+  try { cache.put(ck, JSON.stringify(have), 21600); } catch (e) {}
+  return out;
+}
+function bmdAdviceChunk_(day, m, need, out, have, lastAt, props, key) {
   var ask = need.map(function (x) {
     if (x.a) return { id: x.k, kind: 'reply', task: x.a.subject, asked_by: x.a.by, they_said: x.a.said,
       notes: (m.chat[x.a.id] || []).slice(0, 4).reverse().map(function (n) { return (n.day || '') + ' ' + n.by + ': ' + shorten_(n.text, 260); }) };
@@ -6037,7 +6065,7 @@ function bmdAdvice_(day, m, useAi) {
     var res = UrlFetchApp.fetch(CLAUDE_READ.URL, { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
       headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
       payload: JSON.stringify({ model: String(props.getProperty('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL).trim(), max_tokens: 5000, messages: [{ role: 'user', content: prompt }] }) });
-    if (res.getResponseCode() !== 200) return out;
+    if (res.getResponseCode() !== 200) { try { runlog_('my day advice: Claude answered ' + res.getResponseCode()); } catch (e) {} return out; }
     var txt = (JSON.parse(res.getContentText()).content || []).map(function (b) { return b.text || ''; }).join('');
     var js = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
     need.forEach(function (x) {
@@ -6045,7 +6073,6 @@ function bmdAdvice_(day, m, useAi) {
       out[x.k] = { act: String(v.act), why: shorten_(String(v.why || ''), 120) || out[x.k].why, note: shorten_(String(v.note || ''), 320), ai: true, n: x.a ? String(x.a.at || '') : lastAt(x.k) };
       have[x.k] = out[x.k];
     });
-    try { cache.put(ck, JSON.stringify(have), 21600); } catch (e) {}
   } catch (e) { try { runlog_('my day advice failed: ' + (e && e.message)); } catch (e2) {} }
   return out;
 }
