@@ -50,6 +50,11 @@ function sfRoute(url, opts) {
   const p = url.match(/\/services\/data\/v[\d.]+(\/.*)$/)[1];
   if (p.startsWith('/query?q=')) {
     const q = decodeURIComponent(p.slice(9)); SF.queries.push(q);
+    if (/SELECT AgentName__c FROM CLIENT_PORTFOLIO__c WHERE AgentName__c LIKE/.test(q)) {
+      const nm = (q.match(/LIKE '% - ([^']+)'/) || [])[1];
+      const no = { 'Javid Ali': 'A04020', 'Aleema Mohammed-Ali': 'A04028', 'Ana Agent': 'A10001', 'Gone Agent': 'A10002' }[nm];
+      return res(200, { records: no ? [{ AgentName__c: no + ' - ' + nm }] : [] });
+    }
     if (/AgentName__c LIKE/.test(q)) {
       const a = (q.match(/LIKE '([^%']+)%'/) || [])[1]; const w = ids(q.split('AgentName__c')[0]);
       return res(200, { records: SF.portfolios.filter(r => w.includes(r.Contact__c) && r.AgentName__c.indexOf(a) === 0) });
@@ -61,9 +66,6 @@ function sfRoute(url, opts) {
     if (/Employment_Status__c = 'Active'/.test(q)) return res(200, { records: [
       { Name: 'Javid Ali', Email: 'javid@example.com' }, { Name: 'Aleema Mohammed-Ali', Email: 'aleema@example.com' },
       { Name: 'Ana Agent', Email: 'ana@example.com' }, { Name: 'Gone Agent', Email: 'gone@example.com' }] });
-    if (/SELECT AgentName__c FROM CLIENT_PORTFOLIO__c WHERE CreatedDate/.test(q)) return res(200, { records: [
-      { AgentName__c: 'A04020 - Javid Ali' }, { AgentName__c: 'A04028 - Aleema Mohammed-Ali' }, { AgentName__c: 'A04020 - Javid Ali' },
-      { AgentName__c: 'A10001 - Ana Agent' }, { AgentName__c: 'A10002 - Gone Agent' }, { AgentName__c: 'A09999 - Not Active Person' }] });
     if (/FROM Contact WHERE Id/.test(q)) { const w = ids(q); return res(200, { records: SF.contacts.filter(c => w.includes(c.Id)) }); }
     return res(200, { records: [] });
   }

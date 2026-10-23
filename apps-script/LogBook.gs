@@ -759,7 +759,7 @@ function lbPickAgents_() {
 
 /* Salesforce's active agents with their numbers: [{agentNo, name, email}]. */
 function lbSfActiveAgents_() {
-  var cache = null, key = 'lb_sf_agents_v1';
+  var cache = null, key = 'lb_sf_agents_v2';
   try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
   if (typeof dbSfConfigured_ !== 'function' || !dbSfConfigured_()) return [];
   var out = [];
@@ -770,16 +770,15 @@ function lbSfActiveAgents_() {
         var nk = lbNameKey_(r.Name);
         if (nk) people[nk] = { name: String(r.Name || '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim(), email: String(r.Email || '').trim() };
       });
-    var got = {};
-    dbSoql_('SELECT AgentName__c FROM CLIENT_PORTFOLIO__c WHERE CreatedDate = LAST_N_DAYS:1095 AND AgentName__c != null ORDER BY CreatedDate DESC LIMIT 5000')
-      .forEach(function (r) {
-        var m = String(r.AgentName__c || '').match(/^\s*(A?\d+)\s*-\s*(.+?)\s*$/i);
-        if (!m) return;
-        var nk = lbNameKey_(m[2]), p = people[nk];
-        if (!p || got[nk]) return;
-        got[nk] = 1;
-        out.push({ agentNo: m[1].toUpperCase(), name: p.name, email: p.email });
-      });
+    /* One small read per agent: a single read of every recent policy came
+       back one page (2,000 of 5,886 on 23 Oct 2026) and missed Aleema. */
+    Object.keys(people).forEach(function (nk) {
+      var p = people[nk];
+      var r = dbSoql_('SELECT AgentName__c FROM CLIENT_PORTFOLIO__c WHERE AgentName__c LIKE ' +
+                      dbQuote_('% - ' + p.name.replace(/[%_]/g, '')) + ' ORDER BY CreatedDate DESC LIMIT 1')[0];
+      var m = r && String(r.AgentName__c || '').match(/^\s*(A?\d+)\s*-\s*(.+?)\s*$/i);
+      if (m && lbNameKey_(m[2]) === nk) out.push({ agentNo: m[1].toUpperCase(), name: p.name, email: p.email });
+    });
     try { if (cache) cache.put(key, JSON.stringify(out), 6 * 3600); } catch (e) {}
   } catch (e) { Logger.log('Salesforce agents: ' + e); }
   return out;

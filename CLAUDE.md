@@ -4215,7 +4215,9 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   (`lb.agents`, `lbPickAgents_`) was the fact find's sign-in list less every staff role, so the Branch Manager was
   dropped and agents who do not use the fact find were missing. It is now everyone active on the sign-in lists except
   pure staff (the Branch Manager stays), plus every agent Salesforce marks Active, numbered from the AgentName__c of a
-  policy written in the last three years (`lbSfActiveAgents_`, kept six hours). Anyone the lists mark inactive is never
+  policy they wrote (`lbSfActiveAgents_`, one small read per agent, kept six hours: a single read of every recent policy
+  came back one page, 2,000 of 5,886, and missed Aleema). Someone with no agent record and no policies under their name
+  in Salesforce (on 23 October, Mala Balkaran) is added on the RR Operations Agents tab. Anyone the lists mark inactive is never
   added back from Salesforce. `lbValidate_` accepts any agent on that list. Signing in is unchanged.
 - **The Delivery Book film** (20 October 2026: "a small video on the revised delivery process as it also looks up the
   client etc and the client gets an email confirming delivery"). *The Delivery Book, for staff* (`dbstaff`, 1:45):
