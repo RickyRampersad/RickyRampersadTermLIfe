@@ -43,7 +43,8 @@ const fresh = () => { env.resetRequestMemo_ && env.resetRequestMemo_(); env.Cach
 
 // ---- the times --------------------------------------------------------------------------------
 const at = s => env.twelve_(env.mmText_(env.closeoutAt_(s)));
-ok('Sasha 1:15, Liz 2:15, Azariah 3:15, Kamla 4:15', at('sasha') === '1:15pm' && at('elizabeth') === '2:15pm' && at('azariah') === '3:15pm' && at('kamla') === '4:15pm',
+// Liz 3:15 from 23 Oct 2026: her day is now 8 to 4 (it was 2:15 on her 7 to 3 day).
+ok('Sasha 1:15, Liz 3:15, Azariah 3:15, Kamla 4:15', at('sasha') === '1:15pm' && at('elizabeth') === '3:15pm' && at('azariah') === '3:15pm' && at('kamla') === '4:15pm',
   ['sasha', 'elizabeth', 'azariah', 'kamla'].map(at).join(' '));
 ok('Pawan as before: half an hour before his 5pm', at('pawan') === '4:30pm', at('pawan'));
 ok('Akaash\'s account of the day at 3:00, checked at 3:45', env.UM_EVENING_AT === 15 * 60 && env.CLOSEOUT.MGR_AT + env.CLOSEOUT.MGR_CHECK_AFTER === 15 * 60 + 45);
@@ -90,7 +91,7 @@ ok('the record: one task, one check, signed out at 1:58', un && un.tasks.length 
 // Salesforce down: nobody is told something is unanswered that could not be checked.
 const liz = { staffId: 'elizabeth', name: 'Elizabeth Lee' };
 TASKS.elizabeth = [T(7, 'Conversion Option Letter -1000284301- Ramlalsingh David')]; CHECKS.elizabeth = []; open(7);
-NOW = new Date(DAY + 'T14:15:00'); env.closeoutAskSave_(liz, DAY);
+NOW = new Date(DAY + 'T15:15:00'); env.closeoutAskSave_(liz, DAY);
 NOW = new Date(DAY + 'T15:00:00'); sfDown = true; mails = []; let reminded = 0; const realRem = env.notClosedReminder_; env.notClosedReminder_ = () => { reminded++; return true; };
 env.closeoutCheck_(liz, DAY, 'finish');
 ok('Salesforce did not answer: no unanswered list, the plain reminder instead', !mails.length && reminded === 1);
