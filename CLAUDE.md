@@ -4368,6 +4368,14 @@ to the old page. `forms.json`'s motor entry now carries only `elsewhere`, so
 fails if a line marked `elsewhere` ever appears in the backend. Five forms are
 the branch's own here; the sixth is main's, and better.
 
+**Two lines of copy had to move with it**, because a promise made in one place
+has to be kept in the other. The index's lede said "a licensed agent calls you
+at the time you choose", which is the five's own done screen and is not what
+`/motor-quote/` does — it signs the client in and sends the price back on their
+page — so it now reads "a licensed agent takes it from there", true of all six.
+And the Motor card says what that page actually is: "Sign in and your vehicle
+fills in from your record", so nobody meets the sign-in by surprise.
+
 - **Edit `tools/forms/forms.json` and run `tools/forms/build-forms.py`,
   never a generated page.** One run rewrites all seven. The spec is the
   single source of the fields, the conditional rules, the reference prefixes

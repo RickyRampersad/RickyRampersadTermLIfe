@@ -5,7 +5,7 @@
       "key": "motor",
       "line": "Motor",
       "icon": "car",
-      "lede": "Tell us about the vehicle and who drives it.",
+      "lede": "Sign in and your vehicle fills in from your record. The price comes back on your own page.",
       "elsewhere": "/motor-quote/",
       "index_cta": "Get a price",
       "_note": "Motor is NOT built here. /motor-quote/ (motor-quote/index.html + apps-script/MotorQuote.gs, its own Apps Script project) replaced the same JotForm on 21 October 2026 and does far more than a quote request: it signs the client in with a code to their inbox, reads their Contact, motor policies and vehicles from Salesforce, photographs the permit, e-mails CRMSQuotes with the documents attached, opens a Salesforce task, and shows the client the status and the premium when the quote comes back. One motor door, and that is it. This entry only puts the card on /quote/."

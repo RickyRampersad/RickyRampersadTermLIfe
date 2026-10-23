@@ -440,8 +440,8 @@ def index(forms):
         <span class="eyebrow">Quote &amp; apply</span>
         <h1>Start it here, and we have it.</h1>
         <p>Every one of these is our own form. It files on the branch's worklist the moment
-           you press send, your reference appears on screen, and a licensed agent calls you
-           at the time you choose.</p>
+           you press send, your reference appears on screen, and a licensed agent takes it
+           from there.</p>
         <p class="meta">
           <span>{lock_ic}Straight to the branch &mdash; never to a third party</span>
           <span>{clock_ic}Two to four minutes each</span>
