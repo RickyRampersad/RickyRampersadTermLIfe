@@ -77,19 +77,39 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
   console.log('\nHis page, with the team; a wrong link; no link:\n');
   {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' }); const page = await ctx.newPage();
-    const rk = model({ sid: 'ricky', name: 'Ricky Rampersad', first: 'Ricky', fullLabel: 'Open My day', progress: Object.assign(model().progress, { closed: 9, target: 8, pct: 113, behind: false }),
-      achieved: [{ k: 'note', s: '@Kamla on the CDD form', at: '11:41am', g: 'Servicing' }, { k: 'email', s: 'To Natalie Ramdhan: Brentwood Towers', at: '9:22am', g: 'Other' }],
+    const rk = model({ sid: 'ricky', name: 'Ricky Rampersad', first: 'Ricky', fullLabel: 'Open My day', barsLabel: 'your own notes each day',
+      progress: { lead: true, sf: true, target: 20, cleared: 9, you: 6, team: 3, pct: 45, dayPct: 54, behind: true, waiting: 11, asks: 7, inbox: 3, mineDue: 1, yourNotes: 6,
+        sys: { 'chases in your voice': 15, 'absence handovers': 11, 'questions from Branch Intelligence': 30 } },
+      waiting: [{ k: 'ask', id: '00TA', s: 'Orphan response - Radicia Julal', by: 'Sasha Lalla-Jagassar', said: 'Mr Rampersad, which agent should take Radicia Julal?', read: 'Sasha has asked since 10:54; Waterloo area.', next: 'Name the agent today', draft: 'Sasha, assign Radicia Julal to Fawwaz. Please send the introduction today.' },
+        { k: 'inbox', id: 'kB-20261023', s: 'Dear Mr. Bisnath,', by: 'kamla.dookran@myguardiangroup.com', said: 'Review and approve the reply', done: 'Kamla drafted the reply.', next: 'open a task for Kamla, due Mon 26 Oct', draft: 'Kamla, the reply reads well. Send it on Monday.', to: 'kamla' }],
+      desks: [{ sid: 'kamla', first: 'Kamla' }, { sid: 'sasha', first: 'Sasha' }, { sid: 'ricky', first: 'Me' }],
+      achieved: [{ k: 'note', s: 'Note on CDD form', at: '11:41am' }, { k: 'email', s: 'To Natalie Ramdhan: Brentwood Towers', at: '9:22am', g: 'Other' }],
       team: [{ sid: 'sasha', name: 'Sasha', at: '7:09am', late: 9, closed: 6, target: 14, pct: 43, dayPct: 54 }, { sid: 'elizabeth', name: 'Elizabeth', at: '7:58am', late: 0, closed: 2, target: 7, pct: 29, dayPct: 30 },
         { sid: 'azariah', name: 'Azariah', at: '', absent: true, closed: 0, target: 9, pct: 0, dayPct: 40 }] });
-    await page.route(/script\.google\.com\/macros/, r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rk) }));
+    let posted = [];
+    await page.route(/script\.google\.com\/macros/, r => { if (r.request().method() === 'POST') { posted.push(r.request().postData()); return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, res: "posted on Sasha's task" }) }); }
+      return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rk) }); });
     await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
     await page.goto('http://localhost:8799/myworkday/?p=ricky&k=K2'); await page.waitForTimeout(1800);
+    ok('his bar: cleared of what waited on him', /45%/.test(await page.textContent('#pct')) && /9 of 20 cleared today/.test(await page.textContent('#of')));
+    const yw = await page.$eval('#fill', e => e.getBoundingClientRect().width), tw = await page.$eval('#fill2', e => e.getBoundingClientRect().width), bw = await page.$eval('#bar', e => e.getBoundingClientRect().width);
+    ok('two colours: by him, then by the team', Math.abs(yw / bw - 0.30) < 0.03 && Math.abs(tw / bw - 0.15) < 0.03, (yw / bw).toFixed(2) + ' / ' + (tw / bw).toFixed(2));
+    ok('who still waits, and the staff waiting on his word', /11<\/b> still waiting on you/.test(await page.innerHTML('#pace')) && /<b>7<\/b>staff waiting on your word/.test(await page.innerHTML('#chips')));
+    ok('what the system did for him, apart', /Done for you by the system today: <b>30<\/b> questions from Branch Intelligence · <b>15<\/b> chases in your voice/.test(await page.innerHTML('#sys')));
+    ok('waiting on him, with Claude\'s words in the box', (await page.$$('#waiting .wt')).length === 2 && (await page.$eval('#waiting .wt textarea', e => e.value)).startsWith('Sasha, assign Radicia Julal to Fawwaz'));
+    ok('a mail\'s note has the desk Claude chose', (await page.$eval('#waiting .wt[data-k="inbox"] select', e => e.value)) === 'kamla');
     ok('the team, each against the day', (await page.$$('.team .row')).length === 3 && /absent/.test(await page.textContent('.team')) && /6\/14/.test(await page.textContent('.team')));
-    ok('past the day\'s number: the bar is full and green, the count says so', /113%/.test(await page.textContent('#pct')) && !/behind/.test(await page.getAttribute('#prog', 'class')) && /number reached/.test(await page.innerHTML('#pace')));
-    ok('his notes and e-mails among what was achieved', /E-mail · 9:22am/.test(await page.textContent('#main')));
-    const wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    ok('his notes and e-mails among what he achieved; his bars are his notes', /E-mail · 9:22am/.test(await page.textContent('#main')) && /your own notes each day/.test(await page.textContent('#main')));
+    let wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok('nothing off the side, in the dark too', wide <= 0, String(wide));
     if (OUT) await page.screenshot({ path: path.join(OUT, 'workday-ricky-dark.png'), fullPage: true });
+    await page.fill('#waiting .wt textarea', 'Sasha, assign Radicia Julal to Fawwaz today.');
+    await page.click('#waiting .wt [data-post]'); await page.waitForTimeout(700);
+    ok('one tap posts his words on her task', posted.length === 1 && /act=post/.test(posted[0]) && /kind=ask/.test(posted[0]) && /id=00TA/.test(posted[0]) && /Fawwaz\+today/.test(posted[0]), posted[0]);
+    ok('and it says so, and the item goes', /posted on Sasha's task/.test(await page.textContent('#toast')) && /gone/.test(await page.getAttribute('#waiting .wt', 'class')));
+    await page.waitForTimeout(800);
+    await page.click('#waiting .wt[data-k="inbox"] [data-post]'); await page.waitForTimeout(700);
+    ok('a mail\'s note posts to the desk chosen', posted.length === 2 && /kind=inbox/.test(posted[1]) && /to=kamla/.test(posted[1]), posted[1]);
     await page.unroute(/script\.google\.com\/macros/);
     await page.route(/script\.google\.com\/macros/, r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'This link is not right. Open it again from your morning e-mail.' }) }));
     await page.evaluate(() => localStorage.clear());
