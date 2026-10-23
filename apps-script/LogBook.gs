@@ -2186,6 +2186,16 @@ function lbAppMail_(o) {
    rickyrampersadbranch.com … any other emails with communications"): Microsoft Graph, as
    support@rickyrampersadbranch.com, saved in its Sent Items, when MS_TENANT, MS_CLIENT and MS_SECRET are in
    this project's Script properties. Returns true when Microsoft took it; false sends the caller to Gmail. */
+/* The test copy's Cc. DeliveryBook.gs's dbTestCc_ when the project has it; the
+   live project's older Delivery.gs did not, and every Log It in test mode failed
+   with "dbTestCc_ is not defined" (23 October 2026), so this file carries its own. */
+function lbTestCc_(to) {
+  if (typeof dbTestCc_ === 'function') return dbTestCc_(to);
+  var list = String(dbProp_('DB_TEST_CC') || (lbSalesSupport_() + ',support@rickyrampersadbranch.com')).split(/[,;\s]+/);
+  var seen = {}; [].concat(to || []).forEach(function (t) { seen[String(t).toLowerCase()] = 1; });
+  return list.filter(function (x) { var k = x.toLowerCase(); if (!/@/.test(x) || seen[k]) return false; seen[k] = 1; return true; });
+}
+
 function lbGraphSend_(to, cc, subject, html, replyTo) {
   if (!lbGraphReady_() || !to.length) return false;
   try {
@@ -2242,7 +2252,7 @@ function lbMail_(m) {
     html = '<div style="background:#eef4ff;border:1px solid #6FA8FF;padding:10px 14px;font-family:Arial;font-size:13px">' +
       'TEST — in live mode this would go to <b>' + dbEsc_(to.join(', ')) + '</b>' + (cc.length ? ', copied to ' + dbEsc_(cc.join(', ')) : '') + '.</div>' + html;
     to = [dbProp_('DB_TEST_INBOX') || Session.getEffectiveUser().getEmail()];
-    cc = dbTestCc_(to);
+    cc = lbTestCc_(to);
     subject = '[TEST] ' + subject;
   }
   if (lbGraphSend_(to, cc, subject, html, lbSalesSupport_())) return (dbMode_() === 'live' ? 'Sent' : 'Test copy sent') + ' from ' + lbSupportFrom_();
