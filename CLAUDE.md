@@ -4210,6 +4210,13 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   `LB_INTEL_SHEET_ID` overrides `LB_INTEL_ID`), matched by name, first name, e-mail or agent number with that row's own
   code. A Driver role (`lbIsDriverRole_`) gets the Delivery Book alone. The app's box reads "Agent number or name".
   `tests/test-logbook.js` covers it.
+- **Who staff may log for: the sign-in lists and Salesforce's active agents** (23 October 2026, from Liz at the counter:
+  "Aleema nor Javid name is not listed on the contract delivery or yours Ricky Rampersad"). The "Choose the agent" list
+  (`lb.agents`, `lbPickAgents_`) was the fact find's sign-in list less every staff role, so the Branch Manager was
+  dropped and agents who do not use the fact find were missing. It is now everyone active on the sign-in lists except
+  pure staff (the Branch Manager stays), plus every agent Salesforce marks Active, numbered from the AgentName__c of a
+  policy written in the last three years (`lbSfActiveAgents_`, kept six hours). Anyone the lists mark inactive is never
+  added back from Salesforce. `lbValidate_` accepts any agent on that list. Signing in is unchanged.
 - **The Delivery Book film** (20 October 2026: "a small video on the revised delivery process as it also looks up the
   client etc and the client gets an email confirming delivery"). *The Delivery Book, for staff* (`dbstaff`, 1:45):
   `rroperations/delivery-book/deliverybook-staff.mp4`, poster `film.jpg`, page `/deliverybook-film/` (Open Graph for

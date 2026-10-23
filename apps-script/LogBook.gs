@@ -724,6 +724,66 @@ function lbFindAgent_(no) {
   return k ? lbAgents_().filter(function (a) { return a.key === k; })[0] || null : null;
 }
 
+/* Who staff may log documents for (the "Choose the agent" list on Documents
+   and Contract for delivery). 23 October 2026, from the counter: "Aleema nor
+   Javid name is not listed on the contract delivery or yours Ricky Rampersad".
+   The sign-in lists hold only the agents who use the fact find, and the
+   Branch Manager was filtered out as staff. So the list is:
+   1. everyone active on the sign-in lists who is not pure staff (the Branch
+      Manager stays: he writes business too);
+   2. every agent Salesforce shows as Active, with the number read off the
+      AgentName__c of a policy written in the last three years ("A04020 -
+      Javid Ali"); kept six hours. Anyone the sign-in lists mark inactive
+      (a former agent) is never added back from Salesforce.
+   Signing in is unchanged: only the sign-in lists open the Log Book. */
+var LB_PICK_READ_ = null;
+function lbPickAgents_() {
+  if (LB_PICK_READ_) return LB_PICK_READ_;
+  var all = lbAgents_(), out = [], seen = {}, off = {};
+  all.forEach(function (a) {
+    if (!a.active) { off[a.key] = 1; var nk = lbNameKey_(a.name); if (nk) off['n:' + nk] = 1; return; }
+    if (lbIsStaffRole_(a.role) && !/branch manager/i.test(a.role)) return;
+    if (seen[a.key]) return;
+    seen[a.key] = 1; out.push(a);
+  });
+  lbSfActiveAgents_().forEach(function (a) {
+    var k = lbAgentKey_(a.agentNo);
+    if (!k || seen[k] || off[k] || off['n:' + lbNameKey_(a.name)]) return;
+    seen[k] = 1; out.push({ agentNo: a.agentNo, name: a.name, email: a.email, unit: '', role: 'Agent', active: true, key: k, sf: true });
+  });
+  out.sort(function (x, y) { return String(x.name).localeCompare(String(y.name)); });
+  LB_PICK_READ_ = out;
+  return out;
+}
+
+/* Salesforce's active agents with their numbers: [{agentNo, name, email}]. */
+function lbSfActiveAgents_() {
+  var cache = null, key = 'lb_sf_agents_v1';
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  if (typeof dbSfConfigured_ !== 'function' || !dbSfConfigured_()) return [];
+  var out = [];
+  try {
+    var people = {};
+    dbSoql_("SELECT Name, Email FROM Contact WHERE RecordType.Name = 'AGENT' AND Employment_Status__c = 'Active' LIMIT 500")
+      .forEach(function (r) {
+        var nk = lbNameKey_(r.Name);
+        if (nk) people[nk] = { name: String(r.Name || '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim(), email: String(r.Email || '').trim() };
+      });
+    var got = {};
+    dbSoql_('SELECT AgentName__c FROM CLIENT_PORTFOLIO__c WHERE CreatedDate = LAST_N_DAYS:1095 AND AgentName__c != null ORDER BY CreatedDate DESC LIMIT 5000')
+      .forEach(function (r) {
+        var m = String(r.AgentName__c || '').match(/^\s*(A?\d+)\s*-\s*(.+?)\s*$/i);
+        if (!m) return;
+        var nk = lbNameKey_(m[2]), p = people[nk];
+        if (!p || got[nk]) return;
+        got[nk] = 1;
+        out.push({ agentNo: m[1].toUpperCase(), name: p.name, email: p.email });
+      });
+    try { if (cache) cache.put(key, JSON.stringify(out), 6 * 3600); } catch (e) {}
+  } catch (e) { Logger.log('Salesforce agents: ' + e); }
+  return out;
+}
+
 /* A staff member's address: the RR Operations Access tab, else the fact find's. */
 function lbStaffEmail_(name) {
   var want = String(name || '').trim().toLowerCase();
@@ -838,7 +898,7 @@ function lbIntelPerson_(who, code) {
 /** Sign-in by agent number and password, both. A refusal never says which
  *  was wrong. Ten wrong tries on one number close it for fifteen minutes. */
 function lbLogin_(b) {
-  LB_AGENTS_READ_ = null;
+  LB_AGENTS_READ_ = null; LB_PICK_READ_ = null;
   var no = dbClean_(b.agentNo, 20), code = dbClean_(b.code, 40);
   if (!no || !code) throw new Error('Enter your agent number and your password.');
   var key = 'lb_fail_' + lbAgentKey_(no);
@@ -883,7 +943,7 @@ function lbLoginApps_(staff) { return staff ? 'logbook,delivery-book' : 'logbook
 
 /* Called by DeliveryBook.gs's doPost for every action that starts "lb.". */
 function lbHandle_(b) {
-  LB_READ_ = null; LB_AGENTS_READ_ = null; LB_HOURS_ = null;
+  LB_READ_ = null; LB_AGENTS_READ_ = null; LB_PICK_READ_ = null; LB_HOURS_ = null;
   if (b.action === 'lb.login') return lbLogin_(b);
   var who = lbSession_(b.token);
   if (!who) return { ok: false, error: 'signed-out' };
@@ -917,8 +977,7 @@ function lbHandle_(b) {
     case 'lb.trainSubmit':  return lbTrainSubmit_(b, who);
     case 'lb.trainView':    return lbTrainView_(b, who);
     case 'lb.baginfo':      return { ok: true, bag: lbBagInfo_(new Date()) };
-    case 'lb.agents':       return { ok: true, agents: lbAgents_().filter(function (a) { return a.active && !lbIsStaffRole_(a.role); })
-                                       .map(function (a) { return { agentNo: a.agentNo, name: a.name, unit: a.unit }; }) };
+    case 'lb.agents':       return { ok: true, agents: lbPickAgents_().map(function (a) { return { agentNo: a.agentNo, name: a.name, unit: a.unit }; }) };
     default:                return { ok: false, error: 'Unknown action' };
   }
 }
@@ -1025,7 +1084,8 @@ function lbValidate_(b, who) {
   if (who.isAgent) {
     out.agent = { agentNo: who.agentNo, name: who.name, email: who.email, unit: who.unit };
   } else {
-    var a = lbFindAgent_(d.agentNo);
+    var k = lbAgentKey_(d.agentNo);
+    var a = k ? lbPickAgents_().filter(function (x) { return x.key === k; })[0] : null;
     if (!a) throw new Error('Choose the agent these documents are from.');
     out.agent = { agentNo: a.agentNo, name: a.name, email: a.email, unit: a.unit };
   }
@@ -1924,7 +1984,7 @@ function lbConfirmAsk_(t) {
 /* The department's tap. Yes is recorded at once. No asks what is missing
    (optional), then goes to sales support and opens the Salesforce tasks. */
 function lbConfirmPage_(p) {
-  LB_READ_ = null; LB_AGENTS_READ_ = null;
+  LB_READ_ = null; LB_AGENTS_READ_ = null; LB_PICK_READ_ = null;
   var no = dbClean_(p.lbc, 20);
   if (!no || String(p.k || '') !== lbConfirmSign_(no)) return dbHtml_('<h1>This link has expired</h1><p>Reply to the e-mail instead and we will follow up.</p>');
   var t = lbTransRows_().filter(function (x) { return x.no === no; })[0];

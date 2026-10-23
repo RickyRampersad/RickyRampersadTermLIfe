@@ -58,6 +58,12 @@ function sfRoute(url, opts) {
     if (/FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN/.test(q)) { const w = ids(q.split('WHERE')[1].split(') OR')[0]); return res(200, { records: SF.portfolios.filter(r => w.includes(r.Contact__c)) }); }
     if (/FROM Contact WHERE Email =/.test(q)) { const w = ids(q); return res(200, { records: SF.contacts.filter(c => w.includes(c.Email)) }); }
     if (/FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN/.test(q)) { const w = ids(q.split(' IN ')[1]); return res(200, { records: SF.portfolios.filter(r => w.includes(r.POLICY__c)) }); }
+    if (/Employment_Status__c = 'Active'/.test(q)) return res(200, { records: [
+      { Name: 'Javid Ali', Email: 'javid@example.com' }, { Name: 'Aleema Mohammed-Ali', Email: 'aleema@example.com' },
+      { Name: 'Ana Agent', Email: 'ana@example.com' }, { Name: 'Gone Agent', Email: 'gone@example.com' }] });
+    if (/SELECT AgentName__c FROM CLIENT_PORTFOLIO__c WHERE CreatedDate/.test(q)) return res(200, { records: [
+      { AgentName__c: 'A04020 - Javid Ali' }, { AgentName__c: 'A04028 - Aleema Mohammed-Ali' }, { AgentName__c: 'A04020 - Javid Ali' },
+      { AgentName__c: 'A10001 - Ana Agent' }, { AgentName__c: 'A10002 - Gone Agent' }, { AgentName__c: 'A09999 - Not Active Person' }] });
     if (/FROM Contact WHERE Id/.test(q)) { const w = ids(q); return res(200, { records: SF.contacts.filter(c => w.includes(c.Id)) }); }
     return res(200, { records: [] });
   }
@@ -144,7 +150,14 @@ let env = world();
   ok('an agent is refused the transmittals', ['lb.transmittals', 'lb.transmittal', 'lb.receive', 'lb.stats', 'lb.queue']
     .every(a => /staff/.test(env.lbHandle_({ action: a, token: ag.token }).error || '')));
   ok('"Not Active" is refused', throws(() => env.lbLogin_({ agentNo: 'A00003', code: 'pw3' })));
-  ok('staff are not in the agent list', !env.lbHandle_({ action: 'lb.agents', token: bo.token }).agents.some(a => a.name === 'Bo Branch'));
+  const pick = env.lbHandle_({ action: 'lb.agents', token: bo.token }).agents;
+  ok('the branch manager is in the agent list (he writes business)', pick.some(a => a.name === 'Bo Branch'));
+  ok('staff are not in the agent list', !pick.some(a => /Sam Support|Pat Courier/.test(a.name)));
+  ok('agents Salesforce shows as active are in the list, with their numbers', pick.some(a => a.name === 'Javid Ali' && a.agentNo === 'A04020')
+     && pick.some(a => a.name === 'Aleema Mohammed-Ali' && a.agentNo === 'A04028'));
+  ok('each agent once', pick.filter(a => a.agentNo === 'A04020').length === 1 && pick.filter(a => a.agentNo === 'A10001').length === 1);
+  ok('a former agent is never added back from Salesforce', !pick.some(a => a.name === 'Gone Agent' || a.agentNo === 'A00003'));
+  ok('staff can log for an agent who is only in Salesforce', env.lbValidate_({ entry: entry({ agentNo: 'A04020' }) }, env.lbSession_(bo.token)).agent.name === 'Javid Ali');
 }
 
 /* ── the seam ──────────────────────────────────────────────────────── */
@@ -459,7 +472,7 @@ console.log('three working days on');
   env.lbConfirmRun_(NOW);
   ok('not asked before three working days', env.__mail.length === n0 || new Date(row[tc('Sent At')]) > NOW);
   row[tc('Sent At')] = new Date(NOW.getTime() - 5 * 86400000);   // the Saturday before: 3 working days by Thursday
-  env.LB_READ_ = null; env.LB_AGENTS_READ_ = null;
+  env.LB_READ_ = null; env.LB_AGENTS_READ_ = null; env.LB_PICK_READ_ = null;
   env.lbConfirmRun_(NOW);
   const m = env.__mail[env.__mail.length - 1];
   ok('asked after three working days, to the department', m && m.to === 'rsc@example.com' && /Please confirm receipt/.test(m.subject));
