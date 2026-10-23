@@ -3233,6 +3233,9 @@ voice under the new timing and the caption gives it away.
     policies, the household, the history, Assign, WhatsApp, their page and the script.
   - To assign and Urgent carry the suggested agent, with its one-press button, on the row itself.
   - A phone cell holding two numbers is dialled one number at a time (`phonesOf`); until then the two ran together.
+  - "No answer yet" is the client's answer to our letter, so a client who never answered keeps state `named` (or `called`)
+    after the agent's call. Since 23 October 2026 the pill says the newest logged outcome instead ("named · called 23
+    Oct", `stateWords`): an agent who had logged his calls read "named, no answer yet" and thought nothing had saved.
   - How the board works, the three rules on every call and the scripts are in Help.
   - `board8/board-test.js` (60) and the work, dashboard, snapshot and introduction-hold tests in the scratchpad cover
     it, moved to Log call.

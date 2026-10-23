@@ -1227,6 +1227,21 @@ function needsOf(c) {
   return s;
 }
 function stateOf(c) { return c.state === 'open' && c.late ? 'late' : c.state; }
+/* the state in words. "No answer yet" is the client's answer to our letter, so once the named agent or staff log a call on a
+   client who never answered, the label says the call instead (23 October 2026: an agent read "named, no answer yet" after
+   logging his calls and thought the update had not saved) */
+var OUT_WORDS = { called: 'called', met: 'met', 'no answer': 'tried, no answer', declined: 'declined', closed: 'closed' };
+function stateWords(c) {
+  var so = stateOf(c), w = STATE_WORDS[so] || so;
+  if (so !== 'named' && so !== 'called' && so !== 'silent') return w;
+  var last = null;
+  (c.markers || []).forEach(function (m) {
+    var x = /^\[(called|met|no answer|declined|closed) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/.exec(m);
+    if (x) last = x;
+  });
+  if (!last) return w;
+  return (so === 'named' ? 'named · ' : '') + OUT_WORDS[last[1]] + ' ' + last[2];
+}
 var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', reached: 'reached by phone', named: 'named, no answer yet', silent: 'not answered yet', held: 'letter held', unsent: 'not written to yet',
   called: 'called, no answer yet', tocall: 'to call', dnc: 'do not call', family: 'family' };
 /* the letters, in a few words each (letters/manifest.json) */
@@ -1820,7 +1835,7 @@ var OPENX = {};   // the panels opened on a card: 'pol:TOKEN', 'hh:TOKEN'
 function pills(c) {
   var so = stateOf(c);
   return '<span class="pill seg" title="' + esc(LETTER_WORDS[c.seg] || '') + '">' + esc(c.seg || '—') + (LETTER_WORDS[c.seg] ? ' · ' + esc(LETTER_WORDS[c.seg]) : '') + '</span>' +
-    '<span class="pill ' + esc(so) + '">' + esc(STATE_WORDS[so] || so) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '') +
+    '<span class="pill ' + esc(so) + '">' + esc(stateWords(c)) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '') +
     (backOpen(c) ? '<span class="pill urg">call-back: ' + esc(c.back.kind === 'branch' ? 'the branch' : 'licensed agent') + '</span>' : '');
 }
 function hhPill(c) {
@@ -2106,7 +2121,7 @@ function cap(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slic
 /* the states that need saying on the row; the letter and the rest are in the details */
 function rowPills(c) {
   var so = stateOf(c);
-  return '<span class="pill ' + esc(so) + '">' + esc(STATE_WORDS[so] || so) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '') +
+  return '<span class="pill ' + esc(so) + '">' + esc(stateWords(c)) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '') +
     (backOpen(c) ? '<span class="pill urg">call-back: ' + esc(c.back.kind === 'branch' ? 'the branch' : 'licensed agent') + '</span>' : '') +
     (c.mf && c.mf.length ? '<span class="pill mf">possible family</span>' : '');
 }
@@ -4721,7 +4736,7 @@ function mQueue(X, rows, money) {
     return '<article class="mq" style="--d:' + d + 'ms" data-t="' + esc(c.token) + '">' +
       '<div class="mring" style="--rc:' + mColor(t) + ';--d:' + d + 'ms"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15.915"/><circle class="fg" cx="18" cy="18" r="15.915" stroke-dasharray="' + t + ' 100"/></svg><b>' + t + '</b></div>' +
       '<div><div class="mqn"><a href="#t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '">' + esc(c.client) + '</a><span class="cno">' + esc(c.no || '') + '</span>' +
-      '<span class="pill ' + esc(stateOf(c)) + '">' + esc(STATE_WORDS[stateOf(c)] || c.state) + '</span></div>' +
+      '<span class="pill ' + esc(stateOf(c)) + '">' + esc(stateWords(c)) + '</span></div>' +
       (who ? '<div class="mqs">' + esc(who) + '</div>' : '') + '<div class="mqbars">' + bars + '</div>' + (chips ? '<div class="mchips">' + chips + '</div>' : '') + '</div>' +
       '<div class="mqa">' + act + '</div></article>';
   }).join('');
