@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-22d';
+var SCRIPT_VERSION = '2026-10-23a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -577,9 +577,14 @@ var SCHEDULE = {
     blocks: { KPI1: { time: '9am – 5pm', focus: 'Client portfolios and macros, scripts and clawbacks, renewals and billing, reporting', kpi: 'Scripts/CB' } }
   },
   elizabeth: {
-    // Sales Support 2. 7 to 3, lunch 12 to 1.
-    hours: '7am – 3pm', lunch: '12:00 – 1:00pm',
-    blocks: { KPI1: { time: '7am – 3pm', focus: 'Branch intelligence and Query Pal, new applications, administrative support, reporting', kpi: 'New Application Process' } }
+    /* Sales Support 2. 8 to 4, lunch 12 to 1: from Friday 23 October 2026
+       (Kamla to the agents, 6:22am: "to optimize our service delivery and
+       ensure better coverage during peak morning and afternoon hours,
+       Elizabeth will now be operating from 8:00 AM to 4:00 PM"). Was 7 to 3.
+       Her morning e-mail, the absent mark (start + 5), the hand-over of her
+       work (start + 30) and her finish all follow these hours. */
+    hours: '8am – 4pm', lunch: '12:00 – 1:00pm',
+    blocks: { KPI1: { time: '8am – 4pm', focus: 'Branch intelligence and Query Pal, new applications, administrative support, reporting', kpi: 'New Application Process' } }
   },
   ricky: {
     /* 5am to 3pm (Ricky, 17 October 2026): the plan at 5, the midday check at
@@ -4423,7 +4428,7 @@ function attendanceReport_(day) {
       st = 'Absent · ' + (auto ? 'no sign-in (automatic)' : (String(today.row.Reason || '') || 'marked') + ' (' + String(today.row.MarkedBy || '') + ')');
       color = MAIL.red;
     } else if (today && timeStr_(today.row.FirstSignIn)) {
-      var at = timeStr_(today.row.FirstSignIn), late = lateBy_(sid, at);
+      var at = timeStr_(today.row.FirstSignIn), late = lateBy_(sid, at, day);
       st = 'In at ' + twelve_(at) + (late ? ' · late ' + late + ' min' : ' · on time');
       color = late ? MAIL.amber : MAIL.green;
     } else { st = 'Not signed in'; color = MAIL.red; }
@@ -4436,7 +4441,7 @@ function attendanceReport_(day) {
       if (String(a.row.Status || '').toLowerCase() === 'absent') { mAbs++; return; }
       var t = timeStr_(a.row.FirstSignIn); if (!t) return;
       mIn++; sum += minutesOf_(t);
-      if (lateBy_(sid, t)) mLate++;
+      if (lateBy_(sid, t, d)) mLate++;
     });
     return { sid: sid, name: nameFor_(sid), start: twelve_(mmText_(sp.start)), st: st, color: color,
              late: mLate, abs: mAbs, avg: mIn ? twelve_(mmText_(Math.round(sum / mIn))) : '—', days: mIn };
@@ -7002,7 +7007,7 @@ function gameScoreDay_(sid, day, closes, ctx, quests) {
   sc.qp = ((ctx.qp[day] || {})[sid]) || 0; sc.work += sc.qp * P.qp;
   var a = (ctx.att[day] || {})[sid], first = a ? timeStr_(a.FirstSignIn) : '';
   sc.inAt = first;
-  if (first && !lateBy_(sid, first)) sc.ontime = 1;
+  if (first && !lateBy_(sid, first, day)) sc.ontime = 1;
   if (a && timeStr_(a.SignedOut)) sc.signedOut = 1;
   // A clean close (20 Oct 2026): signed out with nothing from the close-out left unanswered.
   if (sc.signedOut && closeoutDesk_(sid)) { var un = bigGet_(closeoutUnKey_(sid, day), null); if (un && ((un.tasks || []).length + (un.checks || []).length)) sc.signedOut = 0; }
@@ -7094,7 +7099,7 @@ function gameStreak_(sid, day) {
   var judge = function (d) {
     var r = by[d]; if (!r) return any[d] ? 'miss' : 'none';
     var first = timeStr_(r.FirstSignIn), mk = String(r.MarkedBy || '');
-    if (first) return lateBy_(sid, first) ? 'miss' : 'on';
+    if (first) return lateBy_(sid, first, d) ? 'miss' : 'on';
     if (String(r.Status || '').toLowerCase() === 'absent' && mk && mk !== 'tracker' && mk !== sid) return 'leave';
     return 'miss';
   };
@@ -10203,7 +10208,7 @@ function markNotClosed_(sid, day) {
  *   · A clean close (every item answered) is the "day closed off" point in the game.
  */
 var CLOSEOUT = {
-  AT: { sasha: 13 * 60 + 15, elizabeth: 14 * 60 + 15, azariah: 15 * 60 + 15, kamla: 16 * 60 + 15 },
+  AT: { sasha: 13 * 60 + 15, elizabeth: 15 * 60 + 15, azariah: 15 * 60 + 15, kamla: 16 * 60 + 15 },   // Liz 3:15 from 23 Oct 2026 (her day is now 8 to 4)
   MGR_AT: 15 * 60, MGR_CHECK_AFTER: 45,           // Mr Rampersad and the Unit Manager: 3:00, and the check at 3:45
   BMA: 'kamla', KAMLA_AT_RUN: 2, RICKY_AT_RUN: 3, LOOK_BACK: 5, MAX_TASKS: 40
 };
@@ -18058,9 +18063,28 @@ var ATT = { must: ['Date', 'StaffId', 'FirstSignIn'], name: 'Attendance',
                    'Reason', 'MarkedBy', 'UpdatedAt'] };
 var ATT_GRACE_MIN = 5;   // late after five minutes (Ricky, 20 Oct 2026)
 
-/** "8am – 4pm" -> 480. The first token of the hours string, in minutes. */
-function startFor_(staffId) {
-  var h = String(scheduleFor_(staffId).hours || '8am');
+/* THE HOURS A DESK USED TO KEEP, so a past day is judged against the day it
+   was. Elizabeth was 7 to 3 up to Thursday 22 October 2026 and is 8 to 4 from
+   the 23rd: her 7:20 on the 12th was late, and stays late in the month's
+   count and her streak, though 7:20 would be early now. Each entry is the
+   last day on those hours ('until') and the hours. Today's hours are always
+   SCHEDULE's; only a day before an 'until' reads from here. */
+var SCHEDULE_WAS = {
+  elizabeth: [{ until: '2026-10-22', hours: '7am – 3pm' }]
+};
+
+/** The hours string this desk kept on that day ("2026-10-12"); today's when no day is given. */
+function hoursOn_(staffId, day) {
+  var now = scheduleFor_(staffId).hours || '';
+  if (!day) return now;
+  var was = (SCHEDULE_WAS[staffId] || []).slice().sort(function (a, b) { return a.until < b.until ? -1 : a.until > b.until ? 1 : 0; });
+  for (var i = 0; i < was.length; i++) if (String(day) <= String(was[i].until)) return was[i].hours;
+  return now;
+}
+
+/** "8am – 4pm" -> 480. The first token of the hours string, in minutes; on a given day, the hours kept that day. */
+function startFor_(staffId, day) {
+  var h = String(hoursOn_(staffId, day) || '8am');
   var m = /^\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i.exec(h);
   if (!m) return 8 * 60;
   var hr = Number(m[1]) % 12, mn = Number(m[2] || 0);
@@ -18072,10 +18096,10 @@ function minutesOf_(hhmm) {
   var m = /^(\d{1,2}):(\d{2})/.exec(String(hhmm || ''));
   return m ? Number(m[1]) * 60 + Number(m[2]) : null;
 }
-function lateBy_(staffId, at) {
+function lateBy_(staffId, at, day) {
   var mins = minutesOf_(at);
   if (mins == null) return 0;
-  var over = mins - startFor_(staffId);
+  var over = mins - startFor_(staffId, day);
   return over > ATT_GRACE_MIN ? over : 0;
 }
 
@@ -18131,7 +18155,7 @@ function attOut_(r, staffId) {
   var at = timeStr_(r.FirstSignIn);
   return { at: at, lastSeen: timeStr_(r.LastSeen), out: timeStr_(r.SignedOut),
            status: String(r.Status || 'in'), reason: String(r.Reason || ''),
-           late: at ? lateBy_(staffId, at) : 0 };
+           late: at ? lateBy_(staffId, at, isoDay_(r.Date)) : 0 };
 }
 
 /** Called on sign-in and on session resume. Cheap on repeats: the day's
