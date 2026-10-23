@@ -76,6 +76,7 @@ h2{font-family:var(--f);font-size:21px;color:var(--ink);margin:26px 0 10px;lette
 .sess .ti{font-family:var(--f);font-weight:800;color:var(--ink);font-size:17px;line-height:1.3}
 .sess .ti i{font-style:normal;color:var(--dim);font-weight:500;font-size:13px;display:block;margin-top:2px}
 .sess .cnt{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){.sess .hd{grid-template-columns:62px 1fr;padding:12px 14px}.sess .cnt{grid-column:2;justify-content:flex-start}}
 .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-weight:700;font-size:12px;background:#dfe8ee;color:var(--ink);white-space:nowrap}
 .pill.gold{background:var(--gold);color:var(--navy)}.pill.teal{background:var(--notebg);color:var(--tdark)}.pill.ok{background:var(--okbg);color:var(--ok)}
 .sess .bd{padding:0 18px 16px;border-top:1px solid var(--line)}
@@ -123,6 +124,28 @@ h2{font-family:var(--f);font-size:21px;color:var(--ink);margin:26px 0 10px;lette
 .notes h3{margin:14px 0 6px}.notes p{margin:6px 0}.notes ul{margin:4px 0;padding-left:20px}.notes li{margin:5px 0}
 .notes .gap{background:var(--warnbg);border:1px solid #f1dca2;border-left:4px solid var(--gold2);border-radius:10px;padding:10px 14px;margin:10px 0;color:var(--ink)}
 .brief .sess .hd{cursor:default}
+.prior{background:#eef1f6;border:1px solid #cfd8e6;border-left:4px solid #4a5a75;border-radius:10px;padding:12px 16px;margin:10px 0;color:var(--ink)}
+.prior h4{font-family:var(--f);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;color:#4a5a75}
+.prior ul{margin:0;padding-left:20px}.prior li{margin:5px 0;font-size:14.5px}.prior p{margin:8px 0 0;font-size:14.5px}.prior p b{color:#4a5a75}
+.pill.loop{background:#e3e8f1;color:#4a5a75}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:10px 0;background:var(--card)}
+.pair>div{padding:12px 16px}.pair>div:first-child{background:#eef1f6;border-right:1px solid var(--line)}
+.pair small{display:block;font-family:var(--f);font-weight:800;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#4a5a75;margin-bottom:4px}
+.pair>div:last-child small{color:var(--gold2)}.pair p{margin:0;font-size:14.5px;color:var(--ink)}
+@media (max-width:640px){.pair{grid-template-columns:1fr}.pair>div:first-child{border-right:0;border-bottom:1px solid var(--line)}}
+.outs{counter-reset:o;list-style:none;padding:0;margin:10px 0}
+.outs>li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px 12px 52px;margin:8px 0;position:relative}
+.outs>li::before{counter-increment:o;content:counter(o);position:absolute;left:14px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--navy);color:var(--gold);font:800 13px/26px var(--f);text-align:center}
+.outs b.t{display:block;font-family:var(--f);color:var(--ink);font-size:15.5px}
+.outs .w{font-size:13.5px;color:var(--dim);margin:2px 0 6px}
+.outs .m{font-size:14px;margin:4px 0}.outs .m b{color:var(--ink)}
+.st{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.st button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 12px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink)}
+.st button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.st .now{font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:99px}
+.now.yes{background:var(--okbg);color:var(--ok)}.now.part{background:var(--warnbg);color:var(--warn)}.now.no{background:var(--stopbg);color:var(--stop)}.now.unk{background:#dfe8ee;color:var(--ink)}
+.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
+.goals div{background:var(--navy);border-radius:12px;padding:12px 16px;color:#bcd3e4;font-size:13px}.goals b{display:block;color:var(--gold);font:800 24px/1.15 var(--f)}
 @media print{
   header,.tabs,.hero,.add,.sug,.btn,.toast,.x,.note,.live{display:none!important}
   body{background:#fff;font-size:12.5px}.wrap{width:100%}
@@ -175,6 +198,7 @@ h2{font-family:var(--f);font-size:21px;color:var(--ink);margin:26px 0 10px;lette
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="d1" aria-selected="true">Day 1 · Thursday</button>
       <button class="tab" role="tab" data-tab="d2">Day 2 · Friday</button>
+      <button class="tab" role="tab" data-tab="circ">Last year: the circles</button>
       <button class="tab" role="tab" data-tab="sb">Step-Back notes</button>
       <button class="tab" role="tab" data-tab="log">Logistics</button>
       <button class="tab" role="tab" data-tab="brief">Brief for the room</button>
@@ -182,6 +206,7 @@ h2{font-family:var(--f);font-size:21px;color:var(--ink);margin:26px 0 10px;lette
 
     <section id="p-d1" class="panel day"></section>
     <section id="p-d2" class="panel day hide"></section>
+    <section id="p-circ" class="panel hide"></section>
     <section id="p-sb" class="panel hide"></section>
     <section id="p-log" class="panel hide"></section>
     <section id="p-brief" class="panel brief hide"></section>
@@ -406,6 +431,8 @@ const EVIDENCE = {
 /* ── in the room, in sixty seconds: a template for the key sessions, the branch's record first, the evidence second,
    the position, the ask. Live numbers in brackets are read off the tiles on the day. ── */
 const SAY = {
+  'd1-journey': 'Last year we opened by recapping the 2024 retreat\'s actions and status. Eight of today\'s ten working sessions return to ground last year\'s agenda covered: the career path by tenure stage, award criteria, persistency as a measure, bench strength, onboarding, coaching. Last year\'s workshops set out to produce ten things, from branch lapse blueprints and an onboarding blueprint to a new KPI framework and targets by branch. Our ask, before we design anything new: which of those ten were issued, and who owns the rest? And this year, every recommendation leaves the room with an owner, a date and a measure.',
+  'd2-consol': 'Last year closed on "Commitment to Execution". This year the same questions came back. So our recommendation for the action log: every line an owner, a date and a measure the system can count; sent to every branch within seven days; reviewed every quarter; and the 2027 retreat opens by reading it, line by line. Our branch offers its own record as proof it can be done: every task here carries an owner, a date and a note.',
   'd1-mahogany': 'Our old paper log book, measured over 3,634 lines: 41% sent the same day, 13% never dated. Since 15 October every document is stamped four times and a reason is asked for the same day. LIMRA says the second year is the retention cliff, when support is withdrawn; Gallup says the manager is 70% of engagement. So our ask of Project Mahogany: whatever Sales Administration becomes, the time-stamped record stays with the branch, and the manual-and-test pattern we built becomes the standard.',
   'd1-career': 'The industry keeps 14 recruits in 100 after four years, and agency builders have never passed 20. We are rebuilding from 28 agents in two units after ten resignations. One-year retention is 55% when the office head recruits and 44% when a recruiter does. Our position: the next step on the path should be defined by a record anyone can read, recruits still producing at twelve and twenty-four months, not by tenure. Our ask: what must a unit manager hold to stay one, and over what rebuilding period?',
   'd1-succession': 'DDI finds only one organisation in five has leaders ready for its critical roles. Our branch runs on scheduled triggers: the 5 am review, the 11 and 3 o\'clock reports, Monday\'s letters, the 10 o\'clock premium send, the 5 pm Log Book digest. This week, while we are in this room, it runs without me. Readiness is two things: the system runs without the person, and the record shows who is ready. We have the first; the second we can print today for every unit manager and staff member.',
@@ -423,8 +450,77 @@ const OBJECTIVE = [
   'Get business preserved recognised beside business produced, with a unit the system can count: a review filed, a conversion, a premium retained.',
   'Get a company standard for writing to a departed agent\'s book inside days, in the company\'s words, and a counted rebuilding period for the manager who loses one.',
   'Get the readiness record accepted as the basis for advancement, ahead of tenure.',
-  'Leave with an owner and a date on at least one of these.',
+  'Break the circle. Last year\'s agenda set out ten things to produce, and eight of this year\'s ten working sessions return to the same ground. Every decision this year leaves with an owner, a date and a measure, and the 2027 retreat opens by reading them.',
 ];
+
+/* ── last year: the 2025 Joint Sales Managers Strategic Meeting, three days, from its agenda. `PRIOR` sets each 2026
+   session beside the 2025 sessions that covered the same ground, in the 2025 agenda's own words; `OUTPUTS` are the
+   things the 2025 workshops and plenaries set out to produce. Whether each was issued is the branch's to mark. ── */
+const PRIOR = {
+  'd1-journey': { was: ['Day 1, 8:45, Gregg Mannette, twenty minutes: "Strategic Focus and the Why of the Offsite meeting" and "Recap 2024 Sales Managers Retreat – Actions & Status".',
+                        'Day 1, 3:00, one hour, everyone: "From Ideas to Action": "Synthesizing key insights" and "Defining Q3 priorities in improving lapse trends". Day 3 closed on "Commitment to Execution and Future Alignment".'],
+                  ask: 'Last year gave the look back a bullet in a twenty-minute slot; this year it has ten minutes. Which of 2025\'s ten outputs were issued, and where is the log that tracks them?' },
+  'd1-mahogany': { was: ['Day 2, 1:30, Robert Dougan, an hour and a half: "Performance Management with Purpose": "Coaching to excellence, accountability vs blame", "Tenure-based supervision models", "Clarifying consequences: Support vs separation".',
+                         'Workshop C: "Coaching to Excellence & Building Bench Strength": coaching simulations, "Tiered coaching plans by agent tenure", "Coaching Cadence & Commitment".'],
+                   ask: 'Manager coaching for performance was last year\'s Day 2. What did the tiered coaching plans and the coaching cadence become, and is Mahogany building on them or starting again?' },
+  'd1-career': { was: ['Day 3, Plenary 6: "Redefining the agent lifecycle and associated quota targets": Year 1, Foundation; Years 2 to 3, Momentum; Year 4 and on, Stewardship.',
+                       'Workshop E: "Supervisory architecture by career stage" and "Role-specific accountability expectations". Day 2: "Tenure-based supervision models". Workshop D: "Agent Development by target tier".'],
+                 ask: 'Last year defined the career by tenure stage, with quota targets for each. Was it adopted? If it was, this session reviews it; if not, why are we designing it again?' },
+  'd1-succession': { was: ['Day 2, Workshop C: "Coaching to Excellence & Building Bench Strength".'],
+                     ask: 'Bench strength was a workshop last year. How many branches have a named, ready successor today?' },
+  'd1-awards': { was: ['Day 3, Workshop E: "Design new performance metrics and awards/reward criteria".',
+                       'Day 2, Workshop C: "Recognizing behavior not just production".',
+                       'Day 1: "Redesigning KPIs in a Post IFRS 17 World": "Custodians\' vs Creators of Value", "Linking bonus to contribution"; Plenary 1 on the CSM, with the Panama CSM discussion recapped.'],
+                 ask: 'Award criteria were designed in a workshop last year, and the CSM is back after the Panama discussion and last year\'s plenary. Which of last year\'s criteria were adopted?' },
+  'd1-protect': { was: ['Day 1, Plenary 2, Anderson Bisnath: "Lapse Control Intelligence": lapse trends, "the lapse avalanche beyond year two", reinstatement effectiveness, "Branch Specific lapse management blueprints".',
+                        'Workshop A, "Lapse Shield": "Submission Faux Pas, should we place that business?"; "Future payment statistics… is the operational process failing us?"; "Lifecycle touchpoints: delivery, 6 months, annual".',
+                        'Day 1: "Custodians\' vs Creators of Value". Day 3, the new KPI framework: "Persistency contribution", "Lapse thresholds", "CSM-at-risk profiling".'],
+                  ask: 'Last year named custodians of value beside creators and put persistency in the KPI framework. This year asks again whether preserved business should be recognised. It was agreed in principle a year ago: what stopped it being paid?' },
+  'd1-fraud': { was: ['Workshop A: "Submission Faux Pas, should we place that business? - a qualitative approach - questioning early falloff of policies."',
+                      'Day 3, Plenary 7: "Ethics, intensity and consistency". Workshop D: "Accountability metrics". Workshop E: "Role-specific accountability expectations".'],
+                ask: 'Accountability metrics were a workshop output last year. Which ones are managers held to today?' },
+  'd2-succession': { was: ['Day 3, Plenary 6: "Reframing branch leadership expectations", "Cultural drift vs discipline".',
+                           'Day 2: "Clarifying consequences: Support vs separation". Workshop C: "Building Bench Strength". Workshop E: "Supervisory architecture by career stage".'],
+                     ask: 'Leadership expectations were reframed last year. Are they written down, and is anyone advanced against them?' },
+  'd2-transfers': { was: [], ask: 'Not on last year\'s agenda: the one new subject this year, raised by September.' },
+  'd2-recruit': { was: ['Day 2, Plenary 4, Robert Dougan, two hours: "Elevating Selection & Onboarding Standards": "Agent Sourcing Modernization: Talent Nest & SMG", "Selection protocols: Branch vs Panel", "90-Day onboarding models", "Adaptive vs structured probation", mentorship.',
+                        'Workshop B, an hour and a quarter: "Designing the End-to-End Onboarding Engine": weeks 1 to 12, "Early Warning Systems", mentoring and coaching transition points, "Branch onboarding blueprint".',
+                        'Day 3, Plenary 7: the strategic goal of "450 full-time agents".'],
+                  ask: 'Last year gave recruitment and onboarding three and a quarter hours and set a goal of 450 full-time agents. This year it has thirty-five minutes. How many full-time agents are there today, and how many of last year\'s recruits are still producing?' },
+  'd2-consol': { was: ['Day 1, "From Ideas to Action": "Defining Q3 priorities in improving lapse trends". Day 3 closed on "Commitment to Execution and Future Alignment" and "Strategic Close and Vision".'],
+                 ask: 'This year: one action log, an owner, a date and a measure on every line, sent to every branch in seven days and read at the start of the 2027 retreat.' },
+  'd2-close': { was: ['Day 3, 3:00, Gregg & Samanta: "Commitment to Execution and Future Alignment".'],
+                ask: 'Who reads this year\'s commitments back, and when?' },
+};
+const OUTPUTS = [
+  { id: 'c25-lapse', t: 'Branch-specific lapse management blueprints', w: 'Day 1, Plenary 2, Lapse Control Intelligence', now: 'd1-protect',
+    built: 'The Premium Due Desk (October 2026): letters at 45, 60, 75 and 90 days past the paid-to date, each read and ticked by a person, and each letter\'s outcome read against the next dues extract.' },
+  { id: 'c25-q3', t: 'Q3 priorities for improving lapse trends', w: 'Day 1, Plenary 3, From Ideas to Action', now: 'd1-protect', built: '' },
+  { id: 'c25-touch', t: 'Lifecycle touchpoints and servicing reform: delivery, 6 months, annual', w: 'Day 1, Workshop A, Lapse Shield', now: 'd1-protect',
+    built: 'The Delivery Book (15 October 2026): every delivery recorded with the collector, a signature and a GPS pin, and the client e-mailed the same day with a star rating; the 28-day personal delivery standard.' },
+  { id: 'c25-onboard', t: 'A 90-day onboarding model and a branch onboarding blueprint, weeks 1 to 12, with early warning systems', w: 'Day 2, Plenary 4 and Workshop B', now: 'd2-recruit',
+    built: 'Early warning on the tracker: each agent projects the day in the morning and balances it at 5:30; each desk\'s closures are read against its own median; a quiet or re-dated task is asked about.' },
+  { id: 'c25-coach', t: 'Tiered coaching plans by agent tenure, and a coaching cadence', w: 'Day 2, Workshop C', now: 'd1-mahogany',
+    built: 'The unit manager\'s page: his unit against its goals, each agent\'s projection and balance, coaching notes, and a note to an agent that reaches the agent\'s next morning e-mail.' },
+  { id: 'c25-life', t: 'The agent lifecycle and its quota targets: Foundation, Momentum, Stewardship', w: 'Day 3, Plenary 6', now: 'd1-career',
+    built: 'Licence tenure tracked in five bands, from under two years to over twenty.' },
+  { id: 'c25-kpi', t: 'A new KPI framework: risk-based API, persistency contribution, lapse thresholds, CSM-at-risk profiling, with bonus linked to contribution', w: 'Day 1, Redesigning KPIs; Day 3, Plenary 6', now: 'd1-awards',
+    built: 'A retention payment the branch pays and chases: TT$200 to the agent on each service questionnaire received after a client is named to them, followed every working day until Salesforce carries the payment date.' },
+  { id: 'c25-target', t: 'Target allocation by branch, supervision aligned to sales mix, and accountability metrics', w: 'Day 3, Workshop D', now: '',
+    built: 'Each agent and each unit carries its FY27 goal on the tracker, read every day against the share of the year gone.' },
+  { id: 'c25-award', t: 'New performance metrics and award and reward criteria, role-specific accountability, supervisory architecture by career stage', w: 'Day 3, Workshop E', now: 'd1-awards',
+    built: 'A points scheme for staff that pays outcomes, not activity: a client reached 3, met 5, a household named 5, a conversion 10.' },
+  { id: 'c25-goals', t: 'The strategic goals per branch and per agent: $250M risk-based API, $50M annuity premium, 450 full-time agents', w: 'Day 3, Plenary 7', now: '', built: '' },
+];
+const PAIRS = [
+  ['"Custodians\' vs Creators of Value"; "Linking bonus to contribution"; a KPI for "Persistency contribution".', 'Should the business we preserve be recognised alongside the business we produce?'],
+  ['"Redefining the agent lifecycle": Year 1 Foundation, Years 2 to 3 Momentum, Year 4 and on Stewardship; "Supervisory architecture by career stage".', 'Does our current career path encourage advancement, or create unintended barriers?'],
+  ['"Design new performance metrics and awards/reward criteria"; "Recognizing behavior not just production".', 'Does our framework inspire excellence while appropriately recognising meritorious performance?'],
+  ['"Building Bench Strength".', 'How prepared is your organisation to continue successfully without you?'],
+  ['"Selection protocols", "90-Day onboarding models", "Early Warning Systems", "Branch onboarding blueprint"; a goal of 450 full-time agents.', 'Are we rewarding sustainable manpower development or simply recruitment activity?'],
+  ['"Performance Management with Purpose"; "Coaching Cadence & Commitment".', 'Are our support structures enabling managers to develop people and drive performance?'],
+];
+const STATUS = { yes: 'Issued', part: 'In part', no: 'Not issued', unk: 'Not sure' };
 
 function toast(msg, bad) { const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', bad ? 8000 : 4000); }
 async function api(params) {
@@ -503,7 +599,7 @@ async function open() {
       $('linknote').innerHTML = '<div class="note">' + pending.length + ' contribution' + (pending.length === 1 ? '' : 's') + ' saved on this device before the backend was linked. <button class="btn sm gold" onclick="pushLocal()">Send them to the sheet</button></div>';
     }
   }
-  renderObjective(); renderTiles(); renderDays(); renderNotes(); renderLog(); renderBrief(); showTab(TAB);
+  renderObjective(); renderTiles(); renderDays(); renderNotes(); renderLog(); renderCircles(); renderBrief(); showTab(TAB);
 }
 async function pushLocal() {
   const pending = localItems(); let sent = 0;
@@ -552,6 +648,7 @@ function showTab(k) {
   document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === k ? 'true' : 'false'));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('hide', p.id !== 'p-' + k));
   if (k === 'brief') renderBrief();
+  if (k === 'circ') renderCircles();
 }
 function itemsFor(key) { return ITEMS.filter(i => i.session === key); }
 function liveHtml(s) {
@@ -572,6 +669,11 @@ function eviHtml(key) {
   const e = EVIDENCE[key]; if (!e || !e.length) return '';
   return '<div class="evi"><h4>What the industry evidence says</h4><ul>' + e.map(([t, k]) => '<li>' + esc(t) + ' <a href="' + esc(SRC[k][1]) + '" target="_blank" rel="noopener" title="' + esc(SRC[k][0]) + '">source</a></li>').join('') + '</ul></div>';
 }
+function priorHtml(key) {
+  const p = PRIOR[key]; if (!p) return '';
+  return '<div class="prior"><h4>Last year, 2025</h4>' + (p.was.length ? '<ul>' + p.was.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' : '') +
+    (p.ask ? '<p>' + (p.was.length ? '<b>So ask:</b> ' : '') + esc(p.ask) + '</p>' : '') + '</div>';
+}
 function sayHtml(key) { const t = SAY[key]; return t ? '<div class="say"><h4>In the room, in sixty seconds</h4><p>' + esc(t) + '</p></div>' : ''; }
 function sessHtml(s) {
   if (s.brk) return '<div class="brk">' + esc(s.t) + ' to ' + esc(s.e) + ' · ' + esc(s.title) + '</div>';
@@ -581,10 +683,11 @@ function sessHtml(s) {
     '<div class="hd" onclick="toggleSess(\'' + esc(s.key) + '\')">' +
       '<div class="tm">' + esc(s.t) + '<small>to ' + esc(s.e) + '</small></div>' +
       '<div class="ti">' + esc(s.title) + '<i>' + esc(s.who || '') + (s.brief ? ' · ' + esc(s.brief) : '') + '</i></div>' +
-      '<div class="cnt">' + (s.mine ? '<span class="pill gold">Your slot</span>' : '') + (items.length ? '<span class="pill teal">' + items.length + ' logged</span>' : '') + (s.record ? '<span class="pill">record</span>' : '') + '</div>' +
+      '<div class="cnt">' + (s.mine ? '<span class="pill gold">Your slot</span>' : '') + (items.length ? '<span class="pill teal">' + items.length + ' logged</span>' : '') + (PRIOR[s.key] && PRIOR[s.key].was.length ? '<span class="pill loop" title="Last year\'s agenda covered this ground">2025 too</span>' : '') + (s.record ? '<span class="pill">record</span>' : '') + '</div>' +
     '</div>' +
     '<div class="bd' + (opened ? '' : ' hide') + '">' +
       (s.question ? '<div class="q"><b>To consider</b>' + esc(s.question) + '</div>' : '') +
+      priorHtml(s.key) +
       (s.record ? '<div class="rec"><h4>What the branch\'s record says</h4><ul>' + s.record.map(r => '<li>' + esc(r) + '</li>').join('') + '</ul></div>' : '') +
       liveHtml(s) +
       eviHtml(s.key) +
@@ -640,7 +743,7 @@ async function removeItem(id) {
 async function guide(key) {
   const s = SESSIONS.find(x => x.key === key), box = $('sug-' + key);
   box.innerHTML = '<div class="sug"><h4>Guide</h4><p class="small muted">Reading the facts…</p></div>';
-  const notes = [].concat(s.record || [], (EVIDENCE[key] || []).map(([t, k]) => 'Industry evidence (' + SRC[k][0] + '): ' + t), s.position ? ['Position: ' + s.position] : [], SAY[key] ? ['Draft in the room: ' + SAY[key]] : [], (s.asks || []).map(a => 'Question: ' + a)).join('\n');
+  const pr = PRIOR[key], notes = [].concat(pr ? pr.was.map(w => 'On last year\'s (2025) agenda: ' + w).concat(pr.ask ? ['Asked of last year: ' + pr.ask] : []) : [], s.record || [], (EVIDENCE[key] || []).map(([t, k]) => 'Industry evidence (' + SRC[k][0] + '): ' + t), s.position ? ['Position: ' + s.position] : [], SAY[key] ? ['Draft in the room: ' + SAY[key]] : [], (s.asks || []).map(a => 'Question: ' + a)).join('\n');
   const r = await post({ action: 'sm.guide', session: key, title: s.title, brief: s.brief || '', question: s.question || '', notes });
   if (!r.ok) { box.innerHTML = '<div class="sug"><h4>Guide</h4><p class="small" style="color:var(--stop)">' + esc(r.error || 'No answer.') + '</p></div>'; return; }
   window._SUG = window._SUG || {}; window._SUG[key] = r.points;
@@ -653,6 +756,59 @@ function useSug(key, i) {
   const p = (window._SUG || {})[key][i];
   $('k-' + key).value = p.kind; $('p-' + key).value = p.point; $('e-' + key).value = p.evidence || ''; $('a-' + key).value = p.ask || '';
   $('p-' + key).focus(); toast('Edit it, then Log it.');
+}
+
+/* ── last year: the circles ── */
+function outStatus(id) {
+  const its = ITEMS.filter(i => i.session === id); if (!its.length) return null;
+  const last = its[its.length - 1], m = /\[(yes|part|no|unk)\]/.exec(last.point || '');
+  return m ? { k: m[1], by: last.by, when: last.when, note: last.evidence || '' } : null;
+}
+function renderCircles() {
+  const marked = OUTPUTS.map(o => outStatus(o.id)).filter(Boolean), canW = ME && ME.canWrite;
+  const n = k => marked.filter(m => m.k === k).length;
+  $('p-circ').innerHTML = '<h2>Last year, this year: the circles</h2>' +
+    '<p class="sub">The 2025 Joint Sales Managers Strategic Meeting ran three days. Its agenda, set beside this year\'s, session by session.</p>' +
+    '<div class="goals">' +
+      '<div><b>8 of 10</b>of this year\'s working sessions return to ground the 2025 agenda covered</div>' +
+      '<div><b>1</b>new subject this year: Agent &amp; Unit Transfers, after September</div>' +
+      '<div><b>10</b>things the 2025 workshops and plenaries set out to produce</div>' +
+      '<div><b>10 min</b>of this year\'s agenda to look back at the last two retreats</div>' +
+    '</div>' +
+    '<h3>The same question, a year later</h3><p class="small muted">Left, what the 2025 agenda set out to settle, in its own words. Right, the guiding question on this year\'s agenda.</p>' +
+    PAIRS.map(([a, b]) => '<div class="pair"><div><small>2025 agenda</small><p>' + esc(a) + '</p></div><div><small>2026 asks</small><p>' + esc(b) + '</p></div></div>').join('') +
+    '<h3>What 2025 set out to produce, and where it stands</h3>' +
+    '<p class="small muted">Whether each was issued is not on either agenda. ' + (canW ? 'Mark each one as you know it; the marks are kept with your contributions and go into the brief.' : 'The branch manager and a unit manager mark each one.') +
+    (marked.length ? ' Marked so far: ' + n('yes') + ' issued, ' + n('part') + ' in part, ' + n('no') + ' not issued, ' + n('unk') + ' not sure.' : '') + '</p>' +
+    '<ol class="outs">' + OUTPUTS.map(o => {
+      const st = outStatus(o.id), sess = SESSIONS.find(x => x.key === o.now);
+      return '<li id="o-' + o.id + '"><b class="t">' + esc(o.t) + '</b><div class="w">2025: ' + esc(o.w) + ' · 2026: ' + (sess ? esc(sess.title) : 'no session on this year\'s agenda') + '</div>' +
+        (o.built ? '<p class="m"><b>What the branch built meanwhile:</b> ' + esc(o.built) + '</p>' : '') +
+        '<div class="st">' + (st ? '<span class="now ' + st.k + '">' + esc(STATUS[st.k]) + '</span><span class="small muted">' + esc(st.by || '') + (st.note ? ': ' + esc(st.note) : '') + '</span>' : '<span class="now unk">Not marked</span>') +
+        (canW ? Object.keys(STATUS).map(k => '<button aria-pressed="' + (st && st.k === k ? 'true' : 'false') + '" onclick="markOut(\'' + o.id + '\',\'' + k + '\')">' + STATUS[k] + '</button>').join('') : '') + '</div></li>';
+    }).join('') + '</ol>' +
+    '<h3>The goals 2025 set</h3><div class="goals"><div><b>$250M</b>risk-based API</div><div><b>$50M</b>annuity premium</div><div><b>450</b>full-time agents</div></div>' +
+    '<p>Day 3 of 2025 asked "What will it take to hit our true targets", per branch and per agent. No session on this year\'s agenda reports against them.</p>' +
+    '<div class="notes"><h3 style="margin-top:0">What the branch asks of this year\'s action log</h3><ul>' +
+      '<li>Before anything new is designed: which of last year\'s ten were issued, and who owns the rest.</li>' +
+      '<li>Every line an owner, a date and a measure the system can count.</li>' +
+      '<li>The log sent to every branch within seven days, and reviewed every quarter.</li>' +
+      '<li>The 2027 retreat opens by reading it, line by line, before any new session.</li>' +
+      '<li>Where the company and the branches stand against $250M, $50M and 450, read at the start.</li></ul>' +
+      '<p class="small muted">The sixty seconds for this are under Our Strategic Journey (Day 1, 8:40) and Consolidation of Recommendations (Day 2, 1:40).</p></div>';
+}
+async function markOut(id, k) {
+  const o = OUTPUTS.find(x => x.id === id); if (!o) return;
+  const note = prompt('"' + o.t + '": ' + STATUS[k] + '. Anything to add (what was issued, when, by whom)? Optional.', '');
+  if (note === null) return;
+  const point = '2025 output "' + o.t + '": ' + STATUS[k].toLowerCase() + '. [' + k + ']', title = 'Last year: ' + o.t;
+  if (LINKED === false) {
+    const it = { id: 'L-' + Date.now(), session: id, day: 0, title, kind: 'fact', point, evidence: note.trim(), ask: '', by: ME.name || 'Branch', role: ME.role, when: 'on this device' };
+    const list = localItems(); list.push(it); localSave(list); ITEMS = list; renderCircles(); renderTiles(); toast('Kept on this device until the backend is linked.'); return;
+  }
+  const r = await post({ action: 'sm.add', session: id, day: 0, title, kind: 'fact', point, evidence: note.trim(), ask: '' });
+  if (!r.ok) { toast(r.error || 'Could not mark it.', true); return; }
+  ITEMS.push(r.item); renderCircles(); renderTiles(); toast('Marked.');
 }
 
 /* ── the Step-Back notes ── */
@@ -711,15 +867,18 @@ function renderLog() {
 
 /* ── the brief for the room: every session with a record or a contribution, printable ── */
 function renderBrief() {
-  const rows = SESSIONS.filter(s => !s.brk && (s.record || itemsFor(s.key).length));
+  const rows = SESSIONS.filter(s => !s.brk && (s.record || PRIOR[s.key] || itemsFor(s.key).length));
   const obj = ITEMS.filter(i => i.session === 'objective');
   $('p-brief').innerHTML = '<h2>Brief for the room</h2><p class="sub">Every session with something to say: the question, the record, the evidence, the position, the sixty seconds, the questions to put, and what has been logged. Print gives you the two days on paper.</p>' +
     '<p><button class="btn gold sm" onclick="window.print()">Print the brief</button></p>' +
     '<div class="obj"><h3>Our objective</h3><ol>' + OBJECTIVE.map(o => '<li>' + esc(o) + '</li>').join('') + '</ol>' + obj.map(i => itemHtml(i, false)).join('') + '</div>' +
+    '<div class="notes"><h3 style="margin-top:0">Last year, this year</h3><p>Eight of this year\'s ten working sessions return to ground the 2025 agenda covered. Last year set out to produce ten things; where they stand:</p><ol class="small">' +
+      OUTPUTS.map(o => { const st = outStatus(o.id); return '<li>' + esc(o.t) + ' (' + esc(o.w) + '): <b>' + esc(st ? STATUS[st.k] : 'not marked') + '</b>' + (st && st.note ? '. ' + esc(st.note) : '') + '</li>'; }).join('') + '</ol></div>' +
     [1, 2].map(d => '<h3>' + (d === 1 ? 'Day 1 · Thursday 22 October' : 'Day 2 · Friday 23 October') + '</h3>' + rows.filter(s => s.day === d).map(s => {
       const items = itemsFor(s.key);
       return '<article class="sess' + (s.mine ? ' mine' : '') + '"><div class="hd"><div class="tm">' + esc(s.t) + '<small>to ' + esc(s.e) + '</small></div><div class="ti">' + esc(s.title) + '<i>' + esc(s.who || '') + '</i></div><div class="cnt">' + (s.mine ? '<span class="pill gold">Your slot</span>' : '') + '</div></div>' +
         '<div class="bd">' + (s.question ? '<div class="q"><b>To consider</b>' + esc(s.question) + '</div>' : '') +
+        priorHtml(s.key) +
         (s.record ? '<div class="rec"><h4>The record</h4><ul>' + s.record.map(r => '<li>' + esc(r) + '</li>').join('') + '</ul></div>' : '') +
         eviHtml(s.key) +
         (s.position ? '<div class="pos"><h4>Position</h4><p>' + esc(s.position) + '</p></div>' : '') +
