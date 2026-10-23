@@ -58,6 +58,20 @@
   .bar{position:relative;height:16px;border-radius:10px;background:var(--track);margin:10px 0 6px;overflow:visible}
   .fill{position:absolute;inset:0 auto 0 0;width:0;border-radius:10px;background:linear-gradient(90deg,var(--good),var(--good2));transition:width 1.4s var(--ease),background .4s}
   .fill::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);background-size:200% 100%;animation:sheen 2.6s linear infinite}
+  .fill2{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:0 10px 10px 0;background:var(--good);opacity:.38;transition:left 1.4s var(--ease),width 1.4s var(--ease)}
+  .sys{font-size:12.5px;color:var(--muted);margin:-6px 0 14px}
+  .sys b{color:var(--ink)}
+  .wt{padding:12px 0;border-top:1px solid var(--line);max-height:900px} .wt:first-of-type{border-top:0}
+  .wt .who{font:800 14.5px/1.3 var(--fd);color:var(--navy);overflow-wrap:anywhere} .wt .who span{font:600 13px/1.3 var(--fb);color:var(--muted)}
+  .wt .said{color:var(--muted);font-size:13.5px;margin:3px 0 0;font-style:italic;overflow-wrap:anywhere}
+  .wt .rd{font-size:13px;background:var(--soft);border-radius:10px;padding:7px 10px;margin:8px 0 6px;overflow-wrap:anywhere}
+  .wt .rd b{color:var(--navy)}
+  .wt textarea{width:100%;min-height:96px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:15px/1.45 var(--fb);color:var(--ink);background:var(--card);resize:vertical}
+  .wt textarea:focus{outline:none;border-color:var(--good)}
+  .wt .act{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .wt .act select{flex:1;min-width:0;height:48px;border:1.5px solid var(--line);border-radius:12px;padding:0 10px;font:600 14px var(--fb);background:var(--card);color:var(--ink)}
+  .wt .act .go{margin:0;width:auto;flex:none;padding:0 22px}
+  .wt.gone{transition:opacity .4s,max-height .5s,padding .5s;opacity:0;max-height:0!important;overflow:hidden;padding:0}
   .prog.behind .fill{background:linear-gradient(90deg,var(--warn),#D98A2B)}
   .prog.far .fill{background:linear-gradient(90deg,var(--bad),#DB6A55)}
   .now{position:absolute;top:-5px;bottom:-5px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--navy);left:0;transition:left 1.4s var(--ease);opacity:.85}
@@ -151,6 +165,7 @@
     </div>
     <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar">
       <div class="fill" id="fill"></div>
+      <div class="fill2" id="fill2"></div>
       <div class="now" id="nowm" title="Where the working day is now"></div>
     </div>
     <div class="pace" id="pace">&nbsp;</div>
@@ -158,6 +173,7 @@
 
   <div id="notice"></div>
   <div class="chips" id="chips"></div>
+  <div class="sys" id="sys"></div>
   <main id="main">
     <div class="card"><div class="skel" style="width:40%"></div><div class="skel"></div><div class="skel" style="width:70%"></div></div>
   </main>
@@ -202,7 +218,30 @@
   }
   function greet(first) { var h = Number(new Date().toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone: "America/Port_of_Spain" })); return (h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening") + ", " + first; }
 
+  function drawLead(m) {
+    var g = m.progress || {}, t = Math.max(1, Number(g.target || 0)), pct = Math.max(0, Number(g.pct || 0)), day = Math.max(0, Math.min(100, Number(g.dayPct || 0)));
+    var youW = Math.min(100, 100 * Number(g.you || 0) / t), teamW = Math.min(100 - youW, 100 * Number(g.team || 0) / t), gap = day - pct;
+    prog.className = "prog" + (!g.target ? "" : gap > 25 ? " far behind" : gap > 0 ? " behind" : "") + (window.scrollY > 8 ? " stuck" : "");
+    countUp($("pct"), pct);
+    $("bar").setAttribute("aria-valuenow", String(Math.min(100, pct)));
+    requestAnimationFrame(function () { $("fill").style.width = youW + "%"; $("fill2").style.left = youW + "%"; $("fill2").style.width = teamW + "%"; $("nowm").style.left = day + "%"; });
+    $("of").innerHTML = g.target ? "<b>" + g.cleared + "</b> of <b>" + g.target + "</b> cleared today" : "Nothing waited on you today";
+    var bits = ['<span><i class="mk" aria-hidden="true"></i><b>' + day + "%</b> of your day gone</span>",
+      "<span>By you <b>" + (g.you || 0) + "</b> · by the team <b>" + (g.team || 0) + "</b></span>"];
+    if (g.waiting) bits.push('<span><b style="color:var(--bad)">' + g.waiting + "</b> still waiting on you</span>");
+    $("pace").innerHTML = bits.join("");
+    var chips = [];
+    chips.push('<span class="chip' + (g.asks ? " bad" : "") + '"><b>' + (g.asks || 0) + "</b>staff waiting on your word</span>");
+    chips.push('<span class="chip"><b>' + (g.inbox || 0) + "</b>inbox to act on</span>");
+    chips.push('<span class="chip"><b>' + (g.mineDue || 0) + "</b>of your tasks for today</span>");
+    chips.push('<span class="chip good"><b>' + (g.yourNotes || 0) + "</b>notes by you</span>");
+    $("chips").innerHTML = chips.join("");
+    var sys = g.sys || {}, ks = Object.keys(sys).sort(function (a, b) { return sys[b] - sys[a]; });
+    $("sys").innerHTML = ks.length ? "Done for you by the system today: " + ks.map(function (k) { return "<b>" + sys[k] + "</b> " + esc(k); }).join(" · ") : "";
+  }
   function drawProgress(m) {
+    if (m.progress && m.progress.lead) return drawLead(m);
+    $("fill2").style.width = "0"; $("sys").innerHTML = "";
     var g = m.progress || {}, pct = Math.max(0, Number(g.pct || 0)), day = Math.max(0, Math.min(100, Number(g.dayPct || 0)));
     var gap = day - pct, cls = !g.target ? "" : gap > 25 ? "far behind" : gap > 0 ? "behind" : "";
     prog.className = "prog" + (cls ? " " + cls : "") + (window.scrollY > 8 ? " stuck" : "");
@@ -236,6 +275,21 @@
     return '<div class="card"><div class="ci"><div class="dot' + (late ? " late" : "") + '">&#10003;</div><div><div class="t">In at ' + esc(c.at) + (late ? " · " + late + " min late" : " · on time") + "</div>" +
       '<div class="s">Your day started at ' + esc(m.start) + (c.out ? " · signed out " + esc(c.out) : "") + "</div></div></div></div>";
   }
+  // A first name from "Sasha Lalla-Jagassar" or "kamla.dookran@myguardiangroup.com".
+  function firstOf(by) { var b = String(by || "").trim(); if (!b) return "Someone"; if (b.indexOf("@") > -1) b = b.split("@")[0].split(/[._-]/)[0]; b = b.split(/\s+/)[0]; return b.charAt(0).toUpperCase() + b.slice(1); }
+  function waitingCard(m) {
+    var w = m.waiting; if (!w) return "";
+    if (!w.length) return '<div class="card"><div class="ch"><h2>Waiting on you</h2></div><div class="empty">Nobody is waiting on your word. Well done.</div></div>';
+    var desks = m.desks || [];
+    return '<div class="card" id="waiting"><div class="ch"><h2>Waiting on you</h2><span class="n">' + w.length + "</span></div>" + w.map(function (x) {
+      var sel = x.k === "inbox" && desks.length ? '<select aria-label="Post to" data-to>' + desks.map(function (d) { return '<option value="' + esc(d.sid) + '"' + (d.sid === (x.to || "ricky") ? " selected" : "") + ">" + esc(d.first) + "</option>"; }).join("") + "</select>" : "";
+      return '<div class="wt" data-k="' + esc(x.k) + '" data-id="' + esc(x.id) + '"><div class="who">' + esc(firstOf(x.by)) + " <span>· " + esc(x.s) + "</span></div>" +
+        (x.said ? '<div class="said">"' + esc(x.said) + '"</div>' : "") +
+        (x.read || x.next || x.done ? '<div class="rd">' + (x.done ? "<b>Done so far:</b> " + esc(x.done) + "<br>" : "") + (x.read ? "<b>Claude:</b> " + esc(x.read) : "") + (x.next ? (x.read ? "<br>" : "") + "<b>Next:</b> " + esc(x.next) : "") + "</div>" : "") +
+        '<textarea aria-label="Your answer" placeholder="' + (x.draft ? "" : "Claude has not written this one yet. Type your answer.") + '">' + esc(x.draft || "") + "</textarea>" +
+        '<div class="act">' + sel + '<button class="go" data-post>Post</button></div></div>';
+    }).join("") + "</div>";
+  }
   function achievedCard(m) {
     var a = m.achieved || [], lab = { close: "Closed", note: "Note", email: "E-mail", task: "Task", inbox: "Inbox", draft: "Note", move: "Moved" };
     var items = a.map(function (x, i) {
@@ -248,8 +302,8 @@
   }
   function nextCard(m) {
     var n = m.next || [];
-    if (!n.length) return '<div class="card"><div class="ch"><h2>Next up</h2></div><div class="empty">Nothing overdue or due today. Well done.</div></div>';
-    return '<div class="card"><div class="ch"><h2>Next up</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(function (x, i) {
+    if (!n.length) return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2></div><div class="empty">Nothing overdue or due today. Well done.</div></div>';
+    return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(function (x, i) {
       var s = x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
       return '<li style="animation-delay:' + i * 0.04 + 's"><span class="ic ' + (x.late ? "late" : "due") + '">' + (x.late ? "!" : "&#8226;") + '</span><div class="li"><div class="s">' + s + "</div><small>" +
         (x.late ? "Overdue since " + esc(x.due) : "Due today") + (x.ty && x.ty !== "Untyped" ? " · " + esc(x.ty) : "") + "</small></div></li>";
@@ -258,7 +312,7 @@
   function barsCard(m) {
     var b = m.bars || []; if (!b.length) return "";
     var max = Math.max(1, Math.max.apply(null, b.map(function (x) { return Number(x.n || 0); })));
-    return '<div class="card"><div class="ch"><h2>Your last five days</h2><span class="n">closed each day</span></div><div class="bars">' + b.map(function (x, i) {
+    return '<div class="card"><div class="ch"><h2>Your last five days</h2><span class="n">' + esc(m.barsLabel || "closed each day") + '</span></div><div class="bars">' + b.map(function (x, i) {
       var today = i === b.length - 1;
       return '<div class="bcol' + (today ? " today" : "") + '"><div class="bt"><div class="bv">' + (x.n == null ? "–" : x.n) + '</div><div class="bb" data-h="' + Math.round(100 * Number(x.n || 0) / max) + '"></div></div><div class="bl">' + (today ? "Today" : esc(x.l)) + "</div></div>";
     }).join("") + "</div></div>";
@@ -283,7 +337,7 @@
     $("when").textContent = (m.date || "") + (m.hours ? " · " + m.hours : "");
     $("hours").textContent = m.lunch && m.lunch !== "Flexible" ? "lunch " + m.lunch : "";
     drawProgress(m);
-    $("main").innerHTML = checkinCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + footCard(m);
+    $("main").innerHTML = checkinCard(m) + waitingCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + footCard(m);
     requestAnimationFrame(function () {
       Array.prototype.forEach.call(document.querySelectorAll(".bb"), function (e) { var t = e.parentNode.clientHeight - 18; e.style.height = Math.max(4, Math.round(t * Number(e.getAttribute("data-h") || 0) / 100)) + "px"; });
       Array.prototype.forEach.call(document.querySelectorAll(".mini i"), function (e) { e.style.width = e.getAttribute("data-w") + "%"; });
@@ -306,6 +360,23 @@
       .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } notice(""); store.set("wd_day_" + P, { day: m.day, m: m }); draw(m, false); })
       .catch(function () { clearTimeout(timer); busy = false; fail("The tracker did not answer this time."); });
   }
+  function post(btn) {
+    var row = btn.closest(".wt"), ta = row.querySelector("textarea"), sel = row.querySelector("select[data-to]"), text = (ta.value || "").trim();
+    if (!text) { ta.focus(); toast("Write your answer first."); return; }
+    btn.disabled = true; var was = btn.textContent; btn.textContent = "Posting…";
+    var body = new URLSearchParams(); body.set("wd", P); body.set("k", K); body.set("act", "post"); body.set("kind", row.getAttribute("data-k")); body.set("id", row.getAttribute("data-id")); body.set("text", text);
+    if (sel) body.set("to", sel.value);
+    fetch(TRACKER, { method: "POST", body: body, redirect: "follow" })
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (!r || !r.ok) { btn.disabled = false; btn.textContent = was; toast((r && r.error) || "That did not post. Try again."); return; }
+        row.style.maxHeight = row.offsetHeight + "px"; requestAnimationFrame(function () { row.classList.add("gone"); });
+        toast("Done: " + (r.res || "posted") + ".");
+        setTimeout(load, 900);
+      })
+      .catch(function () { btn.disabled = false; btn.textContent = was; toast("That did not reach the tracker. Try again."); });
+  }
+  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-post]"); if (b) { e.preventDefault(); post(b); } });
   function checkIn(e) {
     var b = e.currentTarget; b.disabled = true; b.textContent = "Checking in…";
     var body = new URLSearchParams(); body.set("wd", P); body.set("k", K); body.set("act", "checkin");
