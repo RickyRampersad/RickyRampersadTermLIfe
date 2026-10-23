@@ -1,4 +1,4 @@
-/* SEA & CSEC Study Hub — guided method library
+/* SEA Study Hub — guided method library
  *
  * Worked methods for the question types that carry the most marks. Each guide
  * is: when to use it, the method as numbered steps, one fully worked example
@@ -1131,3 +1131,10 @@ window.CSEC_GUIDES.push(
   ]
 }
 );
+
+/* Scope: under 'sea' only the primary bank remains. Filtered in place, so a page
+   that already holds the array sees the same object. */
+(function (A) {
+  if (window.CSEC_SCOPE !== 'sea' || !A) return;
+  for (var i = A.length - 1; i >= 0; i--) if (!/^p-/.test(A[i].subj)) A.splice(i, 1);
+})(window.CSEC_GUIDES);
