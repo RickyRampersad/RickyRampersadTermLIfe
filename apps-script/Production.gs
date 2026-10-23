@@ -126,10 +126,115 @@ function rebuildProductionTotals() {
   SpreadsheetApp.getUi().alert('Totals rebuilt — every unit and branch line now adds up from the agents beneath it.');
 }
 
+/* ── WHERE THE FIGURES COME FROM ────────────────────────────────────────────
+   The Production tab holds the branch's shape — code, level, name, who each
+   agent reports to. The figures on it were only ever as fresh as the last
+   paste, so the week column could be a week old and nobody would know.
+
+   These read the numbers straight from Salesforce instead, on the branch's
+   own Total API basis: CLIENT_PORTFOLIO__c on Production_Picked_up_Date__c
+   plus Policy_Increases__c on Increase_Production_Picked_Up_Date__c
+   (API_Increase__c — not the joint-split field). Apps are pickups counted;
+   W / M / Y are Salesforce's own THIS_WEEK, THIS_MONTH and THIS_YEAR.
+
+   The sheet still owns the hierarchy, so a new agent is added there once and
+   the figures follow. If Salesforce is unreachable the report falls back to
+   whatever is on the tab and says so rather than showing an empty week. */
+
+/** first + last name, lowercased and stripped, so "Narissa (Agent) Mohammed"
+    and "Narissa Mohammed" are recognised as one person. */
+function prodKey_(name) {
+  var w = String(name || '').replace(/\([^)]*\)/g, ' ')
+    .toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(Boolean);
+  if (!w.length) return '';
+  return w[0] + '|' + w[w.length - 1];
+}
+
+/** Total API picked up per agent for week, month and year. */
+function productionSalesforce_() {
+  if (typeof wbQ_ !== 'function') return null;   // WallBoard.gs not in this project
+  var out = {};
+  function put(name, field, apps, api) {
+    var k = prodKey_(name);
+    if (!k) return;
+    if (!out[k]) out[k] = { name: name, appsW: 0, apiW: 0, appsM: 0, apiM: 0, appsY: 0, apiY: 0 };
+    out[k][field.a] += apps || 0;
+    out[k][field.v] += api || 0;
+  }
+  var periods = [
+    { when: 'THIS_WEEK',  f: { a: 'appsW', v: 'apiW' } },
+    { when: 'THIS_MONTH', f: { a: 'appsM', v: 'apiM' } },
+    { when: 'THIS_YEAR',  f: { a: 'appsY', v: 'apiY' } }
+  ];
+  periods.forEach(function (p) {
+    wbQ_('SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api FROM CLIENT_PORTFOLIO__c ' +
+         'WHERE Production_Picked_up_Date__c = ' + p.when + ' GROUP BY AGENT__r.Name')
+      .forEach(function (r) { put(r.a, p.f, r.n, r.api); });
+    wbQ_('SELECT Policy_Increases__r.AGENT__r.Name a, COUNT(Id) n, SUM(API_Increase__c) api ' +
+         'FROM Policy_Increases__c WHERE Increase_Production_Picked_Up_Date__c = ' + p.when +
+         ' GROUP BY Policy_Increases__r.AGENT__r.Name')
+      .forEach(function (r) { put(r.a, p.f, r.n, r.api); });
+  });
+  return out;
+}
+
+/** Rolls agents up through their units to the branch, in memory. */
+function prodRollUp_(rows) {
+  var byCode = {}, kids = {}, F = ['appsW', 'apiW', 'appsM', 'apiM', 'appsY', 'apiY'];
+  rows.forEach(function (r) { byCode[r.code] = r; });
+  rows.forEach(function (r) { if (r.parent) (kids[r.parent] = kids[r.parent] || []).push(r); });
+  function roll(code, seen) {
+    var r = byCode[code], zero = { appsW: 0, apiW: 0, appsM: 0, apiM: 0, appsY: 0, apiY: 0 };
+    if (!r || seen[code]) return zero;
+    seen[code] = 1;
+    var children = kids[code] || [];
+    if (!children.length) { var own = {}; F.forEach(function (f) { own[f] = r[f] || 0; }); return own; }
+    var sum = { appsW: 0, apiW: 0, appsM: 0, apiM: 0, appsY: 0, apiY: 0 };
+    children.forEach(function (ch) {
+      var v = roll(ch.code, seen);
+      F.forEach(function (f) { sum[f] += v[f]; });
+    });
+    F.forEach(function (f) { r[f] = Math.round(sum[f] * 100) / 100; });
+    return sum;
+  }
+  var seen = {};
+  rows.filter(function (r) { return r.level === 'branch'; }).forEach(function (b) { roll(b.code, seen); });
+  rows.filter(function (r) { return r.level === 'unit' && !seen[r.code]; }).forEach(function (u) { roll(u.code, {}); });
+  return rows;
+}
+
 /** Ordered tree: branch → its units → their agents, then the Total line. */
 function productionData(key, me, pin) {
   var staff = requireProduction_(key, me, pin);
   var rows = prodRows_();
+
+  /* Live figures win over whatever was last pasted. An agent Salesforce has
+     nothing for is zeroed rather than left showing last week's number, and
+     anyone Salesforce knows who is missing from the tab is named on the
+     report — a silent drop would understate the branch. */
+  var source = 'sheet', unmatched = [];
+  try {
+    var live = productionSalesforce_();
+    if (live && Object.keys(live).length) {
+      var seenKey = {};
+      rows.forEach(function (r) {
+        if (r.level !== 'agent') return;
+        var k = prodKey_(r.name), v = live[k];
+        seenKey[k] = 1;
+        ['appsW', 'apiW', 'appsM', 'apiM', 'appsY', 'apiY'].forEach(function (f) {
+          r[f] = v ? Math.round((v[f] || 0) * 100) / 100 : 0;
+        });
+      });
+      Object.keys(live).forEach(function (k) {
+        if (!seenKey[k] && live[k].apiY) unmatched.push(live[k].name);
+      });
+      prodRollUp_(rows);
+      source = 'salesforce';
+    }
+  } catch (e) {
+    source = 'sheet';   // Salesforce unreachable — the tab still reports
+  }
+
   var byCode = {}, kids = {};
   rows.forEach(function (r) { byCode[r.code] = r; });
   rows.forEach(function (r) { if (r.parent) (kids[r.parent] = kids[r.parent] || []).push(r); });
@@ -161,8 +266,8 @@ function productionData(key, me, pin) {
   });
 
   logActivity_('', 'PRODUCTION', 'production-viewed', staff.email, out.length + ' lines');
-  return { ok: true, rows: out, total: tot, marks: marks,
-           asOf: nowStamp_(), by: staff.name, role: staff.role };
+  return { ok: true, rows: out, total: tot, marks: marks, source: source,
+           unmatched: unmatched, asOf: nowStamp_(), by: staff.name, role: staff.role };
 }
 
 /**
@@ -229,7 +334,13 @@ function productionWorkbook(key, me, pin) {
   rows.push('<Row/>');
   rows.push('<Row><Cell ss:StyleID="foot" ss:MergeAcross="6"><Data ss:Type="String">' +
     xe('Downloaded ' + d.asOf + ' by ' + staff.name + ' (' + staff.email +
-       ') — CONFIDENTIAL, branch management only') + '</Data></Cell></Row>');
+       ') — CONFIDENTIAL, branch management only · figures from ' +
+       (d.source === 'salesforce'
+         ? 'Salesforce, production picked up (Total API)'
+         : 'the Production tab as last pasted') +
+       (d.unmatched && d.unmatched.length
+         ? ' · not on the Production tab: ' + d.unmatched.join(', ')
+         : '')) + '</Data></Cell></Row>');
 
   var B = '<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BFBFBF"/>' +
           '<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BFBFBF"/>' +
