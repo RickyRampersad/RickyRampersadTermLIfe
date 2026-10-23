@@ -140,9 +140,20 @@ manager chose "the films and the board pages" over the films alone or the
 whole site. So `assign.html` (the board), `board-films.html`, `wall.html`,
 `dashboard.html`, `stream.html` and `responses.html` carry the blue shield
 (their `.mark` tile is `#13408F` behind it, and their favicon is the same
-file); never `gcm-mark.png`, never a redrawn shape. Every other page and
-every letter keeps the gold shield, and the hosted `logo-mark.png` is
-untouched: the letters already sent load it.
+file); never `gcm-mark.png`, never a redrawn shape. **The agent introduction
+joined them on 16 October 2026** ("change the color i have said i do not like
+the yello inside the logo nor the black!!!!!", on seeing the gold shield on
+the near-black masthead of the Felicia sample): the "Meet your agent" e-mail
+(`tIntroBuild_`, `tIntroTeamHtml_`, colours in `T_INTRO_LOOK`), the client's
+page `your-policy/agent.html` and the sample carry the blue shield, and no
+gold or near-black anywhere. The same evening the saturated blue masthead was
+turned down too ("improve on the color as this is hurting the eyes"): a pale
+`#F2F6FD` header, white panels on `#F4F6FA`, deep blue type `#14284B` and one
+action blue `#2D5BB9`, with the moving banner `orphan-transition/intro-motion.gif`
+for the impact (see the introduction below). Anything new built for the board
+or sent from it takes the same blues. Every other page and every letter
+keeps the gold shield, and the hosted `logo-mark.png` is untouched: the
+letters already sent load it.
 
 The letter's logo is the hosted copy at
 `https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
@@ -461,6 +472,17 @@ language from the text and will read a phrase in another one. It was used for
 the first cut of both wall films and the note back was "I am hearing a different
 language" — which was exactly what it was. `en-US-AndrewNeural` is the same warm,
 confident read with no language detection in it.
+
+**Changed for the wall and the FY27 film, 21 October 2026.** Mr Rampersad heard
+`en-US-AndrewNeural` at -4% as "robotic" ("needs to be more human"), listened to
+five samples over the branch track and chose **"Andrew Expressive"**:
+`en-US-AndrewMultilingualNeural` at +0%, with the lines rewritten in spoken,
+conversational wording (contractions, short sentences, "we" and "you"). Because
+the Multilingual voice can still slip into another language, every clip made on
+the runner is transcribed with Whisper (`tts.yml`, `"check": true` in the job,
+results in `tts/out/check.json`) and any clip not heard as English, or whose words
+differ, is re-worded and re-made before it is used. Other films keep the rule above
+until he says otherwise.
 
 Output is 24 kHz mono MP3 — plenty for speech over a music bed.
 
@@ -2151,7 +2173,17 @@ voice under the new timing and the caption gives it away.
   internal footer) and, when the box is left ticked, the client the
   introduction the receipt promised ("Meet your agent: Name", through
   `clientMail_`, so from support@ when the Entra properties exist), once per
-  client per agent, marked `[intro Name]`. The roster is the Agent Skill
+  client per agent, marked `[intro Name]`. **Since 16 October 2026 the brief is a first look, not the file** ("we can just
+  give a sneak peek, but he is required to log into the portal"): per client the name, age, town, the former book,
+  what they do (occupation and employer) and how they pay, since when they have been with Guardian, how many policies
+  (in force, lapsed, applications), the household and whether it was named with them, up to four lines of what the
+  records show (`tInsightsFor_`: who the policies pay, cover ending, a premium due, a record to check; never the cover
+  against income), how we have served them (the letter's service record, `tSvcOf_`), the one thing they told us that
+  matters most, an open call-back, and a link that opens that client on the board (`/orphanmanagement#t=…`); never a
+  phone number, address, e-mail, words or money figure of the client. Then **Your
+  TT$200** (`tBriefClaims_`, from the Retention Payments tab, their own claims only): owed (with the Retention unit),
+  found and held, to be paid on the commission run, paid, and still to earn (every client named to them with no claim,
+  TT$200 each). `brief16/brief-test.js` in the scratchpad covers it (39 checks). The roster is the Agent Skill
   Bank: name, e-mail, Areas covered, Active, Portal code, and a Phone column
   if one is added, which the introduction then carries; the sheet has no
   client phone numbers unless a Phone column is added to Transition Send
@@ -2161,6 +2193,152 @@ voice under the new timing and the caption gives it away.
   (Playwright, mocked endpoint) in the session scratchpad cover it. A paste
   of Service.gs blanks `TEAM_CODE`: put the branch code back before the New
   version, or every screen locks out.
+- **The introduction shows who the agent is, and the client picks when and how they call** (16 October 2026: "write a
+  very nice bio on each of the agents. So different ones would template differently to show the caliber of the agents
+  … the backing of the entire branch … the client checks when can the agent call and the preferred method … it directly
+  goes to the agent and copy the branch manager and the sales support team, as well as the agent's manager", then
+  "don't depend on the agent skill bank … Depend on pulling social media, LinkedIn, Facebook, anything at all to build a
+  profile, and let's help the agent build their profiles").
+  - **The Agent Profiles tab** (Name, Kind, Shown as, Title, Since, Headline, Bio, Ask me about, Before Guardian,
+    Designations, Awards, Education, Phone, E-mail, Photo, Found online, To confirm, Agent approved, Branch approved,
+    Updated, Updated by) holds one row a person: every agent, the branch manager (`manager`), the support lead (`lead`)
+    and sales support (`support`). The drafts were written in the scratchpad (`profiles17/build-profiles.py`) from the
+    agent records in Salesforce, the Central Bank's registers of sales representatives and agents, TTAIFA's award pages
+    and membership listings, Guardian's own pages and the person's own pages, and imported once
+    (`Agent-Profiles-import.xlsx`). A draft bio states only what a source confirms with high confidence; everything
+    else is a question under To confirm with the sentence it would become. No pronouns: nobody's were given. **No draft
+    and no source about anyone goes in this repository**, which is public; the tab is private.
+  - **Two approvals, both on the last words.** A person opens "Your profile" on the board (agents, unit managers and
+    staff; matched by `tProfSame_`, so "SASHA LALLA" finds "Sasha Lalla-Jagassar"), edits, presses "See it as a client
+    does" (the real e-mail with a made-up client, `profile=preview`) and "This is me". The branch manager (or the branch
+    code) has "Profiles": every row with where it stands, the sources and the questions, and "Approve for clients" or
+    "Take it off clients". An edit by the person takes the branch's approval away and an edit by the branch takes the
+    person's, so a client never reads words their person has not read last. The branch code's "This is me" is the
+    branch manager's own. A client reads a profile's words only when both are on (`state` `live`); until then the
+    introduction carries the card with the Salesforce dates and no words. Everything goes through `action=board&profile=`
+    (`tProfileApi_`), so Service.gs needs no paste.
+  - **The dates are never typed.** `tSfAgentFacts_` reads every agent record with a hire date (Date Hired, License Date
+    Life and General, mobile, e-mail; kept six hours) and `tProfFacts_` gives the years with Guardian, the year licensed
+    and whether both licences are held. A general licence dated before 1950 is a placeholder and never shown. The number
+    on the card is the profile's, else the Salesforce mobile; the e-mail is the profile's, else a myguardiangroup.com
+    address on Salesforce, never another (one record holds a personal Gmail, one an outside agency's address).
+  - **The template follows the years with Guardian** (`T_PROF_TIER`): veteran 20 and more (the years lead the
+    headline: "27 years of looking after families like yours"), seasoned 10 to 19, established 3 to 9 ("your agent
+    from today", licensed since), new under 3 ("your new agent, with our whole branch behind them", and the branch team
+    comes before the picker). On 16 October: 2 veteran, 5 seasoned, 8 established, 3 new.
+  - **The e-mail** (`tIntroBuild_`, sent by `tIntroMail_` through `clientMail_` as before), calm since the evening of
+    16 October (`T_INTRO_LOOK`, see the mark section). In order:
+    - the moving banner, `orphan-transition/intro-motion.gif` (you, our branch, your agent; 1200×300, about 5 s,
+      under 240 KB, made by `motion/make.py` in the scratchpad). Its first frame is the whole picture, because
+      Outlook on Windows shows only that frame, and Gmail strips CSS animation;
+    - a pale header: the shield, the tier's eyebrow and line, "<first name>, meet <agent>.", the agent's photo or
+      initials, "Your agent · Sales representative of Guardian Life" (what the register lists), number, e-mail and
+      three figures;
+    - **You told us** (below), then **Our record with you**: "We have looked after you since <first year>." and up to
+      three figures off the send row's service record (requests and documents handled, premium reminders, the last
+      birthday note; never the reminders on letters I or G);
+    - the picker and "When <agent> calls:", then About (headline, bio, their own words, what they can help with
+      two-up, the promise, and a short table: works with, covers, speaks, awards, before Guardian, outside work,
+      registered with the link). A new agent's template puts About and the support team before the picker;
+    - **the support team only** (`tIntroTeamHtml_`, 16 October: "branch manager and support staff pooled too much
+      for the client they need to just see the support"): their faces in a row, first names, "<names> handle every
+      request with <agent> …", one figure for the team's client requests in the past year, and how to reach them.
+      The branch manager is no longer on the client's e-mail; he is still copied on it;
+    - Query Pal (`T_INTRO.QUERY`, www.querymypolicy.com, the branch's 24-hour query service), the branch and
+      Guardian Direct numbers, and the sign-off.
+
+    The hold on introductions (`HOLD_INTROS`) still stands: nothing goes to a client until the branch releases
+    client e-mail. `transitionIntroTest` (the editor's Run button) sends the branch manager one of each template from
+    the real profiles, drafts included and marked TEST.
+  - **The client's choice.** Every tap opens `/your-policy/agent.html` with the choice made; the client confirms it with
+    one press (a mail scanner opening every link never chooses, and a scripted browser sends nothing). It files one
+    Client Responses row, Response `informed`, Page `/your-policy/agent?q=when_<part>&h=<way>`, Referrer `intro <agent
+    key>: <the day and time>` (`tPickRow_`, `tPickWords_`), and offers a calendar entry. The five-minute run
+    (`tIntroPicks_`) sends the agent one internal e-mail per client with the newest choice and a link to the client on
+    the board (never the client's number), copied to `TRANSITION.CC` and the agent's unit manager (the Unit column of
+    the Agent Skill Bank), posts it on the client's open Salesforce tasks, and marks the rows `[pick sent d MMM → Name]`.
+    No receipt goes for it (`tReceipts_` skips it): the agent's call is the answer. The card shows "Asked for a call".
+  - **Photos are the person's own, never found by a face.** A Photo is a hosted https link (the e-mail cannot carry a
+    picture otherwise), shown in a circle on the card and beside a team line. The first three (16 October) came from
+    screenshots the branch manager sent of pictures that name the person themselves: an agent's own Instagram profile,
+    a Guardian "Advisor of the Week" card, the branch's own Facebook post. A picture that names nobody is never matched
+    to a person by their face: the branch says who it is. Each person approves their photo with the rest of the profile.
+    Four more came the same evening, in screenshots the branch manager sent and named one by one. One (sunglasses,
+    in a car) is held for a head-and-shoulders picture, and one, cut from a group photo, asks for a sharper one. Kamla's
+    Salesforce user record carries a profile photo; Sasha's and Azariah's do not. Until a photo is in, the team line
+    shows the person's initials.
+  - **Skillsets, from what clients look for** (16 October 2026, evening: "add more to this ok more skillsets etc do
+    industry research as to what clients look for and build in"). Seven columns on Agent Profiles:
+    - *Works with* (the clients an agent knows best, from `T_PROF_WORKS` or their own words);
+    - *Areas* and *Languages*;
+    - *Promise* (one thing a client can hold them to, in their own words, printed in a navy band);
+    - *Own words* (why they do this work, printed as a quote under their name);
+    - *Outside work*;
+    - *Registered as* (what the Central Bank's register lists them as; the branch alone sets it, and it prints as a
+      "Registered" badge with a link to the register when `T_INTRO.REGISTER` holds one).
+
+    "Ask me about" now prints as "What <first name> can help you with", each topic with one line in plain words from
+    `T_PROF_SKILLS` (`tProfSkills_`, up to six); Motor and home shows only with a general licence on the agent record.
+    The board's form offers the topics and the client types as taps. Every introduction now says what happens on the
+    first call (a hello, what the client holds in plain words, anything to look at noted; no charge, nothing changes
+    unless they ask) and that a review follows every six months and in the birthday month.
+  - **The team's own record** (`tTeamRecord_`): the client requests each of them closed in Salesforce in the past year.
+    The client reads the team's total in one sentence; the per-person counts stay on the sample page for the branch.
+    Logged e-mails, the birthday flow and internal work (training, staffing, operations) never count; under 20 for a
+    person, their count is left out.
+  - **"You told us": every answer replied to by a named person, on the board** (16 October 2026: "the ai is supposed
+    to have read the questions … to show we are listening", then "the ones that answered the questions they are to see
+    who answered it as felicia and team need to answer this on the portal and reflected in the email template … a very
+    interactive email").
+    - **Where the answers are written.** A board card for a client who told us something has "What they told us ·
+      answer each one" (`answerPanel` in `assign.html`, shown when the backend says `answersApi`): each answer
+      (`tClientItems_`: the letter's questions by their code, a tap as `tap_<type>`, their own words as `words`, most
+      pressing first) with a box, **Draft with AI** and **Save answer**. Whoever may open the client may answer (`tOpenClient_`):
+      the agent named on them, Client Support, the branch, and a unit manager on his team's clients; another agent
+      may not. Every route is
+      `action=board&answer=save|draft|preview|send` (`tAnswerApi_`), so Service.gs needs no paste.
+    - **The Answer Replies tab** (When, Token, Client, Key, Question, Answer, Reply, By, Role, Drafted by AI), made the
+      first time: one row a save, the newest per client and answer counts (`tRepliesAll_`), an empty reply takes it
+      back. A reply starting with `=`, `+`, `-` or `@` is written as text. **Role** is the writer's as the client reads
+      it (`tReplyRole_`): Your agent, Client Support, Branch Manager, Unit Manager.
+    - **Draft with AI** (`T_REPLY.SYSTEM`, `gcmClaude_`, the `ANTHROPIC_API_KEY` Script property) writes a first answer
+      in the writer's voice from the question and the client's answer, their words fenced as data. `tHeardOk_` checks it
+      (length, a link, an amount or long number, a refund, guarantee or promise, a greeting or sign-off, the former
+      agent's name from the Agent column); a draft that fails is not offered. Nothing is saved until the person edits
+      it and presses Save, and the row says it began as a draft.
+    - **In the e-mail** (`tIntroHeard_`) each answer shows, under the client's own words, the reply with the writer's
+      first name, role and initials, and two taps: "✓ That helps" and "Talk to me about this" (`k=<key>&v=ok|call` on
+      `your-policy/agent.html`). Only when nobody has replied to anything does one short line stand in: the AI's,
+      written from the answers under `T_HEARD.SYSTEM` and checked by `tHeardOk_` (kept six hours, so the preview and
+      the send read the same words), else the plain line ("Thank you for telling us. <agent> has your answers and will
+      start your first call with what matters most to you."). A test with no answers shows `T_HEARD_SAMPLE` (one reply
+      by the agent, one by the first support person) and says so.
+    - **The introduction waits for them** (`T_REPLY.WAIT`, true). Naming an agent no longer sends it: the naming
+      answer counts it as `introDue`, the board marks the card, and the agent (or Client Support, or the branch) answers,
+      presses **Preview the introduction** (the e-mail exactly as the client reads it, `answer=preview`) and **Send the
+      introduction** twice (`answer=send`). Send keeps every rule of the naming: only a client who answered, never twice
+      to one agent, never a held or bounced row, never while client e-mail is held. `WAIT` false brings back the send
+      at the naming.
+    - **The client's tap back.** "That helps" sends at once on a press; "Talk to me about this" sends on a press and
+      keeps the time picker under it. Each files `informed`, `/your-policy/agent?q=reply_<ok|call>_<key>`, Referrer
+      `intro <agent key>: reply <v>`; no receipt goes for it (`tPickRow_`). `tIntroPicks_` adds it to the agent's
+      five-minute e-mail with his own reply beside it ("<client> wants a call about your answer" when no time came with
+      it), copies `TRANSITION.CC` and the unit manager as before, and puts it on the Salesforce task. The card shows
+      "Client tapped: talk to me about this" under that answer (`c.replyTaps`).
+  - **The e-mail is short on purpose**: four topics at most (`T_PROF.SKILLS_MAIL`), the first call in two sentences,
+    the support team in one paragraph, one line of help. Under 820 words with every part filled in and two answers
+    replied to.
+  - **The sample**: Felicia's introduction, drawn by the script from her draft, is the example for the whole branch.
+    It is published as a private Artifact page the branch manager shares, never on the website: the drafts are not
+    in this repository. The page shows the e-mail on a computer and in a phone frame side by side, a moving mock of
+    the board where Felicia types her answer and it lands in the client's e-mail beside Sasha's, the four steps, a note
+    on every part, the research and the team. Jordan, the client, is made up, and so are his answers and record; three
+    fields carry sample wording, marked, until Felicia writes her own. Built by `sample17/build-email.js`, `pins.py` and
+    `assemble.py` in the scratchpad.
+  - `profiles17/prof-test.js` in the scratchpad covers it (194 checks, the AI mocked: Node on the 16 October tabs with
+    the drafts and a mocked Salesforce, then Playwright on the board as an agent and the branch, the answer panel from
+    save to send, a phone, and the client's page with its reply taps). The demo backend has no network, so the test
+    puts the site's `receipt.json` and `receipt.html` in the cache; without them no board card carries an answer.
 - **After a call, one press on the board marks the file and can write to the
   client in the manager's name.** Asked for on 28 September 2026 ("a button
   where I click so I can update the notes and let them know that I will
@@ -2387,7 +2565,18 @@ voice under the new timing and the caption gives it away.
   connector pulls). The morning build rewrites it straight from Salesforce
   (`tProfileRefresh_`) once this project has the four `SF_*` Script
   properties that `ServiceSalesforce.gs` uses; until then the imported tab
-  stands, and the build's message says which. The refresh asks by policy
+  stands, and the build's message says which. **It was never written live until 16 October
+  2026**, for two reasons. `svcSfQuery_` puts the query in the web address,
+  and URL Fetch refuses one over 2 KB; two hundred policy numbers make
+  about 3 KB. And the build gave the profile only what was left of its
+  five minutes after the workbook. Every query in Transition.gs now goes
+  through `tSfQuery_`: a long one is sent in the body of a composite
+  request (`tSfComposite_`, which also reads every page), a short one as
+  before. When the build has used `T_PROFILE.INLINE_MS`, it marks the
+  profile due (`profile_due`). The five-minute run then refreshes it in a
+  run of its own, after releasing the lock (`tProfileDue_`).
+  `transitionRefreshClientProfile`, on the editor's Run button, does it at
+  once. `sfq16/sfq-test.js` in the scratchpad covers it (13 checks). The refresh asks by policy
   number, never by client number: clients opened from about mid-2026
   (numbers from about 0000745000) carry no `Client_Number__c` there.
   **The name and date of birth on a policy record are the life insured's,
@@ -2726,6 +2915,106 @@ voice under the new timing and the caption gives it away.
   `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
   `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
   cover it.
+- **What a naming writes in Salesforce, every time** (22 October 2026, the branch manager: "when you assign the agent
+  you need to update the campaign to Orphan and the date assigned as well. Create a task on the Household assigning to
+  the agent Support"):
+  - **Every policy record of the client** (their Contact's records, and a policy they own on someone else's life):
+    Assigned Agent (the agent's Contact), Date Assigned to Agent (the day), and Campaign `Orphan`, over whatever
+    Campaign held before ("Disbursement" included).
+  - **One task on the household Account** ("<SURNAME>, <FIRST> HH", the Contact's AccountId), WhoId the client:
+    subject `Orphan Project: follow up with <agent> re <client> (assigned <d Mon yyyy>)`, owned by the agent's support
+    person, due the day of the naming, High, Call. Description: who assigned the agent and when, the client and
+    household, every policy with its status, the former agent, what the client asked, then "<support>: follow up with
+    <agent> on contact made with the client and the outcome. Log <agent>'s feedback in the task trail. Keep this task
+    open until the service questionnaire is signed." One task a household and agent: an open one with that subject on
+    the Account is found and none is added.
+  - **Both are automatic** on every naming: the board's (`transitionAssign_`), Match's and staff's, and a naming made in
+    Salesforce (`tSfBriefs_`, after the brief). `tSfAssignWrite_` reads the client's policies by number and then every
+    record on their own Contact (`tSameClient_`, so a daughter's own policy on her own Contact is never touched), and
+    `tSfHouseholdTasks_` opens the task. The board's answer says how many records and tasks (`sf.policies`, `hhTask`).
+  - **Who supports whom** (`T_SUPPORT`, `tSupportFor_`): a **Support** column on the Agent Skill Bank wins, when one is
+    added; else `T_SUPPORT.MAP` (Liz for Neil, Felicia, Rajiv and Randolph; Sasha for Varun, Fawwaz and Malcolm;
+    Azariah for Premchand, Darryl, Meera, Narissa and Daniel, from who has owned each agent's tasks); else whichever of
+    Sasha, Azariah and Liz has the fewest open orphan tasks. The owner is that person's Salesforce user, else the
+    branch manager's. `hh22/test.js` (21 checks) and `hh22/sf-test.js` (5) in the scratchpad cover it.
+- **Every orphan on the branch's board, the open tasks, a comment on one chosen task, and an AI guide** (22 October 2026:
+  "on my log in i am not seeing all the orphans and must be able to search and must be able to see the tasks opened and
+  build in intelligence, agent when logged in must be able to post on a chatter on the task … and use our AI for
+  intelligent guided responses").
+  - **Every client of the books, by default, for the branch.** The board used to ask for the clients who had not answered
+    only when "include clients who have not answered yet" was ticked, and it never showed a client whose letter was held
+    (a check, no e-mail, bounced, the manager's hold): 239 of 2,473 on 22 October. The page now asks with `all=1` unless
+    that device turned it off (`rrb-assign-all`), and `tBoard_` adds the held and unsent clients as states `held` and
+    `unsent` (never one `T_NOT_BOOK` leaves out), each with its policy numbers (`pn`). `all` counts for the branch only:
+    staff, unit managers and agents get their own lists whatever the page asks. About 3.4 MB for the branch.
+  - **The search** (`hay`) reaches the name, client number, every policy number, the e-mail, the phone numbers (as digits
+    too), town, address, occupation, the former agent ("was with …"), the agent named, the letter and the household.
+  - **Tasks** (a tab under Act on, for every role; `tTasksView_` through `action=board&tasks=1`, so Service.gs needs no
+    paste): every open Salesforce task whose subject starts "Orphan", matched to its client by the policy record, or by the
+    contact for a household task on the Account (`tPolTokens_`), with who holds it, its age in working days, its due date,
+    the last post and its writer (a board post is read by the name at its head), and whether the agent named on the client
+    has written on it. Tiles for overdue, nothing posted, quiet two working days, agent named with no word, not matched; a
+    row per person holding them. The branch and staff see every task, a unit manager his team's clients and tasks, an agent
+    their own. Read once every five minutes (`T_TASKS`). "Open and post" opens the client (`#t=…&k=<task id>`) with the
+    comment set to that task.
+  - **A comment on one task.** Each open task on a client's details has "Post on this task", and the comment box says where
+    it goes; `transitionComment_` takes `task` and posts only there, and only if it is one of that client's open tasks.
+    Without one it goes to the newest three, as before. An agent named in Salesforce can open the client and post.
+  - **Guide me** (`tGuideApi_`, `action=board&guide=1&token=…`): on a client's details, the Claude API (`GCM.AI_MODEL`,
+    structured output, effort low, `ANTHROPIC_API_KEY`) reads what the board holds on them (where they stand, what they
+    told us, the call-back, the file notes, the history, the policies and what the records show, the open tasks and their
+    last posts) and writes where things stand, a priority, what to do next, what to say first, what to ask, what to be
+    careful of, and a note for the task with [brackets] to fill. The client is "[first name]" to the API and the page puts
+    the name back; the former agent is "the former agent"; numbers, e-mails and links are taken out both ways. Staff's
+    facts carry no figure, and the rules say Client Support never advises. Nothing is saved or sent: "Use as my comment"
+    puts the note in the box. Kept six hours for the same facts.
+  - `hh22/tasks-test.js` (38, Node) and `hh22/page-test.js` (37, Playwright, a phone included) in the scratchpad cover it,
+    Salesforce and the API mocked.
+- **Follow-ups: the clients chasing us, and who on the team answers** (22 October 2026: "run a report on customers who
+  are following up and analyze the staff who are not responding … and have my log in to my dashboard filled with all
+  that was asked for"). A tab second on the branch's board, after Urgent (`tFollowupsView_`, `action=board&followups=1`,
+  so Service.gs needs no paste; the branch alone; kept ten minutes, `T_FU`).
+  - **The clients**: everyone who came back on a later day than their first answer (Client Responses, campaign tokens,
+    never a Test row, a detail taken on a call, a naming or an answer that looks automated). Each is *chasing* (their
+    words ask why nobody called, for an update or a person, `T_FU.CHASE`, or they asked again for the same thing),
+    *wrote with details*, *declined* (`T_FU.DECLINE`) or *came back with more answers*. Then whether anyone answered after
+    their last message: a post by staff or an agent on their task, a call marked on the board, or the task closed; with
+    the working days it took, or the working days they have been waiting.
+  - **The team**: every person holding orphan tasks. The branch's asks are the manager's posts on their tasks (follow-ups,
+    moves, reopenings, notes, his own posts), addressed by the name in the post, else to the owner; never a hold, a
+    carry-on or a board naming note. An answer is any post or comment by that person after the ask (a board post is read
+    by the name at its head; the tracker's "not done" lines by the person they name, "not touched" never an answer).
+    Per person: asks, answered, the same working day, the median wait, the asks unanswered now on open tasks with the
+    working days since their own last entry or since the task became theirs (a move counts from the move), the days of
+    the last ten working days they did anything, open, overdue, untouched, and the tasks closed (with the standard "no
+    questions or concerns" text, with nothing written that day) and reopened by the branch.
+  - **Waiting on the branch**: staff questions to the manager ("who to assign …", "awaiting new agent") on a client nobody
+    is named on yet.
+  - On 22 October: 87 clients came back (21 chasing, 2 with no answer since); 1,036 asks in 21 days, 50% answered, 12%
+    the same day; 96 unanswered now; 53 clients waiting on the branch to name an agent. `fu22/run.js` (the view on the
+    real sheet and Salesforce as pulled that afternoon) and `fu22/page.js` (13, Playwright, a phone included) in the
+    scratchpad cover it; `fu22/build-xlsx.py` writes the same view as a workbook.
+- **A naming in Salesforce now briefs the agent, as a naming on the board does** (22 October 2026: "can a template be
+  created that will trigger a notification to Neil once the Assignment is done? … log in and place his comments in the
+  portal … and give a lot of intelligence"). Until then Salesforce sent nothing (no flow on the policy record reads
+  Assigned Agent, and no e-mail went to any agent after a Salesforce naming), and the sync only copied the name to the
+  board.
+  - **When:** `tSfBriefs_` runs after each `tHaSync_` in the five-minute run (so every 15 minutes). It takes the
+    Household Assignments rows with Source `Salesforce` dated on or after `T_SFBRIEF.FROM` (22 Oct), groups them by agent
+    and sends each agent one `tBriefMail_` (from the script owner's account, internal, nothing to a client, so no hold
+    applies).
+  - **Once:** per client per agent, recorded on the **Agent Briefs** tab (When, Token, Client, Agent, Named on, Source,
+    Status), made the first time. A board naming writes it too, and a board naming from before the tab is known by its
+    Assignment Log row, so a naming the board made and wrote to Salesforce is never briefed twice. A reassignment in
+    Salesforce briefs the new agent. An agent not active on the Agent Skill Bank is recorded `held: …` and not sent;
+    delete that row once the Skill Bank is right and the next run sends it. A send that fails records nothing.
+  - **The brief** (every brief, the board's too): "The branch named you as their agent in Salesforce on <date>" for a
+    Salesforce naming; a numbered **What to do** (sign in, read the file, call within two working days, Log call the same
+    day, Save comment under History · tasks · comments; both go onto the Salesforce task); up to six lines of what the
+    records show (`T_BRIEF_INS`, four until then). Still no client phone, address, e-mail, words or money figure.
+  - `transitionSfBriefTest` (editor Run) sends the branch manager the brief for the newest Salesforce naming, marked
+    TEST, recording nothing; `transitionSfBriefsNow` syncs and sends at once. `sfbrief22/test.js` in the scratchpad
+    covers it (30 checks, the 21 Oct tabs), with `brief16/brief-test.js` (39) still passing.
 - **A questionnaire after the naming earns the agent TT$200, and the claim
   is chased until Salesforce has the payment date** (3 October 2026; ping
   `campaign: 7`). The manager asked: "when a questionnaire is recieved the
@@ -2785,6 +3074,41 @@ voice under the new timing and the caption gives it away.
   the e-mails still go, and the tab says to enter the dates by hand.
   `claims/claims-harness.js` (68 checks) and `claims/claims-test.js`
   (Playwright, 31) in the scratchpad cover it.
+  **Since 16 October 2026 the questionnaire's dates in Salesforce drive every claim** (`T_SQ`, `tSqRun_`; `T_SQ.ON`
+  false puts back the flow above). The manager: "the date service received is updated by the staff … sales support
+  follows up with customer service … after 5 working days … a follow up email is sent attaching the trail as support is
+  copied. If … date SQ processed by CSR is filled then there is no further automation. Once the date SQ processed is
+  filled an automated email to GLOC retention is sent … with a 3 working days timeframe with reminders [until] date SQ
+  comm paid". Every claim since 1 October had been submitted by hand, and none started from a questionnaire on the sheet.
+  - **The fields** (CLIENT_PORTFOLIO__c): `Date_SQ_submitted__c` (the completed questionnaire, staff),
+    `Date_SQ_submitted_to_CSR__c` and `Date_SQ_processed_by_CSR__c` (sales support; both new on 16 October, and both
+    dates), `Date_Subm_to_Retention__c` and `Was_Agent_Paid__c` ("Was Agent Paid for Orphan?", the system),
+    `Date_Comm_Paid__c` ("Date SQ Comm Paid", Retention or sales support). The integration user needs read and edit on
+    the two new fields, or the query fails.
+  - **A claim** is one client (their Contact, else client number) and one questionnaire (the day it went to Customer
+    Service), with every policy that carries those dates. Only dates from 16 October (`T_SQ.FROM`) count. It is a row on
+    the Retention Payments tab (`SQ key`, `Records`, `Sent to CSR`, `CSR follow-ups`, `Last CSR follow-up`, `Processed
+    by CSR`, added by name to an older tab), so the board, the brief and the points read it as before; the board shows
+    the new stage as "with Customer Service".
+  - **Customer Service**: every 5 working days (`CSR_DAYS`, counted as `tWorkingDays_` counts them) until processed is
+    filled, in the first run from 10:00 on a working day, one follow-up: to the desk the SQ task went to (the task's
+    contact when it is a desk, else `CSR_TO`), sales support and the task's owner copied, a reply to sales support; the
+    task's subject as its own, the trail in the body (the task and its Chatter), and the original e-mail attached as
+    `.eml` when support@ was copied on it (found by policy number, `tSqOriginal_`). A line goes on the task's Chatter.
+  - **Retention**: the day processed is filled (8:00 to 17:00, working days) the claim goes to `T_CLAIM.TO`, the manager,
+    sales support and the agent copied, to be paid within 3 working days (`RET_DAYS`), and Date Subm to Retention (and
+    Was Agent Paid No) is written on each policy. A reminder every 3 working days at 10:00, never copying the agent,
+    until Date SQ Comm Paid is in; then Was Agent Paid Yes and the agent told (`tClaimPaidMail_`). A Date Subm to
+    Retention already entered is "Submitted by hand", never e-mailed, still reminded.
+  - **Held**: no agent; an agent who left (`tFormer_`); not active on the Agent Skill Bank; a questionnaire received
+    before the Date Assigned to Agent. A second questionnaire for a client already claimed is Void.
+  - **The agent paid** is Assigned Agent, else the agent on the policy (`AGENT__c`, which is who Sasha's by-hand claims
+    paid).
+  - Nothing goes before the go (`claims_live`); `transitionSqTest` sends the manager one follow-up, one claim and one
+    reminder, marked TEST, from the real records where there are some; `transitionSqNow` runs it at once.
+  - `sq16/sq-test.js` in the scratchpad covers it (54 checks, a made-up Salesforce and mailbox, the clock moved over two
+    weeks). The board film's claim line ("at once … every working day at ten") is now out of date: re-voice it with the
+    next cut.
 - **One client in full on the board: the history, their Salesforce tasks,
   and the team's comments** (3 October 2026, the same request: "so the agent
   can see the email and history and tasks opened on salesforce assigned to
@@ -3096,7 +3420,7 @@ voice under the new timing and the caption gives it away.
   - **The service record.** Every card shows the record the letter printed from the send row (`tSvcOf_`: `svc_docs`,
     `svc_requests`, `svc_reminders`, `svc_birthday`, as at 24 September), or says plainly that the branch had nothing on
     record for that client. Under History, `tSfService_` reads every Salesforce task on the client's policy records and
-    contact record, ever (up to `T_SVC.MAX`): requests handled and since when, the last served, days to close (median and
+    contact record, ever (up to `T_SVCREC.MAX`): requests handled and since when, the last served, days to close (median and
     average), the share closed within a day and by the due date, open and overdue now, by year, by kind of work (the
     Task Type in words: "Renewa/PDl/Bill" reads Premiums and billing, Pendings Applications, "Claims/ Mat" Claims and
     maturities) and by who served them, then every task behind a fold. Logged e-mails and the birthday flow are counted
@@ -3332,6 +3656,17 @@ voice under the new timing and the caption gives it away.
     the routine's late-client follow-ups chase.
   - *The board, for agents* (`boardagent`, 1:48): your list every day, opening a client, Log call, comments, what
     counts, two days to a conversation, the branch sees it.
+  - *The client transition, start to finish* (`boardflow`, 3:48, `board-workflow.html` and `.mp4`), added 16 October 2026
+    for everyone ("where is the revised video to post that will guide all on the revised process, workflow etc so all
+    will understand and take the test"). It is the storyboard approved the day before, one client from the letter to the
+    TT$200: the letter, the answer or Client Support's call, the three rules, the household named, families the records
+    missed, what a naming does, the agent's call, the service record, Log call, the Salesforce task, the claim and the
+    10:00 list, what the branch sees, the seven outcomes (`workflow.html`'s O section, in its order), and the training
+    page. It sits first on `board-films.html` (`#start-to-finish`), at the top of `training.html` above the sign-in, under
+    the title of `workflow.html`, and in the board's Help ("The film: start to finish, for everyone"). It draws six
+    visuals of its own (`letter`, `family`, `record`, `claim`, `outcomes`, `test`), and a scene may carry `role` to show
+    another sign-in's board (its Client Support scene does). The test scene shows the question as grey bars, never a
+    question from the private sheet. If a rule in the workflow changes, re-voice the line that says it.
 
   Each is a page drawn by `tools/film/build-boardfilm.py <key>` from `<key>-lines.json` and `<key>-timing.json`
   (`orphan-transition/board-management.html`, `board-client-support.html`, `board-agents.html`), recorded and mixed
@@ -4005,15 +4340,33 @@ client leaves the page.
 
 | page | reference | what it asks |
 |---|---|---|
-| `/quote/motor/` | `QM-yyMMdd-nnn` | the vehicle, who drives it, the cover |
-| `/quote/property/` | `QP-` | the property, what to cover, claims history |
+| `/quote/property/` | `QP-yyMMdd-nnn` | the property, what to cover, claims history |
 | `/quote/critical-illness/` | `QC-` | who it is for, the cover |
 | `/quote/key-person/` | `QK-` | the business, the key person, what the money does |
 | `/enrol/oas/` | `QO-` | you, your employer, your contribution |
 | `/apply/xpress-life/` | `QX-` | who it is for, the cover, how to finish |
 
-`/quote/` lists all six. The branch app carries a **Quote & apply** tile to
-it, and its "where did it go" line names the old JotForms.
+`/quote/` lists all six lines, Motor included, but **Motor is not built here**
+— its card opens `/motor-quote/`. The branch app carries a **Quote & apply**
+tile to the index, and its "where did it go" line names the old JotForms.
+
+**Motor was built twice, and main's is the one that lives.** On 21 October the
+motor JotForm (223376649264061) was replaced by `/motor-quote/` — its own page,
+its own Apps Script project, its own sheet, and much more than a quote request:
+the client signs in with a code to their inbox, Salesforce fills in their
+Contact, motor policies and vehicles, the permit is photographed on the phone,
+the quote goes to CRMSQuotes with the documents attached, a Salesforce task
+opens, and signing in again shows the client the status and the premium when it
+comes back. On 22 October this branch replaced the same JotForm with a plain
+`/quote/motor/` of its own, not knowing. Two motor doors with two references and
+two backends is exactly the fault the mark rule warns about, so on merging,
+**`/quote/motor/` was deleted, `motor` came out of `QUOTE.FORMS` in `Quotes.gs`
+so no `QM-` row can ever be filed, and the homepage's two motor links and the
+`/quote/` card point at `/motor-quote/`** — which is what main had already done
+to the old page. `forms.json`'s motor entry now carries only `elsewhere`, so
+`build-forms.py` lists it on the index and builds no page for it; `qa/quotes.js`
+fails if a line marked `elsewhere` ever appears in the backend. Five forms are
+the branch's own here; the sixth is main's, and better.
 
 - **Edit `tools/forms/forms.json` and run `tools/forms/build-forms.py`,
   never a generated page.** One run rewrites all seven. The spec is the
@@ -4028,7 +4381,9 @@ it, and its "where did it go" line names the old JotForms.
   nothing about health — the five Xpress Life health questions are on the
   Xpress Life application itself, which is where cover is actually issued.
   Date of birth and smoker status are asked, because they are rating factors
-  and change the price.
+  and change the price. (`/motor-quote/` takes the driver's permit by photograph,
+  because a motor quote cannot be rated without it; that page is main's and has
+  its own rules.)
 - **Two of the six hand over rather than pretend.** `/apply/xpress-life/`
   opens the file, gives the reference and then offers
   **xpresslifett.com** to finish the instant-issue application; `/enrol/oas/`
@@ -4200,8 +4555,9 @@ silent faults nobody would have reported:
   pages, sideways scroll at seven widths, iOS input zoom, touch targets,
   contrast composited through translucency, the validation summary, the
   conditional rules, a real send on all six, a dead backend, reduced motion,
-  the form with JS off, and no JotForm on any client-facing page) and
-  `qa/quotes.js` (22, Node with Sheets and MailApp made of nothing: the tab,
+  the form with JS off, and no JotForm on any client-facing page; the canonical
+  page throughout is `/quote/property/`, since motor is not ours) and
+  `qa/quotes.js` (24, Node with Sheets and MailApp made of nothing: the tab,
   the numbering, the duplicate guard, the honeypot, the row, both e-mails,
   and that the page and the e-mail promise the same three things word for
   word), and `qa/motion.js` (14: the rail against what is answered, a
@@ -4363,6 +4719,53 @@ servicing work".
   the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
   Playwright; `world.js`, the fake workbook and Salesforce).
 
+## The motor quote — the client signs in, Salesforce fills in, the desk quotes
+
+`motor-quote/index.html` (short address `/motorquote`) and `apps-script/MotorQuote.gs`, **its own Apps Script project on its
+own Google Sheet** (own `doGet`/`doPost`: never beside `Claims.gs` or `Service.gs`). Built 21 October 2026, replacing the
+" Motor Quotation" JotForm (id 223376649264061, 41 questions, 2 submissions ever): "a client logs in, the data read from
+Salesforce if he is an existing client by his email, if not a contact is created, then asks data that will generate a motor
+quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-SETUP.md` has the steps.
+
+- **It carries the blue shield, not the gold** (21 October 2026, shown the page: "i dont like the log with the gold and
+  black its not scales and look"): `orphan-transition/board-mark.png` at 46 px on a `#13408F` tile in the header, as the
+  favicon, and as `MQ.LOGO` on both e-mails, as the Delivery Book does. The page is light (a soft blue-white ground, white cards) in a **softer ocean blue** (`#3A7BD5` into `#4C94E6`,
+  deep `#2C5FA8`, sky `#EAF3FD`, teal `#1FA8A0` for the start button), not the corporate blue: a first cut on a midnight
+  ground was turned down ("dont lie the blacks and make more easy on the eyes"), then the corporate blue ("this one is
+  hard on the eyes, research and she what color for clients"). What the research supports (21 October 2026): blue as the
+  dominant colour draws the most trust and black the least (an MWAIS 2007 pilot; a 2021 web-store experiment found
+  the effect stronger in risk-averse markets); text at 4.5:1 contrast and nothing said by colour alone (so the required
+  star has the words "starred answers are needed" beside it); three to five colours; drop-downs for make and model;
+  one column on a phone. White on `#3A7BD5` is about 4.6:1. No study compares colours on insurance quote forms. Long answers are drop-downs (make, year, engine, body,
+  seats, years driving, no-claim discount, insurer, financial institution, each with Other and a box to type); yes or no
+  answers stay as taps.
+- **The project is owned by the support@rickyrampersadbranch.com Workspace account** (21 October 2026: "remember i d
+  have a workspace"), never the personal Gmail: `mqMail_` then sends from support@ through MailApp by itself, under the
+  Workspace's allowance, and the `MS_*` Graph properties are not needed. A sheet made under the personal Gmail on 21
+  October ("Motor Quotes", in that Drive) is not the one to use. **The sheet must be owned by support@, not shared with it**: an editor can run the script but Deploy refuses with "You do not have permission to perform this action" (21 October 2026). The fix was File → Make a copy while signed in as support@ alone, then the Script properties entered again (a copy does not carry them). Deployed the same day; its `/exec` address is `CONFIG.API_URL` in the page.
+- **Sign-in is the claims portal's**: e-mail, six-digit code to that inbox, no password. Anyone may sign in; the answer never
+  says who is a client. The signed-in e-mail is the client's e-mail whatever the form sends (`mqRead_`).
+- **What Salesforce holds is filled in** (`mqLookup_`, by e-mail): the Contact (name, mobile, Title as occupation,
+  Birthdate), motor policies (`CLIENT_PORTFOLIO__c`, MOTOR record type) and vehicles (`Risk_Details__c`, by `Insured__c` or
+  `Email__c`; two years of one vehicle merge, newest first, a blank never erasing: the claims portal's rule). A client picks a
+  vehicle to quote again, or adds one. Every read is in its own try: Salesforce down still signs the client in.
+- **Every question the JotForm asked is still asked**, in six steps; `tests/test-motor-quote.js` checks the list. The permit
+  and the certified copy are photographed on the phone, resized to a 1600 px JPEG on the device, PDFs under 6 MB as they are.
+- **Send**: a row on **Motor Quotes** (`MQ-yyMMdd-nnn`), the documents into Drive (Motor Quotes / year / ref), one e-mail
+  to the quotes desk from support@ through Graph (`mqMail_`, the Log Book's pattern; this Google account with support@ as
+  reply-to when the `MS_*` properties are not set) with sales support and support@ in visible Cc, the agent too when the
+  client names one, and the documents attached; a receipt to the client with the reference; a Salesforce task on the Contact
+  due two working days on. **A client not in Salesforce becomes a Contact at the send**, when a name is held, never on the
+  sign-in alone (`mqEnsureContact_`, `Contact_Type__c` Prospect; the same e-mail on file is the same client).
+- **Test mode is the default** (`MQ_MODE` unset): every e-mail to `MQ_TEST_INBOX` with a banner naming who it was for, and
+  Salesforce read but never written. `mqGoLive()` when the manager says so. The quotes desk never hears from a test.
+- **Signing in again shows the client their requests and where each stands**: the tab's Status, Quoted on and Quoted
+  premium columns, kept by staff by hand.
+- Tests: `tests/test-motor-quote.js` (57 checks, a Salesforce and a Microsoft in memory) and `tests/e2e-motor-quote.js`
+  (Playwright, a phone, the six steps against a fake backend; it caught a tap and a typed box fighting over one answer).
+- The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
+  until the page is live and wired; disable it then, so an old link does not take a client back to it.
+
 ## RR Operations and the Delivery Book — one sign-in, the client told the same day
 
 `rroperations/` and `apps-script/DeliveryBook.gs` (its own Apps Script project,
@@ -4405,6 +4808,13 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   the lists from the public `ping` when a session lacks them, `lb.login` returns them, and both the app and the
   Delivery Book take a staff access code again (`login`, the Access tab) as the way in until the paste.
   `tests/e2e-deliverybook.js` signs staff in as the deployed script answers.
+- **No agent number: a name and the Branch Portfolio's code** (21 October 2026: Pawan, the driver, "trying to log in as
+  Pawan and not allowing … see pawan from the access link", the Branch Portfolio workbook). `lbLogin_` takes a name or an
+  e-mail in the number box: a name only one person on the agent lists carries (`lbFindByName_`), then the Branch
+  Portfolio's access tabs (`lbIntelPerson_`: any small tab with a name and an Access Code, Access Number or Password column, `LB_INTEL_CODE_COLS`; `lbCheckSignIn("Pawan")` in the editor says which tabs it reads and whether the person is on one, never a code;
+  `LB_INTEL_SHEET_ID` overrides `LB_INTEL_ID`), matched by name, first name, e-mail or agent number with that row's own
+  code. A Driver role (`lbIsDriverRole_`) gets the Delivery Book alone. The app's box reads "Agent number or name".
+  `tests/test-logbook.js` covers it.
 - **The Delivery Book film** (20 October 2026: "a small video on the revised delivery process as it also looks up the
   client etc and the client gets an email confirming delivery"). *The Delivery Book, for staff* (`dbstaff`, 1:45):
   `rroperations/delivery-book/deliverybook-staff.mp4`, poster `film.jpg`, page `/deliverybook-film/` (Open Graph for
@@ -4838,12 +5248,61 @@ guide you. In your session review notes on the step back in place from all memor
 
 - **Absence and cover: two clocks (20 Oct 2026, 2026-10-20e).** Ricky: "I would like the absent rule to be applied 5 minutes after sign-in ... unless she goes back and she can change it. The same applies to everybody", "the staff who is absent, the task will have to be automatically reassigned as staff gets their day, so the day will have to now be readjusted", then "cater for all of these things ... agents as well, managers, BMA, everyone who operates in the operation." **Register:** `ABSENT_AFTER_MIN = 5`, `ATT_GRACE_MIN = 5` (in after start + 5 is late); `autoAbsentTick_` covers `DAY_MAIL_DESKS` and `UM_DESKS` (Akaash). `recordAttendance_` turns any absence with no sign-in (the clock's or a manager's) into in, late by the minute, and calls `coverReturn_`. **Cover** (`coverTick_`): the work moves at start + `COVER.AFTER_MIN` (30), at the start when the absence was marked ahead by a person (MarkedBy not `tracker`); a second pass (`cover2_<sid>_<day>`) at max(8:15, first + 15) reaches the eight o'clock desks; ACTION REQUIRED posts on the first pass only. Each receiver takes no more than `coverCap_` (their pace, 5 to `PER_RECEIVER`) in a day across every absence (`cover_got_<day>`). `COVER.KEEP.kamla` (staffing and licensing, training, RR operations, innovation) stays with the BMA (`plan.own`, a tile in the mail to Mr Rampersad). `coverAbsorb_`: moved tasks go to the top of a checked-in receiver's KPI1 plan and as many of their own lowest open items go to "when your list is done", so the day keeps its size. `coverReturn_`: checking in before `RETURN_UNTIL` (noon) moves back each of today's OK moves still open and in the receiver's name that the receiver has neither noted nor changed (script posts MOVED/ACTION/BACK do not count), with a BACK note, out of the receiver's plan and count. `BRANCH_CLOSED` (Script Property, dates) marks and covers nobody. Pawan and Akaash are on the register and nothing of theirs moves; Mr Rampersad is on neither. Pinned by `tests/test-cover.js`; `tests/test-attendance.js` has the five-minute grace.
 
-- **The game for the staff desks (20 Oct 2026, 2026-10-20f).** Ricky: "can we gamify this a lot more so the staff will not feel overwhelmed? ... really have everybody in it and not make it mundane", then "build this first for staff, then agents afterwards." `GAME.DESKS` (sasha, elizabeth, azariah, kamla); agents next. **Scoring** (`gameRange_` = `gameCloses_` + `gameCtx_` + `gameScoreDay_`): a close counts only with a proper note (`gameProperNote_`: 25+ characters, five words, not MOVED/ACTION REQUIRED/BACK/IDEA ACCEPTED/Branch Intelligence) in the person's name (CreatedById, or the day page's header line "· Full Name ·", `gameNoteHead_`) within 7 days before the close; a copied note (`gameNoteKey_`, digits ignored) counts once. 1 a close, +2 high-payoff (`payoffOf_` rank 1–3), +1 a month overdue, +1 a task moved to them (Workload Moves, 14 days); Query Pal closed inside its turnaround 1 (`Assigned To` via `gameWho_`, Liz alias); on time 1; signed out 1; each quest +2; par +3 (every KPI1 plan item closed with a note or moved with a reason on Task Changes, two in three closed); each idea accepted +3. `work` = closes + Query Pal, the figure weeks are compared on. **Kept**: tab **Game Days** (`GAMETAB`), `gameSave_` hourly 6:00–18:30 from `gameTick_` (the first run of a day re-reads the last five working days so a reopened task drops out; the first run ever reads the last 20, `gameBackfillNow`), today live in CacheService `game_all_<day>` for 5 minutes (`gameForget_` on every Save). **Quests** (`gameQuests_`, `game_q_<sid>_<day>`, chosen once): save the client who wants to cancel / former agent / call me, else the top high-payoff; the two oldest overdue; the Query Pal past turnaround, else the work moved to them; else par an hour before the end. **Streak** (`gameStreak_`): on-time check-ins from the Attendance tab, today once in; leave marked ahead by a manager is neutral, a closed branch is skipped, the first miss of a month is forgiven. **Skills** (`gameSkills_`, `GAME_SKILL` by playbook kind, levels at 5/15/30/60/100). **The week** (`gameGain_`): work points Monday to today against the same days of their own last four weeks; best day yet. **The branch's bar** (`gameGoal_`, `game_goal_<monday>`): overdue across the desks at the week's first read, goal 25% under it (`GAME_GOAL_CUT`). **Page**: `gameCard_` above the work (ring `gameRing_`, points, week, streak, quests, thanks received, what earned nothing and why, the bar, skills, how points work); the work card shows the next three and folds the rest (`GAME.NEXT`); `gameThanksForm_` after an absence (`cover_back_`, Workload Moves less BACK) and `gameIdeaForm_` (an Innovation & Creativity task due Friday, not on today's list), saved by `gameSaveForm_` into tab **Game Log** (`GAMELOG`). **Morning mail** (system day): `gameMailCard_` replaces the overdue / due today / planned tiles. **Mr Rampersad**: My day card 6 `gameBmSec_` (the bar, each person's ring and line, ideas to accept `gia_<taskId>` → Game Log + an IDEA ACCEPTED Chatter post, `gameBmSave_`; the week's awards with the WhatsApp text in a copy box); Friday 13:00 `gameAwardsMail_` to him alone. **Awards** (`gameAwards_`): Client Saver (cancel + former kinds + retention closes), Clean Sweep (a month old), Team Player (cover + 2 × thanks), Quest Master, Most Improved (gain, usual ≥ 5), Best Note (`gameBestNote_`: Claude picks once a day, else the longest), Idea of the Week (accepted this week); `gameAwardsText_` single-asterisk bold, no emojis, no client. **Wall**: `case 'wall'` returns `game: gameWall_()` (first names, par, quests, streaks, gains, thanks, award titles; no points, task, client or note); `wall/index.html` slide 13 `sGame` appears only when it is there. `GAME = off` hides everything. Pinned by `tests/test-game.js`.
+- **The game for the staff desks (20 Oct 2026, 2026-10-20f).** Ricky: "can we gamify this a lot more so the staff will not feel overwhelmed? ... really have everybody in it and not make it mundane", then "build this first for staff, then agents afterwards." `GAME.DESKS` (sasha, elizabeth, azariah, kamla); agents next. **Scoring** (`gameRange_` = `gameCloses_` + `gameCtx_` + `gameScoreDay_`): a close counts only with a proper note (`gameProperNote_`: 25+ characters, five words, not MOVED/ACTION REQUIRED/BACK/IDEA ACCEPTED/Branch Intelligence) in the person's name (CreatedById, or the day page's header line "· Full Name ·", `gameNoteHead_`) within 7 days before the close; a copied note (`gameNoteKey_`, digits ignored) counts once. 1 a close, +2 high-payoff (`payoffOf_` rank 1–3), +1 a month overdue, +1 a task moved to them (Workload Moves, 14 days); Query Pal closed inside its turnaround 1 (`Assigned To` via `gameWho_`, Liz alias); on time 1; signed out 1; each quest +2; par +3 (every KPI1 plan item closed with a note or moved with a reason on Task Changes, two in three closed); each idea accepted +3. `work` = closes + Query Pal, the figure weeks are compared on. **Kept**: tab **Game Days** (`GAMETAB`), `gameSave_` hourly 6:00–18:30 from `gameTick_` (the first run of a day re-reads the last five working days so a reopened task drops out; the first run ever reads the last 20, `gameBackfillNow`), today live in CacheService `game_all_<day>` for 5 minutes (`gameForget_` on every Save). **Quests** (`gameQuests_`, `game_q_<sid>_<day>`, chosen once): save the client who wants to cancel / former agent / call me, else the top high-payoff; the two oldest overdue; the Query Pal past turnaround, else the work moved to them; else par an hour before the end. **Streak** (`gameStreak_`): on-time check-ins from the Attendance tab, today once in; leave marked ahead by a manager is neutral, a closed branch is skipped, the first miss of a month is forgiven. **Skills** (`gameSkills_`, `GAME_SKILL` by playbook kind, levels at 5/15/30/60/100). **The week** (`gameGain_`): work points Monday to today against the same days of their own last four weeks; best day yet. **The branch's bar** (`gameGoal_`, `game_goal_<monday>`): overdue across the desks at the week's first read, goal 25% under it (`GAME_GOAL_CUT`). **Page**: `gameCard_` above the work (ring `gameRing_`, points, week, streak, quests, thanks received, what earned nothing and why, the bar, skills, how points work); the work card shows the next three and folds the rest (`GAME.NEXT`); `gameThanksForm_` after an absence (`cover_back_`, Workload Moves less BACK) and `gameIdeaForm_` (an Innovation & Creativity task due the next Wednesday branch meeting, `gameMeetingDay_`; Friday until 2026-10-21h; not on today's list), saved by `gameSaveForm_` into tab **Game Log** (`GAMELOG`). **Morning mail** (system day): `gameMailCard_` replaces the overdue / due today / planned tiles. **Mr Rampersad**: My day card 6 `gameBmSec_` (the bar, each person's ring and line, ideas to accept `gia_<taskId>` → Game Log + an IDEA ACCEPTED Chatter post, `gameBmSave_`; the week's awards with the WhatsApp text in a copy box); Wednesday 7:00 `gameAwardsMail_` to him alone (Friday 13:00 until 2026-10-21h, see below). **Awards** (`gameAwards_`): Client Saver (cancel + former kinds + retention closes), Clean Sweep (a month old), Team Player (cover + 2 × thanks), Quest Master, Most Improved (gain, usual ≥ 5), Best Note (`gameBestNote_`: Claude picks once a day, else the longest), Idea of the Week (accepted this week); `gameAwardsText_` single-asterisk bold, no emojis, no client. **Wall**: `case 'wall'` returns `game: gameWall_()` (first names, par, quests, streaks, gains, thanks, award titles; no points, task, client or note); `wall/index.html` slide 13 `sGame` appears only when it is there. `GAME = off` hides everything. Pinned by `tests/test-game.js`.
+
+- **The wins on a Wednesday (21 Oct 2026, 2026-10-21h).** Ricky: "awards day cannot be a Friday. It's the weekly wins celebrated on a Wednesday in the meeting, during our meeting ... awarding the wins from agents, the staff, everyone gets acknowledged". The branch meets Wednesday 9:00 to 10:30; he chose Wednesday to Tuesday, ready at 7:00. **Window:** `gameAwardsWeek_(day)` = on the Wednesday (`GAME.AWARDS_DOW` 3) the seven days ending the night before, `final`; any other day, the last Wednesday to today, so far; working days only (`gameWeekday_`). `gameAwards_` uses it for every award (closes, thank-yous, accepted ideas, Best Note's once-a-day pick keyed `game_bn_<from>`, Service Star's `rateStats_(from, to)`, Most Improved through `gameGain_(…, from)`), never today's live read on the Wednesday, and returns `week` and per-desk `week/usual/gain` in `totals`. **Mail:** `gameTick_` sends `gameAwardsMail_` on the Wednesday from `GAME.AWARDS_AT` (7:00) until `GAME.MEETING_AT` (9:00), once, through `timedSend_` (`game_aw_<day>`; a failed send is retried by the next run); subject "This week's wins · for the 9:00 meeting · Wed 21 Oct", shell "This week's wins" / "For the Wednesday branch meeting · Wednesday 14 to Tuesday 20 October"; everyone's week and the quests tile are the window's. **WhatsApp** (`gameAwardsText_`): "*This week's wins* · Wednesday 14 to Tuesday 20 October" ("so far" before the Wednesday, `gameAwardsSpan_`). **Unchanged:** the backlog goal (`gameGoal_`, overdue on Monday, goal by Friday), the cards' week, the Friday weekly summary, the fact-find chase. **Staff strings** say Wednesday: Team Player (thanks form), Service Star (how points work), the idea box and its task (due `gameMeetingDay_`), IDEA ACCEPTED, the innovation lines; the **innovation board** (`sendInnovationBoard_`) moved to Wednesday 7:30 (`INNOVATION.BOARD_DOW`), with the last Thursday's hour. **Wall:** `gameBoard_` adds `awardsWeek` and `awardTotals`; `gameWall_` and `wallIntel_` add `awardsWeek` {from 'Wed 14 Oct', to 'Tue 20 Oct', fromDay, toDay, final, label}; `awards` is as before. `wall/index.html` still says "Friday at 1 pm" / "FRIDAY'S AWARDS" (front end not changed here). Tests: `tests/test-game.js`, `tests/test-tick-order.js`, `tests/test-wall2.js` (the harness's `formatDate` now knows `u`).
+- **5:00: Claude's writing in the Branch Manager's morning mail (22 Oct 2026, 2026-10-22a).** Ricky, 6:22am: "I am not seeing any AI writing my tasks in the morning report to me at 5??". The 5:00 run already had Claude read his tasks and who waits on him: `unitModel_('ricky', day, { ai: true })` calls `bmdAdvice_`, kept for the day in `bmd_adv_<day>`. But the mail, simplified on 20 October, showed none of it; Claude's words were only on My day, the respond page and the 3:00/3:45 mails. `bmMorningAi_(mm)` now puts a section "Claude has written these for you (n)" after Urgent, before the inbox:
+  - **People waiting on your word** (`BM_AI.ASK` 6): what they said, then "Claude's reply" with its question and the reply.
+  - **Your own tasks** (`BM_AI.MINE` 8, most overdue first): "Claude: Close it / Move it / Write a note", why, and the note. Tasks marked keep are left out.
+  - **The button** "Post Claude's replies" opens the respond page, where `bmDraftsFor_` reads the same cache. Nothing posts by itself.
+  - **The subject** ends "· Claude has written n".
+  - **No answer from Claude at 5:00:** the mail says so and points to My day after the 6:00 refresh.
+  - **No `ANTHROPIC_API_KEY`:** no section.
+
+  Pinned by `tests/test-bm-morning-ai.js`.
+- **His items at full depth: the whole Chatter, the record, the inbox (22 Oct 2026, 2026-10-22b).** Ricky, 6:48am: "did it build in all the intelligence and all the chatter, including the inbox scrub and anything at all on it that will help build an intelligent response? So I can post on chatter. And am I using the intelligence properly". It had not. The 5:00 read (`bmdAdvice_`) gave the quick model (`ANTHROPIC_MODEL`, else Haiku) the last four notes. Draft with Claude on his respond page gave the last six. The full read was only on the Unit Manager's and BMA's pages, and no draft looked at his inbox.
+  - **`bmDeepDraft_(day, items, said)`**, on the drafting model (`claudeDraftModel_`), `BM_DEEP.BATCH` 3 a call. Each item carries the same full read as `umDraft_`:
+    - the whole Chatter, 25 notes, oldest first;
+    - `umTaskContext_`: the record (description, account, contact, owner) and the other open tasks on it;
+    - `playbookFor_`;
+    - `bmDeepMail_`: up to 3 of the inbox scrub's rows from 30 days that were made into this task, or name the same policy number, or the client by full name.
+
+    It returns `{read, reply, next, add[], action, mail}`.
+  - **`bmDeepWarm_(day, budget)`**:
+    - runs at 4:40 from `housekeepingTick_`, before the 5:00 guard, once (`bmdeep_<day>`);
+    - runs hourly with the inbox scrub;
+    - drafts only items that are new or have a new note;
+    - keeps them in `bm_deep_<day>` (`bigPut_`, pruned).
+  - **Who reads them:**
+    - the 5:00 mail (`bmMorningAi_`: Where it stands, Claude's reply, Next, Check first, "Read with n e-mails from your inbox", plus his instructions with no note);
+    - `bmDraftsFor_` (the respond page, 3:00, 3:45);
+    - `bmdDrafts_` (My day);
+    - `bmDraftOne_`, which tries the full read first with his words as `he_said`, falling back to `claudeDrafts_`.
+  - **The ping:** `has.claude` and `claude: {draftModel, readModel, fullDepthToday}`, never the key.
+
+  Pinned by `tests/test-bm-morning-ai.js` and `tests/test-ask-claude.js`.
+- **Claude gets its own run (22 Oct 2026, 2026-10-22c).** Ricky, 9:01am, after deploying 22b: "not seeing any ai intelligence that scrubs and guides me". His My day showed "Notes to post (24)" with every box empty, and every task's advice was the plain rule (`bmdRule_`). Two causes:
+  - **No room left in the run.** `bmdWarm_` (and the new `bmDeepWarm_`) ran at the tail of the hourly inbox scrub's run, and a long scrub takes a run to Apps Script's six minutes before Claude is asked.
+  - **The asks got no places.** `bmdAdvice_` took the first 30 items, his own tasks first: on 22 Oct his 41 own tasks took every place and the 24 asks got none.
+
+  Now:
+  - **Its own run:** both warm-ups run at :20 or later in each hour (`BM_DEEP.SLOT_MIN`), once an hour (`bmai_hr`), 6:20 to 4:00, with what is left of the run's budget.
+  - **Asks first, in chunks:** `bmdAdvice_` puts the asks first and reads up to `MYDAY.ADVICE` 75 items in chunks of `MYDAY.CHUNK` 25 (`bmdAdviceChunk_`), so one long answer is never cut off.
+  - **The deep pass is wider:** `BM_DEEP` is now BATCH 4, ASK 20, MINE 10, IGNORED 6, `MAX_TOKENS` 3200, a 280-second budget at 4:40, and 150 seconds each hour.
+  - **`draftMyRepliesNow()`**, from the editor, runs both reads at once and logs the count.
+  - **"Today so far"** printed "Sat Dec 30 1899 07:08:00 GMT-0358" when the sheet had turned "07:08" into a time value. `dayLogRows_` now reads At through `timeStr_`.
+- **Claude's answer, read even when untidy or cut short (22 Oct 2026, 2026-10-22d).** Ricky, 9:07am, on My branch: "Draft my reply" said "Branch Intelligence came back empty. Try again." Every Claude reader needed a perfect JSON answer: one raw line break inside the reply, a word or a fence around the braces, or an answer cut off at its limit, and the whole answer was thrown away.
+  - **`claudeJsonParse_(txt)`** is now used by every reader: the batch drafts, the advice chunks, the deep pass, Draft my reply, the brief, the note drafts and the Best Note pick. It tries the answer as it is; then with raw line breaks inside strings escaped (`claudeJsonFix_`); then keeps each complete top-level entry (`claudeJsonEnd_`) and drops only an unfinished one. A reply that was itself cut off is never kept.
+  - **`claudeText_`** skips thinking blocks.
+  - **`claudeStop_`** gives the stop reason. When Draft my reply has no reply, the page says why ("it ran out of room", "it declined this one", "nothing in the answer"), and the run log gets the stop reason and the first 200 characters.
+  - **`UMAI.MAX_TOKENS`** is now 1600 (was 900).
+
+  Pinned by `tests/test-claude-json.js` and `tests/test-um-draft.js`.
 
 - **Wall Intelligence, the new wall (20 Oct 2026, 2026-10-20g).** Ricky: "the wall needs to be redesigned with a lot of animation and motions and graphics ... what the managers do, what the agents do, and what staff actually does ... streamed outside as well as inside", then "I would like sound ... Andrew's voice, this song ... streams outside without client's name so the agents can see what is being actioned, who is doing what, who is out today ... and the gamification." **`/wall/` is now Wall Intelligence** (`wall/index.html`); the block wall moved to **`/wall/classic/`** (`tests/e2e-wall.js` and `tests/test-substance.js` read it there). **Feed** (`wallIntel_(day, outside)`, cached 5 minutes as `wall2_in_<day>` / `wall2_out_<day>`): `wallStaff_` (who is in, out today or later; cover from Workload Moves; tasks closed with a proper note by hour 7–17 and by kind `wallKind_`: new, orphan, retention, claims, other; par, quests, streaks, gain from the game), `wallAgents_` (`agentPeople_`, `agentFunnel_`, `ff360Agent_`, `goalFor_`, `agentDaySummary_` and Agent Day `At` times; the year as % of goal against % of the year gone), `wallManagers_` (My Day Log groups against `myTasks_` by `dayGroup_`, Akaash's unit, cover, Query Pal answered this week), and a running feed newest first. **Never on the wall, inside or out:** a client, a policy number, a note, a task subject, why someone is out. **Outside** also drops arrival times, lateness, points, dollars, agents with nothing yet, agent projection times, the inbox, Query Pal past turnaround, and gains below someone's usual. **Access:** `handle_` action `wall2` (signed in: the Branch Manager gets inside, anyone else outside) and `wallout` (no sign-in, `WALL_OUTSIDE_KEY`; run `wallOutsideLink()` in the editor for the link `https://rickyrampersadbranch.com/wall/?k=…`; a new key changes it). **Page:** an ident, then Staff (who is in / cover flow; hour by hour; the kind of work; the team game), Agents (the field today; review to cover and FY27), Managers, Live; heavy motion (rings, bars, donut, heat grid, flows, counters), warm graphite ground (no saturated blue), the branch bar and a ticker always along the bottom, captions. **Sound:** the branch Motivation track (`/rr-branch-theme.mp3`) under Andrew; recorded lines `wall/audio/v2/n0..n8.mp3` (made with `wall/audio/v2/build-voice.sh` on Ricky's computer, en-US-AndrewNeural at −12%, since the speech service is blocked from the sandbox) play on any screen, else Microsoft Edge's built-in plain Andrew voice reads the live lines with today's numbers, else captions only; `?voice=recorded|live|off`. `?demo=1` (and `&view=outside`) shows a marked sample. Pinned by `tests/test-wall2.js` and `tests/e2e-wall2.js`.
 
 - **The wall on a phone, more motion, and the Branch Manager's day (20 Oct 2026, 2026-10-20h).** Ricky: "viewing on mobile and it's not scaled ... more graphics and more animations and motions for a max impact", then "Can we also build the managers? I am doing a lot right now as the branch manager" and "remember my day starts at 5am". **Phones** (`sizeUp`: width under 900 or height under 560) get `body.mob`: a stacked layout that scrolls, a sticky header, the caption and the branch bar pinned at the foot, two-up tiles, one column of panels (game cards two-up), every row rebuilt for a narrow screen through `mq(tv, mob)`; a phone on its side adds `short`: smaller type, two columns, four-up tiles, a slim bar without the ticker, and Andrew's line only while he speaks. **Motion:** a channel bumper (a band of the channel's colour sweeps across with its name) on every change of channel, titles that land word by word, floating motes, an equaliser by LIVE (gold and faster with the sound on), shines on the tiles, counters that pop when they land, a ripple on the newest event. **Managers** is two scenes: the Branch Manager's day (`wallManagers_().bm`: My Day Log by the hour from `WALL2.BM_FROM_H` = 5am to 6pm, notes, closes, e-mails, moves, tasks, inbox, the busiest hour, his latest actions as kind and group only via `wallBmWhat_`, never the subject; his Salesforce notes and closes are read fresh with `dayLogSalesforce_` on each wall read; inside also his check-in time; his actions join the running feed as Mr Rampersad), then the unit and the desks. Andrew's recorded line for it is `n9`.
-- **Service ratings (20 Oct 2026, 2026-10-20i).** Ricky: "when a task is closed for an agent, a star rating and a summary ... the agent gets to rate the support who had closed that task", and for a client "ask the client for the patience, looking at how long it took, and ask for a rating". `rateTick_` (from `housekeepingTick_`, every `RATE.EVERY_MIN` = 5 minutes from 7am) reads the tasks `RATE.DESKS` closed since the watermark `RATE_SINCE` (default the start of today), up to ten minutes ago (`LAG_MIN`, so the note is there and a close undone at once is never rated). A close asks for a rating only with a proper note by whoever closed it (`gameProperNote_`; the newest is the closing note); `SKIP_TYPES` (HR, training, RR Operations, ideas) and `SKIP_SUBJ` (Email:, birthdays, the tracker's own) never ask. **Agent:** `Task.Agent__c`, a Contact of record type AGENT with an e-mail that is an active agent in `agentPeople_()`, never the Branch Manager (by e-mail or name), a department or a former agent; at most `AGENT_MAX_PER_DAY` = 6 a day each; `rateAgentMail_`: what was closed, the kind, opened, closed, days, a two-sentence summary of the closing note (`rateSummaries_`: Claude Haiku once a run, the note itself otherwise) and five star links (`?sr=token&r=n`). **Client:** `Task.WhoId`, a Contact of record type CLIENT with an e-mail; `rateClientMail_` (its own frame `rateClientShell_`, nothing internal): "We have now taken care of" a phrase from `RATE_CLIENT_WHAT` by the playbook kind (never the subject or the notes), the policy's last four, thanks for their patience at `PATIENT_DAYS` = 3 or more, five stars and a link to stop (`&out=1`, `OptOut` on every row for that e-mail); never for a claim, once per `CLIENT_COOL_DAYS` = 14 (sent or test rows only). **Held** (Status `held`, never sent later) until `rateClientBlocked_()` is '': `RATE_CLIENT_APPROVED_HASH` must equal `rateHash_()` (the wording and every phrase), with `RATE_CLIENT_APPROVED_BY` and `RATE_CLIENTS` = 'send to clients'; `rateClientPreview()` mails him both e-mails and the phrase list, `rateClientApprove("name")` approves and switches on. `RATE_AGENTS` = off stops agent mail; `RATE_TEST_TO` sends every rating mail there, subject marked. Sheet `Service Ratings` (`RATETAB`). **The tap** (`rateClick_` from doGet `sr`): records the rating, posts `SERVICE RATING · n of 5 from ...` on the task's Chatter (not a note for the game, and kept out of his day log), 1 or 2 stars (`RATE.LOW`) goes to `managerEmails_()` alone at once with a link to the task (`rateAlert_`, once); a page with a comment box (`ratePost_` from doPost `sr`, the comment on Chatter and, when low, to him). **Fed into:** `rateStats_(from, to)`; each person's card ("Service rating this week", one decimal via `rateAvg_`, the latest kind comment), his My day game card (every desk, the latest ratings with comments), Friday's **Service Star** award (best average with `STAR_MIN` = 3 ratings), and the wall: `wallStaff_().svc` (the branch as one, four and five stars by first name, never a low rating by name, a comment or a client) for a new scene `n10` STAFF · HOW WE SERVED and the running feed. The wall's `go()` now clears every scene still on the stage and a bumper's pending mount, so quick taps no longer leave one scene under the next.
+- **Service ratings (20 Oct 2026, 2026-10-20i).** Ricky: "when a task is closed for an agent, a star rating and a summary ... the agent gets to rate the support who had closed that task", and for a client "ask the client for the patience, looking at how long it took, and ask for a rating". `rateTick_` (from `housekeepingTick_`, every `RATE.EVERY_MIN` = 5 minutes from 7am) reads the tasks `RATE.DESKS` closed since the watermark `RATE_SINCE` (default the start of today), up to ten minutes ago (`LAG_MIN`, so the note is there and a close undone at once is never rated). A close asks for a rating only with a proper note by whoever closed it (`gameProperNote_`; the newest is the closing note); `SKIP_TYPES` (HR, training, RR Operations, ideas) and `SKIP_SUBJ` (Email:, birthdays, the tracker's own) never ask. **Agent:** `Task.Agent__c`, a Contact of record type AGENT with an e-mail that is an active agent in `agentPeople_()`, never the Branch Manager (by e-mail or name), a department or a former agent; at most `AGENT_MAX_PER_DAY` = 6 a day each; `rateAgentMail_`: what was closed, the kind, opened, closed, days, a two-sentence summary of the closing note (`rateReads_`, formerly `rateSummaries_`: Claude Haiku once a run, the note itself otherwise) and five star links (`?sr=token&r=n`). **Client:** `Task.WhoId`, a Contact of record type CLIENT with an e-mail; `rateClientMail_` (its own frame `rateClientShell_`, nothing internal): "We have now taken care of" a phrase from `RATE_CLIENT_WHAT` by the playbook kind (never the subject or the notes), the policy's last four, thanks for their patience at `PATIENT_DAYS` = 3 or more, five stars and a link to stop (`&out=1`, `OptOut` on every row for that e-mail); never for a claim, once per `CLIENT_COOL_DAYS` = 14 (sent or test rows only). **Held** (Status `held`, never sent later) until `rateClientBlocked_()` is '': `RATE_CLIENT_APPROVED_HASH` must equal `rateHash_()` (the wording and every phrase), with `RATE_CLIENT_APPROVED_BY` and `RATE_CLIENTS` = 'send to clients'; `rateClientPreview()` mails him both e-mails and the phrase list, `rateClientApprove("name")` approves and switches on. `RATE_AGENTS` = off stops agent mail; `RATE_TEST_TO` sends every rating mail there, subject marked. Sheet `Service Ratings` (`RATETAB`). **The tap** (`rateClick_` from doGet `sr`): records the rating, posts `SERVICE RATING · n of 5 from ...` on the task's Chatter (not a note for the game, and kept out of his day log), 1 or 2 stars (`RATE.LOW`) goes to `managerEmails_()` alone at once with a link to the task (`rateAlert_`, once); a page with a comment box (`ratePost_` from doPost `sr`, the comment on Chatter and, when low, to him). **Fed into:** `rateStats_(from, to)`; each person's card ("Service rating this week", one decimal via `rateAvg_`, the latest kind comment), his My day game card (every desk, the latest ratings with comments), Friday's **Service Star** award (best average with `STAR_MIN` = 3 ratings), and the wall: `wallStaff_().svc` (the branch as one, four and five stars by first name, never a low rating by name, a comment or a client) for a new scene `n10` STAFF · HOW WE SERVED and the running feed. The wall's `go()` now clears every scene still on the stage and a bumper's pending mount, so quick taps no longer leave one scene under the next.
 - **The staff's timed mail before the heavy work (20 Oct 2026, 2026-10-20i).** Ricky, 2:40pm: "Elizabeth is saying she did not get her mail at 2:30". Nor her 11:30 progress check; on 19 Oct the close-outs only went by hand at 6:07pm. In `housekeepingTick_` the progress check, the close-out (`hkv2_`) and the at-the-finish reminder / did-not-close mark sat at the end of the run, after the inbox, the game, the agents and the cover; a run that ran out of time (Apps Script stops at six minutes) never reached them, while the morning mail at the top always went. They now run straight after the Branch Manager's progress, before `sdPrune_`, the hourly inbox, `gameTick_` and `rateTick_`. `HK_BUDGET_MS` = 4 minutes: past it, the inbox refresh, the game and the ratings are left to the next run. Each run records `tick_last` and the day's longest (`tick_long_<day>`); `showRunLog()` now prints them and today's `FAIL_` keys. To send a missed close-out by hand: `sendHousekeepingNow()` (skips anyone already sent, absent or not yet due). Test: `tests/test-tick-order.js`.
 - **Mail from support@, through the relay (20 Oct 2026, 2026-10-20i).** Ricky, 3:26pm: "So am I not using the rickyrampersadbranch account as you did have a workspace set up". The tracker runs under the personal Gmail (about 100 recipients a day; each staff e-mail counts three) and ran out after 1pm on 19 and 20 Oct, so the progress checks, close-outs and his 3pm close-out never went. Every send in KPI.gs is now `mailSend_(o)` (never `MailApp.sendEmail` directly): `mailViaRelay_` posts the message, signed (HMAC of message|time with `MAIL_RELAY_KEY`), to `MAIL_RELAY_URL`, the **Mail Relay** (`apps-script/MailRelay.gs`), its own small project under support@rickyrampersadbranch.com (Google Workspace, about 1,500 a day; `RELAY.MAX_PER_DAY` 1,400), deployed as a web app (Execute as: Me, Anyone); it sends only a request signed with its `RELAY_KEY`, under ten minutes old, once. Not set, refused or unreachable: Gmail as before, the reason in `MAIL_RELAY_LAST`, the relay skipped for fifteen minutes (`mail_relay_down`). The tracker's data access, triggers, inbox reading and web-app links do not move. `mailRouteTest()` sends him one test and says which way it went; `mailQuotaLeft()` shows Gmail's allowance and the relay's count; ping `has.mailRelay`; `ffQuotaOk_` is true with the relay. Setup is in the header of MailRelay.gs (`relayMakeKey`). Test: `tests/test-mailrelay.js`.
 - **The close-out at a set time, the sign-off check, and Claude's replies for the managers (20 Oct 2026, 2026-10-20j).** Ricky: "Sasha is 1:15pm, Liz is 2:15pm and Azariah is 3:15pm ... when they do sign off the email trigger goes out at 2pm for Sasha and references the 1:15 email with items not actioned ... build intelligence around this to ensure they respond"; Kamla 4:15 (his choice of the two), his own close-out 3:00 as before, Akaash's account of the day 3:00 (`UM_EVENING_AT`, his day still ends at 6), each checked at 3:45. `CLOSEOUT.AT` sets the notice per desk (`closeoutAt_`; others, Pawan included, finish minus `HK_LEAD_MIN`). The notice records what it asked (`closeoutAskSave_` → `co_ask_<sid>_<day>`: tasks set for the day still open, and the end-of-day checks not done). At the finish (the `ncrem_` slot in the tick) or on signing out after the notice (`closeoutAtSignOut_`, from `signOutDay_` and `autoSignOut_`), `closeoutCheck_` sends what is still unanswered, once a day (`co_chk_`), headed with the notice's own time: answered means closed, moved to a later date, or a reason on the close-out page (`progAnswers_` 'leave'); a check, Done or Not done with a reason. Salesforce not answering sends nothing (the plain reminder at the finish instead); everything answered and still signed in gets the plain reminder. The record is `co_un_<sid>_<day>`. `closeoutRuns_` counts close-outs running per task: the second copies Kamla (`CLOSEOUT.BMA`, never on her own) and marks the subject; the third is in his 5am by name (`closeoutYesterdayHtml_`, after `bmYesterdayLine_`, every desk's yesterday). Next morning `yesterdayOpen_` also returns those still open (`why: 'unanswered'`, cached ten minutes), so they lead the day page and plan page ("Yesterday first · N left from your 1:15pm close-out", the day does not save until each has a reason and a date) and the morning e-mail (`closeoutMorningCard_`). The game's day-closed point is now a clean close. **Claude's replies** (Ricky, 5:01pm: "with Akaash and me intelligence is at the max ... AI guided responses ... to post the Chatter"): `claudeDrafts_` (model `ANTHROPIC_DRAFT_MODEL`, default `claude-sonnet-5-5`; needs `ANTHROPIC_API_KEY`) writes a reply per item from the task and its notes. His 3pm puts Claude's reply under each note waiting on him and records the asks (`co_ask_ricky_`); `bmCloseoutCheck_` at 3:45 sends those still waiting, each with its reply; the respond page (`bmReplyPage_`, cache only via `bmDraftsFor_(…, true)`) shows `draftBox_` with "Use Claude's reply" (fills the box, `DRAFT_JS`; nothing posts by itself). Akaash's 3pm (`umDraftsMake_` → `um_items_<sid>_<day>_eve_ai`) and his page (`umItemHtml_` sixth argument) the same; `umCloseoutCheck_` at 3:45 if his account is not in. `sdPrune_` now also drops `co_`, `bmchk_`, `um_chk_`, `FAIL_` and `ag_` day keys after three weeks. Test: `tests/test-closeout-times.js`.
@@ -4863,3 +5322,16 @@ guide you. In your session review notes on the step back in place from all memor
   Then (10:33am) "not hearing any music, and the ability to pause as well": the branch track under Andrew is at 34% (`BED_VOL`), ducked to 13% while he speaks (`BED_DUCK`); at 12% nobody heard it. **Pause** (the footer button, Space, or the card) now holds everything: the scene stays, the music and Andrew pause, every animation on the stage and the ticker freeze (`body.paused`), the progress bar stops where it is, and a **Paused · Tap to play** card sits over the wall; play picks up exactly there (`setPaused`).
 - **The film: Our new way of work, at /howweworkvid/ (21 Oct 2026).** Ricky, 10:13am: "where is the full video ... what we do daily and how each starts their day and how our environment operates, our new way ... everyone and role is on the video", then 10:42am: "want to run on the site rickyrampersadbranch/howweworkvid". `howweworkvid/index.html` (from the work mode film page) plays the whole wall in the sample: the ident, FY27's eleven, every staff, agent, Branch Manager, manager and live scene, and the close, 4:14, with Andrew on every scene and the branch track ducked under him; `new-way-of-work.mp4` (1600x900) and `new-way-of-work-phone.mp4` (1080x1920, the phone layout), chapters from the recorder's marks (`data-scenes`, `data-chapters`). The staff are the branch's own; the agents' names and every figure are the sample; no client is shown. The old work mode film stays at /workmodevideodemo/.
 - **FY27: our meetings, inside the meeting, and the client (21 Oct 2026).** Ricky, 10:51am: "the way we work regarding our new meeting builder that will be launched when we meet ... show the log in with built-in agendas and contribution for all ... all voices are heard and with a structure ... the ability to build the agenda and minutes ... show the meetings screen ... anything I forget that will make an impact". Three scenes on channel 5. `w13` "Every voice heard, with a structure": a phone signs in (agent number and password; signing in is the register), shows the agent's item and the carried-forward actions, then "What are you presenting?" added to the agenda; the Friday 2:00 to 3:30 agenda as a timeline that builds item by item with an owner on each (Branch Manager, Sales Support, Unit Manager, BMA, an agent, everyone), a ring for the 75 of 90 minutes the team holds (the chair 15), and the four steps from the daily check to the meeting. The meeting is Friday 2:00 to 3:30 (moved from Wednesday; the builder's README still says Wednesday morning). `w15` "Everyone signs in. Nothing is lost.": the Meeting Builder's own screens in a laptop and a phone frame, cycling in step with five lit steps (the chair builds it, the agenda, the register and who carries the meeting, the actions, the minutes). The screens are `wall/img/meet/*-lap.jpg` (1440x900) and `*-ph.jpg` (from 390x844), captured from `meetings/index.html` with its API mocked: sample people (the branch's staff, sample agents), no client anywhere; re-shoot them if the app's screens change. `w14` "The work shows up for the client": the service average (one decimal), ratings this week, five-star share, queries answered on time, how a handover, a Query Pal question and a closed task reach the client, and the latest ratings from `svc.recent`. Andrew: `wall/audio/v2/w13.mp3`, `w14.mp3`, `w15.mp3` (build-voice.sh). The film cut (`NW_FILM`) and the full film carry all three. Two Salesforce mentions came off the FY27 scenes (the film is public): "The system sets each day for every desk", "A comment under any task, without leaving the page". The film's music now loops under the whole film (`-stream_loop -1`); the branch track is two minutes long.
+- **FY27, the rest of Ricky's list (21 Oct 2026, afternoon).** From 12:26 to 12:37: "Andrew is sound robotic", "branch meeting is on a Wednesday", "boast about the revised transmittal", "show the branch intelligence draft how it's done with a sample", "some slides hard to read as it's dark ... not seeing reminders on fact finds ... the slide number and more graphics", "where is the production wall and the goals are aligned", "hour by hour what's being actioned, the task type should be in a colour inside the green, as well who does the bag". New channel 5 scenes: `w17` the transmittal, built for you (the old book, measured; the printed transmittal with the reason beside a late line, stamped SENT; papers in by 11:45, the bag at 12 noon, the department asked after three working days, the 5 pm digest); `w16` Branch Intelligence, step by step (a sample task; the tracker's own labels: Draft my reply, Reading the whole history and the record, Where it stands, Your reply, Next step, To make it stronger, Use this reply, Firmer, Shorter, Kinder, Again; the page drawn light, as staff see it); `w18` nothing slips: the system asks (the week of reminders: Monday 7:00 no fact find in 14 days, Monday 8:14 started and never sent, every day 9:24 "Did this close?", Wednesday the reminder with the Unit Manager copied, Friday the answers to the managers; the agent's card, one tap on Picked up moves pipeline to production); `w20` our goals, aligned (one agent's FY27 Flight Plan from income need to contacts a week; each agent's % of API pace; the unit; the branch against the year gone; no plan, no fact find); `w19` the production wall (the week, the month, the year to date, written and waiting by age, month by month, who is carrying the year; sample figures). The production wall joins our walls in `w12`. Every scene has its number top right (`#sno`, `slideNo()`). Hour by hour (`n2`) colours each green hour by the kinds of task inside it (`hourKinds` from the feed) and rings the bag's hour in gold (`bag`); the hour-now cell no longer loops its entrance. The meeting is Wednesday 9:00 to 10:30 again on `w4` and `w13`; `w15`'s screens (`wall/img/meet/`) were re-shot for that meeting, cropped and lifted for a TV. Andrew is now "Andrew Expressive" (`en-US-AndrewMultilingualNeural`, +0%) on every scene, in conversational wording, each clip transcribed on the runner and checked as English (see the voice rule near the top). Staff wins pop up on the staff channel only and never for anyone out today (#241).
+- **FY27, the deep dive: the client's journey, the fact find, the Log Book, the Wednesday wins (21 Oct 2026, evening).** Ricky, 5:41pm and 5:53pm: "drill into the fact find and agents ... clients get the draft, they get the approval ... what the agent gets, the reminders, what the managers see", "no lapses on these fact finds since we officially launched it in August 2026" ("find a strategy way to mention"), "the transmittal, how it's tracked with the time that goes by during the day ... how we leverage the clean data", "awards day cannot be a Friday: the weekly wins celebrated on a Wednesday in the meeting ... Starbucks ... MovieTowne ... everyone acknowledged", "templates visible, processes shown with motion and graphics", "for our client it's a journey at every touch point ... fully compliant according to the Insurance Act, market conduct". New channel 5 scenes:
+  - `w22`: the client's journey, six stops; each shows THE CLIENT, a real screen from `wall/img/jr/`, and BEHIND THE AGENT.
+  - `w24`: the digital fact find end to end. Its payoff is the counter to 0 "lapses since the digital fact find launched, August 2026"; the date is Ricky's, though FactFind360's index.html says 1 July.
+  - `w25`: the fact find's own e-mails and pages, `wall/img/ff/`, rendered from fact-find-analyzer with sample data, four at a time, each scrolling by `object-position`.
+  - `w23`: compliance, clause by clause against the CBTT Market Conduct Guideline (July 2023, under the Insurance Act, 2018): 5.2, 5.2.2, 5.3.1, 5.4.2, 5.4.3, 5.6, 5.7.
+  - `w26`: the Log Book in the agent's hand. Eight phone screens in `wall/img/lb/`, captured from `rroperations/logbook/` with the API mocked and sample clients, lit in step with eight timed steps. Beside them, the clean data: six spellings of GLOC CS RSC - CHAGUANAS taken from `LB_DEPTS`' alias pattern fold into one; 90 into 25 departments, 237 into 70 documents, 3,634 lines.
+  - `w21`: every Wednesday, the week's wins (Wednesday to Tuesday, ready at 7:00): staff awards and agents' wins, Starbucks and MovieTowne tickets, everyone acknowledged, confetti. Friday's awards came off `w4`, `w6` and `n4`; KPI.gs 21h moves the awards e-mail to Wednesday (#248).
+
+  The wall's order puts the fact find together (w24 w25 w10 w18 w23) and w26 between w8 and w17. `NW_FILM` is now the tight story, about five minutes, and `list()` plays it in NW_FILM's own order: n0 w1 w22 w24 w25 w18 w23 w3 w26 w17 w11 w16 w13 w15 w20 w21 w14 w19 w12 w7. /howweworkvid/ was rewritten for that cut. The Log Book still holds whole hours (in by 12, the bag at 13), so it cannot say 11:45; the wall and the film use 11:45 and 12:00, Ricky's times.
+- **Service ratings, task by task (21 Oct 2026, 2026-10-21f).** Ricky, 12:37pm: "I am seeing the Ratings coming in but a lot more data is needed: the timelines, the chats, the intelligence etc, the client, the department, how, so I can see this, the type etc, build more intel". **At send time** `rateRun_` keeps eight more columns, appended to the end of `RATETAB.head` so older rows still line up (`rateCols_` adds them to an existing tab): `Agent`, `Client` (the task's Who when a CLIENT), `Department` (the Who, or the Agent__c, when a BUSINESS CONTACT; otherwise the first department the notes name, newest first, then the subject, `RATE_DEPTS`; otherwise where the playbook routes the kind, `RATE_DEPT_BY_KIND`), `Opened` and `Closed` (branch time, "2026-10-14 08:00"), `Notes` (Chatter text notes), `Timeline` (JSON `[{a, k, b, x}]`: open with the subject and due date; every note, who and when, 140 characters, the page's head line removed; replies; workload moves from Workload Moves; date moves from Task Changes and Due Moves, the same move once; close with the closing note, 300 characters; at most `RATEPG.TL_MAX` = 40 steps) and `Intel`. `rateFacts_` builds it from what the run already read plus two Salesforce reads a run, only when there is something to send: FeedComment (the replies) and User (names not on the register); the Task query gained `CreatedById, ActivityDate`. `rateReads_` makes ONE Claude call a run for every task (`ANTHROPIC_MODEL` or `CLAUDE_READ.MODEL`), answering `{summary, intel}` per id: the agent's two-sentence summary as before, and two or three sentences on how it went (how long it sat, the follow-ups, where the wait was, how it was worked, whether the closing note says what was done). Without a key, on a failure or a missing answer: the note, and `rateIntelPlain_` (the same points from the record: days, notes before the close, replies, moves, phone/e-mail/WhatsApp from the notes `RATE_HOW`, the longest wait between two steps and what the notes say it waited on `PLAYBOOK_WAIT_RE`, and `RATE_DONE_RE` on the closing note). **His page** `?rs=ricky&f=rate&k=` (`rateIntelUrl_`, signed `replySig_(sid, 'always', 'rate')`, one link for every day, not in `FAST.KINDS`: it reads the tab only): the week (ratings, the average, five-star share, answered of asked, the days, notes and department most involved, by who closed it, by type, the three lowest as links), then a card per rating, newest first (latest `RATEPG.MAX` = 200): stars and comment or "Waiting for a rating" / "Not sent", who closed it for whom, client, department, agent, type and kind, opened to closed, days and notes, the intelligence, the timeline as a vertical list; filters by closer, agent or client, type and stars, client-side. Rows from before show "—". `&i=<token>` opens that card: the 1 or 2 star e-mail (`rateAlert_`) now carries "See the whole task" and the read. The link: his morning mail and his 11:00 / 3:00 mails ("Also:"), My day's links, and under the ratings on his day page (`gameBmSec_`). For him alone; Script Property `RATE_PAGE_ALSO` (e.g. `kamla, akaash`) opens it to the BMA or a Unit Manager, `showRatingsLink("kamla")` gives the link; never a desk. Never on the wall: `rateStats_`, which `wallStaff_` reads, carries none of it. Test: `tests/test-rate-intel.js`.
+- **The wall knows the kinds in each hour, and who has the bag (21 Oct 2026, 2026-10-21f).** Ricky: "hour by hour what's being actioned, the task type should be in a colour inside the green, as well who does the bag as well built in". `wallStaff_` now sends each person's `hourKinds` (per hour, the closes with a note by `wallKind_`: new, orphan, retention, claims, other) and `bag` ({who, at, h, cutoff, covering}) from `mailbagRouter_` (the weekly rota, the next one in when the router is out) and `mailbagLeaves_` (12 noon unless `MAILBAG_AT`), papers in a quarter of an hour before. The wall colours each green hour by kind and rings the bag's hour in gold. Tests: `tests/test-wall2.js`.
+- **Sample ratings for the Branch Manager (21 Oct 2026, 2026-10-21g).** Ricky, 1:55pm: "send some samples to see the revised and let me click". `rateSamples(n)` in the editor, or **Send me sample ratings** on his Ratings page (a signed POST `rs=ricky&f=rate&k=…&act=samples` through `replyPost_`, him alone, not `RATE_PAGE_ALSO`; a second press within `RATE.SAMPLE_GAP_MIN` = 2 minutes sends nothing), sends up to `RATE.SAMPLES` = 3 agent rating e-mails in the real format (`rateAgentMail_`, subject `[Sample] …`) to `managerEmails_()` only, each from one of the latest real agent rows (its subject from the timeline's open step, kind, days, closer, the closing note as what was done, and the record's columns), or from `RATE_SAMPLE_MADE` (no client) when there are none; then one e-mail with every sample's five stars, its card and his page. Each sample is a row of its own (Kind and Status `sample`, Email his), so the stars, the thank-you page, a comment and the 1–2 star alert (`[Sample] Low rating …`, with See the whole task) all work. `rateIsSample_`: no Chatter post from `rateClick_` or `ratePost_`, `&out=1` changes nothing, and `rateStats_` (the week, the game's cards and board, the Service Star, his day page, the wall's `svc` and ticker) and `rateRun_`'s cap, cool-down and opt-outs skip it. His page marks sample cards (dashed, Sample), has Hide samples, and never counts them in the week. Agent e-mails only: client mail stays held. Test: `tests/test-rate-samples.js`.

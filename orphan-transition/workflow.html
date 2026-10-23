@@ -84,6 +84,8 @@
   <h1>The workflow: who does what, every day</h1>
   <p class="sub">Every client of an agent who left ends up with an agent of their own, a conversation on record, and a
     filed review. Three roles carry it. Pick yours, or print the page for all three.</p>
+  <p class="sub"><a href="board-films.html#start-to-finish">&#9654; Watch it first: the whole process, start to finish (3:48)</a>, then
+    <a href="training.html">take the test for your role</a>.</p>
 
   <nav class="roles" id="roles">
     <a href="#agents" data-role="agent">Agents</a>
@@ -130,27 +132,35 @@
   </article>
   <article class="msec" data-sec="C" id="claims">
     <h3><span class="sn">$</span>The TT$200, start to finish</h3>
-    <p>Nobody presses anything to start a claim. The system finds it, sends it and follows it up. One person fills one
-      date.</p>
+    <p>Dates on the policy in Salesforce move every claim. People fill three of them when the work is done; the system
+      follows up until the next date is in, and sends the claim the day it can go.</p>
     <div class="flow">
-      <div><b>The questionnaire comes in</b>On or after the day the client was named. Matched by their own link, else a
-        policy number only they hold, else their e-mail.<i>The client, with the agent</i></div>
-      <div><b>The claim goes</b>To the Retention unit, the branch manager and the agent copied. Salesforce gets Date Subm to Retention and
-        Was Agent Paid = No.<i>The system, at once</i></div>
-      <div><b>The daily list</b>Every working day at 10:00, every claim three days old and unpaid, to Retention with sales
-        support and the branch manager copied.<i>The system</i></div>
-      <div><b>Paid, and the agent told</b>Date Comm Paid goes in. The claim leaves the list, Was Agent Paid turns Yes, and
-        the agent gets one e-mail.<i>Retention or sales support, then the system</i></div>
+      <div><b>In, and to Customer Service</b>The completed questionnaire is received: Date SQ submitted. Sales support sends it to Customer Service, copying support@, and fills Date SQ submitted to CSR.
+        <i>Staff, then sales support</i></div>
+      <div><b>Followed up</b>Every 5 working days until Date SQ processed by CSR is filled: one e-mail to Customer Service
+        with the trail and the original e-mail attached, sales support copied, and a line on the task.<i>The system, at
+        10:00</i></div>
+      <div><b>Processed: the claim goes</b>Sales support fills Date SQ processed by CSR. The claim goes to the Retention unit
+        the same day, to be paid within 3 working days. Date Subm to Retention and Was Agent Paid = No are written.
+        <i>Sales support, then the system</i></div>
+      <div><b>Reminded, then paid</b>A reminder every 3 working days until Date SQ Comm Paid is in. Then Was Agent Paid
+        turns Yes and the agent gets one e-mail.<i>Retention or sales support, then the system</i></div>
     </div>
     <table class="pts two"><tr><th>Field on the policy in Salesforce</th><th>Who fills it</th></tr>
+      <tr><td><b>Date SQ submitted</b>: the completed questionnaire is in</td><td>Staff</td></tr>
+      <tr><td><b>Date SQ submitted to CSR</b>: sent to Customer Service. It starts the follow-ups</td><td>Sales support</td></tr>
+      <tr><td><b>Date SQ processed by CSR</b>: Customer Service has processed it. It stops the follow-ups and sends the
+        claim</td><td>Sales support, on Customer Service&rsquo;s word</td></tr>
       <tr><td><b>Date Subm to Retention</b>: the day the claim e-mail goes</td><td>The system</td></tr>
-      <tr><td><b>Was Agent Paid</b>: No when the claim goes, Yes when paid</td><td>The system</td></tr>
-      <tr><td><b>Date Comm Paid</b>: the commission run date. The one field a person fills, and the one that stops the
-        daily list</td><td>Retention, or sales support from Retention's reply</td></tr>
+      <tr><td><b>Was Agent Paid for Orphan?</b>: No when the claim goes, Yes when paid</td><td>The system</td></tr>
+      <tr><td><b>Date SQ Comm Paid</b>: the commission run date. It stops the reminders</td><td>Retention, or sales
+        support from Retention&rsquo;s reply</td></tr>
     </table>
-    <p class="tip">The branch's own record is the Retention Payments tab. A Paid date typed there closes a claim the same way;
-      Void, Declined or Withdrawn in its Status stops one. One claim per client, ever. A questionnaire from before the
-      naming earns nothing. Nothing goes until the branch manager starts the claims from the menu.</p>
+    <p class="tip">The agent paid is the one named on the client (Assigned Agent), else the agent on the policy, and must
+      be active on the Agent Skill Bank: a claim for an agent who has left waits until the new agent is named. One claim
+      per client. A questionnaire that came in before the client was named earns nothing. The branch&rsquo;s own record is
+      the Retention Payments tab, where Void, Declined or Withdrawn in Status stops a claim. Nothing goes until the branch
+      manager starts the claims from the menu.</p>
   </article>
   </section>
 
@@ -224,15 +234,16 @@
   <article class="msec" data-sec="A5">
     <h3><span class="sn">5</span>The review, and the TT$200</h3>
     <ul>
-      <li>A <b>service questionnaire</b> received on or after the day you were named earns <b>TT$200</b>, whoever sent the
-        link. One claim per client. The board finds it by itself and your <b>Claims</b> tab shows each one and where its
-        payment stands.</li>
+      <li>A completed <b>service questionnaire</b> for a client named to you earns <b>TT$200</b>. One claim per client.
+        Sales support sends it to Customer Service, and the claim goes to the Retention unit the day it is processed. Your
+        <b>Claims</b> tab shows each one and where it stands: with Customer Service, sent, or paid.</li>
       <li>A questionnaire from before the naming earns nothing. So does a staff Test row or a departed agent's own
         policy.</li>
-      <li>Make sure the questionnaire carries the client's policy number, or comes from their own link: that is how it is
-        matched to them.</li>
-      <li>The claim is chased every working day until Salesforce carries the payment date. You do not chase it. When the
-        date goes in, you get one e-mail saying so, and the claim reads paid on your Claims tab.</li>
+      <li>Make sure the questionnaire carries every policy number of the client: sales support records it on each
+        policy in Salesforce.</li>
+      <li>Customer Service is followed up every 5 working days until it is processed, and the Retention unit every 3
+        working days until it is paid. You do not chase either. When the payment date goes in, you get one e-mail saying
+        so, and the claim reads paid on your Claims tab.</li>
     </ul>
   </article>
 
@@ -389,8 +400,9 @@
       <tr><td>Then</td><td><b>Agents</b>: each agent's households and clients, a progress bar, conversations and conversions,
         the median days to a first meeting, and <b>nothing logged</b> two working days after a naming, in red.</td></tr>
       <tr><td>Weekly</td><td><b>Team</b>: who is signing in and how often; the points; who named whom.</td></tr>
-      <tr><td>Claims</td><td>The TT$200 claims on the board, and the unpaid list that goes to the Retention unit every
-        working day at 10:00 with you and sales support copied. A claim weeks on the list is a call to Retention.</td></tr>
+      <tr><td>Claims</td><td>The TT$200 claims on the board: with Customer Service, sent to Retention, or paid. Customer
+        Service is followed up every 5 working days and Retention reminded every 3, sales support copied. A claim several
+        reminders old is a call to Retention.</td></tr>
     </table>
     <p class="tip">A <b>unit manager</b> sees the same four over their own unit: their agents, their clients, their
       sign-ins. Naming agents is the branch manager's and Client Support's.</p>
@@ -438,10 +450,10 @@
       <li><b>Salesforce</b>: every call logged on the board posts to the client's task; the Dashboard counts each person's
         tasks held, closed, and closed with no note. A task closed with no note of who was spoken to is a gap to raise,
         not a close.</li>
-      <li><b>TT$200 claims</b>: found by the system when a questionnaire arrives on or after the naming, e-mailed to the
-        Retention unit with you and the agent copied, then listed every working day at 10:00, sales support copied, until
-        Salesforce carries Date Comm Paid. The agent is told when it is paid. Nothing goes until you start it from the
-        menu.</li>
+      <li><b>TT$200 claims</b>: driven by the questionnaire's dates in Salesforce. Customer Service is followed up every 5
+        working days until Date SQ processed by CSR is filled; the claim then goes to the Retention unit, you, sales
+        support and the agent copied, to be paid within 3 working days, and is reminded every 3 working days until Date SQ
+        Comm Paid is in. The agent is told when it is paid. Nothing goes until you start it from the menu.</li>
       <li><b>Points and the reward</b>: the Team tab ranks Client Support by the period's points (reached 3, met 5, a
         household named 5, a conversion 10, a questionnaire after the naming 10). What a point is worth, a monthly prize
         or a sum per conversion, is yours to set and to announce.</li>

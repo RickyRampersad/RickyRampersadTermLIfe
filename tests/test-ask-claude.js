@@ -41,7 +41,10 @@ ok('Enter in a box drafts that item, not the first one', /onkeydown="askEnter\(e
 
 const back = post({ draft: '00TASK000000000002', ai_00TASK000000000002: 'tell him Thursday noon, and I sign off myself', c_00TASK000000000001: 'Kamla, Thursday is fine.', log: 'Met NovaHub' });
 ok('Draft with Claude: the reply comes back in that item\'s box', /<textarea name="c_00TASK000000000002"[^>]*>Akaash, the projections at 65 and 70 go to you by Thursday noon; I will sign them off myself\.<\/textarea>/.test(back));
-ok('his instruction went to Claude, marked as his, with the task\'s history', /"instruction":"tell him Thursday noon, and I sign off myself"/.test(asked[0]) && /Only "instruction" comes from him/.test(asked[0]) && /LIB projection at age 65 and 70/.test(asked[0]));
+// Since 2026-10-22b the full read goes first (bmDeepDraft_: his words as "he_said", the whole history, the record, his inbox);
+// when it does not come back with a reply, the shorter draft (claudeDrafts_, his words as "instruction") is the fallback.
+ok('his instruction went to Claude, marked as his, with the task\'s history', /"he_said":"tell him Thursday noon, and I sign off myself"/.test(asked[0]) && /Only "he_said" comes from him/.test(asked[0]) && /LIB projection at age 65 and 70/.test(asked[0]));
+ok('and the shorter draft is the fallback, his words still marked as his', /"instruction":"tell him Thursday noon, and I sign off myself"/.test(asked[1]) && /Only "instruction" comes from him/.test(asked[1]));
 ok('everything else he typed is kept', /<textarea name="c_00TASK000000000001"[^>]*>Kamla, Thursday is fine\.<\/textarea>/.test(back) && />Met NovaHub<\/textarea>/.test(back) && /value="tell him Thursday noon, and I sign off myself"/.test(back));
 ok('nothing was posted by drafting', !posts.length);
 ok('the page opens at that item', /getElementById\("i_00TASK000000000002"\)/.test(back));

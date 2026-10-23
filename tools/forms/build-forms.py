@@ -389,12 +389,21 @@ def index(forms):
     # the stage here circles the six LINES, as each form's own circles its
     # sections: the same drawing, one level up
     six = [{'name': f['line'], 'icon': f['icon']} for f in forms]
+    # a line whose form lives elsewhere still gets its card here, so /quote/ is
+    # the whole door. `elsewhere` is an absolute path and no page is built for it.
+    def href(f):
+        return f['elsewhere'] if f.get('elsewhere') else '/%s/' % f['dir']
+
+    def cta(f):
+        if f.get('index_cta'):
+            return f['index_cta']
+        return 'Get a price' if f['dir'].split('/')[0] == 'quote' else 'Start'
+
     cards = ''.join(
-        '<a class="qcard" href="/%s/"><span class="ic">%s</span><h2>%s</h2><p>%s</p>'
+        '<a class="qcard" href="%s"><span class="ic">%s</span><h2>%s</h2><p>%s</p>'
         '<span class="go">%s %s</span></a>'
-        % (f['dir'], ic(f['icon']), esc(f['line']),
-           esc(f['lede'].split('.')[0] + '.'),
-           'Start' if f['dir'].split('/')[0] != 'quote' else 'Get a price', ic('arrow'))
+        % (href(f), ic(f['icon']), esc(f['line']),
+           esc(f['lede'].split('.')[0] + '.'), cta(f), ic('arrow'))
         for f in forms)
 
     return """<!DOCTYPE html>
@@ -477,6 +486,10 @@ def main():
     spec = json.load(open(SPEC, encoding='utf-8'))
     wrote = []
     for f in spec['forms']:
+        if f.get('elsewhere'):
+            # the form is somebody else's page; we only list it on the index
+            wrote.append((f['elsewhere'] + ' (listed, built elsewhere)', 0, 0))
+            continue
         d = os.path.join(ROOT, f['dir'])
         os.makedirs(d, exist_ok=True)
         p = os.path.join(d, 'index.html')

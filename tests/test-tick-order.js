@@ -65,5 +65,23 @@ env.resetRequestMemo_ && env.resetRequestMemo_(); env.forgetHr_(env.ATT);
 env.housekeepingTick_();
 ok('11:31am: her progress check goes, before the inbox', order.indexOf('progress:elizabeth') > -1 && order.indexOf('progress:elizabeth') < order.indexOf('inbox'), order.join(', '));
 
+// The innovation board goes before the branch meeting, which is Wednesday 9:00 since 21 Oct 2026 (2026-10-21h), not Friday.
+let boards = [];
+env.sendInnovationBoard_ = d => { boards.push(d); return true; };
+const boardAt = (day, hm) => {
+  env.todayISO_ = () => day; NOW = new Date(day + 'T' + hm + ':00').getTime(); slow = 0; order = [];
+  env.resetRequestMemo_ && env.resetRequestMemo_(); env.forgetHr_(env.ATT);
+  env.housekeepingTick_();
+};
+boardAt('2026-10-23', '07:31');
+ok('Friday 7:31: no innovation board (there is no Friday meeting)', boards.length === 0, boards.join());
+boardAt('2026-10-21', '07:21');
+ok('Wednesday 7:21: not yet', boards.length === 0, boards.join());
+boardAt('2026-10-21', '07:31');
+ok('Wednesday 7:31: the innovation board, before the 9:00 meeting', boards.join() === '2026-10-21', boards.join());
+boardAt('2026-10-21', '07:41');
+ok('once', boards.length === 1);
+env.todayISO_ = () => DAY;
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

@@ -94,7 +94,16 @@ const p2 = asked[0].messages[0].content;
 ok('Firmer reaches Claude', /Make this version firmer/.test(p2));
 ok('and his own words are the substance', /tell her friday latest or I move it to Akaash/.test(p2));
 reply = 'not json at all';
-ok('an answer that is not JSON says so', /came back empty/.test(env.umDraft({ rs: 'ricky', d: DAY, k, id: ID }).error));
+ok('an answer that is not JSON says so', /came back without a reply/.test(env.umDraft({ rs: 'ricky', d: DAY, k, id: ID }).error));
+// 22 Oct 2026, 9:07am: "Branch Intelligence came back empty" on his page. An answer with a raw line break in the reply, or cut off
+// at its length limit, was thrown away whole; now it is read.
+reply = '{"read":"Open since 8 Sep; four chases.","reply":"Shivonne, Kamla has written four times.\nPlease confirm by Friday 23 October.","next":"Shivonne by Fri 23 Oct","action":"chase"}';
+const r3 = env.umDraft({ rs: 'ricky', d: DAY, k, id: ID });
+ok('a raw line break inside the reply: read, not thrown away', r3.ok && /Please confirm by Friday/.test(r3.reply), r3.error || '');
+reply = '{"read":"Open since 8 Sep.","reply":"Shivonne, please confirm by Friday 23 October.","next":"Shivonne by Fri 23 Oct","add":["Check the Premium Due Desk","Ch';
+const r4 = env.umDraft({ rs: 'ricky', d: DAY, k, id: ID });
+ok('cut off after the reply: the reply is kept', r4.ok && /please confirm by Friday/.test(r4.reply) && r4.add.length === 0, r4.error || '');
+ok('room to answer', asked[asked.length - 1].max_tokens >= 1600);
 P.setProperty('ANTHROPIC_API_KEY', ''); asked = [];
 ok('no key: says so and calls nobody', /not set up/.test(env.umDraft({ rs: 'ricky', d: DAY, k, id: ID }).error) && !asked.length);
 

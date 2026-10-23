@@ -12,8 +12,17 @@
 // the person's own list and are kept for the day; the streak forgives one miss
 // a month and leave neither counts nor breaks it; the week is measured against
 // their own last four; the branch has one overdue bar; thank-yous and accepted
-// ideas; the Friday awards and their WhatsApp text carry no client and no
-// emoji; the wall carries no points, task or note; GAME = off hides it all.
+// ideas; the awards and their WhatsApp text carry no client and no emoji; the
+// wall carries no points, task or note; GAME = off hides it all.
+//
+// The wins on a Wednesday (21 October 2026, 2026-10-21h). Ricky: "awards day
+// cannot be a Friday. It's the weekly wins celebrated on a Wednesday in the
+// meeting". The branch meets Wednesday 9:00 to 10:30. Pinned here: the awards
+// cover Wednesday to Tuesday, working days only, the seven days ending the
+// night before; the mail goes to him alone at 7:00 on the Wednesday, once, and
+// never on a Friday; neither it nor the WhatsApp text says Friday; what staff
+// read about the awards and the meeting says Wednesday; the backlog goal keeps
+// its Monday-to-Friday week; the wall gets the awards' week.
 const { makeEnv } = require('./harness');
 let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x ? '  ' + x : '')); if (!c) fails++; };
@@ -179,6 +188,7 @@ P.setProperty('cover_back_sasha', JSON.stringify({ day: DAY, moved: 1, owe: [] }
 fresh();
 const tf = env.gameThanksForm_('sasha', DAY);
 ok('back from being out, Sasha is asked to thank Elizabeth', /Elizabeth<\/b>/.test(tf) && /name="gthx_elizabeth"/.test(tf));
+ok('and told it goes on Wednesday\'s Team Player award, not Friday\'s', /Say thanks: it goes on their game, and on Wednesday's Team Player award\./.test(tf) && !/Friday/.test(tf));
 env.gameSaveForm_({ staffId: 'sasha', name: 'Sasha Lalla-Jagassar' }, DAY, { gthx_elizabeth: '1' });
 fresh();
 ok('it is kept, and not asked again', env.gameThanksForm_('sasha', DAY) === '');
@@ -186,13 +196,18 @@ ok('Elizabeth sees it on her game', /Sasha<\/b> thanked you for covering/.test(e
 
 console.log('\nIdeas:\n');
 let made = null; env.createTask_ = (d, p) => { made = d; return { ok: true, id: 'NEWIDEA' }; };
-env.gameSaveForm_({ staffId: 'azariah', name: 'Azariah Griffith' }, DAY, { gidea: 'A checklist card for new applications' });
-ok('an idea becomes an Innovation & Creativity task for Friday, not part of today\'s list', made && made.type === env.INNOVATION.TYPE && made.due === '2026-10-23' && !made.block && /^Idea: /.test(made.subject));
+const ideaForm = env.gameIdeaForm_('azariah', DAY);
+ok('the idea box says it is for Wednesday\'s branch meeting', /Innovation &amp; Creativity task for Wednesday's branch meeting/.test(ideaForm) && !/Friday/.test(ideaForm));
+const ideaRes = env.gameSaveForm_({ staffId: 'azariah', name: 'Azariah Griffith' }, DAY, { gidea: 'A checklist card for new applications' });
+ok('an idea becomes an Innovation & Creativity task for Wednesday\'s meeting, not part of today\'s list', made && made.type === env.INNOVATION.TYPE && made.due === '2026-10-21' && !made.block && /^Idea: /.test(made.subject), made && made.due);
+ok('and the page says so', ideaRes.some(o => o.res === "an Innovation & Creativity task, for Wednesday's meeting"), JSON.stringify(ideaRes));
+ok('an idea put in on a Wednesday is for the next one (that day\'s meeting has been)', env.gameMeetingDay_('2026-10-21') === '2026-10-28' && env.gameMeetingDay_('2026-10-23') === '2026-10-28');
 fresh();
 const bmSec = env.gameBmSec_(DAY, 6);
 ok('Mr Rampersad sees the idea waiting, with a tick to accept', /name="gia_00TGAME000000900"/.test(bmSec));
 const acc = env.gameBmSave_(DAY, { ['gia_' + id(900)]: '1' }, 'Mr Rampersad');
 ok('accepting it is kept and told on the task', acc.length === 1 && posts.some(p => p[1].ParentId === id(900) && /^IDEA ACCEPTED/.test(p[1].Body)));
+ok('the task is told to show it at Wednesday\'s branch meeting', posts.some(p => p[1].ParentId === id(900) && /at Wednesday's branch meeting\.$/.test(p[1].Body) && !/Friday/.test(p[1].Body)));
 fresh();
 ok('and it is +3 on Sasha\'s day', env.gameToday_(DAY).sasha.ideas === 1 && env.gameToday_(DAY).sasha.points >= 3);
 ok('accepted once only', env.gameBmSave_(DAY, { ['gia_' + id(900)]: '1' }, 'Mr Rampersad').length === 0);
@@ -206,27 +221,82 @@ ok('Team Player: Elizabeth, covered and thanked', by('team') && /1 task covered 
 ok('Best Note: the longest proper note when Claude is not set up', by('note') && by('note').who.join() === 'elizabeth');
 ok('Idea of the Week: Sasha', by('idea') && by('idea').who.join() === 'sasha');
 const txt = env.gameAwardsText_(DAY, aw.list, env.gameGoal_(DAY));
-ok('single-asterisk bold, no double asterisks', /^\*This week's awards\*/.test(txt) && !/\*\*/.test(txt));
+ok('single-asterisk bold, no double asterisks', /^\*This week's wins so far\* · Wednesday 14 to Tuesday 20 October\n/.test(txt) && !/\*\*/.test(txt), txt.split('\n')[0]);
 ok('no emoji', !/[\u{1F300}-\u{1FAFF}☀-➿]/u.test(txt));
 ok('no client, policy or note text', !/REENA|5001816653|bankers order|Seeparsan/.test(txt), txt);
-ok('the team line', /\*Team goal:\* overdue from 100 to 85 this week, goal 75/.test(txt));
+ok('the team line: the backlog keeps its Monday start', /\*Team goal:\* overdue from 100 on Monday to 85 now, the week's goal 75/.test(txt), txt);
+ok('no Friday in the WhatsApp text', !/Friday/.test(txt));
+
+console.log('\nThe awards\' week: Wednesday to Tuesday:\n');
+const wk = d => { const w = env.gameAwardsWeek_(d); return w.from + '..' + w.to + (w.final ? ' final' : ' so far') + ' [' + w.days.join(',') + ']'; };
+ok('on the Wednesday: the seven days ending the night before, working days only',
+  wk('2026-10-21') === '2026-10-14..2026-10-20 final [2026-10-14,2026-10-15,2026-10-16,2026-10-19,2026-10-20]', wk('2026-10-21'));
+ok('on the Tuesday before: the same week, so far, today included', wk('2026-10-20') === '2026-10-14..2026-10-20 so far [2026-10-14,2026-10-15,2026-10-16,2026-10-19,2026-10-20]', wk('2026-10-20'));
+ok('the day after: a new week from that Wednesday', wk('2026-10-22') === '2026-10-21..2026-10-22 so far [2026-10-21,2026-10-22]', wk('2026-10-22'));
+ok('a Friday and a Monday are inside it, never its end', /^2026-10-21\.\.2026-10-23 so far/.test(wk('2026-10-23')) && /^2026-10-21\.\.2026-10-26 so far/.test(wk('2026-10-26')));
+ok('in words', env.gameAwardsSpan_(env.gameAwardsWeek_('2026-10-21')) === 'Wednesday 14 to Tuesday 20 October');
+ok('across a month and a year', env.gameAwardsSpan_(env.gameAwardsWeek_('2026-11-04')) === 'Wednesday 28 October to Tuesday 3 November' &&
+  env.gameAwardsSpan_(env.gameAwardsWeek_('2027-01-06')) === 'Wednesday 30 December 2026 to Tuesday 5 January 2027', env.gameAwardsSpan_(env.gameAwardsWeek_('2027-01-06')));
+// The figures: Tuesday the 13th is last week's, Wednesday the 21st's live read is next week's.
+const H2 = { kamla: { '2026-10-13': { kinds: { cancel: 9 } }, '2026-10-14': { kinds: { cancel: 2 }, quests: 3 }, '2026-10-20': { kinds: { cancel: 1 }, quests: 1 } },
+             azariah: { '2026-10-20': { kinds: { former: 2 } } } };
+const awW = env.gameAwards_('2026-10-21', { azariah: { kinds: { cancel: 5 }, quests: 9 } }, H2), byW = k => awW.list.find(a => a.k === k);
+ok('Client Saver on the Wednesday: Wednesday 14 to Tuesday 20 only (not the 13th, not the 21st)', byW('saver') && byW('saver').who.join() === 'kamla' && /^3 clients/.test(byW('saver').why) && awW.totals.azariah.saves === 2, JSON.stringify(byW('saver')));
+ok('Quest Master the same way', byW('quest') && byW('quest').who.join() === 'kamla' && /^4 quests/.test(byW('quest').why), JSON.stringify(byW('quest')));
+ok('the week it covers comes with it', awW.week.from === '2026-10-14' && awW.week.to === '2026-10-20' && awW.week.final === true);
+ok('a thank-you given on Tuesday is in Wednesday\'s awards, and not in the next week\'s', awW.totals.elizabeth.thanks === 1 && env.gameAwards_('2026-10-22', null, {}).totals.elizabeth.thanks === 0);
+ok('an idea accepted on Tuesday is the Idea of the Week on the Wednesday', byW('idea') && byW('idea').who.join() === 'sasha');
 
 console.log('\nThe wall:\n');
 const wall = env.gameWall_(DAY), ws = JSON.stringify(wall);
 ok('first names, par, streaks and gains', wall.people.find(p => p.name === 'Elizabeth').parMet && wall.people.find(p => p.name === 'Elizabeth').streak === 13);
 ok('no points, task, client or note on the wall', !/points|REENA|5001816653|bankers|Follow up with UW/.test(ws) && wall.people.every(p => p.points === undefined));
+ok('the awards as before (title, who, why), and the week they cover', wall.awards.length && wall.awards.every(a => Object.keys(a).join() === 'title,who,why') &&
+  wall.awardsWeek.from === 'Wed 14 Oct' && wall.awardsWeek.to === 'Tue 20 Oct' && wall.awardsWeek.final === false && wall.awardsWeek.label === 'Wednesday 14 to Tuesday 20 October', JSON.stringify(wall.awardsWeek));
+const wallWed = env.gameWall_('2026-10-21');
+ok('on the Wednesday the wall shows the finished week', wallWed.awardsWeek.from === 'Wed 14 Oct' && wallWed.awardsWeek.to === 'Tue 20 Oct' && wallWed.awardsWeek.final === true, JSON.stringify(wallWed.awardsWeek));
 
-console.log('\nFriday 1pm, to him alone:\n');
-const FRI = '2026-10-23';
+console.log('\nWednesday 7:00, for the 9:00 meeting, to him alone:\n');
+const FRI = '2026-10-23', WED = '2026-10-21', isAw = m => /wins|awards/i.test(m.subject);
 mails.length = 0;
 P.setProperty('game_backfill', '2026-10-01'); P.setProperty('game_back', FRI);
-env.gameTick_(FRI, 12 * 60 + 50);
-ok('not before one', !mails.some(m => /awards/.test(m.subject)));
-env.gameTick_(FRI, 13 * 60 + 5);
-const am = mails.find(m => /awards/.test(m.subject));
-ok('at one: the awards for the 2pm meeting', am && /for the 2pm meeting/.test(am.subject) && am.to === 'ricky@example.com');
-env.gameTick_(FRI, 13 * 60 + 20);
-ok('once', mails.filter(m => /awards/.test(m.subject)).length === 1);
+env.gameTick_(FRI, 13 * 60 + 5); env.gameTick_(FRI, 7 * 60 + 5); env.gameTick_(FRI, 8 * 60 + 5);
+ok('never on a Friday: not at 1pm, not at 7:00', !mails.some(isAw), mails.map(m => m.subject).join(' | '));
+P.setProperty('game_back', WED);
+env.gameTick_(WED, 6 * 60 + 50);
+ok('not before seven on the Wednesday', !mails.some(isAw));
+env.gameTick_(WED, 7 * 60 + 5);
+const am = mails.find(isAw);
+ok('at seven: the week\'s wins for the 9:00 meeting, to him alone', am && am.subject === "This week's wins · for the 9:00 meeting · Wed 21 Oct" && am.to === 'ricky@example.com', am && am.subject + ' -> ' + am.to);
+ok('the header: For the Wednesday branch meeting, and the week it covers', am && /This week's wins/.test(am.htmlBody) && /For the Wednesday branch meeting · Wednesday 14 to Tuesday 20 October/.test(am.htmlBody));
+ok('the WhatsApp text in it: the finished week', am && /\*This week's wins\* · Wednesday 14 to Tuesday 20 October/.test(am.htmlBody));
+ok('no Friday anywhere in the mail', am && !/Friday/.test(am.subject + am.htmlBody) && !/2pm/.test(am.subject + am.htmlBody));
+ok('the backlog tiles stay: overdue on Monday, now, the week\'s goal', am && /overdue on Monday/.test(am.htmlBody) && /the week's goal/.test(am.htmlBody) && /quests, Wed to Tue/.test(am.htmlBody));
+env.gameTick_(WED, 7 * 60 + 20); env.gameTick_(WED, 8 * 60 + 40);
+ok('once', mails.filter(isAw).length === 1);
+// The next Wednesday: a failed send is tried again by the next run, and nothing goes once the meeting has started.
+const WED2 = '2026-10-28', realMgr = env.managerEmails_;
+P.setProperty('game_back', WED2); mails.length = 0;
+env.managerEmails_ = () => { throw new Error('Sheets did not answer'); };
+env.gameTick_(WED2, 7 * 60 + 2);
+env.managerEmails_ = realMgr;
+ok('a send that fails at 7:00 is not marked sent', !mails.some(isAw) && !P.getProperty('game_aw_' + WED2));
+env.gameTick_(WED2, 7 * 60 + 12);
+ok('and goes from the next run', mails.filter(isAw).length === 1);
+const WED3 = '2026-11-04'; P.setProperty('game_back', WED3); mails.length = 0;
+env.gameTick_(WED3, 9 * 60 + 5);
+ok('not once the 9:00 meeting has started', !mails.some(isAw));
+
+console.log('\nWhat staff read says Wednesday:\n');
+const how = env.gameHowCard_();
+ok('how points work: Service Star at Wednesday\'s branch meeting', /<b>Service Star<\/b> at Wednesday's branch meeting/.test(how) && !/Friday/.test(how));
+ok('the innovation line in the morning: show it at Wednesday\'s branch meeting', /show it at Wednesday's branch meeting/.test(env.innovationLine_({ open: [{ subject: 'Idea', touched: 9, due: '' }] }, DAY, 'sasha').html));
+const bmW = env.gameBmSec_(WED, 6);
+ok('his page on the Wednesday: this week\'s wins, the finished week, for the 9:00 meeting', /This week's wins · Wed 14 Oct to Tue 20 Oct · for the 9:00 meeting/.test(bmW) && !/2pm/.test(bmW));
+ok('the backlog goal still reads by Friday (its own week, unchanged)', /goal 75 by Friday/.test(env.gameGoalBar_(env.gameGoal_(DAY))));
+const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'apps-script', 'KPI.gs'), 'utf8');
+const left = src.split('\n').filter(l => /Friday\\?'s (<b>)?(Team Player|Service Star|award|branch meeting|meeting|board|innovation board)|for the 2pm|2pm (branch )?meeting|Friday (1pm|at 1|awards)|awards? (on|at) Friday|task, for Friday|Friday[ ,0-9:]*(at 7:30 )?(,? )?before the branch meeting|Friday at 7:30/i.test(l));
+ok('no string left in KPI.gs telling anyone the awards or the meeting are on a Friday', left.length === 0, left.map(l => l.trim().slice(0, 90)).join(' | '));
 
 console.log('\nKept on Game Days, and re-read:\n');
 fresh();

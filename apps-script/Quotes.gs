@@ -10,7 +10,10 @@
  *
  *  WHY IT EXISTS. Until 22 October 2026 the homepage sent six of its
  *  busiest links out to JotForm: Motor, Property, Critical Illness, Key
- *  Person, OAS enrolment and the Xpress Life application. A JotForm
+ *  Person, OAS enrolment and the Xpress Life application. Motor is NOT
+ *  here: /motor-quote/ and MotorQuote.gs, its own project, replaced that
+ *  one on 21 October 2026 and do much more, so this file carries the
+ *  other five and /quote/ sends Motor there. A JotForm
  *  submission never reached this sheet, never got a reference, and never
  *  landed in anybody's day — so a client who filled one in heard nothing
  *  back unless somebody happened to check an inbox. The branch manager
@@ -64,7 +67,6 @@ var QUOTE = {
      filed under a name nobody will recognise. The code is the reference's
      own prefix, so a row's reference says which form it came from. */
   FORMS: {
-    'motor':            { code: 'QM', line: 'Motor',             title: 'Motor insurance quote' },
     'property':         { code: 'QP', line: 'Property',          title: 'Property insurance quote' },
     'critical-illness': { code: 'QC', line: 'Critical illness',  title: 'Critical illness quote' },
     'key-person':       { code: 'QK', line: 'Key person',        title: 'Key person protection quote' },

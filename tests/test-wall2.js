@@ -119,6 +119,11 @@ const mix = Object.fromEntries(outside.staff.mix.map(m => [m.k, m.n]));
 ok('retention 1, new business 1, claims 1', mix.retention === 1 && mix['new'] === 1 && mix.claims === 1, JSON.stringify(mix));
 ok('two in three high-payoff', outside.staff.payoffPct === 67);
 ok('the busiest hour', outside.staff.busiest.at === '9:00' && outside.staff.busiest.n === 2);
+// 21 Oct 2026: the kinds inside each hour, and who has the bag.
+ok('each hour carries its kinds, adding up to the hour', sa('elizabeth').hourKinds.every((k, i) => Object.values(k).reduce((x, y) => x + y, 0) === sa('elizabeth').hours[i]), JSON.stringify(sa('elizabeth').hourKinds.slice(0, 5)));
+ok('the kinds across the desks match the mix', (() => { const t = {}; outside.staff.people.forEach(p => (p.hourKinds || []).forEach(h => Object.keys(h).forEach(k => t[k] = (t[k] || 0) + h[k]))); return Object.keys(mix).every(k => (t[k] || 0) === mix[k]); })());
+ok('the bag: a name, the hour it leaves, and the cut-off', !!outside.staff.bag && !!outside.staff.bag.who && outside.staff.bag.h === 12 && outside.staff.bag.at === '12:00' && outside.staff.bag.cutoff === '11:45', JSON.stringify(outside.staff.bag));
+ok('the bag never goes to someone out today', !outside.staff.people.some(p => p.status === 'out' && p.name === outside.staff.bag.who));
 
 console.log('\nThe running feed:\n');
 const tk = outside.ticker;
@@ -145,6 +150,10 @@ ok('the hours start at 5am: a note in the 5 o\'clock hour, two at 10', bm.fromH 
 ok('his feed says what kind, never the subject', bm.feed[0].what === 'answered an e-mail' && bm.feed.some(f => f.what === 'closed an orphan clients task') && bm.feed.some(f => f.what === 'wrote a note on a new business task'));
 ok('and he is in the running feed', outside.ticker.some(t => t.who === 'Mr Rampersad' && /orphan clients task/.test(t.what)));
 ok('inside: in at 5:04; outside: no time', inside.managers.bm.inAt === '5:04' && !('inAt' in bm));
+
+console.log('\nThe awards on the wall (Wednesday to Tuesday, 21 Oct 2026, 2026-10-21h):\n');
+ok('the awards list as before, and the week they cover, inside and out', [inside, outside].every(w => Array.isArray(w.awards) && w.awardsWeek &&
+  w.awardsWeek.from === 'Wed 14 Oct' && w.awardsWeek.to === 'Tue 20 Oct' && w.awardsWeek.final === false && w.awardsWeek.label === 'Wednesday 14 to Tuesday 20 October'), JSON.stringify(outside.awardsWeek));
 
 console.log('\nThe links:\n');
 ok('no key, no wall', env.wallOutside_('').ok === false);

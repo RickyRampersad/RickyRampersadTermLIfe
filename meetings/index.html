@@ -2257,7 +2257,7 @@ function refreshCurrent() {
 /* ---------------- branch service ----------------
  * The four self-service platforms report here. Everything on this screen
  * was produced by a client or by the system, not typed in by anybody, so
- * it is the one tab in the app nobody can dress up before the meeting.
+ * it is the one tab in the app nobody can dress up before Wednesday.
  *
  * Three questions, in the order the branch should care about them:
  * did we answer Monday's brief, is any file stuck, and what did clients
@@ -2322,7 +2322,7 @@ function serviceChases(res) {
     (answered ? ", and of those " + contacted + " reached the client" : "") + ". " +
     (answered < sent
       ? "<b style=\"color:var(--amber)\">" + (sent - answered) + " unanswered</b> — that is the " +
-        "part the meeting has to ask about, because the system cannot tell the difference " +
+        "part Wednesday has to ask about, because the system cannot tell the difference " +
         "between a case nobody worked and a case nobody logged."
       : "Every case came back before the meeting.") +
     "</div></div>";
@@ -2612,7 +2612,7 @@ function buildForm(d) {
     '<div class="row3">' +
     '<div class="field"><label for="b-date">Date</label><input id="b-date" type="date" value="' +
       esc((m.dateISO || "").slice(0, 10)) + '"/></div>' +
-    '<div class="field"><label for="b-start">Starts</label><input id="b-start" type="time" value="' + esc(m.start || "14:00") + '"/></div>' +
+    '<div class="field"><label for="b-start">Starts</label><input id="b-start" type="time" value="' + esc(m.start || "09:00") + '"/></div>' +
     '<div class="field"><label for="b-end">Ends</label><input id="b-end" type="time" value="' + esc(m.end || "") + '"/></div></div>' +
 
     '<div class="row3">' +

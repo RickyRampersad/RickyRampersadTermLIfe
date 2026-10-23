@@ -164,6 +164,32 @@ const post = (env, body) => JSON.parse(env.doPost({ postData: { contents: JSON.s
   ok('the ping says the Log Book is in the project', ping.logbook === true);
 }
 
+/* ── no agent number: the Branch Portfolio's access tab (21 Oct 2026, Pawan) ── */
+console.log('no agent number');
+{
+  env.__mkSheet('Users', 1, ['Name', 'Email', 'Role', 'Access Code', 'Active'], [
+    ['Dex Driver', 'dex@example.com', 'Driver', 'DRV9', 'Yes'],
+    ['Sal Support', 'sal@example.com', 'Staff', 'SAL5', 'Yes'],
+    ['Old Hand', 'old@example.com', 'Staff', 'OLD1', 'No'],
+  ]);
+  const d = post(env, { action: 'lb.login', agentNo: 'Dex', code: 'drv9' });
+  ok('a first name and the access tab code sign in', d.ok && d.name === 'Dex Driver', JSON.stringify(d).slice(0, 160));
+  ok('a driver gets the Delivery Book alone', d.role === 'Driver' && d.apps.map(a => a.id).join() === 'delivery-book');
+  ok('a driver is refused the Log Book', /not on your access/.test(post(env, { action: 'lb.config', token: d.token }).error || ''));
+  ok('the full name works too', post(env, { action: 'lb.login', agentNo: 'dex driver', code: 'DRV9' }).ok);
+  ok('the e-mail works too', post(env, { action: 'lb.login', agentNo: 'dex@example.com', code: 'DRV9' }).ok);
+  ok('a wrong code is refused', !post(env, { action: 'lb.login', agentNo: 'Dex', code: 'nope' }).ok);
+  const s2 = post(env, { action: 'lb.login', agentNo: 'Sal Support', code: 'SAL5' });
+  ok('staff on that tab get the staff side', s2.ok && s2.apps.some(a => a.id === 'delivery-book') && s2.apps.some(a => a.id === 'logbook'));
+  ok('Active No is refused', !post(env, { action: 'lb.login', agentNo: 'Old Hand', code: 'OLD1' }).ok);
+  env.__mkSheet('Portfolio Users', 1, ['Name', 'Role', 'Agent Number', 'Access Number', 'Active'], [
+    ['Pat Porter', 'Driver', 'PP009', 9, 'Yes'],
+  ]);
+  ok('an "Access Number" column with no e-mail works, by name', post(env, { action: 'lb.login', agentNo: 'Pat', code: '9' }).ok);
+  ok('and by its own number', post(env, { action: 'lb.login', agentNo: 'PP009', code: '9' }).ok);
+  ok('the editor check finds the row and prints no code', (r => /1 row/.test(r) && !/\b9\b/.test(r.replace(/PP009/g, '')))(env.lbCheckSignIn('Pat')));
+}
+
 /* ── where things go ───────────────────────────────────────────────── */
 console.log('routing');
 {
