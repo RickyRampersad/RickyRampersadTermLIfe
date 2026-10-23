@@ -525,7 +525,7 @@
   /* the TT$200 retention claims */
   .cnote{font-size:14px;margin:0 0 10px;padding:9px 12px;border-radius:9px;background:var(--warnbg);border:1px solid var(--warnline);color:var(--warn)}
   .cnote.rule{background:#f6f8fb;border-color:var(--line);color:var(--body)}
-  .pt .cst{font-weight:600;white-space:nowrap} .pt .cst.unpaid,.pt .cst.notsent,.pt .cst.check{color:var(--stop)} .pt .cst.paid{color:var(--ok)} .pt .cst.held,.pt .cst.new,.pt .cst.csr{color:var(--warn)} .pt .cst.closed{color:var(--dim)}
+  .pt .cst{font-weight:600;white-space:nowrap} .pt .cst.unpaid,.pt .cst.notsent,.pt .cst.check{color:var(--stop)} .pt .cst.paid{color:var(--ok)} .pt .cst.held,.pt .cst.new,.pt .cst.csr{color:var(--warn)} .pt .cst.ready{color:var(--ok)} .pt .cst.closed{color:var(--dim)}
   .pt a.cgo{color:var(--ink);font-weight:600;text-decoration:none;border-bottom:1px dotted #9ab}
   .claimln{margin-top:10px;font-size:14px;background:#fffaf0;border:1px solid var(--warnline);border-radius:9px;padding:8px 12px}
   .claimln .cl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);margin-right:4px}
@@ -4078,11 +4078,11 @@ function insightsPane() {
 /* ---- the TT$200 retention claims (tClaimsRead_ in Transition.gs): the panel, and the line on a card ---- */
 /* 3 October 2026: "when a questionnaire is recieved the agent is compensated 200.00 as an email goes to retention … to track
    payments". The branch sees every claim, a unit manager his team's, an agent their own; staff never see one (no money). */
-var CSTATE = { unpaid: 'unpaid', paid: 'paid', held: 'held', notsent: 'not sent', check: 'to check', closed: 'closed', 'new': 'new', csr: 'with Customer Service' };
+var CSTATE = { unpaid: 'unpaid', paid: 'paid', held: 'held', notsent: 'not sent', check: 'to check', closed: 'closed', 'new': 'new', csr: 'with Customer Service', ready: 'ready for Friday' };
 function cmoney(n) { return ((D && D.claims && D.claims.cur) || 'TT$') + Math.round(Number(n) || 0).toLocaleString('en-US'); }
 function claimPay(v, manager) {
   if (v.state === 'paid') return v.paid ? (v.future ? 'to be paid ' + v.paid : 'paid ' + v.paid) : 'paid';
-  if (v.state === 'unpaid') return 'unpaid' + (v.days === 0 ? ', sent today' : v.days ? ', ' + v.days + (v.days === 1 ? ' day' : ' days') : '');
+  if (v.state === 'unpaid') return 'unpaid' + (v.tx ? ', ' + v.tx + ' transmittal' : '') + (v.days === 0 ? ', sent today' : v.days ? ', ' + v.days + (v.days === 1 ? ' day' : ' days') : '');
   /* 16 October 2026: the questionnaire is with Customer Service until Date SQ processed by CSR is filled in Salesforce */
   if (v.state === 'csr') return 'with Customer Service' + (v.toCsr ? ' since ' + v.toCsr : '') + (v.csrN ? ', followed up ' + v.csrN + (v.csrN === 1 ? ' time' : ' times') : '');
   if (manager && v.status && v.state !== 'new') return v.status;

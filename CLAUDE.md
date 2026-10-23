@@ -2814,6 +2814,48 @@ voice under the new timing and the caption gives it away.
   - `sq16/sq-test.js` in the scratchpad covers it (54 checks, a made-up Salesforce and mailbox, the clock moved over two
     weeks). The board film's claim line ("at once … every working day at ten") is now out of date: re-voice it with the
     next cut.
+  - **The weekly transmittal** (23 October 2026, the manager, with the "RRB Orphan Transmittal Week 3" sales support filled
+    by hand: "can this be done understanding the Salesforce fields?"). `T_SQ.TX` (ON true; false puts back one e-mail per
+    claim). The claims no longer go one by one: every Friday at 10:00 (`DOW`, `HOUR`) the system sends the Retention unit
+    one GLOC Adopt an Orphan Transmittal Form, as Excel, with every claim processed since the last one.
+    - **The form**, `tSqTxFiles_` (the workbook's own XML, zipped by `tSqTxXlsx_`; no Drive, so no new permission): the
+      layout of the GLOC form, sheet "Blank Form", file `RRB Orphan Transmittal Week N.xlsx`. Week 1 began Monday 5 Oct
+      (`WEEK1`), so 23 Oct was Week 3.
+    - **The columns, field by field**:
+      - Agent Name: Assigned Agent, else the agent on the policy.
+      - Agent ID: the Agent Skill Bank's number, else the "A03522 - Name" in `AgentName__c` when that is the agent.
+      - Branch: 26000.
+      - Client Full Name: the contact.
+      - Number of Policies and #1–#4: the policies on the questionnaire. A fifth goes in the #4 cell.
+      - Visible in EDM: Yes once Date SQ processed by CSR is filled (the manager's choice).
+      - Date: the day it goes, which is Date Subm to Retention.
+      - Additional Comment and Amount are left for Retention.
+    - **A policy with only Date SQ submitted** joins the same client's questionnaire received within a fortnight. Week 3 had
+      one, with no Customer Service dates on the client's second policy.
+    - **In the week** a claim reads "Ready for the Week N transmittal, <Friday>" (board state `ready`, "ready for
+      Friday").
+    - **On Friday**, after it goes:
+      - Date Subm to Retention and Was Agent Paid No are written on each policy, and the tab's new `Transmittal` column
+        reads Week N.
+      - Each agent gets one e-mail with their own clients (never another agent's).
+      - Sales support gets what went and what was held, the manager copied (`tSqTxNote_`).
+      - Once a week: a claim processed after it goes waits for the next Friday.
+    - **Held**, and listed for sales support every working day at ten until put right:
+      - an agent who left (`tFormer_`);
+      - no agent;
+      - an agent not on the Skill Bank;
+      - an Assigned Agent who is not the policy's agent, both active, with no Date Assigned to Agent (`tSqWho_`).
+      Put right by naming the agent in Assigned Agent with its date.
+
+      Measured on Week 3: of its six clients, two still carried a departed agent in Salesforce, one had that Assigned
+      Agent and policy agent conflict, and Date Assigned to Agent was blank on all nine policies.
+    - **Reminders**: one per transmittal, every 3 working days, with the form attached again showing only the unpaid. A
+      claim entered by hand counts by its Date Subm to Retention's week. A sent claim whose agent no longer reads right in
+      Salesforce is left out of the reminder and listed for sales support.
+    - **The go, and testing**: nothing goes before the go (`claims_live`). `transitionTransmittalTest` (editor Run) sends
+      the manager this week's form as it stands, marked TEST, and writes nothing. `transitionTransmittalNow` sends it at
+      once.
+    - `sq23/tx-test.js` in the scratchpad covers it (44 checks), and `sq16/sq-test.js` still passes with `TX.ON` false.
 - **One client in full on the board: the history, their Salesforce tasks,
   and the team's comments** (3 October 2026, the same request: "so the agent
   can see the email and history and tasks opened on salesforce assigned to

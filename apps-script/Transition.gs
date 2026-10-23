@@ -5104,7 +5104,7 @@ function tBoard_(w, all, lite) {
     var cview = crows.map(function (r) { return tClaimView_(r, tz, today, w.role === 'branch'); });
     cview.forEach(function (v) { if (v.token) cBy[v.token] = v; });
     clients.forEach(function (c) { if (cBy[c.token]) c.claim = cBy[c.token]; });
-    var corder = { check: 0, notsent: 1, held: 2, 'new': 3, csr: 4, unpaid: 5, paid: 6, closed: 7 }, csum = { n: cview.length, unpaid: 0, owed: 0, paid: 0, paidAmt: 0, held: 0, csr: 0 };
+    var corder = { check: 0, notsent: 1, held: 2, 'new': 3, ready: 3, csr: 4, unpaid: 5, paid: 6, closed: 7 }, csum = { n: cview.length, unpaid: 0, owed: 0, paid: 0, paidAmt: 0, held: 0, csr: 0 };
     cview.forEach(function (v) {
       if (v.state === 'unpaid') { csum.unpaid++; csum.owed += v.amount; }
       else if (v.state === 'paid') { csum.paid++; csum.paidAmt += v.amount; }
@@ -6716,7 +6716,7 @@ function tBriefClaims_(agent, clients, board) {
     var m = function (n) { return esc(cur + tMoney_(n)); };
     var rows = '';
     if (s.owed) rows += line('Owed to you', m(s.owedAmt), tPl_(s.owed, 'claim') + ' with the Retention unit, waiting for the payment date');
-    if (s.csr) rows += line('With Customer Service', m(s.csrAmt), tPl_(s.csr, 'questionnaire') + ' being processed: the claim goes to Retention the day it is');
+    if (s.csr) rows += line('With Customer Service', m(s.csrAmt), tPl_(s.csr, 'questionnaire') + ' being processed: ' + (T_SQ.TX.ON ? 'the claim goes on the Friday transmittal after it is' : 'the claim goes to Retention the day it is'));
     if (s.held) rows += line('Found, not sent yet', m(s.heldAmt), tPl_(s.held, 'claim') + (tClaimsLive_() ? ' the branch is checking' : ', going to the Retention unit on the branch’s go'));
     if (s.due) rows += line('To be paid', m(s.dueAmt), tPl_(s.due, 'claim') + ' on the commission run' + (s.soon ? ' of ' + esc(s.soon) : ''));
     if (s.paid) rows += line('Paid', m(s.paidAmt), tPl_(s.paid, 'claim'));
@@ -6727,7 +6727,7 @@ function tBriefClaims_(agent, clients, board) {
       '<table style="border-collapse:collapse;margin:6px 0 4px;font-size:14px">' + rows + '</table>' +
       '<p style="margin:4px 0 0;font-size:13px;color:' + mute + '">' + (T_SQ.ON
         ? 'A completed service questionnaire for a client named to you earns ' + esc(cur + amt) + ', once per client. Do it with them on the call or at the visit. ' +
-          'Sales support sends it to Customer Service, and the claim goes to the Retention unit the day Customer Service has processed it, to be paid within ' + T_SQ.RET_DAYS +
+          'Sales support sends it to Customer Service, and the claim goes to the Retention unit ' + (T_SQ.TX.ON ? 'on the branch’s Friday transmittal once Customer Service has processed it' : 'the day Customer Service has processed it') + ', to be paid within ' + T_SQ.RET_DAYS +
           ' working days and reminded until the payment date is in Salesforce. You do not chase it. Your Claims tab on the board shows each one.'
         : 'A service questionnaire that comes in on or after the day a client was named to you earns ' + esc(cur + amt) +
           ', once per client, whoever sent the link. Do it with them on the call or at the visit, from their file on the board, so it carries their own link. ' +
@@ -9809,7 +9809,7 @@ var T_CLAIM = {
 };
 var T_CLAIM_HEAD = ['Claim', 'Token', 'Client', 'Client number', 'Policy', 'Agent', 'Agent no.', 'Agent e-mail', 'Named on', 'Named via',
   'Questionnaire', 'Received', 'Amount', 'Submitted', 'Salesforce', 'Follow-ups', 'Last follow-up', 'Paid', 'Status', 'Note',
-  'SQ key', 'Records', 'Sent to CSR', 'CSR follow-ups', 'Last CSR follow-up', 'Processed by CSR'];
+  'SQ key', 'Records', 'Sent to CSR', 'CSR follow-ups', 'Last CSR follow-up', 'Processed by CSR', 'Transmittal'];
 var T_CLAIM_SHUT = /^(paid|void|declined|withdrawn|cancel)/i;   // closed: never e-mailed or followed up again
 var T_CLAIM_RETRY = /^(not sent|held)/i;                       // tried again on the next scan
 var T_CLAIM_FOOT = 'This e-mail carries client information for Guardian Life of the Caribbean’s own use: do not forward it outside the company.';
@@ -9894,7 +9894,7 @@ function tClaimsRead_() {
       amount: Number(g(v, 'Amount')) || T_CLAIM.AMOUNT, submitted: g(v, 'Submitted'), sf: tText_(g(v, 'Salesforce')),
       follow: Number(g(v, 'Follow-ups')) || 0, lastFollow: g(v, 'Last follow-up'), paid: g(v, 'Paid'), status: tText_(g(v, 'Status')), note: tText_(g(v, 'Note')),
       sqKey: tText_(g(v, 'SQ key')), recIds: tText_(g(v, 'Records')), toCsr: g(v, 'Sent to CSR'), csrN: Number(g(v, 'CSR follow-ups')) || 0,
-      csrLast: g(v, 'Last CSR follow-up'), done: g(v, 'Processed by CSR') });
+      csrLast: g(v, 'Last CSR follow-up'), done: g(v, 'Processed by CSR'), tx: tText_(g(v, 'Transmittal')) });
   }
   return out;
 }
@@ -10277,11 +10277,11 @@ function tClaimView_(r, tz, today, branch) {
   var d = function (x) { var y = tDay_(x); return y ? tDmy_(y) : ''; };
   var sub = tDay_(r.submitted) || '', paid = tDay_(r.paid) || '', st = r.status;
   var state = /^paid/i.test(st) || (/^submitted/i.test(st) && tText_(r.paid)) ? 'paid' : T_CLAIM_SHUT.test(st) ? 'closed' : /^submitted/i.test(st) ? 'unpaid'
-    : /^with customer service/i.test(st) ? 'csr' : /^held/i.test(st) ? 'held' : /^not sent/i.test(st) ? 'notsent' : /^sending/i.test(st) ? 'check' : 'new';
+    : /^with customer service/i.test(st) ? 'csr' : /^ready/i.test(st) ? 'ready' : /^held/i.test(st) ? 'held' : /^not sent/i.test(st) ? 'notsent' : /^sending/i.test(st) ? 'check' : 'new';
   var v = { id: r.id, token: r.token, client: r.client, agent: r.agent, amount: r.amount, q: r.q, received: d(r.received), named: d(r.named), via: r.via,
     submitted: sub ? tDmy_(sub) : '', days: sub ? tDaysBetween_(sub, today) : null, follow: r.follow, last: d(r.lastFollow),
     paid: paid ? tDmy_(paid) : (tText_(r.paid) && !paid ? tText_(r.paid) : ''), future: !!paid && paid > today, state: state, byHand: /by hand/i.test(st),
-    toCsr: d(r.toCsr), csrN: r.csrN || 0, csrLast: d(r.csrLast), done: d(r.done) };
+    toCsr: d(r.toCsr), csrN: r.csrN || 0, csrLast: d(r.csrLast), done: d(r.done), tx: r.tx || '' };
   if (branch) { v.status = st; v.sf = r.sf; }
   return v;
 }
@@ -10317,10 +10317,32 @@ var T_SQ = {
   EVERY_MIN: 15,            // how often Salesforce is read
   MAX_PER_RUN: 10,          // the most e-mails one run sends; the rest go in the next
   EML_MAX: 2800000,         // the original e-mail is attached only under this size (Graph takes 3 MB inline)
+  /* The weekly transmittal (23 October 2026): the claims go to the Retention unit once a week, on the GLOC Adopt an Orphan
+     Transmittal Form sales support used to fill by hand, built from these same dates. The manager chose Friday at ten, and
+     "Visible in EDM" read as Yes once Customer Service has processed the questionnaire. ON false: one e-mail per claim. */
+  TX: {
+    ON: true,
+    DOW: 5, HOUR: 10,       // Friday, the first run at or after ten (sheet time zone)
+    BRANCH: '26000',        // the branch code on the form
+    WEEK1: '2026-10-05',    // the Monday of Week 1: the transmittal of Friday 23 October 2026 was Week 3
+    POLS: 4,                // policy columns on the form; a fifth policy goes in the fourth cell
+    FILE: 'RRB Orphan Transmittal',
+  },
 };
-var T_SQ_FIELDS = 'Id, POLICY__c, Client_Number__c, FIRST_NAME__c, LAST_NAME__c, Contact__c, Contact__r.Name, ' +
+var T_SQ_FIELDS = 'Id, POLICY__c, Client_Number__c, FIRST_NAME__c, LAST_NAME__c, Contact__c, Contact__r.Name, AgentName__c, ' +
   'Assigned_Agent__r.Name, Assigned_Agent__r.Email, AGENT__r.Name, AGENT__r.Email, Date_Assigned_to_Agent__c, Date_SQ_submitted__c, ' +
   'Date_SQ_submitted_to_CSR__c, Date_SQ_processed_by_CSR__c, Date_Subm_to_Retention__c, Was_Agent_Paid__c, Date_Comm_Paid__c';
+/** The query's filter: a questionnaire sent to Customer Service, processed, or received (a client's second policy on the
+ *  same questionnaire sometimes carries only the date received, as one did on the Week 3 transmittal). */
+function tSqWhere_(lit) {
+  /* the date received comes before the date sent to Customer Service: a fortnight earlier, so such a policy is still read */
+  var m = /^(\d{4})-(\d{2})-(\d{2})(.*)$/.exec(String(lit)), early = lit;
+  if (m) {
+    var d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]) - 14));
+    early = d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2) + m[4];
+  }
+  return ' WHERE Date_SQ_submitted_to_CSR__c >= ' + lit + ' OR Date_SQ_processed_by_CSR__c >= ' + lit + ' OR Date_SQ_submitted__c >= ' + early;
+}
 
 /** A Salesforce date or date-time as yyyy-MM-dd ('' when blank). */
 function tSqDay_(x) { var m = /^(\d{4}-\d{2}-\d{2})/.exec(String(x || '')); return m ? m[1] : ''; }
@@ -10340,18 +10362,17 @@ function tSqDue_(x, n, now) {
  *  pols, ids, recs, received, csr, done, ret, paid, named, agent, agentEmail, via }. A client is their Contact, else their
  *  client number; the questionnaire is the day it went to Customer Service (else the day it was processed). */
 function tSqGroups_(recs) {
-  var by = {}, order = [];
+  var by = {}, order = [], loose = [], whoOf = {};
   var min = function (a, b) { return !a ? b : !b ? a : a < b ? a : b; };
-  recs.forEach(function (r) {
+  var whoKey = function (r) { return r.Contact__c ? 'K' + String(r.Contact__c).slice(0, 15) : r.Client_Number__c ? 'N' + tCno_(r.Client_Number__c) : 'P' + tPolNo_(r.POLICY__c); };
+  var add = function (r, key, who) {
     var csr = tSqDay_(r.Date_SQ_submitted_to_CSR__c), done = tSqDay_(r.Date_SQ_processed_by_CSR__c);
-    if (!csr && !done) return;
-    var who = r.Contact__c ? 'K' + String(r.Contact__c).slice(0, 15) : r.Client_Number__c ? 'N' + tCno_(r.Client_Number__c) : 'P' + tPolNo_(r.POLICY__c);
-    var key = who + '|' + (csr || done);
     var g = by[key];
     if (!g) {
       g = by[key] = { key: key, who: who, client: '', cno: '', pols: [], ids: [], recs: [], received: '', csr: '', done: '', ret: '', paid: '', named: '',
-        agents: {}, agent: '', agentEmail: '', via: '' };
+        agents: {}, agent: '', agentEmail: '', via: '', assigned: '', onPolicy: '', agentNoSf: '' };
       order.push(key);
+      (whoOf[who] = whoOf[who] || []).push(key);
     }
     var name = r.Contact__r && r.Contact__r.Name ? String(r.Contact__r.Name) : tNiceName_([r.FIRST_NAME__c, r.LAST_NAME__c].filter(Boolean).join(' '));
     if (!g.client && name) g.client = name;
@@ -10366,12 +10387,34 @@ function tSqGroups_(recs) {
     g.named = min(g.named, tSqDay_(r.Date_Assigned_to_Agent__c));
     /* who is paid: the agent named on the client (Assigned Agent), else the agent on the policy, the one most of the records name */
     var as = r.Assigned_Agent__r && r.Assigned_Agent__r.Name ? r.Assigned_Agent__r : null, ag = r.AGENT__r && r.AGENT__r.Name ? r.AGENT__r : null;
+    var nice = function (n) { return tNiceName_(String(n).replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()); };
     var pick = as || ag;
     if (pick) {
-      var k = (as ? 'A' : 'B') + tNameKey_(pick.Name), t = g.agents[k] = g.agents[k] || { name: tNiceName_(String(pick.Name).replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim()),
+      var k = (as ? 'A' : 'B') + tNameKey_(pick.Name), t = g.agents[k] = g.agents[k] || { name: nice(pick.Name),
         email: String(pick.Email || ''), via: as ? 'Assigned Agent' : 'the agent on the policy', n: 0 };
       t.n++;
     }
+    /* both names, kept apart: the transmittal holds a client whose Assigned Agent and policy agent are two different people */
+    if (as && !g.assigned) g.assigned = nice(as.Name);
+    if (ag && !g.onPolicy) g.onPolicy = nice(ag.Name);
+    /* the agent number the form asks for: "A03522 - Premchand Dookran" on the policy, when that is the agent */
+    var an = /^\s*(A?\d{3,6})\s*-\s*(.+)$/i.exec(String(r.AgentName__c || ''));
+    if (an && !g.agentNoSf) g.agentNoSf = { no: tSqAgentNo_(an[1]), name: an[2] };
+  };
+  recs.forEach(function (r) {
+    var csr = tSqDay_(r.Date_SQ_submitted_to_CSR__c), done = tSqDay_(r.Date_SQ_processed_by_CSR__c);
+    var who = whoKey(r);
+    if (!csr && !done) { if (tSqDay_(r.Date_SQ_submitted__c)) loose.push({ r: r, who: who }); return; }
+    add(r, who + '|' + (csr || done), who);
+  });
+  /* a policy with only the date received joins the same client's questionnaire received within a fortnight of it */
+  loose.forEach(function (l) {
+    var rec = tSqDay_(l.r.Date_SQ_submitted__c), best = '';
+    (whoOf[l.who] || []).forEach(function (key) {
+      var g = by[key], at = g.received || g.csr;
+      if (at && Math.abs(tHaDate_(at).getTime() - tHaDate_(rec).getTime()) <= 14 * 86400000 && !best) best = key;
+    });
+    if (best) add(l.r, best, l.who);
   });
   return order.map(function (k) {
     var g = by[k], best = null;
@@ -10380,6 +10423,11 @@ function tSqGroups_(recs) {
     delete g.agents;
     return g;
   });
+}
+/** An agent number as the form writes it: A and five digits ("10024" and "A10024" are both A10024). */
+function tSqAgentNo_(x) {
+  var m = /^\s*A?\s*0*(\d{1,6})\s*$/i.exec(String(x || ''));
+  return m ? 'A' + ('00000' + m[1]).slice(-5) : String(x || '').trim();
 }
 
 /** The tab's questionnaire columns on a tab made before 16 October 2026, added once, by name. */
@@ -10398,7 +10446,7 @@ function tSqRun_(o) {
   var props = PropertiesService.getScriptProperties(), last = Number(props.getProperty('sq_scan_at') || 0);
   if (!o.force && Date.now() - last < T_SQ.EVERY_MIN * 60000) return out;
   props.setProperty('sq_scan_at', String(Date.now()));
-  var recs, where = function (lit) { return ' WHERE Date_SQ_submitted_to_CSR__c >= ' + lit + ' OR Date_SQ_processed_by_CSR__c >= ' + lit; };
+  var recs, where = tSqWhere_;
   try { recs = tSfQuery_('SELECT ' + T_SQ_FIELDS + ' FROM CLIENT_PORTFOLIO__c' + where(T_SQ.FROM)); }
   catch (e) {   // a field made a date-time takes a date-time in the filter
     if (!/datetime|date\/time|INVALID_FIELD|MALFORMED/i.test(String(e && e.message))) throw e;
@@ -10422,6 +10470,10 @@ function tSqRun_(o) {
     return cno ? tokOf[cno] || '' : '';
   };
   var why = function (e) { return String(e && e.message ? e.message : e).slice(0, 160); };
+  /* the weekly transmittal: what is ready for it, the claims held for a person, those already sent that need putting right */
+  var ready = [], readyWho = {}, held = [], fix = [], remind = {};
+  var txTime = !!o.transmit || (workday && dow === T_SQ.TX.DOW && hour >= T_SQ.TX.HOUR);
+  var txWeek = tSqTxWeek_(now, props);
   groups.forEach(function (g) {
     var r = byKey[g.key];
     if (!r) {   // a new row: the client and questionnaire, from the moment it went to Customer Service
@@ -10491,16 +10543,30 @@ function tSqRun_(o) {
     /* processed: the claim to the Retention unit, once per client; then a reminder every RET_DAYS working days */
     if (tDay_(r.done) !== g.done) set({ 'Processed by CSR': tHaDate_(g.done) });
     if (!/^submitted/i.test(r.status)) {
-      if (g.ret) { set({ Submitted: tHaDate_(g.ret), Status: 'Submitted by hand', Salesforce: 'Date Subm to Retention ' + g.ret + ', entered by hand: not e-mailed again' }); return; }
+      if (g.ret) {
+        set({ Submitted: tHaDate_(g.ret), Status: 'Submitted by hand', Transmittal: r.tx || tSqWeek_(g.ret).label,
+          Salesforce: 'Date Subm to Retention ' + g.ret + ', entered by hand: not e-mailed again' });
+        return;
+      }
       var other = claimed[g.who];
       if (other && other !== r.id) { set({ Status: 'Void: one claim per client, already claimed as ' + other }); return; }
-      var ag = tSqAgent_(g, roster, former);
-      if (ag.why) { set({ Status: 'Held: ' + ag.why }); out.held++; return; }
+      var ag = T_SQ.TX.ON ? tSqWho_(g, roster, former) : tSqAgent_(g, roster, former);
+      if (ag.why) { set({ Status: 'Held: ' + ag.why }); out.held++; held.push({ g: g, r: r, why: ag.why }); return; }
       if (g.named && g.received && g.received < g.named && g.via === 'Assigned Agent') {
-        set({ Status: 'Held: the questionnaire (' + tDmy_(g.received) + ') came in before the client was named to ' + g.agent + ' (' + tDmy_(g.named) + ')' }); out.held++; return;
+        var bw = 'the questionnaire (' + tDmy_(g.received) + ') came in before the client was named to ' + g.agent + ' (' + tDmy_(g.named) + ')';
+        set({ Status: 'Held: ' + bw }); out.held++; held.push({ g: g, r: r, why: bw }); return;
       }
-      set({ Agent: ag.a.name, 'Agent no.': ag.a.no, 'Agent e-mail': ag.a.email });
+      set({ Agent: ag.a.name, 'Agent no.': tSqAgentId_(g, ag.a), 'Agent e-mail': ag.a.email });
       if (!live) { set({ Status: 'Held: processed by Customer Service ' + tDmy_(g.done) + ', waiting for the go (Transition: start the TT$200 claims)' }); out.held++; return; }
+      /* the weekly transmittal: ready now, on the form that goes on Friday */
+      if (T_SQ.TX.ON) {
+        if (readyWho[g.who]) { set({ Status: 'Held: one claim per client: ' + readyWho[g.who] + ' goes first' }); return; }
+        readyWho[g.who] = r.id;
+        var st = 'Ready for the ' + txWeek.label + ' transmittal, ' + tClaimDay_(txWeek.friday);
+        if (r.status !== st) set({ Status: st });
+        ready.push({ g: g, r: r, a: ag.a });
+        return;
+      }
       if (!sendTime || sent >= T_SQ.MAX_PER_RUN) return;
       try {
         var m1 = tSqRetMsg_(g, r, 0, ag.a, now);
@@ -10520,6 +10586,16 @@ function tSqRun_(o) {
       return;
     }
     if (/by hand/i.test(r.status) && tDay_(r.submitted) < T_SQ.FROM) return;   // a claim sent by hand before the process began: left to the people who sent it
+    /* the weekly transmittal: one reminder per transmittal, never one per claim; a claim whose agent no longer reads right in
+       Salesforce is left out of it and listed for sales support to put right */
+    if (T_SQ.TX.ON) {
+      if (!live || !followTime || tDay_(r.lastFollow) === today || !tSqDue_(r.lastFollow || r.submitted, T_SQ.RET_DAYS, now)) return;
+      var ag3 = tSqWho_(g, roster, former);
+      if (ag3.why) { fix.push({ g: g, r: r, why: ag3.why }); return; }
+      var wk3 = r.tx || tSqWeek_(r.submitted).label;
+      (remind[wk3] = remind[wk3] || { label: wk3, sentOn: r.submitted, items: [] }).items.push({ g: g, r: r, a: ag3.a });
+      return;
+    }
     if (!live || !followTime || sent >= T_SQ.MAX_PER_RUN || tDay_(r.lastFollow) === today || !tSqDue_(r.lastFollow || r.submitted, T_SQ.RET_DAYS, now)) return;
     try {
       var ag2 = tSqAgent_(g, roster, former), m2 = tSqRetMsg_(g, r, (r.follow || 0) + 1, ag2.a || { name: r.agent, no: r.agentNo }, now);
@@ -10530,9 +10606,34 @@ function tSqRun_(o) {
     } catch (e) { out.errors.push('reminder for ' + g.client + ': ' + why(e)); }
   });
   props.setProperty('claims_seq', String(seq));
+  /* Friday at ten: the transmittal, then one reminder per transmittal still unpaid, then the note to sales support */
+  var txDone = null;
+  if (T_SQ.TX.ON && live && !o.test) {
+    var thisWeek = tSqWeek_(now), txKey = 'sq_tx_' + thisWeek.n;
+    if (ready.length && txTime && (o.transmit || !props.getProperty(txKey))) {
+      try {
+        txDone = tSqTransmit_(ready, now);
+        props.setProperty(txKey, today);
+        out.sent += txDone.rows.length; sent++;
+        out.errors = out.errors.concat(txDone.errors);
+      } catch (e) { out.errors.push('the ' + thisWeek.label + ' transmittal: ' + why(e)); log_('transition', 'sq-tx-failed', why(e)); }
+    }
+    Object.keys(remind).sort().forEach(function (k) {
+      if (sent >= T_SQ.MAX_PER_RUN) return;
+      try { tSqTxRemind_(remind[k], now); sent++; out.reminders++; }
+      catch (e) { out.errors.push('reminder for the ' + k + ' transmittal: ' + why(e)); }
+    });
+    var noteKey = 'sq_note_' + today;
+    if ((txDone || held.length || fix.length) && followTime && (txDone || !props.getProperty(noteKey))) {
+      try { tSqTxNote_(txDone, held, fix, now); props.setProperty(noteKey, '1'); }
+      catch (e) { out.errors.push('the note to sales support: ' + why(e)); }
+    }
+  }
   out.what = [out.found ? tN_(out.found, 'questionnaire', 'questionnaires') + ' newly with Customer Service.' : '',
     out.csr ? tN_(out.csr, 'follow-up', 'follow-ups') + ' sent to Customer Service.' : '',
-    out.sent ? tN_(out.sent, 'claim', 'claims') + ' e-mailed to the Retention unit.' : '',
+    txDone ? 'The ' + txDone.label + ' transmittal went to the Retention unit: ' + tN_(txDone.rows.length, 'client', 'clients') + '.' : '',
+    !txDone && ready.length ? tN_(ready.length, 'claim is', 'claims are') + ' ready for the ' + txWeek.label + ' transmittal, ' + tClaimDay_(txWeek.friday) + '.' : '',
+    out.sent && !txDone ? tN_(out.sent, 'claim', 'claims') + ' e-mailed to the Retention unit.' : '',
     out.reminders ? tN_(out.reminders, 'reminder', 'reminders') + ' sent to the Retention unit.' : '',
     out.paid ? tN_(out.paid, 'claim', 'claims') + ' marked paid.' : '',
     out.held ? tN_(out.held, 'item is', 'items are') + ' held: see Status on the ' + T_CLAIM.TAB + ' tab.' : ''].filter(Boolean).join(' ');
@@ -10547,6 +10648,277 @@ function tSqAgent_(g, roster, former) {
   var a = null;
   roster.forEach(function (x) { if (!a && tNameKey_(x.name) === k) a = x; });
   return a ? { a: a } : { why: g.agent + ' (' + g.via + ') is not on the Agent Skill Bank as an active agent' };
+}
+
+/* ── the weekly transmittal: the GLOC Adopt an Orphan Transmittal Form, built from Salesforce ───────────────────────────
+   23 October 2026, the manager, sending the RRB Orphan Transmittal Week 3 that sales support filled by hand: "please see the
+   transmittal for service questionnaires to be also built on, can this be done understanding the Salesforce fields?" Each
+   column is a field: the agent (Assigned Agent, else the agent on the policy) and their agent number, the branch (26000),
+   the client, their policies on the questionnaire, Visible in EDM (Yes once Date SQ processed by CSR is filled, the
+   manager's choice) and the date it goes (Date Subm to Retention). It goes every Friday at ten with every claim processed
+   since the last one, attached as Excel, to the Retention unit, sales support and the manager copied; then each agent is
+   told their own, and sales support gets the list of what was held and why. Held: an agent who left (two of the six clients
+   on the Week 3 sheet still carried a departed agent in Salesforce), no agent, an agent not on the Skill Bank, and an
+   Assigned Agent who is not the agent on the policy with no Date Assigned to Agent to say which is right (one in Week 3).
+   Nothing goes before the go. */
+
+/** A claim's agent for the transmittal: tSqAgent_, and held when Assigned Agent and the policy's agent are two different
+ *  active agents with no Date Assigned to Agent to say the naming was made. */
+function tSqWho_(g, roster, former) {
+  var ag = tSqAgent_(g, roster, former);
+  if (ag.why) return ag;
+  if (g.via === 'Assigned Agent' && g.onPolicy && !g.named && tNameKey_(g.onPolicy) !== tNameKey_(g.agent)) {
+    var pk = tNameKey_(g.onPolicy);
+    if (!former[pk] && roster.some(function (x) { return tNameKey_(x.name) === pk; }))
+      return { why: 'Assigned Agent says ' + g.agent + ' and the policy says ' + g.onPolicy + ', with no Date Assigned to Agent: put the agent to be paid in Assigned Agent, with the date they were named' };
+  }
+  return ag;
+}
+/** The agent number the form carries: the Agent Skill Bank's, else the "A03522 - Name" on the policy when that is the agent. */
+function tSqAgentId_(g, a) {
+  if (a && a.no) return tSqAgentNo_(a.no);
+  if (g.agentNoSf && a && tNameKey_(g.agentNoSf.name) === tNameKey_(a.name)) return g.agentNoSf.no;
+  return '';
+}
+/** The transmittal week a day falls in: { n, label, monday, friday } (Week 1 began on T_SQ.TX.WEEK1, a Monday). */
+function tSqWeek_(x) {
+  var day = x && typeof x.getTime === 'function' ? Utilities.formatDate(x, tTz_(), 'yyyy-MM-dd') : tSqDay_(x);
+  var d = tHaDate_(day) || new Date();
+  var mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+  var w1 = tHaDate_(T_SQ.TX.WEEK1), n = Math.round((mon.getTime() - w1.getTime()) / 86400000 / 7) + 1;
+  return { n: n, label: 'Week ' + n, monday: mon, friday: new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 4) };
+}
+/** The next transmittal: this week's, or next week's once this week's has gone or Friday is past. */
+function tSqTxWeek_(now, props) {
+  var w = tSqWeek_(now), dow = Number(Utilities.formatDate(now, tTz_(), 'u'));
+  if (dow > T_SQ.TX.DOW || (props && props.getProperty('sq_tx_' + w.n))) w = tSqWeek_(new Date(w.monday.getTime() + 7 * 86400000 + 3600000));
+  return w;
+}
+/** One form row per claim, by agent then client: { agent, id, branch, client, n, pols, edm, date, done, email, claim }. */
+function tSqTxRows_(items, day) {
+  var P = T_SQ.TX.POLS;
+  return items.map(function (it) {
+    var g = it.g, pols = g.pols.slice(0, P);
+    if (g.pols.length > P) pols[P - 1] = g.pols.slice(P - 1).join(', ');
+    return { agent: it.a.name, id: tSqAgentId_(g, it.a), branch: T_SQ.TX.BRANCH, client: g.client, n: g.pols.length, pols: pols,
+      edm: g.done ? 'Yes' : 'No', date: day, done: g.done, email: String(it.a.email || ''), claim: it.r.id };
+  }).sort(function (a, b) { return a.agent.localeCompare(b.agent) || a.client.localeCompare(b.client); });
+}
+
+/** The form as the files of an .xlsx, in the layout of the GLOC Adopt an Orphan Transmittal Form: [{ name, xml }]. */
+function tSqTxFiles_(rows) {
+  var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+  var COLS = 'ABCDEFGHIJKLM'.split(''), W = [22, 11, 9, 30, 11, 15, 15, 15, 15, 12, 12, 20, 14];
+  var dmy = function (d) { return d && typeof d.getTime === 'function' ? Utilities.formatDate(d, tTz_(), 'MM/dd/yyyy') : tSqDay_(d) ? Utilities.formatDate(tHaDate_(tSqDay_(d)), tTz_(), 'MM/dd/yyyy') : String(d || ''); };
+  var sheet = [], merges = ['A1:M1', 'A2:M2', 'L3:M3'];
+  var cell = function (ref, v, s) {
+    if (v === null || v === undefined || v === '') return '<c r="' + ref + '" s="' + s + '"/>';
+    if (typeof v === 'number') return '<c r="' + ref + '" s="' + s + '"><v>' + v + '</v></c>';
+    return '<c r="' + ref + '" s="' + s + '" t="inlineStr"><is><t xml:space="preserve">' + esc(v) + '</t></is></c>';
+  };
+  var row = function (r, ht, cells) {
+    return '<row r="' + r + '"' + (ht ? ' ht="' + ht + '" customHeight="1"' : '') + '>' + cells.map(function (c, i) { return cell(COLS[i] + r, c[0], c[1]); }).join('') + '</row>';
+  };
+  var head = ['Agent Name', 'Agent ID', 'Branch', 'Client Full Name', 'Number of Policies', 'Existing Policy No Adopted #1', 'Existing Policy No Adopted #2',
+    'Existing Policy No Adopted #3', 'Existing Policy No Adopted #4', 'Visible in EDM (Yes/No)', 'Date'];
+  sheet.push(row(1, 26, COLS.map(function (c, i) { return [i ? '' : 'GLOC ADOPT AN ORPHAN TRANSMITTAL FORM', 1]; })));
+  sheet.push(row(2, 20, COLS.map(function (c, i) { return [i ? '' : 'Please complete all 11 columns shaded yellow (as applicable)', 2]; })));
+  sheet.push(row(3, 30, COLS.map(function (c, i) { return i < 11 ? [head[i], 3] : [i === 11 ? 'FOR OFFICIAL USE ONLY' : '', 4]; })));
+  sheet.push(row(4, 70, COLS.map(function (c, i) { return i < 11 ? ['', 3] : i === 11 ? ['Additional Comment', 5] : ['Amount', 4]; })));
+  for (var i = 0; i < 11; i++) merges.push(COLS[i] + '3:' + COLS[i] + '4');
+  var n = Math.max(rows.length, 20);
+  for (var k = 0; k < n; k++) {
+    var x = rows[k], r = 5 + k;
+    sheet.push(row(r, 18, x ? [[x.agent, 7], [x.id, 6], [x.branch, 6], [x.client, 6], [x.n, 6], [x.pols[0] || '', 6], [x.pols[1] || '', 6], [x.pols[2] || '', 6],
+      [x.pols[3] || '', 6], [x.edm, 6], [dmy(x.date), 6], ['', 8], ['', 6]] : COLS.map(function () { return ['', 6]; })));
+  }
+  var ws = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0" zoomScale="100"/></sheetViews><sheetFormatPr defaultRowHeight="15"/>' +
+    '<cols>' + W.map(function (w, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('') + '</cols>' +
+    '<sheetData>' + sheet.join('') + '</sheetData>' +
+    '<mergeCells count="' + merges.length + '">' + merges.map(function (m) { return '<mergeCell ref="' + m + '"/>'; }).join('') + '</mergeCells>' +
+    '<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>';
+  var B = '<border><left style="thin"><color rgb="FF000000"/></left><right style="thin"><color rgb="FF000000"/></right><top style="thin"><color rgb="FF000000"/></top>' +
+    '<bottom style="thin"><color rgb="FF000000"/></bottom><diagonal/></border>';
+  var xf = function (font, fill, border, align) { return '<xf numFmtId="0" fontId="' + font + '" fillId="' + fill + '" borderId="' + border + '" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' + align + '</xf>'; };
+  var C = '<alignment horizontal="center" vertical="center" wrapText="1"/>';
+  var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<fonts count="5"><font><sz val="11"/><name val="Aptos Narrow"/><family val="2"/></font><font><b/><sz val="11"/><name val="Aptos Narrow"/><family val="2"/></font>' +
+    '<font><b/><sz val="16"/><name val="Aptos Narrow"/><family val="2"/></font><font><sz val="13"/><name val="Aptos Narrow"/><family val="2"/></font>' +
+    '<font><b/><sz val="12"/><name val="Aptos Narrow"/><family val="2"/></font></fonts>' +
+    '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFFFFF66"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFBFBFBF"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+    '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' + B + '</borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="9"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    xf(2, 0, 0, '<alignment horizontal="center" vertical="center"/>') + xf(3, 0, 0, '<alignment horizontal="center" vertical="center"/>') +
+    xf(1, 2, 1, C) + xf(4, 3, 1, C) + xf(1, 3, 1, '<alignment horizontal="center" vertical="center" textRotation="90" wrapText="1"/>') +
+    xf(0, 0, 1, C) + xf(1, 0, 1, C) + xf(0, 2, 1, C) + '</cellXfs>' +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+  return [
+    { name: '[Content_Types].xml', xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
+    { name: '_rels/.rels', xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+    { name: 'xl/workbook.xml', xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Blank Form" sheetId="1" r:id="rId1"/></sheets></workbook>' },
+    { name: 'xl/_rels/workbook.xml.rels', xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+    { name: 'xl/worksheets/sheet1.xml', xml: ws },
+    { name: 'xl/styles.xml', xml: styles },
+  ];
+}
+/** The form as an Excel attachment (the files zipped as Excel opens them). */
+function tSqTxXlsx_(rows, name) {
+  var zip = Utilities.zip(tSqTxFiles_(rows).map(function (f) { return Utilities.newBlob(f.xml, 'application/xml', f.name); }), name);
+  try { zip.setContentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); } catch (e) {}
+  return zip;
+}
+
+/** The rows as a table in the e-mail, the same columns as the form. */
+function tSqTxTable_(rows) {
+  var esc = tEsc_, th = 'padding:6px 8px;font-size:12px;text-align:left;color:#12202e;background:#ffff66;border:1px solid #9aa5b1';
+  var td = 'padding:6px 8px;font-size:13px;color:#12202e;border:1px solid #c9d2db;vertical-align:top';
+  return '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 14px">' +
+    '<tr><th style="' + th + '">Agent</th><th style="' + th + '">Agent ID</th><th style="' + th + '">Client</th><th style="' + th + '">Policies</th>' +
+    '<th style="' + th + '">Processed by Customer Service</th></tr>' +
+    rows.map(function (x) {
+      return '<tr><td style="' + td + '"><b>' + esc(x.agent) + '</b></td><td style="' + td + '">' + esc(x.id || '—') + '</td><td style="' + td + '">' + esc(x.client) +
+        '</td><td style="' + td + '">' + esc(x.pols.filter(Boolean).join(', ')) + '</td><td style="' + td + '">' + esc(x.done ? tClaimDay_(x.done) : '—') + '</td></tr>';
+    }).join('') + '</table>';
+}
+/** The transmittal to the Retention unit (n = 0) or its reminder n. Returns { to, cc, replyTo, subject, html }. */
+function tSqTxMsg_(rows, wk, sentOn, n) {
+  var esc = tEsc_, M = TRANSITION.MANAGER || {}, amt = T_CLAIM.CUR + tMoney_(T_CLAIM.AMOUNT * rows.length, 2);
+  var on = new Date(sentOn.getFullYear(), sentOn.getMonth(), sentOn.getDate()), by = tAddWorkingDays_(on, T_SQ.RET_DAYS);
+  var who = tN_(rows.length, 'client', 'clients');
+  var subject = n
+    ? 'Reminder' + (n > 1 ? ' ' + n : '') + ': GLOC Adopt an Orphan transmittal, Ricky Rampersad Branch, ' + wk.label + ' of ' + tClaimDay_(on) + ': ' + who + ' not yet paid'
+    : 'GLOC Adopt an Orphan transmittal, Ricky Rampersad Branch, ' + wk.label + ' (' + tClaimDay_(on) + '): ' + who + ', ' + amt;
+  var lead = n
+    ? '<p style="margin:0 0 12px">Our ' + esc(wk.label) + ' transmittal went to you on ' + esc(tClaimDay_(on)) + ', to be paid by <b>' + esc(tClaimDay_(by)) + '</b>. Salesforce does not show ' +
+      '<b>Date SQ Comm Paid</b> yet on the ' + esc(who) + ' below. The form is attached again, with these alone on it. Please process it, or reply with the date it will be paid.</p>'
+    : '<p style="margin:0 0 12px">Please find attached the Ricky Rampersad Branch’s GLOC Adopt an Orphan Transmittal Form for ' + esc(wk.label) + ': ' + esc(who) + ', ' +
+      esc(T_CLAIM.CUR + tMoney_(T_CLAIM.AMOUNT, 2)) + ' each, ' + esc(amt) + ' in all. Customer Service has processed each client’s service questionnaire (the dates are below). ' +
+      'We ask that it is paid within ' + T_SQ.RET_DAYS + ' working days, by <b>' + esc(tClaimDay_(by)) + '</b>.</p>';
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:680px">' +
+    '<p style="margin:0 0 12px">Good day,</p>' + lead + tSqTxTable_(rows) +
+    '<p style="margin:0 0 12px">When it is paid, please enter <b>Date SQ Comm Paid</b> on each policy in Salesforce, or reply with the date. Until that date is there, a reminder ' +
+    'comes every ' + T_SQ.RET_DAYS + ' working days; it stops the day the date is entered.</p>' +
+    '<p style="margin:0 0 14px">Thank you,<br><b style="color:#12202e">' + esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch</p>' +
+    '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(T_CLAIM_FOOT) + '</p></div>';
+  return { to: T_CLAIM.TO, cc: tClaimCc_([SVC.SALES_SUPPORT_EMAIL]), replyTo: SVC.SALES_SUPPORT_EMAIL, subject: subject, html: html };
+}
+/** One agent's own clients on the transmittal: what went and what happens next. */
+function tSqTxAgentMsg_(rows, wk, now) {
+  var esc = tEsc_, M = TRANSITION.MANAGER || {}, first = String(rows[0].agent || '').split(/\s+/)[0];
+  var amt = T_CLAIM.CUR + tMoney_(T_CLAIM.AMOUNT, 2), total = T_CLAIM.CUR + tMoney_(T_CLAIM.AMOUNT * rows.length, 2);
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:620px">' +
+    '<p style="margin:0 0 12px">Good day ' + esc(first) + ',</p>' +
+    '<p style="margin:0 0 12px">Your ' + esc(rows.length === 1 ? 'claim' : 'claims') + ' for ' + esc(amt) + ' a client went to the Retention unit today, ' + esc(tClaimDay_(now)) +
+    ', on the branch’s ' + esc(wk.label) + ' transmittal: ' + esc(total) + ' in all.</p><ul style="margin:0 0 12px;padding-left:20px">' +
+    rows.map(function (x) { return '<li><b>' + esc(x.client) + '</b>, ' + esc(x.pols.filter(Boolean).join(', ')) + '</li>'; }).join('') + '</ul>' +
+    '<p style="margin:0 0 12px">It is paid on the commission run. You are told the day Salesforce shows the payment date, and your Claims tab on the board shows each one. You do not chase it.</p>' +
+    '<p style="margin:0 0 14px">Thank you,<br><b style="color:#12202e">' + esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch</p>' +
+    '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(tInternal_(null)) + '</p></div>';
+  return { to: rows[0].email, cc: [SVC.SALES_SUPPORT_EMAIL], replyTo: SVC.SALES_SUPPORT_EMAIL, html: html,
+    subject: 'Your ' + amt + ': ' + tN_(rows.length, 'claim', 'claims') + ' went to the Retention unit on the ' + wk.label + ' transmittal' };
+}
+
+/** Friday at ten: the transmittal goes, Salesforce and the tab are written, and each agent is told their own. Throws when the
+ *  e-mail does not go (nothing is written then). Returns { label, rows, file, errors }. */
+function tSqTransmit_(ready, now) {
+  var tz = tTz_(), today = Utilities.formatDate(now, tz, 'yyyy-MM-dd'), wk = tSqWeek_(now), errors = [], byClaim = {};
+  var why = function (e) { return String(e && e.message ? e.message : e).slice(0, 160); };
+  ready.forEach(function (it) { byClaim[it.r.id] = it; });
+  var rows = tSqTxRows_(ready, now), file = T_SQ.TX.FILE + ' ' + wk.label + '.xlsx';
+  var m = tSqTxMsg_(rows, wk, now, 0);
+  tMsSend_(m.to, m.subject, m.html, { cc: m.cc, replyTo: m.replyTo, attachments: [tSqTxXlsx_(rows, file)] });
+  rows.forEach(function (x) {
+    var it = byClaim[x.claim], wrote = [];
+    it.g.recs.forEach(function (rec) {
+      if (rec.ret) return;
+      var body = { Date_Subm_to_Retention__c: today };
+      if (!rec.was) body.Was_Agent_Paid__c = 'No';
+      try { tSfSend_('patch', '/sobjects/CLIENT_PORTFOLIO__c/' + rec.id, body); wrote.push(rec.no); } catch (e) { errors.push('Date Subm to Retention on ' + rec.no + ': ' + why(e)); }
+    });
+    tClaimSet_(it.r, { Submitted: now, Status: 'Submitted', Transmittal: wk.label,
+      Salesforce: wrote.length ? 'Date Subm to Retention ' + today + ' and Was Agent Paid No on ' + wrote.join(', ') + ' (' + wk.label + ' transmittal)' : 'not written: enter Date Subm to Retention by hand' });
+    log_('transition', 'claim', it.r.id + ' · ' + x.agent + ' · ' + x.client + ' · ' + wk.label + ' transmittal to the Retention unit');
+  });
+  var byAgent = {};
+  rows.forEach(function (x) { if (x.email) (byAgent[x.email.toLowerCase()] = byAgent[x.email.toLowerCase()] || []).push(x); });
+  Object.keys(byAgent).forEach(function (k) {
+    try { var am = tSqTxAgentMsg_(byAgent[k], wk, now); tMsSend_(am.to, am.subject, am.html, { cc: am.cc, replyTo: am.replyTo }); }
+    catch (e) { errors.push('the note to ' + byAgent[k][0].agent + ': ' + why(e)); }
+  });
+  log_('transition', 'sq-transmittal', wk.label + ' · ' + rows.length + ' clients · ' + file);
+  return { label: wk.label, rows: rows, file: file, errors: errors };
+}
+/** One reminder for a transmittal still unpaid, the form attached again with the unpaid clients alone. */
+function tSqTxRemind_(grp, now) {
+  var sentOn = grp.sentOn && typeof grp.sentOn.getTime === 'function' ? grp.sentOn : tHaDate_(tSqDay_(grp.sentOn)) || now, wk = tSqWeek_(sentOn);
+  var n = 1 + grp.items.reduce(function (m, it) { return Math.max(m, it.r.follow || 0); }, 0);
+  var rows = tSqTxRows_(grp.items, sentOn), m = tSqTxMsg_(rows, wk, sentOn, n);
+  tMsSend_(m.to, m.subject, m.html, { cc: m.cc, replyTo: m.replyTo, attachments: [tSqTxXlsx_(rows, T_SQ.TX.FILE + ' ' + wk.label + ' (not yet paid).xlsx')] });
+  grp.items.forEach(function (it) { tClaimSet_(it.r, { 'Follow-ups': n, 'Last follow-up': now }); });
+  log_('transition', 'claim-reminder', wk.label + ' transmittal · reminder ' + n + ' · ' + rows.length + ' clients');
+}
+/** Sales support's note: what went on the transmittal, what was held and why, and what went already but no longer reads
+ *  right in Salesforce. To sales support, the manager copied. */
+function tSqTxNote_(txDone, held, fix, now) {
+  var esc = tEsc_;
+  var list = function (title, items, line) {
+    if (!items.length) return '';
+    return '<p style="margin:14px 0 4px"><b style="color:#12202e">' + esc(title) + '</b></p><ul style="margin:0 0 10px;padding-left:20px">' + items.map(line).join('') + '</ul>';
+  };
+  var who = function (x) { return '<li><b>' + esc(x.g.client) + '</b> (' + esc(x.g.pols.join(', ')) + ')' + (x.r && x.r.id ? ', ' + esc(x.r.id) : '') + ': ' + esc(x.why) + '</li>'; };
+  var subject = (txDone ? 'The ' + txDone.label + ' transmittal went to the Retention unit: ' + tN_(txDone.rows.length, 'client', 'clients') : 'TT$200 claims to put right in Salesforce') +
+    (held.length + fix.length ? ' · ' + (held.length + fix.length) + ' to put right' : '');
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:660px">' +
+    '<p style="margin:0 0 12px">Good day,</p>' +
+    (txDone ? '<p style="margin:0 0 10px">The ' + esc(txDone.label) + ' transmittal (' + esc(txDone.file) + ') went to the Retention unit today, built from Salesforce. ' +
+      'Date Subm to Retention and Was Agent Paid are written on each policy, and each agent has been told their own.</p>' + tSqTxTable_(txDone.rows) : '') +
+    list('Held from the transmittal: put right in Salesforce, and it goes on the next one', held, who) +
+    list('Already with the Retention unit, but Salesforce no longer names the agent being paid: left out of the reminder until it is put right', fix, who) +
+    (txDone && txDone.errors.length ? '<p style="margin:10px 0;color:#9b1c1c">Not written: ' + esc(txDone.errors.join('; ')) + '</p>' : '') +
+    '<p style="margin:14px 0 0;font-size:12px;color:#8a97a8">' + esc(tInternal_(null)) + '</p></div>';
+  var cc = tClaimCc_([]).filter(function (a) { return a.toLowerCase() !== SVC.SALES_SUPPORT_EMAIL.toLowerCase(); });
+  tMsSend_(SVC.SALES_SUPPORT_EMAIL, subject, html, { cc: cc, replyTo: T_CLAIM.COPY || SVC.AGENT_EMAIL });
+}
+
+/** The editor's Run button: the transmittal as it stands now, to the branch manager alone with the Excel attached, marked
+ *  TEST; nothing written to Salesforce or the tab, and nobody else e-mailed. Built from the claims processed and not sent. */
+function transitionTransmittalTest() {
+  var to = T_CLAIM.COPY || SVC.AGENT_EMAIL, now = new Date(), roster = tRoster_(), former = tFormer_(), ready = [], held = [];
+  if (!tSfOn_()) return tSay_('Salesforce is not linked to this project: the questionnaire dates cannot be read.');
+  tSqGroups_(tSfQuery_('SELECT ' + T_SQ_FIELDS + ' FROM CLIENT_PORTFOLIO__c' + tSqWhere_(T_SQ.FROM))).forEach(function (g) {
+    if (!g.done || g.ret || g.paid) return;
+    var ag = tSqWho_(g, roster, former);
+    if (ag.why) held.push({ g: g, r: null, why: ag.why }); else ready.push({ g: g, r: { id: 'TEST' }, a: ag.a });
+  });
+  var wk = tSqTxWeek_(now, PropertiesService.getScriptProperties()), rows = tSqTxRows_(ready, wk.friday);
+  var m = tSqTxMsg_(rows, wk, wk.friday, 0), file = T_SQ.TX.FILE + ' ' + wk.label + ' (TEST).xlsx';
+  var banner = '<div style="font:13px/1.5 Inter,Arial,sans-serif;background:#fff6df;border-left:4px solid #efc24b;padding:8px 12px;margin:0 0 14px">' +
+    '<b>TEST</b>: on ' + tEsc_(tClaimDay_(wk.friday)) + ' at ' + T_SQ.TX.HOUR + ':00 this goes to ' + tEsc_(m.to) + ', copied to ' + tEsc_(m.cc.join(', ')) + ', with the form attached. ' +
+    (held.length ? tEsc_(tN_(held.length, 'claim is', 'claims are')) + ' held from it: ' + held.map(function (h) { return tEsc_(h.g.client + ': ' + h.why); }).join('; ') + '. ' : '') +
+    'Nothing was written to Salesforce.</div>';
+  tMsSend_(to, '[TEST] ' + m.subject, banner + m.html, { attachments: [tSqTxXlsx_(rows, file)] });
+  return tSay_('Sent to ' + to + ': the ' + wk.label + ' transmittal as it stands, ' + tN_(rows.length, 'client', 'clients') + ' on it, ' + held.length + ' held.');
+}
+/** The editor's Run button: the transmittal now, whatever the day (still nothing before the go). */
+function transitionTransmittalNow() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return tSay_('Another run is busy. Try again in a minute.');
+  try { var r = tSqRun_({ force: true, transmit: true }); return tSay_((r.what || 'Nothing was ready for the transmittal.') + (r.errors.length ? ' Problems: ' + r.errors.join('; ') : '')); }
+  finally { lock.releaseLock(); }
 }
 
 /** The task sales support opened for Customer Service on this questionnaire ("SQ- <client> <policies>", "Service
@@ -10685,7 +11057,7 @@ function transitionSqTest() {
   var to = T_CLAIM.COPY || SVC.AGENT_EMAIL, now = new Date(), sent = [];
   var groups = [];
   if (tSfOn_()) {
-    try { groups = tSqGroups_(tSfQuery_('SELECT ' + T_SQ_FIELDS + ' FROM CLIENT_PORTFOLIO__c WHERE Date_SQ_submitted_to_CSR__c >= ' + T_SQ.FROM + ' OR Date_SQ_processed_by_CSR__c >= ' + T_SQ.FROM)); }
+    try { groups = tSqGroups_(tSfQuery_('SELECT ' + T_SQ_FIELDS + ' FROM CLIENT_PORTFOLIO__c' + tSqWhere_(T_SQ.FROM))); }
     catch (e) { groups = []; }
   }
   var sample = { key: 'sample', who: 'sample', client: 'Sample Client', cno: '0000000000', pols: ['5000000000', '8000000000'], ids: [], recs: [],
