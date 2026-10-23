@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-23b';
+var SCRIPT_VERSION = '2026-10-23c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2127,6 +2127,8 @@ function doGet(e) {
     try { return rateClick_(e); }
     catch (err) { return replyPage_('Thank you.', 'Your rating did not record this time. Reply to the e-mail and the branch will take it from there.', ''); }
   }
+  // My workday on the branch's own site asks for the day as JSON (23 Oct 2026).
+  if (p.wd) { try { return json_(workdayGet_(p)); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (p.rs) {
     // A link from an e-mail opens at once: a light page, and the page built behind it (21 Oct 2026). openPage() builds it with full=1.
     if (FAST.KINDS[String(p.f || '')] && String(p.full || '') !== '1') { try { return fastShell_(p); } catch (err) {} }
@@ -2152,6 +2154,8 @@ function doPost(e) {
     try { return ratePost_(e); }
     catch (err) { return replyPage_('That did not send.', 'Go back and press Send again, or reply to the e-mail.', ''); }
   }
+  // My workday: check in from the page on the site (23 Oct 2026).
+  if (e && e.parameter && e.parameter.wd) { try { return json_(workdayPost_(e.parameter)); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   // A Save from one of the answer pages, form-encoded.
   if (e && e.parameter && e.parameter.rs) {
     try { var rp = replyPost_(e); if (rp) return rp; }
@@ -3388,7 +3392,7 @@ function dayStartBuildSend_(staffId, date, kind, opt, to) {
     '<div style="background:#fff;border:1px solid ' + MAIL.gold + ';border-radius:10px;padding:12px 15px;font-size:14px;line-height:1.55;margin-bottom:6px">' + ask +
       (sysDay ? replyButton_(replyUrl_(staffId, date, 'plan'), signIn ? 'Open my day' : 'Check in and start my day', 'One tap. Checking in is the register; your day is already set.') :
        (kind === 'first' && sfOk && target ? replyButton_(replyUrl_(staffId, date, 'plan'), 'Review and save this plan', 'One tap opens it ticked. Untick what you will not do, add your own, save. No sign-in.') : '')) +
-      (sysDay ? '' : '<div style="margin-top:9px"><a href="' + PLANNER_URL + '" style="font-size:12.5px;color:' + MAIL.navy + ';font-weight:700">or open the planner</a></div>') + '</div>' +
+      (sysDay ? '' : '<div style="margin-top:9px"><a href="' + PLANNER_URL + '" style="font-size:12.5px;color:' + MAIL.navy + ';font-weight:700">or open the planner</a></div>') + workdayMailLine_(staffId) + '</div>' +
     (kind === 'first' ? '<div style="background:' + MAIL.paper + ';border:1px dashed ' + MAIL.gold + ';border-radius:10px;padding:11px 15px;margin:10px 0 4px;font-size:13.5px;line-height:1.55">' +
         '<b>First fifteen minutes: the scrub.</b> Go through your inbox, the branch WhatsApp and your calls. Anything from Mr Rampersad, a manager, an agent or a client that needs doing goes in the scrub box on your ' + (systemDayOn_() ? 'day' : 'plan') + ' page, and becomes a Salesforce task in your name before you start. ' +
         '<b>High-payoff work goes first:</b> new business, then orphan adoption, then retention.</div>' : '') +
@@ -4620,7 +4624,7 @@ function sendBranchManagerDay_(day) {
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, Mr Rampersad. Check in and your day is on one page: urgent, drafts, your inbox, then what is important. ' +
       'Everything you do there, in Salesforce and by e-mail is written into your progress as the day goes; it comes to you at 11:00 and 3:00.</div>' +
-    replyButton_(unitUrl_('ricky'), 'Check in and start my day', 'One page, the same link every day: save it to your home screen. Checking in records your time.') +
+    replyButton_(unitUrl_('ricky'), 'Check in and start my day', 'One page, the same link every day: save it to your home screen. Checking in records your time.') + workdayMailLine_('ricky') +
     (function () { try { return bmYesterdayLine_('ricky', day); } catch (e) { return ''; } })() +
     (function () { try { return closeoutYesterdayHtml_(day); } catch (e) { return ''; } })() +
     statTiles_([
@@ -15485,6 +15489,141 @@ function replyClick_(e) {
   if (f === 'ag' || f === 'agc') return agReplyPage_(person, day, f, '', { focus: String(p.i || '') });
   if (f === 'nudge') return nudgeReplyPage_(person, day, '');
   return hkReplyPage_(person, day, '');
+}
+
+/* ─────────── My workday: one fast page for everyone, on the branch's own site (23 October 2026) ───────────
+ *  Ricky, 8:59am: "scale and make my day easy to use, shall this be through a link ... rickyrampersadbranch/myworkday ... would this
+ *  open faster and stream motion, charts and graphics?"; 9:03: "this will apply to all persons"; 9:06: "the top of the page should have a
+ *  progress bar for effectiveness ... so the check in will show what was achieved". The pages behind the e-mail buttons are built by Apps
+ *  Script on every open (Salesforce, Chatter, the inbox), under Google's banner. rickyrampersadbranch.com/myworkday/ is a page on the
+ *  branch's own site: it opens at once with the last copy it had, asks the tracker for the day as JSON (doGet with wd=, workdayModel_)
+ *  and draws it with motion:
+ *    · the progress bar across the top: closed today against the day's number (the same count as the progress-check e-mail), a marker
+ *      for how much of the working day has gone, and the pace;
+ *    · check in there and then (doPost with wd=, the same register as the day page), or the time you did, on time or late;
+ *    · what you have achieved today: each close, with or without your note (and for Mr Rampersad his notes, e-mails and tasks);
+ *    · next up: what is overdue and due today, oldest first;
+ *    · the last five working days as bars; for Mr Rampersad and the BMA, every desk's bar today;
+ *    · one button to the full day page for everything else (drafts, the inbox and Claude's notes, the task cards).
+ *  One link per person for every day (workUrl_, signed like My unit's), in the morning e-mails and from showWorkdayLinks() in the editor.
+ */
+var WORKDAY = { SITE: 'https://rickyrampersadbranch.com/myworkday/', BARS: 5, ACHIEVED: 40, NEXT: 8, TEAM_TTL: 300 };
+function workSig_(sid) { return replySig_(sid, 'always', 'work'); }
+function workUrl_(sid) { return WORKDAY.SITE + '?p=' + encodeURIComponent(sid) + '&k=' + encodeURIComponent(workSig_(sid)); }
+function workdayPerson_(sid) { return rosterPerson_(sid) || (sid === 'ricky' || UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null); }
+/** The full page behind the fast one: My day or My unit, else the staff day page. */
+function workdayFullUrl_(sid, day) { return sid === 'ricky' || UM_DESKS.indexOf(sid) > -1 ? unitUrl_(sid) : replyUrl_(sid, day, 'plan'); }
+/** The small line under a morning e-mail's button. */
+function workdayMailLine_(sid) {
+  return '<div style="margin-top:9px;font-size:12.5px;line-height:1.5;color:' + MAIL.muted + '">New: <a href="' + esc_(workUrl_(sid)) + '" style="color:' + MAIL.navy + ';font-weight:800">My workday</a>' +
+    ' opens at once, with your progress bar and what you have achieved today. The same link every day: save it to your home screen.</div>';
+}
+/** From the editor: every person's My workday link, to send each their own. */
+function showWorkdayLinks() {
+  var sids = ['ricky'].concat(UM_DESKS, DAY_MAIL_DESKS).filter(function (s, i, a) { return a.indexOf(s) === i; });
+  var out = sids.map(function (s) { return nameFor_(s) + ': ' + workUrl_(s); }).join('\n');
+  Logger.log(out); return out;
+}
+
+/** The day's numbers, counted as the progress-check e-mail counts them (sendMidday_). */
+function workdayProgress_(sid, day, now) {
+  var nowM = minutesOf_(hhmm_(now)), hrs = parseSpan_(scheduleFor_(sid).hours || '') || { start: 480, end: 960 }, props = PropertiesService.getScriptProperties();
+  var day1 = null, book = {}, sfOk = sfkConfigured_();
+  if (sfOk) {
+    try { day1 = sfkDayFor_(sid, day); } catch (e) { day1 = null; }
+    try { book = (sfkOpenBook_(day) || {})[sid] || {}; } catch (e) { sfOk = false; }
+  }
+  var overdue = 0, dueOpen = 0, all = [];
+  Object.keys(book).forEach(function (ty) { (book[ty] || []).forEach(function (t) { if (t.late) overdue++; if (t.due === day) dueOpen++; if (t.late || t.due === day) all.push({ t: t, ty: ty }); }); });
+  var closed = day1 ? day1.closed.length : 0, unnoted = day1 ? day1.closed.filter(function (t) { return !t.noted; }).length : 0;
+  var target = 0; try { target = Number(props.getProperty(intelTargetKey_(sid, day)) || 0); } catch (e) {}
+  if (!target) target = closed + intelTarget_(null, dueOpen, overdue, all.length);
+  var done = workedMins_(sid, nowM), whole = workedMins_(sid, hrs.end);
+  var plan = []; try { plan = JSON.parse(props.getProperty('intel_plan_' + sid + '_' + day) || '[]'); } catch (e) {}
+  var shut = {}; ((day1 && day1.closed) || []).forEach(function (t) { shut[t.id] = 1; });
+  var pct = target ? Math.round(100 * closed / target) : (closed ? 100 : 0), dayPct = whole ? Math.round(100 * done / whole) : 0;
+  return { sf: sfOk && !!day1, closed: closed, target: target, pct: pct, dayPct: dayPct, proj: done ? Math.round(closed * whole / done) : 0,
+    behind: target > 0 && pct < dayPct, noted: closed - unnoted, unnoted: unnoted, overdue: overdue, dueToday: dueOpen,
+    lastAt: day1 && day1.lastAt != null ? twelve_(mmText_(day1.lastAt)) : '', notes: day1 ? day1.notes : 0,
+    plan: plan.length, planDone: plan.filter(function (id) { return shut[id]; }).length, _closed: day1 ? day1.closed : [], _all: all };
+}
+/** Closes per working day, the last WORKDAY.BARS of them, oldest first (today last). */
+function workdayBars_(sid, day) {
+  var days = workDays_(day, WORKDAY.BARS), u = (sfkUsers_() || {})[sid], by = {};
+  days.forEach(function (d) { by[d] = 0; });
+  if (!u || !days.length) return days.map(function (d) { return { d: d, l: sbLetter_(d), n: null }; });
+  try {
+    sfkQuery_("SELECT LastModifiedDate FROM Task WHERE OwnerId = '" + u.id + "' AND IsClosed = true AND LastModifiedDate >= " + sfkUtcAt_(days[0], 0) +
+      " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') LIMIT 2000").forEach(function (r) {
+      var l = sfLocal_(r.LastModifiedDate); if (l && by[l.day] != null) by[l.day]++;
+    });
+  } catch (e) { return days.map(function (d) { return { d: d, l: sbLetter_(d), n: null }; }); }
+  return days.map(function (d) { return { d: d, l: sbLetter_(d), n: by[d] }; });
+}
+/** Every desk today, for the Branch Manager and the BMA: in at, closed against the day's number. Kept five minutes. */
+function workdayTeam_(day) {
+  var c = CacheService.getScriptCache(), key = 'wd_team_' + day, hit = c.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  var rows = []; try { rows = hrRows_(ATT, true) || []; } catch (e) {}
+  var now = new Date(), out = DAY_MAIL_DESKS.filter(function (s) { return SCHEDULE[s]; }).map(function (s) {
+    var a = attRow_(rows, day, s), t = a ? timeStr_(a.row.FirstSignIn) : '', st = a ? String(a.row.Status || '').toLowerCase() : '', pr = null;
+    try { pr = workdayProgress_(s, day, now); } catch (e) {}
+    return { sid: s, name: String(nameFor_(s)).split(' ')[0], hours: scheduleFor_(s).hours || '', at: t ? twelve_(t) : '', late: t ? lateBy_(s, t, day) : 0, absent: st === 'absent',
+      closed: pr ? pr.closed : null, target: pr ? pr.target : null, pct: pr ? pr.pct : null, dayPct: pr ? pr.dayPct : null, overdue: pr ? pr.overdue : null };
+  });
+  try { c.put(key, JSON.stringify(out), WORKDAY.TEAM_TTL); } catch (e) {}
+  return out;
+}
+/** Everything the page shows, as JSON. */
+function workdayModel_(sid, day) {
+  var person = workdayPerson_(sid);
+  if (!person) return { ok: false, error: 'That desk is no longer on the register.' };
+  var now = new Date(), sched = scheduleFor_(sid), name = nameFor_(sid);
+  var m = { ok: true, v: SCRIPT_VERSION, sid: sid, name: name, first: String(name).split(' ')[0], day: day, date: prettyDate_(day), at: twelve_(hhmm_(now)),
+    hours: sched.hours || '', lunch: sched.lunch || '', start: twelve_(mmText_(startFor_(sid, day))), full: workdayFullUrl_(sid, day),
+    fullLabel: sid === 'ricky' ? 'Open My day' : UM_DESKS.indexOf(sid) > -1 ? 'Open My unit' : 'Open my day page' };
+  m.checkin = { at: '', late: 0, status: '', out: '', why: '' };
+  try {
+    var a = attRow_(hrRows_(ATT, true) || [], day, sid);
+    if (a) { var t = timeStr_(a.row.FirstSignIn), o = timeStr_(a.row.SignedOut);
+      m.checkin = { at: t ? twelve_(t) : '', late: t ? lateBy_(sid, t, day) : 0, status: String(a.row.Status || (t ? 'in' : '')).toLowerCase(), out: o ? twelve_(o) : '', why: String(a.row.Reason || '') }; }
+  } catch (e) {}
+  var pr = workdayProgress_(sid, day, now), base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
+  m.progress = {}; Object.keys(pr).forEach(function (k) { if (k.charAt(0) !== '_') m.progress[k] = pr[k]; });
+  // What was achieved: each close, with or without a note; for him, his notes, e-mails and tasks from the day log too.
+  var ach = (pr._closed || []).map(function (t) { return { k: 'close', s: shorten_(t.subject, 120), noted: !!t.noted }; });
+  if (sid === 'ricky') { try { dayLogRows_(day).filter(function (r) { return r.Kind !== 'checkin' && r.Kind !== 'close'; }).forEach(function (r) {
+    ach.push({ k: String(r.Kind || 'note'), s: shorten_(String(r.What || ''), 140), at: twelve_(String(r.At || '')), g: String(r.Group || '') }); }); } catch (e) {} }
+  m.achieved = ach.slice(-WORKDAY.ACHIEVED).reverse();
+  // Next up: overdue oldest first, then due today.
+  m.next = (pr._all || []).slice().sort(function (x, y) { return (y.t.late ? 1 : 0) - (x.t.late ? 1 : 0) || String(x.t.due || '').localeCompare(String(y.t.due || '')); })
+    .slice(0, WORKDAY.NEXT).map(function (x) { return { s: shorten_(x.t.subject || x.t.s || '', 110), due: x.t.due ? shortDate_(x.t.due) : '', late: !!x.t.late, ty: x.ty, id: x.t.id || '', url: base && x.t.id && sid !== 'akaash' ? base + x.t.id : '' }; });
+  m.bars = workdayBars_(sid, day);
+  m.team = sid === 'ricky' || sid === 'kamla' ? workdayTeam_(day) : [];
+  return m;
+}
+/** GET with wd=: the day as JSON, for the page on the site. */
+function workdayGet_(p) {
+  var sid = String(p.wd || '').trim();
+  if (!sid || String(p.k || '') !== workSig_(sid)) return { ok: false, error: 'This link is not right. Open it again from your morning e-mail.' };
+  return workdayModel_(sid, todayISO_());
+}
+/** POST with wd=: check in there and then, the same register as the day page; then the day again. */
+function workdayPost_(p) {
+  var sid = String(p.wd || '').trim(), day = todayISO_();
+  if (!sid || String(p.k || '') !== workSig_(sid)) return { ok: false, error: 'This link is not right. Open it again from your morning e-mail.' };
+  var person = workdayPerson_(sid); if (!person) return { ok: false, error: 'That desk is no longer on the register.' };
+  if (String(p.act || '') !== 'checkin') return { ok: false, error: 'Nothing to do.' };
+  var at = '', first = false;
+  if (sid !== 'ricky' && UM_DESKS.indexOf(sid) < 0) { var ci = sdCheckin_(person, day); at = ci.at; first = !!ci.first; }
+  else {
+    var s = signInFromPage_(person); at = s && s.at || hhmm_(new Date()); first = !!(s && s.first);
+    if (sid === 'ricky' && s && s.at) { try { dayLogMany_(day, [{ at: s.at, kind: 'checkin', group: '', what: 'Checked in', ref: 'ci:' + day }]); } catch (e) {} }
+  }
+  try { runlog_('checkin ' + sid + ' workday ' + at); } catch (e) {}
+  try { CacheService.getScriptCache().remove('wd_team_' + day); } catch (e) {}
+  var m = workdayModel_(sid, day); m.checkedIn = { at: twelve_(at), first: first };
+  return m;
 }
 
 /* ─────────── Pages open at once (21 October 2026, 2026-10-21a) ───────────
