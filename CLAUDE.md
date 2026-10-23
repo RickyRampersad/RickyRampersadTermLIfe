@@ -4223,6 +4223,10 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   all my staff is also added"): every active staff row on the sign-in lists, every active row of the RR Operations
   Access tab, and `LB_PICK_EXTRA` (Mala Balkaran; the `LB_PICK_EXTRA` Script property adds more, comma-separated). A
   person with no agent number goes in under their name and shows as "Name · Role"; drivers stay off.
+  **One person is listed once** (the same afternoon: "there is now a duplication for RRB support staff"): the two
+  sign-in lists write a person differently ("SASHA LALLA" on one, "Sasha Lalla-Jagassar" on the other, "Liz" for
+  Elizabeth), so `lbPickHas_` takes the same first name with every other part of the shorter name inside the longer as
+  the same person, across every source; a first name alone matches nobody.
 - **The Delivery Book film** (20 October 2026: "a small video on the revised delivery process as it also looks up the
   client etc and the client gets an email confirming delivery"). *The Delivery Book, for staff* (`dbstaff`, 1:45):
   `rroperations/delivery-book/deliverybook-staff.mp4`, poster `film.jpg`, page `/deliverybook-film/` (Open Graph for
