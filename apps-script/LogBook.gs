@@ -91,8 +91,9 @@ var LB = {
   CUTOFF_HOUR: 12,
   BAG: { CUTOFF: 12, AT: 13, NUDGE: 11, GRACE_MIN: 60, ROTA_FROM: '2026-10-19',
          /* The branch's rota (17 October 2026): the three who do transmittals, one week each, Azariah first
-            from 19 October. Kamla does not do transmittals and is never on it. A Bag Rota tab overrides this. */
-         ROTA: [{ who: 'Azariah', leaves: '4:00 pm' }, { who: 'Elizabeth', also: 'Liz', leaves: '3:00 pm' }, { who: 'Sasha', leaves: '2:00 pm' }] },
+            from 19 October. Kamla does not do transmittals and is never on it. A Bag Rota tab overrides this.
+            Elizabeth goes home at 4 from 23 October 2026 (her day is now 8 to 4). */
+         ROTA: [{ who: 'Azariah', leaves: '4:00 pm' }, { who: 'Elizabeth', also: 'Liz', leaves: '4:00 pm' }, { who: 'Sasha', leaves: '2:00 pm' }] },
   CONTRACT_DAYS: 20, CONTRACT_WARN: [15, 18],
   NUDGE_DAYS: [1, 3],             // logged and not handed in: the agent is reminded on these working days
   REASON_COVERS: 1,               // a reason given covers the rest of that working day and the next
