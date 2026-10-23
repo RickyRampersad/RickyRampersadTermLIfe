@@ -745,7 +745,7 @@ function lbPickAgents_() {
   all.forEach(function (a) {
     if (!a.active) { off[a.key] = 1; var nk = lbNameKey_(a.name); if (nk) off['n:' + nk] = 1; return; }
     if (lbIsDriverRole_(a.role)) return;
-    if (seen[a.key]) return;
+    if (seen[a.key] || lbPickHas_(out, a.name)) return;
     seen[a.key] = 1; out.push(a);
   });
   /* The staff hand papers in too (23 October 2026: "use her name alone as she is
@@ -756,7 +756,7 @@ function lbPickAgents_() {
     name = String(name || '').replace(/\s+/g, ' ').trim();
     var nk = lbNameKey_(name), k = lbAgentKey_(name);
     if (!nk || !k || off['n:' + nk]) return;
-    if (out.some(function (x) { return lbNameKey_(x.name) === nk; })) return;
+    if (lbPickHas_(out, name)) return;
     seen[k] = 1;
     out.push({ agentNo: name, name: name, email: email || '', unit: '', role: role || 'Staff', active: true, key: k, staff: true });
   };
@@ -772,12 +772,36 @@ function lbPickAgents_() {
   String(dbProp_('LB_PICK_EXTRA', '')).split(',').concat(LB_PICK_EXTRA).forEach(function (n) { byName(n, 'Sales Support'); });
   lbSfActiveAgents_().forEach(function (a) {
     var k = lbAgentKey_(a.agentNo);
-    if (!k || seen[k] || off[k] || off['n:' + lbNameKey_(a.name)]) return;
+    if (!k || seen[k] || off[k] || off['n:' + lbNameKey_(a.name)] || lbPickHas_(out, a.name)) return;
     seen[k] = 1; out.push({ agentNo: a.agentNo, name: a.name, email: a.email, unit: '', role: 'Agent', active: true, key: k, sf: true });
   });
   out.sort(function (x, y) { return String(x.name).localeCompare(String(y.name)); });
   LB_PICK_READ_ = out;
   return out;
+}
+
+/* Is this person already on the list? The two sign-in lists write one person
+   differently ("SASHA LALLA" on one, "Sasha Lalla-Jagassar" on the other), so
+   the same first name with every other part of the shorter name inside the
+   longer counts as the same person (23 October 2026: "there is now a
+   duplication for RRB support staff"). A first name alone matches nobody. */
+var LB_PICK_NICK = { liz: 'elizabeth', lizzy: 'elizabeth', beth: 'elizabeth' };
+function lbPickWords_(name) {
+  var w = lbNameKey_(String(name || '').replace(/^\s*A?\d+\s*-\s*/i, '')).split(' ').filter(String);
+  if (w.length && LB_PICK_NICK[w[0]]) w[0] = LB_PICK_NICK[w[0]];
+  return w;
+}
+function lbPickHas_(list, name) {
+  var a = lbPickWords_(name);
+  if (!a.length) return false;
+  return list.some(function (x) {
+    var b = lbPickWords_(x.name);
+    if (!b.length || a[0] !== b[0]) return false;
+    if (a.join(' ') === b.join(' ')) return true;
+    var s = a.length <= b.length ? a : b, l = s === a ? b : a;
+    if (s.length < 2) return false;
+    return s.slice(1).every(function (w) { return l.slice(1).some(function (v) { return v === w || v.indexOf(w) === 0 || w.indexOf(v) === 0; }); });
+  });
 }
 
 /* Salesforce's active agents with their numbers: [{agentNo, name, email}]. */

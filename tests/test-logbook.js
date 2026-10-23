@@ -158,6 +158,10 @@ let env = world();
   ok('Mala Balkaran is in the list by name', pick.some(a => a.name === 'Mala Balkaran' && a.staff));
   ok('staff can log for a staff member by name', env.lbValidate_({ entry: entry({ agentNo: 'Mala Balkaran' }) }, env.lbSession_(bo.token)).agent.name === 'Mala Balkaran');
   ok('no one twice', new Set(pick.map(a => a.name)).size === pick.length);
+  ok('one person written two ways is listed once',
+     env.lbPickHas_([{ name: 'SASHA LALLA' }], 'Sasha Lalla-Jagassar') && env.lbPickHas_([{ name: 'A00427 - Kamla Persad' }], 'Kamla Persad') &&
+     env.lbPickHas_([{ name: 'Elizabeth Lee' }], 'Liz Lee') && !env.lbPickHas_([{ name: 'Sasha Lalla' }], 'Sasha') &&
+     !env.lbPickHas_([{ name: 'Sasha Lalla' }], 'Sasha Ramdial'));
   ok('agents Salesforce shows as active are in the list, with their numbers', pick.some(a => a.name === 'Javid Ali' && a.agentNo === 'A04020')
      && pick.some(a => a.name === 'Aleema Mohammed-Ali' && a.agentNo === 'A04028'));
   ok('each agent once', pick.filter(a => a.agentNo === 'A04020').length === 1 && pick.filter(a => a.agentNo === 'A10001').length === 1);
