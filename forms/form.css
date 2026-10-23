@@ -1,0 +1,625 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   The branch's own forms — shared stylesheet
+   Ricky Rampersad Branch · 22 October 2026
+
+   The six forms that replaced the homepage JotForms. The palette is the
+   homepage's, sampled from Guardian Life of the Caribbean's own live
+   stylesheet, and every pair below was computed against the real ground
+   (#faf9f2), never against pure white.
+
+   Rules this sheet is built on, all of them house rules:
+     · a form control is max(16px, 1rem) — iOS zooms on a COMPUTED size
+       under 16, so a 15px input moves the whole page on a tap
+     · two border tokens: --line for a separator, --line-strong for
+       anything that defines a control or draws a focus ring
+     · type bounds in a clamp() are rem, never px (WCAG failure F94)
+     · min() inside every auto-fit grid, or the page overflows at 320
+     · motion lives only inside prefers-reduced-motion: no-preference;
+       every finished state is the plain CSS default
+     · never animate box-shadow — the lift moves a translate
+     · no emoji anywhere: they render per-OS, cannot inherit currentColor
+       and screen readers announce their Unicode names
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --ground:   #faf9f2;
+  --ground-2: #f4f2e8;
+  --card:     #ffffff;
+  --card-2:   #fdfcf7;
+
+  --ink:    #0d3f5e;
+  --ink-2:  #0a3350;
+  --body:   #2b3b47;
+  --muted:  #5b6670;
+
+  --action:    #00728d;
+  --action-dk: #005a70;
+  --action-lt: #e8f3f6;
+  --action-a8:  rgba(0,114,141,.08);
+  --action-a14: rgba(0,114,141,.14);
+
+  --line:        #e4e0d4;
+  --line-strong: #7d8890;
+
+  --ok:    #0f7a52;  --ok-bg:   #e7f4ee;
+  --warn:  #8a5a00;  --warn-bg: #fbf1dd;
+  --stop:  #b3261e;  --stop-bg: #fbeceb;
+
+  --sh: 32deg 20% 42%;
+  --e1: 0 1px 1px hsl(var(--sh) / .05), 0 2px 2px hsl(var(--sh) / .05);
+  --e2: 0 1px 2px hsl(var(--sh) / .06), 0 3px 6px hsl(var(--sh) / .06),
+        0 6px 12px hsl(var(--sh) / .04);
+  --e3: 0 2px 4px hsl(var(--sh) / .06), 0 6px 12px hsl(var(--sh) / .06),
+        0 12px 24px hsl(var(--sh) / .05);
+
+  --display: 'Inter Tight', 'Inter', system-ui, sans-serif;
+  --text:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --f--2: clamp(0.8125rem, 0.7917rem + 0.1042vw, 0.875rem);
+  --f--1: clamp(0.9375rem, 0.9167rem + 0.1042vw, 1rem);
+  --f-0:  clamp(1.0625rem, 1.0417rem + 0.1042vw, 1.125rem);
+  --f-1:  clamp(1.1875rem, 1.1458rem + 0.2083vw, 1.3125rem);
+  --f-2:  clamp(1.3125rem, 1.2292rem + 0.4167vw, 1.5625rem);
+  --f-3:  clamp(1.5rem, 1.3542rem + 0.7292vw, 1.9375rem);
+  --f-4:  clamp(1.6875rem, 1.4375rem + 1.25vw, 2.4375rem);
+
+  --sp-3xs: 0.25rem; --sp-2xs: 0.5rem; --sp-xs: 0.75rem; --sp-s: 1rem;
+  --sp-m: 1.5rem;
+  --sp-l:  clamp(2rem, 1.8333rem + 0.8333vw, 2.5rem);
+  --sp-xl: clamp(3rem, 2.6667rem + 1.6667vw, 4rem);
+
+  --t-fast: 110ms; --t-mid: 240ms; --t-slow: 400ms;
+  --ease:     cubic-bezier(.2, 0, .38, .9);
+  --ease-out: cubic-bezier(0, 0, .3, 1);
+
+  --r-s: 8px; --r-m: 12px; --r-l: 18px; --r-xl: 26px;
+  --measure: 62ch;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  background: var(--ground);
+  color: var(--body);
+  font: var(--f-0)/1.65 var(--text);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;               /* clip, not hidden: propagates to the viewport */
+}
+
+:where(a) { color: var(--action); text-underline-offset: .18em; }
+:where(a:hover) { color: var(--action-dk); }
+
+:focus-visible {
+  outline: 3px solid var(--line-strong);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1, h2, h3, legend { font-family: var(--display); color: var(--ink); line-height: 1.15;
+                     letter-spacing: -.015em; text-wrap: balance; }
+
+/* ═══ chrome ═══ */
+
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: var(--sp-s);
+  padding: var(--sp-xs) var(--sp-s);
+  /* 94%, not the homepage's 88%: frost reads as craft on an editorial page
+     and as a rendering fault over a form, where the ghost under it is a
+     field the client is in the middle of filling. */
+  background: color-mix(in srgb, var(--ground) 94%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+@supports (backdrop-filter: blur(1px)) {
+  /* one of only three surfaces on the branch site that gets this: it
+     re-samples and re-blurs its backdrop every frame */
+  .topbar { backdrop-filter: blur(12px) saturate(1.3); }
+}
+.topbar .brand { display: flex; align-items: center; gap: var(--sp-2xs);
+                 font-family: var(--display); font-weight: 600; color: var(--ink);
+                 text-decoration: none; font-size: var(--f--1); }
+.topbar .brand img { width: 30px; height: 30px; display: block; flex: none; }
+.topbar .brand span { white-space: nowrap; }
+
+/* On a phone the number's digits would push the branch's own name onto
+   three lines. The number becomes its icon, and the span stays in the
+   accessibility tree, so the link is still announced and dialled as
+   "(868) 226-6461". */
+@media (max-width: 30rem) {
+  .topbar .tel span {
+    position: absolute; width: 1px; height: 1px;
+    clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+  }
+  .topbar .tel { padding-inline: var(--sp-2xs); min-width: 44px; justify-content: center; }
+}
+.topbar .spacer { flex: 1 1 auto; }
+.topbar .tel {
+  display: inline-flex; align-items: center; gap: .4em;
+  white-space: nowrap;            /* "(868) 226-6461" is one thing, never three lines */
+  min-height: 44px; padding: 0 var(--sp-xs);
+  font-size: var(--f--1); font-weight: 600; text-decoration: none;
+  border-radius: var(--r-s);
+}
+.topbar .tel:hover { background: var(--action-a8); }
+
+.layout { width: min(100% - 2.5rem, 54rem); margin-inline: auto; }
+
+/* ═══ the rail. A form this long is worth a horizon: how much is answered,
+       and how much is left. It moves on input, never on scroll. ═══ */
+/* --bar is the topbar's measured height, set by form.js on load and on
+   resize. Both bars stick, so with top:0 the rail parked exactly behind the
+   topbar and the progress disappeared the moment anybody scrolled — which
+   is the only time it is wanted. The rem value is the fallback. */
+.rail { position: sticky; top: var(--bar, 4.3rem); z-index: 15;
+        background: var(--ground);
+        border-bottom: 1px solid var(--line); }
+/* The rail is opaque, and deliberately: frosted at 92% a form field ghosted
+   through it a few pixels under the topbar and read as a rendering fault.
+   It also keeps backdrop-filter to one surface here, which is cheap — it
+   re-samples and re-blurs its backdrop every frame. */
+.rail-in { display: flex; align-items: center; gap: var(--sp-s);
+           padding-block: var(--sp-2xs); }
+.rail-bar { flex: 1 1 auto; height: 6px; border-radius: 999px;
+            background: var(--line); overflow: hidden; position: relative; }
+.rail-bar i { display: block; height: 100%; width: var(--p, 0%);
+              border-radius: inherit; background: var(--action);
+              transition: width var(--t-slow) var(--ease-out); }
+.rail-n { flex: none; font-size: var(--f--2); font-weight: 650; color: var(--muted);
+          font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.rail-n b { color: var(--ink); }
+.rail.full .rail-bar i { background: var(--ok); }
+.rail.full .rail-n b { color: var(--ok); }
+
+
+/* ═══ head of the page ═══ */
+
+.lede { padding-block: var(--sp-l) var(--sp-m); }
+.lede-grid { display: grid; gap: var(--sp-m) var(--sp-l); align-items: center;
+             grid-template-columns: minmax(min(100%, 16rem), 1fr) clamp(9rem, 19vw, 15rem); }
+@media (max-width: 46rem) { .lede-grid { grid-template-columns: 1fr; } }
+
+/* The stage: the mark at the centre and this form's own sections circling it.
+   It is a diagram of what the form asks, not decoration — the same idea as the
+   homepage hero, at the size a form can carry. A fraction of its own box, so
+   it draws identically at 320px and at 1920. */
+/* width is 100% of a track that HAS a size. `min(15rem, 100%, …)` inside an
+   auto track is circular — the percentage resolves against a track sized by
+   its own content — and the whole stage collapsed to 0x0. The same family of
+   trap as the homepage hero's rings. */
+.stage { position: relative; display: grid; place-items: center;
+         width: 100%; max-width: 15rem; aspect-ratio: 1; overflow: clip; }
+@media (max-width: 46rem) { .stage { justify-self: start; max-width: 13rem; } }
+.stage .mesh, .stage .orbit { grid-area: 1 / 1; width: 100%; aspect-ratio: 1; }
+/* the dots are a square patch: fade them out so the field has no visible edge */
+.stage .mesh { -webkit-mask: radial-gradient(circle at 50% 50%, #000 42%, transparent 72%);
+                       mask: radial-gradient(circle at 50% 50%, #000 42%, transparent 72%); }
+.stage .orbit { fill: none; stroke: var(--line-strong); stroke-opacity: .32; stroke-width: 1; }
+.stage .mark { grid-area: 1 / 1; width: 46%; aspect-ratio: 1; display: block; }
+.stage .ring { grid-area: 1 / 1; position: relative; width: 100%; aspect-ratio: 1;
+               --r: 5.7rem; }
+.chip { position: absolute; top: 50%; left: 50%; --sz: 3rem;
+        width: var(--sz); height: var(--sz);
+        margin: calc(var(--sz) / -2) 0 0 calc(var(--sz) / -2);
+        display: grid; place-items: center;
+        border-radius: 50%; background: var(--card); color: var(--action-dk);
+        border: 1px solid var(--line-strong); box-shadow: var(--e1);
+        transform: rotate(var(--a)) translate(var(--r)) rotate(calc(var(--a) * -1)); }
+.chip svg { width: 48%; height: 48%; }
+.chip.on { border-color: var(--ok); color: var(--ok); background: var(--ok-bg); }
+
+/* The composition is a fraction of the STAGE, not of the viewport, so it
+   draws identically at 320px and at 1920; the rem values above are the
+   fallback where container queries are not supported.
+
+   This block must come after the rules it overrides. `.stage .ring` is
+   (0,2,0) in both places, so source order decides it — with the block
+   higher up, --r stayed at its 5.7rem fallback on a 146px stage and the
+   outer chips flew 32px past the clip edge. */
+@supports (container-type: size) {
+  .stage { container-type: size; }
+  /* r + half a chip has to stay inside half the stage: 35 + 9.5 against 50 */
+  .stage .ring { --r: 35cqw; }
+  .stage .chip { --sz: 19cqw; }
+}
+
+/* the pulse that leaves the shield, and the sweep across it */
+.ping { grid-area: 1 / 1; width: 46%; aspect-ratio: 1; border-radius: 50%;
+        border: 1.5px solid var(--action); opacity: 0; pointer-events: none; }
+
+
+.eyebrow {
+  display: inline-block; font-size: var(--f--2); font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--action);
+  margin-bottom: var(--sp-2xs);
+}
+.lede h1 { font-size: var(--f-4); margin-bottom: var(--sp-xs); }
+.lede p  { max-width: var(--measure); color: var(--body); text-wrap: pretty; }
+
+.meta { display: flex; flex-wrap: wrap; gap: var(--sp-xs) var(--sp-s);
+        margin-top: var(--sp-s); font-size: var(--f--1); color: var(--muted); }
+.meta span { display: inline-flex; align-items: center; gap: .45em; }
+.meta svg { width: 18px; height: 18px; flex: none; }
+
+.note {
+  margin-top: var(--sp-m); padding: var(--sp-s) var(--sp-m);
+  background: var(--action-lt); border-left: 4px solid var(--action);
+  border-radius: 0 var(--r-m) var(--r-m) 0;
+  font-size: var(--f--1); color: var(--body); max-width: var(--measure);
+}
+.note strong { color: var(--ink); }
+
+/* ═══ the form ═══ */
+
+form { padding-bottom: var(--sp-xl); }
+
+fieldset {
+  border: 1px solid var(--line); border-radius: var(--r-l);
+  background: var(--card); box-shadow: var(--e1);
+  padding: var(--sp-m); margin-top: var(--sp-m);
+}
+legend {
+  display: flex; align-items: center; gap: var(--sp-2xs);
+  font-size: var(--f-1); font-weight: 650;
+  padding-inline: var(--sp-2xs); margin-inline-start: calc(var(--sp-2xs) * -1);
+}
+.lg-n { flex: none; display: grid; place-items: center;
+        width: 30px; height: 30px; border-radius: 50%;
+        background: var(--action-lt); color: var(--action-dk);
+        border: 1px solid var(--action);
+        font: 700 var(--f--2)/1 var(--display); font-variant-numeric: tabular-nums; }
+.lg-n svg { width: 17px; height: 17px; display: none; }
+fieldset.done .lg-n { background: var(--ok); border-color: var(--ok); color: #fff; }
+fieldset.done .lg-n span { display: none; }
+fieldset.done .lg-n svg { display: block; }
+fieldset.done legend { color: var(--ok); }
+
+
+/* min() inside the auto-fit, or it overflows at 320–360 */
+.grid { display: grid; gap: var(--sp-s) var(--sp-m);
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+        margin-top: var(--sp-s); }
+.f-wide { grid-column: 1 / -1; }
+
+.f > label, .f .q { display: block; font-weight: 600; color: var(--ink);
+                    font-size: var(--f--1); margin-bottom: var(--sp-3xs);
+                    gap: 0; }
+.f .help { display: block; font-size: var(--f--2); color: var(--muted);
+           margin-top: var(--sp-3xs); text-wrap: pretty; }
+.f .req { color: var(--stop); margin-inline-start: .2em; font-weight: 700; }
+
+input[type=text], input[type=email], input[type=tel], input[type=date],
+input[type=number], select, textarea {
+  width: 100%;
+  font: inherit;
+  font-size: max(16px, 1rem);        /* iOS zooms on a computed size under 16 */
+  line-height: 1.4;
+  min-height: 48px;
+  padding: var(--sp-2xs) var(--sp-xs);
+  color: var(--body);
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-s);
+  transition: border-color var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
+}
+textarea { min-height: 7rem; resize: vertical; padding-block: var(--sp-xs); }
+select { appearance: none; padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%235b6670' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right .7rem center;
+  background-size: 20px 20px; }
+
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none;
+  border-color: var(--action);
+  box-shadow: 0 0 0 3px var(--action-a14);
+}
+/* answered: a quiet tick in the corner, so a long form shows its own progress
+   without anybody counting */
+.f.ok > label::after {
+  content: ''; display: inline-block; width: 15px; height: 15px;
+  margin-inline-start: .45em; vertical-align: -2px;
+  background: var(--ok); border-radius: 50%;
+  -webkit-mask: var(--tick) center / 11px 11px no-repeat;
+          mask: var(--tick) center / 11px 11px no-repeat;
+}
+:root { --tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E"); }
+@media (prefers-reduced-motion: no-preference) {
+  .f.ok > label::after { animation: tick-in var(--t-mid) var(--ease-out) both; }
+  @keyframes tick-in { from { scale: 0; rotate: -30deg; } }
+  input, select, textarea { transition: border-color var(--t-fast) var(--ease),
+                                        box-shadow var(--t-fast) var(--ease),
+                                        translate var(--t-fast) var(--ease); }
+  input:focus-visible, select:focus-visible, textarea:focus-visible { translate: 0 -1px; }
+}
+input[aria-invalid=true], select[aria-invalid=true], textarea[aria-invalid=true] {
+  border-color: var(--stop); background: var(--stop-bg);
+}
+
+.money { position: relative; }
+.money > span { position: absolute; left: var(--sp-xs); top: 50%; translate: 0 -50%;
+                color: var(--muted); font-size: var(--f--1); pointer-events: none; }
+.money input { padding-left: 3.4rem; }
+
+/* radios: a tappable card each, so a thumb never misses */
+.opts { display: grid; gap: var(--sp-2xs); margin-top: var(--sp-2xs); }
+.opts.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+.opt {
+  display: flex; align-items: flex-start; gap: var(--sp-2xs);
+  min-height: 48px; padding: var(--sp-2xs) var(--sp-xs);
+  border: 1px solid var(--line-strong); border-radius: var(--r-s);
+  background: var(--card); cursor: pointer;
+  font-size: var(--f--1); line-height: 1.45;
+  transition: background var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease);
+}
+.opt:hover { background: var(--action-a8); }
+.opt input { flex: none; width: 22px; height: 22px; margin-top: .18em;
+             accent-color: var(--action); }
+.opt { position: relative; overflow: hidden; }
+.opt::before { content: ''; position: absolute; inset: 0; border-radius: inherit;
+               background: var(--action-lt); opacity: 0; pointer-events: none; }
+/* the fill is a backdrop, not a cover: without this the chosen option's own
+   words disappear under it the moment it is tapped */
+.opt > * { position: relative; z-index: 1; }
+.opt:has(input:checked) { border-color: var(--action); background: var(--action-lt); }
+@media (prefers-reduced-motion: no-preference) {
+  /* the fill comes out of the control that was tapped, not the whole card */
+  .opt:has(input:checked)::before { animation: fill-out var(--t-slow) var(--ease-out) both; }
+  @keyframes fill-out { from { opacity: 1; clip-path: circle(0 at 1.6rem 50%); }
+                        to   { opacity: 1; clip-path: circle(140% at 1.6rem 50%); } }
+  .opt:has(input:checked) input { animation: dot-pop var(--t-mid) var(--ease-out) both; }
+  @keyframes dot-pop { 0% { scale: 1 } 45% { scale: 1.22 } 100% { scale: 1 } }
+}
+.opt:has(input:checked) span { color: var(--ink); font-weight: 600; }
+.opt:has(input:focus-visible) { outline: 3px solid var(--line-strong); outline-offset: 2px; }
+
+/* .f > label sets 600; a whole sentence of consent in semibold shouts */
+.check { display: flex; align-items: flex-start; gap: var(--sp-xs); font-weight: 400;
+         padding: var(--sp-xs); border: 1px solid var(--line-strong);
+         border-radius: var(--r-m); background: var(--card-2);
+         font-size: var(--f--1); line-height: 1.5; cursor: pointer; }
+.check input { flex: none; width: 24px; height: 24px; margin-top: .1em;
+               accent-color: var(--action); }
+.check:has(input:focus-visible) { outline: 3px solid var(--line-strong); outline-offset: 2px; }
+
+/* A conditional field opens rather than appearing. display is in the
+   transition with allow-discrete, so it still leaves the layout and the
+   accessibility tree completely — hidden has to mean hidden. */
+.hid { display: none; }
+
+/* The honeypot. Not display:none — some bots skip those. Off the screen, out
+   of the tab order, hidden from assistive tech, and no label a person sees. */
+.hp { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px;
+      overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .f[data-show] {
+    transition: opacity var(--t-mid) var(--ease-out),
+                translate var(--t-mid) var(--ease-out),
+                display var(--t-mid) allow-discrete;
+  }
+  .f[data-show].hid { opacity: 0; translate: 0 -8px; }
+  @starting-style { .f[data-show]:not(.hid) { opacity: 0; translate: 0 -8px; } }
+}
+
+/* ═══ the send bar ═══ */
+
+.send { margin-top: var(--sp-m); display: flex; flex-wrap: wrap;
+        align-items: center; gap: var(--sp-s); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5em;
+  min-height: 52px; padding: 0 var(--sp-m);
+  font: 650 var(--f--1)/1 var(--display); letter-spacing: -.005em;
+  color: #fff; background: var(--action);
+  border: 1px solid var(--action-dk); border-radius: 999px;
+  cursor: pointer; text-decoration: none;
+  transition: background var(--t-fast) var(--ease), translate var(--t-fast) var(--ease);
+}
+.btn:hover:not([disabled]) { background: var(--action-dk); color: #fff; }
+.btn[disabled] { opacity: .85; cursor: progress; }
+.btn { position: relative; overflow: hidden; }
+.btn::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+              background: linear-gradient(100deg, transparent 38%,
+                          rgba(255,255,255,.3) 50%, transparent 62%);
+              background-size: 260% 100%; background-position: 160% 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .btn:hover:not([disabled])::after { animation: sheen var(--t-xslow, 700ms) var(--ease-out) both; }
+  @keyframes sheen { to { background-position: -60% 0; } }
+  /* sending: the sheen runs on a loop, so the wait has a pulse */
+  .btn[disabled]::after { animation: sheen 1100ms linear infinite; }
+}
+.btn svg { width: 20px; height: 20px; }
+.btn-2 { color: var(--action); background: var(--card); border-color: var(--line-strong); }
+.btn-2:hover { background: var(--action-a8); color: var(--action-dk); }
+@media (prefers-reduced-motion: no-preference) {
+  .btn:hover:not([disabled]) { translate: 0 -2px; }   /* translate, never box-shadow */
+}
+.send p { font-size: var(--f--2); color: var(--muted); max-width: 32ch; }
+
+/* a restored draft has to say so: answers appearing from a week ago with no
+   explanation read as somebody else's form */
+.draft {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-xs);
+  margin-top: var(--sp-s); padding: var(--sp-xs) var(--sp-s);
+  background: var(--action-lt); border-left: 4px solid var(--action);
+  border-radius: 0 var(--r-s) var(--r-s) 0;
+  font-size: var(--f--1); color: var(--body);
+}
+.draft[hidden] { display: none; }
+.draft b { color: var(--ink); }
+.draft button {
+  font: 600 var(--f--2)/1 var(--text); color: var(--action-dk);
+  background: none; border: 0; padding: var(--sp-3xs) var(--sp-2xs);
+  min-height: 32px; border-radius: var(--r-s); cursor: pointer;
+  text-decoration: underline; text-underline-offset: .2em;
+}
+.draft button:hover { background: var(--action-a14); }
+
+.err {
+  margin-top: var(--sp-s); padding: var(--sp-xs) var(--sp-s);
+  background: var(--stop-bg); border-left: 4px solid var(--stop);
+  border-radius: 0 var(--r-s) var(--r-s) 0;
+  font-size: var(--f--1); color: var(--body);
+}
+.err[hidden] { display: none; }
+.err b { color: var(--stop); }
+
+/* ═══ the done screen ═══ */
+
+.done { padding-block: var(--sp-l) var(--sp-xl); }
+/* narrower than the form: a receipt, not a page. At the form's own 54rem
+   the three lines of copy run past a comfortable measure. */
+.done-card {
+  width: min(100%, 38rem);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--r-xl); box-shadow: var(--e3);
+  padding: var(--sp-l); text-align: left;
+}
+.done-ic { position: relative; display: grid; place-items: center;
+           width: 64px; height: 64px;
+           border-radius: 50%; background: var(--ok-bg); color: var(--ok);
+           margin-bottom: var(--sp-s); }
+.done-ic svg { width: 34px; height: 34px; }
+.done-ic::after { content: ''; position: absolute; inset: 0; border-radius: 50%;
+                  border: 2px solid var(--ok); opacity: 0; pointer-events: none; }
+.refbox { position: relative; overflow: hidden; }
+.refbox .v span { display: inline-block; }
+.done-card h1 { font-size: var(--f-3); margin-bottom: var(--sp-2xs); }
+.done-card > p { max-width: var(--measure); text-wrap: pretty; }
+.refbox {
+  margin: var(--sp-m) 0; padding: var(--sp-s) var(--sp-m);
+  background: var(--action-lt); border: 1px solid var(--action);
+  border-radius: var(--r-m);
+}
+.refbox .k { display: block; font-size: var(--f--2); font-weight: 700;
+             letter-spacing: .08em; text-transform: uppercase; color: var(--action-dk); }
+.refbox .v { display: block; font-family: var(--display); font-size: var(--f-2);
+             font-weight: 700; color: var(--ink); letter-spacing: .02em;
+             font-variant-numeric: tabular-nums; }
+.steps { list-style: none; margin-top: var(--sp-m); display: grid; gap: var(--sp-xs); }
+.steps li { display: flex; gap: var(--sp-xs); align-items: flex-start;
+            font-size: var(--f--1); }
+.steps .n { flex: none; display: grid; place-items: center;
+            width: 26px; height: 26px; border-radius: 50%;
+            background: var(--ink); color: #fff;
+            font: 700 var(--f--2)/1 var(--display); }
+
+/* ═══ foot ═══ */
+
+footer { border-top: 1px solid var(--line); background: var(--ground-2);
+         padding-block: var(--sp-m); margin-top: var(--sp-l); }
+footer .layout { display: flex; flex-wrap: wrap; gap: var(--sp-s) var(--sp-m);
+                 align-items: center; font-size: var(--f--1); color: var(--muted); }
+footer a { font-weight: 600; }
+footer .spacer { flex: 1 1 auto; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOTION. Opt-in: every finished state above is the plain CSS default, so
+   nothing here can strand content if an animation never runs.
+
+   ON LOAD, never on scroll. A scroll-driven reveal is right on an editorial
+   page and wrong on a form: animation-timeline: view() holds every field
+   below the fold at opacity 0 until somebody scrolls to it, and prints the
+   page blank. Everything here finishes inside about a second whether the
+   page is scrolled or not.
+
+   Nothing animates box-shadow (web.dev's do-not-animate list) and nothing
+   blurs a moving layer; the lift moves a translate and the depth moves an
+   opacity on a ::after.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* the page arriving */
+  .lede  { animation: rise var(--t-slow) var(--ease-out) both; }
+  .rail  { animation: rail-in var(--t-slow) var(--ease-out) 240ms both; }
+  @keyframes rail-in { from { opacity: 0; translate: 0 -10px; } }
+
+  form > fieldset {
+    animation: rise var(--t-slow) var(--ease-out) both;
+    animation-delay: calc(70ms * var(--i, 0) + 160ms);
+  }
+  form > fieldset:nth-of-type(1) { --i: 1 } form > fieldset:nth-of-type(2) { --i: 2 }
+  form > fieldset:nth-of-type(3) { --i: 3 } form > fieldset:nth-of-type(4) { --i: 4 }
+  form > fieldset:nth-of-type(5) { --i: 5 } form > fieldset:nth-of-type(n+6) { --i: 6 }
+  @keyframes rise { from { opacity: 0; translate: 0 16px; } }
+
+  /* the headline, word by word. Never letter by letter: that is the dated
+     form and it wrecks the screen-reader read. The split happens in JS only
+     when motion is allowed, and the heading keeps its whole sentence as an
+     aria-label, so assistive tech reads the sentence rather than walking a
+     pile of spans. */
+  .w { display: inline-block; animation: word var(--t-slow) var(--ease-out) both;
+       animation-delay: calc(38ms * var(--wi, 0)); }
+  @keyframes word { from { opacity: 0; translate: 0 .5em; rotate: -1.5deg; } }
+
+  /* ── the stage ───────────────────────────────────────────────────── */
+
+  /* the ring animates the rotate PROPERTY while each chip holds a static
+     transform: separate properties, so they compose instead of one
+     overwriting the other. The inner icon counter-spins at the same
+     duration, which is what keeps it upright. */
+  .stage .ring  { animation: spin 46s linear infinite; }
+  .stage .chip svg { animation: unspin 46s linear infinite; }
+  @keyframes spin   { to { rotate:  360deg } }
+  @keyframes unspin { to { rotate: -360deg } }
+
+  .stage .orbit { stroke-dasharray: 3 7; animation: dash 34s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -400; } }
+
+  .stage .mark .sweep { animation: sweep 5.5s var(--ease) infinite; }
+  @keyframes sweep { 0%, 58% { translate: -42px 0 } 76%, 100% { translate: 42px 0 } }
+
+  .stage .mark .tk { stroke-dasharray: 46; stroke-dashoffset: 46;
+                     animation: draw 900ms var(--ease-out) 420ms both; }
+  @keyframes draw { to { stroke-dashoffset: 0 } }
+
+  .ping   { animation: ping 4.4s var(--ease-out) infinite; }
+  .ping.b { animation-delay: 1.45s }
+  .ping.c { animation-delay: 2.9s }
+  @keyframes ping { 0% { opacity: .55; scale: 1 } 70%, 100% { opacity: 0; scale: 2.25 } }
+
+  /* a section chip lands when its own section is finished */
+  .chip.on { animation: chip-done var(--t-slow) var(--ease-out); }
+  @keyframes chip-done { 0% { scale: 1 } 40% { scale: 1.22 } 100% { scale: 1 } }
+
+  /* the stage and the rail park when they leave the screen, by a class added
+     on exit and never removed on entry: the other polarity freezes every
+     backwards-filled entrance at its invisible first frame when the script
+     does not run */
+  .rest .ring, .rest .chip svg, .rest .orbit, .rest .ping, .rest .sweep
+    { animation-play-state: paused; }
+
+  /* ── a section ticking itself off ──────────────────────────────────── */
+  fieldset.done .lg-n { animation: chip-done var(--t-slow) var(--ease-out); }
+  fieldset.done .lg-n svg { animation: tick-in var(--t-mid) var(--ease-out) both; }
+
+  /* ── the done screen ───────────────────────────────────────────────── */
+  .done-card { animation: pop var(--t-slow) var(--ease-out) both; }
+  @keyframes pop { from { opacity: 0; scale: .97; translate: 0 10px; } }
+
+  .done-ic       { animation: chip-done 620ms var(--ease-out) 120ms both; }
+  .done-ic path  { stroke-dasharray: 34; stroke-dashoffset: 34;
+                   animation: draw 520ms var(--ease-out) 300ms both; }
+  .done-ic::after{ animation: ping 1.5s var(--ease-out) 260ms 2; }
+
+  .refbox { animation: rise var(--t-slow) var(--ease-out) 380ms both; }
+  .refbox .v span { animation: ref-in 380ms var(--ease-out) both;
+                    animation-delay: calc(480ms + 34ms * var(--ci, 0)); }
+  @keyframes ref-in { from { opacity: 0; translate: 0 .35em; scale: .8; } }
+
+  .steps li { animation: rise var(--t-slow) var(--ease-out) both;
+              animation-delay: calc(700ms + 110ms * var(--si, 0)); }
+  .steps .n { animation: chip-done var(--t-mid) var(--ease-out);
+              animation-delay: calc(760ms + 110ms * var(--si, 0)); }
+}
+
+@media print {
+  .topbar, .send, footer, .note, .rail, .stage { display: none; }
+  fieldset { break-inside: avoid; box-shadow: none; }
+  /* whatever an animation was part-way through, paper gets the finished state */
+  *, *::before, *::after { animation: none !important; opacity: 1 !important; }
+}
+

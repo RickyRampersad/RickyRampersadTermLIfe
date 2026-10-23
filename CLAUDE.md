@@ -28,13 +28,79 @@ Asked for in those words: *"remove the shield in this wall so persons will know
 what wall they are watching."* A nameplate is a slide's name, not a substitute
 logo; the rule against inventing a mark stands everywhere, this one included.
 ```css
-.mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+.mark{display:grid;place-items:center}
 .mark img{width:100%;height:100%;display:block}
 ```
 
-The palette that goes with it: navy `#07131f`, gold `#efc24b` into `#c9942c`,
-teal `#00CFEA`. Those are the values in `IBRAND` in `Intelligence.gs`, which is
-what the client letters read.
+**The mark has no dark tile behind it on the web, decided 21 October 2026.**
+Asked for in those words: *"logo and changes as i dont like the blacks"*. The
+shield and check are unchanged; what went was the rounded `#07131f` square they
+sat on, which read as a black chip against the page. Web screens use
+**`logo-mark.svg`** — the same artwork with nothing behind it — so the mark sits
+on whatever colour the page is. `favicon.svg` keeps a tile, because a browser
+tab needs one, but in the new navy.
+
+**`logo-mark.png` is unchanged and still has its tile, on purpose.** It is what
+the letters read, and e-mail is the one place the tile earns its keep: a
+transparent PNG lands on the client's white background and the white check
+disappears into it. So: `logo-mark.svg` on the web, `logo-mark.png` in e-mail.
+
+**A fourth exception, decided 21 October 2026 and settled the same evening:
+the homepage carries its own mark, in the homepage's own colours.**
+
+It went blue first — asked for as *"change the gold!!!"* — using
+`orphan-transition/board-mark.png`, the mark the assignment board, the board
+films and RR Operations carry. That was wrong, and the manager said so:
+*"Every thing is off and the site is horrible, all colors even the logo is
+off!!!!"*. He was right, and the fault is nameable: the page was running
+**three unrelated blues**. The mark was Guardian corporate `#13408F →
+#2A6DE0` with a cyan check, the headings were `#0d3f5e`, the buttons were
+teal `#00728d`. A mark that shares no hue family with anything around it
+reads as pasted on.
+
+Offered the two ways to unify — move the page to the mark's blue, or move the
+mark to the page's teal — he chose **the mark follows the page**.
+
+So the homepage carries **`site-mark.svg`**: `favicon.svg`'s own shield and
+check, no tile, filled `#0e93b0 → #00728d → #0a3350`, the check white over a
+navy casing. `site-icon.svg` is the same on a `#faf9f2` tile, for the tab,
+and `index.html` alone declares it. Nothing is redrawn: it is the brand's own
+silhouette in the page's colours, which is what `gcm-mark.png` and
+`board-mark.png` already are in theirs.
+
+**What this costs, and he accepted it:** the homepage mark no longer matches
+the assignment board, the three board films or RR Operations, which keep the
+corporate-blue shield; every other page and every letter keeps the gold one.
+Four marks now, one per context. That is the price of a homepage whose logo
+belongs to its own palette, and it was his call to pay it.
+
+`logo-mark.png` does not move, as ever: the letters already sent load it.
+
+The palette that goes with it: navy `#0d1f33`, gold `#efc24b` into `#c9942c`,
+teal `#00CFEA`.
+
+**The navy was lifted off near-black on 21 October 2026** — *"i dont like the
+blacks"*. `#07131f` was dark enough to read as black, and worse, panels across
+the site were flat `rgba(0,0,0,…)` laid over it, which on a coloured ground
+reads as a grey haze rather than depth. The homepage and the 404 page now run:
+
+| | old | new |
+|---|---|---|
+| base | `#07131f` | `#0d1f33` |
+| raised | `#0d2137` | `#14314f` |
+| card | `#163553` | `#1b4268` |
+| card top | `#1b3d61` | `#22527f` |
+| muted text | `#a9bbcf` | `#b9cadd` |
+
+Gold and teal did not move. Two rules came out of it: **no flat black anywhere**
+— panels are `--panel`/`--panel2` (navy tints) and shadows are `rgba(4,14,26,…)`
+so they stay in the blue family; and **nothing dark sits on gold or teal except
+`--ink` `#0a1a2b`**, never `#02141a` and never black. The muted grey had to come
+up with the cards or it fell under 4.5:1 on `--card2`.
+
+`IBRAND` in `Intelligence.gs` still carries the old navy, and the client letters
+read it. Those were not touched here: an e-mail masthead is a different problem
+from a web page, and changing it means re-checking every letter in Gmail first.
 
 **A second exception, decided 8 October 2026: group client management** (the
 four pages in `groupclientmanagement/` and the Monday letter built by
@@ -102,6 +168,290 @@ exactly that reason.
 **In a film it has to be embedded**, because the film is one file played in an
 iframe and a linked image does not load there. The builder folds it in as a
 data URI under the `mark` key.
+
+## The homepage look — light, and off gold, decided 21 October 2026
+
+Asked for in these words: *"horrible a total professional makeover different
+colors and change the gold!!! more graphics and motion as well scalled
+intelligently and professionally"*, and then, decisively, *"i said the black
+hurts the eyes!!"*.
+
+Two dark redesigns were rejected on the same day. The second one took the
+ground back to near-black `#070e1c` — **darker than the `#07131f` he had
+already asked to be lifted off black that morning**. Read the complaint
+before reaching for a palette: "I don't like the blacks" meant go light, not
+go to a richer dark.
+
+**The homepage is light.** Ground `#faf9f2`, white cards, deep blue ink.
+Those values are sampled from **Guardian Life of the Caribbean's own live
+stylesheet**, so the branch now matches its parent company, and the answer to
+"why did the gold go?" is that Guardian itself has no gold anywhere.
+
+| token | value | measured on the ground |
+|---|---|---|
+| `--ground` | `#faf9f2` warm off-white | — |
+| `--card` | `#ffffff` | — |
+| `--ink` headings | `#0d3f5e` | 10.53:1 |
+| `--body` | `#2b3b47` | 10.94:1 |
+| `--muted` | `#5b6670` | 5.56:1 |
+| `--action` | `#00728d` | 5.25:1, white on it 5.54:1 |
+| `--line` decorative | `#e4e0d4` | 1.25:1, separators only |
+| `--line-strong` controls | `#7d8890` | 3.43:1 |
+
+**Gold could not stay, and this is arithmetic rather than taste.** On a light
+ground `#efc24b` measures **1.68:1** against white and `#c9942c` **2.71:1** —
+both below even the 3:1 floor for non-text, so gold can never again be a
+button, a link, a focus ring or a distinguishable icon. The branch teal
+`#00CFEA` fails identically at **1.89:1**. They only ever worked because the
+page was dark. The homepage therefore carries **`site-mark.svg`**, the brand's
+own shield in this page's teal and navy — see the mark section above for why
+it is not the blue one any more. Its lightest stop `#0e93b0` measures 3.42:1
+on the ground, so the mark reads as a shape and not only as a colour.
+
+**`logo-mark.png` is still untouched and still gold**, on purpose: every
+client letter already sent loads it from the server, and changing that file
+changes the masthead of letters sitting in people's inboxes. Gold shield in
+e-mail, blue shield on the homepage.
+
+**Two tokens for borders, not one.** Almost no border reaches 3:1, and only
+the one defining a control has to. A separator uses `--line`; an input
+outline or focus ring uses `--line-strong`.
+
+**Pick the muted grey against the real ground, never against white.** Stripe's
+`#64748d` measures 4.75:1 on pure white but exactly **4.50** on `#faf9f2` —
+on the line, so effectively a fail. That is why `--muted` is `#5b6670`.
+
+### What the research changed, and what it cost us to learn twice
+
+- **Light against dark splits on sector lines.** Regulated retail money is
+  light (Ethos, Marshmallow, MetLife, Policygenius, Wise, Monzo); dev tools
+  and trading are dark (Linear, Vercel, Robinhood). A dark life-insurance
+  site is a trading-app aesthetic on the wrong product.
+- **Bento cards with soft 3D is a named tell.** A study of 808 juried
+  Awwwards winners lists it among the patterns that make work read as
+  machine-generated, and found **no single effect moves the jury score by
+  more than ±0.05**. Effects are table stakes; composition and story are not.
+  Do not rebuild this page as a grid of equal glass tiles.
+- **Montserrat and Poppins appear on none of 27 live finance sites** checked
+  for their actual font stacks. Open Sans does (Chase, Prudential), Inter
+  does (Wise, Revolut, Brex, Ethos), Lato does (Lemonade). Free fonts are not
+  the problem; those two specifically are the wrong signal. The page uses
+  **Inter Tight** for display and **Inter** for copy.
+- **The local bar is low and that is an argument, not a boast.** Four of the
+  five live T&T insurer sites serve WordPress/Elementor default colour values
+  in their markup, and one declares `'Chewy', cursive`.
+
+### Rules the rebuild is built on
+
+- **Motion is opt-in, never opt-out.** Every finished state is the plain CSS
+  default and movement lives only inside
+  `@media (prefers-reduced-motion: no-preference)`. That satisfies WCAG 2.3.3
+  with no second code path, can never strand content invisible if an
+  animation fails, and degrades silently in Firefox, which still has
+  scroll-driven animations behind a flag.
+- **No animation library.** Native `animation-timeline: view()` covers the
+  reveals, `scroll(root)` draws the nav progress, `@starting-style` with
+  `allow-discrete` covers the dialogs. `animation-timeline` must be declared
+  **after** the `animation` shorthand, which resets it.
+- **`backdrop-filter` on three surfaces only** — the nav and the two dialogs.
+  It re-samples and re-blurs its backdrop every frame; one measured case put
+  a GPU process at 400–470MB with it on cards.
+- **Never animate `box-shadow`** — it is on web.dev's do-not-animate list.
+  Hover lift uses `translate`.
+- **`min()` inside every auto-fit grid**:
+  `repeat(auto-fit, minmax(min(100%, 18rem), 1fr))`. Without the `min()` the
+  page overflows at 320–360px, and that is the commonest amateur tell in a
+  hand-written grid.
+- **One space token for every section's `padding-block`.** It is `--sp-2xl`,
+  not `--sp-3xl`: two adjacent sections each contribute it, so `--sp-3xl`
+  made every boundary a ~240px hole.
+- **No two adjacent sections share a column shape.** A repeated three-across
+  card grid reads as a list however good the cards are.
+- **Type bounds in a `clamp()` are rem, never px** — a px bound is WCAG
+  failure F94 and defeats the 200% zoom requirement. Form controls use
+  `max(16px, 1rem)`, because iOS zooms on a *computed* size under 16.
+- **Icons follow Lucide's published rules**: 24×24 canvas, exactly 2px
+  stroke, round joins and caps, ≥1px padding inside the canvas. One stroke
+  weight across the set is what makes it read as designed. Every icon is
+  `aria-hidden` with no accessible name; the text beside it is the label.
+- **No emoji.** Not taste: they render differently per OS, cannot inherit
+  `currentColor`, sit on font metrics so they never align to a grid, and
+  screen readers announce their Unicode names.
+- **Shadows take their hue from the ground, not from black.** `--sh` is
+  `32deg 20% 42%`; transparent black desaturates a warm surface.
+
+### The impact layer, added the same day
+
+First cut of the light page was correct and dead: *"there is no motion nor
+apealing and not impactful"*. Correct is not the same as alive. What went in,
+all of it still inside the no-preference query:
+
+- **Kinetic headlines, word by word, never letter by letter.** Splitting to
+  characters is the dated form and it wrecks the screen-reader read. The split
+  is done in JS only when motion is allowed, and the heading first gets its
+  whole sentence as an `aria-label`, so assistive tech reads the sentence
+  rather than walking a pile of spans. The hero splits on load; every other
+  heading splits when it is nearly in view.
+- **Counters count UP TO the figure already in the markup**, never to it. The
+  true number ships in the HTML, so no JS — or a thrown error — still leaves
+  the right figure on screen. Shipping `0` and filling it in by script is how
+  a page ends up showing zeros.
+- **Two drifting colour fields behind the hero**, radial gradients with a long
+  transparent falloff. Not `filter: blur()` on a moving layer: that has to be
+  re-rasterised every frame and is what took an earlier build to about 5fps.
+- **Hover depth moves an opacity, not a shadow.** The lift shadow lives on a
+  `::after` and only its opacity transitions, because `box-shadow` is on
+  web.dev's do-not-animate list.
+- **A moving strip of what the branch covers**, paused on hover, and the
+  open/closed dot breathes, so the page has a pulse at rest.
+- **One statement moment** between the quotes and the applications: large
+  type, scroll-driven, saying the thing the whole site is for.
+
+Measured after: 16.7ms a frame over three passes, cumulative layout shift 0.
+
+### The hero is the hovering shield, and it is not to be removed again
+
+Asked for on 21 October 2026, after a rebuild replaced it with a stat panel:
+*"I found the shield before with the motions and the logo and the animation
+with it hovering, etc., was very effective. Just the color was not nice. And
+I've asked you to improve on this and you've went backwards. We are very tech
+driven."*
+
+Read that carefully, because it is the whole lesson of the week. The complaint
+about the dark build was the **colour**. The composition was right and was
+thrown away with the palette. When a look is rejected, change the thing that
+was named and keep the rest.
+
+**Nothing sits on the mark.** The first cut put three instrument panes in
+front of it, and the manager was right about them: *"things should be
+circling around in terms of the lines that we covered, because that's the
+shield, the objective of the shield. Not things blocking the shield is what
+I'm seeing."* The panes were covering the thing the scene is about, and
+their figures already repeated in the band directly below, so nothing was
+lost in taking them out.
+
+The hero is a stage: the mark at the centre, and **the twelve lines of cover
+circling it** on two rings. That is a diagram of the business, not
+decoration.
+
+**Eight slots, twelve lines.** A ring of twelve reads as clutter, so four
+slots are shared by two lines that take it in turn, one changing every 3.4
+seconds. Every line is in the markup; the resting one sits at opacity 0,
+which keeps it in the accessibility tree, so a screen reader hears all
+twelve either way.
+
+**With motion off, the ring spreads instead of cycling.** Each line carries
+two angles: `--a`, the slot its pair shares, and `--a2`, its own place on
+the ring. `--ang` is `--a2` by default and becomes `--a` only inside
+`prefers-reduced-motion: no-preference`, and the opacity-0 rule for a
+resting pair lives in that query too. Without this the script never runs and
+four lines are invisible for ever — which the audit caught, and which is the
+house rule about never stranding content. Six to a ring, sixty degrees
+apart, and the static diagram is arguably the better drawing of the two.
+
+**The composition is a fraction of the stage, not of the viewport.** The
+stage is a container (`container-type: size`) and the radii, the chip and
+the label size are `cqw`, so the drawing is identical at 320px and at 1920;
+the `vw` clamps are the fallback where container queries are not supported.
+Measured: the mark is 28.8% of the stage at every width from 768 up. Behind them a dot mesh, two drawn
+rings, two arcs sweeping against the spin, and three pings leaving the
+shield. The whole scene tilts to the pointer, which is what reads as
+hovering. Mouse and trackpad only: a tilt that sticks where a finger left it
+looks broken.
+
+**How a chip stays upright.** Each is placed with
+`rotate(a) translate(r) rotate(-a)` — the classic place-on-a-circle
+one-liner — and an inner span counters the ring's own spin at the same
+duration. The ring animates the `rotate` **property** while the node holds a
+static `transform`: separate properties, so they compose instead of one
+overwriting the other. `ring-out` reverses both its ring and its chips,
+which still cancels.
+
+**Short labels inside, long ones outside, and none at all on a phone.**
+Labels at the 9 and 3 o'clock positions reach back across the inner ring, so
+they wrap at `6.5rem` rather than running on, and the four short names take
+the inner ring. Below 35rem the ring is icons only: the names cannot fit
+around a circle that size without landing on each other or on the mark, and
+the live strip immediately beneath the hero carries them instead.
+
+**The stage is capped by the viewport too** — `min(32rem, 100%, 100vw -
+2.5rem)`. The grid area can be wider than the page's own gutters allow, and
+a stage wider than the screen puts the outer ring under `overflow: clip`.
+
+**The mark is inlined, and it is still the mark.** The hero's SVG is the same
+artwork as `orphan-transition/board-mark.svg` — which is `favicon.svg`'s own
+shape in the board blue — inlined so the check can be stroked on rather than
+arriving already drawn. Nothing there is redrawn or invented; the rule against
+a substitute mark stands. `orphan-transition/board-mark.svg` is new and the
+nav and footer use it, because a vector beats a 352px PNG on a web page.
+**`board-mark.png` is untouched**: the board pages and the three films load it,
+and the films carry it as a data URI.
+
+The panes carry what the stat card carried — lines of cover, the MDRT record,
+the years — so the move lost no content.
+
+**Two traps, both of which drew the rings invisibly at first:**
+
+- An absolutely positioned SVG with `width: 100%` inside a grid whose height
+  comes from `aspect-ratio` has no percentage basis to resolve against. They
+  are grid items in the one cell now (`grid-area: 1 / 1`), sized by their own
+  square `aspect-ratio`. `place-self: stretch` does **not** help: an SVG is a
+  replaced element and stretch leaves it at its natural size.
+- `svg:not([width])` near the top of the sheet is specificity (0,1,1) and
+  outranks a bare class, which pinned them to 20px even once they were grid
+  items. The rule has to be `.stage .mesh`, `.stage .orbit`.
+
+**On a phone, two panes, never three.** The first cut put the product pane
+straight across the check and the mark read as a blue smudge. Below 48rem
+`.pane-b` is hidden; the three products are in the ticker directly beneath
+anyway.
+
+**The loops park by a class added on exit, never removed on entry.**
+`.hero.rest` pauses them when the hero leaves the screen. The other polarity
+— JS adds `.live` to start things — freezes every `backwards`-filled entrance
+at its invisible first frame when the script does not run.
+
+**"How it works" was a void** and is the template for any section that reads
+flat: each step carries an icon chip with its number on the shoulder, the
+connector draws itself on scroll and a pulse runs along it (two animations,
+one touching `scale` and the other `background-position`, so they compose —
+`animation-timeline: view(), auto`), and the section sits on the same dot
+field as the stage. `.mesh-bg` is that field, reusable.
+
+### `scrollWidth` is not a test for sideways scroll
+
+The audit used `scrollWidth > clientWidth` and it is the wrong measure in both
+directions. With `overflow-x: clip` on the body — which **propagates to the
+viewport**, so the body ends up visible and the html element clips — a
+deliberately clipped marquee reads as a failure though nothing can scroll.
+Worse, it hid a real one: the hero's decorative field at `right: -8vw` was
+genuinely scrollable, 102px of sideways drag at 1280, and the proxy never
+distinguished the two. The check now *attempts the scroll* and reads
+`scrollX`, and separately reports any element overflowing with no clipping
+ancestor. `.hero` takes `overflow: clip` (not `hidden`, which would make it a
+scroll container).
+
+### The audit harness
+
+`qa/audit.js` in the session scratchpad measures the page rather than
+asserting it: no sideways scroll at the real-world widths (360/375/390/414
+and 1280/1366/1536/1920 — phones cluster at the first four), WCAG AA contrast
+**composited through translucency**, WCAG 2.2 2.5.8 touch targets with the
+inline-link exception, iOS input zoom, reduced motion, CLS, and content
+hygiene. It caught three genuine bugs this build: a specificity collision
+where `.nav-links a` (class + type) outranked `.btn-1` and rendered the Get a
+Quote button's text dark-on-teal at 2.08:1; a 4px overflow at 360px from a
+blanket `white-space: nowrap`; and the old page's 14px footer links.
+
+Two of its own false positives are worth knowing about, because both would
+otherwise be mistaken for page bugs: `color-mix()` computes to
+`color(srgb r g b / a)` whose **channels run 0–1, not 0–255**, so a naive
+parser reads a near-white nav as near-black; and gradient-backed text cannot
+be read from computed style at all, so it is reported for the eye rather than
+failed, the way axe reports "incomplete".
+
+Measured after: every check passing, 16.7ms a frame across three passes,
+cumulative layout shift 0.
 
 ## The voice — narration on every film
 
@@ -3965,6 +4315,269 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - When Salesforce refuses the read, the tab keeps the last good list, and the refresh says so.
   - `coming/coming-test.js` (32 checks) and `coming/page.js` (11, Playwright) in the session scratchpad cover it, on
     the made-up branch.
+
+## The branch's own forms — no client link opens a JotForm
+
+`quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`
+and `forms/form.js`, and `apps-script/Quotes.gs`. Asked for on 22 October
+2026: *"never closed by our online resources. So you need to ensure that
+every link is not opening up a Jot form as well."*
+
+**What was wrong.** Six of the homepage's busiest links went out to JotForm:
+Motor, Property, Critical Illness, Key Person, OAS enrolment and the Xpress
+Life application. A JotForm submission never reached the Service
+Questionnaire sheet, never got a reference, and never landed in anybody's
+day. A client filled one in and heard nothing unless somebody happened to
+check an inbox. That is the loop that was never closed — not the look of the
+form.
+
+**What they are now.** Six branch pages, each posting `q.quote` to the same
+Service Questionnaire `/exec` the other six front ends hold. Every
+submission files one row on the **Quote Requests** tab (it makes itself),
+e-mails sales support with every answer, and e-mails the client a
+confirmation carrying the reference. The reference is on screen before the
+client leaves the page.
+
+| page | reference | what it asks |
+|---|---|---|
+| `/quote/property/` | `QP-yyMMdd-nnn` | the property, what to cover, claims history |
+| `/quote/critical-illness/` | `QC-` | who it is for, the cover |
+| `/quote/key-person/` | `QK-` | the business, the key person, what the money does |
+| `/enrol/oas/` | `QO-` | you, your employer, your contribution |
+| `/apply/xpress-life/` | `QX-` | who it is for, the cover, how to finish |
+
+`/quote/` lists all six lines, Motor included, but **Motor is not built here**
+— its card opens `/motor-quote/`. The branch app carries a **Quote & apply**
+tile to the index, and its "where did it go" line names the old JotForms.
+
+**Motor was built twice, and main's is the one that lives.** On 21 October the
+motor JotForm (223376649264061) was replaced by `/motor-quote/` — its own page,
+its own Apps Script project, its own sheet, and much more than a quote request:
+the client signs in with a code to their inbox, Salesforce fills in their
+Contact, motor policies and vehicles, the permit is photographed on the phone,
+the quote goes to CRMSQuotes with the documents attached, a Salesforce task
+opens, and signing in again shows the client the status and the premium when it
+comes back. On 22 October this branch replaced the same JotForm with a plain
+`/quote/motor/` of its own, not knowing. Two motor doors with two references and
+two backends is exactly the fault the mark rule warns about, so on merging,
+**`/quote/motor/` was deleted, `motor` came out of `QUOTE.FORMS` in `Quotes.gs`
+so no `QM-` row can ever be filed, and the homepage's two motor links and the
+`/quote/` card point at `/motor-quote/`** — which is what main had already done
+to the old page. `forms.json`'s motor entry now carries only `elsewhere`, so
+`build-forms.py` lists it on the index and builds no page for it; `qa/quotes.js`
+fails if a line marked `elsewhere` ever appears in the backend. Five forms are
+the branch's own here; the sixth is main's, and better.
+
+**Two lines of copy had to move with it**, because a promise made in one place
+has to be kept in the other. The index's lede said "a licensed agent calls you
+at the time you choose", which is the five's own done screen and is not what
+`/motor-quote/` does — it signs the client in and sends the price back on their
+page — so it now reads "a licensed agent takes it from there", true of all six.
+And the Motor card says what that page actually is: "Sign in and your vehicle
+fills in from your record", so nobody meets the sign-in by surprise.
+
+- **Edit `tools/forms/forms.json` and run `tools/forms/build-forms.py`,
+  never a generated page.** One run rewrites all seven. The spec is the
+  single source of the fields, the conditional rules, the reference prefixes
+  and the words; the generator writes real HTML, so every field is in the
+  markup and the form reads and fills with `form.js` blocked.
+- **Never collected, on any of them:** a national ID or driver's permit
+  number, a policy card number, bank or card details, and any health
+  declaration. A web page is the wrong place for all of them; they are taken
+  by a person, on the call or on the signed form. That is why the critical
+  illness, key person and Xpress Life pages say in a panel that they ask
+  nothing about health — the five Xpress Life health questions are on the
+  Xpress Life application itself, which is where cover is actually issued.
+  Date of birth and smoker status are asked, because they are rating factors
+  and change the price. (`/motor-quote/` takes the driver's permit by photograph,
+  because a motor quote cannot be rated without it; that page is main's and has
+  its own rules.)
+- **Two of the six hand over rather than pretend.** `/apply/xpress-life/`
+  opens the file, gives the reference and then offers
+  **xpresslifett.com** to finish the instant-issue application; `/enrol/oas/`
+  starts the enrolment and says the signed form and the payment authority
+  come from the branch. Neither invents an underwriting question or a
+  deduction authority nobody can stand behind.
+- **The client's confirmation is not held** by the hold on automatic client
+  e-mail, for the reason the questionnaire's confirmation is not: they
+  pressed send ten seconds ago and the reference has to reach them. It goes
+  through `clientMail_`, so from support@ with the confidentiality footer
+  when the Microsoft 365 properties are set. Its masthead is the hosted
+  **gold** `logo-mark.png`, never an SVG and never a data URI.
+- **The pages carry `site-mark.svg`**, the light-ground mark, because they
+  are the homepage's own family in the homepage's palette. Gold on `#faf9f2`
+  measures 1.68:1 and can never be an icon that reads as a shape — the
+  arithmetic in the homepage section above. Gold shield in e-mail, teal
+  shield on these pages.
+- **A reference is read off the tab, never from a stored counter**, so a row
+  that failed to write cannot take a number with it, and a reference from
+  another day cannot move today's count.
+- **A second tap gives back the first reference.** The same form from the
+  same address inside `DEDUPE_MIN` (12 minutes) returns the reference it
+  already has rather than making a second row and a second pair of e-mails.
+- **Nothing is lost to a bad minute of signal.** If the backend does not
+  answer inside 12 seconds, the page still shows a reference, says plainly
+  that it could not reach us, and opens the client's mail app with every
+  answer in it — the road `service/index.html` already takes. The done
+  screen is painted *before* the mail app opens, so whatever the handler
+  does to the tab, the reference is already in front of them.
+- **The POST is `text/plain`**, which is what stops the browser asking Apps
+  Script for a CORS preflight it cannot answer.
+- **Motion runs on load, never on scroll.** `animation-timeline: view()` is
+  right on an editorial page and wrong on a form: it holds every field below
+  the fold at opacity 0 until somebody scrolls to it, and prints the page
+  blank. A full-page screenshot caught it; the audit, which only tested with
+  motion off, did not. Everything finishes inside half a second, and
+  `@media print` forces the finished state.
+- **A conditional field is hidden from everything**: out of the layout *and*
+  `disabled`, so a stale answer can never travel with the form.
+- **A radio group's label is its `<legend class="q">`**, and it has to be
+  looked for before `label`: `querySelector('label')` inside a radio block
+  finds the first option's own label, which would name the field after one
+  of its answers.
+- **Paste `Quotes.gs` and `Service.gs`, put `TEAM_CODE` back, then Manage
+  deployments → pencil → New version.** `?action=q.ping` answers
+  `quotes: 1` from a browser once the live deployment carries them, and the
+  main `ping` carries `quotes` too.
+- `agent.html` and `staff.html` are redirect stubs to `/app` now — the
+  Agent and Staff Portals are retired and every tool they held is in the
+  branch app. A redirect stub carries no view beacon, as ever.
+- **The 19 JotForms left in the branch app's Forms group are staff admin
+  forms** (petty cash, the gas log, licence renewals, the visitors log),
+  already standing "each until it moves into the app". No link a *client*
+  can reach opens a JotForm.
+### The motion, added the same day
+
+Asked for as *"so review again enhance and more motion"*. What went in is
+motion that tells the client something, not decoration:
+
+- **The stage.** Beside the headline, the branch's own shield with **this
+  form's own sections circling it** — one chip a section, in that order. It
+  is a diagram of what the form asks. A chip **lights green when its section
+  is finished**, so the drawing fills in as the client works down the page.
+  Behind it a dot field (masked to a circle, so it has no square edge), a
+  dashed orbit that drifts, three pings leaving the shield, a sweep across
+  the shield and the check stroking itself on.
+- **The ring animates the `rotate` property while each chip holds a static
+  `transform`** — separate properties, so they compose instead of one
+  overwriting the other — and the icon inside counter-spins at the same
+  duration, which is what keeps it upright. Same trick as the homepage hero.
+- **The rail.** Under the lede, sticky: a bar and "<b>7</b> of 25 answered",
+  moving on input, never on scroll. It turns green when the form is complete.
+  A conditional field opening raises the total asked, so the count is honest.
+- **Every answered field gets a tick beside its label**, and every finished
+  section turns its number into a tick. One pass computes the field ticks,
+  the section ticks, the chips and the rail, so they can never disagree.
+- **The headline lands word by word** (never letter by letter — the dated
+  form, and it wrecks the screen-reader read). The whole sentence goes on as
+  an `aria-label` first and the split only happens when motion is allowed.
+- **A conditional field opens** rather than appearing: `display` is in the
+  transition with `allow-discrete` and `@starting-style`, so it still leaves
+  the layout and the accessibility tree completely.
+- **The chosen option fills from the control that was tapped** (a `clip-path`
+  circle growing from the radio), and the radio pops. `.opt > *` has to carry
+  `z-index: 1`, or the fill paints over the option's own words — which it did,
+  and a screenshot caught it with "WhatsApp" gone from the chosen card.
+- **The send button** carries a sheen on hover and runs it on a loop while it
+  is sending, so the wait has a pulse.
+- **The done screen is drawn, not shown**: the tick strokes itself on, a ring
+  of light leaves it twice, the reference lands character by character (with
+  the whole string on `aria-label` and `title`, so it is still one thing to
+  read and to copy), and the three steps arrive in turn.
+- **The loops park by a class added on exit, never removed on entry.**
+  `body.rest` pauses the stage when it leaves the screen. The other polarity
+  freezes every `backwards`-filled entrance at its invisible first frame on
+  any browser where the script does not run.
+
+Measured after: **16.7 ms a frame over three passes with the ring spinning**,
+cumulative layout shift 0 on three pages, nothing animating and nothing
+invisible with `prefers-reduced-motion: reduce`, and the mark exactly **46%
+of the stage at every width from 320 to 1920**.
+
+**Two sizing traps, both the same shape, both caught by measuring:**
+
+- **A rule that overrides another has to come after it.** Twice a rule meant
+  to size the stage sat *before* the rule it overrides and silently did
+  nothing: the phone `max-width`, and then the `@supports
+  (container-type: size)` block — `.stage .ring` is (0,2,0) in both places,
+  so source order decides, and `--r` stayed at its `5.7rem` fallback on a
+  146px stage, throwing the outer chips 32px past `overflow: clip`.
+- **`min(15rem, 100%, …)` inside an `auto` grid track is circular**: the
+  percentage resolves against a track sized by its own content, so the whole
+  stage collapsed to **0×0** and nothing rendered. The track needs a definite
+  size (`clamp(9rem, 19vw, 15rem)`) and the stage then takes `width: 100%`.
+  The same family as the homepage hero's invisible rings.
+
+**No two sections on one stage may share an icon** — a repeated glyph reads as
+a repeated question. `build-forms.py` refuses to write a page where two do,
+and that guard immediately caught the OAS form carrying two sections both
+named "About you" (the second is "Your details" now).
+
+### The refinements the review pass found, the same day
+
+Asked for as *"aNY FURTHER refinements"*. Six, and the first three were
+silent faults nobody would have reported:
+
+- **The rail was invisible exactly when it was wanted.** Both bars stick, and
+  with `top: 0` the rail parked behind the topbar — 69px of overlap, its whole
+  height — so the progress vanished the moment the client scrolled into the
+  form. Its top is now `var(--bar)`, which `form.js` sets from the topbar's
+  **measured** height on load and on resize, so a longer brand name or a
+  bigger font can never put it back.
+- **The backend's bot guard was dead code twice over.** `quoteSubmit_` checked
+  `core.website`, and no page emitted a honeypot at all; once one was added,
+  it still never travelled, because `payload()` only walks `.f` blocks and the
+  honeypot sits outside them. The forms harness caught the second half by
+  accident, flagging a filled field that did not reach the payload. The
+  honeypot is off screen (never `display: none` — some bots skip those), out
+  of the tab order, `aria-hidden`, read explicitly into `core.website`, and
+  excluded from the progress count and the draft.
+- **A restored draft said nothing.** Answers reappearing with no explanation
+  read as somebody else's form. It now says *"We kept what you had started 20
+  minutes ago. 2 answers are filled in below"* with **Start again, empty**, and
+  a draft over **14 days** old is dropped rather than put back in front of
+  them. Only answered fields are saved: `FormData` hands back every empty box
+  too, and the first cut claimed 17 answers for 2.
+- **Enter no longer sends.** The browser's default is to submit from any
+  single-line input; on a form of twenty-five answers a stray Enter halfway
+  down is a submission nobody meant. Enter moves to the next box, and only the
+  Send button sends.
+- **The index carries the stage too**, circling the **six lines** as each
+  form's own circles its sections: the same drawing, one level up. `form.js`
+  used to return early on any page with no form, so `/quote/` got neither the
+  measured bar nor the kinetic headline; the page-wide motion now runs before
+  that guard.
+- **Two surfaces went opaque.** The rail was frosted at 92% and a form field
+  ghosted through it under the topbar, reading as a rendering fault; it is
+  solid now, which also keeps `backdrop-filter` to one surface on these pages.
+  The topbar sits at 94% rather than the homepage's 88%, because frost reads
+  as craft on an editorial page and as a fault over the field somebody is
+  filling.
+- Smaller: the rail is a real `role="progressbar"` whose `aria-valuenow`
+  tracks the count (the visible text is `aria-hidden`, so it is not read
+  twice), and a radio group's legend no longer inherits the flex gap meant
+  for a section number — it was pushing the required asterisk a full space
+  away from the question.
+
+- Tests in the session scratchpad: `qa/forms.js` (24 checks, Playwright: the
+  pages, sideways scroll at seven widths, iOS input zoom, touch targets,
+  contrast composited through translucency, the validation summary, the
+  conditional rules, a real send on all six, a dead backend, reduced motion,
+  the form with JS off, and no JotForm on any client-facing page; the canonical
+  page throughout is `/quote/property/`, since motor is not ours) and
+  `qa/quotes.js` (24, Node with Sheets and MailApp made of nothing: the tab,
+  the numbering, the duplicate guard, the honeypot, the row, both e-mails,
+  and that the page and the e-mail promise the same three things word for
+  word), and `qa/motion.js` (14: the rail against what is answered, a
+  conditional field raising the total, a section ticking and lighting its
+  chip, the split headline both ways, nothing running or invisible with
+  motion off, the frame cost with the ring spinning, the loops parking off
+  screen, no chip crossing the clip at 6 stages × 10 widths, the mark as a
+  constant fraction of the stage, layout shift, the rail still visible under
+  the topbar after a 1600px scroll, the honeypot's four properties and that a
+  filled one adds nothing to the count, Enter moving on rather than sending,
+  the restored-draft notice and its count, Start again, and the index's own
+  stage, headline and measured bar).
 
 ## The English B essay workshop — it asks, the student writes
 
