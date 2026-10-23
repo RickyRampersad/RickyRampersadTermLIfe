@@ -4219,6 +4219,10 @@ empty on every row. `RROPERATIONS-SETUP.md` is the runbook.
   came back one page, 2,000 of 5,886, and missed Aleema). Someone with no agent record and no policies under their name
   in Salesforce (on 23 October, Mala Balkaran) is added on the RR Operations Agents tab. Anyone the lists mark inactive is never
   added back from Salesforce. `lbValidate_` accepts any agent on that list. Signing in is unchanged.
+  **The staff are on it too, by name** (the same morning: "use her name alone as she is a sales support, also ensure
+  all my staff is also added"): every active staff row on the sign-in lists, every active row of the RR Operations
+  Access tab, and `LB_PICK_EXTRA` (Mala Balkaran; the `LB_PICK_EXTRA` Script property adds more, comma-separated). A
+  person with no agent number goes in under their name and shows as "Name · Role"; drivers stay off.
 - **The Delivery Book film** (20 October 2026: "a small video on the revised delivery process as it also looks up the
   client etc and the client gets an email confirming delivery"). *The Delivery Book, for staff* (`dbstaff`, 1:45):
   `rroperations/delivery-book/deliverybook-staff.mp4`, poster `film.jpg`, page `/deliverybook-film/` (Open Graph for

@@ -154,7 +154,10 @@ let env = world();
   ok('"Not Active" is refused', throws(() => env.lbLogin_({ agentNo: 'A00003', code: 'pw3' })));
   const pick = env.lbHandle_({ action: 'lb.agents', token: bo.token }).agents;
   ok('the branch manager is in the agent list (he writes business)', pick.some(a => a.name === 'Bo Branch'));
-  ok('staff are not in the agent list', !pick.some(a => /Sam Support|Pat Courier/.test(a.name)));
+  ok('staff are in the list by name, marked as staff', pick.some(a => a.name === 'Sam Support' && a.agentNo === 'Sam Support' && a.staff));
+  ok('Mala Balkaran is in the list by name', pick.some(a => a.name === 'Mala Balkaran' && a.staff));
+  ok('staff can log for a staff member by name', env.lbValidate_({ entry: entry({ agentNo: 'Mala Balkaran' }) }, env.lbSession_(bo.token)).agent.name === 'Mala Balkaran');
+  ok('no one twice', new Set(pick.map(a => a.name)).size === pick.length);
   ok('agents Salesforce shows as active are in the list, with their numbers', pick.some(a => a.name === 'Javid Ali' && a.agentNo === 'A04020')
      && pick.some(a => a.name === 'Aleema Mohammed-Ali' && a.agentNo === 'A04028'));
   ok('each agent once', pick.filter(a => a.agentNo === 'A04020').length === 1 && pick.filter(a => a.agentNo === 'A10001').length === 1);

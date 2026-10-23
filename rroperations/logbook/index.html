@@ -487,7 +487,7 @@
       if (!c.agent) api('lb.agents').then(function (r) {
         S.agents = r.agents;
         $('agentSel').innerHTML = '<option value="">Choose the agent…</option>' + r.agents.map(function (a) {
-          return '<option value="' + esc(a.agentNo) + '">' + esc(a.name) + ' · ' + esc(a.agentNo) + (a.unit ? ' · ' + esc(a.unit) : '') + '</option>';
+          return '<option value="' + esc(a.agentNo) + '">' + esc(a.name) + (a.agentNo && a.agentNo !== a.name ? ' · ' + esc(a.agentNo) : '') + (a.staff ? ' · ' + esc(a.role || 'Staff') : a.unit ? ' · ' + esc(a.unit) : '') + '</option>';
         }).join('');
       }).catch(function () {});
       var want = (location.hash || '').replace('#', '');

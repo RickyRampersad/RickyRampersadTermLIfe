@@ -737,16 +737,39 @@ function lbFindAgent_(no) {
       Javid Ali"); kept six hours. Anyone the sign-in lists mark inactive
       (a former agent) is never added back from Salesforce.
    Signing in is unchanged: only the sign-in lists open the Log Book. */
+var LB_PICK_EXTRA = ['Mala Balkaran'];
 var LB_PICK_READ_ = null;
 function lbPickAgents_() {
   if (LB_PICK_READ_) return LB_PICK_READ_;
   var all = lbAgents_(), out = [], seen = {}, off = {};
   all.forEach(function (a) {
     if (!a.active) { off[a.key] = 1; var nk = lbNameKey_(a.name); if (nk) off['n:' + nk] = 1; return; }
-    if (lbIsStaffRole_(a.role) && !/branch manager/i.test(a.role)) return;
+    if (lbIsDriverRole_(a.role)) return;
     if (seen[a.key]) return;
     seen[a.key] = 1; out.push(a);
   });
+  /* The staff hand papers in too (23 October 2026: "use her name alone as she is
+     a sales support, also ensure all my staff is also added"). Staff with no
+     agent number go in by name: the RR Operations Access tab, then the
+     LB_PICK_EXTRA Script property and LB_PICK_EXTRA below (comma-separated names). */
+  var byName = function (name, role, email) {
+    name = String(name || '').replace(/\s+/g, ' ').trim();
+    var nk = lbNameKey_(name), k = lbAgentKey_(name);
+    if (!nk || !k || off['n:' + nk]) return;
+    if (out.some(function (x) { return lbNameKey_(x.name) === nk; })) return;
+    seen[k] = 1;
+    out.push({ agentNo: name, name: name, email: email || '', unit: '', role: role || 'Staff', active: true, key: k, staff: true });
+  };
+  try {
+    var sh = dbSheet_(DB.TABS.ACCESS, DB_ACCESS_COLUMNS), hm = dbHeaderMap_(sh), last = sh.getLastRow();
+    if (last > 1) sh.getRange(2, 1, last - 1, hm.head.length).getValues().forEach(function (r) {
+      var act = String(r[hm.map['Active']] == null ? 'yes' : r[hm.map['Active']]).trim();
+      var role = String(r[hm.map['Role']] || 'Staff').trim() || 'Staff';
+      if (/^(no|false|not active|inactive|resigned|terminated)/i.test(act) || lbIsDriverRole_(role)) return;
+      byName(r[hm.map['Name']], role, 'Email' in hm.map ? String(r[hm.map['Email']] || '').trim() : '');
+    });
+  } catch (e) { Logger.log('pick list access tab: ' + e); }
+  String(dbProp_('LB_PICK_EXTRA', '')).split(',').concat(LB_PICK_EXTRA).forEach(function (n) { byName(n, 'Sales Support'); });
   lbSfActiveAgents_().forEach(function (a) {
     var k = lbAgentKey_(a.agentNo);
     if (!k || seen[k] || off[k] || off['n:' + lbNameKey_(a.name)]) return;
@@ -977,7 +1000,7 @@ function lbHandle_(b) {
     case 'lb.trainSubmit':  return lbTrainSubmit_(b, who);
     case 'lb.trainView':    return lbTrainView_(b, who);
     case 'lb.baginfo':      return { ok: true, bag: lbBagInfo_(new Date()) };
-    case 'lb.agents':       return { ok: true, agents: lbPickAgents_().map(function (a) { return { agentNo: a.agentNo, name: a.name, unit: a.unit }; }) };
+    case 'lb.agents':       return { ok: true, agents: lbPickAgents_().map(function (a) { return { agentNo: a.agentNo, name: a.name, unit: a.unit, staff: !!a.staff || lbIsStaffRole_(a.role), role: a.role || '' }; }) };
     default:                return { ok: false, error: 'Unknown action' };
   }
 }
