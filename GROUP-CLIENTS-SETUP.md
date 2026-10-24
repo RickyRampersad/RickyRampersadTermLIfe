@@ -232,6 +232,18 @@ something is written.
   member's name), twelve months of billed and received from Salesforce, and a form to tell us about a payment, a
   joiner, a leaver, a dependent or a question. Each goes on Group Changes, onto the billing task's Chatter and to the
   account owner by e-mail; a joiner or leaver opens a Salesforce task for the owner.
+- **The change form EB0010** (Guardian's Group and Individual Policy Change Form, 2024/3). On the group's page,
+  "Terminate or change a member": the group searches the member by name, Section A fills from Salesforce (what is not
+  on record is listed, never guessed), the change goes in its section, they preview the form and send it. Staff do the
+  same from the billing review ("Change form EB0010" in Record a change, or Form on a register row). The PDF goes from
+  support@ to EBCustomercare@myguardiangroup.com, copied to sales support and support@, and is logged on Group Changes
+  (the Form column keeps it); a task is opened for the account owner. **Test mode is the bills' own**: until
+  `gblGoLive`, a form goes to the staff member (or the account owner) and the branch, marked TEST.
+- **The owner's task is chased on Chatter every three working days** inside the 10:30 group day, until EB Customer
+  Care replies at support@ naming the member or the task is closed; the fifth follow-up goes to the branch manager.
+  `gblFormChasePreview` (editor) shows what would be posted; `gblFormChaseNow` runs it.
+- **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the two new routes, `gcm.clientForm` and
+  `gcm.clientFormSend`, and the chase in the group day are in GroupClients.gs), then a New version.
 - **Script properties**: none new. `GCM_BILL_LIVE` is set by `gblGoLive`. The AI read uses `ANTHROPIC_API_KEY` as
   the rest of the page does.
 

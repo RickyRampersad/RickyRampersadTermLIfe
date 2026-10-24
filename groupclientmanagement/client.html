@@ -229,6 +229,19 @@ footer a{color:inherit}
 .tell label{display:block;font-weight:500;font-size:14px;margin:10px 0 4px;color:var(--ink2)}
 .tell select.field{appearance:auto}
 .tell .ok{background:var(--goodBg);border-radius:10px;padding:10px 12px;margin-top:10px;font-weight:600;color:var(--good)}
+.chg{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.chg label{display:block;font-weight:500;font-size:14px;margin:10px 0 4px;color:var(--ink2)}
+.chg .srch{display:flex;gap:8px}.chg .srch .field{flex:1}
+.cres{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pickm{width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:2px}
+.pickm span{font-size:13px;color:var(--muted)}.pickm.on,.pickm:hover{border-color:var(--primary);background:var(--infoBg,#eef4fc)}
+.cform{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px}
+.cform .picked{font-size:14px;margin-bottom:4px}
+.deps .dep{display:grid;grid-template-columns:110px 1fr 70px 150px;gap:6px;margin:4px 0}.deps .dep.ben{grid-template-columns:100px 1fr 64px 140px 64px auto}
+.chg .tick{display:flex;align-items:center;gap:8px;font-weight:500;margin:6px 0}.chg .tick.big{font-size:15px;margin:12px 0}
+.chg .ok{background:var(--goodBg);border-radius:10px;padding:10px 12px;margin-top:10px;font-weight:600;color:var(--good)}
+.fprev{margin-top:12px}.fpt{font-size:13px;color:var(--muted);margin-bottom:6px}.fprev iframe{width:100%;height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
+@media (max-width:560px){.deps .dep,.deps .dep.ben{grid-template-columns:1fr 1fr}.fprev iframe{height:420px}}
 .cyears{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:4px 0 8px}
 .cyears div{background:var(--sunken);border-radius:10px;padding:10px 12px}.cyears b{display:block;font-size:18px;color:#13408F}.cyears span{font-size:12.5px;color:var(--muted)}
 </style>
@@ -376,6 +389,7 @@ function billingHtml() {
   if (L.openItems) h += '<p class="sub">' + L.openItems + ' billing item' + (L.openItems === 1 ? ' is' : 's are') + ' open on this line: it is in “Your open items” below, with who is on it and where it stands.</p>';
   if (L.changes && L.changes.length) h += '<h3>What you have told us</h3><ul class="feed">' + L.changes.map(c => '<li><b>' + esc(c.at) + '</b> · ' + esc(c.kind) + (c.member ? ' · ' + esc(c.member) : '') + ' · ' + esc(c.detail) + ' · <span class="st">' + esc(c.status) + '</span></li>').join('') + '</ul>';
   if (L.claims && L.claims.byYear && L.claims.byYear.length) h += '<h3>What your plan paid for your people</h3><div class="cyears">' + L.claims.byYear.map(y => '<div><b>' + money(y.paid) + '</b><span>' + esc(y.year) + ' · ' + y.claims + ' claim' + (y.claims === 1 ? '' : 's') + '</span></div>').join('') + '</div><p class="sub">Claims paid by the plan, by the year of the service. The last two months are still being processed.</p>';
+  h += chgHtml();
   h += '<div class="tell" id="tell"><h3>Tell us about a payment or a change</h3>' + (TELL.sent ? '<div class="ok">' + esc(TELL.sent) + '</div>' : '') +
     '<label for="tkind">What is it?</label><select class="field" id="tkind"><option value="payment">A payment we have made</option><option value="joiner">Someone has joined</option><option value="leaver">Someone has left</option><option value="dependent">A dependent added or removed</option><option value="query">A question about our billing</option></select>' +
     '<div id="tpay"><div class="row2"><div><label for="tamt">Amount (TT$)</label><input class="field" id="tamt" type="number" step="0.01" inputmode="decimal"></div><div><label for="tdate">Date paid</label><input class="field" id="tdate" type="date"></div></div>' +
@@ -388,6 +402,7 @@ function billingHtml() {
 }
 function bindBilling() {
   const sec = document.querySelector('.billing'); if (!sec) return;
+  bindChg();
   sec.querySelectorAll('[data-bt]').forEach(b => b.onclick = () => { BT = b.dataset.bt; sec.outerHTML = billingHtml(); bindBilling(); });
   const kind = $('tkind'), swap = () => { const pay = kind.value === 'payment', q = kind.value === 'query'; $('tpay').classList.toggle('hide', !pay); $('tchg').classList.toggle('hide', pay || q); };
   kind.onchange = swap; swap();
@@ -407,6 +422,100 @@ function bindBilling() {
     try { localStorage.setItem(nameKey(), body.name.slice(0, 80)); } catch (e) {}
     open_();
   };
+}
+
+/* the change form (24 October 2026): search a member of your plan, Guardian Life's form EB0010 fills from our records,
+   confirm the change, and it goes to Guardian Life with our branch copied */
+let CF = { q: '', results: null, member: null, pick: null, kind: 'terminate', html: '', missing: [], sent: '', err: '', busy: false, deps: [], bens: [] };
+const CF_KINDS = [['terminate', 'Terminate this member'], ['adddep', 'Add a dependent'], ['removedep', 'Remove a dependent'], ['address', 'Change of address'], ['beneficiary', 'Change a beneficiary'], ['bank', 'Bank account for claim payments']];
+const CF_RELS = ['SPOUSE', 'CHILD', 'CHILD', 'CHILD'];
+function chgHtml() {
+  let h = '<div class="chg" id="chg"><h3>Terminate or change a member</h3><p class="sub">Search the person’s name. Guardian Life’s change form (EB0010) fills from our records; you confirm the change and it goes to Guardian Life with our branch copied.</p>';
+  if (CF.sent) return h + '<div class="ok">' + esc(CF.sent) + '</div><button class="btn ghost" type="button" id="cfAnother" style="margin-top:8px">Another change</button></div>';
+  h += '<label for="cq">The person’s name</label><div class="srch"><input class="field" id="cq" maxlength="80" placeholder="Surname or first name" value="' + esc(CF.q) + '" autocomplete="off"><button class="btn ghost" type="button" id="cqGo">Search</button></div><div id="cres">' + chgResults() + '</div>';
+  if (CF.pick) h += chgForm();
+  return h + '<div class="err" id="cerr" role="alert">' + esc(CF.err) + '</div></div>';
+}
+function chgResults() {
+  if (CF.busy && !CF.results) return '<p class="sub">Looking in our records…</p>';
+  if (!CF.results) return '';
+  if (!CF.results.length) return '<p class="sub">Nobody on your plan matches that. Try the surname alone, or part of it.</p>';
+  return '<ul class="cres">' + CF.results.map(m => '<li><button type="button" class="pickm' + (CF.pick && CF.pick.id === m.id ? ' on' : '') + '" data-pick="' + esc(m.id) + '"><b>' + esc(m.name) + '</b><span>' + esc(m.label) + ' · ' + esc(m.policy) + ' · ' + esc(m.status) + (m.since ? ' · since ' + esc(dmy(m.since)) : '') + (m.deps ? ' · ' + m.deps + ' dependent' + (m.deps === 1 ? '' : 's') + ' on record' : '') + '</span></button></li>').join('') + '</ul>' + (CF.results.more ? '<p class="sub">More match: add another word of the name.</p>' : '');
+}
+function chgForm() {
+  const m = CF.pick, k = CF.kind, deps = (CF.member && CF.member.deps) || [];
+  const depRows = (list, label) => '<div class="deps"><label>' + label + '</label>' + [0, 1, 2, 3].map(i => { const d = list[i] || {}; return '<div class="dep"><select class="field" data-dep="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD'].map(r => '<option' + (d.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><input class="field" placeholder="Full name" data-dep="name" data-i="' + i + '" value="' + esc(d.name || '') + '"><select class="field" data-dep="gender" data-i="' + i + '"><option value="">M/F</option><option' + (d.gender === 'M' ? ' selected' : '') + '>M</option><option' + (d.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-dep="dob" data-i="' + i + '" value="' + esc(d.dob || '') + '"></div>'; }).join('') + '</div>';
+  let h = '<div class="cform" id="cform"><div class="picked"><b>' + esc(m.name) + '</b> · ' + esc(m.label) + ' · policy / certificate ' + esc(m.policy) + '</div>' +
+    '<label for="ckind">What change?</label><select class="field" id="ckind">' + CF_KINDS.map(([v, l]) => '<option value="' + v + '"' + (v === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+    '<div class="row2"><div><label for="ceff">Effective date</label><input class="field" type="date" id="ceff" value="' + esc(CF.effective || '') + '"></div><div><label for="cmar">Marital status (Section A)</label><select class="field" id="cmar">' + ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'].map(x => '<option value="' + x + '"' + ((CF.marital || '') === x ? ' selected' : '') + '>' + (x ? x.charAt(0) + x.slice(1).toLowerCase() : 'Not sure') + '</option>').join('') + '</select></div></div>';
+  if (k === 'terminate') h += '<p class="sub">Section A fills with ' + esc(m.name) + '’s record' + (deps.length ? ', and the ' + deps.length + ' dependent' + (deps.length === 1 ? '' : 's') + ' on record go in Section B (ii) to be removed on the same date' : '; any dependent covered under this certificate ends with it') + '.</p>';
+  if (k === 'adddep') h += depRows(CF.deps, 'Dependent(s) to be covered (Section B)');
+  if (k === 'removedep') h += (deps.length ? '<p class="sub">On record: ' + esc(deps.map(d => d.name + ' (' + d.rel.toLowerCase() + ')').join(', ')) + '. List those to remove:</p>' : '') + depRows(CF.deps.length ? CF.deps : deps, 'Dependent(s) to be removed (Section B (ii))');
+  if (k === 'address') h += '<label for="caddr">New address (Section D; a utility bill in the insured’s name, not older than three months, follows)</label><textarea class="field" id="caddr" maxlength="240">' + esc(CF.address || '') + '</textarea>';
+  if (k === 'beneficiary') h += '<div class="deps"><label>Beneficiary to add (Section C) or remove (tick)</label>' + [0, 1, 2].map(i => { const d = CF.bens[i] || {}; return '<div class="dep ben"><select class="field" data-ben="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD', 'OTHER'].map(r => '<option' + (d.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><input class="field" placeholder="Full name" data-ben="name" data-i="' + i + '" value="' + esc(d.name || '') + '"><select class="field" data-ben="gender" data-i="' + i + '"><option value="">M/F</option><option' + (d.gender === 'M' ? ' selected' : '') + '>M</option><option' + (d.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-ben="dob" data-i="' + i + '" value="' + esc(d.dob || '') + '"><input class="field" type="number" min="0" max="100" placeholder="%" data-ben="pct" data-i="' + i + '" value="' + esc(d.pct || '') + '"><label class="tick"><input type="checkbox" data-ben="remove" data-i="' + i + '"' + (d.remove ? ' checked' : '') + '> remove</label></div>'; }).join('') + '</div>';
+  if (k === 'bank') h += '<div class="row2"><div><label for="cbank">Name of bank (Section E)</label><input class="field" id="cbank" maxlength="80" value="' + esc(CF.bankName || '') + '"></div><div><label for="cacct">Account number</label><input class="field" id="cacct" maxlength="40" value="' + esc(CF.bankAccount || '') + '"></div></div><label for="cbr">Name of branch</label><input class="field" id="cbr" maxlength="80" value="' + esc(CF.bankBranch || '') + '"><p class="sub">A copy of the bank statement header, showing the insured’s name and account number, follows by e-mail.</p>';
+  h += '<label for="creason">Reason, or anything Guardian Life should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' +
+    '<div class="row2"><div><label for="cadmin">Plan administrator’s name (Section F)</label><input class="field" id="cadmin" maxlength="80" value="' + esc(CF.admin || A._who || '') + '"></div><div><label for="cname">Your name</label><input class="field" id="cname" maxlength="80" value="' + esc(CF.name || A._who || '') + '"></div></div>' +
+    '<label class="tick big"><input type="checkbox" id="cauth"' + (CF.auth ? ' checked' : '') + '> I am authorised to submit this change for ' + esc(D.group) + '</label>' +
+    '<div class="row2"><button class="btn ghost" type="button" id="cprev">' + (CF.html ? 'Update the preview' : 'Preview the form') + '</button><button class="btn" type="button" id="cgo"' + (CF.html ? '' : ' disabled') + '>Submit to Guardian Life</button></div>';
+  if (CF.html) h += '<div class="fprev"><div class="fpt">The form as it will go' + (CF.missing.length ? ' · not on our records: ' + esc(CF.missing.join(', ')) : '') + '</div><iframe title="The change form" id="cfr" sandbox=""></iframe></div>';
+  return h + '</div>';
+}
+function chgRead() {
+  const g = id => $(id) ? $(id).value.trim() : '';
+  CF.kind = g('ckind') || CF.kind; CF.effective = g('ceff'); CF.marital = g('cmar'); CF.reason = g('creason'); CF.admin = g('cadmin'); CF.name = g('cname'); CF.address = g('caddr'); CF.bankName = g('cbank'); CF.bankAccount = g('cacct'); CF.bankBranch = g('cbr'); CF.auth = $('cauth') ? $('cauth').checked : false;
+  const rows = (attr, n) => { const out = []; for (let i = 0; i < n; i++) { const o = {}; document.querySelectorAll('[data-' + attr + '][data-i="' + i + '"]').forEach(el => { o[el.dataset[attr]] = el.type === 'checkbox' ? el.checked : el.value.trim(); }); if (o.name) out.push(o); } return out; };
+  if (document.querySelector('[data-dep]')) CF.deps = rows('dep', 4);
+  if (document.querySelector('[data-ben]')) CF.bens = rows('ben', 3);
+}
+function chgBody() {
+  return { lb: CRED.lb, code: CRED.code, member: CF.pick.id, kind: CF.kind, effective: CF.effective, marital: CF.marital, reason: CF.reason, admin: CF.admin, name: CF.name, address: CF.address, bankName: CF.bankName, bankAccount: CF.bankAccount, bankBranch: CF.bankBranch, deps: JSON.stringify(CF.deps), bens: JSON.stringify(CF.bens) };
+}
+function chgDraw() { const el = $('chg'); if (!el) return; el.outerHTML = chgHtml(); bindChg(); }
+async function chgSearch() {
+  CF.q = $('cq').value.trim(); CF.err = '';
+  if (CF.q.length < 2) { CF.results = null; CF.pick = null; chgDraw(); return; }
+  CF.busy = true; CF.results = null; chgDraw();
+  let r;
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientForm&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&q=' + encodeURIComponent(CF.q) + '&z=' + Date.now())).text()); } catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
+  CF.busy = false;
+  if (!r.ok) { CF.err = r.error || 'Not found.'; CF.results = []; chgDraw(); return; }
+  CF.results = r.members || []; CF.results.more = !!r.more; chgDraw();
+  $('cq').focus(); $('cq').setSelectionRange(CF.q.length, CF.q.length);
+}
+function bindChg() {
+  const el = $('chg'); if (!el) return;
+  if ($('cfAnother')) $('cfAnother').onclick = () => { CF = { q: '', results: null, member: null, pick: null, kind: 'terminate', html: '', missing: [], sent: '', err: '', busy: false, deps: [], bens: [] }; chgDraw(); };
+  if ($('cq')) { let t; $('cq').oninput = () => { clearTimeout(t); t = setTimeout(chgSearch, 400); }; $('cq').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); chgSearch(); } }; }
+  if ($('cqGo')) $('cqGo').onclick = chgSearch;
+  el.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { CF.pick = CF.results.find(m => m.id === b.dataset.pick); CF.member = null; CF.html = ''; CF.missing = []; CF.deps = []; CF.bens = []; chgDraw(); chgPreview(true); });
+  if ($('ckind')) $('ckind').onchange = () => { chgRead(); CF.html = ''; CF.deps = []; CF.bens = []; chgDraw(); };
+  if ($('cprev')) $('cprev').onclick = () => chgPreview(false);
+  if ($('cgo')) $('cgo').onclick = chgSend;
+  if ($('cfr') && CF.html) $('cfr').srcdoc = CF.html;
+}
+async function chgPreview(quiet) {
+  chgRead(); CF.err = '';
+  const b = chgBody(); let r;
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientForm&' + Object.keys(b).map(k => k + '=' + encodeURIComponent(b[k])).join('&') + '&z=' + Date.now())).text()); } catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
+  if (!r.ok) { CF.err = r.error || 'Not available.'; chgDraw(); return; }
+  CF.member = r.member; CF.html = r.html; CF.missing = r.missing || [];
+  if (quiet && !CF.deps.length && CF.kind === 'removedep') CF.deps = (r.member.deps || []).slice(0, 4);
+  chgDraw();
+  if (!quiet) { const f = $('cfr'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+async function chgSend() {
+  chgRead(); CF.err = '';
+  if (!CF.name) { CF.err = 'Please give your name.'; return chgDraw(); }
+  if (!CF.auth) { CF.err = 'Please tick that you are authorised to submit this change.'; return chgDraw(); }
+  if (!CF.effective) { CF.err = 'Please give the effective date.'; return chgDraw(); }
+  $('cgo').disabled = true; $('cgo').textContent = 'Sending…';
+  const body = Object.assign({ action: 'gcm.clientFormSend', authorised: 'Y' }, chgBody()); let r;
+  try { r = JSON.parse(await (await fetch(SVC, { method: 'POST', body: JSON.stringify(body) })).text()); } catch (e) { r = { ok: false, error: 'We could not reach our system. Please try again, or e-mail us.' }; }
+  if (!r.ok) { CF.err = r.error || 'Not sent.'; chgDraw(); return; }
+  CF.sent = r.said || 'Thank you. The form has gone to Guardian Life.';
+  try { localStorage.setItem(nameKey(), CF.name.slice(0, 80)); } catch (e) {}
+  chgDraw();
 }
 
 function bindPend() {

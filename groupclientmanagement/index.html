@@ -355,6 +355,15 @@ h2{font-size:21px}
 .tstep .sel{flex-direction:column;align-items:stretch;gap:4px}
 .ask{margin:0 0 8px;padding-left:18px;font-size:13px;color:var(--muted)}.ask li{margin:2px 0}
 .toggle.small{font-size:13px;font-weight:500}
+.bform .bres{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.bpick{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:2px}
+.bpick span{font-size:13px;color:var(--muted)}.bpick.on,.bpick:hover{border-color:var(--primary);background:var(--infoBg)}
+.bpicked{margin:10px 0 6px;font-size:14px}
+.bdeps{margin:8px 0}.bdeps b{display:block;font-size:13px;margin-bottom:4px}
+.bdep{display:grid;grid-template-columns:110px 1fr 70px 150px;gap:6px;margin:4px 0}.bdep.ben{grid-template-columns:100px 1fr 64px 140px 64px auto}
+.bform .fprev{margin-top:12px}.bform .fprev iframe{width:100%;height:620px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.bform .bad{color:var(--badText)}
+@media (max-width:640px){.bdep,.bdep.ben{grid-template-columns:1fr 1fr}.bform .fprev iframe{height:460px}}
 </style>
 <script src="/rroperations/sso.js"></script>
 </head>

@@ -145,6 +145,7 @@ function gcmDoGet_(p) {
       case 'gcm.remindPreview':  return gcmRemindPreview_(p);
       case 'gcm.refresh': return gcmRefreshAsked_(p);
       case 'gcm.client':  return gcmClient_(p);
+      case 'gcm.clientForm': return typeof gblClientForm_ === 'function' ? gblClientForm_(p) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.wall':    return gcmWall_(p);
       case 'gcm.train':   return gcmTrain_(p);
       case 'gcm.trainView': return gcmTrainView_(p);
@@ -179,6 +180,7 @@ function gcmDoPost_(b) {
       case 'gcm.billSend':    return typeof gblSend_ === 'function' ? gblSend_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.claimsUpload': return typeof gblClaims_ === 'function' ? gblClaims_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.clientTell':  return typeof gblClientTell_ === 'function' ? gblClientTell_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
+      case 'gcm.clientFormSend': return typeof gblClientFormSend_ === 'function' ? gblClientFormSend_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
     }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
@@ -2762,7 +2764,10 @@ function gcmDay_(o) {
   if (rate && rate.busy) rate.said = 'the letters or the refresh were running, twice: the hourly run tries again from 11:00, and its own summary tells you what went.';
   if (rate) said.push('Star reminder: ' + (rate.said || ''));
   if (chase) said.push('Staff: ' + (chase.said || ''));
-  try { gcmDaySummary_({ test: !!o.test, rate: rate, chase: chase }); said.push('Summary sent to ' + gcmDayManager_() + '.'); }
+  /* the change forms waiting on EB Customer Care: the owner's task chased every three working days (GroupBilling.gs) */
+  var forms = null;
+  if (typeof gblFormChase_ === 'function') { try { forms = gblFormChase_({ test: !!o.test }); said.push('Change forms: ' + forms.said); } catch (e) { forms = { said: String(e && e.message ? e.message : e).slice(0, 200), chased: [], answered: [], closed: [], waiting: [] }; } }
+  try { gcmDaySummary_({ test: !!o.test, rate: rate, chase: chase, forms: forms }); said.push('Summary sent to ' + gcmDayManager_() + '.'); }
   catch (e) { said.push('The summary did not go: ' + String(e && e.message ? e.message : e).slice(0, 160)); }
   out.said = said.join(' ');
   return out;
@@ -2950,6 +2955,13 @@ function gcmDaySummary_(o) {
     (all.some(function (a) { return a.kind === 'notready'; }) ? '<p style="margin:14px 0 6px;font-weight:700">Cannot have a letter yet</p>' + tbl(['Group', 'Looked after by', 'What is missing'], all.filter(function (a) { return a.kind === 'notready'; }).map(function (a) {
       return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); })) : '') +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  if (o.forms && (o.forms.chased.length || o.forms.answered.length || o.forms.closed.length || o.forms.waiting.length)) {
+    var fl = function (x, what) { return '<li><b>' + E(x.member) + '</b> (' + E(x.group) + ') · ' + E(what) + (x.owner ? ' · ' + E(x.owner) : '') + '</li>'; };
+    html = html.replace(/<\/div>\s*$/, '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#13408F">Change forms with EB Customer Care</h3><ul style="margin:0;padding-left:18px">' +
+      o.forms.chased.map(function (x) { return fl(x, 'follow-up ' + (x.chases + 1) + ' posted on the task, ' + x.days + ' working days with no reply'); }).join('') +
+      o.forms.answered.map(function (x) { return fl(x, 'EB replied' + (x.reply ? ' ' + x.reply.at + ': ' + x.reply.subject : '') + '; noted on the task'); }).join('') +
+      o.forms.closed.map(function (x) { return fl(x, 'task closed'); }).join('') + o.forms.waiting.map(function (x) { return fl(x, 'waiting, ' + x.days + ' working day' + (x.days === 1 ? '' : 's') + ' since ' + (x.chases ? 'the last follow-up' : 'it went')); }).join('') + '</ul></div>');
+  }
   if (tMsCreds_()) tMsSend_(me, subject, html, { replyTo: me });
   else MailApp.sendEmail({ to: me, subject: subject, htmlBody: html, name: 'Ricky Rampersad Branch' });
 }

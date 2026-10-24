@@ -69,7 +69,7 @@ var GBL_HEAD = {
   'Group Bills': ['When', 'Group', 'Line', 'Month', 'Ref', 'Dated', 'Due by', 'Members', 'Current', 'Adjustments', 'Due', 'Arrears shown', 'Payable',
                   'SF Record', 'SF Billed', 'SF Due', 'SF Paid', 'Variance', 'Findings', 'Resolved', 'Status', 'By', 'Checked at', 'Reconciled at', 'Reconciled by', 'Sent at', 'Files', 'Summary'],
   'Group Bill Lines': ['Group', 'Line', 'Month', 'Member Id', 'Name', 'Division', 'Tier', 'Start', 'Eff', 'Premium', 'Kind', 'For month', 'Cover'],
-  'Group Changes': ['When', 'Group', 'Line', 'Kind', 'Member', 'Detail', 'Effective', 'Amount', 'Source', 'By', 'Status', 'SF Task', 'SF Id', 'Note'],
+  'Group Changes': ['When', 'Group', 'Line', 'Kind', 'Member', 'Detail', 'Effective', 'Amount', 'Source', 'By', 'Status', 'SF Task', 'SF Id', 'Note', 'Form'],
   'Group Claims': ['Group', 'Month', 'Division', 'Claims', 'Charge', 'Member share', 'Paid', 'Uploaded', 'By']
 };
 
@@ -676,6 +676,7 @@ function gblAct_(b) {
   }
   if (act === 'change') return gblChange_(g, who, line, b, 'staff');
   if (act === 'task') return gblTaskOpen_(g, who, line, month, b);
+  if (act === 'members' || act === 'form' || act === 'formSend') return gblFormAct_(g, who, b);
   return { ok: false, error: 'Unknown action.' };
 }
 function gblBillPatch_(bill, fields) {
@@ -711,23 +712,23 @@ function gblTaskFor_(g, line, month) {
  *  the sharing rules GroupClients.gs keeps. */
 /** A change a person reports: a joiner, a leaver, a tier change, a query. Filed on Group Changes; a joiner or leaver opens
  *  a Salesforce task for the account owner, in the branch's own subject pattern; the note goes on the line's billing task. */
-function gblChange_(g, who, line, b, source) {
+function gblChange_(g, who, line, b, source, extra) {
   var kind = String(b.kind || '').toLowerCase(), member = String(b.member || '').trim().slice(0, 120), detail = String(b.detail || '').trim().slice(0, 800), eff = gcmYmd_(b.effective || '') || '';
-  if (['joiner', 'leaver', 'tier', 'query', 'dependent'].indexOf(kind) < 0) return { ok: false, error: 'What kind of change: a joiner, a leaver, a tier change, a dependent, or a question?' };
+  if (['joiner', 'leaver', 'tier', 'query', 'dependent', 'address', 'beneficiary', 'bank', 'plan'].indexOf(kind) < 0) return { ok: false, error: 'What kind of change: a joiner, a leaver, a tier change, a dependent, or a question?' };
   if (kind !== 'query' && !member) return { ok: false, error: 'Whose change is it? Give the person’s name.' };
   if (kind === 'query' && !detail) return { ok: false, error: 'Write the question first.' };
   var lab = GBL.LABEL[line] || 'Billing', taskId = '', taskNote = '';
   if (tSfOn_() && kind !== 'query') {
     var ownerId = gblOwnerId_(g), acct = (g.acctsFull || g.accts)[0] || null;
-    var subj = (kind === 'leaver' ? lab + ' Termination – ' : kind === 'joiner' ? lab + ' Member Enrolment – ' : kind === 'dependent' ? lab + ' Dependent Change – ' : lab + ' Tier Change – ') + member + ' – ' + g.name + (eff ? ' – effective ' + tDmy_(eff) : '');
+    var subj = (kind === 'leaver' ? lab + ' Termination – ' : kind === 'joiner' ? lab + ' Member Enrolment – ' : kind === 'dependent' ? lab + ' Dependent Change – ' : kind === 'address' ? lab + ' Change of Address – ' : kind === 'beneficiary' ? lab + ' Beneficiary Change – ' : kind === 'bank' ? lab + ' ACH Details Change – ' : kind === 'plan' ? lab + ' Plan Change – ' : lab + ' Tier Change – ') + member + ' – ' + g.name + (eff ? ' – effective ' + tDmy_(eff) : '');
     var rec = { Subject: subj.slice(0, 255), WhatId: acct, ActivityDate: gcmAddDays_(gcmToday_(), 2), Status: 'Not Started', Priority: 'Normal',
       Description: (source === 'client' ? 'Reported by the group on their service page' : 'Recorded by ' + who.name + ' on the billing review') + (b.name ? ' (' + String(b.name).slice(0, 80) + ')' : '') + '.\n' + detail };
     if (ownerId) rec.OwnerId = ownerId;
     try { var res = tSfSend_('post', '/sobjects/Task', Object.assign({ Task_Type__c: 'Servicing' }, rec)); taskId = String(res.id || ''); }
     catch (e) { try { var res2 = tSfSend_('post', '/sobjects/Task', rec); taskId = String(res2.id || ''); } catch (e2) { taskNote = 'Salesforce task not opened: ' + String(e2 && e2.message ? e2.message : e2).slice(0, 120); } }
   }
-  gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: line, Kind: kind, Member: member, Detail: detail, Effective: eff, Amount: Number(b.amount) || 0, Source: source, By: source === 'client' ? String(b.name || 'the group').slice(0, 80) : who.name,
-    Status: 'open', 'SF Task': taskId, 'SF Id': '', Note: taskNote }]);
+  gblAppend_(GBL.CHANGES, [Object.assign({ When: new Date(), Group: g.name, Line: line, Kind: kind, Member: member, Detail: detail, Effective: eff, Amount: Number(b.amount) || 0, Source: source, By: source === 'client' ? String(b.name || 'the group').slice(0, 80) : who.name,
+    Status: 'open', 'SF Task': taskId, 'SF Id': '', Note: taskNote }, extra || {})]);
   var posted = gblPostBilling_(g, line, gblMonthOf_(eff) || gcmToday_().slice(0, 7), (source === 'client' ? 'From ' + g.name + ' on their service page' + (b.name ? ' (' + String(b.name).slice(0, 80) + ')' : '') : 'Recorded by ' + who.name) + ': ' +
     (kind === 'query' ? 'question about billing. ' : kind + (member ? ' ' + member : '') + (eff ? ', effective ' + tDmy_(eff) : '') + '. ') + detail + (taskId ? ' Task opened.' : ''), who);
   return { ok: true, task: taskId, posted: posted, said: (kind === 'query' ? 'Your question is with our team.' : 'Noted' + (taskId ? ', and a task is open for our team' : '') + '.') + (taskNote ? ' ' + taskNote : '') };
@@ -932,6 +933,368 @@ function gblBillMail_(g, month, bills, who, test, L) {
     '<p style="margin:0">Warm regards,<br><b>' + E(signer) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br><span style="color:#5a687d">9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p></td></tr></table></div>';
   return { subject: subject, text: text, html: html };
 }
+
+/* ── the EB0010 Group and Individual Policy Change Form, filled from our records ─────── */
+/* 24 October 2026: "the form … GROUP AND INDIVIDUAL POLICY CHANGE FORM is filled as we do have the data and always sent to
+ * EBCustomercare@myguardiangroup.com and copy rickyrampersadsalessupport@myguardiangroup.com as well
+ * support@rickyrampersadbranch.com", then "when a client wants to terminate they should be able to search the name and all
+ * the data mapped onto the form populated as it's pulled from our data … all data should be on the forms exactly".
+ * A group (on its service page) or a staff member (on the billing review) searches a member by name, the member's record
+ * fills Section A of Guardian's form EB0010 (2024/3) exactly as the form lays it out, the change goes in its own section,
+ * the form is rendered as a PDF and e-mailed from support@ to EB Customer Care with the two copies; logged on Group
+ * Changes with the form kept, noted on the billing task, and a task opened for the account owner. Test mode until
+ * gblGoLive: to the staff member (or the account owner, for a group's submission) and the branch, marked TEST. */
+var GBL_FORM = { CODE: 'EB0010', VERSION: '2024/3', TO: 'EBCustomercare@myguardiangroup.com',
+  CC: ['rickyrampersadsalessupport@myguardiangroup.com', 'support@rickyrampersadbranch.com'], CACHE_S: 600, MAX: 12,
+  KINDS: { terminate: 'Termination of the primary insured', adddep: 'Dependent(s) to be covered', removedep: 'Dependent(s) to be removed',
+    address: 'Change of address', beneficiary: 'Beneficiary change', bank: 'Account for payment of claims', plan: 'Policy change' },
+  CHANGE: { terminate: 'leaver', adddep: 'dependent', removedep: 'dependent', address: 'address', beneficiary: 'beneficiary', bank: 'bank', plan: 'plan' } };
+/** The group's members on Group Health and Group Life, with everything the form asks for: read from Salesforce in one
+ *  query, their dependents from Relationship Groups in a second, kept ten minutes. */
+function gblMembers_(g, fresh) {
+  var key = 'gbl-mem-' + g.key.slice(0, 40), cache = null;
+  try { cache = CacheService.getScriptCache(); if (!fresh) { var c = cache.get(key); if (c) return JSON.parse(c); } } catch (e) {}
+  var out = { ok: tSfOn_(), members: [], error: '' };
+  if (!out.ok) { out.error = 'Salesforce is not linked to this project.'; return out; }
+  try {
+    var accts = g.acctsFull && g.acctsFull.length ? g.acctsFull : g.accts, bills = [];
+    g.bills.forEach(function (b) { [b, b.replace(/\s+/g, ''), b.replace(/^([A-Za-z]+)\s*(\d+)$/, '$1 $2')].forEach(function (v) { if (bills.indexOf(v) < 0) bills.push(v); }); });
+    var where = [];
+    if (accts.length) where.push('Account__c IN (' + gcmIn_(accts) + ')');
+    if (bills.length) where.push('List_Bill__c IN (' + gcmIn_(bills) + ')');
+    if (!where.length) return out;
+    var F = 'Id, POLICY__c, Certificate__c, RecordType.Name, Policy_Status_Description__c, Date_Of_Birth__c, Birthdate__c, FIRST_NAME__c, LAST_NAME__c, Email__c, Client_Email__c, ' +
+      'Home_Phone__c, Home_Tele__c, Work__c, Work_Number__c, Business_Phone__c, Mobile__c, Cell__c, Mobile_R__c, PLAN_NAME__c, Plan_Description__c, Product_Name__c, ISSUE_DATE__c, ' +
+      'Address_1__c, Address_2__c, Address_3__c, Street__c, City__c, Mailing_Address_1__c, Benificiary_1__c, Benificiary_2__c, Benificiary_3__c, Status_Change_Date__c, ' +
+      'Contact__c, Contact__r.Name, Contact__r.FirstName, Contact__r.LastName, Contact__r.Birthdate, Contact__r.Gender__c, Contact__r.Email, Contact__r.Preferred_Email__c, ' +
+      'Contact__r.Phone, Contact__r.MobilePhone, Contact__r.HomePhone, Contact__r.Business_Phone__c, Contact__r.MailingStreet, Contact__r.MailingCity, Account__r.Name';
+    var domain = gblGroupDomain_(g), byContact = {};
+    gcmQuery_('SELECT ' + F + ' FROM CLIENT_PORTFOLIO__c WHERE (' + where.join(' OR ') + ") AND RecordType.Name IN ('HEALTH (GROUP)', 'LIFE(GROUP)') ORDER BY Contact__r.Name").forEach(function (p) {
+      var c = p.Contact__r || {}, rt = gcmName_(p, 'RecordType'), st = String(p.Policy_Status_Description__c || '');
+      var emails = [], tel = function () { for (var i = 0; i < arguments.length; i++) { var v = gblTel_(arguments[i]); if (v) return v; } return ''; };
+      [c.Email, p.Email__c, p.Client_Email__c, c.Preferred_Email__c].forEach(function (e) { e = String(e || '').trim().toLowerCase(); if (/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(e) && emails.indexOf(e) < 0) emails.push(e); });
+      var work = emails.filter(function (e) { return domain && e.split('@')[1] === domain; })[0] || '', personal = emails.filter(function (e) { return e !== work; })[0] || '';
+      var addr = [p.Address_1__c, p.Address_2__c, p.Address_3__c].map(function (x) { return String(x || '').replace(/\s+/g, ' ').trim(); }).filter(String).join(', ') || String(c.MailingStreet || '').replace(/\s+/g, ' ').trim();
+      var city = String(p.City__c || c.MailingCity || '').trim();
+      var name = gcmName_(p, 'Contact__r') || [p.FIRST_NAME__c, p.LAST_NAME__c].filter(String).join(' ');
+      var m = { id: String(p.Id), contactId: String(p.Contact__c || ''), line: rt === GBL.POL.health ? 'health' : 'life', rt: rt, policy: String(p.POLICY__c || '').trim(), cert: String(p.Certificate__c || '').trim(),
+        name: gblTitle_(name), first: String(c.FirstName || p.FIRST_NAME__c || ''), last: String(c.LastName || p.LAST_NAME__c || ''), status: st, live: !GBL.GONE.test(st),
+        dob: gcmYmd_(p.Date_Of_Birth__c) || gcmYmd_(c.Birthdate) || gcmYmd_(p.Birthdate__c) || '', gender: gblGender_(c.Gender__c), emailPersonal: personal, emailWork: work,
+        telHome: tel(p.Home_Phone__c, p.Home_Tele__c, c.HomePhone), telWork: tel(p.Work__c, p.Work_Number__c, p.Business_Phone__c, c.Phone, c.Business_Phone__c), telCell: tel(p.Cell__c, p.Mobile__c, p.Mobile_R__c, c.MobilePhone),
+        address: addr, city: city, plan: String(p.PLAN_NAME__c || p.Plan_Description__c || p.Product_Name__c || '').trim(), issued: gcmYmd_(p.ISSUE_DATE__c), changed: gcmYmd_(p.Status_Change_Date__c),
+        bens: [p.Benificiary_1__c, p.Benificiary_2__c, p.Benificiary_3__c].map(function (x) { return String(x || '').trim(); }).filter(String), deps: [], acct: gcmName_(p, 'Account__r') };
+      out.members.push(m);
+      if (m.contactId) (byContact[gcmId15_(m.contactId)] = byContact[gcmId15_(m.contactId)] || []).push(m);
+    });
+    var ids = Object.keys(byContact);
+    for (var i = 0; i < ids.length; i += GCM.CHUNK) {
+      gcmQuery_('SELECT Primary_Name__c, Secondary_Name__r.Name, Secondary_Name__r.Gender__c, Secondary_DOB__c, Child_1__r.Name, Child_1__r.Gender__c, DOB1__c, Child_2__r.Name, Child_2__r.Gender__c, DOB2__c, ' +
+        'Child_3__r.Name, Child_3__r.Gender__c, DOB3__c, Dependent_1__r.Name, Dependent_1__r.Gender__c, DOBD1__c, Relationship_1__c, Dependent_2__r.Name, Dependent_2__r.Gender__c, DOBD2__c, Relationship_2__c, ' +
+        'Dependent_3__r.Name, Dependent_3__r.Gender__c, DOBD3__c, Relationship_3__c FROM Relationship_Groups__c WHERE Primary_Name__c IN (' + gcmIn_(ids.slice(i, i + GCM.CHUNK)) + ')').forEach(function (r) {
+        var deps = [], add = function (rel, who, dob) { var n = who && who.Name ? gblTitle_(who.Name) : ''; if (n) deps.push({ rel: rel, name: n, gender: gblGender_(who.Gender__c), dob: gcmYmd_(dob) || '' }); };
+        add('SPOUSE', r.Secondary_Name__r, r.Secondary_DOB__c); add('CHILD', r.Child_1__r, r.DOB1__c); add('CHILD', r.Child_2__r, r.DOB2__c); add('CHILD', r.Child_3__r, r.DOB3__c);
+        add(String(r.Relationship_1__c || 'DEPENDENT').toUpperCase(), r.Dependent_1__r, r.DOBD1__c); add(String(r.Relationship_2__c || 'DEPENDENT').toUpperCase(), r.Dependent_2__r, r.DOBD2__c); add(String(r.Relationship_3__c || 'DEPENDENT').toUpperCase(), r.Dependent_3__r, r.DOBD3__c);
+        (byContact[gcmId15_(r.Primary_Name__c)] || []).forEach(function (m) { m.deps = m.deps.concat(deps); });
+      });
+    }
+    try { if (cache) cache.put(key, JSON.stringify(out), GBL_FORM.CACHE_S); } catch (e2) {}
+  } catch (e) { out.ok = false; out.error = String(e && e.message ? e.message : e).slice(0, 200); }
+  return out;
+}
+function gblGroupDomain_(g) {
+  var d = '';
+  (g.to || []).concat(g.cc || []).forEach(function (e) { e = String(e || '').toLowerCase(); var m = /@([^@\s]+)$/.exec(e); if (!d && m && !/gmail|yahoo|hotmail|outlook|live\.|icloud|aol\./.test(m[1])) d = m[1]; });
+  return d;
+}
+function gblTel_(v) { v = String(v || '').replace(/[^\d+()\-\s]/g, '').replace(/\s+/g, ' ').trim(); return v.replace(/\D/g, '').length >= 7 ? v : ''; }
+function gblGender_(v) { v = String(v || '').trim().toUpperCase(); return /^F/.test(v) ? 'F' : /^M/.test(v) ? 'M' : ''; }
+/** Members whose name, policy or certificate carries every word typed, the live ones first; at most GBL_FORM.MAX. */
+function gblMemberSearch_(g, q, fresh) {
+  var M = gblMembers_(g, fresh); if (!M.ok) return M;
+  var words = String(q || '').toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).filter(String);
+  if (!words.length) return { ok: true, members: [], total: M.members.length };
+  var hits = M.members.filter(function (m) {
+    var hay = (m.name + ' ' + m.policy + ' ' + m.cert).toLowerCase(), parts = hay.split(/[\s,;-]+/);
+    return words.every(function (w) { return parts.some(function (p) { return p.indexOf(w) === 0; }) || hay.indexOf(w) >= 0; });
+  }).sort(function (a, b) { return (b.live - a.live) || a.name.localeCompare(b.name); });
+  return { ok: true, total: M.members.length, members: hits.slice(0, GBL_FORM.MAX).map(function (m) {
+    return { id: m.id, name: m.name, line: m.line, label: GBL.LABEL[m.line], policy: m.policy, cert: m.cert, status: m.status, live: m.live, dob: m.dob, plan: m.plan, since: m.issued, deps: m.deps.length };
+  }), more: hits.length > GBL_FORM.MAX };
+}
+function gblMemberById_(g, id, fresh) {
+  var M = gblMembers_(g, fresh); if (!M.ok) return null;
+  return M.members.filter(function (m) { return gcmId15_(m.id) === gcmId15_(id); })[0] || null;
+}
+/** What goes on the form: the member's record in Section A, the change in its own section, and who is submitting it. */
+function gblFormData_(g, m, b, who) {
+  var kind = String(b.kind || 'terminate').toLowerCase(); if (!GBL_FORM.KINDS[kind]) kind = 'terminate';
+  var eff = gcmYmd_(b.effective || '') || '', today = gcmToday_();
+  var deps = gblFormDeps_(b.deps), bens = gblFormDeps_(b.bens, true);
+  var d = { code: GBL_FORM.CODE, version: GBL_FORM.VERSION, kind: kind, kindLabel: GBL_FORM.KINDS[kind], effective: eff, reason: String(b.reason || '').replace(/\s+/g, ' ').trim().slice(0, 300),
+    policy: m.policy + (m.cert && m.cert !== m.policy ? ' / ' + m.cert : ''), line: m.line, lineLabel: GBL.LABEL[m.line], holder: g.name, insured: m.name.toUpperCase(), dob: m.dob,
+    emailPersonal: m.emailPersonal, emailWork: m.emailWork, telHome: m.telHome, telWork: m.telWork, telExt: '', telCell: m.telCell, marital: gblMarital_(b.marital), planType: 'GROUP',
+    addDeps: kind === 'adddep' ? deps.map(function (x) { x.reason = x.reason || String(b.reason || '').slice(0, 60); x.on = x.on || eff; return x; }) : [],
+    removeDeps: kind === 'removedep' ? deps.map(function (x) { x.on = x.on || eff; return x; }) : kind === 'terminate' ? m.deps.map(function (x) { return { rel: x.rel, name: x.name, gender: x.gender, dob: x.dob, on: eff }; }) : [],
+    addBens: kind === 'beneficiary' ? bens.filter(function (x) { return !x.remove; }) : [], removeBens: kind === 'beneficiary' ? bens.filter(function (x) { return x.remove; }).map(function (x) { x.on = x.on || eff; return x; }) : [],
+    bensOnFile: who.role === 'client' ? [] : m.bens, plan: { name: m.plan, provisor: /provisor/i.test(m.plan), global: /global/i.test(m.plan), deductible: String(b.deductible || ''), major: String(b.major || ''), mode: '' },
+    address: kind === 'address' ? String(b.address || '').replace(/\s+/g, ' ').trim().slice(0, 240) : '', addressOnFile: [m.address, m.city].filter(String).join(', '),
+    bank: kind === 'bank' ? { name: String(b.bankName || '').slice(0, 80), account: String(b.bankAccount || '').replace(/[^\d\-]/g, '').slice(0, 40), branch: String(b.bankBranch || '').slice(0, 80) } : { name: '', account: '', branch: '' },
+    admin: { name: String(b.admin || '').replace(/\s+/g, ' ').trim().slice(0, 80), date: today }, submitted: { by: who.name, role: who.role === 'client' ? 'the group’s plan administrator, on the group’s service page' : 'Ricky Rampersad Branch', when: gcmWhen_(new Date()) },
+    member: { id: m.id, name: m.name, line: m.line, status: m.status, plan: m.plan }, missing: [] };
+  if (!d.dob) d.missing.push('date of birth');
+  if (!d.emailPersonal && !d.emailWork) d.missing.push('an e-mail address');
+  if (!d.telHome && !d.telWork && !d.telCell) d.missing.push('a telephone number');
+  if (!d.marital) d.missing.push('marital status');
+  if (!eff) d.missing.push('the effective date');
+  if (kind === 'adddep' && !d.addDeps.length) d.missing.push('the dependent(s) to be covered');
+  if (kind === 'removedep' && !d.removeDeps.length) d.missing.push('the dependent(s) to be removed');
+  if (kind === 'address' && !d.address) d.missing.push('the new address');
+  if (kind === 'bank' && (!d.bank.name || !d.bank.account)) d.missing.push('the bank and the account number');
+  if (kind === 'beneficiary' && !d.addBens.length && !d.removeBens.length) d.missing.push('the beneficiary to add or remove');
+  if (!d.admin.name) d.missing.push('the plan administrator’s name (Section F)');
+  d.blocking = d.missing.filter(function (x) { return !/date of birth|e-mail|telephone|marital/.test(x); });
+  return d;
+}
+function gblMarital_(v) { v = String(v || '').trim().toUpperCase(); return ['SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'].indexOf(v) >= 0 ? v : ''; }
+function gblFormDeps_(list, ben) {
+  if (typeof list === 'string') list = gblJ_(list, []);
+  return (Array.isArray(list) ? list : []).map(function (x) {
+    x = x || {};
+    var o = { rel: String(x.rel || '').toUpperCase().slice(0, 20), name: String(x.name || '').replace(/\s+/g, ' ').trim().toUpperCase().slice(0, 80), gender: gblGender_(x.gender), dob: gcmYmd_(x.dob || '') || '', on: gcmYmd_(x.on || '') || '' };
+    if (ben) { o.pct = Number(x.pct) || 0; o.remove = gcmYes_(x.remove); } else o.reason = String(x.reason || '').slice(0, 60);
+    return o;
+  }).filter(function (o) { return o.name; }).slice(0, 4);
+}
+/** The form, exactly as EB0010 (2024/3) lays it out, with the record in its boxes. Letter size, two pages. */
+function gblFormHtml_(d) {
+  var E = tEsc_, dmy = function (y) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(y || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; };
+  var box = function (on, label) { return '<span class="cb">' + (on ? '&#9746;' : '&#9744;') + '</span> ' + E(label); };
+  var cell = function (v, w) { return '<td' + (w ? ' style="width:' + w + '"' : '') + '><span class="v">' + E(v || '') + '</span></td>'; };
+  var rows = function (list, rels, cols) {
+    var out = ''; var fixed = rels.slice();
+    for (var i = 0; i < fixed.length; i++) { var x = list[i] || {}; out += '<tr><td class="rel">' + E(x.rel || fixed[i]) + '</td>' + cols(x) + '</tr>'; }
+    return out;
+  };
+  var depCols = function (x) { return cell(x.name) + cell(x.gender, '9%') + cell(dmy(x.dob), '15%') + cell(x.reason, '18%') + cell(dmy(x.on), '15%'); };
+  var remCols = function (x) { return cell(x.name) + cell(x.gender, '9%') + cell(dmy(x.dob), '15%') + cell(dmy(x.on), '18%'); };
+  var benCols = function (x) { return cell(x.name) + cell(x.gender, '9%') + cell(dmy(x.dob), '15%') + cell(x.pct ? x.pct + '%' : '', '18%'); };
+  var head = '<div class="hd"><div class="l">' + E(d.version) + ' – ' + E(d.code) + '</div><div class="t">GROUP AND INDIVIDUAL POLICY CHANGE FORM</div><div class="s">PLEASE COMPLETE IN BLOCK LETTERS</div></div>';
+  var note = '<div class="note"><b>Change requested:</b> ' + E(d.kindLabel) + (d.effective ? ', effective ' + E(dmy(d.effective)) : '') + (d.reason ? ' · ' + E(d.reason) : '') +
+    '<br>Pre-filled from Guardian Life of the Caribbean’s records by Ricky Rampersad Branch for ' + E(d.holder) + ' (' + E(d.lineLabel) + ') · submitted by ' + E(d.submitted.by) + ', ' + E(d.submitted.role) + ', ' + E(d.submitted.when) + '.</div>';
+  var css = '<style>@page{size:letter;margin:12mm}body{font:10.5px/1.3 Arial,Helvetica,sans-serif;color:#000;margin:0}.pg{page-break-after:always}.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px}.hd .l{font-size:9px}.hd .t{font-weight:700;font-size:15px;letter-spacing:.02em}.hd .s{font-size:9px;font-weight:700}' +
+    '.note{border:1px solid #1d5bc4;background:#eef4fc;padding:5px 8px;margin:0 0 8px;font-size:9.5px}h3{background:#d9d9d9;font-size:10.5px;margin:9px 0 4px;padding:3px 6px;letter-spacing:.03em}table{width:100%;border-collapse:collapse;table-layout:fixed}td,th{border:1px solid #000;padding:4px 5px;vertical-align:top;font-size:10px;text-align:left}th{background:#f2f2f2;font-weight:700;font-size:9px}' +
+    '.v{font-weight:700;text-transform:uppercase}.lab{font-weight:400;font-size:9px;display:block;color:#222}.rel{font-weight:700;width:14%}.cb{font-size:13px;line-height:1}.cbs span.cb{margin-left:6px}.small{font-size:8.5px;margin:3px 0 0}.sig td{height:30px}.blank{height:34px}.stamp{border:1px dashed #000;height:70px;display:flex;align-items:center;justify-content:center;font-size:9px}.pol{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:2px 0 6px;font-weight:700}.pol .v{border-bottom:1px solid #000;min-width:220px;display:inline-block;padding:0 6px}</style>';
+  var a = '<h3>SECTION A – POLICYHOLDER/PRIMARY INSURED INFORMATION</h3><table>' +
+    '<tr><td style="width:50%"><span class="lab">POLICYHOLDER:</span><span class="v">' + E(d.holder) + '</span></td><td><span class="lab">NAME OF PRIMARY INSURED:</span><span class="v">' + E(d.insured) + '</span></td></tr>' +
+    '<tr><td><span class="lab">DATE OF BIRTH: (dd/mm/yyyy)</span><span class="v">' + E(dmy(d.dob)) + '</span></td><td><span class="lab">EMAIL ADDRESS (Personal):</span><span class="v" style="text-transform:none">' + E(d.emailPersonal) + '</span></td></tr>' +
+    '<tr><td><span class="lab">EMAIL ADDRESS (Work):</span><span class="v" style="text-transform:none">' + E(d.emailWork) + '</span></td><td><span class="lab">TELEPHONE (Home):</span><span class="v">' + E(d.telHome) + '</span> &nbsp; <span class="lab" style="display:inline">(Work):</span> <span class="v">' + E(d.telWork) + '</span> &nbsp; <span class="lab" style="display:inline">Ext:</span> <span class="v">' + E(d.telExt) + '</span> &nbsp; <span class="lab" style="display:inline">(Cellular):</span> <span class="v">' + E(d.telCell) + '</span></td></tr>' +
+    '<tr><td class="cbs"><span class="lab">MARITAL STATUS:</span>' + ['SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'].map(function (k) { return box(d.marital === k, k.charAt(0) + k.slice(1).toLowerCase()); }).join(' ') + '</td>' +
+    '<td class="cbs"><span class="lab">TYPE OF PLAN:</span>' + box(d.planType === 'GROUP', 'GROUP') + ' &nbsp; ' + box(d.planType === 'INDIVIDUAL', 'INDIVIDUAL') + '</td></tr></table>';
+  var b1 = '<h3>SECTION B – DEPENDENT(S) TO BE COVERED</h3><table><tr><th style="width:14%">RELATIONSHIP</th><th>NAME OF DEPENDENT/S</th><th style="width:9%">GENDER (M/F)</th><th style="width:15%">DATE OF BIRTH (dd/mm/yyyy)</th><th style="width:18%">REASON FOR CHANGE</th><th style="width:15%">DATE CHANGE OCCURRED (dd/mm/yyyy)</th></tr>' +
+    rows(d.addDeps, ['SPOUSE', 'CHILD', 'CHILD', 'CHILD', 'CHILD'], depCols) + '</table>' +
+    '<p class="small">*An eligible dependent is your lawful spouse, unmarried children, stepchildren or legally adopted children under the age of twenty-two (22). *Extended Coverage is provided to unmarried sons and daughters, stepchildren, legally adopted children that are full-time students at an accredited College or University. A school letter is required every academic year for children attending full-time Tertiary school from age 22 to attainment of age 25.</p>';
+  var b2 = '<h3>SECTION B (ii) – DEPENDENT(S) TO BE REMOVED</h3><table><tr><th style="width:14%">RELATIONSHIP</th><th>NAME OF DEPENDENT/S</th><th style="width:9%">GENDER (M/F)</th><th style="width:15%">DATE OF BIRTH (dd/mm/yyyy)</th><th style="width:18%">EFFECTIVE DATE (dd/mm/yyyy)</th></tr>' +
+    rows(d.removeDeps, ['SPOUSE', 'CHILD', 'CHILD', 'CHILD'], remCols) + '</table>';
+  var c1 = '<h3>SECTION C – BENEFICIARY TO BE ADDED</h3><table><tr><th style="width:14%">RELATIONSHIP</th><th>NAME OF BENEFICIARY</th><th style="width:9%">GENDER (M/F)</th><th style="width:15%">DATE OF BIRTH (dd/mm/yyyy)</th><th style="width:18%">% (total must equal 100%)</th></tr>' +
+    rows(d.addBens, ['SPOUSE', 'CHILD', 'CHILD', 'CHILD'], benCols) + '</table>';
+  var c2 = '<h3>SECTION C (ii) – BENEFICIARY TO BE REMOVED</h3><table><tr><th style="width:14%">RELATIONSHIP</th><th>NAME OF BENEFICIARY</th><th style="width:9%">GENDER (M/F)</th><th style="width:15%">DATE OF BIRTH (dd/mm/yyyy)</th><th style="width:18%">EFFECTIVE DATE (dd/mm/yyyy)</th></tr>' +
+    rows(d.removeBens, ['SPOUSE', 'CHILD', 'CHILD', 'CHILD'], remCols) + '</table>' + (d.bensOnFile.length ? '<p class="small">On file with Guardian Life: ' + E(d.bensOnFile.join('; ')) + '.</p>' : '');
+  var dd = '<h3>SECTION D – POLICY CHANGES</h3><table><tr><td class="cbs" style="width:50%"><span class="lab">PLAN TYPE:</span>' + box(d.plan.provisor, 'PROVISOR') + ' &nbsp; ' + box(d.plan.global, 'GLOBAL CARE PLUS') + (d.plan.name ? ' <span class="small">(on record: ' + E(d.plan.name) + ')</span>' : '') + '</td>' +
+    '<td class="cbs"><span class="lab">DEDUCTIBLE:</span>' + ['$500', '$1,000', '$2,500'].map(function (k) { return box(d.plan.deductible === k, k); }).join(' ') + ' &nbsp; Global Care: <span class="v">' + E(d.plan.deductible && ['$500', '$1,000', '$2,500'].indexOf(d.plan.deductible) < 0 ? d.plan.deductible : '') + '</span></td></tr>' +
+    '<tr><td class="cbs"><span class="lab">MAJOR MEDICAL:</span>' + box(/^inc/i.test(d.plan.major), 'INCREASE') + ' ' + box(/^dec/i.test(d.plan.major), 'DECREASE') + ' &nbsp; ' + ['$250,000', '$500,000', '$1,000,000'].map(function (k) { return box(d.plan.major.indexOf(k) >= 0, k); }).join(' ') + '</td>' +
+    '<td class="cbs"><span class="lab">PREMIUM MODE:</span>' + box(d.plan.mode === 'ANNUAL', 'ANNUAL') + ' &nbsp; ' + box(d.plan.mode === 'SEMI-ANNUAL', 'SEMI-ANNUAL') + '</td></tr>' +
+    '<tr><td colspan="2"><span class="lab">CHANGE OF ADDRESS (Proof of address required – copy of a utility bill not older than three months in the name of the primary insured):</span><span class="v">' + E(d.address) + '</span>' + (d.addressOnFile && d.kind === 'address' ? '<span class="small">On file: ' + E(d.addressOnFile) + '</span>' : '') + '</td></tr></table>';
+  var e = '<h3>SECTION E – ACCOUNT INFORMATION FOR PAYMENT OF CLAIMS CHANGE</h3><table><tr><td style="width:50%"><span class="lab">NAME OF BANK:</span><span class="v">' + E(d.bank.name) + '</span></td><td><span class="lab">ACCOUNT NUMBER: (confirm with copy of bank statement)</span><span class="v">' + E(d.bank.account) + '</span></td></tr>' +
+    '<tr><td colspan="2"><span class="lab">PLEASE ATTACH A COPY OF BANK STATEMENT SHOWING INSURED’S NAME AND BANK ACCOUNT NUMBER (The header (top) of the Bank Statement displaying name and account number is acceptable)</span></td></tr>' +
+    '<tr><td colspan="2"><span class="lab">NAME OF BRANCH:</span><span class="v">' + E(d.bank.branch) + '</span></td></tr></table>' +
+    '<p class="small">I, the undersigned, do hereby authorize Guardian Life of the Caribbean to effect action as requested above with respect to the modification of records applicable to the dispatch of my Health Claim payments via ACH, and to initiate contact with me via the email address and/or cellular telephone number stated herein. I acknowledge Guardian Life of the Caribbean is not liable for any incorrect information submitted on this form. I understand that the ACH banking information stated herein supersedes any and all other ACH banking information previously submitted.</p>' +
+    '<p class="small">I hereby declare that the above information is true and complete and shall form part of my application to Guardian Life of the Caribbean Limited.</p>' +
+    '<table class="sig"><tr><td style="width:60%"><span class="lab">PRIMARY INSURED’S SIGNATURE:</span></td><td><span class="lab">DATE: (dd/mm/yyyy)</span></td></tr><tr><td><span class="lab">SPOUSE’S SIGNATURE:</span></td><td><span class="lab">DATE: (dd/mm/yyyy)</span></td></tr><tr><td><span class="lab">WITNESS (Applicable for beneficiary changes only):</span></td><td><span class="lab">DATE: (dd/mm/yyyy)</span></td></tr></table>';
+  var f = '<h3>SECTION F – FOR OFFICIAL USE ONLY (TO BE COMPLETED BY THE GROUP POLICY HOLDER)</h3><table><tr><td style="width:50%"><span class="lab">PLAN ADMINISTRATOR: NAME:</span><span class="v">' + E(d.admin.name) + '</span></td><td><span class="lab">SIGNATURE:</span><span class="blank"></span></td></tr>' +
+    '<tr><td><span class="lab">DATE: (dd/mm/yyyy)</span><span class="v">' + E(dmy(d.admin.date)) + '</span></td><td><div class="stamp">PLACE COMPANY STAMP HERE</div></td></tr></table>';
+  var pol = '<div class="pol">POLICY NO. / CERTIFICATE NO. <span class="v">' + E(d.policy) + '</span></div>';
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + E(d.code) + ' Policy Change Form – ' + E(d.insured) + '</title>' + css + '</head><body>' +
+    '<div class="pg">' + head + note + pol + a + b1 + b2 + c1 + '</div><div>' + head + c2 + dd + e + f + '</div></body></html>';
+}
+function gblFormPdf_(html, name) {
+  var blob = Utilities.newBlob(html, 'text/html', name + '.html');
+  try { return blob.getAs('application/pdf').setName(name + '.pdf'); } catch (e) { return blob; }
+}
+function gblFormName_(d) { return (d.code + ' Policy Change - ' + d.member.name + ' - ' + d.holder).replace(/[^\w\s\-&.]/g, '').replace(/\s+/g, ' ').slice(0, 120); }
+/** The cover e-mail to EB Customer Care, with the form attached; test mode to the sender and the branch, marked TEST. */
+function gblFormSend_(g, who, d, opt) {
+  opt = opt || {};
+  if (d.blocking.length) return { ok: false, error: 'Still needed before it can go: ' + d.blocking.join(', ') + '.' };
+  if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on this project, so nothing can go from support@.' };
+  var html = gblFormHtml_(d), pdf = gblFormPdf_(html, gblFormName_(d)), live = gblLive_(), test = !live;
+  var to = test ? [who.role === 'client' ? (g.ownerEmail || gcmDayManager_()) : (who.email || gcmDayManager_())].filter(String) : [GBL_FORM.TO];
+  if (!to.length) return { ok: false, error: 'No address to send the test to.' };
+  var cc = test ? (TRANSITION.CC || []).slice() : GBL_FORM.CC.slice();
+  var gto = (g.to || [])[0] || '';
+  if (!test && gcmYes_(opt.copyGroup) && gto && !gcmOurAddress_(gto)) cc.push(gto);
+  var E = tEsc_, dmy = tDmy_, lines = [];
+  lines.push('Please find attached Guardian Life’s form ' + d.code + ' (' + d.version + '), ' + GBL_FORM.KINDS[d.kind].toLowerCase() + ' for <b>' + E(d.member.name) + '</b>, ' + E(d.lineLabel.toLowerCase()) + ' under <b>' + E(d.holder) + '</b> (policy / certificate ' + E(d.policy) + ')' + (d.effective ? ', effective <b>' + E(dmy(d.effective)) + '</b>' : '') + '.');
+  if (d.kind === 'terminate') lines.push('Please terminate the primary insured' + (d.removeDeps.length ? ' and the ' + d.removeDeps.length + ' dependent' + (d.removeDeps.length === 1 ? '' : 's') + ' listed in Section B (ii)' : ' and any dependent covered under this certificate') + ' as at that date, and confirm the credit on the next billing.');
+  if (d.kind === 'adddep') lines.push('Please add the dependent' + (d.addDeps.length === 1 ? '' : 's') + ' in Section B: ' + E(d.addDeps.map(function (x) { return x.name + ' (' + x.rel.toLowerCase() + ')'; }).join(', ')) + '.');
+  if (d.kind === 'removedep') lines.push('Please remove the dependent' + (d.removeDeps.length === 1 ? '' : 's') + ' in Section B (ii): ' + E(d.removeDeps.map(function (x) { return x.name; }).join(', ')) + '.');
+  if (d.kind === 'address') lines.push('Please change the primary insured’s address as in Section D' + (d.addressOnFile ? ' (on file: ' + E(d.addressOnFile) + ')' : '') + '.');
+  if (d.kind === 'beneficiary') lines.push('Please record the beneficiary change in Section C.');
+  if (d.kind === 'bank') lines.push('Please update the account for claim payments as in Section E; the bank statement follows from the insured.');
+  if (d.reason) lines.push('Reason given: ' + E(d.reason) + '.');
+  lines.push('The form is pre-filled from the policy records; Section A is as held' + (d.missing.length ? ' (not on record: ' + E(d.missing.join(', ')) + ')' : '') + '. It was submitted by ' + E(d.submitted.by) + ', ' + E(d.submitted.role) + ', on ' + E(d.submitted.when) + (d.admin.name ? '; the plan administrator named in Section F is ' + E(d.admin.name) : '') + '. A signed and stamped copy follows on request.');
+  var body = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:640px">' + (test ? '<p style="background:#fdf1e1;padding:8px 12px;font-weight:700;color:#a64b05">TEST: this would go to ' + E(GBL_FORM.TO) + ', copied to ' + E(GBL_FORM.CC.join(', ')) + '. Nothing has reached Guardian Life.</p>' : '') +
+    '<p>Dear EB Customer Care,</p>' + lines.map(function (l) { return '<p>' + l + '</p>'; }).join('') +
+    '<p>Kind regards,<br><b>' + E(who.role === 'client' ? 'Ricky Rampersad Branch, for ' + g.name : gcmSigner_(who, g)) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>' +
+    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  var subject = (test ? '[TEST] ' : '') + d.code + ' Policy Change Form – ' + g.name + ' – ' + d.member.name + ' – ' + GBL_FORM.KINDS[d.kind];
+  try { tMsSend_(to[0], subject, body, { cc: cc.concat(to.slice(1)), attachments: [pdf], replyTo: who.role === 'client' ? TRANSITION.MS_FROM : (who.email || TRANSITION.MS_FROM) }); }
+  catch (e) { return { ok: false, error: 'Microsoft would not send it: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
+  /* the register, the task for the owner, the billing task's Chatter, with the form kept on the row */
+  var kind = GBL_FORM.CHANGE[d.kind], detail = (test ? '[TEST] ' : '') + d.code + ' sent to ' + (test ? to[0] : 'EB Customer Care') + ' ' + gcmWhen_(new Date()) + ': ' + GBL_FORM.KINDS[d.kind] + (d.reason ? '. ' + d.reason : '');
+  var r = gblChange_(g, who, d.line, { kind: kind, member: d.member.name, effective: d.effective, detail: detail, name: who.role === 'client' ? who.name : '' }, who.role === 'client' ? 'client' : 'staff', { Form: html.slice(0, 49000), Note: 'form: ' + (test ? 'test' : 'sent') });
+  return { ok: true, test: test, to: to, cc: cc, task: r.task || '', said: test ? 'Test copy sent to ' + to[0] + ' with the form attached; nothing reached Guardian Life. Run gblGoLive to send for real.' : 'Sent to EB Customer Care with the form attached, copied to sales support and support@' + (r.task ? '; a task is open for our team' : '') + '.' };
+}
+function gcmOurAddress_(e) { e = String(e || '').toLowerCase(); return /@(myguardiangroup\.com|rickyrampersadbranch\.com)$/.test(e); }
+/* staff: act=members (search), act=form (fill and preview), act=formSend */
+function gblFormAct_(g, who, b) {
+  var act = String(b.act || '');
+  if (act === 'members') return gblMemberSearch_(g, b.q, gcmYes_(b.fresh));
+  var m = gblMemberById_(g, b.member, gcmYes_(b.fresh));
+  if (!m) return { ok: false, error: 'Pick a member of the group first.' };
+  var d = gblFormData_(g, m, b, who);
+  if (act === 'form') return { ok: true, data: d, html: gblFormHtml_(d), missing: d.missing, blocking: d.blocking, live: gblLive_(), to: GBL_FORM.TO, cc: GBL_FORM.CC, group: (g.to || [])[0] || '' };
+  if (act === 'formSend') return gblFormSend_(g, who, d, { copyGroup: b.copyGroup });
+  return { ok: false, error: 'Unknown action.' };
+}
+/* the group's page: search its own members, fill and preview, submit */
+function gblClientForm_(p) {
+  var L = gcmLoad_(), a = gcmClientAuth_(L, p.lb, p.code);
+  if (!a.ok) return a;
+  var g = a.g, who = { role: 'client', name: String(p.name || 'the group').slice(0, 80), email: '' };
+  if (p.member) {
+    var m = gblMemberById_(g, p.member);
+    if (!m) return { ok: false, error: 'That person is not on your plan with us.' };
+    var d = gblFormData_(g, m, p, who);
+    var c = { ok: true, html: gblFormHtml_(d), missing: d.missing, blocking: d.blocking, kind: d.kind, member: { name: m.name, policy: d.policy, line: m.line, label: GBL.LABEL[m.line], deps: m.deps.map(function (x) { return { rel: x.rel, name: x.name, gender: x.gender, dob: x.dob }; }) } };
+    return c;
+  }
+  var s = gblMemberSearch_(g, p.q);
+  if (!s.ok) return { ok: false, error: 'Our records are not available right now. Please try again shortly, or e-mail us.' };
+  return { ok: true, members: s.members.map(function (x) { return { id: x.id, name: x.name, line: x.line, label: x.label, policy: x.policy, status: x.live ? 'on the plan' : x.status, live: x.live, since: x.since, deps: x.deps }; }), total: s.total, more: s.more, kinds: GBL_FORM.KINDS };
+}
+function gblClientFormSend_(b) {
+  var L = gcmLoad_(), a = gcmClientAuth_(L, b.lb, b.code);
+  if (!a.ok) return a;
+  var g = a.g, who = { role: 'client', name: String(b.name || '').replace(/\s+/g, ' ').trim().slice(0, 80), email: '' };
+  if (!who.name) return { ok: false, error: 'Please give your name.' };
+  if (!gcmYes_(b.authorised)) return { ok: false, error: 'Please confirm you are authorised to submit this change for ' + g.name + '.' };
+  var m = gblMemberById_(g, b.member);
+  if (!m) return { ok: false, error: 'That person is not on your plan with us.' };
+  b.admin = b.admin || who.name;
+  var d = gblFormData_(g, m, b, who), r = gblFormSend_(g, who, d, {});
+  if (!r.ok) return r;
+  try { gblTellOwner_(g, who.name, GBL_FORM.CHANGE[d.kind], d.line, { member: m.name, effective: d.effective, detail: GBL_FORM.KINDS[d.kind] + (d.reason ? ': ' + d.reason : '') }); } catch (e) {}
+  return { ok: true, said: 'Thank you. The change form for ' + m.name + ' has gone to Guardian Life’s EB Customer Care with our branch copied' + (r.task ? ', and our team has a task to see it through' : '') + '. You will see it under “What you have told us”.' };
+}
+
+/* ── the follow-up: the owner's task, chased on Chatter every three working days until EB Customer Care answers ─── */
+/* 24 October 2026: "a task is opened assigned to the account owner to advise to follow up if no response on Salesforce,
+ * this is automated by Chatter comments every 3 working days". The form's send opens the task (gblChange_, owned by the
+ * account owner). Each working day the group day (10:30) runs gblFormChase_: a form sent live whose task is still open
+ * and that EB Customer Care has not answered at support@ gets, every GBL_FORM.CHASE.DAYS working days, one Chatter post on
+ * the task headed Branch Intelligence with the owner @mentioned, and the owner an e-mail from support@; after CHASE.MAX
+ * the branch manager is told. EB's reply (from a Guardian address, not the branch's own, naming the member or the form)
+ * is noted on the task and ends it; so does the task being closed. Test sends are never chased. */
+GBL_FORM.CHASE = { DAYS: 3, MAX: 5, HEAD: 'Branch Intelligence' };
+function gblWorkDays_(from, to) {
+  var a = new Date(from), b = new Date(to), n = 0; a.setHours(0, 0, 0, 0); b.setHours(0, 0, 0, 0);
+  while (a < b) { a.setDate(a.getDate() + 1); var d = a.getDay(); if (d !== 0 && d !== 6) n++; }
+  return n;
+}
+/** Every message in support@'s inbox since a time: who it is from, its subject, when. */
+function gblInboxSince_(sinceTs) {
+  var out = { ok: true, mails: [], error: '' };
+  if (!tMsCreds_()) return { ok: false, mails: [], error: 'Microsoft 365 is not set up' };
+  try {
+    var token = tMsToken_(), since = new Date(sinceTs).toISOString().replace(/\.\d+Z$/, 'Z');
+    var url = 'https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM) + '/mailFolders/inbox/messages' +
+      '?$select=id,subject,from,receivedDateTime&$orderby=receivedDateTime%20desc&$top=100&$filter=' + encodeURIComponent('receivedDateTime ge ' + since);
+    for (var pages = 0; url && pages < 25; pages++) {
+      var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + token } });
+      if (res.getResponseCode() !== 200) throw new Error('HTTP ' + res.getResponseCode());
+      var j = JSON.parse(res.getContentText());
+      (j.value || []).forEach(function (m) { out.mails.push({ from: String(((m.from || {}).emailAddress || {}).address || '').toLowerCase(), subject: String(m.subject || ''), ts: new Date(m.receivedDateTime).getTime() }); });
+      url = j['@odata.nextLink'] || '';
+    }
+  } catch (e) { return { ok: false, mails: [], error: String(e && e.message ? e.message : e).slice(0, 200) }; }
+  return out;
+}
+function gblOurMail_(a) {
+  a = String(a || '').toLowerCase();
+  if (!a || /@rickyrampersadbranch\.com$/.test(a)) return true;
+  var ours = (TRANSITION.CC || []).concat(GBL_FORM.CC, [gcmDayManager_()]).map(function (x) { return String(x || '').toLowerCase(); });
+  if (ours.indexOf(a) >= 0) return true;
+  try { if (tTeam_().people.some(function (p) { return String(p.email || '').toLowerCase() === a; })) return true; } catch (e) {}
+  return false;
+}
+function gblFormChase_(o) {
+  o = o || {};
+  var out = { ok: true, chased: [], answered: [], closed: [], waiting: [], errors: [], said: '' }, today = gcmToday_(), now = new Date();
+  var rows = gblRows_(GBL.CHANGES).filter(function (r) { return /^form: sent/.test(gcmText_(r.Note)) && (gcmText_(r.Status) || 'open') === 'open' && gcmText_(r['SF Task']); });
+  if (!rows.length) { out.said = 'No change form is waiting on EB Customer Care.'; return out; }
+  var ids = rows.map(function (r) { return gcmText_(r['SF Task']); }), tasks = {};
+  if (tSfOn_()) {
+    try { gcmQuery_('SELECT Id, IsClosed, Status, OwnerId, Owner.Name, Owner.Email, Subject FROM Task WHERE Id IN (' + gcmIn_(ids) + ')').forEach(function (t) { tasks[gcmId15_(t.Id)] = t; }); }
+    catch (e) { out.errors.push('Salesforce: ' + String(e && e.message ? e.message : e).slice(0, 120)); }
+  }
+  var oldest = Math.min.apply(null, rows.map(function (r) { return r.When instanceof Date ? r.When.getTime() : now.getTime(); }));
+  var inbox = gblInboxSince_(oldest - 86400000), sh = gblSheet_(GBL.CHANGES), head = GBL_HEAD[GBL.CHANGES];
+  var patch = function (r, f) { if (o.test) return; Object.keys(f).forEach(function (h) { var c = head.indexOf(h); if (c >= 0) sh.getRange(r._n, c + 1).setValue(f[h]); }); };
+  rows.forEach(function (r) {
+    var member = gcmText_(r.Member), group = gcmText_(r.Group), note = gcmText_(r.Note), sentTs = r.When instanceof Date ? r.When.getTime() : now.getTime();
+    var t = tasks[gcmId15_(gcmText_(r['SF Task']))] || null, chases = (note.match(/chased /g) || []).length, lastTs = sentTs;
+    var m = note.match(/chased (\d{4}-\d{2}-\d{2})(?!.*chased)/); if (m) lastTs = new Date(m[1] + 'T12:00:00Z').getTime();
+    var item = { group: group, member: member, kind: gcmText_(r.Kind), sent: gcmYmd_(r.When), chases: chases, task: gcmText_(r['SF Task']), owner: t ? gcmName_(t, 'Owner') : '' };
+    if (t && t.IsClosed) { patch(r, { Status: 'done', Note: note + '; task closed ' + today }); out.closed.push(item); return; }
+    /* EB's reply names the member (every word of the name, in any order), from a Guardian address that is not one of ours */
+    var nameWords = member.toLowerCase().split(/[\s,]+/).filter(function (w) { return w.length > 1; });
+    var reply = inbox.ok && nameWords.length ? inbox.mails.filter(function (x) {
+      var subj = x.subject.toLowerCase();
+      return x.ts > sentTs && /@myguardiangroup\.com$/.test(x.from) && !gblOurMail_(x.from) && nameWords.every(function (w) { return subj.indexOf(w) >= 0; });
+    })[0] : null;
+    if (reply) {
+      item.reply = { from: reply.from, subject: reply.subject, at: gcmWhen_(new Date(reply.ts)) };
+      if (!o.test) {
+        patch(r, { Status: 'answered', Note: note + '; EB replied ' + today });
+        try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: item.task, Body: GBL_FORM.CHASE.HEAD + ' · ' + tDmy_(today) + ': EB Customer Care replied at support@ on ' + item.reply.at + ' (' + reply.from + '): "' + reply.subject.slice(0, 120) + '". Please read it, update the record, and close this task with what was agreed.' }); } catch (e) {}
+      }
+      out.answered.push(item); return;
+    }
+    var days = gblWorkDays_(lastTs, now.getTime());
+    item.days = days;
+    if (days < GBL_FORM.CHASE.DAYS || chases >= GBL_FORM.CHASE.MAX) { out.waiting.push(item); return; }
+    var n = chases + 1, since = gblWorkDays_(sentTs, now.getTime());
+    var kindKey = Object.keys(GBL_FORM.CHANGE).filter(function (k) { return GBL_FORM.CHANGE[k] === item.kind; })[0];
+    var text = 'No reply from EB Customer Care yet on form ' + GBL_FORM.CODE + ' for ' + member + ' (' + (kindKey ? GBL_FORM.KINDS[kindKey].toLowerCase() : item.kind) + ', sent ' + tDmy_(item.sent) + ', ' + since + ' working days ago; follow-up ' + n + ' of ' + GBL_FORM.CHASE.MAX + '). ' +
+      'Please follow up with ' + GBL_FORM.TO + ', quoting the form, and note their answer here. This task closes when they confirm the change; the branch sees it on the billing review.';
+    item.text = text;
+    if (!o.test) {
+      var posted = '';
+      if (t && t.OwnerId) { try { var res = tSfSend_('post', '/chatter/feed-elements', { feedElementType: 'FeedItem', subjectId: item.task, body: { messageSegments: [{ type: 'Text', text: GBL_FORM.CHASE.HEAD + ' · ' + tDmy_(today) + ': ' }, { type: 'Mention', id: String(t.OwnerId) }, { type: 'Text', text: ' ' + text }] } }); posted = String(res.id || ''); } catch (e) {} }
+      if (!posted) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: item.task, Body: GBL_FORM.CHASE.HEAD + ' · ' + tDmy_(today) + ': ' + text }); posted = 'plain'; } catch (e2) { out.errors.push(member + ': the post did not go'); } }
+      var ownerMail = t && t.Owner && t.Owner.Email ? String(t.Owner.Email) : '';
+      if (ownerMail) gblInternalMail_(ownerMail, 'Follow up with EB Customer Care · ' + member + ' · ' + group, '<p>' + tEsc_(gcmName_(t, 'Owner').split(' ')[0]) + ', ' + tEsc_(text) + '</p>' + (gblSfUrl_(item.task) ? '<p><a href="' + gblSfUrl_(item.task) + '">Open the task</a></p>' : '') + '<p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>');
+      if (n >= GBL_FORM.CHASE.MAX && gcmDayManager_()) gblInternalMail_(gcmDayManager_(), 'EB Customer Care has not answered: ' + member + ' · ' + group, '<p>Form ' + GBL_FORM.CODE + ' for <b>' + tEsc_(member) + '</b> (' + tEsc_(group) + ') went to EB Customer Care on ' + tEsc_(tDmy_(item.sent)) + ' and has had ' + n + ' follow-ups on the task' + (item.owner ? ' of ' + tEsc_(item.owner) : '') + ' with no reply at support@. This was the last automatic one.</p><p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>');
+      patch(r, { Note: note + '; chased ' + today });
+    }
+    out.chased.push(item);
+  });
+  out.said = (out.chased.length ? out.chased.length + ' chased on Chatter (' + out.chased.map(function (x) { return x.member; }).join(', ') + ')' : 'nothing to chase') +
+    (out.answered.length ? '; EB replied on ' + out.answered.length : '') + (out.closed.length ? '; ' + out.closed.length + ' closed' : '') + (out.waiting.length ? '; ' + out.waiting.length + ' waiting' : '') + (out.errors.length ? '; ' + out.errors.join('; ') : '') + '.';
+  return out;
+}
+function gblFormChaseNow() { return tSay_(JSON.stringify(gblFormChase_({}))); }
+function gblFormChasePreview() { return tSay_(JSON.stringify(gblFormChase_({ test: true }))); }
 
 /* ── claims experience ──────────────────────────────────────────────────────────────── */
 /** The claims summary, aggregated on the staff member's device by month and division (counts and amounts; no name), onto

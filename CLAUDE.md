@@ -3755,6 +3755,45 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     (`GBL_TASK.CHANGE`), else as `task`; notes it on the line's billing task; resolves the finding ("Task opened for …");
     and e-mails the person from support@ (`gblTaskMail_`, never to oneself). The guide asks for a word on every open
     billing task. Covered in `billing/billing-test.js` (75) and `billing/page-test.js` (69).
+  - **The change form EB0010, filled from our records and sent to EB Customer Care; the owner's task chased on Chatter
+    every three working days** (24 October 2026: "the form uploaded called GROUP AND INDIVIDUAL POLICY CHANGE FORM is
+    filled as we do have the data and always sent to EBCustomercare@myguardiangroup.com and copy
+    rickyrampersadsalessupport@myguardiangroup.com as well support@rickyrampersadbranch.com", then "when a client wants
+    to terminate they should be able to search the name and all the data mapped onto the form populated as it's pulled
+    from our data … all data should be on the forms exactly", then "a task is opened assigned to the account owner to
+    advise to follow up if no response on Salesforce, this is automated by Chatter comments every 3 working days").
+    Guardian's form is EB0010 (2024/3), found on the renewal reminders in support@; `gblFormHtml_` reproduces it section
+    by section (the policy number, A the insured, B the termination, C dependents to add or remove, D the address, E the
+    beneficiaries, F the plan administrator) with the form's own boxes, and `gblFormPdf_` renders it to PDF.
+    - **The member is searched, never typed** (`gblMembers_`: every Group Health and Group Life policy of the group, by
+      its accounts and list bills, in one query, with the dependents from Relationship Groups in a second, kept ten
+      minutes; `gblMemberSearch_`: every typed word starts a word of the name, the policy or the certificate, live
+      members first, twelve at most). Section A fills from the record: name, date of birth, e-mails, telephones, address,
+      the plan and its issue date. **What Salesforce does not hold is listed as "not on record", never guessed**
+      (`d.missing`): marital status is on no record; a dependent fills only where the member has a Relationship Group,
+      and on 24 October 2026 no group member had one, so dependents are typed. The signatures stay blank, with a line
+      that the signed and stamped copy follows on request. Only the effective date and the kind's own facts block a
+      send (`d.blocking`); the plan administrator is prefilled from the group's contact.
+    - **Where**: the group's own page ("Terminate or change a member": search, pick, the kind, the details, preview,
+      send, with a tick that the person is authorised; `gcm.clientForm` and `gcm.clientFormSend`, routed in
+      GroupClients.gs) and the staff billing review (the "Change form EB0010" button in Record a change and a Form button
+      on every register row; acts `members`, `form`, `formSend` through `gblFormAct_`). A group is never shown the
+      beneficiaries on file.
+    - **The send** (`gblFormSend_`): from support@ to `GBL_FORM.TO` (EB Customer Care) with `GBL_FORM.CC` (sales support
+      and support@) and, when ticked and not one of our addresses, the group's contact; subject
+      `EB0010 Policy Change Form – <group> – <member> – <kind>`; the PDF attached; then `gblChange_` logs it on Group
+      Changes (the new **Form** column keeps the HTML; `gblSheet_` adds the column to an older tab) as the leaver,
+      dependent, address, beneficiary, bank or plan change it is, opens the owner's task and notes the billing task.
+      **Test mode until `gblGoLive`**, the same switch as the bills: to the staff member (or the account owner, for a
+      group's submission) and the branch, marked TEST.
+    - **The chase** (`gblFormChase_`, in the 10:30 group day; `gblFormChaseNow` and `gblFormChasePreview` from the editor):
+      every Group Changes row whose Note begins `form: sent` and is still open. Its task closed in Salesforce closes the
+      row. A reply at support@ from a Guardian address that is not ours, after the send, whose subject carries every word
+      of the member's name marks it `answered` and is noted on the task. Otherwise, three working days after the send or
+      the last follow-up (`GBL_FORM.CHASE.DAYS`), a Chatter post headed "Branch Intelligence · <date>" goes on the task
+      with the owner @mentioned (a plain post when Connect refuses) and the owner is e-mailed; the fifth and last
+      (`MAX`) goes to the branch manager. The day's summary lists them under "Change forms with EB Customer Care".
+    - Covered in `billing/billing-test.js` (106) and `billing/page-test.js` (90, the group's flow on a phone and a desk).
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
     Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing

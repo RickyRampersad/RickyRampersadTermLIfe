@@ -178,10 +178,10 @@ function blChangesHtml(d) {
   if (can) h += '<div class="drawer chg"><b>Record a change</b><div class="grid4"><label class="sel">What <select id="chKind"><option value="joiner">Joiner</option><option value="leaver">Leaver</option><option value="tier">Tier change</option><option value="dependent">Dependent added or removed</option><option value="query">A question</option></select></label>' +
     '<label class="sel">Line <select id="chLine">' + d.lines.map(o => '<option value="' + o.line + '">' + esc(o.label) + '</option>').join('') + '</select></label>' +
     '<label class="sel">Person <input class="field" id="chMember" placeholder="Surname, first name"></label><label class="sel">Effective <input class="field" type="date" id="chEff"></label></div>' +
-    '<textarea class="field" id="chDetail" rows="2" maxlength="800" placeholder="What changed, and how we know (who told us, when)"></textarea><div class="uprow"><button class="btn" type="button" id="chSave">Record it and open the task</button><span class="small muted">A joiner or leaver opens a Salesforce task for the account owner and goes on the billing task’s Chatter.</span></div></div>';
+    '<textarea class="field" id="chDetail" rows="2" maxlength="800" placeholder="What changed, and how we know (who told us, when)"></textarea><div class="uprow"><button class="btn" type="button" id="chSave">Record it and open the task</button><button class="btn ghost" type="button" data-form="" data-fkind="">Change form EB0010: fill from Salesforce and send to EB Customer Care</button><span class="small muted">A joiner or leaver opens a Salesforce task for the account owner and goes on the billing task’s Chatter.</span></div></div>';
   if (!C.length) return h + '<p class="muted">Nothing recorded yet.</p>';
   return h + '<div class="scroll"><table class="t"><thead><tr><th>When</th><th>Line</th><th>What</th><th>Who</th><th>Detail</th><th>From</th><th>Status</th></tr></thead><tbody>' +
-    C.map(c => '<tr><td class="small">' + esc(c.at) + '</td><td>' + esc(BL_LABEL[c.line] || c.line) + '</td><td><b>' + esc(K[c.kind] || c.kind) + '</b></td><td>' + esc(c.member) + '</td><td class="small">' + esc(c.detail) + (c.effective ? ' · ' + esc(dmy(c.effective)) : '') + (c.task ? ' · <span class="chip good"><i></i>task</span>' : '') + (c.note ? ' · ' + esc(c.note) : '') + '</td><td class="small">' + esc(c.source) + (c.by ? ' · ' + esc(c.by) : '') + '</td><td><span class="chip' + (c.status === 'open' ? ' warn' : c.status === 'done' ? ' good' : '') + '"><i></i>' + esc(c.status) + '</span></td></tr>').join('') + '</tbody></table></div>';
+    C.map(c => '<tr><td class="small">' + esc(c.at) + '</td><td>' + esc(BL_LABEL[c.line] || c.line) + '</td><td><b>' + esc(K[c.kind] || c.kind) + '</b></td><td>' + esc(c.member) + '</td><td class="small">' + esc(c.detail) + (c.effective ? ' · ' + esc(dmy(c.effective)) : '') + (c.task ? ' · <span class="chip good"><i></i>task</span>' : '') + (c.note ? ' · ' + esc(c.note) : '') + '</td><td class="small">' + esc(c.source) + (c.by ? ' · ' + esc(c.by) : '') + '</td><td><span class="chip' + (c.status === 'open' ? ' warn' : c.status === 'done' ? ' good' : '') + '"><i></i>' + esc(c.status) + '</span>' + (can && c.member && /^(joiner|leaver|dependent|tier|address|beneficiary|bank|plan)$/.test(c.kind) && !/^form:/.test(c.note || '') ? ' <button class="lnk" type="button" data-form="' + esc(c.member) + '" data-fkind="' + esc({ leaver: 'terminate', dependent: 'adddep', address: 'address', beneficiary: 'beneficiary', bank: 'bank', tier: 'plan' }[c.kind] || 'terminate') + '">Form</button>' : '') + '</td></tr>').join('') + '</tbody></table></div>';
 }
 
 /* ── tasks: a visible place to comment on each one, and a guided way to open one ── */
@@ -305,6 +305,98 @@ function blTaskPanel(line, fid) {
   };
 }
 
+/* ── the EB0010 change form, filled from Salesforce: search a member, confirm the change, send to EB Customer Care ── */
+const BL_FORM_KINDS = [['terminate', 'Terminate the primary insured'], ['adddep', 'Add dependent(s)'], ['removedep', 'Remove dependent(s)'], ['address', 'Change of address'], ['beneficiary', 'Beneficiary change'], ['bank', 'Bank account for claim payments'], ['plan', 'Policy change (plan, deductible, major medical)']];
+let BF = null;
+function blFormPanel(q, kind, member) {
+  const d = BILL;
+  BF = { q: q || '', kind: kind && BL_FORM_KINDS.some(([k]) => k === kind) ? kind : 'terminate', results: null, pick: null, member: null, html: '', missing: [], blocking: [], effective: '', marital: '', reason: '', admin: d.group.contact || '', copyGroup: false, deps: [], bens: [], address: '', bankName: '', bankAccount: '', bankBranch: '', deductible: '', major: '' };
+  $('dlgT').textContent = 'Change form EB0010 · ' + d.group.name;
+  blFormDraw();
+  if (!dlg.open) dlg.showModal();
+  if (BF.q) blFormSearch();
+}
+function blFormDraw() {
+  const d = BILL, m = BF.pick, deps = (BF.member && BF.member.deps) || [];
+  const depRows = (list, label, n) => '<div class="bdeps"><b>' + label + '</b>' + Array.from({ length: n }, (_, i) => { const x = list[i] || {}; return '<div class="bdep"><select class="field" data-fdep="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD'].map(r => '<option' + (x.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><input class="field" placeholder="Full name" data-fdep="name" data-i="' + i + '" value="' + esc(x.name || '') + '"><select class="field" data-fdep="gender" data-i="' + i + '"><option value="">M/F</option><option' + (x.gender === 'M' ? ' selected' : '') + '>M</option><option' + (x.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-fdep="dob" data-i="' + i + '" value="' + esc(x.dob || '') + '"></div>'; }).join('') + '</div>';
+  let h = '<div class="bform"><p class="small muted">Guardian Life’s form EB0010 (2024/3) fills from the member’s Salesforce record: Section A as held, the change in its own section. It goes from support@ to ' + esc(d.to || 'EBCustomercare@myguardiangroup.com') + ', copied to sales support and support@' + (d.live ? '' : ' · <b>test mode</b>: to you and the branch, marked TEST') + '.</p>' +
+    '<div class="uprow"><input class="field" id="bfq" placeholder="Search the member by name, policy or certificate" value="' + esc(BF.q) + '" style="flex:1;min-width:220px" autocomplete="off"><button class="btn ghost sm" type="button" id="bfGo">Search</button></div><div id="bfres">' + blFormResults() + '</div>';
+  if (m) {
+    h += '<div class="bpicked"><b>' + esc(m.name) + '</b> · ' + esc(m.label) + ' · ' + esc(m.policy) + ' · ' + esc(m.status) + (m.dob ? ' · born ' + esc(dmy(m.dob)) : ' · <span class="bad">no date of birth on record</span>') + (m.plan ? ' · ' + esc(m.plan) : '') + '</div>' +
+      '<div class="grid4"><label class="sel">The change <select id="bfKind">' + BL_FORM_KINDS.map(([v, l]) => '<option value="' + v + '"' + (v === BF.kind ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+      '<label class="sel">Effective <input class="field" type="date" id="bfEff" value="' + esc(BF.effective) + '"></label>' +
+      '<label class="sel">Marital status (A) <select id="bfMar">' + ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'].map(x => '<option value="' + x + '"' + (BF.marital === x ? ' selected' : '') + '>' + (x ? x.charAt(0) + x.slice(1).toLowerCase() : 'Not on record') + '</option>').join('') + '</select></label>' +
+      '<label class="sel">Plan administrator (F) <input class="field" id="bfAdmin" value="' + esc(BF.admin) + '" placeholder="The group’s administrator"></label></div>';
+    if (BF.kind === 'terminate') h += '<p class="small muted">Section A: the member’s record. Section B (ii): ' + (deps.length ? 'the ' + deps.length + ' dependent' + (deps.length === 1 ? '' : 's') + ' on record, removed on the same date' : 'no dependent on record; the cover note says any dependent under the certificate ends with it') + '.</p>';
+    if (BF.kind === 'adddep') h += depRows(BF.deps, 'Dependent(s) to be covered (Section B)', 4);
+    if (BF.kind === 'removedep') h += depRows(BF.deps.length ? BF.deps : deps, 'Dependent(s) to be removed (Section B (ii))', 4);
+    if (BF.kind === 'address') h += '<label class="sel">New address (Section D) <input class="field" id="bfAddr" maxlength="240" value="' + esc(BF.address) + '"></label>' + (BF.member && BF.member.address ? '<p class="small muted">On file: ' + esc(BF.member.address) + '</p>' : '');
+    if (BF.kind === 'beneficiary') h += '<div class="bdeps"><b>Beneficiary to add (C), or remove (tick)</b>' + [0, 1, 2].map(i => { const x = BF.bens[i] || {}; return '<div class="bdep ben"><select class="field" data-fben="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD', 'OTHER'].map(r => '<option' + (x.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><input class="field" placeholder="Full name" data-fben="name" data-i="' + i + '" value="' + esc(x.name || '') + '"><select class="field" data-fben="gender" data-i="' + i + '"><option value="">M/F</option><option' + (x.gender === 'M' ? ' selected' : '') + '>M</option><option' + (x.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-fben="dob" data-i="' + i + '" value="' + esc(x.dob || '') + '"><input class="field" type="number" placeholder="%" data-fben="pct" data-i="' + i + '" value="' + esc(x.pct || '') + '"><label class="toggle small"><input type="checkbox" data-fben="remove" data-i="' + i + '"' + (x.remove ? ' checked' : '') + '> remove</label></div>'; }).join('') + (BF.member && BF.member.bens && BF.member.bens.length ? '<p class="small muted">On file: ' + esc(BF.member.bens.join('; ')) + '</p>' : '') + '</div>';
+    if (BF.kind === 'bank') h += '<div class="grid4"><label class="sel">Name of bank (E) <input class="field" id="bfBank" value="' + esc(BF.bankName) + '"></label><label class="sel">Account number <input class="field" id="bfAcct" value="' + esc(BF.bankAccount) + '"></label><label class="sel">Branch <input class="field" id="bfBr" value="' + esc(BF.bankBranch) + '"></label></div>';
+    if (BF.kind === 'plan') h += '<div class="grid4"><label class="sel">Deductible (D) <select id="bfDed"><option value="">–</option>' + ['$500', '$1,000', '$2,500'].map(x => '<option' + (BF.deductible === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label><label class="sel">Major medical <select id="bfMaj"><option value="">–</option>' + ['Increase $250,000', 'Increase $500,000', 'Increase $1,000,000', 'Decrease $250,000', 'Decrease $500,000', 'Decrease $1,000,000'].map(x => '<option' + (BF.major === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label></div>';
+    h += '<label class="sel">Reason, for the cover note (optional) <input class="field" id="bfReason" maxlength="300" value="' + esc(BF.reason) + '"></label>' +
+      '<div class="uprow" style="margin-top:8px"><button class="btn ghost" type="button" id="bfPrev">' + (BF.html ? 'Update the preview' : 'Preview the form') + '</button>' + (d.group.to && d.group.to.length ? '<label class="toggle small"><input type="checkbox" id="bfCopy"' + (BF.copyGroup ? ' checked' : '') + '> also copy ' + esc(d.group.contact || d.group.to[0]) + '</label>' : '') + '</div>';
+    if (BF.html) h += '<div class="fprev"><div class="small muted">' + (BF.missing.length ? 'Not on record: ' + esc(BF.missing.join(', ')) + '. ' : 'Every field in Section A is on record. ') + (BF.blocking.length ? '<b class="bad">Needed before it goes: ' + esc(BF.blocking.join(', ')) + '.</b>' : '') + '</div><iframe title="The change form" id="bfFrame" sandbox=""></iframe>' +
+      '<div class="row"><button class="btn" type="button" id="bfSend"' + (BF.blocking.length ? ' disabled' : '') + '>Send to EB Customer Care' + (d.live ? '' : ' (test)') + '</button><button class="btn ghost" type="button" onclick="dlg.close()">Close</button></div></div>';
+  }
+  $('dlgB').innerHTML = h + '</div>';
+  blFormBind();
+}
+function blFormResults() {
+  if (BF.results === 'busy') return '<p class="small muted">Reading Salesforce…</p>';
+  if (!BF.results) return '';
+  if (!BF.results.length) return '<p class="small muted">No member of this group matches. Try the surname alone.</p>';
+  return '<div class="bres">' + BF.results.map(m => '<button type="button" class="bpick' + (BF.pick && BF.pick.id === m.id ? ' on' : '') + '" data-bpick="' + esc(m.id) + '"><b>' + esc(m.name) + '</b><span>' + esc(m.label) + ' · ' + esc(m.policy) + ' · ' + esc(m.status) + (m.deps ? ' · ' + m.deps + ' dependent' + (m.deps === 1 ? '' : 's') : '') + '</span></button>').join('') + '</div>' + (BF.results.more ? '<p class="small muted">More match: add another word.</p>' : '');
+}
+function blFormRead() {
+  const g = id => $(id) ? $(id).value.trim() : '';
+  if ($('bfKind')) BF.kind = $('bfKind').value;
+  BF.effective = g('bfEff'); BF.marital = g('bfMar'); BF.admin = g('bfAdmin'); BF.reason = g('bfReason'); BF.address = g('bfAddr'); BF.bankName = g('bfBank'); BF.bankAccount = g('bfAcct'); BF.bankBranch = g('bfBr'); BF.deductible = g('bfDed'); BF.major = g('bfMaj'); BF.copyGroup = $('bfCopy') ? $('bfCopy').checked : false;
+  const rows = (attr, n) => { const out = []; for (let i = 0; i < n; i++) { const o = {}; document.querySelectorAll('[data-' + attr + '][data-i="' + i + '"]').forEach(el => { o[el.dataset[attr]] = el.type === 'checkbox' ? el.checked : el.value.trim(); }); if (o.name) out.push(o); } return out; };
+  if (document.querySelector('[data-fdep]')) BF.deps = rows('fdep', 4);
+  if (document.querySelector('[data-fben]')) BF.bens = rows('fben', 3);
+}
+function blFormBody(act) {
+  return { action: 'gcm.billAct', group: BILL.group.key, line: BF.pick ? BF.pick.line : '', month: BILL.month, act, member: BF.pick ? BF.pick.id : '', kind: BF.kind, effective: BF.effective, marital: BF.marital, reason: BF.reason, admin: BF.admin, address: BF.address, bankName: BF.bankName, bankAccount: BF.bankAccount, bankBranch: BF.bankBranch, deductible: BF.deductible, major: BF.major, deps: JSON.stringify(BF.deps), bens: JSON.stringify(BF.bens), copyGroup: BF.copyGroup ? 'Y' : '' };
+}
+async function blFormSearch() {
+  BF.q = $('bfq').value.trim(); if (BF.q.length < 2) { BF.results = null; BF.pick = null; blFormDraw(); return; }
+  BF.results = 'busy'; $('bfres').innerHTML = blFormResults();
+  const r = await post({ action: 'gcm.billAct', group: BILL.group.key, act: 'members', q: BF.q });
+  if (!r.ok) { BF.results = []; toast(r.error || 'Not read', true); $('bfres').innerHTML = blFormResults(); return; }
+  BF.results = r.members || []; BF.results.more = !!r.more; $('bfres').innerHTML = blFormResults(); blFormBind();
+}
+async function blFormPreview(quiet) {
+  blFormRead();
+  const r = await post(blFormBody('form'));
+  if (!r.ok) return toast(r.error || 'Not filled', true);
+  BF.member = Object.assign({}, r.data.member, { deps: (r.data.kind === 'terminate' ? r.data.removeDeps : []).concat([]), address: r.data.addressOnFile, bens: r.data.bensOnFile });
+  if (r.data.kind === 'terminate') BF.member.deps = r.data.removeDeps; else if (!BF.deps.length && r.data.kind === 'removedep') BF.deps = r.data.removeDeps;
+  BF.html = r.html; BF.missing = r.missing || []; BF.blocking = r.blocking || []; BILL.live = r.live; BILL.to = r.to;
+  blFormDraw();
+  if (!quiet) { const f = $('bfFrame'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+async function blFormSend() {
+  blFormRead();
+  if (!BF.effective) return toast('Give the effective date.', true);
+  if (!BF.admin) return toast('Name the plan administrator for Section F.', true);
+  $('bfSend').disabled = true;
+  const r = await post(blFormBody('formSend'));
+  $('bfSend').disabled = false;
+  toast(r.ok ? r.said : (r.error || 'Not sent'), !r.ok);
+  if (r.ok) { dlg.close(); openBilling(BILL.group.key, BILL.month); }
+}
+function blFormBind() {
+  const box = $('dlgB');
+  if ($('bfq')) { let t; $('bfq').oninput = () => { clearTimeout(t); t = setTimeout(blFormSearch, 350); }; $('bfq').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); blFormSearch(); } }; }
+  if ($('bfGo')) $('bfGo').onclick = blFormSearch;
+  box.querySelectorAll('[data-bpick]').forEach(b => b.onclick = () => { BF.pick = BF.results.find(m => m.id === b.dataset.bpick); BF.member = null; BF.html = ''; BF.deps = []; BF.bens = []; blFormDraw(); blFormPreview(true); });
+  if ($('bfKind')) $('bfKind').onchange = () => { blFormRead(); BF.html = ''; BF.deps = []; BF.bens = []; blFormDraw(); };
+  if ($('bfPrev')) $('bfPrev').onclick = () => blFormPreview(false);
+  if ($('bfSend')) $('bfSend').onclick = blFormSend;
+  if ($('bfFrame') && BF.html) $('bfFrame').srcdoc = BF.html;
+}
+
 /* ── reading a file on this device ── */
 async function blReadFiles(line, files) {
   const msg = $('upmsg-' + line); if (msg) msg.textContent = 'Reading…';
@@ -418,6 +510,7 @@ function blBindTasks() {
   };
   app.querySelectorAll('[data-tcmt]').forEach(b => b.onclick = () => go(b.dataset.tcmt, false));
   app.querySelectorAll('[data-task]').forEach(b => b.onclick = () => blTaskPanel(b.dataset.task, b.dataset.f || ''));
+  app.querySelectorAll('[data-form]').forEach(b => b.onclick = () => blFormPanel(b.dataset.form, b.dataset.fkind));
   app.querySelectorAll('[data-tpl]').forEach(b => b.onclick = () => { const t = $('tn-' + b.dataset.tpl); if (!t) return; t.value = (t.value.trim() ? t.value.trim() + ' ' : '') + b.dataset.text; t.focus(); const i = t.value.indexOf('['); if (i >= 0) { const j = t.value.indexOf(']', i); t.setSelectionRange(i, j + 1); } });
   app.querySelectorAll('[data-tnote]').forEach(b => b.onclick = () => go(b.dataset.tnote, true));
 }
