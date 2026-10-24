@@ -27,13 +27,23 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'IBM Plex Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:100.68%;ascent-override:101.81%;descent-override:27.32%;line-gap-override:0.00%}
+@font-face{font-family:'IBM Plex Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:98.14%;ascent-override:104.44%;descent-override:28.02%;line-gap-override:0.00%}
+@font-face{font-family:'IBM Plex Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:101.14%;ascent-override:101.35%;descent-override:27.19%;line-gap-override:0.00%}
+@font-face{font-family:'IBM Plex Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:104.62%;ascent-override:97.98%;descent-override:26.29%;line-gap-override:0.00%}
+
+
+
+
 /* The group welcome film at a short address to post (14 October 2026): the group pages' corporate look. */
 :root{
   --canvas:#E9EEF5; --paper:#FFFFFF; --line:#CBD4E0; --ink:#142033; --muted:#4B586C;
   --primary:#1D5BC4; --primaryHover:#174CA6; --primarySoft:#EBF2FD;
-  --font:"IBM Plex Sans","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font:"IBM Plex Sans", 'IBM Plex Sans Fallback', 'IBM Plex Sans Fallback R',"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}

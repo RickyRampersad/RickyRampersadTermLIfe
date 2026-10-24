@@ -14,12 +14,28 @@
 <link rel="manifest" href="/rroperations/manifest.webmanifest"/>
 <link rel="icon" type="image/png" href="/orphan-transition/board-mark.png"/>
 <link rel="apple-touch-icon" href="/orphan-transition/board-mark.png"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'DM Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.31%;ascent-override:95.10%;descent-override:29.72%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:102.04%;ascent-override:97.22%;descent-override:30.38%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.79%;ascent-override:94.67%;descent-override:29.58%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.76%;ascent-override:91.21%;descent-override:28.50%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
   :root{--bg:#070F26;--card:#163553;--card2:#1b3d61;--gold:#6FA8FF;--cyan:#00CFEA;
     --text:#edf4fb;--muted:#a9bbcf;--line:rgba(255,255,255,.09);--bad:#f87171}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+  body{font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
     background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.10),transparent);
     padding-bottom:env(safe-area-inset-bottom)}
   button,input{font:inherit;color:inherit}
@@ -29,7 +45,7 @@
   .lock-card{width:min(380px,100%);text-align:center;background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:22px;padding:32px 24px}
   .lock-card .mark{width:72px;height:72px;border-radius:18px;margin:0 auto 16px}
-  .lock-card h1{font-family:'Montserrat';font-weight:800;font-size:22px;color:#fff;margin-bottom:4px}
+  .lock-card h1{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-weight:800;font-size:22px;color:#fff;margin-bottom:4px}
   .lock-card .tag{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px}
   .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
   .lock-card label{display:block;text-align:left;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px 2px}
@@ -37,7 +53,7 @@
     font-size:16px;margin-bottom:12px;outline:none}
   .lock-card input:focus{border-color:rgba(111,168,255,.55)}
   .btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 18px;border-radius:12px;border:0;cursor:pointer;
-    font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px}
+    font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-weight:800;font-size:14px;min-height:46px}
   .btn.gold{width:100%;background:linear-gradient(135deg,#2A6DE0,#13408F);color:#fff}
   .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);padding:8px 12px;min-height:36px;font-size:12px}
   .btn:disabled{opacity:.6;cursor:wait}
@@ -46,22 +62,22 @@
   .wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
   .top{display:flex;align-items:center;gap:12px}
   .top .mark{width:44px;height:44px}
-  .top h1{font-family:'Montserrat';font-size:18px;font-weight:800;color:#fff}
+  .top h1{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-size:18px;font-weight:800;color:#fff}
   .top small{display:block;color:var(--muted);font-size:13px}
   .top .sp{flex:1}
-  .hello{font-family:'Montserrat';font-size:24px;font-weight:800;margin:28px 0 4px}
+  .hello{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-size:24px;font-weight:800;margin:28px 0 4px}
   .who{color:var(--muted);font-size:14px;margin-bottom:6px}
   .who b{color:var(--gold)}
   .scope{display:inline-block;font-size:12px;font-weight:700;color:var(--cyan);background:rgba(0,207,234,.1);
     border:1px solid rgba(0,207,234,.25);border-radius:99px;padding:4px 10px;margin-bottom:6px}
-  h2{font-family:'Montserrat';font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  h2{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
   .app{display:block;text-decoration:none;color:inherit;background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:18px;padding:16px;min-height:136px;position:relative;transition:transform .15s,border-color .15s}
   a.app:hover,a.app:focus-visible{transform:translateY(-2px);border-color:rgba(111,168,255,.55);outline:none}
   .app .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:rgba(111,168,255,.12);margin-bottom:12px}
   .app .ic svg{width:23px;height:23px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .app b{display:block;font-family:'Montserrat';font-size:15px;font-weight:800}
+  .app b{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-size:15px;font-weight:800}
   .app span{display:block;color:var(--muted);font-size:13px;margin-top:4px;line-height:1.4}
   .app.soon{opacity:.55}
   .badge{position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;
@@ -77,7 +93,7 @@
   .day h2{margin:14px 0 8px;color:#fff}
   .steps{list-style:none;display:grid;gap:10px}
   .steps li{display:flex;gap:12px;align-items:flex-start}
-  .steps .n{flex:none;width:28px;height:28px;border-radius:50%;background:#2A6DE0;color:#fff;font-family:'Montserrat';font-weight:800;
+  .steps .n{flex:none;width:28px;height:28px;border-radius:50%;background:#2A6DE0;color:#fff;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-weight:800;
     font-size:14px;display:grid;place-items:center;margin-top:1px}
   .steps b{display:block;font-size:15px}
   .steps span{display:block;color:var(--muted);font-size:13px;line-height:1.45;margin-top:2px}

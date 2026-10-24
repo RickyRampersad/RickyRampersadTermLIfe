@@ -9,8 +9,22 @@
 <link rel="icon" href="board-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.08%;ascent-override:99.73%;descent-override:21.33%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:99.93%;ascent-override:103.88%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.55%;ascent-override:99.28%;descent-override:21.23%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:106.52%;ascent-override:97.45%;descent-override:20.84%;line-gap-override:0.00%}
+
+
+
+
   /* 8 October 2026, after Client Support's first morning on the board: "the interface is so confusing … a much more
      professional layout … change the look, theme and style and scale properly". An app shell: a navy bar with who is signed
      in, a side menu of the lists (a bar of pills on a phone), each list headed by its own numbers, and one compact row per
@@ -20,7 +34,7 @@
     --paper:#f3f5f8;--card:#fff;--line:#e1e6ed;--line2:#edf1f5;--hover:#f6f8fb;--field:#cdd6e0;
     --stop:#b42318;--stopbg:#fef3f2;--stopline:#fecdca;--ok:#067647;--okbg:#ecfdf3;--okline:#abefc6;
     --warn:#93370d;--warnbg:#fffaeb;--warnline:#fedf89;--notebg:#ecf8fb;--noteline:#b6e3ee;--blue:#1e40af;--bluebg:#eef2ff;--blueline:#c7d2fe;
-    --fh:'Plus Jakarta Sans',Inter,system-ui,sans-serif;--fb:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --fh:'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback', 'Plus Jakarta Sans Fallback R',Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,sans-serif;--fb:Inter, 'Inter Fallback', 'Inter Fallback R',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
     --r:12px;--r2:10px;--sh:0 1px 2px rgba(15,28,43,.06),0 1px 3px rgba(15,28,43,.04);--sh2:0 4px 14px rgba(15,28,43,.08),0 1px 3px rgba(15,28,43,.05)}
   *{box-sizing:border-box}
   [hidden]{display:none!important}

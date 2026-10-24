@@ -19,6 +19,19 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all';this.onload=null">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback';font-weight:100 500;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:105.04%;ascent-override:69.97%;descent-override:25.23%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback';font-weight:600 900;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:106.03%;ascent-override:69.32%;descent-override:24.99%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback R';font-weight:100 500;src:local('Noto Serif'), local('Droid Serif');size-adjust:88.96%;ascent-override:82.62%;descent-override:29.79%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback R';font-weight:600 900;src:local('Noto Serif'), local('Droid Serif');size-adjust:89.99%;ascent-override:81.68%;descent-override:29.45%;line-gap-override:0.00%}
+
+
+
+
   /* The wall's own palette, because this film is about the wall. The pictures
      are the subject — every scene that has one gives it the room and puts the
      words underneath, rather than competing with it. */
@@ -27,7 +40,7 @@
     --blue:#37b1ec; --blue2:#0b7fd4; --gold:#f5b93b;
     --line:rgba(255,255,255,.12); --card:rgba(255,255,255,.05);
     --ease:cubic-bezier(.16,1,.3,1);
-    --d:'Newsreader',Georgia,serif; --b:Inter,system-ui,-apple-system,sans-serif;
+    --d:'Newsreader', 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif; --b:Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,-apple-system,sans-serif;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}

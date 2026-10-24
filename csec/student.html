@@ -6,8 +6,18 @@
 <title>My Desk | SEA &amp; CSEC Study Hub</title>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/csec.css"/>
+<style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+</style>
 </head>
 <body>
 
@@ -76,7 +86,7 @@
         <p class="sub" id="ri-note"></p>
       </div>
       <div style="flex:none;text-align:center">
-        <div style="font-family:'Montserrat',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)" id="ri-ontrack">0</div>
+        <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)" id="ri-ontrack">0</div>
         <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px">on Grade I<br>track</div>
       </div>
       <span class="r-arrow">→</span>
@@ -87,8 +97,8 @@
       <div style="flex:none;width:60px;height:60px;border-radius:16px;display:grid;place-items:center;
                   background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f">
         <div style="text-align:center;line-height:1.05">
-          <div style="font-family:'Montserrat',sans-serif;font-size:.52rem;font-weight:800;letter-spacing:1px">FORM</div>
-          <div style="font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:900" id="jn-form">3</div>
+          <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.52rem;font-weight:800;letter-spacing:1px">FORM</div>
+          <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:1.5rem;font-weight:900" id="jn-form">3</div>
         </div>
       </div>
       <div style="flex:1;min-width:200px">
@@ -142,7 +152,7 @@
       <div class="card">
         <h3>Study timer</h3>
         <p class="sub" style="margin-bottom:14px">Twenty-five minutes of work, five minutes off. Start it, put the phone face down.</p>
-        <div style="font-family:'Montserrat',sans-serif;font-size:2.6rem;font-weight:800;color:var(--gold);text-align:center;margin:6px 0 14px" id="clock">25:00</div>
+        <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:2.6rem;font-weight:800;color:var(--gold);text-align:center;margin:6px 0 14px" id="clock">25:00</div>
         <div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">
           <button class="btn sm" id="tm-go">Start</button>
           <button class="btn ghost sm" id="tm-reset">Reset</button>

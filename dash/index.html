@@ -1,9 +1,23 @@
 <title>Branch Daily Dash</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback';font-weight:100 500;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:105.04%;ascent-override:69.97%;descent-override:25.23%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback';font-weight:600 900;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:106.03%;ascent-override:69.32%;descent-override:24.99%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback R';font-weight:100 500;src:local('Noto Serif'), local('Droid Serif');size-adjust:88.96%;ascent-override:82.62%;descent-override:29.79%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback R';font-weight:600 900;src:local('Noto Serif'), local('Droid Serif');size-adjust:89.99%;ascent-override:81.68%;descent-override:29.45%;line-gap-override:0.00%}
+
+
+
+
   :root{
     --navy:#0B1836; --teal:#0D9488; --teal-lt:#2DD4BF; --gold:#F5B324; --wa:#25D366;
     --good:#0E8A5F; --warn:#B8791A; --crit:#C0392B;
@@ -24,10 +38,10 @@
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--ground);color:var(--ink);
-    font:16px/1.6 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    font:16px/1.6 Inter, 'Inter Fallback', 'Inter Fallback R',-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
     -webkit-font-smoothing:antialiased}
   .wrap{max-width:860px;margin:0 auto;padding:0 16px 60px}
-  h2{font-family:Newsreader,Georgia,serif;font-size:25px;font-weight:600;
+  h2{font-family:Newsreader, 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif;font-size:25px;font-weight:600;
     letter-spacing:-.015em;margin:0 0 3px;line-height:1.22}
   .eyebrow{font-size:11px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;
     color:var(--teal);margin:0 0 8px}
@@ -51,7 +65,7 @@
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:18px}
   .kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
     border-radius:12px;padding:13px 11px}
-  .kpi .v{font-family:Newsreader,Georgia,serif;font-size:29px;font-weight:600;line-height:1;
+  .kpi .v{font-family:Newsreader, 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif;font-size:29px;font-weight:600;line-height:1;
     font-variant-numeric:tabular-nums}
   .kpi .k{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
     color:rgba(255,255,255,.6);margin-top:6px;line-height:1.3}
@@ -67,7 +81,7 @@
   .qr .who{font-size:16px;font-weight:800;line-height:1.25}
   .qr .sub{font-size:13.5px;color:var(--muted);margin-top:3px}
   .qr .rt{text-align:right;flex:none}
-  .qr .amt{font-family:Newsreader,Georgia,serif;font-size:22px;font-weight:600;
+  .qr .amt{font-family:Newsreader, 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif;font-size:22px;font-weight:600;
     font-variant-numeric:tabular-nums}
   .age{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;
     text-transform:uppercase;padding:3px 8px;border-radius:5px;margin-top:5px}
@@ -95,12 +109,12 @@
   .found{display:grid;gap:8px}
   .fd{display:grid;grid-template-columns:44px 1fr auto;gap:13px;align-items:center;
     background:var(--sunk);border-radius:11px;padding:11px 14px}
-  .fd .c{font-family:Newsreader,Georgia,serif;font-size:24px;font-weight:600;color:var(--teal);
+  .fd .c{font-family:Newsreader, 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif;font-size:24px;font-weight:600;color:var(--teal);
     text-align:center;font-variant-numeric:tabular-nums}
   .fd .l{font-size:15px;font-weight:600;line-height:1.3}
   .fd .l em{display:block;font-style:normal;font-size:13px;color:var(--muted);
     font-weight:400;margin-top:2px}
-  .fd .v{font-family:Newsreader,Georgia,serif;font-size:19px;font-weight:600;
+  .fd .v{font-family:Newsreader, 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif;font-size:19px;font-weight:600;
     font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
 
   /* ── coaching ───────────────────────────────────────────────────────── */

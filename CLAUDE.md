@@ -5382,3 +5382,75 @@ guide you. In your session review notes on the step back in place from all memor
 - **Service ratings, task by task (21 Oct 2026, 2026-10-21f).** Ricky, 12:37pm: "I am seeing the Ratings coming in but a lot more data is needed: the timelines, the chats, the intelligence etc, the client, the department, how, so I can see this, the type etc, build more intel". **At send time** `rateRun_` keeps eight more columns, appended to the end of `RATETAB.head` so older rows still line up (`rateCols_` adds them to an existing tab): `Agent`, `Client` (the task's Who when a CLIENT), `Department` (the Who, or the Agent__c, when a BUSINESS CONTACT; otherwise the first department the notes name, newest first, then the subject, `RATE_DEPTS`; otherwise where the playbook routes the kind, `RATE_DEPT_BY_KIND`), `Opened` and `Closed` (branch time, "2026-10-14 08:00"), `Notes` (Chatter text notes), `Timeline` (JSON `[{a, k, b, x}]`: open with the subject and due date; every note, who and when, 140 characters, the page's head line removed; replies; workload moves from Workload Moves; date moves from Task Changes and Due Moves, the same move once; close with the closing note, 300 characters; at most `RATEPG.TL_MAX` = 40 steps) and `Intel`. `rateFacts_` builds it from what the run already read plus two Salesforce reads a run, only when there is something to send: FeedComment (the replies) and User (names not on the register); the Task query gained `CreatedById, ActivityDate`. `rateReads_` makes ONE Claude call a run for every task (`ANTHROPIC_MODEL` or `CLAUDE_READ.MODEL`), answering `{summary, intel}` per id: the agent's two-sentence summary as before, and two or three sentences on how it went (how long it sat, the follow-ups, where the wait was, how it was worked, whether the closing note says what was done). Without a key, on a failure or a missing answer: the note, and `rateIntelPlain_` (the same points from the record: days, notes before the close, replies, moves, phone/e-mail/WhatsApp from the notes `RATE_HOW`, the longest wait between two steps and what the notes say it waited on `PLAYBOOK_WAIT_RE`, and `RATE_DONE_RE` on the closing note). **His page** `?rs=ricky&f=rate&k=` (`rateIntelUrl_`, signed `replySig_(sid, 'always', 'rate')`, one link for every day, not in `FAST.KINDS`: it reads the tab only): the week (ratings, the average, five-star share, answered of asked, the days, notes and department most involved, by who closed it, by type, the three lowest as links), then a card per rating, newest first (latest `RATEPG.MAX` = 200): stars and comment or "Waiting for a rating" / "Not sent", who closed it for whom, client, department, agent, type and kind, opened to closed, days and notes, the intelligence, the timeline as a vertical list; filters by closer, agent or client, type and stars, client-side. Rows from before show "—". `&i=<token>` opens that card: the 1 or 2 star e-mail (`rateAlert_`) now carries "See the whole task" and the read. The link: his morning mail and his 11:00 / 3:00 mails ("Also:"), My day's links, and under the ratings on his day page (`gameBmSec_`). For him alone; Script Property `RATE_PAGE_ALSO` (e.g. `kamla, akaash`) opens it to the BMA or a Unit Manager, `showRatingsLink("kamla")` gives the link; never a desk. Never on the wall: `rateStats_`, which `wallStaff_` reads, carries none of it. Test: `tests/test-rate-intel.js`.
 - **The wall knows the kinds in each hour, and who has the bag (21 Oct 2026, 2026-10-21f).** Ricky: "hour by hour what's being actioned, the task type should be in a colour inside the green, as well who does the bag as well built in". `wallStaff_` now sends each person's `hourKinds` (per hour, the closes with a note by `wallKind_`: new, orphan, retention, claims, other) and `bag` ({who, at, h, cutoff, covering}) from `mailbagRouter_` (the weekly rota, the next one in when the router is out) and `mailbagLeaves_` (12 noon unless `MAILBAG_AT`), papers in a quarter of an hour before. The wall colours each green hour by kind and rings the bag's hour in gold. Tests: `tests/test-wall2.js`.
 - **Sample ratings for the Branch Manager (21 Oct 2026, 2026-10-21g).** Ricky, 1:55pm: "send some samples to see the revised and let me click". `rateSamples(n)` in the editor, or **Send me sample ratings** on his Ratings page (a signed POST `rs=ricky&f=rate&k=…&act=samples` through `replyPost_`, him alone, not `RATE_PAGE_ALSO`; a second press within `RATE.SAMPLE_GAP_MIN` = 2 minutes sends nothing), sends up to `RATE.SAMPLES` = 3 agent rating e-mails in the real format (`rateAgentMail_`, subject `[Sample] …`) to `managerEmails_()` only, each from one of the latest real agent rows (its subject from the timeline's open step, kind, days, closer, the closing note as what was done, and the record's columns), or from `RATE_SAMPLE_MADE` (no client) when there are none; then one e-mail with every sample's five stars, its card and his page. Each sample is a row of its own (Kind and Status `sample`, Email his), so the stars, the thank-you page, a comment and the 1–2 star alert (`[Sample] Low rating …`, with See the whole task) all work. `rateIsSample_`: no Chatter post from `rateClick_` or `ratePost_`, `&out=1` changes nothing, and `rateStats_` (the week, the game's cards and board, the Service Star, his day page, the wall's `svc` and ticker) and `rateRun_`'s cap, cool-down and opt-outs skip it. His page marks sample cards (dashed, Sample), has Hide samples, and never counts them in the week. Agent e-mails only: client mail stays held. Test: `tests/test-rate-samples.js`.
+
+## Web fonts — non-blocking, with a fallback that does not move the page
+
+A plain `<link rel="stylesheet">` to `fonts.googleapis.com` holds up first
+paint. It was on **140 pages**. Measured on a phone viewport with Google
+answering in 600 ms, first contentful paint sat at 650–1470 ms; with the host
+unreachable the page showed nothing at all until the request timed out. All of
+that is a blank screen for somebody opening a WhatsApp link on mobile data.
+
+Every served page now loads fonts like this:
+
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="<css2 url>" rel="stylesheet" media="print"
+      onload="this.media='all';this.onload=null">
+<noscript><link href="<css2 url>" rel="stylesheet"></noscript>
+```
+
+`media="print"` makes the fetch non-blocking; `onload` promotes it to `all`.
+Keep the `noscript` copy, or a visitor without JS is left in the fallback.
+
+**Non-blocking alone made things worse, and this is the part to remember.**
+Paint got fast, then the webfont swapped in and the text reflowed: cumulative
+layout shift went from 0 to **0.205** on the homepage, 0.174 on
+donthaveanagent and 0.119 on /quote/, all failing Core Web Vitals. Speed was
+bought with a page that jumps while it is being read.
+
+So every page also carries **metric-matched fallback faces**, and the stack
+names them:
+
+```css
+--display: 'Inter Tight', 'Inter Tight Fallback', 'Inter Tight Fallback R', system-ui, sans-serif;
+```
+
+A fallback the stack never names is a fallback nobody uses. Four things about
+them, each learned by getting it wrong first:
+
+- **`local()` matches a font's real installed name, never a fontconfig alias.**
+  Probed in Chrome: `local('Arial')` does not resolve on Linux even though
+  `font-family: Arial` does. Android has no Arial at all. So face one lists
+  `Arial, Helvetica, Liberation Sans, Arimo` and face two (`… Fallback R`)
+  lists `Roboto`, which is what an Android phone actually ships. Without the
+  second face a large share of Trinidad visitors match nothing.
+- **Two weight buckets, `100 500` and `600 900`.** A size-adjust taken from
+  the regular weight does not fit an 800-weight heading; that single mistake
+  pushed /service/ from 0.085 to **0.289**. Montserrat needs 112.94% at 400
+  and 110.34% at 700.
+- **Never compute the ratio from `OS/2.xAvgCharWidth`.** Modern Google faces
+  compute it across their whole glyph set while Arial's is a legacy lowercase
+  figure; mixing the two definitions gave Inter 146% instead of its true
+  ~107%. Measure the average advance width from `cmap` + `hmtx` over the same
+  English-frequency-weighted character set for both fonts.
+- **Never inject a font stack inside `<script>`.** `/prospecting/` builds
+  markup in a JS string — `'font:16px/1.6 Inter, …'` — and a single-quoted
+  fallback dropped in there closes the string and throws `SyntaxError`. Mask
+  script bodies before touching font stacks.
+
+Result across the 135 converted pages: first paint median **108 ms** (p90
+152 ms), CLS median **0.0023**, nothing above 0.1, no JS errors, no sideways
+overflow.
+
+**Five pages keep the blocking link on purpose** — they shifted when made
+async and are internal, where a blank moment costs nothing and a jumping
+layout costs attention: `manual/`, `gs/`, `orphan-servicing/`,
+`quote/key-person/` and `orphan-transition/board-films.html`.
+
+**Film sources keep it too.** A page carrying `data-d` scene markup is
+recorded frame by frame, and a recorder must have the real face on frame one
+or the swap shows as a font pop in the MP4. Same for
+`tools/letters/film-card.html`, which is rendered to a JPEG. `apps-script/`
+templates are not web pages and never had one.

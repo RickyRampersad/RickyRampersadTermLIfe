@@ -6,16 +6,28 @@
 <title>My Journey | SEA &amp; CSEC Study Hub</title>
 <meta name="description" content="The guided journey from Standard 1 to CSEC — what this term is for, what is new this year, what is carried forward, and every milestone ahead."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/csec.css"/>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
   /* the spine: primary → lower → upper → CSEC */
   .spine{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
   .sg{flex:1;min-width:170px;padding:14px;border-radius:13px;border:1px solid var(--line);
       background:rgba(0,0,0,.2)}
   .sg.here{border-color:var(--gold);background:rgba(239,194,75,.09)}
   .sg.ext{border-style:dashed;opacity:.72}
-  .sg b{display:block;font-family:'Montserrat',sans-serif;font-size:.92rem;margin-bottom:2px}
+  .sg b{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.92rem;margin-bottom:2px}
   .sg .yr{font-size:.74rem;color:var(--teal);font-weight:700;letter-spacing:.4px}
   .sg .nt{font-size:.78rem;color:var(--muted);line-height:1.55;margin-top:7px}
 
@@ -26,7 +38,7 @@
   .tm.now{border-color:var(--teal);background:rgba(0,207,234,.08)}
   .tm.past{opacity:.55}
   .tm .no{font-size:.7rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700}
-  .tm h4{font-family:'Montserrat',sans-serif;font-size:.97rem;margin:5px 0 4px}
+  .tm h4{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.97rem;margin:5px 0 4px}
   .tm .aim{font-size:.82rem;color:var(--muted);line-height:1.55}
   .tm ul{margin:10px 0 0 17px}
   .tm li{font-size:.8rem;color:var(--muted);line-height:1.65}
@@ -36,7 +48,7 @@
   .yrow.here{border-color:var(--gold)}
   .yrow summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
   .yrow .fno{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
-             font-family:'Montserrat',sans-serif;font-weight:800;background:rgba(255,255,255,.07);color:var(--muted)}
+             font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;background:rgba(255,255,255,.07);color:var(--muted)}
   .yrow.here .fno{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f}
   .ms{display:flex;gap:12px;padding:13px 15px;border-radius:12px;background:rgba(0,0,0,.22);
       border:1px solid var(--line);margin-bottom:9px}
@@ -86,8 +98,8 @@
         <div style="flex:none;width:92px;height:92px;border-radius:22px;display:grid;place-items:center;
                     background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f">
           <div style="text-align:center;line-height:1.05">
-            <div style="font-family:'Montserrat',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:1px">FORM</div>
-            <div style="font-family:'Montserrat',sans-serif;font-size:2.2rem;font-weight:900" id="yh-form">3</div>
+            <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:1px">FORM</div>
+            <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:2.2rem;font-weight:900" id="yh-form">3</div>
           </div>
         </div>
         <div style="flex:1;min-width:220px">

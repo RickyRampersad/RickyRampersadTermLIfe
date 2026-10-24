@@ -8,8 +8,22 @@
 <link rel="icon" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback';font-weight:100 500;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:105.04%;ascent-override:69.97%;descent-override:25.23%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback';font-weight:600 900;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:106.03%;ascent-override:69.32%;descent-override:24.99%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback R';font-weight:100 500;src:local('Noto Serif'), local('Droid Serif');size-adjust:88.96%;ascent-override:82.62%;descent-override:29.79%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback R';font-weight:600 900;src:local('Noto Serif'), local('Droid Serif');size-adjust:89.99%;ascent-override:81.68%;descent-override:29.45%;line-gap-override:0.00%}
+
+
+
+
   :root{
     --navy:#16264F; --deep:#0D1838; --gold:#C7A34A; --soft:#E7D9AE;
     --paper:#F7F5EF; --card:#FFFFFF; --sunk:#FBFAF5;
@@ -30,17 +44,17 @@
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);
-    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
+    font-family:Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
   .wrap{max-width:720px;margin:0 auto;padding:0 20px 70px}
   .mast{background:linear-gradient(158deg,var(--navy) 0%,var(--deep) 100%);
     border-bottom:3px solid var(--gold);color:#fff;padding:32px 0 28px;margin-bottom:30px}
   .mast .wrap{padding-bottom:0}
   .eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
     color:var(--soft);margin:0 0 6px}
-  h1{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:clamp(28px,5.2vw,40px);
+  h1{font-family:Newsreader, 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif;font-weight:600;font-size:clamp(28px,5.2vw,40px);
     line-height:1.12;margin:0 0 10px;color:#fff;text-wrap:balance}
   .stand{margin:0;font-size:15.5px;color:#D9DEEA;max-width:58ch}
-  h2{font-family:Newsreader,Georgia,serif;font-weight:600;font-size:23px;margin:40px 0 4px;
+  h2{font-family:Newsreader, 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif;font-weight:600;font-size:23px;margin:40px 0 4px;
     text-wrap:balance}
   .sub{margin:0 0 16px;color:var(--muted);font-size:14.5px}
   p{color:var(--ink2);margin:0 0 12px}

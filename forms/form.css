@@ -1,3 +1,12 @@
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:96.22%;ascent-override:100.68%;descent-override:25.07%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:95.31%;ascent-override:101.64%;descent-override:25.31%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:96.66%;ascent-override:100.22%;descent-override:24.95%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:101.60%;ascent-override:95.35%;descent-override:23.74%;line-gap-override:0.00%}
 /* ═══════════════════════════════════════════════════════════════════════
    The branch's own forms — shared stylesheet
    Ricky Rampersad Branch · 22 October 2026
@@ -52,8 +61,8 @@
   --e3: 0 2px 4px hsl(var(--sh) / .06), 0 6px 12px hsl(var(--sh) / .06),
         0 12px 24px hsl(var(--sh) / .05);
 
-  --display: 'Inter Tight', 'Inter', system-ui, sans-serif;
-  --text:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display: 'Inter Tight', 'Inter Tight Fallback', 'Inter Tight Fallback R', 'Inter', 'Inter Fallback', 'Inter Fallback R', system-ui, sans-serif;
+  --text:    'Inter', 'Inter Fallback', 'Inter Fallback R', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --f--2: clamp(0.8125rem, 0.7917rem + 0.1042vw, 0.875rem);
   --f--1: clamp(0.9375rem, 0.9167rem + 0.1042vw, 1rem);
