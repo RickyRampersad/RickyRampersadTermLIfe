@@ -322,7 +322,7 @@ function blFormDraw() {
   let h = '<div class="bform"><p class="small muted">Guardian Life’s form EB0010 (2024/3) fills from the member’s Salesforce record: Section A as held, the change in its own section. It goes from support@ to ' + esc(d.to || 'EBCustomercare@myguardiangroup.com') + ', copied to sales support and support@' + (d.live ? '' : ' · <b>test mode</b>: to you and the branch, marked TEST') + '.</p>' +
     '<div class="uprow"><input class="field" id="bfq" placeholder="Search the member by name, policy or certificate" value="' + esc(BF.q) + '" style="flex:1;min-width:220px" autocomplete="off"><button class="btn ghost sm" type="button" id="bfGo">Search</button></div><div id="bfres">' + blFormResults() + '</div>';
   if (m) {
-    h += '<div class="bpicked"><b>' + esc(m.name) + '</b> · ' + esc(m.label) + ' · ' + esc(m.policy) + ' · ' + esc(m.status) + (m.dob ? ' · born ' + esc(dmy(m.dob)) : ' · <span class="bad">no date of birth on record</span>') + (m.plan ? ' · ' + esc(m.plan) : '') + '</div>' +
+    h += '<div class="bpicked"><b>' + esc(m.name) + '</b> · ' + [m.label, m.policy, m.status || (m.live ? 'on the plan' : ''), m.plan].filter(Boolean).map(esc).join(' · ') + (m.dob ? ' · born ' + esc(dmy(m.dob)) : ' · <span class="bad">no date of birth on record</span>') + '</div>' +
       '<div class="grid4"><label class="sel">The change <select id="bfKind">' + BL_FORM_KINDS.map(([v, l]) => '<option value="' + v + '"' + (v === BF.kind ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       '<label class="sel">Effective <input class="field" type="date" id="bfEff" value="' + esc(BF.effective) + '"></label>' +
       '<label class="sel">Marital status (A) <select id="bfMar">' + ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'].map(x => '<option value="' + x + '"' + (BF.marital === x ? ' selected' : '') + '>' + (x ? x.charAt(0) + x.slice(1).toLowerCase() : 'Not on record') + '</option>').join('') + '</select></label>' +
@@ -346,7 +346,7 @@ function blFormResults() {
   if (BF.results === 'busy') return '<p class="small muted">Reading Salesforce…</p>';
   if (!BF.results) return '';
   if (!BF.results.length) return '<p class="small muted">No member of this group matches. Try the surname alone.</p>';
-  return '<div class="bres">' + BF.results.map(m => '<button type="button" class="bpick' + (BF.pick && BF.pick.id === m.id ? ' on' : '') + '" data-bpick="' + esc(m.id) + '"><b>' + esc(m.name) + '</b><span>' + esc(m.label) + ' · ' + esc(m.policy) + ' · ' + esc(m.status) + (m.deps ? ' · ' + m.deps + ' dependent' + (m.deps === 1 ? '' : 's') : '') + '</span></button>').join('') + '</div>' + (BF.results.more ? '<p class="small muted">More match: add another word.</p>' : '');
+  return '<div class="bres">' + BF.results.map(m => '<button type="button" class="bpick' + (BF.pick && BF.pick.id === m.id ? ' on' : '') + '" data-bpick="' + esc(m.id) + '"><b>' + esc(m.name) + '</b><span>' + [m.label, m.policy, m.status || (m.live ? 'on the plan' : ''), m.since ? 'since ' + dmy(m.since) : '', m.deps ? m.deps + ' dependent' + (m.deps === 1 ? '' : 's') + ' on record' : ''].filter(Boolean).map(esc).join(' · ') + '</span></button>').join('') + '</div>' + (BF.results.more ? '<p class="small muted">More match: add another word.</p>' : '');
 }
 function blFormRead() {
   const g = id => $(id) ? $(id).value.trim() : '';
