@@ -178,7 +178,7 @@ function blChangesHtml(d) {
   if (can) h += '<div class="drawer chg"><b>Record a change</b><div class="grid4"><label class="sel">What <select id="chKind"><option value="joiner">Joiner</option><option value="leaver">Leaver</option><option value="tier">Tier change</option><option value="dependent">Dependent added or removed</option><option value="query">A question</option></select></label>' +
     '<label class="sel">Line <select id="chLine">' + d.lines.map(o => '<option value="' + o.line + '">' + esc(o.label) + '</option>').join('') + '</select></label>' +
     '<label class="sel">Person <input class="field" id="chMember" placeholder="Surname, first name"></label><label class="sel">Effective <input class="field" type="date" id="chEff"></label></div>' +
-    '<textarea class="field" id="chDetail" rows="2" maxlength="800" placeholder="What changed, and how we know (who told us, when)"></textarea><div class="uprow"><button class="btn" type="button" id="chSave">Record it and open the task</button><button class="btn ghost" type="button" data-form="" data-fkind="">Change form EB0010: fill from Salesforce and send to EB Customer Care</button><span class="small muted">A joiner or leaver opens a Salesforce task for the account owner and goes on the billing task’s Chatter.</span></div></div>';
+    '<textarea class="field" id="chDetail" rows="2" maxlength="800" placeholder="What changed, and how we know (who told us, when)"></textarea><div class="uprow"><button class="btn" type="button" id="chSave">Record it and open the task</button><button class="btn ghost" type="button" data-form="" data-fkind="" data-fform="change">Change form EB0010: fill from Salesforce and send to EB Customer Care</button><button class="btn ghost" type="button" data-form="" data-fkind="" data-fform="enrol">Enrolment form GIO001</button><button class="btn ghost" type="button" data-form="" data-fkind="" data-fform="easi">EASI Collect (claim payment account)</button><span class="small muted">A joiner or leaver opens a Salesforce task for the account owner and goes on the billing task’s Chatter.</span></div></div>';
   if (!C.length) return h + '<p class="muted">Nothing recorded yet.</p>';
   return h + '<div class="scroll"><table class="t"><thead><tr><th>When</th><th>Line</th><th>What</th><th>Who</th><th>Detail</th><th>From</th><th>Status</th></tr></thead><tbody>' +
     C.map(c => '<tr><td class="small">' + esc(c.at) + '</td><td>' + esc(BL_LABEL[c.line] || c.line) + '</td><td><b>' + esc(K[c.kind] || c.kind) + '</b></td><td>' + esc(c.member) + '</td><td class="small">' + esc(c.detail) + (c.effective ? ' · ' + esc(dmy(c.effective)) : '') + (c.task ? ' · <span class="chip good"><i></i>task</span>' : '') + (c.note ? ' · ' + esc(c.note) : '') + '</td><td class="small">' + esc(c.source) + (c.by ? ' · ' + esc(c.by) : '') + '</td><td><span class="chip' + (c.status === 'open' ? ' warn' : c.status === 'done' ? ' good' : '') + '"><i></i>' + esc(c.status) + '</span>' + (can && c.member && /^(joiner|leaver|dependent|tier|address|beneficiary|bank|plan)$/.test(c.kind) && !/^form:/.test(c.note || '') ? ' <button class="lnk" type="button" data-form="' + esc(c.member) + '" data-fkind="' + esc({ leaver: 'terminate', dependent: 'adddep', address: 'address', beneficiary: 'beneficiary', bank: 'bank', tier: 'plan' }[c.kind] || 'terminate') + '">Form</button>' : '') + '</td></tr>').join('') + '</tbody></table></div>';
@@ -308,36 +308,80 @@ function blTaskPanel(line, fid) {
 /* ── the EB0010 change form, filled from Salesforce: search a member, confirm the change, send to EB Customer Care ── */
 const BL_FORM_KINDS = [['terminate', 'Terminate the primary insured'], ['adddep', 'Add dependent(s)'], ['removedep', 'Remove dependent(s)'], ['address', 'Change of address'], ['beneficiary', 'Beneficiary change'], ['bank', 'Bank account for claim payments'], ['plan', 'Policy change (plan, deductible, major medical)']];
 let BF = null;
-function blFormPanel(q, kind, member) {
+const BL_FORMS = [['change', 'Change or terminate', 'EB0010'], ['enrol', 'Enrol a new member', 'GIO001'], ['easi', 'Claim payment account', 'EASI Collect']];
+const BL_EASI = [['change', 'Change the account'], ['enrol', 'Enrol an account'], ['terminate', 'End the arrangement']];
+const BL_ENR = [
+  ['A', 'first', 'First name', 'text'], ['A', 'last', 'Surname', 'text'], ['A', 'dob', 'Date of birth', 'date'], ['A', 'gender', 'Gender', 'select', ['', 'M', 'F'], ['', 'Male', 'Female']],
+  ['A', 'email', 'E-mail', 'email'], ['A', 'telCell', 'Cellular', 'tel'], ['A', 'telHome', 'Telephone (home)', 'tel'], ['A', 'telWork', 'Telephone (work)', 'tel'], ['A', 'telExt', 'Ext', 'text'],
+  ['A', 'marital', 'Marital status', 'select', ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'], ['', 'Single', 'Married', 'Common law', 'Divorced', 'Widowed']], ['A', 'occupation', 'Occupation', 'text'],
+  ['A', 'idType', 'Identification', 'select', ['', 'DP', 'PP', 'ID'], ['', 'Driver’s permit', 'Passport', 'ID card']], ['A', 'idNo', 'ID number', 'text'],
+  ['A', 'covHealth', 'Group Health', 'check'], ['A', 'covLife', 'Group Life', 'check'], ['A', 'covVoluntary', 'Voluntary Life', 'check'], ['A', 'covDependentLife', 'Dependent Life', 'check'],
+  ['B', 'otherPlan', 'Other medical plan?', 'select', ['', 'no', 'yes'], ['', 'No', 'Yes']], ['B', 'otherPlanName', 'Name of that plan', 'text'], ['B', 'otherInsurer', 'Its insurer', 'text'],
+  ['E', 'bankAccount', 'Account number', 'text'], ['E', 'bankType', 'Account type', 'select', ['', 'SAVINGS', 'CHEQUING'], ['', 'Savings', 'Chequing']], ['E', 'bankName', 'Bank', 'text'], ['E', 'bankBranch', 'Branch', 'text'],
+  ['F', 'employed', 'Date employed', 'date'], ['F', 'confirmed', 'Date of confirmation', 'date'], ['F', 'effective', 'Effective date of coverage', 'date'], ['F', 'tier', 'Coverage tier', 'select', ['', 'SINGLE', 'EMPLOYEE + ONE', 'EMPLOYEE + FAMILY'], ['', 'Single', 'Employee + one', 'Employee + family']], ['F', 'salary', 'Annual salary TT$ (Life)', 'text'],
+  ['F', 'policyHealth', 'Policy no. Health', 'text'], ['F', 'policyLife', 'Policy no. Life', 'text']];
+const BL_ENR_SEC = { A: 'Section A · the employee', B: 'Section B · co-ordination of benefits', C: 'Section C · dependents', D: 'Section D · beneficiary (Group Life)', E: 'Section E · claim payments', F: 'Section F · policyholder' };
+function blFormPanel(q, kind, member, form) {
   const d = BILL;
-  BF = { q: q || '', kind: kind && BL_FORM_KINDS.some(([k]) => k === kind) ? kind : 'terminate', results: null, pick: null, member: null, html: '', missing: [], blocking: [], effective: '', marital: '', reason: '', admin: d.group.contact || '', copyGroup: false, deps: [], bens: [], address: '', bankName: '', bankAccount: '', bankBranch: '', deductible: '', major: '' };
-  $('dlgT').textContent = 'Change form EB0010 · ' + d.group.name;
+  BF = { form: BL_FORMS.some(([k]) => k === form) ? form : 'change', q: q || '', kind: kind && BL_FORM_KINDS.some(([k]) => k === kind) ? kind : 'terminate', easiKind: 'change', results: null, pick: null, member: null, pdf: '', missing: [], blocking: [], effective: '', marital: '', reason: '', admin: d.group.contact || '', copyGroup: false, deps: [], bens: [], address: '', bankName: '', bankAccount: '', bankBranch: '', bankType: '', idType: '', idNo: '', deductible: '', major: '', enrol: {}, policies: null };
+  blFormTitle();
   blFormDraw();
   if (!dlg.open) dlg.showModal();
   if (BF.q) blFormSearch();
 }
+function blFormTitle() { const f = BL_FORMS.find(([k]) => k === BF.form); $('dlgT').textContent = (f ? f[2] + ' · ' + f[1] : 'Guardian form') + ' · ' + BILL.group.name; }
+function blDepRows(list, label, n, attr, extra) {
+  return '<div class="bdeps"><b>' + label + '</b>' + Array.from({ length: n }, (_, i) => { const x = list[i] || {}; return '<div class="bdep' + (extra === 'ben' ? ' ben' : extra === 'country' ? ' wide' : '') + '">' +
+    (extra === 'ben' ? '<input class="field" placeholder="Relationship" data-' + attr + '="rel" data-i="' + i + '" value="' + esc(x.rel || '') + '">' : '<select class="field" data-' + attr + '="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD'].map(r => '<option' + (x.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select>') +
+    '<input class="field" placeholder="Full name" data-' + attr + '="name" data-i="' + i + '" value="' + esc(x.name || '') + '"><select class="field" data-' + attr + '="gender" data-i="' + i + '"><option value="">M/F</option><option' + (x.gender === 'M' ? ' selected' : '') + '>M</option><option' + (x.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-' + attr + '="dob" data-i="' + i + '" value="' + esc(x.dob || '') + '">' +
+    (extra === 'ben' ? '<input class="field" placeholder="%" inputmode="numeric" data-' + attr + '="pct" data-i="' + i + '" value="' + esc(x.pct || '') + '">' + (attr === 'fben' ? '<label class="toggle small"><input type="checkbox" data-' + attr + '="remove" data-i="' + i + '"' + (x.remove ? ' checked' : '') + '> remove</label>' : '') : '') +
+    (extra === 'country' ? '<input class="field" placeholder="Country of residence" data-' + attr + '="country" data-i="' + i + '" value="' + esc(x.country || 'TRINIDAD AND TOBAGO') + '">' : '') + '</div>'; }).join('') + '</div>';
+}
+function blFormTail(label) {
+  const d = BILL;
+  return '<div class="uprow" style="margin-top:8px"><button class="btn ghost" type="button" id="bfPrev">' + (BF.pdf ? 'Update the preview' : 'Preview the form') + '</button>' + (d.group.to && d.group.to.length ? '<label class="toggle small"><input type="checkbox" id="bfCopy"' + (BF.copyGroup ? ' checked' : '') + '> also copy ' + esc(d.group.contact || d.group.to[0]) + '</label>' : '') + '</div>' +
+    (BF.pdf ? '<div class="fprev"><div class="small muted">' + label + '. ' + (BF.missing.length ? 'Not given or not on record: ' + esc(BF.missing.join(', ')) + '. ' : '') + (BF.blocking.length ? '<b class="bad">Needed before it goes: ' + esc(BF.blocking.join(', ')) + '.</b> ' : '') + '<a href="data:application/pdf;base64,' + BF.pdf + '" download="guardian-form.pdf">Download the PDF</a></div><div class="pdfv" id="bfFrame"></div>' +
+      '<div class="row"><button class="btn" type="button" id="bfSend"' + (BF.blocking.length ? ' disabled' : '') + '>Send to EB Customer Care' + (d.live ? '' : ' (test)') + '</button><button class="btn ghost" type="button" onclick="dlg.close()">Close</button></div></div>' : '');
+}
 function blFormDraw() {
   const d = BILL, m = BF.pick, deps = (BF.member && BF.member.deps) || [];
-  const depRows = (list, label, n) => '<div class="bdeps"><b>' + label + '</b>' + Array.from({ length: n }, (_, i) => { const x = list[i] || {}; return '<div class="bdep"><select class="field" data-fdep="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD'].map(r => '<option' + (x.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><input class="field" placeholder="Full name" data-fdep="name" data-i="' + i + '" value="' + esc(x.name || '') + '"><select class="field" data-fdep="gender" data-i="' + i + '"><option value="">M/F</option><option' + (x.gender === 'M' ? ' selected' : '') + '>M</option><option' + (x.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-fdep="dob" data-i="' + i + '" value="' + esc(x.dob || '') + '"></div>'; }).join('') + '</div>';
-  let h = '<div class="bform"><p class="small muted">Guardian Life’s form EB0010 (2024/3) fills from the member’s Salesforce record: Section A as held, the change in its own section. It goes from support@ to ' + esc(d.to || 'EBCustomercare@myguardiangroup.com') + ', copied to sales support and support@' + (d.live ? '' : ' · <b>test mode</b>: to you and the branch, marked TEST') + '.</p>' +
-    '<div class="uprow"><input class="field" id="bfq" placeholder="Search the member by name, policy or certificate" value="' + esc(BF.q) + '" style="flex:1;min-width:220px" autocomplete="off"><button class="btn ghost sm" type="button" id="bfGo">Search</button></div><div id="bfres">' + blFormResults() + '</div>';
+  let h = '<div class="bform"><div class="fsw">' + BL_FORMS.map(([k, l, c]) => '<button type="button" class="fswb' + (BF.form === k ? ' on' : '') + '" data-bform="' + k + '"><b>' + l + '</b><span>' + c + '</span></button>').join('') + '</div>' +
+    '<p class="small muted">Guardian Life’s own PDF, filled with the record and what you give here. It goes from support@ to ' + esc(d.to || 'EBCustomercare@myguardiangroup.com') + ', copied to sales support and support@' + (d.live ? '' : ' · <b>test mode</b>: to you and the branch, marked TEST') + '.</p>';
+  if (BF.form === 'enrol') {
+    const e = BF.enrol, sec = {}; BL_ENR.forEach(f => { (sec[f[0]] = sec[f[0]] || []).push(f); });
+    const field = ([, id, label, type, vals, labels]) => { const v = e[id] === undefined ? '' : e[id];
+      if (type === 'check') return '<label class="toggle small"><input type="checkbox" data-enr="' + id + '"' + (v ? ' checked' : '') + '> ' + label + '</label>';
+      if (type === 'select') return '<label class="sel">' + label + ' <select data-enr="' + id + '">' + vals.map((o, i) => '<option value="' + o + '"' + (String(v) === o ? ' selected' : '') + '>' + (labels[i] || o) + '</option>').join('') + '</select></label>';
+      return '<label class="sel">' + label + ' <input class="field" type="' + type + '" data-enr="' + id + '" value="' + esc(v) + '"></label>'; };
+    ['A', 'B'].forEach(k => { h += '<div class="esec"><b>' + BL_ENR_SEC[k] + '</b><div class="grid4">' + sec[k].filter(f => f[3] !== 'check').map(field).join('') + '</div>' + (sec[k].some(f => f[3] === 'check') ? '<div class="ticks">' + sec[k].filter(f => f[3] === 'check').map(field).join('') + '</div>' : '') + '</div>'; });
+    h += '<div class="esec"><b>' + BL_ENR_SEC.C + '</b>' + blDepRows(BF.deps, 'Spouse first, then children (up to five)', 5, 'fdep', 'country') + '</div>';
+    h += '<div class="esec"><b>' + BL_ENR_SEC.D + '</b>' + blDepRows(BF.bens, 'Relationship, name, gender, date of birth, share', 3, 'fenb', 'ben') + '</div>';
+    ['E', 'F'].forEach(k => { h += '<div class="esec"><b>' + BL_ENR_SEC[k] + '</b><div class="grid4">' + sec[k].map(field).join('') + '</div></div>'; });
+    h += '<div class="grid4"><label class="sel">Plan administrator (F) <input class="field" id="bfAdmin" value="' + esc(BF.admin) + '"></label><label class="sel">Note for the cover e-mail <input class="field" id="bfReason" maxlength="300" value="' + esc(BF.reason) + '"></label></div>' + blFormTail('GIO001 as it will go');
+    $('dlgB').innerHTML = h + '</div>'; blFormBind(); return;
+  }
+  h += '<div class="uprow"><input class="field" id="bfq" placeholder="Search the member by name, policy or certificate" value="' + esc(BF.q) + '" style="flex:1;min-width:220px" autocomplete="off"><button class="btn ghost sm" type="button" id="bfGo">Search</button></div><div id="bfres">' + blFormResults() + '</div>';
   if (m) {
-    h += '<div class="bpicked"><b>' + esc(m.name) + '</b> · ' + [m.label, m.policy, m.status || (m.live ? 'on the plan' : ''), m.plan].filter(Boolean).map(esc).join(' · ') + (m.dob ? ' · born ' + esc(dmy(m.dob)) : ' · <span class="bad">no date of birth on record</span>') + '</div>' +
-      '<div class="grid4"><label class="sel">The change <select id="bfKind">' + BL_FORM_KINDS.map(([v, l]) => '<option value="' + v + '"' + (v === BF.kind ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
-      '<label class="sel">Effective <input class="field" type="date" id="bfEff" value="' + esc(BF.effective) + '"></label>' +
-      '<label class="sel">Marital status (A) <select id="bfMar">' + ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'].map(x => '<option value="' + x + '"' + (BF.marital === x ? ' selected' : '') + '>' + (x ? x.charAt(0) + x.slice(1).toLowerCase() : 'Not on record') + '</option>').join('') + '</select></label>' +
-      '<label class="sel">Plan administrator (F) <input class="field" id="bfAdmin" value="' + esc(BF.admin) + '" placeholder="The group’s administrator"></label></div>';
-    if (BF.kind === 'terminate') h += '<p class="small muted">Section A: the member’s record. Section B (ii): ' + (deps.length ? 'the ' + deps.length + ' dependent' + (deps.length === 1 ? '' : 's') + ' on record, removed on the same date' : 'no dependent on record; the cover note says any dependent under the certificate ends with it') + '.</p>';
-    if (BF.kind === 'adddep') h += depRows(BF.deps, 'Dependent(s) to be covered (Section B)', 4);
-    if (BF.kind === 'removedep') h += depRows(BF.deps.length ? BF.deps : deps, 'Dependent(s) to be removed (Section B (ii))', 4);
-    if (BF.kind === 'address') h += '<label class="sel">New address (Section D) <input class="field" id="bfAddr" maxlength="240" value="' + esc(BF.address) + '"></label>' + (BF.member && BF.member.address ? '<p class="small muted">On file: ' + esc(BF.member.address) + '</p>' : '');
-    if (BF.kind === 'beneficiary') h += '<div class="bdeps"><b>Beneficiary to add (C), or remove (tick)</b>' + [0, 1, 2].map(i => { const x = BF.bens[i] || {}; return '<div class="bdep ben"><select class="field" data-fben="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD', 'OTHER'].map(r => '<option' + (x.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><input class="field" placeholder="Full name" data-fben="name" data-i="' + i + '" value="' + esc(x.name || '') + '"><select class="field" data-fben="gender" data-i="' + i + '"><option value="">M/F</option><option' + (x.gender === 'M' ? ' selected' : '') + '>M</option><option' + (x.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-fben="dob" data-i="' + i + '" value="' + esc(x.dob || '') + '"><input class="field" type="number" placeholder="%" data-fben="pct" data-i="' + i + '" value="' + esc(x.pct || '') + '"><label class="toggle small"><input type="checkbox" data-fben="remove" data-i="' + i + '"' + (x.remove ? ' checked' : '') + '> remove</label></div>'; }).join('') + (BF.member && BF.member.bens && BF.member.bens.length ? '<p class="small muted">On file: ' + esc(BF.member.bens.join('; ')) + '</p>' : '') + '</div>';
-    if (BF.kind === 'bank') h += '<div class="grid4"><label class="sel">Name of bank (E) <input class="field" id="bfBank" value="' + esc(BF.bankName) + '"></label><label class="sel">Account number <input class="field" id="bfAcct" value="' + esc(BF.bankAccount) + '"></label><label class="sel">Branch <input class="field" id="bfBr" value="' + esc(BF.bankBranch) + '"></label></div>';
-    if (BF.kind === 'plan') h += '<div class="grid4"><label class="sel">Deductible (D) <select id="bfDed"><option value="">–</option>' + ['$500', '$1,000', '$2,500'].map(x => '<option' + (BF.deductible === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label><label class="sel">Major medical <select id="bfMaj"><option value="">–</option>' + ['Increase $250,000', 'Increase $500,000', 'Increase $1,000,000', 'Decrease $250,000', 'Decrease $500,000', 'Decrease $1,000,000'].map(x => '<option' + (BF.major === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label></div>';
-    h += '<label class="sel">Reason, for the cover note (optional) <input class="field" id="bfReason" maxlength="300" value="' + esc(BF.reason) + '"></label>' +
-      '<div class="uprow" style="margin-top:8px"><button class="btn ghost" type="button" id="bfPrev">' + (BF.html ? 'Update the preview' : 'Preview the form') + '</button>' + (d.group.to && d.group.to.length ? '<label class="toggle small"><input type="checkbox" id="bfCopy"' + (BF.copyGroup ? ' checked' : '') + '> also copy ' + esc(d.group.contact || d.group.to[0]) + '</label>' : '') + '</div>';
-    if (BF.html) h += '<div class="fprev"><div class="small muted">' + (BF.missing.length ? 'Not on record: ' + esc(BF.missing.join(', ')) + '. ' : 'Every field in Section A is on record. ') + (BF.blocking.length ? '<b class="bad">Needed before it goes: ' + esc(BF.blocking.join(', ')) + '.</b>' : '') + '</div><iframe title="The change form" id="bfFrame" sandbox=""></iframe>' +
-      '<div class="row"><button class="btn" type="button" id="bfSend"' + (BF.blocking.length ? ' disabled' : '') + '>Send to EB Customer Care' + (d.live ? '' : ' (test)') + '</button><button class="btn ghost" type="button" onclick="dlg.close()">Close</button></div></div>';
+    h += '<div class="bpicked"><b>' + esc(m.name) + '</b> · ' + [m.label, m.policy, m.status || (m.live ? 'on the plan' : ''), m.plan].filter(Boolean).map(esc).join(' · ') + (m.dob ? ' · born ' + esc(dmy(m.dob)) : ' · <span class="bad">no date of birth on record</span>') + '</div>';
+    if (BF.form === 'easi') {
+      h += '<div class="grid4"><label class="sel">What is this <select id="bfEasi">' + BL_EASI.map(([v, l]) => '<option value="' + v + '"' + (v === BF.easiKind ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+        '<label class="sel">Identification (B) <select id="bfIdt">' + [['', ''], ['national', 'National ID card'], ['permit', 'Driver’s permit'], ['passport', 'Passport']].map(([v, l]) => '<option value="' + v + '"' + (BF.idType === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label><label class="sel">ID number <input class="field" id="bfIdn" value="' + esc(BF.idNo) + '"></label></div>';
+      if (BF.easiKind !== 'terminate') h += '<div class="grid4"><label class="sel">Bank (C) <input class="field" id="bfBank" value="' + esc(BF.bankName) + '"></label><label class="sel">Branch <input class="field" id="bfBr" value="' + esc(BF.bankBranch) + '"></label><label class="sel">Account number <input class="field" id="bfAcct" inputmode="numeric" value="' + esc(BF.bankAccount) + '"></label><label class="sel">Type <select id="bfBty">' + [['', ''], ['SAVINGS', 'Savings'], ['CHEQUING', 'Chequing']].map(([v, l]) => '<option value="' + v + '"' + (BF.bankType === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label></div>';
+      h += '<label class="sel">Note for the cover e-mail (optional) <input class="field" id="bfReason" maxlength="300" value="' + esc(BF.reason) + '"></label>' + blFormTail('EASI Collect as it will go');
+    } else {
+      h += '<div class="grid4"><label class="sel">The change <select id="bfKind">' + BL_FORM_KINDS.map(([v, l]) => '<option value="' + v + '"' + (v === BF.kind ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+        '<label class="sel">Effective <input class="field" type="date" id="bfEff" value="' + esc(BF.effective) + '"></label>' +
+        '<label class="sel">Marital status (A) <select id="bfMar">' + ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'].map(x => '<option value="' + x + '"' + (BF.marital === x ? ' selected' : '') + '>' + (x ? x.charAt(0) + x.slice(1).toLowerCase() : 'Not on record') + '</option>').join('') + '</select></label>' +
+        '<label class="sel">Plan administrator (F) <input class="field" id="bfAdmin" value="' + esc(BF.admin) + '" placeholder="The group’s administrator"></label></div>';
+      if (BF.kind === 'terminate') h += '<p class="small muted">Section A: the member’s record. Section B (ii): ' + (deps.length ? 'the ' + deps.length + ' dependent' + (deps.length === 1 ? '' : 's') + ' on record, removed on the same date' : 'no dependent on record; the cover note says any dependent under the certificate ends with it') + '.</p>';
+      if (BF.kind === 'adddep') h += blDepRows(BF.deps, 'Dependent(s) to be covered (Section B)', 4, 'fdep');
+      if (BF.kind === 'removedep') h += blDepRows(BF.deps.length ? BF.deps : deps, 'Dependent(s) to be removed (Section B (ii))', 4, 'fdep');
+      if (BF.kind === 'address') h += '<label class="sel">New address (Section D) <input class="field" id="bfAddr" maxlength="240" value="' + esc(BF.address) + '"></label>' + (BF.member && BF.member.address ? '<p class="small muted">On file: ' + esc(BF.member.address) + '</p>' : '');
+      if (BF.kind === 'beneficiary') h += blDepRows(BF.bens, 'Beneficiary to add (C), or remove (tick)', 3, 'fben', 'ben');
+      if (BF.kind === 'bank') h += '<div class="grid4"><label class="sel">Name of bank (E) <input class="field" id="bfBank" value="' + esc(BF.bankName) + '"></label><label class="sel">Account number <input class="field" id="bfAcct" value="' + esc(BF.bankAccount) + '"></label><label class="sel">Branch <input class="field" id="bfBr" value="' + esc(BF.bankBranch) + '"></label></div>';
+      if (BF.kind === 'plan') h += '<div class="grid4"><label class="sel">Deductible (D) <select id="bfDed"><option value="">–</option>' + ['$500', '$1,000', '$2,500'].map(x => '<option' + (BF.deductible === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label><label class="sel">Major medical <select id="bfMaj"><option value="">–</option>' + ['Increase $250,000', 'Increase $500,000', 'Increase $1,000,000', 'Decrease $250,000', 'Decrease $500,000', 'Decrease $1,000,000'].map(x => '<option' + (BF.major === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label></div>';
+      h += '<label class="sel">Reason, for the cover note (optional) <input class="field" id="bfReason" maxlength="300" value="' + esc(BF.reason) + '"></label>' + blFormTail('EB0010 as it will go');
+    }
   }
   $('dlgB').innerHTML = h + '</div>';
   blFormBind();
@@ -351,14 +395,22 @@ function blFormResults() {
 function blFormRead() {
   const g = id => $(id) ? $(id).value.trim() : '';
   if ($('bfKind')) BF.kind = $('bfKind').value;
-  BF.effective = g('bfEff'); BF.marital = g('bfMar'); BF.admin = g('bfAdmin'); BF.reason = g('bfReason'); BF.address = g('bfAddr'); BF.bankName = g('bfBank'); BF.bankAccount = g('bfAcct'); BF.bankBranch = g('bfBr'); BF.deductible = g('bfDed'); BF.major = g('bfMaj'); BF.copyGroup = $('bfCopy') ? $('bfCopy').checked : false;
+  if ($('bfEasi')) BF.easiKind = $('bfEasi').value;
+  BF.effective = g('bfEff'); BF.marital = g('bfMar'); BF.admin = g('bfAdmin'); BF.reason = g('bfReason'); BF.address = g('bfAddr'); BF.bankName = g('bfBank'); BF.bankAccount = g('bfAcct'); BF.bankBranch = g('bfBr'); BF.bankType = g('bfBty'); BF.idType = g('bfIdt'); BF.idNo = g('bfIdn'); BF.deductible = g('bfDed'); BF.major = g('bfMaj'); BF.copyGroup = $('bfCopy') ? $('bfCopy').checked : false;
+  document.querySelectorAll('[data-enr]').forEach(el => { BF.enrol[el.dataset.enr] = el.type === 'checkbox' ? (el.checked ? 'Y' : '') : el.value.trim(); });
   const rows = (attr, n) => { const out = []; for (let i = 0; i < n; i++) { const o = {}; document.querySelectorAll('[data-' + attr + '][data-i="' + i + '"]').forEach(el => { o[el.dataset[attr]] = el.type === 'checkbox' ? el.checked : el.value.trim(); }); if (o.name) out.push(o); } return out; };
-  if (document.querySelector('[data-fdep]')) BF.deps = rows('fdep', 4);
+  if (document.querySelector('[data-fdep]')) BF.deps = rows('fdep', 5);
   if (document.querySelector('[data-fben]')) BF.bens = rows('fben', 3);
+  if (document.querySelector('[data-fenb]')) BF.bens = rows('fenb', 3);
 }
 function blFormBody(act) {
-  return { action: 'gcm.billAct', group: BILL.group.key, line: BF.pick ? BF.pick.line : '', month: BILL.month, act, member: BF.pick ? BF.pick.id : '', kind: BF.kind, effective: BF.effective, marital: BF.marital, reason: BF.reason, admin: BF.admin, address: BF.address, bankName: BF.bankName, bankAccount: BF.bankAccount, bankBranch: BF.bankBranch, deductible: BF.deductible, major: BF.major, deps: JSON.stringify(BF.deps), bens: JSON.stringify(BF.bens), copyGroup: BF.copyGroup ? 'Y' : '' };
+  const b = { action: 'gcm.billAct', group: BILL.group.key, line: BF.pick ? BF.pick.line : '', month: BILL.month, act, member: BF.pick ? BF.pick.id : '', reason: BF.reason, admin: BF.admin, deps: JSON.stringify(BF.deps), bens: JSON.stringify(BF.bens), copyGroup: BF.copyGroup ? 'Y' : '' };
+  if (BF.form === 'enrol') return Object.assign(b, BF.enrol);
+  Object.assign(b, { kind: BF.kind, effective: BF.effective, marital: BF.marital, address: BF.address, bankName: BF.bankName, bankAccount: BF.bankAccount, bankBranch: BF.bankBranch, deductible: BF.deductible, major: BF.major });
+  if (BF.form === 'easi') Object.assign(b, { easiKind: BF.easiKind, idType: BF.idType, idNo: BF.idNo, bankType: BF.bankType });
+  return b;
 }
+function blFormActs() { return BF.form === 'enrol' ? ['enrol', 'enrolSend'] : BF.form === 'easi' ? ['easi', 'easiSend'] : ['form', 'formSend']; }
 async function blFormSearch() {
   BF.q = $('bfq').value.trim(); if (BF.q.length < 2) { BF.results = null; BF.pick = null; blFormDraw(); return; }
   BF.results = 'busy'; $('bfres').innerHTML = blFormResults();
@@ -368,33 +420,53 @@ async function blFormSearch() {
 }
 async function blFormPreview(quiet) {
   blFormRead();
-  const r = await post(blFormBody('form'));
+  const r = await post(blFormBody(blFormActs()[0]));
   if (!r.ok) return toast(r.error || 'Not filled', true);
-  BF.member = Object.assign({}, r.data.member, { deps: (r.data.kind === 'terminate' ? r.data.removeDeps : []).concat([]), address: r.data.addressOnFile, bens: r.data.bensOnFile });
-  if (r.data.kind === 'terminate') BF.member.deps = r.data.removeDeps; else if (!BF.deps.length && r.data.kind === 'removedep') BF.deps = r.data.removeDeps;
-  BF.html = r.html; BF.missing = r.missing || []; BF.blocking = r.blocking || []; BILL.live = r.live; BILL.to = r.to;
+  if (BF.form === 'change') {
+    BF.member = Object.assign({}, r.data.member, { deps: (r.data.kind === 'terminate' ? r.data.removeDeps : []).concat([]), address: r.data.addressOnFile, bens: r.data.bensOnFile });
+    if (r.data.kind === 'terminate') BF.member.deps = r.data.removeDeps; else if (!BF.deps.length && r.data.kind === 'removedep') BF.deps = r.data.removeDeps;
+  }
+  if (r.policies) { BF.policies = r.policies; if (!BF.enrol.policyHealth) BF.enrol.policyHealth = r.policies.health || ''; if (!BF.enrol.policyLife) BF.enrol.policyLife = r.policies.life || ''; }
+  BF.pdf = r.pdf || ''; BF.missing = r.missing || []; BF.blocking = r.blocking || []; BILL.live = r.live; BILL.to = r.to;
+  if (!BF.pdf) toast(r.pdfError ? 'The PDF could not be filled: ' + r.pdfError : 'The PDF could not be filled', true);
   blFormDraw();
   if (!quiet) { const f = $('bfFrame'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 }
 async function blFormSend() {
   blFormRead();
-  if (!BF.effective) return toast('Give the effective date.', true);
-  if (!BF.admin) return toast('Name the plan administrator for Section F.', true);
+  if (BF.form === 'change' && !BF.effective) return toast('Give the effective date.', true);
+  if (BF.form === 'enrol' && !BF.enrol.effective) return toast('Give the effective date of coverage (Section F).', true);
+  if (BF.form !== 'easi' && !BF.admin) return toast('Name the plan administrator for Section F.', true);
   $('bfSend').disabled = true;
-  const r = await post(blFormBody('formSend'));
+  const r = await post(blFormBody(blFormActs()[1]));
   $('bfSend').disabled = false;
   toast(r.ok ? r.said : (r.error || 'Not sent'), !r.ok);
   if (r.ok) { dlg.close(); openBilling(BILL.group.key, BILL.month); }
 }
+async function blPdfPages(el, b64) {
+  el.innerHTML = '<p class="small muted">Drawing the form…</p>';
+  try {
+    await blScript(BL_LIB.pdf); pdfjsLib.GlobalWorkerOptions.workerSrc = BL_LIB.worker;
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0)), doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+    el.innerHTML = ''; const width = Math.min(el.clientWidth || 700, 900), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n), v0 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: width / v0.width * dpr });
+      const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; c.setAttribute('aria-label', 'Page ' + n + ' of the form');
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; el.appendChild(c);
+    }
+  } catch (e) { el.innerHTML = '<p class="small muted">The preview could not be drawn here; download the PDF above to see it.</p>'; }
+}
 function blFormBind() {
   const box = $('dlgB');
+  box.querySelectorAll('[data-bform]').forEach(b => b.onclick = () => { if (BF.form === b.dataset.bform) return; blFormRead(); const keep = { admin: BF.admin, q: BF.q }; blFormPanel(keep.q, '', null, b.dataset.bform); BF.admin = keep.admin; blFormDraw(); });
   if ($('bfq')) { let t; $('bfq').oninput = () => { clearTimeout(t); t = setTimeout(blFormSearch, 350); }; $('bfq').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); blFormSearch(); } }; }
   if ($('bfGo')) $('bfGo').onclick = blFormSearch;
-  box.querySelectorAll('[data-bpick]').forEach(b => b.onclick = () => { BF.pick = BF.results.find(m => m.id === b.dataset.bpick); BF.member = null; BF.html = ''; BF.deps = []; BF.bens = []; blFormDraw(); blFormPreview(true); });
-  if ($('bfKind')) $('bfKind').onchange = () => { blFormRead(); BF.html = ''; BF.deps = []; BF.bens = []; blFormDraw(); };
+  box.querySelectorAll('[data-bpick]').forEach(b => b.onclick = () => { BF.pick = BF.results.find(m => m.id === b.dataset.bpick); BF.member = null; BF.pdf = ''; BF.deps = []; BF.bens = []; blFormDraw(); if (BF.form === 'change') blFormPreview(true); });
+  if ($('bfKind')) $('bfKind').onchange = () => { blFormRead(); BF.pdf = ''; BF.deps = []; BF.bens = []; blFormDraw(); };
+  if ($('bfEasi')) $('bfEasi').onchange = () => { blFormRead(); BF.pdf = ''; blFormDraw(); };
   if ($('bfPrev')) $('bfPrev').onclick = () => blFormPreview(false);
   if ($('bfSend')) $('bfSend').onclick = blFormSend;
-  if ($('bfFrame') && BF.html) $('bfFrame').srcdoc = BF.html;
+  if ($('bfFrame') && BF.pdf) blPdfPages($('bfFrame'), BF.pdf);
 }
 
 /* ── reading a file on this device ── */
@@ -510,7 +582,7 @@ function blBindTasks() {
   };
   app.querySelectorAll('[data-tcmt]').forEach(b => b.onclick = () => go(b.dataset.tcmt, false));
   app.querySelectorAll('[data-task]').forEach(b => b.onclick = () => blTaskPanel(b.dataset.task, b.dataset.f || ''));
-  app.querySelectorAll('[data-form]').forEach(b => b.onclick = () => blFormPanel(b.dataset.form, b.dataset.fkind));
+  app.querySelectorAll('[data-form]').forEach(b => b.onclick = () => blFormPanel(b.dataset.form, b.dataset.fkind, null, b.dataset.fform || 'change'));
   app.querySelectorAll('[data-tpl]').forEach(b => b.onclick = () => { const t = $('tn-' + b.dataset.tpl); if (!t) return; t.value = (t.value.trim() ? t.value.trim() + ' ' : '') + b.dataset.text; t.focus(); const i = t.value.indexOf('['); if (i >= 0) { const j = t.value.indexOf(']', i); t.setSelectionRange(i, j + 1); } });
   app.querySelectorAll('[data-tnote]').forEach(b => b.onclick = () => go(b.dataset.tnote, true));
 }

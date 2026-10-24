@@ -241,7 +241,11 @@ footer a{color:inherit}
 .chg .tick{display:flex;align-items:center;gap:8px;font-weight:500;margin:6px 0}.chg .tick.big{font-size:15px;margin:12px 0}
 .chg .ok{background:var(--goodBg);border-radius:10px;padding:10px 12px;margin-top:10px;font-weight:600;color:var(--good)}
 .fprev{margin-top:12px}.fpt{font-size:13px;color:var(--muted);margin-bottom:6px}.fprev iframe{width:100%;height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
-@media (max-width:560px){.deps .dep,.deps .dep.ben{grid-template-columns:1fr 1fr}.fprev iframe{height:420px}}
+.pdfv canvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:10px;background:#fff;margin:0 0 10px}
+.cfp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px}.cfpb{font:inherit;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}.cfpb b{font-size:14px}.cfpb span{font-size:12px;color:var(--muted)}.cfpb.on{border-color:var(--primary);background:var(--primarySoft,#e8f0ff);box-shadow:0 0 0 2px var(--primarySoft,#e8f0ff) inset}
+.esec{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}.esec>b{display:block;margin-bottom:6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}.ticks{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
+.deps .dep.wide{grid-template-columns:1fr 2fr 1fr 1fr 1.4fr}
+@media (max-width:560px){.deps .dep,.deps .dep.ben,.deps .dep.wide{grid-template-columns:1fr 1fr}.fprev iframe{height:420px}.cfp{grid-template-columns:1fr}}
 .cyears{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:4px 0 8px}
 .cyears div{background:var(--sunken);border-radius:10px;padding:10px 12px}.cyears b{display:block;font-size:18px;color:#13408F}.cyears span{font-size:12.5px;color:var(--muted)}
 </style>
@@ -426,14 +430,34 @@ function bindBilling() {
 
 /* the change form (24 October 2026): search a member of your plan, Guardian Life's form EB0010 fills from our records,
    confirm the change, and it goes to Guardian Life with our branch copied */
-let CF = { q: '', results: null, member: null, pick: null, kind: 'terminate', html: '', missing: [], sent: '', err: '', busy: false, deps: [], bens: [] };
+function cfFresh(form) { return { form: form || 'change', q: '', results: null, member: null, pick: null, kind: 'terminate', easiKind: 'change', pdf: '', missing: [], blocking: [], sent: '', err: '', busy: false, deps: [], bens: [], enrol: {}, easi: {}, policies: null }; }
+let CF = cfFresh('change');
+const CF_FORMS = [['change', 'Change or terminate', 'EB0010'], ['enrol', 'Enrol a new member', 'GIO001'], ['easi', 'Claim payment account', 'EASI Collect']];
+const CF_EASI = [['change', 'Change the account'], ['enrol', 'Enrol an account'], ['terminate', 'End the arrangement']];
+/* GIO001, Guardian's application form: what the group types, section by section */
+const ENR = [
+  ['A', 'first', 'First name', 'text'], ['A', 'last', 'Surname', 'text'], ['A', 'dob', 'Date of birth', 'date'], ['A', 'gender', 'Gender', 'select', ['', 'M', 'F'], ['', 'Male', 'Female']],
+  ['A', 'email', 'E-mail address', 'email'], ['A', 'telCell', 'Cellular', 'tel'], ['A', 'telHome', 'Telephone (home)', 'tel'], ['A', 'telWork', 'Telephone (work)', 'tel'], ['A', 'telExt', 'Ext', 'text'],
+  ['A', 'marital', 'Marital status', 'select', ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'], ['', 'Single', 'Married', 'Common law', 'Divorced', 'Widowed']], ['A', 'occupation', 'Occupation', 'text'],
+  ['A', 'idType', 'Identification', 'select', ['', 'DP', 'PP', 'ID'], ['', 'Driver’s permit', 'Passport', 'ID card']], ['A', 'idNo', 'ID number', 'text'],
+  ['A', 'covHealth', 'Group Health', 'check'], ['A', 'covLife', 'Group Life', 'check'], ['A', 'covVoluntary', 'Voluntary Life (extra)', 'check'], ['A', 'covDependentLife', 'Dependent Life (extra)', 'check'],
+  ['B', 'otherPlan', 'Covered by any other medical plan?', 'select', ['', 'no', 'yes'], ['', 'No', 'Yes']], ['B', 'otherPlanName', 'Name of that plan', 'text'], ['B', 'otherInsurer', 'Its insurance company', 'text'],
+  ['E', 'bankAccount', 'Account number (claims are paid to it)', 'text'], ['E', 'bankType', 'Account type', 'select', ['', 'SAVINGS', 'CHEQUING'], ['', 'Savings', 'Chequing']], ['E', 'bankName', 'Name of bank', 'text'], ['E', 'bankBranch', 'Name of branch', 'text'],
+  ['F', 'employed', 'Date employed', 'date'], ['F', 'confirmed', 'Date of confirmation', 'date'], ['F', 'effective', 'Effective date of coverage', 'date'], ['F', 'tier', 'Coverage tier', 'select', ['', 'SINGLE', 'EMPLOYEE + ONE', 'EMPLOYEE + FAMILY'], ['', 'Single', 'Employee + one', 'Employee + family']], ['F', 'salary', 'Annual salary, TT$ (Group Life)', 'text'],
+  ['F', 'policyHealth', 'Policy no. Health', 'text'], ['F', 'policyLife', 'Policy no. Life', 'text']];
+const ENR_SECTIONS = { A: 'Section A · the employee', B: 'Section B · co-ordination of benefits', C: 'Section C · dependents to be covered', D: 'Section D · beneficiary (Group Life)', E: 'Section E · account for claim payments', F: 'Section F · for the policyholder' };
 const CF_KINDS = [['terminate', 'Terminate this member'], ['adddep', 'Add a dependent'], ['removedep', 'Remove a dependent'], ['address', 'Change of address'], ['beneficiary', 'Change a beneficiary'], ['bank', 'Bank account for claim payments']];
 const CF_RELS = ['SPOUSE', 'CHILD', 'CHILD', 'CHILD'];
 function chgHtml() {
-  let h = '<div class="chg" id="chg"><h3>Terminate or change a member</h3><p class="sub">Search the person’s name. Guardian Life’s change form (EB0010) fills from our records; you confirm the change and it goes to Guardian Life with our branch copied.</p>';
-  if (CF.sent) return h + '<div class="ok">' + esc(CF.sent) + '</div><button class="btn ghost" type="button" id="cfAnother" style="margin-top:8px">Another change</button></div>';
-  h += '<label for="cq">The person’s name</label><div class="srch"><input class="field" id="cq" maxlength="80" placeholder="Surname or first name" value="' + esc(CF.q) + '" autocomplete="off"><button class="btn ghost" type="button" id="cqGo">Search</button></div><div id="cres">' + chgResults() + '</div>';
-  if (CF.pick) h += chgForm();
+  const f = CF.form;
+  let h = '<div class="chg" id="chg"><h3>Enrol, terminate or change a member</h3><p class="sub">Guardian Life’s own forms, filled from our records and what you give here. You confirm, and the form goes to Guardian Life with our branch copied.</p>' +
+    '<div class="cfp">' + CF_FORMS.map(([k, l, c]) => '<button type="button" class="cfpb' + (f === k ? ' on' : '') + '" data-cform="' + k + '"><b>' + l + '</b><span>' + c + '</span></button>').join('') + '</div>';
+  if (CF.sent) return h + '<div class="ok">' + esc(CF.sent) + '</div><button class="btn ghost" type="button" id="cfAnother" style="margin-top:8px">Another form</button></div>';
+  if (f === 'enrol') h += enrolForm();
+  else {
+    h += '<label for="cq">The person’s name</label><div class="srch"><input class="field" id="cq" maxlength="80" placeholder="Surname or first name" value="' + esc(CF.q) + '" autocomplete="off"><button class="btn ghost" type="button" id="cqGo">Search</button></div><div id="cres">' + chgResults() + '</div>';
+    if (CF.pick) h += f === 'easi' ? easiForm() : chgForm();
+  }
   return h + '<div class="err" id="cerr" role="alert">' + esc(CF.err) + '</div></div>';
 }
 function chgResults() {
@@ -442,34 +466,77 @@ function chgResults() {
   if (!CF.results.length) return '<p class="sub">Nobody on your plan matches that. Try the surname alone, or part of it.</p>';
   return '<ul class="cres">' + CF.results.map(m => '<li><button type="button" class="pickm' + (CF.pick && CF.pick.id === m.id ? ' on' : '') + '" data-pick="' + esc(m.id) + '"><b>' + esc(m.name) + '</b><span>' + esc(m.label) + ' · ' + esc(m.policy) + ' · ' + esc(m.status) + (m.since ? ' · since ' + esc(dmy(m.since)) : '') + (m.deps ? ' · ' + m.deps + ' dependent' + (m.deps === 1 ? '' : 's') + ' on record' : '') + '</span></button></li>').join('') + '</ul>' + (CF.results.more ? '<p class="sub">More match: add another word of the name.</p>' : '');
 }
+function chgTail(label) {
+  return '<div class="row2"><div><label for="cadmin">Plan administrator’s name (Section F)</label><input class="field" id="cadmin" maxlength="80" value="' + esc(CF.admin || A._who || '') + '"></div><div><label for="cname">Your name</label><input class="field" id="cname" maxlength="80" value="' + esc(CF.name || A._who || '') + '"></div></div>' +
+    '<label class="tick big"><input type="checkbox" id="cauth"' + (CF.auth ? ' checked' : '') + '> I am authorised to submit this for ' + esc(D.group) + '</label>' +
+    '<div class="row2"><button class="btn ghost" type="button" id="cprev">' + (CF.pdf ? 'Update the preview' : 'Preview the form') + '</button><button class="btn" type="button" id="cgo"' + (CF.pdf && !CF.blocking.length ? '' : ' disabled') + '>Submit to Guardian Life</button></div>' +
+    (CF.pdf ? '<div class="fprev"><div class="fpt">' + (label || 'The form as it will go') + (CF.missing.length ? ' · not given or not on our records: ' + esc(CF.missing.join(', ')) : '') + (CF.blocking.length ? ' · <b>still needed: ' + esc(CF.blocking.join(', ')) + '</b>' : '') + ' · <a href="data:application/pdf;base64,' + CF.pdf + '" download="guardian-form.pdf">download the PDF</a></div><div class="pdfv" id="cfr"></div></div>' : '');
+}
+function depRowsHtml(list, label, n, attr, extra) {
+  return '<div class="deps"><label>' + label + '</label>' + Array.from({ length: n }, (_, i) => { const d = list[i] || {}; return '<div class="dep' + (extra === 'ben' ? ' ben' : extra === 'country' ? ' wide' : '') + '">' +
+    (extra === 'ben' ? '<input class="field" placeholder="Relationship" data-' + attr + '="rel" data-i="' + i + '" value="' + esc(d.rel || '') + '">' : '<select class="field" data-' + attr + '="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD'].map(r => '<option' + (d.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select>') +
+    '<input class="field" placeholder="Full name" data-' + attr + '="name" data-i="' + i + '" value="' + esc(d.name || '') + '"><select class="field" data-' + attr + '="gender" data-i="' + i + '"><option value="">M/F</option><option' + (d.gender === 'M' ? ' selected' : '') + '>M</option><option' + (d.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-' + attr + '="dob" data-i="' + i + '" value="' + esc(d.dob || '') + '">' +
+    (extra === 'ben' ? '<input class="field" placeholder="%" inputmode="numeric" data-' + attr + '="pct" data-i="' + i + '" value="' + esc(d.pct || '') + '">' + (attr === 'ben' ? '<label class="tick"><input type="checkbox" data-' + attr + '="remove" data-i="' + i + '"' + (d.remove ? ' checked' : '') + '> remove</label>' : '') : '') +
+    (extra === 'country' ? '<input class="field" placeholder="Country of residence" data-' + attr + '="country" data-i="' + i + '" value="' + esc(d.country || 'TRINIDAD AND TOBAGO') + '">' : '') + '</div>'; }).join('') + '</div>';
+}
 function chgForm() {
   const m = CF.pick, k = CF.kind, deps = (CF.member && CF.member.deps) || [];
-  const depRows = (list, label) => '<div class="deps"><label>' + label + '</label>' + [0, 1, 2, 3].map(i => { const d = list[i] || {}; return '<div class="dep"><select class="field" data-dep="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD'].map(r => '<option' + (d.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><input class="field" placeholder="Full name" data-dep="name" data-i="' + i + '" value="' + esc(d.name || '') + '"><select class="field" data-dep="gender" data-i="' + i + '"><option value="">M/F</option><option' + (d.gender === 'M' ? ' selected' : '') + '>M</option><option' + (d.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-dep="dob" data-i="' + i + '" value="' + esc(d.dob || '') + '"></div>'; }).join('') + '</div>';
   let h = '<div class="cform" id="cform"><div class="picked"><b>' + esc(m.name) + '</b> · ' + esc(m.label) + ' · policy / certificate ' + esc(m.policy) + '</div>' +
     '<label for="ckind">What change?</label><select class="field" id="ckind">' + CF_KINDS.map(([v, l]) => '<option value="' + v + '"' + (v === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
     '<div class="row2"><div><label for="ceff">Effective date</label><input class="field" type="date" id="ceff" value="' + esc(CF.effective || '') + '"></div><div><label for="cmar">Marital status (Section A)</label><select class="field" id="cmar">' + ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'].map(x => '<option value="' + x + '"' + ((CF.marital || '') === x ? ' selected' : '') + '>' + (x ? x.charAt(0) + x.slice(1).toLowerCase() : 'Not sure') + '</option>').join('') + '</select></div></div>';
   if (k === 'terminate') h += '<p class="sub">Section A fills with ' + esc(m.name) + '’s record' + (deps.length ? ', and the ' + deps.length + ' dependent' + (deps.length === 1 ? '' : 's') + ' on record go in Section B (ii) to be removed on the same date' : '; any dependent covered under this certificate ends with it') + '.</p>';
-  if (k === 'adddep') h += depRows(CF.deps, 'Dependent(s) to be covered (Section B)');
-  if (k === 'removedep') h += (deps.length ? '<p class="sub">On record: ' + esc(deps.map(d => d.name + ' (' + d.rel.toLowerCase() + ')').join(', ')) + '. List those to remove:</p>' : '') + depRows(CF.deps.length ? CF.deps : deps, 'Dependent(s) to be removed (Section B (ii))');
+  if (k === 'adddep') h += depRowsHtml(CF.deps, 'Dependent(s) to be covered (Section B)', 4, 'dep');
+  if (k === 'removedep') h += (deps.length ? '<p class="sub">On record: ' + esc(deps.map(d => d.name + ' (' + d.rel.toLowerCase() + ')').join(', ')) + '. List those to remove:</p>' : '') + depRowsHtml(CF.deps.length ? CF.deps : deps, 'Dependent(s) to be removed (Section B (ii))', 4, 'dep');
   if (k === 'address') h += '<label for="caddr">New address (Section D; a utility bill in the insured’s name, not older than three months, follows)</label><textarea class="field" id="caddr" maxlength="240">' + esc(CF.address || '') + '</textarea>';
-  if (k === 'beneficiary') h += '<div class="deps"><label>Beneficiary to add (Section C) or remove (tick)</label>' + [0, 1, 2].map(i => { const d = CF.bens[i] || {}; return '<div class="dep ben"><select class="field" data-ben="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD', 'OTHER'].map(r => '<option' + (d.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><input class="field" placeholder="Full name" data-ben="name" data-i="' + i + '" value="' + esc(d.name || '') + '"><select class="field" data-ben="gender" data-i="' + i + '"><option value="">M/F</option><option' + (d.gender === 'M' ? ' selected' : '') + '>M</option><option' + (d.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-ben="dob" data-i="' + i + '" value="' + esc(d.dob || '') + '"><input class="field" type="number" min="0" max="100" placeholder="%" data-ben="pct" data-i="' + i + '" value="' + esc(d.pct || '') + '"><label class="tick"><input type="checkbox" data-ben="remove" data-i="' + i + '"' + (d.remove ? ' checked' : '') + '> remove</label></div>'; }).join('') + '</div>';
+  if (k === 'beneficiary') h += depRowsHtml(CF.bens, 'Beneficiary to add (Section C) or remove (tick)', 3, 'ben', 'ben');
   if (k === 'bank') h += '<div class="row2"><div><label for="cbank">Name of bank (Section E)</label><input class="field" id="cbank" maxlength="80" value="' + esc(CF.bankName || '') + '"></div><div><label for="cacct">Account number</label><input class="field" id="cacct" maxlength="40" value="' + esc(CF.bankAccount || '') + '"></div></div><label for="cbr">Name of branch</label><input class="field" id="cbr" maxlength="80" value="' + esc(CF.bankBranch || '') + '"><p class="sub">A copy of the bank statement header, showing the insured’s name and account number, follows by e-mail.</p>';
-  h += '<label for="creason">Reason, or anything Guardian Life should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' +
-    '<div class="row2"><div><label for="cadmin">Plan administrator’s name (Section F)</label><input class="field" id="cadmin" maxlength="80" value="' + esc(CF.admin || A._who || '') + '"></div><div><label for="cname">Your name</label><input class="field" id="cname" maxlength="80" value="' + esc(CF.name || A._who || '') + '"></div></div>' +
-    '<label class="tick big"><input type="checkbox" id="cauth"' + (CF.auth ? ' checked' : '') + '> I am authorised to submit this change for ' + esc(D.group) + '</label>' +
-    '<div class="row2"><button class="btn ghost" type="button" id="cprev">' + (CF.html ? 'Update the preview' : 'Preview the form') + '</button><button class="btn" type="button" id="cgo"' + (CF.html ? '' : ' disabled') + '>Submit to Guardian Life</button></div>';
-  if (CF.html) h += '<div class="fprev"><div class="fpt">The form as it will go' + (CF.missing.length ? ' · not on our records: ' + esc(CF.missing.join(', ')) : '') + '</div><iframe title="The change form" id="cfr" sandbox=""></iframe></div>';
+  h += '<label for="creason">Reason, or anything Guardian Life should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' + chgTail('EB0010 as it will go');
   return h + '</div>';
+}
+function easiForm() {
+  const m = CF.pick, x = CF.easi;
+  let h = '<div class="cform" id="cform"><div class="picked"><b>' + esc(m.name) + '</b> · ' + esc(m.label) + ' · policy / certificate ' + esc(m.policy) + '</div>' +
+    '<p class="sub">EASI Collect is Guardian Life’s form for the bank account its health claims are paid to. Section A fills from the record; give the account and the ID below.</p>' +
+    '<label for="ceasi">What is this?</label><select class="field" id="ceasi">' + CF_EASI.map(([v, l]) => '<option value="' + v + '"' + (v === CF.easiKind ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+    '<div class="row2"><div><label for="cidt">Identification (Section B)</label><select class="field" id="cidt">' + [['', ''], ['national', 'National ID card'], ['permit', 'Driver’s permit'], ['passport', 'Passport']].map(([v, l]) => '<option value="' + v + '"' + ((x.idType || '') === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div><div><label for="cidn">ID number</label><input class="field" id="cidn" maxlength="30" value="' + esc(x.idNo || '') + '"></div></div>';
+  if (CF.easiKind !== 'terminate') h += '<div class="row2"><div><label for="cbank">Name of bank (Section C)</label><input class="field" id="cbank" maxlength="60" value="' + esc(x.bankName || '') + '"></div><div><label for="cbr">Branch</label><input class="field" id="cbr" maxlength="60" value="' + esc(x.bankBranch || '') + '"></div></div>' +
+    '<div class="row2"><div><label for="cacct">Account number</label><input class="field" id="cacct" maxlength="16" inputmode="numeric" value="' + esc(x.bankAccount || '') + '"></div><div><label for="cbty">Type of account</label><select class="field" id="cbty">' + [['', ''], ['SAVINGS', 'Savings'], ['CHEQUING', 'Chequing']].map(([v, l]) => '<option value="' + v + '"' + ((x.bankType || '') === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div></div><p class="sub">A copy of the ID and the top of the bank statement, showing the name and account number, follow by e-mail; the insured signs the form.</p>';
+  h += '<label for="creason">Anything Guardian Life should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' + chgTail('EASI Collect as it will go');
+  return h + '</div>';
+}
+function enrolForm() {
+  const e = CF.enrol, sec = {};
+  ENR.forEach(f => { (sec[f[0]] = sec[f[0]] || []).push(f); });
+  const field = ([, id, label, type, vals, labels]) => {
+    const v = e[id] === undefined ? '' : e[id];
+    if (type === 'check') return '<label class="tick"><input type="checkbox" data-enr="' + id + '"' + (v ? ' checked' : '') + '> ' + label + '</label>';
+    if (type === 'select') return '<div><label for="en_' + id + '">' + label + '</label><select class="field" id="en_' + id + '" data-enr="' + id + '">' + vals.map((o, i) => '<option value="' + o + '"' + (String(v) === o ? ' selected' : '') + '>' + (labels[i] || o) + '</option>').join('') + '</select></div>';
+    return '<div><label for="en_' + id + '">' + label + '</label><input class="field" type="' + type + '" id="en_' + id + '" data-enr="' + id + '" value="' + esc(v) + '"' + (type === 'text' ? ' maxlength="80"' : '') + '></div>';
+  };
+  let h = '<div class="cform" id="cform"><p class="sub">Guardian Life’s Group Health and Life Application Form (GIO001). Give what you have; what is left blank is listed with the preview, and the employee completes the Declaration of Insurability separately.</p>';
+  ['A', 'B'].forEach(k => { h += '<div class="esec"><b>' + ENR_SECTIONS[k] + '</b><div class="row2">' + sec[k].filter(f => f[3] !== 'check').map(field).join('') + '</div>' + (sec[k].some(f => f[3] === 'check') ? '<div class="ticks">' + sec[k].filter(f => f[3] === 'check').map(field).join('') + '</div>' : '') + '</div>'; });
+  h += '<div class="esec"><b>' + ENR_SECTIONS.C + '</b>' + depRowsHtml(CF.deps, 'Spouse first, then children (up to five)', 5, 'dep', 'country') + '</div>';
+  h += '<div class="esec"><b>' + ENR_SECTIONS.D + '</b>' + depRowsHtml(CF.bens, 'Relationship, name, gender, date of birth and share (total 100%)', 3, 'enb', 'ben') + '</div>';
+  ['E', 'F'].forEach(k => { h += '<div class="esec"><b>' + ENR_SECTIONS[k] + '</b><div class="row2">' + sec[k].map(field).join('') + '</div></div>'; });
+  h += '<label for="creason">Anything Guardian Life should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' + chgTail('GIO001 as it will go') + '</div>';
+  return h;
 }
 function chgRead() {
   const g = id => $(id) ? $(id).value.trim() : '';
-  CF.kind = g('ckind') || CF.kind; CF.effective = g('ceff'); CF.marital = g('cmar'); CF.reason = g('creason'); CF.admin = g('cadmin'); CF.name = g('cname'); CF.address = g('caddr'); CF.bankName = g('cbank'); CF.bankAccount = g('cacct'); CF.bankBranch = g('cbr'); CF.auth = $('cauth') ? $('cauth').checked : false;
+  CF.kind = g('ckind') || CF.kind; CF.easiKind = g('ceasi') || CF.easiKind; CF.effective = g('ceff'); CF.marital = g('cmar'); CF.reason = g('creason'); CF.admin = g('cadmin'); CF.name = g('cname'); CF.address = g('caddr'); CF.bankName = g('cbank'); CF.bankAccount = g('cacct'); CF.bankBranch = g('cbr'); CF.auth = $('cauth') ? $('cauth').checked : false;
+  if (CF.form === 'easi') CF.easi = { idType: g('cidt'), idNo: g('cidn'), bankName: g('cbank'), bankBranch: g('cbr'), bankAccount: g('cacct'), bankType: g('cbty') };
+  if (CF.form === 'enrol') document.querySelectorAll('[data-enr]').forEach(el => { CF.enrol[el.dataset.enr] = el.type === 'checkbox' ? (el.checked ? 'Y' : '') : el.value.trim(); });
   const rows = (attr, n) => { const out = []; for (let i = 0; i < n; i++) { const o = {}; document.querySelectorAll('[data-' + attr + '][data-i="' + i + '"]').forEach(el => { o[el.dataset[attr]] = el.type === 'checkbox' ? el.checked : el.value.trim(); }); if (o.name) out.push(o); } return out; };
-  if (document.querySelector('[data-dep]')) CF.deps = rows('dep', 4);
+  if (document.querySelector('[data-dep]')) CF.deps = rows('dep', 5);
   if (document.querySelector('[data-ben]')) CF.bens = rows('ben', 3);
+  if (document.querySelector('[data-enb]')) CF.bens = rows('enb', 3);
 }
 function chgBody() {
-  return { lb: CRED.lb, code: CRED.code, member: CF.pick.id, kind: CF.kind, effective: CF.effective, marital: CF.marital, reason: CF.reason, admin: CF.admin, name: CF.name, address: CF.address, bankName: CF.bankName, bankAccount: CF.bankAccount, bankBranch: CF.bankBranch, deps: JSON.stringify(CF.deps), bens: JSON.stringify(CF.bens) };
+  const b = { lb: CRED.lb, code: CRED.code, form: CF.form, reason: CF.reason, admin: CF.admin, name: CF.name, deps: JSON.stringify(CF.deps), bens: JSON.stringify(CF.bens) };
+  if (CF.form === 'enrol') return Object.assign(b, CF.enrol);
+  Object.assign(b, { member: CF.pick ? CF.pick.id : '', kind: CF.kind, effective: CF.effective, marital: CF.marital, address: CF.address, bankName: CF.bankName, bankAccount: CF.bankAccount, bankBranch: CF.bankBranch });
+  if (CF.form === 'easi') Object.assign(b, { easiKind: CF.easiKind, idType: CF.easi.idType || '', idNo: CF.easi.idNo || '', bankType: CF.easi.bankType || '' });
+  return b;
 }
 function chgDraw() { const el = $('chg'); if (!el) return; el.outerHTML = chgHtml(); bindChg(); }
 async function chgSearch() {
@@ -485,30 +552,36 @@ async function chgSearch() {
 }
 function bindChg() {
   const el = $('chg'); if (!el) return;
-  if ($('cfAnother')) $('cfAnother').onclick = () => { CF = { q: '', results: null, member: null, pick: null, kind: 'terminate', html: '', missing: [], sent: '', err: '', busy: false, deps: [], bens: [] }; chgDraw(); };
+  el.querySelectorAll('[data-cform]').forEach(b => b.onclick = () => { if (CF.form === b.dataset.cform) return; chgRead(); CF = Object.assign(cfFresh(b.dataset.cform), { name: CF.name, admin: CF.admin }); chgDraw(); });
+  if ($('cfAnother')) $('cfAnother').onclick = () => { CF = cfFresh(CF.form); chgDraw(); };
   if ($('cq')) { let t; $('cq').oninput = () => { clearTimeout(t); t = setTimeout(chgSearch, 400); }; $('cq').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); chgSearch(); } }; }
   if ($('cqGo')) $('cqGo').onclick = chgSearch;
-  el.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { CF.pick = CF.results.find(m => m.id === b.dataset.pick); CF.member = null; CF.html = ''; CF.missing = []; CF.deps = []; CF.bens = []; chgDraw(); chgPreview(true); });
-  if ($('ckind')) $('ckind').onchange = () => { chgRead(); CF.html = ''; CF.deps = []; CF.bens = []; chgDraw(); };
+  el.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { CF.pick = CF.results.find(m => m.id === b.dataset.pick); CF.member = null; CF.pdf = ''; CF.missing = []; CF.blocking = []; CF.deps = []; CF.bens = []; chgDraw(); if (CF.form === 'change') chgPreview(true); });
+  if ($('ckind')) $('ckind').onchange = () => { chgRead(); CF.pdf = ''; CF.deps = []; CF.bens = []; chgDraw(); };
+  if ($('ceasi')) $('ceasi').onchange = () => { chgRead(); CF.pdf = ''; chgDraw(); };
   if ($('cprev')) $('cprev').onclick = () => chgPreview(false);
   if ($('cgo')) $('cgo').onclick = chgSend;
-  if ($('cfr') && CF.html) $('cfr').srcdoc = CF.html;
+  if ($('cfr') && CF.pdf) pdfPages($('cfr'), CF.pdf);
 }
 async function chgPreview(quiet) {
   chgRead(); CF.err = '';
   const b = chgBody(); let r;
   try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientForm&' + Object.keys(b).map(k => k + '=' + encodeURIComponent(b[k])).join('&') + '&z=' + Date.now())).text()); } catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
   if (!r.ok) { CF.err = r.error || 'Not available.'; chgDraw(); return; }
-  CF.member = r.member; CF.html = r.html; CF.missing = r.missing || [];
-  if (quiet && !CF.deps.length && CF.kind === 'removedep') CF.deps = (r.member.deps || []).slice(0, 4);
+  if (r.member) CF.member = r.member;
+  CF.pdf = r.pdf || ''; CF.missing = r.missing || []; CF.blocking = r.blocking || [];
+  if (!CF.pdf) CF.err = r.pdfError ? 'The form could not be drawn: ' + r.pdfError : 'The form could not be drawn.';
+  if (r.policies) { CF.policies = r.policies; if (!CF.enrol.policyHealth) CF.enrol.policyHealth = r.policies.health || ''; if (!CF.enrol.policyLife) CF.enrol.policyLife = r.policies.life || ''; }
+  if (quiet && !CF.deps.length && CF.kind === 'removedep' && r.member) CF.deps = (r.member.deps || []).slice(0, 4);
   chgDraw();
   if (!quiet) { const f = $('cfr'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 }
 async function chgSend() {
   chgRead(); CF.err = '';
   if (!CF.name) { CF.err = 'Please give your name.'; return chgDraw(); }
-  if (!CF.auth) { CF.err = 'Please tick that you are authorised to submit this change.'; return chgDraw(); }
-  if (!CF.effective) { CF.err = 'Please give the effective date.'; return chgDraw(); }
+  if (!CF.auth) { CF.err = 'Please tick that you are authorised to submit this.'; return chgDraw(); }
+  if (CF.form === 'change' && !CF.effective) { CF.err = 'Please give the effective date.'; return chgDraw(); }
+  if (CF.form === 'enrol' && !CF.enrol.effective) { CF.err = 'Please give the effective date of coverage (Section F).'; return chgDraw(); }
   $('cgo').disabled = true; $('cgo').textContent = 'Sending…';
   const body = Object.assign({ action: 'gcm.clientFormSend', authorised: 'Y' }, chgBody()); let r;
   try { r = JSON.parse(await (await fetch(SVC, { method: 'POST', body: JSON.stringify(body) })).text()); } catch (e) { r = { ok: false, error: 'We could not reach our system. Please try again, or e-mail us.' }; }
@@ -516,6 +589,22 @@ async function chgSend() {
   CF.sent = r.said || 'Thank you. The form has gone to Guardian Life.';
   try { localStorage.setItem(nameKey(), CF.name.slice(0, 80)); } catch (e) {}
   chgDraw();
+}
+/* the filled PDF drawn page by page, with pdf.js from cdnjs */
+const PDFJS = { src: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', worker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js' };
+function loadScript(src) { return new Promise((res, rej) => { if (document.querySelector('script[src="' + src + '"]')) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+async function pdfPages(el, b64) {
+  el.innerHTML = '<p class="sub">Drawing the form…</p>';
+  try {
+    await loadScript(PDFJS.src); pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS.worker;
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0)), doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+    el.innerHTML = ''; const width = Math.min(el.clientWidth || 600, 900), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n), v0 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: width / v0.width * dpr });
+      const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; c.setAttribute('aria-label', 'Page ' + n + ' of the form');
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; el.appendChild(c);
+    }
+  } catch (e) { el.innerHTML = '<p class="sub">The preview could not be drawn on this device. <a href="data:application/pdf;base64,' + b64 + '" download="guardian-form.pdf">Download the PDF</a> to see it.</p>'; }
 }
 
 function bindPend() {

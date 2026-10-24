@@ -3794,6 +3794,47 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       with the owner @mentioned (a plain post when Connect refuses) and the owner is e-mailed; the fifth and last
       (`MAX`) goes to the branch manager. The day's summary lists them under "Change forms with EB Customer Care".
     - Covered in `billing/billing-test.js` (106) and `billing/page-test.js` (90, the group's flow on a phone and a desk).
+  - **The forms are Guardian's own PDFs, filled exactly; enrolments and the ACH form join** (24 October 2026, the same
+    evening: "forms have to be exactly on the forms I've uploaded to you. Enrollments, everything. It needs to be exact").
+    The HTML rendering of EB0010 is retired (`gblFormHtml_` stays only as the fallback when Guardian's PDF cannot be
+    read). The blank forms live in the repository at `groupclientmanagement/forms/` (`GBL_PDF.FILES`: EB0010 2024/3 and
+    GIO001 V.1/10-2016, both fillable PDFs from Guardian); a file of the same name in the Drive folder the
+    `GCM_FORMS_FOLDER` Script property names wins (`gblFormFile_`), so a new edition from Guardian is a file swap, and the
+    sent copies go to its "Sent forms" subfolder with the link on Group Changes (`gblKeepSent_`; without the folder the
+    Form column just names the PDF). **The EASI Collect form has no blank yet**: the copy uploaded on 24 October was a
+    filled one, so it is not in the repository; `EASI-Collect.pdf` goes in the Drive folder (or the forms folder on the
+    site) when a blank arrives, and until then the EASI flow says which file is missing and sends nothing.
+    - **How a PDF is filled** (`gblPdfFill_`): pdf-lib (cdnjs, or a `pdf-lib.min.js` in the Drive folder) is loaded with
+      `new Function` under a Promise that settles at once (`gblSyncPromise_`) and a `setTimeout` that runs its callback
+      at once, because a web app cannot await and pdf-lib only ever waits on the CPU; the whole fill runs inside one call
+      (about 0.1 s). Text goes into the form's own fields (`setText`, the size fitted to the box between 6 and 11 pt),
+      checkboxes are ticked, radio groups selected, and on a flat form the values are drawn at measured positions
+      (`draw`). Nothing is flattened, so EB Customer Care can still correct a box. Apps Script's bytes are signed:
+      `gblU8_` and `gblSigned_` convert both ways.
+    - **The maps.** `GBL_EB0010` names each of EB0010's 119 fields (random names, mapped box by box from the form); the
+      account number is drawn into the printed cells (`accountCells`). `GBL_GIO001` uses Guardian's own field names and
+      radio options. `GBL_EASI` holds the positions on the flat EASI form. The uploaded "Change of Dependent Status" form
+      is EB0010's 2019/10 edition, which the 2024/3 edition covers, so it is not used.
+    - **Enrolment** (`gblEnrolData_`, `gblGio001Fill_`, `gblEnrolSend_`; acts `enrol` / `enrolSend`; the group's page
+      with `form=enrol`): what the group types goes onto GIO001 section by section; the group's own policy numbers are
+      read off its members' certificates (`gblGroupPolicyNos_`, the part before the first dash) and can be typed over;
+      a name, date of birth, gender, a coverage, the effective date and the administrator block a send, the rest is
+      listed as not given. The cover note lists what follows from the employee (`GBL_ENROL.FOLLOWS`: the Declaration of
+      Insurability, the ID copy, the bank statement header, the signatures). It is logged as a joiner, opens the
+      owner's task and is chased like any form.
+    - **EASI Collect** (`gblEasiData_`, `gblEasiFill_`, `gblEasiSend_`; acts `easi` / `easiSend`; `form=easi`): the
+      member is searched as for a change, Section A fills from the record, the account, its type and the ID are typed;
+      an enrolment or change needs all three, an ending needs none. Logged as a bank change.
+    - **One send path** (`gblSendPack_`): the cover note, test mode, the register row, the owner's task and the kept
+      copy are the same for every form; the subject is `<code> <title> – <group> – <member> – <kind>` (EB0010 keeps
+      "Policy Change Form", which the chase's reply matching reads).
+    - **The pages** draw the PDF page by page with pdf.js (`pdfPages` on the group's page, `blPdfPages` on the staff
+      page) and offer the PDF to download; both have the three forms as pills (`CF.form` / `BF.form`), the enrolment as
+      a sectioned form (`ENR` / `BL_ENR`), and the EASI fields after the member is picked.
+    - Tests: `billing/billing-test.js` (122, the real blank forms from the repository and the EASI copy from the
+      scratchpad placed in a mocked Drive folder) and `billing/page-test.js` (99, pdf.js from the vendor copies); the
+      harness (`gcmlive/env-sq.js`) mocks `DriveApp`, serves the site's forms from the repository and pdf-lib from the
+      scratchpad. `forms/gas-sync.js` there is the proof that pdf-lib runs under the synchronous Promise.
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
     Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing

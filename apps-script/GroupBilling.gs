@@ -676,7 +676,7 @@ function gblAct_(b) {
   }
   if (act === 'change') return gblChange_(g, who, line, b, 'staff');
   if (act === 'task') return gblTaskOpen_(g, who, line, month, b);
-  if (act === 'members' || act === 'form' || act === 'formSend') return gblFormAct_(g, who, b);
+  if (['members', 'form', 'formSend', 'enrol', 'enrolSend', 'easi', 'easiSend'].indexOf(act) >= 0) return gblFormAct_(g, who, b);
   return { ok: false, error: 'Unknown action.' };
 }
 function gblBillPatch_(bill, fields) {
@@ -1116,53 +1116,412 @@ function gblFormHtml_(d) {
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + E(d.code) + ' Policy Change Form – ' + E(d.insured) + '</title>' + css + '</head><body>' +
     '<div class="pg">' + head + note + pol + a + b1 + b2 + c1 + '</div><div>' + head + c2 + dd + e + f + '</div></body></html>';
 }
-function gblFormPdf_(html, name) {
-  var blob = Utilities.newBlob(html, 'text/html', name + '.html');
-  try { return blob.getAs('application/pdf').setName(name + '.pdf'); } catch (e) { return blob; }
+/* ── Guardian's own PDF forms, filled exactly (24 October 2026) ───────────────────────────────────────────────────────── */
+/* "Forms have to be exactly on the forms I've uploaded to you. Enrollments, everything. It needs to be exact." So the form
+ * that goes to EB Customer Care is Guardian's PDF itself with the values typed into its own boxes, never a redrawn page.
+ * EB0010 (2024/3) and GIO001 (V.1/10-2016) are fillable PDFs: each box is an AcroForm field, and GBL_EB0010 / GBL_GIO001
+ * name the field for each value (EB0010's field names are random strings, so they were mapped box by box from the form).
+ * The EASI Collect form is flat, so GBL_EASI holds where each value is drawn. pdf-lib does the filling, inside one call:
+ * a web app cannot await, and pdf-lib only ever waits on the CPU, so it runs under a Promise that settles at once
+ * (gblSyncPromise_). The blank forms are read from the site (groupclientmanagement/forms/<file>); a file of the same
+ * name in the Drive folder the GCM_FORMS_FOLDER Script property names wins, so a new edition from Guardian is a file
+ * swap, and the sent copies are kept there too. Nothing is flattened: a box can still be corrected in Reader. */
+var GBL_PDF = {
+  FOLDER_PROP: 'GCM_FORMS_FOLDER', SITE: 'https://rickyrampersadbranch.com/groupclientmanagement/forms/',
+  LIB: 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js', LIB_NAME: 'pdf-lib.min.js',
+  FILES: { EB0010: 'EB0010-2024-3.pdf', GIO001: 'GIO001.pdf', EASI: 'EASI-Collect.pdf' },
+  TITLES: { EB0010: 'Policy Change Form', GIO001: 'Group Health and Life Application Form', EASI: 'Collect Enrolment/Change Form' }, /* code + title is the subject line */
+  VERSIONS: { EB0010: '2024/3', GIO001: 'V.1/10-2016', EASI: '' },
+  SENT: 'Sent forms', MAXSIZE: 11, MINSIZE: 6
+};
+var GBL_EB0010 = {
+  policy: 'Text-wc1J3leoBl', holder: 'Text-XhJgZzV4Ti', insured: 'Text-6kWiTbOxVO', dob: 'Text-OObtBFgSBC', emailPersonal: 'Text-EKwsAgkyf2', emailWork: 'Text-p7lMqK9-jQ',
+  telHome: 'Text-0IF2JNW4ug', telWork: 'Text-I4PLLjo5Fo', telExt: 'Text-kkwuSjKsdM', telCell: 'Text-_1fi1VB9Bf',
+  marital: { 'SINGLE': 'CheckBox-R8PTwSoOac', 'MARRIED': 'CheckBox-NXxr7iepzM', 'COMMON LAW': 'CheckBox-Os4d_GRunA', 'DIVORCED': 'CheckBox-NchEBm4LvC', 'WIDOWED': 'CheckBox-oWtnIZPROc' },
+  plan: { 'GROUP': 'CheckBox-Qllbo8mRdN', 'INDIVIDUAL': 'CheckBox-Wf6g832N2D' },
+  addDeps: [{ name: 'Text-9hUgcLWcYc', gender: 'Text--r_si-0zYx', dob: 'Text-CjEDRrr4a6', reason: 'Text-2hSlAJsAmx', on: 'Text-XBeLncxZtl' }, { name: 'Text-goqP5R5KNd', gender: 'Text-7x8cjbCgxM', dob: 'Text-Lslfh8MpDe', reason: 'Text-3G6B3RZUpg', on: 'Text-9Nl6QVCXTl' }, { name: 'Text-wmvCj1NuTy', gender: 'Text-V22FRY4aZw', dob: 'Text-khHjlVesWU', reason: 'Text-0z3ymrOn1s', on: 'Text-b9GaztJwpv' }, { name: 'Text-nd-6nX7fGo', gender: 'Text-mYUmNpERwz', dob: 'Text-N_bJPj563B', reason: 'Text-J9BG_e9ACD', on: 'Text-uVLT8sAZrX' }, { name: 'Text-xY9blr2_y9', gender: 'Text-2gxD6rFs_5', dob: 'Text-mZm29DB0bl', reason: 'Text-2m62Jdpp9j', on: 'Text-2NFi7GcwR5' }],
+  removeDeps: [{ name: 'Text-0nSXJyOrWH', gender: 'Text-y8zys2z1NT', dob: 'Text-njWnL4YWLX', on: 'Text-AmZQyewNjy' }, { name: 'Text-Zf9SVAjlYQ', gender: 'Text-_FRP1X9R9W', dob: 'Text-1zuUOmwF4-', on: 'Text-gjiYn0XpTj' }, { name: 'Text-Utl47KhDhr', gender: 'Text-sAgGFb-Xwi', dob: 'Text-wmNhpg9mOY', on: 'Text-BtpkUI0h44' }, { name: 'Text-tjIaLlTFtI', gender: 'Text-aUmbbIjJL_', dob: 'Text-CVWOZhwH0N', on: 'Text-16hkICvv6f' }],
+  addBens: [{ name: 'Text-LuWzomYHzG', gender: 'Text-m3CCxxihGx', dob: 'Text-KcmMj_4fFx', pct: 'Text-FsLnSx4yZ8' }, { name: 'Text-BWFf8hmOxb', gender: 'Text-lS5gRXjE7x', dob: 'Text-COu5ZXARgO', pct: 'Text-jo98ozwsiE' }, { name: 'Text-STwW2TZfDt', gender: 'Text-o02bNPyaDo', dob: 'Text-sGOR-fiFDB', pct: 'Text-LukiyK9ar3' }, { name: 'Text-NwChspsDtz', gender: 'Text-W-SBWCqvT7', dob: 'Text-tFmJeSRJJx', pct: 'Text-Al0ANORVW4' }],
+  removeBens: [{ name: 'Text-CcxKAfyGWI', gender: 'Text-iN3y7TRdY6', dob: 'Text-h8BNkStE7j', on: 'Text-woVQVof5nl' }, { name: 'Text-0gtJrOhdJL', gender: 'Text-x8EHPkxz59', dob: 'Text-4qkyMwtJuX', on: 'Text-Nj3WOZ6YLD' }, { name: 'Text-JtwXNXGRXP', gender: 'Text-2gjyC8HcQQ', dob: 'Text-VgKU9A7bZq', on: 'Text-jNdPU3H97Y' }, { name: 'Text-21MMOyCJ0c', gender: 'Text-jmM9iMjNH0', dob: 'Text-we3sA2uCpP', on: 'Text-IHoYZ4zjRx' }],
+  planType: { 'PROVISOR': 'CheckBox-78nsj7zlMD', 'GLOBAL CARE PLUS': 'CheckBox-3fjaSJNrI6' }, deductible: { '500': 'CheckBox-bnZxZ0JVEV', '1000': 'CheckBox-Ipv3oIPlTS', '2500': 'CheckBox-Vyu3phUZ9Q' }, globalCare: { check: 'CheckBox-o1jKe-gJZn', text: 'Text-hLhxJZUVem' },
+  major: { 'INCREASE': 'CheckBox-tvwWkPJgmV', 'DECREASE': 'CheckBox-vXArtB3MXt', '250000': 'CheckBox-TRE0hEEy2i', '500000': 'CheckBox-oTyDMgk8ZW', '1000000': 'CheckBox-pPQeRTKoeZ' }, mode: { 'ANNUAL': 'CheckBox-QOuAWT1Xi_', 'SEMI-ANNUAL': 'CheckBox-223Y6wDYSn' },
+  address: 'Paragraph-GTVy2UvWTn', bankChange: 'CheckBox-xlkJQmlahn', bankName: 'Text-naSrEKUKJa', bankBranch: 'Text-fq30i5X7NT', bankAccount: 'Text-wmjhDspcT0',
+  accountCells: { page: 2, x0: 28.5, step: 17.3, y: 376, size: 11, n: 16 },
+  signatures: { insured: 'Text-sna6F88dFP', insuredDate: 'Text-EYIVpivQXN', spouse: 'Text-1f7jXh8R4P', spouseDate: 'Text-PBD5WTqstg', witness: 'Text-JwcrdRp6w6', witnessDate: 'Text-JdctaN0dOL' },
+  admin: { name: 'Text-Ys8UhtgDOE', signature: 'Text-MGtx5HI8uw', date: 'Text-8BOP7FtYWw', stamp: 'Paragraph-0TBGkU12FO' }
+};
+/* GIO001: Guardian's own field names; a radio option is its group's name plus the choice. */
+var GBL_GIO001 = {
+  policyLife: 'POLICY NO LIFE', policyHealth: 'POLICY NO HEALTH', holder: 'NAME OF POLICYHOLDER', employee: 'NAME OF EMPLOYEEINSURED', dob: 'DATE OF BIRTHddmmyyyy',
+  email: 'EMAIL ADDRESS', gender: { group: 'DATE OF BIRTHddmmyyyy-0', M: 'DATE OF BIRTHddmmyyyy_MALE_On', F: 'DATE OF BIRTHddmmyyyy_FEMALE_On' },
+  telHome: 'TELEPHONE Home', telWork: 'Work', telExt: 'Ext', telCell: 'Cellular',
+  marital: { group: 'Work Ext', 'SINGLE': 'Work Ext_Single_On', 'MARRIED': 'Work Ext_Married_On', 'COMMON LAW': 'Work Ext_Common Law_On', 'DIVORCED': 'Work Ext_Divorced_On', 'WIDOWED': 'Work Ext_Widowed_On' },
+  occupation: 'OCCUPATION', idType: { DP: 'DP', PP: 'PP', ID: 'ID' }, idNo: 'Please attach a copy Number',
+  coverage: { health: 'GROUP HEALTH', life: 'GROUP LIFE', voluntary: 'VOLUNTARY LIFE', dependentLife: 'DEPENDENT LIFE' },
+  otherPlan: { group: 'SECTION B  COORDINATION OF BENEFITS', yes: 'SECTION B  COORDINATION OF BENEFITS_Yes_On', no: 'SECTION B  COORDINATION OF BENEFITS_No_On' },
+  otherPlanName: 'If Yes please give a NAME OF PLAN', otherInsurer: 'b NAME OF INSURANCE COMPANY',
+  deps: [{ name: 'NAME OF DEPENDENTS', gender: 'GENDER MF', dob: 'DATE OF BIRTH ddmmyyyy', on: 'EFFECTIVE DATE ddmmyyyy', country: 'COUNTRY OF RESIDENCE' },
+    { name: 'NAME OF DEPENDENTS-0', gender: 'GENDER MF-0', dob: 'DATE OF BIRTH ddmmyyyy-0', on: 'EFFECTIVE DATE ddmmyyyy-0', country: 'COUNTRY OF RESIDENCE-0' },
+    { name: 'NAME OF DEPENDENTS-1', gender: 'GENDER MF-1', dob: 'DATE OF BIRTH ddmmyyyy-1', on: 'EFFECTIVE DATE ddmmyyyy-1', country: 'COUNTRY OF RESIDENCE-1' },
+    { name: 'NAME OF DEPENDENTS-2', gender: 'GENDER MF-2', dob: 'DATE OF BIRTH ddmmyyyy-2', on: 'EFFECTIVE DATE ddmmyyyy-2', country: 'COUNTRY OF RESIDENCE-2' },
+    { name: 'NAME OF DEPENDENTS-3', gender: 'GENDER MF-3', dob: 'DATE OF BIRTH ddmmyyyy-3', on: 'EFFECTIVE DATE ddmmyyyy-3', country: 'COUNTRY OF RESIDENCE-3' }],
+  bens: [{ rel: 'RELATIONSHIP', name: 'NAME OF BENEFICIARY', gender: 'GENDER MF-4', dob: 'DATE OF BIRTH ddmmyyyy-4', pct: 'PERCENTAGE' },
+    { rel: 'RELATIONSHIP-0', name: 'NAME OF BENEFICIARY-0', gender: 'GENDER MF-5', dob: 'DATE OF BIRTH ddmmyyyy-5', pct: 'PERCENTAGE-0' },
+    { rel: 'RELATIONSHIP-1', name: 'NAME OF BENEFICIARY-1', gender: 'GENDER MF-6', dob: 'DATE OF BIRTH ddmmyyyy-6', pct: 'PERCENTAGE-1' },
+    { rel: 'RELATIONSHIP-2', name: 'NAME OF BENEFICIARY-2', gender: 'GENDER MF-7', dob: 'DATE OF BIRTH ddmmyyyy-7', pct: 'PERCENTAGE-2' },
+    { rel: 'RELATIONSHIP-3', name: 'NAME OF BENEFICIARY-3', gender: 'GENDER MF-8', dob: 'DATE OF BIRTH ddmmyyyy-8', pct: 'PERCENTAGE-3' }],
+  account: 'Textfield', accountType: { SAVINGS: 'SAVINGS', CHEQUING: 'CHEQUING' }, bankName: 'NAME OF BANK', bankBranch: 'NAME OF BRANCH',
+  employeeSignature: 'EMPLOYEE SIGNATURE', signedOn: 'DATE ddmmyyyy',
+  employed: 'DATE EMPLOYED ddmmyyyy', confirmed: 'DATE OF CONFIRMATION ddmmyyyy', effective: 'EFFECTIVE DATE OF COVERAGE ddmmyyyy',
+  tier: { group: 'COVERAGE TIER tick as applicable', SINGLE: 'COVERAGE TIER tick as applicable_SINGLE_On', 'EMPLOYEE + ONE': 'COVERAGE TIER tick as applicable_EMPLOYEE  ONE_On', 'EMPLOYEE + FAMILY': 'COVERAGE TIER tick as applicable_EMPLOYEE  FAMILY_On' },
+  salary: 'BD', admin: { name: 'NAME', signature: 'SIGNATURE', stamp: 'PLACE COMPANY STAMP HERE' }
+};
+/* EASI Collect (flat): where each value is drawn, in PDF points from the bottom-left of the Letter page. */
+var GBL_EASI = { page: 1, size: 10, mark: 'X', markSize: 12,
+  kind: { enrol: [73, 669], change: [235, 669], terminate: [412, 669] },
+  first: [72, 618], middle: [222, 618], last: [360, 618], email: [72, 571], cell: [375, 571],
+  plan: { group: [78, 535], individual: [248, 535], provider: [380, 535] }, company: [76, 497], policy: [250, 497], providerName: [375, 497],
+  idType: { national: [78, 436], permit: [244, 436], passport: [411, 436] }, idNo: [90, 408],
+  bank: [76, 334], branch: [307, 334], account: { x0: 82, step: 31.2, y: 278, size: 13, n: 16 }, accountType: { savings: [78, 202], chequing: [249, 202] } };
+
+/** A Promise that settles and runs its callbacks at once: pdf-lib never waits on I/O, so under it the library runs to
+ *  the end inside one call, which is what a web app (no event loop to await on) needs. */
+function gblSyncPromise_() {
+  function P(executor) {
+    var self = this; self.s = 0; self.v = undefined; self.q = [];
+    function settle(state, value) {
+      if (self.s) return;
+      if (state === 1 && value && typeof value.then === 'function') { value.then(function (v) { settle(1, v); }, function (e) { settle(2, e); }); return; }
+      self.s = state; self.v = value; var q = self.q; self.q = []; q.forEach(function (f) { f(); });
+    }
+    try { executor(function (v) { settle(1, v); }, function (e) { settle(2, e); }); } catch (e) { settle(2, e); }
+  }
+  P.prototype.then = function (onF, onR) {
+    var self = this;
+    return new P(function (resolve, reject) {
+      function run() {
+        try {
+          if (self.s === 1) resolve(typeof onF === 'function' ? onF(self.v) : self.v);
+          else if (typeof onR === 'function') resolve(onR(self.v)); else reject(self.v);
+        } catch (e) { reject(e); }
+      }
+      if (self.s) run(); else self.q.push(run);
+    });
+  };
+  P.prototype['catch'] = function (onR) { return this.then(undefined, onR); };
+  P.prototype['finally'] = function (f) { return this.then(function (v) { f(); return v; }, function (e) { f(); throw e; }); };
+  P.resolve = function (v) { return new P(function (r) { r(v); }); };
+  P.reject = function (e) { return new P(function (r, j) { j(e); }); };
+  P.all = function (arr) { return new P(function (resolve, reject) { var list = Array.prototype.slice.call(arr), out = [], n = 0; if (!list.length) return resolve(out); list.forEach(function (p, i) { P.resolve(p).then(function (v) { out[i] = v; if (++n === list.length) resolve(out); }, reject); }); }); };
+  P.race = function (arr) { return new P(function (resolve, reject) { Array.prototype.slice.call(arr).forEach(function (p) { P.resolve(p).then(resolve, reject); }); }); };
+  return P;
+}
+var GBL_PDFLIB_ = null;
+/** pdf-lib, loaded once per execution: the Drive copy if the forms folder holds one, else cdnjs. */
+function gblPdfLib_() {
+  if (GBL_PDFLIB_) return GBL_PDFLIB_;
+  var text = '', blob = gblFormFile_(GBL_PDF.LIB_NAME, true);
+  if (blob) text = blob.getDataAsString();
+  else { var res = UrlFetchApp.fetch(GBL_PDF.LIB, { muteHttpExceptions: true }); if (res.getResponseCode() !== 200) throw new Error('pdf-lib could not be fetched (HTTP ' + res.getResponseCode() + ')'); text = res.getContentText(); }
+  var P = gblSyncPromise_();
+  var lib = (new Function('Promise', 'setTimeout', 'self', 'window', 'exports', 'module', 'define', text + '\n;return (typeof PDFLib !== "undefined" ? PDFLib : this.PDFLib);'))(P, function (f) { f(); }, undefined, undefined, undefined, undefined, undefined);
+  if (!lib || !lib.PDFDocument) throw new Error('pdf-lib did not load');
+  GBL_PDFLIB_ = lib;
+  return lib;
+}
+/** A blank form (or the library) as a Blob: the Drive folder's copy first, then the site's. */
+function gblFormFile_(name, optional) {
+  var id = '';
+  try { id = PropertiesService.getScriptProperties().getProperty(GBL_PDF.FOLDER_PROP) || ''; } catch (e) {}
+  if (id) { try { var it = DriveApp.getFolderById(id).getFilesByName(name); if (it.hasNext()) return it.next().getBlob(); } catch (e) {} }
+  if (optional) return null;
+  var res = UrlFetchApp.fetch(GBL_PDF.SITE + name, { muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw new Error('The blank form ' + name + ' is neither in the forms folder nor on the site (HTTP ' + res.getResponseCode() + ').');
+  return res.getBlob();
+}
+function gblU8_(bytes) { var u = new Uint8Array(bytes.length); for (var i = 0; i < bytes.length; i++) u[i] = bytes[i] & 255; return u; }
+function gblSigned_(u8) { var a = new Array(u8.length); for (var i = 0; i < u8.length; i++) a[i] = u8[i] > 127 ? u8[i] - 256 : u8[i]; return a; }
+function gblSync_(promise, what) {
+  var out = { done: false, value: null, error: null };
+  promise.then(function (v) { out.done = true; out.value = v; }, function (e) { out.done = true; out.error = e; });
+  if (!out.done) throw new Error(what + ' did not finish inside the call');
+  if (out.error) throw new Error(what + ': ' + String(out.error && out.error.message ? out.error.message : out.error).slice(0, 200));
+  return out.value;
+}
+/** The form `code` filled: fill = { text: {field: value}, check: [field], radio: {group: option}, size: {field: pt},
+ *  draw: [{page, x, y, text, size}] }. A text that would not fit its box is set smaller, down to MINSIZE. */
+function gblPdfFill_(code, fill, name) {
+  var lib = gblPdfLib_(), blank = gblFormFile_(GBL_PDF.FILES[code]);
+  var doc = gblSync_(lib.PDFDocument.load(gblU8_(blank.getBytes()), { ignoreEncryption: true, updateMetadata: false }), 'Reading ' + code);
+  var font = gblSync_(doc.embedFont(lib.StandardFonts.Helvetica), 'The font'), form = doc.getForm(), pages = doc.getPages(), notes = [];
+  Object.keys(fill.text || {}).forEach(function (k) {
+    var v = fill.text[k]; if (v === undefined || v === null || v === '') return;
+    v = String(v);
+    try {
+      var f = form.getTextField(k), w = f.acroField.getWidgets()[0], width = w ? w.getRectangle().width - 4 : 0, size = (fill.size || {})[k] || 0;
+      if (!size) { size = GBL_PDF.MAXSIZE; if (width > 0 && !f.isMultiline()) while (size > GBL_PDF.MINSIZE && font.widthOfTextAtSize(v, size) > width) size -= 0.5; }
+      f.setFontSize(size); f.setText(v);
+    } catch (e) { notes.push(k + ': ' + String(e && e.message ? e.message : e).slice(0, 80)); }
+  });
+  (fill.check || []).forEach(function (k) { try { form.getCheckBox(k).check(); } catch (e) { notes.push(k + ': ' + String(e && e.message ? e.message : e).slice(0, 80)); } });
+  Object.keys(fill.radio || {}).forEach(function (k) { try { form.getRadioGroup(k).select(fill.radio[k]); } catch (e) { notes.push(k + ': ' + String(e && e.message ? e.message : e).slice(0, 80)); } });
+  (fill.draw || []).forEach(function (t) { var p = pages[(t.page || 1) - 1]; if (p && t.text !== '' && t.text !== undefined) p.drawText(String(t.text), { x: t.x, y: t.y, size: t.size || GBL_PDF.MAXSIZE, font: font }); });
+  try { form.updateFieldAppearances(font); } catch (e) {}
+  var bytes = gblSync_(doc.save({ useObjectStreams: false, updateFieldAppearances: false }), 'Writing ' + code);
+  var blob = Utilities.newBlob(gblSigned_(bytes), 'application/pdf', name + '.pdf');
+  blob.notes = notes;
+  return blob;
+}
+function gblPdfB64_(blob) { return Utilities.base64Encode(blob.getBytes()); }
+function gblDmy_(ymd) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : String(ymd || ''); }
+/** A sent form kept in the forms folder's "Sent forms", when the folder is set: its link goes on the register. */
+function gblKeepSent_(blob, g) {
+  var id = '';
+  try { id = PropertiesService.getScriptProperties().getProperty(GBL_PDF.FOLDER_PROP) || ''; } catch (e) {}
+  if (!id) return '';
+  try {
+    var root = DriveApp.getFolderById(id), it = root.getFoldersByName(GBL_PDF.SENT), sent = it.hasNext() ? it.next() : root.createFolder(GBL_PDF.SENT);
+    var f = sent.createFile(blob.copyBlob ? blob.copyBlob() : blob); f.setName(gcmWhen_(new Date()).replace(/[^\w]+/g, '-') + ' ' + blob.getName());
+    return f.getUrl();
+  } catch (e) { return ''; }
+}
+
+/* ── EB0010 from the change data gblFormData_ builds ─── */
+function gblEb0010Fill_(d) {
+  var M = GBL_EB0010, text = {}, check = [], draw = [], dmy = gblDmy_;
+  text[M.policy] = d.policy; text[M.holder] = d.holder; text[M.insured] = d.insured; text[M.dob] = dmy(d.dob);
+  text[M.emailPersonal] = d.emailPersonal; text[M.emailWork] = d.emailWork; text[M.telHome] = d.telHome; text[M.telWork] = d.telWork; text[M.telExt] = d.telExt; text[M.telCell] = d.telCell;
+  if (d.marital && M.marital[d.marital]) check.push(M.marital[d.marital]);
+  check.push(M.plan[d.planType === 'INDIVIDUAL' ? 'INDIVIDUAL' : 'GROUP']);
+  function rows(list, slots, extra) {
+    var spouse = null, others = [];
+    list.forEach(function (x) { if (/SPOUSE|WIFE|HUSBAND|PARTNER/.test(x.rel) && !spouse) spouse = x; else others.push(x); });
+    var seq = [spouse].concat(others);
+    seq.forEach(function (x, i) { if (!x || !slots[i]) return; var s = slots[i]; text[s.name] = String(x.name || '').toUpperCase(); text[s.gender] = x.gender; text[s.dob] = dmy(x.dob); if (s.on) text[s.on] = dmy(x.on); if (s.reason) text[s.reason] = x.reason; if (s.pct) text[s.pct] = x.pct ? String(x.pct) + '%' : ''; extra && extra(x, s); });
+  }
+  rows(d.addDeps || [], M.addDeps); rows(d.removeDeps || [], M.removeDeps); rows(d.addBens || [], M.addBens); rows(d.removeBens || [], M.removeBens);
+  if (d.kind === 'plan' && d.plan) {
+    if (d.plan.global) check.push(M.planType['GLOBAL CARE PLUS']); else if (d.plan.provisor) check.push(M.planType.PROVISOR);
+    if (M.deductible[String(d.plan.deductible || '').replace(/[^\d]/g, '')]) check.push(M.deductible[String(d.plan.deductible).replace(/[^\d]/g, '')]);
+    var mj = String(d.plan.major || '').toUpperCase().replace(/[^\dA-Z]/g, '');
+    if (/^INC/.test(mj)) check.push(M.major.INCREASE); else if (/^DEC/.test(mj)) check.push(M.major.DECREASE);
+    if (M.major[mj.replace(/[A-Z]/g, '')]) check.push(M.major[mj.replace(/[A-Z]/g, '')]);
+    if (d.plan.mode && M.mode[String(d.plan.mode).toUpperCase()]) check.push(M.mode[String(d.plan.mode).toUpperCase()]);
+  }
+  if (d.address) text[M.address] = d.address;
+  if (d.kind === 'bank' && d.bank && (d.bank.name || d.bank.account)) {
+    check.push(M.bankChange); text[M.bankName] = d.bank.name; text[M.bankBranch] = d.bank.branch;
+    var c = M.accountCells, digits = String(d.bank.account || '').replace(/[^\dA-Za-z]/g, '').slice(0, c.n);
+    for (var i = 0; i < digits.length; i++) draw.push({ page: c.page, x: c.x0 + c.step * i + 5, y: c.y, text: digits.charAt(i), size: c.size });
+  }
+  text[M.admin.name] = d.admin.name; text[M.admin.date] = dmy(d.admin.date);
+  return { text: text, check: check, draw: draw, size: {} };
+}
+/** The filled EB0010 as a PDF Blob; if Guardian's PDF cannot be filled, the HTML rendering, with the reason on d.fallback. */
+function gblFormPdf_(d) {
+  var name = gblFormName_(d);
+  try { var b = gblPdfFill_('EB0010', gblEb0010Fill_(d), name); d.fallback = ''; d.fillNotes = b.notes || []; return b; }
+  catch (e) {
+    d.fallback = String(e && e.message ? e.message : e).slice(0, 200);
+    var blob = Utilities.newBlob(gblFormHtml_(d), 'text/html', name + '.html');
+    try { return blob.getAs('application/pdf').setName(name + '.pdf'); } catch (e2) { return blob; }
+  }
+}
+
+/* ── the cover e-mail, the register row, the owner's task: one path for every form ─── */
+/** pack = { code, title, kindLabel, member, line, effective, reason, blob, lines[], missing[], blocking[], changeKind, name } */
+function gblSendPack_(g, who, pack, opt) {
+  opt = opt || {};
+  if (pack.blocking.length) return { ok: false, error: 'Still needed before it can go: ' + pack.blocking.join(', ') + '.' };
+  if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on this project, so nothing can go from support@.' };
+  var live = gblLive_(), test = !live;
+  var to = test ? [who.role === 'client' ? (g.ownerEmail || gcmDayManager_()) : (who.email || gcmDayManager_())].filter(String) : [GBL_FORM.TO];
+  if (!to.length) return { ok: false, error: 'No address to send the test to.' };
+  var cc = test ? (TRANSITION.CC || []).slice() : GBL_FORM.CC.slice(), gto = (g.to || [])[0] || '';
+  if (!test && gcmYes_(opt.copyGroup) && gto && !gcmOurAddress_(gto)) cc.push(gto);
+  var E = tEsc_;
+  var body = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:640px">' + (test ? '<p style="background:#fdf1e1;padding:8px 12px;font-weight:700;color:#a64b05">TEST: this would go to ' + E(GBL_FORM.TO) + ', copied to ' + E(GBL_FORM.CC.join(', ')) + '. Nothing has reached Guardian Life.</p>' : '') +
+    '<p>Dear EB Customer Care,</p>' + pack.lines.map(function (l) { return '<p>' + l + '</p>'; }).join('') +
+    '<p>Kind regards,<br><b>' + E(who.role === 'client' ? 'Ricky Rampersad Branch, for ' + g.name : gcmSigner_(who, g)) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>' +
+    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  var subject = (test ? '[TEST] ' : '') + pack.code + ' ' + pack.title + ' – ' + g.name + ' – ' + pack.member + ' – ' + pack.kindLabel;
+  try { tMsSend_(to[0], subject, body, { cc: cc.concat(to.slice(1)), attachments: [pack.blob], replyTo: who.role === 'client' ? TRANSITION.MS_FROM : (who.email || TRANSITION.MS_FROM) }); }
+  catch (e) { return { ok: false, error: 'Microsoft would not send it: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
+  var kept = gblKeepSent_(pack.blob, g);
+  var detail = (test ? '[TEST] ' : '') + pack.code + ' sent to ' + (test ? to[0] : 'EB Customer Care') + ' ' + gcmWhen_(new Date()) + ': ' + pack.kindLabel + (pack.reason ? '. ' + pack.reason : '');
+  var r = gblChange_(g, who, pack.line, { kind: pack.changeKind, member: pack.member, effective: pack.effective, detail: detail, name: who.role === 'client' ? who.name : '' }, who.role === 'client' ? 'client' : 'staff', { Form: kept || ('pdf ' + pack.blob.getName()), Note: 'form: ' + (test ? 'test' : 'sent') });
+  return { ok: true, test: test, to: to, cc: cc, task: r.task || '', kept: kept, said: test ? 'Test copy sent to ' + to[0] + ' with the form attached; nothing reached Guardian Life. Run gblGoLive to send for real.' : 'Sent to EB Customer Care with the form attached, copied to sales support and support@' + (r.task ? '; a task is open for our team to see it through' : '') + '.' };
+}
+
+/* ── GIO001: a new member enrolled, from what the group (or staff) types, on Guardian's own application form ─── */
+var GBL_ENROL = { ID: { DP: 'DP', PP: 'PP', ID: 'ID' }, TIERS: ['SINGLE', 'EMPLOYEE + ONE', 'EMPLOYEE + FAMILY'], FOLLOWS: ['the Declaration of Insurability, completed and signed by the employee', 'a copy of the identification ticked in Section A', 'the top of a bank statement showing the name and account number (Section E)', 'the employee’s signature on the form, and the plan administrator’s signature and stamp (Section F)'] };
+/** The group's own policy numbers per line, read off its members' certificates (the part before the first dash). */
+function gblGroupPolicyNos_(g) {
+  var out = { health: '', life: '' };
+  try {
+    var M = gblMembers_(g); if (!M.ok) return out;
+    ['health', 'life'].forEach(function (ln) {
+      var count = {};
+      M.members.forEach(function (m) { if (m.line !== ln || !m.policy) return; var p = String(m.policy).split(/[-\/]/)[0].trim(); if (p) count[p] = (count[p] || 0) + 1; });
+      var best = Object.keys(count).sort(function (a, b) { return count[b] - count[a]; })[0];
+      out[ln] = best || '';
+    });
+  } catch (e) {}
+  return out;
+}
+function gblEnrolData_(g, b, who) {
+  var today = gcmToday_(), clean = function (v, n) { return String(v || '').replace(/\s+/g, ' ').trim().slice(0, n || 80); }, up = function (v, n) { return clean(v, n).toUpperCase(); };
+  var cov = { health: gcmYes_(b.covHealth), life: gcmYes_(b.covLife), voluntary: gcmYes_(b.covVoluntary), dependentLife: gcmYes_(b.covDependentLife) };
+  var nos = gblGroupPolicyNos_(g), idType = up(b.idType, 2); if (!GBL_ENROL.ID[idType]) idType = '';
+  var tier = up(b.tier, 20).replace(/\s*\+\s*/g, ' + '); if (GBL_ENROL.TIERS.indexOf(tier) < 0) tier = '';
+  var other = String(b.otherPlan || '').toLowerCase(); other = other === 'yes' || other === 'y' ? 'yes' : other === 'no' || other === 'n' ? 'no' : '';
+  var e = { code: 'GIO001', version: GBL_PDF.VERSIONS.GIO001, holder: g.name, policyLife: cov.life ? (clean(b.policyLife, 30).toUpperCase() || nos.life) : '', policyHealth: cov.health ? (clean(b.policyHealth, 30).toUpperCase() || nos.health) : '',
+    employee: up(b.employee || ((b.first || '') + ' ' + (b.last || ''))), dob: gcmYmd_(b.dob || '') || '', email: clean(b.email, 80).toLowerCase(), gender: gblGender_(b.gender),
+    telHome: clean(b.telHome, 20), telWork: clean(b.telWork, 20), telExt: clean(b.telExt, 8), telCell: clean(b.telCell, 20), marital: gblMarital_(b.marital), occupation: up(b.occupation, 60),
+    idType: idType, idNo: up(b.idNo, 30), coverage: cov, otherPlan: other, otherPlanName: up(b.otherPlanName, 60), otherInsurer: up(b.otherInsurer, 60),
+    deps: gblFormDeps_(b.deps).map(function (x) { var src = (typeof b.deps === 'string' ? gblJ_(b.deps, []) : (b.deps || [])).filter(function (y) { return up((y || {}).name) === x.name; })[0] || {}; x.on = x.on || gcmYmd_(b.effective || '') || ''; x.country = up(src.country || 'TRINIDAD AND TOBAGO', 40); return x; }).slice(0, 5),
+    bens: gblFormDeps_(b.bens, true).filter(function (x) { return !x.remove; }).slice(0, 5),
+    bank: { account: String(b.bankAccount || '').replace(/[^\dA-Za-z]/g, '').slice(0, 15), type: /^C/i.test(String(b.bankType || '')) ? 'CHEQUING' : /^S/i.test(String(b.bankType || '')) ? 'SAVINGS' : '', name: up(b.bankName, 60), branch: up(b.bankBranch, 60) },
+    employed: gcmYmd_(b.employed || '') || '', confirmed: gcmYmd_(b.confirmed || '') || '', effective: gcmYmd_(b.effective || '') || '', tier: tier,
+    salary: String(b.salary || '').replace(/[^\d.,]/g, '').slice(0, 15),
+    admin: { name: clean(b.admin, 80), date: today }, submitted: { by: who.name, role: who.role === 'client' ? 'the group’s plan administrator, on the group’s service page' : 'Ricky Rampersad Branch', when: gcmWhen_(new Date()) },
+    reason: clean(b.reason, 300), missing: [], blocking: [] };
+  if (!e.employee) e.blocking.push('the employee’s name');
+  if (!e.dob) e.blocking.push('the date of birth');
+  if (!e.gender) e.blocking.push('the gender');
+  if (!cov.health && !cov.life) e.blocking.push('the coverage applied for (Group Health, Group Life)');
+  if (!e.effective) e.blocking.push('the effective date of coverage (Section F)');
+  if (!e.admin.name) e.blocking.push('the plan administrator’s name (Section F)');
+  if (!e.email) e.missing.push('an e-mail address');
+  if (!e.telHome && !e.telWork && !e.telCell) e.missing.push('a telephone number');
+  if (!e.marital) e.missing.push('marital status');
+  if (!e.occupation) e.missing.push('occupation');
+  if (!e.idType || !e.idNo) e.missing.push('the identification and its number');
+  if (!e.otherPlan) e.missing.push('whether another medical plan covers them (Section B)');
+  if (cov.life && !e.bens.length) e.missing.push('a beneficiary for the Group Life (Section D)');
+  if (cov.life && !e.salary) e.missing.push('the annual salary (Section F, Group Life)');
+  if (!e.bank.account) e.missing.push('the account for claim payments (Section E)');
+  if (!e.tier) e.missing.push('the coverage tier (Section F)');
+  if (!e.employed) e.missing.push('the date employed (Section F)');
+  return e;
+}
+function gblGio001Fill_(e) {
+  var M = GBL_GIO001, text = {}, check = [], radio = {}, dmy = gblDmy_;
+  text[M.policyLife] = e.policyLife; text[M.policyHealth] = e.policyHealth; text[M.holder] = e.holder; text[M.employee] = e.employee; text[M.dob] = dmy(e.dob); text[M.email] = e.email;
+  if (e.gender) radio[M.gender.group] = M.gender[e.gender];
+  text[M.telHome] = e.telHome; text[M.telWork] = e.telWork; text[M.telExt] = e.telExt; text[M.telCell] = e.telCell;
+  if (e.marital) radio[M.marital.group] = M.marital[e.marital];
+  text[M.occupation] = e.occupation; if (e.idType) check.push(M.idType[e.idType]); text[M.idNo] = e.idNo;
+  if (e.coverage.health) check.push(M.coverage.health); if (e.coverage.life) check.push(M.coverage.life); if (e.coverage.voluntary) check.push(M.coverage.voluntary); if (e.coverage.dependentLife) check.push(M.coverage.dependentLife);
+  if (e.otherPlan) radio[M.otherPlan.group] = M.otherPlan[e.otherPlan];
+  text[M.otherPlanName] = e.otherPlanName; text[M.otherInsurer] = e.otherInsurer;
+  var spouse = null, others = [];
+  e.deps.forEach(function (x) { if (/SPOUSE|WIFE|HUSBAND|PARTNER/.test(x.rel) && !spouse) spouse = x; else others.push(x); });
+  [spouse].concat(others).forEach(function (x, i) { if (!x || !M.deps[i]) return; var s = M.deps[i]; text[s.name] = x.name; text[s.gender] = x.gender; text[s.dob] = dmy(x.dob); text[s.on] = dmy(x.on); text[s.country] = x.country; });
+  e.bens.forEach(function (x, i) { if (!M.bens[i]) return; var s = M.bens[i]; text[s.rel] = x.rel; text[s.name] = x.name; text[s.gender] = x.gender; text[s.dob] = dmy(x.dob); text[s.pct] = x.pct ? String(x.pct) + '%' : ''; });
+  text[M.account] = e.bank.account; if (e.bank.type) check.push(M.accountType[e.bank.type]); text[M.bankName] = e.bank.name; text[M.bankBranch] = e.bank.branch;
+  text[M.employed] = dmy(e.employed); text[M.confirmed] = dmy(e.confirmed); text[M.effective] = dmy(e.effective);
+  if (e.tier) radio[M.tier.group] = M.tier[e.tier];
+  text[M.salary] = e.salary ? 'TT$ ' + e.salary : ''; text[M.admin.name] = e.admin.name;
+  return { text: text, check: check, radio: radio, draw: [], size: {} };
+}
+function gblEnrolName_(e) { return ('GIO001 Application - ' + e.employee + ' - ' + e.holder).replace(/[^\w\s\-&.]/g, '').replace(/\s+/g, ' ').slice(0, 120); }
+function gblEnrolPdf_(e) { var b = gblPdfFill_('GIO001', gblGio001Fill_(e), gblEnrolName_(e)); e.fillNotes = b.notes || []; return b; }
+function gblEnrolSend_(g, who, e, opt) {
+  var E = tEsc_, lines = [], covs = [];
+  if (e.coverage.health) covs.push('Group Health'); if (e.coverage.life) covs.push('Group Life'); if (e.coverage.voluntary) covs.push('Voluntary Life'); if (e.coverage.dependentLife) covs.push('Dependent Life');
+  lines.push('Please find attached Guardian Life’s form GIO001 (' + e.version + '), the application of <b>' + E(e.employee) + '</b> for ' + E(covs.join(' and ')) + ' under <b>' + E(e.holder) + '</b>' + (e.policyHealth || e.policyLife ? ' (policy ' + E([e.policyHealth, e.policyLife].filter(String).join(' / ')) + ')' : '') + ', effective <b>' + E(tDmy_(e.effective)) + '</b>' + (e.tier ? ', ' + E(e.tier.toLowerCase()) : '') + '.');
+  if (e.deps.length) lines.push('Section C lists ' + e.deps.length + ' dependent' + (e.deps.length === 1 ? '' : 's') + ' to be covered: ' + E(e.deps.map(function (x) { return x.name + ' (' + x.rel.toLowerCase() + ')'; }).join(', ')) + '.');
+  if (e.reason) lines.push('Note from the group: ' + E(e.reason) + '.');
+  lines.push('To follow from the employee and the group: ' + E(GBL_ENROL.FOLLOWS.join('; ')) + '.');
+  lines.push('The form carries what the group gave us' + (e.missing.length ? ' (not given: ' + E(e.missing.join(', ')) + ')' : '') + '. It was submitted by ' + E(e.submitted.by) + ', ' + E(e.submitted.role) + ', on ' + E(e.submitted.when) + '; the plan administrator named in Section F is ' + E(e.admin.name) + '.');
+  var blob;
+  try { blob = gblEnrolPdf_(e); } catch (err) { return { ok: false, error: 'The application form could not be filled: ' + String(err && err.message ? err.message : err).slice(0, 160) }; }
+  return gblSendPack_(g, who, { code: 'GIO001', title: GBL_PDF.TITLES.GIO001, kindLabel: 'Enrolment: ' + covs.join(' and '), member: gblTitle_(e.employee), line: e.coverage.health ? 'health' : 'life', effective: e.effective, reason: e.reason, blob: blob, lines: lines, missing: e.missing, blocking: e.blocking, changeKind: 'joiner' }, opt);
+}
+
+/* ── EASI Collect: the ACH details for claim payments, on Guardian's flat form, drawn at its printed positions ─── */
+var GBL_EASI_KINDS = { enrol: 'ACH enrolment', change: 'ACH change', terminate: 'ACH termination' };
+function gblEasiData_(g, m, b, who) {
+  var clean = function (v, n) { return String(v || '').replace(/\s+/g, ' ').trim().slice(0, n || 80); };
+  var kind = String(b.easiKind || b.kind || 'change').toLowerCase(); if (!GBL_EASI_KINDS[kind]) kind = 'change';
+  var idType = String(b.idType || '').toLowerCase(); idType = /nat|^id/.test(idType) ? 'national' : /perm|dp|driv/.test(idType) ? 'permit' : /pass|pp/.test(idType) ? 'passport' : '';
+  var x = { code: 'EASI', version: '', kind: kind, kindLabel: GBL_EASI_KINDS[kind], holder: g.name, first: String(m.first || m.name.split(' ')[0] || '').toUpperCase(), middle: clean(b.middle, 30).toUpperCase(), last: String(m.last || m.name.split(' ').slice(1).join(' ') || '').toUpperCase(),
+    email: (m.emailPersonal || m.emailWork || clean(b.email, 80)).toLowerCase(), cell: m.telCell || clean(b.cell, 20), plan: 'group', company: g.name, policy: m.policy + (m.cert && m.cert !== m.policy ? ' / ' + m.cert : ''),
+    idType: idType, idNo: clean(b.idNo, 30).toUpperCase(), bank: { name: clean(b.bankName, 60), branch: clean(b.bankBranch, 60), account: String(b.bankAccount || '').replace(/[^\dA-Za-z]/g, '').slice(0, 16), type: /^C/i.test(String(b.bankType || '')) ? 'chequing' : /^S/i.test(String(b.bankType || '')) ? 'savings' : '' },
+    member: { id: m.id, name: m.name, line: m.line, status: m.status, plan: m.plan }, line: m.line, reason: clean(b.reason, 300),
+    submitted: { by: who.name, role: who.role === 'client' ? 'the group’s plan administrator, on the group’s service page' : 'Ricky Rampersad Branch', when: gcmWhen_(new Date()) }, missing: [], blocking: [] };
+  if (kind !== 'terminate') {
+    if (!x.bank.name || !x.bank.account) x.blocking.push('the bank and the account number');
+    if (!x.bank.type) x.blocking.push('the type of account');
+    if (!x.idType || !x.idNo) x.blocking.push('the identification and its number');
+  }
+  if (!x.email) x.missing.push('an e-mail address'); if (!x.cell) x.missing.push('a cell number');
+  return x;
+}
+function gblEasiFill_(x) {
+  var P = GBL_EASI, draw = [], at = function (pos, text, size) { if (pos && text) draw.push({ page: P.page, x: pos[0], y: pos[1], text: text, size: size || P.size }); };
+  at(P.kind[x.kind], P.mark, P.markSize);
+  at(P.first, x.first); at(P.middle, x.middle); at(P.last, x.last); at(P.email, x.email); at(P.cell, x.cell);
+  at(P.plan[x.plan], P.mark, P.markSize); at(P.company, x.company); at(P.policy, x.policy);
+  if (x.idType) at(P.idType[x.idType], P.mark, P.markSize); at(P.idNo, x.idNo);
+  if (x.kind !== 'terminate') {
+    at(P.bank, x.bank.name); at(P.branch, x.bank.branch);
+    for (var i = 0; i < Math.min(x.bank.account.length, P.account.n); i++) draw.push({ page: P.page, x: P.account.x0 + P.account.step * i + 8, y: P.account.y, text: x.bank.account.charAt(i), size: P.account.size });
+    if (x.bank.type) at(P.accountType[x.bank.type], P.mark, P.markSize);
+  }
+  return { text: {}, check: [], radio: {}, draw: draw, size: {} };
+}
+function gblEasiName_(x) { return ('EASI Collect - ' + x.member.name + ' - ' + x.holder).replace(/[^\w\s\-&.]/g, '').replace(/\s+/g, ' ').slice(0, 120); }
+function gblEasiPdf_(x) { var b = gblPdfFill_('EASI', gblEasiFill_(x), gblEasiName_(x)); x.fillNotes = b.notes || []; return b; }
+function gblEasiSend_(g, who, x, opt) {
+  var E = tEsc_, lines = [];
+  lines.push('Please find attached Guardian Life’s EASI Collect form, ' + E(x.kindLabel.toLowerCase()) + ' for the claim payments of <b>' + E(x.member.name) + '</b>, ' + E(GBL.LABEL[x.line].toLowerCase()) + ' under <b>' + E(x.holder) + '</b> (policy / certificate ' + E(x.policy) + ').');
+  if (x.kind !== 'terminate') lines.push('The account is in Section C; a copy of the identification and the top of the bank statement follow from the insured.');
+  if (x.reason) lines.push('Note: ' + E(x.reason) + '.');
+  lines.push('Section A is from the policy record' + (x.missing.length ? ' (not on record: ' + E(x.missing.join(', ')) + ')' : '') + '. It was submitted by ' + E(x.submitted.by) + ', ' + E(x.submitted.role) + ', on ' + E(x.submitted.when) + '. The insured’s signature follows on the signed copy.');
+  var blob;
+  try { blob = gblEasiPdf_(x); } catch (err) { return { ok: false, error: 'The EASI form could not be filled: ' + String(err && err.message ? err.message : err).slice(0, 160) }; }
+  return gblSendPack_(g, who, { code: 'EASI', title: GBL_PDF.TITLES.EASI, kindLabel: x.kindLabel, member: x.member.name, line: x.line, effective: '', reason: x.reason, blob: blob, lines: lines, missing: x.missing, blocking: x.blocking, changeKind: 'bank' }, opt);
 }
 function gblFormName_(d) { return (d.code + ' Policy Change - ' + d.member.name + ' - ' + d.holder).replace(/[^\w\s\-&.]/g, '').replace(/\s+/g, ' ').slice(0, 120); }
 /** The cover e-mail to EB Customer Care, with the form attached; test mode to the sender and the branch, marked TEST. */
 function gblFormSend_(g, who, d, opt) {
-  opt = opt || {};
-  if (d.blocking.length) return { ok: false, error: 'Still needed before it can go: ' + d.blocking.join(', ') + '.' };
-  if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on this project, so nothing can go from support@.' };
-  var html = gblFormHtml_(d), pdf = gblFormPdf_(html, gblFormName_(d)), live = gblLive_(), test = !live;
-  var to = test ? [who.role === 'client' ? (g.ownerEmail || gcmDayManager_()) : (who.email || gcmDayManager_())].filter(String) : [GBL_FORM.TO];
-  if (!to.length) return { ok: false, error: 'No address to send the test to.' };
-  var cc = test ? (TRANSITION.CC || []).slice() : GBL_FORM.CC.slice();
-  var gto = (g.to || [])[0] || '';
-  if (!test && gcmYes_(opt.copyGroup) && gto && !gcmOurAddress_(gto)) cc.push(gto);
-  var E = tEsc_, dmy = tDmy_, lines = [];
-  lines.push('Please find attached Guardian Life’s form ' + d.code + ' (' + d.version + '), ' + GBL_FORM.KINDS[d.kind].toLowerCase() + ' for <b>' + E(d.member.name) + '</b>, ' + E(d.lineLabel.toLowerCase()) + ' under <b>' + E(d.holder) + '</b> (policy / certificate ' + E(d.policy) + ')' + (d.effective ? ', effective <b>' + E(dmy(d.effective)) + '</b>' : '') + '.');
+  var E = tEsc_, lines = [];
+  lines.push('Please find attached Guardian Life’s form ' + d.code + ' (' + d.version + '), ' + GBL_FORM.KINDS[d.kind].toLowerCase() + ' for <b>' + E(d.member.name) + '</b>, ' + E(d.lineLabel.toLowerCase()) + ' under <b>' + E(d.holder) + '</b> (policy / certificate ' + E(d.policy) + ')' + (d.effective ? ', effective <b>' + E(tDmy_(d.effective)) + '</b>' : '') + '.');
   if (d.kind === 'terminate') lines.push('Please terminate the primary insured' + (d.removeDeps.length ? ' and the ' + d.removeDeps.length + ' dependent' + (d.removeDeps.length === 1 ? '' : 's') + ' listed in Section B (ii)' : ' and any dependent covered under this certificate') + ' as at that date, and confirm the credit on the next billing.');
   if (d.kind === 'adddep') lines.push('Please add the dependent' + (d.addDeps.length === 1 ? '' : 's') + ' in Section B: ' + E(d.addDeps.map(function (x) { return x.name + ' (' + x.rel.toLowerCase() + ')'; }).join(', ')) + '.');
   if (d.kind === 'removedep') lines.push('Please remove the dependent' + (d.removeDeps.length === 1 ? '' : 's') + ' in Section B (ii): ' + E(d.removeDeps.map(function (x) { return x.name; }).join(', ')) + '.');
   if (d.kind === 'address') lines.push('Please change the primary insured’s address as in Section D' + (d.addressOnFile ? ' (on file: ' + E(d.addressOnFile) + ')' : '') + '.');
   if (d.kind === 'beneficiary') lines.push('Please record the beneficiary change in Section C.');
   if (d.kind === 'bank') lines.push('Please update the account for claim payments as in Section E; the bank statement follows from the insured.');
+  if (d.kind === 'plan') lines.push('Please apply the plan change ticked in Section D.');
   if (d.reason) lines.push('Reason given: ' + E(d.reason) + '.');
-  lines.push('The form is pre-filled from the policy records; Section A is as held' + (d.missing.length ? ' (not on record: ' + E(d.missing.join(', ')) + ')' : '') + '. It was submitted by ' + E(d.submitted.by) + ', ' + E(d.submitted.role) + ', on ' + E(d.submitted.when) + (d.admin.name ? '; the plan administrator named in Section F is ' + E(d.admin.name) : '') + '. A signed and stamped copy follows on request.');
-  var body = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:640px">' + (test ? '<p style="background:#fdf1e1;padding:8px 12px;font-weight:700;color:#a64b05">TEST: this would go to ' + E(GBL_FORM.TO) + ', copied to ' + E(GBL_FORM.CC.join(', ')) + '. Nothing has reached Guardian Life.</p>' : '') +
-    '<p>Dear EB Customer Care,</p>' + lines.map(function (l) { return '<p>' + l + '</p>'; }).join('') +
-    '<p>Kind regards,<br><b>' + E(who.role === 'client' ? 'Ricky Rampersad Branch, for ' + g.name : gcmSigner_(who, g)) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>' +
-    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
-  var subject = (test ? '[TEST] ' : '') + d.code + ' Policy Change Form – ' + g.name + ' – ' + d.member.name + ' – ' + GBL_FORM.KINDS[d.kind];
-  try { tMsSend_(to[0], subject, body, { cc: cc.concat(to.slice(1)), attachments: [pdf], replyTo: who.role === 'client' ? TRANSITION.MS_FROM : (who.email || TRANSITION.MS_FROM) }); }
-  catch (e) { return { ok: false, error: 'Microsoft would not send it: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
-  /* the register, the task for the owner, the billing task's Chatter, with the form kept on the row */
-  var kind = GBL_FORM.CHANGE[d.kind], detail = (test ? '[TEST] ' : '') + d.code + ' sent to ' + (test ? to[0] : 'EB Customer Care') + ' ' + gcmWhen_(new Date()) + ': ' + GBL_FORM.KINDS[d.kind] + (d.reason ? '. ' + d.reason : '');
-  var r = gblChange_(g, who, d.line, { kind: kind, member: d.member.name, effective: d.effective, detail: detail, name: who.role === 'client' ? who.name : '' }, who.role === 'client' ? 'client' : 'staff', { Form: html.slice(0, 49000), Note: 'form: ' + (test ? 'test' : 'sent') });
-  return { ok: true, test: test, to: to, cc: cc, task: r.task || '', said: test ? 'Test copy sent to ' + to[0] + ' with the form attached; nothing reached Guardian Life. Run gblGoLive to send for real.' : 'Sent to EB Customer Care with the form attached, copied to sales support and support@' + (r.task ? '; a task is open for our team' : '') + '.' };
+  lines.push('The form is pre-filled from the policy records; Section A is as held' + (d.missing.length ? ' (not on record: ' + E(d.missing.join(', ')) + ')' : '') + '. It was submitted by ' + E(d.submitted.by) + ', ' + E(d.submitted.role) + ', on ' + E(d.submitted.when) + (d.admin.name ? '; the plan administrator named in Section F is ' + E(d.admin.name) : '') + '. The signed and stamped copy follows on request.');
+  if (d.blocking.length) return { ok: false, error: 'Still needed before it can go: ' + d.blocking.join(', ') + '.' };
+  var blob = gblFormPdf_(d);
+  if (d.fallback) lines.push('<i>Note: Guardian Life’s PDF could not be filled on our side (' + E(d.fallback) + '), so this copy is our rendering of the same form.</i>');
+  return gblSendPack_(g, who, { code: d.code, title: GBL_PDF.TITLES.EB0010, kindLabel: GBL_FORM.KINDS[d.kind], member: d.member.name, line: d.line, effective: d.effective, reason: d.reason, blob: blob, lines: lines, missing: d.missing, blocking: d.blocking, changeKind: GBL_FORM.CHANGE[d.kind] }, opt);
 }
 function gcmOurAddress_(e) { e = String(e || '').toLowerCase(); return /@(myguardiangroup\.com|rickyrampersadbranch\.com)$/.test(e); }
 /* staff: act=members (search), act=form (fill and preview), act=formSend */
 function gblFormAct_(g, who, b) {
   var act = String(b.act || '');
   if (act === 'members') return gblMemberSearch_(g, b.q, gcmYes_(b.fresh));
+  if (act === 'enrol' || act === 'enrolSend') {
+    var e = gblEnrolData_(g, b, who);
+    if (act === 'enrol') { var pb = null, perr = ''; try { pb = gblEnrolPdf_(e); } catch (x) { perr = String(x && x.message ? x.message : x).slice(0, 200); } return { ok: true, data: e, pdf: pb ? gblPdfB64_(pb) : '', pdfError: perr, missing: e.missing, blocking: e.blocking, live: gblLive_(), to: GBL_FORM.TO, cc: GBL_FORM.CC, group: (g.to || [])[0] || '', policies: { health: e.policyHealth, life: e.policyLife } }; }
+    return gblEnrolSend_(g, who, e, { copyGroup: b.copyGroup });
+  }
   var m = gblMemberById_(g, b.member, gcmYes_(b.fresh));
   if (!m) return { ok: false, error: 'Pick a member of the group first.' };
+  if (act === 'easi' || act === 'easiSend') {
+    var x = gblEasiData_(g, m, b, who);
+    if (act === 'easi') { var xb = null, xerr = ''; try { xb = gblEasiPdf_(x); } catch (y) { xerr = String(y && y.message ? y.message : y).slice(0, 200); } return { ok: true, data: x, pdf: xb ? gblPdfB64_(xb) : '', pdfError: xerr, missing: x.missing, blocking: x.blocking, live: gblLive_(), to: GBL_FORM.TO, cc: GBL_FORM.CC, group: (g.to || [])[0] || '' }; }
+    return gblEasiSend_(g, who, x, { copyGroup: b.copyGroup });
+  }
   var d = gblFormData_(g, m, b, who);
-  if (act === 'form') return { ok: true, data: d, html: gblFormHtml_(d), missing: d.missing, blocking: d.blocking, live: gblLive_(), to: GBL_FORM.TO, cc: GBL_FORM.CC, group: (g.to || [])[0] || '' };
+  if (act === 'form') { var fb = gblFormPdf_(d); return { ok: true, data: d, pdf: gblPdfB64_(fb), fallback: d.fallback || '', missing: d.missing, blocking: d.blocking, live: gblLive_(), to: GBL_FORM.TO, cc: GBL_FORM.CC, group: (g.to || [])[0] || '' }; }
   if (act === 'formSend') return gblFormSend_(g, who, d, { copyGroup: b.copyGroup });
   return { ok: false, error: 'Unknown action.' };
 }
@@ -1170,27 +1529,49 @@ function gblFormAct_(g, who, b) {
 function gblClientForm_(p) {
   var L = gcmLoad_(), a = gcmClientAuth_(L, p.lb, p.code);
   if (!a.ok) return a;
-  var g = a.g, who = { role: 'client', name: String(p.name || 'the group').slice(0, 80), email: '' };
+  var g = a.g, who = { role: 'client', name: String(p.name || 'the group').slice(0, 80), email: '' }, form = String(p.form || 'change').toLowerCase();
+  if (form === 'enrol') {
+    var e = gblEnrolData_(g, p, who), pb = null, perr = '';
+    try { pb = gblEnrolPdf_(e); } catch (x) { perr = String(x && x.message ? x.message : x).slice(0, 200); }
+    return { ok: true, pdf: pb ? gblPdfB64_(pb) : '', pdfError: perr, missing: e.missing, blocking: e.blocking, policies: { health: e.policyHealth, life: e.policyLife }, follows: GBL_ENROL.FOLLOWS, tiers: GBL_ENROL.TIERS };
+  }
   if (p.member) {
     var m = gblMemberById_(g, p.member);
     if (!m) return { ok: false, error: 'That person is not on your plan with us.' };
-    var d = gblFormData_(g, m, p, who);
-    var c = { ok: true, html: gblFormHtml_(d), missing: d.missing, blocking: d.blocking, kind: d.kind, member: { name: m.name, policy: d.policy, line: m.line, label: GBL.LABEL[m.line], deps: m.deps.map(function (x) { return { rel: x.rel, name: x.name, gender: x.gender, dob: x.dob }; }) } };
-    return c;
+    var mem = { name: m.name, policy: m.policy + (m.cert && m.cert !== m.policy ? ' / ' + m.cert : ''), line: m.line, label: GBL.LABEL[m.line], deps: m.deps.map(function (x) { return { rel: x.rel, name: x.name, gender: x.gender, dob: x.dob }; }) };
+    if (form === 'easi') {
+      var x = gblEasiData_(g, m, p, who), xb = null, xerr = '';
+      try { xb = gblEasiPdf_(x); } catch (y) { xerr = String(y && y.message ? y.message : y).slice(0, 200); }
+      return { ok: true, pdf: xb ? gblPdfB64_(xb) : '', pdfError: xerr, missing: x.missing, blocking: x.blocking, kind: x.kind, member: mem };
+    }
+    var d = gblFormData_(g, m, p, who), fb = gblFormPdf_(d);
+    return { ok: true, pdf: gblPdfB64_(fb), fallback: d.fallback || '', missing: d.missing, blocking: d.blocking, kind: d.kind, member: mem };
   }
   var s = gblMemberSearch_(g, p.q);
   if (!s.ok) return { ok: false, error: 'Our records are not available right now. Please try again shortly, or e-mail us.' };
-  return { ok: true, members: s.members.map(function (x) { return { id: x.id, name: x.name, line: x.line, label: x.label, policy: x.policy, status: x.live ? 'on the plan' : x.status, live: x.live, since: x.since, deps: x.deps }; }), total: s.total, more: s.more, kinds: GBL_FORM.KINDS };
+  return { ok: true, members: s.members.map(function (x) { return { id: x.id, name: x.name, line: x.line, label: x.label, policy: x.policy, status: x.live ? 'on the plan' : x.status, live: x.live, since: x.since, deps: x.deps }; }), total: s.total, more: s.more, kinds: GBL_FORM.KINDS, easiKinds: GBL_EASI_KINDS };
 }
 function gblClientFormSend_(b) {
   var L = gcmLoad_(), a = gcmClientAuth_(L, b.lb, b.code);
   if (!a.ok) return a;
-  var g = a.g, who = { role: 'client', name: String(b.name || '').replace(/\s+/g, ' ').trim().slice(0, 80), email: '' };
+  var g = a.g, who = { role: 'client', name: String(b.name || '').replace(/\s+/g, ' ').trim().slice(0, 80), email: '' }, form = String(b.form || 'change').toLowerCase();
   if (!who.name) return { ok: false, error: 'Please give your name.' };
-  if (!gcmYes_(b.authorised)) return { ok: false, error: 'Please confirm you are authorised to submit this change for ' + g.name + '.' };
+  if (!gcmYes_(b.authorised)) return { ok: false, error: 'Please confirm you are authorised to submit this for ' + g.name + '.' };
+  b.admin = b.admin || who.name;
+  if (form === 'enrol') {
+    var e = gblEnrolData_(g, b, who), re = gblEnrolSend_(g, who, e, {});
+    if (!re.ok) return re;
+    try { gblTellOwner_(g, who.name, 'joiner', e.coverage.health ? 'health' : 'life', { member: e.employee, effective: e.effective, detail: 'GIO001 application: ' + (e.coverage.health ? 'Group Health ' : '') + (e.coverage.life ? 'Group Life' : '') }); } catch (err) {}
+    return { ok: true, said: 'Thank you. The application form for ' + gblTitle_(e.employee) + ' has gone to Guardian Life’s EB Customer Care with our branch copied' + (re.task ? ', and our team has a task to see it through' : '') + '. Please send the signed form and the papers listed with it to the same address.' };
+  }
   var m = gblMemberById_(g, b.member);
   if (!m) return { ok: false, error: 'That person is not on your plan with us.' };
-  b.admin = b.admin || who.name;
+  if (form === 'easi') {
+    var x = gblEasiData_(g, m, b, who), rx = gblEasiSend_(g, who, x, {});
+    if (!rx.ok) return rx;
+    try { gblTellOwner_(g, who.name, 'bank', m.line, { member: m.name, effective: '', detail: 'EASI Collect: ' + x.kindLabel }); } catch (err) {}
+    return { ok: true, said: 'Thank you. The EASI Collect form for ' + m.name + ' has gone to Guardian Life’s EB Customer Care with our branch copied' + (rx.task ? ', and our team has a task to see it through' : '') + '. The signed copy and the bank statement follow from the insured.' };
+  }
   var d = gblFormData_(g, m, b, who), r = gblFormSend_(g, who, d, {});
   if (!r.ok) return r;
   try { gblTellOwner_(g, who.name, GBL_FORM.CHANGE[d.kind], d.line, { member: m.name, effective: d.effective, detail: GBL_FORM.KINDS[d.kind] + (d.reason ? ': ' + d.reason : '') }); } catch (e) {}

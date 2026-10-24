@@ -232,13 +232,20 @@ something is written.
   member's name), twelve months of billed and received from Salesforce, and a form to tell us about a payment, a
   joiner, a leaver, a dependent or a question. Each goes on Group Changes, onto the billing task's Chatter and to the
   account owner by e-mail; a joiner or leaver opens a Salesforce task for the owner.
-- **The change form EB0010** (Guardian's Group and Individual Policy Change Form, 2024/3). On the group's page,
-  "Terminate or change a member": the group searches the member by name, Section A fills from Salesforce (what is not
-  on record is listed, never guessed), the change goes in its section, they preview the form and send it. Staff do the
-  same from the billing review ("Change form EB0010" in Record a change, or Form on a register row). The PDF goes from
-  support@ to EBCustomercare@myguardiangroup.com, copied to sales support and support@, and is logged on Group Changes
-  (the Form column keeps it); a task is opened for the account owner. **Test mode is the bills' own**: until
+- **Guardian's own forms, filled exactly.** Three forms, on the group's page ("Enrol, terminate or change a member")
+  and on the staff billing review (Record a change, or Form on a register row): **EB0010** (2024/3, the Group and
+  Individual Policy Change Form: terminations, dependents, beneficiaries, address, plan, claim account), **GIO001**
+  (the Group Health and Life Application Form, an enrolment) and **EASI Collect** (the account health claims are paid
+  to). The member is searched by name and Section A fills from Salesforce (what is not on record is listed, never
+  guessed); an enrolment is typed section by section. The form shown and sent is Guardian's PDF itself with the values
+  in its boxes. It goes from support@ to EBCustomercare@myguardiangroup.com, copied to sales support and support@, and
+  is logged on Group Changes; a task is opened for the account owner. **Test mode is the bills' own**: until
   `gblGoLive`, a form goes to the staff member (or the account owner) and the branch, marked TEST.
+- **The blank forms.** EB0010 and GIO001 are on the site under `groupclientmanagement/forms/`. For a new edition from
+  Guardian, or for the EASI form (no blank yet: `EASI-Collect.pdf`), make a Drive folder, put the PDF in it under the
+  same file name, and set its ID in the **`GCM_FORMS_FOLDER`** Script property: a file there wins over the site's copy,
+  and every sent form is kept in a "Sent forms" subfolder with its link on the register. The first run after the
+  property is set asks the script owner to authorise Drive (re-run the function from the editor once).
 - **The owner's task is chased on Chatter every three working days** inside the 10:30 group day, until EB Customer
   Care replies at support@ naming the member or the task is closed; the fifth follow-up goes to the branch manager.
   `gblFormChasePreview` (editor) shows what would be posted; `gblFormChaseNow` runs it.
