@@ -32,6 +32,10 @@ property and never in the code, since the `.gs` files are public.
      in `doGet` and one in `doPost`, that hand every `gcm.*` request to
      `GroupClients.gs`. **Put the branch code back into `TEAM_CODE`**: the
      repository copy ships it empty.
+   Since 24 October 2026 the project has a fifth file, **`GroupBilling.gs`** (Billings Management): paste it
+   beside `GroupClients.gs`. Without it the billing routes answer "GroupBilling.gs is not in the project yet" and
+   everything else works as before.
+
 2. **Check the Script properties** (Project Settings → Script properties):
    - `SF_KEY`, `SF_SECRET`, `SF_LOGIN_URL`: the Salesforce sign-in, copied
      from the RRB KPI Tracker's own Script properties. The org has retired the
@@ -193,6 +197,43 @@ nobody sends a group a letter before they have read how and passed.
   the result, each competency, the critical questions missed, strengths, what to work on, the manual read, the
   minutes, every answer as marked, and the manager's marks and note. The result is e-mailed to the person and
   the branch manager, never to a shared inbox. Staff may retake it; every attempt is kept.
+
+## Billings Management (24 October 2026)
+
+The monthly bills, checked against Salesforce before they reach a group: `GroupBilling.gs` in the project,
+`billread.js` and `billing-ui.js` beside the staff page. Nothing to import: the four tabs (`Group Bills`,
+`Group Bill Lines`, `Group Changes`, `Group Claims`) are made in the Group Client Management sheet the first time
+something is written.
+
+- **Where it is.** On the staff page, every account row has a **Billing** button and a chip (lines uploaded, to fix,
+  reconciled, sent); a group's page has **Billing review** at the top. The Team dashboard's "Billing to do" filter
+  shows the groups with nothing uploaded this month, a fix open, or a line not yet sent.
+- **The review, line by line** (health, then life, then the pension and life list bill): *Upload → Verify → Fix →
+  Reconcile → Send*. The PDF is read on the staff member's own device (pdf.js from cdnjs) and only the figures and
+  member lines go to the backend. The list bill is a spreadsheet, or is built from the policies carrying the group's
+  list bill in Salesforce.
+- **What is checked**: the month's billing record and its amount (one press sets Salesforce to the bill); the
+  arrears the bill shows against the payments keyed; every member on the bill against the group's member policies
+  (on the bill and not in Salesforce; live in Salesforce and not on the bill; a premium that differs); what changed
+  since last month's bill; the back-charges and life statement adjustments against the tasks on file; the life rates
+  and the 31-day rule; the list bill against the policies tagged with it; payments keyed long after they were made.
+  Each finding says whose it is: Salesforce, Head Office, the group, or us.
+- **Reconciled** is a person's tick: the Salesforce record is marked Reconciled and the billing task gets the note.
+  A finding marked *fix* must be fixed or resolved with a note first (the branch manager may override).
+- **Send** goes from support@ with the PDFs attached and a cover note (amounts, due date, what changed, their page).
+  **Test mode until `gblGoLive`** is run from the editor: a send goes to the staff member and the branch, marked
+  TEST. `gblStop` goes back to test mode. Logged on Group Sends as `bill sent` / `bill test`, never as the weekly
+  letter.
+- **The claims experience**: upload the claims summary spreadsheet on the health line. It is aggregated by month and
+  division in the browser (no patient's name reaches the sheet) and read against the premiums in Salesforce by plan
+  year, a plan year starting where the monthly premium steps up. Staff see loss ratios; the group's page shows what
+  the plan paid for its people by year, never a ratio.
+- **The group's page** gains a Billing section with one tab a line: the latest bill we sent (figures and counts, no
+  member's name), twelve months of billed and received from Salesforce, and a form to tell us about a payment, a
+  joiner, a leaver, a dependent or a question. Each goes on Group Changes, onto the billing task's Chatter and to the
+  account owner by e-mail; a joiner or leaver opens a Salesforce task for the owner.
+- **Script properties**: none new. `GCM_BILL_LIVE` is set by `gblGoLive`. The AI read uses `ANTHROPIC_API_KEY` as
+  the rest of the page does.
 
 ## Tests
 

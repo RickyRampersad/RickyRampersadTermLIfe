@@ -148,6 +148,9 @@ function gcmDoGet_(p) {
       case 'gcm.wall':    return gcmWall_(p);
       case 'gcm.train':   return gcmTrain_(p);
       case 'gcm.trainView': return gcmTrainView_(p);
+      /* billings management (GroupBilling.gs, 24 October 2026) */
+      case 'gcm.billing': return typeof gblView_ === 'function' ? gblView_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billAi':  return typeof gblAi_ === 'function' ? gblAi_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
     }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
@@ -169,6 +172,13 @@ function gcmDoPost_(b) {
       case 'gcm.review': return gcmReview_(b);
       case 'gcm.trainSubmit': return gcmTrainSubmit_(b);
       case 'gcm.trainMark':   return gcmTrainMark_(b);
+      /* billings management (GroupBilling.gs, 24 October 2026): a bill uploaded, an action on it, the bill sent, the claims
+         summary, and what a group tells us from its page */
+      case 'gcm.billUpload':  return typeof gblUpload_ === 'function' ? gblUpload_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billAct':     return typeof gblAct_ === 'function' ? gblAct_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billSend':    return typeof gblSend_ === 'function' ? gblSend_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.claimsUpload': return typeof gblClaims_ === 'function' ? gblClaims_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.clientTell':  return typeof gblClientTell_ === 'function' ? gblClientTell_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
     }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
@@ -770,6 +780,7 @@ function gcmLoad_() {
     if (/^welcome/i.test(st)) { g.welcomed = x.at; g.welcomes.push(x); return; }
     if (/^resent/i.test(st)) { g.resent.push(x); return; }
     if (/^reminder/i.test(st)) { g.reminders.push(x); return; }   // the star reminder (15 October 2026): not a letter either
+    if (/^bill/i.test(st)) { (g.billSends = g.billSends || []).push(x); return; }   // a monthly bill (24 October 2026): not the weekly letter
     if (/welcome|resend|reminder/i.test(st)) return;   // one that failed is on the tab, and the summary e-mail named it
     g.sends.push(x);
   });
@@ -1418,6 +1429,8 @@ function gcmBoard_(p) {
     salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', welcomeOn: gcmWelcomeOn_(), groups: groups };
   if (who.role === 'branch' || who.role === 'deputy') out.tellFailed = gcmTellFailed_();
   out.analytics = gcmAnalytics_(L);
+  /* where each group's billing stands this month (GroupBilling.gs, 24 October 2026) */
+  if (typeof gblBoard_ === 'function') { try { out.billing = gblBoard_(L); out.billingLive = gblLive_(); } catch (e) { out.billing = null; } }
   return out;
 }
 
@@ -3159,6 +3172,8 @@ function gcmClient_(p) {
     /* the page's welcome (14 October 2026): the film, and when they last answered us */
     film: GCM_WELCOME.PAGE, filmLength: GCM_WELCOME.LENGTH, nextLetter: gcmSendLabel_(gcmNextSend_()),
     lastAnswer: g.resps.length ? { at: tDmy_(g.resps[g.resps.length - 1].when), name: g.resps[g.resps.length - 1].name } : null,
+    /* billing, one block a line (GroupBilling.gs, 24 October 2026): figures and counts, never a member's name */
+    billing: typeof gblClientBlock_ === 'function' ? gblClientBlock_(g, L) : null,
     contact: 'rickyrampersadsalessupport@myguardiangroup.com' };
 }
 

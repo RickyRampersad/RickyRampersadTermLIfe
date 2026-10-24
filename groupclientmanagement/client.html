@@ -215,6 +215,22 @@ footer a{color:inherit}
 .cgrp .none{font-size:13.5px;color:var(--muted);margin:4px 0 2px}
 .records{margin:12px 0 4px;padding:10px 12px;border-radius:8px;background:var(--warnBg);border:1px solid var(--warnLine);font-size:14px;color:var(--warn)}
 @media (max-width:640px){.cgrid{grid-template-columns:1fr}}
+/* your billing (24 October 2026): one tab a line, the latest bill, what we received, and a form to tell us */
+.billing{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:18px 0 0;box-shadow:var(--shadow)}
+.billing h2{margin:0 0 4px;font-size:20px}
+.btabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px;border-bottom:1px solid var(--line)}
+.btab{border:0;background:none;padding:10px 12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;font-size:15px}
+.btab[aria-selected="true"]{color:var(--primary);border-color:var(--primary)}
+.btab .bdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warnMark);margin-left:6px;vertical-align:middle}
+.billing h3{font-size:16px;margin:16px 0 6px}
+.owed{background:var(--warnBg);border:1px solid #F3D7B0;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:15px}
+.st.paid{background:var(--goodBg);border-color:transparent;color:var(--good)}
+.tell{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.tell label{display:block;font-weight:500;font-size:14px;margin:10px 0 4px;color:var(--ink2)}
+.tell select.field{appearance:auto}
+.tell .ok{background:var(--goodBg);border-radius:10px;padding:10px 12px;margin-top:10px;font-weight:600;color:var(--good)}
+.cyears{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:4px 0 8px}
+.cyears div{background:var(--sunken);border-radius:10px;padding:10px 12px}.cyears b{display:block;font-size:18px;color:#13408F}.cyears span{font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -336,6 +352,63 @@ function pendHtml() {
   });
   return h + '</section>';
 }
+
+/* your billing (24 October 2026): "on the group health, their billing, the group life in the tabs, the billing, and the
+   group pensions plus any concerns". Figures and counts only: the backend sends no member's name here. */
+const money = n => { n = Number(n) || 0; return (n < 0 ? '−' : '') + 'TT$' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+let BT = '', TELL = { sent: '' };
+function billingHtml() {
+  const B = D.billing; if (!B || !Array.isArray(B.lines) || !B.lines.length) return '';
+  if (!BT || !B.lines.some(l => l.line === BT)) BT = B.lines[0].line;
+  const L = B.lines.find(l => l.line === BT), b = L.bill;
+  let h = '<section class="billing" aria-labelledby="billh"><h2 id="billh">Your billing</h2><p class="sub">Each line’s latest bill, what we have received against it, and a place to tell us about a payment or a person joining or leaving.</p>' +
+    '<div class="btabs" role="tablist">' + B.lines.map(l => '<button type="button" role="tab" class="btab" data-bt="' + esc(l.line) + '" aria-selected="' + (l.line === BT) + '">' + esc(l.label) + (l.owed > 0 ? '<i class="bdot" aria-hidden="true" title="an amount is still open"></i>' : '') + '</button>').join('') + '</div><div class="bpanel" role="tabpanel">';
+  if (b) {
+    h += '<div class="ytiles"><div><b>' + money(b.due) + '</b><span>' + esc(b.label) + (b.dueBy ? ', payable by ' + esc(dmy(b.dueBy)) : '') + '</span></div><div><b>' + b.members + '</b><span>' + (L.line === 'listbill' ? 'policies' : 'members') + ' on the bill</span></div>' +
+      (b.joined || b.left ? '<div><b>' + (b.joined ? '+' + b.joined : '') + (b.joined && b.left ? ' / ' : '') + (b.left ? '−' + b.left : '') + '</b><span>joined / left on this bill</span></div>' : '') +
+      (b.arrears ? '<div><b>' + money(b.arrears) + '</b><span>earlier months the bill shows as unpaid</span></div>' : '') + '</div>' +
+      (b.divisions && b.divisions.length > 1 ? '<p class="sub">' + b.divisions.map(d => esc(d.name) + ': ' + d.employees + ' employees, ' + money(d.total)).join(' · ') + '</p>' : '') +
+      (b.sentAt ? '<p class="sub">We sent you this bill on ' + esc(b.sentAt) + ', checked against our records first.</p>' : '<p class="sub">Checked against our records by our team.</p>');
+  } else h += '<p class="sub">Your ' + esc(L.label.toLowerCase()) + ' bill for this month is being checked by our team against our records before it reaches you.</p>';
+  if (L.owed > 0) h += '<div class="owed">Our records show <b>' + money(L.owed) + '</b> still open on this line. If you have paid it, tell us below and we will have the payment matched.</div>';
+  if (L.history && L.history.length) h += '<h3>Billed and received, month by month</h3><div class="scroll"><table class="t"><thead><tr><th>Month</th><th class="num">Billed</th><th class="num">Received</th><th>Received on</th><th>Status</th></tr></thead><tbody>' +
+    L.history.map(x => '<tr><td>' + esc(x.label) + '</td><td class="num">' + money(x.billed) + '</td><td class="num">' + (x.paid ? money(x.paid) : '–') + '</td><td>' + esc(dmy(x.paidOn)) + '</td><td><span class="st' + (x.status === 'Paid' ? ' paid' : x.status === 'Open' ? ' late' : x.status === 'Part paid' ? ' wait' : '') + '">' + esc(x.status) + '</span></td></tr>').join('') + '</tbody></table></div>';
+  if (L.openItems) h += '<p class="sub">' + L.openItems + ' billing item' + (L.openItems === 1 ? ' is' : 's are') + ' open on this line: it is in “Your open items” below, with who is on it and where it stands.</p>';
+  if (L.changes && L.changes.length) h += '<h3>What you have told us</h3><ul class="feed">' + L.changes.map(c => '<li><b>' + esc(c.at) + '</b> · ' + esc(c.kind) + (c.member ? ' · ' + esc(c.member) : '') + ' · ' + esc(c.detail) + ' · <span class="st">' + esc(c.status) + '</span></li>').join('') + '</ul>';
+  if (L.claims && L.claims.byYear && L.claims.byYear.length) h += '<h3>What your plan paid for your people</h3><div class="cyears">' + L.claims.byYear.map(y => '<div><b>' + money(y.paid) + '</b><span>' + esc(y.year) + ' · ' + y.claims + ' claim' + (y.claims === 1 ? '' : 's') + '</span></div>').join('') + '</div><p class="sub">Claims paid by the plan, by the year of the service. The last two months are still being processed.</p>';
+  h += '<div class="tell" id="tell"><h3>Tell us about a payment or a change</h3>' + (TELL.sent ? '<div class="ok">' + esc(TELL.sent) + '</div>' : '') +
+    '<label for="tkind">What is it?</label><select class="field" id="tkind"><option value="payment">A payment we have made</option><option value="joiner">Someone has joined</option><option value="leaver">Someone has left</option><option value="dependent">A dependent added or removed</option><option value="query">A question about our billing</option></select>' +
+    '<div id="tpay"><div class="row2"><div><label for="tamt">Amount (TT$)</label><input class="field" id="tamt" type="number" step="0.01" inputmode="decimal"></div><div><label for="tdate">Date paid</label><input class="field" id="tdate" type="date"></div></div>' +
+    '<div class="row2"><div><label for="tmethod">How</label><select class="field" id="tmethod"><option>Wire transfer</option><option>Online</option><option>Cheque</option><option>Cash</option></select></div><div><label for="tref">Reference (optional)</label><input class="field" id="tref" maxlength="80"></div></div></div>' +
+    '<div id="tchg" class="hide"><div class="row2"><div><label for="tmember">The person’s name</label><input class="field" id="tmember" maxlength="120"></div><div><label for="teff">Effective date</label><input class="field" id="teff" type="date"></div></div></div>' +
+    '<label for="tdetail">Anything else we should know</label><textarea class="field" id="tdetail" maxlength="800"></textarea>' +
+    '<label for="tname">Your name</label><input class="field" id="tname" maxlength="80" value="' + esc(A._who || '') + '">' +
+    '<div class="err" id="terr" role="alert"></div><button class="btn full" type="button" id="tgo">Send to our team</button><p class="sub" style="margin-top:8px">It goes straight to the person who looks after your account and onto your billing item. A payment is matched against our records; a joiner or leaver opens a task for our team.</p></div>';
+  return h + '</div></section>';
+}
+function bindBilling() {
+  const sec = document.querySelector('.billing'); if (!sec) return;
+  sec.querySelectorAll('[data-bt]').forEach(b => b.onclick = () => { BT = b.dataset.bt; sec.outerHTML = billingHtml(); bindBilling(); });
+  const kind = $('tkind'), swap = () => { const pay = kind.value === 'payment', q = kind.value === 'query'; $('tpay').classList.toggle('hide', !pay); $('tchg').classList.toggle('hide', pay || q); };
+  kind.onchange = swap; swap();
+  $('tgo').onclick = async () => {
+    const err = $('terr'), k = kind.value, body = { action: 'gcm.clientTell', lb: CRED.lb, code: CRED.code, kind: k, line: BT, detail: $('tdetail').value.trim(), name: $('tname').value.trim() };
+    err.textContent = '';
+    if (!body.name) { err.textContent = 'Please give your name.'; return; }
+    if (k === 'payment') { Object.assign(body, { amount: $('tamt').value, paidOn: $('tdate').value, method: $('tmethod').value, ref: $('tref').value.trim() }); if (!body.amount || !body.paidOn) { err.textContent = 'Please give the amount and the date you paid.'; return; } }
+    else if (k !== 'query') { Object.assign(body, { member: $('tmember').value.trim(), effective: $('teff').value }); if (!body.member) { err.textContent = 'Please give the person’s name.'; return; } }
+    else if (!body.detail) { err.textContent = 'Please write your question.'; return; }
+    $('tgo').disabled = true; $('tgo').textContent = 'Sending…';
+    let r;
+    try { r = JSON.parse(await (await fetch(SVC, { method: 'POST', body: JSON.stringify(body) })).text()); } catch (e) { r = { ok: false, error: 'We could not reach our system. Please try again, or e-mail us.' }; }
+    $('tgo').disabled = false; $('tgo').textContent = 'Send to our team';
+    if (!r.ok) { err.textContent = r.error || 'Not sent.'; return; }
+    TELL.sent = r.said || 'Thank you. Our team has it.';
+    try { localStorage.setItem(nameKey(), body.name.slice(0, 80)); } catch (e) {}
+    open_();
+  };
+}
+
 function bindPend() {
   document.querySelectorAll('[data-pf]').forEach(b => b.onclick = () => {
     PF = b.dataset.pf; const box = document.querySelector('.pend');
@@ -380,7 +453,7 @@ function render() {
     (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
     '<div class="links">' + (D.film ? '<a class="pill" href="' + esc(D.film) + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + esc(D.filmLength || '') + '</a>' : '') +
     '<a class="pill plain" href="#rate">Rate our service</a></div></div>' +
-    pendHtml() + comingHtml() +
+    billingHtml() + pendHtml() + comingHtml() +
     '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
     '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +
     '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>';
@@ -433,7 +506,7 @@ function render() {
     '<p style="text-align:center"><button class="btn" type="button" id="out" style="background:transparent;color:var(--muted);border:1.5px solid var(--line)">Sign out</button></p>';
   $('app').innerHTML = h;
   $('prog').classList.remove('hide');
-  bind(); bindPend(); progress();
+  bind(); bindPend(); bindBilling(); progress();
 }
 function bind() {
   document.querySelectorAll('.ch').forEach(b => b.onclick = () => {

@@ -3687,6 +3687,61 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - `coming/coming-test.js` (32 checks) and `coming/page.js` (11, Playwright) in the session scratchpad cover it, on
     the made-up branch.
 
+- **Billings Management: the monthly bills checked against Salesforce before they reach a group** (24 October 2026:
+  "on the 26th the billings go out … create a section called Billings Management as well include in this section
+  Terminations and Enrollments", then "the staff log in … upload the group health, then life, then pensions if any and
+  do the reconciliation … the client has a list bill so it pulls the pension … using intelligence and data to guide",
+  then "it should be an experience … it guides them what they have to check … it verifies our Salesforce records …
+  scrubs all the open tasks … scrubbing the inbox … comments on the task, and it goes on to Chatter … on the client's
+  side … the group health, their billing, the group life in the tabs, the billing, and the group pensions plus any
+  concerns"). `apps-script/GroupBilling.gs` (a fifth file in the project; `gcm.bill*`, `gcm.claimsUpload` and
+  `gcm.clientTell` routed from GroupClients.gs), `groupclientmanagement/billread.js` (the readers) and
+  `groupclientmanagement/billing-ui.js` (the staff page's review). `GROUP-CLIENTS-SETUP.md` has the steps.
+  - **The bill is read on the staff member's device**, never kept by the backend: `BillRead` turns Guardian's Group
+    Health invoice (summary, outstanding balances, member detail, credits and adjustments, transmittal), the Group Life
+    member bill, its Statement of Adjustment and its covering letter, and the branch's own pension and life list bill
+    (a spreadsheet, or built from the policies carrying the list bill in Salesforce) into figures and member lines.
+    pdf.js and SheetJS come from cdnjs. Checked on the first real October bills: every member premium ties to the
+    rates, the members add to the totals, the three life documents combine to the letter's amount.
+  - **The checks (`gblCheck_`)**, each a finding with its level (fix, check, note, ok) and whose it is (Salesforce,
+    Head Office, the group, us): the month's `TRANSACTIONS__c` record and its amount (one press patches
+    `Group_Billing_Premiums__c`); the arrears the bill shows against `Payments__c` and `Payments_Made__c` (a month the
+    bill shows unpaid that Salesforce has paid goes to Head Office, not the group); every member on the bill against
+    the group's `HEALTH (GROUP)` / `LIFE(GROUP)` policies, matched on the employee id's first two parts or the cert
+    number, then by name (`gblSamePerson_`, which reads "QUAN KEP ; KEITH" and "QUANKEP, KEITH" as one person); who
+    joined, left or changed tier since last month's stored bill; each back-charge and statement adjustment against the
+    tasks on file, with "Open a task" where none is; the life rates and the 31-day rule; the list bill against the
+    policies tagged with it (not tagged, tagged but not listed, premiums that differ, paid-to dates behind); payments
+    keyed long after they were made. On the first real group: Salesforce was 1,430 short on health and 614 high on
+    life, a joiner since August had no record, 43 records in Salesforce were live for members no longer on the bill,
+    and the pension list disagreed with Salesforce on four policies and six premiums.
+  - **Reconciled is a person's tick** (`gblAct_` `reconciled`): fixes open block it unless the branch forces; the
+    Salesforce record is marked `Reconciled__c` and the line's billing task gets the note on Chatter
+    (`gblPostBilling_`: the task whose subject carries the month, else the line's newest open billing task).
+    **Send** (`gblSend_`) goes from support@ with the PDFs attached (base64 from the page, under 3 MB each) and a cover
+    note; **test mode until `gblGoLive`** (`GCM_BILL_LIVE`): to the staff member and the branch, marked TEST. Logged
+    on Group Sends as `bill sent` / `bill test`, which `gcmLoad_` keeps apart (`g.billSends`), never the weekly letter.
+  - **The claims experience** (`gblClaims_`, `gblExperience_`): the claims summary is aggregated by month and
+    division in the browser, so no patient's name reaches the sheet; plan years are cut where the monthly premium
+    steps up `GBL.RATE_JUMP` and stays (the renewal lands on the March or April bill, not January). Staff see the loss
+    ratio by plan year; the group sees what the plan paid by calendar year and how many claims, never a ratio.
+    On the first real group: 82% in 2023, 98% in 2024, 90% on the old rates, 43% in the eight months since a 40%
+    increase; 89% of claim money is processed within 30 days of service, 99% within 60.
+  - **The AI read** (`gblAi_`, `gcmClaude_`): the findings with every name taken out (`aiText`), the Salesforce
+    figures and the task ages; answers where / first / careful / say. Staff only.
+  - **The group's page** (`gblClientBlock_` on `gcm.client`): one tab a line with the latest sent or reconciled bill
+    as figures and counts, twelve months of billed and received, the open billing items, what they told us, and for
+    health what the plan paid by year. **Tell us** (`gblClientTell_`): a payment, a joiner, a leaver, a dependent or a
+    question, filed on Group Changes (Source `client`), posted to the billing task's Chatter, e-mailed to the account
+    owner; a joiner or leaver opens a Salesforce task for the owner (`gblOwnerId_`: a standard, active user by e-mail,
+    never a site guest user).
+  - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
+    Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
+  - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing
+    records) and `billing/page-test.js` (52, Playwright: the review driven with the real October PDFs through pdf.js,
+    the made-up bill stored, the fixes, reconcile, the test send, a comment to Chatter, the claims upload; the
+    group's page on a phone and a desk). `billing/world.js` holds the made-up Salesforce.
+
 ## The English B essay workshop — it asks, the student writes
 
 `englishb/index.html` (rickyrampersadbranch.com/englishb/) and `apps-script/EssayWorkshop.gs`, **its own Apps Script
