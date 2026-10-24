@@ -378,7 +378,7 @@ function billingHtml() {
   const B = D.billing; if (!B || !Array.isArray(B.lines) || !B.lines.length) return '';
   if (!BT || !B.lines.some(l => l.line === BT)) BT = B.lines[0].line;
   const L = B.lines.find(l => l.line === BT), b = L.bill;
-  let h = '<section class="billing" aria-labelledby="billh"><h2 id="billh">Your billing</h2><p class="sub">Each line’s latest bill, what we have received against it, and a place to tell us about a payment or a person joining or leaving.</p>' +
+  let h = '<section class="billing" aria-labelledby="billh"><h2 id="billh">Your billing</h2><p class="sub">Each line’s latest bill, what we have received against it, and a place to tell us about a payment or a person joining or leaving.' + (B.nextBill ? ' Your next bill comes on <b>' + esc(B.nextBill.label) + '</b>.' : '') + '</p>' +
     '<div class="btabs" role="tablist">' + B.lines.map(l => '<button type="button" role="tab" class="btab" data-bt="' + esc(l.line) + '" aria-selected="' + (l.line === BT) + '">' + esc(l.label) + (l.owed > 0 ? '<i class="bdot" aria-hidden="true" title="an amount is still open"></i>' : '') + '</button>').join('') + '</div><div class="bpanel" role="tabpanel">';
   if (b) {
     h += '<div class="ytiles"><div><b>' + money(b.due) + '</b><span>' + esc(b.label) + (b.dueBy ? ', payable by ' + esc(dmy(b.dueBy)) : '') + '</span></div><div><b>' + b.members + '</b><span>' + (L.line === 'listbill' ? 'policies' : 'members') + ' on the bill</span></div>' +

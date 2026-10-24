@@ -214,6 +214,8 @@ function gcmRefreshTick() {
   gcmRefreshLocked_();
   /* and catches up any approved letter the Monday trigger did not reach (a busy lock, a run cut short) */
   try { gcmQueueRun_(); } catch (e) {}
+  /* the approved group bills go at 10:00 on the billing day, the 26th (GroupBilling.gs) */
+  try { if (typeof gblDayRun_ === 'function') gblDayRun_({ auto: true }); } catch (e) {}
   /* once the welcome is on, a group a staff member has just verified gets it, in working hours */
   try { if (gcmWelcomeOn_() && d <= 5 && h >= 8 && h <= 17) gcmWelcomeRun_({ auto: true }); } catch (e) {}
   /* and once the branch manager has given the go, the 10:30 group day (star reminders, staff asked why, tasks), caught up
@@ -1432,7 +1434,7 @@ function gcmBoard_(p) {
   if (who.role === 'branch' || who.role === 'deputy') out.tellFailed = gcmTellFailed_();
   out.analytics = gcmAnalytics_(L);
   /* where each group's billing stands this month (GroupBilling.gs, 24 October 2026) */
-  if (typeof gblBoard_ === 'function') { try { out.billing = gblBoard_(L); out.billingLive = gblLive_(); } catch (e) { out.billing = null; } }
+  if (typeof gblBoard_ === 'function') { try { out.billing = gblBoard_(L); out.billingLive = gblLive_(); out.billingDay = gblDayInfo_(); } catch (e) { out.billing = null; } }
   return out;
 }
 
@@ -2767,7 +2769,11 @@ function gcmDay_(o) {
   /* the change forms waiting on EB Customer Care: the owner's task chased every three working days (GroupBilling.gs) */
   var forms = null;
   if (typeof gblFormChase_ === 'function') { try { forms = gblFormChase_({ test: !!o.test }); said.push('Change forms: ' + forms.said); } catch (e) { forms = { said: String(e && e.message ? e.message : e).slice(0, 200), chased: [], answered: [], closed: [], waiting: [] }; } }
-  try { gcmDaySummary_({ test: !!o.test, rate: rate, chase: chase, forms: forms }); said.push('Summary sent to ' + gcmDayManager_() + '.'); }
+  /* the group bills (GroupBilling.gs): on the billing day the 10:00 run if it has not gone, then the staff asked why; every day
+     the block for the summary */
+  var bills = null;
+  if (typeof gblDay_ === 'function') { try { bills = gblDay_({ test: !!o.test }); if (bills.said) said.push('Bills: ' + bills.said); } catch (e) { bills = { html: '', said: String(e && e.message ? e.message : e).slice(0, 200) }; said.push('Bills: ' + bills.said); } }
+  try { gcmDaySummary_({ test: !!o.test, rate: rate, chase: chase, forms: forms, bills: bills }); said.push('Summary sent to ' + gcmDayManager_() + '.'); }
   catch (e) { said.push('The summary did not go: ' + String(e && e.message ? e.message : e).slice(0, 160)); }
   out.said = said.join(' ');
   return out;
@@ -2847,15 +2853,17 @@ function gcmChaseMail_(o, cycle, today, tasks) {
 
 /** A Salesforce task for each group that missed the week, once a group a week, owned by the staff member who looks after
  *  it. Returns { groupKey: { id, subject, error } }; o.test opens nothing and says what it would open. */
-function gcmChaseTasks_(owners, cycle, today, test) {
+function gcmChaseTasks_(owners, cycle, today, test, o) {
+  o = o || {};   // the billing day (GroupBilling.gs) uses the same machinery with its own tag, property and words
+  var TAG = o.tag || GCM_DAY.TASK_TAG, PROP = o.prop || GCM_DAY.TASKS_PROP, TRAIN = o.train || GCM_DAY.TRAIN;
   var props = PropertiesService.getScriptProperties(), out = {};
-  var kept = gcmParse_(props.getProperty(GCM_DAY.TASKS_PROP), {});
+  var kept = gcmParse_(props.getProperty(PROP), {});
   if (kept.cycle !== cycle) kept = { cycle: cycle, tasks: {} };
   var missed = [];
   owners.forEach(function (o) { o.missed.forEach(function (m) { missed.push({ o: o, m: m }); }); });
   if (!missed.length) return out;
   var subjectOf = function (x) {
-    return 'RR/' + String(x.o.name || 'BRANCH').toUpperCase() + ' - ' + GCM_DAY.TASK_TAG + ' - ' + x.m.g.name + ' - week of ' + tDmy_(cycle) + ': reason needed';
+    return 'RR/' + String(x.o.name || 'BRANCH').toUpperCase() + ' - ' + TAG + ' - ' + x.m.g.name + ' - ' + (o.label || 'week of ' + tDmy_(cycle)) + ': reason needed';
   };
   if (test) { missed.forEach(function (x) { out[x.m.g.key] = { id: '', subject: subjectOf(x), test: true }; }); return out; }
   if (!tSfOn_()) { missed.forEach(function (x) { out[x.m.g.key] = { error: 'Salesforce is not linked to this project' }; }); return out; }
@@ -2864,7 +2872,7 @@ function gcmChaseTasks_(owners, cycle, today, test) {
   try {
     var mails = missed.map(function (x) { return String(x.o.email || '').toLowerCase(); }).filter(String);
     if (mails.length) gcmQuery_("SELECT Id, Email FROM User WHERE IsActive = true AND UserType = 'Standard' AND Email IN (" + gcmIn_(mails) + ')').forEach(function (u) { users[String(u.Email || '').toLowerCase()] = u.Id; });
-    gcmQuery_("SELECT Id, WhatId, Subject FROM Task WHERE Task_Type__c = '" + GCM_DAY.TASK_TYPE + "' AND Subject LIKE '%" + GCM_DAY.TASK_TAG + "%' AND CreatedDate >= " + cycle + 'T00:00:00Z')
+    gcmQuery_("SELECT Id, WhatId, Subject FROM Task WHERE Task_Type__c = '" + GCM_DAY.TASK_TYPE + "' AND Subject LIKE '%" + TAG + "%' AND CreatedDate >= " + cycle + 'T00:00:00Z')
       .forEach(function (t) { if (t.WhatId) have[gcmId15_(t.WhatId)] = t.Id; });
   } catch (e) { missed.forEach(function (x) { out[x.m.g.key] = { error: String(e && e.message ? e.message : e).slice(0, 160) }; }); return out; }
   missed.forEach(function (x) {
@@ -2872,15 +2880,15 @@ function gcmChaseTasks_(owners, cycle, today, test) {
     if (made) { kept.tasks[g.key] = made; out[g.key] = { id: made, subject: subjectOf(x), existing: true }; return; }
     var owner = users[String(x.o.email || '').toLowerCase()];
     if (!owner || !x.o.active) { out[g.key] = { error: 'no active Salesforce user for ' + (x.o.name || 'the account owner') + (x.o.email ? ' (' + x.o.email + ')' : '') }; return; }
-    var desc = [x.m.why + '.', 'Do this today: ' + x.m.todo, '', 'Close this task with your reason: why it was not approved by 10:00 on Monday, and when it went.', '',
-      'From the group client management manual:'].concat(GCM_DAY.TRAIN.map(function (t) { return '"' + t[1] + '" (' + t[0] + ')'; })).join('\n');
+    var desc = [x.m.why + '.', 'Do this today: ' + x.m.todo, '', 'Close this task with your reason: why it was ' + (o.why || 'not approved by 10:00 on Monday') + ', and when it went.', '',
+      'From the group client management manual:'].concat(TRAIN.map(function (t) { return '"' + t[1] + '" (' + t[0] + ')'; })).join('\n');
     try {
       var res = tSfSend_('post', '/sobjects/Task', { Subject: subjectOf(x).slice(0, 255), OwnerId: owner, WhatId: acct || null, ActivityDate: today,
         Status: 'Not Started', Priority: 'High', Task_Type__c: GCM_DAY.TASK_TYPE, Description: desc });
       kept.tasks[g.key] = res.id; out[g.key] = { id: res.id, subject: subjectOf(x) };
     } catch (e) { out[g.key] = { error: String(e && e.message ? e.message : e).slice(0, 160) }; }
   });
-  props.setProperty(GCM_DAY.TASKS_PROP, JSON.stringify(kept));
+  props.setProperty(PROP, JSON.stringify(kept));
   return out;
 }
 
@@ -2962,6 +2970,7 @@ function gcmDaySummary_(o) {
       o.forms.answered.map(function (x) { return fl(x, 'EB replied' + (x.reply ? ' ' + x.reply.at + ': ' + x.reply.subject : '') + '; noted on the task'); }).join('') +
       o.forms.closed.map(function (x) { return fl(x, 'task closed'); }).join('') + o.forms.waiting.map(function (x) { return fl(x, 'waiting, ' + x.days + ' working day' + (x.days === 1 ? '' : 's') + ' since ' + (x.chases ? 'the last follow-up' : 'it went')); }).join('') + '</ul></div>');
   }
+  if (o.bills && o.bills.html) html = html.replace(/<\/div>\s*$/, o.bills.html + '</div>');
   if (tMsCreds_()) tMsSend_(me, subject, html, { replyTo: me });
   else MailApp.sendEmail({ to: me, subject: subject, htmlBody: html, name: 'Ricky Rampersad Branch' });
 }

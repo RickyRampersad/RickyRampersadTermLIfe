@@ -3835,6 +3835,48 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       scratchpad placed in a mocked Drive folder) and `billing/page-test.js` (99, pdf.js from the vendor copies); the
       harness (`gcmlive/env-sq.js`) mocks `DriveApp`, serves the site's forms from the repository and pdf-lib from the
       scratchpad. `forms/gas-sync.js` there is the proof that pdf-lib runs under the synchronous Promise.
+  - **The billing day: the 26th, approved by staff, sent by the system, chased at 10:30** (24 October 2026: "on the 26th
+    group billings go out and weekly on a Monday at 10am the queries go out but staff has to approve"). The bills follow
+    the Monday letters' pattern. `GBL_DAY` in GroupBilling.gs: the 26th (`GCM_BILL_DAY` Script property overrides, 1 to
+    28), or the next working day when it falls on a weekend (`gblBillDayOf_`; 26 September and 26 December 2026 are
+    Saturdays, so the 28th); 10:00, as the letters.
+    - **Approve for the 26th** (`gblApprove_`, act `approve`): a reconciled line (fixes closed, or the branch forces), the
+      group with a contact we may write to. The PDFs read in the session travel with the approval and wait in the Drive
+      folder's "Bills to send" (`gblKeepQueued_`, under `GCM_FORMS_FOLDER`), named by month, group and line; the row
+      carries Approved at, by, e-mail, for and the file ids (new Group Bills columns, added to an older tab by name).
+      With a PDF and no Drive folder the approval is refused and says to set the property or press Send now on the day.
+      `unapprove` trashes the waiting PDF and leaves the bill reconciled. Approving after 10:00 on the day is for the next
+      month, and the reply says so; Send now stays for the day itself. The steps strip gains *Approve* before *Send*.
+    - **The run** (`gblDayRun_`): from the hourly refresh (`gcmRefreshTick`, `auto`, silent when nothing is due) and
+      first in the 10:30 group day; every approved bill whose day has come, one e-mail a group and month with the PDFs
+      read back from Drive (`gblBillMail_`), to the contact with sales support in Cc, logged on Group Sends as `bill
+      sent` (Via "support@, 26th run"), the row `sent`, the PDF moved to "Sent bills", a note on the billing task's
+      Chatter. **Test mode is the bills' own**: until `gblGoLive` the run sends each bill to its approver and the branch
+      marked TEST, logs `bill test`, marks the row `tested` and nothing sent; approve again once live. A bill the run
+      cannot send is `held: <why>` on its row (no contact, Microsoft refused, the PDF gone from Drive) and stays
+      approved; one internal e-mail a run (`gblDayTell_`) tells the branch manager and whoever approved a held bill.
+      `gblDayNow` and `gblDayRehearse` (every approved bill as a TEST to its approver, nothing marked) from the editor.
+    - **Who is billed** (`gblExpected_`): a line with a Salesforce billing record (`TRANSACTIONS__c`) for the cycle's
+      month or the one after, one query over every account kept an hour, plus any bill stored for those months; without
+      Salesforce, the lines with a bill stored in the last 70 days. The cycle runs from the previous month's billing day
+      to this one (`gblCycle_`).
+    - **At 10:30 on the billing day** (`gblDay_` inside `gcmDay_`): each staff member whose billed group had no bill
+      (sent or test copy) this cycle is asked why (`gblChaseList_`, `gblChaseMail_`: where each line stands, nothing
+      uploaded / to fix / not reconciled / not approved / held / approved after the run, what to do today, the three
+      training lines in `GBL_DAY.TRAIN`), reply by noon to the branch manager, and a Salesforce task opens per group,
+      `RR/<NAME> - GROUP BILL NOT SENT - <group> - <Month yyyy> bills: reason needed`, Lic/Staffing/SA/HR, High, owned
+      by the staff member's standard user, once a cycle (`gcmChaseTasks_` generalised with `o.tag`, `o.prop`, `o.label`,
+      `o.train`, `o.why`; property `GCM_BILL_TASKS`). The manager's daily summary gains "Group bills: the 26th"
+      (`gblDayHtml_`): on the day, how many billed groups had their bill, who missed with the task, what the run sent and
+      held; on other days, the next billing day and how many are sent or approved. `gblDayTest` rehearses the whole day
+      to the branch manager; `gcmGroupDayTest` includes it.
+    - **The pages**: the review's strip under the title (`blDayStrip`: the day, days to go, test mode, the Drive folder
+      not linked), *Approve for 26 Oct* on a reconciled line (disabled with the reason while the folder is not linked),
+      the approval shown with who and when and *Cancel the approval*, *Send now* beside it; the account chip counts
+      approved and held; the Team dashboard's meter "bills approved or sent for 26 Oct" and its note (`billingDay` on the
+      board answer); the group's page says when its next bill comes (`nextBill` in `gblClientBlock_`).
+    - Tests: `billing/billing-test.js` (165) and `billing/page-test.js` (107) in the scratchpad; the harness's Drive
+      mock gained stable file ids, `getFileById`, `moveTo` and `setTrashed`.
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
     Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing

@@ -35,7 +35,7 @@ async function openBilling(key, month) {
   VIEW = 'billing'; BILL = d; BILL_MONTH = d.month; drawBilling();
 }
 function blSteps(s) {
-  const steps = [['upload', 'Upload'], ['verify', 'Verify'], ['fixed', 'Fix'], ['reconciled', 'Reconcile'], ['sent', 'Send']];
+  const steps = [['upload', 'Upload'], ['verify', 'Verify'], ['fixed', 'Fix'], ['reconciled', 'Reconcile'], ['approved', 'Approve'], ['sent', 'Send']];
   let cur = steps.findIndex(([k]) => !s[k]); if (cur < 0) cur = steps.length;
   return '<ol class="steps" aria-label="Where this line stands">' + steps.map(([k, l], i) => '<li class="' + (s[k] ? 'done' : i === cur ? 'now' : '') + '"><span class="n">' + (s[k] ? '✓' : i + 1) + '</span>' + l + (k === 'fixed' && s.open ? '<small>' + s.open + ' open</small>' : '') + '</li>').join('') + '</ol>';
 }
@@ -48,6 +48,7 @@ function drawBilling() {
   let h = '<button class="back" type="button" id="blBack">← ' + esc(g.name) + '</button>' +
     '<div class="blhead"><div><h2 style="margin:8px 0 2px">Billing review <span class="muted">· ' + esc(g.name) + '</span></h2><p class="small muted" style="margin:0">List bill ' + esc(g.bills.join(', ') || 'none') + ' · letters go to ' + esc(g.contact || g.to.join(', ') || 'nobody yet') + (d.canAct === false ? ' · <b>read only</b>: ' + esc(g.assigned || 'its owner') + ', the assistant branch manager or the branch manager acts here' : '') + '</p></div>' +
     '<div class="blctl"><label class="sel">Month <select id="blMonth">' + opts + '</select></label><button class="btn ghost sm" type="button" id="blFresh">Read Salesforce again</button>' + (d.ai ? '<button class="btn ghost sm" type="button" id="blAi">Read this month with AI</button>' : '') + '</div></div>';
+  h += blDayStrip(d.day, d.live);
   if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked, so the bills cannot be checked against the records' + (d.sfError ? ': ' + esc(d.sfError) : '') + '.</div>';
   if (!d.live) h += '<div class="note info"><div><b>Sending is in test mode.</b> A bill sent from here goes to you and the branch, marked TEST, until the branch manager runs gblGoLive in the script editor. Everything else is live: the checks, the Salesforce fixes, the tasks and the Chatter.</div></div>';
   h += '<div class="guide"><h3>What to do next</h3><ol>' + d.guide.map(s => '<li class="g-' + esc(s.kind) + '">' + esc(s.text) + (s.line ? ' <button class="lnk" type="button" data-jump="' + esc(s.line) + '">go</button>' : '') + '</li>').join('') + '</ol></div>' +
@@ -89,7 +90,8 @@ function blLineCard(o) {
       (can && !BILL_READ[o.line] ? ' · <button class="lnk" type="button" data-reup="' + o.line + '">upload again</button>' : '') + '</p>';
     h += blFindings(o);
     if (can) h += '<div class="blacts">' + (!b.reconciledAt ? '<button class="btn' + (s.fixes ? ' ghost' : '') + '" type="button" data-rec="' + o.line + '"' + (s.fixes && d.role !== 'branch' ? ' disabled title="Fix or resolve the findings marked fix first"' : '') + '>Mark reconciled</button>' : '') +
-      (b.reconciledAt ? '<button class="btn" type="button" data-send="' + o.line + '">' + (b.sentAt ? 'Send to the group again' : 'Send to the group') + (d.live ? '' : ' (test)') + '</button>' : '') +
+      blApproveActs(o, b, s, d) +
+      (b.reconciledAt ? '<button class="btn' + (s.status === 'approved' ? ' ghost' : '') + '" type="button" data-send="' + o.line + '">' + (b.sentAt ? 'Send to the group again' : 'Send now') + (d.live ? '' : ' (test)') + '</button>' : '') +
       '<button class="btn ghost" type="button" data-pay="' + o.line + '">Record a payment</button></div>';
   }
   h += blLineTasks(o);
@@ -525,6 +527,8 @@ function blBindLines() {
   app.querySelectorAll('[data-resolve]').forEach(b => b.onclick = () => blResolve(b.dataset.line, b.dataset.resolve));
   app.querySelectorAll('[data-rec]').forEach(b => b.onclick = () => blReconcile(b.dataset.rec));
   app.querySelectorAll('[data-send]').forEach(b => b.onclick = () => blSend(b.dataset.send));
+  app.querySelectorAll('[data-approve]').forEach(b => b.onclick = () => blApprove(b.dataset.approve));
+  app.querySelectorAll('[data-unapprove]').forEach(b => b.onclick = () => blUnapprove(b.dataset.unapprove));
   app.querySelectorAll('[data-pay]').forEach(b => b.onclick = () => blPayment(b.dataset.pay, b.dataset.month, b.dataset.amount));
   const cl = app.querySelector('input[type=file][id^=claims-]'); if (cl) cl.onchange = () => { if (cl.files.length) blClaimsFile(cl.files[0]); };
 }
@@ -547,6 +551,40 @@ async function blReconcile(line) {
   const note = prompt('Mark the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill reconciled against Salesforce? Add a note for the task’s Chatter (optional):', ''); if (note == null) return;
   const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'reconciled', note, force: BILL.role === 'branch' ? 'Y' : '' });
   toast(r.ok ? r.said : (r.error || 'Not reconciled'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
+}
+/* the billing day (24 October 2026: "on the 26th group billings go out … staff has to approve"): the strip under the title,
+   the Approve button on a reconciled line, and the state once approved. The PDF read in this session travels with the
+   approval and waits in the branch's Drive folder for the 10:00 run. */
+function blDayStrip(day, live) {
+  if (!day) return '';
+  const when = day.isDay ? '<b>today, ' + esc(day.label) + '</b>' : '<b>' + esc(day.label) + '</b>' + (day.daysTo ? ' (in ' + day.daysTo + ' day' + (day.daysTo === 1 ? '' : 's') + ')' : '');
+  return '<div class="note info blday"><div><b>The bills go out by themselves on ' + when + '.</b> Before then, on each line: upload the bill, verify it against Salesforce, fix what is marked fix, mark it reconciled and press <b>Approve for the ' + day.dayOfMonth + 'th</b> with the PDF attached. ' +
+    'A line not approved by ' + day.hour + ':00 waits for you to press Send now. At 10:30 the branch manager is told which groups had no bill, and asks why.' +
+    (live ? '' : ' <span class="muted">The bills are in test mode: the run sends each approved bill to its approver and the branch, marked TEST, until the branch manager runs gblGoLive.</span>') +
+    (day.drive ? '' : ' <b>The Drive folder is not linked yet</b> (the GCM_FORMS_FOLDER Script property, GROUP-CLIENTS-SETUP.md), so a bill cannot wait with its PDF: press Send now on the day.') + '</div></div>';
+}
+function blApproveActs(o, b, s, d) {
+  if (!b.reconciledAt || b.sentAt) return '';
+  const day = d.day || {};
+  if (s.held) return '<span class="chip bad"><i></i>Approved, held at the run: ' + esc(s.held) + '</span><button class="btn ghost" type="button" data-unapprove="' + o.line + '">Cancel the approval</button>';
+  if (s.status === 'approved') return '<span class="chip good"><i></i>Approved for ' + esc(blDayLabel(s.approvedFor)) + ' by ' + esc(s.approvedBy) + '</span><button class="btn ghost" type="button" data-unapprove="' + o.line + '">Cancel the approval</button>';
+  if (s.status === 'tested') return '<span class="chip"><i style="background:var(--bar)"></i>Went as a test copy in the last run</span><button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for the next run</button>';
+  return '<button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for ' + esc(day.date || ('the ' + (day.dayOfMonth || 26) + 'th')) + '</button>';
+}
+const BL_DAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+function blDayLabel(ymd) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); if (!m) return ymd || ''; const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); const dow = d.getUTCDay() || 7; return BL_DAYS[dow] + ' ' + (+m[3]) + ' ' + BL_MON[+m[2] - 1].slice(0, 3); }
+async function blApprove(line) {
+  const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [], day = BILL.day || {};
+  const who = BILL.live ? 'the group (' + (BILL.group.contact || BILL.group.to.join(', ')) + ')' : 'you, marked TEST (test mode)';
+  if (!confirm('Approve the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.label || 'the billing day') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)') + '?')) return;
+  const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'approve', attachments: files, force: BILL.role === 'branch' ? 'Y' : '' });
+  toast(r.ok ? r.said : (r.error || 'Not approved'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
+}
+async function blUnapprove(line) {
+  const o = BILL.lines.find(x => x.line === line);
+  if (!confirm('Cancel the approval of the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill? It stays reconciled; nothing goes until it is approved again or sent now.')) return;
+  const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'unapprove' });
+  toast(r.ok ? r.said : (r.error || 'Not cancelled'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
 }
 async function blSend(line) {
   const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [];
@@ -634,9 +672,14 @@ function blBoardChip(g) {
   const b = BOARD && BOARD.billing ? BOARD.billing[g.key] : null;
   if (!BOARD || !BOARD.billing) return '';
   if (!b || !b.lines) return '<div><span class="chip warn"><i></i>Billing: nothing uploaded for ' + esc(blMon(b ? b.month : BOARD.today.slice(0, 7))) + '</span></div>';
-  return '<div><span class="chip' + (b.fixes ? ' bad' : b.sent === b.lines ? ' good' : '') + '"><i></i>Billing ' + esc(blMon(b.month).slice(0, 3)) + ': ' + b.lines + ' line' + (b.lines === 1 ? '' : 's') + (b.fixes ? ' · ' + b.fixes + ' to fix' : '') + (b.checks ? ' · ' + b.checks + ' to confirm' : '') + ' · ' + b.reconciled + ' reconciled · ' + b.sent + ' sent</span></div>';
+  return '<div><span class="chip' + (b.fixes || b.held ? ' bad' : blDone(g) ? ' good' : '') + '"><i></i>Billing ' + esc(blMon(b.month).slice(0, 3)) + ': ' + b.lines + ' line' + (b.lines === 1 ? '' : 's') + (b.fixes ? ' · ' + b.fixes + ' to fix' : '') + (b.checks ? ' · ' + b.checks + ' to confirm' : '') + ' · ' + b.reconciled + ' reconciled' + (b.approved ? ' · ' + b.approved + ' approved' : '') + (b.held ? ' · ' + b.held + ' held' : '') + ' · ' + b.sent + ' sent</span></div>';
+}
+/* every billed line approved for the run or already sent */
+function blDone(g) {
+  const b = BOARD && BOARD.billing ? BOARD.billing[g.key] : null;
+  return !!(b && b.lines && !b.held && (b.sent + (b.approved || 0)) >= b.lines);
 }
 function blTodo(g) {
   const b = BOARD && BOARD.billing ? BOARD.billing[g.key] : null;
-  return !!(BOARD && BOARD.billing) && (!b || !b.lines || b.fixes > 0 || b.sent < b.lines);
+  return !!(BOARD && BOARD.billing) && (!b || !b.lines || b.fixes > 0 || b.held > 0 || (b.sent + (b.approved || 0)) < b.lines);
 }

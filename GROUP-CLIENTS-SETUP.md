@@ -232,6 +232,17 @@ something is written.
   member's name), twelve months of billed and received from Salesforce, and a form to tell us about a payment, a
   joiner, a leaver, a dependent or a question. Each goes on Group Changes, onto the billing task's Chatter and to the
   account owner by e-mail; a joiner or leaver opens a Salesforce task for the owner.
+- **The billing day: the 26th.** The bills follow the Monday letters' pattern. On each line a staff member uploads,
+  verifies, reconciles and presses **Approve for the 26th** with the PDF attached; the PDF waits in the Drive folder
+  (`GCM_FORMS_FOLDER`, subfolder "Bills to send"), so **set that property before the first approval**: without it the
+  button is disabled and staff press Send now on the day. At 10:00 on the 26th (the next working day when the 26th is a
+  weekend; the `GCM_BILL_DAY` Script property moves the day) every approved bill goes from support@ with its PDF, copied
+  to sales support, and the PDF moves to "Sent bills". At 10:30 the group day asks each staff member whose billed group
+  (a group with a Salesforce billing record for the month) had no bill why, opens a `GROUP BILL NOT SENT` task
+  (Lic/Staffing/SA/HR) in their name, and the branch manager's summary carries "Group bills: the 26th". In test mode
+  (before `gblGoLive`) the run sends each approved bill to its approver and the branch marked TEST and marks the row
+  `tested`; approve again once live. Editor: `gblDayRehearse` (every approved bill as a TEST to its approver, nothing
+  marked), `gblDayNow` (send what is due now), `gblDayTest` (the whole billing day rehearsed to the branch manager).
 - **Guardian's own forms, filled exactly.** Three forms, on the group's page ("Enrol, terminate or change a member")
   and on the staff billing review (Record a change, or Form on a register row): **EB0010** (2024/3, the Group and
   Individual Policy Change Form: terminations, dependents, beneficiaries, address, plan, claim account), **GIO001**

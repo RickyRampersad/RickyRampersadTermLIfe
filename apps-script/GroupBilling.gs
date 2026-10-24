@@ -67,7 +67,8 @@ var GBL = {
 };
 var GBL_HEAD = {
   'Group Bills': ['When', 'Group', 'Line', 'Month', 'Ref', 'Dated', 'Due by', 'Members', 'Current', 'Adjustments', 'Due', 'Arrears shown', 'Payable',
-                  'SF Record', 'SF Billed', 'SF Due', 'SF Paid', 'Variance', 'Findings', 'Resolved', 'Status', 'By', 'Checked at', 'Reconciled at', 'Reconciled by', 'Sent at', 'Files', 'Summary'],
+                  'SF Record', 'SF Billed', 'SF Due', 'SF Paid', 'Variance', 'Findings', 'Resolved', 'Status', 'By', 'Checked at', 'Reconciled at', 'Reconciled by', 'Sent at', 'Files', 'Summary',
+                  'Approved at', 'Approved by', 'Approved e-mail', 'Approved for', 'Files kept'],
   'Group Bill Lines': ['Group', 'Line', 'Month', 'Member Id', 'Name', 'Division', 'Tier', 'Start', 'Eff', 'Premium', 'Kind', 'For month', 'Cover'],
   'Group Changes': ['When', 'Group', 'Line', 'Kind', 'Member', 'Detail', 'Effective', 'Amount', 'Source', 'By', 'Status', 'SF Task', 'SF Id', 'Note', 'Form'],
   'Group Claims': ['Group', 'Month', 'Division', 'Claims', 'Charge', 'Member share', 'Paid', 'Uploaded', 'By']
@@ -226,7 +227,8 @@ function gblBillOf_(r) {
     members: gblNum_(r.Members), current: gblNum_(r.Current), adjustments: gblNum_(r.Adjustments), due: gblNum_(r.Due), arrears: gblNum_(r['Arrears shown']), payable: gblNum_(r.Payable),
     sfRecord: gcmText_(r['SF Record']), sfBilled: gblNum_(r['SF Billed']), sfDue: gblNum_(r['SF Due']), sfPaid: gblNum_(r['SF Paid']), variance: gblNum_(r.Variance),
     findings: gblJ_(r.Findings, []), resolved: gblJ_(r.Resolved, {}), status: gcmText_(r.Status), by: gcmText_(r.By), checkedAt: gcmText_(r['Checked at']),
-    reconciledAt: gcmText_(r['Reconciled at']), reconciledBy: gcmText_(r['Reconciled by']), sentAt: gcmText_(r['Sent at']), files: gcmText_(r.Files), summary: gblJ_(r.Summary, {}), at: gcmWhen_(r.When) };
+    reconciledAt: gcmText_(r['Reconciled at']), reconciledBy: gcmText_(r['Reconciled by']), sentAt: gcmText_(r['Sent at']), files: gcmText_(r.Files), summary: gblJ_(r.Summary, {}), at: gcmWhen_(r.When),
+    approvedAt: gcmText_(r['Approved at']), approvedBy: gcmText_(r['Approved by']), approvedEmail: gcmText_(r['Approved e-mail']), approvedFor: gcmYmd_(r['Approved for']), kept: gcmText_(r['Files kept']) };
 }
 function gblLines_(g, line, month) {
   return gblRows_(GBL.LINES).filter(function (r) { return gcmCodeKey_(r.Group) === g.key && gcmText_(r.Line) === line && gcmText_(r.Month) === month; }).map(function (r) {
@@ -404,11 +406,12 @@ function gblNice_(s) {
 
 /* ── the steps of a review, for the page ────────────────────────────────────────────── */
 function gblSteps_(b) {
-  if (!b) return { upload: false, verify: false, fixed: false, reconciled: false, sent: false, open: 0 };
+  if (!b) return { upload: false, verify: false, fixed: false, reconciled: false, approved: false, sent: false, open: 0 };
   var fixes = b.findings.filter(function (f) { return f.level === 'fix' && !b.resolved[f.id]; }).length;
   var checks = b.findings.filter(function (f) { return f.level === 'check' && !b.resolved[f.id]; }).length;
   /* "Fix" is done when nothing marked fix is open; a check left open is the reconciler's call, and reconciling closes the step */
-  return { upload: true, verify: !!b.checkedAt, fixed: fixes === 0, reconciled: !!b.reconciledAt, sent: !!b.sentAt, open: fixes + checks, fixes: fixes, checks: checks };
+  return { upload: true, verify: !!b.checkedAt, fixed: fixes === 0, reconciled: !!b.reconciledAt, approved: !!b.sentAt || b.status === 'approved' || /^held/i.test(b.status), sent: !!b.sentAt, open: fixes + checks, fixes: fixes, checks: checks,
+    status: b.status, approvedFor: b.approvedFor || '', approvedBy: b.approvedBy || '', approvedAt: b.approvedAt || '', held: /^held/i.test(b.status) ? b.status.replace(/^held:\s*/i, '') : '' };
 }
 
 /* ── routes ─────────────────────────────────────────────────────────────────────────── */
@@ -452,6 +455,7 @@ function gblView_(p) {
   out.people = gblPeople_(g, who);
   out.changes = gblChanges_(g).slice(-40).reverse();
   out.claimsUploaded = gblClaimsRows_(g).length > 0;
+  out.day = gblDayInfo_();
   out.guide = gblGuide_(out);
   return out;
 }
@@ -500,7 +504,10 @@ function gblGuide_(v) {
     var s = o.steps, lab = o.label;
     if (!s.upload) steps.push({ line: o.line, text: 'Upload the ' + v.monthLabel + ' ' + lab.toLowerCase() + (o.line === 'listbill' ? ' list, or build it from Salesforce' : ' bill') + '.', kind: 'upload' });
     else if (s.sent) return;
-    else if (s.reconciled) steps.push({ line: o.line, text: lab + ' is reconciled: send the bill to the group.', kind: 'send' });
+    else if (s.held) steps.push({ line: o.line, text: lab + ' was approved but held at the run: ' + s.held + '. Put it right and press Send now.', kind: 'held' });
+    else if (s.status === 'tested') steps.push({ line: o.line, text: lab + ' went as a test copy in the ' + (v.day ? v.day.date : 'last') + ' run (test mode). Approve it again for the next run once the bills are live, or send it now.', kind: 'approve' });
+    else if (s.approved) steps.push({ line: o.line, text: lab + ' is approved by ' + s.approvedBy + ': it goes by itself on ' + gblDayLabel_(s.approvedFor) + '.', kind: 'approved' });
+    else if (s.reconciled) steps.push({ line: o.line, text: lab + ' is reconciled: approve it for ' + (v.day ? v.day.label : 'the billing day') + ', or send it to the group now.', kind: 'approve' });
     else if (s.fixes) steps.push({ line: o.line, text: lab + ': ' + s.fixes + ' to fix before it can be reconciled.', kind: 'fix' });
     else if (s.checks) steps.push({ line: o.line, text: lab + ': ' + s.checks + ' to confirm, then mark it reconciled.', kind: 'check' });
     else steps.push({ line: o.line, text: lab + ' checks out against Salesforce: mark it reconciled.', kind: 'reconcile' });
@@ -674,6 +681,7 @@ function gblAct_(b) {
     if (made) gblSf_(g, true);
     return { ok: true, said: made ? 'Payment recorded in Salesforce and noted on the task.' : 'Payment noted on the register and the task.' + (rec3 ? '' : ' There is no Salesforce billing record for that month to key it against.') };
   }
+  if (act === 'approve' || act === 'unapprove') { if (!bill) return { ok: false, error: 'No bill is stored for that month.' }; return gblApprove_(g, who, bill, b, L); }
   if (act === 'change') return gblChange_(g, who, line, b, 'staff');
   if (act === 'task') return gblTaskOpen_(g, who, line, month, b);
   if (['members', 'form', 'formSend', 'enrol', 'enrolSend', 'easi', 'easiSend'].indexOf(act) >= 0) return gblFormAct_(g, who, b);
@@ -1784,6 +1792,7 @@ function gblAi_(p) {
  *  us about, and for health what the plan paid for their people by year. */
 function gblClientBlock_(g, L) {
   var out = { lines: [], contact: GCM.TELL_CC[0] || '' };
+  try { var nd = gblNextBillDay_(); out.nextBill = { day: nd, label: tDmy_(nd), dayOfMonth: gblDayOfMonth_() }; } catch (e) {}
   try {
     var sf = gblSf_(g), bills = gblBillRows_(g), changes = gblChanges_(g).filter(function (c) { return c.source === 'client'; }).slice(-10).reverse();
     gblLinesOf_(g, sf, bills).forEach(function (ln) {
@@ -1837,6 +1846,371 @@ function gblTellOwner_(g, name, kind, line, b) {
 
 /* ── the board: one line a group, for the staff page's accounts table ───────────────── */
 /** Where each group's billing stands this month, for the team dashboard: lines uploaded, open fixes, reconciled, sent. */
+/* ── The billing day: the 26th (24 October 2026) ───────────────────────────────────────────────────────────────────
+ *  "On the 26th group billings go out, and weekly on a Monday at 10am the queries go out, but staff has to approve."
+ *  The bills follow the Monday letters' pattern: a staff member reconciles a line and presses Approve for the 26th;
+ *  the bill's PDF waits in the Drive folder; at 10:00 on the billing day (the 26th, or the next working day when it
+ *  falls on a weekend) every approved bill goes from support@ with its PDF; at 10:30 the group day asks each staff
+ *  member whose group had no bill why, opens the KPI task, and the branch manager's summary says what went. */
+var GBL_DAY = {
+  DAY: 26,                      // the day of the month the bills go (the GCM_BILL_DAY Script property overrides, 1 to 28)
+  HOUR: 10,                     // at 10:00, as the Monday letters
+  DAY_PROP: 'GCM_BILL_DAY', TASKS_PROP: 'GCM_BILL_TASKS',
+  QUEUE: 'Bills to send',       // Drive subfolder (of GCM_FORMS_FOLDER) where an approved bill's PDF waits
+  SENT: 'Sent bills',           // where it goes once sent
+  TASK_TAG: 'GROUP BILL NOT SENT',
+  TRAIN: [
+    ['Billings Management', 'The bills go out on the 26th. Before then: upload the month’s bill on each line, verify it against Salesforce, fix or resolve what is marked fix, mark it reconciled, and press Approve for the 26th with the PDF attached.'],
+    ['Billings Management', 'At 10:00 on the billing day every approved bill goes by itself from support@, with its PDF, copied to sales support. A line not approved by then waits for you to press Send now.'],
+    ['Billings Management', 'Reconciled is a person’s tick: nothing goes to a group that a person has not checked against Salesforce.']
+  ]
+};
+function gblDayOfMonth_() { try { var v = Number(PropertiesService.getScriptProperties().getProperty(GBL_DAY.DAY_PROP)); if (v >= 1 && v <= 28) return v; } catch (e) {} return GBL_DAY.DAY; }
+/** The billing day of a month (yyyy-MM): the 26th, or the next working day when it falls on a weekend. */
+function gblBillDayOf_(ym) {
+  var n = gblDayOfMonth_(), d = ym + '-' + ('0' + n).slice(-2);
+  while (gcmDow_(d) > 5) d = gcmAddDays_(d, 1);
+  return d;
+}
+/** The next billing day from now: this month's while it has not passed (the day itself before HOUR counts), else next month's. */
+function gblNextBillDay_(now) {
+  now = now || new Date();
+  var today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H')), d = gblBillDayOf_(today.slice(0, 7));
+  if (d > today || (d === today && h < GBL_DAY.HOUR)) return d;
+  return gblBillDayOf_(gblAddMonths_(today.slice(0, 7), 1));
+}
+/** The cycle the chase reads: its billing day (today when today is one, else the next) and the day before which a bill
+ *  does not count (the billing day of the month before). */
+function gblCycle_(now) {
+  now = now || new Date();
+  var today = gcmYmd_(now), thisM = gblBillDayOf_(today.slice(0, 7));
+  var end = thisM === today ? today : gblNextBillDay_(now);
+  return { end: end, start: gblBillDayOf_(gblAddMonths_(end.slice(0, 7), -1)), isDay: thisM === today, today: today };
+}
+function gblDayLabel_(ymd) { return GCM_DAYS[gcmDow_(ymd)] + ' ' + tDmy_(ymd).replace(/ \d{4}$/, '') + ', ' + GBL_DAY.HOUR + ':00'; }
+/** What the pages show: the next billing day, how far off, whether today is one, and whether a PDF has somewhere to wait. */
+function gblDayInfo_(now) {
+  now = now || new Date();
+  var today = gcmYmd_(now), next = gblNextBillDay_(now), c = gblCycle_(now);
+  return { next: next, label: gblDayLabel_(next), date: tDmy_(next), daysTo: gcmDays_(today, next), isDay: c.isDay, dayOfMonth: gblDayOfMonth_(), hour: GBL_DAY.HOUR, drive: !!gblFolderId_(), live: gblLive_() };
+}
+function gblFolderId_() { try { return PropertiesService.getScriptProperties().getProperty(GBL_PDF.FOLDER_PROP) || ''; } catch (e) { return ''; } }
+function gblSubfolder_(name) {
+  var id = gblFolderId_();
+  if (!id) return null;
+  var root = DriveApp.getFolderById(id), it = root.getFoldersByName(name);
+  return it.hasNext() ? it.next() : root.createFolder(name);
+}
+/** The approved bill's PDFs, into the Drive queue; returns the file ids. */
+function gblKeepQueued_(g, bill, blobs) {
+  var q = gblSubfolder_(GBL_DAY.QUEUE), ids = [];
+  if (!q) return ids;
+  blobs.forEach(function (b) {
+    var f = q.createFile(b.copyBlob ? b.copyBlob() : b);
+    f.setName(gblMonthLabel_(bill.month) + ' · ' + g.name + ' · ' + GBL.LABEL[bill.line] + ' · ' + b.getName());
+    ids.push(f.getId());
+  });
+  return ids;
+}
+function gblFileById_(id) { try { return DriveApp.getFileById(id); } catch (e) { return null; } }
+function gblDropKept_(bill) {
+  (bill.kept || '').split(',').map(function (s) { return s.trim(); }).filter(String).forEach(function (id) { var f = gblFileById_(id); if (f) { try { f.setTrashed(true); } catch (e) {} } });
+}
+/** The staff member's e-mail, for the test copy and the run's summary: the signed-in person's, else from the Agent Skill Bank. */
+function gblStaffEmail_(name) {
+  try { return tTeam_().people.filter(function (t) { return gcmSameName_(t.name, name); }).map(function (t) { return t.email; }).filter(String)[0] || ''; } catch (e) { return ''; }
+}
+
+/** Approve for the 26th (gblAct_ act 'approve'): the reconciled bill, with its PDFs, waits for the run; 'unapprove' takes it back. */
+function gblApprove_(g, who, bill, b, L) {
+  var line = bill.line, month = bill.month, now = new Date(), E = tEsc_;
+  var log = function (kind, detail) {
+    gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: line, Kind: kind, Member: '', Detail: detail, Effective: month + '-01', Amount: bill.due || 0, Source: 'staff', By: who.name, Status: 'done', 'SF Task': '', 'SF Id': '', Note: '' }]);
+  };
+  if (b.act === 'unapprove') {
+    if (bill.status !== 'approved') return { ok: false, error: 'This bill is not approved.' };
+    gblDropKept_(bill);
+    gblBillPatch_(bill, { Status: bill.reconciledAt ? 'reconciled' : 'checked', 'Approved at': '', 'Approved by': '', 'Approved e-mail': '', 'Approved for': '', 'Files kept': '' });
+    log('unapproved', GBL.LABEL[line] + ' ' + gblMonthLabel_(month) + ': the approval for ' + gblDayLabel_(bill.approvedFor) + ' was taken back.');
+    return { ok: true, said: 'The approval is cancelled. The bill stays reconciled; approve it again, or press Send now.', steps: gblSteps_(gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0]) };
+  }
+  if (bill.sentAt) return { ok: false, error: 'This bill went to the group on ' + bill.sentAt + '. To send it again, press Send now.' };
+  if (bill.status === 'approved') return { ok: false, error: 'Already approved for ' + gblDayLabel_(bill.approvedFor) + ' by ' + bill.approvedBy + '. Cancel that approval first to change it.' };
+  var st = gblSteps_(bill);
+  if (!bill.reconciledAt && !(who.role === 'branch' && gcmYes_(b.force))) return { ok: false, error: 'Reconcile it first, so nothing goes to the group that a person has not checked against Salesforce.' };
+  if (st.fixes && !gcmYes_(b.force)) return { ok: false, error: st.fixes + ' finding' + (st.fixes === 1 ? '' : 's') + ' marked “fix” ' + (st.fixes === 1 ? 'is' : 'are') + ' still open. Fix or resolve each one first.' };
+  var why = gcmCannotMail_(g);
+  if (why) return { ok: false, error: 'Cannot approve: ' + why + '.' };
+  var files = Array.isArray(b.attachments) ? b.attachments : [], blobs = [];
+  files.slice(0, 6).forEach(function (f) {
+    try { var bytes = Utilities.base64Decode(String(f.b64 || '')); if (bytes.length && bytes.length < 3000000) blobs.push(Utilities.newBlob(bytes, String(f.type || 'application/pdf'), String(f.name || 'bill.pdf').replace(/[^\w.\- ]/g, '_').slice(0, 80))); } catch (e) {}
+  });
+  if (blobs.length && !gblFolderId_()) return { ok: false, error: 'The PDF has nowhere to wait until the ' + gblDayOfMonth_() + 'th: the branch manager sets the ' + GBL_PDF.FOLDER_PROP + ' Script property to the Drive folder (GROUP-CLIENTS-SETUP.md). Until then, press Send now on the day.' };
+  var ids = [];
+  try { ids = gblKeepQueued_(g, bill, blobs); } catch (e) { return { ok: false, error: 'Drive would not keep the PDF: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+  var forDay = gblNextBillDay_(now), at = gcmWhen_(now), email = who.email || gblStaffEmail_(who.name);
+  gblBillPatch_(bill, { Status: 'approved', 'Approved at': at, 'Approved by': who.name, 'Approved e-mail': email, 'Approved for': forDay, 'Files kept': ids.join(',') });
+  log('approved', GBL.LABEL[line] + ' ' + gblMonthLabel_(month) + ' approved for the ' + gblDayLabel_(forDay) + ' run' + (blobs.length ? ' with ' + blobs.map(function (x) { return x.getName(); }).join(', ') : ' with no file attached') + '.');
+  gblPostBilling_(g, line, month, 'The ' + gblMonthLabel_(month) + ' ' + GBL.LABEL[line].toLowerCase() + ' bill (' + gcmMoney_(bill.due) + ') is approved by ' + who.name + ' to go to the group on ' + gblDayLabel_(forDay) + (blobs.length ? ' with the PDF' : '') + '.', who);
+  var live = gblLive_();
+  return { ok: true, approvedFor: forDay, label: gblDayLabel_(forDay), files: blobs.length,
+    said: 'Approved. It goes by itself on ' + gblDayLabel_(forDay) + (live ? ' to ' + g.to.join(', ') + ', from support@, copied to sales support' : ' as a TEST to you and the branch (the bills are in test mode until the branch manager runs gblGoLive)') + (blobs.length ? ', with ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') + ' attached.' : ', with no file attached.'),
+    steps: gblSteps_(gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0]) };
+}
+
+/** The run at 10:00 on the billing day (from the hourly refresh, and first thing in the 10:30 group day): every approved bill
+ *  whose day has come, group by group, with its PDFs from Drive. o.rehearse sends every approved bill as a TEST to its approver
+ *  and marks nothing; o.auto (the hourly run) says nothing when nothing is due; o.now and o.force are for tests. */
+function gblDayRun_(o) {
+  o = o || {};
+  var now = o.now || new Date(), today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
+  var rows = gblRows_(GBL.BILLS).map(gblBillOf_).filter(function (b) { return b.status === 'approved' && b.approvedFor && !b.sentAt; });
+  var due = rows.filter(function (b) { return o.rehearse || o.force || b.approvedFor < today || (b.approvedFor === today && h >= GBL_DAY.HOUR); });
+  if (!due.length) return { ok: true, sent: [], held: [], said: o.auto ? '' : (o.rehearse ? 'No bill is approved yet: nothing to rehearse.' : 'No approved bill is due.') };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(120000)) return { ok: false, sent: [], held: [], error: 'Busy: the next hourly run sends them.', said: 'busy: the next hourly run sends them.' };
+  var sent = [], held = [], approvers = [], t0 = Date.now();
+  try {
+    var L = gcmLoad_(), live = gblLive_(), test = !live || !!o.rehearse, mail = !!tMsCreds_(), groups = {}, order = [];
+    due.forEach(function (b) { var k = gcmCodeKey_(b.group) + '|' + b.month; if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(b); });
+    order.forEach(function (k) {
+      if (Date.now() - t0 > 240000) return;   // the next hourly run takes the rest
+      var bills = groups[k], g = L.byName[gcmCodeKey_(bills[0].group)], month = bills[0].month;
+      var who = { role: 'staff', name: bills[0].approvedBy || 'the team', email: bills[0].approvedEmail || gblStaffEmail_(bills[0].approvedBy) };
+      if (who.email && approvers.indexOf(who.email.toLowerCase()) < 0) approvers.push(who.email.toLowerCase());
+      var why = !g ? 'the group is no longer on the Group Register' : !mail ? 'Microsoft 365 is not set up on the backend' : gcmCannotMail_(g);
+      var blobs = [];
+      if (!why) bills.forEach(function (b) {
+        (b.kept || '').split(',').map(function (s) { return s.trim(); }).filter(String).forEach(function (id) {
+          var f = gblFileById_(id);
+          if (!f) { why = 'the PDF kept for the ' + GBL.LABEL[b.line].toLowerCase() + ' bill is gone from Drive: approve it again with the file'; return; }
+          try { var bl = f.getBlob(); bl.setName(String(f.getName()).split(' · ').pop()); blobs.push(bl); } catch (e) { why = 'Drive would not give back the PDF (' + String(e && e.message ? e.message : e).slice(0, 100) + ')'; }
+        });
+      });
+      var hold = function (text) {
+        if (!o.rehearse) bills.forEach(function (b) { gblBillPatch_(b, { Status: 'held: ' + text }); });
+        held.push({ group: bills[0].group, month: month, lines: bills.map(function (b) { return GBL.LABEL[b.line]; }), by: who.name, email: who.email, why: text });
+      };
+      if (why) { hold(why); return; }
+      var m = gblBillMail_(g, month, bills, who, test, L), to, cc, html = m.html, subject = m.subject;
+      if (test) {
+        to = [who.email || gcmDayManager_()].filter(String); cc = (TRANSITION.CC || []).slice();
+        html = '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST of the ' + tEsc_(gblDayLabel_(bills[0].approvedFor)) + ' run.</b> This is the ' + tEsc_(gblMonthLabel_(month)) + ' bill exactly as it would go to <b>' + tEsc_(g.to.join(', ')) + '</b>' +
+          (gcmCc_(g).length ? ' (copied to ' + tEsc_(gcmCc_(g).join(', ')) + ')' : '') + ', approved by ' + tEsc_(who.name) + '. ' + (o.rehearse ? 'It has not gone to the group, and nothing is marked as sent.' : 'The bills are in test mode (gblGoLive switches them on): nothing has reached the group.') + '</div>' + html;
+        subject = '[TEST] ' + subject;
+      } else { to = g.to.slice(0, 1); cc = gcmCc_(g); }
+      if (!to.length) { hold('no address to send the test copy to: the approver is not on the Agent Skill Bank with an e-mail'); return; }
+      try { tMsSend_(to[0], subject, html, { cc: cc.concat(to.slice(1)), attachments: blobs, replyTo: TRANSITION.MS_FROM }); }
+      catch (e) { hold('Microsoft 365 refused it (' + String(e && e.message ? e.message : e).slice(0, 160) + ')'); return; }
+      var at = gcmWhen_(new Date());
+      if (!o.rehearse) {
+        gcmAppend_(GCM.SENDS, [{ When: new Date(), Group: g.name, Staff: gcmSigner_(who, g), To: to.join(', '), Cc: cc.join(', '), Subject: m.subject, Items: bills.length, 'Task Ids': bills.map(function (x) { return x.line + ':' + x.month; }).join(' '),
+          Letter: m.text.slice(0, 40000), Via: 'support@, ' + gblDayOfMonth_() + 'th run' + (blobs.length ? ', ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') : ''), Status: test ? 'bill test' : 'bill sent', Html: gcmKeepHtml_(m.html) }]);
+        bills.forEach(function (b) {
+          gblBillPatch_(b, test ? { Status: 'tested' } : { Status: 'sent', 'Sent at': at });
+          gblPostBilling_(g, b.line, month, (test ? 'TEST of the ' : 'The ') + gblMonthLabel_(month) + ' ' + GBL.LABEL[b.line].toLowerCase() + ' bill went ' + (test ? 'to ' + to.join(', ') : 'to the group (' + to.join(', ') + ')') + ' from support@ in the ' + gblDayLabel_(b.approvedFor) + ' run' + (blobs.length ? ', with the PDF attached' : '') + '.', who);
+          if (!test) (b.kept || '').split(',').map(function (s) { return s.trim(); }).filter(String).forEach(function (id) { var f = gblFileById_(id); if (f) { try { f.moveTo(gblSubfolder_(GBL_DAY.SENT)); } catch (e) {} } });
+        });
+      }
+      sent.push({ group: g.name, month: month, lines: bills.map(function (b) { return GBL.LABEL[b.line]; }), by: who.name, email: who.email, to: to.join(', '), files: blobs.length, test: test });
+    });
+  } finally { try { lock.releaseLock(); } catch (e) {} }
+  try { gblDayTell_(sent, held, { rehearse: !!o.rehearse, approvers: approvers }); } catch (e) {}
+  var test2 = sent.length && sent[0].test;
+  return { ok: true, sent: sent, held: held, rehearse: !!o.rehearse,
+    said: o.rehearse ? 'Rehearsal: ' + sent.length + ' bill e-mail' + (sent.length === 1 ? '' : 's') + ' would go, each sent to its approver and the branch marked TEST; ' + held.length + ' would wait. Nothing reached a group.'
+      : sent.length + ' bill e-mail' + (sent.length === 1 ? '' : 's') + (test2 ? ' sent as TEST copies to the approvers (test mode)' : ' sent to the groups') + ', ' + held.length + ' waiting.' };
+}
+/** One internal e-mail a run: what went and what waited and why, to the branch manager and to whoever approved a bill that waited. */
+function gblDayTell_(sent, held, o) {
+  o = o || {};
+  if (!sent.length && !held.length) return;
+  var me = gcmDayManager_(), E = tEsc_, to = [me], cc = [];
+  held.forEach(function (x) { if (x.email && to.concat(cc).map(function (a) { return a.toLowerCase(); }).indexOf(x.email.toLowerCase()) < 0) cc.push(x.email); });
+  if (o.rehearse) (o.approvers || []).forEach(function (a) { if (to.concat(cc).map(function (x) { return x.toLowerCase(); }).indexOf(a) < 0) cc.push(a); });
+  var li = function (x, what) { return '<li><b>' + E(x.group) + '</b> · ' + E(gblMonthLabel_(x.month)) + ' · ' + E(x.lines.join(', ')) + ' · ' + what + ' · approved by ' + E(x.by) + '</li>'; };
+  var subject = (o.rehearse ? '[TEST] ' : '') + 'Group bills, ' + gblDayOfMonth_() + 'th run: ' + sent.length + ' sent' + (held.length ? ', ' + held.length + ' waiting' : '');
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
+    (o.rehearse ? '<p><b>Rehearsal.</b> Each approved bill was sent to its approver and the branch, marked TEST. Nothing reached a group and nothing is marked as sent.</p>' : '') +
+    (sent.length ? '<p style="margin:0 0 6px;font-weight:700">Went</p><ul>' + sent.map(function (x) { return li(x, (x.test ? 'TEST copy to ' : 'to ') + E(x.to) + (x.files ? ', ' + x.files + ' file' + (x.files === 1 ? '' : 's') : ', no file')); }).join('') + '</ul>' : '') +
+    (held.length ? '<p style="margin:12px 0 6px;font-weight:700">Waited</p><ul>' + held.map(function (x) { return li(x, 'held: ' + E(x.why)); }).join('') + '</ul><p>A held bill stays approved with the reason on its row: put it right and press Send now, or approve it again.</p>' : '') +
+    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  if (tMsCreds_()) tMsSend_(to[0], subject, html, { cc: cc, replyTo: me });
+  else MailApp.sendEmail({ to: to[0], cc: cc.join(','), subject: subject, htmlBody: html, name: 'Ricky Rampersad Branch' });
+}
+/** The editor's Run buttons. */
+function gblDayNow() { var r = gblDayRun_({ force: true }); return tSay_(r.said || r.error || ''); }
+function gblDayRehearse() { var r = gblDayRun_({ rehearse: true }); return tSay_(r.said || r.error || ''); }
+
+/** Which lines each group is billed on this cycle: a Salesforce billing record for the cycle's month or the one after
+ *  (one query over every account, kept an hour), plus any bill stored for those months. Without Salesforce, the lines
+ *  with a bill stored in the last 70 days. */
+function gblExpected_(L, cycle) {
+  var m1 = cycle.end.slice(0, 7), m2 = gblAddMonths_(m1, 1), m0 = gblAddMonths_(m1, -1), out = {}, add = function (key, line) { if (!line) return; (out[key] = out[key] || []); if (out[key].indexOf(line) < 0) out[key].push(line); };
+  var byAcct = {};
+  L.reg.forEach(function (g) { (g.acctsFull && g.acctsFull.length ? g.acctsFull : g.accts).forEach(function (a) { byAcct[gcmId15_(a)] = g.key; }); });
+  var accts = Object.keys(byAcct);
+  if (tSfOn_() && accts.length) {
+    var key = 'gbl-expected-' + m1, cache = CacheService.getScriptCache(), recs = null;
+    try { var c = cache.get(key); if (c) recs = JSON.parse(c); } catch (e) {}
+    if (!recs) {
+      recs = [];
+      try {
+        gcmQuery_('SELECT Account__c, RecordType.Name, Renewal_Date__c FROM TRANSACTIONS__c WHERE Account__c IN (' + gcmIn_(accts) + ') AND Renewal_Date__c >= ' + m0 + '-01 AND Renewal_Date__c <= ' + m2 + '-28')
+          .forEach(function (t) { recs.push({ a: gcmId15_(t.Account__c), line: gblLineOfRt_(gcmName_(t, 'RecordType')), month: gblMonthOf_(t.Renewal_Date__c) }); });
+        try { cache.put(key, JSON.stringify(recs), 3600); } catch (e2) {}
+      } catch (e) { recs = null; }
+    }
+    if (recs) recs.forEach(function (t) { if (t.month === m1 || t.month === m2) add(byAcct[t.a], t.line); });
+  }
+  var since = gcmAddDays_(cycle.end, -70);
+  gblRows_(GBL.BILLS).map(gblBillOf_).forEach(function (b) {
+    var g = L.byName[gcmCodeKey_(b.group)];
+    if (!g) return;
+    if (b.month === m1 || b.month === m2 || (!tSfOn_() && b.at.slice(0, 10) >= since)) add(g.key, b.line);
+  });
+  return out;
+}
+/** The cycle, group by group, by who looks after them: the bills that went since the last billing day, the ones that did not
+ *  and why, and the groups that cannot have one. */
+function gblChaseList_(L, now) {
+  var cycle = gblCycle_(now), exp = gblExpected_(L, cycle), by = {}, order = [], all = gblRows_(GBL.BILLS).map(gblBillOf_);
+  var m1 = cycle.end.slice(0, 7), m2 = gblAddMonths_(m1, 1);
+  L.reg.forEach(function (g) {
+    var lines = exp[g.key] || [];
+    if (!lines.length) return;
+    var key = gcmCodeKey_(g.ownerEmail || g.assigned || 'nobody');
+    if (!by[key]) { by[key] = { name: g.assigned || '', email: g.ownerEmail || '', active: !!(g.assigned && g.ownerActive), missed: [], sent: [], notReady: [] }; order.push(key); }
+    var o = by[key];
+    var went = (g.billSends || []).filter(function (x) { return /^bill (sent|test)$/i.test(x.status) && x.when > cycle.start && x.when <= cycle.end; });
+    if (went.length) { o.sent.push({ g: g, at: went[went.length - 1].at, n: went.length, lines: lines, test: went.every(function (x) { return /test/i.test(x.status); }) }); return; }
+    var no = gcmCannotMail_(g);
+    if (no) { o.notReady.push({ g: g, why: no, lines: lines }); return; }
+    /* where each billed line stands for the cycle's month (or the one after) */
+    var states = lines.map(function (ln) {
+      var b = all.filter(function (x) { return gcmCodeKey_(x.group) === g.key && x.line === ln && (x.month === m1 || x.month === m2); }).sort(function (a, c) { return a.month < c.month ? 1 : -1; })[0];
+      var lab = GBL.LABEL[ln];
+      if (!b) return { line: ln, state: 'none', why: lab + ': nothing uploaded', todo: 'upload the bill, verify, reconcile and approve it' };
+      if (/^held/i.test(b.status)) return { line: ln, state: 'held', why: lab + ': approved, held at the run (' + b.status.replace(/^held:\s*/i, '') + ')', todo: 'put it right and press Send now' };
+      if (b.status === 'approved' && b.approvedFor > cycle.end) return { line: ln, state: 'later', why: lab + ': approved by ' + b.approvedBy + ' after the run, so it waits for ' + gblDayLabel_(b.approvedFor), todo: 'if it should go now, press Send now' };
+      if (b.status === 'approved') return { line: ln, state: 'queued', why: '', todo: '' };
+      if (b.reconciledAt) return { line: ln, state: 'reconciled', why: lab + ': reconciled, not approved', todo: 'press Approve for the ' + gblDayOfMonth_() + 'th, or Send now' };
+      var s = gblSteps_(b);
+      if (s.fixes) return { line: ln, state: 'fix', why: lab + ': uploaded, ' + s.fixes + ' to fix', todo: 'fix or resolve each finding, reconcile, approve' };
+      return { line: ln, state: 'check', why: lab + ': uploaded, not reconciled', todo: 'confirm the checks, mark it reconciled, approve' };
+    });
+    if (states.every(function (s) { return s.state === 'queued'; })) return;   // approved for this run, not sent yet: it goes
+    var open = states.filter(function (s) { return s.state !== 'queued'; });
+    o.missed.push({ g: g, lines: lines, states: states, why: open.map(function (s) { return s.why; }).join('; '), todo: open.map(function (s) { return s.todo; }).filter(function (t, i, a) { return a.indexOf(t) === i; }).join('; ') });
+  });
+  return { cycle: cycle, owners: order.map(function (k) { return by[k]; }), month: gblMonthLabel_(m1) };
+}
+/** One staff member's e-mail on the billing day. */
+function gblChaseMail_(o, list, tasks) {
+  var E = tEsc_, first = String(o.name || '').split(/\s+/)[0] || 'team', n = o.missed.length, day = gblDayLabel_(list.cycle.end);
+  var subject = 'Group bills: ' + n + ' of your groups had no bill for ' + list.month + ' · reply by ' + GCM_DAY.REPLY_BY;
+  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F"';
+  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#142033;vertical-align:top"';
+  var table = function (head, rows) { return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px"><tr>' +
+    head.map(function (h) { return '<th ' + th + '>' + E(h) + '</th>'; }).join('') + '</tr>' + rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>'; };
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
+    '<p>Good morning, ' + E(first) + '.</p>' +
+    '<p>The group bills went at ' + GBL_DAY.HOUR + ':00 today, ' + E(day.replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> A bill not approved by then waits for you to press Send now.</p>' +
+    table(['Group', 'Where it stands', 'Do this today'], o.missed.map(function (m) {
+      var t = tasks && tasks[m.g.key];
+      return ['<b>' + E(m.g.name) + '</b>' + (t && t.id ? '<br><span style="color:#4B586C;font-size:12.5px">Salesforce task ' + E(t.id) + '</span>' : ''), m.states.filter(function (s) { return s.state !== 'queued'; }).map(function (s) { return E(s.why); }).join('<br>'), E(m.todo)];
+    })) +
+    (tasks && Object.keys(tasks).length ? '<p>A Salesforce task (' + E(GCM_DAY.TASK_TYPE) + ') is open for each one in your name. Close it with your reason in its comments.</p>' : '') +
+    '<p style="background:#FFF4D6;border-left:4px solid #E0A800;padding:10px 14px"><b>Please reply to this e-mail by ' + E(GCM_DAY.REPLY_BY) + '</b> with why each bill was not approved by ' + GBL_DAY.HOUR + ':00, and when it will go. Your reply goes to Mr Rampersad.</p>' +
+    '<p style="margin:16px 0 6px;font-weight:700">From your training: Billings Management</p>' +
+    GBL_DAY.TRAIN.map(function (t) { return '<p style="margin:0 0 8px;padding:8px 12px;background:#F4F7FA;border-left:3px solid #1D5BC4"><i>“' + E(t[1]) + '”</i><br><span style="font-size:12.5px;color:#4B586C">' + E(t[0]) + '</span></p>'; }).join('') +
+    '<p><a href="' + GCM.SITE + '" style="color:#1D5BC4;font-weight:700">Open group client management</a></p>' +
+    (o.sent.length ? '<p style="margin:18px 0 6px;font-weight:700">Your groups whose bill went this cycle</p>' +
+      table(['Group', 'Sent', 'Lines'], o.sent.map(function (x) { return ['<b>' + E(x.g.name) + '</b>', E(x.at) + (x.test ? ' (test copy)' : ''), E(x.lines.map(function (l) { return GBL.LABEL[l]; }).join(', '))]; })) : '') +
+    (o.notReady.length ? '<p style="margin:18px 0 6px;font-weight:700">Your groups that cannot have a bill yet</p>' +
+      table(['Group', 'What is missing'], o.notReady.map(function (x) { return ['<b>' + E(x.g.name) + '</b>', E(x.why)]; })) : '') +
+    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  var text = ['Good morning, ' + first + '.', '', n + ' of your groups had no bill for ' + list.month + ':']
+    .concat(o.missed.map(function (m) { return '- ' + m.g.name + ': ' + m.why + '. ' + m.todo; }))
+    .concat(['', 'Please reply by ' + GCM_DAY.REPLY_BY + ' with why each was not approved by ' + GBL_DAY.HOUR + ':00, and when it will go.']).join('\n');
+  return { subject: subject, html: html, text: text };
+}
+/** The staff part of the billing day: a task for each group that missed, then one e-mail to each staff member, from support@,
+ *  the branch manager copied and replies to him. o.test sends each to the branch manager instead and opens nothing. */
+function gblChaseRun_(o) {
+  o = o || {};
+  var L = gcmLoad_(), list = gblChaseList_(L, o.now), me = gcmDayManager_(), E = tEsc_, sent = [], failed = [];
+  var tasks = gcmChaseTasks_(list.owners, list.cycle.end, list.cycle.today, !!o.test,
+    { tag: GBL_DAY.TASK_TAG, prop: GBL_DAY.TASKS_PROP, label: list.month + ' bills', train: GBL_DAY.TRAIN, why: 'not approved by ' + GBL_DAY.HOUR + ':00 on the ' + gblDayOfMonth_() + 'th' });
+  list.owners.forEach(function (ow) {
+    if (!ow.missed.length) return;
+    var mine = {};
+    ow.missed.forEach(function (m) { if (tasks[m.g.key]) mine[m.g.key] = tasks[m.g.key]; });
+    var m = gblChaseMail_(ow, list, mine), to = ow.active && ow.email ? ow.email : me, html = m.html;
+    if (o.test) {
+      html = '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST.</b> This goes to <b>' + E(to) + '</b>, copied to you, at 10:30 on the billing day. Tasks it would open:<br>' +
+        ow.missed.map(function (x) { return '· ' + E((tasks[x.g.key] || {}).subject || x.g.name); }).join('<br>') + '</div>' + html;
+      to = me;
+    }
+    try {
+      if (tMsCreds_()) tMsSend_(to, (o.test ? '[TEST] ' : '') + m.subject, html, { cc: o.test || to === me ? [] : [me], replyTo: me });
+      else MailApp.sendEmail({ to: to, cc: o.test || to === me ? '' : me, replyTo: me, subject: (o.test ? '[TEST] ' : '') + m.subject, htmlBody: html, name: 'Ricky Rampersad Branch' });
+      sent.push((ow.name || 'nobody') + ' (' + ow.missed.length + ')');
+    } catch (e) { failed.push((ow.name || 'nobody') + ': ' + String(e && e.message ? e.message : e).slice(0, 140)); }
+  });
+  return { ok: true, list: list, tasks: tasks, sent: sent, failed: failed,
+    said: (sent.length ? sent.length + ' staff e-mail' + (sent.length === 1 ? '' : 's') + (o.test ? ' (tests to ' + me + ')' : '') + ': ' + sent.join(', ') : 'every billed group had its bill this cycle: no staff e-mail') + (failed.length ? '; did not go: ' + failed.join('; ') : '') + '.' };
+}
+/** The bills' part of the 10:30 group day (gcmDay_): on the billing day, the run (if 10:00 did not reach it) and then the
+ *  staff asked why; every day, the block for the branch manager's summary. o.test rehearses both to the branch manager. */
+function gblDay_(o) {
+  o = o || {};
+  var now = o.now || new Date(), cycle = gblCycle_(now), info = gblDayInfo_(now), out = { info: info, cycle: cycle, run: null, chase: null, said: '', html: '' }, said = [];
+  if (cycle.isDay || o.test) {
+    try { out.run = gblDayRun_(o.test ? { rehearse: true, now: now } : { now: now }); if (out.run.said) said.push(out.run.said); } catch (e) { out.run = { sent: [], held: [], said: String(e && e.message ? e.message : e).slice(0, 160) }; said.push(out.run.said); }
+    try { out.chase = gblChaseRun_({ test: !!o.test, now: now }); said.push('staff: ' + out.chase.said); } catch (e) { out.chase = { sent: [], failed: [], said: String(e && e.message ? e.message : e).slice(0, 160) }; said.push('staff: ' + out.chase.said); }
+  }
+  try { out.html = gblDayHtml_(out, o); } catch (e) { out.html = ''; }
+  if (!said.length) {
+    var L = gcmLoad_(), list = gblChaseList_(L, now), n = 0, miss = 0;
+    list.owners.forEach(function (ow) { n += ow.sent.length + ow.missed.length; miss += ow.missed.length; });
+    said.push('the next billing day is ' + info.label + (info.daysTo ? ', in ' + info.daysTo + ' day' + (info.daysTo === 1 ? '' : 's') : '') + ': ' + (n - miss) + ' of ' + n + ' billed groups sent or approved.');
+  }
+  out.said = said.join(' ');
+  return out;
+}
+/** The bills block of the branch manager's daily summary. */
+function gblDayHtml_(d, o) {
+  var E = tEsc_, L = gcmLoad_(), list = (d.chase && d.chase.list) || gblChaseList_(L, o && o.now), info = d.info;
+  var td = 'style="padding:7px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;vertical-align:top"';
+  var row = function (cells) { return '<tr>' + cells.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; };
+  var head = function (cells) { return '<tr>' + cells.map(function (c) { return '<th style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F">' + E(c) + '</th>'; }).join('') + '</tr>'; };
+  var tbl = function (h, rows) { return rows.length ? '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px">' + head(h) + rows.join('') + '</table>' : ''; };
+  var sentG = [], missed = [], notReady = [];
+  list.owners.forEach(function (ow) { ow.sent.forEach(function (x) { sentG.push({ ow: ow, x: x }); }); ow.missed.forEach(function (x) { missed.push({ ow: ow, x: x }); }); ow.notReady.forEach(function (x) { notReady.push({ ow: ow, x: x }); }); });
+  var n = sentG.length + missed.length, tasks = (d.chase && d.chase.tasks) || {};
+  var h = '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#13408F">Group bills: the ' + gblDayOfMonth_() + 'th</h3>';
+  if (d.cycle.isDay || (o && o.test)) {
+    var r = d.run || { sent: [], held: [] };
+    h += '<p><b>' + sentG.length + ' of ' + n + '</b> billed groups had their ' + E(list.month) + ' bill' + (sentG.length && sentG.every(function (s) { return s.x.test; }) ? ' (test copies: the bills are in test mode until gblGoLive)' : '') + '. ' +
+      'The ' + GBL_DAY.HOUR + ':00 run' + (o && o.test ? ' (rehearsed)' : '') + ': ' + r.sent.length + ' went, ' + r.held.length + ' waited.' + (r.held.length ? ' Waiting: ' + r.held.map(function (x) { return E(x.group) + ' (' + E(x.why) + ')'; }).join('; ') + '.' : '') + '</p>' +
+      (missed.length ? '<p style="margin:12px 0 6px;font-weight:700">No bill this cycle</p>' + tbl(['Group', 'Looked after by', 'Where it stands', 'Task'], missed.map(function (a) {
+        var t = tasks[a.x.g.key] || {};
+        return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why), E(t.id ? (t.existing ? 'open since earlier: ' : 'opened: ') + t.id : t.test ? 'would open' : t.error || '–')]); })) : '') +
+      '<p><b>Staff asked why:</b> ' + E(d.chase ? d.chase.said : 'not run') + '</p>';
+  } else {
+    h += '<p>The next billing day is <b>' + E(info.label) + '</b>' + (info.daysTo ? ' (in ' + info.daysTo + ' day' + (info.daysTo === 1 ? '' : 's') + ')' : '') + '. ' +
+      '<b>' + (n - missed.length) + ' of ' + n + '</b> billed groups have their ' + E(list.month) + ' bill sent or approved' + (info.drive ? '' : '. <b>The Drive folder is not set</b> (' + GBL_PDF.FOLDER_PROP + '), so a bill cannot be approved with its PDF: staff press Send now on the day') + '.</p>' +
+      (missed.length ? tbl(['Group', 'Looked after by', 'Where it stands'], missed.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); })) : '');
+  }
+  if (sentG.length && (d.cycle.isDay || (o && o.test))) h += '<p style="margin:12px 0 6px;font-weight:700">Had their bill</p>' + tbl(['Group', 'Looked after by', 'Sent', 'Lines'], sentG.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name), E(a.x.at) + (a.x.test ? ' (test copy)' : ''), E(a.x.lines.map(function (l) { return GBL.LABEL[l]; }).join(', '))]); }));
+  if (notReady.length) h += '<p style="margin:12px 0 6px;font-weight:700">Cannot have a bill yet</p>' + tbl(['Group', 'Looked after by', 'What is missing'], notReady.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); }));
+  return h;
+}
+/** Editor Run: the billing day rehearsed to the branch manager (the approved bills as TEST copies to their approvers, the staff
+ *  e-mails and the summary block to him), with nothing marked and no task opened. */
+function gblDayTest() { var r = gblDay_({ test: true }); try { gcmDaySummary_({ test: true, bills: r }); } catch (e) {} return tSay_(r.said); }
+
 function gblBoard_(L) {
   var out = {}, month = L.today.slice(0, 7), prevM = gblAddMonths_(month, -1);
   var rows = gblRows_(GBL.BILLS);
@@ -1845,7 +2219,8 @@ function gblBoard_(L) {
     var cur = mine.filter(function (b) { return b.month === month; }), m = cur.length ? month : prevM;
     var set = mine.filter(function (b) { return b.month === m; });
     out[g.key] = { month: m, lines: set.length, fixes: set.reduce(function (s, b) { return s + gblSteps_(b).fixes; }, 0), checks: set.reduce(function (s, b) { return s + gblSteps_(b).checks; }, 0),
-      reconciled: set.filter(function (b) { return b.reconciledAt; }).length, sent: set.filter(function (b) { return b.sentAt; }).length, due: gblR_(set.reduce(function (s, b) { return s + b.due; }, 0)) };
+      reconciled: set.filter(function (b) { return b.reconciledAt; }).length, approved: set.filter(function (b) { return b.status === 'approved'; }).length, held: set.filter(function (b) { return /^held/i.test(b.status); }).length,
+      sent: set.filter(function (b) { return b.sentAt; }).length, due: gblR_(set.reduce(function (s, b) { return s + b.due; }, 0)) };
   });
   return out;
 }
