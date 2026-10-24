@@ -3735,6 +3735,26 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     question, filed on Group Changes (Source `client`), posted to the billing task's Chatter, e-mailed to the account
     owner; a joiner or leaver opens a Salesforce task for the owner (`gblOwnerId_`: a standard, active user by e-mail,
     never a site guest user).
+  - **The place to comment, and a task for the owner with guided prompts** (24 October 2026, on the first sample: "NOT
+    SEEing the place for comment … can the person open a task? and assign to the owner with guided prompts?"). Every open
+    billing task sits under its own line (`blLineTasks`, by the record type in its subject; the rest at the foot), with its
+    Chatter, a comment box, one-tap prompts (`blCmt`: chased Head Office, the group confirms paid, waiting on the group,
+    corrected in Salesforce, checked against the bill, a question by a date; the [blanks] are selected to overtype) and a
+    tick, on by default, that tells whoever has it: the comment goes through Connect with the owner @mentioned
+    (`gblNoteTask_` with `notify`, a plain FeedItem when Connect refuses) and they get an e-mail from support@
+    (`gblCommentMail_`); never e-mailed to themselves. **Open a task** on every finding, on every line and at the foot opens
+    a four-step panel (`blTaskPanel`): what it is about (`BL_TASKS`: a member to add, a termination, a tier change, a
+    dependent, a payment to trace, an amount to correct, a back-charge to query, a rate query, something to ask the group,
+    something else; the finding suggests one, `blKindOf`), who should act (`gblPeople_`: the account owner in Salesforce
+    first and chosen by default, then everyone on the Agent Skill Bank who is staff or a manager with an active standard
+    Salesforce login, by e-mail; never an agent, never a site guest), by when (the kind's working days, Normal or High), and
+    what they need to know (the kind's prompts, a note template with the check's facts). The subject is written in the
+    branch's pattern ("Group Health Termination – <name> – <group> – effective <date>"). `gblTaskOpen_` (act `task`)
+    refuses a [blank] left in, a note under 20 characters or a past date; opens the Task on the account, owned by the
+    person, Servicing, with who opened it and why; logs it on Group Changes as the enrolment or termination it records
+    (`GBL_TASK.CHANGE`), else as `task`; notes it on the line's billing task; resolves the finding ("Task opened for …");
+    and e-mails the person from support@ (`gblTaskMail_`, never to oneself). The guide asks for a word on every open
+    billing task. Covered in `billing/billing-test.js` (75) and `billing/page-test.js` (69).
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
     Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing

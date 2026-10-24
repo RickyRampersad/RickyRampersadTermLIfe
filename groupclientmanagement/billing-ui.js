@@ -92,6 +92,7 @@ function blLineCard(o) {
       (b.reconciledAt ? '<button class="btn" type="button" data-send="' + o.line + '">' + (b.sentAt ? 'Send to the group again' : 'Send to the group') + (d.live ? '' : ' (test)') + '</button>' : '') +
       '<button class="btn ghost" type="button" data-pay="' + o.line + '">Record a payment</button></div>';
   }
+  h += blLineTasks(o);
   h += blHistory(o);
   if (o.line === 'health') h += blClaims(o, can);
   return h + '</section>';
@@ -119,7 +120,7 @@ function blFindings(o) {
         (f.members && f.members.length ? '<details><summary>' + f.members.length + ' named</summary><ul>' + f.members.map(m => '<li>' + esc(m.name) + (m.id ? ' · ' + esc(m.id) : '') + (m.premium != null ? ' · ' + esc(blMoney(m.bill != null ? m.bill : m.premium)) : '') + (m.sf != null ? ' (Salesforce ' + esc(blMoney(m.sf)) + ')' : '') + (m.start ? ' · from ' + esc(dmy(m.start)) : '') + '</li>').join('') + '</ul></details>' : '') + '</div>' +
         (r ? '<div class="fr">Resolved by ' + esc(r.by) + ' ' + esc(r.at) + ': ' + esc(r.note) + '</div>' : can && lvl !== 'ok' ? '<div class="fa">' +
           (f.action === 'sfAmount' ? '<button class="btn sm" type="button" data-fix="sfAmount" data-line="' + o.line + '">Set Salesforce to ' + esc(blMoney(f.data.want)) + '</button>' : '') +
-          (f.action === 'task' ? '<button class="btn sm ghost" type="button" data-fix="task" data-line="' + o.line + '" data-f="' + esc(f.id) + '">Open a task for it</button>' : '') +
+          '<button class="btn sm ghost" type="button" data-task="' + o.line + '" data-f="' + esc(f.id) + '">Open a task for it</button>' +
           (f.action === 'payment' ? '<button class="btn sm ghost" type="button" data-pay="' + o.line + '" data-month="' + esc(f.data.month) + '" data-amount="' + esc(f.data.amount) + '">Record the payment</button>' : '') +
           '<button class="btn sm ghost" type="button" data-resolve="' + esc(f.id) + '" data-line="' + o.line + '">Resolve with a note</button></div>' : '') + '</div>';
     }).join('');
@@ -157,14 +158,11 @@ function blMonthBars(list) {
 
 /* ── the tasks, the inbox, the changes ── */
 function blTasksHtml(d) {
-  let h = '<h3 class="blsec">Open billing tasks in Salesforce <span class="muted small">' + d.tasks.length + ' · what is happening with the money, with every Chatter note</span></h3>';
+  const lines = d.lines.map(o => o.line), list = d.tasks.filter(t => lines.indexOf(t.line) < 0), can = d.canAct !== false;
+  let h = '<div class="ltt"><h3 class="blsec">Other open billing tasks in Salesforce <span class="muted small">' + list.length + ' · not tied to one line; each line’s own tasks sit under it</span></h3>' + (can ? '<button class="btn sm" type="button" data-task="">Open a task</button>' : '') + '</div>';
   if (d.feedError) h += '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>';
-  if (!d.tasks.length) return h + '<p class="muted">No open billing task on this group.</p>';
-  return h + '<div class="items">' + d.tasks.map(t => '<div class="item' + (t.late ? ' late' : /waiting/i.test(t.status) ? ' wait' : '') + '"><h4>' + esc(t.title) + '</h4><div class="meta"><b>' + esc(t.owner || '–') + '</b> · opened ' + esc(dmy(t.opened)) + ' (<b>' + t.age + ' days</b>) · due ' + (t.due ? esc(dmy(t.due)) + (t.late ? ' <b style="color:var(--badText)">past target</b>' : '') : 'not set') + ' · ' + esc(t.status) + (t.ref ? ' · ' + esc(t.ref) : '') + '</div>' +
-    (t.story ? '<div class="story"><b>Why it is still open:</b> ' + esc(t.story.why) + '</div>' : '') +
-    '<div class="posts">' + (t.posts.length ? t.posts.map(p => '<div class="post"><span class="who">' + esc(p.by) + '</span> <span class="muted">' + esc(p.when) + '</span>\n' + esc(p.text) + (p.replies || []).map(r => '\n  ↳ ' + esc(r.by) + ': ' + esc(r.text)).join('') + '</div>').join('') : '<div class="small muted">No Chatter on this task.</div>') +
-    '<div class="uprow" style="margin-top:6px"><textarea class="field" id="tn-' + esc(t.id) + '" rows="2" maxlength="2000" placeholder="A comment for the team, posted to this task’s Chatter" style="flex:1;min-width:200px;min-height:44px;padding:8px 10px"></textarea>' +
-    '<button class="btn ghost" type="button" data-tcmt="' + esc(t.id) + '">Comment for the team</button>' + (d.canAct !== false && t.shown ? '<button class="btn ghost" type="button" data-tnote="' + esc(t.id) + '">Post for the group</button>' : '') + '</div></div></div>').join('') + '</div>';
+  if (!list.length) return h + '<p class="muted">None.</p>';
+  return h + '<div class="items">' + list.map(blTaskCard).join('') + '</div>';
 }
 function blInboxHtml(d) {
   const ib = d.inbox || { ok: false, mails: [] };
@@ -184,6 +182,127 @@ function blChangesHtml(d) {
   if (!C.length) return h + '<p class="muted">Nothing recorded yet.</p>';
   return h + '<div class="scroll"><table class="t"><thead><tr><th>When</th><th>Line</th><th>What</th><th>Who</th><th>Detail</th><th>From</th><th>Status</th></tr></thead><tbody>' +
     C.map(c => '<tr><td class="small">' + esc(c.at) + '</td><td>' + esc(BL_LABEL[c.line] || c.line) + '</td><td><b>' + esc(K[c.kind] || c.kind) + '</b></td><td>' + esc(c.member) + '</td><td class="small">' + esc(c.detail) + (c.effective ? ' · ' + esc(dmy(c.effective)) : '') + (c.task ? ' · <span class="chip good"><i></i>task</span>' : '') + (c.note ? ' · ' + esc(c.note) : '') + '</td><td class="small">' + esc(c.source) + (c.by ? ' · ' + esc(c.by) : '') + '</td><td><span class="chip' + (c.status === 'open' ? ' warn' : c.status === 'done' ? ' good' : '') + '"><i></i>' + esc(c.status) + '</span></td></tr>').join('') + '</tbody></table></div>';
+}
+
+/* ── tasks: a visible place to comment on each one, and a guided way to open one ── */
+/* 24 October 2026, after the first sample: "NOT SEEing the place for comment … can the person open a task? and assign to
+ * the owner with guided prompts?". Every open billing task sits under its own line with a comment box, one-tap prompts, and
+ * a tick that @mentions and e-mails whoever has it. "Open a task" on every finding, on every line and at the foot opens a
+ * four-step panel: what it is about, who should act (the account owner first), by when, and what they need to know, with
+ * the subject in the branch's pattern and a note template whose [blanks] must be filled before it goes. */
+const BL_TASKS = {
+  joiner:     { label: 'A member to add', subj: '{line} Member Enrolment – {member} – {group}{eff}', days: 2,
+                ask: ['Who is joining: full name and employee or certificate number', 'From when, and their tier (and dependents, if any)', 'Where you saw it: the bill, the group’s page, an e-mail', 'What you want done: add the record, confirm with Head Office'],
+                text: 'Please add {member} (employee no. [number]) to {line} from {date}, tier [tier]. Seen on the {month} bill. Confirm when the record is in Salesforce.' },
+  leaver:     { label: 'A termination', subj: '{line} Termination – {member} – {group}{eff}', days: 2,
+                ask: ['Who left: full name and employee or certificate number', 'The last day covered', 'Where you saw it: the bill’s credit, the group, an e-mail', 'What you want done: end the record, confirm the credit'],
+                text: 'Please terminate {member} (employee no. [number]) on {line} as at {date}. Seen on the {month} bill as a credit of TT${amount}. Confirm when the record is ended in Salesforce.' },
+  tier:       { label: 'A tier or cover change', subj: '{line} Tier Change – {member} – {group}{eff}', days: 2,
+                ask: ['Who, and their employee or certificate number', 'From which tier to which, and from when', 'Who asked for it, and when', 'What you want done'],
+                text: 'Please change {member} (employee no. [number]) from [old tier] to [new tier] on {line} from {date}, as [who] asked on [date]. Confirm the new premium.' },
+  dependent:  { label: 'A dependent added or removed', subj: '{line} Dependent Change – {member} – {group}{eff}', days: 2,
+                ask: ['The employee, and the dependent’s name', 'Added or removed, and from when', 'Who told us, and when'],
+                text: 'Please [add/remove] the dependent [dependent name] for {member} (employee no. [number]) on {line} from {date}. Told to us by [who] on [date].' },
+  payment:    { label: 'A payment to trace', subj: '{line} Payment Query – {group} – {month}', days: 2,
+                ask: ['The amount and the date the group says it paid', 'How it was paid (wire, online, cheque) and the reference', 'Which month it is for', 'What you want done: find it, key it, or ask Head Office'],
+                text: 'The group reports TT${amount} paid on [date] by [how], reference [ref], for [month], which is not showing on the {line} account. Please trace it with Head Office and key it on Payments once found.' },
+  amount:     { label: 'An amount to correct', subj: '{line} Billing Correction – {group} – {month}', days: 2,
+                ask: ['What the bill says, and what Salesforce says', 'Which is right, and how you know', 'What you want corrected, and by whom'],
+                text: 'The {month} {line} bill shows TT$[bill amount]; Salesforce shows TT$[salesforce amount]. The bill is right because [why]. Please correct [the record / the bill] and confirm.' },
+  backcharge: { label: 'A back-charge or credit to query', subj: '{line} Adjustment Query – {member} – {group} – {month}', days: 3,
+                ask: ['The member and the amount of the adjustment', 'The months it covers', 'Why it looks wrong, or what is not on file', 'What you want from Head Office'],
+                text: 'The {month} {line} bill carries a [back-charge/credit] of TT${amount} for {member} covering [months]. Nothing on file asked for it. Please query it with Head Office and confirm whether it stands.' },
+  rate:       { label: 'A rate query', subj: '{line} Rate Query – {group} – {month}', days: 3,
+                ask: ['Which rate or member premium does not match', 'What the bill charges and what the rate should give', 'What you want checked'],
+                text: 'On the {month} {line} bill, [member or tier] is charged TT$[charged] where the rate gives TT$[expected]. Please check it with Head Office and confirm the right premium.' },
+  group:      { label: 'Something to ask the group', subj: '{line} Billing – {group} – query to the group – {month}', days: 2,
+                ask: ['What we need from the group', 'Why: what on the bill or the record prompted it', 'By when'],
+                text: 'Please ask {group} for [what we need], because [why]. We need it by [date] so the {month} {line} bill can be reconciled.' },
+  other:      { label: 'Something else', subj: '{line} Billing – {group} – {month}', days: 2,
+                ask: ['What it is about', 'What you want done, and by when', 'What the person needs to know to do it'],
+                text: '[What it is about]. Please [what you want done] by [date]. [What they need to know].' }
+};
+const blCmt = month => ['Chased Head Office on [what]; they will answer by [date].', 'The group confirms TT$[amount] paid on [date] by [how], ref [ref]; to be keyed on Payments.', 'Waiting on the group for [what]; chasing again on [date].',
+  'Corrected in Salesforce: [what was changed].', 'Checked against the ' + blMon(month) + ' bill: [what agrees, and what differs].', 'Can you confirm [what] by [date]? The ' + blMon(month) + ' bill waits on it.'];
+const blBlank = s => /\[[^\]\n]{1,40}\]/.test(String(s || ''));
+const blWorkDays = n => { const d = new Date(); let k = 0; while (k < n) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) k++; } return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+/** Which kind of task a finding most likely wants. */
+function blKindOf(f) {
+  if (f.data && f.data.kind && BL_TASKS[f.data.kind]) return f.data.kind;
+  if (f.action === 'payment') return 'payment';
+  if (f.action === 'sfAmount') return 'amount';
+  if (/back-?charge|credit|adjust/i.test(f.text) && f.who !== 'salesforce') return 'backcharge';
+  if (/\brate\b|31-day|31 day/i.test(f.text)) return 'rate';
+  if (f.who === 'group') return 'group';
+  if (f.who === 'headoffice') return 'amount';
+  if (f.who === 'salesforce' && /not in Salesforce/i.test(f.text)) return 'joiner';
+  if (f.who === 'salesforce' && /not on the bill/i.test(f.text)) return 'leaver';
+  return 'other';
+}
+function blTaskCard(t) {
+  const d = BILL, can = d.canAct !== false;
+  return '<div class="item' + (t.late ? ' late' : /waiting/i.test(t.status) ? ' wait' : '') + '" id="task-' + esc(t.id) + '"><h4>' + esc(t.title) + '</h4><div class="meta"><b>' + esc(t.owner || '–') + '</b> has it · opened ' + esc(dmy(t.opened)) + ' (<b>' + t.age + ' days</b>) · due ' + (t.due ? esc(dmy(t.due)) + (t.late ? ' <b style="color:var(--badText)">past target</b>' : '') : 'not set') + ' · ' + esc(t.status) + (t.ref ? ' · ' + esc(t.ref) : '') + '</div>' +
+    (t.story ? '<div class="story"><b>Why it is still open:</b> ' + esc(t.story.why) + '</div>' : '') +
+    '<div class="posts">' + (t.posts.length ? t.posts.map(p => '<div class="post"><span class="who">' + esc(p.by) + '</span> <span class="muted">' + esc(p.when) + '</span>\n' + esc(p.text) + (p.replies || []).map(r => '\n  ↳ ' + esc(r.by) + ': ' + esc(r.text)).join('') + '</div>').join('') : '<div class="small muted">No Chatter on this task yet.</div>') +
+    '<div class="cmtrow"><div class="cmtlab">Comment on this task <span class="muted small">· one tap fills it, then change the [blanks]</span></div><div class="chips tpl">' + blCmt(d.month).map(x => '<button type="button" class="chip" data-tpl="' + esc(t.id) + '" data-text="' + esc(x) + '">' + esc(x.replace(/\s*\[.*$/, '').replace(/[:;,]$/, '')) + '…</button>').join('') + '</div>' +
+    '<textarea class="field" id="tn-' + esc(t.id) + '" rows="2" maxlength="2000" placeholder="What is happening with it, or a question for ' + esc(t.owner || 'whoever has it') + ' · posted to this task’s Chatter"></textarea>' +
+    '<div class="uprow"><label class="toggle small"><input type="checkbox" data-notify="' + esc(t.id) + '" checked> Tell ' + esc(t.owner || 'whoever has it') + ': @mention on Chatter and an e-mail from support@</label></div>' +
+    '<div class="uprow"><button class="btn sm" type="button" data-tcmt="' + esc(t.id) + '">Comment for the team</button>' + (can && t.shown ? '<button class="btn sm ghost" type="button" data-tnote="' + esc(t.id) + '">Post for the group</button>' : '') + '</div></div></div>';
+}
+/** The open billing tasks on one line, each with its comment box, and the way to open one. */
+function blLineTasks(o) {
+  const d = BILL, can = d.canAct !== false, list = d.tasks.filter(t => t.line === o.line);
+  let h = '<div class="ltasks" id="tasks-' + o.line + '"><div class="ltt"><h4>Tasks on this line in Salesforce <span class="n">' + list.length + '</span></h4>' + (can ? '<button class="btn sm" type="button" data-task="' + o.line + '">Open a task</button>' : '') + '</div>';
+  h += list.length ? '<div class="items">' + list.map(blTaskCard).join('') + '</div>' : '<p class="small muted">No open billing task on this line' + (can ? ': open one for whoever should act, or for the account owner.' : '.') + '</p>';
+  return h + '</div>';
+}
+/** The guided panel. */
+function blTaskPanel(line, fid) {
+  const d = BILL, o = d.lines.find(x => x.line === line) || d.lines[0], f = fid && o && o.bill ? (o.bill.findings || []).find(x => x.id === fid) : null;
+  line = o ? o.line : 'health';
+  const people = d.people || [], owner = people.find(p => p.owner), kind0 = f ? blKindOf(f) : 'other', fd = Object.assign({}, (f && f.data) || {});
+  if (!fd.name && f && f.members && f.members.length === 1) { fd.name = f.members[0].name; if (fd.amount == null && f.members[0].premium != null) fd.amount = f.members[0].bill != null ? f.members[0].bill : f.members[0].premium; if (!fd.month && f.members[0].start) fd.month = String(f.members[0].start).slice(0, 7); }
+  $('dlgT').textContent = 'Open a task · ' + d.group.name;
+  $('dlgB').innerHTML = '<div class="tsteps">' +
+    '<section class="tstep"><h4><span class="n">1</span>What is it about?</h4><div class="chips kinds" id="tkKinds">' + Object.keys(BL_TASKS).map(k => '<button type="button" class="chip' + (k === kind0 ? ' on' : '') + '" data-kind="' + k + '">' + esc(BL_TASKS[k].label) + '</button>').join('') + '</div>' +
+      '<div class="grid4"><label class="sel">Line <select id="tkLine">' + d.lines.map(x => '<option value="' + x.line + '"' + (x.line === line ? ' selected' : '') + '>' + esc(x.label) + '</option>').join('') + '</select></label>' +
+      '<label class="sel">Person, if it is about one member <input class="field" id="tkMember" value="' + esc(fd.name || '') + '" placeholder="Surname, first name"></label><label class="sel">Effective <input class="field" type="date" id="tkEff" value="' + esc(fd.month ? fd.month + '-01' : '') + '"></label><label class="sel">Amount (TT$) <input class="field" type="number" step="0.01" id="tkAmount" value="' + esc(fd.amount != null ? fd.amount : '') + '"></label></div>' +
+      '<label class="sel">Subject, in the branch’s pattern <input class="field" id="tkSubject" maxlength="255"></label></section>' +
+    '<section class="tstep"><h4><span class="n">2</span>Who should act on it?</h4><select class="field" id="tkTo">' + (people.length ? people.map(p => '<option value="' + esc(p.id) + '"' + (p.owner ? ' selected' : '') + '>' + esc(p.name) + (p.owner ? ' · looks after this account' : p.me ? ' · you' : '') + '</option>').join('') : '<option value="">Nobody with a Salesforce login was found</option>') + '</select>' +
+      (owner ? '<p class="small muted">' + esc(owner.name) + ' looks after this account in Salesforce, so the task goes to them unless you pick someone else.</p>' : '<p class="small muted">' + esc(d.group.assigned || 'The account owner') + ' has no active Salesforce login, so the task cannot go to them: pick someone else.</p>') + '</section>' +
+    '<section class="tstep"><h4><span class="n">3</span>By when?</h4><div class="uprow"><label class="sel">Due <input class="field" type="date" id="tkDue"></label><label class="sel">Priority <select id="tkPri"><option>Normal</option><option>High</option></select></label><span class="small muted" id="tkDueWhy"></span></div></section>' +
+    '<section class="tstep"><h4><span class="n">4</span>What do they need to know?</h4><ul class="ask" id="tkAsk"></ul><textarea class="field" id="tkText" rows="6" maxlength="4000"></textarea>' + (f ? '<p class="small"><b>From the check:</b> ' + esc(f.text) + '</p>' : '') +
+      '<p class="small muted">Fill in every [blank]. The task carries your name, the month and the line, goes onto the account in Salesforce, and the person is told by e-mail from support@.</p></section>' +
+    '</div><div class="row"><button class="btn" type="button" id="tkGo">Open the task</button><button class="btn ghost" type="button" id="tkCancel">Cancel</button></div>';
+  const touched = { subject: false, text: false };
+  const fillers = () => ({ line: BL_LABEL[$('tkLine').value] || 'Billing', group: d.group.name, month: blMon(d.month), member: $('tkMember').value.trim() || '[name]', date: $('tkEff').value ? dmy($('tkEff').value) : '[date]', amount: $('tkAmount').value ? Number($('tkAmount').value).toFixed(2) : '[amount]', eff: $('tkEff').value ? ' – effective ' + dmy($('tkEff').value) : '' });
+  const fill = s => { const F = fillers(); return s.replace(/\{(\w+)\}/g, (m, k) => F[k] != null ? F[k] : m); };
+  const kindNow = () => { const b = $('tkKinds').querySelector('.chip.on'); return b ? b.dataset.kind : 'other'; };
+  const draw = () => {
+    const K = BL_TASKS[kindNow()];
+    if (!touched.subject) $('tkSubject').value = fill(K.subj);
+    if (!touched.text) $('tkText').value = fill(K.text) + (f && !/^(joiner|leaver)$/.test(kindNow()) ? '\n\nWhat the check found: ' + f.text : '');
+    $('tkAsk').innerHTML = K.ask.map(x => '<li>' + esc(x) + '</li>').join('');
+    $('tkDue').value = blWorkDays(K.days); $('tkDueWhy').textContent = K.days + ' working days, as the branch standard; change it if it must be sooner.';
+  };
+  $('tkKinds').querySelectorAll('.chip').forEach(b => b.onclick = () => { $('tkKinds').querySelectorAll('.chip').forEach(x => x.classList.remove('on')); b.classList.add('on'); touched.subject = false; touched.text = false; draw(); });
+  ['tkLine', 'tkMember', 'tkEff', 'tkAmount'].forEach(id => $(id).oninput = $(id).onchange = draw);
+  $('tkSubject').oninput = () => touched.subject = true; $('tkText').oninput = () => touched.text = true;
+  $('tkCancel').onclick = () => dlg.close();
+  draw();
+  if (!dlg.open) dlg.showModal();
+  $('tkGo').onclick = async () => {
+    const subject = $('tkSubject').value.trim(), text = $('tkText').value.trim();
+    if (!subject) return toast('The task needs a subject.', true);
+    if (blBlank(subject) || blBlank(text)) return toast('Fill in every [blank] first.', true);
+    if (text.length < 20) return toast('Say what the person needs to know.', true);
+    if (!$('tkTo').value) return toast('Pick who should act on it.', true);
+    $('tkGo').disabled = true;
+    const r = await post({ action: 'gcm.billAct', group: d.group.key, line: $('tkLine').value, month: d.month, act: 'task', kind: kindNow(), subject, text, to: $('tkTo').value, due: $('tkDue').value, priority: $('tkPri').value, member: $('tkMember').value, effective: $('tkEff').value, amount: $('tkAmount').value, finding: fid || '' });
+    $('tkGo').disabled = false;
+    toast(r.ok ? r.said : (r.error || 'Not opened'), !r.ok);
+    if (r.ok) { dlg.close(); openBilling(d.group.key, d.month); }
+  };
 }
 
 /* ── reading a file on this device ── */
@@ -251,12 +370,6 @@ async function blFix(b) {
   if (act === 'sfAmount') {
     const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'sfAmount' });
     toast(r.ok ? r.said : (r.error || 'Not set'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month); else b.disabled = false;
-  } else if (act === 'task') {
-    const o = BILL.lines.find(x => x.line === line), f = o && o.bill.findings.find(x => x.id === b.dataset.f);
-    if (!f) return;
-    const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'change', kind: f.data.kind, member: f.data.name, effective: f.data.month ? f.data.month + '-01' : '', detail: 'From the ' + blMon(BILL.month) + ' bill: ' + f.text, amount: f.data.amount });
-    toast(r.ok ? 'Recorded' + (r.task ? ', and a Salesforce task is open' : '') + '.' : (r.error || 'Not recorded'), !r.ok);
-    if (r.ok) { const r2 = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'resolve', finding: f.id, note: 'Task opened' + (r.task ? ' (' + r.task + ')' : '') }); if (r2.ok) openBilling(BILL.group.key, BILL.month); } else b.disabled = false;
   }
 }
 async function blResolve(line, id) {
@@ -298,11 +411,14 @@ function blBindTasks() {
   const app = $('app');
   const go = async (id, forGroup) => {
     const t = $('tn-' + id); if (!t.value.trim()) return toast('Write it first.', true);
-    const r = await post({ action: 'gcm.billAct', group: BILL.group.key, act: 'note', task: id, text: t.value, forGroup: forGroup ? 'Y' : '' });
-    toast(r.ok ? (forGroup ? 'Posted to Chatter, and shown to the group.' : 'Posted to the task’s Chatter for the team.') : (r.error || 'Not posted'), !r.ok);
+    const n = app.querySelector('[data-notify="' + id + '"]');
+    const r = await post({ action: 'gcm.billAct', group: BILL.group.key, act: 'note', task: id, text: t.value, forGroup: forGroup ? 'Y' : '', notify: !forGroup && n && n.checked ? 'Y' : '' });
+    toast(r.ok ? (forGroup ? 'Posted to Chatter, and shown to the group.' : (r.said || 'Posted to the task’s Chatter for the team.')) : (r.error || 'Not posted'), !r.ok);
     if (r.ok) openBilling(BILL.group.key, BILL.month);
   };
   app.querySelectorAll('[data-tcmt]').forEach(b => b.onclick = () => go(b.dataset.tcmt, false));
+  app.querySelectorAll('[data-task]').forEach(b => b.onclick = () => blTaskPanel(b.dataset.task, b.dataset.f || ''));
+  app.querySelectorAll('[data-tpl]').forEach(b => b.onclick = () => { const t = $('tn-' + b.dataset.tpl); if (!t) return; t.value = (t.value.trim() ? t.value.trim() + ' ' : '') + b.dataset.text; t.focus(); const i = t.value.indexOf('['); if (i >= 0) { const j = t.value.indexOf(']', i); t.setSelectionRange(i, j + 1); } });
   app.querySelectorAll('[data-tnote]').forEach(b => b.onclick = () => go(b.dataset.tnote, true));
 }
 function blBindChanges() {

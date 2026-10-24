@@ -449,6 +449,7 @@ function gblView_(p) {
   out.feedError = feed._error || '';
   /* the group's e-mails to support@ about money, the last 60 days */
   out.inbox = gblInbox_(L, g);
+  out.people = gblPeople_(g, who);
   out.changes = gblChanges_(g).slice(-40).reverse();
   out.claimsUploaded = gblClaimsRows_(g).length > 0;
   out.guide = gblGuide_(out);
@@ -506,6 +507,7 @@ function gblGuide_(v) {
   });
   var late = v.tasks.filter(function (t) { return t.late; }).length;
   if (late) steps.push({ line: '', text: late + ' billing task' + (late === 1 ? '' : 's') + ' past target: read the Chatter and post where each stands.', kind: 'tasks' });
+  else if (v.tasks.length) steps.push({ line: '', text: v.tasks.length + ' open billing task' + (v.tasks.length === 1 ? '' : 's') + ': post where each stands, or ask the person who has it.', kind: 'tasks' });
   if (v.inbox && v.inbox.mails && v.inbox.mails.length) steps.push({ line: '', text: v.inbox.mails.length + ' e-mail' + (v.inbox.mails.length === 1 ? '' : 's') + ' from the group about money in the last 60 days: make sure each was answered.', kind: 'inbox' });
   if (!steps.length) steps.push({ line: '', text: 'Everything for ' + v.monthLabel + ' is uploaded, reconciled and sent. Nothing to do here until the next bills.', kind: 'done' });
   return steps;
@@ -673,6 +675,7 @@ function gblAct_(b) {
     return { ok: true, said: made ? 'Payment recorded in Salesforce and noted on the task.' : 'Payment noted on the register and the task.' + (rec3 ? '' : ' There is no Salesforce billing record for that month to key it against.') };
   }
   if (act === 'change') return gblChange_(g, who, line, b, 'staff');
+  if (act === 'task') return gblTaskOpen_(g, who, line, month, b);
   return { ok: false, error: 'Unknown action.' };
 }
 function gblBillPatch_(bill, fields) {
@@ -706,10 +709,6 @@ function gblTaskFor_(g, line, month) {
 }
 /** A comment from the review page onto a task's Chatter: for the team (never shown), or a note the group reads, through
  *  the sharing rules GroupClients.gs keeps. */
-function gblNoteTask_(g, who, b) {
-  var kind = gcmYes_(b.forGroup) ? 'note' : 'comment';
-  return gcmShare_({ code: b.code, who: b.who, group: b.group, kind: kind, task: b.task, text: b.text });
-}
 /** A change a person reports: a joiner, a leaver, a tier change, a query. Filed on Group Changes; a joiner or leaver opens
  *  a Salesforce task for the account owner, in the branch's own subject pattern; the note goes on the line's billing task. */
 function gblChange_(g, who, line, b, source) {
@@ -738,6 +737,124 @@ function gblChange_(g, who, line, b, source) {
 function gblOwnerId_(g) {
   if (!g.ownerEmail || !tSfOn_()) return '';
   try { var u = gcmQuery_("SELECT Id FROM User WHERE IsActive = true AND UserType = 'Standard' AND Email = '" + svcSoqlLit_(g.ownerEmail) + "' LIMIT 1")[0]; return u ? String(u.Id) : ''; } catch (e) { return ''; }
+}
+
+/* ── opening a task, and telling its owner ──────────────────────────────────────────── */
+/* 24 October 2026, after the first sample: "can the person open a task? and assign to the owner with guided prompts?".
+ * A task can be opened from any finding, from a line, or from the foot of the review, for the account owner by default or
+ * for anyone on the team with a Salesforce login; the page guides what to say (its kinds, prompts and [blanks] are in
+ * billing-ui.js), and the backend refuses a [blank] left in. The person is told by e-mail from support@. A comment on a
+ * task can @mention its owner through Connect and e-mail them too, so a question reaches the person who has it. */
+var GBL_TASK = { DUE_DAYS: 2, MIN_TEXT: 20, CACHE_S: 600, KINDS: ['joiner', 'leaver', 'tier', 'dependent', 'payment', 'amount', 'backcharge', 'rate', 'group', 'other'],
+  CHANGE: { joiner: 'joiner', leaver: 'leaver', tier: 'tier', dependent: 'dependent' }, ROLES: ['staff', 'abm', 'bm', 'um'] };
+/** Who a task can go to: the account's owner in Salesforce first, then everyone on the Agent Skill Bank who is staff or a
+ *  manager and has an active Salesforce login, resolved by e-mail. Never an agent, never a site guest user. */
+function gblPeople_(g, who) {
+  var want = {}, order = [];
+  var add = function (email, name, owner) { email = String(email || '').toLowerCase().trim(); if (!email || want[email]) return; want[email] = { name: name, owner: !!owner }; order.push(email); };
+  if (g.ownerEmail) add(g.ownerEmail, g.assigned, true);
+  try { tTeam_().people.forEach(function (p) { if (p.active && p.email && GBL_TASK.ROLES.indexOf(p.role) >= 0) add(p.email, gblTitle_(p.name)); }); } catch (e) {}
+  var users = gblUsersByEmail_(order), me = String(who && who.email || '').toLowerCase(), out = [];
+  order.forEach(function (e) { if (!users[e]) return; out.push({ id: users[e].id, name: want[e].name || users[e].name, email: e, owner: want[e].owner, me: e === me }); });
+  out.sort(function (a, b) { return (b.owner - a.owner) || (b.me - a.me) || a.name.localeCompare(b.name); });
+  return out;
+}
+function gblTitle_(n) { n = String(n || '').trim(); return n === n.toUpperCase() ? n.toLowerCase().replace(/(^|[\s'-])([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); }) : n; }
+/** Active standard Salesforce users by e-mail (lower case), kept ten minutes. */
+function gblUsersByEmail_(emails) {
+  var out = {}, want = emails.map(function (e) { return String(e || '').toLowerCase(); }).filter(String);
+  if (!want.length || !tSfOn_()) return out;
+  var joined = want.slice().sort().join('|'), h = 5381;
+  for (var i = 0; i < joined.length; i++) h = ((h * 33) ^ joined.charCodeAt(i)) >>> 0;
+  var cache = null, key = 'gbl_users_' + want.length + '_' + h.toString(36);
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  try {
+    gcmQuery_("SELECT Id, Name, Email FROM User WHERE IsActive = true AND UserType = 'Standard' AND Email IN (" + gcmIn_(want) + ')').forEach(function (u) {
+      var e = String(u.Email || '').toLowerCase(); if (e && !out[e]) out[e] = { id: String(u.Id), name: String(u.Name || '') };
+    });
+    try { if (cache) cache.put(key, JSON.stringify(out), GBL_TASK.CACHE_S); } catch (e2) {}
+  } catch (e3) {}
+  return out;
+}
+function gblBlank_(s) { return /\[[^\]\n]{1,40}\]/.test(String(s || '')); }
+function gblSfUrl_(id) { if (!id) return ''; try { return svcSfToken_().instance_url + '/' + id; } catch (e) { return ''; } }
+/** Opens a Salesforce task from the billing review for the person chosen (the account owner by default), with the subject in
+ *  the branch's pattern and what the person needs to know; logs it on Group Changes (as the enrolment or termination it
+ *  records, when it is one), notes it on the line's billing task, resolves the finding it came from, and e-mails the person. */
+function gblTaskOpen_(g, who, line, month, b) {
+  var kind = String(b.kind || 'other').toLowerCase();
+  if (GBL_TASK.KINDS.indexOf(kind) < 0) return { ok: false, error: 'What is the task about? Pick one of the kinds.' };
+  var subject = String(b.subject || '').replace(/\s+/g, ' ').trim().slice(0, 255), text = String(b.text || '').trim().slice(0, 4000);
+  if (!subject) return { ok: false, error: 'The task needs a subject.' };
+  if (gblBlank_(subject) || gblBlank_(text)) return { ok: false, error: 'Fill in every [blank] before the task is opened.' };
+  if (text.replace(/\s+/g, ' ').length < GBL_TASK.MIN_TEXT) return { ok: false, error: 'Say what the person needs to know: who, what, the month and the amount, and what you want done.' };
+  var today = gcmToday_(), due = gcmYmd_(b.due || '') || gcmAddDays_(today, GBL_TASK.DUE_DAYS);
+  if (due < today) return { ok: false, error: 'The due date is in the past.' };
+  var priority = /^high$/i.test(String(b.priority || '')) ? 'High' : 'Normal';
+  if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so no task can be opened.' };
+  var people = gblPeople_(g, who), to = String(b.to || 'owner');
+  var person = people.filter(function (p) { return to === 'owner' ? p.owner : to === 'me' ? p.me : p.id === to; })[0] || null;
+  if (!person && to === 'owner') return { ok: false, error: (g.assigned || 'The account owner') + ' has no active Salesforce login, so the task cannot go to them. Pick someone else.' };
+  if (!person) return { ok: false, error: 'Who should act on it? Pick a person from the list.' };
+  var acct = (g.acctsFull || g.accts)[0] || null, member = String(b.member || '').trim().slice(0, 120), eff = gcmYmd_(b.effective || '') || '';
+  var head = 'Opened by ' + who.name + ' from the ' + gblMonthLabel_(month) + ' ' + (GBL.LABEL[line] || 'billing').toLowerCase() + ' review' + (b.finding ? ', on a finding the check raised' : '') + '.';
+  var rec = { Subject: subject, WhatId: acct, OwnerId: person.id, ActivityDate: due, Status: 'Not Started', Priority: priority, Description: head + '\n\n' + text }, taskId = '';
+  try { var res = tSfSend_('post', '/sobjects/Task', Object.assign({ Task_Type__c: 'Servicing' }, rec)); taskId = String(res.id || ''); }
+  catch (e) { try { var res2 = tSfSend_('post', '/sobjects/Task', rec); taskId = String(res2.id || ''); } catch (e2) { return { ok: false, error: 'Salesforce would not open the task: ' + String(e2 && e2.message ? e2.message : e2).slice(0, 160) }; } }
+  gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: line, Kind: GBL_TASK.CHANGE[kind] || 'task', Member: member, Detail: subject + ' — ' + text.slice(0, 500), Effective: eff, Amount: Number(b.amount) || 0,
+    Source: 'staff', By: who.name, Status: 'open', 'SF Task': taskId, 'SF Id': '', Note: 'for ' + person.name + ', due ' + tDmy_(due) }]);
+  var bt = gblTaskFor_(g, line, month), posted = false;
+  if (bt && gcmId15_(bt.id) !== gcmId15_(taskId)) posted = gblPostBilling_(g, line, month, 'Task opened for ' + person.name + ', due ' + tDmy_(due) + ': ' + subject, who);
+  var bill = gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0], f = null;
+  if (bill && b.finding) {
+    f = bill.findings.filter(function (x) { return x.id === b.finding; })[0];
+    if (f) { bill.resolved[f.id] = { by: who.name, at: gcmWhen_(new Date()), note: 'Task opened for ' + person.name + ', due ' + tDmy_(due) + (taskId ? ' (' + taskId + ')' : '') }; gblBillPatch_(bill, { Resolved: JSON.stringify(bill.resolved).slice(0, 49000), Status: gblSteps_(bill).open ? bill.status : 'checked' }); }
+  }
+  var told = !person.me && gblTaskMail_(g, who, person, subject, text, due, priority, taskId);
+  return { ok: true, task: taskId, url: gblSfUrl_(taskId), to: person.name, told: !!told, resolved: !!f,
+    said: 'Task opened for ' + person.name + ', due ' + tDmy_(due) + (told ? '; they have it by e-mail' : '') + (posted ? '; noted on the billing task' : '') + '.' };
+}
+function gblInternalMail_(to, subject, html, replyTo) {
+  try { if (tMsCreds_()) { tMsSend_(to, subject, html, { replyTo: replyTo || TRANSITION.MS_FROM }); return true; } } catch (e) {}
+  try { MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: 'Ricky Rampersad Branch' }); return true; } catch (e2) { return false; }
+}
+function gblTaskMail_(g, who, person, subject, text, due, priority, taskId) {
+  if (!person.email) return false;
+  var url = gblSfUrl_(taskId), first = String(person.name || '').split(' ')[0];
+  var body = '<p>' + tEsc_(first) + ', <b>' + tEsc_(who.name) + '</b> has opened a task for you on <b>' + tEsc_(g.name) + '</b>' + (priority === 'High' ? ' (<b>high priority</b>)' : '') + ', due <b>' + tEsc_(tDmy_(due)) + '</b>:</p>' +
+    '<p style="font-size:16px"><b>' + tEsc_(subject) + '</b></p><div style="background:#fff;border:1px solid #e2e7ef;border-left:4px solid #13408F;border-radius:10px;padding:11px 15px;white-space:pre-wrap">' + tEsc_(text) + '</div>' +
+    (url ? '<p><a href="' + url + '" style="display:inline-block;background:#1d5bc4;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:8px">Open the task</a></p>' : '') +
+    '<p>Answer on the task’s Chatter: what you will do, and by when. It is also on the group’s billing review in <a href="' + GCM.SITE + '">group client management</a>.</p><p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
+  return gblInternalMail_(person.email, who.name + ' opened a task for you · ' + subject.slice(0, 80), body, who.email);
+}
+/** A comment for the team that also reaches the task's owner: posted through Connect with an @mention, so Salesforce tells
+ *  them, and e-mailed from support@. A plain comment when the mention is refused; nothing twice. */
+function gblNoteTask_(g, who, b) {
+  var kind = gcmYes_(b.forGroup) ? 'note' : 'comment';
+  if (kind !== 'comment' || !gcmYes_(b.notify)) return gcmShare_({ code: b.code, who: b.who, group: b.group, kind: kind, task: b.task, text: b.text });
+  var t = g.tasks.filter(function (x) { return x.id15 === gcmId15_(b.task); })[0], said = String(b.text || '').trim().slice(0, 2000);
+  if (!t) return { ok: false, error: 'That item is not on this group.' };
+  if (!said) return { ok: false, error: 'Write the comment first.' };
+  if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the comment cannot go onto the task.' };
+  var o = gblTaskOwner_(t.id), id = '';
+  if (o && o.id) {
+    try { var res = tSfSend_('post', '/chatter/feed-elements', { feedElementType: 'FeedItem', subjectId: t.id, body: { messageSegments: [{ type: 'Text', text: 'Comment for the team from ' + who.name + ' (not shown to the group): ' }, { type: 'Mention', id: o.id }, { type: 'Text', text: '\n' + said }] } }); id = String(res.id || ''); } catch (e) {}
+  }
+  if (id) gcmAppend_(GCM.SHARES, [{ When: new Date(), Group: g.name, 'Task Id': t.id, Kind: 'comment', Value: id, By: who.name }]);
+  else { var plain = gcmShare_({ code: b.code, who: b.who, group: b.group, kind: 'comment', task: b.task, text: said }); if (!plain.ok) return plain; }
+  var told = !!(o && o.email && String(o.email).toLowerCase() !== String(who.email || '').toLowerCase()) && gblCommentMail_(g, who, o, t, said);
+  return { ok: true, mentioned: !!id, told: !!told, said: 'Posted to the task’s Chatter' + (id ? ', with ' + (o.name || 'its owner') + ' mentioned' : '') + (told ? ', and e-mailed to them' : '') + '.' };
+}
+function gblTaskOwner_(id) {
+  try { var u = gcmQuery_("SELECT OwnerId, Owner.Name, Owner.Email FROM Task WHERE Id = '" + svcSoqlLit_(id) + "' LIMIT 1")[0]; return u ? { id: String(u.OwnerId || ''), name: u.Owner && u.Owner.Name ? String(u.Owner.Name) : '', email: u.Owner && u.Owner.Email ? String(u.Owner.Email) : '' } : null; } catch (e) { return null; }
+}
+function gblCommentMail_(g, who, o, t, said) {
+  var url = gblSfUrl_(t.id), first = String(o.name || '').split(' ')[0];
+  var body = '<p>' + tEsc_(first) + ', <b>' + tEsc_(who.name) + '</b> wrote on your task <b>' + tEsc_(t.subject) + '</b> (' + tEsc_(g.name) + '):</p>' +
+    '<div style="background:#fff;border:1px solid #e2e7ef;border-left:4px solid #13408F;border-radius:10px;padding:11px 15px;white-space:pre-wrap">' + tEsc_(said) + '</div>' +
+    (url ? '<p><a href="' + url + '" style="display:inline-block;background:#1d5bc4;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:8px">Open the task</a></p>' : '') +
+    '<p>Answer on the task’s Chatter: what you will do, and by when.</p><p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
+  return gblInternalMail_(o.email, who.name + ' on your task · ' + String(t.subject || '').slice(0, 70), body, who.email);
 }
 
 /** The bill to the group: from support@, the PDFs attached, a cover note with the figures, what changed, how to pay and
