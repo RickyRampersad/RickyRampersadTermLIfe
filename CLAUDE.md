@@ -3917,6 +3917,14 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   wishes to its staff; counted, they show an on-time record the work does not
   have (`GCM_LOGGED`). "On time" counts only tasks with a due date, and the
   dashboard shows average days beside it because a due date can be moved.
+- **A recurring series of tasks is never a group item** (22 October 2026). A staff member could not send a group's
+  letter: an internal reminder on its account, set up in Salesforce as a recurring task in January 2025, counted as an
+  item the group sees open more than 30 days, and Salesforce refuses any Chatter post on a recurring series
+  ("INVALID_CROSS_REFERENCE_KEY … a recurring series of tasks"), so its reason could never be written. Salesforce's own
+  search does not show a series either. The refresh now reads `IsRecurrence` and leaves a series out, as it does a
+  logged e-mail (the org held 11 open series that day); the tasks made from a series are ordinary tasks and stay. A
+  note or team comment Salesforce refuses now says so in plain words (`gcmFeedRefused_`); for a series, untick "The
+  group sees this item", which lifts the 30-day rule on it. `day/series-test.js` in the scratchpad covers it (12 checks).
 - **Salesforce takes a subquery only at the top of a WHERE, never inside an
   OR**, so the refresh asks five ways (account, billing, name, employees'
   policies, employees' contacts) and keeps a task once. Every query goes
@@ -4197,8 +4205,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       about a letter, and a code, they never had. Send the letter again, or the welcome, first.
   - **The go.** `gcmRateRemindTest` (editor Run) sends the branch manager one of each kind, marked TEST, with who would get it,
     who rated and who would not. `gcmRateRemindNow` sends it now to every group on the list. It also sets `GCM_RATE_ON`, so
-    from then on the hourly run sends each group that has not responded one reminder a working day, 10:00 to 16:00.
-    `gcmRateRemindStop` ends that. A group that never answers gets its Monday letter and up to four reminders a week.
+    from then on each group that has not responded gets one reminder a working day. Since 21 October that is in the 10:30
+    group day (below), not the hourly run. `gcmRateRemindStop` ends that. A group that never answers gets its Monday letter
+    and up to four reminders a week.
   - **The staff page:**
     - the accounts table's "Opened · rated" column;
     - filters for "Not rated their last letter" and "Opened their page";
@@ -4208,6 +4217,53 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     A failed reminder is logged as failed and goes on the next run.
   - `rate/rate-test.js` (60 checks), `rate/page.js` (19, Playwright) and `rate/real/dry.js` (the real tabs and the replies in
     support@, nothing sent) in the session scratchpad cover it.
+
+- **10:30 every working day: the group day** (21 October 2026: "emails are supposed to be triggering with insights to
+  clients for a response if they got the email but did not provide a rating, as well an email to the respective staff to
+  provide a response as to why this week's email was not approved so it could have sent out at 10am on Monday, reference
+  the training … done at 10:30am daily", then "a task is opened for the respective staff as this pertains to task type
+  Lic/HR … as this is a KPI"). Until then neither part ran: the star reminder was never pasted, and nothing asked staff
+  anything. `gcmDay_` runs once a working day from a 10:30 trigger (`gcmDay1030`). The hourly refresh runs it from 11:00
+  to 16:00 if 10:30 did not fire (`gcmDayCatchUp_`), and `GCM_DAY_LAST` keeps it to once a day. In order:
+  - **On a Monday, the queue first.** Any approved letter the 10:00 run has not reached goes, so it is never called missed.
+  - **The star reminder** (above), for every group that had a letter and has not rated or written, with the reminder's
+    own summary folded into the day's.
+  - **Each staff member whose group had no letter this week is asked why** (`gcmChaseList_`, `gcmChaseMail_`). A group
+    misses the week when it was ready and no weekly letter went since the Monday run. The e-mail gives:
+    - each group, with why it did not go (not approved, approved after the run, or held at the run with the reason) and
+      what to do today;
+    - the groups that did have their letter, and what came back from each;
+    - the groups that cannot have one yet, and what is missing;
+    - three passages of the training manual (Friday is the day to approve; Monday 10:00 the letters go; no answer by
+      Friday means a call). They are quoted in `GCM_DAY.TRAIN`; change them with the manual.
+
+    It asks for a reply by 12 noon, goes from support@ with the branch manager copied, and replies go to him. A group
+    whose owner is not an active Salesforce user goes to the branch manager. A group approved for this week's run and not
+    yet sent is never asked about.
+  - **A Salesforce task for each group that missed the week** (`gcmChaseTasks_`), because the reason is a KPI:
+    - Task Type `Lic/Staffing/SA/HR`, owned by the staff member, on the group's account, Priority High, Not Started, due
+      that day;
+    - subject `RR/<NAME> - GROUP LETTER NOT SENT - <group> - week of <Monday>: reason needed`, the branch's own pattern;
+    - closed by the staff member with the reason.
+
+    The owner is found by e-mail among **standard** users only: the branch manager's address is also on four site guest
+    users, and a task must never go to one. One task per group per week, remembered in `GCM_CHASE_TASKS` and checked
+    against the tasks already in Salesforce, so a run again by hand or a lost property never opens a second.
+    `gcmExcluded_` already treats the type as internal, so the task never reaches a group's page.
+  - **One summary to the branch manager** (`gcmDaySummary_`): how many ready groups had the week's letter, each that
+    missed with its owner, its reason and its task, what came back from those that had one, each star reminder, and
+    who was asked.
+
+  **The go.** `gcmGroupDayTest` (editor Run) sends the branch manager every e-mail as it would go, marked TEST, and opens
+  no task. `gcmGroupDayStart` turns on the star reminder and the staff e-mails and tasks, makes the 10:30 trigger, and
+  runs today. If the project has no trigger left, it says so, and the hourly run takes the day at 11:00.
+  `gcmGroupDayStop` ends all of it. `gcmRateRemindNow` also makes the 10:30 trigger, for the star reminder alone.
+  **A busy lock is tried again** (22 October 2026). The script lock is the whole project's, and on the first live run
+  (21 October) the hourly refresh held it: the summary read "Busy: the letters or the refresh are running", and no
+  group was reminded that day. The reminder now tries again after the staff part, and failing that the hourly run tries
+  it from 11:00 (`GCM_RATE_RETRY`), with its own summary to the branch; the staff are never asked twice.
+  `day/day-test.js` (46 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
+  scratchpad cover it. On those tabs one staff member would have been asked about five groups and another about one.
 
 - **Applications and increases still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
   also see at the top … applications that remain pending … the name, days outstanding, who it's assigned, what's
@@ -4315,6 +4371,203 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - When Salesforce refuses the read, the tab keeps the last good list, and the refresh says so.
   - `coming/coming-test.js` (32 checks) and `coming/page.js` (11, Playwright) in the session scratchpad cover it, on
     the made-up branch.
+
+- **Billings Management: the monthly bills checked against Salesforce before they reach a group** (24 October 2026:
+  "on the 26th the billings go out … create a section called Billings Management as well include in this section
+  Terminations and Enrollments", then "the staff log in … upload the group health, then life, then pensions if any and
+  do the reconciliation … the client has a list bill so it pulls the pension … using intelligence and data to guide",
+  then "it should be an experience … it guides them what they have to check … it verifies our Salesforce records …
+  scrubs all the open tasks … scrubbing the inbox … comments on the task, and it goes on to Chatter … on the client's
+  side … the group health, their billing, the group life in the tabs, the billing, and the group pensions plus any
+  concerns"). `apps-script/GroupBilling.gs` (a fifth file in the project; `gcm.bill*`, `gcm.claimsUpload` and
+  `gcm.clientTell` routed from GroupClients.gs), `groupclientmanagement/billread.js` (the readers) and
+  `groupclientmanagement/billing-ui.js` (the staff page's review). `GROUP-CLIENTS-SETUP.md` has the steps.
+  - **The bill is read on the staff member's device**, never kept by the backend: `BillRead` turns Guardian's Group
+    Health invoice (summary, outstanding balances, member detail, credits and adjustments, transmittal), the Group Life
+    member bill, its Statement of Adjustment and its covering letter, and the branch's own pension and life list bill
+    (a spreadsheet, or built from the policies carrying the list bill in Salesforce) into figures and member lines.
+    pdf.js and SheetJS come from cdnjs. Checked on the first real October bills: every member premium ties to the
+    rates, the members add to the totals, the three life documents combine to the letter's amount.
+  - **The checks (`gblCheck_`)**, each a finding with its level (fix, check, note, ok) and whose it is (Salesforce,
+    Head Office, the group, us): the month's `TRANSACTIONS__c` record and its amount (one press patches
+    `Group_Billing_Premiums__c`); the arrears the bill shows against `Payments__c` and `Payments_Made__c` (a month the
+    bill shows unpaid that Salesforce has paid goes to Head Office, not the group); every member on the bill against
+    the group's `HEALTH (GROUP)` / `LIFE(GROUP)` policies, matched on the employee id's first two parts or the cert
+    number, then by name (`gblSamePerson_`, which reads "QUAN KEP ; KEITH" and "QUANKEP, KEITH" as one person); who
+    joined, left or changed tier since last month's stored bill; each back-charge and statement adjustment against the
+    tasks on file, with "Open a task" where none is; the life rates and the 31-day rule; the list bill against the
+    policies tagged with it (not tagged, tagged but not listed, premiums that differ, paid-to dates behind); payments
+    keyed long after they were made. On the first real group: Salesforce was 1,430 short on health and 614 high on
+    life, a joiner since August had no record, 43 records in Salesforce were live for members no longer on the bill,
+    and the pension list disagreed with Salesforce on four policies and six premiums.
+  - **Reconciled is a person's tick** (`gblAct_` `reconciled`): fixes open block it unless the branch forces; the
+    Salesforce record is marked `Reconciled__c` and the line's billing task gets the note on Chatter
+    (`gblPostBilling_`: the task whose subject carries the month, else the line's newest open billing task).
+    **Send** (`gblSend_`) goes from support@ with the PDFs attached (base64 from the page, under 3 MB each) and a cover
+    note; **test mode until `gblGoLive`** (`GCM_BILL_LIVE`): to the staff member and the branch, marked TEST. Logged
+    on Group Sends as `bill sent` / `bill test`, which `gcmLoad_` keeps apart (`g.billSends`), never the weekly letter.
+  - **The claims experience** (`gblClaims_`, `gblExperience_`): the claims summary is aggregated by month and
+    division in the browser, so no patient's name reaches the sheet; plan years are cut where the monthly premium
+    steps up `GBL.RATE_JUMP` and stays (the renewal lands on the March or April bill, not January). Staff see the loss
+    ratio by plan year; the group sees what the plan paid by calendar year and how many claims, never a ratio.
+    On the first real group: 82% in 2023, 98% in 2024, 90% on the old rates, 43% in the eight months since a 40%
+    increase; 89% of claim money is processed within 30 days of service, 99% within 60.
+  - **The AI read** (`gblAi_`, `gcmClaude_`): the findings with every name taken out (`aiText`), the Salesforce
+    figures and the task ages; answers where / first / careful / say. Staff only.
+  - **The group's page** (`gblClientBlock_` on `gcm.client`): one tab a line with the latest sent or reconciled bill
+    as figures and counts, twelve months of billed and received, the open billing items, what they told us, and for
+    health what the plan paid by year. **Tell us** (`gblClientTell_`): a payment, a joiner, a leaver, a dependent or a
+    question, filed on Group Changes (Source `client`), posted to the billing task's Chatter, e-mailed to the account
+    owner; a joiner or leaver opens a Salesforce task for the owner (`gblOwnerId_`: a standard, active user by e-mail,
+    never a site guest user).
+  - **The place to comment, and a task for the owner with guided prompts** (24 October 2026, on the first sample: "NOT
+    SEEing the place for comment … can the person open a task? and assign to the owner with guided prompts?"). Every open
+    billing task sits under its own line (`blLineTasks`, by the record type in its subject; the rest at the foot), with its
+    Chatter, a comment box, one-tap prompts (`blCmt`: chased Head Office, the group confirms paid, waiting on the group,
+    corrected in Salesforce, checked against the bill, a question by a date; the [blanks] are selected to overtype) and a
+    tick, on by default, that tells whoever has it: the comment goes through Connect with the owner @mentioned
+    (`gblNoteTask_` with `notify`, a plain FeedItem when Connect refuses) and they get an e-mail from support@
+    (`gblCommentMail_`); never e-mailed to themselves. **Open a task** on every finding, on every line and at the foot opens
+    a four-step panel (`blTaskPanel`): what it is about (`BL_TASKS`: a member to add, a termination, a tier change, a
+    dependent, a payment to trace, an amount to correct, a back-charge to query, a rate query, something to ask the group,
+    something else; the finding suggests one, `blKindOf`), who should act (`gblPeople_`: the account owner in Salesforce
+    first and chosen by default, then everyone on the Agent Skill Bank who is staff or a manager with an active standard
+    Salesforce login, by e-mail; never an agent, never a site guest), by when (the kind's working days, Normal or High), and
+    what they need to know (the kind's prompts, a note template with the check's facts). The subject is written in the
+    branch's pattern ("Group Health Termination – <name> – <group> – effective <date>"). `gblTaskOpen_` (act `task`)
+    refuses a [blank] left in, a note under 20 characters or a past date; opens the Task on the account, owned by the
+    person, Servicing, with who opened it and why; logs it on Group Changes as the enrolment or termination it records
+    (`GBL_TASK.CHANGE`), else as `task`; notes it on the line's billing task; resolves the finding ("Task opened for …");
+    and e-mails the person from support@ (`gblTaskMail_`, never to oneself). The guide asks for a word on every open
+    billing task. Covered in `billing/billing-test.js` (75) and `billing/page-test.js` (69).
+  - **The change form EB0010, filled from our records and sent to EB Customer Care; the owner's task chased on Chatter
+    every three working days** (24 October 2026: "the form uploaded called GROUP AND INDIVIDUAL POLICY CHANGE FORM is
+    filled as we do have the data and always sent to EBCustomercare@myguardiangroup.com and copy
+    rickyrampersadsalessupport@myguardiangroup.com as well support@rickyrampersadbranch.com", then "when a client wants
+    to terminate they should be able to search the name and all the data mapped onto the form populated as it's pulled
+    from our data … all data should be on the forms exactly", then "a task is opened assigned to the account owner to
+    advise to follow up if no response on Salesforce, this is automated by Chatter comments every 3 working days").
+    Guardian's form is EB0010 (2024/3), found on the renewal reminders in support@; `gblFormHtml_` reproduces it section
+    by section (the policy number, A the insured, B the termination, C dependents to add or remove, D the address, E the
+    beneficiaries, F the plan administrator) with the form's own boxes, and `gblFormPdf_` renders it to PDF.
+    - **The member is searched, never typed** (`gblMembers_`: every Group Health and Group Life policy of the group, by
+      its accounts and list bills, in one query, with the dependents from Relationship Groups in a second, kept ten
+      minutes; `gblMemberSearch_`: every typed word starts a word of the name, the policy or the certificate, live
+      members first, twelve at most). Section A fills from the record: name, date of birth, e-mails, telephones, address,
+      the plan and its issue date. **What Salesforce does not hold is listed as "not on record", never guessed**
+      (`d.missing`): marital status is on no record; a dependent fills only where the member has a Relationship Group,
+      and on 24 October 2026 no group member had one, so dependents are typed. The signatures stay blank, with a line
+      that the signed and stamped copy follows on request. Only the effective date and the kind's own facts block a
+      send (`d.blocking`); the plan administrator is prefilled from the group's contact.
+    - **Where**: the group's own page ("Terminate or change a member": search, pick, the kind, the details, preview,
+      send, with a tick that the person is authorised; `gcm.clientForm` and `gcm.clientFormSend`, routed in
+      GroupClients.gs) and the staff billing review (the "Change form EB0010" button in Record a change and a Form button
+      on every register row; acts `members`, `form`, `formSend` through `gblFormAct_`). A group is never shown the
+      beneficiaries on file.
+    - **The send** (`gblFormSend_`): from support@ to `GBL_FORM.TO` (EB Customer Care) with `GBL_FORM.CC` (sales support
+      and support@) and, when ticked and not one of our addresses, the group's contact; subject
+      `EB0010 Policy Change Form – <group> – <member> – <kind>`; the PDF attached; then `gblChange_` logs it on Group
+      Changes (the new **Form** column keeps the HTML; `gblSheet_` adds the column to an older tab) as the leaver,
+      dependent, address, beneficiary, bank or plan change it is, opens the owner's task and notes the billing task.
+      **Test mode until `gblGoLive`**, the same switch as the bills: to the staff member (or the account owner, for a
+      group's submission) and the branch, marked TEST.
+    - **The chase** (`gblFormChase_`, in the 10:30 group day; `gblFormChaseNow` and `gblFormChasePreview` from the editor):
+      every Group Changes row whose Note begins `form: sent` and is still open. Its task closed in Salesforce closes the
+      row. A reply at support@ from a Guardian address that is not ours, after the send, whose subject carries every word
+      of the member's name marks it `answered` and is noted on the task. Otherwise, three working days after the send or
+      the last follow-up (`GBL_FORM.CHASE.DAYS`), a Chatter post headed "Branch Intelligence · <date>" goes on the task
+      with the owner @mentioned (a plain post when Connect refuses) and the owner is e-mailed; the fifth and last
+      (`MAX`) goes to the branch manager. The day's summary lists them under "Change forms with EB Customer Care".
+    - Covered in `billing/billing-test.js` (106) and `billing/page-test.js` (90, the group's flow on a phone and a desk).
+  - **The forms are Guardian's own PDFs, filled exactly; enrolments and the ACH form join** (24 October 2026, the same
+    evening: "forms have to be exactly on the forms I've uploaded to you. Enrollments, everything. It needs to be exact").
+    The HTML rendering of EB0010 is retired (`gblFormHtml_` stays only as the fallback when Guardian's PDF cannot be
+    read). The blank forms live in the repository at `groupclientmanagement/forms/` (`GBL_PDF.FILES`: EB0010 2024/3 and
+    GIO001 V.1/10-2016, both fillable PDFs from Guardian); a file of the same name in the Drive folder the
+    `GCM_FORMS_FOLDER` Script property names wins (`gblFormFile_`), so a new edition from Guardian is a file swap, and the
+    sent copies go to its "Sent forms" subfolder with the link on Group Changes (`gblKeepSent_`; without the folder the
+    Form column just names the PDF). **The EASI Collect form has no blank yet**: the copy uploaded on 24 October was a
+    filled one, so it is not in the repository; `EASI-Collect.pdf` goes in the Drive folder (or the forms folder on the
+    site) when a blank arrives, and until then the EASI flow says which file is missing and sends nothing.
+    - **How a PDF is filled** (`gblPdfFill_`): pdf-lib (cdnjs, or a `pdf-lib.min.js` in the Drive folder) is loaded with
+      `new Function` under a Promise that settles at once (`gblSyncPromise_`) and a `setTimeout` that runs its callback
+      at once, because a web app cannot await and pdf-lib only ever waits on the CPU; the whole fill runs inside one call
+      (about 0.1 s). Text goes into the form's own fields (`setText`, the size fitted to the box between 6 and 11 pt),
+      checkboxes are ticked, radio groups selected, and on a flat form the values are drawn at measured positions
+      (`draw`). Nothing is flattened, so EB Customer Care can still correct a box. Apps Script's bytes are signed:
+      `gblU8_` and `gblSigned_` convert both ways.
+    - **The maps.** `GBL_EB0010` names each of EB0010's 119 fields (random names, mapped box by box from the form); the
+      account number is drawn into the printed cells (`accountCells`). `GBL_GIO001` uses Guardian's own field names and
+      radio options. `GBL_EASI` holds the positions on the flat EASI form. The uploaded "Change of Dependent Status" form
+      is EB0010's 2019/10 edition, which the 2024/3 edition covers, so it is not used.
+    - **Enrolment** (`gblEnrolData_`, `gblGio001Fill_`, `gblEnrolSend_`; acts `enrol` / `enrolSend`; the group's page
+      with `form=enrol`): what the group types goes onto GIO001 section by section; the group's own policy numbers are
+      read off its members' certificates (`gblGroupPolicyNos_`, the part before the first dash) and can be typed over;
+      a name, date of birth, gender, a coverage, the effective date and the administrator block a send, the rest is
+      listed as not given. The cover note lists what follows from the employee (`GBL_ENROL.FOLLOWS`: the Declaration of
+      Insurability, the ID copy, the bank statement header, the signatures). It is logged as a joiner, opens the
+      owner's task and is chased like any form.
+    - **EASI Collect** (`gblEasiData_`, `gblEasiFill_`, `gblEasiSend_`; acts `easi` / `easiSend`; `form=easi`): the
+      member is searched as for a change, Section A fills from the record, the account, its type and the ID are typed;
+      an enrolment or change needs all three, an ending needs none. Logged as a bank change.
+    - **One send path** (`gblSendPack_`): the cover note, test mode, the register row, the owner's task and the kept
+      copy are the same for every form; the subject is `<code> <title> – <group> – <member> – <kind>` (EB0010 keeps
+      "Policy Change Form", which the chase's reply matching reads).
+    - **The pages** draw the PDF page by page with pdf.js (`pdfPages` on the group's page, `blPdfPages` on the staff
+      page) and offer the PDF to download; both have the three forms as pills (`CF.form` / `BF.form`), the enrolment as
+      a sectioned form (`ENR` / `BL_ENR`), and the EASI fields after the member is picked.
+    - Tests: `billing/billing-test.js` (122, the real blank forms from the repository and the EASI copy from the
+      scratchpad placed in a mocked Drive folder) and `billing/page-test.js` (99, pdf.js from the vendor copies); the
+      harness (`gcmlive/env-sq.js`) mocks `DriveApp`, serves the site's forms from the repository and pdf-lib from the
+      scratchpad. `forms/gas-sync.js` there is the proof that pdf-lib runs under the synchronous Promise.
+  - **The billing day: the 26th, approved by staff, sent by the system, chased at 10:30** (24 October 2026: "on the 26th
+    group billings go out and weekly on a Monday at 10am the queries go out but staff has to approve"). The bills follow
+    the Monday letters' pattern. `GBL_DAY` in GroupBilling.gs: the 26th (`GCM_BILL_DAY` Script property overrides, 1 to
+    28), or the next working day when it falls on a weekend (`gblBillDayOf_`; 26 September and 26 December 2026 are
+    Saturdays, so the 28th); 10:00, as the letters.
+    - **Approve for the 26th** (`gblApprove_`, act `approve`): a reconciled line (fixes closed, or the branch forces), the
+      group with a contact we may write to. The PDFs read in the session travel with the approval and wait in the Drive
+      folder's "Bills to send" (`gblKeepQueued_`, under `GCM_FORMS_FOLDER`), named by month, group and line; the row
+      carries Approved at, by, e-mail, for and the file ids (new Group Bills columns, added to an older tab by name).
+      With a PDF and no Drive folder the approval is refused and says to set the property or press Send now on the day.
+      `unapprove` trashes the waiting PDF and leaves the bill reconciled. Approving after 10:00 on the day is for the next
+      month, and the reply says so; Send now stays for the day itself. The steps strip gains *Approve* before *Send*.
+    - **The run** (`gblDayRun_`): from the hourly refresh (`gcmRefreshTick`, `auto`, silent when nothing is due) and
+      first in the 10:30 group day; every approved bill whose day has come, one e-mail a group and month with the PDFs
+      read back from Drive (`gblBillMail_`), to the contact with sales support in Cc, logged on Group Sends as `bill
+      sent` (Via "support@, 26th run"), the row `sent`, the PDF moved to "Sent bills", a note on the billing task's
+      Chatter. **Test mode is the bills' own**: until `gblGoLive` the run sends each bill to its approver and the branch
+      marked TEST, logs `bill test`, marks the row `tested` and nothing sent; approve again once live. A bill the run
+      cannot send is `held: <why>` on its row (no contact, Microsoft refused, the PDF gone from Drive) and stays
+      approved; one internal e-mail a run (`gblDayTell_`) tells the branch manager and whoever approved a held bill.
+      `gblDayNow` and `gblDayRehearse` (every approved bill as a TEST to its approver, nothing marked) from the editor.
+    - **Who is billed** (`gblExpected_`): a line with a Salesforce billing record (`TRANSACTIONS__c`) for the cycle's
+      month or the one after, one query over every account kept an hour, plus any bill stored for those months; without
+      Salesforce, the lines with a bill stored in the last 70 days. The cycle runs from the previous month's billing day
+      to this one (`gblCycle_`).
+    - **At 10:30 on the billing day** (`gblDay_` inside `gcmDay_`): each staff member whose billed group had no bill
+      (sent or test copy) this cycle is asked why (`gblChaseList_`, `gblChaseMail_`: where each line stands, nothing
+      uploaded / to fix / not reconciled / not approved / held / approved after the run, what to do today, the three
+      training lines in `GBL_DAY.TRAIN`), reply by noon to the branch manager, and a Salesforce task opens per group,
+      `RR/<NAME> - GROUP BILL NOT SENT - <group> - <Month yyyy> bills: reason needed`, Lic/Staffing/SA/HR, High, owned
+      by the staff member's standard user, once a cycle (`gcmChaseTasks_` generalised with `o.tag`, `o.prop`, `o.label`,
+      `o.train`, `o.why`; property `GCM_BILL_TASKS`). The manager's daily summary gains "Group bills: the 26th"
+      (`gblDayHtml_`): on the day, how many billed groups had their bill, who missed with the task, what the run sent and
+      held; on other days, the next billing day and how many are sent or approved. `gblDayTest` rehearses the whole day
+      to the branch manager; `gcmGroupDayTest` includes it.
+    - **The pages**: the review's strip under the title (`blDayStrip`: the day, days to go, test mode, the Drive folder
+      not linked), *Approve for 26 Oct* on a reconciled line (disabled with the reason while the folder is not linked),
+      the approval shown with who and when and *Cancel the approval*, *Send now* beside it; the account chip counts
+      approved and held; the Team dashboard's meter "bills approved or sent for 26 Oct" and its note (`billingDay` on the
+      board answer); the group's page says when its next bill comes (`nextBill` in `gblClientBlock_`).
+    - Tests: `billing/billing-test.js` (165) and `billing/page-test.js` (107) in the scratchpad; the harness's Drive
+      mock gained stable file ids, `getFileById`, `moveTo` and `setTrashed`.
+  - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
+    Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
+  - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing
+    records) and `billing/page-test.js` (52, Playwright: the review driven with the real October PDFs through pdf.js,
+    the made-up bill stored, the fixes, reconcile, the test send, a comment to Chatter, the claims upload; the
+    group's page on a phone and a desk). `billing/world.js` holds the made-up Salesforce.
 
 ## The branch's own forms — no client link opens a JotForm
 
@@ -4578,7 +4831,6 @@ silent faults nobody would have reported:
   filled one adds nothing to the count, Enter moving on rather than sending,
   the restored-draft notice and its count, Start again, and the index's own
   stage, headline and measured bar).
-
 ## The English B essay workshop — it asks, the student writes
 
 `englishb/index.html` (rickyrampersadbranch.com/englishb/) and `apps-script/EssayWorkshop.gs`, **its own Apps Script

@@ -307,6 +307,78 @@ h2{font-size:21px}
 .cgrp .own.co{background:#EFE8FD;color:#5B2DA8}.cgrp .own.pe{background:#E8EEF7;color:#2B374C}
 .cleanrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 @media (max-width:900px){.cgrid{grid-template-columns:1fr}}
+/* Billings Management (24 October 2026): the guided billing review (billing-ui.js) */
+.blhead{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;justify-content:space-between;margin:4px 0 10px}
+.blctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.guide{background:var(--paper);border:1px solid var(--primaryLine);border-left:4px solid var(--primary);border-radius:12px;padding:12px 16px;margin:10px 0 16px;box-shadow:var(--shadow)}
+.guide h3{margin:0 0 6px}.guide ol{margin:0;padding-left:22px}.guide li{margin:4px 0;font-size:14.5px}
+.guide li.g-fix::marker{color:var(--badText)}.guide li.g-check::marker{color:var(--warn)}.guide li.g-send::marker,.guide li.g-done::marker{color:var(--good)}
+.lnk{background:none;border:0;color:var(--primary);font-weight:600;cursor:pointer;padding:0 4px;font-size:13px}
+.bline{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:0 0 16px;box-shadow:var(--shadow)}
+.blt{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between}.blt h3{margin:0}
+.steps{display:flex;gap:4px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
+.steps li{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);padding:4px 10px 4px 4px;border-radius:99px;background:var(--sunken)}
+.steps li .n{width:20px;height:20px;border-radius:50%;background:var(--line2);color:#fff;display:grid;place-items:center;font-size:11px}
+.steps li.done{color:var(--good);background:var(--goodBg)}.steps li.done .n{background:var(--good)}
+.steps li.now{color:var(--primary);background:var(--primarySoft);outline:2px solid var(--primaryLine)}.steps li.now .n{background:var(--primary)}
+.steps li small{font-weight:500;color:var(--badText)}
+.sfrow{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+.upload{border:1.5px dashed var(--line2);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff}
+.uprow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pv{background:var(--primarySoft);border:1px solid var(--primaryLine);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px}
+.pvw{margin:6px 0 0;padding-left:18px;color:var(--warn);font-size:13px}
+.bill-tiles{margin:12px 0 6px}
+.findings h4{margin:14px 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.findings h4 .n{background:var(--sunken);border-radius:99px;padding:0 8px;margin-left:4px}
+.findings h4.f-fix{color:var(--badText)}.findings h4.f-check{color:var(--warn)}.findings h4.f-ok{color:var(--good)}
+.finding{border:1px solid var(--line);border-left:4px solid var(--line2);border-radius:10px;padding:10px 12px;margin:0 0 8px;font-size:14px;background:#fff}
+.finding.f-fix{border-left-color:var(--bad)}.finding.f-check{border-left-color:var(--warnMark)}.finding.f-ok{border-left-color:var(--good)}.finding.resolved{opacity:.72;background:var(--sunken)}
+.finding .who{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:var(--sunken);border-radius:99px;padding:1px 8px;margin-right:8px;color:var(--ink2)}
+.finding details{margin-top:6px;font-size:13px}.finding details ul{margin:4px 0 0;padding-left:18px;column-width:260px}
+.finding .fa{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.finding .fr{margin-top:6px;font-size:13px;color:var(--good)}
+.blacts{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 6px}
+.sfhist,.claims{margin-top:12px}.sfhist tr.cur td{background:var(--primarySoft)}.t td.good{color:var(--good);font-weight:600}.t td.bad{color:var(--badText)}
+.t.small td,.t.small th{padding:6px 8px;font-size:12.5px}
+.claimsbody{padding:10px 12px;background:var(--paper)}
+.months .pair{display:flex;align-items:flex-end;gap:2px;height:100%;width:70%;max-width:40px}
+.months .pair .col{flex:1;width:auto;max-width:none}.months .pair .col.prem{background:var(--track)}
+.blsec{margin-top:26px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:8px 0}
+.grid4 .sel{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.grid4 .sel select,.grid4 .sel input{width:100%;max-width:100%;min-width:0;align-self:stretch;box-sizing:border-box}
+.chg textarea{margin:6px 0 8px}
+.drawer.ai{border-left:4px solid var(--primary)}
+.ltasks{margin:14px 0 6px;border-top:1px dashed var(--line);padding-top:12px}
+.ltt{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.ltasks .ltt h4{margin:0;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.ltasks .ltt h4 .n{background:var(--sunken);border-radius:99px;padding:0 8px;margin-left:4px}
+.cmtrow{display:flex;flex-direction:column;gap:6px;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.cmtrow .cmtlab{font-size:13px;font-weight:600}
+.cmtrow .field{width:100%;box-sizing:border-box;min-height:48px;padding:8px 10px}
+.chips.tpl .chip,.chips.kinds .chip{cursor:pointer;background:#fff;font-family:inherit}
+.chips.tpl .chip:hover,.chips.kinds .chip:hover{border-color:var(--primary);color:var(--primary)}
+.chips.kinds .chip{padding:6px 12px;font-size:13px}.chips.kinds .chip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tsteps{display:flex;flex-direction:column;gap:12px}
+.tstep{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper)}
+.tstep h4{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+.tstep h4 .n{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;display:inline-grid;place-items:center;font-size:13px;flex:none}
+.tstep .field,.tstep select.field{width:100%;box-sizing:border-box}
+.tstep .sel{flex-direction:column;align-items:stretch;gap:4px}
+.ask{margin:0 0 8px;padding-left:18px;font-size:13px;color:var(--muted)}.ask li{margin:2px 0}
+.toggle.small{font-size:13px;font-weight:500}
+.bform .bres{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.bpick{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:2px}
+.bpick span{font-size:13px;color:var(--muted)}.bpick.on,.bpick:hover{border-color:var(--primary);background:var(--infoBg)}
+.bpicked{margin:10px 0 6px;font-size:14px}
+.bdeps{margin:8px 0}.bdeps b{display:block;font-size:13px;margin-bottom:4px}
+.bdep{display:grid;grid-template-columns:110px 1fr 70px 150px;gap:6px;margin:4px 0}.bdep.ben{grid-template-columns:100px 1fr 64px 140px 64px auto}
+.bform .fprev{margin-top:12px}.bform .fprev iframe{width:100%;height:620px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.bform .pdfv canvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:10px;background:#fff;margin:0 0 10px}
+.bform .fsw{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}.bform .fswb{font:inherit;text-align:left;background:#fff;border:1px solid var(--line2);border-radius:10px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}.bform .fswb b{font-size:14px}.bform .fswb span{font-size:12px;color:var(--muted)}.bform .fswb.on{border-color:var(--primary);background:var(--primarySoft)}
+.bform .esec{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0}.bform .esec>b{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}.bform .ticks{display:flex;flex-wrap:wrap;gap:4px 14px;margin:6px 0 2px}
+.bdep.wide{grid-template-columns:1fr 2fr .8fr 1.2fr 1.4fr}
+.bform .bad{color:var(--badText)}
+@media (max-width:640px){.bdep,.bdep.ben,.bdep.wide{grid-template-columns:1fr 1fr}.bform .fprev iframe{height:460px}.bform .fsw{grid-template-columns:1fr}}
 </style>
 <script src="/rroperations/sso.js"></script>
 </head>
@@ -414,6 +486,7 @@ function render() {
   if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into the project’s Script properties, then run gcmRefresh.</div>';
   if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
   if (d.nextSend) h += '<div class="note info"><div><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div></div>';
+  if (d.billingDay) h += '<div class="note info"><div><b>The group bills go out by themselves on ' + esc(d.billingDay.label) + (d.billingDay.isDay ? ' (today)' : d.billingDay.daysTo ? ' (in ' + d.billingDay.daysTo + ' day' + (d.billingDay.daysTo === 1 ? '' : 's') + ')' : '') + '.</b> Before then, open each account’s Billing review: upload the month’s bill on each line, check it against Salesforce, mark it reconciled and approve it with the PDF attached. A bill not approved by ' + d.billingDay.hour + ':00 waits for Send now, and the branch manager is told at 10:30.' + (d.billingLive ? '' : ' The bills are in test mode (gblGoLive switches them on).') + (d.billingDay.drive ? '' : ' <b>The Drive folder is not linked</b> (GCM_FORMS_FOLDER), so a bill cannot be approved with its PDF yet.') + '</div></div>';
   if (d.canRehearse) h += '<div class="note"><b>Test the run first.</b> “Rehearse now” writes every approved letter exactly as the ' + esc(d.nextSend || 'Monday') + ' run would, and sends it only to the person who approved it and the branch, marked TEST, with one summary of what would go and what would wait. Nothing reaches a group, and nothing is marked as sent. <button class="btn ghost sm" type="button" id="rh">Rehearse now</button></div>';
   if (!TAB) TAB = d.role === 'staff' ? 'groups' : 'dash';
   if (!FILT.owner) FILT.owner = d.role === 'staff' && d.groups.some(g => g.own) ? 'mine' : 'all';
@@ -503,14 +576,14 @@ function hello(d) {
     pill(due, 'to approve for ' + (d.nextSend || 'Monday'), due ? 'hot' : 'ok') + pill(wel, 'to welcome', wel ? 'hot' : 'ok') + pill(ans, 'have answered us') + '</div>';
 }
 /* each filter's mark: the colour of the state it finds, always beside its words */
-const ACC_SHOW = [['all', 'All', ''], ['due', 'Letter to approve', 'var(--bad)'], ['welcome', 'Welcome to send', 'var(--info)'], ['sent', 'A letter has gone', 'var(--good)'],
+const ACC_SHOW = [['all', 'All', ''], ['billing', 'Billing to do', 'var(--warnMark)'], ['due', 'Letter to approve', 'var(--bad)'], ['welcome', 'Welcome to send', 'var(--info)'], ['sent', 'A letter has gone', 'var(--good)'],
   ['answered', 'Answered us', 'var(--good)'], ['notrated', 'Not rated their last letter', 'var(--warnMark)'], ['opened', 'Opened their page', 'var(--info)'],
   ['setup', 'Needs set-up', 'var(--warnMark)'], ['pending', 'Applications or increases pending', '#5B6B82']];
 function accShow(g, k) {
   const a = g.account, s = g.stats;
   return k === 'all' || (k === 'welcome' && !a.welcome && !a.welcomeWhy) || (k === 'due' && s.week === 'due' && s.ready) || (k === 'sent' && !!a.last) ||
     (k === 'answered' && !!a.answer) || (k === 'setup' && !!(a.mailWhy || !s.ready || !g.assigned || !g.ownerActive)) || (k === 'pending' && !!a.pending) ||
-    (k === 'notrated' && !!a.rate && a.rate.kind !== 'rated') || (k === 'opened' && !!a.views);
+    (k === 'notrated' && !!a.rate && a.rate.kind !== 'rated') || (k === 'opened' && !!a.views) || (k === 'billing' && blTodo(g));
 }
 /* the row's rail: red when something is due from us, amber when the account needs setting up, green when the week is done */
 function rowState(g) {
@@ -529,6 +602,7 @@ function accountsHtml(d) {
     '</div><div class="track" role="img" aria-label="' + esc(label + ': ' + v + ' of ' + n) + '"><div class="fill" style="width:' + (n ? Math.round(100 * v / n) : 0) + '%"></div></div></div>';
   let h = '<h2 style="margin-top:22px">Every account <span class="muted small">who looks after it, who the letters go to, and what has gone</span></h2>' +
     '<div class="meters">' + meter(cnt(g => g.account.welcome), 'welcomed with the film') + meter(cnt(g => g.stats.week !== 'due'), 'approved or sent for ' + (d.nextSend || 'Monday')) +
+    (d.billingDay && typeof blDone === 'function' ? meter(cnt(g => blDone(g)), 'bills approved or sent for ' + d.billingDay.date) : '') +
     meter(cnt(g => g.account.rate && g.account.rate.kind === 'rated'), 'rated us for their last letter') + meter(cnt(g => g.assigned && g.ownerActive && !g.account.mailWhy && g.stats.ready), 'ready: owner, contact, list bill and code') + '</div>';
   const owners = [...new Set(all.map(g => g.assigned).filter(Boolean))].sort();
   if (ACC.owner !== 'all' && ACC.owner !== 'mine' && owners.indexOf(ACC.owner) < 0) ACC.owner = 'all';
@@ -579,11 +653,11 @@ function accRow(g) {
     if (a.last && a.last.again && !a.mailWhy) acts += '<button class="btn ghost" type="button" data-act="again" data-k="' + esc(g.key) + '">Resend last letter</button>';
     if (canRemind(g, a, s)) acts += remindBtn(g.key, a);
   }
-  acts += '<button class="btn ghost" type="button" data-g="' + esc(g.key) + '">Open</button>';
+  acts += '<button class="btn ghost" type="button" data-bill="' + esc(g.key) + '">Billing</button><button class="btn ghost" type="button" data-g="' + esc(g.key) + '">Open</button>';
   return '<div class="acc r-' + rowState(g) + '"><div>' + L('Group') + '<button class="gname" type="button" data-g="' + esc(g.key) + '">' + esc(g.name) + '</button><div class="sub">List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · ' + s.open + ' open' + (s.late ? ' · <b style="color:var(--badText)">' + s.late + ' past target</b>' : '') + '</div>' +
     (a.coming ? '<div><span class="chip"><i style="background:#067647"></i>' + a.coming.n + ' coming up</span></div>' : '') +
-    (a.pending ? '<div><span class="chip ' + (a.pending.late || a.pending.oldest > 30 ? 'bad' : a.pending.oldest > 14 ? 'warn' : '') + '"><i></i>' + pendWords(a.pending) + ', oldest ' + a.pending.oldest + 'd</span></div>' : '') + '</div>' +
+    (a.pending ? '<div><span class="chip ' + (a.pending.late || a.pending.oldest > 30 ? 'bad' : a.pending.oldest > 14 ? 'warn' : '') + '"><i></i>' + pendWords(a.pending) + ', oldest ' + a.pending.oldest + 'd</span></div>' : '') + blBoardChip(g) + '</div>' +
     '<div>' + L('Looked after by') + owner + '</div><div>' + L('Letters go to') + to + '</div><div>' + L('Welcome') + wel + '</div><div>' + L('This week’s letter') + wk + '</div><div>' + L('Opened · rated') + ans + '</div>' +
     '<div class="acts">' + acts + (g.canAct ? '' : '<div class="sub" style="width:100%;text-align:right">' + esc(first || 'Its owner') + ', the assistant branch manager or the branch manager sends</div>') + '</div></div>';
 }
@@ -596,6 +670,7 @@ function bindAccounts(root) {
   const q = root.querySelector('#accQ');
   if (q) q.oninput = () => { ACC.q = q.value; const pos = q.selectionStart; render(); const q2 = $('accQ'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) {} } };
   root.querySelectorAll('[data-act]').forEach(b => b.onclick = () => openAct(b.dataset.act, b.dataset.k));
+  root.querySelectorAll('[data-bill]').forEach(b => b.onclick = () => openBilling(b.dataset.bill));
 }
 
 /* the send window: the e-mail exactly as it goes, who it goes to, the tick, and the button; then what happened */
@@ -833,7 +908,7 @@ async function openGroup(key) {
 function drawGroup() {
   const d = GROUP, g = d.group, s = d.stats;
   $('mhello').innerHTML = '';
-  let h = '<button class="back" type="button" id="bk">← All groups</button><h2 style="margin-top:8px">' + esc(g.name) + '</h2>' +
+  let h = '<button class="back" type="button" id="bk">← All groups</button><button class="btn" type="button" id="bkBill" style="float:right;margin-top:10px">Billing review</button><h2 style="margin-top:8px">' + esc(g.name) + '</h2>' +
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') + (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') +
     (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') + '</div>' +
     '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
@@ -860,6 +935,7 @@ function drawGroup() {
     '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
   $('app').innerHTML = h;
   $('bk').onclick = render;
+  if ($('bkBill')) $('bkBill').onclick = () => openBilling(g.key);
   bindPend();
   $('app').querySelectorAll('[data-act]').forEach(b => b.onclick = () => openAct(b.dataset.act, b.dataset.k));
   $('pv').onclick = preview;
@@ -998,6 +1074,8 @@ async function send(outlook) {
 
 if (AUTH.code) { $('gWho').value = AUTH.who; $('gCode').value = AUTH.code; open_(); }
 </script>
+<script src="billread.js"></script>
+<script src="billing-ui.js"></script>
 <!-- rrb-views -->
 <script>
 (function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
