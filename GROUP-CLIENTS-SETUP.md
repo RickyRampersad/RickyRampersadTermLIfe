@@ -249,6 +249,8 @@ something is written.
   TEST and marks the row `tested`, and nobody is asked why; approve again once live. Editor: `gblDayRehearse` (every
   approved bill as a TEST to its approver, nothing marked), `gblDayNow` (send what is due now), `gblDayTest` (the whole
   billing day rehearsed to the branch manager).
+  After a paste, open `<exec address>?action=gcm.ping`: `bills.next` should read the 26th (or the working day after it)
+  and `bills.report` the 25th at 13:00. No `report` means the GroupBilling.gs pasted is an older one.
 - **Guardian's own forms, filled exactly.** Three forms, on the group's page ("Enrol, terminate or change a member")
   and on the staff billing review (Record a change, or Form on a register row): **EB0010** (2024/3, the Group and
   Individual Policy Change Form: terminations, dependents, beneficiaries, address, plan, claim account), **GIO001**
