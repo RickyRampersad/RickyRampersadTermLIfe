@@ -68,7 +68,7 @@ var GBL = {
 var GBL_HEAD = {
   'Group Bills': ['When', 'Group', 'Line', 'Month', 'Ref', 'Dated', 'Due by', 'Members', 'Current', 'Adjustments', 'Due', 'Arrears shown', 'Payable',
                   'SF Record', 'SF Billed', 'SF Due', 'SF Paid', 'Variance', 'Findings', 'Resolved', 'Status', 'By', 'Checked at', 'Reconciled at', 'Reconciled by', 'Sent at', 'Files', 'Summary',
-                  'Approved at', 'Approved by', 'Approved e-mail', 'Approved for', 'Files kept', 'Answers'],
+                  'Approved at', 'Approved by', 'Approved e-mail', 'Approved for', 'Files kept', 'Answers', 'Sent by', 'Late reason'],
   'Group Bill Lines': ['Group', 'Line', 'Month', 'Member Id', 'Name', 'Division', 'Tier', 'Start', 'Eff', 'Premium', 'Kind', 'For month', 'Cover'],
   'Group Changes': ['When', 'Group', 'Line', 'Kind', 'Member', 'Detail', 'Effective', 'Amount', 'Source', 'By', 'Status', 'SF Task', 'SF Id', 'Note', 'Form'],
   'Group Claims': ['Group', 'Month', 'Division', 'Claims', 'Charge', 'Member share', 'Paid', 'Uploaded', 'By']
@@ -228,7 +228,8 @@ function gblBillOf_(r) {
     sfRecord: gcmText_(r['SF Record']), sfBilled: gblNum_(r['SF Billed']), sfDue: gblNum_(r['SF Due']), sfPaid: gblNum_(r['SF Paid']), variance: gblNum_(r.Variance),
     findings: gblJ_(r.Findings, []), resolved: gblJ_(r.Resolved, {}), status: gcmText_(r.Status), by: gcmText_(r.By), checkedAt: gcmText_(r['Checked at']),
     reconciledAt: gcmText_(r['Reconciled at']), reconciledBy: gcmText_(r['Reconciled by']), sentAt: gcmText_(r['Sent at']), files: gcmText_(r.Files), summary: gblJ_(r.Summary, {}), at: gcmWhen_(r.When),
-    approvedAt: gcmText_(r['Approved at']), approvedBy: gcmText_(r['Approved by']), approvedEmail: gcmText_(r['Approved e-mail']), approvedFor: gcmYmd_(r['Approved for']), kept: gcmText_(r['Files kept']), answers: gblJ_(r.Answers, {}) };
+    approvedAt: gcmText_(r['Approved at']), approvedBy: gcmText_(r['Approved by']), approvedEmail: gcmText_(r['Approved e-mail']), approvedFor: gcmYmd_(r['Approved for']), kept: gcmText_(r['Files kept']), answers: gblJ_(r.Answers, {}),
+    sentBy: gcmText_(r['Sent by']), lateReason: gcmText_(r['Late reason']), atYmd: gcmYmd_(r.When), atHour: r.When instanceof Date ? Number(Utilities.formatDate(r.When, tTz_(), 'H')) : 0 };
 }
 function gblLines_(g, line, month) {
   return gblRows_(GBL.LINES).filter(function (r) { return gcmCodeKey_(r.Group) === g.key && gcmText_(r.Line) === line && gcmText_(r.Month) === month; }).map(function (r) {
@@ -426,7 +427,7 @@ function gblView_(p) {
   var today = L.today, sf = gblSf_(g, gcmYes_(p.fresh));
   var bills = gblBillRows_(g), month = /^\d{4}-\d{2}$/.test(String(p.month || '')) ? p.month : gblDefaultMonth_(bills, sf, today);
   var lines = gblLinesOf_(g, sf, bills);
-  var out = { ok: true, role: who.role, me: who.name, today: today, month: month, monthLabel: gblMonthLabel_(month), canAct: gcmMine_(who, g), live: gblLive_(), ai: !!gcmAiKey_(), salesforce: sf.ok, sfError: sf.error,
+  var out = { ok: true, role: who.role, me: who.name, today: today, month: month, reasonNeeded: who.role !== 'branch', lateMin: GBL_LATE.MIN, monthLabel: gblMonthLabel_(month), canAct: gcmMine_(who, g), live: gblLive_(), ai: !!gcmAiKey_(), salesforce: sf.ok, sfError: sf.error,
     group: { key: g.key, name: g.name, assigned: g.assigned, bills: g.bills, to: g.to, contact: g.contact }, lines: [] };
   lines.forEach(function (ln) {
     var b = bills.filter(function (x) { return x.line === ln && x.month === month; })[0] || null;
@@ -438,6 +439,7 @@ function gblView_(p) {
     });
     var stored = bills.filter(function (x) { return x.line === ln; }).map(function (x) { return { month: x.month, label: gblMonthLabel_(x.month), due: x.due, members: x.members, status: x.status, sentAt: x.sentAt, reconciledAt: x.reconciledAt, by: x.by }; });
     var o = { line: ln, label: GBL.LABEL[ln], rt: GBL.RT[ln], bill: b ? gblBillOut_(b, who) : null, steps: gblSteps_(b), sf: { rec: sm.rec, pays: sm.pays, history: hist }, stored: stored };
+    if (b) { var cutD = gblCutoffOf_(b), nowD = gblNow_(); o.cut = { day: cutD, label: cutD ? gblDayLabel_(cutD) : '', past: gblPast_(cutD, nowD), missed: !!gblMissed_(b, nowD), reason: gblLateText_(b.lateReason) }; }
     if (ln === 'listbill') o.fromSalesforce = sf.ok ? gblListFromSf_(g, sf) : null;
     if (ln === 'health') o.claims = gblExperience_(g, sf, true);
     out.lines.push(o);
@@ -879,12 +881,24 @@ function gblSend_(b) {
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(b.group)];
   if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
   if (!gcmMine_(who, g)) return gcmNotYours_(g);
-  var month = String(b.month || '');
+  var month = String(b.month || ''), now = gblNow_();
   var lines = String(b.lines || 'health,life,listbill').split(',').map(gblLine_).filter(String);
   var bills = gblBillRows_(g).filter(function (x) { return x.month === month && lines.indexOf(x.line) >= 0; });
   if (!bills.length) return { ok: false, error: 'No bill is stored for ' + gblMonthLabel_(month) + '.' };
+  var names = function (list) { return list.map(function (x) { return GBL.LABEL[x.line]; }).join(' and ') + ' ' + (list.length === 1 ? 'is' : 'are'); };
   var notRec = bills.filter(function (x) { return !x.reconciledAt; });
-  if (notRec.length && !gcmYes_(b.force)) return { ok: false, error: notRec.map(function (x) { return GBL.LABEL[x.line]; }).join(' and ') + ' ' + (notRec.length === 1 ? 'is' : 'are') + ' not reconciled yet. Reconcile first, so nothing goes to the group that a person has not checked.' };
+  if (notRec.length && !(who.role === 'branch' && gcmYes_(b.force))) return { ok: false, error: names(notRec) + ' not reconciled yet. Reconcile first, so nothing goes to the group that a person has not checked.' };
+  /* Send now goes only on an approved bill (25 October 2026); a bill already sent goes again with no question */
+  var fresh = bills.filter(function (x) { return !x.sentAt; }), again = !fresh.length;
+  var notApp = fresh.filter(function (x) { return !x.approvedAt; });
+  if (notApp.length) return { ok: false, needApproval: true, error: names(notApp) + ' not approved yet. Approve it first: Send now goes only on an approved bill.' };
+  /* after the cut-off: why it was not done by then (a reason given at a late approval is offered again) */
+  var cut = again ? '' : gblLateOf_(fresh, now), lr = { reason: '' }, had = '';
+  if (cut) {
+    had = fresh.map(function (x) { return gblLateText_(x.lateReason); }).filter(String)[0] || '';
+    lr = gblLateReason_(b.reason || had, who.role !== 'branch');
+    if (lr.error) return { ok: false, needReason: true, cutoff: cut, cutoffLabel: gblDayLabel_(cut), had: had, error: 'This bill missed ' + gblCutWords_(cut) + '. ' + lr.error };
+  }
   var why = gcmCannotMail_(g);
   if (why) return { ok: false, error: 'Cannot send: ' + why + '.' };
   if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on this project, so nothing can go from support@.' };
@@ -893,20 +907,42 @@ function gblSend_(b) {
   if (!to.length) return { ok: false, error: 'No address to send the test to: your e-mail is not on the Agent Skill Bank.' };
   var cc = test ? (TRANSITION.CC || []).slice() : gcmCc_(g);
   var files = Array.isArray(b.attachments) ? b.attachments : [];
-  var blobs = [];
+  var blobs = [], keptUsed = false;
   files.slice(0, 6).forEach(function (f) {
     try { var bytes = Utilities.base64Decode(String(f.b64 || '')); if (bytes.length && bytes.length < 3000000) blobs.push(Utilities.newBlob(bytes, String(f.type || 'application/pdf'), String(f.name || 'bill.pdf').replace(/[^\w.\- ]/g, '_').slice(0, 80))); } catch (e) {}
   });
+  if (!blobs.length && fresh.length) {   // nothing read in this session: the PDFs kept in Drive at the approval
+    var kb = gblKeptBlobs_(fresh);
+    if (kb.missing.length) return { ok: false, error: 'The PDF kept at the approval of the ' + kb.missing.join(' and ').toLowerCase() + ' bill is gone from Drive. Upload the bill again here and press Send now.' };
+    blobs = kb.blobs; keptUsed = blobs.length > 0;
+  }
   var mail = gblBillMail_(g, month, bills, who, test, L), stmtBlob = gblStatementBlob_(g, month, bills, L);
   if (stmtBlob) blobs.push(stmtBlob);
   try { tMsSend_(to[0], (test ? '[TEST] ' : '') + mail.subject, mail.html, { cc: cc.concat(to.slice(1)), attachments: blobs, replyTo: TRANSITION.MS_FROM }); }
   catch (e) { return { ok: false, error: 'Not sent: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
-  var at = gcmWhen_(new Date());
-  gcmAppend_(GCM.SENDS, [{ When: new Date(), Group: g.name, Staff: gcmSigner_(who, g), To: to.join(', '), Cc: cc.join(', '), Subject: mail.subject, Items: bills.length, 'Task Ids': bills.map(function (x) { return x.line + ':' + x.month; }).join(' '),
-    Letter: mail.text.slice(0, 40000), Via: 'support@' + (blobs.length ? ', ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') : ''), Status: test ? 'bill test' : 'bill sent', Html: gcmKeepHtml_(mail.html) }]);
-  if (!test) bills.forEach(function (x) { gblBillPatch_(x, { 'Sent at': at, Status: 'sent' }); });
-  bills.forEach(function (x) { gblPostBilling_(g, x.line, month, (test ? 'TEST of the ' : 'The ') + gblMonthLabel_(month) + ' ' + GBL.LABEL[x.line].toLowerCase() + ' bill ' + (test ? 'was sent to ' + to.join(', ') : 'was sent to the group (' + to.join(', ') + ')') + ' from support@' + (blobs.length ? ' with the PDF attached' : '') + '.', who); });
-  return { ok: true, test: test, to: to, at: at, said: test ? 'Test sent to ' + to.join(', ') + '. Nothing went to the group: run gblGoLive from the editor when the branch is ready.' : 'Sent to ' + to.join(', ') + ' from support@ at ' + at + '.' };
+  var at = gcmWhen_(now), stamp = lr.reason ? lr.reason + GBL_LATE.BY + who.name + ', ' + at : '';
+  gcmAppend_(GCM.SENDS, [{ When: now, Group: g.name, Staff: gcmSigner_(who, g), To: to.join(', '), Cc: cc.join(', '), Subject: mail.subject, Items: bills.length, 'Task Ids': bills.map(function (x) { return x.line + ':' + x.month; }).join(' '),
+    Letter: mail.text.slice(0, 40000), Via: 'support@, Send now' + (again ? ', sent again' : '') + (cut ? ', late (cut-off ' + cut + ')' : '') + (blobs.length ? ', ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') : ''), Status: test ? 'bill test' : 'bill sent', Html: gcmKeepHtml_(mail.html) }]);
+  bills.forEach(function (x) {
+    var p = test ? {} : { 'Sent at': at, Status: 'sent', 'Sent by': who.name };
+    if (stamp && fresh.indexOf(x) >= 0) p['Late reason'] = stamp;
+    if (Object.keys(p).length) gblBillPatch_(x, p);
+    if (!test && fresh.indexOf(x) >= 0) (x.kept || '').split(',').map(function (s) { return s.trim(); }).filter(String).forEach(function (id) { var f = gblFileById_(id); if (f) { try { f.moveTo(gblSubfolder_(GBL_DAY.SENT)); } catch (e) {} } });
+  });
+  var lateSay = cut ? ' It went after ' + gblCutWords_(cut) + (lr.reason ? '. Why: ' + lr.reason : ', no reason given') + '.' : '';
+  bills.forEach(function (x) { gblPostBilling_(g, x.line, month, (test ? 'TEST of the ' : 'The ') + gblMonthLabel_(month) + ' ' + GBL.LABEL[x.line].toLowerCase() + ' bill ' + (test ? 'was sent to ' + to.join(', ') : 'was sent to the group (' + to.join(', ') + ')') + ' from support@ by Send now' + (blobs.length ? ' with the PDF attached' : '') + '.' + (fresh.indexOf(x) >= 0 ? lateSay : ''), who); });
+  var task = '';
+  if (cut) {
+    gblAppend_(GBL.CHANGES, fresh.map(function (x) {
+      return { When: now, Group: g.name, Line: x.line, Kind: 'late send', Member: '', Detail: GBL.LABEL[x.line] + ' ' + gblMonthLabel_(month) + (test ? ' sent as a TEST copy' : ' sent to the group') + ' by Send now at ' + at + ', after ' + gblCutWords_(cut) + '.',
+        Effective: month + '-01', Amount: x.due || 0, Source: 'staff', By: who.name, Status: test ? 'test' : 'done', 'SF Task': '', 'SF Id': '', Note: lr.reason || '' };
+    }));
+    if (!test) task = gblLateTask_(g, cut, who.name + ': the ' + gblMonthLabel_(month) + ' ' + fresh.map(function (x) { return GBL.LABEL[x.line].toLowerCase(); }).join(' and ') + ' bill went to the group by Send now at ' + at + '. Why it missed ' + gblCutWords_(cut) + ': ' + (lr.reason || 'no reason given') + '.');
+    if (who.role !== 'branch') { try { gblLateMail_(g, fresh, who, { cut: cut, reason: lr.reason, at: at, to: to.join(', '), test: test, task: task }); } catch (e) {} }
+  }
+  var lateTail = cut ? ' The reason is on the bill and its Chatter' + (task ? ', it answers and closes the 10:30 task' : '') + (who.role !== 'branch' ? ', and the branch manager has it.' : '.') : '';
+  return { ok: true, test: test, to: to, at: at, kept: keptUsed, late: cut ? { cutoff: cut, reason: lr.reason, task: task } : null,
+    said: (test ? 'Test sent to ' + to.join(', ') + '. Nothing went to the group: run gblGoLive from the editor when the branch is ready.' : 'Sent to ' + to.join(', ') + ' from support@ at ' + at + '.') + (keptUsed ? ' The PDF kept at the approval went with it.' : '') + lateTail };
 }
 function gblLive_() { try { return !!PropertiesService.getScriptProperties().getProperty(GBL.LIVE_PROP); } catch (e) { return false; } }
 /** The editor's Run button (the branch manager): from now on a bill sent from the review page goes to the group. */
@@ -2116,6 +2152,7 @@ var GBL_DAY = {
   TRAIN: [
     ['Billings Management', 'The bills go out on the 26th at 10:00, or the next working day when the 26th is a weekend or a public holiday. Head Office’s bills come in on the 25th: that day upload the month’s bill on each line, verify it against Salesforce, fix or resolve what is marked fix, mark it reconciled, and press Approve with the PDF attached.'],
     ['Billings Management', 'At 13:00 on the 25th the branch manager has the report of who has worked each group’s bills and what is left. At 10:00 on the billing day every approved bill goes by itself from support@, with its PDF, copied to sales support. A bill approved after that goes at 10:00 the next working day, or when you press Send now.'],
+    ['Billings Management', 'Send now works only on an approved bill. After the 10:00 cut-off, Approve and Send now each ask why the bill was not done by then: the reason goes on the bill, its Chatter and to the branch manager.'],
     ['Billings Management', 'Reconciled is a person’s tick: nothing goes to a group that a person has not checked against Salesforce.']
   ]
 };
@@ -2224,10 +2261,105 @@ function gblStaffEmail_(name) {
   try { return tTeam_().people.filter(function (t) { return gcmSameName_(t.name, name); }).map(function (t) { return t.email; }).filter(String)[0] || ''; } catch (e) { return ''; }
 }
 
+/* ── After the cut-off: Send now needs the approval, and the reason (25 October 2026) ───────────────────────────────
+ *  "Staff has to keep Send now but has to have the approval and reasons why it was not done at the specified cut off
+ *  time." Send now goes only on an approved bill; a bill already sent goes again with no question. Each bill's cut-off is
+ *  10:00 on the billing day it was meant for (gblCutoffOf_). After it, Approve and Send now both ask why it was not done
+ *  by then: staff and the deputy must answer, the branch manager may. The reason is kept on the bill (Late reason), on
+ *  Group Changes ('late send'), on the billing task's Chatter and in the run's summary; when the bill reaches the group it
+ *  answers and closes that cycle's GROUP BILL NOT SENT task, and the branch manager has an e-mail at once. A late send
+ *  is marked with its cut-off on Group Sends, so it never counts as the next cycle's bill. */
+var GBL_LATE = { MIN: 15, MAX: 600, BY: ' · given by ' };
+var GBL_NOW_ = null;   // the tests' clock; never set in use
+function gblNow_() { return GBL_NOW_ ? new Date(GBL_NOW_.getTime()) : new Date(); }
+function gblTestClock_(d) { GBL_NOW_ = d || null; }
+/** The billing day a bill was meant for: the one before its month (Head Office bills a month ahead, so November's bill
+ *  goes on 26 October); when it came in more than LATE_DAYS after that day, the line is billed in its own month, so that
+ *  month's billing day. */
+function gblCutoffOf_(bill) {
+  if (!bill || !/^\d{4}-\d{2}$/.test(String(bill.month || ''))) return '';
+  var before = gblBillDayOf_(gblAddMonths_(bill.month, -1)), up = bill.atYmd || '';
+  if (!up || up < before || (up === before && (bill.atHour || 0) < GBL_DAY.HOUR)) return before;
+  return gcmDays_(before, up) <= GBL_DAY.LATE_DAYS ? before : gblBillDayOf_(bill.month);
+}
+/** Whether 10:00 on a day has passed. */
+function gblPast_(day, now) {
+  if (!day) return false;
+  var today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
+  return today > day || (today === day && h >= GBL_DAY.HOUR);
+}
+/** The earliest cut-off a bill missed, else ''. A bill missed its cut-off when 10:00 that day has passed and it was not
+ *  approved for that run (approved later, or not at all), or it was held at the run. One approved in time that the run
+ *  has not reached yet did not miss it. */
+function gblMissed_(bill, now) {
+  var cut = gblCutoffOf_(bill);
+  if (!cut || !gblPast_(cut, now)) return '';
+  return !bill.approvedFor || bill.approvedFor > cut || /^held/i.test(bill.status || '') ? cut : '';
+}
+function gblLateOf_(bills, now) { return bills.map(function (b) { return gblMissed_(b, now); }).filter(String).sort()[0] || ''; }
+function gblCutWords_(cut) { return 'the ' + GBL_DAY.HOUR + ':00 cut-off on ' + gblDayLabel_(cut).replace(/, \d+:\d+$/, ''); }
+/** The reason as typed: no [blank] left in, long enough to say something. need: refused when empty. */
+function gblLateReason_(raw, need) {
+  var r = String(raw || '').replace(/\s+/g, ' ').trim().slice(0, GBL_LATE.MAX);
+  if (!r) return need ? { error: 'Say why it was not done by then.' } : { reason: '' };
+  if (/\[[^\]]*\]/.test(r)) return { error: 'Fill in the [blank] in the reason first.' };
+  if (r.length < GBL_LATE.MIN) return { error: 'Say a little more: what held it up, and what was done about it.' };
+  return { reason: r };
+}
+/** The reason alone, from the Late reason cell ("<reason> · given by <name>, <when>"). */
+function gblLateText_(cell) { var c = String(cell || ''), i = c.lastIndexOf(GBL_LATE.BY); return (i >= 0 ? c.slice(0, i) : c).trim(); }
+/** A late send marked on Group Sends: "late (cut-off yyyy-MM-dd)" in Via. True when that cut-off is before `end`. */
+function gblLateBefore_(via, end) { var m = /cut-off (\d{4}-\d{2}-\d{2})/.exec(String(via || '')); return !!(m && m[1] < end); }
+/** The PDFs kept in Drive at the approval, for Send now when none was read in this session. */
+function gblKeptBlobs_(bills) {
+  var blobs = [], missing = [];
+  bills.forEach(function (b) {
+    (b.kept || '').split(',').map(function (x) { return x.trim(); }).filter(String).forEach(function (id) {
+      var f = gblFileById_(id);
+      if (!f) { missing.push(GBL.LABEL[b.line]); return; }
+      try { var bl = f.getBlob(); bl.setName(String(f.getName()).split(' · ').pop()); blobs.push(bl); } catch (e) { missing.push(GBL.LABEL[b.line]); }
+    });
+  });
+  return { blobs: blobs, missing: missing };
+}
+/** That cycle's GROUP BILL NOT SENT task for the group (opened at 10:30 on the cut-off day): the reason posted on its
+ *  Chatter and the task closed, now the bill has gone to the group. Returns the task id, or ''. */
+function gblLateTask_(g, cut, text) {
+  if (!tSfOn_()) return '';
+  var kept = gcmParse_(PropertiesService.getScriptProperties().getProperty(GBL_DAY.TASKS_PROP), {});
+  var id = kept && kept.cycle === cut && kept.tasks ? kept.tasks[g.key] : '';
+  if (!id) return '';
+  try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: id, Body: text }); } catch (e) {}
+  try { tSfSend_('patch', '/sobjects/Task/' + id, { Status: 'Completed' }); return id; } catch (e2) { return ''; }
+}
+/** The late sends since a day, from Group Changes, newest first: for the branch manager's summary. */
+function gblLateSends_(since) {
+  return gblRows_(GBL.CHANGES).filter(function (r) { return gcmText_(r.Kind) === 'late send' && gcmYmd_(r.When) >= since; }).map(function (r) {
+    return { group: gcmText_(r.Group), line: GBL.LABEL[gcmText_(r.Line)] || gcmText_(r.Line), by: gcmText_(r.By), at: gcmWhen_(r.When), detail: gcmText_(r.Detail), reason: gcmText_(r.Note), test: gcmText_(r.Status) === 'test' };
+  }).reverse();
+}
+/** The branch manager's e-mail when a bill goes by Send now after its cut-off: who, when, to whom, and why. */
+function gblLateMail_(g, bills, who, o) {
+  var me = gcmDayManager_(), E = tEsc_;
+  if (!me) return false;
+  var lines = bills.map(function (x) { return GBL.LABEL[x.line]; }).join(' and '), month = gblMonthLabel_(bills[0].month);
+  var subject = (o.test ? '[TEST] ' : '') + 'Late bill: ' + g.name + ' · ' + month + ' ' + lines.toLowerCase() + ' · sent by ' + who.name;
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:640px">' +
+    (o.test ? '<p style="background:#FFF4D6;border:2px solid #E0A800;padding:10px 14px"><b>TEST.</b> The bills are in test mode: this copy of the bill went to ' + E(o.to) + ', not to the group.</p>' : '') +
+    '<p><b>' + E(who.name) + '</b> sent the <b>' + E(month) + ' ' + E(lines.toLowerCase()) + '</b> bill for <b>' + E(g.name) + '</b> by Send now at ' + E(o.at) + ', after ' + E(gblCutWords_(o.cut)) + '.</p>' +
+    '<p style="margin:0 0 4px;font-weight:700">Why it was not done by then</p>' +
+    '<div style="background:#FFF8E6;border-left:4px solid #E0A800;padding:10px 14px;margin:0 0 14px">' + (o.reason ? E(o.reason) : '<i>No reason given.</i>') + '</div>' +
+    '<p>' + (o.test ? 'A TEST copy went to ' : 'It went to ') + E(o.to) + '. The reason is on the bill, on Group Changes and on the billing task’s Chatter' +
+      (o.task ? '; the ' + E(GBL_DAY.TASK_TAG) + ' task for this cycle is answered with it and closed (' + E(o.task) + ')' : '') + '.</p>' +
+    '<p><a href="' + GCM.SITE + 'billing.html?g=' + encodeURIComponent(g.key) + '&m=' + encodeURIComponent(bills[0].month) + '" style="color:#1D5BC4;font-weight:700">Open the group’s billing</a></p>' +
+    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  return gblInternalMail_(me, subject, html, who.email || me);
+}
+
 /** Approve (gblAct_ act 'approve'): the reconciled bill, with its PDFs, waits for its run (gblNextRunDay_: the billing day, or
  *  the next working day for a late bill); 'unapprove' takes it back. */
 function gblApprove_(g, who, bill, b, L) {
-  var line = bill.line, month = bill.month, now = new Date(), E = tEsc_;
+  var line = bill.line, month = bill.month, now = gblNow_(), E = tEsc_;
   var log = function (kind, detail) {
     gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: line, Kind: kind, Member: '', Detail: detail, Effective: month + '-01', Amount: bill.due || 0, Source: 'staff', By: who.name, Status: 'done', 'SF Task': '', 'SF Id': '', Note: '' }]);
   };
@@ -2249,16 +2381,25 @@ function gblApprove_(g, who, bill, b, L) {
   files.slice(0, 6).forEach(function (f) {
     try { var bytes = Utilities.base64Decode(String(f.b64 || '')); if (bytes.length && bytes.length < 3000000) blobs.push(Utilities.newBlob(bytes, String(f.type || 'application/pdf'), String(f.name || 'bill.pdf').replace(/[^\w.\- ]/g, '_').slice(0, 80))); } catch (e) {}
   });
-  if (blobs.length && !gblFolderId_()) return { ok: false, error: 'The PDF has nowhere to wait until ' + gblDayLabel_(gblNextRunDay_(now)) + ': the branch manager sets the ' + GBL_PDF.FOLDER_PROP + ' Script property to the Drive folder (GROUP-CLIENTS-SETUP.md). Until then, press Send now on the day.' };
+  if (blobs.length && !gblFolderId_()) return { ok: false, error: 'The PDF has nowhere to wait until ' + gblDayLabel_(gblNextRunDay_(now)) + ': the branch manager sets the ' + GBL_PDF.FOLDER_PROP + ' Script property to the Drive folder (GROUP-CLIENTS-SETUP.md). Until then no bill can be approved with its PDF.' };
+  /* after the cut-off: why it was not done by then (staff and the deputy must say; the branch manager may) */
+  var cut = gblPast_(gblCutoffOf_(bill), now) ? gblCutoffOf_(bill) : '', lr = { reason: '' };
+  if (cut) {
+    lr = gblLateReason_(b.reason, who.role !== 'branch');
+    if (lr.error) return { ok: false, needReason: true, cutoff: cut, cutoffLabel: gblDayLabel_(cut), error: 'This bill missed ' + gblCutWords_(cut) + '. ' + lr.error };
+  }
+  var lateSay = cut ? ' After ' + gblCutWords_(cut) + (lr.reason ? '. Why: ' + lr.reason : ', no reason given') + '.' : '';
   var ids = [];
   try { ids = gblKeepQueued_(g, bill, blobs); } catch (e) { return { ok: false, error: 'Drive would not keep the PDF: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
   var forDay = gblNextRunDay_(now), at = gcmWhen_(now), email = who.email || gblStaffEmail_(who.name);
-  gblBillPatch_(bill, { Status: 'approved', 'Approved at': at, 'Approved by': who.name, 'Approved e-mail': email, 'Approved for': forDay, 'Files kept': ids.join(',') });
-  log('approved', GBL.LABEL[line] + ' ' + gblMonthLabel_(month) + ' approved for the ' + gblDayLabel_(forDay) + ' run' + (blobs.length ? ' with ' + blobs.map(function (x) { return x.getName(); }).join(', ') : ' with no file attached') + '.');
-  gblPostBilling_(g, line, month, 'The ' + gblMonthLabel_(month) + ' ' + GBL.LABEL[line].toLowerCase() + ' bill (' + gcmMoney_(bill.due) + ') is approved by ' + who.name + ' to go to the group on ' + gblDayLabel_(forDay) + (blobs.length ? ' with the PDF' : '') + '.', who);
+  var patch = { Status: 'approved', 'Approved at': at, 'Approved by': who.name, 'Approved e-mail': email, 'Approved for': forDay, 'Files kept': ids.join(',') };
+  if (lr.reason) patch['Late reason'] = lr.reason + GBL_LATE.BY + who.name + ', ' + at;
+  gblBillPatch_(bill, patch);
+  log('approved', GBL.LABEL[line] + ' ' + gblMonthLabel_(month) + ' approved for the ' + gblDayLabel_(forDay) + ' run' + (blobs.length ? ' with ' + blobs.map(function (x) { return x.getName(); }).join(', ') : ' with no file attached') + '.' + lateSay);
+  gblPostBilling_(g, line, month, 'The ' + gblMonthLabel_(month) + ' ' + GBL.LABEL[line].toLowerCase() + ' bill (' + gcmMoney_(bill.due) + ') is approved by ' + who.name + ' to go to the group on ' + gblDayLabel_(forDay) + (blobs.length ? ' with the PDF' : '') + '.' + lateSay, who);
   var live = gblLive_();
-  return { ok: true, approvedFor: forDay, label: gblDayLabel_(forDay), files: blobs.length,
-    said: 'Approved. It goes by itself on ' + gblDayLabel_(forDay) + (live ? ' to ' + g.to.join(', ') + ', from support@, copied to sales support' : ' as a TEST to you and the branch (the bills are in test mode until the branch manager runs gblGoLive)') + (blobs.length ? ', with ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') + ' attached.' : ', with no file attached.'),
+  return { ok: true, approvedFor: forDay, label: gblDayLabel_(forDay), files: blobs.length, late: cut ? { cutoff: cut, reason: lr.reason } : null,
+    said: 'Approved' + (cut ? ' (after ' + gblCutWords_(cut) + (lr.reason ? '; your reason is on the bill' : '') + ')' : '') + '. It goes by itself on ' + gblDayLabel_(forDay) + (live ? ' to ' + g.to.join(', ') + ', from support@, copied to sales support' : ' as a TEST to you and the branch (the bills are in test mode until the branch manager runs gblGoLive)') + (blobs.length ? ', with ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') + ' attached.' : ', with no file attached.'),
     steps: gblSteps_(gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0]) };
 }
 
@@ -2308,16 +2449,25 @@ function gblDayRun_(o) {
       try { tMsSend_(to[0], subject, html, { cc: cc.concat(to.slice(1)), attachments: blobs, replyTo: TRANSITION.MS_FROM }); }
       catch (e) { hold('Microsoft 365 refused it (' + String(e && e.message ? e.message : e).slice(0, 160) + ')'); return; }
       var at = gcmWhen_(new Date());
+      /* a bill approved after its cut-off goes in the next run: marked late, with the reason given at the approval */
+      var cut = gblLateOf_(bills, now), why2 = bills.map(function (b) { return gblLateText_(b.lateReason); }).filter(String)[0] || '';
       if (!o.rehearse) {
         gcmAppend_(GCM.SENDS, [{ When: new Date(), Group: g.name, Staff: gcmSigner_(who, g), To: to.join(', '), Cc: cc.join(', '), Subject: m.subject, Items: bills.length, 'Task Ids': bills.map(function (x) { return x.line + ':' + x.month; }).join(' '),
-          Letter: m.text.slice(0, 40000), Via: 'support@, billing run' + (blobs.length ? ', ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') : ''), Status: test ? 'bill test' : 'bill sent', Html: gcmKeepHtml_(m.html) }]);
+          Letter: m.text.slice(0, 40000), Via: 'support@, billing run' + (cut ? ', late (cut-off ' + cut + ')' : '') + (blobs.length ? ', ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') : ''), Status: test ? 'bill test' : 'bill sent', Html: gcmKeepHtml_(m.html) }]);
+        if (cut) {
+          gblAppend_(GBL.CHANGES, bills.map(function (b) {
+            return { When: new Date(), Group: g.name, Line: b.line, Kind: 'late send', Member: '', Detail: GBL.LABEL[b.line] + ' ' + gblMonthLabel_(month) + (test ? ' went as a TEST copy' : ' went to the group') + ' in the ' + gblDayLabel_(b.approvedFor) + ' run, approved by ' + (b.approvedBy || 'the team') + ' after ' + gblCutWords_(cut) + '.',
+              Effective: month + '-01', Amount: b.due || 0, Source: 'staff', By: b.approvedBy || '', Status: test ? 'test' : 'done', 'SF Task': '', 'SF Id': '', Note: why2 };
+          }));
+          if (!test) gblLateTask_(g, cut, (bills[0].approvedBy || 'The team') + ': the ' + gblMonthLabel_(month) + ' bill went to the group in the ' + gblDayLabel_(bills[0].approvedFor) + ' run. Why it missed ' + gblCutWords_(cut) + ': ' + (why2 || 'no reason given') + '.');
+        }
         bills.forEach(function (b) {
           gblBillPatch_(b, test ? { Status: 'tested' } : { Status: 'sent', 'Sent at': at });
           gblPostBilling_(g, b.line, month, (test ? 'TEST of the ' : 'The ') + gblMonthLabel_(month) + ' ' + GBL.LABEL[b.line].toLowerCase() + ' bill went ' + (test ? 'to ' + to.join(', ') : 'to the group (' + to.join(', ') + ')') + ' from support@ in the ' + gblDayLabel_(b.approvedFor) + ' run' + (blobs.length ? ', with the PDF attached' : '') + '.', who);
           if (!test) (b.kept || '').split(',').map(function (s) { return s.trim(); }).filter(String).forEach(function (id) { var f = gblFileById_(id); if (f) { try { f.moveTo(gblSubfolder_(GBL_DAY.SENT)); } catch (e) {} } });
         });
       }
-      sent.push({ group: g.name, month: month, lines: bills.map(function (b) { return GBL.LABEL[b.line]; }), by: who.name, email: who.email, to: to.join(', '), files: blobs.length, test: test });
+      sent.push({ group: g.name, month: month, lines: bills.map(function (b) { return GBL.LABEL[b.line]; }), by: who.name, email: who.email, to: to.join(', '), files: blobs.length, test: test, late: cut ? { cutoff: cut, reason: why2 } : null });
     });
   } finally { try { lock.releaseLock(); } catch (e) {} }
   try { gblDayTell_(sent, held, { rehearse: !!o.rehearse, approvers: approvers }); } catch (e) {}
@@ -2337,7 +2487,8 @@ function gblDayTell_(sent, held, o) {
   var subject = (o.rehearse ? '[TEST] ' : '') + 'Group bills, the ' + GBL_DAY.HOUR + ':00 run: ' + sent.length + ' sent' + (held.length ? ', ' + held.length + ' waiting' : '');
   var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
     (o.rehearse ? '<p><b>Rehearsal.</b> Each approved bill was sent to its approver and the branch, marked TEST. Nothing reached a group and nothing is marked as sent.</p>' : '') +
-    (sent.length ? '<p style="margin:0 0 6px;font-weight:700">Went</p><ul>' + sent.map(function (x) { return li(x, (x.test ? 'TEST copy to ' : 'to ') + E(x.to) + (x.files ? ', ' + x.files + ' file' + (x.files === 1 ? '' : 's') : ', no file')); }).join('') + '</ul>' : '') +
+    (sent.length ? '<p style="margin:0 0 6px;font-weight:700">Went</p><ul>' + sent.map(function (x) { return li(x, (x.test ? 'TEST copy to ' : 'to ') + E(x.to) + (x.files ? ', ' + x.files + ' file' + (x.files === 1 ? '' : 's') : ', no file') +
+      (x.late ? ' · <b>late</b>, after ' + E(gblCutWords_(x.late.cutoff)) + ': ' + (x.late.reason ? E(x.late.reason) : '<i>no reason given</i>') : '')); }).join('') + '</ul>' : '') +
     (held.length ? '<p style="margin:12px 0 6px;font-weight:700">Waited</p><ul>' + held.map(function (x) { return li(x, 'held: ' + E(x.why)); }).join('') + '</ul><p>A held bill stays approved with the reason on its row: put it right and press Send now, or approve it again.</p>' : '') +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   if (tMsCreds_()) tMsSend_(to[0], subject, html, { cc: cc, replyTo: me });
@@ -2387,7 +2538,7 @@ function gblChaseList_(L, now) {
     var key = gcmCodeKey_(g.ownerEmail || g.assigned || 'nobody');
     if (!by[key]) { by[key] = { name: g.assigned || '', email: g.ownerEmail || '', active: !!(g.assigned && g.ownerActive), missed: [], sent: [], notReady: [] }; order.push(key); }
     var o = by[key];
-    var went = (g.billSends || []).filter(function (x) { return /^bill (sent|test)$/i.test(x.status) && x.when > cycle.start && x.when <= cycle.end; });
+    var went = (g.billSends || []).filter(function (x) { return /^bill (sent|test)$/i.test(x.status) && x.when > cycle.start && x.when <= cycle.end && !gblLateBefore_(x.via, cycle.end); });
     if (went.length) { o.sent.push({ g: g, at: went[went.length - 1].at, n: went.length, lines: lines, test: went.every(function (x) { return /test/i.test(x.status); }) }); return; }
     var no = gcmCannotMail_(g);
     if (no) { o.notReady.push({ g: g, why: no, lines: lines }); return; }
@@ -2399,7 +2550,7 @@ function gblChaseList_(L, now) {
       if (/^held/i.test(b.status)) return { line: ln, state: 'held', why: lab + ': approved, held at the run (' + b.status.replace(/^held:\s*/i, '') + ')', todo: 'put it right and press Send now' };
       if (b.status === 'approved' && b.approvedFor > cycle.end) return { line: ln, state: 'later', why: lab + ': approved by ' + b.approvedBy + ' after the run, so it waits for ' + gblDayLabel_(b.approvedFor), todo: 'if it should go now, press Send now' };
       if (b.status === 'approved') return { line: ln, state: 'queued', why: '', todo: '' };
-      if (b.reconciledAt) return { line: ln, state: 'reconciled', why: lab + ': reconciled, not approved', todo: 'press Approve, or Send now' };
+      if (b.reconciledAt) return { line: ln, state: 'reconciled', why: lab + ': reconciled, not approved', todo: 'press Approve (it asks why it missed the cut-off), then Send now if it cannot wait for the next run' };
       var s = gblSteps_(b);
       if (s.fixes) return { line: ln, state: 'fix', why: lab + ': uploaded, ' + s.fixes + ' to fix', todo: 'fix or resolve each finding, reconcile, approve' };
       return { line: ln, state: 'check', why: lab + ': uploaded, not reconciled', todo: 'confirm the checks, mark it reconciled, approve' };
@@ -2421,7 +2572,7 @@ function gblChaseMail_(o, list, tasks) {
   var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
     '<p>Good morning, ' + E(first) + '.</p>' +
     '<p>The group bills went at ' + GBL_DAY.HOUR + ':00 today, ' + E(day.replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> Approve it today and it goes by itself at ' + GBL_DAY.HOUR + ':00 on ' +
-      E(gblDayLabel_(gblNextWorkingDay_(list.cycle.end)).replace(/, \d+:\d+$/, '')) + ', or press Send now to send it at once.</p>' +
+      E(gblDayLabel_(gblNextWorkingDay_(list.cycle.end)).replace(/, \d+:\d+$/, '')) + ', or press Send now to send it at once. Each asks why it was not done by 10:00, and your reason comes to Mr Rampersad.</p>' +
     table(['Group', 'Where it stands', 'Do this today'], o.missed.map(function (m) {
       var t = tasks && tasks[m.g.key];
       return ['<b>' + E(m.g.name) + '</b>' + (t && t.id ? '<br><span style="color:#4B586C;font-size:12.5px">Salesforce task ' + E(t.id) + '</span>' : ''), m.states.filter(function (s) { return s.state !== 'queued'; }).map(function (s) { return E(s.why); }).join('<br>'), E(m.todo)];
@@ -2513,11 +2664,15 @@ function gblDayHtml_(d, o) {
       '<p><b>Staff asked why:</b> ' + E(d.chase ? d.chase.said : 'not run') + '</p>';
   } else {
     h += '<p>The next billing day is <b>' + E(info.label) + '</b>' + (info.daysTo ? ' (in ' + info.daysTo + ' day' + (info.daysTo === 1 ? '' : 's') + ')' : '') + '. ' +
-      '<b>' + (n - missed.length) + ' of ' + n + '</b> billed groups have their ' + E(list.month) + ' bill sent or approved' + (info.drive ? '' : '. <b>The Drive folder is not set</b> (' + GBL_PDF.FOLDER_PROP + '), so a bill cannot be approved with its PDF: staff press Send now on the day') + '.</p>' +
+      '<b>' + (n - missed.length) + ' of ' + n + '</b> billed groups have their ' + E(list.month) + ' bill sent or approved' + (info.drive ? '' : '. <b>The Drive folder is not set</b> (' + GBL_PDF.FOLDER_PROP + '), so a bill cannot be approved with its PDF, and Send now needs an approved bill') + '.</p>' +
       (missed.length ? tbl(['Group', 'Looked after by', 'Where it stands'], missed.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); })) : '');
   }
   if (sentG.length && (d.cycle.isDay || (o && o.test))) h += '<p style="margin:12px 0 6px;font-weight:700">Had their bill</p>' + tbl(['Group', 'Looked after by', 'Sent', 'Lines'], sentG.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name), E(a.x.at) + (a.x.test ? ' (test copy)' : ''), E(a.x.lines.map(function (l) { return GBL.LABEL[l]; }).join(', '))]); }));
   if (notReady.length) h += '<p style="margin:12px 0 6px;font-weight:700">Cannot have a bill yet</p>' + tbl(['Group', 'Looked after by', 'What is missing'], notReady.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); }));
+  /* the bills that went after their cut-off since the last billing day, each with the reason given */
+  var late = []; try { late = gblLateSends_(d.cycle.isDay ? d.cycle.end : d.cycle.start); } catch (e) {}
+  if (late.length) h += '<p style="margin:12px 0 6px;font-weight:700">Sent after the ' + GBL_DAY.HOUR + ':00 cut-off</p>' + tbl(['Group', 'Line', 'By', 'When', 'Why it was late'], late.map(function (x) {
+    return row(['<b>' + E(x.group) + '</b>', E(x.line), E(x.by || '–'), E(x.at) + (x.test ? ' (test copy)' : ''), x.reason ? E(x.reason) : '<i style="color:#B42318">no reason given</i>']); }));
   return h;
 }
 /** Editor Run: the billing day rehearsed to the branch manager (the approved bills as TEST copies to their approvers, the staff
@@ -2544,7 +2699,8 @@ function gblReportRows_(L, now) {
       if (b.reconciledAt) who.push('reconciled by ' + b.reconciledBy);
       if (b.approvedBy) who.push('approved by ' + b.approvedBy);
       var o = { label: lab, month: gblMonthLabel_(b.month), who: who.join('; '), worked: true };
-      if (b.sentAt) return Object.assign(o, { stage: 'Sent ' + b.sentAt, left: '', ready: true });
+      if (b.lateReason) o.late = gblLateText_(b.lateReason);
+      if (b.sentAt) return Object.assign(o, { stage: 'Sent ' + b.sentAt + (b.sentBy ? ' by ' + b.sentBy : ''), left: '', ready: true });
       if (/^held/i.test(b.status)) return Object.assign(o, { stage: 'Approved, held at a run: ' + b.status.replace(/^held:\s*/i, ''), left: 'Put it right and press Send now', ready: false });
       if (b.status === 'approved') return Object.assign(o, { stage: 'Approved for ' + gblDayLabel_(b.approvedFor), left: b.approvedFor <= cycle.end ? '' : 'Approved for a later run: press Send now if it should go', ready: b.approvedFor <= cycle.end });
       if (b.reconciledAt) return Object.assign(o, { stage: 'Reconciled, not approved', left: 'Press Approve', ready: false });
@@ -2592,11 +2748,12 @@ function gblBillReport_(o) {
             return '<div style="border-left:4px solid ' + c + ';background:#F7F9FC;padding:8px 12px;margin:0 0 6px;font:14px/1.45 Arial,sans-serif;color:#142033">' +
               '<b>' + E(x.label) + '</b>' + (x.month ? ' <span style="color:#4B586C;font-size:12.5px">' + E(x.month) + '</span>' : '') + '<br>' + E(x.stage) +
               '<br><span style="color:#4B586C">Who worked it:</span> ' + (x.who ? E(x.who) : '<span style="color:#B42318;font-weight:700">nobody yet</span>') +
-              (x.left ? '<br><span style="color:#4B586C">Left before ' + GBL_DAY.HOUR + ':00:</span> <b>' + E(x.left) + '</b>' : '') + '</div>';
+              (x.left ? '<br><span style="color:#4B586C">Left before ' + GBL_DAY.HOUR + ':00:</span> <b>' + E(x.left) + '</b>' : '') +
+              (x.late ? '<br><span style="color:#4B586C">Why it was late:</span> ' + E(x.late) : '') + '</div>';
           }).join('');
         }).join('');
     }).join('') +
-    '<p>A line approved after ' + E(when) + ' is a late bill and goes at ' + GBL_DAY.HOUR + ':00 the next working day, or when someone presses Send now. At 10:30 on ' + E(dayWords) + ' each staff member whose group had no bill is asked why, and a task opens' + (live ? '' : ' once the bills are live') + '.</p>' +
+    '<p>A line approved after ' + E(when) + ' is a late bill and goes at ' + GBL_DAY.HOUR + ':00 the next working day, or when someone presses Send now; either way the approval or the send asks why it missed ' + GBL_DAY.HOUR + ':00. At 10:30 on ' + E(dayWords) + ' each staff member whose group had no bill is asked why, and a task opens' + (live ? '' : ' once the bills are live') + '.</p>' +
     '<p><a href="' + GCM.SITE + 'billing.html" style="color:#1D5BC4;font-weight:700">Open Billings Management</a></p>' +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   var to = me;

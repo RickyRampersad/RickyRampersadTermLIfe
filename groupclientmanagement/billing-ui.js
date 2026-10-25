@@ -90,8 +90,7 @@ function blLineCard(o) {
       (can && !BILL_READ[o.line] ? ' · <button class="lnk" type="button" data-reup="' + o.line + '">upload again</button>' : '') + '</p>';
     h += blFindings(o);
     if (can) h += '<div class="blacts">' + (!b.reconciledAt ? '<button class="btn' + (s.fixes ? ' ghost' : '') + '" type="button" data-rec="' + o.line + '"' + (s.fixes && d.role !== 'branch' ? ' disabled title="Fix or resolve the findings marked fix first"' : '') + '>Mark reconciled</button>' : '') +
-      blApproveActs(o, b, s, d) +
-      (b.reconciledAt ? '<button class="btn' + (s.status === 'approved' ? ' ghost' : '') + '" type="button" data-send="' + o.line + '">' + (b.sentAt ? 'Send to the group again' : 'Send now') + (d.live ? '' : ' (test)') + '</button>' : '') +
+      blApproveActs(o, b, s, d) + blSendBtn(o, b, s, d) +
       '<button class="btn ghost" type="button" data-pay="' + o.line + '">Record a payment</button></div>';
   }
   h += blLineTasks(o);
@@ -572,25 +571,30 @@ function blDayStrip(day, live) {
   const moved = day.moved ? ' The ' + (day.dayOfMonth || 26) + 'th is a weekend or a public holiday this month, so they go the next working day.' : '';
   const late = day.late && day.run ? ' <b>The billing day has passed:</b> a bill approved now is a late bill and goes on ' + esc(day.runLabel) + '.' : '';
   return '<div class="note info blday"><div><b>The bills go out by themselves on ' + when + '.</b>' + moved + ' Before then, on each line: upload the bill, verify it against Salesforce, fix what is marked fix, mark it reconciled and press <b>Approve</b> with the PDF attached. ' +
-    'At ' + (day.reportHour || 13) + ':00 on ' + esc(day.reportLabel ? day.reportLabel.replace(/, \d+:\d+$/, '') : 'the ' + ((day.dayOfMonth || 26) - 1) + 'th') + ' the branch manager has the report of who has worked each group. A line approved after the ' + day.hour + ':00 run goes at ' + day.hour + ':00 the next working day, or when you press Send now; at 10:30 on the billing day the branch manager is told which groups had no bill, and asks why.' + late +
+    'At ' + (day.reportHour || 13) + ':00 on ' + esc(day.reportLabel ? day.reportLabel.replace(/, \d+:\d+$/, '') : 'the ' + ((day.dayOfMonth || 26) - 1) + 'th') + ' the branch manager has the report of who has worked each group. A line approved after the ' + day.hour + ':00 run goes at ' + day.hour + ':00 the next working day, or when you press Send now. Send now works only on an approved bill, and after the cut-off Approve and Send now each ask why it was not done by ' + day.hour + ':00; at 10:30 on the billing day the branch manager is told which groups had no bill, and asks why.' + late +
     (live ? '' : ' <span class="muted">The bills are in test mode: the run sends each approved bill to its approver and the branch, marked TEST, until the branch manager runs gblGoLive.</span>') +
-    (day.drive ? '' : ' <b>The Drive folder is not linked yet</b> (the GCM_FORMS_FOLDER Script property, GROUP-CLIENTS-SETUP.md), so a bill cannot wait with its PDF: press Send now on the day.') + '</div></div>';
+    (day.drive ? '' : ' <b>The Drive folder is not linked yet</b> (the GCM_FORMS_FOLDER Script property, GROUP-CLIENTS-SETUP.md), so a bill cannot be approved with its PDF yet, and Send now needs an approved bill.') + '</div></div>';
 }
 function blApproveActs(o, b, s, d) {
   if (!b.reconciledAt || b.sentAt) return '';
   const day = d.day || {};
   if (s.held) return '<span class="chip bad"><i></i>Approved, held at the run: ' + esc(s.held) + '</span><button class="btn ghost" type="button" data-unapprove="' + o.line + '">Cancel the approval</button>';
   if (s.status === 'approved') return '<span class="chip good"><i></i>Approved for ' + esc(blDayLabel(s.approvedFor)) + ' by ' + esc(s.approvedBy) + '</span><button class="btn ghost" type="button" data-unapprove="' + o.line + '">Cancel the approval</button>';
-  if (s.status === 'tested') return '<span class="chip"><i style="background:var(--bar)"></i>Went as a test copy in the last run</span><button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for the next run</button>';
-  return '<button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for ' + esc(day.run ? blDayLabel(day.run) : day.date || 'the billing day') + '</button>';
+  if (s.status === 'tested') return '<span class="chip"><i style="background:var(--bar)"></i>Went as a test copy in the last run</span><button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked yet: the branch manager sets GCM_FORMS_FOLDER"' : '') + '>Approve for the next run</button>';
+  return '<button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked yet: the branch manager sets GCM_FORMS_FOLDER"' : '') + '>Approve for ' + esc(day.run ? blDayLabel(day.run) : day.date || 'the billing day') + '</button>';
 }
 const BL_DAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 function blDayLabel(ymd) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); if (!m) return ymd || ''; const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); const dow = d.getUTCDay() || 7; return BL_DAYS[dow] + ' ' + (+m[3]) + ' ' + BL_MON[+m[2] - 1].slice(0, 3); }
-async function blApprove(line) {
+async function blApprove(line, reason) {
   const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [], day = BILL.day || {};
   const who = BILL.live ? 'the group (' + (BILL.group.contact || BILL.group.to.join(', ')) + ')' : 'you, marked TEST (test mode)';
-  if (!confirm('Approve the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.runLabel || day.label || 'the billing day at 10:00') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)') + '?')) return;
-  const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'approve', attachments: files, force: BILL.role === 'branch' ? 'Y' : '' });
+  const what = 'the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.runLabel || day.label || 'the billing day at 10:00') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)');
+  /* after the cut-off: why it was not done by then, in the box (it stands for the confirmation) */
+  if (reason === undefined && o.cut && o.cut.past) return blLateAsk(o, 'approve', 'Approve ' + what + '.');
+  if (reason === undefined && !confirm('Approve ' + what + '?')) return;
+  const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'approve', attachments: files, reason: reason || '', force: BILL.role === 'branch' ? 'Y' : '' });
+  if (!r.ok && r.needReason && reason === undefined) return blLateAsk(Object.assign({}, o, { cut: Object.assign({}, o.cut || {}, { day: r.cutoff, label: r.cutoffLabel }) }), 'approve', 'Approve ' + what + '.');
+  if (reason !== undefined) { if (!r.ok) return blLateErr(r.error || 'Not approved'); dlg.close(); }
   toast(r.ok ? r.said : (r.error || 'Not approved'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
 }
 async function blUnapprove(line) {
@@ -599,13 +603,57 @@ async function blUnapprove(line) {
   const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'unapprove' });
   toast(r.ok ? r.said : (r.error || 'Not cancelled'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
 }
-async function blSend(line) {
-  const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [];
+async function blSend(line, reason) {
+  const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [], b = o.bill || {};
   const who = BILL.live ? 'the group (' + (BILL.group.contact || BILL.group.to.join(', ')) + ')' : 'you, marked TEST';
-  if (!confirm('Send the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to ' + who + ' from support@' + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with no file attached (upload the PDF again in this session to attach it)') + '?')) return;
-  const r = await post({ action: 'gcm.billSend', group: BILL.group.key, month: BILL.month, lines: line, attachments: files });
+  const what = 'the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to ' + who + ' from support@' + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : b.kept ? ', with the PDF kept at the approval' : ', with no file attached (upload the PDF again in this session to attach it)');
+  /* Send now after the cut-off asks why it was not done by then; a reason given at a late approval is offered again */
+  if (reason === undefined && !b.sentAt && o.cut && o.cut.missed) return blLateAsk(o, 'send', 'Send ' + what + '.');
+  if (reason === undefined && !confirm('Send ' + what + '?')) return;
+  const r = await post({ action: 'gcm.billSend', group: BILL.group.key, month: BILL.month, lines: line, attachments: files, reason: reason || '' });
+  if (!r.ok && r.needReason && reason === undefined) return blLateAsk(Object.assign({}, o, { cut: Object.assign({}, o.cut || {}, { day: r.cutoff, label: r.cutoffLabel, reason: r.had || '' }) }), 'send', 'Send ' + what + '.');
+  if (reason !== undefined) { if (!r.ok) return blLateErr(r.error || 'Not sent'); dlg.close(); }
   toast(r.ok ? r.said : (r.error || 'Not sent'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
 }
+/* Send now (25 October 2026: "staff has to keep send now but has to have the approval and reasons why it was not done at
+   the specified cut off time"): the button only on an approved bill, and after the cut-off a box asking why. */
+function blSendBtn(o, b, s, d) {
+  if (!b.reconciledAt) return '';
+  const t = d.live ? '' : ' (test)', why = o.cut && o.cut.reason ? '<span class="chip warn" title="Why it missed the cut-off"><i></i>Late: ' + esc(o.cut.reason) + '</span>' : '';
+  if (b.sentAt) return why + '<button class="btn ghost" type="button" data-send="' + o.line + '">Send to the group again' + t + '</button>';
+  if (!b.approvedAt) return why + '<span class="small muted blwait">Send now opens once the bill is approved.</span>';
+  return why + '<button class="btn' + (s.status === 'approved' ? ' ghost' : '') + '" type="button" data-send="' + o.line + '">Send now' + t + '</button>' +
+    (o.cut && o.cut.missed && !o.cut.reason ? '<span class="small muted blwait">' + (d.reasonNeeded === false ? 'It missed the cut-off: a reason is asked, yours is optional' : 'It missed the cut-off: you will be asked why') + '</span>' : '');
+}
+const BL_LATE_PICKS = ['Head Office’s bill reached us after the cut-off.', 'Salesforce had to be corrected before the bill could go.',
+  'We were waiting on the group to confirm a joiner, a leaver or a payment.', 'The bill needed a correction from Head Office before it could go.', 'I was out of office and it was not covered.'];
+/** The box: why it was not done by the cut-off, with one-tap starts; it stands for the confirmation. */
+function blLateAsk(o, kind, what) {
+  const cut = o.cut || {}, opt = BILL.reasonNeeded === false, min = BILL.lateMin || 15;
+  const held = o.steps && o.steps.held ? 'It was held at the 10:00 run: ' + o.steps.held + '.' : '';
+  const picks = (held ? [held] : []).concat(BL_LATE_PICKS);
+  $('dlgT').textContent = (kind === 'send' ? 'Send now' : 'Approve') + ' · after the cut-off';
+  $('dlgB').innerHTML = '<p>The ' + esc(blMon(BILL.month)) + ' ' + esc(o.label.toLowerCase()) + ' bill missed the ' + esc((BILL.day && BILL.day.hour) || 10) + ':00 cut-off on <b>' + esc(cut.label ? cut.label.replace(/, \d+:\d+$/, '') : 'the billing day') + '</b>. ' +
+    '<b>Why was it not done by then?</b> ' + (opt ? 'As branch manager you may leave this out.' : 'Your reason goes on the bill, its Chatter and to Mr Rampersad.') + '</p>' +
+    '<div class="chips tpl" style="margin:0 0 10px">' + picks.map((x, i) => '<button type="button" class="chip" data-lpick="' + i + '">' + esc(x) + '</button>').join('') + '</div>' +
+    '<textarea class="field" id="lateWhy" rows="3" maxlength="600" placeholder="What held it up, and what was done about it">' + esc(cut.reason || '') + '</textarea>' +
+    '<p class="small muted" id="lateMsg" style="margin:6px 0 10px">' + esc(what) + '</p>' +
+    '<div class="row"><button class="btn" type="button" id="lateGo">' + (kind === 'send' ? 'Send now' : 'Approve') + (opt ? '' : ' with this reason') + '</button><button class="btn ghost" type="button" id="lateX">Cancel</button></div>';
+  if (!dlg.open) dlg.showModal();
+  const box = $('lateWhy');
+  $('dlgB').querySelectorAll('[data-lpick]').forEach(b => b.onclick = () => { box.value = picks[+b.dataset.lpick]; box.focus(); });
+  $('lateX').onclick = () => dlg.close();
+  $('lateGo').onclick = async () => {
+    const v = box.value.trim();
+    if (!opt && v.length < min) return blLateErr(v ? 'Say a little more: what held it up, and what was done about it.' : 'Say why it was not done by then.');
+    if (/\[[^\]]*\]/.test(v)) return blLateErr('Fill in the [blank] first.');
+    $('lateGo').disabled = true;
+    if (kind === 'send') await blSend(o.line, v); else await blApprove(o.line, v);
+    const g = $('lateGo'); if (g) g.disabled = false;
+  };
+  setTimeout(() => box.focus(), 50);
+}
+function blLateErr(t) { const m = $('lateMsg'); if (m) { m.textContent = t; m.className = 'small'; m.style.color = 'var(--badText, #B42318)'; } else toast(t, true); }
 async function blPayment(line, month, amount) {
   $('dlgT').textContent = 'Record a payment · ' + BILL.group.name;
   $('dlgB').innerHTML = '<div class="grid4"><label class="sel">Line <select id="pLine">' + BILL.lines.map(o => '<option value="' + o.line + '"' + (o.line === line ? ' selected' : '') + '>' + esc(o.label) + '</option>').join('') + '</select></label>' +

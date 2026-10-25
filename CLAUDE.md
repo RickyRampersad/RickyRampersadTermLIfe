@@ -4557,9 +4557,36 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       a contact we may write to. The PDFs read in the session travel with the approval and wait in the Drive folder's
       "Bills to send" (`gblKeepQueued_`, under `GCM_FORMS_FOLDER`), named by month, group and line; the row carries
       Approved at, by, e-mail, for and the file ids (new Group Bills columns, added to an older tab by name). With a PDF
-      and no Drive folder the approval is refused and says to set the property or press Send now on the day. `unapprove`
+      and no Drive folder the approval is refused and says to set the property. `unapprove`
       trashes the waiting PDF and leaves the bill reconciled. The reply names the day it goes; Send now stays for a bill
       that cannot wait. The steps strip gains *Approve* before *Send*.
+    - **Send now: only on an approved bill, and a reason after the cut-off** (25 October 2026: "staff has to keep send
+      now but has to have the approval and reasons why it was not done at the specified cut off time"; `GBL_LATE`):
+      - **Approval first.** `gblSend_` refuses a bill with no Approved at (`needApproval`), for everyone. A bill already
+        sent goes again with no question. On the page, Send now shows only once the line is approved (`blSendBtn`).
+        With no PDF read in the session, Send now takes the one kept in Drive at the approval (`gblKeptBlobs_`).
+      - **The cut-off** is 10:00 on the billing day the bill was meant for (`gblCutoffOf_`). That is the billing day before
+        its month, since Head Office bills a month ahead and November's bill goes on 26 October. A bill uploaded more
+        than `LATE_DAYS` after that day is treated as billed in its own month, so its month's billing day.
+      - **Missed** (`gblMissed_`) means 10:00 that day has passed and the bill was approved for a later run, not
+        approved at all, or held at the run. A bill approved for that run, which the run has not reached yet, has not
+        missed it.
+      - **The reason.** After the cut-off, Approve and Send now both ask why it was not done by then (`needReason`, a
+        box on the page with one-tap starts). Staff and the deputy must answer, at least 15 characters with no [blank]
+        left in. The branch manager may leave it out. A reason given at a late approval is offered again at Send now.
+      - **Where the reason goes:**
+        - the bill's **Late reason** column ("<reason> · given by <name>, <when>"), beside a new **Sent by**;
+        - Group Changes (`approved` detail, then Kind `late send` with the reason in Note);
+        - the billing task's Chatter;
+        - the run's summary and the branch manager's daily summary ("Sent after the 10:00 cut-off", `gblLateSends_`);
+        - the 25th report;
+        - an e-mail to the branch manager at once (`gblLateMail_`; never for his own send).
+      - **The 10:30 task.** Live, the send answers that cycle's GROUP BILL NOT SENT task with the reason and closes it
+        (`gblLateTask_`, from the `GCM_BILL_TASKS` property). The run does the same for a late-approved bill.
+      - **No double counting.** Group Sends marks a late send `late (cut-off yyyy-MM-dd)` in Via, and the next cycle's
+        chase never counts it as that cycle's bill (`gblLateBefore_`).
+      - **Tests.** `gblTestClock_` sets the tests' clock (`gblNow_`); nothing in use sets it. `billing/billing-test.js`
+        (285, 39 of them this rule), `billing/door-test.js` (87) and `billing/page-test.js` (46) in the scratchpad.
     - **The run** (`gblDayRun_`): from the hourly refresh (`gcmRefreshTick`, `auto`, silent when nothing is due) and
       first in the 10:30 group day; every approved bill whose day has come, one e-mail a group and month with the PDFs
       read back from Drive (`gblBillMail_`), to the contact with sales support in Cc, logged on Group Sends as `bill
@@ -4575,7 +4602,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       to this one (`gblCycle_`).
     - **At 10:30 on the billing day** (`gblDay_` inside `gcmDay_`): each staff member whose billed group had no bill
       (sent or test copy) this cycle is asked why (`gblChaseList_`, `gblChaseMail_`: where each line stands, nothing
-      uploaded / to fix / not reconciled / not approved / held / approved after the run, what to do today, the three
+      uploaded / to fix / not reconciled / not approved / held / approved after the run, what to do today, the four
       training lines in `GBL_DAY.TRAIN`), reply by noon to the branch manager, and a Salesforce task opens per group,
       `RR/<NAME> - GROUP BILL NOT SENT - <group> - <Month yyyy> bills: reason needed`, Lic/Staffing/SA/HR, High, owned
       by the staff member's standard user, once a cycle (`gcmChaseTasks_` generalised with `o.tag`, `o.prop`, `o.label`,
