@@ -152,6 +152,11 @@ function gcmDoGet_(p) {
       /* billings management (GroupBilling.gs, 24 October 2026) */
       case 'gcm.billing': return typeof gblView_ === 'function' ? gblView_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.billAi':  return typeof gblAi_ === 'function' ? gblAi_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      /* the Billings door (25 October 2026): the questions, last month's tasks, the people, the statement */
+      case 'gcm.billAsk':   return typeof gblQuestions_ === 'function' ? gblQuestions_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billTaskUpdates': return typeof gblTaskUpdates_ === 'function' ? gblTaskUpdates_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billPeople': return typeof gblPeopleStep_ === 'function' ? gblPeopleStep_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billStatement': return typeof gblStatement_ === 'function' ? gblStatement_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
     }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {

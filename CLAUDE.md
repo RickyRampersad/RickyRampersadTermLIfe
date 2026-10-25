@@ -4565,6 +4565,66 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       board answer); the group's page says when its next bill comes (`nextBill` in `gblClientBlock_`).
     - Tests: `billing/billing-test.js` (165) and `billing/page-test.js` (107) in the scratchpad; the harness's Drive
       mock gained stable file ids, `getFileById`, `moveTo` and `setTrashed`.
+  - **The Billings door: its own page, eight steps, the AI asks, last month's tasks, the people, the statement** (25
+    October 2026: "upload the November 2026 group health, life and pension billing and the claims experience, also build
+    in intelligence from AI to ask the questions and run the analysis, as we need to also produce Guardian Life billings
+    as well, read the old invoices that are owed. Tasks opened for last month in October billing: an analysis, deep
+    insight, history is done as well, to post on Chatter for an update, as well any terminations etc. Make much more
+    simple and interactive, a site that will pop and not confuse the weekly query and task update", then "the analysis
+    for all persons re dependants and persons coming of age to convert"). `groupclientmanagement/billing.html` with
+    `billing-door.js`: the staff page's Billing buttons open it (`billing.html?g=<key>&m=<month>`), the same sign-in (the
+    two localStorage keys), and the weekly letters stay on `index.html`, which no longer loads the review. The look is
+    `gcm.css`, pulled out of `index.html` so the two pages read one sheet; `billing-ui.js` runs unchanged under the door
+    (the pieces of a line, the findings, the task panel, the forms, the payment box, approve and send), the door
+    replacing `openBilling` and `drawBilling`. One group, one month, a list of groups first (mine, billing to do,
+    everyone; the billing day and test mode in the hero), then the steps as a strip with a count on each (done, to do,
+    amber for checks) and one panel at a time, a progress bar over them (a step is done only when it is: a test send is
+    not a send, a check still open is not done):
+    1. *Upload the bills*: the three lines, the claims experience under health.
+    2. *What was found*: the AI read runs by itself (`gcm.billAi`, cached by the facts), then the findings by line.
+    3. *Answer the questions* (`gblQuestions_`, `gcm.billAsk`): every open finding becomes a question with taps
+       (`gblQuestionOf_`: who it is for, the names for staff, options with `resolve`, a `post` for Chatter, and a
+       `next`: upload again, the Salesforce fix, the payment box, the task panel with the kind and member filled, the
+       EB0010 termination forms for the members who left), always with "Not sure yet"; the AI adds up to four of its own
+       from the figures (`gblAiQuestions_`, names never sent, cached six hours). An answer (`gblAnswer_`, act `answer`)
+       goes on the bill row's **Answers** column, on Group Changes as Kind `answer` keyed to the question, and onto the
+       line's billing task's Chatter under the staff member's name; a resolving answer resolves the finding. An AI
+       question's answer travels back with its words, so no second call.
+    4. *Last month's tasks* (`gblTaskUpdates_`, `gcm.billTaskUpdates`): every open billing task read against this
+       month's bills and Salesforce (on the bill, off the bill, a credit or back-charge, the month's record and payment,
+       an amount in the subject keyed as a payment), a verdict (settled, still open, worse), and an update written by the
+       AI from the task's history in one call (`gblTaskUpdatesAi_`, names scrubbed) or from the record. Post it
+       (`gblTaskUpdate_`, act `taskUpdate`): `gblNoteTask_` with the owner mentioned and e-mailed, the task closed in
+       Salesforce when ticked (a PATCH to Completed), every update on Group Changes as `taskupdate` or `taskclosed` so the
+       door shows which were dealt with this month. The review's own comment box, prompts and "post for the group" sit
+       under each. The group's e-mails about money are on the step.
+    5. *Terminations and changes*: the counts from the bills, Record a change and the three Guardian forms.
+    6. *The people* (`gblPeopleStep_`, `gcm.billPeople`): everyone on the health and life bills matched to
+       `gblMembers_` by employee id, certificate or name, with the dependants from the Relationship Group: turning 65
+       within six months (`convert`, the group cover ends; `GCM_LIFE.CONVERT_AGE`), a dependant reaching `GCM_DEP_AGE`
+       (`depage`), retiring on the company pension (`retire`, from the Group Milestones tab), over the age and still
+       billed, a family tier with nobody on record, a single tier with dependants, no date of birth, no Salesforce
+       record. Per flag: a letter to the member (`gblMemberLetter_`, act `memberLetter`: previewed as the member reads
+       it, facts and the offer of a licensed agent's call, never advice; sent from support@, in test mode to the staff
+       member marked TEST, logged on Group Changes as `letter` and Group Sends as `member letter test|sent`), or a task
+       (`BL_TASKS` gained `convert`, `depage` and `data`; `GBL_TASK.KINDS` too), or GIO001 for the member with no
+       record. The group's page gets counts only (`forGroup`).
+    7. *The statement* (`gblStatementData_`, `gblStatementHtml_`, `gblStatementPdf_`, `gcm.billStatement`): this
+       month's lines, the earlier invoices Salesforce still shows unpaid (14 months back, billed less payments), Head
+       Office's own arrears figure when the two differ, the total to bring the account up to date, what changed as
+       counts, what is attached; the PDF to download. It goes inline in the bill e-mail (`gblBillMail_`) and as a PDF
+       beside the bills on Send now and in the billing-day run (`gblStatementBlob_`), and the group's page carries the
+       latest sent one (`gblClientBlock_` `statement`).
+    8. *Approve and send*: the day strip, reconcile, approve for the day, send now, a payment.
+    **The group's page is in two tabs** (`client.html`: `ctabsHtml`, `CT`): *Your service items* (the weekly items,
+    the record, the rating, the progress bar) and *Your billing* (the statement of account first, `statementHtml`, then
+    the lines as before). It opens on the items; `?tab=billing` opens on the billing, for the bill e-mail's link. The
+    bill and the weekly letter never share a screen, which was the ask.
+    Tests in the scratchpad: `billing/billing-test.js` (214: the November bill, the questions and their answers, the
+    AI's, the updates with a Task PATCH, the people with a member moved to 65 and `GCM_DEP_AGE` 14, the letter, the
+    statement), `billing/door-test.js` (81, Playwright: the staff page's button into the door, every step, the group's
+    page in its tabs, a phone) and `billing/page-test.js` (46). The harness (`wow/setup.js`) now serves `.css` as
+    `text/css`: until then a stylesheet linked from a page was refused by the browser and the screenshots were bare.
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
     Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing

@@ -222,7 +222,17 @@ const BL_TASKS = {
                 text: 'Please ask {group} for [what we need], because [why]. We need it by [date] so the {month} {line} bill can be reconciled.' },
   other:      { label: 'Something else', subj: '{line} Billing – {group} – {month}', days: 2,
                 ask: ['What it is about', 'What you want done, and by when', 'What the person needs to know to do it'],
-                text: '[What it is about]. Please [what you want done] by [date]. [What they need to know].' }
+                text: '[What it is about]. Please [what you want done] by [date]. [What they need to know].' },
+  /* the people on the bills (the Billings door, 25 October 2026): a member turning 65, a dependant reaching the dependant age, a record to put right */
+  convert:    { label: 'A member turning 65: convert', subj: '{line} Conversion at 65 – {member} – {group}{eff}', days: 5,
+                ask: ['Who, and their employee or certificate number', 'The date they turn 65', 'Whether the member has been written to, and how to reach them', 'What you want done: a licensed agent to call with the individual plan options'],
+                text: '{member} (employee no. [number]) on {line} turns 65 on {date}, when the group cover ends. Please have a licensed agent call them about converting to an individual plan without a break in cover. Contact: [phone or e-mail]. Confirm when the call is made.' },
+  depage:     { label: 'A dependant coming of age', subj: '{line} Dependant Reaching Age Limit – {member} – {group}{eff}', days: 5,
+                ask: ['The employee, and the dependant’s name', 'The date the dependant reaches the dependant age', 'Whether the employee has been told, and how to reach them', 'What you want done: offer the dependant a plan of their own, and end the dependant cover on the record'],
+                text: 'The dependant [dependant name] of {member} (employee no. [number]) on {line} reaches the dependant age on {date}. Please contact the employee about a plan of their own for the dependant, and end the dependant cover on the record from that date. Contact: [phone or e-mail].' },
+  data:       { label: 'A record to put right', subj: '{line} Record Update – {member} – {group}', days: 3,
+                ask: ['Who, and their employee or certificate number', 'What is missing or wrong on the record (date of birth, dependants, tier)', 'Where the right information comes from: the group, the bill, the enrolment form', 'What you want done'],
+                text: 'The Salesforce record for {member} (employee no. [number]) on {line} needs [what is missing or wrong]. The bill shows [what the bill shows]. Please get it from [the group / the enrolment form] and update the record. Confirm when done.' }
 };
 const blCmt = month => ['Chased Head Office on [what]; they will answer by [date].', 'The group confirms TT$[amount] paid on [date] by [how], ref [ref]; to be keyed on Payments.', 'Waiting on the group for [what]; chasing again on [date].',
   'Corrected in Salesforce: [what was changed].', 'Checked against the ' + blMon(month) + ' bill: [what agrees, and what differs].', 'Can you confirm [what] by [date]? The ' + blMon(month) + ' bill waits on it.'];

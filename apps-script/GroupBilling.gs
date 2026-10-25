@@ -68,7 +68,7 @@ var GBL = {
 var GBL_HEAD = {
   'Group Bills': ['When', 'Group', 'Line', 'Month', 'Ref', 'Dated', 'Due by', 'Members', 'Current', 'Adjustments', 'Due', 'Arrears shown', 'Payable',
                   'SF Record', 'SF Billed', 'SF Due', 'SF Paid', 'Variance', 'Findings', 'Resolved', 'Status', 'By', 'Checked at', 'Reconciled at', 'Reconciled by', 'Sent at', 'Files', 'Summary',
-                  'Approved at', 'Approved by', 'Approved e-mail', 'Approved for', 'Files kept'],
+                  'Approved at', 'Approved by', 'Approved e-mail', 'Approved for', 'Files kept', 'Answers'],
   'Group Bill Lines': ['Group', 'Line', 'Month', 'Member Id', 'Name', 'Division', 'Tier', 'Start', 'Eff', 'Premium', 'Kind', 'For month', 'Cover'],
   'Group Changes': ['When', 'Group', 'Line', 'Kind', 'Member', 'Detail', 'Effective', 'Amount', 'Source', 'By', 'Status', 'SF Task', 'SF Id', 'Note', 'Form'],
   'Group Claims': ['Group', 'Month', 'Division', 'Claims', 'Charge', 'Member share', 'Paid', 'Uploaded', 'By']
@@ -228,7 +228,7 @@ function gblBillOf_(r) {
     sfRecord: gcmText_(r['SF Record']), sfBilled: gblNum_(r['SF Billed']), sfDue: gblNum_(r['SF Due']), sfPaid: gblNum_(r['SF Paid']), variance: gblNum_(r.Variance),
     findings: gblJ_(r.Findings, []), resolved: gblJ_(r.Resolved, {}), status: gcmText_(r.Status), by: gcmText_(r.By), checkedAt: gcmText_(r['Checked at']),
     reconciledAt: gcmText_(r['Reconciled at']), reconciledBy: gcmText_(r['Reconciled by']), sentAt: gcmText_(r['Sent at']), files: gcmText_(r.Files), summary: gblJ_(r.Summary, {}), at: gcmWhen_(r.When),
-    approvedAt: gcmText_(r['Approved at']), approvedBy: gcmText_(r['Approved by']), approvedEmail: gcmText_(r['Approved e-mail']), approvedFor: gcmYmd_(r['Approved for']), kept: gcmText_(r['Files kept']) };
+    approvedAt: gcmText_(r['Approved at']), approvedBy: gcmText_(r['Approved by']), approvedEmail: gcmText_(r['Approved e-mail']), approvedFor: gcmYmd_(r['Approved for']), kept: gcmText_(r['Files kept']), answers: gblJ_(r.Answers, {}) };
 }
 function gblLines_(g, line, month) {
   return gblRows_(GBL.LINES).filter(function (r) { return gcmCodeKey_(r.Group) === g.key && gcmText_(r.Line) === line && gcmText_(r.Month) === month; }).map(function (r) {
@@ -684,6 +684,10 @@ function gblAct_(b) {
   if (act === 'approve' || act === 'unapprove') { if (!bill) return { ok: false, error: 'No bill is stored for that month.' }; return gblApprove_(g, who, bill, b, L); }
   if (act === 'change') return gblChange_(g, who, line, b, 'staff');
   if (act === 'task') return gblTaskOpen_(g, who, line, month, b);
+  /* the door (25 October 2026): an answer to a question, an update on last month's task, a letter to a member */
+  if (act === 'answer') return gblAnswer_(g, who, b, L);
+  if (act === 'taskUpdate') return gblTaskUpdate_(g, who, b);
+  if (act === 'memberLetter') return gblMemberLetter_(g, who, b, L);
   if (['members', 'form', 'formSend', 'enrol', 'enrolSend', 'easi', 'easiSend'].indexOf(act) >= 0) return gblFormAct_(g, who, b);
   return { ok: false, error: 'Unknown action.' };
 }
@@ -754,7 +758,7 @@ function gblOwnerId_(g) {
  * for anyone on the team with a Salesforce login; the page guides what to say (its kinds, prompts and [blanks] are in
  * billing-ui.js), and the backend refuses a [blank] left in. The person is told by e-mail from support@. A comment on a
  * task can @mention its owner through Connect and e-mail them too, so a question reaches the person who has it. */
-var GBL_TASK = { DUE_DAYS: 2, MIN_TEXT: 20, CACHE_S: 600, KINDS: ['joiner', 'leaver', 'tier', 'dependent', 'payment', 'amount', 'backcharge', 'rate', 'group', 'other'],
+var GBL_TASK = { DUE_DAYS: 2, MIN_TEXT: 20, CACHE_S: 600, KINDS: ['joiner', 'leaver', 'tier', 'dependent', 'payment', 'amount', 'backcharge', 'rate', 'group', 'other', 'convert', 'depage', 'data'],
   CHANGE: { joiner: 'joiner', leaver: 'leaver', tier: 'tier', dependent: 'dependent' }, ROLES: ['staff', 'abm', 'bm', 'um'] };
 /** Who a task can go to: the account's owner in Salesforce first, then everyone on the Agent Skill Bank who is staff or a
  *  manager and has an active Salesforce login, resolved by e-mail. Never an agent, never a site guest user. */
@@ -893,7 +897,8 @@ function gblSend_(b) {
   files.slice(0, 6).forEach(function (f) {
     try { var bytes = Utilities.base64Decode(String(f.b64 || '')); if (bytes.length && bytes.length < 3000000) blobs.push(Utilities.newBlob(bytes, String(f.type || 'application/pdf'), String(f.name || 'bill.pdf').replace(/[^\w.\- ]/g, '_').slice(0, 80))); } catch (e) {}
   });
-  var mail = gblBillMail_(g, month, bills, who, test, L);
+  var mail = gblBillMail_(g, month, bills, who, test, L), stmtBlob = gblStatementBlob_(g, month, bills, L);
+  if (stmtBlob) blobs.push(stmtBlob);
   try { tMsSend_(to[0], (test ? '[TEST] ' : '') + mail.subject, mail.html, { cc: cc.concat(to.slice(1)), attachments: blobs, replyTo: TRANSITION.MS_FROM }); }
   catch (e) { return { ok: false, error: 'Not sent: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
   var at = gcmWhen_(new Date());
@@ -918,6 +923,8 @@ function gblBillMail_(g, month, bills, who, test, L) {
     return { what: what, extra: extra, due: x.due, arrears: x.arrears };
   });
   var subject = 'Your ' + label + ' billing: ' + g.name + ' (' + gcmMoney_(total) + ')';
+  var stmt = '';
+  try { stmt = gblStatementHtml_(g, gblStatementData_(g, month, L, gblSf_(g), bills), { inline: true }); } catch (e) { stmt = ''; }
   var greet = 'Dear ' + (g.greeting || 'Sir or Madam') + ',';
   var paras = ['Please find attached your ' + label + ' billing' + (bills.length > 1 ? 's' : '') + ' for ' + bills.map(function (x) { return GBL.LABEL[x.line].toLowerCase(); }).join(', ').replace(/, ([^,]*)$/, ' and $1') + '. The total due is ' + gcmMoney_(total) + (dueBy ? ', payable by ' + tDmy_(dueBy) : '') + '.'];
   var arrears = bills.filter(function (x) { return x.arrears > 0; });
@@ -936,6 +943,7 @@ function gblBillMail_(g, month, bills, who, test, L) {
     '<tr><td style="padding:18px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#142033"><p style="margin:0 0 12px">' + E(greet) + '</p>' + paras.map(function (p) { return '<p style="margin:0 0 12px">' + E(p) + '</p>'; }).join('') +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;border:1px solid #e2e7ef;margin:6px 0 16px">' + rows +
     '<tr><td style="padding:10px;font:700 14px Arial,sans-serif;color:#142033;background:#ebf2fd">Total due</td><td style="padding:10px;font:700 16px Arial,sans-serif;color:#1d5bc4;background:#ebf2fd;text-align:right">' + E(gcmMoney_(total)) + '</td></tr></table>' +
+    stmt +
     '<p style="margin:0 0 6px"><a href="' + GCM.SITE + 'client.html?from=bill" style="display:inline-block;background:#1d5bc4;color:#fff;text-decoration:none;font:700 14px Arial,sans-serif;padding:11px 18px;border-radius:8px">Open your service page</a></p>' +
     '<p style="margin:0 0 16px;font:13px/1.5 Arial,sans-serif;color:#5a687d">Sign in with your list bill <b>' + E(g.bills[0] || '') + '</b> and your access code <b>' + E(g.code || '(not set)') + '</b>.</p>' +
     '<p style="margin:0">Warm regards,<br><b>' + E(signer) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br><span style="color:#5a687d">9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p></td></tr></table></div>';
@@ -1810,6 +1818,9 @@ function gblClientBlock_(g, L) {
       if (ln === 'health') { var ex = gblExperience_(g, sf, false); if (ex) o.claims = ex; }
       out.lines.push(o);
     });
+    /* the statement (25 October 2026): the latest month with a bill sent or reconciled, as the group reads it */
+    var stM = bills.filter(function (x) { return x.sentAt || x.reconciledAt; }).map(function (x) { return x.month; }).sort().pop();
+    if (stM) { var sb = bills.filter(function (x) { return x.month === stM && (x.sentAt || x.reconciledAt); }), sd = gblStatementData_(g, stM, L, sf, sb); out.statement = { month: stM, label: sd.label, total: sd.total, dueBy: sd.dueBy, owed: sd.owed, owedTotal: sd.owedTotal, grand: sd.grand, changes: sd.changes, lines: sd.lines.map(function (l) { return { line: l.line, label: l.label, due: l.due, members: l.members }; }), html: gblStatementHtml_(g, sd, { inline: true }) }; }
   } catch (e) { out.error = String(e && e.message ? e.message : e).slice(0, 160); }
   return out;
 }
@@ -1992,7 +2003,8 @@ function gblDayRun_(o) {
         held.push({ group: bills[0].group, month: month, lines: bills.map(function (b) { return GBL.LABEL[b.line]; }), by: who.name, email: who.email, why: text });
       };
       if (why) { hold(why); return; }
-      var m = gblBillMail_(g, month, bills, who, test, L), to, cc, html = m.html, subject = m.subject;
+      var m = gblBillMail_(g, month, bills, who, test, L), to, cc, html = m.html, subject = m.subject, stB = gblStatementBlob_(g, month, bills, L);
+      if (stB) blobs.push(stB);
       if (test) {
         to = [who.email || gcmDayManager_()].filter(String); cc = (TRANSITION.CC || []).slice();
         html = '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST of the ' + tEsc_(gblDayLabel_(bills[0].approvedFor)) + ' run.</b> This is the ' + tEsc_(gblMonthLabel_(month)) + ' bill exactly as it would go to <b>' + tEsc_(g.to.join(', ')) + '</b>' +
@@ -2230,4 +2242,443 @@ function gblBoard_(L) {
       sent: set.filter(function (b) { return b.sentAt; }).length, due: gblR_(set.reduce(function (s, b) { return s + b.due; }, 0)) };
   });
   return out;
+}
+
+/* ── the Billings door (25 October 2026): the AI asks, last month's tasks are updated, the people, the statement ── */
+/* "the objective is to upload the November 2026 group health, life and pension billing and the claims experience, also
+ * build in intelligence from AI to ask the questions and run the analysis … produce Guardian Life billings as well, read
+ * the old invoices that are owed. Tasks opened for last month in October billing: an analysis, deep insight, history …
+ * to post on Chatter for an update, as well any terminations … make it much more simple and interactive, a site that will
+ * pop and not confuse the weekly query and task update", then "the analysis for all persons re dependants and persons
+ * coming of age to convert". The door is groupclientmanagement/billing.html (billing-door.js); these are its routes.
+ * Nothing here carries a member's name to the AI: the facts go as counts and kinds, the names stay on the page. */
+var GBL_ASK = { MAX: 16, AI_MAX: 4, CACHE_S: 21600 };
+var GBL_UPD = { CACHE_S: 21600, MAX: 14, POSTS: 3 };
+var GBL_PEOPLE = { AHEAD: 183, AFTER: 60, DEP_TIER: /FAMILY|SPOUSE|CHILD|DEPEND|\+\s*(ONE|1|2|3|FAM|SP|CH)/i, SINGLE_TIER: /EMPLOYEE\s*ONLY|^SINGLE$|^EMPLOYEE$|^EE$/i };
+
+/* ── the questions ── */
+/** The answers kept on a bill row (the Answers column, by question id). */
+function gblAnswers_(bills) {
+  var out = {};
+  bills.forEach(function (b) { Object.keys(b.answers || {}).forEach(function (k) { out[k] = b.answers[k]; }); });
+  return out;
+}
+/** One question from one finding: what only a person can settle, with the answers as taps. Each option says what the
+ *  backend does with it (resolve the finding, post to Chatter) and what the page opens next (a task, a form, the payment
+ *  box, the one-tap fix). A finding whose kind is for the record only asks nothing. */
+function gblQuestionOf_(g, line, f, month) {
+  if (!f || f.level === 'ok') return null;
+  var lab = GBL.LABEL[line] || 'Billing', ml = gblMonthLabel_(month), M = f.members || [], n = M.length, names = M.slice(0, 6).map(function (m) { return gblNice_(m.name); }).join(', ') + (n > 6 ? ' and ' + (n - 6) + ' more' : '');
+  var mem = f.member || (n === 1 ? M[0].name : ''), d = f.data || {}, money = gcmMoney_;
+  var O = function (v, label, o) { var x = { v: v, label: label }; if (o) Object.keys(o).forEach(function (k) { x[k] = o[k]; }); return x; };
+  var task = function (kind, extra) { var t = { kind: 'task', task: kind, line: line, member: mem }; if (extra) Object.keys(extra).forEach(function (k) { t[k] = extra[k]; }); return t; };
+  var unsure = O('unsure', 'Not sure yet', { post: 'still being checked' });
+  var q = { id: f.id, line: line, label: lab, kind: f.kind, level: f.level, who: f.who, finding: f.text, member: mem, members: M.map(function (m) { return { id: m.id, name: m.name, premium: m.premium }; }), text: '', why: f.text, options: [] };
+  switch (f.kind) {
+    case 'read': q.text = 'The reader warned about this file. Is the ' + lab.toLowerCase() + ' bill still right to use?'; q.options = [O('yes', 'Yes, use it as read', { resolve: true }), O('no', 'No: upload it again', { next: { kind: 'reup', line: line } }), unsure]; break;
+    case 'norecord': q.text = 'There is no ' + GBL.RT[line] + ' billing record for ' + ml + ' in Salesforce. Who creates it?'; q.options = [O('done', 'I have created it', { resolve: true, post: 'the billing record is now in Salesforce' }), O('task', 'Open a task for someone to create it', { next: task('amount') }), unsure]; break;
+    case 'amount': q.text = 'Salesforce and the bill disagree on the ' + ml + ' amount. Which is right?'; q.options = [O('bill', 'The bill: set Salesforce to it', { next: { kind: 'fix', fix: 'sfAmount', line: line } }), O('sf', 'Salesforce: query the bill with Head Office', { next: task('amount'), post: 'the bill is queried with Head Office' }), unsure]; break;
+    case 'arrears':
+      if (f.who === 'headoffice') { q.text = 'The bill still shows ' + gblMonthLabel_(f.month || '') + ' as unpaid, but Salesforce has it paid. Has Group Health premium accounting applied the payment?'; q.options = [O('yes', 'Yes, applied: the group need not pay it again', { resolve: true, post: 'Head Office confirms the payment is applied; the arrears line is not owed' }), O('no', 'No: chase Head Office', { next: task('payment', { month: f.month, amount: d.amount }) }), unsure]; }
+      else if (f.who === 'salesforce') { q.text = 'The bill shows ' + gblMonthLabel_(f.month || '') + ' unpaid and Salesforce has no record for that month at all. Create it?'; q.options = [O('done', 'I have created it', { resolve: true, post: 'the missing month\'s record is now in Salesforce' }), O('task', 'Open a task for it', { next: task('amount', { month: f.month }) }), unsure]; }
+      else if (f.level === 'fix') { q.text = gblMonthLabel_(f.month || '') + ' is shown unpaid (' + money(d.amount || 0) + ') and no payment is keyed. Has the group paid it?'; q.options = [O('paid', 'Yes: record the payment', { next: { kind: 'pay', line: line, month: f.month, amount: d.amount } }), O('no', 'No: ask the group for it', { next: task('group', { month: f.month, amount: d.amount }), post: 'the group is asked for ' + gblMonthLabel_(f.month || '') }), unsure]; }
+      else { q.text = 'Part of ' + gblMonthLabel_(f.month || '') + ' is still outstanding on the bill. Is the rest in hand?'; q.options = [O('yes', 'Yes: a payment is on its way', { resolve: true, post: 'the balance of ' + gblMonthLabel_(f.month || '') + ' is on its way' }), O('no', 'No: ask the group', { next: task('group', { month: f.month }) }), unsure]; }
+      break;
+    case 'unpaid': q.text = 'Several recent months have no payment keyed in Salesforce. Is the group behind, or are the payments not being keyed?'; q.options = [O('behind', 'The group is behind: chase it', { next: task('group') }), O('notkeyed', 'Payments were made and never keyed: key them', { next: { kind: 'pay', line: line } }), unsure]; break;
+    case 'status': q.text = gblNice_(mem) + ' is on the bill, and Salesforce shows the policy as ended. Which is right?'; q.options = [O('covered', 'Still covered: put the record right', { next: task('other'), post: 'the policy record is to be reinstated' }), O('left', 'Left: query the charge with Head Office', { next: task('backcharge') }), unsure]; break;
+    case 'notInSf': q.text = n + ' on the bill ' + (n === 1 ? 'has' : 'have') + ' no record in Salesforce (' + names + '). ' + (n === 1 ? 'A new joiner?' : 'New joiners?'); q.options = [O('joiners', 'Yes: add the records', { next: task('joiner') }), O('wrong', 'No: they should not be billed', { next: task('backcharge'), post: 'the charge is queried with Head Office' }), unsure]; break;
+    case 'inSfOnly': q.text = n + ' live in Salesforce ' + (n === 1 ? 'is' : 'are') + ' not on the bill (' + names + '). Did they leave?'; q.options = [O('left', 'Yes, left: send the termination forms', { next: { kind: 'leavers', line: line, members: M.map(function (m) { return m.name; }) } }), O('dropped', 'No: Head Office dropped them', { next: task('other'), post: 'Head Office is asked why the members are off the bill' }), unsure]; break;
+    case 'tier': q.text = 'The premium differs from Salesforce for ' + n + ' member' + (n === 1 ? '' : 's') + '. A tier change?'; q.options = [O('tier', 'Yes: record the tier change', { next: task('tier') }), O('rate', 'No: a rate error, query Head Office', { next: task('rate') }), unsure]; break;
+    case 'nomembers': q.text = 'Salesforce holds no ' + GBL.POL[line] + ' member records for this group, so the bill cannot be checked member by member. Add them?'; q.options = [O('task', 'Open a task to add the records', { next: task('joiner') }), O('ok', 'Not needed for this group', { resolve: true }), unsure]; break;
+    case 'credit': q.text = gblNice_(mem) + ' has a back-dated change on the bill with no task recording it. Did the group ask for it?'; q.options = [O('yes', 'Yes: open the task that records it', { next: task(d.kind === 'leaver' ? 'leaver' : 'joiner', { month: d.month, amount: d.amount }) }), O('no', 'No: query it with Head Office', { next: task('backcharge', { month: d.month, amount: d.amount }) }), unsure]; break;
+    case 'jump': q.text = 'The bill has moved sharply against last month. A renewal rate?'; q.options = [O('renewal', 'Yes, a renewal: the new rate stands', { resolve: true, post: 'the step in the bill is the renewal rate' }), O('error', 'No: query Head Office', { next: task('rate') }), unsure]; break;
+    case 'rate': q.text = 'A member is charged off the rate on the life bill. Query it?'; q.options = [O('query', 'Query Head Office', { next: task('rate') }), O('ok', 'It is right as charged', { resolve: true }), unsure]; break;
+    case 'adj': if (!/after the effective date/.test(f.text)) return null; q.text = 'A life change was reported after the 31-day window. Was evidence of insurability asked for?'; q.options = [O('yes', 'Yes', { resolve: true, post: 'evidence of insurability was requested' }), O('no', 'No: ask the group for it', { next: task('group') }), unsure]; break;
+    case 'hvl': q.text = n + ' on the health bill ' + (n === 1 ? 'is' : 'are') + ' not on the life bill. Not yet added to life, or health only?'; q.options = [O('add', 'Add them to life', { next: task('joiner', { line: 'life' }) }), O('healthonly', 'Health only: nothing to do', { resolve: true }), unsure]; break;
+    case 'left': q.text = n + ' came off the bill since last month (' + names + '). Does each have a termination on file?'; q.options = [O('yes', 'Yes, all done', { resolve: true }), O('forms', 'Send the termination forms', { next: { kind: 'leavers', line: line, members: M.map(function (m) { return m.name; }) } }), unsure]; break;
+    case 'notTagged': q.text = n + ' polic' + (n === 1 ? 'y' : 'ies') + ' on the list ' + (n === 1 ? 'does' : 'do') + ' not carry the list bill in Salesforce. Tag them?'; q.options = [O('done', 'Done', { resolve: true, post: 'the policies now carry the list bill' }), O('task', 'Open a task for it', { next: task('other') }), unsure]; break;
+    case 'extra': q.text = n + ' polic' + (n === 1 ? 'y' : 'ies') + ' carr' + (n === 1 ? 'ies' : 'y') + ' the list bill in Salesforce but ' + (n === 1 ? 'is' : 'are') + ' not on the list. Left the group?'; q.options = [O('left', 'Yes: take the list bill off', { next: task('leaver') }), O('bill', 'No: they should be billed', { next: task('other'), post: 'the list is to be corrected to include them' }), unsure]; break;
+    case 'premDiff': q.text = 'Premiums differ between the list and Salesforce for ' + n + '. Which is right?'; q.options = [O('list', 'The list: correct Salesforce', { next: task('other') }), O('sf', 'Salesforce: correct the list', { resolve: true, post: 'the list is to be corrected to Salesforce\'s premiums' }), unsure]; break;
+    case 'paidTo': q.text = 'Paid-to dates are behind on ' + n + ' list bill polic' + (n === 1 ? 'y' : 'ies') + '. Is the allocation behind, or are the dates not maintained?'; q.options = [O('behind', 'The allocation is behind: trace the payments', { next: task('payment') }), O('dates', 'The dates are not maintained: fix them', { next: task('other') }), unsure]; break;
+    default: return null;
+  }
+  return q.text ? q : null;
+}
+/** The month's questions: one from each open finding a person must settle, then up to GBL_ASK.AI_MAX from the AI on what
+ *  the rules did not ask (counts and kinds only), answered ones marked. */
+function gblQuestions_(p) {
+  var who = gcmWho_(p);
+  if (!who.ok) return who;
+  var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  var month = String(p.month || ''), bills = gblBillRows_(g).filter(function (x) { return x.month === month; });
+  if (!bills.length) return { ok: true, month: month, questions: [], answered: 0, total: 0, said: 'Upload a bill for ' + gblMonthLabel_(month) + ' first: the questions come from what the checks find.' };
+  var answers = gblAnswers_(bills), qs = [];
+  bills.forEach(function (b) {
+    b.findings.forEach(function (f) { if (b.resolved[f.id]) return; var q = gblQuestionOf_(g, b.line, f, month); if (q) qs.push(q); });
+  });
+  var aiError = '';
+  if (gcmAiKey_() && !gcmYes_(p.noai)) { try { qs = qs.concat(gblAiQuestions_(g, month, bills, qs)); } catch (e) { aiError = String(e && e.message ? e.message : e).slice(0, 160); } }
+  qs.forEach(function (q) { if (answers[q.id]) q.answered = answers[q.id]; });
+  var order = { fix: 0, check: 1, note: 2, ai: 3 };
+  qs.sort(function (a, b) { return ((a.answered ? 1 : 0) - (b.answered ? 1 : 0)) || ((order[a.level] || 2) - (order[b.level] || 2)); });
+  qs = qs.slice(0, GBL_ASK.MAX);
+  var done = qs.filter(function (q) { return q.answered; }).length;
+  return { ok: true, month: month, monthLabel: gblMonthLabel_(month), questions: qs, answered: done, total: qs.length, ai: !!gcmAiKey_(), aiError: aiError,
+    said: !qs.length ? 'Nothing to ask for ' + gblMonthLabel_(month) + ': the bills check out, or every question is settled.' : done === qs.length ? 'Every question for ' + gblMonthLabel_(month) + ' is answered.' : (qs.length - done) + ' question' + (qs.length - done === 1 ? '' : 's') + ' to answer for ' + gblMonthLabel_(month) + '.' };
+}
+/** The facts the AI reads: amounts, counts, finding kinds, task ages, the claims note. Never a member's name. */
+function gblAiFacts_(g, month, bills, sf, L) {
+  var facts = [];
+  bills.forEach(function (b) {
+    var sm = gblSfMonth_(sf, b.line, b.month);
+    facts.push(GBL.LABEL[b.line] + ' ' + gblMonthLabel_(b.month) + ': bill ' + gcmMoney_(b.due) + ' for ' + b.members + ' ' + (b.line === 'listbill' ? 'policies' : 'members') + (b.arrears ? ', earlier months shown unpaid ' + gcmMoney_(b.arrears) : '') +
+      '; Salesforce ' + (sm.rec ? gcmMoney_(sm.rec.billed) + (sm.rec.paid ? ', paid ' + gcmMoney_(sm.rec.paid) : ', nothing paid yet') : 'has no record') + '.');
+    b.findings.filter(function (f) { return !b.resolved[f.id] && f.level !== 'ok'; }).slice(0, GBL.AI_MAX_FINDINGS).forEach(function (f) { facts.push('[' + f.level + ', ' + f.who + ', ' + f.kind + '] ' + (f.aiText || '').replace(/[A-Z][a-z]+ [A-Z][a-z\-]+/g, 'a member')); });
+    var hist = sf.trans.filter(function (t) { return t.line === b.line; }).slice(0, 6).map(function (t) { return gblMonthLabel_(t.month).slice(0, 3) + ' ' + gcmMoney_(t.billed) + (t.paid ? ' paid' : ' unpaid'); });
+    if (hist.length) facts.push(GBL.LABEL[b.line] + ' last months: ' + hist.join(', ') + '.');
+  });
+  g.tasks.filter(function (t) { return t.open && gblIsBillingTask_(t); }).forEach(function (t) { facts.push('Open billing task, ' + gcmDays_(t.opened, L.today) + ' days, ' + t.status + (t.due && t.due < L.today ? ', past target' : '') + ': ' + gcmTitle_(t.subject, g.name).replace(/[A-Z][a-z]+ [A-Z][a-z\-]+/g, 'a member') + '.'); });
+  var ex = gblExperience_(g, sf, true);
+  if (ex && ex.note) facts.push('Claims: ' + ex.note);
+  return facts;
+}
+function gblAiKey_(prefix, g, month, facts) {
+  return prefix + g.key.slice(0, 30) + '-' + month + '-' + Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, facts.join('|'), Utilities.Charset.UTF_8)).slice(0, 16).replace(/[^A-Za-z0-9]/g, '');
+}
+function gblAiJson_(text) {
+  try { return JSON.parse(text); } catch (e) {}
+  try { return JSON.parse(text.replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '')); } catch (e2) {}
+  return null;
+}
+/** Up to GBL_ASK.AI_MAX questions the rules did not ask. The AI reads counts and kinds, never a name; its questions are
+ *  kept six hours for the same facts, and an answer to one is recorded and posted like any other. */
+function gblAiQuestions_(g, month, bills, ruleQs) {
+  var L = gcmLoad_(), sf = gblSf_(g), facts = gblAiFacts_(g, month, bills, sf, L);
+  facts.push('Already asked by the rules: ' + (ruleQs.map(function (q) { return q.kind; }).join(', ') || 'nothing') + '.');
+  var key = gblAiKey_('gbl-ask-', g, month, facts), cache = CacheService.getScriptCache();
+  try { var c = cache.get(key); if (c) return JSON.parse(c); } catch (e) {}
+  var system = 'You help a Trinidad insurance branch reconcile a group client\'s monthly bills (group health, group life, a pension list bill) against its Salesforce records before the bills go to the employer. ' +
+    'From the facts, write the questions only a person at the branch can answer and that the rule checks listed as already asked have not covered: at most ' + GBL_ASK.AI_MAX + ', each short and specific, each with two or three answers as taps (plain labels, no punctuation at the end). ' +
+    'Answer as JSON: {"questions":[{"text":"…","why":"one sentence on what the answer settles","options":["…","…","Not sure yet"]}]}. Never invent a figure, a name or a date. Staff are not licensed advisers: never ask them to advise the group on cover. If nothing is worth asking, answer {"questions":[]}.';
+  var text = gcmClaude_(system, 'Group: a client of the branch (name withheld). Month: ' + gblMonthLabel_(month) + '.\n\n' + facts.join('\n'));
+  var j = gblAiJson_(text), out = [];
+  ((j && j.questions) || []).slice(0, GBL_ASK.AI_MAX).forEach(function (q, i) {
+    var opts = (q.options || []).map(String).filter(String).slice(0, 4);
+    if (!q.text || opts.length < 2) return;
+    out.push({ id: 'a' + (i + 1), line: '', label: 'The AI asks', kind: 'ai', level: 'ai', who: 'us', finding: '', member: '', members: [], text: String(q.text).slice(0, 300), why: String(q.why || '').slice(0, 300),
+      options: opts.map(function (o, k) { return { v: 'o' + (k + 1), label: o.slice(0, 80), post: /not sure/i.test(o) ? 'still being checked' : '' }; }) });
+  });
+  try { cache.put(key, JSON.stringify(out), GBL_ASK.CACHE_S); } catch (e2) {}
+  return out;
+}
+/** An answer: kept on the bill row, filed on Group Changes, posted on the line's billing task, the finding resolved when the
+ *  answer settles it. What the page opens next (a task, a form, the payment box) comes back as `next`. */
+function gblAnswer_(g, who, b, L) {
+  var month = String(b.month || ''), qid = String(b.q || '').trim(), v = String(b.v || '').trim(), note = String(b.note || '').trim().slice(0, 600);
+  var bills = gblBillRows_(g).filter(function (x) { return x.month === month; });
+  if (!bills.length) return { ok: false, error: 'No bill is stored for that month.' };
+  if (!qid || !v) return { ok: false, error: 'Which question, and which answer?' };
+  var q = null, bill = null;
+  if (/^a\d+$/.test(qid)) {
+    /* the AI's question travels back with its answer: the page sends the words it showed, so no second AI call is made */
+    bill = bills[0]; q = { id: qid, line: '', kind: 'ai', member: '', text: String(b.text || 'A question from the AI').slice(0, 300), options: [{ v: v, label: String(b.label || v).slice(0, 80), post: /unsure|not sure/i.test(String(b.label || v)) ? 'still being checked' : '' }] };
+  } else {
+    bills.forEach(function (x) { if (q) return; var f = x.findings.filter(function (y) { return y.id === qid; })[0]; if (f) { q = gblQuestionOf_(g, x.line, f, month); bill = x; } });
+  }
+  if (!q || !bill) return { ok: false, error: 'That question is no longer open: the finding it came from is resolved or gone.' };
+  var opt = q.options.filter(function (o) { return o.v === v; })[0];
+  if (!opt) return { ok: false, error: 'That answer is not one of the question\'s options.' };
+  var at = gcmWhen_(new Date()), rec = { v: v, label: opt.label, by: who.name, at: at, note: note };
+  bill.answers = bill.answers || {}; bill.answers[q.id] = rec;
+  var patch = { Answers: JSON.stringify(bill.answers).slice(0, 49000) }, resolved = false;
+  if (opt.resolve && !/^a\d+$/.test(q.id)) {
+    var f2 = bill.findings.filter(function (y) { return y.id === q.id; })[0];
+    if (f2) { bill.resolved[f2.id] = { by: who.name, at: at, note: 'Answered: ' + opt.label + (note ? '. ' + note : '') }; patch.Resolved = JSON.stringify(bill.resolved).slice(0, 49000); patch.Status = gblSteps_(bill).open ? bill.status : 'checked'; resolved = true; }
+  }
+  gblBillPatch_(bill, patch);
+  gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: q.line || bill.line, Kind: 'answer', Member: q.member || '', Detail: q.text + ' → ' + opt.label + (note ? '. ' + note : ''), Effective: month + '-01', Amount: 0, Source: 'staff', By: who.name, Status: 'done', 'SF Task': '', 'SF Id': '', Note: q.id }]);
+  var posted = gblPostBilling_(g, q.line || bill.line, month, 'Billing question for ' + gblMonthLabel_(month) + ', answered by ' + who.name + ': "' + q.text + '" → ' + opt.label + (opt.post ? ' (' + opt.post + ')' : '') + (note ? '. ' + note : ''), who);
+  var left = gblQuestions_({ code: b.code, who: b.who, group: b.group, month: month, noai: 'Y' });
+  return { ok: true, answered: rec, resolved: resolved, posted: posted, next: opt.next || null, steps: gblSteps_(bill), left: left.ok ? left.total - left.answered : null,
+    said: 'Answered' + (resolved ? ', and the finding is resolved' : '') + (posted ? '; noted on the billing task' : '') + '.' };
+}
+
+/* ── last month's tasks, read against this month's bill ── */
+function gblMonthInSubject_(s) {
+  var m = /\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/.exec(s || '');
+  if (m) return m[3] + '-' + String(m[1]).padStart(2, '0');
+  var names = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+  var m2 = new RegExp('\\b(' + names.join('|') + ')\\b(?:\\s+(\\d{4}))?', 'i').exec(s || '');
+  if (m2) { var y = m2[2] || gcmToday_().slice(0, 4); return y + '-' + String(names.indexOf(m2[1].toLowerCase()) + 1).padStart(2, '0'); }
+  return '';
+}
+/** The open billing tasks, each with what this month's bills and Salesforce say about it, a verdict (cleared, open, worse)
+ *  and an update ready to post: the AI writes it from the task's history and the evidence (no names reach it), the rules
+ *  write it when the AI is off. Kept six hours for the same facts. */
+function gblTaskUpdates_(p) {
+  var who = gcmWho_(p);
+  if (!who.ok) return who;
+  var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  var month = String(p.month || ''), ml = gblMonthLabel_(month), today = L.today, sf = gblSf_(g);
+  var bills = gblBillRows_(g).filter(function (x) { return x.month === month; }), prevM = gblAddMonths_(month, -1);
+  var tasks = g.tasks.filter(function (t) { return t.open && gblIsBillingTask_(t); }).sort(function (a, b) { return (a.opened < b.opened ? -1 : 1); }).slice(0, GBL_UPD.MAX);
+  var feed = gcmFeed_(tasks.map(function (t) { return t.id; }));
+  var lines = {};
+  bills.forEach(function (b) { lines[b.line] = { bill: b, members: gblLines_(g, b.line, month), prev: gblLines_(g, b.line, prevM) }; });
+  var out = tasks.map(function (t) {
+    var subj = String(t.subject || ''), line = gblLineOfRt_(subj), ev = [], verdict = 'open', kind = 'other';
+    var tm = gblMonthInSubject_(subj), money = gcmMoney_;
+    if (/terminat|cancel|remov|left|leaver|resign/i.test(subj)) kind = 'leaver'; else if (/enrol|add|join|new member/i.test(subj)) kind = 'joiner'; else if (/payment|arrear|outstanding|unpaid|owed|receipt|received/i.test(subj)) kind = 'payment';
+    else if (/renewal|rate/i.test(subj)) kind = 'renewal'; else if (/bill|billing|variance|reconcil/i.test(subj)) kind = 'bill';
+    var L2 = line ? lines[line] : null, on = [], off = [], cr = [];
+    Object.keys(lines).forEach(function (ln) {
+      var x = lines[ln];
+      x.members.filter(function (m) { return m.kind === 'member' && gblSamePerson_(subj, m.name); }).forEach(function (m) { on.push({ line: ln, m: m }); });
+      x.prev.filter(function (m) { return m.kind === 'member' && gblSamePerson_(subj, m.name) && !x.members.some(function (c) { return c.kind === 'member' && gblSamePerson_(c.name, m.name); }); }).forEach(function (m) { off.push({ line: ln, m: m }); });
+      x.members.filter(function (m) { return m.kind !== 'member' && gblSamePerson_(subj, m.name); }).forEach(function (m) { cr.push({ line: ln, m: m }); });
+    });
+    on.forEach(function (x) { ev.push('On the ' + ml + ' ' + GBL.LABEL[x.line].toLowerCase() + ' bill as ' + (x.m.tier || 'a member') + ', ' + money(x.m.premium) + (x.m.start ? ', from ' + tDmy_(x.m.start) : '') + '.'); });
+    off.forEach(function (x) { ev.push('Off the ' + ml + ' ' + GBL.LABEL[x.line].toLowerCase() + ' bill (was on the ' + gblMonthLabel_(prevM) + ' bill).'); });
+    cr.forEach(function (x) { ev.push((x.m.kind === 'cancel' ? 'A credit' : 'A back-charge') + ' on the ' + ml + ' ' + GBL.LABEL[x.line].toLowerCase() + ' bill for ' + gblMonthLabel_(x.m.forMonth || '') + ': ' + money(x.m.premium) + '.'); });
+    if (L2) { var b = L2.bill; ev.push('The ' + ml + ' ' + GBL.LABEL[line].toLowerCase() + ' bill: ' + money(b.due) + ' for ' + b.members + ' ' + (line === 'listbill' ? 'policies' : 'members') + (b.arrears ? ', ' + money(b.arrears) + ' of earlier months shown unpaid' : '') + (b.reconciledAt ? ', reconciled ' + b.reconciledAt : '') + (b.sentAt ? ', sent ' + b.sentAt : '') + '.'); }
+    if (tm) { var sm = gblSfMonth_(sf, line || 'health', tm); if (sm.rec) ev.push('Salesforce for ' + gblMonthLabel_(tm) + ': billed ' + money(sm.rec.billed) + ', ' + (sm.rec.paid ? 'paid ' + money(sm.rec.paid) + (sm.pays.length ? ' on ' + tDmy_(sm.pays[0].paidOn) : '') : 'nothing paid yet') + (sm.rec.reconciled ? ', reconciled' : '') + '.'); }
+    var am = /\$\s?([\d,]+\.\d{2})/.exec(subj);
+    if (am) { var amt = Number(am[1].replace(/,/g, '')), pay = sf.pays.filter(function (q) { return Math.abs(q.amount - amt) < 0.05; })[0]; if (pay) ev.push('A payment of ' + money(amt) + ' is keyed in Salesforce, dated ' + tDmy_(pay.paidOn) + (pay.method ? ' by ' + pay.method : '') + '.'); }
+    if (kind === 'leaver') verdict = off.length || (!on.length && Object.keys(lines).length) ? 'cleared' : 'open';
+    else if (kind === 'joiner') verdict = on.length ? 'cleared' : 'open';
+    else if (kind === 'payment') { var smp = tm ? gblSfMonth_(sf, line || 'health', tm) : { rec: null, pays: [] }; verdict = smp.rec && smp.rec.paid >= smp.rec.billed - 0.05 && smp.rec.billed ? 'cleared' : (L2 && L2.bill.arrears > 0 ? 'worse' : 'open'); }
+    else if (kind === 'bill' && L2 && L2.bill.sentAt) verdict = 'cleared';
+    else if (kind === 'renewal' && L2) verdict = L2.bill.findings.some(function (f) { return f.kind === 'jump' && !L2.bill.resolved[f.id]; }) ? 'open' : 'open';
+    if (!ev.length) ev.push('Nothing on the ' + ml + ' bills names this task: it stands as it was.');
+    var posts = (feed[t.id15] || []).slice(0, GBL_UPD.POSTS);
+    return { id: t.id, id15: t.id15, title: gcmTitle_(t.subject, g.name), subject: t.subject, owner: t.owner, opened: t.opened, age: gcmDays_(t.opened, today), due: t.due, late: !!(t.due && t.due < today), status: t.status, open: true, line: line, kind: kind,
+      posts: posts, lastPost: posts[0] || null, evidence: ev, verdict: verdict, canClose: verdict === 'cleared', shown: gcmShown_(g, t), update: '' };
+  });
+  var aiError = '';
+  if (out.length && gcmAiKey_() && !gcmYes_(p.noai)) { try { gblTaskUpdatesAi_(g, month, out); } catch (e) { aiError = String(e && e.message ? e.message : e).slice(0, 160); } }
+  out.forEach(function (u) {
+    if (!u.update) u.update = 'Update from the ' + ml + ' billing review: ' + u.evidence.join(' ') + (u.verdict === 'cleared' ? ' This looks settled: closing unless anyone objects.' : u.verdict === 'worse' ? ' The position has got worse since the task was opened: chasing it this week.' : ' Still open; next step to follow.');
+  });
+  return { ok: true, month: month, monthLabel: ml, tasks: out, ai: !!gcmAiKey_(), aiError: aiError, feedError: feed._error || '',
+    said: !out.length ? 'No open billing task on this group.' : out.length + ' open billing task' + (out.length === 1 ? '' : 's') + ': ' + out.filter(function (u) { return u.verdict === 'cleared'; }).length + ' look' + (out.filter(function (u) { return u.verdict === 'cleared'; }).length === 1 ? 's' : '') + ' settled by the ' + ml + ' bills.' };
+}
+/** One AI call for every task: the subject with names taken out, the last posts, the evidence; back comes the update in the
+ *  staff member's voice and a verdict. Kept six hours for the same facts. */
+function gblTaskUpdatesAi_(g, month, list) {
+  var scrub = function (s) { return String(s || '').replace(new RegExp(g.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), 'the group').replace(/[A-Z][a-z]+,?\s[A-Z][a-z\-]+/g, 'a member').replace(/\b[A-Z]{3,},\s*[A-Z]{3,}\b/g, 'a member'); };
+  var facts = list.map(function (u, i) { return '[' + (i + 1) + '] ' + scrub(u.title) + ' · opened ' + u.age + ' days ago, ' + u.status + (u.late ? ', past target' : '') + '. Last posts: ' + (u.posts.length ? u.posts.map(function (p) { return scrub(p.text).slice(0, 200); }).join(' | ') : 'none') + '. This month: ' + u.evidence.map(scrub).join(' ') + ' Rule verdict: ' + u.verdict + '.'; });
+  var key = gblAiKey_('gbl-upd-', g, month, facts), cache = CacheService.getScriptCache(), j = null;
+  try { var c = cache.get(key); if (c) j = JSON.parse(c); } catch (e) {}
+  if (!j) {
+    var system = 'You write Chatter updates for a Trinidad insurance branch\'s open billing tasks on a group client, from what this month\'s bills and Salesforce show. For each numbered task answer with {"n":<number>,"update":"two or three plain sentences in the first person plural (we), saying what the new bill shows about it and the next step","verdict":"cleared|open|worse"}. ' +
+      'cleared means the bill proves the task\'s work is done; worse means the position deteriorated. Never invent a figure, a name or a date; refer to people as "the member". Answer as JSON: {"updates":[…]}.';
+    var text = gcmClaude_(system, 'Month: ' + gblMonthLabel_(month) + '.\n\n' + facts.join('\n'));
+    j = gblAiJson_(text) || {};
+    try { cache.put(key, JSON.stringify(j), GBL_UPD.CACHE_S); } catch (e2) {}
+  }
+  ((j && j.updates) || []).forEach(function (u) {
+    var i = Number(u.n) - 1; if (!(i >= 0 && i < list.length)) return;
+    if (u.update) list[i].update = String(u.update).slice(0, 1500);
+    if (/^(cleared|open|worse)$/.test(String(u.verdict || ''))) { list[i].verdict = u.verdict; list[i].canClose = u.verdict === 'cleared'; }
+    list[i].byAi = true;
+  });
+}
+/** Post an update on a task (the owner mentioned and e-mailed) and, when asked, close it in Salesforce. */
+function gblTaskUpdate_(g, who, b) {
+  var text = String(b.text || '').trim().slice(0, 2000);
+  if (!text) return { ok: false, error: 'Write the update first.' };
+  var t = g.tasks.filter(function (x) { return x.id15 === gcmId15_(b.task); })[0];
+  if (!t) return { ok: false, error: 'That task is not on this group.' };
+  var r = gblNoteTask_(g, who, { code: b.code, who: b.who, group: b.group, task: b.task, text: text, notify: b.notify, forGroup: '' });
+  if (!r.ok) return r;
+  var closed = false, closeNote = '';
+  if (gcmYes_(b.close)) {
+    if (!tSfOn_()) closeNote = 'Salesforce is not linked, so the task was not closed.';
+    else { try { tSfSend_('patch', '/sobjects/Task/' + t.id, { Status: 'Completed' }); closed = true; } catch (e) { closeNote = 'Salesforce would not close it: ' + String(e && e.message ? e.message : e).slice(0, 140); } }
+    if (closed) { try { t.open = false; t.status = 'Completed'; } catch (e2) {} }
+  }
+  /* every update is on the register, closed or not, so the door can show which of last month's tasks this month has dealt with */
+  gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: gblLineOfRt_(t.subject) || '', Kind: closed ? 'taskclosed' : 'taskupdate', Member: '', Detail: gcmTitle_(t.subject, g.name) + (closed ? ' closed after the billing review' : ': update posted after the billing review') + ': ' + text.slice(0, 400), Effective: String(b.month || '') ? String(b.month) + '-01' : '', Amount: 0, Source: 'staff', By: who.name, Status: closed ? 'done' : 'open', 'SF Task': t.id, 'SF Id': '', Note: closeNote }]);
+  return { ok: true, closed: closed, said: r.said + (closed ? ' The task is closed.' : closeNote ? ' ' + closeNote : '') };
+}
+
+/* ── the people: everyone on the bills, their dependants, who is coming of age and who is turning 65 ── */
+/** Every member on the month's health and life bills matched to their Salesforce record (date of birth, dependants from the
+ *  Relationship Group), with what the dates say: turning 65 (convert to an individual plan), a dependant reaching the
+ *  dependant age, a family tier with nobody on record, no date of birth. The pension list and what the records hold for
+ *  members not on these bills come from the Group Milestones tab. Counts only go to the group's page. */
+function gblPeopleStep_(p) {
+  var who = gcmWho_(p);
+  if (!who.ok) return who;
+  var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  var month = String(p.month || ''), today = L.today, mem = gblMembers_(g, gcmYes_(p.fresh)), depAge = gcmLifeNum_('GCM_DEP_AGE', GCM_LIFE.DEP_AGE);
+  var people = [], byKey = {};
+  var find = function (name) { return people.filter(function (x) { return gblSamePerson_(x.name, name); })[0]; };
+  var sfOf = function (line, l) {
+    var k = line === 'health' ? gblMemberKey_(l.id) : gblCertKey_(l.id), hit = null;
+    if (k) hit = mem.members.filter(function (m) { return m.line === line && (line === 'health' ? gblMemberKey_(m.policy) : gblCertKey_(m.cert || m.policy)) === k; })[0];
+    return hit || mem.members.filter(function (m) { return gblSamePerson_(m.name, l.name); })[0] || null;
+  };
+  ['health', 'life'].forEach(function (line) {
+    gblLines_(g, line, month).filter(function (l) { return l.kind === 'member'; }).forEach(function (l) {
+      var per = find(l.name), sfm = sfOf(line, l);
+      if (!per) { per = { name: gblNice_(l.name), raw: l.name, ids: {}, lines: [], tier: '', premium: 0, sf: !!sfm, dob: '', age: null, gender: '', deps: [], flags: [] }; people.push(per); }
+      per.lines.push(line); per.ids[line] = l.id; per.premium = gblR_(per.premium + (l.premium || 0));
+      if (line === 'health') per.tier = l.tier || per.tier;
+      if (sfm) { per.sf = true; per.dob = per.dob || sfm.dob || ''; per.gender = per.gender || sfm.gender || ''; if (sfm.deps && sfm.deps.length && !per.deps.length) per.deps = sfm.deps.map(function (x) { return { rel: x.rel, name: x.name, dob: x.dob, gender: x.gender }; }); per.email = per.email || sfm.emailPersonal || sfm.emailWork || ''; per.contactId = per.contactId || sfm.contactId || ''; }
+    });
+  });
+  /* the records: the Group Milestones tab for this group, matched by name onto the people, the rest listed apart */
+  var life = (g.life || []).filter(function (r) { return r.kind !== 'summary'; }), onRecord = [];
+  life.forEach(function (r) {
+    var per = find(r.person) || (r.member ? find(r.member) : null);
+    var row = { kind: r.kind, person: r.person, member: r.member, line: r.line, date: r.date, inDays: r.date ? gcmDays_(today, r.date) : null, age: r.ageAt, ownership: r.ownership, task: r.task, assumed: r.assumed === 'Y' };
+    if (per) { per.record = per.record || []; per.record.push(row); if (!per.dob && r.born) per.dob = r.born; } else onRecord.push(row);
+  });
+  var counts = { members: people.length, matched: 0, convert: 0, over65: 0, depAge: 0, depOver: 0, tierDeps: 0, tierSingle: 0, nodob: 0, nosf: 0, retire: 0, deps: 0 };
+  people.forEach(function (per) {
+    if (per.sf) counts.matched++; else { counts.nosf++; per.flags.push({ kind: 'nosf', level: 'data', text: 'No record in Salesforce for this member: see the findings on the bill.' }); }
+    if (per.dob) {
+      per.age = gcmAgeOn_(per.dob, today);
+      var at65 = gcmAddYears_(per.dob, GCM_LIFE.CONVERT_AGE), d65 = gcmDays_(today, at65);
+      if (d65 !== null && d65 <= GBL_PEOPLE.AHEAD && d65 >= -GBL_PEOPLE.AFTER) { counts.convert++; per.flags.push({ kind: 'convert', level: 'act', date: at65, text: (d65 >= 0 ? 'Turns ' : 'Turned ') + GCM_LIFE.CONVERT_AGE + ' on ' + tDmy_(at65) + ': group cover ends at ' + GCM_LIFE.CONVERT_AGE + '. Time to offer an individual plan.' }); }
+      else if (d65 !== null && d65 < -GBL_PEOPLE.AFTER && per.lines.indexOf('health') >= 0) { counts.over65++; per.flags.push({ kind: 'over65', level: 'check', date: at65, text: 'Aged ' + per.age + ' and still on the group health bill: check eligibility with Head Office.' }); }
+    } else if (per.sf) { counts.nodob++; per.flags.push({ kind: 'nodob', level: 'data', text: 'No date of birth on record: ask the group for it.' }); }
+    per.deps.forEach(function (dp) {
+      counts.deps++;
+      if (!dp.dob) return;
+      dp.age = gcmAgeOn_(dp.dob, today);
+      var atD = gcmAddYears_(dp.dob, depAge), dd = gcmDays_(today, atD);
+      if (/SPOUSE|WIFE|HUSBAND|PARTNER/i.test(dp.rel || '')) return;
+      if (dd !== null && dd <= GBL_PEOPLE.AHEAD && dd >= -GBL_PEOPLE.AFTER) { counts.depAge++; dp.coming = atD; per.flags.push({ kind: 'depage', level: 'act', date: atD, dep: dp.name, text: dp.name + ' (' + String(dp.rel || 'dependant').toLowerCase() + ') ' + (dd >= 0 ? 'turns ' : 'turned ') + depAge + ' on ' + tDmy_(atD) + ': comes off the plan. Offer a plan of their own.' }); }
+      else if (dd !== null && dd < -GBL_PEOPLE.AFTER) { counts.depOver++; per.flags.push({ kind: 'depover', level: 'check', date: atD, dep: dp.name, text: dp.name + ' is ' + dp.age + ', past the dependant age of ' + depAge + ', and still on record: check the plan.' }); }
+    });
+    if (per.tier && per.sf) {
+      if (GBL_PEOPLE.DEP_TIER.test(per.tier) && !per.deps.length) { counts.tierDeps++; per.flags.push({ kind: 'tierdeps', level: 'check', text: 'Tier "' + per.tier + '" but no dependant on record in Salesforce: add them to the Relationship Group.' }); }
+      else if (GBL_PEOPLE.SINGLE_TIER.test(per.tier) && per.deps.length) { counts.tierSingle++; per.flags.push({ kind: 'tiersingle', level: 'check', text: per.deps.length + ' dependant' + (per.deps.length === 1 ? '' : 's') + ' on record but the tier is "' + per.tier + '": check the tier with the group.' }); }
+    }
+    (per.record || []).forEach(function (r) { if (r.kind === 'retire') { counts.retire++; per.flags.push({ kind: 'retire', level: 'act', date: r.date, text: 'Retires ' + tDmy_(r.date) + ' at ' + r.age + ' on ' + (r.ownership === 'Company' ? 'the company' : 'a personal') + ' pension' + (r.assumed ? ' (age assumed: confirm it)' : '') + (r.task ? '; projection task open' : '; projection task to open') + '.' }); } });
+    per.flags.sort(function (a, b) { return ({ act: 0, check: 1, data: 2 })[a.level] - ({ act: 0, check: 1, data: 2 })[b.level]; });
+  });
+  people.sort(function (a, b) { return (b.flags.filter(function (f) { return f.level === 'act'; }).length - a.flags.filter(function (f) { return f.level === 'act'; }).length) || (b.flags.length - a.flags.length) || (a.name < b.name ? -1 : 1); });
+  var forGroup = { convert: counts.convert + onRecord.filter(function (r) { return r.kind === 'convert65'; }).length, depAge: counts.depAge + onRecord.filter(function (r) { return r.kind === 'dependent'; }).length, retire: counts.retire + onRecord.filter(function (r) { return r.kind === 'retire' && r.ownership === 'Company'; }).length, nodob: counts.nodob + onRecord.filter(function (r) { return r.kind === 'nodob'; }).length, depAgeAt: depAge, convertAge: GCM_LIFE.CONVERT_AGE };
+  return { ok: true, month: month, monthLabel: gblMonthLabel_(month), salesforce: mem.ok, sfError: mem.error || '', depAge: depAge, convertAge: GCM_LIFE.CONVERT_AGE, people: people, onRecord: onRecord, counts: counts, forGroup: forGroup, live: gblLive_(),
+    said: !people.length ? 'Upload the health or life bill first: the people come from the bill.' : people.length + ' on the bills, ' + counts.matched + ' matched to a record; ' + counts.convert + ' turning ' + GCM_LIFE.CONVERT_AGE + ', ' + counts.depAge + ' dependant' + (counts.depAge === 1 ? '' : 's') + ' coming of age, ' + (counts.tierDeps + counts.tierSingle) + ' tier' + (counts.tierDeps + counts.tierSingle === 1 ? '' : 's') + ' to check, ' + counts.nodob + ' with no date of birth.' };
+}
+/** A letter to a member about a conversion or a dependant coming of age: drafted here, previewed by staff, sent only on a
+ *  press by someone who may act for the group, from support@, in test mode to the staff member until gblGoLive. */
+function gblMemberLetter_(g, who, b, L) {
+  var kind = String(b.kind || 'convert'), name = String(b.member || '').trim().slice(0, 120), dep = String(b.dep || '').trim().slice(0, 120), date = gcmYmd_(b.date || '') || '', email = String(b.email || '').trim().toLowerCase();
+  if (!name) return { ok: false, error: 'Whose letter is it?' };
+  var first = name.split(/[\s,]+/).filter(String), fn = /,/.test(name) ? (name.split(',')[1] || '').trim().split(/\s+/)[0] : first[0];
+  fn = fn ? fn.charAt(0).toUpperCase() + fn.slice(1).toLowerCase() : 'there';
+  var E = tEsc_, signer = gcmSigner_(who, g), age = GCM_LIFE.CONVERT_AGE, depAge = gcmLifeNum_('GCM_DEP_AGE', GCM_LIFE.DEP_AGE);
+  var subject, paras;
+  if (kind === 'depage') {
+    subject = 'Keeping ' + (dep || 'your dependant') + ' covered beyond ' + depAge;
+    paras = ['Your group health plan through ' + g.name + ' covers a dependant up to the age of ' + depAge + '. ' + (dep || 'Your dependant') + (date ? ' reaches that age on ' + tDmy_(date) : ' is reaching that age') + ', and the group cover for them ends then.',
+      'Nothing has to lapse. Guardian Life of the Caribbean offers individual health plans a young adult can move onto without a break in cover, and our branch arranges it with you.',
+      'Reply to this e-mail, or call us on (868) 226-6461, and a licensed agent from our branch will go through the options with you. There is no charge for the conversation.'];
+  } else {
+    subject = 'Your group cover at ' + age + ', and what comes next';
+    paras = ['Your group cover through ' + g.name + ' runs to age ' + age + '. ' + (date ? 'You reach it on ' + tDmy_(date) + '.' : 'You are reaching it soon.'),
+      'Nothing has to lapse. Guardian Life of the Caribbean offers individual plans you can convert to without a break in cover, and our branch arranges the move with you in good time.',
+      'Reply to this e-mail, or call us on (868) 226-6461, and a licensed agent from our branch will go through the options with you. There is no charge for the conversation.'];
+  }
+  var html = '<div style="background:#f3f5f9;padding:20px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse;border:1px solid #e2e7ef">' +
+    '<tr><td style="padding:18px 26px;border-bottom:3px solid #1d5bc4"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
+    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#142033">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Guardian Life of the Caribbean</div></td></tr></table></td></tr>' +
+    '<tr><td style="padding:22px 26px 0;font:700 22px/1.3 Arial,sans-serif;color:#142033">' + E(subject) + '</td></tr>' +
+    '<tr><td style="padding:16px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#142033"><p style="margin:0 0 12px">Dear ' + E(fn) + ',</p>' + paras.map(function (x) { return '<p style="margin:0 0 12px">' + E(x) + '</p>'; }).join('') +
+    '<p style="margin:0">Warm regards,<br><b>' + E(signer) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br><span style="color:#5a687d">9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p></td></tr></table></div>';
+  if (!gcmYes_(b.send)) return { ok: true, preview: true, subject: subject, html: html, to: email, live: gblLive_(), said: email ? 'Preview. It goes to ' + email + (gblLive_() ? '' : ' once the bills are live; in test mode to you') + '.' : 'Preview. No e-mail is on record for this member: add it in Salesforce, or send the letter through the group.' };
+  if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on this project, so nothing can go from support@.' };
+  var live = gblLive_(), test = !live, to = test ? [who.email || gcmDayManager_()].filter(String) : [email].filter(String);
+  if (!to.length) return { ok: false, error: test ? 'Your e-mail is not on the Agent Skill Bank, so the test copy has nowhere to go.' : 'No e-mail is on record for this member.' };
+  var body = (test ? '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST.</b> This letter would go to <b>' + E(email || 'no address on record') + '</b>. The bills are in test mode (gblGoLive switches them on): nothing has reached the member.</div>' : '') + html;
+  try { tMsSend_(to[0], (test ? '[TEST] ' : '') + subject, body, { cc: test ? (TRANSITION.CC || []).slice() : gcmCc_(g), replyTo: TRANSITION.MS_FROM }); }
+  catch (e) { return { ok: false, error: 'Not sent: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
+  gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: 'health', Kind: 'letter', Member: name, Detail: subject + (test ? ' (TEST to ' + to.join(', ') + ')' : ' sent to ' + to.join(', ')), Effective: date, Amount: 0, Source: 'staff', By: who.name, Status: test ? 'test' : 'done', 'SF Task': '', 'SF Id': '', Note: kind }]);
+  gcmAppend_(GCM.SENDS, [{ When: new Date(), Group: g.name, Staff: signer, To: to.join(', '), Cc: '', Subject: subject, Items: 0, 'Task Ids': kind + ':' + name, Letter: paras.join('\n\n').slice(0, 20000), Via: 'support@', Status: test ? 'member letter test' : 'member letter sent', Html: gcmKeepHtml_(html) }]);
+  return { ok: true, test: test, to: to, said: test ? 'Test copy sent to ' + to.join(', ') + '. Nothing reached the member.' : 'Sent to ' + to.join(', ') + ' from support@.' };
+}
+
+/* ── the statement: one page for the group, this month's lines and what is still owed from earlier invoices ── */
+/** The statement's figures: the month's bills, each line's amount; the earlier months Salesforce shows as unpaid or part
+ *  paid (and what Head Office's own invoice shows as outstanding, when it differs); what changed since last month, as counts;
+ *  what is attached. Counts only: no member's name. */
+function gblStatementData_(g, month, L, sf, bills) {
+  var money = gcmMoney_, lines = [], owed = [], total = 0, changes = { joined: 0, left: 0, moved: 0 };
+  bills.forEach(function (b) {
+    total = gblR_(total + b.due);
+    var f = b.findings || [], cnt = function (k) { return f.filter(function (x) { return x.kind === k; }).reduce(function (s, x) { return s + ((x.members || []).length || 1); }, 0); };
+    var j = b.line === 'life' && b.summary ? (b.summary.joined || 0) : cnt('joined'), l = b.line === 'life' && b.summary ? (b.summary.left || 0) : cnt('left'), m = cnt('moved');
+    changes.joined += j; changes.left += l; changes.moved += m;
+    lines.push({ line: b.line, label: GBL.LABEL[b.line], ref: b.ref, due: b.due, dueBy: b.dueBy, members: b.members, arrears: b.arrears, joined: j, left: l, moved: m, files: b.files, status: b.status, sentAt: b.sentAt });
+  });
+  var owedTotal = 0, invoiceOwed = 0;
+  bills.forEach(function (b) { invoiceOwed = gblR_(invoiceOwed + (b.arrears || 0)); });
+  sf.trans.filter(function (t) { return t.month < month && t.month >= gblAddMonths_(month, -14) && t.billed > 0; }).forEach(function (t) {
+    var pays = sf.pays.filter(function (q) { return q.trans === t.id15; }), paid = Math.max(t.paid, pays.reduce(function (s, q) { return s + q.amount; }, 0));
+    if (paid < t.billed - 0.05) { var o = gblR_(t.billed - paid); owedTotal = gblR_(owedTotal + o); owed.push({ line: t.line, label: GBL.LABEL[t.line] || t.rt, month: t.month, monthLabel: gblMonthLabel_(t.month), billed: t.billed, paid: paid, owed: o, status: paid > 0 ? 'Part paid' : 'Open' }); }
+  });
+  owed.sort(function (a, b) { return a.month < b.month ? -1 : a.month > b.month ? 1 : 0; });
+  var dueBy = bills.map(function (x) { return x.dueBy; }).filter(String).sort()[0] || '';
+  return { month: month, label: gblMonthLabel_(month), group: g.name, listBill: g.bills[0] || '', lines: lines, total: total, dueBy: dueBy, owed: owed, owedTotal: owedTotal, invoiceOwed: invoiceOwed, grand: gblR_(total + owedTotal), changes: changes,
+    attachments: bills.map(function (b) { return b.files; }).filter(String), asAt: tDmy_(L.today), today: L.today };
+}
+/** The statement as a page: a table of the month's lines, the earlier months still owed, what changed, what is attached.
+ *  Tables and inline styles only, so it reads in any mail app and renders to PDF. */
+function gblStatementHtml_(g, d, o) {
+  o = o || {};
+  var E = tEsc_, money = gcmMoney_, td = 'style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:14px Arial,sans-serif;color:#142033"', tdr = 'style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:14px Arial,sans-serif;color:#142033;text-align:right;white-space:nowrap"';
+  var th = 'style="text-align:left;padding:8px 10px;border-bottom:2px solid #1d5bc4;font:700 12px Arial,sans-serif;color:#1d5bc4;text-transform:uppercase;letter-spacing:.04em"', thr = th.replace('text-align:left', 'text-align:right');
+  var h = '<div style="background:#f3f5f9;padding:' + (o.inline ? '0' : '20px 0') + '"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:680px;margin:0 auto;background:#ffffff;border-collapse:collapse;border:1px solid #e2e7ef">';
+  if (!o.inline) h += '<tr><td style="padding:18px 26px;border-bottom:3px solid #1d5bc4"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
+    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#142033">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Guardian Life of the Caribbean · Group billing</div></td></tr></table></td>' +
+    '<td style="text-align:right;font:12px/1.5 Arial,sans-serif;color:#5a687d">Statement of account<br>as at ' + E(d.asAt) + '</td></tr></table></td></tr>';
+  h += '<tr><td style="padding:' + (o.inline ? '8px 0 0' : '22px 26px 0') + '"><div style="font:700 ' + (o.inline ? '17' : '22') + 'px/1.3 Arial,sans-serif;color:#142033">' + (o.inline ? 'Statement of account · ' : '') + E(d.label) + ' billing' + (o.inline ? '' : ' · statement of account') + '</div>' +
+    '<div style="font:14px/1.4 Arial,sans-serif;color:#5a687d;margin-top:6px">' + E(d.group) + (d.listBill ? ' · list bill ' + E(d.listBill) : '') + (d.dueBy ? ' · payable by ' + E(tDmy_(d.dueBy)) : '') + '</div></td></tr>';
+  h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '18px 26px 0') + '"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr><th ' + th + '>This month</th><th ' + thr + '>Members</th><th ' + thr + '>Due</th></tr>' +
+    d.lines.map(function (l) { return '<tr><td ' + td + '>' + E(l.label) + (l.ref ? '<div style="font:12px Arial,sans-serif;color:#5a687d">Ref ' + E(l.ref) + '</div>' : '') + '</td><td ' + tdr + '>' + (l.members || '') + '</td><td ' + tdr + '>' + E(money(l.due)) + '</td></tr>'; }).join('') +
+    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700;background:#ebf2fd') + ' colspan="2">Total for ' + E(d.label) + '</td><td ' + tdr.replace('color:#142033', 'color:#1d5bc4;font-weight:700;background:#ebf2fd') + '>' + E(money(d.total)) + '</td></tr></table></td></tr>';
+  if (d.owed.length) h += '<tr><td style="padding:' + (o.inline ? '14px 0 0' : '18px 26px 0') + '"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr><th ' + th + '>Still owed from earlier invoices</th><th ' + thr + '>Billed</th><th ' + thr + '>Received</th><th ' + thr + '>Owed</th></tr>' +
+    d.owed.map(function (x) { return '<tr><td ' + td + '>' + E(x.label) + ' · ' + E(x.monthLabel) + '</td><td ' + tdr + '>' + E(money(x.billed)) + '</td><td ' + tdr + '>' + (x.paid ? E(money(x.paid)) : '–') + '</td><td ' + tdr + '>' + E(money(x.owed)) + '</td></tr>'; }).join('') +
+    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700;background:#fdf1e1') + ' colspan="3">Earlier months still owed</td><td ' + tdr.replace('color:#142033', 'color:#a64b05;font-weight:700;background:#fdf1e1') + '>' + E(money(d.owedTotal)) + '</td></tr>' +
+    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700') + ' colspan="3">Total to bring the account up to date</td><td ' + tdr.replace('color:#142033', 'color:#142033;font-weight:700') + '>' + E(money(d.grand)) + '</td></tr></table>' +
+    (d.invoiceOwed && Math.abs(d.invoiceOwed - d.owedTotal) > 0.05 ? '<p style="margin:8px 0 0;font:12px/1.5 Arial,sans-serif;color:#5a687d">Head Office\'s invoice shows ' + E(money(d.invoiceOwed)) + ' outstanding from earlier months; our records show ' + E(money(d.owedTotal)) + '. If you have paid any of it, tell us and we will have the payment matched.</p>' : '') + '</td></tr>';
+  else h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#067647"><b>Nothing is owed from earlier months.</b> Thank you.' + (d.invoiceOwed ? ' Head Office\'s invoice still shows ' + E(money(d.invoiceOwed)) + ' outstanding: our records show it paid, and we are having it cleared.' : '') + '</td></tr>';
+  var ch = [];
+  if (d.changes.joined) ch.push(d.changes.joined + ' joined');
+  if (d.changes.left) ch.push(d.changes.left + ' left');
+  if (d.changes.moved) ch.push(d.changes.moved + ' changed tier or premium');
+  h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#142033"><b>Since last month:</b> ' + (ch.length ? E(ch.join(', ')) + '. The names are on the attached bills.' : 'no one joined or left, and no premium changed.') + '</td></tr>';
+  if (d.attachments.length) h += '<tr><td style="padding:' + (o.inline ? '8px 0 0' : '10px 26px 0') + ';font:13px/1.5 Arial,sans-serif;color:#5a687d"><b>Attached:</b> ' + E(d.attachments.join('; ')) + '.</td></tr>';
+  if (!o.inline) h += '<tr><td style="padding:18px 26px 22px;font:13px/1.5 Arial,sans-serif;color:#5a687d">Please pay as you do today and quote the invoice reference. Tell us about a payment, a joiner or a leaver on your service page, or reply to this e-mail.<br>Ricky Rampersad Branch, Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</td></tr>';
+  return h + '</table></div>';
+}
+/** The statement as a PDF blob, or null where the conversion is not available. */
+function gblStatementPdf_(html, name) {
+  try { var pdf = Utilities.newBlob('<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0">' + html + '</body></html>', 'text/html', name + '.html').getAs('application/pdf'); pdf.setName(name + '.pdf'); return pdf; } catch (e) { return null; }
+}
+function gblStatementName_(g, month) { return ('Statement - ' + g.name + ' - ' + gblMonthLabel_(month)).replace(/[^\w\s\-]/g, '').replace(/\s+/g, ' ').slice(0, 90); }
+/** The statement route: the figures, the page, and the PDF when it can be made. */
+function gblStatement_(p) {
+  var who = gcmWho_(p);
+  if (!who.ok) return who;
+  var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
+  if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  var month = String(p.month || ''), bills = gblBillRows_(g).filter(function (x) { return x.month === month; });
+  if (!bills.length) return { ok: true, month: month, data: null, html: '', pdf: '', said: 'Upload a bill for ' + gblMonthLabel_(month) + ' first: the statement is written from the bills.' };
+  var sf = gblSf_(g), d = gblStatementData_(g, month, L, sf, bills), html = gblStatementHtml_(g, d, {});
+  var pdf = gcmYes_(p.pdf) ? gblStatementPdf_(html, gblStatementName_(g, month)) : null;
+  return { ok: true, month: month, data: d, html: html, pdf: pdf ? gblPdfB64_(pdf) : '', pdfName: gblStatementName_(g, month) + '.pdf', live: gblLive_(),
+    said: d.owed.length ? gcmMoney_(d.owedTotal) + ' still owed from ' + d.owed.length + ' earlier month' + (d.owed.length === 1 ? '' : 's') + '; ' + gcmMoney_(d.total) + ' this month.' : gcmMoney_(d.total) + ' this month, nothing owed from earlier months.' };
+}
+/** The statement's PDF for a send, or null. */
+function gblStatementBlob_(g, month, bills, L) {
+  try { var d = gblStatementData_(g, month, L, gblSf_(g), bills); return gblStatementPdf_(gblStatementHtml_(g, d, {}), gblStatementName_(g, month)); } catch (e) { return null; }
 }

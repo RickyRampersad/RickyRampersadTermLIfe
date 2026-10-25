@@ -260,7 +260,22 @@ something is written.
 - **The owner's task is chased on Chatter every three working days** inside the 10:30 group day, until EB Customer
   Care replies at support@ naming the member or the task is closed; the fifth follow-up goes to the branch manager.
   `gblFormChasePreview` (editor) shows what would be posted; `gblFormChaseNow` runs it.
-- **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the two new routes, `gcm.clientForm` and
+- **The Billings door (25 October 2026).** The billing is its own page, `groupclientmanagement/billing.html`: the
+  staff page's **Billing** buttons open it, with the same sign-in, and the weekly letters stay where they were. One
+  group and one month at a time, in eight steps with a count on each: upload the bills (and the claims experience);
+  what the checks found, with the AI's read of the month first; **answer the questions** (each open finding as a
+  question with taps, plus the AI's own; an answer goes onto the billing task's Chatter in the staff member's name and
+  settles the finding or opens what comes next: a task, a payment, the termination form); **last month's tasks** (every
+  open billing task read against this month's bills, with an update written for you to post, the owner told, and the
+  task closed when it is settled); terminations and changes (Record a change, the forms); **the people** (everyone on
+  the bills matched to Salesforce: turning 65 to convert, dependants reaching the dependant age (`GCM_DEP_AGE`),
+  retirements, tiers and records to put right, with a letter to the member or a task); **the statement of account**
+  (this month, the earlier invoices Salesforce still shows unpaid, the total to bring the account up to date; it goes
+  inline in the bill e-mail and as a PDF beside the bills); approve and send. The group's page is in two tabs, *Your
+  service items* and *Your billing*, the statement first under the second; a link with `?tab=billing` opens on it.
+  Nothing new to set: the member letters follow the bills' test mode (`gblGoLive`), and the AI steps use
+  `ANTHROPIC_API_KEY`.
+- **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the door's four routes, `gcm.billAsk`, `gcm.billTaskUpdates`, `gcm.billPeople` and `gcm.billStatement`, the two form routes, `gcm.clientForm` and
   `gcm.clientFormSend`, and the chase in the group day are in GroupClients.gs), then a New version.
 - **Script properties**: none new. `GCM_BILL_LIVE` is set by `gblGoLive`. The AI read uses `ANTHROPIC_API_KEY` as
   the rest of the page does. While the bills are in test mode (before `gblGoLive`) the 10:30 asks nobody and opens no task; the branch manager's summary says what it would have asked.
