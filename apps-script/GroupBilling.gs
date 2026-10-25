@@ -2082,53 +2082,77 @@ function gblPostMail_(g, name, role, p, item, text, taskId, owner, opened) {
 
 /* ── the board: one line a group, for the staff page's accounts table ───────────────── */
 /** Where each group's billing stands this month, for the team dashboard: lines uploaded, open fixes, reconciled, sent. */
-/* ── The billing day: the 26th (24 October 2026) ───────────────────────────────────────────────────────────────────
- *  "On the 26th group billings go out, and weekly on a Monday at 10am the queries go out, but staff has to approve."
- *  The bills follow the Monday letters' pattern: a staff member reconciles a line and presses Approve for the 26th;
- *  the bill's PDF waits in the Drive folder; at 10:00 on the billing day (the 26th, or the next working day when it
- *  falls on a weekend) every approved bill goes from support@ with its PDF; at 10:30 the group day asks each staff
- *  member whose group had no bill why, opens the KPI task, and the branch manager's summary says what went. */
+/* ── The billing day: Tuesday at 10:00 (24 October 2026, moved to Tuesday on 25 October 2026) ─────────────────────────
+ *  First: "On the 26th group billings go out, and weekly on a Monday at 10am the queries go out, but staff has to approve."
+ *  The next day, before the first run: "I'd like to change this and not confuse the client, because the group task
+ *  management goes out weekly on a Monday at 10, but I'd like the group billings go out on a Tuesday at 10 after everybody
+ *  confirms … So on Monday, a report is generated with who work on the groups in the afternoon … Tuesday mornings are
+ *  when the group billings go out."
+ *  So a client never has the weekly letter and a bill on the same morning. Head Office's bills come in by the 25th; the
+ *  billing day is the first Tuesday on or after the 26th (GCM_BILL_DAY moves the 26th), at 10:00. A staff member
+ *  reconciles a line and presses Approve for Tuesday; the PDF waits in the Drive folder; at 10:00 every approved bill goes
+ *  from support@ with its PDF. The run is every Tuesday, so a bill approved after the billing Tuesday goes the next one,
+ *  not a month later. At 13:00 on the Monday before the billing Tuesday the branch manager gets the report of who has
+ *  worked each group's bills and what is left (gblMondayReport_), the staff copied while they are still in. At 10:30 on
+ *  the billing Tuesday the group day asks each staff member whose group had no bill why, and opens the KPI task. */
 var GBL_DAY = {
-  DAY: 26,                      // the day of the month the bills go (the GCM_BILL_DAY Script property overrides, 1 to 28)
+  DAY: 26,                      // the bills go on the first Tuesday on or after this day (the GCM_BILL_DAY Script property overrides, 1 to 28)
+  DOW: 2,                       // Tuesday: Monday 10:00 is the weekly letters' morning
   HOUR: 10,                     // at 10:00, as the Monday letters
+  REPORT_HOUR: 13,              // the Monday report, while the staff are still in (the first goes home at 2)
+  REPORT_PROP: 'GCM_BILL_REPORT_LAST',
   DAY_PROP: 'GCM_BILL_DAY', TASKS_PROP: 'GCM_BILL_TASKS',
   QUEUE: 'Bills to send',       // Drive subfolder (of GCM_FORMS_FOLDER) where an approved bill's PDF waits
   SENT: 'Sent bills',           // where it goes once sent
   TASK_TAG: 'GROUP BILL NOT SENT',
   TRAIN: [
-    ['Billings Management', 'The bills go out on the 26th. Before then: upload the month’s bill on each line, verify it against Salesforce, fix or resolve what is marked fix, mark it reconciled, and press Approve for the 26th with the PDF attached.'],
-    ['Billings Management', 'At 10:00 on the billing day every approved bill goes by itself from support@, with its PDF, copied to sales support. A line not approved by then waits for you to press Send now.'],
+    ['Billings Management', 'The bills go out on a Tuesday at 10:00: the first Tuesday on or after the 26th, never on the Monday, which is the weekly letters’ morning. Before then: upload the month’s bill on each line, verify it against Salesforce, fix or resolve what is marked fix, mark it reconciled, and press Approve for Tuesday with the PDF attached.'],
+    ['Billings Management', 'At 13:00 on the Monday before, the branch manager has the report of who has worked each group’s bills and what is left. At 10:00 on Tuesday every approved bill goes by itself from support@, with its PDF, copied to sales support. A line not approved by then goes the next Tuesday, or when you press Send now.'],
     ['Billings Management', 'Reconciled is a person’s tick: nothing goes to a group that a person has not checked against Salesforce.']
   ]
 };
 function gblDayOfMonth_() { try { var v = Number(PropertiesService.getScriptProperties().getProperty(GBL_DAY.DAY_PROP)); if (v >= 1 && v <= 28) return v; } catch (e) {} return GBL_DAY.DAY; }
-/** The billing day of a month (yyyy-MM): the 26th, or the next working day when it falls on a weekend. */
+/** The billing day of a month's bills (yyyy-MM): the first Tuesday on or after the 26th. It can fall in the next month
+ *  (November 2026's is Tuesday 1 December). */
 function gblBillDayOf_(ym) {
   var n = gblDayOfMonth_(), d = ym + '-' + ('0' + n).slice(-2);
-  while (gcmDow_(d) > 5) d = gcmAddDays_(d, 1);
+  while (gcmDow_(d) !== GBL_DAY.DOW) d = gcmAddDays_(d, 1);
   return d;
 }
-/** The next billing day from now: this month's while it has not passed (the day itself before HOUR counts), else next month's. */
+/** The billing days around today, oldest first: two months back to next month, so a billing day that spills into the
+ *  next month is still found. */
+function gblBillDays_(today) { var m = today.slice(0, 7); return [-2, -1, 0, 1].map(function (k) { return gblBillDayOf_(gblAddMonths_(m, k)); }); }
+/** The next billing day from now: the day itself counts before HOUR. */
 function gblNextBillDay_(now) {
   now = now || new Date();
-  var today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H')), d = gblBillDayOf_(today.slice(0, 7));
-  if (d > today || (d === today && h < GBL_DAY.HOUR)) return d;
-  return gblBillDayOf_(gblAddMonths_(today.slice(0, 7), 1));
+  var today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
+  return gblBillDays_(today).filter(function (d) { return d > today || (d === today && h < GBL_DAY.HOUR); })[0];
 }
-/** The cycle the chase reads: its billing day (today when today is one, else the next) and the day before which a bill
- *  does not count (the billing day of the month before). */
+/** The next Tuesday run from now: today before HOUR on a Tuesday, else the next Tuesday. An approval goes on it. */
+function gblNextRunDay_(now) {
+  now = now || new Date();
+  var d = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
+  if (gcmDow_(d) === GBL_DAY.DOW && h < GBL_DAY.HOUR) return d;
+  d = gcmAddDays_(d, 1);
+  while (gcmDow_(d) !== GBL_DAY.DOW) d = gcmAddDays_(d, 1);
+  return d;
+}
+/** The cycle the chase reads: its billing day (today when today is one, else the next) and the billing day before it,
+ *  after which a bill counts. */
 function gblCycle_(now) {
   now = now || new Date();
-  var today = gcmYmd_(now), thisM = gblBillDayOf_(today.slice(0, 7));
-  var end = thisM === today ? today : gblNextBillDay_(now);
-  return { end: end, start: gblBillDayOf_(gblAddMonths_(end.slice(0, 7), -1)), isDay: thisM === today, today: today };
+  var today = gcmYmd_(now), days = gblBillDays_(today), isDay = days.indexOf(today) >= 0;
+  var end = isDay ? today : gblNextBillDay_(now), i = days.indexOf(end);
+  return { end: end, start: i > 0 ? days[i - 1] : gblBillDayOf_(gblAddMonths_(end.slice(0, 7), -2)), isDay: isDay, today: today };
 }
 function gblDayLabel_(ymd) { return GCM_DAYS[gcmDow_(ymd)] + ' ' + tDmy_(ymd).replace(/ \d{4}$/, '') + ', ' + GBL_DAY.HOUR + ':00'; }
 /** What the pages show: the next billing day, how far off, whether today is one, and whether a PDF has somewhere to wait. */
 function gblDayInfo_(now) {
   now = now || new Date();
   var today = gcmYmd_(now), next = gblNextBillDay_(now), c = gblCycle_(now);
-  return { next: next, label: gblDayLabel_(next), date: tDmy_(next), daysTo: gcmDays_(today, next), isDay: c.isDay, dayOfMonth: gblDayOfMonth_(), hour: GBL_DAY.HOUR, drive: !!gblFolderId_(), live: gblLive_() };
+  var run = gblNextRunDay_(now);
+  return { next: next, label: gblDayLabel_(next), date: tDmy_(next), daysTo: gcmDays_(today, next), isDay: c.isDay, dayOfMonth: gblDayOfMonth_(), hour: GBL_DAY.HOUR, drive: !!gblFolderId_(), live: gblLive_(),
+    run: run, runLabel: gblDayLabel_(run), reportHour: GBL_DAY.REPORT_HOUR, weekday: 'Tuesday' };
 }
 function gblFolderId_() { try { return PropertiesService.getScriptProperties().getProperty(GBL_PDF.FOLDER_PROP) || ''; } catch (e) { return ''; } }
 function gblSubfolder_(name) {
@@ -2157,7 +2181,7 @@ function gblStaffEmail_(name) {
   try { return tTeam_().people.filter(function (t) { return gcmSameName_(t.name, name); }).map(function (t) { return t.email; }).filter(String)[0] || ''; } catch (e) { return ''; }
 }
 
-/** Approve for the 26th (gblAct_ act 'approve'): the reconciled bill, with its PDFs, waits for the run; 'unapprove' takes it back. */
+/** Approve for Tuesday (gblAct_ act 'approve'): the reconciled bill, with its PDFs, waits for the next Tuesday run; 'unapprove' takes it back. */
 function gblApprove_(g, who, bill, b, L) {
   var line = bill.line, month = bill.month, now = new Date(), E = tEsc_;
   var log = function (kind, detail) {
@@ -2181,10 +2205,10 @@ function gblApprove_(g, who, bill, b, L) {
   files.slice(0, 6).forEach(function (f) {
     try { var bytes = Utilities.base64Decode(String(f.b64 || '')); if (bytes.length && bytes.length < 3000000) blobs.push(Utilities.newBlob(bytes, String(f.type || 'application/pdf'), String(f.name || 'bill.pdf').replace(/[^\w.\- ]/g, '_').slice(0, 80))); } catch (e) {}
   });
-  if (blobs.length && !gblFolderId_()) return { ok: false, error: 'The PDF has nowhere to wait until the ' + gblDayOfMonth_() + 'th: the branch manager sets the ' + GBL_PDF.FOLDER_PROP + ' Script property to the Drive folder (GROUP-CLIENTS-SETUP.md). Until then, press Send now on the day.' };
+  if (blobs.length && !gblFolderId_()) return { ok: false, error: 'The PDF has nowhere to wait until Tuesday: the branch manager sets the ' + GBL_PDF.FOLDER_PROP + ' Script property to the Drive folder (GROUP-CLIENTS-SETUP.md). Until then, press Send now on the day.' };
   var ids = [];
   try { ids = gblKeepQueued_(g, bill, blobs); } catch (e) { return { ok: false, error: 'Drive would not keep the PDF: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
-  var forDay = gblNextBillDay_(now), at = gcmWhen_(now), email = who.email || gblStaffEmail_(who.name);
+  var forDay = gblNextRunDay_(now), at = gcmWhen_(now), email = who.email || gblStaffEmail_(who.name);
   gblBillPatch_(bill, { Status: 'approved', 'Approved at': at, 'Approved by': who.name, 'Approved e-mail': email, 'Approved for': forDay, 'Files kept': ids.join(',') });
   log('approved', GBL.LABEL[line] + ' ' + gblMonthLabel_(month) + ' approved for the ' + gblDayLabel_(forDay) + ' run' + (blobs.length ? ' with ' + blobs.map(function (x) { return x.getName(); }).join(', ') : ' with no file attached') + '.');
   gblPostBilling_(g, line, month, 'The ' + gblMonthLabel_(month) + ' ' + GBL.LABEL[line].toLowerCase() + ' bill (' + gcmMoney_(bill.due) + ') is approved by ' + who.name + ' to go to the group on ' + gblDayLabel_(forDay) + (blobs.length ? ' with the PDF' : '') + '.', who);
@@ -2242,7 +2266,7 @@ function gblDayRun_(o) {
       var at = gcmWhen_(new Date());
       if (!o.rehearse) {
         gcmAppend_(GCM.SENDS, [{ When: new Date(), Group: g.name, Staff: gcmSigner_(who, g), To: to.join(', '), Cc: cc.join(', '), Subject: m.subject, Items: bills.length, 'Task Ids': bills.map(function (x) { return x.line + ':' + x.month; }).join(' '),
-          Letter: m.text.slice(0, 40000), Via: 'support@, ' + gblDayOfMonth_() + 'th run' + (blobs.length ? ', ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') : ''), Status: test ? 'bill test' : 'bill sent', Html: gcmKeepHtml_(m.html) }]);
+          Letter: m.text.slice(0, 40000), Via: 'support@, Tuesday run' + (blobs.length ? ', ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') : ''), Status: test ? 'bill test' : 'bill sent', Html: gcmKeepHtml_(m.html) }]);
         bills.forEach(function (b) {
           gblBillPatch_(b, test ? { Status: 'tested' } : { Status: 'sent', 'Sent at': at });
           gblPostBilling_(g, b.line, month, (test ? 'TEST of the ' : 'The ') + gblMonthLabel_(month) + ' ' + GBL.LABEL[b.line].toLowerCase() + ' bill went ' + (test ? 'to ' + to.join(', ') : 'to the group (' + to.join(', ') + ')') + ' from support@ in the ' + gblDayLabel_(b.approvedFor) + ' run' + (blobs.length ? ', with the PDF attached' : '') + '.', who);
@@ -2266,7 +2290,7 @@ function gblDayTell_(sent, held, o) {
   held.forEach(function (x) { if (x.email && to.concat(cc).map(function (a) { return a.toLowerCase(); }).indexOf(x.email.toLowerCase()) < 0) cc.push(x.email); });
   if (o.rehearse) (o.approvers || []).forEach(function (a) { if (to.concat(cc).map(function (x) { return x.toLowerCase(); }).indexOf(a) < 0) cc.push(a); });
   var li = function (x, what) { return '<li><b>' + E(x.group) + '</b> · ' + E(gblMonthLabel_(x.month)) + ' · ' + E(x.lines.join(', ')) + ' · ' + what + ' · approved by ' + E(x.by) + '</li>'; };
-  var subject = (o.rehearse ? '[TEST] ' : '') + 'Group bills, ' + gblDayOfMonth_() + 'th run: ' + sent.length + ' sent' + (held.length ? ', ' + held.length + ' waiting' : '');
+  var subject = (o.rehearse ? '[TEST] ' : '') + 'Group bills, Tuesday run: ' + sent.length + ' sent' + (held.length ? ', ' + held.length + ' waiting' : '');
   var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
     (o.rehearse ? '<p><b>Rehearsal.</b> Each approved bill was sent to its approver and the branch, marked TEST. Nothing reached a group and nothing is marked as sent.</p>' : '') +
     (sent.length ? '<p style="margin:0 0 6px;font-weight:700">Went</p><ul>' + sent.map(function (x) { return li(x, (x.test ? 'TEST copy to ' : 'to ') + E(x.to) + (x.files ? ', ' + x.files + ' file' + (x.files === 1 ? '' : 's') : ', no file')); }).join('') + '</ul>' : '') +
@@ -2331,7 +2355,7 @@ function gblChaseList_(L, now) {
       if (/^held/i.test(b.status)) return { line: ln, state: 'held', why: lab + ': approved, held at the run (' + b.status.replace(/^held:\s*/i, '') + ')', todo: 'put it right and press Send now' };
       if (b.status === 'approved' && b.approvedFor > cycle.end) return { line: ln, state: 'later', why: lab + ': approved by ' + b.approvedBy + ' after the run, so it waits for ' + gblDayLabel_(b.approvedFor), todo: 'if it should go now, press Send now' };
       if (b.status === 'approved') return { line: ln, state: 'queued', why: '', todo: '' };
-      if (b.reconciledAt) return { line: ln, state: 'reconciled', why: lab + ': reconciled, not approved', todo: 'press Approve for the ' + gblDayOfMonth_() + 'th, or Send now' };
+      if (b.reconciledAt) return { line: ln, state: 'reconciled', why: lab + ': reconciled, not approved', todo: 'press Approve for Tuesday, or Send now' };
       var s = gblSteps_(b);
       if (s.fixes) return { line: ln, state: 'fix', why: lab + ': uploaded, ' + s.fixes + ' to fix', todo: 'fix or resolve each finding, reconcile, approve' };
       return { line: ln, state: 'check', why: lab + ': uploaded, not reconciled', todo: 'confirm the checks, mark it reconciled, approve' };
@@ -2378,7 +2402,7 @@ function gblChaseRun_(o) {
   o = o || {};
   var L = gcmLoad_(), list = gblChaseList_(L, o.now), me = gcmDayManager_(), E = tEsc_, sent = [], failed = [];
   var tasks = gcmChaseTasks_(list.owners, list.cycle.end, list.cycle.today, !!o.test,
-    { tag: GBL_DAY.TASK_TAG, prop: GBL_DAY.TASKS_PROP, label: list.month + ' bills', train: GBL_DAY.TRAIN, why: 'not approved by ' + GBL_DAY.HOUR + ':00 on the ' + gblDayOfMonth_() + 'th' });
+    { tag: GBL_DAY.TASK_TAG, prop: GBL_DAY.TASKS_PROP, label: list.month + ' bills', train: GBL_DAY.TRAIN, why: 'not approved by ' + gblDayLabel_(list.cycle.end) });
   list.owners.forEach(function (ow) {
     if (!ow.missed.length) return;
     var mine = {};
@@ -2433,7 +2457,7 @@ function gblDayHtml_(d, o) {
   var sentG = [], missed = [], notReady = [];
   list.owners.forEach(function (ow) { ow.sent.forEach(function (x) { sentG.push({ ow: ow, x: x }); }); ow.missed.forEach(function (x) { missed.push({ ow: ow, x: x }); }); ow.notReady.forEach(function (x) { notReady.push({ ow: ow, x: x }); }); });
   var n = sentG.length + missed.length, tasks = (d.chase && d.chase.tasks) || {};
-  var h = '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#13408F">Group bills: the ' + gblDayOfMonth_() + 'th</h3>';
+  var h = '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#13408F">Group bills: ' + E(gblDayLabel_(d.cycle.end)) + '</h3>';
   if (d.cycle.isDay || (o && o.test)) {
     var r = d.run || { sent: [], held: [] };
     h += '<p><b>' + sentG.length + ' of ' + n + '</b> billed groups had their ' + E(list.month) + ' bill' + (sentG.length && sentG.every(function (s) { return s.x.test; }) ? ' (test copies: the bills are in test mode until gblGoLive)' : '') + '. ' +
@@ -2454,6 +2478,89 @@ function gblDayHtml_(d, o) {
 /** Editor Run: the billing day rehearsed to the branch manager (the approved bills as TEST copies to their approvers, the staff
  *  e-mails and the summary block to him), with nothing marked and no task opened. */
 function gblDayTest() { var r = gblDay_({ test: true }); try { gcmDaySummary_({ test: true, bills: r }); } catch (e) {} return tSay_(r.said); }
+
+/* ── The Monday report: who has worked the bills, the day before they go (25 October 2026) ─────────────────────────
+ *  "So on Monday, a report is generated with who work on the groups in the afternoon", at 13:00 on the Monday before the
+ *  billing Tuesday, while the staff are still in: every billed group, each line where it stands and who did each step
+ *  (uploaded, reconciled, approved), and what is left before Tuesday 10:00. To the branch manager, the staff who look after
+ *  the groups copied. Internal only: nothing reaches a group. */
+function gblReportRows_(L, now) {
+  var cycle = gblCycle_(now), exp = gblExpected_(L, cycle), all = gblRows_(GBL.BILLS).map(gblBillOf_), m1 = cycle.end.slice(0, 7), m2 = gblAddMonths_(m1, 1), rows = [];
+  L.reg.forEach(function (g) {
+    var lines = exp[g.key] || [];
+    if (!lines.length) return;
+    var cannot = gcmCannotMail_(g);
+    var states = lines.map(function (ln) {
+      var lab = GBL.LABEL[ln], b = all.filter(function (x) { return gcmCodeKey_(x.group) === g.key && x.line === ln && (x.month === m1 || x.month === m2); }).sort(function (a, c) { return a.month < c.month ? 1 : -1; })[0];
+      if (!b) return { label: lab, stage: 'Nothing uploaded', who: '', left: 'Upload the bill, verify it, reconcile and approve it', ready: false, worked: false };
+      var who = [], s = gblSteps_(b);
+      if (b.by) who.push('uploaded by ' + b.by + (b.at ? ', ' + b.at : ''));
+      if (b.reconciledAt) who.push('reconciled by ' + b.reconciledBy);
+      if (b.approvedBy) who.push('approved by ' + b.approvedBy);
+      var o = { label: lab, month: gblMonthLabel_(b.month), who: who.join('; '), worked: true };
+      if (b.sentAt) return Object.assign(o, { stage: 'Sent ' + b.sentAt, left: '', ready: true });
+      if (/^held/i.test(b.status)) return Object.assign(o, { stage: 'Approved, held at a run: ' + b.status.replace(/^held:\s*/i, ''), left: 'Put it right and press Send now', ready: false });
+      if (b.status === 'approved') return Object.assign(o, { stage: 'Approved for ' + gblDayLabel_(b.approvedFor), left: b.approvedFor <= cycle.end ? '' : 'Approved for a later run: press Send now if it should go', ready: b.approvedFor <= cycle.end });
+      if (b.reconciledAt) return Object.assign(o, { stage: 'Reconciled, not approved', left: 'Press Approve for Tuesday', ready: false });
+      if (s.fixes) return Object.assign(o, { stage: 'Uploaded, ' + s.fixes + ' to fix', left: 'Fix or resolve each finding, reconcile, approve', ready: false });
+      return Object.assign(o, { stage: 'Uploaded, not reconciled', left: 'Confirm the checks, mark it reconciled, approve', ready: false });
+    });
+    rows.push({ g: g, owner: g.assigned || 'nobody', email: g.ownerActive && g.ownerEmail ? g.ownerEmail : '', states: states, cannot: cannot,
+      ready: !cannot && states.every(function (x) { return x.ready; }), started: states.some(function (x) { return x.worked; }) });
+  });
+  rows.sort(function (a, b) { return a.owner.localeCompare(b.owner) || a.g.name.localeCompare(b.g.name); });
+  return { cycle: cycle, rows: rows };
+}
+function gblMondayReport_(o) {
+  o = o || {};
+  var now = o.now || new Date(), today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
+  var day = gblNextBillDay_(now), monday = gcmAddDays_(day, -1), props = PropertiesService.getScriptProperties();
+  if (o.auto) {
+    if (today !== monday || h < GBL_DAY.REPORT_HOUR) return { ok: true, said: '' };
+    if (props.getProperty(GBL_DAY.REPORT_PROP) === today) return { ok: true, said: '' };
+  }
+  var L = gcmLoad_(), R = gblReportRows_(L, now), rows = R.rows, E = tEsc_, me = gcmDayManager_(), live = gblLive_();
+  if (!rows.length) { if (o.auto) props.setProperty(GBL_DAY.REPORT_PROP, today); return { ok: true, said: o.auto ? '' : 'No group is billed this cycle: no report.' }; }
+  var ready = rows.filter(function (r) { return r.ready; }), notStarted = rows.filter(function (r) { return !r.started && !r.cannot; }), left = rows.filter(function (r) { return !r.ready; });
+  var when = gblDayLabel_(day), dayWords = when.replace(/, \d+:\d+$/, '');
+  var subject = (o.test ? '[TEST] ' : '') + 'Group bills go ' + (today === monday ? 'tomorrow, ' : '') + dayWords + ' at ' + GBL_DAY.HOUR + ':00: ' + ready.length + ' of ' + rows.length + ' groups ready';
+  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F"';
+  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#142033;vertical-align:top"';
+  var tile = function (n, what, bad) { return '<td style="padding:10px 12px;border:1px solid #E2E7EF;border-top:4px solid ' + (bad ? '#D03B3B' : '#1D5BC4') + ';font:13px/1.4 Arial,sans-serif;color:#4B586C;width:33%"><b style="display:block;font:700 22px Arial,sans-serif;color:' + (bad ? '#B42318' : '#142033') + '">' + n + '</b>' + what + '</td>'; };
+  var owners = [], cc = [];
+  rows.forEach(function (r) { if (owners.indexOf(r.owner) < 0) owners.push(r.owner); if (r.email && r.email.toLowerCase() !== String(me).toLowerCase() && cc.map(function (x) { return x.toLowerCase(); }).indexOf(r.email.toLowerCase()) < 0) cc.push(r.email); });
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:760px">' +
+    (o.test ? '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST.</b> This report goes at ' + GBL_DAY.REPORT_HOUR + ':00 on ' + E(gblDayLabel_(monday).replace(/, \d+:\d+$/, '')) + ' to you, copied to ' + E(cc.join(', ') || 'nobody') + '.</div>' : '') +
+    '<p>The group bills go by themselves <b>' + E(when) + '</b>: every line reconciled and approved by then, from support@ with its PDF' + (live ? '' : ' (in test mode: a TEST copy to whoever approved it, until gblGoLive)') + '. Here is who has worked each billed group, and what is left.</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:6px 0;margin:0 0 16px"><tr>' +
+    tile(ready.length + ' of ' + rows.length, 'groups ready for ' + E(dayWords)) + tile(left.length, 'with work left before ' + GBL_DAY.HOUR + ':00', left.length > 0) + tile(notStarted.length, 'not started: nothing uploaded', notStarted.length > 0) + '</tr></table>' +
+    owners.map(function (ow) {
+      var mine = rows.filter(function (r) { return r.owner === ow; });
+      return '<p style="margin:16px 0 6px;font-weight:700">' + E(ow) + ' · ' + mine.filter(function (r) { return r.ready; }).length + ' of ' + mine.length + ' ready</p>' +
+        '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 8px"><tr><th ' + th + '>Group</th><th ' + th + '>Line</th><th ' + th + '>Where it stands</th><th ' + th + '>Who worked it</th><th ' + th + '>Left before ' + GBL_DAY.HOUR + ':00</th></tr>' +
+        mine.map(function (r) {
+          if (r.cannot) return '<tr><td ' + td + '><b>' + E(r.g.name) + '</b></td><td ' + td + ' colspan="4">Cannot have a bill yet: ' + E(r.cannot) + '</td></tr>';
+          return r.states.map(function (x, i) {
+            return '<tr>' + (i === 0 ? '<td ' + td + ' rowspan="' + r.states.length + '"><b>' + E(r.g.name) + '</b>' + (r.ready ? '<br><span style="color:#067647;font-size:12.5px;font-weight:700">✓ ready</span>' : '') + '</td>' : '') +
+              '<td ' + td + '>' + E(x.label) + (x.month ? '<br><span style="color:#4B586C;font-size:12.5px">' + E(x.month) + '</span>' : '') + '</td><td ' + td + '>' + E(x.stage) + '</td><td ' + td + '>' + (x.who ? E(x.who) : '<span style="color:#B42318">nobody yet</span>') + '</td><td ' + td + '>' + (x.left ? '<b>' + E(x.left) + '</b>' : '–') + '</td></tr>';
+          }).join('');
+        }).join('') + '</table>';
+    }).join('') +
+    '<p>A line not approved by ' + GBL_DAY.HOUR + ':00 tomorrow goes the following Tuesday, or when someone presses Send now. At 10:30 tomorrow each staff member whose group had no bill is asked why, and a task opens' + (live ? '' : ' once the bills are live') + '.</p>' +
+    '<p><a href="' + GCM.SITE + 'billing.html" style="color:#1D5BC4;font-weight:700">Open Billings Management</a></p>' +
+    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  var to = me;
+  try {
+    if (tMsCreds_()) tMsSend_(to, subject, html, { cc: o.test ? [] : cc, replyTo: me });
+    else MailApp.sendEmail({ to: to, cc: o.test ? '' : cc.join(','), subject: subject, htmlBody: html, name: 'Ricky Rampersad Branch' });
+  } catch (e) { return { ok: false, error: 'The report did not go: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+  if (!o.test) props.setProperty(GBL_DAY.REPORT_PROP, today);
+  return { ok: true, rows: rows, ready: ready.length, left: left.length, cc: cc, subject: subject,
+    said: 'The Monday report went to ' + to + (o.test ? ' (TEST)' : cc.length ? ', copied to ' + cc.join(', ') : '') + ': ' + ready.length + ' of ' + rows.length + ' groups ready for ' + dayWords + '.' };
+}
+/** The editor's Run buttons: the report now, marked TEST and to the branch manager alone; or now for real. */
+function gblMondayReportTest() { var r = gblMondayReport_({ test: true }); return tSay_(r.said || r.error || ''); }
+function gblMondayReportNow() { var r = gblMondayReport_({}); return tSay_(r.said || r.error || ''); }
 
 function gblBoard_(L) {
   var out = {}, month = L.today.slice(0, 7), prevM = gblAddMonths_(month, -1);

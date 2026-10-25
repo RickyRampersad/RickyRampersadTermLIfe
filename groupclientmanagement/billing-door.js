@@ -83,7 +83,7 @@ function render() {
   const pill = (b, s, cls) => '<span class="pill' + (cls ? ' ' + cls : '') + '"><b>' + esc(b) + '</b>' + esc(s) + '</span>';
   $('mhello').innerHTML = '<h1>Billings Management</h1><p style="margin:6px 0 0;color:rgba(255,255,255,.85);max-width:72ch">The ' + esc(blMon(month)) + ' bills, one group at a time: upload the Group Health, Group Life and pension bills with the claims experience, see what the checks found, answer the questions, bring last month’s tasks up to date on Chatter, record the terminations and enrolments, look at the people, read the statement, approve.</p>' +
     '<div class="pills">' + pill(groups.length, 'groups') + pill(todo, 'with billing to do', todo ? 'hot' : 'ok') + pill(done, 'approved or sent') +
-    (day ? pill(day.date, day.isDay ? 'the bills go today at ' + day.hour + ':00' : 'the bills go out' + (day.daysTo ? ' · in ' + day.daysTo + ' day' + (day.daysTo === 1 ? '' : 's') : '')) : '') +
+    (day ? pill(day.label.replace(/, \d+:\d+$/, ''), day.isDay ? 'the bills go today at ' + day.hour + ':00' : 'the bills go out at ' + day.hour + ':00' + (day.daysTo ? ' · in ' + day.daysTo + ' day' + (day.daysTo === 1 ? '' : 's') : '')) : '') +
     (d.billingLive === false ? pill('Test mode', 'a send goes to you, marked TEST') : '') + '</div>';
   let h = '<div class="filt" role="group" aria-label="Which groups"><span class="lbl">Show</span>' +
     [['mine', 'Mine', mine], ['todo', 'Billing to do', todo], ['all', 'Everyone', groups.length]].map(([k, l, n]) => '<button type="button" class="fbtn" data-show="' + k + '" aria-pressed="' + (LIST.show === k) + '">' + l + '<span class="n">' + n + '</span></button>').join('') +
