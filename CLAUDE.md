@@ -4612,7 +4612,14 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     7. *The statement* (`gblStatementData_`, `gblStatementHtml_`, `gblStatementPdf_`, `gcm.billStatement`): this
        month's lines, the earlier invoices Salesforce still shows unpaid (14 months back, billed less payments), Head
        Office's own arrears figure when the two differ, the total to bring the account up to date, what changed as
-       counts, what is attached; the PDF to download. It goes inline in the bill e-mail (`gblBillMail_`) and as a PDF
+       counts, what is attached; the PDF to download. **Arrears are compared line by line** (`arrearsDiff`): a health
+       invoice's outstanding balances against what Salesforce shows owed on health alone, and only a health invoice,
+       since a life bill or a list bill prints none (25 October 2026: the first examples set health's TT$2,822 against
+       every line's TT$4,022 and said the two differed when health matched). **"Changes on this billing"** and the cover
+       note's names come from one place, `gblBillChanges_`: the month's own bills (findings, credits, a life
+       statement's adjustments) for the lines being sent, never Group Changes, which keeps no month (the same examples
+       named a joiner and a leaver in the e-mail and said "no one joined or left" under it, and a November statement
+       would have counted October's joiner again). It goes inline in the bill e-mail (`gblBillMail_`) and as a PDF
        beside the bills on Send now and in the billing-day run (`gblStatementBlob_`), and the group's page carries the
        latest sent one (`gblClientBlock_` `statement`).
     8. *Approve and send*: the day strip, reconcile, approve for the day, send now, a payment.
@@ -4631,6 +4638,46 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     records) and `billing/page-test.js` (52, Playwright: the review driven with the real October PDFs through pdf.js,
     the made-up bill stored, the fixes, reconcile, the test send, a comment to Chatter, the claims upload; the
     group's page on a phone and a desk). `billing/world.js` holds the made-up Salesforce.
+
+- **Your people: who is on the plans, who came off this year, who is pending, and a box on each** (25 October 2026: "a
+  drop down to see the members that are active and members who have come off this year and members who are pending,
+  who they have an application in … very easy for the customer to just look at what is pending, who is having it, and
+  the ability to comment … driven by task. Remember, when they post a comment, it goes on to the respective chatter and
+  task. If there's nothing on it, … the ability to post something … Remember, we upload the billing and the Salesforce
+  data.").
+  - **A third tab on the group's page**, *Your people* (`client.html`: `PEO`, `peopleHtml`, `personHtml`,
+    `composeHtml`, `sendPost`; `?tab=people` opens on it; the tab says how many are pending). A drop-down picks
+    *Pending applications*, *Active members*, *Came off in <year>* or *Everyone*, each with its count, opening on the
+    pending when there are any; a search finds a name. On a phone the tabs read Items, Billing, People. The pending
+    panel on the service items links to it.
+  - **The list** (`gblRoster_` in GroupBilling.gs, `gcm.clientPeople`) is built from both sources: the group's Group
+    Health and Group Life records in Salesforce (`gblMembers_`: live, or off with a status change this year) and the
+    latest bill uploaded on each line (its members, with their tier), with this year's bills for who they took off.
+    A person is active on a line when the latest bill carries them, or Salesforce has them live and no termination
+    this year after they joined. Group Changes adds a leaver the group or our team reported (shown as leaving, with
+    the date) and a joiner being enrolled (pending until a bill or Salesforce has them).
+  - **What is open on each person**: the applications and increases still pending, from `gcmPending_` in its own
+    words (a medical requirement reads "An underwriting requirement: the details stay between the person insured and
+    us"), and any other open item about them the group is shown (`gcmShown_`, never a private one, matched by the
+    task's contact or both names in its subject: a termination task, say). Each says who on our team has it, who it is
+    liaising with, its status, its target date and the last contact, with the notes our team shared for the group.
+    **Never the rest of the Chatter**, replies under the group's own post included: staff write Chatter as the team's
+    own, and only a note shared for the group is the group's to read.
+  - **A message** (`gblClientPost_`, `gcm.clientPost`, a name required, a role optional): on an item, it goes onto
+    that task's Chatter through Connect with the task's owner mentioned (`gblClientFeed_`), headed "From <group> on
+    their service page (<name>, <role>), about <person>, on "<item>":"; with nothing open on the person, it opens a
+    task for the account owner (`Member query – <person> – <group> – the group asks`, or *Pending application* or
+    *Member who came off*; Servicing, due in two days, on the group's account and the person's contact, so it shows on
+    the page within the hour) with the words on its Chatter too. The person who has it is e-mailed from support@ with
+    sales support copied (`gblPostMail_`). It is filed on Group Changes as Kind `post`, Source `client`, and the card
+    shows the group what it wrote. The same words about the same person within ten minutes are taken once; forty a
+    day is the most one group sends.
+  - **What the group reads**: names, the plans, the tier on the bill, the dates. Never a date of birth, an e-mail, a
+    phone, a beneficiary, a Salesforce id, a claim or a health detail; the `_sf` ids the post route needs are taken
+    off before the page reads the list.
+  - Tests in the scratchpad: `people/people-test.js` (30, Node, the made-up branch with an invented application, a
+    medical requirement, a leaver and a private claim item) and `people/page-test.js` (29, Playwright, a desk and a
+    phone, with screenshots).
 
 ## The branch's own forms — no client link opens a JotForm
 

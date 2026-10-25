@@ -271,11 +271,17 @@ something is written.
   the bills matched to Salesforce: turning 65 to convert, dependants reaching the dependant age (`GCM_DEP_AGE`),
   retirements, tiers and records to put right, with a letter to the member or a task); **the statement of account**
   (this month, the earlier invoices Salesforce still shows unpaid, the total to bring the account up to date; it goes
-  inline in the bill e-mail and as a PDF beside the bills); approve and send. The group's page is in two tabs, *Your
-  service items* and *Your billing*, the statement first under the second; a link with `?tab=billing` opens on it.
+  inline in the bill e-mail and as a PDF beside the bills); approve and send. The group's page is in three tabs, *Your
+  service items*, *Your billing* and *Your people*, the statement first under the billing; a link with `?tab=billing`
+  or `?tab=people` opens on that tab.
+- **Your people** (25 October 2026): the group picks *Pending applications*, *Active members*, *Came off this year* or
+  *Everyone*, from Salesforce and the latest bills uploaded. Each person shows what is open on them with us, who has
+  it and where it stands, and a box: a message goes onto that item's task in Salesforce with its owner mentioned and
+  e-mailed (sales support copied); with nothing open, it opens a task for the account owner. Staff answer on the
+  task's Chatter and share a note for the group, which then shows on the group's page. Nothing new to set.
   Nothing new to set: the member letters follow the bills' test mode (`gblGoLive`), and the AI steps use
   `ANTHROPIC_API_KEY`.
-- **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the door's four routes, `gcm.billAsk`, `gcm.billTaskUpdates`, `gcm.billPeople` and `gcm.billStatement`, the two form routes, `gcm.clientForm` and
+- **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the two Your people routes, `gcm.clientPeople` and `gcm.clientPost`, the door's four routes, `gcm.billAsk`, `gcm.billTaskUpdates`, `gcm.billPeople` and `gcm.billStatement`, the two form routes, `gcm.clientForm` and
   `gcm.clientFormSend`, and the chase in the group day are in GroupClients.gs), then a New version.
 - **Script properties**: none new. `GCM_BILL_LIVE` is set by `gblGoLive`. The AI read uses `ANTHROPIC_API_KEY` as
   the rest of the page does. While the bills are in test mode (before `gblGoLive`) the 10:30 asks nobody and opens no task; the branch manager's summary says what it would have asked.

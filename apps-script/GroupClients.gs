@@ -145,6 +145,7 @@ function gcmDoGet_(p) {
       case 'gcm.remindPreview':  return gcmRemindPreview_(p);
       case 'gcm.refresh': return gcmRefreshAsked_(p);
       case 'gcm.client':  return gcmClient_(p);
+      case 'gcm.clientPeople': return typeof gblClientPeople_ === 'function' ? gblClientPeople_(p) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientForm': return typeof gblClientForm_ === 'function' ? gblClientForm_(p) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.wall':    return gcmWall_(p);
       case 'gcm.train':   return gcmTrain_(p);
@@ -184,6 +185,7 @@ function gcmDoPost_(b) {
       case 'gcm.billAct':     return typeof gblAct_ === 'function' ? gblAct_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.billSend':    return typeof gblSend_ === 'function' ? gblSend_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.claimsUpload': return typeof gblClaims_ === 'function' ? gblClaims_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.clientPost':  return typeof gblClientPost_ === 'function' ? gblClientPost_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientTell':  return typeof gblClientTell_ === 'function' ? gblClientTell_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientFormSend': return typeof gblClientFormSend_ === 'function' ? gblClientFormSend_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
     }

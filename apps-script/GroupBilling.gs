@@ -1855,6 +1855,231 @@ function gblTellOwner_(g, name, kind, line, b) {
   try { MailApp.sendEmail({ to: to.join(','), subject: subject, htmlBody: body, name: 'Ricky Rampersad Branch' }); } catch (e2) {}
 }
 
+/* ── the group's people: who is on the plans, who came off this year, who is pending (25 October 2026) ──────────────
+ * "a drop down to see the members that are active and members who have come off this year and members who are pending,
+ * who they have an application in … very easy for the customer to just look at what is pending, who is having it, and
+ * the ability to comment, because they must have what is opened on it from our end … driven by task. When they post a
+ * comment, it goes on to the respective chatter and task. If there's nothing on it, … the ability to post something …
+ * Remember, we upload the billing and the Salesforce data."
+ * The list is built from both: the group's Group Health and Group Life records in Salesforce, and the latest bill
+ * uploaded on each line (with this year's bills for who came off). Each person carries the items open on them that the
+ * group may see: the applications and increases still pending (their requirements in the words the pending panel uses,
+ * a medical requirement's details kept between the person insured and us), and any other open item about them the
+ * group is shown. A post goes onto the item's own task in Salesforce, with its owner mentioned and e-mailed; on a person
+ * with nothing open it opens a task for the account owner, so every word the group writes is on a task someone owns.
+ * What the group reads: names, the plans, the tier on the bill, the dates. Never a date of birth, an e-mail, a phone,
+ * a beneficiary, a claim or a health detail. */
+var GBL_ROSTER = { MIN_TEXT: 8, MAX_TEXT: 1500, DUE_DAYS: 2, SAME_MIN: 10, MAX_DAY: 40, LINES: ['health', 'life'] };
+function gblPersonKey_(name) {
+  return String(name || '').toLowerCase().replace(/\(.*?\)/g, ' ').replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(String).sort().join('-').slice(0, 80);
+}
+/** Is this person named in a task's subject: their first and last names both appear as whole words. */
+function gblNamedIn_(name, subject) {
+  var w = String(name || '').toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(function (x) { return x.length >= 2; });
+  if (w.length < 2) return false;
+  var s = ' ' + String(subject || '').toLowerCase().replace(/[^a-z]+/g, ' ') + ' ';
+  return s.indexOf(' ' + w[0] + ' ') >= 0 && s.indexOf(' ' + w[w.length - 1] + ' ') >= 0;
+}
+/** The group's people. forGroup true: what the group may read. */
+function gblRoster_(g, L, forGroup) {
+  var today = L.today, yr = today.slice(0, 4) + '-01-01', people = [];
+  var display = function (n) { n = String(n || '').trim(); return /[,;]/.test(n) || n === n.toUpperCase() ? gblNice_(n) : n; };
+  var find = function (n) { return people.filter(function (x) { return gblSamePerson_(x.raw, n); })[0] || null; };
+  var get = function (n) {
+    n = String(n || '').trim();
+    if (!n) return null;
+    var p = find(n);
+    if (!p) { p = { raw: n, name: display(n), lines: {}, off: [], leaving: [], joining: [], pending: null, items: [], posts: [], sfId: '', contactId: '' }; people.push(p); }
+    return p;
+  };
+  var line = function (p, ln) { return p.lines[ln] = p.lines[ln] || { line: ln, label: GBL.LABEL[ln], onBill: '', sfLive: false, tier: '', since: '' }; };
+  /* Salesforce: who is live on the group's plans, and who came off this year */
+  var M = { ok: false, members: [] };
+  try { M = gblMembers_(g); } catch (e) {}
+  (M.members || []).forEach(function (m) {
+    if (GBL_ROSTER.LINES.indexOf(m.line) < 0) return;
+    if (m.live) {
+      var p = get(m.name), l = line(p, m.line);
+      l.sfLive = true;
+      if (m.issued && (!l.since || m.issued < l.since)) l.since = m.issued;
+      p.sfId = p.sfId || m.id; p.contactId = p.contactId || m.contactId;
+    } else if (m.changed && m.changed >= yr) {
+      var q = get(m.name);
+      q.off.push({ line: m.line, label: GBL.LABEL[m.line], date: m.changed, why: /TERMINAT|CANCEL/i.test(m.status) ? 'terminated' : '', src: 'record' });
+      q.sfId = q.sfId || m.id; q.contactId = q.contactId || m.contactId;
+    }
+  });
+  /* the bills: who is on the latest bill of each line, and who this year's bills took off */
+  var bills = gblBillRows_(g), lineRows = {};
+  gblRows_(GBL.LINES).forEach(function (r) {
+    if (gcmCodeKey_(r.Group) !== g.key) return;
+    var k = gcmText_(r.Line) + '|' + gcmText_(r.Month);
+    (lineRows[k] = lineRows[k] || []).push({ name: gcmText_(r.Name), tier: gcmText_(r.Tier), start: gcmText_(r.Start), eff: gcmText_(r.Eff), kind: gcmText_(r.Kind) || 'member', forMonth: gcmText_(r['For month']) });
+  });
+  GBL_ROSTER.LINES.forEach(function (ln) {
+    var mine = bills.filter(function (b) { return b.line === ln; }), last = mine[mine.length - 1];
+    if (last) (lineRows[ln + '|' + last.month] || []).forEach(function (r) {
+      if (r.kind !== 'member') return;
+      var p = get(r.name), l = line(p, ln);
+      l.onBill = gblMonthLabel_(last.month);
+      if (r.tier) l.tier = r.tier;
+      if (r.start && !l.since) l.since = r.start;
+    });
+    mine.filter(function (b) { return b.month >= yr.slice(0, 7); }).forEach(function (b) {
+      (lineRows[ln + '|' + b.month] || []).forEach(function (r) {
+        if (r.kind !== 'cancel' && r.kind !== 'left') return;
+        var p = get(r.name), d = r.kind === 'left' ? r.eff : (r.forMonth || b.month) + '-01';
+        if (!p.off.some(function (o) { return o.line === ln; })) p.off.push({ line: ln, label: GBL.LABEL[ln], date: d, why: 'terminated', src: 'bill', bill: gblMonthLabel_(b.month) });
+      });
+    });
+  });
+  /* what the group and our team have recorded: a leaver reported, a joiner being enrolled, and the group's own posts */
+  var changes = [];
+  try { changes = gblChanges_(g); } catch (e2) {}
+  changes.forEach(function (c) {
+    if (!c.member) return;
+    var lnk = GBL_ROSTER.LINES.indexOf(c.line) >= 0 ? c.line : 'health';
+    if (c.kind === 'leaver' && c.source !== 'bill' && (c.effective || c.when) >= yr) { var p = get(c.member); p.leaving.push({ line: lnk, label: GBL.LABEL[lnk], date: c.effective, reported: c.when, by: c.source === 'client' ? 'you' : 'us', task: c.task, done: c.status === 'done' }); }
+    else if (c.kind === 'joiner' && c.source !== 'bill' && c.when >= yr && c.status !== 'done') { var q = get(c.member); q.joining.push({ line: lnk, label: GBL.LABEL[lnk], date: c.effective, reported: c.when, by: c.source === 'client' ? 'you' : 'us', task: c.task }); }
+    else if (c.kind === 'post' && c.source === 'client') { var r = get(c.member); r.posts.push({ at: c.at, ts: c.ts, by: c.by, text: c.detail, on: c.note, feed: c.sfId, task: c.task }); }
+  });
+  /* the applications and increases still pending, in the pending panel's own words */
+  var cards = [];
+  try { cards = gcmPending_(g, today, forGroup); } catch (e3) {}
+  cards.forEach(function (c) {
+    var p = get(c.applicant || 'An employee (name not on our record)');
+    p.pending = { since: c.since, days: c.days, late: c.late, lines: c.lines, apps: c.apps, incs: c.incs, last: c.last ? c.last.text : '', applied: c.applied, incSince: c.incSince };
+    c.items.forEach(function (x) { p.items.push(Object.assign({ pending: true }, x)); });
+  });
+  /* any other open item about the person that the group is shown */
+  g.tasks.forEach(function (t) {
+    if (!t.open || t.app) return;
+    if (forGroup && (!gcmShown_(g, t) || t.priv || GCM_PRIVATE.test(t.subject))) return;
+    var p = people.filter(function (x) { return (t.who && gblSamePerson_(x.raw, t.who)) || gblNamedIn_(x.name, t.subject); })[0];
+    if (!p || p.items.some(function (i) { return i.id === t.id15; })) return;
+    p.items.push({ id: t.id15, kind: 'task', what: gcmTitle_(t.subject, g.name), owner: t.owner || 'Our branch team', status: forGroup ? (GCM_STATUS[String(t.status).toLowerCase()] || 'In progress with us') : t.status,
+      opened: t.opened, days: gcmDays_(t.opened, today), due: t.due, late: !!(t.due && t.due < today) });
+  });
+  /* the notes our team shared with the group on those items. Never the rest of the Chatter, replies under the group's own
+     post included: staff write Chatter as the team's own, and only a note shared for the group is the group's to read. */
+  var taskIds = [];
+  people.forEach(function (p) { p.items.forEach(function (i) { if (i.kind !== 'increase') { var t = g.tasks.filter(function (x) { return x.id15 === i.id; })[0]; if (t) taskIds.push(t.id); } }); });
+  var feed = taskIds.length ? gcmFeed_(taskIds) : {};
+  people.forEach(function (p) { p.items.forEach(function (i) { i.notes = (feed[i.id] || []).filter(function (f) { return g.shares.post[f.id]; }).map(gcmShared_); }); });
+  /* where each person stands */
+  var out = people.map(function (p) {
+    var lines = Object.keys(p.lines).map(function (k) {
+      var l = p.lines[k], offAfter = p.off.some(function (o) { return o.line === k && (!l.since || o.date >= l.since); });
+      l.active = !!l.onBill || (l.sfLive && !offAfter);
+      return l;
+    });
+    var active = lines.filter(function (l) { return l.active; });
+    var offNow = p.off.filter(function (o) { return !(p.lines[o.line] && p.lines[o.line].active); });
+    var joining = p.joining.filter(function (j) { return !(p.lines[j.line] && p.lines[j.line].active); });
+    var leaving = p.leaving.filter(function (x) { return !x.done && !offNow.some(function (o) { return o.line === x.line; }); });
+    var first = String(p.name).split(/\s+/)[0];
+    var o = { key: gblPersonKey_(p.name), name: p.name, first: first, active: active.length > 0, offYear: offNow.length > 0, pendingNow: !!p.pending || joining.length > 0,
+      lines: active.map(function (l) { return { label: l.label, tier: l.tier, since: l.since, onBill: l.onBill }; }),
+      off: offNow.map(function (x) { return { label: x.label, date: x.date, why: x.why, bill: x.bill || '' }; }),
+      leaving: leaving.map(function (x) { return { label: x.label, date: x.date, reported: x.reported, by: x.by }; }),
+      joining: joining.map(function (x) { return { label: x.label, date: x.date, reported: x.reported, by: x.by }; }),
+      pending: p.pending, items: p.items, posts: p.posts.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); }).slice(0, 10).map(function (x) { return { at: x.at, by: x.by, text: x.text, opened: /^new task:/.test(x.on || ''), on: /^on /.test(x.on || '') ? String(x.on).slice(3) : '' }; }) };
+    o._sf = { id: p.sfId, contact: p.contactId };   // for a post's task; gblClientPeople_ takes it off before the page reads it
+    return o;
+  }).filter(function (o) { return o.active || o.offYear || o.pendingNow || o.items.length || o.posts.length; });
+  out.sort(function (a, b) { return (b.pendingNow - a.pendingNow) || ((b.pending ? b.pending.days : 0) - (a.pending ? a.pending.days : 0)) || a.name.localeCompare(b.name); });
+  return { ok: true, asAt: L.refreshed || tDmy_(today), people: out, sf: !!M.ok,
+    counts: { active: out.filter(function (o) { return o.active; }).length, off: out.filter(function (o) { return o.offYear; }).length, pending: out.filter(function (o) { return o.pendingNow; }).length, all: out.length },
+    bills: GBL_ROSTER.LINES.map(function (ln) { var b = bills.filter(function (x) { return x.line === ln; }).pop(); return b ? { label: GBL.LABEL[ln], month: gblMonthLabel_(b.month) } : null; }).filter(Boolean),
+    year: today.slice(0, 4) };
+}
+/** The route the group's page calls for "Your people". */
+function gblClientPeople_(p) {
+  var L = gcmLoad_(), a = gcmClientAuth_(L, p.lb, p.code);
+  if (!a.ok) return a;
+  var R = gblRoster_(a.g, L, true);
+  R.people.forEach(function (o) { delete o._sf; });
+  return R;
+}
+/** A group's post about one of its people: onto the open item's task in Salesforce (its owner mentioned and e-mailed), or,
+ *  with nothing open on them, onto a new task for the account owner. Filed on Group Changes as the group's own post. */
+function gblClientPost_(b) {
+  var L = gcmLoad_(), a = gcmClientAuth_(L, b.lb, b.code);
+  if (!a.ok) return a;
+  var g = a.g, today = L.today, name = String(b.name || '').trim().slice(0, 80), role = String(b.role || '').trim().slice(0, 80);
+  var text = String(b.text || '').trim().slice(0, GBL_ROSTER.MAX_TEXT);
+  if (!name) return { ok: false, error: 'Add your name, so our team knows who wrote.' };
+  if (text.replace(/\s+/g, ' ').length < GBL_ROSTER.MIN_TEXT) return { ok: false, error: 'Write a little more, so the person handling it knows what you need.' };
+  var R = gblRoster_(g, L, true), p = R.people.filter(function (x) { return x.key === String(b.person || ''); })[0];
+  if (!p) return { ok: false, error: 'That person is not on your list any more. Refresh the page and try again.' };
+  var mine = [];
+  try { mine = gblChanges_(g).filter(function (c) { return c.kind === 'post' && c.source === 'client'; }); } catch (e) {}
+  if (mine.some(function (c) { return gblSamePerson_(c.member, p.name) && c.detail === text && c.ts > Date.now() - GBL_ROSTER.SAME_MIN * 60000; })) return { ok: true, dup: true, said: 'We already have this one. Thank you.' };
+  if (mine.filter(function (c) { return c.when === today; }).length >= GBL_ROSTER.MAX_DAY) return { ok: false, error: 'That is a lot of messages for one day. Please e-mail ' + (GCM.TELL_CC[0] || 'our sales support team') + ' and we will pick them up.' };
+  if (!tSfOn_()) return { ok: false, error: 'Our system is being updated. Please e-mail ' + (GCM.TELL_CC[0] || 'our sales support team') + ' instead.' };
+  var item = b.item ? p.items.filter(function (i) { return i.id === gcmId15_(b.item); })[0] : null;
+  if (b.item && !item) return { ok: false, error: 'That item is no longer open. Refresh the page to see where it stands.' };
+  var task = item && item.kind !== 'increase' ? g.tasks.filter(function (t) { return t.id15 === item.id; })[0] || null : null;
+  var head = 'From ' + g.name + ' on their service page (' + name + (role ? ', ' + role : '') + '), about ' + p.name + (item ? ', on "' + item.what + '"' : '') + ':';
+  var taskId = '', feedId = '', owner = null, subject = '';
+  if (task) {
+    taskId = task.id;
+    owner = gblTaskOwner_(task.id);
+    feedId = gblClientFeed_(task.id, head, text, owner);
+    if (!feedId) return { ok: false, error: 'Our system would not take the message just now. Please try again in a minute.' };
+  } else {
+    /* nothing open on them (or an increase whose requirements have no task): a task for the account owner, on the group's
+       account so the group sees it on its page, and on the person by their contact */
+    var inc = item && item.kind === 'increase' ? g.incs.filter(function (n) { return n.id15 === item.id; })[0] : null;
+    var acct = (g.acctsFull || g.accts)[0] || null, ownerId = gblOwnerId_(g), first = p.first;
+    subject = (p.pendingNow ? (inc ? inc.line + ' increase' : 'Pending application') : p.offYear && !p.active ? 'Member who came off' : 'Member query') + ' – ' + p.name + ' – ' + g.name + ' – the group asks';
+    var rec = { Subject: subject.slice(0, 255), WhatId: inc ? inc.id : acct, ActivityDate: gcmAddDays_(today, GBL_ROSTER.DUE_DAYS), Status: 'Not Started', Priority: 'Normal',
+      Description: head + '\n' + text + '\n\nOpened from the group\'s service page' + (item ? ' on the ' + item.what.toLowerCase() : ', because nothing was open on ' + first) + '. Answer on the Chatter, and share a note for the group so they read the reply on their page.' };
+    if (p._sf && p._sf.contact) rec.WhoId = p._sf.contact;
+    if (ownerId) rec.OwnerId = ownerId;
+    try { taskId = String(tSfSend_('post', '/sobjects/Task', Object.assign({ Task_Type__c: 'Servicing' }, rec)).id || ''); }
+    catch (e1) {
+      try { taskId = String(tSfSend_('post', '/sobjects/Task', rec).id || ''); }
+      catch (e2) { return { ok: false, error: 'Our system would not take the message just now. Please try again, or e-mail ' + (GCM.TELL_CC[0] || 'our sales support team') + '.' }; }
+    }
+    feedId = gblClientFeed_(taskId, head, text, null);
+    owner = { name: g.assigned, email: g.ownerEmail };
+  }
+  gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: 'health', Kind: 'post', Member: p.name, Detail: text, Effective: today, Amount: 0, Source: 'client', By: name + (role ? ', ' + role : ''),
+    Status: 'open', 'SF Task': taskId, 'SF Id': feedId, Note: item ? 'on ' + item.what : 'new task: ' + subject }]);
+  try { gblPostMail_(g, name, role, p, item, text, taskId, owner, !task); } catch (e3) {}
+  var who = owner && owner.name ? String(owner.name) : 'our team';
+  return { ok: true, task: taskId ? gcmId15_(taskId) : '', opened: !task,
+    said: task ? 'Sent. It is on the item for ' + who + ', who has been told.' : 'Sent. Nothing was open on ' + p.first + ', so we opened an item for ' + who + '. It shows here once it is in our records, within the hour.' };
+}
+/** The group's words onto a task's Chatter: through Connect with the owner mentioned, so Salesforce tells them; a plain
+ *  post when the mention is refused. Returns the feed item's id, or ''. */
+function gblClientFeed_(taskId, head, text, owner) {
+  if (!taskId) return '';
+  if (owner && owner.id) {
+    try { return String(tSfSend_('post', '/chatter/feed-elements', { feedElementType: 'FeedItem', subjectId: taskId, body: { messageSegments: [{ type: 'Text', text: head + ' ' }, { type: 'Mention', id: owner.id }, { type: 'Text', text: '\n' + text }] } }).id || ''); } catch (e) {}
+  }
+  try { return String(tSfSend_('post', '/sobjects/FeedItem', { ParentId: taskId, Body: head + '\n' + text }).id || ''); } catch (e2) { return ''; }
+}
+/** The person who has it hears at once, sales support copied, from support@ (Gmail if Microsoft refuses). */
+function gblPostMail_(g, name, role, p, item, text, taskId, owner, opened) {
+  var to = [];
+  if (owner && owner.email) to.push(String(owner.email));
+  if (g.ownerEmail && to.map(function (x) { return x.toLowerCase(); }).indexOf(g.ownerEmail.toLowerCase()) < 0) to.push(g.ownerEmail);
+  GCM.TELL_CC.forEach(function (x) { if (to.map(function (y) { return y.toLowerCase(); }).indexOf(x.toLowerCase()) < 0) to.push(x); });
+  if (!to.length) return false;
+  var url = gblSfUrl_(taskId);
+  var body = '<p><b>' + tEsc_(g.name) + '</b> (' + tEsc_(name + (role ? ', ' + role : '')) + ') wrote on their service page about <b>' + tEsc_(p.name) + '</b>' + (item ? ', on <b>' + tEsc_(item.what) + '</b>' : '') + ':</p>' +
+    '<div style="background:#fff;border:1px solid #e2e7ef;border-left:4px solid #13408F;border-radius:10px;padding:11px 15px;white-space:pre-wrap">' + tEsc_(text) + '</div>' +
+    '<p>' + (opened ? 'Nothing was open on ' + tEsc_(p.first) + ', so a task was opened' + (owner && owner.name ? ' for ' + tEsc_(owner.name) : '') + ', due ' + tEsc_(tDmy_(gcmAddDays_(gcmToday_(), GBL_ROSTER.DUE_DAYS))) + '.' : 'It is on the task’s Chatter.') +
+    ' Answer there, and share a note for the group so they read the reply on their page.</p>' +
+    (url ? '<p><a href="' + url + '" style="display:inline-block;background:#1d5bc4;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:8px">Open the task</a></p>' : '') +
+    '<p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
+  var subject = 'Group wrote: ' + g.name + ' · about ' + p.name + (opened ? ' · task opened' : '');
+  try { if (tMsCreds_()) { tMsSend_(to[0], subject, body, { cc: to.slice(1), replyTo: TRANSITION.MS_FROM }); return true; } } catch (e) {}
+  try { MailApp.sendEmail({ to: to.join(','), subject: subject, htmlBody: body, name: 'Ricky Rampersad Branch' }); return true; } catch (e2) { return false; }
+}
+
 /* ── the board: one line a group, for the staff page's accounts table ───────────────── */
 /** Where each group's billing stands this month, for the team dashboard: lines uploaded, open fixes, reconciled, sent. */
 /* ── The billing day: the 26th (24 October 2026) ───────────────────────────────────────────────────────────────────
