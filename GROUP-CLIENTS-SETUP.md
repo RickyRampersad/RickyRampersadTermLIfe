@@ -232,17 +232,25 @@ something is written.
   member's name), twelve months of billed and received from Salesforce, and a form to tell us about a payment, a
   joiner, a leaver, a dependent or a question. Each goes on Group Changes, onto the billing task's Chatter and to the
   account owner by e-mail; a joiner or leaver opens a Salesforce task for the owner.
-- **The billing day: the 26th.** The bills follow the Monday letters' pattern. On each line a staff member uploads,
-  verifies, reconciles and presses **Approve for the 26th** with the PDF attached; the PDF waits in the Drive folder
-  (`GCM_FORMS_FOLDER`, subfolder "Bills to send"), so **set that property before the first approval**: without it the
-  button is disabled and staff press Send now on the day. At 10:00 on the 26th (the next working day when the 26th is a
-  weekend; the `GCM_BILL_DAY` Script property moves the day) every approved bill goes from support@ with its PDF, copied
-  to sales support, and the PDF moves to "Sent bills". At 10:30 the group day asks each staff member whose billed group
-  (a group with a Salesforce billing record for the month) had no bill why, opens a `GROUP BILL NOT SENT` task
-  (Lic/Staffing/SA/HR) in their name, and the branch manager's summary carries "Group bills: the 26th". In test mode
-  (before `gblGoLive`) the run sends each approved bill to its approver and the branch marked TEST and marks the row
-  `tested`; approve again once live. Editor: `gblDayRehearse` (every approved bill as a TEST to its approver, nothing
-  marked), `gblDayNow` (send what is due now), `gblDayTest` (the whole billing day rehearsed to the branch manager).
+- **The billing day: the 26th at 10:00**, or the next working day when the 26th is a Saturday, a Sunday or a public
+  holiday (Monday 26 October, Thursday 26 November, Monday 28 December 2026; the `GCM_BILL_DAY` Script property moves the
+  26th). Trinidad and Tobago's holidays are in `GBL_DAY.HOLIDAYS` for 2026 and 2027: **add the next year's moveable ones
+  each January**, and put any other day the branch is closed in the `GCM_BILL_HOLIDAYS` Script property (yyyy-MM-dd,
+  comma separated). On the 25th a staff member uploads each line, verifies it, reconciles it and presses **Approve** with
+  the PDF attached; the PDF waits in the Drive folder (`GCM_FORMS_FOLDER`, subfolder "Bills to send"), so **set that
+  property before the first approval**: without it the button is disabled and staff press Send now. At 13:00 on the 25th
+  (the last working day before it when the 25th is not one) the branch manager gets the report of who has worked each
+  billed group, line by line, and what is left, the staff copied (`gblBillReportTest` sends him a TEST copy now). At 10:00
+  on the billing day every approved bill goes from support@ with its PDF, copied to sales support, and the PDF moves to
+  "Sent bills". A bill approved after that goes at 10:00 the next working day. At 10:30 on the billing day the group day
+  asks each staff member whose billed group (a group with a Salesforce billing record for the month) had no bill why,
+  opens a `GROUP BILL NOT SENT` task (Lic/Staffing/SA/HR) in their name, and the branch manager's summary carries "Group
+  bills: <day>". In test mode (before `gblGoLive`) the run sends each approved bill to its approver and the branch marked
+  TEST and marks the row `tested`, and nobody is asked why; approve again once live. Editor: `gblDayRehearse` (every
+  approved bill as a TEST to its approver, nothing marked), `gblDayNow` (send what is due now), `gblDayTest` (the whole
+  billing day rehearsed to the branch manager).
+  After a paste, open `<exec address>?action=gcm.ping`: `bills.next` should read the 26th (or the working day after it)
+  and `bills.report` the 25th at 13:00. No `report` means the GroupBilling.gs pasted is an older one.
 - **Guardian's own forms, filled exactly.** Three forms, on the group's page ("Enrol, terminate or change a member")
   and on the staff billing review (Record a change, or Form on a register row): **EB0010** (2024/3, the Group and
   Individual Policy Change Form: terminations, dependents, beneficiaries, address, plan, claim account), **GIO001**
@@ -260,7 +268,28 @@ something is written.
 - **The owner's task is chased on Chatter every three working days** inside the 10:30 group day, until EB Customer
   Care replies at support@ naming the member or the task is closed; the fifth follow-up goes to the branch manager.
   `gblFormChasePreview` (editor) shows what would be posted; `gblFormChaseNow` runs it.
-- **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the two new routes, `gcm.clientForm` and
+- **The Billings door (25 October 2026).** The billing is its own page, `groupclientmanagement/billing.html`: the
+  staff page's **Billing** buttons open it, with the same sign-in, and the weekly letters stay where they were. One
+  group and one month at a time, in eight steps with a count on each: upload the bills (and the claims experience);
+  what the checks found, with the AI's read of the month first; **answer the questions** (each open finding as a
+  question with taps, plus the AI's own; an answer goes onto the billing task's Chatter in the staff member's name and
+  settles the finding or opens what comes next: a task, a payment, the termination form); **last month's tasks** (every
+  open billing task read against this month's bills, with an update written for you to post, the owner told, and the
+  task closed when it is settled); terminations and changes (Record a change, the forms); **the people** (everyone on
+  the bills matched to Salesforce: turning 65 to convert, dependants reaching the dependant age (`GCM_DEP_AGE`),
+  retirements, tiers and records to put right, with a letter to the member or a task); **the statement of account**
+  (this month, the earlier invoices Salesforce still shows unpaid, the total to bring the account up to date; it goes
+  inline in the bill e-mail and as a PDF beside the bills); approve and send. The group's page is in three tabs, *Your
+  service items*, *Your billing* and *Your people*, the statement first under the billing; a link with `?tab=billing`
+  or `?tab=people` opens on that tab.
+- **Your people** (25 October 2026): the group picks *Pending applications*, *Active members*, *Came off this year* or
+  *Everyone*, from Salesforce and the latest bills uploaded. Each person shows what is open on them with us, who has
+  it and where it stands, and a box: a message goes onto that item's task in Salesforce with its owner mentioned and
+  e-mailed (sales support copied); with nothing open, it opens a task for the account owner. Staff answer on the
+  task's Chatter and share a note for the group, which then shows on the group's page. Nothing new to set.
+  Nothing new to set: the member letters follow the bills' test mode (`gblGoLive`), and the AI steps use
+  `ANTHROPIC_API_KEY`.
+- **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the two Your people routes, `gcm.clientPeople` and `gcm.clientPost`, the door's four routes, `gcm.billAsk`, `gcm.billTaskUpdates`, `gcm.billPeople` and `gcm.billStatement`, the two form routes, `gcm.clientForm` and
   `gcm.clientFormSend`, and the chase in the group day are in GroupClients.gs), then a New version.
 - **Script properties**: none new. `GCM_BILL_LIVE` is set by `gblGoLive`. The AI read uses `ANTHROPIC_API_KEY` as
   the rest of the page does. While the bills are in test mode (before `gblGoLive`) the 10:30 asks nobody and opens no task; the branch manager's summary says what it would have asked.

@@ -222,7 +222,17 @@ const BL_TASKS = {
                 text: 'Please ask {group} for [what we need], because [why]. We need it by [date] so the {month} {line} bill can be reconciled.' },
   other:      { label: 'Something else', subj: '{line} Billing – {group} – {month}', days: 2,
                 ask: ['What it is about', 'What you want done, and by when', 'What the person needs to know to do it'],
-                text: '[What it is about]. Please [what you want done] by [date]. [What they need to know].' }
+                text: '[What it is about]. Please [what you want done] by [date]. [What they need to know].' },
+  /* the people on the bills (the Billings door, 25 October 2026): a member turning 65, a dependant reaching the dependant age, a record to put right */
+  convert:    { label: 'A member turning 65: convert', subj: '{line} Conversion at 65 – {member} – {group}{eff}', days: 5,
+                ask: ['Who, and their employee or certificate number', 'The date they turn 65', 'Whether the member has been written to, and how to reach them', 'What you want done: a licensed agent to call with the individual plan options'],
+                text: '{member} (employee no. [number]) on {line} turns 65 on {date}, when the group cover ends. Please have a licensed agent call them about converting to an individual plan without a break in cover. Contact: [phone or e-mail]. Confirm when the call is made.' },
+  depage:     { label: 'A dependant coming of age', subj: '{line} Dependant Reaching Age Limit – {member} – {group}{eff}', days: 5,
+                ask: ['The employee, and the dependant’s name', 'The date the dependant reaches the dependant age', 'Whether the employee has been told, and how to reach them', 'What you want done: offer the dependant a plan of their own, and end the dependant cover on the record'],
+                text: 'The dependant [dependant name] of {member} (employee no. [number]) on {line} reaches the dependant age on {date}. Please contact the employee about a plan of their own for the dependant, and end the dependant cover on the record from that date. Contact: [phone or e-mail].' },
+  data:       { label: 'A record to put right', subj: '{line} Record Update – {member} – {group}', days: 3,
+                ask: ['Who, and their employee or certificate number', 'What is missing or wrong on the record (date of birth, dependants, tier)', 'Where the right information comes from: the group, the bill, the enrolment form', 'What you want done'],
+                text: 'The Salesforce record for {member} (employee no. [number]) on {line} needs [what is missing or wrong]. The bill shows [what the bill shows]. Please get it from [the group / the enrolment form] and update the record. Confirm when done.' }
 };
 const blCmt = month => ['Chased Head Office on [what]; they will answer by [date].', 'The group confirms TT$[amount] paid on [date] by [how], ref [ref]; to be keyed on Payments.', 'Waiting on the group for [what]; chasing again on [date].',
   'Corrected in Salesforce: [what was changed].', 'Checked against the ' + blMon(month) + ' bill: [what agrees, and what differs].', 'Can you confirm [what] by [date]? The ' + blMon(month) + ' bill waits on it.'];
@@ -552,14 +562,17 @@ async function blReconcile(line) {
   const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'reconciled', note, force: BILL.role === 'branch' ? 'Y' : '' });
   toast(r.ok ? r.said : (r.error || 'Not reconciled'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
 }
-/* the billing day (24 October 2026: "on the 26th group billings go out … staff has to approve"): the strip under the title,
-   the Approve button on a reconciled line, and the state once approved. The PDF read in this session travels with the
-   approval and waits in the branch's Drive folder for the 10:00 run. */
+/* the billing day (24 October 2026; for a few hours on 25 October a Tuesday, then back the same day: "I would leave it for
+   the 26th of the month, excepting when it falls on a holiday or a weekend … on the 25th in the afternoon, I get the
+   report … at 1 o'clock"): the strip under the title, the Approve button on a reconciled line, and the state once
+   approved. The PDF read in this session travels with the approval and waits in the branch's Drive folder for the 10:00 run. */
 function blDayStrip(day, live) {
   if (!day) return '';
   const when = day.isDay ? '<b>today, ' + esc(day.label) + '</b>' : '<b>' + esc(day.label) + '</b>' + (day.daysTo ? ' (in ' + day.daysTo + ' day' + (day.daysTo === 1 ? '' : 's') + ')' : '');
-  return '<div class="note info blday"><div><b>The bills go out by themselves on ' + when + '.</b> Before then, on each line: upload the bill, verify it against Salesforce, fix what is marked fix, mark it reconciled and press <b>Approve for the ' + day.dayOfMonth + 'th</b> with the PDF attached. ' +
-    'A line not approved by ' + day.hour + ':00 waits for you to press Send now. At 10:30 the branch manager is told which groups had no bill, and asks why.' +
+  const moved = day.moved ? ' The ' + (day.dayOfMonth || 26) + 'th is a weekend or a public holiday this month, so they go the next working day.' : '';
+  const late = day.late && day.run ? ' <b>The billing day has passed:</b> a bill approved now is a late bill and goes on ' + esc(day.runLabel) + '.' : '';
+  return '<div class="note info blday"><div><b>The bills go out by themselves on ' + when + '.</b>' + moved + ' Before then, on each line: upload the bill, verify it against Salesforce, fix what is marked fix, mark it reconciled and press <b>Approve</b> with the PDF attached. ' +
+    'At ' + (day.reportHour || 13) + ':00 on ' + esc(day.reportLabel ? day.reportLabel.replace(/, \d+:\d+$/, '') : 'the ' + ((day.dayOfMonth || 26) - 1) + 'th') + ' the branch manager has the report of who has worked each group. A line approved after the ' + day.hour + ':00 run goes at ' + day.hour + ':00 the next working day, or when you press Send now; at 10:30 on the billing day the branch manager is told which groups had no bill, and asks why.' + late +
     (live ? '' : ' <span class="muted">The bills are in test mode: the run sends each approved bill to its approver and the branch, marked TEST, until the branch manager runs gblGoLive.</span>') +
     (day.drive ? '' : ' <b>The Drive folder is not linked yet</b> (the GCM_FORMS_FOLDER Script property, GROUP-CLIENTS-SETUP.md), so a bill cannot wait with its PDF: press Send now on the day.') + '</div></div>';
 }
@@ -569,14 +582,14 @@ function blApproveActs(o, b, s, d) {
   if (s.held) return '<span class="chip bad"><i></i>Approved, held at the run: ' + esc(s.held) + '</span><button class="btn ghost" type="button" data-unapprove="' + o.line + '">Cancel the approval</button>';
   if (s.status === 'approved') return '<span class="chip good"><i></i>Approved for ' + esc(blDayLabel(s.approvedFor)) + ' by ' + esc(s.approvedBy) + '</span><button class="btn ghost" type="button" data-unapprove="' + o.line + '">Cancel the approval</button>';
   if (s.status === 'tested') return '<span class="chip"><i style="background:var(--bar)"></i>Went as a test copy in the last run</span><button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for the next run</button>';
-  return '<button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for ' + esc(day.date || ('the ' + (day.dayOfMonth || 26) + 'th')) + '</button>';
+  return '<button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for ' + esc(day.run ? blDayLabel(day.run) : day.date || 'the billing day') + '</button>';
 }
 const BL_DAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 function blDayLabel(ymd) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); if (!m) return ymd || ''; const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); const dow = d.getUTCDay() || 7; return BL_DAYS[dow] + ' ' + (+m[3]) + ' ' + BL_MON[+m[2] - 1].slice(0, 3); }
 async function blApprove(line) {
   const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [], day = BILL.day || {};
   const who = BILL.live ? 'the group (' + (BILL.group.contact || BILL.group.to.join(', ')) + ')' : 'you, marked TEST (test mode)';
-  if (!confirm('Approve the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.label || 'the billing day') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)') + '?')) return;
+  if (!confirm('Approve the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.runLabel || day.label || 'the billing day at 10:00') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)') + '?')) return;
   const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'approve', attachments: files, force: BILL.role === 'branch' ? 'Y' : '' });
   toast(r.ok ? r.said : (r.error || 'Not approved'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
 }

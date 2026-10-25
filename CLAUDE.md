@@ -4520,22 +4520,50 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       scratchpad placed in a mocked Drive folder) and `billing/page-test.js` (99, pdf.js from the vendor copies); the
       harness (`gcmlive/env-sq.js`) mocks `DriveApp`, serves the site's forms from the repository and pdf-lib from the
       scratchpad. `forms/gas-sync.js` there is the proof that pdf-lib runs under the synchronous Promise.
-  - **The billing day: the 26th, approved by staff, sent by the system, chased at 10:30** (24 October 2026: "on the 26th
-    group billings go out and weekly on a Monday at 10am the queries go out but staff has to approve"). The bills follow
-    the Monday letters' pattern. `GBL_DAY` in GroupBilling.gs: the 26th (`GCM_BILL_DAY` Script property overrides, 1 to
-    28), or the next working day when it falls on a weekend (`gblBillDayOf_`; 26 September and 26 December 2026 are
-    Saturdays, so the 28th); 10:00, as the letters.
-    - **Approve for the 26th** (`gblApprove_`, act `approve`): a reconciled line (fixes closed, or the branch forces), the
-      group with a contact we may write to. The PDFs read in the session travel with the approval and wait in the Drive
-      folder's "Bills to send" (`gblKeepQueued_`, under `GCM_FORMS_FOLDER`), named by month, group and line; the row
-      carries Approved at, by, e-mail, for and the file ids (new Group Bills columns, added to an older tab by name).
-      With a PDF and no Drive folder the approval is refused and says to set the property or press Send now on the day.
-      `unapprove` trashes the waiting PDF and leaves the bill reconciled. Approving after 10:00 on the day is for the next
-      month, and the reply says so; Send now stays for the day itself. The steps strip gains *Approve* before *Send*.
+  - **The billing day: the 26th at 10:00, or the next working day; approved by staff, sent by the system, reported on the
+    25th at 13:00, chased at 10:30** (24 October 2026: "on the 26th group billings go out and weekly on a Monday at 10am
+    the queries go out but staff has to approve". On 25 October it went to a Tuesday for a few hours, so a client would
+    never have the weekly letter and a bill on one morning, and came back the same day: "I would leave it for the 26th of
+    the month, excepting when it falls on a holiday or a weekend … We get the billings on the 25th, but on the 25th, we
+    check it and verify it. And on the 26th, it's sent out … on the 25th in the afternoon, I get the report … So at 1
+    o'clock, I have a report"). `GBL_DAY` in GroupBilling.gs:
+    - **The day** (`gblBillDayOf_`): the 26th (`GCM_BILL_DAY` moves it, 1 to 28), and when that is a Saturday, a Sunday
+      or a public holiday, the next working day (`gblWorkingDay_`): Mon 28 Sep, Mon 26 Oct, Thu 26 Nov, Mon 28 Dec 2026
+      (Boxing Day is a Saturday), Tue 26 Jan, Fri 26 Feb, Wed 31 Mar 2027 (Good Friday, the weekend, Easter Monday and
+      Spiritual Baptist Liberation Day in a row). When the 26th is a Monday (26 October 2026) the bills and the weekly
+      letters both go at 10:00 that morning; that was accepted.
+    - **The holidays** (`GBL_DAY.HOLIDAYS`, `gblHolidays_`): Trinidad and Tobago's, the fixed ones as MM-dd and the
+      moveable ones by date for 2026 and 2027 (the same list as `Claims.gs`; add each year's in January), plus the
+      `GCM_BILL_HOLIDAYS` Script property (yyyy-MM-dd or MM-dd, comma separated) for any day the branch is closed. A
+      holiday on a Sunday is kept on the Monday after (Divali 2026, Boxing Day 2027); a Saturday one is not. Read once a
+      run.
+    - **A late bill goes the next working day** (`gblNextRunDay_`): an approval before the billing day's 10:00 run is for
+      that day; one made within `LATE_DAYS` (14) after it goes at 10:00 the next working day (today, before 10:00 on a
+      working day), so it never waits a month; one made later is for the next billing day. A late run is not a billing
+      day: nobody is chased on it.
+    - **The report on the 25th** (`gblBillReport_`, `gblReportRows_`; `gblMondayReport_` is kept as its old name for a
+      GroupClients.gs pasted earlier): at 13:00 (`REPORT_HOUR`) on the 25th, or the last working day before it when the
+      25th is not one (`gblReportDayOf_`: Friday 23 October 2026, Thursday 24 December), while the staff are still in (the
+      first goes home at 2), from the hourly refresh, once (`GCM_BILL_REPORT_LAST`). Every billed group by the staff member
+      who looks after it: each line where it stands (nothing uploaded, to fix, not reconciled, reconciled not approved,
+      approved for which day, held, sent), who worked it (uploaded by and when, reconciled by, approved by; "nobody yet"
+      in red), and what is left before 10:00. Tiles: ready, with work left, not started. To the branch manager, the staff
+      copied; internal, sent in test mode too. Editor: `gblBillReportTest` (to him alone, marked TEST, recording
+      nothing), `gblBillReportNow`.
+    - **A browser can tell which version is live**: `?action=gcm.ping` carries `bills` (the next billing day, the report,
+      live or test, the Drive folder linked). A GroupBilling.gs older than the 26th answers no `report`; with no
+      GroupBilling.gs at all, `bills` is 0.
+    - **Approve** (`gblApprove_`, act `approve`): a reconciled line (fixes closed, or the branch forces), the group with
+      a contact we may write to. The PDFs read in the session travel with the approval and wait in the Drive folder's
+      "Bills to send" (`gblKeepQueued_`, under `GCM_FORMS_FOLDER`), named by month, group and line; the row carries
+      Approved at, by, e-mail, for and the file ids (new Group Bills columns, added to an older tab by name). With a PDF
+      and no Drive folder the approval is refused and says to set the property or press Send now on the day. `unapprove`
+      trashes the waiting PDF and leaves the bill reconciled. The reply names the day it goes; Send now stays for a bill
+      that cannot wait. The steps strip gains *Approve* before *Send*.
     - **The run** (`gblDayRun_`): from the hourly refresh (`gcmRefreshTick`, `auto`, silent when nothing is due) and
       first in the 10:30 group day; every approved bill whose day has come, one e-mail a group and month with the PDFs
       read back from Drive (`gblBillMail_`), to the contact with sales support in Cc, logged on Group Sends as `bill
-      sent` (Via "support@, 26th run"), the row `sent`, the PDF moved to "Sent bills", a note on the billing task's
+      sent` (Via "support@, billing run"), the row `sent`, the PDF moved to "Sent bills", a note on the billing task's
       Chatter. **Test mode is the bills' own**: until `gblGoLive` the run sends each bill to its approver and the branch
       marked TEST, logs `bill test`, marks the row `tested` and nothing sent; approve again once live. A bill the run
       cannot send is `held: <why>` on its row (no contact, Microsoft refused, the PDF gone from Drive) and stays
@@ -4565,12 +4593,119 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       board answer); the group's page says when its next bill comes (`nextBill` in `gblClientBlock_`).
     - Tests: `billing/billing-test.js` (165) and `billing/page-test.js` (107) in the scratchpad; the harness's Drive
       mock gained stable file ids, `getFileById`, `moveTo` and `setTrashed`.
+  - **The Billings door: its own page, eight steps, the AI asks, last month's tasks, the people, the statement** (25
+    October 2026: "upload the November 2026 group health, life and pension billing and the claims experience, also build
+    in intelligence from AI to ask the questions and run the analysis, as we need to also produce Guardian Life billings
+    as well, read the old invoices that are owed. Tasks opened for last month in October billing: an analysis, deep
+    insight, history is done as well, to post on Chatter for an update, as well any terminations etc. Make much more
+    simple and interactive, a site that will pop and not confuse the weekly query and task update", then "the analysis
+    for all persons re dependants and persons coming of age to convert"). `groupclientmanagement/billing.html` with
+    `billing-door.js`: the staff page's Billing buttons open it (`billing.html?g=<key>&m=<month>`), the same sign-in (the
+    two localStorage keys), and the weekly letters stay on `index.html`, which no longer loads the review. The look is
+    `gcm.css`, pulled out of `index.html` so the two pages read one sheet; `billing-ui.js` runs unchanged under the door
+    (the pieces of a line, the findings, the task panel, the forms, the payment box, approve and send), the door
+    replacing `openBilling` and `drawBilling`. One group, one month, a list of groups first (mine, billing to do,
+    everyone; the billing day and test mode in the hero), then the steps as a strip with a count on each (done, to do,
+    amber for checks) and one panel at a time, a progress bar over them (a step is done only when it is: a test send is
+    not a send, a check still open is not done):
+    1. *Upload the bills*: the three lines, the claims experience under health.
+    2. *What was found*: the AI read runs by itself (`gcm.billAi`, cached by the facts), then the findings by line.
+    3. *Answer the questions* (`gblQuestions_`, `gcm.billAsk`): every open finding becomes a question with taps
+       (`gblQuestionOf_`: who it is for, the names for staff, options with `resolve`, a `post` for Chatter, and a
+       `next`: upload again, the Salesforce fix, the payment box, the task panel with the kind and member filled, the
+       EB0010 termination forms for the members who left), always with "Not sure yet"; the AI adds up to four of its own
+       from the figures (`gblAiQuestions_`, names never sent, cached six hours). An answer (`gblAnswer_`, act `answer`)
+       goes on the bill row's **Answers** column, on Group Changes as Kind `answer` keyed to the question, and onto the
+       line's billing task's Chatter under the staff member's name; a resolving answer resolves the finding. An AI
+       question's answer travels back with its words, so no second call.
+    4. *Last month's tasks* (`gblTaskUpdates_`, `gcm.billTaskUpdates`): every open billing task read against this
+       month's bills and Salesforce (on the bill, off the bill, a credit or back-charge, the month's record and payment,
+       an amount in the subject keyed as a payment), a verdict (settled, still open, worse), and an update written by the
+       AI from the task's history in one call (`gblTaskUpdatesAi_`, names scrubbed) or from the record. Post it
+       (`gblTaskUpdate_`, act `taskUpdate`): `gblNoteTask_` with the owner mentioned and e-mailed, the task closed in
+       Salesforce when ticked (a PATCH to Completed), every update on Group Changes as `taskupdate` or `taskclosed` so the
+       door shows which were dealt with this month. The review's own comment box, prompts and "post for the group" sit
+       under each. The group's e-mails about money are on the step.
+    5. *Terminations and changes*: the counts from the bills, Record a change and the three Guardian forms.
+    6. *The people* (`gblPeopleStep_`, `gcm.billPeople`): everyone on the health and life bills matched to
+       `gblMembers_` by employee id, certificate or name, with the dependants from the Relationship Group: turning 65
+       within six months (`convert`, the group cover ends; `GCM_LIFE.CONVERT_AGE`), a dependant reaching `GCM_DEP_AGE`
+       (`depage`), retiring on the company pension (`retire`, from the Group Milestones tab), over the age and still
+       billed, a family tier with nobody on record, a single tier with dependants, no date of birth, no Salesforce
+       record. Per flag: a letter to the member (`gblMemberLetter_`, act `memberLetter`: previewed as the member reads
+       it, facts and the offer of a licensed agent's call, never advice; sent from support@, in test mode to the staff
+       member marked TEST, logged on Group Changes as `letter` and Group Sends as `member letter test|sent`), or a task
+       (`BL_TASKS` gained `convert`, `depage` and `data`; `GBL_TASK.KINDS` too), or GIO001 for the member with no
+       record. The group's page gets counts only (`forGroup`).
+    7. *The statement* (`gblStatementData_`, `gblStatementHtml_`, `gblStatementPdf_`, `gcm.billStatement`): this
+       month's lines, the earlier invoices Salesforce still shows unpaid (14 months back, billed less payments), Head
+       Office's own arrears figure when the two differ, the total to bring the account up to date, what changed as
+       counts, what is attached; the PDF to download. **Arrears are compared line by line** (`arrearsDiff`): a health
+       invoice's outstanding balances against what Salesforce shows owed on health alone, and only a health invoice,
+       since a life bill or a list bill prints none (25 October 2026: the first examples set health's TT$2,822 against
+       every line's TT$4,022 and said the two differed when health matched). **"Changes on this billing"** and the cover
+       note's names come from one place, `gblBillChanges_`: the month's own bills (findings, credits, a life
+       statement's adjustments) for the lines being sent, never Group Changes, which keeps no month (the same examples
+       named a joiner and a leaver in the e-mail and said "no one joined or left" under it, and a November statement
+       would have counted October's joiner again). It goes inline in the bill e-mail (`gblBillMail_`) and as a PDF
+       beside the bills on Send now and in the billing-day run (`gblStatementBlob_`), and the group's page carries the
+       latest sent one (`gblClientBlock_` `statement`).
+    8. *Approve and send*: the day strip, reconcile, approve for the day, send now, a payment.
+    **The group's page is in two tabs** (`client.html`: `ctabsHtml`, `CT`): *Your service items* (the weekly items,
+    the record, the rating, the progress bar) and *Your billing* (the statement of account first, `statementHtml`, then
+    the lines as before). It opens on the items; `?tab=billing` opens on the billing, for the bill e-mail's link. The
+    bill and the weekly letter never share a screen, which was the ask.
+    Tests in the scratchpad: `billing/billing-test.js` (214: the November bill, the questions and their answers, the
+    AI's, the updates with a Task PATCH, the people with a member moved to 65 and `GCM_DEP_AGE` 14, the letter, the
+    statement), `billing/door-test.js` (81, Playwright: the staff page's button into the door, every step, the group's
+    page in its tabs, a phone) and `billing/page-test.js` (46). The harness (`wow/setup.js`) now serves `.css` as
+    `text/css`: until then a stylesheet linked from a page was refused by the browser and the screenshots were bare.
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
     Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing
     records) and `billing/page-test.js` (52, Playwright: the review driven with the real October PDFs through pdf.js,
     the made-up bill stored, the fixes, reconcile, the test send, a comment to Chatter, the claims upload; the
     group's page on a phone and a desk). `billing/world.js` holds the made-up Salesforce.
+
+- **Your people: who is on the plans, who came off this year, who is pending, and a box on each** (25 October 2026: "a
+  drop down to see the members that are active and members who have come off this year and members who are pending,
+  who they have an application in … very easy for the customer to just look at what is pending, who is having it, and
+  the ability to comment … driven by task. Remember, when they post a comment, it goes on to the respective chatter and
+  task. If there's nothing on it, … the ability to post something … Remember, we upload the billing and the Salesforce
+  data.").
+  - **A third tab on the group's page**, *Your people* (`client.html`: `PEO`, `peopleHtml`, `personHtml`,
+    `composeHtml`, `sendPost`; `?tab=people` opens on it; the tab says how many are pending). A drop-down picks
+    *Pending applications*, *Active members*, *Came off in <year>* or *Everyone*, each with its count, opening on the
+    pending when there are any; a search finds a name. On a phone the tabs read Items, Billing, People. The pending
+    panel on the service items links to it.
+  - **The list** (`gblRoster_` in GroupBilling.gs, `gcm.clientPeople`) is built from both sources: the group's Group
+    Health and Group Life records in Salesforce (`gblMembers_`: live, or off with a status change this year) and the
+    latest bill uploaded on each line (its members, with their tier), with this year's bills for who they took off.
+    A person is active on a line when the latest bill carries them, or Salesforce has them live and no termination
+    this year after they joined. Group Changes adds a leaver the group or our team reported (shown as leaving, with
+    the date) and a joiner being enrolled (pending until a bill or Salesforce has them).
+  - **What is open on each person**: the applications and increases still pending, from `gcmPending_` in its own
+    words (a medical requirement reads "An underwriting requirement: the details stay between the person insured and
+    us"), and any other open item about them the group is shown (`gcmShown_`, never a private one, matched by the
+    task's contact or both names in its subject: a termination task, say). Each says who on our team has it, who it is
+    liaising with, its status, its target date and the last contact, with the notes our team shared for the group.
+    **Never the rest of the Chatter**, replies under the group's own post included: staff write Chatter as the team's
+    own, and only a note shared for the group is the group's to read.
+  - **A message** (`gblClientPost_`, `gcm.clientPost`, a name required, a role optional): on an item, it goes onto
+    that task's Chatter through Connect with the task's owner mentioned (`gblClientFeed_`), headed "From <group> on
+    their service page (<name>, <role>), about <person>, on "<item>":"; with nothing open on the person, it opens a
+    task for the account owner (`Member query – <person> – <group> – the group asks`, or *Pending application* or
+    *Member who came off*; Servicing, due in two days, on the group's account and the person's contact, so it shows on
+    the page within the hour) with the words on its Chatter too. The person who has it is e-mailed from support@ with
+    sales support copied (`gblPostMail_`). It is filed on Group Changes as Kind `post`, Source `client`, and the card
+    shows the group what it wrote. The same words about the same person within ten minutes are taken once; forty a
+    day is the most one group sends.
+  - **What the group reads**: names, the plans, the tier on the bill, the dates. Never a date of birth, an e-mail, a
+    phone, a beneficiary, a Salesforce id, a claim or a health detail; the `_sf` ids the post route needs are taken
+    off before the page reads the list.
+  - Tests in the scratchpad: `people/people-test.js` (30, Node, the made-up branch with an invented application, a
+    medical requirement, a leaver and a private claim item) and `people/page-test.js` (29, Playwright, a desk and a
+    phone, with screenshots).
 
 ## The branch's own forms — no client link opens a JotForm
 

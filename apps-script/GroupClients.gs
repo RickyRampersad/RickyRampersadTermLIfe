@@ -135,7 +135,10 @@ function gcmDoGet_(p) {
   try {
     switch (String(p.action || '')) {
       case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(),
-                                   sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_() };
+                                   sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_(),
+                                   /* the group bills' day and report, so a browser can tell which GroupBilling.gs is live */
+                                   bills: (function () { try { if (typeof gblDayInfo_ !== 'function') return 0; var d = gblDayInfo_();
+                                     return { next: d.label, report: d.reportLabel || '', live: !!d.live, drive: !!d.drive }; } catch (e) { return 0; } })() };
       case 'gcm.draft':   return gcmDraft_(p);
       case 'gcm.board':   return gcmBoard_(p);
       case 'gcm.group':   return gcmGroupView_(p);
@@ -145,6 +148,7 @@ function gcmDoGet_(p) {
       case 'gcm.remindPreview':  return gcmRemindPreview_(p);
       case 'gcm.refresh': return gcmRefreshAsked_(p);
       case 'gcm.client':  return gcmClient_(p);
+      case 'gcm.clientPeople': return typeof gblClientPeople_ === 'function' ? gblClientPeople_(p) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientForm': return typeof gblClientForm_ === 'function' ? gblClientForm_(p) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.wall':    return gcmWall_(p);
       case 'gcm.train':   return gcmTrain_(p);
@@ -152,6 +156,11 @@ function gcmDoGet_(p) {
       /* billings management (GroupBilling.gs, 24 October 2026) */
       case 'gcm.billing': return typeof gblView_ === 'function' ? gblView_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.billAi':  return typeof gblAi_ === 'function' ? gblAi_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      /* the Billings door (25 October 2026): the questions, last month's tasks, the people, the statement */
+      case 'gcm.billAsk':   return typeof gblQuestions_ === 'function' ? gblQuestions_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billTaskUpdates': return typeof gblTaskUpdates_ === 'function' ? gblTaskUpdates_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billPeople': return typeof gblPeopleStep_ === 'function' ? gblPeopleStep_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billStatement': return typeof gblStatement_ === 'function' ? gblStatement_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
     }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
@@ -179,6 +188,7 @@ function gcmDoPost_(b) {
       case 'gcm.billAct':     return typeof gblAct_ === 'function' ? gblAct_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.billSend':    return typeof gblSend_ === 'function' ? gblSend_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.claimsUpload': return typeof gblClaims_ === 'function' ? gblClaims_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.clientPost':  return typeof gblClientPost_ === 'function' ? gblClientPost_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientTell':  return typeof gblClientTell_ === 'function' ? gblClientTell_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientFormSend': return typeof gblClientFormSend_ === 'function' ? gblClientFormSend_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
     }
@@ -214,8 +224,10 @@ function gcmRefreshTick() {
   gcmRefreshLocked_();
   /* and catches up any approved letter the Monday trigger did not reach (a busy lock, a run cut short) */
   try { gcmQueueRun_(); } catch (e) {}
-  /* the approved group bills go at 10:00 on the billing day, the 26th (GroupBilling.gs) */
+  /* the approved group bills go at 10:00 on the 26th, or the next working day (GroupBilling.gs), and a late bill at 10:00
+     the working day after it is approved; at 13:00 on the 25th, the report of who has worked each group's bills */
   try { if (typeof gblDayRun_ === 'function') gblDayRun_({ auto: true }); } catch (e) {}
+  try { if (typeof gblBillReport_ === 'function') gblBillReport_({ auto: true }); else if (typeof gblMondayReport_ === 'function') gblMondayReport_({ auto: true }); } catch (e) {}
   /* once the welcome is on, a group a staff member has just verified gets it, in working hours */
   try { if (gcmWelcomeOn_() && d <= 5 && h >= 8 && h <= 17) gcmWelcomeRun_({ auto: true }); } catch (e) {}
   /* and once the branch manager has given the go, the 10:30 group day (star reminders, staff asked why, tasks), caught up

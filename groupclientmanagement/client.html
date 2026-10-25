@@ -225,6 +225,44 @@ footer a{color:inherit}
 .cgrp .none{font-size:13.5px;color:var(--muted);margin:4px 0 2px}
 .records{margin:12px 0 4px;padding:10px 12px;border-radius:8px;background:var(--warnBg);border:1px solid var(--warnLine);font-size:14px;color:var(--warn)}
 @media (max-width:640px){.cgrid{grid-template-columns:1fr}}
+/* the two tabs of the page (25 October 2026): the service items and the billing, never on one screen */
+.ctabs{display:flex;gap:6px;margin:16px 0 0;border-bottom:2px solid var(--line)}
+.ctab{border:0;background:none;padding:12px 16px;font:inherit;font-weight:600;font-size:16px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;display:inline-flex;align-items:center;gap:8px}
+.ctab[aria-selected="true"]{color:var(--primary,#1D5BC4);border-color:var(--primary,#1D5BC4)}
+.ctab .n{font-size:12px;font-weight:600;background:var(--sunken,#E8EDF4);border-radius:99px;padding:1px 8px;color:var(--muted)}
+.ctab[aria-selected="true"] .n{background:var(--primarySoft,#EBF2FD);color:var(--primary,#1D5BC4)}
+.ctab .bdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warnMark,#E0891B)}
+/* your people (25 October 2026): who is on the plans, who came off this year, who is pending, and a box to tell us */
+.ctabs{overflow-x:auto;scrollbar-width:none}.ctabs::-webkit-scrollbar{display:none}.ctab{white-space:nowrap}
+.ppl{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--primary);border-radius:14px;padding:18px 18px 8px;margin:18px 0 0;box-shadow:var(--shadowLg)}
+.ppl h2{font-size:20px;font-weight:600;margin:0 0 4px}
+.pbar{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:8px 10px;align-items:center;margin:4px 0 14px}
+.pbar label{font-weight:600;font-size:14px;margin:0}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pp.off{border-left-color:var(--line2)}.pp.pnd{border-left-color:var(--warnMark)}
+.pst{display:inline-block;font-size:12.5px;font-weight:600;border-radius:99px;padding:2px 10px;border:1px solid var(--line)}
+.pst.pend{background:var(--warnBg);border-color:var(--warnLine);color:var(--warn)}
+.pst.act{background:var(--goodBg);border-color:var(--goodLine);color:var(--good)}
+.pst.off{background:var(--sunken);color:var(--ink2)}
+.pfacts{list-style:none;margin:8px 0 10px;padding:0;display:grid;gap:5px;font-size:14px;color:var(--ink2)}
+.pfacts li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}.pfacts li.o{color:var(--muted)}.pfacts li.w{color:var(--warn)}
+.ph4{margin:10px 0 0;font-size:14px;font-weight:600}.ph4 .n{font-size:12px;background:var(--sunken);border-radius:99px;padding:1px 8px;color:var(--muted)}
+.pnone{margin:6px 0 8px;color:var(--muted);font-size:14px}
+.btn.ghost{background:#fff;color:var(--primary);border-color:var(--primaryLine);box-shadow:none}.btn.ghost:hover{background:var(--primarySoft)}
+.btn.sm{padding:8px 14px;font-size:14px;margin-top:8px}
+.pcomp{margin-top:10px;padding:12px;border:1px solid var(--primaryLine);background:var(--primarySoft);border-radius:10px}
+.pcomp label{font-size:14px;font-weight:600}
+.pbtns{display:flex;gap:8px;flex-wrap:wrap}
+.psent{margin:8px 0 0;padding:8px 10px;border-radius:8px;background:var(--goodBg);color:var(--good);font-size:14px;font-weight:600}
+.ptold{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}.ptold h4{margin:0 0 6px;font-size:14px}
+.tp{margin:0 0 8px}.tp .tm{font-size:12.5px;color:var(--muted)}.tp .tx{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.pfoot{margin-top:12px}.pgo{margin:0 0 12px}
+.lnk{border:0;background:none;padding:0;font:inherit;font-weight:600;color:var(--primary);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.ctab .sh{display:none}
+@media (max-width:560px){.pbar{grid-template-columns:1fr}.ppl{padding:16px 14px 6px}.ctab{padding:10px 8px;font-size:15px;gap:6px}.ctab .lg{display:none}.ctab .sh{display:inline}}
+.stmt{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:18px 0 0;box-shadow:var(--shadow)}
+.stmt h2{margin:0 0 4px;font-size:20px}.stmt h3{font-size:16px;margin:16px 0 6px}
+.stmt .sframe{width:100%;height:620px;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:8px}
 /* your billing (24 October 2026): one tab a line, the latest bill, what we received, and a form to tell us */
 .billing{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:18px 0 0;box-shadow:var(--shadow)}
 .billing h2{margin:0 0 4px;font-size:20px}
@@ -362,6 +400,7 @@ function pendHtml() {
     '<button type="button" class="ln" data-pf="all" aria-pressed="' + (PF === 'all') + '">All <b>' + P.length + '</b></button>' +
     lines.filter(n).map(l => '<button type="button" class="ln" data-pf="' + esc(l) + '" aria-pressed="' + (PF === l) + '"><span class="dot ' + (LINE_DOT[l] || 'enrol') + '" aria-hidden="true"></span>' + esc(l) + ' <b>' + n(l) + '</b></button>').join('') +
     (hasInc && hasApp ? '<button type="button" class="ln" data-pf="' + INC_PF + '" aria-pressed="' + (PF === INC_PF) + '"><span class="up" aria-hidden="true">↑</span>Increases <b>' + nInc + '</b></button>' : '') + '</div>';
+  h += '<p class="pgo"><button class="lnk" type="button" data-topeople>Comment on any of these, or see everyone on your plans, in Your people →</button></p>';
   P.filter(c => PF === 'all' || (PF === INC_PF ? c.incs : c.lines.indexOf(PF) >= 0)).forEach(c => {
     const cls = ageCls(c.days, c.late);
     const since = [c.applied ? 'Application received ' + esc(dmy(c.applied)) : '', c.incSince ? 'Increase submitted ' + esc(dmy(c.incSince)) : ''].filter(Boolean).join(' · ') || 'With us since ' + esc(dmy(c.since));
@@ -384,11 +423,32 @@ function pendHtml() {
    group pensions plus any concerns". Figures and counts only: the backend sends no member's name here. */
 const money = n => { n = Number(n) || 0; return (n < 0 ? '−' : '') + 'TT$' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
 let BT = '', TELL = { sent: '' };
+/* the page in two tabs (25 October 2026): the weekly items and the billing never share a screen. The bill e-mail's link
+   carries ?tab=billing; the weekly letter's opens on the items. */
+let CT = /(^|[?&])tab=billing(&|$)/.test(location.search) ? 'billing' : /(^|[?&])tab=people(&|$)/.test(location.search) ? 'people' : 'items';
+function ctabsHtml(hasBill, items) {
+  const B = D.billing, owed = hasBill ? B.lines.reduce((n, l) => n + (l.owed > 0 ? 1 : 0), 0) : 0, pend = Array.isArray(D.pending) ? D.pending.length : 0;
+  return '<div class="ctabs" role="tablist" aria-label="Your page"><button type="button" role="tab" class="ctab" data-ct="items" aria-selected="' + (CT === 'items') + '"><span class="lg">Your service items</span><span class="sh">Items</span><span class="n">' + items + '</span></button>' +
+    (hasBill ? '<button type="button" role="tab" class="ctab" data-ct="billing" aria-selected="' + (CT === 'billing') + '"><span class="lg">Your billing</span><span class="sh">Billing</span>' + (owed ? '<i class="bdot" aria-hidden="true" title="an amount is still open"></i>' : '') + (B.statement ? '<span class="n">' + esc(B.statement.label.replace(/ \d{4}$/, '')) + '</span>' : '') + '</button>' : '') +
+    '<button type="button" role="tab" class="ctab" data-ct="people" aria-selected="' + (CT === 'people') + '"><span class="lg">Your people</span><span class="sh">People</span>' + (pend ? '<span class="n" title="' + pend + ' pending">' + pend + ' pending</span>' : '') + '</button></div>';
+}
+function bindCtabs() { document.querySelectorAll('[data-ct]').forEach(b => b.onclick = () => { CT = b.dataset.ct; render(); window.scrollTo(0, 0); }); }
+/* the statement of account the bill e-mail carried: this month's lines, the earlier invoices still open, what changed */
+function statementHtml(B) {
+  const s = B.statement; if (!s) return '';
+  let h = '<section class="stmt" aria-labelledby="stmth"><h2 id="stmth">Your statement of account <span class="muted">· ' + esc(s.label) + '</span></h2><p class="sub">The same statement that came with your ' + esc(s.label) + ' bill' + (s.dueBy ? ', payable by <b>' + esc(dmy(s.dueBy)) + '</b>' : '') + '. Figures are from our records; the names are on the bills themselves.</p>' +
+    '<div class="ytiles"><div><b>' + money(s.total) + '</b><span>this month, ' + s.lines.length + ' line' + (s.lines.length === 1 ? '' : 's') + '</span></div><div><b>' + money(s.owedTotal) + '</b><span>' + (s.owed.length ? 'still open from ' + s.owed.length + ' earlier month' + (s.owed.length === 1 ? '' : 's') : 'open from earlier months: nothing') + '</span></div><div><b>' + money(s.grand) + '</b><span>to bring the account up to date</span></div>' +
+    (s.changes && (s.changes.joined || s.changes.left) ? '<div><b>' + (s.changes.joined ? '+' + s.changes.joined : '') + (s.changes.joined && s.changes.left ? ' / ' : '') + (s.changes.left ? '−' + s.changes.left : '') + '</b><span>joined / left since last month</span></div>' : '') + '</div>' +
+    '<div class="scroll"><table class="t"><thead><tr><th>This month</th><th class="num">Members</th><th class="num">Due</th></tr></thead><tbody>' + s.lines.map(l => '<tr><td>' + esc(l.label) + '</td><td class="num">' + (l.members || '') + '</td><td class="num">' + money(l.due) + '</td></tr>').join('') + '<tr><td><b>Total for ' + esc(s.label) + '</b></td><td></td><td class="num"><b>' + money(s.total) + '</b></td></tr></tbody></table></div>';
+  if (s.owed.length) h += '<h3>Still open from earlier invoices</h3><div class="scroll"><table class="t"><thead><tr><th>Invoice</th><th class="num">Billed</th><th class="num">Received</th><th class="num">Still open</th></tr></thead><tbody>' + s.owed.map(o => '<tr><td>' + esc(o.label) + ' · ' + esc(o.monthLabel) + '</td><td class="num">' + money(o.billed) + '</td><td class="num">' + (o.paid ? money(o.paid) : '–') + '</td><td class="num"><b>' + money(o.owed) + '</b></td></tr>').join('') + '</tbody></table></div><p class="sub">If any of these is paid, tell us below with the date and the reference and we will have it matched.</p>';
+  if (s.html) h += '<details class="hist"><summary>The statement as it was sent</summary><iframe class="sframe" title="Your statement of account" sandbox="" srcdoc="' + esc('<!doctype html><meta charset="utf-8"><body style="margin:0;padding:12px;font-family:Arial,sans-serif">' + s.html) + '"></iframe></details>';
+  return h + '</section>';
+}
 function billingHtml() {
   const B = D.billing; if (!B || !Array.isArray(B.lines) || !B.lines.length) return '';
   if (!BT || !B.lines.some(l => l.line === BT)) BT = B.lines[0].line;
   const L = B.lines.find(l => l.line === BT), b = L.bill;
-  let h = '<section class="billing" aria-labelledby="billh"><h2 id="billh">Your billing</h2><p class="sub">Each line’s latest bill, what we have received against it, and a place to tell us about a payment or a person joining or leaving.' + (B.nextBill ? ' Your next bill comes on <b>' + esc(B.nextBill.label) + '</b>.' : '') + '</p>' +
+  let h = statementHtml(B) + '<section class="billing" aria-labelledby="billh"><h2 id="billh">Your billing' + (B.statement ? ', line by line' : '') + '</h2><p class="sub">Each line’s latest bill, what we have received against it, and a place to tell us about a payment or a person joining or leaving.' + (B.nextBill ? ' Your next bill comes on <b>' + esc(B.nextBill.label) + '</b>.' : '') + '</p>' +
     '<div class="btabs" role="tablist">' + B.lines.map(l => '<button type="button" role="tab" class="btab" data-bt="' + esc(l.line) + '" aria-selected="' + (l.line === BT) + '">' + esc(l.label) + (l.owed > 0 ? '<i class="bdot" aria-hidden="true" title="an amount is still open"></i>' : '') + '</button>').join('') + '</div><div class="bpanel" role="tabpanel">';
   if (b) {
     h += '<div class="ytiles"><div><b>' + money(b.due) + '</b><span>' + esc(b.label) + (b.dueBy ? ', payable by ' + esc(dmy(b.dueBy)) : '') + '</span></div><div><b>' + b.members + '</b><span>' + (L.line === 'listbill' ? 'policies' : 'members') + ' on the bill</span></div>' +
@@ -622,7 +682,116 @@ function bindPend() {
     PF = b.dataset.pf; const box = document.querySelector('.pend');
     if (box) { box.outerHTML = pendHtml(); bindPend(); }
   });
+  document.querySelectorAll('[data-topeople]').forEach(b => b.onclick = () => { CT = 'people'; PEO.f = 'pending'; PEO.q = ''; render(); window.scrollTo(0, 0); });
 }
+/* your people (25 October 2026): who is on your plans, who came off this year, and who is pending; what is open on each
+   one with us, who on our team has it, and a box to tell us what is holding it up. A message goes onto that item in our
+   system for the person handling it, who is told at once; with nothing open, it opens an item for the person who looks
+   after your account. Names, plans and dates only: never a health or claim detail. */
+const PEO = { data: null, busy: false, err: '', f: '', q: '', open: '', limit: 40, msg: {} };
+async function loadPeople(force) {
+  if (PEO.busy || (PEO.data && !force)) return;
+  PEO.busy = true; PEO.err = '';
+  let r;
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientPeople&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&z=' + Date.now())).text()); }
+  catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
+  PEO.busy = false;
+  if (!r || !r.ok) PEO.err = (r && r.error) || 'We could not read your people just now.';
+  else { PEO.data = r; if (!PEO.f) PEO.f = r.counts.pending ? 'pending' : 'active'; }
+  if (CT === 'people') { const s = document.querySelector('.ppl'); if (s) { s.outerHTML = peopleHtml(); bindPeople(); } }
+}
+const myName = () => { let n = A._who || ''; if (!n) try { n = localStorage.getItem(nameKey()) || ''; } catch (e) {} return n; };
+function peopleHtml() {
+  let h = '<section class="ppl" aria-labelledby="pplh"><h2 id="pplh">Your people</h2>';
+  if (!PEO.data) return h + (PEO.err ? '<p class="err" role="alert">' + esc(PEO.err) + '</p><button class="btn ghost sm" type="button" id="pretry">Try again</button>'
+    : '<p class="sub" aria-live="polite">Reading your people from our records and your latest bills…</p>') + '</section>';
+  const R = PEO.data, c = R.counts;
+  h += '<p class="sub">Everyone on your Group Health and Group Life plans, from our records' + (R.bills.length ? ' and your latest bills (' + esc(R.bills.map(b => b.label + ', ' + b.month).join('; ')) + ')' : '') +
+    '. Choose who to see. For each person: what is open with us, who on our team has it, and a box to tell us anything that is holding it up.</p>' +
+    '<div class="pbar"><label for="pf">Show</label><select class="field" id="pf">' +
+    [['pending', 'Pending applications', c.pending], ['active', 'Active members', c.active], ['off', 'Came off in ' + R.year, c.off], ['all', 'Everyone', c.all]]
+      .map(o => '<option value="' + o[0] + '"' + (PEO.f === o[0] ? ' selected' : '') + '>' + esc(o[1]) + ' (' + o[2] + ')</option>').join('') + '</select>' +
+    '<label for="pq" class="vh">Find a name</label><input class="field" id="pq" type="search" placeholder="Find a name" value="' + esc(PEO.q) + '" autocomplete="off"></div>' +
+    '<div id="plist">' + peopleList() + '</div>' +
+    '<p class="sub pfoot">What you write goes onto the item in our system for the person handling it, and they are told by e-mail at once. Health and claim details are never shown here: they stay between the person insured and us.</p></section>';
+  return h;
+}
+function peopleList() {
+  const R = PEO.data, q = PEO.q.toLowerCase().trim();
+  const want = p => PEO.f === 'pending' ? p.pendingNow : PEO.f === 'active' ? p.active : PEO.f === 'off' ? p.offYear : true;
+  const list = R.people.filter(p => want(p) && (!q || p.name.toLowerCase().indexOf(q) >= 0));
+  if (!list.length) return '<p class="pnone">' + (q ? 'No one by that name in this list.' : { pending: 'No applications are pending for your employees right now.', active: 'No one is active on your plans in our records.', off: 'No one came off your plans in ' + R.year + '.', all: 'No one is on our records yet.' }[PEO.f]) + '</p>';
+  let h = list.slice(0, PEO.limit).map(personHtml).join('');
+  if (list.length > PEO.limit) h += '<button class="btn ghost sm" type="button" id="pmore">Show the next ' + Math.min(40, list.length - PEO.limit) + ' of ' + (list.length - PEO.limit) + '</button>';
+  return h;
+}
+function personHtml(p) {
+  const pend = p.pending, cls = p.pendingNow ? (ageCls(pend ? pend.days : 0, pend && pend.late) || 'pnd') : !p.active && p.offYear ? 'off' : '';
+  let h = '<article class="papp pp ' + cls + '" id="pp-' + esc(p.key) + '"><div class="top"><h3>' + esc(p.name) + '</h3>' +
+    (p.pendingNow ? '<span class="pst pend">Pending</span>' : '') + (p.active ? '<span class="pst act">Active</span>' : '') +
+    (p.offYear ? '<span class="pst off">Came off ' + esc(p.off.map(o => o.label).join(' and ')) + '</span>' : '') +
+    (pend ? '<span class="age ' + ageCls(pend.days, pend.late) + '">' + days(pend.days) + ' outstanding' + (pend.late ? ', past target' : '') + '</span>' : '') + '</div>';
+  const facts = [];
+  p.lines.forEach(l => facts.push('<li>' + lineTag(l.label) + '<span>' + esc([l.tier, l.since ? 'since ' + dmy(l.since) : '', l.onBill ? 'on your ' + l.onBill + ' bill' : 'on our records'].filter(Boolean).join(' · ')) + '</span></li>'));
+  p.off.forEach(o => facts.push('<li class="o">' + lineTag(o.label) + '<span>came off ' + esc(dmy(o.date)) + (o.bill ? ' · on your ' + esc(o.bill) + ' bill' : '') + '</span></li>'));
+  p.leaving.forEach(x => facts.push('<li class="w">' + lineTag(x.label) + '<span>leaving' + (x.date ? ' on ' + esc(dmy(x.date)) : '') + ' · ' + (x.by === 'you' ? 'you told us' : 'we recorded it') + ' on ' + esc(dmy(x.reported)) + '</span></li>'));
+  p.joining.forEach(x => facts.push('<li class="w">' + lineTag(x.label) + '<span>joining' + (x.date ? ' from ' + esc(dmy(x.date)) : '') + ' · ' + (x.by === 'you' ? 'you told us' : 'we recorded it') + ' on ' + esc(dmy(x.reported)) + '</span></li>'));
+  if (pend) facts.push('<li class="w">' + pend.lines.map(lineTag).join('') + '<span>' + esc(pend.applied ? 'application received ' + dmy(pend.applied) : pend.incSince ? 'increase submitted ' + dmy(pend.incSince) : 'with us since ' + dmy(pend.since)) + (pend.last ? ' · ' + esc(pend.last) : '') + '</span></li>');
+  h += '<ul class="pfacts">' + facts.join('') + '</ul>';
+  if (p.items.length) {
+    h += '<h4 class="ph4">Open with us <span class="n">' + p.items.length + '</span></h4><ul class="reqs">' + p.items.map(x => '<li><div class="w">' + (x.kind === 'increase' ? '<span class="inc">Increase</span>' : '') + esc(x.what) + '</div><dl>' +
+      '<dt>Assigned to</dt><dd>' + esc(x.owner) + '</dd>' + (x.with ? '<dt>Liaising with</dt><dd>' + esc(x.with) + '</dd>' : '') +
+      '<dt>Status</dt><dd>' + esc(x.status) + '</dd>' +
+      (x.kind === 'increase' ? '<dt>Submitted</dt><dd>' + esc(dmy(x.opened)) + '</dd>' : '<dt>Target date</dt><dd>' + (x.due ? esc(dmy(x.due)) + (x.late ? ' <span class="late">past target</span>' : '') : 'Not yet set') + '</dd>') +
+      (x.last ? '<dt>Last contact</dt><dd>' + esc(x.last) + '</dd>' : '') + '</dl>' +
+      (x.notes || []).map(n => '<div class="cmt"><span class="by">' + esc(n.by) + '</span> <span style="color:var(--muted)">' + esc(n.when) + '</span>\n' + esc(n.text) + '</div>').join('') +
+      composeHtml(p, x) + '</li>').join('') + '</ul>';
+  } else h += '<p class="pnone">Nothing is open on ' + esc(p.first) + ' with us.</p>' + composeHtml(p, null);
+  if (p.posts.length) h += '<div class="ptold"><h4>What you told us</h4>' + p.posts.map(t => '<div class="tp"><div class="tm">' + esc(t.at) + ' · ' + esc(t.by) +
+    (t.opened ? ' · an item was opened for our team' : t.on ? ' · on ' + esc(t.on) : '') + '</div><div class="tx">' + esc(t.text) + '</div></div>').join('') + '</div>';
+  return h + '</article>';
+}
+function composeHtml(p, x) {
+  const id = p.key + '|' + (x ? x.id : ''), m = PEO.msg[id];
+  let h = m ? '<p class="psent" role="status">' + esc(m) + '</p>' : '';
+  if (PEO.open !== id) return h + '<button class="btn ghost sm" type="button" data-pc="' + esc(id) + '">' + (x ? 'Comment on this' : 'Tell us about ' + esc(p.first)) + '</button>';
+  const ph = !x ? 'What you need, or what has changed for ' + p.first + '.' : x.kind === 'task' ? 'Anything we should know about this.' : 'What is holding it up, or what has been done (for example: the medical was done on 20 October).';
+  return h + '<div class="pcomp"><label for="ptx">' + (x ? 'Your message on this item' : 'Your message about ' + esc(p.first)) + '</label><textarea class="field" id="ptx" maxlength="1500" placeholder="' + esc(ph) + '"></textarea>' +
+    '<div class="row2"><div><label for="pnm">Your name</label><input class="field" id="pnm" maxlength="80" value="' + esc(myName()) + '"></div><div><label for="prl">Your role (optional)</label><input class="field" id="prl" maxlength="80" value="' + esc(A._role || '') + '" placeholder="e.g. HR Manager"></div></div>' +
+    '<div class="err" id="perr" role="alert"></div><div class="pbtns"><button class="btn" type="button" id="psend" data-id="' + esc(id) + '">Send to our team</button><button class="btn ghost" type="button" data-px>Cancel</button></div></div>';
+}
+function bindPeople() {
+  if (!PEO.data && !PEO.busy && !PEO.err) loadPeople();
+  const re = $('pretry'); if (re) re.onclick = () => { PEO.err = ''; const s = document.querySelector('.ppl'); if (s) { s.outerHTML = peopleHtml(); bindPeople(); } };
+  const f = $('pf'); if (f) f.onchange = () => { PEO.f = f.value; PEO.limit = 40; PEO.open = ''; drawPeople(); };
+  const q = $('pq'); if (q) q.oninput = () => { PEO.q = q.value; PEO.limit = 40; drawPeople(); };
+  bindPeopleList();
+}
+function drawPeople() { const l = $('plist'); if (l) { l.innerHTML = peopleList(); bindPeopleList(); } }
+function bindPeopleList() {
+  document.querySelectorAll('[data-pc]').forEach(b => b.onclick = () => { PEO.open = b.dataset.pc; drawPeople(); const t = $('ptx'); if (t) t.focus(); });
+  document.querySelectorAll('[data-px]').forEach(b => b.onclick = () => { PEO.open = ''; drawPeople(); });
+  const more = $('pmore'); if (more) more.onclick = () => { PEO.limit += 40; drawPeople(); };
+  const go = $('psend'); if (go) go.onclick = () => sendPost(go.dataset.id);
+}
+async function sendPost(id) {
+  const cut = id.indexOf('|'), key = id.slice(0, cut), item = id.slice(cut + 1), err = $('perr'), go = $('psend');
+  const text = $('ptx').value.trim(), name = $('pnm').value.trim(), role = $('prl').value.trim();
+  err.textContent = '';
+  if (!name) { err.textContent = 'Please give your name.'; $('pnm').focus(); return; }
+  if (text.replace(/\s+/g, ' ').length < 8) { err.textContent = 'Please write a little more, so the person handling it knows what you need.'; $('ptx').focus(); return; }
+  go.disabled = true; go.textContent = 'Sending…';
+  let r;
+  try { r = JSON.parse(await (await fetch(SVC, { method: 'POST', body: JSON.stringify({ action: 'gcm.clientPost', lb: CRED.lb, code: CRED.code, person: key, item: item, name: name, role: role, text: text }) })).text()); }
+  catch (e) { r = { ok: false, error: 'We could not reach our system. Please try again, or e-mail us.' }; }
+  if (!r || !r.ok) { go.disabled = false; go.textContent = 'Send to our team'; err.textContent = (r && r.error) || 'Not sent.'; return; }
+  try { localStorage.setItem(nameKey(), name.slice(0, 80)); } catch (e) {}
+  A._who = name; if (role) A._role = role; saveDraft();
+  PEO.open = ''; PEO.msg = {}; PEO.msg[id] = r.said || 'Sent to our team.';
+  drawPeople();
+  await loadPeople(true);
+}
+
 
 /* coming up for your people: three groups, soonest first, each with how long until it */
 function untilWords(n) {
@@ -651,6 +820,7 @@ function comingHtml() {
 function render() {
   $('h1').textContent = D.group;
   $('hsub').textContent = 'Open service items as at ' + D.asAt + '. Please review each one by ' + dmy(D.respondBy) + '.';
+  const hasBill = !!(D.billing && Array.isArray(D.billing.lines) && D.billing.lines.length); if (!hasBill && CT === 'billing') CT = 'items';
   const items = D.items, waiting = items.filter(i => /confirmation/i.test(i.status)).length, late = items.filter(i => i.late).length;
   const cats = [];
   items.forEach(i => { if (cats.indexOf(i.cat) < 0) cats.push(i.cat); });
@@ -661,10 +831,11 @@ function render() {
     (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
     '<div class="links">' + (D.film ? '<a class="pill" href="' + esc(D.film) + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + esc(D.filmLength || '') + '</a>' : '') +
     '<a class="pill plain" href="#rate">Rate our service</a></div></div>' +
-    billingHtml() + pendHtml() + comingHtml() +
+    ctabsHtml(hasBill, items.length) + (CT === 'billing' ? billingHtml() : CT === 'people' ? peopleHtml() : pendHtml() + comingHtml() +
     '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
     '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +
-    '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>';
+    '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>');
+  if (CT === 'items') {
   if (!items.length) h += '<p>There is nothing open for your company right now.</p>';
   cats.forEach(c => {
     h += '<div class="cat">' + esc(c) + '</div>';
@@ -712,9 +883,10 @@ function render() {
     '<div class="err" id="serr" role="alert"></div><button class="btn full" type="button" id="send">Send my answers</button>' +
     '<p class="sub" style="margin-top:10px">Your notes go onto each item for the person handling it, and our team is told the moment you send.</p></div>' +
     '<p style="text-align:center"><button class="btn" type="button" id="out" style="background:transparent;color:var(--muted);border:1.5px solid var(--line)">Sign out</button></p>';
+  }
   $('app').innerHTML = h;
-  $('prog').classList.remove('hide');
-  bind(); bindPend(); bindBilling(); progress();
+  $('prog').classList.toggle('hide', CT !== 'items');
+  bindCtabs(); if (CT === 'billing') bindBilling(); else if (CT === 'people') bindPeople(); else { bind(); bindPend(); progress(); }
 }
 function bind() {
   document.querySelectorAll('.ch').forEach(b => b.onclick = () => {
