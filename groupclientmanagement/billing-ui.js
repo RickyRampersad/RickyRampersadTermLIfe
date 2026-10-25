@@ -562,15 +562,17 @@ async function blReconcile(line) {
   const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'reconciled', note, force: BILL.role === 'branch' ? 'Y' : '' });
   toast(r.ok ? r.said : (r.error || 'Not reconciled'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
 }
-/* the billing day (24 October 2026, moved to a Tuesday on 25 October 2026: "the group billings go out on a Tuesday at 10
-   after everybody confirms … on Monday, a report is generated with who work on the groups in the afternoon"): the strip
-   under the title, the Approve button on a reconciled line, and the state once approved. The PDF read in this session travels with the
-   approval and waits in the branch's Drive folder for the 10:00 run. */
+/* the billing day (24 October 2026; for a few hours on 25 October a Tuesday, then back the same day: "I would leave it for
+   the 26th of the month, excepting when it falls on a holiday or a weekend … on the 25th in the afternoon, I get the
+   report … at 1 o'clock"): the strip under the title, the Approve button on a reconciled line, and the state once
+   approved. The PDF read in this session travels with the approval and waits in the branch's Drive folder for the 10:00 run. */
 function blDayStrip(day, live) {
   if (!day) return '';
   const when = day.isDay ? '<b>today, ' + esc(day.label) + '</b>' : '<b>' + esc(day.label) + '</b>' + (day.daysTo ? ' (in ' + day.daysTo + ' day' + (day.daysTo === 1 ? '' : 's') + ')' : '');
-  return '<div class="note info blday"><div><b>The bills go out by themselves on ' + when + '.</b> Never on a Monday: Monday is the weekly letters’ morning. Before then, on each line: upload the bill, verify it against Salesforce, fix what is marked fix, mark it reconciled and press <b>Approve for Tuesday</b> with the PDF attached. ' +
-    'At ' + (day.reportHour || 13) + ':00 on the Monday before, the branch manager has the report of who has worked each group. A line not approved by ' + day.hour + ':00 on Tuesday goes the next Tuesday, or when you press Send now; at 10:30 the branch manager is told which groups had no bill, and asks why.' +
+  const moved = day.moved ? ' The ' + (day.dayOfMonth || 26) + 'th is a weekend or a public holiday this month, so they go the next working day.' : '';
+  const late = day.late && day.run ? ' <b>The billing day has passed:</b> a bill approved now is a late bill and goes on ' + esc(day.runLabel) + '.' : '';
+  return '<div class="note info blday"><div><b>The bills go out by themselves on ' + when + '.</b>' + moved + ' Before then, on each line: upload the bill, verify it against Salesforce, fix what is marked fix, mark it reconciled and press <b>Approve</b> with the PDF attached. ' +
+    'At ' + (day.reportHour || 13) + ':00 on ' + esc(day.reportLabel ? day.reportLabel.replace(/, \d+:\d+$/, '') : 'the ' + ((day.dayOfMonth || 26) - 1) + 'th') + ' the branch manager has the report of who has worked each group. A line approved after the ' + day.hour + ':00 run goes at ' + day.hour + ':00 the next working day, or when you press Send now; at 10:30 on the billing day the branch manager is told which groups had no bill, and asks why.' + late +
     (live ? '' : ' <span class="muted">The bills are in test mode: the run sends each approved bill to its approver and the branch, marked TEST, until the branch manager runs gblGoLive.</span>') +
     (day.drive ? '' : ' <b>The Drive folder is not linked yet</b> (the GCM_FORMS_FOLDER Script property, GROUP-CLIENTS-SETUP.md), so a bill cannot wait with its PDF: press Send now on the day.') + '</div></div>';
 }
@@ -580,14 +582,14 @@ function blApproveActs(o, b, s, d) {
   if (s.held) return '<span class="chip bad"><i></i>Approved, held at the run: ' + esc(s.held) + '</span><button class="btn ghost" type="button" data-unapprove="' + o.line + '">Cancel the approval</button>';
   if (s.status === 'approved') return '<span class="chip good"><i></i>Approved for ' + esc(blDayLabel(s.approvedFor)) + ' by ' + esc(s.approvedBy) + '</span><button class="btn ghost" type="button" data-unapprove="' + o.line + '">Cancel the approval</button>';
   if (s.status === 'tested') return '<span class="chip"><i style="background:var(--bar)"></i>Went as a test copy in the last run</span><button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for the next run</button>';
-  return '<button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for ' + esc(day.run ? blDayLabel(day.run) : day.date || 'Tuesday') + '</button>';
+  return '<button class="btn" type="button" data-approve="' + o.line + '"' + (day.drive === false ? ' disabled title="The Drive folder is not linked: press Send now on the day"' : '') + '>Approve for ' + esc(day.run ? blDayLabel(day.run) : day.date || 'the billing day') + '</button>';
 }
 const BL_DAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 function blDayLabel(ymd) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); if (!m) return ymd || ''; const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); const dow = d.getUTCDay() || 7; return BL_DAYS[dow] + ' ' + (+m[3]) + ' ' + BL_MON[+m[2] - 1].slice(0, 3); }
 async function blApprove(line) {
   const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [], day = BILL.day || {};
   const who = BILL.live ? 'the group (' + (BILL.group.contact || BILL.group.to.join(', ')) + ')' : 'you, marked TEST (test mode)';
-  if (!confirm('Approve the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.runLabel || day.label || 'Tuesday at 10:00') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)') + '?')) return;
+  if (!confirm('Approve the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.runLabel || day.label || 'the billing day at 10:00') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)') + '?')) return;
   const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'approve', attachments: files, force: BILL.role === 'branch' ? 'Y' : '' });
   toast(r.ok ? r.said : (r.error || 'Not approved'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
 }

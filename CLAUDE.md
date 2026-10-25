@@ -4520,38 +4520,47 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       scratchpad placed in a mocked Drive folder) and `billing/page-test.js` (99, pdf.js from the vendor copies); the
       harness (`gcmlive/env-sq.js`) mocks `DriveApp`, serves the site's forms from the repository and pdf-lib from the
       scratchpad. `forms/gas-sync.js` there is the proof that pdf-lib runs under the synchronous Promise.
-  - **The billing day: a Tuesday at 10:00, approved by staff, sent by the system, reported on Monday at 13:00, chased at
-    10:30** (24 October 2026: "on the 26th group billings go out and weekly on a Monday at 10am the queries go out but
-    staff has to approve"; moved the next day, before the first run: "I'd like to change this and not confuse the client,
-    because the group task management goes out weekly on a Monday at 10, but I'd like the group billings go out on a
-    Tuesday at 10 after everybody confirms … So on Monday, a report is generated with who work on the groups in the
-    afternoon … Tuesday mornings are when the group billings go out"). So a client never has the weekly letter and a bill
-    on the same morning. `GBL_DAY` in GroupBilling.gs: the billing day is **the first Tuesday on or after the 26th**
-    (`gblBillDayOf_`, `DOW` 2; `GCM_BILL_DAY` moves the 26th, 1 to 28): 27 Oct, 1 Dec (November's spills into December),
-    29 Dec 2026, 26 Jan 2027. `gblBillDays_` reads the months around today so a spilled day is found; `gblCycle_` runs
-    from the billing day before. In three months a year (November 2026, February and May 2027) it falls on or after the
-    1st, the day Guardian's invoices are payable by: Send now covers a group that needs its bill sooner.
-    - **The run is every Tuesday** (`gblNextRunDay_`): an approval goes on the next Tuesday at 10:00, so a bill approved
-      after the billing Tuesday goes the Tuesday after, never a month later. A weekly Tuesday is a run, not a billing day:
-      nobody is chased on it.
-    - **The Monday report** (`gblMondayReport_`, `gblReportRows_`): at 13:00 (`REPORT_HOUR`) on the Monday before the
-      billing Tuesday, while the staff are still in (the first goes home at 2), from the hourly refresh, once
-      (`GCM_BILL_REPORT_LAST`). Every billed group by the staff member who looks after it: each line where it stands
-      (nothing uploaded, to fix, not reconciled, reconciled not approved, approved for which Tuesday, held, sent), who
-      worked it (uploaded by and when, reconciled by, approved by; "nobody yet" in red), and what is left before 10:00.
-      Tiles: ready, with work left, not started. To the branch manager, the staff copied; internal, sent in test mode
-      too. Editor: `gblMondayReportTest` (to him alone, marked TEST, recording nothing), `gblMondayReportNow`.
-    - **Approve for Tuesday** (`gblApprove_`, act `approve`): a reconciled line (fixes closed, or the branch forces), the
-      group with a contact we may write to. The PDFs read in the session travel with the approval and wait in the Drive
-      folder's "Bills to send" (`gblKeepQueued_`, under `GCM_FORMS_FOLDER`), named by month, group and line; the row
-      carries Approved at, by, e-mail, for and the file ids (new Group Bills columns, added to an older tab by name).
-      With a PDF and no Drive folder the approval is refused and says to set the property or press Send now on the day.
-      `unapprove` trashes the waiting PDF and leaves the bill reconciled. Approving after 10:00 on a Tuesday is for the next
-      Tuesday, and the reply says so; Send now stays for a bill that cannot wait. The steps strip gains *Approve* before *Send*.
+  - **The billing day: the 26th at 10:00, or the next working day; approved by staff, sent by the system, reported on the
+    25th at 13:00, chased at 10:30** (24 October 2026: "on the 26th group billings go out and weekly on a Monday at 10am
+    the queries go out but staff has to approve". On 25 October it went to a Tuesday for a few hours, so a client would
+    never have the weekly letter and a bill on one morning, and came back the same day: "I would leave it for the 26th of
+    the month, excepting when it falls on a holiday or a weekend … We get the billings on the 25th, but on the 25th, we
+    check it and verify it. And on the 26th, it's sent out … on the 25th in the afternoon, I get the report … So at 1
+    o'clock, I have a report"). `GBL_DAY` in GroupBilling.gs:
+    - **The day** (`gblBillDayOf_`): the 26th (`GCM_BILL_DAY` moves it, 1 to 28), and when that is a Saturday, a Sunday
+      or a public holiday, the next working day (`gblWorkingDay_`): Mon 28 Sep, Mon 26 Oct, Thu 26 Nov, Mon 28 Dec 2026
+      (Boxing Day is a Saturday), Tue 26 Jan, Fri 26 Feb, Wed 31 Mar 2027 (Good Friday, the weekend, Easter Monday and
+      Spiritual Baptist Liberation Day in a row). When the 26th is a Monday (26 October 2026) the bills and the weekly
+      letters both go at 10:00 that morning; that was accepted.
+    - **The holidays** (`GBL_DAY.HOLIDAYS`, `gblHolidays_`): Trinidad and Tobago's, the fixed ones as MM-dd and the
+      moveable ones by date for 2026 and 2027 (the same list as `Claims.gs`; add each year's in January), plus the
+      `GCM_BILL_HOLIDAYS` Script property (yyyy-MM-dd or MM-dd, comma separated) for any day the branch is closed. A
+      holiday on a Sunday is kept on the Monday after (Divali 2026, Boxing Day 2027); a Saturday one is not. Read once a
+      run.
+    - **A late bill goes the next working day** (`gblNextRunDay_`): an approval before the billing day's 10:00 run is for
+      that day; one made within `LATE_DAYS` (14) after it goes at 10:00 the next working day (today, before 10:00 on a
+      working day), so it never waits a month; one made later is for the next billing day. A late run is not a billing
+      day: nobody is chased on it.
+    - **The report on the 25th** (`gblBillReport_`, `gblReportRows_`; `gblMondayReport_` is kept as its old name for a
+      GroupClients.gs pasted earlier): at 13:00 (`REPORT_HOUR`) on the 25th, or the last working day before it when the
+      25th is not one (`gblReportDayOf_`: Friday 23 October 2026, Thursday 24 December), while the staff are still in (the
+      first goes home at 2), from the hourly refresh, once (`GCM_BILL_REPORT_LAST`). Every billed group by the staff member
+      who looks after it: each line where it stands (nothing uploaded, to fix, not reconciled, reconciled not approved,
+      approved for which day, held, sent), who worked it (uploaded by and when, reconciled by, approved by; "nobody yet"
+      in red), and what is left before 10:00. Tiles: ready, with work left, not started. To the branch manager, the staff
+      copied; internal, sent in test mode too. Editor: `gblBillReportTest` (to him alone, marked TEST, recording
+      nothing), `gblBillReportNow`.
+    - **Approve** (`gblApprove_`, act `approve`): a reconciled line (fixes closed, or the branch forces), the group with
+      a contact we may write to. The PDFs read in the session travel with the approval and wait in the Drive folder's
+      "Bills to send" (`gblKeepQueued_`, under `GCM_FORMS_FOLDER`), named by month, group and line; the row carries
+      Approved at, by, e-mail, for and the file ids (new Group Bills columns, added to an older tab by name). With a PDF
+      and no Drive folder the approval is refused and says to set the property or press Send now on the day. `unapprove`
+      trashes the waiting PDF and leaves the bill reconciled. The reply names the day it goes; Send now stays for a bill
+      that cannot wait. The steps strip gains *Approve* before *Send*.
     - **The run** (`gblDayRun_`): from the hourly refresh (`gcmRefreshTick`, `auto`, silent when nothing is due) and
       first in the 10:30 group day; every approved bill whose day has come, one e-mail a group and month with the PDFs
       read back from Drive (`gblBillMail_`), to the contact with sales support in Cc, logged on Group Sends as `bill
-      sent` (Via "support@, Tuesday run"), the row `sent`, the PDF moved to "Sent bills", a note on the billing task's
+      sent` (Via "support@, billing run"), the row `sent`, the PDF moved to "Sent bills", a note on the billing task's
       Chatter. **Test mode is the bills' own**: until `gblGoLive` the run sends each bill to its approver and the branch
       marked TEST, logs `bill test`, marks the row `tested` and nothing sent; approve again once live. A bill the run
       cannot send is `held: <why>` on its row (no contact, Microsoft refused, the PDF gone from Drive) and stays

@@ -221,10 +221,10 @@ function gcmRefreshTick() {
   gcmRefreshLocked_();
   /* and catches up any approved letter the Monday trigger did not reach (a busy lock, a run cut short) */
   try { gcmQueueRun_(); } catch (e) {}
-  /* the approved group bills go at 10:00 on a Tuesday (GroupBilling.gs); at 13:00 on the Monday before the billing
-     Tuesday, the report of who has worked each group's bills */
+  /* the approved group bills go at 10:00 on the 26th, or the next working day (GroupBilling.gs), and a late bill at 10:00
+     the working day after it is approved; at 13:00 on the 25th, the report of who has worked each group's bills */
   try { if (typeof gblDayRun_ === 'function') gblDayRun_({ auto: true }); } catch (e) {}
-  try { if (typeof gblMondayReport_ === 'function') gblMondayReport_({ auto: true }); } catch (e) {}
+  try { if (typeof gblBillReport_ === 'function') gblBillReport_({ auto: true }); else if (typeof gblMondayReport_ === 'function') gblMondayReport_({ auto: true }); } catch (e) {}
   /* once the welcome is on, a group a staff member has just verified gets it, in working hours */
   try { if (gcmWelcomeOn_() && d <= 5 && h >= 8 && h <= 17) gcmWelcomeRun_({ auto: true }); } catch (e) {}
   /* and once the branch manager has given the go, the 10:30 group day (star reminders, staff asked why, tasks), caught up
