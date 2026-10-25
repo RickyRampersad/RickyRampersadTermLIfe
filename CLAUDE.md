@@ -4550,6 +4550,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       in red), and what is left before 10:00. Tiles: ready, with work left, not started. To the branch manager, the staff
       copied; internal, sent in test mode too. Editor: `gblBillReportTest` (to him alone, marked TEST, recording
       nothing), `gblBillReportNow`.
+    - **A browser can tell which version is live**: `?action=gcm.ping` carries `bills` (the next billing day, the report,
+      live or test, the Drive folder linked). A GroupBilling.gs older than the 26th answers no `report`; with no
+      GroupBilling.gs at all, `bills` is 0.
     - **Approve** (`gblApprove_`, act `approve`): a reconciled line (fixes closed, or the branch forces), the group with
       a contact we may write to. The PDFs read in the session travel with the approval and wait in the Drive folder's
       "Bills to send" (`gblKeepQueued_`, under `GCM_FORMS_FOLDER`), named by month, group and line; the row carries

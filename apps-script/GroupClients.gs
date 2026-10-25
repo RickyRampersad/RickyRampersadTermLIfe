@@ -135,7 +135,10 @@ function gcmDoGet_(p) {
   try {
     switch (String(p.action || '')) {
       case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(),
-                                   sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_() };
+                                   sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_(),
+                                   /* the group bills' day and report, so a browser can tell which GroupBilling.gs is live */
+                                   bills: (function () { try { if (typeof gblDayInfo_ !== 'function') return 0; var d = gblDayInfo_();
+                                     return { next: d.label, report: d.reportLabel || '', live: !!d.live, drive: !!d.drive }; } catch (e) { return 0; } })() };
       case 'gcm.draft':   return gcmDraft_(p);
       case 'gcm.board':   return gcmBoard_(p);
       case 'gcm.group':   return gcmGroupView_(p);
