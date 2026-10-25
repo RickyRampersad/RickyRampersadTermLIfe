@@ -915,7 +915,7 @@ function gblStop() { PropertiesService.getScriptProperties().deleteProperty(GBL.
 /** The cover note: the figures per line, what changed, how to pay, their page. Tables and inline styles, so any mail app shows it. */
 function gblBillMail_(g, month, bills, who, test, L) {
   var E = tEsc_, label = gblMonthLabel_(month), signer = gcmSigner_(who, g), total = gblR_(bills.reduce(function (s, x) { return s + x.due; }, 0));
-  var changes = gblChanges_(g).filter(function (c) { return c.source === 'bill' && gcmText_(c.effective).slice(0, 7) >= gblAddMonths_(month, -2) && (c.kind === 'joiner' || c.kind === 'leaver'); });
+  var changes = gblBillChanges_(g, month, bills);
   var dueBy = bills.map(function (x) { return x.dueBy; }).filter(String).sort()[0] || '';
   var lineRows = bills.map(function (x) {
     var what = GBL.LABEL[x.line] + (x.ref ? ' (' + x.ref + ')' : '');
@@ -2212,7 +2212,7 @@ function gblDayHtml_(d, o) {
   if (d.cycle.isDay || (o && o.test)) {
     var r = d.run || { sent: [], held: [] };
     h += '<p><b>' + sentG.length + ' of ' + n + '</b> billed groups had their ' + E(list.month) + ' bill' + (sentG.length && sentG.every(function (s) { return s.x.test; }) ? ' (test copies: the bills are in test mode until gblGoLive)' : '') + '. ' +
-      'The ' + GBL_DAY.HOUR + ':00 run' + (o && o.test ? ' (rehearsed)' : '') + ': ' + r.sent.length + ' went, ' + r.held.length + ' waited.' + (r.held.length ? ' Waiting: ' + r.held.map(function (x) { return E(x.group) + ' (' + E(x.why) + ')'; }).join('; ') + '.' : '') + '</p>' +
+      'The ' + GBL_DAY.HOUR + ':00 run' + (o && o.test ? ' (rehearsed)' : '') + ': ' + r.sent.length + ' bill' + (r.sent.length === 1 ? '' : 's') + ' went, ' + r.held.length + ' waited.' + (r.held.length ? ' Waiting: ' + r.held.map(function (x) { return E(x.group) + ' (' + E(x.why) + ')'; }).join('; ') + '.' : '') + '</p>' +
       (missed.length ? '<p style="margin:12px 0 6px;font-weight:700">No bill this cycle</p>' + tbl(['Group', 'Looked after by', 'Where it stands', 'Task'], missed.map(function (a) {
         var t = tasks[a.x.g.key] || {};
         return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why), E(t.id ? (t.existing ? 'open since earlier: ' : 'opened: ') + t.id : t.test ? 'would open' : d.chase && d.chase.held ? 'would open after gblGoLive' : t.error || '–')]); })) : '') +
@@ -2611,11 +2611,12 @@ function gblMemberLetter_(g, who, b, L) {
  *  paid (and what Head Office's own invoice shows as outstanding, when it differs); what changed since last month, as counts;
  *  what is attached. Counts only: no member's name. */
 function gblStatementData_(g, month, L, sf, bills) {
-  var money = gcmMoney_, lines = [], owed = [], total = 0, changes = { joined: 0, left: 0, moved: 0 };
+  var lines = [], owed = [], total = 0, changes = { joined: 0, left: 0, moved: 0 };
+  var moves = gblBillChanges_(g, month, bills);
   bills.forEach(function (b) {
     total = gblR_(total + b.due);
-    var f = b.findings || [], cnt = function (k) { return f.filter(function (x) { return x.kind === k; }).reduce(function (s, x) { return s + ((x.members || []).length || 1); }, 0); };
-    var j = b.line === 'life' && b.summary ? (b.summary.joined || 0) : cnt('joined'), l = b.line === 'life' && b.summary ? (b.summary.left || 0) : cnt('left'), m = cnt('moved');
+    var m = (b.findings || []).filter(function (x) { return x.kind === 'moved'; }).reduce(function (s, x) { return s + ((x.members || []).length || 1); }, 0);
+    var j = moves.filter(function (c) { return c.line === b.line && c.kind === 'joiner'; }).length, l = moves.filter(function (c) { return c.line === b.line && c.kind === 'leaver'; }).length;
     changes.joined += j; changes.left += l; changes.moved += m;
     lines.push({ line: b.line, label: GBL.LABEL[b.line], ref: b.ref, due: b.due, dueBy: b.dueBy, members: b.members, arrears: b.arrears, joined: j, left: l, moved: m, files: b.files, status: b.status, sentAt: b.sentAt });
   });
@@ -2626,9 +2627,43 @@ function gblStatementData_(g, month, L, sf, bills) {
     if (paid < t.billed - 0.05) { var o = gblR_(t.billed - paid); owedTotal = gblR_(owedTotal + o); owed.push({ line: t.line, label: GBL.LABEL[t.line] || t.rt, month: t.month, monthLabel: gblMonthLabel_(t.month), billed: t.billed, paid: paid, owed: o, status: paid > 0 ? 'Part paid' : 'Open' }); }
   });
   owed.sort(function (a, b) { return a.month < b.month ? -1 : a.month > b.month ? 1 : 0; });
+  /* Head Office's arrears against ours, line by line: a health invoice is compared with what Salesforce shows owed on
+   * health alone, never with every line's arrears added together */
+  var arrearsDiff = [];
+  bills.forEach(function (b) {
+    /* only a health invoice prints its outstanding balances; a life bill or a list bill carries none, so it is never
+     * read as Head Office showing nothing owed */
+    if (b.line !== 'health' && !(b.arrears > 0)) return;
+    var ours = gblR_(owed.filter(function (x) { return x.line === b.line; }).reduce(function (s, x) { return s + x.owed; }, 0)), theirs = gblR_(b.arrears || 0);
+    if (Math.abs(theirs - ours) > 0.05 && (theirs > 0 || ours > 0)) arrearsDiff.push({ line: b.line, label: GBL.LABEL[b.line], invoice: theirs, ours: ours });
+  });
   var dueBy = bills.map(function (x) { return x.dueBy; }).filter(String).sort()[0] || '';
-  return { month: month, label: gblMonthLabel_(month), group: g.name, listBill: g.bills[0] || '', lines: lines, total: total, dueBy: dueBy, owed: owed, owedTotal: owedTotal, invoiceOwed: invoiceOwed, grand: gblR_(total + owedTotal), changes: changes,
-    attachments: bills.map(function (b) { return b.files; }).filter(String), asAt: tDmy_(L.today), today: L.today };
+  return { month: month, label: gblMonthLabel_(month), group: g.name, listBill: g.bills[0] || '', lines: lines, total: total, dueBy: dueBy, owed: owed, owedTotal: owedTotal, invoiceOwed: invoiceOwed, arrearsDiff: arrearsDiff,
+    grand: gblR_(total + owedTotal), changes: changes, attachments: bills.map(function (b) { return b.files; }).filter(String), asAt: tDmy_(L.today), today: L.today };
+}
+/** The joiners and leavers this month's bills show, for the lines given: each bill's own findings (who joined or left
+ *  since last month's bill), its credits and back-charges, and a life statement's adjustments, one entry per person and
+ *  kind. Read from the month's own bill, never from Group Changes, which keeps no month: a joiner charged on October's
+ *  bill is October's change and is not counted again on November's. The cover note names them and the statement counts
+ *  them, so the two never disagree. */
+function gblBillChanges_(g, month, bills) {
+  var out = [];
+  var add = function (line, kind, member, effective) {
+    if (!member || out.some(function (c) { return c.line === line && c.kind === kind && gblSamePerson_(c.member, member); })) return;
+    out.push({ line: line, kind: kind, member: member, effective: effective || '' });
+  };
+  bills.forEach(function (b) {
+    (b.findings || []).forEach(function (f) {
+      if (f.kind === 'joined' || f.kind === 'left') (f.members || []).forEach(function (x) { add(b.line, f.kind === 'joined' ? 'joiner' : 'leaver', x.name, x.start || ''); });
+    });
+    var rows = [];
+    try { rows = gblLines_(g, b.line, b.month || month); } catch (e) {}
+    rows.forEach(function (r) {
+      if (r.kind === 'cancel' || r.kind === 'left') add(b.line, 'leaver', r.name, r.kind === 'cancel' ? (r.forMonth ? r.forMonth + '-01' : '') : r.eff);
+      else if (r.kind === 'adjust' || r.kind === 'joined') add(b.line, 'joiner', r.name, r.kind === 'adjust' ? (r.forMonth ? r.forMonth + '-01' : '') : r.eff);
+    });
+  });
+  return out;
 }
 /** The statement as a page: a table of the month's lines, the earlier months still owed, what changed, what is attached.
  *  Tables and inline styles only, so it reads in any mail app and renders to PDF. */
@@ -2649,16 +2684,29 @@ function gblStatementHtml_(g, d, o) {
     d.owed.map(function (x) { return '<tr><td ' + td + '>' + E(x.label) + ' · ' + E(x.monthLabel) + '</td><td ' + tdr + '>' + E(money(x.billed)) + '</td><td ' + tdr + '>' + (x.paid ? E(money(x.paid)) : '–') + '</td><td ' + tdr + '>' + E(money(x.owed)) + '</td></tr>'; }).join('') +
     '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700;background:#fdf1e1') + ' colspan="3">Earlier months still owed</td><td ' + tdr.replace('color:#142033', 'color:#a64b05;font-weight:700;background:#fdf1e1') + '>' + E(money(d.owedTotal)) + '</td></tr>' +
     '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700') + ' colspan="3">Total to bring the account up to date</td><td ' + tdr.replace('color:#142033', 'color:#142033;font-weight:700') + '>' + E(money(d.grand)) + '</td></tr></table>' +
-    (d.invoiceOwed && Math.abs(d.invoiceOwed - d.owedTotal) > 0.05 ? '<p style="margin:8px 0 0;font:12px/1.5 Arial,sans-serif;color:#5a687d">Head Office\'s invoice shows ' + E(money(d.invoiceOwed)) + ' outstanding from earlier months; our records show ' + E(money(d.owedTotal)) + '. If you have paid any of it, tell us and we will have the payment matched.</p>' : '') + '</td></tr>';
-  else h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#067647"><b>Nothing is owed from earlier months.</b> Thank you.' + (d.invoiceOwed ? ' Head Office\'s invoice still shows ' + E(money(d.invoiceOwed)) + ' outstanding: our records show it paid, and we are having it cleared.' : '') + '</td></tr>';
+    gblArrearsNote_(d, E, money) + '</td></tr>';
+  else h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#067647"><b>Nothing is owed from earlier months.</b> Thank you.' + (d.invoiceOwed ? ' Head Office\'s ' + E(gblArrearsLines_(d)) + ' invoice still shows ' + E(money(d.invoiceOwed)) + ' outstanding: our records show it paid, and we are having it cleared.' : '') + '</td></tr>';
   var ch = [];
   if (d.changes.joined) ch.push(d.changes.joined + ' joined');
   if (d.changes.left) ch.push(d.changes.left + ' left');
   if (d.changes.moved) ch.push(d.changes.moved + ' changed tier or premium');
-  h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#142033"><b>Since last month:</b> ' + (ch.length ? E(ch.join(', ')) + '. The names are on the attached bills.' : 'no one joined or left, and no premium changed.') + '</td></tr>';
+  h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#142033"><b>Changes on this billing:</b> ' + (ch.length ? E(ch.join(', ')) + '. The names are on the attached bills.' : 'no one joined or left, and no premium changed.') + '</td></tr>';
   if (d.attachments.length) h += '<tr><td style="padding:' + (o.inline ? '8px 0 0' : '10px 26px 0') + ';font:13px/1.5 Arial,sans-serif;color:#5a687d"><b>Attached:</b> ' + E(d.attachments.join('; ')) + '.</td></tr>';
   if (!o.inline) h += '<tr><td style="padding:18px 26px 22px;font:13px/1.5 Arial,sans-serif;color:#5a687d">Please pay as you do today and quote the invoice reference. Tell us about a payment, a joiner or a leaver on your service page, or reply to this e-mail.<br>Ricky Rampersad Branch, Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</td></tr>';
   return h + '</table></div>';
+}
+/** The line under the earlier months: each line whose Head Office invoice shows a different figure from our records. */
+function gblArrearsNote_(d, E, money) {
+  var diff = d.arrearsDiff || [];
+  if (!diff.length) return '';
+  return '<p style="margin:8px 0 0;font:12px/1.5 Arial,sans-serif;color:#5a687d">' + diff.map(function (x) {
+    var l = String(x.label).toLowerCase();
+    return 'Head Office\'s ' + E(l) + ' invoice shows ' + E(money(x.invoice)) + ' outstanding from earlier months; our records show ' + E(money(x.ours)) + ' for ' + E(l) + '.';
+  }).join(' ') + ' If you have paid any of it, tell us and we will have the payment matched.</p>';
+}
+function gblArrearsLines_(d) {
+  var l = d.lines.filter(function (x) { return x.arrears > 0; }).map(function (x) { return String(x.label).toLowerCase(); });
+  return l.length ? l.join(' and ') : 'group';
 }
 /** The statement as a PDF blob, or null where the conversion is not available. */
 function gblStatementPdf_(html, name) {
