@@ -4551,7 +4551,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       training lines in `GBL_DAY.TRAIN`), reply by noon to the branch manager, and a Salesforce task opens per group,
       `RR/<NAME> - GROUP BILL NOT SENT - <group> - <Month yyyy> bills: reason needed`, Lic/Staffing/SA/HR, High, owned
       by the staff member's standard user, once a cycle (`gcmChaseTasks_` generalised with `o.tag`, `o.prop`, `o.label`,
-      `o.train`, `o.why`; property `GCM_BILL_TASKS`). The manager's daily summary gains "Group bills: the 26th"
+      `o.train`, `o.why`; property `GCM_BILL_TASKS`). **While the bills are in test mode nobody is asked and no task
+      opens** (25 October 2026, the evening before the first billing day, when the rehearsal found nothing approved and
+      the 10:30 would have asked every staff member why): `gblDay_` runs the chase only once `gblGoLive` has been run;
+      the summary still lists each billed group with no bill and says its task "would open after gblGoLive". The manager's daily summary gains "Group bills: the 26th"
       (`gblDayHtml_`): on the day, how many billed groups had their bill, who missed with the task, what the run sent and
       held; on other days, the next billing day and how many are sent or approved. `gblDayTest` rehearses the whole day
       to the branch manager; `gcmGroupDayTest` includes it.

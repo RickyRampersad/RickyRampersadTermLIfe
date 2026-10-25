@@ -2168,7 +2168,14 @@ function gblDay_(o) {
   var now = o.now || new Date(), cycle = gblCycle_(now), info = gblDayInfo_(now), out = { info: info, cycle: cycle, run: null, chase: null, said: '', html: '' }, said = [];
   if (cycle.isDay || o.test) {
     try { out.run = gblDayRun_(o.test ? { rehearse: true, now: now } : { now: now }); if (out.run.said) said.push(out.run.said); } catch (e) { out.run = { sent: [], held: [], said: String(e && e.message ? e.message : e).slice(0, 160) }; said.push(out.run.said); }
-    try { out.chase = gblChaseRun_({ test: !!o.test, now: now }); said.push('staff: ' + out.chase.said); } catch (e) { out.chase = { sent: [], failed: [], said: String(e && e.message ? e.message : e).slice(0, 160) }; said.push('staff: ' + out.chase.said); }
+    if (gblLive_() || o.test) {
+      try { out.chase = gblChaseRun_({ test: !!o.test, now: now }); said.push('staff: ' + out.chase.said); } catch (e) { out.chase = { sent: [], failed: [], said: String(e && e.message ? e.message : e).slice(0, 160) }; said.push('staff: ' + out.chase.said); }
+    } else {
+      // Test mode: the bills reach nobody but their approvers, so nobody is asked why one did not go, and no KPI task opens. The summary still says what would have been asked.
+      var heldList = null; try { heldList = gblChaseList_(gcmLoad_(), now); } catch (e) {}
+      out.chase = { ok: true, held: true, list: heldList, tasks: {}, sent: [], failed: [], said: 'nobody asked and no task opened: the bills are in test mode until gblGoLive.' };
+      said.push('staff: ' + out.chase.said);
+    }
   }
   try { out.html = gblDayHtml_(out, o); } catch (e) { out.html = ''; }
   if (!said.length) {
@@ -2196,7 +2203,7 @@ function gblDayHtml_(d, o) {
       'The ' + GBL_DAY.HOUR + ':00 run' + (o && o.test ? ' (rehearsed)' : '') + ': ' + r.sent.length + ' went, ' + r.held.length + ' waited.' + (r.held.length ? ' Waiting: ' + r.held.map(function (x) { return E(x.group) + ' (' + E(x.why) + ')'; }).join('; ') + '.' : '') + '</p>' +
       (missed.length ? '<p style="margin:12px 0 6px;font-weight:700">No bill this cycle</p>' + tbl(['Group', 'Looked after by', 'Where it stands', 'Task'], missed.map(function (a) {
         var t = tasks[a.x.g.key] || {};
-        return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why), E(t.id ? (t.existing ? 'open since earlier: ' : 'opened: ') + t.id : t.test ? 'would open' : t.error || '–')]); })) : '') +
+        return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why), E(t.id ? (t.existing ? 'open since earlier: ' : 'opened: ') + t.id : t.test ? 'would open' : d.chase && d.chase.held ? 'would open after gblGoLive' : t.error || '–')]); })) : '') +
       '<p><b>Staff asked why:</b> ' + E(d.chase ? d.chase.said : 'not run') + '</p>';
   } else {
     h += '<p>The next billing day is <b>' + E(info.label) + '</b>' + (info.daysTo ? ' (in ' + info.daysTo + ' day' + (info.daysTo === 1 ? '' : 's') + ')' : '') + '. ' +

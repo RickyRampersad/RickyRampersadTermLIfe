@@ -263,7 +263,7 @@ something is written.
 - **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the two new routes, `gcm.clientForm` and
   `gcm.clientFormSend`, and the chase in the group day are in GroupClients.gs), then a New version.
 - **Script properties**: none new. `GCM_BILL_LIVE` is set by `gblGoLive`. The AI read uses `ANTHROPIC_API_KEY` as
-  the rest of the page does.
+  the rest of the page does. While the bills are in test mode (before `gblGoLive`) the 10:30 asks nobody and opens no task; the branch manager's summary says what it would have asked.
 
 ## Tests
 
