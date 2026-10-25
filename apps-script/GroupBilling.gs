@@ -2420,7 +2420,8 @@ function gblChaseMail_(o, list, tasks) {
     head.map(function (h) { return '<th ' + th + '>' + E(h) + '</th>'; }).join('') + '</tr>' + rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>'; };
   var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
     '<p>Good morning, ' + E(first) + '.</p>' +
-    '<p>The group bills went at ' + GBL_DAY.HOUR + ':00 today, ' + E(day.replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> A bill not approved by then waits for you to press Send now.</p>' +
+    '<p>The group bills went at ' + GBL_DAY.HOUR + ':00 today, ' + E(day.replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> Approve it today and it goes by itself at ' + GBL_DAY.HOUR + ':00 on ' +
+      E(gblDayLabel_(gblNextWorkingDay_(list.cycle.end)).replace(/, \d+:\d+$/, '')) + ', or press Send now to send it at once.</p>' +
     table(['Group', 'Where it stands', 'Do this today'], o.missed.map(function (m) {
       var t = tasks && tasks[m.g.key];
       return ['<b>' + E(m.g.name) + '</b>' + (t && t.id ? '<br><span style="color:#4B586C;font-size:12.5px">Salesforce task ' + E(t.id) + '</span>' : ''), m.states.filter(function (s) { return s.state !== 'queued'; }).map(function (s) { return E(s.why); }).join('<br>'), E(m.todo)];
@@ -2575,21 +2576,25 @@ function gblBillReport_(o) {
   var owners = [], cc = [];
   rows.forEach(function (r) { if (owners.indexOf(r.owner) < 0) owners.push(r.owner); if (r.email && r.email.toLowerCase() !== String(me).toLowerCase() && cc.map(function (x) { return x.toLowerCase(); }).indexOf(r.email.toLowerCase()) < 0) cc.push(r.email); });
   var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:760px">' +
-    (o.test ? '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST.</b> This report goes at ' + GBL_DAY.REPORT_HOUR + ':00 on ' + E(gblDayLabel_(repDay).replace(/, \d+:\d+$/, '')) + ' to you, copied to ' + E(cc.join(', ') || 'nobody') + '.</div>' : '') +
+    (o.test ? '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST.</b> This report goes by itself at ' + GBL_DAY.REPORT_HOUR + ':00 on the ' + (gblDayOfMonth_() - 1) + 'th, or the working day before it (this cycle: ' + E(gblDayLabel_(repDay).replace(/, \d+:\d+$/, '')) + '), to you, copied to ' + E(cc.join(', ') || 'nobody') + '.</div>' : '') +
     '<p>The group bills go by themselves <b>' + E(when) + '</b>: every line reconciled and approved by then, from support@ with its PDF' + (live ? '' : ' (in test mode: a TEST copy to whoever approved it, until gblGoLive)') + '. Here is who has worked each billed group, and what is left.</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:6px 0;margin:0 0 16px"><tr>' +
     tile(ready.length + ' of ' + rows.length, 'groups ready for ' + E(dayWords)) + tile(left.length, 'with work left before ' + GBL_DAY.HOUR + ':00', left.length > 0) + tile(notStarted.length, 'not started: nothing uploaded', notStarted.length > 0) + '</tr></table>' +
     owners.map(function (ow) {
       var mine = rows.filter(function (r) { return r.owner === ow; });
-      return '<p style="margin:16px 0 6px;font-weight:700">' + E(ow) + ' · ' + mine.filter(function (r) { return r.ready; }).length + ' of ' + mine.length + ' ready</p>' +
-        '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 8px"><tr><th ' + th + '>Group</th><th ' + th + '>Line</th><th ' + th + '>Where it stands</th><th ' + th + '>Who worked it</th><th ' + th + '>Left before ' + GBL_DAY.HOUR + ':00</th></tr>' +
+      /* one column, a block a group and a line under it, so it reads on a phone as well as at a desk */
+      return '<p style="margin:18px 0 6px;font-weight:700;font-size:16px;color:#13408F;border-bottom:2px solid #13408F;padding:0 0 4px">' + E(ow) + ' · ' + mine.filter(function (r) { return r.ready; }).length + ' of ' + mine.length + ' ready</p>' +
         mine.map(function (r) {
-          if (r.cannot) return '<tr><td ' + td + '><b>' + E(r.g.name) + '</b></td><td ' + td + ' colspan="4">Cannot have a bill yet: ' + E(r.cannot) + '</td></tr>';
-          return r.states.map(function (x, i) {
-            return '<tr>' + (i === 0 ? '<td ' + td + ' rowspan="' + r.states.length + '"><b>' + E(r.g.name) + '</b>' + (r.ready ? '<br><span style="color:#067647;font-size:12.5px;font-weight:700">✓ ready</span>' : '') + '</td>' : '') +
-              '<td ' + td + '>' + E(x.label) + (x.month ? '<br><span style="color:#4B586C;font-size:12.5px">' + E(x.month) + '</span>' : '') + '</td><td ' + td + '>' + E(x.stage) + '</td><td ' + td + '>' + (x.who ? E(x.who) : '<span style="color:#B42318">nobody yet</span>') + '</td><td ' + td + '>' + (x.left ? '<b>' + E(x.left) + '</b>' : '–') + '</td></tr>';
+          var head = '<div style="font:700 15px/1.4 Arial,sans-serif;color:#142033;margin:12px 0 4px">' + E(r.g.name) + (r.ready ? ' <span style="color:#067647;font-size:12.5px">✓ ready</span>' : '') + '</div>';
+          if (r.cannot) return head + '<div style="border-left:4px solid #E0A800;background:#FFF8E6;padding:8px 12px;margin:0 0 6px;font:14px/1.45 Arial,sans-serif">Cannot have a bill yet: ' + E(r.cannot) + '</div>';
+          return head + r.states.map(function (x) {
+            var c = x.ready ? '#12B76A' : x.worked ? '#E0A800' : '#D03B3B';
+            return '<div style="border-left:4px solid ' + c + ';background:#F7F9FC;padding:8px 12px;margin:0 0 6px;font:14px/1.45 Arial,sans-serif;color:#142033">' +
+              '<b>' + E(x.label) + '</b>' + (x.month ? ' <span style="color:#4B586C;font-size:12.5px">' + E(x.month) + '</span>' : '') + '<br>' + E(x.stage) +
+              '<br><span style="color:#4B586C">Who worked it:</span> ' + (x.who ? E(x.who) : '<span style="color:#B42318;font-weight:700">nobody yet</span>') +
+              (x.left ? '<br><span style="color:#4B586C">Left before ' + GBL_DAY.HOUR + ':00:</span> <b>' + E(x.left) + '</b>' : '') + '</div>';
           }).join('');
-        }).join('') + '</table>';
+        }).join('');
     }).join('') +
     '<p>A line approved after ' + E(when) + ' is a late bill and goes at ' + GBL_DAY.HOUR + ':00 the next working day, or when someone presses Send now. At 10:30 on ' + E(dayWords) + ' each staff member whose group had no bill is asked why, and a task opens' + (live ? '' : ' once the bills are live') + '.</p>' +
     '<p><a href="' + GCM.SITE + 'billing.html" style="color:#1D5BC4;font-weight:700">Open Billings Management</a></p>' +
@@ -3059,10 +3064,16 @@ function gblStatementHtml_(g, d, o) {
   h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '18px 26px 0') + '"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr><th ' + th + '>This month</th><th ' + thr + '>Members</th><th ' + thr + '>Due</th></tr>' +
     d.lines.map(function (l) { return '<tr><td ' + td + '>' + E(l.label) + (l.ref ? '<div style="font:12px Arial,sans-serif;color:#5a687d">Ref ' + E(l.ref) + '</div>' : '') + '</td><td ' + tdr + '>' + (l.members || '') + '</td><td ' + tdr + '>' + E(money(l.due)) + '</td></tr>'; }).join('') +
     '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700;background:#ebf2fd') + ' colspan="2">Total for ' + E(d.label) + '</td><td ' + tdr.replace('color:#142033', 'color:#1d5bc4;font-weight:700;background:#ebf2fd') + '>' + E(money(d.total)) + '</td></tr></table></td></tr>';
-  if (d.owed.length) h += '<tr><td style="padding:' + (o.inline ? '14px 0 0' : '18px 26px 0') + '"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr><th ' + th + '>Still owed from earlier invoices</th><th ' + thr + '>Billed</th><th ' + thr + '>Received</th><th ' + thr + '>Owed</th></tr>' +
-    d.owed.map(function (x) { return '<tr><td ' + td + '>' + E(x.label) + ' · ' + E(x.monthLabel) + '</td><td ' + tdr + '>' + E(money(x.billed)) + '</td><td ' + tdr + '>' + (x.paid ? E(money(x.paid)) : '–') + '</td><td ' + tdr + '>' + E(money(x.owed)) + '</td></tr>'; }).join('') +
-    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700;background:#fdf1e1') + ' colspan="3">Earlier months still owed</td><td ' + tdr.replace('color:#142033', 'color:#a64b05;font-weight:700;background:#fdf1e1') + '>' + E(money(d.owedTotal)) + '</td></tr>' +
-    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700') + ' colspan="3">Total to bring the account up to date</td><td ' + tdr.replace('color:#142033', 'color:#142033;font-weight:700') + '>' + E(money(d.grand)) + '</td></tr></table>' +
+  /* In the e-mail (o.inline) the earlier invoices are two columns, billed and received under the invoice's name, so the
+     statement fits a phone: four columns of amounts ran 60px past one on 25 October 2026. The PDF keeps all four. */
+  var span = o.inline ? '1' : '3';
+  if (d.owed.length) h += '<tr><td style="padding:' + (o.inline ? '14px 0 0' : '18px 26px 0') + '"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr><th ' + th + '>Still owed from earlier invoices</th>' + (o.inline ? '' : '<th ' + thr + '>Billed</th><th ' + thr + '>Received</th>') + '<th ' + thr + '>Owed</th></tr>' +
+    d.owed.map(function (x) {
+      if (o.inline) return '<tr><td ' + td + '>' + E(x.label) + ' · ' + E(x.monthLabel) + '<div style="font:12.5px/1.4 Arial,sans-serif;color:#5a687d">billed ' + E(money(x.billed)) + ' · received ' + (x.paid ? E(money(x.paid)) : 'nothing yet') + '</div></td><td ' + tdr + '>' + E(money(x.owed)) + '</td></tr>';
+      return '<tr><td ' + td + '>' + E(x.label) + ' · ' + E(x.monthLabel) + '</td><td ' + tdr + '>' + E(money(x.billed)) + '</td><td ' + tdr + '>' + (x.paid ? E(money(x.paid)) : '–') + '</td><td ' + tdr + '>' + E(money(x.owed)) + '</td></tr>';
+    }).join('') +
+    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700;background:#fdf1e1') + ' colspan="' + span + '">Earlier months still owed</td><td ' + tdr.replace('color:#142033', 'color:#a64b05;font-weight:700;background:#fdf1e1') + '>' + E(money(d.owedTotal)) + '</td></tr>' +
+    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700') + ' colspan="' + span + '">Total to bring the account up to date</td><td ' + tdr.replace('color:#142033', 'color:#142033;font-weight:700') + '>' + E(money(d.grand)) + '</td></tr></table>' +
     gblArrearsNote_(d, E, money) + '</td></tr>';
   else h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#067647"><b>Nothing is owed from earlier months.</b> Thank you.' + (d.invoiceOwed ? ' Head Office\'s ' + E(gblArrearsLines_(d)) + ' invoice still shows ' + E(money(d.invoiceOwed)) + ' outstanding: our records show it paid, and we are having it cleared.' : '') + '</td></tr>';
   var ch = [];
