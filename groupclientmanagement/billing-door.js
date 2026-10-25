@@ -497,7 +497,7 @@ async function dPdf() {
 /* ── step 8: approve and send ── */
 function dApprove() {
   const d = BILL, can = d.canAct !== false, withBill = d.lines.filter(o => o.bill);
-  let h = '<h3 class="ptitle">Approve and send</h3><p class="plead">A reconciled line goes by itself on the billing day, or now. The e-mail carries the bill, the statement of account (inline and as a PDF) and the cover note, from support@ with sales support copied.</p>';
+  let h = '<h3 class="ptitle">Approve and send</h3><p class="plead">A reconciled line goes by itself on the billing day once it is approved, or now with Send now, which works only on an approved bill. After the 10:00 cut-off, Approve and Send now each ask why it was not done by then. The e-mail carries the bill, the statement of account (inline and as a PDF) and the cover note, from support@ with sales support copied.</p>';
   h += blDayStrip(d.day, d.live);
   if (!d.live) h += '<div class="note info"><div><b>Sending is in test mode.</b> A bill sent from here goes to you and the branch, marked TEST, until the branch manager runs gblGoLive in the script editor. Everything else is live: the checks, the Salesforce fixes, the tasks and the Chatter.</div></div>';
   if (!withBill.length) h += '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>';
@@ -509,8 +509,7 @@ function dApprove() {
       (b.sentAt ? '<span class="chip good"><i></i>Sent ' + esc(b.sentAt) + '</span>' : '') + '<span class="chip"><i style="background:var(--bar)"></i>' + esc(blMoney(b.due)) + ' for ' + b.members + ' ' + (o.line === 'listbill' ? 'policies' : 'members') + '</span>' + (b.files ? '<span class="chip"><i style="background:var(--bar)"></i>' + esc(b.files) + '</span>' : '') + '</div>';
     if (s.fixes && !b.reconciledAt) h += '<p class="small">Fix or resolve the findings marked fix on <button class="lnk" type="button" data-go="findings">What was found</button> first' + (d.role === 'branch' ? '. As branch manager you may reconcile over them' : '') + '.</p>';
     if (can) h += '<div class="blacts">' + (!b.reconciledAt ? '<button class="btn' + (s.fixes ? ' ghost' : '') + '" type="button" data-rec="' + o.line + '"' + (s.fixes && d.role !== 'branch' ? ' disabled title="Fix or resolve the findings marked fix first"' : '') + '>Mark reconciled</button>' : '') +
-      blApproveActs(o, b, s, d) +
-      (b.reconciledAt ? '<button class="btn' + (s.status === 'approved' ? ' ghost' : '') + '" type="button" data-send="' + o.line + '">' + (b.sentAt ? 'Send to the group again' : 'Send now') + (d.live ? '' : ' (test)') + '</button>' : '') +
+      blApproveActs(o, b, s, d) + blSendBtn(o, b, s, d) +
       '<button class="btn ghost" type="button" data-pay="' + o.line + '">Record a payment</button></div>';
     h += blHistory(o) + '</section>';
   });

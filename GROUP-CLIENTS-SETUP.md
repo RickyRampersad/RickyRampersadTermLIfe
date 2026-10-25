@@ -238,11 +238,14 @@ something is written.
   each January**, and put any other day the branch is closed in the `GCM_BILL_HOLIDAYS` Script property (yyyy-MM-dd,
   comma separated). On the 25th a staff member uploads each line, verifies it, reconciles it and presses **Approve** with
   the PDF attached; the PDF waits in the Drive folder (`GCM_FORMS_FOLDER`, subfolder "Bills to send"), so **set that
-  property before the first approval**: without it the button is disabled and staff press Send now. At 13:00 on the 25th
+  property before the first approval**: without it the button is disabled. At 13:00 on the 25th
   (the last working day before it when the 25th is not one) the branch manager gets the report of who has worked each
   billed group, line by line, and what is left, the staff copied (`gblBillReportTest` sends him a TEST copy now). At 10:00
   on the billing day every approved bill goes from support@ with its PDF, copied to sales support, and the PDF moves to
-  "Sent bills". A bill approved after that goes at 10:00 the next working day. At 10:30 on the billing day the group day
+  "Sent bills". A bill approved after that goes at 10:00 the next working day. **Send now** works only on an approved
+  bill; after the 10:00 cut-off, Approve and Send now each ask why it was not done by then. The reason goes on the bill
+  and its Chatter, closes that day's GROUP BILL NOT SENT task once the bill reaches the group, and comes to the branch
+  manager by e-mail. At 10:30 on the billing day the group day
   asks each staff member whose billed group (a group with a Salesforce billing record for the month) had no bill why,
   opens a `GROUP BILL NOT SENT` task (Lic/Staffing/SA/HR) in their name, and the branch manager's summary carries "Group
   bills: <day>". In test mode (before `gblGoLive`) the run sends each approved bill to its approver and the branch marked
