@@ -255,7 +255,10 @@ function col_(map, name) {
 function ensureRenewalCols_() {
   var sh = renewalsSheet_();
   var map = headerMap_(sh);
-  ['Reminders Sent', 'Renewed Date', 'Assigned To'].forEach(function (h) {
+  // 'Agent' and 'Agent Email' come from Salesforce's own Agent__c on the risk
+  // (SalesforceSync). They are what lets an agent be shown their own clients
+  // and nobody else's; a blank one falls to the branch, never to everybody.
+  ['Reminders Sent', 'Renewed Date', 'Assigned To', 'Agent', 'Agent Email'].forEach(function (h) {
     if (col_(map, h) < 0) {
       sh.getRange(1, sh.getLastColumn() + 1).setValue(h);
       map = headerMap_(sh);
@@ -321,8 +324,20 @@ function rowObj_(r, map, rowIndex) {
     remindersSent: String(r[col_(map, 'reminders sent')] || ''),
     renewedDate: fmtDate_(r[col_(map, 'renewed date')]),
     assignedTo: String(r[col_(map, 'assigned to')] || ''),
+    agent:      String(r[col_(map, 'agent')] || ''),
+    agentEmail: String(r[col_(map, 'agent email')] || '').trim().toLowerCase(),
     token: String(r[col_(map, 'token')] || ''),
   };
+}
+
+/** Write one cell on a motor renewal row by header name.
+ *  Property.gs has had setPropCell_ since it was written; the motor side set
+ *  cells inline in four places, each re-reading the header map. */
+function setRenewalCell_(rowIndex, header, value) {
+  var sh = renewalsSheet_();
+  var c = col_(ensureRenewalCols_(), String(header).toLowerCase());
+  if (c < 0) throw new Error('No "' + header + '" column on the renewals sheet.');
+  sh.getRange(Number(rowIndex), c + 1).setValue(value);
 }
 
 function allRenewals_() {
@@ -499,6 +514,7 @@ function logActivity_(token, client, type, by, details) {
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  if (p.board && typeof boardPage_ === 'function') return boardPage_(p);     // the renewal board (?board=KEY)
   if (p.staff) return staffPage_(p);
   if (p.p && typeof propertyPage_ === 'function') return propertyPage_(p);   // property links (?p=TOKEN)
   if (p.find) return findPage_();                                            // client sign-in (?find=1)
