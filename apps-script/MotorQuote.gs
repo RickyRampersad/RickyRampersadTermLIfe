@@ -65,7 +65,7 @@
  */
 
 var MQ = {
-  VERSION: '2026-10-26b',
+  VERSION: '2026-10-26c',
   BRAND: 'Ricky Rampersad Branch',
   LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',   // the blue shield (the manager's choice, 21 Oct 2026); hosted PNG: Gmail strips SVG and data URIs
   SITE: 'https://rickyrampersadbranch.com/motor-quote/',
@@ -1799,8 +1799,9 @@ function mqSetup() {
     '\nMicrosoft 365: ' + (p.graph ? 'sending as ' + MQ.SUPPORT_FROM : 'not set: e-mails go from this Google account, reply-to ' + MQ.SUPPORT_FROM) +
     '\nInvoice reader: ' + (p.ai ? 'on (' + mqProp_('MQ_AI_MODEL', MQ.AI_MODEL) + ')' : 'off: set ANTHROPIC_API_KEY') +
     '\nQuotes go to: ' + mqQuotesTo_() + (mqRenewTo_() !== mqQuotesTo_() ? '\nRenewals go to: ' + mqRenewTo_() : '') + '\n\nDeploy as a web app (Execute as Me, Anyone) and paste the /exec address into motor-quote/index.html.';
+  /* Logged, never a pop-up: run from the editor, an alert waits in the sheet's
+     tab for an OK nobody sees, and the run times out after six minutes. */
   Logger.log(msg);
-  try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
   return msg;
 }
 
