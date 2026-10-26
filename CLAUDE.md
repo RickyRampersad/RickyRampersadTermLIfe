@@ -3893,9 +3893,14 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
   as a tracker with Sent ticked. Checked at 360, 390, 820 and 1366 px wide.
 - **Motion that pops** (26 October 2026: "can you add more motion and graphics to pop"). All of it is CSS and a little
   script, and all of it stops under reduced motion.
-  - **The blue bands** (sign-in and home) carry a road along their foot (`SCENE`, put into every `.band` by the script):
-    lane lines moving, a car that drives in and bobs, its wheels turning, clouds drifting, over a slowly shifting gradient.
-    The sign-in band's icon is a key, since the car is now on the road.
+  - **The blue bands** (sign-in and home) end in three soft waves drifting at three speeds, the front one the card's
+    own white, with a light gliding across the blue (`SCENE`, put into every `.band` by the script). A road with a
+    cartoon car and clouds was tried first and turned down the same day ("I hate the car it's looking like a kid did
+    this … more professional"): keep the bands abstract, never a drawing. The sign-in band's icon is an outline shield
+    with a tick that draws itself, in a frosted tile.
+  - **Line icons, no emoji** (the same day). Every icon in a tile (the three paths, section headers, the documents, the
+    notes) is an inline SVG line icon (`svg.i`, stroke `currentColor`, 24-unit grid), white on a coloured tile or in the
+    path's colour on a light one. Only the ✓ and ✕ marks remain as text. A new icon is drawn the same way.
   - **Numbers count up** (`cu(n)`): a CSS counter animates on screen while the real figure stays in the text, so a test,
     a screen reader and a copy all read the number. Used on the renewal ring, the band's figures and the request summary.
     The ring fills from empty (`@property --p`).

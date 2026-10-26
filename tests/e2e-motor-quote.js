@@ -107,7 +107,7 @@ const calls = []; let requests = [];
   ok('the band gives the figures: vehicles with us, due for renewal', /2\s*vehicles with us/.test(await txt('#homeStats')) && /1\s*due for renewal/.test(await txt('#homeStats')));
   ok('the vehicle not due is under "Your vehicles with us", with its renewal date', /Nissan Note/.test(await txt('#homeVeh')) && /renews/i.test(await txt('#homeVeh')) && !/Toyota/.test(await txt('#homeVeh')));
   ok('nothing runs wider than the phone on the home screen', await wide());
-  ok('both blue bands carry the road scene, hidden from screen readers', await page.evaluate(() => document.querySelectorAll('.band .scene[aria-hidden=true] .car svg').length === 2));
+  ok('both blue bands end in drifting waves, hidden from screen readers', await page.evaluate(() => document.querySelectorAll('.band .waves[aria-hidden=true] svg').length === 6));
   ok('the figures count up on screen and keep their real number in the text', await page.evaluate(() => [...document.querySelectorAll('#homeStats .cu')].map(b => b.textContent).join(',') === '2,1'));
   ok('scrolled to the foot, no section is left waiting to rise in', await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); }
     await new Promise(r => setTimeout(r, 300)); const left = document.querySelectorAll('.sr:not(.sr-in)').length; window.scrollTo(0, 0); return left === 0; }));

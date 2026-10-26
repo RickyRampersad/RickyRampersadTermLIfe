@@ -363,28 +363,33 @@
   @keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 5px rgba(58,123,213,.18)}50%{box-shadow:0 0 0 9px rgba(58,123,213,.08)}}
 
+  /* line icons, in the tile's white or the path's own colour */
+  svg.i{width:1.12em;height:1.12em;display:block;flex:none}
+  .door .ic,.veh .ic,.takedoor .ic,.file .ph{color:var(--blue)}
+  .door.primary .ic{color:#fff}
+  .takedoor .ic{color:var(--ac)}
+  .docnote .ic{color:var(--rn2)}
+  .formcard .ic{color:var(--blue)}
+  .req .kind svg.i,.flowtag b svg.i{display:inline-block;vertical-align:-.22em;width:1.3em;height:1.3em}
+  .sec .ic svg.i{width:1.15em;height:1.15em}
   /* ── motion that pops ─────────────────────────────────────────────── */
   @property --n{syntax:'<integer>';inherits:false;initial-value:0}
   @property --p{syntax:'<number>';inherits:true;initial-value:0}
   /* the band: a gradient that drifts, a road with a car on it */
   .band{background-size:180% 180%;animation:bandmove 14s ease-in-out infinite alternate}
-  .band.has-scene{padding-bottom:86px}
-  .band>*:not(.scene){position:relative;z-index:1}
-  .scene{position:absolute;left:0;right:0;bottom:0;height:72px;overflow:hidden;pointer-events:none;z-index:0}
-  .scene .hill{position:absolute;bottom:14px;border-radius:50% 50% 0 0;background:rgba(255,255,255,.11)}
-  .scene .h1{left:-8%;width:62%;height:44px}.scene .h2{right:-10%;width:58%;height:34px;background:rgba(255,255,255,.08)}
-  .scene .cloud{position:absolute;top:6px;width:46px;height:14px;border-radius:99px;background:rgba(255,255,255,.55);animation:cloud 26s linear infinite}
-  .scene .cloud:before,.scene .cloud:after{content:"";position:absolute;bottom:4px;border-radius:50%;background:inherit}
-  .scene .cloud:before{left:8px;width:18px;height:18px}.scene .cloud:after{left:20px;width:22px;height:22px}
-  .scene .c2{top:20px;width:34px;height:11px;opacity:.7;animation-duration:38s;animation-delay:-17s}
-  .scene .road{position:absolute;left:0;right:0;bottom:0;height:16px;background:rgba(20,44,96,.32);border-top:2px solid rgba(255,255,255,.22)}
-  .scene .road i{position:absolute;left:0;right:0;top:6px;height:2.5px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.85) 0 18px,transparent 18px 36px);animation:lane .55s linear infinite}
-  .scene .car{position:absolute;bottom:9px;left:58%;width:74px;height:34px;animation:drivein 1.6s cubic-bezier(.2,.8,.2,1) .3s both}
-  .scene .car svg{display:block;width:100%;height:100%;animation:bob .5s ease-in-out infinite alternate;filter:drop-shadow(0 4px 6px rgba(10,30,70,.3))}
-  .scene .car .wh{transform-box:fill-box;transform-origin:center;animation:spin .45s linear infinite}
-  .scene .speed{position:absolute;right:100%;top:10px;width:30px;height:2px;border-radius:2px;background:rgba(255,255,255,.7);animation:speed .7s ease-in infinite}
-  .scene .speed+.speed{top:18px;width:20px;animation-delay:.25s}
-  @media (min-width:900px){.band.has-scene{padding-bottom:92px}.scene .car{left:66%}}
+  .band.has-scene{padding-bottom:70px}
+  .band>*:not(.waves){position:relative;z-index:1}
+  /* a soft light that drifts across the blue */
+  .band:before{content:"";position:absolute;left:-20%;top:-60%;width:70%;height:180%;background:radial-gradient(closest-side,rgba(255,255,255,.16),transparent);animation:glide 16s ease-in-out infinite alternate;pointer-events:none}
+  /* three waves at the foot, the front one the card's own white */
+  .waves{position:absolute;left:0;right:0;bottom:-1px;height:58px;overflow:hidden;pointer-events:none;z-index:0}
+  .waves svg{position:absolute;left:0;bottom:0;width:200%;height:100%;display:block;animation:wave 22s linear infinite}
+  .waves .w2{height:78%;animation-duration:15s;animation-direction:reverse}
+  .waves .w3{height:52%;animation-duration:30s}
+  .band .badge{width:58px;height:58px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);display:grid;place-items:center;margin:0 0 14px;box-shadow:0 10px 24px rgba(16,40,90,.18);animation:floaty 4s ease-in-out infinite}
+  .band .badge svg{width:30px;height:30px}
+  .band .badge path{stroke-dasharray:80;stroke-dashoffset:80;animation:draw 1.1s cubic-bezier(.65,0,.35,1) .3s forwards}
+  @media (min-width:900px){.band.has-scene{padding-bottom:78px}.waves{height:68px}}
   /* numbers that count up, rings that fill */
   .cu{--n:var(--to);counter-reset:n var(--n);animation:count 1.2s cubic-bezier(.2,.8,.2,1) .2s both}
   .cu:after{content:counter(n);content:counter(n) / ""}
@@ -426,12 +431,9 @@
   #s-done h1{animation:rise .55s cubic-bezier(.2,.8,.2,1) .3s both}
   .confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
   @keyframes bandmove{from{background-position:0% 40%}to{background-position:100% 60%}}
-  @keyframes cloud{from{transform:translateX(110vw)}to{transform:translateX(-120px)}}
-  @keyframes lane{to{background-position:-36px 0}}
-  @keyframes drivein{from{transform:translateX(-70vw)}to{transform:none}}
-  @keyframes bob{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  @keyframes speed{0%{transform:translateX(10px);opacity:0}40%{opacity:1}100%{transform:translateX(-26px);opacity:0}}
+  @keyframes wave{to{transform:translateX(-50%)}}
+  @keyframes glide{from{transform:translateX(0)}to{transform:translateX(130%)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   @keyframes count{from{--n:0}}
   @keyframes ringfill{from{--p:0}}
   @keyframes travel{0%{left:var(--a);opacity:0;transform:scale(.4)}12%{opacity:1;transform:scale(1)}88%{opacity:1;transform:scale(1)}100%{left:calc(100% - var(--a));opacity:0;transform:scale(.4)}}
@@ -444,7 +446,7 @@
   @keyframes draw{to{stroke-dashoffset:0}}
   @keyframes stamp{0%{transform:scale(1.7) rotate(-5deg);opacity:0}100%{transform:none;opacity:1}}
   @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
-  @media (prefers-reduced-motion:reduce){.scene .car{transform:none}.scene .cloud{left:14%}.scene .c2{left:74%}.scene .speed{display:none}.tick path{stroke-dashoffset:0}.sr{opacity:1!important;transform:none!important}}
+  @media (prefers-reduced-motion:reduce){.band .badge path{stroke-dashoffset:0}.tick path{stroke-dashoffset:0}.sr{opacity:1!important;transform:none!important}}
 </style>
 </head>
 <body>
@@ -459,7 +461,7 @@
   <!-- 0 · sign in -->
   <section class="card hero" id="s-signin">
     <div class="band">
-      <div class="big">🔑</div>
+      <div class="badge" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3.5l10 3.6v7.6c0 6.4-4.3 11.6-10 13.8C10.3 26.3 6 21.1 6 14.7V7.1z"/><path d="M11.6 15.6l3.2 3.2 6-6.4"/></svg></div>
       <h1>Get your motor quote.</h1>
       <p>Sign in with your e-mail. Our clients see their details filled in. New to us? Welcome, it takes five minutes.</p>
       <div class="chips"><span>No password</span><span>Your details filled in</span><span>About five minutes</span></div>
@@ -476,11 +478,11 @@
       <button class="ghost" onclick="backToEmail()">Use a different e-mail</button>
     </div>
     <p class="err" id="signinErr"></p>
-    <div class="sec" style="margin-top:22px"><span class="ic">🧭</span><div><b>Three things you can do here</b><small>Each one is separate, so nothing gets mixed up</small></div></div>
+    <div class="sec" style="margin-top:22px"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></span><div><b>Three things you can do here</b><small>Each one is separate, so nothing gets mixed up</small></div></div>
     <div class="paths">
-      <div class="path t-renew"><span class="pi">🔄</span><span class="pt"><b>Renew</b><small>A vehicle we already insure: next year's cover.</small></span></div>
-      <div class="path t-quote"><span class="pi">🧮</span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet: we price it for you.</small></span></div>
-      <div class="path t-take"><span class="pi">✍️</span><span class="pt"><b>Accept a quote</b><small>You have our quote: sign it online and get covered.</small></span></div>
+      <div class="path t-renew"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><span class="pt"><b>Renew</b><small>A vehicle we already insure: next year's cover.</small></span></div>
+      <div class="path t-quote"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg></span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet: we price it for you.</small></span></div>
+      <div class="path t-take"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><span class="pt"><b>Accept a quote</b><small>You have our quote: sign it online and get covered.</small></span></div>
     </div>
   </section>
 
@@ -493,35 +495,35 @@
       <div class="stats" id="homeStats"></div>
     </div>
     <div class="paths" id="paths">
-      <button type="button" class="path t-renew" id="pathRenew" onclick="toTrack('trRenew')"><span class="pi">🔄</span><span class="pt"><b>Renew</b><small>A vehicle we already insure</small><em id="pathRenewN"></em></span><span class="go">›</span></button>
-      <button type="button" class="path t-quote" onclick="toTrack('trQuote')"><span class="pi">🧮</span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet</small><em>About 2 min</em></span><span class="go">›</span></button>
-      <button type="button" class="path t-take" onclick="toTrack('trTake')"><span class="pi">✍️</span><span class="pt"><b>Accept a quote</b><small>You have our quote and want the cover</small><em>Sign online</em></span><span class="go">›</span></button>
+      <button type="button" class="path t-renew" id="pathRenew" onclick="toTrack('trRenew')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><span class="pt"><b>Renew</b><small>A vehicle we already insure</small><em id="pathRenewN"></em></span><span class="go">›</span></button>
+      <button type="button" class="path t-quote" onclick="toTrack('trQuote')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg></span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet</small><em>About 2 min</em></span><span class="go">›</span></button>
+      <button type="button" class="path t-take" onclick="toTrack('trTake')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><span class="pt"><b>Accept a quote</b><small>You have our quote and want the cover</small><em>Sign online</em></span><span class="go">›</span></button>
     </div>
 
     <section class="track t-renew" id="trRenew">
-      <div class="th"><span class="tn">🔄</span><div class="tt"><b>Renew a vehicle we insure</b><small>Next year's cover for the same vehicle</small></div><span class="lbl">Renewal</span></div>
+      <div class="th"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><div class="tt"><b>Renew a vehicle we insure</b><small>Next year's cover for the same vehicle</small></div><span class="lbl">Renewal</span></div>
       <ol class="journey"><li>Check your record</li><li>Renew as it is, or with changes</li><li>Your renewal by e‑mail</li></ol>
       <div id="renewals"></div>
       <div id="homeVeh"></div>
     </section>
 
     <section class="track t-quote" id="trQuote">
-      <div class="th" id="quoteHead"><span class="tn">🧮</span><div class="tt"><b>Get a new quote</b><small>For a vehicle we don't insure yet</small></div><span class="lbl">New quote</span></div>
+      <div class="th" id="quoteHead"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg></span><div class="tt"><b>Get a new quote</b><small>For a vehicle we don't insure yet</small></div><span class="lbl">New quote</span></div>
       <ol class="journey"><li>Tell us about the vehicle</li><li>We price it</li><li>Your quote by e‑mail</li></ol>
       <div class="doors">
-        <label class="door primary" id="doorInv"><span class="tag">Fastest</span><span class="ic">📄</span><b>I have the dealer's invoice</b>
+        <label class="door primary" id="doorInv"><span class="tag">Fastest</span><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg></span><b>I have the dealer's invoice</b>
           <small>The car dealer's bill for the vehicle you are buying. A photo or a PDF: we read it and fill in the details for you.</small>
           <input type="file" id="invFile" accept="image/*,application/pdf"></label>
-        <button type="button" class="door" id="doorQuick" onclick="startFlow('quick')"><span class="ic">⚡</span><b>No invoice? Answer a few questions</b>
+        <button type="button" class="door" id="doorQuick" onclick="startFlow('quick')"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2.5L4.5 13.5H12l-1 8 8.5-11H12z"/></svg></span><b>No invoice? Answer a few questions</b>
           <small>About eight answers: the vehicle, its value and the cover you want.</small></button>
       </div>
       <button type="button" class="linkbtn" onclick="startFlow('full')">Prefer to give every detail now (permit, papers, driving record)? Start the full quote</button>
     </section>
 
     <section class="track t-take" id="trTake">
-      <div class="th"><span class="tn">✍️</span><div class="tt"><b>Accept a quote</b><small>You have the quote we e‑mailed you and want the cover</small></div><span class="lbl">Accept</span></div>
+      <div class="th"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><div class="tt"><b>Accept a quote</b><small>You have the quote we e‑mailed you and want the cover</small></div><span class="lbl">Accept</span></div>
       <ol class="journey"><li>Upload your quote and papers</li><li>Check the forms we fill in</li><li>Sign on screen</li><li>Covered once paid</li></ol>
-      <button type="button" class="takedoor" id="doorTake" onclick="startTake()"><span class="ic">✍️</span><span><b>Accept my quote</b>
+      <button type="button" class="takedoor" id="doorTake" onclick="startTake()"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><span><b>Accept my quote</b>
         <small>Upload the quote we sent you, your certified copy and your driver's permit. We fill in Guardian's proposal and Know Your Policy form; you check and sign.</small></span><span class="go">›</span></button>
     </section>
 
@@ -606,13 +608,8 @@ function show(id) { ['s-signin', 's-home', 's-form', 's-done'].forEach(s => $(s)
 const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 /* A whole number that counts up on screen; the real figure stays in the text for readers and copy. */
 const cu = n => { const v = Math.max(0, Math.round(Number(n) || 0)); return '<b class="cu" style="--to:' + v + '"><span class="vh">' + v + '</span></b>'; };
-/* The road along the foot of each blue band: lane lines moving, a car with turning wheels, clouds. */
-const SCENE = '<div class="scene" aria-hidden="true"><span class="cloud"></span><span class="cloud c2"></span><span class="hill h1"></span><span class="hill h2"></span>' +
-  '<span class="road"><i></i></span><span class="car"><span class="speed"></span><span class="speed"></span><svg viewBox="0 0 74 34">' +
-  '<path d="M4 24c0-5 3-7 8-7.6l9-1.4 9-7.4c2.4-2 5-2.6 8-2.6h11c3.4 0 6 1.2 8.2 3.6l5.6 6.2c6 .8 8.2 3.2 8.2 7.2v3c0 1.4-1 2-2.2 2H6c-1.2 0-2-.8-2-2z" fill="#fff"/>' +
-  '<path d="M24 15.4l7.4-6.2c1.4-1.2 3-1.6 5-1.6H40v7.8zM43.4 7.6h6.2c2 0 3.6.8 5 2.4l4.4 5H43.4z" fill="#BFE0FF"/><rect x="5" y="20" width="5" height="3" rx="1.5" fill="#FFD66B"/><rect x="65" y="20" width="4" height="3" rx="1.5" fill="#FF8A7A"/>' +
-  '<g class="wh"><circle cx="19" cy="27" r="6.2" fill="#1B2A44"/><circle cx="19" cy="27" r="2.6" fill="#DCEBFC"/><path d="M19 21.6v10.8M13.6 27h10.8" stroke="#DCEBFC" stroke-width="1.3"/></g>' +
-  '<g class="wh"><circle cx="56" cy="27" r="6.2" fill="#1B2A44"/><circle cx="56" cy="27" r="2.6" fill="#DCEBFC"/><path d="M56 21.6v10.8M50.6 27h10.8" stroke="#DCEBFC" stroke-width="1.3"/></g></svg></span></div>';
+/* Soft waves along the foot of each blue band, drifting at three speeds; the front one is the card's white. */
+const SCENE = '<div class="waves" aria-hidden="true"><svg class="w1" viewBox="0 0 2880 120" preserveAspectRatio="none"><path d="M0 52 Q180 14 360 52 T720 52 T1080 52 T1440 52 T1800 52 T2160 52 T2520 52 T2880 52 V120 H0z" fill="rgba(255,255,255,.14)"/></svg><svg class="w2" viewBox="0 0 2880 120" preserveAspectRatio="none"><path d="M0 58 Q180 28 360 58 T720 58 T1080 58 T1440 58 T1800 58 T2160 58 T2520 58 T2880 58 V120 H0z" fill="rgba(255,255,255,.22)"/></svg><svg class="w3" viewBox="0 0 2880 120" preserveAspectRatio="none"><path d="M0 64 Q180 40 360 64 T720 64 T1080 64 T1440 64 T1800 64 T2160 64 T2520 64 T2880 64 V120 H0z" fill="#fff"/></svg></div>';
 document.querySelectorAll('.band').forEach(b => { b.classList.add('has-scene'); b.insertAdjacentHTML('beforeend', SCENE); });
 /* A ripple from where the finger lands. */
 document.addEventListener('pointerdown', ev => {
@@ -705,10 +702,10 @@ const longDay = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})
 const dueNow = v => v.renewState === 'due' || v.renewState === 'lapsed';
 /* Which path a request or a draft is on. The three never share a colour or a word. */
 const PATH = {
-  renew: { cls: 't-renew', ic: '🔄', name: 'Renewal', side: 'Your renewal so far' },
-  quick: { cls: 't-quote', ic: '🧮', name: 'New quote', side: 'Your new quote so far' },
-  full: { cls: 't-quote', ic: '🧮', name: 'New quote', side: 'Your new quote so far' },
-  take: { cls: 't-take', ic: '✍️', name: 'Accepting a quote', side: 'Accepting your quote' } };
+  renew: { cls: 't-renew', ic: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg>', name: 'Renewal', side: 'Your renewal so far' },
+  quick: { cls: 't-quote', ic: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg>', name: 'New quote', side: 'Your new quote so far' },
+  full: { cls: 't-quote', ic: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg>', name: 'New quote', side: 'Your new quote so far' },
+  take: { cls: 't-take', ic: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg>', name: 'Accepting a quote', side: 'Accepting your quote' } };
 const FLOW_NAME = { quick: 'New quote (quick)', full: 'New quote (every detail)', renew: 'Renewal', take: 'Accepting a quote' };
 const termYear = t => { const a = String(t.from || '').slice(0, 4), b = String(t.to || '').slice(0, 4); return a && b && a !== b ? a + '–' + b.slice(2) : (b || a); };
 /* The premium on each term, as bars: the current term in full colour. */
@@ -744,7 +741,7 @@ function vehRow(v, ix) {
   const w = ended ? 100 : Math.max(3, Math.min(100, Math.round(100 - 100 * n / 365)));
   const when = v.renewOn ? (ended ? 'Cover ended <b>' + esc(longDay(v.renewOn)) + '</b>' : 'Renews <b>' + esc(longDay(v.renewOn)) + '</b> · in ' + n + ' day' + (n === 1 ? '' : 's'))
     : v.to ? 'Cover to <b>' + esc(longDay(v.to)) + '</b>' : '';
-  return '<button type="button" class="veh" onclick="' + (ended ? 'startFlow(\'quick\',' + ix + ')' : 'startRenew(' + ix + ',\'\')') + '"><span class="ic">🚗</span><span class="vt"><b>' + esc(vehName(v)) +
+  return '<button type="button" class="veh" onclick="' + (ended ? 'startFlow(\'quick\',' + ix + ')' : 'startRenew(' + ix + ',\'\')') + '"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="vt"><b>' + esc(vehName(v)) +
     '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + '</span>' +
     (when ? '<span class="yr' + (ended ? ' end' : '') + '" aria-hidden="true"><i style="--w:' + w + '%"></i></span><span class="yrl">' + when + '</span>' : '') +
     '<span class="act">' + (ended ? 'Get a new quote' : 'Renew early') + '</span></span><span class="go">›</span></button>';
@@ -791,12 +788,12 @@ function showHome() {
   $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length + ' vehicle' + (vs.length === 1 ? '' : 's');
   $('renewals').innerHTML = due.map(x => renewalCard(x[0], x[1])).join('');
   $('homeVeh').innerHTML = rest.length
-    ? '<div class="sec" style="margin-top:' + (due.length ? 18 : 4) + 'px"><span class="ic" style="background:linear-gradient(135deg,var(--rn),var(--rn2))">🚘</span><div><b>' + (due.length ? 'Your other vehicles with us' : 'Your vehicles with us') +
+    ? '<div class="sec" style="margin-top:' + (due.length ? 18 : 4) + 'px"><span class="ic" style="background:linear-gradient(135deg,var(--rn),var(--rn2))"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><b>' + (due.length ? 'Your other vehicles with us' : 'Your vehicles with us') +
       '</b><small>The bar is how far through its year of cover each one is</small></div></div>' + rest.map(x => vehRow(x[0], x[1])).join('')
     : '';
   if (!requests.length) { $('reqs').innerHTML = ''; return; }
   const quoted = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') === 3).length, doneN = requests.length - open;
-  $('reqs').innerHTML = '<section class="track" id="trReqs"><div class="th" style="--c:var(--mid);--c2:var(--blue2);--bg:var(--soft)"><span class="tn">🧾</span><div class="tt"><b>Your requests</b><small>Each one says which path it is on, and how far it has got</small></div></div>' +
+  $('reqs').innerHTML = '<section class="track" id="trReqs"><div class="th" style="--c:var(--mid);--c2:var(--blue2);--bg:var(--soft)"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg></span><div class="tt"><b>Your requests</b><small>Each one says which path it is on, and how far it has got</small></div></div>' +
     '<div class="reqsum"><div>' + cu(requests.length) + 'sent</div><div>' + cu(quoted) + 'answered</div><div>' + cu(doneN) + 'completed</div></div>' +
     requests.map(reqCard).join('') + '</section>';
 }
@@ -1033,24 +1030,24 @@ const sec = (ic, t, sub) => '<div class="sec"><span class="ic">' + ic + '</span>
 function stepQuick(d) {
   const inv = files.find(f => f.kind === 'invoice');
   const head = d.invoice
-    ? '<div class="docnote"><span class="ic">✨</span><div><b>We read the ' + esc(d.docLabel) + '.</b> Check each field marked <span class="fromdoc">from your document</span> and change anything that is wrong. The document goes with your request.</div></div>'
-    : d.invoiceMsg ? '<div class="docnote"><span class="ic">📎</span><div>' + esc(d.invoiceMsg) + '</div></div>'
+    ? '<div class="docnote"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 15v5M16.5 17.5h5"/></svg></span><div><b>We read the ' + esc(d.docLabel) + '.</b> Check each field marked <span class="fromdoc">from your document</span> and change anything that is wrong. The document goes with your request.</div></div>'
+    : d.invoiceMsg ? '<div class="docnote"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5l-8.3 8.3a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg></span><div>' + esc(d.invoiceMsg) + '</div></div>'
     : '<p class="muted">For a vehicle we don\'t insure yet: the minimum we need to price it. Have the dealer\'s invoice? <label class="linkbtn" style="padding:0">Upload it<input type="file" class="invIn" accept="image/*,application/pdf" style="display:none"></label> and we fill it in.</p>';
   return head +
-    sec('🚗', 'The vehicle') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>', 'The vehicle') +
     '<div class="row">' + sel('make', 'Make', MAKES, { req: 1 }) + inp('model', 'Model', { ph: 'e.g. Aqua', req: 1 }) + '</div>' +
     '<div class="row">' + sel('year', 'Year', YEARS, { req: 1 }) + inp('value', 'Value (TT$)', { mode: 'numeric', ph: 'e.g. 95000', req: 1, hint: 'The price on the invoice, or what it would sell for today.' }) + '</div>' +
     opts('condition', 'New or used', CONDITIONS) +
     inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20 }) +
     '<label class="chk" style="margin:-6px 0 14px"><input type="checkbox" data-k="newUnreg"' + (d.newUnreg === 'Yes' ? ' checked' : '') + '> <span>New vehicle, not registered yet' + tag('newUnreg') + '</span></label>' +
-    sec('🛡️', 'The cover') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8l8 2.9v6.1c0 5.1-3.4 9.3-8 11-4.6-1.7-8-5.9-8-11V5.7z"/><path d="M8.6 12.2l2.4 2.4 4.6-4.8"/></svg>', 'The cover') +
     opts('cover', 'The cover you want', COVERS, '', true) +
     '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS) + '</div>' +
     opts('mortgaged', 'On a loan or hire purchase?', ['Yes', 'No']) +
     '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + sel('institution', 'Financial institution', BANKS) + '</div>' +
     sel('use', 'Use of the vehicle', USES) +
-    sec('🧾', 'Your history') + historyHtml(false) +
-    sec('👤', 'You') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>', 'Your history') + historyHtml(false) +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>', 'You') +
     '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>' +
     '<details class="more"' + (['dob', 'marital', 'occupation', 'employer', 'address', 'chassis', 'antiTheft', 'firstGG'].some(k => d[k]) ? ' open' : '') + '><summary><b>Guardian\'s request form asks a little more</b><small>Optional. Every answer here makes the quote faster.</small></summary>' +
       '<div class="row">' + inp('dob', 'Date of birth', { type: 'date' }) + sel('marital', 'Marital status', MARITAL) + '</div>' +
@@ -1060,7 +1057,7 @@ function stepQuick(d) {
       inp('antiTheft', 'Anti-theft devices fitted', { ph: 'e.g. immobiliser, tracker; or none' }) +
       opts('windscreen', 'Add windscreen cover?', ['Yes', 'No']) + when('windscreen=Yes', inp('windscreenLimit', 'Windscreen limit you want (TT$)', { mode: 'numeric' })) +
       inp('ncdPct', 'No claim discount as a %, if you know it', { mode: 'numeric' }) + ggHtml() + '</details>' +
-    (inv ? sec('📄', 'Your document') + '<div class="files">' + fileRow('invoice') + '</div>' : '');
+    (inv ? sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg>', 'Your document') + '<div class="files">' + fileRow('invoice') + '</div>' : '');
 }
 /* The renewal: the vehicle and its record, then what the client wants. */
 function stepRenew(d) {
@@ -1072,7 +1069,7 @@ function stepRenew(d) {
     '<div id="chgBox" class="' + (d.renewChoice === 'Renew with changes' ? '' : 'hide') + '">' +
     '<label class="f"><b>What would you like changed? ' + req + '</b><textarea class="fld" data-k="renewChanges" placeholder="e.g. add my son as a driver, lower the value to TT$ 80,000">' + esc(d.renewChanges || '') + '</textarea></label>' +
     '<div class="row">' + sel('cover', 'Cover', COVERS.map(c => c[0]), { ph: 'Keep as it is' }) + inp('value', 'New value (TT$)', { mode: 'numeric', ph: 'only if it changes' }) + '</div></div>' +
-    sec('👤', 'You') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>', 'You') +
     '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>';
 }
 /* ---- taking the quote: Guardian's proposal and Know Your Policy, filled and signed here ---- */
@@ -1175,7 +1172,7 @@ function stepTdocs() {
 }
 function tdocRow(kind) {
   const f = files.find(x => x.kind === kind), [label, hint, must] = TDOCS[kind], read = (draft.readDocs || {})[kind];
-  return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph">📄</span>') : '<span class="ph">' + (kind === 'permit' ? '🪪' : kind === 'quote' ? '🧾' : '📑') + '</span>') +
+  return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg></span>') : '<span class="ph">' + (kind === 'permit' ? '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4.5M14 13.5h3"/></svg>' : kind === 'quote' ? '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>' : '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6.5V5a2.5 2.5 0 0 1 2.5-2.5H17L20.5 6v11a2.5 2.5 0 0 1-2.5 2.5h-1.5"/><rect x="3.5" y="6.5" width="12.5" height="15" rx="2.5"/><path d="M7 12h5.5M7 16h4"/></svg>') + '</span>') +
     '<div class="nm">' + esc(label) + (must ? ' ' + req : '') + '<small>' + (f ? esc(f.name) + (read ? ' · ' + esc(read) : '') : esc(hint)) + '</small></div>' +
     (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" class="tdocIn" accept="image/*,application/pdf" data-kind="' + kind + '"></label>') + '</div>';
 }
@@ -1188,15 +1185,15 @@ function stepTyou(d) {
     area('address', 'Residential address ' + req, 'House number, street, town') + inp('mailing', 'Mailing address, if different') +
     '<div class="row">' + inp('phone', 'Contact number', { type: 'tel', mode: 'tel', req: 1 }) + inp('occupation', 'Trade, occupation, profession', { req: 1 }) + '</div>' +
     inp('employer', 'Employer, and its business', { ph: 'e.g. Ministry of Education, teaching' }) +
-    sec('🪪', 'Your driver\'s permit') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4.5M14 13.5h3"/></svg>', 'Your driver\'s permit') +
     '<div class="row">' + inp('permitNo', 'Permit number', { req: 1 }) + inp('permitIssued', 'Date of issue', { type: 'date', req: 1 }) + '</div>' + inp('permitClass', 'Class(es)', { req: 1, ph: 'e.g. 1, 2' }) +
-    sec('❓', 'Two questions') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.3-2.5 3.8"/><path d="M12 17.2h.01" stroke-width="2.6"/></svg>', 'Two questions') +
     ynq('pep', 'Are you a Politically Exposed Person (PEP) or an immediate family member of a PEP?', PEP_TEXT) +
     ynq('otherGG', 'Do you have any other insurance(s) with Guardian Group?') + when('otherGG=Yes', inp('otherGGd', 'Please give particulars'));
 }
 function stepTveh(d) {
   return ynq('q4', 'Have you been driving a motor vehicle regularly during the past twelve months?') + when('q4=No', inp('q4d', 'How long has it been since you drove?')) +
-    sec('🚗', 'Particulars of the vehicle') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>', 'Particulars of the vehicle') +
     opts('fuel', 'Is your motor vehicle ' + req, ['Gas', 'Electric', 'Hybrid', 'CNG']) +
     '<div class="row">' + inp('reg', 'Registration', { req: 1, ph: 'or "Not registered yet"' }) + inp('makeModel', 'Make and model', { req: 1 }) + '</div>' +
     '<div class="row">' + inp('chassis', 'Chassis number', { req: 1 }) + inp('engine', 'Engine number', { req: 1 }) + '</div>' +
@@ -1218,12 +1215,12 @@ function stepTveh(d) {
 function stepTdrv(d) {
   const accRow = i => '<div class="accrow"><div class="row">' + inp('acc' + i + 'date', 'Date', { type: 'date' }) + inp('acc' + i + 'cost', 'Cost, paid or estimated (TT$)', { mode: 'numeric' }) + '</div>' +
     inp('acc' + i + 'driver', 'Driver') + area('acc' + i + 'details', 'Brief details') + '</div>';
-  return sec('👥', 'Who will drive it') +
+  return sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.4 3.4-5.2 6.5-5.2s5.7 1.8 6.5 5.2"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.9c1.9.7 3.1 2.4 3.5 5.1"/></svg>', 'Who will drive it') +
     ynq('q3a', 'Will anyone driving your vehicle be less than 25 years of age?') + ynq('q3b', 'Will anyone driving it have less than 2 years regular driving experience?') +
     '<div data-when="q3a|q3b=Yes" class="' + (d.q3a === 'Yes' || d.q3b === 'Yes' ? '' : 'hide') + '">' +
       '<div class="row">' + inp('d3name', 'Driver\'s name') + inp('d3dob', 'Date of birth', { type: 'date' }) + '</div>' +
       '<div class="row">' + inp('d3permit', 'Driver\'s permit number') + inp('d3issued', 'Date of issue', { type: 'date' }) + '</div>' + inp('d3class', 'Class(es)') + '</div>' +
-    sec('📋', 'You and anyone who will drive it') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17.5" rx="2.5"/><path d="M9 2.5h6v3.5H9z"/><path d="M9 12.5l2 2 4-4"/></svg>', 'You and anyone who will drive it') +
     ynq('q11', 'Have you, or anyone who will drive it, ever suffered from defective vision, hearing, epilepsy or any other physical disability or infirmity?') + when('q11=Yes', area('q11d', 'The nature of it, and any corrective action taken')) +
     ynq('q12', 'Have you, or anyone who will drive it, ever been convicted of any offence or traffic violation, or have any prosecution pending?') + when('q12=Yes', area('q12d', 'The date and nature of it')) +
     ynq('q13', 'Have you ever insured a motor vehicle in your name?') + when('q13=Yes', inp('q13d', 'The vehicle number(s) and the insurer(s)')) +
@@ -1232,16 +1229,16 @@ function stepTdrv(d) {
     '<div data-when="q14a|q14b|q14c=Yes" class="' + (d.q14a === 'Yes' || d.q14b === 'Yes' || d.q14c === 'Yes' ? '' : 'hide') + '">' + area('q14d', 'Please give details') + '</div>' +
     ynq('q15', 'Have you, or anyone who will drive it, had any accidents or losses (including total losses) or made any claims (including windscreen) during the past three years, with this or any other vehicle?') +
     when('q15=Yes', '<p class="muted">Up to three. Each one in full.</p>' + [0, 1, 2].map(accRow).join('')) +
-    sec('🛣️', 'How it will be used') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3L4 21M16 3l4 18"/><path d="M12 4v2.5M12 10.5v3M12 17.5V20"/></svg>', 'How it will be used') +
     ynq('q16a', 'Will it be used for any purpose in connection with a business or trade?') + when('q16a=Yes', inp('q16ad', 'Please give details')) +
     ynq('q16b', 'Will it be used for racing, pacemaking, speed testing, competitions, rallies or trials, or the carriage of passengers for hire or reward?') + when('q16b=Yes', inp('q16bd', 'Please give details')) +
     ynq('q16c', 'Will it be used only for social, domestic and pleasure purposes and for travelling to and from your place of business?') + when('q16c=No', inp('q16cd', 'Please give details'));
 }
 function stepTcov(d) {
-  return (d.quoteRead ? '<div class="docnote"><span class="ic">🧾</span><div>These are from <b>your Guardian quote</b>. Change one and the premium may change: we confirm it with you before cover starts.</div></div>' : '') +
+  return (d.quoteRead ? '<div class="docnote"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg></span><div>These are from <b>your Guardian quote</b>. Change one and the premium may change: we confirm it with you before cover starts.</div></div>' : '') +
     opts('cover', 'Type of cover required ' + req, [['Comprehensive', ''], ['Third Party Fire and Theft', ''], ['Third Party', '']], '', true) +
     '<div class="row">' + inp('from', 'Period of insurance from', { type: 'date', req: 1 }) + inp('to', 'To', { type: 'date', req: 1 }) + '</div>' +
-    sec('➕', 'Optional extra benefits', 'Individual policyholders are entitled to one of (e) or (g) free.') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v8M8 12h8"/></svg>', 'Optional extra benefits', 'Individual policyholders are entitled to one of (e) or (g) free.') +
     BENEFITS.map(b => ynq(b[0], b[1]) +
       (b[0] === 'b19b' ? when('b19b=Yes', inp('b19bLimit', 'Limit required (TT$)', { mode: 'numeric' })) : '') +
       (b[0] === 'b19c' ? when('b19c=Yes', inp('b19cLimit', 'Limit required (TT$)', { mode: 'numeric' })) : '') +
@@ -1249,7 +1246,7 @@ function stepTcov(d) {
       (b[0] === 'b19k' ? when('b19k=Yes', opts('b19kLimit', 'Limit', EV_LIMITS)) : '')).join('');
 }
 function stepTkyp(d) {
-  return '<div class="docnote"><span class="ic">📘</span><div><b>Know Your Policy.</b> Guardian\'s own summary of your Private Motor cover. Read each point and answer it. ' +
+  return '<div class="docnote"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 4.5a2 2 0 0 1 2-2h13v16h-13a2 2 0 0 0-2 2z"/><path d="M4.5 20.5a2 2 0 0 0 2 1h13v-3"/><path d="M9 7h6"/></svg></span><div><b>Know Your Policy.</b> Guardian\'s own summary of your Private Motor cover. Read each point and answer it. ' +
     'A No is fine: we call you to go through it before your cover starts.</div></div>' +
     '<div class="kypinfo"><b>Who is allowed to drive the vehicle.</b> The persons driving must be (a) at least 25 years old and driving for at least 2 years claims free, or (b) declared drivers who do not fall into (a). Please notify us if any persons not meeting this description will be driving the vehicle.</div>' +
     KYP_POINTS.map((p, i) => '<div class="kyp"><div class="eyebrow">' + (i + 1) + ' · ' + esc(p[0]) + '</div>' + (p[1] ? '<p>' + esc(p[1]) + '</p>' : '') + opts('k' + (i + 1), esc(p[2]) + ' ' + req, ['Yes', 'No']) + '</div>').join('') +
@@ -1448,18 +1445,18 @@ function stepCover(d) {
   return opts('cover', 'The cover you want', COVERS, '', true) +
     opts('windscreen', 'Add windscreen cover?', ['Yes', 'No']) +
     when('windscreen=Yes', inp('windscreenLimit', 'Windscreen limit you want (TT$)', { mode: 'numeric', ph: 'e.g. 10000' })) +
-    sec('🪪', 'Your driving record') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4.5M14 13.5h3"/></svg>', 'Your driving record') +
     '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS) + '</div>' +
     inp('ncdPct', 'No claim discount as a %, if you know it', { mode: 'numeric', ph: 'e.g. 30' }) +
     sel('prevInsurer', 'Current or last insurer', INSURERS) +
-    sec('📄', 'Already with Guardian General?') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg>', 'Already with Guardian General?') +
     inp('existingPolicy', 'Existing motor policy number', { hint: 'Leave blank for a new policy.' }) +
     inp('existingVehicles', 'Other vehicles insured with Guardian General', { ph: 'registration numbers, if any' });
 }
 function stepDriver(d) {
   return inp('permit', "Driver's permit number", { ac: 'off', req: 1 }) +
     '<div class="row">' + inp('permitIssued', 'Permit first issued', { type: 'date' }) + inp('permitExpires', 'Permit expires', { type: 'date' }) + '</div>' +
-    sec('🧾', 'Your history', 'As Guardian\'s request form asks it') + historyHtml(true) +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>', 'Your history', 'As Guardian\'s request form asks it') + historyHtml(true) +
     '<label class="f"><b>Anything else we should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';
 }
 const KINDS = { 'invoice': ['The dealer\'s invoice', 'A photo or a PDF of the car dealer\'s bill.'], 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
@@ -1469,7 +1466,7 @@ function stepDocs() {
 }
 function fileRow(kind) {
   const f = files.find(x => x.kind === kind), [label, hint] = KINDS[kind];
-  return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph">📄</span>') : '<span class="ph">📷</span>') +
+  return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg></span>') : '<span class="ph"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5a2 2 0 0 1 2-2h2.2L9 4h6l1.8 2.5H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.8"/></svg></span>') +
     '<div class="nm">' + esc(label) + '<small>' + (f ? esc(f.name) + ' · ' + Math.round(f.bytes / 1024) + ' KB' : esc(hint)) + '</small></div>' +
     (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" accept="image/*,application/pdf"' + (kind === 'invoice' ? ' class="invIn"' : ' capture="environment" data-kind="' + kind + '"') + '></label>') + '</div>';
 }
@@ -1518,7 +1515,7 @@ function stepReview(d) {
     ['Documents', [['Attached', files.length ? files.map(f => docLabel(f.kind)).join(', ') : (d.flow === 'full' ? 'none' : '')]]]];
   return '<p class="muted">Check it over. Tap Back to change anything. A receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
     G.map(g => [g[0], g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()))]).filter(g => g[1].length).map(g => '<h3>' + g[0] + '</h3>' + g[1].map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
-    (d.flow !== 'renew' ? '<div class="formcard"><span class="ic">📝</span><span><b>Guardian\'s Motor Quotation Request, filled in for you</b><small>It goes to the quotes desk with your request. Check it if you wish.</small></span>' +
+    (d.flow !== 'renew' ? '<div class="formcard"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 3h-7A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V11"/><path d="M18 2.5l3.5 3.5-8 8H10v-3.5z"/></svg></span><span><b>Guardian\'s Motor Quotation Request, filled in for you</b><small>It goes to the quotes desk with your request. Check it if you wish.</small></span>' +
       '<button type="button" class="ghost" onclick="previewRequest()">Preview the form</button></div>' : '') +
     '<label class="chk"><input type="checkbox" id="agree"> <span>This is true to the best of my knowledge. Please ' + (d.flow === 'renew' ? 'renew my cover.' : 'get me a quote.') + '</span></label>';
 }
