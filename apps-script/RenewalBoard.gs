@@ -36,6 +36,77 @@ var RB = {
   FIRST: 60,
 };
 
+/* ================================ the menu ================================ */
+
+function renewalBoardMenu_(ui) {
+  return ui.createMenu('📋 Renewal board')
+    .addItem('Show the board link', 'showBoardLink')
+    .addItem('Check it is ready (before anyone signs in)', 'boardReadiness');
+}
+
+/** The board's link, which is the staff link with ?board= in place of ?staff=. */
+function showBoardLink() {
+  var ui = SpreadsheetApp.getUi();
+  var key = staffKey_();
+  if (!key) {
+    ui.alert('No staff key is set, so nobody can open the board.\n\n' +
+      'Run "Issue a new staff key" from the Guardian Renewals menu, or set\n' +
+      STAFF_KEY_PROP + ' by hand in Apps Script → Project Settings → Script Properties.');
+    return;
+  }
+  var url = CONFIG.WEBAPP_URL + '?board=' + encodeURIComponent(key);
+  ui.alert('The renewal board\n\n' + url +
+    '\n\nEveryone opens the same link. What they see is decided by their row on the\n' +
+    'Staff tab — Role "admin" or "manager" sees the branch, "staff" works the queue,\n' +
+    '"agent" sees their own clients only.');
+}
+
+/**
+ * Says whether the board will actually work before anybody is sent to it.
+ *
+ * Three things have to be true and each fails silently otherwise: the agent
+ * columns have to be filled (or every agent's board is empty and nobody can
+ * tell why), somebody has to have the agent role, and the key has to be set.
+ */
+function boardReadiness() {
+  var ui = SpreadsheetApp.getUi();
+  var out = [];
+
+  var key = staffKey_();
+  out.push((key ? '✅' : '❌') + '  Staff key ' + (key ? 'is set' : 'is NOT set — nobody can open the board'));
+
+  var people = staffList_();
+  var roles = {};
+  people.forEach(function (p) { roles[p.role] = (roles[p.role] || 0) + 1; });
+  var agents = Object.keys(roles).filter(function (r) { return /agent/i.test(r); })
+    .reduce(function (a, r) { return a + roles[r]; }, 0);
+  out.push((people.length ? '✅' : '❌') + '  ' + people.length + ' on the Staff tab (' +
+    Object.keys(roles).map(function (r) { return roles[r] + ' ' + r; }).join(', ') + ')');
+  out.push((agents ? '✅' : '⚠️') + '  ' + agents + ' with the "agent" role' +
+    (agents ? '' : ' — no agent can sign in yet'));
+
+  var rows = rbAll_();
+  var withAgent = rows.filter(function (r) { return r.agentEmail || r.agent; }).length;
+  out.push((withAgent ? '✅' : '❌') + '  ' + withAgent + ' of ' + rows.length +
+    ' renewals say who the agent is' +
+    (withAgent ? '' : ' — run ☁ Salesforce → Sync everything now, or every agent\'s board is empty'));
+
+  var byEmail = rows.filter(function (r) { return r.agentEmail; }).length;
+  out.push('     of those, ' + byEmail + ' carry the agent\'s e-mail (the surest match)');
+
+  // Whose board would actually have something on it
+  var named = {};
+  rows.forEach(function (r) { if (r.agent) named[r.agent] = (named[r.agent] || 0) + 1; });
+  var list = Object.keys(named).sort(function (a, b) { return named[b] - named[a]; });
+  if (list.length) {
+    out.push('', 'Agents named on the book:');
+    list.slice(0, 12).forEach(function (n) { out.push('   ' + n + ' — ' + named[n]); });
+    if (list.length > 12) out.push('   …and ' + (list.length - 12) + ' more');
+  }
+
+  ui.alert('Is the renewal board ready?', out.join('\n'), ui.ButtonSet.OK);
+}
+
 /* ================================ the page ================================ */
 
 function boardPage_(p) {

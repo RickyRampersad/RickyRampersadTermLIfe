@@ -1316,6 +1316,8 @@ function onOpen() {
   try { if (typeof salesforceMenu_ === 'function') salesforceMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
   // Production menu appears when Production.gs is installed
   try { if (typeof productionMenu_ === 'function') productionMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
+  // Renewal board menu appears when RenewalBoard.gs is installed
+  try { if (typeof renewalBoardMenu_ === 'function') renewalBoardMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
 }
 
 function toggleTestMode() {
