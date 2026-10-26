@@ -427,7 +427,7 @@ function gblView_(p) {
   var today = L.today, sf = gblSf_(g, gcmYes_(p.fresh));
   var bills = gblBillRows_(g), month = /^\d{4}-\d{2}$/.test(String(p.month || '')) ? p.month : gblDefaultMonth_(bills, sf, today);
   var lines = gblLinesOf_(g, sf, bills);
-  var out = { ok: true, role: who.role, me: who.name, today: today, month: month, reasonNeeded: who.role !== 'branch', lateMin: GBL_LATE.MIN, monthLabel: gblMonthLabel_(month), canAct: gcmMine_(who, g), live: gblLive_(), ai: !!gcmAiKey_(), salesforce: sf.ok, sfError: sf.error,
+  var out = { ok: true, role: who.role, title: who.title || '', me: who.name, today: today, month: month, reasonNeeded: who.role !== 'branch', lateMin: GBL_LATE.MIN, monthLabel: gblMonthLabel_(month), canAct: gcmMine_(who, g), live: gblLive_(), ai: !!gcmAiKey_(), salesforce: sf.ok, sfError: sf.error,
     group: { key: g.key, name: g.name, assigned: g.assigned, bills: g.bills, to: g.to, contact: g.contact }, lines: [] };
   lines.forEach(function (ln) {
     var b = bills.filter(function (x) { return x.line === ln && x.month === month; })[0] || null;

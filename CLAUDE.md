@@ -3996,7 +3996,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **No one sends a group a letter before the manual and the test** (8 October 2026: "a staff manual as well
   as a test … before they start … with weighting, with building in the performance appraisal, the taking
   initiative to try to solve things, the follow up … all results logged with a feedback").
-  `groupclientmanagement/training.html` holds the nine-section manual and the test; the staff page links to
+  `groupclientmanagement/training.html` holds the manual (nine sections until 26 October, fifteen since) and the test; the staff page links to
   it. The questions, their answers and their marking guides are in the private **Group Client Training**
   Google Sheet (`GCM_TRAIN_SHEET_ID`), never in the repository, because the site and the `.gs` files are public:
   the page gets the questions without answers, and `gcmTrainSubmit_` marks them. Written answers are marked by
@@ -4009,6 +4009,33 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   it that way when adding questions. The standards the manual sets that were not set before (an
   acknowledgement within a working day, a call within two working days for a rating of 3 or less, and a call
   or e-mail before the next approval to a group that did not answer) are proposals for the manager to confirm.
+- **The training programme, revised for billing and for roles** (26 October 2026: "a very detailed training
+  program that will cover the billings, step-by-step … with questions and answers, as well as the weekly task
+  report revised. Kamla is overseeing the task. She has a role … so everyone has a responsibility").
+  - **The manual is fifteen sections**: the job; who does what (Branch Manager, Branch Manager's Assistant, the
+    support team, the system, and a table of who does, checks and is told at each step); the week; the six
+    checks; escalations; the billing calendar (the next six billing and report days, worked out by
+    `gblBillDayOf_` and `gblReportDayOf_`, so re-check them with the script when the holiday list changes); the
+    eight billing steps; the Guardian forms; what the group sees on its three tabs; writing to the group;
+    follow-up; the audit trail (what is recorded where); initiative; fourteen practice questions with their answers
+    (not the test's); the appraisal. The device key is `rrb-gcm-train2:` so everyone reads the revised manual
+    afresh.
+  - **The test is by role.** The group course now filters by the bank's Roles column like the orphan course
+    (`gcmTrainFor_`): the support team take `staff` questions, the Branch Manager's Assistant, a deputy and the
+    branch manager take `manager` questions, and `all` is everyone's. A bank with no Roles column still gives
+    everyone everything.
+  - **The bank was rewritten** (`roles26/bank26.py` in the scratchpad: 41 rows, 35 for the support team, 16 for
+    the managers, the right answer never the longest, the answers spread A to D). The live sheet still asked about
+    "Tuesday's letter" and "Letter due". It went to a new private sheet, "Group Client Training (private: test
+    questions and answers) · revised 26 Oct 2026", and `GCM_TRAIN_SHEET_ID` must be pointed at it. The earlier
+    attempts stay on the old sheet's Results tab.
+- **The Branch Manager's Assistant signs in under her own role** (26 October 2026: "Kamla is overseeing the task.
+  She has a role, so she's logging in her role"). `gcmWho_` reads her role on the Agent Skill Bank
+  (`gcmIsBma_`: "Branch Manager Assistant", "BMA", "Branch Manager's Assistant") and makes her the deputy with no
+  Script property, titled `GCM_ROLE_TITLE.bma`. Every answer that carries the role now carries `title` too, and the
+  staff page, the billing door and the training page show it ("Branch Manager’s Assistant", "Support team",
+  "Branch Manager"). Her approvals are still logged with Role `deputy`. `roles26/bma-test.js` in the scratchpad
+  covers it (12 checks), `train26-test.js` the test by role (11) and `page26.js` the page (17, Playwright).
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,

@@ -55,7 +55,7 @@ async function open_() {
 }
 function signOut() { try { localStorage.removeItem('rrb-gcm-code'); localStorage.removeItem('rrb-gcm-who'); } catch (e) {} location.href = 'billing.html'; }
 function head() {
-  $('who').innerHTML = esc(BOARD.me) + ' · ' + (ROLE[BOARD.role] || 'Staff') + (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') +
+  $('who').innerHTML = esc(BOARD.me) + ' · ' + (BOARD.title || ROLE[BOARD.role] || 'Staff') + (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') +
     ' <button class="btn ghost" id="rf" type="button">Refresh from Salesforce</button> <a class="btn ghost" href="index.html">Weekly letters</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
   $('rf').onclick = refresh;
 }
