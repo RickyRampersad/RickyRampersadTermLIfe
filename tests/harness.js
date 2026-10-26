@@ -109,6 +109,8 @@ function makeEnv(opts = {}) {
         if (f === 'HH:mm') return p(d.getHours()) + ':' + p(d.getMinutes());
         if (f === 'h a') { const h = d.getHours(); return ((h % 12) || 12) + ' ' + (h < 12 ? 'AM' : 'PM'); }
         if (f === 'yyyy-MM-dd') return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        // The day of the week, 1 Monday .. 7 Sunday, as housekeepingTick_ reads it.
+        if (f === 'u') return String(d.getDay() || 7);
         // Every date a person reads is built in UTC by prettyDate_/shortDate_,
         // so an e-mail's own subject line stayed an ISO timestamp in tests and
         // nothing could assert on it.

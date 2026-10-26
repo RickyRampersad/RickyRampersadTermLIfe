@@ -23,6 +23,10 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
 const DAY = '2026-10-21';
 const env = makeEnv();
 env.todayISO_ = () => DAY;
+// The incident was on Liz's old 7 to 3 day, so her hours are pinned to it here.
+// (She is 8 to 4 from 23 October 2026; that is tested in test-attendance.js and test-closeout-times.js.)
+env.SCHEDULE.elizabeth = Object.assign({}, env.SCHEDULE.elizabeth, { hours: '7am – 3pm' });
+env.CLOSEOUT.AT.elizabeth = 14 * 60 + 15;
 let NOW = new Date(DAY + 'T06:31:00').getTime();
 const realDate = env.Date;
 env.Date = new Proxy(realDate, { construct(t, a) { return a.length ? new realDate(...a) : new realDate(NOW); },

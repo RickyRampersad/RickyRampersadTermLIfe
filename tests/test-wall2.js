@@ -151,6 +151,10 @@ ok('his feed says what kind, never the subject', bm.feed[0].what === 'answered a
 ok('and he is in the running feed', outside.ticker.some(t => t.who === 'Mr Rampersad' && /orphan clients task/.test(t.what)));
 ok('inside: in at 5:04; outside: no time', inside.managers.bm.inAt === '5:04' && !('inAt' in bm));
 
+console.log('\nThe awards on the wall (Wednesday to Tuesday, 21 Oct 2026, 2026-10-21h):\n');
+ok('the awards list as before, and the week they cover, inside and out', [inside, outside].every(w => Array.isArray(w.awards) && w.awardsWeek &&
+  w.awardsWeek.from === 'Wed 14 Oct' && w.awardsWeek.to === 'Tue 20 Oct' && w.awardsWeek.final === false && w.awardsWeek.label === 'Wednesday 14 to Tuesday 20 October'), JSON.stringify(outside.awardsWeek));
+
 console.log('\nThe links:\n');
 ok('no key, no wall', env.wallOutside_('').ok === false);
 const link = env.wallOutsideLink(), key = link.split('k=')[1];

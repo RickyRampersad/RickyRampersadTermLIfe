@@ -31,7 +31,9 @@ PAGE = {'client': (DHAA, 'client-film.html'), 'process': (DHAA, 'process-film.ht
         'orphan': (BRANCH, 'film.html'),
         # the board films, one per sign-in (14 October 2026), embedded on orphan-transition/board-films.html
         'boardmgr': (TEAM, 'board-management.html'), 'boardstaff': (TEAM, 'board-client-support.html'),
-        'boardagent': (TEAM, 'board-agents.html')}
+        'boardagent': (TEAM, 'board-agents.html'),
+        # the workflow for everyone, start to finish (16 October 2026): board-films.html and the training page
+        'boardflow': (TEAM, 'board-workflow.html')}
 
 def names_of(site, page):
     s = (site / page).read_text(encoding='utf-8')
