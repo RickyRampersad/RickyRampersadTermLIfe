@@ -229,6 +229,24 @@ async function shot(page, name) { if (!SHOTS) return; fs.mkdirSync(SHOTS, { recu
       ok('month column filters to that month', dues.length > 0 && dues.every(d => d.includes(anyMonth)), anyMonth + ': ' + dues.join(','));
       await page.click(`.mch .mc[data-m="${anyMonth}"]`);
       ok('the same month again clears it', (await page.$$('.rrow[data-row]')).length === 22);
+      // this month and next: the two months, every renewal in them, each opens its file
+      {
+        const now = new Date(), a = [now.getFullYear(), now.getMonth()], b = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const inMon = (d, y, m) => d !== null && inDays(d).getFullYear() === y && inDays(d).getMonth() === m;
+        const D0 = data('sasha@example.com');
+        const want = [[a[0], a[1]], [b.getFullYear(), b.getMonth()]].map(([y, m]) =>
+          D0.renewals.filter(r => inMon(r.days, y, m)).length + D0.properties.filter(p => inMon(p.days, y, m)).length);
+        const cols = await page.$$eval('#mmCard .mm-col', cs => cs.map(c => ({ n: c.querySelectorAll('.mm-r').length, more: (c.querySelector('[data-mmall]') || {}).textContent || '', h: c.querySelector('.mm-h').textContent })));
+        ok('this month and next: two months', cols.length === 2 && /This month/.test(cols[0].h) && /Next month/.test(cols[1].h), cols.map(c => c.h).join(' | '));
+        const got = cols.map(c => { const m = c.more.match(/all (\d+)/); return m ? Number(m[1]) : c.n; });
+        ok('this month and next: every renewal in each month is there', got[0] === want[0] && got[1] === want[1], got.join(',') + ' want ' + want.join(','));
+        const first = await page.$('#mmCard [data-mmrow]');
+        if (first) {
+          await first.click(); await page.waitForSelector('#dr.open');
+          ok('this month and next: a row opens the file', true);
+          await page.keyboard.press('Escape'); await page.waitForTimeout(150);
+        } else ok('this month and next: a motor row to open', false);
+      }
       // search, with the cursor kept in the box
       await page.fill('#q', 'celeste');
       ok('search narrows the list', (await page.$$('.rrow[data-row]')).length === 1);

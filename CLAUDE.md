@@ -5419,6 +5419,12 @@ and graphics as well easy to manoeuvre and understand", in the motor quote's loo
   the staff dashboard (`Staff.html`: the pipeline as a stack, renewals by month, tiles that filter, tabs for
   Pipeline, Tasks, Reports, Production and Audit); the renewal board (`Board.html`); and `/renewal/index.html`,
   `motor-policy.html` and `corporate.html`. Every field, id and server call is as before.
+- **This month and next** (26 October 2026: "this month and next I was of the opinion you had renewals in the next
+  section"). The staff dashboard's Pipeline tab opens on a section with the two calendar months side by side
+  (`mmView` in `Staff.html`): every motor and property renewal due in each, the date worked out from its days to go so
+  the year is right, how many renewed, overdue and open as a stacked bar, then each file (date, client, policy, who
+  has it, status), open ones first and renewed last. A file opens its drawer; past twelve, "Show all" filters the
+  pipeline to that month.
 - **The renewal board would not open** until 26 October: `Board.html` parsed `<?!= payload ?>`, an object, so it
   threw on load. It reads `<?!= JSON.stringify(payload) ?>` now, like the others.
 - Tests: `tests/e2e-renewal-portal.js` (211), `e2e-renewal-property.js` (80), `e2e-renewal-staff.js` (101),

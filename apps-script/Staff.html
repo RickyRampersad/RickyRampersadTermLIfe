@@ -68,6 +68,31 @@
 .mkey li{display:inline-flex;align-items:center;gap:6px}
 .mkey li:before{content:"";width:10px;height:10px;border-radius:3px;background:var(--c)}
 
+/* this month and next: the two months side by side, every renewal in them */
+.mm{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:760px){.mm{grid-template-columns:1fr 1fr}}
+.mm-col{border:1.5px solid var(--line);border-radius:16px;padding:14px;background:#fff;min-width:0;animation:rr-rise .45s var(--ease) both}
+.mm-col+.mm-col{animation-delay:.08s}
+.mm-col.now{border-color:var(--blue2);box-shadow:0 10px 26px rgba(58,123,213,.10)}
+.mm-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 4px}
+.mm-h b{font-size:1.18rem;color:var(--ink)}
+.mm-h small{color:var(--dim);font-size:.8rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.mm-n{font-size:2rem;font-weight:900;color:var(--ink);line-height:1.1;font-variant-numeric:tabular-nums}
+.mm-sub{color:var(--body);font-size:.88rem;margin:0 0 10px}
+.mm-list{display:grid;gap:6px;margin:12px 0 0;padding:0;list-style:none}
+.mm-r{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;font:inherit;text-align:left;background:#FAFCFE;border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;min-height:48px;cursor:pointer;color:var(--ink);position:relative;overflow:hidden}
+.mm-r:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.mm-r:hover{border-color:var(--blue2)}
+.mm-r:focus-visible{outline:3px solid var(--blue2);outline-offset:2px}
+.mm-d{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:var(--sky);color:var(--mid);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.mm-d small{font-size:.62rem;font-weight:800;text-transform:uppercase}
+.mm-w{min-width:0}
+.mm-w b{display:block;font-size:.92rem;overflow-wrap:anywhere;line-height:1.25}
+.mm-w small{display:block;color:var(--dim);font-size:.78rem;overflow-wrap:anywhere}
+.mm-r .rr-pill{white-space:nowrap}
+.mm-more{margin:10px 0 0}
+.mm-empty{color:var(--dim);font-size:.9rem;margin:12px 0 0}
+
 /* the toolbar */
 .st-tools{display:grid;gap:10px;margin:0 0 14px}
 .st-tools .r1{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -475,6 +500,9 @@ function renderApp(){
     document.querySelectorAll('[data-who]').forEach(tr=>tr.onclick=()=>{ PIPE.who=tr.dataset.who; VIEW='pipeline'; REP.on=false; FRESHV=true; renderApp(); });
     document.querySelectorAll('[data-fuopen]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); openDetail(Number(b.dataset.fuopen)); });
   }
+  document.querySelectorAll('[data-mmrow]').forEach(b=>b.onclick=()=>openDetail(Number(b.dataset.mmrow)));
+  document.querySelectorAll('[data-mmprop]').forEach(b=>b.onclick=()=>openProp(b.dataset.mmprop));
+  document.querySelectorAll('[data-mmall]').forEach(b=>b.onclick=()=>{ PIPE.month=b.dataset.mmall; FILTER='all'; renderApp(); const pc=$('#pipeCard'); if(pc) pc.scrollIntoView({behavior:RR.calm()?'auto':'smooth',block:'start'}); });
   const fm=$('#fMon'); if(fm) fm.onchange=e=>{ PIPE.month=e.target.value; renderApp(); };
   const fv=$('#fCov'); if(fv) fv.onchange=e=>{ PIPE.cov=e.target.value; renderApp(); };
   const fw=$('#fWho'); if(fw) fw.onchange=e=>{ PIPE.who=e.target.value; renderApp(); };
@@ -492,15 +520,57 @@ function renderApp(){
   }
 }
 
+/* ---------- this month and next ----------
+   Every motor and property renewal whose date falls in this calendar month or the next, read from its days to go
+   (so the year is right), each tappable to open the file. */
+function mmMonths(){
+  const now=new Date(), a=new Date(now.getFullYear(),now.getMonth(),1), b=new Date(now.getFullYear(),now.getMonth()+1,1);
+  return [{y:a.getFullYear(),m:a.getMonth(),key:'this',label:'This month'},{y:b.getFullYear(),m:b.getMonth(),key:'next',label:'Next month'}];
+}
+function mmDateOf(days){
+  if(days===null||days===undefined||days===''||isNaN(Number(days))) return null;
+  const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()+Number(days)); return d;
+}
+function mmItems(){
+  const out=[];
+  D.renewals.forEach(r=>{ const d=mmDateOf(r.days); if(d) out.push({kind:'motor',d,client:r.client,sub:(r.policy||'no policy #')+' · '+String(r.coverage||'Motor').replace(' (assumed)',''),st:statusOf(r),row:r.rowIndex,who:r.assignedTo}); });
+  (D.properties||[]).forEach(pp=>{ const d=mmDateOf(pp.days); if(!d) return; const st=propStatus(pp);
+    out.push({kind:'prop',d,client:pp.client,sub:'Property · '+(pp.policy||'no policy #'),st:{k:pp.stage==='issued'?'done':(pp.days<0?'overdue':'open'),label:st.label,cls:st.cls,c:st.c},tok:pp.token,who:pp.assignedTo}); });
+  return out;
+}
+function mmView(){
+  const all=mmItems(), mons=mmMonths();
+  const cols=mons.map((M,k)=>{
+    const its=all.filter(x=>x.d.getFullYear()===M.y&&x.d.getMonth()===M.m).sort((a,b)=>(a.st.k==='done')-(b.st.k==='done')||a.d-b.d);
+    const done=its.filter(x=>x.st.k==='done').length, over=its.filter(x=>x.st.k==='overdue').length, open=its.length-done-over;
+    const mName=MONTHS[M.m], full=new Date(M.y,M.m,1).toLocaleString('en-GB',{month:'long',year:'numeric'});
+    const nm=its.filter(x=>x.kind==='motor').length, np=its.length-nm;
+    const SHOW=12, shown=its.slice(0,SHOW);
+    return `<div class="mm-col${k===0?' now':''}" aria-label="${esc(M.label)}, ${esc(full)}">
+      <div class="mm-h"><b>${esc(full)}</b><small>${esc(M.label)}</small></div>
+      <div class="mm-n">${RR.cu(its.length)}</div>
+      <p class="mm-sub">renewal${its.length===1?'':'s'}${its.length?` · ${nm} motor${np?`, ${np} property`:''} · <b>${done}</b> renewed${over?`, <b style="color:var(--bad)">${over}</b> overdue`:''}, ${open} open`:''}</p>
+      ${its.length?RR.stack([{l:'Renewed',v:done,c:PC.done},{l:'Overdue',v:over,c:PC.overdue},{l:'Open',v:open,c:PC.due30}].filter(p=>p.v)):''}
+      ${its.length?`<ul class="mm-list">${shown.map(x=>`<li><button type="button" class="mm-r" style="--c:${x.st.c}" ${x.kind==='motor'?`data-mmrow="${x.row}"`:`data-mmprop="${esc(x.tok)}"`} aria-label="${esc(x.client)}, renews ${x.d.getDate()} ${mName}, ${esc(x.st.label)}">
+          <span class="mm-d" aria-hidden="true">${x.d.getDate()}<small>${mName}</small></span>
+          <span class="mm-w"><b>${esc(x.client)}</b><small>${esc(x.sub)}${x.who?' · '+esc(who(x.who)):' · unassigned'}</small></span>
+          <span class="rr-pill ${x.st.cls}">${esc(x.st.label)}</span></button></li>`).join('')}</ul>
+        ${its.length>SHOW?`<button type="button" class="rr-btn ghost sm mm-more" data-mmall="${mName}">Show all ${its.length} in ${esc(full.split(' ')[0])} ${I('arrow')}</button>`:''}`
+        :`<p class="mm-empty">No renewals on the sheet for ${esc(full)}.</p>`}
+    </div>`;
+  }).join('');
+  return `<section class="rr-card flat" id="mmCard">${sec('calendar','This month and next','Every motor and property renewal due in the two months, renewed last. Tap one to open the file',['#2C5FA8','#3A7BD5'])}<div class="mm">${cols}</div></section>`;
+}
+
 /* ---------- the pipeline view ---------- */
 function staffOpts(sel, short){ return D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===sel?'selected':''}>${esc(short?s.name.split(' ')[0]:s.name)}</option>`).join(''); }
 function pipelineView(openTasks){
   const list=filtered(), shown=list.slice(0,150), props=filteredProps();
   const covs=[...new Set(D.renewals.map(r=>r.coverage).filter(Boolean))].sort();
   const anyF = PIPE.month||PIPE.cov||PIPE.who||Q;
-  return `<div class="rr-grid two-side">
+  return `${mmView()}<div class="rr-grid two-side">
    <div>
-    <section class="rr-card flat">
+    <section class="rr-card flat" id="pipeCard">
       ${sec('car','Renewal pipeline · '+esc(FLABEL[FILTER]||FILTER)+' ('+list.length+')','Tap a file to open it: tasks, comments, invite, mark renewed')}
       <div class="st-tools">
         <div class="r1">
