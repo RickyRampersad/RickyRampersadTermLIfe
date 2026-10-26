@@ -1,132 +1,82 @@
 {
- "tts/out/gcmc/01.mp3": [
+ "tts/out/recruit/01.mp3": [
+  "en",
+  0.996,
+  "Let me ask you something. Are you good at what you do but stuck where you are?"
+ ],
+ "tts/out/recruit/02.mp3": [
+  "en",
+  0.998,
+  "Talent gets you in a game. The room you sit and decides how far you go."
+ ],
+ "tts/out/recruit/03.mp3": [
   "en",
   0.993,
-  "This is the Ricky Rampersad Branch's new way of looking after your group."
+  "This is the Ricky Rampersad Branch, guardian life of the Caribbean in Chaguanas, 23 times an MDRT branch, 32 years in Trinidad."
  ],
- "tts/out/gcmc/02.mp3": [
-  "en",
-  0.996,
-  "No more chasing us for answers. Everything about your group plan in one place and always up to date."
- ],
- "tts/out/gcmc/03.mp3": [
+ "tts/out/recruit/04.mp3": [
   "en",
   0.997,
-  "Every Monday at 10, you get one short report, what we finished, what's still open, and what we need from you."
+  "And we do things differently."
  ],
- "tts/out/gcmc/04.mp3": [
-  "en",
-  0.999,
-  "Tap through to your own secure page. Your service items, your billing, and your people each in its own tab."
- ],
- "tts/out/gcmc/05.mp3": [
-  "en",
-  0.991,
-  "On the 26th, your bills arrive, checked against our records, with one clear statement of what's do."
- ],
- "tts/out/gcmc/06.mp3": [
-  "en",
-  0.992,
-  "See who's active, who came off this year, and every application's still pending with who has it on our team."
- ],
- "tts/out/gcmc/07.mp3": [
+ "tts/out/recruit/05.mp3": [
   "en",
   0.998,
-  "Someone joining or leaving. Tell us right there. The form fills itself in and we follow it through to the end."
+  "Here, mentorship isn't luck. Our executive agents and senior sales consultants are required to mentor. It's written into their appointments."
  ],
- "tts/out/gcmc/08.mp3": [
-  "en",
-  0.995,
-  "then rate us from one to five stars. A real person reads every answer and acts on it."
- ],
- "tts/out/gcmc/09.mp3": [
-  "en",
-  0.995,
-  "Behind at all is a name team and every step is recorded. Nothing slips through."
- ],
- "tts/out/gcmc/10.mp3": [
-  "en",
-  0.996,
-  "Want this for your company? Call the Ricky Rampersad branch. Let's look after your people together."
- ],
- "tts/out/gcms/01.mp3": [
+ "tts/out/recruit/06.mp3": [
   "en",
   0.998,
-  "Group client management the new way. Here's how it works and who does what?"
+  "The branch manager interviews every advisor personally and coaches them after. Your book, your cases, your next move."
  ],
- "tts/out/gcms/02.mp3": [
-  "en",
-  0.998,
-  "There are four parts. Our branch manager sets the standard and owns the result. Kamla, our branch manager's assistant, oversees the tasks. The support team looks after their own groups and the system keeps time and keeps the record."
- ],
- "tts/out/gcms/03.mp3": [
-  "en",
-  0.999,
-  "Everyone signs in with their own agent number and password. So everything you do is recording your name."
- ],
- "tts/out/gcms/04.mp3": [
-  "en",
-  0.994,
-  "Every week, you run the six checks and approve each group by Friday. At 10 on Monday, the letters go by themselves."
- ],
- "tts/out/gcms/05.mp3": [
-  "en",
-  0.998,
-  "at 10.30, groups that haven't rated get a reminder. And if one of your ready groups had no letter, you're asked why and a task opens in your name. Reply by noon and close it with the reason."
- ],
- "tts/out/gcms/06.mp3": [
-  "en",
-  0.998,
-  "Every month, the bills come in on the 25th. You upload, check, answer, reconcile, and approve. At 1 o'clock, the branch manager gets the report."
- ],
- "tts/out/gcms/07.mp3": [
-  "en",
-  0.995,
-  "On the 26th at 10, every approved bill goes by itself with its statement. That's the cutoff."
- ],
- "tts/out/gcms/08.mp3": [
-  "en",
-  0.995,
-  "Open Billing, and 8 Steps Guide You. Upload the Bills, and every check against Salesforce comes back as a finding. Fix, Check, Noter, OK."
- ],
- "tts/out/gcms/09.mp3": [
-  "en",
-  0.998,
-  "Answer each question with a tap. Your answer goes on chatter in your name. Then update last month's tasks against this month's bill."
- ],
- "tts/out/gcms/10.mp3": [
-  "en",
-  0.994,
-  "Joiners and levers go on Guardians own forms, filled from Salesforce and chased every three working days. The people step flags who turn 65 or comes of age."
- ],
- "tts/out/gcms/11.mp3": [
-  "en",
-  0.998,
-  "The statement shows what's due and what's still unpaid. Tick reconciled only when you've checked it yourself, then approve it for the billing day."
- ],
- "tts/out/gcms/12.mp3": [
+ "tts/out/recruit/07.mp3": [
   "en",
   0.997,
-  "Miss the cutoff, approve, and sin now will ask why. Give the real reason. It goes on the bill, on chatter, and straight to the branch manager."
+  "Your wins don't vanish into a group chat. They're announced on stage. Blast off in January, mid-year in July. Your name, out loud, in front of the company."
  ],
- "tts/out/gcms/13.mp3": [
-  "en",
-  0.995,
-  "Every press is recorded. Who, when and why. So head office, the branch manager, or the group can see exactly what happened."
- ],
- "tts/out/gcms/14.mp3": [
+ "tts/out/recruit/08.mp3": [
   "en",
   0.998,
-  "Kamla checks the team dashboard every day, chases what's late and steps in when someone's away. No group ever waits on a person who's out."
+  "And the career path is written down executive agent overrides up to 5% a private office sale support senior sales consultant overrides up to 10%"
  ],
- "tts/out/gcms/15.mp3": [
+ "tts/out/recruit/09.mp3": [
   "en",
-  0.995,
-  "Until we go live, every bill comes to you, mark test. But Salesforce is real, so press only what you mean."
+  0.999,
+  "or lead the emerging leaders program to unit manager to running a branch of your own."
  ],
- "tts/out/gcms/16.mp3": [
+ "tts/out/recruit/10.mp3": [
   "en",
-  0.992,
-  "Read the training program, take the test, and let's make every group feel looked after. This is our new way."
+  0.989,
+  "Bankum? Uncapped. It scales with your activity and your skill. No salary band. No seating."
+ ],
+ "tts/out/recruit/11.mp3": [
+  "en",
+  0.998,
+  "already contracted somewhere else, your conversation with us stays confidential."
+ ],
+ "tts/out/recruit/12.mp3": [
+  "en",
+  0.989,
+  "New to insurance? That's normal. You get the full build, training, boot camp, one-on-one coaching, and mentors who are required to develop you."
+ ],
+ "tts/out/recruit/13.mp3": [
+  "en",
+  0.999,
+  "We don't fill seats. We select five gates, the same for a newcomer and a 15-year producer. And at your discovery, you sit with our qualifiers and ask them anything without the branch manager in the room."
+ ],
+ "tts/out/recruit/14.mp3": [
+  "en",
+  0.987,
+  "5 seats this intake, 2 minutes to apply, reviewed within 48 hours."
+ ],
+ "tts/out/recruit/15.mp3": [
+  "en",
+  0.997,
+  "Go to AgentMGT.com. Take the 60-second test and start the selection."
+ ],
+ "tts/out/recruit/16.mp3": [
+  "en",
+  0.97,
+  "The environment decides. We select the driven."
  ]
 }
