@@ -5066,6 +5066,62 @@ guide you. In your session review notes on the step back in place from all memor
   and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (28, Playwright,
   a laptop as the branch, a phone as the unit manager, and the unlinked backend).
 
+## Two units have closed — how their names and their business are handled
+
+Settled 26 October 2026, on being told that two unit managers' teams had gone.
+Salesforce is the source of truth and was read before anything was changed:
+`Contact.Employment_Status__c` and `Termination_Date__c` on the AGENT record
+types. Twelve people across the two units read Resigned or Not Active with a
+September 2026 termination date, and **one advisor on one of the two units is
+still Active** — she stays on every screen and must not be swept up with them.
+A thirteenth, on the same unit, reads Resigned with no termination date and
+came off the sign-in lists only.
+
+**Never infer who has left from a roster in this repository.** Every roster
+here was stale: the branch board still carried all twelve as current, while
+`meetings/README.md` had the Salesforce position from 9 October. Read the
+Salesforce field.
+
+**The rule the boards already set, and which now covers both units: the names
+come off every list, the business does not.** The branch wrote it, and every
+total on `board/dashboard.html` is reduced from the advisors array, so deleting
+the rows restates the year. Each closed unit's rows are folded into one
+unnamed `{a:"Agents who have left", left:true}` row **tagged to its own unit**
+— `t` decides which unit carries the business and neither `renderTeams` nor
+`buildXls` filters `left`, so folding into another unit's row moves money
+between units and quietly restates both. Verified before and after: the branch
+total and all four unit totals are identical. The top-N lists
+(`hbAgents`, `pendingByAgent`, `monthByAgent`, `week`, and production's
+`byAgent`/`leaders`/`latest`) take no fold entry — the name simply goes, which
+is what the file already did for the earlier departures.
+
+**The two unit cards were labelled with their managers' names.** They now read
+"Former unit · 1 advisor" and "Former unit · closed". Where the remaining
+advisor reports is the branch manager's call; the fact-find roster already has
+her under him "for testing".
+
+**A share link under `meet/a/` outlives the advisor.** Prospects still hold the
+address, so the folder stays and the page redirects to `/meet/`. It must drop
+**`a`, `n` and `t`** — all three. `a` and `n` are the advisor; `t` is the
+outreach token, and `/meet/` reads a token as `arrival=sent` and logs the
+enquiry against whoever sent it (`if (!TOKEN) return 'direct'`). Dropping only
+`a` and `n` still credits someone who has left. `c`, the prospect's own name,
+is kept. Nobody is named in the page and no reason is given — a comment naming
+them is the same leak as a meta tag, because the file is served.
+
+**A dated snapshot is not rewritten.** `intelligence/wall/*.html` carry extracts
+cut 25 August and 4–5 September and print that date on screen. Reassigning that
+arrears work by hand would invent who holds it now; it is for Branch
+Intelligence to rebuild. Worked examples in `.gs` comments and
+`INTELLIGENCE-SETUP.md` are the engineering record and stay as they are.
+
+**What this repository cannot do.** Sign-in is locked by the **Agent Skill Bank**
+`Active` column (`T_INACTIVE`, `tFormer_`) — a private sheet, unreachable from a
+session. Set each leaver to `Resigned` or `Terminated` there; do not delete the
+row. `meet/a/` is generated from the advisor roster in `ffproject.html` in the
+**`fact-find-analyzer`** repository, so `fix/FFPROJECT.html` here is a staged
+copy and a regeneration from the other repo will bring the names back.
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and

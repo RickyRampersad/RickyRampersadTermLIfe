@@ -2381,27 +2381,17 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
           <label>Advisor Name <span class="req">*</span> <span class="hint">(pick — rest auto-fills)</span></label>
           <select data-field="advisorName" id="advisorNameSelect">
             <option value="">— select your name —</option>
-            <option value="Aidan Eugene">Aidan Eugene</option>
             <option value="Akaash Kalladeen">Akaash Kalladeen</option>
-            <option value="Alyssa Joseph">Alyssa Joseph</option>
-            <option value="Anthony Simmons">Anthony Simmons</option>
-            <option value="Chris Badaloo">Chris Badaloo</option>
-            <option value="Crystal Fraser">Crystal Fraser</option>
             <option value="Daniel Bhagwandas">Daniel Bhagwandas</option>
             <option value="Darryl Manick">Darryl Manick</option>
-            <option value="Dhalina Heeraman">Dhalina Heeraman</option>
             <option value="Faizal Mohammed">Faizal Mohammed</option>
             <option value="Fawwaz Mohamed">Fawwaz Mohamed</option>
             <option value="Felicia Rampersad">Felicia Rampersad</option>
-            <option value="Gary Sookdeo">Gary Sookdeo</option>
             <option value="Jamil Khan">Jamil Khan</option>
-            <option value="John Boodhoo">John Boodhoo</option>
             <option value="Joy Barbara Sammah">Joy Barbara Sammah</option>
             <option value="Kamla Dookran">Kamla Dookran</option>
-            <option value="Kerwyn Ramroach">Kerwyn Ramroach</option>
             <option value="Malcolm Sooknanan">Malcolm Sooknanan</option>
             <option value="Meera Persad Khan">Meera Persad Khan</option>
-            <option value="Naila Samuel">Naila Samuel</option>
             <option value="Narissa Mohammed">Narissa Mohammed</option>
             <option value="Neil Ramnanan">Neil Ramnanan</option>
             <option value="Petra Chadee">Petra Chadee</option>
@@ -2410,7 +2400,6 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
             <option value="Richard Ramdwar">Richard Ramdwar</option>
             <option value="Ricky Rampersad">Ricky Rampersad</option>
             <option value="Stephanie Rajkumar">Stephanie Rajkumar</option>
-            <option value="Tricia Baksh">Tricia Baksh</option>
             <option value="Varun Seegolam">Varun Seegolam</option>
             <option value="__other__">Other / not listed…</option>
           </select>
@@ -3945,9 +3934,7 @@ const RAI_MASCOT = `<svg class="rai-avatar" viewBox="0 0 64 64" xmlns="http://ww
           <select id="dmNameSelect" onchange="onDmNameChange(this.value)" style="width:100%">
             <option value="">— select your name —</option>
             <option value="Ricky Rampersad">Ricky Rampersad (Branch Manager — direct for own unit)</option>
-            <option value="Kerwyn Ramroach">Kerwyn Ramroach (Assistant Branch Manager)</option>
             <option value="Akaash Kalladeen">Akaash Kalladeen (Unit Manager)</option>
-            <option value="Gary Sookdeo">Gary Sookdeo (Unit Manager)</option>
             <option value="__other__">Other / not listed…</option>
           </select>
           <input type="text" id="dmNameOther" placeholder="Type your name" style="display:none; margin-top:6px" oninput="state.dmName=this.value; calc(); debouncedSave();">
@@ -4223,7 +4210,6 @@ const CONFIG = {
 const AGENT_ROSTER = [
   { code: 'A00427',  name: 'Ricky Rampersad',    mgr: 'ricky' },
   { code: 'A01066',  name: 'Narissa Mohammed',   mgr: 'ricky' },
-  { code: 'A01363',  name: 'Kerwyn Ramroach',    mgr: 'kerwyn' },
   { code: 'A01452',  name: 'Richard Ramdwar',    mgr: 'ricky' },
   { code: 'A03522',  name: 'Premchand Dookran',  mgr: 'ricky' },
   { code: 'A06869',  name: 'Akaash Kalladeen',   mgr: 'akaash' },
@@ -4231,24 +4217,14 @@ const AGENT_ROSTER = [
   { code: 'A07350',  name: 'Faizal Mohammed',    mgr: 'ricky' },
   { code: 'A08413',  name: 'Meera Persad Khan',  mgr: 'ricky' },
   { code: 'A09088',  name: 'Petra Chadee',       mgr: 'ricky' },
-  { code: 'A09281',  name: 'Gary Sookdeo',       mgr: 'gary' },
   { code: 'A09311',  name: 'Randolph Gonzales',  mgr: 'ricky' },
   { code: 'A10024',  name: 'Neil Ramnanan',      mgr: 'ricky' },
-  { code: 'A10338',  name: 'Dhalina Heeraman',   mgr: 'kerwyn' },
   { code: 'A10428',  name: 'Varun Seegolam',     mgr: 'ricky' },
-  { code: 'A10934',  name: 'Anthony Simmons',    mgr: 'kerwyn' },
   { code: 'A11238',  name: 'Darryl Manick',      mgr: 'akaash' },
-  { code: 'A11801',  name: 'Tricia Baksh',       mgr: 'gary' },
   { code: 'A12001',  name: 'Malcolm Sooknanan',  mgr: 'akaash' },
-  { code: 'A12173',  name: 'Chris Badaloo',      mgr: 'gary' },
   { code: 'A12397',  name: 'Fawwaz Mohamed',     mgr: 'akaash' },
   { code: 'A12408',  name: 'Stephanie Rajkumar', mgr: 'akaash' },
-  { code: 'A12530',  name: 'John Boodhoo',       mgr: 'gary' },
   { code: 'A12663',  name: 'Jamil Khan',         mgr: 'ricky' },
-  { code: 'A12749',  name: 'Aidan Eugene',       mgr: 'kerwyn' },
-  { code: 'A13063',  name: 'Crystal Fraser',     mgr: 'kerwyn' },
-  { code: 'A13088',  name: 'Alyssa Joseph',      mgr: 'gary' },
-  { code: 'A13617',  name: 'Naila Samuel',       mgr: 'gary' },
   { code: 'A13682',  name: 'Daniel Bhagwandas',  mgr: 'akaash' },
   // Felicia moved under Ricky for testing (was gary) — keep in step with the
   // Access sheet Unit column AND Code.gs AGENT_TO_KEY, which decides the email.
@@ -4263,7 +4239,7 @@ AGENT_ROSTER.forEach(function (a) {
   if (!AGENT_BY_NAME[a.name])           AGENT_BY_NAME[a.name] = { code: a.code, mgr: a.mgr };
 });
 
-const MGR_DISPLAY = { ricky: 'Ricky Rampersad (Branch Manager)', kerwyn: 'Kerwyn Ramroach (ABM)', akaash: 'Akaash Kalladeen (UM)', gary: 'Gary Sookdeo (UM)' };
+const MGR_DISPLAY = { ricky: 'Ricky Rampersad (Branch Manager)', kerwyn: 'A unit since closed', akaash: 'Akaash Kalladeen (UM)', gary: 'A unit since closed' };
 
 // Legacy shim — old lookups keep working. No email: callers that used to read
 // AGENTS[code].email must take it from the form, not from a published list.
@@ -4275,8 +4251,8 @@ Object.keys(AGENT_BY_CODE).forEach(function (c) {
 // ============== MANAGERS (review dropdown) ==============
 const MANAGERS = {
   ricky:  { name: 'Ricky Rampersad',   role: 'Branch Manager' },
-  kerwyn: { name: 'Kerwyn Ramroach',   role: 'ABM' },
-  gary:   { name: 'Gary Sookdeo',      role: 'Unit Manager' },
+  kerwyn: { name: 'A unit since closed', role: '' },
+  gary:   { name: 'A unit since closed', role: '' },
   akaash: { name: 'Akaash Kalladeen',  role: 'Unit Manager' },
 };
 
@@ -5685,7 +5661,7 @@ window.applyDmNameToUi = function() {
   if (!sel) return;
   const v = state.dmName || '';
   if (!v) { sel.value = ''; if (other) other.style.display = 'none'; return; }
-  const known = ['Ricky Rampersad', 'Kerwyn Ramroach', 'Akaash Kalladeen', 'Gary Sookdeo'];
+  const known = ['Ricky Rampersad', 'Akaash Kalladeen'];
   if (known.indexOf(v) > -1) { sel.value = v; if (other) other.style.display = 'none'; }
   else { sel.value = '__other__'; if (other) { other.style.display = 'block'; other.value = v; } }
 };
@@ -16096,27 +16072,17 @@ window.previewToBMIntelligence = previewToBMIntelligence;
      Central Bank of T&T under the Insurance Act 2018, incl. legacy
      run-off books clients still hold policies with (CLICO, BAT). -->
 <datalist id="dlAgentNames">
-  <option value="Aidan Eugene">
   <option value="Akaash Kalladeen">
-  <option value="Alyssa Joseph">
-  <option value="Anthony Simmons">
-  <option value="Chris Badaloo">
-  <option value="Crystal Fraser">
   <option value="Daniel Bhagwandas">
   <option value="Darryl Manick">
-  <option value="Dhalina Heeraman">
   <option value="Faizal Mohammed">
   <option value="Fawwaz Mohamed">
   <option value="Felicia Rampersad">
-  <option value="Gary Sookdeo">
   <option value="Jamil Khan">
-  <option value="John Boodhoo">
   <option value="Joy Barbara Sammah">
   <option value="Kamla Dookran">
-  <option value="Kerwyn Ramroach">
   <option value="Malcolm Sooknanan">
   <option value="Meera Persad Khan">
-  <option value="Naila Samuel">
   <option value="Narissa Mohammed">
   <option value="Neil Ramnanan">
   <option value="Petra Chadee">
@@ -16125,7 +16091,6 @@ window.previewToBMIntelligence = previewToBMIntelligence;
   <option value="Richard Ramdwar">
   <option value="Ricky Rampersad">
   <option value="Stephanie Rajkumar">
-  <option value="Tricia Baksh">
   <option value="Varun Seegolam">
 </datalist>
 

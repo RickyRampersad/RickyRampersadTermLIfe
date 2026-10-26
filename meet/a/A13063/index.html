@@ -3,41 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex, nofollow">
+<meta name="robots" content="noindex,nofollow">
+<title>Ricky Rampersad Branch · Guardian Life</title>
 
-<!-- Crystal Fraser — A13063
-     One address per advisor, because a link preview is fetched once per
-     address and WhatsApp does not run JavaScript. /meet/ can never carry a
-     name in its preview whatever is on the query string; this page can,
-     because the name is in the file.
-     Generated. Do not hand-edit — see meet/a/README.md. -->
-<title>If your income stopped tomorrow, how long would your family be alright?</title>
-<meta property="og:type" content="website">
+<!-- The advisor who shared this link is no longer with the branch. The
+     address stays alive because prospects hold it: a WhatsApp preview of it
+     used to carry an advisor's name, and it now carries the branch's own.
+     The person is sent to the branch's page with nothing on it that credits
+     somebody who has left. Nobody is named here and no reason is given. -->
+
 <meta property="og:site_name" content="Ricky Rampersad Branch · Guardian Life">
 <meta property="og:title" content="If your income stopped tomorrow, how long would your family be alright?">
-<meta property="og:description" content="Sent to you by Crystal Fraser · Ricky Rampersad Branch, Guardian Life. A minute to watch, then nothing to fill in — just tap what is actually on your mind. Nothing to buy and nothing to sign.">
+<meta property="og:description" content="From the Ricky Rampersad Branch, Guardian Life. A minute to watch, then nothing to fill in — just tap what is actually on your mind. Nothing to buy and nothing to sign.">
 <meta property="og:image" content="https://rickyrampersadbranch.com/prospect-poster.jpg">
-<meta property="og:url" content="https://rickyrampersadbranch.com/meet/a/A13063/">
+<meta property="og:url" content="https://rickyrampersadbranch.com/meet/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="If your income stopped tomorrow, how long would your family be alright?">
-<meta name="twitter:description" content="Sent to you by Crystal Fraser · Ricky Rampersad Branch, Guardian Life. A minute to watch, then nothing to fill in — just tap what is actually on your mind. Nothing to buy and nothing to sign.">
+<meta name="twitter:description" content="From the Ricky Rampersad Branch, Guardian Life. A minute to watch, then nothing to fill in — just tap what is actually on your mind.">
 <meta name="twitter:image" content="https://rickyrampersadbranch.com/prospect-poster.jpg">
-<meta name="description" content="Sent to you by Crystal Fraser · Ricky Rampersad Branch, Guardian Life. A minute to watch, then nothing to fill in — just tap what is actually on your mind. Nothing to buy and nothing to sign.">
+<meta name="description" content="From the Ricky Rampersad Branch, Guardian Life.">
+<link rel="canonical" href="https://rickyrampersadbranch.com/meet/">
 
-<!-- A crawler reads the tags above and stops. A person is moved on at once,
-     carrying whatever the advisor put on the link — the prospect's name, the
-     tracking token — so nothing is lost by coming through here. -->
 <script>
   (function () {
     var q = new URLSearchParams(location.search);
-    q.set('a', 'A13063');
-    q.set('n', 'Crystal Fraser');
-    location.replace('/meet/?' + q.toString());
+    // The three that attribute this person to an advisor who has left: the
+    // advisor code, their name, and the outreach token — /meet/ reads a token
+    // as "sent" and logs the arrival against whoever sent it. Without one the
+    // arrival is "direct", nobody targeted, and the branch picks the person
+    // up. Everything else is kept, the prospect's own name (c) included, so
+    // they are not asked anything twice.
+    q.delete('a'); q.delete('n'); q.delete('t');
+    var s = q.toString();
+    location.replace('/meet/' + (s ? '?' + s : ''));
   })();
 </script>
-<meta http-equiv="refresh" content="0; url=/meet/?a=A13063&n=Crystal%20Fraser">
+<meta http-equiv="refresh" content="0; url=/meet/">
 </head>
 <body style="font:16px/1.6 -apple-system,Arial,sans-serif;padding:40px 22px;text-align:center">
-<p>Opening&hellip; <a href="/meet/?a=A13063&n=Crystal%20Fraser">tap here if nothing happens</a>.</p>
+<p>Taking you to the <a href="/meet/">Ricky Rampersad Branch</a>…</p>
 </body>
 </html>
