@@ -4,167 +4,251 @@
 <meta charset="utf-8">
 <base target="_top">
 <title>Renewals — your board</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap"
-      rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
+<link rel="icon" href="https://rickyrampersadbranch.com/orphan-transition/board-mark.png">
+<?!= rrTheme_() ?>
 <style>
-:root{
-  --bg:#0d1f33; --bg2:#14314f; --card:#1b4268; --card2:#22527f;
-  --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
-  --text:#edf4fb; --muted:#b9cadd; --line:rgba(255,255,255,.12);
-  --good:#4fd18b; --warn:#e0a93f; --bad:#e8705f; --ink:#0a1a2b;
-}
-*{box-sizing:border-box;margin:0;padding:0}
+/* The renewal board in the renewal experience's look (26 October 2026): the
+   theme carries the colours, the band, the charts and the motion; this sheet
+   only lays out what is the board's own. Every keyframe it uses is the
+   theme's, so the theme's reduced-motion rule stops all of it. */
+
 /* A class carrying `display` outranks the hidden attribute, so the sign-in
    card stayed on screen above the board after signing in — caught by
    screenshotting the page rather than trusting the attribute. */
 [hidden]{display:none!important}
-body{font:16px/1.6 'DM Sans',system-ui,sans-serif;color:var(--text);
-  background:linear-gradient(180deg,var(--bg),var(--bg2) 55%,var(--bg));min-height:100vh}
-h1,h2,h3{font-family:'Montserrat',system-ui,sans-serif}
-.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+
+/* the top bar: who is signed in */
+.rr-top .who span{display:block;font-size:.72rem;color:#EAF3FD}
+.rr-top .brand{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* the theme's `.rr a` colour outranks .rr-btn, which left a blue word on a blue button */
+.rr a.rr-btn{color:#fff}
+.rr a.rr-btn.ghost{color:var(--blue)}
+.hero .whoLine{display:none}
+@media (max-width:440px){
+  .rr-top #whoBox{display:none}
+  .rr-top #out .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .rr-top #out{width:40px;justify-content:center;padding:0}
+  .hero .whoLine{display:inline-flex}
+}
 
 /* sign in */
-.gate{display:grid;place-items:center;min-height:100vh;padding:20px}
-.gatecard{background:var(--card);border:1px solid var(--line);border-radius:18px;
-  padding:30px 28px;max-width:440px;width:100%}
-.gatecard h1{font-size:21px;font-weight:800;margin-bottom:8px}
-.gatecard p{font-size:14px;color:var(--muted);margin-bottom:16px}
-input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);
-  border-radius:11px;padding:12px 14px;font:max(16px,1rem) 'DM Sans';color:var(--text);
-  outline:none;margin-bottom:10px;min-height:44px}
-input:focus,select:focus,textarea:focus{border-color:var(--teal)}
-button{font:700 max(16px,1rem) 'DM Sans';border:0;border-radius:11px;padding:12px 18px;
-  min-height:44px;cursor:pointer;background:linear-gradient(180deg,var(--gold),var(--gold2));
-  color:var(--ink)}
-button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
-button:disabled{opacity:.5;cursor:default}
-.err{color:#ffd9d2;background:rgba(232,112,95,.16);border:1px solid rgba(232,112,95,.4);
-  border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px}
+.gate{display:grid;place-items:start center;padding:22px 16px 60px}
+.gatecard{width:min(460px,100%);margin:0}
+.gatecard .rr-in{margin:0 0 10px}
+.gatecard .why{display:flex;gap:9px;align-items:flex-start;font-size:.88rem;color:var(--body);background:var(--soft);border-radius:12px;padding:10px 12px;margin:0 0 14px}
+.gatecard .why svg.i{color:var(--blue);margin-top:2px}
+.err{color:var(--bad);background:var(--badbg);border:1px solid #F0C4BF;border-radius:12px;padding:10px 12px;font-size:.9rem;font-weight:700;margin:0 0 10px}
 
-/* masthead */
-header{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:4px 0 18px}
-.mark{width:42px;height:42px;flex:none;border-radius:12px;overflow:hidden;
-  background:#07131f;display:grid;place-items:center}
-.mark img{width:100%;height:100%;display:block}
-header h1{font-size:19px;font-weight:800}
-header .sub{font-size:12.5px;color:var(--muted)}
-header .right{margin-left:auto;display:flex;gap:10px;align-items:center}
-.who{font-size:12.5px;color:var(--muted);text-align:right}
-.who b{display:block;color:var(--text);font-size:14px}
+/* the opening card: the band, then where the renewals stand */
+.hero h1{margin:4px 0 8px}
+.hero .lede{font-size:.98rem;max-width:62ch;margin:0}
+.hero .lede b{color:#fff}
+.hero .chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0}
+.hero .asof{display:inline-flex;align-items:center;gap:6px;margin:12px 0 0;font-size:.8rem;font-weight:700;color:#fff;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 11px;margin:0}
+.pipe .rr-sec{margin-top:4px}
+.hero .stats span{font-variant-numeric:tabular-nums}
+.pipe .big{display:flex;align-items:baseline;gap:8px;margin:0 0 2px;color:var(--ink)}
+.pipe .big b{font-size:1.9rem;font-weight:900;font-variant-numeric:tabular-nums}
+.pipe .big span{color:var(--dim);font-size:.9rem}
+.pipe .rr-stack{height:22px}
+.pipe .rr-key li{font-size:.84rem}
 
-/* the ask line — what this board is for */
-.lede{background:rgba(0,207,234,.09);border:1px solid rgba(0,207,234,.28);
-  border-radius:12px;padding:12px 15px;font-size:14.5px;line-height:1.55;margin-bottom:16px}
-.lede b{color:var(--teal)}
+/* tiles that count and filter */
+.rb-tiles{grid-template-columns:repeat(auto-fit,minmax(min(100%,9.2rem),1fr))}
+.rb-tiles .rr-tile{min-height:92px}
+.rb-tiles .rr-tile .k svg.i{width:1.05em;height:1.05em}
+.rb-tiles .rr-tile.money .v{font-size:1.3rem}
+@media (max-width:440px){.rb-tiles{grid-template-columns:1fr 1fr}.rb-tiles .rr-tile .v{font-size:1.5rem}}
 
-/* tiles */
-.tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr));
-  margin-bottom:18px}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
-  text-align:left;width:100%;color:var(--text);font-family:inherit;font-weight:400}
-.tile .v{font:800 26px 'Montserrat';line-height:1.1}
-.tile .k{font-size:12.5px;color:var(--muted);margin-top:3px}
-.tile.on{border-color:var(--gold);background:var(--card2)}
-.tile.act .v{color:var(--bad)}
-.tile.owed .v{color:var(--warn)}
+/* the section tabs */
+.rb-tabs{top:64px}
+@media (max-width:400px){.rb-tabs{top:54px}}
 
-/* filters */
-.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
-.chip{background:transparent;border:1px solid var(--line);border-radius:999px;
-  padding:7px 14px;font-size:13.5px;color:var(--muted);cursor:pointer;min-height:40px}
-.chip.on{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:700}
-.bar input{width:auto;flex:1;min-width:190px;margin:0}
+/* the list */
+.rb-find{display:flex;gap:8px;align-items:center;margin:0 0 12px}
+.rb-find label{position:relative;flex:1;min-width:0;display:block}
+.rb-find svg.i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--dim)}
+.rb-find .rr-in{padding-left:40px}
+.rb-showing{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:.86rem;color:var(--dim);margin:0 0 12px}
+.rb-showing .rr-link{padding:4px 2px;min-height:32px}
 
-/* a renewal */
-.row{background:var(--card);border:1px solid var(--line);border-radius:14px;
-  padding:14px 16px;margin-bottom:10px}
-.row.late{border-left:4px solid var(--bad)}
-.row.soon{border-left:4px solid var(--warn)}
-.row.done{opacity:.62}
-.rtop{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
-.rtop b{font-size:16.5px}
-.rtop .pol{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
-.rtop .when{margin-left:auto;font-size:13px;white-space:nowrap}
-.ask{margin-top:7px;font-size:14.5px}
-.ask.urgent{color:#ffd9d2}
-.meta{margin-top:7px;font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
-.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;
-  background:rgba(255,255,255,.1)}
-.pill.comprehensive{background:rgba(0,207,234,.2);color:#9fe9f6}
-.pill.third-party{background:rgba(255,255,255,.12)}
-.pill.property{background:rgba(239,194,75,.2);color:#f6dfa4}
-.acts{margin-top:11px;display:flex;gap:8px;flex-wrap:wrap}
-.acts button{padding:9px 14px;font-size:14px}
-.panel{margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
-.panel textarea{min-height:76px;resize:vertical}
-.ok{color:#c9f3dd;background:rgba(79,209,139,.15);border:1px solid rgba(79,209,139,.4);
-  border-radius:10px;padding:9px 12px;font-size:13.5px;margin-top:8px}
-
-/* who is carrying what */
-.agents{background:var(--card);border:1px solid var(--line);border-radius:14px;
-  padding:4px 16px 12px;margin-bottom:18px}
-.agents h3{font-size:14px;font-weight:800;margin:12px 0 8px}
-.agrow{display:flex;gap:12px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
-.agrow:first-of-type{border-top:0}
-.agrow .n{margin-left:auto;color:var(--muted);font-size:13px;white-space:nowrap}
-.empty{text-align:center;color:var(--muted);padding:34px 16px;font-size:15px}
-.more{text-align:center;color:var(--muted);font-size:13.5px;padding:10px}
-@media (max-width:640px){
-  .rtop .when{margin-left:0;width:100%}
-  header .right{width:100%;margin-left:0;justify-content:space-between}
+.rb-row{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;border:1.5px solid var(--line);border-radius:18px;padding:14px 14px 12px 18px;margin:0 0 12px;background:#fff;position:relative;overflow:hidden;animation:rr-rise .45s var(--ease) both;transition:border-color .15s,box-shadow .15s}
+.rb-row:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c,var(--blue2))}
+.rb-row:hover{border-color:var(--line2);box-shadow:0 10px 24px rgba(58,123,213,.1)}
+.rb-row.late{--c:var(--bad)}
+.rb-row.soon{--c:#C98A00}
+.rb-row.done{--c:var(--ok);background:#FBFDFC}
+.rb-row:nth-child(2){animation-delay:.04s}.rb-row:nth-child(3){animation-delay:.08s}.rb-row:nth-child(4){animation-delay:.12s}.rb-row:nth-child(n+5){animation-delay:.16s}
+.rb-when{grid-row:1/3;display:flex;flex-direction:column;align-items:center;gap:5px;width:70px}
+.rb-when .rr-ring{width:60px;height:60px}
+.rb-when .rr-ring:before{inset:6px}
+.rb-when .rr-ring b{font-size:1.2rem}
+.rb-when .rr-ring small{display:none}
+.rb-when .due{font-size:.72rem;color:var(--dim);text-align:center;line-height:1.3}
+.rb-when .due b{display:block;color:var(--ink);font-size:.74rem}
+.rb-when.late .due b{color:var(--bad)}
+.rb-when.soon .due b{color:var(--warn)}
+.rb-when.done .due b{color:var(--ok)}
+.rb-main{min-width:0}
+.rb-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.rb-head b.name{color:var(--ink);font-size:1.05rem;overflow-wrap:anywhere}
+.rb-line{display:inline-flex;align-items:center;gap:7px;margin:5px 0 0;font-size:.84rem;font-weight:700;color:var(--mid)}
+.rb-line .lic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--sky);color:var(--mid);flex:none}
+.rb-line.property{color:var(--pr)}
+.rb-line.property .lic{background:var(--prbg);color:var(--pr)}
+.rb-line .pol{font-weight:600;color:var(--dim);overflow-wrap:anywhere}
+.rb-ask{display:flex;gap:8px;align-items:flex-start;margin:8px 0 0;padding:9px 11px;border-radius:12px;background:var(--soft);color:var(--ink);font-size:.93rem;font-weight:600}
+.rb-ask svg.i{color:var(--blue);margin-top:2px}
+.rb-ask.late{background:var(--badbg);color:var(--bad)}.rb-ask.late svg.i{color:var(--bad)}
+.rb-ask.soon{background:var(--warnbg);color:var(--warn)}.rb-ask.soon svg.i{color:#A06A00}
+.rb-ask.done{background:var(--okbg);color:var(--ok)}.rb-ask.done svg.i{color:var(--ok)}
+.rb-meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin:8px 0 0;font-size:.82rem;color:var(--dim)}
+.rb-meta span{display:inline-flex;align-items:center;gap:5px;overflow-wrap:anywhere;min-width:0}
+.rb-meta b{color:var(--ink)}
+.rb-meta .owe{color:var(--warn);font-weight:800}
+.rb-acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0;padding:10px 0 0;border-top:1px solid var(--soft)}
+.rb-acts .rr-btn{min-height:44px}
+.rb-panel{grid-column:1/-1;margin:10px 0 0;padding:12px;border-radius:14px;background:var(--soft)}
+.rb-panel .rr-in{background:#fff;margin:0 0 10px}
+.rb-panel .rr-btn{min-height:46px}
+.ok{color:var(--ok);background:var(--okbg);border:1px solid #A7DEC5;border-radius:12px;padding:10px 12px;font-size:.9rem;font-weight:700}
+.more{text-align:center;color:var(--dim);font-size:.86rem;padding:10px 6px}
+@media (max-width:440px){
+  .rb-row{grid-template-columns:1fr;padding:13px 12px 12px 16px}
+  .rb-when{grid-row:auto;flex-direction:row;width:auto;gap:10px;align-items:center}
+  .rb-when .rr-ring{width:54px;height:54px}
+  .rb-when .due{text-align:left;font-size:.78rem}
+  .rb-acts{display:grid;grid-template-columns:1fr 1fr}
+  .rb-acts .rr-btn{padding:8px 8px;font-size:.84rem}
+  .rb-acts .rr-btn:only-child,.rb-acts .rr-btn:last-child:nth-child(odd){grid-column:1/-1}
+  .hero .stats{display:grid;grid-template-columns:1fr 1fr}
+  .hero .stats span.wide{grid-column:1/-1}
 }
+
+/* the side: what is coming, by line, who is carrying what */
+.rb-side .rr-card{animation-delay:.1s}
+.rb-side .sum{font-size:.88rem;color:var(--body);margin:6px 0 0}
+.rb-side .sum b{color:var(--ink)}
+.rb-side .rr-cols{height:160px}
+.rb-side .rr-bar{grid-template-columns:7.6rem 1fr auto}
+@media (max-width:440px){.rb-side .rr-bar{grid-template-columns:1fr auto}}
+.rb-ag{display:grid;gap:12px}
+.rb-ag button{display:block;width:100%;text-align:left;font:inherit;color:var(--body);background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;min-height:44px;transition:border-color .15s,box-shadow .15s}
+.rb-ag button:hover,.rb-ag button.on{border-color:var(--blue2);box-shadow:0 6px 16px rgba(58,123,213,.12)}
+.rb-ag .top{display:flex;gap:8px;align-items:baseline}
+.rb-ag .top b{color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rb-ag .top span{font-size:.8rem;color:var(--dim);white-space:nowrap}
+.rb-ag .trk{display:flex;height:10px;border-radius:999px;overflow:hidden;background:#EAF0F8;margin:7px 0 6px;transform-origin:0 50%;animation:rr-growx 1s var(--ease) both}
+.rb-ag .trk i{display:block;height:100%}
+.rb-ag .sub{font-size:.78rem;color:var(--dim)}
+.rb-ag .sub .act{color:var(--bad);font-weight:800}
+.rb-ag .sub .owe{color:var(--warn);font-weight:800}
 </style>
 </head>
-<body>
+<body class="rr">
 
+<header class="rr-top">
+  <span class="mark"><img src="https://rickyrampersadbranch.com/orphan-transition/board-mark.png" alt=""></span>
+  <span class="brand">Ricky Rampersad Branch<i>Renewals · your board</i></span>
+  <span class="who" id="whoBox" hidden><b id="whoName"></b><span id="whoRole"></span></span>
+  <button id="out" type="button" hidden title="Sign out"><span id="outIc"></span><span class="t">Sign out</span></button>
+  <span class="prog" aria-hidden="true"></span>
+</header>
+
+<!-- ============================ sign in ============================ -->
 <div id="gate" class="gate">
-  <div class="gatecard">
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
-      <div class="mark"><img src="https://rickyrampersadbranch.com/logo-mark.png" alt=""></div>
-      <div><b style="font:800 15px 'Montserrat';color:var(--gold)">Ricky Rampersad Branch</b>
-        <span style="display:block;font-size:11.5px;color:var(--muted)">Renewals</span></div>
+  <div class="rr-card gatecard">
+    <div class="rr-band">
+      <p class="eyebrow">Renewals</p>
+      <h1>Your renewal board</h1>
+      <p>What is yours, and what each renewal still needs from you.</p>
     </div>
-    <h1>Your renewal board</h1>
-    <p>Your work e-mail and your access code — the code beside your name on the
+    <div class="why"><span id="whyIc"></span><span>Your work e-mail and your access code — the code beside your name on the
        <b>Staff</b> tab. What you see is scoped to you, and everything you do here is
-       logged under your name.</p>
+       logged under your name.</span></div>
     <div id="gerr"></div>
-    <input id="em" type="email" placeholder="you@example.com" autocomplete="username">
-    <input id="pin" type="password" inputmode="numeric" placeholder="Access code" autocomplete="current-password">
-    <button id="go" style="width:100%">Open my board</button>
+    <label class="rr-f"><b>Work e-mail</b>
+      <input class="rr-in" id="em" type="email" placeholder="you@example.com" autocomplete="username"></label>
+    <label class="rr-f"><b>Access code</b>
+      <input class="rr-in" id="pin" type="password" inputmode="numeric" placeholder="Access code" autocomplete="current-password"></label>
+    <button id="go" type="button" class="rr-btn main wide">Open my board</button>
   </div>
 </div>
 
-<div id="app" class="wrap" hidden>
-  <header>
-    <div class="mark"><img src="https://rickyrampersadbranch.com/logo-mark.png" alt=""></div>
-    <div>
-      <h1>Renewals</h1>
-      <div class="sub" id="asof"></div>
+<!-- ============================ the board ============================ -->
+<main id="app" class="rr-main" hidden>
+  <section class="rr-card hero" id="top">
+    <div class="rr-band" id="band">
+      <p class="eyebrow" id="eyebrow">Renewals</p>
+      <h1 id="hello">Renewals</h1>
+      <p class="lede" id="lede"></p>
+      <div class="chips"><span class="asof"><span id="asofIc"></span><span id="asof"></span></span>
+        <span class="asof whoLine" id="whoLine"></span></div>
+      <div class="stats" id="bandStats"></div>
     </div>
-    <div class="right">
-      <div class="who"><b id="whoName"></b><span id="whoRole"></span></div>
-      <button class="ghost" id="out">Sign out</button>
-    </div>
-  </header>
+    <div class="pipe" id="pipe"></div>
+  </section>
 
-  <div class="lede" id="lede"></div>
-  <div class="tiles" id="tiles"></div>
-  <div id="agents"></div>
-  <div class="bar" id="bar"></div>
-  <div id="list"></div>
-</div>
+  <div class="rr-tiles rb-tiles" id="tiles"></div>
+
+  <nav class="rr-tabs rb-tabs" id="tabs" aria-label="Sections of the board"></nav>
+
+  <div class="rr-grid two">
+    <section id="secList" class="rb-listwrap">
+      <div class="rr-card flat">
+        <div class="rr-sec"><span class="ic" id="listIc"></span><span><b id="listTitle">Renewals</b><small id="listSub"></small></span></div>
+        <div class="bar rb-find" id="bar"></div>
+        <div class="rb-showing" id="showing"></div>
+        <div id="list"></div>
+      </div>
+    </section>
+    <aside class="rb-side" id="side">
+      <section class="rr-card sr" id="secComing"></section>
+      <section class="rr-card sr" id="secLines"></section>
+      <section class="rr-card sr" id="agents"></section>
+    </aside>
+  </div>
+  <p class="rr-foot">Ricky Rampersad Branch · renewals. Everything you do here is logged under your name.</p>
+</main>
+
+<datalist id="rbNames"></datalist>
 
 <script>
-var BOOT = JSON.parse(<?!= payload ?>);
-var S = { key: BOOT.key || '', email: '', pin: '', data: null, filter: 'act', q: '' };
+/* boardPage_ hands the template a JSON string; printing it raw gave
+   JSON.parse(an object), which throws, so the board never opened. Encoding it
+   once more makes it a string literal, as Staff.html and Portal.html do. */
+var BOOT = JSON.parse(<?!= JSON.stringify(payload) ?>);
+var S = { key: BOOT.key || '', email: '', pin: '', data: null, filter: 'act', q: '', agent: '' };
 var $ = function (s) { return document.querySelector(s); };
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function money(n){return 'TT$'+Math.round(Number(n)||0).toLocaleString('en-US');}
+function ic(n){return window.RR ? RR.i(n) : '';}
+function cu(n){return window.RR ? RR.cu(n) : esc(n);}
+
+/* What each line is, as an icon and a word: a comprehensive vehicle, a third
+   party vehicle, a property. The words are the server's own groups. */
+var LINES = {
+  comprehensive: { icon: 'shield', word: 'Motor · comprehensive', tile: 'Comprehensive' },
+  'third-party': { icon: 'car', word: 'Motor · third party', tile: 'Third party' },
+  property:      { icon: 'home', word: 'Property', tile: 'Property' }
+};
+function lineOf(r){ return LINES[r.line] || LINES['third-party']; }
+
+/* Where a renewal stands, as a word and a colour, never the colour alone. */
+function standing(r){
+  var k = r.ask.key;
+  if (k === 'done') return { cls: 'ok', w: 'Renewed' };
+  if (k === 'past') return { cls: 'bad', w: 'Not renewed' };
+  if (k === 'owed') return { cls: r.ask.tone === 'late' ? 'bad' : 'warn', w: 'Premium owed' };
+  if (r.ask.tone === 'soon') return { cls: 'warn', w: 'Due soon' };
+  return { cls: 'grey', w: 'Coming up' };
+}
+
+$('#whyIc').innerHTML = ic('lock');
+$('#outIc').innerHTML = ic('out');
+$('#asofIc').innerHTML = ic('clock');
+$('#listIc').innerHTML = ic('task');
 
 /* ---------------------------------------------------------------- sign in */
 if (!BOOT.ok) {
@@ -189,7 +273,10 @@ function signIn() {
       S.email = em; S.pin = pin; S.data = d;
       try { localStorage.setItem('rrb-rb-em', em); } catch (e) {}
       $('#gate').hidden = true; $('#app').hidden = false;
+      $('#whoBox').hidden = false; $('#out').hidden = false;
+      S.filter = 'act'; S.q = ''; S.agent = '';
       draw();
+      window.scrollTo(0, 0);
     })
     .withFailureHandler(function (err) {
       $('#go').disabled = false; $('#go').textContent = 'Open my board';
@@ -201,28 +288,49 @@ function signIn() {
 $('#out').onclick = function () {
   /* Forget the board as well as the sign-in: the next person on this device
      must never land on somebody else's clients. */
-  S.data = null; S.pin = '';
+  S.data = null; S.pin = ''; S.q = ''; S.agent = ''; S.filter = 'act';
+  ['#tiles', '#pipe', '#list', '#bar', '#showing', '#secComing', '#secLines', '#agents', '#tabs', '#lede', '#hello', '#asof', '#whoName', '#whoRole', '#whoLine', '#bandStats']
+    .forEach(function (s) { $(s).innerHTML = ''; });
+  $('#rbNames').innerHTML = '';
   $('#app').hidden = true; $('#gate').hidden = false;
+  $('#whoBox').hidden = true; $('#out').hidden = true;
   $('#pin').value = ''; $('#go').disabled = false; $('#go').textContent = 'Open my board';
+  $('#gerr').innerHTML = '';
 };
 
 function refresh(then) {
   google.script.run
     .withSuccessHandler(function (d) { S.data = d; draw(); if (then) then(); })
-    .withFailureHandler(function (e) { alert(e.message || e); })
+    .withFailureHandler(function (e) { if (window.RR) RR.toast(e.message || String(e), 'bad'); else alert(e.message || e); })
     .renewalBoardData(S.key, S.email, false, S.pin);
 }
 
 /* ------------------------------------------------------------------ draw */
+function greeting() {
+  var h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
+
 function draw() {
   var d = S.data, w = d.who, c = d.counts;
   $('#whoName').textContent = w.name;
   $('#whoRole').textContent = w.agent ? 'Your clients' : (w.branch ? 'The branch' : 'Client Support');
   $('#asof').textContent = 'Read ' + d.asOf;
+  $('#whoLine').innerHTML = ic('user') + '<span>' + esc(w.name) + ' · ' + esc(w.agent ? 'Your clients' : (w.branch ? 'The branch' : 'Client Support')) + '</span>';
+  var pct = c.all ? Math.round(c.done / c.all * 100) : 0;
+  $('#bandStats').innerHTML = '<span><b>' + cu(c.all) + '</b>' + (w.agent ? 'your renewals' : 'renewals') + '</span>'
+    + '<span><b>' + cu(c.act) + '</b>need you now</span>'
+    + (c.owed ? '<span class="wide"><b>' + money(c.owedTotal) + '</b>still to collect, on ' + c.owed + ' renewed polic' + (c.owed === 1 ? 'y' : 'ies') + '</span>' : '')
+    + '<span><b>' + pct + '%</b>renewed and paid</span>';
 
   /* The one sentence that says what this board is asking of the person
      reading it. An agent is asked to have the conversation; staff are asked
      to move the queue. Same data, different job. */
+  var first = String(w.name || '').trim().split(/\s+/)[0] || '';
+  first = first ? first.charAt(0).toUpperCase() + first.slice(1).toLowerCase() : '';
+  $('#eyebrow').textContent = w.agent ? 'Your clients’ renewals' : (w.branch ? 'The branch’s renewals' : 'The renewal queue');
+  $('#hello').textContent = w.agent ? (greeting() + (first ? ', ' + first : '') + '.')
+    : (w.branch ? 'Every renewal on the book' : 'Every renewal to work');
   $('#lede').innerHTML = w.agent
     ? 'These are <b>your clients’ renewals</b>. Each one says what it still needs — '
       + 'a value confirmed, sums insured checked, or simply a yes and the premium. '
@@ -231,44 +339,166 @@ function draw() {
       + 'asks a different question: <b>comprehensive</b> needs a value, <b>third party</b> needs a yes, '
       + '<b>property</b> needs its rebuilding cost looked at.';
 
-  var tiles = [
-    { k: 'act',  v: c.act,  label: 'Need you now' },
-    { k: 'owed', v: c.owed, label: 'Renewed, premium owed' },
-    { k: 'comprehensive', v: c.comprehensive, label: 'Comprehensive' },
-    { k: 'third-party',   v: c.thirdParty,    label: 'Third party' },
-    { k: 'property',      v: c.property,      label: 'Property' },
-    { k: 'all',  v: c.all,  label: w.agent ? 'Your renewals' : 'All renewals' },
-  ];
-  $('#tiles').innerHTML = tiles.map(function (t) {
-    return '<button class="tile ' + (t.k === S.filter ? 'on ' : '')
-      + (t.k === 'act' ? 'act ' : t.k === 'owed' ? 'owed ' : '')
-      + '" data-f="' + t.k + '"><div class="v">' + t.v + '</div><div class="k">'
-      + esc(t.label) + '</div></button>';
-  }).join('');
-  if (c.owed) {
-    $('#tiles').insertAdjacentHTML('beforeend',
-      '<div class="tile"><div class="v" style="font-size:19px;color:var(--warn)">'
-      + money(c.owedTotal) + '</div><div class="k">still to collect</div></div>');
-  }
-  Array.prototype.forEach.call(document.querySelectorAll('.tile[data-f]'), function (b) {
-    b.onclick = function () { S.filter = b.dataset.f; draw(); };
-  });
+  drawPipe(c, w);
+  drawTiles(c, w);
+  drawTabs(w);
+  drawComing(d);
+  drawLines(c);
+  drawAgents(d);
 
-  $('#agents').innerHTML = (d.byAgent && d.byAgent.length)
-    ? '<div class="agents"><h3>Who is carrying what</h3>' + d.byAgent.map(function (a) {
-        return '<div class="agrow"><span>' + esc(a.agent) + '</span><span class="n">'
-          + a.n + ' renewal' + (a.n === 1 ? '' : 's')
-          + (a.act ? ' · <b style="color:var(--bad)">' + a.act + ' need action</b>' : '')
-          + (a.owed ? ' · ' + money(a.owed) + ' owed' : '') + '</span></div>';
-      }).join('') + '</div>'
-    : '';
-
-  $('#bar').innerHTML = '<input id="q" placeholder="Find a client, policy or vehicle" value="'
-    + esc(S.q) + '">';
+  $('#bar').innerHTML = '<label>' + ic('search') + '<span class="vh">Search</span>'
+    + '<input id="q" class="rr-in" placeholder="Find a client, policy or vehicle" value="'
+    + esc(S.q) + '"></label>';
   $('#q').oninput = function () { S.q = this.value; list(); };
 
+  /* names already on the board, offered when staff assign */
+  var names = {};
+  d.rows.forEach(function (r) { if (r.assignedTo) names[r.assignedTo] = 1; if (r.agent) names[r.agent] = 1; });
+  if (w.name) names[w.name] = 1;
+  $('#rbNames').innerHTML = Object.keys(names).sort().map(function (n) { return '<option value="' + esc(n) + '">'; }).join('');
+
   list();
+  if (window.RR) RR.init(document.getElementById('app'));
 }
+
+/* Where the renewals stand: one stacked bar of the whole board, from the
+   server's counts (so it covers every renewal, not only the ones listed). */
+function drawPipe(c, w) {
+  var now = Math.max(0, c.act - c.owed), track = Math.max(0, c.all - c.act - c.done);
+  var parts = [
+    { l: 'Need you now', v: now, c: 'var(--bad)' },
+    { l: 'Renewed, premium owed', v: c.owed, c: '#C98A00' },
+    { l: 'On track', v: track, c: 'var(--blue2)' },
+    { l: 'Renewed and paid', v: c.done, c: 'var(--ok)' }
+  ];
+  var pct = c.all ? Math.round(c.done / c.all * 100) : 0;
+  $('#pipe').innerHTML = '<div class="rr-sec"><span class="ic">' + ic('chart') + '</span><span><b>Where '
+    + (w.agent ? 'your' : 'the') + ' renewals stand</b><small>' + c.all + ' renewal' + (c.all === 1 ? '' : 's')
+    + ' · ' + pct + '% renewed and paid</small></span></div>'
+    + (c.all ? (window.RR ? RR.stack(parts) : '') : '<p class="muted">No renewals on this board yet.</p>');
+}
+
+function drawTiles(c, w) {
+  var tiles = [
+    { k: 'act',  v: c.act,  label: 'Need you now', icon: 'alert', tone: 'bad', sub: 'Late, owed or near' },
+    { k: 'owed', v: c.owed, label: 'Renewed, premium owed', icon: 'money', tone: 'warn' },
+    { k: 'comprehensive', v: c.comprehensive, label: 'Comprehensive', icon: 'shield' },
+    { k: 'third-party',   v: c.thirdParty,    label: 'Third party', icon: 'car' },
+    { k: 'property',      v: c.property,      label: 'Property', icon: 'home', tone: 'prop' },
+    { k: 'all',  v: c.all,  label: w.agent ? 'Your renewals' : 'All renewals', icon: 'users', tone: 'teal' },
+  ];
+  var html = tiles.map(function (t) {
+    return '<button type="button" class="rr-tile ' + (t.tone ? 't-' + t.tone : '') + (t.k === S.filter ? ' on' : '')
+      + (t.k === 'act' ? ' act' : t.k === 'owed' ? ' owed' : '') + '" data-f="' + t.k + '" aria-pressed="' + (t.k === S.filter) + '">'
+      + '<span class="k">' + ic(t.icon) + esc(t.label) + '</span>'
+      + '<span class="v">' + cu(t.v) + '</span>'
+      + (t.sub ? '<small>' + esc(t.sub) + '</small>' : '') + '</button>';
+  }).join('');
+  /* the money still to collect is in the band above, beside the counts */
+  $('#tiles').innerHTML = html;
+  Array.prototype.forEach.call(document.querySelectorAll('.rr-tile[data-f]'), function (b) {
+    b.onclick = function () {
+      S.filter = b.dataset.f;
+      Array.prototype.forEach.call(document.querySelectorAll('.rr-tile[data-f]'), function (x) {
+        x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b));
+      });
+      list();
+    };
+  });
+}
+
+function drawTabs(w) {
+  var t = [{ id: 'secList', l: w.agent ? 'Your clients' : 'Renewals', i: 'task' },
+           { id: 'secComing', l: 'Coming up', i: 'calendar' },
+           { id: 'secLines', l: 'By line', i: 'chart' }];
+  if (!w.agent && S.data.byAgent && S.data.byAgent.length) t.push({ id: 'agents', l: 'Who carries what', i: 'users' });
+  $('#tabs').innerHTML = t.map(function (x, k) {
+    return '<button type="button" data-go="' + x.id + '"' + (k === 0 ? ' class="on"' : '') + '>' + ic(x.i) + esc(x.l) + '</button>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs [data-go]'), function (b) {
+    b.onclick = function () {
+      Array.prototype.forEach.call(document.querySelectorAll('#tabs [data-go]'), function (x) { x.classList.toggle('on', x === b); });
+      var el = document.getElementById(b.dataset.go);
+      var y = el.getBoundingClientRect().top + window.scrollY - 130;
+      window.scrollTo({ top: Math.max(0, y), behavior: (window.RR && RR.calm()) ? 'auto' : 'smooth' });
+    };
+  });
+}
+
+/* Renewals coming, as a column a week, from each listed renewal's days to go.
+   A renewal already renewed is finished work and is left out. */
+function drawComing(d) {
+  var B = [
+    { l: 'Past', v: 0, p: 0, n: 'Past the renewal date' }, { l: 'Wk 1', v: 0, p: 0, now: true, n: 'This week' }, { l: 'Wk 2', v: 0, p: 0, n: 'Next week' },
+    { l: 'Wk 3', v: 0, p: 0, n: 'In three weeks' }, { l: 'Wk 4', v: 0, p: 0, n: 'In four weeks' }, { l: 'Later', v: 0, p: 0, n: 'Four weeks or more' }
+  ];
+  var undated = 0;
+  d.rows.forEach(function (r) {
+    if (r.ask.key === 'done') return;
+    if (r.days === null || r.days === undefined) { undated++; return; }
+    var k = r.days < 0 ? 0 : r.days < 7 ? 1 : r.days < 14 ? 2 : r.days < 21 ? 3 : r.days < 28 ? 4 : 5;
+    B[k].v++; B[k].p += Number(r.premium) || 0;
+  });
+  var two = B[1].p + B[2].p, twoN = B[1].v + B[2].v;
+  $('#secComing').innerHTML = '<div class="rr-sec"><span class="ic" style="--c:var(--rn);--c2:var(--blue2)">' + ic('calendar')
+    + '</span><span><b>Renewals coming</b><small>by week, not yet renewed</small></span></div>'
+    + (window.RR ? RR.cols(B.map(function (b) { return { l: b.l, v: b.v, now: b.now }; })) : '')
+    + '<p class="muted">Wk 1 is the seven days from today; Past is past the renewal date.</p>'
+    + '<p class="sum">' + (twoN ? '<b>' + twoN + '</b> renewal' + (twoN === 1 ? '' : 's') + ' in the next two weeks'
+        + (two ? ', <b>' + money(two) + '</b> in premium' : '') + '.' : 'Nothing falls due in the next two weeks.')
+    + (B[0].v ? ' <b>' + B[0].v + '</b> past the renewal date and not renewed.' : '')
+    + (undated ? ' ' + undated + ' with no date on the record.' : '') + '</p>'
+    + (d.more ? '<p class="muted">From the ' + d.rows.length + ' renewals listed on this board.</p>' : '');
+}
+
+/* By line: the server's counts, so every renewal is in it. */
+function drawLines(c) {
+  var rows = [
+    { l: 'Comprehensive', v: c.comprehensive, c: 'var(--mid)' },
+    { l: 'Third party', v: c.thirdParty, c: 'var(--blue2)' },
+    { l: 'Property', v: c.property, c: 'var(--pr2)' }
+  ];
+  $('#secLines').innerHTML = '<div class="rr-sec"><span class="ic" style="--c:var(--pr);--c2:var(--blue2)">' + ic('chart')
+    + '</span><span><b>By line</b><small>each asks a different question</small></span></div>'
+    + (window.RR ? RR.bars(rows) : '')
+    + '<p class="sum">' + (S.data.who.agent ? '<b>Comprehensive</b> needs the value confirmed, <b>third party</b> a yes and the premium, <b>property</b> its sums insured checked.'
+      : '<b>Comprehensive</b> needs a value, <b>third party</b> needs a yes, <b>property</b> needs its rebuilding cost looked at.') + '</p>';
+}
+
+/* Who is carrying what: the branch and staff only (the server sends nothing
+   to an agent). A bar each, what needs action in red, the rest in blue. */
+function drawAgents(d) {
+  var el = $('#agents');
+  if (!(d.byAgent && d.byAgent.length)) { el.innerHTML = ''; el.hidden = true; return; }
+  el.hidden = false;
+  var max = Math.max.apply(null, d.byAgent.map(function (a) { return a.n; }).concat([1]));
+  el.innerHTML = '<div class="rr-sec"><span class="ic" style="--c:var(--mid);--c2:var(--teal)">' + ic('users')
+    + '</span><span><b>Who is carrying what</b><small>tap a name to see their renewals</small></span></div>'
+    + '<div class="rb-ag">' + d.byAgent.map(function (a, k) {
+      var wAct = a.act / max * 100, wRest = (a.n - a.act) / max * 100;
+      return '<button type="button" data-agent="' + esc(a.agent) + '"' + (S.agent === a.agent ? ' class="on"' : '') + '>'
+        + '<span class="top"><b>' + esc(a.agent) + '</b><span>' + a.n + ' renewal' + (a.n === 1 ? '' : 's') + '</span></span>'
+        + '<span class="trk" aria-hidden="true" style="animation-delay:' + (k * 0.06) + 's"><i style="width:' + wAct.toFixed(1) + '%;background:var(--bad)"></i>'
+        + '<i style="width:' + wRest.toFixed(1) + '%;background:var(--blue2)"></i></span>'
+        + '<span class="sub">' + (a.act ? '<span class="act">' + a.act + ' need action</span>' : 'Nothing needs action')
+        + (a.owed ? ' · <span class="owe">' + money(a.owed) + ' owed</span>' : '') + '</span></button>';
+    }).join('') + '</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-agent]'), function (b) {
+    b.onclick = function () {
+      S.agent = S.agent === b.dataset.agent ? '' : b.dataset.agent;
+      if (S.agent) S.filter = 'all';
+      Array.prototype.forEach.call(document.querySelectorAll('.rr-tile[data-f]'), function (x) {
+        var on = x.dataset.f === S.filter; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on));
+      });
+      Array.prototype.forEach.call(el.querySelectorAll('[data-agent]'), function (x) { x.classList.toggle('on', x.dataset.agent === S.agent); });
+      list();
+      var L = document.getElementById('secList');
+      window.scrollTo({ top: Math.max(0, L.getBoundingClientRect().top + window.scrollY - 130), behavior: (window.RR && RR.calm()) ? 'auto' : 'smooth' });
+    };
+  });
+}
+
+var FNAME = { act: 'Need you now', owed: 'Renewed, premium owed', comprehensive: 'Comprehensive', 'third-party': 'Third party', property: 'Property', all: 'Everything' };
 
 function list() {
   var d = S.data, f = S.filter, q = S.q.trim().toLowerCase();
@@ -276,6 +506,7 @@ function list() {
     if (f === 'act' && !r.ask.urgent) return false;
     if (f === 'owed' && r.ask.key !== 'owed') return false;
     if ((f === 'comprehensive' || f === 'third-party' || f === 'property') && r.line !== f) return false;
+    if (S.agent && (r.agent || '(nobody named)') !== S.agent) return false;
     if (q) {
       var hay = [r.client, r.policy, r.detail, r.agent].join(' ').toLowerCase();
       if (hay.indexOf(q) < 0) return false;
@@ -283,11 +514,26 @@ function list() {
     return true;
   });
 
+  $('#listTitle').textContent = d.who.agent ? 'Your clients' : 'Renewals to work';
+  $('#listSub').textContent = 'Most pressing first · ' + (d.who.agent ? 'what each needs from you' : 'what each needs next');
+  $('#showing').innerHTML = 'Showing <b>' + esc(FNAME[f] || f) + '</b>' + (S.agent ? ' · <b>' + esc(S.agent) + '</b>' : '')
+    + ' · ' + rows.length + ' renewal' + (rows.length === 1 ? '' : 's')
+    + ((f !== 'all' || S.agent || q) ? ' <button type="button" class="rr-link" id="clearF">Show everything</button>' : '');
+  var cl = document.getElementById('clearF');
+  if (cl) cl.onclick = function () {
+    S.filter = 'all'; S.agent = ''; S.q = ''; $('#q').value = '';
+    Array.prototype.forEach.call(document.querySelectorAll('.rr-tile[data-f]'), function (x) {
+      var on = x.dataset.f === 'all'; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-agent]'), function (x) { x.classList.remove('on'); });
+    list();
+  };
+
   if (!rows.length) {
-    $('#list').innerHTML = '<div class="empty">' + (q
-      ? 'Nothing matches &ldquo;' + esc(S.q) + '&rdquo;.'
+    $('#list').innerHTML = '<div class="rr-empty"><div class="ic">' + ic(q ? 'search' : f === 'act' ? 'checkc' : 'info') + '</div>'
+      + '<b>' + (q ? 'Nothing matches &ldquo;' + esc(S.q) + '&rdquo;.'
       : f === 'act' ? 'Nothing needs you right now. That is the board doing its job.'
-      : 'Nothing here.') + '</div>';
+      : 'Nothing here.') + '</b></div>';
     return;
   }
 
@@ -300,48 +546,102 @@ function list() {
     b.onclick = function () {
       var p = document.getElementById('p_' + b.dataset.note);
       p.hidden = !p.hidden;
+      b.setAttribute('aria-expanded', String(!p.hidden));
       if (!p.hidden) p.querySelector('textarea').focus();
     };
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-save]'), function (b) {
     b.onclick = function () { saveNote(b.dataset.save, b); };
   });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-assign]'), function (b) {
+    b.onclick = function () {
+      var p = document.getElementById('a_' + b.dataset.assign);
+      p.hidden = !p.hidden;
+      b.setAttribute('aria-expanded', String(!p.hidden));
+      if (!p.hidden) p.querySelector('input').focus();
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-assignsave]'), function (b) {
+    b.onclick = function () { saveAssign(b.dataset.assignsave, b); };
+  });
+}
+
+/* The days to go as a ring: fuller the nearer it is, red once past. The
+   number sits in the ring and the words under it, so the ring stays legible. */
+function whenRing(r) {
+  var R = window.RR;
+  if (r.days === null || r.days === undefined) {
+    return '<div class="rb-when"><div class="rr-ring" style="--p:0;--c:var(--line2)" role="img" aria-label="No renewal date on the record"><span><b>—</b></span></div>'
+      + '<span class="due"><b>No date</b>' + esc(r.due || 'on the record') + '</span></div>';
+  }
+  var big, words, p, col, cls;
+  if (r.ask.key === 'done') { big = Math.abs(r.days); words = 'renewed'; p = 100; col = 'var(--ok)'; cls = 'done'; }
+  else if (r.days < 0) { big = Math.abs(r.days); words = Math.abs(r.days) === 1 ? 'day past' : 'days past'; p = 100; col = 'var(--bad)'; cls = 'late'; }
+  else if (r.days === 0) { big = 0; words = 'due today'; p = 100; col = 'var(--bad)'; cls = 'late'; }
+  else {
+    big = r.days; words = r.days === 1 ? 'day to go' : 'days to go';
+    p = Math.max(6, Math.round(100 - Math.min(r.days, 60) / 60 * 100));
+    cls = r.ask.tone === 'soon' ? 'soon' : '';
+    col = cls ? '#C98A00' : 'var(--blue2)';
+  }
+  if (cls === 'done') {
+    return '<div class="rb-when done">' + (R ? R.ring(100, '', '', { c: col, label: 'Renewed' + (r.due ? ', renewal date ' + r.due : '') }) : '')
+      .replace('<b></b>', '<b>' + ic('check') + '</b>')
+      + '<span class="due"><b>Renewed</b>' + esc(r.due) + '</span></div>';
+  }
+  return '<div class="rb-when ' + cls + '">' + (R ? R.ring(p, String(big), '', { c: col, label: big + ' ' + words + (r.due ? ', ' + r.due : '') }) : '<b>' + big + '</b>')
+    + '<span class="due"><b>' + esc(words) + '</b>' + esc(r.due) + '</span></div>';
 }
 
 function card(r) {
   var who = S.data.who;
   var ask = who.agent ? r.ask.agent : r.ask.staff;
+  var L = lineOf(r), st = standing(r);
+  var tone = r.ask.key === 'done' ? 'done' : r.ask.tone === 'late' ? 'late' : r.ask.tone === 'soon' ? 'soon' : '';
+
   var when = r.days === null ? esc(r.due)
-    : r.days < 0 ? '<b style="color:var(--bad)">' + Math.abs(r.days) + ' days past</b>'
-    : r.days === 0 ? '<b style="color:var(--bad)">due today</b>'
-    : r.days === 1 ? '<b style="color:var(--warn)">due tomorrow</b>'
+    : r.days < 0 ? '<b>' + Math.abs(r.days) + ' days past</b>'
+    : r.days === 0 ? '<b>due today</b>'
+    : r.days === 1 ? '<b>due tomorrow</b>'
     : 'in <b>' + r.days + ' days</b> &middot; ' + esc(r.due);
 
   var meta = [];
-  meta.push('<span class="pill ' + r.line + '">' + (r.line === 'third-party' ? 'Third party'
-    : r.line === 'comprehensive' ? 'Comprehensive' : 'Property') + '</span>');
-  if (r.premium) meta.push('Premium ' + money(r.premium));
-  if (r.balance > 0) meta.push('<b style="color:var(--warn)">' + money(r.balance) + ' owed</b>');
-  if (!who.agent && r.agent) meta.push('Agent: ' + esc(r.agent));
-  if (!who.agent && r.assignedTo) meta.push('With ' + esc(r.assignedTo));
-  if (r.email) meta.push(esc(r.email));
+  meta.push('<span>' + ic('calendar') + '<span>' + when + '</span></span>');
+  if (r.premium) meta.push('<span>' + ic('money') + 'Premium <b>' + money(r.premium) + '</b></span>');
+  if (r.balance > 0) meta.push('<span class="owe">' + ic('card') + money(r.balance) + ' owed</span>');
+  if (!who.agent && r.agent) meta.push('<span>' + ic('user') + 'Agent: <b>' + esc(r.agent) + '</b></span>');
+  if (!who.agent && r.assignedTo) meta.push('<span>' + ic('task') + 'With <b>' + esc(r.assignedTo) + '</b></span>');
+  if (r.email) meta.push('<span>' + ic('mail') + esc(r.email) + '</span>');
 
-  return '<div class="row ' + (r.ask.tone === 'late' ? 'late ' : r.ask.tone === 'soon' ? 'soon ' : '')
-    + (r.ask.key === 'done' ? 'done' : '') + '">'
-    + '<div class="rtop"><b>' + esc(r.client) + '</b>'
-    + '<span class="pol">' + esc(r.detail || r.policy) + '</span>'
-    + '<span class="when">' + when + '</span></div>'
-    + '<div class="ask' + (r.ask.tone === 'late' ? ' urgent' : '') + '">' + esc(ask) + '</div>'
-    + '<div class="meta">' + meta.join('<span>&middot;</span>') + '</div>'
-    + '<div class="acts">'
-    +   (r.mobile ? '<a href="tel:' + esc(r.mobile) + '"><button class="ghost">Call</button></a>' : '')
-    +   '<button class="ghost" data-note="' + esc(r.token) + '">Log what happened</button>'
+  var tk = esc(r.token);
+  return '<article class="rb-row row ' + tone + '">'
+    + whenRing(r)
+    + '<div class="rb-main">'
+    +   '<div class="rb-head"><b class="name">' + esc(r.client) + '</b><span class="rr-pill ' + st.cls + '">' + esc(st.w) + '</span></div>'
+    +   '<div class="rb-line ' + (r.line === 'property' ? 'property' : '') + '"><span class="lic">' + ic(L.icon) + '</span>'
+    +     '<span>' + esc(L.word) + (r.detail || r.policy ? ' · <span class="pol">' + esc(r.detail || r.policy) + '</span>' : '')
+    +     (r.detail && r.policy ? ' <span class="pol">(' + esc(r.policy) + ')</span>' : '') + '</span></div>'
+    +   '<div class="rb-ask ask ' + tone + (r.ask.tone === 'late' ? ' urgent' : '') + '">'
+    +     ic(tone === 'done' ? 'checkc' : tone === 'late' ? 'alert' : tone === 'soon' ? 'clock' : 'arrow') + '<span>' + esc(ask) + '</span></div>'
+    +   '<div class="rb-meta meta">' + meta.join('') + '</div>'
     + '</div>'
-    + '<div class="panel" id="p_' + esc(r.token) + '" hidden>'
-    +   '<textarea placeholder="What happened on this renewal? The next person reads this."></textarea>'
-    +   '<button data-save="' + esc(r.token) + '">Save the note</button>'
+    + '<div class="rb-acts acts">'
+    +   (r.mobile ? '<a class="rr-btn sm" href="tel:' + esc(r.mobile) + '">' + ic('phone') + 'Call</a>' : '')
+    +   (r.email ? '<a class="rr-btn sm ghost" href="mailto:' + esc(r.email) + '">' + ic('mail') + 'E-mail</a>' : '')
+    +   '<button type="button" class="rr-btn sm ghost" data-note="' + tk + '" aria-expanded="false">' + ic('chat') + 'Log what happened</button>'
+    +   (who.agent ? '' : '<button type="button" class="rr-btn sm ghost" data-assign="' + tk + '" aria-expanded="false">' + ic('user') + (r.assignedTo ? 'Reassign' : 'Assign') + '</button>')
     + '</div>'
-    + '</div>';
+    + '<div class="rb-panel panel" id="p_' + tk + '" hidden>'
+    +   '<label class="rr-f"><span class="l">What happened on this renewal?</span>'
+    +   '<textarea class="rr-in" placeholder="What happened on this renewal? The next person reads this."></textarea></label>'
+    +   '<button type="button" class="rr-btn sm teal" data-save="' + tk + '">' + ic('check') + 'Save the note</button>'
+    + '</div>'
+    + (who.agent ? '' : '<div class="rb-panel panel" id="a_' + tk + '" hidden>'
+    +   '<label class="rr-f"><span class="l">Who works this renewal?</span>'
+    +   '<input class="rr-in" list="rbNames" value="' + esc(r.assignedTo) + '" placeholder="A name, or leave empty to clear"></label>'
+    +   '<button type="button" class="rr-btn sm" data-assignsave="' + tk + '">' + ic('check') + 'Save who has it</button>'
+    + '</div>')
+    + '</article>';
 }
 
 function saveNote(token, btn) {
@@ -351,13 +651,33 @@ function saveNote(token, btn) {
   google.script.run
     .withSuccessHandler(function (res) {
       p.innerHTML = '<div class="ok">' + esc(res.said) + '</div>';
+      if (window.RR) RR.toast(res.said, 'ok');
       refresh();
     })
     .withFailureHandler(function (e) {
-      btn.disabled = false; btn.textContent = 'Save the note';
-      p.insertAdjacentHTML('beforeend', '<div class="err">' + esc(e.message || e) + '</div>');
+      btn.disabled = false; btn.innerHTML = ic('check') + 'Save the note';
+      var old = p.querySelector('.err'); if (old) old.remove();
+      p.insertAdjacentHTML('beforeend', '<div class="err" style="margin:10px 0 0">' + esc(e.message || e) + '</div>');
     })
     .renewalBoardAct(S.key, S.email, S.pin, { what: 'note', token: token, note: note });
+}
+
+function saveAssign(token, btn) {
+  var p = document.getElementById('a_' + token);
+  var to = p.querySelector('input').value.trim();
+  btn.disabled = true; btn.textContent = 'Saving…';
+  google.script.run
+    .withSuccessHandler(function (res) {
+      p.innerHTML = '<div class="ok">' + esc(res.said) + '</div>';
+      if (window.RR) RR.toast(res.said, 'ok');
+      refresh();
+    })
+    .withFailureHandler(function (e) {
+      btn.disabled = false; btn.innerHTML = ic('check') + 'Save who has it';
+      var old = p.querySelector('.err'); if (old) old.remove();
+      p.insertAdjacentHTML('beforeend', '<div class="err" style="margin:10px 0 0">' + esc(e.message || e) + '</div>');
+    })
+    .renewalBoardAct(S.key, S.email, S.pin, { what: 'assign', token: token, to: to });
 }
 </script>
 <!-- rrb-views -->

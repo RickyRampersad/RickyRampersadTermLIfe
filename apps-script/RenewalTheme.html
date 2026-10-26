@@ -112,6 +112,10 @@ body.rr{margin:0;min-height:100vh;color:var(--body);font:1rem/1.55 -apple-system
 .rr-btn.ghost:hover{border-color:var(--blue2);color:var(--mid)}
 .rr-btn.sm{font-size:.88rem;min-height:40px;padding:8px 13px;border-radius:11px}
 .rr-btn.danger{background:#fff;color:var(--bad);border:1.5px solid #F0C4BF;box-shadow:none}
+/* a link styled as a button: .rr a would otherwise colour it blue on blue */
+.rr a.rr-btn,.rr a.rr-btn:hover{color:#fff}
+.rr a.rr-btn.ghost{color:var(--blue)}.rr a.rr-btn.ghost:hover{color:var(--mid)}
+.rr a.rr-btn.danger{color:var(--bad)}
 .rr-link{font:inherit;font-size:.9rem;font-weight:700;color:var(--blue);background:none;border:0;padding:8px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .rip{position:absolute;border-radius:50%;background:currentColor;opacity:.22;transform:scale(0);animation:rr-rip .6s ease-out forwards;pointer-events:none}
 
