@@ -65,7 +65,7 @@
  */
 
 var MQ = {
-  VERSION: '2026-10-26c',
+  VERSION: '2026-10-26d',
   BRAND: 'Ricky Rampersad Branch',
   LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',   // the blue shield (the manager's choice, 21 Oct 2026); hosted PNG: Gmail strips SVG and data URIs
   SITE: 'https://rickyrampersadbranch.com/motor-quote/',
@@ -115,6 +115,9 @@ var MQ = {
      branch's. MQ_AGENT_UNITS (comma-separated) replaces the list when a unit
      is added. Read at most every six hours. */
   AGENT_UNITS: ['Ricky_Rampersad', 'Akaash_Kalladeen'], AGENTS_CACHE_S: 6 * 3600, AGENTS_SHOWN: 8,
+  /* Renew by the vehicle's number: tries a sign-in may make a day, and how
+     many vehicles found that way it keeps. */
+  FIND_TRIES: 8, FIND_KEEP: 5,
 };
 
 var MQ_COLS = ['Ref', 'Received', 'Status', 'Client', 'Email', 'Mobile', 'Contact Id', 'Contact action',
@@ -132,13 +135,15 @@ var MQ_COLS = ['Ref', 'Received', 'Status', 'Client', 'Email', 'Mobile', 'Contac
   /* Added 26 October 2026: who the client is to us, the Opportunity, and the permit on the Contact. */
   'Client status', 'Client says', 'SF opportunity', 'Permit on file', 'Permit update',
   /* Added 26 October 2026: who placed it (an agent's e-mail when an agent did) and who the producer is. */
-  'Placed by', 'Producer', 'Producer Id'];
+  'Placed by', 'Producer', 'Producer Id',
+  /* Added 26 October 2026: a renewal the client found by the vehicle's registration. */
+  'Renewal found by'];
 
 /* The questions, in the order the e-mail to the quotes desk lists them. Each
    key is a field the page sends; the label is what the desk reads. */
 var MQ_FIELDS = [
   ['section', 'The request'],
-  ['flowLabel', 'Request'], ['renewDate', 'Renews on'], ['renewChoice', 'The client asks'], ['renewChanges', 'Changes asked for'],
+  ['flowLabel', 'Request'], ['renewFoundBy', 'How the vehicle was found'], ['renewDate', 'Renews on'], ['renewChoice', 'The client asks'], ['renewChanges', 'Changes asked for'],
   ['lastPremium', 'Premium on file for this term'], ['renewHistory', 'Terms on file'], ['invoiceFacts', 'Read from the document'],
   ['section', 'The client'],
   ['name', 'Client name'], ['email', 'E-mail'], ['mobile', 'Mobile'], ['gender', 'Gender'], ['dob', 'Date of birth'],
@@ -202,6 +207,7 @@ function doPost(e) {
       case 'propose':     out = mqPropose_(b); break;
       case 'permit':      out = mqPermitSave_(b); break;
       case 'agents':      out = mqAgentSearch_(b); break;
+      case 'findVehicle': out = mqFindVehicle_(b); break;
       case 'signOut':     out = mqSignOut_(b); break;
       default:            out = { ok: false, error: 'Unknown action' };
     }
@@ -342,7 +348,7 @@ function mqVerifyCode_(b) {
     return { ok: false, error: 'That code did not match. Check the e-mail and try again.' };
   }
   cache.remove(slot);
-  var me = mqLookup_(email);
+  var me = mqWithVerified_(mqLookup_(email), email);
   var token = mqNewSession_(email, me.contactId, me.name);
   mqLog_('(sign-in)', me.agent ? 'agent-signed-in' : me.found ? 'client-signed-in' : 'new-signed-in', email + (me.agent ? ' · ' + me.agent.name : me.found ? ' · ' + me.name : ''));
   return { ok: true, token: token, me: me, requests: mqRequests_(email), mode: mqMode_() };
@@ -392,7 +398,7 @@ function mqSignOut_(b) {
 function mqMe_(b) {
   var s = mqSession_(b.token);
   if (!s) return { ok: false, error: 'Please sign in again.', signedOut: true };
-  var me = mqLookup_(s.email);
+  var me = mqWithVerified_(mqLookup_(s.email), s.email);
   return { ok: true, me: me, requests: mqRequests_(s.email), mode: mqMode_() };
 }
 
@@ -495,58 +501,180 @@ function mqLookup_(email) {
     });
   } catch (e) { mqLog_('(lookup)', 'policies-failed', String(e)); }
   try {
-    var base = 'Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Year_of_Manufacture__c, Chassis__c, Engine__c, ' +
-      'Motor_Vehicle_Coverage_Type__c, Cover1__c, Windscreen__c, Carrier__c, From__c, To__c, Vehicle_Status__c';
-    var where = ' FROM Risk_Details__c WHERE Vehicle__c != null AND (Email__c = ' + mqQ_(email) +
-      (inIds ? ' OR Insured__c IN (' + inIds + ')' : '') + ') ORDER BY To__c DESC NULLS LAST LIMIT 100';
-    /* The renewal date and the premium are asked for too; an org without
-       either field still gives the vehicles. */
-    var rows;
-    try { rows = mqSoql_('SELECT ' + base + ', Next_Renewal_Date__c, Premium_Due__c' + where); }
-    catch (e) { mqLog_('(lookup)', 'renewal-fields-failed', String(e)); rows = mqSoql_('SELECT ' + base + where); }
-    var byReg = {}, order = [];
-    rows.forEach(function (r) {
-      var key = mqRegKey_(r.Vehicle__c);
-      if (!key) return;
-      if (!byReg[key]) { byReg[key] = { reg: r.Vehicle__c, terms: [], seen: {} }; order.push(key); }
-      var v = byReg[key];
-      /* Newest cover first; a blank never erases what an older year knew. */
-      var take = function (field, from) { if (!v[field] && r[from] != null && String(r[from]).trim() !== '') v[field] = r[from]; };
-      take('make', 'Vehicle_Make__c'); take('model', 'Model__c'); take('year', 'Year_of_Manufacture__c');
-      take('chassis', 'Chassis__c'); take('engine', 'Engine__c'); take('cover', 'Motor_Vehicle_Coverage_Type__c');
-      take('sumInsured', 'Cover1__c'); take('windscreen', 'Windscreen__c'); take('carrier', 'Carrier__c');
-      take('from', 'From__c'); take('to', 'To__c'); take('status', 'Vehicle_Status__c'); take('policy', 'Policy__c');
-      /* One term per policy and end date: the same term twice on file counts
-         once (the rule the branch's renewal list keeps). */
-      var tk = String(r.Policy__c || '') + '|' + String(r.To__c || '');
-      if (r.To__c && !v.seen[tk]) {
-        v.seen[tk] = 1;
-        v.terms.push({ policy: r.Policy__c || '', from: mqDay_(r.From__c), to: mqDay_(r.To__c), renew: mqDay_(r.Next_Renewal_Date__c),
-          cover: r.Motor_Vehicle_Coverage_Type__c || '', sum: mqNum_(r.Cover1__c), premium: mqNum_(r.Premium_Due__c),
-          carrier: r.Carrier__c || '', windscreen: r.Windscreen__c || '' });
-      } else if (r.To__c && v.seen[tk]) {
-        /* The duplicate may know what the first did not. */
-        var t = v.terms.filter(function (x) { return x.policy + '|' + x.to === String(r.Policy__c || '') + '|' + mqDay_(r.To__c); })[0];
-        if (t) { if (!t.cover && r.Motor_Vehicle_Coverage_Type__c) t.cover = r.Motor_Vehicle_Coverage_Type__c;
-                 if (!t.sum && r.Cover1__c) t.sum = mqNum_(r.Cover1__c); if (!t.premium && r.Premium_Due__c) t.premium = mqNum_(r.Premium_Due__c);
-                 if (!t.from && r.From__c) t.from = mqDay_(r.From__c); if (!t.renew && r.Next_Renewal_Date__c) t.renew = mqDay_(r.Next_Renewal_Date__c); }
-      }
-    });
-    var today = mqDate_(new Date(), 'yyyy-MM-dd');
-    me.vehicles = order.map(function (k) {
-      var v = byReg[k]; delete v.seen;
-      mqRenewal_(v, today);
-      v.terms = v.terms.slice(0, MQ.TERMS_SHOWN);
-      return v;
-    });
-    /* The renewal comes first: the soonest due, then the ones that lapsed. */
-    var rank = { due: 0, lapsed: 1, later: 2, ended: 3, '': 4 };
-    me.vehicles.sort(function (a, b) { return (rank[a.renewState || ''] - rank[b.renewState || '']) || ((a.renewIn || 0) - (b.renewIn || 0)); });
+    me.vehicles = mqVehicles_(mqVehicleRows_('(Email__c = ' + mqQ_(email) + (inIds ? ' OR Insured__c IN (' + inIds + ')' : '') + ')'));
   } catch (e) { mqLog_('(lookup)', 'vehicles-failed', String(e)); }
   return me;
 }
 
 function mqRegKey_(r) { return String(r || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
+var MQ_RISK_BASE = 'Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Year_of_Manufacture__c, Chassis__c, Engine__c, ' +
+  'Motor_Vehicle_Coverage_Type__c, Cover1__c, Windscreen__c, Carrier__c, From__c, To__c, Vehicle_Status__c';
+
+/** The vehicle records that match a condition, newest cover first. The
+ *  renewal date and the premium are asked for too; an org without either
+ *  field still gives the vehicles. `extra` adds fields (the insured, the
+ *  e-mail on the record) for the search by registration. */
+function mqVehicleRows_(cond, extra) {
+  var where = ' FROM Risk_Details__c WHERE Vehicle__c != null AND ' + cond + ' ORDER BY To__c DESC NULLS LAST LIMIT 100';
+  var more = extra ? ', ' + extra : '';
+  try { return mqSoql_('SELECT ' + MQ_RISK_BASE + ', Next_Renewal_Date__c, Premium_Due__c' + more + where); }
+  catch (e) { mqLog_('(lookup)', 'renewal-fields-failed', String(e)); return mqSoql_('SELECT ' + MQ_RISK_BASE + more + where); }
+}
+
+/** The records grouped into one vehicle a registration, each with its terms
+ *  and where its renewal stands, the renewal first. */
+function mqVehicles_(rows) {
+  var byReg = {}, order = [];
+  rows.forEach(function (r) {
+    var key = mqRegKey_(r.Vehicle__c);
+    if (!key) return;
+    if (!byReg[key]) { byReg[key] = { reg: r.Vehicle__c, terms: [], seen: {} }; order.push(key); }
+    var v = byReg[key];
+    /* Newest cover first; a blank never erases what an older year knew. */
+    var take = function (field, from) { if (!v[field] && r[from] != null && String(r[from]).trim() !== '') v[field] = r[from]; };
+    take('make', 'Vehicle_Make__c'); take('model', 'Model__c'); take('year', 'Year_of_Manufacture__c');
+    take('chassis', 'Chassis__c'); take('engine', 'Engine__c'); take('cover', 'Motor_Vehicle_Coverage_Type__c');
+    take('sumInsured', 'Cover1__c'); take('windscreen', 'Windscreen__c'); take('carrier', 'Carrier__c');
+    take('from', 'From__c'); take('to', 'To__c'); take('status', 'Vehicle_Status__c'); take('policy', 'Policy__c');
+    /* One term per policy and end date: the same term twice on file counts
+       once (the rule the branch's renewal list keeps). */
+    var tk = String(r.Policy__c || '') + '|' + String(r.To__c || '');
+    if (r.To__c && !v.seen[tk]) {
+      v.seen[tk] = 1;
+      v.terms.push({ policy: r.Policy__c || '', from: mqDay_(r.From__c), to: mqDay_(r.To__c), renew: mqDay_(r.Next_Renewal_Date__c),
+        cover: r.Motor_Vehicle_Coverage_Type__c || '', sum: mqNum_(r.Cover1__c), premium: mqNum_(r.Premium_Due__c),
+        carrier: r.Carrier__c || '', windscreen: r.Windscreen__c || '' });
+    } else if (r.To__c && v.seen[tk]) {
+      /* The duplicate may know what the first did not. */
+      var t = v.terms.filter(function (x) { return x.policy + '|' + x.to === String(r.Policy__c || '') + '|' + mqDay_(r.To__c); })[0];
+      if (t) { if (!t.cover && r.Motor_Vehicle_Coverage_Type__c) t.cover = r.Motor_Vehicle_Coverage_Type__c;
+               if (!t.sum && r.Cover1__c) t.sum = mqNum_(r.Cover1__c); if (!t.premium && r.Premium_Due__c) t.premium = mqNum_(r.Premium_Due__c);
+               if (!t.from && r.From__c) t.from = mqDay_(r.From__c); if (!t.renew && r.Next_Renewal_Date__c) t.renew = mqDay_(r.Next_Renewal_Date__c); }
+    }
+  });
+  var today = mqDate_(new Date(), 'yyyy-MM-dd');
+  var out = order.map(function (k) {
+    var v = byReg[k]; delete v.seen;
+    mqRenewal_(v, today);
+    v.terms = v.terms.slice(0, MQ.TERMS_SHOWN);
+    return v;
+  });
+  /* The renewal comes first: the soonest due, then the ones that lapsed. */
+  var rank = { due: 0, lapsed: 1, later: 2, ended: 3, '': 4 };
+  out.sort(function (a, b) { return (rank[a.renewState || ''] - rank[b.renewState || '']) || ((a.renewIn || 0) - (b.renewIn || 0)); });
+  return out;
+}
+
+/* ====================== renew by the vehicle's number ====================== */
+
+/* A vehicle whose record does not carry the e-mail the client signed in with
+   (a company or work address, an old one, or none: 15 of the 186 vehicles
+   renewing from October 2026 to March 2027 had no e-mail on file) is found by
+   its registration AND the insured's surname or the policy number. The
+   registration alone is printed on the car, so it never shows anything. A
+   miss says the same whether the vehicle is on file or not, and tries are
+   counted per e-mail a day. A vehicle found this way is remembered against
+   the sign-in for six hours, so the renewal can be sent. */
+function mqRegVariants_(raw) {
+  var key = mqRegKey_(raw), m = key.match(/^([A-Z]+)(\d+)([A-Z]*)$/), out = [key];
+  if (m) { out.push(m[1] + ' ' + m[2] + m[3]); out.push(m[1] + '-' + m[2] + m[3]); if (m[3]) out.push(m[1] + ' ' + m[2] + ' ' + m[3]); }
+  return out;
+}
+function mqPolKey_(p) { return String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+function mqVerKey_(email) { return 'mq.vv.' + mqHash_(String(email || '').toLowerCase()).slice(0, 24); }
+function mqVerified_(email) {
+  try { return JSON.parse(CacheService.getScriptCache().get(mqVerKey_(email)) || '{}') || {}; } catch (e) { return {}; }
+}
+function mqVerifiedPut_(email, key, rec) {
+  var all = mqVerified_(email); all[key] = rec;
+  var keys = Object.keys(all); if (keys.length > MQ.FIND_KEEP) delete all[keys[0]];
+  try { CacheService.getScriptCache().put(mqVerKey_(email), JSON.stringify(all), 6 * 3600); } catch (e) {}
+}
+
+/** The records for one registration, with who is insured, for the ownership
+ *  check. Never sent to the page. */
+function mqRegRows_(reg) {
+  var vars = mqRegVariants_(reg);
+  return mqVehicleRows_('Vehicle__c IN (' + vars.map(mqQ_).join(',') + ')', 'Email__c, Insured__c, Insured__r.LastName')
+    .filter(function (r) { return mqRegKey_(r.Vehicle__c) === mqRegKey_(reg); });
+}
+
+/** Does the surname or policy number belong to these records? The surname is
+ *  read off the insured on the vehicle record, then off the policy's own
+ *  contact; the policy number is compared without spaces. */
+function mqOwns_(rows, surname, policy) {
+  var pk = mqPolKey_(policy), sw = mqWords_(surname);
+  var pols = {}; rows.forEach(function (r) { if (r.Policy__c) pols[mqPolKey_(r.Policy__c)] = r.Policy__c; });
+  if (pk.length >= 6 && pols[pk]) return { how: 'the policy number', contactId: (rows.filter(function (r) { return mqPolKey_(r.Policy__c) === pk && r.Insured__c; })[0] || {}).Insured__c || '' };
+  if (!sw.length) return null;
+  var hasSurname = function (last) { var have = mqWords_(last); return sw.every(function (w) { return have.indexOf(w) > -1; }); };
+  var hit = rows.filter(function (r) { return r.Insured__r && hasSurname(r.Insured__r.LastName); })[0];
+  if (hit) return { how: 'the insured\'s surname', contactId: hit.Insured__c || '' };
+  /* The policy record writes the number spaced ("TT APU 0660188"); the vehicle
+     record often does not ("TTAPF1362870"). Both forms are asked for. */
+  var list = [];
+  Object.keys(pols).slice(0, 8).forEach(function (k) {
+    list.push(pols[k]); if (list.indexOf(k) < 0) list.push(k);
+    var m = k.match(/^([A-Z]{2})([A-Z]{3})(\d+)$/); if (m) { var sp = m[1] + ' ' + m[2] + ' ' + m[3]; if (list.indexOf(sp) < 0) list.push(sp); }
+  });
+  if (!list.length) return null;
+  try {
+    var c = mqSoql_('SELECT Contact__c, Contact__r.LastName FROM CLIENT_PORTFOLIO__c WHERE Contact__c != null AND POLICY__c IN (' +
+      list.map(mqQ_).join(',') + ') LIMIT 20').filter(function (r) { return r.Contact__r && hasSurname(r.Contact__r.LastName); })[0];
+    if (c) return { how: 'the surname on the policy', contactId: c.Contact__c || '' };
+  } catch (e) { mqLog_('(find)', 'policy-contact-failed', String(e)); }
+  return null;
+}
+
+function mqFindVehicle_(b) {
+  var s = mqSession_(b.token);
+  if (!s) return { ok: false, error: 'Please sign in again.', signedOut: true };
+  if (mqAgentByEmail_(s.email)) return { ok: false, error: 'A renewal is asked for by the client from their own sign-in, or by the branch.' };
+  var reg = mqRegKey_(mqClean_(b.reg, 20)), surname = mqClean_(b.surname, 60), policy = mqClean_(b.policy, 30);
+  if (reg.length < 2 || reg.length > 10) return { ok: false, error: 'Please type the registration as it is on the vehicle, for example PDZ 1234.' };
+  if (!mqWords_(surname).length && mqPolKey_(policy).length < 6) return { ok: false, error: 'Please give the surname on the policy, or the policy number from your certificate.' };
+  if (!mqSfReady_()) return { ok: false, error: 'We cannot look up vehicles right now. Please call the branch on ' + MQ.BRANCH_TEL + '.' };
+  var cache = CacheService.getScriptCache(), tk = 'mq.fv.' + mqHash_(s.email).slice(0, 24) + '.' + mqDate_(new Date(), 'yyyy-MM-dd');
+  var tries = Number(cache.get(tk) || 0);
+  if (tries >= MQ.FIND_TRIES) return { ok: false, error: 'That is the most we can look up today. Please call the branch on ' + MQ.BRANCH_TEL + ' and we will find it with you.' };
+  var rows = [];
+  try { rows = mqRegRows_(reg); } catch (e) { mqLog_('(find)', 'read-failed', String(e)); return { ok: false, error: 'We could not reach our records just now. Please try again in a minute.' }; }
+  var own = rows.length ? mqOwns_(rows, surname, policy) : null;
+  if (!own) {
+    cache.put(tk, String(tries + 1), 86400);
+    mqLog_('(find)', 'no-match', s.email + ' · ' + reg + (rows.length ? ' · on file' : ' · not on file'));
+    return { ok: false, notFound: true, error: 'We could not match that vehicle to that ' + (mqPolKey_(policy).length >= 6 ? 'policy number' : 'surname') +
+      '. Check both, or add the policy number from your certificate. If it still does not match, call the branch on ' + MQ.BRANCH_TEL + '.' };
+  }
+  var emails = {}; rows.forEach(function (r) { if (r.Email__c) emails[String(r.Email__c).toLowerCase()] = 1; });
+  mqVerifiedPut_(s.email, reg, { how: own.how, contactId: own.contactId, recordEmail: Object.keys(emails).join(', '), at: mqDate_(new Date(), 'd MMM yyyy HH:mm') });
+  mqLog_('(find)', 'found', s.email + ' · ' + reg + ' · by ' + own.how);
+  var me = mqWithVerified_(mqLookup_(s.email), s.email);
+  var v = (me.vehicles || []).filter(function (x) { return mqRegKey_(x.reg) === reg; })[0];
+  return { ok: true, me: me, reg: v ? v.reg : reg, vehicle: v || null };
+}
+
+/** The vehicles found by registration this sign-in, added to the ones the
+ *  e-mail finds. */
+function mqWithVerified_(me, email) {
+  if (!me || me.agent || !mqSfReady_()) return me;
+  var ver = mqVerified_(email), have = {};
+  (me.vehicles || []).forEach(function (v) { have[mqRegKey_(v.reg)] = 1; });
+  var added = false;
+  Object.keys(ver).forEach(function (k) {
+    if (have[k]) return;
+    try {
+      var v = mqVehicles_(mqRegRows_(k))[0];
+      if (v) { v.byReg = true; me.vehicles = (me.vehicles || []).concat([v]); added = true; }
+    } catch (e) { mqLog_('(find)', 'reread-failed', String(e)); }
+  });
+  if (added) {
+    var rank = { due: 0, lapsed: 1, later: 2, ended: 3, '': 4 };
+    me.vehicles.sort(function (a, b) { return (rank[a.renewState || ''] - rank[b.renewState || '']) || ((a.renewIn || 0) - (b.renewIn || 0)); });
+  }
+  return me;
+}
 /* A Salesforce date is "yyyy-MM-dd" (a datetime is cut to its day). */
 function mqDay_(v) { var m = String(v || '').match(/^(\d{4}-\d{2}-\d{2})/); return m ? m[1] : ''; }
 function mqNum_(v) { var n = Number(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return v == null || v === '' || isNaN(n) ? 0 : n; }
@@ -706,7 +834,7 @@ function mqPermitSave_(b) {
     var task = mqTaskRaw_({ WhoId: s.contactId, Subject: 'Confirm driver\'s permit: client gave a different number', Description: plan.summary + '\n\nFrom the motor quote page, ' + mqDate_() + '.' });
     if (task) mqLog_('(permit)', 'task', task);
   }
-  return { ok: true, message: msg, changed: !!plan.written, me: mqLookup_(s.email) };
+  return { ok: true, message: msg, changed: !!plan.written, me: mqWithVerified_(mqLookup_(s.email), s.email) };
 }
 
 /* ============================ who the client is ============================ */
@@ -995,7 +1123,10 @@ function mqSubmit_(b) {
   try {
     ref = mqNewRef_();
     /* An agent's session is never the client's record: the client is found by their own e-mail. */
-    var contact = mqEnsureContact_(d, placer ? { email: d.email, contactId: '' } : s);
+    var contact = placer ? mqEnsureContact_(d, { email: d.email, contactId: '' })
+      : (d.renewContactId && !(s.contactId && mqIsSfId_(s.contactId)))
+        ? { id: d.renewContactId, action: 'Insured on the vehicle record (found by registration)', existing: true }
+        : mqEnsureContact_(d, s);
     d.producer = mqProducer_(d, placer);
     if (d.producer.agent) { d.agent = d.producer.name; if (d.producer.email) d.agentEmail = d.producer.email; }
     d.agentHow = d.producer.agent ? d.producer.name + ', ' + d.producer.how : d.producer.how;
@@ -1080,7 +1211,7 @@ function mqRead_(q, s, placer) {
     sfVehicle: g('sfVehicle', 40),
     newUnreg: yn('newUnreg'),
     renewChoice: /change/i.test(g('renewChoice', 40)) ? 'Renew with changes' : /as it is|as is/i.test(g('renewChoice', 40)) ? 'Renew as it is' : '',
-    renewChanges: g('renewChanges', 1000), renewDate: '', lastPremium: '', renewHistory: '',
+    renewChanges: g('renewChanges', 1000), renewDate: '', lastPremium: '', renewHistory: '', renewFoundBy: '', renewContactId: '',
     invoiceFacts: mqInvoiceFacts_(q.invoice),
   };
   d.flow = /^(quick|renew|full)$/.test(g('flow', 10)) ? g('flow', 10) : 'full';
@@ -1185,6 +1316,7 @@ function mqRow_(ref, d, contact, files, folder) {
     'Client status': contact.existing ? 'Existing client' + (contact.unmatched ? ' (not matched)' : '') : contact.id ? 'New client' : (d.clientStatus === 'new' ? 'New client' : ''),
     'Client says': d.clientSaysLine || '', 'SF opportunity': '', 'Permit on file': d.permitOnFileText || '', 'Permit update': d.permitNote || '',
     'Placed by': d.placedBy ? d.placedBy.email : '', 'Producer': d.agentHow || '', 'Producer Id': d.producer ? d.producer.id : '',
+    'Renewal found by': d.renewFoundBy || '',
   };
 }
 
@@ -1226,6 +1358,19 @@ function mqRenewFromRecord_(d, s) {
   if (!mqSfReady_()) { d.renewHistory = 'Not checked against Salesforce (not linked).'; return; }
   var me = mqLookup_(s.email);
   var v = (me.vehicles || []).filter(function (x) { return mqRegKey_(x.reg) === key; })[0];
+  /* Not under the e-mail: a vehicle the client found by its registration and
+     the surname or policy number, this sign-in. The desk is told how, and
+     what e-mail the record carries, so a person can check it before renewing. */
+  var ver = !v ? mqVerified_(s.email)[key] : null;
+  if (ver) {
+    try { v = mqVehicles_(mqRegRows_(key))[0]; } catch (e) { mqLog_('(find)', 'renew-read-failed', String(e)); }
+    if (v) {
+      d.renewFoundBy = 'Found by the client by its registration and ' + ver.how + ' (' + ver.at + '). ' +
+        (ver.recordEmail ? 'The e-mail on the vehicle record is ' + ver.recordEmail + ', not the one they signed in with.' : 'The vehicle record carries no e-mail.') +
+        ' Please confirm the client before renewing.';
+      if (ver.contactId && mqIsSfId_(ver.contactId)) d.renewContactId = ver.contactId;
+    }
+  }
   if (!v) { d.renewHistory = 'This vehicle was not found on file for ' + d.email + '. Please check the client before renewing.'; return; }
   d.reg = String(v.reg);
   ['make', 'model', 'year'].forEach(function (k) { if (!d[k] && v[k]) d[k] = String(v[k]); });
@@ -1686,7 +1831,9 @@ function mqReceipt_(ref, d) {
       '<li>A member of our team calls you to go through it before your cover ends.</li></ol>' +
       '<p>Your reference is <b style="color:#2C5FA8">' + mqEsc_(ref) + '</b>. Sign in again at <a href="' + MQ.SITE + '" style="color:#3A7BD5">' +
       MQ.SITE.replace('https://', '') + '</a> any time to see where it stands.</p>' +
-      '<p>If anything needs correcting, reply to this e-mail or call the branch on ' + MQ.BRANCH_TEL + '.</p>' + mqFieldsHtml_(d));
+      '<p>If anything needs correcting, reply to this e-mail or call the branch on ' + MQ.BRANCH_TEL + '.</p>' +
+      /* How the vehicle was found, and the e-mail on its record, are for the desk alone. */
+      mqFieldsHtml_(Object.assign({}, d, { renewFoundBy: '' })));
   }
   return mqWrap_('We have your request, ' + mqEsc_(d.first || d.name) + '.',
     (d.placedBy ? '<p>Your agent, <b>' + mqEsc_(d.placedBy.name) + '</b>, asked us for a motor quote for you. They are copied on this e-mail.</p>' : '') +

@@ -35,6 +35,11 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
   the days left, every term on file with its cover, value and premium, and what the record shows. One tap renews as
   it is, or with changes. At the send the script reads the vehicle again from Salesforce, so the desk gets the dates,
   the premium and the terms from the record, never from the page. It goes to `MQ_RENEW_TO`, else the quotes desk.
+- **Renew by the vehicle's number.** A vehicle whose record does not carry the client's sign-in e-mail (a work
+  address, a company vehicle, or none on file) is found by its registration **and** the surname on the policy, or the
+  policy number from the certificate. The registration alone shows nothing, a miss reads the same whether the vehicle
+  is on file or not, and a sign-in has eight tries a day. The desk e-mail says the vehicle was found this way and gives
+  the e-mail on the record, so a person confirms the client before renewing.
 - **Every detail** is the original six steps, a link under the two doors.
 - **Take the quote** ("Got your quotation? Take it", or "Take this quote" on a request). The client uploads the
   quotation from Guardian General, the certified copy (or the dealer's invoice for a new vehicle) and the driver's

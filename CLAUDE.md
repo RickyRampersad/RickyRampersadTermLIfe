@@ -5350,6 +5350,27 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     e-mail on record is the one copied on the desk e-mail.
   - The Opportunity's `Producer__c` is that agent; its description says who placed it. The owner stays `MQ_SF_OWNER`.
   - Tests: `tests/test-motor-quote.js` (199 checks) and `tests/e2e-motor-quote.js` (134).
+- **Renew by the vehicle's number** (26 October 2026: "what about renewal where the person places the vehicle number").
+  Until then a renewal was offered only for a vehicle whose record carried the e-mail the client signed in with. Of the
+  186 vehicles renewing from October 2026 to March 2027, 15 had no e-mail on the record and 114 no insured Contact, and
+  others carry a work or company address.
+  - **Renew is offered to every client now**, an agent excepted. With nothing found under the e-mail it opens on "Find
+    your vehicle"; otherwise "Vehicle not listed? Find it by its number" sits under the list.
+  - **The registration alone shows nothing** (`action=findVehicle`, `mqFindVehicle_`): it must come with the insured's
+    surname or the policy number. The registration is asked in its written forms (`mqRegVariants_`: PEJ2952, PEJ 2952,
+    PEJ-2952). The surname is read off `Insured__r.LastName`, then off the Contact of the policy on CLIENT_PORTFOLIO__c
+    (asked spaced and unspaced: the vehicle record writes "TTAPF1362870", the policy record "TT APU 0660188"). The
+    policy number is compared with no spaces, and is the way for a company vehicle (no insured on the record).
+  - **A miss reads the same** whether the vehicle is on file or not, and a sign-in has `MQ.FIND_TRIES` (8) a day.
+  - **Found, it is remembered against the sign-in for six hours** (`mqVerified_`, CacheService, up to `FIND_KEEP` 5),
+    joins `me.vehicles` with `byReg` (`mqWithVerified_`, on sign-in, `me` and the permit save), and the renewal opens on
+    it. The answer never carries the record's e-mail, the insured or their surname.
+  - **At the send** `mqRenewFromRecord_` reads it again from Salesforce. The desk is told how it was found and the
+    e-mail the record carries, and asked to confirm the client (`renewFoundBy`, the row's **Renewal found by**). The
+    request goes on the insured's Contact when the record has one, never a new Contact. The client's receipt never shows
+    how it was found or the record's e-mail.
+  - The vehicle's own read is shared with the e-mail lookup (`mqVehicleRows_`, `mqVehicles_`).
+  - Tests: `tests/test-motor-quote.js` (216 checks) and `tests/e2e-motor-quote.js` (141).
 - **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
   layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
   its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):
