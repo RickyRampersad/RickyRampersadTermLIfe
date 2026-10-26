@@ -4880,7 +4880,7 @@ path: not the mark. What stands:
   typewriter that left "hu" on screen in every screenshot), the counters that
   count up to the figure already in the markup, the strip, the ladders that
   draw themselves, the gate connector with its pulse, the quiz ring, the
-  confetti, the seat that breathes. Scroll-driven entrances use
+  confetti. Scroll-driven entrances use
   `animation-timeline: view()`; where that is unsupported an observer adds
   `.in`, guarded by `html.js`, so with no script nothing is hidden.
 - **The floating "Start the Selection" bar shows below 56rem only**; the topbar
@@ -4918,7 +4918,7 @@ section links it.
   (interviewed, coached after, Friday lit on the week); **clients matched to you**, households sliding onto your
   list; the stage; **two ladders side by side and a toggle, "you choose the ladder"**; the income line; **the FY27
   flight plan**, seven stages on a trajectory, a dot riding it, GO landing; the lock, the checklist, the gates, the
-  seats, the QR, the close. **Every reveal lands on the word that names it** (`at(n, word, k)` reads the word's
+  door that opens, the QR, the close. **Every reveal lands on the word that names it** (`at(n, word, k)` reads the word's
   start from the runner's WordBoundary timings, plus the 0.4 s the mixer leads the voice by; `k` picks the second
   match where a word repeats: "goes GO"). Every name and figure on a mock screen is made up, and the mocks say so.
 - **What the film claims is what the record holds**: the prospect board and the Lead Desk (factfind360.com/leads,
@@ -4929,10 +4929,33 @@ section links it.
   interview and coaching, the Weekly Manager Pulse (unit managers coach agents not on target with leads, fact
   finds and closing interviews), the orphan households matched to agents with the file and the first thing to say,
   the Wednesday wins, Blastoff and Mid-Year, the FY27 Flight Plan (fifteen minutes, seven stages, GO on the big
-  screen, FY27 1 October 2026 to 30 September 2027), the five gates, five seats, 48 hours, confidentiality. "Not
+  screen, FY27 1 October 2026 to 30 September 2027), the five gates, 48 hours, confidentiality. "Not
   one of those cases has lapsed" is Mr Rampersad's own line from the FY27 wall (21 October). **No mentorship
   scene**: the Executive Agent and Senior Sales Consultant rungs stay on the "build a book" ladder as titles only,
   with no overrides and no mentoring duty, because a person decides their own path.
+- **The seat count is gone, and it is not to come back** (26 October 2026, late: "should you remove the 5 seats
+  etc"; yes, and he agreed). A fixed count dates a film that sits at a public URL, tells a strong candidate the door
+  may already be shut, and is a number nobody had fixed (no closing date, no count of applications in hand).
+  Scene 20 is now **"The door is open."**: a door whose two leaves swing open on the word, light pouring out, rays,
+  then the two figures (2 min, 48 h). Line 20 reads "The door is open now. Two minutes to apply. Reviewed within
+  forty-eight hours." The selectivity stays, because that is what makes a strong agent apply: the five gates, "we
+  don't fill seats, we select", the 48-hour review, the Discovery. The page, the branch-site page, the post and the
+  RAI bubble lost their seat count the same evening (the page's seats row is gone; "The door is open. Walk through
+  it."), because a promise made in one place has to be kept in the other. Do not replace it with a bigger number or
+  "unlimited seats": that throws away the selection message.
+- **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
+  rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
+  length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,
+  so never on `.flight`, whose GO sits outside its card), every counter popping as it lands (`--at`, written by
+  `scene()` from `data-at`, so the pop is a second after the count starts), sheens on the production bars and the
+  day's progress bar, a ghost question mark and a spotlight on the hook, sparks when the bars break the ceiling,
+  bursts on "differently" and "Human", the lead's arc from the phone to the board with a comet riding it, a
+  blinking caret on the Lead Desk's question, the CONFIRMED stamp on the fact find (top right, off the figures;
+  the first place put it over the dollars), the thinking dots before Branch Intelligence answers, applause rings
+  on the stage, the ladder rails carrying a pulse, the area under the income line and a grid behind it, the
+  rocket's exhaust trail and seven stars, the lock's ring, the build bar under "the full build", a ring off each
+  gate, the door, a scan line over the QR and a button sheen, and three rings leaving the closing mark. The door's
+  leaves stop at 96°, not 108°: at 108° they vanish edge-on and the door read as a red arch alone.
 - **Andrew Expressive** (`en-US-AndrewMultilingualNeural`, +0%, conversational wording), made on the `tts-run`
   runner with `"check": true`. Three lines came back wrong on the first pass and were re-made: line 3 was **cut off
   after eleven words** (a 36-word line; the same words complete on a second run, so a truncated clip is a retry,
@@ -4942,7 +4965,7 @@ section links it.
   slurs. `tools/film/importvox.py` turns the runner's MP3 and words into the WAV, the VTT cues and the timing file.
 - **The branch theme** (`rr-branch-theme.mp3`, 120 s, looped with a crossfade by `usetrack.py`) at `musicgain`
   0.5, ducked to half under the voice; `sfx.py`'s sweeps on every cut, impacts on the statement scenes (4 and 22),
-  punches under 23×, 32, the board, the protection gap, the pace, GO, five seats and 48 hours. Captions burned
+  punches under 23×, 32, the board, the protection gap, the pace, GO, the door opening and 48 hours. Captions burned
   **over** the frame in both cuts (`capmode: over`), because this audience watches muted; the scenes keep the
   bottom fifth of the frame clear for them.
 - **One page, two frames.** `render.js` takes `RENDER_W` and `RENDER_H`; the portrait rules at the foot of the

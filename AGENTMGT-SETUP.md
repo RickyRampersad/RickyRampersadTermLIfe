@@ -110,7 +110,7 @@ For the branch WhatsApp group, Facebook and LinkedIn (under 120 words, one ask):
 >
 > Four minutes on how our branch works now: leads that land on your own board, the Lead Desk that writes your opening from the prospect's words, the fact find that does the arithmetic while you talk, a live wall, a day the system sets for you, and Branch Intelligence on every file. Digital everywhere. Human at the heart of it. 23× MDRT. 32 years in Trinidad.
 >
-> Five seats this intake. Two minutes to apply, reviewed within 48 hours, and confidential if you are already contracted.
+> The door is open. Two minutes to apply, reviewed within 48 hours, and confidential if you are already contracted.
 >
 > Watch: https://rickyrampersadbranch.com/careersvideo/
 >
