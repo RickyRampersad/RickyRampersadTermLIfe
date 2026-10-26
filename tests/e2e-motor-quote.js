@@ -75,9 +75,6 @@ const calls = []; let requests = []; let NEWME = null;
       return reply({ ok: true, ref, flow: b.quote.flow, mode: 'test', requests, contact: 'Existing', mail: 'Sent', producer: b.quote.clientEmail ? 'Mala Madeup' : '' }); }
     if (b.action === 'permit') return reply({ ok: true, message: 'Saved to your record. Thank you.', changed: true, me: Object.assign({}, ME, { permitExpires: b.permitExpires, permitOnFile: { number: b.permit, issued: b.permitIssued, expires: b.permitExpires, state: 'valid', days: 1200 } }) });
     if (b.action === 'signOut') return reply({ ok: true });
-    if (b.action === 'findVehicle') return /kumar/i.test(b.surname || '')
-      ? reply({ ok: true, reg: 'PEJ2952', me: Object.assign({}, NEWME, { vehicles: [Object.assign({}, ME.vehicles[0], { reg: 'PEJ2952', make: 'Honda', model: 'Fit', year: 2018, byReg: true })] }) })
-      : reply({ ok: false, notFound: true, error: 'We could not match that vehicle to that surname. Check both, or add the policy number from your certificate.' });
     if (b.action === 'agents') return reply({ ok: true, agents: /^ma/i.test(b.q || '') ? [{ id: '003000000000050AAA', name: 'Mala Madeup' }, { id: '003000000000051AAA', name: 'Mala Otherone' }] : [] });
     reply({ ok: false, error: 'Unknown action ' + b.action });
   });
@@ -379,22 +376,6 @@ const calls = []; let requests = []; let NEWME = null;
   await page.fill('#agentQ', 'Mala Made');
   ok('typing again unpicks them', await page.evaluate(() => !JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}').agentId));
   ok('nothing runs wider than the phone with the agent list', await wide());
-  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
-  /* ── renew by the vehicle's number: no vehicle under this e-mail ── */
-  ok('a client with no vehicle on file still has Renew, to find it by its number', await page.isVisible('#pathRenew') && /Find it by its number/.test(await txt('#pathRenewN')));
-  await page.click('#pathRenew');
-  ok('the renewal asks for the registration and the surname, the policy number optional', await page.isVisible('#fvReg') && await page.isVisible('#fvSur') && await page.isVisible('#fvPol') &&
-    /could not find a vehicle under this e-mail/.test(await txt('#findVeh')));
-  await page.fill('#fvReg', 'PEJ 2952'); await page.click('#fvGo');
-  ok('the registration alone is not looked up', /surname on the policy, or the policy number/.test(await txt('#fvMsg')) && !calls.some(c => c.action === 'findVehicle'));
-  await page.fill('#fvSur', 'Wrong'); await page.click('#fvGo'); await page.waitForFunction(() => /could not match/.test(document.getElementById('fvMsg').textContent));
-  ok('a surname that does not match says so, and shows nothing', /could not match/.test(await txt('#fvMsg')) && !(await page.isVisible('#s-form')));
-  ok('nothing runs wider than the phone with the search', await wide());
-  if (process.env.SHOTS) { await page.$eval('#findVeh', el => el.scrollIntoView({ block: 'center' })); await page.waitForTimeout(800); await page.screenshot({ path: path.join(process.env.SHOTS, 'find-vehicle.png') }); }
-  await page.fill('#fvSur', 'Kumar'); await page.click('#fvGo'); await page.waitForSelector('#s-form:not(.hide)');
-  const fv = calls.filter(c => c.action === 'findVehicle').pop();
-  ok('the search sends the registration, the surname and the sign-in', fv.reg === 'PEJ 2952' && fv.surname === 'Kumar' && fv.token.length === 40);
-  ok('found, the renewal opens on that vehicle', /PEJ2952/.test(await txt('#s-form')) && /Honda Fit/.test(await txt('#s-form')));
   await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
   await page.click('#who button'); await page.waitForSelector('#s-signin:not(.hide)');
 

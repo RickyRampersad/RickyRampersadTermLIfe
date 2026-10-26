@@ -105,14 +105,6 @@
   @media (max-width:899px){.nav{position:sticky;bottom:0;background:#fff;margin:18px -20px -20px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -10px 24px rgba(2,8,30,.08)}}
   .note{background:var(--warnbg);border:1px solid #F3D48A;color:var(--warn);border-radius:12px;padding:10px 13px;font-size:14px;margin:0 0 14px}
   .err{color:var(--bad);font-weight:700;font-size:14.5px;margin:10px 0 0;min-height:0}
-  .fvwrap{margin:16px 0 0;border:1.5px dashed #BFE3DF;border-radius:14px;padding:12px 14px;background:#F7FCFB}
-  .fvwrap summary{cursor:pointer;font-weight:700;color:var(--rn);min-height:44px;display:flex;align-items:center}
-  .fvwrap[open] summary{margin-bottom:8px}
-  .fvlead{margin:2px 0 12px;font-size:15px}
-  .findv .send{background:linear-gradient(135deg,var(--rn),var(--rn2))}
-  .findv .msg{font-size:14.5px;margin:10px 0 0;font-weight:600;color:var(--ok)}
-  .findv .msg.bad{color:var(--bad);font-weight:700}
-  .findv .msg:empty{display:none}
   .err:not(:empty){background:var(--badbg);border-radius:10px;padding:9px 12px}
   .veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:16px;padding:13px 14px;margin:0 0 10px;cursor:pointer;background:#fff;width:100%;text-align:left;font:inherit;color:var(--body);transition:transform .12s,border-color .15s,box-shadow .15s;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
   .veh:nth-of-type(2){animation-delay:.08s}.veh:nth-of-type(3){animation-delay:.16s}
@@ -549,7 +541,6 @@
       <ol class="journey"><li>Check your record</li><li>Renew as it is, or with changes</li><li>Your renewal by e‑mail</li></ol>
       <div id="renewals"></div>
       <div id="homeVeh"></div>
-      <div id="findVeh"></div>
     </section>
 
     <section class="track t-quote" id="trQuote">
@@ -880,37 +871,6 @@ async function savePermit(ev) {
   } catch (e) { m.className = 'msg bad'; m.textContent = e.message; b.disabled = false; b.textContent = 'Save my permit'; }
   return false;
 }
-/* Renew by the vehicle's number: the registration and the surname on the
-   policy, or the policy number. Nothing about a vehicle shows unless both match. */
-function findVehHtml(n) {
-  const f = '<form class="findv" onsubmit="return findVehicle(event)">' +
-    '<div class="row"><label class="f"><b>Registration</b><input class="fld" id="fvReg" placeholder="e.g. PDZ 1234" autocomplete="off" autocapitalize="characters" maxlength="12" value="' + esc(draft.fvReg || '') + '"></label>' +
-    '<label class="f"><b>Surname on the policy</b><input class="fld" id="fvSur" autocomplete="family-name" maxlength="60" value="' + esc(draft.fvSur || (me && me.last) || '') + '"></label></div>' +
-    '<label class="f"><b>Policy number <span class="muted">(optional)</span></b><input class="fld" id="fvPol" placeholder="From your certificate, e.g. TT APG 1234567" autocomplete="off" maxlength="30"></label>' +
-    '<small class="muted" style="display:block;margin:0 0 6px">For a company vehicle, use the policy number. We check both against our records before showing anything.</small>' +
-    '<button class="send" id="fvGo" type="submit">Find my vehicle</button><p class="msg" id="fvMsg" role="status"></p></form>';
-  return n
-    ? '<details class="fvwrap" id="fvWrap"' + (draft.fvOpen ? ' open' : '') + '><summary>Vehicle not listed? Find it by its number</summary>' + f + '</details>'
-    : '<div class="fvwrap open"><p class="fvlead"><b>Find your vehicle.</b> We could not find a vehicle under this e-mail. Type its registration and the surname on the policy, and we will look it up.</p>' + f + '</div>';
-}
-async function findVehicle(ev) {
-  ev.preventDefault();
-  const reg = $('fvReg').value.trim(), sur = $('fvSur').value.trim(), pol = $('fvPol').value.trim(), b = $('fvGo'), m = $('fvMsg');
-  m.className = 'msg'; m.textContent = '';
-  if (!reg) { m.className = 'msg bad'; m.textContent = 'Please type the registration.'; return false; }
-  if (!sur && !pol) { m.className = 'msg bad'; m.textContent = 'Please give the surname on the policy, or the policy number.'; return false; }
-  Object.assign(draft, { fvReg: reg, fvSur: sur, fvOpen: true }); saveDraft();
-  b.disabled = true; b.textContent = 'Looking it up…';
-  try {
-    const j = await api('findVehicle', { token: session.token, reg, surname: sur, policy: pol });
-    if (j.me) me = j.me;
-    delete draft.fvReg; delete draft.fvOpen; saveDraft();
-    const key = String(j.reg || reg).toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const ix = ((me && me.vehicles) || []).findIndex(v => String(v.reg || '').toUpperCase().replace(/[^A-Z0-9]/g, '') === key);
-    if (ix > -1) startFlow('renew', ix); else showHome();
-  } catch (e) { m.className = 'msg bad'; m.textContent = e.message; b.disabled = false; b.textContent = 'Find my vehicle'; }
-  return false;
-}
 function showHome() {
   show('s-home'); requestAnimationFrame(() => reveal($('s-home')));
   $('who').classList.remove('hide'); $('whoName').textContent = (isAgent() ? me.agent.name : me && me.name) || (session && session.email) || '';
@@ -931,12 +891,9 @@ function showHome() {
   $('homeStats').innerHTML = [vs.length ? '<span>' + cu(vs.length) + 'vehicle' + (vs.length === 1 ? '' : 's') + ' with us</span>' : '',
     due.length ? '<span>' + cu(due.length) + 'due for renewal</span>' : '', requests.length ? '<span>' + cu(open) + 'request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
   /* No vehicle with us: no renewal path at all. */
-  /* The renewal is always offered to a client: a vehicle the e-mail does not
-     find is found by its registration (findVehHtml). An agent has none. */
-  $('pathRenew').classList.toggle('hide', isAgent()); $('pathRenew').classList.toggle('due', due.length > 0); $('trRenew').classList.toggle('hide', isAgent());
-  $('paths').style.setProperty('--n', isAgent() ? 1 : 3);
-  $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length ? vs.length + ' vehicle' + (vs.length === 1 ? '' : 's') : 'Find it by its number';
-  $('findVeh').innerHTML = isAgent() ? '' : findVehHtml(vs.length);
+  $('pathRenew').classList.toggle('hide', !vs.length); $('pathRenew').classList.toggle('due', due.length > 0); $('trRenew').classList.toggle('hide', !vs.length);
+  $('paths').style.setProperty('--n', (vs.length ? 3 : 2) - (isAgent() ? 1 : 0));
+  $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length + ' vehicle' + (vs.length === 1 ? '' : 's');
   $('renewals').innerHTML = due.map(x => renewalCard(x[0], x[1])).join('');
   $('homeVeh').innerHTML = rest.length
     ? '<div class="sec" style="margin-top:' + (due.length ? 18 : 4) + 'px"><span class="ic" style="background:linear-gradient(135deg,var(--rn),var(--rn2))"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><b>' + (due.length ? 'Your other vehicles with us' : 'Your vehicles with us') +

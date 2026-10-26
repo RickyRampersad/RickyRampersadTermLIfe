@@ -47,7 +47,6 @@ function world(props, opts) {
     created: [], queries: [],
   };
   if (opts.risks) SF.risks = opts.risks;
-  SF.regRisks = opts.regRisks || [];
   const AI = { calls: [], answer: opts.ai || null, code: opts.aiCode || 200 };
   const MS = { sent: [] };
   const res = (code, body) => ({ getResponseCode: () => code, getContentText: () => typeof body === 'string' ? body : JSON.stringify(body) });
@@ -71,13 +70,9 @@ function world(props, opts) {
       if (/FROM RecordType/.test(q)) return res(200, { records: [{ Id: '012000000000001AAA' }] });
       if (/FROM CLIENT_PORTFOLIO__c/.test(q) && /POLICY__c = '/.test(q)) { const pols = (q.match(/POLICY__c = '([^']+)'/g) || []).map(x => x.slice(13, -1));
         return res(200, { records: SF.portfolios.filter(r => pols.indexOf(r.POLICY__c) > -1).map(r => ({ Contact__c: r.Contact__c, Contact__r: { LastName: (SF.contacts.find(c => c.Id === r.Contact__c) || {}).LastName } })) }); }
-      if (/FROM CLIENT_PORTFOLIO__c/.test(q) && /POLICY__c IN \(/.test(q)) { const pols = ((q.match(/POLICY__c IN \(([^)]*)\)/) || [, ''])[1].match(/'[^']+'/g) || []).map(x => x.slice(1, -1));
-        return res(200, { records: SF.portfolios.filter(r => pols.indexOf(r.POLICY__c) > -1).map(r => ({ Contact__c: r.Contact__c, Contact__r: { LastName: (SF.contacts.find(c => c.Id === r.Contact__c) || {}).LastName } })) }); }
       if (/FROM CLIENT_PORTFOLIO__c/.test(q)) { const ids = (q.match(/Contact__c IN \(([^)]*)\)/) || [, ''])[1];
         return res(200, { records: SF.portfolios.filter(r => ids.indexOf(r.Contact__c) > -1) }); }
       if (/FROM Risk_Details__c/.test(q) && opts.noRenewFields && /Next_Renewal_Date__c/.test(q)) return res(400, [{ message: "No such column 'Next_Renewal_Date__c'" }]);
-      if (/FROM Risk_Details__c/.test(q) && /Vehicle__c IN \(/.test(q)) { const regs = ((q.match(/Vehicle__c IN \(([^)]*)\)/) || [, ''])[1].match(/'[^']+'/g) || []).map(x => x.slice(1, -1));
-        return res(200, { records: SF.regRisks.filter(r => regs.indexOf(r.Vehicle__c) > -1) }); }
       if (/FROM Risk_Details__c/.test(q)) { const ids = (q.match(/Insured__c IN \(([^)]*)\)/) || [, ''])[1];
         return res(200, { records: ids ? SF.risks : [] }); }
       return res(400, [{ message: 'unexpected query ' + q }]);
@@ -403,59 +398,6 @@ const RISKS = [
   const v = post(env, { action: 'verifyCode', email: 'anika@example.com', code: (post(env, { action: 'requestCode', email: 'anika@example.com' }), '211110') });
   ok('an org without the renewal fields still gives the vehicles, renewing the day after the cover ends', v.me.vehicles.length === 2 && v.me.vehicles[0].renewOn === day(21) &&
     env.__sheets['Quote Log']._grid.some(x => x[2] === 'renewal-fields-failed'));
-}
-
-/* ── renew by the vehicle's number: the registration and the surname or policy ── */
-{
-  const REG_RISKS = [
-    /* A vehicle whose record carries a work e-mail, not the one the client signs in with. */
-    { Policy__c: 'TT APF 0000077', Vehicle__c: 'PEJ2952', Vehicle_Make__c: 'Honda', Model__c: 'Fit', Year_of_Manufacture__c: 2018, Motor_Vehicle_Coverage_Type__c: 'Comprehensive',
-      Cover1__c: 60000, From__c: day(-350), To__c: day(15), Premium_Due__c: 3100, Email__c: 'office@example.com', Insured__c: '003000000000070AAA', Insured__r: { LastName: 'Madeup-Kumar' } },
-    /* A company vehicle: no insured on the record, the surname only on the policy's contact. */
-    { Policy__c: 'TTMV 00000001', Vehicle__c: 'PED 1766', Vehicle_Make__c: 'Isuzu', Model__c: 'D-Max', Year_of_Manufacture__c: 2020, Motor_Vehicle_Coverage_Type__c: 'Third Party',
-      Cover1__c: 0, From__c: day(-300), To__c: day(65), Email__c: null, Insured__c: null, Insured__r: null },
-  ];
-  const { env, SF, mails } = world(SFPROPS, { regRisks: REG_RISKS });
-  const tok = signIn(env, 'new.person@example.com');
-  const m0 = post(env, { action: 'me', token: tok });
-  ok('a client the e-mail does not find has no vehicles to start with', m0.ok && m0.me.vehicles.length === 0);
-  const nothing = post(env, { action: 'findVehicle', token: tok, reg: 'PEJ 2952' });
-  ok('the registration alone shows nothing', nothing.ok === false && /surname/.test(nothing.error) && !nothing.vehicle);
-  const wrong = post(env, { action: 'findVehicle', token: tok, reg: 'PEJ 2952', surname: 'Somebody' });
-  const absent = post(env, { action: 'findVehicle', token: tok, reg: 'ZZZ 9999', surname: 'Somebody' });
-  ok('a wrong surname is refused, and says the same as a vehicle not on file', wrong.ok === false && wrong.notFound && absent.ok === false && wrong.error === absent.error && !wrong.vehicle);
-  const right = post(env, { action: 'findVehicle', token: tok, reg: 'pej-2952', surname: 'kumar' });
-  ok('the registration and the surname find it, typed any way', right.ok && right.vehicle && right.vehicle.reg === 'PEJ2952' && right.vehicle.renewState === 'due' && right.vehicle.byReg === true, right.error || '');
-  ok('the vehicle joins the client\'s list, with its renewal', right.me.vehicles.length === 1 && right.me.vehicles[0].renewIn === 16 && right.me.vehicles[0].lastPremium === 3100);
-  const said = JSON.stringify(right);
-  ok('the answer never carries the e-mail, the insured or their surname on the record', !/office@example\.com|003000000000070AAA|Madeup/.test(said));
-  ok('the search asks for the registration in its written forms', SF.queries.some(q => /Vehicle__c IN \('PEJ2952','PEJ 2952','PEJ-2952'\)/.test(q)));
-  const again = post(env, { action: 'me', token: tok });
-  ok('signing back in keeps the vehicle found', again.me.vehicles.some(v => v.reg === 'PEJ2952'));
-  const co = post(env, { action: 'findVehicle', token: tok, reg: 'PED1766', surname: 'Pretend' });
-  ok('a company vehicle is found by the surname on the policy\'s own contact', co.ok && co.vehicle && co.vehicle.reg === 'PED 1766', co.error || '');
-
-  mails.length = 0;
-  const r = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Madeup-Kumar', mobile: '868-555-0102', reg: 'PEJ 2952', renewChoice: 'Renew as it is' } });
-  const desk = mails.find(m => /Motor renewal request/.test(m.subject));
-  ok('the renewal goes with the record\'s terms and premium', r.ok && desk && /TT\$ 3,100/.test(desk.htmlBody) && !/not found on file/.test(desk.htmlBody), r.error || '');
-  const rcpt = mails.find(m => /We have your renewal request/.test(m.subject));
-  ok('the client\'s receipt never shows how it was found or the record e-mail', rcpt && !/office@example|Found by the client/.test(rcpt.htmlBody));
-  ok('the desk is told how it was found and the e-mail the record carries', /Found by the client by its registration and the insured&#39;s surname|Found by the client by its registration and the insured's surname/.test(desk.htmlBody) && /office@example\.com/.test(desk.htmlBody) && /confirm the client/.test(desk.htmlBody));
-  const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0], row = sh._grid[sh._grid.length - 1], col = n => row[hdr.indexOf(n)];
-  ok('the row says how it was found, and puts it on the insured\'s Contact', /registration/.test(col('Renewal found by')) && col('Contact Id') === '003000000000070AAA' && /found by registration/.test(col('Contact action')));
-  ok('a renewal never makes a new Contact for a vehicle found this way', !SF.created.some(c => c.obj === 'Contact'));
-
-  /* The fake hands every sign-in the same token, so each later sign-in comes after the renewal above. */
-  const tok2 = signIn(env, 'fleet@example.com');
-  const byPol = post(env, { action: 'findVehicle', token: tok2, reg: 'PEJ 2952', policy: 'tt apf 0000077' });
-  ok('or by the policy number, spaced any way', byPol.ok && byPol.vehicle && byPol.vehicle.reg === 'PEJ2952', byPol.error || '');
-  const tok3 = signIn(env, 'guesser@example.com');
-  for (let i = 0; i < 8; i++) post(env, { action: 'findVehicle', token: tok3, reg: 'PEJ 2952', surname: 'Guess' + i });
-  const late = post(env, { action: 'findVehicle', token: tok3, reg: 'PEJ 2952', surname: 'Kumar' });
-  ok('eight misses a day, then even the right answer waits for tomorrow', late.ok === false && /most we can look up today/.test(late.error) && !late.vehicle);
-  const ag = post(env, { action: 'findVehicle', token: signIn(env, 'mala.madeup@example.com'), reg: 'PEJ 2952', surname: 'Kumar' });
-  ok('an agent does not renew by registration', ag.ok === false && !ag.vehicle);
 }
 
 /* ── a tab made by the first version gains the new columns on the end ─ */
