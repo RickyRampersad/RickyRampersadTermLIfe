@@ -4039,13 +4039,13 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **The new-way films** (26 October 2026: "a video that will go to the clients on our new process moving forward, a
   video for the staff on the new process forward … very short … a new initiative of the Ricky Rampersad branch … this
   will go viral … motions and graphics … sample data").
-  - **For groups: `/groupnewway/`** (`groupnewway/index.html`), "Our new way of looking after your group", 1 min 23 s:
+  - **For groups: `/groupmgt/client/`** (`groupmgt/client/index.html`; `/groupnewway/` and `/groupmgt/` forward to it), "Our new way of looking after your group", 1 min 23 s:
     `groupclientmanagement/new-way.mp4` (wide, 1920x1080) and `new-way-phone.mp4` (upright, 1080x1920, for Reels,
     Status and Stories), with posters `new-way.jpg` and `new-way-phone.jpg` and the share card `new-way-card.jpg` for the
     Open Graph preview. A phone held upright opens on the phone cut; buttons switch. Ten scenes: the promise, the Monday
     report, the three tabs, the bills on the 26th, the people, the forms, the stars, the named team, and a call to action
     on the branch number for employers who are not clients yet. No staff name is spoken or shown.
-  - **For staff: `groupclientmanagement/staff-new-way.mp4`**, 2 min 53 s, first on the training page: who does what
+  - **For staff: `/groupmgt/staff/`** (`groupmgt/staff/index.html`, kept out of search) plays `groupclientmanagement/staff-new-way.mp4`, 2 min 53 s, also first on the training page: who does what
     (the Branch Manager, Kamla as the Branch Manager's Assistant, the support team, the system), the sign-in, the week,
     10:30, the month, the billing day, the eight steps, the cut-off and its reason, the audit trail, Kamla's oversight,
     test mode, the training and the test.
