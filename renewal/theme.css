@@ -16,6 +16,8 @@
    text at 4.5:1 or better; no emoji (line icons, rr.i()); one column on a
    phone with 16px gutters and no sideways scroll; every motion stops under
    prefers-reduced-motion and the finished state is the plain CSS default.
+   White text sits only on fills of 4.5:1 or better (the bar, the band, the
+   buttons are a shade deeper than the motor quote's for that reason).
    ========================================================================== */
 :root{
   --mid:#2C5FA8;--blue:#3A7BD5;--blue2:#4C94E6;--cyan:#7CC8F5;--teal:#1FA8A0;--sky:#EAF3FD;
@@ -46,7 +48,7 @@ body.rr{margin:0;min-height:100vh;color:var(--body);font:1rem/1.55 -apple-system
 .rr svg.i{width:1.15em;height:1.15em;display:inline-block;flex:none;vertical-align:-.2em}
 
 /* ---- the top bar: the blue shield, the name, who is signed in ---- */
-.rr-top{position:sticky;top:0;z-index:20;background:linear-gradient(90deg,var(--blue),var(--blue2));box-shadow:0 4px 18px rgba(58,123,213,.22);padding:10px 16px;display:flex;align-items:center;gap:11px;color:#fff}
+.rr-top{position:sticky;top:0;z-index:20;background:linear-gradient(90deg,#2F6BC0,#3672C9);box-shadow:0 4px 18px rgba(58,123,213,.22);padding:10px 16px;display:flex;align-items:center;gap:11px;color:#fff}
 .rr-top .mark{width:44px;height:44px;border-radius:13px;overflow:hidden;background:var(--mid);flex:none;box-shadow:0 4px 12px rgba(0,0,0,.15)}
 .rr-top .mark img{width:100%;height:100%;display:block}
 .rr-top .brand{font-weight:800;font-size:1rem;line-height:1.2;flex:1;min-width:0}
@@ -69,14 +71,14 @@ body.rr{margin:0;min-height:100vh;color:var(--body);font:1rem/1.55 -apple-system
 .rr-card{background:var(--card);border-radius:20px;padding:20px 18px;margin:0 0 16px;box-shadow:var(--sh);border:1px solid #E3EAF5;position:relative;overflow:hidden;animation:rr-rise .5s var(--ease) both}
 @media (min-width:700px){.rr-card{padding:26px 26px 22px}}
 .rr-card.flat{animation:none}
-.rr-band{margin:-20px -18px 18px;padding:26px 18px 30px;background:linear-gradient(135deg,var(--blue) 0%,var(--blue2) 60%,#62B0EE 120%);color:#fff;position:relative;overflow:hidden}
+.rr-band{margin:-20px -18px 18px;padding:26px 18px 30px;background:linear-gradient(135deg,#2C5FA8 0%,#3470C7 60%,#4C94E6 125%);color:#fff;position:relative;overflow:hidden}
 @media (min-width:700px){.rr-band{margin:-26px -26px 20px;padding:32px 26px 36px}}
 .rr-band:after{content:"";position:absolute;right:-30px;top:-30px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.08)}
 .rr-band>*:not(.waves){position:relative;z-index:1}
 .rr-band h1,.rr-band h2,.rr-band h3{color:#fff}
 .rr-band p{color:#F0F6FF}
 .rr-band .eyebrow{color:#D8ECFF}
-.rr-band.t-renew{background:linear-gradient(135deg,var(--rn) 0%,var(--rn2) 60%,#2FB3A9 120%)}
+.rr-band.t-renew{background:linear-gradient(135deg,#095D58 0%,var(--rn) 55%,#107F78 120%)}
 .rr-band.t-prop{background:linear-gradient(135deg,#5E3A9C 0%,var(--pr) 60%,#8A62C4 120%)}
 .rr-band .stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
 .rr-band .stats span{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:7px 12px;font-size:.82rem;font-weight:600;color:#fff;animation:rr-rise .5s var(--ease) both}
@@ -97,13 +99,13 @@ body.rr{margin:0;min-height:100vh;color:var(--body);font:1rem/1.55 -apple-system
 .rr-sec .end{margin-left:auto}
 
 /* ---- buttons ---- */
-.rr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-size:1rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--blue2),var(--blue));border:0;border-radius:14px;padding:13px 18px;min-height:50px;cursor:pointer;box-shadow:0 8px 20px rgba(58,123,213,.32);transition:transform .1s,box-shadow .15s;text-decoration:none;position:relative;overflow:hidden}
+.rr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-size:1rem;font-weight:800;color:#fff;background:linear-gradient(135deg,#3470C7,#2C5FA8);border:0;border-radius:14px;padding:13px 18px;min-height:50px;cursor:pointer;box-shadow:0 8px 20px rgba(58,123,213,.32);transition:transform .1s,box-shadow .15s;text-decoration:none;position:relative;overflow:hidden}
 .rr-btn:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(58,123,213,.38);color:#fff}
 .rr-btn:active{transform:scale(.98)}
 .rr-btn:disabled,.rr-btn[aria-disabled=true]{opacity:.55;cursor:default;transform:none;box-shadow:none}
 .rr-btn.wide{display:flex;width:100%}
-.rr-btn.teal{background:linear-gradient(135deg,var(--teal),#3A9BD9);box-shadow:0 8px 20px rgba(31,168,160,.3)}
-.rr-btn.ok{background:linear-gradient(135deg,#17A06F,var(--ok));box-shadow:0 8px 20px rgba(15,122,85,.28)}
+.rr-btn.teal{background:linear-gradient(135deg,#107F78,var(--rn));box-shadow:0 8px 20px rgba(31,168,160,.3)}
+.rr-btn.ok{background:linear-gradient(135deg,#0F7A55,#0B6446);box-shadow:0 8px 20px rgba(15,122,85,.28)}
 .rr-btn.violet{background:linear-gradient(135deg,var(--ac2),var(--ac));box-shadow:0 8px 20px rgba(79,68,194,.28)}
 .rr-btn.main:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.3) 50%,transparent 70%);transform:translateX(-120%);animation:rr-sheen 3.6s ease-in-out 1s infinite}
 .rr-btn.ghost{color:var(--blue);background:#fff;border:1.5px solid var(--line2);box-shadow:none;font-weight:700}
@@ -132,7 +134,7 @@ select.rr-in{appearance:none;-webkit-appearance:none;padding-right:40px;backgrou
 .rr-opts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
 .rr-opts button,.rr-opts label{font:inherit;font-size:.95rem;font-weight:700;color:var(--blue);background:#fff;border:1.5px solid var(--line2);border-radius:999px;padding:9px 16px;cursor:pointer;min-height:46px;display:inline-flex;align-items:center;gap:7px;transition:transform .12s,background .15s,border-color .15s,box-shadow .15s}
 .rr-opts button:hover,.rr-opts label:hover{border-color:var(--blue2)}
-.rr-opts .on,.rr-opts button[aria-pressed=true],.rr-opts input:checked+span{background:linear-gradient(135deg,var(--blue),var(--blue2));border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(58,123,213,.3)}
+.rr-opts .on,.rr-opts button[aria-pressed=true],.rr-opts input:checked+span{background:linear-gradient(135deg,#2C5FA8,#3470C7);border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(58,123,213,.3)}
 
 /* ---- labels and notes: a word and a colour, never the colour alone ---- */
 .rr-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-size:.76rem;font-weight:800;letter-spacing:.02em;background:var(--sky);color:var(--mid);white-space:nowrap}

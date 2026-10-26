@@ -5392,6 +5392,42 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
 - The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
   until the page is live and wired; disable it then, so an old link does not take a client back to it.
 
+## The renewal experience: one place to renew, one look
+
+The Renewal Platform (`apps-script/Code.gs`, `Property.gs`, `RenewalLines.gs`, `SalesforceSync.gs`, `RenewalBoard.gs`)
+is where a client renews motor and property: the renewal e-mail's link opens the client portal, Track your renewal
+(`?find=1`) e-mails a lost link, staff work the dashboard (`?staff=`), and the renewal board (`?board=`) gives the
+branch, staff and each agent their own view. The motor quote page sends every renewal there (see the motor quote
+section). Asked for on 26 October 2026: "the theme and scaling has to be brand consistent", "lot of motion, charts
+and graphics as well easy to manoeuvre and understand", in the motor quote's look, which the manager chose.
+
+- **One theme, two homes.** `renewal/theme.css` and `renewal/theme.js` (classes `rr-`, helpers `window.RR`: line
+  icons, counters, bars, columns, stacks, rings, tiles, toast, the scroll reveal, waves on every `.rr-band`). The
+  static pages in `/renewal/` link them; `tools/renewal/build-theme.py` folds both into
+  `apps-script/RenewalTheme.html`, which every Apps Script page takes through `<?!= rrTheme_() ?>` (`rrTheme_` in
+  Code.gs). Edit the two sources and run the builder; `tests/test-renewal-theme.js` fails on a stale copy, a page
+  without the theme, the gold, a near-black ground, an old webfont or an emoji.
+- **The blue shield** (`orphan-transition/board-mark.png`) on every renewal page, as on the motor quote. The old
+  pages' Midnight / Ocean / Daylight picker (`rrb_theme`) is gone: its themes were the dark and gold ones turned down.
+- **White text only on fills of 4.5:1 or better.** The bar, the band and the buttons are a shade deeper than the
+  motor quote's (`#2C5FA8` to `#3672C9`; white on the motor quote's `#4C94E6` is 3.1:1); the property band is
+  `#5E3A9C` to `#8A62C4`, the teal `#095D58` to `#107F78`.
+- **The pages:** the client portal (`Portal.html`: a ring of days to go, one card per policy with its journey, the
+  value history as columns with a range scale that follows the figure typed, three choice cards for the instruction);
+  Track your renewal (`findPage_`, which fills in `e=` from the motor quote page, escaped, only as the input's value);
+  the property portal (`PropertyPortal.html`: the average clause drawn to scale and redrawn as figures are typed);
+  the staff dashboard (`Staff.html`: the pipeline as a stack, renewals by month, tiles that filter, tabs for
+  Pipeline, Tasks, Reports, Production and Audit); the renewal board (`Board.html`); and `/renewal/index.html`,
+  `motor-policy.html` and `corporate.html`. Every field, id and server call is as before.
+- **The renewal board would not open** until 26 October: `Board.html` parsed `<?!= payload ?>`, an object, so it
+  threw on load. It reads `<?!= JSON.stringify(payload) ?>` now, like the others.
+- Tests: `tests/e2e-renewal-portal.js` (211), `e2e-renewal-property.js` (80), `e2e-renewal-staff.js` (101),
+  `e2e-renewal-board.js` (125, the real RenewalBoard.gs as admin, staff and agent), `e2e-renewal-site.js` (240), each
+  at 360, 390 and 1366 wide with reduced motion.
+- To put it live: merge, then paste `Code.gs`, `RenewalBoard.gs`, `Portal.html`, `PropertyPortal.html`, `Staff.html`,
+  `Board.html` and the new `RenewalTheme.html` into the Renewal Platform project (plus `SalesforceSync.gs` and
+  `Property.gs` from the board's change), and publish a New version (pencil, never New deployment).
+
 ## RR Operations and the Delivery Book — one sign-in, the client told the same day
 
 `rroperations/` and `apps-script/DeliveryBook.gs` (its own Apps Script project,
