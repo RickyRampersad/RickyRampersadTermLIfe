@@ -44,8 +44,16 @@ const PAWAN = { staffId:'pawan', name:'Pawan Probhu', role:'pa', manager:false }
 const RICKY = { staffId:'ricky', name:'Ricky Rampersad', role:'bm', manager:true };
 
 console.log('\nEach person is measured against their own start:\n');
-// The hours from 17 October 2026: Sasha and Liz at 7, Azariah at 8, Ashley at 9.
-ok('a seven o\'clock desk starts at 420', env.startFor_('sasha') === 420 && env.startFor_('elizabeth') === 420);
+// The hours from 17 October 2026: Sasha at 7, Azariah at 8, Ashley at 9. Liz was at 7 and is at 8 from
+// Friday 23 October 2026 (Kamla to the agents, 6:22am: "Elizabeth will now be operating from 8:00 AM to 4:00 PM").
+ok('a seven o\'clock desk starts at 420', env.startFor_('sasha') === 420);
+ok('Liz is an eight o\'clock desk from 23 Oct, ending at 4', env.startFor_('elizabeth') === 480 && env.startFor_('elizabeth', '2026-10-23') === 480 && env.endFor_('elizabeth') === 960);
+ok('and was a seven o\'clock desk on the days before', env.startFor_('elizabeth', '2026-10-22') === 420 && env.startFor_('elizabeth', '2026-10-12') === 420);
+ok('7:20 on 12 Oct was late and stays late; 7:20 now is early', env.lateBy_('elizabeth', '07:20', '2026-10-12') === 20 && env.lateBy_('elizabeth', '07:20', '2026-10-23') === 0 && env.lateBy_('elizabeth', '07:20') === 0);
+ok('8:20 from the 23rd is late', env.lateBy_('elizabeth', '08:20', '2026-10-23') === 20);
+ok('her clock from the 23rd: absent at 8:05 and her work moves at 8:30, not 7:05 and 7:30',
+   env.startFor_('elizabeth') + env.ABSENT_AFTER_MIN === 485 && env.startFor_('elizabeth') + env.COVER.AFTER_MIN === 510);
+ok('a desk with no change reads the same on any day', env.startFor_('sasha', '2026-10-12') === 420 && env.startFor_('azariah', '2026-10-12') === 480);
 ok('an eight o\'clock desk starts at 480', env.startFor_('azariah') === 480);
 ok('a nine o\'clock desk starts at 540', env.startFor_('ashley') === 540);
 ok('a stranger to the schedule defaults to eight', env.startFor_('nobody') === 480);

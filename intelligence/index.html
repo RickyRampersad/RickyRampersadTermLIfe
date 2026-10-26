@@ -9,8 +9,22 @@
 <link rel="icon" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'DM Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.31%;ascent-override:95.10%;descent-override:29.72%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:102.04%;ascent-override:97.22%;descent-override:30.38%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.79%;ascent-override:94.67%;descent-override:29.58%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.76%;ascent-override:91.21%;descent-override:28.50%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
 :root{
   --bg:#07131f; --bg2:#0d2137; --card:#12293f; --card2:#173d5e;
   --line:rgba(255,255,255,.10); --line2:rgba(255,255,255,.06);
@@ -19,11 +33,11 @@
   --bad:#ff7a7a; --warn:#f5b942; --good:#35d07f;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font:15px/1.6 'DM Sans',system-ui,sans-serif;color:var(--text);
+body{font:15px/1.6 'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',system-ui,sans-serif;color:var(--text);
   background:linear-gradient(180deg,#00182e 0%,#07131f 40%,#07131f 100%);min-height:100vh}
-h1,h2,h3,h4,.mono-h{font-family:'Montserrat',sans-serif}
+h1,h2,h3,h4,.mono-h{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif}
 a{color:var(--teal)}
-button{font-family:'DM Sans',sans-serif}
+button{font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif}
 
 /* ── sign in ───────────────────────────────────────────────────────────── */
 #gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -34,10 +48,10 @@ button{font-family:'DM Sans',sans-serif}
 .field{text-align:left;margin-bottom:12px}
 .field label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:5px}
 .field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:13px 14px;
-  font:15px 'DM Sans';background:rgba(0,0,0,.28);color:var(--text);outline:none}
+  font:15px 'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R';background:rgba(0,0,0,.28);color:var(--text);outline:none}
 .field input:focus{border-color:var(--gold)}
 .btn{width:100%;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#00254d;
-  font:800 15px 'Montserrat';border:none;border-radius:12px;padding:14px;cursor:pointer;margin-top:6px}
+  font:800 15px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';border:none;border-radius:12px;padding:14px;cursor:pointer;margin-top:6px}
 .btn:hover{filter:brightness(1.06)} .btn:disabled{opacity:.55;cursor:wait}
 .btn.small{width:auto;padding:8px 15px;font-size:12.5px;border-radius:9px}
 .btn.ghost{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid var(--line);font-weight:600}
@@ -51,11 +65,11 @@ button{font-family:'DM Sans',sans-serif}
 header.top{background:linear-gradient(135deg,#00254d,#00458c);border-bottom:1px solid var(--line);
   padding:14px 20px;position:sticky;top:0;z-index:40}
 .top .in{max-width:1220px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.top .brand{font:800 15px 'Montserrat';color:var(--gold);letter-spacing:.3px;line-height:1.2}
-.top .brand small{display:block;font:500 11px 'DM Sans';color:#c8d6e8;letter-spacing:0;margin-top:2px}
+.top .brand{font:800 15px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';color:var(--gold);letter-spacing:.3px;line-height:1.2}
+.top .brand small{display:block;font:500 11px 'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R';color:#c8d6e8;letter-spacing:0;margin-top:2px}
 .top .spacer{flex:1}
 .who{font-size:12.5px;color:#c8d6e8;text-align:right;line-height:1.4}
-.who b{display:block;color:#fff;font:700 13.5px 'Montserrat'}
+.who b{display:block;color:#fff;font:700 13.5px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R'}
 /* The nav is chrome, not prose — it does not have to line up with the 1,220px
    text column, and holding it there is what made every new screen a fight for
    pixels. It takes the window instead, still scrolls on a narrow one, and
@@ -69,7 +83,7 @@ nav.tabs .in{margin:0 auto;display:flex;gap:2px;padding:0 16px;width:max-content
 /* Twelve tabs at 15px of padding each need 1,329px against the 1,220 the
    content column allows, so the last one clipped at every window size. The
    padding gives the width back without shortening any more labels. */
-nav.tabs button{background:none;border:none;color:var(--muted);font:700 13px 'Montserrat';
+nav.tabs button{background:none;border:none;color:var(--muted);font:700 13px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';
   padding:13px 10px;cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent}
 nav.tabs button .n{margin-left:5px}
 nav.tabs button:hover{color:var(--text)}
@@ -87,7 +101,7 @@ main{max-width:1220px;margin:0 auto;padding:22px 16px 80px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;margin-bottom:16px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
 .stat .k{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
-.stat .v{font:800 25px 'Montserrat';margin-top:5px;line-height:1.15}
+.stat .v{font:800 25px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';margin-top:5px;line-height:1.15}
 .stat .n{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.45;
   overflow-wrap:anywhere}
 .stat .v{overflow-wrap:anywhere}
@@ -97,7 +111,7 @@ main{max-width:1220px;margin:0 auto;padding:22px 16px 80px}
 
 table.t{width:100%;border-collapse:collapse;font-size:13px}
 table.t th{text-align:left;padding:9px 10px;background:rgba(0,0,0,.3);color:var(--gold);
-  font:700 10.5px 'Montserrat';text-transform:uppercase;letter-spacing:.06em;
+  font:700 10.5px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';text-transform:uppercase;letter-spacing:.06em;
   position:sticky;top:0;white-space:nowrap;cursor:pointer;user-select:none}
 table.t th:hover{color:var(--gold2)}
 table.t th.plain{cursor:default}
@@ -110,7 +124,7 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
    Only the height cap goes: a wide table still has to scroll sideways inside
    its own container, or it pushes the card out past the page. */
 .scroll.short{max-height:none;overflow-y:visible;overflow-x:auto}
-.pill{display:inline-block;font:700 10.5px 'Montserrat';padding:2px 9px;border-radius:99px;white-space:nowrap}
+.pill{display:inline-block;font:700 10.5px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';padding:2px 9px;border-radius:99px;white-space:nowrap}
 .nowrap{white-space:nowrap}
 /* One line, ellipsis, full text on hover and in the CSV. */
 .clip{display:block;max-width:26ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
@@ -138,7 +152,7 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .note.red b{color:var(--bad)}
 .toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
 .toolbar input,.toolbar select{border:1px solid var(--line);border-radius:9px;padding:9px 12px;
-  font:13.5px 'DM Sans';background:rgba(0,0,0,.28);color:var(--text);outline:none}
+  font:13.5px 'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R';background:rgba(0,0,0,.28);color:var(--text);outline:none}
 .toolbar input:focus,.toolbar select:focus{border-color:var(--gold)}
 .toolbar input.grow{flex:1;min-width:180px}
 .toolbar .count{color:var(--dim);font-size:12.5px;margin-left:auto}
@@ -153,11 +167,11 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
   border-radius:13px;padding:14px 16px;cursor:pointer;color:inherit;font:inherit;transition:.14s}
 .jobrow:hover{border-color:var(--gold);background:rgba(232,160,32,.06);transform:translateX(2px)}
 .jobrow:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.jobn{font:700 12px 'Montserrat';color:var(--dim);text-align:center}
-.jobc{font:800 26px 'Montserrat';text-align:right;font-variant-numeric:tabular-nums;line-height:1}
+.jobn{font:700 12px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';color:var(--dim);text-align:center}
+.jobc{font:800 26px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';text-align:right;font-variant-numeric:tabular-nums;line-height:1}
 .jobc.bad{color:var(--bad)} .jobc.warn{color:var(--warn)}
 .jobc.good{color:var(--good)} .jobc.gold{color:var(--gold)}
-.jobt b{display:block;font:700 15px 'Montserrat';margin-bottom:3px}
+.jobt b{display:block;font:700 15px 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';margin-bottom:3px}
 .jobt span{font-size:13px;color:var(--muted);line-height:1.5}
 .jobgo{color:var(--dim);font-size:17px;text-align:center}
 .jobrow:hover .jobgo{color:var(--gold)}
@@ -179,7 +193,7 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .sheet .who2{color:var(--muted);font-size:13px;margin-bottom:14px}
 .sheet label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin:12px 0 5px}
 .sheet input,.sheet select,.sheet textarea{width:100%;border:1px solid var(--line);border-radius:10px;
-  padding:11px 13px;font:14px 'DM Sans';background:rgba(0,0,0,.3);color:var(--text);outline:none}
+  padding:11px 13px;font:14px 'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R';background:rgba(0,0,0,.3);color:var(--text);outline:none}
 .sheet textarea{min-height:76px;resize:vertical}
 .sheet .row{display:flex;gap:10px;margin-top:16px}
 footer.foot{max-width:1220px;margin:0 auto;padding:0 16px 40px;color:var(--dim);font-size:11.5px;line-height:1.7}

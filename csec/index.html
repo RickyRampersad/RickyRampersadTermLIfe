@@ -6,15 +6,27 @@
 <title>SEA &amp; CSEC Study Hub | Standard 1 to Form 5</title>
 <meta name="description" content="A CSEC / CXC study hub for Trinidad and Tobago secondary students — daily practice, syllabus mastery tracking, and official past-paper resources from Form 1 through Form 5."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/csec.css"/>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
   .formpick{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
   .formpick button{padding:11px 4px;border-radius:11px;border:1px solid var(--line);
     background:rgba(0,0,0,.24);color:var(--text);cursor:pointer;font-family:inherit;
     display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s ease}
   .formpick button:hover{border-color:var(--teal)}
-  .formpick button b{font-family:'Montserrat',sans-serif;font-size:.92rem;font-weight:800;line-height:1.1}
+  .formpick button b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.92rem;font-weight:800;line-height:1.1}
   .picklab{font-size:.7rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);
     font-weight:700;margin:0 0 6px}
   .picklab span{color:var(--gold)}
@@ -160,7 +172,7 @@
           This is the only way back in if the PIN is forgotten. Photograph it, or write it in the
           back of a school book. It is shown once here, and again in Settings while signed in.
         </p>
-        <div id="sv-code" style="font-family:'Montserrat',sans-serif;font-size:2.1rem;font-weight:800;
+        <div id="sv-code" style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:2.1rem;font-weight:800;
              letter-spacing:5px;color:var(--gold);background:rgba(0,0,0,.3);padding:16px;
              border-radius:13px;border:1px solid rgba(239,194,75,.4);margin-bottom:8px"></div>
         <p class="sub" id="sv-for" style="margin-bottom:18px"></p>

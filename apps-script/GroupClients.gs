@@ -135,7 +135,10 @@ function gcmDoGet_(p) {
   try {
     switch (String(p.action || '')) {
       case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(),
-                                   sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_() };
+                                   sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_(),
+                                   /* the group bills' day and report, so a browser can tell which GroupBilling.gs is live */
+                                   bills: (function () { try { if (typeof gblDayInfo_ !== 'function') return 0; var d = gblDayInfo_();
+                                     return { next: d.label, report: d.reportLabel || '', live: !!d.live, drive: !!d.drive }; } catch (e) { return 0; } })() };
       case 'gcm.draft':   return gcmDraft_(p);
       case 'gcm.board':   return gcmBoard_(p);
       case 'gcm.group':   return gcmGroupView_(p);
@@ -145,9 +148,19 @@ function gcmDoGet_(p) {
       case 'gcm.remindPreview':  return gcmRemindPreview_(p);
       case 'gcm.refresh': return gcmRefreshAsked_(p);
       case 'gcm.client':  return gcmClient_(p);
+      case 'gcm.clientPeople': return typeof gblClientPeople_ === 'function' ? gblClientPeople_(p) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
+      case 'gcm.clientForm': return typeof gblClientForm_ === 'function' ? gblClientForm_(p) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.wall':    return gcmWall_(p);
       case 'gcm.train':   return gcmTrain_(p);
       case 'gcm.trainView': return gcmTrainView_(p);
+      /* billings management (GroupBilling.gs, 24 October 2026) */
+      case 'gcm.billing': return typeof gblView_ === 'function' ? gblView_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billAi':  return typeof gblAi_ === 'function' ? gblAi_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      /* the Billings door (25 October 2026): the questions, last month's tasks, the people, the statement */
+      case 'gcm.billAsk':   return typeof gblQuestions_ === 'function' ? gblQuestions_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billTaskUpdates': return typeof gblTaskUpdates_ === 'function' ? gblTaskUpdates_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billPeople': return typeof gblPeopleStep_ === 'function' ? gblPeopleStep_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billStatement': return typeof gblStatement_ === 'function' ? gblStatement_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
     }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
@@ -169,6 +182,15 @@ function gcmDoPost_(b) {
       case 'gcm.review': return gcmReview_(b);
       case 'gcm.trainSubmit': return gcmTrainSubmit_(b);
       case 'gcm.trainMark':   return gcmTrainMark_(b);
+      /* billings management (GroupBilling.gs, 24 October 2026): a bill uploaded, an action on it, the bill sent, the claims
+         summary, and what a group tells us from its page */
+      case 'gcm.billUpload':  return typeof gblUpload_ === 'function' ? gblUpload_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billAct':     return typeof gblAct_ === 'function' ? gblAct_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.billSend':    return typeof gblSend_ === 'function' ? gblSend_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.claimsUpload': return typeof gblClaims_ === 'function' ? gblClaims_(b) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      case 'gcm.clientPost':  return typeof gblClientPost_ === 'function' ? gblClientPost_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
+      case 'gcm.clientTell':  return typeof gblClientTell_ === 'function' ? gblClientTell_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
+      case 'gcm.clientFormSend': return typeof gblClientFormSend_ === 'function' ? gblClientFormSend_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
     }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
@@ -202,10 +224,15 @@ function gcmRefreshTick() {
   gcmRefreshLocked_();
   /* and catches up any approved letter the Monday trigger did not reach (a busy lock, a run cut short) */
   try { gcmQueueRun_(); } catch (e) {}
+  /* the approved group bills go at 10:00 on the 26th, or the next working day (GroupBilling.gs), and a late bill at 10:00
+     the working day after it is approved; at 13:00 on the 25th, the report of who has worked each group's bills */
+  try { if (typeof gblDayRun_ === 'function') gblDayRun_({ auto: true }); } catch (e) {}
+  try { if (typeof gblBillReport_ === 'function') gblBillReport_({ auto: true }); else if (typeof gblMondayReport_ === 'function') gblMondayReport_({ auto: true }); } catch (e) {}
   /* once the welcome is on, a group a staff member has just verified gets it, in working hours */
   try { if (gcmWelcomeOn_() && d <= 5 && h >= 8 && h <= 17) gcmWelcomeRun_({ auto: true }); } catch (e) {}
-  /* and once the branch manager has given the go, a group whose letter is still unrated by Thursday gets its reminder */
-  try { if (gcmRateOn_() && d <= 5 && h >= GCM_RATE.HOURS[0] && h <= GCM_RATE.HOURS[1]) gcmRateRun_({ auto: true }); } catch (e) {}
+  /* and once the branch manager has given the go, the 10:30 group day (star reminders, staff asked why, tasks), caught up
+     here if its own trigger did not fire */
+  try { gcmDayCatchUp_(d, h); } catch (e) {}
 }
 
 /* ── sheet plumbing ─────────────────────────────────────────────── */
@@ -504,7 +531,7 @@ function gcmRefresh_() {
   /* the tasks: open, or opened this year. Salesforce takes a subquery only at the top of a WHERE, never inside an OR,
      so each way in is its own query, and a task found twice is kept once (the first way in wins: the group's own
      account, its billing, its name, then its employees) */
-  var F = 'Id, Subject, Type, Task_Type__c, Status, IsClosed, ActivityDate, CreatedDate, CompletedDateTime, LastModifiedDate, WhatId, WhoId, Owner.Name, Who.Name, What.Name, What.Type';
+  var F = 'Id, Subject, Type, Task_Type__c, Status, IsClosed, IsRecurrence, ActivityDate, CreatedDate, CompletedDateTime, LastModifiedDate, WhatId, WhoId, Owner.Name, Who.Name, What.Name, What.Type';
   var W = ' AND (IsClosed = false OR CreatedDate = THIS_YEAR)';
   var polSub = polWhere.length ? '(SELECT Id FROM CLIENT_PORTFOLIO__c WHERE ' + polWhere.join(' OR ') + ')' : '';
   var conSub = polWhere.length ? '(SELECT Contact__c FROM CLIENT_PORTFOLIO__c WHERE ' + polWhere.join(' OR ') + ')' : '';
@@ -513,6 +540,9 @@ function gcmRefresh_() {
     var id = gcmId15_(t.Id);
     if (seen[id] || gi === undefined) return;
     seen[id] = true;
+    /* a recurring series is the pattern its tasks are made from, not a piece of work: Salesforce hides it from search and
+       refuses any note on it, so a group could never be given the reason its 30 days asked for (22 October 2026) */
+    if (t.IsRecurrence) { excluded++; return; }
     var subject = String(t.Subject || ''), type = String(t.Task_Type__c || t.Type || '');
     if (gcmExcluded_(subject, type)) { excluded++; return; }
     var cat = gcmCategory_(subject, type);
@@ -766,6 +796,7 @@ function gcmLoad_() {
     if (/^welcome/i.test(st)) { g.welcomed = x.at; g.welcomes.push(x); return; }
     if (/^resent/i.test(st)) { g.resent.push(x); return; }
     if (/^reminder/i.test(st)) { g.reminders.push(x); return; }   // the star reminder (15 October 2026): not a letter either
+    if (/^bill/i.test(st)) { (g.billSends = g.billSends || []).push(x); return; }   // a monthly bill (24 October 2026): not the weekly letter
     if (/welcome|resend|reminder/i.test(st)) return;   // one that failed is on the tab, and the summary e-mail named it
     g.sends.push(x);
   });
@@ -1414,6 +1445,8 @@ function gcmBoard_(p) {
     salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', welcomeOn: gcmWelcomeOn_(), groups: groups };
   if (who.role === 'branch' || who.role === 'deputy') out.tellFailed = gcmTellFailed_();
   out.analytics = gcmAnalytics_(L);
+  /* where each group's billing stands this month (GroupBilling.gs, 24 October 2026) */
+  if (typeof gblBoard_ === 'function') { try { out.billing = gblBoard_(L); out.billingLive = gblLive_(); out.billingDay = gblDayInfo_(); } catch (e) { out.billing = null; } }
   return out;
 }
 
@@ -2315,7 +2348,7 @@ function gcmWelcomeRun_(o) {
  * which the weekly run passes over: a reminder is never the week's letter. */
 var GCM_RATE = {
   AFTER_DAYS: 1,                 // from the working day after the letter, once a day, until they respond
-  HOURS: [10, 16],               // the hourly run sends it from 10:00 to 16:00, Monday to Friday
+  HOURS: [10, 16],               // (until 21 October the hourly run's window; the reminder now goes in the 10:30 group day)
   QUIET_H: 20,                   // and never within this many hours of another e-mail to the group (a reminder included)
   AWAY_H: 48,                    // an automatic reply ("out of office") pauses it this long
   AUTO_REPLY: /^\s*(automatic reply|auto(matic)?[\s-]*reply|out of (the )?office|ooo\b|autoreply|away from)/i,
@@ -2544,8 +2577,8 @@ function gcmRateRemindTest() { return tSay_(gcmRateRun_({ test: true }).said); }
  *  working day to each group that has not responded to its letter. gcmRateRemindStop ends that. */
 function gcmRateRemindNow() {
   PropertiesService.getScriptProperties().setProperty(GCM_RATE.ON_PROP, 'Y');
-  return tSay_(gcmRateRun_({ now: true }).said + ' From now on, every working day between ' + GCM_RATE.HOURS[0] + ':00 and ' + GCM_RATE.HOURS[1] +
-    ':00, a group whose letter is still unrated, and who has not written to us since it, gets one reminder naming that letter (gcmRateRemindStop ends that).');
+  try { gcmDayTrigger_(); } catch (e) {}
+  return tSay_(gcmRateRun_({ now: true }).said + ' From now on, at 10:30 every working day, a group whose letter is still unrated, and who has not written to us since it, gets one reminder naming that letter (gcmRateRemindStop ends that).');
 }
 function gcmRateRemindStop() { PropertiesService.getScriptProperties().deleteProperty(GCM_RATE.ON_PROP); return tSay_('The star reminder no longer goes by itself. Staff can still send it from a group’s page.'); }
 function gcmRateOn_() { try { return PropertiesService.getScriptProperties().getProperty(GCM_RATE.ON_PROP) === 'Y'; } catch (e) { return false; } }
@@ -2556,7 +2589,7 @@ function gcmRateRun_(o) {
   o = o || {};
   if (!tMsCreds_()) return { ok: false, said: 'Microsoft 365 is not set up (MS_TENANT, MS_CLIENT, MS_SECRET): nothing was sent.' };
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(60000)) return { ok: false, said: 'Busy: the letters or the refresh are running. Run it again in a minute.' };
+  if (!lock.tryLock(60000)) return { ok: false, busy: true, said: 'Busy: the letters or the refresh are running. Run it again in a minute.' };
   try {
     var L = gcmLoad_(), list = gcmRateInbox_(L, gcmRateList_(L, {})), E = tEsc_, me = (GCM_TRAIN.TO_MANAGER || [])[0], sent = [], failed = [];
     var name = function (x) { return x.g.name + ' (' + { answered: 'answered the items, no stars', viewed: 'opened the page, no answer', waiting: 'no answer yet' }[x.st.kind] +
@@ -2580,14 +2613,15 @@ function gcmRateRun_(o) {
       };
       samples.forEach(function (x) { var m = gcmRateMail_(x.g, x.st, L.today); tMsSend_(me, '[TEST] ' + m.subject, banner(x) + m.html, { replyTo: TRANSITION.MS_FROM }); });
       return { ok: true, test: true, said: samples.length + ' test' + (samples.length === 1 ? '' : 's') + ' went to ' + me + ': ' + list.go.length + ' group' + (list.go.length === 1 ? '' : 's') +
-        ' would get the reminder now, ' + list.rated.length + ' rated us already, ' + list.held.length + ' would not.' };
+        ' would get the reminder now, ' + list.rated.length + ' rated us already, ' + list.held.length + ' would not.',
+        lists: { sent: [], would: list.go.map(name), failed: [], held: list.held.map(heldLine), rated: list.rated.map(ratedLine) } };
     }
-    if (o.auto && !list.go.length) return { ok: true, sent: 0, said: 'No group is due a reminder.' };
+    if (o.auto && !list.go.length) return { ok: true, sent: 0, lists: { sent: [], failed: [], held: list.held.map(heldLine), rated: list.rated.map(ratedLine) }, said: 'No group is due a reminder.' };
     list.go.forEach(function (x) {
       var row = gcmRateSend_(x.g, x.st, L.today, '');
       if (/^failed/.test(row.Status)) failed.push(x.g.name + ': ' + row.Status); else sent.push(name(x));
     });
-    try {
+    if (!o.quiet) try {
       MailApp.sendEmail({ to: (TRANSITION.CC || []).join(','), subject: 'Group star reminder, ' + tDmy_(L.today) + ': ' + sent.length + ' sent' + (failed.length ? ', ' + failed.length + ' failed' : ''),
         htmlBody: '<p><b>' + sent.length + '</b> group' + (sent.length === 1 ? '' : 's') + ' reminded to rate our service, from ' + E(TRANSITION.MS_FROM) + '.</p>' +
           (sent.length ? '<ul>' + sent.map(function (s) { return '<li>' + E(s) + '</li>'; }).join('') + '</ul>' : '') +
@@ -2596,7 +2630,8 @@ function gcmRateRun_(o) {
           (list.held.length ? '<p><b>Not reminded</b></p><ul>' + list.held.map(function (h) { return '<li>' + E(heldLine(h)) + '</li>'; }).join('') + '</ul>' : '') +
           '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p>' });
     } catch (e) {}
-    return { ok: true, sent: sent.length, failed: failed.length, said: sent.length + ' reminded, ' + failed.length + ' failed, ' + list.rated.length + ' rated already, ' + list.held.length + ' not reminded.' };
+    return { ok: true, sent: sent.length, failed: failed.length, lists: { sent: sent, failed: failed, held: list.held.map(heldLine), rated: list.rated.map(ratedLine) },
+      said: sent.length + ' reminded, ' + failed.length + ' failed, ' + list.rated.length + ' rated already, ' + list.held.length + ' not reminded.' };
   } finally { try { lock.releaseLock(); } catch (e) {} }
 }
 
@@ -2639,6 +2674,317 @@ function gcmRemind_(b) {
     if (/^failed/.test(row.Status)) return { ok: false, error: row.Status };
     return { ok: true, sent: true, at: gcmWhen_(row.When), to: g.to.join(', '), contact: g.contact, signer: row.Staff };
   } finally { try { lock.releaseLock(); } catch (e) {} }
+}
+
+/* ── 10:30 every working day: the group day ─────────────────────────
+ * Asked for on 21 October 2026: "emails are supposed to be triggering with insights to clients for a response if they
+ * got the email but did not provide a rating as well an email to the respective staff to provide a response as to why
+ * this week email … was not approved so it could have sent out at 10am on monday, reference the training … at 10:30am
+ * daily", then "a task is opened for the respective staff … task type Lic/HR … as this is a KPI". One run at 10:30,
+ * Monday to Friday (gcmDay1030, its own daily trigger; the hourly run catches it up from 11:00 if it did not fire):
+ *  - the star reminder to every group whose last letter is still unrated (gcmRateRun_, when GCM_RATE_ON is set);
+ *  - to each staff member whose groups had no letter this week: which ones, why each did not go, what to do today, the
+ *    manual's own words, and the groups that did get theirs with what came back; a reply by noon goes to the branch
+ *    manager, who is copied (when GCM_CHASE_ON is set);
+ *  - a Salesforce task for each group that missed the week, owned by the staff member who looks after it, Task Type
+ *    Lic/Staffing/SA/HR, on the group's account, once a group a week: the KPI. That type is internal and never reaches a
+ *    group's page (GCM_EXCLUDE_TYPES). A group that cannot have a letter yet (no contact, code or list bill) is listed
+ *    for its set-up, with no task;
+ *  - one summary to the branch manager.
+ * gcmGroupDayTest sends the manager all of it marked TEST and opens no task. gcmGroupDayStart is the go: both on, the
+ * trigger made, today's run at once. gcmGroupDayStop ends it. */
+var GCM_DAY = {
+  HOUR: 10, MINUTE: 30, LAST_HOUR: 16, REPLY_BY: '12 noon',
+  ON_PROP: 'GCM_CHASE_ON', LAST_PROP: 'GCM_DAY_LAST', TASKS_PROP: 'GCM_CHASE_TASKS',
+  RETRY_PROP: 'GCM_RATE_RETRY',   // the day the star reminder found the lock busy twice: the hourly run tries again
+  TASK_TYPE: 'Lic/Staffing/SA/HR', TASK_TAG: 'GROUP LETTER NOT SENT',
+  MANUAL: 'training.html',
+  TRAIN: [
+    ['Section 2, Your week', 'Friday: Approve. Finish the checks, deal with every escalation (section 4), write the reasons (section 6), then preview and approve each group marked Approve for Monday. You can approve up to 10:00 on Monday, but Friday leaves Monday morning for what changed.'],
+    ['Section 2, Your week', 'Monday, 10:00: the letters go by themselves. Every letter you approved is written again from Salesforce and sent.'],
+    ['Section 7, After Monday’s letter', 'No answer by Friday? Before you approve the next letter, call or e-mail the contact, check they got the letter and can sign in, and note it in Chatter.']
+  ]
+};
+function gcmChaseOn_() { try { return PropertiesService.getScriptProperties().getProperty(GCM_DAY.ON_PROP) === 'Y'; } catch (e) { return false; } }
+function gcmDayManager_() { return (GCM_TRAIN.TO_MANAGER || [])[0] || ''; }
+
+/** The daily trigger at 10:30, made once. */
+function gcmDayTrigger_() {
+  if (ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'gcmDay1030'; })) return;
+  ScriptApp.newTrigger('gcmDay1030').timeBased().atHour(GCM_DAY.HOUR).nearMinute(GCM_DAY.MINUTE).everyDays(1).inTimezone(tTz_()).create();
+}
+/** The trigger's own run: working days only. */
+function gcmDay1030() {
+  if (gcmDow_(gcmToday_()) > 5) return;
+  gcmDay_({});
+}
+/** From the hourly run: once the go is given, make sure of the trigger, and run the day if 10:30 did not fire. */
+function gcmDayCatchUp_(d, h) {
+  if (!(gcmRateOn_() || gcmChaseOn_())) return;
+  try { gcmDayTrigger_(); } catch (e) {}
+  var props = PropertiesService.getScriptProperties(), today = gcmToday_(), last = props.getProperty(GCM_DAY.LAST_PROP) || '';
+  if (d > 5 || h <= GCM_DAY.HOUR || h > GCM_DAY.LAST_HOUR) return;
+  if (last !== today) { gcmDay_({}); return; }
+  /* the day ran, but the star reminder found the lock busy: try it again, with its own summary to the branch */
+  if (props.getProperty(GCM_DAY.RETRY_PROP) === today && gcmRateOn_()) {
+    var r = gcmRateRun_({ auto: true });
+    if (!r.busy) props.deleteProperty(GCM_DAY.RETRY_PROP);
+  }
+}
+
+/** Editor Run, first: the branch manager gets the star reminder as each kind of group would, every staff e-mail as it
+ *  would go, and the summary, all marked TEST. No group and no staff member gets anything, and no task opens. */
+function gcmGroupDayTest() { return tSay_(gcmDay_({ test: true }).said); }
+/** Editor Run, the go: the star reminder and the staff e-mails and tasks on, the 10:30 trigger made, and today's run now
+ *  (on a working day). gcmGroupDayStop ends it. */
+function gcmGroupDayStart() {
+  var p = PropertiesService.getScriptProperties();
+  p.setProperty(GCM_RATE.ON_PROP, 'Y'); p.setProperty(GCM_DAY.ON_PROP, 'Y');
+  var trig = '';
+  try { gcmDayTrigger_(); } catch (e) { trig = ' The 10:30 trigger could not be made (' + String(e && e.message ? e.message : e).slice(0, 120) + '), so the hourly run takes the day at 11:00 instead.'; }
+  var r = gcmDow_(gcmToday_()) <= 5 ? gcmDay_({ now: true }) : { said: 'Today is not a working day: the first run is the next working day at 10:30.' };
+  return tSay_(r.said + ' From now on it runs at 10:30 every working day (gcmGroupDayStop ends it).' + trig);
+}
+function gcmGroupDayStop() {
+  var p = PropertiesService.getScriptProperties();
+  p.deleteProperty(GCM_RATE.ON_PROP); p.deleteProperty(GCM_DAY.ON_PROP);
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'gcmDay1030') ScriptApp.deleteTrigger(t); });
+  return tSay_('The 10:30 group day is off: no star reminders, staff e-mails or tasks go by themselves. Staff can still remind a group from its page.');
+}
+
+/** The day: o.test sends everything to the branch manager marked TEST; o.now runs whatever ran today already. */
+function gcmDay_(o) {
+  o = o || {};
+  var props = PropertiesService.getScriptProperties(), today = gcmToday_(), out = { said: '' };
+  if (!o.test && !o.now && props.getProperty(GCM_DAY.LAST_PROP) === today) return { said: 'The group day ran already today.' };
+  if (!o.test) props.setProperty(GCM_DAY.LAST_PROP, today);
+  /* on a Monday, any approved letter the 10:00 run has not reached goes first, so it is never called missed */
+  if (!o.test && gcmDow_(today) === GCM.SEND_DAY) { try { gcmQueueRun_(); } catch (e) {} }
+  var rate = null, said = [];
+  var runRate = function () {
+    try { return gcmRateRun_(o.test ? { test: true } : { auto: true, quiet: true }); }
+    catch (e) { return { ok: false, said: String(e && e.message ? e.message : e).slice(0, 200) }; }
+  };
+  /* the script lock is the whole project's: the hourly refresh or the campaign's five-minute runs may hold it. On 21
+     October 2026 the reminder found it busy, said so in the summary, and nothing tried again that day. Now a busy lock
+     is tried again after the staff part, and failing that by the hourly run from 11:00 (gcmDayCatchUp_). */
+  if (o.test || gcmRateOn_()) rate = runRate();
+  var chase = null;
+  if (o.test || gcmChaseOn_()) {
+    try { chase = gcmChaseRun_({ test: !!o.test }); } catch (e) { chase = { ok: false, said: String(e && e.message ? e.message : e).slice(0, 200) }; }
+  }
+  if (rate && rate.busy) rate = runRate();
+  if (!o.test) { if (rate && rate.busy) props.setProperty(GCM_DAY.RETRY_PROP, today); else props.deleteProperty(GCM_DAY.RETRY_PROP); }
+  if (rate && rate.busy) rate.said = 'the letters or the refresh were running, twice: the hourly run tries again from 11:00, and its own summary tells you what went.';
+  if (rate) said.push('Star reminder: ' + (rate.said || ''));
+  if (chase) said.push('Staff: ' + (chase.said || ''));
+  /* the change forms waiting on EB Customer Care: the owner's task chased every three working days (GroupBilling.gs) */
+  var forms = null;
+  if (typeof gblFormChase_ === 'function') { try { forms = gblFormChase_({ test: !!o.test }); said.push('Change forms: ' + forms.said); } catch (e) { forms = { said: String(e && e.message ? e.message : e).slice(0, 200), chased: [], answered: [], closed: [], waiting: [] }; } }
+  /* the group bills (GroupBilling.gs): on the billing day the 10:00 run if it has not gone, then the staff asked why; every day
+     the block for the summary */
+  var bills = null;
+  if (typeof gblDay_ === 'function') { try { bills = gblDay_({ test: !!o.test }); if (bills.said) said.push('Bills: ' + bills.said); } catch (e) { bills = { html: '', said: String(e && e.message ? e.message : e).slice(0, 200) }; said.push('Bills: ' + bills.said); } }
+  try { gcmDaySummary_({ test: !!o.test, rate: rate, chase: chase, forms: forms, bills: bills }); said.push('Summary sent to ' + gcmDayManager_() + '.'); }
+  catch (e) { said.push('The summary did not go: ' + String(e && e.message ? e.message : e).slice(0, 160)); }
+  out.said = said.join(' ');
+  return out;
+}
+
+/** This week, group by group, by who looks after them: the letters that went, the ones that did not and why, and the
+ *  groups that cannot have one yet. The week starts at the last Monday run. */
+function gcmChaseList_(L) {
+  var cycle = gcmAddDays_(gcmNextSend_(), -7), by = {}, order = [];
+  L.reg.forEach(function (g) {
+    var s = gcmGroupStats_(g, L.today), key = gcmCodeKey_(g.ownerEmail || g.assigned || 'nobody');
+    if (!by[key]) { by[key] = { name: g.assigned || '', email: g.ownerEmail || '', active: !!(g.assigned && g.ownerActive), missed: [], sent: [], notReady: [] }; order.push(key); }
+    var o = by[key];
+    if (s.sentThisWeek) { o.sent.push({ g: g, s: s, st: gcmRateState_(g, L.today) }); return; }
+    var no = !s.ready ? s.why : gcmCannotMail_(g);
+    if (no) { o.notReady.push({ g: g, why: no }); return; }
+    var q = g.queue || [];
+    if (q.some(function (x) { return x.status === 'queued' && x.for === cycle; })) return;   // approved for this week's run, not sent yet: it goes
+    var held = q.filter(function (x) { return x.for === cycle && /^held/i.test(x.status); }).pop();
+    var later = q.filter(function (x) { return x.status === 'queued' && x.for > cycle; }).pop();
+    var state = held ? 'held' : later ? 'later' : 'none';
+    o.missed.push({ g: g, s: s, state: state,
+      why: held ? 'Approved, but held at the 10:00 run: ' + held.status.replace(/^held:\s*/i, '')
+        : later ? 'Approved by ' + later.staff + ' after this week’s run, so it waits for ' + gcmSendLabel_(later.for)
+        : 'Not approved by ' + gcmSendLabel_(cycle),
+      todo: held ? 'Write the note for the group on that item (manual, section 6), then press Send now.'
+        : later ? 'If they should have it this week, press Send now.'
+        : 'Open it, do the six checks, preview, and press Send now.' });
+  });
+  return { cycle: cycle, owners: order.map(function (k) { return by[k]; }) };
+}
+
+/** What came back from a group that had its letter, in a few words, for staff and the branch manager. */
+function gcmBackWords_(st) {
+  if (!st) return 'no letter yet';
+  var r = st.kind === 'rated' ? 'Rated ' + st.rated.rating + ' of 5 (' + st.rated.at + ', ' + st.rated.name + ')'
+    : st.kind === 'answered' ? 'Items answered, no stars (' + st.answered.at + ')'
+    : st.kind === 'viewed' ? 'Opened their page ' + st.lastView.at + ', no answer'
+    : 'No answer yet';
+  if (st.views && st.kind !== 'viewed') r += '; opened ' + st.views + ' time' + (st.views === 1 ? '' : 's');
+  if (st.reminder) r += '; reminded ' + st.reminder.n + ' time' + (st.reminder.n === 1 ? '' : 's') + ', last ' + st.reminder.at;
+  return r;
+}
+
+/** One staff member's e-mail. */
+function gcmChaseMail_(o, cycle, today, tasks) {
+  var E = tEsc_, first = String(o.name || '').split(/\s+/)[0] || 'team', n = o.missed.length;
+  var subject = 'Group letters: ' + n + ' of your groups had no letter this week · reply by ' + GCM_DAY.REPLY_BY;
+  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F"';
+  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#142033;vertical-align:top"';
+  var table = function (head, rows) { return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px"><tr>' +
+    head.map(function (h) { return '<th ' + th + '>' + E(h) + '</th>'; }).join('') + '</tr>' + rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>'; };
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
+    '<p>Good morning, ' + E(first) + '.</p>' +
+    '<p>This week’s group letters went at 10:00 on ' + E(gcmSendLabel_(cycle).replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> ' +
+    'A letter not approved by 10:00 on Monday waits for the next Monday unless you send it now.</p>' +
+    table(['Group', 'Why it did not go', 'Do this today'], o.missed.map(function (m) {
+      var t = tasks && tasks[m.g.key];
+      return ['<b>' + E(m.g.name) + '</b>' + (t && t.id ? '<br><span style="color:#4B586C;font-size:12.5px">Salesforce task ' + E(t.id) + '</span>' : ''), E(m.why), E(m.todo)];
+    })) +
+    (tasks && Object.keys(tasks).length ? '<p>A Salesforce task (' + E(GCM_DAY.TASK_TYPE) + ') is open for each one in your name. Close it with your reason in its comments.</p>' : '') +
+    '<p style="background:#FFF4D6;border-left:4px solid #E0A800;padding:10px 14px"><b>Please reply to this e-mail by ' + E(GCM_DAY.REPLY_BY) + '</b> with why each one was not approved by 10:00 on Monday, and when it will go. Your reply goes to Mr Rampersad.</p>' +
+    '<p style="margin:16px 0 6px;font-weight:700">From your training: the group client management manual</p>' +
+    GCM_DAY.TRAIN.map(function (t) { return '<p style="margin:0 0 8px;padding:8px 12px;background:#F4F7FA;border-left:3px solid #1D5BC4"><i>“' + E(t[1]) + '”</i><br><span style="font-size:12.5px;color:#4B586C">' + E(t[0]) + '</span></p>'; }).join('') +
+    '<p><a href="' + GCM.SITE + GCM_DAY.MANUAL + '" style="color:#1D5BC4;font-weight:700">Open the manual</a> · <a href="' + GCM.SITE + '" style="color:#1D5BC4;font-weight:700">Open group client management</a></p>' +
+    (o.sent.length ? '<p style="margin:18px 0 6px;font-weight:700">Your groups that had this week’s letter, and what came back</p>' +
+      table(['Group', 'Sent', 'What came back'], o.sent.map(function (x) { return ['<b>' + E(x.g.name) + '</b>', E(x.s.sentThisWeek), E(gcmBackWords_(x.st))]; })) +
+      '<p style="font-size:13.5px;color:#2B374C">No answer by Friday: call or e-mail the contact before you approve the next letter (section 7). The star reminder goes to them each working day until they rate us.</p>' : '') +
+    (o.notReady.length ? '<p style="margin:18px 0 6px;font-weight:700">Your groups that cannot have a letter yet</p>' +
+      table(['Group', 'What is missing'], o.notReady.map(function (x) { return ['<b>' + E(x.g.name) + '</b>', E(x.why)]; })) : '') +
+    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  var text = ['Good morning, ' + first + '.', '', n + ' of your groups had no letter this week:']
+    .concat(o.missed.map(function (m) { return '- ' + m.g.name + ': ' + m.why + '. ' + m.todo; }))
+    .concat(['', 'Please reply by ' + GCM_DAY.REPLY_BY + ' with why each one was not approved by 10:00 on Monday, and when it will go.']).join('\n');
+  return { subject: subject, html: html, text: text };
+}
+
+/** A Salesforce task for each group that missed the week, once a group a week, owned by the staff member who looks after
+ *  it. Returns { groupKey: { id, subject, error } }; o.test opens nothing and says what it would open. */
+function gcmChaseTasks_(owners, cycle, today, test, o) {
+  o = o || {};   // the billing day (GroupBilling.gs) uses the same machinery with its own tag, property and words
+  var TAG = o.tag || GCM_DAY.TASK_TAG, PROP = o.prop || GCM_DAY.TASKS_PROP, TRAIN = o.train || GCM_DAY.TRAIN;
+  var props = PropertiesService.getScriptProperties(), out = {};
+  var kept = gcmParse_(props.getProperty(PROP), {});
+  if (kept.cycle !== cycle) kept = { cycle: cycle, tasks: {} };
+  var missed = [];
+  owners.forEach(function (o) { o.missed.forEach(function (m) { missed.push({ o: o, m: m }); }); });
+  if (!missed.length) return out;
+  var subjectOf = function (x) {
+    return 'RR/' + String(x.o.name || 'BRANCH').toUpperCase() + ' - ' + TAG + ' - ' + x.m.g.name + ' - ' + (o.label || 'week of ' + tDmy_(cycle)) + ': reason needed';
+  };
+  if (test) { missed.forEach(function (x) { out[x.m.g.key] = { id: '', subject: subjectOf(x), test: true }; }); return out; }
+  if (!tSfOn_()) { missed.forEach(function (x) { out[x.m.g.key] = { error: 'Salesforce is not linked to this project' }; }); return out; }
+  /* who each staff member is in Salesforce, by the owner's e-mail; and any task opened this week already */
+  var users = {}, have = {};
+  try {
+    var mails = missed.map(function (x) { return String(x.o.email || '').toLowerCase(); }).filter(String);
+    if (mails.length) gcmQuery_("SELECT Id, Email FROM User WHERE IsActive = true AND UserType = 'Standard' AND Email IN (" + gcmIn_(mails) + ')').forEach(function (u) { users[String(u.Email || '').toLowerCase()] = u.Id; });
+    gcmQuery_("SELECT Id, WhatId, Subject FROM Task WHERE Task_Type__c = '" + GCM_DAY.TASK_TYPE + "' AND Subject LIKE '%" + TAG + "%' AND CreatedDate >= " + cycle + 'T00:00:00Z')
+      .forEach(function (t) { if (t.WhatId) have[gcmId15_(t.WhatId)] = t.Id; });
+  } catch (e) { missed.forEach(function (x) { out[x.m.g.key] = { error: String(e && e.message ? e.message : e).slice(0, 160) }; }); return out; }
+  missed.forEach(function (x) {
+    var g = x.m.g, acct = g.acctsFull[0] || '', made = kept.tasks[g.key] || (acct && have[gcmId15_(acct)]);
+    if (made) { kept.tasks[g.key] = made; out[g.key] = { id: made, subject: subjectOf(x), existing: true }; return; }
+    var owner = users[String(x.o.email || '').toLowerCase()];
+    if (!owner || !x.o.active) { out[g.key] = { error: 'no active Salesforce user for ' + (x.o.name || 'the account owner') + (x.o.email ? ' (' + x.o.email + ')' : '') }; return; }
+    var desc = [x.m.why + '.', 'Do this today: ' + x.m.todo, '', 'Close this task with your reason: why it was ' + (o.why || 'not approved by 10:00 on Monday') + ', and when it went.', '',
+      'From the group client management manual:'].concat(TRAIN.map(function (t) { return '"' + t[1] + '" (' + t[0] + ')'; })).join('\n');
+    try {
+      var res = tSfSend_('post', '/sobjects/Task', { Subject: subjectOf(x).slice(0, 255), OwnerId: owner, WhatId: acct || null, ActivityDate: today,
+        Status: 'Not Started', Priority: 'High', Task_Type__c: GCM_DAY.TASK_TYPE, Description: desc });
+      kept.tasks[g.key] = res.id; out[g.key] = { id: res.id, subject: subjectOf(x) };
+    } catch (e) { out[g.key] = { error: String(e && e.message ? e.message : e).slice(0, 160) }; }
+  });
+  props.setProperty(PROP, JSON.stringify(kept));
+  return out;
+}
+
+/** The staff part of the day: the tasks, then one e-mail to each staff member with a group that missed the week, from
+ *  support@, the branch manager copied and replies to him. o.test sends each one to the branch manager instead. */
+function gcmChaseRun_(o) {
+  o = o || {};
+  var L = gcmLoad_(), list = gcmChaseList_(L), me = gcmDayManager_(), E = tEsc_, sent = [], failed = [];
+  var lock = LockService.getScriptLock();
+  if (!o.test && !lock.tryLock(60000)) return { ok: false, said: 'Busy: run it again in a minute.' };
+  try {
+    var tasks = gcmChaseTasks_(list.owners, list.cycle, L.today, !!o.test);
+    list.owners.forEach(function (ow) {
+      if (!ow.missed.length) return;
+      var mine = {};
+      ow.missed.forEach(function (m) { if (tasks[m.g.key]) mine[m.g.key] = tasks[m.g.key]; });
+      var m = gcmChaseMail_(ow, list.cycle, L.today, mine);
+      var to = ow.active && ow.email ? ow.email : me, html = m.html;
+      if (o.test) {
+        html = '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST.</b> This goes to <b>' + E(to) +
+          '</b>, copied to you, at 10:30. Tasks it would open:<br>' + ow.missed.map(function (x) { return '· ' + E((tasks[x.g.key] || {}).subject || x.g.name); }).join('<br>') + '</div>' + html;
+        to = me;
+      }
+      try {
+        if (tMsCreds_()) tMsSend_(to, (o.test ? '[TEST] ' : '') + m.subject, html, { cc: o.test || to === me ? [] : [me], replyTo: me });
+        else MailApp.sendEmail({ to: to, cc: o.test || to === me ? '' : me, replyTo: me, subject: (o.test ? '[TEST] ' : '') + m.subject, htmlBody: html, name: 'Ricky Rampersad Branch' });
+        sent.push((ow.name || 'nobody') + ' (' + ow.missed.length + ')');
+      } catch (e) { failed.push((ow.name || 'nobody') + ': ' + String(e && e.message ? e.message : e).slice(0, 140)); }
+    });
+    return { ok: true, list: list, tasks: tasks, sent: sent, failed: failed,
+      said: (sent.length ? sent.length + ' staff e-mail' + (sent.length === 1 ? '' : 's') + (o.test ? ' (tests to ' + me + ')' : '') + ': ' + sent.join(', ') : 'every ready group had its letter this week: no staff e-mail') +
+        (failed.length ? '; did not go: ' + failed.join('; ') : '') + '.' };
+  } finally { if (!o.test) { try { lock.releaseLock(); } catch (e) {} } }
+}
+
+/** One e-mail to the branch manager: this week's letters, what came back, today's reminders, who was asked why, and the
+ *  tasks opened. */
+function gcmDaySummary_(o) {
+  var me = gcmDayManager_();
+  if (!me) throw new Error('No branch manager address');
+  var L = gcmLoad_(), list = (o.chase && o.chase.list) || gcmChaseList_(L), E = tEsc_, today = L.today, tasks = (o.chase && o.chase.tasks) || {};
+  var all = [], ready = 0, sentN = 0, missedN = 0;
+  list.owners.forEach(function (ow) {
+    ow.sent.forEach(function (x) { sentN++; ready++; all.push({ kind: 'sent', ow: ow, x: x }); });
+    ow.missed.forEach(function (x) { missedN++; ready++; all.push({ kind: 'missed', ow: ow, x: x }); });
+    ow.notReady.forEach(function (x) { all.push({ kind: 'notready', ow: ow, x: x }); });
+  });
+  var back = { rated: 0, answered: 0, viewed: 0, waiting: 0 };
+  all.forEach(function (a) { if (a.kind === 'sent' && a.x.st) back[a.x.st.kind] = (back[a.x.st.kind] || 0) + 1; });
+  var td = 'style="padding:7px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;vertical-align:top"';
+  var row = function (cells) { return '<tr>' + cells.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; };
+  var head = function (cells) { return '<tr>' + cells.map(function (c) { return '<th style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F">' + E(c) + '</th>'; }).join('') + '</tr>'; };
+  var tbl = function (h, rows) { return rows.length ? '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px">' + head(h) + rows.join('') + '</table>' : ''; };
+  var rl = o.rate && o.rate.lists ? o.rate.lists : null;
+  var subject = (o.test ? '[TEST] ' : '') + 'Group day, ' + tDmy_(today) + ': ' + sentN + ' of ' + ready + ' ready groups had this week’s letter' + (missedN ? ' · ' + missedN + ' missed' : '');
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:760px">' +
+    '<p><b>' + sentN + ' of ' + ready + '</b> ready groups had this week’s letter (from ' + E(gcmSendLabel_(list.cycle)) + '). ' +
+    '<b>' + missedN + '</b> did not. From the groups that had one: ' + back.rated + ' rated, ' + back.answered + ' answered without stars, ' + back.viewed + ' opened with no answer, ' + back.waiting + ' no answer yet.</p>' +
+    (missedN ? '<p style="margin:14px 0 6px;font-weight:700">No letter this week</p>' + tbl(['Group', 'Looked after by', 'Why', 'Task'], all.filter(function (a) { return a.kind === 'missed'; }).map(function (a) {
+      var t = tasks[a.x.g.key] || {};
+      return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why), E(t.id ? (t.existing ? 'open since earlier: ' : 'opened: ') + t.id : t.test ? 'would open' : t.error || '–')]);
+    })) : '') +
+    (sentN ? '<p style="margin:14px 0 6px;font-weight:700">Had this week’s letter</p>' + tbl(['Group', 'Looked after by', 'Sent', 'What came back'], all.filter(function (a) { return a.kind === 'sent'; }).map(function (a) {
+      return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name), E(a.x.s.sentThisWeek), E(gcmBackWords_(a.x.st))]);
+    })) : '') +
+    (o.rate ? '<p style="margin:14px 0 6px;font-weight:700">Star reminders today</p><p>' + E(o.rate.said || '') + '</p>' +
+      (rl && rl.sent.length ? '<ul>' + rl.sent.map(function (s) { return '<li>' + E(s) + '</li>'; }).join('') + '</ul>' : '') +
+      (rl && rl.would && rl.would.length ? '<p style="margin:6px 0 2px">Would get one today:</p><ul>' + rl.would.map(function (s) { return '<li>' + E(s) + '</li>'; }).join('') + '</ul>' : '') +
+      (rl && rl.failed && rl.failed.length ? '<p style="margin:6px 0 2px"><b>Did not go</b></p><ul>' + rl.failed.map(function (s) { return '<li>' + E(s) + '</li>'; }).join('') + '</ul>' : '') :
+      '<p><b>Star reminders:</b> off (gcmGroupDayStart turns them on).</p>') +
+    '<p style="margin:14px 0 6px;font-weight:700">Staff asked why</p><p>' + E(o.chase ? o.chase.said : 'off (gcmGroupDayStart turns it on).') + ' Their replies come to you.</p>' +
+    (all.some(function (a) { return a.kind === 'notready'; }) ? '<p style="margin:14px 0 6px;font-weight:700">Cannot have a letter yet</p>' + tbl(['Group', 'Looked after by', 'What is missing'], all.filter(function (a) { return a.kind === 'notready'; }).map(function (a) {
+      return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); })) : '') +
+    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  if (o.forms && (o.forms.chased.length || o.forms.answered.length || o.forms.closed.length || o.forms.waiting.length)) {
+    var fl = function (x, what) { return '<li><b>' + E(x.member) + '</b> (' + E(x.group) + ') · ' + E(what) + (x.owner ? ' · ' + E(x.owner) : '') + '</li>'; };
+    html = html.replace(/<\/div>\s*$/, '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#13408F">Change forms with EB Customer Care</h3><ul style="margin:0;padding-left:18px">' +
+      o.forms.chased.map(function (x) { return fl(x, 'follow-up ' + (x.chases + 1) + ' posted on the task, ' + x.days + ' working days with no reply'); }).join('') +
+      o.forms.answered.map(function (x) { return fl(x, 'EB replied' + (x.reply ? ' ' + x.reply.at + ': ' + x.reply.subject : '') + '; noted on the task'); }).join('') +
+      o.forms.closed.map(function (x) { return fl(x, 'task closed'); }).join('') + o.forms.waiting.map(function (x) { return fl(x, 'waiting, ' + x.days + ' working day' + (x.days === 1 ? '' : 's') + ' since ' + (x.chases ? 'the last follow-up' : 'it went')); }).join('') + '</ul></div>');
+  }
+  if (o.bills && o.bills.html) html = html.replace(/<\/div>\s*$/, o.bills.html + '</div>');
+  if (tMsCreds_()) tMsSend_(me, subject, html, { replyTo: me });
+  else MailApp.sendEmail({ to: me, subject: subject, htmlBody: html, name: 'Ricky Rampersad Branch' });
 }
 
 /** The send, or with o.test the rehearsal. The send takes the approvals due by now; the rehearsal takes every approval
@@ -2777,7 +3123,9 @@ function gcmShare_(b) {
     var said = String(b.text || '').trim().slice(0, 2000);
     if (!said) return { ok: false, error: 'Write the comment first.' };
     if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the comment cannot go onto the task.' };
-    var cres = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'Comment for the team from ' + who.name + ' (not shown to the group):\n' + said });
+    var cres;
+    try { cres = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'Comment for the team from ' + who.name + ' (not shown to the group):\n' + said }); }
+    catch (e) { return { ok: false, error: gcmFeedRefused_(e) }; }
     row.Kind = 'comment'; row.Value = String(cres.id || '');
   } else if (b.kind === 'show') {
     if (t.priv && gcmYes_(b.value)) return { ok: false, error: 'This item names a member’s health or a claim: it stays with staff.' };
@@ -2792,11 +3140,24 @@ function gcmShare_(b) {
     if (!text) return { ok: false, error: 'Write the note first.' };
     if (t.priv) return { ok: false, error: 'This item stays with staff.' };
     if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the note cannot go onto the task.' };
-    var res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + gcmSigner_(who, g) + ':\n' + text });
+    var res;
+    try { res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + gcmSigner_(who, g) + ':\n' + text }); }
+    catch (e) { return { ok: false, error: gcmFeedRefused_(e) }; }
     row.Kind = 'post'; row.Value = String(res.id || '') + ' Y';
   } else return { ok: false, error: 'Unknown change.' };
   gcmAppend_(GCM.SHARES, [row]);
   return { ok: true };
+}
+
+/** Salesforce's refusal of a note, in words staff can act on. A recurring series (or an event) takes no Chatter post at
+ *  all: such an item is an internal reminder, so the answer is to stop showing it to the group, which also lifts the
+ *  30-day rule on it. */
+function gcmFeedRefused_(e) {
+  var m = String(e && e.message ? e.message : e);
+  if (/INVALID_CROSS_REFERENCE_KEY|recurring series|proposed events/i.test(m))
+    return 'Salesforce takes no notes on this item: it is a recurring series of tasks, an internal reminder rather than ' +
+      'work for the group. Untick “The group sees this item” on it instead; the letter then no longer waits for a reason on it.';
+  return 'Salesforce did not take the note, so nothing was saved. ' + m.replace(/^Salesforce did not take it:\s*/, '').slice(0, 200);
 }
 
 /* ── the group's own page ────────────────────────────────────────── */
@@ -2844,6 +3205,8 @@ function gcmClient_(p) {
     /* the page's welcome (14 October 2026): the film, and when they last answered us */
     film: GCM_WELCOME.PAGE, filmLength: GCM_WELCOME.LENGTH, nextLetter: gcmSendLabel_(gcmNextSend_()),
     lastAnswer: g.resps.length ? { at: tDmy_(g.resps[g.resps.length - 1].when), name: g.resps[g.resps.length - 1].name } : null,
+    /* billing, one block a line (GroupBilling.gs, 24 October 2026): figures and counts, never a member's name */
+    billing: typeof gblClientBlock_ === 'function' ? gblClientBlock_(g, L) : null,
     contact: 'rickyrampersadsalessupport@myguardiangroup.com' };
 }
 

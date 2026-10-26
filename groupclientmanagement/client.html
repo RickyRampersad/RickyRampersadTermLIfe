@@ -8,8 +8,18 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'IBM Plex Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:100.68%;ascent-override:101.81%;descent-override:27.32%;line-gap-override:0.00%}
+@font-face{font-family:'IBM Plex Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:98.14%;ascent-override:104.44%;descent-override:28.02%;line-gap-override:0.00%}
+@font-face{font-family:'IBM Plex Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:101.14%;ascent-override:101.35%;descent-override:27.19%;line-gap-override:0.00%}
+@font-face{font-family:'IBM Plex Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:104.62%;ascent-override:97.98%;descent-override:26.29%;line-gap-override:0.00%}
+
+
+
+
 /* The corporate look (8 October 2026): the same tokens as the staff page, set for an employer reading on a phone. */
 :root{
   --canvas:#D9E1EB; --paper:#F4F7FA; --sunken:#E8EDF4; --line:#CBD4E0; --line2:#B5C1D0;
@@ -18,7 +28,7 @@
   --good:#067647; --goodBg:#E8F5EC; --warn:#A64B05; --warnBg:#FDF1E1; --warnMark:#E0891B; --bad:#D03B3B; --badBg:#FCEBE9; --badText:#B42318;
   --navy:var(--ink); --gold:var(--primary); --gold2:var(--primary); --bg:var(--canvas);
   --shadow:0 1px 2px rgba(16,24,40,.05); --shadowLg:0 24px 48px -16px rgba(16,24,40,.22);
-  --font:"IBM Plex Sans","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font:"IBM Plex Sans", 'IBM Plex Sans Fallback', 'IBM Plex Sans Fallback R',"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
@@ -215,6 +225,77 @@ footer a{color:inherit}
 .cgrp .none{font-size:13.5px;color:var(--muted);margin:4px 0 2px}
 .records{margin:12px 0 4px;padding:10px 12px;border-radius:8px;background:var(--warnBg);border:1px solid var(--warnLine);font-size:14px;color:var(--warn)}
 @media (max-width:640px){.cgrid{grid-template-columns:1fr}}
+/* the two tabs of the page (25 October 2026): the service items and the billing, never on one screen */
+.ctabs{display:flex;gap:6px;margin:16px 0 0;border-bottom:2px solid var(--line)}
+.ctab{border:0;background:none;padding:12px 16px;font:inherit;font-weight:600;font-size:16px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;display:inline-flex;align-items:center;gap:8px}
+.ctab[aria-selected="true"]{color:var(--primary,#1D5BC4);border-color:var(--primary,#1D5BC4)}
+.ctab .n{font-size:12px;font-weight:600;background:var(--sunken,#E8EDF4);border-radius:99px;padding:1px 8px;color:var(--muted)}
+.ctab[aria-selected="true"] .n{background:var(--primarySoft,#EBF2FD);color:var(--primary,#1D5BC4)}
+.ctab .bdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warnMark,#E0891B)}
+/* your people (25 October 2026): who is on the plans, who came off this year, who is pending, and a box to tell us */
+.ctabs{overflow-x:auto;scrollbar-width:none}.ctabs::-webkit-scrollbar{display:none}.ctab{white-space:nowrap}
+.ppl{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--primary);border-radius:14px;padding:18px 18px 8px;margin:18px 0 0;box-shadow:var(--shadowLg)}
+.ppl h2{font-size:20px;font-weight:600;margin:0 0 4px}
+.pbar{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:8px 10px;align-items:center;margin:4px 0 14px}
+.pbar label{font-weight:600;font-size:14px;margin:0}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pp.off{border-left-color:var(--line2)}.pp.pnd{border-left-color:var(--warnMark)}
+.pst{display:inline-block;font-size:12.5px;font-weight:600;border-radius:99px;padding:2px 10px;border:1px solid var(--line)}
+.pst.pend{background:var(--warnBg);border-color:var(--warnLine);color:var(--warn)}
+.pst.act{background:var(--goodBg);border-color:var(--goodLine);color:var(--good)}
+.pst.off{background:var(--sunken);color:var(--ink2)}
+.pfacts{list-style:none;margin:8px 0 10px;padding:0;display:grid;gap:5px;font-size:14px;color:var(--ink2)}
+.pfacts li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}.pfacts li.o{color:var(--muted)}.pfacts li.w{color:var(--warn)}
+.ph4{margin:10px 0 0;font-size:14px;font-weight:600}.ph4 .n{font-size:12px;background:var(--sunken);border-radius:99px;padding:1px 8px;color:var(--muted)}
+.pnone{margin:6px 0 8px;color:var(--muted);font-size:14px}
+.btn.ghost{background:#fff;color:var(--primary);border-color:var(--primaryLine);box-shadow:none}.btn.ghost:hover{background:var(--primarySoft)}
+.btn.sm{padding:8px 14px;font-size:14px;margin-top:8px}
+.pcomp{margin-top:10px;padding:12px;border:1px solid var(--primaryLine);background:var(--primarySoft);border-radius:10px}
+.pcomp label{font-size:14px;font-weight:600}
+.pbtns{display:flex;gap:8px;flex-wrap:wrap}
+.psent{margin:8px 0 0;padding:8px 10px;border-radius:8px;background:var(--goodBg);color:var(--good);font-size:14px;font-weight:600}
+.ptold{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}.ptold h4{margin:0 0 6px;font-size:14px}
+.tp{margin:0 0 8px}.tp .tm{font-size:12.5px;color:var(--muted)}.tp .tx{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.pfoot{margin-top:12px}.pgo{margin:0 0 12px}
+.lnk{border:0;background:none;padding:0;font:inherit;font-weight:600;color:var(--primary);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.ctab .sh{display:none}
+@media (max-width:560px){.pbar{grid-template-columns:1fr}.ppl{padding:16px 14px 6px}.ctab{padding:10px 8px;font-size:15px;gap:6px}.ctab .lg{display:none}.ctab .sh{display:inline}}
+.stmt{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:18px 0 0;box-shadow:var(--shadow)}
+.stmt h2{margin:0 0 4px;font-size:20px}.stmt h3{font-size:16px;margin:16px 0 6px}
+.stmt .sframe{width:100%;height:620px;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:8px}
+/* your billing (24 October 2026): one tab a line, the latest bill, what we received, and a form to tell us */
+.billing{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:18px 0 0;box-shadow:var(--shadow)}
+.billing h2{margin:0 0 4px;font-size:20px}
+.btabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px;border-bottom:1px solid var(--line)}
+.btab{border:0;background:none;padding:10px 12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;font-size:15px}
+.btab[aria-selected="true"]{color:var(--primary);border-color:var(--primary)}
+.btab .bdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warnMark);margin-left:6px;vertical-align:middle}
+.billing h3{font-size:16px;margin:16px 0 6px}
+.owed{background:var(--warnBg);border:1px solid #F3D7B0;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:15px}
+.st.paid{background:var(--goodBg);border-color:transparent;color:var(--good)}
+.tell{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.tell label{display:block;font-weight:500;font-size:14px;margin:10px 0 4px;color:var(--ink2)}
+.tell select.field{appearance:auto}
+.tell .ok{background:var(--goodBg);border-radius:10px;padding:10px 12px;margin-top:10px;font-weight:600;color:var(--good)}
+.chg{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.chg label{display:block;font-weight:500;font-size:14px;margin:10px 0 4px;color:var(--ink2)}
+.chg .srch{display:flex;gap:8px}.chg .srch .field{flex:1}
+.cres{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pickm{width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:2px}
+.pickm span{font-size:13px;color:var(--muted)}.pickm.on,.pickm:hover{border-color:var(--primary);background:var(--infoBg,#eef4fc)}
+.cform{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px}
+.cform .picked{font-size:14px;margin-bottom:4px}
+.deps .dep{display:grid;grid-template-columns:110px 1fr 70px 150px;gap:6px;margin:4px 0}.deps .dep.ben{grid-template-columns:100px 1fr 64px 140px 64px auto}
+.chg .tick{display:flex;align-items:center;gap:8px;font-weight:500;margin:6px 0}.chg .tick.big{font-size:15px;margin:12px 0}
+.chg .ok{background:var(--goodBg);border-radius:10px;padding:10px 12px;margin-top:10px;font-weight:600;color:var(--good)}
+.fprev{margin-top:12px}.fpt{font-size:13px;color:var(--muted);margin-bottom:6px}.fprev iframe{width:100%;height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.pdfv canvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:10px;background:#fff;margin:0 0 10px}
+.cfp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px}.cfpb{font:inherit;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}.cfpb b{font-size:14px}.cfpb span{font-size:12px;color:var(--muted)}.cfpb.on{border-color:var(--primary);background:var(--primarySoft,#e8f0ff);box-shadow:0 0 0 2px var(--primarySoft,#e8f0ff) inset}
+.esec{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}.esec>b{display:block;margin-bottom:6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}.ticks{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
+.deps .dep.wide{grid-template-columns:1fr 2fr 1fr 1fr 1.4fr}
+@media (max-width:560px){.deps .dep,.deps .dep.ben,.deps .dep.wide{grid-template-columns:1fr 1fr}.fprev iframe{height:420px}.cfp{grid-template-columns:1fr}}
+.cyears{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:4px 0 8px}
+.cyears div{background:var(--sunken);border-radius:10px;padding:10px 12px}.cyears b{display:block;font-size:18px;color:#13408F}.cyears span{font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -319,6 +400,7 @@ function pendHtml() {
     '<button type="button" class="ln" data-pf="all" aria-pressed="' + (PF === 'all') + '">All <b>' + P.length + '</b></button>' +
     lines.filter(n).map(l => '<button type="button" class="ln" data-pf="' + esc(l) + '" aria-pressed="' + (PF === l) + '"><span class="dot ' + (LINE_DOT[l] || 'enrol') + '" aria-hidden="true"></span>' + esc(l) + ' <b>' + n(l) + '</b></button>').join('') +
     (hasInc && hasApp ? '<button type="button" class="ln" data-pf="' + INC_PF + '" aria-pressed="' + (PF === INC_PF) + '"><span class="up" aria-hidden="true">↑</span>Increases <b>' + nInc + '</b></button>' : '') + '</div>';
+  h += '<p class="pgo"><button class="lnk" type="button" data-topeople>Comment on any of these, or see everyone on your plans, in Your people →</button></p>';
   P.filter(c => PF === 'all' || (PF === INC_PF ? c.incs : c.lines.indexOf(PF) >= 0)).forEach(c => {
     const cls = ageCls(c.days, c.late);
     const since = [c.applied ? 'Application received ' + esc(dmy(c.applied)) : '', c.incSince ? 'Increase submitted ' + esc(dmy(c.incSince)) : ''].filter(Boolean).join(' · ') || 'With us since ' + esc(dmy(c.since));
@@ -336,12 +418,380 @@ function pendHtml() {
   });
   return h + '</section>';
 }
+
+/* your billing (24 October 2026): "on the group health, their billing, the group life in the tabs, the billing, and the
+   group pensions plus any concerns". Figures and counts only: the backend sends no member's name here. */
+const money = n => { n = Number(n) || 0; return (n < 0 ? '−' : '') + 'TT$' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+let BT = '', TELL = { sent: '' };
+/* the page in two tabs (25 October 2026): the weekly items and the billing never share a screen. The bill e-mail's link
+   carries ?tab=billing; the weekly letter's opens on the items. */
+let CT = /(^|[?&])tab=billing(&|$)/.test(location.search) ? 'billing' : /(^|[?&])tab=people(&|$)/.test(location.search) ? 'people' : 'items';
+function ctabsHtml(hasBill, items) {
+  const B = D.billing, owed = hasBill ? B.lines.reduce((n, l) => n + (l.owed > 0 ? 1 : 0), 0) : 0, pend = Array.isArray(D.pending) ? D.pending.length : 0;
+  return '<div class="ctabs" role="tablist" aria-label="Your page"><button type="button" role="tab" class="ctab" data-ct="items" aria-selected="' + (CT === 'items') + '"><span class="lg">Your service items</span><span class="sh">Items</span><span class="n">' + items + '</span></button>' +
+    (hasBill ? '<button type="button" role="tab" class="ctab" data-ct="billing" aria-selected="' + (CT === 'billing') + '"><span class="lg">Your billing</span><span class="sh">Billing</span>' + (owed ? '<i class="bdot" aria-hidden="true" title="an amount is still open"></i>' : '') + (B.statement ? '<span class="n">' + esc(B.statement.label.replace(/ \d{4}$/, '')) + '</span>' : '') + '</button>' : '') +
+    '<button type="button" role="tab" class="ctab" data-ct="people" aria-selected="' + (CT === 'people') + '"><span class="lg">Your people</span><span class="sh">People</span>' + (pend ? '<span class="n" title="' + pend + ' pending">' + pend + ' pending</span>' : '') + '</button></div>';
+}
+function bindCtabs() { document.querySelectorAll('[data-ct]').forEach(b => b.onclick = () => { CT = b.dataset.ct; render(); window.scrollTo(0, 0); }); }
+/* the statement of account the bill e-mail carried: this month's lines, the earlier invoices still open, what changed */
+function statementHtml(B) {
+  const s = B.statement; if (!s) return '';
+  let h = '<section class="stmt" aria-labelledby="stmth"><h2 id="stmth">Your statement of account <span class="muted">· ' + esc(s.label) + '</span></h2><p class="sub">The same statement that came with your ' + esc(s.label) + ' bill' + (s.dueBy ? ', payable by <b>' + esc(dmy(s.dueBy)) + '</b>' : '') + '. Figures are from our records; the names are on the bills themselves.</p>' +
+    '<div class="ytiles"><div><b>' + money(s.total) + '</b><span>this month, ' + s.lines.length + ' line' + (s.lines.length === 1 ? '' : 's') + '</span></div><div><b>' + money(s.owedTotal) + '</b><span>' + (s.owed.length ? 'still open from ' + s.owed.length + ' earlier month' + (s.owed.length === 1 ? '' : 's') : 'open from earlier months: nothing') + '</span></div><div><b>' + money(s.grand) + '</b><span>to bring the account up to date</span></div>' +
+    (s.changes && (s.changes.joined || s.changes.left) ? '<div><b>' + (s.changes.joined ? '+' + s.changes.joined : '') + (s.changes.joined && s.changes.left ? ' / ' : '') + (s.changes.left ? '−' + s.changes.left : '') + '</b><span>joined / left since last month</span></div>' : '') + '</div>' +
+    '<div class="scroll"><table class="t"><thead><tr><th>This month</th><th class="num">Members</th><th class="num">Due</th></tr></thead><tbody>' + s.lines.map(l => '<tr><td>' + esc(l.label) + '</td><td class="num">' + (l.members || '') + '</td><td class="num">' + money(l.due) + '</td></tr>').join('') + '<tr><td><b>Total for ' + esc(s.label) + '</b></td><td></td><td class="num"><b>' + money(s.total) + '</b></td></tr></tbody></table></div>';
+  if (s.owed.length) h += '<h3>Still open from earlier invoices</h3><div class="scroll"><table class="t"><thead><tr><th>Invoice</th><th class="num">Billed</th><th class="num">Received</th><th class="num">Still open</th></tr></thead><tbody>' + s.owed.map(o => '<tr><td>' + esc(o.label) + ' · ' + esc(o.monthLabel) + '</td><td class="num">' + money(o.billed) + '</td><td class="num">' + (o.paid ? money(o.paid) : '–') + '</td><td class="num"><b>' + money(o.owed) + '</b></td></tr>').join('') + '</tbody></table></div><p class="sub">If any of these is paid, tell us below with the date and the reference and we will have it matched.</p>';
+  if (s.html) h += '<details class="hist"><summary>The statement as it was sent</summary><iframe class="sframe" title="Your statement of account" sandbox="" srcdoc="' + esc('<!doctype html><meta charset="utf-8"><body style="margin:0;padding:12px;font-family:Arial,sans-serif">' + s.html) + '"></iframe></details>';
+  return h + '</section>';
+}
+function billingHtml() {
+  const B = D.billing; if (!B || !Array.isArray(B.lines) || !B.lines.length) return '';
+  if (!BT || !B.lines.some(l => l.line === BT)) BT = B.lines[0].line;
+  const L = B.lines.find(l => l.line === BT), b = L.bill;
+  let h = statementHtml(B) + '<section class="billing" aria-labelledby="billh"><h2 id="billh">Your billing' + (B.statement ? ', line by line' : '') + '</h2><p class="sub">Each line’s latest bill, what we have received against it, and a place to tell us about a payment or a person joining or leaving.' + (B.nextBill ? ' Your next bill comes on <b>' + esc(B.nextBill.label) + '</b>.' : '') + '</p>' +
+    '<div class="btabs" role="tablist">' + B.lines.map(l => '<button type="button" role="tab" class="btab" data-bt="' + esc(l.line) + '" aria-selected="' + (l.line === BT) + '">' + esc(l.label) + (l.owed > 0 ? '<i class="bdot" aria-hidden="true" title="an amount is still open"></i>' : '') + '</button>').join('') + '</div><div class="bpanel" role="tabpanel">';
+  if (b) {
+    h += '<div class="ytiles"><div><b>' + money(b.due) + '</b><span>' + esc(b.label) + (b.dueBy ? ', payable by ' + esc(dmy(b.dueBy)) : '') + '</span></div><div><b>' + b.members + '</b><span>' + (L.line === 'listbill' ? 'policies' : 'members') + ' on the bill</span></div>' +
+      (b.joined || b.left ? '<div><b>' + (b.joined ? '+' + b.joined : '') + (b.joined && b.left ? ' / ' : '') + (b.left ? '−' + b.left : '') + '</b><span>joined / left on this bill</span></div>' : '') +
+      (b.arrears ? '<div><b>' + money(b.arrears) + '</b><span>earlier months the bill shows as unpaid</span></div>' : '') + '</div>' +
+      (b.divisions && b.divisions.length > 1 ? '<p class="sub">' + b.divisions.map(d => esc(d.name) + ': ' + d.employees + ' employees, ' + money(d.total)).join(' · ') + '</p>' : '') +
+      (b.sentAt ? '<p class="sub">We sent you this bill on ' + esc(b.sentAt) + ', checked against our records first.</p>' : '<p class="sub">Checked against our records by our team.</p>');
+  } else h += '<p class="sub">Your ' + esc(L.label.toLowerCase()) + ' bill for this month is being checked by our team against our records before it reaches you.</p>';
+  if (L.owed > 0) h += '<div class="owed">Our records show <b>' + money(L.owed) + '</b> still open on this line. If you have paid it, tell us below and we will have the payment matched.</div>';
+  if (L.history && L.history.length) h += '<h3>Billed and received, month by month</h3><div class="scroll"><table class="t"><thead><tr><th>Month</th><th class="num">Billed</th><th class="num">Received</th><th>Received on</th><th>Status</th></tr></thead><tbody>' +
+    L.history.map(x => '<tr><td>' + esc(x.label) + '</td><td class="num">' + money(x.billed) + '</td><td class="num">' + (x.paid ? money(x.paid) : '–') + '</td><td>' + esc(dmy(x.paidOn)) + '</td><td><span class="st' + (x.status === 'Paid' ? ' paid' : x.status === 'Open' ? ' late' : x.status === 'Part paid' ? ' wait' : '') + '">' + esc(x.status) + '</span></td></tr>').join('') + '</tbody></table></div>';
+  if (L.openItems) h += '<p class="sub">' + L.openItems + ' billing item' + (L.openItems === 1 ? ' is' : 's are') + ' open on this line: it is in “Your open items” below, with who is on it and where it stands.</p>';
+  if (L.changes && L.changes.length) h += '<h3>What you have told us</h3><ul class="feed">' + L.changes.map(c => '<li><b>' + esc(c.at) + '</b> · ' + esc(c.kind) + (c.member ? ' · ' + esc(c.member) : '') + ' · ' + esc(c.detail) + ' · <span class="st">' + esc(c.status) + '</span></li>').join('') + '</ul>';
+  if (L.claims && L.claims.byYear && L.claims.byYear.length) h += '<h3>What your plan paid for your people</h3><div class="cyears">' + L.claims.byYear.map(y => '<div><b>' + money(y.paid) + '</b><span>' + esc(y.year) + ' · ' + y.claims + ' claim' + (y.claims === 1 ? '' : 's') + '</span></div>').join('') + '</div><p class="sub">Claims paid by the plan, by the year of the service. The last two months are still being processed.</p>';
+  h += chgHtml();
+  h += '<div class="tell" id="tell"><h3>Tell us about a payment or a change</h3>' + (TELL.sent ? '<div class="ok">' + esc(TELL.sent) + '</div>' : '') +
+    '<label for="tkind">What is it?</label><select class="field" id="tkind"><option value="payment">A payment we have made</option><option value="joiner">Someone has joined</option><option value="leaver">Someone has left</option><option value="dependent">A dependent added or removed</option><option value="query">A question about our billing</option></select>' +
+    '<div id="tpay"><div class="row2"><div><label for="tamt">Amount (TT$)</label><input class="field" id="tamt" type="number" step="0.01" inputmode="decimal"></div><div><label for="tdate">Date paid</label><input class="field" id="tdate" type="date"></div></div>' +
+    '<div class="row2"><div><label for="tmethod">How</label><select class="field" id="tmethod"><option>Wire transfer</option><option>Online</option><option>Cheque</option><option>Cash</option></select></div><div><label for="tref">Reference (optional)</label><input class="field" id="tref" maxlength="80"></div></div></div>' +
+    '<div id="tchg" class="hide"><div class="row2"><div><label for="tmember">The person’s name</label><input class="field" id="tmember" maxlength="120"></div><div><label for="teff">Effective date</label><input class="field" id="teff" type="date"></div></div></div>' +
+    '<label for="tdetail">Anything else we should know</label><textarea class="field" id="tdetail" maxlength="800"></textarea>' +
+    '<label for="tname">Your name</label><input class="field" id="tname" maxlength="80" value="' + esc(A._who || '') + '">' +
+    '<div class="err" id="terr" role="alert"></div><button class="btn full" type="button" id="tgo">Send to our team</button><p class="sub" style="margin-top:8px">It goes straight to the person who looks after your account and onto your billing item. A payment is matched against our records; a joiner or leaver opens a task for our team.</p></div>';
+  return h + '</div></section>';
+}
+function bindBilling() {
+  const sec = document.querySelector('.billing'); if (!sec) return;
+  bindChg();
+  sec.querySelectorAll('[data-bt]').forEach(b => b.onclick = () => { BT = b.dataset.bt; sec.outerHTML = billingHtml(); bindBilling(); });
+  const kind = $('tkind'), swap = () => { const pay = kind.value === 'payment', q = kind.value === 'query'; $('tpay').classList.toggle('hide', !pay); $('tchg').classList.toggle('hide', pay || q); };
+  kind.onchange = swap; swap();
+  $('tgo').onclick = async () => {
+    const err = $('terr'), k = kind.value, body = { action: 'gcm.clientTell', lb: CRED.lb, code: CRED.code, kind: k, line: BT, detail: $('tdetail').value.trim(), name: $('tname').value.trim() };
+    err.textContent = '';
+    if (!body.name) { err.textContent = 'Please give your name.'; return; }
+    if (k === 'payment') { Object.assign(body, { amount: $('tamt').value, paidOn: $('tdate').value, method: $('tmethod').value, ref: $('tref').value.trim() }); if (!body.amount || !body.paidOn) { err.textContent = 'Please give the amount and the date you paid.'; return; } }
+    else if (k !== 'query') { Object.assign(body, { member: $('tmember').value.trim(), effective: $('teff').value }); if (!body.member) { err.textContent = 'Please give the person’s name.'; return; } }
+    else if (!body.detail) { err.textContent = 'Please write your question.'; return; }
+    $('tgo').disabled = true; $('tgo').textContent = 'Sending…';
+    let r;
+    try { r = JSON.parse(await (await fetch(SVC, { method: 'POST', body: JSON.stringify(body) })).text()); } catch (e) { r = { ok: false, error: 'We could not reach our system. Please try again, or e-mail us.' }; }
+    $('tgo').disabled = false; $('tgo').textContent = 'Send to our team';
+    if (!r.ok) { err.textContent = r.error || 'Not sent.'; return; }
+    TELL.sent = r.said || 'Thank you. Our team has it.';
+    try { localStorage.setItem(nameKey(), body.name.slice(0, 80)); } catch (e) {}
+    open_();
+  };
+}
+
+/* the change form (24 October 2026): search a member of your plan, Guardian Life's form EB0010 fills from our records,
+   confirm the change, and it goes to Guardian Life with our branch copied */
+function cfFresh(form) { return { form: form || 'change', q: '', results: null, member: null, pick: null, kind: 'terminate', easiKind: 'change', pdf: '', missing: [], blocking: [], sent: '', err: '', busy: false, deps: [], bens: [], enrol: {}, easi: {}, policies: null }; }
+let CF = cfFresh('change');
+const CF_FORMS = [['change', 'Change or terminate', 'EB0010'], ['enrol', 'Enrol a new member', 'GIO001'], ['easi', 'Claim payment account', 'EASI Collect']];
+const CF_EASI = [['change', 'Change the account'], ['enrol', 'Enrol an account'], ['terminate', 'End the arrangement']];
+/* GIO001, Guardian's application form: what the group types, section by section */
+const ENR = [
+  ['A', 'first', 'First name', 'text'], ['A', 'last', 'Surname', 'text'], ['A', 'dob', 'Date of birth', 'date'], ['A', 'gender', 'Gender', 'select', ['', 'M', 'F'], ['', 'Male', 'Female']],
+  ['A', 'email', 'E-mail address', 'email'], ['A', 'telCell', 'Cellular', 'tel'], ['A', 'telHome', 'Telephone (home)', 'tel'], ['A', 'telWork', 'Telephone (work)', 'tel'], ['A', 'telExt', 'Ext', 'text'],
+  ['A', 'marital', 'Marital status', 'select', ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'], ['', 'Single', 'Married', 'Common law', 'Divorced', 'Widowed']], ['A', 'occupation', 'Occupation', 'text'],
+  ['A', 'idType', 'Identification', 'select', ['', 'DP', 'PP', 'ID'], ['', 'Driver’s permit', 'Passport', 'ID card']], ['A', 'idNo', 'ID number', 'text'],
+  ['A', 'covHealth', 'Group Health', 'check'], ['A', 'covLife', 'Group Life', 'check'], ['A', 'covVoluntary', 'Voluntary Life (extra)', 'check'], ['A', 'covDependentLife', 'Dependent Life (extra)', 'check'],
+  ['B', 'otherPlan', 'Covered by any other medical plan?', 'select', ['', 'no', 'yes'], ['', 'No', 'Yes']], ['B', 'otherPlanName', 'Name of that plan', 'text'], ['B', 'otherInsurer', 'Its insurance company', 'text'],
+  ['E', 'bankAccount', 'Account number (claims are paid to it)', 'text'], ['E', 'bankType', 'Account type', 'select', ['', 'SAVINGS', 'CHEQUING'], ['', 'Savings', 'Chequing']], ['E', 'bankName', 'Name of bank', 'text'], ['E', 'bankBranch', 'Name of branch', 'text'],
+  ['F', 'employed', 'Date employed', 'date'], ['F', 'confirmed', 'Date of confirmation', 'date'], ['F', 'effective', 'Effective date of coverage', 'date'], ['F', 'tier', 'Coverage tier', 'select', ['', 'SINGLE', 'EMPLOYEE + ONE', 'EMPLOYEE + FAMILY'], ['', 'Single', 'Employee + one', 'Employee + family']], ['F', 'salary', 'Annual salary, TT$ (Group Life)', 'text'],
+  ['F', 'policyHealth', 'Policy no. Health', 'text'], ['F', 'policyLife', 'Policy no. Life', 'text']];
+const ENR_SECTIONS = { A: 'Section A · the employee', B: 'Section B · co-ordination of benefits', C: 'Section C · dependents to be covered', D: 'Section D · beneficiary (Group Life)', E: 'Section E · account for claim payments', F: 'Section F · for the policyholder' };
+const CF_KINDS = [['terminate', 'Terminate this member'], ['adddep', 'Add a dependent'], ['removedep', 'Remove a dependent'], ['address', 'Change of address'], ['beneficiary', 'Change a beneficiary'], ['bank', 'Bank account for claim payments']];
+const CF_RELS = ['SPOUSE', 'CHILD', 'CHILD', 'CHILD'];
+function chgHtml() {
+  const f = CF.form;
+  let h = '<div class="chg" id="chg"><h3>Enrol, terminate or change a member</h3><p class="sub">Guardian Life’s own forms, filled from our records and what you give here. You confirm, and the form goes to Guardian Life with our branch copied.</p>' +
+    '<div class="cfp">' + CF_FORMS.map(([k, l, c]) => '<button type="button" class="cfpb' + (f === k ? ' on' : '') + '" data-cform="' + k + '"><b>' + l + '</b><span>' + c + '</span></button>').join('') + '</div>';
+  if (CF.sent) return h + '<div class="ok">' + esc(CF.sent) + '</div><button class="btn ghost" type="button" id="cfAnother" style="margin-top:8px">Another form</button></div>';
+  if (f === 'enrol') h += enrolForm();
+  else {
+    h += '<label for="cq">The person’s name</label><div class="srch"><input class="field" id="cq" maxlength="80" placeholder="Surname or first name" value="' + esc(CF.q) + '" autocomplete="off"><button class="btn ghost" type="button" id="cqGo">Search</button></div><div id="cres">' + chgResults() + '</div>';
+    if (CF.pick) h += f === 'easi' ? easiForm() : chgForm();
+  }
+  return h + '<div class="err" id="cerr" role="alert">' + esc(CF.err) + '</div></div>';
+}
+function chgResults() {
+  if (CF.busy && !CF.results) return '<p class="sub">Looking in our records…</p>';
+  if (!CF.results) return '';
+  if (!CF.results.length) return '<p class="sub">Nobody on your plan matches that. Try the surname alone, or part of it.</p>';
+  return '<ul class="cres">' + CF.results.map(m => '<li><button type="button" class="pickm' + (CF.pick && CF.pick.id === m.id ? ' on' : '') + '" data-pick="' + esc(m.id) + '"><b>' + esc(m.name) + '</b><span>' + esc(m.label) + ' · ' + esc(m.policy) + ' · ' + esc(m.status) + (m.since ? ' · since ' + esc(dmy(m.since)) : '') + (m.deps ? ' · ' + m.deps + ' dependent' + (m.deps === 1 ? '' : 's') + ' on record' : '') + '</span></button></li>').join('') + '</ul>' + (CF.results.more ? '<p class="sub">More match: add another word of the name.</p>' : '');
+}
+function chgTail(label) {
+  return '<div class="row2"><div><label for="cadmin">Plan administrator’s name (Section F)</label><input class="field" id="cadmin" maxlength="80" value="' + esc(CF.admin || A._who || '') + '"></div><div><label for="cname">Your name</label><input class="field" id="cname" maxlength="80" value="' + esc(CF.name || A._who || '') + '"></div></div>' +
+    '<label class="tick big"><input type="checkbox" id="cauth"' + (CF.auth ? ' checked' : '') + '> I am authorised to submit this for ' + esc(D.group) + '</label>' +
+    '<div class="row2"><button class="btn ghost" type="button" id="cprev">' + (CF.pdf ? 'Update the preview' : 'Preview the form') + '</button><button class="btn" type="button" id="cgo"' + (CF.pdf && !CF.blocking.length ? '' : ' disabled') + '>Submit to Guardian Life</button></div>' +
+    (CF.pdf ? '<div class="fprev"><div class="fpt">' + (label || 'The form as it will go') + (CF.missing.length ? ' · not given or not on our records: ' + esc(CF.missing.join(', ')) : '') + (CF.blocking.length ? ' · <b>still needed: ' + esc(CF.blocking.join(', ')) + '</b>' : '') + ' · <a href="data:application/pdf;base64,' + CF.pdf + '" download="guardian-form.pdf">download the PDF</a></div><div class="pdfv" id="cfr"></div></div>' : '');
+}
+function depRowsHtml(list, label, n, attr, extra) {
+  return '<div class="deps"><label>' + label + '</label>' + Array.from({ length: n }, (_, i) => { const d = list[i] || {}; return '<div class="dep' + (extra === 'ben' ? ' ben' : extra === 'country' ? ' wide' : '') + '">' +
+    (extra === 'ben' ? '<input class="field" placeholder="Relationship" data-' + attr + '="rel" data-i="' + i + '" value="' + esc(d.rel || '') + '">' : '<select class="field" data-' + attr + '="rel" data-i="' + i + '">' + ['', 'SPOUSE', 'CHILD'].map(r => '<option' + (d.rel === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select>') +
+    '<input class="field" placeholder="Full name" data-' + attr + '="name" data-i="' + i + '" value="' + esc(d.name || '') + '"><select class="field" data-' + attr + '="gender" data-i="' + i + '"><option value="">M/F</option><option' + (d.gender === 'M' ? ' selected' : '') + '>M</option><option' + (d.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-' + attr + '="dob" data-i="' + i + '" value="' + esc(d.dob || '') + '">' +
+    (extra === 'ben' ? '<input class="field" placeholder="%" inputmode="numeric" data-' + attr + '="pct" data-i="' + i + '" value="' + esc(d.pct || '') + '">' + (attr === 'ben' ? '<label class="tick"><input type="checkbox" data-' + attr + '="remove" data-i="' + i + '"' + (d.remove ? ' checked' : '') + '> remove</label>' : '') : '') +
+    (extra === 'country' ? '<input class="field" placeholder="Country of residence" data-' + attr + '="country" data-i="' + i + '" value="' + esc(d.country || 'TRINIDAD AND TOBAGO') + '">' : '') + '</div>'; }).join('') + '</div>';
+}
+function chgForm() {
+  const m = CF.pick, k = CF.kind, deps = (CF.member && CF.member.deps) || [];
+  let h = '<div class="cform" id="cform"><div class="picked"><b>' + esc(m.name) + '</b> · ' + esc(m.label) + ' · policy / certificate ' + esc(m.policy) + '</div>' +
+    '<label for="ckind">What change?</label><select class="field" id="ckind">' + CF_KINDS.map(([v, l]) => '<option value="' + v + '"' + (v === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+    '<div class="row2"><div><label for="ceff">Effective date</label><input class="field" type="date" id="ceff" value="' + esc(CF.effective || '') + '"></div><div><label for="cmar">Marital status (Section A)</label><select class="field" id="cmar">' + ['', 'SINGLE', 'MARRIED', 'COMMON LAW', 'DIVORCED', 'WIDOWED'].map(x => '<option value="' + x + '"' + ((CF.marital || '') === x ? ' selected' : '') + '>' + (x ? x.charAt(0) + x.slice(1).toLowerCase() : 'Not sure') + '</option>').join('') + '</select></div></div>';
+  if (k === 'terminate') h += '<p class="sub">Section A fills with ' + esc(m.name) + '’s record' + (deps.length ? ', and the ' + deps.length + ' dependent' + (deps.length === 1 ? '' : 's') + ' on record go in Section B (ii) to be removed on the same date' : '; any dependent covered under this certificate ends with it') + '.</p>';
+  if (k === 'adddep') h += depRowsHtml(CF.deps, 'Dependent(s) to be covered (Section B)', 4, 'dep');
+  if (k === 'removedep') h += (deps.length ? '<p class="sub">On record: ' + esc(deps.map(d => d.name + ' (' + d.rel.toLowerCase() + ')').join(', ')) + '. List those to remove:</p>' : '') + depRowsHtml(CF.deps.length ? CF.deps : deps, 'Dependent(s) to be removed (Section B (ii))', 4, 'dep');
+  if (k === 'address') h += '<label for="caddr">New address (Section D; a utility bill in the insured’s name, not older than three months, follows)</label><textarea class="field" id="caddr" maxlength="240">' + esc(CF.address || '') + '</textarea>';
+  if (k === 'beneficiary') h += depRowsHtml(CF.bens, 'Beneficiary to add (Section C) or remove (tick)', 3, 'ben', 'ben');
+  if (k === 'bank') h += '<div class="row2"><div><label for="cbank">Name of bank (Section E)</label><input class="field" id="cbank" maxlength="80" value="' + esc(CF.bankName || '') + '"></div><div><label for="cacct">Account number</label><input class="field" id="cacct" maxlength="40" value="' + esc(CF.bankAccount || '') + '"></div></div><label for="cbr">Name of branch</label><input class="field" id="cbr" maxlength="80" value="' + esc(CF.bankBranch || '') + '"><p class="sub">A copy of the bank statement header, showing the insured’s name and account number, follows by e-mail.</p>';
+  h += '<label for="creason">Reason, or anything Guardian Life should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' + chgTail('EB0010 as it will go');
+  return h + '</div>';
+}
+function easiForm() {
+  const m = CF.pick, x = CF.easi;
+  let h = '<div class="cform" id="cform"><div class="picked"><b>' + esc(m.name) + '</b> · ' + esc(m.label) + ' · policy / certificate ' + esc(m.policy) + '</div>' +
+    '<p class="sub">EASI Collect is Guardian Life’s form for the bank account its health claims are paid to. Section A fills from the record; give the account and the ID below.</p>' +
+    '<label for="ceasi">What is this?</label><select class="field" id="ceasi">' + CF_EASI.map(([v, l]) => '<option value="' + v + '"' + (v === CF.easiKind ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+    '<div class="row2"><div><label for="cidt">Identification (Section B)</label><select class="field" id="cidt">' + [['', ''], ['national', 'National ID card'], ['permit', 'Driver’s permit'], ['passport', 'Passport']].map(([v, l]) => '<option value="' + v + '"' + ((x.idType || '') === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div><div><label for="cidn">ID number</label><input class="field" id="cidn" maxlength="30" value="' + esc(x.idNo || '') + '"></div></div>';
+  if (CF.easiKind !== 'terminate') h += '<div class="row2"><div><label for="cbank">Name of bank (Section C)</label><input class="field" id="cbank" maxlength="60" value="' + esc(x.bankName || '') + '"></div><div><label for="cbr">Branch</label><input class="field" id="cbr" maxlength="60" value="' + esc(x.bankBranch || '') + '"></div></div>' +
+    '<div class="row2"><div><label for="cacct">Account number</label><input class="field" id="cacct" maxlength="16" inputmode="numeric" value="' + esc(x.bankAccount || '') + '"></div><div><label for="cbty">Type of account</label><select class="field" id="cbty">' + [['', ''], ['SAVINGS', 'Savings'], ['CHEQUING', 'Chequing']].map(([v, l]) => '<option value="' + v + '"' + ((x.bankType || '') === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div></div><p class="sub">A copy of the ID and the top of the bank statement, showing the name and account number, follow by e-mail; the insured signs the form.</p>';
+  h += '<label for="creason">Anything Guardian Life should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' + chgTail('EASI Collect as it will go');
+  return h + '</div>';
+}
+function enrolForm() {
+  const e = CF.enrol, sec = {};
+  ENR.forEach(f => { (sec[f[0]] = sec[f[0]] || []).push(f); });
+  const field = ([, id, label, type, vals, labels]) => {
+    const v = e[id] === undefined ? '' : e[id];
+    if (type === 'check') return '<label class="tick"><input type="checkbox" data-enr="' + id + '"' + (v ? ' checked' : '') + '> ' + label + '</label>';
+    if (type === 'select') return '<div><label for="en_' + id + '">' + label + '</label><select class="field" id="en_' + id + '" data-enr="' + id + '">' + vals.map((o, i) => '<option value="' + o + '"' + (String(v) === o ? ' selected' : '') + '>' + (labels[i] || o) + '</option>').join('') + '</select></div>';
+    return '<div><label for="en_' + id + '">' + label + '</label><input class="field" type="' + type + '" id="en_' + id + '" data-enr="' + id + '" value="' + esc(v) + '"' + (type === 'text' ? ' maxlength="80"' : '') + '></div>';
+  };
+  let h = '<div class="cform" id="cform"><p class="sub">Guardian Life’s Group Health and Life Application Form (GIO001). Give what you have; what is left blank is listed with the preview, and the employee completes the Declaration of Insurability separately.</p>';
+  ['A', 'B'].forEach(k => { h += '<div class="esec"><b>' + ENR_SECTIONS[k] + '</b><div class="row2">' + sec[k].filter(f => f[3] !== 'check').map(field).join('') + '</div>' + (sec[k].some(f => f[3] === 'check') ? '<div class="ticks">' + sec[k].filter(f => f[3] === 'check').map(field).join('') + '</div>' : '') + '</div>'; });
+  h += '<div class="esec"><b>' + ENR_SECTIONS.C + '</b>' + depRowsHtml(CF.deps, 'Spouse first, then children (up to five)', 5, 'dep', 'country') + '</div>';
+  h += '<div class="esec"><b>' + ENR_SECTIONS.D + '</b>' + depRowsHtml(CF.bens, 'Relationship, name, gender, date of birth and share (total 100%)', 3, 'enb', 'ben') + '</div>';
+  ['E', 'F'].forEach(k => { h += '<div class="esec"><b>' + ENR_SECTIONS[k] + '</b><div class="row2">' + sec[k].map(field).join('') + '</div></div>'; });
+  h += '<label for="creason">Anything Guardian Life should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' + chgTail('GIO001 as it will go') + '</div>';
+  return h;
+}
+function chgRead() {
+  const g = id => $(id) ? $(id).value.trim() : '';
+  CF.kind = g('ckind') || CF.kind; CF.easiKind = g('ceasi') || CF.easiKind; CF.effective = g('ceff'); CF.marital = g('cmar'); CF.reason = g('creason'); CF.admin = g('cadmin'); CF.name = g('cname'); CF.address = g('caddr'); CF.bankName = g('cbank'); CF.bankAccount = g('cacct'); CF.bankBranch = g('cbr'); CF.auth = $('cauth') ? $('cauth').checked : false;
+  if (CF.form === 'easi') CF.easi = { idType: g('cidt'), idNo: g('cidn'), bankName: g('cbank'), bankBranch: g('cbr'), bankAccount: g('cacct'), bankType: g('cbty') };
+  if (CF.form === 'enrol') document.querySelectorAll('[data-enr]').forEach(el => { CF.enrol[el.dataset.enr] = el.type === 'checkbox' ? (el.checked ? 'Y' : '') : el.value.trim(); });
+  const rows = (attr, n) => { const out = []; for (let i = 0; i < n; i++) { const o = {}; document.querySelectorAll('[data-' + attr + '][data-i="' + i + '"]').forEach(el => { o[el.dataset[attr]] = el.type === 'checkbox' ? el.checked : el.value.trim(); }); if (o.name) out.push(o); } return out; };
+  if (document.querySelector('[data-dep]')) CF.deps = rows('dep', 5);
+  if (document.querySelector('[data-ben]')) CF.bens = rows('ben', 3);
+  if (document.querySelector('[data-enb]')) CF.bens = rows('enb', 3);
+}
+function chgBody() {
+  const b = { lb: CRED.lb, code: CRED.code, form: CF.form, reason: CF.reason, admin: CF.admin, name: CF.name, deps: JSON.stringify(CF.deps), bens: JSON.stringify(CF.bens) };
+  if (CF.form === 'enrol') return Object.assign(b, CF.enrol);
+  Object.assign(b, { member: CF.pick ? CF.pick.id : '', kind: CF.kind, effective: CF.effective, marital: CF.marital, address: CF.address, bankName: CF.bankName, bankAccount: CF.bankAccount, bankBranch: CF.bankBranch });
+  if (CF.form === 'easi') Object.assign(b, { easiKind: CF.easiKind, idType: CF.easi.idType || '', idNo: CF.easi.idNo || '', bankType: CF.easi.bankType || '' });
+  return b;
+}
+function chgDraw() { const el = $('chg'); if (!el) return; el.outerHTML = chgHtml(); bindChg(); }
+async function chgSearch() {
+  CF.q = $('cq').value.trim(); CF.err = '';
+  if (CF.q.length < 2) { CF.results = null; CF.pick = null; chgDraw(); return; }
+  CF.busy = true; CF.results = null; chgDraw();
+  let r;
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientForm&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&q=' + encodeURIComponent(CF.q) + '&z=' + Date.now())).text()); } catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
+  CF.busy = false;
+  if (!r.ok) { CF.err = r.error || 'Not found.'; CF.results = []; chgDraw(); return; }
+  CF.results = r.members || []; CF.results.more = !!r.more; chgDraw();
+  $('cq').focus(); $('cq').setSelectionRange(CF.q.length, CF.q.length);
+}
+function bindChg() {
+  const el = $('chg'); if (!el) return;
+  el.querySelectorAll('[data-cform]').forEach(b => b.onclick = () => { if (CF.form === b.dataset.cform) return; chgRead(); CF = Object.assign(cfFresh(b.dataset.cform), { name: CF.name, admin: CF.admin }); chgDraw(); });
+  if ($('cfAnother')) $('cfAnother').onclick = () => { CF = cfFresh(CF.form); chgDraw(); };
+  if ($('cq')) { let t; $('cq').oninput = () => { clearTimeout(t); t = setTimeout(chgSearch, 400); }; $('cq').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); chgSearch(); } }; }
+  if ($('cqGo')) $('cqGo').onclick = chgSearch;
+  el.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { CF.pick = CF.results.find(m => m.id === b.dataset.pick); CF.member = null; CF.pdf = ''; CF.missing = []; CF.blocking = []; CF.deps = []; CF.bens = []; chgDraw(); if (CF.form === 'change') chgPreview(true); });
+  if ($('ckind')) $('ckind').onchange = () => { chgRead(); CF.pdf = ''; CF.deps = []; CF.bens = []; chgDraw(); };
+  if ($('ceasi')) $('ceasi').onchange = () => { chgRead(); CF.pdf = ''; chgDraw(); };
+  if ($('cprev')) $('cprev').onclick = () => chgPreview(false);
+  if ($('cgo')) $('cgo').onclick = chgSend;
+  if ($('cfr') && CF.pdf) pdfPages($('cfr'), CF.pdf);
+}
+async function chgPreview(quiet) {
+  chgRead(); CF.err = '';
+  const b = chgBody(); let r;
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientForm&' + Object.keys(b).map(k => k + '=' + encodeURIComponent(b[k])).join('&') + '&z=' + Date.now())).text()); } catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
+  if (!r.ok) { CF.err = r.error || 'Not available.'; chgDraw(); return; }
+  if (r.member) CF.member = r.member;
+  CF.pdf = r.pdf || ''; CF.missing = r.missing || []; CF.blocking = r.blocking || [];
+  if (!CF.pdf) CF.err = r.pdfError ? 'The form could not be drawn: ' + r.pdfError : 'The form could not be drawn.';
+  if (r.policies) { CF.policies = r.policies; if (!CF.enrol.policyHealth) CF.enrol.policyHealth = r.policies.health || ''; if (!CF.enrol.policyLife) CF.enrol.policyLife = r.policies.life || ''; }
+  if (quiet && !CF.deps.length && CF.kind === 'removedep' && r.member) CF.deps = (r.member.deps || []).slice(0, 4);
+  chgDraw();
+  if (!quiet) { const f = $('cfr'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+async function chgSend() {
+  chgRead(); CF.err = '';
+  if (!CF.name) { CF.err = 'Please give your name.'; return chgDraw(); }
+  if (!CF.auth) { CF.err = 'Please tick that you are authorised to submit this.'; return chgDraw(); }
+  if (CF.form === 'change' && !CF.effective) { CF.err = 'Please give the effective date.'; return chgDraw(); }
+  if (CF.form === 'enrol' && !CF.enrol.effective) { CF.err = 'Please give the effective date of coverage (Section F).'; return chgDraw(); }
+  $('cgo').disabled = true; $('cgo').textContent = 'Sending…';
+  const body = Object.assign({ action: 'gcm.clientFormSend', authorised: 'Y' }, chgBody()); let r;
+  try { r = JSON.parse(await (await fetch(SVC, { method: 'POST', body: JSON.stringify(body) })).text()); } catch (e) { r = { ok: false, error: 'We could not reach our system. Please try again, or e-mail us.' }; }
+  if (!r.ok) { CF.err = r.error || 'Not sent.'; chgDraw(); return; }
+  CF.sent = r.said || 'Thank you. The form has gone to Guardian Life.';
+  try { localStorage.setItem(nameKey(), CF.name.slice(0, 80)); } catch (e) {}
+  chgDraw();
+}
+/* the filled PDF drawn page by page, with pdf.js from cdnjs */
+const PDFJS = { src: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', worker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js' };
+function loadScript(src) { return new Promise((res, rej) => { if (document.querySelector('script[src="' + src + '"]')) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+async function pdfPages(el, b64) {
+  el.innerHTML = '<p class="sub">Drawing the form…</p>';
+  try {
+    await loadScript(PDFJS.src); pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS.worker;
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0)), doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+    el.innerHTML = ''; const width = Math.min(el.clientWidth || 600, 900), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n), v0 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: width / v0.width * dpr });
+      const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; c.setAttribute('aria-label', 'Page ' + n + ' of the form');
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; el.appendChild(c);
+    }
+  } catch (e) { el.innerHTML = '<p class="sub">The preview could not be drawn on this device. <a href="data:application/pdf;base64,' + b64 + '" download="guardian-form.pdf">Download the PDF</a> to see it.</p>'; }
+}
+
 function bindPend() {
   document.querySelectorAll('[data-pf]').forEach(b => b.onclick = () => {
     PF = b.dataset.pf; const box = document.querySelector('.pend');
     if (box) { box.outerHTML = pendHtml(); bindPend(); }
   });
+  document.querySelectorAll('[data-topeople]').forEach(b => b.onclick = () => { CT = 'people'; PEO.f = 'pending'; PEO.q = ''; render(); window.scrollTo(0, 0); });
 }
+/* your people (25 October 2026): who is on your plans, who came off this year, and who is pending; what is open on each
+   one with us, who on our team has it, and a box to tell us what is holding it up. A message goes onto that item in our
+   system for the person handling it, who is told at once; with nothing open, it opens an item for the person who looks
+   after your account. Names, plans and dates only: never a health or claim detail. */
+const PEO = { data: null, busy: false, err: '', f: '', q: '', open: '', limit: 40, msg: {} };
+async function loadPeople(force) {
+  if (PEO.busy || (PEO.data && !force)) return;
+  PEO.busy = true; PEO.err = '';
+  let r;
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientPeople&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&z=' + Date.now())).text()); }
+  catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
+  PEO.busy = false;
+  if (!r || !r.ok) PEO.err = (r && r.error) || 'We could not read your people just now.';
+  else { PEO.data = r; if (!PEO.f) PEO.f = r.counts.pending ? 'pending' : 'active'; }
+  if (CT === 'people') { const s = document.querySelector('.ppl'); if (s) { s.outerHTML = peopleHtml(); bindPeople(); } }
+}
+const myName = () => { let n = A._who || ''; if (!n) try { n = localStorage.getItem(nameKey()) || ''; } catch (e) {} return n; };
+function peopleHtml() {
+  let h = '<section class="ppl" aria-labelledby="pplh"><h2 id="pplh">Your people</h2>';
+  if (!PEO.data) return h + (PEO.err ? '<p class="err" role="alert">' + esc(PEO.err) + '</p><button class="btn ghost sm" type="button" id="pretry">Try again</button>'
+    : '<p class="sub" aria-live="polite">Reading your people from our records and your latest bills…</p>') + '</section>';
+  const R = PEO.data, c = R.counts;
+  h += '<p class="sub">Everyone on your Group Health and Group Life plans, from our records' + (R.bills.length ? ' and your latest bills (' + esc(R.bills.map(b => b.label + ', ' + b.month).join('; ')) + ')' : '') +
+    '. Choose who to see. For each person: what is open with us, who on our team has it, and a box to tell us anything that is holding it up.</p>' +
+    '<div class="pbar"><label for="pf">Show</label><select class="field" id="pf">' +
+    [['pending', 'Pending applications', c.pending], ['active', 'Active members', c.active], ['off', 'Came off in ' + R.year, c.off], ['all', 'Everyone', c.all]]
+      .map(o => '<option value="' + o[0] + '"' + (PEO.f === o[0] ? ' selected' : '') + '>' + esc(o[1]) + ' (' + o[2] + ')</option>').join('') + '</select>' +
+    '<label for="pq" class="vh">Find a name</label><input class="field" id="pq" type="search" placeholder="Find a name" value="' + esc(PEO.q) + '" autocomplete="off"></div>' +
+    '<div id="plist">' + peopleList() + '</div>' +
+    '<p class="sub pfoot">What you write goes onto the item in our system for the person handling it, and they are told by e-mail at once. Health and claim details are never shown here: they stay between the person insured and us.</p></section>';
+  return h;
+}
+function peopleList() {
+  const R = PEO.data, q = PEO.q.toLowerCase().trim();
+  const want = p => PEO.f === 'pending' ? p.pendingNow : PEO.f === 'active' ? p.active : PEO.f === 'off' ? p.offYear : true;
+  const list = R.people.filter(p => want(p) && (!q || p.name.toLowerCase().indexOf(q) >= 0));
+  if (!list.length) return '<p class="pnone">' + (q ? 'No one by that name in this list.' : { pending: 'No applications are pending for your employees right now.', active: 'No one is active on your plans in our records.', off: 'No one came off your plans in ' + R.year + '.', all: 'No one is on our records yet.' }[PEO.f]) + '</p>';
+  let h = list.slice(0, PEO.limit).map(personHtml).join('');
+  if (list.length > PEO.limit) h += '<button class="btn ghost sm" type="button" id="pmore">Show the next ' + Math.min(40, list.length - PEO.limit) + ' of ' + (list.length - PEO.limit) + '</button>';
+  return h;
+}
+function personHtml(p) {
+  const pend = p.pending, cls = p.pendingNow ? (ageCls(pend ? pend.days : 0, pend && pend.late) || 'pnd') : !p.active && p.offYear ? 'off' : '';
+  let h = '<article class="papp pp ' + cls + '" id="pp-' + esc(p.key) + '"><div class="top"><h3>' + esc(p.name) + '</h3>' +
+    (p.pendingNow ? '<span class="pst pend">Pending</span>' : '') + (p.active ? '<span class="pst act">Active</span>' : '') +
+    (p.offYear ? '<span class="pst off">Came off ' + esc(p.off.map(o => o.label).join(' and ')) + '</span>' : '') +
+    (pend ? '<span class="age ' + ageCls(pend.days, pend.late) + '">' + days(pend.days) + ' outstanding' + (pend.late ? ', past target' : '') + '</span>' : '') + '</div>';
+  const facts = [];
+  p.lines.forEach(l => facts.push('<li>' + lineTag(l.label) + '<span>' + esc([l.tier, l.since ? 'since ' + dmy(l.since) : '', l.onBill ? 'on your ' + l.onBill + ' bill' : 'on our records'].filter(Boolean).join(' · ')) + '</span></li>'));
+  p.off.forEach(o => facts.push('<li class="o">' + lineTag(o.label) + '<span>came off ' + esc(dmy(o.date)) + (o.bill ? ' · on your ' + esc(o.bill) + ' bill' : '') + '</span></li>'));
+  p.leaving.forEach(x => facts.push('<li class="w">' + lineTag(x.label) + '<span>leaving' + (x.date ? ' on ' + esc(dmy(x.date)) : '') + ' · ' + (x.by === 'you' ? 'you told us' : 'we recorded it') + ' on ' + esc(dmy(x.reported)) + '</span></li>'));
+  p.joining.forEach(x => facts.push('<li class="w">' + lineTag(x.label) + '<span>joining' + (x.date ? ' from ' + esc(dmy(x.date)) : '') + ' · ' + (x.by === 'you' ? 'you told us' : 'we recorded it') + ' on ' + esc(dmy(x.reported)) + '</span></li>'));
+  if (pend) facts.push('<li class="w">' + pend.lines.map(lineTag).join('') + '<span>' + esc(pend.applied ? 'application received ' + dmy(pend.applied) : pend.incSince ? 'increase submitted ' + dmy(pend.incSince) : 'with us since ' + dmy(pend.since)) + (pend.last ? ' · ' + esc(pend.last) : '') + '</span></li>');
+  h += '<ul class="pfacts">' + facts.join('') + '</ul>';
+  if (p.items.length) {
+    h += '<h4 class="ph4">Open with us <span class="n">' + p.items.length + '</span></h4><ul class="reqs">' + p.items.map(x => '<li><div class="w">' + (x.kind === 'increase' ? '<span class="inc">Increase</span>' : '') + esc(x.what) + '</div><dl>' +
+      '<dt>Assigned to</dt><dd>' + esc(x.owner) + '</dd>' + (x.with ? '<dt>Liaising with</dt><dd>' + esc(x.with) + '</dd>' : '') +
+      '<dt>Status</dt><dd>' + esc(x.status) + '</dd>' +
+      (x.kind === 'increase' ? '<dt>Submitted</dt><dd>' + esc(dmy(x.opened)) + '</dd>' : '<dt>Target date</dt><dd>' + (x.due ? esc(dmy(x.due)) + (x.late ? ' <span class="late">past target</span>' : '') : 'Not yet set') + '</dd>') +
+      (x.last ? '<dt>Last contact</dt><dd>' + esc(x.last) + '</dd>' : '') + '</dl>' +
+      (x.notes || []).map(n => '<div class="cmt"><span class="by">' + esc(n.by) + '</span> <span style="color:var(--muted)">' + esc(n.when) + '</span>\n' + esc(n.text) + '</div>').join('') +
+      composeHtml(p, x) + '</li>').join('') + '</ul>';
+  } else h += '<p class="pnone">Nothing is open on ' + esc(p.first) + ' with us.</p>' + composeHtml(p, null);
+  if (p.posts.length) h += '<div class="ptold"><h4>What you told us</h4>' + p.posts.map(t => '<div class="tp"><div class="tm">' + esc(t.at) + ' · ' + esc(t.by) +
+    (t.opened ? ' · an item was opened for our team' : t.on ? ' · on ' + esc(t.on) : '') + '</div><div class="tx">' + esc(t.text) + '</div></div>').join('') + '</div>';
+  return h + '</article>';
+}
+function composeHtml(p, x) {
+  const id = p.key + '|' + (x ? x.id : ''), m = PEO.msg[id];
+  let h = m ? '<p class="psent" role="status">' + esc(m) + '</p>' : '';
+  if (PEO.open !== id) return h + '<button class="btn ghost sm" type="button" data-pc="' + esc(id) + '">' + (x ? 'Comment on this' : 'Tell us about ' + esc(p.first)) + '</button>';
+  const ph = !x ? 'What you need, or what has changed for ' + p.first + '.' : x.kind === 'task' ? 'Anything we should know about this.' : 'What is holding it up, or what has been done (for example: the medical was done on 20 October).';
+  return h + '<div class="pcomp"><label for="ptx">' + (x ? 'Your message on this item' : 'Your message about ' + esc(p.first)) + '</label><textarea class="field" id="ptx" maxlength="1500" placeholder="' + esc(ph) + '"></textarea>' +
+    '<div class="row2"><div><label for="pnm">Your name</label><input class="field" id="pnm" maxlength="80" value="' + esc(myName()) + '"></div><div><label for="prl">Your role (optional)</label><input class="field" id="prl" maxlength="80" value="' + esc(A._role || '') + '" placeholder="e.g. HR Manager"></div></div>' +
+    '<div class="err" id="perr" role="alert"></div><div class="pbtns"><button class="btn" type="button" id="psend" data-id="' + esc(id) + '">Send to our team</button><button class="btn ghost" type="button" data-px>Cancel</button></div></div>';
+}
+function bindPeople() {
+  if (!PEO.data && !PEO.busy && !PEO.err) loadPeople();
+  const re = $('pretry'); if (re) re.onclick = () => { PEO.err = ''; const s = document.querySelector('.ppl'); if (s) { s.outerHTML = peopleHtml(); bindPeople(); } };
+  const f = $('pf'); if (f) f.onchange = () => { PEO.f = f.value; PEO.limit = 40; PEO.open = ''; drawPeople(); };
+  const q = $('pq'); if (q) q.oninput = () => { PEO.q = q.value; PEO.limit = 40; drawPeople(); };
+  bindPeopleList();
+}
+function drawPeople() { const l = $('plist'); if (l) { l.innerHTML = peopleList(); bindPeopleList(); } }
+function bindPeopleList() {
+  document.querySelectorAll('[data-pc]').forEach(b => b.onclick = () => { PEO.open = b.dataset.pc; drawPeople(); const t = $('ptx'); if (t) t.focus(); });
+  document.querySelectorAll('[data-px]').forEach(b => b.onclick = () => { PEO.open = ''; drawPeople(); });
+  const more = $('pmore'); if (more) more.onclick = () => { PEO.limit += 40; drawPeople(); };
+  const go = $('psend'); if (go) go.onclick = () => sendPost(go.dataset.id);
+}
+async function sendPost(id) {
+  const cut = id.indexOf('|'), key = id.slice(0, cut), item = id.slice(cut + 1), err = $('perr'), go = $('psend');
+  const text = $('ptx').value.trim(), name = $('pnm').value.trim(), role = $('prl').value.trim();
+  err.textContent = '';
+  if (!name) { err.textContent = 'Please give your name.'; $('pnm').focus(); return; }
+  if (text.replace(/\s+/g, ' ').length < 8) { err.textContent = 'Please write a little more, so the person handling it knows what you need.'; $('ptx').focus(); return; }
+  go.disabled = true; go.textContent = 'Sending…';
+  let r;
+  try { r = JSON.parse(await (await fetch(SVC, { method: 'POST', body: JSON.stringify({ action: 'gcm.clientPost', lb: CRED.lb, code: CRED.code, person: key, item: item, name: name, role: role, text: text }) })).text()); }
+  catch (e) { r = { ok: false, error: 'We could not reach our system. Please try again, or e-mail us.' }; }
+  if (!r || !r.ok) { go.disabled = false; go.textContent = 'Send to our team'; err.textContent = (r && r.error) || 'Not sent.'; return; }
+  try { localStorage.setItem(nameKey(), name.slice(0, 80)); } catch (e) {}
+  A._who = name; if (role) A._role = role; saveDraft();
+  PEO.open = ''; PEO.msg = {}; PEO.msg[id] = r.said || 'Sent to our team.';
+  drawPeople();
+  await loadPeople(true);
+}
+
 
 /* coming up for your people: three groups, soonest first, each with how long until it */
 function untilWords(n) {
@@ -370,6 +820,7 @@ function comingHtml() {
 function render() {
   $('h1').textContent = D.group;
   $('hsub').textContent = 'Open service items as at ' + D.asAt + '. Please review each one by ' + dmy(D.respondBy) + '.';
+  const hasBill = !!(D.billing && Array.isArray(D.billing.lines) && D.billing.lines.length); if (!hasBill && CT === 'billing') CT = 'items';
   const items = D.items, waiting = items.filter(i => /confirmation/i.test(i.status)).length, late = items.filter(i => i.late).length;
   const cats = [];
   items.forEach(i => { if (cats.indexOf(i.cat) < 0) cats.push(i.cat); });
@@ -380,10 +831,11 @@ function render() {
     (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
     '<div class="links">' + (D.film ? '<a class="pill" href="' + esc(D.film) + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + esc(D.filmLength || '') + '</a>' : '') +
     '<a class="pill plain" href="#rate">Rate our service</a></div></div>' +
-    pendHtml() + comingHtml() +
+    ctabsHtml(hasBill, items.length) + (CT === 'billing' ? billingHtml() : CT === 'people' ? peopleHtml() : pendHtml() + comingHtml() +
     '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
     '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +
-    '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>';
+    '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>');
+  if (CT === 'items') {
   if (!items.length) h += '<p>There is nothing open for your company right now.</p>';
   cats.forEach(c => {
     h += '<div class="cat">' + esc(c) + '</div>';
@@ -431,9 +883,10 @@ function render() {
     '<div class="err" id="serr" role="alert"></div><button class="btn full" type="button" id="send">Send my answers</button>' +
     '<p class="sub" style="margin-top:10px">Your notes go onto each item for the person handling it, and our team is told the moment you send.</p></div>' +
     '<p style="text-align:center"><button class="btn" type="button" id="out" style="background:transparent;color:var(--muted);border:1.5px solid var(--line)">Sign out</button></p>';
+  }
   $('app').innerHTML = h;
-  $('prog').classList.remove('hide');
-  bind(); bindPend(); progress();
+  $('prog').classList.toggle('hide', CT !== 'items');
+  bindCtabs(); if (CT === 'billing') bindBilling(); else if (CT === 'people') bindPeople(); else { bind(); bindPend(); progress(); }
 }
 function bind() {
   document.querySelectorAll('.ch').forEach(b => b.onclick = () => {

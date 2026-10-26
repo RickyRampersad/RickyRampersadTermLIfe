@@ -13,15 +13,25 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rickyrampersadbranch.com/workday/">
 <link rel="icon" href="/favicon.svg">
-<style>html{-webkit-text-size-adjust:100%}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
+<style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Public Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.51%;ascent-override:90.90%;descent-override:21.53%;line-gap-override:0.00%}
+@font-face{font-family:'Public Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:99.28%;ascent-override:95.68%;descent-override:22.66%;line-gap-override:0.00%}
+@font-face{font-family:'Public Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.99%;ascent-override:90.48%;descent-override:21.43%;line-gap-override:0.00%}
+@font-face{font-family:'Public Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:105.83%;ascent-override:89.76%;descent-override:21.26%;line-gap-override:0.00%}
+
+
+
+html{-webkit-text-size-adjust:100%}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
 </head><body>
 
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
 <style>
 /* Layout: a role bar, then the day as a rail of stops beside one phone-width screen. Single light look, by choice: it shows the tracker as staff see it. */
 :root{--ink:#141C4A;--ink2:#1F2433;--muted:#5E6577;--line:#DCD8CC;--paper:#F2EFE7;--card:#FFFFFF;--accent:#0E8FB0;--mail:#7A4E00;--mailbg:#FFF1D6;--pagebg:#E1F2F7;
-  --f-ui:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--f-num:"Public Sans",-apple-system,"Segoe UI",sans-serif;color-scheme:light}
+  --f-ui:"Public Sans", 'Public Sans Fallback', 'Public Sans Fallback R',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--f-num:"Public Sans", 'Public Sans Fallback', 'Public Sans Fallback R',-apple-system,"Segoe UI",sans-serif;color-scheme:light}
 body{background:var(--paper);color:var(--ink2);font-family:var(--f-ui)}
 .top{padding-block:22px 6px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1120px;margin:0 auto}
 .eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}

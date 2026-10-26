@@ -8,296 +8,9 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-/* The corporate look (8 October 2026): white surfaces on a cool grey, one corporate blue for actions, status carried by
-   a tinted label and never by colour alone. The old names (navy, gold, bar, teal) stay as aliases because the scripts
-   below still use some of them. */
-:root{
-  --canvas:#D9E1EB; --paper:#F4F7FA; --sunken:#E8EDF4; --line:#CBD4E0; --line2:#B5C1D0;
-  --ink:#142033; --ink2:#2B374C; --muted:#4B586C; --faint:#97A1B2;
-  --primary:#1D5BC4; --primaryHover:#174CA6; --primarySoft:#EBF2FD; --primaryLine:#B8CEF4;
-  --bar:#2A78D6; --track:#DCE8F8;
-  --good:#067647; --goodBg:#E8F5EC; --warn:#A64B05; --warnBg:#FDF1E1; --warnMark:#E0891B; --bad:#D03B3B; --badBg:#FCEBE9; --badText:#B42318;
-  --navy:var(--ink); --navy2:var(--ink2); --gold:var(--primary); --gold2:var(--primary); --teal:var(--bar); --bg:var(--canvas);
-  --shadow:0 1px 2px rgba(16,24,40,.05); --shadowLg:0 24px 48px -16px rgba(16,24,40,.22);
-  --font:"IBM Plex Sans","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-}
-*,*::before,*::after{box-sizing:border-box}
-body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-button,input,textarea,select{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
-a{color:var(--primary)}
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
-header.mast{background:linear-gradient(120deg,#13408F,#1D5BC4 55%,#2A6FD8);color:#fff;padding:14px 0}
-.mrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.mark{width:38px;height:38px;border-radius:9px;overflow:hidden;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
-.mark img{width:100%;height:100%;display:block}
-.bname{font-weight:600;line-height:1.2}.bsub{font-size:13px;color:rgba(255,255,255,.8)}
-.mright{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.85)}
-.mright a{color:#fff}
-.btn{border:1px solid var(--primary);border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;box-shadow:var(--shadow);transition:background-color .15s,border-color .15s}
-.btn:hover{background:var(--primaryHover);border-color:var(--primaryHover)}.btn[disabled]{opacity:.45;cursor:not-allowed}
-.btn.gold{background:var(--primary);color:#fff}.btn.gold:hover{background:var(--primaryHover)}
-.btn.ghost{background:var(--paper);border:1px solid var(--line2);color:var(--ink)}
-.btn.ghost:hover{background:var(--sunken);border-color:var(--ink2)}
-.mast .btn,.mast .btn.ghost{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.4);color:#fff;box-shadow:none}
-.mast .btn:hover,.mast .btn.ghost:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.6)}
-.gate{max-width:420px;margin:48px auto;background:var(--paper);border:1px solid var(--line);padding:28px 26px;border-radius:12px;box-shadow:var(--shadowLg)}
-.gate h1{font-size:22px;font-weight:600;margin:0 0 4px}.gate p{color:var(--muted);margin:0 0 16px}
-label{display:block;font-weight:500;font-size:14px;margin:12px 0 6px;color:var(--ink2)}
-.field{width:100%;padding:11px 12px;border:1px solid var(--line2);border-radius:8px;background:#fff;transition:border-color .15s,box-shadow .15s}
-.field:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primarySoft)}
-textarea.field{min-height:84px;resize:vertical}
-.err{color:var(--badText);font-size:14px;min-height:20px;margin-top:8px}
-.note{background:var(--warnBg);border:1px solid #F3D7B0;padding:10px 14px;border-radius:8px;margin:14px 0;font-size:14px}
-.note.bad{background:var(--badBg);border-color:#F2C4BF}
-h2{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:28px 0 10px}h3{font-size:16px;font-weight:600;margin:18px 0 8px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:14px 0}
-.tile{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
-.tile b{display:block;font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}.tile span{color:var(--muted);font-size:13px}
-.tile.alert b{color:var(--badText)}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;width:100%;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
-.card:hover{border-color:var(--primaryLine);box-shadow:0 8px 20px -10px rgba(16,24,40,.2)}
-.card h4{margin:0 0 6px;font-size:16px;font-weight:600}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--sunken);border:1px solid var(--line);color:var(--ink2)}
-.chip i{width:7px;height:7px;border-radius:50%;display:inline-block}
-.chip.good{background:var(--goodBg);border-color:transparent;color:var(--good)}.chip.good i{background:var(--good)}
-.chip.warn{background:var(--warnBg);border-color:transparent;color:var(--warn)}.chip.warn i{background:var(--warnMark)}
-.chip.bad{background:var(--badBg);border-color:transparent;color:var(--badText)}.chip.bad i{background:var(--bad)}
-.filt{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0 4px}
-.filt .lbl{font-size:12px;color:var(--muted);font-weight:600;margin-right:2px}
-.fbtn{border:1px solid var(--line2);background:var(--paper);color:var(--ink2);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;min-height:32px}
-.fbtn[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
-.fbtn .n{font-weight:500;opacity:.8;margin-left:4px}
-.click{cursor:pointer}.click:hover{background:var(--primarySoft)}
-button.tile,a.tile{text-align:left;font:inherit;cursor:pointer;color:inherit;text-decoration:none;display:block}
-.post.team{border-left:3px solid var(--warnMark);background:var(--warnBg)}
-.post .tag{font-size:11px;font-weight:600;color:var(--warn);margin-left:6px}
-.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:13px;color:var(--muted);margin-top:8px}
-.kv b{display:block;color:var(--ink);font-size:17px;font-weight:600}
-.tabs{display:flex;gap:4px;margin:18px 0 0;border-bottom:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tab{border:0;background:none;padding:10px 14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
-.tab:hover{color:var(--ink)}
-.tab[aria-selected="true"]{color:var(--primary);border-color:var(--primary)}
-table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px;box-shadow:var(--shadow)}
-.t th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);background:var(--sunken);padding:10px 12px;border-bottom:1px solid var(--line)}
-.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
-.t tr:last-child td{border-bottom:0}
-.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.bar{display:flex;align-items:center;gap:8px;min-width:120px}
-.bar .track{flex:1;height:8px;background:var(--track);border-radius:4px;overflow:hidden}
-.bar .fill{height:100%;background:var(--bar);border-radius:4px}
-.bar .fill.gold{background:var(--primary)}
-.bar em{font-style:normal;font-variant-numeric:tabular-nums;font-size:13px;min-width:38px;text-align:right}
-.weeks{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;align-items:end;height:170px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 12px 8px;box-shadow:var(--shadow)}
-.wk{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:12px;color:var(--muted)}
-.wk .col{width:60%;max-width:24px;background:var(--bar);border-radius:4px 4px 0 0;min-height:2px}
-.wk b{color:var(--ink);font-size:13px;font-weight:600}
-.items{display:flex;flex-direction:column;gap:10px}
-.story{margin:8px 0 4px;font-size:14px}
-.story b{color:var(--ink)}
-.subj{font-size:12px;color:var(--muted);margin-top:4px;word-break:break-word}
-/* the history of an open item: a drop-down bar that reads as one, with the dates in their own column */
-details.hist{margin:10px 0 4px;border:1px solid var(--primaryLine);border-radius:8px;background:var(--primarySoft);overflow:hidden}
-details.hist summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;font-weight:600;font-size:14px;color:var(--primary)}
-details.hist summary::-webkit-details-marker{display:none}
-details.hist summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .2s;flex:none}
-details.hist[open] summary::before{transform:rotate(45deg)}
-details.hist summary:hover{background:#DCE8FB}
-details.hist summary .n{margin-left:auto;background:var(--primary);color:#fff;border-radius:99px;font-size:12px;padding:1px 9px}
-details.hist ul{list-style:none;margin:0;padding:4px 12px 8px;background:var(--paper);border-top:1px solid var(--primaryLine)}
-details.hist li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
-details.hist li:last-child{border-bottom:0}
-details.hist li .d{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
-details.hist li.int{color:var(--muted)}
-details.hist li .staff{display:inline-block;margin-left:6px;font-size:11.5px;font-weight:600;background:var(--warnBg);color:var(--warn);border-radius:99px;padding:0 7px}
-.btn.sm{padding:5px 11px;font-size:13px}
-@media (max-width:640px){details.hist li{grid-template-columns:1fr;gap:2px}}
-.item{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line2);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)}
-.item.late{border-left-color:var(--bad)}.item.wait{border-left-color:var(--warnMark)}
-.item h4{margin:0 0 6px;font-size:16px;font-weight:600}
-.meta{font-size:13.5px;color:var(--muted)}
-.meta b{color:var(--ink);font-weight:600}
-.toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer}
-.toggle input{accent-color:var(--primary)}
-.posts{margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
-.post{font-size:13px;padding:8px 10px;border-radius:8px;background:var(--sunken);margin:6px 0;white-space:pre-wrap}
-.post.shared{background:var(--goodBg);border:1px solid #BFE3CB}
-.post .who{font-weight:600}
-.feed li{margin:6px 0}
-.drawer{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0;box-shadow:var(--shadowLg)}
-iframe.preview{width:100%;height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
-.back{background:none;border:0;color:var(--primary);font-weight:600;cursor:pointer;padding:0;margin:16px 0 0}
-.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:8px;box-shadow:var(--shadowLg);opacity:0;pointer-events:none;transition:opacity .2s;max-width:92vw;z-index:9}
-.toast.on{opacity:1}.toast.bad{background:var(--badText)}
-.muted{color:var(--muted)}.small{font-size:13px}
-.hide{display:none!important}
-/* the year by month (14 October 2026): one column a month, the value above it, the month under it; every number is in
-   the table beneath, and each column says its own value on hover or focus */
-.months{display:grid;gap:8px;align-items:end;height:180px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 12px 8px;box-shadow:var(--shadow)}
-.months .mo{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:12px;color:var(--muted);outline-offset:2px;border-radius:6px}
-.months .mo .col{width:62%;max-width:30px;background:var(--bar);border-radius:4px 4px 0 0;min-height:2px}
-.months .mo b{color:var(--ink);font-size:13px;font-weight:600}
-.months .mo:hover .col,.months .mo:focus .col{background:var(--primary)}
-.trend{margin:10px 0 0;font-size:14px;color:var(--ink2)}
-.opps{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
-.opps li{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--primary);border-radius:10px;padding:10px 14px;font-size:14px;box-shadow:var(--shadow)}
-.opps li .k{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--primary);background:var(--primarySoft);border-radius:99px;padding:2px 8px;margin-right:6px}
-.opps li.click{cursor:pointer}.opps li.click:hover{border-color:var(--primaryLine)}
-/* every account, and sending from the page (14 October 2026): one row an account on a wide screen, a card on a phone */
-.hello{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:18px 0 0}
-.hello h1{font-size:24px;font-weight:600;letter-spacing:-.015em;margin:0}
-.hello p{margin:0;color:var(--muted)}
-.meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
-.meter{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
-.meter .top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.meter b{font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.meter b small{font-size:15px;color:var(--muted);font-weight:500}
-.meter span{font-size:13px;color:var(--muted)}
-.meter .track{height:8px;background:var(--track);border-radius:4px;overflow:hidden;margin-top:10px}
-.meter .fill{height:100%;background:var(--bar);border-radius:4px}
-.accs{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-.acc{display:grid;grid-template-columns:minmax(160px,1.15fr) minmax(170px,1.05fr) minmax(170px,1.15fr) minmax(130px,.85fr) minmax(150px,.95fr) minmax(90px,.55fr) minmax(150px,.9fr);gap:12px;align-items:center;
-  background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
-.acc.head{background:none;border:0;box-shadow:none;padding:0 14px;font-size:12px;font-weight:600;color:var(--muted)}
-.acc .gname{font-weight:600;cursor:pointer;color:var(--ink);background:none;border:0;padding:0;text-align:left}
-.acc .gname:hover{color:var(--primary);text-decoration:underline}
-.acc .sub{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
-.acc .lbl{display:none}
-.who2{display:flex;align-items:center;gap:8px;min-width:0}
-.av{width:30px;height:30px;border-radius:50%;background:var(--primarySoft);color:var(--primary);border:1px solid var(--primaryLine);display:grid;place-items:center;font-size:12px;font-weight:600;flex:none}
-.you{font-size:11px;font-weight:600;color:var(--primary);background:var(--primarySoft);border-radius:99px;padding:0 7px;margin-left:4px}
-.acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
-.acts .btn{padding:6px 10px;font-size:12.5px}
-.stars2{color:#E09B00;letter-spacing:1px;font-size:13px}.stars2 i{font-style:normal;color:#C3CCD8}
-.search{min-width:200px;max-width:280px;padding:7px 12px;border-radius:99px;border:1px solid var(--line2);background:#fff;font-size:14px}
-@media (max-width:1000px){
-  .acc{grid-template-columns:1fr 1fr;gap:8px 14px}.acc.head{display:none}
-  .acc>div:first-child{grid-column:1 / -1}.acc .acts{grid-column:1 / -1;justify-content:flex-start}
-  .acc .lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase;margin-bottom:2px}
-}
-@media (max-width:520px){.acc{grid-template-columns:1fr}}
-/* the send window: the e-mail exactly as it goes, who it goes to, the tick, the button; then what happened */
-dialog.dlg{border:0;border-radius:14px;padding:0;width:min(760px,96vw);max-height:92vh;box-shadow:var(--shadowLg);background:var(--paper);color:var(--ink)}
-dialog.dlg::backdrop{background:rgba(20,32,51,.55)}
-.dlg .dh{display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(120deg,#13408F,#1D5BC4);color:#fff}
-.dlg .dh h3{margin:0;font-size:17px;font-weight:600;flex:1}
-.dlg .dh button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer}
-.dlg .db{padding:14px 18px 18px;overflow:auto;max-height:calc(92vh - 60px)}
-.dlg .to{font-size:14px;margin:0 0 10px}
-.dlg iframe{width:100%;height:440px;border:1px solid var(--line);border-radius:10px;background:#fff}
-.dlg .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.done2{text-align:center;padding:26px 10px 10px}
-.done2 .tick{width:72px;height:72px;border-radius:50%;background:var(--goodBg);color:var(--good);display:grid;place-items:center;margin:0 auto 12px;font-size:40px;font-weight:700;animation:pop .35s ease-out}
-.done2 h4{font-size:20px;margin:0 0 6px}
-@keyframes pop{0%{transform:scale(.4);opacity:0}80%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
-@media (prefers-reduced-motion:reduce){.done2 .tick{animation:none}}
-@media (max-width:640px){dialog.dlg{width:100vw;max-width:100vw;max-height:100vh;height:100vh;border-radius:0}.dlg .db{max-height:calc(100vh - 60px)}.dlg iframe{height:360px}}
-@media (max-width:640px){.kv{grid-template-columns:repeat(2,1fr)}.weeks,.months{height:140px;gap:4px;padding:10px 6px 6px}iframe.preview{height:460px}}
-/* the design pass (14 October 2026: "a much more professional look, filters and scaling and colors for visibility"):
-   white panels, stronger status labels that always carry a word and a mark, the greeting and the week in the masthead,
-   one toolbar of filters, and the accounts as one table */
-:root{--paper:#FFFFFF;--canvas:#DCE3EC;--sunken:#EEF2F7;--line:#D3DBE6;--line2:#B9C4D3;
-  --good:#05603A;--goodBg:#DCF3E5;--goodLine:#9FD9B5;--warn:#93370D;--warnBg:#FDEBD3;--warnLine:#F3C58C;--warnMark:#DC6803;
-  --bad:#D92D20;--badBg:#FCE3E0;--badLine:#F4B5AE;--badText:#B42318;--info:#1D5BC4;--infoBg:#E3EDFC;--infoLine:#B8CEF4}
-.wrap{max-width:1320px}
-@media (min-width:1500px){body{font-size:15.5px}}
-.chip{font-size:12.5px;padding:3px 10px;border:1px solid var(--line)}
-.chip i{width:8px;height:8px}
-.chip.good{background:var(--goodBg);border-color:var(--goodLine);color:var(--good)}
-.chip.warn{background:var(--warnBg);border-color:var(--warnLine);color:var(--warn)}
-.chip.bad{background:var(--badBg);border-color:var(--badLine);color:var(--badText)}
-.chip.info{background:var(--infoBg);border-color:var(--infoLine);color:var(--info)}.chip.info i{background:var(--info)}
-.note{border-radius:10px}
-.note.info{background:var(--infoBg);border-color:var(--infoLine);display:flex;gap:10px;align-items:flex-start}
-.note.info::before{content:"i";flex:none;width:20px;height:20px;border-radius:50%;background:var(--info);color:#fff;font-weight:700;font-size:13px;display:grid;place-items:center;margin-top:1px;font-style:italic}
-header.mast{padding:14px 0 0}
-.mhello{padding:16px 16px 20px}
-.mhello:empty{display:none}
-.mhello h1{margin:0;font-size:clamp(22px,2.4vw,30px);font-weight:600;letter-spacing:-.015em;color:#fff}
-.mhello .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.mhello .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:99px;padding:6px 14px;font-size:14px}
-.mhello .pill b{font-size:16px;font-variant-numeric:tabular-nums}
-.mhello .pill.hot{background:#fff;color:var(--badText);border-color:#fff;font-weight:600}
-.mhello .pill.ok{background:#fff;color:var(--good);border-color:#fff;font-weight:600}
-.tabs{border-bottom:2px solid var(--line);gap:8px}
-.tab{font-size:15.5px;padding:12px 16px}
-.tab[aria-selected="true"]{border-bottom-width:3px}
-h2{font-size:21px}
-.tile{border-top:3px solid var(--line2)}.tile.alert{border-top-color:var(--bad)}
-.toolbar{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px;margin:14px 0 0}
-.toolbar .r1{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
-.sfield{position:relative;flex:1 1 240px;max-width:420px}
-.sfield input{width:100%;padding:10px 12px 10px 38px;border:1px solid var(--line2);border-radius:8px;font-size:15px;background:#fff}
-.sfield input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primarySoft)}
-.sfield svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2}
-.sel{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-weight:600;margin:0}
-.sel select{padding:9px 12px;border:1px solid var(--line2);border-radius:8px;background:#fff;font-size:14px;font-weight:500;color:var(--ink);max-width:240px}
-.toolbar .count{margin-left:auto;font-size:13.5px;color:var(--muted)}
-.toolbar .count button{margin-left:8px;background:none;border:0;color:var(--primary);font-weight:600;cursor:pointer;padding:0}
-.seg{display:flex;flex-wrap:wrap;gap:6px}
-.seg .fbtn{display:inline-flex;align-items:center;gap:7px;padding:6px 12px}
-.seg .fbtn i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
-.seg .fbtn[aria-pressed="true"] i{box-shadow:0 0 0 2px #fff}
-.acctable{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin-top:12px;overflow:clip}
-.acctable .acc{border:0;border-radius:0;box-shadow:none;border-bottom:1px solid var(--line);border-left:4px solid transparent;padding:14px 16px;background:var(--paper)}
-.acctable .acc:last-child{border-bottom:0}
-.acctable .acc:not(.head):hover{background:#F7FAFE}
-.acctable .acc.head{background:var(--sunken);padding:10px 16px 10px 20px;position:sticky;top:0;z-index:1;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase}
-.acc.r-bad{border-left-color:var(--bad)}.acc.r-warn{border-left-color:var(--warnMark)}.acc.r-good{border-left-color:var(--good)}.acc.r-info{border-left-color:var(--info)}
-.acc .gname{font-size:15.5px}
-.meter{border-top:4px solid var(--bar)}
-.meter.done{border-top-color:var(--good)}.meter.done .fill{background:var(--good)}
-.meter .pct{font-size:13px;font-weight:600;color:var(--ink2)}
-.card{border-left:4px solid var(--line2);display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch}.card.r-bad{border-left-color:var(--bad)}.card.r-warn{border-left-color:var(--warnMark)}.card.r-good{border-left-color:var(--good)}.card.r-info{border-left-color:var(--info)}
-.key2{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin:8px 2px 0}
-.key2 span{display:inline-flex;align-items:center;gap:6px}.key2 i{width:4px;height:14px;border-radius:2px;display:inline-block}
-/* applications still pending, at the top of a group's page (14 October 2026); the group sees the same panel, with a
-   medical requirement in general words and nothing a person unticked */
-.pend{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--primary);border-radius:12px;padding:16px 16px 6px;margin:14px 0;box-shadow:var(--shadow)}
-.pend .ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.pend h3{margin:0}
-.pend .cnt{background:var(--primary);color:#fff;border-radius:99px;font-size:12px;font-weight:600;padding:1px 9px}
-.lns{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}
-.ln{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--sunken,#EEF2F7);border-radius:99px;padding:4px 11px;font-size:13px;cursor:pointer}
-.ln[aria-pressed="true"]{background:var(--infoBg);border-color:var(--info);color:var(--info);font-weight:600}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
-.dot.life{background:#1D5BC4}.dot.health{background:#008C7A}.dot.pension{background:#8A4FD8}.dot.enrol{background:#5B6B82}
-.papp{border:1px solid var(--line);border-left:5px solid var(--info);border-radius:10px;padding:12px 14px;margin:0 0 10px;background:#fff}
-.papp.warn{border-left-color:var(--warnMark)}.papp.bad{border-left-color:var(--bad)}
-.papp .top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
-.papp h4{margin:0;font-size:16px;flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
-.lt{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--line);border-radius:99px;padding:1px 9px}
-.age{font-size:12.5px;font-weight:600;border-radius:99px;padding:2px 10px;border:1px solid var(--infoLine);background:var(--infoBg);color:var(--info)}
-.age.warn{background:var(--warnBg);border-color:var(--warnLine);color:var(--warn)}.age.warn::before{content:"● ";color:var(--warnMark)}
-.age.bad{background:var(--badBg);border-color:var(--badLine);color:var(--badText)}.age.bad::before{content:"! ";font-weight:700}
-.papp .meta{margin:4px 0 6px;font-size:13.5px;color:var(--muted)}
-.reqs{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-.reqs li{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.reqs li:last-child{border-bottom:0}
-.reqs .w{font-weight:600}.reqs .sub2{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
-.inc{display:inline-block;font-size:11.5px;font-weight:600;color:#fff;background:#8A4FD8;border-radius:4px;padding:1px 7px;margin-right:7px;vertical-align:1px}
-.inc.soft{background:#F1EAFD;color:#5B2DA8}
-.reqs li.sub{padding-left:12px;border-left:3px solid #E4D8FA}
-.coming{background:var(--paper);border:1px solid var(--line);border-top:4px solid #067647;border-radius:12px;padding:16px 16px 10px;margin:14px 0;box-shadow:var(--shadow)}
-.coming .ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.coming h3{margin:0}
-.coming .cnt{background:#067647;color:#fff;border-radius:99px;font-size:12px;font-weight:600;padding:1px 9px}
-.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px}
-.cgrp{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;min-width:0}
-.cgrp h4{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:14.5px}
-.cgrp h4 .ic{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
-.cgrp.c65 .ic{background:#1D5BC4}.cgrp.dep .ic{background:#008C7A}.cgrp.ret .ic{background:#8A4FD8}
-.cgrp h4 b{margin-left:auto;color:var(--muted)}
-.cgrp ul{list-style:none;margin:0;padding:0}.cgrp li{padding:6px 0;border-top:1px solid var(--line);font-size:13.5px;overflow-wrap:anywhere}
-.cgrp li .dt{display:block;color:var(--muted);font-size:12.5px}
-.cgrp .own{font-size:11.5px;font-weight:600;border-radius:4px;padding:0 6px;margin-left:4px}
-.cgrp .own.co{background:#EFE8FD;color:#5B2DA8}.cgrp .own.pe{background:#E8EEF7;color:#2B374C}
-.cleanrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-@media (max-width:900px){.cgrid{grid-template-columns:1fr}}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="gcm.css">
 <script src="/rroperations/sso.js"></script>
 </head>
 <body>
@@ -348,6 +61,20 @@ async function post(body) {
   try { const txt = await (await fetch(SVC, { method: 'POST', body: JSON.stringify(Object.assign({}, body, { code: AUTH.code, who: AUTH.who })) })).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, error: 'The backend answered with a page instead of data.' }; } }
   catch (e) { return { ok: false, error: 'Could not reach the branch backend.' }; }
 }
+
+/* ---- Billings Management lives on its own page (billing.html, 25 October 2026): the Billing buttons open it there. The
+   three chip helpers the board and the Team dashboard read come from gblBoard_'s block on the board answer. ---- */
+function openBilling(key, month) { location.href = 'billing.html?g=' + encodeURIComponent(key) + (month ? '&m=' + encodeURIComponent(month) : ''); }
+const BL_MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const blMon = m => { const x = /^(\d{4})-(\d{2})/.exec(m || ''); return x ? BL_MON[+x[2] - 1] + ' ' + x[1] : ''; };
+function blBoardChip(g) {
+  const b = BOARD && BOARD.billing ? BOARD.billing[g.key] : null;
+  if (!BOARD || !BOARD.billing) return '';
+  if (!b || !b.lines) return '<div><span class="chip warn"><i></i>Billing: nothing uploaded for ' + esc(blMon(b ? b.month : BOARD.today.slice(0, 7))) + '</span></div>';
+  return '<div><span class="chip' + (b.fixes || b.held ? ' bad' : blDone(g) ? ' good' : '') + '"><i></i>Billing ' + esc(blMon(b.month).slice(0, 3)) + ': ' + b.lines + ' line' + (b.lines === 1 ? '' : 's') + (b.fixes ? ' · ' + b.fixes + ' to fix' : '') + (b.checks ? ' · ' + b.checks + ' to confirm' : '') + ' · ' + b.reconciled + ' reconciled' + (b.approved ? ' · ' + b.approved + ' approved' : '') + (b.held ? ' · ' + b.held + ' held' : '') + ' · ' + b.sent + ' sent</span></div>';
+}
+function blDone(g) { const b = BOARD && BOARD.billing ? BOARD.billing[g.key] : null; return !!(b && b.lines && !b.held && (b.sent + (b.approved || 0)) >= b.lines); }
+function blTodo(g) { const b = BOARD && BOARD.billing ? BOARD.billing[g.key] : null; return !!(BOARD && BOARD.billing) && (!b || !b.lines || b.fixes > 0 || b.held > 0 || (b.sent + (b.approved || 0)) < b.lines); }
 
 /* ---- the gate ---- */
 $('gate').addEventListener('submit', e => { e.preventDefault(); AUTH = { code: $('gCode').value.trim(), who: $('gWho').value.trim() }; open_(); });
@@ -404,6 +131,7 @@ function render() {
   if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into the project’s Script properties, then run gcmRefresh.</div>';
   if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
   if (d.nextSend) h += '<div class="note info"><div><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div></div>';
+  if (d.billingDay) h += '<div class="note info"><div><b>The group bills go out by themselves on ' + esc(d.billingDay.label) + (d.billingDay.isDay ? ' (today)' : d.billingDay.daysTo ? ' (in ' + d.billingDay.daysTo + ' day' + (d.billingDay.daysTo === 1 ? '' : 's') + ')' : '') + '.</b> That is the 26th, or the next working day when the 26th is a weekend or a public holiday. Before then, open each account’s Billing review: upload the month’s bill on each line, check it against Salesforce, mark it reconciled and approve it with the PDF attached. At ' + (d.billingDay.reportHour || 13) + ':00 on ' + esc(d.billingDay.reportLabel ? d.billingDay.reportLabel.replace(/, \d+:\d+$/, '') : 'the 25th') + ' the branch manager has the report of who has worked each group. A bill approved after the ' + d.billingDay.hour + ':00 run goes at ' + d.billingDay.hour + ':00 the next working day, or with Send now, and the branch manager is told at 10:30.' + (d.billingLive ? '' : ' The bills are in test mode (gblGoLive switches them on).') + (d.billingDay.drive ? '' : ' <b>The Drive folder is not linked</b> (GCM_FORMS_FOLDER), so a bill cannot be approved with its PDF yet.') + '</div></div>';
   if (d.canRehearse) h += '<div class="note"><b>Test the run first.</b> “Rehearse now” writes every approved letter exactly as the ' + esc(d.nextSend || 'Monday') + ' run would, and sends it only to the person who approved it and the branch, marked TEST, with one summary of what would go and what would wait. Nothing reaches a group, and nothing is marked as sent. <button class="btn ghost sm" type="button" id="rh">Rehearse now</button></div>';
   if (!TAB) TAB = d.role === 'staff' ? 'groups' : 'dash';
   if (!FILT.owner) FILT.owner = d.role === 'staff' && d.groups.some(g => g.own) ? 'mine' : 'all';
@@ -493,14 +221,14 @@ function hello(d) {
     pill(due, 'to approve for ' + (d.nextSend || 'Monday'), due ? 'hot' : 'ok') + pill(wel, 'to welcome', wel ? 'hot' : 'ok') + pill(ans, 'have answered us') + '</div>';
 }
 /* each filter's mark: the colour of the state it finds, always beside its words */
-const ACC_SHOW = [['all', 'All', ''], ['due', 'Letter to approve', 'var(--bad)'], ['welcome', 'Welcome to send', 'var(--info)'], ['sent', 'A letter has gone', 'var(--good)'],
+const ACC_SHOW = [['all', 'All', ''], ['billing', 'Billing to do', 'var(--warnMark)'], ['due', 'Letter to approve', 'var(--bad)'], ['welcome', 'Welcome to send', 'var(--info)'], ['sent', 'A letter has gone', 'var(--good)'],
   ['answered', 'Answered us', 'var(--good)'], ['notrated', 'Not rated their last letter', 'var(--warnMark)'], ['opened', 'Opened their page', 'var(--info)'],
   ['setup', 'Needs set-up', 'var(--warnMark)'], ['pending', 'Applications or increases pending', '#5B6B82']];
 function accShow(g, k) {
   const a = g.account, s = g.stats;
   return k === 'all' || (k === 'welcome' && !a.welcome && !a.welcomeWhy) || (k === 'due' && s.week === 'due' && s.ready) || (k === 'sent' && !!a.last) ||
     (k === 'answered' && !!a.answer) || (k === 'setup' && !!(a.mailWhy || !s.ready || !g.assigned || !g.ownerActive)) || (k === 'pending' && !!a.pending) ||
-    (k === 'notrated' && !!a.rate && a.rate.kind !== 'rated') || (k === 'opened' && !!a.views);
+    (k === 'notrated' && !!a.rate && a.rate.kind !== 'rated') || (k === 'opened' && !!a.views) || (k === 'billing' && blTodo(g));
 }
 /* the row's rail: red when something is due from us, amber when the account needs setting up, green when the week is done */
 function rowState(g) {
@@ -519,6 +247,7 @@ function accountsHtml(d) {
     '</div><div class="track" role="img" aria-label="' + esc(label + ': ' + v + ' of ' + n) + '"><div class="fill" style="width:' + (n ? Math.round(100 * v / n) : 0) + '%"></div></div></div>';
   let h = '<h2 style="margin-top:22px">Every account <span class="muted small">who looks after it, who the letters go to, and what has gone</span></h2>' +
     '<div class="meters">' + meter(cnt(g => g.account.welcome), 'welcomed with the film') + meter(cnt(g => g.stats.week !== 'due'), 'approved or sent for ' + (d.nextSend || 'Monday')) +
+    (d.billingDay && typeof blDone === 'function' ? meter(cnt(g => blDone(g)), 'bills approved or sent for ' + d.billingDay.date) : '') +
     meter(cnt(g => g.account.rate && g.account.rate.kind === 'rated'), 'rated us for their last letter') + meter(cnt(g => g.assigned && g.ownerActive && !g.account.mailWhy && g.stats.ready), 'ready: owner, contact, list bill and code') + '</div>';
   const owners = [...new Set(all.map(g => g.assigned).filter(Boolean))].sort();
   if (ACC.owner !== 'all' && ACC.owner !== 'mine' && owners.indexOf(ACC.owner) < 0) ACC.owner = 'all';
@@ -569,11 +298,11 @@ function accRow(g) {
     if (a.last && a.last.again && !a.mailWhy) acts += '<button class="btn ghost" type="button" data-act="again" data-k="' + esc(g.key) + '">Resend last letter</button>';
     if (canRemind(g, a, s)) acts += remindBtn(g.key, a);
   }
-  acts += '<button class="btn ghost" type="button" data-g="' + esc(g.key) + '">Open</button>';
+  acts += '<button class="btn ghost" type="button" data-bill="' + esc(g.key) + '">Billing</button><button class="btn ghost" type="button" data-g="' + esc(g.key) + '">Open</button>';
   return '<div class="acc r-' + rowState(g) + '"><div>' + L('Group') + '<button class="gname" type="button" data-g="' + esc(g.key) + '">' + esc(g.name) + '</button><div class="sub">List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · ' + s.open + ' open' + (s.late ? ' · <b style="color:var(--badText)">' + s.late + ' past target</b>' : '') + '</div>' +
     (a.coming ? '<div><span class="chip"><i style="background:#067647"></i>' + a.coming.n + ' coming up</span></div>' : '') +
-    (a.pending ? '<div><span class="chip ' + (a.pending.late || a.pending.oldest > 30 ? 'bad' : a.pending.oldest > 14 ? 'warn' : '') + '"><i></i>' + pendWords(a.pending) + ', oldest ' + a.pending.oldest + 'd</span></div>' : '') + '</div>' +
+    (a.pending ? '<div><span class="chip ' + (a.pending.late || a.pending.oldest > 30 ? 'bad' : a.pending.oldest > 14 ? 'warn' : '') + '"><i></i>' + pendWords(a.pending) + ', oldest ' + a.pending.oldest + 'd</span></div>' : '') + blBoardChip(g) + '</div>' +
     '<div>' + L('Looked after by') + owner + '</div><div>' + L('Letters go to') + to + '</div><div>' + L('Welcome') + wel + '</div><div>' + L('This week’s letter') + wk + '</div><div>' + L('Opened · rated') + ans + '</div>' +
     '<div class="acts">' + acts + (g.canAct ? '' : '<div class="sub" style="width:100%;text-align:right">' + esc(first || 'Its owner') + ', the assistant branch manager or the branch manager sends</div>') + '</div></div>';
 }
@@ -586,6 +315,7 @@ function bindAccounts(root) {
   const q = root.querySelector('#accQ');
   if (q) q.oninput = () => { ACC.q = q.value; const pos = q.selectionStart; render(); const q2 = $('accQ'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) {} } };
   root.querySelectorAll('[data-act]').forEach(b => b.onclick = () => openAct(b.dataset.act, b.dataset.k));
+  root.querySelectorAll('[data-bill]').forEach(b => b.onclick = () => openBilling(b.dataset.bill));
 }
 
 /* the send window: the e-mail exactly as it goes, who it goes to, the tick, and the button; then what happened */
@@ -823,7 +553,7 @@ async function openGroup(key) {
 function drawGroup() {
   const d = GROUP, g = d.group, s = d.stats;
   $('mhello').innerHTML = '';
-  let h = '<button class="back" type="button" id="bk">← All groups</button><h2 style="margin-top:8px">' + esc(g.name) + '</h2>' +
+  let h = '<button class="back" type="button" id="bk">← All groups</button><button class="btn" type="button" id="bkBill" style="float:right;margin-top:10px">Billing review</button><h2 style="margin-top:8px">' + esc(g.name) + '</h2>' +
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') + (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') +
     (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') + '</div>' +
     '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
@@ -850,6 +580,7 @@ function drawGroup() {
     '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
   $('app').innerHTML = h;
   $('bk').onclick = render;
+  if ($('bkBill')) $('bkBill').onclick = () => openBilling(g.key);
   bindPend();
   $('app').querySelectorAll('[data-act]').forEach(b => b.onclick = () => openAct(b.dataset.act, b.dataset.k));
   $('pv').onclick = preview;
