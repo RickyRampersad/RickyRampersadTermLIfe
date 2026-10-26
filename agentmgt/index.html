@@ -184,6 +184,17 @@ section,.layout{padding-block:var(--sp-2xl)}
 .strip li{display:inline-flex;align-items:center;gap:.6rem}
 .strip li::before{content:'';width:.4rem;height:.4rem;border-radius:50%;background:var(--aL)}
 
+
+/* ═══ THE FILM ═══ */
+.film-sec{padding-block:var(--sp-2xl)}
+.vwrap{--dp-accent:#E85F6A;position:relative;border-radius:var(--r);overflow:hidden;background:var(--d0);aspect-ratio:16/9;box-shadow:var(--e3);max-width:60rem;margin:0 auto}
+.vwrap video{width:100%;height:100%;display:block;object-fit:contain;background:var(--d0)}
+.vcover{position:absolute;inset:0;background-size:cover;background-position:center;display:grid;place-items:center;cursor:pointer;z-index:4}
+.vcover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,23,30,.1),rgba(20,23,30,.55))}
+.vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:.7rem;background:#fff;color:var(--ink);border-radius:999px;padding:.85rem 1.4rem;font:600 var(--f-0)/1 var(--text);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.vcover .pl svg{width:1.1rem;height:1.1rem}
+.film-sec .lede{text-align:center;margin-inline:auto}
+
 /* ═══ FIGURES BAND ═══ */
 .band{background:var(--bg2);border-bottom:1px solid var(--line);padding-block:var(--sp-xl)}
 .band-grid{display:grid;gap:var(--sp-m);grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))}
@@ -513,6 +524,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       <div class="hero-cta">
         <a class="btn btn-1" href="https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275" data-apply>Start the Selection <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
         <a class="btn btn-2" href="#quiz">Take the 60-second test</a>
+        <a class="btn btn-2" href="#film">Watch the film · 2:16</a>
       </div>
       <p class="trust">
         <span><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Confidential for practising advisors</span>
@@ -603,6 +615,23 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   </div>
 </div>
 
+
+<!-- ═══ THE FILM ═══ -->
+<section class="film-sec" id="film">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">The film · 2:16</span>
+      <h2 data-words>Why advisors move here.</h2>
+      <p>Two minutes on what is different about this room, and the five seats open this intake.</p>
+    </div>
+    <div class="vwrap rv">
+      <video playsinline preload="metadata" poster="recruit.jpg" data-scenes="4.7,5.4,12.5,3.0,10.2,8.9,11.6,13.8,7.2,8.5,6.2,10.4,15.1,6.7,7.1,4.3" data-chapters="A question|Talent and the room|The branch|We do things differently|Mentorship, written in|In your corner|Your name, out loud|The career path|Or lead|Uncapped|Confidential|Newcomers|We select|Five seats|Start here|The environment decides">
+        <source src="recruit.mp4" type="video/mp4">
+      </video>
+      <div class="vcover" style="background-image:url(recruit.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#17191F" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch · 2:16</div></div>
+    </div>
+  </div>
+</section>
 <!-- ═══ THE ENVIRONMENT ═══ -->
 <section class="env" id="environment" data-g="env">
   <div class="wrap">
@@ -917,6 +946,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 })();
 </script>
 
+<script src="player.js" defer></script>
 <!-- rrb-views -->
 <script>
 (function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{

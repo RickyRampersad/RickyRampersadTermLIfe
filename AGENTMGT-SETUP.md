@@ -15,6 +15,10 @@ What is in the folder:
 | `qr.svg` | the QR code on the final card: it opens the TalentNest application |
 | `og.jpg` | the picture a WhatsApp, Facebook or LinkedIn link preview shows |
 | `netlify.toml` | the headers and the short links `/apply`, `/quiz`, `/test` |
+| `recruit.mp4`, `recruit.jpg` | the recruiting film, 1280×720, 2:16, and its poster |
+| `recruit-story.mp4`, `recruit-story.jpg` | the same film cut 1080×1920 for Reels and Stories |
+| `film.html` | the film's source page, drawn by `tools/film/build-recruitfilm.py` (not linked) |
+| `player.js` | the branch's film player: tap to pause, a dot per scene, mute, full screen |
 
 ## Two ways to deploy
 
@@ -73,3 +77,42 @@ circling it.
   the shield, every card, every heading. Nothing depends on the script.
 - The copy is the approved copy from the previous page, word for word. The
   quiz questions and the three verdicts are unchanged.
+
+## The film
+
+`recruit.mp4` plays on agentmgt.com (the "Watch the film" block under the figures) and on the branch site at
+**rickyrampersadbranch.com/careersvideo/**, which is the page to post: it carries the Open Graph tags, so a link
+pasted into WhatsApp, Facebook or LinkedIn previews with the poster. The same page offers the phone cut. The MP4
+itself is served from both domains (`/agentmgt/recruit.mp4` on the branch site, `/recruit.mp4` on agentmgt.com).
+
+To re-cut it: edit the lines in `tools/film/recruit-lines.json`, voice them on the `tts-run` runner (Andrew
+Expressive, `en-US-AndrewMultilingualNeural` at +0%, `"check": true`), then in `tools/film/`:
+
+```
+python3 importvox.py <tts/out/recruit> vorecruit 1.15 --timing recruit-timing.json
+python3 films-recruit.py && python3 build-recruitfilm.py
+for k in recruit recruitv; do python3 sfx.py "$(python3 -c "import json;print(json.dumps(json.load(open('films.json'))['$k']))")" sfx-$k.wav; done
+python3 usetrack.py ../../rr-branch-theme.mp3 recruit recruitv
+node render.js ../../agentmgt/film.html cap-recruit 30 ../../agentmgt/recruit.jpg
+RENDER_W=1080 RENDER_H=1920 node render.js ../../agentmgt/film.html cap-recruitv 30 ../../agentmgt/recruit-story.jpg
+for k in recruit recruitv; do python3 mixany.py "$(python3 -c "import json;print(json.dumps(json.load(open('films.json'))['$k']))")" "$(python3 -c "import json;print(json.load(open('films.json'))['$k']['out'])")"; done
+```
+
+Then put the new `durs` from films.json on the three `data-scenes` attributes (agentmgt/index.html and
+careersvideo/index.html, both cuts).
+
+## The post
+
+For the branch WhatsApp group, Facebook and LinkedIn (under 120 words, one ask):
+
+> *Good at what you do, but stuck where you are?*
+>
+> Two minutes on why advisors are moving to our branch: mentorship written into the appointment, a career path on
+> paper, your name announced on stage, and an income with no ceiling. 23× MDRT. 32 years in Trinidad.
+>
+> Five seats this intake. Two minutes to apply, reviewed within 48 hours, and confidential if you are already
+> contracted.
+>
+> Watch: https://rickyrampersadbranch.com/careersvideo/
+>
+> Know one person who should see this? Send it to them today.

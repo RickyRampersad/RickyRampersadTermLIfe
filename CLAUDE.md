@@ -4892,6 +4892,43 @@ path: not the mark. What stands:
 - The footer keeps the page's own contact line (`678-5821`): a fact on the
   live page, not changed unasked.
 
+### The recruiting film, 26 October 2026
+
+Asked for as *"a killer video with lots of motion and drive to what really makes a person want to leave the
+current job and join our branch as we do things differently and a person can excel"*, for the branch page and to
+post. `agentmgt/recruit.mp4` (1280×720, 2:16) and `agentmgt/recruit-story.mp4` (1080×1920, the Reels and Stories
+cut), posters beside them. It plays on agentmgt.com (`#film`) and on **`/careersvideo/`** on the branch site, the
+page to post (Open Graph with the poster, both cuts, the apply buttons); the homepage careers section links it.
+
+- **Sixteen scenes, one per spoken line**, the page's own look (onyx lifted off black, wine, Playfair and Inter
+  embedded as base64 so a render never waits on the network), drawn by `tools/film/build-recruitfilm.py` from
+  `recruit-lines.json` and `recruit-timing.json` into `agentmgt/film.html`. The hook (good at what you do, stuck
+  where you are), the bars that break through the room's ceiling, the shield with the five gates and the five rungs
+  circling it, the letter of appointment stamped WRITTEN IN, the stage and the spotlight with a chat bubble that
+  fades, the two ladders, the income line leaving the salary band, the lock, the checklist, the five gates, the five
+  seats with one lit, agentmgt.com with the QR, the close. **Every reveal lands on the word that names it**: the
+  template's `{{AT:n:word}}` reads the word's start from the runner's WordBoundary timings, plus the 0.4 s the mixer
+  leads the voice by.
+- **The words are the page's own claims only**: 23× MDRT, 32 years, five seats, 48 hours, the written path with its
+  overrides and offices, mentorship written into appointments, the Discovery with the qualifiers, confidentiality.
+  Nothing new was promised.
+- **Andrew Expressive** (`en-US-AndrewMultilingualNeural`, +0%, conversational wording), made on the `tts-run`
+  runner with `"check": true`; every clip heard as English. Line 10 opened with a two-word fragment ("The income?")
+  that Whisper heard as a different word, so it was reworded to a full sentence and re-voiced: a line that starts
+  with a clause of one or two words is the one this voice slurs. `tools/film/importvox.py` (in the repository now,
+  not the scratchpad) turns the runner's MP3 and words into the WAV, the VTT cues and the timing file.
+- **The branch theme** (`rr-branch-theme.mp3`, 120 s, looped with a crossfade by `usetrack.py`) at `musicgain`
+  0.5, ducked to half under the voice; `sfx.py`'s sweeps on every cut, impacts on the statement scenes (4 and 16),
+  punches under 23×, 32, five seats and 48 hours. Captions burned **over** the frame in both cuts (`capmode:
+  over`), because this audience watches muted; the scenes keep the bottom fifth of the frame clear for them.
+- **One page, two frames.** `render.js` now takes `RENDER_W` and `RENDER_H`; the portrait rules at the foot of the
+  stylesheet restack every split and re-base the unit (`--u`) on the width. Each `.scene` keeps render.js's
+  contract (`SC`, `go`, `paused`, `timer`, `.act`, `.out` cleared at 720 ms, `.cnt` counters). `films-recruit.py`
+  writes both entries into films.json from the timing file, so a re-voice is one command each step.
+- **A percentage height inside a grid item with `align-content: center` resolves to 0.** The chart's bars did not
+  draw at all until `.bars` took a definite height. And a dark "lid" that slides away must also fade and be clipped
+  by its parent, or it parks over the headline on the portrait cut.
+
 ## The branch's own forms — no client link opens a JotForm
 
 `quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`

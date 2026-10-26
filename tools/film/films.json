@@ -603,5 +603,99 @@
    159.59,
    217.78
   ]
+ },
+ "recruit": {
+  "durs": [
+   4.7,
+   5.4,
+   12.5,
+   3.0,
+   10.2,
+   8.9,
+   11.6,
+   13.8,
+   7.2,
+   8.5,
+   6.2,
+   10.4,
+   15.1,
+   6.7,
+   7.1,
+   4.3
+  ],
+  "dur": 135.6,
+  "vox": "vorecruit",
+  "start": 18,
+  "musicgain": 0.5,
+  "duck": 0.5,
+  "dark": [
+   3,
+   15
+  ],
+  "ticks": [],
+  "hits": [
+   16.18,
+   19.66,
+   118.08,
+   122.01
+  ],
+  "capmode": "over",
+  "cap": "cap-recruit",
+  "out": "../../agentmgt/recruit.mp4",
+  "mix": "recruit-mix.wav",
+  "music": "bed-recruit.wav",
+  "sfx": "sfx-recruit.wav",
+  "ass": "captions-recruit.ass",
+  "w": 1280,
+  "h": 720,
+  "capsize": 30,
+  "capwrap": 52
+ },
+ "recruitv": {
+  "durs": [
+   4.7,
+   5.4,
+   12.5,
+   3.0,
+   10.2,
+   8.9,
+   11.6,
+   13.8,
+   7.2,
+   8.5,
+   6.2,
+   10.4,
+   15.1,
+   6.7,
+   7.1,
+   4.3
+  ],
+  "dur": 135.6,
+  "vox": "vorecruit",
+  "start": 18,
+  "musicgain": 0.5,
+  "duck": 0.5,
+  "dark": [
+   3,
+   15
+  ],
+  "ticks": [],
+  "hits": [
+   16.18,
+   19.66,
+   118.08,
+   122.01
+  ],
+  "capmode": "over",
+  "cap": "cap-recruitv",
+  "out": "../../agentmgt/recruit-story.mp4",
+  "mix": "recruitv-mix.wav",
+  "music": "bed-recruitv.wav",
+  "sfx": "sfx-recruitv.wav",
+  "ass": "captions-recruitv.ass",
+  "w": 1080,
+  "h": 1920,
+  "capsize": 46,
+  "capwrap": 30
  }
 }
