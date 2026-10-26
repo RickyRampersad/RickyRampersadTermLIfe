@@ -33,3 +33,8 @@ tools/film/captions-*.ass
 tools/letters/departed.txt
 tools/letters/exclude.txt
 tools/letters/*.csv
+# Recruit tracker: the seed candidate and the dataset CSVs are imported into the
+# private workbook, never committed. The page holds no data.
+recruiting/*.json
+recruiting/*.csv
+recruiting/seed/
