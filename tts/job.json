@@ -3,29 +3,17 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "recruitb": [
-   "Let me ask you something. Are you good at what you do, but stuck where you are?",
-   "Talent gets you in the game. The tools you're handed decide how far you go.",
-   "This is the Ricky Rampersad Branch. Guardian Life of the Caribbean, in Chaguanas. Twenty-three times an MDRT branch. Thirty-two years in Trinidad. And a brand new financial year, FY twenty-seven, just began.",
-   "And we do things differently. Digital everywhere. Human where it counts.",
-   "Start with the thing every advisor asks about. Leads. You get your own link and your own QR code. A prospect taps what's on their mind, and the lead lands on your board, in their own words.",
-   "Then the Lead Desk writes your opening for you, from what they told you. Not a product pitch. An appointment. And a lead that's forwarded to you stays yours.",
-   "At the kitchen table, fact find three sixty does the arithmetic while you talk. The family's need, in dollars, before you finish the sentence. Your manager signs it. The client confirms it from their own inbox. And since it launched, not one of those cases has lapsed.",
-   "Dashboards everywhere. The production wall is live: your week, your year, your pace against your goal, on the screen in the branch and on your phone. Nothing waits for a spreadsheet.",
-   "Every morning the system sets your day. Your projection. Your next calls. Your pending cases, with the history on them. Check in, and your workday page shows what you've achieved, as you go.",
-   "And on the hard ones, you're not alone. One tap, and Branch Intelligence reads the whole file and tells you where it stands and what to say first. You decide. It prepares.",
-   "The digital does the carrying. The people do the coaching. The Branch Manager interviews every advisor personally, and coaches you after. Your unit manager sees your week before Friday, and sits with you on it.",
-   "And you don't start from zero. Clients whose agent has moved on are matched to you, household by household, with the file, the history, and the first thing to say.",
-   "Your wins don't vanish into a group chat. They're celebrated every Wednesday in the branch meeting, and announced on stage. Blastoff in January. Mid-Year in July. Your name, out loud.",
-   "Where you go is your call. Build a book of your own. Or lead: the Emerging Leaders Program, to Unit Manager, to running a branch. The rungs are written down. You choose the ladder.",
-   "And the income is uncapped. It scales with your activity and your skill. No salary band. No ceiling.",
-   "FY twenty-seven even has a flight plan. Fifteen minutes. Start with what your life costs, work back to the API that pays for it, and your name goes GO on the big screen.",
-   "Already contracted somewhere else? Your conversation with us stays confidential.",
-   "New to insurance? That's normal. You get the full build: training, boot camp, one-on-one coaching, and every one of these tools from day one.",
-   "We don't fill seats. We select. Five gates, the same for a newcomer and a fifteen-year producer. And at your Discovery, you sit with our qualifiers and ask them anything, without the Branch Manager in the room.",
-   "Five seats this intake. Two minutes to apply. Reviewed within forty-eight hours.",
-   "Go to agent M G T dot com. Take the sixty-second test, and start the selection.",
-   "The environment decides. We select the driven."
+  "recruitb03": [
+   "This is the Ricky Rampersad Branch. Guardian Life of the Caribbean, in Chaguanas. Twenty-three times an MDRT branch. Thirty-two years in Trinidad. And a brand new financial year, FY twenty-seven, just began."
+  ],
+  "recruitb03b": [
+   "This is the Ricky Rampersad Branch. Guardian Life of the Caribbean, in Chaguanas. Twenty-three times an MDRT branch. Thirty-two years in Trinidad. And FY twenty-seven, a brand new financial year, has just begun."
+  ],
+  "recruitb04": [
+   "And we do things differently. Digital everywhere. And people where it counts."
+  ],
+  "recruitb12": [
+   "And you don't start from zero. Clients whose agent has moved on get matched to you, household by household, with the file, the history, and the first thing to say."
   ]
  }
 }
