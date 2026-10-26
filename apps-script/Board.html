@@ -159,7 +159,14 @@ header .right{margin-left:auto;display:flex;gap:10px;align-items:center}
 </div>
 
 <script>
-var BOOT = JSON.parse(<?!= payload ?>);
+/* boardPage_ sets t.payload to a JSON STRING, so it has to be stringified
+   again here: JSON.stringify of a string emits a quoted JS string literal,
+   which JSON.parse then turns back into the object. Writing <?!= payload ?>
+   emits the bare JSON, which lands in the source as an object literal, and
+   JSON.parse(object) throws "unexpected token o" before a line of this page
+   runs — the board opened to a blank screen and no error anybody could see.
+   Portal.html has always used this form; this file did not copy it. */
+var BOOT = JSON.parse(<?!= JSON.stringify(payload) ?>);
 var S = { key: BOOT.key || '', email: '', pin: '', data: null, filter: 'act', q: '' };
 var $ = function (s) { return document.querySelector(s); };
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
@@ -234,6 +241,7 @@ function draw() {
   var tiles = [
     { k: 'act',  v: c.act,  label: 'Need you now' },
     { k: 'owed', v: c.owed, label: 'Renewed, premium owed' },
+    { k: 'toinvite', v: c.toInvite, label: 'Never written to' },
     { k: 'comprehensive', v: c.comprehensive, label: 'Comprehensive' },
     { k: 'third-party',   v: c.thirdParty,    label: 'Third party' },
     { k: 'property',      v: c.property,      label: 'Property' },
@@ -275,6 +283,7 @@ function list() {
   var rows = d.rows.filter(function (r) {
     if (f === 'act' && !r.ask.urgent) return false;
     if (f === 'owed' && r.ask.key !== 'owed') return false;
+    if (f === 'toinvite' && !(r.ask.key !== 'done' && r.invited === null && r.invitable)) return false;
     if ((f === 'comprehensive' || f === 'third-party' || f === 'property') && r.line !== f) return false;
     if (q) {
       var hay = [r.client, r.policy, r.detail, r.agent].join(' ').toLowerCase();
@@ -287,6 +296,7 @@ function list() {
     $('#list').innerHTML = '<div class="empty">' + (q
       ? 'Nothing matches &ldquo;' + esc(S.q) + '&rdquo;.'
       : f === 'act' ? 'Nothing needs you right now. That is the board doing its job.'
+      : f === 'toinvite' ? 'Every open renewal has been written to.'
       : 'Nothing here.') + '</div>';
     return;
   }
@@ -306,10 +316,20 @@ function list() {
   Array.prototype.forEach.call(document.querySelectorAll('[data-save]'), function (b) {
     b.onclick = function () { saveNote(b.dataset.save, b); };
   });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-send]'), function (b) {
+    b.onclick = function () {
+      var p = document.getElementById('s_' + b.dataset.send);
+      p.hidden = !p.hidden;
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-go]'), function (b) {
+    b.onclick = function () { sendTemplate(b.dataset.go, b); };
+  });
 }
 
 function card(r) {
   var who = S.data.who;
+  var id = rowId(r);
   var ask = who.agent ? r.ask.agent : r.ask.staff;
   var when = r.days === null ? esc(r.due)
     : r.days < 0 ? '<b style="color:var(--bad)">' + Math.abs(r.days) + ' days past</b>'
@@ -326,6 +346,15 @@ function card(r) {
   if (!who.agent && r.assignedTo) meta.push('With ' + esc(r.assignedTo));
   if (r.email) meta.push(esc(r.email));
 
+  // Has the client actually been asked? A renewal nobody has written to is not
+  // a client ignoring us, and until now the board showed them the same.
+  if (r.ask.key !== 'done') {
+    if (!r.email) meta.push('<b style="color:var(--warn)">No e-mail — this one is a call</b>');
+    else if (r.invited === null) meta.push('<b style="color:var(--warn)">Not written to yet</b>');
+    else meta.push('Template sent ' + (r.invited === 0 ? 'today'
+      : r.invited === 1 ? 'yesterday' : r.invited + ' days ago'));
+  }
+
   return '<div class="row ' + (r.ask.tone === 'late' ? 'late ' : r.ask.tone === 'soon' ? 'soon ' : '')
     + (r.ask.key === 'done' ? 'done' : '') + '">'
     + '<div class="rtop"><b>' + esc(r.client) + '</b>'
@@ -335,17 +364,63 @@ function card(r) {
     + '<div class="meta">' + meta.join('<span>&middot;</span>') + '</div>'
     + '<div class="acts">'
     +   (r.mobile ? '<a href="tel:' + esc(r.mobile) + '"><button class="ghost">Call</button></a>' : '')
-    +   '<button class="ghost" data-note="' + esc(r.token) + '">Log what happened</button>'
+    +   (canSend(r) ? '<button class="ghost" data-send="' + id + '">'
+          + (r.invited === null ? 'Send the renewal template' : 'Send it again') + '</button>' : '')
+    +   '<button class="ghost" data-note="' + id + '">Log what happened</button>'
     + '</div>'
-    + '<div class="panel" id="p_' + esc(r.token) + '" hidden>'
+    + '<div class="panel" id="p_' + id + '" hidden>'
     +   '<textarea placeholder="What happened on this renewal? The next person reads this."></textarea>'
-    +   '<button data-save="' + esc(r.token) + '">Save the note</button>'
+    +   '<button data-save="' + id + '">Save the note</button>'
     + '</div>'
+    + '<div class="panel" id="s_' + id + '" hidden>' + sendPanel(r) + '</div>'
     + '</div>';
 }
 
-function saveNote(token, btn) {
-  var p = document.getElementById('p_' + token);
+/* A client has one token and may have several vehicles on it, so the token
+   alone is not unique on this board — two rows would share one panel id and
+   getElementById would open the first one's panel from the second one's
+   button. The row's own index makes it unique. */
+function rowId(r) { return r.kind + '-' + r.rowIndex + '-' + r.token; }
+function byId(id) { return S.data.rows.filter(function (r) { return rowId(r) === id; })[0]; }
+
+/* Only the branch and staff send templates; an agent's board is for the
+   conversation, not for sending the branch's mail. The server enforces this —
+   this only keeps the button off a screen where pressing it would fail. */
+function canSend(r) {
+  return !S.data.who.agent && !!r.invitable && r.ask.key !== 'done';
+}
+
+/* What the client is about to receive, before it is sent. Sending to a client
+   is not undoable, so the panel says who it goes to, what that line's template
+   asks them, and whether anything actually leaves the building. */
+function ASKS(line) {
+  return line === 'comprehensive'
+      ? 'what the vehicle is worth today, with its own value history and what it has fallen by'
+    : line === 'property'
+      ? 'their sums insured against rebuilding cost, with the average clause worked on their own figures'
+      : 'a yes — nothing on a third party changes, so it is confirm and collect';
+}
+function sendPanel(r) {
+  var t = S.data.test;
+  return '<div style="font-size:13px;line-height:1.7">'
+    + '<b>' + esc(r.client) + '</b> &middot; ' + esc(r.policy || r.detail) + '<br>'
+    + (t ? '<b style="color:var(--warn)">🧪 Test mode — this goes to the test inbox, '
+           + 'not to the client.</b>'
+         : 'Goes to <b>' + esc(r.email) + '</b>')
+    + '<br>It asks for ' + ASKS(r.line) + '.'
+    + '<br>They tap it and land on their own page, already signed in. Nothing is '
+    + 'filed until they press send there.'
+    + (r.invited !== null ? '<br><b style="color:var(--warn)">They were already sent this '
+        + (r.invited === 0 ? 'today' : r.invited === 1 ? 'yesterday' : r.invited + ' days ago')
+        + '.</b>' : '')
+    + '</div>'
+    + '<button data-go="' + rowId(r) + '">'
+    + (t ? 'Send the test copy' : 'Send it to ' + esc(r.client.split(' ')[0] || 'them')) + '</button>';
+}
+
+function saveNote(id, btn) {
+  var r = byId(id);
+  var p = document.getElementById('p_' + id);
   var note = p.querySelector('textarea').value.trim();
   btn.disabled = true; btn.textContent = 'Saving…';
   google.script.run
@@ -357,7 +432,23 @@ function saveNote(token, btn) {
       btn.disabled = false; btn.textContent = 'Save the note';
       p.insertAdjacentHTML('beforeend', '<div class="err">' + esc(e.message || e) + '</div>');
     })
-    .renewalBoardAct(S.key, S.email, S.pin, { what: 'note', token: token, note: note });
+    .renewalBoardAct(S.key, S.email, S.pin, { what: 'note', token: r.token, note: note });
+}
+
+function sendTemplate(id, btn) {
+  var r = byId(id);
+  var p = document.getElementById('s_' + id);
+  btn.disabled = true; btn.textContent = 'Sending…';
+  google.script.run
+    .withSuccessHandler(function (res) {
+      p.innerHTML = '<div class="ok">' + esc(res.said) + '</div>';
+      refresh();
+    })
+    .withFailureHandler(function (e) {
+      btn.disabled = false; btn.textContent = 'Try again';
+      p.insertAdjacentHTML('beforeend', '<div class="err">' + esc(e.message || e) + '</div>');
+    })
+    .renewalBoardAct(S.key, S.email, S.pin, { what: 'invite', token: r.token, rowIndex: r.rowIndex });
 }
 </script>
 <!-- rrb-views -->

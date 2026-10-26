@@ -488,7 +488,8 @@ function sendPropertyInvite_(rows) {
       eduBox_('<b style="color:#a05e03">💡 Remember your excess</b> — the first portion of every claim is yours to carry. ' +
         'Your renewal page shows the excess that applies, peril by peril.') +
       '<p>Reviewing takes two minutes online. Prefer to talk it through? Just reply to this email' +
-      (CONFIG.AGENT_PHONE ? ' or call ' + esc_(CONFIG.AGENT_PHONE) : '') + '.</p>' + sig_(),
+      (CONFIG.AGENT_PHONE ? ' or call ' + esc_(CONFIG.AGENT_PHONE) : '') + '.</p>' + sig_() +
+      (typeof lostLink_ === 'function' ? lostLink_() : ''),
       'Property renewal'),
   });
 }

@@ -264,6 +264,32 @@ function rbMoney_(n) {
   return 'TT$' + Math.round(n).toLocaleString('en-US');
 }
 
+/**
+ * When each client was last sent their renewal template, read once from the
+ * Activity sheet rather than kept in a column of its own.
+ *
+ * Two sheets would have needed the column — the motor tab and the property tab
+ * — and a stamp that lives in two places is a stamp that disagrees with itself.
+ * The activity log already records every send, so it is the one answer.
+ */
+function rbInvites_() {
+  var out = {};
+  try {
+    var sh = activitySheet_();
+    if (sh.getLastRow() < 2) return out;
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues();
+    rows.forEach(function (r) {
+      if (!/^(invite|stage-email|property-invite)$/i.test(String(r[3] || ''))) return;
+      var token = String(r[1] || '').trim();
+      if (!token) return;
+      var when = asDate_(r[0]);
+      if (!when) return;
+      if (!out[token] || when > out[token].when) out[token] = { when: when, by: String(r[4] || '') };
+    });
+  } catch (err) { /* no log yet — every renewal simply reads as never invited */ }
+  return out;
+}
+
 /** Most pressing first: what is late, then what is owed, then what is near. */
 function rbWeight_(r) {
   var w = 0;
@@ -287,7 +313,24 @@ function renewalBoardData(key, me, isLogin, pin) {
   }
 
   var rows = rbAll_().filter(function (r) { return rbMine_(r, scope); });
-  rows.forEach(function (r) { r.ask = rbAsk_(r, scope); r.w = rbWeight_(r); });
+  var sent = rbInvites_();
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  rows.forEach(function (r) {
+    r.ask = rbAsk_(r, scope);
+    r.w = rbWeight_(r);
+    // Whether the client has actually been asked yet. A renewal nobody has
+    // written to is not a client who is ignoring us, and the board should not
+    // let the two look the same.
+    // Calendar days, which is what "sent three days ago" means to a person.
+    // The log carries a time of day and `today` is midnight, so subtracting
+    // them raw reports a template sent on Friday afternoon as two days old by
+    // Monday morning and three by Monday evening. Both ends are zeroed.
+    var s = sent[r.token];
+    var day = null;
+    if (s) { day = new Date(s.when.getTime()); day.setHours(0, 0, 0, 0); }
+    r.invited = day ? Math.round((today - day) / 86400000) : null;
+    r.invitable = !!r.email;
+  });
   rows.sort(function (a, b) { return b.w - a.w; });
 
   var lines = { comprehensive: [], 'third-party': [], property: [] };
@@ -300,6 +343,11 @@ function renewalBoardData(key, me, isLogin, pin) {
     owed: owed.length,
     owedTotal: owed.reduce(function (a, r) { return a + r.balance; }, 0),
     done: rows.filter(function (r) { return r.ask.key === 'done'; }).length,
+    // Still to be asked at all: open, and nothing has ever gone to them.
+    toInvite: rows.filter(function (r) {
+      return r.ask.key !== 'done' && r.invited === null && r.invitable;
+    }).length,
+    noEmail: rows.filter(function (r) { return r.ask.key !== 'done' && !r.email; }).length,
     comprehensive: lines.comprehensive.length,
     thirdParty: lines['third-party'].length,
     property: lines.property.length,
@@ -325,6 +373,10 @@ function renewalBoardData(key, me, isLogin, pin) {
     ok: true,
     who: { name: staff.name, email: staff.email, role: scope.role,
            agent: scope.agent, branch: scope.branch },
+    // Said on the button itself, not only in a toast afterwards. Somebody
+    // rehearsing has to know before they press that nothing reaches a client,
+    // and somebody live has to know that it does.
+    test: (typeof testMode_ === 'function') ? !!testMode_() : false,
     counts: counts,
     byAgent: byAgent,
     rows: rows.slice(0, RB.FIRST),
@@ -346,7 +398,13 @@ function renewalBoardAct(key, me, pin, act) {
   act = act || {};
   var token = String(act.token || '').trim();
 
-  var row = rbAll_().filter(function (r) { return r.token === token; })[0];
+  // A client has one token and may have several vehicles on it, so the token
+  // alone does not name a renewal. The row index does, and the page sends it.
+  // Without this, a note or a template meant for the second vehicle landed on
+  // the first.
+  var mine = rbAll_().filter(function (r) { return r.token === token; });
+  var at = Number(act.rowIndex);
+  var row = (at ? mine.filter(function (r) { return r.rowIndex === at; })[0] : null) || mine[0];
   if (!row) throw new Error('That renewal is not on this board.');
   if (!rbMine_(row, scope)) throw new Error('That client is not yours.');
 
@@ -356,6 +414,39 @@ function renewalBoardAct(key, me, pin, act) {
       if (note.length < 10) throw new Error('Write a line on what happened — a note of under ten characters tells the next person nothing.');
       logActivity_(token, row.client, 'note', staff.name, note);
       return { ok: true, said: 'Noted on ' + row.client + '.' };
+    }
+    /**
+     * Send this client their renewal template.
+     *
+     * The board does not own a template of its own: it calls the one that
+     * line already sends, so what a client receives from a button is word for
+     * word what the daily run sends. A second template written here would
+     * drift from the first, and the client would be the one to notice.
+     */
+    case 'invite': {
+      if (!scope.staff) throw new Error('Only the branch and staff send renewal templates.');
+      if (!row.email) throw new Error(row.client + ' has no e-mail on file — this one is a call. ' +
+        'Put the address on the sheet and it will go.');
+
+      if (row.kind === 'property') {
+        if (typeof sendPropertyInviteByToken_ !== 'function')
+          throw new Error('Property.gs is not installed, so the property template cannot be sent.');
+        sendPropertyInviteByToken_(row.token, staff.name);
+      } else {
+        var motor = rowsForToken_(row.token)
+          .filter(function (x) { return x.rowIndex === row.rowIndex; })[0];
+        if (!motor) throw new Error('That renewal has moved on the sheet — refresh the board and try again.');
+        sendStageEmail_(motor, 'manual');
+      }
+      // One type for both lines, because rbInvites_ reads this back and the
+      // board must not care which line it was.
+      logActivity_(row.token, row.client, 'invite', staff.name,
+        'Renewal template sent (' + row.line + ') to ' + row.email);
+
+      var test = (typeof testMode_ === 'function') && testMode_();
+      return { ok: true, said: test
+        ? '🧪 Test mode — ' + row.client + '’s template went to the test inbox, not to them.'
+        : 'Sent to ' + row.client + ' at ' + row.email + '.' };
     }
     case 'assign': {
       if (!scope.staff) throw new Error('Only the branch and staff assign renewals.');

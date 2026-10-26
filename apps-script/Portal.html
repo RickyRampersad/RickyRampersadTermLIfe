@@ -298,6 +298,40 @@ function render(){
   }));
   document.querySelectorAll('[data-submit]').forEach(b=>b.onclick=()=>submit(Number(b.dataset.submit), b));
   DATA.policies.forEach((p,i)=>{ if(p.comp) wireValue(i); });
+  preselect();
+}
+
+/* A one-tap option from the renewal e-mail: ?opt=renew|changes|call arrives
+   with the instruction already chosen, so a client who has decided taps once
+   in their inbox and once on the page.
+
+   It only ticks the box. Nothing is sent until they press send themselves,
+   because mail security opens every link in an e-mail — Avanan does it at
+   Guardian — and a tap that renewed a policy would renew it for every client
+   whose mail was scanned. Same rule as the orphan letters' answer page. */
+const OPTS = { renew:'RENEW — proceed', changes:'RENEW WITH CHANGES', call:'PLEASE CALL ME' };
+function preselect(){
+  const want = OPTS[String(DATA.opt||'').toLowerCase()];
+  if(!want) return;
+  let first = null;
+  document.querySelectorAll('.opt input').forEach(r=>{
+    if(r.value!==want) return;
+    r.checked = true;
+    const card = r.closest('.card');
+    if(card) card.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
+    if(!first) first = r;
+  });
+  if(!first) return;
+  /* Say it was carried over, or a ticked box the client does not remember
+     ticking reads as us having decided for them. */
+  const note = document.createElement('p');
+  note.style.cssText = 'font-size:12.5px;color:var(--muted);margin:2px 0 10px';
+  note.textContent = 'Carried over from your e-mail — change it here if you like, then send below.';
+  const box = first.closest('.opt');
+  if(box && box.parentNode) box.parentNode.insertBefore(note, box);
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)
+    first.closest('.card').scrollIntoView({behavior:'smooth', block:'center'});
+  else first.closest('.card').scrollIntoView({block:'center'});
 }
 
 /* Progress tracker: appears once the client has instructed, and follows the
