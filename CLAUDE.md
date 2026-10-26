@@ -5237,8 +5237,149 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
   Salesforce read but never written. `mqGoLive()` when the manager says so. The quotes desk never hears from a test.
 - **Signing in again shows the client their requests and where each stands**: the tab's Status, Quoted on and Quoted
   premium columns, kept by staff by hand.
-- Tests: `tests/test-motor-quote.js` (57 checks, a Salesforce and a Microsoft in memory) and `tests/e2e-motor-quote.js`
-  (Playwright, a phone, the six steps against a fake backend; it caught a tap and a typed box fighting over one answer).
+- **Three doors, the renewal first** (21 October 2026: "when a person wants a quote they normally have the invoice …
+  upload the invoice and all key fields presented … If they don't, just minimum to quote … a person log in to renew and
+  have the renewal at the forefront with renewal history and intelligence").
+  - *The invoice*: `readInvoice` sends the photo or PDF to Claude (`ANTHROPIC_API_KEY`, `MQ_AI_MODEL`, default
+    `claude-sonnet-5-5`, structured output, 15 a day per e-mail). The document is data: the system prompt says so,
+    and `mqInvClean_` drops whatever is not a year or an amount. The page fills the quick quote, marks each field
+    "from your document", and never lets the buyer on the document replace the signed-in client's name or mobile.
+    The document travels to the desk; what was read is on the **Invoice read** column.
+  - *The quick quote* (`flow` quick): `MQ_REQUIRED_BY.quick`, no permit; "New vehicle, not registered yet" is allowed.
+  - *The renewal* (`flow` renew): `mqRenewal_` gives each vehicle its terms (one per policy and end date), the renewal
+    date (the day after the cover ends, or `Next_Renewal_Date__c` within three days of it), the days to it and the
+    facts off the record, never advice. Due within `RENEW_AHEAD` (60) or lapsed within `RENEW_BACK` (45) comes first
+    on the home screen. `mqRenewFromRecord_` reads the vehicle again at the send, so the date, premium and terms come
+    from Salesforce. It goes to `MQ_RENEW_TO`, else the quotes desk.
+  - New columns go on the end of the Motor Quotes tab, added by name (`mqQuotesSheet_`), and a row is placed by the
+    tab's own headers.
+  - Tests: `tests/test-motor-quote.js` (170 checks) and `tests/e2e-motor-quote.js` (120, every door on a phone).
+- **Taking the quote fills Guardian's own PDFs** (21 October 2026: "once they agree on the quote … upload the certified
+  copy … extract all the details on the vehicles … fill out the proposal form very fast", then "it has to be exactly on
+  the Guardian PDF and know your [policy], ensuring that they can answer it").
+  - The forms are `motor-quote/forms/gg-private-motor-proposal.pdf` (GG-MOT-APV-PRO-02/2025v2, four US Legal pages,
+    no fields) and `gg-know-your-policy-private-motor.pdf` (45 fields), with their file properties and XMP cleared,
+    because a staff member's name was in them and the site is public.
+  - `motor-quote/forms.js` (browser and Node) prints each answer at the position of its own blank, measured off the
+    PDF's characters: the YES____NO____ underscore runs, the blanks, the two tables' cells. It ticks the KYP's own
+    boxes by field name, with pdf-lib's check mark, because the form's "on" glyph renders garbled in some viewers.
+  - pdf-lib 1.17.1 is kept in `motor-quote/vendor/` (MIT), never loaded from outside.
+  - `readDoc` reads `quote`, `certified` and `permit` (the certified copy: only the current owner, never an earlier
+    one). Every declaration is the client's own tap, never pre-ticked. A fact off a document (registered in your
+    name, anti-theft from the quote's discount, the benefits on the quote) is filled and marked.
+  - `propose` checks every yes/no, every detail a Yes asks for, all 17 KYP points and both signed PDFs, then e-mails
+    the desk (`MQ_BIND_TO`, else the quotes desk) with the five documents. A Yes an underwriter must see and a KYP No
+    go first. The client gets their own signed forms. The row goes on **Motor Proposals**, and the quote request is
+    marked taken only when it is the signed-in client's.
+  - The signature pad is in a div, never a label: a click in a label also clicks its first button, which was Clear.
+  - The answers print in bold at 10.5 pt (table cells 9 pt, wrapping at full size, so a chassis number takes two
+    lines rather than shrinking), and the KYP's fields at 11.5 pt bold (21 October 2026: "fonts more bold and scaled
+    properly"). The signature is cut to its ink (`trimSig`) before it goes on page 4 of the proposal and the KYP's
+    signature line, so it fills the line.
+  - When Guardian revises either form, replace the PDF and re-measure the positions in `forms.js`.
+- **Every quote request carries Guardian's own Motor Quotation Request form, filled in** (21 October 2026: "see guardian
+  motor request form so the data collected should be proper on this form as it will be attached").
+  - The form is `motor-quote/forms/gg-motor-quotation-request.pdf`: Guardian's fillable one-page US Legal form, taken
+    from the e-mail it came in, with its file properties and XMP cleared.
+  - It is filled on the phone by field name (`fillRequest`, `requestValues` in `forms.js`), so nothing is measured.
+    Dates are written out ("12 Apr 1988"), the registration and chassis in capitals, and the value as "TT$ 212,645".
+    The boxes and yes/no buttons are the form's own, ticked with pdf-lib's mark.
+  - **The page asks every question the form asks.**
+    - The full door asks: marital status, occupation and employer, home number, address, a first-time Guardian client,
+      other business with Guardian, the chassis, new, foreign used or second hand (and an accident if second hand),
+      the use, anti-theft, the windscreen limit, the no-claim percentage.
+    - "Your history" asks accidents and young drivers. On the full door each Yes opens a table of up to three rows.
+    - The quick quote asks the use and the history. The rest of the form sits in a fold, "Guardian's request form asks
+      a little more" (optional). The fold opens by itself when any of it is already known.
+  - The client can preview the filled form on the review step. It travels to the desk as `motor-quotation-request.pdf`,
+    still fillable, with a green note saying so.
+  - A renewal never carries it. Nor does a request form that is not a PDF, which the script drops. A form that cannot be
+    filled never stops the request.
+  - The answers are on new columns at the end of **Motor Quotes**, ending with "Request form" (attached).
+  - When Guardian revises the form, replace the PDF and check its field names against `REQUEST` in `forms.js`.
+- **Existing or new, an Opportunity for every new quote, and the permit on the Contact** (26 October 2026: "should it
+  ask if they are an existing client or if not it creates a salesforce contact and places this as an opportunity on the
+  opps objects … if an existing client pull in all their data … in the contact the drivers permit number issue and
+  expiry what we have and what they can update").
+  - **The e-mail decides.** A client found sees "We found your record" (`meCard`): name, mobile, date of birth,
+    occupation and the permit as the Contact holds it, `DP__c`, `Drivers_Permit_Issue_Date__c`,
+    `Driver_s_Permit_Expiry__c` (`mqPermitOnFile_`), with a word for where it stands (`mqPermitState_`: valid, expiring
+    within `PERMIT_SOON_DAYS` (60), expired, nothing on file). The forms open with those values. On 26 October 2026 the
+    org's CLIENT contacts held a number on 781 of 12,656, an expiry on 458 and an issue date on 42, so most clients
+    are filling blanks.
+  - **Anyone else is asked once**, "Are you already a Guardian client?" (`clientStatus`, `clientRef` in the draft). New:
+    a Contact at the send, with the permit. Yes: matched by a policy or client number **and** the surname
+    (`mqMatchExisting_`), never by the number alone, so a number typed by someone else never reaches another client's
+    record; unmatched, no Contact is made and the Opportunity says to link it by hand. Nothing found that way reaches
+    the page.
+  - **The Opportunity** (`mqOpp_`): every new quote, never a renewal, the way the branch writes them by hand (read off
+    its own on 26 October): GENERAL INSURANCE, "OPP Motor - <client> (<vehicle> <reg>)", Proposal/Price Quote, close
+    in `OPP_CLOSE_DAYS` (30), `Contact__c` (not the standard ContactId), the Contact's account, `Vehicle__c`, New
+    Business, lead source Existing Client or Web, owner `MQ_SF_OWNER` (the BMA owns the branch's), producer
+    `MQ_SF_PRODUCER` (a Contact id: the branch manager's agent record on the branch's own). A field the org refuses
+    is dropped and the rest tried again. The task sits on it (`WhatId`). `mqPropose_` moves the quote's Opportunity to
+    Negotiation/Review (`mqOppTaken_`), or makes one there for a known client who takes a quote with no request of
+    ours behind it.
+  - **The permit's rules** (`mqPermitPlan_`), so a slip of the finger never spoils a good record: a blank is filled;
+    a later expiry replaces the old one, with its issue date when that is later too; an earlier expiry is never
+    written; a different permit number is never written and nothing else changes with it: staff confirm it (the row,
+    the task, and from the home screen a task "Confirm driver's permit"). The client updates it from the home screen
+    too (`action=permit`, `mqPermitSave_`), a found client only. Test mode writes nothing and says what it would have.
+  - New columns on Motor Quotes: Client status, Client says, SF opportunity, Permit on file, Permit update; on Motor
+    Proposals: SF opportunity. The desk e-mail says "An existing client of ours" or "New to us".
+- **The producer is whoever placed the quote, from the branch's own agents** (26 October 2026: "dependant on who places
+  the quotes … i do have agents as contacts and record type agent so it searches the contacts", then "it should be
+  limited to our Branch not the entire guardian life").
+  - **The branch's agents** (`mqAgents_`): Contacts of record type AGENT, Employment Status Active, Units__c one of
+    the branch's units (`MQ.AGENT_UNITS`: Ricky_Rampersad and Akaash_Kalladeen; the `MQ_AGENT_UNITS` Script property,
+    comma-separated, replaces them when a unit is added). Never a resigned, terminated or not-active agent, never
+    another branch's. Read at most every six hours. On 26 October: 16 active in one unit, 7 in the other.
+  - **An agent signs in with their own e-mail** and the page knows them (`me.agent`): nothing of their own record is
+    read. They get the new quote alone (quick or full): a renewal and taking a quote stay the client's own, and the
+    server refuses both, and the permit update, for an agent. The form asks the client's e-mail (never the agent's
+    own), whether the client is with Guardian (with an optional number), and the client's name and mobile. The client
+    is found or created by their own e-mail, never the agent's session (`mqEnsureContact_` with the client's e-mail).
+    The receipt goes to the client, the agent copied, saying the agent asked and will call; the desk reads "requested
+    by our agent … for their client", the agent copied. The row: Placed by (the agent's e-mail), Producer, Producer
+    Id. The agent's home lists the requests they placed, with each client's name; the client sees theirs when they sign
+    in. When the client takes that quote, the agent is copied on the proposal.
+  - **A client names their agent** in a search box (`action=agents`, `mqAgentSearch_`: names only, never an e-mail,
+    two letters at least, every word starting a word of the name). The producer (`mqProducer_`), in order: the agent
+    who placed it; the agent picked from the list; an active agent whose e-mail the client typed; a full name only one
+    active agent carries; else `MQ_SF_PRODUCER`, the row saying why ("not one of our active agents"). A matched agent's
+    e-mail on record is the one copied on the desk e-mail.
+  - The Opportunity's `Producer__c` is that agent; its description says who placed it. The owner stays `MQ_SF_OWNER`.
+  - Tests: `tests/test-motor-quote.js` (199 checks) and `tests/e2e-motor-quote.js` (134).
+- **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
+  layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
+  its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):
+  **Renew** (a vehicle we already insure; hidden when the client has none), **New quote** (a vehicle we don't insure yet;
+  the only place the word invoice appears, always "the dealer's invoice"), **Accept a quote** (the quote we e-mailed; called
+  "your Guardian quote", never a quotation or an invoice). Every form carries a tag naming its path (`flowTag`), and the
+  stepper, choices and main button take the path's colour. Charts: the renewal's premium by term as bars with the change
+  on the year before (`premChart`), each other vehicle's cover year as a bar with "Renew early", every request as a
+  four-stage tracker in its path's words (`reqStage`: a renewal is never offered as a quote to accept), and the done page
+  as a tracker with Sent ticked. Checked at 360, 390, 820 and 1366 px wide.
+- **Motion that pops** (26 October 2026: "can you add more motion and graphics to pop"). All of it is CSS and a little
+  script, and all of it stops under reduced motion.
+  - **The blue bands** (sign-in and home) end in three soft waves drifting at three speeds, the front one the card's
+    own white, with a light gliding across the blue (`SCENE`, put into every `.band` by the script). A road with a
+    cartoon car and clouds was tried first and turned down the same day ("I hate the car it's looking like a kid did
+    this … more professional"): keep the bands abstract, never a drawing. The sign-in band's icon is an outline shield
+    with a tick that draws itself, in a frosted tile.
+  - **Line icons, no emoji** (the same day). Every icon in a tile (the three paths, section headers, the documents, the
+    notes) is an inline SVG line icon (`svg.i`, stroke `currentColor`, 24-unit grid), white on a coloured tile or in the
+    path's colour on a light one. Only the ✓ and ✕ marks remain as text. A new icon is drawn the same way.
+  - **Numbers count up** (`cu(n)`): a CSS counter animates on screen while the real figure stays in the text, so a test,
+    a screen reader and a copy all read the number. Used on the renewal ring, the band's figures and the request summary.
+    The ring fills from empty (`@property --p`).
+  - **A dot travels along each path's numbered steps**, behind the numbers.
+  - **Taps**: a ripple where the finger lands; a light sweeps the main buttons; icons pop in and wiggle on hover; the
+    Renew path's icon pulses while a vehicle is due.
+  - **Sections below the first screen wait and rise in when scrolled to** (`reveal`, class `sr`; never `.rv`, which a
+    request card already uses), so their bars and rings play when they are seen. Printing shows everything.
+  - **Done**: the tick draws itself, the reference stamps in, and confetti in the three paths' colours bursts from the
+    tick and clears itself in under three seconds.
 - The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
   until the page is live and wired; disable it then, so an old link does not take a client back to it.
 
