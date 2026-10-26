@@ -38,6 +38,12 @@ function world(props, opts) {
         Engine__c: 'EN-1', Motor_Vehicle_Coverage_Type__c: null, Cover1__c: null, Windscreen__c: null, Carrier__c: null,
         From__c: '2025-02-01', To__c: '2026-01-31', Vehicle_Status__c: null },
     ],
+    /* The branch's agents: Contacts of record type AGENT. */
+    agents: [{ Id: '003000000000050AAA', Name: 'Mala Madeup', FirstName: 'Mala', Email: 'mala.madeup@example.com', Employment_Status__c: 'Active', Units__c: 'Ricky_Rampersad' },
+             { Id: '003000000000051AAA', Name: 'Mala Otherone', FirstName: 'Mala', Email: 'mala.other@example.com', Employment_Status__c: 'Active', Units__c: 'Akaash_Kalladeen' },
+             { Id: '003000000000052AAA', Name: 'Ravi Gonenow', FirstName: 'Ravi', Email: 'ravi.gone@example.com', Employment_Status__c: 'Resigned', Units__c: 'Ricky_Rampersad' },
+             /* Another branch's agent: never ours. */
+             { Id: '003000000000053AAA', Name: 'Omar Elsewhere', FirstName: 'Omar', Email: 'omar.else@example.com', Employment_Status__c: 'Active', Units__c: 'Some_Other_Branch' }],
     created: [], queries: [],
   };
   if (opts.risks) SF.risks = opts.risks;
@@ -57,6 +63,8 @@ function world(props, opts) {
       const q = decodeURIComponent(p.slice(9)); SF.queries.push(q);
       const email = (q.match(/Email(?:__c)? = '([^']+)'/) || [])[1];
       const byId = (q.match(/WHERE Id = '([^']+)'/) || [])[1];
+      if (/FROM Contact WHERE RecordType\.Name = 'AGENT'/.test(q)) { const units = ((q.match(/Units__c IN \(([^)]*)\)/) || [, ''])[1].match(/'[^']+'/g) || []).map(u => u.slice(1, -1));
+        return res(200, { records: SF.agents.filter(a => (!/Employment_Status__c = 'Active'/.test(q) || a.Employment_Status__c === 'Active') && units.indexOf(a.Units__c) > -1) }); }
       if (/FROM Contact/.test(q) && byId) return res(200, { records: SF.contacts.filter(c => c.Id === byId) });
       if (/FROM Contact/.test(q)) return res(200, { records: SF.contacts.filter(c => c.Email === email) });
       if (/FROM RecordType/.test(q)) return res(200, { records: [{ Id: '012000000000001AAA' }] });
@@ -593,6 +601,98 @@ const PFILES = [{ kind: 'quote', name: 'quote.pdf', type: 'application/pdf', dat
   }
 }
 
+/* ── who places the quote: an agent for a client, or the client with their agent ── */
+{
+  const OWN = { MQ_SF_OWNER: '005000000000001AAA', MQ_SF_PRODUCER: '003000000000077AAA', MQ_MODE: 'live' };
+  const AGENT = 'mala.madeup@example.com';
+  /* An active agent signs in: the page knows them, and nothing of their own record is read. */
+  {
+    const { env, SF } = world(Object.assign({}, SFPROPS, OWN));
+    post(env, { action: 'requestCode', email: AGENT });
+    const v = post(env, { action: 'verifyCode', email: AGENT, code: '211110' });
+    ok('an active agent signs in as an agent', v.ok && v.me.agent && v.me.agent.name === 'Mala Madeup' && v.me.agent.first === 'Mala' && !v.me.found);
+    ok('…and nothing of their own is read: no vehicles, no policies, no e-mail of theirs back', !SF.queries.some(q => /Risk_Details__c|CLIENT_PORTFOLIO__c/.test(q)) &&
+      !(v.me.vehicles || []).length && !JSON.stringify(v.me.agent).includes('@'));
+    post(env, { action: 'requestCode', email: 'ravi.gone@example.com' });
+    const g = post(env, { action: 'verifyCode', email: 'ravi.gone@example.com', code: '211110' });
+    ok('a resigned agent is never signed in as an agent', g.ok && !g.me.agent);
+    post(env, { action: 'requestCode', email: 'omar.else@example.com' });
+    const o = post(env, { action: 'verifyCode', email: 'omar.else@example.com', code: '211110' });
+    ok('another branch\'s agent is never signed in as one of ours', o.ok && !o.me.agent && SF.queries.some(q => /Units__c IN \('Ricky_Rampersad','Akaash_Kalladeen'\)/.test(q)));
+  }
+  /* The agent asks for a quote for a new client: the client's Contact, the agent the producer. */
+  {
+    const { env, SF, mails } = world(Object.assign({}, SFPROPS, OWN));
+    const tok = signIn(env, AGENT);
+    const r = post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { name: 'Dev Madeup', clientEmail: 'Dev.Client@example.com', clientStatus: 'new', agent: 'Someone typed', agentEmail: 'x@example.com' }) });
+    const c = SF.created.find(x => x.obj === 'Contact'), opp = SF.created.find(x => x.obj === 'Opportunity');
+    ok('the agent\'s quote creates the client\'s Contact, on the client\'s e-mail', r.ok && c && c.body.Email === 'dev.client@example.com' && c.body.LastName === 'Madeup');
+    ok('…the Opportunity names the agent as producer, on the client', opp && opp.body.Producer__c === '003000000000050AAA' && opp.body.Contact__c === '003000000000009AAA' &&
+      /Placed by the agent Mala Madeup/.test(opp.body.Description) && r.producer === 'Mala Madeup');
+    const rcpt = mails.find(m => /We have your motor quote request/.test(m.subject)), desk = mails.find(m => /^Motor quote request/.test(m.subject));
+    ok('the client gets the receipt, the agent copied, and it says who asked', rcpt && rcpt.to === 'dev.client@example.com' && rcpt.cc === AGENT &&
+      /Your agent, <b>Mala Madeup<\/b>, asked us/.test(rcpt.htmlBody) && /Mala calls you/.test(rcpt.htmlBody));
+    ok('the desk reads it came from the agent, and the agent is copied', desk && /requested by our agent <b>Mala Madeup<\/b> for their client/.test(desk.htmlBody) && desk.cc.indexOf(AGENT) > -1);
+    const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0], col = n => sh._grid[1][hdr.indexOf(n)];
+    ok('the row: the client\'s e-mail, placed by the agent, the producer and its id', col('Email') === 'dev.client@example.com' && col('Placed by') === AGENT &&
+      /^Mala Madeup, the agent who placed the quote$/.test(col('Producer')) && col('Producer Id') === '003000000000050AAA' && col('Agent e-mail') === AGENT);
+    ok('the agent sees the request on their home, with the client\'s name', r.requests.length === 1 && r.requests[0].client === 'Dev Madeup');
+    const ct = signIn(env, 'dev.client@example.com');
+    const cm = post(env, { action: 'me', token: ct });
+    ok('the client sees it too when they sign in, without the agent\'s label on it', cm.requests.length === 1 && cm.requests[0].client === '');
+  }
+  /* The agent's client is already with us: found by their e-mail, never by the agent's. */
+  {
+    const { env, SF } = world(Object.assign({}, SFPROPS, OWN));
+    const tok = signIn(env, AGENT);
+    const r = post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { clientEmail: 'anika@example.com' }) });
+    const opp = SF.created.find(x => x.obj === 'Opportunity');
+    ok('an existing client is found by their own e-mail: no new Contact, the Opportunity on theirs', r.ok && !SF.created.some(x => x.obj === 'Contact') &&
+      opp.body.Contact__c === '003000000000001AAA' && opp.body.Producer__c === '003000000000050AAA' && opp.body.LeadSource === 'Existing Client');
+  }
+  /* What an agent cannot do. */
+  {
+    const { env } = world(Object.assign({}, SFPROPS, OWN));
+    const tok = signIn(env, AGENT);
+    ok('an agent\'s quote needs the client\'s e-mail', /client's e-mail/.test(post(env, { action: 'submit', token: tok, quote: GOOD }).error));
+    ok('…and not the agent\'s own', /not yours/.test(post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { clientEmail: AGENT.toUpperCase() }) }).error));
+    ok('an agent does not ask for a renewal', /renewal is asked for by the client/.test(post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'A B', mobile: '1', reg: 'PDX 1234', renewChoice: 'Renew as it is', clientEmail: 'c@example.com' } }).error));
+    ok('an agent does not sign a proposal for a client', /from their own sign-in/.test(post(env, { action: 'propose', token: tok, answers: PA, files: PFILES }).error));
+    ok('an agent does not update a permit from the home screen', post(env, { action: 'permit', token: tok, permit: 'DP-1' }).ok === false);
+  }
+  /* A client names their agent: picked from the list, or typed. */
+  {
+    const { env, SF, mails } = world(Object.assign({}, SFPROPS, OWN));
+    const tok = signIn(env, 'anika@example.com');
+    const s1 = post(env, { action: 'agents', token: tok, q: 'mal' });
+    ok('the agent box lists active agents by name, names only', s1.ok && s1.agents.length === 2 && s1.agents.every(a => a.id && a.name && Object.keys(a).length === 2));
+    ok('…in any order of the words, never a resigned agent, and nothing for one letter', post(env, { action: 'agents', token: tok, q: 'madeup ma' }).agents.length === 1 &&
+      post(env, { action: 'agents', token: tok, q: 'ravi' }).agents.length === 0 && post(env, { action: 'agents', token: tok, q: 'm' }).agents.length === 0);
+    ok('the agent box needs a sign-in', post(env, { action: 'agents', token: 'x'.repeat(30), q: 'mal' }).signedOut === true);
+    const r = post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { agent: 'Mala Madeup', agentId: '003000000000050AAA' }) });
+    const opp = SF.created.find(x => x.obj === 'Opportunity'), desk = mails.find(m => /^Motor quote request/.test(m.subject));
+    ok('a picked agent is the producer, and the desk copies their e-mail on record', r.ok && opp.body.Producer__c === '003000000000050AAA' && desk.cc.indexOf(AGENT) > -1);
+    const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0], col = (i, n) => sh._grid[i][hdr.indexOf(n)];
+    ok('…and the row says how it was found, and that the client placed it', /chosen by the client/.test(col(1, 'Producer')) && col(1, 'Placed by') === '');
+    const run = q => { SF.created.length = 0; post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, q) }); return SF.created.find(x => x.obj === 'Opportunity').body.Producer__c; };
+    ok('a full name only one agent carries finds them', run({ agent: 'madeup mala' }) === '003000000000050AAA');
+    ok('an e-mail an agent holds finds them', run({ agent: '', agentEmail: 'MALA.OTHER@example.com' }) === '003000000000051AAA');
+    ok('a first name two agents share is the branch\'s producer', run({ agent: 'Mala' }) === '003000000000077AAA');
+    ok('another branch\'s agent is never listed, and never the producer', post(env, { action: 'agents', token: tok, q: 'omar' }).agents.length === 0 &&
+      run({ agent: 'Omar Elsewhere', agentId: '003000000000053AAA', agentEmail: 'omar.else@example.com' }) === '003000000000077AAA');
+    ok('a resigned agent, or a made-up id, is the branch\'s producer', run({ agent: 'Ravi Gonenow' }) === '003000000000077AAA' && run({ agentId: '003000000000052AAA' }) === '003000000000077AAA');
+    ok('…and the row says the name is not one of our active agents', /"Ravi Gonenow" is not one of our active agents/.test(col(sh._grid.length - 2, 'Producer')));
+  }
+  /* The client takes a quote an agent placed: the agent hears of it. */
+  {
+    const { env, mails } = world(Object.assign({}, SFPROPS, OWN));
+    const q = post(env, { action: 'submit', token: signIn(env, AGENT), quote: Object.assign({}, GOOD, { clientEmail: 'anika@example.com' }) });
+    const r = post(env, { action: 'propose', token: signIn(env, 'anika@example.com'), quoteRef: q.ref, answers: PA, files: PFILES });
+    const desk = mails.find(m => /Motor proposal MP-/.test(m.subject));
+    ok('the client takes the agent\'s quote, and the agent is copied on the proposal', r.ok && desk && desk.cc.indexOf(AGENT) > -1);
+  }
+}
+
 /* ── Guardian's own forms, filled where their blanks are ──────────── */
 {
   const forms = require(path.join(ROOT, 'motor-quote/forms.js'));
@@ -651,7 +751,7 @@ const PFILES = [{ kind: 'quote', name: 'quote.pdf', type: 'application/pdf', dat
     'permitIssued', 'permitExpires', 'accidents', 'existingVehicles', 'notes', 'certified', 'permit', 'permit', 'year', 'mortgaged', 'institution', 'agent', 'windscreen', 'existingPolicy', 'ownerType', 'company', 'companyEmail'];
   const missing = keys.filter(k => page.indexOf("'" + k + "'") < 0 && page.indexOf('"' + k + '"') < 0);
   ok('every question the JotForm asked is asked on the page', missing.length === 0, missing.join(', '));
-  ok('no client name in the script or the page', !/Rampersad\b(?! Branch)/.test(gs.replace(/Ricky Rampersad Branch/g, '')) && !/@gmail\.com|@hotmail\.com|@yahoo\.com/.test(gs + page));
+  ok('no client name in the script or the page', !/Rampersad\b(?! Branch)/.test(gs.replace(/Ricky Rampersad Branch|'Ricky_Rampersad'/g, '')) && !/@gmail\.com|@hotmail\.com|@yahoo\.com/.test(gs + page));
 }
 
 Promise.resolve(module.exports && module.exports.then ? module.exports : null).catch(e => { console.log('  FAIL  ' + e.message); fails++; }).then(() => {

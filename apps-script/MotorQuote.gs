@@ -65,7 +65,7 @@
  */
 
 var MQ = {
-  VERSION: '2026-10-26a',
+  VERSION: '2026-10-26b',
   BRAND: 'Ricky Rampersad Branch',
   LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',   // the blue shield (the manager's choice, 21 Oct 2026); hosted PNG: Gmail strips SVG and data URIs
   SITE: 'https://rickyrampersadbranch.com/motor-quote/',
@@ -110,6 +110,11 @@ var MQ = {
   OPP_RT: 'GENERAL_INSURANCE', OPP_STAGE: 'Proposal/Price Quote', OPP_STAGE_TAKEN: 'Negotiation/Review', OPP_CLOSE_DAYS: 30,
   /* The permit on the Contact: shown to the client, and how it may be changed (mqPermitUpdate_). */
   PERMIT_SOON_DAYS: 60,
+  /* The branch's agents: Contacts of record type AGENT, Employment Status
+     Active, in one of the branch's own units (Units__c), never another
+     branch's. MQ_AGENT_UNITS (comma-separated) replaces the list when a unit
+     is added. Read at most every six hours. */
+  AGENT_UNITS: ['Ricky_Rampersad', 'Akaash_Kalladeen'], AGENTS_CACHE_S: 6 * 3600, AGENTS_SHOWN: 8,
 };
 
 var MQ_COLS = ['Ref', 'Received', 'Status', 'Client', 'Email', 'Mobile', 'Contact Id', 'Contact action',
@@ -125,7 +130,9 @@ var MQ_COLS = ['Ref', 'Received', 'Status', 'Client', 'Email', 'Mobile', 'Contac
   'Marital status', 'Home no.', 'Home address', 'Employer', 'First GG client', 'Other GG business', 'Chassis #', 'Use of vehicle',
   'Anti-theft', 'Second-hand accident', 'Windscreen limit', 'NCD %', 'Young drivers', 'Request form',
   /* Added 26 October 2026: who the client is to us, the Opportunity, and the permit on the Contact. */
-  'Client status', 'Client says', 'SF opportunity', 'Permit on file', 'Permit update'];
+  'Client status', 'Client says', 'SF opportunity', 'Permit on file', 'Permit update',
+  /* Added 26 October 2026: who placed it (an agent's e-mail when an agent did) and who the producer is. */
+  'Placed by', 'Producer', 'Producer Id'];
 
 /* The questions, in the order the e-mail to the quotes desk lists them. Each
    key is a field the page sends; the label is what the desk reads. */
@@ -138,7 +145,7 @@ var MQ_FIELDS = [
   ['occupation', 'Occupation'], ['marital', 'Marital status'], ['employer', "Employer's name"], ['homePhone', 'Home number'], ['address', 'Home address'],
   ['firstGG', 'First-time Guardian General client'], ['otherGGLine', 'Other business with Guardian General'],
   ['ownerType', 'Vehicle owned by'], ['company', 'Company name'], ['companyEmail', 'Company e-mail'],
-  ['agent', 'Agent'], ['agentEmail', 'Agent e-mail'],
+  ['agent', 'Agent'], ['agentEmail', 'Agent e-mail'], ['placedByLine', 'Placed by'], ['agentHow', 'Producer on the Opportunity'],
   ['section', 'The vehicle'],
   ['reg', 'Vehicle #'], ['make', 'Make'], ['model', 'Model'], ['year', 'Year of manufacture'], ['body', 'Body type'],
   ['seating', 'Seating'], ['cc', 'CC rating'], ['chassis', 'Chassis #'], ['value', 'Vehicle value (TT$)'], ['condition', 'New or used'],
@@ -194,6 +201,7 @@ function doPost(e) {
       case 'readDoc':     out = mqReadDoc_(b, mqClean_(b.kind, 20)); break;
       case 'propose':     out = mqPropose_(b); break;
       case 'permit':      out = mqPermitSave_(b); break;
+      case 'agents':      out = mqAgentSearch_(b); break;
       case 'signOut':     out = mqSignOut_(b); break;
       default:            out = { ok: false, error: 'Unknown action' };
     }
@@ -336,7 +344,7 @@ function mqVerifyCode_(b) {
   cache.remove(slot);
   var me = mqLookup_(email);
   var token = mqNewSession_(email, me.contactId, me.name);
-  mqLog_('(sign-in)', me.found ? 'client-signed-in' : 'new-signed-in', email + (me.found ? ' · ' + me.name : ''));
+  mqLog_('(sign-in)', me.agent ? 'agent-signed-in' : me.found ? 'client-signed-in' : 'new-signed-in', email + (me.agent ? ' · ' + me.agent.name : me.found ? ' · ' + me.name : ''));
   return { ok: true, token: token, me: me, requests: mqRequests_(email), mode: mqMode_() };
 }
 
@@ -445,6 +453,10 @@ function mqLookup_(email) {
   var me = { found: false, email: email, contactId: '', name: '', first: '', last: '', mobile: '', occupation: '', dob: '',
              vehicles: [], policies: [], salesforce: mqSfReady_() };
   if (!mqSfReady_()) return me;
+  /* An active agent signs in to ask for quotes for their clients: nothing of
+     their own record is read, and the page asks who the client is. */
+  var ag = mqAgentByEmail_(email);
+  if (ag) { me.agent = { name: ag.name, first: ag.first }; return me; }
   var contacts = [];
   try {
     contacts = mqSoql_('SELECT ' + MQ_CONTACT_FIELDS + ' FROM Contact WHERE Email = ' + mqQ_(email) +
@@ -676,6 +688,7 @@ function mqPermitText_(f) {
 function mqPermitSave_(b) {
   var s = mqSession_(b.token);
   if (!s) return { ok: false, error: 'Please sign in again.', signedOut: true };
+  if (mqAgentByEmail_(s.email)) return { ok: false, error: 'A client updates their own permit from their own sign-in. Put your client\'s permit on their quote instead.' };
   if (!s.contactId || !mqSfReady_()) return { ok: false, error: 'We could not find your record to update. Your permit details go with your next request instead.' };
   var given = { permit: mqClean_(b.permit, 20), permitIssued: mqClean_(b.permitIssued, 10), permitExpires: mqClean_(b.permitExpires, 10) };
   if (!given.permit && !given.permitExpires && !given.permitIssued) return { ok: false, error: 'Please type the permit details to update.' };
@@ -725,6 +738,86 @@ function mqMatchExisting_(d) {
     } catch (e) { mqLog_('(contact)', 'match-failed', String(e)); }
   }
   return null;
+}
+
+/* ============================== the agents ============================== */
+
+/* The branch's agents are Contacts of record type AGENT in one of the
+   branch's units. Only one whose Employment Status reads Active counts: a
+   resigned, terminated or not-active agent, or an agent of another branch, is
+   never a producer and never signs in as one. */
+function mqAgentUnits_() {
+  var set = String(mqProp_('MQ_AGENT_UNITS') || '').split(',').map(function (u) { return u.trim(); }).filter(Boolean);
+  return set.length ? set : MQ.AGENT_UNITS;
+}
+function mqAgents_(fresh) {
+  var units = mqAgentUnits_(), cache = CacheService.getScriptCache(), key = 'mq.agents.' + mqHash_(units.join('|')).slice(0, 12);
+  if (!fresh) { var hit = cache.get(key); if (hit) { try { return JSON.parse(hit); } catch (e) {} } }
+  if (!mqSfReady_()) return [];
+  var out = [];
+  try {
+    out = mqSoql_("SELECT Id, Name, FirstName, Email FROM Contact WHERE RecordType.Name = 'AGENT' AND Employment_Status__c = 'Active'" +
+        ' AND Units__c IN (' + units.map(mqQ_).join(',') + ') ORDER BY Name LIMIT 500')
+      .map(function (r) {
+        var name = String(r.Name || '').replace(/\s+/g, ' ').trim();
+        return { id: String(r.Id || ''), name: name, first: String(r.FirstName || name.split(' ')[0] || '').trim(), email: mqNormEmail_(r.Email) };
+      })
+      .filter(function (a) { return mqIsSfId_(a.id) && a.name; });
+    try { cache.put(key, JSON.stringify(out), MQ.AGENTS_CACHE_S); } catch (e) {}
+  } catch (e) { mqLog_('(agents)', 'read-failed', String(e)); }
+  return out;
+}
+function mqAgentByEmail_(email) {
+  email = mqNormEmail_(email);
+  if (!email || !mqSfReady_()) return null;
+  return mqAgents_().filter(function (a) { return a.email === email; })[0] || null;
+}
+function mqAgentById_(id) {
+  id = String(id || '');
+  if (!mqIsSfId_(id)) return null;
+  return mqAgents_().filter(function (a) { return a.id === id || a.id.slice(0, 15) === id.slice(0, 15); })[0] || null;
+}
+/* A name's words, lower case, a label in brackets dropped ("Narissa (Agent) Mohammed"). */
+function mqWords_(s) {
+  return String(s || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[^a-z\s'\-]/g, ' ').split(/[\s'\-]+/).filter(Boolean);
+}
+/* Every word typed begins a word of the agent's name, in any order. */
+function mqAgentsByName_(q) {
+  var want = mqWords_(q);
+  if (!want.length) return [];
+  return mqAgents_().filter(function (a) {
+    var have = mqWords_(a.name);
+    return want.every(function (w) { return have.some(function (h) { return h.indexOf(w) === 0; }); });
+  });
+}
+/** The "Your agent" box: the active agents whose name matches what is typed.
+ *  Names only, never an agent's e-mail or number. */
+function mqAgentSearch_(b) {
+  var s = mqSession_(b.token);
+  if (!s) return { ok: false, error: 'Please sign in again.', signedOut: true };
+  var q = mqClean_(b.q, 60);
+  if (q.replace(/\s/g, '').length < 2) return { ok: true, agents: [] };
+  return { ok: true, agents: mqAgentsByName_(q).slice(0, MQ.AGENTS_SHOWN).map(function (a) { return { id: a.id, name: a.name }; }) };
+}
+/** Who the producer on the Opportunity is, by who placed the quote:
+ *   - an agent signed in and placed it: that agent;
+ *   - the client picked their agent from the list: that agent;
+ *   - the client typed an e-mail an active agent holds: that agent;
+ *   - the client typed a name only one active agent carries: that agent;
+ *   - otherwise the branch's producer, MQ_SF_PRODUCER. */
+function mqProducer_(d, placer) {
+  var found = function (a, how) { return { id: a.id, name: a.name, email: a.email, how: how, agent: true }; };
+  if (placer) return found(placer, 'the agent who placed the quote');
+  var a = d.agentId ? mqAgentById_(d.agentId) : null;
+  if (a) return found(a, 'chosen by the client from our agents');
+  a = d.agentEmail ? mqAgentByEmail_(d.agentEmail) : null;
+  if (a) return found(a, 'matched by the agent e-mail the client gave');
+  var byName = d.agent ? mqAgentsByName_(d.agent) : [];
+  if (byName.length === 1 && mqWords_(d.agent).length >= 2) return found(byName[0], 'matched by the name the client gave');
+  var def = mqProp_('MQ_SF_PRODUCER');
+  return { id: mqIsSfId_(def) ? def : '', name: '', email: '', agent: false,
+           how: d.agent ? 'the branch: "' + d.agent + '" is not one of our active agents' + (byName.length > 1 ? ' (' + byName.length + ' agents carry that name)' : '')
+                        : 'the branch: no agent named' };
 }
 
 /** Who the request belongs to in Salesforce.
@@ -797,6 +890,7 @@ function mqOpp_(d, ref, contact, stage) {
       Name: ('OPP Motor - ' + (d.name || 'Client') + ' (' + (veh || 'vehicle') + (d.reg ? ' ' + d.reg : ', not registered yet') + ')').slice(0, 120),
       StageName: stage || MQ.OPP_STAGE, CloseDate: close,
       Description: (((stage === MQ.OPP_STAGE_TAKEN ? 'Motor proposal ' : 'Motor quote ') + ref + ' from the branch website (' + MQ.SITE + '), ' + mqDate_() + '. ' +
+        (d.placedBy ? 'Placed by the agent ' + d.placedBy.name + '. ' : '') +
         (contact.existing ? 'An existing client.' : 'A new client.') + (says ? ' ' + says : '') + (contact.unmatched ? ' No Contact matched: link it by hand.' : '') +
         (d.permitNote ? '\nPermit: ' + d.permitNote : '') + '\n\n' + mqFieldsText_(d))).slice(0, 31000),
       NextStep: ((stage === MQ.OPP_STAGE_TAKEN ? 'Proposal signed online: collect the premium, ' : 'Quote from the desk to the client, ') + ref).slice(0, 255),
@@ -807,7 +901,7 @@ function mqOpp_(d, ref, contact, stage) {
     if (contact.accountId) body.AccountId = contact.accountId;
     if (d.reg) body.Vehicle__c = String(d.reg).slice(0, 20);
     var owner = mqProp_('MQ_SF_OWNER'); if (mqIsSfId_(owner)) body.OwnerId = owner;
-    var producer = mqProp_('MQ_SF_PRODUCER'); if (mqIsSfId_(producer)) body.Producer__c = producer;
+    var producer = d.producer && d.producer.id ? d.producer.id : mqProp_('MQ_SF_PRODUCER'); if (mqIsSfId_(producer)) body.Producer__c = producer;
     try { return { id: mqSfFetch_('/sobjects/Opportunity', { method: 'post', body: body }).id || '', note: 'Created' }; }
     catch (e) {
       ['LeadSource', 'Type', 'Producer__c', 'Vehicle__c', 'AccountId'].forEach(function (k) { delete body[k]; });
@@ -872,7 +966,14 @@ function mqTask_(d, ref, contactId, whatId) {
 function mqSubmit_(b) {
   var s = mqSession_(b.token);
   if (!s) return { ok: false, error: 'Your sign-in has expired. Sign in again; what you typed is kept on this device.', signedOut: true };
-  var d = mqRead_(b.quote || {}, s);
+  /* Who places it: an active agent for a client, or the client themself. */
+  var placer = mqAgentByEmail_(s.email);
+  var d = mqRead_(b.quote || {}, s, placer);
+  if (placer) {
+    if (d.flow === 'renew') return { ok: false, error: 'A renewal is asked for by the client from their own sign-in, or by the branch.' };
+    if (!mqEmailOk_(d.email)) return { ok: false, error: 'Please give your client\'s e-mail.' };
+    if (d.email === s.email) return { ok: false, error: 'Please give your client\'s own e-mail, not yours.' };
+  }
   if (d.flow === 'renew') mqRenewFromRecord_(d, s);
   var missing = (MQ_REQUIRED_BY[d.flow] || MQ_REQUIRED).filter(function (k) { return !d[k]; });
   if (missing.length) {
@@ -893,7 +994,11 @@ function mqSubmit_(b) {
   var ref;
   try {
     ref = mqNewRef_();
-    var contact = mqEnsureContact_(d, s);
+    /* An agent's session is never the client's record: the client is found by their own e-mail. */
+    var contact = mqEnsureContact_(d, placer ? { email: d.email, contactId: '' } : s);
+    d.producer = mqProducer_(d, placer);
+    if (d.producer.agent) { d.agent = d.producer.name; if (d.producer.email) d.agentEmail = d.producer.email; }
+    d.agentHow = d.producer.agent ? d.producer.name + ', ' + d.producer.how : d.producer.how;
     /* The permit against the Contact: shown to staff, updated by the rules. */
     var onFile = contact.id && contact.action !== 'Created' ? mqPermitOnFile_(contact.id) : null;
     if (onFile) contact.accountId = onFile.accountId;
@@ -928,7 +1033,8 @@ function mqSubmit_(b) {
 
   /* The receipt to the client. */
   mqMail_({
-    to: [d.email], subject: (renew ? 'We have your renewal request, ' : 'We have your motor quote request, ') + (d.first || d.name) + ' (' + ref + ')',
+    to: [d.email], cc: placer ? [placer.email] : [],
+    subject: (renew ? 'We have your renewal request, ' : 'We have your motor quote request, ') + (d.first || d.name) + ' (' + ref + ')',
     html: mqReceipt_(ref, d), client: true,
   });
 
@@ -940,12 +1046,13 @@ function mqSubmit_(b) {
   mqLog_(ref, 'sent', sent + (opp.id ? ' · opportunity ' + opp.id : '') + (taskId ? ' · task ' + taskId : ''));
 
   return { ok: true, ref: ref, mode: mqMode_(), sentTo: deskTo, flow: d.flow, contact: contact.action, mail: sent,
-           requests: mqRequests_(s.email) };
+           producer: d.producer.agent ? d.producer.name : '', requests: mqRequests_(s.email) };
 }
 
 /** What the page sent, cleaned. The signed-in e-mail is the client's e-mail,
- *  whatever the form says. */
-function mqRead_(q, s) {
+ *  whatever the form says, unless an agent placed it: then the client's
+ *  e-mail is the one the agent gave, and the agent is the agent who signed in. */
+function mqRead_(q, s, placer) {
   var g = function (k, n) { return mqClean_(q[k], n || 160); };
   var yn = function (k) { var v = g(k, 10).toLowerCase(); return v === 'yes' ? 'Yes' : v === 'no' ? 'No' : ''; };
   var d = {
@@ -995,6 +1102,12 @@ function mqRead_(q, s) {
   if (d.agentEmail && !mqEmailOk_(d.agentEmail)) d.agentEmail = '';
   if (d.value) { var v = Number(d.value); d.value = isNaN(v) ? '' : String(Math.round(v)); }
   if (d.year && (Number(d.year) < 1950 || Number(d.year) > new Date().getFullYear() + 1)) d.year = '';
+  d.agentId = mqIsSfId_(g('agentId', 18)) ? g('agentId', 18) : '';
+  if (placer) {
+    d.email = mqNormEmail_(g('clientEmail', 120));
+    d.placedBy = placer; d.agent = placer.name; d.agentEmail = placer.email; d.agentId = '';
+    d.placedByLine = 'The agent ' + placer.name + ', signed in as ' + placer.email;
+  }
   d.first = d.name.split(/\s+/)[0] || '';
   return d;
 }
@@ -1071,6 +1184,7 @@ function mqRow_(ref, d, contact, files, folder) {
     'Request form': files.some(function (f) { return f.kind === 'request'; }) ? 'attached' : '',
     'Client status': contact.existing ? 'Existing client' + (contact.unmatched ? ' (not matched)' : '') : contact.id ? 'New client' : (d.clientStatus === 'new' ? 'New client' : ''),
     'Client says': d.clientSaysLine || '', 'SF opportunity': '', 'Permit on file': d.permitOnFileText || '', 'Permit update': d.permitNote || '',
+    'Placed by': d.placedBy ? d.placedBy.email : '', 'Producer': d.agentHow || '', 'Producer Id': d.producer ? d.producer.id : '',
   };
 }
 
@@ -1089,14 +1203,16 @@ function mqRequests_(email) {
   if (sh.getLastRow() < 2) return [];
   var m = mqHeaderMap_(sh), rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues(), out = [];
   rows.forEach(function (r) {
-    if (String(r[m['Email']] || '').toLowerCase() !== email) return;
+    var placed = 'Placed by' in m && String(r[m['Placed by']] || '').toLowerCase() === email;
+    if (String(r[m['Email']] || '').toLowerCase() !== email && !placed) return;
     var when = r[m['Received']];
     out.push({ ref: String(r[m['Ref']]), when: when instanceof Date ? mqDate_(when, 'd MMM yyyy') : String(when),
       vehicle: [r[m['Year']], r[m['Make']], r[m['Model']]].filter(Boolean).join(' '), reg: String(r[m['Vehicle #']] || ''),
       cover: String(r[m['Cover']] || ''), status: String(r[m['Status']] || ''),
       quotedOn: r[m['Quoted on']] instanceof Date ? mqDate_(r[m['Quoted on']], 'd MMM yyyy') : String(r[m['Quoted on']] || ''),
       premium: String(r[m['Quoted premium']] || ''),
-      type: 'Request type' in m ? String(r[m['Request type']] || '') : '', renews: 'Renewal date' in m ? String(r[m['Renewal date']] || '') : '' });
+      type: 'Request type' in m ? String(r[m['Request type']] || '') : '', renews: 'Renewal date' in m ? String(r[m['Renewal date']] || '') : '',
+      client: placed ? String(r[m['Client']] || '') : '' });
   });
   return out.reverse();
 }
@@ -1363,6 +1479,8 @@ function mqProposalsSheet_() {
 function mqPropose_(b) {
   var s = mqSession_(b.token);
   if (!s) return { ok: false, error: 'Your sign-in has expired. Sign in again; what you typed is kept on this device.', signedOut: true };
+  /* The proposal is the client's own declaration and signature. */
+  if (mqAgentByEmail_(s.email)) return { ok: false, error: 'Your client takes the quote and signs from their own sign-in, with the e-mail the quote went to.' };
   var A = {}, q = b.answers || {};
   Object.keys(q).forEach(function (k) { if (/^[a-zA-Z0-9]{1,24}$/.test(k) && typeof q[k] !== 'object') A[k] = mqClean_(q[k], 600); });
   A.accidents = (Array.isArray(q.accidents) ? q.accidents : []).slice(0, 3).map(function (r) {
@@ -1410,8 +1528,10 @@ function mqPropose_(b) {
   if (quoteRef) mqSetIfMine_(quoteRef, s.email, 'Status', 'Accepted: proposal ' + ref + ' sent');
 
   var deskTo = mqProp_('MQ_BIND_TO', mqQuotesTo_());
+  /* The agent who placed the quote hears that their client took it. */
+  var placedBy = quoteRef ? String(mqGetIfMine_(quoteRef, s.email, 'Placed by') || '') : '';
   var sent = mqMail_({
-    to: [deskTo], cc: mqCc_(), replyTo: MQ.SUPPORT_FROM,
+    to: [deskTo], cc: mqCc_().concat(mqEmailOk_(placedBy) ? [placedBy] : []), replyTo: MQ.SUPPORT_FROM,
     subject: 'Motor proposal ' + ref + ': ' + name + ' · ' + veh + ' (' + A.reg + ')' + (A.policyNo ? ' · ' + A.policyNo : '') + ' · taking the quote',
     html: mqProposalMail_(ref, A, flags, kypNo, folder, quoteRef), attachments: files.map(function (f) { return f.blob; }),
   });
@@ -1537,7 +1657,7 @@ function mqDeskMail_(ref, d, contact, folder) {
     ? '<p>Good day,</p><p>Please renew the following motor policy, asked for by the client on the branch website (' + site + '). ' +
       'The client asks: <b>' + mqEsc_(d.renewChoice) + '</b>. The terms on file below are read from Salesforce at the moment the request was sent. ' +
       'Reply to this e-mail and the renewal reaches the branch and the client together.</p>'
-    : '<p>Good day,</p><p>Please quote for the following, requested by the client on the branch website (' + site + '). ' +
+    : '<p>Good day,</p><p>Please quote for the following, requested ' + (d.placedBy ? 'by our agent <b>' + mqEsc_(d.placedBy.name) + '</b> for their client' : 'by the client') + ' on the branch website (' + site + '). ' +
       'Reply to this e-mail and the quote reaches the branch and the client together.</p>' +
       (d.flow === 'quick' ? '<p>This is a <b>quick quote</b>: the client gave what the price needs. The driver\'s permit and the certified copy follow when the client takes the quote.</p>' : '');
   if (d.invoiceFacts) intro += '<p style="background:#EAF3FD;border-radius:10px;padding:10px 12px;font-size:14px">The client uploaded a document (attached). ' +
@@ -1569,12 +1689,13 @@ function mqReceipt_(ref, d) {
       '<p>If anything needs correcting, reply to this e-mail or call the branch on ' + MQ.BRANCH_TEL + '.</p>' + mqFieldsHtml_(d));
   }
   return mqWrap_('We have your request, ' + mqEsc_(d.first || d.name) + '.',
-    '<p>Thank you. Your motor quote request for <b>' + mqEsc_(veh) + '</b>, ' + mqEsc_(d.cover) + ', went to Guardian General\'s quotes desk at ' +
+    (d.placedBy ? '<p>Your agent, <b>' + mqEsc_(d.placedBy.name) + '</b>, asked us for a motor quote for you. They are copied on this e-mail.</p>' : '') +
+    '<p>' + (d.placedBy ? 'The' : 'Thank you. Your') + ' motor quote request for <b>' + mqEsc_(veh) + '</b>, ' + mqEsc_(d.cover) + ', went to Guardian General\'s quotes desk at ' +
     mqDate_(new Date(), 'h:mm a') + ' today, with our branch copied.</p>' +
     '<p><b>What happens next</b></p><ol style="padding-left:20px;margin:6px 0 12px">' +
     '<li>The quotes desk prices the cover from what you told us.</li>' +
     '<li>The quote comes back to our branch and to you at this address, usually within two working days.</li>' +
-    '<li>A member of our team calls you to go through it and, if you wish, to put the cover in place.</li></ol>' +
+    '<li>' + (d.placedBy ? mqEsc_(d.placedBy.first || d.placedBy.name) : 'A member of our team') + ' calls you to go through it and, if you wish, to put the cover in place.</li></ol>' +
     (d.flow === 'quick' ? '<p>When you take the quote we will ask for your driver\'s permit and the vehicle\'s certified copy.</p>' : '') +
     '<p>Your reference is <b style="color:#2C5FA8">' + mqEsc_(ref) + '</b>. Sign in again at <a href="' + MQ.SITE + '" style="color:#3A7BD5">' +
     MQ.SITE.replace('https://', '') + '</a> any time to see where it stands.</p>' +

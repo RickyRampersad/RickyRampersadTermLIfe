@@ -3911,6 +3911,29 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     too (`action=permit`, `mqPermitSave_`), a found client only. Test mode writes nothing and says what it would have.
   - New columns on Motor Quotes: Client status, Client says, SF opportunity, Permit on file, Permit update; on Motor
     Proposals: SF opportunity. The desk e-mail says "An existing client of ours" or "New to us".
+- **The producer is whoever placed the quote, from the branch's own agents** (26 October 2026: "dependant on who places
+  the quotes … i do have agents as contacts and record type agent so it searches the contacts", then "it should be
+  limited to our Branch not the entire guardian life").
+  - **The branch's agents** (`mqAgents_`): Contacts of record type AGENT, Employment Status Active, Units__c one of
+    the branch's units (`MQ.AGENT_UNITS`: Ricky_Rampersad and Akaash_Kalladeen; the `MQ_AGENT_UNITS` Script property,
+    comma-separated, replaces them when a unit is added). Never a resigned, terminated or not-active agent, never
+    another branch's. Read at most every six hours. On 26 October: 16 active in one unit, 7 in the other.
+  - **An agent signs in with their own e-mail** and the page knows them (`me.agent`): nothing of their own record is
+    read. They get the new quote alone (quick or full): a renewal and taking a quote stay the client's own, and the
+    server refuses both, and the permit update, for an agent. The form asks the client's e-mail (never the agent's
+    own), whether the client is with Guardian (with an optional number), and the client's name and mobile. The client
+    is found or created by their own e-mail, never the agent's session (`mqEnsureContact_` with the client's e-mail).
+    The receipt goes to the client, the agent copied, saying the agent asked and will call; the desk reads "requested
+    by our agent … for their client", the agent copied. The row: Placed by (the agent's e-mail), Producer, Producer
+    Id. The agent's home lists the requests they placed, with each client's name; the client sees theirs when they sign
+    in. When the client takes that quote, the agent is copied on the proposal.
+  - **A client names their agent** in a search box (`action=agents`, `mqAgentSearch_`: names only, never an e-mail,
+    two letters at least, every word starting a word of the name). The producer (`mqProducer_`), in order: the agent
+    who placed it; the agent picked from the list; an active agent whose e-mail the client typed; a full name only one
+    active agent carries; else `MQ_SF_PRODUCER`, the row saying why ("not one of our active agents"). A matched agent's
+    e-mail on record is the one copied on the desk e-mail.
+  - The Opportunity's `Producer__c` is that agent; its description says who placed it. The owner stays `MQ_SF_OWNER`.
+  - Tests: `tests/test-motor-quote.js` (199 checks) and `tests/e2e-motor-quote.js` (134).
 - **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
   layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
   its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):

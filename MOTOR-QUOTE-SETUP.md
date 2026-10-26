@@ -58,6 +58,13 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
   <client> (<vehicle> <reg>)", stage Proposal/Price Quote, close date 30 days on, Contact, account, Vehicle #, New
   Business, lead source Existing Client or Web, owner `MQ_SF_OWNER`, producer `MQ_SF_PRODUCER`. Its task sits on it.
   Taking the quote moves it to Negotiation/Review.
+- **Who placed it decides the producer.** Only the branch's own agents count: Contacts of record type AGENT,
+  Employment Status Active, in the units Ricky_Rampersad or Akaash_Kalladeen (`MQ_AGENT_UNITS` replaces the list).
+  An agent who signs in with their own e-mail asks for quotes for their clients: they give the client's e-mail, the
+  client's Contact is found or created by it, the agent is the producer, and the agent is copied on the receipt and
+  the desk e-mail. An agent cannot ask for a renewal or sign a proposal: those are the client's own. A client picks
+  their agent from a search of the branch's agents (names only); a typed e-mail or a full name only one agent carries
+  also finds them. With no agent, the producer is `MQ_SF_PRODUCER`.
 - **The permit on the Contact.** A blank is filled; a later expiry (a renewed permit) replaces the old one with its
   issue date; an earlier expiry is never written; a **different permit number is never written**: it goes to staff
   (on the row, the task, and from the home screen a task "Confirm driver's permit") to confirm with the client. The
@@ -86,6 +93,8 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
      `MQ_AI_MODEL` changes the model (default `claude-sonnet-5-5`).
    - `MQ_RENEW_TO` — where renewals go (default: the quotes desk).
    - `MQ_BIND_TO` — where signed proposals go (default: the quotes desk).
+   - `MQ_AGENT_UNITS` — optional: the branch's agent units in Salesforce (Units__c), comma-separated (default
+     `Ricky_Rampersad,Akaash_Kalladeen`). Only active agents in these units sign in as agents or are named producer.
    - Optional: `MQ_QUOTES_TO` (overrides the quotes desk), `MQ_CC` (more copies, comma-separated),
      `MQ_SF_OWNER` (the Salesforce user id that owns new Contacts, Opportunities and tasks; the branch's motor
      opportunities are owned by the BMA), `MQ_SF_PRODUCER` (the Contact id put in Producer on every Opportunity; the

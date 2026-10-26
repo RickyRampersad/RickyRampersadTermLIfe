@@ -366,6 +366,14 @@
   /* who you are to us: the record we found, or the one question we ask */
   .mecard{border:1.5px solid #CFDDF0;border-radius:18px;padding:15px 16px;margin:0 0 16px;background:linear-gradient(180deg,#F7FAFE,#fff);animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
   .mecard .mh{display:flex;gap:12px;align-items:center}
+  .mecard.agent{border-color:#B9D0F0;background:linear-gradient(180deg,#EEF5FF,#fff)}
+  .agpick{position:relative;margin:0 0 13px}
+  .agpick>b{display:block;color:var(--ink);font-size:14px;margin:0 0 6px}
+  .aglist{display:flex;flex-direction:column;gap:6px;margin:6px 0 0}
+  .aglist button{text-align:left;font:inherit;font-size:15px;padding:11px 13px;border-radius:12px;border:1.5px solid #CFDDF0;background:#fff;color:var(--ink);cursor:pointer;min-height:44px}
+  .aglist button:hover,.aglist button:focus-visible{border-color:var(--blue);background:var(--sky)}
+  .agsaid{display:block;font-size:13px;color:var(--dim);margin-top:6px}
+  .agsaid.ok{color:#1d7a4d;font-weight:600}
   .mecard .mi{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;display:grid;place-items:center;font-size:21px;flex:none}
   .mecard .mh b{display:block;color:var(--ink);font-size:16.5px;line-height:1.25}
   .mecard .mh small{display:block;color:var(--dim);font-size:13.5px}
@@ -525,7 +533,7 @@
     <div class="paths" id="paths">
       <button type="button" class="path t-renew" id="pathRenew" onclick="toTrack('trRenew')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><span class="pt"><b>Renew</b><small>A vehicle we already insure</small><em id="pathRenewN"></em></span><span class="go">›</span></button>
       <button type="button" class="path t-quote" onclick="toTrack('trQuote')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg></span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet</small><em>About 2 min</em></span><span class="go">›</span></button>
-      <button type="button" class="path t-take" onclick="toTrack('trTake')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><span class="pt"><b>Accept a quote</b><small>You have our quote and want the cover</small><em>Sign online</em></span><span class="go">›</span></button>
+      <button type="button" class="path t-take" id="pathTake" onclick="toTrack('trTake')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><span class="pt"><b>Accept a quote</b><small>You have our quote and want the cover</small><em>Sign online</em></span><span class="go">›</span></button>
     </div>
 
     <section class="track t-renew" id="trRenew">
@@ -785,10 +793,11 @@ const tracker = (labels, at, big) => '<ol class="trk' + (big ? ' big' : '') + '"
 function reqCard(r) {
   const kind = r.type === 'Renewal' ? 'renew' : 'quote', st = reqStage(r, kind), P = kind === 'renew' ? PATH.renew : PATH.quick;
   return '<div class="req ' + P.cls + '"><div class="rh"><span class="kind">' + P.ic + ' ' + P.name + '</span><b>' + esc(r.ref) + '</b><span class="rm">' + esc(r.when) + (r.type && kind !== 'renew' ? ' · ' + esc(r.type) : '') + '</span></div>' +
+    (r.client ? '<div class="rv"><b>' + esc(r.client) + '</b></div>' : '') +
     '<div class="rv">' + esc(r.vehicle || r.reg || 'Vehicle') + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + (r.cover ? ' · ' + esc(r.cover) : '') + '</div>' +
     tracker(STAGES[kind], st) +
     '<div class="rm">' + esc(r.status || 'Received') + (r.quotedOn ? ' · ' + (kind === 'renew' ? 'renewal sent ' : 'quoted ') + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</div>' +
-    (kind === 'quote' && st < 4 ? '<button type="button" class="linkbtn" style="padding:6px 0 0;color:var(--ac)" onclick="startTake(\'' + esc(r.ref) + '\')">Accept this quote ›</button>' : '') + '</div>';
+    (kind === 'quote' && st < 4 && !isAgent() ? '<button type="button" class="linkbtn" style="padding:6px 0 0;color:var(--ac)" onclick="startTake(\'' + esc(r.ref) + '\')">Accept this quote ›</button>' : '') + '</div>';
 }
 function toTrack(id) {
   const el = $(id); if (!el) return;
@@ -804,9 +813,17 @@ function permitPill(pf) {
   if (pf.state === 'soon') return '<span class="pill soon">Expires in ' + pf.days + ' day' + (pf.days === 1 ? '' : 's') + '</span>';
   return '<span class="pill valid">Valid to ' + esc(longD(pf.expires)) + '</span>';
 }
+/* An active agent signed in: they ask for quotes for their clients, and are the producer on each. */
+const isAgent = () => !!(me && me.agent);
 function meCard() {
   const el = $('meCard'); if (!el) return;
   if (!me) { el.innerHTML = ''; return; }
+  if (isAgent()) {
+    el.innerHTML = '<div class="mecard agent"><div class="mh"><span class="mi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.6"/><path d="M2.8 20c.8-3.6 3.3-5.5 6.2-5.5s5.4 1.9 6.2 5.5"/><path d="M15.5 4.6a3.6 3.6 0 0 1 0 6.8"/><path d="M18 14.8c1.7.8 2.8 2.5 3.2 5.2"/></svg></span>' +
+      '<span><b>Signed in as agent ' + esc(me.agent.name) + '</b><small>Every quote you ask for here names you as the producer in Salesforce.</small></span></div>' +
+      '<p class="said">Give your client\'s e-mail on the form: the receipt and the quote go to them, copied to you. Your client takes the quote and signs from their own sign-in.</p></div>';
+    return;
+  }
   if (me.found) {
     const pf = me.permitOnFile || null, rows = [['Name', me.name], ['Mobile', me.mobile], ['Date of birth', longD(me.dob)], ['Occupation', me.occupation]].filter(r => r[1]);
     el.innerHTML = '<div class="mecard"><div class="mh"><span class="mi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg></span><span><b>We found your record</b><small>What we hold for ' + esc(session.email || me.email || '') + '</small></span>' +
@@ -856,15 +873,18 @@ async function savePermit(ev) {
 }
 function showHome() {
   show('s-home'); requestAnimationFrame(() => reveal($('s-home')));
-  $('who').classList.remove('hide'); $('whoName').textContent = (me && me.name) || (session && session.email) || '';
-  const first = me && (me.first || (me.name || '').split(' ')[0]);
+  $('who').classList.remove('hide'); $('whoName').textContent = (isAgent() ? me.agent.name : me && me.name) || (session && session.email) || '';
+  const first = isAgent() ? me.agent.first : me && (me.first || (me.name || '').split(' ')[0]);
   const vs = (me && me.vehicles) || [], all = vs.map((v, i) => [v, i]), due = all.filter(x => dueNow(x[0])), rest = all.filter(x => !dueNow(x[0]));
   $('homeTitle').textContent = first ? 'Good day, ' + first + '.' : 'Good day.';
   $('homeBack').textContent = me && me.found ? ' back' : '';
   const soon = due.filter(x => x[0].renewState === 'due').map(x => Math.abs(x[0].renewIn || 0)).sort((a, b) => a - b)[0];
-  $('homeLead').textContent = due.length
+  $('homeLead').textContent = isAgent() ? 'Ask for a motor quote for your client. You are the producer on it.'
+    : due.length
     ? (due.length === 1 ? 'One vehicle is due for renewal.' : due.length + ' vehicles are due for renewal.') + ' Choose what you would like to do.'
     : 'What would you like to do today? Choose one of the three below.';
+  /* An agent has the new quote alone: a renewal and taking a quote are the client's own. */
+  $('pathTake').classList.toggle('hide', isAgent()); $('trTake').classList.toggle('hide', isAgent());
   /* The band's figures: what we hold, at a glance. */
   const open = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') < 4).length;
   meCard();
@@ -872,7 +892,7 @@ function showHome() {
     due.length ? '<span>' + cu(due.length) + 'due for renewal</span>' : '', requests.length ? '<span>' + cu(open) + 'request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
   /* No vehicle with us: no renewal path at all. */
   $('pathRenew').classList.toggle('hide', !vs.length); $('pathRenew').classList.toggle('due', due.length > 0); $('trRenew').classList.toggle('hide', !vs.length);
-  $('paths').style.setProperty('--n', vs.length ? 3 : 2);
+  $('paths').style.setProperty('--n', (vs.length ? 3 : 2) - (isAgent() ? 1 : 0));
   $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length + ' vehicle' + (vs.length === 1 ? '' : 's');
   $('renewals').innerHTML = due.map(x => renewalCard(x[0], x[1])).join('');
   $('homeVeh').innerHTML = rest.length
@@ -888,7 +908,7 @@ function showHome() {
 
 /* ---- the steps ---- */
 const FULL_STEPS = [
-  { key: 'you', title: 'About you', short: 'You', render: stepYou, check: d => need(d, ['name', 'mobile']) || (d.ownerType === 'Company' && !d.company ? 'Please give the company name.' : '') },
+  { key: 'you', title: 'About you', short: 'You', render: stepYou, check: d => agentCheck(d) || need(d, ['name', 'mobile']) || (d.ownerType === 'Company' && !d.company ? 'Please give the company name.' : '') },
   { key: 'vehicle', title: 'Your vehicle', short: 'Vehicle', render: stepVehicle, check: d => need(d, ['reg', 'make', 'model', 'year', 'value']) || (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') },
   { key: 'cover', title: 'The cover', short: 'Cover', render: stepCover, check: d => need(d, ['cover', 'drivingYears']) },
   { key: 'driver', title: 'The driver', short: 'Driver', render: stepDriver, check: d => need(d, ['permit', 'accidents', 'young']) || historyCheck(d) },
@@ -912,8 +932,16 @@ FLOWS.take = [
   { key: 'tkyp', title: 'Know your policy', short: 'Policy', render: stepTkyp, check: d => checkTake('tkyp', d) },
   { key: 'tsign', title: 'Sign and send', short: 'Sign', render: stepTsign, check: () => '' }];
 const steps = () => FLOWS[draft.flow] || FULL_STEPS;
+/* An agent's request needs the client's own e-mail. */
+function agentCheck(d) {
+  if (!isAgent()) return '';
+  const e = String(d.clientEmail || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(e)) return 'Please give your client\'s e-mail.';
+  if (session && e === String(session.email || '').toLowerCase()) return 'Please give your client\'s own e-mail, not yours.';
+  return '';
+}
 function checkQuick(d) {
-  return need(d, ['name', 'mobile', 'make', 'model', 'year', 'value', 'cover', 'drivingYears']) ||
+  return agentCheck(d) || need(d, ['name', 'mobile', 'make', 'model', 'year', 'value', 'cover', 'drivingYears']) ||
     (!String(d.reg || '').trim() && d.newUnreg !== 'Yes' ? 'Still needed: the registration number, or tick "New vehicle, not registered yet".' : '') ||
     (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') ||
     need(d, ['accidents', 'young']) || historyCheck(d);
@@ -934,12 +962,13 @@ function need(d, keys) { const m = keys.filter(k => !String(d[k] || '').trim());
    another request (a vehicle, an invoice) is not, unless keep says so. */
 function startFlow(flow, vehIx, keep) {
   const carry = ['name', 'mobile', 'gender', 'dob', 'occupation', 'agent', 'ownerType', 'company', 'companyEmail', 'drivingYears', 'ncd', 'clientStatus', 'clientRef', 'permit', 'permitIssued', 'permitExpires'];
-  const old = draft.sent ? {} : draft;
+  /* An agent's next request is for a client of its own: nothing is carried, and nothing of the agent's is filled in. */
+  const old = draft.sent || isAgent() ? {} : draft;
   draft = {};
   carry.forEach(k => { if (old[k]) draft[k] = old[k]; });
   if (!keep) files = [];
   draft.flow = flow;
-  if (me) {
+  if (me && !isAgent()) {
     if (!draft.name && me.name) draft.name = me.name;
     if (!draft.mobile && me.mobile) draft.mobile = me.mobile;
     if (!draft.occupation && me.occupation) draft.occupation = me.occupation;
@@ -1034,6 +1063,7 @@ function render() {
   $('btnNext').textContent = stepIx === STEPS.length - 1 ? (draft.flow === 'take' ? 'Sign and send' : 'Send my request') : 'Continue';
   $('btnNext').disabled = false;
   if (s.key === 'docs') wireFiles();
+  wireAgentPicker();
   $('step').querySelectorAll('input.invIn').forEach(el => el.addEventListener('change', ev => onInvoice(ev.target.files[0])));
   $('step').querySelectorAll('input.tdocIn').forEach(el => el.addEventListener('change', ev => onDoc(el.dataset.kind, ev.target.files[0])));
   if (s.key === 'tsign') wireSig();
@@ -1138,8 +1168,10 @@ function stepQuick(d) {
     '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + sel('institution', 'Financial institution', BANKS) + '</div>' +
     sel('use', 'Use of the vehicle', USES) +
     sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>', 'Your history') + historyHtml(false) +
-    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>', 'You') +
-    '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>' +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>', isAgent() ? 'Your client' : 'You') +
+    (isAgent() ? clientFields() : '') +
+    '<div class="row">' + inp('name', isAgent() ? 'Your client\'s full name' : 'Your full name', { ac: isAgent() ? 'off' : 'name', req: 1 }) + inp('mobile', isAgent() ? 'Their mobile number' : 'Mobile number', { type: 'tel', mode: 'tel', ac: isAgent() ? 'off' : 'tel', ph: '868-', req: 1 }) + '</div>' +
+    (isAgent() ? '' : agentPicker(d)) +
     '<details class="more"' + (['dob', 'marital', 'occupation', 'employer', 'address', 'chassis', 'antiTheft', 'firstGG'].some(k => d[k]) ? ' open' : '') + '><summary><b>Guardian\'s request form asks a little more</b><small>Optional. Every answer here makes the quote faster.</small></summary>' +
       '<div class="row">' + inp('dob', 'Date of birth', { type: 'date' }) + sel('marital', 'Marital status', MARITAL) + '</div>' +
       '<div class="row">' + inp('occupation', 'Occupation', { ph: 'e.g. Teacher' }) + inp('employer', "Employer's name") + '</div>' +
@@ -1505,9 +1537,49 @@ function startTake(quoteRef) {
   saveDraft(); render(); pdfLib().catch(() => {});
 }
 
+/* The client, when an agent asks for them: their e-mail, and whether they are with us. */
+function clientFields() {
+  return inp('clientEmail', 'Your client\'s e-mail', { type: 'email', mode: 'email', req: 1, hint: 'The receipt and the quote go here, copied to you.' }) +
+    opts('clientWith', 'Is your client already with Guardian?', ['Yes', 'No']) +
+    when('clientWith=Yes', inp('clientRef', 'Their policy or client number', { hint: 'Optional. It helps us find their record.' }));
+}
+/* The client's own agent, picked from the branch's active agents, so the quote names them. */
+function agentPicker(d) {
+  return '<div class="agpick"><b>Your Guardian agent, if you have one' + tag('agent') + '</b>' +
+    '<input class="fld" id="agentQ" value="' + esc(d.agent || '') + '" autocomplete="off" placeholder="Start typing their name" aria-describedby="agentSaid">' +
+    '<div class="aglist" id="agentList" role="listbox" aria-label="Our agents"></div>' +
+    '<small class="agsaid' + (d.agentId ? ' ok' : '') + '" id="agentSaid" aria-live="polite">' + (d.agentId ? '✓ ' + esc(d.agent) + ' is named on your quote.' : 'Optional. Pick them from the list so your quote reaches them.') + '</small></div>';
+}
+let agentTimer = 0, agentAsk = 0;
+function wireAgentPicker() {
+  const q = $('agentQ'); if (!q) return;
+  const list = $('agentList'), said = $('agentSaid');
+  q.addEventListener('input', () => {
+    draft.agent = q.value.trim().slice(0, 120); delete draft.agentId; saveDraft();
+    said.className = 'agsaid'; said.textContent = draft.agent ? 'Tap their name in the list.' : 'Optional. Pick them from the list so your quote reaches them.';
+    clearTimeout(agentTimer); list.innerHTML = '';
+    if (draft.agent.replace(/\s/g, '').length < 2) return;
+    const n = ++agentAsk;
+    agentTimer = setTimeout(async () => {
+      try {
+        const j = await api('agents', { token: session.token, q: draft.agent });
+        if (n !== agentAsk) return;
+        const A = j.agents || [];
+        list.innerHTML = A.map(a => '<button type="button" role="option" data-id="' + esc(a.id) + '" data-name="' + esc(a.name) + '">' + esc(a.name) + '</button>').join('');
+        if (!A.length) said.textContent = 'Not one of our agents by that name. We send your request to the branch, who will pass it on.';
+      } catch (e) { if (n === agentAsk) said.textContent = /Unknown action/i.test(e.message) ? 'We pass your agent\'s name to the branch.' : ''; }
+    }, 250);
+  });
+  list.addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-id]'); if (!b) return;
+    draft.agent = b.dataset.name; draft.agentId = b.dataset.id; saveDraft();
+    q.value = draft.agent; list.innerHTML = '';
+    said.className = 'agsaid ok'; said.textContent = '✓ ' + draft.agent + ' is named on your quote.';
+  });
+}
 function stepYou(d) {
   const held = me && me.found ? '<p class="muted">Filled in from our records. Change anything that is different.</p>' : '';
-  return held + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) +
+  return held + (isAgent() ? clientFields() : '') + inp('name', isAgent() ? 'Your client\'s full name' : 'Your full name', { ac: isAgent() ? 'off' : 'name', req: 1 }) + inp('mobile', isAgent() ? 'Their mobile number' : 'Mobile number', { type: 'tel', mode: 'tel', ac: isAgent() ? 'off' : 'tel', ph: '868-', req: 1 }) +
     '<div class="row">' + opts('gender', 'Gender', ['Female', 'Male']) + inp('dob', 'Date of birth', { type: 'date' }) + '</div>' +
     sel('marital', 'Marital status', MARITAL) +
     '<div class="row">' + inp('occupation', 'Occupation', { ph: 'e.g. Teacher', list: 'jobs' }) + inp('employer', "Employer's name", { ph: 'e.g. Ministry of Education' }) + '</div>' +
@@ -1517,7 +1589,7 @@ function stepYou(d) {
     '<datalist id="jobs">' + ['Teacher', 'Nurse', 'Police Officer', 'Soldier', 'Civil Servant', 'Clerk', 'Accountant', 'Engineer', 'Driver', 'Mechanic', 'Electrician', 'Business Owner', 'Sales', 'Manager', 'Doctor', 'Lawyer', 'Student', 'Retired', 'Self-employed'].map(x => '<option value="' + x + '">').join('') + '</datalist>' +
     opts('ownerType', 'The vehicle is owned by', ['Individual', 'Company']) +
     '<div id="companyBox" class="' + (d.ownerType === 'Company' ? '' : 'hide') + '">' + inp('company', 'Company name') + inp('companyEmail', 'Company e-mail', { type: 'email', mode: 'email' }) + '</div>' +
-    inp('agent', 'Your agent, if you have one', { hint: 'Optional.' });
+    (isAgent() ? '' : agentPicker(d));
 }
 function stepVehicle(d) {
   return inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20, req: 1 }) +
@@ -1607,20 +1679,20 @@ function prepFile(file, kind, maxPx) {
 }
 function stepReview(d) {
   const G = [['The request', [['Request', FLOW_NAME[d.flow] || ''], ['Renews on', d.renewOnText], ['You ask', d.renewChoice], ['Changes', d.renewChanges], ['Read from', d.invoice ? d.docLabel : '']]],
-    ['The client', [['Name', d.name], ['E-mail', session && session.email], ['Mobile', d.mobile], ['Home number', d.homePhone], ['Gender', d.gender], ['Date of birth', d.dob], ['Marital status', d.marital], ['Occupation', d.occupation], ['Employer', d.employer], ['Home address', d.address], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', d.agent], ['First policy with GG', d.firstGG], ['Other business with GG', d.otherGG === 'Yes' ? 'Yes' + (d.otherGGType ? ': ' + d.otherGGType : '') : d.otherGG]]],
+    ['The client', [['Name', d.name], ['E-mail', isAgent() ? d.clientEmail : session && session.email], ['Mobile', d.mobile], ['Home number', d.homePhone], ['Gender', d.gender], ['Date of birth', d.dob], ['Marital status', d.marital], ['Occupation', d.occupation], ['Employer', d.employer], ['Home address', d.address], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', isAgent() ? me.agent.name + ' (you, the producer)' : d.agent], ['First policy with GG', d.firstGG], ['Other business with GG', d.otherGG === 'Yes' ? 'Yes' + (d.otherGGType ? ': ' + d.otherGGType : '') : d.otherGG]]],
     ['The vehicle', [['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['Chassis', d.chassis], ['Use', d.use], ['Anti-theft', d.antiTheft], ['Ever in an accident', /used|second/i.test(d.condition || '') && d.secondAcc === 'Yes' ? 'Yes' + (d.secondAccDetails ? ': ' + d.secondAccDetails : '') : ''], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
     ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen === 'Yes' && d.windscreenLimit ? 'Yes, TT$ ' + Number(d.windscreenLimit).toLocaleString() : d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', [d.ncd, d.ncdPct ? d.ncdPct + '%' : ''].filter(Boolean).join(', ')], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
     ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents or claims', d.accidents === 'Yes' ? 'Yes' + (d.accidentDetails ? ': ' + d.accidentDetails : '') : d.accidents === 'No' ? 'None' : ''], ['Young or new drivers', d.young === 'Yes' ? 'Yes' + (d.youngDetails ? ': ' + d.youngDetails : '') : d.young === 'No' ? 'None' : ''], ['Notes', d.notes]]],
     ['Documents', [['Attached', files.length ? files.map(f => docLabel(f.kind)).join(', ') : (d.flow === 'full' ? 'none' : '')]]]];
-  return '<p class="muted">Check it over. Tap Back to change anything. A receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
+  return '<p class="muted">Check it over. Tap Back to change anything. ' + (isAgent() ? 'A receipt goes to your client at ' + esc(d.clientEmail) + ', copied to you.' : 'A receipt comes to ' + esc(session && session.email) + '.') + '</p><div class="rev">' +
     G.map(g => [g[0], g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()))]).filter(g => g[1].length).map(g => '<h3>' + g[0] + '</h3>' + g[1].map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
     (d.flow !== 'renew' ? '<div class="formcard"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 3h-7A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V11"/><path d="M18 2.5l3.5 3.5-8 8H10v-3.5z"/></svg></span><span><b>Guardian\'s Motor Quotation Request, filled in for you</b><small>It goes to the quotes desk with your request. Check it if you wish.</small></span>' +
       '<button type="button" class="ghost" onclick="previewRequest()">Preview the form</button></div>' : '') +
-    '<label class="chk"><input type="checkbox" id="agree"> <span>This is true to the best of my knowledge. Please ' + (d.flow === 'renew' ? 'renew my cover.' : 'get me a quote.') + '</span></label>';
+    '<label class="chk"><input type="checkbox" id="agree"> <span>' + (isAgent() ? 'This is what my client told me, and they asked me to get them a quote.' : 'This is true to the best of my knowledge. Please ' + (d.flow === 'renew' ? 'renew my cover.' : 'get me a quote.')) + '</span></label>';
 }
 async function buildRequest() {
   const L = await pdfLib(), t = await fetch(FORM_REQUEST).then(r => { if (!r.ok) throw new Error('The form could not load.'); return r.arrayBuffer(); });
-  return MQForms.fillRequest(L, t, Object.assign({}, draft, { email: session && session.email }));
+  return MQForms.fillRequest(L, t, Object.assign({}, draft, { email: isAgent() ? draft.clientEmail : session && session.email, agent: isAgent() ? me.agent.name : draft.agent }));
 }
 async function previewRequest() {
   const w = window.open('', '_blank');
@@ -1638,13 +1710,15 @@ async function submit() {
       try { out.push({ kind: 'request', name: 'motor-quotation-request.pdf', type: 'application/pdf', data: bytesToB64(await buildRequest()) }); } catch (e) {}
     }
     $('btnNext').textContent = 'Sending…';
+    if (isAgent()) draft.clientStatus = draft.clientWith === 'Yes' ? 'existing' : draft.clientWith === 'No' ? 'new' : '';
     const j = await api('submit', { token: session.token, quote: draft, files: out });
     requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
     $('doneRef').textContent = j.ref;
     $('doneTitle').textContent = j.flow === 'renew' ? 'Your renewal request has gone.' : 'Your request has gone.';
     doneSteps(j.flow === 'renew' ? ['We check your renewal', 'Your renewal by e‑mail', 'We call you'] : ['We price it', 'Your quote by e‑mail', 'We call you'], j.flow === 'renew' ? 'renew' : 'quick');
-    $('doneMsg').textContent = j.mode === 'test' ? 'Test mode: this request went to the branch test inbox, not to the desk.' : 'It went to Guardian General\'s desk at ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ', with our branch copied.' +
-      (j.flow === 'quick' ? ' When you take the quote we will ask for your driver\'s permit and the certified copy.' : '');
+    $('doneMsg').textContent = (j.mode === 'test' ? 'Test mode: this request went to the branch test inbox, not to the desk.' : 'It went to Guardian General\'s desk at ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ', with our branch copied.') +
+      (j.flow === 'quick' ? (isAgent() ? ' When your client takes the quote, they sign in with their own e-mail and upload their permit and certified copy.' : ' When you take the quote we will ask for your driver\'s permit and the certified copy.') : '') +
+      (j.producer ? ' ' + j.producer + ' is the producer on it.' : '');
     show('s-done');
   } catch (e) { $('formErr').textContent = e.message; $('btnNext').disabled = false; $('btnNext').textContent = 'Send my request'; }
 }

@@ -72,9 +72,10 @@ const calls = []; let requests = []; let NEWME = null;
     if (b.action === 'propose') return reply({ ok: true, ref: 'MP-261021-001', mode: 'test', requests, flags: 1, kypNo: 1 });
     if (b.action === 'submit') { const ref = 'MQ-261021-00' + (requests.length + 1);
       requests = [{ ref, when: '21 Oct 2026', type: b.quote.flow === 'renew' ? 'Renewal' : 'Quick quote', vehicle: [b.quote.year, b.quote.make, b.quote.model].filter(Boolean).join(' '), reg: b.quote.reg, cover: b.quote.cover, status: 'Sent to quotes desk' }].concat(requests);
-      return reply({ ok: true, ref, flow: b.quote.flow, mode: 'test', requests, contact: 'Existing', mail: 'Sent' }); }
+      return reply({ ok: true, ref, flow: b.quote.flow, mode: 'test', requests, contact: 'Existing', mail: 'Sent', producer: b.quote.clientEmail ? 'Mala Madeup' : '' }); }
     if (b.action === 'permit') return reply({ ok: true, message: 'Saved to your record. Thank you.', changed: true, me: Object.assign({}, ME, { permitExpires: b.permitExpires, permitOnFile: { number: b.permit, issued: b.permitIssued, expires: b.permitExpires, state: 'valid', days: 1200 } }) });
     if (b.action === 'signOut') return reply({ ok: true });
+    if (b.action === 'agents') return reply({ ok: true, agents: /^ma/i.test(b.q || '') ? [{ id: '003000000000050AAA', name: 'Mala Madeup' }, { id: '003000000000051AAA', name: 'Mala Otherone' }] : [] });
     reply({ ok: false, error: 'Unknown action ' + b.action });
   });
   const wide = async () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
@@ -363,6 +364,55 @@ const calls = []; let requests = []; let NEWME = null;
   ok('"No, I am new" says the record is set up with the first request, and drops the number', /set up your record/.test(await txt('#meCard')) &&
     await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}'); return d.clientStatus === 'new' && !d.clientRef; }));
   ok('nothing runs wider than the phone with the question', await wide());
+  /* ── a client names their agent from the branch's list ── */
+  await page.click('#doorQuick'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('the quick quote asks for the client\'s agent, as a search', await page.isVisible('#agentQ') && /Your Guardian agent/.test(await txt('#step')));
+  await page.fill('#agentQ', 'ma'); await page.waitForSelector('#agentList button');
+  if (process.env.SHOTS) { await page.$eval('#agentQ', el => el.scrollIntoView({ block: 'center' })); await page.waitForTimeout(1500); await page.screenshot({ path: path.join(process.env.SHOTS, 'agent-pick.png') }); }
+  ok('typing lists our agents by name', (await page.$$('#agentList button')).length === 2 && calls.filter(c => c.action === 'agents').pop().q === 'ma');
+  await page.click('#agentList button:has-text("Mala Madeup")');
+  ok('picking one names them on the quote', /Mala Madeup is named on your quote/.test(await txt('#agentSaid')) && await page.inputValue('#agentQ') === 'Mala Madeup' &&
+    await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}'); return d.agentId === '003000000000050AAA' && d.agent === 'Mala Madeup'; }));
+  await page.fill('#agentQ', 'Mala Made');
+  ok('typing again unpicks them', await page.evaluate(() => !JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}').agentId));
+  ok('nothing runs wider than the phone with the agent list', await wide());
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.click('#who button'); await page.waitForSelector('#s-signin:not(.hide)');
+
+  /* ── an agent signs in and asks for a quote for a client ── */
+  NEWME = { found: false, email: 'mala.madeup@example.com', contactId: '', name: '', first: '', last: '', mobile: '', occupation: '', dob: '', vehicles: [], policies: [], salesforce: true,
+    agent: { name: 'Mala Madeup', first: 'Mala' } };
+  await page.evaluate(() => localStorage.removeItem('rrb-mq-draft'));
+  await page.fill('#email', 'mala.madeup@example.com'); await page.click('#btnCode'); await page.waitForSelector('#codeBox:not(.hide)');
+  await page.fill('#code', '211110'); await page.click('#btnVerify'); await page.waitForSelector('#s-home:not(.hide)');
+  ok('an agent is greeted as an agent, the producer on every quote', /Good day, Mala/.test(await txt('#homeTitle')) && /Signed in as agent Mala Madeup/.test(await txt('#meCard')) &&
+    /producer/.test(await txt('#homeLead')) && /Mala Madeup/.test(await txt('#whoName')));
+  if (process.env.SHOTS) { await page.waitForTimeout(1500); await page.screenshot({ path: path.join(process.env.SHOTS, 'agent-home.png') }); }
+  ok('an agent has the new quote alone: no renewal, no taking a quote', !(await page.isVisible('#pathRenew')) && !(await page.isVisible('#pathTake')) && !(await page.isVisible('#trTake')) && await page.isVisible('#trQuote'));
+  await page.click('#doorQuick'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('the form asks for the client: their e-mail, whether they are with us, their name; no agent box', await page.isVisible('[data-k=clientEmail]') &&
+    /Is your client already with Guardian/.test(await txt('#step')) && /Your client's full name/.test(await txt('#step')) && !(await page.$('#agentQ')) &&
+    await page.inputValue('[data-k=name]') === '');
+  if (process.env.SHOTS) { await page.waitForTimeout(1500); await page.screenshot({ path: path.join(process.env.SHOTS, 'agent-form.png') }); }
+  const pk3 = async (k, v) => page.click(`#step button[onclick^="pick('${k}','${v}'"]`);
+  await page.fill('[data-k=name]', 'Dev Madeup'); await page.fill('[data-k=mobile]', '868-555-0199');
+  await page.selectOption('select[data-k=make]', 'Honda'); await page.fill('[data-k=model]', 'Fit'); await page.selectOption('select[data-k=year]', '2018'); await page.fill('[data-k=value]', '70000');
+  await page.fill('[data-k=reg]', 'PDQ 1'); await page.click('.opts button:has-text("Third Party Only")'); await page.selectOption('select[data-k=drivingYears]', '5');
+  await pk3('accidents', 'No'); await pk3('young', 'No');
+  await page.click('#btnNext'); await page.waitForFunction(() => /client's e-mail/.test(document.getElementById('formErr').textContent));
+  ok('without the client\'s e-mail it does not go on', /client's e-mail/.test(await txt('#formErr')));
+  await page.fill('[data-k=clientEmail]', 'Mala.Madeup@example.com'); await page.click('#btnNext');
+  await page.waitForFunction(() => /not yours/.test(document.getElementById('formErr').textContent));
+  ok('…nor with the agent\'s own', /not yours/.test(await txt('#formErr')));
+  await page.fill('[data-k=clientEmail]', 'dev.client@example.com'); await pk3('clientWith', 'No');
+  await page.click('#btnNext'); await page.waitForFunction(() => /Check it over/.test(document.getElementById('step').textContent));
+  ok('the review sends the receipt to the client, copied to the agent, and names the agent as producer', /receipt goes to your client at dev\.client@example\.com, copied to you/.test(await txt('#step')) &&
+    /Mala Madeup \(you, the producer\)/.test(await txt('#step')) && /what my client told me/.test(await txt('#step')));
+  await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)', { timeout: 20000 });
+  const asub = calls.filter(c => c.action === 'submit').pop();
+  ok('the request carries the client\'s e-mail and that they are new', asub.quote.clientEmail === 'dev.client@example.com' && asub.quote.clientStatus === 'new' && asub.quote.name === 'Dev Madeup');
+  ok('the done screen says the agent is the producer and how the client takes it', /Mala Madeup is the producer/.test(await txt('#doneMsg')) && /their own e-mail/.test(await txt('#doneMsg')));
+  ok('nothing runs wider than the phone for an agent', await wide());
   ok('no page errors', errors.length === 0, errors.join(' | '));
   await browser.close(); server.close();
   console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');
