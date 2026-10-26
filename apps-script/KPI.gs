@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-23d';
+var SCRIPT_VERSION = '2026-10-26a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3166,17 +3166,18 @@ function sendDayStart_(staffId, date, kind, opt) {
     if (dsMarkHolds_(had)) return false;
     if (had) runlog_('morning ' + staffId + ': the ' + dsTryAt_(had) + ' try did not finish, trying again');
     var to = emailFor_(staffId);
-    if (!to) return false;
-    props.setProperty(onceKey, DS_TRY + Date.now());
+    if (!to) { runlog_('morning ' + staffId + ': NOT sent, no e-mail address on the Access tab'); return false; }
+    try { propSet_(props, onceKey, DS_TRY + Date.now()); }
+    catch (eMark) { runlog_('morning ' + staffId + ' FAILED ' + hhmm_(new Date()) + ': the mark could not be saved: ' + String(eMark && eMark.message || eMark).slice(0, 140)); eMark.logged = true; throw eMark; }
   }
   var res;
   try { res = dayStartBuildSend_(staffId, date, kind, opt, to); }
   catch (e) {
     try { if (kind === 'plan' && had) props.setProperty(onceKey, had); else props.deleteProperty(onceKey); } catch (e2) {}
-    if (kind !== 'plan') runlog_('morning ' + staffId + ' FAILED ' + hhmm_(new Date()) + ': ' + String(e && e.message || e).slice(0, 160));
+    if (kind !== 'plan') { runlog_('morning ' + staffId + ' FAILED ' + hhmm_(new Date()) + ': ' + String(e && e.message || e).slice(0, 160)); try { e.logged = true; } catch (e3) {} }
     throw e;
   }
-  if (kind !== 'plan') props.setProperty(onceKey, hhmm_(new Date()));
+  if (kind !== 'plan') { try { propSet_(props, onceKey, hhmm_(new Date())); } catch (e4) { runlog_('morning ' + staffId + ' sent, but the mark could not be saved: ' + String(e4 && e4.message || e4).slice(0, 120)); } }
   return res;
 }
 
@@ -3677,12 +3678,13 @@ function timedSend_(props, key, now, fn) {
   if (tries >= 3) return false;
   try {
     var ok = fn();
-    props.setProperty(key, hhmm_(now));
+    // The mark through propSet_: on a full store the old copies are cleared first, so a sent e-mail is not sent again (26 Oct 2026).
+    try { propSet_(props, key, hhmm_(now)); } catch (eMark) { runlog_(key + ' sent ' + hhmm_(now) + ', but the mark could not be saved: ' + String(eMark && eMark.message || eMark).slice(0, 100)); return true; }
     if (tries) props.deleteProperty(fk);
     runlog_(key + ' sent ' + hhmm_(now) + (ok === false ? ' (nothing to send)' : ''));
     return true;
   } catch (e) {
-    props.setProperty(fk, String(tries + 1));
+    try { propSet_(props, fk, String(tries + 1)); } catch (e2) {}
     runlog_(key + ' FAILED ' + hhmm_(now) + ' try ' + (tries + 1) + ': ' + (e && e.message));
     return false;
   }
@@ -3696,6 +3698,7 @@ function showRunLog() {
   var fails = Object.keys(p.getProperties()).filter(function (k) { return /^FAIL_/.test(k) && k.indexOf(day) > -1; }).map(function (k) { return k + ' = ' + p.getProperty(k) + ' tries'; });
   var m = (p.getProperty('RUNLOG') || 'No timed sends recorded yet.') + '\n\nLast run: ' + (p.getProperty('tick_last') || 'not recorded yet') +
     '\nLongest run today: ' + (p.getProperty('tick_long_' + day) || 'not recorded yet') + '\nFailed today: ' + (fails.length ? fails.join(', ') : 'none') +
+    '\nStorage: ' + (function () { try { return storeKb_() + ' KB of about ' + STORE.LIMIT_KB; } catch (e) { return 'not read'; } })() +
     '\n\nMorning e-mail today:\n' + morningMailStatus_(day);
   Logger.log(m); return m;
 }
@@ -3767,6 +3770,8 @@ function housekeepingTick_() {
   // and they are to review; if a staff does not open and save, it is assumed
   // they are absent"). Three a run; a desk the runs missed still gets it up to
   // twenty minutes after its start.
+  // The storage, hourly and before anything is sent: old copies out before it fills (26 Oct 2026).
+  try { storeTick_(day, mins); } catch (e) {}
   var morningSent = 0;
   people.forEach(function (p) {
     var sid = String(p.staffId), sp = parseSpan_(scheduleFor_(sid).hours || '');
@@ -3775,8 +3780,12 @@ function housekeepingTick_() {
     // Past the budget a second build waits ten minutes for the next run rather than be stopped part-way (21 Oct 2026).
     if (morningSent && late()) return;
     // A failure is logged and cleared by sendDayStart_ itself, so the next run tries again.
-    try { if (sendDayStart_(sid, day, 'first')) { sent.push(p.name + ' (morning)'); morningSent++; runlog_('morning ' + sid + ' sent ' + hhmm_(new Date())); } } catch (e) {}
+    try { if (sendDayStart_(sid, day, 'first')) { sent.push(p.name + ' (morning)'); morningSent++; runlog_('morning ' + sid + ' sent ' + hhmm_(new Date())); } }
+    catch (e) { if (!(e && e.logged)) { try { runlog_('morning ' + sid + ' FAILED ' + hhmm_(new Date()) + ': ' + String(e && e.message || e).slice(0, 160)); } catch (e2) {} } }
   });
+  // A desk with no morning e-mail ten minutes after its start: Mr Rampersad is told why (26 Oct 2026).
+  try { morningWatch_(day, mins, people, absent); } catch (e) {}
+
 
   // 5:00, the Branch Manager's own day; 11:00 his progress; 15:00 he closes out the day.
   if (mins >= BM_MAIL_AT && mins <= 11 * 60 && !morningSent && !props.getProperty('bmday_' + day)) {
@@ -7168,7 +7177,8 @@ function sdSave_(person, day, p, all) {
 /** Once a day: drop the morning's working copies (models, targets, choices, mail marks) older than three weeks.
  *  Nothing reads them after the next day; left alone they fill the script's property store. */
 function sdPrune_(day) {
-  var props = PropertiesService.getScriptProperties(), cut = shiftDays_(day, -21), n = 0;
+  var n0 = 0; try { n0 = storeRelief_(day, false); } catch (e) {}   // the AI reviews and big day caches first (26 Oct 2026)
+  var props = PropertiesService.getScriptProperties(), cut = shiftDays_(day, -STORE.LONG_DAYS), n = n0;
   var keys = typeof props.getKeys === 'function' ? props.getKeys() : Object.keys(props.getProperties());
   keys.forEach(function (k) {
     var m = String(k).match(/^(?:bm_deep_|bmdeep_|ix_deep_|ixdeep_|lead_|lunchoff_|intel_model_|intel_plan_|intel_target_|daystart_(?:first|plan)_|md_|hkv2_|autoabs_|cover_|cover2_|notclosed_|ncchk_|ncrem_|ncdone_|um_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|sd_(?:list|qids)_|tcard_|game_|wall2_|co_(?:ask|un|chk)_|bmchk_|um_chk_|FAIL_|ag_(?:am|md|pm|items)_)[A-Za-z0-9_.-]*?(\d{4}-\d{2}-\d{2})(?:_[A-Za-z0-9_]+)?$/);
@@ -9046,12 +9056,108 @@ function umItemsKey_(sid, day) { return 'um_items_' + sid + '_' + day; }
  *  pieces. The day's items used to be cut at 8,900 characters, and cut JSON
  *  reads as nothing: a big unit's page showed no comment boxes, so nothing
  *  Akaash wrote reached Chatter (19 Oct 2026). */
+/* ─────────── The tracker's storage, kept from filling (26 October 2026) ───────────
+ *  Ricky, 7:57am: "please see kamla message - Not seeing my day's email to check in"; 8:02, Azariah the same. No desk had
+ *  its morning e-mail and nothing was in the run log. Google gives a script about 500 KB of Script Properties in all, and
+ *  once they are full every NEW value fails to save. The morning e-mail saves a "being built" mark before it builds, the
+ *  save threw, and the run's own try/catch swallowed it: no e-mail, no log, and no absence either (the clock waits for the
+ *  e-mail). What had filled it: the AI inbox review and drafts (bm_deep_, ix_deep_, 23 Oct), whole Claude answers in
+ *  8,000-character pieces every hour, kept three weeks with the small marks. Friday's lunch close-off went the same way.
+ *  Now:
+ *    · the AI reviews are dropped after their own day, the big day caches after three days, the small marks after 21;
+ *    · a save that hits the limit clears the old caches and tries again (propSet_, bigPut_);
+ *    · every run checks the size hourly and clears early (storeTick_), and Mr Rampersad is told if it stays high;
+ *    · a desk whose morning e-mail has not gone ten minutes after its start: he is told why (morningWatch_);
+ *    · showRunLog says how full it is. */
+var STORE = {
+  LIMIT_KB: 500, RELIEF_KB: 380, WARN_KB: 430, SHORT_DAYS: 3, LONG_DAYS: 21, WATCH_AFTER: 10,
+  SAME_DAY: /^(?:bm_deep_|ix_deep_)/,
+  SHORT: /^(?:ag_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|intel_model_|sd_(?:list|qids)_|um_items_|lead_|game_ideas_|co_(?:ask|un)_)/
+};
+/** Script Properties in use, in KB (keys and values). */
+function storeKb_() {
+  var o = PropertiesService.getScriptProperties().getProperties(), n = 0;
+  Object.keys(o).forEach(function (k) { n += k.length + String(o[k]).length; });
+  return Math.round(n / 1024);
+}
+function storeFull_(e) { return /quota|exceeded|too large|maximum size/i.test(String(e && e.message || e)); }
+/** The old working copies out: the AI reviews before today, the big day caches past SHORT_DAYS (all but today when hard). */
+function storeRelief_(day, hard) {
+  var props = PropertiesService.getScriptProperties(), d0 = day || todayISO_(), cut = hard ? d0 : shiftDays_(d0, -STORE.SHORT_DAYS), n = 0;
+  var keys = typeof props.getKeys === 'function' ? props.getKeys() : Object.keys(props.getProperties());
+  keys.forEach(function (k) {
+    var d = (/(\d{4}-\d{2}-\d{2})/.exec(k) || [])[1];
+    if (!d) return;
+    if ((STORE.SAME_DAY.test(k) && d < d0) || (STORE.SHORT.test(k) && d < cut)) { try { props.deleteProperty(k); n++; } catch (e) {} }
+  });
+  return n;
+}
+/** setProperty that, on a full store, clears the old caches and tries again: soft first, then all but today's. */
+function propSet_(props, key, val) {
+  try { props.setProperty(key, val); return; } catch (e) { if (!storeFull_(e)) throw e; }
+  var day = todayISO_(), n = storeRelief_(day, false);
+  try { props.setProperty(key, val); try { runlog_('storage full: ' + n + ' old values cleared to save ' + key); } catch (e0) {} return; } catch (e1) { if (!storeFull_(e1)) throw e1; }
+  n += storeRelief_(day, true);
+  props.setProperty(key, val);
+  try { runlog_('storage full: ' + n + ' values cleared (all but today) to save ' + key); } catch (e2) {}
+}
+/** Hourly: the size checked, cleared past RELIEF_KB, and Mr Rampersad told once a day if it is still past WARN_KB. */
+function storeTick_(day, mins) {
+  var c = CacheService.getScriptCache(), hk = 'store_chk_' + day + '_' + Math.floor(mins / 60);
+  if (c.get(hk)) return '';
+  c.put(hk, '1', 3600);
+  var kb = storeKb_(), msg = '';
+  if (kb >= STORE.RELIEF_KB) {
+    var n = storeRelief_(day, false), kb2 = storeKb_();
+    if (kb2 >= STORE.RELIEF_KB) { n += storeRelief_(day, true); kb2 = storeKb_(); }
+    msg = 'storage ' + kb + ' KB of about ' + STORE.LIMIT_KB + ': ' + n + ' old values cleared, now ' + kb2 + ' KB';
+    try { runlog_(msg); } catch (e) {}
+    if (kb2 >= STORE.WARN_KB && !c.get('store_warn_' + day)) {
+      c.put('store_warn_' + day, '1', 21600);
+      try { trackerAlert_('The tracker\'s storage is nearly full', 'It holds ' + kb2 + ' KB of the ' + STORE.LIMIT_KB + ' KB Google allows, after clearing the old copies. ' +
+        'When it is full, e-mails and marks stop saving. Run showRunLog in the editor and send the log to Claude.'); } catch (e) {}
+    }
+  }
+  return msg;
+}
+/** One plain e-mail to Mr Rampersad about the tracker itself. Never needs a Script Property to send. */
+function trackerAlert_(title, text) {
+  var to = managerEmails_();
+  if (!to.length) return false;
+  mailSend_({ to: to.join(','), subject: 'Tracker: ' + title + ' · ' + shortDate_(todayISO_()) + ' ' + hhmm_(new Date()),
+    htmlBody: shell_(title, prettyDate_(todayISO_()), '<div style="font-size:14px;line-height:1.55">' + esc_(text) + '</div>') });
+  return true;
+}
+/** Ten minutes after a desk's start with no morning e-mail gone: Mr Rampersad is told, once, with the reason if there is one. */
+function morningWatch_(day, mins, people, absent) {
+  var c = CacheService.getScriptCache(), props = PropertiesService.getScriptProperties(), late = [];
+  people.forEach(function (p) {
+    var sid = String(p.staffId), sp = parseSpan_(scheduleFor_(sid).hours || '');
+    if (!sp || absent[sid] || mins < sp.start + STORE.WATCH_AFTER || mins > sp.start + 120) return;
+    if (dsSent_(props.getProperty('daystart_first_' + sid + '_' + day))) return;
+    var ck = 'ds_watch_' + sid + '_' + day;
+    if (c.get(ck)) return;
+    c.put(ck, '1', 21600);
+    late.push(p);
+  });
+  if (!late.length) return [];
+  var why = (String(props.getProperty('RUNLOG') || '').split('\n').filter(function (l) { return l.indexOf(day) === 0 && /morning .* FAILED|storage/.test(l); }).pop() || '').slice(11);
+  var kb = 0; try { kb = storeKb_(); } catch (e) {}
+  try {
+    trackerAlert_('morning e-mail not gone: ' + late.map(function (p) { return String(p.name).split(' ')[0]; }).join(', '),
+      late.map(function (p) { return p.name; }).join(', ') + ': no morning e-mail ' + STORE.WATCH_AFTER + ' minutes after the start, so no check-in link from it. ' +
+      (why ? 'Last reason logged: ' + why + '. ' : 'Nothing was logged. ') + 'Storage: ' + kb + ' KB of about ' + STORE.LIMIT_KB + '. ' +
+      'They can check in from their My workday link (showWorkdayLinks). To send one again: resendMorningKamla and the others, from the editor.');
+  } catch (e) {}
+  runlog_('morning not gone by start + ' + STORE.WATCH_AFTER + ': ' + late.map(function (p) { return p.staffId; }).join(', ') + ' (Mr Rampersad told)');
+  return late.map(function (p) { return p.staffId; });
+}
 function bigPut_(key, obj) {
   var props = PropertiesService.getScriptProperties(), js = JSON.stringify(obj), n = Math.max(1, Math.ceil(js.length / 8000));
   var old = Number(props.getProperty(key + '_n') || 1);
-  for (var i = 0; i < n; i++) props.setProperty(key + (i ? '_' + i : ''), js.slice(i * 8000, (i + 1) * 8000));
+  for (var i = 0; i < n; i++) propSet_(props, key + (i ? '_' + i : ''), js.slice(i * 8000, (i + 1) * 8000));
   for (var j = n; j < old; j++) { try { props.deleteProperty(key + '_' + j); } catch (e) {} }
-  if (n > 1) props.setProperty(key + '_n', String(n)); else { try { props.deleteProperty(key + '_n'); } catch (e) {} }
+  if (n > 1) propSet_(props, key + '_n', String(n)); else { try { props.deleteProperty(key + '_n'); } catch (e) {} }
 }
 function bigGet_(key, dflt) {
   var props = PropertiesService.getScriptProperties(), n = Number(props.getProperty(key + '_n') || 1), js = '';
