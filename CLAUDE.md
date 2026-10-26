@@ -3957,6 +3957,24 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   "Cancel the approval" withdraws it. Whoever looks after the group, the deputy
   and the branch manager can still send at once ("Send now", or Outlook; until
   14 October 2026 the branch manager alone); doing so closes that group's approval.
+  **The run never refreshes into its own time, and at 11:00 the team is told** (26 October 2026: the 10:00 run and the
+  10:30 retry sent none of the eleven approved letters, and nothing said so. The Salesforce refresh had grown to about
+  five minutes, and the run started its 4.5-minute sending clock before it, so it ran out of time before the first
+  letter. Then: "all needs to go out, if all is not done a letter must trigger to the team with the reason and hold
+  persons responsible if they are assigned").
+  - **The run uses a refresh under an hour old** (`GCM.QUEUE_FRESH_MIN`, `gcmRefreshedMs_` from the `gcm_refreshed_ms`
+    property the refresh now writes) and starts its sending clock after any refresh it does. A letter the clock leaves
+    is named in the run's summary as not reached.
+  - **The hourly run sends first and refreshes after**: the queue, the approved bills and the team check, then the
+    refresh, only when the last is over 15 minutes old.
+  - **Monday 11:00, the team letter** (`gcmTeamCheck_`, `GCM.TEAM_HOUR`, once a week by `GCM_TEAM_LAST`): if any group on
+    the register has no letter this week, one e-mail goes to every active account owner, the Branch Manager's Assistant,
+    the branch manager and sales support. Each group not out is named with the reason and who is responsible: the
+    account owner for a letter not approved or a group not set up, the approver for a letter held at the run, the branch
+    for an approved letter the run did not reach, and the BMA for a group whose owner is not active in Salesforce.
+    Nothing goes when every group has its letter. `gcmTeamTest` (editor Run) sends the branch manager the letter as it
+    would go now, marked TEST. The letters stay at 10:00, as every letter, film and the manual say.
+  - `team26/team-test.js` in the scratchpad covers it (19 checks).
   The group is asked to answer by Friday. Every letter is logged on `Group
   Sends` with the letter itself. `gcmlive/queue-test.js` in the session
   scratchpad covers it (26 checks).
