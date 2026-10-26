@@ -189,6 +189,39 @@ table.esc td:first-child{font-weight:600;width:40%}
 .rv .ans{white-space:pre-wrap;background:var(--sunken);border-radius:6px;padding:8px 10px;margin:6px 0}
 .rv .fb{background:var(--primarySoft);border-radius:6px;padding:8px 10px;margin:6px 0}
 .markin{width:80px;padding:8px;border:1px solid var(--line2);border-radius:6px}
+.intro{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin:16px 0;box-shadow:var(--shadow)}
+.intro h1{font-size:24px;font-weight:600;letter-spacing:-.015em;margin:2px 0 8px;line-height:1.2}.intro p{margin:6px 0}
+.kick{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--primary)}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.toc a{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;text-decoration:none;color:var(--ink2);background:var(--sunken);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
+.toc a:hover{border-color:var(--primaryLine);color:var(--primary)}.toc a.on{background:var(--goodBg);border-color:#BFE3CB;color:var(--good)}
+.toc a i{font-style:normal;font-variant-numeric:tabular-nums;color:var(--muted)}
+.two,.three{display:grid;gap:10px;margin:12px 0}.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}.three{grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))}
+.box{background:var(--primarySoft);border:1px solid var(--primaryLine);border-radius:10px;padding:12px 14px;font-size:14px}.box b{display:block;margin-bottom:4px;color:var(--ink)}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;margin:12px 0}
+.role{border:1px solid var(--line);border-top:4px solid var(--primary);border-radius:10px;padding:12px 16px;background:#fff;font-size:14px}
+.role.sys{border-top-color:var(--ink2);background:var(--sunken)}
+.role p{margin:8px 0 4px}.role ul{margin:4px 0 0;padding-left:20px}
+.rtag{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--primary);border-radius:6px;padding:3px 9px}
+.role.sys .rtag{background:var(--ink2)}
+table.raci td:first-child,table.audit td:first-child{font-weight:600;width:34%}
+table.raci td{font-size:13.5px}
+.cal{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:10px;margin:12px 0}
+.cd{background:#fff;border:1px solid var(--line);border-left:4px solid var(--bar);border-radius:10px;padding:10px 12px;font-size:13.5px}
+.cd.hot{border-left-color:var(--primary);background:var(--primarySoft)}
+.cd b{display:block;font-size:15px;margin:2px 0 4px}.ct{font-size:12px;font-weight:600;color:var(--primary);font-variant-numeric:tabular-nums}
+.stepc{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.stepc:last-of-type{border-bottom:0}.stepc p{margin:6px 0}.stepc ul{margin:4px 0;padding-left:20px}.stepc>div>b{font-size:16px}
+.sc{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;font-weight:600}
+.levels{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;margin:8px 0}
+.lvp{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.lv{font-weight:600;font-size:12px;border-radius:99px;padding:2px 9px}.lv.fix{background:var(--badBg);color:var(--badText)}.lv.chk{background:var(--warnBg);color:var(--warn)}.lv.nt{background:var(--primarySoft);color:var(--primary)}.lv.ok{background:var(--goodBg);color:var(--good)}
+.qa details{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:#fff;overflow:hidden}
+.qa summary{cursor:pointer;list-style:none;padding:11px 14px 11px 40px;font-weight:600;position:relative}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"Q";position:absolute;left:12px;top:10px;width:20px;height:20px;border-radius:5px;background:var(--primarySoft);color:var(--primary);font-size:12px;display:grid;place-items:center}
+.qa details[open] summary{background:var(--sunken)}
+.qa details p{margin:0;padding:10px 14px 12px 40px;border-top:1px solid var(--line);position:relative}
+.qa details p::before{content:"A";position:absolute;left:12px;top:10px;width:20px;height:20px;border-radius:5px;background:var(--goodBg);color:var(--good);font-size:12px;font-weight:600;display:grid;place-items:center}
 .appr .bar{min-width:104px}.appr td{padding:9px 6px}.appr td:first-child{padding-left:10px}.rowlink{cursor:pointer}.rowlink:hover td{background:var(--sunken)}
 </style>
 <script src="/rroperations/sso.js"></script>
@@ -204,7 +237,7 @@ table.esc td:first-child{font-weight:600;width:40%}
   <div id="app">
   <form class="gate" id="gate" autocomplete="off">
     <h1>Training and test</h1>
-    <p>The staff manual for group client management, then the test. Sign in with your agent number and password from the Agent Skill Bank, so your reading and your result are logged against your name.</p>
+    <p>The training programme for group client management: the week, the month’s billing, everyone’s part, then the test. Sign in with your agent number and password from the Agent Skill Bank, so your reading and your result are logged against your name.</p>
     <label for="gWho">Agent number</label>
     <input class="field" id="gWho" autocapitalize="characters" spellcheck="false" placeholder="A00427">
     <label for="gCode">Password, or the branch code</label>
@@ -214,85 +247,239 @@ table.esc td:first-child{font-weight:600;width:40%}
   </form>
   </div>
 <article id="manual" class="manual hide">
+<div class="intro">
+  <p class="kick">Revised 26 October 2026</p>
+  <h1>Group client management: the training programme</h1>
+  <p>This is how the Ricky Rampersad Branch looks after its group clients: every week, every month, and every person’s part in it. Read each section and tick it. When all fifteen are ticked, the test opens. Your questions depend on your role.</p>
+  <div class="toc" id="toc"></div>
+</div>
+
+<figure class="guide"><video controls playsinline preload="none" poster="staff-new-way.jpg" src="staff-new-way.mp4"></video>
+  <figcaption><b>Watch first: the new way</b> (2 min 53 s). Who does what, the week, the month’s billing step by step, the cut-off and the audit trail. A sample branch, made-up groups and figures; music: the Ricky Rampersad Branch theme.</figcaption></figure>
 <figure class="guide"><video controls playsinline preload="none" poster="staff-guide.jpg" src="staff-guide.mp4"></video>
-  <figcaption><b>Watch first:</b> the new week in under three minutes. Sample groups and figures; music: “Inspired” by Kevin MacLeod (incompetech.com), licensed under CC BY 4.0.</figcaption></figure>
+  <figcaption><b>Then:</b> the week in detail, from checking a group to the letter at 10:00 on Monday (under three minutes). Sample groups and figures; music: “Inspired” by Kevin MacLeod (incompetech.com), licensed under CC BY 4.0.</figcaption></figure>
 <figure class="guide"><video controls playsinline preload="none" poster="group-view.jpg" src="group-view.mp4"></video>
-  <figcaption><b>Then:</b> what the group sees, from Monday’s letter to their answer, and how it comes back to you (2 minutes). Sample groups and figures.</figcaption></figure>
+  <figcaption><b>And:</b> what the group sees, from Monday’s letter to their answer, and how it comes back to you (2 minutes). The film groups are sent, <a href="/groupmgt/client/">our new way of looking after your group</a>, is 1 min 23 s. Sample groups and figures.</figcaption></figure>
+
 <section class="msec" id="m1" data-sec="1">
   <h2><span class="sn">1</span>The job, and why it matters</h2>
   <p>Each of your groups is an employer that pays for its employees’ life, health and pension plans with Guardian Life. To that employer, <b>you are Guardian Life</b>.</p>
-  <p>Every Monday at 10:00 each group gets one letter from you: what we completed, what is still open, what we need from them, and a link to their own service page. You check the group and approve its letter during the week; at ten on Monday it goes out by itself from support@. On that page they read each item, mark it <i>Correct</i>, <i>Needs a change</i> or <i>Not ours</i>, and rate our service.</p>
-  <p>So the letter is a promise that every item on it is true <b>today</b>. A wrong item, an item the group already answered, a date we let slip without a word: each costs more trust than a late letter ever would.</p>
+  <p>The branch now runs every group the same way, in two rhythms:</p>
+  <div class="two">
+    <div class="box"><b>Every week: the service report</b>Each Monday at 10:00 every group gets one letter: what we completed, what is still open, what we need from them, and the link to their own service page. They answer each item and rate us.</div>
+    <div class="box"><b>Every month: the bills</b>Head Office’s bills arrive on the 25th. We check every line against Salesforce, answer what does not agree, and send each group its bills and a statement of account at 10:00 on the 26th.</div>
+  </div>
+  <p>The group’s page has three tabs: <b>Your service items</b>, <b>Your billing</b> and <b>Your people</b>. What they read there is a promise that it is true <b>today</b>. A wrong item, a bill nobody checked, or a date we let slip without a word costs more trust than a late letter ever would.</p>
   <ul>
-    <li><b>Your groups</b> are the accounts you own in Salesforce. A group moves to someone else when the account owner is changed in Salesforce.</li>
-    <li><b>Three places, three jobs.</b> Salesforce is the record. The inboxes are the truth of what was said. The group page (rickyrampersadbranch.com/groupclientmanagement) is what the group will read.</li>
+    <li><b>Your groups</b> are the accounts you own in Salesforce. A group moves to someone else only when the account owner is changed in Salesforce.</li>
+    <li><b>Three places, three jobs.</b> Salesforce is the record. The inboxes are the truth of what was said. The group’s page is what the group reads.</li>
+    <li><b>Nothing reaches a group that a person has not checked.</b> The system sends at set times, but only what someone approved.</li>
   </ul>
   <label class="readtick"><input type="checkbox" data-read="1"> I have read and understood section 1</label>
 </section>
 
 <section class="msec" id="m2" data-sec="2">
-  <h2><span class="sn">2</span>Your week</h2>
-  <div class="scroll"><table class="t week">
-    <tr><th>Monday</th><td><b>10:00: the letters go by themselves.</b> Every letter you approved is written again from Salesforce and sent. One that waited (a new item since you checked, a reason missing) comes to you by e-mail: put it right and approve it again, and it goes in the next hourly run. Then follow up any group that did not answer last week (section 7).</td></tr>
-    <tr><th>Tue – Wed</th><td>Work the open items. Keep Salesforce current as you go: status, target dates, Chatter, and e-mails filed on the record.</td></tr>
-    <tr><th>Thursday</th><td>Groups answer by Friday; each answer reaches you by e-mail, and you act on it by the next working day (section 7). Start the six checks (section 3) on each of your groups.</td></tr>
-    <tr><th>Friday</th><td><b>Approve.</b> Finish the checks, deal with every escalation (section 4), write the reasons (section 6), then preview and approve each group marked <i>Approve for Monday</i>. You can approve up to 10:00 on Monday, but Friday leaves Monday morning for what changed.</td></tr>
-    <tr><th>Every day</th><td>Read support@ and your own inbox. Nothing from a group waits more than a working day for at least an acknowledgement.</td></tr>
+  <h2><span class="sn">2</span>Who does what</h2>
+  <p>Everyone signs in with their own agent number and password, so everything they do is recorded in their own name. The pages know your role from the Agent Skill Bank.</p>
+  <div class="roles">
+    <div class="role"><span class="rtag">Branch Manager</span>
+      <p><b>Sets the standard and owns the result.</b></p>
+      <ul>
+        <li>Reads the billing report at 13:00 on the 25th, and the daily summary after 10:30.</li>
+        <li>Is told of every late bill and its reason, every rating of 3 or less, and anything about health, claims or the law.</li>
+        <li>The only one who rehearses the runs, switches the bills live, and reconciles a line with a fix still open.</li>
+        <li>Confirms the marks on written test answers.</li>
+      </ul></div>
+    <div class="role"><span class="rtag">Branch Manager’s Assistant</span>
+      <p><b>Oversees the tasks.</b> Kamla signs in under her own role.</p>
+      <ul>
+        <li>Sees and acts on every group: approve, send, comment, write a note for the group. Her approval is logged in her name; the letter is still signed by the person who looks after the group.</li>
+        <li>Every day, reads the Team dashboard and chases what is late: letters not approved by Friday, bills not reconciled by 13:00 on the 25th, answers waiting more than a working day.</li>
+        <li>Steps in when someone is away, so a group never waits on a person who is out.</li>
+        <li>Gives a reason, like everyone else, when she sends a bill after the cut-off.</li>
+      </ul></div>
+    <div class="role"><span class="rtag">Support team</span>
+      <p><b>Each of you looks after your own groups</b>: the accounts you own in Salesforce.</p>
+      <ul>
+        <li>Each week: the six checks, a reason on every item open more than 30 days, then <i>Approve for Monday</i> by Friday.</li>
+        <li>Each month: on the 25th, upload, check, answer, reconcile and approve every bill.</li>
+        <li>Every day: the inboxes, and an answer to every group within one working day.</li>
+        <li>You see every group, so you can help a colleague. A colleague’s group opens read only; you can leave a comment for the team on any item.</li>
+      </ul></div>
+    <div class="role sys"><span class="rtag">The system</span>
+      <p><b>Keeps time and keeps the record.</b></p>
+      <ul>
+        <li>Sends the approved letters at 10:00 on Monday, and the approved bills at 10:00 on the billing day.</li>
+        <li>Reminds groups every working day to rate their letter, until they do or write to us.</li>
+        <li>At 10:30 asks anyone whose ready group missed its letter or its bill why, and opens a task for the reason.</li>
+        <li>Chases each change form every three working days, and logs every step (section 12).</li>
+      </ul></div>
+  </div>
+  <h3>Step by step: who does it, who checks it, who is told</h3>
+  <div class="scroll"><table class="t raci">
+    <thead><tr><th>What</th><th>Does it</th><th>Checks it</th><th>Is told</th></tr></thead>
+    <tbody>
+      <tr><td>The six checks and the weekly letter</td><td>Support team, by Friday</td><td>BMA, on the Team dashboard</td><td>The group, at 10:00 on Monday</td></tr>
+      <tr><td>A ready group with no letter this week</td><td>Support team: the reason by noon, the task closed with it</td><td>BMA</td><td>Branch Manager, in the 10:30 summary</td></tr>
+      <tr><td>A group’s answer: <i>Needs a change</i> or <i>Not ours</i></td><td>Support team, by the next working day</td><td>BMA</td><td>The group, with what we did</td></tr>
+      <tr><td>A rating of 3 or less</td><td>Support team: a call within two working days</td><td>BMA</td><td>Branch Manager</td></tr>
+      <tr><td>The month’s bills</td><td>Support team, on the 25th</td><td>BMA, then the Branch Manager at 13:00</td><td>The group, at 10:00 on the billing day</td></tr>
+      <tr><td>A bill after the cut-off</td><td>Whoever sends it, with the reason</td><td>BMA</td><td>Branch Manager, at once</td></tr>
+      <tr><td>A member joining, leaving or changing</td><td>Support team: the Guardian form, from the page</td><td>The account owner’s task</td><td>EB Customer Care, sales support, support@</td></tr>
+      <tr><td>Going live, rehearsing, a line reconciled with a fix open</td><td>Branch Manager only</td><td>–</td><td>The team</td></tr>
+    </tbody>
   </table></div>
   <label class="readtick"><input type="checkbox" data-read="2"> I have read and understood section 2</label>
 </section>
 
 <section class="msec" id="m3" data-sec="3">
-  <h2><span class="sn">3</span>Before you approve: the six checks</h2>
-  <p>The letter is written again from Salesforce at ten on Monday, and an item that appears after you approve holds it. These checks make Salesforce true first.</p>
-  <ol class="steps">
-    <li><b>Open the group and read it.</b> Read the chips: <i>Approve for Monday</i>, <i>waiting on them</i>, <i>past target</i>, <i>needs a reason</i>. Read <i>Letter goes to</i>: is it the right person? (Personal mailboxes: section 5.)</li>
-    <li><b>Check every open Salesforce task.</b> Is it still open? Is the status right? Is the target date real? Is the right person on it? Close what is done. If a date has passed and you cannot finish today, set a realistic new date with a Chatter note saying why. <b>Never move a date just to clear the red</b>: every move is recorded, and the group sees the first target date beside the current one.</li>
-    <li><b>Scrub the inboxes.</b> Search support@, your own Outlook and the sales support inbox for the group’s name, its list bill, the contact’s e-mail address and each item’s subject line. Look for: an e-mail from the group nobody answered (answer it first); a document or form they sent (update the item); a payment confirmation (check the billing and close the item if it is settled); a complaint (section 4). Not every e-mail is filed in Salesforce, so <b>the inbox is the truth</b>. File what matters on the record, so the item’s history shows it.</li>
-    <li><b>See what the group actually has.</b> In Salesforce, open the account: its policies and list bill, the latest billing record (amount, date, status), and who is joining or leaving. Compare that with what the open items say. A letter that contradicts the group’s own billing or headcount tells them we do not know their business.</li>
-    <li><b>Update, then refresh.</b> Salesforce first: statuses, dates, Chatter notes, e-mails filed. Then tap <i>Refresh from Salesforce</i> on the group page, so the board and the letter read the new state.</li>
-    <li><b>Preview, check, approve.</b> Write the reason for any item open more than 30 days (section 6). Preview: the right contact and greeting, the group’s items ticked and nothing else, your opening line if you want one. Tick <i>I have checked every item against Salesforce and the latest billing</i>, then <i>Approve for Monday</i>. If something changes before Monday, approve it again. Who approved it, the letter, its items and when it went are all logged.</li>
-  </ol>
-  <div class="rule">Untick an item only when it is not the group’s to see (section 5). <b>Never untick to hide a problem.</b> If it is true and it is theirs, they see it.</div>
+  <h2><span class="sn">3</span>Your week: the service report</h2>
+  <div class="scroll"><table class="t week">
+    <tr><th>Monday</th><td><b>10:00: the letters go by themselves.</b> Every letter that was approved is written again from Salesforce and sent from support@, with sales support copied. A letter that waited (a new item since you checked, a reason missing, the group no longer ready) comes back to you by e-mail with the reason: put it right and approve it again, and it goes in the next hourly run.<br>
+      <b>10:30: the group day.</b> Each group that had a letter and has not rated gets a reminder, every working day, until it rates or writes to us. If one of your ready groups had no letter this week, you get an e-mail asking why, and a Salesforce task opens in your name: <i>GROUP LETTER NOT SENT … reason needed</i>. <b>Reply by 12 noon, put it right today, and close the task with the reason.</b> The reason is a KPI.</td></tr>
+    <tr><th>Tue – Wed</th><td>Work the open items. Keep Salesforce current as you go: the status, the target dates, Chatter, and e-mails filed on the record.</td></tr>
+    <tr><th>Thursday</th><td>Groups answer by Friday. Each answer reaches you by e-mail, and you act on it by the next working day (section 11). Start the six checks (section 4) on each of your groups.</td></tr>
+    <tr><th>Friday</th><td><b>Approve.</b> Finish the checks, deal with every escalation (section 5), write the reasons (section 10), then preview and approve each group marked <i>Approve for Monday</i>. You can approve until 10:00 on Monday, but Friday leaves Monday morning for what changed. An approval made after 10:00 on Monday is for the next Monday.</td></tr>
+    <tr><th>Every day</th><td>Read support@ and your own inbox. Nothing from a group waits more than one working day for at least an acknowledgement.</td></tr>
+  </table></div>
+  <div class="rule">On the group’s page they mark each item <i>Correct</i>, <i>Needs a change</i> or <i>Not ours</i>, and rate us from one to five stars. An answer of <i>Needs a change</i> or <i>Not ours</i> stays first on your <i>To act on</i> list for 14 days, until the item is closed or a note for the group follows it.</div>
   <label class="readtick"><input type="checkbox" data-read="3"> I have read and understood section 3</label>
 </section>
 
 <section class="msec" id="m4" data-sec="4">
-  <h2><span class="sn">4</span>Escalations: what you deal with before you approve</h2>
+  <h2><span class="sn">4</span>Before you approve: the six checks</h2>
+  <p>The letter is written again from Salesforce at ten on Monday, and an item that appears after you approve holds it. These checks make Salesforce true first.</p>
+  <ol class="steps">
+    <li><b>Open the group and read it.</b> Read the chips: <i>Approve for Monday</i>, <i>waiting on them</i>, <i>past target</i>, <i>needs a reason</i>. Read <i>Letter goes to</i>: is it the right person? (Personal mailboxes: section 9.)</li>
+    <li><b>Check every open Salesforce task.</b> Is it still open? Is the status right? Is the target date real? Is the right person on it? Close what is done. If a date has passed and you cannot finish today, set a realistic new date with a Chatter note saying why. <b>Never move a date just to clear the red</b>: every move is recorded, and the group sees the first target date beside the current one.</li>
+    <li><b>Scrub the inboxes.</b> Search support@, your own Outlook and the sales support inbox for the group’s name, its list bill, the contact’s address and each item’s subject. Look for: an e-mail nobody answered (answer it first), a document or form they sent (update the item), a payment confirmation (check the billing), a complaint (section 5). <b>The inbox is the truth</b>: file what matters on the record.</li>
+    <li><b>See what the group actually has.</b> In Salesforce, open the account: its policies and list bill, the latest billing record, who is joining or leaving. A letter that contradicts the group’s own billing or headcount tells them we do not know their business.</li>
+    <li><b>Update, then refresh.</b> Salesforce first: statuses, dates, Chatter notes, e-mails filed. Then tap <i>Refresh from Salesforce</i>, so the board and the letter read the new state.</li>
+    <li><b>Preview, check, approve.</b> Write the reason for any item open more than 30 days. Preview: the right contact and greeting, the group’s items and nothing else, your opening line if you want one. Tick <i>I have checked every item against Salesforce and the latest billing</i>, then <i>Approve for Monday</i>. If something changes before Monday, approve it again.</li>
+  </ol>
+  <div class="rule">Untick an item only when it is not the group’s to see (section 9). <b>Never untick to hide a problem.</b> If it is true and it is theirs, they see it.</div>
+  <label class="readtick"><input type="checkbox" data-read="4"> I have read and understood section 4</label>
+</section>
+
+<section class="msec" id="m5" data-sec="5">
+  <h2><span class="sn">5</span>Escalations: what you deal with first</h2>
   <div class="scroll"><table class="t esc">
-    <thead><tr><th>What you see</th><th>What you do before the letter goes</th></tr></thead>
+    <thead><tr><th>What you see</th><th>What you do</th></tr></thead>
     <tbody>
     <tr><td>An e-mail from the group with no answer</td><td>Answer it first, the same day: acknowledge it, say what will happen and by when.</td></tr>
     <tr><td>An item past its target date</td><td>Work it today, or set a realistic new date in Salesforce with a Chatter note, and write the group a reason.</td></tr>
     <tr><td>“Waiting on the group”, with no e-mail to them in 14 days</td><td>Call or e-mail them before the letter: they may not know we are waiting.</td></tr>
     <tr><td>A payment confirmation e-mailed, the item still open</td><td>Check the billing record: close the item, or note in Chatter what is still owed.</td></tr>
-    <tr><td>A target date moved three times or more</td><td>Tell the branch manager what is blocking it, and what you have done.</td></tr>
-    <tr><td>The group marked an item <i>Needs a change</i> or <i>Not ours</i></td><td>Fix it or find out why, and tell the group, before the next letter.</td></tr>
-    <tr><td>A rating of 3 or less, or a complaint</td><td>Call the contact within two working days, and tell the branch manager.</td></tr>
-    <tr><td>A billing error: a leaver still billed, a joiner missing</td><td>Check the record, raise the correction with the team that makes it, give the group a date, and follow it to the corrected bill.</td></tr>
-    <tr><td>Stuck with head office for more than a week</td><td>Raise it with the details, copy the branch manager, set yourself a follow-up date.</td></tr>
-    <tr><td>Anything about a member’s health, a claim, or a legal matter</td><td>Never in the letter. The branch manager, at once.</td></tr>
-    <tr><td>The contact has left, or the letter bounced</td><td>Get the new contact and update the Contact Person in Salesforce (section 8).</td></tr>
+    <tr><td>A target date moved three times or more</td><td>Tell the BMA what is blocking it and what you have done.</td></tr>
+    <tr><td>A rating of 3 or less, or a complaint</td><td>Call the contact within two working days, and tell the Branch Manager.</td></tr>
+    <tr><td>A billing error: a leaver still billed, a joiner missing</td><td>Check the record, send the Guardian form (section 8), give the group a date, and follow it to the corrected bill.</td></tr>
+    <tr><td>A bill you cannot reconcile by 13:00 on the 25th</td><td>Tell the BMA what is blocking it, so the Branch Manager’s report says why.</td></tr>
+    <tr><td>Stuck with Head Office for more than a week</td><td>Raise it with the details, copy the BMA, set yourself a follow-up date.</td></tr>
+    <tr><td>Anything about a member’s health, a claim, or a legal matter</td><td>Never in a letter or a note. The Branch Manager, at once.</td></tr>
+    <tr><td>The contact has left, or the letter bounced</td><td>Get the new contact and update the Contact Person in Salesforce, then send the letter again.</td></tr>
     </tbody>
   </table></div>
-  <div class="rule">Escalating is not passing it on. <b>You still own the item</b>: you tell the manager what is blocking it and what you have already done.</div>
-  <label class="readtick"><input type="checkbox" data-read="4"> I have read and understood section 4</label>
-</section>
-
-<section class="msec" id="m5" data-sec="5">
-  <h2><span class="sn">5</span>What the group sees, and what it never sees</h2>
-  <ul>
-    <li><b>Shown unless you untick:</b> items on the group’s own account, its billing records, or naming the group.</li>
-    <li><b>Hidden unless you tick:</b> items reached only through an employee’s own policy or contact. Tick one only when it is plan administration the employer handles, such as someone joining or leaving the plan. A member’s personal matters (their beneficiary, a loan, a change to their own policy) stay hidden.</li>
-    <li><b>Never, whatever is ticked:</b> a member’s health or a claim. The system keeps those items with staff. Never work around it by e-mail, by phone or in the letter. If HR asks, explain that a member’s health matters are between the member and Guardian Life, and that we deal with the member directly.</li>
-    <li><b>Chatter is where staff write to each other.</b> A group sees a comment only when you tick it, and only a note written for the group should ever be ticked. A note you write for the group on the page is posted to Chatter and shown to them at once.</li>
-    <li><b>The access code.</b> The letter carries the group’s list bill and access code, and anyone holding them can read the group’s page. So the letter goes only to the group’s contact: the Contact Person on the account in Salesforce. If that is a personal mailbox (gmail, hotmail, yahoo), confirm it is still their contact before you send; if it is not, update the Contact Person in Salesforce first. Never forward the letter, and never send it to another employee to pass on.</li>
-  </ul>
+  <div class="rule">Escalating is not passing it on. <b>You still own the item</b>: you say what is blocking it and what you have already done.</div>
   <label class="readtick"><input type="checkbox" data-read="5"> I have read and understood section 5</label>
 </section>
 
 <section class="msec" id="m6" data-sec="6">
-  <h2><span class="sn">6</span>Writing to the group</h2>
+  <h2><span class="sn">6</span>Your month: the billing calendar</h2>
+  <div class="cal">
+    <div class="cd"><span class="ct">The 25th</span><b>Check and approve</b>Head Office’s bills come in. Upload each line, check it against Salesforce, answer what does not agree, reconcile it and approve it for the billing day.</div>
+    <div class="cd"><span class="ct">25th · 13:00</span><b>The Branch Manager’s report</b>Every billed group, by the person who looks after it: uploaded, reconciled, approved, and what is left before 10:00 tomorrow.</div>
+    <div class="cd hot"><span class="ct">26th · 10:00</span><b>The bills go</b>Every approved bill goes by itself from support@ with its PDFs and the statement of account, sales support copied. This is the cut-off.</div>
+    <div class="cd"><span class="ct">26th · 10:30</span><b>Why not?</b>Once the bills are live: if a billed group of yours had no bill, you are asked why, a task <i>GROUP BILL NOT SENT … reason needed</i> opens in your name, and the reply is due by noon.</div>
+  </div>
+  <ul>
+    <li><b>Weekends and holidays.</b> When the 26th is a Saturday, a Sunday or a public holiday, the bills go at 10:00 on the next working day, and the report goes at 13:00 on the 25th, or on the last working day before it.</li>
+    <li><b>A late bill.</b> A bill approved after the cut-off goes at 10:00 on the next working day, so it never waits a month. <b>Approve</b> and <b>Send now</b> each ask why it was not done by the cut-off. The reason goes on the bill, on the billing task’s Chatter, in the Branch Manager’s summary and in the next report; Send now also e-mails the Branch Manager at once.</li>
+    <li><b>Send now</b> only works on an approved bill. It is for a bill that cannot wait for the next run.</li>
+    <li><b>Test mode.</b> Until the Branch Manager switches the bills live, every bill goes to the person who approved it and to the branch, marked TEST, and nothing reaches the group. Anything approved in test mode has to be approved again once the bills are live. <b>Salesforce is real in test mode</b>: a Reconciled tick, a fix, a Chatter post and a task are all written for real.</li>
+  </ul>
+  <h3>The next billing days</h3>
+  <div class="scroll"><table class="t">
+    <thead><tr><th>Bills for</th><th>Report (13:00)</th><th>Bills go (10:00)</th></tr></thead>
+    <tbody>
+      <tr><td>December 2026</td><td>Wed 25 Nov</td><td>Thu 26 Nov</td></tr>
+      <tr><td>January 2027</td><td>Thu 24 Dec</td><td>Mon 28 Dec</td></tr>
+      <tr><td>February 2027</td><td>Mon 25 Jan</td><td>Tue 26 Jan</td></tr>
+      <tr><td>March 2027</td><td>Thu 25 Feb</td><td>Fri 26 Feb</td></tr>
+      <tr><td>April 2027</td><td>Thu 25 Mar</td><td>Wed 31 Mar</td></tr>
+      <tr><td>May 2027</td><td>Fri 23 Apr</td><td>Mon 26 Apr</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Head Office bills a month ahead, so the bills that go on 26 November are December’s. The Billing page always shows the next day at the top.</p>
+  <label class="readtick"><input type="checkbox" data-read="6"> I have read and understood section 6</label>
+</section>
+
+<section class="msec" id="m7" data-sec="7">
+  <h2><span class="sn">7</span>Billing, step by step</h2>
+  <p>Open <b>Billing</b> on a group (or <i>Group billing</i> in the branch app). One group, one month, eight steps. Each step shows a count, and the bar fills only when a step is really done.</p>
+  <div class="stepc"><span class="sc">1</span><div><b>Upload the bills</b>
+    <p>Each line takes its own documents:</p>
+    <ul><li><b>Group Health:</b> Guardian’s invoice (PDF). Under it, the claims experience if you have it.</li>
+      <li><b>Group Life:</b> the member bill, its Statement of Adjustment and the covering letter.</li>
+      <li><b>Pension:</b> the list bill (a spreadsheet), or built from the policies carrying the list bill in Salesforce.</li></ul>
+    <p>The bill is read on your device. Check the month at the top before you go on. The claims experience is added up on your device by month, so no patient’s name reaches the sheet.</p></div></div>
+  <div class="stepc"><span class="sc">2</span><div><b>What was found</b>
+    <p>Every check against Salesforce is a finding, with a level and whose it is:</p>
+    <div class="levels"><span class="lvp"><span class="lv fix">Fix</span> wrong: put it right</span><span class="lvp"><span class="lv chk">Check</span> may be wrong: look</span><span class="lvp"><span class="lv nt">Note</span> worth knowing</span><span class="lvp"><span class="lv ok">OK</span> agrees</span></div>
+    <p>The checks: the month’s billing record and its amount; the arrears on the bill against the payments in Salesforce; every member against the group’s policies; who joined, left or changed tier since last month; each back-charge and adjustment against a task on file; the life rates and the 31-day rule; the list bill against the policies tagged with it; payments keyed long after they were made. Whose it is says where the fix belongs: <b>Salesforce</b>, <b>Head Office</b>, <b>the group</b> or <b>us</b>. The AI’s read is for you, never the group.</p></div></div>
+  <div class="stepc"><span class="sc">3</span><div><b>Answer the questions</b>
+    <p>Every open finding becomes a question, with answers to tap. Your answer goes on the bill, on Group Changes and on the line’s billing task’s Chatter in your name. An answer that settles it resolves the finding; some open the next step for you: upload again, set the Salesforce figure, record a payment, open a task, or send a termination form. <i>Not sure yet</i> is always there, and leaves the finding open.</p></div></div>
+  <div class="stepc"><span class="sc">4</span><div><b>Last month’s tasks</b>
+    <p>Every open billing task is read against this month’s bill: <i>settled</i>, <i>still open</i> or <i>worse</i>, with an update drafted from its history. Read it, correct it, then <b>Post</b>: the task’s owner is mentioned and e-mailed. Tick <i>close it</i> only when the bill shows it is done.</p></div></div>
+  <div class="stepc"><span class="sc">5</span><div><b>Terminations and changes</b>
+    <p>The joiners, leavers and tier changes the bills show, with <i>Record a change</i> and the three Guardian forms (section 8).</p></div></div>
+  <div class="stepc"><span class="sc">6</span><div><b>The people</b>
+    <p>Everyone on the bills matched to Salesforce: turning 65 within six months (the group cover ends, and they can convert), a dependant coming of age, retiring on the company pension, still billed past the age, a family tier with nobody on record, a single tier with dependants, no date of birth, no Salesforce record. For each, a letter to the member (the facts and the offer of a call from a licensed agent, never advice), a task, or the enrolment form. The group sees counts only.</p></div></div>
+  <div class="stepc"><span class="sc">7</span><div><b>The statement</b>
+    <p>One page: this month’s lines, the earlier invoices Salesforce still shows unpaid, Head Office’s own arrears where they differ, and the total to bring the account up to date, with the changes on this billing. It goes with the bills, and the group sees it on their page.</p></div></div>
+  <div class="stepc"><span class="sc">8</span><div><b>Approve and send</b>
+    <p><b>Reconciled</b> is your tick that you checked the line against Salesforce yourself, and it is refused while a fix is open (only the Branch Manager may override). Then <b>Approve for</b> the billing day: the PDFs are kept safe in Drive until the run. <i>Cancel the approval</i> takes it back. <b>Send now</b> is for a bill that cannot wait.</p></div></div>
+  <div class="rule"><b>Never:</b> tick Reconciled to get a bill out; send a bill that still bills a leaver without the correction raised; put a member’s health or claim in a note; or press <i>Open a task</i>, <i>close it</i> or a fix just to see what happens. Every press writes to Salesforce.</div>
+  <label class="readtick"><input type="checkbox" data-read="7"> I have read and understood section 7</label>
+</section>
+
+<section class="msec" id="m8" data-sec="8">
+  <h2><span class="sn">8</span>Members joining, leaving and changing: the Guardian forms</h2>
+  <div class="scroll"><table class="t">
+    <thead><tr><th>Form</th><th>For</th></tr></thead>
+    <tbody>
+      <tr><td><b>EB0010</b> Group and Individual Policy Change</td><td>A termination, a dependant added or removed, an address, beneficiaries, the plan administrator</td></tr>
+      <tr><td><b>GIO001</b> Enrolment</td><td>A new member joining the group plan</td></tr>
+      <tr><td><b>EASI Collect</b></td><td>A member’s bank deduction (not ready until Guardian sends a blank form)</td></tr>
+    </tbody>
+  </table></div>
+  <ol class="steps">
+    <li><b>Search the member</b> by name, policy or certificate. Never type a member in: the form fills from Salesforce exactly. What Salesforce does not hold says <i>not on record</i>; it is never guessed.</li>
+    <li><b>Fill in what the change needs</b>: the effective date, and the facts of that change. The signatures stay blank: the signed and stamped copy follows on request.</li>
+    <li><b>Preview, then send.</b> It goes from support@ to EB Customer Care, with sales support and support@ copied (and the group’s contact when you tick it), with Guardian’s own PDF attached.</li>
+    <li><b>It is recorded and followed up.</b> It is logged on Group Changes, a copy is kept in Drive, and a task opens for the account owner. Every three working days without an answer, a follow-up goes on the task’s Chatter with the owner mentioned; the fifth goes to the Branch Manager. A reply from EB Customer Care marks it answered.</li>
+  </ol>
+  <p>A group can send a change or an enrolment from its own page too: the same form, the same route, and the same follow-up.</p>
+  <label class="readtick"><input type="checkbox" data-read="8"> I have read and understood section 8</label>
+</section>
+
+<section class="msec" id="m9" data-sec="9">
+  <h2><span class="sn">9</span>What the group sees, and what it never sees</h2>
+  <div class="three">
+    <div class="box"><b>Your service items</b>The weekly items, their history and target dates, the year so far, the pending applications and increases, and what is coming up for their people.</div>
+    <div class="box"><b>Your billing</b>The statement of account, each line’s latest bill, twelve months billed and received, the open billing items, and for health what the plan paid by year.</div>
+    <div class="box"><b>Your people</b>Who is pending, active, or came off this year. A message on a person goes to that task’s Chatter and the person who has it is e-mailed; with nothing open, a task opens for the account owner.</div>
+  </div>
+  <ul>
+    <li><b>Shown unless you untick:</b> items on the group’s own account, its billing records, or naming the group.</li>
+    <li><b>Hidden unless you tick:</b> items reached only through an employee’s own policy or contact. Tick one only when it is plan administration the employer handles, such as someone joining or leaving.</li>
+    <li><b>Never, whatever is ticked:</b> a member’s health or a claim, a date of birth, an e-mail, a phone number, a beneficiary, a loss ratio, the AI’s read, or a Chatter comment that was not written for the group. If HR asks about a member’s health, explain that it is between the member and Guardian Life, and that we deal with the member directly.</li>
+    <li><b>The access code.</b> Every letter and bill carries the group’s list bill and access code, so it goes only to the Contact Person in Salesforce. If that is a personal mailbox, confirm it before you approve. Never forward a letter, and never send it to another employee to pass on.</li>
+  </ul>
+  <label class="readtick"><input type="checkbox" data-read="9"> I have read and understood section 9</label>
+</section>
+
+<section class="msec" id="m10" data-sec="10">
+  <h2><span class="sn">10</span>Writing to the group</h2>
   <p><b>The note under an item</b> is plain facts, a date that is in Salesforce, and what happens next, in one or two sentences.</p>
   <div class="eg good"><b>Good</b> “Your September leavers went for processing on 1 October. We expect the corrected bill by 16 October.”</div>
   <div class="eg bad"><b>Never</b> blame (“head office has been slow again”), internal names or departments, words copied from Chatter, a date you cannot keep, or anything about a member’s health.</div>
@@ -302,47 +489,92 @@ table.esc td:first-child{font-weight:600;width:40%}
     <li><b>Your opening line</b> is optional: a thank-you, or a heads-up about something important this week. It is never the place for internal problems.</li>
     <li><b>On the phone</b> the same rules hold: own it, give plain facts and a date, then do what you said.</li>
   </ul>
-  <label class="readtick"><input type="checkbox" data-read="6"> I have read and understood section 6</label>
+  <label class="readtick"><input type="checkbox" data-read="10"> I have read and understood section 10</label>
 </section>
 
-<section class="msec" id="m7" data-sec="7">
-  <h2><span class="sn">7</span>After Monday’s letter: follow-up</h2>
+<section class="msec" id="m11" data-sec="11">
+  <h2><span class="sn">11</span>Follow-up: after the letter and the bill</h2>
   <ul>
-    <li><b>Answers come in by Friday.</b> Each one reaches you by e-mail, and any note the group writes goes on the task’s Chatter.</li>
-    <li><b>Act by the next working day.</b> <i>Needs a change</i>: fix it or find out why, tell the group what you are doing, note it in Chatter. <i>Not ours</i>: find out whose it is, correct Salesforce, tell the group. <b>A rating of 3 or less</b>: call the contact within two working days, and tell the branch manager.</li>
-    <li><b>No answer by Friday?</b> Before you approve the next letter, call or e-mail the contact, check they got the letter and can sign in, and note it in Chatter. Never answer for the group: its answers are its own.</li>
-    <li><b>Keep your promises.</b> When you give a group a date, put it in Salesforce. If it is going to slip, tell the group <b>before</b> the date, not after, with the new date and what you are doing. Then confirm when it is done.</li>
+    <li><b>Answers come in by Friday.</b> Each one reaches you and sales support by e-mail, and any note the group writes goes on the task’s Chatter.</li>
+    <li><b>Act by the next working day.</b> <i>Needs a change</i>: fix it or find out why, tell the group what you are doing, note it in Chatter. <i>Not ours</i>: find out whose it is, correct Salesforce, tell the group. <b>A rating of 3 or less</b>: call the contact within two working days, and tell the Branch Manager.</li>
+    <li><b>No rating?</b> The system reminds the group every working day. A group that writes to support@ instead is owed a person’s reply, and the reminders stop. If they still have not answered by Friday, call them before you approve the next letter: check they got it and can sign in, and note it in Chatter. Never answer for the group.</li>
+    <li><b>Billing questions and messages on Your people</b> are answered within a working day, on the task, where the group can see the note you share.</li>
+    <li><b>Keep your promises.</b> When you give a group a date, put it in Salesforce. If it is going to slip, tell the group <b>before</b> the date, with the new date and what you are doing. Then confirm when it is done.</li>
     <li><b>Close the loop.</b> An item is done when the group’s problem is solved and they know it, not when the task is closed.</li>
   </ul>
-  <label class="readtick"><input type="checkbox" data-read="7"> I have read and understood section 7</label>
+  <label class="readtick"><input type="checkbox" data-read="11"> I have read and understood section 11</label>
 </section>
 
-<section class="msec" id="m8" data-sec="8">
-  <h2><span class="sn">8</span>Taking initiative</h2>
+<section class="msec" id="m12" data-sec="12">
+  <h2><span class="sn">12</span>The audit trail: where every step is recorded</h2>
+  <p>Nothing here relies on anyone remembering. Every press is recorded with who pressed it and when, so Head Office, the Branch Manager or the group can be shown exactly what happened.</p>
+  <div class="scroll"><table class="t audit">
+    <thead><tr><th>When this happens</th><th>It is recorded on</th></tr></thead>
+    <tbody>
+      <tr><td>A weekly letter is approved</td><td>Group Queue: who approved it, when, the items they saw, their opening line</td></tr>
+      <tr><td>A letter, a bill, a welcome or a reminder goes</td><td>Group Sends, with the letter itself; support@’s Sent Items, with sales support copied</td></tr>
+      <tr><td>A group signs in</td><td>Group Views: when, on a phone or a computer, and whether they came from a letter, the welcome or a reminder</td></tr>
+      <tr><td>A group answers or rates</td><td>Group Responses, the task’s Chatter, and an e-mail to the account owner</td></tr>
+      <tr><td>A bill is uploaded, answered, reconciled, approved, sent</td><td>Group Bills (uploaded by, reconciled by, approved by and for, sent by, the late reason), Group Changes, and the billing task’s Chatter</td></tr>
+      <tr><td>A Salesforce figure is fixed, or Reconciled ticked</td><td>The billing record in Salesforce, and Group Changes with who pressed</td></tr>
+      <tr><td>A task is opened or closed from the page</td><td>The Salesforce task, Group Changes, and an e-mail to its owner</td></tr>
+      <tr><td>A Guardian form is sent</td><td>Group Changes with the form, Drive’s “Sent forms”, the e-mail to EB Customer Care, and the owner’s task</td></tr>
+      <tr><td>A letter or a bill missed its time</td><td>The reason task in Salesforce (Lic/Staffing/SA/HR), the reply to the Branch Manager, his daily summary</td></tr>
+      <tr><td>A training test is taken</td><td>The private training sheet, and an e-mail to you and the Branch Manager</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rule">The record is only as good as what goes into it. <b>Write the real reason</b>, in plain words, the first time. “Busy” is not a reason; “the group’s new leaver list came at 9:40 and I checked it before sending” is.</div>
+  <label class="readtick"><input type="checkbox" data-read="12"> I have read and understood section 12</label>
+</section>
+
+<section class="msec" id="m13" data-sec="13">
+  <h2><span class="sn">13</span>Taking initiative</h2>
   <p>Initiative is fixing the cause, not just the item, and doing it before anyone asks.</p>
   <ul>
-    <li><b>See the pattern.</b> The same item stuck on three groups is one problem. Raise it once with the details, copy the branch manager, set a follow-up date, and tell each group what you are doing.</li>
-    <li><b>Don’t wait for a colleague.</b> If a group is waiting on an item that sits with someone on leave, take it over with a Chatter note to your colleague, and tell the group.</li>
-    <li><b>Fix records at the source.</b> A contact who left, a wrong list bill, a missing e-mail: correct it in Salesforce, not around it. When a letter bounces, call the group, get the new contact, update the Contact Person, and approve the letter again.</li>
-    <li><b>Ask before the deadline.</b> If head office needs something from the group, ask early, not on the day it is due.</li>
+    <li><b>See the pattern.</b> The same item stuck on three groups is one problem. Raise it once with the details, copy the BMA, set a follow-up date, and tell each group what you are doing.</li>
+    <li><b>Don’t wait for a colleague.</b> If a group is waiting on someone who is away, leave a comment for the team on the item and ask the BMA to act on it or move it.</li>
+    <li><b>Fix records at the source.</b> A contact who left, a wrong list bill, a missing e-mail, a member with no record: correct it in Salesforce, not around it.</li>
+    <li><b>Ask before the deadline.</b> If Head Office needs something from the group, ask early, not on the day it is due. A bill question found on the 25th is answered on the 25th.</li>
     <li><b>Bring a next step.</b> When you cannot solve it today, tell the group what happens next and when.</li>
-    <li><b>Tell the manager what you find:</b> a gap in a process, a group at risk, a better way of doing it. The board shows the work; you see the reasons.</li>
+    <li><b>Tell the managers what you find:</b> a gap in a process, a group at risk, a better way of doing it.</li>
   </ul>
-  <label class="readtick"><input type="checkbox" data-read="8"> I have read and understood section 8</label>
+  <label class="readtick"><input type="checkbox" data-read="13"> I have read and understood section 13</label>
 </section>
 
-<section class="msec" id="m9" data-sec="9">
-  <h2><span class="sn">9</span>How you are appraised, and the test</h2>
-  <p>The test is weighted like your appraisal. Each competency’s weight is its share of the marks:</p>
+<section class="msec" id="m14" data-sec="14">
+  <h2><span class="sn">14</span>Practice: questions with answers</h2>
+  <p>Answer each one in your head, then open it. These are not the test questions.</p>
+  <div class="qa" id="practice">
+    <details><summary>I approve a group’s bill at 9:40 on the billing day. When does it go?</summary><p>At 10:00 that morning, by itself, with its PDFs and the statement. You have not missed the cut-off, so no reason is asked.</p></details>
+    <details><summary>The 26th is a Saturday. When do the bills go, and when is the report?</summary><p>The bills go at 10:00 on Monday 28th (or the next working day, if Monday is a holiday). The report goes at 13:00 on Friday the 25th.</p></details>
+    <details><summary>I approve a bill at 11:15 on the billing day. What happens?</summary><p>The page asks why it was not done by 10:00. Give the real reason. It then goes at 10:00 the next working day, unless you use Send now. Either way the reason is recorded and the Branch Manager sees it.</p></details>
+    <details><summary>Why is there no Send now button on my bill?</summary><p>Send now only appears once the bill is approved. Reconcile it, approve it, and Send now is there.</p></details>
+    <details><summary>A finding says “fix · Head Office”. Is it mine?</summary><p>You raise it. Whose it is says where the correction is made, not who follows it up. Raise it with Head Office with the facts, answer the question so it is on the record, and tell the group it is in hand if it touches their bill.</p></details>
+    <details><summary>Can I tick Reconciled with a fix still open, so the bill catches the run?</summary><p>No. The page refuses it, and only the Branch Manager may override. A bill that goes on time but wrong costs more than a bill that goes a day late with a reason.</p></details>
+    <details><summary>Kamla approved my group’s letter while I was out. Whose name is on it?</summary><p>Yours: the letter is signed by whoever looks after the group. The approval is recorded in Kamla’s name.</p></details>
+    <details><summary>A colleague is away and her group’s HR officer has been waiting two days for an answer. Her group is read only for me. What do I do?</summary><p>Acknowledge HR today, leave a comment for the team on the item saying what you told them, and ask the BMA to act on the group or move it to you.</p></details>
+    <details><summary>My ready group had no letter this week. What do I get, and what do I do?</summary><p>At 10:30 on Monday, an e-mail asking why and a task in your name, <i>GROUP LETTER NOT SENT … reason needed</i>. Reply by noon with the real reason, put it right today, and close the task with the reason.</p></details>
+    <details><summary>A group’s HR writes that an employee left on 30 September. What do I send?</summary><p>EB0010, from the page, for the termination. Search the member, give the effective date, preview, and send. It goes to EB Customer Care with sales support and support@ copied, and the owner’s task follows it up.</p></details>
+    <details><summary>What can the group see about a member who turns 65 in four months?</summary><p>That someone on their plan is coming up to 65, as a count on their billing and their name under <i>Coming up</i>. The member gets the letter. Never their date of birth.</p></details>
+    <details><summary>Is anything written anywhere while the bills are in test mode?</summary><p>Yes. Bills and forms go only to you and the branch, marked TEST, but Salesforce is real: a Reconciled tick, a fix, a Chatter post and a task are written for real. Press only what you mean.</p></details>
+    <details><summary>HR asks on Your people why a member’s claim was reduced. What do I say?</summary><p>That a member’s claims stay between the member and Guardian Life, and that we will speak to the member directly. Nothing about the claim goes to the employer.</p></details>
+    <details><summary>Head Office asks who sent a group’s bill late in October, and why. Where is it?</summary><p>On the bill’s row: Approved by, Sent by and the late reason. The same is on Group Changes and the billing task’s Chatter, and in the Branch Manager’s summary for that day.</p></details>
+  </div>
+  <label class="readtick"><input type="checkbox" data-read="14"> I have read and understood section 14</label>
+</section>
+
+<section class="msec" id="m15" data-sec="15">
+  <h2><span class="sn">15</span>How you are appraised, and the test</h2>
+  <p>The test is weighted like your appraisal. Your questions depend on your role: the support team take the questions on the work; the Branch Manager’s Assistant and the Branch Manager take the questions on oversight; everyone takes confidentiality, client communication and the audit trail. Your weights:</p>
   <div id="weights"></div>
   <ul>
-    <li><b>To pass:</b> <span class="passrule">80% overall, every critical question right, and no competency under 60%</span>. The critical questions are on confidentiality.</li>
+    <li><b>To pass:</b> <span class="passrule">80% overall, every critical question right, and no competency under 60%</span>. The critical questions are on confidentiality and on what a group may see.</li>
     <li><b>Each competency is rated</b> Exceeds (90% and over), Meets (75–89%), Developing (60–74%) or Not yet (under 60%).</li>
-    <li><b>Written answers</b> are marked by AI against a marking guide, and your manager confirms the mark. Write them the way you would do the work: the steps, in order, and why.</li>
-    <li><b>Your result is logged</b> with feedback on every question, and e-mailed to you and the branch manager. You may take the test again; every attempt is kept.</li>
-    <li><b>On the job</b> the same competencies show on the board: letters approved for Monday, items past target, how many items groups mark <i>Correct</i>, ratings, and how quickly answers are followed up.</li>
+    <li><b>Written answers</b> are marked by AI against a marking guide, and the Branch Manager confirms the mark. Write them the way you would do the work: the steps, in order, and why.</li>
+    <li><b>Your result is logged</b> with feedback on every question, and e-mailed to you and the Branch Manager. You may take the test again; every attempt is kept.</li>
+    <li><b>On the job</b> the same competencies show on the board: letters approved by Friday, bills reconciled by 13:00 on the 25th, reasons given the first time, items past target, ratings, and how quickly answers are followed up.</li>
   </ul>
-  <label class="readtick"><input type="checkbox" data-read="9"> I have read and understood section 9</label>
+  <label class="readtick"><input type="checkbox" data-read="15"> I have read and understood section 15</label>
 </section>
 </article>
 
@@ -371,7 +603,7 @@ async function post(body) {
 }
 
 /* ---- progress, on this device: sections read, minutes in the manual, answers not yet sent ---- */
-function pkey() { return 'rrb-gcm-train:' + String(AUTH.who || 'branch').toLowerCase(); }
+function pkey() { return 'rrb-gcm-train2:' + String(AUTH.who || 'branch').toLowerCase(); }   /* 2: the manual revised on 26 October 2026 is read afresh */
 function loadProg() {
   try { PROG = JSON.parse(localStorage.getItem(pkey()) || 'null'); } catch (e) { PROG = null; }
   PROG = Object.assign({ read: {}, ms: 0, answers: {}, started: 0 }, PROG || {});
@@ -397,10 +629,15 @@ async function open_() {
 }
 function signOut() { try { localStorage.removeItem('rrb-gcm-code'); localStorage.removeItem('rrb-gcm-who'); } catch (e) {} location.reload(); }
 
+function tocDraw() {
+  const t = $('toc'); if (!t) return;
+  t.innerHTML = [...document.querySelectorAll('#manual .msec')].map(m => '<a href="#' + m.id + '" class="' + (PROG && PROG.read[m.dataset.sec] ? 'on' : '') + '"><i>' + m.dataset.sec + '</i>' + esc(m.querySelector('h2').textContent.replace(/^\d+/, '')) + '</a>').join('');
+}
 function wireManual() {
+  tocDraw();
   document.querySelectorAll('#manual [data-read]').forEach(c => {
     c.checked = !!PROG.read[c.dataset.read]; c.closest('.readtick').classList.toggle('on', c.checked);
-    c.onchange = () => { PROG.read[c.dataset.read] = c.checked; saveProg(); c.closest('.readtick').classList.toggle('on', c.checked); progBar(); if (c.checked && readCount() === SECS.length) toast('Every section read. The test is open.'); };
+    c.onchange = () => { PROG.read[c.dataset.read] = c.checked; saveProg(); c.closest('.readtick').classList.toggle('on', c.checked); progBar(); tocDraw(); if (c.checked && readCount() === SECS.length) toast('Every section read. The test is open.'); };
   });
   $('weights').innerHTML = weightsTable();
   document.querySelectorAll('#manual .passrule').forEach(e => e.textContent = T.pass + '% overall, every critical question right, and no competency under ' + T.floor + '%');
@@ -412,7 +649,7 @@ function weightsTable() {
 
 /* ---- the frame ---- */
 function head() {
-  $('who').innerHTML = esc(T.me) + ' · ' + (T.role === 'branch' ? 'Branch manager' : 'Staff') +
+  $('who').innerHTML = esc(T.me) + ' · ' + esc(T.title || (T.role === 'branch' ? 'Branch Manager' : T.role === 'deputy' ? 'Assistant Branch Manager' : 'Support team')) +
     ' <a class="btn ghost" href="./">My groups</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
 }
 function render() {
@@ -447,7 +684,7 @@ function drawTest() {
   const written = Q.filter(q => q.type === 'written').length;
   if (!PROG.started) {
     pane.innerHTML = '<div class="panel"><h2>The group client management test</h2>' +
-      '<p><b>' + Q.length + ' questions</b>: ' + (Q.length - written) + ' multiple choice and ' + written + ' written scenarios. Allow about 35 minutes. Your answers are kept on this device as you go, and nothing is sent until you press Submit.</p>' +
+      '<p><b>' + Q.length + ' questions</b>: ' + (Q.length - written) + ' multiple choice and ' + written + ' written scenarios. Allow about ' + (Math.round((Q.length - written) * 1.2 + written * 6) + 2) + ' minutes. Your answers are kept on this device as you go, and nothing is sent until you press Submit.</p>' +
       '<p><b>To pass:</b> ' + T.pass + '% overall, every critical question right, and no competency under ' + T.floor + '%.</p>' + weightsTable() +
       '<p class="small muted" style="margin-top:12px">Written answers are marked by AI against a marking guide' + (T.ai ? '' : ' (not switched on yet: the manager marks them)') + ', and your manager confirms the mark. Write them the way you would do the work: the steps, in order, and why.</p>' +
       '<button class="btn gold" type="button" id="start" style="margin-top:8px">Start the test</button></div>';

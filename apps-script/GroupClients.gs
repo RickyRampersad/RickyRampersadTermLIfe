@@ -1355,11 +1355,18 @@ function gcmWho_(p) {
   var w = tWho_(p.code, p.who);
   if (!w.ok) return w;
   /* the assistant branch manager signs in as the branch on the other boards (tAs_, canTell false); here she is the deputy */
-  if (w.role === 'branch' && w.me && w.canTell === false) return { ok: true, role: 'deputy', name: w.me.name, email: w.me.email };
-  if (w.role === 'branch') return { ok: true, role: 'branch', name: w.me ? w.me.name : 'Branch', email: w.me ? w.me.email : '' };
-  if (w.role === 'staff') return { ok: true, role: gcmDeputy_(w.me, p.who) ? 'deputy' : 'staff', name: w.me.name, email: w.me.email };
+  if (w.role === 'branch' && w.me && w.canTell === false) return { ok: true, role: 'deputy', title: GCM_ROLE_TITLE.deputy, name: w.me.name, email: w.me.email };
+  if (w.role === 'branch') return { ok: true, role: 'branch', title: GCM_ROLE_TITLE.branch, name: w.me ? w.me.name : 'Branch', email: w.me ? w.me.email : '' };
+  /* the Branch Manager's Assistant (26 October 2026: "Kamla is overseeing the task. She has a role, so she's logging in her
+     role"): her role on the Agent Skill Bank makes her the deputy here, by itself, under her own title */
+  if (w.role === 'staff' && gcmIsBma_(w.me)) return { ok: true, role: 'deputy', title: GCM_ROLE_TITLE.bma, name: w.me.name, email: w.me.email };
+  if (w.role === 'staff') { var dep = gcmDeputy_(w.me, p.who); return { ok: true, role: dep ? 'deputy' : 'staff', title: dep ? GCM_ROLE_TITLE.deputy : GCM_ROLE_TITLE.staff, name: w.me.name, email: w.me.email }; }
   return { ok: false, refused: true, error: 'Group client management is for the branch’s staff and the branch manager.' };
 }
+/** How each role reads on the pages and in the training. */
+var GCM_ROLE_TITLE = { branch: 'Branch Manager', bma: 'Branch Manager’s Assistant', deputy: 'Assistant Branch Manager', staff: 'Support team' };
+/** The Branch Manager's Assistant, by her role on the Agent Skill Bank ("Branch Manager Assistant", "BMA"). */
+function gcmIsBma_(me) { return !!me && /\bbma\b|branch\s*manager[’'`s\s]*assistant/i.test(String(me.title || '')); }
 /** The deputy (asked for on 13 October 2026: the assistant branch manager "needs to approve more or less some, she can
  *  comment"): an Assistant Branch Manager on the Agent Skill Bank, or anyone the GCM_DEPUTIES Script property names, by
  *  agent number or by name, comma-separated. The property, so that naming a deputy never changes what she sees on the
@@ -1441,7 +1448,7 @@ function gcmBoard_(p) {
   });
   var urgency = function (x) { return (x.stats.week === 'due' ? 1000 : 0) + x.stats.late * 10 + x.stats.waiting * 5 + Math.min(x.stats.oldest, 99) / 100; };
   groups.sort(function (a, b) { return urgency(b) - urgency(a); });
-  var out = { ok: true, role: who.role, me: who.name, today: today, sendDay: GCM.SEND_DAY, dow: gcmDow_(today), refreshed: L.refreshed,
+  var out = { ok: true, role: who.role, title: who.title || '', me: who.name, today: today, sendDay: GCM.SEND_DAY, dow: gcmDow_(today), refreshed: L.refreshed,
     salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', welcomeOn: gcmWelcomeOn_(), groups: groups };
   if (who.role === 'branch' || who.role === 'deputy') out.tellFailed = gcmTellFailed_();
   out.analytics = gcmAnalytics_(L);
@@ -1544,7 +1551,7 @@ function gcmGroupView_(p) {
       answer: mine[t.id15] ? { verdict: mine[t.id15].verdict, note: mine[t.id15].note, by: mine[t.id15].name, at: mine[t.id15].at } : null };
   }).sort(function (a, b) { return (b.late - a.late) || ((b.age || 0) - (a.age || 0)); });
   var weekAgo = gcmAddDays_(today, -7);
-  return { ok: true, role: who.role, me: who.name, today: today, refreshed: L.refreshed, feedError: feed._error || '', reasonDays: GCM.REASON_DAYS, ai: !!gcmAiKey_(),
+  return { ok: true, role: who.role, title: who.title || '', me: who.name, today: today, refreshed: L.refreshed, feedError: feed._error || '', reasonDays: GCM.REASON_DAYS, ai: !!gcmAiKey_(),
     canSendNow: who.role === 'branch', canAct: gcmMine_(who, g), own: gcmOwn_(who, g),
     approvedIntro: (function () { var q = (g.queue || []).filter(function (x) { return x.status === 'queued' && x.for >= L.today; }).pop(); return q ? q.intro : ''; })(),
     group: { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, to: g.to, cc: g.cc, toFrom: g.toFrom, contact: g.contact,
@@ -3437,16 +3444,18 @@ function gcmCourse_(p) { var k = String((p && p.course) || 'group').toLowerCase(
  *  signs in, with the role whose questions they get (`test`: agent, staff or manager) and, for a unit manager, the team
  *  whose results they may read. A unit manager and the assistant branch manager take the managers' test. */
 function gcmTrainWho_(p, course) {
-  if (!course.roles) { var g = gcmWho_(p); if (g.ok) g.test = 'staff'; return g; }
+  /* the group course: the support team take the staff questions; the Branch Manager's Assistant, a deputy and the branch
+     manager take the managers' (26 October 2026: "everyone has a responsibility"). A question with no Roles is everyone's. */
+  if (!course.roles) { var g = gcmWho_(p); if (g.ok) g.test = g.role === 'staff' ? 'staff' : 'manager'; return g; }
   var w = tWho_(p.code, p.who);
   if (!w.ok) return w;
   var me = w.me || null, test = w.role === 'branch' || w.role === 'unit' ? 'manager' : w.role === 'staff' ? 'staff' : 'agent';
   return { ok: true, role: w.role, test: test, name: me ? me.name : 'Branch', email: me ? me.email : '',
     title: me && me.title ? me.title : (w.role === 'branch' ? 'Branch Manager' : w.role), team: w.role === 'unit' ? (w.team || []) : null };
 }
-/** The questions a person gets: every one on the group course; on the orphan course those whose Roles name their role or all. */
+/** The questions a person gets: those whose Roles name their role (agent, staff, manager) or all; a bank with no Roles column
+ *  gives everyone every question. */
 function gcmTrainFor_(q, who, course) {
-  if (!course.roles) return true;
   var roles = q.roles && q.roles.length ? q.roles : ['all'];
   return roles.indexOf('all') >= 0 || roles.indexOf(who.test) >= 0;
 }
