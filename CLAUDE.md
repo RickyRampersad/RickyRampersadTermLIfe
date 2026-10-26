@@ -4892,42 +4892,72 @@ path: not the mark. What stands:
 - The footer keeps the page's own contact line (`678-5821`): a fact on the
   live page, not changed unasked.
 
-### The recruiting film, 26 October 2026
+### The recruiting film, 26 October 2026, re-cut the same evening for the digital branch
 
 Asked for as *"a killer video with lots of motion and drive to what really makes a person want to leave the
-current job and join our branch as we do things differently and a person can excel"*, for the branch page and to
-post. `agentmgt/recruit.mp4` (1280×720, 2:16) and `agentmgt/recruit-story.mp4` (1080×1920, the Reels and Stories
-cut), posters beside them. It plays on agentmgt.com (`#film`) and on **`/careersvideo/`** on the branch site, the
-page to post (Open Graph with the poster, both cuts, the apply buttons); the homepage careers section links it.
+current job and join our branch as we do things differently and a person can excel"*, then re-cut the same evening:
+*"our financial year changed in October … forget about the mentorship with executive agents and senior sales
+consultant, because a person could decide a path … the whole focus is on the digital process and the digital tools
+that we use and the leads generation program … digital dashboards everywhere … coaching and the high productivity
+… blend it in with the human interface"*. `agentmgt/recruit.mp4` (1280×720, 3:54) and `agentmgt/recruit-story.mp4`
+(1080×1920, the phone cut), posters beside them. It plays on agentmgt.com (`#film`) and on **`/careersvideo/`** on
+the branch site, the page to post (Open Graph with the poster, both cuts, the apply buttons); the homepage careers
+section links it.
 
-- **Sixteen scenes, one per spoken line**, the page's own look (onyx lifted off black, wine, Playfair and Inter
+- **Twenty-two scenes, one per spoken line**, the page's own look (onyx lifted off black, wine, Playfair and Inter
   embedded as base64 so a render never waits on the network), drawn by `tools/film/build-recruitfilm.py` from
-  `recruit-lines.json` and `recruit-timing.json` into `agentmgt/film.html`. The hook (good at what you do, stuck
-  where you are), the bars that break through the room's ceiling, the shield with the five gates and the five rungs
-  circling it, the letter of appointment stamped WRITTEN IN, the stage and the spotlight with a chat bubble that
-  fades, the two ladders, the income line leaving the salary band, the lock, the checklist, the five gates, the five
-  seats with one lit, agentmgt.com with the QR, the close. **Every reveal lands on the word that names it**: the
-  template's `{{AT:n:word}}` reads the word's start from the runner's WordBoundary timings, plus the 0.4 s the mixer
-  leads the voice by.
-- **The words are the page's own claims only**: 23× MDRT, 32 years, five seats, 48 hours, the written path with its
-  overrides and offices, mentorship written into appointments, the Discovery with the qualifiers, confidentiality.
-  Nothing new was promised.
+  `recruit-lines.json` and `recruit-timing.json` into `agentmgt/film.html`. The hook; the bars breaking through the
+  ceiling of the old tools; the shield with the five gates inside and the five tools outside, and the FY27 badge;
+  "Digital everywhere. Human at the heart of it."; **the leads board** (a phone where a prospect taps what is on
+  their mind, the lead flying onto the board with sent, opened, watched, booked counting, the QR code); **the Lead
+  Desk** typing the call script from the prospect's own words, "not a pitch, an appointment", a forwarded lead
+  stays yours; **factfind360** adding the need in dollars, the manager's signature drawing itself, the client's
+  confirmation, and the 0 cases lapsed since launch; **the live wall** with the phone beside it and the spreadsheet
+  struck through; **the day the system sets**, the check-in pressed and the list ticking as the bar fills;
+  **Branch Intelligence** scanning a file and typing where it stands and what to say first; the people who coach
+  (interviewed, coached after, Friday lit on the week); **clients matched to you**, households sliding onto your
+  list; the stage; **two ladders side by side and a toggle, "you choose the ladder"**; the income line; **the FY27
+  flight plan**, seven stages on a trajectory, a dot riding it, GO landing; the lock, the checklist, the gates, the
+  seats, the QR, the close. **Every reveal lands on the word that names it** (`at(n, word, k)` reads the word's
+  start from the runner's WordBoundary timings, plus the 0.4 s the mixer leads the voice by; `k` picks the second
+  match where a word repeats: "goes GO"). Every name and figure on a mock screen is made up, and the mocks say so.
+- **What the film claims is what the record holds**: the prospect board and the Lead Desk (factfind360.com/leads,
+  the Lead Desk builds the script from the prospect's `wants` and never prices or recommends; a forwarded lead
+  stays with the advisor whose link produced it, per `UnclaimedLeads.md` in fact-find-analyzer), factfind360 with
+  the manager's four attestations and the client's confirmation from their inbox, the production wall read live
+  (11 September 2026 minutes), My workday and the day the system sets, Guide me on the board, the Branch Manager's
+  interview and coaching, the Weekly Manager Pulse (unit managers coach agents not on target with leads, fact
+  finds and closing interviews), the orphan households matched to agents with the file and the first thing to say,
+  the Wednesday wins, Blastoff and Mid-Year, the FY27 Flight Plan (fifteen minutes, seven stages, GO on the big
+  screen, FY27 1 October 2026 to 30 September 2027), the five gates, five seats, 48 hours, confidentiality. "Not
+  one of those cases has lapsed" is Mr Rampersad's own line from the FY27 wall (21 October). **No mentorship
+  scene**: the Executive Agent and Senior Sales Consultant rungs stay on the "build a book" ladder as titles only,
+  with no overrides and no mentoring duty, because a person decides their own path.
 - **Andrew Expressive** (`en-US-AndrewMultilingualNeural`, +0%, conversational wording), made on the `tts-run`
-  runner with `"check": true`; every clip heard as English. Line 10 opened with a two-word fragment ("The income?")
-  that Whisper heard as a different word, so it was reworded to a full sentence and re-voiced: a line that starts
-  with a clause of one or two words is the one this voice slurs. `tools/film/importvox.py` (in the repository now,
-  not the scratchpad) turns the runner's MP3 and words into the WAV, the VTT cues and the timing file.
+  runner with `"check": true`. Three lines came back wrong on the first pass and were re-made: line 3 was **cut off
+  after eleven words** (a 36-word line; the same words complete on a second run, so a truncated clip is a retry,
+  not a rewrite: always compare the words.json count with the line), and "where it counts" was heard twice as
+  "work counts" / "wear accounts" (the voice slurs "where it"; it became "Human at the heart of it"). "The income?"
+  on the first cut was the same lesson: a line that starts with a clause of one or two words is the one this voice
+  slurs. `tools/film/importvox.py` turns the runner's MP3 and words into the WAV, the VTT cues and the timing file.
 - **The branch theme** (`rr-branch-theme.mp3`, 120 s, looped with a crossfade by `usetrack.py`) at `musicgain`
-  0.5, ducked to half under the voice; `sfx.py`'s sweeps on every cut, impacts on the statement scenes (4 and 16),
-  punches under 23×, 32, five seats and 48 hours. Captions burned **over** the frame in both cuts (`capmode:
-  over`), because this audience watches muted; the scenes keep the bottom fifth of the frame clear for them.
-- **One page, two frames.** `render.js` now takes `RENDER_W` and `RENDER_H`; the portrait rules at the foot of the
+  0.5, ducked to half under the voice; `sfx.py`'s sweeps on every cut, impacts on the statement scenes (4 and 22),
+  punches under 23×, 32, the board, the protection gap, the pace, GO, five seats and 48 hours. Captions burned
+  **over** the frame in both cuts (`capmode: over`), because this audience watches muted; the scenes keep the
+  bottom fifth of the frame clear for them.
+- **One page, two frames.** `render.js` takes `RENDER_W` and `RENDER_H`; the portrait rules at the foot of the
   stylesheet restack every split and re-base the unit (`--u`) on the width. Each `.scene` keeps render.js's
   contract (`SC`, `go`, `paused`, `timer`, `.act`, `.out` cleared at 720 ms, `.cnt` counters). `films-recruit.py`
-  writes both entries into films.json from the timing file, so a re-voice is one command each step.
-- **A percentage height inside a grid item with `align-content: center` resolves to 0.** The chart's bars did not
-  draw at all until `.bars` took a definite height. And a dark "lid" that slides away must also fade and be clipped
-  by its parent, or it parks over the headline on the portrait cut.
+  writes both entries into films.json from the timing file, so a re-voice is one command each step. The motes
+  and the mesh drift outside the scenes, so they run on the clock, not the frame: fine for a drift, never for a
+  reveal.
+- **Typed text has to keep its words whole.** The first cut typed character by character with `&nbsp;` for every
+  space, so a line had no break opportunity and ran off the card; each word is an inline-block now and the spaces
+  between them are real. **A percentage height inside a grid item with `align-content: center` resolves to 0.**
+  The chart's bars did not draw at all until `.bars` took a definite height. And a dark "lid" that slides away
+  must also fade and be clipped by its parent, or it parks over the headline on the portrait cut.
+- `scenes.js` in the session scratchpad shoots every scene at a fraction of its length in either frame (the same
+  seek render.js uses) and tiles them, which is how the layouts were checked before the voice came back.
 
 ## The branch's own forms — no client link opens a JotForm
 

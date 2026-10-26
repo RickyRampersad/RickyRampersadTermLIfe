@@ -5,13 +5,13 @@ the picture in both, since most of this audience watches muted. Run after import
 import json
 t = json.load(open('recruit-timing.json')); f = json.load(open('films.json'))
 starts = [sum(t['durs'][:i]) for i in range(len(t['durs']))]
-def at(n, word):  # the second a counter lands, for the punch under it
-    for s, w in t['lines'][n - 1]['words']:
-        if w.lower().strip('.,?:!').startswith(word.lower()): return round(starts[n - 1] + 0.4 + s, 2)
+def at(n, word, k=0):  # the second a counter lands, for the punch under it; the k-th match
+    hits = [s for s, w in t['lines'][n - 1]['words'] if w.lower().strip('.,?:!').startswith(word.lower())]
+    if len(hits) > k: return round(starts[n - 1] + 0.4 + hits[k], 2)
     raise SystemExit(f'no "{word}" in line {n}')
-hits = [at(3, 'Twenty'), at(3, 'Thirty'), at(14, 'Five'), at(14, 'forty')]
+hits = [at(3, 'Twenty'), at(3, 'Thirty'), at(5, 'board'), at(7, 'dollars'), at(8, 'pace'), at(16, 'GO', 1), at(20, 'Five'), at(20, 'forty')]
 base = dict(durs=t['durs'], dur=t['dur'], vox='vorecruit', start=18, musicgain=0.5, duck=0.5,
-            dark=[3, 15], ticks=[], hits=hits, capmode='over')
+            dark=[3, 21], ticks=[], hits=hits, capmode='over')
 f['recruit'] = dict(base, cap='cap-recruit', out='../../agentmgt/recruit.mp4', mix='recruit-mix.wav', music='bed-recruit.wav',
                     sfx='sfx-recruit.wav', ass='captions-recruit.ass', w=1280, h=720, capsize=30, capwrap=52)
 f['recruitv'] = dict(base, cap='cap-recruitv', out='../../agentmgt/recruit-story.mp4', mix='recruitv-mix.wav', music='bed-recruitv.wav',

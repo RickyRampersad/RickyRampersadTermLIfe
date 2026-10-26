@@ -15,8 +15,8 @@ What is in the folder:
 | `qr.svg` | the QR code on the final card: it opens the TalentNest application |
 | `og.jpg` | the picture a WhatsApp, Facebook or LinkedIn link preview shows |
 | `netlify.toml` | the headers and the short links `/apply`, `/quiz`, `/test` |
-| `recruit.mp4`, `recruit.jpg` | the recruiting film, 1280×720, 2:16, and its poster |
-| `recruit-story.mp4`, `recruit-story.jpg` | the same film cut 1080×1920 for Reels and Stories |
+| `recruit.mp4`, `recruit.jpg` | the recruiting film, 1280×720, 3:54, twenty-two scenes, and its poster |
+| `recruit-story.mp4`, `recruit-story.jpg` | the same film cut 1080×1920 for the phone (WhatsApp status, TikTok, YouTube Shorts; at 3:54 it is over Instagram's Reels limit, so post the link there) |
 | `film.html` | the film's source page, drawn by `tools/film/build-recruitfilm.py` (not linked) |
 | `player.js` | the branch's film player: tap to pause, a dot per scene, mute, full screen |
 
@@ -99,7 +99,8 @@ for k in recruit recruitv; do python3 mixany.py "$(python3 -c "import json;print
 ```
 
 Then put the new `durs` from films.json on the three `data-scenes` attributes (agentmgt/index.html and
-careersvideo/index.html, both cuts).
+careersvideo/index.html, both cuts) and the length beside them; `scenes.js` and `pages.py` in the session scratchpad
+did both on 26 October.
 
 ## The post
 
@@ -107,11 +108,9 @@ For the branch WhatsApp group, Facebook and LinkedIn (under 120 words, one ask):
 
 > *Good at what you do, but stuck where you are?*
 >
-> Two minutes on why advisors are moving to our branch: mentorship written into the appointment, a career path on
-> paper, your name announced on stage, and an income with no ceiling. 23× MDRT. 32 years in Trinidad.
+> Four minutes on how our branch works now: leads that land on your own board, the Lead Desk that writes your opening from the prospect's words, the fact find that does the arithmetic while you talk, a live wall, a day the system sets for you, and Branch Intelligence on every file. Digital everywhere. Human at the heart of it. 23× MDRT. 32 years in Trinidad.
 >
-> Five seats this intake. Two minutes to apply, reviewed within 48 hours, and confidential if you are already
-> contracted.
+> Five seats this intake. Two minutes to apply, reviewed within 48 hours, and confidential if you are already contracted.
 >
 > Watch: https://rickyrampersadbranch.com/careersvideo/
 >
