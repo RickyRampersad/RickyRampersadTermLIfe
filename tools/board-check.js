@@ -22,6 +22,10 @@ if (start < 0) { console.error('WALL_DATA not found in board/index.html'); proce
 const end = src.indexOf('\n};', start) + 3;
 const D = eval('(' + src.slice(start + 'var WALL_DATA ='.length, end - 1) + ')');
 
+// Keep in step with STALE_DAYS in board/index.html, which decides when the
+// board itself stops presenting the snapshot as today's book.
+const STALE_DAYS = 3;
+
 const sum = (a, f) => a.reduce((x, y) => x + (y[f] || 0), 0);
 const fails = [];
 const check = (ok, label, detail) => {
@@ -57,9 +61,19 @@ const longRef = (D.oldestClaims || []).filter(c => /\d{6,}/.test(c.ref));
 check(longRef.length === 0, 'claim references are masked',
   longRef.map(c => c.ref).join(', '));
 
-// Staleness is not an error, but the wall should never be quietly ancient.
+// The check above proves the snapshot was coherent on the day it was taken.
+// It says nothing about today, and that is the gap that let the board run six
+// weeks out of date: every row stayed consistent with a date in the past.
+// These two measure it against now.
 const days = Math.round((Date.now() - Date.parse(D.generatedAt)) / 864e5);
-console.log(`\n  snapshot is ${days} day(s) old${days > 7 ? '  ← refresh it (tools/wall-refresh.md)' : ''}`);
+const today = new Date().toISOString().slice(0, 10);
+const pastNow = D.renewals.filter(r => r.when < today);
+console.log(`\n  snapshot is ${days} day(s) old`);
+check(pastNow.length < D.renewals.length,
+  'at least one renewal is still ahead of us',
+  pastNow.length ? `${pastNow.length} of ${D.renewals.length} have fallen due since it was taken` : '');
+check(days <= STALE_DAYS, `snapshot is no more than ${STALE_DAYS} days old`,
+  days > STALE_DAYS ? 'refresh it, or switch the live feed on — tools/wall-refresh.md' : '');
 
 console.log(fails.length ? `\n${fails.length} failure(s).\n` : '\nSnapshot is consistent.\n');
 process.exit(fails.length ? 1 : 0);

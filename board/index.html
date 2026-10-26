@@ -131,6 +131,14 @@
   td:last-child,th:last-child{text-align:right}
   td b{font-weight:700}
   .more{padding:14px 14px 2px;font-size:14px;color:var(--dim)}
+  /* Amber, not red: the board is still useful, it is just not live. */
+  .stale{margin:0 0 18px;padding:12px 16px;border-radius:10px;font-size:15px;line-height:1.5;
+    background:rgba(224,169,63,.12);border:1px solid rgba(224,169,63,.42);color:#f0cf8a}
+  .stale b{color:#ffe0a3}
+  #src.old{color:#e0a93f}
+  .empty{padding:34px 20px;font-size:19px;line-height:1.65;color:var(--dim)}
+  .empty b{color:#eaf4ff}
+  .empty span{display:block;margin-top:10px;font-size:16px}
   .chip{display:inline-block;font-size:12px;font-weight:650;padding:4px 12px;border-radius:20px;
     border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--dim);white-space:nowrap}
   .chip.good{color:var(--good);border-color:rgba(52,211,153,.35)}
@@ -347,6 +355,29 @@ function sMix(D){
     +'<div class="panel"><h3>Carriers · risks placed, last 12 months</h3><div class="rows">'+crows+'</div></div>'
     +'</div></div>';
 }
+/* How old is what we are showing?
+   The snapshot in this file is a fallback for when the live feed is
+   unreachable, and a fallback nobody refreshes quietly becomes the board.
+   It ran six weeks out of date once, and nothing on screen said so: the
+   figures looked like today's. Every slide that could mislead now carries
+   its own age. STALE_DAYS is three — a Monday board still reading Friday's
+   numbers is fine; one reading last month's is not. */
+var STALE_DAYS = 3;
+function snapAge(D){
+  var t = new Date(D.generatedAt), now = new Date();
+  var days = Math.floor((now - t) / 864e5);
+  return {
+    days: days, stale: days >= STALE_DAYS, t: t,
+    on: t.toLocaleDateString("en-GB",{day:"numeric",month:"long"}),
+    phrase: days <= 0 ? "today" : days === 1 ? "yesterday" : days + " days ago"
+  };
+}
+function staleNote(D){
+  var a = snapAge(D);
+  if (!a.stale) return "";
+  return '<div class="stale">These are not live figures. This board is reading a snapshot taken <b>'
+    + a.on + '</b> — ' + a.phrase + '. Refresh it, or switch the live feed on (tools/wall-refresh.md).</div>';
+}
 function sRenewals(D){
   // How many rows clear the footer depends on the screen, so it is measured
   // rather than fixed. Ten rows fit the 1080p wall; on a 720p screen the last
@@ -354,21 +385,48 @@ function sRenewals(D){
   // gets missed. Verified at both sizes by tools/board-fit.js.
   var h = window.innerHeight || 1080;
   var SHOWN = h >= 1000 ? 10 : h >= 860 ? 8 : 6;
-  var rest = Math.max(0, (D.ytd.renewals30||0) - SHOWN);
-  var rows = D.renewals.slice(0,SHOWN).map(function(x){
+  /* A renewal whose date has passed is not a call to make — it has already
+     renewed or already lapsed. The board showed three such rows for six
+     weeks because the snapshot was refreshed and then stood still, and a
+     screen that tells the room to chase a dead policy is worse than a
+     screen that admits it is out of date. Measured against TODAY, never
+     against the day the snapshot was taken. */
+  var live = D.renewals.filter(function(x){ return daysUntil(x.when) >= 0; });
+  var gone = D.renewals.length - live.length;
+  var rest = Math.max(0, (D.ytd.renewals30||0) - Math.min(SHOWN, live.length));
+  var rows = live.slice(0,SHOWN).map(function(x){
     var d = daysUntil(x.when), cls = d<=7?"bad":(d<=21?"warn":"good");
     return '<tr><td><b>'+esc(x.who)+'</b></td><td>'+esc(x.what)+'</td>'
       +'<td>'+dstr(x.when)+'</td><td><span class="chip '+cls+'">'
       +(d<=0?"today":d===1?"tomorrow":d+" days")+'</span></td>'
       +'<td>'+(x.prem>0?money(x.prem):"—")+'</td></tr>';
   }).join("");
+  var age = snapAge(D);
+  var head = live.length
+    ? (age.stale
+        ? 'Renewals as at ' + age.on
+        : D.ytd.renewals30 + ' renewals in the next 30 days')
+    : 'No renewal on this board is still ahead of us';
+  var lede = live.length
+    ? 'Renewed on time, a policy is a phone call. Missed, it’s a client shopping around. These are the next ones due.'
+    : 'Every renewal in this snapshot has already come and gone. Refresh it before working from this screen.';
   return '<div class="kick">Renewals radar</div>'
-    +'<h2>'+D.ytd.renewals30+' renewals in the next 30 days</h2>'
-    +'<p class="lede">Renewed on time, a policy is a phone call. Missed, it’s a client shopping around. These are the next ones due.</p>'
-    +'<div class="body"><div class="panel"><table><thead><tr>'
-    +'<th>Renewal</th><th>Detail</th><th>Due</th><th>Countdown</th><th>Premium</th></tr></thead>'
-    +'<tbody>'+rows+'</tbody></table>'
-    +(rest?'<div class="more">and '+rest+' more due inside 30 days — the full list is on the renewal worklist</div>':'')
+    +'<h2>'+head+'</h2>'
+    +'<p class="lede">'+lede+'</p>'
+    + staleNote(D)
+    +'<div class="body"><div class="panel">'
+    /* An empty table with its headings still up reads as a broken screen.
+       With nothing live there is no table — just what the snapshot held
+       and what to do about it. */
+    +(live.length
+       ? '<table><thead><tr>'
+         +'<th>Renewal</th><th>Detail</th><th>Due</th><th>Countdown</th><th>Premium</th></tr></thead>'
+         +'<tbody>'+rows+'</tbody></table>'
+         +(gone?'<div class="more">'+gone+' row'+(gone===1?'':'s')+' from this snapshot already past, and not shown</div>':'')
+         +(rest&&!age.stale?'<div class="more">and '+rest+' more due inside 30 days — the full list is on the renewal worklist</div>':'')
+       : '<div class="empty"><b>'+gone+' renewal'+(gone===1?'':'s')+'</b> were on this snapshot when it was taken on '
+         +age.on+'. Every one of them has since fallen due.<br><span>Switch the live feed on and this screen fills itself '
+         +'every fifteen minutes — tools/wall-refresh.md.</span></div>')
     +'</div></div>';
 }
 function sClaims(D){
@@ -433,10 +491,12 @@ function render(D){
     d.onclick=function(){go(i,true)};
     dots.appendChild(d);
   });
-  var t=new Date(D.generatedAt);
+  var a=snapAge(D), t=a.t;
   $("#src").textContent="Data: Salesforce · pulled "
     +t.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "
-    +t.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+    +t.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})
+    +(a.stale?"  ·  "+a.phrase+", not live":"");
+  $("#src").classList.toggle("old", a.stale);
   go(Math.min(cur,BUILDERS.length-1),false);
 }
 
