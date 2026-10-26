@@ -117,7 +117,40 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     ok('a wrong link says so, with a way to try again', /This link is not right/.test(await page.textContent('#notice')) && !!(await page.$('#again')));
     await page.evaluate(() => localStorage.clear());
     await page.goto('http://localhost:8799/myworkday/'); await page.waitForTimeout(600);
-    ok('no link: where to find yours', /from the <b>My workday<\/b> link in your morning e-mail/.test(await page.innerHTML('#notice')));
+    ok('no link: where to find yours', /<b>My day<\/b> in the <a href="\/rroperations\/">branch app<\/a>/.test(await page.innerHTML('#notice')) && /the <b>My workday<\/b> link in your morning e-mail/.test(await page.innerHTML('#notice')));
+    await ctx.close();
+  }
+
+  // My day in the branch app (26 Oct 2026: "make available as a view on the branch apps as my day"): the app's sign-in,
+  // not the e-mail's link; the tile and the first step of a staff member's day open it; an agent has no My day.
+  console.log('\nfrom the branch app:\n');
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const TOK = 'T'.repeat(32);
+    await ctx.addInitScript(t => { try { if (!localStorage.getItem('rrb-ops-session')) localStorage.setItem('rrb-ops-session', JSON.stringify({ token: t, name: 'Pawan Prabhu', role: 'Staff', agentNo: 'PP005', mode: 'test' })); } catch (e) {} }, TOK);
+    const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
+    let asked = [], posted = [];
+    await page.route(/script\.google\.com\/macros/, async route => {
+      const req = route.request();
+      if (!/AKfycbzb9/.test(req.url())) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, mode: 'test' }) });   // the app's own backend
+      if (req.method() === 'POST') { posted.push(req.postData() || ''); const m = model({ sid: 'pawan', name: 'Pawan Prabhu', first: 'Pawan' }); m.checkedIn = { at: '4:55pm', first: true }; return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(m) }); }
+      asked.push(req.url()); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model({ sid: 'pawan', name: 'Pawan Prabhu', first: 'Pawan', checkin: { at: '', late: 0, status: '', out: '', why: '' } })) });
+    });
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+    await page.goto('http://localhost:8799/rroperations/'); await page.waitForTimeout(900);
+    const tile = await page.$('a.app[href="/myworkday/?app=1"]');
+    ok('staff: a My day tile, first under Every day', !!tile && /My day/.test(await tile.textContent()) && (await page.$$eval('#sections .grid', g => g[0] ? g[0].querySelector('a.app').getAttribute('href') : '')) === '/myworkday/?app=1');
+    ok('and the first step of the day opens it', /Check in on My day/.test(await page.textContent('#day')) && !!(await page.$('#day a[href="/myworkday/?app=1"]')));
+    await page.evaluate(() => localStorage.setItem('wd_link', JSON.stringify({ p: 'sasha', k: 'OLDKEY' })));
+    await page.click('a.app[href="/myworkday/?app=1"]'); await page.waitForTimeout(1500);
+    ok('My day asks the tracker with the app\'s sign-in, not a link left on the phone', asked.length >= 1 && /wd=app&ops=T{32}/.test(asked[0]) && !/k=OLDKEY/.test(asked[0]), asked[0]);
+    ok('it is his day, with the way back to the app', /Pawan$/.test(await page.textContent('#hello')) && await page.isVisible('#toapp'));
+    await page.click('#ci'); await page.waitForTimeout(900);
+    ok('checking in goes with the app\'s sign-in', posted.length === 1 && /act=checkin/.test(posted[0]) && /ops=T{32}/.test(posted[0]) && /wd=app/.test(posted[0]), posted[0]);
+    await page.evaluate(() => localStorage.setItem('rrb-ops-session', JSON.stringify({ token: 'A'.repeat(32), name: 'Some Agent', role: 'Agent', agentNo: 'A01234' })));
+    await page.goto('http://localhost:8799/rroperations/'); await page.waitForTimeout(800);
+    ok('an agent has no My day tile', !(await page.$('a.app[href="/myworkday/?app=1"]')));
+    ok('no page errors', errs.length === 0, errs.join(' | '));
     await ctx.close();
   }
   await b.close(); server.close();

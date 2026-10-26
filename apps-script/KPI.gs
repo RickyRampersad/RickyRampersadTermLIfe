@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-26b';
+var SCRIPT_VERSION = '2026-10-26c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -15684,7 +15684,10 @@ function replyClick_(e) {
  *    · one button to the full day page for everything else (drafts, the inbox and Claude's notes, the task cards).
  *  One link per person for every day (workUrl_, signed like My unit's), in the morning e-mails and from showWorkdayLinks() in the editor.
  */
-var WORKDAY = { SITE: 'https://rickyrampersadbranch.com/myworkday/', BARS: 5, ACHIEVED: 40, NEXT: 8, TEAM_TTL: 300 };
+var WORKDAY = { SITE: 'https://rickyrampersadbranch.com/myworkday/', BARS: 5, ACHIEVED: 40, NEXT: 8, TEAM_TTL: 300,
+  // My day in the branch app (26 Oct 2026): the app's sign-in, checked with RR Operations (lb.whoami), the way the clients
+  // board and group clients take it (rroperations/sso.js). RROPS_URL in Script properties overrides the address.
+  OPS_URL: 'https://script.google.com/macros/s/AKfycbyRPFW_RdQItCeSMHvP2HYEN69Zv2HQMrLxw9IUWUlnUlkzjqaVFPdvjFcg_-b-zX78/exec', OPS_TTL: 600 };
 function workSig_(sid) { return replySig_(sid, 'always', 'work'); }
 function workUrl_(sid) { return WORKDAY.SITE + '?p=' + encodeURIComponent(sid) + '&k=' + encodeURIComponent(workSig_(sid)); }
 function workdayPerson_(sid) { return rosterPerson_(sid) || (sid === 'ricky' || UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null); }
@@ -15818,15 +15821,67 @@ function workdayNoteBars_(day) {
   return days.map(function (d) { return { d: d, l: sbLetter_(d), n: by[d] }; });
 }
 /** GET with wd=: the day as JSON, for the page on the site. */
+/* ── My day in the branch app (26 October 2026) ──
+ *  Ricky, 4:49pm, the branch app open as Pawan: "MAKE AVAILABLE AS A VIEW ON THE BRANCH APPS AS MY DAY, CAN THIS BE DONE".
+ *  The branch app (/app) already signs each person in and carries that sign-in into the other tools. My day is a tile
+ *  there: /myworkday/?app=1 sends the app's token (ops=) instead of the e-mail's signed link, the tracker asks RR
+ *  Operations who it is (lb.whoami, server to server, kept ten minutes, never a password), and finds the desk on the
+ *  Access tab: by e-mail, then by number, then by first name, only among the desks of that person's role (staff: the
+ *  day-mail desks; a unit manager: his; the branch manager: his). An agent has no My day. The link in the e-mail still
+ *  works as before. Pawan's branch app sign-in works where Google's pages do not (a phone signed in to two accounts). */
+function wdOpsWho_(token) {
+  token = String(token || '').trim();
+  if (!/^[A-Za-z0-9]{20,80}$/.test(token)) return null;
+  var cache = CacheService.getScriptCache(), key = 'wd-ops-' + token.slice(0, 48), hit = cache.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  var url = PropertiesService.getScriptProperties().getProperty('RROPS_URL') || WORKDAY.OPS_URL;
+  try {
+    var r = UrlFetchApp.fetch(url, { method: 'post', contentType: 'text/plain;charset=utf-8', followRedirects: true, muteHttpExceptions: true,
+      payload: JSON.stringify({ action: 'lb.whoami', token: token }) });
+    var j = JSON.parse(r.getContentText());
+    if (!j || !j.ok) return null;
+    var v = { name: String(j.name || ''), role: String(j.role || ''), agentNo: String(j.agentNo || ''), email: String(j.email || '') };
+    cache.put(key, JSON.stringify(v), WORKDAY.OPS_TTL);
+    return v;
+  } catch (e) { return null; }
+}
+/** The tracker desk a branch app person is, among the desks of their role; '' when none. */
+function wdOpsSid_(v) {
+  var role = String(v && v.role || '').trim().toLowerCase();
+  if (role === 'agent') return '';
+  var cands = role === 'branch manager' ? ['ricky'] : role === 'unit manager' ? UM_DESKS.slice() : DAY_MAIL_DESKS.slice();
+  var norm = function (x) { return String(x || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+  var people = roster_().filter(function (p) { return p.active && cands.indexOf(p.staffId) > -1; }), hit = '';
+  var email = String(v.email || '').trim().toLowerCase(), no = norm(v.agentNo);
+  if (email) people.forEach(function (p) { if (!hit && String(p.email || '').toLowerCase() === email) hit = p.staffId; });
+  if (!hit && no) people.forEach(function (p) { if (!hit && norm(p.agentNumber) === no) hit = p.staffId; });
+  if (!hit && v.name) { var s = staffIdFor_(v.name); people.forEach(function (p) { if (!hit && p.staffId === s) hit = s; }); }
+  return hit;
+}
+/** Who a My workday call is for: the app's sign-in (ops=), else the e-mail's signed link (wd= and k=). */
+function wdAuth_(p) {
+  var ops = String(p.ops || '').trim();
+  if (ops) {
+    var v = wdOpsWho_(ops);
+    if (!v) return { error: 'Your branch app sign-in has ended. Sign in again at rickyrampersadbranch.com/app.' };
+    var sid = wdOpsSid_(v);
+    if (!sid) return { error: 'My day is for the branch staff and managers' + (v.name ? ': ' + v.name + ' is not on the tracker\'s register' : '') + '. Ask Mr Rampersad.' };
+    return { sid: sid, ops: true };
+  }
+  var sid2 = String(p.wd || '').trim();
+  if (!sid2 || String(p.k || '') !== workSig_(sid2)) return { error: 'This link is not right. Open it again from your morning e-mail.' };
+  return { sid: sid2 };
+}
 function workdayGet_(p) {
-  var sid = String(p.wd || '').trim();
-  if (!sid || String(p.k || '') !== workSig_(sid)) return { ok: false, error: 'This link is not right. Open it again from your morning e-mail.' };
-  return workdayModel_(sid, todayISO_());
+  var a = wdAuth_(p);
+  if (a.error) return { ok: false, error: a.error };
+  return workdayModel_(a.sid, todayISO_());
 }
 /** POST with wd=: check in there and then, the same register as the day page; then the day again. */
 function workdayPost_(p) {
-  var sid = String(p.wd || '').trim(), day = todayISO_();
-  if (!sid || String(p.k || '') !== workSig_(sid)) return { ok: false, error: 'This link is not right. Open it again from your morning e-mail.' };
+  var a = wdAuth_(p), day = todayISO_();
+  if (a.error) return { ok: false, error: a.error };
+  var sid = a.sid;
   var person = workdayPerson_(sid); if (!person) return { ok: false, error: 'That desk is no longer on the register.' };
   if (String(p.act || '') === 'post') { if (sid !== 'ricky') return { ok: false, error: 'Nothing to do.' }; return workdayPostNote_(p, day); }
   if (String(p.act || '') !== 'checkin') return { ok: false, error: 'Nothing to do.' };

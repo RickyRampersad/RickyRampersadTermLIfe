@@ -213,6 +213,11 @@
      kpi = the tracker's; mtg = the meeting code; jf = a JotForm (no sign-in); open = no sign-in.
      tags: the words people use for it. until: hidden after that day. */
   var TILES = [
+    /* My day (26 Oct 2026: "make available as a view on the branch apps as my day"): check in, the progress bar and
+       what is next, signed in by this app (the tracker asks RR Operations who the sign-in is). Not for agents. */
+    { sec: 'Every day', id: 'myday', name: 'My day', ic: 'cal', to: 'lsm', href: '/myworkday/?app=1',
+      tags: 'my day my workday check in checkin register sign in progress plan bar achieved next',
+      blurb: { l: 'Check in, your progress bar and your unit', s: 'Check in, your progress bar and what is next', m: 'Check in, your day and every desk\'s bar' } },
     { sec: 'Every day', id: 'logbook', name: 'Log Book', ic: 'book', to: 'alsm', href: '/rroperations/logbook/',
       tags: 'digital log log book documents papers bag mailbag hand in jotform log',
       blurb: { a: 'Log your documents and see where each one is', l: 'Your documents, and your team\'s', s: 'Receive, sign for and route the papers', m: 'Every line in the branch' } },
@@ -357,12 +362,12 @@
       ['Check your team\'s clients', 'The clients board shows each of your agents\' clients and who has nothing logged.', 'board'],
       ['Your team against its goals', 'The Flight Plan and the fact find insights show each agent\'s year so far.', 'goals'] ] },
     s: { title: 'Your day', steps: [
-      ['Check in from your morning e-mail', 'It arrives half an hour before you start. Press Check in: that is the register, and your day is laid out on that page.', ''],
+      ['Check in on My day', 'Open My day here, or from your morning e-mail, and press Check in: that is the register. Your progress bar and what is next are on the same page.', 'myday'],
       ['Receive the papers and make the bag', 'Sign for each document in the Log Book; the Transmittal tab prints the bag for each department.', 'logbook'],
       ['Record every cheque and contract handed over', 'Each cheque, policy contract or certificate given to a client or an agent goes in the Delivery Book (not the Log Book), and the client is told.', 'delivery-book'],
       ['Before 10 am: the premium letters', 'Tick each letter you have checked on the Premium Due Desk. Group letters are approved during the week for Monday.', 'premium'] ] },
     m: { title: 'Your day', steps: [
-      ['Check in and start your day', 'Your 5:00 e-mail: Check in and start my day opens My branch, the same link every day.', ''],
+      ['Check in and start your day', 'My day: Check in, your progress and every desk\'s bar. Your 5:00 e-mail opens My branch.', 'myday'],
       ['Start with what is urgent', 'The clients board opens on Urgent: call-backs, pressing answers and the late ones.', 'board'],
       ['Check the Log Book', 'Late lines, departments that said No, contracts at day 15. The 5 pm digest has the same.', 'logbook'],
       ['Group letters for Monday', 'Approve or rehearse before the 10 am run.', 'groups'] ] }
