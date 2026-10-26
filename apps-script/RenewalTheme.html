@@ -79,7 +79,7 @@ body.rr{margin:0;min-height:100vh;color:var(--body);font:1rem/1.55 -apple-system
 .rr-band p{color:#F0F6FF}
 .rr-band .eyebrow{color:#D8ECFF}
 .rr-band.t-renew{background:linear-gradient(135deg,var(--rn) 0%,var(--rn2) 60%,#2FB3A9 120%)}
-.rr-band.t-prop{background:linear-gradient(135deg,var(--pr) 0%,var(--pr2) 70%,#B190E0 120%)}
+.rr-band.t-prop{background:linear-gradient(135deg,#5E3A9C 0%,var(--pr) 60%,#8A62C4 120%)}
 .rr-band .stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
 .rr-band .stats span{background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:7px 12px;font-size:.82rem;font-weight:600;color:#fff;animation:rr-rise .5s var(--ease) both}
 .rr-band .stats span b{display:block;font-size:1.35rem;line-height:1.1}
@@ -156,6 +156,7 @@ select.rr-in{appearance:none;-webkit-appearance:none;padding-right:40px;backgrou
 /* ---- tabs: one row, sticky, a scroll on a phone, never a second line ---- */
 .rr-tabs{position:sticky;top:64px;z-index:15;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 2px 10px;margin:0 0 6px;background:linear-gradient(180deg,rgba(243,247,252,.97) 70%,rgba(243,247,252,0))}
 .rr-tabs::-webkit-scrollbar{display:none}
+@media (max-width:400px){.rr-tabs{top:54px}}
 .rr-tabs button,.rr-tabs a{flex:none;font:inherit;font-size:.9rem;font-weight:700;color:var(--body);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;min-height:42px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-decoration:none;transition:background .15s,color .15s,border-color .15s}
 .rr-tabs button:hover,.rr-tabs a:hover{border-color:var(--blue2)}
 .rr-tabs .on,.rr-tabs [aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
