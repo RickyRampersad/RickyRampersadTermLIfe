@@ -3,35 +3,23 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "gcmc": [
-   "This is the Ricky Rampersad Branch's new way of looking after your group.",
-   "No more chasing us for answers. Everything about your group plan, in one place, and always up to date.",
-   "Every Monday at ten, you get one short report. What we finished, what's still open, and what we need from you.",
-   "Tap through to your own secure page. Your service items, your billing, and your people, each in its own tab.",
-   "On the twenty-sixth, your bills arrive checked against our records, with one clear statement of what's due.",
-   "See who's active, who came off this year, and every application still pending, with who has it on our team.",
-   "Someone joining or leaving? Tell us right there. The form fills itself in, and we follow it through to the end.",
-   "Then rate us, from one to five stars. A real person reads every answer, and acts on it.",
-   "Behind it all is a named team, and every step is recorded. Nothing slips through.",
-   "Want this for your company? Call the Ricky Rampersad Branch. Let's look after your people, together."
-  ],
-  "gcms": [
-   "Group client management, the new way. Here's how it works, and who does what.",
-   "There are four parts. Our Branch Manager sets the standard and owns the result. Kamla, our Branch Manager's Assistant, oversees the tasks. The support team looks after their own groups. And the system keeps time, and keeps the record.",
-   "Everyone signs in with their own agent number and password, so everything you do is recorded in your name.",
-   "Every week, you run the six checks and approve each group by Friday. At ten on Monday, the letters go by themselves.",
-   "At ten thirty, groups that haven't rated get a reminder. And if one of your ready groups had no letter, you're asked why, and a task opens in your name. Reply by noon, and close it with the reason.",
-   "Every month, the bills come in on the twenty-fifth. You upload, check, answer, reconcile, and approve. At one o'clock, the Branch Manager gets the report.",
-   "On the twenty-sixth at ten, every approved bill goes by itself, with its statement. That's the cut-off.",
-   "Open Billing, and eight steps guide you. Upload the bills, and every check against Salesforce comes back as a finding: fix, check, note, or okay.",
-   "Answer each question with a tap. Your answer goes on Chatter, in your name. Then update last month's tasks against this month's bill.",
-   "Joiners and leavers go on Guardian's own forms, filled from Salesforce, and chased every three working days. The people step flags who turns sixty-five, or comes of age.",
-   "The statement shows what's due, and what's still unpaid. Tick reconciled only when you've checked it yourself, then approve it for the billing day.",
-   "Missed the cut-off? Approve and Send now will ask why. Give the real reason. It goes on the bill, on Chatter, and straight to the Branch Manager.",
-   "Every press is recorded: who, when, and why. So Head Office, the Branch Manager, or the group can see exactly what happened.",
-   "Kamla checks the team dashboard every day, chases what's late, and steps in when someone's away. No group ever waits on a person who's out.",
-   "Until we go live, every bill comes to you, marked test. But Salesforce is real, so press only what you mean.",
-   "Read the training programme, take the test, and let's make every group feel looked after. This is our new way."
+  "recruit": [
+   "Let me ask you something. Are you good at what you do, but stuck where you are?",
+   "Talent gets you in the game. The room you sit in decides how far you go.",
+   "This is the Ricky Rampersad Branch. Guardian Life of the Caribbean, in Chaguanas. Twenty-three times an MDRT branch. Thirty-two years in Trinidad.",
+   "And we do things differently.",
+   "Here, mentorship isn't luck. Our Executive Agents and Senior Sales Consultants are required to mentor. It's written into their appointments.",
+   "The Branch Manager interviews every advisor personally, and coaches them after. Your book, your cases, your next move.",
+   "Your wins don't vanish into a group chat. They're announced on stage. Blastoff in January. Mid-Year in July. Your name, out loud, in front of the company.",
+   "And the career path is written down. Executive Agent: overrides up to five percent, a private office, sales support. Senior Sales Consultant: overrides up to ten percent.",
+   "Or lead. The Emerging Leaders Program, to Unit Manager, to running a branch of your own.",
+   "The income? Uncapped. It scales with your activity and your skill. No salary band. No ceiling.",
+   "Already contracted somewhere else? Your conversation with us stays confidential.",
+   "New to insurance? That's normal. You get the full build: training, boot camp, one-on-one coaching, and mentors who are required to develop you.",
+   "We don't fill seats. We select. Five gates, the same for a newcomer and a fifteen-year producer. And at your Discovery, you sit with our qualifiers and ask them anything, without the Branch Manager in the room.",
+   "Five seats this intake. Two minutes to apply. Reviewed within forty-eight hours.",
+   "Go to agent M G T dot com. Take the sixty-second test, and start the selection.",
+   "The environment decides. We select the driven."
   ]
  }
 }
