@@ -47,6 +47,22 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
   forms back. Each proposal is a row on the **Motor Proposals** tab (`MP-yyMMdd-nnn`). The representative's half of the
   Know Your Policy form is left for the branch. Compliance must confirm the signed-on-screen proposal is accepted.
   When Guardian revises a form, replace the PDF and re-measure: the positions in `forms.js` are taken off its characters.
+- **Existing or new, and the Opportunity.** The sign-in e-mail decides. A client found on file sees "We found your
+  record": name, mobile, date of birth, occupation and the driver's permit as the Contact holds it (`DP__c`,
+  `Drivers_Permit_Issue_Date__c`, `Driver_s_Permit_Expiry__c`), with whether it is valid, expiring within 60 days or
+  expired. Anyone else is asked once, "Are you already a Guardian client?": **No** creates a Contact at the send, with
+  the permit they gave; **Yes** takes an optional policy or client number, and the request is matched to a Contact by
+  that number **and** the surname, never by the number alone; unmatched, no Contact is made (it would be a duplicate)
+  and the Opportunity says to link it by hand. Nothing found that way is ever shown on the page. Every new quote (not
+  a renewal) is an **Opportunity**, as the branch writes them by hand: record type GENERAL INSURANCE, "OPP Motor -
+  <client> (<vehicle> <reg>)", stage Proposal/Price Quote, close date 30 days on, Contact, account, Vehicle #, New
+  Business, lead source Existing Client or Web, owner `MQ_SF_OWNER`, producer `MQ_SF_PRODUCER`. Its task sits on it.
+  Taking the quote moves it to Negotiation/Review.
+- **The permit on the Contact.** A blank is filled; a later expiry (a renewed permit) replaces the old one with its
+  issue date; an earlier expiry is never written; a **different permit number is never written**: it goes to staff
+  (on the row, the task, and from the home screen a task "Confirm driver's permit") to confirm with the client. The
+  client can update the permit from the home screen, by the same rules. In test mode nothing is written; the row says
+  what would have been.
 - **Guardian's Motor Quotation Request form.** Every new quote (quick or full, never a renewal) carries Guardian's own
   fillable request form (`motor-quote/forms/gg-motor-quotation-request.pdf`), filled in on the phone from the client's
   answers and attached to the desk e-mail as `motor-quotation-request.pdf`. It stays fillable, so the desk can add or
@@ -71,7 +87,9 @@ own Google Sheet** (it has its own `doGet`/`doPost`, so never paste it beside `C
    - `MQ_RENEW_TO` — where renewals go (default: the quotes desk).
    - `MQ_BIND_TO` — where signed proposals go (default: the quotes desk).
    - Optional: `MQ_QUOTES_TO` (overrides the quotes desk), `MQ_CC` (more copies, comma-separated),
-     `MQ_SF_OWNER` (the Salesforce user id that owns new Contacts and tasks), `MQ_SF_TASK_TYPE` (default
+     `MQ_SF_OWNER` (the Salesforce user id that owns new Contacts, Opportunities and tasks; the branch's motor
+     opportunities are owned by the BMA), `MQ_SF_PRODUCER` (the Contact id put in Producer on every Opportunity; the
+     branch's own are the branch manager's agent record), `MQ_SF_TASK_TYPE` (default
      "New Business"; a value the org refuses is left off), `MQ_DRIVE_FOLDER` (a folder id; else a "Motor Quotes"
      folder is made in the owner's Drive).
 3. Run `mqSetup()` once; grant the permissions (Sheets, Drive, Gmail, external requests). It makes the four tabs
@@ -95,7 +113,7 @@ fresh `/exec` and the page would have to be re-wired.
 ## Tabs
 
 - **Motor Proposals** — one row a proposal: the quote it takes, the vehicle, what needs attention, the answers.
-- **Motor Quotes** — one row a request. Staff keep **Status**, **Quoted on**, **Quoted premium**, **Staff note**.
+- **Motor Quotes** — one row a request. Staff keep **Status**, **Quoted on**, **Quoted premium**, **Staff note**. **Client status**, **Client says**, **SF opportunity**, **Permit on file** and **Permit update** say who the client is to us and what changed on the Contact.
 - **Quote Files** — each uploaded document and its Drive id.
 - **Quote Log** — sign-ins, sends, failures.
 - **Sessions** — token hashes only, pruned as they expire.

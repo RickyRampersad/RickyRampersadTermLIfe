@@ -65,7 +65,7 @@
  */
 
 var MQ = {
-  VERSION: '2026-10-21c',
+  VERSION: '2026-10-26a',
   BRAND: 'Ricky Rampersad Branch',
   LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',   // the blue shield (the manager's choice, 21 Oct 2026); hosted PNG: Gmail strips SVG and data URIs
   SITE: 'https://rickyrampersadbranch.com/motor-quote/',
@@ -102,6 +102,14 @@ var MQ = {
   /* The renewal comes first when the cover ends within RENEW_AHEAD days, or
      ended no more than RENEW_BACK days ago. */
   RENEW_AHEAD: 60, RENEW_BACK: 45, TERMS_SHOWN: 6,
+
+  /* Every new quote is an Opportunity on the branch's own pattern (26 October
+     2026): GENERAL INSURANCE, "OPP Motor - <client>", the contact in Contact__c,
+     the owner MQ_SF_OWNER and the producer MQ_SF_PRODUCER (a Contact id).
+     Taking the quote moves it to Negotiation/Review. */
+  OPP_RT: 'GENERAL_INSURANCE', OPP_STAGE: 'Proposal/Price Quote', OPP_STAGE_TAKEN: 'Negotiation/Review', OPP_CLOSE_DAYS: 30,
+  /* The permit on the Contact: shown to the client, and how it may be changed (mqPermitUpdate_). */
+  PERMIT_SOON_DAYS: 60,
 };
 
 var MQ_COLS = ['Ref', 'Received', 'Status', 'Client', 'Email', 'Mobile', 'Contact Id', 'Contact action',
@@ -115,7 +123,9 @@ var MQ_COLS = ['Ref', 'Received', 'Status', 'Client', 'Email', 'Mobile', 'Contac
   'Request type', 'Renewal date', 'Renewal choice', 'Renewal changes', 'Last premium', 'Invoice read',
   /* Added 21 October 2026 with Guardian's Motor Quotation Request form: what it asks that the page did not. */
   'Marital status', 'Home no.', 'Home address', 'Employer', 'First GG client', 'Other GG business', 'Chassis #', 'Use of vehicle',
-  'Anti-theft', 'Second-hand accident', 'Windscreen limit', 'NCD %', 'Young drivers', 'Request form'];
+  'Anti-theft', 'Second-hand accident', 'Windscreen limit', 'NCD %', 'Young drivers', 'Request form',
+  /* Added 26 October 2026: who the client is to us, the Opportunity, and the permit on the Contact. */
+  'Client status', 'Client says', 'SF opportunity', 'Permit on file', 'Permit update'];
 
 /* The questions, in the order the e-mail to the quotes desk lists them. Each
    key is a field the page sends; the label is what the desk reads. */
@@ -183,6 +193,7 @@ function doPost(e) {
       case 'readInvoice': out = mqReadDoc_(b, 'invoice'); break;
       case 'readDoc':     out = mqReadDoc_(b, mqClean_(b.kind, 20)); break;
       case 'propose':     out = mqPropose_(b); break;
+      case 'permit':      out = mqPermitSave_(b); break;
       case 'signOut':     out = mqSignOut_(b); break;
       default:            out = { ok: false, error: 'Unknown action' };
     }
@@ -449,6 +460,15 @@ function mqLookup_(email) {
     var c = contacts[0];
     me.found = true; me.contactId = c.Id; me.name = c.Name || ''; me.first = c.FirstName || ''; me.last = c.LastName || '';
     me.mobile = c.MobilePhone || c.Phone || ''; me.occupation = mqNiceTitle_(c.Title); me.dob = c.Birthdate || '';
+    /* The driver's permit as the Contact holds it: the number, the issue date
+       and the expiry. Asked apart, like the address. */
+    var pf = mqPermitOnFile_(c.Id);
+    if (pf) {
+      me.permitOnFile = { number: pf.number, issued: pf.issued, expires: pf.expires };
+      var st = mqPermitState_(pf.expires, mqDate_(new Date(), 'yyyy-MM-dd'));
+      me.permitOnFile.state = st.state; me.permitOnFile.days = st.days;
+      me.permit = pf.number; me.permitIssued = pf.issued; me.permitExpires = pf.expires;
+    }
   }
   var ids = contacts.map(function (c) { return c.Id; });
   var inIds = ids.length ? ids.map(mqQ_).join(',') : '';
@@ -576,16 +596,156 @@ function mqNiceTitle_(t) {
   return t;
 }
 
-/** A new client becomes a Contact when their request is sent, when a name is
- *  held. The same e-mail already on file is the same client, whatever the
- *  name was typed as. Never in test mode. */
+/* ============================ the permit on file ============================ */
+
+/** The Contact's driver's permit: DP__c, Drivers_Permit_Issue_Date__c and
+ *  Driver_s_Permit_Expiry__c, with the Contact's account for the Opportunity.
+ *  Null when Salesforce cannot be read. */
+function mqPermitOnFile_(contactId) {
+  if (!contactId || !mqIsSfId_(contactId) || !mqSfReady_()) return null;
+  try {
+    var r = mqSoql_('SELECT Id, AccountId, DP__c, Drivers_Permit_Issue_Date__c, Driver_s_Permit_Expiry__c FROM Contact WHERE Id = ' + mqQ_(contactId) + ' LIMIT 1')[0];
+    if (!r) return null;
+    return { number: mqClean_(r.DP__c, 20), issued: mqDay_(r.Drivers_Permit_Issue_Date__c), expires: mqDay_(r.Driver_s_Permit_Expiry__c), accountId: r.AccountId || '' };
+  } catch (e) { mqLog_('(permit)', 'read-failed', String(e)); return null; }
+}
+
+/** Where a permit stands on a given day: valid, expiring within
+ *  PERMIT_SOON_DAYS, expired, or nothing on file. */
+function mqPermitState_(expires, today) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(expires || '')) return { state: 'none', days: null };
+  var n = mqDays_(today, expires);
+  return { state: n < 0 ? 'expired' : n <= MQ.PERMIT_SOON_DAYS ? 'soon' : 'valid', days: n };
+}
+
+function mqDateOk_(v) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v || '')) return false;
+  var y = +v.slice(0, 4), m = +v.slice(5, 7), dd = +v.slice(8, 10);
+  return y >= 1950 && y <= 2100 && m >= 1 && m <= 12 && dd >= 1 && dd <= 31;
+}
+function mqPermitKey_(v) { return String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
+/** What the client gave against what the Contact holds, and what may change.
+ *  The rules, so a slip of the finger never spoils a good record:
+ *   - a blank on the Contact is filled;
+ *   - a later expiry replaces the old one (a renewed permit), with its issue
+ *     date when that is later too; an earlier expiry is never written;
+ *   - a different permit number is never written over the one on file: it
+ *     goes to staff to confirm, and nothing else changes with it.
+ *  Returns { body, notes, summary }: body is what would be written. */
+function mqPermitPlan_(given, onFile) {
+  var body = {}, notes = [], f = onFile || { number: '', issued: '', expires: '' };
+  var num = mqClean_(given.permit, 20), iss = mqDateOk_(given.permitIssued) ? given.permitIssued : '', exp = mqDateOk_(given.permitExpires) ? given.permitExpires : '';
+  if (iss && exp && exp <= iss) { notes.push('The expiry given (' + exp + ') is not after the issue date (' + iss + '): nothing changed.'); return { body: {}, notes: notes, summary: notes[0] }; }
+  if (num && f.number && mqPermitKey_(num) !== mqPermitKey_(f.number)) {
+    notes.push('The client gave permit number ' + num + '; the Contact holds ' + f.number + '. Not changed: confirm with the client and update the Contact by hand.');
+    return { body: {}, notes: notes, summary: notes[0] };
+  }
+  if (num && !f.number) { body.DP__c = num; notes.push('Permit number added: ' + num + '.'); }
+  if (exp) {
+    if (!f.expires) { body.Driver_s_Permit_Expiry__c = exp; notes.push('Permit expiry added: ' + exp + '.'); }
+    else if (exp > f.expires) { body.Driver_s_Permit_Expiry__c = exp; notes.push('Permit expiry renewed: ' + f.expires + ' to ' + exp + '.'); }
+    else if (exp < f.expires) notes.push('The client gave an earlier expiry (' + exp + ') than the Contact holds (' + f.expires + '): kept as it is.');
+  }
+  if (iss) {
+    if (!f.issued) { body.Drivers_Permit_Issue_Date__c = iss; notes.push('Permit issue date added: ' + iss + '.'); }
+    else if (iss > f.issued && body.Driver_s_Permit_Expiry__c) { body.Drivers_Permit_Issue_Date__c = iss; notes.push('Permit issue date updated with the renewal: ' + f.issued + ' to ' + iss + '.'); }
+  }
+  return { body: body, notes: notes, summary: notes.join(' ') || (num || exp || iss ? 'Matches what the Contact holds.' : '') };
+}
+
+/** Applies the plan to the Contact. Never in test mode: there it says what it
+ *  would have written. */
+function mqPermitUpdate_(contactId, given, onFile) {
+  var plan = mqPermitPlan_(given, onFile);
+  if (!Object.keys(plan.body).length) return plan;
+  if (!contactId || !mqIsSfId_(contactId)) { plan.summary = 'No Contact to update. ' + plan.summary; return plan; }
+  if (mqMode_() !== 'live') { plan.summary = 'Would update (test mode): ' + plan.summary; return plan; }
+  try { mqSfFetch_('/sobjects/Contact/' + contactId, { method: 'patch', body: plan.body }); plan.written = true; }
+  catch (e) { mqLog_('(permit)', 'update-failed', String(e)); plan.summary = 'Not updated (' + String(e.message || e).slice(0, 120) + '). ' + plan.summary; }
+  return plan;
+}
+
+function mqPermitText_(f) {
+  if (!f || !(f.number || f.issued || f.expires)) return 'Nothing on the Contact';
+  return [f.number ? 'DP ' + f.number : 'no number', f.issued ? 'issued ' + f.issued : '', f.expires ? 'expires ' + f.expires : 'no expiry'].filter(Boolean).join(', ');
+}
+
+/** The client updates the permit from the home screen. Only a client we found
+ *  on file, and only by the rules above. */
+function mqPermitSave_(b) {
+  var s = mqSession_(b.token);
+  if (!s) return { ok: false, error: 'Please sign in again.', signedOut: true };
+  if (!s.contactId || !mqSfReady_()) return { ok: false, error: 'We could not find your record to update. Your permit details go with your next request instead.' };
+  var given = { permit: mqClean_(b.permit, 20), permitIssued: mqClean_(b.permitIssued, 10), permitExpires: mqClean_(b.permitExpires, 10) };
+  if (!given.permit && !given.permitExpires && !given.permitIssued) return { ok: false, error: 'Please type the permit details to update.' };
+  if ((given.permitIssued && !mqDateOk_(given.permitIssued)) || (given.permitExpires && !mqDateOk_(given.permitExpires))) return { ok: false, error: 'Please check the dates.' };
+  var onFile = mqPermitOnFile_(s.contactId);
+  if (!onFile) return { ok: false, error: 'We could not read your record just now. Please try again in a few minutes.' };
+  var plan = mqPermitUpdate_(s.contactId, given, onFile);
+  mqLog_('(permit)', 'client-update', s.email + ' · ' + plan.summary);
+  var differ = /holds .*Not changed/.test(plan.summary);
+  var msg = differ ? 'That number is different from the one on our record, so a member of the team will confirm it with you before it changes.'
+    : plan.written ? 'Saved to your record. Thank you.'
+    : Object.keys(plan.body).length ? 'Noted. It is saved to your record once this page is live; until then it goes with your request.'
+    : /earlier expiry|not after/.test(plan.summary) ? plan.notes[0] : 'That is what we already hold. Nothing to change.';
+  if (differ && mqMode_() === 'live') {
+    var task = mqTaskRaw_({ WhoId: s.contactId, Subject: 'Confirm driver\'s permit: client gave a different number', Description: plan.summary + '\n\nFrom the motor quote page, ' + mqDate_() + '.' });
+    if (task) mqLog_('(permit)', 'task', task);
+  }
+  return { ok: true, message: msg, changed: !!plan.written, me: mqLookup_(s.email) };
+}
+
+/* ============================ who the client is ============================ */
+
+/** The client's own account of who they are to us, when their e-mail is not
+ *  on file: "new" or "existing" (with a policy or client number, optional). */
+function mqClientSays_(d) {
+  if (d.clientStatus === 'existing') return 'Says they are an existing Guardian client' + (d.clientRef ? ', policy or client number ' + d.clientRef : '') + '.';
+  if (d.clientStatus === 'new') return 'Says they are new to Guardian.';
+  return '';
+}
+
+/** A client whose e-mail we do not hold, who says they are with us, is matched
+ *  by a policy or client number AND their surname, never by the number alone:
+ *  a number typed by someone else must not reach another client's record.
+ *  Nothing found here is ever shown on the page. */
+function mqMatchExisting_(d) {
+  var ref = mqClean_(d.clientRef, 30), last = String(d.name || '').trim().split(/\s+/).pop().toLowerCase();
+  if (!ref || !last) return null;
+  var tight = ref.replace(/\s+/g, '');
+  var tries = [
+    'SELECT Contact__c, Contact__r.LastName FROM CLIENT_PORTFOLIO__c WHERE Contact__c != null AND (POLICY__c = ' + mqQ_(ref) + ' OR POLICY__c = ' + mqQ_(tight) + ' OR Client_Number__c = ' + mqQ_(ref) + ') LIMIT 10',
+    'SELECT Contact__c, Contact__r.LastName FROM CLIENT_PORTFOLIO__c WHERE Contact__c != null AND (POLICY__c = ' + mqQ_(ref) + ' OR POLICY__c = ' + mqQ_(tight) + ') LIMIT 10'];
+  for (var i = 0; i < tries.length; i++) {
+    try {
+      var rows = mqSoql_(tries[i]);
+      var hit = rows.filter(function (r) { return r.Contact__r && String(r.Contact__r.LastName || '').toLowerCase().split(/[\s-]+/).indexOf(last) > -1; });
+      return hit.length ? hit[0].Contact__c : '';
+    } catch (e) { mqLog_('(contact)', 'match-failed', String(e)); }
+  }
+  return null;
+}
+
+/** Who the request belongs to in Salesforce.
+ *   - found by the signed-in e-mail: that Contact;
+ *   - the same e-mail on another Contact: that one;
+ *   - says they are already a client: matched by number and surname, else no
+ *     new Contact (it would be a duplicate): staff link the record by hand;
+ *   - new: a Contact is created, with the permit they gave.
+ *  Never written in test mode. */
 function mqEnsureContact_(d, s) {
-  if (s.contactId && mqIsSfId_(s.contactId)) return { id: s.contactId, action: 'Existing' };
-  if (!mqSfReady_()) return { id: '', action: 'Salesforce not linked' };
+  if (s.contactId && mqIsSfId_(s.contactId)) return { id: s.contactId, action: 'Existing', existing: true };
+  if (!mqSfReady_()) return { id: '', action: 'Salesforce not linked', existing: d.clientStatus === 'existing' };
   try {
     var same = mqSoql_('SELECT Id, Name FROM Contact WHERE Email = ' + mqQ_(d.email) + ' OR Preferred_Email__c = ' + mqQ_(d.email) + ' LIMIT 1');
-    if (same.length) return { id: same[0].Id, action: 'Matched by e-mail' };
-    if (mqMode_() !== 'live') return { id: '', action: 'Would be created (test mode)' };
+    if (same.length) return { id: same[0].Id, action: 'Matched by e-mail', existing: true };
+    if (d.clientStatus === 'existing') {
+      var m = mqMatchExisting_(d);
+      if (m) return { id: m, action: 'Matched by policy or client number and surname', existing: true };
+      return { id: '', action: 'Says existing client, not matched: link the Contact by hand', existing: true, unmatched: true };
+    }
+    if (mqMode_() !== 'live') return { id: '', action: 'Would be created (test mode)', existing: false };
     var parts = d.name.split(/\s+/), first = parts.length > 1 ? parts.slice(0, -1).join(' ') : '', last = parts[parts.length - 1];
     var body = { FirstName: first.slice(0, 40), LastName: last.slice(0, 80), Email: d.email, Contact_Type__c: 'Prospect',
                  Description: 'Created from the motor quote page, ' + mqDate_() + '.' };
@@ -594,30 +754,106 @@ function mqEnsureContact_(d, s) {
     if (d.dob && /^\d{4}-\d{2}-\d{2}$/.test(d.dob)) body.Birthdate = d.dob;
     var owner = mqProp_('MQ_SF_OWNER');
     if (mqIsSfId_(owner)) body.OwnerId = owner;
-    var made = mqSfFetch_('/sobjects/Contact', { method: 'post', body: body });
-    return { id: made.id, action: 'Created' };
+    /* The permit they gave goes on the new Contact, by the same rules. */
+    var plan = mqPermitPlan_(d, null);
+    Object.keys(plan.body).forEach(function (k) { body[k] = plan.body[k]; });
+    var made;
+    try { made = mqSfFetch_('/sobjects/Contact', { method: 'post', body: body }); }
+    catch (e) {
+      if (!Object.keys(plan.body).length) throw e;
+      Object.keys(plan.body).forEach(function (k) { delete body[k]; });
+      made = mqSfFetch_('/sobjects/Contact', { method: 'post', body: body });
+      plan.summary = 'Permit not saved on the new Contact (' + String(e.message || e).slice(0, 100) + ').';
+    }
+    return { id: made.id, action: 'Created', existing: false, permit: plan.summary };
   } catch (e) {
     mqLog_('(contact)', 'create-failed', String(e));
-    return { id: '', action: 'Not created: ' + String(e.message || e).slice(0, 120) };
+    return { id: '', action: 'Not created: ' + String(e.message || e).slice(0, 120), existing: false };
   }
 }
 
+/* ============================ the opportunity ============================ */
+
+function mqOppRecordType_() {
+  var key = 'mq_opp_rt_' + MQ.OPP_RT, have = mqProp_(key);
+  if (have) return have;
+  try {
+    var r = mqSoql_("SELECT Id FROM RecordType WHERE SobjectType = 'Opportunity' AND DeveloperName = " + mqQ_(MQ.OPP_RT) + ' LIMIT 1')[0];
+    if (r && r.Id) { PropertiesService.getScriptProperties().setProperty(key, r.Id); return r.Id; }
+  } catch (e) { mqLog_('(opp)', 'record-type-failed', String(e)); }
+  return '';
+}
+
+/** One Opportunity a new quote, the way the branch writes them by hand.
+ *  Live only. A field the org refuses is left off and the rest tried again. */
+function mqOpp_(d, ref, contact, stage) {
+  if (!mqSfReady_()) return { id: '', note: 'Salesforce not linked' };
+  if (mqMode_() !== 'live') return { id: '', note: 'Would be created (test mode)' };
+  try {
+    var veh = [d.year, d.make, d.model].filter(Boolean).join(' ');
+    var close = mqAddDays_(mqDate_(new Date(), 'yyyy-MM-dd'), MQ.OPP_CLOSE_DAYS);
+    var says = mqClientSays_(d);
+    var body = {
+      Name: ('OPP Motor - ' + (d.name || 'Client') + ' (' + (veh || 'vehicle') + (d.reg ? ' ' + d.reg : ', not registered yet') + ')').slice(0, 120),
+      StageName: stage || MQ.OPP_STAGE, CloseDate: close,
+      Description: (((stage === MQ.OPP_STAGE_TAKEN ? 'Motor proposal ' : 'Motor quote ') + ref + ' from the branch website (' + MQ.SITE + '), ' + mqDate_() + '. ' +
+        (contact.existing ? 'An existing client.' : 'A new client.') + (says ? ' ' + says : '') + (contact.unmatched ? ' No Contact matched: link it by hand.' : '') +
+        (d.permitNote ? '\nPermit: ' + d.permitNote : '') + '\n\n' + mqFieldsText_(d))).slice(0, 31000),
+      NextStep: ((stage === MQ.OPP_STAGE_TAKEN ? 'Proposal signed online: collect the premium, ' : 'Quote from the desk to the client, ') + ref).slice(0, 255),
+      Type: 'New Business', LeadSource: contact.existing ? 'Existing Client' : 'Web',
+    };
+    var rt = mqOppRecordType_(); if (rt) body.RecordTypeId = rt;
+    if (contact.id) body.Contact__c = contact.id;
+    if (contact.accountId) body.AccountId = contact.accountId;
+    if (d.reg) body.Vehicle__c = String(d.reg).slice(0, 20);
+    var owner = mqProp_('MQ_SF_OWNER'); if (mqIsSfId_(owner)) body.OwnerId = owner;
+    var producer = mqProp_('MQ_SF_PRODUCER'); if (mqIsSfId_(producer)) body.Producer__c = producer;
+    try { return { id: mqSfFetch_('/sobjects/Opportunity', { method: 'post', body: body }).id || '', note: 'Created' }; }
+    catch (e) {
+      ['LeadSource', 'Type', 'Producer__c', 'Vehicle__c', 'AccountId'].forEach(function (k) { delete body[k]; });
+      return { id: mqSfFetch_('/sobjects/Opportunity', { method: 'post', body: body }).id || '', note: 'Created without some fields (' + String(e.message || e).slice(0, 100) + ')' };
+    }
+  } catch (e) { mqLog_('(opp)', 'opp-failed', String(e)); return { id: '', note: 'Not created: ' + String(e.message || e).slice(0, 120) }; }
+}
+
+/** Taking the quote moves its Opportunity on. */
+function mqOppTaken_(oppId, ref) {
+  if (!oppId || !mqIsSfId_(oppId) || !mqSfReady_() || mqMode_() !== 'live') return false;
+  try { mqSfFetch_('/sobjects/Opportunity/' + oppId, { method: 'patch', body: { StageName: MQ.OPP_STAGE_TAKEN, NextStep: ('Proposal signed online: collect the premium, ' + ref).slice(0, 255) } }); return true; }
+  catch (e) { mqLog_('(opp)', 'stage-failed', String(e)); return false; }
+}
+
 /** One open task on the Contact, so the quote is chased until it is back. */
-function mqTask_(d, ref, contactId) {
-  if (!contactId || !mqSfReady_() || mqMode_() !== 'live') return '';
+/* A task with nothing but what it is given; for notes to staff. */
+function mqTaskRaw_(body) {
+  if (!mqSfReady_() || mqMode_() !== 'live') return '';
+  try {
+    var due = new Date(); var n = 0;
+    while (n < MQ.TASK_DUE_DAYS) { due.setDate(due.getDate() + 1); if (due.getDay() !== 0 && due.getDay() !== 6) n++; }
+    body.Status = body.Status || 'In Progress'; body.Priority = body.Priority || 'Normal';
+    body.ActivityDate = Utilities.formatDate(due, mqTz_(), 'yyyy-MM-dd');
+    var owner = mqProp_('MQ_SF_OWNER'); if (mqIsSfId_(owner)) body.OwnerId = owner;
+    return mqSfFetch_('/sobjects/Task', { method: 'post', body: body }).id || '';
+  } catch (e) { mqLog_('(task)', 'task-failed', String(e)); return ''; }
+}
+
+function mqTask_(d, ref, contactId, whatId) {
+  if (!(contactId || whatId) || !mqSfReady_() || mqMode_() !== 'live') return '';
   try {
     var due = new Date(); var n = 0;
     while (n < MQ.TASK_DUE_DAYS) { due.setDate(due.getDate() + 1); if (due.getDay() !== 0 && due.getDay() !== 6) n++; }
     var body = {
-      WhoId: contactId,
       Subject: (d.flow === 'renew' ? 'Motor renewal ' : d.flow === 'proposal' ? 'Motor proposal ' : 'Motor quote ') + ref + ': ' + [d.year, d.make, d.model].filter(Boolean).join(' ') +
         ' (' + d.reg + ') · ' + (d.flow === 'renew' ? d.renewChoice + (d.renewDate ? ', renews ' + d.renewDate : '') : d.cover),
       Status: 'In Progress', Priority: 'Normal',
       ActivityDate: Utilities.formatDate(due, mqTz_(), 'yyyy-MM-dd'),
       Description: ((d.flow === 'renew' ? 'Renewal' : d.flow === 'proposal' ? 'Proposal (the client is taking the quote)' : 'Quote') + ' requested on ' + MQ.SITE + ' and sent to ' +
         (d.flow === 'renew' ? mqRenewTo_() : mqQuotesTo_()) + ' on ' + mqDate_() + '.\n\n' +
+        (d.clientSaysLine ? d.clientSaysLine + '\n' : '') + (d.permitNote ? 'Permit: ' + d.permitNote + '\n' : '') + (d.clientSaysLine || d.permitNote ? '\n' : '') +
         mqFieldsText_(d) + '\n\nReference ' + ref + (d.flow === 'proposal' ? '. Close this task when the premium is paid and the policy issued.' : '. Close this task when the quote has reached the client.')).slice(0, 31000),
     };
+    if (contactId) body.WhoId = contactId;
+    if (whatId && mqIsSfId_(whatId)) body.WhatId = whatId;
     var owner = mqProp_('MQ_SF_OWNER');
     if (mqIsSfId_(owner)) body.OwnerId = owner;
     var tt = mqProp_('MQ_SF_TASK_TYPE', 'New Business');
@@ -658,6 +894,12 @@ function mqSubmit_(b) {
   try {
     ref = mqNewRef_();
     var contact = mqEnsureContact_(d, s);
+    /* The permit against the Contact: shown to staff, updated by the rules. */
+    var onFile = contact.id && contact.action !== 'Created' ? mqPermitOnFile_(contact.id) : null;
+    if (onFile) contact.accountId = onFile.accountId;
+    d.permitOnFileText = contact.action === 'Created' ? 'New Contact' : mqPermitText_(onFile);
+    d.permitNote = contact.action === 'Created' ? (contact.permit || '') : onFile ? mqPermitUpdate_(contact.id, d, onFile).summary : '';
+    d.clientSaysLine = mqClientSays_(d);
     var folder = mqStoreFiles_(ref, d, files);
     var row = mqRow_(ref, d, contact, files, folder);
     /* Placed by the tab's own headers, so a tab whose columns were added
@@ -690,9 +932,12 @@ function mqSubmit_(b) {
     html: mqReceipt_(ref, d), client: true,
   });
 
-  var taskId = mqTask_(d, ref, contact.id);
+  /* A new quote is an Opportunity; a renewal is the vehicle we already insure. */
+  var opp = d.flow === 'renew' ? { id: '', note: '' } : mqOpp_(d, ref, contact);
+  mqSet_(ref, 'SF opportunity', opp.id || opp.note);
+  var taskId = mqTask_(d, ref, contact.id, opp.id);
   if (taskId) mqSet_(ref, 'SF task', taskId);
-  mqLog_(ref, 'sent', sent + (taskId ? ' · task ' + taskId : ''));
+  mqLog_(ref, 'sent', sent + (opp.id ? ' · opportunity ' + opp.id : '') + (taskId ? ' · task ' + taskId : ''));
 
   return { ok: true, ref: ref, mode: mqMode_(), sentTo: deskTo, flow: d.flow, contact: contact.action, mail: sent,
            requests: mqRequests_(s.email) };
@@ -704,6 +949,7 @@ function mqRead_(q, s) {
   var g = function (k, n) { return mqClean_(q[k], n || 160); };
   var yn = function (k) { var v = g(k, 10).toLowerCase(); return v === 'yes' ? 'Yes' : v === 'no' ? 'No' : ''; };
   var d = {
+    clientStatus: /^(new|existing)$/.test(g('clientStatus', 10)) ? g('clientStatus', 10) : '', clientRef: g('clientRef', 30),
     name: g('name', 120), email: s.email, mobile: g('mobile', 40), gender: g('gender', 20), dob: g('dob', 10),
     occupation: g('occupation', 120), ownerType: /company/i.test(g('ownerType')) ? 'Company' : 'Individual',
     company: g('company', 120), companyEmail: mqNormEmail_(g('companyEmail', 120)),
@@ -823,6 +1069,8 @@ function mqRow_(ref, d, contact, files, folder) {
     'Second-hand accident': d.secondAccLine, 'Windscreen limit': d.windscreenLimit, 'NCD %': d.ncdPct,
     'Young drivers': d.young + (d.youngDetails ? ': ' + d.youngDetails : ''),
     'Request form': files.some(function (f) { return f.kind === 'request'; }) ? 'attached' : '',
+    'Client status': contact.existing ? 'Existing client' + (contact.unmatched ? ' (not matched)' : '') : contact.id ? 'New client' : (d.clientStatus === 'new' ? 'New client' : ''),
+    'Client says': d.clientSaysLine || '', 'SF opportunity': '', 'Permit on file': d.permitOnFileText || '', 'Permit update': d.permitNote || '',
   };
 }
 
@@ -1071,7 +1319,9 @@ function mqInvoiceFacts_(o) {
    Policy form, filled and signed on the page, travel with the quotation, the certified copy and the permit. */
 var MQ_PCOLS = ['Ref', 'Received', 'Status', 'Quote ref', 'Client', 'Email', 'Mobile', 'Policy number', 'Vehicle', 'Registration',
   'Chassis', 'Engine', 'Cover', 'Sum insured', 'Period', 'Premium total', 'Needs attention', 'KYP not understood', 'Files', 'Drive folder',
-  'Mail result', 'SF task', 'Answers'];
+  'Mail result', 'SF task', 'Answers',
+  /* Added 26 October 2026. */
+  'SF opportunity'];
 
 /* Every yes/no the client must answer themselves: Guardian's declarations, never pre-ticked. */
 var MQ_P_YN = ['pep', 'otherGG', 'q3a', 'q3b', 'q4', 'acc', 'q6', 'q7b', 'q7c', 'q7d', 'q7e', 'q8', 'q9', 'q11', 'q12', 'q13',
@@ -1099,7 +1349,14 @@ var MQ_KYP_TEXT = ['Courtesy car only for the repair time', 'Loss of use on a re
   'Motor Assist', 'The no claim discount may be affected', 'Your duties under the policy', 'What to do on a claim', 'Policy cancellation', 'Sale of the vehicle',
   'Claims appeal process', 'Complaints process', 'Offered the optional benefits', 'Sharing of data and electronic signatures'];
 
-function mqProposalsSheet_() { return mqSheet_('Motor Proposals', MQ_PCOLS); }
+function mqProposalsSheet_() {
+  var sh = mqSheet_('Motor Proposals', MQ_PCOLS);
+  try {
+    var have = mqHeaderMap_(sh), add = MQ_PCOLS.filter(function (c) { return !(c in have); });
+    if (add.length && sh.getLastRow() > 0) sh.getRange(1, sh.getLastColumn() + 1, 1, add.length).setValues([add]);
+  } catch (e) {}
+  return sh;
+}
 
 /** The client takes a quote: the filled forms and the documents, checked whole, then one e-mail to the desk with
  *  everything attached, the client's own signed copy back to them, a row, a task. */
@@ -1163,7 +1420,16 @@ function mqPropose_(b) {
     to: [s.email], subject: 'Your motor proposal is in, ' + (A.first || name) + ' (' + ref + ')', client: true,
     html: mqProposalReceipt_(ref, A), attachments: files.filter(function (f) { return f.kind === 'proposal' || f.kind === 'kyp'; }).map(function (f) { return f.blob; }),
   });
-  var taskId = mqTask_({ flow: 'proposal', year: A.year, make: '', model: A.makeModel, reg: A.reg, cover: A.cover, name: name, email: s.email }, ref, s.contactId);
+  /* The quote's Opportunity moves on; a quote taken with no request of ours behind it gets one, on a client we know. */
+  var oppId = quoteRef ? mqGetIfMine_(quoteRef, s.email, 'SF opportunity') : '', oppNote = '';
+  if (oppId && mqIsSfId_(oppId)) oppNote = mqOppTaken_(oppId, ref) ? oppId + ' moved to ' + MQ.OPP_STAGE_TAKEN : oppId;
+  else if (s.contactId) {
+    var o = mqOpp_({ name: name, year: A.year, make: '', model: A.makeModel, reg: A.reg, cover: A.cover, email: s.email, flow: 'proposal' }, ref,
+      { id: s.contactId, existing: true, accountId: (mqPermitOnFile_(s.contactId) || {}).accountId || '' }, MQ.OPP_STAGE_TAKEN);
+    oppId = o.id; oppNote = o.id || o.note;
+  }
+  if (oppNote) mqPSet_(ref, 'SF opportunity', oppNote);
+  var taskId = mqTask_({ flow: 'proposal', year: A.year, make: '', model: A.makeModel, reg: A.reg, cover: A.cover, name: name, email: s.email }, ref, s.contactId, mqIsSfId_(oppId) ? oppId : '');
   if (taskId) mqPSet_(ref, 'SF task', taskId);
   mqLog_(ref, 'proposal', s.email + ' · ' + A.reg + ' · ' + sent);
   return { ok: true, ref: ref, mode: mqMode_(), sentTo: deskTo, flags: flags.length, kypNo: kypNo.length, requests: mqRequests_(s.email) };
@@ -1176,6 +1442,18 @@ function mqPSet_(ref, col, value) {
     var refs = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();
     for (var i = refs.length - 1; i >= 0; i--) if (String(refs[i][0]) === ref) { sh.getRange(i + 2, m[col] + 1).setValue(value); return; }
   } catch (e) {}
+}
+/* A column of the client's own quote request, or nothing. */
+function mqGetIfMine_(ref, email, col) {
+  try {
+    var sh = mqQuotesSheet_(), m = mqHeaderMap_(sh);
+    if (sh.getLastRow() < 2 || !(col in m)) return '';
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+    for (var i = rows.length - 1; i >= 0; i--) {
+      if (String(rows[i][0]) === ref && String(rows[i][m['Email']] || '').toLowerCase() === email) return String(rows[i][m[col]] || '');
+    }
+  } catch (e) {}
+  return '';
 }
 /* The quote request is marked only when it belongs to the signed-in client. */
 function mqSetIfMine_(ref, email, col, value) {
@@ -1268,6 +1546,9 @@ function mqDeskMail_(ref, d, contact, folder) {
     (contact.id ? ' · Salesforce contact ' + mqEsc_(contact.id) + ' (' + mqEsc_(contact.action) + ')' : ' · ' + mqEsc_(contact.action)) +
     (folder ? ' · <a href="' + mqEsc_(folder) + '" style="color:#3A7BD5">documents in Drive</a>' : '') +
     '. The driver\'s permit and the certified copy, where the client attached them, are attached to this e-mail.</p>';
+  intro += contact.existing
+    ? '<p style="font-size:14px"><b>An existing client of ours.</b>' + (contact.unmatched ? ' The client says so; their e-mail is not on our records yet.' : '') + '</p>'
+    : '<p style="font-size:14px"><b>New to us.</b></p>';
   if (d.requestForm) intro += '<p style="background:#EEF6EE;border-radius:10px;padding:10px 12px;font-size:14px"><b>Guardian\'s Motor Quotation Request form is attached</b>, ' +
     'filled in from the client\'s answers (motor-quotation-request.pdf). It is still a fillable form: add or correct anything before you price.</p>';
   return mqWrap_('Motor quote request ' + ref, intro + mqFieldsHtml_(d) + tail, true);

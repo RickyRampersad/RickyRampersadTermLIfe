@@ -26,7 +26,8 @@ function world(props, opts) {
   opts = opts || {};
   const SF = {
     contacts: [{ Id: '003000000000001AAA', Name: 'Anika Pretend', FirstName: 'Anika', LastName: 'Pretend', Email: 'anika@example.com',
-      Preferred_Email__c: null, MobilePhone: '868-555-0101', Phone: null, Title: 'TEACHER', Birthdate: '1988-04-12', Contact_Type__c: 'Client' }],
+      Preferred_Email__c: null, MobilePhone: '868-555-0101', Phone: null, Title: 'TEACHER', Birthdate: '1988-04-12', Contact_Type__c: 'Client',
+      AccountId: '001000000000001AAA', DP__c: 'DP-000000', Drivers_Permit_Issue_Date__c: null, Driver_s_Permit_Expiry__c: '2025-05-01' }],
     portfolios: [{ POLICY__c: 'TTMV00000001', Product_Name__c: 'Private Motor', Expiry_Date__c: '2027-01-31', Date_Of_Birth__c: '1988-04-12',
       Occupation__c: null, Contact__c: '003000000000001AAA', RecordType: { Name: 'MOTOR' } }],
     risks: [
@@ -55,7 +56,12 @@ function world(props, opts) {
     if (p.startsWith('/query?q=')) {
       const q = decodeURIComponent(p.slice(9)); SF.queries.push(q);
       const email = (q.match(/Email(?:__c)? = '([^']+)'/) || [])[1];
+      const byId = (q.match(/WHERE Id = '([^']+)'/) || [])[1];
+      if (/FROM Contact/.test(q) && byId) return res(200, { records: SF.contacts.filter(c => c.Id === byId) });
       if (/FROM Contact/.test(q)) return res(200, { records: SF.contacts.filter(c => c.Email === email) });
+      if (/FROM RecordType/.test(q)) return res(200, { records: [{ Id: '012000000000001AAA' }] });
+      if (/FROM CLIENT_PORTFOLIO__c/.test(q) && /POLICY__c = '/.test(q)) { const pols = (q.match(/POLICY__c = '([^']+)'/g) || []).map(x => x.slice(13, -1));
+        return res(200, { records: SF.portfolios.filter(r => pols.indexOf(r.POLICY__c) > -1).map(r => ({ Contact__c: r.Contact__c, Contact__r: { LastName: (SF.contacts.find(c => c.Id === r.Contact__c) || {}).LastName } })) }); }
       if (/FROM CLIENT_PORTFOLIO__c/.test(q)) { const ids = (q.match(/Contact__c IN \(([^)]*)\)/) || [, ''])[1];
         return res(200, { records: SF.portfolios.filter(r => ids.indexOf(r.Contact__c) > -1) }); }
       if (/FROM Risk_Details__c/.test(q) && opts.noRenewFields && /Next_Renewal_Date__c/.test(q)) return res(400, [{ message: "No such column 'Next_Renewal_Date__c'" }]);
@@ -64,6 +70,8 @@ function world(props, opts) {
       return res(400, [{ message: 'unexpected query ' + q }]);
     }
     if (p === '/sobjects/Contact' && o.method === 'post') { const b = JSON.parse(o.payload); SF.created.push({ obj: 'Contact', body: b }); return res(201, { id: '003000000000009AAA' }); }
+    if (p === '/sobjects/Opportunity' && o.method === 'post') { const b = JSON.parse(o.payload); SF.created.push({ obj: 'Opportunity', body: b }); return res(201, { id: '006000000000001AAA' }); }
+    if (/^\/sobjects\/(Contact|Opportunity)\/\w+$/.test(p) && o.method === 'patch') { const b = JSON.parse(o.payload); SF.created.push({ obj: p.split('/')[2] + ' update', id: p.split('/')[3], body: b }); return res(204, ''); }
     if (p === '/sobjects/Task' && o.method === 'post') { const b = JSON.parse(o.payload); SF.created.push({ obj: 'Task', body: b }); return res(201, { id: '00T000000000001AAA' }); }
     return res(404, [{ message: 'no route ' + p }]);
   } };
@@ -217,7 +225,7 @@ const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex').toString('bas
   post(env, { action: 'requestCode', email: 'anika@example.com' });
   const tok = post(env, { action: 'verifyCode', email: 'anika@example.com', code: '211110' }).token;
   const r = post(env, { action: 'submit', token: tok, quote: GOOD });
-  ok('an existing client keeps their Contact; only the task is created', r.ok && r.contact === 'Existing' && SF.created.length === 1 && SF.created[0].obj === 'Task');
+  ok('an existing client keeps their Contact: nothing new is created on it', r.ok && r.contact === 'Existing' && !SF.created.some(c => c.obj === 'Contact'));
 }
 
 /* ── the invoice: read by Claude, the document is data ──────────────── */
@@ -473,6 +481,116 @@ const PFILES = [{ kind: 'quote', name: 'quote.pdf', type: 'application/pdf', dat
   const t2 = signIn(env, 'newperson@example.com');
   const r = post(env, { action: 'propose', token: t2, quoteRef: qr, answers: PA, files: PFILES });
   ok('a proposal never marks someone else\'s quote request', r.ok && env.__sheets['Motor Quotes']._grid[1][env.__sheets['Motor Quotes']._grid[0].indexOf('Status')] === 'Sent to quotes desk');
+}
+
+/* ── existing or new, the opportunity, and the permit on the Contact ─ */
+{
+  const OWN = { MQ_SF_OWNER: '005000000000001AAA', MQ_SF_PRODUCER: '003000000000077AAA' };
+  /* Signed in: what the Contact holds for the permit comes back, with where it stands. */
+  {
+    const { env } = world(SFPROPS);
+    post(env, { action: 'requestCode', email: 'anika@example.com' });
+    const v = post(env, { action: 'verifyCode', email: 'anika@example.com', code: '211110' });
+    ok('the permit on the Contact comes back: number, expiry, expired', v.me.permitOnFile && v.me.permitOnFile.number === 'DP-000000' && v.me.permitOnFile.expires === '2025-05-01' &&
+      v.me.permitOnFile.state === 'expired' && v.me.permit === 'DP-000000' && v.me.permitExpires === '2025-05-01');
+    ok('the account id never reaches the page', !JSON.stringify(v.me).includes('001000000000001AAA'));
+  }
+  /* Live, an existing client: an Opportunity on the branch's pattern, the task on it, the renewed permit written. */
+  {
+    const { env, SF, mails } = world(Object.assign({}, SFPROPS, OWN, { MQ_MODE: 'live' }));
+    const tok = signIn(env, 'anika@example.com');
+    const r = post(env, { action: 'submit', token: tok, quote: GOOD });
+    const opp = SF.created.find(c => c.obj === 'Opportunity'), task = SF.created.find(c => c.obj === 'Task'), patch = SF.created.find(c => c.obj === 'Contact update');
+    ok('a new quote becomes an Opportunity: GENERAL INSURANCE, OPP Motor - name (vehicle reg), Proposal/Price Quote, 30 days', r.ok && opp &&
+      /^OPP Motor - Anika Pretend \(2019 Toyota Aqua PDX 1234\)$/.test(opp.body.Name) && opp.body.RecordTypeId === '012000000000001AAA' &&
+      opp.body.StageName === 'Proposal/Price Quote' && /^\d{4}-\d{2}-\d{2}$/.test(opp.body.CloseDate), opp && opp.body.Name);
+    ok('…on the Contact and its account, the vehicle, an existing client, the owner and the producer', opp.body.Contact__c === '003000000000001AAA' &&
+      opp.body.AccountId === '001000000000001AAA' && opp.body.Vehicle__c === 'PDX 1234' && opp.body.LeadSource === 'Existing Client' && opp.body.Type === 'New Business' &&
+      opp.body.OwnerId === '005000000000001AAA' && opp.body.Producer__c === '003000000000077AAA');
+    ok('the task sits on the Opportunity and the Contact', task && task.body.WhatId === '006000000000001AAA' && task.body.WhoId === '003000000000001AAA');
+    ok('a renewed permit renews the Contact: the later expiry and the blank issue date, never the number', patch && patch.id === '003000000000001AAA' &&
+      patch.body.Driver_s_Permit_Expiry__c === '2027-05-01' && patch.body.Drivers_Permit_Issue_Date__c === '2017-05-01' && !('DP__c' in patch.body));
+    const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0], row = sh._grid[1], col = n => row[hdr.indexOf(n)];
+    ok('the row says existing client, the Opportunity, what was on file and what changed', col('Client status') === 'Existing client' && col('SF opportunity') === '006000000000001AAA' &&
+      /DP DP-000000.*expires 2025-05-01/.test(col('Permit on file')) && /renewed: 2025-05-01 to 2027-05-01/.test(col('Permit update')));
+    SF.created.length = 0;
+    post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { permit: 'DP 999 999' }) });
+    ok('a different permit number changes nothing on the Contact and goes to staff', !SF.created.some(c => c.obj === 'Contact update') &&
+      /holds DP-000000\. Not changed/.test(env.__sheets['Motor Quotes']._grid[2][hdr.indexOf('Permit update')]));
+    SF.created.length = 0;
+    post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { permit: 'dp-000000', permitExpires: '2024-01-01', permitIssued: '' }) });
+    ok('an earlier expiry is never written; the number matches whatever its case and dashes', !SF.created.some(c => c.obj === 'Contact update') &&
+      /earlier expiry/.test(env.__sheets['Motor Quotes']._grid[3][hdr.indexOf('Permit update')]));
+    SF.created.length = 0;
+    post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX 1234', renewChoice: 'Renew as it is' } });
+    ok('a renewal is not an Opportunity', !SF.created.some(c => c.obj === 'Opportunity'));
+    ok('the desk reads that this is an existing client of ours', mails.some(m => /Motor quote request/.test(m.subject) && /An existing client of ours/.test(m.htmlBody)));
+  }
+  /* Live, new: says they are new, so a Contact with the permit, and an Opportunity from the web. */
+  {
+    const { env, SF } = world(Object.assign({}, SFPROPS, OWN, { MQ_MODE: 'live' }));
+    const tok = signIn(env, 'newperson@example.com');
+    const r = post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { name: 'Dev Madeup', clientStatus: 'new' }) });
+    const c = SF.created.find(x => x.obj === 'Contact'), opp = SF.created.find(x => x.obj === 'Opportunity');
+    ok('a new client becomes a Contact with the permit on it', r.ok && r.contact === 'Created' && c.body.DP__c === 'DP-000000' && c.body.Driver_s_Permit_Expiry__c === '2027-05-01' && c.body.Drivers_Permit_Issue_Date__c === '2017-05-01');
+    ok('…and an Opportunity on the new Contact, from the web', opp && opp.body.Contact__c === '003000000000009AAA' && opp.body.LeadSource === 'Web' && !('AccountId' in opp.body) && /A new client\. Says they are new/.test(opp.body.Description));
+    const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0];
+    ok('the row says new client and what the client said', sh._grid[1][hdr.indexOf('Client status')] === 'New client' && /new to Guardian/.test(sh._grid[1][hdr.indexOf('Client says')]));
+  }
+  /* Live, says they are with us under another e-mail: matched by number AND surname, never a duplicate Contact. */
+  {
+    const { env, SF } = world(Object.assign({}, SFPROPS, OWN, { MQ_MODE: 'live' }));
+    const tok = signIn(env, 'anika.work@example.com');
+    const r = post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { clientStatus: 'existing', clientRef: 'TTMV 00000001' }) });
+    const opp = SF.created.find(x => x.obj === 'Opportunity');
+    ok('a policy number and the right surname find the client: no new Contact, the Opportunity on theirs', r.ok && /Matched by policy/.test(r.contact) &&
+      !SF.created.some(x => x.obj === 'Contact') && opp.body.Contact__c === '003000000000001AAA' && opp.body.LeadSource === 'Existing Client');
+    SF.created.length = 0;
+    const r2 = post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { name: 'Someone Else', clientStatus: 'existing', clientRef: 'TTMV00000001' }) });
+    const opp2 = SF.created.find(x => x.obj === 'Opportunity');
+    ok('the number with another surname matches nobody: no Contact made, the Opportunity says link it by hand', r2.ok && /not matched/.test(r2.contact) &&
+      !SF.created.some(x => x.obj === 'Contact') && !('Contact__c' in opp2.body) && /link it by hand/.test(opp2.body.Description));
+    const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0];
+    ok('the row reads existing client, not matched', sh._grid[2][hdr.indexOf('Client status')] === 'Existing client (not matched)');
+  }
+  /* Test mode: nothing written, the row says what would have been. */
+  {
+    const { env, SF } = world(Object.assign({}, SFPROPS, OWN));
+    const tok = signIn(env, 'anika@example.com');
+    post(env, { action: 'submit', token: tok, quote: GOOD });
+    const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0], row = sh._grid[1];
+    ok('in test mode no Opportunity and no Contact update, and the row says what would have gone', SF.created.length === 0 &&
+      row[hdr.indexOf('SF opportunity')] === 'Would be created (test mode)' && /^Would update \(test mode\)/.test(row[hdr.indexOf('Permit update')]));
+  }
+  /* The client updates the permit from the home screen. */
+  {
+    const { env, SF } = world(Object.assign({}, SFPROPS, OWN, { MQ_MODE: 'live' }));
+    const tok = signIn(env, 'anika@example.com');
+    const a = post(env, { action: 'permit', token: tok, permit: 'DP-000000', permitIssued: '2025-04-20', permitExpires: '2030-04-30' });
+    const pt = SF.created.find(c => c.obj === 'Contact update');
+    ok('a renewed permit is saved to the record', a.ok && /Saved to your record/.test(a.message) && pt.body.Driver_s_Permit_Expiry__c === '2030-04-30' && pt.body.Drivers_Permit_Issue_Date__c === '2025-04-20');
+    SF.created.length = 0;
+    const b = post(env, { action: 'permit', token: tok, permit: 'DP-123456', permitExpires: '2030-04-30' });
+    ok('a different number waits for the team: no update, a task to confirm', b.ok && /team will confirm/.test(b.message) && !SF.created.some(c => c.obj === 'Contact update') &&
+      SF.created.some(c => c.obj === 'Task' && /Confirm driver's permit/.test(c.body.Subject)));
+    ok('bad dates are refused', post(env, { action: 'permit', token: tok, permitExpires: '30/04/2030' }).ok === false &&
+      post(env, { action: 'permit', token: tok, permitIssued: '2030-05-01', permitExpires: '2030-04-30' }).message.indexOf('not after') > -1);
+    const n = signIn(env, 'newperson@example.com');
+    ok('someone not on file cannot update a record', post(env, { action: 'permit', token: n, permit: 'DP-1' }).ok === false);
+  }
+  /* Taking the quote moves its Opportunity to Negotiation/Review. */
+  {
+    const { env, SF } = world(Object.assign({}, SFPROPS, OWN, { MQ_MODE: 'live' }));
+    const tok = signIn(env, 'anika@example.com');
+    const q = post(env, { action: 'submit', token: tok, quote: GOOD });
+    SF.created.length = 0;
+    const r = post(env, { action: 'propose', token: tok, quoteRef: q.ref, answers: PA, files: PFILES });
+    const mv = SF.created.find(c => c.obj === 'Opportunity update'), task = SF.created.find(c => c.obj === 'Task');
+    ok('taking the quote moves its Opportunity to Negotiation/Review, and the task sits on it', r.ok && mv && mv.id === '006000000000001AAA' &&
+      mv.body.StageName === 'Negotiation/Review' && /collect the premium/.test(mv.body.NextStep) && task.body.WhatId === '006000000000001AAA');
+    const ps = env.__sheets['Motor Proposals'];
+    ok('the proposal row names the Opportunity', /006000000000001AAA moved to Negotiation\/Review/.test(ps._grid[1][ps._grid[0].indexOf('SF opportunity')]));
+  }
 }
 
 /* ── Guardian's own forms, filled where their blanks are ──────────── */

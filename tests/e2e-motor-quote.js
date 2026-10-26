@@ -24,6 +24,7 @@ let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x ? '  ' + x : '')); if (!c) fails++; };
 const ME = { found: true, email: 'anika@example.com', contactId: '003000000000001AAA', name: 'Anika Pretend', first: 'Anika', last: 'Pretend',
   mobile: '868-555-0101', occupation: 'Teacher', dob: '1988-04-12', salesforce: true,
+  permit: 'DP-000000', permitIssued: '', permitExpires: '2025-05-01', permitOnFile: { number: 'DP-000000', issued: '', expires: '2025-05-01', state: 'expired', days: -543 },
   vehicles: [
     { reg: 'PDX 1234', make: 'Toyota', model: 'Aqua', year: 2019, cover: 'Comprehensive', sumInsured: 95000, windscreen: '', carrier: 'Guardian General', to: '2026-11-10', policy: 'TTMV00000001',
       renewOn: '2026-11-11', renewOnText: '11 November 2026', renewIn: 21, renewState: 'due', lastPremium: 4321.5,
@@ -49,7 +50,7 @@ const DOCS = {
   certified: { reg: 'PDZ 9999', make: 'MG', model: 'ZS', description: '', colour: 'Black', chassis: 'LSJ0000000000TEST', engine: 'EN0000TEST', cc: '1600', seating: '5', year: '2026',
     body: 'SUV', fuel: 'Gas', ownerName: 'ANIKA PRETEND', ownerAddress: '', notes: '' },
   permit: { permitNo: 'DP000000', name: 'ANIKA PRETEND', dob: '1988-04-12', issued: '2010-05-01', expires: '2030-05-01', classes: '1, 2', notes: '' } };
-const calls = []; let requests = [];
+const calls = []; let requests = []; let NEWME = null;
 (async () => {
   await new Promise(r => server.listen(0, r));
   const base = 'http://127.0.0.1:' + server.address().port;
@@ -64,7 +65,7 @@ const calls = []; let requests = [];
     const reply = o => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
     if (b.siteKey !== 'rrb-motor-quote-1') return reply({ ok: false, error: 'out of date' });
     if (b.action === 'requestCode') return reply({ ok: true, sent: true, message: 'Your sign-in code is on its way to ' + b.email + '.' });
-    if (b.action === 'verifyCode') return b.code === '211110' ? reply({ ok: true, token: 'T'.repeat(40), me: ME, requests, mode: 'test' }) : reply({ ok: false, error: 'That code did not match.' });
+    if (b.action === 'verifyCode') return b.code === '211110' ? reply({ ok: true, token: 'T'.repeat(40), me: NEWME || ME, requests: NEWME ? [] : requests, mode: 'test' }) : reply({ ok: false, error: 'That code did not match.' });
     if (b.action === 'me') return reply({ ok: true, me: ME, requests, mode: 'test' });
     if (b.action === 'readInvoice') return setTimeout(() => reply({ ok: true, read: true, fields: READ }), 400);
     if (b.action === 'readDoc') return setTimeout(() => reply({ ok: true, read: true, kind: b.kind, fields: DOCS[b.kind] }), 150);
@@ -72,6 +73,7 @@ const calls = []; let requests = [];
     if (b.action === 'submit') { const ref = 'MQ-261021-00' + (requests.length + 1);
       requests = [{ ref, when: '21 Oct 2026', type: b.quote.flow === 'renew' ? 'Renewal' : 'Quick quote', vehicle: [b.quote.year, b.quote.make, b.quote.model].filter(Boolean).join(' '), reg: b.quote.reg, cover: b.quote.cover, status: 'Sent to quotes desk' }].concat(requests);
       return reply({ ok: true, ref, flow: b.quote.flow, mode: 'test', requests, contact: 'Existing', mail: 'Sent' }); }
+    if (b.action === 'permit') return reply({ ok: true, message: 'Saved to your record. Thank you.', changed: true, me: Object.assign({}, ME, { permitExpires: b.permitExpires, permitOnFile: { number: b.permit, issued: b.permitIssued, expires: b.permitExpires, state: 'valid', days: 1200 } }) });
     if (b.action === 'signOut') return reply({ ok: true });
     reply({ ok: false, error: 'Unknown action ' + b.action });
   });
@@ -90,6 +92,18 @@ const calls = []; let requests = [];
   ok('the test-mode notice shows', await page.isVisible('#notice') && /Test mode/.test(await txt('#notice')));
   ok('her name is in the header with Sign out', /Anika Pretend/.test(await txt('#whoName')));
   ok('the session is kept on the device', await page.evaluate(() => !!localStorage.getItem('rrb-mq-session')));
+  /* ── the record we found, the permit first ── */
+  const mc = await txt('#meCard');
+  ok('a client we found sees "We found your record" with what we hold', /We found your record/.test(mc) && /Anika Pretend/.test(mc) && /868-555-0101/.test(mc) && /12 Apr 1988/.test(mc));
+  ok('the permit on file shows with where it stands: expired, in words', /DP-000000/.test(mc) && /Expired 1 May 2025/.test(mc) && await page.isVisible('#meCard .pill.expired'));
+  await page.click('#pmtOpen');
+  ok('the update form opens filled with what we hold', await page.inputValue('#pfNo') === 'DP-000000' && await page.inputValue('#pfExp') === '2025-05-01');
+  await page.fill('#pfIss', '2025-04-20'); await page.fill('#pfExp', '2030-04-30'); await page.click('#pfSave');
+  await page.waitForFunction(() => /Saved to your record/.test(document.getElementById('meCard').textContent));
+  const pc = calls.filter(c => c.action === 'permit').pop();
+  ok('saving sends the permit, signed in, and the card shows it valid', pc && pc.token && pc.permit === 'DP-000000' && pc.permitExpires === '2030-04-30' && pc.permitIssued === '2025-04-20' &&
+    /Valid to 30 Apr 2030/.test(await txt('#meCard')));
+  ok('a client we found is not asked whether they are a client', !/Are you already a Guardian client/.test(await txt('#meCard')));
 
   /* ── the renewal comes first ── */
   ok('the renewal is the first thing on the home screen, before the quote doors', await page.evaluate(() => {
@@ -331,6 +345,24 @@ const calls = []; let requests = [];
   ok('a reload keeps her signed in (me is asked)', calls.some(c => c.action === 'me'));
   await page.click('#who button'); await page.waitForSelector('#s-signin:not(.hide)');
   ok('sign out returns to the sign-in and forgets the device', await page.evaluate(() => !localStorage.getItem('rrb-mq-session')));
+
+  /* ── someone we did not find is asked once whether they are with us ── */
+  NEWME = { found: false, email: 'new@example.com', contactId: '', name: '', first: '', last: '', mobile: '', occupation: '', dob: '', vehicles: [], policies: [], salesforce: true };
+  await page.evaluate(() => localStorage.removeItem('rrb-mq-draft'));
+  await page.fill('#email', 'new@example.com'); await page.click('#btnCode'); await page.waitForSelector('#codeBox:not(.hide)');
+  await page.fill('#code', '211110'); await page.click('#btnVerify'); await page.waitForSelector('#s-home:not(.hide)');
+  ok('someone not on file is asked "Are you already a Guardian client?"', /Are you already a Guardian client/.test(await txt('#meCard')) && /new@example.com/.test(await txt('#meCard')));
+  await page.click('#meCard button:has-text("Yes, I am")');
+  await page.fill('#clientRef', 'TTMV00000001');
+  ok('"Yes" asks for a policy or client number, optional, and promises nothing is shown', await page.isVisible('#clientRef') && /Nothing from it is shown/.test(await txt('#meCard')));
+  await page.click('#doorQuick'); await page.waitForSelector('#s-form:not(.hide)');
+  const sv = await page.evaluate(() => JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}'));
+  ok('the answer travels with the request', sv.clientStatus === 'existing' && sv.clientRef === 'TTMV00000001');
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.click('#meCard button:has-text("No, I am new")');
+  ok('"No, I am new" says the record is set up with the first request, and drops the number', /set up your record/.test(await txt('#meCard')) &&
+    await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}'); return d.clientStatus === 'new' && !d.clientRef; }));
+  ok('nothing runs wider than the phone with the question', await wide());
   ok('no page errors', errors.length === 0, errors.join(' | '));
   await browser.close(); server.close();
   console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');

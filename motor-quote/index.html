@@ -363,6 +363,33 @@
   @keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 5px rgba(58,123,213,.18)}50%{box-shadow:0 0 0 9px rgba(58,123,213,.08)}}
 
+  /* who you are to us: the record we found, or the one question we ask */
+  .mecard{border:1.5px solid #CFDDF0;border-radius:18px;padding:15px 16px;margin:0 0 16px;background:linear-gradient(180deg,#F7FAFE,#fff);animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .mecard .mh{display:flex;gap:12px;align-items:center}
+  .mecard .mi{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;display:grid;place-items:center;font-size:21px;flex:none}
+  .mecard .mh b{display:block;color:var(--ink);font-size:16.5px;line-height:1.25}
+  .mecard .mh small{display:block;color:var(--dim);font-size:13.5px}
+  .mecard .ok{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--ok);background:var(--okbg);border-radius:999px;padding:3px 10px;margin-left:auto;white-space:nowrap}
+  .mecard dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;margin:12px 0 0}
+  .mecard dl div{background:#fff;border:1px solid #E1E9F4;border-radius:12px;padding:8px 11px;min-width:0}
+  .mecard dt{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .mecard dd{margin:2px 0 0;color:var(--ink);font-weight:700;font-size:14.5px;overflow-wrap:anywhere}
+  .pmt{margin:12px 0 0;border-radius:14px;padding:12px 13px;border:1px solid #DCE7F5;background:#fff}
+  .pmt .pt{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+  .pmt .pt b{color:var(--ink);font-size:15px;display:flex;gap:8px;align-items:center}
+  .pmt .pt b svg.i{color:var(--blue);width:1.3em;height:1.3em}
+  .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap}
+  .pill.valid{background:var(--okbg);color:var(--ok)}.pill.soon{background:var(--warnbg);color:var(--warn)}.pill.expired{background:var(--badbg);color:var(--bad)}.pill.none{background:var(--soft);color:var(--dim)}
+  .pmt .pv{font-size:14px;color:var(--body);margin:6px 0 0}
+  .pmt form{margin:10px 0 0}
+  .pmt .msg{font-size:14px;margin:8px 0 0;font-weight:600;color:var(--ok)}
+  .pmt .msg.bad{color:var(--bad)}
+  .ask .two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 0}
+  .ask .two button{font:inherit;font-weight:800;font-size:14.5px;border-radius:14px;padding:12px 10px;min-height:48px;cursor:pointer;border:1.5px solid #CFDDF0;background:#fff;color:var(--blue)}
+  .ask .two button.on{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border-color:transparent}
+  .ask .said{font-size:14px;margin:10px 0 0}
+  .onfile{font-size:13px;color:var(--dim);margin:-6px 0 12px}
+  .onfile b{color:var(--ink)}
   /* line icons, in the tile's white or the path's own colour */
   svg.i{width:1.12em;height:1.12em;display:block;flex:none}
   .door .ic,.veh .ic,.takedoor .ic,.file .ph{color:var(--blue)}
@@ -494,6 +521,7 @@
       <p id="homeLead"></p>
       <div class="stats" id="homeStats"></div>
     </div>
+    <div id="meCard"></div>
     <div class="paths" id="paths">
       <button type="button" class="path t-renew" id="pathRenew" onclick="toTrack('trRenew')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><span class="pt"><b>Renew</b><small>A vehicle we already insure</small><em id="pathRenewN"></em></span><span class="go">›</span></button>
       <button type="button" class="path t-quote" onclick="toTrack('trQuote')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg></span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet</small><em>About 2 min</em></span><span class="go">›</span></button>
@@ -767,6 +795,65 @@ function toTrack(id) {
   el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
 }
+/* ---- who you are to us ---- */
+/* A client we found sees what we hold, the permit first; anyone else is asked once whether they are with us. */
+const longD = v => { const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (+m[3]) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1] + ' ' + m[1] : ''; };
+function permitPill(pf) {
+  if (!pf || pf.state === 'none' || !pf.expires) return '<span class="pill none">No expiry on file</span>';
+  if (pf.state === 'expired') return '<span class="pill expired">Expired ' + esc(longD(pf.expires)) + '</span>';
+  if (pf.state === 'soon') return '<span class="pill soon">Expires in ' + pf.days + ' day' + (pf.days === 1 ? '' : 's') + '</span>';
+  return '<span class="pill valid">Valid to ' + esc(longD(pf.expires)) + '</span>';
+}
+function meCard() {
+  const el = $('meCard'); if (!el) return;
+  if (!me) { el.innerHTML = ''; return; }
+  if (me.found) {
+    const pf = me.permitOnFile || null, rows = [['Name', me.name], ['Mobile', me.mobile], ['Date of birth', longD(me.dob)], ['Occupation', me.occupation]].filter(r => r[1]);
+    el.innerHTML = '<div class="mecard"><div class="mh"><span class="mi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg></span><span><b>We found your record</b><small>What we hold for ' + esc(session.email || me.email || '') + '</small></span>' +
+      '<span class="ok"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg> On file</span></div>' +
+      (rows.length ? '<dl>' + rows.map(r => '<div><dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd></div>').join('') + '</dl>' : '') +
+      '<div class="pmt" id="pmt"><div class="pt"><b><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4.5M14 13.5h3"/></svg> Your driver\'s permit</b>' + permitPill(pf) + '</div>' +
+      '<p class="pv">' + (pf && (pf.number || pf.issued || pf.expires)
+        ? [pf.number ? 'Number <b>' + esc(pf.number) + '</b>' : 'No number on file', pf.issued ? 'issued ' + esc(longD(pf.issued)) : '', pf.expires ? 'expires ' + esc(longD(pf.expires)) : ''].filter(Boolean).join(' · ')
+        : 'We have no permit details on file for you yet.') + '</p>' +
+      '<button type="button" class="linkbtn" id="pmtOpen" onclick="permitForm()">' + (pf && pf.number ? 'Renewed your permit, or something is wrong? Update it' : 'Add your permit details') + '</button>' +
+      '<div id="pmtForm"></div></div></div>';
+    return;
+  }
+  if (!me.salesforce) { el.innerHTML = ''; return; }
+  const st = draft.clientStatus || '';
+  el.innerHTML = '<div class="mecard ask"><div class="mh"><span class="mi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg></span><span><b>Are you already a Guardian client?</b>' +
+    '<small>We did not find ' + esc(session.email || me.email || 'this e-mail') + ' on our records.</small></span></div>' +
+    '<div class="two"><button type="button" class="' + (st === 'existing' ? 'on' : '') + '" onclick="clientSays(\'existing\')">Yes, I am</button>' +
+    '<button type="button" class="' + (st === 'new' ? 'on' : '') + '" onclick="clientSays(\'new\')">No, I am new</button></div>' +
+    (st === 'existing' ? '<label class="f" style="margin-top:12px"><b>Your policy or client number</b><input class="fld" id="clientRef" value="' + esc(draft.clientRef || '') + '" placeholder="Optional" autocomplete="off">' +
+      '<small>It helps us find your record. Nothing from it is shown on this page.</small></label>' : '') +
+    (st ? '<p class="said">' + (st === 'new' ? 'Welcome. We set up your record when you send your first request.' : 'Thank you. We link your request to your record on our side.') + '</p>' : '') + '</div>';
+  const r = $('clientRef'); if (r) r.addEventListener('input', () => { draft.clientRef = r.value.trim().slice(0, 30); saveDraft(); });
+}
+function clientSays(v) { draft.clientStatus = v; if (v === 'new') delete draft.clientRef; saveDraft(); meCard(); }
+function permitForm() {
+  const pf = (me && me.permitOnFile) || {};
+  $('pmtOpen').classList.add('hide');
+  $('pmtForm').innerHTML = '<form onsubmit="return savePermit(event)"><label class="f"><b>Permit number</b><input class="fld" id="pfNo" value="' + esc(pf.number || '') + '" autocomplete="off" maxlength="20"></label>' +
+    '<div class="row"><label class="f"><b>Date of issue</b><input class="fld" id="pfIss" type="date" value="' + esc(pf.issued || '') + '"></label>' +
+    '<label class="f"><b>Expiry date</b><input class="fld" id="pfExp" type="date" value="' + esc(pf.expires || '') + '"></label></div>' +
+    '<small class="muted" style="display:block;margin:0 0 4px">A renewed permit replaces the old dates. A different permit number is confirmed with you by our team first.</small>' +
+    '<button class="send" id="pfSave" type="submit">Save my permit</button><p class="msg" id="pfMsg"></p></form>';
+}
+async function savePermit(ev) {
+  ev.preventDefault();
+  const b = $('pfSave'), m = $('pfMsg'), body = { token: session.token, permit: $('pfNo').value.trim(), permitIssued: $('pfIss').value, permitExpires: $('pfExp').value };
+  b.disabled = true; b.textContent = 'Saving…'; m.className = 'msg'; m.textContent = '';
+  try {
+    const j = await api('permit', body);
+    /* What they typed goes with their next request too, whatever the record did with it. */
+    Object.assign(draft, { permit: body.permit, permitIssued: body.permitIssued, permitExpires: body.permitExpires }); saveDraft();
+    if (j.me) me = j.me;
+    meCard(); const mm = $('pmt'); if (mm) mm.insertAdjacentHTML('beforeend', '<p class="msg">' + esc(j.message) + '</p>');
+  } catch (e) { m.className = 'msg bad'; m.textContent = e.message; b.disabled = false; b.textContent = 'Save my permit'; }
+  return false;
+}
 function showHome() {
   show('s-home'); requestAnimationFrame(() => reveal($('s-home')));
   $('who').classList.remove('hide'); $('whoName').textContent = (me && me.name) || (session && session.email) || '';
@@ -780,6 +867,7 @@ function showHome() {
     : 'What would you like to do today? Choose one of the three below.';
   /* The band's figures: what we hold, at a glance. */
   const open = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') < 4).length;
+  meCard();
   $('homeStats').innerHTML = [vs.length ? '<span>' + cu(vs.length) + 'vehicle' + (vs.length === 1 ? '' : 's') + ' with us</span>' : '',
     due.length ? '<span>' + cu(due.length) + 'due for renewal</span>' : '', requests.length ? '<span>' + cu(open) + 'request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
   /* No vehicle with us: no renewal path at all. */
@@ -845,7 +933,7 @@ function need(d, keys) { const m = keys.filter(k => !String(d[k] || '').trim());
 /* Starts a door. What we hold about the client is carried in; what belonged to
    another request (a vehicle, an invoice) is not, unless keep says so. */
 function startFlow(flow, vehIx, keep) {
-  const carry = ['name', 'mobile', 'gender', 'dob', 'occupation', 'agent', 'ownerType', 'company', 'companyEmail', 'drivingYears', 'ncd'];
+  const carry = ['name', 'mobile', 'gender', 'dob', 'occupation', 'agent', 'ownerType', 'company', 'companyEmail', 'drivingYears', 'ncd', 'clientStatus', 'clientRef', 'permit', 'permitIssued', 'permitExpires'];
   const old = draft.sent ? {} : draft;
   draft = {};
   carry.forEach(k => { if (old[k]) draft[k] = old[k]; });
@@ -856,6 +944,9 @@ function startFlow(flow, vehIx, keep) {
     if (!draft.mobile && me.mobile) draft.mobile = me.mobile;
     if (!draft.occupation && me.occupation) draft.occupation = me.occupation;
     if (!draft.dob && me.dob) draft.dob = String(me.dob).slice(0, 10);
+    if (!draft.permit && me.permit) draft.permit = me.permit;
+    if (!draft.permitIssued && me.permitIssued) draft.permitIssued = me.permitIssued;
+    if (!draft.permitExpires && me.permitExpires) draft.permitExpires = me.permitExpires;
     if (me.found && me.vehicles && me.vehicles.length) draft.existingVehicles = me.vehicles.map(v => v.reg).join(', ');
     if (me.found && me.policies && me.policies.length) draft.existingPolicy = me.policies[0].policy;
   }
@@ -1409,6 +1500,7 @@ function startTake(quoteRef) {
     if (!draft.title && me.salutation) draft.title = String(me.salutation).replace(/\.$/, '');
     if (!draft.address && me.address) draft.address = me.address;
     if (!draft.phone && me.mobile) draft.phone = me.mobile;
+    if (!draft.permitNo && me.permit) draft.permitNo = me.permit;
   }
   saveDraft(); render(); pdfLib().catch(() => {});
 }
@@ -1453,8 +1545,15 @@ function stepCover(d) {
     inp('existingPolicy', 'Existing motor policy number', { hint: 'Leave blank for a new policy.' }) +
     inp('existingVehicles', 'Other vehicles insured with Guardian General', { ph: 'registration numbers, if any' });
 }
+/* What the record holds for the permit, above the boxes: the client corrects it there. */
+function permitOnFileHtml() {
+  const pf = me && me.permitOnFile;
+  if (!pf || !(pf.number || pf.expires)) return '';
+  return '<p class="onfile">On our record: <b>' + esc(pf.number || 'no number') + '</b>' + (pf.expires ? ', expires <b>' + esc(longD(pf.expires)) + '</b>' : '') + ' ' + permitPill(pf) +
+    '<br>Change anything that has changed: a renewed permit updates your record.</p>';
+}
 function stepDriver(d) {
-  return inp('permit', "Driver's permit number", { ac: 'off', req: 1 }) +
+  return permitOnFileHtml() + inp('permit', "Driver's permit number", { ac: 'off', req: 1 }) +
     '<div class="row">' + inp('permitIssued', 'Permit first issued', { type: 'date' }) + inp('permitExpires', 'Permit expires', { type: 'date' }) + '</div>' +
     sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>', 'Your history', 'As Guardian\'s request form asks it') + historyHtml(true) +
     '<label class="f"><b>Anything else we should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';

@@ -3837,7 +3837,7 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     from Salesforce. It goes to `MQ_RENEW_TO`, else the quotes desk.
   - New columns go on the end of the Motor Quotes tab, added by name (`mqQuotesSheet_`), and a row is placed by the
     tab's own headers.
-  - Tests: `tests/test-motor-quote.js` (146 checks) and `tests/e2e-motor-quote.js` (110, every door on a phone).
+  - Tests: `tests/test-motor-quote.js` (170 checks) and `tests/e2e-motor-quote.js` (120, every door on a phone).
 - **Taking the quote fills Guardian's own PDFs** (21 October 2026: "once they agree on the quote … upload the certified
   copy … extract all the details on the vehicles … fill out the proposal form very fast", then "it has to be exactly on
   the Guardian PDF and know your [policy], ensuring that they can answer it").
@@ -3881,6 +3881,36 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     filled never stops the request.
   - The answers are on new columns at the end of **Motor Quotes**, ending with "Request form" (attached).
   - When Guardian revises the form, replace the PDF and check its field names against `REQUEST` in `forms.js`.
+- **Existing or new, an Opportunity for every new quote, and the permit on the Contact** (26 October 2026: "should it
+  ask if they are an existing client or if not it creates a salesforce contact and places this as an opportunity on the
+  opps objects … if an existing client pull in all their data … in the contact the drivers permit number issue and
+  expiry what we have and what they can update").
+  - **The e-mail decides.** A client found sees "We found your record" (`meCard`): name, mobile, date of birth,
+    occupation and the permit as the Contact holds it, `DP__c`, `Drivers_Permit_Issue_Date__c`,
+    `Driver_s_Permit_Expiry__c` (`mqPermitOnFile_`), with a word for where it stands (`mqPermitState_`: valid, expiring
+    within `PERMIT_SOON_DAYS` (60), expired, nothing on file). The forms open with those values. On 26 October 2026 the
+    org's CLIENT contacts held a number on 781 of 12,656, an expiry on 458 and an issue date on 42, so most clients
+    are filling blanks.
+  - **Anyone else is asked once**, "Are you already a Guardian client?" (`clientStatus`, `clientRef` in the draft). New:
+    a Contact at the send, with the permit. Yes: matched by a policy or client number **and** the surname
+    (`mqMatchExisting_`), never by the number alone, so a number typed by someone else never reaches another client's
+    record; unmatched, no Contact is made and the Opportunity says to link it by hand. Nothing found that way reaches
+    the page.
+  - **The Opportunity** (`mqOpp_`): every new quote, never a renewal, the way the branch writes them by hand (read off
+    its own on 26 October): GENERAL INSURANCE, "OPP Motor - <client> (<vehicle> <reg>)", Proposal/Price Quote, close
+    in `OPP_CLOSE_DAYS` (30), `Contact__c` (not the standard ContactId), the Contact's account, `Vehicle__c`, New
+    Business, lead source Existing Client or Web, owner `MQ_SF_OWNER` (the BMA owns the branch's), producer
+    `MQ_SF_PRODUCER` (a Contact id: the branch manager's agent record on the branch's own). A field the org refuses
+    is dropped and the rest tried again. The task sits on it (`WhatId`). `mqPropose_` moves the quote's Opportunity to
+    Negotiation/Review (`mqOppTaken_`), or makes one there for a known client who takes a quote with no request of
+    ours behind it.
+  - **The permit's rules** (`mqPermitPlan_`), so a slip of the finger never spoils a good record: a blank is filled;
+    a later expiry replaces the old one, with its issue date when that is later too; an earlier expiry is never
+    written; a different permit number is never written and nothing else changes with it: staff confirm it (the row,
+    the task, and from the home screen a task "Confirm driver's permit"). The client updates it from the home screen
+    too (`action=permit`, `mqPermitSave_`), a found client only. Test mode writes nothing and says what it would have.
+  - New columns on Motor Quotes: Client status, Client says, SF opportunity, Permit on file, Permit update; on Motor
+    Proposals: SF opportunity. The desk e-mail says "An existing client of ours" or "New to us".
 - **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
   layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
   its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):
