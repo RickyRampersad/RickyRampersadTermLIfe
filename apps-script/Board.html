@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<base target="_top">
+<title>Renewals — your board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --bg:#0d1f33; --bg2:#14314f; --card:#1b4268; --card2:#22527f;
+  --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
+  --text:#edf4fb; --muted:#b9cadd; --line:rgba(255,255,255,.12);
+  --good:#4fd18b; --warn:#e0a93f; --bad:#e8705f; --ink:#0a1a2b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+/* A class carrying `display` outranks the hidden attribute, so the sign-in
+   card stayed on screen above the board after signing in — caught by
+   screenshotting the page rather than trusting the attribute. */
+[hidden]{display:none!important}
+body{font:16px/1.6 'DM Sans',system-ui,sans-serif;color:var(--text);
+  background:linear-gradient(180deg,var(--bg),var(--bg2) 55%,var(--bg));min-height:100vh}
+h1,h2,h3{font-family:'Montserrat',system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+
+/* sign in */
+.gate{display:grid;place-items:center;min-height:100vh;padding:20px}
+.gatecard{background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:30px 28px;max-width:440px;width:100%}
+.gatecard h1{font-size:21px;font-weight:800;margin-bottom:8px}
+.gatecard p{font-size:14px;color:var(--muted);margin-bottom:16px}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);
+  border-radius:11px;padding:12px 14px;font:max(16px,1rem) 'DM Sans';color:var(--text);
+  outline:none;margin-bottom:10px;min-height:44px}
+input:focus,select:focus,textarea:focus{border-color:var(--teal)}
+button{font:700 max(16px,1rem) 'DM Sans';border:0;border-radius:11px;padding:12px 18px;
+  min-height:44px;cursor:pointer;background:linear-gradient(180deg,var(--gold),var(--gold2));
+  color:var(--ink)}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+button:disabled{opacity:.5;cursor:default}
+.err{color:#ffd9d2;background:rgba(232,112,95,.16);border:1px solid rgba(232,112,95,.4);
+  border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px}
+
+/* masthead */
+header{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:4px 0 18px}
+.mark{width:42px;height:42px;flex:none;border-radius:12px;overflow:hidden;
+  background:#07131f;display:grid;place-items:center}
+.mark img{width:100%;height:100%;display:block}
+header h1{font-size:19px;font-weight:800}
+header .sub{font-size:12.5px;color:var(--muted)}
+header .right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.who{font-size:12.5px;color:var(--muted);text-align:right}
+.who b{display:block;color:var(--text);font-size:14px}
+
+/* the ask line — what this board is for */
+.lede{background:rgba(0,207,234,.09);border:1px solid rgba(0,207,234,.28);
+  border-radius:12px;padding:12px 15px;font-size:14.5px;line-height:1.55;margin-bottom:16px}
+.lede b{color:var(--teal)}
+
+/* tiles */
+.tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,10.5rem),1fr));
+  margin-bottom:18px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+  text-align:left;width:100%;color:var(--text);font-family:inherit;font-weight:400}
+.tile .v{font:800 26px 'Montserrat';line-height:1.1}
+.tile .k{font-size:12.5px;color:var(--muted);margin-top:3px}
+.tile.on{border-color:var(--gold);background:var(--card2)}
+.tile.act .v{color:var(--bad)}
+.tile.owed .v{color:var(--warn)}
+
+/* filters */
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chip{background:transparent;border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;font-size:13.5px;color:var(--muted);cursor:pointer;min-height:40px}
+.chip.on{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:700}
+.bar input{width:auto;flex:1;min-width:190px;margin:0}
+
+/* a renewal */
+.row{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px;margin-bottom:10px}
+.row.late{border-left:4px solid var(--bad)}
+.row.soon{border-left:4px solid var(--warn)}
+.row.done{opacity:.62}
+.rtop{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.rtop b{font-size:16.5px}
+.rtop .pol{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.rtop .when{margin-left:auto;font-size:13px;white-space:nowrap}
+.ask{margin-top:7px;font-size:14.5px}
+.ask.urgent{color:#ffd9d2}
+.meta{margin-top:7px;font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;
+  background:rgba(255,255,255,.1)}
+.pill.comprehensive{background:rgba(0,207,234,.2);color:#9fe9f6}
+.pill.third-party{background:rgba(255,255,255,.12)}
+.pill.property{background:rgba(239,194,75,.2);color:#f6dfa4}
+.acts{margin-top:11px;display:flex;gap:8px;flex-wrap:wrap}
+.acts button{padding:9px 14px;font-size:14px}
+.panel{margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+.panel textarea{min-height:76px;resize:vertical}
+.ok{color:#c9f3dd;background:rgba(79,209,139,.15);border:1px solid rgba(79,209,139,.4);
+  border-radius:10px;padding:9px 12px;font-size:13.5px;margin-top:8px}
+
+/* who is carrying what */
+.agents{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:4px 16px 12px;margin-bottom:18px}
+.agents h3{font-size:14px;font-weight:800;margin:12px 0 8px}
+.agrow{display:flex;gap:12px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.agrow:first-of-type{border-top:0}
+.agrow .n{margin-left:auto;color:var(--muted);font-size:13px;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);padding:34px 16px;font-size:15px}
+.more{text-align:center;color:var(--muted);font-size:13.5px;padding:10px}
+@media (max-width:640px){
+  .rtop .when{margin-left:0;width:100%}
+  header .right{width:100%;margin-left:0;justify-content:space-between}
+}
+</style>
+</head>
+<body>
+
+<div id="gate" class="gate">
+  <div class="gatecard">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+      <div class="mark"><img src="https://rickyrampersadbranch.com/logo-mark.png" alt=""></div>
+      <div><b style="font:800 15px 'Montserrat';color:var(--gold)">Ricky Rampersad Branch</b>
+        <span style="display:block;font-size:11.5px;color:var(--muted)">Renewals</span></div>
+    </div>
+    <h1>Your renewal board</h1>
+    <p>Your work e-mail and your access code — the code beside your name on the
+       <b>Staff</b> tab. What you see is scoped to you, and everything you do here is
+       logged under your name.</p>
+    <div id="gerr"></div>
+    <input id="em" type="email" placeholder="you@example.com" autocomplete="username">
+    <input id="pin" type="password" inputmode="numeric" placeholder="Access code" autocomplete="current-password">
+    <button id="go" style="width:100%">Open my board</button>
+  </div>
+</div>
+
+<div id="app" class="wrap" hidden>
+  <header>
+    <div class="mark"><img src="https://rickyrampersadbranch.com/logo-mark.png" alt=""></div>
+    <div>
+      <h1>Renewals</h1>
+      <div class="sub" id="asof"></div>
+    </div>
+    <div class="right">
+      <div class="who"><b id="whoName"></b><span id="whoRole"></span></div>
+      <button class="ghost" id="out">Sign out</button>
+    </div>
+  </header>
+
+  <div class="lede" id="lede"></div>
+  <div class="tiles" id="tiles"></div>
+  <div id="agents"></div>
+  <div class="bar" id="bar"></div>
+  <div id="list"></div>
+</div>
+
+<script>
+var BOOT = JSON.parse(<?!= payload ?>);
+var S = { key: BOOT.key || '', email: '', pin: '', data: null, filter: 'act', q: '' };
+var $ = function (s) { return document.querySelector(s); };
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function money(n){return 'TT$'+Math.round(Number(n)||0).toLocaleString('en-US');}
+
+/* ---------------------------------------------------------------- sign in */
+if (!BOOT.ok) {
+  $('#gerr').innerHTML = '<div class="err">' + esc(BOOT.why ||
+    'This board link is not valid. Ask an admin for the current one.') + '</div>';
+  $('#go').disabled = true;
+}
+try {
+  S.email = localStorage.getItem('rrb-rb-em') || '';
+  if (S.email) $('#em').value = S.email;
+} catch (e) {}
+
+$('#go').onclick = signIn;
+$('#pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') signIn(); });
+
+function signIn() {
+  var em = $('#em').value.trim(), pin = $('#pin').value.trim();
+  if (!em) { $('#gerr').innerHTML = '<div class="err">Your work e-mail, please.</div>'; return; }
+  $('#go').disabled = true; $('#go').textContent = 'Opening…';
+  google.script.run
+    .withSuccessHandler(function (d) {
+      S.email = em; S.pin = pin; S.data = d;
+      try { localStorage.setItem('rrb-rb-em', em); } catch (e) {}
+      $('#gate').hidden = true; $('#app').hidden = false;
+      draw();
+    })
+    .withFailureHandler(function (err) {
+      $('#go').disabled = false; $('#go').textContent = 'Open my board';
+      $('#gerr').innerHTML = '<div class="err">' + esc(err.message || err) + '</div>';
+    })
+    .renewalBoardData(S.key, em, true, pin);
+}
+
+$('#out').onclick = function () {
+  /* Forget the board as well as the sign-in: the next person on this device
+     must never land on somebody else's clients. */
+  S.data = null; S.pin = '';
+  $('#app').hidden = true; $('#gate').hidden = false;
+  $('#pin').value = ''; $('#go').disabled = false; $('#go').textContent = 'Open my board';
+};
+
+function refresh(then) {
+  google.script.run
+    .withSuccessHandler(function (d) { S.data = d; draw(); if (then) then(); })
+    .withFailureHandler(function (e) { alert(e.message || e); })
+    .renewalBoardData(S.key, S.email, false, S.pin);
+}
+
+/* ------------------------------------------------------------------ draw */
+function draw() {
+  var d = S.data, w = d.who, c = d.counts;
+  $('#whoName').textContent = w.name;
+  $('#whoRole').textContent = w.agent ? 'Your clients' : (w.branch ? 'The branch' : 'Client Support');
+  $('#asof').textContent = 'Read ' + d.asOf;
+
+  /* The one sentence that says what this board is asking of the person
+     reading it. An agent is asked to have the conversation; staff are asked
+     to move the queue. Same data, different job. */
+  $('#lede').innerHTML = w.agent
+    ? 'These are <b>your clients’ renewals</b>. Each one says what it still needs — '
+      + 'a value confirmed, sums insured checked, or simply a yes and the premium. '
+      + 'Renewed on time, a policy is a phone call; missed, it is a client shopping around.'
+    : 'Every renewal on the book, most pressing first. Grouped by line, because each line '
+      + 'asks a different question: <b>comprehensive</b> needs a value, <b>third party</b> needs a yes, '
+      + '<b>property</b> needs its rebuilding cost looked at.';
+
+  var tiles = [
+    { k: 'act',  v: c.act,  label: 'Need you now' },
+    { k: 'owed', v: c.owed, label: 'Renewed, premium owed' },
+    { k: 'comprehensive', v: c.comprehensive, label: 'Comprehensive' },
+    { k: 'third-party',   v: c.thirdParty,    label: 'Third party' },
+    { k: 'property',      v: c.property,      label: 'Property' },
+    { k: 'all',  v: c.all,  label: w.agent ? 'Your renewals' : 'All renewals' },
+  ];
+  $('#tiles').innerHTML = tiles.map(function (t) {
+    return '<button class="tile ' + (t.k === S.filter ? 'on ' : '')
+      + (t.k === 'act' ? 'act ' : t.k === 'owed' ? 'owed ' : '')
+      + '" data-f="' + t.k + '"><div class="v">' + t.v + '</div><div class="k">'
+      + esc(t.label) + '</div></button>';
+  }).join('');
+  if (c.owed) {
+    $('#tiles').insertAdjacentHTML('beforeend',
+      '<div class="tile"><div class="v" style="font-size:19px;color:var(--warn)">'
+      + money(c.owedTotal) + '</div><div class="k">still to collect</div></div>');
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.tile[data-f]'), function (b) {
+    b.onclick = function () { S.filter = b.dataset.f; draw(); };
+  });
+
+  $('#agents').innerHTML = (d.byAgent && d.byAgent.length)
+    ? '<div class="agents"><h3>Who is carrying what</h3>' + d.byAgent.map(function (a) {
+        return '<div class="agrow"><span>' + esc(a.agent) + '</span><span class="n">'
+          + a.n + ' renewal' + (a.n === 1 ? '' : 's')
+          + (a.act ? ' · <b style="color:var(--bad)">' + a.act + ' need action</b>' : '')
+          + (a.owed ? ' · ' + money(a.owed) + ' owed' : '') + '</span></div>';
+      }).join('') + '</div>'
+    : '';
+
+  $('#bar').innerHTML = '<input id="q" placeholder="Find a client, policy or vehicle" value="'
+    + esc(S.q) + '">';
+  $('#q').oninput = function () { S.q = this.value; list(); };
+
+  list();
+}
+
+function list() {
+  var d = S.data, f = S.filter, q = S.q.trim().toLowerCase();
+  var rows = d.rows.filter(function (r) {
+    if (f === 'act' && !r.ask.urgent) return false;
+    if (f === 'owed' && r.ask.key !== 'owed') return false;
+    if ((f === 'comprehensive' || f === 'third-party' || f === 'property') && r.line !== f) return false;
+    if (q) {
+      var hay = [r.client, r.policy, r.detail, r.agent].join(' ').toLowerCase();
+      if (hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+
+  if (!rows.length) {
+    $('#list').innerHTML = '<div class="empty">' + (q
+      ? 'Nothing matches &ldquo;' + esc(S.q) + '&rdquo;.'
+      : f === 'act' ? 'Nothing needs you right now. That is the board doing its job.'
+      : 'Nothing here.') + '</div>';
+    return;
+  }
+
+  $('#list').innerHTML = rows.map(card).join('')
+    + (d.more ? '<div class="more">' + d.more + ' more renewal'
+        + (d.more === 1 ? '' : 's') + ' beyond the first ' + d.rows.length
+        + ' — narrow with a filter or the search.</div>' : '');
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-note]'), function (b) {
+    b.onclick = function () {
+      var p = document.getElementById('p_' + b.dataset.note);
+      p.hidden = !p.hidden;
+      if (!p.hidden) p.querySelector('textarea').focus();
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-save]'), function (b) {
+    b.onclick = function () { saveNote(b.dataset.save, b); };
+  });
+}
+
+function card(r) {
+  var who = S.data.who;
+  var ask = who.agent ? r.ask.agent : r.ask.staff;
+  var when = r.days === null ? esc(r.due)
+    : r.days < 0 ? '<b style="color:var(--bad)">' + Math.abs(r.days) + ' days past</b>'
+    : r.days === 0 ? '<b style="color:var(--bad)">due today</b>'
+    : r.days === 1 ? '<b style="color:var(--warn)">due tomorrow</b>'
+    : 'in <b>' + r.days + ' days</b> &middot; ' + esc(r.due);
+
+  var meta = [];
+  meta.push('<span class="pill ' + r.line + '">' + (r.line === 'third-party' ? 'Third party'
+    : r.line === 'comprehensive' ? 'Comprehensive' : 'Property') + '</span>');
+  if (r.premium) meta.push('Premium ' + money(r.premium));
+  if (r.balance > 0) meta.push('<b style="color:var(--warn)">' + money(r.balance) + ' owed</b>');
+  if (!who.agent && r.agent) meta.push('Agent: ' + esc(r.agent));
+  if (!who.agent && r.assignedTo) meta.push('With ' + esc(r.assignedTo));
+  if (r.email) meta.push(esc(r.email));
+
+  return '<div class="row ' + (r.ask.tone === 'late' ? 'late ' : r.ask.tone === 'soon' ? 'soon ' : '')
+    + (r.ask.key === 'done' ? 'done' : '') + '">'
+    + '<div class="rtop"><b>' + esc(r.client) + '</b>'
+    + '<span class="pol">' + esc(r.detail || r.policy) + '</span>'
+    + '<span class="when">' + when + '</span></div>'
+    + '<div class="ask' + (r.ask.tone === 'late' ? ' urgent' : '') + '">' + esc(ask) + '</div>'
+    + '<div class="meta">' + meta.join('<span>&middot;</span>') + '</div>'
+    + '<div class="acts">'
+    +   (r.mobile ? '<a href="tel:' + esc(r.mobile) + '"><button class="ghost">Call</button></a>' : '')
+    +   '<button class="ghost" data-note="' + esc(r.token) + '">Log what happened</button>'
+    + '</div>'
+    + '<div class="panel" id="p_' + esc(r.token) + '" hidden>'
+    +   '<textarea placeholder="What happened on this renewal? The next person reads this."></textarea>'
+    +   '<button data-save="' + esc(r.token) + '">Save the note</button>'
+    + '</div>'
+    + '</div>';
+}
+
+function saveNote(token, btn) {
+  var p = document.getElementById('p_' + token);
+  var note = p.querySelector('textarea').value.trim();
+  btn.disabled = true; btn.textContent = 'Saving…';
+  google.script.run
+    .withSuccessHandler(function (res) {
+      p.innerHTML = '<div class="ok">' + esc(res.said) + '</div>';
+      refresh();
+    })
+    .withFailureHandler(function (e) {
+      btn.disabled = false; btn.textContent = 'Save the note';
+      p.insertAdjacentHTML('beforeend', '<div class="err">' + esc(e.message || e) + '</div>');
+    })
+    .renewalBoardAct(S.key, S.email, S.pin, { what: 'note', token: token, note: note });
+}
+</script>
+<!-- rrb-views -->
+</body>
+</html>
