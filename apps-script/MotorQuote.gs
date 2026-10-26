@@ -65,7 +65,7 @@
  */
 
 var MQ = {
-  VERSION: '2026-10-26c',
+  VERSION: '2026-10-26e',
   BRAND: 'Ricky Rampersad Branch',
   LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',   // the blue shield (the manager's choice, 21 Oct 2026); hosted PNG: Gmail strips SVG and data URIs
   SITE: 'https://rickyrampersadbranch.com/motor-quote/',
@@ -115,6 +115,8 @@ var MQ = {
      branch's. MQ_AGENT_UNITS (comma-separated) replaces the list when a unit
      is added. Read at most every six hours. */
   AGENT_UNITS: ['Ricky_Rampersad', 'Akaash_Kalladeen'], AGENTS_CACHE_S: 6 * 3600, AGENTS_SHOWN: 8,
+  /* Where a client renews: the Renewal Platform's "Track your renewal" page (apps-script/Code.gs, findPage_). */
+  RENEW_PORTAL: 'https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec?find=1',
 };
 
 var MQ_COLS = ['Ref', 'Received', 'Status', 'Client', 'Email', 'Mobile', 'Contact Id', 'Contact action',
@@ -969,6 +971,10 @@ function mqSubmit_(b) {
   /* Who places it: an active agent for a client, or the client themself. */
   var placer = mqAgentByEmail_(s.email);
   var d = mqRead_(b.quote || {}, s, placer);
+  /* Renewals are done in the branch's Renewal Platform (26 October 2026: one place to renew). The page opens it;
+     a renewal sent here by an older page is turned away with the way there. */
+  if (d.flow === 'renew') return { ok: false, renewPortal: MQ.RENEW_PORTAL,
+    error: 'Renewals are done in your renewal portal. Open ' + MQ.RENEW_PORTAL + ' and we will e-mail your secure link to the address on your policy.' };
   if (placer) {
     if (d.flow === 'renew') return { ok: false, error: 'A renewal is asked for by the client from their own sign-in, or by the branch.' };
     if (!mqEmailOk_(d.email)) return { ok: false, error: 'Please give your client\'s e-mail.' };

@@ -366,32 +366,12 @@ const RISKS = [
   ok('every line is a fact, never advice', !/should|recommend|advise|must/i.test(f));
   ok('a vehicle with windscreen cover is not told it has none', !/windscreen/i.test(vs[1].facts.join(' ')));
 
+  /* Renewing is done in the Renewal Platform (26 October 2026): this page shows the renewal and opens the portal. */
   const tok = v.token;
-  const none = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX 1234' } });
-  ok('a renewal needs the choice', none.ok === false && /client asks/.test(none.error));
-  const chg = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX 1234', renewChoice: 'Renew with changes' } });
-  ok('with changes needs the changes', chg.ok === false && /changed/.test(chg.error));
-}
-{
-  const { env, mails } = world(Object.assign({}, SFPROPS, { MQ_RENEW_TO: 'renewals@example.com' }), { risks: RISKS });
-  const tok = signIn(env, 'anika@example.com'); mails.length = 0;
-  const r = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'pdx1234', renewChoice: 'Renew as it is',
-    renewOnText: '1 January 1999', lastPremium: 1 }, files: [{ kind: 'request', name: 'motor-quotation-request.pdf', type: 'application/pdf', data: Buffer.from('%PDF-1.7').toString('base64') }] });
-  ok('a renewal goes as it is, with nothing else typed', r.ok && r.flow === 'renew' && r.sentTo === 'renewals@example.com', r.error || '');
-  const desk = mails.find(m => /Motor renewal request/.test(m.subject));
-  ok('the subject says renewal, the vehicle, when it renews and what the client asks', desk && /2019 Toyota Aqua \(PDX 1234\) · renews \d+ \w+ \d{4} · Renew as it is · Anika Pretend/.test(desk.subject));
-  ok('a renewal never carries the request form', !(desk.attachments || []).length && !/Quotation Request form/.test(desk.htmlBody));
-  ok('the date and the premium come from Salesforce, never from the page', !/1999/.test(desk.htmlBody) && /TT\$ 4,322/.test(desk.htmlBody));
-  ok('the desk gets every term on file and what the record shows', /Third Party/.test(desk.htmlBody) && /With us since/.test(desk.htmlBody) && /TT\$ 95,000/.test(desk.htmlBody));
-  ok('MQ_RENEW_TO is named in the test banner', /renewals@example.com/.test(desk.htmlBody));
-  const rcpt = mails.find(m => /We have your renewal request/.test(m.subject));
-  ok('the receipt is a renewal receipt with the date', rcpt && /renews on <b>\d+ \w+ \d{4}<\/b>/.test(rcpt.htmlBody));
-  const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0], row = sh._grid[1], col = n => row[hdr.indexOf(n)];
-  ok('the row holds the renewal: type, date, choice, premium, policy', col('Request type') === 'Renewal' && /\d{4}/.test(col('Renewal date')) && col('Renewal choice') === 'Renew as it is' &&
-    col('Last premium') === 'TT$ 4,322' && col('Existing policy') === 'TTMV00000001');
-  const other = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'ZZZ 999', renewChoice: 'Renew as it is' } });
-  const d2 = mails.filter(m => /Motor renewal request/.test(m.subject))[1];
-  ok('a vehicle not on file for this e-mail still goes, flagged for a check', other.ok && /not found on file/.test(d2.htmlBody));
+  const r = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX 1234', renewChoice: 'Renew as it is' } });
+  ok('a renewal sent here is turned away with the way to the renewal portal', r.ok === false && /renewal portal/.test(r.error) && /find=1/.test(r.renewPortal || ''));
+  const sh = env.__sheets['Motor Quotes'];
+  ok('…and nothing is written or sent for it', !sh || sh._grid.length <= 1);
 }
 {
   const { env } = world(SFPROPS, { risks: RISKS, noRenewFields: true });
@@ -656,7 +636,7 @@ const PFILES = [{ kind: 'quote', name: 'quote.pdf', type: 'application/pdf', dat
     const tok = signIn(env, AGENT);
     ok('an agent\'s quote needs the client\'s e-mail', /client's e-mail/.test(post(env, { action: 'submit', token: tok, quote: GOOD }).error));
     ok('…and not the agent\'s own', /not yours/.test(post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { clientEmail: AGENT.toUpperCase() }) }).error));
-    ok('an agent does not ask for a renewal', /renewal is asked for by the client/.test(post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'A B', mobile: '1', reg: 'PDX 1234', renewChoice: 'Renew as it is', clientEmail: 'c@example.com' } }).error));
+    ok('an agent does not ask for a renewal', /renewal portal/.test(post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'A B', mobile: '1', reg: 'PDX 1234', renewChoice: 'Renew as it is', clientEmail: 'c@example.com' } }).error));
     ok('an agent does not sign a proposal for a client', /from their own sign-in/.test(post(env, { action: 'propose', token: tok, answers: PA, files: PFILES }).error));
     ok('an agent does not update a permit from the home screen', post(env, { action: 'permit', token: tok, permit: 'DP-1' }).ok === false);
   }

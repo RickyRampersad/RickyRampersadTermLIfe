@@ -202,6 +202,11 @@
   .tl li b{color:var(--ink)}
   .tl .k{display:block;font-size:12.5px;color:var(--dim)}
   .rnw-act{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 0}
+  .rnw-port{margin:14px 0 0;display:flex;flex-direction:column;gap:6px}
+  .rnw-port .send{margin:0;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center}
+  .rnw-port small{color:var(--dim);font-size:13px;line-height:1.45}
+  .rnw-port.lone{border:1.5px dashed #BFE3DF;border-radius:16px;padding:14px;background:#F7FCFB;margin:14px 0 0}
+  .rnw-port.lone b{color:var(--ink);font-size:15px}
   .rnw-act .send,.rnw-act .ghost{margin:0;min-height:50px;font-size:15px}
   @media (max-width:380px){.rnw-act{grid-template-columns:1fr}}
   /* read from the client's document */
@@ -538,9 +543,10 @@
 
     <section class="track t-renew" id="trRenew">
       <div class="th"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><div class="tt"><b>Renew a vehicle we insure</b><small>Next year's cover for the same vehicle</small></div><span class="lbl">Renewal</span></div>
-      <ol class="journey"><li>Check your record</li><li>Renew as it is, or with changes</li><li>Your renewal by e‑mail</li></ol>
+      <ol class="journey"><li>Open your renewal portal</li><li>Renew as it is, or with changes</li><li>Your renewal by e‑mail</li></ol>
       <div id="renewals"></div>
       <div id="homeVeh"></div>
+      <div id="renewPortal"></div>
     </section>
 
     <section class="track t-quote" id="trQuote">
@@ -605,7 +611,17 @@ const CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbwLr9ztrs3FdY9yKG9GCJ6FoFolL39CaD82P1NWapt9mrBnU7CD_BDFI5kqVDIU8nvAOQ/exec",
   /* Must equal MQ.SITE_KEY in MotorQuote.gs. Not a secret. */
   SITE_KEY: "rrb-motor-quote-1",
+  /* Renewals are done in the branch's Renewal Platform (apps-script/Code.gs), never here (26 October 2026: one place
+     to renew). Its "Track your renewal" page e-mails the client their secure renewal link; e= fills in their e-mail. */
+  RENEW_PORTAL: "https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec?find=1",
 };
+/* The client's own renewal portal, with their e-mail filled in. */
+function renewPortalUrl() {
+  const e = (session && session.email) || (me && me.email) || '';
+  return CONFIG.RENEW_PORTAL + (e ? '&e=' + encodeURIComponent(e) : '');
+}
+const PORTAL_BTN = (cls, label) => '<a class="' + cls + '" href="#" onclick="openRenewPortal(event)">' + label + '</a>';
+function openRenewPortal(ev) { if (ev) ev.preventDefault(); window.open(renewPortalUrl(), '_blank', 'noopener'); }
 const SKEY = 'rrb-mq-session', DKEY = 'rrb-mq-draft';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -768,8 +784,8 @@ function renewalCard(v, i) {
     (v.facts && v.facts.length ? '<ul class="facts">' + v.facts.map(f => '<li>' + esc(f) + '</li>').join('') + '</ul>' : '') +
     '<div class="rnw-grid">' + premChart(v.terms) +
     (terms ? '<ol class="tl">' + terms + '</ol>' : '') + '</div>' +
-    '<div class="rnw-act"><button type="button" class="send tc" onclick="startRenew(' + i + ',\'Renew as it is\')">Renew as it is</button>' +
-    '<button type="button" class="ghost tc" onclick="startRenew(' + i + ',\'Renew with changes\')">Renew with changes</button></div></div>';
+    '<div class="rnw-port">' + PORTAL_BTN('send tc', 'Renew in your renewal portal') +
+    '<small>Renew as it is or with changes, update how you pay and follow it to your documents. We e‑mail your secure link to the address on your policy.</small></div></div>';
 }
 /* A vehicle we insure that is not due yet: how far through its cover year it is, and renewing early. */
 function vehRow(v, ix) {
@@ -777,7 +793,7 @@ function vehRow(v, ix) {
   const w = ended ? 100 : Math.max(3, Math.min(100, Math.round(100 - 100 * n / 365)));
   const when = v.renewOn ? (ended ? 'Cover ended <b>' + esc(longDay(v.renewOn)) + '</b>' : 'Renews <b>' + esc(longDay(v.renewOn)) + '</b> · in ' + n + ' day' + (n === 1 ? '' : 's'))
     : v.to ? 'Cover to <b>' + esc(longDay(v.to)) + '</b>' : '';
-  return '<button type="button" class="veh" onclick="' + (ended ? 'startFlow(\'quick\',' + ix + ')' : 'startRenew(' + ix + ',\'\')') + '"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="vt"><b>' + esc(vehName(v)) +
+  return '<button type="button" class="veh" onclick="' + (ended ? 'startFlow(\'quick\',' + ix + ')' : 'openRenewPortal(event)') + '"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="vt"><b>' + esc(vehName(v)) +
     '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + '</span>' +
     (when ? '<span class="yr' + (ended ? ' end' : '') + '" aria-hidden="true"><i style="--w:' + w + '%"></i></span><span class="yrl">' + when + '</span>' : '') +
     '<span class="act">' + (ended ? 'Get a new quote' : 'Renew early') + '</span></span><span class="go">›</span></button>';
@@ -891,9 +907,14 @@ function showHome() {
   $('homeStats').innerHTML = [vs.length ? '<span>' + cu(vs.length) + 'vehicle' + (vs.length === 1 ? '' : 's') + ' with us</span>' : '',
     due.length ? '<span>' + cu(due.length) + 'due for renewal</span>' : '', requests.length ? '<span>' + cu(open) + 'request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
   /* No vehicle with us: no renewal path at all. */
-  $('pathRenew').classList.toggle('hide', !vs.length); $('pathRenew').classList.toggle('due', due.length > 0); $('trRenew').classList.toggle('hide', !vs.length);
-  $('paths').style.setProperty('--n', (vs.length ? 3 : 2) - (isAgent() ? 1 : 0));
-  $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length + ' vehicle' + (vs.length === 1 ? '' : 's');
+  /* Renewing happens in the Renewal Platform, so the path is offered to every client: with a vehicle found it shows the
+     renewal and opens the portal; without, it says where the renewal is. An agent has none. */
+  $('pathRenew').classList.toggle('hide', isAgent()); $('pathRenew').classList.toggle('due', due.length > 0); $('trRenew').classList.toggle('hide', isAgent());
+  $('paths').style.setProperty('--n', isAgent() ? 1 : 3);
+  $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length ? vs.length + ' vehicle' + (vs.length === 1 ? '' : 's') : 'In your renewal portal';
+  $('renewPortal').innerHTML = isAgent() ? '' : '<div class="rnw-port lone">' + (vs.length ? '<b>Another vehicle renewing?</b>' : '<b>Your renewal is in your renewal portal.</b>') +
+    '<small>' + (vs.length ? 'Every policy you hold with us is in your portal, whichever e‑mail it was written to.' : 'We could not find a vehicle under this e‑mail, but your portal holds every policy you have with us. Ask for your secure link and it comes to the e‑mail on your policy.') + '</small>' +
+    PORTAL_BTN('send tc', 'Open my renewal portal') + '</div>';
   $('renewals').innerHTML = due.map(x => renewalCard(x[0], x[1])).join('');
   $('homeVeh').innerHTML = rest.length
     ? '<div class="sec" style="margin-top:' + (due.length ? 18 : 4) + 'px"><span class="ic" style="background:linear-gradient(135deg,var(--rn),var(--rn2))"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><b>' + (due.length ? 'Your other vehicles with us' : 'Your vehicles with us') +

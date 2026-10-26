@@ -126,23 +126,15 @@ const calls = []; let requests = []; let NEWME = null;
   ok('the figures count up on screen and keep their real number in the text', await page.evaluate(() => [...document.querySelectorAll('#homeStats .cu')].map(b => b.textContent).join(',') === '2,1'));
   ok('scrolled to the foot, no section is left waiting to rise in', await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); }
     await new Promise(r => setTimeout(r, 300)); const left = document.querySelectorAll('.sr:not(.sr-in)').length; window.scrollTo(0, 0); return left === 0; }));
-  await page.click('#renewals .rnw .ghost'); await page.waitForSelector('#s-form:not(.hide)');
-  ok('the form says which path it is on: Renewal, the vehicle', /Renewal/.test(await txt('#flowTag')) && /Toyota Aqua/.test(await txt('#flowTag')) && await page.evaluate(() => document.getElementById('s-form').classList.contains('t-renew')));
-  ok('"Renew with changes" opens the renewal with that chosen and the changes box open', /Your renewal/.test(await txt('#step')) && (await page.$('.opts button.on:has-text("Renew with changes")')) !== null && await page.isVisible('#chgBox'));
-  ok('the renewal is two steps, filled from what we hold', (await page.$$('#steps i')).length === 2 && await page.inputValue('[data-k=name]') === 'Anika Pretend');
-  await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
-  ok('with changes, the changes are needed', /changed/.test(await txt('#formErr')));
-  await page.fill('[data-k=renewChanges]', 'Add my son as a driver.');
-  await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
-  const rrev = await txt('.rev');
-  ok('the review leads with the request: renewal, date, choice, changes', /Renewal/.test(rrev) && /11 November 2026/.test(rrev) && /Renew with changes/.test(rrev) && /son as a driver/.test(rrev));
-  await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
-  const rsub = calls.filter(c => c.action === 'submit').pop();
-  ok('the renewal is sent as flow "renew" with the vehicle and what she asked', rsub.quote.flow === 'renew' && rsub.quote.reg === 'PDX 1234' && rsub.quote.renewChoice === 'Renew with changes' && /son/.test(rsub.quote.renewChanges));
-  ok('the done screen says renewal', /renewal request has gone/.test(await txt('#doneTitle')));
-  ok('a sent request is celebrated with confetti, which clears itself', await page.evaluate(() => !!document.querySelector('canvas.confetti')) && await page.waitForFunction(() => !document.querySelector('canvas.confetti'), null, { timeout: 5000 }).then(() => true, () => false));
-  ok('the renewal done screen gives the renewal\'s own next steps, as a tracker with Sent ticked', /check your renewal/.test(await txt('#doneSteps')) && (await page.$$('#doneSteps .trk li.done')).length === 1);
-  await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
+  /* ── renewing happens in the Renewal Platform (26 October 2026): one place to renew ── */
+  ok('the renewal card renews in the renewal portal, not on this page', /Renew in your renewal portal/.test(rn) && !(await page.$('#renewals .rnw .ghost')) && /secure link/.test(rn));
+  ok('a line under the renewals says every policy is in the portal', /Another vehicle renewing\?/.test(await txt('#renewPortal')) && /Open my renewal portal/.test(await txt('#renewPortal')));
+  const [pop] = await Promise.all([ctx.waitForEvent('page'), page.click('#renewals .rnw-port .send')]);
+  const popUrl = pop.url(); await pop.close().catch(() => {});
+  ok('it opens Track your renewal with her e-mail filled in', /find=1/.test(popUrl) && /e=anika%40example\.com/.test(popUrl), popUrl);
+  ok('nothing is submitted from this page for a renewal', !calls.some(c => c.action === 'submit' && c.quote && c.quote.flow === 'renew'));
+  /* A renewal request made here before 26 October still shows in her list, with its own tracker. */
+  requests = [{ ref: 'MQ-261021-001', when: '21 Oct 2026', type: 'Renewal', vehicle: '2019 Toyota Aqua', reg: 'PDX 1234', cover: 'Comprehensive', status: 'Sent to quotes desk' }];
 
   /* ── the invoice: upload, read, filled in, checked ── */
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR4nGNgYGD4z8DAwMAAAA0IAgCp5mD/AAAAAElFTkSuQmCC', 'base64');
