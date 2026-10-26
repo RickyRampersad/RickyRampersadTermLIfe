@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-26a';
+var SCRIPT_VERSION = '2026-10-26b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -15690,10 +15690,14 @@ function workUrl_(sid) { return WORKDAY.SITE + '?p=' + encodeURIComponent(sid) +
 function workdayPerson_(sid) { return rosterPerson_(sid) || (sid === 'ricky' || UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null); }
 /** The full page behind the fast one: My day or My unit, else the staff day page. */
 function workdayFullUrl_(sid, day) { return sid === 'ricky' || UM_DESKS.indexOf(sid) > -1 ? unitUrl_(sid) : replyUrl_(sid, day, 'plan'); }
-/** The small line under a morning e-mail's button. */
+/** The small line under a morning e-mail's button. 26 Oct 2026, Pawan's link and then Ricky's own Chrome: "Sorry, unable to
+ *  open the file at this time" (Google Drive). The ping, a JSON answer, opened in the same window: a page the tracker draws
+ *  (HtmlService) will not open in a browser signed in to more than one Google account, a JSON answer will. My workday is
+ *  drawn on the branch's own site from JSON, so it opens either way; the line says so, and how to open the button anyway. */
 function workdayMailLine_(sid) {
-  return '<div style="margin-top:9px;font-size:12.5px;line-height:1.5;color:' + MAIL.muted + '">New: <a href="' + esc_(workUrl_(sid)) + '" style="color:' + MAIL.navy + ';font-weight:800">My workday</a>' +
-    ' opens at once, with your progress bar and what you have achieved today. The same link every day: save it to your home screen.</div>';
+  return '<div style="margin-top:9px;font-size:12.5px;line-height:1.5;color:' + MAIL.muted + '"><a href="' + esc_(workUrl_(sid)) + '" style="color:' + MAIL.navy + ';font-weight:800">My workday</a>' +
+    ' opens at once, with your progress bar and what you have achieved today, and checks you in. The same link every day: save it to your home screen.' +
+    ' If the button above says <i>Sorry, unable to open the file</i>, your browser is signed in to more than one Google account: use My workday, or open the button in a private (incognito) window.</div>';
 }
 /** From the editor: every person's My workday link, to send each their own. */
 function showWorkdayLinks() {
@@ -16934,7 +16938,7 @@ function sendPawanDay_(day, kind) {
     ]) +
     replyButton_(replyUrl_(sid, day, 'errand') + '&c=' + (kind === 'leave' ? 'leave' : 'progress'),
       kind === 'first' ? 'Confirm today\'s run' : kind === 'midday' ? 'Mark what is done' : 'Close my day and sign out',
-      'One tap per errand: done, on it, needs another day, or can\'t. No sign-in.') +
+      'One tap per errand: done, on it, needs another day, or can\'t. No sign-in.') + workdayMailLine_(sid) +
     intelBox_(lines, 'What the calendar shows') +
     sectionLabel_('Today\'s run' + (kind === 'first' ? '' : ' · still to come')) +
     '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' +
