@@ -4834,6 +4834,64 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     medical requirement, a leaver and a private claim item) and `people/page-test.js` (29, Playwright, a desk and a
     phone, with screenshots).
 
+## agentmgt.com — the recruiting page, rebuilt in this repository
+
+`agentmgt/` is the selection page: the copy, the 60-second test, the five
+gates, the two career roads, the apply button and the QR, all opening the one
+TalentNest posting. It is served by **Netlify** at agentmgt.com, from this
+folder alone (link the site to the repository with base directory `agentmgt`,
+or drag the whole folder onto Netlify Drop). `AGENTMGT-SETUP.md` has the steps.
+It is a third hosting chain and touches neither of the other two.
+
+Rebuilt 26 October 2026, asked for as *"the recruiting app rebuilt with more
+motion etc and most impactful"*. Until then the page on the domain was a
+single file uploaded by hand, in no repository, and its "shield" was a redrawn
+path: not the mark. What stands:
+
+- **The copy is the approved copy, word for word**: the headline, the four
+  environment cards, the two roads and their rungs, the five questions and the
+  three verdicts, the proof, the gates, the quote, the FAQ, the closing. The
+  request named motion and impact, not words, so the words did not move.
+- **The identity is the page's own: onyx and wine.** Not the homepage's teal,
+  not the gold, not the board blue. The request named motion, not colour, and
+  changing an un-named thing is the recorded mistake. The dark surfaces were
+  lifted off near-black (`#14171E`, not `#0E1013`) with no flat black and no
+  `rgba(0,0,0,…)` anywhere, by the 21 October rule. The accent on a white or
+  wine ground is `#D33F49`→`#B22F3A` (4.6:1 and 6.25:1 under white type); small
+  accent text on the dark ground is `#F08A91`, because `#E85F6A` measured 3.6:1
+  against the hero's lighter stop.
+- **The mark is `agentmgt/mark.svg`: favicon.svg's own shield and check in the
+  page's wine**, inline in the hero so the check strokes itself on. A fifth
+  mark, one per context, by the same rule as `site-mark.svg` and `board-mark.png`.
+- **The hero is the stage**: the shield at the centre, **the five gates on the
+  inner ring** (numbered chips) and **the five rungs of the career path on the
+  outer** (icons), each counter-rotating so it stays upright, the dot mesh, the
+  drawn rings, the arcs, three pings, the tilt to the pointer. Five to a ring,
+  seventy-two degrees apart, no pairs and no cycling, so every chip is in the
+  markup and visible whatever the motion setting. Below 35rem the labels go
+  and the strip under the hero carries the names.
+- **Playfair Display for display, Inter for copy**, non-blocking, with
+  metric-matched fallbacks measured from the font files (Playfair against
+  Times New Roman/Liberation Serif at 105.73%, against Noto Serif at 88.38%;
+  Inter's are the homepage's). Measured: cumulative layout shift 0.0015.
+- **All motion lives inside `prefers-reduced-motion: no-preference`**: the
+  kinetic headlines (words, never letters), the swapping word in the headline
+  (driven, hungry, proven, disciplined, unstoppable: a crossfade now, not the
+  typewriter that left "hu" on screen in every screenshot), the counters that
+  count up to the figure already in the markup, the strip, the ladders that
+  draw themselves, the gate connector with its pulse, the quiz ring, the
+  confetti, the seat that breathes. Scroll-driven entrances use
+  `animation-timeline: view()`; where that is unsupported an observer adds
+  `.in`, guarded by `html.js`, so with no script nothing is hidden.
+- **The floating "Start the Selection" bar shows below 56rem only**; the topbar
+  carries Apply on every width. RAI, the guide bubble, stays.
+- **Measured**: no sideways scroll at 360/375/390/414/1280/1366/1536/1920,
+  contrast AA composited, touch targets, no iOS zoom, 16.7 ms a frame with
+  the rings spinning, CLS 0.0015, nothing animating and nothing invisible with
+  motion off. `agentmgt/audit.js` in the session scratchpad is the harness.
+- The footer keeps the page's own contact line (`678-5821`): a fact on the
+  live page, not changed unasked.
+
 ## The branch's own forms — no client link opens a JotForm
 
 `quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`
