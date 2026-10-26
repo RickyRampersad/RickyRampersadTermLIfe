@@ -362,7 +362,89 @@
   @keyframes ring{from{transform:scale(1);opacity:.7}to{transform:scale(2.2);opacity:0}}
   @keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 5px rgba(58,123,213,.18)}50%{box-shadow:0 0 0 9px rgba(58,123,213,.08)}}
+
+  /* ── motion that pops ─────────────────────────────────────────────── */
+  @property --n{syntax:'<integer>';inherits:false;initial-value:0}
+  @property --p{syntax:'<number>';inherits:true;initial-value:0}
+  /* the band: a gradient that drifts, a road with a car on it */
+  .band{background-size:180% 180%;animation:bandmove 14s ease-in-out infinite alternate}
+  .band.has-scene{padding-bottom:86px}
+  .band>*:not(.scene){position:relative;z-index:1}
+  .scene{position:absolute;left:0;right:0;bottom:0;height:72px;overflow:hidden;pointer-events:none;z-index:0}
+  .scene .hill{position:absolute;bottom:14px;border-radius:50% 50% 0 0;background:rgba(255,255,255,.11)}
+  .scene .h1{left:-8%;width:62%;height:44px}.scene .h2{right:-10%;width:58%;height:34px;background:rgba(255,255,255,.08)}
+  .scene .cloud{position:absolute;top:6px;width:46px;height:14px;border-radius:99px;background:rgba(255,255,255,.55);animation:cloud 26s linear infinite}
+  .scene .cloud:before,.scene .cloud:after{content:"";position:absolute;bottom:4px;border-radius:50%;background:inherit}
+  .scene .cloud:before{left:8px;width:18px;height:18px}.scene .cloud:after{left:20px;width:22px;height:22px}
+  .scene .c2{top:20px;width:34px;height:11px;opacity:.7;animation-duration:38s;animation-delay:-17s}
+  .scene .road{position:absolute;left:0;right:0;bottom:0;height:16px;background:rgba(20,44,96,.32);border-top:2px solid rgba(255,255,255,.22)}
+  .scene .road i{position:absolute;left:0;right:0;top:6px;height:2.5px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.85) 0 18px,transparent 18px 36px);animation:lane .55s linear infinite}
+  .scene .car{position:absolute;bottom:9px;left:58%;width:74px;height:34px;animation:drivein 1.6s cubic-bezier(.2,.8,.2,1) .3s both}
+  .scene .car svg{display:block;width:100%;height:100%;animation:bob .5s ease-in-out infinite alternate;filter:drop-shadow(0 4px 6px rgba(10,30,70,.3))}
+  .scene .car .wh{transform-box:fill-box;transform-origin:center;animation:spin .45s linear infinite}
+  .scene .speed{position:absolute;right:100%;top:10px;width:30px;height:2px;border-radius:2px;background:rgba(255,255,255,.7);animation:speed .7s ease-in infinite}
+  .scene .speed+.speed{top:18px;width:20px;animation-delay:.25s}
+  @media (min-width:900px){.band.has-scene{padding-bottom:92px}.scene .car{left:66%}}
+  /* numbers that count up, rings that fill */
+  .cu{--n:var(--to);counter-reset:n var(--n);animation:count 1.2s cubic-bezier(.2,.8,.2,1) .2s both}
+  .cu:after{content:counter(n);content:counter(n) / ""}
+  .vh,.ring span.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;margin:-1px;padding:0}
+  .ring{animation:pop .6s cubic-bezier(.2,1.4,.3,1) both,ringfill 1.3s cubic-bezier(.2,.8,.2,1) .2s both}
+  .ring:after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--c);opacity:0;animation:ring 2.4s ease-out 1.4s infinite}
+  /* a dot that travels along each path's steps */
+  .journey{position:relative;isolation:isolate}
+  .journey{--a:16.67%}.journey:has(li:nth-child(4)){--a:12.5%}
+  .journey:after{content:"";position:absolute;top:22px;left:var(--a);width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--c2);box-shadow:0 0 0 4px rgba(255,255,255,.9),0 0 14px var(--c2);z-index:-1;animation:travel 3.4s cubic-bezier(.45,0,.25,1) .8s infinite}
+  .journey li:before{transition:transform .2s}
+  /* buttons: a ripple where you tap, a light that sweeps the main ones */
+  .send,.ghost,.opts button,.veh,.takedoor{position:relative;overflow:hidden}
+  .rip{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.28;transform:scale(0);animation:rip .65s ease-out forwards}
+  .send:not(:disabled):after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.32) 50%,transparent 65%);transform:translateX(-120%);animation:sheen 4.2s ease-in-out 1.4s infinite;pointer-events:none}
+  .send:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(58,123,213,.38)}
+  #s-form .opts button.on{animation:choose .38s cubic-bezier(.2,1.4,.3,1)}
+  /* icons pop in, and wiggle when you point at them */
+  .sec .ic,.th .tn,.path .pi,.door .ic,.takedoor .ic{animation:iconpop .65s cubic-bezier(.2,1.5,.3,1) .1s both}
+  .path:hover .pi,.door:hover .ic,.veh:hover .ic,.takedoor:hover .ic,.path:focus-visible .pi{animation:wiggle .6s ease}
+  .path.due .pi{animation:iconpop .65s cubic-bezier(.2,1.5,.3,1) .1s both,duebeat 2.2s ease-out 1.2s infinite}
+  .mark{position:relative}
+  .mark:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-130%);animation:sheen 6s ease-in-out 2s infinite}
+  /* the chart's figures land after the bars; the newest bar shines */
+  .pc-v{animation:rise .5s cubic-bezier(.2,.8,.2,1) .6s both}
+  .pc-col.now .pc-b{position:relative;overflow:hidden}
+  .pc-col.now .pc-b:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateY(100%);animation:shineup 2.8s ease-in-out 1.4s infinite}
+  /* sections rise in as you scroll to them, and play their charts then */
+  .sr{transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+  .sr:not(.sr-in){opacity:0;transform:translateY(28px) scale(.985)}
+  .sr:not(.sr-in),.sr:not(.sr-in) *{animation-play-state:paused!important}
+  @media print{.sr{opacity:1!important;transform:none!important}}
+  /* done: the tick draws itself, the reference stamps in */
+  .tick{position:relative}
+  .tick svg{width:46px;height:46px}
+  .tick path{stroke-dasharray:48;stroke-dashoffset:48;animation:draw .55s cubic-bezier(.65,0,.35,1) .45s forwards}
+  .tick:before{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid #28C286;animation:ring 1.4s ease-out .6s both}
+  #s-done .ref{animation:stamp .55s cubic-bezier(.2,1.4,.3,1) .75s both}
+  #s-done h1{animation:rise .55s cubic-bezier(.2,.8,.2,1) .3s both}
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+  @keyframes bandmove{from{background-position:0% 40%}to{background-position:100% 60%}}
+  @keyframes cloud{from{transform:translateX(110vw)}to{transform:translateX(-120px)}}
+  @keyframes lane{to{background-position:-36px 0}}
+  @keyframes drivein{from{transform:translateX(-70vw)}to{transform:none}}
+  @keyframes bob{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes speed{0%{transform:translateX(10px);opacity:0}40%{opacity:1}100%{transform:translateX(-26px);opacity:0}}
+  @keyframes count{from{--n:0}}
+  @keyframes ringfill{from{--p:0}}
+  @keyframes travel{0%{left:var(--a);opacity:0;transform:scale(.4)}12%{opacity:1;transform:scale(1)}88%{opacity:1;transform:scale(1)}100%{left:calc(100% - var(--a));opacity:0;transform:scale(.4)}}
+  @keyframes rip{to{transform:scale(1);opacity:0}}
+  @keyframes choose{0%{transform:scale(.92)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+  @keyframes iconpop{0%{transform:scale(0) rotate(-25deg);opacity:0}100%{transform:none;opacity:1}}
+  @keyframes wiggle{0%,100%{transform:none}25%{transform:rotate(-10deg) scale(1.08)}50%{transform:rotate(8deg) scale(1.08)}75%{transform:rotate(-4deg)}}
+  @keyframes duebeat{0%{box-shadow:0 6px 14px rgba(20,40,90,.18),0 0 0 0 rgba(19,138,130,.5)}70%,100%{box-shadow:0 6px 14px rgba(20,40,90,.18),0 0 0 12px rgba(19,138,130,0)}}
+  @keyframes shineup{0%,55%{transform:translateY(100%)}100%{transform:translateY(-100%)}}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes stamp{0%{transform:scale(1.7) rotate(-5deg);opacity:0}100%{transform:none;opacity:1}}
   @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+  @media (prefers-reduced-motion:reduce){.scene .car{transform:none}.scene .cloud{left:14%}.scene .c2{left:74%}.scene .speed{display:none}.tick path{stroke-dashoffset:0}.sr{opacity:1!important;transform:none!important}}
 </style>
 </head>
 <body>
@@ -377,7 +459,7 @@
   <!-- 0 · sign in -->
   <section class="card hero" id="s-signin">
     <div class="band">
-      <div class="big">🚗</div>
+      <div class="big">🔑</div>
       <h1>Get your motor quote.</h1>
       <p>Sign in with your e-mail. Our clients see their details filled in. New to us? Welcome, it takes five minutes.</p>
       <div class="chips"><span>No password</span><span>Your details filled in</span><span>About five minutes</span></div>
@@ -464,7 +546,7 @@
 
   <!-- done -->
   <section class="card hide" id="s-done" style="text-align:center">
-    <div class="tick">✓</div>
+    <div class="tick" role="img" aria-label="Sent"><svg viewBox="0 0 52 52" aria-hidden="true"><path d="M14 27l8 8 16-18" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <h1 id="doneTitle">Your request has gone.</h1>
     <p class="muted">Your reference</p>
     <p class="ref" id="doneRef"></p>
@@ -518,7 +600,60 @@ async function api(action, body) {
 }
 function saveDraft() { try { localStorage.setItem(DKEY, JSON.stringify(draft)); } catch (e) {} }
 function clearSession() { session = null; me = null; try { localStorage.removeItem(SKEY); } catch (e) {} }
-function show(id) { ['s-signin', 's-home', 's-form', 's-done'].forEach(s => $(s).classList.toggle('hide', s !== id)); window.scrollTo(0, 0); }
+function show(id) { ['s-signin', 's-home', 's-form', 's-done'].forEach(s => $(s).classList.toggle('hide', s !== id)); window.scrollTo(0, 0); if (id === 's-done') confetti(); }
+
+/* ---- motion ---- */
+const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+/* A whole number that counts up on screen; the real figure stays in the text for readers and copy. */
+const cu = n => { const v = Math.max(0, Math.round(Number(n) || 0)); return '<b class="cu" style="--to:' + v + '"><span class="vh">' + v + '</span></b>'; };
+/* The road along the foot of each blue band: lane lines moving, a car with turning wheels, clouds. */
+const SCENE = '<div class="scene" aria-hidden="true"><span class="cloud"></span><span class="cloud c2"></span><span class="hill h1"></span><span class="hill h2"></span>' +
+  '<span class="road"><i></i></span><span class="car"><span class="speed"></span><span class="speed"></span><svg viewBox="0 0 74 34">' +
+  '<path d="M4 24c0-5 3-7 8-7.6l9-1.4 9-7.4c2.4-2 5-2.6 8-2.6h11c3.4 0 6 1.2 8.2 3.6l5.6 6.2c6 .8 8.2 3.2 8.2 7.2v3c0 1.4-1 2-2.2 2H6c-1.2 0-2-.8-2-2z" fill="#fff"/>' +
+  '<path d="M24 15.4l7.4-6.2c1.4-1.2 3-1.6 5-1.6H40v7.8zM43.4 7.6h6.2c2 0 3.6.8 5 2.4l4.4 5H43.4z" fill="#BFE0FF"/><rect x="5" y="20" width="5" height="3" rx="1.5" fill="#FFD66B"/><rect x="65" y="20" width="4" height="3" rx="1.5" fill="#FF8A7A"/>' +
+  '<g class="wh"><circle cx="19" cy="27" r="6.2" fill="#1B2A44"/><circle cx="19" cy="27" r="2.6" fill="#DCEBFC"/><path d="M19 21.6v10.8M13.6 27h10.8" stroke="#DCEBFC" stroke-width="1.3"/></g>' +
+  '<g class="wh"><circle cx="56" cy="27" r="6.2" fill="#1B2A44"/><circle cx="56" cy="27" r="2.6" fill="#DCEBFC"/><path d="M56 21.6v10.8M50.6 27h10.8" stroke="#DCEBFC" stroke-width="1.3"/></g></svg></span></div>';
+document.querySelectorAll('.band').forEach(b => { b.classList.add('has-scene'); b.insertAdjacentHTML('beforeend', SCENE); });
+/* A ripple from where the finger lands. */
+document.addEventListener('pointerdown', ev => {
+  const el = ev.target.closest && ev.target.closest('.send,.ghost,.path,.door,.opts button,.veh,.takedoor');
+  if (!el || el.disabled || el.tagName === 'DIV' || calm()) return;
+  const r = el.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2, s = document.createElement('span');
+  s.className = 'rip'; s.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (ev.clientX - r.left - d / 2) + 'px;top:' + (ev.clientY - r.top - d / 2) + 'px';
+  el.appendChild(s); setTimeout(() => s.remove(), 700);
+}, { passive: true });
+/* Below the first screen, each section waits and rises in as it is scrolled to, playing its charts then. */
+const RV = ('IntersectionObserver' in window) ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('sr-in'); RV.unobserve(e.target); } }), { rootMargin: '0px 0px -6% 0px' }) : null;
+function reveal(root) {
+  if (!RV || !root || calm()) return;
+  root.querySelectorAll('.track,.rnw,.pchart,.veh,.req,.doors,.takedoor,.journey,.reqsum').forEach(el => {
+    el.classList.remove('sr', 'sr-in');
+    if (el.getBoundingClientRect().top > window.innerHeight * 0.94) { el.classList.add('sr'); RV.observe(el); }
+  });
+}
+/* Confetti on a request sent, in the three paths' colours. */
+function confetti() {
+  if (calm()) return;
+  try {
+    const c = document.createElement('canvas'), x = c.getContext('2d'); if (!x) return;
+    const W = c.width = innerWidth * (devicePixelRatio || 1), H = c.height = innerHeight * (devicePixelRatio || 1), k = devicePixelRatio || 1;
+    c.className = 'confetti'; document.body.appendChild(c);
+    const t = document.querySelector('#s-done .tick'), tr = t ? t.getBoundingClientRect() : { left: innerWidth / 2, top: 120, width: 0, height: 0 };
+    const ox = (tr.left + tr.width / 2) * k, oy = (tr.top + tr.height / 2) * k;
+    const COL = ['#138A82', '#3A7BD5', '#7468E4', '#28C286', '#FFC94D', '#62B0EE'];
+    const P = Array.from({ length: 150 }, () => { const a = Math.random() * Math.PI * 2, v = (4 + Math.random() * 9) * k;
+      return { x: ox, y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6 * k, r: Math.random() * Math.PI, vr: (Math.random() - .5) * .4,
+        w: (5 + Math.random() * 6) * k, h: (8 + Math.random() * 8) * k, c: COL[Math.random() * COL.length | 0] }; });
+    const t0 = performance.now();
+    (function frame(now) {
+      const e = now - t0; x.clearRect(0, 0, W, H);
+      P.forEach(p => { p.vy += .32 * k; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        x.save(); x.globalAlpha = Math.max(0, 1 - e / 2600); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c;
+        x.fillRect(-p.w / 2, -p.h / 2 * Math.abs(Math.cos(p.r * 2)), p.w, p.h * Math.abs(Math.cos(p.r * 2)) + 1); x.restore(); });
+      if (e < 2600) requestAnimationFrame(frame); else c.remove();
+    })(t0);
+  } catch (e) {}
+}
 
 /* ---- sign in ---- */
 function showSignin() { show('s-signin'); $('who').classList.add('hide'); }
@@ -594,7 +729,7 @@ function renewalCard(v, i) {
   const terms = (v.terms || []).slice(0, 4).map(t => '<li><b>' + esc(longDay(t.from) || 'Start not on file') + ' to ' + esc(longDay(t.to)) + '</b><span class="k">' +
     esc([t.cover, t.sum ? money(t.sum) : '', t.premium ? 'premium ' + money(t.premium) : ''].filter(Boolean).join(' · ') || 'Details not on file') + '</span></li>').join('');
   return '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" data-reg="' + esc(v.reg) + '"><div class="rnw-top">' +
-    '<div class="ring" style="--p:' + pct + '"><span><b>' + n + '</b><small>' + (lapsed ? 'days ago' : n === 1 ? 'day' : 'days') + '</small></span></div>' +
+    '<div class="ring" style="--p:' + pct + '"><span>' + cu(n) + '<small>' + (lapsed ? 'days ago' : n === 1 ? 'day' : 'days') + '</small></span></div>' +
     '<div><div class="eyebrow">' + (lapsed ? 'Your cover has ended' : 'Due for renewal') + '</div><h3>' + esc(vehName(v)) + '</h3>' +
     '<div class="when">' + esc(v.reg) + ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(v.renewOnText || longDay(v.renewOn)) + '</b></div></div></div>' +
     (v.facts && v.facts.length ? '<ul class="facts">' + v.facts.map(f => '<li>' + esc(f) + '</li>').join('') + '</ul>' : '') +
@@ -636,7 +771,7 @@ function toTrack(id) {
   el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
 }
 function showHome() {
-  show('s-home');
+  show('s-home'); requestAnimationFrame(() => reveal($('s-home')));
   $('who').classList.remove('hide'); $('whoName').textContent = (me && me.name) || (session && session.email) || '';
   const first = me && (me.first || (me.name || '').split(' ')[0]);
   const vs = (me && me.vehicles) || [], all = vs.map((v, i) => [v, i]), due = all.filter(x => dueNow(x[0])), rest = all.filter(x => !dueNow(x[0]));
@@ -648,10 +783,10 @@ function showHome() {
     : 'What would you like to do today? Choose one of the three below.';
   /* The band's figures: what we hold, at a glance. */
   const open = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') < 4).length;
-  $('homeStats').innerHTML = [vs.length ? '<span><b>' + vs.length + '</b>vehicle' + (vs.length === 1 ? '' : 's') + ' with us</span>' : '',
-    due.length ? '<span><b>' + due.length + '</b>due for renewal</span>' : '', requests.length ? '<span><b>' + open + '</b>request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
+  $('homeStats').innerHTML = [vs.length ? '<span>' + cu(vs.length) + 'vehicle' + (vs.length === 1 ? '' : 's') + ' with us</span>' : '',
+    due.length ? '<span>' + cu(due.length) + 'due for renewal</span>' : '', requests.length ? '<span>' + cu(open) + 'request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
   /* No vehicle with us: no renewal path at all. */
-  $('pathRenew').classList.toggle('hide', !vs.length); $('trRenew').classList.toggle('hide', !vs.length);
+  $('pathRenew').classList.toggle('hide', !vs.length); $('pathRenew').classList.toggle('due', due.length > 0); $('trRenew').classList.toggle('hide', !vs.length);
   $('paths').style.setProperty('--n', vs.length ? 3 : 2);
   $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length + ' vehicle' + (vs.length === 1 ? '' : 's');
   $('renewals').innerHTML = due.map(x => renewalCard(x[0], x[1])).join('');
@@ -662,7 +797,7 @@ function showHome() {
   if (!requests.length) { $('reqs').innerHTML = ''; return; }
   const quoted = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') === 3).length, doneN = requests.length - open;
   $('reqs').innerHTML = '<section class="track" id="trReqs"><div class="th" style="--c:var(--mid);--c2:var(--blue2);--bg:var(--soft)"><span class="tn">🧾</span><div class="tt"><b>Your requests</b><small>Each one says which path it is on, and how far it has got</small></div></div>' +
-    '<div class="reqsum"><div><b>' + requests.length + '</b>sent</div><div><b>' + quoted + '</b>answered</div><div><b>' + doneN + '</b>completed</div></div>' +
+    '<div class="reqsum"><div>' + cu(requests.length) + 'sent</div><div>' + cu(quoted) + 'answered</div><div>' + cu(doneN) + 'completed</div></div>' +
     requests.map(reqCard).join('') + '</section>';
 }
 
@@ -930,7 +1065,7 @@ function stepQuick(d) {
 /* The renewal: the vehicle and its record, then what the client wants. */
 function stepRenew(d) {
   const lapsed = d.renewState === 'lapsed', n = Math.abs(d.renewIn || 0);
-  return '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" style="margin-top:6px"><div class="rnw-top"><div class="ring" style="--p:' + (lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)))) + '"><span><b>' + n + '</b><small>' + (lapsed ? 'days ago' : 'days') + '</small></span></div>' +
+  return '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" style="margin-top:6px"><div class="rnw-top"><div class="ring" style="--p:' + (lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)))) + '"><span>' + cu(n) + '<small>' + (lapsed ? 'days ago' : 'days') + '</small></span></div>' +
     '<div><h3>' + esc([d.year, d.make, d.model].filter(Boolean).join(' ') || d.reg) + '</h3><div class="when">' + esc(d.reg) + ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(d.renewOnText || '') + '</b></div>' +
     '<div class="when" style="font-size:13px;color:var(--dim)">' + esc([d.lastCover, d.lastSum ? 'insured for ' + money(d.lastSum) : '', d.lastPremium ? 'premium ' + money(d.lastPremium) : ''].filter(Boolean).join(' · ')) + '</div></div></div></div>' +
     opts('renewChoice', 'What would you like?', [['Renew as it is', 'The same cover and the same value'], ['Renew with changes', 'Change the cover, the value, a driver or anything else']], '', true) +

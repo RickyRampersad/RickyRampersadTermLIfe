@@ -3837,7 +3837,7 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     from Salesforce. It goes to `MQ_RENEW_TO`, else the quotes desk.
   - New columns go on the end of the Motor Quotes tab, added by name (`mqQuotesSheet_`), and a row is placed by the
     tab's own headers.
-  - Tests: `tests/test-motor-quote.js` (146 checks) and `tests/e2e-motor-quote.js` (106, every door on a phone).
+  - Tests: `tests/test-motor-quote.js` (146 checks) and `tests/e2e-motor-quote.js` (110, every door on a phone).
 - **Taking the quote fills Guardian's own PDFs** (21 October 2026: "once they agree on the quote … upload the certified
   copy … extract all the details on the vehicles … fill out the proposal form very fast", then "it has to be exactly on
   the Guardian PDF and know your [policy], ensuring that they can answer it").
@@ -3891,6 +3891,21 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
   on the year before (`premChart`), each other vehicle's cover year as a bar with "Renew early", every request as a
   four-stage tracker in its path's words (`reqStage`: a renewal is never offered as a quote to accept), and the done page
   as a tracker with Sent ticked. Checked at 360, 390, 820 and 1366 px wide.
+- **Motion that pops** (26 October 2026: "can you add more motion and graphics to pop"). All of it is CSS and a little
+  script, and all of it stops under reduced motion.
+  - **The blue bands** (sign-in and home) carry a road along their foot (`SCENE`, put into every `.band` by the script):
+    lane lines moving, a car that drives in and bobs, its wheels turning, clouds drifting, over a slowly shifting gradient.
+    The sign-in band's icon is a key, since the car is now on the road.
+  - **Numbers count up** (`cu(n)`): a CSS counter animates on screen while the real figure stays in the text, so a test,
+    a screen reader and a copy all read the number. Used on the renewal ring, the band's figures and the request summary.
+    The ring fills from empty (`@property --p`).
+  - **A dot travels along each path's numbered steps**, behind the numbers.
+  - **Taps**: a ripple where the finger lands; a light sweeps the main buttons; icons pop in and wiggle on hover; the
+    Renew path's icon pulses while a vehicle is due.
+  - **Sections below the first screen wait and rise in when scrolled to** (`reveal`, class `sr`; never `.rv`, which a
+    request card already uses), so their bars and rings play when they are seen. Printing shows everything.
+  - **Done**: the tick draws itself, the reference stamps in, and confetti in the three paths' colours bursts from the
+    tick and clears itself in under three seconds.
 - The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
   until the page is live and wired; disable it then, so an old link does not take a client back to it.
 

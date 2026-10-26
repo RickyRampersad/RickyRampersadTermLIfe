@@ -107,6 +107,10 @@ const calls = []; let requests = [];
   ok('the band gives the figures: vehicles with us, due for renewal', /2\s*vehicles with us/.test(await txt('#homeStats')) && /1\s*due for renewal/.test(await txt('#homeStats')));
   ok('the vehicle not due is under "Your vehicles with us", with its renewal date', /Nissan Note/.test(await txt('#homeVeh')) && /renews/i.test(await txt('#homeVeh')) && !/Toyota/.test(await txt('#homeVeh')));
   ok('nothing runs wider than the phone on the home screen', await wide());
+  ok('both blue bands carry the road scene, hidden from screen readers', await page.evaluate(() => document.querySelectorAll('.band .scene[aria-hidden=true] .car svg').length === 2));
+  ok('the figures count up on screen and keep their real number in the text', await page.evaluate(() => [...document.querySelectorAll('#homeStats .cu')].map(b => b.textContent).join(',') === '2,1'));
+  ok('scrolled to the foot, no section is left waiting to rise in', await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); }
+    await new Promise(r => setTimeout(r, 300)); const left = document.querySelectorAll('.sr:not(.sr-in)').length; window.scrollTo(0, 0); return left === 0; }));
   await page.click('#renewals .rnw .ghost'); await page.waitForSelector('#s-form:not(.hide)');
   ok('the form says which path it is on: Renewal, the vehicle', /Renewal/.test(await txt('#flowTag')) && /Toyota Aqua/.test(await txt('#flowTag')) && await page.evaluate(() => document.getElementById('s-form').classList.contains('t-renew')));
   ok('"Renew with changes" opens the renewal with that chosen and the changes box open', /Your renewal/.test(await txt('#step')) && (await page.$('.opts button.on:has-text("Renew with changes")')) !== null && await page.isVisible('#chgBox'));
@@ -121,6 +125,7 @@ const calls = []; let requests = [];
   const rsub = calls.filter(c => c.action === 'submit').pop();
   ok('the renewal is sent as flow "renew" with the vehicle and what she asked', rsub.quote.flow === 'renew' && rsub.quote.reg === 'PDX 1234' && rsub.quote.renewChoice === 'Renew with changes' && /son/.test(rsub.quote.renewChanges));
   ok('the done screen says renewal', /renewal request has gone/.test(await txt('#doneTitle')));
+  ok('a sent request is celebrated with confetti, which clears itself', await page.evaluate(() => !!document.querySelector('canvas.confetti')) && await page.waitForFunction(() => !document.querySelector('canvas.confetti'), null, { timeout: 5000 }).then(() => true, () => false));
   ok('the renewal done screen gives the renewal\'s own next steps, as a tracker with Sent ticked', /check your renewal/.test(await txt('#doneSteps')) && (await page.$$('#doneSteps .trk li.done')).length === 1);
   await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
 
