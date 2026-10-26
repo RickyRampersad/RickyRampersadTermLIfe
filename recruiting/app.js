@@ -1221,8 +1221,9 @@ const STAGES = [
     branchManager: [{ name: "Ricky Rampersad", role: "Branch Manager" }],
     bma: [{ name: "Kamla", role: "Branch Manager Assistant" }],
     recruitingManagers: [
-      { name: "Kerwyn Ramroach", role: "Asst. Branch Manager (formerly Unit Manager)" },
-      { name: "Gary Sookdeo", role: "Unit Manager" },
+      // Two seats are vacant: the Assistant Branch Manager and a second Unit
+      // Manager. A candidate recruited by whoever held one keeps that name on
+      // their own record — this list is only who may be chosen from now on.
       { name: "Akaash Kalladeen", role: "Unit Manager" },
       { name: "Ricky Rampersad", role: "Branch Manager (acting RM)" },
       { name: "Other / external", role: "Other" },

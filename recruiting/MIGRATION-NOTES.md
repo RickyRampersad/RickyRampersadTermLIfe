@@ -49,14 +49,18 @@ approval → onboarding → induction`.
 | Name | Role in the deployed app |
 |---|---|
 | Ricky Rampersad | Branch Manager (also listed as acting RM) |
-| Kerwyn Ramroach | **Asst. Branch Manager (formerly Unit Manager)** |
-| Gary **Sookdeo** | Unit Manager |
 | Akaash Kalladeen | Unit Manager |
 | Kamla | Branch Manager Assistant |
 
-Two things the Project conversation had wrong, corrected by the deployed code: the
-surname is Sookdeo, not Gookdeo; and there *is* an ABM — Kerwyn. The v5.1 build that
-removed the ABM seat was mistaken.
+Two seats on that list — the Assistant Branch Manager and a second Unit
+Manager — were filled when this was migrated and are vacant now; they were
+taken out of `BRANCH_ROSTER` on 26 October 2026.
+
+Two things the Project conversation had wrong, corrected by the deployed code: a
+unit manager's surname was misspelt throughout, and an Assistant Branch Manager
+seat the v5.1 build had removed did in fact exist. The lesson both times was the
+same — take the roster from the deployed code and the Access tab, never from the
+conversation.
 
 **Selection file checklist.** The tracker uses 19 items numbered 0–18 (0 is the index
 sheet itself; 6 splits into 6.a and 6.b; item 9 is the GGLDC Discovery Report). The

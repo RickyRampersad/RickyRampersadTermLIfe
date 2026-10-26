@@ -34,8 +34,8 @@ function env(opts = {}) {
   const acc = g.__sheets['Access'];
   acc._grid.length = 1;                       // drop the change-me row setup() seeds
   [['Ricky Rampersad', 'Branch Manager', 'bm-pass', 'ricky@example.com', 'Yes'],
-   ['Kerwyn Ramroach', 'Assit Branch Mgr', 'abm-pass', '', 'Yes'],
-   ['Gary Sookdeo', 'Unit Mgr', 'gary-pass', '', 'Yes'],
+   ['Abel Carter', 'Assit Branch Mgr', 'abm-pass', '', 'Yes'],
+   ['Una Mitchell', 'Unit Mgr', 'um-pass', '', 'Yes'],
    ['Akaash Kalladeen', 'Unit Manager', 'ak-pass', '', 'Yes'],
    ['Kamla', 'Branch Mgr Assistant', 'bma-pass', '', 'Yes'],
    ['Former Staffer', 'Unit Manager', 'x', '', 'No']].forEach(r => acc.appendRow(r));
@@ -79,28 +79,28 @@ section('who may sign in');
   const g = env();
   const bm = g.login_('Ricky Rampersad', 'bm-pass');
   ok(bm.ok && bm.profile.role === 'BM' && bm.profile.scope === 'all', 'the Branch Manager signs in and sees everything');
-  const abm = g.login_('Kerwyn Ramroach', 'abm-pass');
+  const abm = g.login_('Abel Carter', 'abm-pass');
   ok(abm.ok && abm.profile.role === 'RM' && abm.profile.scope === 'all', '"Assit Branch Mgr" is understood as the ABM, who also sees everything');
   ok(abm.profile.title === 'Assistant Branch Manager', 'and is called one');
-  const um = g.login_('Gary Sookdeo', 'gary-pass');
+  const um = g.login_('Una Mitchell', 'um-pass');
   ok(um.ok && um.profile.role === 'RM' && um.profile.scope === 'own', 'a Unit Manager signs in scoped to his own');
   ok(g.login_('Kamla', 'bma-pass').profile.role === 'BMA', 'the BMA is a BMA, not a Branch Manager, despite the word in the title');
   ok(g.login_('ricky@example.com', 'bm-pass').ok, 'an email address works as an identity too');
   ok(!g.login_('Former Staffer', 'x').ok, 'an inactive row cannot sign in');
   ok(!g.login_('Nobody At All', 'x').ok, 'nor can a name that is not there');
   ok(!g.login_('Ricky Rampersad', 'wrong').ok, 'nor the right name with the wrong password');
-  ok(!JSON.stringify(bm).includes('bm-pass') && !JSON.stringify(bm.roster).includes('gary-pass'),
+  ok(!JSON.stringify(bm).includes('bm-pass') && !JSON.stringify(bm.roster).includes('um-pass'),
      'no password appears anywhere in what leaves the server');
 }
 
 section('five wrong tries, and how long a session lasts');
 {
   const g = env();
-  for (let i = 0; i < 5; i++) g.login_('Gary Sookdeo', 'wrong');
-  const locked = g.login_('Gary Sookdeo', 'gary-pass');
+  for (let i = 0; i < 5; i++) g.login_('Una Mitchell', 'wrong');
+  const locked = g.login_('Una Mitchell', 'um-pass');
   ok(!locked.ok && /Too many attempts/.test(locked.error), 'five wrong tries locks the name even against the right password');
   g.__advance(901);
-  ok(g.login_('Gary Sookdeo', 'gary-pass').ok, 'and the lock lifts after fifteen minutes');
+  ok(g.login_('Una Mitchell', 'um-pass').ok, 'and the lock lifts after fifteen minutes');
 
   const tok = g.login_('Ricky Rampersad', 'bm-pass').token;
   ok(g.readToken_(tok).name === 'Ricky Rampersad', 'a token reads back as the person who signed in');
@@ -115,14 +115,14 @@ section('five wrong tries, and how long a session lasts');
 section('the figures, scoped to who is asking');
 {
   const g = env();
-  g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Gary Sookdeo', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A001', '2025-03-01', '', 'active', 'Marginal.']);
+  g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Una Mitchell', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A001', '2025-03-01', '', 'active', 'Marginal.']);
   g.__sheets['Cohort'].appendRow(['Recruit Two', 2025, 'Akaash Kalladeen', '', '', '', '', '', '', '', '', '', '', 'no_show', 'no_contract', '', '', '', 'never_contracted', 'Full file, never came.']);
   g.__sheets['Production'].appendRow(['A001', 'Recruit One', 7, 22506, 0, 0, 'A note.', '']);
   g.__sheets['Production'].appendRow(['A002', 'Someone Else', 14, 61391, 1, 500, '', 'Yes']);
-  g.__sheets['ManagerPulse'].appendRow(['Gary Sookdeo', 7, 1, 4, 2, 1, '2026-01-13', 'One on One', 'Recruit One, Recruit Three', 'Recruit One', 'Names the same agents.']);
+  g.__sheets['ManagerPulse'].appendRow(['Una Mitchell', 7, 1, 4, 2, 1, '2026-01-13', 'One on One', 'Recruit One, Recruit Three', 'Recruit One', 'Names the same agents.']);
   g.__sheets['ManagerPulse'].appendRow(['Akaash Kalladeen', 4, 2, 1, 1, 0, '2026-02-04', 'Online', 'Recruit Two', '', 'Reports late.']);
-  g.__sheets['MarketSurveys'].appendRow(['Recruit One', 25, 6, 14, '0-10', 'Gary Sookdeo', 'red', 'Volume without effort.']);
-  g.__sheets['Variance'].appendRow(['Recruit One (Jan 2025)', 'Recruit One', 'Jan 2025', 'Gary Sookdeo', 12000, 0, -100, 120, 76, -37, 35, 23, -34, 10, 4, -60, 5, 2, 16500, 'Did not settle.']);
+  g.__sheets['MarketSurveys'].appendRow(['Recruit One', 25, 6, 14, '0-10', 'Una Mitchell', 'red', 'Volume without effort.']);
+  g.__sheets['Variance'].appendRow(['Recruit One (Jan 2025)', 'Recruit One', 'Jan 2025', 'Una Mitchell', 12000, 0, -100, 120, 76, -37, 35, 23, -34, 10, 4, -60, 5, 2, 16500, 'Did not settle.']);
 
   const BM = g.login_('Ricky Rampersad', 'bm-pass').token;
   const d = g.handle_('datasets', {}, BM).datasets;
@@ -130,16 +130,16 @@ section('the figures, scoped to who is asking');
   ok(d.cohort[0].PS === 51 && typeof d.cohort[0].PS === 'number', 'scores come back as numbers');
   ok(d.cohort[1].PS === null && d.cohort[1].finalRating === null, 'a recruit with no scores gives nulls, not zeros — a blank is not a nought');
   ok(d.cohort[1].agentId === null, 'and a blank agent number is null, not an empty string');
-  ok(Array.isArray(d.managerPulse['Gary Sookdeo'].agents_named) && d.managerPulse['Gary Sookdeo'].agents_named.length === 2,
+  ok(Array.isArray(d.managerPulse['Una Mitchell'].agents_named) && d.managerPulse['Una Mitchell'].agents_named.length === 2,
      'a comma-separated cell becomes an array');
   ok(d.managerPulse['Akaash Kalladeen'].repeat_offenders.length === 0, 'and an empty one becomes an empty array, not [""]');
   ok(d.production['A001'].note === 'A note.' && d.production['A002'].terminated === 'Yes', 'production keeps its note and its terminated flag');
   ok(d.variance['Recruit One (Jan 2025)'].income_var_pct === -100, 'a variance row keeps its negative percentage');
 
-  const UM = g.login_('Gary Sookdeo', 'gary-pass').token;
+  const UM = g.login_('Una Mitchell', 'um-pass').token;
   const u = g.handle_('datasets', {}, UM).datasets;
-  ok(u.cohort.length === 1 && u.cohort[0].rm === 'Gary Sookdeo', 'a Unit Manager gets only his own recruits');
-  ok(Object.keys(u.managerPulse).length === 1 && u.managerPulse['Gary Sookdeo'], 'and only his own coaching summary');
+  ok(u.cohort.length === 1 && u.cohort[0].rm === 'Una Mitchell', 'a Unit Manager gets only his own recruits');
+  ok(Object.keys(u.managerPulse).length === 1 && u.managerPulse['Una Mitchell'], 'and only his own coaching summary');
   ok(Object.keys(u.production).length === 1 && u.production['A001'], 'and production only for agents in his own cohort');
   ok(Object.keys(u.marketSurveys).length === 1, 'and market surveys only for his');
   ok(g.handle_('datasets', {}, g.login_('Kamla', 'bma-pass').token).datasets.cohort.length === 2, 'the BMA sees the branch');
@@ -149,7 +149,7 @@ section('a candidate, and where the files go');
 {
   const g = env();
   const BM = g.login_('Ricky Rampersad', 'bm-pass').token;
-  const rec = candidate('cand_1', 'A Candidate', 'Gary Sookdeo',
+  const rec = candidate('cand_1', 'A Candidate', 'Una Mitchell',
     { '3': upload('3 Form A.pdf', PDF), '6.a': upload('6a Quals.pdf', BIG_PDF) },
     { filename: 'POP.pdf', sizeKB: 400, base64: BIG_PDF, mediaType: 'application/pdf' });
   const raw = JSON.stringify(rec);
@@ -157,7 +157,7 @@ section('a candidate, and where the files go');
 
   const row = g.__rows('Candidates')[0];
   ok(row.Id === 'cand_1' && row.Name === 'A Candidate', 'the index columns are filled from the record');
-  ok(row.RecruitingManager === 'Gary Sookdeo' && row.CreatedBy === 'Ricky Rampersad', 'along with who recruits and who created it');
+  ok(row.RecruitingManager === 'Una Mitchell' && row.CreatedBy === 'Ricky Rampersad', 'along with who recruits and who created it');
   const stored = Object.keys(row).filter(k => /^Json\d+$/.test(k)).reduce((n, k) => n + String(row[k]).length, 0);
   ok(stored < raw.length / 5, `only ${(stored / 1024).toFixed(0)} KB reached the sheet — the files went elsewhere`);
   ok(!/"base64":"[A-Za-z0-9+/]{200,}/.test(JSON.stringify(row)), 'no base64 payload is left in any cell');
@@ -187,7 +187,7 @@ section('replacing and removing a file');
 {
   const g = env();
   const BM = g.login_('Ricky Rampersad', 'bm-pass').token;
-  g.handle_('save', { id: 'c', json: JSON.stringify(candidate('c', 'X', 'Gary Sookdeo')) }, BM);
+  g.handle_('save', { id: 'c', json: JSON.stringify(candidate('c', 'X', 'Una Mitchell')) }, BM);
   const first = Buffer.from('first').toString('base64');
   g.handle_('docPut', { candidateId: 'c', docKey: '12', base64: first, mediaType: 'application/pdf', filename: 'a.pdf' }, BM);
   const firstId = g.__rows('Documents').find(r => r.DocKey === '12').FileId;
@@ -205,7 +205,7 @@ section('a record longer than one cell, and wider than the sheet');
 {
   const g = env();
   const BM = g.login_('Ricky Rampersad', 'bm-pass').token;
-  const rec = candidate('long', 'Long Record', 'Gary Sookdeo');
+  const rec = candidate('long', 'Long Record', 'Una Mitchell');
 
   rec.stages.induction.coachingNotes = 'x'.repeat(120000);
   ok(g.handle_('save', { id: 'long', json: JSON.stringify(rec) }, BM).ok, 'a 120 KB record saves');
@@ -236,29 +236,29 @@ section('what one unit may not see of another');
 {
   const g = env();
   const BM = g.login_('Ricky Rampersad', 'bm-pass').token;
-  g.handle_('save', { id: 'gary1', json: JSON.stringify(candidate('gary1', 'Gary Recruit', 'Gary Sookdeo', { '3': upload('f.pdf', PDF) })) }, BM);
-  const GARY = g.login_('Gary Sookdeo', 'gary-pass').token;
+  g.handle_('save', { id: 'um1', json: JSON.stringify(candidate('um1', 'Una Recruit', 'Una Mitchell', { '3': upload('f.pdf', PDF) })) }, BM);
+  const UNA = g.login_('Una Mitchell', 'um-pass').token;
   const AK = g.login_('Akaash Kalladeen', 'ak-pass').token;
   const KAMLA = g.login_('Kamla', 'bma-pass').token;
 
-  ok(g.handle_('list', {}, GARY).list.length === 1, 'Gary sees the candidate he recruits');
+  ok(g.handle_('list', {}, UNA).list.length === 1, 'Gary sees the candidate he recruits');
   ok(g.handle_('list', {}, AK).list.length === 0, 'Akaash does not see her at all');
-  ok(!g.handle_('get', { id: 'gary1' }, AK).ok, 'and cannot fetch her by id');
-  ok(!g.handle_('docGet', { candidateId: 'gary1', docKey: '3' }, AK).ok, 'nor pull her documents');
-  ok(!g.handle_('save', { id: 'gary1', json: JSON.stringify(candidate('gary1', 'Renamed', 'Akaash Kalladeen')) }, AK).ok,
+  ok(!g.handle_('get', { id: 'um1' }, AK).ok, 'and cannot fetch her by id');
+  ok(!g.handle_('docGet', { candidateId: 'um1', docKey: '3' }, AK).ok, 'nor pull her documents');
+  ok(!g.handle_('save', { id: 'um1', json: JSON.stringify(candidate('um1', 'Renamed', 'Akaash Kalladeen')) }, AK).ok,
      'nor take her over by saving over the record');
-  ok(g.__rows('Candidates')[0].Name === 'Gary Recruit', 'and the record is untouched by the attempt');
+  ok(g.__rows('Candidates')[0].Name === 'Una Recruit', 'and the record is untouched by the attempt');
   ok(g.handle_('list', {}, KAMLA).list.length === 1, 'the BMA sees her, because assembling the file is her job');
-  ok(!g.handle_('delete', { id: 'gary1' }, GARY).ok, 'a Unit Manager cannot delete a candidate');
-  ok(!g.handle_('delete', { id: 'gary1' }, KAMLA).ok, 'nor can the BMA');
-  ok(g.handle_('delete', { id: 'gary1' }, BM).ok, 'the Branch Manager can');
+  ok(!g.handle_('delete', { id: 'um1' }, UNA).ok, 'a Unit Manager cannot delete a candidate');
+  ok(!g.handle_('delete', { id: 'um1' }, KAMLA).ok, 'nor can the BMA');
+  ok(g.handle_('delete', { id: 'um1' }, BM).ok, 'the Branch Manager can');
   ok([...g.__drive.files.values()].every(f => !f.trashed), 'and the files stay in Drive — a deleted row is a click, a police certificate is not');
 
   // A new candidate has no recruiting manager yet, so the person who made it
   // has to be able to see it, or it vanishes the moment it is created.
   const fresh = candidate('fresh', '', '');
-  g.handle_('save', { id: 'fresh', json: JSON.stringify(fresh) }, GARY);
-  ok(g.handle_('list', {}, GARY).list.length === 1, 'a candidate Gary has just created, with no manager set, is still his');
+  g.handle_('save', { id: 'fresh', json: JSON.stringify(fresh) }, UNA);
+  ok(g.handle_('list', {}, UNA).list.length === 1, 'a candidate Gary has just created, with no manager set, is still his');
 }
 
 section('Salesforce — where the production figures come from');
@@ -300,7 +300,7 @@ section('Salesforce — where the production figures come from');
     g.__sheets['Production'].appendRow(['A9001', 'Rajiv Soodoo', 0, 0, 0, 0, 'Pasted before he settled anything.', '']);
     g.__sheets['Production'].appendRow(['A0001', 'Recruit One', 1, 999, 0, 0, '', '']);
     g.__sheets['Cohort'].appendRow(['Rajiv Soodoo', 2026, 'Akaash Kalladeen', 55, 35, 5, 10, 45, 50, 45, 4, 'proceed', 60, 'hired', 'contracted', 'A9001', '2026-07-01', '', 'active', 'Newest recruit.']);
-    g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Gary Sookdeo', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A0001', '2025-03-01', '', 'active', '']);
+    g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Una Mitchell', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A0001', '2025-03-01', '', 'active', '']);
     return g;
   }
 
@@ -336,7 +336,7 @@ section('Salesforce — where the production figures come from');
     // number here, so nothing can look him up — say so rather than lose him.
     const g = env({ properties: SFPROPS, fetchHandler: salesforce });
     g.__sheets['Production'].appendRow(['A0001', 'Recruit One', 1, 999, 0, 0, '', '']);
-    g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Gary Sookdeo', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A0001', '2025-03-01', '', 'active', '']);
+    g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Una Mitchell', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A0001', '2025-03-01', '', 'active', '']);
     const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
     ok(d.productionSource.unplaced.includes('Rajiv Soodoo'),
        'an agent settling business with no row on the Production tab is named, not dropped');
@@ -344,7 +344,7 @@ section('Salesforce — where the production figures come from');
   }
   {
     const g = withProduction(env({ properties: SFPROPS, fetchHandler: salesforce }));
-    const d = g.handle_('datasets', {}, g.login_('Gary Sookdeo', 'gary-pass').token).datasets;
+    const d = g.handle_('datasets', {}, g.login_('Una Mitchell', 'um-pass').token).datasets;
     ok(Object.keys(d.production).length === 1 && d.production['A0001'],
        "a Unit Manager's live figures cover his own agents and nobody else's");
     ok(!d.production['A9001'], "and Akaash's newest recruit is not among them");
@@ -422,8 +422,8 @@ section('a recruit contracted before anybody typed their agent number');
   ok(!Object.keys(d.production).length, 'while nothing is invented on the agent-number side');
 
   // Scope still holds: this is Akaash's recruit, not Gary's.
-  const gary = g.handle_('datasets', {}, g.login_('Gary Sookdeo', 'gary-pass').token).datasets;
-  ok(!gary.productionByName['rajiv soodoo'], "a Unit Manager does not get another unit's recruit by name either");
+  const una = g.handle_('datasets', {}, g.login_('Una Mitchell', 'um-pass').token).datasets;
+  ok(!una.productionByName['rajiv soodoo'], "a Unit Manager does not get another unit's recruit by name either");
   const ak = g.handle_('datasets', {}, g.login_('Akaash Kalladeen', 'ak-pass').token).datasets;
   ok(ak.productionByName['rajiv soodoo'], 'the manager who recruits him does');
 }
@@ -449,12 +449,12 @@ section('addRecruit, for somebody already contracted');
   ok(g.__logs.some(l => /89303|89,303/.test(l)), 'it also reports the production Salesforce already has for the name');
   const again = g.addRecruit('Rajiv  Soodoo', 'Akaash Kalladeen', { stage: 'induction' });
   ok(again === id && g.__rows('Candidates').length === 1, 'running it twice does not make a second Rajiv');
-  const withDates = g.addRecruit('Someone New', 'Gary Sookdeo', { stage: 'induction', agentNumber: 'A9999', probationStart: '2026-08-01', probationEnd: '2027-03-01' });
+  const withDates = g.addRecruit('Someone New', 'Una Mitchell', { stage: 'induction', agentNumber: 'A9999', probationStart: '2026-08-01', probationEnd: '2027-03-01' });
   const rec2 = JSON.parse(g.handle_('get', { id: withDates }, g.login_('Ricky Rampersad', 'bm-pass').token).json);
   ok(rec2.stages.onboarding.agentNumber === 'A9999' && rec2.stages.induction.contract.probationEnd === '2027-03-01',
      'what is passed is written');
   let threw = false;
-  try { g.addRecruit('', 'Gary Sookdeo'); } catch (e) { threw = true; }
+  try { g.addRecruit('', 'Una Mitchell'); } catch (e) { threw = true; }
   ok(threw, 'a nameless recruit is refused');
 }
 

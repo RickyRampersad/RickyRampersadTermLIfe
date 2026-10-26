@@ -309,8 +309,9 @@ function publicRoster_() {
 // ---------------------------------------------------------------------------
 //  Names
 //
-//  The data writes managers three ways: "Gary", "Gary Sookdeo", and in one
-//  place "Gary " with a space. First names match when the full names do not.
+//  The data writes a manager three ways: a first name on its own, the full
+//  name, and in one place the first name with a trailing space. First names
+//  match when the full names do not.
 //  That is safe while no two managers share a first name; the day they do,
 //  put the full name in every column and tighten this to a full match.
 // ---------------------------------------------------------------------------

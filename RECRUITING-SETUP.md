@@ -50,7 +50,7 @@ A cell holds 50 KB; a POP report is 1.5 MB. The Documents tab is the index.
 
 | Column | What goes in it |
 |---|---|
-| **Name** | as the person will type it to sign in — `Gary Sookdeo` |
+| **Name** | as the person will type it to sign in — `Akaash Kalladeen` |
 | **Role** | written the way you would say it; abbreviations are understood |
 | **Password** | per person, not obvious. Changed here, it changes at once |
 | **Email** | optional; also accepted at sign-in |
@@ -66,13 +66,14 @@ The Role column decides what the tracker calls you and what it shows you:
 | Branch Manager Assistant, BMA | BM Assistant | every candidate |
 | Investigator | Investigator | every candidate |
 
-The branch as it stands: Ricky Rampersad — Branch Manager; Kerwyn Ramroach —
-Assistant Branch Manager; Gary Sookdeo and Akaash Kalladeen — Unit Managers; Kamla
-— Branch Manager Assistant. A Unit Manager's sign-in also filters the figures: their
+The branch as it stands: Ricky Rampersad — Branch Manager; Akaash Kalladeen —
+Unit Manager; Kamla — Branch Manager Assistant. Two seats are vacant, the
+Assistant Branch Manager and a second Unit Manager; add whoever fills them to
+the Access tab and to `BRANCH_ROSTER` in `recruiting/app.js` together. A Unit Manager's sign-in also filters the figures: their
 own cohort, their own coaching summary, their own agents.
 
-Managers are matched by first name where the data only has a first name (`rm:
-"Gary"`). That is safe until two managers share one. When that day comes, put the
+Managers are matched by first name where the data only has a first name
+(`rm: "Akaash"`). That is safe until two managers share one. When that day comes, put the
 full name in every `rm` and `manager` column and tighten `samePerson_` in the script.
 
 **Change the `change-me` password before anyone else signs in.** Five wrong tries

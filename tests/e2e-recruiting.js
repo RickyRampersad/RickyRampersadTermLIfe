@@ -54,12 +54,12 @@ g.setup();
 const acc = g.__sheets['Access'];
 acc._grid.length = 1;
 [['Ricky Rampersad', 'Branch Manager', 'bm1', '', 'Yes'],
- ['Gary Sookdeo', 'Unit Mgr', 'gary1', '', 'Yes'],
+ ['Una Mitchell', 'Unit Mgr', 'um1', '', 'Yes'],
  ['Akaash Kalladeen', 'Unit Manager', 'ak1', '', 'Yes']].forEach(r => acc.appendRow(r));
-g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Gary Sookdeo', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A001', '2025-03-01', '', 'active', 'Marginal POP, on-track production.']);
+g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Una Mitchell', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A001', '2025-03-01', '', 'active', 'Marginal POP, on-track production.']);
 g.__sheets['Cohort'].appendRow(['Recruit Two', 2024, 'Akaash Kalladeen', 18, 13, -16, -23, 61, 57, 70, 1, 'extreme_caution', 10, 'dropped', 'no_contract', '', '', '', 'never_contracted', 'The POP should have ended it.']);
 g.__sheets['Production'].appendRow(['A001', 'Recruit One', 7, 22506, 0, 0, '', '']);
-g.__sheets['ManagerPulse'].appendRow(['Gary Sookdeo', 7, 1, 4, 2, 1, '2026-01-13', 'One on One', 'Recruit One', 'Recruit One', 'Names the same agent weekly.']);
+g.__sheets['ManagerPulse'].appendRow(['Una Mitchell', 7, 1, 4, 2, 1, '2026-01-13', 'One on One', 'Recruit One', 'Recruit One', 'Names the same agent weekly.']);
 
 const PDF = Buffer.from('%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n').toString('base64');
 const SEED = process.env.RRB_SEED_DIR;
@@ -71,7 +71,7 @@ if (!seedFiles.length) {
   const uploads = {};
   for (const k of ['3', '6.a', '12']) uploads[k] = { filename: `${k} doc.pdf`, sizeKB: 1, uploadedAt: '2026-09-01T00:00:00.000Z', base64: PDF, mediaType: 'application/pdf', uploadedBy: 'Test' };
   const rec = { id: 'cand_test', created: '2026-01-02T00:00:00.000Z', updated: '2026-09-01T00:00:00.000Z',
-    meta: { name: 'Test Candidate', recruitingManager: 'Gary Sookdeo', currentStage: 'selectionFile', phone: '000-0000', email: 't@example.com' },
+    meta: { name: 'Test Candidate', recruitingManager: 'Una Mitchell', currentStage: 'selectionFile', phone: '000-0000', email: 't@example.com' },
     stages: { firstInterview: { date: '2026-01-12', outcome: 'proceed', rmComments: 'Steady.' },
       pop7Review: { finalRating: 3, uploadedReport: { filename: 'POP.pdf', sizeKB: 1, base64: PDF, mediaType: 'application/pdf' } },
       selectionFile: { documentUploads: uploads, filePrepChecklist: { '3': true, '6.a': true, '12': true } },
@@ -228,8 +228,8 @@ const calls = [], errors = [], dialogs = [];
 
   await page.locator('button:has-text("Sign out")').click({ force: true });
   await page.waitForSelector('button:has-text("Sign in")', { timeout: 20000 });
-  await page.fill('input[placeholder="Your name"]', 'Gary Sookdeo');
-  await page.fill('input[placeholder="Password"]', 'gary1');
+  await page.fill('input[placeholder="Your name"]', 'Una Mitchell');
+  await page.fill('input[placeholder="Password"]', 'um1');
   await page.click('button:has-text("Sign in")');
   await page.waitForSelector(`text=${subject}`, { timeout: 20000 })
     .then(() => ok(true, 'the manager who recruits her does see her'))
@@ -238,7 +238,7 @@ const calls = [], errors = [], dialogs = [];
   console.log('\nthe newest recruit, contracted and producing, with no agent number yet');
   {
     // addRecruit puts him in at the induction stage with the dates left blank.
-    const id = g.addRecruit('Rajiv Soodoo', 'Gary Sookdeo', { stage: 'induction' });
+    const id = g.addRecruit('Rajiv Soodoo', 'Una Mitchell', { stage: 'induction' });
     ok(!!id, 'addRecruit adds him with nothing invented');
     await page.reload();
     await page.waitForSelector('text=Rajiv Soodoo', { timeout: 20000 });
