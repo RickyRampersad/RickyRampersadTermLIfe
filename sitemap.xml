@@ -1,11 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Every URL here must be a real, indexable page.
+
+  Deliberately NOT listed:
+    - /service/, /renewals/, /your-policy/, /csec/sea.html  — they carry
+      noindex; they are client-specific doors, not pages to be found in
+      search. A noindex page listed in a sitemap is a contradiction Search
+      Console reports, and sea.html was listed here until 26 October.
+    - /careers/  — a redirect stub whose canonical is /#careers. A URL whose
+      canonical points elsewhere is what produces Search Console's
+      "Page with redirect" warnings, which this site has had before.
+    - every branch-internal tool — see robots.txt.
+
+  lastmod is each file's real last-changed date from git, never invented.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://rickyrampersadbranch.com/</loc><lastmod>2026-10-21</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://rickyrampersadbranch.com/claims/</loc><lastmod>2026-08-16</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://rickyrampersadbranch.com/renewal/</loc><lastmod>2026-08-16</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://rickyrampersadbranch.com/csec/start.html</loc><lastmod>2026-10-16</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://rickyrampersadbranch.com/csec/sea.html</loc><lastmod>2026-10-16</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://rickyrampersadbranch.com/csec/journey.html</loc><lastmod>2026-10-16</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://rickyrampersadbranch.com/csec/papers.html</loc><lastmod>2026-10-16</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://rickyrampersadbranch.com/csec/guides.html</loc><lastmod>2026-10-16</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
+  <!-- the front door -->
+  <url><loc>https://rickyrampersadbranch.com/</loc><lastmod>2026-10-24</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+
+  <!-- getting a quote: what the branch is found for -->
+  <url><loc>https://rickyrampersadbranch.com/quote/</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/motor-quote/</loc><lastmod>2026-10-21</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/quote/property/</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/quote/critical-illness/</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/quote/key-person/</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+
+  <!-- applying and enrolling -->
+  <url><loc>https://rickyrampersadbranch.com/apply/xpress-life/</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/enrol/oas/</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+  <!-- already a client -->
+  <url><loc>https://rickyrampersadbranch.com/claims/</loc><lastmod>2026-10-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/renewal/</loc><lastmod>2026-10-17</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/mycover/</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+  <!-- the CSEC English B material -->
+  <url><loc>https://rickyrampersadbranch.com/csec/start.html</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/csec/journey.html</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/csec/papers.html</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://rickyrampersadbranch.com/csec/guides.html</loc><lastmod>2026-10-24</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+
 </urlset>
