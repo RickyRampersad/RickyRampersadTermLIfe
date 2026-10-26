@@ -5350,6 +5350,15 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     e-mail on record is the one copied on the desk e-mail.
   - The Opportunity's `Producer__c` is that agent; its description says who placed it. The owner stays `MQ_SF_OWNER`.
   - Tests: `tests/test-motor-quote.js` (199 checks) and `tests/e2e-motor-quote.js` (134).
+- **One place to renew: the Renewal Platform** (26 October 2026). The motor quote page had its own renewal path
+  beside the branch's Renewal Platform (`apps-script/Code.gs`, the client portal from the renewal e-mail), so a client
+  could renew in two places with two sets of records. A renew-by-registration door built for this page that morning
+  (pull request #265) was reverted before it went live. The page still shows the renewal it reads from Salesforce (the
+  days to go, the terms, the premium chart), and every renew button opens Track your renewal
+  (`CONFIG.RENEW_PORTAL`, the platform's `?find=1` with `e=` the client's e-mail filled in), which e-mails the
+  client's secure link. A client with no vehicle under their e-mail is told their renewal is in the portal.
+  `mqSubmit_` turns away a renewal sent by an older page, with the way there (`MQ.RENEW_PORTAL`). The renewal form
+  code on the page is no longer reached.
 - **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
   layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
   its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):
