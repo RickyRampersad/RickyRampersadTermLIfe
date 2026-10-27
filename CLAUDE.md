@@ -3900,6 +3900,18 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 1099", "TGM1099"):
   compared as letters and digits only. The account fields `List_Bill_Life__c`
   and `List_Bill_Pension__c` are empty on all but one account.
+  **A letter O counts as a zero** (`gcmSignKey_`, 27 October 2026), on both
+  sides, because list bills such as `01_..00` end in zeros that read like the
+  letter O on an e-mail; no two list bills or codes on the register differ by
+  that alone. **A letter preview on the staff page can never sign in**: it is
+  a sandboxed frame where nothing runs, and that day the manager clicked
+  "Open your service page" in Xtra Foods' preview, the group's page opened
+  inside the box, and its button did nothing ("Group log on not working").
+  Every preview (`pvDoc` on the staff page, `pvHead` in the billing door)
+  now opens its links in a tab of their own, and a link to the group's page
+  carries `from=preview`, which `gcmViewLog_` never logs, so a staff member
+  trying the sign-in is not counted as the group opening its page. The live
+  sign-in was working throughout.
 - **What a group sees.** Never a member's health or a claim (`GCM_PRIVATE`),
   and a health reimbursement is a claim whatever its subject says: the first
   live refresh carried "Reissue Cheque (health)" with a member's name, which

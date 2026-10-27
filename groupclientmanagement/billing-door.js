@@ -16,6 +16,11 @@
 const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* a letter or statement shown here runs nothing; its links open in a tab of their own, and a link to the group's page
+   says it came from a preview (27 October 2026) */
+const PV_SANDBOX = 'allow-popups allow-popups-to-escape-sandbox';
+const pvHead = '<!doctype html><meta charset="utf-8"><base target="_blank">';
+const pvLinks = h => String(h || '').replace(/([?&;]from=)(letter|welcome|reminder)\b/g, '$1preview');
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const dmy = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1] : ''; };
 const pct = n => n == null ? '–' : n + '%';
@@ -455,7 +460,7 @@ async function dLetter(ds) {
   const r = await post(b);
   if (!r.ok) { $('dlgB').innerHTML = '<div class="note bad">' + esc(r.error) + '</div>'; return; }
   $('dlgB').innerHTML = '<p class="to"><b>Subject:</b> ' + esc(r.subject) + '<br><b>To:</b> ' + (r.to ? esc(r.to) : '<span style="color:var(--badText)">no e-mail on the record</span>') + ' · ' + esc(r.said) + '</p>' +
-    '<iframe title="The letter" sandbox="" srcdoc="' + esc('<!doctype html><meta charset="utf-8"><body style="margin:0;font-family:Arial,sans-serif">' + r.html) + '"></iframe>' +
+    '<iframe title="The letter" sandbox="' + PV_SANDBOX + '" srcdoc="' + esc(pvHead + '<body style="margin:0;font-family:Arial,sans-serif">' + pvLinks(r.html)) + '"></iframe>' +
     '<div class="row"><button class="btn" type="button" id="dLetterSend"' + (!r.to && r.live ? ' disabled title="No e-mail on the record"' : '') + '>' + (r.live ? 'Send to the member from support@' : 'Send the test copy to me') + '</button><button class="btn ghost" type="button" id="dLetterX">Close</button></div>' +
     '<p class="small muted">Facts only, no advice: the group cover ends at the age and a licensed agent calls about the options. ' + (r.live ? 'It goes from support@ with sales support copied.' : 'The bills are in test mode, so it goes to you, marked TEST, and names who would get it.') + '</p>';
   $('dLetterX').onclick = () => dlg.close();
@@ -482,7 +487,7 @@ function dStatement() {
   else h += '<div class="dnote" style="border-left:4px solid var(--good)">Nothing is owed from earlier months in Salesforce.' + (t.invoiceOwed ? ' Head Office’s invoice still shows ' + esc(blMoney(t.invoiceOwed)) + ' outstanding: the arrears question on the Questions step settles which is right.' : '') + '</div>';
   h += '<p class="small muted">Changes on this billing: ' + (t.changes.joined || t.changes.left || t.changes.moved ? [t.changes.joined ? t.changes.joined + ' joined' : '', t.changes.left ? t.changes.left + ' left' : '', t.changes.moved ? t.changes.moved + ' changed tier or premium' : ''].filter(Boolean).map(esc).join(', ') : 'no one joined or left') + '. Attached with the bill: ' + (t.attachments.length ? esc(t.attachments.join('; ')) : 'nothing yet') + '.</p>';
   h += '<div class="uprow" style="margin:8px 0"><button class="btn ghost" type="button" id="dPdf">Download the PDF</button><button class="btn ghost" type="button" data-go="approve">Send it with the bill →</button></div>';
-  h += '<iframe class="sframe" title="The statement of account as the group reads it" sandbox="" srcdoc="' + esc('<!doctype html><meta charset="utf-8"><body style="margin:0;font-family:Arial,sans-serif">' + S.html) + '"></iframe>';
+  h += '<iframe class="sframe" title="The statement of account as the group reads it" sandbox="' + PV_SANDBOX + '" srcdoc="' + esc(pvHead + '<body style="margin:0;font-family:Arial,sans-serif">' + pvLinks(S.html)) + '"></iframe>';
   return h + dNav('statement');
 }
 async function dPdf() {

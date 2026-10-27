@@ -2382,6 +2382,8 @@ var GCM_RATE = {
 
 /** A sign-in on the group's own page, as a row on Group Views; one a half hour per group, so a reload is not a visit. */
 function gcmViewLog_(g, p) {
+  /* a staff member trying the sign-in from a letter preview on the staff page is not the group opening its page */
+  if (String(p.from || '').toLowerCase() === 'preview') return;
   var cache = CacheService.getScriptCache(), key = 'gcm-view-' + g.key.slice(0, 80);
   if (cache.get(key)) return;
   cache.put(key, '1', GCM_RATE.VIEW_GAP_MIN * 60);
@@ -3279,12 +3281,17 @@ function gcmFeedRefused_(e) {
 
 /** A group signs in with its list bill and its code, both. Eight wrong codes on one list bill close it for fifteen
  *  minutes; a refusal never says which of the two was wrong. */
+/** The sign-in reads a letter O as a zero, on both sides (27 October 2026): list bills such as 01_NAIXT00 end in zeros
+ *  that a person reading them off an e-mail types as the letter O. No two list bills or codes differ by that alone. */
+function gcmSignKey_(k) { return String(k || '').replace(/O/g, '0'); }
+
 function gcmClientAuth_(L, lb, code) {
   var bk = gcmBillKey_(lb), ck = gcmCodeKey_(code);
   if (!bk || !ck) return { ok: false, error: 'Enter your list bill and your access code.' };
-  var tk = 'gcm-tries-' + bk.slice(0, 30);
+  var tk = 'gcm-tries-' + gcmSignKey_(bk).slice(0, 30);
   if (tTries_(tk) >= GCM.TRIES) return { ok: false, error: 'Too many tries. Wait fifteen minutes, or ask our sales support team for your code.' };
-  var g = L.reg.filter(function (x) { return x.billKeys.indexOf(bk) >= 0 && x.code && gcmCodeKey_(x.code).length >= GCM.MIN_CODE && gcmCodeKey_(x.code) === ck; })[0];
+  var sb = gcmSignKey_(bk), sc = gcmSignKey_(ck);
+  var g = L.reg.filter(function (x) { return x.billKeys.some(function (k) { return gcmSignKey_(k) === sb; }) && x.code && gcmCodeKey_(x.code).length >= GCM.MIN_CODE && gcmSignKey_(gcmCodeKey_(x.code)) === sc; })[0];
   if (!g) { tTriesAdd_(tk); return { ok: false, error: 'That list bill and access code do not match. Check both against the e-mail we sent.' }; }
   tTriesClear_(tk);
   return { ok: true, g: g };
