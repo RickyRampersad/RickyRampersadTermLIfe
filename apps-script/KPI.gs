@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-26c';
+var SCRIPT_VERSION = '2026-10-27a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -16085,13 +16085,14 @@ function sendLunchOff_(person, day, nowOpt) {
  *    · Check in on his day and on a staff day page is done there and then (checkInNow), without rebuilding the page.
  */
 var FAST = { KINDS: { unit: 1, me: 1, plan: 1, 'in': 1, prog: 1, bm: 1, cmd: 1, um: 1, umeve: 1, hk: 1, ag: 1, agc: 1, nudge: 1, qp: 1, agff: 1, errand: 1, undo: 1 },
-             PRE_FROM: 5 * 60, PRE_TO: 8 * 60 + 30, PRE_EVERY_MIN: 40, KEEP_SEC: 4 * 3600, CHUNK: 45000 };
+             PRE_FROM: 5 * 60, PRE_TO: 8 * 60 + 30, PRE_EVERY_MIN: 40, KEEP_SEC: 4 * 3600, CHUNK: 45000,
+             RESCUE_SEC: 20 * 60, RESCUE_WAIT_MS: 150000, RESCUE_POLL_MS: 3000 };
 function fastKey_(sid, f, day) { return 'fastpg_' + sid + '_' + f + '_' + day; }
-function fastCachePut_(key, html) {
+function fastCachePut_(key, html, sec) {
   var c = CacheService.getScriptCache(), n = Math.max(1, Math.ceil(html.length / FAST.CHUNK)), o = {};
   for (var i = 0; i < n; i++) o[key + '_' + i] = html.slice(i * FAST.CHUNK, (i + 1) * FAST.CHUNK);
   o[key + '_n'] = String(n); o[key + '_at'] = hhmm_(new Date());
-  c.putAll(o, FAST.KEEP_SEC);
+  c.putAll(o, sec || FAST.KEEP_SEC);
 }
 /** The page built ahead, once: whoever takes it, it is gone (so a second open is live). */
 function fastCacheTake_(key) {
@@ -16116,10 +16117,19 @@ function fastShell_(p, note) {
     '<p class="sub" id="msg">Reading Salesforce, the inbox and the team. It appears here by itself in a few seconds.</p><div class="bar"><i></i></div><div id="t"></div></div>' +
     '<script>var P=' + js + ',t0=Date.now();setInterval(function(){var e=document.getElementById("t");if(e)e.textContent=Math.round((Date.now()-t0)/1000)+" s";},1000);' +
     'function show(h){document.open();document.write(h);document.close();}' +
-    'function fail(e){var m=document.getElementById("msg");if(m)m.innerHTML="It did not open this time ("+String(e&&e.message||e).replace(/[<>&]/g,"")+"). <a href=\\"#\\" onclick=\\"go();return false\\">Try again</a>";}' +
-    'function go(){var m=document.getElementById("msg");if(m)m.textContent="Reading Salesforce, the inbox and the team. It appears here by itself in a few seconds.";' +
+    /* 27 Oct 2026, 5:24am on his phone: "It did not open this time (NetworkError: Connection failure due to HTTP 0)" after
+       110 s. The phone let go of a long build (or he looked away); the tracker went on and finished it. Now a dropped
+       connection tries again by itself (twice), and again when the page is looked at again, with retry=1: openPage then
+       hands over the page the first try built, or waits for it, instead of building it a second time. */
+    'var tries=0,down=false;' +
+    'function fail(e){var w=String(e&&e.message||e);tries++;down=true;var m=document.getElementById("msg");' +
+    'if(tries<3&&/network|http 0|connection|timed? ?out|disconnect/i.test(w)){if(m)m.textContent="Still putting it together. Trying again by itself…";setTimeout(function(){go(true);},1500);return;}' +
+    'if(m)m.innerHTML="It did not open this time ("+w.replace(/[<>&]/g,"")+"). <a href=\\"#\\" onclick=\\"go(true);return false\\">Try again</a>";}' +
+    'function go(again){var m=document.getElementById("msg");if(m&&!again)m.textContent="Reading Salesforce, the inbox and the team. It appears here by itself in a few seconds.";' +
     'if(!(window.google&&google.script&&google.script.run)){location.replace(location.href+(location.href.indexOf("?")<0?"?":"&")+"full=1");return;}' +
-    'google.script.run.withSuccessHandler(show).withFailureHandler(fail).openPage(P);}go();</script>';
+    'var q={};for(var k in P){if(Object.prototype.hasOwnProperty.call(P,k))q[k]=P[k];}if(again)q.retry="1";down=false;' +
+    'google.script.run.withSuccessHandler(show).withFailureHandler(fail).openPage(q);}' +
+    'document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&down){tries=0;go(true);}});go();</script>';
   return HtmlService.createHtmlOutput(html).setTitle('Opening ' + what).addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 /** Called from the light page: the full page, checked and built exactly as the link would have, as HTML. */
@@ -16133,9 +16143,33 @@ function openPage(params) {
     try { PropertiesService.getScriptProperties().setProperty('fastpg_opened_' + sid + '_' + day, hhmm_(new Date())); } catch (e) {}
     if (hit) html = fastBanner_(hit.html, 'Prepared at ' + twelve_(hit.at) + '. <a href="#" onclick="return fastFresh()">Bring it up to date</a>', p);
   }
-  if (!html) { var out = replyClick_({ parameter: p }); html = out && out.getContent ? out.getContent() : String(out || ''); }
+  // A try after a dropped connection (retry=1): the page the first try built, or wait for it while it is still building.
+  var rk = fastRescueKey_(p, day), cache = CacheService.getScriptCache();
+  if (!html && String(p.retry || '') === '1') {
+    var until = Date.now() + FAST.RESCUE_WAIT_MS;
+    while (true) {
+      var got = null; try { got = fastCacheTake_(rk); } catch (e) {}
+      if (got) { html = fastBanner_(got.html, 'Put together at ' + twelve_(got.at) + '. <a href="#" onclick="return fastFresh()">Bring it up to date</a>', p); break; }
+      var busy = null; try { busy = cache.get(rk + '_busy'); } catch (e) {}
+      if (!busy || Date.now() > until) break;
+      Utilities.sleep(FAST.RESCUE_POLL_MS);
+    }
+  }
+  if (!html) {
+    try { cache.put(rk + '_busy', '1', 300); } catch (e) {}
+    var out = replyClick_({ parameter: p }); html = out && out.getContent ? out.getContent() : String(out || '');
+    // Kept a little while, in case the phone let go before it arrived.
+    try { if (html) fastCachePut_(rk, html, FAST.RESCUE_SEC); } catch (e) {}
+    try { cache.remove(rk + '_busy'); } catch (e) {}
+  }
   if (note) html = fastBanner_(html, esc_(note), p);
   return html;
+}
+/** The key for a page built by openPage: the person, the page and its link (never the retry or the note). */
+function fastRescueKey_(p, day) {
+  var raw = ['rs', 'd', 'f', 'k', 'c', 'i'].map(function (k) { return k + '=' + String(p[k] || ''); }).join('&'), h = 5381;
+  for (var i = 0; i < raw.length; i++) h = ((h << 5) + h + raw.charCodeAt(i)) | 0;
+  return 'fastrs_' + String(p.rs || '') + '_' + String(p.f || '') + '_' + day + '_' + (h >>> 0).toString(36);
 }
 function fastBanner_(html, msg, p) {
   var keep = {}; ['rs', 'd', 'f', 'k', 'c', 'i'].forEach(function (k) { if (p[k] != null && p[k] !== '') keep[k] = String(p[k]); }); keep.fresh = '1';
