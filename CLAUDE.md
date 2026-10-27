@@ -5015,6 +5015,23 @@ section links it.
     chapters. Whisper hears "No ceiling." as "No seating" and "call reluctance" as "correluctance" on every take of
     those lines, identically on a second run: the voice is deterministic and the read is right, so those two were
     kept after the re-take matched.
+  - **The persuasion pass, the same evening** ("the catching opening is good; we now need to have the 5 seats
+    available so this should be unique; more persuasive to be attracted to the career; show coaching not micro
+    managing; condensed; remove MDRT; drive attraction power; more motion; research deep"). **The five seats are
+    back, by his decision**, which reverses the morning's call: the one study on scarcity wording in a job ad
+    (Highhouse et al. 1998) found the limited-vacancy version made the employer read as a better one to work for and
+    the pay seem higher. **MDRT is out** of the film, the trailer, agentmgt.com, `/careersvideo/`, the posts and the
+    homepage careers section (the homepage's own stats band and the testimonial cite still say it; those are the
+    homepage's proof points, not the recruiting copy, and were left for him to decide). **Coaching, not watching**:
+    the scenes that read as surveillance went (talent and the tools, projected-done-balance with the register, the
+    managers managed); the day scene now says the admin is done before you are up and your hours go to clients and
+    the coaching; the pulse scene is "a coaching sheet, not a report card" with the note in the morning e-mail. Gallup's
+    finding behind it: 45% of leavers had nobody talk to them about their work in the three months before they left,
+    and micromanagement tops the worst-manager list. Film 32 scenes, 7:34; **the trailer rewritten as the ad** (1:44):
+    the hook; what this career gives that a job can't (income decided by your work, a week shaped by you, a family
+    covered before the worst day); what this branch gives (never stuck for an answer: the fact find, Branch
+    Intelligence, Query Pal; never from zero); a coach, not a clock; five seats, not because we can't take more but
+    because every one gets the full build; the door; the booking; the close.
   - The game's points and streaks are still not claimed for agents (staff first). Every name and figure on a mock is
     made up and marked; no client, no client count.
   - Still to do, his: two 15-second phone clips of real agents saying one line each (candidates trust employees

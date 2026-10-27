@@ -113,7 +113,7 @@ reader's own fear, then the specific answer, then one low-commitment ask. Under 
 
 > *Good at what you do, but stuck where you are?*
 >
-> The thing that keeps a good advisor where they are is the fear of starting from zero. At our branch you don't: clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. Leads land on your own board, in the prospect's words. The fact find does the arithmetic while you talk. Your name goes up every Wednesday. 23× MDRT. 32 years in Trinidad.
+> The thing that keeps a good advisor where they are is the fear of starting from zero. At our branch you don't: clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. Leads land on your own board, in the prospect's words. The fact find does the arithmetic while you talk. Your name goes up every Wednesday. Your manager is a coach, not a clock. Thirty-two years in Trinidad. Five seats this year.
 >
 > One confidential conversation. Twenty minutes, this week. Nobody will know you asked.
 >
@@ -125,7 +125,7 @@ reader's own fear, then the specific answer, then one low-commitment ask. Under 
 
 > *Want a career with no ceiling, but afraid of the first year?*
 >
-> Fair fear. Here is what is different: the leads come to you, so you are not selling to your friends and family. Every morning the system sets your day. You get training, boot camp and one-on-one coaching, and the Branch Manager interviews and coaches you personally. No salary band, no ceiling, and the ladder written down rung by rung. 23× MDRT. 32 years in Trinidad.
+> Fair fear. Here is what is different: the leads come to you, so you are not selling to your friends and family. Every morning the system sets your day. You get training, boot camp and one-on-one coaching, and the Branch Manager interviews and coaches you personally. No salary band, no ceiling, and the ladder written down rung by rung. Thirty-two years in Trinidad. Five seats this year.
 >
 > One 20-minute conversation. Bring your questions; we show you the branch's own figures, not an adjective.
 >
