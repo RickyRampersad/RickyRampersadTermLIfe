@@ -4346,6 +4346,20 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `day/day-test.js` (46 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
   scratchpad cover it. On those tabs one staff member would have been asked about five groups and another about one.
 
+- **A group can be put on hold from the weekly letter** (27 October 2026: a group's bills were being tested, its letter
+  approved on 23 October was held at the Monday run, and the 10:30 run then chased its account owner and opened a task
+  in her name: "you need to unapprove this as you are testing the billings"). Name the group in the **`GCM_HOLD_GROUPS`**
+  Script property (by the start of its name, comma-separated, any case). `gcmOnHold_` then makes it never ready
+  (`gcmGroupStats_` gives `hold` and the reason), so:
+  - no approval, no Send now, and a letter queued before the hold waits at the run;
+  - no welcome and no star reminder;
+  - the 10:30 run lists it apart (`hold` in `gcmChaseList_`): no staff e-mail, no Salesforce task, and the Monday team
+    letter leaves it out;
+  - the branch manager's daily summary names it under "On hold";
+  - "To act on" does not count it as a set-up job.
+
+  Its billing is untouched: the billing door, the bill checks and the Salesforce writes do not read it. Take the group
+  out of the property to put it back. `hold27/hold-test.js` in the scratchpad covers it (16 checks).
 - **Applications and increases still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
   also see at the top … applications that remain pending … the name, days outstanding, who it's assigned, what's
   outstanding … pension groups, health groups and life groups … and who was last liaised with").
