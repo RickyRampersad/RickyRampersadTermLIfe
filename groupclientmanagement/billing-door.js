@@ -55,7 +55,7 @@ async function open_() {
   }
   try { localStorage.setItem('rrb-gcm-code', AUTH.code); localStorage.setItem('rrb-gcm-who', AUTH.who); } catch (e) {}
   BOARD = d; head();
-  const u = new URL(location.href), g = u.searchParams.get('g'), m = u.searchParams.get('m') || '';
+  const u = new URL(location.href), g = u.searchParams.get('g'), m = (u.searchParams.get('m') || '').slice(0, 7);  /* an address saved as 2026-10-01 still opens October */
   if (g && d.groups.some(x => x.key === g)) openBilling(g, m); else render();
 }
 function signOut() { try { localStorage.removeItem('rrb-gcm-code'); localStorage.removeItem('rrb-gcm-who'); } catch (e) {} location.href = 'billing.html'; }

@@ -4768,6 +4768,14 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     statement), `billing/door-test.js` (81, Playwright: the staff page's button into the door, every step, the group's
     page in its tabs, a phone) and `billing/page-test.js` (46). The harness (`wow/setup.js`) now serves `.css` as
     `text/css`: until then a stylesheet linked from a page was refused by the browser and the screenshots were bare.
+  - **A month is read back as a month** (27 October 2026, the first bill stored live: Xtra Foods' October health bill).
+    Google Sheets turns "2026-10" written into a cell into the date 1 October, which read back as "2026-10-01" and never
+    matched "2026-10" again: the page said nothing was uploaded, opened itself as `m=2026-10-01`, looked in Salesforce for
+    a record of that month that cannot exist ("No T-HEALTH GROUP record for October 2026"), and every upload added a row
+    where it should have replaced one. `gblRows_` now reads every Month and For month cell as yyyy-MM in the sheet's own
+    zone (`gblMon_`), keeps one Group Bills row a group, line and month (the newest), and `gblCell_` writes months as
+    text. The test harness (`gcmlive/env-sq.js` in the scratchpad) never caught it because its cells kept what they were
+    given; `SHEETS_DATES=1` makes them behave as Sheets does, and `billing/month-test.js` (25) covers the live case.
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
     Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing

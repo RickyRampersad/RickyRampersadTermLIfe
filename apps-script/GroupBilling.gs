@@ -87,19 +87,51 @@ function gblSheet_(name) {
   }
   return sh;
 }
-function gblRows_(name) { return gcmSS_().getSheetByName(name) ? gcmRows_(name) : []; }
+/* A month is kept as "2026-10", and Google Sheets turns "2026-10" written into a cell into the date 1 October 2026, which
+ * reads back as "2026-10-01" (27 October 2026: the first bill stored live, Xtra Foods' October health bill, was then never
+ * found again: the page said nothing was uploaded, looked in Salesforce for a "2026-10-01" record that cannot exist, and
+ * each upload added a row where it should have replaced one). Every Month and For month cell is read back as yyyy-MM, in
+ * the sheet's own time zone so the 1st never slips to the 30th, and written as text so the sheet keeps it as written. */
+var GBL_MONTH_COLS = { 'Month': true, 'For month': true };
+var GBL_SS_TZ = '';
+function gblMon_(x) {
+  if (x instanceof Date) {
+    if (isNaN(x.getTime())) return '';
+    if (!GBL_SS_TZ) { try { GBL_SS_TZ = gcmSS_().getSpreadsheetTimeZone() || tTz_(); } catch (e) { GBL_SS_TZ = tTz_(); } }
+    return Utilities.formatDate(x, GBL_SS_TZ, 'yyyy-MM');
+  }
+  var s = gcmText_(x).replace(/^'/, '');
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.slice(0, 7) : s;
+}
+function gblCell_(h, v) {
+  if (v === undefined || v === null) return '';
+  if (GBL_MONTH_COLS[h]) { var m = gblMon_(v); return /^\d{4}-\d{2}$/.test(m) ? "'" + m : m; }
+  return v;
+}
+function gblRows_(name) {
+  if (!gcmSS_().getSheetByName(name)) return [];
+  var rows = gcmRows_(name);
+  rows.forEach(function (r) { for (var h in GBL_MONTH_COLS) if (h in r) r[h] = gblMon_(r[h]); });
+  /* one stored bill a group, line and month, the newest: the rows the month bug added are passed over */
+  if (name === GBL.BILLS) {
+    var last = {}, key = function (r) { return gcmCodeKey_(r.Group) + '|' + gcmText_(r.Line) + '|' + r.Month; };
+    rows.forEach(function (r, i) { last[key(r)] = i; });
+    rows = rows.filter(function (r, i) { return last[key(r)] === i; });
+  }
+  return rows;
+}
 function gblAppend_(name, rows) {
   if (!rows.length) return;
   var sh = gblSheet_(name), head = GBL_HEAD[name];
   sh.getRange(sh.getLastRow() + 1, 1, rows.length, head.length).setValues(rows.map(function (o) {
-    return head.map(function (h) { var v = o[h]; return v === undefined || v === null ? '' : v; });
+    return head.map(function (h) { return gblCell_(h, o[h]); });
   }));
 }
 /** Rewrite a tab without the rows `drop` picks, then with `add` after them. Whole, so a reader never meets it half written. */
 function gblReplace_(name, drop, add) {
   var sh = gblSheet_(name), head = GBL_HEAD[name];
   var keep = gblRows_(name).filter(function (r) { return !drop(r); });
-  var rows = keep.concat(add || []).map(function (o) { return head.map(function (h) { var v = o[h]; return v === undefined || v === null ? '' : v; }); });
+  var rows = keep.concat(add || []).map(function (o) { return head.map(function (h) { return gblCell_(h, o[h]); }); });
   var last = sh.getLastRow();
   if (last > 1) sh.getRange(2, 1, last - 1, head.length).clearContent();
   if (rows.length) sh.getRange(2, 1, rows.length, head.length).setValues(rows);
