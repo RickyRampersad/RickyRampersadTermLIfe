@@ -676,15 +676,6 @@ var SCHEDULE_DATED = {
   pawan: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }]
 };
 
-/* NO AI FOR THE STAFF (Ricky, 27 October 2026, 7:28am: "Also do not give the staff any AI features").
-   The desks (Sasha, Azariah, Liz, Kamla, Pawan) see no Claude: no "Draft with Claude" on their day page's
-   task cards (and the card refuses a draft), no "Claude's read" on Kamla's "What is not getting attention",
-   and the week's Best Note is the longest proper note rather than Claude's pick. The rules still say what
-   to do on each task. Mr Rampersad and the Unit Managers keep theirs. The Script Property STAFF_AI = on
-   brings the staff's back; nothing else does. */
-function staffAi_() { try { return String(PropertiesService.getScriptProperties().getProperty('STAFF_AI') || '').trim().toLowerCase() === 'on'; } catch (e) { return false; } }
-function staffDesk_(sid) { sid = String(sid || ''); return sid !== 'ricky' && UM_DESKS.indexOf(sid) < 0; }
-
 /** A desk's schedule on a day ("2026-10-27"), today's when no day is given. */
 function scheduleFor_(staffId, day) {
   var base = SCHEDULE[staffId] || DEFAULT_SCHEDULE, list = SCHEDULE_DATED[staffId];
@@ -6943,10 +6934,9 @@ function tcardHtml_(t, pb, day) {
     var tag = x[1] === 'c' ? '<i class="c">closes</i>' : x[1] === 'm' ? '<i class="m">moves</i>' : '<i>note</i>';
     return '<button type="button" data-a="' + (x[1] === 'c' ? 'close' : x[1] === 'm' ? 'move' : 'note') + '" data-n="' + esc_(x[0]) + '" onclick="cardTpl(\'' + id + '\',this)">' + tag + esc_(x[0]) + '</button>';
   }).join('');
-  var ai = staffAi_();
-  return '<div class="bf" style="margin:10px 0 2px">' + (ai ? 'Tap a template, or type or speak a few words and let Claude write it:' : 'Tap a template, or write your own note:') + '</div><div class="tpl">' + chips + '</div>' +
+  return '<div class="bf" style="margin:10px 0 2px">Tap a template, or type or speak a few words and let Claude write it:</div><div class="tpl">' + chips + '</div>' +
     '<textarea name="n_' + id + '" rows="3" placeholder="What was done, who you spoke to, the outcome and the next step. It goes on the task\'s Chatter." style="margin:4px 0 6px"></textarea>' +
-    (ai ? '<button type="button" class="cai" onclick="cardGo(\'' + id + '\',\'draft\')">&#10024; Draft with Claude</button>' : '') +
+    '<button type="button" class="cai" onclick="cardGo(\'' + id + '\',\'draft\')">&#10024; Draft with Claude</button>' +
     '<label style="display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;margin:4px 0 6px"><input type="checkbox" name="x_' + id + '" value="1" style="width:22px;height:22px;margin:0;flex:none"> Done: close it</label>' +
     '<label style="display:block;font-size:13px;color:#6A7180;margin:0 0 6px">Or it cannot be done today: the new date' +
       '<input type="date" name="m_' + id + '" min="' + esc_(shiftDays_(day, 1)) + '" style="display:block;width:100%;box-sizing:border-box;margin:4px 0 0"></label>' +
@@ -7008,7 +6998,7 @@ function cardAct_(o) {
   var t = list.filter(function (x) { return x && x.id === id && !x.next; })[0];
   if (!t) return { ok: false, error: 'That task is not on your day. Open your day again from the e-mail.' };
   var notes = []; try { notes = (cmdChatter_([id]) || {})[id] || []; } catch (e) {}
-  if (act === 'draft') return staffAi_() ? tcardDraft_(sid, t, String(o.note || ''), notes, day) : { ok: false, error: 'Write the note yourself, or tap a template.' };
+  if (act === 'draft') return tcardDraft_(sid, t, String(o.note || ''), notes, day);
   var txt = String(o.note || '').replace(/\r/g, '').trim(), name = nameFor_(sid), at = hhmm_(new Date()), to = String(o.to || '').trim();
   var acted = tcardActed_(sid, day), was = acted[id];
   if (was && was.a === 'close') return { ok: true, act: 'close', already: true, msg: 'Already closed at ' + twelve_(was.at) + ' from this card.' };
@@ -7110,7 +7100,7 @@ function sdPage_(person, day, error, notice) {
     : open.slice(0, nx).map(row).join('') + '<details style="margin-top:6px"><summary style="font-weight:800;font-size:14px;padding:8px 0;cursor:pointer">The rest of today (' + (open.length - nx) + ')</summary>' +
       open.slice(nx).map(function (t, i) { return row(t, nx + i); }).join('') + '</details>';
   var work = '<div class="card" id="p-work"><div class="bh">Your work today · ' + (open.length > nx + 1 ? 'next ' + nx + ' of ' + open.length : open.length + ' to do') + (done.length ? ' · ' + done.length + ' done' : '') + '</div>' +
-    '<div class="bf">Set for you from Salesforce, in this order. Each says what to do. Tap a template or ' + (staffAi_() ? 'let Claude write the note' : 'write the note') + ', then Close now, Move now or Post note: it is done at once. Or fill several and Save at the bottom.</div>' +
+    '<div class="bf">Set for you from Salesforce, in this order. Each says what to do. Tap a template or let Claude write the note, then Close now, Move now or Post note: it is done at once. Or fill several and Save at the bottom.</div>' +
     (open.length ? openRows : list.length ? '<div class="ln" style="color:#2C7A57"><b>All done.</b> Take the next ones below.</div>' : '<div class="ln">Nothing is set for today yet. Check in, and the day is set.</div>') +
     (done.length ? '<details style="margin-top:8px"><summary style="font-weight:800;font-size:14px;padding:6px 0;cursor:pointer">Done today (' + done.length + ')</summary>' +
       done.map(function (t) { return '<div class="ln" style="font-size:13.5px">&#10003; ' + esc_(t.s) + '</div>'; }).join('') + '</details>' : '') + '</div>';
@@ -7700,7 +7690,7 @@ function gameBestNote_(cands, day, from) {
   var longest = cands.slice().sort(function (a, b) { return b.n.length - a.n.length; })[0];
   var props = PropertiesService.getScriptProperties(), key = 'game_bn_' + (from || weekStart_(day));
   try { var hit = JSON.parse(props.getProperty(key) || 'null'); if (hit && hit.day === day) { var f = cands.filter(function (c) { return c.sid === hit.sid; })[0]; if (f) return f; } } catch (e) {}
-  var api = staffAi_() ? String(props.getProperty('ANTHROPIC_API_KEY') || '').trim() : '', pick = longest;   // the staff's award: no Claude (27 Oct 2026)
+  var api = String(props.getProperty('ANTHROPIC_API_KEY') || '').trim(), pick = longest;
   if (api && cands.length > 1) {
     try {
       var prompt = 'You judge the best task note of the week at a Guardian Life insurance branch in Trinidad. A good note says who was spoken to, when, how, and what was agreed or done, ' +
@@ -12619,7 +12609,7 @@ function cmdReplyPage_(person, day, error, notice) {
 
   items.forEach(function (it) { it.adv = cmdAdvise_(it, ctx); it.hist = cmdHistory_(it, ctx); it.nc = !!(it.adv && it.adv.tag === 'agent'); });
   // Claude reads the notes, when a key is set; its read corrects the rules where it knows better.
-  var reads = {}; if (!staffDesk_(sid) || staffAi_()) { try { reads = cmdClaudeRead_(items, ctx); } catch (e) {} }   // none for the staff (27 Oct 2026)
+  var reads = {}; try { reads = cmdClaudeRead_(items, ctx); } catch (e) {}
   items.forEach(function (it) { it.ai = reads[it.id] || null; cmdApplyRead_(it); it.nc = !!(it.adv && it.adv.tag === 'agent'); });
   // The client in one view, and the risk that ranks the page.
   try { ctx.clients = items.length ? cmdClientIndex_(day) : null; } catch (e) { ctx.clients = null; }

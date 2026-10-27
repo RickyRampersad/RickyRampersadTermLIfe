@@ -19,7 +19,6 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
 
 const DAY = '2026-10-20';
 const env = makeEnv();
-env.PropertiesService.getScriptProperties().setProperty('STAFF_AI', 'on');   // the switched-on path; off by default since 27 Oct 2026 (test-staff-ai)
 env.todayISO_ = () => DAY;
 env.__mkSheet('Access', 1, ['Name', 'StaffId', 'Email', 'Password', 'Role', 'Unit', 'Active'],
   [['Ricky Rampersad', 'ricky', 'ricky@example.com', '1', 'Branch Manager', 'Branch', 'Yes'],
