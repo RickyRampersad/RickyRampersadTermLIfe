@@ -1,32 +1,32 @@
 {
- "tts/out/wallreqs/01.mp3": [
+ "tts/out/wallpend/01.mp3": [
   "en",
-  0.985,
-  "This is what is still outstanding on our pending cases from today's pending report."
+  0.983,
+  "This is the Branch Pending Wall Policy by Policy from today's Pending Report."
  ],
- "tts/out/wallreqs/02.mp3": [
-  "en",
-  0.993,
-  "The big number is every requirement still waiting to be received."
- ],
- "tts/out/wallreqs/03.mp3": [
+ "tts/out/wallpend/03.mp3": [
   "en",
   0.997,
-  "The bars are the agents who still owe a first premium, collected, and the policy can issue."
+  "The bar under it is where underwriting has them. Approved ones need only the last items in, so they come first."
  ],
- "tts/out/wallreqs/04.mp3": [
+ "tts/out/wallpend/04.mp3": [
   "en",
-  0.992,
-  "Most requirements sit with the agent. That is the first call to make."
+  0.997,
+  "One item from issue, ready with only the premium left and money already paid that we cannot apply yet."
  ],
- "tts/out/wallreqs/05.mp3": [
-  "en",
-  0.986,
-  "On the right, what the team chased today, and which agents they chased."
- ],
- "tts/out/wallreqs/06.mp3": [
+ "tts/out/wallpend/05.mp3": [
   "en",
   0.996,
-  "No client is named here. Counts and agents only."
+  "on the right, every agent, and what is on their desk, documents, medicals, and first premiums."
+ ],
+ "tts/out/wallpend/06.mp3": [
+  "en",
+  0.996,
+  "then the Salesforce tasks on those same policies. Open, overdo, untouched for a week, and done today."
+ ],
+ "tts/out/wallpend/07.mp3": [
+  "en",
+  0.998,
+  "The last column is the one to fix. Policies nobody has ever raised a task on. No client is named here."
  ]
 }
