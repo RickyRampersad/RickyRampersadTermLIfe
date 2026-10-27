@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-27g';
+var SCRIPT_VERSION = '2026-10-27i';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2815,6 +2815,8 @@ function keepWarm() {
   try { housekeepingTick_(); } catch (e) {}
   // His day, built ahead on a working morning so his first tap opens it at once (21 Oct 2026).
   try { var fp = fastPrebuildTick_(); if (fp) runlog_('fast page: ' + fp); } catch (e) {}
+  // The Branch Portal's pending notes into Salesforce, and Salesforce's chase back to the Portal (27 Oct 2026, 27i).
+  try { var pc = pendSyncTick_(); if (pc && /Portal note/.test(pc)) runlog_(pc); } catch (e) { try { runlog_('pending chase failed: ' + (e && e.message)); } catch (e2) {} }
 }
 
 function installTriggers() {
@@ -15946,8 +15948,32 @@ function wallFeedOut_(action, out) {
  *  `live`: every requirement still awaiting receipt (count, policies, new this week, red/amber/green, the age bands), each
  *  requirement by name with a count, who acts next, the first premiums outstanding agent by agent (FUTPY: policies and the
  *  modal premium), and today's chasing: each desk's notes on its Pendings tasks today, Pendings tasks closed today, and the
- *  agents those policies belong to. Agents' names and counts only; wallScrub_ folds anyone who has left. Kept 5 minutes. */
-var WALL_PEND = { PREFIX: 'Branch Pendings', TTL: 300, TOP: 12, AGES: ['0-30 days', '31-60 days', '61-90 days', '90+ days'] };
+ *  agents those policies belong to. Agents' names and counts only; wallScrub_ folds anyone who has left. Kept 5 minutes.
+ *
+ *  27h, 3pm the same day, after the review of the Branch Portal ("ok agreed"): one source for pending, so the policies stop
+ *  (slide 3) reads the same report. `pol`: the policies by days since submission, past ninety days, one item from issue,
+ *  ready (only the premium left), the suspense held on them (SUSPENDED_AMOUNT, once a policy), new this week, and the
+ *  underwriting decision as states (approved, more information asked, with underwriting, declined). `board`: one row per
+ *  agent, their policies, requirements by kind (documents, medical), first premiums, ready, red, suspense, the oldest, and
+ *  the Salesforce Pendings tasks on those same policies (open, overdue, untouched a week, today, never raised), matched by
+ *  the policy or application number in the subject. `chase`: the same for the branch. Ordered by the call to make first:
+ *  cash, then medicals, then documents. */
+var WALL_PEND = { PREFIX: 'Branch Pendings', TTL: 300, TOP: 12, AGES: ['0-30 days', '31-60 days', '61-90 days', '90+ days'],
+  BANDS: [['0-30', 30], ['31-60', 60], ['61-90', 90], ['91-180', 180], ['180+', 1e9]], TOPCATS: 4, IDS: 40,
+  STATES: [{ key: 'settle', abbr: 'AP', label: 'Approved · settle it', work: true, re: /^(standard|loaded|terms)/i, note: 'Underwriting has approved; only the items left stand between it and issue.' },
+           { key: 'info', abbr: 'AI', label: 'More info asked', work: true, re: /additional/i, note: 'Underwriting has asked for more: a document, a form, a report.' },
+           { key: 'uw', abbr: 'UW', label: 'With underwriting', work: false, re: /refer/i, note: 'Referred: the decision is with the underwriter or the reinsurer.' },
+           { key: 'decl', abbr: 'DC', label: 'Declined', work: false, re: /declin/i, note: 'Declined, with requirements still open on it.' },
+           { key: 'none', abbr: '—', label: 'No decision yet', work: false, re: null, note: 'No underwriting decision on the report.' }] };
+/** A requirement's kind, short enough for a wall. */
+function wallReqKind_(cat, name) {
+  var c = String(cat || '');
+  var map = [[/^payment/i, 'First premium'], [/^forms/i, 'Forms'], [/exam|lab/i, 'Medical exam'], [/copy of records/i, 'Medical records'],
+             [/questionnaire/i, 'Questionnaire'], [/doctor/i, 'Doctor’s report'], [/fatca|crs/i, 'FATCA / CRS'], [/kyc|identity/i, 'ID & address'],
+             [/financial/i, 'Financials'], [/underwriting decision/i, 'Acceptance'], [/underwriting/i, 'Underwriting'], [/corporate/i, 'Company papers']];
+  for (var i = 0; i < map.length; i++) if (map[i][0].test(c)) return map[i][1];
+  return c || String(name || 'Other');
+}
 function wallPendLive_(day) {
   var cache = CacheService.getScriptCache(), key = 'wall_pend_' + day, hit = cache.get(key);
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
@@ -15960,20 +15986,33 @@ function wallPendLive_(day) {
   if (vals.length < 2) return { error: tab.getName() + ' is empty.' };
   var h = vals[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };
   var c = { pol: ix('POLICY'), agent: ix('Agent Name'), code: ix('REQUIREMENT_CODE'), name: ix('requirement_name'), who: ix('WHO_ACTS_NEXT'),
-            rag: ix('RAG_STATUS'), age: ix('AGEING_BUCKET'), nw: ix('NEW_THIS_WEEK'), prem: ix('mode_premium'), st: ix('REQUIREMENT_STATUS') };
+            rag: ix('RAG_STATUS'), age: ix('AGEING_BUCKET'), nw: ix('NEW_THIS_WEEK'), prem: ix('mode_premium'), st: ix('REQUIREMENT_STATUS'),
+            app: ix('application_number'), cat: ix('REQUIREMENT_CATEGORY'), days: ix('DAYS_SINCE_SUBMISSION'), susp: ix('SUSPENDED_AMOUNT'), dec: ix('DecisionType') };
   if (c.pol < 0 || c.code < 0) return { error: tab.getName() + ' has no POLICY or REQUIREMENT_CODE column.' };
   var cell = function (r, i) { return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
   var m = /(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})/.exec(tab.getName());
   var out = { tab: tab.getName(), asOf: m ? prettyDate_(m[1] + '-' + m[2] + '-' + m[3]).replace(/ \d{4}$/, '') + ', ' + twelve_(m[4] + ':' + m[5]) : tab.getName(),
               reqs: 0, policies: 0, newWeek: 0, rag: { Red: 0, Amber: 0, Green: 0 }, ages: [], byReq: [], who: [], first: { policies: 0, prem: 0, agents: [] }, agents: 0 };
-  var pols = {}, ages = {}, reqs = {}, who = {}, agentOf = {}, firstBy = {}, firstPol = {}, agentsSeen = {};
+  var pols = {}, ages = {}, reqs = {}, who = {}, agentOf = {}, firstBy = {}, firstPol = {}, agentsSeen = {}, P = {}, numOf = {};
   vals.slice(1).forEach(function (r) {
     var pol = cell(r, c.pol); if (!pol) return;
     if (/closed|received|waived|complete|cancel/i.test(cell(r, c.st))) return;
     var ag = cell(r, c.agent) || 'No agent named';
     out.reqs++; pols[pol] = 1; agentOf[pol] = ag; agentsSeen[ag] = 1;
+    numOf[pol] = pol; var an = cell(r, c.app); if (an) numOf[an] = pol;
     if (/^y/i.test(cell(r, c.nw))) out.newWeek++;
     var rg = cell(r, c.rag); if (out.rag[rg] != null) out.rag[rg]++;
+    // The policy, once: its requirements by kind, the money held on it, its decision and its age.
+    var p = P[pol] = P[pol] || { ag: ag, reqs: 0, med: 0, docs: 0, pay: 0, red: 0, days: 0, susp: 0, dec: '', nw: 0, kinds: {} };
+    var cat = cell(r, c.cat), isPay = /^payment/i.test(cat) || cell(r, c.code).toUpperCase() === 'FUTPY';
+    p.reqs++; if (isPay) p.pay++; else if (/^medical/i.test(cat)) p.med++; else p.docs++;
+    if (rg === 'Red') p.red++;
+    p.days = Math.max(p.days, Number(cell(r, c.days)) || 0);
+    p.susp = Math.max(p.susp, Number(cell(r, c.susp)) || 0);
+    if (!p.dec) p.dec = cell(r, c.dec);
+    if (/^y/i.test(cell(r, c.nw))) p.nw = 1;
+    var kd = isPay ? 'First premium' : wallReqKind_(cat, cell(r, c.name));
+    var kk = p.kinds[kd] = p.kinds[kd] || { n: 0, red: 0, amber: 0 }; kk.n++; if (rg === 'Red') kk.red++; else if (rg === 'Amber') kk.amber++;
     var a = cell(r, c.age) || 'Not dated'; ages[a] = (ages[a] || 0) + 1;
     var nm = cell(r, c.name) || cell(r, c.code); reqs[nm] = (reqs[nm] || 0) + 1;
     var w = cell(r, c.who) || 'Not said'; who[w] = (who[w] || 0) + 1;
@@ -15990,12 +16029,192 @@ function wallPendLive_(day) {
   out.first.agents = Object.keys(firstBy).map(function (k) { return firstBy[k]; }).sort(function (a, b) { return (b.n - a.n) || (b.prem - a.prem); });
   out.first.policies = Object.keys(firstPol).length;
   out.first.prem = Math.round(out.first.agents.reduce(function (s2, x) { return s2 + x.prem; }, 0));
-  try { out.today = wallPendToday_(day, agentOf); } catch (e) { out.today = { error: String(e && e.message || e) }; }
+  try { out.today = wallPendToday_(day, agentOf, numOf); } catch (e) { out.today = { error: String(e && e.message || e) }; }
+  var chase = null; try { chase = wallPendChase_(day, numOf); } catch (e) { out.chase = { error: String(e && e.message || e) }; }
+  wallPendPolicies_(out, P, chase);
   try { cache.put(key, JSON.stringify(out), WALL_PEND.TTL); } catch (e) {}
   return out;
 }
+/** The policies stop: policy-level figures, the decision states and the board, agent by agent. */
+function wallPendPolicies_(out, P, chase) {
+  var list = Object.keys(P).map(function (k) { return P[k]; });
+  var band = function (d) { for (var i = 0; i < WALL_PEND.BANDS.length; i++) if (d <= WALL_PEND.BANDS[i][1]) return WALL_PEND.BANDS[i][0]; return '180+'; };
+  var ages = {}; list.forEach(function (p) { var b = band(p.days); ages[b] = (ages[b] || 0) + 1; });
+  var stateOf = function (p) { for (var i = 0; i < WALL_PEND.STATES.length; i++) { var s = WALL_PEND.STATES[i]; if (s.re && s.re.test(p.dec)) return s.key; } return 'none'; };
+  var st = {}; list.forEach(function (p) { var k = stateOf(p); st[k] = (st[k] || 0) + 1; });
+  var held = list.filter(function (p) { return p.susp > 0; });
+  out.pol = {
+    ages: WALL_PEND.BANDS.map(function (b) { return { k: b[0], n: ages[b[0]] || 0 }; }),
+    past90: list.filter(function (p) { return p.days > 90; }).length,
+    oneLeft: list.filter(function (p) { return p.reqs === 1; }).length,
+    ready: list.filter(function (p) { return p.pay > 0 && p.pay === p.reqs; }).length,
+    held: Math.round(held.reduce(function (s2, p) { return s2 + p.susp; }, 0)), heldPolicies: held.length,
+    newWeek: list.filter(function (p) { return p.nw; }).length,
+    states: WALL_PEND.STATES.map(function (s) { return { key: s.key, abbr: s.abbr, label: s.label, work: s.work, note: s.note, n: st[s.key] || 0 }; })
+      .filter(function (s) { return s.n || s.key !== 'none'; })
+  };
+  var A = {}, T = { policies: 0, reqs: 0, docs: 0, medical: 0, cash: 0, ready: 0, red: 0, held: 0, open: 0, overdue: 0, quiet: 0, today: 0, never: 0 };
+  Object.keys(P).forEach(function (pol) {
+    var p = P[pol], ch = chase ? chase[pol] || null : null;
+    var a = A[p.ag] = A[p.ag] || { agent: p.ag, policies: 0, reqs: 0, docs: 0, medical: 0, cash: 0, ready: 0, red: 0, held: 0,
+                                   open: 0, overdue: 0, quiet: 0, today: 0, never: 0, oldest: 0, kinds: {} };
+    a.policies++; a.reqs += p.reqs; a.docs += p.docs; a.medical += p.med; a.red += p.red; a.held += p.susp;
+    if (p.pay) a.cash++; if (p.pay && p.pay === p.reqs) a.ready++;
+    a.oldest = Math.max(a.oldest, p.days);
+    if (ch) { a.open += ch.open; a.overdue += ch.overdue; a.quiet += ch.quiet; a.today += ch.today; } else if (chase) a.never++;
+    Object.keys(p.kinds).forEach(function (k) { var x = a.kinds[k] = a.kinds[k] || { k: k, n: 0, red: 0, amber: 0 }; x.n += p.kinds[k].n; x.red += p.kinds[k].red; x.amber += p.kinds[k].amber; });
+  });
+  var agents = Object.keys(A).map(function (k) {
+    var a = A[k]; a.held = Math.round(a.held);
+    Object.keys(T).forEach(function (f) { T[f] += a[f] || 0; });
+    // Each kind with its colour: red if any of it is red, amber if any is amber. A number, never an age.
+    a.top = Object.keys(a.kinds).map(function (x) { var y = a.kinds[x]; return { k: y.k, n: y.n, tone: y.red ? 'red' : y.amber ? 'amber' : '' }; })
+      .sort(function (x, y) { return y.n - x.n; }).slice(0, WALL_PEND.TOPCATS);
+    delete a.kinds; return a;
+  }).sort(function (x, y) { return (y.cash - x.cash) || (y.medical - x.medical) || (y.docs - x.docs) || (y.policies - x.policies); });
+  out.board = { agents: agents, total: T, tasks: !!chase };
+  if (chase) {
+    var tasked = Object.keys(P).filter(function (pol) { return chase[pol]; }).length;
+    var live = Object.keys(P).filter(function (pol) { return chase[pol] && chase[pol].open; }).length;
+    // never: no task ever; live: a task open on it; closedOnly: every task on it closed, and the policy still pending.
+    out.chase = { tasked: tasked, never: Object.keys(P).length - tasked, live: live, closedOnly: tasked - live,
+                  open: T.open, overdue: T.overdue, quiet: T.quiet, today: T.today };
+  }
+}
+/** The Salesforce Pendings tasks on the report's policies, matched by any policy or application number in the subject. */
+function wallPendChase_(day, numOf) {
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return null;
+  var from = sfkUtcAt_(day, 0).slice(0, 19), to = sfkUtcAt_(shiftDays_(day, 1), 0).slice(0, 19), weekAgo = sfkUtcAt_(shiftDays_(day, -7), 0).slice(0, 19);
+  var rows = sfkQuery_("SELECT Subject, IsClosed, ActivityDate, CreatedDate, LastModifiedDate FROM Task WHERE Task_Type__c = 'Pendings'" +
+    ' AND (IsClosed = false OR CreatedDate = LAST_N_DAYS:400) LIMIT 10000');
+  var by = {};
+  rows.forEach(function (t) {
+    var seen = {}, made = String(t.CreatedDate || '').slice(0, 19), mod = String(t.LastModifiedDate || '').slice(0, 19);
+    (String(t.Subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) {
+      var pol = numOf[x]; if (!pol || seen[pol]) return; seen[pol] = 1;
+      var b = by[pol] = by[pol] || { ever: 0, open: 0, overdue: 0, quiet: 0, today: 0 };
+      b.ever++;
+      if (!t.IsClosed) { b.open++; if (t.ActivityDate && String(t.ActivityDate) < day) b.overdue++; if (mod && mod < weekAgo) b.quiet++; }
+      if ((made >= from && made < to) || (t.IsClosed && mod >= from && mod < to)) b.today++;
+    });
+  });
+  return by;
+}
+
+/* ── The Branch Portal and Salesforce, through the workbook (27 Oct 2026, 2026-10-27i) ──
+ *  Ricky, 3pm, agreeing one place for chasing notes: Salesforce's Pendings tasks, not the Portal's own Requirements Log
+ *  (empty: nobody had used it). The Branch Portal is the Branch Portfolio's own script and has no Salesforce access, so the
+ *  workbook is the bridge, on the ten-minute keepWarm, weekdays 7am to 7pm:
+ *    in   "Requirements Log": a comment typed in the Portal (column G) with nothing in column I is posted as a note on that
+ *         policy's open Pendings task (the most recently touched one), signed "Branch Portal · <who>", and column I says
+ *         when. With no open Pendings task on it, column I says that, and the comment stays in the log for staff to raise one.
+ *    out  "Pendings Chase": one row per policy on the newest pending report, with its Pendings task (open ones, owner, due,
+ *         overdue) and its last notes. The Portal's Requirements view reads it.
+ *  Nothing is deleted in Salesforce; the chase tab is rewritten whole each run. pendSyncTick_(true) runs it by hand. */
+var PEND_SYNC = { TAB: 'Pendings Chase', LOG: 'Requirements Log', FROM: 7 * 60, TO: 19 * 60, NOTES: 3, PUSH: 20, SIGN: 'Branch Portal',
+  HEAD: ['Policy', 'Agent', 'Task', 'Owner', 'Due', 'Open tasks', 'Overdue', 'Last note at', 'Last note by', 'Last note', 'Earlier notes', 'Updated'] };
+function pendSyncTick_(force) {
+  var now = new Date(), dow = Number(Utilities.formatDate(now, CONFIG.TZ, 'u')), mins = minutesOf_(hhmm_(now));
+  if (!force && (dow > 5 || mins < PEND_SYNC.FROM || mins > PEND_SYNC.TO)) return '';
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return '';
+  var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
+  if (!ss) return '';
+  var rep = pendReportPolicies_(ss); if (!rep) return '';
+  var day = todayISO_(), tasks = pendTasksByPolicy_(rep.numOf, day);
+  var pushed = pendSyncPush_(ss, rep, tasks);
+  var rows = pendSyncChase_(ss, rep, tasks, day);
+  return 'pending chase: ' + rows + ' policies' + (pushed ? ', ' + pushed + ' Portal note' + (pushed === 1 ? '' : 's') + ' to Salesforce' : '');
+}
+/** The newest pending report, policy by policy: { tab, pols: { policy: { agent, app } }, numOf: { number: policy } }. */
+function pendReportPolicies_(ss) {
+  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_PEND.PREFIX) === 0; })
+    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  if (!tabs.length) return null;
+  var vals = tabs[0].getDataRange().getValues(); if (vals.length < 2) return null;
+  var h = vals[0].map(function (x) { return String(x).trim(); });
+  var cp = h.indexOf('POLICY'), ca = h.indexOf('application_number'), cg = h.indexOf('Agent Name'), cs = h.indexOf('REQUIREMENT_STATUS');
+  if (cp < 0) return null;
+  var pols = {}, numOf = {};
+  vals.slice(1).forEach(function (r) {
+    var pol = String(r[cp] == null ? '' : r[cp]).trim(); if (!pol) return;
+    if (cs > -1 && /closed|received|waived|complete|cancel/i.test(String(r[cs]))) return;
+    var app = ca > -1 ? String(r[ca] == null ? '' : r[ca]).trim() : '';
+    pols[pol] = pols[pol] || { agent: cg > -1 ? String(r[cg] || '').trim() : '', app: app };
+    numOf[pol] = pol; if (app) numOf[app] = pol;
+  });
+  return { tab: tabs[0].getName(), pols: pols, numOf: numOf };
+}
+/** The Pendings tasks on the report's policies, newest touched first: { policy: [ { id, subject, open, due, owner, mod } ] }. */
+function pendTasksByPolicy_(numOf, day) {
+  var rows = sfkQuery_("SELECT Id, Subject, IsClosed, ActivityDate, LastModifiedDate, Owner.Name FROM Task WHERE Task_Type__c = 'Pendings'" +
+    ' AND (IsClosed = false OR CreatedDate = LAST_N_DAYS:400) ORDER BY LastModifiedDate DESC LIMIT 10000');
+  var by = {};
+  rows.forEach(function (t) {
+    var seen = {};
+    (String(t.Subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) {
+      var pol = numOf[x]; if (!pol || seen[pol]) return; seen[pol] = 1;
+      (by[pol] = by[pol] || []).push({ id: String(t.Id), subject: String(t.Subject || ''), open: !t.IsClosed, due: String(t.ActivityDate || ''),
+        overdue: !t.IsClosed && !!t.ActivityDate && String(t.ActivityDate) < day, owner: String((t.Owner && t.Owner.Name) || ''), mod: String(t.LastModifiedDate || '') });
+    });
+  });
+  return by;
+}
+/** Portal comments not yet in Salesforce, posted on the policy's open Pendings task. Returns how many were posted. */
+function pendSyncPush_(ss, rep, tasks) {
+  var sh = ss.getSheetByName(PEND_SYNC.LOG); if (!sh || sh.getLastRow() < 2) return 0;
+  if (String(sh.getRange(1, 9).getValue() || '') !== 'Salesforce') sh.getRange(1, 9).setValue('Salesforce');
+  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 9).getValues(), posted = 0, tried = 0;
+  for (var i = 0; i < vals.length && tried < PEND_SYNC.PUSH; i++) {
+    var r = vals[i], text = String(r[6] || '').trim();
+    if (!text || String(r[8] || '').trim()) continue;
+    tried++;
+    var num = String(r[1] || '').trim(), pol = rep.numOf[num] || num;
+    var open = (tasks[pol] || []).filter(function (t) { return t.open; })[0];
+    var mark;
+    if (!open) mark = 'No open Pendings task in Salesforce on ' + pol + ' · ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'd MMM, h:mm a');
+    else {
+      var who = String(r[5] || '').replace(/\s*<[^>]*>\s*/g, '').trim() || 'the Portal';
+      var status = String(r[7] || '').trim();
+      try {
+        sfkInsert_('FeedItem', { ParentId: open.id, Body: PEND_SYNC.SIGN + ' · ' + who + (status ? ' · ' + status : '') + ':\n' + text.slice(0, 2000) });
+        mark = 'Posted to "' + shorten_(open.subject, 60) + '" · ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'd MMM, h:mm a');
+        posted++;
+      } catch (e) { mark = ''; try { runlog_('pending chase: a Portal note did not post: ' + (e && e.message)); } catch (e2) {} }
+    }
+    if (mark) sh.getRange(i + 2, 9).setValue(mark);
+  }
+  return posted;
+}
+/** "Pendings Chase", rewritten whole: one row per policy on the report, its task and its last notes. Returns the row count. */
+function pendSyncChase_(ss, rep, tasks, day) {
+  var ids = []; Object.keys(tasks).forEach(function (p) { tasks[p].forEach(function (t) { ids.push(t.id); }); });
+  var notes = {}, plain = function (b) { return String(b || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;|&quot;/g, "'").replace(/\s+/g, ' ').trim(); };
+  for (var i = 0; i < ids.length; i += WALL_PEND.IDS) {
+    sfkQuery_("SELECT ParentId, CreatedDate, CreatedBy.Name, Body FROM FeedItem WHERE Type = 'TextPost' AND ParentId IN (" +
+      ids.slice(i, i + WALL_PEND.IDS).map(soqlStr_).join(',') + ') ORDER BY CreatedDate DESC LIMIT 2000').forEach(function (f) {
+      (notes[f.ParentId] = notes[f.ParentId] || []).push({ at: String(f.CreatedDate || ''), by: String((f.CreatedBy && f.CreatedBy.Name) || ''), text: plain(f.Body).slice(0, 500) });
+    });
+  }
+  var when = function (iso) { var d = iso ? new Date(String(iso).replace(/\+0000$/, 'Z')) : null; return d && !isNaN(d) ? Utilities.formatDate(d, CONFIG.TZ, 'd MMM, h:mm a') : ''; };
+  var stamp = Utilities.formatDate(new Date(), CONFIG.TZ, 'd MMM yyyy, h:mm a');
+  var out = Object.keys(rep.pols).sort().map(function (pol) {
+    var ts = tasks[pol] || [], open = ts.filter(function (t) { return t.open; }), lead = open[0] || ts[0] || null;
+    var ns = []; ts.forEach(function (t) { (notes[t.id] || []).forEach(function (n) { ns.push(n); }); });
+    ns.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
+    var last = ns[0] || null;
+    return [pol, rep.pols[pol].agent, lead ? lead.subject : '', lead ? lead.owner : '', lead && lead.open ? lead.due : '', open.length,
+            open.filter(function (t) { return t.overdue; }).length, last ? when(last.at) : '', last ? last.by : '', last ? last.text : '',
+            JSON.stringify(ns.slice(1, PEND_SYNC.NOTES).map(function (n) { return { at: when(n.at), by: n.by, text: n.text }; })), stamp];
+  });
+  var sh = ss.getSheetByName(PEND_SYNC.TAB) || ss.insertSheet(PEND_SYNC.TAB);
+  sh.clearContents();
+  sh.getRange(1, 1, 1, PEND_SYNC.HEAD.length).setValues([PEND_SYNC.HEAD]);
+  if (out.length) sh.getRange(2, 1, out.length, PEND_SYNC.HEAD.length).setValues(out);
+  return out.length;
+}
 /** Today's chasing on the pending cases: per desk, notes on Pendings tasks and Pendings tasks closed, and whose policies. */
-function wallPendToday_(day, agentOf) {
+function wallPendToday_(day, agentOf, numOf) {
+  numOf = numOf || {};
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return null;
   var users = sfkUsers_() || {}, ids = {};
   DAY_MAIL_DESKS.concat(['ricky']).forEach(function (s) { if (users[s] && users[s].id) ids[users[s].id] = s; });
@@ -16005,17 +16224,22 @@ function wallPendToday_(day, agentOf) {
     ' AND CreatedById IN (' + idList.map(soqlStr_).join(',') + ") AND Type IN ('TextPost','ContentPost','LinkPost') LIMIT 2000");
   var tasks = {}, tid = {}; notes.forEach(function (f) { if (/^00T/.test(String(f.ParentId))) tid[f.ParentId] = 1; });
   var tl = Object.keys(tid);
-  for (var i = 0; i < tl.length; i += 150) {
-    sfkQuery_('SELECT Id, Subject, Task_Type__c FROM Task WHERE Id IN (' + tl.slice(i, i + 150).map(soqlStr_).join(',') + ')').forEach(function (t) { tasks[t.Id] = t; });
+  // Forty at a time: 150 Ids made a query longer than Apps Script will fetch ("Limit Exceeded: URLFetch URL Length", 27g, 3pm).
+  for (var i = 0; i < tl.length; i += WALL_PEND.IDS) {
+    sfkQuery_('SELECT Id, Subject, Task_Type__c FROM Task WHERE Id IN (' + tl.slice(i, i + WALL_PEND.IDS).map(soqlStr_).join(',') + ')').forEach(function (t) { tasks[t.Id] = t; });
   }
   var closed = sfkQuery_("SELECT Id, Subject, OwnerId FROM Task WHERE Task_Type__c = 'Pendings' AND IsClosed = true AND LastModifiedDate >= " + from +
     ' AND LastModifiedDate < ' + to + ' LIMIT 500');
   var desk = {}, all = {}, polAll = {};
   var get = function (sid) { return desk[sid] = desk[sid] || { sid: sid, name: String(nameFor_(sid)).split(' ')[0], notes: 0, closed: 0, ag: {}, pol: {} }; };
+  // Every number in the subject, the policy's or its application's ("Forms for sign off- 8004315917/8004315909").
   var mark = function (d, subject) {
-    var p = (String(subject || '').match(/\b\d{10}\b/) || [])[0]; if (!p) return;
-    d.pol[p] = 1; polAll[p] = 1;
-    var a = agentOf[p]; if (a) { d.ag[a] = (d.ag[a] || 0) + 1; all[a] = (all[a] || 0) + 1; }
+    var nums = String(subject || '').match(/\b\d{10}\b/g) || [], seen = {};
+    nums.forEach(function (x) {
+      var p = numOf[x] || x; if (seen[p]) return; seen[p] = 1;
+      d.pol[p] = 1; polAll[p] = 1;
+      var a = agentOf[p]; if (a) { d.ag[a] = (d.ag[a] || 0) + 1; all[a] = (all[a] || 0) + 1; }
+    });
   };
   notes.forEach(function (f) { var t = tasks[f.ParentId]; if (!t || String(t.Task_Type__c) !== 'Pendings' || !ids[f.CreatedById]) return; var d = get(ids[f.CreatedById]); d.notes++; mark(d, t.Subject); });
   closed.forEach(function (t) { var sid = ids[t.OwnerId]; if (!sid) return; var d = get(sid); d.closed++; mark(d, t.Subject); });
