@@ -1,67 +1,72 @@
 {
- "tts/out/agpilot/01.mp3": [
+ "tts/out/rf04/01.mp3": [
   "en",
   0.998,
-  "Good morning. You're one of five agents in the branch's new daily pilot. Neil, Fawas, Rajiv, Joy and Daryl. Here's how your day works in a couple of minutes."
+  "And here's the part nobody tells you about a sales career. What happens to you after you apply? In this branch, you're not alone from the first day. Here's the whole journey."
  ],
- "tts/out/agpilot/02.mp3": [
+ "tts/out/rf05/01.mp3": [
+  "en",
+  0.999,
+  "two minutes to apply within 48 hours of call. Then you meet the branch manager himself. Then an orientation, the career, the branch, the numbers, no gloss. Then a digital market survey, a scientific profile, a discovery with our qualifiers, and the selection. Every step has a person on the other end of it."
+ ],
+ "tts/out/rf06/01.mp3": [
+  "en",
+  0.998,
+  "The digital market survey maps your market before you start. You list the people you know. How well, whether you could approach them on business, whether they'd refer you, what they're saving for. By the end, you know whether your first 90 days have a market in them. So do we."
+ ],
+ "tts/out/rf07/01.mp3": [
   "en",
   0.997,
-  "There are three touches a day. You plan in a morning, you check in at midday, and you close off at 5.30. That's it."
+  "than the science. Pop 7 is the profile the industry uses to predict who makes it, achievement drive, independence, correluctance, the probability of success. We select on evidence and the evidence protects you as much as it protects us."
  ],
- "tts/out/agpilot/03.mp3": [
+ "tts/out/rf09/01.mp3": [
   "en",
   0.998,
-  "Every morning, an email from the branch called your day. It shows what the team is working on for your clients today, what's overdue, and who's handling it."
+  "Selected, you're built properly, training and induction, boot camp, the license, the study, the exam, the contracting, with the branch beside you for every form. Field training with your unit manager. In constant contact, nobody disappears between the signature and the first client."
  ],
- "tts/out/agpilot/04.mp3": [
-  "en",
-  0.998,
-  "Below that is your book, premiums past 60 days, dues to chase, and pending business holding money. Then your goal for the year, where you should be by now, and your fact finds."
- ],
- "tts/out/agpilot/05.mp3": [
+ "tts/out/rf18/01.mp3": [
   "en",
   0.999,
-  "Tap Project My Day, put a number against each line. The calls you'll make, appointments, fact finds, closing interviews, applications, dues, and pendings. Been safe!"
+  "A client question you can't answer at the table, query pal. Post it from your phone. The branch team answers inside the turnaround, and every query is tracked until the client has the answer. You never have to say I'll find out twice."
  ],
- "tts/out/agpilot/06.mp3": [
-  "en",
-  0.995,
-  "Please have your projection in by 1030. No projection by 1030 reads as not working today."
- ],
- "tts/out/agpilot/07.mp3": [
-  "en",
-  0.999,
-  "On the same page, you can comment on any client the team is working for you. Type it or tap the microphone and just say it. It goes straight onto that task chatter in your name."
- ],
- "tts/out/agpilot/08.mp3": [
-  "en",
-  0.999,
-  "At midday, a second email shows your progress so far against your projection. If the day has moved, tap update my projection."
- ],
- "tts/out/agpilot/09.mp3": [
-  "en",
-  0.999,
-  "At 5.30, close off you day, put in what you actually did, zero where nothing was done, and the balance against this morning shows as you type. No answer reads as nothing done."
- ],
- "tts/out/agpilot/10.mp3": [
-  "en",
-  0.999,
-  "Your close-off goes to your unit manager and a sales support, so the whole branch knows where every client stands."
- ],
- "tts/out/agpilot/11.mp3": [
-  "en",
-  0.998,
-  "One tip. If a button ever says, sorry, unable to open the file, your phone is signed into more than one Google account. Press and hold the button, copy the link, and open it in a private window. It works there every time."
- ],
- "tts/out/agpilot/12.mp3": [
-  "en",
-  0.995,
-  "So, every working day, project by 10.30, check in at midday and close off at 5.30."
- ],
- "tts/out/agpilot/13.mp3": [
+ "tts/out/rf24/01.mp3": [
   "en",
   0.997,
-  "Thank you for being part of this pilot. We tell us now shapes what the whole branch gets next."
+  "Wednesday, 9 o'clock, the production board by unit exceptions only. Then you're called list for the week, score by the sheet, the gap named, and the question already written for you. Then the maturities, money and motion, everyone a conversation, and the 85-day report, so no client of yours lapses quietly."
+ ],
+ "tts/out/rf26/01.mp3": [
+  "en",
+  0.999,
+  "Your clients' premiums are watched for you at 45, 60, 75, and 90 days a letter goes. Checked by a person sent at 10 with you copied and the client asked to rate you. Renewals and claims have their own desks. Your book is never left to lapse while you're at the kitchen table."
+ ],
+ "tts/out/rf27/01.mp3": [
+  "en",
+  0.999,
+  "Every month, your income review, where you earn what your life needs this month, what changed, and the plan to close the gap. And the career path is digital. Every position, every requirement, your own numbers against it, and a realistic date for your next step."
+ ],
+ "tts/out/rf30/01.mp3": [
+  "en",
+  0.998,
+  "and the managers are managed to. The Branch Manager's Day starts at five with everything that waits on him. Your unit manager plans is mourning against his own numbers, names recruited, agents coached, joint field work, and he accounts for it at the end of the day. The same system that sets your day sets theirs."
+ ],
+ "tts/out/rt02/01.mp3": [
+  "en",
+  0.999,
+  "Here's a branch where you're not alone from the day you apply, a call within 48 hours, the branch manager himself, an orientation, a market survey, a scientific profile, and a discovery with our qualifiers."
+ ],
+ "tts/out/rt03/01.mp3": [
+  "en",
+  0.999,
+  "Selected, you're built properly, and you don't start from zero. Clients match to you household by household. Leads at land on your own board. A fact find that does the arithmetic while you talk."
+ ],
+ "tts/out/rt04/01.mp3": [
+  "en",
+  0.998,
+  "Every morning the system sets your day. Every week your manager sees it before Friday. Every Wednesday your winds are set out loud, and your book is washed while you're at the table."
+ ],
+ "tts/out/rt05/01.mp3": [
+  "en",
+  0.99,
+  "23 times an MDRT branch. 32 years in Trinidad. No salary band. No seating."
  ]
 }
