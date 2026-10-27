@@ -114,6 +114,15 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     ok('a mail\'s note posts to the desk chosen', posted.length === 2 && /kind=inbox/.test(posted[1]) && /to=kamla/.test(posted[1]), posted[1]);
     await page.unroute(/script\.google\.com\/macros/);
     await page.route(/script\.google\.com\/macros/, r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'This link is not right. Open it again from your morning e-mail.' }) }));
+    // 27 Oct 2026: a dropped first answer is tried once more by itself.
+    await page.unroute(/script\.google\.com\/macros/);
+    let tries2 = 0;
+    await page.route(/script\.google\.com\/macros/, r => { tries2++; return tries2 === 1 ? r.abort('failed') : r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model()) }); });
+    await page.evaluate(() => localStorage.clear());
+    await page.goto('http://localhost:8799/myworkday/?p=sasha&k=KEY'); await page.waitForTimeout(2600);
+    ok('a dropped first answer is tried again by itself, and the day draws', tries2 === 2 && /Sasha$/.test(await page.textContent('#hello')) && !(await page.$('#again')), String(tries2));
+    await page.unroute(/script\.google\.com\/macros/);
+    await page.route(/script\.google\.com\/macros/, r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'This link is not right. Open it again from your morning e-mail.' }) }));
     await page.evaluate(() => localStorage.clear());
     await page.goto('http://localhost:8799/myworkday/?p=ricky&k=bad'); await page.waitForTimeout(1200);
     ok('a wrong link says so, with a way to try again', /This link is not right/.test(await page.textContent('#notice')) && !!(await page.$('#again')));

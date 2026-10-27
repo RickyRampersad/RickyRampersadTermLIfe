@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-27b';
+var SCRIPT_VERSION = '2026-10-27c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -9863,7 +9863,8 @@ function sendBranchManagerProgress_(day, which) {
     '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Closed today against the morning\'s suggested target; closed with the owner\'s own note. ' + (moves ? moves + ' task' + (moves === 1 ? '' : 's') + ' moved between desks today.' : '') + '</div>' +
     (um ? sectionLabel_('Unit Managers') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:6px 15px">' + um + '</div>' : '') +
     (function () { var t = ''; try { if (agentMode_() !== 'off') t = agentSummaryTable_(agentDaySummary_(day)); } catch (e) {}
-      return t ? sectionLabel_('Agents today' + (agentMode_() === 'preview' ? ' (preview mode: agents are not being mailed yet)' : '')) + t : ''; })() +
+      var pl = 0; try { if (agentMode_() === 'preview') { var ap = agentPeople_(); pl = Object.keys(ap).filter(function (k) { return agentInPilot_(ap[k]); }).length; } } catch (e) {}
+      return t ? sectionLabel_('Agents today' + (agentMode_() === 'preview' ? (pl ? ' (pilot: ' + pl + ' agents are mailed; the rest are not yet)' : ' (preview mode: agents are not being mailed yet)') : '')) + t : ''; })() +
     (w.ask.length ? sectionLabel_('Still waiting on your Chatter (' + w.ask.length + ')') +
       '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.red + ';border-radius:10px;padding:8px 15px">' +
       w.ask.slice(0, 8).map(function (a) { return '<div style="font-size:12.5px;padding:5px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(a.by) + '</b> on ' + esc_(a.subject) + '<div style="color:' + MAIL.muted + '">"' + esc_(a.said) + '"</div>' + draftMail_(drafts[a.id]) + '</div>'; }).join('') + '</div>' +
@@ -10036,6 +10037,28 @@ function agentMode_() {
   var m = String(PropertiesService.getScriptProperties().getProperty('AGENT_DAY') || 'preview').toLowerCase();
   return m === 'live' || m === 'off' ? m : 'preview';
 }
+/* ── The agents' pilot (27 October 2026) ──
+ *  Ricky, 6:24am: "I would really like it scale what the agents get. Put this now live for Neil Ramnanan, Fawaz Mohammed,
+ *  Rajiv Sukdev, Joy Sama, and Daryl Manik ... in a test group more or less from today, logging in, checks and afternoon."
+ *  In preview, these five get their own mail from today: the morning (project your day), the midday progress and the 5:30
+ *  close-off, to them, their unit manager copied as live mail is. Everyone else stays in preview (samples to Mr Rampersad).
+ *  By agent number from the Agent Skill Bank (Rajiv Sukdev is Rajiv Soodoo, A14158). Script Property AGENT_PILOT (numbers
+ *  or names, comma separated) replaces the list; AGENT_PILOT = off ends it; AGENT_DAY = live sends to every agent. */
+var AGENT_PILOT = { FROM: '2026-10-27', CODES: ['A10024', 'A12397', 'A14158', 'A07347', 'A11238',
+  'Neil Ramnanan', 'Fawwaz Mohamed', 'Rajiv Soodoo', 'Joy Barbara Sammah', 'Darryl Manick'] };
+function agentPilotList_() {
+  var v = ''; try { v = String(PropertiesService.getScriptProperties().getProperty('AGENT_PILOT') || '').trim(); } catch (e) {}
+  if (/^off$/i.test(v)) return [];
+  return (v ? v.split(/\s*,\s*/) : AGENT_PILOT.CODES).filter(String);
+}
+/** Is this agent in the pilot (by number, else by name)? */
+function agentInPilot_(a) {
+  if (!a || todayISO_() < AGENT_PILOT.FROM) return false;
+  var code = String(a.code || a.agentId || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), nk = bkNk_(a.agentName || a.name || '');
+  return agentPilotList_().some(function (x) { var c = String(x).toUpperCase().replace(/[^A-Z0-9]/g, ''); return (code && c === code) || (nk && bkNk_(x) === nk); });
+}
+/** This agent's mail goes to them: every agent when live, the pilot's in preview. */
+function agentLiveFor_(a) { var m = agentMode_(); return m === 'live' || (m === 'preview' && agentInPilot_(a)); }
 
 function agSlug_(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
 
@@ -13891,7 +13914,7 @@ function agWrite_(a, day, kind, rows) {
 function agSend_(a, subject, html, ccList) {
   var mode = agentMode_();
   if (mode === 'off') return false;
-  if (mode === 'preview') {
+  if (mode === 'preview' && !agentLiveFor_(a)) {
     var mgr = managerEmails_();
     if (!mgr.length) return false;
     mailSend_({ to: mgr.join(','), subject: '[Preview] ' + subject,
@@ -13906,6 +13929,11 @@ function agSend_(a, subject, html, ccList) {
   return true;
 }
 
+/** Under an agent's button (27 Oct 2026): a phone signed in to two Google accounts will not open Google's page. */
+function agOpenHint_() {
+  return '<div style="margin-top:8px;font-size:12px;line-height:1.5;color:' + MAIL.muted + '">If the button says <i>Sorry, unable to open the file</i>, your phone is signed in to more than one Google account: ' +
+    'press and hold the button, copy the link, and open it in a private (incognito) window. It opens there every time.</div>';
+}
 function agLine_(inner) { return '<div style="font-size:12.5px;line-height:1.45;padding:5px 0;border-top:1px solid ' + MAIL.line + '">' + inner + '</div>'; }
 function agCard_(color, inner) { return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + color + ';border-radius:10px;padding:8px 15px">' + inner + '</div>'; }
 
@@ -13923,7 +13951,7 @@ function agentMorningMail_(a, day, data, cache) {
   var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late }; });
   try { bigPut_('ag_items_' + a.key + '_' + day, items); } catch (e) {}
 
-  var btn = replyButton_(replyUrl_(a.key, day, 'ag'), 'Project my day and comment', 'One page: what you expect to do today, in numbers, and a comment on anything below. Comments go on Chatter. No sign-in.');
+  var btn = replyButton_(replyUrl_(a.key, day, 'ag'), 'Project my day and comment', 'One page: what you expect to do today, in numbers, and a comment on anything below. Comments go on Chatter. No sign-in.') + agOpenHint_();
   var mgrNotes = []; try { mgrNotes = umNotesUnsent_(a.agentName || a.name, day); } catch (e) {}
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. Here is what the branch is working on for your clients today, what your book says, and where your fact finds stand. ' +
@@ -13975,7 +14003,7 @@ function agentMorningMail_(a, day, data, cache) {
   var sentOk = agSend_(a, 'Your day · ' + a.name + ' · ' + shortDate_(day) + ' · ' + open.length + ' being worked for you' + (book ? ', ' + book.urgent.length + ' premiums 60+ days' : ''),
     shell_('Good morning · your day', a.name + ' · ' + prettyDate_(day), body), []);
   // A preview goes to Mr Rampersad, not the agent: the notes wait for the agent's own mail.
-  if (sentOk && mgrNotes.length && agentMode_() === 'live') { try { umNotesMarkSent_(a.agentName || a.name, day); } catch (e) {} }
+  if (sentOk && mgrNotes.length && agentLiveFor_(a)) { try { umNotesMarkSent_(a.agentName || a.name, day); } catch (e) {} }
   return sentOk;
 }
 
@@ -13986,7 +14014,7 @@ function agentMiddayMail_(a, day, data) {
   var closed = data.closed[a.key] || [], open = data.open[a.key] || [];
   var late = open.filter(function (t) { return t.late; }).length;
   var btn = replyButton_(replyUrl_(a.key, day, 'ag'), planned ? 'Update my projection' : 'Project my day now',
-    planned ? 'Your projection from this morning, to change if the day has moved. Comments go on Chatter. No sign-in.' : 'No projection is in yet. One page, no sign-in.');
+    planned ? 'Your projection from this morning, to change if the day has moved. Comments go on Chatter. No sign-in.' : 'No projection is in yet. One page, no sign-in.') + agOpenHint_();
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is midday. Here is your progress so far' +
       (planned ? ', against what you projected this morning' : ': <b style="color:' + MAIL.red + '">no projection was set this morning</b>') + '. At 5:30 you close the day off and it balances against your projection.</div>' +
@@ -14010,7 +14038,7 @@ function agentMiddayMail_(a, day, data) {
 function agentEveningMail_(a, day, data) {
   var first = String(a.name).split(' ')[0], plan = agRows_(a.key, day, 'plan'), planned = Object.keys(plan).length;
   var closed = data.closed[a.key] || [], open = data.open[a.key] || [];
-  var btn = replyButton_(replyUrl_(a.key, day, 'agc'), 'Close off my day', 'One page: what you did, in numbers, balanced against what you projected. No answer reads as nothing done today.');
+  var btn = replyButton_(replyUrl_(a.key, day, 'agc'), 'Close off my day', 'One page: what you did, in numbers, balanced against what you projected. No answer reads as nothing done today.') + agOpenHint_();
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is half past five. Close off your day' +
       (planned ? ': give what was done, and it balances against what you projected this morning' : ' (no projection was set this morning)') + '. It goes to your manager and sales support.</div>' +
@@ -14036,12 +14064,15 @@ function agentTick_(day, mins) {
            : (mins >= AGENT_PM_AT && mins <= 19 * 60 ? 'pm' : ''));
   if (!kind) return [];
   var people = agentPeople_(), keys = Object.keys(people).sort();
-  var pre = mode === 'preview' ? 'agp_' : 'ag_';   // a preview's mark never stops the agent's own mail once live
-  var done = function (k) { return props.getProperty(pre + kind + '_' + k + '_' + day); };
+  // A preview's mark (agp_) never stops the agent's own mail (ag_) once live; the pilot's mail is live (27 Oct 2026).
+  var preOf = function (k) { return agentLiveFor_(people[k]) ? 'ag_' : 'agp_'; };
+  var done = function (k) { return props.getProperty(preOf(k) + kind + '_' + k + '_' + day); };
+  var samples = 0;
   if (mode === 'preview') {
+    var pilot = keys.filter(function (k) { return agentLiveFor_(people[k]); });
     var n = Number(props.getProperty('ag_prev_' + kind + '_' + day) || 0);
-    if (n >= AGENT_PREVIEW_MAX) return [];
-    keys = keys.slice(0, AGENT_PREVIEW_MAX);
+    var rest = n >= AGENT_PREVIEW_MAX ? [] : keys.filter(function (k) { return pilot.indexOf(k) < 0; }).slice(0, AGENT_PREVIEW_MAX - n);
+    keys = pilot.concat(rest);
   }
   var batch = keys.filter(function (k) { return !done(k); }).slice(0, AGENT_PER_RUN).map(function (k) { return people[k]; });
   if (!batch.length) return [];
@@ -14049,13 +14080,14 @@ function agentTick_(day, mins) {
   var cache = null;
   if (kind === 'am') { try { cache = typeof iLoadCache_ === 'function' ? iLoadCache_() : null; } catch (e) {} }
   batch.forEach(function (a) {
-    props.setProperty(pre + kind + '_' + a.key + '_' + day, hhmm_(new Date()));
+    var live = agentLiveFor_(a); if (!live) samples++;
+    props.setProperty((live ? 'ag_' : 'agp_') + kind + '_' + a.key + '_' + day, hhmm_(new Date()));
     try {
       var ok = kind === 'am' ? agentMorningMail_(a, day, data, cache) : kind === 'md' ? agentMiddayMail_(a, day, data) : agentEveningMail_(a, day, data);
       if (ok) out.push(a.name + ' (agent ' + kind + ')');
     } catch (e) { out.push(a.name + ' agent mail FAILED: ' + (e && e.message)); }
   });
-  if (mode === 'preview') props.setProperty('ag_prev_' + kind + '_' + day, String(Number(props.getProperty('ag_prev_' + kind + '_' + day) || 0) + batch.length));
+  if (mode === 'preview' && samples) props.setProperty('ag_prev_' + kind + '_' + day, String(Number(props.getProperty('ag_prev_' + kind + '_' + day) || 0) + samples));
   return out;
 }
 
@@ -14173,7 +14205,7 @@ function agCopy_(a, day, eve, rows, comments) {
 }
 
 function agSendCopy_(to, cc, subject, html, a) {
-  if (agentMode_() === 'preview') {
+  if (agentMode_() === 'preview' && !agentLiveFor_(a)) {
     mailSend_({ to: (managerEmails_() || []).join(','), subject: '[Preview] ' + subject,
       htmlBody: '<div style="background:#EEF9FD;border:1px solid #0EA5C9;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">Preview. In live mode this goes to ' +
         esc_(to.concat(cc).join(', ')) + '.</div>' + html });
