@@ -1,10 +1,21 @@
 {
- "voice": "en-US-AndrewNeural",
- "rate": "-12%",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
  "check": true,
  "films": {
-  "wallpend02": [
-   "The big number is every policy that still has something outstanding."
+  "adA": [
+   "Good at what you do, but stuck where you are?",
+   "Already contracted? Then you know the fear: move, and you start from zero. Not here. Clients matched to you, household by household. Leads that land on your own board.",
+   "Your manager is a coach, not a clock. And nobody will know you asked.",
+   "Five seats this year. Every one gets the full build. Thirty-two years in Trinidad.",
+   "One confidential conversation. Twenty minutes, this week. Agent M G T dot com."
+  ],
+  "adB": [
+   "Want a career with no ceiling, but afraid of the first year?",
+   "New to this? Then you know the fear: months with nothing coming in. Not here. Leads come to you, from people who asked to be called. Your day is set every morning. And you're trained before you're contracted.",
+   "Your manager is a coach, not a clock. Nobody here is left to figure it out alone.",
+   "Five seats this year. Every one gets the full build. Thirty-two years in Trinidad.",
+   "One confidential conversation. Twenty minutes, this week. Agent M G T dot com."
   ]
  }
 }
