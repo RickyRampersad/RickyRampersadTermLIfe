@@ -1,32 +1,7 @@
 {
- "tts/out/wallpend/01.mp3": [
-  "en",
-  0.983,
-  "This is the Branch Pending Wall Policy by Policy from today's Pending Report."
- ],
- "tts/out/wallpend/03.mp3": [
-  "en",
-  0.997,
-  "The bar under it is where underwriting has them. Approved ones need only the last items in, so they come first."
- ],
- "tts/out/wallpend/04.mp3": [
-  "en",
-  0.997,
-  "One item from issue, ready with only the premium left and money already paid that we cannot apply yet."
- ],
- "tts/out/wallpend/05.mp3": [
+ "tts/out/wallpend02/01.mp3": [
   "en",
   0.996,
-  "on the right, every agent, and what is on their desk, documents, medicals, and first premiums."
- ],
- "tts/out/wallpend/06.mp3": [
-  "en",
-  0.996,
-  "then the Salesforce tasks on those same policies. Open, overdo, untouched for a week, and done today."
- ],
- "tts/out/wallpend/07.mp3": [
-  "en",
-  0.998,
-  "The last column is the one to fix. Policies nobody has ever raised a task on. No client is named here."
+  "The big number is every policy that still has something outstanding."
  ]
 }
