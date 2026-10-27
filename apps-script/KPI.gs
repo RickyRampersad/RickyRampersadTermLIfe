@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-27d';
+var SCRIPT_VERSION = '2026-10-27e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -15857,6 +15857,7 @@ function workdayModel_(sid, day) {
   } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   // His bar is his leadership day (23 Oct 2026): what waited on him, cleared.
+  if (sid === 'ricky' || sid === 'kamla') { try { m.att = workdayAtt_(sid, day); } catch (e) {} }
   if (sid === 'ricky') return workdayLeadModel_(m, day, now, base);
   var pr = workdayProgress_(sid, day, now);
   m.progress = {}; Object.keys(pr).forEach(function (k) { if (k.charAt(0) !== '_') m.progress[k] = pr[k]; });
@@ -15965,6 +15966,10 @@ function wdAuth_(p) {
   if (ops) {
     var v = wdOpsWho_(ops);
     if (!v) return { error: 'Your branch app sign-in has ended. Sign in again at rickyrampersadbranch.com/app.' };
+    if (String(v.role || '').trim().toLowerCase() === 'agent') {   // the agents' My day (27 Oct 2026)
+      var ag = wdOpsAgent_(v);
+      return ag ? { agent: ag, ops: true } : { error: 'We could not find ' + (v.name || 'you') + ' on the branch\'s list of agents. Ask Mrs Dookran or Mr Rampersad.' };
+    }
     var sid = wdOpsSid_(v);
     if (!sid) return { error: 'My day is for the branch staff and managers' + (v.name ? ': ' + v.name + ' is not on the tracker\'s register' : '') + '. Ask Mr Rampersad.' };
     return { sid: sid, ops: true };
@@ -15976,15 +15981,96 @@ function wdAuth_(p) {
 function workdayGet_(p) {
   var a = wdAuth_(p);
   if (a.error) return { ok: false, error: a.error };
+  if (a.agent) return agentDayModel_(a.agent, todayISO_());
   return workdayModel_(a.sid, todayISO_());
+}
+
+/* ── The register on My day (27 October 2026) ──
+ *  Ricky, 7:44am: "seeing liz was also absent yesterday and sasha was absent yesterday, so the attendance log must be
+ *  visible". Monday's morning e-mails failed (storage full), and the clock marks a desk absent only after its e-mail has
+ *  gone, so Liz and Sasha had no line at all. His and Kamla's My day carry the last five working days, desk by desk: in
+ *  (and how late), absent with the reason and who said so, or NO RECORD for a day gone by with nothing written. Either can
+ *  mark a desk absent with a reason (Sick, On leave, or their own words) on a day with no sign-in; Kamla for the desks
+ *  that report to her, he for every desk (markAbsent_). */
+var WD_ATT = { DAYS: 5, BACK: 7 };
+function workdayAtt_(sid, day) {
+  var rows = hrRows_(ATT, true) || [], me = { staffId: sid, manager: sid === 'ricky' };
+  var days = lastWorkdays_(day, WD_ATT.DAYS - 1).concat([day]).filter(function (d) { return !branchClosed_(d); });
+  var nowM = minutesOf_(hhmm_(new Date()));
+  var desks = DAY_MAIL_DESKS.filter(function (d) { return SCHEDULE[d]; }).map(function (d) {
+    return { sid: d, first: String(nameFor_(d)).split(' ')[0], mark: sid === 'ricky' || isLeadOf_(me, d), cells: days.map(function (dd) {
+      var a = attRow_(rows, dd, d), r = a ? a.row : null, t = r ? timeStr_(r.FirstSignIn) : '';
+      if (t) { var late = lateBy_(d, t, dd); return { st: late ? 'late' : 'in', t: twelve_(t), late: late }; }
+      if (r && String(r.Status || '').toLowerCase() === 'absent') {
+        var by = String(r.MarkedBy || ''), auto = by === 'tracker';
+        return { st: 'absent', why: auto ? 'No sign-in' : String(r.Reason || 'Absent'), by: auto ? '' : String(nameFor_(by) || by).split(' ')[0], auto: auto };
+      }
+      if (dd === day) { var sp = parseSpan_(scheduleFor_(d, dd).hours || ''); if (sp && nowM < sp.start + ABSENT_AFTER_MIN) return { st: 'wait' }; return { st: 'notin' }; }
+      return { st: 'none' };
+    }) };
+  });
+  return { days: days.map(function (d) { var x = new Date(d + 'T12:00:00Z'); return { d: d, l: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][x.getUTCDay()] + ' ' + x.getUTCDate() }; }), desks: desks };
+}
+/** My day's Mark absent: { who, date, why }. Only a day with no sign-in, in the last week, not ahead. */
+function workdayMarkAbsent_(sid, p, day) {
+  var who = String(p.who || '').trim(), d = isoDay_(p.date) || '', why = String(p.why || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (DAY_MAIL_DESKS.indexOf(who) < 0) return { ok: false, error: 'That desk is not on the register.' };
+  if (!d || d > day || d < shiftDays_(day, -WD_ATT.BACK)) return { ok: false, error: 'Mark a day in the last week, not ahead.' };
+  if (!why) return { ok: false, error: 'Say why: Sick, On leave, or what it is.' };
+  var a = attRow_(hrRows_(ATT, true) || [], d, who);
+  if (a && timeStr_(a.row.FirstSignIn)) return { ok: false, error: nameFor_(who).split(' ')[0] + ' signed in that day.' };
+  var r = markAbsent_({ staffId: who, date: d, reason: why }, { staffId: sid, manager: sid === 'ricky' });
+  if (!r.ok) return r;
+  try { runlog_('absent ' + who + ' ' + d + ' (' + why + ') by ' + sid + ' on My day'); } catch (e) {}
+  return null;
+}
+
+/* ── The agents' My day (27 October 2026) ──
+ *  Ricky, 7:40am: "if they dont get the trigger point them to the branch app log in link". An agent signed in to the
+ *  Branch App opens My day and gets the same two pages the e-mails carry: Project my day (and comment) and Close off my
+ *  day, with today's list made then if the 5:30 e-mail never went. For the agents the day is mailed to (the pilot, or
+ *  every agent when AGENT_DAY = live); anyone else is told it is coming. Found by the Branch App's e-mail, then agent
+ *  number, then name. */
+function wdOpsAgent_(v) {
+  var people = {}; try { people = agentPeople_() || {}; } catch (e) { return null; }
+  var keys = Object.keys(people), norm = function (x) { return String(x || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+  var email = String(v.email || '').trim().toLowerCase(), no = norm(v.agentNo), nm = agSlug_(v.name), hit = null;
+  if (email) keys.forEach(function (k) { if (!hit && String(people[k].email || '').toLowerCase() === email) hit = people[k]; });
+  if (!hit && no) keys.forEach(function (k) { var a = people[k]; if (!hit && (norm(a.agentId) === no || norm(a.code) === no)) hit = a; });
+  if (!hit && nm) keys.forEach(function (k) { var a = people[k]; if (!hit && (agSlug_(a.name) === nm || agSlug_(a.agentName) === nm)) hit = a; });
+  return hit;
+}
+function agentDayModel_(a, day) {
+  var first = String(a.name || '').split(' ')[0], nowM = minutesOf_(hhmm_(new Date()));
+  var m = { ok: true, v: SCRIPT_VERSION, agent: true, first: first, name: a.name, day: day, date: prettyDate_(day), at: twelve_(hhmm_(new Date())),
+            on: agentLiveFor_(a), film: 'https://rickyrampersadbranch.com/agentworkday/' };
+  if (!m.on) return m;
+  var props = PropertiesService.getScriptProperties(), mark = function (k) { return props.getProperty('ag_' + k + '_' + a.key + '_' + day) || ''; };
+  // No 5:30 e-mail, no list: make today's now, as the e-mail would have, so the page has the clients on it.
+  var items = null; try { items = bigGet_('ag_items_' + a.key + '_' + day, null); } catch (e) {}
+  if (!items) {
+    try { var data = agentBatchData_([a], day), open = (data.open[a.key] || []).slice().sort(function (x, y) { return (x.late === y.late ? 0 : x.late ? -1 : 1) || String(x.due).localeCompare(String(y.due)); });
+      bigPut_('ag_items_' + a.key + '_' + day, open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late }; })); } catch (e) {}
+  }
+  var plan = {}, close = {}; try { plan = agRows_(a.key, day, 'plan'); close = agRows_(a.key, day, 'close'); } catch (e) {}
+  m.project = { url: replyUrl_(a.key, day, 'ag'), done: Object.keys(plan).length > 0, by: twelve_(mmText_(AGENT_ABSENT_AT)) };
+  m.close = { url: replyUrl_(a.key, day, 'agc'), done: Object.keys(close).length > 0, at: twelve_(mmText_(AGENT_PM_AT)), open: nowM >= AGENT_MD_AT };
+  m.mailed = { am: mark('am') ? twelve_(mark('am')) : '', pm: mark('pm') ? twelve_(mark('pm')) : '' };
+  return m;
 }
 /** POST with wd=: check in there and then, the same register as the day page; then the day again. */
 function workdayPost_(p) {
   var a = wdAuth_(p), day = todayISO_();
   if (a.error) return { ok: false, error: a.error };
+  if (a.agent) return { ok: false, error: 'Nothing to do here: open Project my day.' };
   var sid = a.sid;
   var person = workdayPerson_(sid); if (!person) return { ok: false, error: 'That desk is no longer on the register.' };
   if (String(p.act || '') === 'post') { if (sid !== 'ricky') return { ok: false, error: 'Nothing to do.' }; return workdayPostNote_(p, day); }
+  if (String(p.act || '') === 'absent') {
+    if (sid !== 'ricky' && sid !== 'kamla') return { ok: false, error: 'Nothing to do.' };
+    var err = workdayMarkAbsent_(sid, p, day); if (err) return err;
+    var mm = workdayModel_(sid, day); mm.marked = { who: String(p.who), date: String(p.date), why: String(p.why || '') }; return mm;
+  }
   if (String(p.act || '') !== 'checkin') return { ok: false, error: 'Nothing to do.' };
   var at = '', first = false;
   if (sid !== 'ricky' && UM_DESKS.indexOf(sid) < 0) { var ci = sdCheckin_(person, day); at = ci.at; first = !!ci.first; }
