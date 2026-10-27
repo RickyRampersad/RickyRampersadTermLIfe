@@ -357,8 +357,7 @@
         <h2><span class="step">4</span>Confirm</h2>
         <label for="notes">Notes for the branch (optional)</label>
         <textarea id="notes" maxlength="500" placeholder="e.g. Client will drop the ID tomorrow"></textarea>
-        <label class="chk"><input type="checkbox" id="declare"><span><b>Declaration 1.</b> <span id="declareText"></span></span></label>
-        <label class="chk"><input type="checkbox" id="declare2"><span><b>Declaration 2.</b> <span id="declareText2"></span></span></label>
+        <label class="chk"><input type="checkbox" id="declare"><span id="declareText"></span></label>
         <div class="bagnote" id="bagHint"></div>
         <div class="err" id="subErr" role="alert" hidden></div>
         <button class="btn gold block" type="submit" id="submitBtn" style="margin-top:14px">Log it</button>
@@ -627,7 +626,7 @@
     $('typeHint').textContent = contract
       ? 'A contract you are collecting from the branch to deliver. The 20 days under s.155(6) start today; record the handover in the Delivery Book.'
       : 'Documents you are handing to the branch for Guardian Life. They go the day the branch receives them.';
-    $('declareText').textContent = S.cfg.declareDocs; $('declareText2').textContent = S.cfg.declareContract;
+    $('declareText').textContent = contract ? S.cfg.declareContract : S.cfg.declareDocs;
     $('submitBtn').textContent = contract ? 'Log the contract' : 'Log it';
     S.items = []; renderItems(); fillContractPol(); gateSteps();
   }
@@ -748,7 +747,7 @@
     $('c4').classList.toggle('dim', !(ok && docsOk));
   }
   $('tName').addEventListener('input', gateSteps);
-  ['declare', 'declare2'].forEach(function (id) { $(id).addEventListener('change', function () { showErr($('subErr'), ''); }); });
+  $('declare').addEventListener('change', function () { showErr($('subErr'), ''); });
 
   /* ── finding the client ─────────────────────────────────── */
   function find() {
@@ -808,13 +807,13 @@
       type: S.type, agentNo: S.cfg.agent ? '' : $('agentSel').value,
       client: S.client ? S.client.name : $('tName').value.trim(), contactId: S.client ? S.client.id : '',
       clientEmail: S.client ? S.client.email : $('tEmail').value.trim(),
-      items: items, notes: $('notes').value.trim(), declared: $('declare').checked && $('declare2').checked, declared1: $('declare').checked, declared2: $('declare2').checked,
+      items: items, notes: $('notes').value.trim(), declared: $('declare').checked,
     };
   }
   $('logForm').addEventListener('submit', function (e) { e.preventDefault(); submit(false); });
   function submit(confirmDup) {
     showErr($('subErr'), '');
-    if (!$('declare').checked || !$('declare2').checked) return showErr($('subErr'), 'Tick Declaration 1 and Declaration 2 first.');
+    if (!$('declare').checked) return showErr($('subErr'), 'Tick the declaration first.');
     if (!S.cfg.agent && !$('agentSel').value) return showErr($('subErr'), 'Choose the agent these documents are from (step 1).');
     busy($('submitBtn'), true, 'Logging…');
     api('lb.submit', { entry: entry(), confirmDuplicates: confirmDup, confirmMissing: confirmDup }).then(function (r) {
@@ -864,7 +863,7 @@
     $('logForm').hidden = false; $('result').hidden = true;
     S.items = []; S.client = null; S.typed = false; S.policies = [];
     $('q').value = ''; $('results').innerHTML = ''; $('picked').hidden = true; $('typed').hidden = true;
-    $('tName').value = ''; $('tEmail').value = ''; $('notes').value = ''; $('declare').checked = false; $('declare2').checked = false;
+    $('tName').value = ''; $('tEmail').value = ''; $('notes').value = ''; $('declare').checked = false;
     $('deptFilter').value = ''; fillDocSel();
     setType(S.cfg.types[0]);
   }

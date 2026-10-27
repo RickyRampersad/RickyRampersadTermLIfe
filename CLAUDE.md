@@ -5775,11 +5775,7 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   (`Delivery.gs`) is older than the repository's and has no `dbTestCc_`, so every Log It in test mode failed with
   "dbTestCc_ is not defined". LogBook.gs must not call a `db*` function the live `Delivery.gs` lacks; check the live
   file before relying on a new one.
-- **Declaration 1 and Declaration 2, on every line** (27 October 2026: "Add to the form Declaration 1 and Declaration 2
-  these were there before and agents not seeing this"; he chose both always). Step 4 shows both, whatever the type:
-  Declaration 1 is `LB.DECLARE_DOCS`, Declaration 2 `LB.DECLARE_CONTRACT` (s.155(6)). Nothing logs until both are
-  ticked, on the page and in `lbValidate_` (`declared1`, `declared2`); the row's Declaration cell carries both texts. A
-  page from before sends `declared` alone and is taken as before.
+- **Declaration 1 and Declaration 2 are documents in the list** (27 October 2026: "Add to the form Declaration 1 and Declaration 2 these were there before"). They are `LB_DOCS` entries routed to Records Management, as on the old form. The same day two required tick boxes of that name were added to step 4 by mistake and taken off at his word; step 4 keeps its one declaration. `lbValidate_` still checks `declared1`/`declared2` if a page ever sends them.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).

@@ -125,13 +125,8 @@ const server = http.createServer((req, res) => {
   ok('the document is chosen first and the department is routed for it', /Routed automatically/.test(await page.textContent('.item .sugg')) &&
      /Routed to/.test(await page.textContent('.item')));
   await page.click('#submitBtn');
-  ok('no declaration, refused', /Declaration 1 and Declaration 2/.test(await page.textContent('#subErr')));
-  ok('both declarations are on the form, with their words', (await page.isVisible('#declare')) && (await page.isVisible('#declare2')) &&
-     /documents I am handing/.test(await page.textContent('#declareText')) && /155\(6\)/.test(await page.textContent('#declareText2')));
+  ok('no declaration, refused', /declaration/.test(await page.textContent('#subErr')));
   await page.check('#declare');
-  await page.click('#submitBtn');
-  ok('one declaration alone, refused', /Declaration 1 and Declaration 2/.test(await page.textContent('#subErr')));
-  await page.check('#declare2');
   const wide = await page.evaluate(() => document.documentElement.scrollWidth);
   ok('nothing runs off the phone', wide <= 390, wide);
   if (SHOTS) await page.screenshot({ path: SHOTS + '/lb-2-form.png', fullPage: true });
@@ -153,7 +148,7 @@ const server = http.createServer((req, res) => {
   await page.waitForSelector('#results .client'); await page.click('#results .client');
   await page.waitForFunction(() => /policy on record/.test((document.getElementById('polLine') || {}).textContent || ''));
   await page.selectOption('#docSel', 'ACH Form');
-  await page.check('#declare'); await page.check('#declare2');
+  await page.check('#declare');
   await page.click('#submitBtn');
   await page.waitForSelector('[data-addmiss]');
   const asks = await page.$$eval('[data-addmiss]', b => b.map(x => x.getAttribute('data-addmiss')));
