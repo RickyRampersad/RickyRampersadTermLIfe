@@ -4346,20 +4346,38 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `day/day-test.js` (46 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
   scratchpad cover it. On those tabs one staff member would have been asked about five groups and another about one.
 
-- **A group can be put on hold from the weekly letter** (27 October 2026: a group's bills were being tested, its letter
-  approved on 23 October was held at the Monday run, and the 10:30 run then chased its account owner and opened a task
-  in her name: "you need to unapprove this as you are testing the billings"). Name the group in the **`GCM_HOLD_GROUPS`**
-  Script property (by the start of its name, comma-separated, any case). `gcmOnHold_` then makes it never ready
-  (`gcmGroupStats_` gives `hold` and the reason), so:
-  - no approval, no Send now, and a letter queued before the hold waits at the run;
-  - no welcome and no star reminder;
-  - the 10:30 run lists it apart (`hold` in `gcmChaseList_`): no staff e-mail, no Salesforce task, and the Monday team
-    letter leaves it out;
-  - the branch manager's daily summary names it under "On hold";
-  - "To act on" does not count it as a set-up job.
+- **Group letters can be put on hold, every group or one, from the staff page** (27 October 2026: a group's bills were
+  being tested, and its letter, approved on 23 October, was held at the Monday run. The 10:30 run then chased its
+  account owner and opened a task in her name: "you need to unapprove this as you are testing the billings". First
+  built as a Script property, then: "should you not have instead of the script properties the ability to hold all
+  groups").
+  - **Who and where.** The branch manager and the deputy (the BMA included) press **Hold every group…** on the Team
+    dashboard, or **Put on hold** on a group's row, and say why. One-tap reasons are offered. The hold, who set it,
+    when and why are kept in the `GCM_HOLD` Script property, written by `gcmHold_` (`gcm.hold`, so Service.gs needs no
+    paste), with the last 40 holds and lifts. Everyone sees it:
+    - every group on hold: one amber banner first, and the note that the letters go by themselves is left out;
+    - some groups on hold: a slate list with a Lift button on each;
+    - each held row: slate, "On hold" and the reason, and an "On hold" filter.
 
-  Its billing is untouched: the billing door, the bill checks and the Salesforce writes do not read it. Take the group
-  out of the property to put it back. `hold27/hold-test.js` in the scratchpad covers it (16 checks).
+    Staff cannot change it, and the backend refuses them. **Lift the hold** puts it back. Lifting every group leaves
+    the groups held one by one on hold. The older `GCM_HOLD_GROUPS` property (names, comma-separated) still holds a
+    group, and lifting that group from the page takes it out of the property.
+  - **What a hold does.** `gcmOnHold_` makes the group never ready (`gcmGroupStats_` gives `hold` and the reason), so:
+    - no approval, no Send now, and no letter sent again (`gcmResend_`);
+    - a letter approved before the hold waits: it goes on Monday only if the hold is lifted before 10:00, otherwise it
+      is held at the run and approved again after;
+    - no welcome and no star reminder;
+    - the 10:30 run lists it apart (`hold` in `gcmChaseList_`): no staff e-mail, no Salesforce task, and the Monday
+      team letter leaves it out;
+    - "To act on" does not count it as a set-up job;
+    - the branch manager's daily summary names each held group with its reason, or says in one line that every group
+      is on hold;
+    - `gcm.ping` answers `hold` (`all`, and how many groups).
+
+    Bills are not part of it: the billing door, the bill checks, the Salesforce writes and the billing day run as
+    before (the bills have their own test mode and approval).
+  - **Tests** in the scratchpad: `hold27/hold-test.js` (20 checks) and `hold27/page.js` (24, Playwright: the branch
+    manager, staff and a phone).
 - **Applications and increases still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
   also see at the top … applications that remain pending … the name, days outstanding, who it's assigned, what's
   outstanding … pension groups, health groups and life groups … and who was last liaised with").

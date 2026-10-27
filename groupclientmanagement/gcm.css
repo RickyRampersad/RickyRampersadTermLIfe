@@ -375,3 +375,13 @@ h2{font-size:21px}
 .bdep.wide{grid-template-columns:1fr 2fr .8fr 1.2fr 1.4fr}
 .bform .bad{color:var(--badText)}
 @media (max-width:640px){.bdep,.bdep.ben,.bdep.wide{grid-template-columns:1fr 1fr}.bform .fprev iframe{height:460px}.bform .fsw{grid-template-columns:1fr}}
+
+/* on hold (27 October 2026): a slate mark and a quiet band, so a held group reads as paused, not as a fault */
+:root{--holdMark:#5A687D;--holdBg:#EEF1F5;--holdText:#334155}
+.chip.hold{background:var(--holdBg);border-color:transparent;color:var(--holdText)}.chip.hold i{background:var(--holdMark)}
+.acc.r-hold{border-left-color:var(--holdMark);background:linear-gradient(90deg,var(--holdBg),transparent 40%)}.card.r-hold{border-left-color:var(--holdMark)}
+.hold{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:12px 0;padding:12px 14px;border-radius:10px;border:1px solid #D5DCE6;border-left:5px solid var(--holdMark);background:var(--holdBg);color:var(--holdText);font-size:15px}
+.hold > div{flex:1 1 22rem;min-width:0}.hold .small{margin-top:4px}.hold ul{margin:6px 0 0;padding-left:18px}.hold li{margin:4px 0}
+.hold.on{border-color:#F3C58C;border-left-color:var(--warnMark);background:#FFF6E6;color:#5A3A00}
+.hold.idle{background:transparent;border-style:dashed;border-left-style:solid}
+
