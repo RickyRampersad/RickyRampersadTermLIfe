@@ -5804,6 +5804,15 @@ guide you. In your session review notes on the step back in place from all memor
   `#i<id>`); those pages show `chatterNotes_` (latest two, the whole history a
   tap away) and the `SPEAK_PH` box; the command centre drops "Open in
   Salesforce" for them. Ricky and the staff keep their Salesforce links.
+- **A manager closes a task for the agent** (`umPostOrClose_`, 27 October 2026:
+  "the managers must be able to close off on behalf of the agents as it's
+  appearing on their dash"). Every task on the Unit Manager's page (`f=um` and
+  `f=umeve`) has "Close this task for <agent>". His comment is the closing note:
+  it is posted on Chatter first, headed "closed for <agent>", then the task is
+  Completed and logged (`taskChangeLog_`). A close is refused, and the page says
+  why, when there is no note, the note is a single word (`tcardThin_`), or the
+  client is still waiting for an agent (`tcardWantsAgent_`) and the note does not
+  name one. Pinned in `tests/test-um-close.js`.
 - **Day items in pieces** (`bigPut_`/`bigGet_`): the unit, agent, plan and
   fact-find lists were cut at 8,900 characters, and cut JSON read back as
   nothing. They are kept in 8,000-character pieces now.

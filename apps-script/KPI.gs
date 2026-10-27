@@ -9199,12 +9199,14 @@ function umItemHtml_(it, chat, base, noSf, opened, draft) {
     (it.due ? ' <span class="br2">· ' + (it.late ? 'overdue since ' : 'due ') + esc_(shortDate_(it.due)) + '</span>' : '') +
     (base && !noSf ? ' · <a href="' + esc_(base + it.id) + '" target="_blank">open</a>' : '') + '</div>' +
     (opened ? '<div class="br2" style="margin-top:6px;font-weight:800">History</div>' : '') + chatterNotes_(chat, it.id, opened) + draftBox_(it.id, draft, 'c_' + it.id) +
-    '<textarea name="c_' + esc_(it.id) + '" rows="' + (opened ? 3 : 2) + '" placeholder="' + esc_(SPEAK_PH) + '"></textarea>' + umAiButton_(it.id) + '</div>';
+    '<textarea name="c_' + esc_(it.id) + '" rows="' + (opened ? 3 : 2) + '" placeholder="' + esc_(SPEAK_PH) + '"></textarea>' +
+    '<label class="t" style="margin-top:6px"><input type="checkbox" name="x_' + esc_(it.id) + '" value="1"><span>Close this task for ' + esc_(String(it.a || 'the agent').split(' ')[0]) +
+    ' <span class="br2">· your comment above is the closing note</span></span></label>' + umAiButton_(it.id) + '</div>';
 }
 function umOpenedCard_(items, focus, chat, base, noSf, drafts) {
   var it = focus ? items.filter(function (x) { return String(x.id) === String(focus); })[0] : null;
   return it ? '<div class="card" style="border:2px solid #E0A526"><div class="bh">The task you opened</div>' + umItemHtml_(it, chat, base, noSf, true, (drafts || {})[it.id]) +
-    '<button type="submit" name="only" value="1">Post my comment</button></div>' : '';
+    '<button type="submit" name="only" value="1">Post my comment (and close, if ticked)</button></div>' : '';
 }
 
 /* Branch Intelligence writes the reply (Ricky, 21 Oct 2026 9:14am: "in my day, how do you build the Intelligence response
@@ -9555,6 +9557,38 @@ function umReplyPage_(person, day, error, opt) {
     '<button type="submit">Save my comments and my plan</button></form>' + umAiScript_(sid, day));
 }
 
+/* A manager closes a task for the agent (Ricky, 27 Oct 2026: "the managers must be able to close off on behalf of the
+   agents as it's appearing on their dash. Akash told me things on his dash, he wants to close off"). Under every task on
+   his page, "Close this task for <agent>" makes his comment the closing note: the note goes on Chatter first, headed
+   as his and "closed for <agent>", then the task is Completed and the change is logged. The rules of every other close
+   stand: a note that says what was done, and never while the client is waiting for an agent. */
+function umPostOrClose_(sid, day, items, p, at) {
+  var name = nameFor_(sid), done = [];
+  var closing = items.filter(function (it) { return String(p['x_' + it.id] || '') === '1'; }), chat = {};
+  if (closing.length) { try { chat = cmdChatter_(closing.map(function (it) { return it.id; })) || {}; } catch (e) {} }
+  items.forEach(function (it) {
+    var txt = String(p['c_' + it.id] || '').trim(), close = String(p['x_' + it.id] || '') === '1';
+    if (!txt && !close) return;
+    var label = (it.a ? it.a + ' · ' : '') + it.s, agent = String(it.a || 'the agent');
+    if (close && !txt) { done.push({ s: label, txt: '', res: 'NOT CLOSED: write what was done in the box first; it becomes the closing note.' }); return; }
+    if (close && tcardThin_(txt)) { done.push({ s: label, txt: txt, res: 'NOT CLOSED: too short to close on. Say what was done, who was spoken to, and what happens next.' }); return; }
+    if (close && tcardWantsAgent_({ s: it.s }, chat[it.id] || []) && !tcardAgentGiven_(txt)) {
+      done.push({ s: label, txt: txt, res: 'NOT CLOSED: the client asked for an agent. Say in the note which agent is assigned, then close.' }); return; }
+    var head = unitRole_(sid) + ' · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at) + (close ? ' · closed for ' + agent : '');
+    try { mgrPost_({ ParentId: it.id, Body: head + '\n\n' + txt }, sid); }
+    catch (e) { done.push({ s: label, txt: txt, res: 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140) }); return; }
+    var res = 'posted', closed = false;
+    if (close) {
+      try {
+        sfkPatchTask_(it.id, { Status: 'Completed' }); res = 'closed for ' + agent.split(' ')[0]; closed = true;
+        try { taskChangeLog_({ TaskId: it.id, Subject: it.s, Field: 'Status', Before: 'open', After: 'Completed', Why: txt, By: name + ' for ' + agent, Result: 'OK' }); } catch (e) {}
+      } catch (e) { res = 'NOT CLOSED (your note is posted): ' + String(e && e.message || e).slice(0, 100); }
+    }
+    done.push({ s: label, txt: txt, res: res, closed: closed });
+  });
+  return done;
+}
+
 function umPostsAdd_(sid, day, n) {
   if (!n) return;
   try { var props = PropertiesService.getScriptProperties(), k = 'um_posts_' + sid + '_' + day; props.setProperty(k, String(Number(props.getProperty(k) || 0) + n)); meLogAct_(sid, day); } catch (e) {}
@@ -9562,23 +9596,17 @@ function umPostsAdd_(sid, day, n) {
 function umReplySave_(person, day, p) {
   var sid = String(person.staffId), name = nameFor_(sid), items = [], at = hhmm_(new Date()), done = [];
   try { items = bigGet_(umItemsKey_(sid, day), []); } catch (e) {}
-  items.forEach(function (it) {
-    var txt = String(p['c_' + it.id] || '').trim();
-    if (!txt) return;
-    var res = 'posted';
-    try { mgrPost_({ ParentId: it.id, Body: unitRole_(sid) + ' · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at) + '\n\n' + txt }, sid); }
-    catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
-    done.push({ s: (it.a ? it.a + ' · ' : '') + it.s, txt: txt, res: res });
-  });
+  done = umPostOrClose_(sid, day, items, p, at);
   var rows = UM_CHECKS.map(function (c) {
     return { Item: c.id, Question: c.q, Planned: String(p['p_' + c.id] || '').trim(), Note: String(p['n_' + c.id] || '').trim() };
   }).filter(function (r) { return r.Planned !== '' || r.Note; });
-  if (!done.length && !rows.length) return umReplyPage_(person, day, 'Nothing filled in. Comment on a task or set at least one number for your day.');
-  umPostsAdd_(sid, day, done.filter(function (d) { return d.res === 'posted'; }).length);
+  if (!done.length && !rows.length) return umReplyPage_(person, day, 'Nothing filled in. Comment on a task, close one, or set at least one number for your day.');
+  umPostsAdd_(sid, day, done.filter(function (d) { return d.res === 'posted' || d.closed; }).length);
   if (rows.length) mgrWrite_(sid, day, 'plan', rows);
   var signed = null; try { signed = signInFromPage_(person); } catch (e) {}
   if (sid !== 'ricky') { try { umCopy_(sid, day, 'plan', done, rows); } catch (e) {} }
-  return replyPage_('Saved' + (signed ? ' · signed in ' + twelve_(signed.at) : ''), done.length + ' comment' + (done.length === 1 ? '' : 's') + ' on Chatter; your plan for the day is in' + (sid === 'ricky' ? '.' : '. Mr Rampersad has a copy.'),
+  var nClosed = done.filter(function (d) { return d.closed; }).length;
+  return replyPage_('Saved' + (signed ? ' · signed in ' + twelve_(signed.at) : ''), done.length + ' comment' + (done.length === 1 ? '' : 's') + ' on Chatter' + (nClosed ? ', ' + nClosed + ' task' + (nClosed === 1 ? '' : 's') + ' closed' : '') + (rows.length ? '; your plan for the day is in' : '') + (sid === 'ricky' ? '.' : '. Mr Rampersad has a copy.'),
     '<div class="card ok">' + done.map(function (d) { return '<div class="ln">' + (/^NOT/.test(d.res) ? '&#9888; ' : '&#10003; ') + esc_(d.s) + ' · ' + esc_(d.res) + '</div>'; }).join('') +
     rows.map(function (r) { return '<div class="ln">&#9675; ' + esc_(r.Question) + ': <b>' + esc_(r.Planned || '—') + '</b>' + (r.Note ? ' · ' + esc_(r.Note) : '') + '</div>'; }).join('') + '</div>');
 }
@@ -9722,7 +9750,7 @@ function umEveReplyPage_(person, day, error, opt) {
   var rest = items.filter(function (it) { return String(it.id) !== String(focus); });
   var list = rest.length ? '<div class="card"><div class="bh">Your unit · comment on anything (goes to Chatter)</div>' +
     rest.map(function (it) { return umItemHtml_(it, chat, base, noSf, false, drafts[it.id]); }).join('') +
-    '<button type="submit" name="only" value="1">Post my comments</button><div class="br2" style="margin-top:4px">Posts what you typed above now; your account can follow.</div></div>' : '';
+    '<button type="submit" name="only" value="1">Post my comments and closes</button><div class="br2" style="margin-top:4px">Posts what you typed above now, and closes what you ticked; your account can follow.</div></div>' : '';
   return replyPage_('Your day · ' + prettyDate_(day), 'A number against each KPI, with names where it asks. Mr Rampersad gets the account. A comment can go on any task at any time.',
     (opt.posted ? '<div class="card ok">' + opt.posted + '</div>' : '') +
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
@@ -9736,23 +9764,16 @@ function umEveReplySave_(person, day, p) {
   // The comments go on first, whatever else is filled in. Until 19 October 2026
   // a comment was only posted with a complete account, so a manager who only
   // wanted to comment on one task saw it refused, and lost what he had typed.
-  items.forEach(function (it) {
-    var txt = String(p['c_' + it.id] || '').trim();
-    if (!txt) return;
-    var res = 'posted';
-    try { mgrPost_({ ParentId: it.id, Body: unitRole_(sid) + ' · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at) + '\n\n' + txt }, sid); }
-    catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
-    done.push({ s: (it.a ? it.a + ' · ' : '') + it.s, txt: txt, res: res });
-  });
-  umPostsAdd_(sid, day, done.filter(function (d) { return d.res === 'posted'; }).length);
+  done = umPostOrClose_(sid, day, items, p, at);
+  umPostsAdd_(sid, day, done.filter(function (d) { return d.res === 'posted' || d.closed; }).length);
   var postedHtml = done.map(function (d) { return '<div class="ln">' + (/^NOT/.test(d.res) ? '&#9888; ' : '&#10003; ') + esc_(d.s) + ' · ' + esc_(d.res) + '</div>'; }).join('');
   var rows = UM_CHECKS.map(function (c) {
     return { Item: c.id, Question: c.q, Done: String(p['d_' + c.id] || '').trim(), Note: String(p['n_' + c.id] || '').trim() };
   });
   var filled = rows.filter(function (r) { return r.Done !== ''; }).length;
   if (String(p.only || '') === '1') {
-    if (!done.length) return umEveReplyPage_(person, day, 'Nothing to post: type a comment under a task first.', { keep: p });
-    return umEveReplyPage_(person, day, '', { keep: p, posted: '<b>Comment' + (done.length === 1 ? '' : 's') + ' posted on Chatter</b>' + postedHtml + '<div class="br2" style="margin-top:4px">Your account for the day can follow below.</div>' });
+    if (!done.length) return umEveReplyPage_(person, day, 'Nothing to post: type a comment under a task first (tick Close to close it).', { keep: p });
+    return umEveReplyPage_(person, day, '', { keep: p, posted: '<b>Comment' + (done.length === 1 ? '' : 's') + ' posted on Chatter' + (done.some(function (d) { return d.closed; }) ? ', ticked tasks closed' : '') + '</b>' + postedHtml + '<div class="br2" style="margin-top:4px">Your account for the day can follow below.</div>' });
   }
   if (filled < UM_CHECKS.length) return umEveReplyPage_(person, day, 'Put a number against every KPI, 0 where nothing was done. ' + (UM_CHECKS.length - filled) + ' left blank.',
     { keep: p, posted: done.length ? '<b>Your comment' + (done.length === 1 ? ' is' : 's are') + ' posted</b>' + postedHtml : '' });
