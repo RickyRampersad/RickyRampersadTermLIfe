@@ -90,7 +90,9 @@ var GCM = {
   QUEUE_FRESH_MIN: 60,
   TEAM_HOUR: 11,            // Monday 11:00: if any group still has no letter this week, the whole team is told why and who
   TEAM_PROP: 'GCM_TEAM_LAST',
-  HOLD_PROP: 'GCM_HOLD_GROUPS',    // Script property: groups on hold from the weekly letter, by name, comma-separated (27 Oct 2026)      // the Monday run writes from a refresh this recent rather than refresh again (26 October 2026: the
+  HOLD_PROP: 'GCM_HOLD_GROUPS',    // Script property: groups on hold from the weekly letter, by name, comma-separated (27 Oct 2026)
+  HOLD_STATE: 'GCM_HOLD',          // the hold set from the staff page: every group, or groups by name, with who, when and why
+  HOLD_LOG: 40,                    // the last holds and releases kept with it      // the Monday run writes from a refresh this recent rather than refresh again (26 October 2026: the
                             // refresh had grown to about five minutes and used up the run's time before a single letter went)
   RESPOND_DAY: 5,           // the letter asks for an answer by Friday of the same week
   SITE: 'https://rickyrampersadbranch.com/groupclientmanagement/',
@@ -141,6 +143,7 @@ function gcmDoGet_(p) {
     switch (String(p.action || '')) {
       case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(),
                                    sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_(),
+                                   hold: (function () { try { var h = gcmHoldState_(); return { all: !!h.all, groups: Object.keys(h.groups).length + h.legacy.length }; } catch (e) { return 0; } })(),
                                    /* the group bills' day and report, so a browser can tell which GroupBilling.gs is live */
                                    bills: (function () { try { if (typeof gblDayInfo_ !== 'function') return 0; var d = gblDayInfo_();
                                      return { next: d.label, report: d.reportLabel || '', live: !!d.live, drive: !!d.drive }; } catch (e) { return 0; } })() };
@@ -182,6 +185,7 @@ function gcmDoPost_(b) {
       case 'gcm.remind': return gcmRemind_(b);
       case 'gcm.approve':   return gcmApprove_(b);
       case 'gcm.unapprove': return gcmUnapprove_(b);
+      case 'gcm.hold':      return gcmHold_(b);
       case 'gcm.rehearse':  return gcmRehearse_(b);
       case 'gcm.share':  return gcmShare_(b);
       case 'gcm.review': return gcmReview_(b);
@@ -772,6 +776,7 @@ function gcmFeed_(ids) {
 /* ── everything the pages read, assembled once a request ─────────── */
 
 function gcmLoad_() {
+  gcmHoldForget_();
   var reg = gcmRegister_(), byName = {};
   reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.incs = []; g.life = []; g.lifeSum = null; g.sends = []; g.resent = []; g.welcomes = []; g.reminders = []; g.views = []; g.resps = []; g.queue = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {}, comment: {} }; });
   gcmRows_(GCM.QUEUE).forEach(function (r) {
@@ -951,17 +956,92 @@ function gcmGroupStats_(g, today) {
   return s;
 }
 
-/** A group the branch has put on hold from the weekly letter, by name in the GCM_HOLD_GROUPS Script property (asked for
- *  on 27 October 2026: a group whose bills are being tested must not be approved, sent, reminded or chased). On hold it
- *  is never ready: no approval, no Send now, no Monday letter, no welcome, no star reminder, and the 10:30 run and the
- *  Monday team letter leave it out, so nobody is asked why it had no letter. Its billing is untouched. Returns the
- *  reason, or ''. */
+/** A group the branch has put on hold from the weekly letter (27 October 2026: a group whose bills were being tested had
+ *  its letter approved and held, and the 10:30 run chased its owner for it: "you need to unapprove this as you are testing
+ *  the billings"; then "should you not have instead of the script properties the ability to hold all groups"). The
+ *  branch manager or the deputy holds every group, or one group, from the staff page (gcmHold_), with a reason; the
+ *  GCM_HOLD_GROUPS Script property still holds groups by name. On hold a group is never ready: no approval, no Send now,
+ *  no letter sent again, no Monday letter (an approved one is held at the run unless the hold is lifted first), no
+ *  welcome, no star reminder, and the 10:30 run and the Monday team letter leave it out, so nobody is asked why it had no
+ *  letter. Its billing is untouched. Returns the reason, or ''. */
 function gcmOnHold_(g) {
-  var key = g && g.key ? g.key : '', list = [];
+  var key = g && g.key ? g.key : '';
   if (!key) return '';
-  try { list = gcmPropList_(GCM.HOLD_PROP); } catch (e) {}
-  return list.some(function (k) { return key === k || key.indexOf(k) === 0; })
-    ? 'On hold from the weekly letter (' + GCM.HOLD_PROP + ')' : '';
+  var st = gcmHoldState_(), by = function (x) { return (x.by ? ', ' + x.by : '') + (x.at ? ', ' + x.at : ''); };
+  if (st.all) return 'All group letters are on hold' + (st.all.why ? ': ' + st.all.why : '') + ' (' + by(st.all).replace(/^, /, '') + ')';
+  var mine = st.groups[key];
+  if (mine) return 'On hold' + (mine.why ? ': ' + mine.why : '') + ' (' + by(mine).replace(/^, /, '') + ')';
+  if (st.legacy.some(function (k) { return key === k || key.indexOf(k) === 0; })) return 'On hold from the weekly letter (' + GCM.HOLD_PROP + ')';
+  return '';
+}
+/** The hold as it stands, read once a run (gcmLoad_ and gcmHold_ read it again): { all: {by, at, when, why} | null,
+ *  groups: { key: {name, by, at, when, why} }, legacy: [keys from GCM_HOLD_GROUPS], log: [...] }. */
+function gcmHoldState_() {
+  if (gcmHoldState_.memo) return gcmHoldState_.memo;
+  var st = { all: null, groups: {}, legacy: [], log: [] };
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty(GCM.HOLD_STATE);
+    if (raw) { var j = JSON.parse(raw); st.all = j.all || null; st.groups = j.groups || {}; st.log = j.log || []; }
+  } catch (e) {}
+  try { st.legacy = gcmPropList_(GCM.HOLD_PROP); } catch (e) {}
+  gcmHoldState_.memo = st;
+  return st;
+}
+function gcmHoldForget_() { gcmHoldState_.memo = null; }
+/** The hold for the pages and the ping: every group on hold by name, and who held it. */
+function gcmHoldView_(L) {
+  var st = gcmHoldState_(), groups = [];
+  Object.keys(st.groups).forEach(function (k) { var x = st.groups[k]; groups.push({ key: k, name: x.name || k, by: x.by || '', at: x.at || '', why: x.why || '' }); });
+  (L ? L.reg : []).forEach(function (g) {
+    if (!st.groups[g.key] && st.legacy.some(function (k) { return g.key === k || g.key.indexOf(k) === 0; }))
+      groups.push({ key: g.key, name: g.name, by: '', at: '', why: 'named in the ' + GCM.HOLD_PROP + ' Script property', legacy: true });
+  });
+  groups.sort(function (a, b) { return a.name.localeCompare(b.name); });
+  return { all: st.all, groups: groups, log: st.log.slice(-10).reverse() };
+}
+/** Hold or release every group, or one group, from the staff page: the branch manager and the deputy only, with a
+ *  reason to hold. An approved letter stays approved: if the hold is lifted before the Monday run it goes, and if not it
+ *  is held at the run and approved again after. Releasing a group named in GCM_HOLD_GROUPS takes it out of the property
+ *  too. Every hold and release is kept, with who and why. */
+function gcmHold_(b) {
+  var who = gcmWho_(b);
+  if (!who.ok) return who;
+  if (who.role !== 'branch' && who.role !== 'deputy') return { ok: false, error: 'Only the branch manager or the assistant branch manager puts group letters on hold.' };
+  var on = b.on === true || /^(1|y|yes|true|on)$/i.test(String(b.on)), all = String(b.what || '') === 'all', why = String(b.why || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  if (on && why.length < 5) return { ok: false, error: 'Say why it is on hold (a few words), so the team knows.' };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) return { ok: false, error: 'The letters are going out right now. Try again in a minute.' };
+  try {
+    var props = PropertiesService.getScriptProperties();
+    gcmHoldForget_();
+    var L = gcmLoad_(), st = gcmHoldState_(), now = new Date(), stamp = { by: who.name, at: gcmWhen_(now), when: gcmYmd_(now), why: why }, said = '', g = null;
+    if (!all) {
+      g = L.byName[gcmCodeKey_(b.group)];
+      if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+    }
+    if (all) {
+      if (on) { st.all = stamp; said = 'Every group letter is on hold: no letter, welcome or reminder goes to any group, and nobody is chased, until you lift it.'; }
+      else { if (!st.all) return { ok: false, error: 'Group letters are not on hold.' }; st.all = null; said = 'The hold on every group is lifted.' + (Object.keys(st.groups).length ? ' The groups held one by one stay on hold.' : ''); }
+    } else if (on) {
+      st.groups[g.key] = { name: g.name, by: stamp.by, at: stamp.at, when: stamp.when, why: why };
+      said = g.name + ' is on hold: no letter, welcome or reminder goes to it, and nobody is chased for it, until you lift it. Its billing goes on.';
+    } else {
+      var legacy = st.legacy.filter(function (k) { return g.key === k || g.key.indexOf(k) === 0; });
+      if (!st.groups[g.key] && !legacy.length) return { ok: false, error: g.name + ' is not on hold.' };
+      delete st.groups[g.key];
+      if (legacy.length) {
+        var keep = String(props.getProperty(GCM.HOLD_PROP) || '').split(',').map(function (x) { return x.trim(); })
+          .filter(function (x) { return x && legacy.indexOf(gcmCodeKey_(x)) < 0; });
+        if (keep.length) props.setProperty(GCM.HOLD_PROP, keep.join(', ')); else props.deleteProperty(GCM.HOLD_PROP);
+      }
+      said = g.name + ' is back on the weekly letter.' + (st.all ? ' Every group is still on hold, so nothing goes until that is lifted too.' : ' Check it and approve its letter for ' + gcmSendLabel_(gcmNextSend_()) + '.');
+    }
+    st.log.push({ at: stamp.at, by: who.name, what: all ? 'every group' : g.name, on: on, why: on ? why : '' });
+    st.log = st.log.slice(-GCM.HOLD_LOG);
+    props.setProperty(GCM.HOLD_STATE, JSON.stringify({ all: st.all, groups: st.groups, log: st.log }));
+    gcmHoldForget_();
+    return { ok: true, said: said, hold: gcmHoldView_(gcmLoad_()) };
+  } finally { try { lock.releaseLock(); } catch (e) {} }
 }
 
 /* ── applications still pending ─────────────────────────────────────
@@ -1479,7 +1559,8 @@ function gcmBoard_(p) {
   var urgency = function (x) { return (x.stats.week === 'due' ? 1000 : 0) + x.stats.late * 10 + x.stats.waiting * 5 + Math.min(x.stats.oldest, 99) / 100; };
   groups.sort(function (a, b) { return urgency(b) - urgency(a); });
   var out = { ok: true, role: who.role, title: who.title || '', me: who.name, today: today, sendDay: GCM.SEND_DAY, dow: gcmDow_(today), refreshed: L.refreshed,
-    salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', welcomeOn: gcmWelcomeOn_(), groups: groups };
+    salesforce: tSfOn_(), mail: !!tMsCreds_(), nextSend: gcmSendLabel_(gcmNextSend_()), canRehearse: who.role === 'branch', welcomeOn: gcmWelcomeOn_(), groups: groups,
+    hold: gcmHoldView_(L), canHold: who.role === 'branch' || who.role === 'deputy' };
   if (who.role === 'branch' || who.role === 'deputy') out.tellFailed = gcmTellFailed_();
   out.analytics = gcmAnalytics_(L);
   /* where each group's billing stands this month (GroupBilling.gs, 24 October 2026) */
@@ -1983,7 +2064,8 @@ function gcmResend_(b) {
     var L = gcmLoad_(), g = L.byName[gcmCodeKey_(b.group)];
     if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
     if (!gcmMine_(who, g)) return gcmNotYours_(g);
-    var last = gcmLastLetter_(g), no = gcmCannotMail_(g);
+    var last = gcmLastLetter_(g), no = gcmCannotMail_(g), hold = gcmOnHold_(g);
+    if (hold) return { ok: false, error: hold + ': nothing was sent.' };
     if (!last || !last.html) return { ok: false, error: 'There is no copy of the last letter to send again: send this week’s letter now instead.' };
     if (no) return { ok: false, error: no + ': nothing was sent.' };
     if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on the backend: nothing was sent.' };
@@ -3015,10 +3097,12 @@ function gcmDaySummary_(o) {
     '<p style="margin:14px 0 6px;font-weight:700">Staff asked why</p><p>' + E(o.chase ? o.chase.said : 'off (gcmGroupDayStart turns it on).') + ' Their replies come to you.</p>' +
     (all.some(function (a) { return a.kind === 'notready'; }) ? '<p style="margin:14px 0 6px;font-weight:700">Cannot have a letter yet</p>' + tbl(['Group', 'Looked after by', 'What is missing'], all.filter(function (a) { return a.kind === 'notready'; }).map(function (a) {
       return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); })) : '') +
-    (all.some(function (a) { return a.kind === 'hold'; }) ? '<p style="margin:14px 0 6px;font-weight:700">On hold: no letter, no reminder, nobody asked</p>' +
-      '<p style="margin:0 0 6px;font-size:13.5px;color:#555">Named in the ' + E(GCM.HOLD_PROP) + ' Script property. Take a group out of it to put it back on the weekly letter; its billing goes on as before.</p>' +
-      tbl(['Group', 'Looked after by'], all.filter(function (a) { return a.kind === 'hold'; }).map(function (a) {
-        return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody')]); })) : '') +
+    (gcmHoldState_().all ? '<p style="margin:14px 0 6px;padding:10px 12px;background:#FFF4D6;border-left:4px solid #E0A800"><b>Every group letter is on hold</b> since ' + E(gcmHoldState_().all.at || '') + ', by ' + E(gcmHoldState_().all.by || '') +
+      (gcmHoldState_().all.why ? ': ' + E(gcmHoldState_().all.why) : '') + '. No letter, welcome or reminder went to a group, and nobody was asked why. Lift it on the staff page (Team dashboard).</p>'
+    : all.some(function (a) { return a.kind === 'hold'; }) ? '<p style="margin:14px 0 6px;font-weight:700">On hold: no letter, no reminder, nobody asked</p>' +
+      '<p style="margin:0 0 6px;font-size:13.5px;color:#555">Lift a hold on the staff page (the group’s row on the Team dashboard) to put it back on the weekly letter; its billing goes on as before.</p>' +
+      tbl(['Group', 'Looked after by', 'Why'], all.filter(function (a) { return a.kind === 'hold'; }).map(function (a) {
+        return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); })) : '') +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   if (o.forms && (o.forms.chased.length || o.forms.answered.length || o.forms.closed.length || o.forms.waiting.length)) {
     var fl = function (x, what) { return '<li><b>' + E(x.member) + '</b> (' + E(x.group) + ') · ' + E(what) + (x.owner ? ' · ' + E(x.owner) : '') + '</li>'; };
