@@ -1,7 +1,27 @@
 {
- "tts/out/recruitb20/01.mp3": [
+ "tts/out/recruitc01/01.mp3": [
   "en",
-  0.986,
-  "The door is open now. Two minutes to apply. Reviewed within 48 hours."
+  0.996,
+  "let me ask you something are you good at what you do but stuck where you are or wanting a career with no ceiling and afraid of the first year"
+ ],
+ "tts/out/recruitc12/01.mp3": [
+  "en",
+  0.998,
+  "Afraid you'd be starting from zero? You won't. Clients whose agent has moved on get matched to you, household by household, with a file, the history, and the first thing to say."
+ ],
+ "tts/out/recruitc15/01.mp3": [
+  "en",
+  0.995,
+  "and the income is uncapped. No salary band. No seating. It scales with your activity and your skill. And you're not living off your phone contacts. The leads come to you."
+ ],
+ "tts/out/recruitc20/01.mp3": [
+  "en",
+  0.995,
+  "The door is open now. Already contracted? Nobody will know you asked. New to this? You get the full build. One confidential conversation. 20 minutes this week."
+ ],
+ "tts/out/recruitc21/01.mp3": [
+  "en",
+  0.999,
+  "Go to agentmgt.com, book your confidential conversation, or take the 62nd test first and start the selection."
  ]
 }
