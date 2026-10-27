@@ -11,7 +11,7 @@ film's scenes are timed from the audio. This writes all three, and prints the du
 The timing file carries, per line, its length and every word's start, so a builder can land a reveal on
 the word that names it.
 """
-import glob, json, os, subprocess, sys, wave
+import glob, json, os, re, subprocess, sys, wave
 
 src, dst = sys.argv[1], sys.argv[2]
 air = float(sys.argv[3]) if len(sys.argv) > 3 and not sys.argv[3].startswith('--') else 1.15
@@ -41,6 +41,8 @@ for mp3 in sorted(glob.glob(os.path.join(src, '[0-9][0-9].mp3'))):
             cur = []
     with open(os.path.join(dst, n + '.vtt'), 'w', encoding='utf-8') as f:
         f.write('WEBVTT\n\n')
+        # the voice is told to say the address letter by letter; the caption reads it as written
+        cues = [(a, b, re.sub(r'[Aa]gent M\s*G\s*T dot com', 'agentmgt.com', t)) for a, b, t in cues]
         for a, b, t in cues:
             f.write(f'{hms(a)} --> {hms(b)}\n{t}\n\n')
     d = round(length + air, 1)
