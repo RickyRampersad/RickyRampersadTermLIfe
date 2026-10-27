@@ -104,6 +104,7 @@ S.append(scene(1, 's-hook', f'''
   <p class="eye in" style="--t0:300ms">A question</p>
   <h1 class="h xl">{words("Good at what you do?", 500)}<br><em class="wine">{words("Stuck where you are?", at(1,"stuck") - 200)}</em></h1>
   <div class="ceil-line" style="--t0:{at(1,"stuck")}ms"></div>
+  <p class="sub2 in" style="--t0:{at(1,"Or")}ms">Or wanting a career with no ceiling, <em class="wine">and afraid of the first year?</em></p>
 </div>'''))
 
 # 2 · talent and the tools
@@ -359,9 +360,9 @@ HH = [('The Ramlogan household', '3 policies · since 2014'), ('The Charles hous
 S.append(scene(12, 's-match', f'''
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:200ms">Not from zero</p>
-    <h2 class="h l">{words("Clients, matched to you.", at(12,"matched") - 400)}</h2>
-    <p class="sub in" style="--t0:{at(12,"household")}ms">Household by household.</p>
+    <p class="eye in" style="--t0:200ms">Afraid you'd start from zero?</p>
+    <h2 class="h l">{words("You won't.", at(12,"won") - 150, 160)}</h2>
+    <p class="sub in" style="--t0:{at(12,"matched") - 300}ms">Clients whose agent has moved on are <b>matched to you</b>, household by household.</p>
     <div class="pill-row">
       <span class="ypill in" style="--t0:{at(12,"file")}ms">The file</span>
       <span class="ypill in" style="--t0:{at(12,"history")}ms">The history</span>
@@ -436,8 +437,12 @@ S.append(scene(15, 's-income', f'''
   <div class="col">
     <p class="eye in" style="--t0:200ms">The income</p>
     <h2 class="h xl">{words("Uncapped.", at(15,"uncapped") - 200, 80)}</h2>
-    <p class="sub in" style="--t0:{at(15,"scales")}ms">It scales with your activity and your skill.</p>
     <h2 class="h m wine2">{words("No salary band. No ceiling.", at(15,"No") - 100, 120)}</h2>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:{at(15,"not")}ms">Not your phone contacts</span>
+      <span class="ypill in" style="--t0:{at(15,"leads")}ms">The leads come to you</span>
+    </div>
+    <p class="sub in" style="--t0:{at(15,"scales")}ms">It scales with your activity and your skill.</p>
   </div>
   <div class="col">
     <svg class="graph" viewBox="0 0 400 300" aria-hidden="true">
@@ -521,16 +526,20 @@ S.append(scene(19, 's-gates', f'''
 # 20 · the door is open
 S.append(scene(20, 's-door', f'''
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">Apply now</p>
+  <p class="eye in" style="--t0:200ms">One conversation</p>
   <h2 class="h xl">{words("The door is open.", 400, 120)}</h2>
-  <div class="door" style="--t0:{at(20,"open")}ms">
-    <div class="d-glow"></div>
-    <div class="d-frame"><div class="d-light"></div><div class="d-leaf l"></div><div class="d-leaf r"></div></div>
-    {''.join(f'<span class="d-ray" style="--a:{a}deg"></span>' for a in (-28,-14,0,14,28))}
+  <div class="door-row">
+    <div class="who in fl" style="--t0:{at(20,"Already")}ms"><b>Already contracted?</b><span>Nobody will know you asked.</span><i class="lock-s"><svg class="ic"><use href="#i-lock"/></svg> Confidential</i></div>
+    <div class="door" style="--t0:{at(20,"open")}ms">
+      <div class="d-glow"></div>
+      <div class="d-frame"><div class="d-light"></div><div class="d-leaf l"></div><div class="d-leaf r"></div></div>
+      {''.join(f'<span class="d-ray" style="--a:{a}deg"></span>' for a in (-28,-14,0,14,28))}
+    </div>
+    <div class="who in fl" style="--t0:{at(20,"New")}ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
   </div>
   <div class="figs row">
-    <div class="fig in" style="--t0:{at(20,"Two")}ms"><b><em class="cnt" data-to="2" data-at="{at(20,"Two")}">2</em> min</b><span>to apply</span></div>
-    <div class="fig in" style="--t0:{at(20,"Reviewed")}ms"><b><em class="cnt" data-to="48" data-at="{at(20,"Reviewed")}">48</em> h</b><span>to a review</span></div>
+    <div class="fig in" style="--t0:{at(20,"One")}ms"><b><em class="cnt" data-to="1" data-at="{at(20,"One")}">1</em></b><span>confidential conversation</span></div>
+    <div class="fig in" style="--t0:{at(20,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{at(20,"Twenty")}">20</em> min</b><span>this week</span></div>
   </div>
 </div>'''))
 
@@ -541,12 +550,12 @@ S.append(scene(21, 's-cta', f'''
     <p class="eye in" style="--t0:200ms">Start here</p>
     <h2 class="h url">{words("agentmgt.com", 400, 60)}</h2>
     <div class="btns">
-      <span class="btn b1 in" style="--t0:{at(21,"Take")}ms">Take the 60-second test</span>
-      <span class="btn b2 in" style="--t0:{at(21,"start")}ms">Start the selection →</span>
+      <span class="btn b1 in" style="--t0:{at(21,"Book")}ms">Book a confidential conversation →</span>
+      <span class="btn b2 in" style="--t0:{at(21,"Take")}ms">Take the 60-second test first</span>
     </div>
   </div>
   <div class="col">
-    <div class="qr in" style="--t0:{at(21,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to apply</span></div>
+    <div class="qr in" style="--t0:{at(21,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>'''))
 
@@ -657,6 +666,14 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .fig b{display:block;font:800 calc(var(--u)*9)/1 var(--display);color:#fff;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .fig b em{font-style:normal;color:var(--aL)}
 .fig span{display:block;margin-top:.4em;font-size:calc(var(--u)*2.4);color:var(--mute);letter-spacing:.04em}
+.sub2{margin-top:calc(var(--u)*2.2);font-size:calc(var(--u)*3.2);line-height:1.35;color:var(--mute);max-width:46ch}
+.sub2 em{color:var(--aT);font-style:normal;font-weight:600}
+.door-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:calc(var(--u)*5);width:100%;max-width:calc(var(--u)*150);margin:0 auto}
+.who{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2.4);padding:calc(var(--u)*2.8) calc(var(--u)*3.2);text-align:left}
+.who b{display:block;font:800 calc(var(--u)*3.8)/1.1 var(--display);color:#fff;letter-spacing:-.01em}
+.who span{display:block;margin-top:.45em;font-size:calc(var(--u)*2.7);line-height:1.35;color:var(--mute)}
+.lock-s{display:inline-flex;align-items:center;gap:.5em;margin-top:calc(var(--u)*1.6);font:600 calc(var(--u)*2.1)/1 var(--text);color:var(--aT);font-style:normal;letter-spacing:.08em;text-transform:uppercase}
+.lock-s .ic{width:calc(var(--u)*2.6);height:calc(var(--u)*2.6)}
 .rule{width:calc(var(--u)*14);height:calc(var(--u)*.6);background:linear-gradient(90deg,var(--aL),var(--aD));transform:scaleX(0);transform-origin:50% 50%;margin-top:calc(var(--u)*2)}
 .scene.act .rule{animation:rule .8s var(--out) both;animation-delay:var(--t0)}
 @keyframes rule{to{transform:scaleX(1)}}
@@ -987,7 +1004,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .scene.act .graph .line{animation:dash 2.2s var(--ease) both;animation-delay:var(--t0)}
 @keyframes dash{to{stroke-dashoffset:0}}
 .graph .ggrid line{stroke:rgba(255,255,255,.1);stroke-dasharray:3 6}
-.graph .area{opacity:0}
+.graph .area{opacity:0;fill:url(#ga)}
 .scene.act .graph .area{animation:fade 1.2s var(--out) both;animation-delay:var(--t0)}
 .graph .band rect{fill:rgba(255,255,255,.07);stroke:rgba(255,255,255,.35);stroke-dasharray:6 6}
 .graph .band text{font:600 16px var(--text);letter-spacing:.12em;text-transform:uppercase;fill:var(--mute2)}
@@ -1132,7 +1149,10 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .gates span{font-size:calc(var(--u)*2)}
   .gates b{width:calc(var(--u)*11);height:calc(var(--u)*11);font-size:calc(var(--u)*4.6)}
   .gline{top:calc(var(--u)*5.5)}
-  .door{width:calc(var(--u)*34)}
+  .door{width:calc(var(--u)*34);grid-column:1/-1;order:-1}
+  .door-row{grid-template-columns:1fr 1fr;gap:calc(var(--u)*3)}
+  .who b{font-size:calc(var(--u)*3.2)}
+  .sub2{font-size:calc(var(--u)*2.9)}
   .ghost{font-size:calc(var(--u)*70);top:-4%}
   .cta{grid-template-columns:1fr}
   .qr svg{width:calc(var(--u)*36);height:calc(var(--u)*36)}
@@ -1157,6 +1177,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
       <path class="tick-u" d="M30 44L39.5 53.5L58 32.5" stroke="#5a141b" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       <path class="tick-o" d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
     <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
     <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
     <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></symbol>

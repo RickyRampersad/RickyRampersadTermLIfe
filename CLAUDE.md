@@ -4943,6 +4943,42 @@ section links it.
   RAI bubble lost their seat count the same evening (the page's seats row is gone; "The door is open. Walk through
   it."), because a promise made in one place has to be kept in the other. Do not replace it with a bigger number or
   "unlimited seats": that throws away the selection message.
+- **The reframe, 27 October 2026: the candidate's fear first, the specific answer second, one conversation
+  third.** Asked for as *"research in the web what will entice somebody to click on this ad … shouldn't it be
+  framed in terms of what this career offers and to hit the pain points"*, then *"let's do this and create a
+  wow"*. The research (sources in the session's reply): candidates ask about money first (LinkedIn 61%; ads that
+  state pay get 27% more applications, Reed; specific reward wording raises intent to apply through "this fits
+  me", Van Hoye and Baeten 2016); experienced advisors move for payout, technology and autonomy and fear the cost
+  of moving (Cerulli: payout 54 to 58%, technology 57%, movers lose about 22% of assets); newcomers fear the
+  income gap, buying leads and selling to friends (26% of 103 former agents quit over lead money), and LIMRA's
+  retention fix is honest expectations at recruitment; question headlines with "you" beat statements; the
+  click-to-apply rate is about 6% and the post-click friction decides the cost, so the ask is a conversation, not
+  a form. What changed:
+  - **Five lines re-voiced** (1, 12, 15, 20, 21; 4:12 now). Scene 1 names both fears ("Or wanting a career with
+    no ceiling, and afraid of the first year?"); scene 12 leads with the fear ("Afraid you'd be starting from zero?
+    You won't."); scene 15 adds "you're not living off your phone contacts, the leads come to you"; scene 20 puts
+    the two audiences either side of the door (Already contracted: nobody will know you asked; New to this: the
+    full build) and asks for **one confidential conversation, twenty minutes, this week**; scene 21 books it
+    first and offers the test second. Line 15 came back once as "No seating" from Whisper and was re-made; the
+    second take read clean. The income graph's area had no fill and rendered flat black in the last two cuts
+    (`.graph .area` now carries `fill:url(#ga)`).
+  - **The page**: the hero asks the question ("Good at what you do, but stuck? Move without starting from
+    [zero / a cold list / scratch / nothing / nobody]"), its sub speaks to each audience by name, and its first
+    button is **Book a confidential conversation**; a new section, "Two kinds of people walk through this door",
+    strikes through each audience's own fear and answers it with what is true here; under it the dark
+    **"What this career pays, honestly"** panel (how it is paid, what grows it, and what we won't print: an
+    average we made up; the record is shown at the conversation). The top bar, the sticky bar and the closing
+    carry the conversation; the application stays one tap away everywhere. "The environment decides. We select
+    the driven." is the sign-off, not the headline.
+  - **The conversation link is WhatsApp to 678-5821**, the number already on the page's footer, with the first
+    line typed; change it in six places (`data-talk` on agentmgt, one on `/careersvideo/`) if the branch wants
+    another number.
+  - **No figure was invented.** The page promises the branch's own figures at the conversation; printing a
+    median first-year income or the leads per advisor per month needs the record from Mr Rampersad first.
+  - **Two posts, not one** (`AGENTMGT-SETUP.md`): each names its reader in the first line because the ad
+    platforms limit targeting, and each ends "Reply TALK and I'll call you".
+  - Still to do, his: two 15-second phone clips of real agents saying one line each (candidates trust employees
+    about three times more than the company), and the first-year figures for the pay panel.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,

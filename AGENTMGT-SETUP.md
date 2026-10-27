@@ -102,16 +102,37 @@ Then put the new `durs` from films.json on the three `data-scenes` attributes (a
 careersvideo/index.html, both cuts) and the length beside them; `scenes.js` and `pages.py` in the session scratchpad
 did both on 26 October.
 
-## The post
+## The posts
 
-For the branch WhatsApp group, Facebook and LinkedIn (under 120 words, one ask):
+Two posts, one film, by the 27 October research (CLAUDE.md, "The reframe"): each names its reader in the first
+line, because the ad platforms limit the targeting and the copy has to do the selecting; each leads with the
+reader's own fear, then the specific answer, then one low-commitment ask. Under 120 words, WhatsApp bold.
+
+**For practising advisors** (LinkedIn, the agents' WhatsApp groups, Facebook):
 
 > *Good at what you do, but stuck where you are?*
 >
-> Four minutes on how our branch works now: leads that land on your own board, the Lead Desk that writes your opening from the prospect's words, the fact find that does the arithmetic while you talk, a live wall, a day the system sets for you, and Branch Intelligence on every file. Digital everywhere. Human at the heart of it. 23× MDRT. 32 years in Trinidad.
+> The thing that keeps a good advisor where they are is the fear of starting from zero. At our branch you don't: clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. Leads land on your own board, in the prospect's words. The fact find does the arithmetic while you talk. Your name goes up every Wednesday. 23× MDRT. 32 years in Trinidad.
 >
-> The door is open. Two minutes to apply, reviewed within 48 hours, and confidential if you are already contracted.
+> One confidential conversation. Twenty minutes, this week. Nobody will know you asked.
 >
-> Watch: https://rickyrampersadbranch.com/careersvideo/
+> Watch (4 min): https://rickyrampersadbranch.com/careersvideo/
 >
-> Know one person who should see this? Send it to them today.
+> Reply *TALK* and I'll call you.
+
+**For people new to insurance** (Facebook, Instagram, the branch's own circles):
+
+> *Want a career with no ceiling, but afraid of the first year?*
+>
+> Fair fear. Here is what is different: the leads come to you, so you are not selling to your friends and family. Every morning the system sets your day. You get training, boot camp and one-on-one coaching, and the Branch Manager interviews and coaches you personally. No salary band, no ceiling, and the ladder written down rung by rung. 23× MDRT. 32 years in Trinidad.
+>
+> One 20-minute conversation. Bring your questions; we show you the branch's own figures, not an adjective.
+>
+> Watch (4 min): https://rickyrampersadbranch.com/careersvideo/
+>
+> Reply *TALK* and I'll call you.
+
+The "Book a confidential conversation" buttons on agentmgt.com and on `/careersvideo/` open WhatsApp to
+**678-5821** (the number on the page's own footer) with the first line typed; `tel:` is the fallback in the
+footer. If the conversations should go to another number, change the `wa.me/1868…` links in `agentmgt/index.html`
+(five, `data-talk`) and `careersvideo/index.html` (one).

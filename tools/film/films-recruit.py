@@ -9,7 +9,7 @@ def at(n, word, k=0):  # the second a counter lands, for the punch under it; the
     hits = [s for s, w in t['lines'][n - 1]['words'] if w.lower().strip('.,?:!').startswith(word.lower())]
     if len(hits) > k: return round(starts[n - 1] + 0.4 + hits[k], 2)
     raise SystemExit(f'no "{word}" in line {n}')
-hits = [at(3, 'Twenty'), at(3, 'Thirty'), at(5, 'board'), at(7, 'dollars'), at(8, 'pace'), at(16, 'GO', 1), at(20, 'open'), at(20, 'forty')]
+hits = [at(3, 'Twenty'), at(3, 'Thirty'), at(5, 'board'), at(7, 'dollars'), at(8, 'pace'), at(16, 'GO', 1), at(20, 'open'), at(20, 'Twenty')]
 base = dict(durs=t['durs'], dur=t['dur'], vox='vorecruit', start=18, musicgain=0.5, duck=0.5,
             dark=[3, 21], ticks=[], hits=hits, capmode='over')
 f['recruit'] = dict(base, cap='cap-recruit', out='../../agentmgt/recruit.mp4', mix='recruit-mix.wav', music='bed-recruit.wav',
