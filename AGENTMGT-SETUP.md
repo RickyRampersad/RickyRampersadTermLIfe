@@ -16,7 +16,7 @@ What is in the folder:
 | `og.jpg` | the picture a WhatsApp, Facebook or LinkedIn link preview shows |
 | `netlify.toml` | the headers and the short links `/apply`, `/quiz`, `/test` |
 | `trailer.mp4`, `trailer.jpg`, `trailer-story.mp4`, `trailer-story.jpg` | the 90-second film, the ad, wide and phone, with posters |
-| `recruit.mp4`, `recruit.jpg` | the full film, 1280×720, 8:20, thirty-five scenes (the journey from the day you apply), and its poster |
+| `recruit.mp4`, `recruit.jpg` | the full film, 1280×720, 7:34, thirty-two scenes (the journey from the day you apply), and its poster |
 | `recruit-story.mp4`, `recruit-story.jpg` | the same film cut 1080×1920 for the phone (WhatsApp status, TikTok, YouTube Shorts; at 3:54 it is over Instagram's Reels limit, so post the link there) |
 | `film.html` | the film's source page, drawn by `tools/film/build-recruitfilm.py` (not linked) |
 | `player.js` | the branch's film player: tap to pause, a dot per scene, mute, full screen |
