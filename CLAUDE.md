@@ -3905,7 +3905,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   letter O on an e-mail; no two list bills or codes on the register differ by
   that alone. **A letter preview on the staff page can never sign in**: it is
   a sandboxed frame where nothing runs, and that day the manager clicked
-  "Open your service page" in Xtra Foods' preview, the group's page opened
+  "Open your service page" in one group's preview, the group's page opened
   inside the box, and its button did nothing ("Group log on not working").
   Every preview (`pvDoc` on the staff page, `pvHead` in the billing door)
   now opens its links in a tab of their own, and a link to the group's page
@@ -4768,7 +4768,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     statement), `billing/door-test.js` (81, Playwright: the staff page's button into the door, every step, the group's
     page in its tabs, a phone) and `billing/page-test.js` (46). The harness (`wow/setup.js`) now serves `.css` as
     `text/css`: until then a stylesheet linked from a page was refused by the browser and the screenshots were bare.
-  - **A month is read back as a month** (27 October 2026, the first bill stored live: Xtra Foods' October health bill).
+  - **A month is read back as a month** (27 October 2026, the first bill stored live: a group's October health bill).
     Google Sheets turns "2026-10" written into a cell into the date 1 October, which read back as "2026-10-01" and never
     matched "2026-10" again: the page said nothing was uploaded, opened itself as `m=2026-10-01`, looked in Salesforce for
     a record of that month that cannot exist ("No T-HEALTH GROUP record for October 2026"), and every upload added a row
@@ -4776,6 +4776,16 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     zone (`gblMon_`), keeps one Group Bills row a group, line and month (the newest), and `gblCell_` writes months as
     text. The test harness (`gcmlive/env-sq.js` in the scratchpad) never caught it because its cells kept what they were
     given; `SHEETS_DATES=1` makes them behave as Sheets does, and `billing/month-test.js` (25) covers the live case.
+  - **Group Life comes in two layouts** (27 October 2026: "the group Life members are on and its not reading"). Guardian's
+    member bill carries ten figures a row when the plan has New Life cover (basic, accidental death, new life, then each
+    premium with its tax, then the premium) and seven when it has none (`LIFE_COLS`, `lifeFig` in `billread.js`); the
+    reader knew only the ten, so a seven-figure bill read 0 members. Rows, the grand total and the Statement of
+    Adjustment's rows go through `lifeFig`; a row with any other count is warned about, never guessed. The bill's own
+    "No of Lives" is read and checked against the members found. The statement's "AS AT" date is read either way round
+    ("31ST AUGUST 2026" and "AUGUST 31ST 2026"), and the covering letter is known by "Group Life Assurance Plan" or
+    "Monthly Billing for <month>" as well as the older wording. The Group Health box refuses a life document and says to
+    upload it under Group Life. `signin27/life-read.js` (13) and `life-backend.js` (4) in the scratchpad cover it, on
+    the first real seven-figure bill and a ten-figure one.
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
     Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing
