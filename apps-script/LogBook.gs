@@ -1194,8 +1194,15 @@ function lbValidate_(b, who) {
       if (it.portfolioId && !mine.portfolios[it.portfolioId]) throw new Error('Policy ' + it.policy + ' is not one of yours.');
     });
   }
-  if (d.declared !== true) throw new Error('Tick the declaration.');
-  out.declaration = contract ? LB.DECLARE_CONTRACT : LB.DECLARE_DOCS;
+  /* Both declarations, every time (27 October 2026: "Declaration 1 and Declaration 2 these were there
+     before and agents not seeing this"). A page from before sends declared alone and is taken as before. */
+  if (d.declared !== true) throw new Error('Tick Declaration 1 and Declaration 2.');
+  if ('declared1' in d || 'declared2' in d) {
+    if (d.declared1 !== true || d.declared2 !== true) throw new Error('Tick Declaration 1 and Declaration 2.');
+    out.declaration = 'Declaration 1: ' + LB.DECLARE_DOCS + ' | Declaration 2: ' + LB.DECLARE_CONTRACT;
+  } else {
+    out.declaration = contract ? LB.DECLARE_CONTRACT : LB.DECLARE_DOCS;
+  }
   out.notes = dbClean_(d.notes, 500);
   return out;
 }
