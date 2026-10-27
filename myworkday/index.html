@@ -55,6 +55,7 @@
   .wrap{max-width:680px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-inset-bottom))}
   .eyebrow{font:800 11px/1 var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
   header.top{padding:18px 0 6px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+  #toapp{color:inherit;font-weight:800;text-decoration:none;margin-right:8px} #toapp:hover{text-decoration:underline}
   h1{font:800 clamp(22px,6vw,28px)/1.15 var(--fd);margin:6px 0 2px;color:var(--navy);letter-spacing:-.01em}
   .sub{color:var(--muted);font-size:13.5px}
   .clock{font:700 13px/1 var(--fd);color:var(--muted);white-space:nowrap;text-align:right}
@@ -165,7 +166,7 @@
 <div class="wrap">
   <header class="top">
     <div>
-      <div class="eyebrow">Ricky Rampersad Branch · My workday</div>
+      <div class="eyebrow"><a id="toapp" href="/rroperations/" hidden>&larr; Branch app</a> Ricky Rampersad Branch · My workday</div>
       <h1 id="hello">Your day</h1>
       <div class="sub" id="when">&nbsp;</div>
     </div>
@@ -206,9 +207,19 @@
     get: function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
-  // The link carries who you are and your key. Opened from the home screen without them, the last link on this phone is used.
-  var P = Q.get("p") || "", K = Q.get("k") || "";
-  if (P && K) store.set("wd_link", { p: P, k: K }); else { var last = store.get("wd_link"); if (last) { P = last.p; K = last.k; } }
+  // Who you are, one of two ways. The e-mail's link carries your name and key (p, k); opened from the home screen without
+  // them, the last link on this phone is used. Or the branch app's sign-in (26 Oct 2026, "My day" in the app, ?app=1):
+  // the app keeps it under rrb-ops-session on this site and the tracker asks the app who it is. From the app, the app's
+  // sign-in wins; otherwise a link does, and the app's sign-in is the fallback when this phone has no link.
+  var P = Q.get("p") || "", K = Q.get("k") || "", OPS = "", fromApp = Q.get("app") === "1", ses = null;
+  try { ses = JSON.parse(localStorage.getItem("rrb-ops-session") || "null"); } catch (e) {}
+  var appTok = ses && ses.token ? String(ses.token) : "";
+  if (P && K) store.set("wd_link", { p: P, k: K });
+  else if (fromApp && appTok) OPS = appTok;
+  else { var last = store.get("wd_link"); if (last) { P = last.p; K = last.k; } else if (appTok) OPS = appTok; }
+  var WHO = OPS ? "app_" + String(ses.agentNo || ses.name || "") : P;
+  function auth(body) { if (OPS) { body.set("wd", "app"); body.set("ops", OPS); } else { body.set("wd", P); body.set("k", K); } return body; }
+  if (OPS || fromApp) { var ta = document.getElementById("toapp"); if (ta) ta.hidden = false; }
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var M = null, busy = false;
@@ -366,19 +377,19 @@
     var a = $("again"); if (a) a.addEventListener("click", function (e) { e.preventDefault(); load(); });
   }
   function load() {
-    if (!P || !K) { notice("Open this page from the <b>My workday</b> link in your morning e-mail. After that it opens from your home screen.", false); $("of").textContent = ""; $("main").innerHTML = ""; return; }
+    if (!OPS && (!P || !K)) { notice('Open <b>My day</b> in the <a href="/rroperations/">branch app</a>, or the <b>My workday</b> link in your morning e-mail. After that it opens from your home screen.', false); $("of").textContent = ""; $("main").innerHTML = ""; return; }
     if (busy) return; busy = true;
     var ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 45000);
-    fetch(TRACKER + "?wd=" + encodeURIComponent(P) + "&k=" + encodeURIComponent(K) + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
+    fetch(TRACKER + "?" + auth(new URLSearchParams()).toString() + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json(); })
-      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } notice(""); store.set("wd_day_" + P, { day: m.day, m: m }); draw(m, false); })
+      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); })
       .catch(function () { clearTimeout(timer); busy = false; fail("The tracker did not answer this time."); });
   }
   function post(btn) {
     var row = btn.closest(".wt"), ta = row.querySelector("textarea"), sel = row.querySelector("select[data-to]"), text = (ta.value || "").trim();
     if (!text) { ta.focus(); toast("Write your answer first."); return; }
     btn.disabled = true; var was = btn.textContent; btn.textContent = "Posting…";
-    var body = new URLSearchParams(); body.set("wd", P); body.set("k", K); body.set("act", "post"); body.set("kind", row.getAttribute("data-k")); body.set("id", row.getAttribute("data-id")); body.set("text", text);
+    var body = auth(new URLSearchParams()); body.set("act", "post"); body.set("kind", row.getAttribute("data-k")); body.set("id", row.getAttribute("data-id")); body.set("text", text);
     if (sel) body.set("to", sel.value);
     fetch(TRACKER, { method: "POST", body: body, redirect: "follow" })
       .then(function (r) { return r.json(); })
@@ -393,19 +404,19 @@
   document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-post]"); if (b) { e.preventDefault(); post(b); } });
   function checkIn(e) {
     var b = e.currentTarget; b.disabled = true; b.textContent = "Checking in…";
-    var body = new URLSearchParams(); body.set("wd", P); body.set("k", K); body.set("act", "checkin");
+    var body = auth(new URLSearchParams()); body.set("act", "checkin");
     fetch(TRACKER, { method: "POST", body: body, redirect: "follow" })
       .then(function (r) { return r.json(); })
       .then(function (m) {
         if (!m || !m.ok) { b.disabled = false; b.textContent = "Check in and start my day"; toast((m && m.error) || "That did not record. Try again."); return; }
-        store.set("wd_day_" + P, { day: m.day, m: m }); draw(m, false);
+        store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
         toast(m.checkedIn && m.checkedIn.first === false ? "You were already in at " + m.checkedIn.at : "Checked in at " + (m.checkedIn ? m.checkedIn.at : m.at) + ". Have a good day.");
       })
       .catch(function () { b.disabled = false; b.textContent = "Check in and start my day"; toast("That did not reach the tracker. Try again."); });
   }
 
   // At once: the last copy this phone saw today, then the live day.
-  var keep = P ? store.get("wd_day_" + P) : null, today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Port_of_Spain" });
+  var keep = WHO ? store.get("wd_day_" + WHO) : null, today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Port_of_Spain" });
   if (keep && keep.m && keep.day === today) draw(keep.m, true);
   load();
   $("refresh").addEventListener("click", load);
