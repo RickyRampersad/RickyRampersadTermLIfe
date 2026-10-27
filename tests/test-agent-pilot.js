@@ -67,5 +67,13 @@ DAY = '2026-10-27';
 console.log('\nThe buttons:\n');
 const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'apps-script', 'KPI.gs'), 'utf8');
 ok('the morning, midday and close-off buttons say what to do when Google\'s page will not open', (src.match(/\) \+ agOpenHint_\(\);/g) || []).length === 3 && /private \(incognito\) window/.test(env.agOpenHint_()));
+console.log('\nThe ping:\n');
+const props = env.PropertiesService.getScriptProperties();
+const pingNow = () => JSON.parse(env.doGet({ parameter: { action: 'ping' } }).getContent());
+const was = pingNow().agents.mailedToday;   // the runs above
+props.setProperty('ag_am_ZZ1_' + DAY, '05:31'); props.setProperty('ag_am_ZZ2_' + DAY, '05:31'); props.setProperty('ag_md_ZZ1_' + DAY, '12:01');
+props.setProperty('ag_am_ZZ3_2026-10-26', '05:31'); props.setProperty('ag_prev_am_' + DAY, '3'); props.setProperty('agp_am_ZZ4_' + DAY, '05:41');
+const ping = pingNow();
+ok('ping says the mode and how many agents were mailed today, by run (not samples, not yesterday)', ping.agents && ping.agents.mailedToday.am - was.am === 2 && ping.agents.mailedToday.md - was.md === 1 && ping.agents.mailedToday.pm === was.pm && typeof ping.agents.mode === 'string', JSON.stringify(ping.agents));
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');
 process.exit(fails ? 1 : 0);

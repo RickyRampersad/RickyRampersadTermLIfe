@@ -2226,6 +2226,10 @@ function handle_(action, data, token) {
                     mailRelay: typeof mailRelayReady_ === 'function' && mailRelayReady_(),
                     // 22 Oct 2026: whether Claude is switched on (never the key), which models, and how many of his items are written at full depth today.
                     claude: (function () { try { return !!String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); } catch (e) { return false; } })() },
+             // 27 Oct 2026: the agents' mail, so a check needs no editor: the mode (preview runs the pilot) and how many agents were mailed today, by run.
+             agents: (function () { try { var d = todayISO_(), n = { am: 0, md: 0, pm: 0 };
+               Object.keys(PropertiesService.getScriptProperties().getProperties()).forEach(function (k) { var m = /^ag_(am|md|pm)_.+_(\d{4}-\d{2}-\d{2})$/.exec(k); if (m && m[2] === d) n[m[1]]++; });
+               return { mode: agentMode_(), mailedToday: n }; } catch (e) { return null; } })(),
              claude: (function () { try { var pp = PropertiesService.getScriptProperties();
                return { draftModel: claudeDraftModel_(), readModel: String(pp.getProperty('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL).trim(), fullDepthToday: Object.keys(bmDeepGet_(todayISO_())).length, inboxReviewedToday: Object.keys(ixDeepGet_(todayISO_())).length }; } catch (e) { return null; } })() };
   }
