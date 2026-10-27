@@ -24,6 +24,8 @@ const DAY = '2026-10-20', Y1 = '2026-10-19', Y2 = '2026-10-16';   // Tuesday, Mo
 const env = makeEnv();
 let TODAY = DAY;
 env.todayISO_ = () => TODAY;
+// Pinned to the hours this was written on: Sasha 7 to 2 (7 to 3 from 2 November 2026; test-schedule-week).
+env.SCHEDULE.sasha = Object.assign({}, env.SCHEDULE.sasha, { hours: '7am – 2pm' }); env.CLOSEOUT.AT.sasha = 13 * 60 + 15;
 let NOW = new Date(DAY + 'T13:15:00');
 const realDate = env.Date;
 env.Date = new Proxy(realDate, { construct(t, a) { return a.length ? new realDate(...a) : new realDate(NOW.getTime()); },

@@ -24,6 +24,7 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
   achieved: [{ k: 'close', s: 'Orphan response: call-back from the branch - 5000816447 GERALD HEERAH', noted: false }, { k: 'close', s: 'Premium due: Call back - 5004096791 HEMAN BAHADOOR', noted: true },
     { k: 'close', s: 'Statement request for a client with a very long subject line that has to wrap neatly on a phone without spilling off the side', noted: true }],
   next: [{ s: 'Change of address', due: 'Mon 12 Oct', late: true, ty: 'Servicing', id: '00T9', url: 'https://sf.example/00T9' }, { s: 'Statement request', due: 'Fri 23 Oct', late: false, ty: 'Servicing', url: '' }],
+  close: { url: 'https://script.google.com/macros/s/X/exec?rs=sasha&d=2026-10-23&f=hk&k=K', end: '2:00pm' },
   list: [{ id: '00T7', s: 'Statement request for Gerald Heerah', ty: 'Servicing', done: true, url: 'https://sf.example/00T7' }, { id: '00T9', s: 'Change of address', ty: 'Servicing', done: false, url: 'https://sf.example/00T9' }], listSet: true,
   bars: [{ d: '2026-10-19', l: 'M', n: 9 }, { d: '2026-10-20', l: 'Tu', n: 12 }, { d: '2026-10-21', l: 'W', n: 7 }, { d: '2026-10-22', l: 'Th', n: 11 }, { d: day, l: 'F', n: 6 }],
   team: [] }, o);
@@ -57,6 +58,7 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     ok('the chips: with and without a note, overdue, due, the plan', /<b>5<\/b>closed with your note/.test(chips) && /chip bad"><b>1<\/b>closed with no note/.test(chips) && /<b>41<\/b>overdue/.test(chips) && /<b>4 of 12<\/b>/.test(chips), chips.slice(0, 200));
     ok('not in yet: the check-in button', !!(await page.$('#ci')) && /Your day starts at 7:00am/.test(await page.textContent('#main')));
     ok('what was achieved, with a nudge where there is no note', (await page.$$('ul.list')).length === 3 && /add your note/.test(await page.textContent('#main')));
+    ok('not in yet: no Close my day', !(await page.$('#closeday')));
     ok('the day\'s list: what is done ticked, each to its task', /Your list today/.test(await page.textContent('#list')) && /1 of 2 done/.test(await page.textContent('#list')) && (await page.$$('#list .s.done')).length === 1 && !!(await page.$('#list a[href="https://sf.example/00T9"]')));
     ok('what is on the list is not repeated under Next up', /Also overdue or due/.test(await page.textContent('#main')) && (await page.$$('#main a[href="https://sf.example/00T9"]')).length === 1 && /Statement request/.test(await page.textContent('#main')));
     const bars = await page.$$eval('.bb', es => es.map(e => e.getBoundingClientRect().height));
@@ -68,6 +70,7 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     await page.click('#ci'); await page.waitForTimeout(1500);
     ok('checking in posts her key and redraws: in at 7:12', posted.length === 1 && /wd=sasha/.test(posted[0]) && /act=checkin/.test(posted[0]) && /In at 7:09am/.test(await page.textContent('#main')), posted[0]);
     ok('and says so', /Checked in at 7:12am/.test(await page.textContent('#toast')));
+    ok('checked in: Close my day opens today\'s close-out', /f=hk/.test(await page.getAttribute('#closeday', 'href') || '') && /At the end of your day \(2:00pm\): a reason and a new date for anything not done/.test(await page.textContent('#main')));
     // The next open: the last copy at once, before the tracker answers.
     await page.unroute(/script\.google\.com\/macros/);
     await page.route(/script\.google\.com\/macros/, async route => { await new Promise(r => setTimeout(r, 2500)); route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model()) }); });

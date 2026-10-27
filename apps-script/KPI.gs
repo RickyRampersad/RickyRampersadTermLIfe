@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-27c';
+var SCRIPT_VERSION = '2026-10-27d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -549,9 +549,10 @@ var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2', 'EVE'];
    'focus' is the work of the role in the words of the job document. */
 var SCHEDULE = {
   sasha: {
-    // Sales Support 1. In the office 7 to 2 (Ricky, 14 and 17 October 2026).
-    hours: '7am – 2pm', lunch: '12:00 – 12:30pm',
-    blocks: { KPI1: { time: '7am – 2pm', focus: 'Premium dues and surveys, health billing, orphan adoption, quotations, branch meeting reports', kpi: 'Renewa/PDl/Bill' } }
+    // Sales Support 1. 7 to 3 from Monday 2 November 2026 (Ricky, 27 October; 7 to 2 before
+    // that); 8 to 4 the week of 26 October, in SCHEDULE_DATED.
+    hours: '7am – 3pm', lunch: '12:00 – 12:30pm',
+    blocks: { KPI1: { time: '7am – 3pm', focus: 'Premium dues and surveys, health billing, orphan adoption, quotations, branch meeting reports', kpi: 'Renewa/PDl/Bill' } }
   },
   azariah: {
     // Sales Support 3. 8 to 4, lunch 1 to 2.
@@ -661,7 +662,39 @@ var REPORTS_TO = {
   pawan: 'ricky'      // and works to Kamla day to day; see TIER below
 };
 
-function scheduleFor_(staffId) { return SCHEDULE[staffId] || DEFAULT_SCHEDULE; }
+/* HOURS FOR A RUN OF DAYS (27 October 2026). Kamla, for the week of 26 October:
+   Sasha 8 to 4 with lunch 2 to 3, Liz 12 to 1, Azariah 1 to 2, Kamla and Pawan
+   lunch flexible; Sasha back to 7 to 3 from Monday 2 November. An entry holds
+   from 'from' to 'until' (either may be left off) and changes only what it names:
+   the hours (and so the morning e-mail, late and absent, cover, the close-out and
+   the day's block) and the lunch (and so the close-off-for-lunch e-mail; 'Flexible'
+   sends none). Everything that asks scheduleFor_ follows on the day. */
+var SCHEDULE_DATED = {
+  // Her 7 to 2 before the week needs no entry: late is judged on the start, 7am either way.
+  sasha: [{ from: '2026-10-26', until: '2026-10-30', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' }],
+  kamla: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }],
+  pawan: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }]
+};
+
+/** A desk's schedule on a day ("2026-10-27"), today's when no day is given. */
+function scheduleFor_(staffId, day) {
+  var base = SCHEDULE[staffId] || DEFAULT_SCHEDULE, list = SCHEDULE_DATED[staffId];
+  if (!list || !list.length) return base;
+  var d = String(day || todayISO_()), hit = null;
+  for (var i = 0; i < list.length && !hit; i++) if ((!list[i].from || d >= list[i].from) && (!list[i].until || d <= list[i].until)) hit = list[i];
+  if (!hit) return base;
+  var out = {}, blocks = {};
+  Object.keys(base).forEach(function (k) { out[k] = base[k]; });
+  if (hit.hours) out.hours = hit.hours;
+  if (hit.lunch) out.lunch = hit.lunch;
+  Object.keys(base.blocks || {}).forEach(function (b) {
+    var x = {}; Object.keys(base.blocks[b]).forEach(function (k) { x[k] = base.blocks[b][k]; });
+    if (hit.hours && x.time === base.hours) x.time = hit.hours;
+    blocks[b] = x;
+  });
+  out.blocks = blocks;
+  return out;
+}
 
 /** Every scheduled KPI must be one a person can actually pick. Run from the
  *  editor after editing SCHEDULE — a typo here shows up as a blank dropdown
@@ -3837,7 +3870,7 @@ function housekeepingTick_() {
     if (props.getProperty(key)) return;
     if (timedSend_(props, key, now, function () { return sendLunchOff_(p, day, now); })) sent.push(p.name + ' (lunch)');
   });
-  // Before you leave: Sasha 1:15, Liz 2:15, Azariah 3:15, Kamla 4:15; half an hour before the finish otherwise (CLOSEOUT.AT, 20 Oct 2026).
+  // Before you leave: 45 minutes before the finish for the desks in CLOSEOUT.AT (Sasha 2:15 on 7 to 3, 3:15 the week of 26 Oct), half an hour otherwise.
   people.forEach(function (p) {
     var sid = String(p.staffId);
     if (!expected(sid)) return;
@@ -10676,12 +10709,17 @@ function markNotClosed_(sid, day) {
  *   · A clean close (every item answered) is the "day closed off" point in the game.
  */
 var CLOSEOUT = {
-  AT: { sasha: 13 * 60 + 15, elizabeth: 15 * 60 + 15, azariah: 15 * 60 + 15, kamla: 16 * 60 + 15 },   // Liz 3:15 from 23 Oct 2026 (her day is now 8 to 4)
+  AT: { sasha: 14 * 60 + 15, elizabeth: 15 * 60 + 15, azariah: 15 * 60 + 15, kamla: 16 * 60 + 15 },   // Liz 3:15 from 23 Oct 2026 (her day is now 8 to 4); Sasha 2:15 on her 7 to 3 (closeoutAt_ moves it on other hours)
   MGR_AT: 15 * 60, MGR_CHECK_AFTER: 45,           // Mr Rampersad and the Unit Manager: 3:00, and the check at 3:45
   BMA: 'kamla', KAMLA_AT_RUN: 2, RICKY_AT_RUN: 3, LOOK_BACK: 5, MAX_TASKS: 40
 };
 /** When this desk's close-out notice goes. */
-function closeoutAt_(sid) { return CLOSEOUT.AT[sid] != null ? CLOSEOUT.AT[sid] : endFor_(sid) - HK_LEAD_MIN; }
+function closeoutAt_(sid) {
+  if (CLOSEOUT.AT[sid] == null) return endFor_(sid) - HK_LEAD_MIN;
+  // On a day with other hours (SCHEDULE_DATED) the notice moves with the finish: Sasha 3:15 on her 8 to 4 week.
+  var base = parseSpan_((SCHEDULE[sid] || {}).hours || ''), on = parseSpan_(scheduleFor_(sid).hours || '');
+  return base && on && on.end !== base.end ? CLOSEOUT.AT[sid] + (on.end - base.end) : CLOSEOUT.AT[sid];
+}
 function closeoutAskKey_(sid, day) { return 'co_ask_' + sid + '_' + day; }
 function closeoutUnKey_(sid, day) { return 'co_un_' + sid + '_' + day; }
 function closeoutDesk_(sid) { return CLOSEOUT.AT[sid] != null; }
@@ -15826,6 +15864,13 @@ function workdayModel_(sid, day) {
   // Next up: overdue oldest first, then due today.
   m.next = (pr._all || []).slice().sort(function (x, y) { return (y.t.late ? 1 : 0) - (x.t.late ? 1 : 0) || String(x.t.due || '').localeCompare(String(y.t.due || '')); })
     .slice(0, WORKDAY.NEXT).map(function (x) { return { s: shorten_(x.t.subject || x.t.s || '', 110), due: x.t.due ? shortDate_(x.t.due) : '', late: !!x.t.late, ty: x.ty, id: x.t.id || '', url: base && x.t.id && sid !== 'akaash' ? base + x.t.id : '' }; });
+  // Start and close my day from My day itself (27 Oct 2026, 6:57am). Ricky: "if a lot of them complain that they don't get the
+  // email ... when they log on to My Day, it can ask them start My Day or close My Day. So at least they have an access to go to."
+  // Check-in was already on it; the close-out (a reason and a new date for anything not done, the checks, sign out) is the
+  // same page the 3:15 e-mail opens, signed for today, so nobody needs the e-mail to close the day. Pawan's is his errands page.
+  if (UM_DESKS.indexOf(sid) < 0) {
+    m.close = { url: sid === 'pawan' ? replyUrl_(sid, day, 'errand') + '&c=leave' : replyUrl_(sid, day, 'hk'), end: twelve_(mmText_(endFor_(sid))) };
+  }
   // The day's list (27 Oct 2026): what the system set at check-in, each ticked when closed today; before check-in, what it will set.
   if (UM_DESKS.indexOf(sid) < 0) {
     var shut = {}; (pr._closed || []).forEach(function (t) { if (t && t.id) shut[t.id] = 1; });
@@ -19026,7 +19071,7 @@ var SCHEDULE_WAS = {
 
 /** The hours string this desk kept on that day ("2026-10-12"); today's when no day is given. */
 function hoursOn_(staffId, day) {
-  var now = scheduleFor_(staffId).hours || '';
+  var now = scheduleFor_(staffId, day).hours || '';
   if (!day) return now;
   var was = (SCHEDULE_WAS[staffId] || []).slice().sort(function (a, b) { return a.until < b.until ? -1 : a.until > b.until ? 1 : 0; });
   for (var i = 0; i < was.length; i++) if (String(day) <= String(was[i].until)) return was[i].hours;

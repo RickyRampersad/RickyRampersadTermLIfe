@@ -124,6 +124,8 @@
   ul.list li:first-child{border-top:0}
   @keyframes slide{to{opacity:1;transform:none}}
   .ic{flex:none;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font:800 13px/1 var(--fd);background:var(--soft);color:var(--good);margin-top:1px}
+  #closeday{display:flex;margin-top:14px}
+  .closed{margin-top:12px;font-size:14px;color:var(--muted)} .closed b{color:var(--good)} .closed a{color:inherit;font-weight:700}
   .ic.no{color:var(--bad)} .ic.late{color:var(--bad)} .ic.due{color:var(--warn)} .ic.k{color:var(--navy)} .ic.todo{color:var(--muted)}
   .li .s.done{text-decoration:line-through;color:var(--muted)} .li .s.done a{color:inherit}
   .li{flex:1;min-width:0}
@@ -297,9 +299,13 @@
       "</div></div></div>" + '<button class="go" id="ci">Check in now</button><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">Checking in before noon brings back the work nobody has touched.</div></div>';
     if (!c.at) return '<div class="card"><div class="ci"><div class="dot">' + "&#9654;" + '</div><div><div class="t">Start your day</div><div class="s">Your day starts at ' + esc(m.start) + ". Checking in is the register.</div></div></div>" +
       '<button class="go" id="ci">Check in and start my day</button></div>';
-    var late = Number(c.late || 0);
+    var late = Number(c.late || 0), cl = m.close;
+    // Close my day (27 Oct 2026): the close-out, from here, with or without the e-mail.
+    var close = !cl ? "" : c.out
+      ? '<div class="closed"><b>Day closed</b> · signed out ' + esc(c.out) + '. <a href="' + esc(cl.url) + '">Open the close-out again</a></div>'
+      : '<a class="btn go" id="closeday" href="' + esc(cl.url) + '">Close my day</a><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">At the end of your day' + (cl.end ? " (" + esc(cl.end) + ")" : "") + ': a reason and a new date for anything not done, the checks, and sign out.</div>';
     return '<div class="card"><div class="ci"><div class="dot' + (late ? " late" : "") + '">&#10003;</div><div><div class="t">In at ' + esc(c.at) + (late ? " · " + late + " min late" : " · on time") + "</div>" +
-      '<div class="s">Your day started at ' + esc(m.start) + (c.out ? " · signed out " + esc(c.out) : "") + "</div></div></div></div>";
+      '<div class="s">Your day started at ' + esc(m.start) + (c.out ? " · signed out " + esc(c.out) : "") + "</div></div></div>" + close + "</div>";
   }
   // A first name from "Sasha Lalla-Jagassar" or "kamla.dookran@myguardiangroup.com".
   function firstOf(by) { var b = String(by || "").trim(); if (!b) return "Someone"; if (b.indexOf("@") > -1) b = b.split("@")[0].split(/[._-]/)[0]; b = b.split(/\s+/)[0]; return b.charAt(0).toUpperCase() + b.slice(1); }
