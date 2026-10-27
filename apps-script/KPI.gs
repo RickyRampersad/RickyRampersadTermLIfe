@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-27e';
+var SCRIPT_VERSION = '2026-10-27f';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2199,7 +2199,7 @@ function doPost(e) {
   if (typeof intelRoute_ === 'function') {
     try {
       var hit = intelRoute_(body);      // null for anything not an intel.* action
-      if (hit) return hit;
+      if (hit) return WALL_FEEDS[String(body.action || '')] ? wallFeedOut_(String(body.action), hit) : hit;
     } catch (err) {
       return json_({ ok: false, error: String(err && err.message || err) });
     }
@@ -2393,7 +2393,7 @@ function handle_(action, data, token) {
 
     // The new wall (20 Oct 2026): the Branch Manager sees the inside read; anyone else signed in, the outside one.
     case 'wall2':
-      return { ok: true, intel: wallIntel_(todayISO_(), !profile.manager), inside: !!profile.manager };
+      return { ok: true, intel: wallScrub_(wallIntel_(todayISO_(), !profile.manager)), inside: !!profile.manager };
 
     case 'checkpoint':
       if (!profile.manager) return { ok: false, error: 'Branch Manager only.' };
@@ -15836,11 +15836,116 @@ function workdayTeam_(day) {
     var a = attRow_(rows, day, s), t = a ? timeStr_(a.row.FirstSignIn) : '', st = a ? String(a.row.Status || '').toLowerCase() : '', pr = null;
     try { pr = workdayProgress_(s, day, now); } catch (e) {}
     return { sid: s, name: String(nameFor_(s)).split(' ')[0], hours: scheduleFor_(s).hours || '', at: t ? twelve_(t) : '', late: t ? lateBy_(s, t, day) : 0, absent: st === 'absent',
-      closed: pr ? pr.closed : null, target: pr ? pr.target : null, pct: pr ? pr.pct : null, dayPct: pr ? pr.dayPct : null, overdue: pr ? pr.overdue : null };
+      closed: pr ? pr.closed : null, target: pr ? pr.target : null, pct: pr ? pr.pct : null, dayPct: pr ? pr.dayPct : null, overdue: pr ? pr.overdue : null,
+      dueToday: pr ? pr.dueToday : null, list: wdListCount_(s, day, pr) };
   });
   try { c.put(key, JSON.stringify(out), WORKDAY.TEAM_TTL); } catch (e) {}
   return out;
 }
+/** The day's list the system set at check-in, and how much of it is closed: { of, done }, or null before check-in (27 Oct 2026). */
+function wdListCount_(sid, day, pr) {
+  var plans = {}; try { plans = planRows_(sid, day); } catch (e) { return null; }
+  var shut = {}; ((pr && pr._closed) || []).forEach(function (t) { if (t && t.id) shut[t.id] = 1; });
+  var seen = {}, of = 0, done = 0;
+  BLOCK_IDS.forEach(function (b) { if (plans[b]) planItemsOf_(plans[b].Items).forEach(function (it) { if (it && it.k === 'sf' && it.id && !seen[it.id]) { seen[it.id] = 1; of++; if (shut[it.id]) done++; } }); });
+  return of ? { of: of, done: done } : null;
+}
+
+/* ── The walls: nobody who has left, and the system's day (27 October 2026) ──
+ *  Ricky, 1:17pm: "we dont work in blocks re kpi again but the system assign to us ... revise the wall urgent with motion and
+ *  graphs"; 1:18pm: "the premium due and pendings needs to be real and the birthdays"; 1:19pm: "Kerwyn and Gary as well their
+ *  team members with exception of felicia is not longer here and not to be displayed".
+ *  Every wall feed (the Intelligence wall's intel.* screens and the office wall) passes through wallScrub_. A row keyed by
+ *  someone who has left is folded into one row, WALL_ORPHANS, its counts and money summed, so every total stays the branch's
+ *  real book (their clients still owe, and are being reassigned) and nobody who has left is named; a desk or team row of
+ *  theirs is dropped; a name field reads WALL_ORPHANS. The list is WALL_LEFT, or the Script Property WALL_LEFT (names, comma
+ *  separated) when it is set. Felicia Rampersad stays. intel.day also carries the system's day (`system`): each desk's
+ *  check-in, closed against the day's target, the list set at check-in, overdue. */
+var WALL_LEFT = ['Kerwyn Ramroach', 'Gary Sookdeo',
+  // Kerwyn's unit
+  'Aidan Eugene', 'Amrit Mootiram', 'Anthony Simmons', 'Anushka Singh', 'Brian Joseph', 'Crystal Fraser', 'Dhalina Heeraman', 'Diana Singh',
+  'Fazeeda Mohammed', 'Jonathan Hart', 'Lulliana Ragunan', 'Mariom Johnny', 'Roberta Laltoo', 'Sarita Manickchand',
+  // Gary's unit (Felicia Rampersad stays)
+  'Alyssa Joseph', 'Chris Badaloo', 'Jesus Boodhoo', 'John Boodhoo', 'Jonathann Pantin', 'Naila Samuel', 'Terrell Godden', 'Tricia Baksh'];
+var WALL_ORPHANS = 'Orphans · to reassign';
+var WALL_FEEDS = { 'intel.day': 1, 'intel.wall': 1, 'intel.pending': 1, 'intel.book': 1, 'intel.lapses': 1, 'intel.delivery': 1, 'intel.licence': 1,
+  'intel.possession': 1, 'intel.conversion': 1, 'intel.groups': 1, 'intel.permanent': 1, 'intel.riders': 1 };
+var WALL_DROP = { desks: 1, team: 1, people: 1, roster: 1, staff: 1, managers: 1 };
+function wallKey_(s) { return String(s || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/\b[a-z]*\d[a-z\d]*\b/g, ' ').replace(/[^a-z]+/g, ' ').trim(); }
+function wallLeft_() {
+  var v = ''; try { v = String(PropertiesService.getScriptProperties().getProperty('WALL_LEFT') || '').trim(); } catch (e) {}
+  var out = {}; (v ? v.split(/\s*,\s*/) : WALL_LEFT).forEach(function (n) { var k = wallKey_(n); if (k) out[k] = 1; });
+  return out;
+}
+function wallIsLeft_(v, left) { return typeof v === 'string' && v.length < 80 && !!left[wallKey_(v)]; }
+/** The feed with everyone who has left folded into WALL_ORPHANS (see above). */
+function wallScrub_(o, leftOpt) {
+  var left = leftOpt || wallLeft_();
+  var idOf = function (x) { if (!x || typeof x !== 'object') return ''; var ks = ['k', 'name', 'agent', 'a', 'who', 'unit'];
+    for (var i = 0; i < ks.length; i++) if (typeof x[ks[i]] === 'string') return x[ks[i]]; return ''; };
+  var maxKey = /^(med|median|avg|mean|pct|rate|share|ratio|age|oldest|days|tenure|max|min|score|dayPct|late)(?![a-z])/;   // a median is not summed; 'agents' is
+  var merge = function (a, b) {
+    Object.keys(b).forEach(function (k) {
+      if (typeof b[k] === 'number' && typeof a[k] === 'number') a[k] = maxKey.test(k) ? Math.max(a[k], b[k]) : Math.round((a[k] + b[k]) * 100) / 100;
+      else if (a[k] == null) a[k] = b[k];
+    });
+    return a;
+  };
+  var walk = function (x, parentKey) {
+    if (Array.isArray(x)) {
+      if (x.length && x.every(function (e) { return typeof e === 'string'; })) {
+        var seen = {}; return x.map(function (e) { return wallIsLeft_(e, left) ? WALL_ORPHANS : e; }).filter(function (e) { if (seen[e]) return false; seen[e] = 1; return true; });
+      }
+      var out = [], orph = null;
+      x.forEach(function (e) {
+        var id = idOf(e);
+        if (id && wallIsLeft_(id, left)) {
+          if (WALL_DROP[parentKey]) return;
+          var c = walk(e, '');
+          Object.keys(c).forEach(function (k) { if (typeof c[k] === 'string' && wallIsLeft_(c[k], left)) c[k] = WALL_ORPHANS; });
+          if (orph) merge(orph, c); else { orph = c; out.push(orph); }
+          return;
+        }
+        out.push(walk(e, ''));
+      });
+      return out;
+    }
+    if (x && typeof x === 'object') {
+      var o2 = {};
+      Object.keys(x).forEach(function (k) {
+        var v = walk(x[k], k);
+        if (typeof v === 'string' && wallIsLeft_(v, left)) v = WALL_ORPHANS;
+        if (wallIsLeft_(k, left)) { if (WALL_DROP[parentKey]) return; o2[WALL_ORPHANS] = o2[WALL_ORPHANS] && typeof v === 'object' ? merge(o2[WALL_ORPHANS], v) : v; return; }
+        o2[k] = v;
+      });
+      return o2;
+    }
+    return x;
+  };
+  return walk(o, '');
+}
+/** An intel.* wall answer with the scrub applied, and for intel.day the system's day added. */
+function wallFeedOut_(action, out) {
+  var j = null; try { j = JSON.parse(out.getContent()); } catch (e) { return out; }
+  if (!j || !j.ok || !j.data) return out;
+  try { j.data = wallScrub_(j.data); } catch (e) {}
+  if (action === 'intel.day') { try { j.data.system = wallSystemDay_(todayISO_()); } catch (e) {} }
+  return ContentService.createTextOutput(JSON.stringify(j)).setMimeType(ContentService.MimeType.JSON);
+}
+/** The system's day for the wall: no client, no task, counts only. */
+function wallSystemDay_(day) {
+  var nowM = minutesOf_(hhmm_(new Date()));
+  var team = workdayTeam_(day).map(function (d) {
+    var sp = parseSpan_(d.hours || '') || { start: 480, end: 960 };
+    return { name: d.name, hours: d.hours, at: d.at, late: d.late, absent: d.absent, waiting: !d.at && !d.absent && nowM < sp.start + ABSENT_AFTER_MIN,
+      closed: d.closed, target: d.target, pct: d.pct, dayPct: d.dayPct, overdue: d.overdue, dueToday: d.dueToday, list: d.list };
+  });
+  var sum = function (f) { return team.reduce(function (a, d) { return a + (Number(d[f]) || 0); }, 0); };
+  var listOf = team.reduce(function (a, d) { return a + (d.list ? d.list.of : 0); }, 0), listDone = team.reduce(function (a, d) { return a + (d.list ? d.list.done : 0); }, 0);
+  return { at: twelve_(hhmm_(new Date())), team: team, closed: sum('closed'), target: sum('target'), overdue: sum('overdue'),
+    listOf: listOf, listDone: listDone, inNow: team.filter(function (d) { return d.at; }).length, of: team.length };
+}
+
 /** Everything the page shows, as JSON. */
 function workdayModel_(sid, day) {
   var person = workdayPerson_(sid);
