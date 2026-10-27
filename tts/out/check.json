@@ -1,42 +1,32 @@
 {
- "tts/out/wallsys/01.mp3": [
+ "tts/out/wallreqs/01.mp3": [
   "en",
-  0.987,
-  "This is the day the system set."
+  0.985,
+  "This is what is still outstanding on our pending cases from today's pending report."
  ],
- "tts/out/wallsys/02.mp3": [
-  "en",
-  0.989,
-  "No blocks. At check-in, each desk gets its day from Salesforce."
- ],
- "tts/out/wallsys/03.mp3": [
-  "en",
-  0.997,
-  "The ring is what each desk has closed against the day's target."
- ],
- "tts/out/wallsys/04.mp3": [
-  "en",
-  0.997,
-  "The white mark on the ring is where the clock is."
- ],
- "tts/out/wallsys/05.mp3": [
+ "tts/out/wallreqs/02.mp3": [
   "en",
   0.993,
-  "The bar is the list the system set and how much of it is done."
+  "The big number is every requirement still waiting to be received."
  ],
- "tts/out/wallsys/06.mp3": [
-  "en",
-  0.99,
-  "Every desk against its own day. Nobody is ranked."
- ],
- "tts/out/wallsys/07.mp3": [
+ "tts/out/wallreqs/03.mp3": [
   "en",
   0.997,
-  "No client is named here. Counts only."
+  "The bars are the agents who still owe a first premium, collected, and the policy can issue."
  ],
- "tts/out/wallday6/01.mp3": [
+ "tts/out/wallreqs/04.mp3": [
   "en",
-  0.997,
-  "On the right, how much of the list the system said it check in is done."
+  0.992,
+  "Most requirements sit with the agent. That is the first call to make."
+ ],
+ "tts/out/wallreqs/05.mp3": [
+  "en",
+  0.986,
+  "On the right, what the team chased today, and which agents they chased."
+ ],
+ "tts/out/wallreqs/06.mp3": [
+  "en",
+  0.996,
+  "No client is named here. Counts and agents only."
  ]
 }
