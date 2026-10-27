@@ -167,6 +167,99 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .cust{display:inline-block;margin-top:calc(var(--u)*1.4);font:600 calc(var(--u)*1.9)/1 var(--text);color:var(--aD);font-style:normal;opacity:0}
 .scene.act .cust{animation:up .5s var(--out) both;animation-delay:var(--t0)}
 .h.xl .cnt{color:var(--aL)}
+/* the journey strip (6, trailer 2) */
+.jr{position:relative;display:grid;grid-template-columns:repeat(8,1fr);gap:calc(var(--u)*1.2);width:100%;margin-top:calc(var(--u)*3);padding-top:calc(var(--u)*2)}
+.jline{position:absolute;left:6%;right:6%;top:calc(var(--u)*2 + var(--u)*3.2);height:2px;background:rgba(255,255,255,.14)}
+.jdot{position:absolute;left:6%;top:calc(var(--u)*2 + var(--u)*3.2 - var(--u)*.7);width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);border-radius:50%;background:var(--aL);box-shadow:0 0 calc(var(--u)*2.4) var(--aL);opacity:0;z-index:2}
+.scene.act .jdot{animation:jride 1s linear both;animation-delay:var(--t0);animation-duration:calc(var(--t1) - var(--t0))}
+@keyframes jride{from{opacity:1;left:6%}to{opacity:1;left:94%}}
+.jn{display:grid;justify-items:center;gap:.5em;text-align:center;opacity:0;position:relative}
+.scene.act .jn{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.jic{width:calc(var(--u)*6.4);height:calc(var(--u)*6.4);border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;font-size:calc(var(--u)*2.8);box-shadow:0 0 0 calc(var(--u)*.6) rgba(211,63,73,.25);position:relative;z-index:1}
+.scene.act .jic{animation:jon .6s var(--pop) both;animation-delay:var(--t0)}
+@keyframes jon{from{transform:scale(.5)}60%{transform:scale(1.15)}to{transform:scale(1)}}
+.jn b{font:700 calc(var(--u)*2.1)/1.15 var(--text);color:#fff}
+.jn small{font:500 calc(var(--u)*1.7)/1 var(--text);color:var(--aT);letter-spacing:.06em;text-transform:uppercase}
+.jp{position:absolute;top:calc(var(--u)*-1.4);right:12%;width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);border-radius:50%;background:#fff;border:2px solid var(--aD);opacity:0;transform:scale(.4);z-index:2}
+.jp::after{content:'';position:absolute;left:30%;top:22%;width:40%;height:40%;border-radius:50%;background:var(--aD)}
+.scene.act .jp{animation:pop .5s var(--pop) both;animation-delay:calc(var(--t0) + var(--i,0) * 90ms)}
+/* white card with form rows (7, 25, 27, 28) */
+.wcard{position:relative;background:#fff;color:#17191F;border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*2.4) calc(var(--u)*2.8) calc(var(--u)*3.8);box-shadow:0 calc(var(--u)*4) calc(var(--u)*8) rgba(4,6,10,.5);display:grid;gap:calc(var(--u)*1.1)}
+.wh{display:flex;justify-content:space-between;align-items:baseline;gap:1em;font:700 calc(var(--u)*2.4)/1 var(--display);padding-bottom:calc(var(--u)*1.1);border-bottom:1px solid #E3E5EA}
+.wh span{font:600 calc(var(--u)*1.7)/1 var(--text);color:#5F6471;letter-spacing:.06em}
+.frow{display:grid;grid-template-columns:1fr 1.3fr;gap:1em;align-items:center;font:500 calc(var(--u)*2.1)/1.3 var(--text);color:#5F6471;opacity:0;padding:calc(var(--u)*.4) 0;border-bottom:1px dashed #E3E5EA}
+.frow b{color:#17191F;font-weight:600}
+.scene.act .frow{animation:up .55s var(--out) both;animation-delay:var(--t0)}
+.hbar{display:block;height:calc(var(--u)*1.5);border-radius:99px;background:#EEF2F8;overflow:hidden}
+.hbar b{display:block;height:100%;width:var(--v);background:linear-gradient(90deg,var(--aD),var(--aL));transform:scaleX(0);transform-origin:0 50%;border-radius:99px}
+.scene.act .hbar b{animation:grow .9s var(--out) both;animation-delay:var(--t0)}
+.yes{display:inline-block;justify-self:start;font:700 calc(var(--u)*1.9)/1 var(--text);color:#1E7A4F;background:#E8F5EE;border-radius:99px;padding:.45em 1em;opacity:0;transform:scale(.5)}
+.scene.act .yes{animation:pop .45s var(--pop) both;animation-delay:var(--t0)}
+/* POP7 ring (8) */
+.pring{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:calc(var(--u)*2);margin-top:calc(var(--u)*1);opacity:0}
+.scene.act .pring{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.pring svg{width:calc(var(--u)*11);height:calc(var(--u)*11);transform:rotate(-90deg)}
+.pring circle{fill:none;stroke:rgba(255,255,255,.12);stroke-width:8}
+.pring .arc{stroke:var(--aL);stroke-linecap:round;stroke-dasharray:264;stroke-dashoffset:264}
+.scene.act .pring .arc{animation:parc 1.2s var(--out) both;animation-delay:calc(var(--t0) + 150ms)}
+@keyframes parc{to{stroke-dashoffset:53}}
+.pring b{font:800 calc(var(--u)*4.2)/1 var(--display);color:#fff}
+.pring span{display:block;font:500 calc(var(--u)*2)/1.2 var(--text);color:var(--mute)}
+/* Query Pal (19) */
+.qp{position:relative;background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.4) calc(var(--u)*2.4) calc(var(--u)*4);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5);display:grid;gap:calc(var(--u)*1.4)}
+.qmsg{max-width:88%;border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*1.4) calc(var(--u)*2);font:500 calc(var(--u)*2.1)/1.35 var(--text);opacity:0;display:grid;gap:.3em}
+.qmsg small{font:600 calc(var(--u)*1.6)/1 var(--text);letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.qmsg.me{justify-self:end;background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;border-bottom-right-radius:.3em}
+.qmsg.them{justify-self:start;background:#fff;color:#17191F;border-bottom-left-radius:.3em}
+.scene.act .qmsg{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.steps4.three{grid-template-columns:repeat(3,1fr);margin-top:calc(var(--u)*1)}
+.qp .steps4::before{background:rgba(255,255,255,.14)}
+.qp .st{color:var(--mute)}
+.qp .st i{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
+.turn{display:inline-block;justify-self:center;font:600 calc(var(--u)*1.8)/1 var(--text);letter-spacing:.1em;text-transform:uppercase;color:var(--aT);font-style:normal;opacity:0}
+.scene.act .turn{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+/* the Wednesday agenda (25) */
+.agenda{list-style:none;display:grid;gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*1)}
+.agenda li{display:grid;grid-template-columns:auto 1fr;gap:.1em 1.2em;align-items:center;opacity:0}
+.scene.act .agenda li{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.agenda i{grid-row:span 2;font:800 calc(var(--u)*2.2)/1 var(--display);font-style:normal;color:#fff;background:linear-gradient(145deg,var(--a),var(--aD));border-radius:calc(var(--u)*1);padding:.6em .7em;text-align:center;min-width:4.2em}
+.agenda b{font:700 calc(var(--u)*2.6)/1.1 var(--display);color:#fff}
+.agenda span{font:500 calc(var(--u)*2)/1.2 var(--text);color:var(--mute)}
+.cl{display:grid;gap:.35em;padding:calc(var(--u)*1.2) 0;border-bottom:1px dashed #E3E5EA;opacity:0}
+.scene.act .cl{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.cl b{font:700 calc(var(--u)*2.3)/1 var(--display)}
+.cl .gap{display:inline-block;justify-self:start;font:600 calc(var(--u)*1.7)/1 var(--text);color:var(--aD);background:var(--a-tint,#FBE3E5);border-radius:99px;padding:.4em .9em}
+.cl p{font:500 calc(var(--u)*2.1)/1.35 var(--text);color:#17191F;min-height:2.7em}
+/* the premium-due timeline (27, trailer 4) */
+.tl4{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1);position:relative;margin-top:calc(var(--u)*.6)}
+.tl4::before{content:'';position:absolute;left:10%;right:10%;top:calc(var(--u)*2.6);height:2px;background:#E3E5EA}
+.tn{display:grid;justify-items:center;gap:.3em;text-align:center;opacity:0;position:relative}
+.scene.act .tn{animation:up .55s var(--out) both;animation-delay:var(--t0)}
+.tn i{width:calc(var(--u)*5.2);height:calc(var(--u)*5.2);border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;font-size:calc(var(--u)*2.4);position:relative;z-index:1}
+.scene.act .tn i{animation:jon .6s var(--pop) both;animation-delay:var(--t0)}
+.tn b{font:800 calc(var(--u)*2.8)/1 var(--display);color:#17191F}
+.tn span{font:600 calc(var(--u)*1.6)/1 var(--text);color:#5F6471;letter-spacing:.08em;text-transform:uppercase}
+.tl4.mini .tn i{width:calc(var(--u)*3.6);height:calc(var(--u)*3.6);font-size:calc(var(--u)*1.7)}
+.tl4.mini .tn b{font-size:calc(var(--u)*2.1)}
+.tl4.mini::before{top:calc(var(--u)*1.8)}
+.stars.sm{align-items:center;gap:calc(var(--u)*.6)}
+.stars.sm svg{width:calc(var(--u)*3.4);height:calc(var(--u)*3.4)}
+.stars.sm span{font:500 calc(var(--u)*1.9)/1.2 var(--text);color:#5F6471;margin-left:.6em;font-style:italic}
+/* the career path rows (28) */
+.cp{gap:calc(var(--u)*1.2)}
+.cpr{display:grid;grid-template-columns:1fr 1.2fr;gap:.2em 1em;align-items:center;font:700 calc(var(--u)*2.2)/1.2 var(--display);opacity:0}
+.scene.act .cpr{animation:up .55s var(--out) both;animation-delay:var(--t0)}
+.cpr em{grid-column:2;font:500 calc(var(--u)*1.7)/1 var(--text);color:#5F6471;font-style:normal}
+.cpr .dt{color:var(--aD);font-weight:600;opacity:0}
+.scene.act .cpr .dt{animation:fade .5s both;animation-delay:var(--t0)}
+/* the trailer's rhythm grid */
+.rh{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*2.4);width:100%;max-width:calc(var(--u)*150);margin:calc(var(--u)*1) auto 0}
+.rc{background:#fff;color:#17191F;border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*2.2) calc(var(--u)*2.6);display:grid;gap:calc(var(--u)*1.1);text-align:left;box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5)}
+.rc small{font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--aD)}
+.rc>b{font:700 calc(var(--u)*2.7)/1.15 var(--display)}
+.rc .week span{color:#5F6471;background:#EEF2F8}
+.rc .week span.fri{color:#fff}
+.rc .prz .ypill{font-size:calc(var(--u)*2)}
 /* scene 17: the wins */
 .wins{background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);padding:calc(var(--u)*2) calc(var(--u)*2.4);display:grid;gap:calc(var(--u)*1.1);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5)}
 .aw{display:flex;justify-content:space-between;align-items:center;background:#fff;color:#17191F;border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.2) calc(var(--u)*1.8);font:700 calc(var(--u)*2.3)/1 var(--display);opacity:0}
@@ -664,6 +757,10 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .gline{top:calc(var(--u)*5.5)}
   .door{width:calc(var(--u)*34);grid-column:1/-1;order:-1}
   .gal{grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3)}
+  .jr{grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*3) calc(var(--u)*1.2)}
+  .jline,.jdot{display:none}
+  .rh{grid-template-columns:1fr}
+  .tl4 .tn b{font-size:calc(var(--u)*2.4)}
   .shot figcaption{font-size:calc(var(--u)*2.4)}
   .steps4 .st{font-size:calc(var(--u)*2.2)}
   .door-row{grid-template-columns:1fr 1fr;gap:calc(var(--u)*3)}
@@ -778,7 +875,155 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-leads" data-d="12900" data-n="5" style="--kb:12900ms" >
+<section class="scene s-notalone" data-d="10900" data-n="5" style="--kb:10900ms" >
+
+<div class="full center">
+  <span class="ghost" aria-hidden="true">?</span>
+  <p class="eye in" style="--t0:200ms">The part nobody tells you</p>
+  <h2 class="h xl"><span aria-label="What happens to you"><span class="w"><i style="--i:0;--t0:400ms">What</i></span> <span class="w"><i style="--i:1;--t0:400ms">happens</i></span> <span class="w"><i style="--i:2;--t0:400ms">to</i></span> <span class="w"><i style="--i:3;--t0:400ms">you</i></span></span><br><em class="wine"><span aria-label="after you apply."><span class="w"><i style="--i:0;--t0:4287ms">after</i></span> <span class="w"><i style="--i:1;--t0:4287ms">you</i></span> <span class="w"><i style="--i:2;--t0:4287ms">apply.</i></span></span></em></h2>
+  <div class="ceil-line" style="--t0:4788ms"></div>
+  <p class="sub2 in" style="--t0:7075ms">In this branch, <em class="wine">you're not alone from the first day.</em></p>
+  <p class="eye in" style="--t0:9300ms">Here is the whole journey</p>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-journey" data-d="22800" data-n="6" style="--kb:22800ms" >
+
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">From the day you apply</p>
+  <h2 class="h l"><span aria-label="Eight steps."><span class="w"><i style="--i:0;--t0:400ms">Eight</i></span> <span class="w"><i style="--i:1;--t0:400ms">steps.</i></span></span> <em class="wine"><span aria-label="A person at every one."><span class="w"><i style="--i:0;--t0:18950ms">A</i></span> <span class="w"><i style="--i:1;--t0:18950ms">person</i></span> <span class="w"><i style="--i:2;--t0:18950ms">at</i></span> <span class="w"><i style="--i:3;--t0:18950ms">every</i></span> <span class="w"><i style="--i:4;--t0:18950ms">one.</i></span></span></em></h2>
+  <div class="jr">
+    <i class="jline"></i><i class="jdot" style="--t0:500ms;--t1:18250ms"></i>
+    <div class="jn" style="--t0:500ms;--i:0"><span class="jic"><svg class="ic"><use href="#i-doc"/></svg></span><b>Apply</b><small>2 min</small><em class="jp" style="--t0:20362ms"></em></div><div class="jn" style="--t0:2112ms;--i:1"><span class="jic"><svg class="ic"><use href="#i-phone"/></svg></span><b>A call</b><small>48 h</small><em class="jp" style="--t0:20362ms"></em></div><div class="jn" style="--t0:4613ms;--i:2"><span class="jic"><svg class="ic"><use href="#i-users"/></svg></span><b>The Branch Manager</b><small>in person</small><em class="jp" style="--t0:20362ms"></em></div><div class="jn" style="--t0:6725ms;--i:3"><span class="jic"><svg class="ic"><use href="#i-chat"/></svg></span><b>Orientation</b><small>no gloss</small><em class="jp" style="--t0:20362ms"></em></div><div class="jn" style="--t0:12312ms;--i:4"><span class="jic"><svg class="ic"><use href="#i-grid"/></svg></span><b>Market survey</b><small>digital</small><em class="jp" style="--t0:20362ms"></em></div><div class="jn" style="--t0:13975ms;--i:5"><span class="jic"><svg class="ic"><use href="#i-target"/></svg></span><b>POP7</b><small>the profile</small><em class="jp" style="--t0:20362ms"></em></div><div class="jn" style="--t0:15738ms;--i:6"><span class="jic"><svg class="ic"><use href="#i-spark"/></svg></span><b>Discovery</b><small>our qualifiers</small><em class="jp" style="--t0:20362ms"></em></div><div class="jn" style="--t0:18250ms;--i:7"><span class="jic"><svg class="ic"><use href="#i-lock"/></svg></span><b>Selection</b><small>chosen</small><em class="jp" style="--t0:20362ms"></em></div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-survey" data-d="17600" data-n="7" style="--kb:17600ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Before you start</p>
+    <h2 class="h l"><span aria-label="Your market, mapped."><span class="w"><i style="--i:0;--t0:1412ms">Your</i></span> <span class="w"><i style="--i:1;--t0:1412ms">market,</i></span> <span class="w"><i style="--i:2;--t0:1412ms">mapped.</i></span></span></h2>
+    <p class="sub in" style="--t0:4262ms">The people you know, one by one: how well, whether you could approach them on business, whether they'd refer you.</p>
+    <div class="figs"><div class="fig in" style="--t0:13850ms"><b><em class="cnt" data-to="90" data-at="13850" style="--at:13850ms">90</em> days</b><span>with a market in them</span></div></div>
+  </div>
+  <div class="col">
+    <div class="wcard in fl" style="--t0:1287ms">
+      <div class="wh"><b>Market Survey</b><span>prospect 14 of 60</span></div>
+      <div class="frow" style="--t0:4462ms"><span>Name</span><b><span class="ty" aria-label="Keisha R."><span class="tw"><i style="--t:4662ms">K</i><i style="--t:4722ms">e</i><i style="--t:4782ms">i</i><i style="--t:4842ms">s</i><i style="--t:4902ms">h</i><i style="--t:4962ms">a</i></span> <span class="tw"><i style="--t:5082ms">R</i><i style="--t:5142ms">.</i></span></span></b></div>
+      <div class="frow" style="--t0:6250ms"><span>How well known</span><i class="hbar"><b style="--v:80%;--t0:6450ms"></b></i></div>
+      <div class="frow" style="--t0:7363ms"><span>Could approach on business</span><em class="yes" style="--t0:7613ms">Yes</em></div>
+      <div class="frow" style="--t0:9212ms"><span>Would refer you</span><i class="hbar"><b style="--v:65%;--t0:9412ms"></b></i></div>
+      <div class="frow" style="--t0:10638ms"><span>Saving for</span><b><span class="ty" aria-label="a house in Couva"><span class="tw"><i style="--t:10938ms">a</i></span> <span class="tw"><i style="--t:11018ms">h</i><i style="--t:11058ms">o</i><i style="--t:11098ms">u</i><i style="--t:11138ms">s</i><i style="--t:11178ms">e</i></span> <span class="tw"><i style="--t:11258ms">i</i><i style="--t:11298ms">n</i></span> <span class="tw"><i style="--t:11378ms">C</i><i style="--t:11418ms">o</i><i style="--t:11458ms">u</i><i style="--t:11498ms">v</i><i style="--t:11538ms">a</i></span></span></b></div>
+      <span class="sample">sample figures</span>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-pop" data-d="17800" data-n="8" style="--kb:17800ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">The science</p>
+    <h2 class="h xl"><span aria-label="POP7."><span class="w"><i style="--i:0;--t0:1550ms">POP7.</i></span></span></h2>
+    <p class="sub in" style="--t0:4413ms">The profile the industry uses to predict who makes it.</p>
+    <h2 class="h m wine2"><span aria-label="Selected on evidence."><span class="w"><i style="--i:0;--t0:12188ms">Selected</i></span> <span class="w"><i style="--i:1;--t0:12188ms">on</i></span> <span class="w"><i style="--i:2;--t0:12188ms">evidence.</i></span></span></h2>
+    <p class="sub in" style="--t0:14013ms">It protects you as much as it protects us.</p>
+  </div>
+  <div class="col">
+    <div class="pulse in fl" style="--t0:2637ms">
+      <div class="bd-h"><b>Career Profile · POP7</b><span>candidate</span></div>
+      <div class="meter" style="--t0:6175ms;--v:78%"><span>Achievement drive</span><i><b></b></i></div><div class="meter" style="--t0:7588ms;--v:66%"><span>Independence</span><i><b></b></i></div><div class="meter" style="--t0:8437ms;--v:22%"><span>Call reluctance · low</span><i><b></b></i></div>
+      <div class="pring" style="--t0:9412ms"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/><circle class="arc" cx="50" cy="50" r="42"/></svg><b><em class="cnt" data-to="80" data-suf="%" data-at="9412" style="--at:9412ms">80%</em></b><span>probability of success</span></div>
+      <span class="sample">sample figures</span>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-gates" data-d="15100" data-n="9" style="--kb:15100ms" >
+
+<div class="full">
+  <p class="eye in" style="--t0:200ms">The selection</p>
+  <h2 class="h l"><span aria-label="We don’t fill seats. We select."><span class="w"><i style="--i:0;--t0:400ms">We</i></span> <span class="w"><i style="--i:1;--t0:400ms">don’t</i></span> <span class="w"><i style="--i:2;--t0:400ms">fill</i></span> <span class="w"><i style="--i:3;--t0:400ms">seats.</i></span> <span class="w"><i style="--i:4;--t0:400ms">We</i></span> <span class="w"><i style="--i:5;--t0:400ms">select.</i></span></span></h2>
+  <ol class="gates">
+    <li style="--t0:3175ms"><b>1</b><span>Apply & screen</span></li><li style="--t0:3525ms"><b>2</b><span>Meet the Branch Manager</span></li><li style="--t0:3875ms"><b>3</b><span>Discovery</span></li><li style="--t0:4225ms"><b>4</b><span>Assessment</span></li><li style="--t0:4575ms"><b>5</b><span>Selection</span></li>
+    <span class="gline" style="--t0:3175ms"></span>
+  </ol>
+  <p class="sub big in" style="--t0:7950ms">At your Discovery you sit with our qualifiers and ask them anything, <em>without the Branch Manager in the room.</em></p>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-build" data-d="20200" data-n="10" style="--kb:20200ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Selected</p>
+    <h2 class="h l"><span aria-label="Built properly."><span class="w"><i style="--i:0;--t0:1363ms">Built</i></span> <span class="w"><i style="--i:1;--t0:1363ms">properly.</i></span></span></h2>
+    <p class="sub in" style="--t0:11138ms">The branch beside you for <em>every form</em>.</p>
+    <p class="sub in" style="--t0:15825ms">Nobody disappears between the signature and the first client.</p>
+  </div>
+  <div class="col">
+    <div class="day in fl" style="--t0:500ms">
+      <ul class="dlist">
+        <li style="--t0:2813ms;--t1:3713ms"><svg class="ic"><use href="#i-cap"/></svg><b>Training and induction</b><span>with the branch</span></li><li style="--t0:4550ms;--t1:5450ms"><svg class="ic"><use href="#i-bolt"/></svg><b>Boot camp</b><span>with the branch</span></li><li style="--t0:5512ms;--t1:6412ms"><svg class="ic"><use href="#i-doc"/></svg><b>The licence: study · exam · contracting</b><span>with the branch</span></li><li style="--t0:12037ms;--t1:12937ms"><svg class="ic"><use href="#i-users"/></svg><b>Field training with your unit manager</b><span>with the branch</span></li><li style="--t0:14412ms;--t1:15312ms"><svg class="ic"><use href="#i-phone"/></svg><b>Constant contact</b><span>with the branch</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-match" data-d="12100" data-n="11" style="--kb:12100ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Afraid you'd start from zero?</p>
+    <h2 class="h l"><span aria-label="You won't."><span class="w"><i style="--i:0;--t0:2475ms">You</i></span> <span class="w"><i style="--i:1;--t0:2475ms">won't.</i></span></span></h2>
+    <p class="sub in" style="--t0:5063ms">Clients whose agent has moved on are <b>matched to you</b>, household by household.</p>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:8012ms">The file</span>
+      <span class="ypill in" style="--t0:8875ms">The history</span>
+      <span class="ypill in" style="--t0:9925ms">The first thing to say</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="list in fl" style="--t0:3375ms">
+      <div class="bd-h"><b>Your list</b><span>named to you</span></div>
+      <div class="hh" style="--t0:5363ms"><svg class="ic"><use href="#i-home"/></svg><b>The Ramlogan household</b><span>3 policies · since 2014</span><em>named</em></div><div class="hh" style="--t0:5743ms"><svg class="ic"><use href="#i-home"/></svg><b>The Charles household</b><span>2 policies · since 2019</span><em>named</em></div><div class="hh" style="--t0:6123ms"><svg class="ic"><use href="#i-home"/></svg><b>The Ali household</b><span>4 policies · since 2008</span><em>named</em></div>
+      <span class="sample">sample figures</span>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-money" data-d="18200" data-n="12" style="--kb:18200ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Two more things</p>
+    <h2 class="h xl"><span class="cnt" data-to="200" data-pre="TT$" data-at="5625" style="--at:5625ms">TT$200</span></h2>
+    <h2 class="h m"><span aria-label="every matched household, when the questionnaire comes in."><span class="w"><i style="--i:0;--t0:2363ms">every</i></span> <span class="w"><i style="--i:1;--t0:2363ms">matched</i></span> <span class="w"><i style="--i:2;--t0:2363ms">household,</i></span> <span class="w"><i style="--i:3;--t0:2363ms">when</i></span> <span class="w"><i style="--i:4;--t0:2363ms">the</i></span> <span class="w"><i style="--i:5;--t0:2363ms">questionnaire</i></span> <span class="w"><i style="--i:6;--t0:2363ms">comes</i></span> <span class="w"><i style="--i:7;--t0:2363ms">in.</i></span></span></h2>
+    <p class="sub in" style="--t0:16287ms">And when the support team closes a task for you, <em>you rate the work.</em></p>
+  </div>
+  <div class="col">
+    <div class="claim in fl" style="--t0:1175ms">
+      <div class="bd-h"><b>Retention claim</b><span>RP-261027-014</span></div>
+      <div class="steps4"><div class="st" style="--t0:2663ms"><i></i><span>Questionnaire in</span></div><div class="st" style="--t0:4825ms"><i></i><span>Claim found</span></div><div class="st" style="--t0:7550ms"><i></i><span>Chased by the system</span></div><div class="st" style="--t0:9050ms"><i></i><span>Paid</span></div></div>
+      <span class="stamp paid" style="--t0:9050ms">Paid</span>
+      <span class="sample">sample figures</span>
+    </div>
+    <div class="rate in fl" style="--t0:10287ms">
+      <div class="rt"><b>Task closed for you</b><span>Sasha L. · Premium reinstated · 1 day</span></div>
+      <div class="stars"><svg viewBox="0 0 24 24" style="--t0:14225ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:14385ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:14545ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:14705ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:14865ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg></div>
+      <em class="cust" style="--t0:16287ms">You're their customer too</em>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-leads" data-d="12900" data-n="13" style="--kb:12900ms" >
 
 <div class="split wide">
   <div class="col">
@@ -816,7 +1061,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-desk" data-d="10200" data-n="6" style="--kb:10200ms" >
+<section class="scene s-desk" data-d="10200" data-n="14" style="--kb:10200ms" >
 
 <div class="split">
   <div class="col">
@@ -840,7 +1085,80 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-ff" data-d="18300" data-n="7" style="--kb:18300ms" >
+<section class="scene s-flight" data-d="12000" data-n="15" style="--kb:12000ms" >
+
+<div class="split wide">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">FY27 Flight Plan</p>
+    <h2 class="h l"><span aria-label="Your year has a flight plan."><span class="w"><i style="--i:0;--t0:1825ms">Your</i></span> <span class="w"><i style="--i:1;--t0:1825ms">year</i></span> <span class="w"><i style="--i:2;--t0:1825ms">has</i></span> <span class="w"><i style="--i:3;--t0:1825ms">a</i></span> <span class="w"><i style="--i:4;--t0:1825ms">flight</i></span> <span class="w"><i style="--i:5;--t0:1825ms">plan.</i></span></span></h2>
+    <div class="figs">
+      <div class="fig in" style="--t0:3425ms"><b><em class="cnt" data-to="15" data-at="3425" style="--at:3425ms">15</em> min</b><span>to file it</span></div>
+      <div class="fig in" style="--t0:5588ms"><b>7</b><span>stages, from your budget</span></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="flight in" style="--t0:2025ms">
+      <svg viewBox="0 0 400 240" aria-hidden="true">
+        <path class="traj" style="--t0:4700ms" d="M20 210 C 120 210, 190 180, 240 120 S 340 30, 380 20"/>
+        <g class="st" style="--t0:4700ms"><circle cx="20" cy="210" r="9"/><text x="20" y="238">Your why</text></g><g class="st" style="--t0:5020ms"><circle cx="80" cy="208" r="9"/><text x="80" y="190">Your budget</text></g><g class="st" style="--t0:5340ms"><circle cx="140" cy="200" r="9"/><text x="140" y="228">Your income</text></g><g class="st" style="--t0:5660ms"><circle cx="200" cy="170" r="9"/><text x="200" y="152">Your API</text></g><g class="st" style="--t0:5980ms"><circle cx="250" cy="110" r="9"/><text x="250" y="138">Your week</text></g><g class="st" style="--t0:6300ms"><circle cx="300" cy="65" r="9"/><text x="300" y="47">How you work</text></g><g class="st" style="--t0:6620ms"><circle cx="380" cy="20" r="9"/></g>
+        <circle class="star" cx="300" cy="180" r="2.2" style="--dl:0.0s"/><circle class="star" cx="350" cy="150" r="1.6" style="--dl:0.7s"/><circle class="star" cx="120" cy="60" r="1.8" style="--dl:1.4s"/><circle class="star" cx="60" cy="120" r="1.4" style="--dl:2.1s"/><circle class="star" cx="250" cy="40" r="2" style="--dl:0.5s"/><circle class="star" cx="180" cy="120" r="1.3" style="--dl:1.2s"/><circle class="star" cx="370" cy="110" r="1.5" style="--dl:1.9s"/>
+        <circle class="rocket trail t2" style="--t0:4960ms" r="3"/>
+        <circle class="rocket trail t1" style="--t0:4830ms" r="5"/>
+        <circle class="rocket" style="--t0:4700ms" r="7"/>
+      </svg>
+      <div class="go" style="--t0:10037ms"><small>Your name</small><b>GO</b></div>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-day" data-d="13000" data-n="16" style="--kb:13000ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Every morning</p>
+    <h2 class="h l"><span aria-label="The system sets your day."><span class="w"><i style="--i:0;--t0:1675ms">The</i></span> <span class="w"><i style="--i:1;--t0:1675ms">system</i></span> <span class="w"><i style="--i:2;--t0:1675ms">sets</i></span> <span class="w"><i style="--i:3;--t0:1675ms">your</i></span> <span class="w"><i style="--i:4;--t0:1675ms">day.</i></span></span></h2>
+    <p class="sub in" style="--t0:8100ms">Check in, and the page shows what you have achieved, as you go.</p>
+  </div>
+  <div class="col">
+    <div class="day in fl" style="--t0:1138ms">
+      <div class="prog"><i style="--t0:10687ms"></i><b><em class="cnt" data-to="78" data-suf="%" data-at="10687" style="--at:10687ms">78%</em> of the day</b></div>
+      <div class="ck tap" style="--t0:8100ms"><span class="before">Check in</span><span class="after"><i></i>Checked in · 6:02</span></div>
+      <ul class="dlist">
+        <li style="--t0:3400ms;--t1:10887ms"><svg class="ic"><use href="#i-target"/></svg><b>Your projection</b><span>12 calls · 3 appointments</span></li>
+        <li style="--t0:4675ms;--t1:11187ms"><svg class="ic"><use href="#i-phone"/></svg><b>Next calls</b><span>Keisha · Andre · Priya</span></li>
+        <li style="--t0:5600ms;--t1:11487ms"><svg class="ic"><use href="#i-doc"/></svg><b>Pending cases</b><span>2 · with the history on them</span></li>
+      </ul>
+      <span class="sample">sample figures</span>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-balance" data-d="18100" data-n="17" style="--kb:18100ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Projected · done · balance</p>
+    <h2 class="h l"><span aria-label="Your morning asks."><span class="w"><i style="--i:0;--t0:425ms">Your</i></span> <span class="w"><i style="--i:1;--t0:425ms">morning</i></span> <span class="w"><i style="--i:2;--t0:425ms">asks.</i></span></span></h2>
+    <h2 class="h l wine2"><span aria-label="Your evening balances."><span class="w"><i style="--i:0;--t0:5213ms">Your</i></span> <span class="w"><i style="--i:1;--t0:5213ms">evening</i></span> <span class="w"><i style="--i:2;--t0:5213ms">balances.</i></span></span></h2>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:9825ms"><svg class="ic"><use href="#i-users"/></svg> The register knows you're in</span>
+      <span class="npill in strike" style="--t0:15200ms">A spreadsheet</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="bal in fl" style="--t0:1900ms">
+      <div class="bal-h"><b>Morning</b><span class="ck2" style="--t0:8662ms"><i></i>In · 6:02 · on time</span><b class="ev" style="--t0:5413ms">Evening</b></div>
+      <div class="brow" style="--t0:2500ms;--t1:6312ms;--t2:7613ms"><span>Calls to make</span><b class="pj"><em class="cnt" data-to="12" data-at="2500" style="--at:2500ms">12</em></b><b class="dn"><em class="cnt" data-to="14" data-at="6312" style="--at:6312ms">14</em></b><i class="bl up">+2</i></div><div class="brow" style="--t0:3125ms;--t1:6572ms;--t2:7833ms"><span>Appointments to set</span><b class="pj"><em class="cnt" data-to="3" data-at="3125" style="--at:3125ms">3</em></b><b class="dn"><em class="cnt" data-to="3" data-at="6572" style="--at:6572ms">3</em></b><i class="bl ">0</i></div><div class="brow" style="--t0:3900ms;--t1:6832ms;--t2:8053ms"><span>Fact finds</span><b class="pj"><em class="cnt" data-to="2" data-at="3900" style="--at:3900ms">2</em></b><b class="dn"><em class="cnt" data-to="2" data-at="6832" style="--at:6832ms">2</em></b><i class="bl ">0</i></div>
+      <div class="prog slim" style="margin-top:calc(var(--u)*1.6)"><i style="--t0:12363ms"></i><b><em class="cnt" data-to="84" data-suf="%" data-at="12363" style="--at:12363ms">84%</em> of the day</b></div>
+      <span class="sample">sample figures</span>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-ff" data-d="18300" data-n="18" style="--kb:18300ms" >
 
 <div class="split">
   <div class="col">
@@ -868,7 +1186,32 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-wall" data-d="13000" data-n="8" style="--kb:13000ms" >
+<section class="scene s-qp" data-d="15000" data-n="19" style="--kb:15000ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Query Pal</p>
+    <h2 class="h l"><span aria-label="Ask once. Tracked till answered."><span class="w"><i style="--i:0;--t0:2838ms">Ask</i></span> <span class="w"><i style="--i:1;--t0:2838ms">once.</i></span> <span class="w"><i style="--i:2;--t0:2838ms">Tracked</i></span> <span class="w"><i style="--i:3;--t0:2838ms">till</i></span> <span class="w"><i style="--i:4;--t0:2838ms">answered.</i></span></span></h2>
+    <p class="sub in" style="--t0:13162ms">You never have to say <em>"I'll find out"</em> twice.</p>
+  </div>
+  <div class="col">
+    <div class="qp in fl" style="--t0:925ms">
+      <div class="bd-h"><b>Query Pal</b><span>from your phone</span></div>
+      <div class="qmsg me" style="--t0:4088ms"><small>You · 10:14</small><span class="ty" aria-label="Can my client add her son to the health plan mid-year?"><span class="tw"><i style="--t:4388ms">C</i><i style="--t:4414ms">a</i><i style="--t:4440ms">n</i></span> <span class="tw"><i style="--t:4492ms">m</i><i style="--t:4518ms">y</i></span> <span class="tw"><i style="--t:4570ms">c</i><i style="--t:4596ms">l</i><i style="--t:4622ms">i</i><i style="--t:4648ms">e</i><i style="--t:4674ms">n</i><i style="--t:4700ms">t</i></span> <span class="tw"><i style="--t:4752ms">a</i><i style="--t:4778ms">d</i><i style="--t:4804ms">d</i></span> <span class="tw"><i style="--t:4856ms">h</i><i style="--t:4882ms">e</i><i style="--t:4908ms">r</i></span> <span class="tw"><i style="--t:4960ms">s</i><i style="--t:4986ms">o</i><i style="--t:5012ms">n</i></span> <span class="tw"><i style="--t:5064ms">t</i><i style="--t:5090ms">o</i></span> <span class="tw"><i style="--t:5142ms">t</i><i style="--t:5168ms">h</i><i style="--t:5194ms">e</i></span> <span class="tw"><i style="--t:5246ms">h</i><i style="--t:5272ms">e</i><i style="--t:5298ms">a</i><i style="--t:5324ms">l</i><i style="--t:5350ms">t</i><i style="--t:5376ms">h</i></span> <span class="tw"><i style="--t:5428ms">p</i><i style="--t:5454ms">l</i><i style="--t:5480ms">a</i><i style="--t:5506ms">n</i></span> <span class="tw"><i style="--t:5558ms">m</i><i style="--t:5584ms">i</i><i style="--t:5610ms">d</i><i style="--t:5636ms">-</i><i style="--t:5662ms">y</i><i style="--t:5688ms">e</i><i style="--t:5714ms">a</i><i style="--t:5740ms">r</i><i style="--t:5766ms">?</i></span></span></div>
+      <div class="qmsg them" style="--t0:6200ms"><small>Branch team · 11:02</small><span class="ty" aria-label="Yes, within 31 days of the birth or adoption. Form EB0010, I've attached it."><span class="tw"><i style="--t:6500ms">Y</i><i style="--t:6524ms">e</i><i style="--t:6548ms">s</i><i style="--t:6572ms">,</i></span> <span class="tw"><i style="--t:6620ms">w</i><i style="--t:6644ms">i</i><i style="--t:6668ms">t</i><i style="--t:6692ms">h</i><i style="--t:6716ms">i</i><i style="--t:6740ms">n</i></span> <span class="tw"><i style="--t:6788ms">3</i><i style="--t:6812ms">1</i></span> <span class="tw"><i style="--t:6860ms">d</i><i style="--t:6884ms">a</i><i style="--t:6908ms">y</i><i style="--t:6932ms">s</i></span> <span class="tw"><i style="--t:6980ms">o</i><i style="--t:7004ms">f</i></span> <span class="tw"><i style="--t:7052ms">t</i><i style="--t:7076ms">h</i><i style="--t:7100ms">e</i></span> <span class="tw"><i style="--t:7148ms">b</i><i style="--t:7172ms">i</i><i style="--t:7196ms">r</i><i style="--t:7220ms">t</i><i style="--t:7244ms">h</i></span> <span class="tw"><i style="--t:7292ms">o</i><i style="--t:7316ms">r</i></span> <span class="tw"><i style="--t:7364ms">a</i><i style="--t:7388ms">d</i><i style="--t:7412ms">o</i><i style="--t:7436ms">p</i><i style="--t:7460ms">t</i><i style="--t:7484ms">i</i><i style="--t:7508ms">o</i><i style="--t:7532ms">n</i><i style="--t:7556ms">.</i></span> <span class="tw"><i style="--t:7604ms">F</i><i style="--t:7628ms">o</i><i style="--t:7652ms">r</i><i style="--t:7676ms">m</i></span> <span class="tw"><i style="--t:7724ms">E</i><i style="--t:7748ms">B</i><i style="--t:7772ms">0</i><i style="--t:7796ms">0</i><i style="--t:7820ms">1</i><i style="--t:7844ms">0</i><i style="--t:7868ms">,</i></span> <span class="tw"><i style="--t:7916ms">I</i><i style="--t:7940ms">'</i><i style="--t:7964ms">v</i><i style="--t:7988ms">e</i></span> <span class="tw"><i style="--t:8036ms">a</i><i style="--t:8060ms">t</i><i style="--t:8084ms">t</i><i style="--t:8108ms">a</i><i style="--t:8132ms">c</i><i style="--t:8156ms">h</i><i style="--t:8180ms">e</i><i style="--t:8204ms">d</i></span> <span class="tw"><i style="--t:8252ms">i</i><i style="--t:8276ms">t</i><i style="--t:8300ms">.</i></span></span></div>
+      <div class="steps4 three">
+        <div class="st" style="--t0:4088ms"><i></i><span>Posted</span></div>
+        <div class="st" style="--t0:6200ms"><i></i><span>Answered</span></div>
+        <div class="st" style="--t0:1787ms"><i></i><span>Client told</span></div>
+      </div>
+      <em class="turn" style="--t0:7363ms">inside the turnaround</em>
+      <span class="sample">sample figures</span>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-wall" data-d="13000" data-n="20" style="--kb:13000ms" >
 
 <div class="split wide">
   <div class="col">
@@ -901,53 +1244,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-day" data-d="13000" data-n="9" style="--kb:13000ms" >
-
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">Every morning</p>
-    <h2 class="h l"><span aria-label="The system sets your day."><span class="w"><i style="--i:0;--t0:1675ms">The</i></span> <span class="w"><i style="--i:1;--t0:1675ms">system</i></span> <span class="w"><i style="--i:2;--t0:1675ms">sets</i></span> <span class="w"><i style="--i:3;--t0:1675ms">your</i></span> <span class="w"><i style="--i:4;--t0:1675ms">day.</i></span></span></h2>
-    <p class="sub in" style="--t0:8100ms">Check in, and the page shows what you have achieved, as you go.</p>
-  </div>
-  <div class="col">
-    <div class="day in fl" style="--t0:1138ms">
-      <div class="prog"><i style="--t0:10687ms"></i><b><em class="cnt" data-to="78" data-suf="%" data-at="10687" style="--at:10687ms">78%</em> of the day</b></div>
-      <div class="ck tap" style="--t0:8100ms"><span class="before">Check in</span><span class="after"><i></i>Checked in · 6:02</span></div>
-      <ul class="dlist">
-        <li style="--t0:3400ms;--t1:10887ms"><svg class="ic"><use href="#i-target"/></svg><b>Your projection</b><span>12 calls · 3 appointments</span></li>
-        <li style="--t0:4675ms;--t1:11187ms"><svg class="ic"><use href="#i-phone"/></svg><b>Next calls</b><span>Keisha · Andre · Priya</span></li>
-        <li style="--t0:5600ms;--t1:11487ms"><svg class="ic"><use href="#i-doc"/></svg><b>Pending cases</b><span>2 · with the history on them</span></li>
-      </ul>
-      <span class="sample">sample figures</span>
-    </div>
-  </div>
-</div>
-<div class="streak"></div>
-</section>
-<section class="scene s-balance" data-d="18100" data-n="10" style="--kb:18100ms" >
-
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">Projected · done · balance</p>
-    <h2 class="h l"><span aria-label="Your morning asks."><span class="w"><i style="--i:0;--t0:425ms">Your</i></span> <span class="w"><i style="--i:1;--t0:425ms">morning</i></span> <span class="w"><i style="--i:2;--t0:425ms">asks.</i></span></span></h2>
-    <h2 class="h l wine2"><span aria-label="Your evening balances."><span class="w"><i style="--i:0;--t0:5213ms">Your</i></span> <span class="w"><i style="--i:1;--t0:5213ms">evening</i></span> <span class="w"><i style="--i:2;--t0:5213ms">balances.</i></span></span></h2>
-    <div class="pill-row">
-      <span class="ypill in" style="--t0:9825ms"><svg class="ic"><use href="#i-users"/></svg> The register knows you're in</span>
-      <span class="npill in strike" style="--t0:15200ms">A spreadsheet</span>
-    </div>
-  </div>
-  <div class="col">
-    <div class="bal in fl" style="--t0:1900ms">
-      <div class="bal-h"><b>Morning</b><span class="ck2" style="--t0:8662ms"><i></i>In · 6:02 · on time</span><b class="ev" style="--t0:5413ms">Evening</b></div>
-      <div class="brow" style="--t0:2500ms;--t1:6312ms;--t2:7613ms"><span>Calls to make</span><b class="pj"><em class="cnt" data-to="12" data-at="2500" style="--at:2500ms">12</em></b><b class="dn"><em class="cnt" data-to="14" data-at="6312" style="--at:6312ms">14</em></b><i class="bl up">+2</i></div><div class="brow" style="--t0:3125ms;--t1:6572ms;--t2:7833ms"><span>Appointments to set</span><b class="pj"><em class="cnt" data-to="3" data-at="3125" style="--at:3125ms">3</em></b><b class="dn"><em class="cnt" data-to="3" data-at="6572" style="--at:6572ms">3</em></b><i class="bl ">0</i></div><div class="brow" style="--t0:3900ms;--t1:6832ms;--t2:8053ms"><span>Fact finds</span><b class="pj"><em class="cnt" data-to="2" data-at="3900" style="--at:3900ms">2</em></b><b class="dn"><em class="cnt" data-to="2" data-at="6832" style="--at:6832ms">2</em></b><i class="bl ">0</i></div>
-      <div class="prog slim" style="margin-top:calc(var(--u)*1.6)"><i style="--t0:12363ms"></i><b><em class="cnt" data-to="84" data-suf="%" data-at="12363" style="--at:12363ms">84%</em> of the day</b></div>
-      <span class="sample">sample figures</span>
-    </div>
-  </div>
-</div>
-<div class="streak"></div>
-</section>
-<section class="scene s-ai" data-d="12500" data-n="11" style="--kb:12500ms" >
+<section class="scene s-ai" data-d="12500" data-n="21" style="--kb:12500ms" >
 
 <div class="split">
   <div class="col">
@@ -974,7 +1271,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-real" data-d="15500" data-n="12" style="--kb:15500ms" >
+<section class="scene s-real" data-d="15500" data-n="22" style="--kb:15500ms" >
 
 <div class="full center">
   <p class="eye in" style="--t0:200ms">Not a mock-up</p>
@@ -985,7 +1282,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-coach" data-d="14400" data-n="13" style="--kb:14400ms" >
+<section class="scene s-coach" data-d="14400" data-n="23" style="--kb:14400ms" >
 
 <div class="split">
   <div class="col">
@@ -1009,7 +1306,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-pulse" data-d="15700" data-n="14" style="--kb:15700ms" >
+<section class="scene s-pulse" data-d="15700" data-n="24" style="--kb:15700ms" >
 
 <div class="split wide">
   <div class="col">
@@ -1033,55 +1330,28 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-match" data-d="12100" data-n="15" style="--kb:12100ms" >
+<section class="scene s-meeting" data-d="21700" data-n="25" style="--kb:21700ms" >
 
-<div class="split">
+<div class="split wide">
   <div class="col">
-    <p class="eye in" style="--t0:200ms">Afraid you'd start from zero?</p>
-    <h2 class="h l"><span aria-label="You won't."><span class="w"><i style="--i:0;--t0:2475ms">You</i></span> <span class="w"><i style="--i:1;--t0:2475ms">won't.</i></span></span></h2>
-    <p class="sub in" style="--t0:5063ms">Clients whose agent has moved on are <b>matched to you</b>, household by household.</p>
-    <div class="pill-row">
-      <span class="ypill in" style="--t0:8012ms">The file</span>
-      <span class="ypill in" style="--t0:8875ms">The history</span>
-      <span class="ypill in" style="--t0:9925ms">The first thing to say</span>
-    </div>
+    <p class="eye in" style="--t0:200ms">Wednesday · 9:00</p>
+    <h2 class="h l"><span aria-label="Your call list, written for you."><span class="w"><i style="--i:0;--t0:5587ms">Your</i></span> <span class="w"><i style="--i:1;--t0:5587ms">call</i></span> <span class="w"><i style="--i:2;--t0:5587ms">list,</i></span> <span class="w"><i style="--i:3;--t0:5587ms">written</i></span> <span class="w"><i style="--i:4;--t0:5587ms">for</i></span> <span class="w"><i style="--i:5;--t0:5587ms">you.</i></span></span></h2>
+    <ul class="agenda">
+      <li style="--t0:2175ms"><i>7 min</i><b>The production board</b><span>by unit · exceptions only</span></li><li style="--t0:5887ms"><i>12 min</i><b>Your call list</b><span>scored by the sheet</span></li><li style="--t0:11937ms"><i>10 min</i><b>Maturities</b><span>money in motion</span></li><li style="--t0:16225ms"><i>5 min</i><b>The 85-day report</b><span>nobody lapses quietly</span></li>
+    </ul>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:3375ms">
-      <div class="bd-h"><b>Your list</b><span>named to you</span></div>
-      <div class="hh" style="--t0:5363ms"><svg class="ic"><use href="#i-home"/></svg><b>The Ramlogan household</b><span>3 policies · since 2014</span><em>named</em></div><div class="hh" style="--t0:5743ms"><svg class="ic"><use href="#i-home"/></svg><b>The Charles household</b><span>2 policies · since 2019</span><em>named</em></div><div class="hh" style="--t0:6123ms"><svg class="ic"><use href="#i-home"/></svg><b>The Ali household</b><span>4 policies · since 2008</span><em>named</em></div>
+    <div class="wcard in fl" style="--t0:5687ms">
+      <div class="wh"><b>This week's call list</b><span>scored by the sheet</span></div>
+      <div class="cl" style="--t0:8700ms"><b>The Ali household</b><span class="gap">no critical illness cover</span><p><span class="ty" aria-label="If an illness stopped your income for a year, what would carry the mortgage?"><span class="tw"><i style="--t:10025ms">I</i><i style="--t:10047ms">f</i></span> <span class="tw"><i style="--t:10091ms">a</i><i style="--t:10113ms">n</i></span> <span class="tw"><i style="--t:10157ms">i</i><i style="--t:10179ms">l</i><i style="--t:10201ms">l</i><i style="--t:10223ms">n</i><i style="--t:10245ms">e</i><i style="--t:10267ms">s</i><i style="--t:10289ms">s</i></span> <span class="tw"><i style="--t:10333ms">s</i><i style="--t:10355ms">t</i><i style="--t:10377ms">o</i><i style="--t:10399ms">p</i><i style="--t:10421ms">p</i><i style="--t:10443ms">e</i><i style="--t:10465ms">d</i></span> <span class="tw"><i style="--t:10509ms">y</i><i style="--t:10531ms">o</i><i style="--t:10553ms">u</i><i style="--t:10575ms">r</i></span> <span class="tw"><i style="--t:10619ms">i</i><i style="--t:10641ms">n</i><i style="--t:10663ms">c</i><i style="--t:10685ms">o</i><i style="--t:10707ms">m</i><i style="--t:10729ms">e</i></span> <span class="tw"><i style="--t:10773ms">f</i><i style="--t:10795ms">o</i><i style="--t:10817ms">r</i></span> <span class="tw"><i style="--t:10861ms">a</i></span> <span class="tw"><i style="--t:10905ms">y</i><i style="--t:10927ms">e</i><i style="--t:10949ms">a</i><i style="--t:10971ms">r</i><i style="--t:10993ms">,</i></span> <span class="tw"><i style="--t:11037ms">w</i><i style="--t:11059ms">h</i><i style="--t:11081ms">a</i><i style="--t:11103ms">t</i></span> <span class="tw"><i style="--t:11147ms">w</i><i style="--t:11169ms">o</i><i style="--t:11191ms">u</i><i style="--t:11213ms">l</i><i style="--t:11235ms">d</i></span> <span class="tw"><i style="--t:11279ms">c</i><i style="--t:11301ms">a</i><i style="--t:11323ms">r</i><i style="--t:11345ms">r</i><i style="--t:11367ms">y</i></span> <span class="tw"><i style="--t:11411ms">t</i><i style="--t:11433ms">h</i><i style="--t:11455ms">e</i></span> <span class="tw"><i style="--t:11499ms">m</i><i style="--t:11521ms">o</i><i style="--t:11543ms">r</i><i style="--t:11565ms">t</i><i style="--t:11587ms">g</i><i style="--t:11609ms">a</i><i style="--t:11631ms">g</i><i style="--t:11653ms">e</i><i style="--t:11675ms">?</i></span></span></p></div>
+      <div class="cl" style="--t0:9400ms"><b>Keisha R.</b><span class="gap">policy matures in 60 days</span><p><span class="ty" aria-label="Where would you like that money to go next?"><span class="tw"><i style="--t:12237ms">W</i><i style="--t:12263ms">h</i><i style="--t:12289ms">e</i><i style="--t:12315ms">r</i><i style="--t:12341ms">e</i></span> <span class="tw"><i style="--t:12393ms">w</i><i style="--t:12419ms">o</i><i style="--t:12445ms">u</i><i style="--t:12471ms">l</i><i style="--t:12497ms">d</i></span> <span class="tw"><i style="--t:12549ms">y</i><i style="--t:12575ms">o</i><i style="--t:12601ms">u</i></span> <span class="tw"><i style="--t:12653ms">l</i><i style="--t:12679ms">i</i><i style="--t:12705ms">k</i><i style="--t:12731ms">e</i></span> <span class="tw"><i style="--t:12783ms">t</i><i style="--t:12809ms">h</i><i style="--t:12835ms">a</i><i style="--t:12861ms">t</i></span> <span class="tw"><i style="--t:12913ms">m</i><i style="--t:12939ms">o</i><i style="--t:12965ms">n</i><i style="--t:12991ms">e</i><i style="--t:13017ms">y</i></span> <span class="tw"><i style="--t:13069ms">t</i><i style="--t:13095ms">o</i></span> <span class="tw"><i style="--t:13147ms">g</i><i style="--t:13173ms">o</i></span> <span class="tw"><i style="--t:13225ms">n</i><i style="--t:13251ms">e</i><i style="--t:13277ms">x</i><i style="--t:13303ms">t</i><i style="--t:13329ms">?</i></span></span></p></div>
       <span class="sample">sample figures</span>
     </div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-money" data-d="18200" data-n="16" style="--kb:18200ms" >
-
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">Two more things</p>
-    <h2 class="h xl"><span class="cnt" data-to="200" data-pre="TT$" data-at="5625" style="--at:5625ms">TT$200</span></h2>
-    <h2 class="h m"><span aria-label="every matched household, when the questionnaire comes in."><span class="w"><i style="--i:0;--t0:2363ms">every</i></span> <span class="w"><i style="--i:1;--t0:2363ms">matched</i></span> <span class="w"><i style="--i:2;--t0:2363ms">household,</i></span> <span class="w"><i style="--i:3;--t0:2363ms">when</i></span> <span class="w"><i style="--i:4;--t0:2363ms">the</i></span> <span class="w"><i style="--i:5;--t0:2363ms">questionnaire</i></span> <span class="w"><i style="--i:6;--t0:2363ms">comes</i></span> <span class="w"><i style="--i:7;--t0:2363ms">in.</i></span></span></h2>
-    <p class="sub in" style="--t0:16287ms">And when the support team closes a task for you, <em>you rate the work.</em></p>
-  </div>
-  <div class="col">
-    <div class="claim in fl" style="--t0:1175ms">
-      <div class="bd-h"><b>Retention claim</b><span>RP-261027-014</span></div>
-      <div class="steps4"><div class="st" style="--t0:2663ms"><i></i><span>Questionnaire in</span></div><div class="st" style="--t0:4825ms"><i></i><span>Claim found</span></div><div class="st" style="--t0:7550ms"><i></i><span>Chased by the system</span></div><div class="st" style="--t0:9050ms"><i></i><span>Paid</span></div></div>
-      <span class="stamp paid" style="--t0:9050ms">Paid</span>
-      <span class="sample">sample figures</span>
-    </div>
-    <div class="rate in fl" style="--t0:10287ms">
-      <div class="rt"><b>Task closed for you</b><span>Sasha L. · Premium reinstated · 1 day</span></div>
-      <div class="stars"><svg viewBox="0 0 24 24" style="--t0:14225ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:14385ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:14545ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:14705ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:14865ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg></div>
-      <em class="cust" style="--t0:16287ms">You're their customer too</em>
-    </div>
-  </div>
-</div>
-<div class="streak"></div>
-</section>
-<section class="scene s-stage" data-d="19500" data-n="17" style="--kb:19500ms" >
+<section class="scene s-stage" data-d="19500" data-n="26" style="--kb:19500ms" >
 
 <div class="split">
   <div class="col">
@@ -1113,7 +1383,62 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-path" data-d="12600" data-n="18" style="--kb:12600ms" >
+<section class="scene s-watch" data-d="19500" data-n="27" style="--kb:19500ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Your book, protected</p>
+    <h2 class="h l"><span aria-label="Watched while you're at the table."><span class="w"><i style="--i:0;--t0:788ms">Watched</i></span> <span class="w"><i style="--i:1;--t0:788ms">while</i></span> <span class="w"><i style="--i:2;--t0:788ms">you're</i></span> <span class="w"><i style="--i:3;--t0:788ms">at</i></span> <span class="w"><i style="--i:4;--t0:788ms">the</i></span> <span class="w"><i style="--i:5;--t0:788ms">table.</i></span></span></h2>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:7562ms">Checked by a person</span>
+      <span class="ypill in" style="--t0:9263ms">Sent at 10:00</span>
+      <span class="ypill in" style="--t0:10263ms">You copied</span>
+      <span class="ypill in" style="--t0:11875ms">The client rates you</span>
+    </div>
+    <div class="duo2">
+      <span class="npill in" style="--t0:12787ms">Renewals desk</span>
+      <span class="npill in" style="--t0:13363ms">Claims desk</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="wcard in fl" style="--t0:988ms">
+      <div class="wh"><b>Premium Due Desk</b><span>your clients</span></div>
+      <div class="tl4">
+        <div class="tn" style="--t0:2762ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>45</b><span>days</span></div><div class="tn" style="--t0:3788ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>60</b><span>days</span></div><div class="tn" style="--t0:4762ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>75</b><span>days</span></div><div class="tn" style="--t0:5588ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>90</b><span>days</span></div>
+      </div>
+      <div class="stars sm" style="--t0:11875ms"><svg viewBox="0 0 24 24" style="--t0:11875ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:12015ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:12155ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:12295ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><svg viewBox="0 0 24 24" style="--t0:12435ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg><span>"How have we looked after you?"</span></div>
+      <span class="sample">sample figures</span>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-review" data-d="17300" data-n="28" style="--kb:17300ms" >
+
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Every month</p>
+    <h2 class="h l"><span aria-label="Your income, reviewed."><span class="w"><i style="--i:0;--t0:1400ms">Your</i></span> <span class="w"><i style="--i:1;--t0:1400ms">income,</i></span> <span class="w"><i style="--i:2;--t0:1400ms">reviewed.</i></span></span></h2>
+    <p class="sub in" style="--t0:6050ms">What you earned, what your life needs, what changed, and the plan to close the gap.</p>
+    <h2 class="h m wine2"><span aria-label="The career path is digital."><span class="w"><i style="--i:0;--t0:7537ms">The</i></span> <span class="w"><i style="--i:1;--t0:7537ms">career</i></span> <span class="w"><i style="--i:2;--t0:7537ms">path</i></span> <span class="w"><i style="--i:3;--t0:7537ms">is</i></span> <span class="w"><i style="--i:4;--t0:7537ms">digital.</i></span></span></h2>
+  </div>
+  <div class="col">
+    <div class="wcard in fl" style="--t0:500ms">
+      <div class="wh"><b>Monthly income review</b><span>October</span></div>
+      <div class="frow" style="--t0:3175ms"><span>Earned last month</span><i class="hbar"><b style="--v:72%;--t0:3375ms"></b></i></div>
+      <div class="frow" style="--t0:4125ms"><span>Needs this month</span><i class="hbar"><b style="--v:100%;--t0:4325ms"></b></i></div>
+      <div class="frow" style="--t0:5088ms"><span>What changed</span><b><span class="ty" aria-label="school fees in January"><span class="tw"><i style="--t:5388ms">s</i><i style="--t:5428ms">c</i><i style="--t:5468ms">h</i><i style="--t:5508ms">o</i><i style="--t:5548ms">o</i><i style="--t:5588ms">l</i></span> <span class="tw"><i style="--t:5668ms">f</i><i style="--t:5708ms">e</i><i style="--t:5748ms">e</i><i style="--t:5788ms">s</i></span> <span class="tw"><i style="--t:5868ms">i</i><i style="--t:5908ms">n</i></span> <span class="tw"><i style="--t:5988ms">J</i><i style="--t:6028ms">a</i><i style="--t:6068ms">n</i><i style="--t:6108ms">u</i><i style="--t:6148ms">a</i><i style="--t:6188ms">r</i><i style="--t:6228ms">y</i></span></span></b></div>
+      <span class="sample">sample figures</span>
+    </div>
+    <div class="wcard in fl cp" style="--t0:7687ms">
+      <div class="cpr" style="--t0:10312ms"><b>Career Sales Rep</b><i class="hbar"><b style="--v:100%;--t0:10512ms"></b></i><em>you are here</em></div>
+      <div class="cpr" style="--t0:11650ms"><b>Executive Agent</b><i class="hbar"><b style="--v:58%;--t0:13137ms"></b></i><em class="dt" style="--t0:15075ms">next window · a realistic date</em></div>
+    </div>
+  </div>
+</div>
+<div class="streak"></div>
+</section>
+<section class="scene s-path" data-d="12600" data-n="29" style="--kb:12600ms" >
 
 <div class="split wide">
   <div class="col">
@@ -1143,7 +1468,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-income" data-d="12300" data-n="19" style="--kb:12300ms" >
+<section class="scene s-income" data-d="12300" data-n="30" style="--kb:12300ms" >
 
 <div class="split">
   <div class="col">
@@ -1169,34 +1494,32 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-flight" data-d="12000" data-n="20" style="--kb:12000ms" >
+<section class="scene s-mgrs" data-d="21100" data-n="31" style="--kb:21100ms" >
 
-<div class="split wide">
+<div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:200ms">FY27 Flight Plan</p>
-    <h2 class="h l"><span aria-label="Your year has a flight plan."><span class="w"><i style="--i:0;--t0:1825ms">Your</i></span> <span class="w"><i style="--i:1;--t0:1825ms">year</i></span> <span class="w"><i style="--i:2;--t0:1825ms">has</i></span> <span class="w"><i style="--i:3;--t0:1825ms">a</i></span> <span class="w"><i style="--i:4;--t0:1825ms">flight</i></span> <span class="w"><i style="--i:5;--t0:1825ms">plan.</i></span></span></h2>
-    <div class="figs">
-      <div class="fig in" style="--t0:3425ms"><b><em class="cnt" data-to="15" data-at="3425" style="--at:3425ms">15</em> min</b><span>to file it</span></div>
-      <div class="fig in" style="--t0:5588ms"><b>7</b><span>stages, from your budget</span></div>
-    </div>
+    <p class="eye in" style="--t0:200ms">Managers, managed</p>
+    <h2 class="h l"><span aria-label="The same system sets theirs."><span class="w"><i style="--i:0;--t0:400ms">The</i></span> <span class="w"><i style="--i:1;--t0:400ms">same</i></span> <span class="w"><i style="--i:2;--t0:400ms">system</i></span> <span class="w"><i style="--i:3;--t0:400ms">sets</i></span> <span class="w"><i style="--i:4;--t0:400ms">theirs.</i></span></span></h2>
+    <p class="sub in" style="--t0:14900ms">Planned in the morning. <em>Accounted for at the end of the day.</em></p>
   </div>
   <div class="col">
-    <div class="flight in" style="--t0:2025ms">
-      <svg viewBox="0 0 400 240" aria-hidden="true">
-        <path class="traj" style="--t0:4700ms" d="M20 210 C 120 210, 190 180, 240 120 S 340 30, 380 20"/>
-        <g class="st" style="--t0:4700ms"><circle cx="20" cy="210" r="9"/><text x="20" y="238">Your why</text></g><g class="st" style="--t0:5020ms"><circle cx="80" cy="208" r="9"/><text x="80" y="190">Your budget</text></g><g class="st" style="--t0:5340ms"><circle cx="140" cy="200" r="9"/><text x="140" y="228">Your income</text></g><g class="st" style="--t0:5660ms"><circle cx="200" cy="170" r="9"/><text x="200" y="152">Your API</text></g><g class="st" style="--t0:5980ms"><circle cx="250" cy="110" r="9"/><text x="250" y="138">Your week</text></g><g class="st" style="--t0:6300ms"><circle cx="300" cy="65" r="9"/><text x="300" y="47">How you work</text></g><g class="st" style="--t0:6620ms"><circle cx="380" cy="20" r="9"/></g>
-        <circle class="star" cx="300" cy="180" r="2.2" style="--dl:0.0s"/><circle class="star" cx="350" cy="150" r="1.6" style="--dl:0.7s"/><circle class="star" cx="120" cy="60" r="1.8" style="--dl:1.4s"/><circle class="star" cx="60" cy="120" r="1.4" style="--dl:2.1s"/><circle class="star" cx="250" cy="40" r="2" style="--dl:0.5s"/><circle class="star" cx="180" cy="120" r="1.3" style="--dl:1.2s"/><circle class="star" cx="370" cy="110" r="1.5" style="--dl:1.9s"/>
-        <circle class="rocket trail t2" style="--t0:4960ms" r="3"/>
-        <circle class="rocket trail t1" style="--t0:4830ms" r="5"/>
-        <circle class="rocket" style="--t0:4700ms" r="7"/>
-      </svg>
-      <div class="go" style="--t0:10037ms"><small>Your name</small><b>GO</b></div>
+    <div class="pulse in fl" style="--t0:2525ms">
+      <div class="bd-h"><b>Branch Manager</b><span>5:00</span></div>
+      <div class="prow2" style="--t0:4362ms"><span>Waiting on him</span><b>7 · the inbox scrubbed, the replies drafted</b></div>
+    </div>
+    <div class="pulse in fl" style="--t0:7363ms">
+      <div class="bd-h"><b>Unit Manager</b><span>6:00 · the plan</span></div>
+      <div class="meter" style="--t0:10950ms;--v:60%"><span>Names recruited</span><i><b></b></i><em>planned 3 · done 2</em></div>
+      <div class="meter" style="--t0:12625ms;--v:100%"><span>Agents coached</span><i><b></b></i><em>planned 2 · done 2</em></div>
+      <div class="meter" style="--t0:13363ms;--v:100%"><span>Joint field work</span><i><b></b></i><em>planned 1 · done 1</em></div>
+      <em class="turn" style="--t0:14900ms">accounted for · 5:00 pm</em>
+      <span class="sample">sample figures</span>
     </div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-lock" data-d="6200" data-n="21" style="--kb:6200ms" >
+<section class="scene s-lock" data-d="6200" data-n="32" style="--kb:6200ms" >
 
 <div class="full center">
   <div class="lock in" style="--t0:300ms;--t1:4375ms"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path class="shackle" style="--t0:4375ms" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
@@ -1205,40 +1528,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-new" data-d="10500" data-n="22" style="--kb:10500ms" >
-
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">Newcomers</p>
-    <h2 class="h l"><span aria-label="New to insurance? That’s normal."><span class="w"><i style="--i:0;--t0:400ms">New</i></span> <span class="w"><i style="--i:1;--t0:400ms">to</i></span> <span class="w"><i style="--i:2;--t0:400ms">insurance?</i></span> <span class="w"><i style="--i:3;--t0:400ms">That’s</i></span> <span class="w"><i style="--i:4;--t0:400ms">normal.</i></span></span></h2>
-    <p class="sub in" style="--t0:3175ms">You get the full build.</p>
-    <div class="buildbar" style="--t0:4375ms;--t1:4350ms"><i></i></div>
-  </div>
-  <div class="col">
-    <ul class="checks">
-      <li style="--t0:4375ms"><i></i>Training</li>
-      <li style="--t0:5187ms"><i></i>Boot camp</li>
-      <li style="--t0:5950ms"><i></i>One-on-one coaching</li>
-      <li style="--t0:7825ms"><i></i>Every one of these tools, from day one</li>
-    </ul>
-  </div>
-</div>
-<div class="streak"></div>
-</section>
-<section class="scene s-gates" data-d="15100" data-n="23" style="--kb:15100ms" >
-
-<div class="full">
-  <p class="eye in" style="--t0:200ms">The selection</p>
-  <h2 class="h l"><span aria-label="We don’t fill seats. We select."><span class="w"><i style="--i:0;--t0:400ms">We</i></span> <span class="w"><i style="--i:1;--t0:400ms">don’t</i></span> <span class="w"><i style="--i:2;--t0:400ms">fill</i></span> <span class="w"><i style="--i:3;--t0:400ms">seats.</i></span> <span class="w"><i style="--i:4;--t0:400ms">We</i></span> <span class="w"><i style="--i:5;--t0:400ms">select.</i></span></span></h2>
-  <ol class="gates">
-    <li style="--t0:3175ms"><b>1</b><span>Apply & screen</span></li><li style="--t0:3525ms"><b>2</b><span>Meet the Branch Manager</span></li><li style="--t0:3875ms"><b>3</b><span>Discovery</span></li><li style="--t0:4225ms"><b>4</b><span>Assessment</span></li><li style="--t0:4575ms"><b>5</b><span>Selection</span></li>
-    <span class="gline" style="--t0:3175ms"></span>
-  </ol>
-  <p class="sub big in" style="--t0:7950ms">At your Discovery you sit with our qualifiers and ask them anything, <em>without the Branch Manager in the room.</em></p>
-</div>
-<div class="streak"></div>
-</section>
-<section class="scene s-door" data-d="12600" data-n="24" style="--kb:12600ms" >
+<section class="scene s-door" data-d="12600" data-n="33" style="--kb:12600ms" >
 
 <div class="full center">
   <p class="eye in" style="--t0:200ms">One conversation</p>
@@ -1259,7 +1549,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-cta" data-d="10200" data-n="25" style="--kb:10200ms" >
+<section class="scene s-cta" data-d="10200" data-n="34" style="--kb:10200ms" >
 
 <div class="split cta">
   <div class="col">
@@ -1276,7 +1566,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-close dark" data-d="4300" data-n="26" style="--kb:4300ms" >
+<section class="scene s-close dark" data-d="4300" data-n="35" style="--kb:4300ms" >
 
 <div class="full center">
   <div class="mark big in" style="--t0:200ms"><span class="ping"></span><span class="ping p2"></span><span class="ping p3"></span><svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg></div>
@@ -1287,7 +1577,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </section>
   <div class="grain"></div>
   <div id="poster"><button type="button">▶ Play the film (silent preview)</button></div>
-  <div id="ctrl"><button id="pauseBtn" type="button">⏸</button><div id="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div id="ctrl"><button id="pauseBtn" type="button">⏸</button><div id="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
 </div>
 <script>
 const SC = Array.from(document.querySelectorAll('.scene'));

@@ -4993,6 +4993,30 @@ section links it.
     streaks are **not** claimed for agents: the game is live for the staff desks and agents come after. Every
     name and figure on the mocks is made up and marked; the real screens carry "sample data on every screen".
     `TT$200` also went into the page's pay panel, the one figure the record allows.
+  - **The journey cut, the same afternoon (35 scenes, 8:20, and a 1:27 trailer).** "You are producing the same
+    video. … we go through an orientation, we go through digital market surveys, we go through many tests … POP7 … so
+    they're not alone … I did ask you to review all the codes, every single thing that we do for an agent to succeed."
+    He was right: the previous cuts were a tour of tools. The film is now the candidate's own journey, and every scene
+    is read off the record (the inventory is published as the private page "Everything We Do for an Advisor"; its
+    source is `advisor-support-map.html` in the session scratchpad). Chapters: the question; after you apply (the
+    call, the Branch Manager, orientation, the **digital market survey** from the Drive's "Market Survey 1.0", **POP7**
+    from the Drive's results sheet, the Discovery, the selection, the onboarding with the licence guide, contracting
+    form and field training); the first ninety days (matched households, TT$200, leads, the flight plan); every day
+    (the day set, the balance, factfind360, **Query Pal**, the wall, Branch Intelligence, the real screens); every week
+    (coaching, the pulse, **Wednesday 9:00** with the call list the sheet scores, maturities and the 85-day report,
+    the wins); the book protected (**the Premium Due Desk's 45/60/75/90-day letters**, renewals, claims); every month
+    (**the monthly income review** from the Drive's form, the digital career path tracker); the path and the pay; **the
+    managers managed** (the Branch Manager's 5:00, the unit manager's ten KPIs planned and accounted for); the door.
+    The old newcomer scene went: the onboarding scene carries it.
+  - **The trailer is the ad; the film is what the called candidate watches.** `RECRUIT_MODE=trailer
+    build-recruitfilm.py` writes `agentmgt/trailer.html` from `recruit-trailer-lines.json` and
+    `recruit-trailer-timing.json` (vox in `tools/film/votrailer`); `films-recruit.py` writes `trailer` and `trailerv`
+    beside `recruit` and `recruitv`. Both pages show the trailer first and the full film under it, each with its
+    chapters. Whisper hears "No ceiling." as "No seating" and "call reluctance" as "correluctance" on every take of
+    those lines, identically on a second run: the voice is deterministic and the read is right, so those two were
+    kept after the re-take matched.
+  - The game's points and streaks are still not claimed for agents (staff first). Every name and figure on a mock is
+    made up and marked; no client, no client count.
   - Still to do, his: two 15-second phone clips of real agents saying one line each (candidates trust employees
     about three times more than the company), and the first-year figures for the pay panel.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and

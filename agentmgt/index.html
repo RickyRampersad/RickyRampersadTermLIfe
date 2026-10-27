@@ -194,6 +194,7 @@ section,.layout{padding-block:var(--sp-2xl)}
 .vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:.7rem;background:#fff;color:var(--ink);border-radius:999px;padding:.85rem 1.4rem;font:600 var(--f-0)/1 var(--text);box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .vcover .pl svg{width:1.1rem;height:1.1rem}
 .film-sec .lede{text-align:center;margin-inline:auto}
+.film-sec .vwrap+.film-note{text-align:center;margin:var(--sp-l) auto var(--sp-s);color:var(--muted)}
 
 /* ═══ FIGURES BAND ═══ */
 .band{background:var(--bg2);border-bottom:1px solid var(--line);padding-block:var(--sp-xl)}
@@ -542,7 +543,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       <div class="hero-cta">
         <a class="btn btn-1" href="https://wa.me/18686785821?text=Hi%20Mr%20Rampersad%2C%20I%27d%20like%20a%20confidential%2020-minute%20conversation%20about%20joining%20the%20branch." data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
         <a class="btn btn-2" href="#quiz">Take the 60-second test</a>
-        <a class="btn btn-2" href="#film">Watch the film · 5:26</a>
+        <a class="btn btn-2" href="#film">Watch the film · 1:27</a>
       </div>
       <p class="trust">
         <span><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Confidential for practising advisors</span>
@@ -639,15 +640,22 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 <section class="film-sec" id="film">
   <div class="wrap">
     <div class="lede rv">
-      <span class="eyebrow">The film · 3:54</span>
-      <h2 data-words>Why advisors move here.</h2>
-      <p>Five minutes on the digital branch: the fear of starting from zero, and why you won't; the leads, the tools, the coaching, and the one conversation that opens the door.</p>
+      <span class="eyebrow">The films</span>
+      <h2 data-words>Ninety seconds, or the whole journey.</h2>
+      <p>The short film says what is different here. The full film walks you through it from the day you apply: the call, the Branch Manager, the orientation, the market survey, POP7, the Discovery, the onboarding, and then every day, every week and every month after.</p>
     </div>
     <div class="vwrap rv">
-      <video playsinline preload="metadata" poster="recruit.jpg" data-scenes="8.9,5.5,16.7,6.0,12.9,10.2,18.3,13.0,13.0,18.1,12.5,15.5,14.4,15.7,12.1,18.2,19.5,12.6,12.3,12.0,6.2,10.5,15.1,12.6,10.2,4.3" data-chapters="A question|Talent and the tools|The branch, FY27|We do things differently|Leads on your board|The Lead Desk|factfind360|The wall is live|The system sets your day|Projected, done, balance|Branch Intelligence|The real screens|The people coach|Your manager's pulse|You won't start from zero|TT$200 and the stars|Your name, out loud|Your path, your call|Uncapped|The flight plan|Confidential|Newcomers|We select|One conversation|Book it|The environment decides">
+      <video playsinline preload="metadata" poster="trailer.jpg" data-scenes="8.9,15.1,13.2,13.1,9.4,12.6,10.2,4.3" data-chapters="A question|Not alone|Never from zero|Your rhythm|No ceiling|One conversation|Book it|The environment decides">
+        <source src="trailer.mp4" type="video/mp4">
+      </video>
+      <div class="vcover" style="background-image:url(trailer.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#17191F" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch · 1:27</div></div>
+    </div>
+    <p class="small film-note rv">The whole journey, 8 minutes 20 seconds, with a chapter for every stop.</p>
+    <div class="vwrap rv">
+      <video playsinline preload="none" poster="recruit.jpg" data-scenes="8.9,5.5,16.7,6.0,10.9,22.8,17.6,17.8,15.1,20.2,12.1,18.2,12.9,10.2,12.0,13.0,18.1,18.3,15.0,13.0,12.5,15.5,14.4,15.7,21.7,19.5,19.5,17.3,12.6,12.3,21.1,6.2,12.6,10.2,4.3" data-chapters="A question|Talent and the tools|The branch, FY27|We do things differently|After you apply|Eight steps, a person at each|Your market, mapped|POP7|We select|Built properly|You won't start from zero|TT$200 and the stars|Leads on your board|The Lead Desk|The flight plan|The system sets your day|Projected, done, balance|factfind360|Query Pal|The wall is live|Branch Intelligence|The real screens|The people coach|Your manager's pulse|Wednesday, 9:00|Your name, out loud|Your book, watched|Your income, reviewed|Your path, your call|Uncapped|Managers, managed|Confidential|One conversation|Book it|The environment decides">
         <source src="recruit.mp4" type="video/mp4">
       </video>
-      <div class="vcover" style="background-image:url(recruit.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#17191F" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch · 5:26</div></div>
+      <div class="vcover" style="background-image:url(recruit.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#17191F" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch the full film · 8:20</div></div>
     </div>
   </div>
 </section>
