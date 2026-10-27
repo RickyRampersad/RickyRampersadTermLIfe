@@ -317,6 +317,13 @@ h2{font-size:21px}
 .pv{background:var(--primarySoft);border:1px solid var(--primaryLine);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px}
 .pvw{margin:6px 0 0;padding-left:18px;color:var(--warn);font-size:13px}
 .bill-tiles{margin:12px 0 6px}
+/* what the upload wrote in Salesforce (27 October 2026) */
+.sfw{border:1px solid var(--primaryLine);border-left:4px solid var(--primary);border-radius:10px;background:var(--primarySoft);padding:10px 12px;margin:10px 0;font-size:14px}
+.sfw.ok{border-color:#B7DEC4;border-left-color:var(--good);background:var(--goodBg)}.sfw.err{border-color:#F3C2BD;border-left-color:var(--bad);background:var(--badBg)}
+.sfw-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}.sfw-h a{overflow-wrap:anywhere}
+.sfw .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:#fff;border:1px solid var(--line);border-radius:99px;padding:1px 8px;margin-right:6px;color:var(--ink2)}
+.sfw details{margin:6px 0}.sfw table{background:#fff}.sfw-t ul{margin:4px 0 6px;padding-left:0;list-style:none}.sfw-t li{margin:4px 0;overflow-wrap:anywhere}
+.sfw .btn{margin-top:6px}.sfw .bad{color:var(--badText)}
 .findings h4{margin:14px 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .findings h4 .n{background:var(--sunken);border-radius:99px;padding:0 8px;margin-left:4px}
 .findings h4.f-fix{color:var(--badText)}.findings h4.f-check{color:var(--warn)}.findings h4.f-ok{color:var(--good)}

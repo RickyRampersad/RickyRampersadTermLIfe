@@ -261,7 +261,7 @@ function dUploadCard(o) {
     h += '<div class="tiles bill-tiles"><div class="tile"><b>' + esc(blMoney(b.due)) + '</b><span>due for ' + esc(blMon(b.month)) + (b.dueBy ? ' · by ' + esc(dmy(b.dueBy)) : '') + '</span></div>' +
       '<div class="tile"><b>' + b.members + '</b><span>' + (o.line === 'listbill' ? 'policies' : 'members') + ' on the bill</span></div>' +
       (b.arrears ? '<div class="tile alert"><b>' + esc(blMoney(b.arrears)) + '</b><span>earlier months shown unpaid</span></div>' : '') +
-      '<div class="tile' + (Math.abs(v) > 0.05 ? ' alert' : '') + '"><b>' + (b.sfRecord ? esc(blMoney(b.sfBilled)) : '–') + '</b><span>in Salesforce' + (b.sfRecord ? (Math.abs(v) > 0.05 ? ' · ' + (v > 0 ? esc(blMoney(v)) + ' too high' : esc(blMoney(-v)) + ' short') : ' · agrees') : ' · no record') + '</span></div></div>' +
+      '<div class="tile' + (Math.abs(v) > 0.05 ? ' alert' : '') + '"><b>' + (b.sfRecord ? esc(blMoney(b.sfBilled)) : '–') + '</b><span>billed in Salesforce' + (b.sfRecord ? (Math.abs(v) > 0.05 ? ' · ' + (v > 0 ? esc(blMoney(v)) + ' more than' : esc(blMoney(-v)) + ' short of') + ' the ' + esc(blMoney(blCharged(o.line, b))) + ' charged' : ' · the same as the ' + esc(blMoney(blCharged(o.line, b))) + ' charged') : ' · no record') + '</span></div></div>' +
       '<p class="small muted">' + (b.ref ? 'Ref ' + esc(b.ref) + ' · ' : '') + (b.dated ? 'dated ' + esc(dmy(b.dated)) + ' · ' : '') + 'uploaded by ' + esc(b.by) + ' ' + esc(b.checkedAt) + (b.files ? ' · ' + esc(b.files) : '') + (b.reconciledAt ? ' · <b>reconciled ' + esc(b.reconciledAt) + '</b>' : '') + (b.sentAt ? ' · <b>sent ' + esc(b.sentAt) + '</b>' : '') +
       (can && !BILL_READ[o.line] ? ' · <button class="lnk" type="button" data-reup="' + o.line + '">upload again</button>' : '') + '</p>';
   }
@@ -275,7 +275,7 @@ function dFindings() {
   let h = '<h3 class="ptitle">What the checks found</h3><p class="plead">Every bill against Salesforce: the month’s record and its amount, the arrears, every member on the bill and on the record, who joined or left, the back-charges, the rates, the list bill. Fix what is marked <b>fix</b>, confirm what is marked <b>check</b>; the rest is for the record. The AI reads the whole month for you first.</p>';
   if (!withBill.length) return h + '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + dNav('findings');
   if (d.ai) h += '<div id="blAiBox">' + (DOOR.aiRead ? dAiHtml(DOOR.aiRead) : '<div class="drawer ai"><p class="muted" style="margin:0">' + (DOOR.aiBusy ? 'Reading this month with AI: the findings as counts, the Salesforce figures, the open tasks…' : 'The AI read of this month comes here.') + '</p></div>') + '</div>';
-  withBill.forEach(o => { h += '<section class="bline" id="line-' + o.line + '"><div class="blt"><h3>' + esc(o.label) + '</h3>' + blSteps(o.steps) + '</div>' + dSfRow(o) + blFindings(o) + '</section>'; });
+  withBill.forEach(o => { h += '<section class="bline" id="line-' + o.line + '"><div class="blt"><h3>' + esc(o.label) + '</h3>' + blSteps(o.steps) + '</div>' + dSfRow(o) + blSfwPanel(o) + blFindings(o) + '</section>'; });
   return h + dNav('findings');
 }
 function dAiHtml(r) {
@@ -340,7 +340,7 @@ async function dAnswer(qid, v, btn) {
 function dNext(n, q) {
   if (!n || !n.kind) return;
   if (n.kind === 'reup') { BILL_READ[n.line] = { part: null, names: [], warnings: [], again: true }; dGo('upload'); const b = $('preview-' + n.line); if (b) b.innerHTML = ''; toast('Upload the ' + (BL_LABEL[n.line] || '') + ' bill again.'); }
-  else if (n.kind === 'fix' && n.fix === 'sfAmount') { post({ action: 'gcm.billAct', group: BILL.group.key, line: n.line, month: BILL.month, act: 'sfAmount' }).then(r => { toast(r.ok ? r.said : (r.error || 'Not set'), !r.ok); if (r.ok) { DOOR.ask = null; dRefreshBill().then(() => dLoad('ask')); } }); }
+  else if (n.kind === 'fix' && (n.fix === 'sfAmount' || n.fix === 'sfWrite')) { toast('Writing to Salesforce…'); post({ action: 'gcm.billAct', group: BILL.group.key, line: n.line, month: BILL.month, act: n.fix }).then(r => { toast(r.ok ? r.said : (r.error || 'Not set'), !r.ok); if (r.ok) { DOOR.ask = null; dRefreshBill().then(() => dLoad('ask')); } }); }
   else if (n.kind === 'pay') blPayment(n.line, n.month || BILL.month, n.amount);
   else if (n.kind === 'task') { blTaskPanel(n.line || 'health', /^a\d+$/.test(q.id) ? '' : q.id); dPreset(n.task, n.member || ''); }
   else if (n.kind === 'leavers') { const M = n.members || []; blFormPanel(M[0] ? blNice(M[0]) : '', 'terminate', null, 'change'); if (M.length > 1) toast('One form a person: ' + M.map(blNice).join(', ') + '.'); }
