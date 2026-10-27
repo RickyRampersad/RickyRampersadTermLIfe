@@ -1,7 +1,67 @@
 {
- "tts/out/recruitd10b/01.mp3": [
+ "tts/out/agpilot/01.mp3": [
+  "en",
+  0.998,
+  "Good morning. You're one of five agents in the branch's new daily pilot. Neil, Fawas, Rajiv, Joy and Daryl. Here's how your day works in a couple of minutes."
+ ],
+ "tts/out/agpilot/02.mp3": [
+  "en",
+  0.997,
+  "There are three touches a day. You plan in a morning, you check in at midday, and you close off at 5.30. That's it."
+ ],
+ "tts/out/agpilot/03.mp3": [
+  "en",
+  0.998,
+  "Every morning, an email from the branch called your day. It shows what the team is working on for your clients today, what's overdue, and who's handling it."
+ ],
+ "tts/out/agpilot/04.mp3": [
+  "en",
+  0.998,
+  "Below that is your book, premiums past 60 days, dues to chase, and pending business holding money. Then your goal for the year, where you should be by now, and your fact finds."
+ ],
+ "tts/out/agpilot/05.mp3": [
   "en",
   0.999,
-  "Your morning asks what you'll do, the calls, the appointments, the fact finds. Your evening asks what you did and shows the balance. Check in and the register knows you're in. Your workday page fills as the day goes. Nothing typed into a spreadsheet. Nothing lost."
+  "Tap Project My Day, put a number against each line. The calls you'll make, appointments, fact finds, closing interviews, applications, dues, and pendings. Been safe!"
+ ],
+ "tts/out/agpilot/06.mp3": [
+  "en",
+  0.995,
+  "Please have your projection in by 1030. No projection by 1030 reads as not working today."
+ ],
+ "tts/out/agpilot/07.mp3": [
+  "en",
+  0.999,
+  "On the same page, you can comment on any client the team is working for you. Type it or tap the microphone and just say it. It goes straight onto that task chatter in your name."
+ ],
+ "tts/out/agpilot/08.mp3": [
+  "en",
+  0.999,
+  "At midday, a second email shows your progress so far against your projection. If the day has moved, tap update my projection."
+ ],
+ "tts/out/agpilot/09.mp3": [
+  "en",
+  0.999,
+  "At 5.30, close off you day, put in what you actually did, zero where nothing was done, and the balance against this morning shows as you type. No answer reads as nothing done."
+ ],
+ "tts/out/agpilot/10.mp3": [
+  "en",
+  0.999,
+  "Your close-off goes to your unit manager and a sales support, so the whole branch knows where every client stands."
+ ],
+ "tts/out/agpilot/11.mp3": [
+  "en",
+  0.998,
+  "One tip. If a button ever says, sorry, unable to open the file, your phone is signed into more than one Google account. Press and hold the button, copy the link, and open it in a private window. It works there every time."
+ ],
+ "tts/out/agpilot/12.mp3": [
+  "en",
+  0.995,
+  "So, every working day, project by 10.30, check in at midday and close off at 5.30."
+ ],
+ "tts/out/agpilot/13.mp3": [
+  "en",
+  0.997,
+  "Thank you for being part of this pilot. We tell us now shapes what the whole branch gets next."
  ]
 }
