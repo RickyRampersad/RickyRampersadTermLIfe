@@ -3,8 +3,20 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "recruitc15b": [
-   "And the income is uncapped. No salary band. No ceiling. It scales with your activity and your skill. And you're not living off your phone contacts. The leads come to you."
+  "recruitd10": [
+   "Your morning asks what you'll do: the calls, the appointments, the fact finds. Your evening asks what you did, and shows the balance. Check in, and the register knows you're in. Your workday page fills as the day goes. Nothing typed into a spreadsheet. Nothing lost."
+  ],
+  "recruitd12": [
+   "And none of this is a mock-up. These are the screens. The client's draft. Your manager's sign-off. Your own copy. The client's approval. The Log Book in your hand. The meeting on your phone. Built here, in Chaguanas, for this branch."
+  ],
+  "recruitd14": [
+   "Your unit manager files a pulse on the unit every week: who lifted it, who's off pace on leads, fact finds and closing interviews, and what coaching was done about it. The note he writes for you lands in your morning e-mail. Help finds you before Friday."
+  ],
+  "recruitd16": [
+   "Every matched household whose service questionnaire comes in after your naming earns you two hundred dollars, and the system chases it until Retention pays. And when the support team closes a task for you, you rate the work. Five stars, one tap. You're their customer too."
+  ],
+  "recruitd17": [
+   "Your wins don't vanish into a group chat. Every Wednesday the branch meeting celebrates the week's wins, the agents' wins included, with Starbucks and MovieTowne tickets. And your item goes on the agenda from your phone. Blastoff in January. Mid-Year in July. Your name, out loud."
   ]
  }
 }
