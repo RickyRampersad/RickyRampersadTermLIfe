@@ -3,13 +3,14 @@
  "rate": "-12%",
  "check": true,
  "films": {
-  "wallreqs": [
-   "This is what is still outstanding on our pending cases, from today's pending report.",
-   "The big number is every requirement still waiting to be received.",
-   "The bars are the agents who still owe a first premium. Collect it, and the policy can issue.",
-   "Most requirements sit with the agent. That is the first call to make.",
-   "On the right, what the team chased today, and which agents they chased.",
-   "No client is named here. Counts and agents only."
+  "wallpend": [
+   "This is the branch pending wall, policy by policy, from today's pending report.",
+   "The big number is every policy that still has something outstanding.",
+   "The bar under it is where underwriting has them. Approved ones need only the last items in, so they come first.",
+   "One item from issue, ready with only the premium left, and money already paid that we cannot apply yet.",
+   "On the right, every agent, and what is on their desk. Documents, medicals and first premiums.",
+   "Then the Salesforce tasks on those same policies. Open, overdue, untouched for a week, and done today.",
+   "The last column is the one to fix: policies nobody has ever raised a task on. No client is named here."
   ]
  }
 }
