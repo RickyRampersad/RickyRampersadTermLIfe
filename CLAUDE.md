@@ -4977,6 +4977,22 @@ section links it.
     median first-year income or the leads per advisor per month needs the record from Mr Rampersad first.
   - **Two posts, not one** (`AGENTMGT-SETUP.md`): each names its reader in the first line because the ad
     platforms limit targeting, and each ends "Reply TALK and I'll call you".
+  - **Five more scenes, the same morning, after "lots of motion, as you have access to everything: how we manage
+    our agents and managers, and all the drives"** (26 scenes, 5:26). Drawn from the record and the Drive, never
+    invented: scene 10, projected, done, balance and the register (the tracker's agent metrics `p`/`d`, the
+    check-in, My workday's bar); scene 12, **the real screens** (`wall/img/ff`, `lb`, `meet`: the client's draft,
+    the manager's sign-off, the agent's copy, the client's approval, the Log Book, the meeting app, all captured
+    with sample data and already public on `/wall/`; embedded as data URIs by `img64`, a 420-px JPEG each, so
+    `film.html` stays under 300 KB); scene 14, **the Weekly Manager Pulse** (the Drive sheet "RRB | Weekly Manager
+    Pulse (2026)": who lifted the unit, agents not on target with leads, fact finds and closing interviews, and the
+    coaching done) and the manager's note that lands in the agent's morning e-mail (the tracker's Manager Notes
+    tab, "From your manager"); scene 16, **TT$200** a matched household whose service questionnaire comes in after
+    the naming, chased until Retention pays (`T_CLAIM`), and **the agent rates the support** when a task is closed
+    for them (`rateRun_`, five stars); scene 17 re-voiced: the Wednesday wins, the agents' wins included, Starbucks
+    and MovieTowne, and the item added to the agenda from the phone (the Meeting Builder). The game's points and
+    streaks are **not** claimed for agents: the game is live for the staff desks and agents come after. Every
+    name and figure on the mocks is made up and marked; the real screens carry "sample data on every screen".
+    `TT$200` also went into the page's pay panel, the one figure the record allows.
   - Still to do, his: two 15-second phone clips of real agents saying one line each (candidates trust employees
     about three times more than the company), and the first-year figures for the pay panel.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and

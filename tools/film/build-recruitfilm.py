@@ -89,6 +89,16 @@ def typed(text, t0, per=38):
 
 MARK = '''<svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg>'''
 SAMPLE = '<span class="sample">sample figures</span>'
+def img64(rel, w=420, q=72):
+    """A wall screenshot (sample data, already public on /wall/) as a data URI, resized so the film stays light."""
+    from PIL import Image; import io
+    im = Image.open(os.path.join(ROOT, 'wall', 'img', rel)).convert('RGB')
+    im = im.resize((w, int(im.height * w / im.width)), Image.LANCZOS)
+    b = io.BytesIO(); im.save(b, 'JPEG', quality=q, optimize=True)
+    return 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
+SHOTS = [('ff/01-client-draft.jpg', 'The client\'s draft', 'draft'), ('ff/02-manager-signoff.jpg', 'Your manager\'s sign-off', 'sign'),
+         ('ff/03-agent-your-copy.jpg', 'Your own copy', 'copy'), ('ff/05-client-sign-and-rate.jpg', 'The client\'s approval', 'approval'),
+         ('lb/logged-ph.jpg', 'The Log Book, in your hand', 'Log'), ('meet/signin-ph.jpg', 'The meeting, on your phone', 'meeting')]
 
 def scene(n, kind, body, extra=''):
     body = re.sub(r'(class="cnt"[^>]*?data-at="(\d+)")', r'\1 style="--at:\2ms"', body)   # the pop when a counter lands
@@ -305,266 +315,361 @@ S.append(scene(9, 's-day', f'''
   </div>
 </div>'''))
 
-# 10 · Branch Intelligence
-S.append(scene(10, 's-ai', f'''
+# 10 · projected, done, balance; the register
+BAL = [('Calls to make', 12, 14, '+2'), ('Appointments to set', 3, 3, '0'), ('Fact finds', 2, 2, '0')]
+S.append(scene(10, 's-balance', f'''
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:200ms">Branch Intelligence</p>
-    <h2 class="h l">{words("One tap. The whole file, read.", at(10,"tap") - 300)}</h2>
-    <div class="duo2">
-      <span class="ypill big in" style="--t0:{at(10,"decide")}ms">You decide.</span>
-      <span class="npill big in" style="--t0:{at(10,"prepares")}ms">It prepares.</span>
+    <p class="eye in" style="--t0:200ms">Projected · done · balance</p>
+    <h2 class="h l">{words("Your morning asks.", at(10,"morning") - 200)}</h2>
+    <h2 class="h l wine2">{words("Your evening balances.", at(10,"evening") - 200)}</h2>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:{at(10,"register")}ms"><svg class="ic"><use href="#i-users"/></svg> The register knows you're in</span>
+      <span class="npill in strike" style="--t0:{at(10,"spreadsheet")}ms">A spreadsheet</span>
     </div>
   </div>
   <div class="col">
-    <div class="file in fl" style="--t0:{at(10,"hard")}ms">
+    <div class="bal in fl" style="--t0:{at(10,"calls") - 600}ms">
+      <div class="bal-h"><b>Morning</b><span class="ck2" style="--t0:{at(10,"Check")}ms"><i></i>In · 6:02 · on time</span><b class="ev" style="--t0:{at(10,"evening")}ms">Evening</b></div>
+      {''.join(f'<div class="brow" style="--t0:{at(10,["calls","appointments","fact"][i])}ms;--t1:{at(10,"did") + i*260}ms;--t2:{at(10,"balance") + i*220}ms"><span>{n}</span><b class="pj"><em class="cnt" data-to="{a}" data-at="{at(10,["calls","appointments","fact"][i])}">{a}</em></b><b class="dn"><em class="cnt" data-to="{b}" data-at="{at(10,"did") + i*260}">{b}</em></b><i class="bl {"up" if d.startswith("+") else ""}">{d}</i></div>' for i,(n,a,b,d) in enumerate(BAL))}
+      <div class="prog slim" style="margin-top:calc(var(--u)*1.6)"><i style="--t0:{at(10,"fills")}ms"></i><b><em class="cnt" data-to="84" data-suf="%" data-at="{at(10,"fills")}">84%</em> of the day</b></div>
+      {SAMPLE}
+    </div>
+  </div>
+</div>'''))
+
+# 11 · Branch Intelligence
+S.append(scene(11, 's-ai', f'''
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Branch Intelligence</p>
+    <h2 class="h l">{words("One tap. The whole file, read.", at(11,"tap") - 300)}</h2>
+    <div class="duo2">
+      <span class="ypill big in" style="--t0:{at(11,"decide")}ms">You decide.</span>
+      <span class="npill big in" style="--t0:{at(11,"prepares")}ms">It prepares.</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="file in fl" style="--t0:{at(11,"hard")}ms">
       <div class="bd-h"><b>Client file</b><span>4 policies · 6 notes · 2 e-mails</span></div>
       <div class="flines"><i></i><i class="short"></i><i></i><i class="short"></i><i></i></div>
-      <div class="scan" style="--t0:{at(10,"reads")}ms"></div>
-      <div class="think" style="--t0:{at(10,"reads") + 500}ms;--t1:{at(10,"stands")}ms"><i></i><i></i><i></i></div>
-      <div class="ai" style="--t0:{at(10,"stands")}ms">
-        <p><b>Where it stands</b>{typed("Premium 41 days due. Wrote in on Tuesday asking for a call.", at(10,"stands") + 200, 24)}</p>
-        <p style="--t0:{at(10,"first")}ms"><b>Say first</b>{typed("Thank them for writing. Confirm what the policy pays before anything else.", at(10,"first") + 100, 24)}</p>
+      <div class="scan" style="--t0:{at(11,"reads")}ms"></div>
+      <div class="think" style="--t0:{at(11,"reads") + 500}ms;--t1:{at(11,"stands")}ms"><i></i><i></i><i></i></div>
+      <div class="ai" style="--t0:{at(11,"stands")}ms">
+        <p><b>Where it stands</b>{typed("Premium 41 days due. Wrote in on Tuesday asking for a call.", at(11,"stands") + 200, 24)}</p>
+        <p style="--t0:{at(11,"first")}ms"><b>Say first</b>{typed("Thank them for writing. Confirm what the policy pays before anything else.", at(11,"first") + 100, 24)}</p>
       </div>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 11 · the people coach
+# 12 · the real screens
+def shots():
+    out = []
+    for i, (rel, cap, word) in enumerate(SHOTS):
+        t0 = at(12, word); t1 = at(12, SHOTS[i + 1][2]) if i + 1 < len(SHOTS) else at(12, "Built")
+        out.append(f'<figure class="shot" style="--i:{i};--t0:{t0}ms;--t1:{t1}ms"><div class="frame"><img src="{img64(rel)}" alt=""></div><figcaption>{cap}</figcaption></figure>')
+    return ''.join(out)
+S.append(scene(12, 's-real', f'''
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">Not a mock-up</p>
+  <h2 class="h l">{words("These are the screens.", at(12,"screens") - 300, 110)}</h2>
+  <div class="gal" style="--t0:{at(12,"screens")}ms">{shots()}</div>
+  <p class="sub in built" style="--t0:{at(12,"Built")}ms">Built here, in <em>Chaguanas</em>, for this branch.</p>
+  <span class="sample gal-s">sample data on every screen</span>
+</div>'''))
+
+# 13 · the people coach
 DAYS = ['Mon','Tue','Wed','Thu','Fri']
-S.append(scene(11, 's-coach', f'''
+S.append(scene(13, 's-coach', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">The human part</p>
     <h2 class="h l">{words("The digital carries.", 400)}</h2>
-    <h2 class="h l wine2">{words("The people coach.", at(11,"people") - 300)}</h2>
+    <h2 class="h l wine2">{words("The people coach.", at(13,"people") - 300)}</h2>
   </div>
   <div class="col">
     <div class="corner">
       <span class="brk tl"></span><span class="brk br"></span>
       <div class="chips3">
-        <div class="chip in fl" style="--t0:{at(11,"interviews")}ms"><svg class="ic"><use href="#i-users"/></svg><b>Interviewed by the Branch Manager</b></div>
-        <div class="chip in fl" style="--t0:{at(11,"coaches")}ms"><svg class="ic"><use href="#i-up"/></svg><b>Coached after</b></div>
-        <div class="week in" style="--t0:{at(11,"week")}ms">
-          {''.join(f'<span class="{"fri" if d == "Fri" else ""}" style="--t0:{at(11,"Friday") if d == "Fri" else 0}ms">{d}</span>' for d in DAYS)}
+        <div class="chip in fl" style="--t0:{at(13,"interviews")}ms"><svg class="ic"><use href="#i-users"/></svg><b>Interviewed by the Branch Manager</b></div>
+        <div class="chip in fl" style="--t0:{at(13,"coaches")}ms"><svg class="ic"><use href="#i-up"/></svg><b>Coached after</b></div>
+        <div class="week in" style="--t0:{at(13,"week")}ms">
+          {''.join(f'<span class="{"fri" if d == "Fri" else ""}" style="--t0:{at(13,"Friday") if d == "Fri" else 0}ms">{d}</span>' for d in DAYS)}
         </div>
-        <div class="chip in fl" style="--t0:{at(11,"sits")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>Your unit manager sits with you on it</b></div>
+        <div class="chip in fl" style="--t0:{at(13,"sits")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>Your unit manager sits with you on it</b></div>
       </div>
     </div>
   </div>
 </div>'''))
 
-# 12 · clients matched to you
+# 14 · the weekly pulse, and the note in your morning e-mail
+OFF3 = [('Leads', 'Andre', 62), ('Fact finds', 'Priya', 48), ('Closing interviews', 'Keisha', 71)]
+S.append(scene(14, 's-pulse', f'''
+<div class="split wide">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Every week</p>
+    <h2 class="h l">{words("Your manager sees your week before Friday.", at(14,"pulse") - 400, 90)}</h2>
+    <p class="sub in" style="--t0:{at(14,"Help")}ms">Help finds you <em>before Friday</em>, not after.</p>
+  </div>
+  <div class="col">
+    <div class="pulse in fl" style="--t0:{at(14,"pulse") - 300}ms">
+      <div class="bd-h"><b>Weekly Manager Pulse</b><span>Akaash's unit · week 4</span></div>
+      <div class="prow2" style="--t0:{at(14,"lifted")}ms"><span>Who lifted the unit</span><b>Stephanie · Fawwaz</b></div>
+      {''.join(f'<div class="meter" style="--t0:{at(14,["leads","fact","closing"][i])}ms;--v:{v}%"><span>{n}</span><i><b></b></i><em>{a} · off pace</em></div>' for i,(n,a,v) in enumerate(OFF3))}
+      <div class="prow2" style="--t0:{at(14,"coaching")}ms"><span>Coaching done</span><b>{typed("Role-played the opening with Priya. Thursday calls booked together.", at(14,"coaching") + 300, 22)}</b></div>
+      {SAMPLE}
+    </div>
+    <div class="note in" style="--t0:{at(14,"note")}ms">
+      <small>From your manager · in your morning e-mail</small>
+      <p>{typed("Two fact finds this week, Priya. Let's book your Thursday calls together at eight.", at(14,"note") + 400, 26)}</p>
+    </div>
+  </div>
+</div>'''))
+
+# 15 · clients matched to you
 HH = [('The Ramlogan household', '3 policies · since 2014'), ('The Charles household', '2 policies · since 2019'), ('The Ali household', '4 policies · since 2008')]
-S.append(scene(12, 's-match', f'''
+S.append(scene(15, 's-match', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Afraid you'd start from zero?</p>
-    <h2 class="h l">{words("You won't.", at(12,"won") - 150, 160)}</h2>
-    <p class="sub in" style="--t0:{at(12,"matched") - 300}ms">Clients whose agent has moved on are <b>matched to you</b>, household by household.</p>
+    <h2 class="h l">{words("You won't.", at(15,"won") - 150, 160)}</h2>
+    <p class="sub in" style="--t0:{at(15,"matched") - 300}ms">Clients whose agent has moved on are <b>matched to you</b>, household by household.</p>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{at(12,"file")}ms">The file</span>
-      <span class="ypill in" style="--t0:{at(12,"history")}ms">The history</span>
-      <span class="ypill in" style="--t0:{at(12,"first")}ms">The first thing to say</span>
+      <span class="ypill in" style="--t0:{at(15,"file")}ms">The file</span>
+      <span class="ypill in" style="--t0:{at(15,"history")}ms">The history</span>
+      <span class="ypill in" style="--t0:{at(15,"first")}ms">The first thing to say</span>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{at(12,"Clients")}ms">
+    <div class="list in fl" style="--t0:{at(15,"Clients")}ms">
       <div class="bd-h"><b>Your list</b><span>named to you</span></div>
-      {''.join(f'<div class="hh" style="--t0:{at(12,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{s}</span><em>named</em></div>' for i, (n, s) in enumerate(HH))}
+      {''.join(f'<div class="hh" style="--t0:{at(15,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{s}</span><em>named</em></div>' for i, (n, s) in enumerate(HH))}
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 13 · recognition on stage
-S.append(scene(13, 's-stage', f'''
+# 16 · TT$200 a household, and you rate the support
+CLAIM = [('Questionnaire in', 'questionnaire'), ('Claim found', 'earns'), ('Chased by the system', 'chases'), ('Paid', 'pays')]
+S.append(scene(16, 's-money', f'''
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Two more things</p>
+    <h2 class="h xl"><span class="cnt" data-to="200" data-pre="TT$" data-at="{at(16,"two")}">TT$200</span></h2>
+    <h2 class="h m">{words("every matched household, when the questionnaire comes in.", at(16,"questionnaire") - 300, 70)}</h2>
+    <p class="sub in" style="--t0:{at(16,"customer")}ms">And when the support team closes a task for you, <em>you rate the work.</em></p>
+  </div>
+  <div class="col">
+    <div class="claim in fl" style="--t0:{at(16,"household")}ms">
+      <div class="bd-h"><b>Retention claim</b><span>RP-261027-014</span></div>
+      <div class="steps4">{''.join(f'<div class="st" style="--t0:{at(16,w)}ms"><i></i><span>{n}</span></div>' for n,w in CLAIM)}</div>
+      <span class="stamp paid" style="--t0:{at(16,"pays")}ms">Paid</span>
+      {SAMPLE}
+    </div>
+    <div class="rate in fl" style="--t0:{at(16,"support")}ms">
+      <div class="rt"><b>Task closed for you</b><span>Sasha L. · Premium reinstated · 1 day</span></div>
+      <div class="stars">{''.join(f'<svg viewBox="0 0 24 24" style="--t0:{at(16,"Five") + i*160}ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>' for i in range(5))}</div>
+      <em class="cust" style="--t0:{at(16,"customer")}ms">You're their customer too</em>
+    </div>
+  </div>
+</div>'''))
+
+# 17 · recognition on stage
+S.append(scene(17, 's-stage', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Recognition</p>
-    <h2 class="h l">{words("Your name, said out loud.", at(13,"announced") - 300)}</h2>
-    <div class="bubble in" style="--t0:400ms;--t1:{at(13,"celebrated") - 100}ms"><span>congrats bro!!</span><span>seen · 2:41 pm · no reply</span></div>
+    <h2 class="h l">{words("Your name, said out loud.", at(17,"celebrates") - 300)}</h2>
+    <div class="bubble in" style="--t0:400ms;--t1:{at(17,"Wednesday") - 100}ms"><span>congrats bro!!</span><span>seen · 2:41 pm · no reply</span></div>
+    <div class="wins in" style="--t0:{at(17,"celebrates")}ms">
+      <div class="bd-h"><b>This week's wins</b><span>Wednesday · 9:00</span></div>
+      <div class="aw" style="--t0:{at(17,"wins")}ms"><i>Client Saver</i><b>Sasha L.</b></div>
+      <div class="aw" style="--t0:{at(17,"agents")}ms"><i>Agent of the week</i><b>Your name</b></div>
+      <div class="prz"><span class="ypill" style="--t0:{at(17,"Starbucks")}ms">Starbucks</span><span class="ypill" style="--t0:{at(17,"MovieTowne")}ms">MovieTowne</span></div>
+      <div class="agd" style="--t0:{at(17,"agenda")}ms"><svg class="ic"><use href="#i-phone"/></svg><span>Your item · <b>added from your phone</b></span></div>
+    </div>
     <div class="dates">
-      <div class="date in" style="--t0:{at(13,"Wednesday")}ms"><b>Wednesday</b><span>every week</span></div>
-      <div class="date in" style="--t0:{at(13,"Blastoff")}ms"><b>Blastoff</b><span>January</span></div>
-      <div class="date in" style="--t0:{at(13,"Mid")}ms"><b>Mid-Year</b><span>July</span></div>
+      <div class="date in" style="--t0:{at(17,"Wednesday")}ms"><b>Wednesday</b><span>every week</span></div>
+      <div class="date in" style="--t0:{at(17,"Blastoff")}ms"><b>Blastoff</b><span>January</span></div>
+      <div class="date in" style="--t0:{at(17,"Mid")}ms"><b>Mid-Year</b><span>July</span></div>
     </div>
   </div>
   <div class="col">
     <div class="podium">
-      <div class="light" style="--t0:{at(13,"stage") - 400}ms"></div>
-      <div class="plate in" style="--t0:{at(13,"stage")}ms"><small>MDRT qualifier</small><b>Your name</b></div>
+      <div class="light" style="--t0:{at(17,"Blastoff") - 400}ms"></div>
+      <div class="plate in" style="--t0:{at(17,"Blastoff")}ms"><small>MDRT qualifier</small><b>Your name</b></div>
       <div class="floor"></div>
-      <span class="ring-a" style="--t0:{at(13,"name")}ms"></span><span class="ring-a" style="--t0:{at(13,"name") + 500}ms"></span><span class="ring-a" style="--t0:{at(13,"name") + 1000}ms"></span>
-      {''.join(f'<span class="conf" style="--x:{8 + (i*37)%86}%;--t0:{at(13,"name") + (i*53)%700}ms;--c:{["#E85F6A","#fff","#F5CBD0","#D33F49"][i%4]}"></span>' for i in range(22))}
+      <span class="ring-a" style="--t0:{at(17,"name")}ms"></span><span class="ring-a" style="--t0:{at(17,"name") + 500}ms"></span><span class="ring-a" style="--t0:{at(17,"name") + 1000}ms"></span>
+      {''.join(f'<span class="conf" style="--x:{8 + (i*37)%86}%;--t0:{at(17,"name") + (i*53)%700}ms;--c:{["#E85F6A","#fff","#F5CBD0","#D33F49"][i%4]}"></span>' for i in range(22))}
     </div>
   </div>
 </div>'''))
 
 # 14 · the path is your call
-S.append(scene(14, 's-path', f'''
+S.append(scene(18, 's-path', f'''
 <div class="split wide">
   <div class="col">
     <p class="eye in" style="--t0:200ms">The career path</p>
     <h2 class="h l">{words("Where you go is your call.", 400)}</h2>
-    <p class="sub in" style="--t0:{at(14,"rungs")}ms">The rungs are written down.</p>
-    <div class="choose in" style="--t0:{at(14,"choose")}ms"><span class="knob"></span><b>You choose the ladder.</b></div>
+    <p class="sub in" style="--t0:{at(18,"rungs")}ms">The rungs are written down.</p>
+    <div class="choose in" style="--t0:{at(18,"choose")}ms"><span class="knob"></span><b>You choose the ladder.</b></div>
   </div>
   <div class="col">
     <div class="ladders">
       <ol class="ladder">
-        <p class="lad-h in" style="--t0:{at(14,"Build")}ms">Build a book</p>
-        <li class="in" style="--t0:{at(14,"Build") + 200}ms"><b>Career Sales Representative</b><span>Training, induction, boot camp</span></li>
-        <li class="in" style="--t0:{at(14,"Build") + 500}ms"><b>Executive Agent</b><span>Overrides, a private office</span></li>
-        <li class="in top" style="--t0:{at(14,"Build") + 800}ms"><b>Senior Sales Consultant</b><span>The top of the professional road</span></li>
-        <span class="rail" style="--t0:{at(14,"Build")}ms"></span>
+        <p class="lad-h in" style="--t0:{at(18,"Build")}ms">Build a book</p>
+        <li class="in" style="--t0:{at(18,"Build") + 200}ms"><b>Career Sales Representative</b><span>Training, induction, boot camp</span></li>
+        <li class="in" style="--t0:{at(18,"Build") + 500}ms"><b>Executive Agent</b><span>Overrides, a private office</span></li>
+        <li class="in top" style="--t0:{at(18,"Build") + 800}ms"><b>Senior Sales Consultant</b><span>The top of the professional road</span></li>
+        <span class="rail" style="--t0:{at(18,"Build")}ms"></span>
       </ol>
       <ol class="ladder">
-        <p class="lad-h in" style="--t0:{at(14,"lead")}ms">Or lead</p>
-        <li class="in" style="--t0:{at(14,"Emerging")}ms"><b>Emerging Leaders Program</b><span>By Branch Manager recommendation</span></li>
-        <li class="in" style="--t0:{at(14,"Unit")}ms"><b>Unit Manager</b><span>Recruit, build and run a unit</span></li>
-        <li class="in top" style="--t0:{at(14,"branch")}ms"><b>Branch Manager</b><span>A branch of your own</span></li>
-        <span class="rail" style="--t0:{at(14,"lead")}ms"></span>
+        <p class="lad-h in" style="--t0:{at(18,"lead")}ms">Or lead</p>
+        <li class="in" style="--t0:{at(18,"Emerging")}ms"><b>Emerging Leaders Program</b><span>By Branch Manager recommendation</span></li>
+        <li class="in" style="--t0:{at(18,"Unit")}ms"><b>Unit Manager</b><span>Recruit, build and run a unit</span></li>
+        <li class="in top" style="--t0:{at(18,"branch")}ms"><b>Branch Manager</b><span>A branch of your own</span></li>
+        <span class="rail" style="--t0:{at(18,"lead")}ms"></span>
       </ol>
     </div>
   </div>
 </div>'''))
 
 # 15 · uncapped
-S.append(scene(15, 's-income', f'''
+S.append(scene(19, 's-income', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">The income</p>
-    <h2 class="h xl">{words("Uncapped.", at(15,"uncapped") - 200, 80)}</h2>
-    <h2 class="h m wine2">{words("No salary band. No ceiling.", at(15,"No") - 100, 120)}</h2>
+    <h2 class="h xl">{words("Uncapped.", at(19,"uncapped") - 200, 80)}</h2>
+    <h2 class="h m wine2">{words("No salary band. No ceiling.", at(19,"No") - 100, 120)}</h2>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{at(15,"not")}ms">Not your phone contacts</span>
-      <span class="ypill in" style="--t0:{at(15,"leads")}ms">The leads come to you</span>
+      <span class="ypill in" style="--t0:{at(19,"not")}ms">Not your phone contacts</span>
+      <span class="ypill in" style="--t0:{at(19,"leads")}ms">The leads come to you</span>
     </div>
-    <p class="sub in" style="--t0:{at(15,"scales")}ms">It scales with your activity and your skill.</p>
+    <p class="sub in" style="--t0:{at(19,"scales")}ms">It scales with your activity and your skill.</p>
   </div>
   <div class="col">
     <svg class="graph" viewBox="0 0 400 300" aria-hidden="true">
       <defs><linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E85F6A" stop-opacity=".2"/><stop offset="1" stop-color="#E85F6A"/></linearGradient><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E85F6A" stop-opacity=".45"/><stop offset="1" stop-color="#E85F6A" stop-opacity="0"/></linearGradient></defs>
       <g class="ggrid">{''.join(f'<line x1="20" x2="380" y1="{y}" y2="{y}"/>' for y in (60,130,200,270))}</g>
-      <path class="area" style="--t0:{at(15,"scales") + 900}ms" d="M20,270 70,250 120,238 170,215 220,196 260,160 300,120 340,70 380,10 L380 300 L20 300Z"/>
-      <g class="band" style="--t0:{at(15,"No")}ms"><rect x="20" y="150" width="360" height="60" rx="6"/><text x="36" y="186">salary band</text></g>
-      <polyline class="line" style="--t0:{at(15,"scales") - 200}ms" points="20,270 70,250 120,238 170,215 220,196 260,160 300,120 340,70 380,10"/>
-      <circle class="dot" style="--t0:{at(15,"ceiling")}ms" cx="380" cy="10" r="7"/>
+      <path class="area" style="--t0:{at(19,"scales") + 900}ms" d="M20,270 70,250 120,238 170,215 220,196 260,160 300,120 340,70 380,10 L380 300 L20 300Z"/>
+      <g class="band" style="--t0:{at(19,"No")}ms"><rect x="20" y="150" width="360" height="60" rx="6"/><text x="36" y="186">salary band</text></g>
+      <polyline class="line" style="--t0:{at(19,"scales") - 200}ms" points="20,270 70,250 120,238 170,215 220,196 260,160 300,120 340,70 380,10"/>
+      <circle class="dot" style="--t0:{at(19,"ceiling")}ms" cx="380" cy="10" r="7"/>
     </svg>
   </div>
 </div>'''))
 
 # 16 · the FY27 flight plan
 STAGES = ['Your why', 'Your budget', 'Your income', 'Your API', 'Your week', 'How you work', 'GO']
-S.append(scene(16, 's-flight', f'''
+S.append(scene(20, 's-flight', f'''
 <div class="split wide">
   <div class="col">
     <p class="eye in" style="--t0:200ms">FY27 Flight Plan</p>
-    <h2 class="h l">{words("Your year has a flight plan.", at(16,"flight") - 400)}</h2>
+    <h2 class="h l">{words("Your year has a flight plan.", at(20,"flight") - 400)}</h2>
     <div class="figs">
-      <div class="fig in" style="--t0:{at(16,"Fifteen")}ms"><b><em class="cnt" data-to="15" data-at="{at(16,"Fifteen")}">15</em> min</b><span>to file it</span></div>
-      <div class="fig in" style="--t0:{at(16,"costs")}ms"><b>7</b><span>stages, from your budget</span></div>
+      <div class="fig in" style="--t0:{at(20,"Fifteen")}ms"><b><em class="cnt" data-to="15" data-at="{at(20,"Fifteen")}">15</em> min</b><span>to file it</span></div>
+      <div class="fig in" style="--t0:{at(20,"costs")}ms"><b>7</b><span>stages, from your budget</span></div>
     </div>
   </div>
   <div class="col">
-    <div class="flight in" style="--t0:{at(16,"flight") - 200}ms">
+    <div class="flight in" style="--t0:{at(20,"flight") - 200}ms">
       <svg viewBox="0 0 400 240" aria-hidden="true">
-        <path class="traj" style="--t0:{at(16,"Start")}ms" d="M20 210 C 120 210, 190 180, 240 120 S 340 30, 380 20"/>
-        {''.join(f'<g class="st" style="--t0:{at(16,"Start") + i*320}ms"><circle cx="{x}" cy="{y}" r="9"/>{"" if i == 6 else f"<text x=\"{x}\" y=\"{y + (28 if i % 2 == 0 else -18)}\">{s}</text>"}</g>' for i, (s, (x, y)) in enumerate(zip(STAGES, [(20,210),(80,208),(140,200),(200,170),(250,110),(300,65),(380,20)])))}
+        <path class="traj" style="--t0:{at(20,"Start")}ms" d="M20 210 C 120 210, 190 180, 240 120 S 340 30, 380 20"/>
+        {''.join(f'<g class="st" style="--t0:{at(20,"Start") + i*320}ms"><circle cx="{x}" cy="{y}" r="9"/>{"" if i == 6 else f"<text x=\"{x}\" y=\"{y + (28 if i % 2 == 0 else -18)}\">{s}</text>"}</g>' for i, (s, (x, y)) in enumerate(zip(STAGES, [(20,210),(80,208),(140,200),(200,170),(250,110),(300,65),(380,20)])))}
         {''.join(f'<circle class="star" cx="{x}" cy="{y}" r="{r}" style="--dl:{(i*7)%23/10}s"/>' for i,(x,y,r) in enumerate([(300,180,2.2),(350,150,1.6),(120,60,1.8),(60,120,1.4),(250,40,2),(180,120,1.3),(370,110,1.5)]))}
-        <circle class="rocket trail t2" style="--t0:{at(16,"Start") + 260}ms" r="3"/>
-        <circle class="rocket trail t1" style="--t0:{at(16,"Start") + 130}ms" r="5"/>
-        <circle class="rocket" style="--t0:{at(16,"Start")}ms" r="7"/>
+        <circle class="rocket trail t2" style="--t0:{at(20,"Start") + 260}ms" r="3"/>
+        <circle class="rocket trail t1" style="--t0:{at(20,"Start") + 130}ms" r="5"/>
+        <circle class="rocket" style="--t0:{at(20,"Start")}ms" r="7"/>
       </svg>
-      <div class="go" style="--t0:{at(16,"GO",1)}ms"><small>Your name</small><b>GO</b></div>
+      <div class="go" style="--t0:{at(20,"GO",1)}ms"><small>Your name</small><b>GO</b></div>
     </div>
   </div>
 </div>'''))
 
 # 17 · confidential
-S.append(scene(17, 's-lock', f'''
+S.append(scene(21, 's-lock', f'''
 <div class="full center">
-  <div class="lock in" style="--t0:300ms;--t1:{at(17,"confidential")}ms"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path class="shackle" style="--t0:{at(17,"confidential")}ms" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+  <div class="lock in" style="--t0:300ms;--t1:{at(21,"confidential")}ms"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path class="shackle" style="--t0:{at(21,"confidential")}ms" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
   <h2 class="h l">{words("Already contracted somewhere else?", 500)}</h2>
-  <h2 class="h l wine2">{words("Your conversation with us stays confidential.", at(17,"conversation") - 300)}</h2>
+  <h2 class="h l wine2">{words("Your conversation with us stays confidential.", at(21,"conversation") - 300)}</h2>
 </div>'''))
 
 # 18 · newcomers
-S.append(scene(18, 's-new', f'''
+S.append(scene(22, 's-new', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Newcomers</p>
     <h2 class="h l">{words("New to insurance? That’s normal.", 400)}</h2>
-    <p class="sub in" style="--t0:{at(18,"full")}ms">You get the full build.</p>
-    <div class="buildbar" style="--t0:{at(18,"training")}ms;--t1:{at(18,"every") - at(18,"training") + 900}ms"><i></i></div>
+    <p class="sub in" style="--t0:{at(22,"full")}ms">You get the full build.</p>
+    <div class="buildbar" style="--t0:{at(22,"training")}ms;--t1:{at(22,"every") - at(22,"training") + 900}ms"><i></i></div>
   </div>
   <div class="col">
     <ul class="checks">
-      <li style="--t0:{at(18,"training")}ms"><i></i>Training</li>
-      <li style="--t0:{at(18,"boot")}ms"><i></i>Boot camp</li>
-      <li style="--t0:{at(18,"one")}ms"><i></i>One-on-one coaching</li>
-      <li style="--t0:{at(18,"every")}ms"><i></i>Every one of these tools, from day one</li>
+      <li style="--t0:{at(22,"training")}ms"><i></i>Training</li>
+      <li style="--t0:{at(22,"boot")}ms"><i></i>Boot camp</li>
+      <li style="--t0:{at(22,"one")}ms"><i></i>One-on-one coaching</li>
+      <li style="--t0:{at(22,"every")}ms"><i></i>Every one of these tools, from day one</li>
     </ul>
   </div>
 </div>'''))
 
 # 19 · we select
 GATES = ['Apply & screen','Meet the Branch Manager','Discovery','Assessment','Selection']
-S.append(scene(19, 's-gates', f'''
+S.append(scene(23, 's-gates', f'''
 <div class="full">
   <p class="eye in" style="--t0:200ms">The selection</p>
   <h2 class="h l">{words("We don’t fill seats. We select.", 400)}</h2>
   <ol class="gates">
-    {''.join(f'<li style="--t0:{at(19,"Five") + 350*i}ms"><b>{i+1}</b><span>{g}</span></li>' for i, g in enumerate(GATES))}
-    <span class="gline" style="--t0:{at(19,"Five")}ms"></span>
+    {''.join(f'<li style="--t0:{at(23,"Five") + 350*i}ms"><b>{i+1}</b><span>{g}</span></li>' for i, g in enumerate(GATES))}
+    <span class="gline" style="--t0:{at(23,"Five")}ms"></span>
   </ol>
-  <p class="sub big in" style="--t0:{at(19,"Discovery")}ms">At your Discovery you sit with our qualifiers and ask them anything, <em>without the Branch Manager in the room.</em></p>
+  <p class="sub big in" style="--t0:{at(23,"Discovery")}ms">At your Discovery you sit with our qualifiers and ask them anything, <em>without the Branch Manager in the room.</em></p>
 </div>'''))
 
 # 20 · the door is open
-S.append(scene(20, 's-door', f'''
+S.append(scene(24, 's-door', f'''
 <div class="full center">
   <p class="eye in" style="--t0:200ms">One conversation</p>
   <h2 class="h xl">{words("The door is open.", 400, 120)}</h2>
   <div class="door-row">
-    <div class="who in fl" style="--t0:{at(20,"Already")}ms"><b>Already contracted?</b><span>Nobody will know you asked.</span><i class="lock-s"><svg class="ic"><use href="#i-lock"/></svg> Confidential</i></div>
-    <div class="door" style="--t0:{at(20,"open")}ms">
+    <div class="who in fl" style="--t0:{at(24,"Already")}ms"><b>Already contracted?</b><span>Nobody will know you asked.</span><i class="lock-s"><svg class="ic"><use href="#i-lock"/></svg> Confidential</i></div>
+    <div class="door" style="--t0:{at(24,"open")}ms">
       <div class="d-glow"></div>
       <div class="d-frame"><div class="d-light"></div><div class="d-leaf l"></div><div class="d-leaf r"></div></div>
       {''.join(f'<span class="d-ray" style="--a:{a}deg"></span>' for a in (-28,-14,0,14,28))}
     </div>
-    <div class="who in fl" style="--t0:{at(20,"New")}ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
+    <div class="who in fl" style="--t0:{at(24,"New")}ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
   </div>
   <div class="figs row">
-    <div class="fig in" style="--t0:{at(20,"One")}ms"><b><em class="cnt" data-to="1" data-at="{at(20,"One")}">1</em></b><span>confidential conversation</span></div>
-    <div class="fig in" style="--t0:{at(20,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{at(20,"Twenty")}">20</em> min</b><span>this week</span></div>
+    <div class="fig in" style="--t0:{at(24,"One")}ms"><b><em class="cnt" data-to="1" data-at="{at(24,"One")}">1</em></b><span>confidential conversation</span></div>
+    <div class="fig in" style="--t0:{at(24,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{at(24,"Twenty")}">20</em> min</b><span>this week</span></div>
   </div>
 </div>'''))
 
 # 21 · the call
-S.append(scene(21, 's-cta', f'''
+S.append(scene(25, 's-cta', f'''
 <div class="split cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
     <h2 class="h url">{words("agentmgt.com", 400, 60)}</h2>
     <div class="btns">
-      <span class="btn b1 in" style="--t0:{at(21,"Book")}ms">Book a confidential conversation →</span>
-      <span class="btn b2 in" style="--t0:{at(21,"Take")}ms">Take the 60-second test first</span>
+      <span class="btn b1 in" style="--t0:{at(25,"Book")}ms">Book a confidential conversation →</span>
+      <span class="btn b2 in" style="--t0:{at(25,"Take")}ms">Take the 60-second test first</span>
     </div>
   </div>
   <div class="col">
-    <div class="qr in" style="--t0:{at(21,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{at(25,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>'''))
 
 # 22 · the close
-S.append(scene(22, 's-close dark', f'''
+S.append(scene(26, 's-close dark', f'''
 <div class="full center">
   <div class="mark big in" style="--t0:200ms"><span class="ping"></span><span class="ping p2"></span><span class="ping p3"></span>{MARK}</div>
-  <h1 class="h xl">{words("The environment decides.", 500, 110)}<br><em class="wine">{words("We select the driven.", at(22,"We") - 200, 110)}</em></h1>
-  <p class="foot in" style="--t0:{at(22,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
+  <h1 class="h xl">{words("The environment decides.", 500, 110)}<br><em class="wine">{words("We select the driven.", at(26,"We") - 200, 110)}</em></h1>
+  <p class="foot in" style="--t0:{at(26,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
 </div>'''))
 
 HTML = r'''<!DOCTYPE html>
@@ -666,6 +771,86 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .fig b{display:block;font:800 calc(var(--u)*9)/1 var(--display);color:#fff;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .fig b em{font-style:normal;color:var(--aL)}
 .fig span{display:block;margin-top:.4em;font-size:calc(var(--u)*2.4);color:var(--mute);letter-spacing:.04em}
+/* scene 10: the balance */
+.bal{position:relative;background:#fff;color:#17191F;border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*2.6) calc(var(--u)*3) calc(var(--u)*4.2);box-shadow:0 calc(var(--u)*4) calc(var(--u)*8) rgba(4,6,10,.5);display:grid;gap:calc(var(--u)*1.2)}
+.bal-h{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1em;font:700 calc(var(--u)*2.4)/1 var(--display);padding-bottom:calc(var(--u)*1.2);border-bottom:1px solid #E3E5EA}
+.bal-h .ev{text-align:right;color:var(--aD);opacity:0}
+.scene.act .bal-h .ev{animation:fade .4s both;animation-delay:var(--t0)}
+.ck2{display:inline-flex;align-items:center;gap:.5em;font:600 calc(var(--u)*1.9)/1 var(--text);color:#1E7A4F;background:#E8F5EE;border-radius:99px;padding:.5em 1em;opacity:0;transform:scale(.6)}
+.ck2 i{width:1em;height:1em;border-radius:50%;background:#1E7A4F;position:relative}
+.ck2 i::after{content:'';position:absolute;left:34%;top:18%;width:22%;height:46%;border:solid #fff;border-width:0 .18em .18em 0;transform:rotate(45deg)}
+.scene.act .ck2{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.brow{display:grid;grid-template-columns:1fr auto auto auto;gap:0 calc(var(--u)*2.4);align-items:center;font:500 calc(var(--u)*2.2)/1.2 var(--text);opacity:0;padding:calc(var(--u)*.6) 0;border-bottom:1px dashed #E3E5EA}
+.scene.act .brow{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.brow b{font:800 calc(var(--u)*3)/1 var(--display);font-variant-numeric:tabular-nums;min-width:2.2ch;text-align:right}
+.brow .dn{color:var(--aD);opacity:0}
+.scene.act .brow .dn{animation:fade .4s both;animation-delay:var(--t1)}
+.brow .bl{font:700 calc(var(--u)*1.9)/1 var(--text);color:#5F6471;background:#EEF2F8;border-radius:99px;padding:.4em .8em;min-width:3.2ch;text-align:center;opacity:0;transform:scale(.5)}
+.brow .bl.up{color:#1E7A4F;background:#E8F5EE}
+.scene.act .brow .bl{animation:pop .45s var(--pop) both;animation-delay:var(--t2)}
+.prog.slim{height:calc(var(--u)*4.2)}
+.prog.slim i{width:84%}
+.npill.strike{text-decoration:line-through;text-decoration-thickness:.12em;text-decoration-color:var(--aL);opacity:.9}
+/* scene 12: the real screens */
+.gal{display:grid;grid-template-columns:repeat(6,1fr);gap:calc(var(--u)*2.2);width:100%;perspective:calc(var(--u)*160);margin-top:calc(var(--u)*1)}
+.shot{margin:0;opacity:0;display:grid;gap:calc(var(--u)*1.2);justify-items:center;transform-style:preserve-3d}
+.scene.act .shot{animation:shot-in .9s var(--out) both,lit .5s ease forwards,dim .6s ease forwards;animation-delay:calc(var(--t0) - 500ms),var(--t0),var(--t1)}
+@keyframes shot-in{from{opacity:0;translate:calc(var(--u)*8) 0;rotate:y -28deg}to{opacity:1;translate:0 0;rotate:y 0deg}}
+@keyframes lit{from{scale:1;filter:brightness(.85)}to{scale:1.07;filter:brightness(1.08)}}
+@keyframes dim{to{scale:1;filter:brightness(.6)}}
+.shot .frame{width:100%;aspect-ratio:9/16.6;border-radius:calc(var(--u)*2.4);overflow:hidden;background:#fff;border:calc(var(--u)*.55) solid #2a3140;box-shadow:0 calc(var(--u)*3) calc(var(--u)*7) rgba(4,6,10,.55)}
+.shot img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block;animation:pan 7s ease-in-out infinite alternate;animation-delay:calc(var(--i) * -1.3s)}
+@keyframes pan{to{object-position:50% 100%}}
+.shot figcaption{font:600 calc(var(--u)*1.9)/1.25 var(--text);color:var(--mute);text-align:center;letter-spacing:.02em}
+.built em{color:var(--aT);font-style:normal;font-weight:600}
+.gal-s{position:static;margin-top:calc(var(--u)*-1)}
+/* scene 14: the pulse */
+.pulse{position:relative;background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.4) calc(var(--u)*2.4) calc(var(--u)*4);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5);display:grid;gap:calc(var(--u)*1.3)}
+.prow2{display:grid;grid-template-columns:1fr 1.6fr;gap:1em;align-items:start;font:500 calc(var(--u)*2.1)/1.3 var(--text);color:var(--mute);opacity:0}
+.prow2 b{color:#fff;font-weight:600}
+.scene.act .prow2{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.meter{display:grid;grid-template-columns:1fr 1.6fr;gap:.3em 1em;align-items:center;font:500 calc(var(--u)*2.1)/1.3 var(--text);color:var(--mute);opacity:0}
+.scene.act .meter{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.meter i{height:calc(var(--u)*1.4);border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;display:block}
+.meter i b{display:block;height:100%;width:var(--v);background:linear-gradient(90deg,var(--aD),var(--aL));transform:scaleX(0);transform-origin:0 50%}
+.scene.act .meter i b{animation:grow .9s var(--out) both;animation-delay:calc(var(--t0) + 200ms)}
+@keyframes grow{to{transform:scaleX(1)}}
+.meter em{grid-column:2;font-style:normal;font-size:calc(var(--u)*1.8);color:var(--aT)}
+.note{background:#fff;color:#17191F;border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*2) calc(var(--u)*2.6);border-left:calc(var(--u)*.7) solid var(--a);box-shadow:0 calc(var(--u)*3) calc(var(--u)*7) rgba(4,6,10,.5);display:grid;gap:.4em}
+.note small{font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--aD)}
+.note p{font:500 calc(var(--u)*2.3)/1.35 var(--text)}
+/* scene 16: TT$200 and the stars */
+.claim,.rate{position:relative;background:#fff;color:#17191F;border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*2.4) calc(var(--u)*2.8) calc(var(--u)*3.6);box-shadow:0 calc(var(--u)*4) calc(var(--u)*8) rgba(4,6,10,.5)}
+.claim .bd-h{color:#17191F;border-color:#E3E5EA}
+.steps4{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1);position:relative}
+.steps4::before{content:'';position:absolute;left:8%;right:8%;top:calc(var(--u)*1.7);height:2px;background:#E3E5EA}
+.st{display:grid;justify-items:center;gap:.6em;text-align:center;font:600 calc(var(--u)*1.8)/1.2 var(--text);color:#5F6471;position:relative}
+.st i{width:calc(var(--u)*3.6);height:calc(var(--u)*3.6);border-radius:50%;background:#EEF2F8;border:2px solid #E3E5EA;transform:scale(.7)}
+.scene.act .st i{animation:st-on .5s var(--pop) both;animation-delay:var(--t0)}
+@keyframes st-on{to{transform:scale(1);background:var(--a);border-color:var(--a);box-shadow:0 0 0 calc(var(--u)*1) rgba(211,63,73,.25)}}
+.stamp.paid{right:5%;top:auto;bottom:11%;font-size:calc(var(--u)*3)}
+.scene.act .stamp.paid{animation:stamp .5s var(--pop) both;animation-delay:var(--t0)}
+.rt{display:grid;gap:.3em;font:700 calc(var(--u)*2.4)/1 var(--display)}
+.rt span{font:500 calc(var(--u)*1.9)/1.2 var(--text);color:#5F6471}
+.stars{display:flex;gap:calc(var(--u)*1);margin-top:calc(var(--u)*1.6)}
+.stars svg{width:calc(var(--u)*5.2);height:calc(var(--u)*5.2);fill:#E3E5EA;transform:scale(.8)}
+.scene.act .stars svg{animation:star .45s var(--pop) both;animation-delay:var(--t0)}
+@keyframes star{50%{transform:scale(1.35) rotate(-8deg)}to{fill:#E9B949;transform:scale(1)}}
+.cust{display:inline-block;margin-top:calc(var(--u)*1.4);font:600 calc(var(--u)*1.9)/1 var(--text);color:var(--aD);font-style:normal;opacity:0}
+.scene.act .cust{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+.h.xl .cnt{color:var(--aL)}
+/* scene 17: the wins */
+.wins{background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);padding:calc(var(--u)*2) calc(var(--u)*2.4);display:grid;gap:calc(var(--u)*1.1);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5)}
+.aw{display:flex;justify-content:space-between;align-items:center;background:#fff;color:#17191F;border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.2) calc(var(--u)*1.8);font:700 calc(var(--u)*2.3)/1 var(--display);opacity:0}
+.aw i{font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.1em;text-transform:uppercase;color:var(--aD);font-style:normal}
+.scene.act .aw{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.prz{display:flex;gap:calc(var(--u)*1.2)}
+.prz .ypill{opacity:0;transform:scale(.6)}
+.scene.act .prz .ypill{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.agd{display:flex;align-items:center;gap:.7em;font:500 calc(var(--u)*2.1)/1.2 var(--text);color:var(--mute);opacity:0}
+.agd b{color:#fff;font-weight:600}
+.agd .ic{color:var(--aT);font-size:calc(var(--u)*2.6)}
+.scene.act .agd{animation:up .6s var(--out) both;animation-delay:var(--t0)}
 .sub2{margin-top:calc(var(--u)*2.2);font-size:calc(var(--u)*3.2);line-height:1.35;color:var(--mute);max-width:46ch}
 .sub2 em{color:var(--aT);font-style:normal;font-weight:600}
 .door-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:calc(var(--u)*5);width:100%;max-width:calc(var(--u)*150);margin:0 auto}
@@ -1150,6 +1335,9 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .gates b{width:calc(var(--u)*11);height:calc(var(--u)*11);font-size:calc(var(--u)*4.6)}
   .gline{top:calc(var(--u)*5.5)}
   .door{width:calc(var(--u)*34);grid-column:1/-1;order:-1}
+  .gal{grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3)}
+  .shot figcaption{font-size:calc(var(--u)*2.4)}
+  .steps4 .st{font-size:calc(var(--u)*2.2)}
   .door-row{grid-template-columns:1fr 1fr;gap:calc(var(--u)*3)}
   .who b{font-size:calc(var(--u)*3.2)}
   .sub2{font-size:calc(var(--u)*2.9)}
@@ -1240,7 +1428,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='ArrowRight') go(cur+1); if(
 MOTES = ''.join(f'<i style="--x:{(i*37+11)%97}%;--d:{14 + (i*7)%9}s;--dl:{-(i*1.9)%14:.1f}s"></i>' for i in range(18))
 page = (HTML.replace('{{FONTS}}', FONTS).replace('{{SCENES}}', '\n'.join(S))
         .replace('{{BARS}}', '<i></i>' * len(S)).replace('{{MOTES}}', MOTES))
-assert len(S) == len(LINES) == 22, (len(S), len(LINES))
+assert len(S) == len(LINES) == 26, (len(S), len(LINES))
 open(OUT, 'w', encoding='utf-8').write(page)
 print(f'wrote {os.path.relpath(OUT, ROOT)}: {len(S)} scenes, {sum(dur(i) for i in range(1, len(S) + 1)) / 1000:.1f}s'
       + ('' if timing else ' (estimated: no timing file yet)'))

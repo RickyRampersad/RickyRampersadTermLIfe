@@ -15,7 +15,7 @@ What is in the folder:
 | `qr.svg` | the QR code on the final card: it opens the TalentNest application |
 | `og.jpg` | the picture a WhatsApp, Facebook or LinkedIn link preview shows |
 | `netlify.toml` | the headers and the short links `/apply`, `/quiz`, `/test` |
-| `recruit.mp4`, `recruit.jpg` | the recruiting film, 1280×720, 3:54, twenty-two scenes, and its poster |
+| `recruit.mp4`, `recruit.jpg` | the recruiting film, 1280×720, 3:54, twenty-six scenes, and its poster |
 | `recruit-story.mp4`, `recruit-story.jpg` | the same film cut 1080×1920 for the phone (WhatsApp status, TikTok, YouTube Shorts; at 3:54 it is over Instagram's Reels limit, so post the link there) |
 | `film.html` | the film's source page, drawn by `tools/film/build-recruitfilm.py` (not linked) |
 | `player.js` | the branch's film player: tap to pause, a dot per scene, mute, full screen |
@@ -116,7 +116,7 @@ reader's own fear, then the specific answer, then one low-commitment ask. Under 
 >
 > One confidential conversation. Twenty minutes, this week. Nobody will know you asked.
 >
-> Watch (4 min): https://rickyrampersadbranch.com/careersvideo/
+> Watch (5 min): https://rickyrampersadbranch.com/careersvideo/
 >
 > Reply *TALK* and I'll call you.
 
@@ -128,7 +128,7 @@ reader's own fear, then the specific answer, then one low-commitment ask. Under 
 >
 > One 20-minute conversation. Bring your questions; we show you the branch's own figures, not an adjective.
 >
-> Watch (4 min): https://rickyrampersadbranch.com/careersvideo/
+> Watch (5 min): https://rickyrampersadbranch.com/careersvideo/
 >
 > Reply *TALK* and I'll call you.
 
