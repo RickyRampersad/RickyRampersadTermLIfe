@@ -398,11 +398,12 @@
   function load() {
     if (!OPS && (!P || !K)) { notice('Open <b>My day</b> in the <a href="/rroperations/">branch app</a>, or the <b>My workday</b> link in your morning e-mail. After that it opens from your home screen.', false); $("of").textContent = ""; $("main").innerHTML = ""; return; }
     if (busy) return; busy = true;
-    var ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 45000);
+    // 27 Oct 2026: a phone can let go of a slow first answer of the day; it waits up to 90 s and tries once more by itself.
+    var ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 90000);
     fetch(TRACKER + "?" + auth(new URLSearchParams()).toString() + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json(); })
-      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); })
-      .catch(function () { clearTimeout(timer); busy = false; fail("The tracker did not answer this time."); });
+      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } load.again = false; notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); })
+      .catch(function () { clearTimeout(timer); busy = false; if (!load.again) { load.again = true; if (!M) $("of").textContent = "Still opening your day…"; setTimeout(load, 1500); return; } load.again = false; fail("The tracker did not answer this time."); });
   }
   function post(btn) {
     var row = btn.closest(".wt"), ta = row.querySelector("textarea"), sel = row.querySelector("select[data-to]"), text = (ta.value || "").trim();
