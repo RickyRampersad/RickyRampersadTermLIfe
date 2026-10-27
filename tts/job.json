@@ -1,28 +1,19 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
- "rate": "+0%",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
  "check": true,
  "films": {
-  "rg03": [
-   "This is the Ricky Rampersad Branch. Guardian Life of the Caribbean, in Chaguanas. Thirty-two years in Trinidad. Five seats this year. And a brand new financial year, FY twenty-seven, just began."
+  "wallsys": [
+   "This is the day the system set.",
+   "No blocks. At check-in, each desk gets its day from Salesforce.",
+   "The ring is what each desk has closed against the day's target.",
+   "The white mark on the ring is where the clock is.",
+   "The bar is the list the system set, and how much of it is done.",
+   "Every desk against its own day. Nobody is ranked.",
+   "No client is named here. Counts only."
   ],
-  "rg16": [
-   "Every morning your day is already laid out: your calls, your pending cases with the history on them, your next step. The admin is done before you're up. Your hours go to clients, and to the coaching."
-  ],
-  "rg24": [
-   "Your unit manager knows your week before Friday. Not a report card. A coaching sheet: who's finding leads, fact finds or closing hard this week, and what he did about it. The note he writes for you lands in your morning e-mail."
-  ],
-  "rh02": [
-   "Here's what this career gives that your job can't. Your income decided by your work, not by a salary band. Your week shaped by you. And work that matters: a family covered before the worst day comes."
-  ],
-  "rh03": [
-   "And here's what this branch gives that most agencies don't. You're never stuck for an answer at the table: the fact find does the arithmetic, Branch Intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients matched to you, household by household. Leads that land on your own board."
-  ],
-  "rh04": [
-   "Your manager is a coach, not a clock. The system does the admin. He does the sitting with you: your week, before Friday, in your morning e-mail and in person. Nobody here is left to figure it out alone."
-  ],
-  "rh05": [
-   "Five seats. Not because we can't take more. Because every one of them gets the full build: a call within forty-eight hours, the Branch Manager himself, an orientation, a profile, and a Discovery with the people already doing it. Thirty-two years in Trinidad. Five seats."
+  "wallday6": [
+   "On the right, how much of the list the system set at check-in is done."
   ]
  }
 }
