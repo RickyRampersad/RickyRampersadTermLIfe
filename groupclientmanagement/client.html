@@ -349,7 +349,7 @@ const draftKey = () => 'rrb-gcm-draft-' + (CRED.lb || '').toUpperCase().replace(
    brought them; the star a reminder's link chose is waiting when they sign in. The code is never in the address. */
 const nameKey = () => 'rrb-gcm-name-' + (CRED.lb || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const QS = new URLSearchParams(location.search);
-const FROM = /^(letter|welcome|reminder)$/.test(QS.get('from') || '') ? QS.get('from') : '';
+const FROM = /^(letter|welcome|reminder|preview)$/.test(QS.get('from') || '') ? QS.get('from') : '';
 const RATE_IN = /^[1-5]$/.test(QS.get('rate') || '') ? +QS.get('rate') : 0;
 function seen() {
   let nm = ''; try { nm = localStorage.getItem(nameKey()) || ''; } catch (e) {}
@@ -441,7 +441,7 @@ function statementHtml(B) {
     (s.changes && (s.changes.joined || s.changes.left) ? '<div><b>' + (s.changes.joined ? '+' + s.changes.joined : '') + (s.changes.joined && s.changes.left ? ' / ' : '') + (s.changes.left ? '−' + s.changes.left : '') + '</b><span>joined / left since last month</span></div>' : '') + '</div>' +
     '<div class="scroll"><table class="t"><thead><tr><th>This month</th><th class="num">Members</th><th class="num">Due</th></tr></thead><tbody>' + s.lines.map(l => '<tr><td>' + esc(l.label) + '</td><td class="num">' + (l.members || '') + '</td><td class="num">' + money(l.due) + '</td></tr>').join('') + '<tr><td><b>Total for ' + esc(s.label) + '</b></td><td></td><td class="num"><b>' + money(s.total) + '</b></td></tr></tbody></table></div>';
   if (s.owed.length) h += '<h3>Still open from earlier invoices</h3><div class="scroll"><table class="t"><thead><tr><th>Invoice</th><th class="num">Billed</th><th class="num">Received</th><th class="num">Still open</th></tr></thead><tbody>' + s.owed.map(o => '<tr><td>' + esc(o.label) + ' · ' + esc(o.monthLabel) + '</td><td class="num">' + money(o.billed) + '</td><td class="num">' + (o.paid ? money(o.paid) : '–') + '</td><td class="num"><b>' + money(o.owed) + '</b></td></tr>').join('') + '</tbody></table></div><p class="sub">If any of these is paid, tell us below with the date and the reference and we will have it matched.</p>';
-  if (s.html) h += '<details class="hist"><summary>The statement as it was sent</summary><iframe class="sframe" title="Your statement of account" sandbox="" srcdoc="' + esc('<!doctype html><meta charset="utf-8"><body style="margin:0;padding:12px;font-family:Arial,sans-serif">' + s.html) + '"></iframe></details>';
+  if (s.html) h += '<details class="hist"><summary>The statement as it was sent</summary><iframe class="sframe" title="Your statement of account" sandbox="allow-popups allow-popups-to-escape-sandbox" srcdoc="' + esc('<!doctype html><meta charset="utf-8"><base target="_blank"><body style="margin:0;padding:12px;font-family:Arial,sans-serif">' + s.html) + '"></iframe></details>';
   return h + '</section>';
 }
 function billingHtml() {

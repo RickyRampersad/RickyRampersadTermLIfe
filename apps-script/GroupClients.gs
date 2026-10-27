@@ -87,6 +87,10 @@ var GCM = {
   SEND_DAY: 1,              // Monday (1 Monday … 7 Sunday): the week's letters go out by themselves at SEND_HOUR (8 October 2026)
   SEND_HOUR: 10,            // staff approve each letter during the week; at 10:00 on Monday the approved letters go
   QUEUE: 'Group Queue',
+  QUEUE_FRESH_MIN: 60,
+  TEAM_HOUR: 11,            // Monday 11:00: if any group still has no letter this week, the whole team is told why and who
+  TEAM_PROP: 'GCM_TEAM_LAST',      // the Monday run writes from a refresh this recent rather than refresh again (26 October 2026: the
+                            // refresh had grown to about five minutes and used up the run's time before a single letter went)
   RESPOND_DAY: 5,           // the letter asks for an answer by Friday of the same week
   SITE: 'https://rickyrampersadbranch.com/groupclientmanagement/',
   COPY: ['rickyrampersadsalessupport@myguardiangroup.com'],   // copied, in plain sight, on every letter and welcome: the record of what went
@@ -221,12 +225,16 @@ function gcmRefreshTick() {
   /* the Monday send needs no step in the editor: the hourly run makes its trigger the first time it finds none */
   try { gcmMondayTrigger_(); } catch (e) {}
   if (d === 7 || h < GCM.HOURS[0] || h > GCM.HOURS[1]) return;
-  gcmRefreshLocked_();
-  /* and catches up any approved letter the Monday trigger did not reach (a busy lock, a run cut short) */
+  /* what has to go goes first (26 October 2026): the refresh had grown to about five minutes, and a run that refreshed
+     before sending ran out of time with every letter still waiting. So the hourly run catches up any approved letter the
+     Monday trigger did not reach (it refreshes only when the last refresh is over an hour old), sends the approved bills,
+     tells the team at 11:00 on a Monday which groups still have no letter, and refreshes after. */
   try { gcmQueueRun_(); } catch (e) {}
   /* the approved group bills go at 10:00 on the 26th, or the next working day (GroupBilling.gs), and a late bill at 10:00
      the working day after it is approved; at 13:00 on the 25th, the report of who has worked each group's bills */
   try { if (typeof gblDayRun_ === 'function') gblDayRun_({ auto: true }); } catch (e) {}
+  try { gcmTeamCheck_({ auto: true }); } catch (e) {}
+  if (Date.now() - gcmRefreshedMs_() > 15 * 60000) gcmRefreshLocked_();
   try { if (typeof gblBillReport_ === 'function') gblBillReport_({ auto: true }); else if (typeof gblMondayReport_ === 'function') gblMondayReport_({ auto: true }); } catch (e) {}
   /* once the welcome is on, a group a staff member has just verified gets it, in working hours */
   try { if (gcmWelcomeOn_() && d <= 5 && h >= 8 && h <= 17) gcmWelcomeRun_({ auto: true }); } catch (e) {}
@@ -639,6 +647,7 @@ function gcmRefresh_() {
   });
   var when = gcmWhen_(new Date());
   PropertiesService.getScriptProperties().setProperty('gcm_refreshed', when);
+  PropertiesService.getScriptProperties().setProperty('gcm_refreshed_ms', String(Date.now()));
   try { CacheService.getScriptCache().remove('gcm-load'); } catch (e) {}
   var open = rows.filter(function (r) { return r[6] === 'Y'; }).length;
   return { ok: true, tasks: rows.length, open: open, excluded: excluded, refreshed: when,
@@ -735,6 +744,12 @@ function gcmToGroup_(addr, g, m) {
 }
 
 function gcmRefreshed_() { return PropertiesService.getScriptProperties().getProperty('gcm_refreshed') || ''; }
+/** When the last refresh finished, in ms: the stamp written beside the printed one, else the printed one read back. */
+function gcmRefreshedMs_() {
+  var p = PropertiesService.getScriptProperties(), ms = Number(p.getProperty('gcm_refreshed_ms') || 0);
+  if (ms) return ms;
+  try { var w = p.getProperty('gcm_refreshed'); return w ? Utilities.parseDate(w, tTz_(), 'd MMM yyyy, h:mm a').getTime() : 0; } catch (e) { return 0; }
+}
 
 /** Chatter on some tasks: { taskId15: [{ id, by, when, text, replies: [...] }] }, newest first. Never throws. */
 function gcmFeed_(ids) {
@@ -2367,6 +2382,8 @@ var GCM_RATE = {
 
 /** A sign-in on the group's own page, as a row on Group Views; one a half hour per group, so a reload is not a visit. */
 function gcmViewLog_(g, p) {
+  /* a staff member trying the sign-in from a letter preview on the staff page is not the group opening its page */
+  if (String(p.from || '').toLowerCase() === 'preview') return;
   var cache = CacheService.getScriptCache(), key = 'gcm-view-' + g.key.slice(0, 80);
   if (cache.get(key)) return;
   cache.put(key, '1', GCM_RATE.VIEW_GAP_MIN * 60);
@@ -2994,6 +3011,92 @@ function gcmDaySummary_(o) {
   else MailApp.sendEmail({ to: me, subject: subject, htmlBody: html, name: 'Ricky Rampersad Branch' });
 }
 
+/* ── Monday 11:00: every group has its letter, or the team is told why and who ──────────────────────────────────
+ * Asked for on 26 October 2026, the morning the 10:00 run sent nothing: "all needs to go out, if all is not done a letter
+ * must trigger to the team with the reason and hold persons responsible if they are assigned". At 11:00 on the send day
+ * (the first hourly run from then), if any group on the register has no letter this week, one e-mail goes to the whole
+ * team: every account owner, the Branch Manager's Assistant, the branch manager and sales support. Each group that is not
+ * out is named with the reason and the person responsible: the account owner in Salesforce for a letter not approved or a
+ * group not set up, the approver for a letter held at the run, and the branch itself when the run did not reach an
+ * approved letter (the hourly run sends it). A group with no active owner is put to the Branch Manager's Assistant.
+ * Nothing goes when every group has its letter. Once a week. gcmTeamTest sends the branch manager the letter as it would
+ * go now, marked TEST. */
+function gcmTeamCheck_(o) {
+  o = o || {};
+  var tz = tTz_(), now = new Date(), today = gcmToday_(), h = Number(Utilities.formatDate(now, tz, 'H')), props = PropertiesService.getScriptProperties();
+  if (!o.test) {
+    if (gcmDow_(today) !== GCM.SEND_DAY || h < GCM.TEAM_HOUR) return { ok: true, said: 'Not yet: the team check is on ' + gcmSendLabel_(gcmNextSend_()).replace(/,.*$/, '') + ' from ' + GCM.TEAM_HOUR + ':00.' };
+    if (props.getProperty(GCM.TEAM_PROP) === today) return { ok: true, said: 'The team was told already today.' };
+  }
+  var L = gcmLoad_(), list = gcmChaseList_(L), cycle = list.cycle, bma = gcmBmaPeople_();
+  var bmaName = bma.length ? gcmNiceName_(bma[0].name) : 'the Branch Manager’s Assistant', bmaShort = bma.length ? bmaName.split(/\s+/)[0] : 'BMA';
+  var rows = [], sent = [];
+  list.owners.forEach(function (ow) {
+    var resp = ow.active ? gcmNiceName_(ow.name) : bmaName + ' (no active account owner in Salesforce' + (ow.name ? ': ' + gcmNiceName_(ow.name) : '') + ')';
+    var short = ow.active ? gcmNiceName_(ow.name).split(/\s+/)[0] : bmaShort;
+    ow.sent.forEach(function (x) { sent.push({ group: x.g.name, by: gcmNiceName_(ow.name), at: x.s.sentThisWeek }); });
+    ow.missed.forEach(function (x) {
+      var q = (x.g.queue || []).filter(function (y) { return y.for === cycle && /^held/i.test(y.status); }).pop();
+      var who = x.state === 'held' && q && q.staff ? gcmNiceName_(q.staff) + (gcmCodeKey_(q.staff) !== gcmCodeKey_(ow.name) ? ' (approved it), with ' + resp : '') : resp;
+      rows.push({ group: x.g.name, kind: x.state === 'held' ? 'held' : x.state === 'later' ? 'later' : 'none', why: x.why, todo: x.todo, who: who,
+        short: x.state === 'held' && q && q.staff ? gcmNiceName_(q.staff).split(/\s+/)[0] : short });
+    });
+    ow.notReady.forEach(function (x) {
+      rows.push({ group: x.g.name, kind: 'setup', why: 'Cannot have a letter yet: ' + x.why, todo: 'Put right what is missing, then check the group and approve it.', who: resp, short: short });
+    });
+  });
+  /* approved for this week's run and still not sent: the run did not reach it, so the branch answers for it, not the approver */
+  L.reg.forEach(function (g) {
+    var s = gcmGroupStats_(g, L.today);
+    if (s.sentThisWeek) return;
+    var q = (g.queue || []).filter(function (y) { return y.status === 'queued' && y.for === cycle; }).pop();
+    if (q) rows.push({ group: g.name, kind: 'system', why: 'Approved by ' + gcmNiceName_(q.staff) + '; the 10:00 run has not sent it yet.', todo: 'Nothing for you: the next hourly run sends it. If it must go now, press Send now on the group.', who: 'The branch (the send itself)', short: 'the send' });
+  });
+  var total = sent.length + rows.length;
+  if (!rows.length) { if (!o.test) props.setProperty(GCM.TEAM_PROP, today); return { ok: true, sent: sent.length, missing: 0, said: 'Every group had its letter this week (' + sent.length + '): nobody to tell.' }; }
+  var order = { system: 0, held: 1, none: 2, later: 3, setup: 4 };
+  rows.sort(function (a, b) { return (order[a.kind] - order[b.kind]) || (a.who < b.who ? -1 : a.who > b.who ? 1 : 0) || (a.group < b.group ? -1 : 1); });
+  var byWho = {};
+  rows.forEach(function (r) { byWho[r.short] = (byWho[r.short] || 0) + 1; });
+  var E = tEsc_, label = { system: 'Not reached by the run', held: 'Held at the run', none: 'Not approved', later: 'Approved too late', setup: 'Not set up' };
+  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F"';
+  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#142033;vertical-align:top"';
+  var tag = function (k) { var c = k === 'system' ? '#5A687D' : k === 'setup' ? '#8A5A00' : '#B42318';
+    return '<span style="display:inline-block;padding:2px 8px;border:1px solid ' + c + ';border-radius:10px;font:700 12px Arial,sans-serif;color:' + c + '">' + E(label[k]) + '</span>'; };
+  var subject = (o.test ? '[TEST] ' : '') + 'Group letters this week: ' + sent.length + ' of ' + total + ' out · ' + rows.length + ' not out (' +
+    Object.keys(byWho).map(function (k) { return k + ' ' + byWho[k]; }).join(', ') + ')';
+  var html = '<div style="font:15px/1.55 Arial,sans-serif;color:#142033;max-width:760px">' +
+    (o.test ? '<p style="background:#FFF4D6;border:2px solid #E0A800;padding:10px 14px"><b>TEST.</b> The team letter as it would go now. It went to you alone.</p>' : '') +
+    '<p>Team,</p><p>Every group is to have its letter each Monday at 10:00. At 11:00, <b>' + sent.length + ' of ' + total + '</b> groups have this week’s letter. ' +
+    'These <b>' + rows.length + '</b> do not. Each is named with the reason and the person responsible for it.</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px"><tr>' +
+    ['Group', 'Why it is not out', 'Responsible', 'What to do today'].map(function (x) { return '<th ' + th + '>' + E(x) + '</th>'; }).join('') + '</tr>' +
+    rows.map(function (r) { return '<tr><td ' + td + '><b>' + E(r.group) + '</b><br>' + tag(r.kind) + '</td><td ' + td + '>' + E(r.why) + '</td><td ' + td + '><b>' + E(r.who) + '</b></td><td ' + td + '>' + E(r.todo) + '</td></tr>'; }).join('') +
+    '</table>' +
+    '<p>If a group is yours, put it right today and reply to Mr Rampersad with when its letter will go. A letter approved today goes at the next hourly run; Send now sends it at once.</p>' +
+    (sent.length ? '<p style="margin:14px 0 6px;font-weight:700">Out this week</p><ul style="margin:0;padding-left:18px">' + sent.map(function (x) { return '<li>' + E(x.group) + ' · ' + E(x.by) + (x.at ? ' · ' + E(x.at) : '') + '</li>'; }).join('') + '</ul>' : '') +
+    '<p><a href="' + GCM.SITE + '">Open group client management</a> · <a href="' + GCM.SITE + GCM_DAY.MANUAL + '">The manual</a></p>' +
+    '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
+  var me = gcmDayManager_(), to = [];
+  var add = function (a) { a = String(a || '').trim(); if (a && to.map(function (x) { return x.toLowerCase(); }).indexOf(a.toLowerCase()) < 0) to.push(a); };
+  if (o.test) add(me);
+  else {
+    list.owners.forEach(function (ow) { if (ow.active) add(ow.email); });
+    bma.forEach(function (p) { add(p.email); });
+    add(me); (TRANSITION.CC || []).forEach(add);
+  }
+  if (!to.length) return { ok: false, said: 'Nobody to send the team letter to.' };
+  if (tMsCreds_()) tMsSend_(to[0], subject, html, { cc: to.slice(1), replyTo: me || TRANSITION.MS_FROM });
+  else MailApp.sendEmail({ to: to.join(','), subject: subject, htmlBody: html, name: 'Ricky Rampersad Branch', replyTo: me || '' });
+  if (!o.test) props.setProperty(GCM.TEAM_PROP, today);
+  return { ok: true, sent: sent.length, missing: rows.length, to: to, rows: rows, said: 'The team was told: ' + sent.length + ' of ' + total + ' out, ' + rows.length + ' not out.' };
+}
+function gcmTeamTest() { var r = gcmTeamCheck_({ test: true }); return tSay_(r.said); }
+/** The Branch Manager's Assistant on the Agent Skill Bank, active, with an e-mail. */
+function gcmBmaPeople_() {
+  try { return tTeam_().people.filter(function (p) { return p.active && p.email && gcmIsBma_({ title: p.roleText }); }); } catch (e) { return []; }
+}
+
 /** The send, or with o.test the rehearsal. The send takes the approvals due by now; the rehearsal takes every approval
  *  still waiting for a run, whatever the hour. */
 function gcmQueueRun_(o) {
@@ -3010,13 +3113,17 @@ function gcmQueueRun_(o) {
   if (!test && !due().length) return { ok: true, sent: 0, held: 0, said: 'No approved letter is due.' };
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(120000)) return { ok: false, error: 'Busy: ' + (test ? 'try the rehearsal again in a minute.' : 'the next hourly run sends them.') };
-  var sent = [], held = [], approvers = [], waiting = [], t0 = Date.now();
+  var sent = [], held = [], approvers = [], waiting = [], left = [], start = Date.now(), t0;
   try {
-    /* the letters are written from Salesforce as it is at ten; if Salesforce does not answer, from the last refresh */
-    if (tSfOn_()) { try { gcmRefresh_(); } catch (e) {} }
+    /* the letters are written from Salesforce as it is at ten; if Salesforce does not answer, from the last refresh. A refresh
+       finished in the last QUEUE_FRESH_MIN minutes is used as it is: on 26 October 2026 the refresh took about five minutes,
+       the run's time ran out before the first letter, and nothing went and nothing said so. */
+    if (tSfOn_() && Date.now() - gcmRefreshedMs_() > GCM.QUEUE_FRESH_MIN * 60000) { try { gcmRefresh_(); } catch (e) {} }
+    t0 = Date.now();
     var L = gcmLoad_(), mail = !!tMsCreds_(), rows = due();
     rows.forEach(function (r) {   // read again under the lock: a row another run has sent is not sent twice
-      if (Date.now() - t0 > 270000) return;   // the next hourly run takes the rest
+      /* the next hourly run takes the rest, and the summary says how many it left */
+      if (Date.now() - t0 > 270000 || Date.now() - start > 320000) { left.push({ group: gcmText_(r.Group), by: gcmText_(r.Staff) }); return; }
       var g = L.byName[gcmCodeKey_(r.Group)], why = '', letter = null;
       var who = { role: { branch: 'branch', deputy: 'deputy' }[gcmText_(r.Role)] || 'staff', name: gcmText_(r.Staff), email: gcmText_(r['Staff e-mail']) };
       if (who.email && approvers.indexOf(who.email.toLowerCase()) < 0) approvers.push(who.email.toLowerCase());
@@ -3072,12 +3179,12 @@ function gcmQueueRun_(o) {
       L.reg.forEach(function (g) { if (!queued[g.key]) waiting.push({ group: g.name, by: g.assigned || 'no account owner' }); });
     }
   } finally { try { lock.releaseLock(); } catch (e) {} }
-  try { gcmQueueTell_(sent, held, test ? { test: true, approvers: approvers, waiting: waiting } : null); } catch (e) {}
-  return { ok: true, test: test, sent: sent.length, held: held.length, waiting: waiting.length,
+  try { gcmQueueTell_(sent, held, test ? { test: true, approvers: approvers, waiting: waiting, left: left } : { left: left }); } catch (e) {}
+  return { ok: true, test: test, sent: sent.length, held: held.length, waiting: waiting.length, left: left.length,
     said: test ? 'Rehearsal done. ' + (sent.length ? sent.length + ' letter' + (sent.length === 1 ? '' : 's') + ' would go: each came to its approver and the branch, marked TEST. '
         : 'No approved letter would go yet. ') + (held.length ? held.length + ' would wait. ' : '') +
       (waiting.length ? waiting.length + ' group' + (waiting.length === 1 ? ' is' : 's are') + ' not approved yet. ' : '') + 'Nothing reached a group.'
-      : sent.length + ' letter' + (sent.length === 1 ? '' : 's') + ' sent, ' + held.length + ' waiting.' };
+      : sent.length + ' letter' + (sent.length === 1 ? '' : 's') + ' sent, ' + held.length + ' waiting' + (left.length ? ', ' + left.length + ' left for the next run (out of time)' : '') + '.' };
 }
 
 /** One internal e-mail a run: what went, and what waited and why, to the branch and to whoever approved a letter that
@@ -3085,7 +3192,8 @@ function gcmQueueRun_(o) {
  *  approved. */
 function gcmQueueTell_(sent, held, o) {
   o = o || {};
-  if (!o.test && !sent.length && !held.length) return;
+  var left = o.left || [];
+  if (!o.test && !sent.length && !held.length && !left.length) return;
   var to = [];
   (TRANSITION.CC || []).concat(held.map(function (h) { return h.email; })).concat(o.approvers || []).forEach(function (a) { a = String(a || '').trim().toLowerCase(); if (a && to.indexOf(a) < 0) to.push(a); });
   if (!to.length) return;
@@ -3095,10 +3203,12 @@ function gcmQueueTell_(sent, held, o) {
     '<p><b>' + sent.length + '</b> group letter' + (sent.length === 1 ? '' : 's') + (o.test ? ' would go' : ' went out') + ' from ' + E(TRANSITION.MS_FROM) + (held.length ? '; <b>' + held.length + '</b> ' + (o.test ? 'would wait' : 'waited') + '.' : '.') + '</p>' +
     (held.length ? '<p><b>' + (o.test ? 'Would wait.' : 'Waiting.') + '</b> Open the group, put it right and approve it again' + (o.test ? '' : ': today, the next hourly run sends it') + '.</p><ul>' +
       held.map(function (h) { return '<li><b>' + E(h.group) + '</b> (approved by ' + E(h.by) + '): ' + E(h.why) + '</li>'; }).join('') + '</ul>' : '') +
+    (left.length ? '<p><b>Not reached yet.</b> The run ran out of time before ' + (left.length === 1 ? 'this one' : 'these') + '; the next hourly run sends ' + (left.length === 1 ? 'it' : 'them') + ', or press Send now on the group.</p><ul>' +
+      left.map(function (h) { return '<li><b>' + E(h.group) + '</b> (approved by ' + E(h.by) + ')</li>'; }).join('') + '</ul>' : '') +
     (sent.length ? '<p><b>' + (o.test ? 'Would go' : 'Sent') + '</b></p><ul>' + sent.map(function (x) { return '<li>' + E(x.group) + ': ' + x.items + ' item' + (x.items === 1 ? '' : 's') + ', approved by ' + E(x.by) + (o.test && x.to ? ', to ' + E(x.to) : '') + '</li>'; }).join('') + '</ul>' : '') +
     (o.test && (o.waiting || []).length ? '<p><b>Not approved yet</b> (nothing goes for these on Monday)</p><ul>' + o.waiting.map(function (w) { return '<li>' + E(w.group) + ' · ' + E(w.by) + '</li>'; }).join('') + '</ul>' : '') +
     '<p><a href="' + GCM.SITE + '">Open group client management</a></p><p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p>';
-  MailApp.sendEmail({ to: to.join(','), subject: (o.test ? 'TEST · ' : '') + 'Group letters, ' + tDmy_(gcmToday_()) + ': ' + sent.length + (o.test ? ' would go' : ' sent') + (held.length ? ', ' + held.length + (o.test ? ' would wait' : ' waiting') : ''), htmlBody: body, name: 'Ricky Rampersad Branch' });
+  MailApp.sendEmail({ to: to.join(','), subject: (o.test ? 'TEST · ' : '') + 'Group letters, ' + tDmy_(gcmToday_()) + ': ' + sent.length + (o.test ? ' would go' : ' sent') + (held.length ? ', ' + held.length + (o.test ? ' would wait' : ' waiting') : '') + (left.length ? ', ' + left.length + ' not reached' : ''), htmlBody: body, name: 'Ricky Rampersad Branch' });
 }
 
 function gcmHasMondayTrigger_() {
@@ -3171,12 +3281,17 @@ function gcmFeedRefused_(e) {
 
 /** A group signs in with its list bill and its code, both. Eight wrong codes on one list bill close it for fifteen
  *  minutes; a refusal never says which of the two was wrong. */
+/** The sign-in reads a letter O as a zero, on both sides (27 October 2026): list bills such as 01_NAIXT00 end in zeros
+ *  that a person reading them off an e-mail types as the letter O. No two list bills or codes differ by that alone. */
+function gcmSignKey_(k) { return String(k || '').replace(/O/g, '0'); }
+
 function gcmClientAuth_(L, lb, code) {
   var bk = gcmBillKey_(lb), ck = gcmCodeKey_(code);
   if (!bk || !ck) return { ok: false, error: 'Enter your list bill and your access code.' };
-  var tk = 'gcm-tries-' + bk.slice(0, 30);
+  var tk = 'gcm-tries-' + gcmSignKey_(bk).slice(0, 30);
   if (tTries_(tk) >= GCM.TRIES) return { ok: false, error: 'Too many tries. Wait fifteen minutes, or ask our sales support team for your code.' };
-  var g = L.reg.filter(function (x) { return x.billKeys.indexOf(bk) >= 0 && x.code && gcmCodeKey_(x.code).length >= GCM.MIN_CODE && gcmCodeKey_(x.code) === ck; })[0];
+  var sb = gcmSignKey_(bk), sc = gcmSignKey_(ck);
+  var g = L.reg.filter(function (x) { return x.billKeys.some(function (k) { return gcmSignKey_(k) === sb; }) && x.code && gcmCodeKey_(x.code).length >= GCM.MIN_CODE && gcmSignKey_(gcmCodeKey_(x.code)) === sc; })[0];
   if (!g) { tTriesAdd_(tk); return { ok: false, error: 'That list bill and access code do not match. Check both against the e-mail we sent.' }; }
   tTriesClear_(tk);
   return { ok: true, g: g };

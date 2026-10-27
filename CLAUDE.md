@@ -3900,6 +3900,18 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 1099", "TGM1099"):
   compared as letters and digits only. The account fields `List_Bill_Life__c`
   and `List_Bill_Pension__c` are empty on all but one account.
+  **A letter O counts as a zero** (`gcmSignKey_`, 27 October 2026), on both
+  sides, because list bills such as `01_..00` end in zeros that read like the
+  letter O on an e-mail; no two list bills or codes on the register differ by
+  that alone. **A letter preview on the staff page can never sign in**: it is
+  a sandboxed frame where nothing runs, and that day the manager clicked
+  "Open your service page" in one group's preview, the group's page opened
+  inside the box, and its button did nothing ("Group log on not working").
+  Every preview (`pvDoc` on the staff page, `pvHead` in the billing door)
+  now opens its links in a tab of their own, and a link to the group's page
+  carries `from=preview`, which `gcmViewLog_` never logs, so a staff member
+  trying the sign-in is not counted as the group opening its page. The live
+  sign-in was working throughout.
 - **What a group sees.** Never a member's health or a claim (`GCM_PRIVATE`),
   and a health reimbursement is a claim whatever its subject says: the first
   live refresh carried "Reissue Cheque (health)" with a member's name, which
@@ -3957,6 +3969,24 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   "Cancel the approval" withdraws it. Whoever looks after the group, the deputy
   and the branch manager can still send at once ("Send now", or Outlook; until
   14 October 2026 the branch manager alone); doing so closes that group's approval.
+  **The run never refreshes into its own time, and at 11:00 the team is told** (26 October 2026: the 10:00 run and the
+  10:30 retry sent none of the eleven approved letters, and nothing said so. The Salesforce refresh had grown to about
+  five minutes, and the run started its 4.5-minute sending clock before it, so it ran out of time before the first
+  letter. Then: "all needs to go out, if all is not done a letter must trigger to the team with the reason and hold
+  persons responsible if they are assigned").
+  - **The run uses a refresh under an hour old** (`GCM.QUEUE_FRESH_MIN`, `gcmRefreshedMs_` from the `gcm_refreshed_ms`
+    property the refresh now writes) and starts its sending clock after any refresh it does. A letter the clock leaves
+    is named in the run's summary as not reached.
+  - **The hourly run sends first and refreshes after**: the queue, the approved bills and the team check, then the
+    refresh, only when the last is over 15 minutes old.
+  - **Monday 11:00, the team letter** (`gcmTeamCheck_`, `GCM.TEAM_HOUR`, once a week by `GCM_TEAM_LAST`): if any group on
+    the register has no letter this week, one e-mail goes to every active account owner, the Branch Manager's Assistant,
+    the branch manager and sales support. Each group not out is named with the reason and who is responsible: the
+    account owner for a letter not approved or a group not set up, the approver for a letter held at the run, the branch
+    for an approved letter the run did not reach, and the BMA for a group whose owner is not active in Salesforce.
+    Nothing goes when every group has its letter. `gcmTeamTest` (editor Run) sends the branch manager the letter as it
+    would go now, marked TEST. The letters stay at 10:00, as every letter, film and the manual say.
+  - `team26/team-test.js` in the scratchpad covers it (19 checks).
   The group is asked to answer by Friday. Every letter is logged on `Group
   Sends` with the letter itself. `gcmlive/queue-test.js` in the session
   scratchpad covers it (26 checks).
@@ -4738,6 +4768,24 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     statement), `billing/door-test.js` (81, Playwright: the staff page's button into the door, every step, the group's
     page in its tabs, a phone) and `billing/page-test.js` (46). The harness (`wow/setup.js`) now serves `.css` as
     `text/css`: until then a stylesheet linked from a page was refused by the browser and the screenshots were bare.
+  - **A month is read back as a month** (27 October 2026, the first bill stored live: a group's October health bill).
+    Google Sheets turns "2026-10" written into a cell into the date 1 October, which read back as "2026-10-01" and never
+    matched "2026-10" again: the page said nothing was uploaded, opened itself as `m=2026-10-01`, looked in Salesforce for
+    a record of that month that cannot exist ("No T-HEALTH GROUP record for October 2026"), and every upload added a row
+    where it should have replaced one. `gblRows_` now reads every Month and For month cell as yyyy-MM in the sheet's own
+    zone (`gblMon_`), keeps one Group Bills row a group, line and month (the newest), and `gblCell_` writes months as
+    text. The test harness (`gcmlive/env-sq.js` in the scratchpad) never caught it because its cells kept what they were
+    given; `SHEETS_DATES=1` makes them behave as Sheets does, and `billing/month-test.js` (25) covers the live case.
+  - **Group Life comes in two layouts** (27 October 2026: "the group Life members are on and its not reading"). Guardian's
+    member bill carries ten figures a row when the plan has New Life cover (basic, accidental death, new life, then each
+    premium with its tax, then the premium) and seven when it has none (`LIFE_COLS`, `lifeFig` in `billread.js`); the
+    reader knew only the ten, so a seven-figure bill read 0 members. Rows, the grand total and the Statement of
+    Adjustment's rows go through `lifeFig`; a row with any other count is warned about, never guessed. The bill's own
+    "No of Lives" is read and checked against the members found. The statement's "AS AT" date is read either way round
+    ("31ST AUGUST 2026" and "AUGUST 31ST 2026"), and the covering letter is known by "Group Life Assurance Plan" or
+    "Monthly Billing for <month>" as well as the older wording. The Group Health box refuses a life document and says to
+    upload it under Group Life. `signin27/life-read.js` (13) and `life-backend.js` (4) in the scratchpad cover it, on
+    the first real seven-figure bill and a ten-figure one.
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
     Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing
