@@ -90,15 +90,13 @@ WALLS = {
         "The grey is the part carrying no status at all. A blank is not the same as nothing pending.",
         "Every row is named, with whose it is and how long it has held.",
     ],
-    'reqs': [                                    # Branch Pending · Requirements & tasks
-        "This is the second half of the pending wall.",
-        "The number is every requirement outstanding, and beside it the policies they sit on.",
-        "Each document carries its own age. The middle one, and the oldest.",
-        "A medical is marked apart. That is a third party's clock, not the agent's.",
-        "The strip is the year they were ordered in, month by month.",
-        "On the right, what the branch is doing about it. The pending tasks, desk by desk.",
-        "Open, overdue, gone quiet for a week, touched today, closed today.",
-        "A chase closed with the policy still open is the worst of the three. It reads as handled, and it is not.",
+    'reqs': [                                    # Branch Pending · what is outstanding, and who is chasing it (27 Oct 2026)
+        "This is what is still outstanding on our pending cases, from today's pending report.",
+        "The big number is every requirement still waiting to be received.",
+        "The bars are the agents who still owe a first premium. Collect it, and the policy can issue.",
+        "Most requirements sit with the agent. That is the first call to make.",
+        "On the right, what the team chased today, and which agents they chased.",
+        "No client is named here. Counts and agents only.",
     ],
     'codes': [                                   # Code by code
         "This is the branch in five states.",
