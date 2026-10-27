@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-27a';
+var SCRIPT_VERSION = '2026-10-27b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3391,9 +3391,9 @@ function dayStartBuildSend_(staffId, date, kind, opt, to) {
         check.lines.map(function (l) { return '<div style="font-size:13.5px;line-height:1.55;padding:5px 0;border-top:1px solid ' + MAIL.line + '"><span style="color:' + (l.bad ? MAIL.red : MAIL.green) + ';font-weight:800">' + (l.bad ? '&#9679;' : '&#10003;') + '</span> ' + l.html + '</div>'; }).join('') +
         (check.ok ? '' : replyButton_(replyUrl_(staffId, date, 'plan'), 'Fix my plan', 'Opens your plan with today\'s suggestion ticked. Change it and save; no sign-in.')) + '</div>' : '') +
     '<div style="background:#fff;border:1px solid ' + MAIL.gold + ';border-radius:10px;padding:12px 15px;font-size:14px;line-height:1.55;margin-bottom:6px">' + ask +
-      (sysDay ? replyButton_(replyUrl_(staffId, date, 'plan'), signIn ? 'Open my day' : 'Check in and start my day', 'One tap. Checking in is the register; your day is already set.') :
+      (sysDay ? replyButton_(workUrl_(staffId), signIn ? 'Open my day' : 'Check in and start my day', 'One tap. Checking in is the register; your list for the day is set when you do.') :
        (kind === 'first' && sfOk && target ? replyButton_(replyUrl_(staffId, date, 'plan'), 'Review and save this plan', 'One tap opens it ticked. Untick what you will not do, add your own, save. No sign-in.') : '')) +
-      (sysDay ? '' : '<div style="margin-top:9px"><a href="' + PLANNER_URL + '" style="font-size:12.5px;color:' + MAIL.navy + ';font-weight:700">or open the planner</a></div>') + workdayMailLine_(staffId) + '</div>' +
+      (sysDay ? workdayMailFull_(replyUrl_(staffId, date, 'plan'), 'your full day page') : '<div style="margin-top:9px"><a href="' + PLANNER_URL + '" style="font-size:12.5px;color:' + MAIL.navy + ';font-weight:700">or open the planner</a></div>' + workdayMailLine_(staffId)) + '</div>' +
     (kind === 'first' ? '<div style="background:' + MAIL.paper + ';border:1px dashed ' + MAIL.gold + ';border-radius:10px;padding:11px 15px;margin:10px 0 4px;font-size:13.5px;line-height:1.55">' +
         '<b>First fifteen minutes: the scrub.</b> Go through your inbox, the branch WhatsApp and your calls. Anything from Mr Rampersad, a manager, an agent or a client that needs doing goes in the scrub box on your ' + (systemDayOn_() ? 'day' : 'plan') + ' page, and becomes a Salesforce task in your name before you start. ' +
         '<b>High-payoff work goes first:</b> new business, then orphan adoption, then retention.</div>' : '') +
@@ -4712,7 +4712,7 @@ function sendBranchManagerDay_(day) {
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, Mr Rampersad. Check in and your day is on one page: urgent, drafts, your inbox, then what is important. ' +
       'Everything you do there, in Salesforce and by e-mail is written into your progress as the day goes; it comes to you at 11:00 and 3:00.</div>' +
-    replyButton_(unitUrl_('ricky'), 'Check in and start my day', 'One page, the same link every day: save it to your home screen. Checking in records your time.') + workdayMailLine_('ricky') +
+    replyButton_(workUrl_('ricky'), 'Check in and start my day', 'One tap: check in, what waits on you and the team. Checking in records your time.') + workdayMailFull_(unitUrl_('ricky'), 'My branch (drafts, the inbox, every card)') +
     (function () { try { return bmYesterdayLine_('ricky', day); } catch (e) { return ''; } })() +
     (function () { try { return closeoutYesterdayHtml_(day); } catch (e) { return ''; } })() +
     statTiles_([
@@ -15684,7 +15684,7 @@ function replyClick_(e) {
  *    · one button to the full day page for everything else (drafts, the inbox and Claude's notes, the task cards).
  *  One link per person for every day (workUrl_, signed like My unit's), in the morning e-mails and from showWorkdayLinks() in the editor.
  */
-var WORKDAY = { SITE: 'https://rickyrampersadbranch.com/myworkday/', BARS: 5, ACHIEVED: 40, NEXT: 8, TEAM_TTL: 300,
+var WORKDAY = { SITE: 'https://rickyrampersadbranch.com/myworkday/', BARS: 5, ACHIEVED: 40, NEXT: 8, TEAM_TTL: 300, LIST: 30,
   // My day in the branch app (26 Oct 2026): the app's sign-in, checked with RR Operations (lb.whoami), the way the clients
   // board and group clients take it (rroperations/sso.js). RROPS_URL in Script properties overrides the address.
   OPS_URL: 'https://script.google.com/macros/s/AKfycbyRPFW_RdQItCeSMHvP2HYEN69Zv2HQMrLxw9IUWUlnUlkzjqaVFPdvjFcg_-b-zX78/exec', OPS_TTL: 600 };
@@ -15693,6 +15693,15 @@ function workUrl_(sid) { return WORKDAY.SITE + '?p=' + encodeURIComponent(sid) +
 function workdayPerson_(sid) { return rosterPerson_(sid) || (sid === 'ricky' || UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null); }
 /** The full page behind the fast one: My day or My unit, else the staff day page. */
 function workdayFullUrl_(sid, day) { return sid === 'ricky' || UM_DESKS.indexOf(sid) > -1 ? unitUrl_(sid) : replyUrl_(sid, day, 'plan'); }
+/* My day is the morning's door (27 Oct 2026, 6:11am). Ricky: "I don't like to see the script. So can you do anything before
+ * I copy and paste the codes to ensure ... it goes out for a better user experience?" The big button in each morning e-mail
+ * (the staff's, the BMA's, his own at 5:00, Pawan's first) now opens My day on the branch's own site: no Google banner, it
+ * opens at once, and it works on a phone signed in to two Google accounts. Check in there; the day's list, set by the system
+ * at check-in, is on it with each task to open in Salesforce. Google's full day page stays one small link away. */
+function workdayMailFull_(href, label) {
+  return '<div style="margin-top:9px;font-size:12.5px;line-height:1.5;color:' + MAIL.muted + '">Opens at once on the branch\'s own site, the same link every day: save it to your home screen. ' +
+    'Anything not on it is on <a href="' + esc_(href) + '" style="color:' + MAIL.navy + ';font-weight:700">' + esc_(label) + '</a> (a slower Google page).</div>';
+}
 /** The small line under a morning e-mail's button. 26 Oct 2026, Pawan's link and then Ricky's own Chrome: "Sorry, unable to
  *  open the file at this time" (Google Drive). The ping, a JSON answer, opened in the same window: a page the tracker draws
  *  (HtmlService) will not open in a browser signed in to more than one Google account, a JSON answer will. My workday is
@@ -15785,6 +15794,17 @@ function workdayModel_(sid, day) {
   // Next up: overdue oldest first, then due today.
   m.next = (pr._all || []).slice().sort(function (x, y) { return (y.t.late ? 1 : 0) - (x.t.late ? 1 : 0) || String(x.t.due || '').localeCompare(String(y.t.due || '')); })
     .slice(0, WORKDAY.NEXT).map(function (x) { return { s: shorten_(x.t.subject || x.t.s || '', 110), due: x.t.due ? shortDate_(x.t.due) : '', late: !!x.t.late, ty: x.ty, id: x.t.id || '', url: base && x.t.id && sid !== 'akaash' ? base + x.t.id : '' }; });
+  // The day's list (27 Oct 2026): what the system set at check-in, each ticked when closed today; before check-in, what it will set.
+  if (UM_DESKS.indexOf(sid) < 0) {
+    var shut = {}; (pr._closed || []).forEach(function (t) { if (t && t.id) shut[t.id] = 1; });
+    var plans = {}; try { plans = planRows_(sid, day); } catch (e) {}
+    var items = [], seen = {};
+    BLOCK_IDS.forEach(function (b) { if (plans[b]) planItemsOf_(plans[b].Items).forEach(function (it) { if (it && it.k === 'sf' && it.id && !seen[it.id]) { seen[it.id] = 1; items.push(it); } }); });
+    m.listSet = items.length > 0;
+    if (!items.length) { try { items = (sdList_(sid, day) || []).map(function (t) { return { k: 'sf', id: t.id, subject: t.s, type: t.ty }; }); } catch (e) { items = []; } }
+    m.list = items.slice(0, WORKDAY.LIST).map(function (it) {
+      return { id: it.id, s: shorten_(String(it.subject || it.s || ''), 110), ty: String(it.type || it.ty || ''), done: !!shut[it.id], url: base && it.id ? base + it.id : '' }; });
+  }
   m.bars = workdayBars_(sid, day);
   m.team = sid === 'ricky' || sid === 'kamla' ? workdayTeam_(day) : [];
   return m;
@@ -17025,9 +17045,11 @@ function sendPawanDay_(day, kind) {
       { value: it.tasks.length, label: 'tasks due', color: it.tasks.length ? MAIL.amber : MAIL.navy },
       { value: gi.length, label: 'GI expiring ' + PAWAN_GI_DAYS + 'd' }
     ]) +
-    replyButton_(replyUrl_(sid, day, 'errand') + '&c=' + (kind === 'leave' ? 'leave' : 'progress'),
-      kind === 'first' ? 'Confirm today\'s run' : kind === 'midday' ? 'Mark what is done' : 'Close my day and sign out',
-      'One tap per errand: done, on it, needs another day, or can\'t. No sign-in.') + workdayMailLine_(sid) +
+    (kind === 'first'
+      ? replyButton_(workUrl_(sid), 'Check in and start my day', 'One tap: checking in is the register. It opens at once, on any phone.') + workdayMailFull_(replyUrl_(sid, day, 'errand') + '&c=progress', 'today\'s run, to confirm each errand')
+      : replyButton_(replyUrl_(sid, day, 'errand') + '&c=' + (kind === 'leave' ? 'leave' : 'progress'),
+          kind === 'midday' ? 'Mark what is done' : 'Close my day and sign out',
+          'One tap per errand: done, on it, needs another day, or can\'t. No sign-in.') + workdayMailLine_(sid)) +
     intelBox_(lines, 'What the calendar shows') +
     sectionLabel_('Today\'s run' + (kind === 'first' ? '' : ' · still to come')) +
     '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 15px 8px">' +

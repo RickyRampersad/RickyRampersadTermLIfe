@@ -23,7 +23,11 @@ let threw = '';
 try { env.sendPawanDay_(DAY, 'first'); } catch (e) { threw = e.message; }
 const m = mails[0] || {};
 ok('the morning e-mail goes', !threw && !!m.htmlBody, threw);
-ok('it carries his My workday link', String(m.htmlBody || '').indexOf(env.WORKDAY.SITE + '?p=pawan&amp;k=') > -1 || String(m.htmlBody || '').indexOf(env.WORKDAY.SITE + '?p=pawan&k=') > -1);
-ok('it says what to do when the button will not open', /unable to open the file/.test(m.htmlBody || '') && /private \(incognito\) window/.test(m.htmlBody || ''));
+const link = h => String(h || '').indexOf(env.WORKDAY.SITE + '?p=pawan&amp;k=') > -1 || String(h || '').indexOf(env.WORKDAY.SITE + '?p=pawan&k=') > -1;
+ok('it carries his My workday link', link(m.htmlBody));
+// 27 Oct 2026: the morning's big button is My day itself (it checks him in on any phone); the errand page is a small link.
+ok('the morning\'s big button is My day, the errands a small link', /Check in and start my day/.test(m.htmlBody || '') && /today&#39;s run, to confirm each errand|today's run, to confirm each errand/.test(m.htmlBody || ''));
+mails.length = 0; env.sendPawanDay_(DAY, 'midday');
+ok('the midday e-mail keeps the errand button, and says what to do when it will not open', /Mark what is done/.test((mails[0] || {}).htmlBody || '') && /unable to open the file/.test((mails[0] || {}).htmlBody || '') && link((mails[0] || {}).htmlBody));
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');
 process.exit(fails ? 1 : 0);
