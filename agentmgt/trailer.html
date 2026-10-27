@@ -260,6 +260,25 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .rc .week span{color:#5F6471;background:#EEF2F8}
 .rc .week span.fri{color:#fff}
 .rc .prz .ypill{font-size:calc(var(--u)*2)}
+.rh.three{grid-template-columns:repeat(3,1fr)}
+.rc .hbar{margin-top:calc(var(--u)*.6)}
+.strk{font:600 calc(var(--u)*1.9)/1 var(--text);color:#5F6471;text-decoration:line-through;text-decoration-color:var(--a);text-decoration-thickness:.14em;opacity:0;font-style:normal}
+.scene.act .strk{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+.fam{display:flex;align-items:center;gap:.6em;font:500 calc(var(--u)*2.1)/1.2 var(--text);color:#5F6471;opacity:0}
+.fam .ic{font-size:calc(var(--u)*3.2);color:var(--aD)}
+.scene.act .fam{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+.lead-in{display:grid;grid-template-columns:auto 1fr;gap:.1em 1em;align-items:center;background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;border-radius:calc(var(--u)*1.4);padding:calc(var(--u)*1.4) calc(var(--u)*1.8);opacity:0;transform:translateX(calc(var(--u)*6))}
+.lead-in .ic{grid-row:span 2;font-size:calc(var(--u)*3.2)}
+.lead-in b{font:700 calc(var(--u)*2.2)/1.1 var(--text)}
+.lead-in span{font:500 calc(var(--u)*1.9)/1.2 var(--text);opacity:.9}
+.scene.act .lead-in{animation:slidein .6s var(--out) both;animation-delay:var(--t0)}
+@keyframes slidein{to{opacity:1;transform:none}}
+.seatrow{display:flex;justify-content:center;gap:calc(var(--u)*2);margin:calc(var(--u)*1) 0}
+.seatrow i{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:calc(var(--u)*1.6);display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:var(--mute2);font-size:calc(var(--u)*3);opacity:0;transform:scale(.6)}
+.scene.act .seatrow i{animation:seat-on .55s var(--pop) both;animation-delay:var(--t0)}
+@keyframes seat-on{to{opacity:1;transform:scale(1);background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;border-color:rgba(255,255,255,.3);box-shadow:0 0 calc(var(--u)*3) rgba(232,95,106,.5)}}
+.jr.five{grid-template-columns:repeat(5,1fr);max-width:calc(var(--u)*120);margin-inline:auto}
+.jr.five .jline{left:10%;right:10%}
 /* scene 17: the wins */
 .wins{background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);padding:calc(var(--u)*2) calc(var(--u)*2.4);display:grid;gap:calc(var(--u)*1.1);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5)}
 .aw{display:flex;justify-content:space-between;align-items:center;background:#fff;color:#17191F;border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.2) calc(var(--u)*1.8);font:700 calc(var(--u)*2.3)/1 var(--display);opacity:0}
@@ -759,7 +778,9 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .gal{grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3)}
   .jr{grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*3) calc(var(--u)*1.2)}
   .jline,.jdot{display:none}
-  .rh{grid-template-columns:1fr}
+  .rh,.rh.three{grid-template-columns:1fr}
+  .jr.five{grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*1)}
+  .jr.five .jn b{font-size:calc(var(--u)*1.8)}
   .tl4 .tn b{font-size:calc(var(--u)*2.4)}
   .shot figcaption{font-size:calc(var(--u)*2.4)}
   .steps4 .st{font-size:calc(var(--u)*2.2)}
@@ -820,63 +841,78 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-journey" data-d="15100" data-n="2" style="--kb:15100ms" >
+<section class="scene s-gives" data-d="13300" data-n="2" style="--kb:13300ms" >
 
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">From the day you apply</p>
-  <h2 class="h l"><span aria-label="You're not alone."><span class="w"><i style="--i:0;--t0:1475ms">You're</i></span> <span class="w"><i style="--i:1;--t0:1475ms">not</i></span> <span class="w"><i style="--i:2;--t0:1475ms">alone.</i></span></span></h2>
-  <div class="jr">
-    <i class="jline"></i><i class="jdot" style="--t0:2700ms;--t1:13075ms"></i>
-    <div class="jn" style="--t0:2700ms;--i:0"><span class="jic"><svg class="ic"><use href="#i-doc"/></svg></span><b>Apply</b><small>2 min</small><em class="jp" style="--t0:13088ms"></em></div><div class="jn" style="--t0:3588ms;--i:1"><span class="jic"><svg class="ic"><use href="#i-phone"/></svg></span><b>A call</b><small>48 h</small><em class="jp" style="--t0:13088ms"></em></div><div class="jn" style="--t0:6150ms;--i:2"><span class="jic"><svg class="ic"><use href="#i-users"/></svg></span><b>The Branch Manager</b><small>in person</small><em class="jp" style="--t0:13088ms"></em></div><div class="jn" style="--t0:7663ms;--i:3"><span class="jic"><svg class="ic"><use href="#i-chat"/></svg></span><b>Orientation</b><small>no gloss</small><em class="jp" style="--t0:13088ms"></em></div><div class="jn" style="--t0:8950ms;--i:4"><span class="jic"><svg class="ic"><use href="#i-grid"/></svg></span><b>Market survey</b><small>digital</small><em class="jp" style="--t0:13088ms"></em></div><div class="jn" style="--t0:10338ms;--i:5"><span class="jic"><svg class="ic"><use href="#i-target"/></svg></span><b>POP7</b><small>the profile</small><em class="jp" style="--t0:13088ms"></em></div><div class="jn" style="--t0:12175ms;--i:6"><span class="jic"><svg class="ic"><use href="#i-spark"/></svg></span><b>Discovery</b><small>our qualifiers</small><em class="jp" style="--t0:13088ms"></em></div><div class="jn" style="--t0:13075ms;--i:7"><span class="jic"><svg class="ic"><use href="#i-lock"/></svg></span><b>Selection</b><small>chosen</small><em class="jp" style="--t0:13088ms"></em></div>
+  <p class="eye in" style="--t0:200ms">What this career gives</p>
+  <h2 class="h l"><span aria-label="What your job can't."><span class="w"><i style="--i:0;--t0:1962ms">What</i></span> <span class="w"><i style="--i:1;--t0:1962ms">your</i></span> <span class="w"><i style="--i:2;--t0:1962ms">job</i></span> <span class="w"><i style="--i:3;--t0:1962ms">can't.</i></span></span></h2>
+  <div class="rh three">
+    <div class="rc in fl" style="--t0:3075ms"><small>Your income</small><b>Decided by your work</b><i class="hbar"><b style="--v:100%;--t0:3375ms"></b></i><em class="strk" style="--t0:5500ms">salary band</em></div>
+    <div class="rc in fl" style="--t0:6800ms"><small>Your week</small><b>Shaped by you</b><div class="week"><span class="" style="--t0:6950ms">Mon</span><span class="fri" style="--t0:7070ms">Tue</span><span class="" style="--t0:7190ms">Wed</span><span class="fri" style="--t0:7310ms">Thu</span><span class="" style="--t0:7430ms">Fri</span></div></div>
+    <div class="rc in fl" style="--t0:8763ms"><small>Your work</small><b>A family covered</b><div class="fam" style="--t0:9838ms"><svg class="ic"><use href="#i-users"/></svg><span>before the worst day comes</span></div></div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-match" data-d="13200" data-n="3" style="--kb:13200ms" >
+<section class="scene s-match" data-d="21000" data-n="3" style="--kb:21000ms" >
 
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:200ms">Selected</p>
-    <h2 class="h l"><span aria-label="Built properly."><span class="w"><i style="--i:0;--t0:1363ms">Built</i></span> <span class="w"><i style="--i:1;--t0:1363ms">properly.</i></span></span></h2>
-    <h2 class="h l wine2"><span aria-label="Never from zero."><span class="w"><i style="--i:0;--t0:3325ms">Never</i></span> <span class="w"><i style="--i:1;--t0:3325ms">from</i></span> <span class="w"><i style="--i:2;--t0:3325ms">zero.</i></span></span></h2>
+    <p class="eye in" style="--t0:200ms">What this branch gives</p>
+    <h2 class="h l"><span aria-label="Never stuck for an answer."><span class="w"><i style="--i:0;--t0:4113ms">Never</i></span> <span class="w"><i style="--i:1;--t0:4113ms">stuck</i></span> <span class="w"><i style="--i:2;--t0:4113ms">for</i></span> <span class="w"><i style="--i:3;--t0:4113ms">an</i></span> <span class="w"><i style="--i:4;--t0:4113ms">answer.</i></span></span></h2>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:7437ms">Leads on your own board</span>
-      <span class="ypill in" style="--t0:9263ms">The fact find does the arithmetic</span>
+      <span class="ypill in" style="--t0:6187ms">The fact find does the arithmetic</span>
+      <span class="ypill in" style="--t0:9013ms">Branch Intelligence reads the file</span>
+      <span class="ypill in" style="--t0:12400ms">Query Pal · answered the same day</span>
     </div>
+    <h2 class="h l wine2"><span aria-label="Never from zero."><span class="w"><i style="--i:0;--t0:14587ms">Never</i></span> <span class="w"><i style="--i:1;--t0:14587ms">from</i></span> <span class="w"><i style="--i:2;--t0:14587ms">zero.</i></span></span></h2>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:4713ms">
+    <div class="list in fl" style="--t0:15900ms">
       <div class="bd-h"><b>Your list</b><span>named to you</span></div>
-      <div class="hh" style="--t0:4913ms"><svg class="ic"><use href="#i-home"/></svg><b>The Ramlogan household</b><span>3 policies · since 2014</span><em>named</em></div><div class="hh" style="--t0:5293ms"><svg class="ic"><use href="#i-home"/></svg><b>The Charles household</b><span>2 policies · since 2019</span><em>named</em></div><div class="hh" style="--t0:5673ms"><svg class="ic"><use href="#i-home"/></svg><b>The Ali household</b><span>4 policies · since 2008</span><em>named</em></div>
+      <div class="hh" style="--t0:16100ms"><svg class="ic"><use href="#i-home"/></svg><b>The Ramlogan household</b><span>3 policies · since 2014</span><em>named</em></div><div class="hh" style="--t0:16480ms"><svg class="ic"><use href="#i-home"/></svg><b>The Charles household</b><span>2 policies · since 2019</span><em>named</em></div><div class="hh" style="--t0:16860ms"><svg class="ic"><use href="#i-home"/></svg><b>The Ali household</b><span>4 policies · since 2008</span><em>named</em></div>
+      <div class="lead-in" style="--t0:18612ms"><svg class="ic"><use href="#i-bolt"/></svg><b>New lead</b><span>"Retiring properly" · landed on your board</span></div>
       <span class="sample">sample figures</span>
     </div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-rhythm" data-d="13100" data-n="4" style="--kb:13100ms" >
+<section class="scene s-coach2" data-d="14500" data-n="4" style="--kb:14500ms" >
 
-<div class="full center">
-  <p class="eye in" style="--t0:200ms">Your rhythm</p>
-  <div class="rh">
-    <div class="rc in fl" style="--t0:700ms"><small>Every morning</small><b>The system sets your day</b><div class="prog slim"><i style="--t0:2125ms"></i><b><em class="cnt" data-to="84" data-suf="%" data-at="2125" style="--at:2125ms">84%</em></b></div></div>
-    <div class="rc in fl" style="--t0:3450ms"><small>Every week</small><b>Your manager sees it before Friday</b><div class="week"><span class="" style="--t0:0ms">Mon</span><span class="" style="--t0:0ms">Tue</span><span class="" style="--t0:0ms">Wed</span><span class="" style="--t0:0ms">Thu</span><span class="fri" style="--t0:5675ms">Fri</span></div></div>
-    <div class="rc in fl" style="--t0:6913ms"><small>Every Wednesday</small><b>Your wins, said out loud</b><div class="prz"><span class="ypill" style="--t0:7475ms">Client Saver</span><span class="ypill" style="--t0:8787ms">Agent of the week</span></div></div>
-    <div class="rc in fl" style="--t0:9775ms"><small>Every day</small><b>Your book, watched</b><div class="tl4 mini"><div class="tn" style="--t0:10600ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>45</b></div><div class="tn" style="--t0:10780ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>60</b></div><div class="tn" style="--t0:10960ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>75</b></div><div class="tn" style="--t0:11140ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>90</b></div></div></div>
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Your manager</p>
+    <h2 class="h xl"><span aria-label="A coach,"><span class="w"><i style="--i:0;--t0:1063ms">A</i></span> <span class="w"><i style="--i:1;--t0:1063ms">coach,</i></span></span> <em class="wine"><span aria-label="not a clock."><span class="w"><i style="--i:0;--t0:2200ms">not</i></span> <span class="w"><i style="--i:1;--t0:2200ms">a</i></span> <span class="w"><i style="--i:2;--t0:2200ms">clock.</i></span></span></em></h2>
+    <p class="sub in" style="--t0:4063ms">The system does the admin. He does the sitting with you.</p>
+    <p class="sub in" style="--t0:12988ms"><em>Nobody here is left to figure it out alone.</em></p>
   </div>
-  <span class="sample">sample figures</span>
+  <div class="col">
+    <div class="week in" style="--t0:6650ms"><span class="" style="--t0:0ms">Mon</span><span class="" style="--t0:0ms">Tue</span><span class="" style="--t0:0ms">Wed</span><span class="" style="--t0:0ms">Thu</span><span class="fri" style="--t0:7637ms">Fri</span></div>
+    <div class="note in" style="--t0:9100ms">
+      <small>From your manager · in your morning e-mail</small>
+      <p><span class="ty" aria-label="Two fact finds this week, Priya. Let's book your Thursday calls together at eight."><span class="tw"><i style="--t:9400ms">T</i><i style="--t:9424ms">w</i><i style="--t:9448ms">o</i></span> <span class="tw"><i style="--t:9496ms">f</i><i style="--t:9520ms">a</i><i style="--t:9544ms">c</i><i style="--t:9568ms">t</i></span> <span class="tw"><i style="--t:9616ms">f</i><i style="--t:9640ms">i</i><i style="--t:9664ms">n</i><i style="--t:9688ms">d</i><i style="--t:9712ms">s</i></span> <span class="tw"><i style="--t:9760ms">t</i><i style="--t:9784ms">h</i><i style="--t:9808ms">i</i><i style="--t:9832ms">s</i></span> <span class="tw"><i style="--t:9880ms">w</i><i style="--t:9904ms">e</i><i style="--t:9928ms">e</i><i style="--t:9952ms">k</i><i style="--t:9976ms">,</i></span> <span class="tw"><i style="--t:10024ms">P</i><i style="--t:10048ms">r</i><i style="--t:10072ms">i</i><i style="--t:10096ms">y</i><i style="--t:10120ms">a</i><i style="--t:10144ms">.</i></span> <span class="tw"><i style="--t:10192ms">L</i><i style="--t:10216ms">e</i><i style="--t:10240ms">t</i><i style="--t:10264ms">'</i><i style="--t:10288ms">s</i></span> <span class="tw"><i style="--t:10336ms">b</i><i style="--t:10360ms">o</i><i style="--t:10384ms">o</i><i style="--t:10408ms">k</i></span> <span class="tw"><i style="--t:10456ms">y</i><i style="--t:10480ms">o</i><i style="--t:10504ms">u</i><i style="--t:10528ms">r</i></span> <span class="tw"><i style="--t:10576ms">T</i><i style="--t:10600ms">h</i><i style="--t:10624ms">u</i><i style="--t:10648ms">r</i><i style="--t:10672ms">s</i><i style="--t:10696ms">d</i><i style="--t:10720ms">a</i><i style="--t:10744ms">y</i></span> <span class="tw"><i style="--t:10792ms">c</i><i style="--t:10816ms">a</i><i style="--t:10840ms">l</i><i style="--t:10864ms">l</i><i style="--t:10888ms">s</i></span> <span class="tw"><i style="--t:10936ms">t</i><i style="--t:10960ms">o</i><i style="--t:10984ms">g</i><i style="--t:11008ms">e</i><i style="--t:11032ms">t</i><i style="--t:11056ms">h</i><i style="--t:11080ms">e</i><i style="--t:11104ms">r</i></span> <span class="tw"><i style="--t:11152ms">a</i><i style="--t:11176ms">t</i></span> <span class="tw"><i style="--t:11224ms">e</i><i style="--t:11248ms">i</i><i style="--t:11272ms">g</i><i style="--t:11296ms">h</i><i style="--t:11320ms">t</i><i style="--t:11344ms">.</i></span></span></p>
+    </div>
+    <div class="chips3"><div class="chip in fl" style="--t0:9988ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div></div>
+  </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-branch" data-d="9400" data-n="5" style="--kb:9400ms" >
+<section class="scene s-seats" data-d="19100" data-n="5" style="--kb:19100ms" >
 
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
-  <div class="figs row">
-    <div class="fig in" style="--t0:500ms"><b class="cnt" data-to="23" data-suf="×" data-at="500" style="--at:500ms">23×</b><span>MDRT branch</span></div>
-    <div class="fig in" style="--t0:3925ms"><b class="cnt" data-to="32" data-at="3925" style="--at:3925ms">32</b><span>years in Trinidad</span></div>
+  <p class="eye in" style="--t0:200ms">This year</p>
+  <h2 class="h xl"><span class="cnt" data-to="5" data-at="563" style="--at:563ms">5</span> <span aria-label="seats."><span class="w"><i style="--i:0;--t0:563ms">seats.</i></span></span></h2>
+  <div class="seatrow"><i style="--t0:763ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:903ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1043ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1183ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1323ms"><svg class="ic"><use href="#i-users"/></svg></i></div>
+  <p class="sub in" style="--t0:2313ms">Not because we can't take more. Because every one gets <em>the full build</em>.</p>
+  <div class="jr five">
+    <i class="jline"></i>
+    <div class="jn" style="--t0:6350ms;--i:0"><span class="jic"><svg class="ic"><use href="#i-phone"/></svg></span><b>A call</b><small>48 h</small></div><div class="jn" style="--t0:8312ms;--i:1"><span class="jic"><svg class="ic"><use href="#i-users"/></svg></span><b>The Branch Manager</b><small>himself</small></div><div class="jn" style="--t0:10162ms;--i:2"><span class="jic"><svg class="ic"><use href="#i-chat"/></svg></span><b>Orientation</b><small>no gloss</small></div><div class="jn" style="--t0:11212ms;--i:3"><span class="jic"><svg class="ic"><use href="#i-target"/></svg></span><b>A profile</b><small>POP7</small></div><div class="jn" style="--t0:12513ms;--i:4"><span class="jic"><svg class="ic"><use href="#i-spark"/></svg></span><b>Discovery</b><small>the people doing it</small></div>
   </div>
-  <h2 class="h xl"><span aria-label="No salary band."><span class="w"><i style="--i:0;--t0:6100ms">No</i></span> <span class="w"><i style="--i:1;--t0:6100ms">salary</i></span> <span class="w"><i style="--i:2;--t0:6100ms">band.</i></span></span> <em class="wine"><span aria-label="No ceiling."><span class="w"><i style="--i:0;--t0:7600ms">No</i></span> <span class="w"><i style="--i:1;--t0:7600ms">ceiling.</i></span></span></em></h2>
+  <div class="figs row">
+    <div class="fig in" style="--t0:14962ms"><b class="cnt" data-to="32" data-at="14962" style="--at:14962ms">32</b><span>years in Trinidad</span></div>
+    <div class="fig in" style="--t0:17175ms"><b class="cnt" data-to="5" data-at="17175" style="--at:17175ms">5</b><span>seats</span></div>
+  </div>
 </div>
 <div class="streak"></div>
 </section>

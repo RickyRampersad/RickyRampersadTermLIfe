@@ -18,9 +18,9 @@ def entries(key, tfile, vox, out, hitlist, dark):
                         sfx=f'sfx-{key}v.wav', ass=f'captions-{key}v.ass', w=1080, h=1920, capsize=46, capwrap=30)
     print(f'films.json: {key} {t["dur"]} s · hits {hits}')
 entries('recruit', 'recruit-timing.json', 'vorecruit', 'recruit',
-        [(3, 'Twenty'), (3, 'Thirty'), (6, 'call'), (8, 'evidence'), (13, 'board'), (18, 'dollars'), (20, 'pace'), (17, 'balance'),
-         (12, 'hundred'), (12, 'pays'), (25, 'written'), (27, 'ten'), (15, 'GO', 1), (33, 'open'), (33, 'Twenty')], [4, 35])
+        [(2, 'Five'), (2, 'Thirty'), (5, 'call'), (7, 'evidence'), (12, 'board'), (16, 'dollars'), (18, 'pace'),
+         (11, 'hundred'), (11, 'pays'), (23, 'written'), (25, 'ten'), (14, 'GO', 1), (30, 'open'), (30, 'Twenty')], [3, 32])
 if os.path.exists('recruit-trailer-timing.json'):
     entries('trailer', 'recruit-trailer-timing.json', 'votrailer', 'trailer',
-            [(2, 'call'), (3, 'zero'), (5, 'Twenty'), (5, 'Thirty'), (6, 'open'), (6, 'Twenty')], [8])
+            [(2, 'income'), (3, 'zero'), (4, 'coach'), (5, 'Five'), (5, 'Thirty'), (5, 'Five', 1), (6, 'open'), (6, 'Twenty')], [8])
 json.dump(f, open('films.json', 'w'), indent=1)

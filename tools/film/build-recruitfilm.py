@@ -126,39 +126,21 @@ S.append(scene(1, 's-hook', f'''
   <p class="sub2 in" style="--t0:{at(1,"Or")}ms">Or wanting a career with no ceiling, <em class="wine">and afraid of the first year?</em></p>
 </div>'''))
 
-# 2 · talent and the tools
-S.append(scene(2, 's-room', f'''
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">The truth about this business</p>
-    <h2 class="h l">{words("Talent gets you in the game.", 400)}</h2>
-    <h2 class="h l wine2">{words("The tools decide how far you go.", at(2,"tools") - 300)}</h2>
-  </div>
-  <div class="col chart" style="position:relative">
-    <div class="bars">
-      {''.join(f'<i style="--h:{h}%;--t0:{600 + i*110}ms"></i>' for i, h in enumerate([28,36,44,52,61,70,80,92]))}
-      <div class="lid" style="--t0:{at(2,"decide") + 300}ms"></div>
-      <div class="ceil" style="--t0:{at(2,"decide") + 300}ms"><span>the old tools</span></div>
-    </div>
-    {''.join(f'<span class="spk" style="--x:{6 + (i*41)%88}%;--dx:{(i*17)%30 - 15};--t0:{at(2,"decide") + 500 + (i*37)%420}ms;--c:{["#E85F6A","#fff","#F5CBD0"][i%3]}"></span>' for i in range(16))}
-  </div>
-</div>'''))
-
-# 3 · the branch, with the stage: the five gates inside, the five tools outside
+# 2 · the branch, with the stage: the five gates inside, the five tools outside
 RING_IN = ''.join(f'<li style="--a:{a}deg;--i:{i}"><span class="spin"><b>{i+1}</b></span></li>' for i, a in enumerate([270,342,54,126,198]))
 RING_OUT_ICONS = ['spark','doc','chart','bolt','users']
 RING_OUT = ''.join(f'<li style="--a:{a}deg;--i:{i+5}"><span class="spin"><svg class="ic"><use href="#i-{RING_OUT_ICONS[i]}"/></svg></span></li>' for i, a in enumerate([306,18,90,162,234]))
-S.append(scene(3, 's-branch', f'''
+S.append(scene(2, 's-branch', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Chaguanas · Trinidad</p>
     <h2 class="h l">{words("The Ricky Rampersad Branch.", 400)}</h2>
-    <p class="sub in" style="--t0:{at(3,"Guardian")}ms">Guardian Life of the Caribbean</p>
+    <p class="sub in" style="--t0:{at(2,"Guardian")}ms">Guardian Life of the Caribbean</p>
     <div class="figs">
-      <div class="fig in" style="--t0:{at(3,"Twenty")}ms"><b class="cnt" data-to="23" data-suf="×" data-at="{at(3,"Twenty")}">23×</b><span>MDRT branch</span></div>
-      <div class="fig in" style="--t0:{at(3,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{at(3,"Thirty")}">32</b><span>years in Trinidad</span></div>
+      <div class="fig in" style="--t0:{at(2,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{at(2,"Thirty")}">32</b><span>years in Trinidad</span></div>
+      <div class="fig in" style="--t0:{at(2,"Five")}ms"><b class="cnt" data-to="5" data-at="{at(2,"Five")}">5</b><span>seats this year</span></div>
     </div>
-    <div class="fy in" style="--t0:{at(3,"brand")}ms"><b>FY27</b><span>A new year, from 1 October</span></div>
+    <div class="fy in" style="--t0:{at(2,"brand")}ms"><b>FY27</b><span>A new year, from 1 October</span></div>
   </div>
   <div class="col">
     <div class="stage">
@@ -172,195 +154,195 @@ S.append(scene(3, 's-branch', f'''
   </div>
 </div>'''))
 
-# 4 · the statement
-S.append(scene(4, 's-state dark', f'''
+# 3 · the statement
+S.append(scene(3, 's-state dark', f'''
 <div class="full center">
   <h1 class="h xxl">{words("We do things differently.", 350, 140)}</h1>
-  <span class="burst" style="--t0:{at(4,"differently")}ms"></span><span class="burst b2" style="--t0:{at(4,"Human")}ms"></span>
-  <div class="rule" style="--t0:{at(4,"differently")}ms"></div>
-  <h2 class="h m duo"><span class="dg">{words("Digital everywhere.", at(4,"Digital") - 150, 100)}</span> <span class="hu">{words("Human at the heart of it.", at(4,"Human") - 150, 100)}</span></h2>
+  <span class="burst" style="--t0:{at(3,"differently")}ms"></span><span class="burst b2" style="--t0:{at(3,"Human")}ms"></span>
+  <div class="rule" style="--t0:{at(3,"differently")}ms"></div>
+  <h2 class="h m duo"><span class="dg">{words("Digital everywhere.", at(3,"Digital") - 150, 100)}</span> <span class="hu">{words("Human at the heart of it.", at(3,"Human") - 150, 100)}</span></h2>
 </div>'''))
 
-# 5 · after you apply: not alone
-S.append(scene(5, 's-notalone', f'''
+# 4 · after you apply: not alone
+S.append(scene(4, 's-notalone', f'''
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
   <p class="eye in" style="--t0:200ms">The part nobody tells you</p>
-  <h2 class="h xl">{words("What happens to you", 400, 110)}<br><em class="wine">{words("after you apply.", at(5,"after") - 150, 110)}</em></h2>
-  <div class="ceil-line" style="--t0:{at(5,"apply")}ms"></div>
-  <p class="sub2 in" style="--t0:{at(5,"alone")}ms">In this branch, <em class="wine">you're not alone from the first day.</em></p>
-  <p class="eye in" style="--t0:{at(5,"journey")}ms">Here is the whole journey</p>
+  <h2 class="h xl">{words("What happens to you", 400, 110)}<br><em class="wine">{words("after you apply.", at(4,"after") - 150, 110)}</em></h2>
+  <div class="ceil-line" style="--t0:{at(4,"apply")}ms"></div>
+  <p class="sub2 in" style="--t0:{at(4,"alone")}ms">In this branch, <em class="wine">you're not alone from the first day.</em></p>
+  <p class="eye in" style="--t0:{at(4,"journey")}ms">Here is the whole journey</p>
 </div>'''))
 
-# 6 · the journey strip
+# 5 · the journey strip
 JOURNEY = [('Apply', '2 min', 'Two', 'doc'), ('A call', '48 h', 'forty', 'phone'), ('The Branch Manager', 'in person', 'Branch', 'users'),
            ('Orientation', 'no gloss', 'orientation', 'chat'), ('Market survey', 'digital', 'digital', 'grid'), ('POP7', 'the profile', 'scientific', 'target'),
            ('Discovery', 'our qualifiers', 'Discovery', 'spark'), ('Selection', 'chosen', 'selection', 'lock')]
-S.append(scene(6, 's-journey', f'''
+S.append(scene(5, 's-journey', f'''
 <div class="full center">
   <p class="eye in" style="--t0:200ms">From the day you apply</p>
-  <h2 class="h l">{words("Eight steps.", 400, 120)} <em class="wine">{words("A person at every one.", at(6,"Every") - 300, 90)}</em></h2>
+  <h2 class="h l">{words("Eight steps.", 400, 120)} <em class="wine">{words("A person at every one.", at(5,"Every") - 300, 90)}</em></h2>
   <div class="jr">
-    <i class="jline"></i><i class="jdot" style="--t0:{at(6,"Two")}ms;--t1:{at(6,"selection")}ms"></i>
-    {''.join(f'<div class="jn" style="--t0:{at(6,w)}ms;--i:{k}"><span class="jic"><svg class="ic"><use href="#i-{ic}"/></svg></span><b>{n}</b><small>{d}</small><em class="jp" style="--t0:{at(6,"person")}ms"></em></div>' for k,(n,d,w,ic) in enumerate(JOURNEY))}
+    <i class="jline"></i><i class="jdot" style="--t0:{at(5,"Two")}ms;--t1:{at(5,"selection")}ms"></i>
+    {''.join(f'<div class="jn" style="--t0:{at(5,w)}ms;--i:{k}"><span class="jic"><svg class="ic"><use href="#i-{ic}"/></svg></span><b>{n}</b><small>{d}</small><em class="jp" style="--t0:{at(5,"person")}ms"></em></div>' for k,(n,d,w,ic) in enumerate(JOURNEY))}
   </div>
 </div>'''))
 
-# 7 · the digital market survey
+# 6 · the digital market survey
 SURVEY = [('How well known', 'well', 'meter', 80), ('Could approach on business', 'approach', 'yes', 0), ('Would refer you', 'refer', 'meter', 65), ('Saving for', 'saving', 'typed', 0)]
-S.append(scene(7, 's-survey', f'''
+S.append(scene(6, 's-survey', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Before you start</p>
-    <h2 class="h l">{words("Your market, mapped.", at(7,"maps") - 300, 120)}</h2>
-    <p class="sub in" style="--t0:{at(7,"list")}ms">The people you know, one by one: how well, whether you could approach them on business, whether they'd refer you.</p>
-    <div class="figs"><div class="fig in" style="--t0:{at(7,"ninety")}ms"><b><em class="cnt" data-to="90" data-at="{at(7,"ninety")}">90</em> days</b><span>with a market in them</span></div></div>
+    <h2 class="h l">{words("Your market, mapped.", at(6,"maps") - 300, 120)}</h2>
+    <p class="sub in" style="--t0:{at(6,"list")}ms">The people you know, one by one: how well, whether you could approach them on business, whether they'd refer you.</p>
+    <div class="figs"><div class="fig in" style="--t0:{at(6,"ninety")}ms"><b><em class="cnt" data-to="90" data-at="{at(6,"ninety")}">90</em> days</b><span>with a market in them</span></div></div>
   </div>
   <div class="col">
-    <div class="wcard in fl" style="--t0:{at(7,"survey")}ms">
+    <div class="wcard in fl" style="--t0:{at(6,"survey")}ms">
       <div class="wh"><b>Market Survey</b><span>prospect 14 of 60</span></div>
-      <div class="frow" style="--t0:{at(7,"list") + 200}ms"><span>Name</span><b>{typed("Keisha R.", at(7,"list") + 400, 60)}</b></div>
-      <div class="frow" style="--t0:{at(7,"well")}ms"><span>How well known</span><i class="hbar"><b style="--v:80%;--t0:{at(7,"well") + 200}ms"></b></i></div>
-      <div class="frow" style="--t0:{at(7,"approach")}ms"><span>Could approach on business</span><em class="yes" style="--t0:{at(7,"approach") + 250}ms">Yes</em></div>
-      <div class="frow" style="--t0:{at(7,"refer")}ms"><span>Would refer you</span><i class="hbar"><b style="--v:65%;--t0:{at(7,"refer") + 200}ms"></b></i></div>
-      <div class="frow" style="--t0:{at(7,"saving")}ms"><span>Saving for</span><b>{typed("a house in Couva", at(7,"saving") + 300, 40)}</b></div>
+      <div class="frow" style="--t0:{at(6,"list") + 200}ms"><span>Name</span><b>{typed("Keisha R.", at(6,"list") + 400, 60)}</b></div>
+      <div class="frow" style="--t0:{at(6,"well")}ms"><span>How well known</span><i class="hbar"><b style="--v:80%;--t0:{at(6,"well") + 200}ms"></b></i></div>
+      <div class="frow" style="--t0:{at(6,"approach")}ms"><span>Could approach on business</span><em class="yes" style="--t0:{at(6,"approach") + 250}ms">Yes</em></div>
+      <div class="frow" style="--t0:{at(6,"refer")}ms"><span>Would refer you</span><i class="hbar"><b style="--v:65%;--t0:{at(6,"refer") + 200}ms"></b></i></div>
+      <div class="frow" style="--t0:{at(6,"saving")}ms"><span>Saving for</span><b>{typed("a house in Couva", at(6,"saving") + 300, 40)}</b></div>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 8 · POP7, the science
+# 7 · POP7, the science
 POP = [('Achievement drive', 'achievement', 78), ('Independence', 'independence', 66), ('Call reluctance · low', 'call', 22)]
-S.append(scene(8, 's-pop', f'''
+S.append(scene(7, 's-pop', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">The science</p>
-    <h2 class="h xl">{words("POP7.", at(8,"POP7") - 200, 80)}</h2>
-    <p class="sub in" style="--t0:{at(8,"predict")}ms">The profile the industry uses to predict who makes it.</p>
-    <h2 class="h m wine2">{words("Selected on evidence.", at(8,"evidence") - 150, 120)}</h2>
-    <p class="sub in" style="--t0:{at(8,"protects")}ms">It protects you as much as it protects us.</p>
+    <h2 class="h xl">{words("POP7.", at(7,"POP7") - 200, 80)}</h2>
+    <p class="sub in" style="--t0:{at(7,"predict")}ms">The profile the industry uses to predict who makes it.</p>
+    <h2 class="h m wine2">{words("Selected on evidence.", at(7,"evidence") - 150, 120)}</h2>
+    <p class="sub in" style="--t0:{at(7,"protects")}ms">It protects you as much as it protects us.</p>
   </div>
   <div class="col">
-    <div class="pulse in fl" style="--t0:{at(8,"profile")}ms">
+    <div class="pulse in fl" style="--t0:{at(7,"profile")}ms">
       <div class="bd-h"><b>Career Profile · POP7</b><span>candidate</span></div>
-      {''.join(f'<div class="meter" style="--t0:{at(8,w)}ms;--v:{v}%"><span>{n}</span><i><b></b></i></div>' for n,w,v in POP)}
-      <div class="pring" style="--t0:{at(8,"probability")}ms"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/><circle class="arc" cx="50" cy="50" r="42"/></svg><b><em class="cnt" data-to="80" data-suf="%" data-at="{at(8,"probability")}">80%</em></b><span>probability of success</span></div>
+      {''.join(f'<div class="meter" style="--t0:{at(7,w)}ms;--v:{v}%"><span>{n}</span><i><b></b></i></div>' for n,w,v in POP)}
+      <div class="pring" style="--t0:{at(7,"probability")}ms"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/><circle class="arc" cx="50" cy="50" r="42"/></svg><b><em class="cnt" data-to="80" data-suf="%" data-at="{at(7,"probability")}">80%</em></b><span>probability of success</span></div>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 9 · we select
+# 8 · we select
 GATES = ['Apply & screen','Meet the Branch Manager','Discovery','Assessment','Selection']
-S.append(scene(9, 's-gates', f'''
+S.append(scene(8, 's-gates', f'''
 <div class="full">
   <p class="eye in" style="--t0:200ms">The selection</p>
   <h2 class="h l">{words("We don’t fill seats. We select.", 400)}</h2>
   <ol class="gates">
-    {''.join(f'<li style="--t0:{at(9,"Five") + 350*i}ms"><b>{i+1}</b><span>{g}</span></li>' for i, g in enumerate(GATES))}
-    <span class="gline" style="--t0:{at(9,"Five")}ms"></span>
+    {''.join(f'<li style="--t0:{at(8,"Five") + 350*i}ms"><b>{i+1}</b><span>{g}</span></li>' for i, g in enumerate(GATES))}
+    <span class="gline" style="--t0:{at(8,"Five")}ms"></span>
   </ol>
-  <p class="sub big in" style="--t0:{at(9,"Discovery")}ms">At your Discovery you sit with our qualifiers and ask them anything, <em>without the Branch Manager in the room.</em></p>
+  <p class="sub big in" style="--t0:{at(8,"Discovery")}ms">At your Discovery you sit with our qualifiers and ask them anything, <em>without the Branch Manager in the room.</em></p>
 </div>'''))
 
-# 10 · selected: built properly
+# 9 · selected: built properly
 BUILD = [('Training and induction', 'Training', 'cap'), ('Boot camp', 'Boot', 'bolt'), ('The licence: study · exam · contracting', 'licence', 'doc'), ('Field training with your unit manager', 'Field', 'users'), ('Constant contact', 'constant', 'phone')]
-S.append(scene(10, 's-build', f'''
+S.append(scene(9, 's-build', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Selected</p>
-    <h2 class="h l">{words("Built properly.", at(10,"built") - 200, 140)}</h2>
-    <p class="sub in" style="--t0:{at(10,"form")}ms">The branch beside you for <em>every form</em>.</p>
-    <p class="sub in" style="--t0:{at(10,"Nobody")}ms">Nobody disappears between the signature and the first client.</p>
+    <h2 class="h l">{words("Built properly.", at(9,"built") - 200, 140)}</h2>
+    <p class="sub in" style="--t0:{at(9,"form")}ms">The branch beside you for <em>every form</em>.</p>
+    <p class="sub in" style="--t0:{at(9,"Nobody")}ms">Nobody disappears between the signature and the first client.</p>
   </div>
   <div class="col">
-    <div class="day in fl" style="--t0:{at(10,"Selected")}ms">
+    <div class="day in fl" style="--t0:{at(9,"Selected")}ms">
       <ul class="dlist">
-        {''.join(f'<li style="--t0:{at(10,w)}ms;--t1:{at(10,w) + 900}ms"><svg class="ic"><use href="#i-{ic}"/></svg><b>{n}</b><span>with the branch</span></li>' for n,w,ic in BUILD)}
+        {''.join(f'<li style="--t0:{at(9,w)}ms;--t1:{at(9,w) + 900}ms"><svg class="ic"><use href="#i-{ic}"/></svg><b>{n}</b><span>with the branch</span></li>' for n,w,ic in BUILD)}
       </ul>
     </div>
   </div>
 </div>'''))
 
-# 11 · clients matched to you
+# 10 · clients matched to you
 HH = [('The Ramlogan household', '3 policies · since 2014'), ('The Charles household', '2 policies · since 2019'), ('The Ali household', '4 policies · since 2008')]
-S.append(scene(11, 's-match', f'''
+S.append(scene(10, 's-match', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Afraid you'd start from zero?</p>
-    <h2 class="h l">{words("You won't.", at(11,"won") - 150, 160)}</h2>
-    <p class="sub in" style="--t0:{at(11,"matched") - 300}ms">Clients whose agent has moved on are <b>matched to you</b>, household by household.</p>
+    <h2 class="h l">{words("You won't.", at(10,"won") - 150, 160)}</h2>
+    <p class="sub in" style="--t0:{at(10,"matched") - 300}ms">Clients whose agent has moved on are <b>matched to you</b>, household by household.</p>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{at(11,"file")}ms">The file</span>
-      <span class="ypill in" style="--t0:{at(11,"history")}ms">The history</span>
-      <span class="ypill in" style="--t0:{at(11,"first")}ms">The first thing to say</span>
+      <span class="ypill in" style="--t0:{at(10,"file")}ms">The file</span>
+      <span class="ypill in" style="--t0:{at(10,"history")}ms">The history</span>
+      <span class="ypill in" style="--t0:{at(10,"first")}ms">The first thing to say</span>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{at(11,"Clients")}ms">
+    <div class="list in fl" style="--t0:{at(10,"Clients")}ms">
       <div class="bd-h"><b>Your list</b><span>named to you</span></div>
-      {''.join(f'<div class="hh" style="--t0:{at(11,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{s}</span><em>named</em></div>' for i, (n, s) in enumerate(HH))}
+      {''.join(f'<div class="hh" style="--t0:{at(10,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{s}</span><em>named</em></div>' for i, (n, s) in enumerate(HH))}
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 12 · TT$200 a household, and you rate the support
+# 11 · TT$200 a household, and you rate the support
 CLAIM = [('Questionnaire in', 'questionnaire'), ('Claim found', 'earns'), ('Chased by the system', 'chases'), ('Paid', 'pays')]
-S.append(scene(12, 's-money', f'''
+S.append(scene(11, 's-money', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Two more things</p>
-    <h2 class="h xl"><span class="cnt" data-to="200" data-pre="TT$" data-at="{at(12,"two")}">TT$200</span></h2>
-    <h2 class="h m">{words("every matched household, when the questionnaire comes in.", at(12,"questionnaire") - 300, 70)}</h2>
-    <p class="sub in" style="--t0:{at(12,"customer")}ms">And when the support team closes a task for you, <em>you rate the work.</em></p>
+    <h2 class="h xl"><span class="cnt" data-to="200" data-pre="TT$" data-at="{at(11,"two")}">TT$200</span></h2>
+    <h2 class="h m">{words("every matched household, when the questionnaire comes in.", at(11,"questionnaire") - 300, 70)}</h2>
+    <p class="sub in" style="--t0:{at(11,"customer")}ms">And when the support team closes a task for you, <em>you rate the work.</em></p>
   </div>
   <div class="col">
-    <div class="claim in fl" style="--t0:{at(12,"household")}ms">
+    <div class="claim in fl" style="--t0:{at(11,"household")}ms">
       <div class="bd-h"><b>Retention claim</b><span>RP-261027-014</span></div>
-      <div class="steps4">{''.join(f'<div class="st" style="--t0:{at(12,w)}ms"><i></i><span>{n}</span></div>' for n,w in CLAIM)}</div>
-      <span class="stamp paid" style="--t0:{at(12,"pays")}ms">Paid</span>
+      <div class="steps4">{''.join(f'<div class="st" style="--t0:{at(11,w)}ms"><i></i><span>{n}</span></div>' for n,w in CLAIM)}</div>
+      <span class="stamp paid" style="--t0:{at(11,"pays")}ms">Paid</span>
       {SAMPLE}
     </div>
-    <div class="rate in fl" style="--t0:{at(12,"support")}ms">
+    <div class="rate in fl" style="--t0:{at(11,"support")}ms">
       <div class="rt"><b>Task closed for you</b><span>Sasha L. · Premium reinstated · 1 day</span></div>
-      <div class="stars">{''.join(f'<svg viewBox="0 0 24 24" style="--t0:{at(12,"Five") + i*160}ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>' for i in range(5))}</div>
-      <em class="cust" style="--t0:{at(12,"customer")}ms">You're their customer too</em>
+      <div class="stars">{''.join(f'<svg viewBox="0 0 24 24" style="--t0:{at(11,"Five") + i*160}ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>' for i in range(5))}</div>
+      <em class="cust" style="--t0:{at(11,"customer")}ms">You're their customer too</em>
     </div>
   </div>
 </div>'''))
 
-# 13 · leads: the link, the code, the board
+# 12 · leads: the link, the code, the board
 PICKS = ['My family, if something happens to me', 'The house and the mortgage', 'Retiring properly', 'Check what I already have']
-S.append(scene(13, 's-leads', f'''
+S.append(scene(12, 's-leads', f'''
 <div class="split wide">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Leads</p>
-    <h2 class="h l">{words("Leads land on your board.", at(13,"Leads") - 200)}</h2>
-    <p class="sub in" style="--t0:{at(13,"link")}ms">Your own link. Your own QR code. A prospect taps what is on their mind.</p>
-    <div class="qr mini in" style="--t0:{at(13,"QR")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><span>Your code</span></div>
+    <h2 class="h l">{words("Leads land on your board.", at(12,"Leads") - 200)}</h2>
+    <p class="sub in" style="--t0:{at(12,"link")}ms">Your own link. Your own QR code. A prospect taps what is on their mind.</p>
+    <div class="qr mini in" style="--t0:{at(12,"QR")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><span>Your code</span></div>
   </div>
   <div class="col">
     <div class="lead-wrap">
-      <svg class="arcpath" viewBox="0 0 400 240" preserveAspectRatio="none" aria-hidden="true"><path class="ap" style="--t0:{at(13,"lands") - 700}ms" d="M80 150 C 150 40, 230 40, 330 90"/><path class="ap comet" style="--t0:{at(13,"lands") - 700}ms" d="M80 150 C 150 40, 230 40, 330 90"/></svg>
-      <div class="phone in fl" style="--t0:{at(13,"link")}ms">
+      <svg class="arcpath" viewBox="0 0 400 240" preserveAspectRatio="none" aria-hidden="true"><path class="ap" style="--t0:{at(12,"lands") - 700}ms" d="M80 150 C 150 40, 230 40, 330 90"/><path class="ap comet" style="--t0:{at(12,"lands") - 700}ms" d="M80 150 C 150 40, 230 40, 330 90"/></svg>
+      <div class="phone in fl" style="--t0:{at(12,"link")}ms">
         <div class="ph-top"><b>Hi Keisha</b><span>from your advisor</span></div>
         <p class="ph-q">What is on your mind?</p>
         <ul class="picks">
-          {''.join(f'<li class="{"on" if i in (0,2) else ""}" style="--t0:{at(13,"taps") + i*260}ms"><i></i>{p}</li>' for i, p in enumerate(PICKS))}
+          {''.join(f'<li class="{"on" if i in (0,2) else ""}" style="--t0:{at(12,"taps") + i*260}ms"><i></i>{p}</li>' for i, p in enumerate(PICKS))}
         </ul>
-        <div class="ph-btn tap" style="--t0:{at(13,"lead",1)}ms">Call me</div>
+        <div class="ph-btn tap" style="--t0:{at(12,"lead",1)}ms">Call me</div>
         {SAMPLE}
       </div>
-      <div class="board in fl" style="--t0:{at(13,"board") - 500}ms">
+      <div class="board in fl" style="--t0:{at(12,"board") - 500}ms">
         <div class="bd-h"><b>Your board</b><span class="live"><i></i>live</span></div>
         <div class="tiles4">
-          <div><b class="cnt" data-to="14" data-at="{at(13,"board")}">14</b><span>sent</span></div>
-          <div><b class="cnt" data-to="11" data-at="{at(13,"board") + 120}">11</b><span>opened</span></div>
-          <div><b class="cnt" data-to="8" data-at="{at(13,"board") + 240}">8</b><span>watched</span></div>
-          <div class="hot"><b class="cnt" data-to="5" data-at="{at(13,"board") + 360}">5</b><span>booked</span></div>
+          <div><b class="cnt" data-to="14" data-at="{at(12,"board")}">14</b><span>sent</span></div>
+          <div><b class="cnt" data-to="11" data-at="{at(12,"board") + 120}">11</b><span>opened</span></div>
+          <div><b class="cnt" data-to="8" data-at="{at(12,"board") + 240}">8</b><span>watched</span></div>
+          <div class="hot"><b class="cnt" data-to="5" data-at="{at(12,"board") + 360}">5</b><span>booked</span></div>
         </div>
-        <div class="lead-card fly" style="--t0:{at(13,"lands")}ms"><b>Keisha</b><span>my family · retiring properly</span><em>this week, evenings</em></div>
+        <div class="lead-card fly" style="--t0:{at(12,"lands")}ms"><b>Keisha</b><span>my family · retiring properly</span><em>this week, evenings</em></div>
         <div class="lead-row dim"><b>Andre</b><span>the house and the mortgage</span></div>
         <div class="lead-row dim"><b>Priya</b><span>check what I already have</span></div>
       </div>
@@ -368,508 +350,460 @@ S.append(scene(13, 's-leads', f'''
   </div>
 </div>'''))
 
-# 14 · the Lead Desk
-S.append(scene(14, 's-desk', f'''
+# 13 · the Lead Desk
+S.append(scene(13, 's-desk', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">The Lead Desk</p>
-    <h2 class="h l">{words("Your opening, written from their words.", at(14,"writes") - 300)}</h2>
+    <h2 class="h l">{words("Your opening, written from their words.", at(13,"writes") - 300)}</h2>
     <div class="pill-row">
-      <span class="npill in" style="--t0:{at(14,"Not")}ms"><s>A product pitch</s></span>
-      <span class="ypill in" style="--t0:{at(14,"appointment")}ms">An appointment</span>
+      <span class="npill in" style="--t0:{at(13,"Not")}ms"><s>A product pitch</s></span>
+      <span class="ypill in" style="--t0:{at(13,"appointment")}ms">An appointment</span>
     </div>
-    <div class="fwd in" style="--t0:{at(14,"forwarded")}ms"><svg class="ic"><use href="#i-fwd"/></svg><span>Forwarded to a friend?</span><b>Still yours.</b></div>
+    <div class="fwd in" style="--t0:{at(13,"forwarded")}ms"><svg class="ic"><use href="#i-fwd"/></svg><span>Forwarded to a friend?</span><b>Still yours.</b></div>
   </div>
   <div class="col">
-    <div class="desk in fl" style="--t0:{at(14,"Lead")}ms">
+    <div class="desk in fl" style="--t0:{at(13,"Lead")}ms">
       <p class="dk-h">Call script · Keisha</p>
-      <p class="dk-l">{typed("Good evening, is that Keisha? You put your number in on our page and asked me to call.", at(14,"opening"), 26)}</p>
-      <p class="dk-l hl">{typed("You told me what was on your mind was your family, if something happened to you, and retiring properly.", at(14,"from"), 26)}</p>
-      <p class="dk-q">{typed("Who depends on your income right now, and for how long would they need it?", at(14,"told") + 900, 26)}</p>
+      <p class="dk-l">{typed("Good evening, is that Keisha? You put your number in on our page and asked me to call.", at(13,"opening"), 26)}</p>
+      <p class="dk-l hl">{typed("You told me what was on your mind was your family, if something happened to you, and retiring properly.", at(13,"from"), 26)}</p>
+      <p class="dk-q">{typed("Who depends on your income right now, and for how long would they need it?", at(13,"told") + 900, 26)}</p>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 15 · the FY27 flight plan
+# 14 · the FY27 flight plan
 STAGES = ['Your why', 'Your budget', 'Your income', 'Your API', 'Your week', 'How you work', 'GO']
-S.append(scene(15, 's-flight', f'''
+S.append(scene(14, 's-flight', f'''
 <div class="split wide">
   <div class="col">
     <p class="eye in" style="--t0:200ms">FY27 Flight Plan</p>
-    <h2 class="h l">{words("Your year has a flight plan.", at(15,"flight") - 400)}</h2>
+    <h2 class="h l">{words("Your year has a flight plan.", at(14,"flight") - 400)}</h2>
     <div class="figs">
-      <div class="fig in" style="--t0:{at(15,"Fifteen")}ms"><b><em class="cnt" data-to="15" data-at="{at(15,"Fifteen")}">15</em> min</b><span>to file it</span></div>
-      <div class="fig in" style="--t0:{at(15,"costs")}ms"><b>7</b><span>stages, from your budget</span></div>
+      <div class="fig in" style="--t0:{at(14,"Fifteen")}ms"><b><em class="cnt" data-to="15" data-at="{at(14,"Fifteen")}">15</em> min</b><span>to file it</span></div>
+      <div class="fig in" style="--t0:{at(14,"costs")}ms"><b>7</b><span>stages, from your budget</span></div>
     </div>
   </div>
   <div class="col">
-    <div class="flight in" style="--t0:{at(15,"flight") - 200}ms">
+    <div class="flight in" style="--t0:{at(14,"flight") - 200}ms">
       <svg viewBox="0 0 400 240" aria-hidden="true">
-        <path class="traj" style="--t0:{at(15,"Start")}ms" d="M20 210 C 120 210, 190 180, 240 120 S 340 30, 380 20"/>
-        {''.join(f'<g class="st" style="--t0:{at(15,"Start") + i*320}ms"><circle cx="{x}" cy="{y}" r="9"/>{"" if i == 6 else f"<text x=\"{x}\" y=\"{y + (28 if i % 2 == 0 else -18)}\">{s}</text>"}</g>' for i, (s, (x, y)) in enumerate(zip(STAGES, [(20,210),(80,208),(140,200),(200,170),(250,110),(300,65),(380,20)])))}
+        <path class="traj" style="--t0:{at(14,"Start")}ms" d="M20 210 C 120 210, 190 180, 240 120 S 340 30, 380 20"/>
+        {''.join(f'<g class="st" style="--t0:{at(14,"Start") + i*320}ms"><circle cx="{x}" cy="{y}" r="9"/>{"" if i == 6 else f"<text x=\"{x}\" y=\"{y + (28 if i % 2 == 0 else -18)}\">{s}</text>"}</g>' for i, (s, (x, y)) in enumerate(zip(STAGES, [(20,210),(80,208),(140,200),(200,170),(250,110),(300,65),(380,20)])))}
         {''.join(f'<circle class="star" cx="{x}" cy="{y}" r="{r}" style="--dl:{(i*7)%23/10}s"/>' for i,(x,y,r) in enumerate([(300,180,2.2),(350,150,1.6),(120,60,1.8),(60,120,1.4),(250,40,2),(180,120,1.3),(370,110,1.5)]))}
-        <circle class="rocket trail t2" style="--t0:{at(15,"Start") + 260}ms" r="3"/>
-        <circle class="rocket trail t1" style="--t0:{at(15,"Start") + 130}ms" r="5"/>
-        <circle class="rocket" style="--t0:{at(15,"Start")}ms" r="7"/>
+        <circle class="rocket trail t2" style="--t0:{at(14,"Start") + 260}ms" r="3"/>
+        <circle class="rocket trail t1" style="--t0:{at(14,"Start") + 130}ms" r="5"/>
+        <circle class="rocket" style="--t0:{at(14,"Start")}ms" r="7"/>
       </svg>
-      <div class="go" style="--t0:{at(15,"GO",1)}ms"><small>Your name</small><b>GO</b></div>
+      <div class="go" style="--t0:{at(14,"GO",1)}ms"><small>Your name</small><b>GO</b></div>
     </div>
   </div>
 </div>'''))
 
-# 16 · the system sets your day
-S.append(scene(16, 's-day', f'''
+# 15 · the system sets your day
+S.append(scene(15, 's-day', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Every morning</p>
-    <h2 class="h l">{words("The system sets your day.", at(16,"sets") - 400)}</h2>
-    <p class="sub in" style="--t0:{at(16,"Check")}ms">Check in, and the page shows what you have achieved, as you go.</p>
+    <h2 class="h l">{words("Your day, already laid out.", at(15,"laid") - 400)}</h2>
+    <p class="sub in" style="--t0:{at(15,"admin")}ms">The admin is done before you're up.</p>
+    <h2 class="h m wine2">{words("Your hours go to clients, and to the coaching.", at(15,"hours") - 150, 90)}</h2>
   </div>
   <div class="col">
-    <div class="day in fl" style="--t0:{at(16,"system")}ms">
-      <div class="prog"><i style="--t0:{at(16,"achieved")}ms"></i><b><em class="cnt" data-to="78" data-suf="%" data-at="{at(16,"achieved")}">78%</em> of the day</b></div>
-      <div class="ck tap" style="--t0:{at(16,"Check")}ms"><span class="before">Check in</span><span class="after"><i></i>Checked in · 6:02</span></div>
+    <div class="day in fl" style="--t0:{at(15,"laid")}ms">
       <ul class="dlist">
-        <li style="--t0:{at(16,"projection")}ms;--t1:{at(16,"achieved") + 200}ms"><svg class="ic"><use href="#i-target"/></svg><b>Your projection</b><span>12 calls · 3 appointments</span></li>
-        <li style="--t0:{at(16,"calls")}ms;--t1:{at(16,"achieved") + 500}ms"><svg class="ic"><use href="#i-phone"/></svg><b>Next calls</b><span>Keisha · Andre · Priya</span></li>
-        <li style="--t0:{at(16,"pending")}ms;--t1:{at(16,"achieved") + 800}ms"><svg class="ic"><use href="#i-doc"/></svg><b>Pending cases</b><span>2 · with the history on them</span></li>
+        <li style="--t0:{at(15,"calls")}ms;--t1:{at(15,"calls") + 900}ms"><svg class="ic"><use href="#i-phone"/></svg><b>Your calls</b><span>Keisha · Andre · Priya</span></li>
+        <li style="--t0:{at(15,"pending")}ms;--t1:{at(15,"pending") + 900}ms"><svg class="ic"><use href="#i-doc"/></svg><b>Pending cases</b><span>2 · with the history on them</span></li>
+        <li style="--t0:{at(15,"next")}ms;--t1:{at(15,"next") + 900}ms"><svg class="ic"><use href="#i-target"/></svg><b>Your next step</b><span>on each one, already written</span></li>
       </ul>
+      <div class="prog slim" style="margin-top:calc(var(--u)*1.6)"><i style="--t0:{at(15,"admin")}ms"></i><b><em class="cnt" data-to="100" data-suf="%" data-at="{at(15,"admin")}">100%</em> of the admin, done</b></div>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 17 · projected, done, balance; the register
-BAL = [('Calls to make', 12, 14, '+2'), ('Appointments to set', 3, 3, '0'), ('Fact finds', 2, 2, '0')]
-S.append(scene(17, 's-balance', f'''
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">Projected · done · balance</p>
-    <h2 class="h l">{words("Your morning asks.", at(17,"morning") - 200)}</h2>
-    <h2 class="h l wine2">{words("Your evening balances.", at(17,"evening") - 200)}</h2>
-    <div class="pill-row">
-      <span class="ypill in" style="--t0:{at(17,"register")}ms"><svg class="ic"><use href="#i-users"/></svg> The register knows you're in</span>
-      <span class="npill in strike" style="--t0:{at(17,"spreadsheet")}ms">A spreadsheet</span>
-    </div>
-  </div>
-  <div class="col">
-    <div class="bal in fl" style="--t0:{at(17,"calls") - 600}ms">
-      <div class="bal-h"><b>Morning</b><span class="ck2" style="--t0:{at(17,"Check")}ms"><i></i>In · 6:02 · on time</span><b class="ev" style="--t0:{at(17,"evening")}ms">Evening</b></div>
-      {''.join(f'<div class="brow" style="--t0:{at(17,["calls","appointments","fact"][i])}ms;--t1:{at(17,"did") + i*260}ms;--t2:{at(17,"balance") + i*220}ms"><span>{n}</span><b class="pj"><em class="cnt" data-to="{a}" data-at="{at(17,["calls","appointments","fact"][i])}">{a}</em></b><b class="dn"><em class="cnt" data-to="{b}" data-at="{at(17,"did") + i*260}">{b}</em></b><i class="bl {"up" if d.startswith("+") else ""}">{d}</i></div>' for i,(n,a,b,d) in enumerate(BAL))}
-      <div class="prog slim" style="margin-top:calc(var(--u)*1.6)"><i style="--t0:{at(17,"fills")}ms"></i><b><em class="cnt" data-to="84" data-suf="%" data-at="{at(17,"fills")}">84%</em> of the day</b></div>
-      {SAMPLE}
-    </div>
-  </div>
-</div>'''))
-
-# 18 · factfind360: the arithmetic while you talk
-S.append(scene(18, 's-ff', f'''
+# 16 · factfind360: the arithmetic while you talk
+S.append(scene(16, 's-ff', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">factfind360</p>
-    <h2 class="h l">{words("The arithmetic, while you talk.", at(18,"arithmetic") - 500)}</h2>
+    <h2 class="h l">{words("The arithmetic, while you talk.", at(16,"arithmetic") - 500)}</h2>
     <ul class="steps3">
-      <li class="in" style="--t0:{at(18,"signs")}ms"><i>1</i>Your manager signs it</li>
-      <li class="in" style="--t0:{at(18,"confirms")}ms"><i>2</i>The client confirms it</li>
-      <li class="in zero" style="--t0:{at(18,"not")}ms"><b>0</b><span>cases lapsed since launch</span></li>
+      <li class="in" style="--t0:{at(16,"signs")}ms"><i>1</i>Your manager signs it</li>
+      <li class="in" style="--t0:{at(16,"confirms")}ms"><i>2</i>The client confirms it</li>
+      <li class="in zero" style="--t0:{at(16,"not")}ms"><b>0</b><span>cases lapsed since launch</span></li>
     </ul>
   </div>
   <div class="col">
-    <div class="calc in fl" style="--t0:{at(18,"table")}ms">
+    <div class="calc in fl" style="--t0:{at(16,"table")}ms">
       <p class="dk-h">The need, in dollars</p>
-      <div class="crow" style="--t0:{at(18,"arithmetic")}ms"><span>Income replacement</span><b>TT$<em class="cnt" data-to="1240" data-pre="" data-suf="k" data-at="{at(18,"arithmetic")}">1240k</em></b></div>
-      <div class="crow" style="--t0:{at(18,"arithmetic") + 500}ms"><span>The mortgage</span><b>TT$<em class="cnt" data-to="620" data-suf="k" data-at="{at(18,"arithmetic") + 500}">620k</em></b></div>
-      <div class="crow" style="--t0:{at(18,"arithmetic") + 1000}ms"><span>Education</span><b>TT$<em class="cnt" data-to="310" data-suf="k" data-at="{at(18,"arithmetic") + 1000}">310k</em></b></div>
-      <div class="ctot" style="--t0:{at(18,"dollars")}ms"><span>Protection gap</span><b>TT$<em class="cnt" data-to="2170" data-suf="k" data-at="{at(18,"dollars")}">2170k</em></b></div>
-      <div class="sig" style="--t0:{at(18,"signs")}ms"><svg viewBox="0 0 220 50" aria-hidden="true"><path d="M6 36c18-30 28-28 30-10s8 14 20-6 16-16 22 2 6 20 22 6 14-24 26-6 10 22 24 8 12-20 26-6 12 12 26 2" fill="none" stroke="#17191F" stroke-width="2.4" stroke-linecap="round"/></svg><span>Manager · signed</span></div>
-      <div class="conf in" style="--t0:{at(18,"confirms")}ms"><i></i>Client confirmed from their inbox</div>
-      <div class="stamp" style="--t0:{at(18,"confirms") + 350}ms">Confirmed</div>
+      <div class="crow" style="--t0:{at(16,"arithmetic")}ms"><span>Income replacement</span><b>TT$<em class="cnt" data-to="1240" data-pre="" data-suf="k" data-at="{at(16,"arithmetic")}">1240k</em></b></div>
+      <div class="crow" style="--t0:{at(16,"arithmetic") + 500}ms"><span>The mortgage</span><b>TT$<em class="cnt" data-to="620" data-suf="k" data-at="{at(16,"arithmetic") + 500}">620k</em></b></div>
+      <div class="crow" style="--t0:{at(16,"arithmetic") + 1000}ms"><span>Education</span><b>TT$<em class="cnt" data-to="310" data-suf="k" data-at="{at(16,"arithmetic") + 1000}">310k</em></b></div>
+      <div class="ctot" style="--t0:{at(16,"dollars")}ms"><span>Protection gap</span><b>TT$<em class="cnt" data-to="2170" data-suf="k" data-at="{at(16,"dollars")}">2170k</em></b></div>
+      <div class="sig" style="--t0:{at(16,"signs")}ms"><svg viewBox="0 0 220 50" aria-hidden="true"><path d="M6 36c18-30 28-28 30-10s8 14 20-6 16-16 22 2 6 20 22 6 14-24 26-6 10 22 24 8 12-20 26-6 12 12 26 2" fill="none" stroke="#17191F" stroke-width="2.4" stroke-linecap="round"/></svg><span>Manager · signed</span></div>
+      <div class="conf in" style="--t0:{at(16,"confirms")}ms"><i></i>Client confirmed from their inbox</div>
+      <div class="stamp" style="--t0:{at(16,"confirms") + 350}ms">Confirmed</div>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 19 · Query Pal
-S.append(scene(19, 's-qp', f'''
+# 17 · Query Pal
+S.append(scene(17, 's-qp', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Query Pal</p>
-    <h2 class="h l">{words("Ask once. Tracked till answered.", at(19,"Query") - 200, 100)}</h2>
-    <p class="sub in" style="--t0:{at(19,"twice")}ms">You never have to say <em>"I'll find out"</em> twice.</p>
+    <h2 class="h l">{words("Ask once. Tracked till answered.", at(17,"Query") - 200, 100)}</h2>
+    <p class="sub in" style="--t0:{at(17,"twice")}ms">You never have to say <em>"I'll find out"</em> twice.</p>
   </div>
   <div class="col">
-    <div class="qp in fl" style="--t0:{at(19,"question")}ms">
+    <div class="qp in fl" style="--t0:{at(17,"question")}ms">
       <div class="bd-h"><b>Query Pal</b><span>from your phone</span></div>
-      <div class="qmsg me" style="--t0:{at(19,"Post")}ms"><small>You · 10:14</small>{typed("Can my client add her son to the health plan mid-year?", at(19,"Post") + 300, 26)}</div>
-      <div class="qmsg them" style="--t0:{at(19,"answers")}ms"><small>Branch team · 11:02</small>{typed("Yes, within 31 days of the birth or adoption. Form EB0010, I've attached it.", at(19,"answers") + 300, 24)}</div>
+      <div class="qmsg me" style="--t0:{at(17,"Post")}ms"><small>You · 10:14</small>{typed("Can my client add her son to the health plan mid-year?", at(17,"Post") + 300, 26)}</div>
+      <div class="qmsg them" style="--t0:{at(17,"answers")}ms"><small>Branch team · 11:02</small>{typed("Yes, within 31 days of the birth or adoption. Form EB0010, I've attached it.", at(17,"answers") + 300, 24)}</div>
       <div class="steps4 three">
-        <div class="st" style="--t0:{at(19,"Post")}ms"><i></i><span>Posted</span></div>
-        <div class="st" style="--t0:{at(19,"answers")}ms"><i></i><span>Answered</span></div>
-        <div class="st" style="--t0:{at(19,"answer")}ms"><i></i><span>Client told</span></div>
+        <div class="st" style="--t0:{at(17,"Post")}ms"><i></i><span>Posted</span></div>
+        <div class="st" style="--t0:{at(17,"answers")}ms"><i></i><span>Answered</span></div>
+        <div class="st" style="--t0:{at(17,"answer")}ms"><i></i><span>Client told</span></div>
       </div>
-      <em class="turn" style="--t0:{at(19,"turnaround")}ms">inside the turnaround</em>
+      <em class="turn" style="--t0:{at(17,"turnaround")}ms">inside the turnaround</em>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 20 · dashboards everywhere: the live wall
+# 18 · dashboards everywhere: the live wall
 WALL_BARS = [('You', 92, True), ('N.', 74, False), ('F.', 66, False), ('D.', 58, False), ('M.', 44, False)]
-S.append(scene(20, 's-wall', f'''
+S.append(scene(18, 's-wall', f'''
 <div class="split wide">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Dashboards everywhere</p>
-    <h2 class="h l">{words("The wall is live.", at(20,"live") - 500)}</h2>
-    <p class="sub in" style="--t0:{at(20,"screen")}ms">On the screen in the branch, and on your phone.</p>
-    <div class="nosheet in" style="--t0:{at(20,"Nothing")}ms"><svg class="ic"><use href="#i-grid"/></svg><s>the spreadsheet</s></div>
+    <h2 class="h l">{words("The wall is live.", at(18,"live") - 500)}</h2>
+    <p class="sub in" style="--t0:{at(18,"screen")}ms">On the screen in the branch, and on your phone.</p>
+    <div class="nosheet in" style="--t0:{at(18,"Nothing")}ms"><svg class="ic"><use href="#i-grid"/></svg><s>the spreadsheet</s></div>
   </div>
   <div class="col">
     <div class="wall-wrap">
-      <div class="wall in fl" style="--t0:{at(20,"wall") - 300}ms">
+      <div class="wall in fl" style="--t0:{at(18,"wall") - 300}ms">
         <div class="bd-h"><b>Production</b><span class="live"><i></i>live</span></div>
         <div class="tiles3">
-          <div style="--t0:{at(20,"week")}ms"><b class="cnt" data-to="4" data-at="{at(20,"week")}">4</b><span>apps this week</span></div>
-          <div style="--t0:{at(20,"year")}ms"><b class="cnt" data-to="31" data-at="{at(20,"year")}">31</b><span>this year</span></div>
-          <div class="hot" style="--t0:{at(20,"pace")}ms"><b class="cnt" data-to="108" data-suf="%" data-at="{at(20,"pace")}">108%</b><span>of pace</span></div>
+          <div style="--t0:{at(18,"week")}ms"><b class="cnt" data-to="4" data-at="{at(18,"week")}">4</b><span>apps this week</span></div>
+          <div style="--t0:{at(18,"year")}ms"><b class="cnt" data-to="31" data-at="{at(18,"year")}">31</b><span>this year</span></div>
+          <div class="hot" style="--t0:{at(18,"pace")}ms"><b class="cnt" data-to="108" data-suf="%" data-at="{at(18,"pace")}">108%</b><span>of pace</span></div>
         </div>
         <div class="wbars">
-          {''.join(f'<div class="wb{" you" if y else ""}" style="--w:{w}%;--t0:{at(20,"live") + i*140}ms"><span>{n}</span><i></i></div>' for i, (n, w, y) in enumerate(WALL_BARS))}
+          {''.join(f'<div class="wb{" you" if y else ""}" style="--w:{w}%;--t0:{at(18,"live") + i*140}ms"><span>{n}</span><i></i></div>' for i, (n, w, y) in enumerate(WALL_BARS))}
         </div>
         {SAMPLE}
       </div>
-      <div class="phone small in" style="--t0:{at(20,"phone")}ms">
+      <div class="phone small in" style="--t0:{at(18,"phone")}ms">
         <div class="ph-top"><b>My workday</b><span>today</span></div>
-        <div class="ring-p" style="--t0:{at(20,"phone") + 200}ms"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/><circle class="arc" cx="50" cy="50" r="42"/></svg><b class="cnt" data-to="108" data-suf="%" data-at="{at(20,"phone") + 200}">108%</b></div>
+        <div class="ring-p" style="--t0:{at(18,"phone") + 200}ms"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/><circle class="arc" cx="50" cy="50" r="42"/></svg><b class="cnt" data-to="108" data-suf="%" data-at="{at(18,"phone") + 200}">108%</b></div>
         <p class="ph-s">ahead of the day</p>
       </div>
     </div>
   </div>
 </div>'''))
 
-# 21 · Branch Intelligence
-S.append(scene(21, 's-ai', f'''
+# 19 · Branch Intelligence
+S.append(scene(19, 's-ai', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Branch Intelligence</p>
-    <h2 class="h l">{words("One tap. The whole file, read.", at(21,"tap") - 300)}</h2>
+    <h2 class="h l">{words("One tap. The whole file, read.", at(19,"tap") - 300)}</h2>
     <div class="duo2">
-      <span class="ypill big in" style="--t0:{at(21,"decide")}ms">You decide.</span>
-      <span class="npill big in" style="--t0:{at(21,"prepares")}ms">It prepares.</span>
+      <span class="ypill big in" style="--t0:{at(19,"decide")}ms">You decide.</span>
+      <span class="npill big in" style="--t0:{at(19,"prepares")}ms">It prepares.</span>
     </div>
   </div>
   <div class="col">
-    <div class="file in fl" style="--t0:{at(21,"hard")}ms">
+    <div class="file in fl" style="--t0:{at(19,"hard")}ms">
       <div class="bd-h"><b>Client file</b><span>4 policies · 6 notes · 2 e-mails</span></div>
       <div class="flines"><i></i><i class="short"></i><i></i><i class="short"></i><i></i></div>
-      <div class="scan" style="--t0:{at(21,"reads")}ms"></div>
-      <div class="think" style="--t0:{at(21,"reads") + 500}ms;--t1:{at(21,"stands")}ms"><i></i><i></i><i></i></div>
-      <div class="ai" style="--t0:{at(21,"stands")}ms">
-        <p><b>Where it stands</b>{typed("Premium 41 days due. Wrote in on Tuesday asking for a call.", at(21,"stands") + 200, 24)}</p>
-        <p style="--t0:{at(21,"first")}ms"><b>Say first</b>{typed("Thank them for writing. Confirm what the policy pays before anything else.", at(21,"first") + 100, 24)}</p>
+      <div class="scan" style="--t0:{at(19,"reads")}ms"></div>
+      <div class="think" style="--t0:{at(19,"reads") + 500}ms;--t1:{at(19,"stands")}ms"><i></i><i></i><i></i></div>
+      <div class="ai" style="--t0:{at(19,"stands")}ms">
+        <p><b>Where it stands</b>{typed("Premium 41 days due. Wrote in on Tuesday asking for a call.", at(19,"stands") + 200, 24)}</p>
+        <p style="--t0:{at(19,"first")}ms"><b>Say first</b>{typed("Thank them for writing. Confirm what the policy pays before anything else.", at(19,"first") + 100, 24)}</p>
       </div>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 22 · the real screens
+# 20 · the real screens
 def shots():
     out = []
     for i, (rel, cap, word) in enumerate(SHOTS):
-        t0 = at(22, word); t1 = at(22, SHOTS[i + 1][2]) if i + 1 < len(SHOTS) else at(22, "Built")
+        t0 = at(20, word); t1 = at(20, SHOTS[i + 1][2]) if i + 1 < len(SHOTS) else at(20, "Built")
         out.append(f'<figure class="shot" style="--i:{i};--t0:{t0}ms;--t1:{t1}ms"><div class="frame"><img src="{img64(rel)}" alt=""></div><figcaption>{cap}</figcaption></figure>')
     return ''.join(out)
-S.append(scene(22, 's-real', f'''
+S.append(scene(20, 's-real', f'''
 <div class="full center">
   <p class="eye in" style="--t0:200ms">Not a mock-up</p>
-  <h2 class="h l">{words("These are the screens.", at(22,"screens") - 300, 110)}</h2>
-  <div class="gal" style="--t0:{at(22,"screens")}ms">{shots()}</div>
-  <p class="sub in built" style="--t0:{at(22,"Built")}ms">Built here, in <em>Chaguanas</em>, for this branch.</p>
+  <h2 class="h l">{words("These are the screens.", at(20,"screens") - 300, 110)}</h2>
+  <div class="gal" style="--t0:{at(20,"screens")}ms">{shots()}</div>
+  <p class="sub in built" style="--t0:{at(20,"Built")}ms">Built here, in <em>Chaguanas</em>, for this branch.</p>
   <span class="sample gal-s">sample data on every screen</span>
 </div>'''))
 
-# 23 · the people coach
+# 21 · the people coach
 DAYS = ['Mon','Tue','Wed','Thu','Fri']
-S.append(scene(23, 's-coach', f'''
+S.append(scene(21, 's-coach', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">The human part</p>
     <h2 class="h l">{words("The digital carries.", 400)}</h2>
-    <h2 class="h l wine2">{words("The people coach.", at(23,"people") - 300)}</h2>
+    <h2 class="h l wine2">{words("The people coach.", at(21,"people") - 300)}</h2>
   </div>
   <div class="col">
     <div class="corner">
       <span class="brk tl"></span><span class="brk br"></span>
       <div class="chips3">
-        <div class="chip in fl" style="--t0:{at(23,"interviews")}ms"><svg class="ic"><use href="#i-users"/></svg><b>Interviewed by the Branch Manager</b></div>
-        <div class="chip in fl" style="--t0:{at(23,"coaches")}ms"><svg class="ic"><use href="#i-up"/></svg><b>Coached after</b></div>
-        <div class="week in" style="--t0:{at(23,"week")}ms">
-          {''.join(f'<span class="{"fri" if d == "Fri" else ""}" style="--t0:{at(23,"Friday") if d == "Fri" else 0}ms">{d}</span>' for d in DAYS)}
+        <div class="chip in fl" style="--t0:{at(21,"interviews")}ms"><svg class="ic"><use href="#i-users"/></svg><b>Interviewed by the Branch Manager</b></div>
+        <div class="chip in fl" style="--t0:{at(21,"coaches")}ms"><svg class="ic"><use href="#i-up"/></svg><b>Coached after</b></div>
+        <div class="week in" style="--t0:{at(21,"week")}ms">
+          {''.join(f'<span class="{"fri" if d == "Fri" else ""}" style="--t0:{at(21,"Friday") if d == "Fri" else 0}ms">{d}</span>' for d in DAYS)}
         </div>
-        <div class="chip in fl" style="--t0:{at(23,"sits")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>Your unit manager sits with you on it</b></div>
+        <div class="chip in fl" style="--t0:{at(21,"sits")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>Your unit manager sits with you on it</b></div>
       </div>
     </div>
   </div>
 </div>'''))
 
-# 24 · the weekly pulse, and the note in your morning e-mail
+# 22 · the weekly pulse, and the note in your morning e-mail
 OFF3 = [('Leads', 'Andre', 62), ('Fact finds', 'Priya', 48), ('Closing interviews', 'Keisha', 71)]
-S.append(scene(24, 's-pulse', f'''
+S.append(scene(22, 's-pulse', f'''
 <div class="split wide">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Every week</p>
-    <h2 class="h l">{words("Your manager sees your week before Friday.", at(24,"pulse") - 400, 90)}</h2>
-    <p class="sub in" style="--t0:{at(24,"Help")}ms">Help finds you <em>before Friday</em>, not after.</p>
+    <h2 class="h l">{words("A coaching sheet, not a report card.", at(22,"report") - 300, 90)}</h2>
+    <p class="sub in" style="--t0:{at(22,"note")}ms">The note he writes for you lands in <em>your morning e-mail</em>.</p>
   </div>
   <div class="col">
-    <div class="pulse in fl" style="--t0:{at(24,"pulse") - 300}ms">
-      <div class="bd-h"><b>Weekly Manager Pulse</b><span>Akaash's unit · week 4</span></div>
-      <div class="prow2" style="--t0:{at(24,"lifted")}ms"><span>Who lifted the unit</span><b>Stephanie · Fawwaz</b></div>
-      {''.join(f'<div class="meter" style="--t0:{at(24,["leads","fact","closing"][i])}ms;--v:{v}%"><span>{n}</span><i><b></b></i><em>{a} · off pace</em></div>' for i,(n,a,v) in enumerate(OFF3))}
-      <div class="prow2" style="--t0:{at(24,"coaching")}ms"><span>Coaching done</span><b>{typed("Role-played the opening with Priya. Thursday calls booked together.", at(24,"coaching") + 300, 22)}</b></div>
+    <div class="pulse in fl" style="--t0:{at(22,"knows") - 300}ms">
+      <div class="bd-h"><b>Coaching this week</b><span>Akaash's unit · week 4</span></div>
+      {''.join(f'<div class="meter" style="--t0:{at(22,["leads","fact","closing"][i])}ms;--v:{v}%"><span>{n}</span><i><b></b></i><em>{a} · coached {w}</em></div>' for i,(n,a,v,w) in enumerate([("Leads","Andre",62,"Tuesday"),("Fact finds","Priya",48,"Wednesday"),("Closing","Keisha",71,"Thursday")]))}
+      <div class="prow2" style="--t0:{at(22,"did")}ms"><span>What he did</span><b>{typed("Role-played the opening with Priya. Thursday calls booked together.", at(22,"did") + 300, 22)}</b></div>
       {SAMPLE}
     </div>
-    <div class="note in" style="--t0:{at(24,"note")}ms">
+    <div class="note in" style="--t0:{at(22,"note")}ms">
       <small>From your manager · in your morning e-mail</small>
-      <p>{typed("Two fact finds this week, Priya. Let's book your Thursday calls together at eight.", at(24,"note") + 400, 26)}</p>
+      <p>{typed("Two fact finds this week, Priya. Let's book your Thursday calls together at eight.", at(22,"note") + 400, 26)}</p>
     </div>
   </div>
 </div>'''))
 
-# 25 · Wednesday, nine o'clock
+# 23 · Wednesday, nine o'clock
 AGENDA = [('The production board', 'by unit · exceptions only', 'production', 7), ('Your call list', 'scored by the sheet', 'call', 12), ('Maturities', 'money in motion', 'maturities', 10), ('The 85-day report', 'nobody lapses quietly', 'eighty', 5)]
-S.append(scene(25, 's-meeting', f'''
+S.append(scene(23, 's-meeting', f'''
 <div class="split wide">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Wednesday · 9:00</p>
-    <h2 class="h l">{words("Your call list, written for you.", at(25,"call") - 300, 100)}</h2>
+    <h2 class="h l">{words("Your call list, written for you.", at(23,"call") - 300, 100)}</h2>
     <ul class="agenda">
-      {''.join(f'<li style="--t0:{at(25,w)}ms"><i>{m} min</i><b>{n}</b><span>{d}</span></li>' for n,d,w,m in AGENDA)}
+      {''.join(f'<li style="--t0:{at(23,w)}ms"><i>{m} min</i><b>{n}</b><span>{d}</span></li>' for n,d,w,m in AGENDA)}
     </ul>
   </div>
   <div class="col">
-    <div class="wcard in fl" style="--t0:{at(25,"call") - 200}ms">
+    <div class="wcard in fl" style="--t0:{at(23,"call") - 200}ms">
       <div class="wh"><b>This week's call list</b><span>scored by the sheet</span></div>
-      <div class="cl" style="--t0:{at(25,"gap")}ms"><b>The Ali household</b><span class="gap">no critical illness cover</span><p>{typed("If an illness stopped your income for a year, what would carry the mortgage?", at(25,"question") + 200, 22)}</p></div>
-      <div class="cl" style="--t0:{at(25,"gap") + 700}ms"><b>Keisha R.</b><span class="gap">policy matures in 60 days</span><p>{typed("Where would you like that money to go next?", at(25,"maturities") + 300, 26)}</p></div>
+      <div class="cl" style="--t0:{at(23,"gap")}ms"><b>The Ali household</b><span class="gap">no critical illness cover</span><p>{typed("If an illness stopped your income for a year, what would carry the mortgage?", at(23,"question") + 200, 22)}</p></div>
+      <div class="cl" style="--t0:{at(23,"gap") + 700}ms"><b>Keisha R.</b><span class="gap">policy matures in 60 days</span><p>{typed("Where would you like that money to go next?", at(23,"maturities") + 300, 26)}</p></div>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 26 · recognition on stage
-S.append(scene(26, 's-stage', f'''
+# 24 · recognition on stage
+S.append(scene(24, 's-stage', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Recognition</p>
-    <h2 class="h l">{words("Your name, said out loud.", at(26,"celebrates") - 300)}</h2>
-    <div class="bubble in" style="--t0:400ms;--t1:{at(26,"Wednesday") - 100}ms"><span>congrats bro!!</span><span>seen · 2:41 pm · no reply</span></div>
-    <div class="wins in" style="--t0:{at(26,"celebrates")}ms">
+    <h2 class="h l">{words("Your name, said out loud.", at(24,"celebrates") - 300)}</h2>
+    <div class="bubble in" style="--t0:400ms;--t1:{at(24,"Wednesday") - 100}ms"><span>congrats bro!!</span><span>seen · 2:41 pm · no reply</span></div>
+    <div class="wins in" style="--t0:{at(24,"celebrates")}ms">
       <div class="bd-h"><b>This week's wins</b><span>Wednesday · 9:00</span></div>
-      <div class="aw" style="--t0:{at(26,"wins")}ms"><i>Client Saver</i><b>Sasha L.</b></div>
-      <div class="aw" style="--t0:{at(26,"agents")}ms"><i>Agent of the week</i><b>Your name</b></div>
-      <div class="prz"><span class="ypill" style="--t0:{at(26,"Starbucks")}ms">Starbucks</span><span class="ypill" style="--t0:{at(26,"MovieTowne")}ms">MovieTowne</span></div>
-      <div class="agd" style="--t0:{at(26,"agenda")}ms"><svg class="ic"><use href="#i-phone"/></svg><span>Your item · <b>added from your phone</b></span></div>
+      <div class="aw" style="--t0:{at(24,"wins")}ms"><i>Client Saver</i><b>Sasha L.</b></div>
+      <div class="aw" style="--t0:{at(24,"agents")}ms"><i>Agent of the week</i><b>Your name</b></div>
+      <div class="prz"><span class="ypill" style="--t0:{at(24,"Starbucks")}ms">Starbucks</span><span class="ypill" style="--t0:{at(24,"MovieTowne")}ms">MovieTowne</span></div>
+      <div class="agd" style="--t0:{at(24,"agenda")}ms"><svg class="ic"><use href="#i-phone"/></svg><span>Your item · <b>added from your phone</b></span></div>
     </div>
     <div class="dates">
-      <div class="date in" style="--t0:{at(26,"Wednesday")}ms"><b>Wednesday</b><span>every week</span></div>
-      <div class="date in" style="--t0:{at(26,"Blastoff")}ms"><b>Blastoff</b><span>January</span></div>
-      <div class="date in" style="--t0:{at(26,"Mid")}ms"><b>Mid-Year</b><span>July</span></div>
+      <div class="date in" style="--t0:{at(24,"Wednesday")}ms"><b>Wednesday</b><span>every week</span></div>
+      <div class="date in" style="--t0:{at(24,"Blastoff")}ms"><b>Blastoff</b><span>January</span></div>
+      <div class="date in" style="--t0:{at(24,"Mid")}ms"><b>Mid-Year</b><span>July</span></div>
     </div>
   </div>
   <div class="col">
     <div class="podium">
-      <div class="light" style="--t0:{at(26,"Blastoff") - 400}ms"></div>
-      <div class="plate in" style="--t0:{at(26,"Blastoff")}ms"><small>MDRT qualifier</small><b>Your name</b></div>
+      <div class="light" style="--t0:{at(24,"Blastoff") - 400}ms"></div>
+      <div class="plate in" style="--t0:{at(24,"Blastoff")}ms"><small>This week's win</small><b>Your name</b></div>
       <div class="floor"></div>
-      <span class="ring-a" style="--t0:{at(26,"name")}ms"></span><span class="ring-a" style="--t0:{at(26,"name") + 500}ms"></span><span class="ring-a" style="--t0:{at(26,"name") + 1000}ms"></span>
-      {''.join(f'<span class="conf" style="--x:{8 + (i*37)%86}%;--t0:{at(26,"name") + (i*53)%700}ms;--c:{["#E85F6A","#fff","#F5CBD0","#D33F49"][i%4]}"></span>' for i in range(22))}
+      <span class="ring-a" style="--t0:{at(24,"name")}ms"></span><span class="ring-a" style="--t0:{at(24,"name") + 500}ms"></span><span class="ring-a" style="--t0:{at(24,"name") + 1000}ms"></span>
+      {''.join(f'<span class="conf" style="--x:{8 + (i*37)%86}%;--t0:{at(24,"name") + (i*53)%700}ms;--c:{["#E85F6A","#fff","#F5CBD0","#D33F49"][i%4]}"></span>' for i in range(22))}
     </div>
   </div>
 </div>'''))
 
-# 27 · your book, watched
-S.append(scene(27, 's-watch', f'''
+# 25 · your book, watched
+S.append(scene(25, 's-watch', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Your book, protected</p>
-    <h2 class="h l">{words("Watched while you're at the table.", at(27,"premiums") - 200, 100)}</h2>
+    <h2 class="h l">{words("Watched while you're at the table.", at(25,"premiums") - 200, 100)}</h2>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{at(27,"checked")}ms">Checked by a person</span>
-      <span class="ypill in" style="--t0:{at(27,"ten")}ms">Sent at 10:00</span>
-      <span class="ypill in" style="--t0:{at(27,"copied")}ms">You copied</span>
-      <span class="ypill in" style="--t0:{at(27,"rate")}ms">The client rates you</span>
+      <span class="ypill in" style="--t0:{at(25,"checked")}ms">Checked by a person</span>
+      <span class="ypill in" style="--t0:{at(25,"ten")}ms">Sent at 10:00</span>
+      <span class="ypill in" style="--t0:{at(25,"copied")}ms">You copied</span>
+      <span class="ypill in" style="--t0:{at(25,"rate")}ms">The client rates you</span>
     </div>
     <div class="duo2">
-      <span class="npill in" style="--t0:{at(27,"Renewals")}ms">Renewals desk</span>
-      <span class="npill in" style="--t0:{at(27,"claims")}ms">Claims desk</span>
+      <span class="npill in" style="--t0:{at(25,"Renewals")}ms">Renewals desk</span>
+      <span class="npill in" style="--t0:{at(25,"claims")}ms">Claims desk</span>
     </div>
   </div>
   <div class="col">
-    <div class="wcard in fl" style="--t0:{at(27,"premiums")}ms">
+    <div class="wcard in fl" style="--t0:{at(25,"premiums")}ms">
       <div class="wh"><b>Premium Due Desk</b><span>your clients</span></div>
       <div class="tl4">
-        {''.join(f'<div class="tn" style="--t0:{at(27,w)}ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>{d}</b><span>days</span></div>' for d,w in ((45,"forty"),(60,"sixty"),(75,"seventy"),(90,"ninety")))}
+        {''.join(f'<div class="tn" style="--t0:{at(25,w)}ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>{d}</b><span>days</span></div>' for d,w in ((45,"forty"),(60,"sixty"),(75,"seventy"),(90,"ninety")))}
       </div>
-      <div class="stars sm" style="--t0:{at(27,"rate")}ms">{''.join(f'<svg viewBox="0 0 24 24" style="--t0:{at(27,"rate") + i*140}ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>' for i in range(5))}<span>"How have we looked after you?"</span></div>
+      <div class="stars sm" style="--t0:{at(25,"rate")}ms">{''.join(f'<svg viewBox="0 0 24 24" style="--t0:{at(25,"rate") + i*140}ms"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>' for i in range(5))}<span>"How have we looked after you?"</span></div>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
 
-# 28 · the monthly income review, and the career path tracker
-S.append(scene(28, 's-review', f'''
+# 26 · the monthly income review, and the career path tracker
+S.append(scene(26, 's-review', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Every month</p>
-    <h2 class="h l">{words("Your income, reviewed.", at(28,"income") - 200, 120)}</h2>
-    <p class="sub in" style="--t0:{at(28,"plan")}ms">What you earned, what your life needs, what changed, and the plan to close the gap.</p>
-    <h2 class="h m wine2">{words("The career path is digital.", at(28,"career") - 150, 100)}</h2>
+    <h2 class="h l">{words("Your income, reviewed.", at(26,"income") - 200, 120)}</h2>
+    <p class="sub in" style="--t0:{at(26,"plan")}ms">What you earned, what your life needs, what changed, and the plan to close the gap.</p>
+    <h2 class="h m wine2">{words("The career path is digital.", at(26,"career") - 150, 100)}</h2>
   </div>
   <div class="col">
-    <div class="wcard in fl" style="--t0:{at(28,"Every")}ms">
+    <div class="wcard in fl" style="--t0:{at(26,"Every")}ms">
       <div class="wh"><b>Monthly income review</b><span>October</span></div>
-      <div class="frow" style="--t0:{at(28,"earned")}ms"><span>Earned last month</span><i class="hbar"><b style="--v:72%;--t0:{at(28,"earned") + 200}ms"></b></i></div>
-      <div class="frow" style="--t0:{at(28,"needs")}ms"><span>Needs this month</span><i class="hbar"><b style="--v:100%;--t0:{at(28,"needs") + 200}ms"></b></i></div>
-      <div class="frow" style="--t0:{at(28,"changed")}ms"><span>What changed</span><b>{typed("school fees in January", at(28,"changed") + 300, 40)}</b></div>
+      <div class="frow" style="--t0:{at(26,"earned")}ms"><span>Earned last month</span><i class="hbar"><b style="--v:72%;--t0:{at(26,"earned") + 200}ms"></b></i></div>
+      <div class="frow" style="--t0:{at(26,"needs")}ms"><span>Needs this month</span><i class="hbar"><b style="--v:100%;--t0:{at(26,"needs") + 200}ms"></b></i></div>
+      <div class="frow" style="--t0:{at(26,"changed")}ms"><span>What changed</span><b>{typed("school fees in January", at(26,"changed") + 300, 40)}</b></div>
       {SAMPLE}
     </div>
-    <div class="wcard in fl cp" style="--t0:{at(28,"career")}ms">
-      <div class="cpr" style="--t0:{at(28,"position")}ms"><b>Career Sales Rep</b><i class="hbar"><b style="--v:100%;--t0:{at(28,"position") + 200}ms"></b></i><em>you are here</em></div>
-      <div class="cpr" style="--t0:{at(28,"requirement")}ms"><b>Executive Agent</b><i class="hbar"><b style="--v:58%;--t0:{at(28,"numbers") + 200}ms"></b></i><em class="dt" style="--t0:{at(28,"date")}ms">next window · a realistic date</em></div>
+    <div class="wcard in fl cp" style="--t0:{at(26,"career")}ms">
+      <div class="cpr" style="--t0:{at(26,"position")}ms"><b>Career Sales Rep</b><i class="hbar"><b style="--v:100%;--t0:{at(26,"position") + 200}ms"></b></i><em>you are here</em></div>
+      <div class="cpr" style="--t0:{at(26,"requirement")}ms"><b>Executive Agent</b><i class="hbar"><b style="--v:58%;--t0:{at(26,"numbers") + 200}ms"></b></i><em class="dt" style="--t0:{at(26,"date")}ms">next window · a realistic date</em></div>
     </div>
   </div>
 </div>'''))
 
-# 29 · the path is your call
-S.append(scene(29, 's-path', f'''
+# 27 · the path is your call
+S.append(scene(27, 's-path', f'''
 <div class="split wide">
   <div class="col">
     <p class="eye in" style="--t0:200ms">The career path</p>
     <h2 class="h l">{words("Where you go is your call.", 400)}</h2>
-    <p class="sub in" style="--t0:{at(29,"rungs")}ms">The rungs are written down.</p>
-    <div class="choose in" style="--t0:{at(29,"choose")}ms"><span class="knob"></span><b>You choose the ladder.</b></div>
+    <p class="sub in" style="--t0:{at(27,"rungs")}ms">The rungs are written down.</p>
+    <div class="choose in" style="--t0:{at(27,"choose")}ms"><span class="knob"></span><b>You choose the ladder.</b></div>
   </div>
   <div class="col">
     <div class="ladders">
       <ol class="ladder">
-        <p class="lad-h in" style="--t0:{at(29,"Build")}ms">Build a book</p>
-        <li class="in" style="--t0:{at(29,"Build") + 200}ms"><b>Career Sales Representative</b><span>Training, induction, boot camp</span></li>
-        <li class="in" style="--t0:{at(29,"Build") + 500}ms"><b>Executive Agent</b><span>Overrides, a private office</span></li>
-        <li class="in top" style="--t0:{at(29,"Build") + 800}ms"><b>Senior Sales Consultant</b><span>The top of the professional road</span></li>
-        <span class="rail" style="--t0:{at(29,"Build")}ms"></span>
+        <p class="lad-h in" style="--t0:{at(27,"Build")}ms">Build a book</p>
+        <li class="in" style="--t0:{at(27,"Build") + 200}ms"><b>Career Sales Representative</b><span>Training, induction, boot camp</span></li>
+        <li class="in" style="--t0:{at(27,"Build") + 500}ms"><b>Executive Agent</b><span>Overrides, a private office</span></li>
+        <li class="in top" style="--t0:{at(27,"Build") + 800}ms"><b>Senior Sales Consultant</b><span>The top of the professional road</span></li>
+        <span class="rail" style="--t0:{at(27,"Build")}ms"></span>
       </ol>
       <ol class="ladder">
-        <p class="lad-h in" style="--t0:{at(29,"lead")}ms">Or lead</p>
-        <li class="in" style="--t0:{at(29,"Emerging")}ms"><b>Emerging Leaders Program</b><span>By Branch Manager recommendation</span></li>
-        <li class="in" style="--t0:{at(29,"Unit")}ms"><b>Unit Manager</b><span>Recruit, build and run a unit</span></li>
-        <li class="in top" style="--t0:{at(29,"branch")}ms"><b>Branch Manager</b><span>A branch of your own</span></li>
-        <span class="rail" style="--t0:{at(29,"lead")}ms"></span>
+        <p class="lad-h in" style="--t0:{at(27,"lead")}ms">Or lead</p>
+        <li class="in" style="--t0:{at(27,"Emerging")}ms"><b>Emerging Leaders Program</b><span>By Branch Manager recommendation</span></li>
+        <li class="in" style="--t0:{at(27,"Unit")}ms"><b>Unit Manager</b><span>Recruit, build and run a unit</span></li>
+        <li class="in top" style="--t0:{at(27,"branch")}ms"><b>Branch Manager</b><span>A branch of your own</span></li>
+        <span class="rail" style="--t0:{at(27,"lead")}ms"></span>
       </ol>
     </div>
   </div>
 </div>'''))
 
-# 30 · uncapped
-S.append(scene(30, 's-income', f'''
+# 28 · uncapped
+S.append(scene(28, 's-income', f'''
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">The income</p>
-    <h2 class="h xl">{words("Uncapped.", at(30,"uncapped") - 200, 80)}</h2>
-    <h2 class="h m wine2">{words("No salary band. No ceiling.", at(30,"No") - 100, 120)}</h2>
+    <h2 class="h xl">{words("Uncapped.", at(28,"uncapped") - 200, 80)}</h2>
+    <h2 class="h m wine2">{words("No salary band. No ceiling.", at(28,"No") - 100, 120)}</h2>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{at(30,"not")}ms">Not your phone contacts</span>
-      <span class="ypill in" style="--t0:{at(30,"leads")}ms">The leads come to you</span>
+      <span class="ypill in" style="--t0:{at(28,"not")}ms">Not your phone contacts</span>
+      <span class="ypill in" style="--t0:{at(28,"leads")}ms">The leads come to you</span>
     </div>
-    <p class="sub in" style="--t0:{at(30,"scales")}ms">It scales with your activity and your skill.</p>
+    <p class="sub in" style="--t0:{at(28,"scales")}ms">It scales with your activity and your skill.</p>
   </div>
   <div class="col">
     <svg class="graph" viewBox="0 0 400 300" aria-hidden="true">
       <defs><linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E85F6A" stop-opacity=".2"/><stop offset="1" stop-color="#E85F6A"/></linearGradient><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E85F6A" stop-opacity=".45"/><stop offset="1" stop-color="#E85F6A" stop-opacity="0"/></linearGradient></defs>
       <g class="ggrid">{''.join(f'<line x1="20" x2="380" y1="{y}" y2="{y}"/>' for y in (60,130,200,270))}</g>
-      <path class="area" style="--t0:{at(30,"scales") + 900}ms" d="M20,270 70,250 120,238 170,215 220,196 260,160 300,120 340,70 380,10 L380 300 L20 300Z"/>
-      <g class="band" style="--t0:{at(30,"No")}ms"><rect x="20" y="150" width="360" height="60" rx="6"/><text x="36" y="186">salary band</text></g>
-      <polyline class="line" style="--t0:{at(30,"scales") - 200}ms" points="20,270 70,250 120,238 170,215 220,196 260,160 300,120 340,70 380,10"/>
-      <circle class="dot" style="--t0:{at(30,"ceiling")}ms" cx="380" cy="10" r="7"/>
+      <path class="area" style="--t0:{at(28,"scales") + 900}ms" d="M20,270 70,250 120,238 170,215 220,196 260,160 300,120 340,70 380,10 L380 300 L20 300Z"/>
+      <g class="band" style="--t0:{at(28,"No")}ms"><rect x="20" y="150" width="360" height="60" rx="6"/><text x="36" y="186">salary band</text></g>
+      <polyline class="line" style="--t0:{at(28,"scales") - 200}ms" points="20,270 70,250 120,238 170,215 220,196 260,160 300,120 340,70 380,10"/>
+      <circle class="dot" style="--t0:{at(28,"ceiling")}ms" cx="380" cy="10" r="7"/>
     </svg>
   </div>
 </div>'''))
 
-# 31 · the managers are managed too
-S.append(scene(31, 's-mgrs', f'''
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">Managers, managed</p>
-    <h2 class="h l">{words("The same system sets theirs.", 400, 110)}</h2>
-    <p class="sub in" style="--t0:{at(31,"accounts")}ms">Planned in the morning. <em>Accounted for at the end of the day.</em></p>
-  </div>
-  <div class="col">
-    <div class="pulse in fl" style="--t0:{at(31,"Branch")}ms">
-      <div class="bd-h"><b>Branch Manager</b><span>5:00</span></div>
-      <div class="prow2" style="--t0:{at(31,"five")}ms"><span>Waiting on him</span><b>7 · the inbox scrubbed, the replies drafted</b></div>
-    </div>
-    <div class="pulse in fl" style="--t0:{at(31,"unit")}ms">
-      <div class="bd-h"><b>Unit Manager</b><span>6:00 · the plan</span></div>
-      <div class="meter" style="--t0:{at(31,"names")}ms;--v:60%"><span>Names recruited</span><i><b></b></i><em>planned 3 · done 2</em></div>
-      <div class="meter" style="--t0:{at(31,"coached")}ms;--v:100%"><span>Agents coached</span><i><b></b></i><em>planned 2 · done 2</em></div>
-      <div class="meter" style="--t0:{at(31,"joint")}ms;--v:100%"><span>Joint field work</span><i><b></b></i><em>planned 1 · done 1</em></div>
-      <em class="turn" style="--t0:{at(31,"accounts")}ms">accounted for · 5:00 pm</em>
-      {SAMPLE}
-    </div>
-  </div>
-</div>'''))
-
-# 32 · confidential
-S.append(scene(32, 's-lock', f'''
+# 29 · confidential
+S.append(scene(29, 's-lock', f'''
 <div class="full center">
-  <div class="lock in" style="--t0:300ms;--t1:{at(32,"confidential")}ms"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path class="shackle" style="--t0:{at(32,"confidential")}ms" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+  <div class="lock in" style="--t0:300ms;--t1:{at(29,"confidential")}ms"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path class="shackle" style="--t0:{at(29,"confidential")}ms" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
   <h2 class="h l">{words("Already contracted somewhere else?", 500)}</h2>
-  <h2 class="h l wine2">{words("Your conversation with us stays confidential.", at(32,"conversation") - 300)}</h2>
+  <h2 class="h l wine2">{words("Your conversation with us stays confidential.", at(29,"conversation") - 300)}</h2>
 </div>'''))
 
-# 33 · the door is open
-S.append(scene(33, 's-door', f'''
+# 30 · the door is open
+S.append(scene(30, 's-door', f'''
 <div class="full center">
   <p class="eye in" style="--t0:200ms">One conversation</p>
   <h2 class="h xl">{words("The door is open.", 400, 120)}</h2>
   <div class="door-row">
-    <div class="who in fl" style="--t0:{at(33,"Already")}ms"><b>Already contracted?</b><span>Nobody will know you asked.</span><i class="lock-s"><svg class="ic"><use href="#i-lock"/></svg> Confidential</i></div>
-    <div class="door" style="--t0:{at(33,"open")}ms">
+    <div class="who in fl" style="--t0:{at(30,"Already")}ms"><b>Already contracted?</b><span>Nobody will know you asked.</span><i class="lock-s"><svg class="ic"><use href="#i-lock"/></svg> Confidential</i></div>
+    <div class="door" style="--t0:{at(30,"open")}ms">
       <div class="d-glow"></div>
       <div class="d-frame"><div class="d-light"></div><div class="d-leaf l"></div><div class="d-leaf r"></div></div>
       {''.join(f'<span class="d-ray" style="--a:{a}deg"></span>' for a in (-28,-14,0,14,28))}
     </div>
-    <div class="who in fl" style="--t0:{at(33,"New")}ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
+    <div class="who in fl" style="--t0:{at(30,"New")}ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
   </div>
   <div class="figs row">
-    <div class="fig in" style="--t0:{at(33,"One")}ms"><b><em class="cnt" data-to="1" data-at="{at(33,"One")}">1</em></b><span>confidential conversation</span></div>
-    <div class="fig in" style="--t0:{at(33,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{at(33,"Twenty")}">20</em> min</b><span>this week</span></div>
+    <div class="fig in" style="--t0:{at(30,"One")}ms"><b><em class="cnt" data-to="1" data-at="{at(30,"One")}">1</em></b><span>confidential conversation</span></div>
+    <div class="fig in" style="--t0:{at(30,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{at(30,"Twenty")}">20</em> min</b><span>this week</span></div>
   </div>
 </div>'''))
 
-# 34 · the call
-S.append(scene(34, 's-cta', f'''
+# 31 · the call
+S.append(scene(31, 's-cta', f'''
 <div class="split cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
     <h2 class="h url">{words("agentmgt.com", 400, 60)}</h2>
     <div class="btns">
-      <span class="btn b1 in" style="--t0:{at(34,"Book")}ms">Book a confidential conversation →</span>
-      <span class="btn b2 in" style="--t0:{at(34,"Take")}ms">Take the 60-second test first</span>
+      <span class="btn b1 in" style="--t0:{at(31,"Book")}ms">Book a confidential conversation →</span>
+      <span class="btn b2 in" style="--t0:{at(31,"Take")}ms">Take the 60-second test first</span>
     </div>
   </div>
   <div class="col">
-    <div class="qr in" style="--t0:{at(34,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{at(31,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>'''))
 
-# 35 · the close
-S.append(scene(35, 's-close dark', f'''
+# 32 · the close
+S.append(scene(32, 's-close dark', f'''
 <div class="full center">
   <div class="mark big in" style="--t0:200ms"><span class="ping"></span><span class="ping p2"></span><span class="ping p3"></span>{MARK}</div>
-  <h1 class="h xl">{words("The environment decides.", 500, 110)}<br><em class="wine">{words("We select the driven.", at(35,"We") - 200, 110)}</em></h1>
-  <p class="foot in" style="--t0:{at(35,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
+  <h1 class="h xl">{words("The environment decides.", 500, 110)}<br><em class="wine">{words("We select the driven.", at(32,"We") - 200, 110)}</em></h1>
+  <p class="foot in" style="--t0:{at(32,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
 </div>'''))
 
 
@@ -888,53 +822,68 @@ if TLINES:
     TJ = [('Apply', '2 min', 'apply', 'doc'), ('A call', '48 h', 'call', 'phone'), ('The Branch Manager', 'in person', 'Manager', 'users'),
           ('Orientation', 'no gloss', 'orientation', 'chat'), ('Market survey', 'digital', 'market', 'grid'), ('POP7', 'the profile', 'scientific', 'target'),
           ('Discovery', 'our qualifiers', 'Discovery', 'spark'), ('Selection', 'chosen', 'Discovery', 'lock')]
-    T.append(tscene(2, 's-journey', f'''
+    T.append(tscene(2, 's-gives', f'''
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">From the day you apply</p>
-  <h2 class="h l">{words("You're not alone.", tat(2,"alone") - 300, 120)}</h2>
-  <div class="jr">
-    <i class="jline"></i><i class="jdot" style="--t0:{tat(2,"apply")}ms;--t1:{tat(2,"Discovery") + 900}ms"></i>
-    {''.join(f'<div class="jn" style="--t0:{tat(2,w) + (900 if k == 7 else 0)}ms;--i:{k}"><span class="jic"><svg class="ic"><use href="#i-{ic}"/></svg></span><b>{n}</b><small>{d}</small><em class="jp" style="--t0:{tat(2,"qualifiers")}ms"></em></div>' for k,(n,d,w,ic) in enumerate(TJ))}
+  <p class="eye in" style="--t0:200ms">What this career gives</p>
+  <h2 class="h l">{words("What your job can't.", tat(2,"can") - 200, 120)}</h2>
+  <div class="rh three">
+    <div class="rc in fl" style="--t0:{tat(2,"income")}ms"><small>Your income</small><b>Decided by your work</b><i class="hbar"><b style="--v:100%;--t0:{tat(2,"income") + 300}ms"></b></i><em class="strk" style="--t0:{tat(2,"salary")}ms">salary band</em></div>
+    <div class="rc in fl" style="--t0:{tat(2,"week")}ms"><small>Your week</small><b>Shaped by you</b><div class="week">{''.join(f'<span class="{"fri" if d in ("Tue","Thu") else ""}" style="--t0:{tat(2,"shaped") + i*120}ms">{d}</span>' for i,d in enumerate(['Mon','Tue','Wed','Thu','Fri']))}</div></div>
+    <div class="rc in fl" style="--t0:{tat(2,"matters")}ms"><small>Your work</small><b>A family covered</b><div class="fam" style="--t0:{tat(2,"family")}ms"><svg class="ic"><use href="#i-users"/></svg><span>before the worst day comes</span></div></div>
   </div>
 </div>'''))
     T.append(tscene(3, 's-match', f'''
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:200ms">Selected</p>
-    <h2 class="h l">{words("Built properly.", tat(3,"built") - 200, 140)}</h2>
-    <h2 class="h l wine2">{words("Never from zero.", tat(3,"zero") - 200, 140)}</h2>
+    <p class="eye in" style="--t0:200ms">What this branch gives</p>
+    <h2 class="h l">{words("Never stuck for an answer.", tat(3,"stuck") - 300, 110)}</h2>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(3,"Leads")}ms">Leads on your own board</span>
       <span class="ypill in" style="--t0:{tat(3,"fact")}ms">The fact find does the arithmetic</span>
+      <span class="ypill in" style="--t0:{tat(3,"Intelligence")}ms">Branch Intelligence reads the file</span>
+      <span class="ypill in" style="--t0:{tat(3,"query")}ms">Query Pal · answered the same day</span>
     </div>
+    <h2 class="h l wine2">{words("Never from zero.", tat(3,"zero") - 200, 140)}</h2>
   </div>
   <div class="col">
     <div class="list in fl" style="--t0:{tat(3,"matched") - 200}ms">
       <div class="bd-h"><b>Your list</b><span>named to you</span></div>
       {''.join(f'<div class="hh" style="--t0:{tat(3,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{s}</span><em>named</em></div>' for i, (n, s) in enumerate(HH))}
+      <div class="lead-in" style="--t0:{tat(3,"Leads")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>New lead</b><span>"Retiring properly" · landed on your board</span></div>
       {SAMPLE}
     </div>
   </div>
 </div>'''))
-    T.append(tscene(4, 's-rhythm', f'''
-<div class="full center">
-  <p class="eye in" style="--t0:200ms">Your rhythm</p>
-  <div class="rh">
-    <div class="rc in fl" style="--t0:{tat(4,"morning")}ms"><small>Every morning</small><b>The system sets your day</b><div class="prog slim"><i style="--t0:{tat(4,"sets")}ms"></i><b><em class="cnt" data-to="84" data-suf="%" data-at="{tat(4,"sets")}">84%</em></b></div></div>
-    <div class="rc in fl" style="--t0:{tat(4,"week")}ms"><small>Every week</small><b>Your manager sees it before Friday</b><div class="week">{''.join(f'<span class="{"fri" if d == "Fri" else ""}" style="--t0:{tat(4,"Friday") if d == "Fri" else 0}ms">{d}</span>' for d in ['Mon','Tue','Wed','Thu','Fri'])}</div></div>
-    <div class="rc in fl" style="--t0:{tat(4,"Wednesday")}ms"><small>Every Wednesday</small><b>Your wins, said out loud</b><div class="prz"><span class="ypill" style="--t0:{tat(4,"wins")}ms">Client Saver</span><span class="ypill" style="--t0:{tat(4,"loud")}ms">Agent of the week</span></div></div>
-    <div class="rc in fl" style="--t0:{tat(4,"book")}ms"><small>Every day</small><b>Your book, watched</b><div class="tl4 mini">{''.join(f'<div class="tn" style="--t0:{tat(4,"watched") + i*180}ms"><i><svg class="ic"><use href="#i-doc"/></svg></i><b>{d}</b></div>' for i,d in enumerate((45,60,75,90)))}</div></div>
+    T.append(tscene(4, 's-coach2', f'''
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Your manager</p>
+    <h2 class="h xl">{words("A coach,", tat(4,"coach") - 200, 120)} <em class="wine">{words("not a clock.", tat(4,"clock") - 150, 120)}</em></h2>
+    <p class="sub in" style="--t0:{tat(4,"admin")}ms">The system does the admin. He does the sitting with you.</p>
+    <p class="sub in" style="--t0:{tat(4,"alone")}ms"><em>Nobody here is left to figure it out alone.</em></p>
   </div>
-  {SAMPLE}
+  <div class="col">
+    <div class="week in" style="--t0:{tat(4,"week")}ms">{''.join(f'<span class="{"fri" if d == "Fri" else ""}" style="--t0:{tat(4,"Friday") if d == "Fri" else 0}ms">{d}</span>' for d in ['Mon','Tue','Wed','Thu','Fri'])}</div>
+    <div class="note in" style="--t0:{tat(4,"e-mail")}ms">
+      <small>From your manager · in your morning e-mail</small>
+      <p>{typed("Two fact finds this week, Priya. Let's book your Thursday calls together at eight.", tat(4,"e-mail") + 300, 24)}</p>
+    </div>
+    <div class="chips3"><div class="chip in fl" style="--t0:{tat(4,"person")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div></div>
+  </div>
 </div>'''))
-    T.append(tscene(5, 's-branch', f'''
+    T.append(tscene(5, 's-seats', f'''
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
-  <div class="figs row">
-    <div class="fig in" style="--t0:{tat(5,"Twenty")}ms"><b class="cnt" data-to="23" data-suf="×" data-at="{tat(5,"Twenty")}">23×</b><span>MDRT branch</span></div>
-    <div class="fig in" style="--t0:{tat(5,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{tat(5,"Thirty")}">32</b><span>years in Trinidad</span></div>
+  <p class="eye in" style="--t0:200ms">This year</p>
+  <h2 class="h xl"><span class="cnt" data-to="5" data-at="{tat(5,"Five")}">5</span> {words("seats.", tat(5,"Five"), 120)}</h2>
+  <div class="seatrow">{''.join(f'<i style="--t0:{tat(5,"Five") + 200 + k*140}ms"><svg class="ic"><use href="#i-users"/></svg></i>' for k in range(5))}</div>
+  <p class="sub in" style="--t0:{tat(5,"can")}ms">Not because we can't take more. Because every one gets <em>the full build</em>.</p>
+  <div class="jr five">
+    <i class="jline"></i>
+    {''.join(f'<div class="jn" style="--t0:{tat(5,w)}ms;--i:{k}"><span class="jic"><svg class="ic"><use href="#i-{ic}"/></svg></span><b>{n}</b><small>{d}</small></div>' for k,(n,d,w,ic) in enumerate([("A call","48 h","call","phone"),("The Branch Manager","himself","Branch","users"),("Orientation","no gloss","orientation","chat"),("A profile","POP7","profile","target"),("Discovery","the people doing it","Discovery","spark")]))}
   </div>
-  <h2 class="h xl">{words("No salary band.", tat(5,"salary") - 200, 120)} <em class="wine">{words("No ceiling.", tat(5,"ceiling") - 150, 120)}</em></h2>
+  <div class="figs row">
+    <div class="fig in" style="--t0:{tat(5,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{tat(5,"Thirty")}">32</b><span>years in Trinidad</span></div>
+    <div class="fig in" style="--t0:{tat(5,"Five",1)}ms"><b class="cnt" data-to="5" data-at="{tat(5,"Five",1)}">5</b><span>seats</span></div>
+  </div>
 </div>'''))
     T.append(tscene(6, 's-door', f'''
 <div class="full center">
@@ -1235,6 +1184,25 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .rc .week span{color:#5F6471;background:#EEF2F8}
 .rc .week span.fri{color:#fff}
 .rc .prz .ypill{font-size:calc(var(--u)*2)}
+.rh.three{grid-template-columns:repeat(3,1fr)}
+.rc .hbar{margin-top:calc(var(--u)*.6)}
+.strk{font:600 calc(var(--u)*1.9)/1 var(--text);color:#5F6471;text-decoration:line-through;text-decoration-color:var(--a);text-decoration-thickness:.14em;opacity:0;font-style:normal}
+.scene.act .strk{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+.fam{display:flex;align-items:center;gap:.6em;font:500 calc(var(--u)*2.1)/1.2 var(--text);color:#5F6471;opacity:0}
+.fam .ic{font-size:calc(var(--u)*3.2);color:var(--aD)}
+.scene.act .fam{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+.lead-in{display:grid;grid-template-columns:auto 1fr;gap:.1em 1em;align-items:center;background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;border-radius:calc(var(--u)*1.4);padding:calc(var(--u)*1.4) calc(var(--u)*1.8);opacity:0;transform:translateX(calc(var(--u)*6))}
+.lead-in .ic{grid-row:span 2;font-size:calc(var(--u)*3.2)}
+.lead-in b{font:700 calc(var(--u)*2.2)/1.1 var(--text)}
+.lead-in span{font:500 calc(var(--u)*1.9)/1.2 var(--text);opacity:.9}
+.scene.act .lead-in{animation:slidein .6s var(--out) both;animation-delay:var(--t0)}
+@keyframes slidein{to{opacity:1;transform:none}}
+.seatrow{display:flex;justify-content:center;gap:calc(var(--u)*2);margin:calc(var(--u)*1) 0}
+.seatrow i{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:calc(var(--u)*1.6);display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:var(--mute2);font-size:calc(var(--u)*3);opacity:0;transform:scale(.6)}
+.scene.act .seatrow i{animation:seat-on .55s var(--pop) both;animation-delay:var(--t0)}
+@keyframes seat-on{to{opacity:1;transform:scale(1);background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;border-color:rgba(255,255,255,.3);box-shadow:0 0 calc(var(--u)*3) rgba(232,95,106,.5)}}
+.jr.five{grid-template-columns:repeat(5,1fr);max-width:calc(var(--u)*120);margin-inline:auto}
+.jr.five .jline{left:10%;right:10%}
 /* scene 17: the wins */
 .wins{background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);padding:calc(var(--u)*2) calc(var(--u)*2.4);display:grid;gap:calc(var(--u)*1.1);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5)}
 .aw{display:flex;justify-content:space-between;align-items:center;background:#fff;color:#17191F;border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.2) calc(var(--u)*1.8);font:700 calc(var(--u)*2.3)/1 var(--display);opacity:0}
@@ -1734,7 +1702,9 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .gal{grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3)}
   .jr{grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*3) calc(var(--u)*1.2)}
   .jline,.jdot{display:none}
-  .rh{grid-template-columns:1fr}
+  .rh,.rh.three{grid-template-columns:1fr}
+  .jr.five{grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*1)}
+  .jr.five .jn b{font-size:calc(var(--u)*1.8)}
   .tl4 .tn b{font-size:calc(var(--u)*2.4)}
   .shot figcaption{font-size:calc(var(--u)*2.4)}
   .steps4 .st{font-size:calc(var(--u)*2.2)}
@@ -1828,7 +1798,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='ArrowRight') go(cur+1); if(
 MOTES = ''.join(f'<i style="--x:{(i*37+11)%97}%;--d:{14 + (i*7)%9}s;--dl:{-(i*1.9)%14:.1f}s"></i>' for i in range(18))
 page = (HTML.replace('{{FONTS}}', FONTS).replace('{{SCENES}}', '\n'.join(S))
         .replace('{{BARS}}', '<i></i>' * len(S)).replace('{{MOTES}}', MOTES))
-assert len(S) == len(LINES) == 35, (len(S), len(LINES))
+assert len(S) == len(LINES) == 32, (len(S), len(LINES))
 if MODE == 'trailer':
     assert len(T) == len(TLINES) == 8, (len(T), len(TLINES))
     page = (HTML.replace('{{FONTS}}', FONTS).replace('{{SCENES}}', '\n'.join(T))

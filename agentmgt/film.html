@@ -260,6 +260,25 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .rc .week span{color:#5F6471;background:#EEF2F8}
 .rc .week span.fri{color:#fff}
 .rc .prz .ypill{font-size:calc(var(--u)*2)}
+.rh.three{grid-template-columns:repeat(3,1fr)}
+.rc .hbar{margin-top:calc(var(--u)*.6)}
+.strk{font:600 calc(var(--u)*1.9)/1 var(--text);color:#5F6471;text-decoration:line-through;text-decoration-color:var(--a);text-decoration-thickness:.14em;opacity:0;font-style:normal}
+.scene.act .strk{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+.fam{display:flex;align-items:center;gap:.6em;font:500 calc(var(--u)*2.1)/1.2 var(--text);color:#5F6471;opacity:0}
+.fam .ic{font-size:calc(var(--u)*3.2);color:var(--aD)}
+.scene.act .fam{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+.lead-in{display:grid;grid-template-columns:auto 1fr;gap:.1em 1em;align-items:center;background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;border-radius:calc(var(--u)*1.4);padding:calc(var(--u)*1.4) calc(var(--u)*1.8);opacity:0;transform:translateX(calc(var(--u)*6))}
+.lead-in .ic{grid-row:span 2;font-size:calc(var(--u)*3.2)}
+.lead-in b{font:700 calc(var(--u)*2.2)/1.1 var(--text)}
+.lead-in span{font:500 calc(var(--u)*1.9)/1.2 var(--text);opacity:.9}
+.scene.act .lead-in{animation:slidein .6s var(--out) both;animation-delay:var(--t0)}
+@keyframes slidein{to{opacity:1;transform:none}}
+.seatrow{display:flex;justify-content:center;gap:calc(var(--u)*2);margin:calc(var(--u)*1) 0}
+.seatrow i{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:calc(var(--u)*1.6);display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:var(--mute2);font-size:calc(var(--u)*3);opacity:0;transform:scale(.6)}
+.scene.act .seatrow i{animation:seat-on .55s var(--pop) both;animation-delay:var(--t0)}
+@keyframes seat-on{to{opacity:1;transform:scale(1);background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;border-color:rgba(255,255,255,.3);box-shadow:0 0 calc(var(--u)*3) rgba(232,95,106,.5)}}
+.jr.five{grid-template-columns:repeat(5,1fr);max-width:calc(var(--u)*120);margin-inline:auto}
+.jr.five .jline{left:10%;right:10%}
 /* scene 17: the wins */
 .wins{background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);padding:calc(var(--u)*2) calc(var(--u)*2.4);display:grid;gap:calc(var(--u)*1.1);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5)}
 .aw{display:flex;justify-content:space-between;align-items:center;background:#fff;color:#17191F;border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.2) calc(var(--u)*1.8);font:700 calc(var(--u)*2.3)/1 var(--display);opacity:0}
@@ -759,7 +778,9 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .gal{grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3)}
   .jr{grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*3) calc(var(--u)*1.2)}
   .jline,.jdot{display:none}
-  .rh{grid-template-columns:1fr}
+  .rh,.rh.three{grid-template-columns:1fr}
+  .jr.five{grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*1)}
+  .jr.five .jn b{font-size:calc(var(--u)*1.8)}
   .tl4 .tn b{font-size:calc(var(--u)*2.4)}
   .shot figcaption{font-size:calc(var(--u)*2.4)}
   .steps4 .st{font-size:calc(var(--u)*2.2)}
@@ -820,37 +841,18 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-room" data-d="5500" data-n="2" style="--kb:5500ms" >
-
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">The truth about this business</p>
-    <h2 class="h l"><span aria-label="Talent gets you in the game."><span class="w"><i style="--i:0;--t0:400ms">Talent</i></span> <span class="w"><i style="--i:1;--t0:400ms">gets</i></span> <span class="w"><i style="--i:2;--t0:400ms">you</i></span> <span class="w"><i style="--i:3;--t0:400ms">in</i></span> <span class="w"><i style="--i:4;--t0:400ms">the</i></span> <span class="w"><i style="--i:5;--t0:400ms">game.</i></span></span></h2>
-    <h2 class="h l wine2"><span aria-label="The tools decide how far you go."><span class="w"><i style="--i:0;--t0:1737ms">The</i></span> <span class="w"><i style="--i:1;--t0:1737ms">tools</i></span> <span class="w"><i style="--i:2;--t0:1737ms">decide</i></span> <span class="w"><i style="--i:3;--t0:1737ms">how</i></span> <span class="w"><i style="--i:4;--t0:1737ms">far</i></span> <span class="w"><i style="--i:5;--t0:1737ms">you</i></span> <span class="w"><i style="--i:6;--t0:1737ms">go.</i></span></span></h2>
-  </div>
-  <div class="col chart" style="position:relative">
-    <div class="bars">
-      <i style="--h:28%;--t0:600ms"></i><i style="--h:36%;--t0:710ms"></i><i style="--h:44%;--t0:820ms"></i><i style="--h:52%;--t0:930ms"></i><i style="--h:61%;--t0:1040ms"></i><i style="--h:70%;--t0:1150ms"></i><i style="--h:80%;--t0:1260ms"></i><i style="--h:92%;--t0:1370ms"></i>
-      <div class="lid" style="--t0:3088ms"></div>
-      <div class="ceil" style="--t0:3088ms"><span>the old tools</span></div>
-    </div>
-    <span class="spk" style="--x:6%;--dx:-15;--t0:3288ms;--c:#E85F6A"></span><span class="spk" style="--x:47%;--dx:2;--t0:3325ms;--c:#fff"></span><span class="spk" style="--x:88%;--dx:-11;--t0:3362ms;--c:#F5CBD0"></span><span class="spk" style="--x:41%;--dx:6;--t0:3399ms;--c:#E85F6A"></span><span class="spk" style="--x:82%;--dx:-7;--t0:3436ms;--c:#fff"></span><span class="spk" style="--x:35%;--dx:10;--t0:3473ms;--c:#F5CBD0"></span><span class="spk" style="--x:76%;--dx:-3;--t0:3510ms;--c:#E85F6A"></span><span class="spk" style="--x:29%;--dx:14;--t0:3547ms;--c:#fff"></span><span class="spk" style="--x:70%;--dx:1;--t0:3584ms;--c:#F5CBD0"></span><span class="spk" style="--x:23%;--dx:-12;--t0:3621ms;--c:#E85F6A"></span><span class="spk" style="--x:64%;--dx:5;--t0:3658ms;--c:#fff"></span><span class="spk" style="--x:17%;--dx:-8;--t0:3695ms;--c:#F5CBD0"></span><span class="spk" style="--x:58%;--dx:9;--t0:3312ms;--c:#E85F6A"></span><span class="spk" style="--x:11%;--dx:-4;--t0:3349ms;--c:#fff"></span><span class="spk" style="--x:52%;--dx:13;--t0:3386ms;--c:#F5CBD0"></span><span class="spk" style="--x:93%;--dx:0;--t0:3423ms;--c:#E85F6A"></span>
-  </div>
-</div>
-<div class="streak"></div>
-</section>
-<section class="scene s-branch" data-d="16700" data-n="3" style="--kb:16700ms" >
+<section class="scene s-branch" data-d="14900" data-n="2" style="--kb:14900ms" >
 
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Chaguanas · Trinidad</p>
     <h2 class="h l"><span aria-label="The Ricky Rampersad Branch."><span class="w"><i style="--i:0;--t0:400ms">The</i></span> <span class="w"><i style="--i:1;--t0:400ms">Ricky</i></span> <span class="w"><i style="--i:2;--t0:400ms">Rampersad</i></span> <span class="w"><i style="--i:3;--t0:400ms">Branch.</i></span></span></h2>
-    <p class="sub in" style="--t0:2725ms">Guardian Life of the Caribbean</p>
+    <p class="sub in" style="--t0:2762ms">Guardian Life of the Caribbean</p>
     <div class="figs">
-      <div class="fig in" style="--t0:6100ms"><b class="cnt" data-to="23" data-suf="×" data-at="6100" style="--at:6100ms">23×</b><span>MDRT branch</span></div>
-      <div class="fig in" style="--t0:9537ms"><b class="cnt" data-to="32" data-at="9537" style="--at:9537ms">32</b><span>years in Trinidad</span></div>
+      <div class="fig in" style="--t0:6150ms"><b class="cnt" data-to="32" data-at="6150" style="--at:6150ms">32</b><span>years in Trinidad</span></div>
+      <div class="fig in" style="--t0:8250ms"><b class="cnt" data-to="5" data-at="8250" style="--at:8250ms">5</b><span>seats this year</span></div>
     </div>
-    <div class="fy in" style="--t0:11775ms"><b>FY27</b><span>A new year, from 1 October</span></div>
+    <div class="fy in" style="--t0:9800ms"><b>FY27</b><span>A new year, from 1 October</span></div>
   </div>
   <div class="col">
     <div class="stage">
@@ -865,7 +867,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-state dark" data-d="6000" data-n="4" style="--kb:6000ms" >
+<section class="scene s-state dark" data-d="6000" data-n="3" style="--kb:6000ms" >
 
 <div class="full center">
   <h1 class="h xxl"><span aria-label="We do things differently."><span class="w"><i style="--i:0;--t0:350ms">We</i></span> <span class="w"><i style="--i:1;--t0:350ms">do</i></span> <span class="w"><i style="--i:2;--t0:350ms">things</i></span> <span class="w"><i style="--i:3;--t0:350ms">differently.</i></span></span></h1>
@@ -875,7 +877,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-notalone" data-d="10900" data-n="5" style="--kb:10900ms" >
+<section class="scene s-notalone" data-d="10900" data-n="4" style="--kb:10900ms" >
 
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
@@ -887,7 +889,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-journey" data-d="22800" data-n="6" style="--kb:22800ms" >
+<section class="scene s-journey" data-d="22800" data-n="5" style="--kb:22800ms" >
 
 <div class="full center">
   <p class="eye in" style="--t0:200ms">From the day you apply</p>
@@ -899,7 +901,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-survey" data-d="17600" data-n="7" style="--kb:17600ms" >
+<section class="scene s-survey" data-d="17600" data-n="6" style="--kb:17600ms" >
 
 <div class="split">
   <div class="col">
@@ -922,7 +924,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-pop" data-d="17800" data-n="8" style="--kb:17800ms" >
+<section class="scene s-pop" data-d="17800" data-n="7" style="--kb:17800ms" >
 
 <div class="split">
   <div class="col">
@@ -943,7 +945,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-gates" data-d="15100" data-n="9" style="--kb:15100ms" >
+<section class="scene s-gates" data-d="15100" data-n="8" style="--kb:15100ms" >
 
 <div class="full">
   <p class="eye in" style="--t0:200ms">The selection</p>
@@ -956,7 +958,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-build" data-d="20200" data-n="10" style="--kb:20200ms" >
+<section class="scene s-build" data-d="20200" data-n="9" style="--kb:20200ms" >
 
 <div class="split">
   <div class="col">
@@ -975,7 +977,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-match" data-d="12100" data-n="11" style="--kb:12100ms" >
+<section class="scene s-match" data-d="12100" data-n="10" style="--kb:12100ms" >
 
 <div class="split">
   <div class="col">
@@ -998,7 +1000,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-money" data-d="18200" data-n="12" style="--kb:18200ms" >
+<section class="scene s-money" data-d="18200" data-n="11" style="--kb:18200ms" >
 
 <div class="split">
   <div class="col">
@@ -1023,7 +1025,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-leads" data-d="12900" data-n="13" style="--kb:12900ms" >
+<section class="scene s-leads" data-d="12900" data-n="12" style="--kb:12900ms" >
 
 <div class="split wide">
   <div class="col">
@@ -1061,7 +1063,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-desk" data-d="10200" data-n="14" style="--kb:10200ms" >
+<section class="scene s-desk" data-d="10200" data-n="13" style="--kb:10200ms" >
 
 <div class="split">
   <div class="col">
@@ -1085,7 +1087,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-flight" data-d="12000" data-n="15" style="--kb:12000ms" >
+<section class="scene s-flight" data-d="12000" data-n="14" style="--kb:12000ms" >
 
 <div class="split wide">
   <div class="col">
@@ -1112,53 +1114,30 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-day" data-d="13000" data-n="16" style="--kb:13000ms" >
+<section class="scene s-day" data-d="13600" data-n="15" style="--kb:13600ms" >
 
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Every morning</p>
-    <h2 class="h l"><span aria-label="The system sets your day."><span class="w"><i style="--i:0;--t0:1675ms">The</i></span> <span class="w"><i style="--i:1;--t0:1675ms">system</i></span> <span class="w"><i style="--i:2;--t0:1675ms">sets</i></span> <span class="w"><i style="--i:3;--t0:1675ms">your</i></span> <span class="w"><i style="--i:4;--t0:1675ms">day.</i></span></span></h2>
-    <p class="sub in" style="--t0:8100ms">Check in, and the page shows what you have achieved, as you go.</p>
+    <h2 class="h l"><span aria-label="Your day, already laid out."><span class="w"><i style="--i:0;--t0:1938ms">Your</i></span> <span class="w"><i style="--i:1;--t0:1938ms">day,</i></span> <span class="w"><i style="--i:2;--t0:1938ms">already</i></span> <span class="w"><i style="--i:3;--t0:1938ms">laid</i></span> <span class="w"><i style="--i:4;--t0:1938ms">out.</i></span></span></h2>
+    <p class="sub in" style="--t0:7775ms">The admin is done before you're up.</p>
+    <h2 class="h m wine2"><span aria-label="Your hours go to clients, and to the coaching."><span class="w"><i style="--i:0;--t0:9512ms">Your</i></span> <span class="w"><i style="--i:1;--t0:9512ms">hours</i></span> <span class="w"><i style="--i:2;--t0:9512ms">go</i></span> <span class="w"><i style="--i:3;--t0:9512ms">to</i></span> <span class="w"><i style="--i:4;--t0:9512ms">clients,</i></span> <span class="w"><i style="--i:5;--t0:9512ms">and</i></span> <span class="w"><i style="--i:6;--t0:9512ms">to</i></span> <span class="w"><i style="--i:7;--t0:9512ms">the</i></span> <span class="w"><i style="--i:8;--t0:9512ms">coaching.</i></span></span></h2>
   </div>
   <div class="col">
-    <div class="day in fl" style="--t0:1138ms">
-      <div class="prog"><i style="--t0:10687ms"></i><b><em class="cnt" data-to="78" data-suf="%" data-at="10687" style="--at:10687ms">78%</em> of the day</b></div>
-      <div class="ck tap" style="--t0:8100ms"><span class="before">Check in</span><span class="after"><i></i>Checked in · 6:02</span></div>
+    <div class="day in fl" style="--t0:2338ms">
       <ul class="dlist">
-        <li style="--t0:3400ms;--t1:10887ms"><svg class="ic"><use href="#i-target"/></svg><b>Your projection</b><span>12 calls · 3 appointments</span></li>
-        <li style="--t0:4675ms;--t1:11187ms"><svg class="ic"><use href="#i-phone"/></svg><b>Next calls</b><span>Keisha · Andre · Priya</span></li>
-        <li style="--t0:5600ms;--t1:11487ms"><svg class="ic"><use href="#i-doc"/></svg><b>Pending cases</b><span>2 · with the history on them</span></li>
+        <li style="--t0:3538ms;--t1:4438ms"><svg class="ic"><use href="#i-phone"/></svg><b>Your calls</b><span>Keisha · Andre · Priya</span></li>
+        <li style="--t0:4425ms;--t1:5325ms"><svg class="ic"><use href="#i-doc"/></svg><b>Pending cases</b><span>2 · with the history on them</span></li>
+        <li style="--t0:6712ms;--t1:7612ms"><svg class="ic"><use href="#i-target"/></svg><b>Your next step</b><span>on each one, already written</span></li>
       </ul>
+      <div class="prog slim" style="margin-top:calc(var(--u)*1.6)"><i style="--t0:7775ms"></i><b><em class="cnt" data-to="100" data-suf="%" data-at="7775" style="--at:7775ms">100%</em> of the admin, done</b></div>
       <span class="sample">sample figures</span>
     </div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-balance" data-d="18100" data-n="17" style="--kb:18100ms" >
-
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">Projected · done · balance</p>
-    <h2 class="h l"><span aria-label="Your morning asks."><span class="w"><i style="--i:0;--t0:425ms">Your</i></span> <span class="w"><i style="--i:1;--t0:425ms">morning</i></span> <span class="w"><i style="--i:2;--t0:425ms">asks.</i></span></span></h2>
-    <h2 class="h l wine2"><span aria-label="Your evening balances."><span class="w"><i style="--i:0;--t0:5213ms">Your</i></span> <span class="w"><i style="--i:1;--t0:5213ms">evening</i></span> <span class="w"><i style="--i:2;--t0:5213ms">balances.</i></span></span></h2>
-    <div class="pill-row">
-      <span class="ypill in" style="--t0:9825ms"><svg class="ic"><use href="#i-users"/></svg> The register knows you're in</span>
-      <span class="npill in strike" style="--t0:15200ms">A spreadsheet</span>
-    </div>
-  </div>
-  <div class="col">
-    <div class="bal in fl" style="--t0:1900ms">
-      <div class="bal-h"><b>Morning</b><span class="ck2" style="--t0:8662ms"><i></i>In · 6:02 · on time</span><b class="ev" style="--t0:5413ms">Evening</b></div>
-      <div class="brow" style="--t0:2500ms;--t1:6312ms;--t2:7613ms"><span>Calls to make</span><b class="pj"><em class="cnt" data-to="12" data-at="2500" style="--at:2500ms">12</em></b><b class="dn"><em class="cnt" data-to="14" data-at="6312" style="--at:6312ms">14</em></b><i class="bl up">+2</i></div><div class="brow" style="--t0:3125ms;--t1:6572ms;--t2:7833ms"><span>Appointments to set</span><b class="pj"><em class="cnt" data-to="3" data-at="3125" style="--at:3125ms">3</em></b><b class="dn"><em class="cnt" data-to="3" data-at="6572" style="--at:6572ms">3</em></b><i class="bl ">0</i></div><div class="brow" style="--t0:3900ms;--t1:6832ms;--t2:8053ms"><span>Fact finds</span><b class="pj"><em class="cnt" data-to="2" data-at="3900" style="--at:3900ms">2</em></b><b class="dn"><em class="cnt" data-to="2" data-at="6832" style="--at:6832ms">2</em></b><i class="bl ">0</i></div>
-      <div class="prog slim" style="margin-top:calc(var(--u)*1.6)"><i style="--t0:12363ms"></i><b><em class="cnt" data-to="84" data-suf="%" data-at="12363" style="--at:12363ms">84%</em> of the day</b></div>
-      <span class="sample">sample figures</span>
-    </div>
-  </div>
-</div>
-<div class="streak"></div>
-</section>
-<section class="scene s-ff" data-d="18300" data-n="18" style="--kb:18300ms" >
+<section class="scene s-ff" data-d="18300" data-n="16" style="--kb:18300ms" >
 
 <div class="split">
   <div class="col">
@@ -1186,7 +1165,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-qp" data-d="15000" data-n="19" style="--kb:15000ms" >
+<section class="scene s-qp" data-d="15000" data-n="17" style="--kb:15000ms" >
 
 <div class="split">
   <div class="col">
@@ -1211,7 +1190,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-wall" data-d="13000" data-n="20" style="--kb:13000ms" >
+<section class="scene s-wall" data-d="13000" data-n="18" style="--kb:13000ms" >
 
 <div class="split wide">
   <div class="col">
@@ -1244,7 +1223,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-ai" data-d="12500" data-n="21" style="--kb:12500ms" >
+<section class="scene s-ai" data-d="12500" data-n="19" style="--kb:12500ms" >
 
 <div class="split">
   <div class="col">
@@ -1271,7 +1250,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-real" data-d="15500" data-n="22" style="--kb:15500ms" >
+<section class="scene s-real" data-d="15500" data-n="20" style="--kb:15500ms" >
 
 <div class="full center">
   <p class="eye in" style="--t0:200ms">Not a mock-up</p>
@@ -1282,7 +1261,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-coach" data-d="14400" data-n="23" style="--kb:14400ms" >
+<section class="scene s-coach" data-d="14400" data-n="21" style="--kb:14400ms" >
 
 <div class="split">
   <div class="col">
@@ -1306,31 +1285,30 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-pulse" data-d="15700" data-n="24" style="--kb:15700ms" >
+<section class="scene s-pulse" data-d="15800" data-n="22" style="--kb:15800ms" >
 
 <div class="split wide">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Every week</p>
-    <h2 class="h l"><span aria-label="Your manager sees your week before Friday."><span class="w"><i style="--i:0;--t0:1550ms">Your</i></span> <span class="w"><i style="--i:1;--t0:1550ms">manager</i></span> <span class="w"><i style="--i:2;--t0:1550ms">sees</i></span> <span class="w"><i style="--i:3;--t0:1550ms">your</i></span> <span class="w"><i style="--i:4;--t0:1550ms">week</i></span> <span class="w"><i style="--i:5;--t0:1550ms">before</i></span> <span class="w"><i style="--i:6;--t0:1550ms">Friday.</i></span></span></h2>
-    <p class="sub in" style="--t0:12900ms">Help finds you <em>before Friday</em>, not after.</p>
+    <h2 class="h l"><span aria-label="A coaching sheet, not a report card."><span class="w"><i style="--i:0;--t0:3863ms">A</i></span> <span class="w"><i style="--i:1;--t0:3863ms">coaching</i></span> <span class="w"><i style="--i:2;--t0:3863ms">sheet,</i></span> <span class="w"><i style="--i:3;--t0:3863ms">not</i></span> <span class="w"><i style="--i:4;--t0:3863ms">a</i></span> <span class="w"><i style="--i:5;--t0:3863ms">report</i></span> <span class="w"><i style="--i:6;--t0:3863ms">card.</i></span></span></h2>
+    <p class="sub in" style="--t0:12375ms">The note he writes for you lands in <em>your morning e-mail</em>.</p>
   </div>
   <div class="col">
-    <div class="pulse in fl" style="--t0:1650ms">
-      <div class="bd-h"><b>Weekly Manager Pulse</b><span>Akaash's unit · week 4</span></div>
-      <div class="prow2" style="--t0:4387ms"><span>Who lifted the unit</span><b>Stephanie · Fawwaz</b></div>
-      <div class="meter" style="--t0:5850ms;--v:62%"><span>Leads</span><i><b></b></i><em>Andre · off pace</em></div><div class="meter" style="--t0:6325ms;--v:48%"><span>Fact finds</span><i><b></b></i><em>Priya · off pace</em></div><div class="meter" style="--t0:7437ms;--v:71%"><span>Closing interviews</span><i><b></b></i><em>Keisha · off pace</em></div>
-      <div class="prow2" style="--t0:8738ms"><span>Coaching done</span><b><span class="ty" aria-label="Role-played the opening with Priya. Thursday calls booked together."><span class="tw"><i style="--t:9038ms">R</i><i style="--t:9060ms">o</i><i style="--t:9082ms">l</i><i style="--t:9104ms">e</i><i style="--t:9126ms">-</i><i style="--t:9148ms">p</i><i style="--t:9170ms">l</i><i style="--t:9192ms">a</i><i style="--t:9214ms">y</i><i style="--t:9236ms">e</i><i style="--t:9258ms">d</i></span> <span class="tw"><i style="--t:9302ms">t</i><i style="--t:9324ms">h</i><i style="--t:9346ms">e</i></span> <span class="tw"><i style="--t:9390ms">o</i><i style="--t:9412ms">p</i><i style="--t:9434ms">e</i><i style="--t:9456ms">n</i><i style="--t:9478ms">i</i><i style="--t:9500ms">n</i><i style="--t:9522ms">g</i></span> <span class="tw"><i style="--t:9566ms">w</i><i style="--t:9588ms">i</i><i style="--t:9610ms">t</i><i style="--t:9632ms">h</i></span> <span class="tw"><i style="--t:9676ms">P</i><i style="--t:9698ms">r</i><i style="--t:9720ms">i</i><i style="--t:9742ms">y</i><i style="--t:9764ms">a</i><i style="--t:9786ms">.</i></span> <span class="tw"><i style="--t:9830ms">T</i><i style="--t:9852ms">h</i><i style="--t:9874ms">u</i><i style="--t:9896ms">r</i><i style="--t:9918ms">s</i><i style="--t:9940ms">d</i><i style="--t:9962ms">a</i><i style="--t:9984ms">y</i></span> <span class="tw"><i style="--t:10028ms">c</i><i style="--t:10050ms">a</i><i style="--t:10072ms">l</i><i style="--t:10094ms">l</i><i style="--t:10116ms">s</i></span> <span class="tw"><i style="--t:10160ms">b</i><i style="--t:10182ms">o</i><i style="--t:10204ms">o</i><i style="--t:10226ms">k</i><i style="--t:10248ms">e</i><i style="--t:10270ms">d</i></span> <span class="tw"><i style="--t:10314ms">t</i><i style="--t:10336ms">o</i><i style="--t:10358ms">g</i><i style="--t:10380ms">e</i><i style="--t:10402ms">t</i><i style="--t:10424ms">h</i><i style="--t:10446ms">e</i><i style="--t:10468ms">r</i><i style="--t:10490ms">.</i></span></span></b></div>
+    <div class="pulse in fl" style="--t0:1412ms">
+      <div class="bd-h"><b>Coaching this week</b><span>Akaash's unit · week 4</span></div>
+      <div class="meter" style="--t0:7350ms;--v:62%"><span>Leads</span><i><b></b></i><em>Andre · coached Tuesday</em></div><div class="meter" style="--t0:8075ms;--v:48%"><span>Fact finds</span><i><b></b></i><em>Priya · coached Wednesday</em></div><div class="meter" style="--t0:9412ms;--v:71%"><span>Closing</span><i><b></b></i><em>Keisha · coached Thursday</em></div>
+      <div class="prow2" style="--t0:11388ms"><span>What he did</span><b><span class="ty" aria-label="Role-played the opening with Priya. Thursday calls booked together."><span class="tw"><i style="--t:11688ms">R</i><i style="--t:11710ms">o</i><i style="--t:11732ms">l</i><i style="--t:11754ms">e</i><i style="--t:11776ms">-</i><i style="--t:11798ms">p</i><i style="--t:11820ms">l</i><i style="--t:11842ms">a</i><i style="--t:11864ms">y</i><i style="--t:11886ms">e</i><i style="--t:11908ms">d</i></span> <span class="tw"><i style="--t:11952ms">t</i><i style="--t:11974ms">h</i><i style="--t:11996ms">e</i></span> <span class="tw"><i style="--t:12040ms">o</i><i style="--t:12062ms">p</i><i style="--t:12084ms">e</i><i style="--t:12106ms">n</i><i style="--t:12128ms">i</i><i style="--t:12150ms">n</i><i style="--t:12172ms">g</i></span> <span class="tw"><i style="--t:12216ms">w</i><i style="--t:12238ms">i</i><i style="--t:12260ms">t</i><i style="--t:12282ms">h</i></span> <span class="tw"><i style="--t:12326ms">P</i><i style="--t:12348ms">r</i><i style="--t:12370ms">i</i><i style="--t:12392ms">y</i><i style="--t:12414ms">a</i><i style="--t:12436ms">.</i></span> <span class="tw"><i style="--t:12480ms">T</i><i style="--t:12502ms">h</i><i style="--t:12524ms">u</i><i style="--t:12546ms">r</i><i style="--t:12568ms">s</i><i style="--t:12590ms">d</i><i style="--t:12612ms">a</i><i style="--t:12634ms">y</i></span> <span class="tw"><i style="--t:12678ms">c</i><i style="--t:12700ms">a</i><i style="--t:12722ms">l</i><i style="--t:12744ms">l</i><i style="--t:12766ms">s</i></span> <span class="tw"><i style="--t:12810ms">b</i><i style="--t:12832ms">o</i><i style="--t:12854ms">o</i><i style="--t:12876ms">k</i><i style="--t:12898ms">e</i><i style="--t:12920ms">d</i></span> <span class="tw"><i style="--t:12964ms">t</i><i style="--t:12986ms">o</i><i style="--t:13008ms">g</i><i style="--t:13030ms">e</i><i style="--t:13052ms">t</i><i style="--t:13074ms">h</i><i style="--t:13096ms">e</i><i style="--t:13118ms">r</i><i style="--t:13140ms">.</i></span></span></b></div>
       <span class="sample">sample figures</span>
     </div>
-    <div class="note in" style="--t0:10263ms">
+    <div class="note in" style="--t0:12375ms">
       <small>From your manager · in your morning e-mail</small>
-      <p><span class="ty" aria-label="Two fact finds this week, Priya. Let's book your Thursday calls together at eight."><span class="tw"><i style="--t:10663ms">T</i><i style="--t:10689ms">w</i><i style="--t:10715ms">o</i></span> <span class="tw"><i style="--t:10767ms">f</i><i style="--t:10793ms">a</i><i style="--t:10819ms">c</i><i style="--t:10845ms">t</i></span> <span class="tw"><i style="--t:10897ms">f</i><i style="--t:10923ms">i</i><i style="--t:10949ms">n</i><i style="--t:10975ms">d</i><i style="--t:11001ms">s</i></span> <span class="tw"><i style="--t:11053ms">t</i><i style="--t:11079ms">h</i><i style="--t:11105ms">i</i><i style="--t:11131ms">s</i></span> <span class="tw"><i style="--t:11183ms">w</i><i style="--t:11209ms">e</i><i style="--t:11235ms">e</i><i style="--t:11261ms">k</i><i style="--t:11287ms">,</i></span> <span class="tw"><i style="--t:11339ms">P</i><i style="--t:11365ms">r</i><i style="--t:11391ms">i</i><i style="--t:11417ms">y</i><i style="--t:11443ms">a</i><i style="--t:11469ms">.</i></span> <span class="tw"><i style="--t:11521ms">L</i><i style="--t:11547ms">e</i><i style="--t:11573ms">t</i><i style="--t:11599ms">'</i><i style="--t:11625ms">s</i></span> <span class="tw"><i style="--t:11677ms">b</i><i style="--t:11703ms">o</i><i style="--t:11729ms">o</i><i style="--t:11755ms">k</i></span> <span class="tw"><i style="--t:11807ms">y</i><i style="--t:11833ms">o</i><i style="--t:11859ms">u</i><i style="--t:11885ms">r</i></span> <span class="tw"><i style="--t:11937ms">T</i><i style="--t:11963ms">h</i><i style="--t:11989ms">u</i><i style="--t:12015ms">r</i><i style="--t:12041ms">s</i><i style="--t:12067ms">d</i><i style="--t:12093ms">a</i><i style="--t:12119ms">y</i></span> <span class="tw"><i style="--t:12171ms">c</i><i style="--t:12197ms">a</i><i style="--t:12223ms">l</i><i style="--t:12249ms">l</i><i style="--t:12275ms">s</i></span> <span class="tw"><i style="--t:12327ms">t</i><i style="--t:12353ms">o</i><i style="--t:12379ms">g</i><i style="--t:12405ms">e</i><i style="--t:12431ms">t</i><i style="--t:12457ms">h</i><i style="--t:12483ms">e</i><i style="--t:12509ms">r</i></span> <span class="tw"><i style="--t:12561ms">a</i><i style="--t:12587ms">t</i></span> <span class="tw"><i style="--t:12639ms">e</i><i style="--t:12665ms">i</i><i style="--t:12691ms">g</i><i style="--t:12717ms">h</i><i style="--t:12743ms">t</i><i style="--t:12769ms">.</i></span></span></p>
+      <p><span class="ty" aria-label="Two fact finds this week, Priya. Let's book your Thursday calls together at eight."><span class="tw"><i style="--t:12775ms">T</i><i style="--t:12801ms">w</i><i style="--t:12827ms">o</i></span> <span class="tw"><i style="--t:12879ms">f</i><i style="--t:12905ms">a</i><i style="--t:12931ms">c</i><i style="--t:12957ms">t</i></span> <span class="tw"><i style="--t:13009ms">f</i><i style="--t:13035ms">i</i><i style="--t:13061ms">n</i><i style="--t:13087ms">d</i><i style="--t:13113ms">s</i></span> <span class="tw"><i style="--t:13165ms">t</i><i style="--t:13191ms">h</i><i style="--t:13217ms">i</i><i style="--t:13243ms">s</i></span> <span class="tw"><i style="--t:13295ms">w</i><i style="--t:13321ms">e</i><i style="--t:13347ms">e</i><i style="--t:13373ms">k</i><i style="--t:13399ms">,</i></span> <span class="tw"><i style="--t:13451ms">P</i><i style="--t:13477ms">r</i><i style="--t:13503ms">i</i><i style="--t:13529ms">y</i><i style="--t:13555ms">a</i><i style="--t:13581ms">.</i></span> <span class="tw"><i style="--t:13633ms">L</i><i style="--t:13659ms">e</i><i style="--t:13685ms">t</i><i style="--t:13711ms">'</i><i style="--t:13737ms">s</i></span> <span class="tw"><i style="--t:13789ms">b</i><i style="--t:13815ms">o</i><i style="--t:13841ms">o</i><i style="--t:13867ms">k</i></span> <span class="tw"><i style="--t:13919ms">y</i><i style="--t:13945ms">o</i><i style="--t:13971ms">u</i><i style="--t:13997ms">r</i></span> <span class="tw"><i style="--t:14049ms">T</i><i style="--t:14075ms">h</i><i style="--t:14101ms">u</i><i style="--t:14127ms">r</i><i style="--t:14153ms">s</i><i style="--t:14179ms">d</i><i style="--t:14205ms">a</i><i style="--t:14231ms">y</i></span> <span class="tw"><i style="--t:14283ms">c</i><i style="--t:14309ms">a</i><i style="--t:14335ms">l</i><i style="--t:14361ms">l</i><i style="--t:14387ms">s</i></span> <span class="tw"><i style="--t:14439ms">t</i><i style="--t:14465ms">o</i><i style="--t:14491ms">g</i><i style="--t:14517ms">e</i><i style="--t:14543ms">t</i><i style="--t:14569ms">h</i><i style="--t:14595ms">e</i><i style="--t:14621ms">r</i></span> <span class="tw"><i style="--t:14673ms">a</i><i style="--t:14699ms">t</i></span> <span class="tw"><i style="--t:14751ms">e</i><i style="--t:14777ms">i</i><i style="--t:14803ms">g</i><i style="--t:14829ms">h</i><i style="--t:14855ms">t</i><i style="--t:14881ms">.</i></span></span></p>
     </div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-meeting" data-d="21700" data-n="25" style="--kb:21700ms" >
+<section class="scene s-meeting" data-d="21700" data-n="23" style="--kb:21700ms" >
 
 <div class="split wide">
   <div class="col">
@@ -1351,7 +1329,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-stage" data-d="19500" data-n="26" style="--kb:19500ms" >
+<section class="scene s-stage" data-d="19500" data-n="24" style="--kb:19500ms" >
 
 <div class="split">
   <div class="col">
@@ -1374,7 +1352,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
   <div class="col">
     <div class="podium">
       <div class="light" style="--t0:13725ms"></div>
-      <div class="plate in" style="--t0:14125ms"><small>MDRT qualifier</small><b>Your name</b></div>
+      <div class="plate in" style="--t0:14125ms"><small>This week's win</small><b>Your name</b></div>
       <div class="floor"></div>
       <span class="ring-a" style="--t0:17287ms"></span><span class="ring-a" style="--t0:17787ms"></span><span class="ring-a" style="--t0:18287ms"></span>
       <span class="conf" style="--x:8%;--t0:17287ms;--c:#E85F6A"></span><span class="conf" style="--x:45%;--t0:17340ms;--c:#fff"></span><span class="conf" style="--x:82%;--t0:17393ms;--c:#F5CBD0"></span><span class="conf" style="--x:33%;--t0:17446ms;--c:#D33F49"></span><span class="conf" style="--x:70%;--t0:17499ms;--c:#E85F6A"></span><span class="conf" style="--x:21%;--t0:17552ms;--c:#fff"></span><span class="conf" style="--x:58%;--t0:17605ms;--c:#F5CBD0"></span><span class="conf" style="--x:9%;--t0:17658ms;--c:#D33F49"></span><span class="conf" style="--x:46%;--t0:17711ms;--c:#E85F6A"></span><span class="conf" style="--x:83%;--t0:17764ms;--c:#fff"></span><span class="conf" style="--x:34%;--t0:17817ms;--c:#F5CBD0"></span><span class="conf" style="--x:71%;--t0:17870ms;--c:#D33F49"></span><span class="conf" style="--x:22%;--t0:17923ms;--c:#E85F6A"></span><span class="conf" style="--x:59%;--t0:17976ms;--c:#fff"></span><span class="conf" style="--x:10%;--t0:17329ms;--c:#F5CBD0"></span><span class="conf" style="--x:47%;--t0:17382ms;--c:#D33F49"></span><span class="conf" style="--x:84%;--t0:17435ms;--c:#E85F6A"></span><span class="conf" style="--x:35%;--t0:17488ms;--c:#fff"></span><span class="conf" style="--x:72%;--t0:17541ms;--c:#F5CBD0"></span><span class="conf" style="--x:23%;--t0:17594ms;--c:#D33F49"></span><span class="conf" style="--x:60%;--t0:17647ms;--c:#E85F6A"></span><span class="conf" style="--x:11%;--t0:17700ms;--c:#fff"></span>
@@ -1383,7 +1361,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-watch" data-d="19500" data-n="27" style="--kb:19500ms" >
+<section class="scene s-watch" data-d="19500" data-n="25" style="--kb:19500ms" >
 
 <div class="split">
   <div class="col">
@@ -1413,7 +1391,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-review" data-d="17300" data-n="28" style="--kb:17300ms" >
+<section class="scene s-review" data-d="17300" data-n="26" style="--kb:17300ms" >
 
 <div class="split">
   <div class="col">
@@ -1438,7 +1416,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-path" data-d="12600" data-n="29" style="--kb:12600ms" >
+<section class="scene s-path" data-d="12600" data-n="27" style="--kb:12600ms" >
 
 <div class="split wide">
   <div class="col">
@@ -1468,7 +1446,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-income" data-d="12300" data-n="30" style="--kb:12300ms" >
+<section class="scene s-income" data-d="12300" data-n="28" style="--kb:12300ms" >
 
 <div class="split">
   <div class="col">
@@ -1494,32 +1472,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-mgrs" data-d="21100" data-n="31" style="--kb:21100ms" >
-
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">Managers, managed</p>
-    <h2 class="h l"><span aria-label="The same system sets theirs."><span class="w"><i style="--i:0;--t0:400ms">The</i></span> <span class="w"><i style="--i:1;--t0:400ms">same</i></span> <span class="w"><i style="--i:2;--t0:400ms">system</i></span> <span class="w"><i style="--i:3;--t0:400ms">sets</i></span> <span class="w"><i style="--i:4;--t0:400ms">theirs.</i></span></span></h2>
-    <p class="sub in" style="--t0:14900ms">Planned in the morning. <em>Accounted for at the end of the day.</em></p>
-  </div>
-  <div class="col">
-    <div class="pulse in fl" style="--t0:2525ms">
-      <div class="bd-h"><b>Branch Manager</b><span>5:00</span></div>
-      <div class="prow2" style="--t0:4362ms"><span>Waiting on him</span><b>7 · the inbox scrubbed, the replies drafted</b></div>
-    </div>
-    <div class="pulse in fl" style="--t0:7363ms">
-      <div class="bd-h"><b>Unit Manager</b><span>6:00 · the plan</span></div>
-      <div class="meter" style="--t0:10950ms;--v:60%"><span>Names recruited</span><i><b></b></i><em>planned 3 · done 2</em></div>
-      <div class="meter" style="--t0:12625ms;--v:100%"><span>Agents coached</span><i><b></b></i><em>planned 2 · done 2</em></div>
-      <div class="meter" style="--t0:13363ms;--v:100%"><span>Joint field work</span><i><b></b></i><em>planned 1 · done 1</em></div>
-      <em class="turn" style="--t0:14900ms">accounted for · 5:00 pm</em>
-      <span class="sample">sample figures</span>
-    </div>
-  </div>
-</div>
-<div class="streak"></div>
-</section>
-<section class="scene s-lock" data-d="6200" data-n="32" style="--kb:6200ms" >
+<section class="scene s-lock" data-d="6200" data-n="29" style="--kb:6200ms" >
 
 <div class="full center">
   <div class="lock in" style="--t0:300ms;--t1:4375ms"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path class="shackle" style="--t0:4375ms" d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
@@ -1528,7 +1481,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-door" data-d="12600" data-n="33" style="--kb:12600ms" >
+<section class="scene s-door" data-d="12600" data-n="30" style="--kb:12600ms" >
 
 <div class="full center">
   <p class="eye in" style="--t0:200ms">One conversation</p>
@@ -1549,7 +1502,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-cta" data-d="10200" data-n="34" style="--kb:10200ms" >
+<section class="scene s-cta" data-d="10200" data-n="31" style="--kb:10200ms" >
 
 <div class="split cta">
   <div class="col">
@@ -1566,7 +1519,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-close dark" data-d="4300" data-n="35" style="--kb:4300ms" >
+<section class="scene s-close dark" data-d="4300" data-n="32" style="--kb:4300ms" >
 
 <div class="full center">
   <div class="mark big in" style="--t0:200ms"><span class="ping"></span><span class="ping p2"></span><span class="ping p3"></span><svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg></div>
@@ -1577,7 +1530,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </section>
   <div class="grain"></div>
   <div id="poster"><button type="button">▶ Play the film (silent preview)</button></div>
-  <div id="ctrl"><button id="pauseBtn" type="button">⏸</button><div id="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div id="ctrl"><button id="pauseBtn" type="button">⏸</button><div id="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
 </div>
 <script>
 const SC = Array.from(document.querySelectorAll('.scene'));
