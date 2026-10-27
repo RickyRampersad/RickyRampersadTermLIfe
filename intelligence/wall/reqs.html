@@ -227,9 +227,16 @@ function paint(){
     "<b>"+fmt(F.policies)+"</b> policies waiting on a first premium: collect it today",
     ag ? "<b>"+fmt(ag.n)+"</b> requirements sit with the agent: that is the first call" : "",
     T.notes!=null ? "<b>"+fmt(T.notes)+"</b> chases and <b>"+fmt(T.closed)+"</b> closed today"+(top?" &middot; chasing "+top:"") : "",
-    D.chase ? "<b>"+fmt(D.chase.never)+"</b> pending policies have never had a task raised" : "",
+    chaseOf().never!=null ? "<b>"+fmt(chaseOf().never)+"</b> pending policies have never had a task raised" : "",
     "From the pending report of <b>"+esc(L.asOf)+"</b>"].filter(String);
   $("#tk").innerHTML = bits.concat(bits).map(function(b){ return "<span>"+b+"</span>"; }).join("");
+}
+/* Who is on it: from the same pending report as everything else on this slide (27h), matched to Salesforce's Pendings
+   tasks by policy or application number; before 27h, the tracker's older chase over Guardian's register. */
+function chaseOf(){
+  var c=D&&D.live&&D.live.chase;
+  if(c&&!c.error&&c.never!=null) return { never:c.never, live:c.live, quiet:c.closedOnly };
+  return (D&&D.chase)||{};
 }
 function paintChase(){
   var L=(D&&D.live)||{}, T=L.today, sup={};
@@ -244,7 +251,7 @@ function paintChase(){
   } else {
     $("#desks").innerHTML = '<div class="empty">'+(T&&T.error?esc(T.error):"Today's chasing comes from Salesforce with the tracker's next update.")+'</div>';
   }
-  var ch=(D&&D.chase)||{}; count($("#nNever"),ch.never); count($("#nLive"),ch.live); count($("#nQuiet"),ch.quiet);
+  var ch=chaseOf(); count($("#nNever"),ch.never); count($("#nLive"),ch.live); count($("#nQuiet"),ch.quiet);
 }
 function feed(url, body, tries){
   tries = tries === undefined ? 3 : tries;

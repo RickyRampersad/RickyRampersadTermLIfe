@@ -70,15 +70,14 @@ WALLS = {
         "Econo Life and Liberator are not on this screen. Nothing about them ends on a date, and they have a screen of their own.",
         "No client is named here. Cover and counts only.",
     ],
-    'pending': [                                 # Branch Pending · Policies
-        "This is the branch pending wall.",
-        "The number is what is genuinely pending. Submitted, not issued, not closed.",
-        "Guardian's register carries more than that. Some of those policies are already paying, and some were closed months ago.",
-        "The figures under it reconcile the number, so nobody has to take it on trust.",
-        "In the middle, the statuses that matter. Guardian types them many ways. These are the six they mean.",
-        "The gold ones can be worked today. A document outstanding, or a case waiting to settle.",
-        "On the right, every agent with what is theirs. Cash to collect, routine in motion, medicals waited on.",
-        "The strip under each name is their own pile, aging. No client is named here.",
+    'pending': [                                 # Branch Pending · Policies (rebuilt 27 Oct 2026, 27h)
+        "This is the branch pending wall, policy by policy, from today's pending report.",
+        "The big number is every policy that still has something outstanding.",
+        "The bar under it is where underwriting has them. Approved ones need only the last items in, so they come first.",
+        "One item from issue, ready with only the premium left, and money already paid that we cannot apply yet.",
+        "On the right, every agent, and what is on their desk. Documents, medicals and first premiums.",
+        "Then the Salesforce tasks on those same policies. Open, overdue, untouched for a week, and done today.",
+        "The last column is the one to fix: policies nobody has ever raised a task on. No client is named here.",
     ],
     'increases': [                               # Increases, group & health
         "This slide is the pendings the other two cannot see.",
