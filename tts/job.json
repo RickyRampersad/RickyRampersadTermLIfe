@@ -3,17 +3,13 @@
  "rate": "-12%",
  "check": true,
  "films": {
-  "wallsys": [
-   "This is the day the system set.",
-   "No blocks. At check-in, each desk gets its day from Salesforce.",
-   "The ring is what each desk has closed against the day's target.",
-   "The white mark on the ring is where the clock is.",
-   "The bar is the list the system set, and how much of it is done.",
-   "Every desk against its own day. Nobody is ranked.",
-   "No client is named here. Counts only."
-  ],
-  "wallday6": [
-   "On the right, how much of the list the system set at check-in is done."
+  "wallreqs": [
+   "This is what is still outstanding on our pending cases, from today's pending report.",
+   "The big number is every requirement still waiting to be received.",
+   "The bars are the agents who still owe a first premium. Collect it, and the policy can issue.",
+   "Most requirements sit with the agent. That is the first call to make.",
+   "On the right, what the team chased today, and which agents they chased.",
+   "No client is named here. Counts and agents only."
   ]
  }
 }
