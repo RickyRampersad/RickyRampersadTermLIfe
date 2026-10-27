@@ -833,5 +833,141 @@
   "h": 1920,
   "capsize": 46,
   "capwrap": 30
+ },
+ "adAq": {
+  "durs": [
+   3.1,
+   11.8,
+   5.7,
+   6.7,
+   7.4
+  ],
+  "dur": 34.7,
+  "vox": "voadA",
+  "start": 18,
+  "musicgain": 0.5,
+  "duck": 0.5,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   8.75,
+   21.18,
+   24.38,
+   27.8,
+   29.8
+  ],
+  "capmode": "over",
+  "cap": "cap-adAq",
+  "out": "../../agentmgt/ad-a-square.mp4",
+  "mix": "adAq-mix.wav",
+  "music": "bed-adAq.wav",
+  "sfx": "sfx-adAq.wav",
+  "ass": "captions-adAq.ass",
+  "w": 1080,
+  "h": 1080,
+  "capsize": 40,
+  "capwrap": 34
+ },
+ "adAv": {
+  "durs": [
+   3.1,
+   11.8,
+   5.7,
+   6.7,
+   7.4
+  ],
+  "dur": 34.7,
+  "vox": "voadA",
+  "start": 18,
+  "musicgain": 0.5,
+  "duck": 0.5,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   8.75,
+   21.18,
+   24.38,
+   27.8,
+   29.8
+  ],
+  "capmode": "over",
+  "cap": "cap-adAv",
+  "out": "../../agentmgt/ad-a-story.mp4",
+  "mix": "adAv-mix.wav",
+  "music": "bed-adAv.wav",
+  "sfx": "sfx-adAv.wav",
+  "ass": "captions-adAv.ass",
+  "w": 1080,
+  "h": 1920,
+  "capsize": 46,
+  "capwrap": 30
+ },
+ "adBq": {
+  "durs": [
+   4.9,
+   14.0,
+   6.7,
+   6.7,
+   7.4
+  ],
+  "dur": 39.7,
+  "vox": "voadB",
+  "start": 18,
+  "musicgain": 0.5,
+  "duck": 0.5,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   8.43,
+   26.18,
+   29.38,
+   32.8,
+   34.8
+  ],
+  "capmode": "over",
+  "cap": "cap-adBq",
+  "out": "../../agentmgt/ad-b-square.mp4",
+  "mix": "adBq-mix.wav",
+  "music": "bed-adBq.wav",
+  "sfx": "sfx-adBq.wav",
+  "ass": "captions-adBq.ass",
+  "w": 1080,
+  "h": 1080,
+  "capsize": 40,
+  "capwrap": 34
+ },
+ "adBv": {
+  "durs": [
+   4.9,
+   14.0,
+   6.7,
+   6.7,
+   7.4
+  ],
+  "dur": 39.7,
+  "vox": "voadB",
+  "start": 18,
+  "musicgain": 0.5,
+  "duck": 0.5,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   8.43,
+   26.18,
+   29.38,
+   32.8,
+   34.8
+  ],
+  "capmode": "over",
+  "cap": "cap-adBv",
+  "out": "../../agentmgt/ad-b-story.mp4",
+  "mix": "adBv-mix.wav",
+  "music": "bed-adBv.wav",
+  "sfx": "sfx-adBv.wav",
+  "ass": "captions-adBv.ass",
+  "w": 1080,
+  "h": 1920,
+  "capsize": 46,
+  "capwrap": 30
  }
 }

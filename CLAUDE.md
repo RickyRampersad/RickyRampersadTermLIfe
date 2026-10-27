@@ -5067,6 +5067,25 @@ section links it.
     words, the Market Survey's questions and the POP7 dimensions. LIMRA's session guide, the orientation deck and a
     Career Profile+ sample report were asked for on 27 October; when they arrive they go in the Drive, never the
     repository (LIMRA's material is licensed), and the gate copy is checked against them.
+- **The feed cuts, 27 October 2026: 35 seconds, two readers, square and tall.** Asked, on the 7:34 film: "if you're
+  going to post this on LinkedIn and Facebook, what do you think about the size of the movie? Shouldn't it be shorter,
+  impactful, and straight to the point?", then "Yes, revoice." The research behind the length: feed video is paid for
+  about 30 seconds in, the first three seconds decide the stop, and most of it is watched muted, so the captions are
+  burned over the picture and the first frame carries the shield and the question. Two variants, one per reader, by
+  the 27 October reframe: **A** for the advisor already contracted ("Move, and start from zero? Not here": clients
+  matched household by household, leads on your own board, "nobody will know you asked"), **B** for the person new to
+  the work ("Months with nothing coming in? Not here": leads from people who asked to be called, the day set every
+  morning, trained before you are contracted, "nobody here is left to figure it out alone"); then a coach not a clock,
+  five seats, and agentmgt.com with the QR, the same on both. `RECRUIT_MODE=ad RECRUIT_AD=A|B build-recruitfilm.py`
+  writes `agentmgt/ad-a.html` / `ad-b.html` from `recruit-adA-lines.json` and `recruit-adA-timing.json` (five
+  scenes, the trailer's visuals re-timed to the shorter lines); `films-recruit.py` gained a `shapes` argument and a
+  square shape (`q`: 1080×1080, capsize 40, capwrap 34, `-square.mp4`), and writes `adAq`, `adAv`, `adBq`, `adBv`.
+  **A square is "portrait" to the media query** (height is not less than width), so the square rules come after the
+  portrait block and only shrink what a square cannot hold: scene 2's list (`zoom:.76`) and the CTA's QR, which
+  otherwise sat in the caption band (the mixer's `over` mode puts the captions from 16% of the height up). Every scene
+  was shot in both frames with the caption band drawn before rendering (`scenes.js`). Andrew Expressive on the runner,
+  all ten clips heard as English and complete. The careers page (`/careersvideo/`) carries both square cuts above the
+  buttons with the tall cut linked beside each, and the posts in `AGENTMGT-SETUP.md` say which MP4 to attach.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,

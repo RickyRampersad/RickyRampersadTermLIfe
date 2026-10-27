@@ -15,7 +15,9 @@ What is in the folder:
 | `qr.svg` | the QR code on the final card: it opens the TalentNest application |
 | `og.jpg` | the picture a WhatsApp, Facebook or LinkedIn link preview shows |
 | `netlify.toml` | the headers and the short links `/apply`, `/quiz`, `/test` |
-| `trailer.mp4`, `trailer.jpg`, `trailer-story.mp4`, `trailer-story.jpg` | the 90-second film, the ad, wide and phone, with posters |
+| `trailer.mp4`, `trailer.jpg`, `trailer-story.mp4`, `trailer-story.jpg` | the 90-second film, wide and phone, with posters |
+| `ad-a-square.mp4`, `ad-a-story.mp4`, `ad-b-square.mp4`, `ad-b-story.mp4`, and their `.jpg` posters | the 35-second feed ads: A for the advisor already contracted (0:35), B for the person new to the work (0:40); square 1080×1080 for the LinkedIn and Facebook feed, 1080×1920 for Reels and Stories; captions burned over the picture |
+| `ad-a.html`, `ad-b.html` | the ads' source pages, drawn by `build-recruitfilm.py` in `ad` mode (not linked) |
 | `recruit.mp4`, `recruit.jpg` | the full film, 1280×720, 7:34, thirty-two scenes (the journey from the day you apply), and its poster |
 | `recruit-story.mp4`, `recruit-story.jpg` | the same film cut 1080×1920 for the phone (WhatsApp status, TikTok, YouTube Shorts; at 3:54 it is over Instagram's Reels limit, so post the link there) |
 | `film.html` | the film's source page, drawn by `tools/film/build-recruitfilm.py` (not linked) |
@@ -103,6 +105,34 @@ Then put the new `durs` from films.json on the three `data-scenes` attributes (a
 careersvideo/index.html, both cuts) and the length beside them; `scenes.js` and `pages.py` in the session scratchpad
 did both on 26 October.
 
+## The feed ads
+
+The 7:34 film is what a candidate watches after the call, and the 1:27 trailer is for the page. Neither is what a
+feed shows: LinkedIn and Facebook stop paying out after about thirty seconds, and most of the audience watches
+muted. So the ad itself is 35 seconds, in two variants, one per reader, each five scenes: the question, the fear
+answered (A: never from zero, clients matched and leads on your board; B: leads from people who asked to be
+called, the day set every morning, trained before you are contracted), a coach not a clock, five seats, and
+agentmgt.com with the QR. Post the **square** cut in the feed and the **tall** cut as a Reel or Story; the first
+frame carries the shield and the question, which is what shows before anyone taps.
+
+To re-cut one: the lines are `tools/film/recruit-adA-lines.json` and `recruit-adB-lines.json`, voiced on the
+runner under the keys `adA` and `adB`, then in `tools/film/`:
+
+```
+python3 importvox.py <tts/out/adA> voadA --timing recruit-adA-timing.json      # and adB
+python3 films-recruit.py
+RECRUIT_MODE=ad RECRUIT_AD=A python3 build-recruitfilm.py                        # and B
+for k in adAq adAv; do python3 sfx.py "$(python3 -c "import json;print(json.dumps(json.load(open('films.json'))['$k']))")" sfx-$k.wav; done
+python3 usetrack.py ../../rr-branch-theme.mp3 adAq adAv
+RENDER_W=1080 RENDER_H=1080 node render.js ../../agentmgt/ad-a.html cap-adAq 30 ../../agentmgt/ad-a-square.jpg
+RENDER_W=1080 RENDER_H=1920 node render.js ../../agentmgt/ad-a.html cap-adAv 30 ../../agentmgt/ad-a-story.jpg
+for k in adAq adAv; do python3 mixany.py "$(python3 -c "import json;print(json.dumps(json.load(open('films.json'))['$k']))")" "$(python3 -c "import json;print(json.load(open('films.json'))['$k']['out'])")"; done
+```
+
+A square frame is "portrait" to the page's media query (height is not less than width), so the square block in
+the stylesheet comes after the portrait rules and only resizes what a square cannot hold. The bottom fifth of every
+frame stays clear: the mixer burns the captions there.
+
 ## The posts
 
 Two posts, one film, by the 27 October research (CLAUDE.md, "The reframe"): each names its reader in the first
@@ -117,9 +147,11 @@ reader's own fear, then the specific answer, then one low-commitment ask. Under 
 >
 > One confidential conversation. Twenty minutes, this week. Nobody will know you asked.
 >
-> Watch (90 seconds, or the whole journey): https://rickyrampersadbranch.com/careersvideo/
+> Watch (35 seconds, 90 seconds, or the whole journey): https://rickyrampersadbranch.com/careersvideo/
 >
 > Reply *TALK* and I'll call you.
+
+Post it with `ad-a-square.mp4` attached (the feed plays the video; the link is for the rest).
 
 **For people new to insurance** (Facebook, Instagram, the branch's own circles):
 
@@ -129,9 +161,11 @@ reader's own fear, then the specific answer, then one low-commitment ask. Under 
 >
 > One 20-minute conversation. Bring your questions; we show you the branch's own figures, not an adjective.
 >
-> Watch (90 seconds, or the whole journey): https://rickyrampersadbranch.com/careersvideo/
+> Watch (35 seconds, 90 seconds, or the whole journey): https://rickyrampersadbranch.com/careersvideo/
 >
 > Reply *TALK* and I'll call you.
+
+Post it with `ad-b-square.mp4` attached.
 
 The "Book a confidential conversation" buttons on agentmgt.com and on `/careersvideo/` open WhatsApp to
 **678-5821** (the number on the page's own footer) with the first line typed; `tel:` is the fallback in the

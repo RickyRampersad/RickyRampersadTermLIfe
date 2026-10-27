@@ -29,13 +29,17 @@ import base64, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
-MODE = os.environ.get('RECRUIT_MODE', 'film')   # 'film' (35 scenes) or 'trailer' (8 scenes, the ad)
-OUT = os.path.join(ROOT, 'agentmgt', 'film.html' if MODE == 'film' else 'trailer.html')
+MODE = os.environ.get('RECRUIT_MODE', 'film')   # 'film' (32 scenes), 'trailer' (8 scenes), 'ad' (5 scenes, the 35-second feed cut)
+AD = os.environ.get('RECRUIT_AD', 'A').upper()     # ad mode only: 'A' already contracted, 'B' new to this
+OUT = os.path.join(ROOT, 'agentmgt', {'film': 'film.html', 'trailer': 'trailer.html', 'ad': f'ad-{AD.lower()}.html'}[MODE])
 LINES = json.load(open(os.path.join(HERE, 'recruit-lines.json')))
 TLINES = json.load(open(os.path.join(HERE, 'recruit-trailer-lines.json'))) if os.path.exists(os.path.join(HERE, 'recruit-trailer-lines.json')) else []
 timing = None; ttiming = None
 tp = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, 'recruit-timing.json')
 ttp = os.path.join(HERE, 'recruit-trailer-timing.json')
+if MODE == 'ad':   # the ad reuses the trailer helpers (tat, tscene) on its own five lines
+    TLINES = json.load(open(os.path.join(HERE, f'recruit-ad{AD}-lines.json')))
+    ttp = os.path.join(HERE, f'recruit-ad{AD}-timing.json')
 if os.path.exists(ttp): ttiming = json.load(open(ttp))
 if os.path.exists(tp):
     timing = json.load(open(tp))
@@ -809,7 +813,7 @@ S.append(scene(32, 's-close dark', f'''
 
 # ── the trailer: eight scenes, the ad ──────────────────────────────────────────
 T = []
-if TLINES:
+if TLINES and MODE != 'ad':
     T.append(tscene(1, 's-hook', f'''
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
@@ -923,6 +927,127 @@ if TLINES:
   <h1 class="h xl">{words("The environment decides.", 500, 110)}<br><em class="wine">{words("We select the driven.", tat(8,"We") - 200, 110)}</em></h1>
   <p class="foot in" style="--t0:{tat(8,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
 </div>'''))
+
+# ── the feed cut: five scenes, 35 seconds, one variant per audience ────────────
+# A speaks to an agent already contracted elsewhere; B to someone new to the work. Scenes 1 and 2 differ in words and
+# picture, 3 in its second half; 4 and 5 are the same. The bottom fifth of every frame stays clear for the burned captions.
+if MODE == 'ad':
+    assert len(TLINES) == 5, len(TLINES)
+    LEADS = [('Retiring properly', 'asked to be called · 9:12'), ('Cover for the children', 'asked to be called · 9:40'), ('Starting a business', 'asked to be called · 10:05')]
+    if AD == 'A':
+        T.append(tscene(1, 's-hook', f"""
+<div class="full center">
+  <span class="ghost" aria-hidden="true">?</span>
+  <span class="spot" style="--t0:{tat(1,"stuck")}ms"></span>
+  <div class="mark top in" style="--t0:100ms">{MARK}</div>
+  <p class="eye in" style="--t0:300ms">A question</p>
+  <h1 class="h xl">{words("Good at what you do?", 400)}<br><em class="wine">{words("Stuck where you are?", tat(1,"stuck") - 200)}</em></h1>
+  <div class="ceil-line" style="--t0:{tat(1,"stuck")}ms"></div>
+</div>"""))
+        T.append(tscene(2, 's-match', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:{tat(2,"Already")}ms">Already contracted?</p>
+    <h2 class="h l">{words("Move, and start from zero?", tat(2,"fear") - 200, 110)}</h2>
+    <h2 class="h l wine2">{words("Not here.", tat(2,"Not") - 150, 140)}</h2>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:{tat(2,"matched")}ms">Clients matched to you</span>
+      <span class="ypill in" style="--t0:{tat(2,"household")}ms">Household by household</span>
+      <span class="ypill in" style="--t0:{tat(2,"Leads")}ms">Leads on your own board</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="list in fl" style="--t0:{tat(2,"Clients") - 200}ms">
+      <div class="bd-h"><b>Your list</b><span>named to you</span></div>
+      {''.join(f'<div class="hh" style="--t0:{tat(2,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{d}</span><em>named</em></div>' for i, (n, d) in enumerate(HH))}
+      <div class="lead-in" style="--t0:{tat(2,"Leads")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>New lead</b><span>"Retiring properly" · landed on your board</span></div>
+      {SAMPLE}
+    </div>
+  </div>
+</div>"""))
+        coach_sub = f'<p class="sub in" style="--t0:{tat(3,"nobody")}ms"><em>And nobody will know you asked.</em></p>'
+        coach_chip = f'<div class="chip in fl" style="--t0:{tat(3,"asked")}ms"><svg class="ic"><use href="#i-lock"/></svg><b>Confidential. Nobody will know you asked.</b></div>'
+    else:
+        T.append(tscene(1, 's-hook', f"""
+<div class="full center">
+  <span class="ghost" aria-hidden="true">?</span>
+  <span class="spot" style="--t0:{tat(1,"afraid")}ms"></span>
+  <div class="mark top in" style="--t0:100ms">{MARK}</div>
+  <p class="eye in" style="--t0:300ms">A question</p>
+  <h1 class="h xl">{words("A career with no ceiling?", 400)}<br><em class="wine">{words("Afraid of the first year?", tat(1,"afraid") - 200)}</em></h1>
+  <div class="ceil-line" style="--t0:{tat(1,"ceiling")}ms"></div>
+</div>"""))
+        T.append(tscene(2, 's-match', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:{tat(2,"New")}ms">New to this?</p>
+    <h2 class="h l">{words("Months with nothing coming in?", tat(2,"fear") - 200, 110)}</h2>
+    <h2 class="h l wine2">{words("Not here.", tat(2,"Not") - 150, 140)}</h2>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:{tat(2,"Leads")}ms">Leads from people who asked to be called</span>
+      <span class="ypill in" style="--t0:{tat(2,"day")}ms">Your day, set every morning</span>
+      <span class="ypill in" style="--t0:{tat(2,"trained")}ms">Trained before you're contracted</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="list in fl" style="--t0:{tat(2,"Leads") - 200}ms">
+      <div class="bd-h"><b>Your board</b><span>this morning</span></div>
+      {''.join(f'<div class="lead-in" style="--t0:{tat(2,"people") + i*380}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
+      <div class="hh" style="--t0:{tat(2,"day")}ms"><svg class="ic"><use href="#i-grid"/></svg><b>Your day</b><span>set at 6:00 · four calls, two fact finds</span><em>today</em></div>
+      <div class="hh" style="--t0:{tat(2,"trained")}ms"><svg class="ic"><use href="#i-spark"/></svg><b>Boot camp</b><span>training · induction · field work</span><em>first</em></div>
+      {SAMPLE}
+    </div>
+  </div>
+</div>"""))
+        coach_sub = f'<p class="sub in" style="--t0:{tat(3,"Nobody")}ms"><em>Nobody here is left to figure it out alone.</em></p>'
+        coach_chip = f'<div class="chip in fl" style="--t0:{tat(3,"alone")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div>'
+    T.append(tscene(3, 's-coach2', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Your manager</p>
+    <h2 class="h xl">{words("A coach,", tat(3,"coach") - 200, 120)} <em class="wine">{words("not a clock.", tat(3,"clock") - 150, 120)}</em></h2>
+    <p class="sub in" style="--t0:{tat(3,"clock") + 500}ms">The system does the admin. He does the sitting with you.</p>
+    {coach_sub}
+  </div>
+  <div class="col">
+    <div class="week in" style="--t0:{tat(3,"coach")}ms">{''.join(f'<span class="{"fri" if d == "Fri" else ""}" style="--t0:{tat(3,"clock") if d == "Fri" else 0}ms">{d}</span>' for d in ['Mon','Tue','Wed','Thu','Fri'])}</div>
+    <div class="note in" style="--t0:{tat(3,"clock") + 300}ms">
+      <small>From your manager · in your morning e-mail</small>
+      <p>{typed("Two fact finds this week, Priya. Let's book your Thursday calls together at eight.", tat(3,"clock") + 600, 24)}</p>
+    </div>
+    <div class="chips3">{coach_chip}</div>
+  </div>
+</div>"""))
+    T.append(tscene(4, 's-seats', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">This year</p>
+  <h2 class="h xl"><span class="cnt" data-to="5" data-at="{tat(4,"Five")}">5</span> {words("seats.", tat(4,"Five"), 120)}</h2>
+  <div class="seatrow">{''.join(f'<i style="--t0:{tat(4,"Five") + 200 + k*140}ms"><svg class="ic"><use href="#i-users"/></svg></i>' for k in range(5))}</div>
+  <p class="sub in" style="--t0:{tat(4,"Every")}ms">Every one gets <em>the full build</em>.</p>
+  <div class="figs row">
+    <div class="fig in" style="--t0:{tat(4,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{tat(4,"Thirty")}">32</b><span>years in Trinidad</span></div>
+    <div class="fig in" style="--t0:{tat(4,"year")}ms"><b class="cnt" data-to="5" data-at="{tat(4,"year")}">5</b><span>seats</span></div>
+  </div>
+</div>"""))
+    T.append(tscene(5, 's-cta', f"""
+<div class="split cta">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Start here</p>
+    <div class="figs">
+      <div class="fig in" style="--t0:{tat(5,"One")}ms"><b><em class="cnt" data-to="1" data-at="{tat(5,"One")}">1</em></b><span>confidential conversation</span></div>
+      <div class="fig in" style="--t0:{tat(5,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{tat(5,"Twenty")}">20</em> min</b><span>this week</span></div>
+    </div>
+    <h2 class="h url">{words("agentmgt.com", tat(5,"Agent") - 200, 60)}</h2>
+    <div class="btns">
+      <span class="btn b1 in" style="--t0:{tat(5,"Agent") + 500}ms">Book a confidential conversation →</span>
+    </div>
+    <p class="foot in" style="--t0:{tat(5,"week")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
+  </div>
+  <div class="col">
+    <div class="mark top in" style="--t0:200ms">{MARK}</div>
+    <div class="qr in" style="--t0:{tat(5,"Agent")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+  </div>
+</div>"""))
 
 HTML = r'''<!DOCTYPE html>
 <html lang="en">
@@ -1724,6 +1849,24 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .steps3 .zero b{font-size:calc(var(--u)*11)}
   .qr.mini{display:none}
 }
+/* ── the small mark the feed cut carries on its first and last frames ── */
+.mark.top{width:calc(var(--u)*9);margin:0 auto calc(var(--u)*.6);position:relative}
+.s-cta .mark.top{margin:0 auto calc(var(--u)*2)}
+/* ── the square cut: 1080x1080 for the LinkedIn and Facebook feed. A square is "portrait" to the media query (height
+   is not less than width), so this block comes after the portrait rules and only resizes what a square cannot hold. ── */
+@media (aspect-ratio:1/1){
+  :root{--u:.84vw}
+  .scene{padding:calc(var(--u)*6) calc(var(--u)*7) calc(var(--u)*30)}
+  .h.xl{font-size:calc(var(--u)*11.5)}.h.l{font-size:calc(var(--u)*7.6)}.h.url{font-size:calc(var(--u)*11)}
+  .split{gap:calc(var(--u)*3.5)}
+  .ghost{font-size:calc(var(--u)*58);top:-8%}
+  .qr svg{width:calc(var(--u)*24);height:calc(var(--u)*24)}
+  .mark.top{width:calc(var(--u)*8)}
+  .fig b{font-size:calc(var(--u)*7.5)}
+  .seatrow i{width:calc(var(--u)*6);height:calc(var(--u)*6)}
+  .s-match .h.l{font-size:calc(var(--u)*6.2)}.s-match .list{zoom:.76}.s-match .ypill{font-size:calc(var(--u)*2.2)}
+  .cta{grid-template-columns:1.25fr .75fr;gap:calc(var(--u)*3)}.s-cta .qr svg{width:calc(var(--u)*21);height:calc(var(--u)*21)}.s-cta .mark.top{width:calc(var(--u)*6.5)}
+}
 </style>
 </head>
 <body>
@@ -1799,8 +1942,8 @@ MOTES = ''.join(f'<i style="--x:{(i*37+11)%97}%;--d:{14 + (i*7)%9}s;--dl:{-(i*1.
 page = (HTML.replace('{{FONTS}}', FONTS).replace('{{SCENES}}', '\n'.join(S))
         .replace('{{BARS}}', '<i></i>' * len(S)).replace('{{MOTES}}', MOTES))
 assert len(S) == len(LINES) == 32, (len(S), len(LINES))
-if MODE == 'trailer':
-    assert len(T) == len(TLINES) == 8, (len(T), len(TLINES))
+if MODE in ('trailer', 'ad'):
+    assert len(T) == len(TLINES) == (8 if MODE == 'trailer' else 5), (len(T), len(TLINES))
     page = (HTML.replace('{{FONTS}}', FONTS).replace('{{SCENES}}', '\n'.join(T))
             .replace('{{BARS}}', '<i></i>' * len(T)).replace('{{MOTES}}', MOTES))
     open(OUT, 'w', encoding='utf-8').write(page)
