@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-27h';
+var SCRIPT_VERSION = '2026-10-27i';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2815,6 +2815,8 @@ function keepWarm() {
   try { housekeepingTick_(); } catch (e) {}
   // His day, built ahead on a working morning so his first tap opens it at once (21 Oct 2026).
   try { var fp = fastPrebuildTick_(); if (fp) runlog_('fast page: ' + fp); } catch (e) {}
+  // The Branch Portal's pending notes into Salesforce, and Salesforce's chase back to the Portal (27 Oct 2026, 27i).
+  try { var pc = pendSyncTick_(); if (pc && /Portal note/.test(pc)) runlog_(pc); } catch (e) { try { runlog_('pending chase failed: ' + (e && e.message)); } catch (e2) {} }
 }
 
 function installTriggers() {
@@ -16097,6 +16099,118 @@ function wallPendChase_(day, numOf) {
     });
   });
   return by;
+}
+
+/* ── The Branch Portal and Salesforce, through the workbook (27 Oct 2026, 2026-10-27i) ──
+ *  Ricky, 3pm, agreeing one place for chasing notes: Salesforce's Pendings tasks, not the Portal's own Requirements Log
+ *  (empty: nobody had used it). The Branch Portal is the Branch Portfolio's own script and has no Salesforce access, so the
+ *  workbook is the bridge, on the ten-minute keepWarm, weekdays 7am to 7pm:
+ *    in   "Requirements Log": a comment typed in the Portal (column G) with nothing in column I is posted as a note on that
+ *         policy's open Pendings task (the most recently touched one), signed "Branch Portal · <who>", and column I says
+ *         when. With no open Pendings task on it, column I says that, and the comment stays in the log for staff to raise one.
+ *    out  "Pendings Chase": one row per policy on the newest pending report, with its Pendings task (open ones, owner, due,
+ *         overdue) and its last notes. The Portal's Requirements view reads it.
+ *  Nothing is deleted in Salesforce; the chase tab is rewritten whole each run. pendSyncTick_(true) runs it by hand. */
+var PEND_SYNC = { TAB: 'Pendings Chase', LOG: 'Requirements Log', FROM: 7 * 60, TO: 19 * 60, NOTES: 3, PUSH: 20, SIGN: 'Branch Portal',
+  HEAD: ['Policy', 'Agent', 'Task', 'Owner', 'Due', 'Open tasks', 'Overdue', 'Last note at', 'Last note by', 'Last note', 'Earlier notes', 'Updated'] };
+function pendSyncTick_(force) {
+  var now = new Date(), dow = Number(Utilities.formatDate(now, CONFIG.TZ, 'u')), mins = minutesOf_(hhmm_(now));
+  if (!force && (dow > 5 || mins < PEND_SYNC.FROM || mins > PEND_SYNC.TO)) return '';
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return '';
+  var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
+  if (!ss) return '';
+  var rep = pendReportPolicies_(ss); if (!rep) return '';
+  var day = todayISO_(), tasks = pendTasksByPolicy_(rep.numOf, day);
+  var pushed = pendSyncPush_(ss, rep, tasks);
+  var rows = pendSyncChase_(ss, rep, tasks, day);
+  return 'pending chase: ' + rows + ' policies' + (pushed ? ', ' + pushed + ' Portal note' + (pushed === 1 ? '' : 's') + ' to Salesforce' : '');
+}
+/** The newest pending report, policy by policy: { tab, pols: { policy: { agent, app } }, numOf: { number: policy } }. */
+function pendReportPolicies_(ss) {
+  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_PEND.PREFIX) === 0; })
+    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  if (!tabs.length) return null;
+  var vals = tabs[0].getDataRange().getValues(); if (vals.length < 2) return null;
+  var h = vals[0].map(function (x) { return String(x).trim(); });
+  var cp = h.indexOf('POLICY'), ca = h.indexOf('application_number'), cg = h.indexOf('Agent Name'), cs = h.indexOf('REQUIREMENT_STATUS');
+  if (cp < 0) return null;
+  var pols = {}, numOf = {};
+  vals.slice(1).forEach(function (r) {
+    var pol = String(r[cp] == null ? '' : r[cp]).trim(); if (!pol) return;
+    if (cs > -1 && /closed|received|waived|complete|cancel/i.test(String(r[cs]))) return;
+    var app = ca > -1 ? String(r[ca] == null ? '' : r[ca]).trim() : '';
+    pols[pol] = pols[pol] || { agent: cg > -1 ? String(r[cg] || '').trim() : '', app: app };
+    numOf[pol] = pol; if (app) numOf[app] = pol;
+  });
+  return { tab: tabs[0].getName(), pols: pols, numOf: numOf };
+}
+/** The Pendings tasks on the report's policies, newest touched first: { policy: [ { id, subject, open, due, owner, mod } ] }. */
+function pendTasksByPolicy_(numOf, day) {
+  var rows = sfkQuery_("SELECT Id, Subject, IsClosed, ActivityDate, LastModifiedDate, Owner.Name FROM Task WHERE Task_Type__c = 'Pendings'" +
+    ' AND (IsClosed = false OR CreatedDate = LAST_N_DAYS:400) ORDER BY LastModifiedDate DESC LIMIT 10000');
+  var by = {};
+  rows.forEach(function (t) {
+    var seen = {};
+    (String(t.Subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) {
+      var pol = numOf[x]; if (!pol || seen[pol]) return; seen[pol] = 1;
+      (by[pol] = by[pol] || []).push({ id: String(t.Id), subject: String(t.Subject || ''), open: !t.IsClosed, due: String(t.ActivityDate || ''),
+        overdue: !t.IsClosed && !!t.ActivityDate && String(t.ActivityDate) < day, owner: String((t.Owner && t.Owner.Name) || ''), mod: String(t.LastModifiedDate || '') });
+    });
+  });
+  return by;
+}
+/** Portal comments not yet in Salesforce, posted on the policy's open Pendings task. Returns how many were posted. */
+function pendSyncPush_(ss, rep, tasks) {
+  var sh = ss.getSheetByName(PEND_SYNC.LOG); if (!sh || sh.getLastRow() < 2) return 0;
+  if (String(sh.getRange(1, 9).getValue() || '') !== 'Salesforce') sh.getRange(1, 9).setValue('Salesforce');
+  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 9).getValues(), posted = 0, tried = 0;
+  for (var i = 0; i < vals.length && tried < PEND_SYNC.PUSH; i++) {
+    var r = vals[i], text = String(r[6] || '').trim();
+    if (!text || String(r[8] || '').trim()) continue;
+    tried++;
+    var num = String(r[1] || '').trim(), pol = rep.numOf[num] || num;
+    var open = (tasks[pol] || []).filter(function (t) { return t.open; })[0];
+    var mark;
+    if (!open) mark = 'No open Pendings task in Salesforce on ' + pol + ' · ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'd MMM, h:mm a');
+    else {
+      var who = String(r[5] || '').replace(/\s*<[^>]*>\s*/g, '').trim() || 'the Portal';
+      var status = String(r[7] || '').trim();
+      try {
+        sfkInsert_('FeedItem', { ParentId: open.id, Body: PEND_SYNC.SIGN + ' · ' + who + (status ? ' · ' + status : '') + ':\n' + text.slice(0, 2000) });
+        mark = 'Posted to "' + shorten_(open.subject, 60) + '" · ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'd MMM, h:mm a');
+        posted++;
+      } catch (e) { mark = ''; try { runlog_('pending chase: a Portal note did not post: ' + (e && e.message)); } catch (e2) {} }
+    }
+    if (mark) sh.getRange(i + 2, 9).setValue(mark);
+  }
+  return posted;
+}
+/** "Pendings Chase", rewritten whole: one row per policy on the report, its task and its last notes. Returns the row count. */
+function pendSyncChase_(ss, rep, tasks, day) {
+  var ids = []; Object.keys(tasks).forEach(function (p) { tasks[p].forEach(function (t) { ids.push(t.id); }); });
+  var notes = {}, plain = function (b) { return String(b || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;|&quot;/g, "'").replace(/\s+/g, ' ').trim(); };
+  for (var i = 0; i < ids.length; i += WALL_PEND.IDS) {
+    sfkQuery_("SELECT ParentId, CreatedDate, CreatedBy.Name, Body FROM FeedItem WHERE Type = 'TextPost' AND ParentId IN (" +
+      ids.slice(i, i + WALL_PEND.IDS).map(soqlStr_).join(',') + ') ORDER BY CreatedDate DESC LIMIT 2000').forEach(function (f) {
+      (notes[f.ParentId] = notes[f.ParentId] || []).push({ at: String(f.CreatedDate || ''), by: String((f.CreatedBy && f.CreatedBy.Name) || ''), text: plain(f.Body).slice(0, 500) });
+    });
+  }
+  var when = function (iso) { var d = iso ? new Date(String(iso).replace(/\+0000$/, 'Z')) : null; return d && !isNaN(d) ? Utilities.formatDate(d, CONFIG.TZ, 'd MMM, h:mm a') : ''; };
+  var stamp = Utilities.formatDate(new Date(), CONFIG.TZ, 'd MMM yyyy, h:mm a');
+  var out = Object.keys(rep.pols).sort().map(function (pol) {
+    var ts = tasks[pol] || [], open = ts.filter(function (t) { return t.open; }), lead = open[0] || ts[0] || null;
+    var ns = []; ts.forEach(function (t) { (notes[t.id] || []).forEach(function (n) { ns.push(n); }); });
+    ns.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
+    var last = ns[0] || null;
+    return [pol, rep.pols[pol].agent, lead ? lead.subject : '', lead ? lead.owner : '', lead && lead.open ? lead.due : '', open.length,
+            open.filter(function (t) { return t.overdue; }).length, last ? when(last.at) : '', last ? last.by : '', last ? last.text : '',
+            JSON.stringify(ns.slice(1, PEND_SYNC.NOTES).map(function (n) { return { at: when(n.at), by: n.by, text: n.text }; })), stamp];
+  });
+  var sh = ss.getSheetByName(PEND_SYNC.TAB) || ss.insertSheet(PEND_SYNC.TAB);
+  sh.clearContents();
+  sh.getRange(1, 1, 1, PEND_SYNC.HEAD.length).setValues([PEND_SYNC.HEAD]);
+  if (out.length) sh.getRange(2, 1, out.length, PEND_SYNC.HEAD.length).setValues(out);
+  return out.length;
 }
 /** Today's chasing on the pending cases: per desk, notes on Pendings tasks and Pendings tasks closed, and whose policies. */
 function wallPendToday_(day, agentOf, numOf) {
