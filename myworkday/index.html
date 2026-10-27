@@ -124,7 +124,8 @@
   ul.list li:first-child{border-top:0}
   @keyframes slide{to{opacity:1;transform:none}}
   .ic{flex:none;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font:800 13px/1 var(--fd);background:var(--soft);color:var(--good);margin-top:1px}
-  .ic.no{color:var(--bad)} .ic.late{color:var(--bad)} .ic.due{color:var(--warn)} .ic.k{color:var(--navy)}
+  .ic.no{color:var(--bad)} .ic.late{color:var(--bad)} .ic.due{color:var(--warn)} .ic.k{color:var(--navy)} .ic.todo{color:var(--muted)}
+  .li .s.done{text-decoration:line-through;color:var(--muted)} .li .s.done a{color:inherit}
   .li{flex:1;min-width:0}
   .li .s{overflow-wrap:anywhere}
   .li small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
@@ -325,8 +326,26 @@
     return '<div class="card"><div class="ch"><h2>What you have achieved today</h2><span class="n">' + a.length + "</span></div>" +
       (a.length ? '<ul class="list">' + items + "</ul>" : '<div class="empty">Nothing closed yet today. Your first close shows here, with your note.</div>') + "</div>";
   }
+  /* The day's list (27 Oct 2026): set by the system when you check in; each ticks itself when closed in Salesforce. */
+  function listCard(m) {
+    var l = m.list; if (!l) return "";
+    var done = l.filter(function (x) { return x.done; }).length;
+    if (!l.length) return '<div class="card"><div class="ch"><h2>Your list today</h2></div><div class="empty">' + (m.listSet ? "Your list is clear." : "Nothing to set yet: nothing is overdue or due today.") + "</div></div>";
+    return '<div class="card" id="list"><div class="ch"><h2>Your list today</h2><span class="n">' + (m.listSet ? done + " of " + l.length + " done" : "set when you check in") + '</span></div><ul class="list">' + l.map(function (x, i) {
+      var s = x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
+      return '<li style="animation-delay:' + i * 0.03 + 's"><span class="ic ' + (x.done ? "" : "todo") + '">' + (x.done ? "&#10003;" : "&#9675;") + '</span><div class="li"><div class="s' + (x.done ? " done" : "") + '">' + s + "</div><small>" +
+        (x.done ? "Closed today" : "Open it in Salesforce, do it, note it in the client's words, close it") + (x.ty && x.ty !== "Untyped" ? " · " + esc(x.ty) : "") + "</small></div></li>";
+    }).join("") + "</ul></div>";
+  }
   function nextCard(m) {
-    var n = m.next || [];
+    var on = {}, hasList = !!(m.list && m.list.length); (m.list || []).forEach(function (x) { if (x.id) on[x.id] = 1; });
+    var n = (m.next || []).filter(function (x) { return !(x.id && on[x.id]); });
+    if (hasList && !n.length) return "";
+    if (hasList) return '<div class="card"><div class="ch"><h2>Also overdue or due</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(function (x, i) {
+      var s = x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
+      return '<li style="animation-delay:' + i * 0.04 + 's"><span class="ic ' + (x.late ? "late" : "due") + '">' + (x.late ? "!" : "&#8226;") + '</span><div class="li"><div class="s">' + s + "</div><small>" +
+        (x.late ? "Overdue since " + esc(x.due) : "Due today") + (x.ty && x.ty !== "Untyped" ? " · " + esc(x.ty) : "") + "</small></div></li>";
+    }).join("") + "</ul></div>";
     if (!n.length) return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2></div><div class="empty">Nothing overdue or due today. Well done.</div></div>';
     return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(function (x, i) {
       var s = x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
@@ -353,7 +372,7 @@
   }
   function footCard(m) {
     return '<div class="foot"><a class="btn go" href="' + esc(m.full) + '">' + esc(m.fullLabel || "Open my day page") + " &rarr;</a>" +
-      '<div style="color:var(--muted);font-size:12.5px;text-align:center">Your drafts, your inbox with Claude\'s notes, and every task card are on your day page.</div></div>';
+      '<div style="color:var(--muted);font-size:12.5px;text-align:center">Anything not here (drafts, the inbox with Claude\'s notes, every task card) is on the full page, a slower Google page.</div></div>';
   }
 
   function draw(m, cached) {
@@ -362,7 +381,7 @@
     $("when").textContent = (m.date || "") + (m.hours ? " · " + m.hours : "");
     $("hours").textContent = m.lunch && m.lunch !== "Flexible" ? "lunch " + m.lunch : "";
     drawProgress(m);
-    $("main").innerHTML = checkinCard(m) + waitingCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + footCard(m);
+    $("main").innerHTML = checkinCard(m) + waitingCard(m) + listCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + footCard(m);
     requestAnimationFrame(function () {
       Array.prototype.forEach.call(document.querySelectorAll(".bb"), function (e) { var t = e.parentNode.clientHeight - 18; e.style.height = Math.max(4, Math.round(t * Number(e.getAttribute("data-h") || 0) / 100)) + "px"; });
       Array.prototype.forEach.call(document.querySelectorAll(".mini i"), function (e) { e.style.width = e.getAttribute("data-w") + "%"; });

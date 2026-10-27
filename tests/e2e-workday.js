@@ -23,7 +23,8 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
   progress: { sf: true, closed: 6, target: 14, pct: 43, dayPct: 54, proj: 11, behind: true, noted: 5, unnoted: 1, overdue: 41, dueToday: 5, lastAt: '10:41am', notes: 3, plan: 12, planDone: 4 },
   achieved: [{ k: 'close', s: 'Orphan response: call-back from the branch - 5000816447 GERALD HEERAH', noted: false }, { k: 'close', s: 'Premium due: Call back - 5004096791 HEMAN BAHADOOR', noted: true },
     { k: 'close', s: 'Statement request for a client with a very long subject line that has to wrap neatly on a phone without spilling off the side', noted: true }],
-  next: [{ s: 'Change of address', due: 'Mon 12 Oct', late: true, ty: 'Servicing', url: 'https://sf.example/00T9' }, { s: 'Statement request', due: 'Fri 23 Oct', late: false, ty: 'Servicing', url: '' }],
+  next: [{ s: 'Change of address', due: 'Mon 12 Oct', late: true, ty: 'Servicing', id: '00T9', url: 'https://sf.example/00T9' }, { s: 'Statement request', due: 'Fri 23 Oct', late: false, ty: 'Servicing', url: '' }],
+  list: [{ id: '00T7', s: 'Statement request for Gerald Heerah', ty: 'Servicing', done: true, url: 'https://sf.example/00T7' }, { id: '00T9', s: 'Change of address', ty: 'Servicing', done: false, url: 'https://sf.example/00T9' }], listSet: true,
   bars: [{ d: '2026-10-19', l: 'M', n: 9 }, { d: '2026-10-20', l: 'Tu', n: 12 }, { d: '2026-10-21', l: 'W', n: 7 }, { d: '2026-10-22', l: 'Th', n: 11 }, { d: day, l: 'F', n: 6 }],
   team: [] }, o);
 
@@ -55,8 +56,9 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     const chips = await page.innerHTML('#chips');
     ok('the chips: with and without a note, overdue, due, the plan', /<b>5<\/b>closed with your note/.test(chips) && /chip bad"><b>1<\/b>closed with no note/.test(chips) && /<b>41<\/b>overdue/.test(chips) && /<b>4 of 12<\/b>/.test(chips), chips.slice(0, 200));
     ok('not in yet: the check-in button', !!(await page.$('#ci')) && /Your day starts at 7:00am/.test(await page.textContent('#main')));
-    ok('what was achieved, with a nudge where there is no note', (await page.$$('ul.list')).length === 2 && /add your note/.test(await page.textContent('#main')));
-    ok('next up, overdue first, each to its task', /Overdue since Mon 12 Oct/.test(await page.textContent('#main')) && !!(await page.$('a[href="https://sf.example/00T9"]')));
+    ok('what was achieved, with a nudge where there is no note', (await page.$$('ul.list')).length === 3 && /add your note/.test(await page.textContent('#main')));
+    ok('the day\'s list: what is done ticked, each to its task', /Your list today/.test(await page.textContent('#list')) && /1 of 2 done/.test(await page.textContent('#list')) && (await page.$$('#list .s.done')).length === 1 && !!(await page.$('#list a[href="https://sf.example/00T9"]')));
+    ok('what is on the list is not repeated under Next up', /Also overdue or due/.test(await page.textContent('#main')) && (await page.$$('#main a[href="https://sf.example/00T9"]')).length === 1 && /Statement request/.test(await page.textContent('#main')));
     const bars = await page.$$eval('.bb', es => es.map(e => e.getBoundingClientRect().height));
     ok('five bars, grown to their numbers, the tallest the best day', bars.length === 5 && bars[1] === Math.max(...bars) && bars[1] > bars[3] && bars[3] > bars[0] && bars[0] > bars[2] && bars[4] > 0, bars.map(Math.round).join(','));
     ok('one button to the full day page', /Open my day page/.test(await page.textContent('.foot')) && (await page.getAttribute('.foot a', 'href')).includes('f=plan'));

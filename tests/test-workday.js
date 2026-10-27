@@ -75,7 +75,8 @@ ok('a wrong key checks nobody in', env.workdayPost_({ wd: 'sasha', k: 'x', act: 
 console.log('\nThe morning e-mails:\n');
 ok('carry the link', /rickyrampersadbranch\.com\/myworkday\/\?p=sasha/.test(env.workdayMailLine_('sasha')) && /save it to your home screen/.test(env.workdayMailLine_('sasha')));
 const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'apps-script', 'KPI.gs'), 'utf8');
-ok('in his 5:00 and in each desk\'s morning e-mail', /workdayMailLine_\('ricky'\)/.test(src) && /workdayMailLine_\(staffId\)/.test(src));
+// 27 Oct 2026: the big button itself opens My day, in his 5:00 and in each desk's morning e-mail; the Google page is a small link.
+ok('in his 5:00 and in each desk\'s morning e-mail, the big button opens My day', /replyButton_\(workUrl_\('ricky'\), 'Check in and start my day'/.test(src) && /sysDay \? replyButton_\(workUrl_\(staffId\)/.test(src) && /workdayMailFull_\(unitUrl_\('ricky'\)/.test(src) && /workdayMailFull_\(replyUrl_\(staffId, date, 'plan'\)/.test(src));
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
 process.exit(fails ? 1 : 0);
