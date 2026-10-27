@@ -5036,6 +5036,37 @@ section links it.
     made up and marked; no client, no client count.
   - Still to do, his: two 15-second phone clips of real agents saying one line each (candidates trust employees
     about three times more than the company), and the first-year figures for the pay panel.
+- **The professional layout pass, 27 October 2026** ("a more professional layout and you did have what was built
+  with the recruiting app, and you do have what we put the agents through in discovery, it's a LIMRA process … all
+  the support, scaled and more motion and graphics"). Three sections rebuilt or added on agentmgt.com, the hero kept
+  (the opening he liked):
+  - **The two audiences are a ledger**, not struck-through paragraphs: each card is two columns, "what you've heard"
+    (✕, muted, italic) against "what is true here" (✓, ink), five rows each, the button at the foot. One column on a
+    narrow phone.
+  - **The five gates are the selection step by step, LIMRA's process**, as tabs with a drawn graphic per gate: the
+    application filling and stamped Received and Reviewed · 48 h; the Branch Manager's conversation with the three
+    things orientation lays out (the career, the branch, the numbers); **the digital market survey** (the Jotform's own
+    questions off the Drive's Market Survey 1.0: how well known, could approach on business, would refer, saving for;
+    scored out of 100 by the unit manager) and the room with the qualifiers; **POP7, LIMRA's Career Profile+** (the
+    dimensions off the Drive's POP7 sheet: enterprising, achievement and independence potential, self-direction,
+    lifestyle management, call reluctance, listening style, people orientation; two predictors, first-year survival
+    and first-year production; three verdicts: proceed, proceed with caution, redirect; the bars are a marked sample,
+    never a candidate's); selection, then the build (training, induction, boot camp, the licence, field work). The
+    tabs turn by themselves every 5.2 s until someone touches them, and only while the section is on screen. No
+    candidate, no score and no name from the sheet reaches the page.
+  - **"Everything around you"**: the advisor-support inventory (the private "Everything We Do for an Advisor" page) as
+    six tabs by when it happens (before you join 7, first 90 days 5, every day 10, every week 6, every month 6, your
+    managers too 5: 39 items), a rail of the six moments above them, each item an icon, a name and one line. The
+    Mentorship card gave way to "A coach, not a clock" (the Weekly Manager Pulse and the morning note), and the pay
+    panel moved under the career path.
+  - **Two traps:** `strong,b{color:var(--ink)}` turned the selected tab's label ink-on-ink (a `b` inside a dark pill
+    needs `color:inherit`); and a `view()` reveal with `animation-range: entry 10% entry 40%` never fires in a
+    full-page screenshot (the element never "enters"), so it reads as missing content when it is not: use
+    `entry … cover …` like the rest of the page, and review full-page shots with motion off.
+  - **The Discovery session's own material is not on file.** The page says what the record holds: the live page's
+    words, the Market Survey's questions and the POP7 dimensions. LIMRA's session guide, the orientation deck and a
+    Career Profile+ sample report were asked for on 27 October; when they arrive they go in the Drive, never the
+    repository (LIMRA's material is licensed), and the gate copy is checked against them.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,
