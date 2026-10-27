@@ -6083,3 +6083,140 @@ recorded frame by frame, and a recorder must have the real face on frame one
 or the swap shows as a font pop in the MP4. Same for
 `tools/letters/film-card.html`, which is rendered to a JPEG. `apps-script/`
 templates are not web pages and never had one.
+
+
+## Apps Script — the last definition wins, and that is a trap
+
+The branch backend is one shared namespace across `Code.gs`, `RRBranchOS.gs`,
+`RRBranchEmails.gs` and `RRB_Additions.gs`. Two functions with the same name are
+not an error: **the last one loaded is the one that runs.** Every fix delivered
+to this project is therefore a block appended at the end of a file, because an
+append always wins over whatever is above it.
+
+That works, and it is why nothing here is ever edited in place over WhatsApp —
+a paste that lands inside an existing function eats its closing brace, and the
+whole project stops with a `SyntaxError` on a line nobody typed.
+
+**But an append also silently discards any later fix to the same function.**
+
+On 4 September the settlement board could not find its tab. The spreadsheet id
+had been saved to Script Properties, and the version of `rrbSettleSheet_` that
+reads that property had been pasted and saved. Both were correct. The board was
+running a *different* `rrbSettleSheet_` — an older copy, from a settlement block
+that had been pasted three more times underneath it. Last wins, and last was the
+one that did not know about the property.
+
+It cost an evening, because from outside the script all three possible causes
+look identical: the file not pasted, the version not deployed, and a later copy
+winning. Reading the file settled it in seconds.
+
+So, when appending:
+
+- **Say what the block redefines**, at the top, by name. If a function is being
+  replaced, the next person needs to know without diffing.
+- **Never send the same block twice.** A second paste of an older copy undoes
+  every fix made to those functions since.
+- **Carry a build marker** in `doGet`'s "Unknown action" reply. `?action=zzz`
+  then names the running build from outside, with no sign-in.
+- **Ship a self-check** with anything structural. `String(fn).indexOf('...')`
+  reads the *live* function body, so the script can be asked which copy won
+  instead of it being inferred. `rrbSettlementSelfCheck` is the pattern.
+
+A marker alone is not enough: it lives inside the block being pasted, so it
+cannot tell "never pasted" apart from "never deployed". The self-check can.
+
+## Apps Script — a gated action must never go in `cacheableActions`
+
+`doGet` caches some replies under the key
+`"rrb_" + action + code + year`. **There is no token in that key.** So a
+sign-in-gated action added to that list is gated only until the first
+authorised read: the reply is stored, and for the next `ttl` seconds anyone
+with the URL and no sign-in gets the stored copy back. The wall re-reads its
+feeds every few minutes, so the copy never expires.
+
+On 8 September 2026 the `ratings` action — every advisor's average and the
+clients' own words — was readable from outside for that reason, on both
+deployments, for most of a day. Found by probing `?action=ratings` with no
+token and getting data instead of "Sign in to see ratings."
+
+Rules:
+
+- **Nothing that calls `rrbAuthorize_` goes in `cacheableActions`.** If it
+  must be cached, the key has to carry the token — and then it is per-person
+  and barely worth caching.
+- **After every deploy, probe each gated action from outside with no token**
+  (`settlement`, `ratings`, `submitted`, `clear_cache`). The only acceptable
+  answer is a sign-in error. `?action=zzz` proves the build; it does not
+  prove the gates.
+
+## Production is counted on the pick-up date, not the submission date
+
+Branch production — the "submitted" figure on the wall and the one head office
+reads — comes from **Salesforce**, not from the fact find sheet, and it is
+keyed on a date that is easy to get wrong.
+
+**It is two Salesforce objects, not one**, and their field names do not match.
+
+New business — life and pensions:
+
+| | |
+|---|---|
+| Object | `CLIENT_PORTFOLIO__c` |
+| Date | `Production_Picked_up_Date__c` |
+| API | `SUM(Total_API__c)` |
+| Apps | `SUM(App_Count__c)` |
+| Agent | `AGENT__r.Agent__c` |
+| Product mix | `RecordType.Name` |
+
+Increases — their own object, their own dates:
+
+| | |
+|---|---|
+| Object | **`Policy_Increases__c`** |
+| Date | `Increase_Production_Picked_Up_Date__c` |
+| API | `SUM(Increase_API__c)` |
+| Apps | `SUM(App_Count_Inc__c)` |
+| Agent | `Policy_Increases__r.AGENT__r.Agent__c` — through the relationship, not direct |
+
+**Mind the capital.** New business is `Picked_up`; the increase is
+`Picked_Up`. One letter, and Salesforce refuses the whole query. Copy these
+names, do not retype them.
+
+Branch production is the two added together. Query one and the number is wrong
+and looks right.
+
+**"Picked up" means the application pick-up date** — the day the application
+was collected, which is the day the branch is credited with the production. It
+is not the day the policy was issued, not the day cover started, and not the
+day the advisor submitted the fact find. The whole report hangs on that one
+date, on both objects.
+
+`wall.html` states the rule on the report itself: *"Total API = new business on
+its production picked-up date + increases on theirs."*
+
+Two routes serve it, both on that same basis:
+
+- `?action=prodboard` → `sfBoard` → `pbSalesforce.gs`, querying Salesforce live
+- `?action=submitted` → `getSubmitted()` in `Code.gs`, reading `PENDING_SHEET_ID`,
+  whose pick-up tab is recognised by the headers `production picked up date`,
+  `total api`, `app count` (`_identifyTab`, Code.gs ~1647)
+
+**Why this bites.** Every other date on a policy is tempting and wrong.
+`EFFECTIVE_DT` is when cover starts, `submittedAt` is when the advisor sent the
+fact find, `App_Received_Date__c` is when it was keyed. Totalling on any of
+them produces a number that looks plausible, disagrees with the wall, and
+disagrees with what head office already has — and nothing says which is right.
+
+**And increases count.** An increase on an existing policy is production on the
+day it is picked up. Counting new business alone understates the branch.
+
+Note this is a different question from the fact find's cover rule: there, only
+life sums assured count toward the underwriting ceiling. That is about cover
+recommended to one client. This is about what the branch wrote and had picked
+up. The two rules do not conflict and must not be mixed.
+
+**There is no stored production report.** `RRB-production-YYYY-MM-DD.xlsx` is
+built in the browser by `wall.html` when the Spreadsheet button is pressed. Six
+tabs, of which only `Submitted` is live — the other five read the hardcoded
+`PROD` literal, frozen at its `asOf` date, because `PROD_ENDPOINT` is blank.
+Searching Drive for that workbook finds nothing; it has to be computed.
