@@ -1376,9 +1376,32 @@ function gblLive_() { try { return !!PropertiesService.getScriptProperties().get
 /** The editor's Run button (the branch manager): from now on a bill sent from the review page goes to the group. */
 function gblGoLive() { PropertiesService.getScriptProperties().setProperty(GBL.LIVE_PROP, gcmWhen_(new Date())); return tSay_('Bills sent from the billing review now go to the groups, from support@, copied to sales support. gblStop ends that.'); }
 function gblStop() { PropertiesService.getScriptProperties().deleteProperty(GBL.LIVE_PROP); return tSay_('Bills now go only to the staff member and the branch, marked TEST.'); }
-/** The cover note: the figures per line, what changed, how to pay, their page. Tables and inline styles, so any mail app shows it. */
+/** Who the bill e-mail greets (27 October 2026: "where is the email addressing to persons"). A greeting typed on the
+ *  register is kept as it is. The contact's name as Salesforce has it, with no salutation, reads by its first name
+ *  ("Dear Kavita", never "Dear Kavita Persad"). An account with an e-mail and no named contact greets the company's
+ *  team, never "Sir or Madam". */
+function gblGreet_(g) {
+  var gr = String(g.greeting || '').trim(), ct = String(g.contact || '').trim();
+  var first = function (n) { var w = gcmNiceName_(n).split(/\s+/)[0] || ''; return w.length > 1 && /[a-z]/i.test(w) ? w : ''; };
+  var full = gr && ct && gr.toLowerCase() === ct.toLowerCase() && gr.split(/\s+/).length > 1;
+  if (gr && !full) return gcmNiceName_(gr);
+  var f = first(gr || ct);
+  if (f) return f;
+  var co = gcmNiceName_(String(g.name || '')).replace(/[\s,]+(limited|ltd\.?|company|co\.?|inc\.?|plc)\s*$/i, '').trim();
+  return co ? co + ' team' : 'Sir or Madam';
+}
+/** Who looks after the account: the account owner in Salesforce while active, else whoever signs the bill. */
+function gblCarer_(g, signer) {
+  var full = gcmNiceName_(g.ownerActive && g.assigned ? g.assigned : signer || '');
+  if (!full || /^the\b|\bteam\b/i.test(full)) return { full: '', first: '' };   // "the team" is not a person to rate by name
+  return { full: full, first: full.split(/\s+/)[0] || '' };
+}
+/** The cover note: a greeting by name, the figures per line, what changed, who looks after the account, the sign-in to
+ *  comment on any line, and five stars for that person (27 October 2026: "a log in so they can also make comments … a
+ *  star rating to rate the staff who manages the account"). Tables and inline styles, so any mail app shows it. */
 function gblBillMail_(g, month, bills, who, test, L) {
   var E = tEsc_, label = gblMonthLabel_(month), signer = gcmSigner_(who, g), total = gblR_(bills.reduce(function (s, x) { return s + x.due; }, 0));
+  var carer = gblCarer_(g, signer), cf = carer.first || 'our team', site = GCM.SITE + 'client.html';
   var changes = gblBillChanges_(g, month, bills);
   var dueBy = bills.map(function (x) { return x.dueBy; }).filter(String).sort()[0] || '';
   var lineRows = bills.map(function (x) {
@@ -1389,29 +1412,67 @@ function gblBillMail_(g, month, bills, who, test, L) {
   var subject = 'Your ' + label + ' billing: ' + g.name + ' (' + gcmMoney_(total) + ')';
   var stmt = '';
   try { stmt = gblStatementHtml_(g, gblStatementData_(g, month, L, gblSf_(g), bills), { inline: true }); } catch (e) { stmt = ''; }
-  var greet = 'Dear ' + (g.greeting || 'Sir or Madam') + ',';
-  var paras = ['Please find attached your ' + label + ' billing' + (bills.length > 1 ? 's' : '') + ' for ' + bills.map(function (x) { return GBL.LABEL[x.line].toLowerCase(); }).join(', ').replace(/, ([^,]*)$/, ' and $1') + '. The total due is ' + gcmMoney_(total) + (dueBy ? ', payable by ' + tDmy_(dueBy) : '') + '.'];
+  var greet = 'Dear ' + gblGreet_(g) + ',';
+  var lines = bills.map(function (x) { return GBL.LABEL[x.line].toLowerCase(); }).join(', ').replace(/, ([^,]*)$/, ' and $1');
+  var paras = ['Thank you for another month with us. Your ' + label + ' billing for ' + lines + ' is attached. The total due is ' + gcmMoney_(total) + (dueBy ? ', payable by ' + tDmy_(dueBy) : '') + '.'];
   var arrears = bills.filter(function (x) { return x.arrears > 0; });
-  if (arrears.length) paras.push('The ' + arrears.map(function (x) { return GBL.LABEL[x.line].toLowerCase(); }).join(' and ') + ' bill' + (arrears.length === 1 ? '' : 's') + ' also show' + (arrears.length === 1 ? 's' : '') + ' earlier months as outstanding (' + gcmMoney_(arrears.reduce(function (s, x) { return s + x.arrears; }, 0)) + '). If you have paid these, please send us the payment details and we will have them applied.');
+  if (arrears.length) paras.push('The ' + arrears.map(function (x) { return GBL.LABEL[x.line].toLowerCase(); }).join(' and ') + ' bill' + (arrears.length === 1 ? '' : 's') + ' also show' + (arrears.length === 1 ? 's' : '') + ' earlier months as outstanding (' + gcmMoney_(arrears.reduce(function (s, x) { return s + x.arrears; }, 0)) + '). If you have paid these, send us the payment details and we will have them applied.');
   if (changes.length) paras.push('Changes on this billing: ' + changes.map(function (c) { return (c.kind === 'joiner' ? 'added ' : 'removed ') + gblNice_(c.member) + (c.effective ? ' (' + tDmy_(c.effective) + ')' : ''); }).join('; ') + '. Please tell us if anyone is missing or should not be there.');
-  paras.push('We have checked each bill against our records before sending it. Your service page shows your billing and payments for the last twelve months, every open item on your account, and a form to tell us about a payment made or a person joining or leaving.');
-  var text = [greet, '', paras.join('\n\n'), '', lineRows.map(function (r) { return r.what + ': ' + gcmMoney_(r.due) + (r.extra ? ' (' + r.extra + ')' : ''); }).join('\n'), '',
-    'Your page: ' + GCM.SITE + 'client.html?from=bill', 'Sign in with your list bill (' + (g.bills[0] || '') + ') and your access code: ' + (g.code || '(not set)'), '',
-    'Warm regards,', signer, 'Ricky Rampersad Branch, Guardian Life of the Caribbean', '9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461'].join('\n');
+  var recBy = bills.map(function (x) { return x.reconciledBy; }).filter(String)[0] || '', recAt = bills.map(function (x) { return x.reconciledAt; }).filter(String)[0] || '';
+  var vline = recBy ? 'Checked against our records by ' + gcmVerName_(recBy, g) + (recAt ? ' on ' + String(recAt).split(',')[0] : '') + '.' : '';
+  var careLine = carer.full ? carer.full + ' looks after your account: your bills, your service items and your people’s applications. If anything on this billing does not look right, ' + cf + ' will put it right.' : '';
+  var commentLine = 'Sign in to your service page to comment on any line, tell us about a payment you have made, or someone joining or leaving. It goes straight to ' + cf + '.';
+  var link = function (n) { return site + '?tab=billing&from=bill&m=' + month + (n ? '&rate=' + n : ''); };
+  var words = (typeof GCM_RATE !== 'undefined' && GCM_RATE.WORDS) || ['', 'Poor', 'Below expectations', 'Fair', 'Good', 'Excellent'];
+  var rateQ = 'How is ' + cf + ' looking after your account?';
+  var text = [greet, '', paras.join('\n\n'), '', lineRows.map(function (r) { return r.what + ': ' + gcmMoney_(r.due) + (r.extra ? ' (' + r.extra + ')' : ''); }).join('\n'), 'Total due: ' + gcmMoney_(total), '',
+    careLine, '', commentLine, 'Your billing: ' + link(0), 'Sign in with your list bill (' + (g.bills[0] || '') + ') and your access code: ' + (g.code || '(not set)'), '',
+    rateQ + ' Tap a star (your page opens with it chosen):'].concat([5, 4, 3, 2, 1].map(function (n) { return n + ' star' + (n === 1 ? '' : 's') + ', ' + words[n] + ': ' + link(n); }))
+    .concat(['', 'You can also reply to this e-mail: it reaches our team.', '', 'Warm regards,', signer, 'Group client service, Ricky Rampersad Branch', 'Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461', vline])
+    .join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  var font = "font-family:'IBM Plex Sans','Segoe UI',Roboto,Arial,sans-serif";
   var rows = lineRows.map(function (r) { return '<tr><td style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:14px Arial,sans-serif;color:#142033">' + E(r.what) + (r.extra ? '<div style="font:12px Arial,sans-serif;color:#5a687d">' + E(r.extra) + '</div>' : '') + '</td><td style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:700 14px Arial,sans-serif;color:#142033;text-align:right;white-space:nowrap">' + E(gcmMoney_(r.due)) + '</td></tr>'; }).join('');
-  var html = '<div style="background:#f3f5f9;padding:20px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse;border:1px solid #e2e7ef">' +
+  var initials = (carer.full ? gcmNiceName_(carer.full).split(/\s+/).filter(String).map(function (w) { return w.charAt(0); }).slice(0, 2).join('') : 'RR').toUpperCase();
+  var star = function (n) {
+    return '<td width="20%" align="center" style="padding:0 3px"><a href="' + link(n) + '" style="display:block;text-decoration:none;border:1px solid #DCE3EC;border-radius:10px;background:#ffffff;padding:10px 0 8px">' +
+      '<span style="font:28px/1 Arial,sans-serif;color:#C98A00">&#9733;</span><br><span style="font:700 15px/1.4 Arial,sans-serif;color:#142033">' + n + '</span></a></td>';
+  };
+  var pre = 'Your ' + label + ' billing is ready: ' + gcmMoney_(total) + (dueBy ? ', payable by ' + tDmy_(dueBy) : '') + '.' + (carer.first ? ' ' + carer.first + ' looks after your account.' : '');
+  var html = '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' + E(pre) + '</div>' +
+    '<div style="background:#E9EEF5;padding:22px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse">' +
     (test ? '<tr><td style="padding:10px 26px;background:#fdf1e1;font:700 13px Arial,sans-serif;color:#a64b05">TEST: this would go to ' + E(g.to.join(', ') || 'nobody') + '. Nothing has reached the group.</td></tr>' : '') +
-    '<tr><td style="padding:18px 26px;border-bottom:3px solid #1d5bc4"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
-    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#142033">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Group billing</div></td></tr></table></td></tr>' +
-    '<tr><td style="padding:22px 26px 0"><div style="font:700 22px/1.3 Arial,sans-serif;color:#142033">Your ' + E(label) + ' billing</div><div style="font:14px/1.4 Arial,sans-serif;color:#5a687d;margin-top:6px">' + E(g.name) + (dueBy ? ' · payable by ' + E(tDmy_(dueBy)) : '') + '</div></td></tr>' +
-    '<tr><td style="padding:18px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#142033"><p style="margin:0 0 12px">' + E(greet) + '</p>' + paras.map(function (p) { return '<p style="margin:0 0 12px">' + E(p) + '</p>'; }).join('') +
+    '<tr><td bgcolor="#1D5BC4" style="background:#1D5BC4;background-image:linear-gradient(120deg,#13408F,#1D5BC4 60%,#2A6FD8);padding:20px 28px 22px;' + font + '">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px;border:1px solid #7FA3E0"></td>' +
+    '<td style="padding-left:12px;color:#ffffff;font:600 15px/1.25 Arial,sans-serif;' + font + '">Ricky Rampersad Branch<div style="font:400 12.5px/1.4 Arial,sans-serif;color:#D6E3F8">Group billing · Guardian Life of the Caribbean</div></td></tr></table>' +
+    '<div style="font:600 24px/1.25 Arial,sans-serif;' + font + ';color:#ffffff;margin:18px 0 4px">Your ' + E(label) + ' billing</div>' +
+    '<div style="font:15px/1.5 Arial,sans-serif;' + font + ';color:#E4ECFA">' + E(g.name) + (dueBy ? ' · payable by ' + E(tDmy_(dueBy)) : '') + '</div></td></tr>' +
+    '<tr><td style="padding:22px 28px 8px;font:15.5px/1.6 Arial,sans-serif;' + font + ';color:#142033"><p style="margin:0 0 12px">' + E(greet) + '</p>' + paras.map(function (p) { return '<p style="margin:0 0 12px">' + E(p) + '</p>'; }).join('') +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;border:1px solid #e2e7ef;margin:6px 0 16px">' + rows +
     '<tr><td style="padding:10px;font:700 14px Arial,sans-serif;color:#142033;background:#ebf2fd">Total due</td><td style="padding:10px;font:700 16px Arial,sans-serif;color:#1d5bc4;background:#ebf2fd;text-align:right">' + E(gcmMoney_(total)) + '</td></tr></table>' +
     stmt +
-    '<p style="margin:0 0 6px"><a href="' + GCM.SITE + 'client.html?from=bill" style="display:inline-block;background:#1d5bc4;color:#fff;text-decoration:none;font:700 14px Arial,sans-serif;padding:11px 18px;border-radius:8px">Open your service page</a></p>' +
-    '<p style="margin:0 0 16px;font:13px/1.5 Arial,sans-serif;color:#5a687d">Sign in with your list bill <b>' + E(g.bills[0] || '') + '</b> and your access code <b>' + E(g.code || '(not set)') + '</b>.</p>' +
-    '<p style="margin:0">Warm regards,<br><b>' + E(signer) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br><span style="color:#5a687d">9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p></td></tr></table></div>';
-  return { subject: subject, text: text, html: html };
+    /* who looks after the account */
+    (carer.full ? '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:4px 0 16px;border:1px solid #DCE3EC;border-radius:10px;background:#F7F9FC"><tr>' +
+      '<td width="58" style="padding:14px 0 14px 14px;vertical-align:top"><div style="width:44px;height:44px;border-radius:22px;background:#13408F;color:#ffffff;font:700 16px/44px Arial,sans-serif;text-align:center">' + E(initials) + '</div></td>' +
+      '<td style="padding:14px 16px 14px 12px;font:14.5px/1.55 Arial,sans-serif;color:#142033"><div style="font:700 12px/1.3 Arial,sans-serif;color:#4B586C;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px">Your account manager</div>' +
+      '<b>' + E(carer.full) + '</b> looks after your account: your bills, your service items and your people’s applications. If anything on this billing does not look right, ' + E(cf) + ' will put it right.</td></tr></table>' : '') +
+    /* the sign-in, to comment */
+    '<p style="margin:0 0 6px;font-weight:700">Comment on your billing</p>' +
+    '<p style="margin:0 0 12px">' + E(commentLine) + '</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 10px"><tr><td bgcolor="#13408F" style="background:#13408F;border-radius:8px"><a href="' + link(0) + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your billing</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B8CEF4;background:#EBF2FD;margin:0 0 20px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#142033">' +
+    'List bill: <b>' + E(g.bills[0] || '') + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(g.code || '(not set)') + '</b></td></tr></table>' +
+    /* five stars for the person who looks after the account */
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 18px;background:#F4F7FA;border-radius:10px"><tr><td style="padding:14px 12px 12px">' +
+    '<p style="margin:0 0 4px 3px;font:700 15px/1.4 Arial,sans-serif;color:#142033">' + E(rateQ) + '</p>' +
+    '<p style="margin:0 0 10px 3px;font:13.5px/1.5 Arial,sans-serif;color:#2B374C">Tap a star: your page opens with it chosen, and you can add a comment.</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr>' + [1, 2, 3, 4, 5].map(star).join('') + '</tr></table>' +
+    '<p style="margin:8px 0 0 3px;font-size:12.5px;color:#2B374C">' + E([1, 2, 3, 4, 5].map(function (n) { return n + ' ' + words[n].toLowerCase(); }).join(' · ')) + '</p>' +
+    '<p style="margin:4px 0 0 3px;font-size:12.5px;color:#4B586C">Nothing is sent until you sign in and press Send on your page.</p></td></tr></table>' +
+    '<p style="margin:0 0 18px">You can also reply to this e-mail: it reaches our team.</p>' +
+    '<p style="margin:0;border-top:1px solid #E2E7EF;padding-top:14px">Warm regards,<br><b>' + E(signer) + '</b><br>Group client service, Ricky Rampersad Branch<br>' +
+    '<span style="color:#4B586C">Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p>' +
+    (typeof gcmVerifiedHtml_ === 'function' ? gcmVerifiedHtml_(vline) : '') + (typeof tLegal_ === 'function' ? tLegal_(null) : '') + '</td></tr></table></div>';
+  return { subject: subject, text: text, html: html, carer: carer.full, greet: greet };
 }
 
 /* ── the EB0010 Group and Individual Policy Change Form, filled from our records ─────── */
@@ -3608,7 +3669,7 @@ function gblStatementData_(g, month, L, sf, bills) {
   });
   var dueBy = bills.map(function (x) { return x.dueBy; }).filter(String).sort()[0] || '';
   return { month: month, label: gblMonthLabel_(month), group: g.name, listBill: g.bills[0] || '', lines: lines, total: total, dueBy: dueBy, owed: owed, owedTotal: owedTotal, invoiceOwed: invoiceOwed, arrearsDiff: arrearsDiff,
-    grand: gblR_(total + owedTotal), changes: changes, attachments: bills.map(function (b) { return b.files; }).filter(String), asAt: tDmy_(L.today), today: L.today };
+    grand: gblR_(total + owedTotal), changes: changes, attachments: bills.map(function (b) { return String(b.files || '').trim(); }).filter(String), asAt: tDmy_(L.today), today: L.today };
 }
 /** The joiners and leavers this month's bills show, for the lines given: each bill's own findings (who joined or left
  *  since last month's bill), its credits and back-charges, and a life statement's adjustments, one entry per person and
@@ -3698,7 +3759,14 @@ function gblStatement_(p) {
   if (!bills.length) return { ok: true, month: month, data: null, html: '', pdf: '', said: 'Upload a bill for ' + gblMonthLabel_(month) + ' first: the statement is written from the bills.' };
   var sf = gblSf_(g), d = gblStatementData_(g, month, L, sf, bills), html = gblStatementHtml_(g, d, {});
   var pdf = gcmYes_(p.pdf) ? gblStatementPdf_(html, gblStatementName_(g, month)) : null;
-  return { ok: true, month: month, data: d, html: html, pdf: pdf ? gblPdfB64_(pdf) : '', pdfName: gblStatementName_(g, month) + '.pdf', live: gblLive_(),
+  /* the bill e-mail exactly as the group reads it (27 October 2026), with who it greets, who signs it and whom they rate */
+  var mail = null;
+  if (gcmYes_(p.mail)) {
+    var m = gblBillMail_(g, month, bills, who, false, L);
+    mail = { subject: m.subject, html: m.html, greet: m.greet, carer: m.carer, signer: gcmSigner_(who, g), to: g.to.slice(0, 1).join(', '), cc: gcmCc_(g).join(', '),
+      named: !!(String(g.greeting || '').trim() || String(g.contact || '').trim()), why: gcmCannotMail_(g) || '' };
+  }
+  return { ok: true, month: month, data: d, html: html, pdf: pdf ? gblPdfB64_(pdf) : '', pdfName: gblStatementName_(g, month) + '.pdf', live: gblLive_(), mail: mail,
     said: d.owed.length ? gcmMoney_(d.owedTotal) + ' still owed from ' + d.owed.length + ' earlier month' + (d.owed.length === 1 ? '' : 's') + '; ' + gcmMoney_(d.total) + ' this month.' : gcmMoney_(d.total) + ' this month, nothing owed from earlier months.' };
 }
 /** The statement's PDF for a send, or null. */

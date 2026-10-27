@@ -109,7 +109,7 @@ var GCM_HEAD = {
                       'Contact in Salesforce', 'Contact e-mail', 'Contact greeting', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
   'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private', 'History', 'Mails', 'Application'],
   'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status', 'Html'],
-  'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter'],
+  'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter', 'About'],
   'Group Shares':    ['When', 'Group', 'Task Id', 'Kind', 'Value', 'By'],
   'Group Queue':     ['When', 'Group', 'Staff', 'Role', 'Staff e-mail', 'For', 'Task Ids', 'Intro', 'Status', 'Sent at'],
   'Group Increases': ['Group', 'Increase Id', 'Policy', 'Line', 'Insured', 'Submitted', 'Days', 'Status', 'Stage', 'Support', 'Agent',
@@ -818,7 +818,7 @@ function gcmLoad_() {
   gcmRows_(GCM.RESPONSES).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
     if (g) g.resps.push({ when: gcmYmd_(r.When), at: gcmWhen_(r.When), ts: r.When instanceof Date ? r.When.getTime() : 0, name: gcmText_(r.Name), role: gcmText_(r.Role), task: gcmId15_(gcmText_(r['Task Id'])),
-      title: gcmText_(r.Task), verdict: gcmText_(r.Verdict), note: gcmText_(r.Note), rating: Number(r.Rating) || 0, comment: gcmText_(r.Comment), staff: gcmText_(r.Staff) });
+      title: gcmText_(r.Task), verdict: gcmText_(r.Verdict), note: gcmText_(r.Note), rating: Number(r.Rating) || 0, comment: gcmText_(r.Comment), staff: gcmText_(r.Staff), about: gcmText_(r.About) });
   });
   gcmRows_(GCM.VIEWS).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
@@ -1506,7 +1506,7 @@ function gcmAnalytics_(L) {
       if (wk) wk.responses++;
       if (r.when >= monday) tot.responsesWeek++;
       if (r.when >= gcmAddDays_(today, -30) && (r.verdict === 'change' || r.verdict === 'notours' || (r.rating && r.rating <= 3) || r.comment || r.note))
-        resp.push({ group: g.name, at: r.at, when: r.when, name: r.name, task: r.title, verdict: r.verdict, note: r.note, rating: r.rating, comment: r.comment, staff: r.staff || g.assigned });
+        resp.push({ group: g.name, at: r.at, when: r.when, name: r.name, task: r.title, verdict: r.verdict, note: r.note, rating: r.rating, comment: r.comment, staff: r.staff || g.assigned, about: gcmAboutSay_(r.about) });
     });
     /* An answer asking for a change stays on "To act on" until the item is closed or a note for the group follows it
        (13 October 2026: the manager could not find Dansteel's answer, which the list did not carry). */
@@ -1586,7 +1586,7 @@ function gcmGroupView_(p) {
         kind: /^welcome/i.test(x.status) ? 'welcome' : /^resent/i.test(x.status) ? 'again' : /^reminder/i.test(x.status) ? 'reminder' : 'letter', status: x.status }; }),
     views: g.views.slice(-15).reverse().map(function (v) { return { at: v.at, name: v.name, device: v.device, from: v.from }; }),
     rate: gcmRateState_(g, L.today),
-    responses: g.resps.slice(-25).reverse() };
+    responses: g.resps.slice(-25).reverse().map(function (r) { var o = {}; Object.keys(r).forEach(function (k) { o[k] = r[k]; }); o.about = gcmAboutSay_(r.about); return o; }) };
 }
 
 /** A group's year, by category, counting only what the group may see. */
@@ -2389,7 +2389,7 @@ function gcmViewLog_(g, p) {
   cache.put(key, '1', GCM_RATE.VIEW_GAP_MIN * 60);
   var pick = function (v, re) { v = String(v || '').toLowerCase(); return re.test(v) ? v : ''; };
   gcmAppend_(GCM.VIEWS, [{ When: new Date(), Group: g.name, Bill: String(p.lb || '').trim().toUpperCase().slice(0, 30),
-    Name: String(p.nm || '').replace(/\s+/g, ' ').trim().slice(0, 80), Device: pick(p.dev, /^(phone|computer)$/), From: pick(p.from, /^(letter|welcome|reminder)$/) }]);
+    Name: String(p.nm || '').replace(/\s+/g, ' ').trim().slice(0, 80), Device: pick(p.dev, /^(phone|computer)$/), From: pick(p.from, /^(letter|welcome|reminder|bill)$/) }]);
 }
 
 /** Where the group's last weekly letter stands: rated, its items answered without the stars, the page opened without an
@@ -3327,9 +3327,19 @@ function gcmClient_(p) {
     /* the page's welcome (14 October 2026): the film, and when they last answered us */
     film: GCM_WELCOME.PAGE, filmLength: GCM_WELCOME.LENGTH, nextLetter: gcmSendLabel_(gcmNextSend_()),
     lastAnswer: g.resps.length ? { at: tDmy_(g.resps[g.resps.length - 1].when), name: g.resps[g.resps.length - 1].name } : null,
+    /* the last rating from a bill e-mail (27 October 2026), so the billing tab can say it was had */
+    billRated: (function () { var r = g.resps.filter(function (x) { return x.rating && /^billing/.test(x.about || ''); }).pop(); return r ? { at: tDmy_(r.when), rating: r.rating, about: r.about, name: r.name } : null; })(),
     /* billing, one block a line (GroupBilling.gs, 24 October 2026): figures and counts, never a member's name */
     billing: typeof gblClientBlock_ === 'function' ? gblClientBlock_(g, L) : null,
     contact: 'rickyrampersadsalessupport@myguardiangroup.com' };
+}
+
+/** What a group's answer was about, in words: "the October 2026 billing" for a rating from the bill e-mail; '' for
+ *  the weekly letter's. */
+function gcmAboutSay_(about) {
+  var m = /^billing(?: (\d{4})-(\d{2}))?$/.exec(String(about || ''));
+  if (!m) return '';
+  return m[1] ? 'the ' + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][Number(m[2]) - 1] + ' ' + m[1] + ' billing' : 'the billing';
 }
 
 /** A shared comment as the group reads it. A note staff wrote on this site is posted by the integration's login, so its
@@ -3364,20 +3374,22 @@ function gcmReview_(b) {
     rows.push({ When: now, Group: g.name, Name: name, Role: role, 'Task Id': t.id, Task: gcmTitle_(t.subject, g.name), Verdict: v, Note: note, Staff: g.assigned, Chatter: chatter });
   });
   var rating = Math.round(Number(b.rating) || 0), comment = String(b.comment || '').trim().slice(0, 2000);
+  /* a rating from the bill e-mail (27 October 2026): of the person who looks after the account, for that month's billing */
+  var about = /^billing( \d{4}-\d{2})?$/.test(String(b.about || '')) ? String(b.about) : '';
   /* The stars are required (13 October 2026: "ensure the star rating is pressed"): Dansteel, the first group to answer,
      sent two items and no rating. */
   if (!(rating >= 1 && rating <= 5)) return { ok: false, error: 'Please rate our service: tap one to five stars before you send.' };
-  if (rating >= 1 && rating <= 5 || comment) rows.push({ When: now, Group: g.name, Name: name, Role: role, Rating: rating >= 1 && rating <= 5 ? rating : '', Comment: comment, Staff: g.assigned });
+  if (rating >= 1 && rating <= 5 || comment) rows.push({ When: now, Group: g.name, Name: name, Role: role, Rating: rating >= 1 && rating <= 5 ? rating : '', Comment: comment, Staff: g.assigned, About: about });
   if (!rows.length) return { ok: false, error: 'Mark at least one item, or rate our service, before you send.' };
   gcmAppend_(GCM.RESPONSES, rows);
-  try { gcmTell_(g, name, rows, rating, comment); } catch (e) {}   // recorded by gcmTell_ itself; the answer is already filed
+  try { gcmTell_(g, name, rows, rating, comment, about); } catch (e) {}   // recorded by gcmTell_ itself; the answer is already filed
   return { ok: true, saved: rows.length, posted: posted, failed: failed };
 }
 
 /** The account owner hears at once, with sales support copied: an internal note, with what changed (13 October 2026:
  *  "come in via email … to the account owner and copy the Ricky Rampersad sales support"; the branch manager is no
  *  longer copied, and sees every answer on the dashboard). With no owner's address, sales support alone. */
-function gcmTell_(g, name, rows, rating, comment) {
+function gcmTell_(g, name, rows, rating, comment, about) {
   var to = [];
   if (g.ownerEmail) to.push(g.ownerEmail);
   else tTeam_().people.forEach(function (p) { if (gcmSameName_(p.name, g.assigned) && p.email && to.indexOf(p.email) < 0) to.push(p.email); });
@@ -3385,13 +3397,15 @@ function gcmTell_(g, name, rows, rating, comment) {
   if (!to.length) return;
   var V = { correct: 'Correct', change: 'Needs a change', notours: 'Not ours' };
   var flag = rows.filter(function (r) { return r.Verdict === 'change' || r.Verdict === 'notours' || r.Note; });
+  var bill = /^billing/.test(about || ''), items = rows.filter(function (r) { return r['Task Id']; }).length;
   var body = '<p><b>' + tEsc_(g.name) + '</b> answered on their service page (' + tEsc_(name) + ').</p>' +
+    (bill ? '<p>This rating came from ' + tEsc_(gcmAboutSay_(about)) + ' e-mail, and rates how <b>' + tEsc_(g.assigned || 'our team') + '</b> looks after the account.</p>' : '') +
     (rating ? '<p>Rating: <b>' + rating + ' of 5</b>' + (comment ? ' — “' + tEsc_(comment) + '”' : '') + '</p>' : (comment ? '<p>“' + tEsc_(comment) + '”</p>' : '')) +
     (flag.length ? '<p>To act on:</p><ul>' + flag.map(function (r) { return '<li>' + tEsc_(r.Task) + ': <b>' + (V[r.Verdict] || 'a note') + '</b>' + (r.Note ? ' — “' + tEsc_(r.Note) + '”' : '') + '</li>'; }).join('') + '</ul>'
-      : '<p>Every item they marked is correct.</p>') +
+      : items ? '<p>Every item they marked is correct.</p>' : '') +
     '<p>Each note is also on the task’s Chatter in Salesforce. <a href="' + GCM.SITE + '">Open group client management</a></p>' +
     '<p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
-  var subject = 'Group review in: ' + g.name + (rating ? ' · ' + rating + '/5' : '') + (flag.length ? ' · ' + flag.length + ' to act on' : '');
+  var subject = (bill ? 'Billing rating in: ' : 'Group review in: ') + g.name + (rating ? ' · ' + rating + '/5' : '') + (flag.length ? ' · ' + flag.length + ' to act on' : '');
   /* From support@ first, as the letters go; the Gmail allowance second. Until 13 October this went by Gmail alone and a
      failure was swallowed: Dansteel's answer of 12 October reached the sheet and Salesforce, and nobody was told. */
   var err = [];

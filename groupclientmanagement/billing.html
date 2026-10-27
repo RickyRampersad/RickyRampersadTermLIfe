@@ -79,6 +79,8 @@
 .sframe{width:100%;height:720px;border:1px solid var(--line);border-radius:12px;background:#fff}
 .sowed td.num.bad{color:var(--badText);font-weight:600}
 .dnote{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0;font-size:14px}
+.dnote.dmail{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-left:4px solid var(--bar)}
+.dnote.dmail>div{flex:1 1 18rem;min-width:0}
 /* the group list */
 .dlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-top:12px}
 .gcard{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line2);border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;width:100%;box-shadow:var(--shadow);font:inherit;color:inherit;transition:transform .15s,box-shadow .15s}
@@ -113,7 +115,7 @@
 
 <script src="billread.js?v=2026-10-27"></script>
 <script src="billing-ui.js?v=2026-10-27b"></script>
-<script src="billing-door.js?v=2026-10-27b"></script>
+<script src="billing-door.js?v=2026-10-27c"></script>
 <!-- rrb-views -->
 <script>
 (function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
