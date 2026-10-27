@@ -6,7 +6,7 @@
 // Pinned here:
 //   - Pawan (Staff, a branch app number the tracker does not know) gets his own day, by name
 //   - Kamla by e-mail; the branch manager is ricky; a unit manager his own desk
-//   - an agent who shares a staff member's first name gets nothing; an ended sign-in says to sign in again
+//   - an agent who shares a staff member's first name never gets that desk's day; an ended sign-in says to sign in again
 //   - RR Operations is asked once per token (kept ten minutes); the e-mail link still works; a wrong link still refused
 //   - checking in with the app's sign-in records the right desk; doGet routes wd=app&ops=
 const { makeEnv } = require('./harness');
@@ -43,7 +43,7 @@ ok('Kamla, by e-mail', get('K').sid === 'kamla');
 ok('the branch manager is his own desk', get('R').sid === 'ricky');
 ok('a unit manager, his own desk', get('U').sid === 'akaash');
 const ag = get('G');
-ok('an agent named Sasha is not Sasha\'s day', ag.ok === false && /branch staff and managers/.test(ag.error), JSON.stringify(ag));
+ok('an agent named Sasha is not Sasha\'s day (an agent is looked for among the agents: test-myday-agent)', ag.ok === false && ag.sid !== 'sasha' && /list of agents/.test(ag.error), JSON.stringify(ag));
 const gone = get('X');
 ok('an ended sign-in says to sign in again', gone.ok === false && /Sign in again at rickyrampersadbranch.com\/app/.test(gone.error));
 ok('the e-mail link still opens', env.workdayGet_({ wd: 'sasha', k: env.workSig_('sasha') }).sid === 'sasha');

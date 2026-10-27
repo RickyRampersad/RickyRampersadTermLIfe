@@ -161,9 +161,67 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     ok('it is his day, with the way back to the app', /Pawan$/.test(await page.textContent('#hello')) && await page.isVisible('#toapp'));
     await page.click('#ci'); await page.waitForTimeout(900);
     ok('checking in goes with the app\'s sign-in', posted.length === 1 && /act=checkin/.test(posted[0]) && /ops=T{32}/.test(posted[0]) && /wd=app/.test(posted[0]), posted[0]);
-    await page.evaluate(() => localStorage.setItem('rrb-ops-session', JSON.stringify({ token: 'A'.repeat(32), name: 'Some Agent', role: 'Agent', agentNo: 'A01234' })));
-    await page.goto('http://localhost:8799/rroperations/'); await page.waitForTimeout(800);
-    ok('an agent has no My day tile', !(await page.$('a.app[href="/myworkday/?app=1"]')));
+    ok('no page errors', errs.length === 0, errs.join(' | '));
+    await ctx.close();
+  }
+  console.log('\nan agent, from the branch app (27 Oct 2026):\n');
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: OUT ? 2.5 : 1 });
+    await ctx.addInitScript(() => { try { localStorage.setItem('rrb-ops-session', JSON.stringify({ token: 'A'.repeat(32), name: 'Neil Ramnanan', role: 'Agent', agentNo: 'A10024', mode: 'test' })); } catch (e) {} });
+    const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
+    const AGM = { ok: true, v: '2026-10-27e', agent: true, first: 'Neil', name: 'Neil Ramnanan', day, date: 'Tuesday 27 October 2026', at: '9:10am', on: true, film: 'https://rickyrampersadbranch.com/agentworkday/',
+      project: { url: 'https://script.google.com/macros/s/X/exec?rs=a-neil-ramnanan&d=' + day + '&f=ag&k=K', done: false, by: '10:30am' },
+      close: { url: 'https://script.google.com/macros/s/X/exec?rs=a-neil-ramnanan&d=' + day + '&f=agc&k=K', done: false, at: '5:30pm', open: false }, mailed: { am: '', pm: '' } };
+    let asked = [];
+    await page.route(/script\.google\.com\/macros/, async route => {
+      const req = route.request();
+      if (!/AKfycbzb9/.test(req.url())) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, mode: 'test' }) });
+      asked.push(req.url()); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(AGM) });
+    });
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+    await page.goto('http://localhost:8799/rroperations/'); await page.waitForTimeout(900);
+    const tile = await page.$('a.app[href="/myworkday/?app=1"]');
+    ok('an agent has a My day tile: project and close off', !!tile && /Project your day and close it off/.test(await tile.textContent()));
+    if (OUT) await page.screenshot({ path: path.join(OUT, 'app-agent.png') });
+    await page.click('a.app[href="/myworkday/?app=1"]'); await page.waitForTimeout(1500);
+    ok('My day asks with the app\'s sign-in', asked.length >= 1 && /wd=app&ops=A{32}/.test(asked[0]), asked[0]);
+    ok('his day: Project my day opens the e-mail\'s page', /Neil$/.test(await page.textContent('#hello')) && /f=ag&k=/.test(await page.getAttribute('#agproj', 'href')) && /By 10:30am/.test(await page.textContent("#main")));
+    ok('and Close off my day, at 5:30', /f=agc&k=/.test(await page.getAttribute('#agclose', 'href')) && /At 5:30pm/.test(await page.textContent('#main')));
+    ok('no progress bar for an agent; the private-window tip; the film', !(await page.isVisible('#prog')) && /private window/.test(await page.textContent('#main')) && !!(await page.$('#main a[href="https://rickyrampersadbranch.com/agentworkday/"]')));
+    const wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    ok('nothing off the side', wide <= 0, String(wide));
+    if (OUT) await page.screenshot({ path: path.join(OUT, 'myday-agent.png') });
+    ok('no page errors', errs.length === 0, errs.join(' | '));
+    await ctx.close();
+  }
+  console.log('\nthe register on his My day (27 Oct 2026):\n');
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
+    const days = [{ d: '2026-10-21', l: 'Wed 21' }, { d: '2026-10-22', l: 'Thu 22' }, { d: '2026-10-23', l: 'Fri 23' }, { d: '2026-10-26', l: 'Mon 26' }, { d: day, l: 'Tue 27' }];
+    const C = (st, o) => Object.assign({ st }, o || {});
+    const att = (lizMon) => ({ days, desks: [
+      { sid: 'sasha', first: 'Sasha', mark: true, cells: [C('in', { t: '7:11am' }), C('in', { t: '7:11am' }), C('in', { t: '7:01am' }), C('none'), C('wait')] },
+      { sid: 'elizabeth', first: 'Elizabeth', mark: true, cells: [C('in', { t: '6:59am' }), C('in', { t: '6:59am' }), C('late', { t: '8:12am', late: 12 }), lizMon, C('wait')] },
+      { sid: 'pawan', first: 'Pawan', mark: true, cells: [C('in', { t: '8:01am' }), C('absent', { why: 'No sign-in', auto: true }), C('in', { t: '7:58am' }), C('absent', { why: 'No sign-in', auto: true }), C('wait')] }] });
+    let posted = [];
+    await page.route(/script\.google\.com\/macros/, async route => {
+      const req = route.request();
+      if (req.method() === 'POST') { posted.push(req.postData() || ''); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model({ att: att(C('absent', { why: 'Sick', by: 'Ricky' })) })) }); }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model({ att: att(C('none')) })) });
+    });
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+    await page.goto(url); await page.waitForTimeout(1500);
+    ok('Attendance: five days, each desk', (await page.$$('#attcard tr')).length === 4 && /Mon 26/.test(await page.textContent('#attcard')));
+    ok('Monday: NO RECORD for Liz and Sasha, tap to mark', (await page.$$('#attcard td.none[data-mark]')).length === 2);
+    ok('late and the clock\'s absence read as such', !!(await page.$('#attcard td.late')) && /12 min late/.test(await page.textContent('#attcard')) && (await page.$$('#attcard td.absent')).length === 2);
+    await page.click('#attcard td.none[data-mark*="elizabeth"]'); await page.waitForTimeout(300);
+    ok('tapping it asks why', /Elizabeth, Mon 26: not in\. Why\?/.test(await page.textContent('#markbox')));
+    await page.click('#markbox [data-why="Sick"]'); await page.waitForTimeout(900);
+    ok('Sick posts who, the day and the reason, and redraws', posted.length === 1 && /act=absent/.test(posted[0]) && /who=elizabeth/.test(posted[0]) && /date=2026-10-26/.test(posted[0]) && /why=Sick/.test(posted[0]) && /Sick · Ricky/.test(await page.textContent('#attcard')), posted[0]);
+    const wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    ok('nothing off the side on a phone', wide <= 0, String(wide));
+    if (OUT) await page.screenshot({ path: path.join(OUT, 'myday-attendance.png'), fullPage: true });
     ok('no page errors', errs.length === 0, errs.join(' | '));
     await ctx.close();
   }
