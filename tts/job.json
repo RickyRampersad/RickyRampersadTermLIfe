@@ -3,8 +3,20 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "recruitb20": [
-   "The door is open now. Two minutes to apply. Reviewed within forty-eight hours."
+  "recruitc01": [
+   "Let me ask you something. Are you good at what you do, but stuck where you are? Or wanting a career with no ceiling, and afraid of the first year?"
+  ],
+  "recruitc12": [
+   "Afraid you'd be starting from zero? You won't. Clients whose agent has moved on get matched to you, household by household, with the file, the history, and the first thing to say."
+  ],
+  "recruitc15": [
+   "And the income is uncapped. No salary band. No ceiling. It scales with your activity and your skill. And you're not living off your phone contacts. The leads come to you."
+  ],
+  "recruitc20": [
+   "The door is open now. Already contracted? Nobody will know you asked. New to this? You get the full build. One confidential conversation. Twenty minutes, this week."
+  ],
+  "recruitc21": [
+   "Go to agent M G T dot com. Book your confidential conversation. Or take the sixty-second test first, and start the selection."
   ]
  }
 }
