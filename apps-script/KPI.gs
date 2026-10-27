@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-27f';
+var SCRIPT_VERSION = '2026-10-27g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -15877,7 +15877,12 @@ function wallLeft_() {
   var out = {}; (v ? v.split(/\s*,\s*/) : WALL_LEFT).forEach(function (n) { var k = wallKey_(n); if (k) out[k] = 1; });
   return out;
 }
-function wallIsLeft_(v, left) { return typeof v === 'string' && v.length < 80 && !!left[wallKey_(v)]; }
+function wallIsLeft_(v, left) {
+  if (typeof v !== 'string' || v.length >= 80) return false;
+  var k = wallKey_(v); if (left[k]) return true;
+  // A unit named for someone who has left ("KERWYN RAMROACH UNIT-CHAGUANAS REG CEN") is theirs too.
+  var m = /^(.+?) unit\b/.exec(k); return !!(m && left[m[1]]);
+}
 /** The feed with everyone who has left folded into WALL_ORPHANS (see above). */
 function wallScrub_(o, leftOpt) {
   var left = leftOpt || wallLeft_();
@@ -15928,10 +15933,101 @@ function wallScrub_(o, leftOpt) {
 function wallFeedOut_(action, out) {
   var j = null; try { j = JSON.parse(out.getContent()); } catch (e) { return out; }
   if (!j || !j.ok || !j.data) return out;
+  if (action === 'intel.pending') { try { j.data.live = wallPendLive_(todayISO_()); } catch (e) { j.data.live = { error: String(e && e.message || e) }; } }
   try { j.data = wallScrub_(j.data); } catch (e) {}
   if (action === 'intel.day') { try { j.data.system = wallSystemDay_(todayISO_()); } catch (e) {} }
   return ContentService.createTextOutput(JSON.stringify(j)).setMimeType(ContentService.MimeType.JSON);
 }
+/* ── The pending wall, from the newest pending report (27 October 2026) ──
+ *  Ricky, 2:16pm, on the requirements stop: "should the pending wall not have a barchart to show which agents has first
+ *  premium outstanding, and remove the oldest and middle and only have a number!! what the branch is doing about this need
+ *  to be updated ... who are they chasing and whats done today". He uploads Guardian's pending report into the Branch
+ *  Portfolio as "Branch Pendings_<date>-<time>", one requirement a row; the newest tab is read. intel.pending carries it as
+ *  `live`: every requirement still awaiting receipt (count, policies, new this week, red/amber/green, the age bands), each
+ *  requirement by name with a count, who acts next, the first premiums outstanding agent by agent (FUTPY: policies and the
+ *  modal premium), and today's chasing: each desk's notes on its Pendings tasks today, Pendings tasks closed today, and the
+ *  agents those policies belong to. Agents' names and counts only; wallScrub_ folds anyone who has left. Kept 5 minutes. */
+var WALL_PEND = { PREFIX: 'Branch Pendings', TTL: 300, TOP: 12, AGES: ['0-30 days', '31-60 days', '61-90 days', '90+ days'] };
+function wallPendLive_(day) {
+  var cache = CacheService.getScriptCache(), key = 'wall_pend_' + day, hit = cache.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
+  if (!ss) return { error: 'The Branch Portfolio would not open.' };
+  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_PEND.PREFIX) === 0; })
+    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  if (!tabs.length) return { error: 'No "' + WALL_PEND.PREFIX + '" tab in the Branch Portfolio yet.' };
+  var tab = tabs[0], vals = tab.getDataRange().getValues();
+  if (vals.length < 2) return { error: tab.getName() + ' is empty.' };
+  var h = vals[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };
+  var c = { pol: ix('POLICY'), agent: ix('Agent Name'), code: ix('REQUIREMENT_CODE'), name: ix('requirement_name'), who: ix('WHO_ACTS_NEXT'),
+            rag: ix('RAG_STATUS'), age: ix('AGEING_BUCKET'), nw: ix('NEW_THIS_WEEK'), prem: ix('mode_premium'), st: ix('REQUIREMENT_STATUS') };
+  if (c.pol < 0 || c.code < 0) return { error: tab.getName() + ' has no POLICY or REQUIREMENT_CODE column.' };
+  var cell = function (r, i) { return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
+  var m = /(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})/.exec(tab.getName());
+  var out = { tab: tab.getName(), asOf: m ? prettyDate_(m[1] + '-' + m[2] + '-' + m[3]).replace(/ \d{4}$/, '') + ', ' + twelve_(m[4] + ':' + m[5]) : tab.getName(),
+              reqs: 0, policies: 0, newWeek: 0, rag: { Red: 0, Amber: 0, Green: 0 }, ages: [], byReq: [], who: [], first: { policies: 0, prem: 0, agents: [] }, agents: 0 };
+  var pols = {}, ages = {}, reqs = {}, who = {}, agentOf = {}, firstBy = {}, firstPol = {}, agentsSeen = {};
+  vals.slice(1).forEach(function (r) {
+    var pol = cell(r, c.pol); if (!pol) return;
+    if (/closed|received|waived|complete|cancel/i.test(cell(r, c.st))) return;
+    var ag = cell(r, c.agent) || 'No agent named';
+    out.reqs++; pols[pol] = 1; agentOf[pol] = ag; agentsSeen[ag] = 1;
+    if (/^y/i.test(cell(r, c.nw))) out.newWeek++;
+    var rg = cell(r, c.rag); if (out.rag[rg] != null) out.rag[rg]++;
+    var a = cell(r, c.age) || 'Not dated'; ages[a] = (ages[a] || 0) + 1;
+    var nm = cell(r, c.name) || cell(r, c.code); reqs[nm] = (reqs[nm] || 0) + 1;
+    var w = cell(r, c.who) || 'Not said'; who[w] = (who[w] || 0) + 1;
+    if (cell(r, c.code).toUpperCase() === 'FUTPY' && !firstPol[pol]) {
+      firstPol[pol] = 1;
+      var f = firstBy[ag] = firstBy[ag] || { k: ag, n: 0, prem: 0 };
+      f.n++; f.prem = Math.round((f.prem + (Number(cell(r, c.prem)) || 0)) * 100) / 100;
+    }
+  });
+  out.policies = Object.keys(pols).length; out.agents = Object.keys(agentsSeen).length;
+  out.ages = WALL_PEND.AGES.map(function (k) { return { k: k.replace(' days', ''), n: ages[k] || 0 }; });
+  out.byReq = Object.keys(reqs).map(function (k) { return { k: k, n: reqs[k] }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, WALL_PEND.TOP);
+  out.who = Object.keys(who).map(function (k) { return { k: k, n: who[k] }; }).sort(function (a, b) { return b.n - a.n; });
+  out.first.agents = Object.keys(firstBy).map(function (k) { return firstBy[k]; }).sort(function (a, b) { return (b.n - a.n) || (b.prem - a.prem); });
+  out.first.policies = Object.keys(firstPol).length;
+  out.first.prem = Math.round(out.first.agents.reduce(function (s2, x) { return s2 + x.prem; }, 0));
+  try { out.today = wallPendToday_(day, agentOf); } catch (e) { out.today = { error: String(e && e.message || e) }; }
+  try { cache.put(key, JSON.stringify(out), WALL_PEND.TTL); } catch (e) {}
+  return out;
+}
+/** Today's chasing on the pending cases: per desk, notes on Pendings tasks and Pendings tasks closed, and whose policies. */
+function wallPendToday_(day, agentOf) {
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return null;
+  var users = sfkUsers_() || {}, ids = {};
+  DAY_MAIL_DESKS.concat(['ricky']).forEach(function (s) { if (users[s] && users[s].id) ids[users[s].id] = s; });
+  var idList = Object.keys(ids); if (!idList.length) return null;
+  var from = sfkUtcAt_(day, 0), to = sfkUtcAt_(shiftDays_(day, 1), 0);
+  var notes = sfkQuery_("SELECT ParentId, CreatedById FROM FeedItem WHERE CreatedDate >= " + from + ' AND CreatedDate < ' + to +
+    ' AND CreatedById IN (' + idList.map(soqlStr_).join(',') + ") AND Type IN ('TextPost','ContentPost','LinkPost') LIMIT 2000");
+  var tasks = {}, tid = {}; notes.forEach(function (f) { if (/^00T/.test(String(f.ParentId))) tid[f.ParentId] = 1; });
+  var tl = Object.keys(tid);
+  for (var i = 0; i < tl.length; i += 150) {
+    sfkQuery_('SELECT Id, Subject, Task_Type__c FROM Task WHERE Id IN (' + tl.slice(i, i + 150).map(soqlStr_).join(',') + ')').forEach(function (t) { tasks[t.Id] = t; });
+  }
+  var closed = sfkQuery_("SELECT Id, Subject, OwnerId FROM Task WHERE Task_Type__c = 'Pendings' AND IsClosed = true AND LastModifiedDate >= " + from +
+    ' AND LastModifiedDate < ' + to + ' LIMIT 500');
+  var desk = {}, all = {}, polAll = {};
+  var get = function (sid) { return desk[sid] = desk[sid] || { sid: sid, name: String(nameFor_(sid)).split(' ')[0], notes: 0, closed: 0, ag: {}, pol: {} }; };
+  var mark = function (d, subject) {
+    var p = (String(subject || '').match(/\b\d{10}\b/) || [])[0]; if (!p) return;
+    d.pol[p] = 1; polAll[p] = 1;
+    var a = agentOf[p]; if (a) { d.ag[a] = (d.ag[a] || 0) + 1; all[a] = (all[a] || 0) + 1; }
+  };
+  notes.forEach(function (f) { var t = tasks[f.ParentId]; if (!t || String(t.Task_Type__c) !== 'Pendings' || !ids[f.CreatedById]) return; var d = get(ids[f.CreatedById]); d.notes++; mark(d, t.Subject); });
+  closed.forEach(function (t) { var sid = ids[t.OwnerId]; if (!sid) return; var d = get(sid); d.closed++; mark(d, t.Subject); });
+  var list = function (o) { return Object.keys(o).map(function (k) { return { k: k, n: o[k] }; }).sort(function (a, b) { return b.n - a.n; }); };
+  // Every desk, in the register's own order, quiet ones too: nobody is ranked.
+  var order = DAY_MAIL_DESKS.concat(['ricky']).filter(function (s) { return s !== 'pawan'; });
+  var desks = order.filter(function (sid) { return users[sid]; }).map(function (sid) { var d = desk[sid] || get(sid);
+    return { name: d.name, notes: d.notes, closed: d.closed, policies: Object.keys(d.pol).length, agents: list(d.ag).slice(0, 6) }; });
+  return { desks: desks, notes: desks.reduce(function (s2, d) { return s2 + d.notes; }, 0), closed: desks.reduce(function (s2, d) { return s2 + d.closed; }, 0),
+           policies: Object.keys(polAll).length, agents: list(all).slice(0, 10) };
+}
+
 /** The system's day for the wall: no client, no task, counts only. */
 function wallSystemDay_(day) {
   var nowM = minutesOf_(hhmm_(new Date()));
