@@ -46,8 +46,10 @@
  *
  *  Rules:
  *    - No member's name goes to the AI, into a Chatter post the group reads, or onto the group's page from here.
- *    - A Salesforce write happens only on a signed-in person's press (an amount, a payment, a task, a note), never from
- *      the upload itself, and is logged on Group Changes with who pressed it.
+ *    - A Salesforce write happens on a signed-in person's press (an amount, a payment, a task, a note) or, since 27 October
+ *      2026, on their upload of a health or life bill: the month's billing record made or brought into line with the bill,
+ *      and the tasks it calls for (see "the bill writes Salesforce"). Either way it is logged on Group Changes with who
+ *      did it, and an upload never writes a bill that reads as another month or that the reader was unsure of.
  *    - The 30-day reason rule, who may act on a group (owner, deputy, branch) and the sign-in are GroupClients.gs's.
  */
 
@@ -68,7 +70,7 @@ var GBL = {
 var GBL_HEAD = {
   'Group Bills': ['When', 'Group', 'Line', 'Month', 'Ref', 'Dated', 'Due by', 'Members', 'Current', 'Adjustments', 'Due', 'Arrears shown', 'Payable',
                   'SF Record', 'SF Billed', 'SF Due', 'SF Paid', 'Variance', 'Findings', 'Resolved', 'Status', 'By', 'Checked at', 'Reconciled at', 'Reconciled by', 'Sent at', 'Files', 'Summary',
-                  'Approved at', 'Approved by', 'Approved e-mail', 'Approved for', 'Files kept', 'Answers', 'Sent by', 'Late reason'],
+                  'Approved at', 'Approved by', 'Approved e-mail', 'Approved for', 'Files kept', 'Answers', 'Sent by', 'Late reason', 'SF Write'],
   'Group Bill Lines': ['Group', 'Line', 'Month', 'Member Id', 'Name', 'Division', 'Tier', 'Start', 'Eff', 'Premium', 'Kind', 'For month', 'Cover'],
   'Group Changes': ['When', 'Group', 'Line', 'Kind', 'Member', 'Detail', 'Effective', 'Amount', 'Source', 'By', 'Status', 'SF Task', 'SF Id', 'Note', 'Form'],
   'Group Claims': ['Group', 'Month', 'Division', 'Claims', 'Charge', 'Member share', 'Paid', 'Uploaded', 'By']
@@ -261,7 +263,7 @@ function gblBillOf_(r) {
     findings: gblJ_(r.Findings, []), resolved: gblJ_(r.Resolved, {}), status: gcmText_(r.Status), by: gcmText_(r.By), checkedAt: gcmText_(r['Checked at']),
     reconciledAt: gcmText_(r['Reconciled at']), reconciledBy: gcmText_(r['Reconciled by']), sentAt: gcmText_(r['Sent at']), files: gcmText_(r.Files), summary: gblJ_(r.Summary, {}), at: gcmWhen_(r.When),
     approvedAt: gcmText_(r['Approved at']), approvedBy: gcmText_(r['Approved by']), approvedEmail: gcmText_(r['Approved e-mail']), approvedFor: gcmYmd_(r['Approved for']), kept: gcmText_(r['Files kept']), answers: gblJ_(r.Answers, {}),
-    sentBy: gcmText_(r['Sent by']), lateReason: gcmText_(r['Late reason']), atYmd: gcmYmd_(r.When), atHour: r.When instanceof Date ? Number(Utilities.formatDate(r.When, tTz_(), 'H')) : 0 };
+    sentBy: gcmText_(r['Sent by']), lateReason: gcmText_(r['Late reason']), sfWrite: gblJ_(r['SF Write'], null), atYmd: gcmYmd_(r.When), atHour: r.When instanceof Date ? Number(Utilities.formatDate(r.When, tTz_(), 'H')) : 0 };
 }
 function gblLines_(g, line, month) {
   return gblRows_(GBL.LINES).filter(function (r) { return gcmCodeKey_(r.Group) === g.key && gcmText_(r.Line) === line && gcmText_(r.Month) === month; }).map(function (r) {
@@ -280,6 +282,14 @@ function gblChanges_(g) {
       detail: gcmText_(r.Detail), effective: gcmText_(r.Effective), amount: gblNum_(r.Amount), source: gcmText_(r.Source), by: gcmText_(r.By), status: gcmText_(r.Status) || 'open',
       task: gcmText_(r['SF Task']), sfId: gcmText_(r['SF Id']), note: gcmText_(r.Note) };
   });
+}
+
+/** What the month's record carries as Group Billing Premiums: the month's charges before credits, as the team keys it
+ *  (the health bill's current month, the life bill's gross); the credits and back-charges are queried, never netted. */
+function gblBilled_(line, bill) {
+  if (line === 'health') return gblR_(bill.current || (bill.summary && bill.summary.current) || bill.due || 0);
+  if (line === 'life') return gblR_(bill.gross || (bill.summary && bill.summary.gross) || (bill.totals && bill.totals.premium) || bill.due || 0);
+  return gblR_(bill.due || bill.total || 0);
 }
 
 /* ── the checks ─────────────────────────────────────────────────────────────────────── */
@@ -301,12 +311,12 @@ function gblCheck_(g, line, bill, sf, prev, today) {
   /* 1. the month's billing record in Salesforce, and its amount */
   var sm = gblSfMonth_(sf, line, bill.month), rec = sm.rec;
   if (!sf.ok) add('check', 'salesforce', 'Salesforce could not be read' + (sf.error ? ' (' + sf.error + ')' : '') + ': the record checks are not done.', { kind: 'sf' });
-  else if (!rec) add('fix', 'salesforce', 'There is no ' + GBL.RT[line] + ' billing record for ' + gblMonthLabel_(bill.month) + ' in Salesforce. Create it for ' + money(bill.due) + ' before the bill goes.', { kind: 'norecord' });
+  else if (!rec) add('fix', 'salesforce', 'There is no ' + GBL.RT[line] + ' billing record for ' + gblMonthLabel_(bill.month) + ' in Salesforce. It can be made from this bill: ' + money(gblBilled_(line, bill)) + ' billed, the invoice numbers and the totals.', { kind: 'norecord', action: 'sfWrite', data: { want: gblBilled_(line, bill) } });
   else {
-    var diff = gblR_(rec.billed - bill.due);
-    if (Math.abs(diff) > 0.05) add('fix', 'salesforce', 'Salesforce has ' + money(rec.billed) + ' for ' + gblMonthLabel_(bill.month) + '; the bill says ' + money(bill.due) + ' (' + (diff > 0 ? money(diff) + ' too high' : money(-diff) + ' short') + ').',
-      { kind: 'amount', action: 'sfAmount', data: { rec: rec.id, want: bill.due, have: rec.billed } });
-    else add('ok', 'salesforce', 'Salesforce has the month at ' + money(rec.billed) + ', the same as the bill.', { kind: 'amount' });
+    var want = gblBilled_(line, bill), diff = gblR_(rec.billed - want);
+    if (Math.abs(diff) > 0.05) add('fix', 'salesforce', 'Salesforce has ' + money(rec.billed) + ' billed for ' + gblMonthLabel_(bill.month) + '; the bill charges ' + money(want) + ' before credits (' + (diff > 0 ? money(diff) + ' too high' : money(-diff) + ' short') + ').',
+      { kind: 'amount', action: 'sfWrite', data: { rec: rec.id, want: want, have: rec.billed } });
+    else add('ok', 'salesforce', 'Salesforce has the month at ' + money(rec.billed) + ' billed, the same as the bill.', { kind: 'amount' });
     if (line === 'health' && bill.divisions && bill.divisions.length > 1 && rec.due && Math.abs(rec.due - bill.divisions[0].total) > 0.05)
       add('note', 'salesforce', 'Premium Due on the record is ' + money(rec.due) + '; the first division on the bill (' + bill.divisions[0].name + ') is ' + money(bill.divisions[0].total) + '.', { kind: 'division', aiText: 'The staff division figure on the record differs from the bill.' });
     if (rec.reconciled) add('note', 'us', 'The Salesforce record is already marked Reconciled.', { kind: 'reconciled' });
@@ -572,6 +582,7 @@ function gblUpload_(b) {
     if (b.month && /^\d{4}-\d{2}$/.test(b.month)) bill.month = b.month;
   }
   if (!bill || typeof bill !== 'object') return { ok: false, error: 'Nothing was read from the file.' };
+  var readMonth = /^\d{4}-\d{2}$/.test(String(bill.month || '')) ? bill.month : '';
   var month = /^\d{4}-\d{2}$/.test(String(b.month || '')) ? b.month : bill.month;
   if (!/^\d{4}-\d{2}$/.test(String(month || ''))) return { ok: false, error: 'The bill’s month could not be read. Choose it on the page.' };
   bill.month = month;
@@ -599,14 +610,31 @@ function gblUpload_(b) {
   var row = { When: new Date(), Group: g.name, Line: line, Month: month, Ref: bill.ref || '', Dated: bill.dated || '', 'Due by': bill.dueBy || '', Members: bill.count || (bill.members || []).length,
     Current: bill.current || bill.gross || bill.total || 0, Adjustments: typeof bill.adjustments === 'number' ? bill.adjustments : (line === 'life' ? gblR_(gblArr_(bill.adjustments).reduce(function (s, a) { return s + a.premium; }, 0)) : 0),
     Due: bill.due || 0, 'Arrears shown': bill.outstandingTotal || 0, Payable: bill.payable || bill.due || 0,
-    'SF Record': rec ? rec.name : '', 'SF Billed': rec ? rec.billed : '', 'SF Due': rec ? rec.due : '', 'SF Paid': sfPaid, Variance: rec ? gblR_(rec.billed - (bill.due || 0)) : '',
+    'SF Record': rec ? rec.name : '', 'SF Billed': rec ? rec.billed : '', 'SF Due': rec ? rec.due : '', 'SF Paid': sfPaid, Variance: rec ? gblR_(rec.billed - gblBilled_(line, bill)) : '',
     Findings: JSON.stringify(findings).slice(0, 49000), Resolved: '{}', Status: findings.some(function (f) { return f.level === 'fix'; }) ? 'to fix' : findings.some(function (f) { return f.level === 'check'; }) ? 'to check' : 'checked',
     By: who.name, 'Checked at': gcmWhen_(new Date()), 'Reconciled at': '', 'Reconciled by': '', 'Sent at': '', Files: String(b.files || '').slice(0, 400), Summary: JSON.stringify(summary).slice(0, 49000) };
   gblReplace_(GBL.BILLS, same, [row]);
   /* the changes the bill itself shows go on the register, once each */
   gblChangesFromBill_(g, line, month, bill, findings, who);
+  /* the bill writes the month's record in Salesforce and opens the tasks it calls for (27 October 2026) */
+  var wr = null, wrSkip = gblSfwSkip_(line, bill, sf, readMonth, month);
+  if (!wrSkip) {
+    try { wr = gblSfWrite_(g, who, line, month, { bill: bill, findings: findings, sf: sf }); }
+    catch (e) { wr = { ok: false, action: '', changed: [], tasks: [], skipped: [], errors: ['Salesforce was not written: ' + String(e && e.message ? e.message : e).slice(0, 200)] }; wr.said = gblSfwSaid_(wr); }
+  } else if (wrSkip !== 'off') wr = { ok: true, action: 'held', why: wrSkip, changed: [], tasks: [], skipped: [], errors: [], said: wrSkip };
   var stored = gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0];
-  return { ok: true, line: line, month: month, monthLabel: gblMonthLabel_(month), bill: stored ? gblBillOut_(stored, who) : null, steps: gblSteps_(stored), findings: findings, said: gblSaid_(findings) };
+  if (wr && stored) {
+    if (wr.action === 'created' || wr.action === 'updated') {
+      var sf2 = gblSf_(g, true), sm2 = gblSfMonth_(sf2, line, month), F2 = gblCheck_(g, line, bill, sf2, prev, today), rec2 = sm2.rec;
+      findings = F2;
+      gblBillPatch_(stored, { Findings: JSON.stringify(F2).slice(0, 49000), 'SF Record': rec2 ? rec2.name : '', 'SF Billed': rec2 ? rec2.billed : '', 'SF Due': rec2 ? rec2.due : '',
+        Variance: rec2 ? gblR_(rec2.billed - gblBilled_(line, bill)) : '', Status: F2.some(function (f) { return f.level === 'fix'; }) ? 'to fix' : F2.some(function (f) { return f.level === 'check'; }) ? 'to check' : 'checked' });
+    }
+    gblBillPatch_(stored, { 'SF Write': JSON.stringify(gblSfwKeep_(wr)).slice(0, 49000) });
+    stored = gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0];
+  }
+  return { ok: true, line: line, month: month, monthLabel: gblMonthLabel_(month), bill: stored ? gblBillOut_(stored, who) : null, steps: gblSteps_(stored), findings: findings,
+    said: gblSaid_(findings) + (wr && wr.said ? ' ' + wr.said : ''), sfWrite: wr ? gblSfwKeep_(wr) : null };
 }
 function gblNote_(bill, text) { bill.warnings = (bill.warnings || []).concat([text]); }
 function gblSaid_(F) {
@@ -618,7 +646,8 @@ function gblSummary_(line, bill) {
   var s = { line: line, month: bill.month, ref: bill.ref || '', dated: bill.dated || '', dueBy: bill.dueBy || '', due: bill.due || 0, count: bill.count || (bill.members || []).length };
   if (line === 'health') {
     s.current = bill.current; s.adjustments = bill.adjustments; s.arrears = bill.outstandingTotal; s.payable = bill.payable;
-    s.divisions = (bill.divisions || []).map(function (d) { return { name: d.name, employees: d.employees, total: d.total, tiers: d.tiers }; });
+    s.divisions = bill.transmittal ? gblDivInvoices_(bill) : (bill.divisions || []).map(function (d) { return { name: d.name, employees: d.employees, total: d.total, tiers: d.tiers }; });
+    s.adjInvoices = gblArr_(bill.transmittal).filter(function (t) { return !/^Current Month/i.test(String(t.what || '')); });
     s.credits = (bill.credits || []).length; s.cancels = (bill.credits || []).filter(function (c) { return c.kind === 'cancel'; }).length;
     var tiers = {}; (bill.members || []).forEach(function (m) { tiers[m.tier] = (tiers[m.tier] || 0) + 1; }); s.tiers = tiers;
   }
@@ -649,6 +678,362 @@ function gblChangesFromBill_(g, line, month, bill, findings, who) {
   gblAppend_(GBL.CHANGES, rows);
 }
 
+/* ── the bill writes Salesforce ─────────────────────────────────────────────────────── */
+/* 27 October 2026: "when we get the billing its updated on salesforce and in the past we have to figure this out, so
+ * verifying the records in salesforce for a month should change, when the bills are received it should be uploaded on
+ * to the platform and deep dive looking at terminations and adjustments creating the relevant tasks and a transaction on
+ * salesforce populating the respective fields and invoice numbers with the totals and a task to open to query the
+ * adjustments". Until then staff keyed each month's TRANSACTIONS__c by hand, often by copying the month before: that
+ * morning one group's October health record carried September's invoice number, and another's October life record
+ * carried cover and premiums the October bill did not. Now the upload writes the record:
+ *   - the month's T-HEALTH GROUP or T-LIFE GROUP record is made from last month's (its policy, issue date and owner), or
+ *     the one already keyed is brought into line with the bill; every change is kept, with what it was, on the record's
+ *     Chatter and on Group Changes;
+ *   - the fields the team fills, from the bill: Group Billing Premiums and Total Premium are the month's charges before
+ *     credits (the credits are queried, never netted), each division's invoice number, premium and employees, Premium
+ *     Due (the first division), the invoice date; for life the cover and the premium totals;
+ *   - one task a person the bill takes off, one a person whose tier it changes, and one to query the month's adjustments
+ *     with Head Office, for the account owner, due in two working days, never twice.
+ * GCM_BILL_SF = off stops it; the check then asks for the record, as before. */
+var GBL_SFW = { PROP: 'GCM_BILL_SF', DUE_WD: 2, LOOK_DAYS: 180, MAX_TASKS: 25, EACH_MAX: 6, DIVS: 5, PREM_SLOTS: 4,
+  FIELDS: {
+    health: ['Group_Billing_Premiums__c', 'Total_Premium__c', 'Premium_Due__c', 'PREMIUM_INV_01_DATE__c', 'Year__c',
+      'Premium_Billed_1__c', 'Premium_Billed_2__c', 'Premium_Billed_3__c', 'Premium_Billed_4__c',
+      'Employee_Div_1__c', 'Employee_Div_2__c', 'Employee_Div_3__c', 'Employee_Div_4__c', 'Employee_Div_5__c',
+      'Invoice_Value_1__c', 'Invoice_Value_2__c', 'Invoice_Value_3__c', 'Invoice_Value_4__c', 'Invoice_Value_5__c',
+      'Division_Value_1__c', 'Division_Value_2__c', 'Division_Value_3__c', 'Division_Value_4__c', 'Division_Value_5__c'],
+    life: ['Group_Billing_Premiums__c', 'Life_Cover__c', 'ADD_Cover__c', 'Life_Premiums__c', 'ADD_Premium__c', 'PREMIUM_INV_01_DATE__c', 'Year__c'] },
+  LABEL: { Group_Billing_Premiums__c: 'Group Billing Premiums', Total_Premium__c: 'Total Premium', Premium_Due__c: 'Premium Due', PREMIUM_INV_01_DATE__c: 'Invoice date',
+    Year__c: 'Year', Owner__c: 'Owner', Life_Cover__c: 'Life Cover', ADD_Cover__c: 'AD&D Cover', Life_Premiums__c: 'Life Premiums', ADD_Premium__c: 'AD&D Premium', Renewal_Date__c: 'Renewal Date',
+    RecordTypeId: 'Record type', Account__c: 'Account', INSURANCE_PORTFOLIO__c: 'Policy', Issue_Date__c: 'Issue Date' } };
+function gblSfwOn_() { try { return String(PropertiesService.getScriptProperties().getProperty(GBL_SFW.PROP) || '').toLowerCase() !== 'off'; } catch (e) { return true; } }
+function gblSfwLabel_(k) {
+  if (GBL_SFW.LABEL[k]) return GBL_SFW.LABEL[k];
+  var m = /^(Premium_Billed|Employee_Div|Invoice_Value|Division_Value)_(\d)__c$/.exec(k);
+  return m ? { Premium_Billed: 'Premium billed', Employee_Div: 'Employees', Invoice_Value: 'Invoice', Division_Value: 'Division' }[m[1]] + ' ' + m[2] : k.replace(/__c$/, '').replace(/_/g, ' ');
+}
+function gblSfwShow_(v, field) {
+  if (v === null || v === undefined || v === '') return '(blank)';
+  if (typeof v === 'number') return /^(Year__c|Employee_Div_\d__c)$/.test(String(field || '')) ? String(Math.round(v)) : gcmMoney_(v).replace(/^TT\$/, '');
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? tDmy_(String(v)) : String(v);
+}
+/** Two field values the same, as Salesforce and the bill write them: numbers to the cent, the rest as trimmed text. */
+function gblSfwSame_(a, b) {
+  var blank = function (x) { return x === null || x === undefined || x === ''; };
+  if (blank(a) && blank(b)) return true;
+  if (blank(a) !== blank(b)) return false;
+  if (typeof a === 'number' || typeof b === 'number') return Math.abs(Number(a) - Number(b)) < 0.005;
+  return String(a).trim() === String(b).trim();
+}
+/** A health bill's divisions, each with the invoice number the transmittal gives it for the current month: matched by
+ *  amount first, then by order, so two divisions on one invoice and one invoice a division both come out right. */
+function gblDivInvoices_(bill) {
+  var cur = gblArr_(bill.transmittal).filter(function (t) { return /^Current Month/i.test(String(t.what || '')); }), used = {};
+  return gblArr_(bill.divisions).map(function (d, i) {
+    var k = -1;
+    cur.forEach(function (t, j) { if (k < 0 && !used[j] && Math.abs((Number(t.amount) || 0) - (Number(d.total) || 0)) < 0.05) k = j; });
+    if (k < 0 && cur[i] && !used[i]) k = i;
+    if (k < 0 && cur.length === 1) k = 0;
+    if (k >= 0) used[k] = true;
+    return { name: d.name, employees: Number(d.employees) || 0, total: gblR_(d.total), tiers: d.tiers || {}, invoice: String(d.invoice || (k >= 0 ? cur[k].invoice : '') || '') };
+  });
+}
+/** A division's label as the team writes it: what the record already says, else the part after the group's name
+ *  ("Staff", "Managers"), else its number. */
+function gblDivLabel_(name, i, had) {
+  if (had !== null && had !== undefined && String(had).trim()) return String(had).trim();
+  var m = /[-–]\s*([^-–]+)$/.exec(String(name || '')), t = m ? m[1].trim() : '';
+  return t && t.length <= 40 ? gblTitle_(t) : String(i);
+}
+/** The Premium Billed slots, laid out as the team lays them, read off the branch's records on 27 October 2026: a group
+ *  billed in several divisions takes one slot a division, each with its own invoice; a group billed in one takes one
+ *  slot a tier (Employee Only, +Child, +Family, +Spouse, in that order), the tier's headcount in Employee # and the
+ *  division's invoice in each. If the tiers do not add to the division, the division is the one slot. */
+function gblSfwSlots_(f) {
+  var D = f.divisions;
+  if (!D.length) return { mode: 'one', slots: [{ amount: f.current, count: f.members.length, invoice: '', label: '' }] };
+  if (D.length > 1) return { mode: 'division', slots: D.map(function (d) { return { amount: d.total, count: d.employees, invoice: d.invoice, label: d.name }; }) };
+  var t = {}, d0 = D[0];
+  f.members.forEach(function (m) { var k = String(m.tier || '').trim(); if (!k) return; t[k] = t[k] || { amount: 0, count: 0 }; t[k].amount += Number(m.premium) || 0; t[k].count++; });
+  var keys = Object.keys(t).sort(), sum = gblR_(keys.reduce(function (s, k) { return s + t[k].amount; }, 0));
+  if (!keys.length || keys.length > GBL_SFW.PREM_SLOTS || Math.abs(sum - d0.total) > 1)
+    return { mode: 'one', slots: [{ amount: d0.total, count: d0.employees, invoice: d0.invoice, label: d0.name }] };
+  return { mode: 'tier', slots: keys.map(function (k) { return { amount: gblR_(t[k].amount), count: t[k].count, invoice: d0.invoice, label: k }; }) };
+}
+/** What the bill says, in the shape the record wants, from the bill as read at the upload or the stored one rebuilt. */
+function gblSfwFacts_(line, bill, findings, summary) {
+  var s = summary || {}, f = { line: line, dated: gcmText_(bill.dated || s.dated || '').slice(0, 10), current: 0, gross: 0, divisions: [], totals: null,
+    credits: [], adjustments: [], adjTotal: 0, adjInvoices: [], members: gblArr_(bill.members), left: [], note: '' };
+  if (line === 'health') {
+    f.divisions = bill.transmittal ? gblDivInvoices_(bill) : gblArr_(s.divisions && s.divisions.length ? s.divisions : bill.divisions).map(function (d) {
+      return { name: d.name, employees: Number(d.employees) || 0, total: gblR_(d.total), tiers: d.tiers || {}, invoice: String(d.invoice || '') }; });
+    f.current = gblR_(bill.current || s.current || f.divisions.reduce(function (t, d) { return t + d.total; }, 0));
+    f.credits = gblArr_(bill.credits);
+    f.adjTotal = gblR_(typeof bill.adjustments === 'number' ? bill.adjustments : (s.adjustments || f.credits.reduce(function (t, c) { return t + (Number(c.premium) || 0); }, 0)));
+    f.adjInvoices = bill.transmittal ? gblArr_(bill.transmittal).filter(function (t) { return !/^Current Month/i.test(String(t.what || '')); }) : gblArr_(s.adjInvoices);
+    var L = gblSfwSlots_(f); f.slotMode = L.mode; f.slots = L.slots;
+  } else if (line === 'life') {
+    f.totals = bill.totals || s.totals || null;
+    f.gross = gblR_(bill.gross || s.gross || (f.totals && f.totals.premium) || 0);
+    f.adjustments = gblArr_(bill.adjustments);
+    f.adjTotal = gblR_(f.adjustments.reduce(function (t, a) { return t + (Number(a.premium) || 0); }, 0));
+    if (f.totals && Number(f.totals.pNew)) f.note = 'New Life on the bill: ' + gcmMoney_(f.totals.newLife || 0) + ' cover, ' + gcmMoney_(f.totals.pNew) + ' premium (the record has no field for it).';
+  }
+  gblArr_(findings).forEach(function (x) { if (x && x.kind === 'left') gblArr_(x.members).forEach(function (m) { f.left.push(m); }); });
+  return f;
+}
+/** The record's fields from the bill. Slots the bill does not use are emptied, so last month's never linger. */
+function gblSfwFields_(line, month, f, had) {
+  had = had || {};
+  var o = { Renewal_Date__c: month + '-01', Year__c: Number(month.slice(0, 4)) };
+  if (f.dated && /^\d{4}-\d{2}-\d{2}$/.test(f.dated)) o.PREMIUM_INV_01_DATE__c = f.dated;
+  if (line === 'health') {
+    var S = f.slots || [], known = S.some(function (x) { return x.invoice; });
+    o.Group_Billing_Premiums__c = f.current; o.Total_Premium__c = f.current;
+    o.Premium_Due__c = S.length ? S[0].amount : f.current;
+    for (var i = 1; i <= GBL_SFW.DIVS; i++) {
+      var x = S[i - 1] || null;
+      if (i <= GBL_SFW.PREM_SLOTS) o['Premium_Billed_' + i + '__c'] = x ? x.amount : null;
+      o['Employee_Div_' + i + '__c'] = x && x.count ? x.count : null;
+      if (known) o['Invoice_Value_' + i + '__c'] = x && x.invoice ? x.invoice : null;
+      if (f.slotMode === 'division') o['Division_Value_' + i + '__c'] = x ? (i <= 2 ? gblDivLabel_(x.label, i, had['Division_Value_' + i + '__c']) : String(i)) : null;
+    }
+  } else if (line === 'life') {
+    var T = f.totals || {};
+    o.Group_Billing_Premiums__c = f.gross;
+    if (T.basic) o.Life_Cover__c = T.basic;
+    if (T.add) o.ADD_Cover__c = T.add;
+    if (T.pBasic) o.Life_Premiums__c = gblR_(T.pBasic);
+    if (T.pAdd) o.ADD_Premium__c = gblR_(T.pAdd);
+  }
+  return o;
+}
+/** A standard, active Salesforce user by e-mail (never a site guest). */
+function gblSfwUserId_(email) {
+  if (!email || !tSfOn_()) return '';
+  try { var u = gcmQuery_("SELECT Id FROM User WHERE IsActive = true AND UserType = 'Standard' AND Email = '" + svcSoqlLit_(email) + "' LIMIT 1")[0]; return u ? String(u.Id) : ''; } catch (e) { return ''; }
+}
+/** A create or an update, leaving out a field this login may not write (a formula, a locked field) and saying which. */
+function gblSfwSave_(method, path, body) {
+  var dropped = [];
+  for (var k = 0; k < 4; k++) {
+    try { return { res: tSfSend_(method, path, body), dropped: dropped }; }
+    catch (e) {
+      var msg = String(e && e.message ? e.message : e), bad = [];
+      var m1 = /fields?:\s*([A-Za-z0-9_,\s]+?)(?:\.\s|\.$|$)/i.exec(msg), m2 = /No such column '([^']+)'/i.exec(msg);
+      if (m1 && /create\/update|INVALID_FIELD_FOR_INSERT_UPDATE/i.test(msg)) bad = m1[1].split(/[,\s]+/).filter(function (x) { return x && Object.prototype.hasOwnProperty.call(body, x); });
+      if (m2 && Object.prototype.hasOwnProperty.call(body, m2[1])) bad.push(m2[1]);
+      if (!bad.length) throw e;
+      bad.forEach(function (x) { delete body[x]; dropped.push(x); });
+    }
+  }
+  throw new Error('Salesforce refused the record.');
+}
+function gblSfwRtId_(name) {
+  try { var r = gcmQuery_("SELECT Id FROM RecordType WHERE SobjectType = 'TRANSACTIONS__c' AND Name = '" + svcSoqlLit_(name) + "' LIMIT 1")[0]; return r ? String(r.Id) : ''; } catch (e) { return ''; }
+}
+/** Two working days from today, for the tasks. */
+function gblSfwDue_() { var d = gcmToday_(); for (var i = 0; i < GBL_SFW.DUE_WD; i++) d = gblNextWorkingDay_(d); return d; }
+/** The bill writes the month's billing record in Salesforce, then opens the tasks it calls for. opt.bill: the bill as read
+ *  at the upload (its transmittal gives the invoice numbers); else the stored bill, rebuilt. opt.findings: the check's.
+ *  opt.tasks false: the record only. Returns what it did, for the page, the Group Bills row and the toast. */
+function gblSfWrite_(g, who, line, month, opt) {
+  opt = opt || {};
+  var out = { ok: true, line: line, month: month, at: gcmWhen_(new Date()), by: who.name, action: '', id: '', name: '', changed: [], dropped: [], tasks: [], skipped: [], errors: [] };
+  var fin = function () { out.said = gblSfwSaid_(out); return out; };
+  if (line !== 'health' && line !== 'life') { out.action = 'none'; return fin(); }
+  if (!tSfOn_()) { out.ok = false; out.errors.push('Salesforce is not linked to this project.'); return fin(); }
+  var stored = gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0] || null;
+  var f = opt.bill ? gblSfwFacts_(line, opt.bill, opt.findings || [], null) : stored ? gblSfwFacts_(line, gblRebuild_(g, stored), stored.findings, stored.summary) : null;
+  if (!f) { out.ok = false; out.errors.push('No ' + GBL.LABEL[line] + ' bill is stored for ' + gblMonthLabel_(month) + '.'); return fin(); }
+  var accts = (g.acctsFull && g.acctsFull.length ? g.acctsFull : g.accts) || [];
+  if (!accts.length) { out.ok = false; out.errors.push('The group has no Salesforce account on the register.'); return fin(); }
+  var rt = GBL.RT[line], first = month + '-01', F = 'Id, Name, RecordTypeId, Account__c, INSURANCE_PORTFOLIO__c, Issue_Date__c, Owner__c, ' + GBL_SFW.FIELDS[line].join(', ');
+  var now = [], prev = null;
+  try {
+    now = gcmQuery_('SELECT ' + F + ' FROM TRANSACTIONS__c WHERE Account__c IN (' + gcmIn_(accts) + ") AND RecordType.Name = '" + rt + "' AND Renewal_Date__c = " + first + ' ORDER BY CreatedDate');
+    prev = gcmQuery_('SELECT ' + F + ' FROM TRANSACTIONS__c WHERE Account__c IN (' + gcmIn_(accts) + ") AND RecordType.Name = '" + rt + "' AND Renewal_Date__c < " + first + ' ORDER BY Renewal_Date__c DESC LIMIT 1')[0] || null;
+  } catch (e) { out.ok = false; out.errors.push('Salesforce could not be read: ' + String(e && e.message ? e.message : e).slice(0, 160)); return fin(); }
+  var want = gblSfwFields_(line, month, f, now[0] || prev), body = {}, r;
+  if (now.length) {
+    var rec = now[0];
+    out.id = String(rec.Id); out.name = String(rec.Name || '');
+    if (now.length > 1) out.skipped.push(now.length + ' ' + rt + ' records for ' + gblMonthLabel_(month) + ' in Salesforce: ' + out.name + ', the first made, was brought into line; the others are for a person to close.');
+    if (!rec.Owner__c) { var own0 = gblSfwUserId_(who.email); if (own0) want.Owner__c = own0; }
+    Object.keys(want).forEach(function (k) {
+      if (gblSfwSame_(rec[k], want[k])) return;
+      body[k] = want[k];
+      out.changed.push({ field: k, label: gblSfwLabel_(k), from: rec[k] === undefined ? null : rec[k], to: want[k] });
+    });
+    if (!Object.keys(body).length) out.action = 'same';
+    else {
+      try { r = gblSfwSave_('patch', '/sobjects/TRANSACTIONS__c/' + out.id, body); out.dropped = r.dropped; out.action = 'updated'; }
+      catch (e2) { out.ok = false; out.errors.push('Salesforce would not take the changes to ' + out.name + ': ' + String(e2 && e2.message ? e2.message : e2).slice(0, 200)); out.changed = []; }
+    }
+  } else {
+    var base = prev, rtId = prev ? String(prev.RecordTypeId || '') : '';
+    if (!base) { try { base = gcmQuery_('SELECT Id, Account__c, INSURANCE_PORTFOLIO__c, Issue_Date__c, Owner__c FROM TRANSACTIONS__c WHERE Account__c IN (' + gcmIn_(accts) + ') ORDER BY Renewal_Date__c DESC LIMIT 1')[0] || null; } catch (e3) { base = null; } }
+    if (!rtId) rtId = gblSfwRtId_(rt);
+    if (!base || !base.INSURANCE_PORTFOLIO__c || !rtId) {
+      out.ok = false;
+      out.errors.push('There is no earlier billing record for ' + g.name + ' to take the policy from, so the ' + gblMonthLabel_(month) + ' ' + rt + ' record was not made. Create it once in Salesforce; every month after fills itself.');
+      return fin();
+    }
+    body = { RecordTypeId: rtId, Account__c: String(base.Account__c || accts[0]), INSURANCE_PORTFOLIO__c: String(base.INSURANCE_PORTFOLIO__c) };
+    if (prev && prev.Issue_Date__c) body.Issue_Date__c = prev.Issue_Date__c;
+    var own = gblSfwUserId_(who.email) || gblOwnerId_(g) || (prev && prev.Owner__c) || '';
+    if (own) body.Owner__c = String(own);
+    Object.keys(want).forEach(function (k) { if (want[k] !== null && want[k] !== '') body[k] = want[k]; });
+    try {
+      r = gblSfwSave_('post', '/sobjects/TRANSACTIONS__c', body);
+      out.id = String(r.res && r.res.id || ''); out.dropped = r.dropped; out.action = 'created';
+      Object.keys(body).forEach(function (k) { if (r.dropped.indexOf(k) < 0 && ['RecordTypeId', 'Account__c', 'INSURANCE_PORTFOLIO__c', 'Owner__c'].indexOf(k) < 0) out.changed.push({ field: k, label: gblSfwLabel_(k), from: null, to: body[k] }); });
+      try { var nm = gcmQuery_("SELECT Name FROM TRANSACTIONS__c WHERE Id = '" + svcSoqlLit_(out.id) + "'")[0]; out.name = nm ? String(nm.Name || '') : ''; } catch (e4) {}
+    } catch (e5) { out.ok = false; out.errors.push('Salesforce would not make the ' + gblMonthLabel_(month) + ' ' + rt + ' record: ' + String(e5 && e5.message ? e5.message : e5).slice(0, 200)); }
+  }
+  out.changed = out.changed.filter(function (c) { return out.dropped.indexOf(c.field) < 0; });
+  if (out.id && (out.action === 'created' || out.action === 'updated')) {
+    var ln = out.changed.map(function (c) { return c.label + ': ' + (out.action === 'updated' ? gblSfwShow_(c.from, c.field) + ' → ' : '') + gblSfwShow_(c.to, c.field); });
+    var post = (out.action === 'created' ? 'Made' : 'Brought into line') + ' from the ' + gblMonthLabel_(month) + ' ' + GBL.LABEL[line].toLowerCase() + ' bill, ' + (opt.bill ? 'uploaded' : 'checked') + ' by ' + who.name + ' on group client management:\n' +
+      ln.map(function (x) { return '• ' + x; }).join('\n') + (f.note ? '\n' + f.note : '') + (out.dropped.length ? '\nNot written (this login may not change them): ' + out.dropped.map(gblSfwLabel_).join(', ') + '.' : '');
+    try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: out.id, Body: post.slice(0, 9900) }); } catch (e6) {}
+    gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: line, Kind: 'salesforce', Member: '', Detail: (out.name || out.id) + ' ' + out.action + ' from the bill: ' + ln.join('; ').slice(0, 1800),
+      Effective: first, Amount: want.Group_Billing_Premiums__c || 0, Source: 'bill', By: who.name, Status: 'done', 'SF Task': '', 'SF Id': out.id, Note: out.dropped.length ? 'not written: ' + out.dropped.join(', ') : '' }]);
+  }
+  if (opt.tasks !== false) {
+    var t = gblSfwTasks_(g, who, line, month, f, out.id, opt.sf || null);
+    out.tasks = t.tasks; out.skipped = out.skipped.concat(t.skipped); out.errors = out.errors.concat(t.errors);
+  }
+  return fin();
+}
+/** The upload's toast, in one line. */
+function gblSfwSaid_(o) {
+  if (o.action === 'none') return '';
+  var bits = [];
+  if (o.action === 'created') bits.push('Salesforce: ' + (o.name || 'the month\'s record') + ' made from the bill');
+  else if (o.action === 'updated') bits.push('Salesforce: ' + (o.name || 'the month\'s record') + ' brought into line with the bill (' + o.changed.length + ' field' + (o.changed.length === 1 ? '' : 's') + ')');
+  else if (o.action === 'same') bits.push('Salesforce: ' + (o.name || 'the month\'s record') + ' already matches the bill');
+  if (o.tasks.length) bits.push(o.tasks.length + ' task' + (o.tasks.length === 1 ? '' : 's') + ' opened');
+  if (o.errors.length) bits.push(o.errors[0]);
+  return bits.map(function (x) { return String(x).replace(/[.\s]+$/, ''); }).join(' · ') + (bits.length ? '.' : '');
+}
+/** Why an upload does not write Salesforce by itself: '' when it may, 'off' when it never would (another line, the
+ *  switch off, Salesforce not linked), else the reason, said to the person: a bill that reads as another month is never
+ *  written onto this one, and a bill the reader was unsure of waits for a person's press. */
+function gblSfwSkip_(line, bill, sf, readMonth, month) {
+  if ((line !== 'health' && line !== 'life') || !gblSfwOn_() || !sf || !sf.ok) return 'off';
+  if (readMonth && readMonth !== month) return 'The bill reads as ' + gblMonthLabel_(readMonth) + ', not ' + gblMonthLabel_(month) + ', so Salesforce was not written. Open ' + gblMonthLabel_(readMonth) + ' and upload it there.';
+  var w = gblArr_(bill.warnings);
+  if (w.length) return 'The bill was read with ' + w.length + ' warning' + (w.length === 1 ? '' : 's') + ', so Salesforce was not written. Check ' + (w.length === 1 ? 'it' : 'them') + ', then press “Bring Salesforce in line with the bill”.';
+  return '';
+}
+/** What a write leaves on the Group Bills row and hands the page: what changed, the tasks, and the links. */
+function gblSfwKeep_(w) {
+  return { at: w.at || gcmWhen_(new Date()), by: w.by || '', action: w.action || '', why: w.why || '', id: w.id || '', name: w.name || '', url: w.id ? gblSfUrl_(w.id) : '',
+    changed: gblArr_(w.changed).slice(0, 40).map(function (c) { return { label: c.label, from: gblSfwShow_(c.from, c.field), to: gblSfwShow_(c.to, c.field), was: c.from === null || c.from === undefined || c.from === '' ? '' : 'had' }; }),
+    tasks: gblArr_(w.tasks).map(function (t) { return { id: t.id, kind: t.kind, subject: t.subject, url: gblSfUrl_(t.id) }; }),
+    skipped: gblArr_(w.skipped).slice(0, 30), errors: gblArr_(w.errors).slice(0, 10), said: w.said || '' };
+}
+/** The tasks a bill calls for: one a person it takes off, one a person whose tier it changes, one to query the month's
+ *  adjustments. For the account owner, due in two working days, never twice: a task already in Salesforce with the same
+ *  subject (the adjustments) or naming the same person (a termination, a tier change) in the last six months stands. */
+function gblSfwTasks_(g, who, line, month, f, recId, sf) {
+  var out = { tasks: [], skipped: [], errors: [] }, lab = GBL.LABEL[line], ml = gblMonthLabel_(month), money = gcmMoney_;
+  var accts = (g.acctsFull && g.acctsFull.length ? g.acctsFull : g.accts) || [], acct = accts[0] || null;
+  if (!acct) return out;
+  var same = gblSamePerson_, onBill = function (name) { return f.members.some(function (m) { return same(m.name, name); }); };
+  var pols = sf ? (line === 'health' ? sf.health : sf.life) || [] : [];
+  var polOf = function (name) { var p = pols.filter(function (x) { return same(x.name, name); })[0]; return p ? 'Salesforce has ' + (p.policy || 'a policy') + (p.status ? ', ' + p.status : '') + '.' : 'No ' + GBL.POL[line] + ' policy for them was found in Salesforce.'; };
+  var head = 'From the ' + ml + ' ' + lab.toLowerCase() + ' bill for ' + g.name + ', checked by ' + who.name + ' on ' + tDmy_(gcmToday_()) + '.';
+  var signed = function (x) { return x < 0 ? '-' + money(-x) : money(x); };
+  var plan = [], gone = [];
+  if (line === 'health') {
+    f.credits.filter(function (c) { return c.kind === 'cancel'; }).forEach(function (c) {
+      if (onBill(c.name)) return;
+      var x = gone.filter(function (y) { return same(y.name, c.name); })[0];
+      var why = 'taken off ' + gblMonthLabel_(c.month || month) + (c.tier ? ' as ' + c.tier : '') + ', a credit of ' + money(c.premium);
+      if (x) { x.why += '; ' + why; if (c.month && c.month + '-01' < x.eff) x.eff = c.month + '-01'; }
+      else gone.push({ name: c.name, eff: (c.month || month) + '-01', why: why, id: c.id });
+    });
+    var tiered = [];
+    f.credits.filter(function (c) { return c.kind === 'cancel' && onBill(c.name); }).forEach(function (c) {
+      if (tiered.some(function (x) { return same(x, c.name); })) return;
+      tiered.push(c.name);
+      var now = f.members.filter(function (m) { return same(m.name, c.name); })[0] || {};
+      var charged = f.credits.filter(function (k) { return k.kind !== 'cancel' && same(k.name, c.name); });
+      plan.push({ kind: 'tier', member: c.name, subject: lab + ' Tier Change – ' + gblNice_(c.name) + ' – ' + g.name + ' – from ' + tDmy_((c.month || month) + '-01'),
+        text: head + '\n' + gblNice_(c.name) + ' was taken off ' + gblMonthLabel_(c.month || month) + (c.tier ? ' as ' + c.tier : '') + ' (' + money(c.premium) + ')' + (charged.length ? ' and charged ' + charged.map(function (k) { return money(k.premium) + ' for ' + gblMonthLabel_(k.month || month) + (k.tier ? ' as ' + k.tier : ''); }).join(', ') : '') +
+          ', and is on this month\'s bill' + (now.tier ? ' as ' + now.tier : '') + ': a change of tier.' + (c.id ? ' Member id on the bill: ' + c.id + '.' : '') + '\n' + polOf(c.name) +
+          '\n\nTo do:\n1. Confirm the new tier and the date with the group\'s administrator.\n2. Update the member\'s Group Health policy record in Salesforce to the new tier.\n3. If the group did not ask for it, query it with EB Customer Care.\nNote what was done here, and close the task with who confirmed it and when.' });
+    });
+  }
+  if (line === 'life') gblArr_(f.adjustments).filter(function (a) { return a.kind === 'left'; }).forEach(function (a) {
+    if (gone.some(function (y) { return same(y.name, a.name); })) return;
+    gone.push({ name: a.name, eff: a.asAt || month + '-01', why: 'terminated as at ' + tDmy_(a.asAt || month + '-01') + ' on the statement of adjustment, ' + money(a.premium) + (a.basic ? ' on ' + money(-a.basic) + ' of basic cover' : ''), id: a.cert });
+  });
+  f.left.forEach(function (m) {
+    if (onBill(m.name) || gone.some(function (y) { return same(y.name, m.name); })) return;
+    gone.push({ name: m.name, eff: month + '-01', why: 'on last month\'s bill' + (m.tier ? ' as ' + m.tier : '') + ' and not on this one', id: m.id });
+  });
+  /* more people gone than one bill plausibly takes off: one task to confirm them all, never a task a person (a bill read
+   * short, or last month's from another layout, would otherwise open dozens) */
+  if (gone.length > GBL_SFW.EACH_MAX) {
+    plan.push({ kind: 'leavers', member: '', subject: lab + ' Terminations – ' + g.name + ' – ' + ml + ' – ' + gone.length + ' members to confirm',
+      text: head + '\n' + gone.length + ' members are off this bill. That is more than a month usually takes off, so confirm the bill was read in full before any record is changed.\n\n' +
+        gone.map(function (x) { return '• ' + gblNice_(x.name) + ': ' + x.why + (x.id ? ' (member id ' + x.id + ')' : ''); }).join('\n') +
+        '\n\nTo do:\n1. Check the bill against last month\'s: is every page there?\n2. Confirm each termination and its date with the group\'s administrator.\n3. Update each member\'s ' + lab + ' policy record in Salesforce: status and status change date.\nNote what was done here, and close the task when every one is confirmed.' });
+    gone = [];
+  }
+  gone.forEach(function (x) {
+    plan.push({ kind: 'leaver', member: x.name, subject: lab + ' Termination – ' + gblNice_(x.name) + ' – ' + g.name + ' – effective ' + tDmy_(x.eff),
+      text: head + '\n' + gblNice_(x.name) + ': ' + x.why + '.' + (x.id ? ' Member id on the bill: ' + x.id + '.' : '') + '\n' + polOf(x.name) +
+        '\n\nTo do:\n1. Confirm the termination and its date with the group\'s administrator.\n2. Update the member\'s ' + lab + ' policy record in Salesforce: status and status change date.\n3. If the group did not ask for it, query it with EB Customer Care.\nNote what was done here, and close the task with who confirmed it and when.' });
+  });
+  var adj = line === 'health' ? f.credits : gblArr_(f.adjustments);
+  if (adj.length || Math.abs(f.adjTotal) > 0.005) {
+    var rows = adj.map(function (a) {
+      if (line === 'health') return '• ' + gblNice_(a.name) + ': ' + (a.kind === 'cancel' ? 'taken off ' : 'charged for ') + gblMonthLabel_(a.month || month) + (a.tier ? ' as ' + a.tier : '') + ': ' + money(a.premium);
+      return '• ' + gblNice_(a.name) + ': ' + (a.kind === 'left' ? 'terminated' : a.kind === 'joined' ? 'added' : 'cover changed') + (a.asAt ? ' as at ' + tDmy_(a.asAt) : '') + ': ' + money(a.premium) + (a.basic ? ' on ' + money(a.basic) + ' of basic cover' : '');
+    });
+    var inv = f.adjInvoices.map(function (t) { return '• ' + t.what + ', invoice ' + t.invoice + ': ' + money(t.amount); });
+    plan.push({ kind: 'adjust', what: recId || acct, priority: 'High', subject: lab + ' Billing Adjustments – ' + g.name + ' – ' + ml + ' – query (' + signed(f.adjTotal) + ')',
+      text: head + '\nThe bill carries ' + signed(f.adjTotal) + ' of credits and adjustments. Each line should match a change the group asked for; query any that does not with Head Office (' + (line === 'health' ? 'Group Health premium accounting or EB Customer Care' : 'EB Customer Care') + '), and note the answer here.\n\n' +
+        rows.join('\n') + (inv.length ? '\n\nInvoices adjusted:\n' + inv.join('\n') : '') + '\n\nWhen every line is confirmed, close the task with who confirmed it and when.' });
+  }
+  if (!plan.length) return out;
+  var have = [];
+  try { have = gcmQuery_('SELECT Id, Subject FROM Task WHERE WhatId IN (' + gcmIn_(accts.concat(recId ? [recId] : [])) + ') AND CreatedDate = LAST_N_DAYS:' + GBL_SFW.LOOK_DAYS); }
+  catch (e) { out.errors.push('The tasks already in Salesforce could not be read, so none was opened (it would risk a second one): ' + String(e && e.message ? e.message : e).slice(0, 120)); return out; }
+  var dup = function (p) {
+    return have.some(function (t) {
+      var s = String(t.Subject || '');
+      if (p.kind === 'adjust') return s.indexOf(lab + ' Billing Adjustments – ' + g.name + ' – ' + ml) === 0;
+      if (p.kind === 'leavers') return s.indexOf(lab + ' Terminations – ' + g.name + ' – ' + ml) === 0;
+      return s.indexOf(lab) >= 0 && (p.kind === 'leaver' ? /Termination/i : /Tier Change/i).test(s) && gblNamedIn_(p.member, s);
+    });
+  };
+  var ownerId = gblOwnerId_(g), due = gblSfwDue_();
+  plan.forEach(function (p) {
+    if (dup(p)) { out.skipped.push('Already in Salesforce: ' + p.subject); return; }
+    if (out.tasks.length >= GBL_SFW.MAX_TASKS) { out.skipped.push('Not opened, more than ' + GBL_SFW.MAX_TASKS + ' at once: ' + p.subject); return; }
+    var rec = { Subject: p.subject.slice(0, 255), WhatId: p.what || acct, ActivityDate: due, Status: 'Not Started', Priority: p.priority || 'Normal', Description: p.text.slice(0, 31000) }, id = '';
+    if (ownerId) rec.OwnerId = ownerId;
+    try { id = String(tSfSend_('post', '/sobjects/Task', Object.assign({ Task_Type__c: 'Servicing' }, rec)).id || ''); }
+    catch (e) { try { id = String(tSfSend_('post', '/sobjects/Task', rec).id || ''); } catch (e2) { out.errors.push('Not opened: ' + p.subject + ' (' + String(e2 && e2.message ? e2.message : e2).slice(0, 120) + ')'); return; } }
+    out.tasks.push({ id: id, kind: p.kind, subject: p.subject, member: p.member || '' });
+    have.push({ Id: id, Subject: p.subject });
+    gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: line, Kind: 'task', Member: p.member || '', Detail: p.subject, Effective: month + '-01', Amount: 0, Source: 'bill', By: who.name, Status: 'open', 'SF Task': id, 'SF Id': recId || '', Note: 'opened by the upload, due ' + tDmy_(due) }]);
+  });
+  /* the owner hears once, with the list */
+  if (out.tasks.length && g.ownerEmail && String(g.ownerEmail).toLowerCase() !== String(who.email || '').toLowerCase()) {
+    var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    gblInternalMail_(g.ownerEmail, g.name + ': ' + out.tasks.length + ' task' + (out.tasks.length === 1 ? '' : 's') + ' from the ' + ml + ' ' + lab.toLowerCase() + ' bill',
+      '<div style="font-family:Arial,sans-serif;font-size:14px;color:#14284B"><p>' + esc(who.name) + ' checked the ' + esc(ml) + ' ' + esc(lab.toLowerCase()) + ' bill for <b>' + esc(g.name) + '</b>. It opened these tasks for you in Salesforce, due ' + esc(tDmy_(due)) + ':</p><ul>' +
+      out.tasks.map(function (t) { var u = gblSfUrl_(t.id); return '<li>' + (u ? '<a href="' + esc(u) + '">' + esc(t.subject) + '</a>' : esc(t.subject)) + '</li>'; }).join('') + '</ul><p style="color:#5b6670;font-size:12px">Internal: do not forward outside the branch.</p></div>');
+  }
+  return out;
+}
+
 /** An action on a stored bill: set the Salesforce amount, mark reconciled, resolve a finding, record a payment, open a
  *  task for a change, or post a note on a billing task. Each Salesforce write is a signed-in person's press, logged. */
 function gblAct_(b) {
@@ -673,6 +1058,17 @@ function gblAct_(b) {
     bill.resolved[f.id] = { by: who.name, at: gcmWhen_(new Date()), note: why };
     gblBillPatch_(bill, { Resolved: JSON.stringify(bill.resolved).slice(0, 49000), Status: gblSteps_(bill).open ? bill.status : 'checked' });
     return { ok: true, steps: gblSteps_(bill), resolved: bill.resolved };
+  }
+  if (act === 'sfWrite' || (act === 'sfAmount' && (line === 'health' || line === 'life'))) {
+    if (!bill) return { ok: false, error: 'No bill is stored for that month.' };
+    if (!sf.ok) return { ok: false, error: 'Salesforce is not linked.' };
+    var w = gblSfWrite_(g, who, line, month, { sf: sf });
+    gblSf_(g, true);
+    var F3 = gblCheck_(g, line, gblRebuild_(g, bill), gblSf_(g), gblPrevious_(g, line, month), L.today), rec3w = gblSfMonth_(gblSf_(g), line, month).rec;
+    bill.findings = F3;
+    gblBillPatch_(bill, { Findings: JSON.stringify(F3).slice(0, 49000), 'SF Record': rec3w ? rec3w.name : '', 'SF Billed': rec3w ? rec3w.billed : '', 'SF Due': rec3w ? rec3w.due : '',
+      Variance: rec3w ? gblR_(rec3w.billed - gblBilled_(line, gblRebuild_(g, bill))) : '', 'SF Write': JSON.stringify(gblSfwKeep_(w)).slice(0, 49000), Status: gblSteps_(bill).open ? bill.status : 'checked' });
+    return { ok: w.ok || w.action === 'same', said: w.said || 'Salesforce already matches the bill.', error: w.ok ? '' : w.errors[0], findings: F3, steps: gblSteps_(bill), sfWrite: gblSfwKeep_(w) };
   }
   if (act === 'sfAmount') {
     if (!bill) return { ok: false, error: 'No bill is stored for that month.' };
@@ -2849,8 +3245,8 @@ function gblQuestionOf_(g, line, f, month) {
   var q = { id: f.id, line: line, label: lab, kind: f.kind, level: f.level, who: f.who, finding: f.text, member: mem, members: M.map(function (m) { return { id: m.id, name: m.name, premium: m.premium }; }), text: '', why: f.text, options: [] };
   switch (f.kind) {
     case 'read': q.text = 'The reader warned about this file. Is the ' + lab.toLowerCase() + ' bill still right to use?'; q.options = [O('yes', 'Yes, use it as read', { resolve: true }), O('no', 'No: upload it again', { next: { kind: 'reup', line: line } }), unsure]; break;
-    case 'norecord': q.text = 'There is no ' + GBL.RT[line] + ' billing record for ' + ml + ' in Salesforce. Who creates it?'; q.options = [O('done', 'I have created it', { resolve: true, post: 'the billing record is now in Salesforce' }), O('task', 'Open a task for someone to create it', { next: task('amount') }), unsure]; break;
-    case 'amount': q.text = 'Salesforce and the bill disagree on the ' + ml + ' amount. Which is right?'; q.options = [O('bill', 'The bill: set Salesforce to it', { next: { kind: 'fix', fix: 'sfAmount', line: line } }), O('sf', 'Salesforce: query the bill with Head Office', { next: task('amount'), post: 'the bill is queried with Head Office' }), unsure]; break;
+    case 'norecord': q.text = 'There is no ' + GBL.RT[line] + ' billing record for ' + ml + ' in Salesforce. Make it from the bill?'; q.options = (line === 'health' || line === 'life' ? [O('make', 'Yes: make it from the bill, with the invoice numbers and totals', { next: { kind: 'fix', fix: 'sfWrite', line: line } })] : []).concat([O('done', 'I have created it', { resolve: true, post: 'the billing record is now in Salesforce' }), O('task', 'Open a task for someone to create it', { next: task('amount') }), unsure]); break;
+    case 'amount': q.text = 'Salesforce and the bill disagree on the ' + ml + ' amount. Which is right?'; q.options = [O('bill', 'The bill: bring Salesforce in line with it', { next: { kind: 'fix', fix: line === 'health' || line === 'life' ? 'sfWrite' : 'sfAmount', line: line } }), O('sf', 'Salesforce: query the bill with Head Office', { next: task('amount'), post: 'the bill is queried with Head Office' }), unsure]; break;
     case 'arrears':
       if (f.who === 'headoffice') { q.text = 'The bill still shows ' + gblMonthLabel_(f.month || '') + ' as unpaid, but Salesforce has it paid. Has Group Health premium accounting applied the payment?'; q.options = [O('yes', 'Yes, applied: the group need not pay it again', { resolve: true, post: 'Head Office confirms the payment is applied; the arrears line is not owed' }), O('no', 'No: chase Head Office', { next: task('payment', { month: f.month, amount: d.amount }) }), unsure]; }
       else if (f.who === 'salesforce') { q.text = 'The bill shows ' + gblMonthLabel_(f.month || '') + ' unpaid and Salesforce has no record for that month at all. Create it?'; q.options = [O('done', 'I have created it', { resolve: true, post: 'the missing month\'s record is now in Salesforce' }), O('task', 'Open a task for it', { next: task('amount', { month: f.month }) }), unsure]; }

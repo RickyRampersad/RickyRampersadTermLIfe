@@ -4786,8 +4786,59 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     "Monthly Billing for <month>" as well as the older wording. The Group Health box refuses a life document and says to
     upload it under Group Life. `signin27/life-read.js` (13) and `life-backend.js` (4) in the scratchpad cover it, on
     the first real seven-figure bill and a ten-figure one.
+  - **The upload writes the month's billing record in Salesforce, and opens the tasks the bill calls for** (27 October
+    2026: "when the bills are received it should be uploaded on to the platform and deep dive looking at terminations
+    and adjustments creating the relevant tasks and a transaction on salesforce populating the respective fields and
+    invoice numbers with the totals and a task to open to query the adjustments"). Until then staff keyed each month's
+    `TRANSACTIONS__c` by hand, often by copying the month before. That morning one group's October health record still
+    carried September's invoice number, and another's October record carried figures from an earlier month.
+    `gblSfWrite_` in GroupBilling.gs, from `gblUpload_` for a health or life bill:
+    - **The record.** The month's T-HEALTH GROUP or T-LIFE GROUP record is brought into line with the bill, only the
+      fields that differ. With none for the month, one is made from the last one before it: its record type, account,
+      policy and issue date, with Owner the uploader's Salesforce user (as the team keys it). With no earlier record at
+      all, nothing is made and the toast says to make the first by hand.
+    - **The fields, laid out as the team lays them** (read off the live records that day):
+      - Group Billing Premiums and Total Premium are the month's charges before credits: health's current month, life's
+        gross. The credits are queried, never netted. The check (`gblBilled_`) and the Variance compare against the same
+        figure, so "agrees" means what the team keyed.
+      - Health with several divisions: one Premium Billed slot a division, each with its own invoice in Invoice Value
+        and its employees in Employee #; the team's own Division Value names ("Staff") are kept.
+      - Health with one division: one slot a tier, Employee Only, +Child, +Family, +Spouse in that order, the tier's
+        headcount in Employee # and the invoice in each slot. On one group's September bill this reproduced the four
+        amounts and headcounts the team had keyed by hand.
+      - Premium Due is the first slot. Then the invoice date, Year and the 1st of the month.
+      - Life: Life Cover, AD&D Cover, Life Premiums and AD&D Premium. New Life has no field, so it goes on the record's
+        Chatter. Life leaves Total Premium and Premium Due alone, as the team does.
+      - Never `GROUP_TRANSACTION_TYPE__c` (blank on every live record), and never a slot the bill does not use left
+        holding last month's figure.
+    - **The trail.** Every change, with what it was, goes on the record's Chatter and on Group Changes (Kind
+      `salesforce`, Source `bill`), and on the Group Bills row's new **SF Write** column, which the page reads. A field
+      Salesforce refuses for this login is left out, said, and never claimed as written (`gblSfwSave_`).
+    - **The tasks** (`gblSfwTasks_`), for the account owner, Servicing, due in two working days:
+      - one a person the bill takes off: a health cancel credit for someone not on the bill, a life statement's
+        termination, or someone on last month's stored bill and not this one (`… Termination – <member> – <group> –
+        effective <date>`, on the account);
+      - one a person whose tier changed (`… Tier Change – …`);
+      - one, High, on the record, to query the month's credits and adjustments with Head Office, every line and every
+        earlier invoice adjusted (`… Billing Adjustments – <group> – <Month yyyy> – query (<total>)`).
+
+      More than `EACH_MAX` (6) off at once becomes one task to confirm them all, so a bill read short never opens
+      dozens. None is opened twice: a task in Salesforce in the last 180 days with the same subject, or naming the same
+      person, stands. The owner gets one e-mail with the list when someone else checked the bill. Like any task on the
+      account or its billing record, they show on the group's page unless staff untick them.
+    - **When it holds back.** It never writes a bill that reads as another month than the one it is stored under, or one
+      the reader warned about (a reference not on the register counts); those wait for **Bring Salesforce in line with
+      the bill**, a press on the panel and on the findings (act `sfWrite`; the old `sfAmount` does the same for health
+      and life). The `GCM_BILL_SF` Script property set to `off` stops the write at the upload; the press still works. It
+      does not follow the bills' test mode: it writes our own records, never a client's inbox.
+    - **The pages.** The door's "What was found" step and the review show what went to Salesforce, field by field, the
+      tasks with links, and the button. The amount tile reads "billed in Salesforce · the same as the TT$… charged".
+    - Tests in the scratchpad: `sfw27/sfw-test.js` (46: the real October bills through the real reader on the made-up
+      group, Salesforce mocked with the team's own October records; also with `SHEETS_DATES=1`). `billing-test.js`,
+      `month-test.js`, `door-test.js` and `page-test.js` now start October as a copy of September, as it is in life.
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
-    Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
+    Salesforce write happens on a signed-in person's press or their upload of a bill, and is logged on Group Changes
+    with who did it.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing
     records) and `billing/page-test.js` (52, Playwright: the review driven with the real October PDFs through pdf.js,
     the made-up bill stored, the fixes, reconcile, the test send, a comment to Chatter, the claims upload; the
