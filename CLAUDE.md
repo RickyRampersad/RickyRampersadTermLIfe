@@ -4844,6 +4844,38 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     the made-up bill stored, the fixes, reconcile, the test send, a comment to Chatter, the claims upload; the
     group's page on a phone and a desk). `billing/world.js` holds the made-up Salesforce.
 
+- **The bill e-mail greets a person, names who looks after the account, opens the page to comment, and asks for a
+  rating of that person** (27 October 2026: "in the send off where is the email addressing to persons and a more warmth
+  and a log in so they can also make comments … as well a star rating to rate the staff who manages the account").
+  `gblBillMail_` in GroupBilling.gs, used by Send now and the billing-day run alike:
+  - **The greeting** (`gblGreet_`): a Greeting typed on the register as typed; a Salesforce salutation ("Ms. Morales")
+    as it is; a contact's full name with no salutation by the first name ("Dear Pat"); no named contact, the company's
+    team ("Dear Harbour Point Logistics team"). Never "Sir or Madam" when there is any name. The weekly letter, the
+    welcome and the star reminder keep their own greeting, unchanged.
+  - **The words**: "Thank you for another month with us", the total and the date in the opening, then the arrears and
+    the changes as before, the lines and the statement.
+  - **Who looks after the account** (`gblCarer_`): the account owner in Salesforce while active, else whoever signs the
+    bill; a team's name ("the team", "Client Support Team") is never read as a person, and "our team" is rated instead.
+    A card with their initials says what they look after and that they will put a wrong bill right.
+  - **Comment on your billing**: what the sign-in is for (a comment on any line, a payment, a joiner or a leaver, which
+    goes straight to the account manager), **Open your billing** (`client.html?tab=billing&from=bill&m=<month>`), and
+    the list bill and the access code in a box.
+  - **Five stars**: "How is <first name> looking after your account?", each star a link with `&rate=n` that opens the
+    page with it chosen. Nothing is recorded until the group signs in and presses Send, so a mail scanner rates nobody.
+  - The reconciler in the green "Checked against our records by …" label, the confidentiality footer, and a preview
+    line for the inbox. A reply still goes to support@, and the e-mail says it reaches our team.
+  - **The staff see it first**: "See the e-mail as the group reads it" on the door's Approve and send step
+    (`gcm.billStatement` with `mail=Y`), with who it greets, who signs it and who is rated, and a warning when the
+    account has no named contact. Its links read `from=preview`, so trying them is not logged as the group.
+  - **On the group's page** the billing tab ends in "How is <first name> looking after your account?" (`brateHtml`), with
+    the star from the e-mail chosen and the page scrolled to it, a box for a note, name and role. It goes through
+    `gcm.review` with `about: "billing <yyyy-mm>"`, filed on Group Responses in a new **About** column (added to the tab
+    by name), Staff the account owner, so it counts in that person's ratings on the Team dashboard. The owner is told
+    as "Billing rating in: <group> · n/5". "What groups told us" says what a rating was for. A sign-in from the bill is
+    logged on Group Views with From `bill`. A billing rating after a weekly letter counts as a response to it, so the
+    star reminder stops.
+  - Paste **GroupBilling.gs and GroupClients.gs**, then a New version. Tests in the scratchpad: `billmail/billmail-test.js`
+    (38) and `billing/door-test.js` (114, the preview and the star-to-rating flow on a phone and a desk).
 - **Your people: who is on the plans, who came off this year, who is pending, and a box on each** (25 October 2026: "a
   drop down to see the members that are active and members who have come off this year and members who are pending,
   who they have an application in … very easy for the customer to just look at what is pending, who is having it, and

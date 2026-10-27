@@ -20,7 +20,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
    says it came from a preview (27 October 2026) */
 const PV_SANDBOX = 'allow-popups allow-popups-to-escape-sandbox';
 const pvHead = '<!doctype html><meta charset="utf-8"><base target="_blank">';
-const pvLinks = h => String(h || '').replace(/([?&;]from=)(letter|welcome|reminder)\b/g, '$1preview');
+const pvLinks = h => String(h || '').replace(/([?&;]from=)(letter|welcome|reminder|bill)\b/g, '$1preview');
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const dmy = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1] : ''; };
 const pct = n => n == null ? '–' : n + '%';
@@ -208,6 +208,7 @@ function dBindPanel() {
   app.querySelectorAll('[data-ptask]').forEach(b => b.onclick = () => { blTaskPanel(b.dataset.line || 'health', ''); dPreset(b.dataset.ptask, b.dataset.member || ''); });
   app.querySelectorAll('[data-enrol]').forEach(b => b.onclick = () => blFormPanel(b.dataset.enrol || '', '', null, 'enrol'));
   const pdf = $('dPdf'); if (pdf) pdf.onclick = dPdf;
+  const ml = $('dMail'); if (ml) ml.onclick = dMail;
   const ai = $('dAiGo'); if (ai) ai.onclick = () => { DOOR.aiRead = null; dAiRead(true); };
 }
 function dAfterDraw(step) {
@@ -499,11 +500,29 @@ async function dPdf() {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([u], { type: 'application/pdf' })); a.download = r.pdfName || 'Statement.pdf'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
 }
 
+/* the bill e-mail as the group reads it: who it greets, who signs it, whom they rate (27 October 2026) */
+async function dMail() {
+  $('dlgT').textContent = 'The ' + BILL.monthLabel + ' bill e-mail, as the group reads it';
+  $('dlgB').innerHTML = '<p class="muted">Writing the e-mail…</p>';
+  if (!dlg.open) dlg.showModal();
+  const r = await api({ action: 'gcm.billStatement', group: BILL.group.key, month: BILL.month, mail: 'Y' });
+  if (!r.ok || !r.mail) { $('dlgB').innerHTML = '<div class="note bad">' + esc(r.ok ? 'This backend does not write the e-mail preview yet: paste GroupBilling.gs and publish a New version.' : (r.error || 'Not written')) + '</div>'; return; }
+  const m = r.mail;
+  $('dlgB').innerHTML = '<p class="to"><b>Subject:</b> ' + esc(m.subject) + '<br><b>To:</b> ' + (m.to ? esc(m.to) : '<span style="color:var(--badText)">no address: ' + esc(m.why || 'none on the register or in Salesforce') + '</span>') + (m.cc ? ' · <b>Cc:</b> ' + esc(m.cc) : '') +
+    '<br><b>Greets:</b> ' + esc(m.greet) + (m.named ? '' : ' <span class="chip warn"><i></i>no contact name in Salesforce: add the Contact Person on the account, or a Greeting on the register</span>') +
+    '<br><b>Signed by:</b> ' + esc(m.signer) + (m.carer ? ' · <b>Rated:</b> ' + esc(m.carer) + ', who looks after the account' : '') + '</p>' +
+    (r.live ? '' : '<p class="small muted">Sending is in test mode, so the bill goes to you, marked TEST, until gblGoLive.</p>') +
+    '<iframe title="The bill e-mail" sandbox="' + PV_SANDBOX + '" srcdoc="' + esc(pvHead + '<body style="margin:0;font-family:Arial,sans-serif">' + pvLinks(m.html)) + '"></iframe>' +
+    '<div class="row"><button class="btn ghost" type="button" id="dMailX">Close</button></div>';
+  $('dMailX').onclick = () => dlg.close();
+}
+
 /* ── step 8: approve and send ── */
 function dApprove() {
   const d = BILL, can = d.canAct !== false, withBill = d.lines.filter(o => o.bill);
   let h = '<h3 class="ptitle">Approve and send</h3><p class="plead">A reconciled line goes by itself on the billing day once it is approved, or now with Send now, which works only on an approved bill. After the 10:00 cut-off, Approve and Send now each ask why it was not done by then. The e-mail carries the bill, the statement of account (inline and as a PDF) and the cover note, from support@ with sales support copied.</p>';
   h += blDayStrip(d.day, d.live);
+  if (withBill.length) h += '<div class="dnote dmail"><div><b>The e-mail the group gets</b><span class="small muted"> · addressed to their contact by name, signed by the person who looks after the account, with the sign-in to comment on any line and five stars to rate that person.</span></div><button class="btn ghost sm" type="button" id="dMail">See the e-mail as the group reads it</button></div>';
   if (!d.live) h += '<div class="note info"><div><b>Sending is in test mode.</b> A bill sent from here goes to you and the branch, marked TEST, until the branch manager runs gblGoLive in the script editor. Everything else is live: the checks, the Salesforce fixes, the tasks and the Chatter.</div></div>';
   if (!withBill.length) h += '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>';
   d.lines.forEach(o => {

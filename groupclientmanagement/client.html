@@ -349,7 +349,7 @@ const draftKey = () => 'rrb-gcm-draft-' + (CRED.lb || '').toUpperCase().replace(
    brought them; the star a reminder's link chose is waiting when they sign in. The code is never in the address. */
 const nameKey = () => 'rrb-gcm-name-' + (CRED.lb || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const QS = new URLSearchParams(location.search);
-const FROM = /^(letter|welcome|reminder|preview)$/.test(QS.get('from') || '') ? QS.get('from') : '';
+const FROM = /^(letter|welcome|reminder|bill|preview)$/.test(QS.get('from') || '') ? QS.get('from') : '';
 const RATE_IN = /^[1-5]$/.test(QS.get('rate') || '') ? +QS.get('rate') : 0;
 function seen() {
   let nm = ''; try { nm = localStorage.getItem(nameKey()) || ''; } catch (e) {}
@@ -371,11 +371,13 @@ async function open_() {
   if (!d.ok) { try { sessionStorage.removeItem('rrb-gcm-client'); } catch (x) {} if (!go) { location.reload(); return; } err.textContent = d.error; go.disabled = false; go.textContent = 'Open my service page'; return; }
   try { sessionStorage.setItem('rrb-gcm-client', JSON.stringify(CRED)); } catch (x) {}
   D = d; loadDraft();
-  const fromStar = RATE_IN && !A._stars;
-  if (fromStar) { A._stars = RATE_IN; saveDraft(); }
+  /* a star tapped in the bill e-mail rates the person who looks after the account, on the billing tab (27 October 2026) */
+  const toBill = FROM === 'bill' && !!(D.billing && Array.isArray(D.billing.lines) && D.billing.lines.length);
+  const fromStar = RATE_IN && (toBill ? !A._bstars : !A._stars);
+  if (fromStar) { if (toBill) A._bstars = RATE_IN; else A._stars = RATE_IN; saveDraft(); }
   render();
-  /* a star tapped in the reminder: the page opens on the rating, with that star chosen */
-  if (fromStar) { const r = $('rate'); if (r) setTimeout(() => r.scrollIntoView({ block: 'start', behavior: 'smooth' }), 150); }
+  /* a star tapped in the reminder or the bill: the page opens on the rating, with that star chosen */
+  if (fromStar) { const r = $(toBill ? 'brate' : 'rate'); if (r) setTimeout(() => r.scrollIntoView({ block: 'start', behavior: 'smooth' }), 150); }
 }
 
 /* applications still pending: the plan's line as a mark and a word, the age as a word and a colour */
@@ -422,7 +424,57 @@ function pendHtml() {
 /* your billing (24 October 2026): "on the group health, their billing, the group life in the tabs, the billing, and the
    group pensions plus any concerns". Figures and counts only: the backend sends no member's name here. */
 const money = n => { n = Number(n) || 0; return (n < 0 ? '−' : '') + 'TT$' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
-let BT = '', TELL = { sent: '' };
+let BT = '', TELL = { sent: '' }, BRATE = { sent: '' };
+/* the month a bill e-mail's star was for, else the statement's */
+const BM = /^\d{4}-\d{2}$/.test(QS.get('m') || '') ? QS.get('m') : '';
+const BMEANS = ['', 'Our billing was wrong or late, and you had to chase us.', 'Mistakes, or slow answers when you asked about your billing or your items.',
+  'It got done, but slower than promised or with follow-up from you.', 'Right and on time, and you knew where each thing stood.', 'Right first time, on time, and we told you before you had to ask.'];
+function brateLab(n) { return n ? '<b><span class="gs" aria-hidden="true">' + '★'.repeat(n) + '</span> ' + RATE[n] + '</b><span>' + BMEANS[n] + '</span>' : '<span>Tap a star.</span>'; }
+/* the rating of the person who looks after the account, under the billing (27 October 2026) */
+/* the person who looks after the account; a team's name ("Client Support Team") is never read as a first name */
+const carer = () => { const w = String(D.staff || '').trim(); return w && !/^the\b|\bteam\b/i.test(w) ? { who: w, first: w.split(/\s+/)[0] } : { who: '', first: '' }; };
+function brateHtml() {
+  const C = carer(), who = C.who, first = C.first || 'our team';
+  if (BRATE.sent) return '<div class="panel thanks brate" id="brate" role="status"><div class="tick" aria-hidden="true">✓</div><h2 class="sec" style="margin-top:0">' + esc(BRATE.sent) + '</h2><p class="sub">You can rate again any time from here, or from the stars in your next bill.</p></div>';
+  const prev = D.billRated;
+  return '<div class="panel brate" id="brate"><h2 class="sec" style="margin-top:0">How is ' + esc(first) + ' looking after your account?</h2>' +
+    '<p class="sub">' + (who ? esc(who) + ' looks after your bills, your service items and your people’s applications.' : 'Our branch team looks after your bills, your service items and your people’s applications.') +
+    ' Your rating and anything you write go straight to ' + esc(first) + ' and to our branch.' + (prev ? ' You last rated ' + prev.rating + ' of 5 on ' + esc(prev.at) + '.' : '') + '</p>' +
+    '<div class="stars" role="radiogroup" aria-label="Your rating of ' + esc(who || 'our team') + '">' + [1, 2, 3, 4, 5].map(n => '<button type="button" class="star bstar" role="radio" data-s="' + n + '" aria-checked="' + ((A._bstars || 0) >= n) + '" aria-label="' + n + ' of 5: ' + RATE[n] + '"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg></button>').join('') + '</div>' +
+    '<div class="rlab" id="brl" aria-live="polite">' + brateLab(A._bstars) + '</div>' +
+    '<label for="bgen">Anything you would like ' + esc(first) + ' to know? (optional)</label><textarea class="field" id="bgen" maxlength="2000">' + esc(A._bgen || '') + '</textarea>' +
+    '<div class="row2"><div><label for="bnm">Your name</label><input class="field" id="bnm" value="' + esc(A._who || '') + '"></div><div><label for="brl2">Your role</label><input class="field" id="brl2" value="' + esc(A._role || '') + '" placeholder="e.g. HR Manager"></div></div>' +
+    '<div class="err" id="berr" role="alert"></div><button class="btn full" type="button" id="bsend">Send my rating</button></div>';
+}
+function bindBrate() {
+  const box = $('brate'); if (!box || BRATE.sent) return;
+  const paint = n => { box.querySelectorAll('.bstar').forEach(x => x.classList.toggle('hot', +x.dataset.s <= n)); $('brl').innerHTML = brateLab(n || A._bstars); };
+  box.querySelectorAll('.bstar').forEach(st => {
+    st.onclick = () => { A._bstars = +st.dataset.s; box.querySelectorAll('.bstar').forEach(x => x.setAttribute('aria-checked', String(+x.dataset.s <= A._bstars))); paint(0); saveDraft(); };
+    st.onmouseenter = () => paint(+st.dataset.s); st.onfocus = () => paint(+st.dataset.s);
+  });
+  const sw = box.querySelector('.stars'); sw.onmouseleave = () => paint(0); sw.addEventListener('focusout', () => paint(0));
+  [['bgen', '_bgen'], ['bnm', '_who'], ['brl2', '_role']].forEach(([id, k]) => $(id).oninput = () => { A[k] = $(id).value; saveDraft(); });
+  $('bsend').onclick = async () => {
+    const err = $('berr'); err.textContent = '';
+    if (!A._bstars) { err.textContent = 'Please tap one to five stars before you send.'; const s1 = box.querySelector('.bstar'); if (s1) s1.focus(); return; }
+    if (!(A._who || '').trim()) { err.textContent = 'Add your name, so we know who rated us.'; $('bnm').focus(); return; }
+    const m = BM || (D.billing && D.billing.statement ? D.billing.statement.month : '');
+    const b = $('bsend'); b.disabled = true; b.textContent = 'Sending…';
+    let r;
+    try {
+      const txt = await (await fetch(SVC, { method: 'POST', body: JSON.stringify({ action: 'gcm.review', lb: CRED.lb, code: CRED.code, name: A._who, role: A._role || '', items: [], rating: A._bstars, comment: A._bgen || '', about: 'billing' + (m ? ' ' + m : '') }) })).text();
+      try { r = JSON.parse(txt); } catch (x) { r = { ok: false, error: 'Our system did not take it. Please try again in a few minutes.' }; }
+    } catch (x) { r = { ok: false, error: 'We could not reach our system. Your rating is saved on this device: try again shortly.' }; }
+    if (!r.ok) { err.textContent = r.error; b.disabled = false; b.textContent = 'Send my rating'; return; }
+    const who0 = String(A._who || '').trim(), nm = /^(mr|mrs|ms|miss|dr)\.?$/i.test(who0.split(/\s+/)[0]) ? who0 : who0.split(/\s+/)[0], first = carer().first || 'Our team';
+    D.billRated = { at: 'today', rating: A._bstars };
+    BRATE.sent = 'Thank you' + (nm ? ', ' + nm : '') + '. ' + first + ' has your rating' + ((A._bgen || '').trim() ? ' and your note' : '') + '.';
+    try { localStorage.setItem(nameKey(), who0.slice(0, 80)); } catch (x) {}
+    delete A._bstars; delete A._bgen; saveDraft();
+    box.outerHTML = brateHtml(); $('brate').scrollIntoView({ block: 'center' });
+  };
+}
 /* the page in two tabs (25 October 2026): the weekly items and the billing never share a screen. The bill e-mail's link
    carries ?tab=billing; the weekly letter's opens on the items. */
 let CT = /(^|[?&])tab=billing(&|$)/.test(location.search) ? 'billing' : /(^|[?&])tab=people(&|$)/.test(location.search) ? 'people' : 'items';
@@ -472,12 +524,12 @@ function billingHtml() {
     '<label for="tdetail">Anything else we should know</label><textarea class="field" id="tdetail" maxlength="800"></textarea>' +
     '<label for="tname">Your name</label><input class="field" id="tname" maxlength="80" value="' + esc(A._who || '') + '">' +
     '<div class="err" id="terr" role="alert"></div><button class="btn full" type="button" id="tgo">Send to our team</button><p class="sub" style="margin-top:8px">It goes straight to the person who looks after your account and onto your billing item. A payment is matched against our records; a joiner or leaver opens a task for our team.</p></div>';
-  return h + '</div></section>';
+  return h + '</div></section>' + brateHtml();
 }
 function bindBilling() {
   const sec = document.querySelector('.billing'); if (!sec) return;
-  bindChg();
-  sec.querySelectorAll('[data-bt]').forEach(b => b.onclick = () => { BT = b.dataset.bt; sec.outerHTML = billingHtml(); bindBilling(); });
+  bindChg(); bindBrate();
+  sec.querySelectorAll('[data-bt]').forEach(b => b.onclick = () => { BT = b.dataset.bt; const br = $('brate'); if (br) br.remove(); sec.outerHTML = billingHtml(); bindBilling(); });
   const kind = $('tkind'), swap = () => { const pay = kind.value === 'payment', q = kind.value === 'query'; $('tpay').classList.toggle('hide', !pay); $('tchg').classList.toggle('hide', pay || q); };
   kind.onchange = swap; swap();
   $('tgo').onclick = async () => {
@@ -830,7 +882,7 @@ function render() {
     '<p class="muted">' + (D.lastAnswer ? 'You last answered us on ' + esc(D.lastAnswer.at) + (D.lastAnswer.name ? ' (' + esc(D.lastAnswer.name) + ')' : '') + '. ' : '') +
     (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
     '<div class="links">' + (D.film ? '<a class="pill" href="' + esc(D.film) + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + esc(D.filmLength || '') + '</a>' : '') +
-    '<a class="pill plain" href="#rate">Rate our service</a></div></div>' +
+    '<a class="pill plain" href="' + (CT === 'billing' ? '#brate' : '#rate') + '">Rate our service</a></div></div>' +
     ctabsHtml(hasBill, items.length) + (CT === 'billing' ? billingHtml() : CT === 'people' ? peopleHtml() : pendHtml() + comingHtml() +
     '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
     '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +

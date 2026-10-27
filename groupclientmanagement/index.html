@@ -46,7 +46,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
    never counted as the group opening its page. */
 const PV_SANDBOX = 'allow-popups allow-popups-to-escape-sandbox';
 function pvDoc(html) {
-  html = String(html || '').replace(/([?&;]from=)(letter|welcome|reminder)\b/g, '$1preview');
+  html = String(html || '').replace(/([?&;]from=)(letter|welcome|reminder|bill)\b/g, '$1preview');
   const b = '<base target="_blank">';
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, m => m + b);
   const d = /^\s*<!doctype[^>]*>/i.exec(html);
@@ -474,7 +474,7 @@ function dash(a) {
   }
   h += '<h2 id="told">What groups told us <span class="muted small">the last 30 days: changes, “not ours”, ratings of 3 or less, and every comment</span></h2>' + (a.responses.length
     ? '<ul class="feed">' + a.responses.map(r => '<li class="click" data-gn="' + esc(r.group) + '"><b>' + esc(r.group) + '</b> <span class="muted small">' + esc(r.at) + ' · ' + esc(r.name) + ' · ' + esc(r.staff) + '</span><br>' +
-      (r.rating ? '<b>' + r.rating + '★</b> ' : '') + (r.verdict ? esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.task) + ' ' : '') + (r.note ? '“' + esc(r.note) + '”' : '') + (r.comment ? '“' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>'
+      (r.rating ? '<b>' + r.rating + '★</b> ' : '') + (r.about ? '<span class="muted">for ' + esc(r.about) + ':</span> ' : '') + (r.verdict ? esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.task) + ' ' : '') + (r.note ? '“' + esc(r.note) + '”' : '') + (r.comment ? '“' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>'
     : '<p class="muted">No answers needing attention yet.</p>');
   return h;
 }
@@ -589,7 +589,7 @@ function drawGroup() {
       esc(x.at) + ' · ' + esc(x.staff) + (x.kind === 'letter' ? ' · ' + x.items + ' items' : '') + (x.to ? ' · to ' + esc(x.to) : '') + (/^failed/i.test(x.status) ? ' · <b style="color:var(--badText)">' + esc(x.status) + '</b>' : '') + '</li>').join('') + '</ul>' : '<p class="muted">Nothing yet.</p>') +
     (Array.isArray(d.views) ? '<h3>Who opened their page</h3>' + (d.views.length ? '<ul class="feed">' + d.views.map(v => '<li>' + esc(v.at) + (v.name ? ' · <b>' + esc(v.name) + '</b>' : ' · <span class="muted">name not known until they answer from that device</span>') +
       (DEV[v.device] ? ' · ' + DEV[v.device] : '') + (v.from ? ' · from the ' + esc(v.from) : '') + '</li>').join('') + '</ul>' : '<p class="muted">No sign-in on record yet.</p>') : '') +
-    '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
+    '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.about ? ' <span class="muted">for ' + esc(r.about) + '</span>' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
   $('app').innerHTML = h;
   $('bk').onclick = render;
   if ($('bkBill')) $('bkBill').onclick = () => openBilling(g.key);
