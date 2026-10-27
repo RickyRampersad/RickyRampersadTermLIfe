@@ -29,7 +29,15 @@ ok('Next up still comes too (the page leaves out what is on the list)', Array.is
 plan = {};
 m = env.workdayModel_('sasha', DAY);
 ok('not checked in: what check-in will set, marked so', m.listSet === false && m.list.length === 2 && m.list[0].s === 'Preview one' && m.list[0].ty === 'Pendings');
+ok('Close my day: today\'s close-out, signed, with the end of her day', /[?&]rs=sasha&d=2026-10-27&f=hk&k=/.test(m.close.url) && !!m.close.end, JSON.stringify(m.close));
+env.__mkSheet('Access', 1, ['Email', 'Name', 'Agent Number', 'Password', 'Role', 'Unit', 'Active'], [
+  ['akaash@example.com', 'A06869 - Akaash Kalladeen', 'A06869', '4', 'Unit Manager', 'Akaash Kalladeen', 'Active'],
+  ['sasha@example.com', 'SL002 - SASHA LALLA', 'SL002', '2', 'Staff', 'SASHA LALLA', 'Active'],
+  ['support@example.com', 'PB001-Pawan Prabhu', 'PB001', '1', 'Staff', 'PAWAN PRABHU', 'Active']]);
+env.resetRequestMemo_ && env.resetRequestMemo_();
+m = env.workdayModel_('pawan', DAY);
+ok('Pawan\'s Close my day is his errands page, to close', /[?&]rs=pawan&d=2026-10-27&f=errand&k=[^&]+&c=leave/.test(m.close && m.close.url || ''), m.close && m.close.url);
 m = env.workdayModel_('akaash', DAY);
-ok('a unit manager\'s My day has no staff list', m.list === undefined);
+ok('a unit manager\'s My day has no staff list and no staff close-out', m.list === undefined && m.close === undefined);
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');
 process.exit(fails ? 1 : 0);

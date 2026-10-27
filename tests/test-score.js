@@ -20,6 +20,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
 const DAY = '2026-10-19', D2 = '2026-10-20';
 let TODAY = DAY;
 env.todayISO_ = () => TODAY;
+env.SCHEDULE.sasha = Object.assign({}, env.SCHEDULE.sasha, { hours: '7am – 2pm' });   // the hours this was written on (7 to 3 from 2 November 2026)
 let NOW = new Date(DAY + 'T10:40:00');
 const realDate = env.Date;
 env.Date = new Proxy(realDate, { construct(t, a) { return a.length ? new realDate(...a) : new realDate(NOW.getTime()); }, get(t, k) { return k === 'now' ? () => NOW.getTime() : t[k]; } });
