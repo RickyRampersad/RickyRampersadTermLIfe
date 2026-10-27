@@ -150,7 +150,7 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   ok('the line has not faded', hb.op === '1' && hb.vis === 'visible' && hb.top === 0, JSON.stringify(hb));
   ok('and the timer is on it, on screen', hb.in && hb.stateIn, JSON.stringify(hb));
   const hudText = () => s.page.locator('#state').innerText();
-  const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Premium dues',
+  const SLIDE_NAMES = ['The day so far', 'The system\u2019s day', 'What is pending', 'Premium dues',
                        'Lapses', 'In our possession', 'With the agent', 'The licence year',
                        'Birthdays today', 'Conversions', LAST_TAB];
   // Not pinned to one slide: the rail takes four seconds to fade and the dwell
