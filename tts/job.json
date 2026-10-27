@@ -3,20 +3,47 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "agpilot": [
-   "Good morning. You're one of five agents in the branch's new daily pilot: Neil, Fawwaz, Rajiv, Joy and Darryl. Here's how your day works, in a couple of minutes.",
-   "There are three touches a day. You plan in the morning, you check in at midday, and you close off at five thirty. That's it.",
-   "Every morning, an email lands from the branch called Your day. It shows what the team is working on for your clients today, what's overdue, and who's handling it.",
-   "Below that is your book: premiums past sixty days, dues to chase, and pending business holding money. Then your goal for the year, where you should be by now, and your fact finds.",
-   "Tap Project my day. Put a number against each line: the calls you'll make, appointments, fact finds, closing interviews, applications, dues and pendings. Then save.",
-   "Please have your projection in by ten thirty. No projection by ten thirty reads as not working today.",
-   "On the same page, you can comment on any client the team is working for you. Type it, or tap the microphone and just say it. It goes straight onto that task's Chatter, in your name.",
-   "At midday, a second email shows your progress so far, against your projection. If the day has moved, tap Update my projection.",
-   "At five thirty, close off your day. Put in what you actually did, zero where nothing was done, and the balance against this morning shows as you type. No answer reads as nothing done.",
-   "Your close-off goes to your unit manager and to sales support, so the whole branch knows where every client stands.",
-   "One tip. If a button ever says, Sorry, unable to open the file, your phone is signed in to more than one Google account. Press and hold the button, copy the link, and open it in a private window. It works there every time.",
-   "So, every working day: project by ten thirty, check in at midday, and close off at five thirty.",
-   "Thank you for being part of this pilot. What you tell us now shapes what the whole branch gets next."
+  "rf04": [
+   "And here's the part nobody tells you about a sales career: what happens to you after you apply. In this branch, you're not alone from the first day. Here's the whole journey."
+  ],
+  "rf05": [
+   "Two minutes to apply. Within forty-eight hours, a call. Then you meet the Branch Manager himself. Then an orientation: the career, the branch, the numbers, no gloss. Then a digital market survey, a scientific profile, a Discovery with our qualifiers, and the selection. Every step has a person on the other end of it."
+  ],
+  "rf06": [
+   "The digital market survey maps your market before you start. You list the people you know: how well, whether you could approach them on business, whether they'd refer you, what they're saving for. By the end, you know whether your first ninety days have a market in them. So do we."
+  ],
+  "rf07": [
+   "Then the science. POP7 is the profile the industry uses to predict who makes it: achievement drive, independence, call reluctance, the probability of success. We select on evidence, and the evidence protects you as much as it protects us."
+  ],
+  "rf09": [
+   "Selected, you're built properly. Training and induction. Boot camp. The licence: the study, the exam, the contracting, with the branch beside you for every form. Field training with your unit manager. And constant contact. Nobody disappears between the signature and the first client."
+  ],
+  "rf18": [
+   "A client question you can't answer at the table? Query Pal. Post it from your phone. The branch team answers inside the turnaround, and every query is tracked until the client has the answer. You never have to say I'll find out twice."
+  ],
+  "rf24": [
+   "Wednesday, nine o'clock. The production board, by unit, exceptions only. Then your call list for the week, scored by the sheet: the gap named, and the question already written for you. Then the maturities: money in motion, every one a conversation. And the eighty-five day report, so no client of yours lapses quietly."
+  ],
+  "rf26": [
+   "Your clients' premiums are watched for you. At forty-five, sixty, seventy-five and ninety days a letter goes: checked by a person, sent at ten, with you copied, and the client asked to rate you. Renewals and claims have their own desks. Your book is never left to lapse while you're at the kitchen table."
+  ],
+  "rf27": [
+   "Every month, your income review: what you earned, what your life needs this month, what changed, and the plan to close the gap. And the career path is digital: every position, every requirement, your own numbers against it, and a realistic date for your next step."
+  ],
+  "rf30": [
+   "And the managers are managed too. The Branch Manager's day starts at five, with everything that waits on him. Your unit manager plans his morning against his own numbers: names recruited, agents coached, joint field work. And he accounts for it at the end of the day. The same system that sets your day sets theirs."
+  ],
+  "rt02": [
+   "Here's a branch where you're not alone from the day you apply. A call within forty-eight hours. The Branch Manager himself. An orientation, a market survey, a scientific profile, and a Discovery with our qualifiers."
+  ],
+  "rt03": [
+   "Selected, you're built properly. And you don't start from zero: clients matched to you, household by household. Leads that land on your own board. A fact find that does the arithmetic while you talk."
+  ],
+  "rt04": [
+   "Every morning the system sets your day. Every week your manager sees it before Friday. Every Wednesday your wins are said out loud. And your book is watched while you're at the table."
+  ],
+  "rt05": [
+   "Twenty-three times an MDRT branch. Thirty-two years in Trinidad. No salary band. No ceiling."
   ]
  }
 }
