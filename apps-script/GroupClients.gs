@@ -89,7 +89,8 @@ var GCM = {
   QUEUE: 'Group Queue',
   QUEUE_FRESH_MIN: 60,
   TEAM_HOUR: 11,            // Monday 11:00: if any group still has no letter this week, the whole team is told why and who
-  TEAM_PROP: 'GCM_TEAM_LAST',      // the Monday run writes from a refresh this recent rather than refresh again (26 October 2026: the
+  TEAM_PROP: 'GCM_TEAM_LAST',
+  HOLD_PROP: 'GCM_HOLD_GROUPS',    // Script property: groups on hold from the weekly letter, by name, comma-separated (27 Oct 2026)      // the Monday run writes from a refresh this recent rather than refresh again (26 October 2026: the
                             // refresh had grown to about five minutes and used up the run's time before a single letter went)
   RESPOND_DAY: 5,           // the letter asks for an answer by Friday of the same week
   SITE: 'https://rickyrampersadbranch.com/groupclientmanagement/',
@@ -944,9 +945,23 @@ function gcmGroupStats_(g, today) {
   s.verdicts = { correct: 0, change: 0, notours: 0 };
   g.resps.forEach(function (r) { if (s.verdicts[r.verdict] !== undefined) s.verdicts[r.verdict]++; });
   s.lastResponse = g.resps.length ? g.resps[g.resps.length - 1].at : '';
-  s.ready = !!(g.to.length && g.code && g.bills.length);
-  s.why = !g.to.length ? 'No Contact Person with an e-mail on the account in Salesforce' : !g.code ? 'No code on the register' : !g.bills.length ? 'No list bill on the register' : '';
+  s.hold = gcmOnHold_(g);
+  s.ready = !s.hold && !!(g.to.length && g.code && g.bills.length);
+  s.why = s.hold || (!g.to.length ? 'No Contact Person with an e-mail on the account in Salesforce' : !g.code ? 'No code on the register' : !g.bills.length ? 'No list bill on the register' : '');
   return s;
+}
+
+/** A group the branch has put on hold from the weekly letter, by name in the GCM_HOLD_GROUPS Script property (asked for
+ *  on 27 October 2026: a group whose bills are being tested must not be approved, sent, reminded or chased). On hold it
+ *  is never ready: no approval, no Send now, no Monday letter, no welcome, no star reminder, and the 10:30 run and the
+ *  Monday team letter leave it out, so nobody is asked why it had no letter. Its billing is untouched. Returns the
+ *  reason, or ''. */
+function gcmOnHold_(g) {
+  var key = g && g.key ? g.key : '', list = [];
+  if (!key) return '';
+  try { list = gcmPropList_(GCM.HOLD_PROP); } catch (e) {}
+  return list.some(function (k) { return key === k || key.indexOf(k) === 0; })
+    ? 'On hold from the weekly letter (' + GCM.HOLD_PROP + ')' : '';
 }
 
 /* ── applications still pending ─────────────────────────────────────
@@ -1522,7 +1537,7 @@ function gcmAnalytics_(L) {
     if (s.late) act.push({ group: g.name, what: s.late + ' item' + (s.late > 1 ? 's' : '') + ' past target', who: g.assigned, kind: 'late' });
     if (s.lastRating !== null && s.lastRating <= 3) act.push({ group: g.name, what: 'Rated us ' + s.lastRating + ' of 5', who: g.assigned, kind: 'rating' });
     if (s.needReason) act.push({ group: g.name, what: s.needReason + ' item' + (s.needReason === 1 ? '' : 's') + ' open over ' + GCM.REASON_DAYS + ' days with no reason given to the group', who: g.assigned, kind: 'reason' });
-    if (!s.ready) act.push({ group: g.name, what: s.why, who: g.assigned, kind: 'setup' });
+    if (!s.ready && !s.hold) act.push({ group: g.name, what: s.why, who: g.assigned, kind: 'setup' });
     if (!g.assigned) act.push({ group: g.name, what: 'No account owner in Salesforce: give the account an owner', who: '', kind: 'owner' });
     else if (!g.ownerActive) act.push({ group: g.name, what: 'Its account owner in Salesforce is no longer an active user: change the account owner', who: g.assigned, kind: 'owner' });
   });
@@ -2821,8 +2836,9 @@ function gcmChaseList_(L) {
   var cycle = gcmAddDays_(gcmNextSend_(), -7), by = {}, order = [];
   L.reg.forEach(function (g) {
     var s = gcmGroupStats_(g, L.today), key = gcmCodeKey_(g.ownerEmail || g.assigned || 'nobody');
-    if (!by[key]) { by[key] = { name: g.assigned || '', email: g.ownerEmail || '', active: !!(g.assigned && g.ownerActive), missed: [], sent: [], notReady: [] }; order.push(key); }
+    if (!by[key]) { by[key] = { name: g.assigned || '', email: g.ownerEmail || '', active: !!(g.assigned && g.ownerActive), missed: [], sent: [], notReady: [], hold: [] }; order.push(key); }
     var o = by[key];
+    if (s.hold) { o.hold.push({ g: g, why: s.hold }); return; }
     if (s.sentThisWeek) { o.sent.push({ g: g, s: s, st: gcmRateState_(g, L.today) }); return; }
     var no = !s.ready ? s.why : gcmCannotMail_(g);
     if (no) { o.notReady.push({ g: g, why: no }); return; }
@@ -2971,6 +2987,7 @@ function gcmDaySummary_(o) {
     ow.sent.forEach(function (x) { sentN++; ready++; all.push({ kind: 'sent', ow: ow, x: x }); });
     ow.missed.forEach(function (x) { missedN++; ready++; all.push({ kind: 'missed', ow: ow, x: x }); });
     ow.notReady.forEach(function (x) { all.push({ kind: 'notready', ow: ow, x: x }); });
+    (ow.hold || []).forEach(function (x) { all.push({ kind: 'hold', ow: ow, x: x }); });
   });
   var back = { rated: 0, answered: 0, viewed: 0, waiting: 0 };
   all.forEach(function (a) { if (a.kind === 'sent' && a.x.st) back[a.x.st.kind] = (back[a.x.st.kind] || 0) + 1; });
@@ -2998,6 +3015,10 @@ function gcmDaySummary_(o) {
     '<p style="margin:14px 0 6px;font-weight:700">Staff asked why</p><p>' + E(o.chase ? o.chase.said : 'off (gcmGroupDayStart turns it on).') + ' Their replies come to you.</p>' +
     (all.some(function (a) { return a.kind === 'notready'; }) ? '<p style="margin:14px 0 6px;font-weight:700">Cannot have a letter yet</p>' + tbl(['Group', 'Looked after by', 'What is missing'], all.filter(function (a) { return a.kind === 'notready'; }).map(function (a) {
       return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); })) : '') +
+    (all.some(function (a) { return a.kind === 'hold'; }) ? '<p style="margin:14px 0 6px;font-weight:700">On hold: no letter, no reminder, nobody asked</p>' +
+      '<p style="margin:0 0 6px;font-size:13.5px;color:#555">Named in the ' + E(GCM.HOLD_PROP) + ' Script property. Take a group out of it to put it back on the weekly letter; its billing goes on as before.</p>' +
+      tbl(['Group', 'Looked after by'], all.filter(function (a) { return a.kind === 'hold'; }).map(function (a) {
+        return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody')]); })) : '') +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   if (o.forms && (o.forms.chased.length || o.forms.answered.length || o.forms.closed.length || o.forms.waiting.length)) {
     var fl = function (x, what) { return '<li><b>' + E(x.member) + '</b> (' + E(x.group) + ') · ' + E(what) + (x.owner ? ' · ' + E(x.owner) : '') + '</li>'; };
