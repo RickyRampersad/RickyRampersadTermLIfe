@@ -5086,6 +5086,28 @@ section links it.
   was shot in both frames with the caption band drawn before rendering (`scenes.js`). Andrew Expressive on the runner,
   all ten clips heard as English and complete. The careers page (`/careersvideo/`) carries both square cuts above the
   buttons with the tall cut linked beside each, and the posts in `AGENTMGT-SETUP.md` say which MP4 to attach.
+- **One door: /careers/ on the branch site, 28 October 2026.** "I would suggest going to the branch page under careers
+  and this opens", then "ok". Nothing built since 25 October was live: the branch was unmerged and agentmgt.com still
+  served the old upload. The whole `agentmgt/` folder sits in the repository root, so GitHub Pages serves it the moment
+  main is merged, and no Netlify step stands between the homepage and the page. `tools/careers/sync.py` writes
+  `careers/index.html` from `agentmgt/index.html` (the HTML copied, every local asset read from `/agentmgt/`, `poster=`
+  attributes included, the canonical and the share card set to `/careers/`, the view beacon kept; it refuses to write
+  if any relative reference is left or the beacon is missing). **Edit the agentmgt page and run the script; the
+  careers copy is never edited by hand.** The homepage's Careers section was rewritten to match the page it opens: it
+  had sent people to three places (agentmgt.com, a separate careerpathrrb site, the film page), said "Watch the film ·
+  2:16" (no cut is that length), promised "Mentorship by design" by Executive Agents and Senior Sales Consultants (taken
+  out of the film because a person chooses their own path) and named the gates differently from the LIMRA stepper.
+  Now: the two readers in the lede, four cards in the page's own framing (never from zero; a coach, not a clock; people
+  who have done it, beside you, with the twenty-three MDRT qualifications the homepage already published, said as who
+  you sit beside rather than as a trophy; your wins, said out loud), the five gates by the stepper's names, and five
+  buttons that all go to `/careers/` (its anchors `#apply`, `#quiz`, `#film`, `#path`) or to the WhatsApp conversation.
+  `/careersvideo/` and its footer point there too; the setup file says agentmgt.com is now a short address for the
+  same page, best as a domain redirect. The years figure was left out of the new lede (the page says thirty-two, the
+  branch manager said thirty-five, unresolved); the credentials line waits on his three answers.
+  **The four cards had rendered wrong on the live section all along**: their icon sat in `.chip-o`, which is the hero
+  stage's chip and fills its parent (`width:100%;height:100%`), so each drew a card-wide ellipse and the text ran out
+  of the card over the gates. They carry the small solid `.chip` the byline uses, sized inline, and every card now holds
+  its text. `tools/careers/sync.py` must be re-run after any edit to `agentmgt/index.html`.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,

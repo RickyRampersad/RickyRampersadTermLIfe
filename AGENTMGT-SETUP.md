@@ -23,6 +23,18 @@ What is in the folder:
 | `film.html` | the film's source page, drawn by `tools/film/build-recruitfilm.py` (not linked) |
 | `player.js` | the branch's film player: tap to pause, a dot per scene, mute, full screen |
 
+## The page lives on the branch site first: /careers/
+
+Since 28 October 2026 the recruiting page is served on **rickyrampersadbranch.com/careers/** (GitHub Pages, from
+`careers/index.html`), so the Careers button on the homepage opens it the moment main is merged, with no Netlify
+step. `tools/careers/sync.py` writes that file from `agentmgt/index.html`: the HTML is copied, every asset (the mark,
+the films, the posters, the QR, the player, the tab icon) is read from `/agentmgt/`, where GitHub Pages already
+serves the folder, and the canonical address and the share card say `/careers/`. **Edit `agentmgt/index.html` and
+run the script; never edit `careers/index.html`.** The homepage's Careers section, `/careersvideo/` and the posts all
+send people to `/careers/`, one address. agentmgt.com stays the short address for the same page: either of the two
+ways below, or a plain redirect of the domain to `https://rickyrampersadbranch.com/careers/` in Netlify, which is one
+page fewer to keep right.
+
 ## Two ways to deploy
 
 **A. Link the Netlify site to this repository (do this once, then every merge
