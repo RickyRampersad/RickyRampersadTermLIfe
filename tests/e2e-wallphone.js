@@ -35,7 +35,7 @@ const SCREENS = [
   ['The orphan campaign', '/intelligence/wall/orphans.html'],
   ['Orphan results',     '/intelligence/wall/orphans-results.html'],
   ['First-Contact Cup',  '/intelligence/wall/orphans-cup.html'],
-  ['The system\'s day',  '/intelligence/wall/blocks.html'],
+  ['The day, hour by hour', '/intelligence/wall/blocks.html'],
   ['The 45-day line',    '/intelligence/wall/'],
   ['Lapses',             '/intelligence/wall/lapses.html'],
   ['Whose hands',        '/intelligence/wall/possession.html'],

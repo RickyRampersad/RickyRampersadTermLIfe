@@ -23,6 +23,18 @@ What is in the folder:
 | `film.html` | the film's source page, drawn by `tools/film/build-recruitfilm.py` (not linked) |
 | `player.js` | the branch's film player: tap to pause, a dot per scene, mute, full screen |
 
+## The page lives on the branch site first: /careers/
+
+Since 28 October 2026 the recruiting page is served on **rickyrampersadbranch.com/careers/** (GitHub Pages, from
+`careers/index.html`), so the Careers button on the homepage opens it the moment main is merged, with no Netlify
+step. `tools/careers/sync.py` writes that file from `agentmgt/index.html`: the HTML is copied, every asset (the mark,
+the films, the posters, the QR, the player, the tab icon) is read from `/agentmgt/`, where GitHub Pages already
+serves the folder, and the canonical address and the share card say `/careers/`. **Edit `agentmgt/index.html` and
+run the script; never edit `careers/index.html`.** The homepage's Careers section, `/careersvideo/` and the posts all
+send people to `/careers/`, one address. agentmgt.com stays the short address for the same page: either of the two
+ways below, or a plain redirect of the domain to `https://rickyrampersadbranch.com/careers/` in Netlify, which is one
+page fewer to keep right.
+
 ## Two ways to deploy
 
 **A. Link the Netlify site to this repository (do this once, then every merge
@@ -132,6 +144,22 @@ for k in adAq adAv; do python3 mixany.py "$(python3 -c "import json;print(json.d
 A square frame is "portrait" to the page's media query (height is not less than width), so the square block in
 the stylesheet comes after the portrait rules and only resizes what a square cannot hold. The bottom fifth of every
 frame stays clear: the mixer burns the captions there.
+
+## The conversation is booked on the page, never in another app
+
+Since 28 October 2026 ("book a call opens WhatsApp so remove this") every "Book a confidential conversation" button
+on the recruiting page, the homepage and `/careersvideo/` opens **`/careers/#talk`**: a form on the page (name, phone,
+e-mail, where they are now, the best time for the call, one optional line) that posts `q.quote` with the form key
+`careers` to the Service Questionnaire backend, the road the branch's own quote forms take. The backend files one row
+on the Quote Requests tab with a `QT-` reference, e-mails **the Branch Manager alone** (never the sales support inbox:
+the person may be contracted elsewhere today), and sends the person a confirmation that says Mr Rampersad reads it
+himself. If the backend cannot be reached inside 12 seconds, the page still shows a reference and opens the mail app
+addressed to him with the same details.
+
+**Paste `apps-script/Quotes.gs` into the Service Questionnaire project, put `TEAM_CODE` back in Service.gs if you
+paste that too, then Deploy → Manage deployments → pencil → New version.** Until the paste, the live backend answers
+"Unknown form" and every booking takes the mail-app road, which still reaches him. `?action=q.ping` lists `careers`
+among `forms` once the new version is live.
 
 ## The posts
 

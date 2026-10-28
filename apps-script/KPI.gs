@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-28c';
+var SCRIPT_VERSION = '2026-10-28d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -16040,7 +16040,7 @@ function wallFeedOut_(action, out) {
   if (action === 'intel.pending') { try { j.data.live = wallPendLive_(todayISO_()); } catch (e) { j.data.live = { error: String(e && e.message || e) }; } }
   if (action === 'intel.groups') { try { j.data = wallGroupsTidy_(j.data, j.stored); } catch (e) {} }
   try { j.data = wallScrub_(j.data); } catch (e) {}
-  if (action === 'intel.day') { try { j.data.system = wallSystemDay_(todayISO_()); } catch (e) {} }
+  if (action === 'intel.day') { try { j.data.system = wallSystemDay_(todayISO_()); } catch (e) {} try { j.data.hours = wallDayHours_(todayISO_()); } catch (e) { j.data.hours = { error: String(e && e.message || e) }; } }
   return ContentService.createTextOutput(JSON.stringify(j)).setMimeType(ContentService.MimeType.JSON);
 }
 /* ── Increases, group and health: today's, and what is really pending (28 October 2026) ──
@@ -16292,7 +16292,12 @@ function wallPendPolicies_(out, P, chase) {
   var stateOf = function (p) { for (var i = 0; i < WALL_PEND.STATES.length; i++) { var s = WALL_PEND.STATES[i]; if (s.re && s.re.test(p.dec)) return s.key; } return 'none'; };
   var st = {}; list.forEach(function (p) { var k = stateOf(p); st[k] = (st[k] || 0) + 1; });
   var held = list.filter(function (p) { return p.susp > 0; });
+  // No money paid (28 Oct 2026, Ricky: "can the persons who have not paid any monies have the days out highlighted in red"): a
+  // first premium still outstanding and nothing held in suspense on the policy.
+  var unpaid = list.filter(function (p) { return p.pay > 0 && !(p.susp > 0); });
   out.pol = {
+    unpaid: unpaid.length, unpaidOldest: unpaid.reduce(function (m, p) { return Math.max(m, p.days); }, 0),
+    unpaid30: unpaid.filter(function (p) { return p.days > 30; }).length,
     ages: WALL_PEND.BANDS.map(function (b) { return { k: b[0], n: ages[b[0]] || 0 }; }),
     past90: list.filter(function (p) { return p.days > 90; }).length,
     oneLeft: list.filter(function (p) { return p.reqs === 1; }).length,
@@ -16302,13 +16307,14 @@ function wallPendPolicies_(out, P, chase) {
     states: WALL_PEND.STATES.map(function (s) { return { key: s.key, abbr: s.abbr, label: s.label, work: s.work, note: s.note, n: st[s.key] || 0 }; })
       .filter(function (s) { return s.n || s.key !== 'none'; })
   };
-  var A = {}, T = { policies: 0, reqs: 0, docs: 0, medical: 0, cash: 0, ready: 0, red: 0, held: 0, open: 0, overdue: 0, quiet: 0, today: 0, never: 0 };
+  var A = {}, T = { policies: 0, reqs: 0, docs: 0, medical: 0, cash: 0, ready: 0, red: 0, held: 0, open: 0, overdue: 0, quiet: 0, today: 0, never: 0, unpaid: 0 };
   Object.keys(P).forEach(function (pol) {
     var p = P[pol], ch = chase ? chase[pol] || null : null;
     var a = A[p.ag] = A[p.ag] || { agent: p.ag, policies: 0, reqs: 0, docs: 0, medical: 0, cash: 0, ready: 0, red: 0, held: 0,
-                                   open: 0, overdue: 0, quiet: 0, today: 0, never: 0, oldest: 0, kinds: {} };
+                                   open: 0, overdue: 0, quiet: 0, today: 0, never: 0, oldest: 0, unpaid: 0, unpaidDays: 0, kinds: {} };
     a.policies++; a.reqs += p.reqs; a.docs += p.docs; a.medical += p.med; a.red += p.red; a.held += p.susp;
     if (p.pay) a.cash++; if (p.pay && p.pay === p.reqs) a.ready++;
+    if (p.pay && !(p.susp > 0)) { a.unpaid++; a.unpaidDays = Math.max(a.unpaidDays, p.days); }
     a.oldest = Math.max(a.oldest, p.days);
     if (ch) { a.open += ch.open; a.overdue += ch.overdue; a.quiet += ch.quiet; a.today += ch.today; } else if (chase) a.never++;
     Object.keys(p.kinds).forEach(function (k) { var x = a.kinds[k] = a.kinds[k] || { k: k, n: 0, red: 0, amber: 0 }; x.n += p.kinds[k].n; x.red += p.kinds[k].red; x.amber += p.kinds[k].amber; });
@@ -16321,6 +16327,7 @@ function wallPendPolicies_(out, P, chase) {
       .sort(function (x, y) { return y.n - x.n; }).slice(0, WALL_PEND.TOPCATS);
     delete a.kinds; return a;
   }).sort(function (x, y) { return (y.cash - x.cash) || (y.medical - x.medical) || (y.docs - x.docs) || (y.policies - x.policies); });
+  T.unpaidDays = agents.reduce(function (m, a) { return Math.max(m, a.unpaidDays || 0); }, 0);
   out.board = { agents: agents, total: T, tasks: !!chase };
   if (chase) {
     var tasked = Object.keys(P).filter(function (pol) { return chase[pol]; }).length;
@@ -16513,6 +16520,101 @@ function wallSystemDay_(day) {
   var listOf = team.reduce(function (a, d) { return a + (d.list ? d.list.of : 0); }, 0), listDone = team.reduce(function (a, d) { return a + (d.list ? d.list.done : 0); }, 0);
   return { at: twelve_(hhmm_(new Date())), team: team, closed: sum('closed'), target: sum('target'), overdue: sum('overdue'),
     listOf: listOf, listDone: listDone, inNow: team.filter(function (d) { return d.at; }).length, of: team.length };
+}
+
+/* ── The day, hour by hour (28 October 2026, 2026-10-28d) ──
+ *  Ricky, 1:15pm, after checking slide 2 against Salesforce's own list: "how can this board be fixed, it shows task closed off
+ *  as the day goes by for what task type and agent and what was touched but not closed and aging? ... bring in me as i
+ *  automated and show the tasks by me as servicing as its birthdays, the timeblocks are important ... motion, scaled".
+ *  From Salesforce, for each desk and the Branch Manager, today: every task closed (by its Task Type, in the hour it was
+ *  closed), every task worked on and not closed (the desk itself last changed it, or wrote a note on it today, in that hour),
+ *  how old the work they touched is, the e-mails logged, and the agents whose work it was. A task is the desk's own work only
+ *  when the desk did it: a task the Branch Manager's automation last touched is not counted as anyone's. His row is his and
+ *  what runs as him; the logged e-mails under his name (the birthday e-mails) are "automated", in their own colour, and stay
+ *  out of the desks' totals. Counts, task types and agents' first names only, never a client or a subject. Kept 4 minutes. */
+var WALL_HOURS = { FROM: 7, TO: 17, TTL: 240, AGES: [7, 30, 90],
+  TYPES: [['Servicing', 'Servicing'], ['Pendings', 'Pendings'], ['Renewa/PDl/Bill', 'Renewals · PDL · Billing'], ['Opportunity', 'Opportunity'],
+          ['Training', 'Training'], ['RR Operations', 'RR Operations']] };
+function wallHourOf_(iso) {
+  var h = Number(String(Utilities.formatDate(new Date(iso), CONFIG.TZ, 'HH:mm')).slice(0, 2));
+  return Math.max(WALL_HOURS.FROM, Math.min(WALL_HOURS.TO - 1, isNaN(h) ? WALL_HOURS.FROM : h));
+}
+function wallIsEmail_(subject) { return /^email:/i.test(String(subject || '').replace(/<[^>]*>/g, '').replace(/&quot;|&#34;/g, '"').replace(/^[\s"']+/, '')); }
+function wallDayHours_(day) {
+  var cache = CacheService.getScriptCache(), key = 'wall_hours_' + day, hit = cache.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  var users = sfkUsers_() || {}, bySf = {}, ids = [], order = DAY_MAIL_DESKS.concat(['ricky']);
+  order.forEach(function (s) { var id = s === 'ricky' ? bmSfId_() : (users[s] && users[s].id); if (id) { bySf[id] = s; ids.push("'" + id + "'"); } });
+  if (!ids.length) return { error: 'No desk is linked to a Salesforce user.' };
+  var since = sfkUtcAt_(day, 0), H0 = WALL_HOURS.FROM, NH = WALL_HOURS.TO - WALL_HOURS.FROM;
+  var typeKey = {}; WALL_HOURS.TYPES.forEach(function (t) { typeKey[t[0]] = t[0]; });
+  var tyOf = function (v) { v = String(v || '').trim(); return typeKey[v] || (v ? 'Other' : 'Not typed'); };
+  var tasks = sfkQuery_('SELECT Id, OwnerId, Task_Type__c, IsClosed, CompletedDateTime, LastModifiedDate, LastModifiedById, CreatedDate, Agent__r.Name, Subject FROM Task' +
+    ' WHERE OwnerId IN (' + ids.join(',') + ') AND (LastModifiedDate >= ' + since + ' OR CompletedDateTime >= ' + since + ') LIMIT 5000');
+  var notes = []; try { notes = sfkQuery_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE Type = 'TextPost' AND CreatedById IN (" + ids.join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 5000'); } catch (e) {}
+  var D = {}, desk = function (sid) {
+    return D[sid] = D[sid] || { sid: sid, name: String(nameFor_(sid)).split(' ')[0], auto: sid === 'ricky', closed: 0, worked: 0, emails: 0, automated: 0, noted: 0,
+      byType: {}, autoTypes: {}, hours: Array.apply(null, Array(NH)).map(function () { return { c: 0, w: 0, a: 0 }; }), ages: [0, 0, 0, 0], oldest: 0, _w: {} }; };
+  order.forEach(function (s) { if (s === 'ricky' || users[s]) desk(s); });
+  var hours = Array.apply(null, Array(NH)).map(function (_, i) { return { h: H0 + i, closed: {}, worked: 0, auto: 0 }; });
+  var agents = {}, byId = {}, sinceMs = new Date(since).getTime(), today = new Date(day + 'T12:00:00Z').getTime();
+  var ageBand = function (created) { var d = Math.max(0, Math.round((today - new Date(String(created).slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000)), A = WALL_HOURS.AGES;
+    return { d: d, b: d <= A[0] ? 0 : d <= A[1] ? 1 : d <= A[2] ? 2 : 3 }; };
+  // The agents served (28 Oct 2026, 3:43pm: "and where is the agent served?"): whose work each close and each task worked on
+  // was, and which desks did it. Once a task.
+  var served = {};
+  var serve = function (t, sid, how) {
+    var ag = t && t.Agent__r && String(t.Agent__r.Name || '').trim(); if (!ag) return;
+    var a = agents[ag] = agents[ag] || { k: ag, c: 0, w: 0, by: {} }, key = t.Id + '|' + how;
+    if (served[key]) return; served[key] = 1;
+    a[how]++; var dn = D[sid] ? D[sid].name : sid; a.by[dn] = (a.by[dn] || 0) + 1;
+  };
+  var work = function (sid, t, at) {          // worked on, not closed: once a task, in the hour it last moved
+    var d = D[sid]; if (!d) return;
+    var i = wallHourOf_(at) - H0, ms = new Date(at).getTime(), had = d._w[t.Id];
+    if (had) { if (ms > had.ms) { d.hours[had.i].w--; hours[had.i].worked--; d.hours[i].w++; hours[i].worked++; d._w[t.Id] = { i: i, ms: ms }; } return; }
+    d._w[t.Id] = { i: i, ms: ms }; d.worked++; d.hours[i].w++; hours[i].worked++; serve(t, sid, 'w');
+    if (t.CreatedDate) { var a = ageBand(t.CreatedDate); d.ages[a.b]++; d.oldest = Math.max(d.oldest, a.d); }
+  };
+  tasks.forEach(function (t) {
+    byId[t.Id] = t;
+    var owner = bySf[t.OwnerId]; if (!owner) return;
+    var doneToday = t.IsClosed && t.CompletedDateTime && new Date(t.CompletedDateTime).getTime() >= sinceMs;
+    if (doneToday) {
+      var i = wallHourOf_(t.CompletedDateTime) - H0, d = D[owner];
+      if (wallIsEmail_(t.Subject)) {
+        if (owner === 'ricky') { d.automated++; d.hours[i].a++; hours[i].auto++; var at = tyOf(t.Task_Type__c); d.autoTypes[at] = (d.autoTypes[at] || 0) + 1; } else d.emails++;
+        return;
+      }
+      var ty = tyOf(t.Task_Type__c);
+      d.closed++; d.byType[ty] = (d.byType[ty] || 0) + 1; d.hours[i].c++; hours[i].closed[ty] = (hours[i].closed[ty] || 0) + 1;
+      serve(t, owner, 'c');
+      return;
+    }
+    if (!t.IsClosed && new Date(t.LastModifiedDate).getTime() >= sinceMs) {
+      var actor = bySf[t.LastModifiedById];
+      if (actor && actor !== 'ricky') work(actor, t, t.LastModifiedDate);   // the Branch Manager's automation is nobody's work
+    }
+  });
+  notes.forEach(function (n) {
+    var sid = bySf[n.CreatedById], t = byId[n.ParentId]; if (!sid) return;
+    if (D[sid]) { D[sid].noted++; if (sid === 'ricky') D[sid].hours[wallHourOf_(n.CreatedDate) - H0].n = (D[sid].hours[wallHourOf_(n.CreatedDate) - H0].n || 0) + 1; }
+    if (t && !t.IsClosed && sid !== 'ricky') work(sid, t, n.CreatedDate);   // his notes are instructions and the automation's, counted as notes
+  });
+  var list = function (o) { return Object.keys(o).map(function (k) { return { k: k, n: o[k] }; }).sort(function (a, b) { return b.n - a.n; }); };
+  var desks = order.filter(function (s) { return D[s]; }).map(function (s) { var d = D[s]; delete d._w; d.byType = list(d.byType); d.autoTypes = list(d.autoTypes); return d; });
+  var sum = function (f, onlyDesks) { return desks.reduce(function (a, d) { return a + (onlyDesks && d.auto ? 0 : d[f]); }, 0); };
+  var typesSeen = {}; hours.forEach(function (h) { Object.keys(h.closed).forEach(function (k) { typesSeen[k] = (typesSeen[k] || 0) + h.closed[k]; }); });
+  var labels = {}; WALL_HOURS.TYPES.forEach(function (t) { labels[t[0]] = t[1]; });
+  var out = { at: twelve_(hhmm_(new Date())), from: H0, to: WALL_HOURS.TO, nowH: (function () { var m = minutesOf_(Utilities.formatDate(new Date(), CONFIG.TZ, 'HH:mm')); return m == null ? null : Math.round(m / 6) / 10; })(),
+    types: WALL_HOURS.TYPES.map(function (t) { return { k: t[0], label: t[1], n: typesSeen[t[0]] || 0 }; })
+      .concat(['Other', 'Not typed'].filter(function (k) { return typesSeen[k]; }).map(function (k) { return { k: k, label: k, n: typesSeen[k] }; })),
+    hours: hours, desks: desks,
+    agents: Object.keys(agents).map(function (k) { var a = agents[k]; return { k: a.k, c: a.c, w: a.w, n: a.c + a.w, by: list(a.by) }; })
+      .sort(function (x, y) { var a = String(x.k).toLowerCase(), b = String(y.k).toLowerCase(); return a < b ? -1 : a > b ? 1 : 0; }),   // name order: nobody ranked
+    totals: { closed: sum('closed', true), worked: sum('worked', true), emails: sum('emails', true), automated: sum('automated'), mine: (D.ricky || {}).closed || 0 } };
+  try { cache.put(key, JSON.stringify(out), WALL_HOURS.TTL); } catch (e) {}
+  return out;
 }
 
 /** Everything the page shows, as JSON. */

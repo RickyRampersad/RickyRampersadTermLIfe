@@ -67,11 +67,13 @@ const PO = L.pol;
 ok('policies by days since submission, five bands', PO.ages.map(a => a.k + ':' + a.n).join(' ') === '0-30:2 31-60:1 61-90:1 91-180:1 180+:0', PO.ages.map(a => a.k + ':' + a.n).join(' '));
 ok('past ninety days, one item from issue, ready (only the premium left)', PO.past90 === 1 && PO.oneLeft === 4 && PO.ready === 3, JSON.stringify([PO.past90, PO.oneLeft, PO.ready]));
 ok('suspense held once a policy', PO.held === 550 && PO.heldPolicies === 2 && PO.newWeek === 2, JSON.stringify([PO.held, PO.heldPolicies, PO.newWeek]));
+ok('no money paid (28 Oct): three policies wait on a first premium with nothing in suspense, the oldest 70 days, two past a month', PO.unpaid === 3 && PO.unpaidOldest === 70 && PO.unpaid30 === 2, JSON.stringify([PO.unpaid, PO.unpaidOldest, PO.unpaid30]));
 ok('the decision as states: approved 2, more information 2, with underwriting 1, declined 0',
   PO.states.map(s => s.key + ':' + s.n).join(' ') === 'settle:2 info:2 uw:1 decl:0', PO.states.map(s => s.key + ':' + s.n).join(' '));
 const C = L.chase;
 ok('Salesforce tasks matched by policy or application number', C.tasked === 3 && C.never === 2 && C.live === 2 && C.closedOnly === 1 && C.open === 3 && C.overdue === 1 && C.quiet === 1 && C.today === 3, JSON.stringify(C));
 const B = L.board, BV = B.agents.find(a => a.agent === 'Varun Seegolam'), BF = B.agents.find(a => a.agent === 'Fawwaz Mohamed');
+ok('and on each agent\'s row: Varun one unpaid, 20 days out; the branch three, the oldest 70', BV.unpaid === 1 && BV.unpaidDays === 20 && B.total.unpaid === 3 && B.total.unpaidDays === 70, JSON.stringify([BV.unpaid, BV.unpaidDays, B.total.unpaid, B.total.unpaidDays]));
 ok('Varun\'s row: 2 policies, 4 requirements, 1 document, 2 first premiums, 1 ready, 1 red, $250 held',
   BV.policies === 2 && BV.reqs === 4 && BV.docs === 1 && BV.medical === 0 && BV.cash === 2 && BV.ready === 1 && BV.red === 1 && BV.held === 250, JSON.stringify(BV));
 ok('and his tasks: 2 open, 1 overdue, 1 quiet, 2 today, none never raised, the oldest 100 days',

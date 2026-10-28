@@ -125,6 +125,21 @@
   .key b{color:var(--dim);font-weight:700}
   .empty{font:600 1.05rem/1.5 var(--fb);color:var(--dim);margin-top:1rem}
   .card.held{opacity:.62}
+  .ak{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-top:.55rem}
+  .ak div{font:600 .85rem/1.2 var(--fb);color:var(--dim);min-width:0}
+  .ak div{display:flex;flex-direction:column} .ak div span{white-space:nowrap}
+  .ak div b{font:800 1.3rem/1.1 var(--fd);color:var(--ink);font-variant-numeric:tabular-nums}
+  .ak div i{display:inline-block;width:.6rem;height:.6rem;border-radius:.2rem;margin-right:.3rem}
+  /* No money paid (28 Oct 2026): a first premium outstanding and nothing held in suspense, in red, with how long it has been out. */
+  .tile.np{grid-column:1 / -1;display:flex;align-items:center;gap:.9rem;border-color:rgba(232,98,90,.55);background:linear-gradient(90deg,rgba(232,98,90,.16),rgba(232,98,90,.04));animation:flagb 2.4s ease-in-out 1s infinite}
+  @keyframes flagb{50%{border-color:rgba(232,98,90,.18)}}
+  .np .n{font:800 2.4rem/1 var(--fd);color:var(--red);font-variant-numeric:tabular-nums;flex:none}
+  .np .t{font:600 .9rem/1.35 var(--fb);color:var(--dim);min-width:0}
+  .np .t b{display:inline;font:800 .95rem var(--fb);color:var(--ink);margin:0} .np .t .d{color:var(--red);font-weight:800}
+  .np.clear{border-color:rgba(120,209,152,.3);background:rgba(120,209,152,.06);animation:none} .np.clear .n{color:var(--green)}
+  .br.unp{box-shadow:inset .28rem 0 0 var(--red)} .br.unp .nm{padding-left:.6rem}
+  .br .nm em i.np-pill{font-style:normal;color:#fff;background:rgba(232,98,90,.9);border-radius:.4rem;padding:.02rem .4rem;font-weight:800;animation:flag 1.8s ease-in-out infinite}
+  @keyframes flag{50%{opacity:.6}}
 
   .ticker{position:relative;z-index:2;overflow:hidden;border-top:1px solid var(--line);background:rgba(0,0,0,.25);height:3rem;display:flex;align-items:center}
   .ticker .in{display:flex;gap:4rem;white-space:nowrap;animation:tick 70s linear infinite;padding-left:100%}
@@ -165,8 +180,9 @@
       <div class="tile"><b id="sReady" style="color:var(--gold)">0</b><small>ready: only the premium left</small></div>
       <div class="tile"><b id="sOld" style="color:var(--amber)">0</b><small>past ninety days</small></div>
       <div class="tile"><b id="sHeld" style="color:var(--gold)">0</b><small id="sHeldK">paid, and we cannot apply it yet</small></div>
+      <div class="tile np" id="npCard"><div class="n" id="npN">&ndash;</div><div class="t" id="npT">Policies waiting on a first premium with no money paid show here.</div></div>
     </div></div>
-    <div class="card bars" style="--d:.24s;flex:1"><div class="kick">How long since it was submitted</div><div id="ages"></div></div>
+    <div class="card bars" style="--d:.24s;flex:1"><div class="kick">How long since it was submitted &middot; days</div><div id="ages"></div></div>
     <div class="card" id="setCard" style="--d:.36s"><div class="kick">Settled &middot; from Salesforce</div>
       <div class="settled"><div class="now"><b id="zT">&mdash;</b>today</div><div><b id="zW">&mdash;</b>this week</div><div><b id="zM">&mdash;</b>this month</div></div></div>
   </section>
@@ -208,7 +224,8 @@ function cells(a, tasks){
     return '<div class="v'+(v?(c[2]?' '+c[2]:''):' z')+(c[3]?' sep':'')+'" data-k="'+c[1]+'">'+t+'</div>'; }).join("");
 }
 function kinds(a){
-  return (a.top||[]).map(function(k){ return '<i class="'+esc(k.tone||"")+'">'+esc(k.k)+' '+fmt(k.n)+'</i>'; }).join(" &middot; ") || "nothing outstanding";
+  var flag = a.unpaid ? '<i class="np-pill">no money paid on '+fmt(a.unpaid)+' &middot; '+fmt(a.unpaidDays)+' days out</i> ' : '';
+  return flag + ((a.top||[]).map(function(k){ return '<i class="'+esc(k.tone||"")+'">'+esc(k.k)+' '+fmt(k.n)+'</i>'; }).join(" &middot; ") || "nothing outstanding");
 }
 
 function paint(){
@@ -228,8 +245,16 @@ function paint(){
   $("#deck").innerHTML = S.map(function(x){ return '<div class="'+(x.work?'work':'')+'"><i style="background:'+(DECCOL[x.key]||"var(--faint)")+'"></i><span>'+esc(x.label)+'</span><b>'+fmt(x.n)+'</b></div>'; }).join("");
   count($("#sOne"), P.oneLeft); count($("#sReady"), P.ready); count($("#sOld"), P.past90); count($("#sHeld"), P.held, "$");
   $("#sHeldK").textContent = "paid, and we cannot apply it yet" + (P.heldPolicies ? " · " + P.heldPolicies + (P.heldPolicies===1?" policy":" policies") : "");
+  if(P.unpaid != null){
+    var npc = $("#npCard"); npc.classList.toggle("clear", !P.unpaid); count($("#npN"), P.unpaid);
+    $("#npT").innerHTML = P.unpaid ? "<b>no money paid</b>: waiting on a first premium with nothing in suspense &middot; the oldest <span class=\"d\">"+fmt(P.unpaidOldest)+" days out</span>"+(P.unpaid30 ? " &middot; <span class=\"d\">"+fmt(P.unpaid30)+"</span> past a month" : "")
+      : "<b>Every policy waiting on a first premium has money paid.</b>";
+  }
   var A=P.ages||[], amax=Math.max.apply(null,A.map(function(a){return a.n;}).concat([1]));
-  $("#ages").innerHTML = A.map(function(a,i){ return '<div class="row"><span>'+esc(a.k)+' days</span><div class="t"><i data-w="'+(100*a.n/amax).toFixed(1)+'" style="background:'+AGECOL[i%5]+'"></i></div><b>'+fmt(a.n)+'</b></div>'; }).join("");
+  // One bar, five bands (28 Oct 2026: the red no-money tile needed the room), each band with its count under it.
+  var atot = A.reduce(function(s2,a){ return s2+a.n; },0)||1;
+  $("#ages").innerHTML = '<div class="dec">'+A.map(function(a,i){ return '<i data-w="'+(100*a.n/atot).toFixed(1)+'" style="background:'+AGECOL[i%5]+'"></i>'; }).join("")+'</div>'
+    + '<div class="ak">'+A.map(function(a,i){ return '<div><span><i style="background:'+AGECOL[i%5]+'"></i>'+esc(a.k)+'</span><b>'+fmt(a.n)+'</b></div>'; }).join("")+'</div>';
   // right: the board
   var tasks = !!B.tasks;
   $("#tot").innerHTML = '<div class="nm"><b>The branch</b></div>' + cells(B.total||{}, tasks);
@@ -247,6 +272,7 @@ function paint(){
     P.oneLeft ? "<b>"+fmt(P.oneLeft)+"</b> policies are one item from issue: finish them today" : "",
     P.ready ? "<b>"+fmt(P.ready)+"</b> need only the premium: collect it and they issue" : "",
     P.held ? "TT$<b>"+fmt(P.held)+"</b> paid and held in suspense on <b>"+fmt(P.heldPolicies)+"</b> policies" : "",
+    P.unpaid ? "<b style=\"color:var(--red)\">"+fmt(P.unpaid)+"</b> policies wait on a first premium with <b>no money paid</b>, the oldest "+fmt(P.unpaidOldest)+" days out" : "",
     C.never!=null ? "<b>"+fmt(C.never)+"</b> pending policies have never had a task raised" : "",
     C.overdue ? "<b>"+fmt(C.overdue)+"</b> Pendings tasks are past their date" : "",
     "From the pending report of <b>"+esc(L.asOf)+"</b>"].filter(String);
@@ -263,7 +289,7 @@ var pageT = null, pageAt = 0;
 function buildPages(agents, tasks){
   clearInterval(pageT); pageAt = 0;
   var box = $("#rows");
-  var row = function(a, i){ return '<div class="br'+(a.agent===ORPH?' orph':'')+'" style="--d:'+(0.05*i).toFixed(2)+'s"><div class="nm"><b>'+esc(a.agent===ORPH?"Orphans · to reassign":a.agent)+'</b><em>'+kinds(a)+'</em></div>'+cells(a, tasks)+'</div>'; };
+  var row = function(a, i){ return '<div class="br'+(a.agent===ORPH?' orph':'')+(a.unpaid?' unp':'')+'" style="--d:'+(0.05*i).toFixed(2)+'s"><div class="nm"><b>'+esc(a.agent===ORPH?"Orphans · to reassign":a.agent)+'</b><em>'+kinds(a)+'</em></div>'+cells(a, tasks)+'</div>'; };
   if(!agents.length){ box.innerHTML = '<div class="empty">Nothing pending on any desk.</div>'; $("#pager").innerHTML=""; return; }
   // Measure one row, then deal.
   box.innerHTML = '<div class="page">'+row(agents[0],0)+'</div>';
