@@ -27,7 +27,7 @@ let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x && !c ? '  — ' + x : '')); if (!c) fails++; };
 
 const AGENTS = ['Neil R.', 'Felicia R.', 'Rajiv S.', 'Malcolm S.', 'Premchand D.', 'Randolph G.', 'Fawwaz M.', 'Meera P.', 'Narissa M.',
-  'Daniel B.', 'Joy S.', 'Darryl M.', 'Varun S.', 'Aleema M.', 'Javid A.', 'Faizal M.', 'Akaash K.'];
+  'Daniel B.', 'Joy S.', 'Darryl M.', 'Varun S.', 'Faizal M.', 'Akaash K.'];
 const SUP = { 'Neil R.': 'Liz', 'Felicia R.': 'Liz', 'Rajiv S.': 'Liz', 'Randolph G.': 'Liz', 'Varun S.': 'Sasha', 'Fawwaz M.': 'Sasha', 'Malcolm S.': 'Sasha',
   'Premchand D.': 'Azariah', 'Darryl M.': 'Azariah', 'Meera P.': 'Azariah', 'Narissa M.': 'Azariah', 'Daniel B.': 'Azariah' };
 const per = (pts, reached, fast, home, comm, drive) => ({ pts, reached, fast, home, homeFast: Math.floor(home / 2), tried: reached + 3, notes: reached * 2 + 4, clients: reached + 5,
