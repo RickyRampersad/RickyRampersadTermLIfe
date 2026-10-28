@@ -5379,6 +5379,21 @@ section links it.
   helpers; no new colour. The portrait and square rules at the foot of the stylesheet restack each block. `scenes.js`
   in the scratchpad shot all eight in both frames before the render. The feed ads (`ad-a`, `ad-b`) keep their own
   scenes; the ad hook, match and seats were not redrawn.
+- **Seven places and a sales manager (28 October 2026, late night).** "I'd want to change the 5 to 7. What do you think? And also
+  to a manager, we're looking for a sales manager." Asked first whether to say five seats at all, the research answer was: a
+  limited count helps (Highhouse et al. 1998, the one study on scarcity wording in a job ad) only when it has a reason and a
+  date, because an evergreen "5 seats this year" at a public URL dates the film and tells a strong candidate the door may be
+  shut. So the count is now **a dated class with a reason**: FY27 began on 1 October, its first class is being selected now,
+  **seven places**, each getting the full build, **and one seat for a sales manager** to build a unit here, as its own door.
+  Where it lives: trailer lines 5 and 6, film lines 2 and 30, the ads' line 4 (Andrew Expressive on the runner; a first push
+  of the job was overwritten by another session's job before the runner ran it, so check `tts/out/<key>` exists, not only
+  that a "tts output" commit landed); `blk_seats` carries a `+1 A sales manager` card under the five steps of the build and
+  `blk_gate` a third door, "Leading a team already?", both only when the line says so, so an older line draws the old scene;
+  the recruiting page's hero, metas, strip, apply section (seven seat tiles, You, and the manager's seat set apart by a rule;
+  the row shrinks under 35rem so eight fit one line), a sales manager's door (`#manager`, after the people, whose button
+  preselects "Leading a team already" on the booking form through `data-who`), the form's fourth option, the guide's lines;
+  the homepage careers section, `/careersvideo/`, the two posts, and the pages' chapter marks. Never "unlimited", never a
+  bigger number without a reason, and when the class is full the number comes off, not up.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,
