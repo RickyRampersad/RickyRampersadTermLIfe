@@ -119,6 +119,22 @@ WALLS = {
         "Beside each list are the open tasks that person holds, and how many are past their date.",
         "Below, the clients named to an agent in Salesforce, agent by agent. No client is named on this screen.",
     ],
+    'orphans-results': [               # What the orphan campaign has earned (28 Oct 2026)
+        "This is what the orphan campaign has earned so far.",
+        "On the left, the two hundred dollars an agent earns for every service questionnaire: paid, to be paid on the next commission run, and still on its way.",
+        "Each claim moves through Customer Service and then Retention, and the stages show where every one of them is.",
+        "On the right, the new applications from orphan clients, and the premiums paid back since our letters.",
+        "We also count every lapsed policy that is now back in force.",
+        "Below, what clients are telling us, by subject. No client is named on this screen.",
+    ],
+    'orphans-cup': [                   # The First-Contact Cup (28 Oct 2026)
+        "This is the First-Contact Cup, for Client Support.",
+        "Every client of the campaign is a race to the first conversation, and then to the service questionnaire.",
+        "Three points for every client you reach first, two more within two working days, and ten for the questionnaire it brings home.",
+        "The AI reads every timeline and rates how clearly you communicate, and how firmly you bring it home.",
+        "Last week's champion is celebrated at the Wednesday meeting.",
+        "Below, who looks after whom: each agent, the support person beside them, and the questionnaires they have brought in.",
+    ],
     'index': [                                   # The 45-Day Line
         "This is the forty five day line.",
         "Past the grace period. Still early enough that a phone call works.",
