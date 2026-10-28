@@ -5048,6 +5048,297 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     medical requirement, a leaver and a private claim item) and `people/page-test.js` (29, Playwright, a desk and a
     phone, with screenshots).
 
+## agentmgt.com — the recruiting page, rebuilt in this repository
+
+`agentmgt/` is the selection page: the copy, the 60-second test, the five
+gates, the two career roads, the apply button and the QR, all opening the one
+TalentNest posting. It is served by **Netlify** at agentmgt.com, from this
+folder alone (link the site to the repository with base directory `agentmgt`,
+or drag the whole folder onto Netlify Drop). `AGENTMGT-SETUP.md` has the steps.
+It is a third hosting chain and touches neither of the other two.
+
+Rebuilt 26 October 2026, asked for as *"the recruiting app rebuilt with more
+motion etc and most impactful"*. Until then the page on the domain was a
+single file uploaded by hand, in no repository, and its "shield" was a redrawn
+path: not the mark. What stands:
+
+- **The copy is the approved copy, word for word**: the headline, the four
+  environment cards, the two roads and their rungs, the five questions and the
+  three verdicts, the proof, the gates, the quote, the FAQ, the closing. The
+  request named motion and impact, not words, so the words did not move.
+- **The identity is the page's own: onyx and wine.** Not the homepage's teal,
+  not the gold, not the board blue. The request named motion, not colour, and
+  changing an un-named thing is the recorded mistake. The dark surfaces were
+  lifted off near-black (`#14171E`, not `#0E1013`) with no flat black and no
+  `rgba(0,0,0,…)` anywhere, by the 21 October rule. The accent on a white or
+  wine ground is `#D33F49`→`#B22F3A` (4.6:1 and 6.25:1 under white type); small
+  accent text on the dark ground is `#F08A91`, because `#E85F6A` measured 3.6:1
+  against the hero's lighter stop.
+- **The mark is `agentmgt/mark.svg`: favicon.svg's own shield and check in the
+  page's wine**, inline in the hero so the check strokes itself on. A fifth
+  mark, one per context, by the same rule as `site-mark.svg` and `board-mark.png`.
+- **The hero is the stage**: the shield at the centre, **the five gates on the
+  inner ring** (numbered chips) and **the five rungs of the career path on the
+  outer** (icons), each counter-rotating so it stays upright, the dot mesh, the
+  drawn rings, the arcs, three pings, the tilt to the pointer. Five to a ring,
+  seventy-two degrees apart, no pairs and no cycling, so every chip is in the
+  markup and visible whatever the motion setting. Below 35rem the labels go
+  and the strip under the hero carries the names.
+- **Playfair Display for display, Inter for copy**, non-blocking, with
+  metric-matched fallbacks measured from the font files (Playfair against
+  Times New Roman/Liberation Serif at 105.73%, against Noto Serif at 88.38%;
+  Inter's are the homepage's). Measured: cumulative layout shift 0.0015.
+- **All motion lives inside `prefers-reduced-motion: no-preference`**: the
+  kinetic headlines (words, never letters), the swapping word in the headline
+  (driven, hungry, proven, disciplined, unstoppable: a crossfade now, not the
+  typewriter that left "hu" on screen in every screenshot), the counters that
+  count up to the figure already in the markup, the strip, the ladders that
+  draw themselves, the gate connector with its pulse, the quiz ring, the
+  confetti. Scroll-driven entrances use
+  `animation-timeline: view()`; where that is unsupported an observer adds
+  `.in`, guarded by `html.js`, so with no script nothing is hidden.
+- **The floating "Start the Selection" bar shows below 56rem only**; the topbar
+  carries Apply on every width. RAI, the guide bubble, stays.
+- **Measured**: no sideways scroll at 360/375/390/414/1280/1366/1536/1920,
+  contrast AA composited, touch targets, no iOS zoom, 16.7 ms a frame with
+  the rings spinning, CLS 0.0015, nothing animating and nothing invisible with
+  motion off. `agentmgt/audit.js` in the session scratchpad is the harness.
+- The footer keeps the page's own contact line (`678-5821`): a fact on the
+  live page, not changed unasked.
+
+### The recruiting film, 26 October 2026, re-cut the same evening for the digital branch
+
+Asked for as *"a killer video with lots of motion and drive to what really makes a person want to leave the
+current job and join our branch as we do things differently and a person can excel"*, then re-cut the same evening:
+*"our financial year changed in October … forget about the mentorship with executive agents and senior sales
+consultant, because a person could decide a path … the whole focus is on the digital process and the digital tools
+that we use and the leads generation program … digital dashboards everywhere … coaching and the high productivity
+… blend it in with the human interface"*. `agentmgt/recruit.mp4` (1280×720, 3:54) and `agentmgt/recruit-story.mp4`
+(1080×1920, the phone cut), posters beside them. It plays on agentmgt.com (`#film`) and on **`/careersvideo/`** on
+the branch site, the page to post (Open Graph with the poster, both cuts, the apply buttons); the homepage careers
+section links it.
+
+- **Twenty-two scenes, one per spoken line**, the page's own look (onyx lifted off black, wine, Playfair and Inter
+  embedded as base64 so a render never waits on the network), drawn by `tools/film/build-recruitfilm.py` from
+  `recruit-lines.json` and `recruit-timing.json` into `agentmgt/film.html`. The hook; the bars breaking through the
+  ceiling of the old tools; the shield with the five gates inside and the five tools outside, and the FY27 badge;
+  "Digital everywhere. Human at the heart of it."; **the leads board** (a phone where a prospect taps what is on
+  their mind, the lead flying onto the board with sent, opened, watched, booked counting, the QR code); **the Lead
+  Desk** typing the call script from the prospect's own words, "not a pitch, an appointment", a forwarded lead
+  stays yours; **factfind360** adding the need in dollars, the manager's signature drawing itself, the client's
+  confirmation, and the 0 cases lapsed since launch; **the live wall** with the phone beside it and the spreadsheet
+  struck through; **the day the system sets**, the check-in pressed and the list ticking as the bar fills;
+  **Branch Intelligence** scanning a file and typing where it stands and what to say first; the people who coach
+  (interviewed, coached after, Friday lit on the week); **clients matched to you**, households sliding onto your
+  list; the stage; **two ladders side by side and a toggle, "you choose the ladder"**; the income line; **the FY27
+  flight plan**, seven stages on a trajectory, a dot riding it, GO landing; the lock, the checklist, the gates, the
+  door that opens, the QR, the close. **Every reveal lands on the word that names it** (`at(n, word, k)` reads the word's
+  start from the runner's WordBoundary timings, plus the 0.4 s the mixer leads the voice by; `k` picks the second
+  match where a word repeats: "goes GO"). Every name and figure on a mock screen is made up, and the mocks say so.
+- **What the film claims is what the record holds**: the prospect board and the Lead Desk (factfind360.com/leads,
+  the Lead Desk builds the script from the prospect's `wants` and never prices or recommends; a forwarded lead
+  stays with the advisor whose link produced it, per `UnclaimedLeads.md` in fact-find-analyzer), factfind360 with
+  the manager's four attestations and the client's confirmation from their inbox, the production wall read live
+  (11 September 2026 minutes), My workday and the day the system sets, Guide me on the board, the Branch Manager's
+  interview and coaching, the Weekly Manager Pulse (unit managers coach agents not on target with leads, fact
+  finds and closing interviews), the orphan households matched to agents with the file and the first thing to say,
+  the Wednesday wins, Blastoff and Mid-Year, the FY27 Flight Plan (fifteen minutes, seven stages, GO on the big
+  screen, FY27 1 October 2026 to 30 September 2027), the five gates, 48 hours, confidentiality. "Not
+  one of those cases has lapsed" is Mr Rampersad's own line from the FY27 wall (21 October). **No mentorship
+  scene**: the Executive Agent and Senior Sales Consultant rungs stay on the "build a book" ladder as titles only,
+  with no overrides and no mentoring duty, because a person decides their own path.
+- **The seat count is gone, and it is not to come back** (26 October 2026, late: "should you remove the 5 seats
+  etc"; yes, and he agreed). A fixed count dates a film that sits at a public URL, tells a strong candidate the door
+  may already be shut, and is a number nobody had fixed (no closing date, no count of applications in hand).
+  Scene 20 is now **"The door is open."**: a door whose two leaves swing open on the word, light pouring out, rays,
+  then the two figures (2 min, 48 h). Line 20 reads "The door is open now. Two minutes to apply. Reviewed within
+  forty-eight hours." The selectivity stays, because that is what makes a strong agent apply: the five gates, "we
+  don't fill seats, we select", the 48-hour review, the Discovery. The page, the branch-site page, the post and the
+  RAI bubble lost their seat count the same evening (the page's seats row is gone; "The door is open. Walk through
+  it."), because a promise made in one place has to be kept in the other. Do not replace it with a bigger number or
+  "unlimited seats": that throws away the selection message.
+- **The reframe, 27 October 2026: the candidate's fear first, the specific answer second, one conversation
+  third.** Asked for as *"research in the web what will entice somebody to click on this ad … shouldn't it be
+  framed in terms of what this career offers and to hit the pain points"*, then *"let's do this and create a
+  wow"*. The research (sources in the session's reply): candidates ask about money first (LinkedIn 61%; ads that
+  state pay get 27% more applications, Reed; specific reward wording raises intent to apply through "this fits
+  me", Van Hoye and Baeten 2016); experienced advisors move for payout, technology and autonomy and fear the cost
+  of moving (Cerulli: payout 54 to 58%, technology 57%, movers lose about 22% of assets); newcomers fear the
+  income gap, buying leads and selling to friends (26% of 103 former agents quit over lead money), and LIMRA's
+  retention fix is honest expectations at recruitment; question headlines with "you" beat statements; the
+  click-to-apply rate is about 6% and the post-click friction decides the cost, so the ask is a conversation, not
+  a form. What changed:
+  - **Five lines re-voiced** (1, 12, 15, 20, 21; 4:12 now). Scene 1 names both fears ("Or wanting a career with
+    no ceiling, and afraid of the first year?"); scene 12 leads with the fear ("Afraid you'd be starting from zero?
+    You won't."); scene 15 adds "you're not living off your phone contacts, the leads come to you"; scene 20 puts
+    the two audiences either side of the door (Already contracted: nobody will know you asked; New to this: the
+    full build) and asks for **one confidential conversation, twenty minutes, this week**; scene 21 books it
+    first and offers the test second. Line 15 came back once as "No seating" from Whisper and was re-made; the
+    second take read clean. The income graph's area had no fill and rendered flat black in the last two cuts
+    (`.graph .area` now carries `fill:url(#ga)`).
+  - **The page**: the hero asks the question ("Good at what you do, but stuck? Move without starting from
+    [zero / a cold list / scratch / nothing / nobody]"), its sub speaks to each audience by name, and its first
+    button is **Book a confidential conversation**; a new section, "Two kinds of people walk through this door",
+    strikes through each audience's own fear and answers it with what is true here; under it the dark
+    **"What this career pays, honestly"** panel (how it is paid, what grows it, and what we won't print: an
+    average we made up; the record is shown at the conversation). The top bar, the sticky bar and the closing
+    carry the conversation; the application stays one tap away everywhere. "The environment decides. We select
+    the driven." is the sign-off, not the headline.
+  - **The conversation link is WhatsApp to 678-5821**, the number already on the page's footer, with the first
+    line typed; change it in six places (`data-talk` on agentmgt, one on `/careersvideo/`) if the branch wants
+    another number.
+  - **No figure was invented.** The page promises the branch's own figures at the conversation; printing a
+    median first-year income or the leads per advisor per month needs the record from Mr Rampersad first.
+  - **Two posts, not one** (`AGENTMGT-SETUP.md`): each names its reader in the first line because the ad
+    platforms limit targeting, and each ends "Reply TALK and I'll call you".
+  - **Five more scenes, the same morning, after "lots of motion, as you have access to everything: how we manage
+    our agents and managers, and all the drives"** (26 scenes, 5:26). Drawn from the record and the Drive, never
+    invented: scene 10, projected, done, balance and the register (the tracker's agent metrics `p`/`d`, the
+    check-in, My workday's bar); scene 12, **the real screens** (`wall/img/ff`, `lb`, `meet`: the client's draft,
+    the manager's sign-off, the agent's copy, the client's approval, the Log Book, the meeting app, all captured
+    with sample data and already public on `/wall/`; embedded as data URIs by `img64`, a 420-px JPEG each, so
+    `film.html` stays under 300 KB); scene 14, **the Weekly Manager Pulse** (the Drive sheet "RRB | Weekly Manager
+    Pulse (2026)": who lifted the unit, agents not on target with leads, fact finds and closing interviews, and the
+    coaching done) and the manager's note that lands in the agent's morning e-mail (the tracker's Manager Notes
+    tab, "From your manager"); scene 16, **TT$200** a matched household whose service questionnaire comes in after
+    the naming, chased until Retention pays (`T_CLAIM`), and **the agent rates the support** when a task is closed
+    for them (`rateRun_`, five stars); scene 17 re-voiced: the Wednesday wins, the agents' wins included, Starbucks
+    and MovieTowne, and the item added to the agenda from the phone (the Meeting Builder). The game's points and
+    streaks are **not** claimed for agents: the game is live for the staff desks and agents come after. Every
+    name and figure on the mocks is made up and marked; the real screens carry "sample data on every screen".
+    `TT$200` also went into the page's pay panel, the one figure the record allows.
+  - **The journey cut, the same afternoon (35 scenes, 8:20, and a 1:27 trailer).** "You are producing the same
+    video. … we go through an orientation, we go through digital market surveys, we go through many tests … POP7 … so
+    they're not alone … I did ask you to review all the codes, every single thing that we do for an agent to succeed."
+    He was right: the previous cuts were a tour of tools. The film is now the candidate's own journey, and every scene
+    is read off the record (the inventory is published as the private page "Everything We Do for an Advisor"; its
+    source is `advisor-support-map.html` in the session scratchpad). Chapters: the question; after you apply (the
+    call, the Branch Manager, orientation, the **digital market survey** from the Drive's "Market Survey 1.0", **POP7**
+    from the Drive's results sheet, the Discovery, the selection, the onboarding with the licence guide, contracting
+    form and field training); the first ninety days (matched households, TT$200, leads, the flight plan); every day
+    (the day set, the balance, factfind360, **Query Pal**, the wall, Branch Intelligence, the real screens); every week
+    (coaching, the pulse, **Wednesday 9:00** with the call list the sheet scores, maturities and the 85-day report,
+    the wins); the book protected (**the Premium Due Desk's 45/60/75/90-day letters**, renewals, claims); every month
+    (**the monthly income review** from the Drive's form, the digital career path tracker); the path and the pay; **the
+    managers managed** (the Branch Manager's 5:00, the unit manager's ten KPIs planned and accounted for); the door.
+    The old newcomer scene went: the onboarding scene carries it.
+  - **The trailer is the ad; the film is what the called candidate watches.** `RECRUIT_MODE=trailer
+    build-recruitfilm.py` writes `agentmgt/trailer.html` from `recruit-trailer-lines.json` and
+    `recruit-trailer-timing.json` (vox in `tools/film/votrailer`); `films-recruit.py` writes `trailer` and `trailerv`
+    beside `recruit` and `recruitv`. Both pages show the trailer first and the full film under it, each with its
+    chapters. Whisper hears "No ceiling." as "No seating" and "call reluctance" as "correluctance" on every take of
+    those lines, identically on a second run: the voice is deterministic and the read is right, so those two were
+    kept after the re-take matched.
+  - **The persuasion pass, the same evening** ("the catching opening is good; we now need to have the 5 seats
+    available so this should be unique; more persuasive to be attracted to the career; show coaching not micro
+    managing; condensed; remove MDRT; drive attraction power; more motion; research deep"). **The five seats are
+    back, by his decision**, which reverses the morning's call: the one study on scarcity wording in a job ad
+    (Highhouse et al. 1998) found the limited-vacancy version made the employer read as a better one to work for and
+    the pay seem higher. **MDRT is out** of the film, the trailer, agentmgt.com, `/careersvideo/`, the posts and the
+    homepage careers section (the homepage's own stats band and the testimonial cite still say it; those are the
+    homepage's proof points, not the recruiting copy, and were left for him to decide). **Coaching, not watching**:
+    the scenes that read as surveillance went (talent and the tools, projected-done-balance with the register, the
+    managers managed); the day scene now says the admin is done before you are up and your hours go to clients and
+    the coaching; the pulse scene is "a coaching sheet, not a report card" with the note in the morning e-mail. Gallup's
+    finding behind it: 45% of leavers had nobody talk to them about their work in the three months before they left,
+    and micromanagement tops the worst-manager list. Film 32 scenes, 7:34; **the trailer rewritten as the ad** (1:44):
+    the hook; what this career gives that a job can't (income decided by your work, a week shaped by you, a family
+    covered before the worst day); what this branch gives (never stuck for an answer: the fact find, Branch
+    Intelligence, Query Pal; never from zero); a coach, not a clock; five seats, not because we can't take more but
+    because every one gets the full build; the door; the booking; the close.
+  - The game's points and streaks are still not claimed for agents (staff first). Every name and figure on a mock is
+    made up and marked; no client, no client count.
+  - Still to do, his: two 15-second phone clips of real agents saying one line each (candidates trust employees
+    about three times more than the company), and the first-year figures for the pay panel.
+- **The professional layout pass, 27 October 2026** ("a more professional layout and you did have what was built
+  with the recruiting app, and you do have what we put the agents through in discovery, it's a LIMRA process … all
+  the support, scaled and more motion and graphics"). Three sections rebuilt or added on agentmgt.com, the hero kept
+  (the opening he liked):
+  - **The two audiences are a ledger**, not struck-through paragraphs: each card is two columns, "what you've heard"
+    (✕, muted, italic) against "what is true here" (✓, ink), five rows each, the button at the foot. One column on a
+    narrow phone.
+  - **The five gates are the selection step by step, LIMRA's process**, as tabs with a drawn graphic per gate: the
+    application filling and stamped Received and Reviewed · 48 h; the Branch Manager's conversation with the three
+    things orientation lays out (the career, the branch, the numbers); **the digital market survey** (the Jotform's own
+    questions off the Drive's Market Survey 1.0: how well known, could approach on business, would refer, saving for;
+    scored out of 100 by the unit manager) and the room with the qualifiers; **POP7, LIMRA's Career Profile+** (the
+    dimensions off the Drive's POP7 sheet: enterprising, achievement and independence potential, self-direction,
+    lifestyle management, call reluctance, listening style, people orientation; two predictors, first-year survival
+    and first-year production; three verdicts: proceed, proceed with caution, redirect; the bars are a marked sample,
+    never a candidate's); selection, then the build (training, induction, boot camp, the licence, field work). The
+    tabs turn by themselves every 5.2 s until someone touches them, and only while the section is on screen. No
+    candidate, no score and no name from the sheet reaches the page.
+  - **"Everything around you"**: the advisor-support inventory (the private "Everything We Do for an Advisor" page) as
+    six tabs by when it happens (before you join 7, first 90 days 5, every day 10, every week 6, every month 6, your
+    managers too 5: 39 items), a rail of the six moments above them, each item an icon, a name and one line. The
+    Mentorship card gave way to "A coach, not a clock" (the Weekly Manager Pulse and the morning note), and the pay
+    panel moved under the career path.
+  - **Two traps:** `strong,b{color:var(--ink)}` turned the selected tab's label ink-on-ink (a `b` inside a dark pill
+    needs `color:inherit`); and a `view()` reveal with `animation-range: entry 10% entry 40%` never fires in a
+    full-page screenshot (the element never "enters"), so it reads as missing content when it is not: use
+    `entry … cover …` like the rest of the page, and review full-page shots with motion off.
+  - **The Discovery session's own material is not on file.** The page says what the record holds: the live page's
+    words, the Market Survey's questions and the POP7 dimensions. LIMRA's session guide, the orientation deck and a
+    Career Profile+ sample report were asked for on 27 October; when they arrive they go in the Drive, never the
+    repository (LIMRA's material is licensed), and the gate copy is checked against them.
+- **The feed cuts, 27 October 2026: 35 seconds, two readers, square and tall.** Asked, on the 7:34 film: "if you're
+  going to post this on LinkedIn and Facebook, what do you think about the size of the movie? Shouldn't it be shorter,
+  impactful, and straight to the point?", then "Yes, revoice." The research behind the length: feed video is paid for
+  about 30 seconds in, the first three seconds decide the stop, and most of it is watched muted, so the captions are
+  burned over the picture and the first frame carries the shield and the question. Two variants, one per reader, by
+  the 27 October reframe: **A** for the advisor already contracted ("Move, and start from zero? Not here": clients
+  matched household by household, leads on your own board, "nobody will know you asked"), **B** for the person new to
+  the work ("Months with nothing coming in? Not here": leads from people who asked to be called, the day set every
+  morning, trained before you are contracted, "nobody here is left to figure it out alone"); then a coach not a clock,
+  five seats, and agentmgt.com with the QR, the same on both. `RECRUIT_MODE=ad RECRUIT_AD=A|B build-recruitfilm.py`
+  writes `agentmgt/ad-a.html` / `ad-b.html` from `recruit-adA-lines.json` and `recruit-adA-timing.json` (five
+  scenes, the trailer's visuals re-timed to the shorter lines); `films-recruit.py` gained a `shapes` argument and a
+  square shape (`q`: 1080×1080, capsize 40, capwrap 34, `-square.mp4`), and writes `adAq`, `adAv`, `adBq`, `adBv`.
+  **A square is "portrait" to the media query** (height is not less than width), so the square rules come after the
+  portrait block and only shrink what a square cannot hold: scene 2's list (`zoom:.76`) and the CTA's QR, which
+  otherwise sat in the caption band (the mixer's `over` mode puts the captions from 16% of the height up). Every scene
+  was shot in both frames with the caption band drawn before rendering (`scenes.js`). Andrew Expressive on the runner,
+  all ten clips heard as English and complete. The careers page (`/careersvideo/`) carries both square cuts above the
+  buttons with the tall cut linked beside each, and the posts in `AGENTMGT-SETUP.md` say which MP4 to attach.
+- **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
+  rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
+  length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,
+  so never on `.flight`, whose GO sits outside its card), every counter popping as it lands (`--at`, written by
+  `scene()` from `data-at`, so the pop is a second after the count starts), sheens on the production bars and the
+  day's progress bar, a ghost question mark and a spotlight on the hook, sparks when the bars break the ceiling,
+  bursts on "differently" and "Human", the lead's arc from the phone to the board with a comet riding it, a
+  blinking caret on the Lead Desk's question, the CONFIRMED stamp on the fact find (top right, off the figures;
+  the first place put it over the dollars), the thinking dots before Branch Intelligence answers, applause rings
+  on the stage, the ladder rails carrying a pulse, the area under the income line and a grid behind it, the
+  rocket's exhaust trail and seven stars, the lock's ring, the build bar under "the full build", a ring off each
+  gate, the door, a scan line over the QR and a button sheen, and three rings leaving the closing mark. The door's
+  leaves stop at 96°, not 108°: at 108° they vanish edge-on and the door read as a red arch alone.
+- **Andrew Expressive** (`en-US-AndrewMultilingualNeural`, +0%, conversational wording), made on the `tts-run`
+  runner with `"check": true`. Three lines came back wrong on the first pass and were re-made: line 3 was **cut off
+  after eleven words** (a 36-word line; the same words complete on a second run, so a truncated clip is a retry,
+  not a rewrite: always compare the words.json count with the line), and "where it counts" was heard twice as
+  "work counts" / "wear accounts" (the voice slurs "where it"; it became "Human at the heart of it"). "The income?"
+  on the first cut was the same lesson: a line that starts with a clause of one or two words is the one this voice
+  slurs. `tools/film/importvox.py` turns the runner's MP3 and words into the WAV, the VTT cues and the timing file.
+- **The branch theme** (`rr-branch-theme.mp3`, 120 s, looped with a crossfade by `usetrack.py`) at `musicgain`
+  0.5, ducked to half under the voice; `sfx.py`'s sweeps on every cut, impacts on the statement scenes (4 and 22),
+  punches under 23×, 32, the board, the protection gap, the pace, GO, the door opening and 48 hours. Captions burned
+  **over** the frame in both cuts (`capmode: over`), because this audience watches muted; the scenes keep the
+  bottom fifth of the frame clear for them.
+- **One page, two frames.** `render.js` takes `RENDER_W` and `RENDER_H`; the portrait rules at the foot of the
+  stylesheet restack every split and re-base the unit (`--u`) on the width. Each `.scene` keeps render.js's
+  contract (`SC`, `go`, `paused`, `timer`, `.act`, `.out` cleared at 720 ms, `.cnt` counters). `films-recruit.py`
+  writes both entries into films.json from the timing file, so a re-voice is one command each step. The motes
+  and the mesh drift outside the scenes, so they run on the clock, not the frame: fine for a drift, never for a
+  reveal.
+- **Typed text has to keep its words whole.** The first cut typed character by character with `&nbsp;` for every
+  space, so a line had no break opportunity and ran off the card; each word is an inline-block now and the spaces
+  between them are real. **A percentage height inside a grid item with `align-content: center` resolves to 0.**
+  The chart's bars did not draw at all until `.bars` took a definite height. And a dark "lid" that slides away
+  must also fade and be clipped by its parent, or it parks over the headline on the portrait cut.
+- `scenes.js` in the session scratchpad shoots every scene at a fraction of its length in either frame (the same
+  seek render.js uses) and tiles them, which is how the layouts were checked before the voice came back.
+
 ## The branch's own forms — no client link opens a JotForm
 
 `quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`
