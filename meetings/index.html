@@ -926,9 +926,6 @@ function wireCheckIn() {
   Array.prototype.forEach.call(document.querySelectorAll("[data-checkin]"), function (b) {
     b.onclick = function () { checkIn(b.getAttribute("data-checkin"), b); };
   });
-  Array.prototype.forEach.call(document.querySelectorAll("[data-excuse]"), function (b) {
-    b.onclick = function () { excuseModal(b.getAttribute("data-excuse")); };
-  });
 }
 
 function checkIn(id, btn) {
@@ -975,67 +972,19 @@ function confirmModal(title, text, label, onYes) {
   $("m-no").onclick = closeModal;
 }
 
-/*  THE APOLOGY. Picked from a list, never typed.
+/*  THE SELF-SERVICE APOLOGY WAS TAKEN OUT ON 28 OCTOBER 2026.
  *
- *  A typed reason gives "personal", "busy" and "sorry", which cannot
- *  be counted, so the wall could never show which reason is the one
- *  worth doing something about. The list comes from the backend
- *  (APOLOGY_REASONS) so the two can never drift apart — a reason this
- *  page invented would be refused on arrival.
+ *  Asked for in these words: "dont give the opportunity to say cannot
+ *  attend". A person can put themselves in three states and only
+ *  three — present, present but late, and absent for not signing in
+ *  — so the modal that chose a reason, its reason list and its
+ *  handler are gone from here, and the backend's apiExcuse_ refuses.
  *
- *  The note box only appears for "Something else", because that is
- *  the only reason the backend accepts free text against.
+ *  What stays, deliberately: the "You logged that you cannot attend"
+ *  cards. Branch staff can still record an apology on somebody's
+ *  behalf through the register, and that person has to be shown the
+ *  right thing when they open the meeting.
  */
-var APOLOGY_FALLBACK = ["With a client", "Client appointment I could not move",
-  "On a medical or hospital visit", "Unwell", "Family or personal emergency",
-  "On leave or out of the country", "Training or an exam",
-  "At head office or another branch", "Travel or transport problem", "Something else"];
-
-function apologyReasons() {
-  return (S.detail && S.detail.apologyReasons && S.detail.apologyReasons.length)
-    ? S.detail.apologyReasons : APOLOGY_FALLBACK;
-}
-function apologyOther() {
-  return (S.detail && S.detail.apologyOther) || "Something else";
-}
-
-function excuseModal(id) {
-  var reasons = apologyReasons(), other = apologyOther();
-  openModal("I cannot attend this meeting",
-    "Pick the reason. It goes on the register beside your name and is counted on the branch wall. " +
-    "You will not be able to open the meeting pack once this is logged — if that changes, sign in and it opens.",
-    '<div class="field"><label for="ex-why">Reason</label>' +
-    '<select id="ex-why"><option value="">Choose one…</option>' +
-    reasons.map(function (r) { return '<option value="' + esc(r) + '">' + esc(r) + "</option>"; }).join("") +
-    "</select></div>" +
-    '<div class="field" id="ex-note-wrap" style="display:none">' +
-    '<label for="ex-note">Say in a line what it is</label>' +
-    '<textarea id="ex-note" maxlength="300" placeholder="A short line — this is the only reason that takes one."></textarea></div>' +
-    '<div class="msg" id="ex-msg"></div>' +
-    '<div class="btn-row"><button class="btn auto" id="ex-go">Log it</button>' +
-    '<button class="btn ghost auto" id="ex-cancel">Cancel</button></div>');
-
-  $("ex-why").onchange = function () {
-    $("ex-note-wrap").style.display = this.value === other ? "block" : "none";
-  };
-  $("ex-cancel").onclick = closeModal;
-  $("ex-go").onclick = function () {
-    var why = $("ex-why").value;
-    var note = $("ex-note") ? $("ex-note").value.trim() : "";
-    if (!why) return say("ex-msg", "Pick the reason you cannot attend.");
-    if (why === other && note.length < 3) return say("ex-msg", "Say in a line what the reason is.");
-    $("ex-go").disabled = true;
-    post("excuse", { meetingId: id, reason: why, note: note, device: navigator.userAgent })
-      .then(guard)
-      .then(function (res) {
-        $("ex-go").disabled = false;
-        if (!res.ok) return say("ex-msg", res.error);
-        closeModal();
-        if (S.view === "meeting") loadMeeting(id); else loadHome();
-      })
-      .catch(function () { $("ex-go").disabled = false; say("ex-msg", "No connection — try again."); });
-  };
-}
 
 /* ---------------- one meeting ---------------- */
 
