@@ -970,38 +970,49 @@
   "capsize": 46,
   "capwrap": 30
  },
- "blastoff": {
-  "cap": "cap-blastoff",
-  "vox": "voblastoff",
-  "music": "bed-blastoff.wav",
-  "mix": "blastoff-mix.wav",
-  "ass": "captions-blastoff.ass",
-  "dur": 65.63,
+ "rise": {
+  "cap": "cap-rise",
+  "vox": "vorise",
+  "music": "bed-rise.wav",
+  "mix": "rise-mix.wav",
+  "ass": "captions-rise.ass",
+  "dur": 87.6,
   "durs": [
-   5.22,
-   5.73,
-   6.72,
-   3.57,
-   3.77,
-   6.26,
-   6.02,
-   7.56,
-   6.57,
-   7.66,
-   6.55
+   3.6,
+   3.3,
+   3.0,
+   4.2,
+   5.6,
+   6.3,
+   7.5,
+   5.4,
+   4.7,
+   3.7,
+   5.4,
+   5.9,
+   5.3,
+   5.1,
+   4.3,
+   5.3,
+   4.8,
+   4.2
   ],
   "out": "blastoff.mp4",
-  "musicgain": 0.52,
+  "musicgain": 0.55,
   "duck": 0.3,
   "dark": [
    0,
-   3,
-   4
+   2,
+   12,
+   17
   ],
-  "sfx": "sfx-blastoff.wav",
+  "sfx": "sfx-rise.wav",
   "start": 0,
   "ticks": [],
-  "hits": [],
+  "hits": [
+   16.0,
+   21.0
+  ],
   "capbg": "17191E"
  }
 }

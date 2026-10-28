@@ -1,0 +1,101 @@
+{
+  "key": "rise",
+  "scenes": [
+    {
+      "v": "hit",
+      "say": "This branch took a hit.",
+      "screen": "",
+      "extra": 0.6
+    },
+    {
+      "v": "left",
+      "say": "People left. The work didn't.",
+      "screen": ""
+    },
+    {
+      "v": "held",
+      "say": "Nothing here fell over.",
+      "screen": "IT HELD"
+    },
+    {
+      "v": "stayed",
+      "say": "So before Friday, look at who's still standing.",
+      "screen": ""
+    },
+    {
+      "v": "count",
+      "say": "Twenty-three agents and managers. Five more behind them.",
+      "screen": "28",
+      "extra": 0.8
+    },
+    {
+      "v": "years",
+      "say": "Between us, two hundred and sixty-three years of this work.",
+      "screen": "263 YEARS",
+      "extra": 1.4
+    },
+    {
+      "v": "mix",
+      "say": "Eleven of us have been at it more than ten years. Three joined in the last three.",
+      "screen": "",
+      "extra": 1.6
+    },
+    {
+      "v": "rebuild",
+      "say": "And while all of that was happening, we rebuilt how this branch runs.",
+      "screen": ""
+    },
+    {
+      "v": "one",
+      "say": "One sign-in now, and every tool is behind it.",
+      "screen": "ONE SIGN-IN"
+    },
+    {
+      "v": "day",
+      "say": "The system sets your day before you're even up.",
+      "screen": "YOUR DAY, SET"
+    },
+    {
+      "v": "wall",
+      "say": "The wall shows the score, and everybody sees the same numbers.",
+      "screen": "ONE SCORE"
+    },
+    {
+      "v": "fy27",
+      "say": "FY27 is thirty days old, and every goal plan is in.",
+      "screen": "DAY 30"
+    },
+    {
+      "v": "gold",
+      "say": "The cracks are still there. We filled them with gold.",
+      "screen": "",
+      "extra": 1.2
+    },
+    {
+      "v": "better",
+      "say": "We're not going back to what this branch was. We're going somewhere better.",
+      "screen": ""
+    },
+    {
+      "v": "friday",
+      "say": "Friday. Twelve noon. Ninety minutes.",
+      "screen": "FRI 30 OCT"
+    },
+    {
+      "v": "yours",
+      "say": "Seventy-five of those minutes belong to you, not to me.",
+      "screen": "75 OF 90"
+    },
+    {
+      "v": "ask",
+      "say": "Three questions are already waiting for you. Answer one tonight.",
+      "screen": "ANSWER ONE"
+    },
+    {
+      "v": "rise",
+      "say": "We rise together.",
+      "screen": "",
+      "extra": 1.6
+    }
+  ]
+}
