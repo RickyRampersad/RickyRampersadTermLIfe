@@ -1264,6 +1264,13 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   body { background: #fff; color: #000; }
   a::after { content: ' (' attr(href) ')'; font-size: .85em; color: #555; }
 }
+/* the careers film, through the branch's own player */
+#careers .vwrap{--dp-accent:#00728d;position:relative;border-radius:var(--r,1rem);overflow:hidden;background:#14171E;aspect-ratio:16/9;box-shadow:var(--e3,0 18px 40px hsl(32deg 20% 42% / .18))}
+#careers .vwrap video{width:100%;height:100%;display:block;object-fit:contain;background:#14171E}
+#careers .vcover{position:absolute;inset:0;background-size:cover;background-position:center;display:grid;place-items:center;cursor:pointer;z-index:4}
+#careers .vcover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,23,30,.1),rgba(20,23,30,.55))}
+#careers .vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:.7rem;background:#fff;color:#14171E;border-radius:999px;padding:.85rem 1.4rem;font:600 1rem/1 var(--text);box-shadow:0 10px 30px rgba(4,14,26,.35)}
+#careers .vcover .pl svg{width:1.1rem;height:1.1rem}
 </style>
 </head>
 <body>
@@ -1784,6 +1791,13 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
     <p>Talent gets you in the game. The environment decides how far you go. Five seats this year: for advisors who are good at this and stuck where they are, and for people who want a career with no ceiling and are afraid of the first year. Both start with one confidential conversation.</p>
   </div>
 
+  <div class="vwrap wide" style="margin-bottom:var(--sp-xl)">
+    <video playsinline preload="none" poster="/agentmgt/trailer.jpg" data-scenes="8.9,15.1,13.2,13.1,9.4,12.6,10.2,4.3" data-chapters="A question|Not alone|Never from zero|Your rhythm|No ceiling|One conversation|Book it|The environment decides">
+      <source src="/agentmgt/trailer.mp4" type="video/mp4">
+    </video>
+    <div class="vcover" style="background-image:url(/agentmgt/trailer.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#14171E" aria-hidden="true" focusable="false"><path d="M7 4l13 8-13 8z"/></svg>Watch &middot; 1:27</div></div>
+  </div>
+
   <div class="g-2" style="gap:var(--sp-xl);align-items:start;margin-bottom:var(--sp-xl)">
     <figure class="card rise" style="padding:var(--sp-l)">
       <blockquote style="font-family:var(--display);font-size:var(--f-2);font-weight:500;color:var(--ink);letter-spacing:-.018em;line-height:1.35">
@@ -1813,10 +1827,10 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   </div>
 
   <div class="hero-cta">
-    <a class="btn btn-1 ext" href="https://wa.me/18686785821?text=Hi%20Mr%20Rampersad%2C%20I%27d%20like%20a%20confidential%2020-minute%20conversation%20about%20joining%20the%20branch." target="_blank" rel="noopener">Book a confidential conversation &mdash; 20 min</a>
+    <a class="btn btn-1" href="/careers/#talk">Book a confidential conversation &mdash; 20 min</a>
     <a class="btn btn-2" href="/careers/#apply">Start the selection &mdash; 2 min</a>
     <a class="btn btn-2" href="/careers/#quiz">Take the 60-second test</a>
-    <a class="btn btn-3" href="/careers/#film">Watch the film &middot; 1:27</a>
+    <a class="btn btn-3" href="/careers/#film">The whole journey &middot; 7:34</a>
     <a class="btn btn-3" href="/careers/#path">See the career path</a>
   </div>
   <p class="cc-n" style="margin-top:var(--sp-s)">Confidential for practising advisors &middot; reviewed within 48 hours &middot; newcomers fully trained &middot; everything is on one page: <a href="/careers/">rickyrampersadbranch.com/careers</a> &middot; applications are received through Guardian Life of the Caribbean.</p>
@@ -2304,6 +2318,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 }
 </script>
 
+<script src="/orphan-video/player.js" defer></script>
 <!-- rrb-views -->
 <script>
 (function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{

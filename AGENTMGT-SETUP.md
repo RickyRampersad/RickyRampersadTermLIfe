@@ -145,6 +145,22 @@ A square frame is "portrait" to the page's media query (height is not less than 
 the stylesheet comes after the portrait rules and only resizes what a square cannot hold. The bottom fifth of every
 frame stays clear: the mixer burns the captions there.
 
+## The conversation is booked on the page, never in another app
+
+Since 28 October 2026 ("book a call opens WhatsApp so remove this") every "Book a confidential conversation" button
+on the recruiting page, the homepage and `/careersvideo/` opens **`/careers/#talk`**: a form on the page (name, phone,
+e-mail, where they are now, the best time for the call, one optional line) that posts `q.quote` with the form key
+`careers` to the Service Questionnaire backend, the road the branch's own quote forms take. The backend files one row
+on the Quote Requests tab with a `QT-` reference, e-mails **the Branch Manager alone** (never the sales support inbox:
+the person may be contracted elsewhere today), and sends the person a confirmation that says Mr Rampersad reads it
+himself. If the backend cannot be reached inside 12 seconds, the page still shows a reference and opens the mail app
+addressed to him with the same details.
+
+**Paste `apps-script/Quotes.gs` into the Service Questionnaire project, put `TEAM_CODE` back in Service.gs if you
+paste that too, then Deploy → Manage deployments → pencil → New version.** Until the paste, the live backend answers
+"Unknown form" and every booking takes the mail-app road, which still reaches him. `?action=q.ping` lists `careers`
+among `forms` once the new version is live.
+
 ## The posts
 
 Two posts, one film, by the 27 October research (CLAUDE.md, "The reframe"): each names its reader in the first
