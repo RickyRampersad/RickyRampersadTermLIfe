@@ -132,6 +132,13 @@ const detail = (over = {}) => Object.assign({
     /Put it on the agenda/.test(await page.locator('#fl-go').innerText()),
     await page.locator('#fl-go').innerText());
   ok('the clip recorder is not offered before the meeting', await page.locator('#fl-rec').count() === 0);
+  /* 28 October 2026: "dont give the opportunity to say cannot attend". The card
+     states the three states instead: present, present but late, absent. */
+  const card = await page.locator('.checkin').first().innerText();
+  ok('the check-in card states the rule, with no way out of it',
+    /present but late/i.test(card) && /absent/i.test(card), card.replace(/\n+/g, ' | '));
+  ok('and offers no apology', !/cannot attend/i.test(card), card.replace(/\n+/g, ' | '));
+
   ok('it says the floor opens on the day',
     /floor opens on the day/i.test(await page.locator('#fl-body').locator('xpath=ancestor::div[contains(@class,"card")][1]').innerText()),
     await page.locator('#fl-body').locator('xpath=ancestor::div[contains(@class,"card")][1]').innerText());
@@ -203,6 +210,15 @@ const detail = (over = {}) => Object.assign({
   await page.waitForTimeout(500);
   ok('the pre-meeting box is gone once the register opens',
     await page.locator('#fl-agenda').count() === 0);
+
+  /* 28 October 2026: "dont give the opportunity to say cannot attend". Three
+     states a person can put themselves in, and only three. */
+  const txt = await page.locator('body').innerText();
+  ok('there is no way to say you cannot attend', !/cannot attend/i.test(txt),
+    (txt.match(/.{0,60}cannot attend.{0,60}/i) || [''])[0]);
+  ok('no apology button anywhere on the page',
+    await page.locator('[data-excuse]').count() === 0);
+
 
   /* ───────────── a phone ───────────── */
   console.log('\nON A PHONE');

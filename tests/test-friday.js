@@ -206,6 +206,46 @@ ok('what was brought in beforehand is reported on its own',
   st.earlyTotal === 1 && st.broughtIn.length === 1 && st.broughtIn[0].email === 'one@example.com',
   JSON.stringify({ earlyTotal: st.earlyTotal, broughtIn: st.broughtIn }));
 
+console.log('\nTHE REGISTER: PRESENT, LATE, OR ABSENT \u2014 AND NOTHING ELSE');
+/* 28 October 2026: "dont give the opportunity to say cannot attend ... if they log
+   in after the time it started they are present but late". */
+const start = env.atTime_(m['Date'], m['Start']);
+const at_ = (ms) => env.statusForNow_(m, new Date(start.getTime() + ms));
+ok('on the minute is present', at_(0).status === 'present', JSON.stringify(at_(0)));
+ok('half a minute before is present', at_(-30000).status === 'present');
+ok('thirty seconds after it starts is LATE, not rounded down to present',
+  at_(30000).status === 'late', JSON.stringify(at_(30000)));
+ok('and it is never written down as nought minutes late', at_(30000).late >= 1, at_(30000).late);
+ok('one minute after is late, by one', at_(60000).status === 'late' && at_(60000).late === 1,
+  JSON.stringify(at_(60000)));
+ok('twenty minutes after is late, by twenty',
+  at_(20 * 60000).status === 'late' && at_(20 * 60000).late === 20, JSON.stringify(at_(20 * 60000)));
+ok('the meeting carries no grace', env.num_(m['Late After (min)']) === 0, m['Late After (min)']);
+ok('and the branch default is none either', env.MEET.LATE_AFTER_MINUTES === 0,
+  env.MEET.LATE_AFTER_MINUTES);
+
+/* An explicit 0 in the cell used to be thrown away by `num_(cell) || DEFAULT`,
+   so a meeting set to no grace quietly kept the branch default. */
+const withGrace = Object.assign({}, m); withGrace['Late After (min)'] = 15;
+ok('a meeting may still carry its own grace',
+  env.statusForNow_(withGrace, new Date(start.getTime() + 10 * 60000)).status === 'present');
+ok('and ten past is late once that grace runs out',
+  env.statusForNow_(withGrace, new Date(start.getTime() + 16 * 60000)).status === 'late');
+const noCell = Object.assign({}, m); noCell['Late After (min)'] = '';
+ok('an empty cell falls back to the branch default, an explicit 0 does not',
+  env.statusForNow_(noCell, new Date(start.getTime() + 60000)).status === 'late');
+
+ok('nobody can excuse themselves any more',
+  env.apiExcuse_({ token: tOne, meetingId: MID, reason: 'Client appointment' }).ok === false);
+ok('and it says what to do instead',
+  /only branch staff can record an apology/i.test(
+    String(env.apiExcuse_({ token: tOne, meetingId: MID, reason: 'Client appointment' }).error)));
+ok('no excused row was written',
+  rows('TAB_ATTENDANCE').filter(a => env.low_(a['Status']) === 'excused').length === 0);
+/* Staff recording an apology on somebody's behalf is a different thing, and stays. */
+ok('branch staff can still record one on somebody\u2019s behalf',
+  typeof env.apiMarkAttendance_ === 'function');
+
 Date.now = REAL_NOW;
 console.log('\n' + (fails ? fails + ' FAILED' : 'all passing'));
 process.exit(fails ? 1 : 0);

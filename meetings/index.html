@@ -884,19 +884,18 @@ function nextMeetingBlock(m) {
     return head + '<div class="checkin">' +
       "<h2>Are you here?</h2>" +
       "<p>Pressing this puts you on the attendance register for this meeting, " +
-      "time-stamped. There is nothing else to sign. If you do not sign in, you are marked absent.</p>" +
+      "time-stamped. There is nothing else to sign. Sign in after the meeting has " +
+      "started and you are recorded present but late. Do not sign in at all and you " +
+      "are absent.</p>" +
       '<button class="btn big-btn" data-checkin="' + esc(m.id) + '">✓ &nbsp;I am here</button>' +
-      '<div class="btn-row" style="justify-content:center;margin-top:10px">' +
-      '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button></div>' +
       '<div class="hint" style="text-align:center">Check-in closes ' + esc(m.checkInClosesAt) + "</div></div>";
   }
 
   return head + '<div class="checkin shut">' +
     "<h2>Check-in opens " + esc(m.checkInOpensAt || "closer to the time") + "</h2>" +
-    "<p>Come back then and sign in — that is the register, and not signing in is recorded as absent. " +
-    "If you cannot attend, log it now so the reason is on the record.</p>" +
+    "<p>Come back then and sign in — that is the register. Signing in after the meeting " +
+    "has started is recorded present but late, and not signing in at all is absent.</p>" +
     '<div class="btn-row" style="justify-content:center">' +
-    '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button>' +
     '<button class="btn teal auto" data-open="' + esc(m.id) + '">Open the meeting</button></div></div>';
 }
 
@@ -1485,8 +1484,8 @@ function checkinBlock(m) {
       ". If you were there and did not log in, ask branch staff to correct the register.</p></div>";
   }
   return '<div class="checkin shut"><h2>Check-in opens ' + esc(m.checkInOpensAt) + "</h2>" +
-    "<p>Sign in when the meeting starts. If you cannot attend, log it now.</p>" +
-    '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button></div>';
+    "<p>Sign in when the meeting starts. After it has started you are present but late; " +
+    "no sign-in at all is absent.</p></div>";
 }
 
 function agendaRow(a) {

@@ -135,7 +135,9 @@ var FRIDAY = {
    *  hour to arrive and be counted before the clock starts.      */
   CHECKIN_OPENS: '11:30 AM',
   CHECKIN_CLOSES: '1:30 PM',
-  LATE_AFTER: 10,
+  /*  No grace: twelve means twelve. Sign in after it starts and the
+   *  register says present but late. */
+  LATE_AFTER: 0,
 
   /*  What a person is asked to answer. Three, not nine: more than
    *  two or three open-ended questions is answered worse, not more. */

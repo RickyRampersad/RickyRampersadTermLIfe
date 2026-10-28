@@ -99,10 +99,20 @@ var MEET = {
   MAX_ATTEMPTS: 5,
   LOCKOUT_MINUTES: 15,
 
-  /* A sign-in this many minutes after the start time is recorded
-     as Late rather than Present. Per-meeting override lives on
-     the Meetings tab. */
-  LATE_AFTER_MINUTES: 10,
+  /*  A sign-in this many minutes after the start time is recorded as
+   *  Late rather than Present.
+   *
+   *  ZERO SINCE 28 OCTOBER 2026, at the branch manager's word: "if they
+   *  log in after the time it started they are present but late". There
+   *  is no grace. A meeting that starts at twelve starts at twelve, and
+   *  ten minutes of grace is ten minutes the people who were on time
+   *  spend waiting.
+   *
+   *  It is still a per-meeting override on the Meetings tab, so a
+   *  meeting that genuinely needs a few minutes can carry them in its
+   *  own `Late After (min)` cell without changing this rule for every
+   *  other one. */
+  LATE_AFTER_MINUTES: 0,
 
   /* Check-in opens this long before the start time by default. */
   CHECKIN_OPENS_BEFORE: 30,
@@ -1124,9 +1134,24 @@ function checkinWindow_(m) {
 function statusForNow_(m, when) {
   var w = checkinWindow_(m);
   if (!w.start) return { status: 'present', late: 0 };
-  var grace = num_(m['Late After (min)']) || MEET.LATE_AFTER_MINUTES;
-  var lateBy = Math.round((when.getTime() - w.start.getTime()) / 60000);
-  if (lateBy > grace) return { status: 'late', late: lateBy };
+
+  /*  AN EXPLICIT ZERO IS NOT AN EMPTY CELL. `num_(cell) || DEFAULT`
+   *  throws a deliberate 0 away and hands back the default instead,
+   *  which is how a meeting set to no grace would quietly keep ten
+   *  minutes of it. Empty means "use the branch default"; a number,
+   *  zero included, means that number. */
+  var cell = str_(m['Late After (min)']);
+  var grace = cell === '' ? MEET.LATE_AFTER_MINUTES : num_(cell);
+
+  /*  Decided on the clock, in milliseconds, not on a rounded count of
+   *  minutes: with no grace, a sign-in at 12:00:30 is after a meeting
+   *  that started at 12:00, and rounding would have called it present.
+   *  The minutes are only how it is written down afterwards, and they
+   *  never read zero on a late row. */
+  var byMs = when.getTime() - w.start.getTime();
+  if (byMs > grace * 60000) {
+    return { status: 'late', late: Math.max(1, Math.round(byMs / 60000)) };
+  }
   return { status: 'present', late: 0 };
 }
 
@@ -1580,7 +1605,36 @@ function apiCheckIn_(body) {
  *  refused rather than quietly stored, because the whole point of
  *  the list is that every apology lands in a box the wall can count.
  */
+/*  NOBODY EXCUSES THEMSELVES, SINCE 28 OCTOBER 2026.
+ *
+ *  Asked for in these words: "dont give the opportunity to say cannot
+ *  attend". The register now has three states a person can put
+ *  themselves in, and only three: present, present but late, and
+ *  absent for not signing in. An apology a person files for themselves
+ *  is the fourth, and it is the one that empties a room — it costs
+ *  nothing to file and it reads on the register as though it were
+ *  settled.
+ *
+ *  The route is kept and refuses, rather than being deleted, because a
+ *  browser holding an older copy of the page would otherwise post into
+ *  nothing and show the person a success they did not get.
+ *
+ *  Staff can still record an apology on someone's behalf through the
+ *  register (apiMarkAttendance_). That is a different thing: a manager
+ *  deciding that approved leave is not an absence, with their name
+ *  against the decision.                                            */
 function apiExcuse_(body) {
+  requireUser_(body.token);
+  return { ok: false, excuseClosed: true,
+           error: 'Sign in on the day \u2014 that is the register. Signing in after the ' +
+                  'meeting has started is recorded present but late. If you genuinely ' +
+                  'cannot be there, speak to the branch manager: only branch staff can ' +
+                  'record an apology.' };
+}
+
+/*  The old self-service apology, kept for the record of what it did and
+ *  for the day somebody asks for it back. It is not routed.         */
+function apiExcuseRetired_(body) {
   var me = requireUser_(body.token);
   var m = findMeeting_(body.meetingId);
   if (!m) return { ok: false, error: 'That meeting no longer exists.' };
