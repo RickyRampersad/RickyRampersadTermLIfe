@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-27i';
+var SCRIPT_VERSION = '2026-10-28a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3782,10 +3782,12 @@ function housekeepingTick_() {
   if (mins >= BM_DEEP.AT && mins < MORNING_MAIL_AT) {
     var dp = PropertiesService.getScriptProperties(), dday = todayISO_();
     if (dp.getProperty('bmdeep_' + dday) !== '1') { dp.setProperty('bmdeep_' + dday, '1'); try { runlog_('deep drafts 4:40: ' + bmDeepWarm_(dday, BM_DEEP.BUDGET_MS)); } catch (e) { try { runlog_('deep drafts failed: ' + (e && e.message)); } catch (e2) {} } }
-    // The next run (4:50): the night's mail scrubbed, and Claude reviews every inbox item, ready for the 5:00 mail (23 Oct 2026).
+    // The next run (4:50): the night's mail scrubbed, and yesterday's reviews of mail still open carried into today (28 Oct 2026).
+    // Claude's review of what is new runs from 5:00 in runs of its own: in this run, after the scrub, it ran Apps Script's six
+    // minutes out and nothing it wrote was kept, and My day opened at 6:03 with every item "not reviewed".
     else if (dp.getProperty('ixdeep_' + dday) !== '1') { dp.setProperty('ixdeep_' + dday, '1');
       try { inboxScrub_(dday, 'pre'); } catch (e) { try { runlog_('inbox scrub 4:50 failed: ' + (e && e.message)); } catch (e2) {} }
-      try { runlog_('inbox review 4:50: ' + ixDeepWarm_(dday, BM_DEEP.BUDGET_MS)); } catch (e) { try { runlog_('inbox review failed: ' + (e && e.message)); } catch (e2) {} } }
+      try { var cn = ixDeepCarryNow_(dday); if (cn) runlog_('inbox reviews carried from yesterday: ' + cn); } catch (e) {} }
     return '';
   }
   if (mins < MORNING_MAIL_AT || mins > 19 * 60) return '';
@@ -3903,10 +3905,11 @@ function housekeepingTick_() {
   // Once a day, the working copies older than three weeks are dropped (20 Oct 2026).
   if (props.getProperty('sd_prune') !== day) { props.setProperty('sd_prune', day); try { sdPrune_(day); } catch (e) {} }
   // His inbox and his day's log, every hour of his day (20 Oct 2026): what came in, what he answered, what he did in Salesforce.
+  var scrubRan = false;
   if (inboxOn_() && mins >= INBOX.REFRESH_FROM && mins <= INBOX.REFRESH_TO && !late()) {
     var inboxHr = day + '_' + Math.floor(mins / 60);
     if (props.getProperty('inbox_hr') !== inboxHr) {
-      props.setProperty('inbox_hr', inboxHr);
+      props.setProperty('inbox_hr', inboxHr); scrubRan = true;
       try { inboxScrub_(day, 'hour'); } catch (e) {}
       try { dayLogSalesforce_(day); } catch (e) {}
     }
@@ -3924,14 +3927,13 @@ function housekeepingTick_() {
       try { var dn = bmDeepWarm_(day, Math.min(BM_DEEP.HOUR_BUDGET_MS, Math.max(30000, HK_BUDGET_MS - (Date.now() - t0) - 20000))); runlog_('deep drafts ' + aiHr + ': ' + dn + ' in ' + Math.round((Date.now() - w0) / 1000) + 's'); } catch (e) { try { runlog_('deep drafts failed: ' + (e && e.message)); } catch (e2) {} }
     }
   }
-  // 23 Oct 2026: Claude's review of the inbox gets its own run each hour at :35, after the scrub and the deep drafts, never in the same run as them.
-  if (!aiRan && inboxOn_() && mins >= INBOX.REFRESH_FROM && mins <= INBOX.REFRESH_TO + 45 && (mins % 60) >= IX_DEEP.SLOT_MIN && !late()) {
-    var ixHr = day + '_' + Math.floor(mins / 60);
-    if (props.getProperty('ixai_hr') !== ixHr) {
-      props.setProperty('ixai_hr', ixHr);
-      var x0 = Date.now();
-      try { var xn = ixDeepWarm_(day, Math.min(IX_DEEP.BUDGET_MS, Math.max(30000, HK_BUDGET_MS - (Date.now() - t0) - 20000))); runlog_('inbox review ' + ixHr + ': ' + xn + ' in ' + Math.round((Date.now() - x0) / 1000) + 's'); } catch (e) { try { runlog_('inbox review failed: ' + (e && e.message)); } catch (e2) {} }
-    }
+  // Claude's review of the inbox: any run with mail it has not reviewed, from 5:00 to 7pm, never in the same run as the scrub or the
+  // deep drafts (28 Oct 2026; it was once an hour at :35, from 6:35, so the night's mail waited until then). Small waves, each
+  // kept as it lands, so a run that reaches its time keeps what it did. A run with nothing new costs one read of the list.
+  if (!aiRan && !scrubRan && inboxOn_() && mins >= IX_DEEP.FROM && mins <= IX_DEEP.TO && !late()) {
+    var x0 = Date.now();
+    try { var xn = ixDeepWarm_(day, Math.min(IX_DEEP.BUDGET_MS, Math.max(30000, HK_BUDGET_MS - (Date.now() - t0) - 20000)), { parallel: IX_DEEP.TICK_PARALLEL });
+      if (xn) runlog_('inbox review ' + hhmm_(new Date()) + ': ' + xn + ' in ' + Math.round((Date.now() - x0) / 1000) + 's'); } catch (e) { try { runlog_('inbox review failed: ' + (e && e.message)); } catch (e2) {} }
   }
   // The game, every hour of the working day; Wednesday 7:00 the awards for the 9:00 branch meeting (21 Oct 2026).
   if (!late()) try { gameTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {}
@@ -6013,6 +6015,21 @@ function inboxMailSection_(v, which, day) {
       (shown.length ? shown.map(row).join('') : '<div style="font-size:13px;color:' + MAIL.green + ';padding:4px 0">All dealt with.</div>') +
       (open.length > INBOX.SHOW ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (open.length - INBOX.SHOW) + ' more on My branch.</div>' : '') + '</div>' + foot;
 }
+/** Claude's review of one inbox item on My day: what it found, the note in the box, the desk to post to. The page builds it, and
+ *  so does the review started when the page opens (ixReviewNow), which fills the item in place (28 Oct 2026). */
+function ixReviewHtml_(x, d, day, desks) {
+  var to = d.to || inboxOwnerSid_(x.owner) || 'ricky', k = x.k;
+  var deskSel = function (name, pick) { return '<select name="' + name + '_' + esc_(k) + '" style="flex:1;min-width:0;margin:0">' + (desks || []).map(function (t) { return '<option value="' + esc_(t.sid) + '"' + (t.sid === pick ? ' selected' : '') + '>' + esc_(t.sid === 'ricky' ? 'Me' : String(t.name).split(' ')[0]) + '</option>'; }).join('') + '</select>'; };
+  return '<div style="background:#F3F7FF;border-left:3px solid #3557A8;border-radius:6px;padding:8px 10px;margin:8px 0 6px;font-size:13.5px;line-height:1.5">' +
+      '<b style="color:#3557A8">Claude reviewed it' + (IX_DEEP.ACT[d.action] ? ' · ' + esc_(IX_DEEP.ACT[d.action]) : '') + '</b>' +
+      (d.done ? '<div style="margin-top:3px"><b>Done so far:</b> ' + esc_(d.done) + '</div>' : '') +
+      (d.read ? '<div style="margin-top:3px"><b>Where it stands:</b> ' + esc_(d.read) + '</div>' : '') +
+      '<div style="margin-top:3px"><b>Follow-up:</b> ' + esc_(ixFollow_(d, x, day, to)) + '</div>' +
+      (d.check && d.check.length ? '<div style="margin-top:3px;color:#4A5160"><b>Check first:</b> ' + d.check.map(esc_).join(' · ') + '</div>' : '') + '</div>' +
+    '<div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label style="display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;flex:none"><input type="checkbox" name="ixp_' + esc_(k) + '" value="1" style="width:22px;height:22px;margin:0"> Post Claude\'s note to</label>' + deskSel('ixpw', to) + '</div>' +
+    '<textarea name="ixpt_' + esc_(k) + '" rows="4" style="margin:0 0 4px">' + esc_(d.post) + '</textarea>' +
+    '<div class="br2" style="margin:0 0 8px">Change the words if you like. It goes on the open task when that desk holds it; otherwise it opens a task for the desk you choose, with the note on its Chatter.</div>';
+}
 /** The inbox on My branch's Today tab: each with a Done tick, make it a task, and a note. */
 function inboxCard_(m, num) {
   var v = m.inbox; if (!v || !v.on) return '';
@@ -6020,20 +6037,8 @@ function inboxCard_(m, num) {
   var day = m.day, ag = { now: 'r', today: 'a', later: '' }, lab = { now: 'Now', today: 'Today', later: 'Later' };
   var desks = []; try { desks = cmdTargets_(); } catch (e) {}
   var deep = v.deep || {}, keyOn = false; try { keyOn = !!String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); } catch (e) {}
-  var deskSel = function (name, k, pick) { return '<select name="' + name + '_' + esc_(k) + '" style="flex:1;min-width:0;margin:0">' + desks.map(function (t) { return '<option value="' + esc_(t.sid) + '"' + (t.sid === pick ? ' selected' : '') + '>' + esc_(t.sid === 'ricky' ? 'Me' : String(t.name).split(' ')[0]) + '</option>'; }).join('') + '</select>'; };
   // 23 Oct 2026: Claude's review of the item, its note in the box and the desk chosen; one tick posts it (ixDeepWarm_, inboxSave_).
-  var review = function (x, d) {
-    var to = d.to || inboxOwnerSid_(x.owner) || 'ricky', k = x.k;
-    return '<div style="background:#F3F7FF;border-left:3px solid #3557A8;border-radius:6px;padding:8px 10px;margin:8px 0 6px;font-size:13.5px;line-height:1.5">' +
-        '<b style="color:#3557A8">Claude reviewed it' + (IX_DEEP.ACT[d.action] ? ' · ' + esc_(IX_DEEP.ACT[d.action]) : '') + '</b>' +
-        (d.done ? '<div style="margin-top:3px"><b>Done so far:</b> ' + esc_(d.done) + '</div>' : '') +
-        (d.read ? '<div style="margin-top:3px"><b>Where it stands:</b> ' + esc_(d.read) + '</div>' : '') +
-        '<div style="margin-top:3px"><b>Follow-up:</b> ' + esc_(ixFollow_(d, x, day, to)) + '</div>' +
-        (d.check && d.check.length ? '<div style="margin-top:3px;color:#4A5160"><b>Check first:</b> ' + d.check.map(esc_).join(' · ') + '</div>' : '') + '</div>' +
-      '<div style="display:flex;gap:8px;align-items:center;margin:6px 0"><label style="display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;flex:none"><input type="checkbox" name="ixp_' + esc_(k) + '" value="1" style="width:22px;height:22px;margin:0"> Post Claude\'s note to</label>' + deskSel('ixpw', k, to) + '</div>' +
-      '<textarea name="ixpt_' + esc_(k) + '" rows="4" style="margin:0 0 4px">' + esc_(d.post) + '</textarea>' +
-      '<div class="br2" style="margin:0 0 8px">Change the words if you like. It goes on the open task when that desk holds it; otherwise it opens a task for the desk you choose, with the note on its Chatter.</div>';
-  };
+  var review = function (x, d) { return ixReviewHtml_(x, d, day, desks); };
   var item = function (x) {
     var hasTask = !!x.task, ownerSid = inboxOwnerSid_(x.owner), d = deep[x.k];
     return '<details class="it" id="x' + esc_(x.k) + '"><summary><div class="hd"><span class="age ' + ag[x.u] + '">' + lab[x.u] + '</span>' +
@@ -6044,7 +6049,7 @@ function inboxCard_(m, num) {
       (x.link ? '<div class="ln"><a href="' + esc_(x.link) + '" target="_blank" rel="noopener" style="font-weight:800">Open the mail &rarr;</a></div>' : '') +
       (hasTask ? '<div class="ln"><span class="badge a">task open' + (x.owner !== 'Ricky' ? ' · ' + esc_(x.owner) : '') + '</span></div>' : '') +
       (x.note ? '<div class="br2" style="margin-top:2px">Your note: ' + esc_(x.note) + '</div>' : '') +
-      (d && d.post ? review(x, d) : keyOn ? '<div class="br2" style="margin-top:6px;color:#6A7180">Claude has not reviewed this one yet: it does at 4:50 and at :35 each hour.</div>' : '') +
+      (d && d.post ? review(x, d) : keyOn ? '<div class="br2 ixwait" data-k="' + esc_(x.k) + '" style="margin-top:6px;color:#6A7180">Claude is reviewing this one now: the note appears here in a minute or two.</div>' : '') +
       '<label style="display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;margin:10px 0 6px"><input type="checkbox" name="ixd_' + esc_(x.k) + '" value="1" style="width:22px;height:22px;margin:0;flex:none"> Done: dealt with</label>' +
       (hasTask || (d && d.post) ? '' : '<div style="display:flex;gap:8px;align-items:center;margin:0 0 6px"><label style="display:flex;gap:8px;align-items:center;font-size:14px;flex:none"><input type="checkbox" name="ixt_' + esc_(x.k) + '" value="1" style="width:22px;height:22px;margin:0"> Make it a task for</label>' +
         '<select name="ixw_' + esc_(x.k) + '" style="flex:1;min-width:0;margin:0">' + desks.map(function (t) { return '<option value="' + esc_(t.sid) + '"' + (t.sid === (ownerSid || 'ricky') ? ' selected' : '') + '>' + esc_(t.sid === 'ricky' ? 'Me' : String(t.name).split(' ')[0]) + '</option>'; }).join('') + '</select></div>') +
@@ -6081,7 +6086,7 @@ function inboxSave_(sid, day, p, head, name) {
     var post = String(p['ixp_' + it.k] || '') === '1', ptext = String(p['ixpt_' + it.k] || '').trim(), pwho = String(p['ixpw_' + it.k] || '');
     if (!done && !task && !note && !(post && ptext)) return;
     var label = 'Inbox · ' + it.f + ' · ' + shorten_(it.s, 60), r = rows[it.k];
-    if (!r) { out.push({ s: label, res: 'NOT SAVED: no longer on the Inbox Scrub tab' }); return; }
+    if (!r) { out.push({ s: label, res: 'NOT SAVED: no longer on the Inbox Scrub tab', k: it.k }); return; }
     var set = {}, parts = [];
     if (note) { set.Note = note; parts.push('note kept'); }
     // 23 Oct 2026: Claude's note, ticked: on the open task when that desk holds it, else a new task for the desk chosen, due when Claude said.
@@ -6106,7 +6111,7 @@ function inboxSave_(sid, day, p, head, name) {
     }
     if (done) { set.Status = 'done'; set.DoneAt = inboxStamp_(Date.now()); set.By = 'ticked'; parts.push('dealt with'); }
     try { inboxSet_(r._row, set); } catch (e) { parts.push('NOT SAVED: ' + String(e && e.message || e).slice(0, 80)); }
-    out.push({ s: label, res: parts.join(' · ') });
+    out.push({ s: label, res: parts.join(' · '), k: it.k, f: ['ixd_' + it.k, 'ixt_' + it.k, 'ixn_' + it.k, 'ixp_' + it.k] });
   });
   return out;
 }
@@ -6128,9 +6133,28 @@ function inboxSave_(sid, day, p, head, name) {
  *  Claude says (ixOpensTask_). Nothing posts or opens without his tick.
  */
 var IX_DEEP = { MAX: 24, BATCH: 4, PARALLEL: 5, THREAD: 4, NOTES: 15, NOTE_LEN: 400, OTHER_MAIL: 3, MAX_TOKENS: 3200, BUDGET_MS: 150000, SLOT_MIN: 35, DUE_MAX: 5,
+  CARRY_DAYS: 4, FROM: 5 * 60, TO: 19 * 60, TICK_PARALLEL: 3, BUSY_SEC: 360, NOW_BUDGET_MS: 240000,
   ACT: { post: 'Post the note', task: 'Open a task', call: 'Call', reply: 'Reply to the mail', decide: 'Your decision', close: 'Already dealt with', wait: 'Wait' } };
 function ixDeepKey_(day) { return 'ix_deep_' + day; }
-function ixDeepGet_(day) { try { return bigGet_(ixDeepKey_(day), {}) || {}; } catch (e) { return {}; } }
+function ixDeepGet_(day) {
+  var have = {}; try { have = bigGet_(ixDeepKey_(day), {}) || {}; } catch (e) { have = {}; }
+  // Yesterday's review of a mail still open is still good (28 Oct 2026: My day opened at 6:03 with every carried item "not reviewed",
+  // because each day began with an empty store). ixDeepWarm_ re-reviews any whose mail, task or status has moved since (the stamp).
+  for (var i = 1; i <= IX_DEEP.CARRY_DAYS; i++) {
+    var old = null; try { old = bigGet_(ixDeepKey_(shiftDays_(day, -i)), null); } catch (e) { old = null; }
+    if (old) Object.keys(old).forEach(function (k) { if (!have[k]) have[k] = old[k]; });
+  }
+  return have;
+}
+/** Today's store with the carried reviews written into it, before the morning's tidy drops the old days. */
+function ixDeepCarryNow_(day) {
+  var mine = {}; try { mine = bigGet_(ixDeepKey_(day), {}) || {}; } catch (e) { mine = {}; }
+  var all = ixDeepGet_(day), open = {}, n = 0;
+  try { (inboxView_(day).open || []).forEach(function (x) { open[x.k] = 1; }); } catch (e) { open = null; }
+  Object.keys(all).forEach(function (k) { if (!mine[k] && (!open || open[k])) { mine[k] = all[k]; n++; } });
+  if (n) { try { bigPut_(ixDeepKey_(day), mine); } catch (e) {} }
+  return n;
+}
 /** The mail's own conversation in Gmail, the last few messages oldest first: who wrote, when, and what (the replies too). */
 function ixThread_(link, day) {
   var m = String(link || '').match(/#[a-z]+\/([A-Za-z0-9]+)/), msgs = [];
@@ -6199,19 +6223,27 @@ function ixDeepRead_(res, keys, deskIds) {
   return out;
 }
 /** Reviews (and keeps for the day) each open inbox item not yet reviewed today, or with a new message, a task or a new status since. Returns how many it wrote. */
-function ixDeepWarm_(day, budgetMs) {
+function ixDeepWarm_(day, budgetMs, opts) {
+  opts = opts || {};
   var t0 = Date.now(), key = ''; try { key = String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); } catch (e) {}
   if (!key || !inboxOn_()) return 0;
   var v = null; try { v = inboxView_(day); } catch (e) {}
   if (!v || !v.open || !v.open.length) return 0;
   var have = ixDeepGet_(day), stamp = function (x) { return String(x.at || '') + '|' + String(x.task || '') + '|' + String(x.status || ''); };
+  // Only what is on the list today is kept: the carried days' reviews of mail since dealt with are dropped, so the store stays small.
+  var onList = {}; (v.items || v.open).forEach(function (x) { onList[x.k] = 1; });
+  Object.keys(have).forEach(function (k) { if (!onList[k]) delete have[k]; });
   var need = v.open.slice(0, IX_DEEP.MAX).filter(function (x) { return !have[x.k] || have[x.k].n !== stamp(x); });
-  if (!need.length) return 0;
+  if (!need.length) { if (opts.keep) { try { bigPut_(ixDeepKey_(day), have); } catch (e) {} } return 0; }
+  // One review at a time, whether the clock started it or the page did (28 Oct 2026).
+  var cache = CacheService.getScriptCache(), busyKey = 'ix_busy_' + day;
+  if (cache.get(busyKey) && !opts.force) return 0;
+  try { cache.put(busyKey, String(Date.now()), IX_DEEP.BUSY_SEC); } catch (e) {}
   var users = {}; try { users = sfkUsers_() || {}; } catch (e) {}
   var desks = []; try { desks = cmdTargets_().map(function (t) { return { id: t.sid, name: String(t.name) }; }); } catch (e) {}
   var deskIds = desks.map(function (d) { return d.id; });
   var sidOf = function (id) { var hit = ''; Object.keys(users).forEach(function (s) { if (!hit && users[s] && String(users[s].id) === String(id)) hit = s; }); return hit; };
-  var rows = bmDeepRows_(day), done = 0, wave = IX_DEEP.BATCH * IX_DEEP.PARALLEL;
+  var rows = bmDeepRows_(day), done = 0, wave = IX_DEEP.BATCH * (opts.parallel || IX_DEEP.PARALLEL);
   for (var i = 0; i < need.length && Date.now() - t0 < (budgetMs || IX_DEEP.BUDGET_MS); i += wave) {
     var part = need.slice(i, i + wave), meta = {};
     var prep = part.map(function (x) {
@@ -6249,13 +6281,32 @@ function ixDeepWarm_(day, budgetMs) {
     });
     try { bigPut_(ixDeepKey_(day), have); } catch (e) {}
   }
+  try { cache.remove(busyKey); } catch (e) {}
   return done;
+}
+/** From the page (google.script.run), when My day opens with items Claude has not reviewed: review them now and hand back each
+ *  one's review, built as the page builds it, to put in place. A review already running answers busy, and the page asks again. */
+function ixReviewNow(o) {
+  o = o || {}; var sid = String(o.rs || ''), day = todayISO_();
+  if (sid !== 'ricky' || String(o.f || '') !== 'unit' || String(o.k || '') !== unitSig_(sid)) return { ok: false, msg: 'This page has expired: open My day again.' };
+  var keys = (Array.isArray(o.keys) ? o.keys : []).map(String).slice(0, 60), n = 0, busy = false;
+  if (!o.peek) {
+    if (CacheService.getScriptCache().get('ix_busy_' + day)) busy = true;
+    else { try { n = ixDeepWarm_(day, IX_DEEP.NOW_BUDGET_MS); } catch (e) { try { runlog_('inbox review from the page failed: ' + (e && e.message)); } catch (e2) {} } }
+  }
+  var v = null; try { v = inboxView_(day); } catch (e) { return { ok: false, msg: 'The inbox could not be read just now.' }; }
+  var desks = []; try { desks = cmdTargets_(); } catch (e) {}
+  var byK = {}; v.items.forEach(function (x) { byK[x.k] = x; });
+  var html = {}, left = 0;
+  keys.forEach(function (k) { var x = byK[k], d = (v.deep || {})[k]; if (!x) return; if (d && d.post) html[k] = ixReviewHtml_(x, d, day, desks); else left++; });
+  try { if (n) runlog_('inbox review from the page: ' + n); } catch (e) {}
+  return { ok: true, html: html, left: left, busy: busy, n: n };
 }
 /** From the editor: Claude reviews every open inbox item now, without waiting for the hour (23 Oct 2026). */
 function reviewMyInboxNow() {
   var day = todayISO_(), t0 = Date.now(), n = 0;
   try { inboxScrub_(day, 'now'); } catch (e) { Logger.log('The scrub failed: ' + (e && e.message)); }
-  try { n = ixDeepWarm_(day, 300000 - (Date.now() - t0)); } catch (e) { Logger.log('The review failed: ' + (e && e.message)); }
+  try { n = ixDeepWarm_(day, 300000 - (Date.now() - t0), { force: true }); } catch (e) { Logger.log('The review failed: ' + (e && e.message)); }
   var held = Object.keys(ixDeepGet_(day)).length;
   var m = 'Inbox review: ' + n + ' reviewed just now, ' + held + ' held for today. Took ' + Math.round((Date.now() - t0) / 1000) + 's. Open My day.';
   Logger.log(m); return m;
@@ -7216,6 +7267,7 @@ function sdSave_(person, day, p, all) {
 /** Once a day: drop the morning's working copies (models, targets, choices, mail marks) older than three weeks.
  *  Nothing reads them after the next day; left alone they fill the script's property store. */
 function sdPrune_(day) {
+  try { ixDeepCarryNow_(day); } catch (e) {}   // yesterday's reviews of mail still open, into today's, before they go (28 Oct 2026)
   var n0 = 0; try { n0 = storeRelief_(day, false); } catch (e) {}   // the AI reviews and big day caches first (26 Oct 2026)
   var props = PropertiesService.getScriptProperties(), cut = shiftDays_(day, -STORE.LONG_DAYS), n = n0;
   var keys = typeof props.getKeys === 'function' ? props.getKeys() : Object.keys(props.getProperties());
@@ -7937,7 +7989,7 @@ function gameBmSave_(day, p, name) {
     try {
       gameLogAdd_({ Kind: 'idea', StaffId: x.sid, Text: x.s, Status: 'accepted', DecidedOn: day, Ref: x.id });
       try { sfkInsert_('FeedItem', { ParentId: x.id, Body: 'IDEA ACCEPTED · ' + shortDate_(day) + '. ' + (name || 'Mr Rampersad') + ' accepted this idea: +' + GAME.PTS.idea + ' on your game. Take it forward and show where it stands at Wednesday\'s branch meeting.' }); } catch (e) {}
-      out.push({ s: gameFirst_(x.sid) + '\'s idea · ' + shorten_(x.s, 60), res: 'accepted, +' + GAME.PTS.idea });
+      out.push({ s: gameFirst_(x.sid) + '\'s idea · ' + shorten_(x.s, 60), res: 'accepted, +' + GAME.PTS.idea, f: ['gia_' + x.id] });
     } catch (e) { out.push({ s: shorten_(x.s, 60), res: 'NOT SAVED: ' + String(e && e.message || e).slice(0, 80) }); }
   });
   if (out.length) gameForget_(day);
@@ -11544,12 +11596,12 @@ function unitPage_(person, day, error, notice, view) {
   return replyPage_((bm ? 'My branch · ' : 'My unit · ') + prettyDate_(day), bm ? 'Check in, then work down the page: urgent, drafts, your inbox, what is important. Everything you do is kept in Today so far. The same link every day.' : 'Keep this link on your home screen. It is the same every day. Nothing here needs a Salesforce login.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') +
     (bm ? '' : bar + brief + firstCard) +
-    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top" id="ufm">' +
       '<input type="hidden" name="rs" value="' + esc_(sid) + '"><input type="hidden" name="f" value="unit"><input type="hidden" name="k" value="' + esc_(unitSig_(sid)) + '">' +
-      (bm ? bmdCheckin_(m, nowM, sp) : '') + body + '<button type="submit">Save</button></form>' + js);
+      (bm ? bmdCheckin_(m, nowM, sp) : '') + body + '<div id="usaved"></div><button type="submit" id="usave">Save</button></form>' + js + UNIT_SAVE_JS + (bm ? IX_WAIT_JS : ''));
 }
 
-function unitSave_(person, day, p) {
+function unitSave_(person, day, p, quick) {
   var sid = String(person.staffId), name = nameFor_(sid), at = hhmm_(new Date()), out = [], posted = 0;
   var head = unitRole_(sid) + ' · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at);
   // Everything the Branch Manager does here goes on his day's log, under its task type (My day, 20 Oct 2026).
@@ -11564,7 +11616,7 @@ function unitSave_(person, day, p) {
     var res = 'posted';
     try { mgrPost_({ ParentId: it.id, Body: head + '\n\n' + txt }, sid); posted++; logA('note', '', 'Note on ' + it.s, 'pg:' + it.id + ':' + stamp); }
     catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
-    out.push({ s: (it.a ? String(it.a).split(' ')[0] + ' · ' : '') + it.s, res: res });
+    out.push({ s: (it.a ? String(it.a).split(' ')[0] + ' · ' : '') + it.s, res: res, f: ['c_' + it.id] });
   });
   // His own tasks: a tick closes one, a date moves one (only with a note saying why), a note goes on it.
   var mine = []; try { mine = bigGet_('unit_mine_' + sid + '_' + day, []); } catch (e) {}
@@ -11587,7 +11639,7 @@ function unitSave_(person, day, p) {
         taskChangeLog_({ TaskId: it.id, Subject: it.s, Field: 'Status', Before: it.st || 'open', After: 'Completed', Why: txt, By: name, Result: 'OK' }); }
       catch (e) { parts.push('NOT CLOSED: ' + String(e && e.message || e).slice(0, 80)); }
     }
-    out.push({ s: label, res: parts.join(' · ') });
+    out.push({ s: label, res: parts.join(' · '), f: ['c_' + it.id, 'done_' + it.id] });
   });
   // Renewal and premium tasks (Renewals tab): a note goes on the task; a new date moves it, only with a note saying why.
   var rtasks = []; try { rtasks = bigGet_('unit_rtasks_' + sid + '_' + day, []) || []; } catch (e) {}
@@ -11607,7 +11659,7 @@ function unitSave_(person, day, p) {
           dm.appendRow(dh.map(function (h) { return o[h] != null ? o[h] : ''; })); forgetHr_(DUEMOVES); _dueMovesMemo = null; } catch (e) {}
       } catch (e) { parts.push('NOT MOVED: ' + String(e && e.message || e).slice(0, 80)); }
     }
-    out.push({ s: label, res: parts.join(' · ') });
+    out.push({ s: label, res: parts.join(' · '), f: ['rc_' + it.id] });
   });
   // Drafts on My day: a note written for him posts only with its tick, in the words he leaves in the box.
   var drafts = []; try { drafts = bigGet_('unit_drafts_' + sid + '_' + day, []) || []; } catch (e) {}
@@ -11617,7 +11669,7 @@ function unitSave_(person, day, p) {
     draftDone[d.id] = 1;
     var txt = String(p['dn_' + d.id] || '').trim(), label = (d.k === 'reply' ? 'Reply · ' : d.k === 'chase' ? 'Chase · ' : 'Note · ') + shorten_(d.s, 70);
     if (!txt) { out.push({ s: label, res: 'NOT POSTED: the note is empty' }); return; }
-    try { mgrPost_({ ParentId: d.id, Body: head + '\n\n' + txt }, sid); posted++; out.push({ s: label, res: 'posted' });
+    try { mgrPost_({ ParentId: d.id, Body: head + '\n\n' + txt }, sid); posted++; out.push({ s: label, res: 'posted', f: ['dp_' + d.id] });
       logA('note', '', (d.k === 'reply' ? 'Replied on ' : d.k === 'chase' ? 'Chased ' : 'Note on ') + d.s, 'dr:' + d.id + ':' + stamp); }
     catch (e) { out.push({ s: label, res: 'NOT POSTED: ' + String(e && e.message || e).slice(0, 120) }); }
   });
@@ -11632,7 +11684,7 @@ function unitSave_(person, day, p) {
     var res = 'noted on the query in Query Pal (internal)';
     try { qpNote_(q.ref, name + ' (' + unitRole_(sid) + ')', txt); posted++; }
     catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
-    out.push({ s: (q.a ? String(q.a).split(' ')[0] + ' · ' : '') + (q.c || q.ref), res: res });
+    out.push({ s: (q.a ? String(q.a).split(' ')[0] + ' · ' : '') + (q.c || q.ref), res: res, f: ['q_' + i] });
   });
   // A note for an agent, tied to no task: kept, and sent with his next morning e-mail.
   var agByKey = {}; try { (bigGet_('unit_ags_' + sid + '_' + day, []) || []).forEach(function (n) { agByKey[bkNk_(n)] = n; }); } catch (e) {}
@@ -11642,7 +11694,7 @@ function unitSave_(person, day, p) {
     if (!txt || !ag) return;
     var res = 'kept: he gets it in his next morning e-mail';
     try { umNoteWrite_(sid, day, ag, txt); posted++; } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
-    out.push({ s: 'A note for ' + String(ag).split(' ')[0], res: res });
+    out.push({ s: 'A note for ' + String(ag).split(' ')[0], res: res, f: [k] });
   });
   var plan = mgrRows_(sid, day, 'plan'), eve = mgrRows_(sid, day, 'eve'), pr = [], dr = [];
   var val = function (v) { return v == null ? '' : String(v).trim(); };
@@ -11666,18 +11718,28 @@ function unitSave_(person, day, p) {
       try { mgrPost_({ ParentId: id, Body: head + '\n\n' + l + '\n\nNote here what you will do and by when.' }, sid); posted++; } catch (e) {}
       res = 'task for ' + String(tgt.name).split(' ')[0] + (capd !== day ? ', due ' + shortDate_(capd) : ', due today'); logA('task', 'RR Operations', 'Task for ' + String(tgt.name).split(' ')[0] + ': ' + l, 'ct:' + id);
     } catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
-    out.push({ s: l, res: res });
+    out.push({ s: l, res: res, f: ['cap'] });
   });
   umPostsAdd_(sid, day, posted);
   var checkin = bm && String(p.ci || '') === '1';
-  if (!out.length && !checkin) return unitPage_(person, day, 'Nothing to save. Comment on a task, put in a number, or write a task for a desk, then Save.');
+  if (!out.length && !checkin) return quick ? { ok: true, nothing: true, html: '<b>Nothing to save.</b> Comment on a task, put in a number, tick a note, or write a task for a desk, then Save.', fields: [], inbox: [] }
+    : unitPage_(person, day, 'Nothing to save. Comment on a task, put in a number, or write a task for a desk, then Save.');
   var signed = null; try { signed = signInFromPage_(person); } catch (e) {}
   if (bm) {
     if (signed && signed.at) acts.unshift({ at: signed.at, kind: 'checkin', group: '', what: 'Checked in', ref: 'ci:' + day });
     try { dayLogMany_(day, acts); } catch (e) {}
-    if (!out.length) return unitPage_(person, day, '', '<b>Checked in at ' + esc_(twelve_(signed && signed.at || at)) + '.</b> Your day is below: urgent first.');
+    if (!out.length) return quick ? { ok: true, html: '<b>Checked in at ' + esc_(twelve_(signed && signed.at || at)) + '.</b>', fields: ['ci'], inbox: [] }
+      : unitPage_(person, day, '', '<b>Checked in at ' + esc_(twelve_(signed && signed.at || at)) + '.</b> Your day is below: urgent first.');
   }
-  try { runlog_('unit ' + sid + ' ' + out.length + ' actions'); } catch (e) {}
+  try { runlog_('unit ' + sid + ' ' + out.length + ' actions' + (quick ? ' (in place)' : '')); } catch (e) {}
+  // Saved in place (28 Oct 2026): the page stays as it is; what saved is cleared from it, and what did not keeps its words for another try.
+  if (quick) {
+    var good = out.filter(function (o) { return !/NOT /.test(o.res); }), fl = checkin ? ['ci'] : [];
+    good.forEach(function (o) { (o.f || []).forEach(function (n) { fl.push(n); }); });
+    return { ok: true, fields: fl, inbox: good.filter(function (o) { return o.k; }).map(function (o) { return { k: o.k, res: o.res }; }),
+      html: '<b>' + good.length + ' of ' + out.length + ' saved' + (signed && signed.first ? ' · signed in ' + esc_(twelve_(signed.at)) : '') + '</b>' +
+        out.map(function (o) { return '<div class="ln">' + (/NOT /.test(o.res) ? '&#9888; ' : '&#10003; ') + esc_(shorten_(o.s, 80)) + ' · <b>' + esc_(o.res) + '</b></div>'; }).join('') };
+  }
   return unitPage_(person, day, '', '<b>' + out.filter(function (o) { return !/^NOT/.test(o.res); }).length + ' of ' + out.length + ' saved' + (signed && signed.first ? ' · signed in ' + esc_(twelve_(signed.at)) : '') + '.</b>' +
     out.map(function (o) { return '<div class="ln">' + (/^NOT/.test(o.res) ? '&#9888; ' : '&#10003; ') + esc_(shorten_(o.s, 80)) + ' · <b>' + esc_(o.res) + '</b></div>'; }).join(''));
 }
@@ -16417,7 +16479,7 @@ function workdayGet_(p) {
  *  (and how late), absent with the reason and who said so, or NO RECORD for a day gone by with nothing written. Either can
  *  mark a desk absent with a reason (Sick, On leave, or their own words) on a day with no sign-in; Kamla for the desks
  *  that report to her, he for every desk (markAbsent_). */
-var WD_ATT = { DAYS: 5, BACK: 7 };
+var WD_ATT = { DAYS: 5, BACK: 7, EARLY_MIN: 15 };   // EARLY_MIN: a sign-out more than this before the day's finish is called early
 function workdayAtt_(sid, day) {
   var rows = hrRows_(ATT, true) || [], me = { staffId: sid, manager: sid === 'ricky' };
   var days = lastWorkdays_(day, WD_ATT.DAYS - 1).concat([day]).filter(function (d) { return !branchClosed_(d); });
@@ -16425,7 +16487,14 @@ function workdayAtt_(sid, day) {
   var desks = DAY_MAIL_DESKS.filter(function (d) { return SCHEDULE[d]; }).map(function (d) {
     return { sid: d, first: String(nameFor_(d)).split(' ')[0], mark: sid === 'ricky' || isLeadOf_(me, d), cells: days.map(function (dd) {
       var a = attRow_(rows, dd, d), r = a ? a.row : null, t = r ? timeStr_(r.FirstSignIn) : '';
-      if (t) { var late = lateBy_(d, t, dd); return { st: late ? 'late' : 'in', t: twelve_(t), late: late }; }
+      // The time they left too (28 Oct 2026, Ricky: "would like to have the time left as well"): the sign-out at the close of
+      // the day, how early it was against the day's own hours, and a past day with no sign-out at all said as such.
+      if (t) {
+        var late = lateBy_(d, t, dd), o = timeStr_(r.SignedOut), sp2 = parseSpan_(scheduleFor_(d, dd).hours || ''), cell = { st: late ? 'late' : 'in', t: twelve_(t), late: late };
+        if (o) { cell.o = twelve_(o); var em = sp2 ? sp2.end - minutesOf_(o) : 0; if (em > WD_ATT.EARLY_MIN) cell.early = em; }
+        else if (dd < day) cell.noout = true;
+        return cell;
+      }
       if (r && String(r.Status || '').toLowerCase() === 'absent') {
         var by = String(r.MarkedBy || ''), auto = by === 'tracker';
         return { st: 'absent', why: auto ? 'No sign-in' : String(r.Reason || 'Absent'), by: auto ? '' : String(nameFor_(by) || by).split(' ')[0], auto: auto };
@@ -16807,6 +16876,42 @@ function fastPrebuildTick_() {
   props.setProperty('fastpg_built_ricky_' + day, hhmm_(new Date()));
   return 'built in ' + Math.round((Date.now() - t0) / 1000) + ' s';
 }
+/* ── Save in place, and Claude's review started from the page (28 October 2026) ──
+ *  Ricky, 6:10am: "when I open my day ... I am not seeing it drafting the responses and using the intelligence!! Also it's taking long
+ *  when I post, this is supposed to be helping me and assisting". Save used to post the form and build the whole of My day again
+ *  (Gmail, Salesforce, the drafts) before showing anything. Now, where the page can call the script directly (google.script.run),
+ *  Save sends the form to unitSaveNow, which writes exactly as before and answers with what saved: the page keeps its place,
+ *  shows the result above the button, clears what saved (notes, ticks) and folds each inbox item dealt with. Anything that did not
+ *  save keeps its words for another try. Where the call is not possible, or fails, the form posts as it always did.
+ *  An inbox item Claude has not reviewed says so and the page asks for the review at once (ixReviewNow), putting each one in
+ *  place as it comes, and asking again while any are left. */
+function unitSaveNow(o) {
+  o = o || {}; var sid = String(o.rs || '');
+  if (String(o.f || '') !== 'unit' || !sid || String(o.k || '') !== unitSig_(sid)) return { ok: false, msg: 'This page has expired: open it again from today\'s e-mail.' };
+  var person = replyPerson_(sid, 'unit');
+  if (!person) return { ok: false, msg: 'This page has expired: open it again from today\'s e-mail.' };
+  return unitSave_(person, todayISO_(), o, true);
+}
+var UNIT_SAVE_JS = '<script>(function(){var f=document.getElementById("ufm"),b=document.getElementById("usave"),box=document.getElementById("usaved");' +
+  'if(!f||!b||!(window.google&&google.script&&google.script.run))return;' +
+  'f.addEventListener("submit",function(e){e.preventDefault();var o={};new FormData(f).forEach(function(v,k){if(!(k in o))o[k]=v;});' +
+  'b.disabled=true;b.textContent="Saving\u2026";' +
+  'google.script.run.withSuccessHandler(function(r){b.disabled=false;b.textContent="Save";' +
+  'if(!r||!r.ok){box.innerHTML="<div class=\\"card bad\\"><b style=\\"color:#DC3F3F\\">"+((r&&r.msg)||"That did not save. Try again.")+"</b></div>";return;}' +
+  'box.innerHTML="<div class=\\"card ok\\">"+r.html+"</div>";' +
+  '(r.fields||[]).forEach(function(n){var els=f.querySelectorAll("[name=\\""+n+"\\"]");for(var i=0;i<els.length;i++){var el=els[i];if(el.type==="checkbox"||el.type==="radio")el.checked=false;else if(el.tagName==="TEXTAREA"||el.type==="text")el.value="";}});' +
+  '(r.inbox||[]).forEach(function(x){var d=document.getElementById("x"+x.k);if(!d)return;d.open=false;var s=d.querySelector("summary");' +
+  'd.innerHTML="";if(s)d.appendChild(s);var n=document.createElement("div");n.className="ln";n.style.color="#2C7A57";n.style.fontWeight="700";n.textContent="\u2713 "+x.res;d.appendChild(n);d.style.opacity=".7";});' +
+  'box.scrollIntoView({behavior:"smooth",block:"center"});})' +
+  '.withFailureHandler(function(){b.disabled=false;b.textContent="Save";f.submit();}).unitSaveNow(o);});})();</script>';
+var IX_WAIT_JS = '<script>(function(){if(!document.querySelector(".ixwait")||!(window.google&&google.script&&google.script.run))return;' +
+  'var f=document.getElementById("ufm");if(!f)return;var P={rs:f.querySelector("[name=rs]").value,f:"unit",k:f.querySelector("[name=k]").value},tries=0;' +
+  'function keys(){var a=[],w=document.querySelectorAll(".ixwait");for(var i=0;i<w.length;i++)a.push(w[i].getAttribute("data-k"));return a;}' +
+  'function again(ms){if(tries++<8)setTimeout(ask,ms);}' +
+  'function fill(r){if(r&&r.ok){Object.keys(r.html||{}).forEach(function(k){var w=document.querySelectorAll(".ixwait");for(var i=0;i<w.length;i++)if(w[i].getAttribute("data-k")===k){var d=document.createElement("div");d.innerHTML=r.html[k];w[i].parentNode.replaceChild(d,w[i]);}});}' +
+  'if(keys().length)again(r&&r.busy?45000:30000);}' +
+  'function ask(){var k=keys();if(!k.length)return;P.keys=k;google.script.run.withSuccessHandler(fill).withFailureHandler(function(){again(60000);}).ixReviewNow(P);}' +
+  'ask();})();</script>';
 /** Check in from the page itself, without building the page again: his day (f=unit), a staff day page (f=in). */
 function checkInNow(o) {
   o = o || {}; var sid = String(o.rs || ''), f = String(o.f || ''), day = todayISO_(), person = null;
