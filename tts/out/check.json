@@ -1,62 +1,17 @@
 {
- "tts/out/wallowres/01.mp3": [
-  "en",
-  0.994,
-  "This is what the orphan campaign has earned so far."
- ],
- "tts/out/wallowres/02.mp3": [
+ "tts/out/wallowresb/01.mp3": [
   "en",
   0.997,
-  "On the left, the $200 an agent earns for every service questionnaire paid to be paid on the next commission run and still on its way."
+  "Lapsed policies now back in Forcer County 2."
  ],
- "tts/out/wallowres/03.mp3": [
-  "en",
-  0.996,
-  "Each claim moves through customer service and then retention and the stages show where every one of them is."
- ],
- "tts/out/wallowres/04.mp3": [
+ "tts/out/wallowcupb/01.mp3": [
   "en",
   0.997,
-  "On the right, the new applications from orphan clients and the premiums paid back since our letters."
+  "The AI reads every timeline and rates how clearly you communicate and how firmly you bring it home."
  ],
- "tts/out/wallowres/05.mp3": [
-  "en",
-  0.997,
-  "Client who's policy had lapsed and is now back in force or counted too."
- ],
- "tts/out/wallowres/06.mp3": [
-  "en",
-  0.998,
-  "Below, what clients are telling us by subject? No client is named on this screen."
- ],
- "tts/out/wallowcup/01.mp3": [
-  "en",
-  0.998,
-  "This is the first contact cup for client support."
- ],
- "tts/out/wallowcup/02.mp3": [
-  "en",
-  0.994,
-  "Every client of the campaign is a race to the first conversation and then to the service questionnaire."
- ],
- "tts/out/wallowcup/03.mp3": [
-  "en",
-  0.993,
-  "Three points for every client you reach first, two more within two working days, and ten for the questionnaire it brings home."
- ],
- "tts/out/wallowcup/04.mp3": [
-  "en",
-  0.998,
-  "The AI reads every timeline and rates how clearly you communicate and how will you bring it home."
- ],
- "tts/out/wallowcup/05.mp3": [
-  "en",
-  0.996,
-  "Last week's winter is celebrated at the Wednesday meeting."
- ],
- "tts/out/wallowcup/06.mp3": [
+ "tts/out/wallowcupb/02.mp3": [
   "en",
   0.995,
-  "Below, who looks after whom? Each agent, the support person beside them, and the questionnaires they have brought in."
+  "Last week's champion is celebrated at the Wednesday meeting."
  ]
 }
