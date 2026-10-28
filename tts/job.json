@@ -3,13 +3,13 @@
  "rate": "-12%",
  "check": true,
  "films": {
-  "wallday": [
-   "This is the branch's day, hour by hour, from Salesforce.",
-   "Along the top are the time blocks: what was closed in each hour, by task type, and under it what was worked on and not yet closed.",
-   "The gold line is where the clock is now.",
-   "Below, each desk across the same hours, with what they closed, what they worked on, and how old that work is.",
-   "The last row is the Branch Manager: the birthday e-mails and the notes that run as him, kept apart from the desks' totals.",
-   "Along the foot, the agents whose work was closed today. Each desk against its own day, nobody ranked, and no client is named here."
+  "wallorphans": [
+   "This is the orphan campaign: the clients whose agents left, and where we stand with every one of them.",
+   "On the left, every household on our books, how many answered the letter, and how many asked us for something.",
+   "The bar shows how far those households have got: completed, an agent named, spoken to, or still waiting on us.",
+   "On the right, today's lists. Each morning every desk gets a list, and each client on it is marked done, reached, tried, or nothing yet.",
+   "Beside each list are the open tasks that person holds, and how many are past their date.",
+   "Below, the clients named to an agent in Salesforce, agent by agent. No client is named on this screen."
   ]
  }
 }
