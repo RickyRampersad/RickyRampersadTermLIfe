@@ -69,76 +69,104 @@ def scr(lines, cls=''):
     return ''.join(f'<div class="ln {cls}" style="--i:{i}">{t}</div>' for i, t in enumerate(lines))
 
 
+def mesh(mode, nodes=9):
+    """The lattice: eight points on a ring and one at the centre, with every
+       chord between them. It is the branch's actual substance — connected work,
+       made visible — so it is not decoration in one scene but the thing the
+       whole film is about, and it runs through all eleven.
+
+       mode    what it is doing
+       ----    ---------------------------------------------------------------
+       dark    lone points, unlit, unconnected
+       wake    the points light, one after another
+       link    the chords draw themselves between them
+       pulse   the whole mesh lit and breathing
+       burst   the points fly outward through the split in the shell
+       field   faint and wide, behind the frame, so the film stays one thing
+       home    the points fly back and settle
+    """
+    import math
+    R = 21.0
+    pts = [(44 + R * math.cos(math.radians(a)), 44 + R * math.sin(math.radians(a)))
+           for a in range(-90, 270, 45)]
+    pts.append((44.0, 44.0))                       # the centre: the branch itself
+    edges = []
+    for i in range(len(pts)):
+        for j in range(i + 1, len(pts)):
+            edges.append((i, j))
+    eh = ''.join(
+        f'<line class="mx-e" style="--i:{k}" x1="{pts[i][0]:.1f}" y1="{pts[i][1]:.1f}" '
+        f'x2="{pts[j][0]:.1f}" y2="{pts[j][1]:.1f}"/>'
+        for k, (i, j) in enumerate(edges))
+    nh = ''
+    for k, (x, y) in enumerate(pts):
+        dx, dy = (x - 44) * 3.4, (y - 44) * 3.4     # where it flies to, straight out
+        r = 2.6 if k == len(pts) - 1 else 1.9
+        nh += (f'<circle class="mx-n" style="--i:{k};--dx:{dx:.1f};--dy:{dy:.1f}" '
+               f'cx="{x:.1f}" cy="{y:.1f}" r="{r}"/>')
+    return f'<svg class="mx mx-{mode}" viewBox="0 0 88 88" aria-hidden="true">{eh}{nh}</svg>'
+
 def V(name, s):
     """One scene's innards. `s` is its entry from blastoff-lines.json."""
     on = s.get('screen', [])
 
     if name == 'seam':
-        return (f'<div class="bostage">{shell_svg("dim")}'
-                f'<div class="seam"></div><div class="glowdot"></div></div>'
+        return (f'<div class="bostage">{shell_svg("dim")}{mesh("dark")}'
+                f'<div class="seam"></div></div>'
                 f'<div class="cap">{scr(on)}</div>')
 
     if name == 'figures':
-        tiles = ''.join(
-            f'<div class="bofig" style="--i:{i}"><b>{t}</b></div>' for i, t in enumerate(on))
-        return (f'<div class="bostage">{shell_svg("dim")}<div class="seam lit"></div></div>'
-                f'<div class="figs">{tiles}</div>')
+        tiles = ''.join(f'<div class="bofig" style="--i:{i}"><b>{t}</b></div>'
+                        for i, t in enumerate(on))
+        return (f'<div class="bostage">{shell_svg("dim")}{mesh("wake")}'
+                f'<div class="seam lit"></div></div>'
+                f'<div class="bofigs">{tiles}</div>')
 
     if name == 'lattice':
-        # a triangulated mesh that draws itself inside the shell: the system, assembling
-        import math
-        pts = [(44 + 19 * math.cos(math.radians(a)), 44 + 21 * math.sin(math.radians(a)))
-               for a in range(-90, 270, 45)]
-        seg = []
-        for i, (x, y) in enumerate(pts):
-            for j in range(i + 1, len(pts)):
-                x2, y2 = pts[j]
-                seg.append(f'<line class="lt" style="--i:{len(seg)}" x1="{x:.1f}" y1="{y:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>')
-        nodes = ''.join(f'<circle class="nd" style="--i:{i}" cx="{x:.1f}" cy="{y:.1f}" r="1.9"/>'
-                        for i, (x, y) in enumerate(pts))
-        return (f'<div class="bostage">{shell_svg("dim", "".join(seg) + nodes)}</div>'
+        return (f'<div class="bostage">{shell_svg("dim")}{mesh("link")}</div>'
                 f'<div class="cap">{scr(on)}</div>')
 
     if name == 'tight':
-        return (f'<div class="bostage breathe">{shell_svg("sealed")}<div class="seam bohot"></div></div>'
+        return (f'<div class="bostage breathe">{shell_svg("sealed")}{mesh("pulse")}'
+                f'<div class="seam bohot"></div></div>'
                 f'<div class="cap"><h2 class="kin">{words(on[0])}</h2></div>')
 
     if name == 'crack':
         return (f'<div class="bostage">{shell_svg("split")}'
-                f'<div class="burst"></div><div class="rays"></div></div>'
+                f'<div class="burst"></div><div class="rays"></div>{mesh("burst")}</div>'
                 f'<div class="cap"><h2 class="kin">{words(on[0])}</h2></div>')
 
     if name == 'table':
         rows = ''.join(f'<i style="--i:{i}"></i>' for i in range(5))
-        return (f'<div class="cap top"><div class="eyeb">{on[0]}</div>'
+        return (f'{mesh("field")}<div class="cap top"><div class="eyeb">{on[0]}</div>'
                 f'<div class="dt">{on[1]}</div></div>'
                 f'<div class="tbl"><div class="card"><div class="ch"></div>{rows}</div></div>')
 
     if name == 'invite':
-        return (f'<div class="cap big"><div class="eyeb">{on[0]}</div>'
+        return (f'{mesh("field")}<div class="cap big"><div class="eyeb">{on[0]}</div>'
                 f'<div class="noon">{on[1]}</div></div>')
 
     if name == 'silence':
         bars = ''.join(f'<i style="--i:{i};--w:{w}%"></i>' for i, w in
                        enumerate([84, 62, 93, 71, 55, 88, 66]))
-        return (f'<div class="quietpage">{bars}</div>'
+        return (f'{mesh("field")}<div class="quietpage">{bars}</div>'
                 f'<div class="cap"><h2 class="kin">{words(on[0] + " " + on[1])}</h2></div>')
 
     if name == 'quietest':
         bars = ''.join(f'<i style="--i:{i};--h:{h}%" class="eq"></i>' for i, h in
                        enumerate([26, 94, 41, 100, 33, 78, 22, 88, 30]))
-        return (f'<div class="eqrow">{bars}</div>'
+        return (f'{mesh("field")}<div class="eqrow">{bars}</div>'
                 f'<div class="cap"><h2 class="kin">{words(on[0])}</h2></div>')
 
     if name == 'ask':
-        return (f'<div class="cap big"><div class="bourl">{on[0]}</div>'
+        return (f'{mesh("field")}<div class="cap big"><div class="bourl">{on[0]}</div>'
                 f'<div class="three"><span style="--i:0"></span><span style="--i:1"></span>'
                 f'<span style="--i:2"></span></div>'
                 f'<div class="eyeb bolo">{on[1]}</div></div>')
 
     if name == 'flight':
         ck = '<path class="ck" d="' + CHECK + '"/>'
-        return (f'<div class="bostage">{shell_svg("fly", ck)}</div>'
+        return (f'<div class="bostage">{shell_svg("fly", ck)}{mesh("home")}</div>'
                 f'<div class="cap"><div class="noon sm">{on[0]}</div>'
                 f'<div class="eyeb bolo">Ricky Rampersad Branch</div></div>')
 
@@ -195,12 +223,67 @@ CSS = r"""
 @keyframes dotUp{0%{opacity:0;transform:translateY(5rem) scale(.4)}
   40%{opacity:1}100%{opacity:0;transform:translateY(-5rem) scale(1.3)}}
 
-/* 3 · the lattice drawing itself */
-.bo .lt{stroke:var(--teal);stroke-width:.4;opacity:0;
-  stroke-dasharray:60;stroke-dashoffset:60;animation:draw .5s calc(.25s + var(--i)*45ms) both}
-@keyframes draw{from{opacity:0;stroke-dashoffset:60}to{opacity:.45;stroke-dashoffset:0}}
-.bo .nd{fill:var(--teal);opacity:0;animation:pop .4s calc(.9s + var(--i)*70ms) both}
-@keyframes pop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+/* ══ the mesh — the film's own body, in every scene ══════════════════════
+   The branch's substance is connected work, so the lattice is not one scene's
+   decoration: it is dark and unconnected at the start, it lights, it links, it
+   breathes, it bursts out through the split shell, it stays as a field behind
+   the middle of the film, and it comes home. */
+.bo .mx{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.bo .mx-e{stroke:var(--teal);stroke-width:.38;opacity:0;stroke-dasharray:62;stroke-dashoffset:62}
+.bo .mx-n{fill:var(--teal);opacity:0;transform-box:fill-box;transform-origin:50% 50%}
+
+/* dark · lone points, unlit and unjoined */
+.bo .mx-dark .mx-n{opacity:0;animation:nDim 1.6s calc(.4s + var(--i)*.12s) both}
+@keyframes nDim{from{opacity:0;transform:scale(.3)}to{opacity:.22;transform:scale(.8)}}
+
+/* wake · they light, one after another */
+.bo .mx-wake .mx-n{animation:nWake .5s calc(.3s + var(--i)*.16s) both}
+@keyframes nWake{0%{opacity:.22;transform:scale(.8)}
+  60%{opacity:1;transform:scale(1.45)}100%{opacity:.92;transform:scale(1)}}
+
+/* link · the chords draw themselves between them */
+.bo .mx-link .mx-n{opacity:.92;animation:nHold .3s both}
+@keyframes nHold{to{opacity:.92;transform:scale(1)}}
+.bo .mx-link .mx-e{animation:eDraw .5s calc(.2s + var(--i)*28ms) both}
+@keyframes eDraw{from{opacity:0;stroke-dashoffset:62}to{opacity:.5;stroke-dashoffset:0}}
+
+/* pulse · lit and breathing, the quiet part */
+.bo .mx-pulse .mx-e{opacity:.42;stroke-dashoffset:0;animation:eBr 2.6s infinite}
+@keyframes eBr{0%,100%{opacity:.26}50%{opacity:.62}}
+.bo .mx-pulse .mx-n{opacity:1;animation:nBr 2.6s calc(var(--i)*.07s) infinite}
+@keyframes nBr{0%,100%{transform:scale(1);filter:none}
+  50%{transform:scale(1.3);filter:drop-shadow(0 0 .3rem rgba(79,193,176,.8))}}
+
+/* burst · out through the split, the thing that was inside the shell */
+.bo .mx-burst .mx-e{opacity:.42;stroke-dashoffset:0;animation:eGo 1.4s .6s both}
+@keyframes eGo{to{opacity:0}}
+/*  The burst is the shot the film is for, and the first cut had the points
+ *  gone by the time the scene is read: they must still be in flight when the
+ *  frame is looked at, so they hold their light to three-quarters of the way
+ *  out and only fade on the last stretch. */
+.bo .mx-burst .mx-n{opacity:1;animation:nGo 3.3s calc(.55s + var(--i)*.05s) both}
+@keyframes nGo{0%{opacity:1;transform:translate(0,0) scale(1)}
+  14%{opacity:1;transform:translate(0,0) scale(1.9);
+      filter:drop-shadow(0 0 .6rem rgba(79,193,176,.95))}
+  70%{opacity:1;filter:drop-shadow(0 0 .4rem rgba(79,193,176,.7));
+      transform:translate(calc(var(--dx)*.62px),calc(var(--dy)*.62px)) scale(1.05)}
+  100%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px)) scale(.6)}}
+
+/* field · faint and wide behind the middle of the film, so it stays one thing */
+.bo .mx-field{position:absolute;inset:auto;left:50%;top:46%;width:min(150vh,112vw);
+  height:min(150vh,112vw);transform:translate(-50%,-50%);opacity:0;
+  animation:fieldIn 1.6s both,fieldDrift 26s linear infinite}
+@keyframes fieldIn{from{opacity:0}to{opacity:.16}}
+@keyframes fieldDrift{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.bo .mx-field .mx-e{opacity:.55;stroke-dashoffset:0;stroke-width:.22}
+.bo .mx-field .mx-n{opacity:.8}
+
+/* home · back in, and settled */
+.bo .mx-home .mx-e{opacity:0;stroke-dashoffset:0;animation:eBack .8s 1.9s both}
+@keyframes eBack{to{opacity:.34}}
+.bo .mx-home .mx-n{animation:nBack 2.2s calc(var(--i)*.05s) both}
+@keyframes nBack{0%{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px)) scale(.5)}
+  55%{opacity:1}100%{opacity:.85;transform:translate(0,0) scale(1)}}
 
 /* 4 · the breath before it opens */
 .bo .breathe{animation:breathe 3.2s ease-in-out infinite}
