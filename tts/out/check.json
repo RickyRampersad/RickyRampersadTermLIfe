@@ -1,32 +1,32 @@
 {
- "tts/out/trl7/01.mp3": [
+ "tts/out/walldriver/01.mp3": [
   "en",
-  0.998,
-  "Our new year began on the first of October, and the first class of it is being selected now. Seven places. Not because we can't take more, but because every one of them gets the full build, a call within 48 hours, the branch manager himself, an orientation, a profile, and a discovery with the people already doing it. And one more seat for sales manager to build a unit here. 32 years in Trinidad. One class. Seven places."
+  0.992,
+  "This is the branch manager's drive on the orphan campaign."
  ],
- "tts/out/trl7/02.mp3": [
+ "tts/out/walldriver/02.mp3": [
+  "en",
+  0.993,
+  "Every prompt he puts on the tasks is counted in his own words and from the automation he set going."
+ ],
+ "tts/out/walldriver/03.mp3": [
+  "en",
+  0.992,
+  "His automation writes to clients, briefs the agents, and alerts the branch. Everyone is counted here."
+ ],
+ "tts/out/walldriver/04.mp3": [
   "en",
   0.996,
-  "The door is open now. Already contracted? Nobody will know you asked. New to this? You get the full build. Leading a team already? Come and build a unit here. One confidential conversation. 20 minutes this week."
+  "This ring shows when the team answers his prompts. The same day, the next working day, or later."
  ],
- "tts/out/film7/01.mp3": [
+ "tts/out/walldriver/05.mp3": [
   "en",
-  0.996,
-  "This is the Ricky Rampersad branch, Guardian Life of the Caribbean in Chaguanas. 32 years in Trinidad, a brand new financial year, FY27, began on the first of October. Its first class is being selected now. Seven places and one seat for sales manager."
+  0.992,
+  "Day by day, his prompt stand beside the team's notes."
  ],
- "tts/out/film7/02.mp3": [
+ "tts/out/walldriver/06.mp3": [
   "en",
-  0.996,
-  "The door is open now. Already contracted? Nobody will know you asked. New to this? You get the full build. Leading a team already? Come and build a unit here. One confidential conversation. 20 minutes this week."
- ],
- "tts/out/adA7/01.mp3": [
-  "en",
-  0.995,
-  "7 places in this year's first class. Everyone gets the full build. 32 years in Trinidad."
- ],
- "tts/out/adB7/01.mp3": [
-  "en",
-  0.995,
-  "7 places in this year's first class. Everyone gets the full build. 32 years in Trinidad."
+  0.997,
+  "And for each member of the team, how many notes came after a prompt and what those notes say?"
  ]
 }
