@@ -1,57 +1,62 @@
 {
- "tts/out/blastoff/01.mp3": [
-  "en",
-  0.996,
-  "Something's been building in this branch, quietly, for months."
- ],
- "tts/out/blastoff/02.mp3": [
-  "en",
-  0.995,
-  "A new financial year, 30 days old, and every goal plan is in."
- ],
- "tts/out/blastoff/03.mp3": [
+ "tts/out/wallowres/01.mp3": [
   "en",
   0.994,
-  "One sign in now. One app. The system sets her day and the wall shows the score."
+  "This is what the orphan campaign has earned so far."
  ],
- "tts/out/blastoff/04.mp3": [
-  "en",
-  0.994,
-  "That was the quiet part."
- ],
- "tts/out/blastoff/05.mp3": [
-  "en",
-  0.992,
-  "This is the part where we come out."
- ],
- "tts/out/blastoff/06.mp3": [
+ "tts/out/wallowres/02.mp3": [
   "en",
   0.997,
-  "Last week Akash and I took this branch to the company. Our record on the table."
+  "On the left, the $200 an agent earns for every service questionnaire paid to be paid on the next commission run and still on its way."
  ],
- "tts/out/blastoff/07.mp3": [
+ "tts/out/wallowres/03.mp3": [
+  "en",
+  0.996,
+  "Each claim moves through customer service and then retention and the stages show where every one of them is."
+ ],
+ "tts/out/wallowres/04.mp3": [
+  "en",
+  0.997,
+  "On the right, the new applications from orphan clients and the premiums paid back since our letters."
+ ],
+ "tts/out/wallowres/05.mp3": [
+  "en",
+  0.997,
+  "Client who's policy had lapsed and is now back in force or counted too."
+ ],
+ "tts/out/wallowres/06.mp3": [
   "en",
   0.998,
-  "Friday, 12 noon, we come back to you, not a brief you, to hear you."
+  "Below, what clients are telling us by subject? No client is named on this screen."
  ],
- "tts/out/blastoff/08.mp3": [
+ "tts/out/wallowcup/01.mp3": [
+  "en",
+  0.998,
+  "This is the first contact cup for client support."
+ ],
+ "tts/out/wallowcup/02.mp3": [
+  "en",
+  0.994,
+  "Every client of the campaign is a race to the first conversation and then to the service questionnaire."
+ ],
+ "tts/out/wallowcup/03.mp3": [
+  "en",
+  0.993,
+  "Three points for every client you reach first, two more within two working days, and ten for the questionnaire it brings home."
+ ],
+ "tts/out/wallowcup/04.mp3": [
+  "en",
+  0.998,
+  "The AI reads every timeline and rates how clearly you communicate and how will you bring it home."
+ ],
+ "tts/out/wallowcup/05.mp3": [
+  "en",
+  0.996,
+  "Last week's winter is celebrated at the Wednesday meeting."
+ ],
+ "tts/out/wallowcup/06.mp3": [
   "en",
   0.995,
-  "Everything you write before Friday is red in the room in silence before anybody speaks."
- ],
- "tts/out/blastoff/09.mp3": [
-  "en",
-  0.992,
-  "The quietest person in this branch, read as carefully as the loudest."
- ],
- "tts/out/blastoff/10.mp3": [
-  "en",
-  0.998,
-  "So open the Meetings page and answer three questions. Say the thing you'd say in the car park."
- ],
- "tts/out/blastoff/11.mp3": [
-  "en",
-  0.989,
-  "Friday, 12 noon. Let's begin."
+  "Below, who looks after whom? Each agent, the support person beside them, and the questionnaires they have brought in."
  ]
 }
