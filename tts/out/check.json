@@ -1,32 +1,32 @@
 {
- "tts/out/wallday/01.mp3": [
+ "tts/out/wallorphans/01.mp3": [
+  "en",
+  0.996,
+  "This is the orphan campaign, the clients whose agents left and where we stand with every one of them."
+ ],
+ "tts/out/wallorphans/02.mp3": [
+  "en",
+  0.998,
+  "On the left, every household on our books, how many answered the letter, and how many asked us for something?"
+ ],
+ "tts/out/wallorphans/03.mp3": [
   "en",
   0.99,
-  "This is the Branch's Day, hour by hour, from Salesforce."
+  "the bar shows how far those households have got completed an agent named spoken to for still waiting on us."
  ],
- "tts/out/wallday/02.mp3": [
-  "en",
-  0.997,
-  "Along the top are the time blocks, what was closed in each hour by task type, and under what was worked on and not yet closed."
- ],
- "tts/out/wallday/03.mp3": [
-  "en",
-  0.996,
-  "The gold line is where the clock is now."
- ],
- "tts/out/wallday/04.mp3": [
-  "en",
-  0.996,
-  "Below, each desk across the same hours with what they closed, what they worked on, and how old that work is."
- ],
- "tts/out/wallday/05.mp3": [
-  "en",
-  0.999,
-  "The last row is the branch manager. The birthday emails and the notes that run as him kept apart from the desk's totals."
- ],
- "tts/out/wallday/06.mp3": [
+ "tts/out/wallorphans/04.mp3": [
   "en",
   0.995,
-  "Along the foot, the agents whose work was closed today, each desk against its own day, nobody ranked, and no client is named here."
+  "on the right today's lists each morning every desk gets a list and each client on it is marked done, reached, tried, or nothing yet."
+ ],
+ "tts/out/wallorphans/05.mp3": [
+  "en",
+  0.999,
+  "Beside each list are the open tasks that person holds and how many are passed their date."
+ ],
+ "tts/out/wallorphans/06.mp3": [
+  "en",
+  0.995,
+  "Below, the client's name to an agent in Salesforce, agent by agent. No client is named on this screen."
  ]
 }
