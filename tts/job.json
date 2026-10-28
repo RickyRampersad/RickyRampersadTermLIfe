@@ -1,21 +1,27 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
- "rate": "+0%",
- "check": true,
- "films": {
-  "trl7": [
-   "Our new year began on the first of October, and the first class of it is being selected now. Seven places. Not because we can't take more, but because every one of them gets the full build: a call within forty-eight hours, the Branch Manager himself, an orientation, a profile, and a Discovery with the people already doing it. And one more seat: for a sales manager, to build a unit here. Thirty-two years in Trinidad. One class. Seven places.",
-   "The door is open now. Already contracted? Nobody will know you asked. New to this? You get the full build. Leading a team already? Come and build a unit here. One confidential conversation. Twenty minutes, this week."
-  ],
-  "film7": [
-   "This is the Ricky Rampersad Branch. Guardian Life of the Caribbean, in Chaguanas. Thirty-two years in Trinidad. A brand new financial year, FY twenty-seven, began on the first of October. Its first class is being selected now: seven places, and one seat for a sales manager.",
-   "The door is open now. Already contracted? Nobody will know you asked. New to this? You get the full build. Leading a team already? Come and build a unit here. One confidential conversation. Twenty minutes, this week."
-  ],
-  "adA7": [
-   "Seven places in this year's first class. Every one gets the full build. Thirty-two years in Trinidad."
-  ],
-  "adB7": [
-   "Seven places in this year's first class. Every one gets the full build. Thirty-two years in Trinidad."
-  ]
- }
+  "voice": "en-US-AndrewMultilingualNeural",
+  "rate": "+0%",
+  "check": true,
+  "films": {
+    "rise": [
+      "This branch took a hit.",
+      "People left. The work didn't.",
+      "Nothing here fell over.",
+      "So before Friday, look at who's still standing.",
+      "Twenty-three agents and managers. Five more behind them.",
+      "Between us, two hundred and sixty-three years of this work.",
+      "Eleven of us have been at it more than ten years. Three joined in the last three.",
+      "And while all of that was happening, we rebuilt how this branch runs.",
+      "One sign-in now, and every tool is behind it.",
+      "The system sets your day before you're even up.",
+      "The wall shows the score, and everybody sees the same numbers.",
+      "FY27 is thirty days old, and every goal plan is in.",
+      "The cracks are still there. We filled them with gold.",
+      "We're not going back to what this branch was. We're going somewhere better.",
+      "Friday. Twelve noon. Ninety minutes.",
+      "Seventy-five of those minutes belong to you, not to me.",
+      "Three questions are already waiting for you. Answer one tonight.",
+      "We rise together."
+    ]
+  }
 }
