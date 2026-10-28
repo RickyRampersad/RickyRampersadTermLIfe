@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-28a';
+var SCRIPT_VERSION = '2026-10-28b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2196,6 +2196,8 @@ function doPost(e) {
   }
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
+  // The wall's Issued this month, from the newest production report (28 Oct 2026).
+  if (String(body.action || '') === 'wall.issued') { try { return json_({ ok: true, data: wallScrub_(wallIssued_(todayISO_())) }); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (typeof intelRoute_ === 'function') {
     try {
       var hit = intelRoute_(body);      // null for anything not an intel.* action
@@ -2810,6 +2812,7 @@ function nothingToReport_(e) {
    of "Signing in" for the person least able to ask anybody about it. It reads
    one cell; running it round the clock costs nothing worth counting. */
 function keepWarm() {
+  var kw0 = Date.now();
   try { ss_().getSheets()[0].getRange(1, 1).getValue(); } catch (e) {}
   // Housekeeping rides on this ten-minute trigger rather than adding one.
   try { housekeepingTick_(); } catch (e) {}
@@ -2817,6 +2820,8 @@ function keepWarm() {
   try { var fp = fastPrebuildTick_(); if (fp) runlog_('fast page: ' + fp); } catch (e) {}
   // The Branch Portal's pending notes into Salesforce, and Salesforce's chase back to the Portal (27 Oct 2026, 27i).
   try { var pc = pendSyncTick_(); if (pc && /Portal note/.test(pc)) runlog_(pc); } catch (e) { try { runlog_('pending chase failed: ' + (e && e.message)); } catch (e2) {} }
+  // The wall copies no clock rebuilt: increases and group hourly, the premium dues copy when its midnight build missed (28 Oct 2026).
+  try { wallFeedsTick_(kw0); } catch (e) {}
 }
 
 function installTriggers() {
@@ -15932,6 +15937,8 @@ var WALL_LEFT = ['Kerwyn Ramroach', 'Gary Sookdeo',
   // Gary's unit (Felicia Rampersad stays)
   'Alyssa Joseph', 'Chris Badaloo', 'Jesus Boodhoo', 'John Boodhoo', 'Jonathann Pantin', 'Naila Samuel', 'Terrell Godden', 'Tricia Baksh'];
 var WALL_ORPHANS = 'Orphans · to reassign';
+/** Lists that are cases, one row each, whatever their names: renamed, never folded (28 Oct 2026). */
+var WALL_ITEMS = { rows: 1 };
 var WALL_FEEDS = { 'intel.day': 1, 'intel.wall': 1, 'intel.pending': 1, 'intel.book': 1, 'intel.lapses': 1, 'intel.delivery': 1, 'intel.licence': 1,
   'intel.possession': 1, 'intel.conversion': 1, 'intel.groups': 1, 'intel.permanent': 1, 'intel.riders': 1 };
 var WALL_DROP = { desks: 1, team: 1, people: 1, roster: 1, staff: 1, managers: 1 };
@@ -15966,12 +15973,18 @@ function wallScrub_(o, leftOpt) {
         var seen = {}; return x.map(function (e) { return wallIsLeft_(e, left) ? WALL_ORPHANS : e; }).filter(function (e) { if (seen[e]) return false; seen[e] = 1; return true; });
       }
       var out = [], orph = null;
+      // A list of cases, one row each (the same person on more than one row), keeps every row: whoever has left reads Orphans
+      // on each. Only a list of people, one row a person, is folded into one Orphans row with the counts summed (28 Oct 2026:
+      // eight increases had become one "Orphans" line on the increases slide).
+      var ids = {}, items = !!WALL_ITEMS[parentKey];
+      x.forEach(function (e) { var id = idOf(e); if (id) { if (ids[id]) items = true; ids[id] = 1; } });
       x.forEach(function (e) {
         var id = idOf(e);
         if (id && wallIsLeft_(id, left)) {
           if (WALL_DROP[parentKey]) return;
           var c = walk(e, '');
           Object.keys(c).forEach(function (k) { if (typeof c[k] === 'string' && wallIsLeft_(c[k], left)) c[k] = WALL_ORPHANS; });
+          if (items) { out.push(c); return; }
           if (orph) merge(orph, c); else { orph = c; out.push(orph); }
           return;
         }
@@ -15998,9 +16011,145 @@ function wallFeedOut_(action, out) {
   var j = null; try { j = JSON.parse(out.getContent()); } catch (e) { return out; }
   if (!j || !j.ok || !j.data) return out;
   if (action === 'intel.pending') { try { j.data.live = wallPendLive_(todayISO_()); } catch (e) { j.data.live = { error: String(e && e.message || e) }; } }
+  if (action === 'intel.groups') { try { j.data = wallGroupsTidy_(j.data, j.stored); } catch (e) {} }
   try { j.data = wallScrub_(j.data); } catch (e) {}
   if (action === 'intel.day') { try { j.data.system = wallSystemDay_(todayISO_()); } catch (e) {} }
   return ContentService.createTextOutput(JSON.stringify(j)).setMimeType(ContentService.MimeType.JSON);
+}
+/* ── Increases, group and health: today's, and what is really pending (28 October 2026) ──
+ *  Ricky, 11:45am: "please fix the increases and group and individual Health wall this is incorrect". It was the copy built on
+ *  18 September: nothing rebuilt it on a clock (wallFeedsTick_ does now, hourly). And of what it called pending, two health
+ *  cases were 2,066 and 2,056 days old and three increases two years old: records nobody closed in Salesforce, not cases
+ *  anybody is working. Past WALL_GRP.OLD_DAYS a case leaves the counts and the lists and is counted apart, as records to
+ *  close in Salesforce (`old`), with the pending figures worked again from what is left. `builtAt` says when it was read. */
+var WALL_GRP = { OLD_DAYS: 365, REBUILD_MIN: 55, FROM_H: 6, TO_H: 18 };
+function wallGroupsTidy_(d, stored) {
+  if (!d || !d.types) return d;
+  var old = { n: 0, oldest: 0, byType: {}, inc: 0, incApi: 0, incOldest: 0 }, keep = [];
+  (d.rows || []).forEach(function (r) {
+    if ((Number(r.days) || 0) <= WALL_GRP.OLD_DAYS) { keep.push(r); return; }
+    old.n++; old.oldest = Math.max(old.oldest, Number(r.days) || 0); old.byType[r.label] = (old.byType[r.label] || 0) + 1;
+    (d.types || []).forEach(function (t) {
+      if (t.key !== r.type) return;
+      t.pending = Math.max(0, (t.pending || 0) - 1); t.old = (t.old || 0) + 1;
+      if (t.states && t.states[r.state]) t.states[r.state]--;
+    });
+    if (d.totals) d.totals.pending = Math.max(0, (d.totals.pending || 0) - 1);
+  });
+  d.rows = keep;
+  (d.types || []).forEach(function (t) { t.oldest = keep.filter(function (r) { return r.type === t.key; }).reduce(function (m, r) { return Math.max(m, Number(r.days) || 0); }, 0); });
+  var inc = d.increases;
+  if (inc && inc.rows) {
+    var cur = [], io = [];
+    inc.rows.forEach(function (r) { ((Number(r.days) || 0) > WALL_GRP.OLD_DAYS ? io : cur).push(r); });
+    var sum = function (a, f) { return Math.round(a.reduce(function (s2, r) { return s2 + (Number(r[f]) || 0); }, 0) * 100) / 100; };
+    inc.rows = cur;
+    inc.pending = { n: cur.length, api: sum(cur, 'api'), prem: sum(cur, 'prem'), oldest: cur.reduce(function (m, r) { return Math.max(m, Number(r.days) || 0); }, 0),
+                    noDocs: cur.filter(function (r) { return !r.docs; }).length, reqts: cur.filter(function (r) { return r.reqt; }).length };
+    old.inc = io.length; old.incApi = sum(io, 'api'); old.incOldest = io.reduce(function (m, r) { return Math.max(m, Number(r.days) || 0); }, 0);
+  }
+  d.old = old;
+  d.builtAt = String(stored || d.asOf || '');
+  return d;
+}
+/** The wall copies that no clock rebuilt (28 Oct 2026): increases and group every hour of the day, and the premium dues copy
+ *  once in the early morning when its own midnight build has not landed. On keepWarm, only in a run with time to spare. */
+function wallFeedsTick_(t0) {
+  if (typeof iWallLoad_ !== 'function' || typeof iWallSave_ !== 'function') return '';
+  var now = new Date(), h = Number(Utilities.formatDate(now, CONFIG.TZ, 'H')), out = [], cache = CacheService.getScriptCache(), day = todayISO_();
+  var spare = function (ms) { return Date.now() - t0 < ms; };
+  // How old a stored copy is, in minutes, both stamps read as wall-clock times in the zone the copy was stamped in.
+  var tz = typeof iTz_ === 'function' ? iTz_() : CONFIG.TZ;
+  var mins = function (str) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(String(str || '')); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 : null; };
+  var ageMin = function (key) { var had = null; try { had = iWallLoad_(key); } catch (e) {}
+    var b = had ? mins(had.builtAt) : null, n = mins(Utilities.formatDate(now, tz, 'yyyy-MM-dd HH:mm'));
+    return b == null || n == null ? 1e9 : Math.round(n - b); };
+  if (h >= WALL_GRP.FROM_H && h <= WALL_GRP.TO_H && spare(150000) && typeof iGroupsWall_ === 'function' && !cache.get('wall_grp_busy') && ageMin('groups') > WALL_GRP.REBUILD_MIN) {
+    try { cache.put('wall_grp_busy', '1', 300); var g = iGroupsWall_(); if (g && g.configured !== false && !g.error) { iWallSave_('groups', g); out.push('increases and group rebuilt'); } }
+    catch (e) { out.push('increases and group failed: ' + (e && e.message)); } finally { try { cache.remove('wall_grp_busy'); } catch (e2) {} }
+  }
+  var props = PropertiesService.getScriptProperties();
+  if (h >= 5 && h < 7 && spare(30000) && typeof intelRebuildWall45 === 'function' && props.getProperty('wall45_catch') !== day && ageMin('wall45') > 20 * 60) {
+    props.setProperty('wall45_catch', day);
+    try { runlog_('premium dues copy: its midnight build did not land; building now'); out.push(intelRebuildWall45()); }
+    catch (e) { out.push('premium dues failed: ' + (e && e.message)); }
+  }
+  if (out.length) { try { runlog_(out.join(' · ')); } catch (e) {} }
+  return out.join(' · ');
+}
+/* ── Issued this month, by unit and by agent (28 October 2026) ──
+ *  Ricky, 11:56am: "and what about the policies issued this month by agent and unit?". From the newest "Branch Production_" tab
+ *  of the Branch Portfolio (Guardian's production report: one in-force policy a row, settled July 2025 on), the policies settled
+ *  this month: how many, the annual premium (ANNUAL_PREMIUM, or the modal premium times the payments a year), the last seven days
+ *  (Guardian's own SETTLED_LAST_7_DAYS when the report has it), week by week, and where the branch stood on the same day last
+ *  month (of the people here now, as the usual is). Each unit and each agent against their own usual, never ranked: agents in name order. The usual is the average month
+ *  over the USUAL_MONTHS before this one, of the people here now (whoever has left is out of every usual, and out of the list
+ *  unless they settled something this month, when the scrub folds them into Orphans), and of what is still in force: the report
+ *  carries in-force policies only, so a month that has had lapses reads a little light. A unit is named for its manager only
+ *  while the manager is here (WALL_UNITS, or the Script Property WALL_UNITS as JSON), the others by number. Agents' names and
+ *  counts only, never a client. Kept 5 minutes. */
+var WALL_ISSUED = { PREFIX: 'Branch Production', TTL: 300, USUAL_MONTHS: 6, MODE: { '01': 12, '02': 6, '03': 4, '04': 3, '06': 2, '12': 1 } };
+var WALL_UNITS = { '26000': 'The branch', '26002': 'Akaash Kalladeen’s unit' };
+var WALL_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function wallMonth_(ym) { return WALL_MONTHS[(+String(ym).slice(5, 7) || 1) - 1]; }
+function wallYm_(ym, n) { var y = +ym.slice(0, 4), m = +ym.slice(5, 7) + n; while (m < 1) { y--; m += 12; } while (m > 12) { y++; m -= 12; } return y + '-' + (m < 10 ? '0' : '') + m; }
+function wallIssued_(day) {
+  var cache = CacheService.getScriptCache(), key = 'wall_issued_' + day, hit = cache.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
+  if (!ss) return { error: 'The Branch Portfolio would not open.' };
+  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_ISSUED.PREFIX) === 0; })
+    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  if (!tabs.length) return { error: 'No "' + WALL_ISSUED.PREFIX + '" tab in the Branch Portfolio yet: upload Guardian\'s production report.' };
+  var tab = tabs[0], vals = tab.getDataRange().getValues();
+  if (vals.length < 2) return { error: tab.getName() + ' is empty.' };
+  var h = vals[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };
+  var c = { pol: ix('POLICY_ID'), issue: ix('ISSUE_DATE'), month: ix('SETTLED_MONTH'), ann: ix('ANNUAL_PREMIUM'), mon: ix('MONTHLY_PREMIUM'),
+            mode: ix('BILLING_MODE'), agent: ix('WRITING_AGENT_NAME'), aid: ix('WRITING_AGENT_ID'), unit: ix('BRANCH_ID'), l7: ix('SETTLED_LAST_7_DAYS') };
+  if (c.pol < 0 || c.month < 0) return { error: tab.getName() + ' has no POLICY_ID or SETTLED_MONTH column.' };
+  var units = {}; try { var up = PropertiesService.getScriptProperties().getProperty('WALL_UNITS'); if (up) units = JSON.parse(up); } catch (e) { units = {}; }
+  Object.keys(WALL_UNITS).forEach(function (k) { if (!units[k]) units[k] = WALL_UNITS[k]; });
+  var unitLabel = function (code) { return units[code] || (code ? 'Unit ' + code : 'No unit'); };
+  var left = wallLeft_(), gone = function (n) { return wallIsLeft_(n, left); };
+  var cell = function (r, i) { return i < 0 || r[i] == null ? '' : r[i]; };
+  var ymOf = function (v) { if (v instanceof Date) return Utilities.formatDate(v, CONFIG.TZ, 'yyyy-MM'); return String(v || '').trim().slice(0, 7); };
+  var isoOf = function (v) { if (v instanceof Date) return Utilities.formatDate(v, CONFIG.TZ, 'yyyy-MM-dd'); return String(v || '').trim().slice(0, 10); };
+  // The day the report speaks for: its own date when it is this month's, else today.
+  var ym = day.slice(0, 7), m2 = /(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})/.exec(tab.getName());
+  var repDay = m2 ? m2[1] + '-' + m2[2] + '-' + m2[3] : '', ref = repDay && repDay.slice(0, 7) === ym && repDay <= day ? repDay : day;
+  var dom = Number(ref.slice(8, 10)), prevYm = wallYm_(ym, -1), wk7 = shiftDays_(ref, -6);
+  var inUsual = {}; for (var i = 1; i <= WALL_ISSUED.USUAL_MONTHS; i++) inUsual[wallYm_(ym, -i)] = 1;
+  var out = { tab: tab.getName(), month: ym, asOf: m2 ? prettyDate_(repDay).replace(/ \d{4}$/, '') + ', ' + twelve_(m2[4] + ':' + m2[5]) : tab.getName(),
+              monthLabel: wallMonth_(ym), prevLabel: wallMonth_(prevYm), day: dom, usualMonths: WALL_ISSUED.USUAL_MONTHS, usualFrom: wallMonth_(wallYm_(ym, -WALL_ISSUED.USUAL_MONTHS)),
+              policies: 0, prem: 0, last7: 0, prevAtPoint: 0, prevMonth: 0, usual: 0, weeks: [0, 0, 0, 0, 0], units: [], agents: [] };
+  var U = {}, A = {}, usualAll = 0, seen = {};
+  var gu = function (code) { return U[code] = U[code] || { k: unitLabel(code), code: code, n: 0, prem: 0, hist: 0 }; };
+  var ga = function (name, code) { return A[name] = A[name] || { agent: name, n: 0, prem: 0, hist: 0, unit: unitLabel(code) }; };
+  vals.slice(1).forEach(function (r) {
+    var pol = String(cell(r, c.pol)).trim(); if (!pol || seen[pol]) return; seen[pol] = 1;
+    var sm = ymOf(cell(r, c.month)), iss = isoOf(cell(r, c.issue)), code = String(cell(r, c.unit)).trim();
+    var name = String(cell(r, c.agent)).trim() || ('Agent code ' + (String(cell(r, c.aid)).trim() || 'unknown'));
+    if (inUsual[sm] && !gone(name)) { usualAll++; gu(code).hist++; ga(name, code).hist++; }
+    if (sm === prevYm && !gone(name)) { out.prevMonth++; if (Number(iss.slice(8, 10)) <= dom) out.prevAtPoint++; }
+    if (sm !== ym) return;
+    var ann = Number(cell(r, c.ann)) || 0, mon = Number(cell(r, c.mon)) || 0, mult = WALL_ISSUED.MODE[String(cell(r, c.mode)).trim()] || 12;
+    var prem = Math.round((ann || mon * mult) * 100) / 100;
+    out.policies++; out.prem += prem;
+    if (c.l7 >= 0 ? /^(y|yes|true|1)$/i.test(String(cell(r, c.l7)).trim()) : (iss >= wk7 && iss <= ref)) out.last7++;
+    out.weeks[Math.min(4, Math.floor((Math.max(1, Number(iss.slice(8, 10)) || 1) - 1) / 7))]++;
+    var u = gu(code); u.n++; u.prem += prem;
+    var a = ga(name, code); a.n++; a.prem += prem;
+  });
+  var per = WALL_ISSUED.USUAL_MONTHS, r1 = function (x) { return Math.round(x * 10) / 10; };
+  out.prem = Math.round(out.prem); out.usual = r1(usualAll / per);
+  out.units = Object.keys(U).map(function (k) { var u = U[k]; return { k: u.k, code: u.code, n: u.n, prem: Math.round(u.prem), usual: r1(u.hist / per) }; })
+    .filter(function (u) { return u.n || u.usual >= 0.5; }).sort(function (a, b) { return a.code < b.code ? -1 : 1; });
+  out.agents = Object.keys(A).map(function (k) { var a = A[k]; return { agent: a.agent, n: a.n, usual: r1(a.hist / per), unit: a.unit }; })
+    .filter(function (a) { return a.n || (a.usual >= 0.5 && !gone(a.agent)); })
+    .sort(function (a, b) { var x = String(a.agent).toLowerCase(), y = String(b.agent).toLowerCase(); return x < y ? -1 : x > y ? 1 : 0; });   // name order: nobody is ranked
+  out.weeks = out.weeks.map(function (n, i) { return { k: (i * 7 + 1) + (i < 4 ? '–' + (i * 7 + 7) : '+'), n: n }; });
+  try { cache.put(key, JSON.stringify(out), WALL_ISSUED.TTL); } catch (e) {}
+  return out;
 }
 /* ── The pending wall, from the newest pending report (27 October 2026) ──
  *  Ricky, 2:16pm, on the requirements stop: "should the pending wall not have a barchart to show which agents has first
@@ -16021,7 +16170,7 @@ function wallFeedOut_(action, out) {
  *  the policy or application number in the subject. `chase`: the same for the branch. Ordered by the call to make first:
  *  cash, then medicals, then documents. */
 var WALL_PEND = { PREFIX: 'Branch Pendings', TTL: 300, TOP: 12, AGES: ['0-30 days', '31-60 days', '61-90 days', '90+ days'],
-  BANDS: [['0-30', 30], ['31-60', 60], ['61-90', 90], ['91-180', 180], ['180+', 1e9]], TOPCATS: 4, IDS: 40,
+  BANDS: [['0-30', 30], ['31-60', 60], ['61-90', 90], ['91-180', 180], ['180+', 1e9]], TOPCATS: 4, IDS: 40, CODES: 60, CODE_AGENTS: 4,
   STATES: [{ key: 'settle', abbr: 'AP', label: 'Approved · settle it', work: true, re: /^(standard|loaded|terms)/i, note: 'Underwriting has approved; only the items left stand between it and issue.' },
            { key: 'info', abbr: 'AI', label: 'More info asked', work: true, re: /additional/i, note: 'Underwriting has asked for more: a document, a form, a report.' },
            { key: 'uw', abbr: 'UW', label: 'With underwriting', work: false, re: /refer/i, note: 'Referred: the decision is with the underwriter or the reinsurer.' },
@@ -16055,7 +16204,7 @@ function wallPendLive_(day) {
   var m = /(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})/.exec(tab.getName());
   var out = { tab: tab.getName(), asOf: m ? prettyDate_(m[1] + '-' + m[2] + '-' + m[3]).replace(/ \d{4}$/, '') + ', ' + twelve_(m[4] + ':' + m[5]) : tab.getName(),
               reqs: 0, policies: 0, newWeek: 0, rag: { Red: 0, Amber: 0, Green: 0 }, ages: [], byReq: [], who: [], first: { policies: 0, prem: 0, agents: [] }, agents: 0 };
-  var pols = {}, ages = {}, reqs = {}, who = {}, agentOf = {}, firstBy = {}, firstPol = {}, agentsSeen = {}, P = {}, numOf = {};
+  var pols = {}, ages = {}, reqs = {}, who = {}, agentOf = {}, firstBy = {}, firstPol = {}, agentsSeen = {}, P = {}, numOf = {}, codes = {}, whoPol = {};
   vals.slice(1).forEach(function (r) {
     var pol = cell(r, c.pol); if (!pol) return;
     if (/closed|received|waived|complete|cancel/i.test(cell(r, c.st))) return;
@@ -16078,6 +16227,11 @@ function wallPendLive_(day) {
     var a = cell(r, c.age) || 'Not dated'; ages[a] = (ages[a] || 0) + 1;
     var nm = cell(r, c.name) || cell(r, c.code); reqs[nm] = (reqs[nm] || 0) + 1;
     var w = cell(r, c.who) || 'Not said'; who[w] = (who[w] || 0) + 1;
+    // Code by code (slide 6, 28 Oct 2026): each requirement, how many, overdue at Guardian, new this week, who acts, whose.
+    var co = codes[nm] = codes[nm] || { k: nm, code: cell(r, c.code).toUpperCase(), kind: kd, n: 0, red: 0, amber: 0, nw: 0, pol: {}, who: {}, ag: {} };
+    co.n++; if (rg === 'Red') co.red++; else if (rg === 'Amber') co.amber++; if (/^y/i.test(cell(r, c.nw))) co.nw++;
+    co.pol[pol] = 1; co.who[w] = (co.who[w] || 0) + 1; co.ag[ag] = (co.ag[ag] || 0) + 1;
+    (whoPol[w] = whoPol[w] || {})[pol] = 1;
     if (cell(r, c.code).toUpperCase() === 'FUTPY' && !firstPol[pol]) {
       firstPol[pol] = 1;
       var f = firstBy[ag] = firstBy[ag] || { k: ag, n: 0, prem: 0 };
@@ -16087,7 +16241,13 @@ function wallPendLive_(day) {
   out.policies = Object.keys(pols).length; out.agents = Object.keys(agentsSeen).length;
   out.ages = WALL_PEND.AGES.map(function (k) { return { k: k.replace(' days', ''), n: ages[k] || 0 }; });
   out.byReq = Object.keys(reqs).map(function (k) { return { k: k, n: reqs[k] }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, WALL_PEND.TOP);
-  out.who = Object.keys(who).map(function (k) { return { k: k, n: who[k] }; }).sort(function (a, b) { return b.n - a.n; });
+  out.who = Object.keys(who).map(function (k) { return { k: k, n: who[k], p: Object.keys(whoPol[k] || {}).length }; }).sort(function (a, b) { return b.n - a.n; });
+  var top = function (o, n) { return Object.keys(o).map(function (k) { return { k: k, n: o[k] }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, n); };
+  out.codes = Object.keys(codes).map(function (k) { var co = codes[k], w1 = top(co.who, 1)[0];
+    return { k: co.k, code: co.code, kind: co.kind, n: co.n, red: co.red, amber: co.amber, nw: co.nw, policies: Object.keys(co.pol).length,
+             who: w1 ? w1.k : '', agents: top(co.ag, WALL_PEND.CODE_AGENTS) }; })
+    .sort(function (a, b) { return (b.n - a.n) || (b.red - a.red) || (a.k < b.k ? -1 : 1); }).slice(0, WALL_PEND.CODES);
+  out.codeCount = Object.keys(codes).length;
   out.first.agents = Object.keys(firstBy).map(function (k) { return firstBy[k]; }).sort(function (a, b) { return (b.n - a.n) || (b.prem - a.prem); });
   out.first.policies = Object.keys(firstPol).length;
   out.first.prem = Math.round(out.first.agents.reduce(function (s2, x) { return s2 + x.prem; }, 0));

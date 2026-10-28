@@ -235,7 +235,7 @@
     <div class="mark"><img src="../../logo-mark.png" alt=""></div>
     <div>
       <h1>The Branch Intelligence Wall</h1>
-      <p id="bootSub">Eleven screens, one after another. Reading Salesforce…</p>
+      <p id="bootSub">Fifteen screens, one after another. Reading Salesforce…</p>
     </div>
   </div>
 </div>
@@ -275,7 +275,14 @@ var SLIDES = [
      Salesforce." The board says what is on each agent's desk; this says
      who is holding each requirement, which is the other way to read the
      same join and the one a branch meeting argues from. */
-  { file:'codes.html',      tab:'Pending \u00b7 code by code', secs:22 },
+  { file:'codes.html',      tab:'Pending \u00b7 code by code', secs:34 },
+  /* WHAT BECAME A POLICY, asked for on 28 October 2026: "and what about the
+     policies issued this month by agent and unit?". After the four pending
+     stops, the month's issued business from Guardian's production report:
+     each unit and each agent against their own usual month, never ranked.
+     Code by code holds longer since the same day: its pages turn every eight
+     seconds and every code has to come round. */
+  { file:'issued.html',     tab:'Issued this month', secs:24 },
   /* Ready to settle, whose move is it and who is holding it up were three
      slides here until 17 September 2026. All three read the pending feed, and
      the rebuilt pending screen now carries what they said — what can be
@@ -677,7 +684,7 @@ setInterval(function () {
 if (LONE) {
   try {
     document.getElementById('bootSub').textContent =
-      'Eleven screens, one after another. One at a time on a phone.';
+      'Fifteen screens, one after another. One at a time on a phone.';
   } catch (e) {}
 }
 

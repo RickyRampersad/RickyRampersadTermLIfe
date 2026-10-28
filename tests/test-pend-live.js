@@ -56,6 +56,12 @@ ok('today: Sasha\'s notes on Pendings tasks, and whose policies', S.notes === 2 
 ok('Azariah closed one; a note on a Servicing task is not a chase', A.notes === 0 && A.closed === 1 && A.agents[0].k === 'Varun Seegolam', JSON.stringify(A));
 ok('every desk shows, quiet ones too, in the register\'s order', T.desks.map(d => d.name).join() === 'Sasha,Elizabeth,Azariah,Kamla,Ricky' && T.notes === 2 && T.closed === 1 && T.policies === 3, T.desks.map(d => d.name).join());
 
+console.log('\nCode by code (slide 6, 28 Oct):\n');
+const CF = L.codes.find(x => x.k === 'Future Premium Payment');
+ok('each requirement with its count, red and amber, its policies, who acts and whose', CF && CF.n === 5 && CF.red === 1 && CF.amber === 2 && CF.policies === 4 && CF.who === 'Agent' && CF.code === 'FUTPY' && CF.kind === 'First premium', JSON.stringify(CF));
+ok('the agents holding it, biggest first', CF.agents[0].k === 'Varun Seegolam' && CF.agents[0].n === 3 && CF.agents.length === 3, JSON.stringify(CF.agents));
+ok('biggest code first; a received one is not there', L.codes[0].k === 'Future Premium Payment' && !L.codes.find(x => /Declaration/.test(x.k)) && L.codeCount === 3, L.codes.map(x => x.k + ':' + x.n).join());
+ok('who acts next counts policies too', L.who[0].k === 'Agent' && L.who[0].n === 6 && L.who[0].p === 4, JSON.stringify(L.who[0]));
 console.log('\nThe policies stop (27h):\n');
 const PO = L.pol;
 ok('policies by days since submission, five bands', PO.ages.map(a => a.k + ':' + a.n).join(' ') === '0-30:2 31-60:1 61-90:1 91-180:1 180+:0', PO.ages.map(a => a.k + ':' + a.n).join(' '));
@@ -92,6 +98,7 @@ ok('intel.pending carries the live report', j.data.live && j.data.live.reqs === 
 ok('the departed fold: first premiums of Aidan and Tricia are one Orphans bar', (() => { const o = j.data.live.first.agents.find(a => a.k === env.WALL_ORPHANS); return o && o.n === 2 && o.prem === 500; })(), JSON.stringify(j.data.live.first.agents));
 ok('a unit named for someone who has left reads Orphans', j.data.units[0].name === env.WALL_ORPHANS && /AKAASH/.test(j.data.units[1].name), JSON.stringify(j.data.units));
 ok('the departed fold on the board too: Aidan and Tricia are one Orphans row', (() => { const o = j.data.live.board.agents.find(a => a.agent === env.WALL_ORPHANS); return o && o.policies === 2 && o.cash === 2 && o.ready === 2 && o.never === 1 && o.oldest === 70; })(), JSON.stringify(j.data.live.board.agents.map(a => a.agent)));
+ok('on a code, the departed agents fold into one Orphans count', (() => { const c = j.data.live.codes.find(x => x.k === 'Future Premium Payment'); const o = c.agents.find(a => a.k === env.WALL_ORPHANS); return o && o.n === 2 && c.agents.length === 2; })(), JSON.stringify(j.data.live.codes[0].agents));
 ok('nobody who has left is named', !/Aidan|Baksh|KERWYN/i.test(JSON.stringify(j.data)));
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');
 process.exit(fails ? 1 : 0);
