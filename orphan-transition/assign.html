@@ -539,7 +539,7 @@
   /* the TT$200 retention claims */
   .cnote{font-size:14px;margin:0 0 10px;padding:9px 12px;border-radius:9px;background:var(--warnbg);border:1px solid var(--warnline);color:var(--warn)}
   .cnote.rule{background:#f6f8fb;border-color:var(--line);color:var(--body)}
-  .pt .cst{font-weight:600;white-space:nowrap} .pt .cst.unpaid,.pt .cst.notsent,.pt .cst.check{color:var(--stop)} .pt .cst.paid{color:var(--ok)} .pt .cst.held,.pt .cst.new,.pt .cst.csr{color:var(--warn)} .pt .cst.closed{color:var(--dim)}
+  .pt .cst{font-weight:600;white-space:nowrap} .pt .cst.unpaid,.pt .cst.notsent,.pt .cst.check{color:var(--stop)} .pt .cst.paid{color:var(--ok)} .pt .cst.held,.pt .cst.new,.pt .cst.csr{color:var(--warn)} .pt .cst.ready{color:var(--ok)} .pt .cst.closed{color:var(--dim)}
   .pt a.cgo{color:var(--ink);font-weight:600;text-decoration:none;border-bottom:1px dotted #9ab}
   .claimln{margin-top:10px;font-size:14px;background:#fffaf0;border:1px solid var(--warnline);border-radius:9px;padding:8px 12px}
   .claimln .cl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);margin-right:4px}
@@ -607,6 +607,8 @@
   .svlist th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);padding:5px 8px 5px 0;border-bottom:1px solid var(--line)}
   .svlist td{padding:6px 8px 6px 0;border-top:1px solid var(--line2);vertical-align:top} .svlist td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
   .svlist .late{color:var(--stop);font-weight:600} .svlist .openx{color:var(--tdark);font-weight:600}
+  .wil{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:5px;white-space:nowrap}
+  .wil.l1{background:#eef1f4;color:#33465a} .wil.l2{background:#fff1d6;color:#8a5200} .svlist .wil.l3,.wil.l3{background:var(--stop);color:#fff}
   .dnone,.dload{font-size:14px;color:var(--dim);margin:4px 0} .derr{font-size:14px;color:var(--stop);margin:4px 0} .derr a{color:var(--tdark);cursor:pointer;text-decoration:underline}
   /* the assign bar */
   .bar{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#e8eef5;padding:12px max(16px,calc((100% - 1400px)/2));display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;z-index:20;box-shadow:0 -4px 20px rgba(7,19,31,.25)}
@@ -947,6 +949,7 @@
     <!-- Follow-ups: the clients chasing us, and who on the team is answering (22 October 2026) -->
     <div class="pane" id="paneFollow" hidden>
       <div class="panehead"><h2>Follow-ups</h2><span>The clients who came back to us, whether anyone answered, and how each person on the team answers your asks</span></div>
+      <div class="card dcard wicard" id="wiCard" hidden></div>
       <div class="agstate" id="fuState"></div>
       <div id="fuBody" hidden>
         <div class="card dcard"><div class="dtiles" id="fuTiles"></div><p class="pnote" id="fuWhat"></p></div>
@@ -1238,6 +1241,21 @@ function needsOf(c) {
   return s;
 }
 function stateOf(c) { return c.state === 'open' && c.late ? 'late' : c.state; }
+/* the state in words. "No answer yet" is the client's answer to our letter, so once the named agent or staff log a call on a
+   client who never answered, the label says the call instead (23 October 2026: an agent read "named, no answer yet" after
+   logging his calls and thought the update had not saved) */
+var OUT_WORDS = { called: 'called', met: 'met', 'no answer': 'tried, no answer', declined: 'declined', closed: 'closed' };
+function stateWords(c) {
+  var so = stateOf(c), w = STATE_WORDS[so] || so;
+  if (so !== 'named' && so !== 'called' && so !== 'silent') return w;
+  var last = null;
+  (c.markers || []).forEach(function (m) {
+    var x = /^\[(called|met|no answer|declined|closed) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/.exec(m);
+    if (x) last = x;
+  });
+  if (!last) return w;
+  return (so === 'named' ? 'named · ' : '') + OUT_WORDS[last[1]] + ' ' + last[2];
+}
 var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', reached: 'reached by phone', named: 'named, no answer yet', silent: 'not answered yet', held: 'letter held', unsent: 'not written to yet',
   called: 'called, no answer yet', tocall: 'to call', dnc: 'do not call', family: 'family' };
 /* the letters, in a few words each (letters/manifest.json) */
@@ -1426,6 +1444,7 @@ function render() {
     TAB = tabs[0];
     if (manager) TAB = 'urgent';
   }
+  if (WI_OPEN && tabs.indexOf('follow') >= 0) { TAB = 'follow'; WI_OPEN = false; }
   if (FOCUS && TABDEF[TAB] && TABDEF[TAB].pane) TAB = tabs.filter(function (t) { return !TABDEF[t].pane; })[0];
   drawTabs(tabs);
   showPane();
@@ -1801,7 +1820,7 @@ function clearFilters() {
   FILTER.agent = ''; SUB = ''; SHOW_N = SHOW_STEP; if (D) listPane();
 }
 /* #t=TOKEN&s=SEG, a link from the calls sheet or the team panel: the board opens on that one client */
-var FOCUS = '', FOCUS_SEG = '', focusTried = false;
+var FOCUS = '', FOCUS_SEG = '', focusTried = false, WI_OPEN = false;
 /* the AI guide read for each client, and the task each client's comment goes on (22 October 2026); a link may name the task */
 var GUIDE = {}, TASK_PICK = {};
 function readHash() {
@@ -1809,6 +1828,7 @@ function readHash() {
   FOCUS = t ? t[1] : ''; FOCUS_SEG = s ? s[1].toUpperCase() : ''; focusTried = false;
   var k = /[#&]k=([A-Za-z0-9]{15,18})/.exec(h);
   if (FOCUS && k) TASK_PICK[FOCUS] = k[1];
+  if (/^#watch\b/.test(h)) WI_OPEN = true;   // the link in a Branch Intelligence e-mail opens its card (22 October 2026)
 }
 readHash();
 window.addEventListener('hashchange', function () { readHash(); if (D) { if (FOCUS && TABDEF[TAB] && TABDEF[TAB].pane) TAB = tabsFor(D).filter(function (t) { return !TABDEF[t].pane; })[0]; drawTabs(tabsFor(D)); showPane(); } });
@@ -1829,7 +1849,7 @@ var OPENX = {};   // the panels opened on a card: 'pol:TOKEN', 'hh:TOKEN'
 function pills(c) {
   var so = stateOf(c);
   return '<span class="pill seg" title="' + esc(LETTER_WORDS[c.seg] || '') + '">' + esc(c.seg || '—') + (LETTER_WORDS[c.seg] ? ' · ' + esc(LETTER_WORDS[c.seg]) : '') + '</span>' +
-    '<span class="pill ' + esc(so) + '">' + esc(STATE_WORDS[so] || so) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '') +
+    '<span class="pill ' + esc(so) + '">' + esc(stateWords(c)) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '') +
     (backOpen(c) ? '<span class="pill urg">call-back: ' + esc(c.back.kind === 'branch' ? 'the branch' : 'licensed agent') + '</span>' : '');
 }
 function hhPill(c) {
@@ -2115,7 +2135,7 @@ function cap(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slic
 /* the states that need saying on the row; the letter and the rest are in the details */
 function rowPills(c) {
   var so = stateOf(c);
-  return '<span class="pill ' + esc(so) + '">' + esc(STATE_WORDS[so] || so) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '') +
+  return '<span class="pill ' + esc(so) + '">' + esc(stateWords(c)) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '') +
     (backOpen(c) ? '<span class="pill urg">call-back: ' + esc(c.back.kind === 'branch' ? 'the branch' : 'licensed agent') + '</span>' : '') +
     (c.mf && c.mf.length ? '<span class="pill mf">possible family</span>' : '');
 }
@@ -2830,6 +2850,99 @@ function agState(html) { $('agState').innerHTML = html || ''; }
    asks, what is still unanswered, the days they did anything, and how they closed; and the questions waiting on the
    branch. Read when the tab opens and again after ten minutes, never on the two-minute refresh. */
 var FUV = null, FUV_AT = 0, FUV_BUSY = false, FUF = { kind: 'chasing', wait: false, open: '' };
+/* ---- Branch Intelligence (22 October 2026: "more intelligence to help me manage this properly") ----
+   The named-client clock (every client named to an agent with nothing logged since, and who has been asked), the clients
+   chasing us with a reply drafted for the branch manager to send, the namings found in his own e-mails to confirm with one
+   press, and the staff notes asked about. The branch alone. Read when the Follow-ups tab opens, again after five minutes. */
+var WIV = null, WIV_AT = 0, WIV_BUSY = false, WI_SHOW = { clock: false };
+function wiLoad(force, act, extra) {
+  if (!D || D.role !== 'branch' || WIV_BUSY) return;
+  if (!force && !act && WIV && Date.now() - WIV_AT < 300000) return;
+  WIV_BUSY = true;
+  var p = signed({ action: 'board', watch: act || '1' });
+  Object.keys(extra || {}).forEach(function (k) { p[k] = extra[k]; });
+  api(p).then(function (r) {
+    WIV_BUSY = false;
+    if (r && r.ok && r.watch) WIV = r.watch;
+    else if (r && r.ok) WIV = { on: false, why: 'Branch Intelligence needs the new backend: paste Transition.gs, then Deploy \u2192 Manage deployments \u2192 New version.' };
+    else if (!WIV || !WIV.on) WIV = { on: false, why: r && r.notUpdated ? FU_OLD : ((r && r.error) || 'The sheet did not answer.') };
+    WIV_AT = Date.now();
+    if (TAB === 'follow') wiDraw();
+    if (act === 'start') toast('Branch Intelligence started: the clock, the chasing alerts and the note check now reach staff and agents.');
+    if (act === 'stop') toast('Branch Intelligence stopped: only you hear.');
+  }).catch(function () { WIV_BUSY = false; if (TAB === 'follow') wiDraw(); });
+}
+function wiDraw() {
+  var el = $('wiCard');
+  if (!el) return;
+  if (!D || D.role !== 'branch') { el.hidden = true; return; }
+  el.hidden = false;
+  var v = WIV;
+  if (!v) { el.innerHTML = '<div class="dh2">Branch Intelligence</div><p class="pnote">Reading every named client, the clients chasing us and the staff notes&hellip;</p>'; return; }
+  if (!v.on) { el.innerHTML = '<div class="dh2">Branch Intelligence</div><p class="pnote"><span class="stop">' + esc(v.why || '') + '</span></p>'; return; }
+  var C = v.clock || [], three = C.filter(function (x) { return x.days >= 3; }), CH = v.chases || [], NM = v.namings || [], NT = v.notes || [], WN = v.wouldNotes && v.wouldNotes.list ? v.wouldNotes.list : (v.wouldNotes || []);
+  var lvl = function (x) { return x.days >= 3 ? '<span class="wil l3">3+ days: you</span>' : x.days === 2 ? '<span class="wil l2">2 days: unit manager</span>' : '<span class="wil l1">1 day: support and agent</span>'; };
+  var html = '<div class="dh2">Branch Intelligence <small>' + (v.live ? '<span class="pill done">running</span> the clock at ' + v.hours.clock + ':00, your list at ' + v.hours.daily + ':00, the notes hourly'
+      : '<span class="pill late">not started</span> nothing goes to staff or agents yet; your ' + v.hours.daily + ':00 list still comes') + '</small></div>' +
+    '<div class="dtiles">' + dTile(C.length, 'Named, nothing logged', three.length + ' for 3 working days or more', three.length ? 'crit' : '', 'wiClock') +
+      dTile(CH.length, 'Chasing us', 'in the last 14 days', CH.length ? 'crit' : '', 'wiChase') + dTile(NM.length, 'Namings in your e-mails', 'waiting for one press', NM.length ? 'crit' : '', 'wiName') +
+      dTile(v.live ? NT.length : WN.length, v.live ? 'Notes asked about' : 'Notes it would ask about', v.live ? 'in the last 14 days' : 'once started', '', 'wiNotes') + '</div>' +
+    '<p class="pnote">' + (v.live ? '<button type="button" id="wiStop">Stop it</button> Only you would hear.' :
+      '<button type="button" id="wiStart" class="go">Start it</button> From then on, a client named to an agent with nothing logged after 1 working day gets a line on the support person\u2019s task and an e-mail to the agent; after 2, the unit manager; after 3, you. A client who writes that nobody has called reaches the agent and the support person at once. A staff note with no call or outcome is asked about on its own Chatter.') + '</p>';
+  /* namings in his e-mails */
+  html += '<div class="dh2" id="wiName">Namings in your e-mails <small>an e-mail names the agent nowhere: one press writes Salesforce, opens the support person\u2019s task and briefs the agent</small></div>' +
+    (NM.length ? NM.map(function (x) {
+      return '<div class="furow"><div class="tkh">' + fuLink(x.t, x.n) + '<span class="mut">your e-mail of ' + esc(x.at) + '</span></div><div class="fuq">\u201c' + esc(String(x.words || '').slice(0, 300)) + '\u201d</div>' +
+        '<div class="fua"><button type="button" class="go" data-winame="' + esc(x.t) + '" data-wiag="' + esc(x.a) + '">Name ' + esc(firstName(x.a)) + ' on ' + esc(firstName(x.n)) + '</button> ' +
+        '<button type="button" data-widis="' + esc(x.key) + '">Not a naming</button></div></div>';
+    }).join('') : '<p class="dnone">None waiting.</p>');
+  /* clients chasing us */
+  html += '<div class="dh2" id="wiChase">Clients chasing us <small>a reply drafted for you; it goes from support@ in your name, under an apology for the wait</small></div>' +
+    (CH.length ? CH.map(function (x, i) {
+      return '<div class="furow"><div class="tkh">' + fuLink(x.t, x.n) + '<span class="mut">' + esc(x.at) + ' \u00b7 agent: <b>' + esc(x.a || 'nobody named') + '</b></span></div>' +
+        '<div class="fuq ch">\u201c' + esc(String(x.words || '').slice(0, 400)) + '\u201d</div>' +
+        '<label class="mut" for="wiDr' + i + '">Your line to ' + esc(firstName(x.n)) + '</label><textarea id="wiDr' + i + '" rows="3" maxlength="300" style="width:100%;font:inherit;box-sizing:border-box">' + esc(x.draft || '') + '</textarea>' +
+        '<div class="fua"><button type="button" class="go" data-wisend="' + i + '">Send to ' + esc(firstName(x.n)) + '</button> <span class="mut">from support@, signed by you, the branch copied</span></div></div>';
+    }).join('') : '<p class="dnone">Nobody chasing in the last 14 days.</p>');
+  /* the clock */
+  var showC = WI_SHOW.clock ? C : C.slice(0, 12);
+  html += '<div class="dh2" id="wiClock">Named, nothing logged <small>no call on the board and no word from the agent on the client\u2019s tasks since the naming</small></div>' +
+    (C.length ? '<div class="svwrap"><table class="svlist"><tr><th>Client</th><th>Agent</th><th>Named</th><th>Working days</th><th>Who is asked</th><th>Support</th></tr>' +
+      showC.map(function (x) { return '<tr><td>' + fuLink(x.t, x.n) + '</td><td>' + esc(x.a) + '</td><td>' + esc(x.on) + '</td><td class="n' + (x.days >= 3 ? ' late' : '') + '">' + x.days + '</td><td>' + lvl(x) + '</td><td>' + esc(x.support || '') + '</td></tr>'; }).join('') +
+      '</table></div>' + (C.length > showC.length ? '<p class="pnote"><button type="button" id="wiMore">Show all ' + C.length + '</button></p>' : '') : '<p class="dnone">Every named client has something logged.</p>');
+  /* the notes */
+  var NL = v.live ? NT : WN;
+  html += '<div class="dh2" id="wiNotes">' + (v.live ? 'Staff notes asked about' : 'Staff notes it would ask about') + ' <small>a note on an orphan task that records no call or outcome, asked once on its own Chatter</small></div>' +
+    (NL.length ? NL.map(function (x) {
+      return '<div class="furow"><div class="tkh">' + (x.t ? fuLink(x.t, x.n || x.client) : '<b>' + esc(x.n || x.client || 'a task') + '</b>') + '<span class="mut">' + esc(x.by) + (x.at ? ' \u00b7 ' + esc(x.at) : '') + '</span></div>' +
+        '<div class="tkl">' + esc(x.why || x.ask || '') + '</div></div>';
+    }).join('') : '<p class="dnone">None.</p>');
+  html += '<p class="pnote">Read ' + esc(v.at || '') + (v.ai ? '. The drafts and the note check are by the AI: read each before it goes.' : '. The AI key is not set: the drafts and the note check use plain rules.') + '</p>';
+  el.innerHTML = html;
+  each('#wiCard [data-go]', function (b) { b.addEventListener('click', function () { try { $(b.getAttribute('data-go')).scrollIntoView({ behavior: 'smooth' }); } catch (e) {} }); });
+  if ($('wiStart')) $('wiStart').addEventListener('click', function () { if (confirm('Start Branch Intelligence? From now on it posts on the support people\u2019s tasks and e-mails the agents and unit managers as described.')) wiLoad(true, 'start'); });
+  if ($('wiStop')) $('wiStop').addEventListener('click', function () { wiLoad(true, 'stop'); });
+  if ($('wiMore')) $('wiMore').addEventListener('click', function () { WI_SHOW.clock = true; wiDraw(); });
+  each('#wiCard [data-widis]', function (b) { b.addEventListener('click', function () { wiLoad(true, 'dismiss', { key: b.getAttribute('data-widis') }); }); });
+  each('#wiCard [data-winame]', function (b) { b.addEventListener('click', function () {
+    var tok = b.getAttribute('data-winame'), ag = b.getAttribute('data-wiag');
+    b.disabled = true; b.textContent = 'Naming\u2026';
+    api(signed({ action: 'assign', tokens: tok, agent: ag, brief: '1', intro: '0' })).then(function (r) {
+      if (r && r.ok) { toast(ag + ' is named: Salesforce written, the support person\u2019s task opened, ' + firstName(ag) + ' briefed.'); WIV_AT = 0; wiLoad(true); load(); }
+      else { b.disabled = false; b.textContent = 'Name ' + firstName(ag); toast((r && r.error) || 'The naming did not go through.', true); }
+    });
+  }); });
+  each('#wiCard [data-wisend]', function (b) { b.addEventListener('click', function () {
+    var x = CH[Number(b.getAttribute('data-wisend'))], line = $('wiDr' + b.getAttribute('data-wisend')).value.trim();
+    if (!x || !line) return;
+    if (!confirm('Send this to ' + x.n + ' from support@, in your name?')) return;
+    b.disabled = true; b.textContent = 'Sending\u2026';
+    api(signed({ action: 'update', token: x.t, status: 'Open', note: 'replied to their e-mail: nobody had been in touch', tell: 'sorry', line: line })).then(function (r) {
+      if (r && r.ok && r.told) { b.textContent = 'Sent'; toast('Sent to ' + x.n + (r.toldTo ? ' at ' + r.toldTo : '') + '.'); }
+      else { b.disabled = false; b.textContent = 'Send to ' + firstName(x.n); toast((r && (r.warning || r.error)) || 'It did not send.', true); }
+    });
+  }); });
+}
 var FU_KIND = { chasing: ['Chasing us', 'their words ask why nobody called, for an update or for a person, or they asked again'], details: ['Wrote with details', 'a number, a time, a document'],
   declined: ['Declined', 'do not want an agent now, or are staying with the former agent'], more: ['Came back with more answers', 'ticked more of the letter on a later day'] };
 var FU_OLD = 'The Follow-ups tab needs the new backend: paste Transition.gs, then Deploy → Manage deployments → New version.';
@@ -2849,6 +2962,7 @@ function fuLoad(force) {
 function fuLink(tok, name) { return tok ? '<a href="#t=' + encodeURIComponent(tok) + '"><b>' + esc(name || 'the client') + '</b></a>' : '<b>' + esc(name || '') + '</b>'; }
 function followPane() {
   if (!D) return;
+  wiDraw(); wiLoad();
   var v = FUV;
   if (!v) { $('fuBody').hidden = true; fuState('Reading every client who came back to us, and every task&rsquo;s Chatter&hellip; about thirty seconds.'); fuLoad(); return; }
   if (!v.on) {
@@ -3978,11 +4092,11 @@ function insightsPane() {
 /* ---- the TT$200 retention claims (tClaimsRead_ in Transition.gs): the panel, and the line on a card ---- */
 /* 3 October 2026: "when a questionnaire is recieved the agent is compensated 200.00 as an email goes to retention … to track
    payments". The branch sees every claim, a unit manager his team's, an agent their own; staff never see one (no money). */
-var CSTATE = { unpaid: 'unpaid', paid: 'paid', held: 'held', notsent: 'not sent', check: 'to check', closed: 'closed', 'new': 'new', csr: 'with Customer Service' };
+var CSTATE = { unpaid: 'unpaid', paid: 'paid', held: 'held', notsent: 'not sent', check: 'to check', closed: 'closed', 'new': 'new', csr: 'with Customer Service', ready: 'ready for Friday' };
 function cmoney(n) { return ((D && D.claims && D.claims.cur) || 'TT$') + Math.round(Number(n) || 0).toLocaleString('en-US'); }
 function claimPay(v, manager) {
   if (v.state === 'paid') return v.paid ? (v.future ? 'to be paid ' + v.paid : 'paid ' + v.paid) : 'paid';
-  if (v.state === 'unpaid') return 'unpaid' + (v.days === 0 ? ', sent today' : v.days ? ', ' + v.days + (v.days === 1 ? ' day' : ' days') : '');
+  if (v.state === 'unpaid') return 'unpaid' + (v.tx ? ', ' + v.tx + ' transmittal' : '') + (v.days === 0 ? ', sent today' : v.days ? ', ' + v.days + (v.days === 1 ? ' day' : ' days') : '');
   /* 16 October 2026: the questionnaire is with Customer Service until Date SQ processed by CSR is filled in Salesforce */
   if (v.state === 'csr') return 'with Customer Service' + (v.toCsr ? ' since ' + v.toCsr : '') + (v.csrN ? ', followed up ' + v.csrN + (v.csrN === 1 ? ' time' : ' times') : '');
   if (manager && v.status && v.state !== 'new') return v.status;
@@ -4636,7 +4750,7 @@ function mQueue(X, rows, money) {
     return '<article class="mq" style="--d:' + d + 'ms" data-t="' + esc(c.token) + '">' +
       '<div class="mring" style="--rc:' + mColor(t) + ';--d:' + d + 'ms"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15.915"/><circle class="fg" cx="18" cy="18" r="15.915" stroke-dasharray="' + t + ' 100"/></svg><b>' + t + '</b></div>' +
       '<div><div class="mqn"><a href="#t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '">' + esc(c.client) + '</a><span class="cno">' + esc(c.no || '') + '</span>' +
-      '<span class="pill ' + esc(stateOf(c)) + '">' + esc(STATE_WORDS[stateOf(c)] || c.state) + '</span></div>' +
+      '<span class="pill ' + esc(stateOf(c)) + '">' + esc(stateWords(c)) + '</span></div>' +
       (who ? '<div class="mqs">' + esc(who) + '</div>' : '') + '<div class="mqbars">' + bars + '</div>' + (chips ? '<div class="mchips">' + chips + '</div>' : '') + '</div>' +
       '<div class="mqa">' + act + '</div></article>';
   }).join('');

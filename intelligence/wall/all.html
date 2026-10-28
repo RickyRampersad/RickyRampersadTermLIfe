@@ -99,7 +99,7 @@
   /* The line across the top: time to the next story. Thick enough to be read
      from the far side of the floor. */
   /* THE CHROME IS ALL ON ONE LINE ACROSS THE TOP NOW. It used to be three
-     things stacked over the foot of every slide — the rail of fourteen stops,
+     things stacked over the foot of every slide — the rail of sixteen stops,
      the timer pill, and (from this afternoon) the stale-code bar — and the
      note back was that it was blocking the bottom of the slide. A slide is
      designed to fill its frame; anything laid over it has to be somewhere the
@@ -139,7 +139,7 @@
   #chrome.nar .track i{background:var(--blue)}
   #chrome.nar #left{color:var(--blue)}
 
-  /* FOURTEEN STOPS, NUMBERS ONLY. With their names on them they needed two
+  /* SIXTEEN STOPS, NUMBERS ONLY. With their names on them they needed two
      rows at 1366 and the line stopped being a line. The name of the stop you
      are on is spelled out in #state beside them, which is the only one
      anybody in the room needs. */
@@ -235,7 +235,7 @@
     <div class="mark"><img src="../../logo-mark.png" alt=""></div>
     <div>
       <h1>The Branch Intelligence Wall</h1>
-      <p id="bootSub">Fifteen screens, one after another. Reading Salesforce…</p>
+      <p id="bootSub">Sixteen screens, one after another. Reading Salesforce…</p>
     </div>
   </div>
 </div>
@@ -283,6 +283,12 @@ var SLIDES = [
      Code by code holds longer since the same day: its pages turn every eight
      seconds and every code has to come round. */
   { file:'issued.html',     tab:'Issued this month', secs:24 },
+  /* The orphan campaign, 28 October 2026. Asked for the same day: "can a
+     dash on the orphans management, can a dash be created to assign to that
+     wall?". Where the households stand, today's list for each desk and what
+     was done on it, and the clients named to an agent: counts and first names
+     only, from the campaign script rather than the tracker. */
+  { file:'orphans.html',    tab:'The orphan campaign', secs:30 },
   /* Ready to settle, whose move is it and who is holding it up were three
      slides here until 17 September 2026. All three read the pending feed, and
      the rebuilt pending screen now carries what they said — what can be
@@ -684,7 +690,7 @@ setInterval(function () {
 if (LONE) {
   try {
     document.getElementById('bootSub').textContent =
-      'Fifteen screens, one after another. One at a time on a phone.';
+      'Sixteen screens, one after another. One at a time on a phone.';
   } catch (e) {}
 }
 

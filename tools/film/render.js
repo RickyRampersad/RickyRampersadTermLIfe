@@ -19,7 +19,8 @@ const fs = require('fs'), path = require('path'), { execFileSync } = require('ch
   const dir = path.join(cap, 'frames');
   fs.rmSync(cap, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true });
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--force-device-scale-factor=1'] });
-  const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
+  // 1280x720 unless the film asks for another frame (RENDER_W / RENDER_H): the social cut of the recruiting film is 1080x1920.
+  const p = await b.newPage({ viewport: { width: +(process.env.RENDER_W || 1280), height: +(process.env.RENDER_H || 720) } });
   const errs = []; p.on('pageerror', e => errs.push(String(e).slice(0, 160)));
   await p.addInitScript(() => { window.__RENDER = true; });
   await p.goto('file://' + path.resolve(page));

@@ -111,6 +111,14 @@ WALLS = {
         "On the right, each unit, then each agent in name order. Nobody is ranked here.",
         "Each bar is that person against their own usual month, and green is past it. No client is named here.",
     ],
+    'orphans': [                              # The orphan campaign (28 Oct 2026)
+        "This is the orphan campaign: the clients whose agents left, and where we stand with every one of them.",
+        "On the left, every household on our books, how many answered the letter, and how many asked us for something.",
+        "The bar shows how far those households have got: completed, an agent named, spoken to, or still waiting on us.",
+        "On the right, today's lists. Each morning every desk gets a list, and each client on it is marked done, reached, tried, or nothing yet.",
+        "Beside each list are the open tasks that person holds, and how many are past their date.",
+        "Below, the clients named to an agent in Salesforce, agent by agent. No client is named on this screen.",
+    ],
     'index': [                                   # The 45-Day Line
         "This is the forty five day line.",
         "Past the grace period. Still early enough that a phone call works.",

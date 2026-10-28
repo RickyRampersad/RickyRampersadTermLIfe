@@ -29,7 +29,7 @@ const server = http.createServer((req, res) => {
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
 const ORDER = ['day.html', 'blocks.html', 'pending.html', 'reqs.html', 'increases.html',
-               'codes.html', 'issued.html',
+               'codes.html', 'issued.html', 'orphans.html',
                'index.html', 'lapses.html',
                'possession.html', 'delivery.html', 'licence.html', 'book.html',
                'conversion.html', 'riders.html'];
@@ -95,7 +95,7 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   ok('  the story you are on is named beside them',
      /The day so far/.test(await s.page.locator('#state').innerText()),
      await s.page.locator('#state').innerText());
-  await s.page.waitForTimeout(20000);          // stagger is 1.5s apart: every frame assigned inside this
+  await s.page.waitForTimeout(24000);          // stagger is 1.5s apart: sixteen frames, the last asked for at 22.5s
   ok('every story is loaded in its own frame, in the film\'s order', JSON.stringify(await srcs(s.page)) === JSON.stringify(ORDER), JSON.stringify(await srcs(s.page)));
   const first = await s.page.frames().filter(f => f.url().endsWith('/day.html')).length;
   ok('the first story really rendered inside its frame', first === 1);
@@ -152,7 +152,7 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   const hudText = () => s.page.locator('#state').innerText();
   const SLIDE_NAMES = ['The day so far', 'The system\u2019s day', 'What is pending', 'Premium dues',
                        'Lapses', 'In our possession', 'With the agent', 'The licence year',
-                       'Birthdays today', 'Conversions', LAST_TAB];
+                       'Birthdays today', 'Conversions', LAST_TAB, 'Issued this month', 'The orphan campaign'];
   // Not pinned to one slide: the rail takes four seconds to fade and the dwell
   // here is five, so the wall may legitimately have turned by now. What must
   // hold is the shape — which story of how many, named, and the seconds left.

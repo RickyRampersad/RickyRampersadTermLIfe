@@ -42,6 +42,7 @@ const PAGES = [
   ['Pending · increases & group', '/intelligence/wall/increases.html'],
   ['Pending · code by code', '/intelligence/wall/codes.html'],
   ['Issued this month', '/intelligence/wall/issued.html'],
+  ['The orphan campaign', '/intelligence/wall/orphans.html'],
   ['Premium dues',      '/intelligence/wall/'],
   ['Lapses',            '/intelligence/wall/lapses.html'],
   ['In our possession', '/intelligence/wall/possession.html'],

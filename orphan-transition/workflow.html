@@ -156,18 +156,21 @@
       <div><b>Followed up</b>Every 5 working days until Date SQ processed by CSR is filled: one e-mail to Customer Service
         with the trail and the original e-mail attached, sales support copied, and a line on the task.<i>The system, at
         10:00</i></div>
-      <div><b>Processed: the claim goes</b>Sales support fills Date SQ processed by CSR. The claim goes to the Retention unit
-        the same day, to be paid within 3 working days. Date Subm to Retention and Was Agent Paid = No are written.
-        <i>Sales support, then the system</i></div>
-      <div><b>Reminded, then paid</b>A reminder every 3 working days until Date SQ Comm Paid is in. Then Was Agent Paid
-        turns Yes and the agent gets one e-mail.<i>Retention or sales support, then the system</i></div>
+      <div><b>Processed: on Friday's transmittal</b>Sales support fills Date SQ processed by CSR. Every Friday at 10:00 the
+        system builds the GLOC Adopt an Orphan Transmittal Form from Salesforce (agent, agent ID, branch 26000, client,
+        policies, Visible in EDM, date) and sends it to the Retention unit as Excel, to be paid within 3 working days. Date
+        Subm to Retention and Was Agent Paid = No are written, each agent is told their own, and sales support gets what
+        went and what was held. <i>Sales support, then the system</i></div>
+      <div><b>Reminded, then paid</b>One reminder per transmittal every 3 working days, the form attached again with the
+        unpaid alone, until Date SQ Comm Paid is in. Then Was Agent Paid turns Yes and the agent gets one e-mail.
+        <i>Retention or sales support, then the system</i></div>
     </div>
     <table class="pts two"><tr><th>Field on the policy in Salesforce</th><th>Who fills it</th></tr>
       <tr><td><b>Date SQ submitted</b>: the completed questionnaire is in</td><td>Staff</td></tr>
       <tr><td><b>Date SQ submitted to CSR</b>: sent to Customer Service. It starts the follow-ups</td><td>Sales support</td></tr>
       <tr><td><b>Date SQ processed by CSR</b>: Customer Service has processed it. It stops the follow-ups and sends the
         claim</td><td>Sales support, on Customer Service&rsquo;s word</td></tr>
-      <tr><td><b>Date Subm to Retention</b>: the day the claim e-mail goes</td><td>The system</td></tr>
+      <tr><td><b>Date Subm to Retention</b>: the day the transmittal goes</td><td>The system</td></tr>
       <tr><td><b>Was Agent Paid for Orphan?</b>: No when the claim goes, Yes when paid</td><td>The system</td></tr>
       <tr><td><b>Date SQ Comm Paid</b>: the commission run date. It stops the reminders</td><td>Retention, or sales
         support from Retention&rsquo;s reply</td></tr>
@@ -251,7 +254,7 @@
     <h3><span class="sn">5</span>The review, and the TT$200</h3>
     <ul>
       <li>A completed <b>service questionnaire</b> for a client named to you earns <b>TT$200</b>. One claim per client.
-        Sales support sends it to Customer Service, and the claim goes to the Retention unit the day it is processed. Your
+        Sales support sends it to Customer Service, and the claim goes to the Retention unit on the Friday transmittal after it is processed. Your
         <b>Claims</b> tab shows each one and where it stands: with Customer Service, sent, or paid.</li>
       <li>A questionnaire from before the naming earns nothing. So does a staff Test row or a departed agent's own
         policy.</li>
@@ -467,9 +470,10 @@
         tasks held, closed, and closed with no note. A task closed with no note of who was spoken to is a gap to raise,
         not a close.</li>
       <li><b>TT$200 claims</b>: driven by the questionnaire's dates in Salesforce. Customer Service is followed up every 5
-        working days until Date SQ processed by CSR is filled; the claim then goes to the Retention unit, you, sales
-        support and the agent copied, to be paid within 3 working days, and is reminded every 3 working days until Date SQ
-        Comm Paid is in. The agent is told when it is paid. Nothing goes until you start it from the menu.</li>
+        working days until Date SQ processed by CSR is filled; the claim then goes on Friday's transmittal to the Retention
+        unit, you and sales support copied, each agent told their own, to be paid within 3 working days, and the
+        transmittal is reminded every 3 working days until Date SQ Comm Paid is in. A claim whose agent has left, or whose
+        Assigned Agent and policy agent differ with no Date Assigned to Agent, is held and listed for sales support. The agent is told when it is paid. Nothing goes until you start it from the menu.</li>
       <li><b>Points and the reward</b>: the Team tab ranks Client Support by the period's points (reached 3, met 5, a
         household named 5, a conversion 10, a questionnaire after the naming 10). What a point is worth, a monthly prize
         or a sum per conversion, is yours to set and to announce.</li>
