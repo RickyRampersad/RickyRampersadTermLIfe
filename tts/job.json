@@ -1,10 +1,27 @@
 {
- "voice": "en-US-AndrewNeural",
- "rate": "-12%",
- "check": true,
- "films": {
-  "wallowresc": [
-   "We also count every lapsed policy that is now back in force."
-  ]
- }
+  "voice": "en-US-AndrewMultilingualNeural",
+  "rate": "+0%",
+  "check": true,
+  "films": {
+    "rise": [
+      "This branch took a hit.",
+      "People left. The work didn't.",
+      "Nothing here fell over.",
+      "So before Friday, look at who's still standing.",
+      "Twenty-three agents and managers. Five more behind them.",
+      "Between us, two hundred and sixty-three years of this work.",
+      "Eleven of us have been at it more than ten years. Three joined in the last three.",
+      "And while all of that was happening, we rebuilt how this branch runs.",
+      "One sign-in now, and every tool is behind it.",
+      "The system sets your day before you're even up.",
+      "The wall shows the score, and everybody sees the same numbers.",
+      "FY27 is thirty days old, and every goal plan is in.",
+      "The cracks are still there. We filled them with gold.",
+      "We're not going back to what this branch was. We're going somewhere better.",
+      "Friday. Twelve noon. Ninety minutes.",
+      "Seventy-five of those minutes belong to you, not to me.",
+      "Three questions are already waiting for you. Answer one tonight.",
+      "We rise together."
+    ]
+  }
 }
