@@ -4742,6 +4742,9 @@ function transitionBoard_(p) {
     /* the stream (stream.html): counts only, for the branch code. A script older than 8 October 2026 takes "stream" for a
        person, finds nobody by that name and refuses, so an old backend never sends the stream the board. */
     if (/^stream$/i.test(String(p.who || '').trim())) return transitionStream_(p.code);
+    /* the Branch Intelligence wall's orphan slide (intelligence/wall/orphans.html, 28 October 2026): counts and first names
+       only, with no code, like every slide on that wall */
+    if (/^wall$/i.test(String(p.who || '').trim())) return transitionOrphanWall_();
     var w = tWho_(p.code, p.who);
     if (!w.ok) return { ok: false, refused: true, configured: w.configured, error: w.error };
     tSignIn_(w, p);   // the Sign-ins tab: who opened the board, once an hour a person (15 October 2026)
@@ -12674,3 +12677,176 @@ function transitionWatchPreview() {
     n.flagged + ' of ' + n.checked + ' staff notes.');
 }
 function transitionWatchDailyNow() { return tSay_(tWatchDaily_({ force: true }) ? 'The Branch Intelligence list went to the branch manager.' : 'The list did not go: the log says why.'); }
+
+/* ── the orphan campaign on the Branch Intelligence wall (28 October 2026) ────────────────────────────────────────────
+   Ricky: "we have the branch intelligence wall, but can a dash on the orphans management, can a dash be created to assign
+   to that wall?". intelligence/wall/orphans.html asks GET action=board&who=wall, with no code: like every other slide on
+   that wall it carries counts and first names, nothing about any client. Its answer, kept five minutes (tServeCached_):
+     campaign  the stream's own counts (tStream_, so the two screens always agree);
+     tasks     every open orphan task in Salesforce, by the person who holds it: open, overdue, due today, closed today;
+     lists     today's lists, read from the morning run's "ON YOUR LIST TODAY — <name>, #n of N" posts, and what that
+               person has done on each listed task today: closed (done), spoke to the client (reached), a call or message
+               that did not get through (tried), another note (noted), or nothing; with their first and last entry today;
+     agents    the clients named to an agent in Salesforce (Assigned Agent, Campaign Orphan), by agent: clients, named in
+               the last seven days, and with the agent's feedback recorded.
+   No client's name, number, policy, words or money; no former agent's name. Service.gs needs no paste: it rides the
+   board's route, and a script older than this takes "wall" for a person, finds nobody and refuses. */
+var T_OWALL = { KEY: 'transition:owall:z', BUSY: 'transition:owall:busy', FRESH_S: 300, KEEP_S: 21600, BUSY_S: 120, PIECE: 90000,
+  STAFF: ['Sasha Lalla-Jagassar', 'Elizabeth Lee', 'Azariah Griffith', 'Kamla Dookran', 'Pawan Probhu'],
+  NICK: { 'elizabeth': 'Liz' },
+  LIST: /^\s*ON YOUR LIST TODAY\s*[—–-]+\s*([^,]+?)\s*,\s*#(\d+)\s+of\s+(\d+)/i,
+  HEAD: /^\s*(Sales Support|BMA|Branch Manager Assistant|Unit Manager|Agent|Client Support)\s*·\s*([^·\n]+?)\s*·/i,
+  REACHED: /\b(spoke|spoken|speaking|contacted|client (advised|confirmed|said|agreed|ok|wants|requested)|appointment|met with|meeting set|reached|conversation|answered the call)\b/i,
+  TRIED: /\b(no answer|not answering|did ?n[o']t answer|voice ?mail|not reachable|unreachable|unable to (reach|contact)|could ?n[o']t (reach|contact)|trying to reach|tried|try again|will try|call(ed)? back|phone (off|busy)|busy|not in service|wrong number|left (a )?(message|msg|vm)|sent (a |an )?(whats ?app|message|msg|text|sms|e-?mail))\b/i,
+  MOVED: /\b(re-?assign(ing|ed)?|moved to|handing (it )?over)\b/i,
+  WEEK_DAYS: 7,
+  /* the namings this campaign made: Salesforce also holds Campaign "Orphan" namings from earlier years, many of them to
+     agents who have since left, and those are never on the wall */
+  NAMED_FROM: '2026-09-09' };
+function transitionOrphanWall_() {
+  return tServeCached_(T_OWALL, function () { return tOrphanWall_(); });
+}
+/** The person as the wall names them: their first name, "Liz" for Elizabeth. */
+function tOwallFirst_(full) {
+  var f = String(full || '').trim().split(/\s+/)[0] || '';
+  var k = f.toLowerCase();
+  return T_OWALL.NICK[k] || (f.charAt(0).toUpperCase() + f.slice(1).toLowerCase());
+}
+/** Midnight today in the sheet's zone, as a Salesforce date-time literal. */
+function tOwallMidnight_() {
+  var tz = tTz_(), d = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  var p = d.split('-'), probe = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2], 12));
+  var off = Number(Utilities.formatDate(probe, tz, 'H')) - 12;   // the zone's offset at noon, in hours (Trinidad: -4)
+  return Utilities.formatDate(new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]) - off * 3600000), 'UTC', "yyyy-MM-dd'T'HH:mm:ss'Z'");
+}
+function tOrphanWall_() {
+  var tz = tTz_(), now = new Date(), today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  var out = { ok: true, wall: 1, at: Utilities.formatDate(now, tz, 'd MMM, h:mm a'), today: today };
+  /* the campaign: the stream's answer, as the stream keeps it */
+  try {
+    var s = tServeCached_(T_STREAM, function () { return tStream_(); });
+    out.campaign = s && s.ok ? tOwallCampaign_(s) : { error: (s && s.error) || 'the campaign could not be read' };
+  } catch (e) { out.campaign = { error: String(e && e.message ? e.message : e).slice(0, 160) }; }
+  if (!tSfOn_()) { out.sf = { on: false, why: 'Salesforce is not linked to the campaign script yet.' }; return out; }
+  try { tOwallSalesforce_(out, today, tz); }
+  catch (e) { out.sf = { on: true, error: 'Salesforce did not answer: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+  return out;
+}
+/** The campaign's counts off the stream's answer, only the numbers the slide shows. */
+function tOwallCampaign_(s) {
+  var pick = function (o, keys) { var r = {}; keys.forEach(function (k) { if (o && typeof o[k] === 'number') r[k] = o[k]; }); return r; };
+  var hh = s.hh || {}, cl = s.clients || {}, pe = s.people || {}, ft = pe.firstTouch || {};
+  return {
+    households: { all: hh.all || 0, answered: hh.answered || 0, asked: hh.asked || 0, toReach: hh.toReach || 0, stage: hh.stage || null, agent: hh.agent || null },
+    clients: { all: cl.all || 0, answered: cl.answered || 0, asked: cl.asked || 0, wrote: cl.wrote || 0, stage: cl.stage || null },
+    auto: pick(s.auto, ['letters', 'reminders', 'afterReminder', 'waiting']),
+    late: pe.late || 0, lateHh: pe.lateHh || 0,
+    firstTouch: { median: ft.median == null ? null : ft.median, within2: ft.within2 || 0, n: ft.n || 0, waiting: ft.waiting || 0 },
+    at: s.at || '' };
+}
+function tOwallSalesforce_(out, today, tz) {
+  var since = tOwallMidnight_(), mgr = TRANSITION.MANAGER.name;
+  var names = T_OWALL.STAFF.concat([mgr]);
+  var key = function (n) { return tNameKey_(n); }, staffKey = {};
+  T_OWALL.STAFF.forEach(function (n) { staffKey[key(n)] = n; });
+  var hhmm = function (s) { var m = /T(\d{2}):(\d{2})/.exec(String(s || '')); if (!m) return ''; return Utilities.formatDate(new Date(String(s).replace(/\.\d+\+0000$/, 'Z').replace(/\+0000$/, 'Z')), tz, 'h:mm a'); };
+  /* 1. every open orphan task, by who holds it; and those closed today */
+  var open = tSfQuery_("SELECT Id, ActivityDate, Owner.Name FROM Task WHERE IsClosed = false AND Subject LIKE 'Orphan%' LIMIT 2000");
+  var closed = tSfQuery_("SELECT Id, Owner.Name FROM Task WHERE IsClosed = true AND Subject LIKE 'Orphan%' AND CompletedDateTime >= " + since + ' LIMIT 2000');
+  var people = {};
+  /* staff by first name, the branch manager as such, anyone else folded into one line */
+  var person = function (full) {
+    var k = key(full), label = staffKey[k] ? tOwallFirst_(full) : k === key(mgr) ? 'Branch Manager' : 'Others';
+    k = staffKey[k] || k === key(mgr) ? k : 'others';
+    return people[k] = people[k] || { name: label, open: 0, overdue: 0, dueToday: 0, closedToday: 0 };
+  };
+  open.forEach(function (t) {
+    var who = t.Owner && t.Owner.Name ? t.Owner.Name : '';
+    if (!who) return;
+    var p = person(who), due = tSfDay_(t.ActivityDate);
+    p.open++;
+    if (due && due < today) p.overdue++;
+    if (due === today) p.dueToday++;
+  });
+  closed.forEach(function (t) { var who = t.Owner && t.Owner.Name ? t.Owner.Name : ''; if (who) person(who).closedToday++; });
+  out.tasks = { open: open.length, overdue: open.filter(function (t) { var d = tSfDay_(t.ActivityDate); return d && d < today; }).length, closedToday: closed.length,
+    people: Object.keys(people).map(function (k) { var p = people[k]; return { name: p.name, open: p.open, overdue: p.overdue, dueToday: p.dueToday, closedToday: p.closedToday }; })
+      .sort(function (a, b) { return b.open - a.open || a.name.localeCompare(b.name); }) };
+  /* 2. today's lists: the morning run's posts, then what the person did on each listed task today */
+  var feed = tSfQuery_('SELECT ParentId, Type, Body, CreatedDate, CreatedBy.Name, (SELECT FieldName, NewValue FROM FeedTrackedChanges) FROM TaskFeed WHERE CreatedDate >= ' + since +
+    ' AND CreatedBy.Name IN (' + tSoqlIn_(names) + ") AND Type IN ('TextPost','TrackedChange') LIMIT 2000");
+  var comments = tSfQuery_('SELECT ParentId, CommentBody, CreatedDate, CreatedBy.Name FROM FeedComment WHERE CreatedDate >= ' + since + ' AND CreatedBy.Name IN (' + tSoqlIn_(T_OWALL.STAFF) + ') LIMIT 2000');
+  var listed = {}, lists = {}, order = [];
+  var txt = function (b) { return String(b || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/g, ' ').replace(/&amp;/g, '&').replace(/&#39;|&rsquo;/g, "'").replace(/\s+/g, ' ').trim(); };
+  feed.forEach(function (f) {
+    if (f.Type !== 'TextPost' || !f.CreatedBy || key(f.CreatedBy.Name) !== key(mgr)) return;
+    var m = T_OWALL.LIST.exec(txt(f.Body));
+    if (!m) return;
+    var k = key(m[1]);
+    if (!staffKey[k]) return;
+    if (!lists[k]) { lists[k] = { name: tOwallFirst_(staffKey[k]), size: Number(m[3]), tasks: {} }; order.push(k); }
+    lists[k].tasks[f.ParentId] = 'nothing';
+    listed[f.ParentId] = k;
+  });
+  /* who did each entry: the staff member themselves, or the tracker's close-out under the branch's user headed with their name */
+  var entries = [];
+  feed.forEach(function (f) {
+    var by = f.CreatedBy ? f.CreatedBy.Name : '', body = txt(f.Body), k = key(by);
+    if (k === key(mgr)) {
+      var h = T_OWALL.HEAD.exec(body);
+      if (!h || /not touched/i.test(body)) return;
+      k = key(h[2]);
+      if (!staffKey[k]) { var hit = Object.keys(staffKey).filter(function (s) { return s.indexOf(key(h[2].split(/\s+/)[0])) === 0; }); k = hit.length === 1 ? hit[0] : ''; }
+      if (!k) return;
+    }
+    if (!staffKey[k]) return;
+    var closedNow = f.Type === 'TrackedChange' && ((f.FeedTrackedChanges && f.FeedTrackedChanges.records) || []).some(function (c) { return /Status$/i.test(String(c.FieldName || '')) && /^Completed$/i.test(String(c.NewValue || '')); });
+    if (f.Type === 'TrackedChange' && !closedNow) { entries.push({ k: k, at: f.CreatedDate, task: f.ParentId, kind: 'touch' }); return; }
+    entries.push({ k: k, at: f.CreatedDate, task: f.ParentId, kind: closedNow ? 'closed' : 'note', body: body });
+  });
+  comments.forEach(function (c) { var k = key(c.CreatedBy ? c.CreatedBy.Name : ''); if (staffKey[k]) entries.push({ k: k, at: c.CreatedDate, task: c.ParentId, kind: 'note', body: txt(c.CommentBody) }); });
+  var rank = { nothing: 0, noted: 1, moved: 1, tried: 2, reached: 3, done: 4 };
+  var first = {}, last = {};
+  entries.forEach(function (e) {
+    if (!first[e.k] || e.at < first[e.k]) first[e.k] = e.at;
+    if (!last[e.k] || e.at > last[e.k]) last[e.k] = e.at;
+    var owner = listed[e.task];
+    if (!owner || owner !== e.k || e.kind === 'touch') return;   // a date moved with no note counts as nothing
+    var cls = e.kind === 'closed' ? 'done' : T_OWALL.REACHED.test(e.body) && !/\bno answer\b/i.test(e.body) ? 'reached' : T_OWALL.TRIED.test(e.body) ? 'tried' : T_OWALL.MOVED.test(e.body) ? 'moved' : 'noted';
+    var cur = lists[owner].tasks[e.task];
+    if (rank[cls] > rank[cur]) lists[owner].tasks[e.task] = cls;
+  });
+  out.lists = order.map(function (k) {
+    var l = lists[k], c = { done: 0, reached: 0, tried: 0, noted: 0, moved: 0, nothing: 0 };
+    Object.keys(l.tasks).forEach(function (t) { c[l.tasks[t]]++; });
+    return { name: l.name, size: l.size, posted: Object.keys(l.tasks).length, done: c.done, reached: c.reached, tried: c.tried, noted: c.noted + c.moved, nothing: c.nothing,
+      first: first[k] ? hhmm(first[k]) : '', last: last[k] ? hhmm(last[k]) : '' };
+  });
+  /* the day's first and last entry for everyone on staff, listed or not */
+  out.day = T_OWALL.STAFF.map(function (n) { var k = key(n); return { name: tOwallFirst_(n), first: first[k] ? hhmm(first[k]) : '', last: last[k] ? hhmm(last[k]) : '',
+    entries: entries.filter(function (e) { return e.k === k && e.kind !== 'touch'; }).length }; });
+  /* 3. clients named to an agent in Salesforce, by agent */
+  var recs = tSfQuery_("SELECT Contact__c, Assigned_Agent__r.Name, Assigned_Agent__r.Employment_Status__c, Date_Assigned_to_Agent__c, Campain_Feedback_Update__c FROM CLIENT_PORTFOLIO__c" +
+    " WHERE Campaign__c = 'Orphan' AND Assigned_Agent__c != null AND Date_Assigned_to_Agent__c >= " + T_OWALL.NAMED_FROM + ' LIMIT 5000');
+  var weekFrom = Utilities.formatDate(new Date(Date.now() - (T_OWALL.WEEK_DAYS - 1) * 86400000), tz, 'yyyy-MM-dd');
+  var ag = {}, seen = {};
+  recs.forEach(function (r) {
+    var a = r.Assigned_Agent__r && r.Assigned_Agent__r.Name ? r.Assigned_Agent__r.Name : '', c = r.Contact__c || '';
+    if (!a || !c || key(a) === key(mgr)) return;
+    if (!/^active$/i.test(String((r.Assigned_Agent__r && r.Assigned_Agent__r.Employment_Status__c) || ''))) return;   // only agents still with the branch
+    var x = ag[key(a)] = ag[key(a)] || { full: a, clients: {}, week: {}, today: {}, feedback: {} };
+    x.clients[c] = true;
+    var d = tSfDay_(r.Date_Assigned_to_Agent__c);
+    if (d && d >= weekFrom) x.week[c] = true;
+    if (d === today) x.today[c] = true;
+    if (String(r.Campain_Feedback_Update__c || '').trim()) x.feedback[c] = true;
+    seen[c] = true;
+  });
+  var n = function (o) { return Object.keys(o).length; };
+  var short = function (full) { var p = String(full).replace(/\([^)]*\)/g, ' ').trim().split(/\s+/); return tOwallFirst_(p[0]) + (p.length > 1 ? ' ' + p[p.length - 1].charAt(0).toUpperCase() + '.' : ''); };
+  out.agents = { clients: n(seen), people: Object.keys(ag).map(function (k) { var x = ag[k]; return { name: short(x.full), clients: n(x.clients), week: n(x.week), today: n(x.today), feedback: n(x.feedback) }; })
+    .sort(function (a, b) { return b.clients - a.clients || a.name.localeCompare(b.name); }) };
+  out.agents.week = out.agents.people.reduce(function (s, p) { return s + p.week; }, 0);
+  out.agents.today = out.agents.people.reduce(function (s, p) { return s + p.today; }, 0);
+  out.sf = { on: true };
+}
