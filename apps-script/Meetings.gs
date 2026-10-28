@@ -73,6 +73,11 @@ var MEET = {
   BRANCH: 'Ricky Rampersad Branch',
   BRANCH_SHORT: 'TV Branch',
 
+  /*  Bumped whenever this file changes in a way a deployment has to
+   *  carry. `?action=ping` reports it, so a browser can tell a live
+   *  build from one pasted six weeks ago without anybody guessing. */
+  VERSION: '2026-10-28',
+
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
      an account before its owner does — it is not the sign-in
@@ -6497,13 +6502,95 @@ function doGet(e) {
       case 'goals':      out = apiGoals_(p.token); break;
       case 'chases':     out = apiChases_(p.token); break;
       case 'service':    out = apiService_(p.token); break;
-      case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
+      case 'ping':       out = apiPing_(); break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }
   } catch (err) {
     out = { ok: false, error: String(err && err.message ? err.message : err) };
   }
   return json_(out);
+}
+
+/*  WHAT PING ANSWERS, AND WHY.
+ *
+ *  "Is it working?" is four questions, and ping used to answer none of
+ *  them: it said the app's name whether or not the project had been
+ *  pasted, redeployed or seeded, so a browser could not tell a live
+ *  build from a six-week-old one. It now says which build is
+ *  deployed, whether the one-off file is in the project, whether the
+ *  meeting has been seeded and can be opened, and — the thing that
+ *  actually goes wrong — how many people on the roll still cannot
+ *  sign in.
+ *
+ *  THIS ANSWER IS PUBLIC. The /exec address sits in a public
+ *  repository, so anything returned here is readable by anyone. It
+ *  carries settings and counts only: never a name, a meeting's title,
+ *  an agenda item, a code, or anything a person said. Keep it that
+ *  way — a count is operational, a title is the branch's business.
+ *
+ *  Nothing here may throw. A ping that fails is indistinguishable
+ *  from a backend that is down, which is the one thing it exists to
+ *  tell apart, so every part is read inside its own try.          */
+function apiPing_() {
+  var out = {
+    ok: true,
+    app: 'Branch Meeting Builder',
+    branch: MEET.BRANCH,
+    version: MEET.VERSION,
+    /* The register has three states a person can put themselves in,
+       and only three. See apiExcuse_. */
+    register: {
+      selfExcuse: false,
+      lateAfterMinutes: MEET.LATE_AFTER_MINUTES
+    }
+  };
+
+  /* Is the one-off file in the project at all? */
+  try { out.oneOff = (typeof seedFridayMeeting === 'function'); }
+  catch (e) { out.oneOff = false; }
+
+  /* Has it been seeded, and can a person open it today? */
+  try {
+    if (typeof FRIDAY !== 'undefined' && FRIDAY && FRIDAY.REF) {
+      var m = meetingRows_().filter(function (r) {
+        return str_(r['Ref']) === FRIDAY.REF;
+      })[0];
+      if (!m) {
+        out.meeting = { ref: FRIDAY.REF, seeded: false };
+      } else {
+        var w = checkinWindow_(m);
+        var now = Date.now();
+        var items = readTab_(MEET.TAB_AGENDA).filter(function (a) {
+          return str_(a['Meeting ID']) === str_(m['ID']);
+        });
+        out.meeting = {
+          ref: FRIDAY.REF,
+          seeded: true,
+          status: low_(m['Status']),
+          /* Published, or an agent opens the app and sees nothing. */
+          openToEveryone: low_(m['Status']) !== 'draft',
+          date: fmtDate_(m['Date']),
+          start: str_(m['Start']),
+          agendaItems: items.length,
+          minutes: items.reduce(function (n, a) { return n + num_(a['Allotted (min)']); }, 0),
+          lateAfterMinutes: num_(str_(m['Late After (min)']) === '' ? MEET.LATE_AFTER_MINUTES : m['Late After (min)']),
+          checkInOpensAt: w.open ? fmtStamp_(w.open) : '',
+          checkInOpenNow: !!(w.open && w.close && now >= w.open.getTime() && now <= w.close.getTime())
+        };
+      }
+    }
+  } catch (e) { out.meeting = { error: 'could not be read' }; }
+
+  /*  The one that actually goes wrong. Somebody with no access code
+   *  is not told they cannot sign in — they are marked absent for a
+   *  meeting they came to. Counts only, never a name.             */
+  try {
+    var roll = readPeople_().filter(function (p) { return p.active && p.role !== 'guest'; });
+    var can = roll.filter(function (p) { return !!(p.code || p.hash); });
+    out.roster = { onTheRoll: roll.length, canSignIn: can.length, cannot: roll.length - can.length };
+  } catch (e) { out.roster = { error: 'could not be read' }; }
+
+  return out;
 }
 
 function doPost(e) {

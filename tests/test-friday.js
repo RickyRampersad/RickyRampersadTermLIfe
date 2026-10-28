@@ -246,6 +246,42 @@ ok('no excused row was written',
 ok('branch staff can still record one on somebody\u2019s behalf',
   typeof env.apiMarkAttendance_ === 'function');
 
-Date.now = REAL_NOW;
+Date.now = REAL_NOW;   // back to the real clock: ping reports today's state
+console.log('\nPING ANSWERS "IS IT WORKING?"');
+/* 28 October 2026: "can you check and see if it's working?" — and ping said the
+   app's name whether or not anything had been pasted, deployed or seeded. */
+const png = env.apiPing_();
+ok('it answers', png.ok === true);
+ok('it says which build is deployed', /^\d{4}-\d{2}-\d{2}$/.test(String(png.version)), png.version);
+ok('it says the one-off file is in the project', png.oneOff === true);
+ok('it says the meeting is seeded', png.meeting && png.meeting.seeded === true, JSON.stringify(png.meeting));
+ok('and published, so an agent can open it',
+  png.meeting.openToEveryone === true && png.meeting.status === 'published', png.meeting.status);
+ok('with its seven items and ninety minutes',
+  png.meeting.agendaItems === 7 && png.meeting.minutes === 90, JSON.stringify(png.meeting));
+ok('it says the register carries no grace', png.meeting.lateAfterMinutes === 0 &&
+  png.register.lateAfterMinutes === 0, JSON.stringify(png.register));
+ok('and that nobody can excuse themselves', png.register.selfExcuse === false);
+ok('it says the register is not open yet', png.meeting.checkInOpenNow === false);
+ok('it counts who cannot sign in \u2014 the thing that actually goes wrong',
+  png.roster && png.roster.cannot === 1 && png.roster.canSignIn === png.roster.onTheRoll - 1,
+  JSON.stringify(png.roster));
+
+/* The /exec address is in a public repository, so this answer is public. */
+const flat = JSON.stringify(png);
+['Agent One', 'Agent Two', 'The Branch Manager', 'The Unit Manager', 'example.com',
+ '11111111', '22222222', '99999999', env.FRIDAY.TITLE, 'What is not working']
+  .forEach(secret => ok('ping never leaks ' + JSON.stringify(secret),
+    flat.indexOf(secret) === -1, flat.slice(0, 300)));
+
+/* A backend with Meetings.gs and nothing else must still answer. */
+const seed = env.seedFridayMeeting, FRI = env.FRIDAY;
+env.seedFridayMeeting = undefined; env.FRIDAY = undefined;
+const bare = env.apiPing_();
+ok('it still answers with the one-off file missing', bare.ok === true && bare.oneOff === false);
+ok('and says the meeting is not there rather than throwing', bare.meeting === undefined,
+  JSON.stringify(bare.meeting));
+env.seedFridayMeeting = seed; env.FRIDAY = FRI;
+
 console.log('\n' + (fails ? fails + ' FAILED' : 'all passing'));
 process.exit(fails ? 1 : 0);
