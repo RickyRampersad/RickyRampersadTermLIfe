@@ -3,13 +3,9 @@
  "rate": "-12%",
  "check": true,
  "films": {
-  "wallorphans": [
-   "This is the orphan campaign: the clients whose agents left, and where we stand with every one of them.",
-   "On the left, every household on our books, how many answered the letter, and how many asked us for something.",
-   "The bar shows how far those households have got: completed, an agent named, spoken to, or still waiting on us.",
-   "On the right, today's lists. Each morning every desk gets a list, and each client on it is marked done, reached, tried, or nothing yet.",
-   "Beside each list are the open tasks that person holds, and how many are past their date.",
-   "Below, the clients named to an agent in Salesforce, agent by agent. No client is named on this screen."
+  "wallday2": [
+   "The top then turns to each desk's ring: what they have closed against their day, and the white mark where the clock is.",
+   "Then the agents served today. Each bubble is the work done for one agent, and its ring is how much of it was closed. Nobody is ranked, and no client is named here."
   ]
  }
 }
