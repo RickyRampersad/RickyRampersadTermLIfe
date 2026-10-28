@@ -1,21 +1,15 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
- "rate": "+0%",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
  "check": true,
  "films": {
-  "trl7": [
-   "Our new year began on the first of October, and the first class of it is being selected now. Seven places. Not because we can't take more, but because every one of them gets the full build: a call within forty-eight hours, the Branch Manager himself, an orientation, a profile, and a Discovery with the people already doing it. And one more seat: for a sales manager, to build a unit here. Thirty-two years in Trinidad. One class. Seven places.",
-   "The door is open now. Already contracted? Nobody will know you asked. New to this? You get the full build. Leading a team already? Come and build a unit here. One confidential conversation. Twenty minutes, this week."
-  ],
-  "film7": [
-   "This is the Ricky Rampersad Branch. Guardian Life of the Caribbean, in Chaguanas. Thirty-two years in Trinidad. A brand new financial year, FY twenty-seven, began on the first of October. Its first class is being selected now: seven places, and one seat for a sales manager.",
-   "The door is open now. Already contracted? Nobody will know you asked. New to this? You get the full build. Leading a team already? Come and build a unit here. One confidential conversation. Twenty minutes, this week."
-  ],
-  "adA7": [
-   "Seven places in this year's first class. Every one gets the full build. Thirty-two years in Trinidad."
-  ],
-  "adB7": [
-   "Seven places in this year's first class. Every one gets the full build. Thirty-two years in Trinidad."
+  "walldriver": [
+   "This is the Branch Manager's drive on the orphan campaign.",
+   "Every prompt he puts on the tasks is counted, in his own words and from the automation he set going.",
+   "His automation writes to clients, briefs the agents, and alerts the branch. Every one is counted here.",
+   "This ring shows when the team answers his prompts: the same day, the next working day, or later.",
+   "Day by day, his prompts stand beside the team's notes.",
+   "And for each member of the team: how many notes came after a prompt, and what those notes say."
   ]
  }
 }
