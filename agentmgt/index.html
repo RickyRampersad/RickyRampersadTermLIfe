@@ -344,6 +344,48 @@ footer a{color:var(--dT2);text-decoration:none;display:inline-flex;align-items:c
 footer a:hover{color:#fff}
 footer .ic{width:1rem;height:1rem;color:var(--aL)}
 
+/* ═══ WHY THIS BRANCH EXISTS — the Branch Manager's own words ═══ */
+.why{background:radial-gradient(60% 70% at 15% 20%,rgba(211,63,73,.25),transparent 60%),linear-gradient(160deg,var(--d1),var(--d0) 70%);color:var(--dT2);padding-block:clamp(3.5rem,3rem + 4vw,6rem)}
+.why .wrap{max-width:54rem}
+.why .eyebrow{color:var(--aT)}
+.why figure{margin:0}
+.why blockquote{margin:.8rem 0 0;font:600 clamp(1.5rem,1.1rem + 2.2vw,2.6rem)/1.25 var(--display);color:#fff;letter-spacing:-.015em;text-wrap:balance}
+.why blockquote em{font-style:italic;color:var(--aL)}
+.why figcaption{margin-top:var(--sp-m);display:flex;align-items:center;gap:var(--sp-s);color:var(--dT2);font-size:var(--f--1)}
+.why figcaption img{width:2.6rem;height:2.6rem}
+.why figcaption b{display:block;color:#fff;font-size:var(--f-0)}
+.why .stake{margin-top:var(--sp-l);font-size:var(--f-1);color:var(--dT2);max-width:42rem}
+.why .stake b{color:#fff;font-weight:600}
+/* ═══ THE CONVERSATION — booked on the page, never in another app ═══ */
+.talk{background:var(--bg2);border-block:1px solid var(--line)}
+.talk-grid{display:grid;gap:var(--sp-xl);grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));align-items:start}
+.talk-list{list-style:none;margin:var(--sp-l) 0 0;padding:0;display:grid;gap:var(--sp-m)}
+.talk-list li{display:grid;grid-template-columns:auto 1fr;gap:var(--sp-s);align-items:start}
+.talk-list .ic{width:1.5rem;height:1.5rem;color:var(--aD);margin-top:.15rem}
+.talk-list b{display:block;color:var(--ink)}.talk-list span{color:var(--muted);font-size:var(--f--1)}
+.talk-form{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-l);box-shadow:var(--e3);display:grid;gap:var(--sp-m)}
+.talk-form label,.talk-form legend{display:block;font:600 var(--f--1)/1.3 var(--text);color:var(--ink);margin-bottom:.4rem}
+.talk-form label small,.talk-form legend small{font-weight:400;color:var(--muted)}
+.talk-form input,.talk-form textarea{width:100%;min-height:2.75rem;padding:.65rem .9rem;border:1.5px solid var(--line-strong);border-radius:var(--r-s);font:400 max(16px,1rem)/1.4 var(--text);color:var(--ink);background:var(--card)}
+.talk-form textarea{min-height:4.5rem;resize:vertical}
+.talk-form input:focus,.talk-form textarea:focus{outline:2px solid var(--a);outline-offset:1px;border-color:var(--a)}
+.talk-form fieldset{border:0;padding:0;margin:0;min-width:0}
+.two{display:grid;gap:var(--sp-m);grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))}
+.pills{display:flex;flex-wrap:wrap;gap:.5rem}
+.pills label{margin:0;position:relative}
+.pills input{position:absolute;opacity:0;width:1px;height:1px;min-height:0;padding:0}
+.pills span{display:inline-flex;align-items:center;min-height:2.75rem;padding:.5rem 1rem;border:1.5px solid var(--line-strong);border-radius:999px;font:500 var(--f--1)/1.2 var(--text);color:var(--ink);cursor:pointer;background:var(--card)}
+.pills input:checked+span{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pills input:focus-visible+span{outline:2px solid var(--a);outline-offset:2px}
+.talk-form .err{color:var(--aD);font-size:var(--f--1);font-weight:600;display:none}.talk-form .err.on{display:block}
+.talk-form .hp{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+.talk-form .fine{font-size:var(--f--1);color:var(--muted)}
+.talk-form .btn{justify-self:start}
+.talk-done{display:none;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-l);box-shadow:var(--e3)}
+.talk-done.on{display:block}
+.talk-done .ref{font:800 var(--f-3)/1 var(--display);color:var(--aD);letter-spacing:.02em;margin:.5rem 0 var(--sp-s)}
+.talk-done h3{font-size:var(--f-2)}.talk-done p{color:var(--body);margin-top:.5rem}
+.talk-done .warn{margin-top:var(--sp-s);padding:.7rem .9rem;border-radius:var(--r-s);background:var(--a-tint);color:var(--aD);font-size:var(--f--1)}
 /* ═══ STICKY CTA + GUIDE ═══ */
 .sticky{display:none;position:fixed;left:1rem;right:5rem;bottom:1rem;translate:0 140%;z-index:30;transition:translate var(--t-mid) var(--ease)}
 .sticky .btn{width:100%}
@@ -711,7 +753,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 <header class="topbar" id="top">
   <div class="wrap">
     <a class="brand" href="#top" aria-label="Ricky Rampersad Branch, top of page"><span class="mk"><img src="mark.svg" alt=""></span><span>Ricky Rampersad Branch</span></a>
-    <a class="btn btn-1" href="https://wa.me/18686785821?text=Hi%20Mr%20Rampersad%2C%20I%27d%20like%20a%20confidential%2020-minute%20conversation%20about%20joining%20the%20branch." data-talk>Talk — 20 min</a>
+    <a class="btn btn-1" href="#talk" data-talk>Talk — 20 min</a>
   </div>
   <span class="nav-prog" aria-hidden="true"></span>
 </header>
@@ -724,7 +766,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       <h1 data-words aria-label="Good at what you do, but stuck? Move without starting from zero.">Good at what you do, <em>but stuck?</em><br>Move without starting from <span class="swap" aria-hidden="true"><span class="sw on">zero.</span><span class="sw">a cold list.</span><span class="sw">nobody.</span><span class="sw">scratch.</span><span class="sw">nothing.</span></span></h1>
       <p class="sub"><strong>Already contracted?</strong> Leads on your own board, households matched to you, and a conversation nobody will know you had. <strong>New to this?</strong> The full build, and a day the system sets. <strong>32 years in Trinidad. Five seats this year.</strong></p>
       <div class="hero-cta">
-        <a class="btn btn-1" href="https://wa.me/18686785821?text=Hi%20Mr%20Rampersad%2C%20I%27d%20like%20a%20confidential%2020-minute%20conversation%20about%20joining%20the%20branch." data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-1" href="#talk" data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
         <a class="btn btn-2" href="#quiz">Take the 60-second test</a>
         <a class="btn btn-2" href="#film">Watch the film · 1:27</a>
       </div>
@@ -855,19 +897,30 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         <header><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span><div><small>Already contracted elsewhere</small><h3>Move without starting over.</h3></div></header>
         <div class="lhead" aria-hidden="true"><span>What you’ve heard</span><span>What is true here</span></div>
         <ul><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“If I move, I start from zero.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. TT$200 for each one whose questionnaire comes in after your naming.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’d be buying my own leads again.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Your own link and QR code. A prospect taps what is on their mind and the lead lands on your board, in their words. A lead forwarded to you stays yours.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“The tools are from another decade.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>A fact find that does the arithmetic while you talk. A live production wall on the screen and on your phone. Branch Intelligence that reads the file before you do.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Nobody would notice if I doubled my year.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Wins are announced every Wednesday, at Blastoff in January and at Mid-Year in July. Your name, out loud.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Word gets back.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>The conversation stays confidential. At your Discovery you question our qualifiers with the Branch Manager out of the room.</span></li></ul>
-        <a class="btn btn-1" href="https://wa.me/18686785821?text=Hi%20Mr%20Rampersad%2C%20I%27d%20like%20a%20confidential%2020-minute%20conversation%20about%20joining%20the%20branch." data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-1" href="#talk" data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
       </article>
       <article class="ledger rv">
         <header><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-cap"/></svg></span><div><small>New to insurance</small><h3>The full build, not a phone book.</h3></div></header>
         <div class="lhead" aria-hidden="true"><span>What you fear</span><span>What is true here</span></div>
         <ul><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I can’t go months with nothing coming in.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>It is commission-based and we will not dress that up. What shortens the start is here from day one: leads, matched households, a day the system sets, and a manager who sees your week before Friday.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’d have to sell to my friends and family.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>You don’t live off your phone contacts. The leads come to you, from people who asked to be called.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“They promise training, then you’re on your own.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Training, induction, boot camp and one-on-one coaching. The Branch Manager interviews every advisor personally and coaches you after.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I wouldn’t know what to do each morning.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Every morning the system sets your day: your projection, your next calls, your pending cases with the history on them. Check in, and your workday page keeps score.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’m leaving a salary for a ceiling I can’t see.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>No salary band and no ceiling. The ladder is written down, rung by rung, and you choose which one you climb.</span></li></ul>
-        <a class="btn btn-1" href="https://wa.me/18686785821?text=Hi%20Mr%20Rampersad%2C%20I%27d%20like%20a%20confidential%2020-minute%20conversation%20about%20joining%20the%20branch." data-talk>Book a 20-minute conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-1" href="#talk" data-talk>Book a 20-minute conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
       </article>
     </div>
   </div>
 </section>
 
 <!-- ═══ THE SELECTION ═══ -->
+<section class="why" id="why" data-g="why">
+  <div class="wrap">
+    <figure class="rv">
+      <span class="eyebrow">Why this branch exists</span>
+      <blockquote data-words>Talent is everywhere in Trinidad. Environments that turn talent into top producers are not. <em>That's the difference we sell, to our advisors first.</em></blockquote>
+      <figcaption><img src="mark.svg" alt=""><span><b>Ricky Rampersad</b>Branch Manager · Guardian Life of the Caribbean · Chaguanas</span></figcaption>
+    </figure>
+    <p class="stake rv">And the work is the reason the environment matters. <b>A family covered before the worst day comes.</b> A client who knows exactly who to call. An advisor who is never left to figure it out alone. That is what the five gates are protecting.</p>
+  </div>
+</section>
+
 <section class="sel" id="gates" data-g="gates">
   <div class="wrap">
     <div class="lede rv">
@@ -1031,6 +1084,51 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 </section>
 
 <!-- ═══ FINAL ═══ -->
+<section class="talk" id="talk" data-g="talk">
+  <div class="wrap">
+    <div class="talk-grid">
+      <div class="talk-copy rv">
+        <span class="eyebrow">One conversation</span>
+        <h2 data-words>Twenty minutes with the Branch Manager. <em>Nobody else will know.</em></h2>
+        <ul class="talk-list">
+          <li><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg><div><b>He reads it himself.</b><span>Your name and number reach Mr Rampersad alone, not an inbox the branch shares. If you are contracted elsewhere today, nobody there will hear of it.</span></div></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><div><b>He calls at the time you chose.</b><span>Within two working days, for twenty minutes, from his own phone.</span></div></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><div><b>Your questions. The branch's own figures.</b><span>No pitch and no form. If it is not for you, that is the end of it.</span></div></li>
+        </ul>
+      </div>
+      <div class="rv">
+        <form class="talk-form" id="talkForm" novalidate autocomplete="on">
+          <div class="two">
+            <div><label for="tkName">Your name</label><input id="tkName" name="name" type="text" autocomplete="name" required></div>
+            <div><label for="tkPhone">Phone</label><input id="tkPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required></div>
+          </div>
+          <div><label for="tkMail">E-mail <small>· for your reference, nothing else</small></label><input id="tkMail" name="email" type="email" inputmode="email" autocomplete="email" required></div>
+          <fieldset><legend>Where are you now?</legend>
+            <div class="pills">
+              <label><input type="radio" name="who" value="Already contracted elsewhere" checked><span>Already contracted elsewhere</span></label>
+              <label><input type="radio" name="who" value="New to this work"><span>New to this work</span></label>
+              <label><input type="radio" name="who" value="Somewhere in between"><span>Somewhere in between</span></label>
+            </div>
+          </fieldset>
+          <fieldset><legend>Best time for his call</legend>
+            <div class="pills">
+              <label><input type="radio" name="when" value="Morning" checked><span>Morning</span></label>
+              <label><input type="radio" name="when" value="Afternoon"><span>Afternoon</span></label>
+              <label><input type="radio" name="when" value="Evening"><span>Evening</span></label>
+            </div>
+          </fieldset>
+          <div><label for="tkNote">One line he should know first <small>· optional</small></label><textarea id="tkNote" name="note" maxlength="300" rows="2"></textarea></div>
+          <div class="hp" aria-hidden="true"><label for="tkWeb" tabindex="-1">Website</label><input id="tkWeb" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+          <p class="err" id="tkErr" role="alert"></p>
+          <button class="btn btn-1" type="submit" id="tkSend">Book my conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <p class="fine">Confidential. Reviewed by the Branch Manager himself. Nothing is sent to anyone else.</p>
+        </form>
+        <div class="talk-done" id="talkDone" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="final" id="apply" data-g="apply">
   <div class="wrap">
     <div>
@@ -1040,7 +1138,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         <li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li class="you" aria-label="You">You</li>
       </ul>
       <p>Five seats this year, and every one of them gets the full build. One confidential conversation, twenty minutes, this week. Or two minutes to apply. A career that caps out only where you do — which is nowhere.</p>
-      <div class="hero-cta"><a class="btn btn-1" href="https://wa.me/18686785821?text=Hi%20Mr%20Rampersad%2C%20I%27d%20like%20a%20confidential%2020-minute%20conversation%20about%20joining%20the%20branch." data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a><a class="btn btn-2" href="https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275" data-apply>Start the Selection</a></div>
+      <div class="hero-cta"><a class="btn btn-1" href="#talk" data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a><a class="btn btn-2" href="https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275" data-apply>Start the Selection</a></div>
       <p class="small">The environment decides. We select the driven. · Reviewed within 48 hours · Chaguanas · Central Trinidad</p>
     </div>
     <div class="qrcard rv">
@@ -1060,7 +1158,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   </div>
 </footer>
 
-<div class="sticky" id="sticky"><a class="btn btn-1" href="https://wa.me/18686785821?text=Hi%20Mr%20Rampersad%2C%20I%27d%20like%20a%20confidential%2020-minute%20conversation%20about%20joining%20the%20branch." data-talk>Book a conversation — 20 min</a></div>
+<div class="sticky" id="sticky"><a class="btn btn-1" href="#talk" data-talk>Book a conversation — 20 min</a></div>
 <button class="guide" id="guide" type="button" aria-label="RAI, the branch guide. Go to the application."><img src="mark.svg" alt=""><small aria-hidden="true">RAI</small></button>
 <div class="gbubble" id="gbubble" role="status" aria-live="polite"></div>
 
@@ -1186,6 +1284,50 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
     var n=0;(function f(){x.clearRect(0,0,c.width,c.height);var alive=false;for(var j=0;j<P.length;j++){var p=P[j];p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.a-=.009;p.rot+=.1;if(p.a>0&&p.y<c.height+20){alive=true;x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.globalAlpha=Math.max(p.a,0);x.fillStyle=p.cl;x.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.6);x.restore()}}
     if(alive&&n++<300)requestAnimationFrame(f);else x.clearRect(0,0,c.width,c.height)})()}
 
+
+  /* ── the conversation, booked on this page: the branch's own backend, the mail app if it cannot be reached ── */
+  (function(){
+    var API='https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+    var TO='Ricky.Rampersad@myguardiangroup.com';
+    var f=d.getElementById('talkForm'),done=d.getElementById('talkDone'),err=d.getElementById('tkErr'),btn=d.getElementById('tkSend');
+    if(!f)return;
+    function val(n){var el=f.querySelector('[name="'+n+'"]:checked')||f.querySelector('[name="'+n+'"]');return el?String(el.value||'').trim():''}
+    function localRef(){var t=new Date(),p=function(n){return(n<10?'0':'')+n};return 'QT-'+String(t.getFullYear()).slice(2)+p(t.getMonth()+1)+p(t.getDate())+'-'+p(t.getHours())+p(t.getMinutes())}
+    function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+    function show(ref,sent,first,when){
+      f.style.display='none';
+      done.innerHTML='<span class="eyebrow">Booked</span><h3>Thank you, '+esc(first)+'. Mr Rampersad has it.</h3>'
+        +'<div class="ref" aria-label="'+esc(ref)+'" title="'+esc(ref)+'">'+esc(ref)+'</div>'
+        +'<p>He calls you in the '+esc(when.toLowerCase())+', within two working days, for twenty minutes. Nobody else in the branch sees this. Keep the reference if you need to reach him sooner: <a href="tel:+18686785821">678-5821</a>.</p>'
+        +(sent?'':'<p class="warn">We could not reach our system just now, so your mail app has opened with the same details addressed to him. Press send there and it reaches him the same way.</p>');
+      done.classList.add('on');done.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    function mailRoad(body,ref){
+      var t='CONFIDENTIAL CONVERSATION\nReference: '+ref+'\n\nName: '+body.core.name+'\nPhone: '+body.core.phone+'\nE-mail: '+body.core.email+'\n';
+      body.fields.forEach(function(x){if(x.value)t+=x.label+': '+x.value+'\n'});
+      location.href='mailto:'+TO+'?subject='+encodeURIComponent('Confidential conversation \u2014 '+ref)+'&body='+encodeURIComponent(t);
+    }
+    f.addEventListener('submit',function(e){
+      e.preventDefault();
+      var name=val('name'),phone=val('phone'),email=val('email');
+      var bad=!name?'We need your name.':!/^[+\d][\d\s().-]{6,}$/.test(phone)?'We need a phone number he can call.':!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)?'That e-mail address does not look right.':'';
+      err.textContent=bad;err.classList.toggle('on',!!bad);if(bad){(bad.indexOf('name')>-1?f.name:bad.indexOf('phone')>-1?f.phone:f.email).focus();return}
+      if(f.dataset.sending)return;f.dataset.sending='1';var was=btn.innerHTML;btn.disabled=true;btn.textContent='Sending\u2026';
+      var who=val('who'),when=val('when'),note=val('note');
+      var body={action:'q.quote',form:'careers',code:'QT',line:'Careers',title:'Confidential conversation',
+        core:{name:name,email:email,phone:phone,reach:'call',when:when,agent:'',notes:note,website:val('website')},
+        fields:[{section:'The conversation',k:'who',label:'Where they are now',value:who},{section:'The conversation',k:'when_talk',label:'Best time for the call',value:when},{section:'The conversation',k:'note',label:'One line he should know first',value:note}],
+        page:location.pathname,ref_from:(new URLSearchParams(location.search)).get('from')||'',at:new Date().toISOString()};
+      var ref='',sent=false,first=name.split(' ')[0];
+      function finish(){f.dataset.sending='';btn.disabled=false;btn.innerHTML=was;if(!ref)ref=localRef();show(ref,sent,first,when);if(!sent)setTimeout(function(){mailRoad(body,ref)},60)}
+      var ac=('AbortController' in window)?new AbortController():null,to=setTimeout(function(){if(ac)ac.abort()},12000);
+      fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),signal:ac?ac.signal:undefined})
+        .then(function(r){return r.json().catch(function(){return{}})})
+        .then(function(x){sent=!!(x&&x.ok!==false&&x.ref);ref=(x&&x.ref)||''})
+        .catch(function(){sent=false})
+        .then(function(){clearTimeout(to);finish()});
+    });
+  })();
   /* ── RAI, the guide: one line per section as it arrives ── */
 
   /* ── the selection: five gates as tabs; they turn by themselves until somebody touches them ── */
@@ -1228,7 +1370,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   })();
   var guide=d.getElementById('guide'),bub=d.getElementById('gbubble'),bubTimer=null,lastMsg='';
   function say(msg,ms){ms=ms||4200;if(msg===lastMsg&&bub.classList.contains('on'))return;lastMsg=msg;bub.innerHTML=msg;bub.classList.add('on');guide.classList.remove('hop');void guide.offsetWidth;guide.classList.add('hop');clearTimeout(bubTimer);bubTimer=setTimeout(function(){bub.classList.remove('on')},ms)}
-  var lines={hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Five seats. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
+  var lines={why:"His words, not mine. <b>The room decides.</b>",talk:"Twenty minutes, your questions, his own figures. <b>He reads this himself.</b>",hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Five seats. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
   if('IntersectionObserver' in window){
     var secIO=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&lines[e.target.dataset.g])say(lines[e.target.dataset.g])})},{threshold:.3});
     d.querySelectorAll('[data-g]').forEach(function(s){secIO.observe(s)});

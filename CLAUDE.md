@@ -5322,6 +5322,24 @@ section links it.
   stage's chip and fills its parent (`width:100%;height:100%`), so each drew a card-wide ellipse and the text ran out
   of the card over the gates. They carry the small solid `.chip` the byline uses, sized inline, and every card now holds
   its text. `tools/careers/sync.py` must be re-run after any edit to `agentmgt/index.html`.
+- **The conversation is booked on the page, the film is on the homepage, and the page has a person on it** (28
+  October 2026: "book a call opens whats app so remove this, and embedded the recruiting video on the site or should
+  you, refine the site further with more emotion etc and an impact what you think"). Every "Book a confidential
+  conversation" button (six on the recruiting page, the homepage's, `/careersvideo/`'s) now opens `/careers/#talk`: a
+  form on the page that posts `q.quote` with the form key `careers` to the Service Questionnaire backend, the road the
+  branch's own quote forms take, so no client link opens another app. `Quotes.gs` gained the `careers` form (`QT-`,
+  `to: 'manager'`: the team e-mail goes to the Branch Manager alone and copies nobody, because the person may be
+  contracted elsewhere today; `client`: the confirmation says he reads it himself; `KIND` `talk` with its own three
+  steps). The page's own script posts it (12-second timeout, the same payload shape as `form.js`, the mail app
+  addressed to him when the backend cannot be reached, a local `QT-` reference either way, the honeypot off screen).
+  The homepage's Careers section carries the 1:27 trailer through the branch's own player (`/orphan-video/player.js`,
+  the `.vwrap` styles scoped to `#careers`), so a visitor sees it without a click. **"Why this branch exists"**
+  (`#why`, after the ledger) is the first layer of the emotion pass: the Branch Manager's own approved quote, in his
+  name, on a dark full-bleed moment with the stake under it ("a family covered before the worst day comes"): the page
+  had no person on it. The rest of that pass needs faces and voices only he can supply (see the reply of 28 October).
+  Checked with Playwright against a mocked backend both ways (filed with a reference; backend down shows the same done
+  screen with the mail-app note), an empty submit refused on the page, no sideways scroll at 390 px on either page.
+  Paste `Quotes.gs` and publish a New version; until then every booking takes the mail-app road.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,
