@@ -1,21 +1,23 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
- "rate": "+0%",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
  "check": true,
  "films": {
-  "adA": [
-   "Good at what you do, but stuck where you are?",
-   "Already contracted? Then you know the fear: move, and you start from zero. Not here. Clients matched to you, household by household. Leads that land on your own board.",
-   "Your manager is a coach, not a clock. And nobody will know you asked.",
-   "Five seats this year. Every one gets the full build. Thirty-two years in Trinidad.",
-   "One confidential conversation. Twenty minutes, this week. Agent M G T dot com."
+  "wallinc": [
+   "This slide is the pendings Guardian's report cannot see: increases, group life, group health and individual health.",
+   "On the left, increases on policies already in force, and the premium waiting on them.",
+   "In the middle, the group and health book. Gold is pending, green is paying, and grey has no status in Salesforce at all.",
+   "On the right, every case actually pending, whose it is, and how long it has waited.",
+   "Underneath, the records over a year old still marked pending. Those are not work. Close them in Salesforce.",
+   "It reads Salesforce every hour. No client is named here."
   ],
-  "adB": [
-   "Want a career with no ceiling, but afraid of the first year?",
-   "New to this? Then you know the fear: months with nothing coming in. Not here. Leads come to you, from people who asked to be called. Your day is set every morning. And you're trained before you're contracted.",
-   "Your manager is a coach, not a clock. Nobody here is left to figure it out alone.",
-   "Five seats this year. Every one gets the full build. Thirty-two years in Trinidad.",
-   "One confidential conversation. Twenty minutes, this week. Agent M G T dot com."
+  "wallcodes": [
+   "This is code by code: every requirement outstanding on today's pending report.",
+   "On the left, whose move it is. Most sit with the agent, and that is the first call.",
+   "The rest wait on the client, the doctor or the lab, and each line says what moves it.",
+   "On the right, each requirement: how many are out, how many Guardian marks overdue, and how many came in this week.",
+   "Under each, the agents holding it. Orphans are the cases still to be reassigned.",
+   "The pages turn on their own, so every code is on the wall. No client is named here."
   ]
  }
 }
