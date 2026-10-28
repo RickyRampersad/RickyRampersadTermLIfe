@@ -36,7 +36,7 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
 // Every story in the rotation. index.html is served from the directory.
 const PAGES = [
   ['The day so far',    '/intelligence/wall/day.html'],
-  ['The day in blocks', '/intelligence/wall/blocks.html'],
+  ['The day, hour by hour', '/intelligence/wall/blocks.html'],
   ['Pending · policies',     '/intelligence/wall/pending.html'],
   ['Pending · requirements', '/intelligence/wall/reqs.html'],
   ['Pending · increases & group', '/intelligence/wall/increases.html'],
@@ -177,6 +177,19 @@ DAY.data.system = { at: '11:10am', closed: 29, target: 96, overdue: 39, listOf: 
   { name: 'Errol', hours: '8am – 4pm', at: '8:09am', late: 4, absent: false, waiting: false, closed: 8, target: 25, pct: 32, dayPct: 40, overdue: 14, dueToday: 1, list: { of: 12, done: 5 } },
   { name: 'Fay', hours: '8am – 4pm', at: '7:58am', late: 0, absent: false, waiting: false, closed: 2, target: 12, pct: 17, dayPct: 40, overdue: 1, dueToday: 0, list: { of: 9, done: 2 } },
   { name: 'Gus', hours: '8am – 5pm', at: '', late: 0, absent: true, waiting: false, closed: 1, target: 8, pct: 13, dayPct: 35, overdue: 8, dueToday: 1, list: null }] };
+/* The day, hour by hour (28 Oct 2026): what each desk closed by type and hour, worked on and not closed, and how old; the
+   Branch Manager's automated e-mails apart. Sample names, counts only. */
+DAY.data.hours = (function () {
+  const types = ['Servicing', 'Pendings', 'Renewa/PDl/Bill', 'Opportunity', 'Training', 'RR Operations'];
+  const hrs = Array.from({ length: 10 }, (_, i) => ({ h: 7 + i, closed: i < 5 ? { Servicing: i % 3, Pendings: (i + 1) % 2 * 3, 'Renewa/PDl/Bill': i === 2 ? 1 : 0 } : {}, worked: i < 5 ? 20 + i * 7 : 0, auto: i === 0 ? 27 : 0 }));
+  const desk = (sid, name, closed, worked, auto) => ({ sid, name, auto: !!auto, closed, worked, emails: auto ? 0 : 1, automated: auto ? 27 : 0, noted: auto ? 258 : 12,
+    byType: closed ? [{ k: 'Pendings', n: Math.ceil(closed / 2) }, { k: 'Servicing', n: Math.floor(closed / 2) }] : [], autoTypes: auto ? [{ k: 'Servicing', n: 27 }] : [],
+    hours: Array.from({ length: 10 }, (_, i) => ({ c: i < 5 ? i % 2 : 0, w: i < 5 ? worked % 7 + i : 0, a: auto && !i ? 27 : 0, n: auto && i < 5 ? 40 : 0 })),
+    ages: auto ? [0, 0, 0, 0] : [3, worked - 6, 2, 1], oldest: auto ? 0 : 268 });
+  return { at: '11:10am', from: 7, to: 17, nowH: 11.2, types: types.map((k, i) => ({ k, label: k === 'Renewa/PDl/Bill' ? 'Renewals · PDL · Billing' : k, n: [6, 9, 1, 0, 0, 0][i] })),
+    hours: hrs, desks: [desk('carl', 'Carl', 4, 26), desk('dina', 'Dina', 14, 77), desk('errol', 'Errol', 8, 30), desk('fay', 'Fay', 2, 9), desk('gus', 'Gus', 1, 8), desk('ricky', 'Ricky', 0, 0, 1)],
+    agents: [{ k: 'Rajiv Soodoo', c: 3, w: 6, n: 9, by: [{ k: 'Dina', n: 8 }, { k: 'Fay', n: 1 }] }, { k: 'Stephanie Rajkumar', c: 1, w: 1, n: 2, by: [{ k: 'Carl', n: 2 }] }, { k: 'Orphans · to reassign', c: 3, w: 24, n: 27, by: [{ k: 'Dina', n: 5 }] }], totals: { closed: 29, worked: 150, emails: 5, automated: 27, mine: 0 } };
+})();
 const LAP = { ok: true, data: {
   configured: true, generatedAt: '2026-09-17', year: 2026, month: 'September', monthIndex: 8, quarter: 'Q3',
   windows: {
@@ -327,10 +340,17 @@ async function fresh(b, w, h, feed) {
     ok(tag.padEnd(22) + ' system\'s day: nothing below the fold, nothing cut through it',
        m.overflow <= 2 && m.sideways <= 2 && !m.below.length && !m.through.length,
        'overflow ' + m.overflow + 'px, below ' + JSON.stringify(m.below.slice(0, 2)) + ', through ' + JSON.stringify(m.through.slice(0, 2)));
-    const sy = await s.page.evaluate(() => ({ desks: document.querySelectorAll('.desk').length, rings: document.querySelectorAll('.desk .ring svg').length,
-      chips: [...document.querySelectorAll('.desk .chip')].map(e => e.textContent.trim()), big: (document.getElementById('bOf') || {}).textContent || '', title: document.querySelector('h1').textContent }));
-    ok(tag.padEnd(22) + ' the system\'s day: a ring for each desk, who is in and who is out, no blocks', sy.desks === 5 && sy.rings === 5 && /The System's Day/.test(sy.title) &&
-       /Out today/.test(sy.chips.join('|')) && /4 min late/.test(sy.chips.join('|')) && /of 96 today/.test(sy.big), JSON.stringify(sy));
+    const sy = await s.page.evaluate(() => {
+      const chartCols = [...document.querySelectorAll('#chart .hc')].map(c => Math.round(c.getBoundingClientRect().left + c.getBoundingClientRect().width / 2));
+      const rowCols = [...document.querySelectorAll('#desks .dk')][0] ? [...document.querySelectorAll('#desks .dk')][0].querySelectorAll('.cell') : [];
+      const cellMid = [...rowCols].map(c => Math.round(c.getBoundingClientRect().left + c.getBoundingClientRect().width / 2));
+      return { title: document.querySelector('h1').textContent, rows: document.querySelectorAll('#desks .dk').length, cols: chartCols.length, cells: cellMid.length,
+        aligned: chartCols.every((x, i) => Math.abs(x - cellMid[i]) <= 3), me: (document.querySelector('#desks .dk.me .nm b') || {}).textContent, big: document.getElementById('kN').textContent,
+        now: !!document.getElementById('nowline') && document.getElementById('nowline').style.display !== 'none', rings: document.querySelectorAll('.ring').length,
+        chips: [...document.querySelectorAll('#desks .nm span')].map(e => e.textContent.trim()) };
+    });
+    ok(tag.padEnd(22) + ' the day, hour by hour: ten hours, a row a desk and the Branch Manager last, each hour in one column all the way down, and a ring a desk', sy.rows === 6 && sy.cols === 10 && sy.cells === 10 && sy.aligned &&
+       /Hour by Hour/.test(sy.title) && sy.me === 'Ricky' && sy.big === '29' && sy.now && sy.rings === 6 && /4 min late/.test(sy.chips.join('|')) && /away today/.test(sy.chips.join('|')), JSON.stringify(sy));
     ok(tag.padEnd(22) + ' no javascript errors on the blocks', s.errors.length === 0, s.errors.join(' | '));
     await s.ctx.close();
   }
