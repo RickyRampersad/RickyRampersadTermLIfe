@@ -5340,6 +5340,28 @@ section links it.
   Checked with Playwright against a mocked backend both ways (filed with a reference; backend down shows the same done
   screen with the mail-app note), an empty submit refused on the page, no sideways scroll at 390 px on either page.
   Paste `Quotes.gs` and publish a New version; until then every booking takes the mail-app road.
+- **One palette, and the people on the page (28 October 2026, evening).** "all colours must sync as i am seeing team
+  and red etc so scale and more motion that wil resonate and pop", then "ok so you do have a unit manager Akaash and
+  experienced agenst and staff", then "research akaash on linked in he is alos i lebeive a 2 time top f table and an llb".
+  The page lives at `/careers/` on the branch site, so onyx and wine beside the homepage's teal read as two brands on one
+  site. The recruiting page now carries the homepage's own tokens (`--bg #faf9f2`, `--ink #0d3f5e`, `--a #00728d`, the
+  navy family `#0d1f33` to `#22527f`, `--aL #00CFEA` on dark ground only, shadows `32 20% 42%`), `site-mark.svg` as its
+  mark and `site-icon.svg` as its tab icon (`agentmgt/mark.svg`, `icon.svg` are copies), the share card regenerated,
+  and the quiet text on the dark ground (`--dT3`) lifted to `#b1c3d5`, which is 4.51:1 on the lightest navy; `#8fa3b8`
+  was 3.14:1 there. `scratchpad/agentmgt/recolour.py` did the mapping on the page and on `build-recruitfilm.py`, so
+  **every film cut was re-rendered in the palette** (`.wine` keeps its class name; it is teal now). The `agentmgt/`
+  identity line in this file above ("onyx and wine") is history, not the rule: the rule is the site's palette.
+  **The people section** (`#people`, after `#why`): the Branch Manager, the Unit Manager, the qualifiers and the
+  support team by first name, with initials until photos are approved (the Agent Profiles rule: a person's own
+  picture, never found by a face). **Only source-confirmed facts go on a card.** Akaash Kalladeen's card says Unit
+  Manager, TTAIFA Top Producer (Male) 2022 (ttaifa.com/awards) and Guardian Group's Advisor of the Month, April 2021
+  (Guardian Group's own Facebook page). The two-time Top of the Table and the LLB (University of London, on ZoomInfo
+  only, an aggregator) are **not** on the page until he or Akaash confirms them; "fifteen years" is the branch
+  manager's own word and stays until a source says otherwise. The lead card stacks under 35rem (the face beside the
+  text squeezed the name on a phone). Motion added, all inside the no-preference query: two fields drifting behind
+  the why moment, the people cards landing in turn (`--i` stagger) with a ring off each face, the lead face breathing,
+  the pills and the booking form's focus ring and done screen. Audit 28/28; the stale WhatsApp link check in
+  `audit.js` now expects `#talk`.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,
