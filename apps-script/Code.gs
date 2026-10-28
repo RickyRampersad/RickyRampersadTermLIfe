@@ -512,8 +512,28 @@ function logActivity_(token, client, type, by, details) {
 
 /* ============================ web app routing ============================ */
 
+/**
+ * The JSON the hosted pages ask for. It has to be answered before any HTML
+ * route, because rickyrampersadbranch.com/renewals is a page on the branch's
+ * own site and this /exec only ever hands it data.
+ *
+ * The page POSTs text/plain, which is what keeps the browser from asking for
+ * a CORS preflight Apps Script cannot answer. A POST to /exec answers 302 and
+ * the browser follows it to a GET, which is why doGet has to route rn.* too.
+ */
+function doPost(e) {
+  var body = {};
+  try { if (e && e.postData && e.postData.contents) body = JSON.parse(e.postData.contents) || {}; }
+  catch (err) { /* handled below as an unknown action */ }
+  var action = String(body.action || (e && e.parameter && e.parameter.action) || '');
+  if (action.indexOf('rn.') === 0 && typeof rnApi_ === 'function') return rnApi_(e);
+  return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'Unknown action.' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  if (String(p.action || '').indexOf('rn.') === 0 && typeof rnApi_ === 'function') return rnApi_(e);
   if (p.board && typeof boardPage_ === 'function') return boardPage_(p);     // the renewal board (?board=KEY)
   if (p.staff) return staffPage_(p);
   if (p.p && typeof propertyPage_ === 'function') return propertyPage_(p);   // property links (?p=TOKEN)
@@ -1369,6 +1389,8 @@ function onOpen() {
   try { if (typeof renewalBoardMenu_ === 'function') renewalBoardMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
   // Sign-in menu appears when RenewalTeam.gs is installed
   try { if (typeof renewalTeamMenu_ === 'function') renewalTeamMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
+  // The hosted board's menu appears when Renewals.gs is installed
+  try { if (typeof renewalsMenu_ === 'function') renewalsMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
 }
 
 function toggleTestMode() {

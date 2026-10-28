@@ -40,25 +40,24 @@ var RB = {
 
 function renewalBoardMenu_(ui) {
   return ui.createMenu('📋 Renewal board')
-    .addItem('Show the board link', 'showBoardLink')
+    .addItem('Where the board is now', 'showBoardLink')
     .addItem('Check it is ready (before anyone signs in)', 'boardReadiness');
 }
 
 /** The board's link, which is the staff link with ?board= in place of ?staff=. */
 function showBoardLink() {
-  var ui = SpreadsheetApp.getUi();
-  var key = staffKey_();
-  if (!key) {
-    ui.alert('No staff key is set, so nobody can open the board.\n\n' +
-      'Run "Issue a new staff key" from the Guardian Renewals menu, or set\n' +
-      STAFF_KEY_PROP + ' by hand in Apps Script → Project Settings → Script Properties.');
-    return;
-  }
-  var url = CONFIG.WEBAPP_URL + '?board=' + encodeURIComponent(key);
-  ui.alert('The renewal board\n\n' + url +
-    '\n\nEveryone opens the same link. What they see is decided by their row on the\n' +
-    'Staff tab — Role "admin" or "manager" sees the branch, "staff" works the queue,\n' +
-    '"agent" sees their own clients only.');
+  SpreadsheetApp.getUi().alert('The renewal board',
+    'https://rickyrampersadbranch.com/renewals\n\n' +
+    'The board is on the branch’s own site now. It reads Salesforce live and ' +
+    'shows one card per POLICY rather than one row per vehicle, so a fleet client ' +
+    'is one conversation instead of sixty rows.\n\n' +
+    'There is no key in that address. Each person signs in with their own work ' +
+    'e-mail and their own access code from the Staff tab, and what they see is ' +
+    'decided by their Role. Somebody with no access code cannot get in at all — ' +
+    'issue them one from "Who can sign in".\n\n' +
+    'The old ?board= link still opens and simply points here, so nobody is left ' +
+    'on a dead address.',
+    SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 /**
