@@ -235,6 +235,34 @@ const noCell = Object.assign({}, m); noCell['Late After (min)'] = '';
 ok('an empty cell falls back to the branch default, an explicit 0 does not',
   env.statusForNow_(noCell, new Date(start.getTime() + 60000)).status === 'late');
 
+/*  THE CELL IS NOT A STRING. Google Sheets keeps a time-only cell as a Date
+ *  on its own 1899 epoch, so the live sheet hands back
+ *  "Sat Dec 30 1899 12:00:00" where this harness had been handing back
+ *  "12:00 PM". Every check above would pass on a build where the register
+ *  read 1899 and marked the whole branch a century late, so the same
+ *  arithmetic is run again against what Sheets really stores. */
+const sheetsTime = Object.assign({}, m);
+sheetsTime['Start'] = new Date(1899, 11, 30, 12, 0, 0);
+const sStart = env.atTime_(sheetsTime['Date'], sheetsTime['Start']);
+const mStart = env.asDate_(m['Date']);
+ok('a time-only cell is lifted onto the meeting\u2019s own date, not 1899',
+  sStart && sStart.getFullYear() === mStart.getFullYear() &&
+  sStart.getMonth() === mStart.getMonth() && sStart.getDate() === mStart.getDate(),
+  sStart && sStart.toString());
+ok('and it keeps the hour and minute off the cell',
+  sStart.getHours() === 12 && sStart.getMinutes() === 0, sStart && sStart.toString());
+const sAt = (ms) => env.statusForNow_(sheetsTime, new Date(sStart.getTime() + ms));
+ok('the register is right on a real Sheets time: on the minute is present',
+  sAt(0).status === 'present', JSON.stringify(sAt(0)));
+ok('and thirty seconds after is late, by one',
+  sAt(30000).status === 'late' && sAt(30000).late === 1, JSON.stringify(sAt(30000)));
+
+/*  And the ping, which is the one thing a person checks a deployment with,
+ *  prints the time rather than the 1899 stamp. */
+const pingStart = env.fmtTime_(env.atTime_(sheetsTime['Date'], sheetsTime['Start']));
+ok('ping prints the start as a time, never the 1899 stamp',
+  pingStart.indexOf('1899') === -1 && /\d/.test(pingStart), pingStart);
+
 ok('nobody can excuse themselves any more',
   env.apiExcuse_({ token: tOne, meetingId: MID, reason: 'Client appointment' }).ok === false);
 ok('and it says what to do instead',
