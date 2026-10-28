@@ -3,12 +3,8 @@
  "rate": "-12%",
  "check": true,
  "films": {
-  "wallowresb": [
-   "Lapsed policies now back in force are counted too."
-  ],
-  "wallowcupb": [
-   "The AI reads every timeline and rates how clearly you communicate, and how firmly you bring it home.",
-   "Last week's champion is celebrated at the Wednesday meeting."
+  "wallowresc": [
+   "We also count every lapsed policy that is now back in force."
   ]
  }
 }
