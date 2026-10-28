@@ -228,6 +228,37 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     ok('no page errors', errs.length === 0, errs.join(' | '));
     await ctx.close();
   }
+  console.log('\nwhen the tracker is slow to answer (28 Oct 2026):\n');
+  {
+    // Two failures, then the day: it keeps trying and opens, no error shown.
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
+    let gets = 0;
+    await page.route(/script\.google\.com\/macros/, route => { gets++; return gets <= 2 ? route.fulfill({ status: 503, contentType: 'text/html', body: '<html>Service unavailable</html>' })
+      : route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model()) }); });
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+    await page.goto(url); await page.waitForTimeout(9000);
+    const opened = await page.evaluate(() => ({ cards: document.querySelectorAll('main .card').length, of: document.getElementById('of').textContent, body: document.body.innerText }));
+    ok('a busy minute: it tries again by itself and the day opens', gets === 3 && opened.cards > 2 && !/did not answer|Not open|Still opening/.test(opened.body), 'gets ' + gets + ' · cards ' + opened.cards + ' · ' + opened.of);
+    ok('no page errors', errs.length === 0, errs.join(' | '));
+    await ctx.close();
+  }
+  {
+    // It never answers: after four tries it says so, and the check-in still goes.
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    let gets = 0, posts = [];
+    await page.route(/script\.google\.com\/macros/, route => { const req = route.request();
+      if (req.method() === 'POST') { posts.push(req.postData() || ''); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model({ checkin: { at: '8:04am', late: 4, status: 'in' }, checkedIn: { at: '8:04am', first: true } })) }); }
+      gets++; return route.fulfill({ status: 503, contentType: 'text/html', body: '<html>Service unavailable</html>' }); });
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+    await page.goto(url); await page.waitForTimeout(20000);
+    ok('four tries, then it says the tracker did not answer', gets === 4 && /did not answer/.test(await page.textContent('body')), 'gets ' + gets);
+    ok('and offers the check-in anyway', !!(await page.$('#cinow')) && /Check in now/.test(await page.textContent('main')));
+    await page.click('#cinow'); await page.waitForTimeout(1200);
+    ok('the check-in posts, and the day it brings back is drawn', posts.length === 1 && /act=checkin/.test(posts[0]) && !(await page.$('#cinow')), posts[0]);
+    await ctx.close();
+  }
   await b.close(); server.close();
   console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
   process.exit(fails ? 1 : 0);

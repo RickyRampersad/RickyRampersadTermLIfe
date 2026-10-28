@@ -493,8 +493,15 @@
 
   function fail(msg) {
     if (M) { notice(esc(msg) + ' <a href="#" id="again">Try again</a>', true); $("asat").textContent = "As at " + (M.at || ""); }
-    else { notice(esc(msg) + ' <a href="#" id="again">Try again</a>', true); $("of").textContent = "Not opened"; $("main").innerHTML = ""; }
-    var a = $("again"); if (a) a.addEventListener("click", function (e) { e.preventDefault(); load(); });
+    else {
+      // 28 Oct 2026: Azariah, 8:04, "Still trying to get into my day": the day would not open, so she could not check in, and the
+      // clock had her late at 8:07. When the day will not open, the check-in still goes: it records the time now, and the day follows.
+      notice(esc(msg) + ' <a href="#" id="again">Try again</a>', true); $("of").textContent = "Not open yet";
+      $("main").innerHTML = '<div class="card"><div class="ci"><div class="dot">&#9654;</div><div><div class="t">Check in now</div><div class="s">Your day is slow to open. ' +
+        'Check in here and the time you came is recorded now; your day opens after.</div></div></div><button class="go" id="cinow">Check in and start my day</button></div>';
+      var cn = $("cinow"); if (cn) cn.addEventListener("click", checkIn);
+    }
+    var a = $("again"); if (a) a.addEventListener("click", function (e) { e.preventDefault(); load.tries = 0; load(); });
   }
   function load() {
     if (!OPS && (!P || !K)) { notice('Open <b>My day</b> in the <a href="/rroperations/">branch app</a>, or the <b>My workday</b> link in your morning e-mail. After that it opens from your home screen.', false); $("of").textContent = ""; $("main").innerHTML = ""; return; }
@@ -503,8 +510,11 @@
     var ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 90000);
     fetch(TRACKER + "?" + auth(new URLSearchParams()).toString() + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json(); })
-      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } load.again = false; notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); })
-      .catch(function () { clearTimeout(timer); busy = false; if (!load.again) { load.again = true; if (!M) $("of").textContent = "Still opening your day…"; setTimeout(load, 1500); return; } load.again = false; fail("The tracker did not answer this time."); });
+      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } load.tries = 0; notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); })
+      // Three more tries, further apart (2, 5 and 10 seconds), before it says so: a busy minute at the tracker passes (28 Oct 2026).
+      .catch(function () { clearTimeout(timer); busy = false; load.tries = (load.tries || 0) + 1;
+        if (load.tries <= 3) { if (!M) $("of").textContent = "Still opening your day… (try " + (load.tries + 1) + " of 4)"; setTimeout(load, [0, 2000, 5000, 10000][load.tries]); return; }
+        load.tries = 0; fail("The tracker did not answer this time."); });
   }
   function post(btn) {
     var row = btn.closest(".wt"), ta = row.querySelector("textarea"), sel = row.querySelector("select[data-to]"), text = (ta.value || "").trim();
