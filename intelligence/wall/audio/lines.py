@@ -27,14 +27,13 @@ WALLS = {
         "On the right, how much of the list the system set at check-in is done.",
         "No client is named here. Counts only.",
     ],
-    'blocks': [                                  # The System's Day (no blocks since 17 October 2026)
-        "This is the day the system set.",
-        "No blocks. At check-in, each desk gets its day from Salesforce.",
-        "The ring is what each desk has closed against the day's target.",
-        "The white mark on the ring is where the clock is.",
-        "The bar is the list the system set, and how much of it is done.",
-        "Every desk against its own day. Nobody is ranked.",
-        "No client is named here. Counts only.",
+    'blocks': [                                  # The Day, Hour by Hour (28 Oct 2026, 28d; was The System's Day)
+        "This is the branch's day, hour by hour, from Salesforce.",
+        "Along the top are the time blocks: what was closed in each hour, by task type, and under it what was worked on and not yet closed.",
+        "The gold line is where the clock is now.",
+        "Below, each desk across the same hours, with what they closed, what they worked on, and how old that work is.",
+        "The last row is the Branch Manager: the birthday e-mails and the notes that run as him, kept apart from the desks' totals.",
+        "Along the foot, the agents whose work was closed today. Each desk against its own day, nobody ranked, and no client is named here.",
     ],
     'riders': [                                  # Riders On A Clock
         "Every rider has an expiry.",
