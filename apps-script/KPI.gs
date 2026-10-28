@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-28b';
+var SCRIPT_VERSION = '2026-10-28c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3035,55 +3035,82 @@ function absentToday_(day) {
   return out;
 }
 
-/** Noon. Anyone in whose day is still not planned hears about it while the
- *  afternoon can still be used. */
+/* THE TWO NUDGES READ THE DAY AS IT IS KEPT NOW (28 October 2026, 2026-10-28c).
+ *  Ricky, 12:38pm, with Kamla's noon "Your day is not planned": "this triggered despite persons working today". Since
+ *  17 October nobody writes the old time blocks: the day is set at check-in (sdCheckin_) or on the plan page, in the
+ *  Block Plans tab, and the work is done in Salesforce. Both nudges still asked only whether the old blocks had text, so
+ *  everybody at work heard both. Now each reads, per person (dayStates_): the register's sign-in; the plan (Block Plans
+ *  items or a note, or the day-start mark); the old blocks, still; progress or a close-out on the plan; and what they
+ *  closed and noted in Salesforce today.
+ *    noon  only somebody with no sign-in, no plan and nothing done: "You have not checked in today"
+ *    3pm   only somebody at work today (signed in or planned) with nothing closed or noted in Salesforce and nothing logged
+ *  Marked absent: neither. Salesforce not answering counts as no news, never as nothing done, at 3pm: nobody is chased. */
+function dayStates_(day, people) {
+  var att = {}; try { sheetObjects_(attSheet_()).forEach(function (r) { if (isoDay_(r.Date) === day) att[String(r.StaffId)] = r; }); } catch (e) {}
+  var sf = null; try { sf = deskToday_(day) || null; } catch (e) { sf = null; }
+  var props = null; try { props = PropertiesService.getScriptProperties(); } catch (e) {}
+  var out = {};
+  people.forEach(function (p) {
+    var sid = String(p.staffId), a = att[sid] || {}, pl = {};
+    try { pl = planRows_(sid, day); } catch (e) {}
+    var rows = Object.keys(pl).map(function (k) { return pl[k]; });
+    var planned = rows.some(function (r) { var n = 0; try { n = planItemsOf_(r.Items).length; } catch (e) {} return n > 0 || hasText_(r.Note) || hasText_(r.PlannedAt); });
+    if (!planned && props) { try { planned = !!props.getProperty('daystart_plan_' + sid + '_' + day); } catch (e) {} }
+    var blocks = []; try { blocks = blocksSubmittedOn_(sid, day); } catch (e) {}
+    var logged = blocks.length > 0 || rows.some(function (r) { return hasText_(r.ClosedAt) || hasText_(r.Filed) || Number(r.Achieved || 0) > 0 || Number(r.SFClosed || 0) > 0; });
+    var d = sf && sf[sid], done = d ? (Number(d.closed || 0) + Number(d.notes || 0)) : null;   // null: not known
+    out[sid] = { absent: String(a.Status || '').toLowerCase() === 'absent', inAt: timeStr_(a.FirstSignIn), planned: planned || blocks.length > 0,
+                 logged: logged, sfDone: done, sfOk: !!sf };
+  });
+  return out;
+}
+
+/** Noon. Somebody with no sign-in, no plan and nothing done hears about it while the afternoon can still be used. */
 function remindMidday(e) {
   if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
   var people = publicRoster_();
-  var away = absentToday_(date);
-  var sent = [];
+  var st = dayStates_(date, people);
+  var sent = [], working = [];
 
   people.forEach(function (p) {
-    if (away[String(p.staffId)]) return;
+    var x = st[String(p.staffId)] || {};
+    if (x.absent) return;
+    if (x.inAt || x.planned || x.logged || x.sfDone > 0) { working.push(p.name); return; }   // at work: say nothing
     var owed = BLOCK_IDS.filter(function (b) { return scheduleFor_(p.staffId).blocks[b]; });
-    var done = blocksSubmittedOn_(p.staffId, date);
-    var missing = owed.filter(function (b) { return done.indexOf(b) === -1; });
-    if (missing.length === 0) return;                 // up to date; say nothing
-    if (nudge_(p.staffId, date, missing, 'Your day is not planned',
-        'Nothing has been planned or logged for today yet. Open your plan, pick the work, and save it: that is your morning check.')) {
+    if (nudge_(p.staffId, date, owed, 'You have not checked in today',
+        'There is no check-in from you today, no plan, and nothing done in Salesforce yet. If you are in, open your day from this morning\'s e-mail and check in: one tap, and your list is set. If you are off today, have yourself marked absent so your work is shared out.')) {
       sent.push(p.name);
     }
   });
 
   var msg = sent.length
-    ? 'Midday reminder sent to: ' + sent.join(', ')
-    : 'Midday reminder: everyone is up to date, nothing sent.';
+    ? 'Midday reminder sent to: ' + sent.join(', ') + (working.length ? ' · at work, not nudged: ' + working.join(', ') : '')
+    : 'Midday reminder: everyone is in or accounted for, nothing sent.';
   Logger.log(msg);
   return msg;
 }
 
-/** Three o'clock. Anyone still at work with nothing logged for the day gets
- *  one line asking for it before they leave. A desk whose day has already
- *  ended had its close-out notice half an hour before it did. */
+/** Three o'clock. Anyone at work today with nothing closed, noted or logged gets one line asking for it before they
+ *  leave. A desk whose day has already ended had its close-out notice half an hour before it did. */
 function remindCheckpoint(e) {
   if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
   var people = publicRoster_();
-  var away = absentToday_(date);
+  var st = dayStates_(date, people);
   var nowM = minutesOf_(hhmm_(new Date()));
   var sent = [];
 
   people.forEach(function (p) {
-    if (away[String(p.staffId)]) return;
+    var x = st[String(p.staffId)] || {};
+    if (x.absent) return;
     var sp = parseSpan_(scheduleFor_(p.staffId).hours || '');
     if (sp && sp.end <= nowM + 30) return;            // their close-out is already out
+    if (!x.inAt && !x.planned) return;                // not at work today: noon has said so already
+    if (x.logged || x.sfDone > 0 || x.sfDone == null) return;   // something done, or Salesforce did not say
     var owed = BLOCK_IDS.filter(function (b) { return scheduleFor_(p.staffId).blocks[b]; });
-    var done = blocksSubmittedOn_(p.staffId, date);
-    var due = owed.filter(function (b) { return done.indexOf(b) === -1; });
-    if (due.length === 0) return;
-    if (nudge_(p.staffId, date, due, 'Your day is not logged',
-        'It is past three and nothing is logged for today. Write what you have done against your plan, and close the day off before you leave.')) {
+    if (nudge_(p.staffId, date, owed, 'Your day is not logged',
+        'It is past three and nothing is closed or noted in Salesforce from you today. Close what you have finished with its note, and close the day off before you leave.')) {
       sent.push(p.name);
     }
   });
