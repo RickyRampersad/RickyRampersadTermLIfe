@@ -3,21 +3,12 @@
  "rate": "-12%",
  "check": true,
  "films": {
-  "wallowres": [
-   "This is what the orphan campaign has earned so far.",
-   "On the left, the two hundred dollars an agent earns for every service questionnaire: paid, to be paid on the next commission run, and still on its way.",
-   "Each claim moves through Customer Service and then Retention, and the stages show where every one of them is.",
-   "On the right, the new applications from orphan clients, and the premiums paid back since our letters.",
-   "Clients whose policy had lapsed and is now back in force are counted too.",
-   "Below, what clients are telling us, by subject. No client is named on this screen."
+  "wallowresb": [
+   "Lapsed policies now back in force are counted too."
   ],
-  "wallowcup": [
-   "This is the First-Contact Cup, for Client Support.",
-   "Every client of the campaign is a race to the first conversation, and then to the service questionnaire.",
-   "Three points for every client you reach first, two more within two working days, and ten for the questionnaire it brings home.",
-   "The AI reads every timeline and rates how clearly you communicate, and how well you bring it home.",
-   "Last week's winner is celebrated at the Wednesday meeting.",
-   "Below, who looks after whom: each agent, the support person beside them, and the questionnaires they have brought in."
+  "wallowcupb": [
+   "The AI reads every timeline and rates how clearly you communicate, and how firmly you bring it home.",
+   "Last week's champion is celebrated at the Wednesday meeting."
   ]
  }
 }
