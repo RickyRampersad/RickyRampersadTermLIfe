@@ -69,7 +69,11 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   label{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;
     text-transform:uppercase;color:var(--accent-dark);margin:0 0 6px}
   input,select,textarea{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
-    background:rgba(0,0,0,.3);color:var(--text);font-size:14.5px;font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif;outline:none}
+    background:rgba(0,0,0,.3);color:var(--text);
+    /* max(16px, 1rem), never 14.5px: iOS zooms the page in when a control
+       it focuses computes under 16px, and it does not zoom back out. The
+       floor composer is typed into on a phone, in the room. */
+    font-size:max(16px, 1rem);font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif;outline:none}
   input:focus,select:focus,textarea:focus{border-color:rgba(0,207,234,.55)}
   textarea{resize:vertical;min-height:92px;line-height:1.65}
   select option{background:#1C242E}
@@ -1586,6 +1590,11 @@ function floorSection(d) {
   var m = d.meeting, sn = d.session, list = d.contributions || [];
   var mine = m.me && (m.me.status === "present" || m.me.status === "late");
   var live = sn && sn.running;
+  /*  Still to come: not started, not over, and the register has not
+     opened yet. That last part is what keeps the pre-meeting box
+     from showing on the morning of, when signing in is the thing to
+     do and the floor is minutes away. */
+  var upcoming = !live && !m.past && !m.checkInOpen;
 
   var out = '<section><div class="section-label">The floor' +
     (list.length ? " — " + list.length + " contribution" + (list.length === 1 ? "" : "s") : "") +
@@ -1617,11 +1626,52 @@ function floorSection(d) {
     out += '<div class="card flat"><div style="font-size:13px;color:var(--muted);line-height:1.7">' +
       "Sign in to the meeting above and the floor opens — you can put a point, a question or " +
       "a commitment on the record as it happens.</div></div>";
+  } else if (upcoming) {
+    /*  BEFORE THE DAY. The floor is shut, because the floor is the
+     *  record of what was said in the room. This is the other thing:
+     *  the agenda is published with a question against every item,
+     *  and this is where a person answers one. It lands on the
+     *  agenda, not on the floor, and it does not put anybody on the
+     *  register — see apiAddContribution_.                        */
+    out += '<div class="card"><div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:13px">' +
+      "The floor opens on the day. Until then this is where you say what you are bringing — " +
+      "pick the item, answer its question, and it is on the agenda before anybody sits down. " +
+      "Everything written is read in the room before anybody speaks." +
+      "</div>" +
+      /*  Three pickers, and the middle one earns its place: tagging each
+       *  answer with the part of the work it belongs to is what makes
+       *  what comes back sort by line instead of arriving as a pile.
+       *  The list is the Topics tab the project already seeds.        */
+      '<div class="row3" style="margin-bottom:10px">' +
+      '<div class="field" style="margin-bottom:0"><label for="fl-agenda">Which item</label>' +
+      '<select id="fl-agenda"><option value="">The meeting as a whole</option>' +
+      (d.agenda || []).map(function (a) {
+        return '<option value="' + esc(a.id) + '">' + esc(a.order + ". " + a.title) + "</option>";
+      }).join("") + "</select></div>" +
+      '<div class="field" style="margin-bottom:0"><label for="fl-topic">Which part of the work</label>' +
+      '<select id="fl-topic"><option value="">Not one in particular</option>' +
+      (d.topicList || []).map(function (t) {
+        return '<option value="' + esc(t) + '">' + esc(t) + "</option>";
+      }).join("") + "</select></div>" +
+      '<div class="field" style="margin-bottom:0"><label for="fl-kind">What is this</label>' +
+      '<select id="fl-kind">' + (d.kinds || ["Point"]).map(function (k) {
+        return '<option value="' + esc(k) + '">' + esc(k) + "</option>";
+      }).join("") + "</select></div></div>" +
+      '<div class="hint" id="fl-ask" style="margin:-4px 0 12px"></div>' +
+      '<div class="field"><label for="fl-body">Your answer</label>' +
+      '<textarea id="fl-body" placeholder="Name one thing, and say what it changed or what it costs…"></textarea></div>' +
+      '<div class="msg" id="fl-msg"></div>' +
+      '<div class="btn-row"><button class="btn teal sm" id="fl-go">Put it on the agenda</button>' +
+      (isStaff() ? '<select id="fl-vis" style="width:auto;padding:8px 11px;font-size:12px">' +
+        '<option value="all">Everyone</option><option value="staff">Staff only</option></select>' : "") +
+      "</div></div>";
   }
 
   if (!list.length) {
     out += '<div class="empty" style="padding:26px"><span class="big">💬</span>' +
-      (live ? "Nothing on the record yet." : "No contributions were logged for this meeting.") +
+      (live ? "Nothing on the record yet."
+        : upcoming ? "Nothing brought in yet — be the first."
+        : "No contributions were logged for this meeting.") +
       "</div></section>";
     return out;
   }
@@ -1634,7 +1684,9 @@ function floorSection(d) {
       '<div class="c"><div class="hd"><b>' + esc(c.name) + "</b>" +
       '<span class="badge ' + kindBadge(c.kind) + '">' + esc(c.kind) + "</span>" +
       (c.visibility !== "all" ? " " + visBadge(c.visibility) : "") +
-      '<span class="t">' + esc(c.time) + (c.offset ? " · " + c.offset + " min in" : "") + "</span>" +
+      '<span class="t">' + esc(c.time) +
+      (c.offset < 0 ? " · brought in beforehand"
+        : c.offset ? " · " + c.offset + " min in" : "") + "</span>" +
       (canEdit ? '<button class="btn ghost sm" style="margin-left:auto;padding:3px 8px;font-size:10.5px" ' +
         'data-con="' + esc(c.id) + '">Edit</button>' : "") + "</div>" +
       '<div class="bd">' + escLines(c.body) + "</div>" +
@@ -1684,7 +1736,11 @@ function wireFloor(d) {
     go.disabled = true;
     post("contribute", {
       meetingId: m.id, body: body, kind: $("fl-kind").value,
-      topics: $("fl-topic").value, agendaId: (d.session && d.session.currentAgendaId) || "",
+      topics: $("fl-topic") ? $("fl-topic").value : "",
+      // Before the meeting a person picks the item; during it, the
+      // item the chair has on the clock.
+      agendaId: $("fl-agenda") ? $("fl-agenda").value
+        : ((d.session && d.session.currentAgendaId) || ""),
       visibility: $("fl-vis") ? $("fl-vis").value : "all",
       clipId: S.pendingClip || ""
     }).then(guard).then(function (res) {
@@ -1694,6 +1750,19 @@ function wireFloor(d) {
       loadMeeting(m.id);
     }).catch(function () { go.disabled = false; say("fl-msg", "No connection — try again."); });
   };
+
+  /*  The item's own question, shown under the picker, because an
+     item title alone is not something a person can answer. */
+  var pick = $("fl-agenda"), ask = $("fl-ask");
+  if (pick && ask) {
+    var showAsk = function () {
+      var a = (d.agenda || []).filter(function (x) { return x.id === pick.value; })[0];
+      ask.textContent = a && a.detail ? a.detail : "";
+      ask.style.display = ask.textContent ? "" : "none";
+    };
+    pick.onchange = showAsk;
+    showAsk();
+  }
 
   var rec = $("fl-rec");
   if (rec) rec.onclick = function () { toggleRecording(m.id, d.maxClipMinutes || 15); };
