@@ -3,13 +3,13 @@
  "rate": "-12%",
  "check": true,
  "films": {
-  "wallissued": [
-   "This is what the branch has issued this month, from Guardian's production report.",
-   "The big number is every policy settled since the first, and the annual premium on them.",
-   "The bar is a usual month for the people here now. The mark on it is where a usual month would be by today.",
-   "Under it, week by week, and where we were on this same day last month.",
-   "On the right, each unit, then each agent in name order. Nobody is ranked here.",
-   "Each bar is that person against their own usual month, and green is past it. No client is named here."
+  "wallday": [
+   "This is the branch's day, hour by hour, from Salesforce.",
+   "Along the top are the time blocks: what was closed in each hour, by task type, and under it what was worked on and not yet closed.",
+   "The gold line is where the clock is now.",
+   "Below, each desk across the same hours, with what they closed, what they worked on, and how old that work is.",
+   "The last row is the Branch Manager: the birthday e-mails and the notes that run as him, kept apart from the desks' totals.",
+   "Along the foot, the agents whose work was closed today. Each desk against its own day, nobody ranked, and no client is named here."
   ]
  }
 }
