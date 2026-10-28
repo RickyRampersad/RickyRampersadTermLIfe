@@ -33,7 +33,7 @@ const SCREENS = [
   ['Pending · code by code', '/intelligence/wall/codes.html'],
   ['Issued this month',  '/intelligence/wall/issued.html'],
   ['The orphan campaign', '/intelligence/wall/orphans.html'],
-  ['The system\'s day',  '/intelligence/wall/blocks.html'],
+  ['The day, hour by hour', '/intelligence/wall/blocks.html'],
   ['The 45-day line',    '/intelligence/wall/'],
   ['Lapses',             '/intelligence/wall/lapses.html'],
   ['Whose hands',        '/intelligence/wall/possession.html'],
