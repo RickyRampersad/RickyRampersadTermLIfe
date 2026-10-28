@@ -3,21 +3,13 @@
  "rate": "-12%",
  "check": true,
  "films": {
-  "wallinc": [
-   "This slide is the pendings Guardian's report cannot see: increases, group life, group health and individual health.",
-   "On the left, increases on policies already in force, and the premium waiting on them.",
-   "In the middle, the group and health book. Gold is pending, green is paying, and grey has no status in Salesforce at all.",
-   "On the right, every case actually pending, whose it is, and how long it has waited.",
-   "Underneath, the records over a year old still marked pending. Those are not work. Close them in Salesforce.",
-   "It reads Salesforce every hour. No client is named here."
-  ],
-  "wallcodes": [
-   "This is code by code: every requirement outstanding on today's pending report.",
-   "On the left, whose move it is. Most sit with the agent, and that is the first call.",
-   "The rest wait on the client, the doctor or the lab, and each line says what moves it.",
-   "On the right, each requirement: how many are out, how many Guardian marks overdue, and how many came in this week.",
-   "Under each, the agents holding it. Orphans are the cases still to be reassigned.",
-   "The pages turn on their own, so every code is on the wall. No client is named here."
+  "wallissued": [
+   "This is what the branch has issued this month, from Guardian's production report.",
+   "The big number is every policy settled since the first, and the annual premium on them.",
+   "The bar is a usual month for the people here now. The mark on it is where a usual month would be by today.",
+   "Under it, week by week, and where we were on this same day last month.",
+   "On the right, each unit, then each agent in name order. Nobody is ranked here.",
+   "Each bar is that person against their own usual month, and green is past it. No client is named here."
   ]
  }
 }
