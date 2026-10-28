@@ -31,9 +31,10 @@ WALLS = {
         "This is the branch's day, hour by hour, from Salesforce.",
         "Along the top are the time blocks: what was closed in each hour, by task type, and under it what was worked on and not yet closed.",
         "The gold line is where the clock is now.",
+        "The top then turns to each desk's ring: what they have closed against their day, and the white mark where the clock is.",
         "Below, each desk across the same hours, with what they closed, what they worked on, and how old that work is.",
         "The last row is the Branch Manager: the birthday e-mails and the notes that run as him, kept apart from the desks' totals.",
-        "Along the foot, the agents whose work was closed today. Each desk against its own day, nobody ranked, and no client is named here.",
+        "Then the agents served today. Each bubble is the work done for one agent, and its ring is how much of it was closed. Nobody is ranked, and no client is named here.",
     ],
     'riders': [                                  # Riders On A Clock
         "Every rider has an expiry.",

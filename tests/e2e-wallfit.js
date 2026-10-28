@@ -188,7 +188,7 @@ DAY.data.hours = (function () {
     ages: auto ? [0, 0, 0, 0] : [3, worked - 6, 2, 1], oldest: auto ? 0 : 268 });
   return { at: '11:10am', from: 7, to: 17, nowH: 11.2, types: types.map((k, i) => ({ k, label: k === 'Renewa/PDl/Bill' ? 'Renewals · PDL · Billing' : k, n: [6, 9, 1, 0, 0, 0][i] })),
     hours: hrs, desks: [desk('carl', 'Carl', 4, 26), desk('dina', 'Dina', 14, 77), desk('errol', 'Errol', 8, 30), desk('fay', 'Fay', 2, 9), desk('gus', 'Gus', 1, 8), desk('ricky', 'Ricky', 0, 0, 1)],
-    agents: [{ k: 'Rajiv Soodoo', n: 3 }, { k: 'Orphans · to reassign', n: 3 }, { k: 'Stephanie Rajkumar', n: 1 }], totals: { closed: 29, worked: 150, emails: 5, automated: 27, mine: 0 } };
+    agents: [{ k: 'Rajiv Soodoo', c: 3, w: 6, n: 9, by: [{ k: 'Dina', n: 8 }, { k: 'Fay', n: 1 }] }, { k: 'Stephanie Rajkumar', c: 1, w: 1, n: 2, by: [{ k: 'Carl', n: 2 }] }, { k: 'Orphans · to reassign', c: 3, w: 24, n: 27, by: [{ k: 'Dina', n: 5 }] }], totals: { closed: 29, worked: 150, emails: 5, automated: 27, mine: 0 } };
 })();
 const LAP = { ok: true, data: {
   configured: true, generatedAt: '2026-09-17', year: 2026, month: 'September', monthIndex: 8, quarter: 'Q3',

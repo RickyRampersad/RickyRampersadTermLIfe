@@ -16560,11 +16560,20 @@ function wallDayHours_(day) {
   var agents = {}, byId = {}, sinceMs = new Date(since).getTime(), today = new Date(day + 'T12:00:00Z').getTime();
   var ageBand = function (created) { var d = Math.max(0, Math.round((today - new Date(String(created).slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000)), A = WALL_HOURS.AGES;
     return { d: d, b: d <= A[0] ? 0 : d <= A[1] ? 1 : d <= A[2] ? 2 : 3 }; };
+  // The agents served (28 Oct 2026, 3:43pm: "and where is the agent served?"): whose work each close and each task worked on
+  // was, and which desks did it. Once a task.
+  var served = {};
+  var serve = function (t, sid, how) {
+    var ag = t && t.Agent__r && String(t.Agent__r.Name || '').trim(); if (!ag) return;
+    var a = agents[ag] = agents[ag] || { k: ag, c: 0, w: 0, by: {} }, key = t.Id + '|' + how;
+    if (served[key]) return; served[key] = 1;
+    a[how]++; var dn = D[sid] ? D[sid].name : sid; a.by[dn] = (a.by[dn] || 0) + 1;
+  };
   var work = function (sid, t, at) {          // worked on, not closed: once a task, in the hour it last moved
     var d = D[sid]; if (!d) return;
     var i = wallHourOf_(at) - H0, ms = new Date(at).getTime(), had = d._w[t.Id];
     if (had) { if (ms > had.ms) { d.hours[had.i].w--; hours[had.i].worked--; d.hours[i].w++; hours[i].worked++; d._w[t.Id] = { i: i, ms: ms }; } return; }
-    d._w[t.Id] = { i: i, ms: ms }; d.worked++; d.hours[i].w++; hours[i].worked++;
+    d._w[t.Id] = { i: i, ms: ms }; d.worked++; d.hours[i].w++; hours[i].worked++; serve(t, sid, 'w');
     if (t.CreatedDate) { var a = ageBand(t.CreatedDate); d.ages[a.b]++; d.oldest = Math.max(d.oldest, a.d); }
   };
   tasks.forEach(function (t) {
@@ -16579,7 +16588,7 @@ function wallDayHours_(day) {
       }
       var ty = tyOf(t.Task_Type__c);
       d.closed++; d.byType[ty] = (d.byType[ty] || 0) + 1; d.hours[i].c++; hours[i].closed[ty] = (hours[i].closed[ty] || 0) + 1;
-      var ag = t.Agent__r && t.Agent__r.Name; if (ag) agents[ag] = (agents[ag] || 0) + 1;
+      serve(t, owner, 'c');
       return;
     }
     if (!t.IsClosed && new Date(t.LastModifiedDate).getTime() >= sinceMs) {
@@ -16600,7 +16609,9 @@ function wallDayHours_(day) {
   var out = { at: twelve_(hhmm_(new Date())), from: H0, to: WALL_HOURS.TO, nowH: (function () { var m = minutesOf_(Utilities.formatDate(new Date(), CONFIG.TZ, 'HH:mm')); return m == null ? null : Math.round(m / 6) / 10; })(),
     types: WALL_HOURS.TYPES.map(function (t) { return { k: t[0], label: t[1], n: typesSeen[t[0]] || 0 }; })
       .concat(['Other', 'Not typed'].filter(function (k) { return typesSeen[k]; }).map(function (k) { return { k: k, label: k, n: typesSeen[k] }; })),
-    hours: hours, desks: desks, agents: list(agents).slice(0, 14),
+    hours: hours, desks: desks,
+    agents: Object.keys(agents).map(function (k) { var a = agents[k]; return { k: a.k, c: a.c, w: a.w, n: a.c + a.w, by: list(a.by) }; })
+      .sort(function (x, y) { var a = String(x.k).toLowerCase(), b = String(y.k).toLowerCase(); return a < b ? -1 : a > b ? 1 : 0; }),   // name order: nobody ranked
     totals: { closed: sum('closed', true), worked: sum('worked', true), emails: sum('emails', true), automated: sum('automated'), mine: (D.ricky || {}).closed || 0 } };
   try { cache.put(key, JSON.stringify(out), WALL_HOURS.TTL); } catch (e) {}
   return out;
