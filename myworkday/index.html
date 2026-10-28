@@ -146,6 +146,9 @@
   .att td.in{background:rgba(62,156,114,.13);color:var(--good)} .att td.late{background:rgba(194,106,4,.13);color:var(--warn)}
   .att td.absent{background:rgba(200,64,47,.12);color:var(--bad)} .att td.none,.att td.notin{background:transparent;border:1.5px dashed rgba(194,106,4,.55);color:var(--warn)}
   .att td small{display:block;font-weight:500;font-size:10.5px;opacity:.85}
+  .att td b.t{display:block;white-space:nowrap;font-weight:700}
+  .att td small.out{margin-top:3px;padding-top:3px;border-top:1px solid rgba(127,127,127,.25);color:var(--ink);opacity:.8}
+  .att td small.out.early{color:var(--warn);opacity:1} .att td small.out.none{color:var(--muted)}
   .att td[data-mark]{cursor:pointer} .att td[data-mark]:hover{filter:brightness(.96)}
   .markbox{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
   .markbox .q{font:800 14px/1.3 var(--fd);color:var(--navy);margin-bottom:8px}
@@ -429,8 +432,11 @@
     var a = m.att; if (!a || !a.desks) return "";
     var cell = function (x, d, day) {
       var mark = d.mark && (x.st === "none" || x.st === "notin" || (x.st === "absent" && x.auto)) ? ' data-mark="' + esc(d.sid) + '|' + esc(day.d) + '|' + esc(d.first) + '|' + esc(day.l) + '"' : "";
-      if (x.st === "in") return '<td class="in"' + mark + '>' + esc(x.t) + "</td>";
-      if (x.st === "late") return '<td class="late"' + mark + '>' + esc(x.t) + "<small>" + x.late + " min late</small></td>";
+      // In, and out (28 Oct 2026): the time they left under the time they came, early in amber, no sign-out said so.
+      var out = x.o ? '<small class="out' + (x.early ? ' early' : '') + '">left ' + esc(x.o) + (x.early ? " · " + x.early + " min early" : "") + "</small>"
+        : x.noout ? '<small class="out none">no sign-out</small>' : "";
+      if (x.st === "in") return '<td class="in"' + mark + '><b class="t">' + esc(x.t) + "</b>" + out + "</td>";
+      if (x.st === "late") return '<td class="late"' + mark + '><b class="t">' + esc(x.t) + "</b><small>" + x.late + " min late</small>" + out + "</td>";
       if (x.st === "absent") return '<td class="absent"' + mark + '>Absent<small>' + esc(x.why) + (x.by ? " · " + esc(x.by) : "") + "</small></td>";
       if (x.st === "none") return '<td class="none"' + mark + '>No record' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
       if (x.st === "notin") return '<td class="notin"' + mark + '>Not in' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
@@ -439,7 +445,7 @@
     return '<div class="card" id="attcard"><div class="ch"><h2>Attendance</h2><span class="n">last ' + a.days.length + ' working days</span></div>' +
       '<table class="att"><tr><th></th>' + a.days.map(function (d) { return "<th>" + esc(d.l) + "</th>"; }).join("") + "</tr>" +
       a.desks.map(function (d) { return '<tr><td class="nm">' + esc(d.first) + "</td>" + d.cells.map(function (x, i) { return cell(x, d, a.days[i]); }).join("") + "</tr>"; }).join("") +
-      '</table><div id="markbox"></div><div class="attkey"><b>No record</b>: nothing was written that day (no sign-in, and no morning e-mail to mark it). Tap one to say why.</div></div>';
+      '</table><div id="markbox"></div><div class="attkey">Each day: the time in, and under it the time they left. <b>No record</b>: nothing was written that day (no sign-in, and no morning e-mail to mark it). Tap one to say why.</div></div>';
   }
   document.addEventListener("click", function (e) {
     var td = e.target.closest && e.target.closest("td[data-mark]"); if (!td) return;
@@ -487,8 +493,15 @@
 
   function fail(msg) {
     if (M) { notice(esc(msg) + ' <a href="#" id="again">Try again</a>', true); $("asat").textContent = "As at " + (M.at || ""); }
-    else { notice(esc(msg) + ' <a href="#" id="again">Try again</a>', true); $("of").textContent = "Not opened"; $("main").innerHTML = ""; }
-    var a = $("again"); if (a) a.addEventListener("click", function (e) { e.preventDefault(); load(); });
+    else {
+      // 28 Oct 2026: Azariah, 8:04, "Still trying to get into my day": the day would not open, so she could not check in, and the
+      // clock had her late at 8:07. When the day will not open, the check-in still goes: it records the time now, and the day follows.
+      notice(esc(msg) + ' <a href="#" id="again">Try again</a>', true); $("of").textContent = "Not open yet";
+      $("main").innerHTML = '<div class="card"><div class="ci"><div class="dot">&#9654;</div><div><div class="t">Check in now</div><div class="s">Your day is slow to open. ' +
+        'Check in here and the time you came is recorded now; your day opens after.</div></div></div><button class="go" id="cinow">Check in and start my day</button></div>';
+      var cn = $("cinow"); if (cn) cn.addEventListener("click", checkIn);
+    }
+    var a = $("again"); if (a) a.addEventListener("click", function (e) { e.preventDefault(); load.tries = 0; load(); });
   }
   function load() {
     if (!OPS && (!P || !K)) { notice('Open <b>My day</b> in the <a href="/rroperations/">branch app</a>, or the <b>My workday</b> link in your morning e-mail. After that it opens from your home screen.', false); $("of").textContent = ""; $("main").innerHTML = ""; return; }
@@ -497,8 +510,11 @@
     var ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 90000);
     fetch(TRACKER + "?" + auth(new URLSearchParams()).toString() + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json(); })
-      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } load.again = false; notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); })
-      .catch(function () { clearTimeout(timer); busy = false; if (!load.again) { load.again = true; if (!M) $("of").textContent = "Still opening your day…"; setTimeout(load, 1500); return; } load.again = false; fail("The tracker did not answer this time."); });
+      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } load.tries = 0; notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); })
+      // Three more tries, further apart (2, 5 and 10 seconds), before it says so: a busy minute at the tracker passes (28 Oct 2026).
+      .catch(function () { clearTimeout(timer); busy = false; load.tries = (load.tries || 0) + 1;
+        if (load.tries <= 3) { if (!M) $("of").textContent = "Still opening your day… (try " + (load.tries + 1) + " of 4)"; setTimeout(load, [0, 2000, 5000, 10000][load.tries]); return; }
+        load.tries = 0; fail("The tracker did not answer this time."); });
   }
   function post(btn) {
     var row = btn.closest(".wt"), ta = row.querySelector("textarea"), sel = row.querySelector("select[data-to]"), text = (ta.value || "").trim();

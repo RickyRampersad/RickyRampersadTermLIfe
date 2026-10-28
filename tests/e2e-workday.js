@@ -201,8 +201,8 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     const days = [{ d: '2026-10-21', l: 'Wed 21' }, { d: '2026-10-22', l: 'Thu 22' }, { d: '2026-10-23', l: 'Fri 23' }, { d: '2026-10-26', l: 'Mon 26' }, { d: day, l: 'Tue 27' }];
     const C = (st, o) => Object.assign({ st }, o || {});
     const att = (lizMon) => ({ days, desks: [
-      { sid: 'sasha', first: 'Sasha', mark: true, cells: [C('in', { t: '7:11am' }), C('in', { t: '7:11am' }), C('in', { t: '7:01am' }), C('none'), C('wait')] },
-      { sid: 'elizabeth', first: 'Elizabeth', mark: true, cells: [C('in', { t: '6:59am' }), C('in', { t: '6:59am' }), C('late', { t: '8:12am', late: 12 }), lizMon, C('wait')] },
+      { sid: 'sasha', first: 'Sasha', mark: true, cells: [C('in', { t: '7:11am', o: '3:02pm' }), C('in', { t: '7:11am', o: '2:20pm', early: 40 }), C('in', { t: '7:01am', noout: true }), C('none'), C('wait')] },
+      { sid: 'elizabeth', first: 'Elizabeth', mark: true, cells: [C('in', { t: '6:59am' }), C('in', { t: '6:59am' }), C('late', { t: '10:40am', late: 12, o: '4:05pm' }), lizMon, C('wait')] },
       { sid: 'pawan', first: 'Pawan', mark: true, cells: [C('in', { t: '8:01am' }), C('absent', { why: 'No sign-in', auto: true }), C('in', { t: '7:58am' }), C('absent', { why: 'No sign-in', auto: true }), C('wait')] }] });
     let posted = [];
     await page.route(/script\.google\.com\/macros/, async route => {
@@ -214,6 +214,9 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     await page.goto(url); await page.waitForTimeout(1500);
     ok('Attendance: five days, each desk', (await page.$$('#attcard tr')).length === 4 && /Mon 26/.test(await page.textContent('#attcard')));
     ok('Monday: NO RECORD for Liz and Sasha, tap to mark', (await page.$$('#attcard td.none[data-mark]')).length === 2);
+    ok('the time they left under the time they came (28 Oct)', /left 3:02pm/.test(await page.textContent('#attcard')) && /left 4:05pm/.test(await page.textContent('#attcard')));
+    ok('left early says by how much; no sign-out says so', /left 2:20pm · 40 min early/.test(await page.textContent('#attcard')) && /no sign-out/.test(await page.textContent('#attcard')) && !!(await page.$('#attcard small.out.early')));
+    ok('a time never breaks across two lines', await page.evaluate(() => [...document.querySelectorAll('#attcard b.t')].every(b => b.getClientRects().length === 1 && b.offsetHeight < 22)));
     ok('late and the clock\'s absence read as such', !!(await page.$('#attcard td.late')) && /12 min late/.test(await page.textContent('#attcard')) && (await page.$$('#attcard td.absent')).length === 2);
     await page.click('#attcard td.none[data-mark*="elizabeth"]'); await page.waitForTimeout(300);
     ok('tapping it asks why', /Elizabeth, Mon 26: not in\. Why\?/.test(await page.textContent('#markbox')));
@@ -223,6 +226,37 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     ok('nothing off the side on a phone', wide <= 0, String(wide));
     if (OUT) await page.screenshot({ path: path.join(OUT, 'myday-attendance.png'), fullPage: true });
     ok('no page errors', errs.length === 0, errs.join(' | '));
+    await ctx.close();
+  }
+  console.log('\nwhen the tracker is slow to answer (28 Oct 2026):\n');
+  {
+    // Two failures, then the day: it keeps trying and opens, no error shown.
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
+    let gets = 0;
+    await page.route(/script\.google\.com\/macros/, route => { gets++; return gets <= 2 ? route.fulfill({ status: 503, contentType: 'text/html', body: '<html>Service unavailable</html>' })
+      : route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model()) }); });
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+    await page.goto(url); await page.waitForTimeout(9000);
+    const opened = await page.evaluate(() => ({ cards: document.querySelectorAll('main .card').length, of: document.getElementById('of').textContent, body: document.body.innerText }));
+    ok('a busy minute: it tries again by itself and the day opens', gets === 3 && opened.cards > 2 && !/did not answer|Not open|Still opening/.test(opened.body), 'gets ' + gets + ' · cards ' + opened.cards + ' · ' + opened.of);
+    ok('no page errors', errs.length === 0, errs.join(' | '));
+    await ctx.close();
+  }
+  {
+    // It never answers: after four tries it says so, and the check-in still goes.
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    let gets = 0, posts = [];
+    await page.route(/script\.google\.com\/macros/, route => { const req = route.request();
+      if (req.method() === 'POST') { posts.push(req.postData() || ''); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model({ checkin: { at: '8:04am', late: 4, status: 'in' }, checkedIn: { at: '8:04am', first: true } })) }); }
+      gets++; return route.fulfill({ status: 503, contentType: 'text/html', body: '<html>Service unavailable</html>' }); });
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+    await page.goto(url); await page.waitForTimeout(20000);
+    ok('four tries, then it says the tracker did not answer', gets === 4 && /did not answer/.test(await page.textContent('body')), 'gets ' + gets);
+    ok('and offers the check-in anyway', !!(await page.$('#cinow')) && /Check in now/.test(await page.textContent('main')));
+    await page.click('#cinow'); await page.waitForTimeout(1200);
+    ok('the check-in posts, and the day it brings back is drawn', posts.length === 1 && /act=checkin/.test(posts[0]) && !(await page.$('#cinow')), posts[0]);
     await ctx.close();
   }
   await b.close(); server.close();

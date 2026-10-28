@@ -11,8 +11,8 @@
 //   - My day shows the review, the note in the box and the desk chosen, and "make it a task" gives way to the note;
 //   - one tick posts it: on the open task when that desk holds it, else on a new task for the desk chosen, due when
 //     Claude said, working days only; the mails carry the note; the deep drafts go a wave at a time too;
-//   - the clock: 4:40 the deep drafts, the next run the scrub and the inbox review; then :35 each hour, never in the
-//     same run as the :20 drafts.
+//   - the clock: 4:40 the deep drafts, the next run the scrub and the carry of yesterday's reviews; from 5:00 to 7pm every
+//     run reviews what is new, never in the same run as the drafts or the hourly scrub (28 Oct 2026).
 const { makeEnv } = require('./harness');
 const env = makeEnv();
 let fails = 0;
@@ -157,16 +157,25 @@ if (dow <= 5) {
   P.deleteProperty('bmdeep_' + DAY); P.deleteProperty('ixdeep_' + DAY);
   env.hhmm_ = () => '04:42'; env.housekeepingTick_();
   ok('4:40: the deep drafts first, alone', deepN === 1 && ixN === 0, deepN + '/' + ixN);
+  let carries = 0; env.ixDeepCarryNow_ = () => { carries++; return 0; };
   env.hhmm_ = () => '04:52'; env.housekeepingTick_(); env.housekeepingTick_();
-  ok('the next run: the night\'s mail scrubbed, then the inbox review, once', ixN === 1 && scrubs === 1 && deepN === 1, ixN + '/' + scrubs + '/' + deepN);
+  // 28 Oct 2026: the 4:50 run scrubs and carries yesterday's reviews; the review itself runs from 5:00 in runs of its own.
+  ok('the next run: the night\'s mail scrubbed and yesterday\'s reviews carried, once; no review in that run', ixN === 0 && scrubs === 1 && carries === 1 && deepN === 1, ixN + '/' + scrubs + '/' + carries + '/' + deepN);
   P.deleteProperty('bmai_hr'); P.deleteProperty('ixai_hr'); deepN = 0; ixN = 0;
   env.hhmm_ = () => '09:24'; env.housekeepingTick_();
   ok(':24: the drafts, not the review', deepN === 1 && ixN === 0, deepN + '/' + ixN);
   env.hhmm_ = () => '09:44'; env.housekeepingTick_(); env.housekeepingTick_();
-  ok(':35 on: the review, once that hour', ixN === 1 && deepN === 1, deepN + '/' + ixN);
+  ok('after that, every run looks for mail Claude has not reviewed (twice here), the drafts still once that hour', ixN === 2 && deepN === 1, deepN + '/' + ixN);
   P.deleteProperty('bmai_hr'); P.deleteProperty('ixai_hr'); deepN = 0; ixN = 0;
   env.hhmm_ = () => '10:41'; env.housekeepingTick_();
-  ok('a late run that does the drafts leaves the review to the next', deepN === 1 && ixN === 0, deepN + '/' + ixN);
+  ok('a run that does the drafts leaves the review to the next', deepN === 1 && ixN === 0, deepN + '/' + ixN);
+  P.deleteProperty('inbox_hr'); ixN = 0; scrubs = 0;
+  env.hhmm_ = () => '11:05'; env.housekeepingTick_();
+  ok('a run that scrubs the inbox leaves the review to the next', scrubs >= 1 && ixN === 0, scrubs + '/' + ixN);
+  env.hhmm_ = () => '05:12'; ixN = 0; env.housekeepingTick_();
+  ok('from 5:00, not 6:35', ixN === 1, String(ixN));
+  env.hhmm_ = () => '18:40'; ixN = 0; env.housekeepingTick_();
+  ok('and on to 7pm', ixN === 1, String(ixN));
 } else ok('the clock (weekday only; skipped today)', true);
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
