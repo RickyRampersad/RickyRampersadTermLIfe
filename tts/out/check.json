@@ -1,52 +1,62 @@
 {
- "tts/out/adA/01.mp3": [
-  "en",
-  0.985,
-  "Good at what you do, but stuck where you are?"
- ],
- "tts/out/adA/02.mp3": [
-  "en",
-  0.998,
-  "already contracted, then you know the fear, move, and you start from zero. Not here. Clients match to you, household by household. Leads that land on your own board."
- ],
- "tts/out/adA/03.mp3": [
-  "en",
-  0.998,
-  "Your manager is a coach, not a clock, and nobody will know you asked."
- ],
- "tts/out/adA/04.mp3": [
-  "en",
-  0.996,
-  "Five seats this year. Everyone gets a full build. 32 years in Trinidad."
- ],
- "tts/out/adA/05.mp3": [
-  "en",
-  0.995,
-  "One confidential conversation, 20 minutes this week, agentmgt.com."
- ],
- "tts/out/adB/01.mp3": [
-  "en",
-  0.99,
-  "Want a career with no ceiling, but afraid of the first year?"
- ],
- "tts/out/adB/02.mp3": [
+ "tts/out/wallinc/01.mp3": [
   "en",
   0.997,
-  "New to this, then you know the fear, months with nothing coming in. Not here, leads come to you from people who ask to be called. Your day is set every morning and you're trained before you're contracted."
+  "This slide is the Pending's Guardians report cannot see. Increases, Group Life, Group Health, and Individual Health."
  ],
- "tts/out/adB/03.mp3": [
+ "tts/out/wallinc/02.mp3": [
   "en",
-  1.0,
-  "Your manager is a coach, not a clock. Nobody here is left to figure it out alone."
+  0.994,
+  "On the left, increases on policies already in force and the premium waiting on them."
  ],
- "tts/out/adB/04.mp3": [
+ "tts/out/wallinc/03.mp3": [
+  "en",
+  0.993,
+  "In the middle, the group in health book, gold is pending, green is paying, and gray has no status in sales force at all."
+ ],
+ "tts/out/wallinc/04.mp3": [
+  "en",
+  0.997,
+  "on the right, every case actually pending, whose it is, and how long it has waited."
+ ],
+ "tts/out/wallinc/05.mp3": [
   "en",
   0.995,
-  "Five seats this year. Everyone gets a full build. 32 years in Trinidad."
+  "Underneath, the record's over a year old still marked pending. Those are not work. Close them in Salesforce."
  ],
- "tts/out/adB/05.mp3": [
+ "tts/out/wallinc/06.mp3": [
+  "en",
+  0.995,
+  "It reads Salesforce every hour. No client is named here."
+ ],
+ "tts/out/wallcodes/01.mp3": [
   "en",
   0.996,
-  "One confidential conversation, 20 minutes this week, agnmgt.com"
+  "This is Code by Code. Every requirement outstanding on today's pending report."
+ ],
+ "tts/out/wallcodes/02.mp3": [
+  "en",
+  0.991,
+  "On the left, whose move it is. Most sit with the agent, and that is the first call."
+ ],
+ "tts/out/wallcodes/03.mp3": [
+  "en",
+  0.998,
+  "The rest wait on the client, the doctor, or the lab, and each line says what moves it."
+ ],
+ "tts/out/wallcodes/04.mp3": [
+  "en",
+  0.997,
+  "on the right, each requirement, how many are out, how many guardian marks overdue, and how many came in this week."
+ ],
+ "tts/out/wallcodes/05.mp3": [
+  "en",
+  0.997,
+  "Under each, the agent's holding it. Orphans are the cases still to be reassigned."
+ ],
+ "tts/out/wallcodes/06.mp3": [
+  "en",
+  0.998,
+  "The pages turn on their own, so every code is on the wall. No client is named here."
  ]
 }
