@@ -73,6 +73,11 @@ var MEET = {
   BRANCH: 'Ricky Rampersad Branch',
   BRANCH_SHORT: 'TV Branch',
 
+  /*  Bumped whenever this file changes in a way a deployment has to
+   *  carry. `?action=ping` reports it, so a browser can tell a live
+   *  build from one pasted six weeks ago without anybody guessing. */
+  VERSION: '2026-10-28',
+
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
      an account before its owner does — it is not the sign-in
@@ -99,10 +104,20 @@ var MEET = {
   MAX_ATTEMPTS: 5,
   LOCKOUT_MINUTES: 15,
 
-  /* A sign-in this many minutes after the start time is recorded
-     as Late rather than Present. Per-meeting override lives on
-     the Meetings tab. */
-  LATE_AFTER_MINUTES: 10,
+  /*  A sign-in this many minutes after the start time is recorded as
+   *  Late rather than Present.
+   *
+   *  ZERO SINCE 28 OCTOBER 2026, at the branch manager's word: "if they
+   *  log in after the time it started they are present but late". There
+   *  is no grace. A meeting that starts at twelve starts at twelve, and
+   *  ten minutes of grace is ten minutes the people who were on time
+   *  spend waiting.
+   *
+   *  It is still a per-meeting override on the Meetings tab, so a
+   *  meeting that genuinely needs a few minutes can carry them in its
+   *  own `Late After (min)` cell without changing this rule for every
+   *  other one. */
+  LATE_AFTER_MINUTES: 0,
 
   /* Check-in opens this long before the start time by default. */
   CHECKIN_OPENS_BEFORE: 30,
@@ -1124,9 +1139,24 @@ function checkinWindow_(m) {
 function statusForNow_(m, when) {
   var w = checkinWindow_(m);
   if (!w.start) return { status: 'present', late: 0 };
-  var grace = num_(m['Late After (min)']) || MEET.LATE_AFTER_MINUTES;
-  var lateBy = Math.round((when.getTime() - w.start.getTime()) / 60000);
-  if (lateBy > grace) return { status: 'late', late: lateBy };
+
+  /*  AN EXPLICIT ZERO IS NOT AN EMPTY CELL. `num_(cell) || DEFAULT`
+   *  throws a deliberate 0 away and hands back the default instead,
+   *  which is how a meeting set to no grace would quietly keep ten
+   *  minutes of it. Empty means "use the branch default"; a number,
+   *  zero included, means that number. */
+  var cell = str_(m['Late After (min)']);
+  var grace = cell === '' ? MEET.LATE_AFTER_MINUTES : num_(cell);
+
+  /*  Decided on the clock, in milliseconds, not on a rounded count of
+   *  minutes: with no grace, a sign-in at 12:00:30 is after a meeting
+   *  that started at 12:00, and rounding would have called it present.
+   *  The minutes are only how it is written down afterwards, and they
+   *  never read zero on a late row. */
+  var byMs = when.getTime() - w.start.getTime();
+  if (byMs > grace * 60000) {
+    return { status: 'late', late: Math.max(1, Math.round(byMs / 60000)) };
+  }
   return { status: 'present', late: 0 };
 }
 
@@ -1580,7 +1610,36 @@ function apiCheckIn_(body) {
  *  refused rather than quietly stored, because the whole point of
  *  the list is that every apology lands in a box the wall can count.
  */
+/*  NOBODY EXCUSES THEMSELVES, SINCE 28 OCTOBER 2026.
+ *
+ *  Asked for in these words: "dont give the opportunity to say cannot
+ *  attend". The register now has three states a person can put
+ *  themselves in, and only three: present, present but late, and
+ *  absent for not signing in. An apology a person files for themselves
+ *  is the fourth, and it is the one that empties a room — it costs
+ *  nothing to file and it reads on the register as though it were
+ *  settled.
+ *
+ *  The route is kept and refuses, rather than being deleted, because a
+ *  browser holding an older copy of the page would otherwise post into
+ *  nothing and show the person a success they did not get.
+ *
+ *  Staff can still record an apology on someone's behalf through the
+ *  register (apiMarkAttendance_). That is a different thing: a manager
+ *  deciding that approved leave is not an absence, with their name
+ *  against the decision.                                            */
 function apiExcuse_(body) {
+  requireUser_(body.token);
+  return { ok: false, excuseClosed: true,
+           error: 'Sign in on the day \u2014 that is the register. Signing in after the ' +
+                  'meeting has started is recorded present but late. If you genuinely ' +
+                  'cannot be there, speak to the branch manager: only branch staff can ' +
+                  'record an apology.' };
+}
+
+/*  The old self-service apology, kept for the record of what it did and
+ *  for the day somebody asks for it back. It is not routed.         */
+function apiExcuseRetired_(body) {
   var me = requireUser_(body.token);
   var m = findMeeting_(body.meetingId);
   if (!m) return { ok: false, error: 'That meeting no longer exists.' };
@@ -3506,17 +3565,41 @@ function apiAddContribution_(body) {
   var text = str_(body.body);
   if (text.length < 2) return { ok: false, error: 'Write what you want on the record.' };
 
-  // You have to be in the room. The register already knows whether you are.
-  var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
-    return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
-  })[0];
-  if (!att || ['present', 'late'].indexOf(low_(att['Status'])) === -1) {
-    return { ok: false, error: 'Sign in to the meeting first — that is what puts you in the room.' };
-  }
-
   var sn = sessionFor_(m['ID']);
   var started = sn ? asDate_(sn['Started']) : null;
-  var offset = started ? Math.round((Date.now() - started.getTime()) / 60000) : 0;
+
+  /*  BEFORE THE MEETING THE FLOOR IS SHUT, BUT THE AGENDA IS OPEN.
+   *
+   *  A contribution made in the room is the record of something SAID
+   *  in it, so it needs the register — that rule is below and it does
+   *  not move. But a person reading the agenda the day before has
+   *  something to say about it, and there are only two ways to take
+   *  it: open the register early, which marks them present at a
+   *  meeting that has not happened, or lose the point. Neither is
+   *  acceptable, so there is a third thing.
+   *
+   *  Until the register opens, and while no session has started, a
+   *  contribution is taken as BROUGHT IN BEFOREHAND and stamped with
+   *  an offset of -1. Nothing else ever writes a negative offset, so
+   *  the floor tells the two apart without a new column, and
+   *  floorStats_ counts only what was said in the room — otherwise a
+   *  person who wrote in on Thursday and sat silent on Friday would
+   *  read as having held the floor.                                */
+  var w = checkinWindow_(m);
+  var early = !started && !!(w.open && Date.now() < w.open.getTime());
+
+  if (!early) {
+    // You have to be in the room. The register already knows whether you are.
+    var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
+      return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
+    })[0];
+    if (!att || ['present', 'late'].indexOf(low_(att['Status'])) === -1) {
+      return { ok: false, error: 'Sign in to the meeting first — that is what puts you in the room.' };
+    }
+  }
+
+  var offset = early ? -1
+    : (started ? Math.round((Date.now() - started.getTime()) / 60000) : 0);
 
   var kind = CONTRIB_KINDS.indexOf(str_(body.kind)) > -1 ? str_(body.kind) : 'Point';
   var agendaId = str_(body.agendaId) || (sn ? str_(sn['Current Agenda ID']) : '');
@@ -3576,7 +3659,14 @@ function contributionsFor_(m, person) {
 /** Who actually said something, and how much. Silence is visible too. */
 function floorStats_(contribs, register) {
   var per = {};
-  contribs.forEach(function (c) {
+  /*  Only what was said IN THE ROOM. A contribution brought in before
+   *  the meeting carries an offset of -1 (see apiAddContribution_);
+   *  counting it here would move a person out of "in the room,
+   *  nothing on the record", which is the one thing this measure is
+   *  for. They are reported on their own, below.                   */
+  var room = contribs.filter(function (c) { return num_(c.offset) >= 0; });
+  var early = contribs.filter(function (c) { return num_(c.offset) < 0; });
+  room.forEach(function (c) {
     if (!per[c.email]) per[c.email] = { email: c.email, name: c.name, role: c.role, count: 0, kinds: {} };
     per[c.email].count++;
     per[c.email].kinds[c.kind] = (per[c.email].kinds[c.kind] || 0) + 1;
@@ -3595,7 +3685,21 @@ function floorStats_(contribs, register) {
     silent.sort(function (a, b) { return a.name.localeCompare(b.name); });
   }
 
-  return { total: contribs.length, spoke: spoke, silent: silent };
+  var broughtIn = {};
+  early.forEach(function (c) {
+    if (!broughtIn[c.email]) broughtIn[c.email] = { email: c.email, name: c.name, role: c.role, count: 0 };
+    broughtIn[c.email].count++;
+  });
+
+  return {
+    total: room.length,
+    spoke: spoke,
+    silent: silent,
+    // Brought in before the meeting: counted apart, never as the floor.
+    earlyTotal: early.length,
+    broughtIn: Object.keys(broughtIn).map(function (e) { return broughtIn[e]; })
+      .sort(function (a, b) { return b.count - a.count; })
+  };
 }
 
 /* ======================== topics ======================== */
@@ -6398,13 +6502,95 @@ function doGet(e) {
       case 'goals':      out = apiGoals_(p.token); break;
       case 'chases':     out = apiChases_(p.token); break;
       case 'service':    out = apiService_(p.token); break;
-      case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
+      case 'ping':       out = apiPing_(); break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }
   } catch (err) {
     out = { ok: false, error: String(err && err.message ? err.message : err) };
   }
   return json_(out);
+}
+
+/*  WHAT PING ANSWERS, AND WHY.
+ *
+ *  "Is it working?" is four questions, and ping used to answer none of
+ *  them: it said the app's name whether or not the project had been
+ *  pasted, redeployed or seeded, so a browser could not tell a live
+ *  build from a six-week-old one. It now says which build is
+ *  deployed, whether the one-off file is in the project, whether the
+ *  meeting has been seeded and can be opened, and — the thing that
+ *  actually goes wrong — how many people on the roll still cannot
+ *  sign in.
+ *
+ *  THIS ANSWER IS PUBLIC. The /exec address sits in a public
+ *  repository, so anything returned here is readable by anyone. It
+ *  carries settings and counts only: never a name, a meeting's title,
+ *  an agenda item, a code, or anything a person said. Keep it that
+ *  way — a count is operational, a title is the branch's business.
+ *
+ *  Nothing here may throw. A ping that fails is indistinguishable
+ *  from a backend that is down, which is the one thing it exists to
+ *  tell apart, so every part is read inside its own try.          */
+function apiPing_() {
+  var out = {
+    ok: true,
+    app: 'Branch Meeting Builder',
+    branch: MEET.BRANCH,
+    version: MEET.VERSION,
+    /* The register has three states a person can put themselves in,
+       and only three. See apiExcuse_. */
+    register: {
+      selfExcuse: false,
+      lateAfterMinutes: MEET.LATE_AFTER_MINUTES
+    }
+  };
+
+  /* Is the one-off file in the project at all? */
+  try { out.oneOff = (typeof seedFridayMeeting === 'function'); }
+  catch (e) { out.oneOff = false; }
+
+  /* Has it been seeded, and can a person open it today? */
+  try {
+    if (typeof FRIDAY !== 'undefined' && FRIDAY && FRIDAY.REF) {
+      var m = meetingRows_().filter(function (r) {
+        return str_(r['Ref']) === FRIDAY.REF;
+      })[0];
+      if (!m) {
+        out.meeting = { ref: FRIDAY.REF, seeded: false };
+      } else {
+        var w = checkinWindow_(m);
+        var now = Date.now();
+        var items = readTab_(MEET.TAB_AGENDA).filter(function (a) {
+          return str_(a['Meeting ID']) === str_(m['ID']);
+        });
+        out.meeting = {
+          ref: FRIDAY.REF,
+          seeded: true,
+          status: low_(m['Status']),
+          /* Published, or an agent opens the app and sees nothing. */
+          openToEveryone: low_(m['Status']) !== 'draft',
+          date: fmtDate_(m['Date']),
+          start: str_(m['Start']),
+          agendaItems: items.length,
+          minutes: items.reduce(function (n, a) { return n + num_(a['Allotted (min)']); }, 0),
+          lateAfterMinutes: num_(str_(m['Late After (min)']) === '' ? MEET.LATE_AFTER_MINUTES : m['Late After (min)']),
+          checkInOpensAt: w.open ? fmtStamp_(w.open) : '',
+          checkInOpenNow: !!(w.open && w.close && now >= w.open.getTime() && now <= w.close.getTime())
+        };
+      }
+    }
+  } catch (e) { out.meeting = { error: 'could not be read' }; }
+
+  /*  The one that actually goes wrong. Somebody with no access code
+   *  is not told they cannot sign in — they are marked absent for a
+   *  meeting they came to. Counts only, never a name.             */
+  try {
+    var roll = readPeople_().filter(function (p) { return p.active && p.role !== 'guest'; });
+    var can = roll.filter(function (p) { return !!(p.code || p.hash); });
+    out.roster = { onTheRoll: roll.length, canSignIn: can.length, cannot: roll.length - can.length };
+  } catch (e) { out.roster = { error: 'could not be read' }; }
+
+  return out;
 }
 
 function doPost(e) {

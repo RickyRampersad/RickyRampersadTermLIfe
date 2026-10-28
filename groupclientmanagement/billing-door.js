@@ -16,6 +16,11 @@
 const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* a letter or statement shown here runs nothing; its links open in a tab of their own, and a link to the group's page
+   says it came from a preview (27 October 2026) */
+const PV_SANDBOX = 'allow-popups allow-popups-to-escape-sandbox';
+const pvHead = '<!doctype html><meta charset="utf-8"><base target="_blank">';
+const pvLinks = h => String(h || '').replace(/([?&;]from=)(letter|welcome|reminder|bill)\b/g, '$1preview');
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const dmy = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1] : ''; };
 const pct = n => n == null ? '–' : n + '%';
@@ -50,12 +55,12 @@ async function open_() {
   }
   try { localStorage.setItem('rrb-gcm-code', AUTH.code); localStorage.setItem('rrb-gcm-who', AUTH.who); } catch (e) {}
   BOARD = d; head();
-  const u = new URL(location.href), g = u.searchParams.get('g'), m = u.searchParams.get('m') || '';
+  const u = new URL(location.href), g = u.searchParams.get('g'), m = (u.searchParams.get('m') || '').slice(0, 7);  /* an address saved as 2026-10-01 still opens October */
   if (g && d.groups.some(x => x.key === g)) openBilling(g, m); else render();
 }
 function signOut() { try { localStorage.removeItem('rrb-gcm-code'); localStorage.removeItem('rrb-gcm-who'); } catch (e) {} location.href = 'billing.html'; }
 function head() {
-  $('who').innerHTML = esc(BOARD.me) + ' · ' + (ROLE[BOARD.role] || 'Staff') + (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') +
+  $('who').innerHTML = esc(BOARD.me) + ' · ' + (BOARD.title || ROLE[BOARD.role] || 'Staff') + (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') +
     ' <button class="btn ghost" id="rf" type="button">Refresh from Salesforce</button> <a class="btn ghost" href="index.html">Weekly letters</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
   $('rf').onclick = refresh;
 }
@@ -203,6 +208,7 @@ function dBindPanel() {
   app.querySelectorAll('[data-ptask]').forEach(b => b.onclick = () => { blTaskPanel(b.dataset.line || 'health', ''); dPreset(b.dataset.ptask, b.dataset.member || ''); });
   app.querySelectorAll('[data-enrol]').forEach(b => b.onclick = () => blFormPanel(b.dataset.enrol || '', '', null, 'enrol'));
   const pdf = $('dPdf'); if (pdf) pdf.onclick = dPdf;
+  const ml = $('dMail'); if (ml) ml.onclick = dMail;
   const ai = $('dAiGo'); if (ai) ai.onclick = () => { DOOR.aiRead = null; dAiRead(true); };
 }
 function dAfterDraw(step) {
@@ -256,7 +262,7 @@ function dUploadCard(o) {
     h += '<div class="tiles bill-tiles"><div class="tile"><b>' + esc(blMoney(b.due)) + '</b><span>due for ' + esc(blMon(b.month)) + (b.dueBy ? ' · by ' + esc(dmy(b.dueBy)) : '') + '</span></div>' +
       '<div class="tile"><b>' + b.members + '</b><span>' + (o.line === 'listbill' ? 'policies' : 'members') + ' on the bill</span></div>' +
       (b.arrears ? '<div class="tile alert"><b>' + esc(blMoney(b.arrears)) + '</b><span>earlier months shown unpaid</span></div>' : '') +
-      '<div class="tile' + (Math.abs(v) > 0.05 ? ' alert' : '') + '"><b>' + (b.sfRecord ? esc(blMoney(b.sfBilled)) : '–') + '</b><span>in Salesforce' + (b.sfRecord ? (Math.abs(v) > 0.05 ? ' · ' + (v > 0 ? esc(blMoney(v)) + ' too high' : esc(blMoney(-v)) + ' short') : ' · agrees') : ' · no record') + '</span></div></div>' +
+      '<div class="tile' + (Math.abs(v) > 0.05 ? ' alert' : '') + '"><b>' + (b.sfRecord ? esc(blMoney(b.sfBilled)) : '–') + '</b><span>billed in Salesforce' + (b.sfRecord ? (Math.abs(v) > 0.05 ? ' · ' + (v > 0 ? esc(blMoney(v)) + ' more than' : esc(blMoney(-v)) + ' short of') + ' the ' + esc(blMoney(blCharged(o.line, b))) + ' charged' : ' · the same as the ' + esc(blMoney(blCharged(o.line, b))) + ' charged') : ' · no record') + '</span></div></div>' +
       '<p class="small muted">' + (b.ref ? 'Ref ' + esc(b.ref) + ' · ' : '') + (b.dated ? 'dated ' + esc(dmy(b.dated)) + ' · ' : '') + 'uploaded by ' + esc(b.by) + ' ' + esc(b.checkedAt) + (b.files ? ' · ' + esc(b.files) : '') + (b.reconciledAt ? ' · <b>reconciled ' + esc(b.reconciledAt) + '</b>' : '') + (b.sentAt ? ' · <b>sent ' + esc(b.sentAt) + '</b>' : '') +
       (can && !BILL_READ[o.line] ? ' · <button class="lnk" type="button" data-reup="' + o.line + '">upload again</button>' : '') + '</p>';
   }
@@ -270,7 +276,7 @@ function dFindings() {
   let h = '<h3 class="ptitle">What the checks found</h3><p class="plead">Every bill against Salesforce: the month’s record and its amount, the arrears, every member on the bill and on the record, who joined or left, the back-charges, the rates, the list bill. Fix what is marked <b>fix</b>, confirm what is marked <b>check</b>; the rest is for the record. The AI reads the whole month for you first.</p>';
   if (!withBill.length) return h + '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + dNav('findings');
   if (d.ai) h += '<div id="blAiBox">' + (DOOR.aiRead ? dAiHtml(DOOR.aiRead) : '<div class="drawer ai"><p class="muted" style="margin:0">' + (DOOR.aiBusy ? 'Reading this month with AI: the findings as counts, the Salesforce figures, the open tasks…' : 'The AI read of this month comes here.') + '</p></div>') + '</div>';
-  withBill.forEach(o => { h += '<section class="bline" id="line-' + o.line + '"><div class="blt"><h3>' + esc(o.label) + '</h3>' + blSteps(o.steps) + '</div>' + dSfRow(o) + blFindings(o) + '</section>'; });
+  withBill.forEach(o => { h += '<section class="bline" id="line-' + o.line + '"><div class="blt"><h3>' + esc(o.label) + '</h3>' + blSteps(o.steps) + '</div>' + dSfRow(o) + blSfwPanel(o) + blFindings(o) + '</section>'; });
   return h + dNav('findings');
 }
 function dAiHtml(r) {
@@ -335,7 +341,7 @@ async function dAnswer(qid, v, btn) {
 function dNext(n, q) {
   if (!n || !n.kind) return;
   if (n.kind === 'reup') { BILL_READ[n.line] = { part: null, names: [], warnings: [], again: true }; dGo('upload'); const b = $('preview-' + n.line); if (b) b.innerHTML = ''; toast('Upload the ' + (BL_LABEL[n.line] || '') + ' bill again.'); }
-  else if (n.kind === 'fix' && n.fix === 'sfAmount') { post({ action: 'gcm.billAct', group: BILL.group.key, line: n.line, month: BILL.month, act: 'sfAmount' }).then(r => { toast(r.ok ? r.said : (r.error || 'Not set'), !r.ok); if (r.ok) { DOOR.ask = null; dRefreshBill().then(() => dLoad('ask')); } }); }
+  else if (n.kind === 'fix' && (n.fix === 'sfAmount' || n.fix === 'sfWrite')) { toast('Writing to Salesforce…'); post({ action: 'gcm.billAct', group: BILL.group.key, line: n.line, month: BILL.month, act: n.fix }).then(r => { toast(r.ok ? r.said : (r.error || 'Not set'), !r.ok); if (r.ok) { DOOR.ask = null; dRefreshBill().then(() => dLoad('ask')); } }); }
   else if (n.kind === 'pay') blPayment(n.line, n.month || BILL.month, n.amount);
   else if (n.kind === 'task') { blTaskPanel(n.line || 'health', /^a\d+$/.test(q.id) ? '' : q.id); dPreset(n.task, n.member || ''); }
   else if (n.kind === 'leavers') { const M = n.members || []; blFormPanel(M[0] ? blNice(M[0]) : '', 'terminate', null, 'change'); if (M.length > 1) toast('One form a person: ' + M.map(blNice).join(', ') + '.'); }
@@ -455,7 +461,7 @@ async function dLetter(ds) {
   const r = await post(b);
   if (!r.ok) { $('dlgB').innerHTML = '<div class="note bad">' + esc(r.error) + '</div>'; return; }
   $('dlgB').innerHTML = '<p class="to"><b>Subject:</b> ' + esc(r.subject) + '<br><b>To:</b> ' + (r.to ? esc(r.to) : '<span style="color:var(--badText)">no e-mail on the record</span>') + ' · ' + esc(r.said) + '</p>' +
-    '<iframe title="The letter" sandbox="" srcdoc="' + esc('<!doctype html><meta charset="utf-8"><body style="margin:0;font-family:Arial,sans-serif">' + r.html) + '"></iframe>' +
+    '<iframe title="The letter" sandbox="' + PV_SANDBOX + '" srcdoc="' + esc(pvHead + '<body style="margin:0;font-family:Arial,sans-serif">' + pvLinks(r.html)) + '"></iframe>' +
     '<div class="row"><button class="btn" type="button" id="dLetterSend"' + (!r.to && r.live ? ' disabled title="No e-mail on the record"' : '') + '>' + (r.live ? 'Send to the member from support@' : 'Send the test copy to me') + '</button><button class="btn ghost" type="button" id="dLetterX">Close</button></div>' +
     '<p class="small muted">Facts only, no advice: the group cover ends at the age and a licensed agent calls about the options. ' + (r.live ? 'It goes from support@ with sales support copied.' : 'The bills are in test mode, so it goes to you, marked TEST, and names who would get it.') + '</p>';
   $('dLetterX').onclick = () => dlg.close();
@@ -482,7 +488,7 @@ function dStatement() {
   else h += '<div class="dnote" style="border-left:4px solid var(--good)">Nothing is owed from earlier months in Salesforce.' + (t.invoiceOwed ? ' Head Office’s invoice still shows ' + esc(blMoney(t.invoiceOwed)) + ' outstanding: the arrears question on the Questions step settles which is right.' : '') + '</div>';
   h += '<p class="small muted">Changes on this billing: ' + (t.changes.joined || t.changes.left || t.changes.moved ? [t.changes.joined ? t.changes.joined + ' joined' : '', t.changes.left ? t.changes.left + ' left' : '', t.changes.moved ? t.changes.moved + ' changed tier or premium' : ''].filter(Boolean).map(esc).join(', ') : 'no one joined or left') + '. Attached with the bill: ' + (t.attachments.length ? esc(t.attachments.join('; ')) : 'nothing yet') + '.</p>';
   h += '<div class="uprow" style="margin:8px 0"><button class="btn ghost" type="button" id="dPdf">Download the PDF</button><button class="btn ghost" type="button" data-go="approve">Send it with the bill →</button></div>';
-  h += '<iframe class="sframe" title="The statement of account as the group reads it" sandbox="" srcdoc="' + esc('<!doctype html><meta charset="utf-8"><body style="margin:0;font-family:Arial,sans-serif">' + S.html) + '"></iframe>';
+  h += '<iframe class="sframe" title="The statement of account as the group reads it" sandbox="' + PV_SANDBOX + '" srcdoc="' + esc(pvHead + '<body style="margin:0;font-family:Arial,sans-serif">' + pvLinks(S.html)) + '"></iframe>';
   return h + dNav('statement');
 }
 async function dPdf() {
@@ -494,11 +500,29 @@ async function dPdf() {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([u], { type: 'application/pdf' })); a.download = r.pdfName || 'Statement.pdf'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
 }
 
+/* the bill e-mail as the group reads it: who it greets, who signs it, whom they rate (27 October 2026) */
+async function dMail() {
+  $('dlgT').textContent = 'The ' + BILL.monthLabel + ' bill e-mail, as the group reads it';
+  $('dlgB').innerHTML = '<p class="muted">Writing the e-mail…</p>';
+  if (!dlg.open) dlg.showModal();
+  const r = await api({ action: 'gcm.billStatement', group: BILL.group.key, month: BILL.month, mail: 'Y' });
+  if (!r.ok || !r.mail) { $('dlgB').innerHTML = '<div class="note bad">' + esc(r.ok ? 'This backend does not write the e-mail preview yet: paste GroupBilling.gs and publish a New version.' : (r.error || 'Not written')) + '</div>'; return; }
+  const m = r.mail;
+  $('dlgB').innerHTML = '<p class="to"><b>Subject:</b> ' + esc(m.subject) + '<br><b>To:</b> ' + (m.to ? esc(m.to) : '<span style="color:var(--badText)">no address: ' + esc(m.why || 'none on the register or in Salesforce') + '</span>') + (m.cc ? ' · <b>Cc:</b> ' + esc(m.cc) : '') +
+    '<br><b>Greets:</b> ' + esc(m.greet) + (m.named ? '' : ' <span class="chip warn"><i></i>no contact name in Salesforce: add the Contact Person on the account, or a Greeting on the register</span>') +
+    '<br><b>Signed by:</b> ' + esc(m.signer) + (m.carer ? ' · <b>Rated:</b> ' + esc(m.carer) + ', who looks after the account' : '') + '</p>' +
+    (r.live ? '' : '<p class="small muted">Sending is in test mode, so the bill goes to you, marked TEST, until gblGoLive.</p>') +
+    '<iframe title="The bill e-mail" sandbox="' + PV_SANDBOX + '" srcdoc="' + esc(pvHead + '<body style="margin:0;font-family:Arial,sans-serif">' + pvLinks(m.html)) + '"></iframe>' +
+    '<div class="row"><button class="btn ghost" type="button" id="dMailX">Close</button></div>';
+  $('dMailX').onclick = () => dlg.close();
+}
+
 /* ── step 8: approve and send ── */
 function dApprove() {
   const d = BILL, can = d.canAct !== false, withBill = d.lines.filter(o => o.bill);
   let h = '<h3 class="ptitle">Approve and send</h3><p class="plead">A reconciled line goes by itself on the billing day once it is approved, or now with Send now, which works only on an approved bill. After the 10:00 cut-off, Approve and Send now each ask why it was not done by then. The e-mail carries the bill, the statement of account (inline and as a PDF) and the cover note, from support@ with sales support copied.</p>';
   h += blDayStrip(d.day, d.live);
+  if (withBill.length) h += '<div class="dnote dmail"><div><b>The e-mail the group gets</b><span class="small muted"> · addressed to their contact by name, signed by the person who looks after the account, with the sign-in to comment on any line and five stars to rate that person.</span></div><button class="btn ghost sm" type="button" id="dMail">See the e-mail as the group reads it</button></div>';
   if (!d.live) h += '<div class="note info"><div><b>Sending is in test mode.</b> A bill sent from here goes to you and the branch, marked TEST, until the branch manager runs gblGoLive in the script editor. Everything else is live: the checks, the Salesforce fixes, the tasks and the Chatter.</div></div>';
   if (!withBill.length) h += '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>';
   d.lines.forEach(o => {

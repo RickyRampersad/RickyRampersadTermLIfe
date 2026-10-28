@@ -4000,6 +4000,18 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 1099", "TGM1099"):
   compared as letters and digits only. The account fields `List_Bill_Life__c`
   and `List_Bill_Pension__c` are empty on all but one account.
+  **A letter O counts as a zero** (`gcmSignKey_`, 27 October 2026), on both
+  sides, because list bills such as `01_..00` end in zeros that read like the
+  letter O on an e-mail; no two list bills or codes on the register differ by
+  that alone. **A letter preview on the staff page can never sign in**: it is
+  a sandboxed frame where nothing runs, and that day the manager clicked
+  "Open your service page" in one group's preview, the group's page opened
+  inside the box, and its button did nothing ("Group log on not working").
+  Every preview (`pvDoc` on the staff page, `pvHead` in the billing door)
+  now opens its links in a tab of their own, and a link to the group's page
+  carries `from=preview`, which `gcmViewLog_` never logs, so a staff member
+  trying the sign-in is not counted as the group opening its page. The live
+  sign-in was working throughout.
 - **What a group sees.** Never a member's health or a claim (`GCM_PRIVATE`),
   and a health reimbursement is a claim whatever its subject says: the first
   live refresh carried "Reissue Cheque (health)" with a member's name, which
@@ -4057,6 +4069,24 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   "Cancel the approval" withdraws it. Whoever looks after the group, the deputy
   and the branch manager can still send at once ("Send now", or Outlook; until
   14 October 2026 the branch manager alone); doing so closes that group's approval.
+  **The run never refreshes into its own time, and at 11:00 the team is told** (26 October 2026: the 10:00 run and the
+  10:30 retry sent none of the eleven approved letters, and nothing said so. The Salesforce refresh had grown to about
+  five minutes, and the run started its 4.5-minute sending clock before it, so it ran out of time before the first
+  letter. Then: "all needs to go out, if all is not done a letter must trigger to the team with the reason and hold
+  persons responsible if they are assigned").
+  - **The run uses a refresh under an hour old** (`GCM.QUEUE_FRESH_MIN`, `gcmRefreshedMs_` from the `gcm_refreshed_ms`
+    property the refresh now writes) and starts its sending clock after any refresh it does. A letter the clock leaves
+    is named in the run's summary as not reached.
+  - **The hourly run sends first and refreshes after**: the queue, the approved bills and the team check, then the
+    refresh, only when the last is over 15 minutes old.
+  - **Monday 11:00, the team letter** (`gcmTeamCheck_`, `GCM.TEAM_HOUR`, once a week by `GCM_TEAM_LAST`): if any group on
+    the register has no letter this week, one e-mail goes to every active account owner, the Branch Manager's Assistant,
+    the branch manager and sales support. Each group not out is named with the reason and who is responsible: the
+    account owner for a letter not approved or a group not set up, the approver for a letter held at the run, the branch
+    for an approved letter the run did not reach, and the BMA for a group whose owner is not active in Salesforce.
+    Nothing goes when every group has its letter. `gcmTeamTest` (editor Run) sends the branch manager the letter as it
+    would go now, marked TEST. The letters stay at 10:00, as every letter, film and the manual say.
+  - `team26/team-test.js` in the scratchpad covers it (19 checks).
   The group is asked to answer by Friday. Every letter is logged on `Group
   Sends` with the letter itself. `gcmlive/queue-test.js` in the session
   scratchpad covers it (26 checks).
@@ -4096,7 +4126,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **No one sends a group a letter before the manual and the test** (8 October 2026: "a staff manual as well
   as a test … before they start … with weighting, with building in the performance appraisal, the taking
   initiative to try to solve things, the follow up … all results logged with a feedback").
-  `groupclientmanagement/training.html` holds the nine-section manual and the test; the staff page links to
+  `groupclientmanagement/training.html` holds the manual (nine sections until 26 October, fifteen since) and the test; the staff page links to
   it. The questions, their answers and their marking guides are in the private **Group Client Training**
   Google Sheet (`GCM_TRAIN_SHEET_ID`), never in the repository, because the site and the `.gs` files are public:
   the page gets the questions without answers, and `gcmTrainSubmit_` marks them. Written answers are marked by
@@ -4109,6 +4139,57 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   it that way when adding questions. The standards the manual sets that were not set before (an
   acknowledgement within a working day, a call within two working days for a rating of 3 or less, and a call
   or e-mail before the next approval to a group that did not answer) are proposals for the manager to confirm.
+- **The training programme, revised for billing and for roles** (26 October 2026: "a very detailed training
+  program that will cover the billings, step-by-step … with questions and answers, as well as the weekly task
+  report revised. Kamla is overseeing the task. She has a role … so everyone has a responsibility").
+  - **The manual is fifteen sections**: the job; who does what (Branch Manager, Branch Manager's Assistant, the
+    support team, the system, and a table of who does, checks and is told at each step); the week; the six
+    checks; escalations; the billing calendar (the next six billing and report days, worked out by
+    `gblBillDayOf_` and `gblReportDayOf_`, so re-check them with the script when the holiday list changes); the
+    eight billing steps; the Guardian forms; what the group sees on its three tabs; writing to the group;
+    follow-up; the audit trail (what is recorded where); initiative; fourteen practice questions with their answers
+    (not the test's); the appraisal. The device key is `rrb-gcm-train2:` so everyone reads the revised manual
+    afresh.
+  - **The test is by role.** The group course now filters by the bank's Roles column like the orphan course
+    (`gcmTrainFor_`): the support team take `staff` questions, the Branch Manager's Assistant, a deputy and the
+    branch manager take `manager` questions, and `all` is everyone's. A bank with no Roles column still gives
+    everyone everything.
+  - **The bank was rewritten** (`roles26/bank26.py` in the scratchpad: 41 rows, 35 for the support team, 16 for
+    the managers, the right answer never the longest, the answers spread A to D). The live sheet still asked about
+    "Tuesday's letter" and "Letter due". It went to a new private sheet, "Group Client Training (private: test
+    questions and answers) · revised 26 Oct 2026", and `GCM_TRAIN_SHEET_ID` must be pointed at it. The earlier
+    attempts stay on the old sheet's Results tab.
+- **The Branch Manager's Assistant signs in under her own role** (26 October 2026: "Kamla is overseeing the task.
+  She has a role, so she's logging in her role"). `gcmWho_` reads her role on the Agent Skill Bank
+  (`gcmIsBma_`: "Branch Manager Assistant", "BMA", "Branch Manager's Assistant") and makes her the deputy with no
+  Script property, titled `GCM_ROLE_TITLE.bma`. Every answer that carries the role now carries `title` too, and the
+  staff page, the billing door and the training page show it ("Branch Manager’s Assistant", "Support team",
+  "Branch Manager"). Her approvals are still logged with Role `deputy`. `roles26/bma-test.js` in the scratchpad
+  covers it (12 checks), `train26-test.js` the test by role (11) and `page26.js` the page (17, Playwright).
+- **The new-way films** (26 October 2026: "a video that will go to the clients on our new process moving forward, a
+  video for the staff on the new process forward … very short … a new initiative of the Ricky Rampersad branch … this
+  will go viral … motions and graphics … sample data").
+  - **For groups: `/groupmgt/client/`** (`groupmgt/client/index.html`; `/groupnewway/` and `/groupmgt/` forward to it), "Our new way of looking after your group", 1 min 23 s:
+    `groupclientmanagement/new-way.mp4` (wide, 1920x1080) and `new-way-phone.mp4` (upright, 1080x1920, for Reels,
+    Status and Stories), with posters `new-way.jpg` and `new-way-phone.jpg` and the share card `new-way-card.jpg` for the
+    Open Graph preview. A phone held upright opens on the phone cut; buttons switch. Ten scenes: the promise, the Monday
+    report, the three tabs, the bills on the 26th, the people, the forms, the stars, the named team, and a call to action
+    on the branch number for employers who are not clients yet. No staff name is spoken or shown.
+  - **For staff: `/groupmgt/staff/`** (`groupmgt/staff/index.html`, kept out of search) plays `groupclientmanagement/staff-new-way.mp4`, 2 min 53 s, also first on the training page: who does what
+    (the Branch Manager, Kamla as the Branch Manager's Assistant, the support team, the system), the sign-in, the week,
+    10:30, the month, the billing day, the eight steps, the cut-off and its reason, the audit trail, Kamla's oversight,
+    test mode, the training and the test.
+  - **How they are made** (all in the scratchpad, `films26/`): `lines.json` (the words), voiced on the `tts-run` runner
+    as Andrew Expressive (`en-US-AndrewMultilingualNeural`, +0%) with the Whisper check, keys `gcmc` and `gcms`;
+    `shots.js` (the real pages on the made-up branch, `people/setup.js`, with the Drive folder linked so no warning
+    shows); `timing.py` (scene times from the audio, word times from edge-tts); `engine.js`, `film.css`,
+    `cfg-gcmc.js`, `cfg-gcms.js` (every frame a function of t: kinetic headlines, devices that float and pan to the
+    named box, rings and taps on the word, counters, drawn lines, push transitions, captions that light word by word);
+    `render.js <film> <h|v>` (frame by frame at 1.5x); `mix.py` (the branch theme `rr-branch-theme.mp3`, looped with a
+    crossfade past two minutes, 16 dB under the voice, -14 LUFS). The late-reason screen comes from an older capture,
+    cropped to the dialog with the attached file's name painted out, because that name was a real group's.
+  - Re-cut when the pages change: re-run `shots.js`, then `render.js` and `mix.py`. The figures, people and groups on
+    screen are all invented.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
@@ -4365,6 +4446,38 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `day/day-test.js` (46 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
   scratchpad cover it. On those tabs one staff member would have been asked about five groups and another about one.
 
+- **Group letters can be put on hold, every group or one, from the staff page** (27 October 2026: a group's bills were
+  being tested, and its letter, approved on 23 October, was held at the Monday run. The 10:30 run then chased its
+  account owner and opened a task in her name: "you need to unapprove this as you are testing the billings". First
+  built as a Script property, then: "should you not have instead of the script properties the ability to hold all
+  groups").
+  - **Who and where.** The branch manager and the deputy (the BMA included) press **Hold every group…** on the Team
+    dashboard, or **Put on hold** on a group's row, and say why. One-tap reasons are offered. The hold, who set it,
+    when and why are kept in the `GCM_HOLD` Script property, written by `gcmHold_` (`gcm.hold`, so Service.gs needs no
+    paste), with the last 40 holds and lifts. Everyone sees it:
+    - every group on hold: one amber banner first, and the note that the letters go by themselves is left out;
+    - some groups on hold: a slate list with a Lift button on each;
+    - each held row: slate, "On hold" and the reason, and an "On hold" filter.
+
+    Staff cannot change it, and the backend refuses them. **Lift the hold** puts it back. Lifting every group leaves
+    the groups held one by one on hold. The older `GCM_HOLD_GROUPS` property (names, comma-separated) still holds a
+    group, and lifting that group from the page takes it out of the property.
+  - **What a hold does.** `gcmOnHold_` makes the group never ready (`gcmGroupStats_` gives `hold` and the reason), so:
+    - no approval, no Send now, and no letter sent again (`gcmResend_`);
+    - a letter approved before the hold waits: it goes on Monday only if the hold is lifted before 10:00, otherwise it
+      is held at the run and approved again after;
+    - no welcome and no star reminder;
+    - the 10:30 run lists it apart (`hold` in `gcmChaseList_`): no staff e-mail, no Salesforce task, and the Monday
+      team letter leaves it out;
+    - "To act on" does not count it as a set-up job;
+    - the branch manager's daily summary names each held group with its reason, or says in one line that every group
+      is on hold;
+    - `gcm.ping` answers `hold` (`all`, and how many groups).
+
+    Bills are not part of it: the billing door, the bill checks, the Salesforce writes and the billing day run as
+    before (the bills have their own test mode and approval).
+  - **Tests** in the scratchpad: `hold27/hold-test.js` (20 checks) and `hold27/page.js` (24, Playwright: the branch
+    manager, staff and a phone).
 - **Applications and increases still pending are the first thing a group sees** (14 October 2026: "when the groups log in they should
   also see at the top … applications that remain pending … the name, days outstanding, who it's assigned, what's
   outstanding … pension groups, health groups and life groups … and who was last liaised with").
@@ -4787,13 +4900,114 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     statement), `billing/door-test.js` (81, Playwright: the staff page's button into the door, every step, the group's
     page in its tabs, a phone) and `billing/page-test.js` (46). The harness (`wow/setup.js`) now serves `.css` as
     `text/css`: until then a stylesheet linked from a page was refused by the browser and the screenshots were bare.
+  - **A month is read back as a month** (27 October 2026, the first bill stored live: a group's October health bill).
+    Google Sheets turns "2026-10" written into a cell into the date 1 October, which read back as "2026-10-01" and never
+    matched "2026-10" again: the page said nothing was uploaded, opened itself as `m=2026-10-01`, looked in Salesforce for
+    a record of that month that cannot exist ("No T-HEALTH GROUP record for October 2026"), and every upload added a row
+    where it should have replaced one. `gblRows_` now reads every Month and For month cell as yyyy-MM in the sheet's own
+    zone (`gblMon_`), keeps one Group Bills row a group, line and month (the newest), and `gblCell_` writes months as
+    text. The test harness (`gcmlive/env-sq.js` in the scratchpad) never caught it because its cells kept what they were
+    given; `SHEETS_DATES=1` makes them behave as Sheets does, and `billing/month-test.js` (25) covers the live case.
+  - **Group Life comes in two layouts** (27 October 2026: "the group Life members are on and its not reading"). Guardian's
+    member bill carries ten figures a row when the plan has New Life cover (basic, accidental death, new life, then each
+    premium with its tax, then the premium) and seven when it has none (`LIFE_COLS`, `lifeFig` in `billread.js`); the
+    reader knew only the ten, so a seven-figure bill read 0 members. Rows, the grand total and the Statement of
+    Adjustment's rows go through `lifeFig`; a row with any other count is warned about, never guessed. The bill's own
+    "No of Lives" is read and checked against the members found. The statement's "AS AT" date is read either way round
+    ("31ST AUGUST 2026" and "AUGUST 31ST 2026"), and the covering letter is known by "Group Life Assurance Plan" or
+    "Monthly Billing for <month>" as well as the older wording. The Group Health box refuses a life document and says to
+    upload it under Group Life. `signin27/life-read.js` (13) and `life-backend.js` (4) in the scratchpad cover it, on
+    the first real seven-figure bill and a ten-figure one.
+  - **The upload writes the month's billing record in Salesforce, and opens the tasks the bill calls for** (27 October
+    2026: "when the bills are received it should be uploaded on to the platform and deep dive looking at terminations
+    and adjustments creating the relevant tasks and a transaction on salesforce populating the respective fields and
+    invoice numbers with the totals and a task to open to query the adjustments"). Until then staff keyed each month's
+    `TRANSACTIONS__c` by hand, often by copying the month before. That morning one group's October health record still
+    carried September's invoice number, and another's October record carried figures from an earlier month.
+    `gblSfWrite_` in GroupBilling.gs, from `gblUpload_` for a health or life bill:
+    - **The record.** The month's T-HEALTH GROUP or T-LIFE GROUP record is brought into line with the bill, only the
+      fields that differ. With none for the month, one is made from the last one before it: its record type, account,
+      policy and issue date, with Owner the uploader's Salesforce user (as the team keys it). With no earlier record at
+      all, nothing is made and the toast says to make the first by hand.
+    - **The fields, laid out as the team lays them** (read off the live records that day):
+      - Group Billing Premiums and Total Premium are the month's charges before credits: health's current month, life's
+        gross. The credits are queried, never netted. The check (`gblBilled_`) and the Variance compare against the same
+        figure, so "agrees" means what the team keyed.
+      - Health with several divisions: one Premium Billed slot a division, each with its own invoice in Invoice Value
+        and its employees in Employee #; the team's own Division Value names ("Staff") are kept.
+      - Health with one division: one slot a tier, Employee Only, +Child, +Family, +Spouse in that order, the tier's
+        headcount in Employee # and the invoice in each slot. On one group's September bill this reproduced the four
+        amounts and headcounts the team had keyed by hand.
+      - Premium Due is the first slot. Then the invoice date, Year and the 1st of the month.
+      - Life: Life Cover, AD&D Cover, Life Premiums and AD&D Premium. New Life has no field, so it goes on the record's
+        Chatter. Life leaves Total Premium and Premium Due alone, as the team does.
+      - Never `GROUP_TRANSACTION_TYPE__c` (blank on every live record), and never a slot the bill does not use left
+        holding last month's figure.
+    - **The trail.** Every change, with what it was, goes on the record's Chatter and on Group Changes (Kind
+      `salesforce`, Source `bill`), and on the Group Bills row's new **SF Write** column, which the page reads. A field
+      Salesforce refuses for this login is left out, said, and never claimed as written (`gblSfwSave_`).
+    - **The tasks** (`gblSfwTasks_`), for the account owner, Servicing, due in two working days:
+      - one a person the bill takes off: a health cancel credit for someone not on the bill, a life statement's
+        termination, or someone on last month's stored bill and not this one (`… Termination – <member> – <group> –
+        effective <date>`, on the account);
+      - one a person whose tier changed (`… Tier Change – …`);
+      - one, High, on the record, to query the month's credits and adjustments with Head Office, every line and every
+        earlier invoice adjusted (`… Billing Adjustments – <group> – <Month yyyy> – query (<total>)`).
+
+      More than `EACH_MAX` (6) off at once becomes one task to confirm them all, so a bill read short never opens
+      dozens. None is opened twice: a task in Salesforce in the last 180 days with the same subject, or naming the same
+      person, stands. The owner gets one e-mail with the list when someone else checked the bill. Like any task on the
+      account or its billing record, they show on the group's page unless staff untick them.
+    - **When it holds back.** It never writes a bill that reads as another month than the one it is stored under, or one
+      the reader warned about (a reference not on the register counts); those wait for **Bring Salesforce in line with
+      the bill**, a press on the panel and on the findings (act `sfWrite`; the old `sfAmount` does the same for health
+      and life). The `GCM_BILL_SF` Script property set to `off` stops the write at the upload; the press still works. It
+      does not follow the bills' test mode: it writes our own records, never a client's inbox.
+    - **The pages.** The door's "What was found" step and the review show what went to Salesforce, field by field, the
+      tasks with links, and the button. The amount tile reads "billed in Salesforce · the same as the TT$… charged".
+    - Tests in the scratchpad: `sfw27/sfw-test.js` (46: the real October bills through the real reader on the made-up
+      group, Salesforce mocked with the team's own October records; also with `SHEETS_DATES=1`). `billing-test.js`,
+      `month-test.js`, `door-test.js` and `page-test.js` now start October as a copy of September, as it is in life.
   - **Never a member's name** in the AI's facts, in the group's billing block, or in the Chatter the group reads. A
-    Salesforce write happens only on a signed-in person's press and is logged on Group Changes with who pressed.
+    Salesforce write happens on a signed-in person's press or their upload of a bill, and is logged on Group Changes
+    with who did it.
   - Tests in the scratchpad: `billing/billing-test.js` (57 checks, Node, the made-up branch with made-up billing
     records) and `billing/page-test.js` (52, Playwright: the review driven with the real October PDFs through pdf.js,
     the made-up bill stored, the fixes, reconcile, the test send, a comment to Chatter, the claims upload; the
     group's page on a phone and a desk). `billing/world.js` holds the made-up Salesforce.
 
+- **The bill e-mail greets a person, names who looks after the account, opens the page to comment, and asks for a
+  rating of that person** (27 October 2026: "in the send off where is the email addressing to persons and a more warmth
+  and a log in so they can also make comments … as well a star rating to rate the staff who manages the account").
+  `gblBillMail_` in GroupBilling.gs, used by Send now and the billing-day run alike:
+  - **The greeting** (`gblGreet_`): a Greeting typed on the register as typed; a Salesforce salutation ("Ms. Morales")
+    as it is; a contact's full name with no salutation by the first name ("Dear Pat"); no named contact, the company's
+    team ("Dear Harbour Point Logistics team"). Never "Sir or Madam" when there is any name. The weekly letter, the
+    welcome and the star reminder keep their own greeting, unchanged.
+  - **The words**: "Thank you for another month with us", the total and the date in the opening, then the arrears and
+    the changes as before, the lines and the statement.
+  - **Who looks after the account** (`gblCarer_`): the account owner in Salesforce while active, else whoever signs the
+    bill; a team's name ("the team", "Client Support Team") is never read as a person, and "our team" is rated instead.
+    A card with their initials says what they look after and that they will put a wrong bill right.
+  - **Comment on your billing**: what the sign-in is for (a comment on any line, a payment, a joiner or a leaver, which
+    goes straight to the account manager), **Open your billing** (`client.html?tab=billing&from=bill&m=<month>`), and
+    the list bill and the access code in a box.
+  - **Five stars**: "How is <first name> looking after your account?", each star a link with `&rate=n` that opens the
+    page with it chosen. Nothing is recorded until the group signs in and presses Send, so a mail scanner rates nobody.
+  - The reconciler in the green "Checked against our records by …" label, the confidentiality footer, and a preview
+    line for the inbox. A reply still goes to support@, and the e-mail says it reaches our team.
+  - **The staff see it first**: "See the e-mail as the group reads it" on the door's Approve and send step
+    (`gcm.billStatement` with `mail=Y`), with who it greets, who signs it and who is rated, and a warning when the
+    account has no named contact. Its links read `from=preview`, so trying them is not logged as the group.
+  - **On the group's page** the billing tab ends in "How is <first name> looking after your account?" (`brateHtml`), with
+    the star from the e-mail chosen and the page scrolled to it, a box for a note, name and role. It goes through
+    `gcm.review` with `about: "billing <yyyy-mm>"`, filed on Group Responses in a new **About** column (added to the tab
+    by name), Staff the account owner, so it counts in that person's ratings on the Team dashboard. The owner is told
+    as "Billing rating in: <group> · n/5". "What groups told us" says what a rating was for. A sign-in from the bill is
+    logged on Group Views with From `bill`. A billing rating after a weekly letter counts as a response to it, so the
+    star reminder stops.
+  - Paste **GroupBilling.gs and GroupClients.gs**, then a New version. Tests in the scratchpad: `billmail/billmail-test.js`
+    (38) and `billing/door-test.js` (114, the preview and the star-to-rating flow on a phone and a desk).
 - **Your people: who is on the plans, who came off this year, who is pending, and a box on each** (25 October 2026: "a
   drop down to see the members that are active and members who have come off this year and members who are pending,
   who they have an application in … very easy for the customer to just look at what is pending, who is having it, and
@@ -5599,8 +5813,149 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
   Salesforce read but never written. `mqGoLive()` when the manager says so. The quotes desk never hears from a test.
 - **Signing in again shows the client their requests and where each stands**: the tab's Status, Quoted on and Quoted
   premium columns, kept by staff by hand.
-- Tests: `tests/test-motor-quote.js` (57 checks, a Salesforce and a Microsoft in memory) and `tests/e2e-motor-quote.js`
-  (Playwright, a phone, the six steps against a fake backend; it caught a tap and a typed box fighting over one answer).
+- **Three doors, the renewal first** (21 October 2026: "when a person wants a quote they normally have the invoice …
+  upload the invoice and all key fields presented … If they don't, just minimum to quote … a person log in to renew and
+  have the renewal at the forefront with renewal history and intelligence").
+  - *The invoice*: `readInvoice` sends the photo or PDF to Claude (`ANTHROPIC_API_KEY`, `MQ_AI_MODEL`, default
+    `claude-sonnet-5-5`, structured output, 15 a day per e-mail). The document is data: the system prompt says so,
+    and `mqInvClean_` drops whatever is not a year or an amount. The page fills the quick quote, marks each field
+    "from your document", and never lets the buyer on the document replace the signed-in client's name or mobile.
+    The document travels to the desk; what was read is on the **Invoice read** column.
+  - *The quick quote* (`flow` quick): `MQ_REQUIRED_BY.quick`, no permit; "New vehicle, not registered yet" is allowed.
+  - *The renewal* (`flow` renew): `mqRenewal_` gives each vehicle its terms (one per policy and end date), the renewal
+    date (the day after the cover ends, or `Next_Renewal_Date__c` within three days of it), the days to it and the
+    facts off the record, never advice. Due within `RENEW_AHEAD` (60) or lapsed within `RENEW_BACK` (45) comes first
+    on the home screen. `mqRenewFromRecord_` reads the vehicle again at the send, so the date, premium and terms come
+    from Salesforce. It goes to `MQ_RENEW_TO`, else the quotes desk.
+  - New columns go on the end of the Motor Quotes tab, added by name (`mqQuotesSheet_`), and a row is placed by the
+    tab's own headers.
+  - Tests: `tests/test-motor-quote.js` (170 checks) and `tests/e2e-motor-quote.js` (120, every door on a phone).
+- **Taking the quote fills Guardian's own PDFs** (21 October 2026: "once they agree on the quote … upload the certified
+  copy … extract all the details on the vehicles … fill out the proposal form very fast", then "it has to be exactly on
+  the Guardian PDF and know your [policy], ensuring that they can answer it").
+  - The forms are `motor-quote/forms/gg-private-motor-proposal.pdf` (GG-MOT-APV-PRO-02/2025v2, four US Legal pages,
+    no fields) and `gg-know-your-policy-private-motor.pdf` (45 fields), with their file properties and XMP cleared,
+    because a staff member's name was in them and the site is public.
+  - `motor-quote/forms.js` (browser and Node) prints each answer at the position of its own blank, measured off the
+    PDF's characters: the YES____NO____ underscore runs, the blanks, the two tables' cells. It ticks the KYP's own
+    boxes by field name, with pdf-lib's check mark, because the form's "on" glyph renders garbled in some viewers.
+  - pdf-lib 1.17.1 is kept in `motor-quote/vendor/` (MIT), never loaded from outside.
+  - `readDoc` reads `quote`, `certified` and `permit` (the certified copy: only the current owner, never an earlier
+    one). Every declaration is the client's own tap, never pre-ticked. A fact off a document (registered in your
+    name, anti-theft from the quote's discount, the benefits on the quote) is filled and marked.
+  - `propose` checks every yes/no, every detail a Yes asks for, all 17 KYP points and both signed PDFs, then e-mails
+    the desk (`MQ_BIND_TO`, else the quotes desk) with the five documents. A Yes an underwriter must see and a KYP No
+    go first. The client gets their own signed forms. The row goes on **Motor Proposals**, and the quote request is
+    marked taken only when it is the signed-in client's.
+  - The signature pad is in a div, never a label: a click in a label also clicks its first button, which was Clear.
+  - The answers print in bold at 10.5 pt (table cells 9 pt, wrapping at full size, so a chassis number takes two
+    lines rather than shrinking), and the KYP's fields at 11.5 pt bold (21 October 2026: "fonts more bold and scaled
+    properly"). The signature is cut to its ink (`trimSig`) before it goes on page 4 of the proposal and the KYP's
+    signature line, so it fills the line.
+  - When Guardian revises either form, replace the PDF and re-measure the positions in `forms.js`.
+- **Every quote request carries Guardian's own Motor Quotation Request form, filled in** (21 October 2026: "see guardian
+  motor request form so the data collected should be proper on this form as it will be attached").
+  - The form is `motor-quote/forms/gg-motor-quotation-request.pdf`: Guardian's fillable one-page US Legal form, taken
+    from the e-mail it came in, with its file properties and XMP cleared.
+  - It is filled on the phone by field name (`fillRequest`, `requestValues` in `forms.js`), so nothing is measured.
+    Dates are written out ("12 Apr 1988"), the registration and chassis in capitals, and the value as "TT$ 212,645".
+    The boxes and yes/no buttons are the form's own, ticked with pdf-lib's mark.
+  - **The page asks every question the form asks.**
+    - The full door asks: marital status, occupation and employer, home number, address, a first-time Guardian client,
+      other business with Guardian, the chassis, new, foreign used or second hand (and an accident if second hand),
+      the use, anti-theft, the windscreen limit, the no-claim percentage.
+    - "Your history" asks accidents and young drivers. On the full door each Yes opens a table of up to three rows.
+    - The quick quote asks the use and the history. The rest of the form sits in a fold, "Guardian's request form asks
+      a little more" (optional). The fold opens by itself when any of it is already known.
+  - The client can preview the filled form on the review step. It travels to the desk as `motor-quotation-request.pdf`,
+    still fillable, with a green note saying so.
+  - A renewal never carries it. Nor does a request form that is not a PDF, which the script drops. A form that cannot be
+    filled never stops the request.
+  - The answers are on new columns at the end of **Motor Quotes**, ending with "Request form" (attached).
+  - When Guardian revises the form, replace the PDF and check its field names against `REQUEST` in `forms.js`.
+- **Existing or new, an Opportunity for every new quote, and the permit on the Contact** (26 October 2026: "should it
+  ask if they are an existing client or if not it creates a salesforce contact and places this as an opportunity on the
+  opps objects … if an existing client pull in all their data … in the contact the drivers permit number issue and
+  expiry what we have and what they can update").
+  - **The e-mail decides.** A client found sees "We found your record" (`meCard`): name, mobile, date of birth,
+    occupation and the permit as the Contact holds it, `DP__c`, `Drivers_Permit_Issue_Date__c`,
+    `Driver_s_Permit_Expiry__c` (`mqPermitOnFile_`), with a word for where it stands (`mqPermitState_`: valid, expiring
+    within `PERMIT_SOON_DAYS` (60), expired, nothing on file). The forms open with those values. On 26 October 2026 the
+    org's CLIENT contacts held a number on 781 of 12,656, an expiry on 458 and an issue date on 42, so most clients
+    are filling blanks.
+  - **Anyone else is asked once**, "Are you already a Guardian client?" (`clientStatus`, `clientRef` in the draft). New:
+    a Contact at the send, with the permit. Yes: matched by a policy or client number **and** the surname
+    (`mqMatchExisting_`), never by the number alone, so a number typed by someone else never reaches another client's
+    record; unmatched, no Contact is made and the Opportunity says to link it by hand. Nothing found that way reaches
+    the page.
+  - **The Opportunity** (`mqOpp_`): every new quote, never a renewal, the way the branch writes them by hand (read off
+    its own on 26 October): GENERAL INSURANCE, "OPP Motor - <client> (<vehicle> <reg>)", Proposal/Price Quote, close
+    in `OPP_CLOSE_DAYS` (30), `Contact__c` (not the standard ContactId), the Contact's account, `Vehicle__c`, New
+    Business, lead source Existing Client or Web, owner `MQ_SF_OWNER` (the BMA owns the branch's), producer
+    `MQ_SF_PRODUCER` (a Contact id: the branch manager's agent record on the branch's own). A field the org refuses
+    is dropped and the rest tried again. The task sits on it (`WhatId`). `mqPropose_` moves the quote's Opportunity to
+    Negotiation/Review (`mqOppTaken_`), or makes one there for a known client who takes a quote with no request of
+    ours behind it.
+  - **The permit's rules** (`mqPermitPlan_`), so a slip of the finger never spoils a good record: a blank is filled;
+    a later expiry replaces the old one, with its issue date when that is later too; an earlier expiry is never
+    written; a different permit number is never written and nothing else changes with it: staff confirm it (the row,
+    the task, and from the home screen a task "Confirm driver's permit"). The client updates it from the home screen
+    too (`action=permit`, `mqPermitSave_`), a found client only. Test mode writes nothing and says what it would have.
+  - New columns on Motor Quotes: Client status, Client says, SF opportunity, Permit on file, Permit update; on Motor
+    Proposals: SF opportunity. The desk e-mail says "An existing client of ours" or "New to us".
+- **The producer is whoever placed the quote, from the branch's own agents** (26 October 2026: "dependant on who places
+  the quotes … i do have agents as contacts and record type agent so it searches the contacts", then "it should be
+  limited to our Branch not the entire guardian life").
+  - **The branch's agents** (`mqAgents_`): Contacts of record type AGENT, Employment Status Active, Units__c one of
+    the branch's units (`MQ.AGENT_UNITS`: Ricky_Rampersad and Akaash_Kalladeen; the `MQ_AGENT_UNITS` Script property,
+    comma-separated, replaces them when a unit is added). Never a resigned, terminated or not-active agent, never
+    another branch's. Read at most every six hours. On 26 October: 16 active in one unit, 7 in the other.
+  - **An agent signs in with their own e-mail** and the page knows them (`me.agent`): nothing of their own record is
+    read. They get the new quote alone (quick or full): a renewal and taking a quote stay the client's own, and the
+    server refuses both, and the permit update, for an agent. The form asks the client's e-mail (never the agent's
+    own), whether the client is with Guardian (with an optional number), and the client's name and mobile. The client
+    is found or created by their own e-mail, never the agent's session (`mqEnsureContact_` with the client's e-mail).
+    The receipt goes to the client, the agent copied, saying the agent asked and will call; the desk reads "requested
+    by our agent … for their client", the agent copied. The row: Placed by (the agent's e-mail), Producer, Producer
+    Id. The agent's home lists the requests they placed, with each client's name; the client sees theirs when they sign
+    in. When the client takes that quote, the agent is copied on the proposal.
+  - **A client names their agent** in a search box (`action=agents`, `mqAgentSearch_`: names only, never an e-mail,
+    two letters at least, every word starting a word of the name). The producer (`mqProducer_`), in order: the agent
+    who placed it; the agent picked from the list; an active agent whose e-mail the client typed; a full name only one
+    active agent carries; else `MQ_SF_PRODUCER`, the row saying why ("not one of our active agents"). A matched agent's
+    e-mail on record is the one copied on the desk e-mail.
+  - The Opportunity's `Producer__c` is that agent; its description says who placed it. The owner stays `MQ_SF_OWNER`.
+  - Tests: `tests/test-motor-quote.js` (199 checks) and `tests/e2e-motor-quote.js` (134).
+- **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
+  layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
+  its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):
+  **Renew** (a vehicle we already insure; hidden when the client has none), **New quote** (a vehicle we don't insure yet;
+  the only place the word invoice appears, always "the dealer's invoice"), **Accept a quote** (the quote we e-mailed; called
+  "your Guardian quote", never a quotation or an invoice). Every form carries a tag naming its path (`flowTag`), and the
+  stepper, choices and main button take the path's colour. Charts: the renewal's premium by term as bars with the change
+  on the year before (`premChart`), each other vehicle's cover year as a bar with "Renew early", every request as a
+  four-stage tracker in its path's words (`reqStage`: a renewal is never offered as a quote to accept), and the done page
+  as a tracker with Sent ticked. Checked at 360, 390, 820 and 1366 px wide.
+- **Motion that pops** (26 October 2026: "can you add more motion and graphics to pop"). All of it is CSS and a little
+  script, and all of it stops under reduced motion.
+  - **The blue bands** (sign-in and home) end in three soft waves drifting at three speeds, the front one the card's
+    own white, with a light gliding across the blue (`SCENE`, put into every `.band` by the script). A road with a
+    cartoon car and clouds was tried first and turned down the same day ("I hate the car it's looking like a kid did
+    this … more professional"): keep the bands abstract, never a drawing. The sign-in band's icon is an outline shield
+    with a tick that draws itself, in a frosted tile.
+  - **Line icons, no emoji** (the same day). Every icon in a tile (the three paths, section headers, the documents, the
+    notes) is an inline SVG line icon (`svg.i`, stroke `currentColor`, 24-unit grid), white on a coloured tile or in the
+    path's colour on a light one. Only the ✓ and ✕ marks remain as text. A new icon is drawn the same way.
+  - **Numbers count up** (`cu(n)`): a CSS counter animates on screen while the real figure stays in the text, so a test,
+    a screen reader and a copy all read the number. Used on the renewal ring, the band's figures and the request summary.
+    The ring fills from empty (`@property --p`).
+  - **A dot travels along each path's numbered steps**, behind the numbers.
+  - **Taps**: a ripple where the finger lands; a light sweeps the main buttons; icons pop in and wiggle on hover; the
+    Renew path's icon pulses while a vehicle is due.
+  - **Sections below the first screen wait and rise in when scrolled to** (`reveal`, class `sr`; never `.rv`, which a
+    request card already uses), so their bars and rings play when they are seen. Printing shows everything.
+  - **Done**: the tick draws itself, the reference stamps in, and confetti in the three paths' colours bursts from the
+    tick and clears itself in under three seconds.
 - The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
   until the page is live and wired; disable it then, so an old link does not take a client back to it.
 
@@ -5833,6 +6188,7 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   (`Delivery.gs`) is older than the repository's and has no `dbTestCc_`, so every Log It in test mode failed with
   "dbTestCc_ is not defined". LogBook.gs must not call a `db*` function the live `Delivery.gs` lacks; check the live
   file before relying on a new one.
+- **Declaration 1 and Declaration 2 are documents in the list** (27 October 2026: "Add to the form Declaration 1 and Declaration 2 these were there before"). They are `LB_DOCS` entries routed to Records Management, as on the old form. The same day two required tick boxes of that name were added to step 4 by mistake and taken off at his word; step 4 keeps its one declaration. `lbValidate_` still checks `declared1`/`declared2` if a page ever sends them.
 - **Every Log Book e-mail is internal** and follows `DB_MODE`. Imported history is never chased or sent.
 - Tests: `tests/test-logbook.js`, `tests/e2e-logbook.js` (the page against the real script in the harness;
   `GS_PATH` now takes several files, comma-separated).
@@ -6176,6 +6532,33 @@ guide you. In your session review notes on the step back in place from all memor
   - **His bar (`leadProgress_`, `workdayLeadModel_`).** Today's number is everything that waited on him (`leadItems_`, kept in `lead_<day>` so it never shrinks, new ones join): the staff asking him, his inbox to act on now or today, his tasks due today and a fifth of his overdue (`LEAD.OVERDUE_SHARE`). Cleared = no longer waiting: by him (solid), or by the team (lighter: an inbox item a desk replied to or closed). Chips: staff waiting on his word, inbox to act on, his tasks for today, notes by him; a line "Done for you by the system today". His bars are his own notes per day (`workdayNoteBars_`).
   - **Waiting on you, posted with one tap (`leadWaiting_`, `workdayPostNote_`, POST `act=post`).** Each with Claude's words: a question's deep draft (`bmDeepGet_`), or the inbox review's note with its desk (`ixDeepGet_`, `ixFollow_`). A question's answer goes on its task, headed "Branch Manager · Ricky Rampersad · …" through `mgrPost_` (the holder is mentioned and e-mailed); an inbox note through `ixPostOne_` (now shared with `inboxSave_`). Only on what is in `lead_<day>`, only from his link, never an empty box; each goes on his day log.
   - **Lunch close-off (`sendLunchOff_`, `lunchoff_<sid>_<day>`).** `LUNCHOFF.LEAD_MIN` (5) before each person's lunch, the desks in today and him: the desks get the morning's number, closes with no note flagged, what is still open with the playbook's "What to do", and the button to My workday (to them, sales support copied as every day mail); he gets what is cleared, who still waits with Claude's words, and the button. Tests: `tests/test-leadership.js`, `tests/e2e-workday.js`.
+- **The tracker's storage, kept from filling (26 Oct 2026, 2026-10-26a).** Ricky, 7:57am: "please see kamla message - Not seeing my day's email to check in"; 8:02, Azariah the same. showRunLog: every desk "not sent", nothing failed, nothing logged. Google gives a script about 500 KB of Script Properties in all; once full, every NEW value fails to save. The morning e-mail saves its "being built" mark first, that save threw, and the run's try/catch swallowed it: no e-mail, no log, and no absence (the clock waits for the e-mail). What filled it: the AI inbox review and drafts (`bm_deep_`, `ix_deep_`, 23 Oct), whole Claude answers in 8,000-character pieces every hour, kept 21 days by `sdPrune_` with the small marks. Friday's lunch close-off most likely went the same way. The morning of the 26th was cleared by hand with a one-off `fixMorningNow`.
+  - `STORE` (KPI.gs, by `bigPut_`): the AI reviews go after their own day (`SAME_DAY`), the big day caches (`ag_items_`, `unit_*`, `intel_model_`, `sd_list_`/`sd_qids_`, `um_items_` incl. `_eve_ai`, `lead_`, `game_ideas_`, `co_ask_`/`co_un_`) after `SHORT_DAYS` (3), the small marks after `LONG_DAYS` (21). `storeRelief_(day, hard)` does it; `sdPrune_` calls it first.
+  - `propSet_(props, key, val)`: a save that hits the limit clears the old copies and tries again (soft, then all but today). Used by `bigPut_`, the morning marks in `sendDayStart_`, and `timedSend_` (whose mark used to throw after the e-mail had gone, out of the run, so the next run sent it again).
+  - `storeTick_`: hourly, before anything is sent, clears past `RELIEF_KB` (380) and tells Mr Rampersad once a day if it is still past `WARN_KB` (430). Its marks are in CacheService, which a full store cannot block. `trackerAlert_` sends him a plain note.
+  - `morningWatch_`: a desk with no morning e-mail `WATCH_AFTER` (10) minutes after its start (and not marked absent) — he is told once, with the last reason in the run log and the storage size. The morning loop now logs any failure it catches by desk; a desk with no e-mail address says so.
+  - showRunLog says "Storage: N KB of about 500". Tests: `tests/test-storage-full.js`.
+- **Pawan's check-in, and a browser signed in to two Google accounts (26 Oct 2026, 2026-10-26b).** Ricky, 4:39pm, Pawan's "Close my day" link open in his own Chrome: Google Drive's "Sorry, unable to open the file at this time". The ping opened in the same window. A page the tracker draws (HtmlService) will not open in a browser signed in to more than one Google account; a JSON answer (the ping, My workday's `wd=` calls) will. Pawan had the same error every morning since 19 Oct, which is why the register missed him on days Salesforce shows him working. `workdayMailLine_` now also says what to do when the button will not open (My workday, or a private window), and `sendPawanDay_` carries it: his was the one morning e-mail without his My workday link. Test: `tests/test-pawan-workday.js`.
+- **My day in the branch app (26 Oct 2026, 2026-10-26c).** Ricky, 4:49pm, the branch app open as Pawan: "MAKE AVAILABLE AS A VIEW ON THE BRANCH APPS AS MY DAY, CAN THIS BE DONE". A **My day** tile, first under Every day for staff, unit managers and the branch manager (not agents), opens `/myworkday/?app=1`; the first step of the staff day and the branch manager's day opens it too. From the app, My workday sends the app's sign-in (`wd=app&ops=<token>`, from `rrb-ops-session` on the same site) instead of the e-mail's signed link; from the app the app's sign-in wins over a link left on the phone, otherwise a link wins and the app's sign-in is the fallback. The tracker (`wdAuth_`) asks RR Operations `lb.whoami` who the token is (`wdOpsWho_`, server to server, kept `WORKDAY.OPS_TTL`, `RROPS_URL` overrides `WORKDAY.OPS_URL`) and finds the desk on the Access tab by e-mail, then number, then first name, only among the desks of that role (`wdOpsSid_`: staff the day-mail desks, a unit manager `UM_DESKS`, the branch manager ricky); an agent gets "My day is for the branch staff and managers". Pawan's app number (PP005) is not the tracker's (PB001), so he is found by name. A page opened from the app shows "← Branch app". It needs the new web-app version deployed (wd= is answered by the deployed code). Tests: `tests/test-myday-app.js`, `tests/e2e-workday.js` (from the branch app).
+- **His day opens after a dropped connection (27 Oct 2026, 2026-10-27a).** Ricky, 5:24am on his phone, the 5:00 e-mail's button: "Opening your day…", then at 110 s "It did not open this time (NetworkError: Connection failure due to HTTP 0)". Nothing had been built ahead, the live build was long, and the phone let go; the tracker carried on and finished it. The light page (`fastShell_`) now tries again by itself on a dropped connection (twice, 1.5 s apart) and again when the page is looked at again (`visibilitychange`), sending `retry=1`. `openPage` keeps every page it builds for `FAST.RESCUE_SEC` (20 min) under `fastRescueKey_` (the person, the page and its signed link), marks a build in progress (`_busy`), and on `retry=1` hands over the kept page ("Put together at 5:22 · Bring it up to date") or waits for the build in progress (up to `RESCUE_WAIT_MS`), instead of building a second time. An ordinary second open is still live. Tests: `tests/test-open-retry.js` (runs the light page's own script), `tests/test-fast-open.js`.
+- **My day is the morning's door (27 Oct 2026, 2026-10-27b).** Ricky, 6:11am: "I don't like to see the script. So can you do anything before I copy and paste the codes to ensure ... it goes out for a better user experience?" The big button in each morning e-mail now opens My day on the branch's own site (`workUrl_`): the staff's and the BMA's (system day), his own 5:00 ("Check in and start my day"), and Pawan's first e-mail; Google's page is one small link under it (`workdayMailFull_`: "your full day page", "My branch", "today's run"). Pawan's midday and leave e-mails keep the errand button with the two-accounts hint. My day carries the day's list (`m.list`, `m.listSet`, `WORKDAY.LIST`): the system's plan for the day from the plan rows (every block), each ticked when closed today and opening its task in Salesforce; before check-in, what check-in will set (`sdList_`), marked "set when you check in". A unit manager's My day has no staff list. The page shows "Your list today" after the check-in, and "Also overdue or due" for what is not on it. The e-mail's link works with the web app already deployed; the list needs the new version. Tests: `tests/test-myday-list.js`, `tests/test-workday.js`, `tests/test-pawan-workday.js`, `tests/e2e-workday.js`.
+- **The agents' pilot, and My day trying again (27 Oct 2026, 2026-10-27c).** Ricky, 6:24am: "Put this now live for Neil Ramnanan, Fawaz Mohammed, Rajiv Sukdev, Joy Sama, and Daryl Manik ... in a test group more or less from today, logging in, checks and afternoon." With `AGENT_DAY` in preview, these five get their own morning ("Project my day"), midday and 5:30 close-off mail from 27 Oct, their unit manager copied as in live, marked `ag_`; every other agent stays in preview, and his three samples a day now come only from outside the pilot. `AGENT_PILOT` (KPI.gs: numbers and names; Rajiv Sukdev is Rajiv Soodoo, A14158) is replaced by the Script Property of the same name (numbers or names, comma separated); `AGENT_PILOT = off` ends it; `AGENT_DAY = live` sends to every agent. `agentInPilot_`, `agentLiveFor_` decide; `agSend_`, `agSendCopy_`, the manager notes' mark and `agentTick_` follow it; his 5:00 summary says "pilot: N agents are mailed". Each agent button carries `agOpenHint_` (a phone signed in to two Google accounts: open the link in a private window). My day waits up to 90 s for the first answer of the day and tries once more by itself before saying it did not answer. Tests: `tests/test-agent-pilot.js`, `tests/e2e-workday.js`.
+- **This week's hours, and Close my day (27 Oct 2026, 2026-10-27d).** Kamla, 7:14am: Sasha 8 to 4 this week and 7 to 3 from Monday 2 November; lunch Liz 12 to 1, Azariah 1 to 2, Sasha 2 to 3, Kamla and Pawan flexible. `SCHEDULE_DATED` holds a desk's hours or lunch for a run of days (`from`, `until`, each optional); `scheduleFor_(sid, day)` reads it (today's when no day is given), so the morning e-mail (start - 30: Sasha 7:30 this week), late and absent, cover, the day's block, the close-off-for-lunch e-mail (Liz 11:55, Azariah 12:55, Sasha 1:55; none for Kamla and Pawan this week) and `closeoutAt_` (the notice moves with the finish: Sasha 3:15 this week, 2:15 on 7 to 3) all follow on the day. `SCHEDULE.sasha` is now 7 to 3; her 7 to 2 before needs no history entry (late is judged on the start, 7am either way). `hoursOn_` reads the day's dated hours before `SCHEDULE_WAS`. My day's check-in card, once checked in, carries **Close my day** (the close-out page, `errand&c=leave` for Pawan), or "Day closed · signed out" with a link back, so a desk without the e-mail can still close the day (Ricky, 6:57am). The ping now says `agents: { mode, mailedToday: { am, md, pm } }` (the pilot's own mail, `ag_` marks; samples not counted), so whether the pilot went can be checked without the editor. Tests: `tests/test-schedule-week.js`, `tests/test-myday-list.js`, `tests/test-agent-pilot.js`, `tests/e2e-workday.js`; `test-closeout-times` and `test-score` pinned to the 7 to 2 they were written on.
+- **The agents' My day, and the register on My day (27 Oct 2026, 2026-10-27e).** Ricky, 7:40am: "if they dont get the trigger point them to the branch app log in link". An agent signed in to the Branch App now has the **My day** tile; the tracker finds them among `agentPeople_()` by the app's e-mail, agent number, then name (`wdOpsAgent_`), and `agentDayModel_` answers with **Project my day** and **Close off my day**, the very pages the 5:30 and 5:30pm e-mails open (`replyUrl_(key, day, 'ag'|'agc')`), whether each is done, and when the morning e-mail went; if the e-mail never went, today's list (`ag_items_`) is made then. Only agents the day is mailed to (`agentLiveFor_`: the pilot, or all when `AGENT_DAY = live`); anyone else is told it is coming. Ricky, 7:44am: "seeing liz was also absent yesterday and sasha was absent yesterday, so the attendance log must be visible": Monday's e-mails failed, and the clock only marks absent after the e-mail, so Liz and Sasha had no line. His and Kamla's My day now carry **Attendance**, the last five working days desk by desk (in, late, absent with the reason and who said so, **No record**), and a tap on No record, Not in or the clock's absence marks the desk absent with Sick, On leave or their own words (`workdayMarkAbsent_` → `markAbsent_`; he for every desk, Kamla for the desks that report to her; never a day with a sign-in, never ahead, the last week only). Tests: `tests/test-myday-agent.js`, `tests/test-myday-app.js`, `tests/e2e-workday.js`.
+- **The walls: nobody who has left, and the system's day (27 Oct 2026, 2026-10-27f).** Ricky, 1:17pm: "we dont work in blocks re kpi again but the system assign to us ... revise the wall urgent with motion and graphs"; 1:18pm: "the premium due and pendings needs to be real and the birthdays"; 1:19pm: "Kerwyn and Gary as well their team members with exception of felicia is not longer here and not to be displayed". doPost passes every Intelligence wall feed (`WALL_FEEDS`: intel.day, .wall, .pending, .book, .lapses and the rest) and the office wall's `wall2` through `wallScrub_`: a row keyed by anyone on `WALL_LEFT` (Kerwyn, Gary and their units' agents, Felicia Rampersad kept; or the Script Property `WALL_LEFT`, names comma separated) folds into one **Orphans · to reassign** row with counts and money summed (medians and ages take the larger, never summed), so every total stays the real book; a desk or team row of theirs is dropped; any name field, list of names or name-keyed map reads Orphans. intel.day now carries `system` (`wallSystemDay_`, from `workdayTeam_`, which gained `dueToday` and `list` = the list set at check-in, done of of). The Intelligence wall's blocks stop (`intelligence/wall/blocks.html`, tab "The system's day") is rebuilt: the branch ring (closed of the day's targets), desks in, list done, overdue, a pace bar against the day gone, and each desk's ring with a tick where the clock is, list and day bars, overdue and due today; motion throughout; first names and counts only, never ranked. day.html's Blocks column is Today's list. Tests: `tests/test-wall-left.js`.
+- **The pending wall from the pending report, and who is chasing it (27 Oct 2026, 2026-10-27g).** Ricky, 2:16pm, on the requirements stop: "a barchart to show which agents has first premium outstanding, and remove the oldest and middle and only have a number!! what the branch is doing about this ... who are they chasing and whats done today". He uploads Guardian's pending report to the Branch Portfolio as "Branch Pendings_<date>-<time>" (one requirement a row, 101 columns); `wallPendLive_` reads the newest such tab (via Intelligence's `iSs_`), and `wallFeedOut_` adds it to intel.pending as `live` before the scrub: requirements awaiting receipt, policies, new this week, red/amber/green, the four age bands, each requirement by name with its count, who acts next, the first premiums (FUTPY) by agent (policies once, the modal premium), and `today` (`wallPendToday_`): each desk's Chatter notes today on its Pendings tasks (Task_Type__c) and Pendings closed today, with the agents those policies belong to (the 10-digit policy in the subject, matched to the report). Kept 5 minutes. `intelligence/wall/reqs.html` is rebuilt on it: one big number, the red/amber/green bar, the age bars, a who-acts-next donut, first premium by agent as bars, each requirement as a number only (no middle, no oldest), the desks' chasing today with the agents chased, and never-tasked / open / closed-but-pending; new narration. `wallIsLeft_` now also folds a unit named for someone who has left ("KERWYN RAMROACH UNIT-..."). Tests: `tests/test-pend-live.js`.
+- **One source for pending: the policies stop from the same report (27 Oct 2026, 2026-10-27h).** Ricky, 3pm, after the review of what already reads the Branch Portfolio (the Branch Portal bound script "BRANCH INTELLIGENCE AUTOMATION" reads the book's status for pending, an empty Requirements Log for notes, and the Settlement tab for production; the wall read Requirement Management + URPPBIEX + SFTASK MGT): "ok agreed". `wallPendLive_` now also carries, from the same newest `Branch Pendings_` tab: `pol` (policies by DAYS_SINCE_SUBMISSION in five bands, past ninety, one item from issue, ready = only Payment/FUTPY left, SUSPENDED_AMOUNT once a policy, new this week, DecisionType as states via `WALL_PEND.STATES`: approved / more info / with underwriting / declined), `board` (one row per agent: policies, reqs, docs, medical, first premiums, ready, red, held, and the Salesforce Pendings tasks on those policies — open, overdue = past ActivityDate, quiet = untouched 7 days, today, never — with `top` kinds as a number and a colour, never an age; ordered cash → medical → documents) and `chase` (tasked, never, live, closedOnly, open, overdue, quiet, today). `wallPendChase_` matches every 10-digit number in a Pendings task's subject to the report's POLICY or application_number. `wallPendToday_` looks Task Ids up forty at a time (`WALL_PEND.IDS`): 150 was "Limit Exceeded: URLFetch URL Length" on the live 27g. `intelligence/wall/pending.html` is rebuilt on it in the reqs.html look (#0E1116, gold/teal/coral, no saturated blue): the number, the decision bar, four tiles, the submission bands, settled from Salesforce, and the board paged every 8 seconds so every agent is shown; the register reconciliation, the six statuses and the held policy table are gone. reqs.html's "Who is on it" reads `live.chase` when present. New narration (7 lines). Tests: `tests/test-pend-live.js`.
+- **The Branch Portal on the same report, and its notes into Salesforce (27 Oct 2026, 2026-10-27i).** The Portal (`apps-script/branch-portal/Code.gs`, the Branch Portfolio's own bound script, pasted by hand into that project, not the tracker) now reads the newest `Branch Pendings_` tab for its Requirements view (`pendReport_`, one entry a policy: outstanding by kind, days since submission, red at Guardian, suspense, underwriting decision; agents matched by `sameAgent_` however the name is written) and the tracker's "Pendings Chase" tab for each policy's Salesforce task and last notes. The Portal has no Salesforce access, so the workbook is the bridge: the tracker's `pendSyncTick_` (on `keepWarm`, every ten minutes, weekdays 7am–7pm) posts each Requirements Log comment with nothing in column I as a FeedItem on the policy's most recently touched open Pendings task, signed "Branch Portal · <who>", and marks column I (or says there is no open task); then rewrites "Pendings Chase" whole (one row a report policy: task, owner, due, open, overdue, last note, earlier notes). Nothing is deleted. Tests: `tests/test-pend-sync.js`, `tests/test-portal-reqs.js`. Production stays on Branch Settlement Exp PBI Production for both until Ricky says which tab head office counts.
+- **My day that helps at once: reviews carried, started on open, Save in place, and the time they left (28 Oct 2026, 2026-10-28a).** Ricky, 6:10am: "when I open my day ... I am not seeing it drafting the responses and using the intelligence!! Also it's taking long when I post", 6:11: "would like to have the time left as well". Found: the 4:50 run did the night's scrub and then Claude's inbox review in the same run (it ran Apps Script's six minutes out, so nothing was kept), the review store began empty every day, and the hourly review was only at :35 from 6:35 to 4:15pm. Now: `ixDeepGet_` merges the last `IX_DEEP.CARRY_DAYS` days' reviews (today's win), `ixDeepCarryNow_` writes the carried ones for mail still open into today's store at 4:50 and at the start of `sdPrune_` (before the old days are dropped), `ixDeepWarm_` keeps only today's list, re-asks only what moved (the stamp), runs one at a time (`ix_busy_<day>` in the cache, `opts.force` from the editor) and takes `opts.parallel`; the 4:50 run scrubs and carries, and from 5:00 to 7pm (`IX_DEEP.FROM`/`TO`) every run with something unreviewed reviews it (never in the same run as the deep drafts or the hourly scrub). On My branch an unreviewed item says Claude is on it (`.ixwait`) and `IX_WAIT_JS` calls `ixReviewNow` (his page only; the review built by `ixReviewHtml_`, the same as the page's) and puts each in place, asking again while any are left. Save: the form has `id="ufm"`; `UNIT_SAVE_JS` sends it to `unitSaveNow` → `unitSave_(person, day, p, true)`, which writes as before and returns `{html, fields, inbox}` (each `out` item carries `f`, its field names, and inbox items `k`); the page shows the result above the button, clears the fields of what saved, folds inbox items dealt with, and falls back to posting the form if the call fails. Attendance (`workdayAtt_`): each in/late cell carries `o` (sign-out), `early` (minutes before the day's own finish past `WD_ATT.EARLY_MIN`) or `noout` (a past day with no sign-out); myworkday shows "left 3:58pm" under the time in, early in amber, and times no longer break across lines. Tests: `tests/test-inbox-fast.js`, `tests/e2e-myday-inplace.js`, `tests/test-inbox-review.js` (the clock), `tests/e2e-workday.js`.
+- **Slides 5 and 6 rebuilt, and Issued this month (28 Oct 2026, 2026-10-28b).** Ricky, 11:45am: "please fix the increases and group and individual Health wall this is incorrect"; 11:46: "slide 6 in the intell wall is far down and does this make any sense"; 11:56: "and what about the policies issued this month by agent and unit?". Found: the increases copy (`_Intel Wall` tab, key `groups`) was last built on 18 September (no clock rebuilt it), two of its health "pendings" were from 2020, the scrub folded eight increases into one Orphans line (it folded any list of objects with a departed name), and slide 6 was the September triage screen running past the fold. Now: `wallScrub_` keeps every row of a list of cases (`WALL_ITEMS`, or any list where a name repeats), each departed name reading Orphans, and still folds a list of people; `wallFeedOut_` runs intel.groups through `wallGroupsTidy_` (rows past `WALL_GRP.OLD_DAYS` leave every count and list and are counted in `d.old` as records to close; the increases pending figures are worked again; `builtAt` says when Salesforce was read); `wallFeedsTick_(t0)`, at the end of `keepWarm`, rebuilds the groups copy when it is over `WALL_GRP.REBUILD_MIN` old between `FROM_H` and `TO_H`, and runs `intelRebuildWall45` once in the early morning (prop `wall45_catch`) when the dues copy is over 20 hours old (its midnight build had not landed since Monday). `wallPendLive_` adds `codes` (each requirement: code, kind, out, red, amber, new this week, policies, the commonest who-acts-next, the top `WALL_PEND.CODE_AGENTS` agents) and `codeCount`, and `who` items carry `p` (policies). New `wallIssued_(day)` on `wall.issued` (routed in doPost before intelRoute_, through the scrub, cached 5 minutes): the newest `Branch Production_` tab, SETTLED_MONTH this month, premium ANNUAL_PREMIUM or modal × payments a year (`WALL_ISSUED.MODE`), Guardian's own SETTLED_LAST_7_DAYS, week by week, the same day last month by the report's own date; each unit (`WALL_UNITS`, or the Script Property as JSON; a unit named for a manager only while the manager is here) and each agent against their own usual (the average of the `USUAL_MONTHS` before this one, of the people here now: whoever has left is out of every usual and off the list unless they settled something, when they read Orphans), agents in name order, no agent premium. Pages: `increases.html`, `codes.html` (paged every 8s; 34s on the wall) and the new `issued.html` (after codes in all.html), in the pending slide's look and player; Andrew's narration, six lines each (lines.py `increases`, `codes`, `issued`; rebuild a page and the audio must be embedded again). Tests: `tests/test-walls-5-6.js`, `tests/test-issued.js`, `tests/test-pend-live.js` (code by code), `tests/e2e-walls-5-6.js` (full feeds at 1920, 1366 and a phone).
+- **The orphan campaign on the Branch Intelligence wall (28 Oct 2026).** Ricky, about 2:40pm: "can a dash on the orphans management, can a dash be created to assign to that wall?". `intelligence/wall/orphans.html` (tab "The orphan campaign", 30 s, after Issued this month in `all.html`; sixteen stops now) reads the **campaign script**, not the tracker: GET `action=board&who=wall` on the Service Questionnaire `/exec`, with no code. `transitionBoard_` routes `who=wall` to `transitionOrphanWall_` → `tOrphanWall_`, kept by `tServeCached_` (`T_OWALL`, five minutes fresh, six hours kept), so Service.gs needs no paste; a Transition.gs older than this takes "wall" for a person, refuses, and the page says to paste Transition.gs and publish a New version. What it carries:
+  - **the campaign**: the stream's own counts (`tStream_` through `T_STREAM`, so the two screens agree), picked by `tOwallCampaign_`: households on the books, answered, asked, how far those got (completed, agent named, spoken to, waiting on us), letters, reminders, answered after a reminder, households past the line, the first call (median working days, within two). None of the stream's lists by name comes through;
+  - **open tasks**: every open task whose subject starts "Orphan", by who holds it (open, past date, due today, closed today); staff by first name (Liz for Elizabeth), the Branch Manager as such, anyone else as Others;
+  - **today's lists**: the morning run's "ON YOUR LIST TODAY — <name>, #n of N" posts under the Branch Manager's user (`T_OWALL.LIST`), and for each listed task what that desk did today: closed (done), a note saying the client was spoken to (reached), a call or message that did not get through, or a message left or sent (tried), another note (noted), or nothing; a date moved with no note is nothing, a tracker note under the branch's user counts by the name at its head, "not touched" never; each desk's first and last entry today;
+  - **agents**: clients named in Salesforce (Assigned Agent, Campaign Orphan) **since 9 September** (`NAMED_FROM`: Salesforce also holds Campaign "Orphan" namings from earlier years, many to agents who have left) and only to agents whose Employment Status reads Active, never the Branch Manager: clients, this week, today, with feedback.
+
+  No client's name, number, policy, words or task id, and no former agent. The page keeps the last good answer on the screen (`rrb-owall-snapshot`, twelve hours), the gold shield, Andrew at −12% (lines.py `orphans`, voiced on the `tts-run` runner as `wallorphans`). Tests: `tests/test-orphan-wall.js` (the backend, Salesforce and the stream made up, with the leak check) and `tests/e2e-orphan-wall.js` (1920, 1366, 1280 and a phone; an old script; a dead feed after a good one); the stop is in `e2e-intelwall`, `e2e-wallfit` and `e2e-wallphone`.
+- **The noon and 3pm nudges read the day as it is kept now (28 Oct 2026, 2026-10-28c).** Ricky, 12:38pm, with Kamla's noon "Your day is not planned": "this triggered despite persons working today". `remindMidday` and `remindCheckpoint` still asked only `blocksSubmittedOn_` (the old KPI1–EVE text, unused since 17 October), so everyone at work heard both. Now `dayStates_(day, people)` reads, per person: the register's sign-in and absence, the Block Plans rows (items, a note or PlannedAt; the `daystart_plan_` mark), the old blocks still, progress or a close on the plan (ClosedAt, Filed, Achieved, SFClosed), and `deskToday_` (closed and notes in Salesforce today; null when Salesforce does not answer). Noon: only somebody with no sign-in, no plan and nothing done hears "You have not checked in today"; the run log names who was at work. 3pm: only somebody at work today (signed in or planned) with nothing closed, noted or logged hears "Your day is not logged"; nobody not in, nobody whose day has ended, nobody at all when Salesforce does not answer. Absent: neither. Test: `tests/test-nudges.js`.
 - **Wall Intelligence, the new wall (20 Oct 2026, 2026-10-20g).** Ricky: "the wall needs to be redesigned with a lot of animation and motions and graphics ... what the managers do, what the agents do, and what staff actually does ... streamed outside as well as inside", then "I would like sound ... Andrew's voice, this song ... streams outside without client's name so the agents can see what is being actioned, who is doing what, who is out today ... and the gamification." **`/wall/` is now Wall Intelligence** (`wall/index.html`); the block wall moved to **`/wall/classic/`** (`tests/e2e-wall.js` and `tests/test-substance.js` read it there). **Feed** (`wallIntel_(day, outside)`, cached 5 minutes as `wall2_in_<day>` / `wall2_out_<day>`): `wallStaff_` (who is in, out today or later; cover from Workload Moves; tasks closed with a proper note by hour 7–17 and by kind `wallKind_`: new, orphan, retention, claims, other; par, quests, streaks, gain from the game), `wallAgents_` (`agentPeople_`, `agentFunnel_`, `ff360Agent_`, `goalFor_`, `agentDaySummary_` and Agent Day `At` times; the year as % of goal against % of the year gone), `wallManagers_` (My Day Log groups against `myTasks_` by `dayGroup_`, Akaash's unit, cover, Query Pal answered this week), and a running feed newest first. **Never on the wall, inside or out:** a client, a policy number, a note, a task subject, why someone is out. **Outside** also drops arrival times, lateness, points, dollars, agents with nothing yet, agent projection times, the inbox, Query Pal past turnaround, and gains below someone's usual. **Access:** `handle_` action `wall2` (signed in: the Branch Manager gets inside, anyone else outside) and `wallout` (no sign-in, `WALL_OUTSIDE_KEY`; run `wallOutsideLink()` in the editor for the link `https://rickyrampersadbranch.com/wall/?k=…`; a new key changes it). **Page:** an ident, then Staff (who is in / cover flow; hour by hour; the kind of work; the team game), Agents (the field today; review to cover and FY27), Managers, Live; heavy motion (rings, bars, donut, heat grid, flows, counters), warm graphite ground (no saturated blue), the branch bar and a ticker always along the bottom, captions. **Sound:** the branch Motivation track (`/rr-branch-theme.mp3`) under Andrew; recorded lines `wall/audio/v2/n0..n8.mp3` (made with `wall/audio/v2/build-voice.sh` on Ricky's computer, en-US-AndrewNeural at −12%, since the speech service is blocked from the sandbox) play on any screen, else Microsoft Edge's built-in plain Andrew voice reads the live lines with today's numbers, else captions only; `?voice=recorded|live|off`. `?demo=1` (and `&view=outside`) shows a marked sample. Pinned by `tests/test-wall2.js` and `tests/e2e-wall2.js`.
 
 - **The wall on a phone, more motion, and the Branch Manager's day (20 Oct 2026, 2026-10-20h).** Ricky: "viewing on mobile and it's not scaled ... more graphics and more animations and motions for a max impact", then "Can we also build the managers? I am doing a lot right now as the branch manager" and "remember my day starts at 5am". **Phones** (`sizeUp`: width under 900 or height under 560) get `body.mob`: a stacked layout that scrolls, a sticky header, the caption and the branch bar pinned at the foot, two-up tiles, one column of panels (game cards two-up), every row rebuilt for a narrow screen through `mq(tv, mob)`; a phone on its side adds `short`: smaller type, two columns, four-up tiles, a slim bar without the ticker, and Andrew's line only while he speaks. **Motion:** a channel bumper (a band of the channel's colour sweeps across with its name) on every change of channel, titles that land word by word, floating motes, an equaliser by LIVE (gold and faster with the sound on), shines on the tiles, counters that pop when they land, a ripple on the newest event. **Managers** is two scenes: the Branch Manager's day (`wallManagers_().bm`: My Day Log by the hour from `WALL2.BM_FROM_H` = 5am to 6pm, notes, closes, e-mails, moves, tasks, inbox, the busiest hour, his latest actions as kind and group only via `wallBmWhat_`, never the subject; his Salesforce notes and closes are read fresh with `dayLogSalesforce_` on each wall read; inside also his check-in time; his actions join the running feed as Mr Rampersad), then the unit and the desks. Andrew's recorded line for it is `n9`.

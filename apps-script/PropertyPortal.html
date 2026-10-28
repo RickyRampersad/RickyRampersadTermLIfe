@@ -68,6 +68,9 @@ h1,h2,h3,h4,.mont{font-family:'Montserrat',sans-serif}
 .repl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:rgba(239,194,75,.07);
   border:1px solid rgba(239,194,75,.3);border-radius:12px;padding:12px 15px;margin-top:12px}
 .repl label{font-size:12.5px;color:var(--text);flex:1;min-width:180px}
+.rhint{flex:1 0 100%;font-size:12px;color:var(--muted);line-height:1.55}
+.rhint b{color:var(--text)}
+.rmine{display:block;margin-top:3px;color:var(--gold);font-weight:600}
 .repl input{width:140px;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--text);
   font:700 14px 'DM Sans';text-align:right;padding:9px 10px;outline:none}
 .repl input:focus{border-color:var(--gold)}
@@ -263,6 +266,42 @@ function tracker(g){
   </div>`;
 }
 
+/* The reality check.
+   This box used to open pre-filled with the client's OWN current sums
+   insured, which meant every client landed on "✅ Insured at full value — a
+   claim here pays in full" before touching anything, while the average box
+   directly above sent them here to see where they stood. The one screen that
+   exists to catch under-insurance was reassuring by default.
+   It now opens on what the record suggests the rebuilding cost has drifted
+   to since the values were last reviewed (RenewalLines' propertyValueGuide_),
+   and says plainly that the figure is ours and theirs to correct. Where we
+   have no review date we suggest nothing and ask, rather than guess — and the
+   verdict stays silent until a figure is actually confirmed. */
+function replBlock(loc,i){
+  const g=loc.guide||null;
+  const cur=locTotal(loc);
+  const seed=(g&&g.suggested)?g.suggested:'';
+  const since=(g&&g.years!=null)
+    ? `Last reviewed <b>${g.years} year${g.years===1?'':'s'}</b> ago.`
+    : `We have <b>no record</b> of when these were last reviewed.`;
+  let hint='';
+  if(g&&g.suggested&&g.suggested>cur){
+    hint=`<div class="rhint">${since} At about 5% a year, rebuilding here is likely nearer
+      <b>${money0(g.suggested)}</b> than the ${money0(cur)} on your schedule.
+      <span class="rmine">That is our estimate, not a valuation — please correct it.</span></div>`;
+  } else {
+    hint=`<div class="rhint">${since}
+      <span class="rmine">Put in what it would cost to rebuild and replace today.</span></div>`;
+  }
+  return `<div class="repl">
+      <label><b>Reality check:</b> what would it cost to replace everything here today?</label>
+      ${hint}
+      <input id="rc_${i}" inputmode="numeric" value="${seed?fmtN(seed):''}"
+             placeholder="Rebuilding cost today" data-seed="${seed||''}">
+      <div class="verdict ok" id="rcv_${i}"></div>
+    </div>`;
+}
+
 function locationBlock(loc){
   const i=loc.idx;
   return `<div class="locpanel">
@@ -283,11 +322,7 @@ function locationBlock(loc){
     <div class="est" id="est_${i}"></div>
     <div class="premline">Premium for this location: <b>${money(loc.premium)}</b> incl. Government Tax
       ${loc.rate?` · your rate: <b>$${loc.rate.toFixed(2)} per $1,000</b> of cover`:''}</div>
-    <div class="repl">
-      <label><b>Reality check:</b> what would it cost to replace everything here today?</label>
-      <input id="rc_${i}" inputmode="numeric" value="${fmtN(locTotal(loc))}">
-      <div class="verdict ok" id="rcv_${i}"></div>
-    </div>
+    ${replBlock(loc,i)}
     ${excessChips(loc.excess)}
     <div class="addr">
       <b>Is this address exactly right?</b>
@@ -440,8 +475,12 @@ function touch(i){
         <span style="color:var(--muted)">Estimate at your rate of $${r.rate.toFixed(2)}/$1,000; Guardian confirms final terms.</span>`;
     } else est.style.display='none';
   }
-  const rc=document.getElementById('rc_'+i);
-  if(rc&&st.changed){rc.value=fmtN(st.total);}
+  /* The rebuilding cost is NOT the sums insured and must never be set from
+     them. This line used to copy the client's new total into the reality
+     check the moment they edited a value, so raising cover always produced
+     "insured at full value" — the check agreeing with whatever they had just
+     typed. What it costs to rebuild is an independent fact about the
+     building; only the client (or a valuer) can say it. */
   check(i);
   bar();
 }
@@ -452,13 +491,28 @@ function check(i){
   if(!rc||!out) return;
   const repl=numv(rc.value);
   if(!repl){out.className='verdict ok';out.textContent='';return;}
+  /* Is this figure the client's, or still the one we suggested? Saying
+     "insured at full value" off our own estimate would be us clearing our
+     own homework — and if our estimate is low, we would have told them they
+     were covered right up to the moment of a claim. */
+  const seed=Number(rc.dataset.seed||0);
+  const ours=seed&&Math.round(repl)===Math.round(seed);
   if(st.total>=repl){
-    out.className='verdict ok';
-    out.textContent=`✅ Insured at full value — a claim here pays in full, subject to your excess.`;
+    if(ours){
+      out.className='verdict ok';
+      out.innerHTML=`Your cover meets <b>our estimate</b> of the rebuilding cost.
+        Average is only satisfied against the <u>real</u> figure — if you know it, put it in.`;
+    } else {
+      out.className='verdict ok';
+      out.textContent=`✅ Insured at full value — average does not bite, and a claim here pays in full, subject to your excess.`;
+    }
   } else {
     const pct=Math.round((1-st.total/repl)*100);
     out.className='verdict warn';
-    out.innerHTML=`⚠️ You'd carry <b>${pct}%</b> of every claim yourself — a $100,000 loss pays only ${money0(100000*st.total/repl)}. Tap the figures above to close the gap.`;
+    out.innerHTML=`⚠️ Insured at <b>${Math.round(st.total/repl*100)}%</b> of ${ours?'our estimated':'that'} rebuilding cost,
+      so <b>average</b> cuts every claim here by the same ${pct}% — a $100,000 loss pays
+      <b>${money0(100000*st.total/repl)}</b> and you carry ${money0(100000*(1-st.total/repl))}.
+      It applies to a small claim as much as a total loss. Tap the figures above to close the gap.`;
   }
 }
 

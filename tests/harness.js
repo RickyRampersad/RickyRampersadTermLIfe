@@ -27,7 +27,10 @@ function makeEnv(opts = {}) {
       getLastRow: () => { calls.getLastRow++; return grid.length; },
       getLastColumn: () => { calls.getLastColumn++;
         return grid.length ? Math.max(...grid.map(r => r.length)) : 0; },
-      setFrozenRows: () => sh,
+      setFrozenRows: () => sh, setColumnWidth: () => sh, setColumnWidths: () => sh,
+      autoResizeColumn: () => sh, autoResizeColumns: () => sh, hideColumns: () => sh,
+      setTabColor: () => sh, clearFormats: () => sh, getMaxColumns: () => 60,
+      getMaxRows: () => Math.max(grid.length, 1000), insertColumns: () => sh,
       appendRow: r => { calls.appendRow++; grid.push(r.slice()); return sh; },
       deleteRow: n => { calls.deleteRow++; grid.splice(n - 1, 1); return sh; },
       getRange: (r, c, nr = 1, nc = 1) => ({
@@ -59,7 +62,16 @@ function makeEnv(opts = {}) {
             for (let j = 0; j < vals[i].length; j++) grid[r - 1 + i][c - 1 + j] = vals[i][j];
           }
         },
-        setNumberFormat: () => {}, setFontWeight: () => {}, setBackground: () => {}
+        /* Chainable, because real formatting calls are written as one
+           chain (setFontWeight(..).setBackground(..).setFontColor(..))
+           and a stub returning undefined breaks on the second link. */
+        setNumberFormat() { return this; }, setFontWeight() { return this; },
+        setBackground() { return this; }, setFontColor() { return this; },
+        setFontSize() { return this; }, setWrap() { return this; },
+        setHorizontalAlignment() { return this; }, setVerticalAlignment() { return this; },
+        setBorder() { return this; }, setFontStyle() { return this; },
+        setDataValidation() { return this; }, clearDataValidations() { return this; },
+        setNote() { return this; }, merge() { return this; }
       })
     };
     sheets[name] = sh;
@@ -101,7 +113,8 @@ function makeEnv(opts = {}) {
                     deleteProperty: k => { delete store[k]; return api; },
                     getProperties: () => Object.assign({}, store) };
       return { getScriptProperties: () => api }; })(),
-    Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }) },
+    Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }),
+               getScriptTimeZone: () => 'America/Port_of_Spain' },
     MailApp: { sendEmail: () => { calls.mail++; if (opts.mailThrows) throw new Error('Service invoked too many times'); } },
     Utilities: {
       formatDate: (d, tz, f) => {
