@@ -1,7 +1,92 @@
 {
- "tts/out/wallowresc/01.mp3": [
+ "tts/out/rise/01.mp3": [
+  "en",
+  0.991,
+  "This branch took a hit."
+ ],
+ "tts/out/rise/02.mp3": [
+  "en",
+  0.99,
+  "People left, the work didn't."
+ ],
+ "tts/out/rise/03.mp3": [
+  "en",
+  0.996,
+  "Nothing here fell over."
+ ],
+ "tts/out/rise/04.mp3": [
+  "en",
+  0.998,
+  "So, before Friday, look at who's still standing."
+ ],
+ "tts/out/rise/05.mp3": [
+  "en",
+  0.998,
+  "23 agents and managers. Five more behind them."
+ ],
+ "tts/out/rise/06.mp3": [
+  "en",
+  0.977,
+  "Between us, 263 years of this work."
+ ],
+ "tts/out/rise/07.mp3": [
+  "en",
+  0.991,
+  "11 of us have been at it more than 10 years. 3 joined in the last 3."
+ ],
+ "tts/out/rise/08.mp3": [
   "en",
   0.993,
-  "We also count every lapsed policy that is now back in force."
+  "And while all of that was happening, we rebuilt how this branch runs."
+ ],
+ "tts/out/rise/09.mp3": [
+  "en",
+  0.993,
+  "One sign in now, and every tool is behind it."
+ ],
+ "tts/out/rise/10.mp3": [
+  "en",
+  0.995,
+  "The system sets your day before you're even up."
+ ],
+ "tts/out/rise/11.mp3": [
+  "en",
+  0.995,
+  "The wall shows the score and everybody sees the same numbers."
+ ],
+ "tts/out/rise/12.mp3": [
+  "en",
+  0.99,
+  "FY27 is 30 days old, and every goal plan is in."
+ ],
+ "tts/out/rise/13.mp3": [
+  "en",
+  0.995,
+  "The cracks are still there. We fill them with gold."
+ ],
+ "tts/out/rise/14.mp3": [
+  "en",
+  0.995,
+  "We're not going back to what this branch was. We're going somewhere better."
+ ],
+ "tts/out/rise/15.mp3": [
+  "en",
+  0.986,
+  "Friday, 12 noon, 90 minutes."
+ ],
+ "tts/out/rise/16.mp3": [
+  "en",
+  0.986,
+  "75 of those minutes belong to you, not to me."
+ ],
+ "tts/out/rise/17.mp3": [
+  "en",
+  0.994,
+  "Three questions are already waiting for you. Answer one tonight."
+ ],
+ "tts/out/rise/18.mp3": [
+  "en",
+  0.973,
+  "We rise together."
  ]
 }
