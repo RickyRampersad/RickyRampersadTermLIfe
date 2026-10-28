@@ -969,5 +969,39 @@
   "h": 1920,
   "capsize": 46,
   "capwrap": 30
+ },
+ "blastoff": {
+  "cap": "cap-blastoff",
+  "vox": "voblastoff",
+  "music": "bed-blastoff.wav",
+  "mix": "blastoff-mix.wav",
+  "ass": "captions-blastoff.ass",
+  "dur": 65.63,
+  "durs": [
+   5.22,
+   5.73,
+   6.72,
+   3.57,
+   3.77,
+   6.26,
+   6.02,
+   7.56,
+   6.57,
+   7.66,
+   6.55
+  ],
+  "out": "blastoff.mp4",
+  "musicgain": 0.52,
+  "duck": 0.3,
+  "dark": [
+   0,
+   3,
+   4
+  ],
+  "sfx": "sfx-blastoff.wav",
+  "start": 0,
+  "ticks": [],
+  "hits": [],
+  "capbg": "17191E"
  }
 }

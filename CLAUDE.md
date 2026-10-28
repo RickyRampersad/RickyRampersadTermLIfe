@@ -6626,6 +6626,66 @@ guide you. In your session review notes on the step back in place from all memor
 - **The wall knows the kinds in each hour, and who has the bag (21 Oct 2026, 2026-10-21f).** Ricky: "hour by hour what's being actioned, the task type should be in a colour inside the green, as well who does the bag as well built in". `wallStaff_` now sends each person's `hourKinds` (per hour, the closes with a note by `wallKind_`: new, orphan, retention, claims, other) and `bag` ({who, at, h, cutoff, covering}) from `mailbagRouter_` (the weekly rota, the next one in when the router is out) and `mailbagLeaves_` (12 noon unless `MAILBAG_AT`), papers in a quarter of an hour before. The wall colours each green hour by kind and rings the bag's hour in gold. Tests: `tests/test-wall2.js`.
 - **Sample ratings for the Branch Manager (21 Oct 2026, 2026-10-21g).** Ricky, 1:55pm: "send some samples to see the revised and let me click". `rateSamples(n)` in the editor, or **Send me sample ratings** on his Ratings page (a signed POST `rs=ricky&f=rate&k=…&act=samples` through `replyPost_`, him alone, not `RATE_PAGE_ALSO`; a second press within `RATE.SAMPLE_GAP_MIN` = 2 minutes sends nothing), sends up to `RATE.SAMPLES` = 3 agent rating e-mails in the real format (`rateAgentMail_`, subject `[Sample] …`) to `managerEmails_()` only, each from one of the latest real agent rows (its subject from the timeline's open step, kind, days, closer, the closing note as what was done, and the record's columns), or from `RATE_SAMPLE_MADE` (no client) when there are none; then one e-mail with every sample's five stars, its card and his page. Each sample is a row of its own (Kind and Status `sample`, Email his), so the stars, the thank-you page, a comment and the 1–2 star alert (`[Sample] Low rating …`, with See the whole task) all work. `rateIsSample_`: no Chatter post from `rateClick_` or `ratePost_`, `&out=1` changes nothing, and `rateStats_` (the week, the game's cards and board, the Service Star, his day page, the wall's `svc` and ticker) and `rateRun_`'s cap, cool-down and opt-outs skip it. His page marks sample cards (dashed, Sample), has Hide samples, and never counts them in the week. Agent e-mails only: client mail stays held. Test: `tests/test-rate-samples.js`.
 
+## The FY27 blast-off — the shield is the cocoon
+
+`blastoff/` (short address `/blastoff`) and `tools/film/build-blastoff.py`. Asked
+for on 28 October 2026, for the branch group the next morning and as the opener
+in the room on Friday: *"need to do a blast off tomorrow a refresh or rebiirth
+comming out of a cocoon etc"*, with the roll-out of the new way forward at the
+Friday meeting itself. Shown the choice, he took **a sixty-second blast-off plus
+the existing `/howweworkvid/` for the room** over a second long film, and
+**cocoon to flight, literal** over dawn or a countdown.
+
+- **The chrysalis is the branch's own shield.** `logo-mark.svg`'s path, cut down
+  its centre line into two halves: sealed and lit along the seam, filled with
+  the year's figures and then with the lattice of the new way of working, split
+  open with light flooding through, swung wide like wings, and closed back whole
+  with the check stroking on. One object across eleven scenes, so the film reads
+  as one thing becoming itself. **Never a drawn butterfly** — the rule that took
+  the cartoon car off the motor page: abstract and geometric, or it reads as a
+  child's drawing.
+- **The look is Wall Intelligence's**, not the branch's hard palette: warm
+  graphite `#121317`, gold `#E3B85A`, teal `#4FC1B0`. It plays beside
+  `/howweworkvid/`, which is recorded off that wall, so it has to look like its
+  sibling. `#efc24b` and `#00CFEA` were chosen for a near-black page and read as
+  neon on graphite.
+- **The shell is donthaveanagent's, and it leaks.** `client-film.html` supplies
+  the `SC` / `go` / `paused` contract that `render.js` drives, and with it The
+  Knot in Ink & Coral in the chrome, coral progress bars and a WhatsApp button
+  these scenes do not carry. All three are replaced or guarded in the builder:
+  two marks, two products, on purpose, and a branch film carrying the other
+  one is the exact error the mark rule warns about.
+- **A class the shell already styles wins silently.** The first cut used
+  `.stage`, the shell's own, and its rule collapsed the stage from 461px to 146
+  — the shield rendered at a sixth of its size and the metaphor the whole film
+  rests on was a smudge, with nothing in the console. Every scene class is
+  `bo`-prefixed now, and `build-blastoff.py` refuses to write a page whose
+  scenes use a class the shell styles, as `build-boardfilm.py` does.
+- **The mixer crops the bottom 104px away.** `mixany.py` takes 1280x616 out of
+  the frame and pads the caption strip back under it, so anything laid out
+  against the bottom of a 720px page is cut in half in the MP4; the first cut
+  lost the foot of "The system sets the day" and of "Friday 12 noon". The scene
+  box therefore ends at 616 and every percentage inside it is a percentage of
+  what survives.
+- **The caption strip is a setting now.** It was `0x1B2A44` for every film,
+  because every film was donthaveanagent's; on warm graphite that navy is a
+  stripe of another brand across the foot of the screen. `capbg` in `films.json`
+  sets it (`17191E` here) and defaults to the old value, so no other film moves.
+- **The voice is Andrew Expressive** (`en-US-AndrewMultilingualNeural`, +0%),
+  made on the `tts-run` runner with `"check": true`; all eleven clips came back
+  English at 0.99. The captions are built from the runner's `words.json`, with
+  the punctuation walked back on from the line itself, because edge-tts emits
+  bare words and a burned-in caption should read as a sentence.
+- **The music is the branch's own theme**, not the Kevin MacLeod track, so the
+  page carries no CC BY credit and it sounds like `/howweworkvid/`.
+- **Nothing on screen is a client.** No name, no count, no figure off any sheet.
+
+To re-cut it: edit `tools/film/blastoff-lines.json`, push a `tts/job.json` to
+`tts-run`, import the clips to `tools/film/voblastoff` as `NN.wav` (**the mixer
+reads WAV, not MP3**) with their `NN.vtt`, re-time `blastoff-timing.json` from
+the audio, then `build-blastoff.py`, `sfx.py`, `usetrack.py ../../rr-branch-theme.mp3
+blastoff`, `render.js`, `mixany.py`.
+
 ## Web fonts — non-blocking, with a fallback that does not move the page
 
 A plain `<link rel="stylesheet">` to `fonts.googleapis.com` holds up first
