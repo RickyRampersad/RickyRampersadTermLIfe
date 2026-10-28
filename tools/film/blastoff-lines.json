@@ -1,0 +1,92 @@
+{
+  "key": "blastoff",
+  "title": "Out of the quiet",
+  "note": "The FY27 reset, for the branch group on Thursday 29 October 2026 and as the opener in the room on Friday. Cocoon to flight, geometric, never a drawn butterfly. Andrew Expressive, +0%, conversational.",
+  "scenes": [
+    {
+      "v": "seam",
+      "say": "Something's been building in this branch. Quietly. For months.",
+      "screen": [
+        "Something has been building"
+      ]
+    },
+    {
+      "v": "figures",
+      "say": "A new financial year, thirty days old, and every goal plan is in.",
+      "screen": [
+        "FY27",
+        "Day 30",
+        "Every goal plan in"
+      ]
+    },
+    {
+      "v": "lattice",
+      "say": "One sign-in now. One app. The system sets your day, and the wall shows the score.",
+      "screen": [
+        "One sign-in",
+        "The system sets the day",
+        "The wall shows the score"
+      ]
+    },
+    {
+      "v": "tight",
+      "say": "That was the quiet part.",
+      "screen": [
+        "That was the quiet part"
+      ]
+    },
+    {
+      "v": "crack",
+      "say": "This is the part where we come out.",
+      "screen": [
+        "This is the part where we come out"
+      ]
+    },
+    {
+      "v": "table",
+      "say": "Last week Akaash and I took this branch to the company. Our record, on the table.",
+      "screen": [
+        "Joint Sales Managers’ Strategic Meeting",
+        "22 and 23 October"
+      ]
+    },
+    {
+      "v": "invite",
+      "say": "Friday, twelve noon, we come back to you. Not to brief you. To hear you.",
+      "screen": [
+        "Friday 30 October",
+        "12 noon"
+      ]
+    },
+    {
+      "v": "silence",
+      "say": "Everything you write before Friday is read in the room. In silence. Before anybody speaks.",
+      "screen": [
+        "Read in silence",
+        "before anybody speaks"
+      ]
+    },
+    {
+      "v": "quietest",
+      "say": "The quietest person in this branch, read as carefully as the loudest.",
+      "screen": [
+        "Every voice heard, with a structure"
+      ]
+    },
+    {
+      "v": "ask",
+      "say": "So open the meetings page, and answer three questions. Say the thing you'd say in the car park.",
+      "screen": [
+        "rickyrampersadbranch.com/meetings",
+        "Answer 3 questions"
+      ]
+    },
+    {
+      "v": "flight",
+      "say": "Friday. Twelve noon. Let's begin.",
+      "screen": [
+        "Friday 12 noon"
+      ]
+    }
+  ]
+}
