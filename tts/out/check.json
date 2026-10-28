@@ -1,32 +1,12 @@
 {
- "tts/out/wallorphans/01.mp3": [
-  "en",
-  0.996,
-  "This is the orphan campaign, the clients whose agents left and where we stand with every one of them."
- ],
- "tts/out/wallorphans/02.mp3": [
+ "tts/out/wallday2/01.mp3": [
   "en",
   0.998,
-  "On the left, every household on our books, how many answered the letter, and how many asked us for something?"
+  "The top then turns to each desk's ring, what they have closed against their day and the white mark where the clock is."
  ],
- "tts/out/wallorphans/03.mp3": [
+ "tts/out/wallday2/02.mp3": [
   "en",
-  0.99,
-  "the bar shows how far those households have got completed an agent named spoken to for still waiting on us."
- ],
- "tts/out/wallorphans/04.mp3": [
-  "en",
-  0.995,
-  "on the right today's lists each morning every desk gets a list and each client on it is marked done, reached, tried, or nothing yet."
- ],
- "tts/out/wallorphans/05.mp3": [
-  "en",
-  0.999,
-  "Beside each list are the open tasks that person holds and how many are passed their date."
- ],
- "tts/out/wallorphans/06.mp3": [
-  "en",
-  0.995,
-  "Below, the client's name to an agent in Salesforce, agent by agent. No client is named on this screen."
+  0.997,
+  "Then the agents serve today, each bubble is the work done for one agent, and its ring is how much of it was closed. Nobody is ranked, and no client is named here."
  ]
 }
