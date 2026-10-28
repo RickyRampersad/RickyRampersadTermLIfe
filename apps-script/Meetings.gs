@@ -6570,7 +6570,15 @@ function apiPing_() {
           /* Published, or an agent opens the app and sees nothing. */
           openToEveryone: low_(m['Status']) !== 'draft',
           date: fmtDate_(m['Date']),
-          start: str_(m['Start']),
+          /*  Sheets stores a time-only cell as a Date on its own 1899
+           *  epoch, so str_() on it prints "Sat Dec 30 1899 12:00:00"
+           *  and reads as a meeting set in the wrong century. The
+           *  register was never wrong — checkinWindow_ goes through
+           *  atTime_, which lifts the hours and minutes onto the
+           *  meeting's own date — but this line is what a person
+           *  checks the deployment with, so it is formatted the same
+           *  way the meeting card formats it. */
+          start: fmtTime_(atTime_(m['Date'], m['Start'])),
           agendaItems: items.length,
           minutes: items.reduce(function (n, a) { return n + num_(a['Allotted (min)']); }, 0),
           lateAfterMinutes: num_(str_(m['Late After (min)']) === '' ? MEET.LATE_AFTER_MINUTES : m['Late After (min)']),
