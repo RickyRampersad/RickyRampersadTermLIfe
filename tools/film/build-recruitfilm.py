@@ -165,9 +165,11 @@ def blk_gives(n, A):
   </div>
 </div>'''
 
-def blk_seats(n, A):
+def blk_seats(n, A, L=None):
     steps = [("A call","48 h","call","phone"),("The Branch Manager","himself","Branch","users"),("Orientation","no gloss","orientation","chat"),("A profile","POP7","profile","target"),("Discovery","the people doing it","Discovery","spark")]
-    t5 = A(n, "Five")
+    t5 = A(n, "Seven")
+    line = (L or LINES)[n - 1].lower()
+    mgr = f'<div class="tr-mgr in fl" style="--t0:{A(n,"sales")}ms"><i>+1</i><div><b>A sales manager</b><span>to build a unit here</span></div><svg class="ic"><use href="#i-users"/></svg></div>' if "sales manager" in line else ""
     tiles = ''.join(f'''<div class="tr-seat" style="--t0:{t5 + 200 + k*140}ms;--t1:{A(n,w)}ms">
       <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
       <span class="nm"><b>{nm}</b><small>{d}</small></span>
@@ -175,19 +177,22 @@ def blk_seats(n, A):
     </div>''' for k, (nm, d, w, ic) in enumerate(steps))
     return f'''
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">This year</p>
-  <h2 class="h xl"><span class="cnt" data-to="5" data-at="{t5}">5</span> {words("seats.", t5, 120)}</h2>
+  <p class="eye in" style="--t0:200ms">FY27 · the first class, selected now</p>
+  <h2 class="h xl"><span class="cnt" data-to="7" data-at="{t5}">7</span> {words("places.", t5, 120)}</h2>
   <p class="sub in" style="--t0:{A(n,"can")}ms">Not because we can't take more. Because every one gets <em>the full build</em>.</p>
   <div class="tr-rail" style="--t0:{A(n,"call")}ms;--d:{A(n,"Discovery") - A(n,"call")}ms"></div>
   <div class="tr-seats">{tiles}</div>
   <div class="figs row">
+    {mgr}
     <div class="fig in" style="--t0:{A(n,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{A(n,"Thirty")}">32</b><span>years in Trinidad</span></div>
-    <div class="fig in" style="--t0:{A(n,"Five",1)}ms"><b class="cnt" data-to="5" data-at="{A(n,"Five",1)}">5</b><span>seats</span></div>
+    <div class="fig in" style="--t0:{A(n,"Seven",1)}ms"><b class="cnt" data-to="7" data-at="{A(n,"Seven",1)}">7</b><span>places · one class</span></div>
   </div>
 </div>'''
 
-def blk_gate(n, A):
+def blk_gate(n, A, L=None):
     to = A(n, "open")
+    line = (L or LINES)[n - 1].lower()
+    mgr = f'<div class="who mgr in fl" style="--t0:{A(n,"Leading")}ms"><b>Leading a team already?</b><span>Come and build a unit here: one seat for a sales manager, with the system doing the admin and the branch behind you.</span><i class="lock-s"><svg class="ic"><use href="#i-users"/></svg> Sales manager · one seat</i></div>' if "leading a team" in line else ""
     return f'''
 <div class="full center tr-gate">
   <p class="eye in" style="--t0:200ms">One conversation</p>
@@ -207,6 +212,7 @@ def blk_gate(n, A):
     </div>
     <div class="who in fl" style="--t0:{A(n,"New")}ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
   </div>
+  {mgr}
   <div class="tr-line in" style="--t0:{A(n,"One")}ms"><b><em class="cnt" data-to="1" data-at="{A(n,"One")}">1</em> confidential conversation</b><i></i><b><em class="cnt" data-to="20" data-at="{A(n,"Twenty")}">20</em> minutes</b><i></i><b>this week</b></div>
 </div>'''
 
@@ -246,7 +252,7 @@ S.append(scene(2, 's-branch', f'''
     <p class="sub in" style="--t0:{at(2,"Guardian")}ms">Guardian Life of the Caribbean</p>
     <div class="figs">
       <div class="fig in" style="--t0:{at(2,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{at(2,"Thirty")}">32</b><span>years in Trinidad</span></div>
-      <div class="fig in" style="--t0:{at(2,"Five")}ms"><b class="cnt" data-to="5" data-at="{at(2,"Five")}">5</b><span>seats this year</span></div>
+      <div class="fig in" style="--t0:{at(2,"seven")}ms"><b class="cnt" data-to="7" data-at="{at(2,"seven")}">7</b><span>places · the first class of FY27</span></div>
     </div>
     <div class="fy in" style="--t0:{at(2,"brand")}ms"><b>FY27</b><span>A new year, from 1 October</span></div>
   </div>
@@ -951,8 +957,8 @@ if TLINES and MODE != 'ad':
     <div class="chips3"><div class="chip in fl" style="--t0:{tat(4,"person")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div></div>
   </div>
 </div>'''))
-    T.append(tscene(5, 's-seats tr', blk_seats(5, tat)))
-    T.append(tscene(6, 's-door tr', blk_gate(6, tat)))
+    T.append(tscene(5, 's-seats tr', blk_seats(5, tat, TLINES)))
+    T.append(tscene(6, 's-door tr', blk_gate(6, tat, TLINES)))
     tb = tat(7, "Book")
     T.append(tscene(7, 's-cta tr', f'''
 <div class="split cta tr-cta">
@@ -1076,13 +1082,13 @@ if MODE == 'ad':
 </div>"""))
     T.append(tscene(4, 's-seats', f"""
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">This year</p>
-  <h2 class="h xl"><span class="cnt" data-to="5" data-at="{tat(4,"Five")}">5</span> {words("seats.", tat(4,"Five"), 120)}</h2>
-  <div class="seatrow">{''.join(f'<i style="--t0:{tat(4,"Five") + 200 + k*140}ms"><svg class="ic"><use href="#i-users"/></svg></i>' for k in range(5))}</div>
+  <p class="eye in" style="--t0:200ms">FY27 · the first class</p>
+  <h2 class="h xl"><span class="cnt" data-to="7" data-at="{tat(4,"Seven")}">7</span> {words("places.", tat(4,"Seven"), 120)}</h2>
+  <div class="seatrow">{''.join(f'<i style="--t0:{tat(4,"Seven") + 200 + k*120}ms"><svg class="ic"><use href="#i-users"/></svg></i>' for k in range(7))}</div>
   <p class="sub in" style="--t0:{tat(4,"Every")}ms">Every one gets <em>the full build</em>.</p>
   <div class="figs row">
     <div class="fig in" style="--t0:{tat(4,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{tat(4,"Thirty")}">32</b><span>years in Trinidad</span></div>
-    <div class="fig in" style="--t0:{tat(4,"year")}ms"><b class="cnt" data-to="5" data-at="{tat(4,"year")}">5</b><span>seats</span></div>
+    <div class="fig in" style="--t0:{tat(4,"class")}ms"><b class="cnt" data-to="7" data-at="{tat(4,"class")}">7</b><span>places · one class</span></div>
   </div>
 </div>"""))
     T.append(tscene(5, 's-cta', f"""
@@ -2059,6 +2065,16 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .tr-seat{min-height:calc(var(--u)*19)}
   .tr-chart{height:calc(var(--u)*34)}
 }
+
+.tr-mgr{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:calc(var(--u)*2);background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;border-radius:calc(var(--u)*2);padding:calc(var(--u)*1.8) calc(var(--u)*2.6);text-align:left;box-shadow:0 calc(var(--u)*2) calc(var(--u)*6) rgba(0,90,112,.45)}
+.tr-mgr i{font:800 calc(var(--u)*5)/1 var(--display);font-style:normal;letter-spacing:-.03em}
+.tr-mgr b{display:block;font:700 calc(var(--u)*2.8)/1.1 var(--display)}
+.tr-mgr span{display:block;margin-top:.3em;font:500 calc(var(--u)*2)/1.2 var(--text);opacity:.92}
+.tr-mgr .ic{font-size:calc(var(--u)*3.6)}
+.who.mgr{display:grid;grid-template-columns:1fr auto;align-items:center;gap:calc(var(--u)*1) calc(var(--u)*4);width:100%;max-width:calc(var(--u)*150);margin:0 auto;padding:calc(var(--u)*2.2) calc(var(--u)*3.2);background:linear-gradient(135deg,rgba(0,114,141,.35),rgba(0,114,141,.12));border-color:rgba(0,207,234,.4)}
+.who.mgr b{font-size:calc(var(--u)*3.4)}.who.mgr span{font-size:calc(var(--u)*2.5);margin-top:.3em;max-width:70ch}.who.mgr .lock-s{grid-column:2;grid-row:1/3;margin:0;white-space:nowrap}
+.gate-row .who.mgr b{font-size:calc(var(--u)*3.4)}.gate-row .who.mgr span{font-size:calc(var(--u)*2.5)}
+@media (orientation:portrait){.who.mgr{grid-template-columns:1fr}.who.mgr .lock-s{grid-column:1;grid-row:auto;margin-top:calc(var(--u)*1.2)}.tr-mgr{grid-column:1/-1}}
 </style>
 </head>
 <body>

@@ -19,14 +19,14 @@ def entries(key, tfile, vox, out, hitlist, dark, shapes=('l', 'v')):
                     sfx=f'sfx-{k}.wav', ass=f'captions-{k}.ass', w=w, h=h, capsize=cs, capwrap=cw)
     print(f'films.json: {key} {t["dur"]} s · hits {hits}')
 entries('recruit', 'recruit-timing.json', 'vorecruit', 'recruit',
-        [(2, 'Five'), (2, 'Thirty'), (5, 'call'), (7, 'evidence'), (12, 'board'), (16, 'dollars'), (18, 'pace'),
+        [(2, 'seven'), (2, 'Thirty'), (5, 'call'), (7, 'evidence'), (12, 'board'), (16, 'dollars'), (18, 'pace'),
          (11, 'hundred'), (11, 'pays'), (23, 'written'), (25, 'ten'), (14, 'GO', 1), (30, 'open'), (30, 'Twenty')], [3, 32])
 if os.path.exists('recruit-trailer-timing.json'):
     entries('trailer', 'recruit-trailer-timing.json', 'votrailer', 'trailer',
-            [(2, 'income'), (3, 'zero'), (4, 'coach'), (5, 'Five'), (5, 'Thirty'), (5, 'Five', 1), (6, 'open'), (6, 'Twenty')], [8])
+            [(2, 'income'), (3, 'zero'), (4, 'coach'), (5, 'Seven'), (5, 'Thirty'), (5, 'Seven', 1), (6, 'open'), (6, 'Twenty')], [8])
 # the 35-second feed cuts: square for the LinkedIn and Facebook feed, tall for Reels and Stories; no landscape
 for v in 'AB':
     if os.path.exists(f'recruit-ad{v}-timing.json'):
         entries(f'ad{v}', f'recruit-ad{v}-timing.json', f'voad{v}', f'ad-{v.lower()}',
-                [(2, 'Not'), (4, 'Five'), (4, 'Thirty'), (5, 'One'), (5, 'Twenty')], [], shapes=('q', 'v'))
+                [(2, 'Not'), (4, 'Seven'), (4, 'Thirty'), (5, 'One'), (5, 'Twenty')], [], shapes=('q', 'v'))
 json.dump(f, open('films.json', 'w'), indent=1)

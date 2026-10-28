@@ -954,6 +954,16 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .tr-seat{min-height:calc(var(--u)*19)}
   .tr-chart{height:calc(var(--u)*34)}
 }
+
+.tr-mgr{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:calc(var(--u)*2);background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;border-radius:calc(var(--u)*2);padding:calc(var(--u)*1.8) calc(var(--u)*2.6);text-align:left;box-shadow:0 calc(var(--u)*2) calc(var(--u)*6) rgba(0,90,112,.45)}
+.tr-mgr i{font:800 calc(var(--u)*5)/1 var(--display);font-style:normal;letter-spacing:-.03em}
+.tr-mgr b{display:block;font:700 calc(var(--u)*2.8)/1.1 var(--display)}
+.tr-mgr span{display:block;margin-top:.3em;font:500 calc(var(--u)*2)/1.2 var(--text);opacity:.92}
+.tr-mgr .ic{font-size:calc(var(--u)*3.6)}
+.who.mgr{display:grid;grid-template-columns:1fr auto;align-items:center;gap:calc(var(--u)*1) calc(var(--u)*4);width:100%;max-width:calc(var(--u)*150);margin:0 auto;padding:calc(var(--u)*2.2) calc(var(--u)*3.2);background:linear-gradient(135deg,rgba(0,114,141,.35),rgba(0,114,141,.12));border-color:rgba(0,207,234,.4)}
+.who.mgr b{font-size:calc(var(--u)*3.4)}.who.mgr span{font-size:calc(var(--u)*2.5);margin-top:.3em;max-width:70ch}.who.mgr .lock-s{grid-column:2;grid-row:1/3;margin:0;white-space:nowrap}
+.gate-row .who.mgr b{font-size:calc(var(--u)*3.4)}.gate-row .who.mgr span{font-size:calc(var(--u)*2.5)}
+@media (orientation:portrait){.who.mgr{grid-template-columns:1fr}.who.mgr .lock-s{grid-column:1;grid-row:auto;margin-top:calc(var(--u)*1.2)}.tr-mgr{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -1077,49 +1087,50 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-seats tr" data-d="19100" data-n="5" style="--kb:19100ms" >
+<section class="scene s-seats tr" data-d="30300" data-n="5" style="--kb:30300ms" >
 
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">This year</p>
-  <h2 class="h xl"><span class="cnt" data-to="5" data-at="563" style="--at:563ms">5</span> <span aria-label="seats."><span class="w"><i style="--i:0;--t0:563ms">seats.</i></span></span></h2>
-  <p class="sub in" style="--t0:2313ms">Not because we can't take more. Because every one gets <em>the full build</em>.</p>
-  <div class="tr-rail" style="--t0:6350ms;--d:6163ms"></div>
-  <div class="tr-seats"><div class="tr-seat" style="--t0:763ms;--t1:6350ms">
+  <p class="eye in" style="--t0:200ms">FY27 · the first class, selected now</p>
+  <h2 class="h xl"><span class="cnt" data-to="7" data-at="5975" style="--at:5975ms">7</span> <span aria-label="places."><span class="w"><i style="--i:0;--t0:5975ms">places.</i></span></span></h2>
+  <p class="sub in" style="--t0:7850ms">Not because we can't take more. Because every one gets <em>the full build</em>.</p>
+  <div class="tr-rail" style="--t0:11950ms;--d:6075ms"></div>
+  <div class="tr-seats"><div class="tr-seat" style="--t0:6175ms;--t1:11950ms">
       <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
       <span class="nm"><b>A call</b><small>48 h</small></span>
       <em class="st"><svg class="ic"><use href="#i-phone"/></svg></em>
-    </div><div class="tr-seat" style="--t0:903ms;--t1:8312ms">
+    </div><div class="tr-seat" style="--t0:6315ms;--t1:14025ms">
       <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
       <span class="nm"><b>The Branch Manager</b><small>himself</small></span>
       <em class="st"><svg class="ic"><use href="#i-users"/></svg></em>
-    </div><div class="tr-seat" style="--t0:1043ms;--t1:10162ms">
+    </div><div class="tr-seat" style="--t0:6455ms;--t1:15787ms">
       <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
       <span class="nm"><b>Orientation</b><small>no gloss</small></span>
       <em class="st"><svg class="ic"><use href="#i-chat"/></svg></em>
-    </div><div class="tr-seat" style="--t0:1183ms;--t1:11212ms">
+    </div><div class="tr-seat" style="--t0:6595ms;--t1:16875ms">
       <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
       <span class="nm"><b>A profile</b><small>POP7</small></span>
       <em class="st"><svg class="ic"><use href="#i-target"/></svg></em>
-    </div><div class="tr-seat" style="--t0:1323ms;--t1:12513ms">
+    </div><div class="tr-seat" style="--t0:6735ms;--t1:18025ms">
       <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
       <span class="nm"><b>Discovery</b><small>the people doing it</small></span>
       <em class="st"><svg class="ic"><use href="#i-spark"/></svg></em>
     </div></div>
   <div class="figs row">
-    <div class="fig in" style="--t0:14962ms"><b class="cnt" data-to="32" data-at="14962" style="--at:14962ms">32</b><span>years in Trinidad</span></div>
-    <div class="fig in" style="--t0:17175ms"><b class="cnt" data-to="5" data-at="17175" style="--at:17175ms">5</b><span>seats</span></div>
+    <div class="tr-mgr in fl" style="--t0:22125ms"><i>+1</i><div><b>A sales manager</b><span>to build a unit here</span></div><svg class="ic"><use href="#i-users"/></svg></div>
+    <div class="fig in" style="--t0:24650ms"><b class="cnt" data-to="32" data-at="24650" style="--at:24650ms">32</b><span>years in Trinidad</span></div>
+    <div class="fig in" style="--t0:28200ms"><b class="cnt" data-to="7" data-at="28200" style="--at:28200ms">7</b><span>places · one class</span></div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-door tr" data-d="12600" data-n="6" style="--kb:12600ms" >
+<section class="scene s-door tr" data-d="15300" data-n="6" style="--kb:15300ms" >
 
 <div class="full center tr-gate">
   <p class="eye in" style="--t0:200ms">One conversation</p>
   <h2 class="h xl"><span aria-label="The door is open."><span class="w"><i style="--i:0;--t0:400ms">The</i></span> <span class="w"><i style="--i:1;--t0:400ms">door</i></span> <span class="w"><i style="--i:2;--t0:400ms">is</i></span> <span class="w"><i style="--i:3;--t0:400ms">open.</i></span></span></h2>
   <div class="gate-row">
-    <div class="who in fl" style="--t0:2350ms"><b>Already contracted?</b><span>Nobody will know you asked.</span><i class="lock-s"><svg class="ic"><use href="#i-lock"/></svg> Confidential</i></div>
-    <div class="stage iris" style="--t0:1287ms">
+    <div class="who in fl" style="--t0:2025ms"><b>Already contracted?</b><span>Nobody will know you asked.</span><i class="lock-s"><svg class="ic"><use href="#i-lock"/></svg> Confidential</i></div>
+    <div class="stage iris" style="--t0:975ms">
       <div class="halo"></div>
       <div class="iris-wrap">
         <svg class="orbit" viewBox="0 0 400 400" aria-hidden="true"><circle class="o-ring" cx="200" cy="200" r="92"/><circle class="o-ring o-dash" cx="200" cy="200" r="130"/><circle class="o-ring" cx="200" cy="200" r="162"/><circle class="o-arc" cx="200" cy="200" r="90"/><circle class="o-arc o-arc2" cx="200" cy="200" r="158"/></svg>
@@ -1130,9 +1141,10 @@ body.paused #bars i.run::after{animation-play-state:paused}
       <span class="flash"></span>
       <div class="mark"><svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg></div>
     </div>
-    <div class="who in fl" style="--t0:5350ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
+    <div class="who in fl" style="--t0:5025ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
   </div>
-  <div class="tr-line in" style="--t0:7937ms"><b><em class="cnt" data-to="1" data-at="7937" style="--at:7937ms">1</em> confidential conversation</b><i></i><b><em class="cnt" data-to="20" data-at="9975" style="--at:9975ms">20</em> minutes</b><i></i><b>this week</b></div>
+  <div class="who mgr in fl" style="--t0:7562ms"><b>Leading a team already?</b><span>Come and build a unit here: one seat for a sales manager, with the system doing the admin and the branch behind you.</span><i class="lock-s"><svg class="ic"><use href="#i-users"/></svg> Sales manager · one seat</i></div>
+  <div class="tr-line in" style="--t0:10937ms"><b><em class="cnt" data-to="1" data-at="10937" style="--at:10937ms">1</em> confidential conversation</b><i></i><b><em class="cnt" data-to="20" data-at="12912" style="--at:12912ms">20</em> minutes</b><i></i><b>this week</b></div>
 </div>
 <div class="streak"></div>
 </section>
